@@ -1,0 +1,71 @@
+﻿<div class="cronograma-container">
+  <!-- Topbar -->
+  <div class="topbar">
+
+    <div class="title-wrap">
+      <h1>Cronograma Logístico</h1>
+      <p>Gerencie e visualize o cronograma de pedidos</p>
+    </div>
+
+    <div class="topbar-center">
+      <div class="alert-panel" id="painelAlertas" onclick="abrirDetalhesAlertas()">
+        ✔️ Nenhum problema no cronograma
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button class="btn btn-light" onclick="abrirAgendaNova()">
+        + Operação Interna
+      </button>
+      <button class="btn btn-accent" onclick="abrirNovoPedido()">
+        + Novo Pedido
+      </button>
+    </div>
+
+  </div>
+  <!-- Navegação Semana -->
+  <div class="toolbar">
+    <div class="week-nav">
+      <button class="btn btn-light" onclick="mudarSemana(-7)">Anterior</button>
+      <div class="week-badge" id="weekLabel">Carregando semana...</div>
+      <button class="btn btn-light" onclick="mudarSemana(7)">Próxima</button>
+    </div>
+    <div class="toolbar-right">
+      <select id="filtroEtapa" class="filter" onchange="renderCronograma()">
+        <option value="semAgenda" selected>Somente cronograma</option>
+        <option value="comAgenda">Cronograma + Agenda interna</option>
+        <option value="triagemAgenda">Triagem + Agenda interna</option>
+        <option value="">Todas as etapas</option>
+        <option value="Separação">TRIAGEM</option>
+        <option value="Carregamento">Carregamento</option>
+        <option value="Montagem">Montagem</option>
+        <option value="Desmontagem">Desmontagem</option>
+      </select>
+      <input id="filtroResponsavel" class="filter" type="text" placeholder="Filtrar responsável" oninput="renderCronograma()" />
+      <input id="filtroCaminhao" class="filter" type="text" placeholder="Filtrar caminhão" oninput="renderCronograma()" />
+    </div>
+  </div>
+
+  <!-- Tabela Cronograma -->
+  <div class="board-wrap">
+    <table class="board">
+      <thead>
+        <tr>
+          <th>Pedido</th>
+          <th id="th0">Ter</th>
+          <th id="th1">Qua</th>
+          <th id="th2">Qui</th>
+          <th id="th3">Sex</th>
+          <th id="th4">Sáb</th>
+          <th id="th5">Dom</th>
+          <th id="th6">Seg</th>
+        </tr>
+      </thead>
+      <tbody id="cronogramaBody">
+        <tr>
+          <td colspan="8" class="empty-state">Carregando cronograma...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

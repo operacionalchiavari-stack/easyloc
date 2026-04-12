@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Lia | EasyLoc</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="ia-page">
+
+    <!-- HEADER -->
+    <header class="ia-header">
+      <div class="ia-header-left">
+        <div class="ia-avatar">
+          <img
+            src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/avatars/lia/liaavatar3.png"
+            alt="Lia"
+          />
+        </div>
+        <div class="ia-header-info">
+          <h1>Lia</h1>
+          <span>Assistente Inteligente</span>
+        </div>
+      </div>
+
+      <div class="ia-header-actions">
+        <button class="btn btn-outline" id="btnOpenKB">Minha base</button>
+        <button class="btn btn-primary" id="btnOpenAddKnowledge">+ Adicionar conhecimento</button>
+      </div>
+    </header>
+
+    <!-- CHAT + INPUT -->
+    <main class="chat-layout">
+      <div class="ia-chat" id="chat">
+        <div class="placeholder">Faça uma pergunta sobre processos, produtos ou atendimento.</div>
+      </div>
+
+      <!-- STATUS DE VOZ (ÚNICO) -->
+<div class="ia-input ia-input-with-voice" id="liaInputBar">
+
+  <!-- INPUT TEXTO -->
+  <input
+    id="pergunta"
+    placeholder="Digite sua pergunta para a Lia..."
+  />
+
+  <!-- MICROFONE (PADRÃO) -->
+  <button
+    class="btn btn-outline btn-voice"
+    id="liaMicBtn"
+    type="button"
+    aria-label="Ativar modo conversa"
+  >
+    🎤
+  </button>
+
+  <!-- STATUS DE VOZ (SUBSTITUI O MICROFONE) -->
+  <div
+    class="lia-voice-inline"
+    id="liaVoiceStatus"
+    style="display:none;"
+  >
+    <span class="lia-voice-dot"></span>
+    <span class="lia-voice-text" id="liaVoiceText">Ouvindo…</span>
+
+    <button
+      class="lia-voice-end"
+      id="liaVoiceStop"
+      type="button"
+    >
+      Encerrar
+    </button>
+  </div>
+
+  <!-- BOTÃO ENVIAR (SEMPRE VISÍVEL) -->
+  <button
+    class="btn btn-primary"
+    id="btnPerguntar"
+    type="button"
+  >
+    Enviar
+  </button>
+
+</div>
+
+    </main>
+
+    <!-- MODAL: Adicionar Conhecimento -->
+    <div class="modal" id="modalAddKnowledge" aria-hidden="true">
+      <div class="modal-overlay" data-close="modalAddKnowledge"></div>
+
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div>
+            <h2>Adicionar conhecimento</h2>
+            <p>Escolha documento ou cole um texto. Só entra na base o que você confirmar.</p>
+          </div>
+          <button class="btn-icon" data-close="modalAddKnowledge" aria-label="Fechar">✕</button>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="tabDoc">Documento</button>
+          <button class="tab" data-tab="tabText">Texto colado</button>
+        </div>
+
+        <!-- TAB: Documento -->
+        <div class="tab-panel active" id="tabDoc">
+          <div class="grid-2">
+            <div class="field">
+              <label>Título</label>
+              <input id="docTitulo" placeholder="Ex.: Processo Comercial v1" />
+            </div>
+
+            <div class="field">
+              <label>Categoria</label>
+              <select id="docCategoria">
+                <option value="Comercial">Comercial</option>
+                <option value="Processos">Processos</option>
+                <option value="Preços">Preços</option>
+                <option value="Itens">Itens</option>
+                <option value="Atendimento">Atendimento</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label>Arquivo</label>
+
+              <div class="file-upload">
+                <input id="docArquivo" type="file" accept=".pdf,.doc,.docx,.txt" />
+                <label for="docArquivo" class="file-btn">
+                  <span class="file-icon">📄</span>
+                  <span class="file-text">Selecionar arquivo</span>
+                </label>
+                <span class="file-name" id="fileName">Nenhum arquivo selecionado</span>
+              </div>
+
+              <small class="hint">Neste MVP, o arquivo fica registrado. Upload real via Supabase depois.</small>
+            </div>
+
+            <div class="field">
+              <label>Status</label>
+              <div class="switch-row">
+                <label class="switch">
+                  <input id="docAtivo" type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+                <span>Ativar para a Lia</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline" data-close="modalAddKnowledge">Cancelar</button>
+            <button class="btn btn-primary" id="btnSalvarDoc">Salvar documento</button>
+          </div>
+        </div>
+
+        <!-- TAB: Texto -->
+        <div class="tab-panel" id="tabText">
+          <div class="grid-2">
+            <div class="field">
+              <label>Título</label>
+              <input id="txtTitulo" placeholder="Ex.: Regra - Mesa 1,60" />
+            </div>
+
+            <div class="field">
+              <label>Categoria</label>
+              <select id="txtCategoria">
+                <option value="Comercial">Comercial</option>
+                <option value="Processos">Processos</option>
+                <option value="Preços">Preços</option>
+                <option value="Itens">Itens</option>
+                <option value="Atendimento">Atendimento</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Conteúdo</label>
+            <textarea id="txtConteudo" placeholder="Cole aqui o procedimento, regra, roteiro de resposta, etc..."></textarea>
+          </div>
+
+          <div class="field">
+            <label>Status</label>
+            <div class="switch-row">
+              <label class="switch">
+                <input id="txtAtivo" type="checkbox" checked />
+                <span class="slider"></span>
+              </label>
+              <span>Ativar para a Lia</span>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline" data-close="modalAddKnowledge">Cancelar</button>
+            <button class="btn btn-primary" id="btnSalvarTexto">Salvar texto</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MODAL: Salvar como aprendizado -->
+    <div class="modal" id="modalSaveLearning" aria-hidden="true">
+      <div class="modal-overlay" data-close="modalSaveLearning"></div>
+
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div>
+            <h2>Salvar como aprendizado</h2>
+            <p>Você escolhe o que vira base. Nada é salvo automaticamente.</p>
+          </div>
+          <button class="btn-icon" data-close="modalSaveLearning" aria-label="Fechar">✕</button>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>Título</label>
+            <input id="learnTitulo" placeholder="Ex.: Mesa 1,60 - Indicação" />
+          </div>
+
+          <div class="field">
+            <label>Categoria</label>
+            <select id="learnCategoria">
+              <option value="Comercial">Comercial</option>
+              <option value="Processos">Processos</option>
+              <option value="Preços">Preços</option>
+              <option value="Itens">Itens</option>
+              <option value="Atendimento">Atendimento</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Conteúdo (editável)</label>
+          <textarea id="learnConteudo"></textarea>
+          <small class="hint">Ajuste para virar uma regra/padrão da empresa.</small>
+        </div>
+
+        <div class="field">
+          <label>Status</label>
+          <div class="switch-row">
+            <label class="switch">
+              <input id="learnAtivo" type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+            <span>Ativar para a Lia</span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline" data-close="modalSaveLearning">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmSaveLearning">Salvar aprendizado</button>
+        </div>
+      </div>
+    </div>
+
+<!-- MODAL: Minha base (GESTÃO DE CONHECIMENTO) -->
+<div class="modal" id="modalKB" aria-hidden="true">
+  <div class="modal-overlay" data-close="modalKB"></div>
+
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true">
+
+    <!-- HEADER -->
+    <div class="modal-header">
+      <div>
+        <h2>Minha base de conhecimento</h2>
+        <p>Gerencie os conteúdos usados pela Lia</p>
+      </div>
+      <button class="btn-icon" data-close="modalKB" aria-label="Fechar">✕</button>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="kb-toolbar kb-toolbar-one-line">
+      <input
+        id="kbSearch"
+        placeholder="Buscar por título ou conteúdo..."
+      />
+
+      <select id="kbFilterCat">
+        <option value="__ALL__">Todas as categorias</option>
+        <option value="Comercial">Comercial</option>
+        <option value="Processos">Processos</option>
+        <option value="Preços">Preços</option>
+        <option value="Itens">Itens</option>
+        <option value="Atendimento">Atendimento</option>
+        <option value="Outros">Outros</option>
+      </select>
+
+      <select id="kbFilterTipo">
+        <option value="__ALL__">Todos os tipos</option>
+        <option value="texto">Texto</option>
+        <option value="documento">Documento</option>
+        <option value="aprendizado">Aprendizado</option>
+      </select>
+    </div>
+
+    <!-- LISTA (TABELA VISUAL) -->
+    <div class="kb-list" id="kbList">
+
+      <!-- ITEM DE CONHECIMENTO (MODELO) -->
+      <div class="kb-item" data-id="">
+        <div class="kb-item-main">
+          <strong class="kb-title">Título do conhecimento</strong>
+          <span class="kb-meta">
+            <span class="kb-tag categoria">Comercial</span>
+            <span class="kb-tag tipo">Texto</span>
+          </span>
+        </div>
+
+        <div class="kb-item-actions">
+          <label class="switch">
+            <input type="checkbox" checked />
+            <span class="slider"></span>
+          </label>
+
+          <button class="btn-icon" title="Editar">✏️</button>
+          <button class="btn-icon danger" title="Excluir">🗑️</button>
+        </div>
+      </div>
+
+      <!-- placeholder vazio -->
+      <div class="kb-empty" style="display:none;">
+        Nenhum conhecimento encontrado.
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-close="modalKB">Fechar</button>
+    </div>
+
+  </div>
+</div>
+
+
+  </div>
+
+</body>
+</html>

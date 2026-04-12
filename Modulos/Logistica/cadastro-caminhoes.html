@@ -1,0 +1,239 @@
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="page-header">
+    <h1>Caminhões Cadastrados</h1>
+
+    <div class="header-actions">
+      <button class="btn secondary" onclick="imprimirCaminhoes()">
+        Imprimir / PDF
+      </button>
+
+      <button class="btn primary" onclick="abrirModalCaminhao()">
+        + Adicionar Caminhão
+      </button>
+    </div>
+  </header>
+
+  <!-- FILTRO -->
+  <div class="filtros">
+    <input type="text" id="filtroTexto" placeholder="Pesquisar caminhão..." />
+
+    <select id="filtroTipo">
+      <option value="">Todos os tipos</option>
+      <option value="proprio">Próprio</option>
+      <option value="terceirizado">Terceirizado</option>
+    </select>
+
+    <select id="filtroStatus">
+      <option value="">Todos os status</option>
+      <option value="ativo">Ativo</option>
+      <option value="inativo">Inativo</option>
+    </select>
+  </div>
+
+<!-- TABELA -->
+<section class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>MODELO</th>
+        <th>PLACA</th>
+        <th>VÍNCULO</th>
+        <th>EMPRESA</th>
+        <th>CATEGORIA</th>
+        <th>CAPACIDADE (m³)</th>
+        <th>STATUS</th>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody id="tabelaCaminhoes"></tbody>
+  </table>
+</section>
+
+
+<!-- =====================================================
+     MODAL ALERTA GLOBAL EASYLOC
+===================================================== -->
+<div id="modalAlerta" class="modal-alert hidden">
+  <div class="modal-alert-box">
+
+    <div class="modal-alert-icon">!</div>
+
+    <div class="modal-alert-title" id="modalAlertaTitulo">
+      Atenção
+    </div>
+
+    <div class="modal-alert-text" id="modalAlertaTexto">
+      Mensagem aqui
+    </div>
+
+    <button class="modal-alert-btn" onclick="fecharAlerta()">
+      Ok
+    </button>
+
+  </div>
+</div>
+
+<!-- ================= MODAL ================= -->
+<div id="modalCaminhao" class="modal-overlay hidden">
+  <div class="modal-box">
+
+   <!-- HEADER -->
+<div class="modal-header-caminhao">
+
+  <h2>Cadastrar Caminhão</h2>
+
+  <div class="header-actions-caminhao">
+
+    <div class="status-toggle-caminhao">
+      <button type="button"
+              class="status-btn ativo selected"
+              onclick="setStatusCaminhao('ativo')">
+        ● Ativo
+      </button>
+
+      <button type="button"
+              class="status-btn inativo"
+              onclick="setStatusCaminhao('inativo')">
+        ● Inativo
+      </button>
+    </div>
+
+<button type="button"
+        class="btn-edit"
+        id="btnEditarCaminhao"
+        onclick="prepararEdicaoCaminhao()">
+  ✎
+</button>
+
+  </div>
+
+</div>
+
+<input type="hidden" id="statusInput" value="ativo">
+
+    <!-- ================= DADOS GERAIS ================= -->
+<h3 style="margin-top:30px;">Empresa</h3>
+
+<div class="form-grid">
+
+  <div class="form-group">
+    <label>CNPJ</label>
+    <input type="text" id="cnpjInput">
+  </div>
+
+  <div class="form-group">
+    <label>Empresa Proprietária</label>
+    <input type="text" id="empresaInput">
+  </div>
+
+  <div class="form-group">
+    <label>Telefone</label>
+    <input type="text" id="telefoneInput">
+  </div>
+
+  <div></div>
+
+</div>
+<div class="form-grid">
+
+    <!-- VÍNCULO -->
+  <div class="form-group">
+    <label>Vínculo *</label>
+    <select id="tipoInput">
+      <option value="proprio">Próprio</option>
+      <option value="terceirizado">Terceirizado</option>
+    </select>
+  </div>
+
+  <!-- CATEGORIA DO CAMINHÃO -->
+  <div class="form-group">
+    <label>Categoria do veículo *</label>
+    <select id="categoriaInput">
+      <option value="vuc">VUC</option>
+      <option value="34">3/4</option>
+      <option value="toco">Toco</option>
+      <option value="truck">Truck</option>
+      <option value="bitruck">Bitruck</option>
+      <option value="carreta">Carreta</option>
+      <option value="van">Van</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Modelo *</label>
+    <input type="text" id="modeloInput">
+  </div>
+
+  <div class="form-group">
+    <label>Placa *</label>
+    <input type="text" id="placaInput">
+  </div>
+
+  <div></div>
+
+</div>
+    <!-- ================= DIMENSÕES EXTERNAS ================= -->
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Comprimento total (m)</label>
+        <input type="number" step="0.01" id="comprimentoTotalInput">
+      </div>
+
+      <div class="form-group">
+        <label>Largura total (m)</label>
+        <input type="number" step="0.01" id="larguraTotalInput">
+      </div>
+
+      <div class="form-group">
+        <label>Altura total (m)</label>
+        <input type="number" step="0.01" id="alturaTotalInput">
+      </div>
+
+    </div>
+
+
+    <!-- ================= DIMENSÕES INTERNAS ================= -->
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Comprimento interno (m)</label>
+        <input type="number" step="0.01" id="comprimentoInput">
+      </div>
+
+      <div class="form-group">
+        <label>Largura interna (m)</label>
+        <input type="number" step="0.01" id="larguraInput">
+      </div>
+
+      <div class="form-group">
+        <label>Altura interna (m)</label>
+        <input type="number" step="0.01" id="alturaInput">
+      </div>
+
+      <div class="form-group">
+        <label>Capacidade calculada</label>
+        <div id="capacidadePreview" style="font-weight:600;">
+          0.00 m³
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- BOTÕES -->
+    <div class="modal-actions" style="margin-top:30px;">
+      <button class="btn secondary" onclick="fecharModalCaminhao()">
+        Cancelar
+      </button>
+      <button class="btn primary" id="btnSalvarCaminhao" onclick="salvarCaminhao()">
+        Salvar
+      </button>
+    </div>
+
+  </div>
+</div>
+

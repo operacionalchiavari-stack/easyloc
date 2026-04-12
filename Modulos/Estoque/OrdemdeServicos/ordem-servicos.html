@@ -1,0 +1,607 @@
+
+<div class="ordem-servicos-page">
+
+  <div class="header">
+<h1 id="tituloPagina">
+  Itens Danificados 
+  <span id="ultimaAtualizacao" style="font-size:12px; font-weight:500; color:#64748b; margin-left:8px;">
+    • Atualizando...
+  </span>
+</h1>
+
+<div class="acoes-topo" id="acoesTopo">
+  <button class="btn-nova-os" onclick="abrirModalOS()">
+    <span>＋</span>
+    Nova O.S
+  </button>
+
+  <button class="btn-baixa" onclick="abrirBaixa()">
+    Concluir O.S
+  </button>
+
+  <button class="btn" onclick="abrirEncaminhamento()">
+    Encaminhar
+  </button>
+
+<button class="btn" onclick="iniciarPainel()">
+  Painel
+</button>
+</div>
+</div>
+
+<div class="filtros" id="filtros">
+  <select id="filtroSetor"></select>
+<div class="dropdown-multi">
+  <div class="dropdown-header" onclick="toggleDropdown()">
+    Setor responsável (todos)
+  </div>
+
+  <div class="dropdown-body" id="dropdownFluxo">
+    <!-- preenchido via JS -->
+  </div>
+</div>
+  <select id="filtroNome"></select>
+  <input id="filtroOS" placeholder="Número O.S">
+  <select id="filtroOnde">
+    <option value="">Dano (todos)</option>
+    <option value="Dano Interno">Dano Interno</option>
+    <option value="Evento">Evento</option>
+  </select>
+  <input id="filtroPedido" placeholder="Número do pedido">
+</div>
+
+<!-- cards removidos -->
+
+<div class="table-container">
+<table>
+<thead>
+  <tr>
+    <th>Data</th>
+    <th>Setor</th>
+    <th>Nome</th>
+    <th>O.S</th>
+    <th>Item</th>
+    <th>Qtd</th>
+    <th>Fluxo</th>
+    <th>Onde aconteceu</th>
+    <th>Nº Pedido</th>
+    <th>Detalhes</th>
+    <th>Data de urgência</th>
+  </tr>
+</thead>
+<tbody id="tabela">
+
+<tr>
+  <td>04/03/2026</td>
+  <td>Setor 01</td>
+  <td>Silas</td>
+  <td class="col-os">2451</td>
+  <td>Aparador Provençal Branco</td>
+  <td>4</td>
+  <td>
+    <div class="fluxo-linha">
+      <span class="tag AcabamentoePintura">Acabamento</span>
+    </div>
+  </td>
+  <td>Dano interno</td>
+  <td class="col-pedido">-</td>
+  <td class="col-detalhes">Arranhado na lateral esquerda</td>
+  <td><input type="date" class="input-data-urgencia urgente" value="2026-03-05"></td>
+</tr>
+
+<tr>
+  <td>12/03/2026</td>
+  <td>Setor 01</td>
+  <td>Marcus Vinicius</td>
+  <td class="col-os">2452</td>
+  <td>Cadeira Tiffany Dourada</td>
+  <td>12</td>
+  <td>
+    <div class="fluxo-linha">
+      <span class="tag Reparo">Reparo</span>
+    </div>
+  </td>
+  <td>Dano interno</td>
+  <td class="col-pedido">-</td>
+  <td class="col-detalhes">Solda solta na base</td>
+  <td><input type="date" class="input-data-urgencia" value="2026-03-24"></td>
+</tr>
+
+<tr>
+  <td>24/03/2026</td>
+  <td>Setor 02</td>
+  <td>Igor</td>
+  <td class="col-os">2453</td>
+  <td>Base Mesa Verona</td>
+  <td>2</td>
+  <td>
+    <div class="fluxo-linha">
+      <span class="tag Solda">Solda</span>
+      <span class="tag AcabamentoePintura">Acabamento</span>
+    </div>
+  </td>
+  <td>Dano interno</td>
+  <td class="col-pedido">-</td>
+  <td class="col-detalhes">Estrutura torta</td>
+  <td><input type="date" class="input-data-urgencia atencao" value="2026-03-25"></td>
+</tr>
+
+<tr>
+  <td>31/03/2026</td>
+  <td>Setor 02</td>
+  <td>Danilo</td>
+  <td class="col-os">2454</td>
+  <td>Poltrona Fratini Verde</td>
+  <td>1</td>
+  <td>
+    <div class="fluxo-linha">
+      <span class="tag Costura">Costura</span>
+    </div>
+  </td>
+  <td>Evento</td>
+  <td class="col-pedido">874</td>
+  <td class="col-detalhes">Rasgo no braço direito</td>
+  <td><input type="date" class="input-data-urgencia urgente" value="2026-04-01"></td>
+</tr>
+
+<tr>
+  <td>02/04/2026</td>
+  <td>Estoque</td>
+  <td>Larissa</td>
+  <td class="col-os">2455</td>
+  <td>Cadeira Katrina Madeira</td>
+  <td>6</td>
+  <td>
+    <div class="fluxo-linha">
+      <span class="tag LimpezadeEstofados">Limpeza</span>
+    </div>
+  </td>
+  <td>Produção</td>
+  <td class="col-pedido">-</td>
+  <td class="col-detalhes">Manchas no estofado</td>
+  <td><input type="date" value="2026-04-06"></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<div id="painelDinamico" style="display:none;"></div>
+
+<!-- 🔥 DASHBOARD EMBUTIDO -->
+<div id="telaDashboard" style="display:none; position:relative;">
+
+  <!-- 🔥 BOTÃO FIXO -->
+  <div style="position:fixed; top:10px; right:10px; z-index:9999;">
+    <button onclick="sairPainel()" class="btn-sair">
+      ✖ Sair
+    </button>
+  </div>
+<div class="dashboard">
+
+  <!-- GRID DOS SETORES -->
+  <section class="section">
+
+    <div class="grid-setores">
+
+      <!-- LIMPEZA -->
+<div class="card-setor"><div class="titulo-setor">Limpeza de Estofados</div></div>
+<div class="card-setor"><div class="titulo-setor">Costura</div></div>
+<div class="card-setor"><div class="titulo-setor">Forração</div></div>
+<div class="card-setor"><div class="titulo-setor">Acabamento e Pintura</div></div>
+<div class="card-setor"><div class="titulo-setor">Solda</div></div>
+<div class="card-setor"><div class="titulo-setor">Reparo</div></div>
+
+    </div>
+
+  </section>
+
+</div>
+
+    <!-- TETO DE GASTOS -->
+<section class="section">
+<div class="divider-title">
+  <span>Teto de Gastos</span>
+</div>
+
+  <div class="circle-grid teto-grid">
+    <div class="circle-card" data-setor="Reparo">
+      <div class="circle-progress" style="--value:0; --color:var(--green);">
+        <div class="circle-value">0%</div>
+      </div>
+      <div class="circle-name"></div>
+      <div class="circle-label">Reparo</div>
+      <div class="circle-meta">Carregando...</div>
+    </div>
+
+    <div class="circle-card" data-setor="Acabamento e Pintura">
+      <div class="circle-progress" style="--value:0; --color:var(--green);">
+        <div class="circle-value">0%</div>
+      </div>
+      <div class="circle-name"></div>
+      <div class="circle-label">Acabamento e Pintura</div>
+      <div class="circle-meta">Carregando...</div>
+    </div>
+
+    <div class="circle-card" data-setor="Solda">
+      <div class="circle-progress" style="--value:0; --color:var(--green);">
+        <div class="circle-value">0%</div>
+      </div>
+      <div class="circle-name"></div>
+      <div class="circle-label">Solda</div>
+      <div class="circle-meta">Carregando...</div>
+    </div>
+
+    <div class="circle-card" data-setor="Costura">
+      <div class="circle-progress" style="--value:0; --color:var(--green);">
+        <div class="circle-value">0%</div>
+      </div>
+      <div class="circle-name"></div>
+      <div class="circle-label">Costura</div>
+      <div class="circle-meta">Carregando...</div>
+    </div>
+
+    <div class="circle-card" data-setor="Forração">
+      <div class="circle-progress" style="--value:0; --color:var(--green);">
+        <div class="circle-value">0%</div>
+      </div>
+      <div class="circle-name"></div>
+      <div class="circle-label">Forração</div>
+      <div class="circle-meta">Carregando...</div>
+    </div>
+
+    <div class="circle-card" data-setor="Limpeza de Estofados">
+      <div class="circle-progress" style="--value:0; --color:var(--green);">
+        <div class="circle-value">0%</div>
+      </div>
+      <div class="circle-name"></div>
+      <div class="circle-label">Limpeza de Estofados</div>
+      <div class="circle-meta">Carregando...</div>
+    </div>
+  </div>
+</section>
+
+    <!-- META DE DESEMPENHO COMPORTAMENTAL -->
+    <section class="section">
+<div class="divider-title">
+  <span>Meta de Desempenho Comportamental</span>
+</div>
+
+<div class="behavior-grid"></div>
+    </section>
+
+  </div>
+  
+</div>
+
+
+<!-- MODAL LANÇAMENTO O.S -->
+<div class="modal" id="modalOS">
+  <div class="modal-box os-modal-box">
+
+    <div class="os-modal-header">
+      <h2>O.S Manutenção</h2>
+      <button class="os-modal-close" type="button" onclick="fecharModalOS()">✕</button>
+    </div>
+
+    <div class="os-modal-body">
+
+      <!-- LINHA 1 -->
+      <div class="os-row os-row-top">
+        <div class="os-field os-field-setor">
+          <label>Qual o seu Setor? *</label>
+<div class="radio-group" id="setor">
+
+  <div class="radio-option" data-value="Setor 01">
+    Setor 01
+  </div>
+
+  <div class="radio-option" data-value="Setor 02">
+    Setor 02
+  </div>
+
+  <div class="radio-option" data-value="Setor 03">
+    Setor 03
+  </div>
+
+</div>
+        </div>
+
+        <div class="os-field os-field-senha">
+          <label>Senha *</label>
+          <input type="password" id="senha" maxlength="4" />
+        </div>
+      </div>
+
+      <!-- NUMERO OS -->
+      <div class="os-field" id="osContainer" style="display:none;">
+        <label>Número da O.S. *</label>
+        <input type="text" id="numeroOS" placeholder="Ex: 2318" />
+      </div>
+
+      <!-- NOME -->
+      <div class="os-field">
+        <label>Qual seu nome? *</label>
+        <div class="radio-group" id="nome">
+          <div class="radio-option" data-value="Danilo">Danilo</div>
+          <div class="radio-option" data-value="Igor">Igor</div>
+          <div class="radio-option" data-value="Carlos Eduardo">Carlos Eduardo</div>
+          <div class="radio-option" data-value="Larissa">Larissa</div>
+          <div class="radio-option" data-value="Falck">Falck</div>
+          <div class="radio-option" data-value="Guilherme">Guilherme</div>
+        </div>
+      </div>
+
+      <!-- CATEGORIA -->
+      <div class="os-field os-field-categoria">
+        <label>Categoria *</label>
+        <select id="categoria">
+          <option value="">Selecione uma categoria...</option>
+        </select>
+      </div>
+
+      <!-- ITEM / CODIGO -->
+      <div class="os-row">
+        <div class="os-field os-grow">
+          <label>Qual o item? *</label>
+          <input list="itensList" id="item" placeholder="Digite para buscar..." />
+          <datalist id="itensList"></datalist>
+        </div>
+
+        <div class="os-field os-field-codigo">
+          <label>Código</label>
+          <input type="text" id="codigoItem" readonly />
+        </div>
+      </div>
+
+      <!-- QUANTIDADE -->
+      <div class="os-field">
+        <label>Quantidade *</label>
+        <input type="number" id="quantidade" max="999" />
+      </div>
+
+      <!-- SETOR SOLICITADO -->
+      <div class="os-field">
+        <label>Setor Solicitado *</label>
+
+        <div class="radio-group" id="setorSolicitado">
+
+          <div class="radio-option" data-value="Reparo">Reparo</div>
+
+          <div class="radio-option" data-value="Solda">Solda</div>
+
+          <div class="radio-option" data-value="Acabamento e Pintura">Acabamento e Pintura</div>
+
+          <div class="radio-option" data-value="Costura">Costura</div>
+
+          <div class="radio-option" data-value="Forração">Forração</div>
+
+          <div class="radio-option" data-value="Limpeza de Estofados">Limpeza de Estofados</div>
+
+        </div>
+      </div>
+
+      <!-- SAI SEMANA -->
+      <div class="os-field">
+        <label>Tem Urgência?</label>
+
+        <div class="radio-group" id="saiSemana">
+          <div class="radio-option" data-value="Sim">Sim</div>
+          <div class="radio-option" data-value="Não">Não</div>
+        </div>
+      </div>
+
+      <!-- DATA LIMITE -->
+      <div class="os-field" id="dataContainer" style="display:none;">
+        <label>Data limite *</label>
+        <input type="date" id="dataLimite" />
+      </div>
+
+      <!-- ONDE DANO -->
+      <div class="os-field">
+        <label>Onde aconteceu o dano? *</label>
+
+        <div class="radio-group" id="ondeDano">
+          <div class="radio-option" data-value="Dano Interno">Dano Interno</div>
+          <div class="radio-option" data-value="Evento">Evento</div>
+        </div>
+      </div>
+
+      <!-- NUMERO DO PEDIDO (APENAS EVENTO) -->
+      <div class="os-field" id="pedidoContainer" style="display:none;">
+        <label>Número do Pedido *</label>
+        <input type="text" id="numeroPedido" placeholder="Ex: 743" />
+      </div>
+
+      <!-- DETALHES -->
+      <div class="os-field">
+        <label>Detalhes sobre a Avaria *</label>
+        <textarea id="detalhes"></textarea>
+      </div>
+
+    </div>
+
+    <div class="os-modal-footer">
+      <button class="os-btn os-btn-light" type="button" onclick="fecharModalOS()">Cancelar</button>
+      <button class="os-btn os-btn-primary" type="button" onclick="salvarOSModal()">Enviar</button>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="modal" id="modalEncaminhar">
+  <div class="modal-box" style="max-width:420px;">
+
+    <div style="padding:20px; border-bottom:1px solid #e2e8f0;">
+      <h3 style="font-size:18px; font-weight:700;">Encaminhar O.S</h3>
+      <span style="font-size:13px; color:#64748b;">Selecione o próximo setor</span>
+    </div>
+
+    <div style="padding:20px;">
+      <select id="setorEncaminhar">
+        <option value="">Selecione...</option>
+        <option value="Reparo">Reparo</option>
+        <option value="Solda">Solda</option>
+        <option value="Acabamento e Pintura">Acabamento e Pintura</option>
+        <option value="Costura">Costura</option>
+        <option value="Forração">Forração</option>
+        <option value="Limpeza de Estofados">Limpeza de Estofados</option>
+      </select>
+    </div>
+
+    <div style="
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding:15px;
+      border-top:1px solid #e2e8f0;
+    ">
+      <button onclick="fecharEncaminhar()" class="os-btn os-btn-light">
+        Cancelar
+      </button>
+
+      <button onclick="confirmarEncaminhar()" class="os-btn os-btn-primary">
+        Confirmar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal" id="modalSenha">
+  <div class="modal-box" style="max-width:420px;">
+
+    <div style="padding:24px 26px; border-bottom:1px solid #e2e8f0;">
+      <h2 style="font-size:18px; font-weight:700;">Confirmar baixa</h2>
+      <span style="font-size:13px; color:#64748b;">Digite sua senha para continuar</span>
+    </div>
+
+    <div style="padding:20px 26px;">
+      <input 
+        type="password" 
+        id="senhaBaixa" 
+        placeholder="••••" 
+        style="
+          width:100%;
+          height:42px;
+          border-radius:10px;
+          border:1px solid #cbd5e1;
+          text-align:center;
+          font-size:16px;
+          letter-spacing:4px;
+        "
+      >
+    </div>
+
+    <div style="
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding:15px 20px;
+      border-top:1px solid #e2e8f0;
+    ">
+      <button onclick="fecharModalSenha()" class="os-btn os-btn-light">
+        Cancelar
+      </button>
+
+      <button onclick="validarSenhaBaixa()" class="os-btn os-btn-primary">
+        Confirmar
+      </button>
+    </div>
+
+  </div>
+</div>
+<div class="modal" id="modalChecklist">
+  <div class="modal-box" style="
+    max-width:720px;        /* 🔥 mais largo */
+    max-height:85vh;
+    display:flex;
+    flex-direction:column;
+  ">
+
+    <!-- HEADER -->
+    <div style="padding:20px 24px; border-bottom:1px solid #e2e8f0;">
+      <h2 style="font-size:18px; font-weight:700;">Checklist de Qualidade</h2>
+      <span style="font-size:13px; color:#64748b;">Confirme antes de finalizar</span>
+    </div>
+
+    <!-- CONTEÚDO (SCROLL CONTROLADO) -->
+    <div style="
+      padding:16px 24px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow-y:auto;
+    ">
+
+      <label class="check-item">
+        <input type="checkbox" id="chk1">
+        <span>Item limpo</span>
+      </label>
+
+      <label class="check-item">
+        <input type="checkbox" id="chk2">
+        <span>Não existem pregos aparentes</span>
+      </label>
+
+      <label class="check-item">
+        <input type="checkbox" id="chk3">
+        <span>Todos os itens estão com carpete ou patinha de plástico</span>
+      </label>
+
+      <label class="check-item">
+        <input type="checkbox" id="chk4">
+        <span>Itens firmes e sem outro dano aparente</span>
+      </label>
+
+      <label class="check-item">
+        <input type="checkbox" id="chk5">
+        <span>Estrutura alinhada (não está torto ou bambo)</span>
+      </label>
+
+      <label class="check-item">
+        <input type="checkbox" id="chk6">
+        <span>Acabamento ok (sem manchas, rasgos ou falhas)</span>
+      </label>
+
+      <!-- 🔥 BLOCO RESPONSABILIDADE -->
+<div style="
+  padding:12px;
+  border:1px solid #fde68a;
+  border-radius:10px;
+  background:#fef9c3;
+  font-size:12.5px;
+  color:#92400e;
+  line-height:1.4;
+">
+        Eu, responsável pelo estoque, declaro que realizei a conferência completa do item conforme o checklist acima, assegurando que o mesmo está em perfeitas condições de uso, atendendo a todos os padrões de qualidade e segurança exigidos, assumindo total responsabilidade pela liberação deste material.
+      </div>
+
+      <label class="check-item">
+        <input type="checkbox" id="chkResponsabilidade">
+        <span>Confirmo a responsabilidade pela liberação do item</span>
+      </label>
+
+    </div>
+
+    <!-- FOOTER (SÓ BOTÕES) -->
+    <div style="
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding:14px 20px;
+      border-top:1px solid #e2e8f0;
+    ">
+      <button onclick="fecharChecklist()" class="os-btn os-btn-light">
+        Cancelar
+      </button>
+
+      <button onclick="confirmarBaixa()" class="os-btn os-btn-primary">
+        Finalizar baixa
+      </button>
+    </div>
+
+  </div>
+</div>
+</div>

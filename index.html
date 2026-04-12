@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>EasyLoc • Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="js/core/supabase.js"></script>
+
+<style>
+  /* ===== LOADING BUTTON ===== */
+.login-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.login-btn.loading{
+  opacity:.85;
+  cursor:not-allowed;
+}
+
+.login-btn .spinner{
+  width:16px;
+  height:16px;
+  border:2px solid rgba(255,255,255,.4);
+  border-top-color:#ffffff;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+  to{ transform:rotate(360deg); }
+}
+
+:root{
+  --azul:#0f2a44;
+  --azul-2:#173a5e;
+  --laranja:#ff6a00;
+  --fundo:#fbf4ef;
+  --borda:#e5e7eb;
+  --texto:#0f172a;
+  --muted:#6b7280;
+}
+
+*{ box-sizing:border-box; font-family:"Inter",sans-serif; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--fundo); /* bege EasyLoc */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+
+
+/* ===== TELA INTEIRA 50/50 ===== */
+.login-screen{
+  width:100%;
+  min-height:100vh;
+  display:flex;
+}
+
+.visual{
+  width:60%;
+  position:relative;
+  overflow:hidden;
+}
+.visual::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(15,42,68,0) 0%,
+      rgba(15,42,68,0.25) 60%,
+      rgba(15,42,68,0.55) 100%
+    );
+  pointer-events:none;
+  z-index:4;
+}
+
+/* slider ocupa 100% da metade esquerda */
+.slider{
+  position:absolute;
+  inset:0;
+}
+
+.slider img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:0;
+  transition:opacity .8s ease;
+}
+
+.slider img.active{ opacity:1; }
+
+/* setas */
+.arrow{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(0,0,0,.45);
+  border:none;
+  color:#fff;
+  font-size:28px;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  cursor:pointer;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.arrow.left{ left:18px; }
+.arrow.right{ right:18px; }
+
+/* ===== METADE LOGIN ===== */
+.form{
+  width:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:48px 24px;
+}
+
+.form-card{
+  width:520px;
+  max-width:100%;
+  background:#fff;
+  border-radius:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.18);
+  border:1px solid var(--borda);
+  padding:40px 40px 34px;
+}
+
+.logo{
+  width:120px;
+  margin-bottom:22px;
+  display:block;
+}
+
+h2{
+  margin:0 0 8px;
+  font-size:22px;
+  color:var(--texto);
+}
+
+.sub{
+  margin:0 0 26px;
+  font-size:14px;
+  color:var(--muted);
+}
+
+/* inputs */
+.field{
+  margin-bottom:16px;
+}
+.field label{
+  display:block;
+  font-size:13px;
+  color:#374151;
+  margin-bottom:6px;
+}
+input{
+  width:100%;
+  padding:14px 14px;
+  border-radius:12px;
+  border:1px solid var(--borda);
+  background:#f8fafc;
+  outline:none;
+}
+input:focus{
+  border-color:#cbd5e1;
+  box-shadow:0 0 0 4px rgba(15,42,68,.08);
+}
+
+/* botão */
+button.login-btn{
+  width:100%;
+  padding:14px;
+  background:var(--laranja);
+  color:#fff;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:6px;
+}
+button.login-btn:hover{ filter:brightness(.95); }
+
+/* msg erro */
+.erro{
+  margin-top:14px;
+  color:#dc2626;
+  font-size:14px;
+  min-height:18px;
+  text-align:center;
+}
+
+/* link planos */
+.link{
+  margin-top:18px;
+  text-align:center;
+  font-size:14px;
+  color:#374151;
+}
+.link a{
+  color:var(--azul);
+  font-weight:700;
+  text-decoration:none;
+}
+.link a:hover{ text-decoration:underline; }
+
+/* ===== MOBILE ===== */
+@media (max-width: 900px){
+  .login-screen{ flex-direction:column; }
+  .visual{ width:100%; height:240px; }
+  .form{ width:100%; }
+  .form-card{ border-radius:18px; }
+}
+
+/* ===== MODAL CENTRAL ===== */
+.login-wrapper{
+  width:100%;
+  padding:32px;
+  display:flex;
+  justify-content:center;
+}
+
+.login-modal{
+  width:100%;
+  max-width:980px;
+  background:#fff;
+  border-radius:26px;
+  display:grid;
+  grid-template-columns: 42% 58%;
+  overflow:hidden;
+  box-shadow:0 40px 90px rgba(0,0,0,.15);
+  border:1px solid var(--borda);
+}
+
+/* ===== FOTO LATERAL ===== */
+.login-visual{
+  position:relative;
+  overflow:hidden;
+}
+
+.login-visual::after{
+  display:none;
+}
+
+
+.login-visual .slider,
+.login-visual img{
+  width:100%;
+  height:100%;
+}
+
+.login-visual img{
+  object-fit:cover;
+}
+
+/* ===== FORM ===== */
+.login-form{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:48px;
+}
+
+.form-card{
+  width:100%;
+  max-width:420px;
+  box-shadow:none;
+  border:none;
+  padding:0;
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:900px){
+  .login-modal{
+    grid-template-columns:1fr;
+  }
+  .login-visual{
+    height:220px;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="login-wrapper">
+
+  <div class="login-modal">
+
+    <!-- COLUNA ESQUERDA: IMAGEM -->
+    <div class="login-visual">
+      <div class="slider">
+        <img src="slide1.jpg" class="active" alt="slide 1">
+        <img src="slide2.jpg" alt="slide 2">
+        <img src="slide3.jpg" alt="slide 3">
+      </div>
+    </div>
+
+    <!-- COLUNA DIREITA: FORM -->
+    <div class="login-form">
+      <div class="form-card">
+
+        <img src="logo.png" class="logo" alt="EasyLoc">
+
+        <h2>Acessar o sistema</h2>
+        <p class="sub">Entre com seu e-mail e senha para continuar</p>
+
+        <div class="field">
+          <label>Email</label>
+          <input id="email" type="email" placeholder="Email">
+        </div>
+
+        <div class="field">
+          <label>Senha</label>
+          <input id="senha" type="password" placeholder="Senha">
+        </div>
+
+        <button class="login-btn" id="loginBtn" onclick="login()">
+          <span class="btn-text">Entrar</span>
+        </button>
+
+        <div id="msg" class="erro"></div>
+
+        <div class="link">
+          Não tem conta?
+          <a href="planos.html">Conheça os planos</a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+/* SLIDER */
+const slides = document.querySelectorAll(".slider img");
+let slideIndex = 0;
+
+function showSlide(i){
+  slides.forEach(s => s.classList.remove("active"));
+  slides[i].classList.add("active");
+}
+function nextSlide(){
+  slideIndex = (slideIndex + 1) % slides.length;
+  showSlide(slideIndex);
+}
+function prevSlide(){
+  slideIndex = (slideIndex - 1 + slides.length) % slides.length;
+  showSlide(slideIndex);
+}
+setInterval(nextSlide, 6000);
+
+/* SUPABASE */
+const supabaseClient = window.supabaseClient;
+
+async function login(){
+
+  const btn = document.getElementById("loginBtn");
+  const btnText = btn.querySelector(".btn-text");
+
+  // ativa loading
+  btn.classList.add("loading");
+  btn.disabled = true;
+  btnText.innerHTML = `<span class="spinner"></span> Entrando...`;
+
+  const email = document.getElementById("email").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+  const msg = document.getElementById("msg");
+
+  msg.innerText = "";
+
+  if(!email || !senha){
+    msg.innerText = "Preencha e-mail e senha";
+    resetButton();
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password: senha
+  });
+
+  if(error || !data.user){
+    msg.innerText = "E-mail ou senha inválidos";
+    resetButton();
+    return;
+  }
+
+  const userId = data.user.id;
+
+  const { data: vinculos, error: erroVinculo } = await supabaseClient
+    .from("usuarios_empresas")
+    .select("empresa_id")
+    .eq("user_id", userId)
+    .limit(1);
+
+  if(erroVinculo || !vinculos || vinculos.length === 0){
+    msg.innerText = "Usuário não está vinculado a nenhuma empresa";
+    resetButton();
+    return;
+  }
+
+  const empresaId = vinculos[0].empresa_id;
+
+const { data: assinatura, error: erroAssinatura } = await supabaseClient
+  .from("assinaturas")
+  .select("status,vencimento")
+  .eq("empresa_id", empresaId)
+  .single();
+
+if(erroAssinatura || !assinatura){
+  location.href = "planos.html";
+  return;
+}
+
+  const vencida =
+    assinatura.status !== "ativo" ||
+    new Date(assinatura.vencimento) < new Date();
+
+  if(vencida){
+    location.href = "planos.html";
+    return;
+  }
+
+  // 🔥 ESSENCIAL PARA O DASHBOARD VALIDAR
+// 🔎 BUSCA O NOME REAL DO USUÁRIO NA TABELA usuarios
+const { data: usuario, error: erroUsuario } = await supabaseClient
+  .from("usuarios")
+  .select("nome")
+  .eq("id", userId)
+  .single();
+
+if(erroUsuario){
+  console.error("Erro ao buscar usuário:", erroUsuario);
+}
+
+// 🔥 SALVA DADOS PARA O BOOT
+sessionStorage.setItem("login_ok", "1");
+sessionStorage.setItem("empresa_id", empresaId);
+sessionStorage.setItem("usuario_nome", usuario?.nome || "Usuário");
+
+// 🚀 REDIRECIONA PARA O BOOT
+location.href = "Modulos/Login/Boot/boot.html";
+}
+
+/* helper */
+function resetButton(){
+  const btn = document.getElementById("loginBtn");
+  const btnText = btn.querySelector(".btn-text");
+  btn.classList.remove("loading");
+  btn.disabled = false;
+  btnText.innerHTML = "Entrar";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,271 @@
+<div class="container" data-module="controle-qualidade"></div>
+
+<div class="container">
+
+
+ </div> <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>Controle de Qualidade</h1>
+        <p>Inspeção visual, estrutural e liberação de mobiliário para eventos</p>
+      </div>
+
+
+    </div>
+  </div>
+
+  <div class="page">
+
+    <div class="cards">
+      <div class="card summary-card">
+        <div class="label">Itens cadastrados</div>
+        <div class="value" id="cardTotalItens">0</div>
+        <div class="sub">Base da aba Itens</div>
+      </div>
+
+<div class="card summary-card">
+  <div class="label">Meta mensal de inspeção</div>
+  <div class="value blue">
+    <span id="metaAtual">0</span> / <span id="metaMensal">150</span>
+  </div>
+  <div class="sub">Acompanhamento do mês</div>
+
+  <div style="margin-top:10px">
+    <div style="width:100%;height:8px;background:#e6edf6;border-radius:999px;overflow:hidden">
+      <div id="metaBar" style="height:100%;width:0%;background:#2f6fe4"></div>
+    </div>
+  </div>
+</div>
+
+      <div class="card summary-card">
+        <div class="label">Pendentes de análise</div>
+        <div class="value yellow" id="cardPendentes">0</div>
+        <div class="sub">Ainda não vistoriados</div>
+      </div>
+
+      <div class="card summary-card">
+        <div class="label">Aprovados</div>
+        <div class="value green" id="cardAprovados">0</div>
+        <div class="sub">Liberados para locação</div>
+      </div>
+
+      <div class="card summary-card">
+        <div class="label">Com observação</div>
+        <div class="value yellow" id="cardObservacao">0</div>
+        <div class="sub">Exigem atenção</div>
+      </div>
+
+      <div class="card summary-card">
+        <div class="label">Reprovados</div>
+        <div class="value red" id="cardReprovados">0</div>
+        <div class="sub">Bloqueados no controle</div>
+      </div>
+    </div>
+
+<div class="tabs">
+
+  <button class="tab active destaque" data-tab="inspecao">
+    Inspeção
+  </button>
+
+  <button class="tab alerta" data-tab="pendencias">
+    Pendências
+  </button>
+
+  <button class="tab" data-tab="itens">
+    Lista de itens
+  </button>
+
+  <button class="tab" data-tab="historico">
+    Histórico
+  </button>
+
+  <button class="tab" data-tab="metas">
+    Metas
+  </button>
+
+</div>
+
+<div id="tab-inspecao" class="tab-content">
+  <div class="main-grid">
+
+    <!-- BLOCO ESQUERDO -->
+    <div class="card section-card">
+      <div class="section-header">
+        <div>
+          <h2>Inspeção do item</h2>
+          <p>Fluxo prático para uso em tablet e conferência operacional</p>
+        </div>
+      </div>
+
+      <div class="section-body">
+        <div class="inspection-layout">
+
+          <div class="item-panel">
+            <div class="item-photo" id="itemFoto">Foto do item / imagem de referência</div>
+
+            <div class="pill" id="itemCategoriaPill">Categoria</div>
+
+            <h3 class="item-title" id="itemNome">Carregando item...</h3>
+
+            <div class="item-meta">
+              <div class="meta-row">
+                <div class="k">Código</div>
+                <div class="v" id="itemCodigo">-</div>
+              </div>
+
+              <div class="meta-row">
+                <div class="k">Valor de reposição</div>
+                <div class="v" id="itemValor">-</div>
+              </div>
+
+              <div class="meta-row">
+                <div class="k">Posição da fila</div>
+                <div class="v"><span id="itemIndex">0</span> de <span id="itemTotal">0</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label>Responsável</label>
+                <input class="input" id="responsavel" placeholder="Nome do responsável">
+              </div>
+
+              <div class="field">
+                <label>Data da análise</label>
+                <input class="input" id="dataAnalise" type="date">
+              </div>
+            </div>
+
+            <div class="status-buttons">
+              <button class="status-btn approved" data-status="Aprovado">
+                Aprovado
+                <small>Liberado para locação</small>
+              </button>
+
+              <button class="status-btn warning" data-status="Aprovado com observação">
+                Atenção
+                <small>Liberado com observação</small>
+              </button>
+
+              <button class="status-btn rejected" data-status="Reprovado">
+                Reprovado
+                <small>Bloqueado para uso</small>
+              </button>
+            </div>
+
+            <div class="checklist-title">Checklist de qualidade</div>
+            <div class="checklist" id="checklistContainer"></div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label>Ação necessária</label>
+                <select class="select" id="acaoNecessaria">
+                  <option value="">Selecione</option>
+                  <option>Nenhuma</option>
+                  <option>Revitalização</option>
+                  <option>Limpeza</option>
+                  <option>Manutenção</option>
+                  <option>Costura</option>
+                  <option>Forração</option>
+                  <option>Solda</option>
+                  <option>Pintura</option>
+                  <option>Reparo estrutural</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Prioridade</label>
+                <select class="select" id="prioridade">
+                  <option value="">Selecione</option>
+                  <option>Baixa</option>
+                  <option>Média</option>
+                  <option>Alta</option>
+                  <option>Urgente</option>
+                </select>
+              </div>
+
+              <div class="field full">
+                <label>Destino do item</label>
+                <select class="select" id="destinoItem">
+                  <option value="">Selecione</option>
+                  <option>Liberado para locação</option>
+                  <option>Enviar para manutenção</option>
+                  <option>Enviar para limpeza</option>
+                  <option>Enviar para revitalização</option>
+                  <option>Bloquear item</option>
+                </select>
+              </div>
+
+              <div class="field full">
+                <label>Observações</label>
+                <textarea class="textarea" id="observacoes"></textarea>
+              </div>
+            </div>
+
+            <div class="actions-bar">
+              <button class="btn secondary" id="btnPular">Pular item</button>
+              <button class="btn primary" id="btnSalvarProximo">Salvar e próximo</button>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOCO DIREITO -->
+    <div class="card section-card">
+      <div class="section-header">
+        <div>
+          <h2>Últimas inspeções</h2>
+          <p>Visão rápida do que acabou de ser avaliado</p>
+        </div>
+      </div>
+
+      <div class="section-body">
+        <div class="toolbar">
+          <input class="input" id="filtroBusca" placeholder="Buscar item, código ou responsável">
+          <select class="select" id="filtroStatus">
+            <option value="">Todos os status</option>
+            <option>Aprovado</option>
+            <option>Aprovado com observação</option>
+            <option>Reprovado</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Código</th>
+                <th>Item</th>
+                <th>Status</th>
+                <th>Ação</th>
+                <th>Prioridade</th>
+                <th>Responsável</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaInspecoes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- OUTRAS ABAS -->
+<div id="tab-itens" class="tab-content" style="display:none"></div>
+<div id="tab-pendencias" class="tab-content" style="display:none"></div>
+<div id="tab-historico" class="tab-content" style="display:none"></div>
+<div id="tab-metas" class="tab-content" style="display:none"></div>
+
+<div class="toast" id="toast">Inspeção salva com sucesso</div>
+
+</div>
+</div>

@@ -1,0 +1,1804 @@
+:root {
+  --azul: #0f2a44;
+  --laranja: #ff6a00;
+  --fundo: #fbf4ef;
+  --cinza: #e5e7eb;
+  --verde: #16a34a;
+  --amarelo: #facc15;
+  --vermelho: #dc2626;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: Inter, sans-serif;
+}
+
+.container {
+  padding: 32px;
+}
+
+/* ================= HEADER ================= */
+
+.header-list {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-btn {
+  background: var(--laranja);
+  color: #fff;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-btn.secondary {
+  background: #ffffff;
+  color: #ff7a00;
+  border: 2px solid #ff7a00;
+}
+
+.add-btn.secondary:hover {
+  background: #ff7a00;
+  color: #ffffff;
+}
+
+/* ================= FILTERS ================= */
+
+.container .filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.container .filters::-webkit-scrollbar {
+  height: 6px;
+}
+
+.container .filters::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 999px;
+}
+
+/* busca */
+
+#itensSearchInput {
+  flex: 1 0 320px;
+  min-width: 320px;
+}
+
+/* selects */
+
+#itensTipoFilter,
+#itensCategoriaFilter,
+#itensStatusFilter {
+  flex: 0 0 180px;
+  min-width: 180px;
+}
+
+.container .filters input,
+.container .filters select {
+  height: 38px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--cinza);
+  font-size: 13px;
+  background: #fff;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ================= STATUS ================= */
+
+.status {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ativo {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.inativo {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ================= MODALS ================= */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: #ffffff;
+  width: 900px;
+  max-height: 94vh;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 28px 28px 96px;
+  border: 1px solid #e5e7eb;
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.35),
+    0 10px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 200;
+}
+
+/* confirmação */
+
+.confirm-box {
+  width: 420px;
+}
+
+.modal-header-item {
+  margin-bottom: 20px;
+}
+
+.item-topo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.item-topo-info {
+  margin-bottom: 18px;
+}
+
+.item-topo-info h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f2a44;
+}
+
+.edit-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+/* ================= FORM GRID ================= */
+
+.item-side-form .col-2 {
+  grid-column: span 2;
+}
+
+.item-bottom-form .foto-form-row:last-child {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* wrapper do formulário */
+
+.item-form-wrapper {
+  width: 100%;
+  min-width: 0;
+}
+
+.item-form-wrapper .form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px 24px;
+  width: 100%;
+}
+
+.item-form-wrapper .form-group {
+  min-width: 0;
+}
+
+.item-form-wrapper input,
+.item-form-wrapper select,
+.item-form-wrapper textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.item-form-wrapper .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-form-wrapper .form-group.col-2 {
+  grid-column: span 2;
+}
+
+.item-form-wrapper .form-group.col-3 {
+  grid-column: span 3;
+}
+
+#itensKitWrapper {
+  grid-column: span 3;
+  margin-top: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group.col-3 {
+  grid-column: span 3;
+}
+
+/* ================= KIT TABLE ================= */
+
+.kit-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.kit-table th,
+.kit-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ================= ACTIONS ================= */
+
+.modal-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 28px;
+  background: #ffffff;
+  border-top: none;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+
+.btn-delete {
+  background: var(--vermelho);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-right: auto;
+  display: none;
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  border: 1px solid var(--cinza);
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-save {
+  background: var(--laranja);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+}
+
+/* ================= TAGS ================= */
+
+.itens-tag-section {
+  display: flex;
+  gap: 18px;
+  margin-top: 20px;
+  margin-bottom: 32px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.itens-tag-group {
+  min-width: 260px;
+  border: 1px solid var(--cinza);
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.itens-tag-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.itens-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.itens-tag {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.itens-azul .itens-tag {
+  background: #e0ecff;
+  color: #1e3a8a;
+}
+
+.itens-verde .itens-tag {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.itens-amarelo .itens-tag {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.itens-laranja .itens-tag {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.itens-vermelho .itens-tag {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.itens-tag.selected {
+  border-color: currentColor;
+  box-shadow: 0 0 0 1px currentColor inset;
+}
+
+/* ================= TABELA COMPACTA ================= */
+
+#itensTable td {
+  padding: 20px 8px;
+  font-size: 15px;
+  line-height: 1.1;
+  vertical-align: middle;
+}
+
+/* ================= GRID HELPERS ================= */
+
+.itens-col-2 {
+  grid-column: span 2;
+}
+
+.itens-col-3 {
+  grid-column: span 3;
+}
+/* =========================
+   ALERTA INLINE (ITENS)
+========================= */
+
+.itens-form-alert {
+  display: none;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fff4e6;
+  border: 1px solid var(--laranja);
+  color: #9a3412;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* =========================
+   LABELS – PADRÃO EASYLOC
+========================= */
+
+.modal-content label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+/* =========================
+   BASE – INPUTS / SELECTS
+========================= */
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  height: 42px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.modal-content input::placeholder,
+.modal-content textarea::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.modal-content input:focus,
+.modal-content select:focus,
+.modal-content textarea:focus {
+  border-color: var(--laranja);
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.15);
+  background: #ffffff;
+}
+
+.modal-content input[readonly],
+.modal-content select:disabled,
+.modal-content textarea[readonly] {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.modal-content input:focus-visible,
+.modal-content select:focus-visible,
+.modal-content textarea:focus-visible {
+  outline: none;
+}
+
+/* =========================
+   FIX OVERFLOW MODAL
+========================= */
+
+.modal,
+.modal-content {
+  overflow: visible !important;
+}
+
+/* =========================
+   TABELA – CONTAINER
+========================= */
+
+.table-wrapper {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+/* HEADER */
+
+thead th {
+  background: linear-gradient(180deg, #0f2a44, #081b2d);
+  color: #e5e7eb;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 14px 18px;
+  text-align: left;
+  border: none;
+}
+
+/* LINHAS */
+
+tbody tr {
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+/* CÉLULAS */
+
+td {
+  padding: 16px 18px;
+  font-size: 14px;
+  color: #1f2937;
+  vertical-align: middle;
+  border: none;
+}
+
+/* =========================
+   TAGS NA TABELA – ITENS
+========================= */
+
+.itens-table-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.itens-table-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* CORES POR TIPO */
+
+.itens-tag-item {
+  background: #e8f0ff;
+  color: #1d4ed8;
+}
+
+.itens-tag-componente {
+  background: #eafff3;
+  color: #047857;
+}
+
+.itens-tag-kit {
+  background: #fff3e8;
+  color: #c2410c;
+}
+
+/* =========================
+   MODAL ALERTA – ITENS
+========================= */
+
+.modal-alert {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(80, 80, 80, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 999999;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-alert-content {
+  background: #ffffff;
+  width: 100%;
+  max-width: 420px;
+  padding: 32px 28px 28px;
+  border-radius: 20px;
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.25),
+    0 10px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  position: relative;
+  z-index: 10001;
+}
+
+.modal-alert-content::before {
+  content: "!";
+  width: 56px;
+  height: 56px;
+  background: var(--laranja);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 800;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 8px 20px rgba(255, 106, 0, 0.45);
+}
+
+.modal-alert-content h4 {
+  margin: 20px 0 6px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--azul);
+}
+
+.modal-alert-content p {
+  font-size: 15px;
+  color: #4b5563;
+  margin-bottom: 26px;
+  line-height: 1.4;
+}
+
+.btn-alert {
+  background: var(--laranja);
+  color: #fff;
+  border: none;
+  padding: 12px 36px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-alert:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+.btn-alert:active {
+  transform: translateY(0);
+}
+
+/* =========================
+   TABELA – ITENS
+========================= */
+
+#itensTable td:first-child {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+#itensTable tr:hover {
+  background-color: #eef4ff;
+  cursor: pointer;
+}
+
+/* =========================
+   BOTÃO AJUDA – ITENS
+========================= */
+
+.btn-ajuda-img {
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  display: block;
+}
+
+/* =========================
+   MODAL AJUDA – ITENS
+========================= */
+
+#itensModalAjuda {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 42, 68, 0.65);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+#itensModalAjuda .modal-ajuda-content {
+  background: #ffffff;
+  width: 920px;
+  max-width: 95%;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.35),
+    0 10px 25px rgba(0, 0, 0, 0.12);
+}
+/* =========================
+   HEADER
+========================= */
+
+#itensModalAjuda .modal-ajuda-header {
+  background: linear-gradient(90deg, var(--azul), #081b2d);
+  color: #fff;
+  padding: 16px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+#itensModalAjuda .modal-ajuda-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--laranja);
+}
+
+#itensModalAjuda .modal-ajuda-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+#itensModalAjuda .modal-ajuda-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+#itensModalAjuda .modal-ajuda-header button:hover {
+  opacity: 1;
+}
+
+/* =========================
+   BODY
+========================= */
+
+#itensModalAjuda .modal-ajuda-body {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: 520px;
+}
+
+/* =========================
+   MENU LATERAL
+========================= */
+
+#itensModalAjuda .ajuda-videos {
+  background: #f1f5fb;
+  padding: 14px;
+  overflow-y: auto;
+  border-right: 1px solid #e5e7eb;
+}
+
+#itensModalAjuda .ajuda-video-item {
+  background: #ffffff;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+}
+
+#itensModalAjuda .ajuda-video-item:hover {
+  background: #fff7ed;
+  border-left-color: var(--laranja);
+}
+
+#itensModalAjuda .ajuda-video-item.active {
+  background: #fff4e6;
+  border-left-color: var(--laranja);
+  font-weight: 700;
+  color: var(--azul);
+}
+
+/* =========================
+   PLAYER – AJUDA ITENS
+========================= */
+
+#itensModalAjuda .ajuda-player {
+  padding: 18px;
+  background: #ffffff;
+}
+
+#itensModalAjuda .ajuda-player iframe {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  border: none;
+}
+
+/* =========================
+   HEADER – AJUDA ITENS
+========================= */
+
+#itensModalAjuda .modal-ajuda-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#itensModalAjuda .ajuda-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================
+   MINI-PLAYER – INFO
+========================= */
+
+#itensModalAjuda .btn-pip-info {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px dashed rgba(255, 255, 255, 0.55);
+  cursor: default;
+}
+
+#itensModalAjuda .pip-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f2a44;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+#itensModalAjuda .pip-tooltip::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #0f2a44 transparent;
+}
+
+#itensModalAjuda .btn-pip-info:hover .pip-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(2px);
+}
+
+/* =========================
+   AVISO MINI-PLAYER
+========================= */
+
+#itensModalAjuda .pip-warning {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #fff4e6;
+  border: 1px dashed var(--laranja);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9a3412;
+}
+
+/* =========================
+   INFO BOX
+========================= */
+
+#itensModalAjuda .pip-info-box {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #fff7ed;
+  border: 1px dashed var(--laranja);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9a3412;
+  line-height: 1.4;
+}
+
+/* =========================
+   COLUNA FOTO – TABELA
+========================= */
+
+.col-foto {
+  width: 96px;
+  text-align: center;
+}
+
+.itens-foto {
+  width: 44px;
+  height: 44px;
+}
+
+.itens-foto.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #94a3b8;
+}
+
+/* =========================
+   HEADER MODAL
+========================= */
+
+.modal-header-fixed {
+  position: relative;
+  padding-right: 52px;
+}
+
+.edit-btn-top {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-btn-top:hover {
+  background: #e5e7eb;
+}
+
+/* =========================
+   CAMPOS AO LADO DA FOTO
+========================= */
+
+.item-side-form .foto-form-row:first-child {
+  margin-top: 18px;
+}
+
+.item-side-form .foto-form-row:nth-child(2) {
+  margin-top: 6px;
+}
+
+.item-side-form .col-3 {
+  grid-column: span 3;
+}
+
+.item-side-form .col-2 {
+  grid-column: span 2;
+}
+
+.item-layout-advanced input::placeholder {
+  color: #9ca3af;
+}
+
+/* =====================================================
+   GRID PRINCIPAL DO MODAL – DEFINITIVO
+===================================================== */
+
+.item-layout-advanced {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-areas:
+    "foto side"
+    "bottom bottom";
+  gap: 20px;
+  align-items: start;
+}
+
+.btn-foto:hover {
+  background: #ff6a00;
+  color: #ffffff;
+}
+
+/* =====================================================
+   CAMPOS AO LADO DA FOTO (APENAS LINHAS 1 e 2)
+===================================================== */
+
+.item-side-form {
+  grid-area: side;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.item-side-form .foto-form-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.item-side-form .col-3 {
+  grid-column: span 3;
+}
+
+/* =====================================================
+   TOGGLE TIPO (ITEM / COMPONENTE)
+===================================================== */
+
+.item-tipo-toggle-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 8px;
+  grid-column: span 3;
+}
+
+.tipo-btn {
+  padding: 10px 28px;
+  border-radius: 999px;
+  border: 1.5px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+  transition: all 0.22s ease;
+}
+
+.tipo-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
+}
+
+.tipo-btn.active {
+  background: #ff6a00;
+  border-color: #ff6a00;
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(255, 106, 0, 0.35);
+}
+
+/* =====================================================
+   CAMPOS ABAIXO DA FOTO (LINHAS 3, 4 e 5)
+===================================================== */
+
+.item-bottom-form {
+  grid-area: bottom;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  margin-top: 1px;
+}
+
+.item-bottom-form .foto-form-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.item-bottom-form .valores-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* =====================================================
+   PADRÃO DE CAMPOS
+===================================================== */
+
+.item-layout-advanced label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.item-layout-advanced input,
+.item-layout-advanced select {
+  width: 100%;
+  height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.item-layout-advanced input::placeholder {
+  color: #9ca3af;
+}
+
+/* =====================================================
+   HEADER COM DESCRIÇÃO TOTAL
+===================================================== */
+
+.header-line-inline {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.header-line-inline .modal-title {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.header-desc-total {
+  flex: 1;
+  min-width: 0;
+}
+
+/* =====================================================
+   TOGGLE STATUS – ATIVO / INATIVO (ITENS)
+===================================================== */
+
+.item-tipo-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 28px;
+  grid-column: span 3;
+  flex-wrap: nowrap;
+}
+
+.item-tipo-toggle-row,
+.item-status-toggle-row {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.item-tipo-toggle-row {
+  display: flex;
+  gap: 16px;
+}
+
+.item-status-toggle-row {
+  display: flex;
+  gap: 14px;
+}
+
+.item-status-toggle-row .status-btn {
+  min-width: 120px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cinza);
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+  color: #374151;
+}
+
+.item-status-toggle-row .status-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
+}
+
+.item-status-toggle-row .status-btn.ativo.active {
+  background: var(--verde);
+  border-color: var(--verde);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(22, 163, 74, 0.45);
+}
+
+.item-status-toggle-row .status-btn.inativo.active {
+  background: var(--vermelho);
+  border-color: var(--vermelho);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(220, 38, 38, 0.45);
+}
+
+.item-status-toggle-row .status-btn:not(.active) {
+  opacity: 0.7;
+}
+
+@media (max-width: 900px) {
+  .item-tipo-status-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .item-status-toggle-row {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* =====================================================
+   AÇÕES DO MODAL – ESQUERDA / DIREITA
+===================================================== */
+
+.modal-actions-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-actions-left {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-actions-right {
+  display: flex;
+  gap: 12px;
+}
+
+/* botão secundário */
+.btn-secondary {
+  background: #f1f5f9;
+  border: 1.5px solid #e5e7eb;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+/* =====================================================
+   OVERRIDE – AÇÕES DO MODAL
+===================================================== */
+
+.modal-actions.modal-actions-split {
+  justify-content: space-between;
+}
+
+.modal-actions-left,
+.modal-actions-context {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* =====================================================
+   BOTÕES CONTEXTUAIS – PADRÃO EASYLOC
+===================================================== */
+
+.modal-actions .btn-context:hover {
+  background: #f1f5fb;
+  border-color: var(--azul);
+}
+
+.modal-actions .btn-context:active {
+  transform: translateY(1px);
+}
+
+.btn-context:hover {
+  background: #f4f7fb;
+  border-color: var(--azul);
+}
+
+.btn-context {
+  box-shadow: none !important;
+}
+/* =====================================================
+   BOTÕES CONTEXTUAIS – AZUL CLARO (DISCRETO)
+===================================================== */
+
+.modal-actions .btn-context {
+  height: 44px;
+  padding: 0 18px;
+
+  background: #eaf2fb !important;
+  color: var(--azul) !important;
+
+  border: 1px solid #cfe0f5 !important;
+  border-radius: 12px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  box-shadow: none !important;
+  transition:
+    background 0.15s ease,
+    border 0.15s ease;
+}
+
+.modal-actions .btn-context:hover {
+  background: #ddeafb !important;
+  border-color: #b7d2f2 !important;
+}
+
+.modal-actions .btn-context:active {
+  background: #d1e3f8 !important;
+}
+
+/* =====================================================
+   SUAVIZAR CORES – ITEM / COMPONENTE / ATIVO / INATIVO
+===================================================== */
+
+.tipo-btn.active {
+  background: #fff1e6 !important;
+  color: #c45a1a !important;
+  border-color: #ffd7bd !important;
+}
+
+.tipo-btn:not(.active) {
+  background: #ffffff;
+  border-color: #e5e7eb;
+}
+
+.status-btn.ativo.active {
+  background: #e9f7ef !important;
+  color: #1f7a4d !important;
+  border-color: #bfe6d2 !important;
+}
+
+.status-btn.inativo.active {
+  background: #fdecec !important;
+  color: #a73737 !important;
+  border-color: #f5c2c2 !important;
+}
+
+.tipo-btn,
+.status-btn {
+  box-shadow: none !important;
+}
+
+#itensVolumeCubico[readonly] {
+  background-color: #f5f7fa;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* =====================================================
+   FOTO PADRONIZADA – LAYOUT LIMPO
+===================================================== */
+
+.item-foto-box {
+  grid-area: foto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.foto-guia-container {
+  width: 240px;
+  aspect-ratio: 1 / 1;
+
+  background: #f8fafc;
+  border: 2px solid #e5e7eb;
+  border-radius: 18px;
+
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#itensFotoPreview {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+
+  transform: scale(1);
+  transform-origin: center center;
+
+  user-select: none;
+  cursor: grab;
+}
+
+.foto-controles {
+  position: relative;
+  top: -12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-zoom {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.btn-foto:hover {
+  background: var(--laranja);
+  color: #ffffff;
+}
+#kitsModal .kit-foto-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#kitsModal .foto-guia-container {
+  width: 240px;
+  aspect-ratio: 1 / 1;
+  background: #f8fafc;
+  border: 2px solid #e5e7eb;
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#kitsModal #kitFotoPreview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+}
+
+#kitsModal .foto-guia {
+  display: none;
+}
+
+#kitsModal .foto-controles {
+  position: relative;
+  top: -12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  z-index: 5;
+}
+
+#kitsModal .btn-zoom {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* BOTÃO INSERIR FOTO – PADRÃO */
+.btn-foto {
+  background: #ffffff;
+  border: 1.5px solid var(--laranja);
+  color: var(--laranja);
+
+  padding: 6px 14px;
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* botão do modal de KIT (mesmo estilo, só sem posição absoluta) */
+#kitsModal .btn-foto {
+  position: static;
+  padding: 6px 14px;
+}
+
+#kitsModal .btn-foto:hover {
+  background: var(--laranja);
+  color: #ffffff;
+}
+
+#kitsModal .btn-save {
+  display: inline-flex;
+}
+
+/* ================================
+   CARD COMPONENTES DO KIT
+================================ */
+
+.kit-componentes-area {
+  margin-top: 24px;
+
+  background: #f8fafc;
+
+  border: 1px solid #fbb0936a;
+
+  border-radius: 14px;
+
+  padding: 18px;
+
+  box-shadow: 0 2px 6px #fbb0936a;
+}
+.kit-componentes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.kit-componentes-header h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e2b3a;
+  margin: 0;
+}
+
+/* =================================
+   BOTÃO ADICIONAR COMPONENTE
+================================= */
+
+.kit-componentes-header .btn-add {
+  background: #ff6a00;
+  color: #fff;
+
+  border: none;
+  border-radius: 10px;
+
+  padding: 8px 14px;
+
+  font-weight: 600;
+  font-size: 14px;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.kit-componentes-header .btn-add:hover {
+  background: #e85f00;
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.kit-componentes-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.kit-componentes-table thead {
+  background: #eef4fa;
+}
+
+.kit-componentes-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: #2a3b4d;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+.kit-componentes-table td {
+  padding: 10px 12px;
+  border-top: 1px solid #edf2f7;
+}
+
+.kit-componentes-table select,
+.kit-componentes-table input {
+  height: 30px;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.kit-remove {
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #ef4444;
+}
+
+.modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.item-layout {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+#kitsModal .kit-componentes-table thead th {
+  background: #eef4fa !important;
+  color: #2a3b4d !important;
+}
+/* ========================================
+   FOTO DO ITEM DENTRO DO KIT
+======================================== */
+
+.kit-item-foto {
+  width: 70px;
+}
+
+.kit-foto-preview {
+  width: 60px;
+  height: 60px;
+
+  object-fit: contain;
+
+  border-radius: 8px;
+  background: #fff;
+
+  display: block;
+}
+/* =================================
+   BOTÃO REMOVER COMPONENTE
+================================= */
+
+.kit-item-row .remove {
+  width: 26px;
+  height: 26px;
+
+  border-radius: 6px;
+
+  border: 1px solid #ef4444;
+
+  background: #fee2e2;
+
+  color: #b91c1c;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.15s ease;
+}
+
+.kit-item-row .remove:hover {
+  background: #ef4444;
+  color: #fff;
+}
+/* ======================================
+   BUSCA DE ITEM NO KIT
+====================================== */
+
+.kit-item-busca {
+  position: relative;
+}
+
+.kit-item-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.kit-item-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  width: 100%;
+  max-height: 220px;
+
+  overflow: auto;
+
+  background: #fff;
+  border: 1px solid #e5e7eb;
+
+  border-radius: 8px;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+
+  z-index: 10;
+
+  display: none;
+}
+
+.kit-item-option {
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.kit-item-option:hover {
+  background: #f1f5f9;
+}
+.kit-item-busca {
+  position: relative;
+}
+
+.kit-item-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.kit-item-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  width: 100%;
+  max-height: 220px;
+
+  overflow: auto;
+
+  background: #fff;
+  border: 1px solid #e5e7eb;
+
+  border-radius: 8px;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+
+  z-index: 10;
+
+  display: none;
+}
+
+.kit-item-option {
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.kit-item-option:hover {
+  background: #f1f5f9;
+}
+/* =================================
+   TOTAIS DO KIT – ALINHAMENTO ERP
+================================= */
+
+.kit-componentes-table tfoot td {
+  padding: 12px 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.kit-total-row {
+  background: #fafafa;
+}
+
+.kit-total-row td:first-child {
+  text-align: right;
+  font-weight: 600;
+  color: #374151;
+}
+
+.kit-total-valor {
+  text-align: right;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+}
+.kit-table th,
+.kit-table td {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.kit-table td.valor-custo,
+.kit-table td.valor-reposicao,
+.kit-table td.valor-locacao {
+  text-align: left;
+  font-weight: 500;
+}
+
+.kit-table td:last-child {
+  text-align: center;
+  width: 60px;
+}

@@ -1,0 +1,692 @@
+<div class="container">
+
+  <!-- ================= HEADER ================= -->
+  <div class="header-list">
+    <h2>Itens Cadastrados</h2>
+
+<div class="header-actions">
+
+
+  <button class="add-btn" onclick="itens_openAdd()">+ Adicionar Item</button>
+
+  <button class="add-btn outline" onclick="kits_openAdd()">🧩 Montar Kit</button>
+
+
+</div>
+
+
+  </div>
+
+
+  <!-- ================= FILTROS ================= -->
+  <div class="filters">
+    <input
+      id="itensSearchInput"
+      placeholder="Pesquisar item..."
+      oninput="itens_aplicarFiltros()"
+    >
+
+    <select id="itensTipoFilter" onchange="itens_aplicarFiltros()">
+      <option value="">Todos os tipos</option>
+      <option value="Item">Item</option>
+      <option value="Componente">Componente</option>
+      <option value="Kit">Kit</option>
+    </select>
+
+    <select id="itensCategoriaFilter" onchange="itens_aplicarFiltros()">
+      <option value="">Todas as categorias</option>
+    </select>
+
+    <select id="itensStatusFilter" onchange="itens_aplicarFiltros()">
+      <option value="">Todos os status</option>
+      <option value="Ativo">Ativo</option>
+      <option value="Inativo">Inativo</option>
+    </select>
+  </div>
+
+<!-- ================= TABELA ================= -->
+<table class="itens-table" id="itensTable">
+<thead>
+  <tr>
+    <th style="width:70px;">Foto</th>
+    <th style="width:80px;">Código</th>
+    <th style="width:120px;">Tipo</th>
+    <th>Item</th>
+    <th style="width:140px;">Setor</th>
+    <th style="width:140px;">Valor</th>
+    <th style="width:90px;">Estoque</th>
+    <th style="width:110px;">Status</th>
+  </tr>
+</thead>
+
+  <tbody id="itensTableBody">
+    <!-- JS vai popular -->
+  </tbody>
+</table>
+
+
+
+<!-- ================= MODAL ITENS ================= -->
+<div class="modal" id="itensModal">
+  <div class="modal-content">
+
+    <input type="hidden" id="itensId">
+
+<!-- ===== HEADER ===== -->
+<div class="modal-header-item modal-header-fixed modal-header-horizontal">
+
+  <!-- LINHA ÚNICA: TÍTULO + DESCRIÇÃO -->
+  <div class="header-line header-line-inline">
+
+    <h3 class="modal-title">Detalhes do Item</h3>
+
+<input
+  id="itensDescricaoTotal"
+  class="header-desc-total"
+  placeholder="Gerado automaticamente"
+  readonly
+  tabindex="-1"
+>
+
+
+  </div>
+
+  <!-- BOTÃO EDITAR -->
+  <button
+    class="edit-btn edit-btn-top"
+    onclick="itens_enableEdit()"
+    title="Editar item">
+    ✏️
+  </button>
+
+</div>
+
+    <!-- ===== CONTEÚDO ===== -->
+<div class="item-layout item-layout-advanced">
+
+  <!-- FOTO -->
+<!-- FOTO COM GUIA PADRÃO -->
+<div class="item-foto-box">
+
+<div class="foto-guia-container">
+
+  <div class="foto-preview-wrapper">
+    <img
+      id="itensFotoPreview"
+      src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+      data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+      alt="Sem foto"
+      draggable="false"
+    >
+  </div>
+
+  <!-- INPUT REAL (OBRIGATÓRIO) -->
+<input
+  type="file"
+  id="itensFotoInput"
+  accept="image/*"
+  hidden
+>
+
+  <div class="foto-guia"></div>
+
+</div>
+
+<div class="foto-controles">
+
+<button
+  class="btn-zoom"
+  type="button"
+  onmousedown="itens_startZoom(1)"
+  onmouseup="itens_stopZoom()"
+  onmouseleave="itens_stopZoom()">
+  +
+</button>
+
+  <button
+    class="btn-foto"
+    type="button"
+    onclick="itens_selecionarFoto()">
+    Inserir foto
+  </button>
+
+<button
+  class="btn-zoom"
+  type="button"
+  onmousedown="itens_startZoom(-1)"
+  onmouseup="itens_stopZoom()"
+  onmouseleave="itens_stopZoom()">
+  −
+</button>
+</div>
+
+
+</div>
+
+
+  <!-- LATERAL (APENAS LINHA 1 e 2) -->
+<!-- LATERAL (TOGGLE + LINHAS 1 e 2) -->
+<div class="item-side-form">
+
+  <!-- TOGGLE ITEM / COMPONENTE -->
+<!-- TOGGLES (FORA DO GRID DE CAMPOS) -->
+<div class="item-tipo-status-row">
+
+  <!-- ITEM / COMPONENTE -->
+  <div class="item-tipo-toggle-row">
+    <button
+      type="button"
+      class="tipo-btn active"
+      onclick="itens_setTipo('Item', this)">
+      Item
+    </button>
+
+    <button
+      type="button"
+      class="tipo-btn"
+      onclick="itens_setTipo('Componente', this)">
+      Componente
+    </button>
+  </div>
+
+  <!-- ATIVO / INATIVO -->
+  <div class="item-status-toggle-row">
+<button
+  type="button"
+  class="status-btn ativo active"
+  data-ativo="true"
+  onclick="itens_setStatus(this)">
+  🟢 Ativo
+</button>
+
+<button
+  type="button"
+  class="status-btn inativo"
+  data-ativo="false"
+  onclick="itens_setStatus(this)">
+  🔴 Inativo
+</button>
+
+  </div>
+
+</div>
+
+
+  <!-- LINHA 1 -->
+  <div class="foto-form-row">
+    <div class="form-group">
+      <label>Código *</label>
+<input id="itensCodigo" readonly>
+    </div>
+
+    <div class="form-group">
+      <label>Produto *</label>
+      <input id="itensProduto">
+    </div>
+
+    <div class="form-group">
+      <label>Material</label>
+      <input id="itensMaterial">
+    </div>
+  </div>
+
+  <!-- LINHA 2 -->
+  <div class="foto-form-row">
+    <div class="form-group">
+      <label>Cor</label>
+      <input id="itensCor">
+    </div>
+
+    <div class="form-group col-2">
+      <label>Descrição complementar</label>
+      <input id="itensDescricaoComplementar">
+    </div>
+  </div>
+
+</div>
+
+  <!-- ⬇⬇⬇ AGORA FORA DO SIDE ⬇⬇⬇ -->
+  <div class="item-bottom-form">
+
+    <!-- LINHA 3 -->
+    <div class="foto-form-row">
+      <div class="form-group">
+        <label>Largura / Diâmetro (m)</label>
+<input id="itensLargura" oninput="itens_calcularVolume()">
+      </div>
+      <div class="form-group">
+        <label>Altura (m)</label>
+<input id="itensAltura" oninput="itens_calcularVolume()">
+      </div>
+      <div class="form-group">
+        <label>Profundidade (m)</label>
+<input id="itensProfundidade" oninput="itens_calcularVolume()">
+      </div>
+      <div class="form-group">
+        <label>Volume cúbico (m³)</label>
+<input
+  id="itensVolumeCubico"
+  placeholder="Auto"
+  readonly
+  tabindex="-1"
+>
+
+      </div>
+    </div>
+
+    <!-- LINHA 4 -->
+    <div class="foto-form-row">
+      <div class="form-group">
+        <label>Família</label>
+        <input id="itensFamilia">
+      </div>
+      <div class="form-group">
+        <label>Categoria *</label>
+        <input id="itensCategoria">
+      </div>
+      <div class="form-group">
+        <label>Setor de estoque *</label>
+<select id="itensSetor">
+  <option value="">Selecione</option>
+  <option value="Almoxarifado">Almoxarifado</option>
+  <option value="Estoque Geral">Estoque Geral</option>
+  <option value="Decoração">Decoração</option>
+  <option value="Louças">Louças</option>
+  <option value="Iluminação">Iluminação</option>
+  <option value="Móveis">Móveis</option>
+</select>
+
+      </div>
+      <div class="form-group">
+        <label>Exibir no site *</label>
+<select id="itensExibirSite">
+  <option value="">Selecione</option>
+  <option value="true">Sim</option>
+  <option value="false">Não</option>
+</select>
+
+      </div>
+    </div>
+
+    <!-- LINHA 5 -->
+    <div class="foto-form-row valores-row">
+      <div class="form-group">
+        <label>Custo (R$)</label>
+        <input id="itensCusto" placeholder="0,00">
+      </div>
+      <div class="form-group">
+        <label>Valor de locação (R$)</label>
+        <input id="itensValorLocacao" placeholder="0,00">
+      </div>
+      <div class="form-group">
+        <label>Valor de reposição (R$)</label>
+        <input id="itensValorReposicao" placeholder="0,00">
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ================= AÇÕES DO MODAL ITENS ================= -->
+<div class="modal-actions modal-actions-fixed modal-actions-split">
+
+  <!-- AÇÕES CONTEXTUAIS -->
+  <div class="modal-actions-left modal-actions-context">
+
+    <button
+      type="button"
+      class="btn-context"
+      title="Galeria de fotos do item">
+      <span>Galeria</span>
+    </button>
+
+    <button
+      type="button"
+      class="btn-context"
+      title="Histórico de movimentação">
+      <span>Histórico</span>
+    </button>
+
+    <button
+      type="button"
+      class="btn-context"
+      title="Kits vinculados">
+      <span>Kits</span>
+    </button>
+
+  </div>
+
+  <!-- BOTÕES PRINCIPAIS -->
+  <div class="modal-actions-right">
+
+    <button
+      type="button"
+      class="btn-cancel"
+      onclick="itens_closeModal()">
+      Fechar
+    </button>
+
+    <button
+      type="button"
+      class="btn-save"
+      onclick="itens_salvar()">
+      Salvar
+    </button>
+
+  </div>
+
+</div>
+
+</div> <!-- FECHA modal-content -->
+</div> <!-- FECHA itensModal -->
+
+<!-- ================= MODAL KIT ================= -->
+<div class="modal" id="kitsModal">
+<div class="modal-content">
+
+<input type="hidden" id="kitId">
+
+<!-- HEADER -->
+<div class="modal-header-item modal-header-fixed modal-header-horizontal">
+
+<div class="header-line header-line-inline">
+
+<h3 class="modal-title">Detalhes do Kit</h3>
+
+<input
+id="kitDescricaoTotal"
+class="header-desc-total"
+placeholder="Gerado automaticamente"
+readonly
+tabindex="-1"
+>
+
+</div>
+
+</div>
+
+
+<div class="item-layout item-layout-advanced">
+
+
+<!-- FOTO -->
+<div class="item-foto-box">
+
+<div class="foto-guia-container">
+
+<div class="foto-preview-wrapper">
+<img
+id="kitFotoPreview"
+class="kit-foto-preview"
+src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+alt="Sem foto"
+draggable="false"
+>
+</div>
+
+<input
+type="file"
+id="kitFotoInput"
+accept="image/*"
+hidden
+>
+
+<div class="foto-guia"></div>
+
+</div>
+
+<div class="foto-controles">
+
+<button
+class="btn-zoom"
+type="button"
+onmousedown="kits_startZoom(1)"
+onmouseup="kits_stopZoom()"
+onmouseleave="kits_stopZoom()">
++
+</button>
+
+<button
+class="btn-foto"
+type="button"
+onclick="kits_selecionarFoto()">
+Inserir foto
+</button>
+
+<button
+class="btn-zoom"
+type="button"
+onmousedown="kits_startZoom(-1)"
+onmouseup="kits_stopZoom()"
+onmouseleave="kits_stopZoom()">
+−
+</button>
+
+</div>
+
+</div>
+
+
+<!-- LATERAL -->
+<div class="item-side-form">
+
+
+<!-- STATUS -->
+<div class="item-tipo-status-row">
+
+<div class="item-status-toggle-row">
+
+<button
+type="button"
+class="status-btn ativo active"
+data-ativo="true"
+onclick="kits_setStatus(this)">
+🟢 Ativo
+</button>
+
+<button
+type="button"
+class="status-btn inativo"
+data-ativo="false"
+onclick="kits_setStatus(this)">
+🔴 Inativo
+</button>
+
+</div>
+
+</div>
+
+
+<!-- LINHA 1 -->
+<div class="foto-form-row">
+
+<div class="form-group">
+<label>Código *</label>
+<input id="kitCodigo">
+</div>
+
+<div class="form-group">
+<label>Produto *</label>
+<input id="kitProduto">
+</div>
+
+<div class="form-group">
+<label>Material</label>
+<input id="kitMaterial">
+</div>
+
+</div>
+
+
+<!-- LINHA 2 -->
+<div class="foto-form-row">
+
+<div class="form-group">
+<label>Cor</label>
+<input id="kitCor">
+</div>
+
+<div class="form-group col-2">
+<label>Descrição complementar</label>
+<input id="kitDescricaoComplementar">
+</div>
+
+</div>
+
+
+<!-- LINHA 3 -->
+<div class="foto-form-row">
+
+<div class="form-group">
+<label>Família</label>
+<input id="kitFamilia">
+</div>
+
+<div class="form-group">
+<label>Categoria *</label>
+<input id="kitCategoria">
+</div>
+
+<div class="form-group">
+<label>Exibir no site *</label>
+
+<select id="kitExibirSite">
+<option value="">Selecione</option>
+<option value="true">Sim</option>
+<option value="false">Não</option>
+</select>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- PARTE DE BAIXO -->
+<div class="item-bottom-form">
+
+
+<!-- DIMENSÕES -->
+<div class="foto-form-row">
+
+<div class="form-group">
+<label>Largura / Diâmetro (m)</label>
+<input id="kitLargura">
+</div>
+
+<div class="form-group">
+<label>Altura (m)</label>
+<input id="kitAltura">
+</div>
+
+<div class="form-group">
+<label>Profundidade (m)</label>
+<input id="kitProfundidade">
+</div>
+
+</div>
+
+
+<!-- COMPONENTES -->
+<div class="kit-componentes-area">
+
+<div class="kit-componentes-header">
+
+<h4>Componentes do Kit</h4>
+
+<button
+type="button"
+class="btn-add"
+onclick="kits_addItem()">
++ Adicionar componente
+</button>
+
+</div>
+
+<table class="kit-componentes-table">
+
+<thead>
+<tr>
+<th style="width:70px;">Foto</th>
+<th>Item / Componente</th>
+<th style="width:90px;">Qtd</th>
+<th style="width:120px;">CUSTO</th>
+<th style="width:120px;">REPOSIÇÃO</th>
+<th style="width:120px;">LOCAÇÃO</th>
+<th style="width:40px;"></th>
+</tr>
+</thead>
+
+<tbody id="kitItensBody"></tbody>
+
+<tfoot>
+
+<tr class="kit-total-row">
+  <td colspan="4"></td>
+  <td class="kit-total-label">Total de Custo</td>
+  <td class="kit-total-valor">R$ 11.000,00</td>
+  <td></td>
+</tr>
+
+<tr class="kit-total-row">
+  <td colspan="4"></td>
+  <td class="kit-total-label">Total de Reposição</td>
+  <td class="kit-total-valor">R$ 925,00</td>
+  <td></td>
+</tr>
+
+<tr class="kit-total-row">
+  <td colspan="4"></td>
+  <td class="kit-total-label">Total de Locação</td>
+  <td class="kit-total-valor">R$ 1.600,00</td>
+  <td></td>
+</tr>
+
+</tfoot>
+
+</table>
+
+</div>
+
+</div>
+
+
+<!-- AÇÕES -->
+<div class="modal-actions modal-actions-fixed modal-actions-split">
+
+<div class="modal-actions-right">
+
+<button
+type="button"
+class="btn-cancel"
+onclick="kits_closeModal()">
+Fechar
+</button>
+
+<button
+type="button"
+class="btn-save"
+onclick="kits_salvar()">
+Salvar
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div>
+<!-- ================= MODAL ALERTA DE VALIDAÇÃO ================= -->
+<div class="modal-alert" id="itensValidationModal">
+  <div class="modal-alert-content">
+    <h4>Atenção</h4>
+    <p id="itensValidationMsg"></p>
+    <button class="btn-alert" onclick="itens_fecharValidationModal()">Ok</button>
+  </div>
+</div>

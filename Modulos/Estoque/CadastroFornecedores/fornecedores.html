@@ -1,0 +1,251 @@
+<div class="container-fornecedores">
+
+  <!-- HEADER -->
+  <header class="page-header">
+    <h1>Fornecedores Cadastrados</h1>
+
+    <div class="header-actions">
+      <button class="btn secondary" id="btnPrint">Imprimir / PDF</button>
+      <button class="btn primary" id="btnNovoFornecedor">
+        + Adicionar Fornecedor
+      </button>
+    </div>
+  </header>
+
+  <!-- FILTROS -->
+  <div class="filters">
+    <input type="text" id="filtroTexto" placeholder="Pesquisar fornecedor..." />
+
+    <select id="filtroStatus">
+      <option value="">Todos os status</option>
+      <option value="ativo">Ativo</option>
+      <option value="inativo">Inativo</option>
+    </select>
+
+    <select id="filtroTipo">
+      <option value="">Todos os tipos</option>
+      <option value="insumos">Insumos</option>
+      <option value="materiais">Materiais</option>
+      <option value="ambos">Ambos</option>
+      <option value="servicos">Serviços</option>
+    </select>
+
+    <select id="filtroCategoria">
+      <option value="">Todas categorias</option>
+      <option value="madeira">Madeira</option>
+      <option value="metal">Metal</option>
+      <option value="tecidos">Tecidos</option>
+      <option value="servicos">Serviços</option>
+    </select>
+  </div>
+
+  <!-- TABELA -->
+  <section class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>NOME / RAZÃO SOCIAL</th>
+          <th>CNPJ / CPF</th>
+          <th>TELEFONE</th>
+          <th>EMAIL</th>
+          <th>TIPO</th>
+          <th>CATEGORIA</th>
+          <th>STATUS</th>
+          <th>AÇÕES</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaFornecedores"></tbody>
+    </table>
+  </section>
+
+</div>
+
+
+<!-- ================= MODAL FORNECEDOR ================= -->
+<div class="modal hidden" id="modalFornecedor">
+  <div class="modal-content">
+
+    <!-- HEADER MODAL -->
+    <div class="modal-header">
+      <h2 id="modalTitulo">Novo Fornecedor</h2>
+      <button class="btn-close" onclick="fecharModalFornecedor()">✕</button>
+    </div>
+
+    <!-- BODY -->
+    <div class="modal-body">
+
+      <!-- DADOS PRINCIPAIS -->
+      <div class="form-section">
+        <h3>Dados do fornecedor</h3>
+
+        <div class="form-grid">
+
+          <div class="field">
+            <label>Nome / Razão Social *</label>
+            <input id="fNome">
+          </div>
+
+          <div class="field">
+            <label>Nome Fantasia</label>
+            <input id="fFantasia">
+          </div>
+
+          <div class="field">
+            <label>CNPJ / CPF *</label>
+            <input id="fDocumento">
+          </div>
+
+          <div class="field">
+            <label>Tipo *</label>
+            <select id="fTipo">
+              <option value="">Selecione</option>
+              <option value="insumos">Insumos</option>
+              <option value="materiais">Materiais</option>
+              <option value="ambos">Ambos</option>
+              <option value="servicos">Serviços</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Categoria</label>
+            <select id="fCategoria">
+              <option value="">Selecione</option>
+              <option value="madeira">Madeira</option>
+              <option value="metal">Metal</option>
+              <option value="tecidos">Tecidos</option>
+              <option value="servicos">Serviços</option>
+              <option value="limpeza">Limpeza</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Status</label>
+            <select id="fStatus">
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ENDEREÇO -->
+      <div class="form-section">
+        <h3>Endereço</h3>
+
+        <div class="form-grid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label>Endereço (Google) *</label>
+            <input id="enderecoGoogle" placeholder="Digite e selecione o endereço do fornecedor">
+          </div>
+        </div>
+
+        <!-- CAMPOS OCULTOS -->
+        <input type="hidden" id="endLogradouro">
+        <input type="hidden" id="endNumero">
+        <input type="hidden" id="endBairro">
+        <input type="hidden" id="endCidade">
+        <input type="hidden" id="endEstado">
+        <input type="hidden" id="endCep">
+        <input type="hidden" id="endLatitude">
+        <input type="hidden" id="endLongitude">
+      </div>
+
+      <!-- CONTATO -->
+      <div class="form-section">
+        <h3>Contato</h3>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Telefone</label>
+            <input id="fTelefone">
+          </div>
+
+          <div class="field">
+            <label>E-mail</label>
+            <input id="fEmail">
+          </div>
+
+          <div class="field">
+            <label>Responsável</label>
+            <input id="fContato">
+          </div>
+        </div>
+      </div>
+
+      <!-- INFORMAÇÕES ADICIONAIS -->
+      <div class="form-section">
+        <h3>Informações adicionais</h3>
+
+        <div class="tag-section">
+
+          <!-- OPERACIONAL -->
+          <div class="tag-group azul">
+            <span class="tag-title">Operacional</span>
+            <div class="tags">
+              <div class="tag" data-group="operacional" data-value="entrega_propria">Entrega própria</div>
+              <div class="tag" data-group="operacional" data-value="retirada_local">Retirada no local</div>
+              <div class="tag" data-group="operacional" data-value="entrega_rapida">Entrega rápida</div>
+              <div class="tag" data-group="operacional" data-value="sob_demanda">Prazo sob demanda</div>
+              <div class="tag" data-group="operacional" data-value="agendamento">Exige agendamento</div>
+            </div>
+          </div>
+
+          <!-- COMERCIAL -->
+          <div class="tag-group verde">
+            <span class="tag-title">Comercial</span>
+            <div class="tags">
+              <div class="tag" data-group="comercial" data-value="preco_competitivo">Preço competitivo</div>
+              <div class="tag" data-group="comercial" data-value="preco_premium">Preço premium</div>
+              <div class="tag" data-group="comercial" data-value="facil_negociacao">Fácil negociação</div>
+              <div class="tag" data-group="comercial" data-value="condicao_especial">Condição especial</div>
+              <div class="tag" data-group="comercial" data-value="parceria">Fornecedor parceiro</div>
+            </div>
+          </div>
+
+          <!-- LOGÍSTICA -->
+          <div class="tag-group amarelo">
+            <span class="tag-title">Logística</span>
+            <div class="tags">
+              <div class="tag" data-group="logistica" data-value="frete_gratis">Frete grátis</div>
+              <div class="tag" data-group="logistica" data-value="frete_fixo">Frete fixo</div>
+              <div class="tag" data-group="logistica" data-value="prazo_flexivel">Prazo flexível</div>
+              <div class="tag" data-group="logistica" data-value="regiao_limitada">Região limitada</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div> <!-- modal-body -->
+    <!-- FOOTER -->
+    <div class="modal-footer">
+      <button class="btn secondary" onclick="fecharModalFornecedor()">Cancelar</button>
+      <button class="btn primary" onclick="salvarFornecedor()">Salvar fornecedor</button>
+    </div>
+
+  </div>
+</div>
+<!-- ================= MODAL ALERTA PADRÃO ================= -->
+<div class="modal-alert hidden" id="modalAlerta">
+
+  <div class="modal-alert-box">
+
+    <div class="modal-alert-icon">
+      !
+    </div>
+
+    <h3 id="modalAlertaTitulo">Atenção</h3>
+    <p id="modalAlertaMensagem">
+      Mensagem aqui
+    </p>
+
+    <div class="modal-alert-footer">
+      <button class="btn primary" onclick="fecharModalAlerta()">
+        Ok
+      </button>
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,301 @@
+<div class="container locais-container">
+
+  <!-- ================= HEADER ================= -->
+  <div class="header-list">
+    <h2>Locais Cadastrados</h2>
+
+    <div class="header-actions">
+      <button class="add-btn secondary" onclick="Locais_imprimir()">
+        Imprimir / PDF
+      </button>
+      <button class="add-btn" onclick="Locais_openAdd()">
+        + Adicionar Local
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= FILTROS ================= -->
+  <div class="filters locais-filters">
+
+    <input
+      id="locaisSearchInput"
+      placeholder="Pesquisar local..."
+      oninput="Locais_aplicarFiltros()"
+    >
+
+    <select id="locaisStatusFilter" onchange="Locais_aplicarFiltros()">
+      <option value="">Todos os status</option>
+      <option value="Ativo">Ativo</option>
+      <option value="Morno">Morno</option>
+      <option value="Inativo">Inativo</option>
+    </select>
+
+    <select id="locaisInactiveFilter" onchange="Locais_aplicarFiltros()">
+      <option value="">Toda inatividade</option>
+      <option value="30">Até 30 dias</option>
+      <option value="90">31 a 90 dias</option>
+      <option value="180">Acima de 90 dias</option>
+    </select>
+
+    <select id="locaisStyleFilter" onchange="Locais_aplicarFiltros()">
+      <option value="">Todos os tipos</option>
+      <option value="Casa de Festa">Casa de Festa</option>
+      <option value="Pousada">Pousada</option>
+      <option value="Residência">Residência</option>
+      <option value="Hotel">Hotel</option>
+      <option value="Clube">Clube</option>
+    </select>
+
+    <select id="locaisBudgetFilter" onchange="Locais_aplicarFiltros()">
+      <option value="">Todos os orçamentos</option>
+      <option value="Econômico">Econômico</option>
+      <option value="Intermediário">Intermediário</option>
+      <option value="Premium">Premium</option>
+    </select>
+
+  </div>
+
+  <!-- ================= TABELA ================= -->
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>CPF / CNPJ</th>
+        <th>Telefone</th>
+        <th>Email</th>
+        <th>Tipo</th>
+        <th>Canal</th>
+        <th>Orçamento</th>
+        <th>Inatividade</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="locaisTable"></tbody>
+  </table>
+
+</div>
+
+<!-- ================= MODAL DETALHES ================= -->
+<div class="modal" id="locais-modal">
+  <div class="modal-content">
+
+    <input type="hidden" id="locaisId">
+
+    <div class="modal-header">
+      <h3>Detalhes do Local</h3>
+      <button class="edit-btn" onclick="Locais_enableEdit()">✏️</button>
+    </div>
+
+    <div class="form-grid three-cols">
+
+      <div class="form-group">
+        <label>Tipo de Pessoa *</label>
+        <select id="locaisTipoPessoa" disabled>
+          <option>Pessoa Física</option>
+          <option>Pessoa Jurídica</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>CPF / CNPJ *</label>
+        <input id="locaisCpfCnpj" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Inscrição Estadual</label>
+        <input id="locaisInscricaoEstadual" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Nome / Razão Social *</label>
+        <input id="locaisNome" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Telefone *</label>
+        <input id="locaisTelefone" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Email *</label>
+        <input id="locaisEmail" readonly>
+      </div>
+
+<div class="form-group col-full">
+  <label>Endereço completo *</label>
+  <div id="locais-endereco-wrapper"></div>
+</div>
+
+<div class="form-group">
+  <label>Número *</label>
+  <input id="locaisNumeroEndereco" readonly>
+</div>
+
+<div class="form-group">
+  <label>Ponto de referência *</label>
+  <input id="locaisPontoReferencia" readonly>
+</div>
+
+<div class="form-group">
+  <label>Última locação</label>
+  <input id="locaisUltimaLocacao" type="date">
+</div>
+
+<div class="form-group">
+  <label>Status do Local *</label>
+  <select id="locaisStatus" disabled>
+    <option>Ativo</option>
+    <option>Morno</option>
+    <option>Inativo</option>
+  </select>
+</div>
+
+
+      <!-- ================= TAGS ================= -->
+      <div class="tag-section col-3">
+
+<div class="tag-group azul single" data-group="tipo">
+  <span class="tag-title">Tipo</span>
+  <div class="tags">
+    <span class="tag">Casa de Festa</span>
+    <span class="tag">Pousada</span>
+    <span class="tag">Residência</span>
+    <span class="tag">Hotel</span>
+    <span class="tag">Clube</span>
+  </div>
+</div>
+
+
+        <div class="tag-group verde single" data-group="canal">
+          <span class="tag-title">Canal</span>
+          <div class="tags">
+            <span class="tag">WhatsApp</span>
+            <span class="tag">Ligação</span>
+            <span class="tag">Email</span>
+          </div>
+        </div>
+
+        <div class="tag-group amarelo single" data-group="horario">
+          <span class="tag-title">Horário</span>
+          <div class="tags">
+            <span class="tag">Manhã</span>
+            <span class="tag">Tarde</span>
+            <span class="tag">Noite</span>
+          </div>
+        </div>
+
+        <div class="tag-group laranja single" data-group="orcamento">
+          <span class="tag-title">Orçamento</span>
+          <div class="tags">
+            <span class="tag">Econômico</span>
+            <span class="tag">Intermediário</span>
+            <span class="tag">Premium</span>
+          </div>
+        </div>
+
+<div class="tag-group vermelho" data-group="observacoes">
+  <span class="tag-title">Observações</span>
+  <div class="tags">
+    <span class="tag">Rígido com horários</span>
+    <span class="tag">Necessita Baldeação</span>
+    <span class="tag">Caminhão para em frente</span>
+    <span class="tag">Tem escadas</span>
+    <span class="tag">Tem Elevador</span>
+    <span class="tag">Caminhão para perto</span>
+  </div>
+</div>
+
+
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="Locais_closeModal()">Fechar</button>
+      <button class="btn-save" onclick="Locais_salvar()">Salvar</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= MODAL CONFIRMAÇÃO ================= -->
+<div class="modal" id="locaisConfirmModal">
+  <div class="modal-content confirm-box">
+    <h3>Confirmar exclusão</h3>
+    <p>
+      Tem certeza que deseja excluir este cadastro?<br>
+      <strong>Essa ação não poderá ser desfeita.</strong>
+    </p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="Locais_closeModal()">Fechar</button>
+      <button class="btn-delete" onclick="Locais_delete()">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL ALERTA ================= -->
+<div class="modal-alert" id="locaisValidationModal">
+  <div class="modal-alert-box">
+
+    <div class="modal-alert-icon">
+      !
+    </div>
+
+    <h3 class="modal-alert-title">Atenção</h3>
+
+    <p class="modal-alert-text" id="locaisValidationMsg"></p>
+
+    <button class="modal-alert-btn" onclick="Locais_fecharValidationModal()">
+      Ok
+    </button>
+
+  </div>
+</div>
+
+
+<iframe id="locaisPrintFrame" style="display:none;"></iframe>
+
+<!-- ================= MODAL AJUDA ================= -->
+<div class="modal-ajuda" id="locaisModalAjuda">
+  <div class="modal-ajuda-content">
+
+    <div class="modal-ajuda-header">
+      <div class="ajuda-header-left">
+        <h3>Ajuda • Cadastro de Locais</h3>
+
+        <span class="btn-pip-info">
+          📺 Mini-player
+          <span class="pip-tooltip">
+            No vídeo, clique no ícone Picture-in-Picture
+            para assistir enquanto usa o sistema
+          </span>
+        </span>
+      </div>
+
+      <button class="btn-close-ajuda" onclick="Locais_fecharAjuda()">✕</button>
+    </div>
+
+    <div class="modal-ajuda-body">
+      <div class="ajuda-videos">
+        <div class="ajuda-video-item active"
+             onclick="Locais_trocarVideo('https://www.youtube.com/embed/A8Gn9rZjJic', this)">
+          ▶ Visão geral
+        </div>
+
+        <div class="ajuda-video-item"
+             onclick="Locais_trocarVideo('https://www.youtube.com/embed/pzTkdZoUUTg', this)">
+          ▶ Preenchimento
+        </div>
+      </div>
+
+      <div class="ajuda-player">
+        <iframe
+          id="locaisAjudaIframe"
+          src="https://www.youtube.com/embed/A8Gn9rZjJic"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+
+  </div>
+</div>

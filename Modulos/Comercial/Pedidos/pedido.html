@@ -1,0 +1,506 @@
+<div class="orcamento-page" data-module-root>
+
+  <div class="orcamento" id="orcamentoLayout">
+<!-- ================= TOPO ================= -->
+<div class="topo">
+
+<div class="topo-esquerda">
+
+<div class="logo" id="orcamentoLogo">
+  <img id="logoEmpresa" style="display:none;">
+</div>
+   
+</div>
+
+<div class="topo-direita">
+
+<div class="pedido-status" id="pedidoStatus">
+  ORÇAMENTO
+</div>
+
+<div class="pedido-numero">
+  Pedido <strong id="orcamentoNumero">—</strong>
+</div>
+
+</div>
+
+<!-- ALERTA CENTRAL -->
+<div class="area-reserva-topo"> 
+
+  <div class="alerta-reserva-topo" id="alertaReserva">
+    Este orçamento não gera reserva de material.
+  </div>
+
+<div class="pre-reserva-controls">
+
+  <button id="btnPreReserva" class="btn-pre-reserva">
+    Pré-reserva
+  </button>
+
+  <div id="preReservaBox" class="pre-reserva-box hidden">
+
+    <span>Válido até</span>
+
+    <input type="date" id="preReservaData"> 
+
+  </div>
+
+  <div class="cancelar-pre-reserva-wrapper hidden" id="cancelarPreReservaWrapper">
+
+    <button id="btnCancelarPreReserva" class="btn-cancelar-pre-reserva">
+      Cancelar
+    </button>
+
+  </div>
+
+</div>
+
+</div> <!-- fecha .area-reserva-topo -->
+
+</div> <!-- fecha .topo -->
+
+<!-- ================= DADOS CLIENTE + DATAS ================= -->
+<div class="dados-grid">
+
+  <div class="dados-cliente">
+
+    <div class="linha-campo">
+      <strong>Cliente:</strong>
+      <div class="autocomplete-wrapper">
+        <input type="text" id="clienteInput" placeholder="Digite o nome do cliente..." autocomplete="off">
+        <input type="hidden" id="clienteIdHidden">
+        <div class="autocomplete-list" id="clienteLista"></div>
+      </div>
+    </div>
+
+    <div class="linha-campo">
+      <strong>Solicitante:</strong>
+      <input type="text" id="responsavelInput">
+    </div>
+
+    <div class="linha-campo">
+      <strong>Telefone:</strong>
+      <input type="text" id="telefoneInput">
+    </div>
+
+    <div class="linha-campo">
+      <strong>Tipo de Evento:</strong>
+      <select id="tipoEventoSelect">
+        <option value="">Selecione</option>
+        <option value="casamento">Casamento</option>
+        <option value="aniversario">Aniversário</option>
+        <option value="15anos">15 Anos</option>
+        <option value="corporativo">Corporativo</option>
+        <option value="editorial">Editorial</option>
+        <option value="outro">Outro</option>
+      </select>
+    </div>
+
+  </div>
+
+
+      <!-- DATAS -->
+      <div class="datas-cards">
+
+        <div class="data-card">
+          <span class="card-label">Entrega</span>
+          <input type="date" id="dataEntrega" class="input-data">
+          <div class="dia-semana" id="diaEntrega">—</div>
+          <input type="time" id="horaEntrega" class="input-hora">
+        </div>
+
+        <div class="data-card">
+          <span class="card-label">Evento</span>
+          <input type="date" id="dataEvento" class="input-data">
+          <div class="dia-semana" id="diaEvento">—</div>
+          <input type="time" id="horaEvento" class="input-hora">
+        </div>
+
+        <div class="data-card">
+          <span class="card-label">Coleta</span>
+          <input type="date" id="dataColeta" class="input-data">
+          <div class="dia-semana" id="diaColeta">—</div>
+          <input type="time" id="horaColeta" class="input-hora">
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= LOCAL ================= -->
+<div class="local">
+
+  <!-- BLOCO 1 - INPUT LOCAL -->
+  <div class="local-topo">
+    <div class="linha-campo">
+      <strong>Local:</strong>
+      <div class="autocomplete-wrapper">
+        <input type="text" id="localInput" placeholder="Digite o nome do local..." autocomplete="off">
+        <input type="hidden" id="localIdHidden">
+        <div class="autocomplete-list" id="localLista"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINHA DIVISÓRIA -->
+  <div class="local-divider"></div>
+
+  <!-- BLOCO 2 - INFORMAÇÕES -->
+  <div class="local-info">
+
+    <div class="obs-local" id="localObservacoes"></div>
+
+    <div class="local-tags" id="localTagsInline"></div>
+
+  </div>
+
+</div>
+
+
+<!-- ================= ITENS ================= -->
+<table class="tabela">
+<thead>
+  <tr>
+    <th class="acao-col"></th>
+    <th>Qtd</th>
+    <th></th>
+    <th>Item</th>
+    <th class="valor">Unitário</th>
+    <th class="valor">Desc %</th>
+    <th class="valor">Total</th>
+    <th class="valor">Reposição</th>
+  </tr>
+</thead>
+
+
+  <tbody id="listaItens">
+  </tbody>
+</table>
+
+<!-- ================= BOTÕES ================= -->
+<div class="acoes-itens">
+
+<button id="addItemBtn" type="button" class="btn-espaco">
+    + Adicionar Item
+</button>
+
+<button id="addComponenteBtn" type="button" class="btn-espaco">
+    + Adicionar Componente
+</button>
+
+<button id="addEspacoBtn" type="button" class="btn-espaco">
+    + Adicionar Espaço
+</button>
+
+<button id="addPersonalizacaoBtn" type="button" class="btn-espaco">
+  + Adicionar Personalização
+</button>
+
+<button id="addServicoBtn" type="button" class="btn-espaco">
+  + Adicionar Serviço
+</button>
+
+</div>
+
+<!-- ================= EXTRAS + RESUMO (3 CARDS ALINHADOS) ================= -->
+
+<div class="extras-grid">
+
+<!-- CARD FRETE INTELIGENTE -->
+<div class="card-extra">
+
+  <h3>Frete</h3>
+
+  <!-- INFO SUPERIOR -->
+  <div class="frete-triplo-info">
+
+    <div class="frete-info">
+      <span>Volume</span>
+      <strong id="freteVolumeTotal">0 m³</strong>
+    </div>
+
+    <div class="frete-info">
+      <span>Distância</span>
+      <strong id="freteDistanciaKm">0 km</strong>
+    </div>
+
+    <div class="frete-info">
+      <span>Caminhões</span>
+      <strong id="freteQtdCaminhoes">0</strong>
+    </div>
+
+  </div>
+
+  <!-- DIVISOR -->
+  <div style="margin:16px 0;border-top:1px solid #eef2f7;"></div>
+
+<!-- LISTA DE CAMINHÕES NECESSÁRIOS -->
+<div id="freteDetalheCaminhoes" class="frete-detalhe-container">
+
+  <!-- Exemplo visual padrão -->
+  <!--
+  <div class="frete-caminhao-linha">
+    <span>XG</span>
+    <span>1</span>
+  </div>
+
+  <div class="frete-caminhao-linha">
+    <span>G</span>
+    <span>1</span>
+  </div>
+  -->
+
+</div>
+
+  <!-- DIVISOR -->
+  <div style="margin:16px 0;border-top:1px solid #eef2f7;"></div>
+
+  <!-- VALOR -->
+  <div class="frete-info frete-valor">
+    <span>Valor selecionado</span>
+    <strong id="freteValor">R$ 0,00</strong>
+  </div>
+
+</div>
+
+<!-- CARD MONTAGEM -->
+<div class="card-extra" id="cardMontagem">
+
+  <h3>Montagem</h3>
+
+  <div id="montagemSugestaoBox">
+
+    <div class="montagem-label">
+      Montagem sugerida
+    </div>
+
+    <div class="montagem-linha">
+      <span>Qtd Montadores</span>
+      <strong id="montagemQtd">—</strong>
+    </div>
+
+    <div class="montagem-linha">
+      <span>Custo sugerido</span>
+      <strong id="montagemCusto">—</strong>
+    </div>
+
+    <div class="montagem-info" id="montagemInfo">
+      —
+    </div>
+
+    <!-- DIVISOR -->
+    <div style="margin:16px 0;border-top:1px solid #eef2f7;"></div>
+
+    <!-- DESCONTO -->
+    <div class="montagem-linha linha-desconto">
+      <span>Desconto</span>
+      <strong id="montagemDesconto">- R$ 0,00</strong>
+    </div>
+
+    <!-- DIVISOR -->
+    <div class="card-divider"></div>
+
+    <!-- VALOR FINAL -->
+    <div class="valor-final-box">
+      <div class="valor-label">
+        Valor final
+      </div>
+
+      <div id="montagemValorFinal" class="valor-destaque">
+        R$ 0,00
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+<div class="card-resumo">
+
+
+  <div class="resumo-linha">
+    <span>Valor de locação:</span>
+    <strong id="resumoLocacaoBruto">R$ 0,00</strong>
+  </div>
+
+  <div class="resumo-linha desconto">
+    <span>Desconto locação:</span>
+    <strong id="resumoLocacaoDesconto">- R$ 0,00</strong>
+  </div>
+  <div class="resumo-linha">
+  <span>Customizações:</span>
+  <strong id="resumoCustomizacoes">R$ 0,00</strong>
+</div>
+
+  <div class="resumo-linha">
+    <span>Frete:</span>
+    <strong id="resumoFreteBruto">R$ 0,00</strong>
+  </div>
+
+  <div class="resumo-linha desconto">
+    <span>Desconto frete:</span>
+    <strong id="resumoFreteDesconto">- R$ 0,00</strong>
+  </div>
+
+  <div class="resumo-linha">
+    <span>Montagem/Desmontagem:</span>
+    <strong id="resumoMontagemBruto">R$ 0,00</strong>
+  </div>
+
+  <div class="resumo-linha desconto">
+    <span>Desconto Montagem/Desmontagem</span>
+    <strong id="resumoMontagemDesconto">- R$ 0,00</strong>
+  </div>
+
+  <div class="resumo-linha">
+    <span>Serviços:</span>
+    <strong id="resumoServicos">R$ 0,00</strong>
+  </div>
+
+  <div class="resumo-linha resumo-total">
+    <span>Total:</span>
+    <strong id="resumoTotalGeral">R$ 0,00</strong>
+  </div>
+
+</div>
+
+</div>
+
+<!-- ================= FORMA DE PAGAMENTO ================= -->
+
+<div class="card-pagamento-horizontal">
+
+  <h3>Forma de pagamento</h3>
+
+  <!-- CONFIGURAÇÃO -->
+  <div class="pagamento-config-grid">
+
+    <div class="campo">
+      <label>Tipo</label>
+      <select id="pagamentoTipo">
+        <option value="avista">À vista</option>
+        <option value="entrada_parcelado">Entrada + Parcelado</option>
+        <option value="parcelado">Parcelado</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label>Entrada (%)</label>
+      <input type="number" id="pagamentoEntradaPercent" value="30">
+    </div>
+
+    <div class="campo">
+      <label>Nº Parcelas</label>
+      <input type="number" id="pagamentoParcelas" value="2">
+    </div>
+
+    <div class="campo">
+      <label>Intervalo (dias)</label>
+      <input type="number" id="pagamentoIntervalo" value="30">
+    </div>
+
+    <div class="campo">
+      <label>Data base</label>
+      <input type="date" id="pagamentoDataBase">
+    </div>
+
+    <div class="campo">
+      <label>Método</label>
+      <select id="pagamentoMetodo">
+        <option>PIX</option>
+        <option>Boleto</option>
+        <option>Cartão</option>
+        <option>Transferência</option>
+      </select>
+    </div>
+
+  </div>
+
+  <!-- CRONOGRAMA -->
+  <div class="cronograma-wrapper">
+    <table class="cronograma-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Tipo</th>
+          <th>Vencimento</th>
+          <th>Valor</th>
+          <th>Método</th>
+        </tr>
+      </thead>
+      <tbody id="cronogramaParcelas">
+        <tr>
+          <td>1</td>
+          <td>Entrada</td>
+          <td>—</td>
+          <td>R$ 0,00</td>
+          <td>PIX</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RESUMO -->
+  <div class="pagamento-resumo">
+    <div>
+      <span>Total contrato:</span>
+      <strong id="pgTotalContrato">R$ 0,00</strong>
+    </div>
+    <div>
+      <span>Total programado:</span>
+      <strong id="pgTotalProgramado">R$ 0,00</strong>
+    </div>
+    <div>
+      <span>Diferença:</span>
+      <strong id="pgDiferenca">R$ 0,00</strong>
+    </div>
+  </div>
+
+</div>
+
+    <!-- ================= CONTRATO ================= -->
+    <div class="contrato">
+
+      <h2 contenteditable="true">
+        Contrato de Locação
+      </h2>
+
+      <div contenteditable="true" class="texto-contrato">
+        <p><strong>Cláusula 1ª – Objeto:</strong> Locação dos materiais descritos neste orçamento.</p>
+        <p><strong>Cláusula 2ª – Responsabilidade:</strong> O contratante se responsabiliza pela guarda e conservação.</p>
+        <p><strong>Cláusula 3ª – Pagamento:</strong> Conforme condições acordadas.</p>
+        <p><strong>Cláusula 4ª – Cancelamento:</strong> Sujeito à política da empresa.</p>
+      </div>
+
+      <div class="assinaturas">
+        <div class="assinatura">EasyLoc</div>
+        <div class="assinatura">Cliente</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+</div>
+<!-- MODAL CONFIRMAR COMPONENTE -->
+<div class="modal-confirmacao hidden" id="modalConfirmarComponente">
+  <div class="modal-box">
+
+    <h3>Confirmar ação</h3>
+    <p>Tem certeza que deseja acrescentar um componente?</p>
+
+<div class="modal-acoes">
+  <button class="btn-confirmar" onclick="confirmarAdicionarComponente()">
+    Sim, adicionar
+  </button>
+
+  <button class="btn-cancelar" onclick="fecharModalComponente()">
+    Cancelar
+  </button>
+</div>
+  </div>
+</div>

@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>EasyLoc</title>
+  <link rel="icon" type="image/png" href="logosimbolo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fonte -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Ícones -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- SortableJS -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+  <style>
+    .modal-alert-global{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.45);
+  backdrop-filter:blur(4px);
+  z-index:999999;
+}
+
+.modal-alert-box{
+  width:420px;
+  background:#fff;
+  border-radius:18px;
+  padding:30px;
+  text-align:center;
+  box-shadow:0 30px 60px rgba(0,0,0,0.25);
+}
+
+.alert-icon{
+  width:54px;
+  height:54px;
+  background:#ff6a00;
+  color:#fff;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:26px;
+  font-weight:800;
+  margin:0 auto 12px;
+}
+
+.modal-alert-box h4{
+  margin-bottom:8px;
+  font-size:18px;
+}
+
+.modal-alert-box p{
+  margin-bottom:20px;
+}
+
+.modal-alert-box button{
+  background:#ff6a00;
+  color:#fff;
+  border:none;
+  padding:10px 30px;
+  border-radius:999px;
+  font-weight:700;
+  cursor:pointer;
+}
+    /* ========================================
+   INDICADOR DE ESTABILIDADE - EASYLOC
+======================================== */
+
+.system-status{
+  position: relative;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+}
+/* ========================================
+   STATUS - SIDEBAR RECOLHIDA
+======================================== */
+
+/* Quando sidebar estiver recolhida */
+.sidebar:not(:hover):not(.expanded) .status-indicator{
+
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  justify-content: center;
+}
+
+/* Esconde o texto */
+.sidebar:not(:hover):not(.expanded) .status-text{
+  display: none;
+}
+
+/* Deixa só a bolinha visível e centralizada */
+.sidebar:not(:hover):not(.expanded) .status-dot{
+  width: 12px;
+  height: 12px;
+}
+
+/* Centraliza dentro da sidebar */
+.sidebar:not(:hover):not(.expanded) .system-status{
+  justify-content: center;
+}
+
+.status-indicator{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#ffffffc2;
+  padding:8px 14px;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:600;
+  color:#0f172a;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.12);
+  transition:.2s;
+}
+
+.status-indicator:hover{
+  background:#f8fafc;
+}
+
+.status-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#16a34a;
+}
+
+/* ========================================
+   STATUS PANEL PREMIUM - EASYLOC
+======================================== */
+
+.status-panel{
+  position:absolute;
+  bottom:120%;
+  left:50%;
+  transform:translateX(-50%);
+  width:220px; /* menor largura */
+  background:#ffffff;
+  border-radius:16px;
+  padding:14px 16px;
+  box-shadow:0 18px 40px rgba(0,0,0,.18);
+  border:1px solid rgba(15, 23, 42, 0.06);
+  display:none;
+  z-index:4000;
+  animation: statusFade .18s ease-out;
+}
+
+.status-panel-header{
+  font-size:13px;
+  font-weight:600;
+  margin-bottom:10px;
+  color:#0f172a;
+}
+
+.status-line{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+  margin-bottom:6px;
+  color:#475569;
+}
+
+.status-line:last-child{
+  margin-bottom:0;
+}
+
+.status-line span:last-child{
+  font-weight:600;
+  color:#0f172a;
+}
+
+/* animação suave */
+@keyframes statusFade{
+  from{
+    opacity:0;
+    transform:translateX(-50%) translateY(6px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+}
+    @keyframes pulse{
+  0%{opacity:.5}
+  50%{opacity:1}
+  100%{opacity:.5}
+}
+.pac-container{
+  z-index:2147483647 !important;
+}
+    .dashboard-topbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 52px;
+  margin-bottom: 12px;
+}
+
+.topbar-center {
+  position: relative;
+  text-align: center;
+}
+
+.empresa {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.usuario {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #0f172a;
+}
+
+.arrow {
+  font-size: 12px;
+  margin-left: 4px;
+  color: #6b7280;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  min-width: 180px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+  display: none;
+  z-index: 200;
+}
+
+.user-dropdown button {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.user-dropdown button:hover {
+  background: #f1f5f9;
+}
+
+    :root {
+      --azul: #0f2a44;
+      --azul-2: #173a5e;
+      --laranja: #ff6a00;
+      --fundo: #fbf4ef;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    body {
+      background: var(--fundo);
+      color: #1f2937;
+    }
+
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      font-size: 26px;
+      background: none;
+      border: none;
+      color: var(--azul);
+      z-index: 1100;
+      cursor: pointer;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 72px;
+      background: linear-gradient(180deg, var(--azul), var(--azul-2));
+      color: white;
+      transition: width .25s ease;
+      overflow: hidden;
+      z-index: 1000;
+    }
+
+    /* comportamento original */
+.sidebar:hover {
+  width: 260px;
+  transform: translateZ(0);
+}
+
+    .sidebar-header {
+      height: 64px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sidebar-header img {
+      height: 32px;
+    }
+
+.sidebar-header span {
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  transition: opacity .2s ease, width .2s ease;
+}
+
+    .sidebar:hover .sidebar-header span {
+      opacity: 1;
+      width: auto;
+    }
+
+    .menu {
+      margin-top: 20px;
+      padding-bottom: 90px;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 0;
+      cursor: pointer;
+      transition: .2s;
+      position: relative;
+    }
+
+    .menu-item:hover {
+      background: rgba(255,255,255,.08);
+    }
+
+    .menu-item.active {
+      background: var(--laranja);
+    }
+
+.menu-item span {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  transition: opacity .2s ease, width .2s ease;
+  white-space: nowrap;
+}
+
+    .sidebar:hover .menu-item {
+      justify-content: flex-start;
+      padding: 14px 20px;
+      gap: 14px;
+    }
+
+    .sidebar:hover .menu-item span {
+      opacity: 1;
+      width: auto;
+    }
+
+    .menu-item.has-sub::after {
+      content: "▶";
+      position: absolute;
+      right: 18px;
+      font-size: 12px;
+      opacity: 0;
+    }
+
+    .sidebar:hover .menu-item.has-sub::after {
+      opacity: 1;
+    }
+
+    .menu-item.has-sub.open::after {
+      content: "▼";
+    }
+
+    .submenu {
+      display: none;
+    }
+
+    .sidebar:not(:hover) .submenu {
+      display: none !important;
+    }
+
+    .submenu.open {
+      display: block;
+    }
+
+    .submenu-item {
+      padding: 12px 20px 12px 56px;
+      font-size: 14px;
+      color: #fff;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .submenu-item:hover {
+      background: rgba(255,255,255,.12);
+    }
+
+    .submenu-item.active {
+      background: rgba(255, 106, 0, 0.38);
+    }
+
+.main {
+  margin-left: 72px;
+  padding: 16px 20px;
+  transition: .25s;
+  min-height: 100vh;
+
+  width: calc(100% - 72px); /* 🔥 ESSENCIAL */
+}
+
+.sidebar:hover ~ .main {
+  margin-left: 260px;
+  width: calc(100% - 260px); /* 🔥 ESSENCIAL */
+}
+    .sidebar-logout {
+      position: absolute;
+      bottom: 16px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 0 12px;
+    }
+
+    .sidebar-logout button {
+      width: 100%;
+      max-width: 220px;
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+.sidebar-logout span {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  transition: opacity .2s ease, width .2s ease;
+}
+
+    .sidebar:hover .sidebar-logout span {
+      opacity: 1;
+      width: auto;
+    }
+
+    /* FIX de expansão por clique (mantém layout) */
+    .sidebar.expanded { width: 260px; }
+.sidebar.expanded ~ .main { 
+  margin-left: 260px;
+  width: calc(100% - 260px); /* 🔥 ESSENCIAL */
+}
+
+    .sidebar.expanded .sidebar-header span,
+    .sidebar.expanded .menu-item span,
+    .sidebar.expanded .sidebar-logout span {
+      opacity: 1;
+      width: auto;
+    }
+
+    .sidebar.expanded .menu-item {
+      justify-content: flex-start;
+      padding: 14px 20px;
+      gap: 14px;
+    }
+
+    .sidebar.expanded .menu-item.has-sub::after {
+      opacity: 1;
+    }
+
+    .sidebar:not(:hover).expanded .submenu.open {
+      display: block !important;
+    }
+/* ===============================
+   USUÁRIO NA SIDEBAR
+================================ */
+
+/* ===============================
+   CONTA DO USUÁRIO (SIDEBAR)
+================================ */
+
+.sidebar-user{
+  position:absolute;
+  bottom:88px;
+  width:100%;
+  padding:0 16px;
+}
+
+.user-account{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:#ffffff;
+  color:#0f172a;
+  padding:10px 12px;
+  border-radius:14px;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.12);
+  transition:.2s;
+}
+
+.user-account:hover{
+  background:#f8fafc;
+}
+
+/* AVATAR */
+.user-avatar{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:var(--laranja);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  font-size:13px;
+  flex-shrink:0;
+}
+
+/* INFO */
+.user-info{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.user-info .empresa{
+  font-size:11px;
+  color:#64748b;
+}
+
+.user-info .usuario{
+  font-size:14px;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.user-info .arrow{
+  font-size:11px;
+  color:#64748b;
+}
+
+
+/* ===============================
+   SIDEBAR RECOLHIDA (APENAS CÍRCULO)
+================================ */
+
+.sidebar:not(:hover):not(.expanded) .user-info{
+  display:none;
+}
+
+/* remove completamente o "card branco" */
+.sidebar:not(:hover):not(.expanded) .user-account{
+  background:transparent;
+  box-shadow:none;
+  padding:0;
+  justify-content:center;
+}
+
+/* aumenta levemente o avatar para dar presença */
+.sidebar:not(:hover):not(.expanded) .user-avatar{
+  width:42px;
+  height:42px;
+  font-size:14px;
+}
+
+.sidebar:not(:hover):not(.expanded) .user-avatar{
+  width:40px;
+  height:40px;
+  font-size:14px;
+}
+/* ===============================
+   DROPDOWN USUÁRIO PROFISSIONAL
+================================ */
+
+.sidebar-user .user-dropdown-modern{
+  position:absolute;
+  bottom:110%;
+  left:50%;
+  transform:translateX(-50%);
+  background:#ffffff;
+  border-radius:14px;
+  min-width:220px;
+  padding:6px;
+  box-shadow:0 20px 40px rgba(0,0,0,.25);
+  display:none;
+  z-index:3000;
+  border:1px solid #e5e7eb;
+}
+
+.sidebar-user .dropdown-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:500;
+  color:#0f172a !important;
+  background:#ffffff;
+  transition:.2s ease;
+}
+
+.sidebar-user .dropdown-item:hover{
+  background:#f1f5f9;
+}
+
+.sidebar-user .dropdown-item span{
+  color:#0f172a !important;
+}
+
+
+/* ===============================
+   LOADER GLOBAL (DASHBOARD)
+=============================== */
+
+.main {
+  position: relative; /* ESSENCIAL */
+}
+
+.content-loader {
+  position: absolute;
+  inset: 0;
+  background: var(--fundo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.content-loader.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/* círculo */
+.loader-circle {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  animation: loader-spin 1.2s linear infinite;
+}
+
+.loader-circle .dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.loader-circle .blue {
+  background-color: #0f2a44; /* azul marinho EasyLoc */
+}
+
+.loader-circle .orange {
+  background-color: #ff6a00; /* laranja EasyLoc */
+}
+
+.loader-circle .dot:nth-child(1) {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.loader-circle .dot:nth-child(2) {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.loader-circle .dot:nth-child(3) {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.loader-circle .dot:nth-child(4) {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@keyframes loader-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+/* =========================================
+   EASYLOC GLOBAL MODAL SYSTEM (ISOLADO REAL)
+========================================= */
+
+#global-overlays{
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  pointer-events: none;
+}
+
+.easyloc-modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+
+.easyloc-modal-box{
+  all: unset;
+  box-sizing: border-box;
+  width: 520px;
+  max-width: 92%;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 40px 80px rgba(0,0,0,.25);
+  display: block;
+  font-family: 'Inter', sans-serif;
+  color: #0f172a;
+  animation: easylocModalFade .18s ease-out;
+}
+
+.easyloc-modal-box *{
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+.easyloc-modal-box .modal-header-perfil{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:24px;
+}
+
+.easyloc-modal-box h3{
+  margin:0;
+  font-size:20px;
+  font-weight:700;
+}
+
+.easyloc-modal-box .perfil-body{
+  display:flex;
+  gap:28px;
+}
+
+.easyloc-modal-box .perfil-foto{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+}
+
+.easyloc-modal-box .perfil-avatar-wrapper{
+  width:90px;
+  height:90px;
+  border-radius:50%;
+  overflow:hidden;
+  border:2px solid #e5e7eb;
+}
+
+.easyloc-modal-box .perfil-avatar-wrapper img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.easyloc-modal-box label{
+  font-size:13px;
+  font-weight:600;
+  display:block;
+  margin-bottom:6px;
+}
+
+.easyloc-modal-box input{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #e5e7eb;
+  font-size:14px;
+  outline:none;
+}
+
+.easyloc-modal-box input:focus{
+  border-color:#ff6a00;
+}
+
+.easyloc-modal-box .perfil-campos{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.easyloc-modal-box .modal-actions{
+  margin-top:28px;
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+}
+
+.easyloc-modal-box .btn-cancel{
+  background:#e5e7eb;
+  border:none;
+  padding:10px 18px;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+.easyloc-modal-box .btn-save{
+  background:#ff6a00;
+  color:#fff;
+  border:none;
+  padding:10px 18px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+@keyframes easylocModalFade{
+  from{
+    opacity:0;
+    transform: translateY(10px) scale(.98);
+  }
+  to{
+    opacity:1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+.modal-actions{
+  margin-top:24px;
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+}
+
+.btn-cancel{
+  background:#e5e7eb;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.btn-save{
+  background:#ff6a00;
+  color:#fff;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+
+  </style>
+</head>
+
+<body>
+
+<button class="hamburger" onclick="toggleMenu()">☰</button>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="logosimbolo.png">
+    <span>EasyLoc</span>
+  </div>
+
+<nav class="menu">
+
+  <!-- ===== COMERCIAL ===== -->
+<div class="menu-item has-sub" onclick="toggleSubmenu('comercial-sub', this)">
+  <i data-lucide="briefcase"></i>
+  <span>Comercial</span>
+</div>
+
+<div class="submenu" id="comercial-sub">
+
+<div class="submenu-item"
+  onclick="carregarNaMain(
+    'Modulos/Comercial/Pedidos/pedido.html',
+    'js/pedido/pedido.mjs',
+    this,
+    'Modulos/Comercial/Pedidos/pedido.css'
+  )">
+  Pedido / Orçamento
+</div>
+
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Comercial/CadastroClientes/cadastro-clientes.html',
+      'Modulos/Comercial/CadastroClientes/cadastro-clientes.js',
+      this,
+      'Modulos/Comercial/CadastroClientes/cadastro-clientes.css'
+    )">
+    Cadastro de Clientes
+  </div>
+
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Comercial/CadastroLocais/cadastro-locais.html',
+      'Modulos/Comercial/CadastroLocais/cadastro-locais.js',
+      this,
+      'Modulos/Comercial/CadastroLocais/cadastro-locais.css'
+    )">
+    Cadastro de Locais
+  </div>
+
+</div>
+
+
+<!-- ===== ESTOQUE ===== -->
+<div class="menu-item has-sub" onclick="toggleSubmenu('estoque-sub', this)">
+  <i data-lucide="package"></i>
+  <span>Estoque</span>
+</div>
+
+<div class="submenu" id="estoque-sub">
+
+<div class="submenu-item"
+  onclick="carregarNaMain(
+    'Modulos/Estoque/CadastroItens/cadastro-itens.html',
+    'Modulos/Estoque/CadastroItens/cadastro-itens.mjs',
+    this,
+    'Modulos/Estoque/CadastroItens/cadastro-itens.css'
+  )">
+  Cadastro de Itens
+</div>
+
+<div class="submenu-item"
+  onclick="carregarNaMain(
+    'Modulos/Estoque/Personalizacoes/estoque-personalizacoes.html',
+    'js/Estoque/estoque-personalizacoes.mjs',
+    this,
+    'Modulos/Estoque/Personalizacoes/estoque-personalizacoes.css'
+  )">
+    Cadastro de Personalizações
+</div>
+
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Estoque/Almoxarifado/cadastro-insumos.html',
+      'Modulos/Estoque/Almoxarifado/cadastro-insumos.js',
+      this,
+      'Modulos/Estoque/Almoxarifado/cadastro-insumos.css'
+    )">
+    Cadastro de Insumos
+  </div>
+
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Estoque/CadastroFornecedores/fornecedores.html',
+      'Modulos/Estoque/CadastroFornecedores/fornecedores.js',
+      this,
+      'Modulos/Estoque/CadastroFornecedores/fornecedores.css'
+    )">
+    Cadastro de Fornecedores
+  </div>
+
+    <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Estoque/OrdemdeServicos/ordem-servicos.html',
+      'Modulos/Estoque/OrdemdeServicos/ordem-servicos.js',
+      this,
+      'Modulos/Estoque/OrdemdeServicos/ordem-servicos.css'
+    )">
+    Ordem de Serviços
+  </div>
+
+      <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Estoque/Almoxarifado/Principal/almoxarifado.html',
+      'Modulos/Estoque/Almoxarifado/Principal/almoxarifado.js',
+      this,
+      'Modulos/Estoque/Almoxarifado/Principal/almoxarifado.css'
+    )">
+    Almoxarifado
+  </div>
+
+        <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Estoque/Controledequalidade/controledequalidade.html',
+      'Modulos/Estoque/Controledequalidade/controledequalidade.js',
+      this,
+      'Modulos/Estoque/Controledequalidade/controledequalidade.css'
+    )">
+    Controle de Qualidade
+  </div>
+</div>
+
+
+<!-- ===== LOGÍSTICA ===== -->
+<div class="menu-item has-sub" onclick="toggleSubmenu('logistica-sub', this)">
+  <i data-lucide="truck"></i>
+  <span>Logística</span>
+</div>
+
+<div class="submenu" id="logistica-sub">
+
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Logistica/cadastro-caminhoes.html',
+      'Modulos/Logistica/cadastro-caminhoes.js',
+      this,
+      'Modulos/Logistica/cadastro-caminhoes.css'
+    )">
+    Cadastro de Caminhões
+  </div>
+
+<div class="submenu-item"
+  onclick="carregarNaMain(
+    'Modulos/Logistica/Cronograma/cronograma.html',
+    'Modulos/Logistica/Cronograma/cronograma.js',
+    this,
+    'Modulos/Logistica/Cronograma/cronograma.css'
+  )">
+  Cronograma Logístico
+</div>
+</div>
+
+
+<!-- ===== INTELIGÊNCIA ARTIFICIAL ===== -->
+<div class="menu-item has-sub" onclick="toggleSubmenu('ia-sub', this)">
+  <i data-lucide="sparkles"></i>
+  <span>Inteligência Artificial</span>
+</div>
+
+<div class="submenu" id="ia-sub">
+
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'inteligencia-artificial/assistente-ia.html',
+      'inteligencia-artificial/assistente-ia.js',
+      this,
+      'inteligencia-artificial/assistente-ia.css'
+    )">
+    Lia - Assistente Comercial
+  </div>
+
+</div>
+
+</nav>
+
+
+<div class="sidebar-user">
+
+  <!-- INDICADOR DE ESTABILIDADE -->
+  <div class="system-status" id="systemStatus">
+
+    <div class="status-indicator" id="statusIndicator">
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-text" id="statusText">Estável</span>
+    </div>
+
+    <div class="status-panel" id="statusPanel">
+
+      <div class="status-panel-header">
+        <strong>Status do Sistema</strong>
+      </div>
+
+      <div class="status-line">
+        <span>Conexão com internet:</span>
+        <span id="statusInternet">Verificando...</span>
+      </div>
+
+      <div class="status-line">
+        <span>Resposta do sistema:</span>
+        <span id="statusBackend">Verificando...</span>
+      </div>
+
+      <div class="status-line">
+        <span>Performance geral:</span>
+        <span id="statusGeral">Analisando...</span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- CARD DO USUÁRIO -->
+  <div class="user-account" onclick="toggleUserMenu(event)">
+    
+    <div class="user-avatar" id="userAvatar">--</div>
+
+    <div class="user-info">
+      <span class="empresa" id="empresaNome">Carregando...</span>
+      <span class="usuario" id="usuarioNome">
+        Carregando...
+        <span class="arrow">▾</span>
+      </span>
+    </div>
+
+  </div>
+
+  <div class="user-dropdown-modern" id="userDropdown">
+
+    <div class="dropdown-item" onclick="abrirEmpresa()">
+      <span class="icon">🏢</span>
+      <span>Editar empresa</span>
+    </div>
+
+    <div class="dropdown-item" onclick="abrirPerfil()">
+      <span class="icon">👤</span>
+      <span>Editar perfil</span>
+    </div>
+
+    <div class="dropdown-item" onclick="ativarAusencia()">
+      <span class="icon">🕒</span>
+      <span>Entrar em ausência</span>
+    </div>
+
+  </div>
+
+</div>
+
+
+</div>
+
+
+
+
+  <div class="sidebar-logout">
+    <button onclick="logout()">
+      <i data-lucide="log-out"></i>
+      <span>Sair</span>
+    </button>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- LOADER GLOBAL DO DASHBOARD -->
+  <div id="global-loader" class="content-loader hidden">
+    <div class="loader-circle">
+      <span class="dot blue"></span>
+      <span class="dot orange"></span>
+      <span class="dot blue"></span>
+      <span class="dot orange"></span>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO DINÂMICO -->
+  <div id="main-content"></div>
+
+</main>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/core/supabase.js"></script>
+
+<!-- =====================================================
+   CORE DO SISTEMA (ORDEM CRÍTICA)
+===================================================== -->
+
+<!-- ALERTA GLOBAL -->
+<script src="js/core/alerta.js"></script>
+
+<!-- CONTEXTO GLOBAL -->
+<script src="js/core/context.js"></script>
+<script src="js/core/google.js"></script>
+
+<!-- AUTENTICAÇÃO -->
+<script src="js/core/auth.js"></script>
+
+<!-- LOADER DE MÓDULOS (carregarNaMain) -->
+<script src="js/core/moduleLoader.js"></script>
+
+<script src="js/core/systemStatus.js"></script>
+
+<!-- =====================================================
+   UI BASE (PRECISA VIR ANTES DOS CLIQUES)
+===================================================== -->
+
+<!-- SIDEBAR / MENU -->
+<script src="js/ui/sidebar.js"></script>
+
+<!-- SISTEMA DE MODAIS -->
+<script src="js/ui/modais.js"></script>
+
+<!-- =====================================================
+   FUNCIONALIDADES
+===================================================== -->
+
+<!-- USUÁRIO -->
+<script src="js/usuario/usuario.js"></script>
+
+<!-- EMPRESA -->
+<!-- EMPRESA (NOVO MODULAR) -->
+<script src="js/empresa/empresa.utils.js"></script>
+<script src="js/empresa/empresa.api.js"></script>
+<script src="js/empresa/empresa.sections.dados.js"></script>
+<script src="js/empresa/empresa.sections.tributacao.js"></script>
+<script src="js/empresa/empresa.sections.comercial.js"></script>
+<script src="js/empresa/empresa.logistica.frete.js"></script>
+<script src="js/empresa/empresa.logistica.montagem.js"></script>
+<script src="js/empresa/empresa.sections.logistica.js"></script>
+<script src="js/empresa/empresa.sections.financeiro.js"></script>
+<script src="js/empresa/empresa.modal.js"></script>
+
+<!-- =====================================================
+   LIBS EXTRAS
+===================================================== -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+<!-- ROOT GLOBAL DE MODAIS -->
+<div id="modal-root"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+
+});
+</script>
+<!-- ================= ALERTA GLOBAL ================= -->
+<div class="modal-alert-global" id="alertaGlobal">
+
+  <div class="modal-alert-box">
+
+    <div class="alert-icon">!</div>
+
+    <h4 id="alertaGlobalTitulo">Atenção</h4>
+
+    <p id="alertaGlobalMsg"></p>
+
+    <button onclick="fecharAlertaGlobal()">
+      Ok
+    </button>
+
+  </div>
+
+</div>
+</body>
+</html>

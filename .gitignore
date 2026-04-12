@@ -1,0 +1,32 @@
+# Dependências
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Variáveis de ambiente (NUNCA commitar .env)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build
+dist/
+build/
+out/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Supabase local
+.supabase/

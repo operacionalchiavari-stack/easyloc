@@ -1,0 +1,854 @@
+/* =====================================================
+   ESTOQUE → PERSONALIZAÇÕES (VISUAL PADRÃO EASYLOC)
+   arquivo: estoque-personalizacoes.css
+===================================================== */
+
+.personalizacoes-page {
+  --bg: #f7efe9;
+  --white: #ffffff;
+  --navy: #0f2a44;
+  --navy-2: #123250;
+  --orange: #ff6a00;
+  --orange-2: #ff7b1a;
+  --text: #0b1b2a;
+  --muted: #6b7b8b;
+  --border: #e7dcd2;
+  --shadow: 0 12px 30px rgba(15, 42, 68, 0.12);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --input: #ffffff;
+  --chip-green-bg: #e8fbef;
+  --chip-green-tx: #128a43;
+  --chip-red-bg: #ffecec;
+  --chip-red-tx: #b42318;
+}
+
+.personalizacoes-page {
+  background: var(--bg);
+  padding: 28px;
+  min-height: calc(100vh - 70px);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
+    sans-serif;
+  color: var(--text);
+}
+
+/* TOP */
+.page-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 28px; /* aumentado para dar mais respiro */
+}
+
+.page-title h1 {
+  margin: 0;
+  font-size: 26px; /* diminuído */
+  letter-spacing: -0.01em;
+  font-weight: 800;
+}
+
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn {
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-weight: 700;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 106, 0, 0.08);
+}
+
+.btn-primary {
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(255, 106, 0, 0.18);
+}
+
+.btn-primary:hover {
+  background: var(--orange-2);
+}
+
+.btn-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+
+/* FILTERS */
+.filters-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+/* Faz os selects crescerem e ocuparem melhor o espaço */
+.filters-row select {
+  flex: 1;
+  min-width: 220px;
+}
+
+/* Aumenta um pouco a busca também */
+.search-wrap {
+  flex: 1.4;
+  min-width: 420px;
+}
+
+.search-wrap {
+  flex: 1.6; /* cresce mais que os selects */
+  min-width: 480px;
+  display: flex;
+}
+
+.search-wrap input {
+  width: 100%; /* faz o input ocupar todo o espaço */
+}
+
+.filters-row input,
+.filters-row select {
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 0 14px;
+  background: var(--input);
+  outline: none;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.filters-row input::placeholder {
+  color: #94a3b8;
+}
+
+/* TABLE */
+.table-wrap {
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 22px rgba(15, 42, 68, 0.06);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead th {
+  background: linear-gradient(180deg, var(--navy), #0b2036);
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.data-table tbody td {
+  padding: 18px 16px;
+  border-top: 1px solid rgba(15, 42, 68, 0.06);
+  vertical-align: middle;
+  font-size: 14px;
+  font-weight: 400; /* remove negrito */
+  color: var(--text);
+}
+
+/* garante que nada dentro da célula fique em negrito */
+.data-table tbody td strong {
+  font-weight: 400;
+}
+
+.data-table tbody td b {
+  font-weight: 400;
+}
+.data-table tbody tr:hover {
+  background: rgba(15, 42, 68, 0.02);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.badge.green {
+  background: var(--chip-green-bg);
+  color: var(--chip-green-tx);
+}
+.badge.red {
+  background: var(--chip-red-bg);
+  color: var(--chip-red-tx);
+}
+
+.mini-muted {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 900;
+  color: var(--navy);
+}
+
+.icon-btn:hover {
+  border-color: rgba(255, 106, 0, 0.6);
+  box-shadow: 0 8px 18px rgba(255, 106, 0, 0.12);
+}
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 42, 68, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  z-index: 9999;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.modal-card {
+  width: min(1100px, 98vw);
+  background: var(--white);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(15, 42, 68, 0.14);
+  display: flex;
+  flex-direction: column;
+  max-height: min(86vh, 860px);
+}
+
+.modal-header {
+  background: #ffffff; /* remove o azul */
+  color: var(--navy);
+  padding: 22px 22px 18px 22px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--border); /* linha elegante de separação */
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modal-sub {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12.5px;
+  max-width: 720px;
+}
+
+.modal-close {
+  background: #f1f5f9;
+  color: var(--navy);
+  border: 1px solid var(--border);
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.modal-body {
+  padding: 18px 22px;
+  overflow: auto;
+}
+
+.modal-footer {
+  padding: 14px 22px;
+  border-top: 1px solid rgba(15, 42, 68, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #fff;
+}
+
+/* GRID */
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr;
+  gap: 16px;
+}
+
+.card-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+  background: #fff;
+}
+
+.card-title {
+  font-weight: 900;
+  color: var(--navy);
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.form-row.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  outline: none;
+  font-size: 14px;
+  background: #fff;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 4px rgba(15, 42, 68, 0.04);
+}
+
+/* Hover suave */
+input[type="text"]:hover,
+input[type="number"]:hover,
+select:hover,
+textarea:hover {
+  border-color: rgba(15, 42, 68, 0.25);
+}
+
+/* Focus premium EasyLoc */
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.15);
+}
+/* Campo de buscar item específico */
+#buscarItemInput {
+  background: linear-gradient(180deg, #ffffff, #fdfdfd);
+  border-radius: 16px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.hint {
+  font-size: 12px;
+  color: #8695a6;
+}
+
+/* Radio pills */
+.radio-row {
+  display: flex;
+  gap: 10px;
+}
+
+.radio-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: #fff;
+  user-select: none;
+  font-weight: 900;
+  color: var(--navy);
+}
+
+.radio-pill input {
+  accent-color: var(--orange);
+}
+
+/* Resume */
+.resume-card {
+  position: sticky;
+  top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(15, 42, 68, 0.06);
+}
+
+.resume-title {
+  font-weight: 900;
+  color: var(--navy);
+  margin-bottom: 12px;
+}
+
+.resume-box {
+  border: 1px dashed rgba(15, 42, 68, 0.22);
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(15, 42, 68, 0.02);
+}
+
+.resume-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 6px 0;
+  color: var(--navy);
+}
+
+.resume-line.big {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.resume-sep {
+  height: 1px;
+  background: rgba(15, 42, 68, 0.1);
+  margin: 8px 0;
+}
+
+.resume-highlight {
+  margin-top: 12px;
+  border-radius: 18px;
+  padding: 14px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 106, 0, 0.14),
+    rgba(255, 106, 0, 0.06)
+  );
+  border: 1px solid rgba(255, 106, 0, 0.3);
+}
+
+.hl-label {
+  font-size: 12px;
+  color: rgba(15, 42, 68, 0.75);
+  font-weight: 900;
+}
+
+.hl-value {
+  font-size: 26px;
+  font-weight: 1000;
+  color: var(--navy);
+  margin-top: 4px;
+  letter-spacing: -0.02em;
+}
+
+.hl-sub {
+  font-size: 12px;
+  color: rgba(15, 42, 68, 0.7);
+  margin-top: 2px;
+  font-weight: 800;
+}
+
+.full {
+  width: 100%;
+}
+
+/* Toggle */
+.toggle-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(15, 42, 68, 0.08);
+  border-radius: 16px;
+  background: rgba(15, 42, 68, 0.02);
+}
+
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 28px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-ui {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 42, 68, 0.2);
+  border-radius: 999px;
+  transition: 0.18s ease;
+}
+
+.toggle-ui::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  top: 3px;
+  left: 3px;
+  background: #fff;
+  border-radius: 999px;
+  transition: 0.18s ease;
+  box-shadow: 0 6px 12px rgba(15, 42, 68, 0.18);
+}
+
+.toggle input:checked + .toggle-ui {
+  background: rgba(255, 106, 0, 0.8);
+}
+
+.toggle input:checked + .toggle-ui::after {
+  transform: translateX(20px);
+}
+
+.toggle-text .toggle-title {
+  font-weight: 1000;
+  color: var(--navy);
+  font-size: 13px;
+}
+
+.toggle-text .toggle-sub {
+  font-size: 12px;
+  color: rgba(15, 42, 68, 0.65);
+  margin-top: 2px;
+}
+/* ================================
+   Campo Selecionar Item (Premium)
+================================ */
+
+#buscarItemInput,
+input[placeholder="Digite para buscar item..."] {
+  width: 100%;
+  height: 46px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  padding: 0 16px;
+  font-size: 14px;
+  background: #ffffff;
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 10px rgba(15, 42, 68, 0.05);
+}
+
+/* Hover */
+#buscarItemInput:hover,
+input[placeholder="Digite para buscar item..."]:hover {
+  border-color: rgba(15, 42, 68, 0.25);
+}
+
+/* Focus */
+#buscarItemInput:focus,
+input[placeholder="Digite para buscar item..."]:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.15);
+  outline: none;
+}
+/* =========================================
+   Campo Selecionar Item / Componente
+========================================= */
+
+.form-row input[type="text"] {
+  width: 100%;
+  height: 46px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  padding: 0 16px;
+  font-size: 14px;
+  background: #ffffff;
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 10px rgba(15, 42, 68, 0.05);
+}
+
+/* Hover */
+.form-row input[type="text"]:hover {
+  border-color: rgba(15, 42, 68, 0.25);
+}
+
+/* Focus */
+.form-row input[type="text"]:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.15);
+  outline: none;
+}
+/* =========================================
+   Input Vinculado (Item / Componente)
+========================================= */
+
+#inpVinculoNome {
+  width: 100%;
+  height: 48px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  padding: 0 18px;
+  font-size: 14px;
+  background: #ffffff;
+  transition: all 0.18s ease;
+  box-shadow: 0 6px 14px rgba(15, 42, 68, 0.06);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Hover */
+#inpVinculoNome:hover {
+  border-color: rgba(15, 42, 68, 0.25);
+}
+
+/* Focus premium */
+#inpVinculoNome:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.15);
+}
+
+/* Remove visual estranho do datalist */
+#inpVinculoNome::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+/* ================================
+   Lista dinâmica de insumos
+================================ */
+
+.insumo-row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.9fr 0.9fr 0.9fr 40px;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.insumo-row select,
+.insumo-row input {
+  height: 42px;
+}
+
+.insumo-total {
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.insumo-remove {
+  background: transparent;
+  border: none;
+  height: 42px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  transition: 0.15s ease;
+}
+
+.insumo-remove:hover {
+  color: #ef4444;
+  transform: scale(1.1);
+}
+#btnAddInsumo {
+  display: inline-flex;
+  margin-top: 12px;
+}
+/* =====================================
+   Botão Adicionar Insumo (suave)
+===================================== */
+
+#btnAddInsumo {
+  background: rgba(255, 106, 0, 0.08); /* laranja bem clarinho */
+  border: 1px solid rgba(255, 106, 0, 0.18);
+  color: var(--orange);
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: 14px;
+  padding: 10px 16px;
+  box-shadow: none;
+  transition: all 0.15s ease;
+}
+
+#btnAddInsumo:hover {
+  background: rgba(255, 106, 0, 0.15);
+  border-color: rgba(255, 106, 0, 0.35);
+  transform: translateY(-1px);
+}
+/* =========================================
+   IDENTIFICAÇÃO HEADER COM RADIO NO TOPO
+========================================= */
+
+.identificacao-card {
+  position: relative;
+}
+
+.identificacao-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.identificacao-header .card-title {
+  margin: 0;
+}
+
+.identificacao-radio {
+  gap: 8px;
+}
+
+.identificacao-radio .radio-pill {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+/* =========================================
+   STATUS NO HEADER DO MODAL
+========================================= */
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-toggle {
+  display: flex;
+  gap: 10px;
+}
+
+.status-btn {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #eef2f6;
+  color: #5b6b7b;
+  transition: 0.2s ease;
+}
+
+.status-btn.active {
+  background: #dff5e8;
+  color: #18794e;
+}
+
+.status-btn[data-status="INATIVO"].active {
+  background: #f4f6f8;
+  color: #64748b;
+}
+.resume-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 28px 30px 28px;
+}
+.resume-box {
+  margin-top: 18px;
+  margin-bottom: 22px;
+}
+.resume-highlight {
+  margin-top: 18px;
+  margin-bottom: 20px;
+}
+.resume-card {
+  background: #f3f7fc;
+  border: 1px solid #d9e6f5;
+  border-radius: var(--radius);
+  padding: 28px 28px 30px 28px;
+}
+/* =========================================
+   BADGE TIPO PERSONALIZAÇÃO
+========================================= */
+
+.badge.tipo {
+  background: #eef4ff;
+  color: #1d4ed8;
+}
+
+/* =========================================
+   BADGE COMPLEXIDADE
+========================================= */
+
+.badge.complexidade-simples {
+  background: #e8fbef;
+  color: #128a43;
+}
+
+.badge.complexidade-media {
+  background: #fff6e5;
+  color: #b26a00;
+}
+
+.badge.complexidade-alta {
+  background: #ffecec;
+  color: #b42318;
+}

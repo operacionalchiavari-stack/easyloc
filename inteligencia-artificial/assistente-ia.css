@@ -1,0 +1,868 @@
+:root{
+  --azul:#0B1F33;
+  --azul-user:#2b4d73;
+  --laranja:#FF7A00;
+  --fundo:#F9F4EE;
+  --cinza:#E5E7EB;
+  --texto:#0F172A;
+  --muted:#64748b;
+  --card:#ffffff;
+  --soft:#F8FAFC;
+}
+
+*{ box-sizing:border-box; font-family:'Inter',sans-serif; }
+body{ margin:0; background:var(--fundo); color:var(--texto); }
+
+.ia-page{ min-height:100vh; display:flex; flex-direction:column; }
+
+/* HEADER */
+.ia-header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; padding:08px 22px; background:var(--card);
+  border-bottom:1px solid var(--cinza);
+}
+.ia-header-left{ display:flex; align-items:center; gap:14px; }
+.ia-header-info h1{ margin:0; font-size:18px; color:var(--azul); }
+.ia-header-info span{ font-size:13px; color:var(--muted); }
+
+.ia-avatar{
+  width:60px; height:60px; border-radius:20%;
+  overflow:hidden; border:2px solid var(--laranja);
+}
+.ia-avatar img{ width:100%; height:100%; object-fit:cover; }
+
+.ia-header-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+
+/* BUTTONS */
+.btn{
+  border:none; cursor:pointer; border-radius:10px;
+  padding:11px 14px; font-weight:600; font-size:13px;
+}
+.btn-primary{ background:var(--laranja); color:#fff; }
+.btn-outline{ background:#fff; color:var(--azul); border:1px solid var(--cinza); }
+.btn:hover{ filter:brightness(.98); }
+
+.btn-icon{
+  width:38px; height:38px; border-radius:10px;
+  border:1px solid var(--cinza); background:#fff; cursor:pointer;
+}
+
+/* LAYOUT */
+.chat-layout{
+  max-width:980px; width:100%;
+  margin:0 auto; padding:18px 18px 22px;
+  display:flex; flex-direction:column;
+  height:calc(100vh - 78px);
+  gap:12px;
+}
+
+/* CHAT */
+.ia-chat{
+  flex:1; overflow-y:auto;
+  background:var(--card); border:1px solid var(--cinza);
+  border-radius:14px; padding:18px;
+
+  display:flex; flex-direction:column; gap:10px;
+}
+.placeholder{ color:#94a3b8; font-size:14px; }
+
+.msg-row{ display:flex; width:100%; }
+.msg{
+  max-width:75%;
+  padding:12px 16px;
+  border-radius:14px;
+  font-size:14px; line-height:1.5;
+  word-wrap:break-word;
+}
+.msg-row.user{ justify-content:flex-end; }
+.msg.user{
+  background:var(--azul-user); color:#fff;
+  border-bottom-right-radius:4px;
+}
+.msg-row.ia{ justify-content:flex-start; }
+.msg.ia{
+  background:var(--soft); border:1px solid var(--cinza);
+  color:var(--texto);
+  border-bottom-left-radius:4px;
+}
+
+.msg-tools{
+  margin-top:10px;
+  display:flex; gap:8px; justify-content:flex-start; flex-wrap:wrap;
+}
+.msg-tools .tool{
+  border:1px solid var(--cinza);
+  background:#fff;
+  color:var(--azul);
+  padding:7px 10px;
+  border-radius:9px;
+  font-size:12px;
+  cursor:pointer;
+}
+.msg-tools .tool.primary{
+  background:#FFE4CC;
+  border-color:#FFD2A6;
+  color:var(--azul);
+}
+
+/* INPUT */
+.ia-input{
+  background:var(--card);
+  border:1px solid var(--cinza);
+  border-radius:14px;
+  padding:12px;
+  display:flex; gap:10px;
+}
+.ia-input input{
+  flex:1; padding:13px 14px;
+  border:1px solid var(--cinza);
+  border-radius:10px;
+  font-size:15px;
+}
+.ia-input input:focus{ outline:none; border-color:var(--laranja); }
+
+/* MODAL */
+.modal{ position:fixed; inset:0; display:none; z-index:2000; }
+.modal[aria-hidden="false"]{ display:block; }
+.modal-overlay{ position:absolute; inset:0; background:rgba(0,0,0,.45); }
+
+.modal-card{
+  position:relative;
+  width:min(760px, calc(100% - 28px));
+  margin:28px auto;
+  background:#fff;
+  border-radius:16px;
+  border:1px solid var(--cinza);
+  box-shadow:0 20px 55px rgba(0,0,0,.18);
+  overflow:hidden;
+}
+.modal-wide{ width:min(980px, calc(100% - 28px)); }
+
+.modal-header{
+  display:flex; justify-content:space-between; gap:14px;
+  padding:18px 18px 14px;
+  border-bottom:1px solid var(--cinza);
+}
+.modal-header h2{ margin:0; font-size:16px; color:var(--azul); }
+.modal-header p{ margin:6px 0 0; font-size:13px; color:var(--muted); }
+
+.modal-footer{
+  display:flex; justify-content:flex-end; gap:10px;
+  padding:14px 18px;
+  border-top:1px solid var(--cinza);
+  background:#fff;
+}
+
+/* TABS */
+.tabs{ display:flex; gap:8px; padding:12px 18px; }
+.tab{
+  padding:9px 12px;
+  border-radius:10px;
+  border:1px solid var(--cinza);
+  background:#fff;
+  cursor:pointer;
+  font-weight:600; font-size:13px;
+  color:var(--azul);
+}
+.tab.active{ background:#FFE4CC; border-color:#FFD2A6; }
+.tab-panel{ display:none; padding:0 18px 16px; }
+.tab-panel.active{ display:block; }
+
+/* FORM */
+.field{ margin:12px 0; }
+label{ display:block; font-size:13px; color:var(--azul); font-weight:600; margin-bottom:6px; }
+select, textarea, .modal-card input{
+  width:100%;
+  padding:12px 12px;
+  border-radius:10px;
+  border:1px solid var(--cinza);
+  font-size:14px;
+}
+textarea{ min-height:140px; resize:vertical; }
+.hint{ display:block; margin-top:6px; font-size:12px; color:#94a3b8; }
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* SWITCH */
+.switch-row{ display:flex; align-items:center; gap:12px; }
+.switch{ position:relative; display:inline-block; width:46px; height:26px; }
+.switch input{ display:none; }
+.slider{
+  position:absolute; cursor:pointer; inset:0;
+  background:#e2e8f0; border-radius:30px;
+  border:1px solid var(--cinza);
+  transition:.2s;
+}
+.slider:before{
+  position:absolute; content:"";
+  height:20px; width:20px; left:3px; top:2px;
+  background:white; border-radius:50%;
+  transition:.2s; border:1px solid var(--cinza);
+}
+.switch input:checked + .slider{ background:#FFE4CC; border-color:#FFD2A6; }
+.switch input:checked + .slider:before{ transform:translateX(20px); }
+
+/* =========================
+   KB – TABELA ESTILO EXCEL
+========================= */
+
+.kb-list{
+  padding: 0;
+  max-height: 65vh;
+  overflow: auto;
+  background: #fff;
+  border-top: 1px solid var(--cinza);
+}
+
+/* estrutura da tabela */
+.kb-table{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-size: 13px;
+}
+
+/* cabeçalho */
+.kb-header{
+  display: grid;
+  grid-template-columns: 2.4fr 1.4fr 0.8fr;
+  padding: 10px 16px;
+  background: #f1f5f9;
+  border-bottom: 1px solid var(--cinza);
+  font-weight: 500;
+  color: #475569;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+/* linha */
+.kb-row{
+  display: grid;
+  grid-template-columns: 2.4fr 1.4fr 0.8fr;
+  padding: 10px 16px;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+
+/* zebra striping */
+.kb-row:nth-child(even){
+  background: #fafafa;
+}
+
+.kb-row:nth-child(odd){
+  background: #ffffff;
+}
+
+/* hover discreto */
+.kb-row:hover{
+  background: #eef6ff;
+}
+
+/* colunas */
+.kb-assunto{
+  font-weight: 400;           /* 👈 remove negrito */
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kb-categoria{
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+/* status alinhado como grid */
+.kb-status{
+  font-size: 12px;
+  text-align: right;
+}
+
+/* status visual tipo planilha */
+.kb-status.ativo{
+  color: #15803d;
+}
+
+.kb-status.inativo{
+  color: #b91c1c;
+}
+
+/* mobile */
+@media (max-width: 700px){
+  .kb-header,
+  .kb-row{
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .kb-status{
+    text-align: left;
+    font-size: 11px;
+  }
+}
+
+
+/* status visual */
+.kb-status.ativo{
+  color: #16a34a;
+}
+
+.kb-status.inativo{
+  color: #dc2626;
+}
+
+/* mobile */
+@media (max-width: 700px){
+  .kb-header,
+  .kb-row{
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .kb-status{
+    text-align: left;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 700px){
+  .grid-2{ grid-template-columns:1fr; }
+  .msg{ max-width:90%; }
+  .ia-header{ padding:14px 14px; }
+}
+/* =========================
+   MODAL PRO (upgrade visual)
+   cola NO FINAL do assistente-ia.css
+========================= */
+
+/* overlay mais elegante */
+.modal-overlay{
+  background: rgba(11,31,51,.55);
+  backdrop-filter: blur(3px);
+}
+
+/* card mais “enterprise” */
+.modal-card{
+  border-radius: 18px;
+  border: 1px solid rgba(229,231,235,.9);
+  box-shadow: 0 28px 80px rgba(0,0,0,.25);
+  overflow: hidden;
+}
+
+/* header com faixa sutil */
+.modal-header{
+  padding: 18px 20px 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+  border-bottom: 1px solid var(--cinza);
+}
+.modal-header h2{
+  font-size: 16px;
+  letter-spacing: .2px;
+}
+.modal-header p{
+  font-size: 12.5px;
+  line-height: 1.35;
+  max-width: 560px;
+}
+
+/* botão fechar “clean” */
+.btn-icon{
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--cinza);
+  background: #fff;
+  color: var(--azul);
+}
+.btn-icon:hover{
+  background: #f8fafc;
+}
+
+/* tabs estilo pill */
+.tabs{
+  padding: 12px 20px 6px;
+  gap: 10px;
+  border-bottom: 1px solid var(--cinza);
+}
+.tab{
+  border: 1px solid var(--cinza);
+  background: #fff;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+}
+.tab.active{
+  background: #FFE4CC;
+  border-color: #FFD2A6;
+  box-shadow: 0 6px 16px rgba(255,122,0,.14);
+}
+
+/* conteúdo com padding mais profissional */
+.tab-panel{
+  padding: 14px 20px 12px;
+}
+.grid-2{
+  gap: 14px;
+}
+
+/* campos */
+.field{ margin: 12px 0; }
+label{
+  font-size: 12.5px;
+  margin-bottom: 7px;
+  color: #0b1f33;
+}
+.modal-card input,
+.modal-card select,
+.modal-card textarea{
+  background: #fff;
+  border: 1px solid #E6E8EC;
+  border-radius: 12px;
+  padding: 12px 12px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.modal-card textarea{ min-height: 150px; }
+
+.modal-card input:focus,
+.modal-card select:focus,
+.modal-card textarea:focus{
+  outline: none;
+  border-color: rgba(255,122,0,.7);
+  box-shadow: 0 0 0 4px rgba(255,122,0,.14);
+}
+
+/* hint mais discreta */
+.hint{
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* footer “sticky” com área separada */
+.modal-footer{
+  padding: 14px 20px;
+  background: #fff;
+  border-top: 1px solid var(--cinza);
+  position: sticky;
+  bottom: 0;
+}
+
+/* botões no modal com cara premium */
+.modal-footer .btn{
+  border-radius: 12px;
+  padding: 11px 14px;
+}
+.modal-footer .btn-primary{
+  box-shadow: 0 10px 22px rgba(255,122,0,.20);
+}
+.modal-footer .btn-outline{
+  background:#fff;
+}
+
+/* switch row alinhado */
+.switch-row{
+  background: #f8fafc;
+  border: 1px solid #E6E8EC;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+/* modal KB: lista mais “card” */
+.kb-item{
+  border-radius: 16px;
+  border: 1px solid #E6E8EC;
+}
+.kb-preview{
+  border-radius: 14px;
+  border: 1px solid #EEF2F7;
+}
+
+/* responsivo */
+@media (max-width: 700px){
+  .modal-card{ margin: 16px auto; }
+  .modal-header{ padding: 16px 16px 12px; }
+  .tabs{ padding: 10px 16px 6px; }
+  .tab-panel{ padding: 12px 16px 10px; }
+  .modal-footer{ padding: 12px 16px; }
+}
+/* ===== FIX MODAL: mais respiro (texto não "gruda" nas bordas) ===== */
+
+/* mais padding geral dentro do conteúdo do modal */
+.modal-header{
+  padding: 22px 24px 16px !important;
+}
+
+.tabs{
+  padding: 12px 24px 10px !important;
+}
+
+.tab-panel{
+  padding: 18px 24px 16px !important;
+}
+
+/* labels com mais espaço e leitura melhor */
+.field label{
+  margin-bottom: 10px !important;
+  line-height: 1.25 !important;
+}
+
+/* inputs/textarea com respiro interno e altura confortável */
+.modal-card input,
+.modal-card select{
+  padding: 14px 14px !important;
+}
+
+.modal-card textarea{
+  padding: 14px 14px !important;
+  line-height: 1.45 !important;
+  min-height: 180px !important;
+}
+
+/* separação entre blocos */
+.field{
+  margin: 16px 0 !important;
+}
+
+/* status card (switch) com mais padding e borda suave */
+.switch-row{
+  padding: 14px 14px !important;
+  border-radius: 14px !important;
+}
+
+/* footer com mais altura e “respira” */
+.modal-footer{
+  padding: 16px 24px !important;
+}
+
+/* no mobile, mantém proporcional */
+@media (max-width: 700px){
+  .modal-header{ padding: 18px 16px 12px !important; }
+  .tabs{ padding: 10px 16px 8px !important; }
+  .tab-panel{ padding: 14px 16px 12px !important; }
+  .modal-footer{ padding: 12px 16px !important; }
+}
+/* ===== FIX DEFINITIVO: respiro lateral do modal ===== */
+
+/* cria “gutter” lateral real dentro do modal */
+.modal-card > *:not(.modal-header):not(.modal-footer):not(.tabs) {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* garante que tabs também respeitem o respiro */
+.tabs {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+/* textarea e inputs nunca encostam */
+.modal-card input,
+.modal-card select,
+.modal-card textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* preview e blocos longos */
+.kb-preview,
+.switch-row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* mobile: reduz mas mantém espaço */
+@media (max-width: 700px) {
+  .modal-card > *:not(.modal-header):not(.modal-footer):not(.tabs) {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .tabs {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}
+/* ===== FILE UPLOAD PROFISSIONAL ===== */
+
+.file-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* esconde o input nativo */
+.file-upload input[type="file"] {
+  display: none;
+}
+
+/* botão customizado */
+.file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px dashed #FFD2A6;
+  background: #FFF7ED;
+  color: #0B1F33;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.file-btn:hover {
+  background: #FFE4CC;
+  border-color: #FFB366;
+}
+
+/* ícone */
+.file-icon {
+  font-size: 16px;
+}
+
+/* nome do arquivo */
+.file-name {
+  font-size: 13px;
+  color: #64748b;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* quando tiver arquivo selecionado */
+.file-upload.has-file .file-btn {
+  background: #E6F9F0;
+  border-color: #86EFAC;
+}
+
+.file-upload.has-file .file-icon {
+  content: "📎";
+}
+/* ===== KB TOOLBAR: tudo em 1 linha ===== */
+.kb-toolbar-one-line{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:nowrap;     /* força 1 linha */
+  overflow-x:auto;      /* se faltar espaço, rola */
+  padding:12px 18px;
+  border-bottom:1px solid var(--cinza);
+}
+
+.kb-toolbar-one-line input{
+  flex: 1 1 420px;
+  min-width: 260px;
+}
+
+.kb-toolbar-one-line select{
+  flex: 0 0 220px;
+  min-width: 200px;
+}
+
+.kb-toolbar-actions{
+  display:flex;
+  gap:8px;
+  margin-left:auto;
+  flex: 0 0 auto;
+}
+
+
+/* Status bubble */
+.lia-voice-status{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cinza);
+  background: #0b1f33;
+  color: #fff;
+  margin: 0 auto 6px;
+  width: fit-content;
+}
+
+.lia-voice-text{
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.lia-voice-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: liaPulse 1s infinite ease-in-out;
+}
+
+
+.lia-voice-text{
+  font-size: 13px;
+  opacity: .95;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
+}
+
+.lia-voice-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 80, 80, 0.9);
+  animation: liaPulse 1s infinite ease-in-out;
+}
+
+@keyframes liaPulse{
+  0%{ transform: scale(1); opacity: .7; }
+  50%{ transform: scale(1.4); opacity: 1; }
+  100%{ transform: scale(1); opacity: .7; }
+}
+
+.lia-voice-stop{
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.08);
+  cursor:pointer;
+  font-size: 12px;
+}
+.lia-voice-stop:hover{ background: rgba(255,255,255,0.12); }
+/* ================================
+   INPUT + VOZ (estilo ChatGPT)
+================================ */
+.ia-input-with-voice{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-voice{
+  min-width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* Estado ouvindo */
+.btn-voice.listening{
+  border-color: rgba(255, 80, 80, 0.55);
+  background: rgba(255, 80, 80, 0.18);
+}
+/* ===============================
+   VOZ INLINE (estilo ChatGPT)
+================================ */
+
+.lia-voice-inline{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 10px;
+  height:44px;
+  border-radius:12px;
+  background:#0B1F33;
+  color:#fff;
+  font-size:13px;
+}
+
+.lia-voice-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#ff4d4f;
+  animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+  0%{ transform:scale(1); opacity:.6; }
+  50%{ transform:scale(1.4); opacity:1; }
+  100%{ transform:scale(1); opacity:.6; }
+}
+
+.lia-voice-end{
+  border:1px solid rgba(255,255,255,.35);
+  background:transparent;
+  color:#fff;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:12px;
+  cursor:pointer;
+}
+
+.lia-voice-end:hover{
+  background:rgba(255,255,255,.12);
+}
+.is-hidden {
+  display: none !important;
+}
+.msg.ia {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 14px 16px;
+  max-width: 82%;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.msg.ia .ia-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.msg.ia .ia-card h4 {
+  font-size: 13.5px;
+  margin: 0 0 6px 0;
+  color: #ea580c; /* laranja Chiavari */
+  font-weight: 600;
+}
+
+.msg.ia .ia-card ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.msg.ia .ia-card li {
+  margin-bottom: 4px;
+}
+.msg.ia .tag {
+  display: inline-block;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 4px;
+}
+/* ===== COLUNA PERGUNTAS-EXEMPLO ===== */
+
+.kb-header{
+  grid-template-columns: 2.2fr 3fr 1.2fr .8fr;
+}
+
+.kb-row{
+  grid-template-columns: 2.2fr 3fr 1.2fr .8fr;
+}
+
+/* perguntas-exemplo */
+.kb-perguntas{
+  font-size: 12.5px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+}
+
+/* melhora leitura visual */
+.kb-row:nth-child(even){
+  background: #fafafa;
+}
+
+.kb-row:hover{
+  background: #eef6ff;
+}

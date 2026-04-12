@@ -1,0 +1,269 @@
+<!-- =====================================================
+     ESTOQUE → CADASTRO DE PERSONALIZAÇÕES (VISUAL)
+     arquivo: estoque-personalizacoes.html
+===================================================== -->
+<div class="page-wrap personalizacoes-page" data-module-root>
+
+  <!-- TOP BAR -->
+  <div class="page-top">
+    <div class="page-title">
+      <h1>Personalizações Cadastradas</h1>
+    </div>
+
+    <div class="page-actions">
+      <button class="btn btn-outline" id="btnPrint">Imprimir / PDF</button>
+      <button class="btn btn-primary" id="btnAddPersonalizacao">+ Adicionar Personalização</button>
+      <button class="btn btn-icon" id="btnHelp" title="Ajuda">?</button>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters-row">
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Pesquisar personalização..." />
+    </div>
+
+    <select id="filtroTipo">
+      <option value="">Todos os tipos</option>
+      <option value="Pintura">Pintura</option>
+      <option value="Forração">Forração</option>
+      <option value="Adesivação">Adesivação</option>
+      <option value="Outro">Outro</option>
+    </select>
+
+    <select id="filtroAlvo">
+      <option value="">Item + Componente</option>
+      <option value="ITEM">Somente Item</option>
+      <option value="COMPONENTE">Somente Componente</option>
+    </select>
+
+    <select id="filtroStatus">
+      <option value="">Todos os status</option>
+      <option value="ATIVO">Ativo</option>
+      <option value="INATIVO">Inativo</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <table class="data-table">
+<thead>
+  <tr>
+    <th style="width:160px;">TIPO</th>
+    <th>ITEM / COMPONENTE</th>
+    <th style="width:160px;">COMPLEXIDADE</th>
+    <th style="width:160px;">CUSTO EST.</th>
+    <th style="width:170px;">PREÇO SUG.</th>
+    <th style="width:120px;">STATUS</th>
+  </tr>
+</thead>
+      <tbody id="tbodyPersonalizacoes">
+        <!-- render JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MODAL ROOT -->
+  <div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+      <!-- HEADER -->
+<div class="modal-header">
+
+  <div class="modal-header-left">
+    <h3 id="modalTitle">Adicionar Personalização</h3>
+    <div class="modal-sub">
+      Vincule a um item ou componente e defina parâmetros de produção para gerar o preço automaticamente.
+    </div>
+  </div>
+
+  <div class="modal-header-right">
+
+    <div class="status-toggle">
+      <button type="button"
+              class="status-btn active"
+              data-status="ATIVO">
+        ● Ativo
+      </button>
+
+      <button type="button"
+              class="status-btn"
+              data-status="INATIVO">
+        ● Inativo
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+      <!-- BODY -->
+      <div class="modal-body">
+
+        <!-- GRID 2 COL -->
+        <div class="modal-grid">
+
+          <!-- COL 1 (FORM) -->
+          <div class="form-col">
+
+            <!-- BLOCO: IDENTIFICAÇÃO -->
+<div class="card-section identificacao-card">
+
+  <div class="identificacao-header">
+    <div class="card-title">Identificação</div>
+
+    <div class="radio-row identificacao-radio" id="radioAlvo">
+      <label class="radio-pill">
+        <input type="radio" name="alvo" value="ITEM" checked />
+        <span>Item</span>
+      </label>
+      <label class="radio-pill">
+        <input type="radio" name="alvo" value="COMPONENTE" />
+        <span>Componente</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-row two">
+
+    <div>
+      <label>Tipo de personalização</label>
+      <select id="inpTipo" required>
+        <option value="" disabled selected>Selecione...</option>
+        <option value="Pintura">Pintura</option>
+        <option value="Forração">Forração</option>
+        <option value="Adesivação">Adesivação</option>
+        <option value="Outro">Outro</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Complexidade</label>
+      <select id="inpComplexidade">
+        <option value="1">Simples</option>
+        <option value="1.15">Média</option>
+        <option value="1.30">Alta</option>
+      </select>
+    </div>
+
+  </div>
+
+  <div class="form-row">
+    <label id="lblVinculo">Selecionar item</label>
+    <input id="inpVinculoNome" list="listaVinculos" placeholder="Digite para buscar..." autocomplete="off" />
+    <datalist id="listaVinculos"></datalist>
+  </div>
+
+  <div class="form-row">
+    <label>Observações</label>
+    <textarea id="inpObs" rows="2" placeholder="Ex: cor específica, padrão de costura, acabamento..." ></textarea>
+  </div>
+
+</div>
+
+<!-- BLOCO: MATERIAIS UTILIZADOS -->
+<div class="card-section">
+  <div class="card-title">Materiais utilizados</div>
+
+  <div id="insumosContainer"></div>
+
+<button type="button" class="btn btn-primary" id="btnAddInsumo" style="margin-top:12px;">
+    + Adicionar insumo
+  </button>
+
+</div>
+
+            <!-- BLOCO: MÃO DE OBRA -->
+            <div class="card-section">
+              <div class="card-title">Mão de obra</div>
+
+              <div class="form-row two">
+                <div>
+                  <label>Tempo por unidade (horas)</label>
+                  <input type="number" id="inpTempo" step="0.1" min="0" placeholder="Ex: 1.5" />
+                </div>
+                <div>
+                  <label>Custo por hora (R$)</label>
+                  <input type="number" id="inpCustoHora" step="0.01" min="0" placeholder="Ex: 35.00" />
+                </div>
+              </div>
+
+
+            </div>
+
+          </div>
+
+          <!-- COL 2 (RESUMO) -->
+          <div class="resume-col">
+
+            <div class="resume-card">
+              <div class="resume-title">Formação de preço</div>
+
+              <div class="resume-box">
+                <div class="resume-line">
+                  <span>Custo materiais</span>
+                  <strong id="outCustoMateriais">R$ 0,00</strong>
+                </div>
+                <div class="resume-line">
+                  <span>Custo mão de obra</span>
+                  <strong id="outCustoMaoObra">R$ 0,00</strong>
+                </div>
+                <div class="resume-line">
+                  <span>Custo fixo</span>
+                  <strong id="outCustoFixo">R$ 0,00</strong>
+                </div>
+                <div class="resume-sep"></div>
+                <div class="resume-line big">
+                  <span>Custo estimado</span>
+                  <strong id="outCustoTotal">R$ 0,00</strong>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <label>Margem desejada (%)</label>
+                <input type="number" id="inpMargem" step="0.1" min="0" placeholder="Ex: 40" />
+              </div>
+
+              <div class="resume-highlight">
+                <div class="hl-label">Preço sugerido</div>
+                <div class="hl-value" id="outPrecoSugerido">R$ 0,00</div>
+                <div class="hl-sub" id="outMargemReal">Margem real: 0%</div>
+              </div>
+
+              <div class="toggle-row">
+                <label class="toggle">
+                  <input type="checkbox" id="chkManual" />
+                  <span class="toggle-ui"></span>
+                </label>
+                <div class="toggle-text">
+                  <div class="toggle-title">Usar preço manual</div>
+                  <div class="toggle-sub">Se ativar, você define o valor final sem cálculo.</div>
+                </div>
+              </div>
+
+              <div class="form-row" id="manualWrap" style="display:none;">
+                <label>Preço manual (R$)</label>
+                <input type="number" id="inpPrecoManual" step="0.01" min="0" placeholder="Ex: 250.00" />
+              </div>
+
+
+
+              <button class="btn btn-outline full" id="btnRecalcular">Recalcular</button>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="btnCancelar">Cancelar</button>
+        <button class="btn btn-primary" id="btnSalvar">Salvar</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
