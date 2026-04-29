@@ -12,6 +12,126 @@ const {
   modalComponente,
 } = els;
 
+/* =====================================================
+   ADICIONAR COMPONENTE
+===================================================== */
+
+/* =====================================================
+   ADICIONAR COMPONENTE
+===================================================== */
+function adicionarComponente() {
+
+  const valorUnitarioOficial = 0;
+  const valorReposicaoOficial = 0;
+
+  const tr = document.createElement("tr");
+  tr.classList.add("item-row", "item-componente");
+
+  tr.dataset.valorUnitario = valorUnitarioOficial;
+  tr.dataset.valorReposicao = valorReposicaoOficial;
+  tr.dataset.volume = 0;
+
+  tr.innerHTML = `
+<td class="acao-col">
+  <div class="acoes-linha">
+    <span class="drag-handle">≡</span>
+    <button class="btn-remover-item" type="button">✕</button>
+  </div>
+</td>
+
+<td class="qtd" contenteditable="true">1</td>
+
+<td>
+  <div class="foto-item"></div>
+</td>
+
+<td>
+  <div class="item-autocomplete-wrapper">
+    <div class="nome-item" contenteditable="true">Novo Componente</div>
+    <div class="item-autocomplete-list"></div>
+  </div>
+</td>
+
+<td class="valor valor-unitario">
+  ${formatCurrency(valorUnitarioOficial)}
+</td>
+
+<td class="valor">
+  <input 
+    type="number"
+    class="input-desconto"
+    value="0"
+    min="0"
+    max="100"
+    step="1"
+  >
+</td>
+
+<td class="valor valor-total">
+  R$ 0,00
+</td>
+
+<td class="valor valor-reposicao">
+  ${formatCurrency(valorReposicaoOficial)}
+</td>
+  `;
+
+  tbody.appendChild(tr);
+
+  const qtd = tr.querySelector(".qtd");
+  const desconto = tr.querySelector(".input-desconto");
+
+  qtd.addEventListener("input", () => recalcularLinha(tr));
+  desconto.addEventListener("input", () => recalcularLinha(tr));
+
+  bindAutocompleteItem(tr, "Componente");
+  bindRemover(tr);
+  recalcularLinha(tr);
+}
+
+/* =====================================================
+   BIND COMPONENTE (SPA SAFE)
+===================================================== */
+
+setTimeout(() => {
+
+  const btn = document.getElementById("addComponenteBtn");
+  const modal = document.getElementById("modalConfirmarComponente");
+
+  if(!btn){
+    console.warn("❌ Botão componente não encontrado");
+    return;
+  }
+
+  btn.onclick = function(e){
+    e.preventDefault();
+    e.stopPropagation();
+
+    if(modal){
+      modal.classList.remove("hidden");
+      modal.classList.add("ativo");
+      return;
+    }
+
+    adicionarComponente();
+  };
+
+  window.fecharModalComponente = function () {
+    if(modal){
+      modal.classList.remove("ativo");
+      modal.classList.add("hidden");
+    }
+  };
+
+  window.confirmarAdicionarComponente = function () {
+    if(modal){
+      modal.classList.remove("ativo");
+      modal.classList.add("hidden");
+    }
+    adicionarComponente();
+  };
+
+}, 300);
   /* =====================================================
      RESUMO + VOLUME
 ===================================================== */
@@ -100,7 +220,15 @@ function atualizarResumo() {
     montagemFinal +
     servicos;
 
-  set("resumoTotalGeral", total > 0 ? total : 0);
+const totalFinalPedido = total > 0 ? total : 0;
+
+set("resumoTotalGeral", totalFinalPedido);
+
+/* 🔥 SALVA GLOBAL */
+window.__TOTAL_PEDIDO = totalFinalPedido;
+
+/* 🔥 DISPARA PAGAMENTO */
+window.atualizarPagamento?.();
 }
 
 function calcularVolumeTotalPedido(){
@@ -661,95 +789,6 @@ select.addEventListener("change", function(){
 }
 
   /* =====================================================
-     COMPONENTE
-  ===================================================== */
-  function adicionarComponente() {
-
-    const valorUnitarioOficial = 0;
-    const valorReposicaoOficial = 0;
-
-    const tr = document.createElement("tr");
-    tr.classList.add("item-row", "item-componente");
-
-    tr.dataset.valorUnitario = valorUnitarioOficial;
-    tr.dataset.valorReposicao = valorReposicaoOficial;
-    tr.dataset.volume = 0;
-
-    tr.innerHTML = `
-<td class="acao-col">
-  <div class="acoes-linha">
-    <span class="drag-handle">≡</span>
-    <button class="btn-remover-item" type="button">✕</button>
-  </div>
-</td>
-
-<td class="qtd" contenteditable="true">1</td>
-
-<td>
-  <div class="foto-item"></div>
-</td>
-
-<td>
-  <div class="item-autocomplete-wrapper">
-    <div class="nome-item" contenteditable="true">Novo Componente</div>
-    <div class="item-autocomplete-list"></div>
-  </div>
-</td>
-
-<td class="valor valor-unitario">
-  ${formatCurrency(valorUnitarioOficial)}
-</td>
-
-<td class="valor">
-  <input 
-    type="number"
-    class="input-desconto"
-    value="0"
-    min="0"
-    max="100"
-    step="1"
-  >
-</td>
-
-<td class="valor valor-total">
-  R$ 0,00
-</td>
-
-<td class="valor valor-reposicao">
-  ${formatCurrency(valorReposicaoOficial)}
-</td>
-    `;
-
-    tbody.appendChild(tr);
-
-    const qtd = tr.querySelector(".qtd");
-    const desconto = tr.querySelector(".input-desconto");
-
-    qtd.addEventListener("input", () => recalcularLinha(tr));
-    desconto.addEventListener("input", () => recalcularLinha(tr));
-
-    bindAutocompleteItem(tr, "Componente");
-    bindRemover(tr);
-    recalcularLinha(tr);
-  }
-
-  if(addComponenteBtn && modalComponente){
-
-    addComponenteBtn.addEventListener("click", function () {
-      modalComponente.classList.add("ativo");
-    });
-
-    window.fecharModalComponente = function () {
-      modalComponente.classList.remove("ativo");
-    };
-
-    window.confirmarAdicionarComponente = function () {
-      modalComponente.classList.remove("ativo");
-      adicionarComponente();
-    };
-  }
-
-  /* =====================================================
      SORTABLE
   ===================================================== */
   if (window.Sortable && tbody) {
@@ -783,3 +822,24 @@ calcularVolumeTotalPedido();
   }
 
 });
+if(!window.__orcamentoToggleLoaded){
+
+  document.addEventListener("click", function(e){
+
+    const header = e.target.closest(".orcamento-header");
+    if(!header) return;
+
+    const container = header.parentElement;
+    const content = container.querySelector('.orcamento');
+    const btn = header.querySelector('.btn-minimizar');
+
+    if(!content) return;
+
+    content.classList.toggle('hidden');
+
+    btn.textContent = content.classList.contains('hidden') ? '+' : '—';
+
+  });
+
+  window.__orcamentoToggleLoaded = true;
+}

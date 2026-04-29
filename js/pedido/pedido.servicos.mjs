@@ -15,7 +15,14 @@ window.__servicosModuleLoaded = true;
 
 const { tbody, addServicoBtn } = els;
 
-if(!addServicoBtn || !tbody) return;
+if(!tbody){
+  console.warn("⚠️ tbody não encontrado para serviços");
+  return;
+}
+
+if(!addServicoBtn){
+  console.warn("⚠️ Botão de serviço não encontrado no DOM ainda");
+}
 
 /* =====================================================
    ADICIONAR SERVIÇO
@@ -278,7 +285,9 @@ window.atualizarResumoGlobal?.();
    BOTÃO ADICIONAR
 ===================================================== */
 
-addServicoBtn.addEventListener("click", adicionarServico);
+if(addServicoBtn){
+  addServicoBtn.onclick = adicionarServico;
+}
 
 /* =====================================================
    RECALCULAR SERVIÇOS GLOBAL

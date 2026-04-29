@@ -1,5 +1,12 @@
 <div class="orcamento-page" data-module-root>
 
+<div class="orcamento-container">
+
+<div class="orcamento-header">
+  <span>Pedido</span>
+  <button type="button" class="btn-minimizar">—</button>
+</div>
+
   <div class="orcamento" id="orcamentoLayout">
 <!-- ================= TOPO ================= -->
 <div class="topo">
@@ -407,18 +414,40 @@
 
     <div class="campo">
       <label>Método</label>
-      <select id="pagamentoMetodo">
-        <option>PIX</option>
-        <option>Boleto</option>
-        <option>Cartão</option>
-        <option>Transferência</option>
-      </select>
+<select id="pagamentoMetodo">
+  <option>PIX</option>
+  <option>Boleto</option>
+  <option>Cartão</option>
+  <option>Transferência</option>
+  <option>Híbrido</option>
+</select>
     </div>
 
   </div>
 
-  <!-- CRONOGRAMA -->
-  <div class="cronograma-wrapper">
+<!-- ================= BV ================= -->
+
+<div class="bv-box">
+
+  <div class="bv-item">
+    <span>BV Decorador</span>
+    <input type="number" id="bvTotal" placeholder="0,00">
+  </div>
+
+  <div class="bv-item">
+    <span>Abater no pedido</span>
+    <input type="number" id="bvAbatido" placeholder="0,00">
+  </div>
+
+  <div class="bv-item">
+    <span><strong>BV pendente</strong></span>
+    <input type="text" id="bvPendente" value="R$ 0,00" readonly>
+  </div>
+
+</div>
+
+<!-- CRONOGRAMA -->
+<div class="cronograma-wrapper">
     <table class="cronograma-table">
       <thead>
         <tr>
@@ -487,7 +516,7 @@
 
 </div>
 <!-- MODAL CONFIRMAR COMPONENTE -->
-<div class="modal-confirmacao hidden" id="modalConfirmarComponente">
+<div class="modal-confirmacao hidden" id="modalConfirmarComponente" style="display:none;">
   <div class="modal-box">
 
     <h3>Confirmar ação</h3>
@@ -503,4 +532,31 @@
   </button>
 </div>
   </div>
+</div> <!-- fecha orcamento -->
+</div> <!-- fecha container -->  
 </div>
+<script>
+window.toggleOrcamento = function(header){
+  const container = header.parentElement;
+  const content = container.querySelector('.orcamento');
+  const btn = header.querySelector('.btn-minimizar');
+
+  content.classList.toggle('hidden');
+
+  btn.textContent = content.classList.contains('hidden') ? '+' : '—';
+}
+</script>
+<script>
+document.addEventListener("click", function(e){
+  const header = e.target.closest(".orcamento-header");
+  if(!header) return;
+
+  const container = header.parentElement;
+  const content = container.querySelector('.orcamento');
+  const btn = header.querySelector('.btn-minimizar');
+
+  content.classList.toggle('hidden');
+
+  btn.textContent = content.classList.contains('hidden') ? '+' : '—';
+});
+</script>

@@ -7,6 +7,7 @@ import { initItens } from "./pedido.itens.mjs";
 import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs";
+import { initPagamento } from "./pedido.pagamento.mjs";
 
 export async function initPedido(){
 
@@ -128,11 +129,17 @@ export async function initPedido(){
   /* =====================================================
      ITENS (tabela, espaços, componentes, volume, resumo)
   ===================================================== */
-  initItens({ supabase, els });
+initItens({ supabase, els });
+
 /* =====================================================
    SERVIÇOS
 ===================================================== */
 initServicos({ supabase, els });
+
+/* =====================================================
+   PAGAMENTO 🔥
+===================================================== */
+initPagamento();
 
 /* =====================================================
    PRÉ RESERVA
