@@ -253,7 +253,8 @@ row.innerHTML = `
           const { error } = await api.insertCategoriaCaminhao(payload);
           if (error) {
             console.error("Erro ao criar categoria:", error);
-            alert("Erro ao criar categoria.");
+            if (typeof window.alerta === "function") window.alerta("Erro ao criar categoria.", "Erro", "erro");
+            else alert("Erro ao criar categoria.");
             return;
           }
           await loadCategorias();

@@ -7,6 +7,14 @@
  * - criarModalPerfil()
  */
 
+function avisarUsuario(mensagem, titulo = "Atenção", tipo = "aviso") {
+  if (typeof window.alerta === "function") {
+    window.alerta(mensagem, titulo, tipo);
+    return;
+  }
+  alert(mensagem);
+}
+
 /* =====================================================
    OTIMIZA IMAGEM ANTES DO UPLOAD
 ===================================================== */
@@ -117,7 +125,7 @@ async function salvarPerfilShadow(shadow){
   // Atualiza senha
   if(senha){
     if(senha !== senha2){
-      alert("As senhas não coincidem.");
+      avisarUsuario("As senhas não coincidem.");
       return;
     }
 
@@ -356,7 +364,7 @@ function criarModalPerfil(){
         });
 
     if(error){
-      alert("Erro ao enviar imagem.");
+      avisarUsuario("Erro ao enviar imagem.", "Erro", "erro");
       console.error(error);
       return;
     }

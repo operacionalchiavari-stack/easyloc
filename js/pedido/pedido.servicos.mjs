@@ -2,6 +2,14 @@ import { formatCurrency } from "./pedido.utils.mjs";
 
 export function initServicos({ supabase, els }){
 
+function avisar(mensagem, titulo = "Atenção", tipo = "aviso"){
+if(typeof window.alerta === "function"){
+window.alerta(mensagem, titulo, tipo);
+return;
+}
+alert(mensagem);
+}
+
 /* =====================================================
    SPA GUARD (EVITA DUPLICAÇÃO NO EASYLOC)
 ===================================================== */
@@ -33,7 +41,7 @@ async function adicionarServico(){
 const empresaId = window.__CONTEXT?.empresa_id;
 
 if(!empresaId){
-alert("Empresa não encontrada.");
+avisar("Empresa não encontrada.", "Erro", "erro");
 return;
 }
 
@@ -50,7 +58,7 @@ return;
 }
 
 if(!data || !data.length){
-alert("Nenhum serviço cadastrado.");
+avisar("Nenhum serviço cadastrado.");
 return;
 }
 

@@ -1,15 +1,15 @@
-<div class="almoxarifado-page" data-module-root>
+<div class="almoxarifado-page el-page" data-module-root>
 
   <div class="loading" id="loading">Carregando...</div>
 
-<div class="page-header">
+<div class="page-header el-page">
   <h1>Almoxarifado</h1>
 </div>
 
 
 </div>
 
-<div class="almoxarifado-container">
+<div class="almoxarifado-container el-page">
 
   <div class="cards">
     <div class="card">
@@ -59,12 +59,12 @@
 "></div>
 
 <div class="tabs">
-    <button class="tab-btn active" data-tab="dashboard" onclick="abrirTab('dashboard')">Dashboard</button>
-    <button class="tab-btn" data-tab="cadastro" onclick="abrirTab('cadastro')">Cadastro de insumos</button>
-    <button class="tab-btn" data-tab="movimentacao" onclick="abrirTab('movimentacao')">Entrada / Saída</button>
-    <button class="tab-btn" data-tab="emprestimos" onclick="abrirTab('emprestimos')">Retiradas</button>
-    <button class="tab-btn" data-tab="contagem" onclick="abrirTab('contagem')">Contagem semanal</button>
-    <button class="tab-btn" data-tab="usuarios" onclick="abrirTab('usuarios')">Usuários</button>
+    <button type="button" class="tab-btn active" data-tab="dashboard" onclick="abrirTab('dashboard')">Dashboard</button>
+    <button type="button" class="tab-btn" data-tab="cadastro" onclick="abrirTab('cadastro')">Cadastro de insumos</button>
+    <button type="button" class="tab-btn" data-tab="movimentacao" onclick="abrirTab('movimentacao')">Entrada / Saída</button>
+    <button type="button" class="tab-btn" data-tab="emprestimos" onclick="abrirTab('emprestimos')">Retiradas</button>
+    <button type="button" class="tab-btn" data-tab="contagem" onclick="abrirTab('contagem')">Contagem semanal</button>
+    <button type="button" class="tab-btn" data-tab="usuarios" onclick="abrirTab('usuarios')">Usuários</button>
   </div>
 
 <section class="section active" id="tab-dashboard">
@@ -75,7 +75,7 @@
 
         <div class="filtro-box">
           <span class="filtro-icon">🔍</span>
-          <input 
+          <input class="el-input"
             type="text" 
             id="filtroProduto" 
             placeholder="Buscar produto..." 
@@ -135,19 +135,19 @@
       </div>
       <div class="panel-body">
         <div class="form-grid-3">
-          <div class="field">
+          <div class="field el-field">
             <label>Código</label>
-<input id="prodCodigo" placeholder="Gerado automaticamente" readonly>
+<input class="el-input" id="prodCodigo" placeholder="Gerado automaticamente" readonly>
           </div>
 
-          <div class="field">
+          <div class="field el-field">
             <label>Produto / Insumo</label>
-            <input type="text" id="prodNome" placeholder="Nome do insumo">
+            <input class="el-input" type="text" id="prodNome" placeholder="Nome do insumo">
           </div>
 
-          <div class="field">
+          <div class="field el-field">
             <label>Categoria</label>
-<select id="cadCategoria">
+<select class="el-select" id="cadCategoria">
   <option value="">Selecione</option>
 
   <!-- Limpeza -->
@@ -185,14 +185,14 @@
 </select>
           </div>
 
-          <div class="field">
+          <div class="field el-field">
             <label>Setor</label>
-            <input type="text" id="prodSetor" placeholder="Ex: Almoxarifado">
+            <input class="el-input" type="text" id="prodSetor" placeholder="Ex: Almoxarifado">
           </div>
 
-          <div class="field">
+          <div class="field el-field">
             <label>Unidade</label>
-<select id="cadUnidade">
+<select class="el-select" id="cadUnidade">
   <option value="">Selecione</option>
   <option value="UN">UN (Unidade)</option>
   <option value="KG">KG (Quilo)</option>
@@ -207,42 +207,42 @@
 </select>
           </div>
 
-          <div class="field">
+          <div class="field el-field">
             <label>Estoque atual</label>
-            <input type="number" id="prodEstoqueAtual" placeholder="0" step="0.01">
+            <input class="el-input" type="number" id="prodEstoqueAtual" placeholder="0" step="0.01">
           </div>
 
-          <div class="field">
+          <div class="field el-field">
             <label>Estoque mínimo</label>
-            <input type="number" id="prodEstoqueMinimo" placeholder="0" step="0.01">
+            <input class="el-input" type="number" id="prodEstoqueMinimo" placeholder="0" step="0.01">
           </div>
 
-          <div class="field">
+          <div class="field el-field">
             <label>Valor de custo</label>
-            <input type="number" id="prodValorCusto" placeholder="0" step="0.01">
+            <input class="el-input" type="number" id="prodValorCusto" placeholder="0" step="0.01">
           </div>
 
-          <div class="field">
+          <div class="field el-field">
             <label>Valor de reposição</label>
-            <input type="number" id="prodValorReposicao" placeholder="0" step="0.01">
+            <input class="el-input" type="number" id="prodValorReposicao" placeholder="0" step="0.01">
           </div>
 
-          <div class="field">
+          <div class="field el-field">
             <label>Status</label>
-            <select id="prodStatus">
+            <select class="el-select" id="prodStatus">
               <option>Ativo</option>
               <option>Inativo</option>
             </select>
           </div>
-          <div class="field" style="grid-column:1/-1;">
+          <div class="field el-field" style="grid-column:1/-1;">
             <label>Observações</label>
-            <textarea id="prodObs" placeholder="Observações do item"></textarea>
+            <textarea class="el-textarea" id="prodObs" placeholder="Observações do item"></textarea>
           </div>
         </div>
 
         <div class="actions">
-          <button class="btn btn-primary" onclick="salvarProdutoFront()">Salvar insumo</button>
-          <button class="btn btn-outline" onclick="limparFormProduto()">Limpar</button>
+          <button type="button" class="btn primary" onclick="salvarProdutoFront()">Salvar insumo</button>
+          <button type="button" class="btn secondary" onclick="limparFormProduto()">Limpar</button>
         </div>
       </div>
     </div>
@@ -256,51 +256,51 @@
         </div>
         <div class="panel-body">
           <div class="form-grid">
-            <div class="field">
+            <div class="field el-field">
               <label>Tipo</label>
-              <select id="movTipo">
+              <select class="el-select" id="movTipo">
                 <option value="entrada">Entrada</option>
                 <option value="saida">Saída</option>
               </select>
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Produto</label>
-              <select id="movProduto"></select>
+              <select class="el-select" id="movProduto"></select>
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Quantidade</label>
-              <input type="number" id="movQuantidade" step="0.01">
+              <input class="el-input" type="number" id="movQuantidade" step="0.01">
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Responsável</label>
-              <select id="movResponsavel"></select>
+              <select class="el-select" id="movResponsavel"></select>
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Solicitante / Quem pegou</label>
-<select id="movSolicitante">
+<select class="el-select" id="movSolicitante">
   <option value="">Selecione</option>
 </select>
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Destino</label>
-<select id="movDestino">
+<select class="el-select" id="movDestino">
   <option value="">Selecione</option>
 </select>
             </div>
 
-            <div class="field" style="grid-column:1/-1;">
+            <div class="field el-field" style="grid-column:1/-1;">
               <label>Observações</label>
-              <textarea id="movObs"></textarea>
+              <textarea class="el-textarea" id="movObs"></textarea>
             </div>
           </div>
 
           <div class="actions">
-            <button class="btn btn-primary" onclick="salvarMovimentacaoFront()">Salvar movimentação</button>
+            <button type="button" class="btn primary" onclick="salvarMovimentacaoFront()">Salvar movimentação</button>
           </div>
         </div>
       </div>
@@ -337,48 +337,48 @@
         </div>
         <div class="panel-body">
           <div class="form-grid">
-            <div class="field">
+            <div class="field el-field">
               <label>Produto</label>
-              <select id="empProduto"></select>
+              <select class="el-select" id="empProduto"></select>
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Quantidade</label>
-              <input type="number" id="empQuantidade" step="0.01">
+              <input class="el-input" type="number" id="empQuantidade" step="0.01">
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Responsável pela entrega</label>
-              <select id="empResponsavelEntrega"></select>
+              <select class="el-select" id="empResponsavelEntrega"></select>
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Pessoa que pegou</label>
-<select id="empPessoaPegou">
+<select class="el-select" id="empPessoaPegou">
   <option value="">Selecione</option>
 </select>
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Setor</label>
-<select id="empSetor">
+<select class="el-select" id="empSetor">
   <option value="">Selecione</option>
 </select>
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Previsão de devolução</label>
-              <input type="date" id="empPrevisao">
+              <input class="el-input" type="date" id="empPrevisao">
             </div>
 
-            <div class="field" style="grid-column:1/-1;">
+            <div class="field el-field" style="grid-column:1/-1;">
               <label>Observações</label>
-              <textarea id="empObs"></textarea>
+              <textarea class="el-textarea" id="empObs"></textarea>
             </div>
           </div>
 
           <div class="actions">
-            <button class="btn btn-primary" onclick="salvarEmprestimoFront()">Salvar Retirada</button>
+            <button type="button" class="btn primary" onclick="salvarEmprestimoFront()">Salvar Retirada</button>
           </div>
         </div>
       </div>
@@ -415,9 +415,9 @@
         </div>
         <div class="panel-body">
           <div class="form-grid">
-<div class="field">
+<div class="field el-field">
   <label>Semana referência</label>
-  <input type="text" id="contSemana" readonly>
+  <input class="el-input" type="text" id="contSemana" readonly>
 </div>
 
 <div style="grid-column:1/-1;">
@@ -433,19 +433,19 @@
 
 </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Responsável pela conferência</label>
-              <select id="contResponsavel"></select>
+              <select class="el-select" id="contResponsavel"></select>
             </div>
 
-            <div class="field" style="grid-column:1/-1;">
+            <div class="field el-field" style="grid-column:1/-1;">
               <label>Observações</label>
-              <textarea id="contObs"></textarea>
+              <textarea class="el-textarea" id="contObs"></textarea>
             </div>
           </div>
 
           <div class="actions">
-            <button class="btn btn-primary" onclick="salvarContagemFront()">Salvar contagem</button>
+            <button type="button" class="btn primary" onclick="salvarContagemFront()">Salvar contagem</button>
           </div>
         </div>
       </div>
@@ -482,24 +482,24 @@
         </div>
         <div class="panel-body">
           <div class="form-grid">
-            <div class="field">
+            <div class="field el-field">
               <label>Nome</label>
-              <input type="text" id="userNome">
+              <input class="el-input" type="text" id="userNome">
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Setor</label>
-              <input type="text" id="userSetor">
+              <input class="el-input" type="text" id="userSetor">
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Função</label>
-              <input type="text" id="userFuncao">
+              <input class="el-input" type="text" id="userFuncao">
             </div>
 
-            <div class="field">
+            <div class="field el-field">
               <label>Status</label>
-              <select id="userStatus">
+              <select class="el-select" id="userStatus">
                 <option>Ativo</option>
                 <option>Inativo</option>
               </select>
@@ -507,7 +507,7 @@
           </div>
 
           <div class="actions">
-            <button class="btn btn-primary" onclick="salvarUsuarioFront()">Salvar usuário</button>
+            <button type="button" class="btn primary" onclick="salvarUsuarioFront()">Salvar usuário</button>
           </div>
         </div>
       </div>
@@ -537,13 +537,13 @@
 
 </div>
 
-<div id="modalConfirm" class="modal hidden">
-  <div class="modal-box">
+<div id="modalConfirm" class="modal hidden el-modal">
+  <div class="modal-box el-modal__box">
 
     <h3>Confirmação</h3>
     <p>Confirmar devolução?</p>
 
-    <input 
+    <input class="el-input"
       type="text" 
       id="inputResponsavel" 
       placeholder="Quem está recebendo?" 
@@ -551,14 +551,14 @@
     >
 
     <div class="modal-actions">
-      <button class="btn btn-outline" onclick="fecharModal()">Cancelar</button>
-      <button class="btn btn-primary" id="btnConfirmar">Confirmar</button>
+      <button type="button" class="btn secondary" onclick="fecharModal()">Cancelar</button>
+      <button type="button" class="btn primary" id="btnConfirmar">Confirmar</button>
     </div>
 
   </div>
 </div>
-<div id="modalAbaixoMinimo" class="modal hidden">
-  <div class="modal-box" style="width:900px; max-height:80vh; text-align:left;">
+<div id="modalAbaixoMinimo" class="modal hidden el-modal">
+  <div class="modal-box el-modal__box" style="width:900px; max-height:80vh; text-align:left;">
 
     <h3 style="margin-bottom:15px;">Itens abaixo do mínimo</h3>
 
@@ -579,7 +579,7 @@
     </div>
 
     <div style="margin-top:15px; text-align:right;">
-      <button class="btn btn-outline" onclick="fecharModalAbaixoMinimo()">Fechar</button>
+      <button type="button" class="btn danger btn-fechar" onclick="fecharModalAbaixoMinimo()">Fechar</button>
     </div>
 
   </div>

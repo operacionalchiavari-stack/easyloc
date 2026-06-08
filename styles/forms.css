@@ -1,0 +1,74 @@
+.el-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.el-label,
+.el-field label {
+  color: var(--el-color-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.el-input,
+.el-select,
+.el-textarea,
+.el-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.el-page select,
+.el-page textarea,
+#main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+#main-content select,
+#main-content textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-md);
+  background: var(--el-color-surface);
+  color: var(--el-color-text);
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.el-textarea,
+.el-page textarea,
+#main-content textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.el-input:focus,
+.el-select:focus,
+.el-textarea:focus,
+.el-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+.el-page select:focus,
+.el-page textarea:focus,
+#main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+#main-content select:focus,
+#main-content textarea:focus {
+  border-color: var(--el-color-accent);
+  box-shadow: var(--el-focus-ring);
+  outline: none;
+}
+
+.el-input::placeholder,
+.el-textarea::placeholder,
+.el-page input::placeholder,
+.el-page textarea::placeholder,
+#main-content input::placeholder,
+#main-content textarea::placeholder {
+  color: #94a3b8;
+}
+
+.el-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--el-space-4);
+}
+
+@media (max-width: 720px) {
+  .el-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

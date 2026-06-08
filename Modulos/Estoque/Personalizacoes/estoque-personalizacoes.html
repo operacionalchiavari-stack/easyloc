@@ -2,28 +2,28 @@
      ESTOQUE → CADASTRO DE PERSONALIZAÇÕES (VISUAL)
      arquivo: estoque-personalizacoes.html
 ===================================================== -->
-<div class="page-wrap personalizacoes-page" data-module-root>
+<div class="page-wrap personalizacoes-page el-page" data-module-root>
 
   <!-- TOP BAR -->
-  <div class="page-top">
-    <div class="page-title">
+  <div class="page-top el-page">
+    <div class="page-title el-page">
       <h1>Personalizações Cadastradas</h1>
     </div>
 
-    <div class="page-actions">
-      <button class="btn btn-outline" id="btnPrint">Imprimir / PDF</button>
-      <button class="btn btn-primary" id="btnAddPersonalizacao">+ Adicionar Personalização</button>
-      <button class="btn btn-icon" id="btnHelp" title="Ajuda">?</button>
+    <div class="page-actions el-page">
+      <button type="button" class="btn secondary" id="btnPrint">Imprimir / PDF</button>
+      <button type="button" class="btn primary" id="btnAddPersonalizacao">+ Adicionar Personalização</button>
+      <button type="button" class="btn btn-icon" id="btnHelp" title="Ajuda">?</button>
     </div>
   </div>
 
   <!-- FILTERS -->
   <div class="filters-row">
     <div class="search-wrap">
-      <input type="text" id="searchInput" placeholder="Pesquisar personalização..." />
+      <input class="el-input" type="text" id="searchInput" placeholder="Pesquisar personalização..." />
     </div>
 
-    <select id="filtroTipo">
+    <select class="el-select" id="filtroTipo">
       <option value="">Todos os tipos</option>
       <option value="Pintura">Pintura</option>
       <option value="Forração">Forração</option>
@@ -31,13 +31,13 @@
       <option value="Outro">Outro</option>
     </select>
 
-    <select id="filtroAlvo">
+    <select class="el-select" id="filtroAlvo">
       <option value="">Item + Componente</option>
       <option value="ITEM">Somente Item</option>
       <option value="COMPONENTE">Somente Componente</option>
     </select>
 
-    <select id="filtroStatus">
+    <select class="el-select" id="filtroStatus">
       <option value="">Todos os status</option>
       <option value="ATIVO">Ativo</option>
       <option value="INATIVO">Inativo</option>
@@ -64,15 +64,15 @@
   </div>
 
   <!-- MODAL ROOT -->
-  <div class="modal-overlay hidden" id="modalOverlay">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-overlay hidden el-modal" id="modalOverlay">
+    <div class="modal-card el-modal__box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
 
       <!-- HEADER -->
 <div class="modal-header">
 
   <div class="modal-header-left">
     <h3 id="modalTitle">Adicionar Personalização</h3>
-    <div class="modal-sub">
+    <div class="modal-sub el-modal">
       Vincule a um item ou componente e defina parâmetros de produção para gerar o preço automaticamente.
     </div>
   </div>
@@ -101,7 +101,7 @@
       <div class="modal-body">
 
         <!-- GRID 2 COL -->
-        <div class="modal-grid">
+        <div class="modal-grid el-modal">
 
           <!-- COL 1 (FORM) -->
           <div class="form-col">
@@ -128,7 +128,7 @@
 
     <div>
       <label>Tipo de personalização</label>
-      <select id="inpTipo" required>
+      <select class="el-select" id="inpTipo" required>
         <option value="" disabled selected>Selecione...</option>
         <option value="Pintura">Pintura</option>
         <option value="Forração">Forração</option>
@@ -139,7 +139,7 @@
 
     <div>
       <label>Complexidade</label>
-      <select id="inpComplexidade">
+      <select class="el-select" id="inpComplexidade">
         <option value="1">Simples</option>
         <option value="1.15">Média</option>
         <option value="1.30">Alta</option>
@@ -150,13 +150,13 @@
 
   <div class="form-row">
     <label id="lblVinculo">Selecionar item</label>
-    <input id="inpVinculoNome" list="listaVinculos" placeholder="Digite para buscar..." autocomplete="off" />
+    <input class="el-input" id="inpVinculoNome" list="listaVinculos" placeholder="Digite para buscar..." autocomplete="off" />
     <datalist id="listaVinculos"></datalist>
   </div>
 
   <div class="form-row">
     <label>Observações</label>
-    <textarea id="inpObs" rows="2" placeholder="Ex: cor específica, padrão de costura, acabamento..." ></textarea>
+    <textarea class="el-textarea" id="inpObs" rows="2" placeholder="Ex: cor específica, padrão de costura, acabamento..." ></textarea>
   </div>
 
 </div>
@@ -167,7 +167,7 @@
 
   <div id="insumosContainer"></div>
 
-<button type="button" class="btn btn-primary" id="btnAddInsumo" style="margin-top:12px;">
+<button type="button" class="btn primary" id="btnAddInsumo" style="margin-top:12px;">
     + Adicionar insumo
   </button>
 
@@ -180,11 +180,11 @@
               <div class="form-row two">
                 <div>
                   <label>Tempo por unidade (horas)</label>
-                  <input type="number" id="inpTempo" step="0.1" min="0" placeholder="Ex: 1.5" />
+                  <input class="el-input" type="number" id="inpTempo" step="0.1" min="0" placeholder="Ex: 1.5" />
                 </div>
                 <div>
                   <label>Custo por hora (R$)</label>
-                  <input type="number" id="inpCustoHora" step="0.01" min="0" placeholder="Ex: 35.00" />
+                  <input class="el-input" type="number" id="inpCustoHora" step="0.01" min="0" placeholder="Ex: 35.00" />
                 </div>
               </div>
 
@@ -221,7 +221,7 @@
 
               <div class="form-row">
                 <label>Margem desejada (%)</label>
-                <input type="number" id="inpMargem" step="0.1" min="0" placeholder="Ex: 40" />
+                <input class="el-input" type="number" id="inpMargem" step="0.1" min="0" placeholder="Ex: 40" />
               </div>
 
               <div class="resume-highlight">
@@ -243,12 +243,12 @@
 
               <div class="form-row" id="manualWrap" style="display:none;">
                 <label>Preço manual (R$)</label>
-                <input type="number" id="inpPrecoManual" step="0.01" min="0" placeholder="Ex: 250.00" />
+                <input class="el-input" type="number" id="inpPrecoManual" step="0.01" min="0" placeholder="Ex: 250.00" />
               </div>
 
 
 
-              <button class="btn btn-outline full" id="btnRecalcular">Recalcular</button>
+              <button type="button" class="btn secondary full" id="btnRecalcular">Recalcular</button>
 
             </div>
 
@@ -259,8 +259,8 @@
 
       <!-- FOOTER -->
       <div class="modal-footer">
-        <button class="btn btn-outline" id="btnCancelar">Cancelar</button>
-        <button class="btn btn-primary" id="btnSalvar">Salvar</button>
+        <button type="button" class="btn secondary" id="btnCancelar">Cancelar</button>
+        <button type="button" class="btn primary" id="btnSalvar">Salvar</button>
       </div>
 
     </div>

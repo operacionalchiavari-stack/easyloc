@@ -25,7 +25,11 @@ window.itens_openAdd = function(){
     document.getElementById("itensModal");
 
   if(!modal){
-    alert("Modal itensModal não encontrado");
+    if (typeof window.alerta === "function") {
+      window.alerta("Modal itensModal não encontrado", "Erro", "erro");
+    } else {
+      alert("Modal itensModal não encontrado");
+    }
     return;
   }
 

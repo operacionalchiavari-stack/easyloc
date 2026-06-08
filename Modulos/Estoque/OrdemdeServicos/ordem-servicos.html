@@ -1,5 +1,5 @@
 
-<div class="ordem-servicos-page">
+<div class="ordem-servicos-page el-page">
 
   <div class="header">
 <h1 id="tituloPagina">
@@ -10,27 +10,27 @@
 </h1>
 
 <div class="acoes-topo" id="acoesTopo">
-  <button class="btn-nova-os" onclick="abrirModalOS()">
+  <button class="btn-nova-os btn primary" type="button" onclick="abrirModalOS()">
     <span>＋</span>
     Nova O.S
   </button>
 
-  <button class="btn-baixa" onclick="abrirBaixa()">
+  <button class="btn-baixa btn primary" type="button" onclick="abrirBaixa()">
     Concluir O.S
   </button>
 
-  <button class="btn" onclick="abrirEncaminhamento()">
+  <button class="btn secondary" type="button" onclick="abrirEncaminhamento()">
     Encaminhar
   </button>
 
-<button class="btn" onclick="iniciarPainel()">
+<button class="btn secondary" type="button" onclick="iniciarPainel()">
   Painel
 </button>
 </div>
 </div>
 
 <div class="filtros" id="filtros">
-  <select id="filtroSetor"></select>
+  <select class="el-select" id="filtroSetor"></select>
 <div class="dropdown-multi">
   <div class="dropdown-header" onclick="toggleDropdown()">
     Setor responsável (todos)
@@ -40,19 +40,19 @@
     <!-- preenchido via JS -->
   </div>
 </div>
-  <select id="filtroNome"></select>
-  <input id="filtroOS" placeholder="Número O.S">
-  <select id="filtroOnde">
+  <select class="el-select" id="filtroNome"></select>
+  <input class="el-input" id="filtroOS" placeholder="Número O.S">
+  <select class="el-select" id="filtroOnde">
     <option value="">Dano (todos)</option>
     <option value="Dano Interno">Dano Interno</option>
     <option value="Evento">Evento</option>
   </select>
-  <input id="filtroPedido" placeholder="Número do pedido">
+  <input class="el-input" id="filtroPedido" placeholder="Número do pedido">
 </div>
 
 <!-- cards removidos -->
 
-<div class="table-container">
+<div class="table-container el-page">
 <table>
 <thead>
   <tr>
@@ -86,7 +86,7 @@
   <td>Dano interno</td>
   <td class="col-pedido">-</td>
   <td class="col-detalhes">Arranhado na lateral esquerda</td>
-  <td><input type="date" class="input-data-urgencia urgente" value="2026-03-05"></td>
+  <td><input type="date" class="input-data-urgencia urgente el-input" value="2026-03-05"></td>
 </tr>
 
 <tr>
@@ -104,7 +104,7 @@
   <td>Dano interno</td>
   <td class="col-pedido">-</td>
   <td class="col-detalhes">Solda solta na base</td>
-  <td><input type="date" class="input-data-urgencia" value="2026-03-24"></td>
+  <td><input type="date" class="input-data-urgencia el-input" value="2026-03-24"></td>
 </tr>
 
 <tr>
@@ -123,7 +123,7 @@
   <td>Dano interno</td>
   <td class="col-pedido">-</td>
   <td class="col-detalhes">Estrutura torta</td>
-  <td><input type="date" class="input-data-urgencia atencao" value="2026-03-25"></td>
+  <td><input type="date" class="input-data-urgencia atencao el-input" value="2026-03-25"></td>
 </tr>
 
 <tr>
@@ -141,7 +141,7 @@
   <td>Evento</td>
   <td class="col-pedido">874</td>
   <td class="col-detalhes">Rasgo no braço direito</td>
-  <td><input type="date" class="input-data-urgencia urgente" value="2026-04-01"></td>
+  <td><input type="date" class="input-data-urgencia urgente el-input" value="2026-04-01"></td>
 </tr>
 
 <tr>
@@ -159,7 +159,7 @@
   <td>Produção</td>
   <td class="col-pedido">-</td>
   <td class="col-detalhes">Manchas no estofado</td>
-  <td><input type="date" value="2026-04-06"></td>
+  <td><input class="el-input" type="date" value="2026-04-06"></td>
 </tr>
 
 </tbody>
@@ -173,7 +173,7 @@
 
   <!-- 🔥 BOTÃO FIXO -->
   <div style="position:fixed; top:10px; right:10px; z-index:9999;">
-    <button onclick="sairPainel()" class="btn-sair">
+    <button type="button" onclick="sairPainel()" class="btn-sair btn danger">
       ✖ Sair
     </button>
   </div>
@@ -276,19 +276,19 @@
 
 
 <!-- MODAL LANÇAMENTO O.S -->
-<div class="modal" id="modalOS">
-  <div class="modal-box os-modal-box">
+<div class="modal el-modal" id="modalOS">
+  <div class="modal-box os-modal-box el-modal__box">
 
     <div class="os-modal-header">
       <h2>O.S Manutenção</h2>
-      <button class="os-modal-close" type="button" onclick="fecharModalOS()">✕</button>
+      <button class="os-modal-close btn-icon" type="button" onclick="fecharModalOS()">✕</button>
     </div>
 
     <div class="os-modal-body">
 
       <!-- LINHA 1 -->
       <div class="os-row os-row-top">
-        <div class="os-field os-field-setor">
+        <div class="os-field os-field-setor el-field">
           <label>Qual o seu Setor? *</label>
 <div class="radio-group" id="setor">
 
@@ -307,20 +307,20 @@
 </div>
         </div>
 
-        <div class="os-field os-field-senha">
+        <div class="os-field os-field-senha el-field">
           <label>Senha *</label>
-          <input type="password" id="senha" maxlength="4" />
+          <input class="el-input" type="password" id="senha" maxlength="4" />
         </div>
       </div>
 
       <!-- NUMERO OS -->
-      <div class="os-field" id="osContainer" style="display:none;">
+      <div class="os-field el-field" id="osContainer" style="display:none;">
         <label>Número da O.S. *</label>
-        <input type="text" id="numeroOS" placeholder="Ex: 2318" />
+        <input class="el-input" type="text" id="numeroOS" placeholder="Ex: 2318" />
       </div>
 
       <!-- NOME -->
-      <div class="os-field">
+      <div class="os-field el-field">
         <label>Qual seu nome? *</label>
         <div class="radio-group" id="nome">
           <div class="radio-option" data-value="Danilo">Danilo</div>
@@ -333,35 +333,35 @@
       </div>
 
       <!-- CATEGORIA -->
-      <div class="os-field os-field-categoria">
+      <div class="os-field os-field-categoria el-field">
         <label>Categoria *</label>
-        <select id="categoria">
+        <select class="el-select" id="categoria">
           <option value="">Selecione uma categoria...</option>
         </select>
       </div>
 
       <!-- ITEM / CODIGO -->
       <div class="os-row">
-        <div class="os-field os-grow">
+        <div class="os-field os-grow el-field">
           <label>Qual o item? *</label>
-          <input list="itensList" id="item" placeholder="Digite para buscar..." />
+          <input class="el-input" list="itensList" id="item" placeholder="Digite para buscar..." />
           <datalist id="itensList"></datalist>
         </div>
 
-        <div class="os-field os-field-codigo">
+        <div class="os-field os-field-codigo el-field">
           <label>Código</label>
-          <input type="text" id="codigoItem" readonly />
+          <input class="el-input" type="text" id="codigoItem" readonly />
         </div>
       </div>
 
       <!-- QUANTIDADE -->
-      <div class="os-field">
+      <div class="os-field el-field">
         <label>Quantidade *</label>
-        <input type="number" id="quantidade" max="999" />
+        <input class="el-input" type="number" id="quantidade" max="999" />
       </div>
 
       <!-- SETOR SOLICITADO -->
-      <div class="os-field">
+      <div class="os-field el-field">
         <label>Setor Solicitado *</label>
 
         <div class="radio-group" id="setorSolicitado">
@@ -382,7 +382,7 @@
       </div>
 
       <!-- SAI SEMANA -->
-      <div class="os-field">
+      <div class="os-field el-field">
         <label>Tem Urgência?</label>
 
         <div class="radio-group" id="saiSemana">
@@ -392,13 +392,13 @@
       </div>
 
       <!-- DATA LIMITE -->
-      <div class="os-field" id="dataContainer" style="display:none;">
+      <div class="os-field el-field" id="dataContainer" style="display:none;">
         <label>Data limite *</label>
-        <input type="date" id="dataLimite" />
+        <input class="el-input" type="date" id="dataLimite" />
       </div>
 
       <!-- ONDE DANO -->
-      <div class="os-field">
+      <div class="os-field el-field">
         <label>Onde aconteceu o dano? *</label>
 
         <div class="radio-group" id="ondeDano">
@@ -408,30 +408,30 @@
       </div>
 
       <!-- NUMERO DO PEDIDO (APENAS EVENTO) -->
-      <div class="os-field" id="pedidoContainer" style="display:none;">
+      <div class="os-field el-field" id="pedidoContainer" style="display:none;">
         <label>Número do Pedido *</label>
-        <input type="text" id="numeroPedido" placeholder="Ex: 743" />
+        <input class="el-input" type="text" id="numeroPedido" placeholder="Ex: 743" />
       </div>
 
       <!-- DETALHES -->
-      <div class="os-field">
+      <div class="os-field el-field">
         <label>Detalhes sobre a Avaria *</label>
-        <textarea id="detalhes"></textarea>
+        <textarea class="el-textarea" id="detalhes"></textarea>
       </div>
 
     </div>
 
     <div class="os-modal-footer">
-      <button class="os-btn os-btn-light" type="button" onclick="fecharModalOS()">Cancelar</button>
-      <button class="os-btn os-btn-primary" type="button" onclick="salvarOSModal()">Enviar</button>
+      <button class="os-btn btn secondary" type="button" onclick="fecharModalOS()">Cancelar</button>
+      <button class="os-btn btn primary" type="button" onclick="salvarOSModal()">Enviar</button>
     </div>
 
   </div>
 </div>
 
 
-<div class="modal" id="modalEncaminhar">
-  <div class="modal-box" style="max-width:420px;">
+<div class="modal el-modal" id="modalEncaminhar">
+  <div class="modal-box el-modal__box" style="max-width:420px;">
 
     <div style="padding:20px; border-bottom:1px solid #e2e8f0;">
       <h3 style="font-size:18px; font-weight:700;">Encaminhar O.S</h3>
@@ -439,7 +439,7 @@
     </div>
 
     <div style="padding:20px;">
-      <select id="setorEncaminhar">
+      <select class="el-select" id="setorEncaminhar">
         <option value="">Selecione...</option>
         <option value="Reparo">Reparo</option>
         <option value="Solda">Solda</option>
@@ -457,11 +457,11 @@
       padding:15px;
       border-top:1px solid #e2e8f0;
     ">
-      <button onclick="fecharEncaminhar()" class="os-btn os-btn-light">
+      <button type="button" onclick="fecharEncaminhar()" class="os-btn btn secondary">
         Cancelar
       </button>
 
-      <button onclick="confirmarEncaminhar()" class="os-btn os-btn-primary">
+      <button type="button" onclick="confirmarEncaminhar()" class="os-btn btn primary">
         Confirmar
       </button>
     </div>
@@ -469,8 +469,8 @@
   </div>
 </div>
 
-<div class="modal" id="modalSenha">
-  <div class="modal-box" style="max-width:420px;">
+<div class="modal el-modal" id="modalSenha">
+  <div class="modal-box el-modal__box" style="max-width:420px;">
 
     <div style="padding:24px 26px; border-bottom:1px solid #e2e8f0;">
       <h2 style="font-size:18px; font-weight:700;">Confirmar baixa</h2>
@@ -480,17 +480,9 @@
     <div style="padding:20px 26px;">
       <input 
         type="password" 
+        class="el-input"
         id="senhaBaixa" 
-        placeholder="••••" 
-        style="
-          width:100%;
-          height:42px;
-          border-radius:10px;
-          border:1px solid #cbd5e1;
-          text-align:center;
-          font-size:16px;
-          letter-spacing:4px;
-        "
+        placeholder="••••"
       >
     </div>
 
@@ -501,19 +493,19 @@
       padding:15px 20px;
       border-top:1px solid #e2e8f0;
     ">
-      <button onclick="fecharModalSenha()" class="os-btn os-btn-light">
+      <button type="button" onclick="fecharModalSenha()" class="os-btn btn secondary">
         Cancelar
       </button>
 
-      <button onclick="validarSenhaBaixa()" class="os-btn os-btn-primary">
+      <button type="button" onclick="validarSenhaBaixa()" class="os-btn btn primary">
         Confirmar
       </button>
     </div>
 
   </div>
 </div>
-<div class="modal" id="modalChecklist">
-  <div class="modal-box" style="
+<div class="modal el-modal" id="modalChecklist">
+  <div class="modal-box el-modal__box" style="
     max-width:720px;        /* 🔥 mais largo */
     max-height:85vh;
     display:flex;
@@ -593,11 +585,11 @@
       padding:14px 20px;
       border-top:1px solid #e2e8f0;
     ">
-      <button onclick="fecharChecklist()" class="os-btn os-btn-light">
+      <button type="button" onclick="fecharChecklist()" class="os-btn btn secondary">
         Cancelar
       </button>
 
-      <button onclick="confirmarBaixa()" class="os-btn os-btn-primary">
+      <button type="button" onclick="confirmarBaixa()" class="os-btn btn primary">
         Finalizar baixa
       </button>
     </div>

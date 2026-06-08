@@ -1,0 +1,66 @@
+.el-card,
+.card,
+.cards-resumo > *,
+.card-resumo,
+.resumo-card,
+.info-card,
+.metric-card {
+  background: var(--el-color-surface);
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-lg);
+  box-shadow: var(--el-shadow-sm);
+  min-height: var(--el-card-min-height);
+  padding: var(--el-card-padding);
+}
+
+.el-card:hover,
+.card-resumo:hover,
+.resumo-card:hover,
+.info-card:hover,
+.metric-card:hover {
+  box-shadow: var(--el-shadow-md);
+}
+
+.el-card-title,
+.card-title,
+.card-resumo span,
+.resumo-card span,
+.info-card span,
+.metric-card span {
+  color: var(--el-color-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.el-card-value,
+.card-value,
+.card-resumo strong,
+.resumo-card strong,
+.info-card strong,
+.metric-card strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--el-color-primary);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.el-card-meta,
+.card-meta,
+.card-resumo small,
+.resumo-card small,
+.info-card small,
+.metric-card small {
+  display: block;
+  margin-top: 4px;
+  color: var(--el-color-muted);
+  font-size: 12px;
+}
+
+.el-card-grid,
+.cards-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--el-space-4);
+}

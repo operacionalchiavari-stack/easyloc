@@ -481,16 +481,16 @@ function imprimirCaminhoes() {
 ===================================================== */
 
 function mostrarAlerta(texto, titulo = "Atenção") {
+  if (typeof window.alerta === "function") {
+    window.alerta(texto, titulo, titulo === "Erro" ? "erro" : "aviso");
+    return;
+  }
 
-  document.getElementById("modalAlertaTitulo").innerText = titulo;
-  document.getElementById("modalAlertaTexto").innerText = texto;
-
-  document.getElementById("modalAlerta").classList.remove("hidden");
-
+  alert(texto);
 }
 
 function fecharAlerta() {
-  document.getElementById("modalAlerta").classList.add("hidden");
+  window.fecharAlertaGlobal?.();
 }
 /* =====================================================
    MODAL DETALHE / VISUALIZAÇÃO CAMINHÃO

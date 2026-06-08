@@ -10,7 +10,11 @@ window.itens_imprimir = function(){
     [];
 
   if(!lista.length){
-    alert("Nenhum item para imprimir.");
+    if (typeof window.alerta === "function") {
+      window.alerta("Nenhum item para imprimir.", "Atenção", "aviso");
+    } else {
+      alert("Nenhum item para imprimir.");
+    }
     return;
   }
 

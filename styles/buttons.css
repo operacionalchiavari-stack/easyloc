@@ -1,0 +1,138 @@
+.btn,
+.el-btn {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--el-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--el-radius-md);
+  padding: 10px 16px;
+  background: var(--el-color-surface);
+  color: var(--el-color-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+
+.btn:hover,
+.el-btn:hover {
+  box-shadow: var(--el-shadow-sm);
+}
+
+.btn:active,
+.el-btn:active {
+  transform: translateY(1px);
+}
+
+.btn.primary,
+.btn.save,
+.btn.salvar,
+.btn-primary,
+.btn-save,
+.btn-salvar,
+.el-btn--primary {
+  background: var(--el-color-accent);
+  border-color: var(--el-color-accent);
+  color: #ffffff;
+}
+
+.btn.primary:hover,
+.btn.save:hover,
+.btn.salvar:hover,
+.btn-primary:hover,
+.btn-save:hover,
+.btn-salvar:hover,
+.el-btn--primary:hover {
+  background: var(--el-color-accent-strong);
+  border-color: var(--el-color-accent-strong);
+}
+
+.btn.secondary,
+.btn.cancel,
+.btn.cancelar,
+.btn-secondary,
+.btn-cancel,
+.btn-cancelar,
+.el-btn--secondary {
+  background: var(--el-color-surface);
+  border-color: var(--el-color-border);
+  color: var(--el-color-primary);
+}
+
+.btn.danger,
+.btn.exit,
+.btn.sair,
+.btn-danger,
+.btn-exit,
+.btn-sair,
+.el-btn--danger {
+  background: var(--el-color-danger);
+  border-color: var(--el-color-danger);
+  color: #ffffff;
+}
+
+.btn.ghost,
+.btn-ghost,
+.el-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--el-color-primary);
+}
+
+.btn-icon,
+.el-icon-btn {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-md);
+  background: var(--el-color-surface);
+  color: var(--el-color-primary);
+  padding: 0;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+
+.btn-icon:hover,
+.el-icon-btn:hover {
+  background: var(--el-color-surface-soft);
+  box-shadow: var(--el-shadow-sm);
+}
+
+.btn-close,
+.modal-close,
+.os-modal-close,
+.btn-close-ajuda,
+.btn-fechar,
+.btn.fechar,
+.fechar,
+.fechar-dia,
+.btn-icon[aria-label="Fechar"],
+button[aria-label="Fechar"],
+.el-btn--close {
+  background: var(--el-color-danger) !important;
+  border-color: var(--el-color-danger) !important;
+  color: #ffffff !important;
+}
+
+.btn-close:hover,
+.modal-close:hover,
+.os-modal-close:hover,
+.btn-close-ajuda:hover,
+.btn-fechar:hover,
+.btn.fechar:hover,
+.fechar:hover,
+.fechar-dia:hover,
+.btn-icon[aria-label="Fechar"]:hover,
+button[aria-label="Fechar"]:hover,
+.el-btn--close:hover {
+  background: #b91c1c !important;
+  border-color: #b91c1c !important;
+  color: #ffffff !important;
+}

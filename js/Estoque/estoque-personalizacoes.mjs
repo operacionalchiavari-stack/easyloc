@@ -5,6 +5,14 @@
 
 let personalizacoes = [];
 
+function avisar(mensagem, titulo = "Atenção", tipo = "aviso"){
+  if(typeof window.alerta === "function"){
+    window.alerta(mensagem, titulo, tipo);
+    return;
+  }
+  alert(mensagem);
+}
+
 window.__moduleInit = function(){
 
   "use strict";
@@ -775,17 +783,17 @@ async function salvarPersonalizacao(){
   const insumosUsados = coletarInsumosDoModal();
 
   if(!tipo){
-    alert("Selecione o tipo de personalização.");
+    avisar("Selecione o tipo de personalização.");
     return;
   }
 
   if(!vinculoNome){
-    alert("Selecione um item ou componente para vincular.");
+    avisar("Selecione um item ou componente para vincular.");
     return;
   }
 
   if(insumosUsados.length === 0){
-    alert("Adicione pelo menos 1 insumo.");
+    avisar("Adicione pelo menos 1 insumo.");
     return;
   }
 
@@ -794,7 +802,7 @@ async function salvarPersonalizacao(){
   );
 
   if(!ref){
-    alert("Selecione um item válido da lista.");
+    avisar("Selecione um item válido da lista.");
     return;
   }
 
@@ -904,7 +912,7 @@ if(insErr) throw insErr;
 
   }catch(err){
     console.error("Erro ao salvar personalização:", err);
-    alert("Erro ao salvar personalização.");
+    avisar("Erro ao salvar personalização.", "Erro", "erro");
   }
 
 }

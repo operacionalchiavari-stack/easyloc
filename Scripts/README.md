@@ -23,7 +23,7 @@ OPENAI_API_KEY=sk-...              (sua chave OpenAI)
 ### 2️⃣ Rodar o script
 
 ```bash
-node Scripts/gerar-embedding.js
+node Scripts/gerar-embedding.mjs
 ```
 
 Ou com npm (se configurado em package.json):
@@ -39,7 +39,7 @@ Adicione um script em `package.json`:
 ```json
 {
   "scripts": {
-    "generate-embeddings": "node Scripts/gerar-embedding.js",
+    "generate-embeddings": "node Scripts/gerar-embedding.mjs",
     "start": "node server/index.js"
   }
 }

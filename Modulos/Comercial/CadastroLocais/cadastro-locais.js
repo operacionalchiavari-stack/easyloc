@@ -318,9 +318,6 @@ document.querySelectorAll(".tag").forEach(tag => {
    VALIDAÇÃO
 ===================================================== */
 function mostrarAlerta(msg) {
-  const modal = document.getElementById("locaisValidationModal");
-  const text = document.getElementById("locaisValidationMsg");
-
   // 🔒 tira o foco de qualquer campo (derruba o autocomplete)
   try { document.activeElement?.blur(); } catch (e) {}
 
@@ -328,13 +325,12 @@ function mostrarAlerta(msg) {
   const pac = document.querySelector(".pac-container");
   if (pac) pac.style.display = "none";
 
-  if (!modal || !text) {
-    alert(msg);
+  if (typeof window.alerta === "function") {
+    window.alerta(msg, "Atenção", "aviso");
     return;
   }
 
-  text.textContent = msg;
-  modal.style.display = "flex";
+  alert(msg);
 }
 
 function fecharValidationModal() {
@@ -587,7 +583,13 @@ function abrirDetalhesLocal(local) {
 async function Locais_excluir() {
   if (!localAtualId) return;
 
-  if (!confirm("Deseja realmente excluir este local?")) return;
+  const confirmou = await window.confirmarGlobal?.(
+    "Deseja realmente excluir este local?",
+    "Confirmar exclusão",
+    { confirmarTexto: "Excluir", tipo: "error" }
+  );
+
+  if (!confirmou) return;
 
   const { error } = await supabase
     .from("locais_empresas")
@@ -671,6 +673,15 @@ function extrairTag(tags, nomeGrupo) {
     : valor;
 }
 
+function esc(v) {
+  return String(v ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function renderizarTagsComoCards(tags, grupo, classe) {
   if (!tags) return "-";
 
@@ -691,7 +702,7 @@ function renderizarTagsComoCards(tags, grupo, classe) {
     <div class="table-tags">
       ${valores
         .map(
-          v => `<span class="table-tag ${classe}">${v}</span>`
+          v => `<span class="table-tag ${classe}">${esc(v)}</span>`
         )
         .join("")}
     </div>
@@ -712,10 +723,10 @@ function renderizarTabelaLocais(locais) {
     const inatividade = calcularInatividade(l.ultima_locacao);
 
     tr.innerHTML = `
-      <td>${l.nome_razao || "-"}</td>
-      <td>${l.cpf_cnpj || "-"}</td>
-      <td>${l.telefone || "-"}</td>
-      <td>${l.email || "-"}</td>
+      <td>${esc(l.nome_razao || "-")}</td>
+      <td>${esc(l.cpf_cnpj || "-")}</td>
+      <td>${esc(l.telefone || "-")}</td>
+      <td>${esc(l.email || "-")}</td>
 
       <td>${renderizarTagsComoCards(l.tags, "tipo", "tag-tipo")}</td>
       <td>${renderizarTagsComoCards(l.tags, "canal", "tag-canal")}</td>
@@ -724,7 +735,7 @@ function renderizarTabelaLocais(locais) {
       <td>${inatividade}</td>
 
       <td>
-        <span class="status ${String(status).toLowerCase()}">${status}</span>
+        <span class="status ${esc(String(status).toLowerCase())}">${esc(status)}</span>
       </td>
     `;
 
@@ -955,7 +966,7 @@ function Locais_imprimir() {
   const locais = window.locaisFiltrados || locaisCache || [];
 
   if (!locais.length) {
-    alert("Nenhum local para imprimir.");
+    mostrarAlerta("Nenhum local para imprimir.");
     return;
   }
 
@@ -1067,11 +1078,11 @@ window.Locais_imprimir = function () {
     [];
 
   if (!lista.length) {
-    alert("Nenhum local para imprimir.");
+    mostrarAlerta("Nenhum local para imprimir.");
     return;
   }
 
-  const iframe = document.getElementById("printFrame");
+  const iframe = document.getElementById("locaisPrintFrame");
   const doc = iframe.contentWindow.document;
 
   doc.open();
@@ -1217,6 +1228,7 @@ const wrapper = document.getElementById("locais-endereco-wrapper");
 
   const input = document.createElement("input");
 input.id = "locais-endereco";
+  input.className = "el-input";
   input.type = "text";
   input.placeholder =
     "Pesquise rua, salão, chácara, buffet, ponto conhecido...";
@@ -1231,7 +1243,7 @@ input.id = "locais-endereco";
 ===================== */
 
 function abrirMiniPlayer() {
-  alert(
+  mostrarAlerta(
     "No vídeo do YouTube, clique no ícone Picture-in-Picture (quadrado pequeno) para assistir enquanto usa o sistema."
   );
 }

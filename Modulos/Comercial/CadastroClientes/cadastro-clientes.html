@@ -1,11 +1,11 @@
-<div class="container">
+<div class="container el-page">
 
 <div class="header-list">
   <h2>Clientes Cadastrados</h2>
 
   <div class="header-actions">
-<button class="add-btn secondary" onclick="clientes_imprimir()">Imprimir / PDF</button>
-    <button class="add-btn" onclick="clientes_openAdd()">+ Adicionar Cliente</button>
+<button class="add-btn secondary btn secondary" type="button" onclick="clientes_imprimir()">Imprimir / PDF</button>
+    <button class="add-btn btn primary" type="button" onclick="clientes_openAdd()">+ Adicionar Cliente</button>
 <img
   src="./logoajuda.png"
   class="btn-ajuda-img"
@@ -24,26 +24,27 @@
 
 <div class="filters">
   <input
+    class="el-input"
     id="searchInput"
     placeholder="Pesquisar cliente..."
     oninput="aplicarFiltros()"
   >
 
-  <select id="statusFilter" onchange="aplicarFiltros()">
+  <select class="el-select" id="statusFilter" onchange="aplicarFiltros()">
     <option value="">Todos os status</option>
     <option value="Ativo">Ativo</option>
     <option value="Morno">Morno</option>
     <option value="Inativo">Inativo</option>
   </select>
 
-  <select id="inactiveFilter" onchange="aplicarFiltros()">
+  <select class="el-select" id="inactiveFilter" onchange="aplicarFiltros()">
     <option value="">Toda inatividade</option>
     <option value="30">Até 30 dias</option>
     <option value="90">31 a 90 dias</option>
     <option value="180">Acima de 90 dias</option>
   </select>
 
-  <select id="styleFilter" onchange="aplicarFiltros()">
+  <select class="el-select" id="styleFilter" onchange="aplicarFiltros()">
     <option value="">Todos os estilos</option>
     <option value="Clássico">Clássico</option>
     <option value="Moderno">Moderno</option>
@@ -52,7 +53,7 @@
     <option value="Luxo">Luxo</option>
   </select>
 
-  <select id="budgetFilter" onchange="aplicarFiltros()">
+  <select class="el-select" id="budgetFilter" onchange="aplicarFiltros()">
     <option value="">Todos os orçamentos</option>
     <option value="Econômico">Econômico</option>
     <option value="Intermediário">Intermediário</option>
@@ -81,53 +82,53 @@
 </div>
 
 <!-- ================= MODAL DETALHES ================= -->
-<div class="modal" id="modal">
-  <div class="modal-content">
+<div class="modal el-modal" id="modal">
+  <div class="modal-content el-modal__box">
 
     <input type="hidden" id="clienteId">
 
     <div class="modal-header">
       <h3>Detalhes do Cliente</h3>
-      <button class="edit-btn" onclick="clientes_enableEdit()">✏️</button>
+      <button class="edit-btn btn-icon" type="button" onclick="clientes_enableEdit()">✏️</button>
     </div>
 
     <div class="form-grid three-cols">
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Tipo de Pessoa *</label>
-        <select id="tipoPessoa" disabled>
+        <select class="el-select" id="tipoPessoa" disabled>
           <option>Pessoa Física</option>
           <option>Pessoa Jurídica</option>
         </select>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>CPF / CNPJ *</label>
-        <input id="cpfCnpj" readonly>
+        <input class="el-input" id="cpfCnpj" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Inscrição Estadual</label>
-        <input id="inscricaoEstadual" readonly>
+        <input class="el-input" id="inscricaoEstadual" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Nome / Razão Social *</label>
-        <input id="nome" readonly>
+        <input class="el-input" id="nome" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Telefone *</label>
-        <input id="telefone" readonly>
+        <input class="el-input" id="telefone" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Email *</label>
-        <input id="email" readonly>
+        <input class="el-input" id="email" readonly>
       </div>
 
       <!-- ENDEREÇO COM GOOGLE PLACES -->
-<div class="form-group col-2">
+<div class="form-group el-field col-2">
   <label>Endereço completo *</label>
 
   <!-- Wrapper para input dinâmico do Google -->
@@ -136,24 +137,24 @@
 
 
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Número *</label>
-        <input id="numeroEndereco" readonly>
+        <input class="el-input" id="numeroEndereco" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Ponto de referência *</label>
-        <input id="pontoReferencia" readonly>
+        <input class="el-input" id="pontoReferencia" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Última locação</label>
-<input id="ultimaLocacao" type="date">
+<input class="el-input" id="ultimaLocacao" type="date">
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Status do cliente *</label>
-        <select id="statusCliente" disabled>
+        <select class="el-select" id="statusCliente" disabled>
           <option>Ativo</option>
           <option>Morno</option>
           <option>Inativo</option>
@@ -218,34 +219,25 @@
 
     <div class="modal-actions">
 
-      <button class="btn-cancel" onclick="clientes_closeModal()">Fechar</button>
-      <button class="btn-save" onclick="clientes_salvar()">Salvar</button>
+      <button class="btn-fechar btn danger" type="button" onclick="clientes_closeModal()">Fechar</button>
+      <button class="btn-save btn primary" type="button" onclick="clientes_salvar()">Salvar</button>
     </div>
 
   </div>
 </div>
 
 <!-- ================= MODAL CONFIRMAÇÃO ================= -->
-<div class="modal" id="confirmModal">
-  <div class="modal-content confirm-box">
+<div class="modal el-modal" id="confirmModal">
+  <div class="modal-content el-modal__box confirm-box">
     <h3>Confirmar exclusão</h3>
     <p>
       Tem certeza que deseja excluir este cadastro?<br>
       <strong>Essa ação não poderá ser desfeita.</strong>
     </p>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="clientes_closeModal()">Fechar</button>
-      <button class="btn-delete" onclick="clientes_excluir()">Excluir</button>
+      <button class="btn-fechar btn danger" type="button" onclick="clientes_closeModal()">Fechar</button>
+      <button class="btn-delete btn danger" type="button" onclick="clientes_excluir()">Excluir</button>
     </div>
-  </div>
-</div>
-
-<!-- ================= MODAL ALERTA DE VALIDAÇÃO ================= -->
-<div class="modal-alert" id="validationModal">
-  <div class="modal-alert-content">
-    <h4>Atenção</h4>
-    <p id="validationMsg"></p>
-    <button class="btn-alert" onclick="fecharValidationModal()">Ok</button>
   </div>
 </div>
 
@@ -258,10 +250,10 @@
   style="display:none; width:0; height:0; border:0;"
 ></iframe>
 
-<div class="modal-ajuda" id="modalAjuda">
-  <div class="modal-ajuda-content">
+<div class="modal-ajuda el-modal" id="modalAjuda">
+  <div class="modal-ajuda-content el-modal">
 
-<div class="modal-ajuda-header">
+<div class="modal-ajuda-header el-modal">
 
 <div class="ajuda-header-left">
   <h3>Ajuda • Cadastro de Clientes</h3>
@@ -278,11 +270,11 @@
 </div>
 
   <!-- BOTÃO FECHAR -->
-  <button class="btn-close-ajuda" onclick="fecharAjuda()">✕</button>
+  <button type="button" class="btn-close-ajuda" onclick="fecharAjuda()">✕</button>
 
 </div>
 
-    <div class="modal-ajuda-body">
+    <div class="modal-ajuda-body el-modal">
 
 <div class="ajuda-videos">
 

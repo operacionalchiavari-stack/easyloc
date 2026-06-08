@@ -96,7 +96,7 @@ meu-sistema/
 ├── inteligencia-artificial/
 │   └── assistente-ia.js                 # Lógica do assistente
 ├── Scripts/
-│   └── gerar-embedding.js               # Script para gerar embeddings
+│   └── gerar-embedding.mjs              # Script para gerar embeddings
 └── utils/
     └── validacoes.js                    # Funções de validação reutilizáveis
 ```

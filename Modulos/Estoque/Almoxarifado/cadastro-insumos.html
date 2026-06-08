@@ -1,25 +1,25 @@
-<div class="container">
+<div class="container el-page">
 
   <!-- HEADER -->
   <header class="page-header">
     <h1>Insumos Cadastrados</h1>
-    <button class="btn primary" onclick="abrirModalAdicionarInsumo()">
+    <button type="button" class="btn primary" onclick="abrirModalAdicionarInsumo()">
       + Adicionar Insumo
     </button>
   </header>
   <div class="filtros-insumos">
 
-  <input
+  <input class="el-input"
     type="text"
     id="filtroInsumoTexto"
     placeholder="Pesquisar insumo..."
   />
 
-  <select id="filtroCategoria">
+  <select class="el-select" id="filtroCategoria">
     <option value="">Todas as categorias</option>
   </select>
 
-  <select id="filtroStatus">
+  <select class="el-select" id="filtroStatus">
     <option value="">Todos os status</option>
     <option value="ativo">Ativo</option>
     <option value="inativo">Inativo</option>
@@ -50,8 +50,8 @@
 </div>
 
 <!-- ================= MODAL NOVO INSUMO ================= -->
-<div class="modal hidden" id="modalAdicionarInsumo">
-  <div class="modal-content large novo-insumo-layout">
+<div class="modal hidden el-modal" id="modalAdicionarInsumo">
+  <div class="modal-content large novo-insumo-layout el-modal__box">
 
     <!-- HEADER -->
     <div class="modal-header modal-header-inline">
@@ -59,7 +59,7 @@
       <input
         type="text"
         id="nomeInsumoGeradoTopo"
-        class="nome-gerado-topo"
+        class="nome-gerado-topo el-input"
         placeholder="Nome do insumo será gerado automaticamente"
         readonly
       >
@@ -92,19 +92,19 @@
 
         <!-- LINHA ÚNICA DE CAMPOS -->
         <div class="linha-insumo-unica">
-          <div class="form-group">
+          <div class="form-group el-field">
             <label>Qtd por embalagem</label>
-            <input type="number" id="quantidadeEmbalagem" placeholder="Ex: 1, 5, 18">
+            <input class="el-input" type="number" id="quantidadeEmbalagem" placeholder="Ex: 1, 5, 18">
           </div>
 
-          <div class="form-group">
+          <div class="form-group el-field">
             <label>Estoque mínimo</label>
-            <input type="number" id="novoMinimo">
+            <input class="el-input" type="number" id="novoMinimo">
           </div>
 
-          <div class="form-group">
+          <div class="form-group el-field">
             <label>Unidade</label>
-            <select id="novaUnidade">
+            <select class="el-select" id="novaUnidade">
               <option>Unidade</option>
               <option>Kg</option>
               <option>Litro</option>
@@ -112,9 +112,9 @@
             </select>
           </div>
 
-          <div class="form-group">
+          <div class="form-group el-field">
             <label>Categoria</label>
-            <select id="novaCategoria">
+            <select class="el-select" id="novaCategoria">
               <option>Marcenaria</option>
               <option>Pintura</option>
               <option>Costura</option>
@@ -151,24 +151,24 @@
 
 
 
-        <div class="form-group">
+        <div class="form-group el-field">
           <label>Tipo de produto</label>
-          <input id="tipoProduto" placeholder="Ex: Cola, Parafuso, Tinta">
+          <input class="el-input" id="tipoProduto" placeholder="Ex: Cola, Parafuso, Tinta">
         </div>
 
-        <div class="form-group">
+        <div class="form-group el-field">
           <label>Especificação</label>
-          <input id="especificacaoProduto" placeholder="Ex: PVA, Fosca, 10mm">
+          <input class="el-input" id="especificacaoProduto" placeholder="Ex: PVA, Fosca, 10mm">
         </div>
 
-        <div class="form-group">
+        <div class="form-group el-field">
           <label>Marca</label>
-          <input id="marcaProduto" placeholder="Ex: Cascola, Suvinil">
+          <input class="el-input" id="marcaProduto" placeholder="Ex: Cascola, Suvinil">
         </div>
 
-        <div class="form-group">
+        <div class="form-group el-field">
           <label>Cor (opcional)</label>
-          <input id="corProduto" placeholder="Ex: Branco, Preto">
+          <input class="el-input" id="corProduto" placeholder="Ex: Branco, Preto">
         </div>
 
       </div>
@@ -176,35 +176,16 @@
 
     <!-- FOOTER -->
     <div class="modal-actions modal-footer-right">
-      <button class="btn secondary" onclick="fecharModalAdicionar()">Cancelar</button>
-      <button class="btn primary" onclick="salvarNovoInsumo()">Salvar insumo</button>
+      <button type="button" class="btn secondary" onclick="fecharModalAdicionar()">Cancelar</button>
+      <button type="button" class="btn primary" onclick="salvarNovoInsumo()">Salvar insumo</button>
     </div>
 
    </div>
 </div>
 
-<!-- ================= MODAL ALERTA DE VALIDAÇÃO ================= -->
-<div class="modal-alert hidden" id="modalAlerta">
-  <div class="modal-alert-box">
-
-    <div class="modal-alert-icon">!</div>
-
-    <div class="modal-alert-title" id="alertaTitulo">
-      Atenção
-    </div>
-
-    <div class="modal-alert-text" id="alertaMensagem"></div>
-
-    <button class="modal-alert-btn" onclick="fecharModalAlerta()">
-      Ok
-    </button>
-
-  </div>
-</div>
-
 <!-- ================= MODAL DETALHE INSUMO ================= -->
-<div class="modal hidden" id="modalDetalheInsumo">
-  <div class="modal-content large">
+<div class="modal hidden el-modal" id="modalDetalheInsumo">
+  <div class="modal-content large el-modal__box">
 
     <!-- TOPO -->
     <div class="insumo-topo">
@@ -305,11 +286,11 @@
 </div>
 
 <div class="modal-actions">
-  <button class="btn secondary" onclick="fecharModalDetalhe()">
+  <button type="button" class="btn secondary" onclick="fecharModalDetalhe()">
     Cancelar
   </button>
 
-  <button class="btn primary" onclick="salvarAlteracoesDetalhe()">
+  <button type="button" class="btn primary" onclick="salvarAlteracoesDetalhe()">
     Salvar
   </button>
 </div>

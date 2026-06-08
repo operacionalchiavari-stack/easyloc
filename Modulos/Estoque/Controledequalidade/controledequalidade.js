@@ -301,7 +301,11 @@ function atualizarCards(){
       const erro = validarPayload(payload);
 
       if(erro){
-        alert(erro);
+        if(typeof window.alerta === "function"){
+          window.alerta(erro, "Atenção", "aviso");
+        }else{
+          alert(erro);
+        }
         return;
       }
 

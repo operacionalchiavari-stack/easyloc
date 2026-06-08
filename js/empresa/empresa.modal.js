@@ -191,7 +191,8 @@ function showTab(tipo) {
       const { error: erroEmpresa } = await api.saveEmpresa(state.empresaId, payloadEmpresa);
       if (erroEmpresa) {
         console.error('Erro ao salvar empresa:', erroEmpresa);
-        alert('Erro ao salvar dados da empresa');
+        if (typeof window.alerta === "function") window.alerta('Erro ao salvar dados da empresa', 'Erro', 'erro');
+        else alert('Erro ao salvar dados da empresa');
         return;
       }
 
@@ -216,7 +217,8 @@ if (freteMinInput) {
 
   if (erroConfig) {
     console.error('Erro ao salvar configurações:', erroConfig);
-    alert('Erro ao salvar configurações logísticas');
+    if (typeof window.alerta === "function") window.alerta('Erro ao salvar configurações logísticas', 'Erro', 'erro');
+    else alert('Erro ao salvar configurações logísticas');
     return;
   }
 
@@ -242,7 +244,8 @@ const { data: financeiroSalvo, error: erroFinanceiro } =
 
 if (erroFinanceiro) {
   console.error('Erro ao salvar financeiro:', erroFinanceiro);
-  alert('Erro ao salvar configurações financeiras');
+  if (typeof window.alerta === "function") window.alerta('Erro ao salvar configurações financeiras', 'Erro', 'erro');
+  else alert('Erro ao salvar configurações financeiras');
   return;
 }
 
@@ -261,7 +264,8 @@ if (window.__salvarServicosComercial) {
     await window.__salvarServicosComercial();
   } catch (e) {
     console.error("Erro ao salvar serviços comerciais:", e);
-    alert("Erro ao salvar serviços comerciais");
+    if (typeof window.alerta === "function") window.alerta("Erro ao salvar serviços comerciais", "Erro", "erro");
+    else alert("Erro ao salvar serviços comerciais");
     return;
   }
 }

@@ -51,6 +51,28 @@ window.toggleMenu = function(){
 };
 
 
+document.addEventListener("click", (event) => {
+
+  const sidebar = document.getElementById("sidebar");
+
+  if(!sidebar || window.innerWidth > 1200) return;
+
+  if(event.target.closest(".submenu-item")){
+    sidebar.classList.remove("expanded");
+    return;
+  }
+
+  if(
+    sidebar.classList.contains("expanded") &&
+    !event.target.closest("#sidebar") &&
+    !event.target.closest(".hamburger")
+  ){
+    sidebar.classList.remove("expanded");
+  }
+
+});
+
+
 /* fecha dropdown clicando fora */
 document.addEventListener("click", () => {
 

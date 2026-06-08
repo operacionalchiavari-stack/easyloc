@@ -2,6 +2,14 @@ import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
 
 export function initItens({ supabase, els }){
 
+function avisar(mensagem, titulo = "Atenção", tipo = "aviso"){
+if(typeof window.alerta === "function"){
+window.alerta(mensagem, titulo, tipo);
+return;
+}
+alert(mensagem);
+}
+
 const {
   tbody,
   addItemBtn,
@@ -582,7 +590,7 @@ async function adicionarPersonalizacao(){
   const empresaId = window.__CONTEXT?.empresa_id;
 
   if(!empresaId){
-    alert("Empresa não encontrada.");
+    avisar("Empresa não encontrada.", "Erro", "erro");
     return;
   }
 
@@ -599,7 +607,7 @@ async function adicionarPersonalizacao(){
   }
 
   if(!data || !data.length){
-    alert("Nenhuma personalização cadastrada.");
+    avisar("Nenhuma personalização cadastrada.");
     return;
   }
 

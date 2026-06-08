@@ -1,0 +1,43 @@
+.el-page {
+  width: 100%;
+  min-height: 100%;
+}
+
+.el-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--el-space-4);
+  margin-bottom: var(--el-space-5);
+}
+
+.el-page-title {
+  margin: 0;
+  color: var(--el-color-primary);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.el-page-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--el-space-3);
+  flex-wrap: wrap;
+}
+
+.el-card {
+  background: var(--el-color-surface);
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-lg);
+  box-shadow: var(--el-shadow-sm);
+  min-height: var(--el-card-min-height);
+  padding: var(--el-card-padding);
+}
+
+.el-table-wrap {
+  width: 100%;
+  overflow: auto;
+  background: var(--el-color-surface);
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-lg);
+}

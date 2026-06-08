@@ -1,6 +1,6 @@
-<div class="orcamento-page" data-module-root>
+<div class="orcamento-page el-page" data-module-root>
 
-<div class="orcamento-container">
+<div class="orcamento-container el-page">
 
 <div class="orcamento-header">
   <span>Pedido</span>
@@ -40,7 +40,7 @@
 
 <div class="pre-reserva-controls">
 
-  <button id="btnPreReserva" class="btn-pre-reserva">
+  <button type="button" id="btnPreReserva" class="btn-pre-reserva primary">
     Pré-reserva
   </button>
 
@@ -48,13 +48,13 @@
 
     <span>Válido até</span>
 
-    <input type="date" id="preReservaData"> 
+    <input class="el-input" type="date" id="preReservaData">
 
   </div>
 
   <div class="cancelar-pre-reserva-wrapper hidden" id="cancelarPreReservaWrapper">
 
-    <button id="btnCancelarPreReserva" class="btn-cancelar-pre-reserva">
+    <button type="button" id="btnCancelarPreReserva" class="btn-cancelar-pre-reserva secondary">
       Cancelar
     </button>
 
@@ -71,28 +71,28 @@
 
   <div class="dados-cliente">
 
-    <div class="linha-campo">
+    <div class="linha-campo el-field">
       <strong>Cliente:</strong>
       <div class="autocomplete-wrapper">
-        <input type="text" id="clienteInput" placeholder="Digite o nome do cliente..." autocomplete="off">
+        <input class="el-input" type="text" id="clienteInput" placeholder="Digite o nome do cliente..." autocomplete="off">
         <input type="hidden" id="clienteIdHidden">
         <div class="autocomplete-list" id="clienteLista"></div>
       </div>
     </div>
 
-    <div class="linha-campo">
+    <div class="linha-campo el-field">
       <strong>Solicitante:</strong>
-      <input type="text" id="responsavelInput">
+      <input class="el-input" type="text" id="responsavelInput">
     </div>
 
-    <div class="linha-campo">
+    <div class="linha-campo el-field">
       <strong>Telefone:</strong>
-      <input type="text" id="telefoneInput">
+      <input class="el-input" type="text" id="telefoneInput">
     </div>
 
-    <div class="linha-campo">
+    <div class="linha-campo el-field">
       <strong>Tipo de Evento:</strong>
-      <select id="tipoEventoSelect">
+      <select class="el-select" id="tipoEventoSelect">
         <option value="">Selecione</option>
         <option value="casamento">Casamento</option>
         <option value="aniversario">Aniversário</option>
@@ -111,23 +111,23 @@
 
         <div class="data-card">
           <span class="card-label">Entrega</span>
-          <input type="date" id="dataEntrega" class="input-data">
+          <input type="date" id="dataEntrega" class="input-data el-input">
           <div class="dia-semana" id="diaEntrega">—</div>
-          <input type="time" id="horaEntrega" class="input-hora">
+          <input type="time" id="horaEntrega" class="input-hora el-input">
         </div>
 
         <div class="data-card">
           <span class="card-label">Evento</span>
-          <input type="date" id="dataEvento" class="input-data">
+          <input type="date" id="dataEvento" class="input-data el-input">
           <div class="dia-semana" id="diaEvento">—</div>
-          <input type="time" id="horaEvento" class="input-hora">
+          <input type="time" id="horaEvento" class="input-hora el-input">
         </div>
 
         <div class="data-card">
           <span class="card-label">Coleta</span>
-          <input type="date" id="dataColeta" class="input-data">
+          <input type="date" id="dataColeta" class="input-data el-input">
           <div class="dia-semana" id="diaColeta">—</div>
-          <input type="time" id="horaColeta" class="input-hora">
+          <input type="time" id="horaColeta" class="input-hora el-input">
         </div>
 
       </div>
@@ -139,10 +139,10 @@
 
   <!-- BLOCO 1 - INPUT LOCAL -->
   <div class="local-topo">
-    <div class="linha-campo">
+    <div class="linha-campo el-field">
       <strong>Local:</strong>
       <div class="autocomplete-wrapper">
-        <input type="text" id="localInput" placeholder="Digite o nome do local..." autocomplete="off">
+        <input class="el-input" type="text" id="localInput" placeholder="Digite o nome do local..." autocomplete="off">
         <input type="hidden" id="localIdHidden">
         <div class="autocomplete-list" id="localLista"></div>
       </div>
@@ -242,7 +242,7 @@
   <div style="margin:16px 0;border-top:1px solid #eef2f7;"></div>
 
 <!-- LISTA DE CAMINHÕES NECESSÁRIOS -->
-<div id="freteDetalheCaminhoes" class="frete-detalhe-container">
+<div id="freteDetalheCaminhoes" class="frete-detalhe-container el-page">
 
   <!-- Exemplo visual padrão -->
   <!--
@@ -383,38 +383,38 @@
   <!-- CONFIGURAÇÃO -->
   <div class="pagamento-config-grid">
 
-    <div class="campo">
+    <div class="campo el-field">
       <label>Tipo</label>
-      <select id="pagamentoTipo">
+      <select class="el-select" id="pagamentoTipo">
         <option value="avista">À vista</option>
         <option value="entrada_parcelado">Entrada + Parcelado</option>
         <option value="parcelado">Parcelado</option>
       </select>
     </div>
 
-    <div class="campo">
+    <div class="campo el-field">
       <label>Entrada (%)</label>
-      <input type="number" id="pagamentoEntradaPercent" value="30">
+      <input class="el-input" type="number" id="pagamentoEntradaPercent" value="30">
     </div>
 
-    <div class="campo">
+    <div class="campo el-field">
       <label>Nº Parcelas</label>
-      <input type="number" id="pagamentoParcelas" value="2">
+      <input class="el-input" type="number" id="pagamentoParcelas" value="2">
     </div>
 
-    <div class="campo">
+    <div class="campo el-field">
       <label>Intervalo (dias)</label>
-      <input type="number" id="pagamentoIntervalo" value="30">
+      <input class="el-input" type="number" id="pagamentoIntervalo" value="30">
     </div>
 
-    <div class="campo">
+    <div class="campo el-field">
       <label>Data base</label>
-      <input type="date" id="pagamentoDataBase">
+      <input class="el-input" type="date" id="pagamentoDataBase">
     </div>
 
-    <div class="campo">
+    <div class="campo el-field">
       <label>Método</label>
-<select id="pagamentoMetodo">
+<select class="el-select" id="pagamentoMetodo">
   <option>PIX</option>
   <option>Boleto</option>
   <option>Cartão</option>
@@ -431,17 +431,17 @@
 
   <div class="bv-item">
     <span>BV Decorador</span>
-    <input type="number" id="bvTotal" placeholder="0,00">
+    <input class="el-input" type="number" id="bvTotal" placeholder="0,00">
   </div>
 
   <div class="bv-item">
     <span>Abater no pedido</span>
-    <input type="number" id="bvAbatido" placeholder="0,00">
+    <input class="el-input" type="number" id="bvAbatido" placeholder="0,00">
   </div>
 
   <div class="bv-item">
     <span><strong>BV pendente</strong></span>
-    <input type="text" id="bvPendente" value="R$ 0,00" readonly>
+    <input class="el-input" type="text" id="bvPendente" value="R$ 0,00" readonly>
   </div>
 
 </div>
@@ -516,18 +516,18 @@
 
 </div>
 <!-- MODAL CONFIRMAR COMPONENTE -->
-<div class="modal-confirmacao hidden" id="modalConfirmarComponente" style="display:none;">
-  <div class="modal-box">
+<div class="modal-confirmacao hidden el-modal" id="modalConfirmarComponente" style="display:none;">
+  <div class="modal-box el-modal__box">
 
     <h3>Confirmar ação</h3>
     <p>Tem certeza que deseja acrescentar um componente?</p>
 
-<div class="modal-acoes">
-  <button class="btn-confirmar" onclick="confirmarAdicionarComponente()">
+<div class="modal-acoes el-modal">
+  <button type="button" class="btn-confirmar primary" onclick="confirmarAdicionarComponente()">
     Sim, adicionar
   </button>
 
-  <button class="btn-cancelar" onclick="fecharModalComponente()">
+  <button type="button" class="btn-cancelar secondary" onclick="fecharModalComponente()">
     Cancelar
   </button>
 </div>

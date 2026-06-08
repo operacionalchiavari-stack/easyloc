@@ -78,6 +78,10 @@ carregarCodigoAutomatico();
 }
 
 function alertar(msg) {
+if (typeof window.alerta === "function") {
+window.alerta(msg, "Atenção", "aviso");
+return;
+}
 alert(msg);
 }
 
@@ -348,7 +352,7 @@ tbody.innerHTML = "";
 </td>
 <td>
   ${e.Status === "Aberto"
-      ? `<button onclick="devolverEmprestimo('${e.ID}')" class="btn btn-outline">Devolver</button>`
+      ? `<button onclick="devolverEmprestimo('${e.ID}')" class="btn secondary">Devolver</button>`
       : "-"
     }
 </td>

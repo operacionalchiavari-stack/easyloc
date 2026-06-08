@@ -547,27 +547,6 @@
   gap: 14px;
 }
 
-.btn-primary,
-.btn-secondary {
-  height: 44px;
-  padding: 0 22px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-}
-
-.btn-primary {
-  background: var(--azul);
-  color: #fff;
-}
-
-.btn-secondary {
-  background: var(--laranja);
-  color: #fff;
-}
-
 /* =====================================================
    RESUMO
 ===================================================== */

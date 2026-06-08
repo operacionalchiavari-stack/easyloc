@@ -1,0 +1,95 @@
+.el-table-wrap,
+.table-wrapper,
+.table-wrap,
+.tabela-card {
+  width: 100%;
+  overflow: auto;
+  background: var(--el-color-surface);
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-lg);
+  box-shadow: var(--el-shadow-sm);
+}
+
+.el-table,
+.el-page table,
+#main-content table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--el-color-surface);
+  color: var(--el-color-text);
+  font-size: 14px;
+}
+
+.el-table thead th,
+.el-page table thead th,
+#main-content table thead th {
+  background: var(--el-table-header-bg);
+  color: var(--el-table-header-color);
+  padding: 14px 16px;
+  border: 0;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.el-table tbody td,
+.el-page table tbody td,
+#main-content table tbody td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--el-table-row-border);
+  color: var(--el-color-text);
+  vertical-align: middle;
+}
+
+.el-table tbody tr,
+.el-page table tbody tr,
+#main-content table tbody tr {
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.el-table tbody tr:hover,
+.el-page table tbody tr:hover,
+#main-content table tbody tr:hover {
+  background: var(--el-table-row-hover);
+}
+
+.el-table tbody tr:last-child td,
+.el-page table tbody tr:last-child td,
+#main-content table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.el-table .actions,
+.el-page table .actions,
+#main-content table .actions {
+  display: flex;
+  align-items: center;
+  gap: var(--el-space-2);
+  justify-content: flex-end;
+}
+
+.el-table-empty {
+  padding: 28px;
+  color: var(--el-color-muted);
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .el-table,
+  .el-page table,
+  #main-content table {
+    font-size: 13px;
+  }
+
+  .el-table thead th,
+  .el-page table thead th,
+  #main-content table thead th,
+  .el-table tbody td,
+  .el-page table tbody td,
+  #main-content table tbody td {
+    padding: 11px 12px;
+  }
+}

@@ -158,14 +158,14 @@ function renderizarTabela(lista) {
     });
 
     tr.innerHTML = `
-      <td>${f.nome_razao_social}</td>
-      <td>${f.documento}</td>
-      <td>${f.telefone || "-"}</td>
-      <td>${f.email || "-"}</td>
-      <td><span class="badge tipo">${f.tipo}</span></td>
-      <td><span class="badge categoria">${f.categoria || "-"}</span></td>
+      <td>${esc(f.nome_razao_social || "-")}</td>
+      <td>${esc(f.documento || "-")}</td>
+      <td>${esc(f.telefone || "-")}</td>
+      <td>${esc(f.email || "-")}</td>
+      <td><span class="badge tipo">${esc(f.tipo || "-")}</span></td>
+      <td><span class="badge categoria">${esc(f.categoria || "-")}</span></td>
       <td>
-        <span class="badge ${f.status}">
+        <span class="badge ${esc(f.status || "")}">
           ${f.status === "ativo" ? "Ativo" : "Inativo"}
         </span>
       </td>
@@ -190,6 +190,15 @@ function renderizarTabela(lista) {
 
     tabela.appendChild(tr);
   });
+}
+
+function esc(v) {
+  return String(v ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 /* =====================================================
@@ -339,7 +348,7 @@ const { data: existente } = await sb
   .maybeSingle();
 
 if (existente && existente.id !== fornecedorSelecionado?.id) {
-  alert("Já existe fornecedor cadastrado com esse CNPJ");
+  mostrarAlerta("Já existe fornecedor cadastrado com esse CNPJ");
   return;
 }
 
@@ -386,7 +395,7 @@ if (existente && existente.id !== fornecedorSelecionado?.id) {
 
   if (error) {
     console.error("❌ Erro ao salvar:", error);
-    alert("Erro ao salvar fornecedor");
+    mostrarAlerta("Erro ao salvar fornecedor", "Erro");
     return;
   }
 
@@ -652,41 +661,16 @@ function validarEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 function mostrarAlerta(mensagem, titulo = "Atenção") {
-
-  let modal = document.getElementById("modalAlerta");
-
-  // 🔥 Se o modal não existir, cria automaticamente
-  if (!modal) {
-
-    const html = `
-      <div class="modal-alert" id="modalAlerta">
-        <div class="modal-alert-box">
-          <div class="modal-alert-icon">!</div>
-          <h3 id="modalAlertaTitulo">${titulo}</h3>
-          <p id="modalAlertaMensagem">${mensagem}</p>
-          <div class="modal-alert-footer">
-            <button class="btn primary" onclick="fecharModalAlerta()">
-              Ok
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.insertAdjacentHTML("beforeend", html);
-
+  if (typeof window.alerta === "function") {
+    window.alerta(mensagem, titulo, titulo === "Erro" ? "erro" : "aviso");
     return;
   }
 
-  document.getElementById("modalAlertaTitulo").innerText = titulo;
-  document.getElementById("modalAlertaMensagem").innerText = mensagem;
-
-  modal.classList.remove("hidden");
+  alert(mensagem);
 }
 
 function fecharModalAlerta() {
-  document.getElementById("modalAlerta")
-    .classList.add("hidden");
+  window.fecharAlertaGlobal?.();
 }
 
 /* =====================================================

@@ -32,7 +32,6 @@ html,
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
-  background: #fcfaf7;
   color: var(--text);
 }
 
@@ -538,32 +537,6 @@ body {
   justify-content: flex-end;
   flex-wrap: wrap;
   margin-top: 8px;
-}
-
-.btn {
-  border: none;
-  border-radius: 16px;
-  padding: 15px 22px;
-  font-weight: 800;
-  font-size: 14px;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.btn.secondary {
-  background: #edf3fb;
-  color: var(--navy);
-  border: 1px solid #d2deed;
-}
-
-.btn.primary {
-  background: linear-gradient(180deg, var(--navy), #12356e);
-  color: #fff;
-  box-shadow: 0 12px 20px rgba(15, 45, 98, 0.18);
-}
-
-.btn:active {
-  transform: translateY(1px);
 }
 
 .toolbar {

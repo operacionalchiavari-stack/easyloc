@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container el-page">
 
   <!-- ================= HEADER ================= -->
   <div class="header-list">
@@ -7,9 +7,9 @@
 <div class="header-actions">
 
 
-  <button class="add-btn" onclick="itens_openAdd()">+ Adicionar Item</button>
+  <button type="button" class="add-btn btn primary" onclick="itens_openAdd()">+ Adicionar Item</button>
 
-  <button class="add-btn outline" onclick="kits_openAdd()">🧩 Montar Kit</button>
+  <button type="button" class="add-btn outline btn secondary" onclick="kits_openAdd()">🧩 Montar Kit</button>
 
 
 </div>
@@ -20,24 +20,24 @@
 
   <!-- ================= FILTROS ================= -->
   <div class="filters">
-    <input
+    <input class="el-input"
       id="itensSearchInput"
       placeholder="Pesquisar item..."
       oninput="itens_aplicarFiltros()"
     >
 
-    <select id="itensTipoFilter" onchange="itens_aplicarFiltros()">
+    <select class="el-select" id="itensTipoFilter" onchange="itens_aplicarFiltros()">
       <option value="">Todos os tipos</option>
       <option value="Item">Item</option>
       <option value="Componente">Componente</option>
       <option value="Kit">Kit</option>
     </select>
 
-    <select id="itensCategoriaFilter" onchange="itens_aplicarFiltros()">
+    <select class="el-select" id="itensCategoriaFilter" onchange="itens_aplicarFiltros()">
       <option value="">Todas as categorias</option>
     </select>
 
-    <select id="itensStatusFilter" onchange="itens_aplicarFiltros()">
+    <select class="el-select" id="itensStatusFilter" onchange="itens_aplicarFiltros()">
       <option value="">Todos os status</option>
       <option value="Ativo">Ativo</option>
       <option value="Inativo">Inativo</option>
@@ -67,8 +67,8 @@
 
 
 <!-- ================= MODAL ITENS ================= -->
-<div class="modal" id="itensModal">
-  <div class="modal-content">
+<div class="modal el-modal" id="itensModal">
+  <div class="modal-content el-modal__box">
 
     <input type="hidden" id="itensId">
 
@@ -82,7 +82,7 @@
 
 <input
   id="itensDescricaoTotal"
-  class="header-desc-total"
+  class="header-desc-total el-input"
   placeholder="Gerado automaticamente"
   readonly
   tabindex="-1"
@@ -92,7 +92,7 @@
   </div>
 
   <!-- BOTÃO EDITAR -->
-  <button
+  <button type="button"
     class="edit-btn edit-btn-top"
     onclick="itens_enableEdit()"
     title="Editar item">
@@ -108,7 +108,7 @@
 <!-- FOTO COM GUIA PADRÃO -->
 <div class="item-foto-box">
 
-<div class="foto-guia-container">
+<div class="foto-guia-container el-page">
 
   <div class="foto-preview-wrapper">
     <img
@@ -214,32 +214,32 @@
 
   <!-- LINHA 1 -->
   <div class="foto-form-row">
-    <div class="form-group">
+    <div class="form-group el-field">
       <label>Código *</label>
-<input id="itensCodigo" readonly>
+<input class="el-input" id="itensCodigo" readonly>
     </div>
 
-    <div class="form-group">
+    <div class="form-group el-field">
       <label>Produto *</label>
-      <input id="itensProduto">
+      <input class="el-input" id="itensProduto">
     </div>
 
-    <div class="form-group">
+    <div class="form-group el-field">
       <label>Material</label>
-      <input id="itensMaterial">
+      <input class="el-input" id="itensMaterial">
     </div>
   </div>
 
   <!-- LINHA 2 -->
   <div class="foto-form-row">
-    <div class="form-group">
+    <div class="form-group el-field">
       <label>Cor</label>
-      <input id="itensCor">
+      <input class="el-input" id="itensCor">
     </div>
 
-    <div class="form-group col-2">
+    <div class="form-group col-2 el-field">
       <label>Descrição complementar</label>
-      <input id="itensDescricaoComplementar">
+      <input class="el-input" id="itensDescricaoComplementar">
     </div>
   </div>
 
@@ -250,21 +250,21 @@
 
     <!-- LINHA 3 -->
     <div class="foto-form-row">
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Largura / Diâmetro (m)</label>
-<input id="itensLargura" oninput="itens_calcularVolume()">
+<input class="el-input" id="itensLargura" oninput="itens_calcularVolume()">
       </div>
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Altura (m)</label>
-<input id="itensAltura" oninput="itens_calcularVolume()">
+<input class="el-input" id="itensAltura" oninput="itens_calcularVolume()">
       </div>
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Profundidade (m)</label>
-<input id="itensProfundidade" oninput="itens_calcularVolume()">
+<input class="el-input" id="itensProfundidade" oninput="itens_calcularVolume()">
       </div>
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Volume cúbico (m³)</label>
-<input
+<input class="el-input"
   id="itensVolumeCubico"
   placeholder="Auto"
   readonly
@@ -276,17 +276,17 @@
 
     <!-- LINHA 4 -->
     <div class="foto-form-row">
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Família</label>
-        <input id="itensFamilia">
+        <input class="el-input" id="itensFamilia">
       </div>
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Categoria *</label>
-        <input id="itensCategoria">
+        <input class="el-input" id="itensCategoria">
       </div>
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Setor de estoque *</label>
-<select id="itensSetor">
+<select class="el-select" id="itensSetor">
   <option value="">Selecione</option>
   <option value="Almoxarifado">Almoxarifado</option>
   <option value="Estoque Geral">Estoque Geral</option>
@@ -297,9 +297,9 @@
 </select>
 
       </div>
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Exibir no site *</label>
-<select id="itensExibirSite">
+<select class="el-select" id="itensExibirSite">
   <option value="">Selecione</option>
   <option value="true">Sim</option>
   <option value="false">Não</option>
@@ -310,17 +310,17 @@
 
     <!-- LINHA 5 -->
     <div class="foto-form-row valores-row">
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Custo (R$)</label>
-        <input id="itensCusto" placeholder="0,00">
+        <input class="el-input" id="itensCusto" placeholder="0,00">
       </div>
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Valor de locação (R$)</label>
-        <input id="itensValorLocacao" placeholder="0,00">
+        <input class="el-input" id="itensValorLocacao" placeholder="0,00">
       </div>
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Valor de reposição (R$)</label>
-        <input id="itensValorReposicao" placeholder="0,00">
+        <input class="el-input" id="itensValorReposicao" placeholder="0,00">
       </div>
     </div>
 
@@ -363,14 +363,14 @@
 
     <button
       type="button"
-      class="btn-cancel"
+      class="btn btn-fechar danger"
       onclick="itens_closeModal()">
       Fechar
     </button>
 
     <button
       type="button"
-      class="btn-save"
+      class="btn-save primary"
       onclick="itens_salvar()">
       Salvar
     </button>
@@ -383,8 +383,8 @@
 </div> <!-- FECHA itensModal -->
 
 <!-- ================= MODAL KIT ================= -->
-<div class="modal" id="kitsModal">
-<div class="modal-content">
+<div class="modal el-modal" id="kitsModal">
+<div class="modal-content el-modal__box">
 
 <input type="hidden" id="kitId">
 
@@ -397,7 +397,7 @@
 
 <input
 id="kitDescricaoTotal"
-class="header-desc-total"
+class="header-desc-total el-input"
 placeholder="Gerado automaticamente"
 readonly
 tabindex="-1"
@@ -414,7 +414,7 @@ tabindex="-1"
 <!-- FOTO -->
 <div class="item-foto-box">
 
-<div class="foto-guia-container">
+<div class="foto-guia-container el-page">
 
 <div class="foto-preview-wrapper">
 <img
@@ -503,19 +503,19 @@ onclick="kits_setStatus(this)">
 <!-- LINHA 1 -->
 <div class="foto-form-row">
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Código *</label>
-<input id="kitCodigo">
+<input class="el-input" id="kitCodigo">
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Produto *</label>
-<input id="kitProduto">
+<input class="el-input" id="kitProduto">
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Material</label>
-<input id="kitMaterial">
+<input class="el-input" id="kitMaterial">
 </div>
 
 </div>
@@ -524,14 +524,14 @@ onclick="kits_setStatus(this)">
 <!-- LINHA 2 -->
 <div class="foto-form-row">
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Cor</label>
-<input id="kitCor">
+<input class="el-input" id="kitCor">
 </div>
 
-<div class="form-group col-2">
+<div class="form-group col-2 el-field">
 <label>Descrição complementar</label>
-<input id="kitDescricaoComplementar">
+<input class="el-input" id="kitDescricaoComplementar">
 </div>
 
 </div>
@@ -540,20 +540,20 @@ onclick="kits_setStatus(this)">
 <!-- LINHA 3 -->
 <div class="foto-form-row">
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Família</label>
-<input id="kitFamilia">
+<input class="el-input" id="kitFamilia">
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Categoria *</label>
-<input id="kitCategoria">
+<input class="el-input" id="kitCategoria">
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Exibir no site *</label>
 
-<select id="kitExibirSite">
+<select class="el-select" id="kitExibirSite">
 <option value="">Selecione</option>
 <option value="true">Sim</option>
 <option value="false">Não</option>
@@ -573,19 +573,19 @@ onclick="kits_setStatus(this)">
 <!-- DIMENSÕES -->
 <div class="foto-form-row">
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Largura / Diâmetro (m)</label>
-<input id="kitLargura">
+<input class="el-input" id="kitLargura">
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Altura (m)</label>
-<input id="kitAltura">
+<input class="el-input" id="kitAltura">
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
 <label>Profundidade (m)</label>
-<input id="kitProfundidade">
+<input class="el-input" id="kitProfundidade">
 </div>
 
 </div>
@@ -662,14 +662,14 @@ onclick="kits_addItem()">
 
 <button
 type="button"
-class="btn-cancel"
+class="btn btn-fechar danger"
 onclick="kits_closeModal()">
 Fechar
 </button>
 
 <button
 type="button"
-class="btn-save"
+class="btn-save primary"
 onclick="kits_salvar()">
 Salvar
 </button>
@@ -681,12 +681,4 @@ Salvar
 </div>
 
 </div>
-</div>
-<!-- ================= MODAL ALERTA DE VALIDAÇÃO ================= -->
-<div class="modal-alert" id="itensValidationModal">
-  <div class="modal-alert-content">
-    <h4>Atenção</h4>
-    <p id="itensValidationMsg"></p>
-    <button class="btn-alert" onclick="itens_fecharValidationModal()">Ok</button>
-  </div>
 </div>

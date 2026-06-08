@@ -16,58 +16,6 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
   <style>
-    .modal-alert-global{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:rgba(0,0,0,0.45);
-  backdrop-filter:blur(4px);
-  z-index:999999;
-}
-
-.modal-alert-box{
-  width:420px;
-  background:#fff;
-  border-radius:18px;
-  padding:30px;
-  text-align:center;
-  box-shadow:0 30px 60px rgba(0,0,0,0.25);
-}
-
-.alert-icon{
-  width:54px;
-  height:54px;
-  background:#ff6a00;
-  color:#fff;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:26px;
-  font-weight:800;
-  margin:0 auto 12px;
-}
-
-.modal-alert-box h4{
-  margin-bottom:8px;
-  font-size:18px;
-}
-
-.modal-alert-box p{
-  margin-bottom:20px;
-}
-
-.modal-alert-box button{
-  background:#ff6a00;
-  color:#fff;
-  border:none;
-  padding:10px 30px;
-  border-radius:999px;
-  font-weight:700;
-  cursor:pointer;
-}
     /* ========================================
    INDICADOR DE ESTABILIDADE - EASYLOC
 ======================================== */
@@ -263,7 +211,6 @@
       --azul: #0f2a44;
       --azul-2: #173a5e;
       --laranja: #ff6a00;
-      --fundo: #fbf4ef;
     }
 
     * {
@@ -274,7 +221,6 @@
     }
 
     body {
-      background: var(--fundo);
       color: #1f2937;
     }
 
@@ -655,7 +601,7 @@
 .content-loader {
   position: absolute;
   inset: 0;
-  background: var(--fundo);
+  background: var(--el-color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -831,24 +777,6 @@
   gap:12px;
 }
 
-.easyloc-modal-box .btn-cancel{
-  background:#e5e7eb;
-  border:none;
-  padding:10px 18px;
-  border-radius:12px;
-  cursor:pointer;
-}
-
-.easyloc-modal-box .btn-save{
-  background:#ff6a00;
-  color:#fff;
-  border:none;
-  padding:10px 18px;
-  border-radius:12px;
-  cursor:pointer;
-  font-weight:600;
-}
-
 @keyframes easylocModalFade{
   from{
     opacity:0;
@@ -868,26 +796,127 @@
   gap:12px;
 }
 
-.btn-cancel{
-  background:#e5e7eb;
-  border:none;
-  padding:10px 16px;
-  border-radius:10px;
-  cursor:pointer;
-}
+@media (max-width: 1200px) {
+  body {
+    overflow-x: hidden;
+  }
 
-.btn-save{
-  background:#ff6a00;
-  color:#fff;
-  border:none;
-  padding:10px 16px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:600;
-}
+  .hamburger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    top: 12px;
+    left: 12px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  }
 
+  .sidebar {
+    width: min(86vw, 320px);
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    box-shadow: 24px 0 60px rgba(15, 23, 42, 0.24);
+  }
+
+  .sidebar:hover,
+  .sidebar.expanded {
+    width: min(86vw, 320px);
+    transform: translateX(0);
+  }
+
+  .sidebar-header span,
+  .sidebar:hover .sidebar-header span,
+  .sidebar.expanded .sidebar-header span,
+  .sidebar .menu-item span,
+  .sidebar:hover .menu-item span,
+  .sidebar.expanded .menu-item span,
+  .sidebar .sidebar-logout span,
+  .sidebar:hover .sidebar-logout span,
+  .sidebar.expanded .sidebar-logout span {
+    opacity: 1;
+    width: auto;
+  }
+
+  .sidebar .menu-item,
+  .sidebar:hover .menu-item,
+  .sidebar.expanded .menu-item {
+    justify-content: flex-start;
+    padding: 13px 18px;
+    gap: 12px;
+  }
+
+  .sidebar .menu {
+    margin-top: 10px;
+    padding-bottom: 150px;
+    max-height: calc(100vh - 74px);
+    overflow-y: auto;
+  }
+
+  .sidebar .menu-item.has-sub::after,
+  .sidebar:hover .menu-item.has-sub::after,
+  .sidebar.expanded .menu-item.has-sub::after {
+    opacity: 1;
+  }
+
+  .sidebar:not(:hover) .submenu.open,
+  .sidebar:not(:hover).expanded .submenu.open,
+  .submenu.open {
+    display: block !important;
+  }
+
+  .sidebar-user {
+    bottom: 78px;
+  }
+
+  .sidebar:not(:hover):not(.expanded) .user-info {
+    display: flex;
+  }
+
+  .sidebar:not(:hover):not(.expanded) .user-account {
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(0,0,0,.12);
+    padding: 10px 12px;
+    justify-content: flex-start;
+  }
+
+  .main,
+  .sidebar:hover ~ .main,
+  .sidebar.expanded ~ .main {
+    margin-left: 0;
+    width: 100%;
+    padding: 72px 12px 18px;
+  }
+
+  .dashboard-topbar {
+    height: auto;
+    margin-bottom: 10px;
+  }
+
+  .easyloc-modal-box {
+    width: min(94vw, 520px);
+    max-height: 88vh;
+    overflow: auto;
+    padding: 22px;
+    border-radius: 16px;
+  }
+
+  .easyloc-modal-box .perfil-body,
+  .easyloc-modal-box .modal-actions {
+    flex-direction: column;
+  }
+
+  .easyloc-modal-box .modal-actions button {
+    width: 100%;
+  }
+}
 
   </style>
+
+  <link rel="stylesheet" href="styles/global.css">
 </head>
 
 <body>
@@ -1020,6 +1049,16 @@
     )">
     Controle de Qualidade
   </div>
+
+        <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html',
+      'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.js',
+      this,
+      'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.css'
+    )">
+    Separação de Materiais
+  </div>
 </div>
 
 
@@ -1050,6 +1089,27 @@
   )">
   Cronograma Logístico
 </div>
+</div>
+
+
+<!-- ===== FINANCEIRO ===== -->
+<div class="menu-item has-sub" onclick="toggleSubmenu('financeiro-sub', this)">
+  <i data-lucide="wallet"></i>
+  <span>Financeiro</span>
+</div>
+
+<div class="submenu" id="financeiro-sub">
+
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Financeiro/fluxodecaixa.html',
+      'Modulos/Financeiro/fluxodecaixa.js',
+      this,
+      'Modulos/Financeiro/fluxodecaixa.css'
+    )">
+    Fluxo de Caixa
+  </div>
+
 </div>
 
 
@@ -1251,18 +1311,18 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <!-- ================= ALERTA GLOBAL ================= -->
-<div class="modal-alert-global" id="alertaGlobal">
+<div class="modal-alert-global" id="alertaGlobal" role="dialog" aria-modal="true" aria-labelledby="alertaGlobalTitulo" aria-describedby="alertaGlobalMsg" data-variant="warning">
 
   <div class="modal-alert-box">
 
-    <div class="alert-icon">!</div>
+    <div class="alert-icon" id="alertaGlobalIcon">!</div>
 
     <h4 id="alertaGlobalTitulo">Atenção</h4>
 
     <p id="alertaGlobalMsg"></p>
 
-    <button onclick="fecharAlertaGlobal()">
-      Ok
+    <button class="btn danger btn-fechar" type="button" onclick="fecharAlertaGlobal()">
+      Fechar
     </button>
 
   </div>

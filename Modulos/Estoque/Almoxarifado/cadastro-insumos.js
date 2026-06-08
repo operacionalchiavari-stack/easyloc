@@ -287,7 +287,7 @@ async function salvarNovoInsumo() {
       .upload(caminhoArquivo, arquivoFotoSelecionado, { upsert: true });
 
     if (uploadError) {
-      alert("Erro ao enviar a foto");
+      abrirModalAlerta("Erro ao enviar a foto", "Erro");
       return;
     }
 
@@ -311,7 +311,7 @@ async function salvarNovoInsumo() {
   });
 
   if (error) {
-    alert("Erro ao salvar insumo");
+    abrirModalAlerta("Erro ao salvar insumo", "Erro");
     return;
   }
 
@@ -583,13 +583,16 @@ function zoomFoto(delta) {
 }
 
 function abrirModalAlerta(mensagem, titulo = "Atenção") {
-  document.getElementById("alertaTitulo").innerText = titulo;
-  document.getElementById("alertaMensagem").innerText = mensagem;
-  document.getElementById("modalAlerta").classList.remove("hidden");
+  if (typeof window.alerta === "function") {
+    window.alerta(mensagem, titulo, titulo === "Erro" ? "erro" : "aviso");
+    return;
+  }
+
+  alert(mensagem);
 }
 
 function fecharModalAlerta() {
-  document.getElementById("modalAlerta").classList.add("hidden");
+  window.fecharAlertaGlobal?.();
 }
 function aplicarFiltrosInsumos() {
   let filtrados = [...insumosCache];

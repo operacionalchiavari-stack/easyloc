@@ -1,14 +1,14 @@
-<div class="container locais-container">
+<div class="container el-page locais-container">
 
   <!-- ================= HEADER ================= -->
   <div class="header-list">
     <h2>Locais Cadastrados</h2>
 
     <div class="header-actions">
-      <button class="add-btn secondary" onclick="Locais_imprimir()">
+      <button class="add-btn secondary btn secondary" type="button" onclick="Locais_imprimir()">
         Imprimir / PDF
       </button>
-      <button class="add-btn" onclick="Locais_openAdd()">
+      <button class="add-btn btn primary" type="button" onclick="Locais_openAdd()">
         + Adicionar Local
       </button>
     </div>
@@ -18,26 +18,27 @@
   <div class="filters locais-filters">
 
     <input
+      class="el-input"
       id="locaisSearchInput"
       placeholder="Pesquisar local..."
       oninput="Locais_aplicarFiltros()"
     >
 
-    <select id="locaisStatusFilter" onchange="Locais_aplicarFiltros()">
+    <select class="el-select" id="locaisStatusFilter" onchange="Locais_aplicarFiltros()">
       <option value="">Todos os status</option>
       <option value="Ativo">Ativo</option>
       <option value="Morno">Morno</option>
       <option value="Inativo">Inativo</option>
     </select>
 
-    <select id="locaisInactiveFilter" onchange="Locais_aplicarFiltros()">
+    <select class="el-select" id="locaisInactiveFilter" onchange="Locais_aplicarFiltros()">
       <option value="">Toda inatividade</option>
       <option value="30">Até 30 dias</option>
       <option value="90">31 a 90 dias</option>
       <option value="180">Acima de 90 dias</option>
     </select>
 
-    <select id="locaisStyleFilter" onchange="Locais_aplicarFiltros()">
+    <select class="el-select" id="locaisStyleFilter" onchange="Locais_aplicarFiltros()">
       <option value="">Todos os tipos</option>
       <option value="Casa de Festa">Casa de Festa</option>
       <option value="Pousada">Pousada</option>
@@ -46,7 +47,7 @@
       <option value="Clube">Clube</option>
     </select>
 
-    <select id="locaisBudgetFilter" onchange="Locais_aplicarFiltros()">
+    <select class="el-select" id="locaisBudgetFilter" onchange="Locais_aplicarFiltros()">
       <option value="">Todos os orçamentos</option>
       <option value="Econômico">Econômico</option>
       <option value="Intermediário">Intermediário</option>
@@ -76,74 +77,74 @@
 </div>
 
 <!-- ================= MODAL DETALHES ================= -->
-<div class="modal" id="locais-modal">
-  <div class="modal-content">
+<div class="modal el-modal" id="locais-modal">
+  <div class="modal-content el-modal__box">
 
     <input type="hidden" id="locaisId">
 
     <div class="modal-header">
       <h3>Detalhes do Local</h3>
-      <button class="edit-btn" onclick="Locais_enableEdit()">✏️</button>
+      <button class="edit-btn btn-icon" type="button" onclick="Locais_enableEdit()">✏️</button>
     </div>
 
     <div class="form-grid three-cols">
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Tipo de Pessoa *</label>
-        <select id="locaisTipoPessoa" disabled>
+        <select class="el-select" id="locaisTipoPessoa" disabled>
           <option>Pessoa Física</option>
           <option>Pessoa Jurídica</option>
         </select>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>CPF / CNPJ *</label>
-        <input id="locaisCpfCnpj" readonly>
+        <input class="el-input" id="locaisCpfCnpj" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Inscrição Estadual</label>
-        <input id="locaisInscricaoEstadual" readonly>
+        <input class="el-input" id="locaisInscricaoEstadual" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Nome / Razão Social *</label>
-        <input id="locaisNome" readonly>
+        <input class="el-input" id="locaisNome" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Telefone *</label>
-        <input id="locaisTelefone" readonly>
+        <input class="el-input" id="locaisTelefone" readonly>
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Email *</label>
-        <input id="locaisEmail" readonly>
+        <input class="el-input" id="locaisEmail" readonly>
       </div>
 
-<div class="form-group col-full">
+<div class="form-group el-field col-full">
   <label>Endereço completo *</label>
   <div id="locais-endereco-wrapper"></div>
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
   <label>Número *</label>
-  <input id="locaisNumeroEndereco" readonly>
+  <input class="el-input" id="locaisNumeroEndereco" readonly>
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
   <label>Ponto de referência *</label>
-  <input id="locaisPontoReferencia" readonly>
+  <input class="el-input" id="locaisPontoReferencia" readonly>
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
   <label>Última locação</label>
-  <input id="locaisUltimaLocacao" type="date">
+  <input class="el-input" id="locaisUltimaLocacao" type="date">
 </div>
 
-<div class="form-group">
+<div class="form-group el-field">
   <label>Status do Local *</label>
-  <select id="locaisStatus" disabled>
+  <select class="el-select" id="locaisStatus" disabled>
     <option>Ativo</option>
     <option>Morno</option>
     <option>Inativo</option>
@@ -210,55 +211,35 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="Locais_closeModal()">Fechar</button>
-      <button class="btn-save" onclick="Locais_salvar()">Salvar</button>
+      <button class="btn-fechar btn danger" type="button" onclick="Locais_closeModal()">Fechar</button>
+      <button class="btn-save btn primary" type="button" onclick="Locais_salvar()">Salvar</button>
     </div>
 
   </div>
 </div>
 
 <!-- ================= MODAL CONFIRMAÇÃO ================= -->
-<div class="modal" id="locaisConfirmModal">
-  <div class="modal-content confirm-box">
+<div class="modal el-modal" id="locaisConfirmModal">
+  <div class="modal-content el-modal__box confirm-box">
     <h3>Confirmar exclusão</h3>
     <p>
       Tem certeza que deseja excluir este cadastro?<br>
       <strong>Essa ação não poderá ser desfeita.</strong>
     </p>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="Locais_closeModal()">Fechar</button>
-      <button class="btn-delete" onclick="Locais_delete()">Excluir</button>
+      <button class="btn-fechar btn danger" type="button" onclick="Locais_closeModal()">Fechar</button>
+      <button class="btn-delete btn danger" type="button" onclick="Locais_excluir()">Excluir</button>
     </div>
   </div>
 </div>
-
-<!-- ================= MODAL ALERTA ================= -->
-<div class="modal-alert" id="locaisValidationModal">
-  <div class="modal-alert-box">
-
-    <div class="modal-alert-icon">
-      !
-    </div>
-
-    <h3 class="modal-alert-title">Atenção</h3>
-
-    <p class="modal-alert-text" id="locaisValidationMsg"></p>
-
-    <button class="modal-alert-btn" onclick="Locais_fecharValidationModal()">
-      Ok
-    </button>
-
-  </div>
-</div>
-
 
 <iframe id="locaisPrintFrame" style="display:none;"></iframe>
 
 <!-- ================= MODAL AJUDA ================= -->
-<div class="modal-ajuda" id="locaisModalAjuda">
-  <div class="modal-ajuda-content">
+<div class="modal-ajuda el-modal" id="locaisModalAjuda">
+  <div class="modal-ajuda-content el-modal">
 
-    <div class="modal-ajuda-header">
+    <div class="modal-ajuda-header el-modal">
       <div class="ajuda-header-left">
         <h3>Ajuda • Cadastro de Locais</h3>
 
@@ -271,10 +252,10 @@
         </span>
       </div>
 
-      <button class="btn-close-ajuda" onclick="Locais_fecharAjuda()">✕</button>
+      <button type="button" class="btn-close-ajuda" onclick="Locais_fecharAjuda()">✕</button>
     </div>
 
-    <div class="modal-ajuda-body">
+    <div class="modal-ajuda-body el-modal">
       <div class="ajuda-videos">
         <div class="ajuda-video-item active"
              onclick="Locais_trocarVideo('https://www.youtube.com/embed/A8Gn9rZjJic', this)">

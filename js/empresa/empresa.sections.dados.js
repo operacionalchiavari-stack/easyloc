@@ -193,7 +193,8 @@
           });
       if (uploadError) {
         console.error(uploadError);
-        alert("Erro ao enviar logo");
+        if (typeof window.alerta === "function") window.alerta("Erro ao enviar logo", "Erro", "erro");
+        else alert("Erro ao enviar logo");
         return;
       }
       const { data: publicData } =
@@ -202,7 +203,8 @@
           .from("empresas-logos")
           .getPublicUrl(path);
       if (!publicData?.publicUrl) {
-        alert("Erro ao gerar URL pública");
+        if (typeof window.alerta === "function") window.alerta("Erro ao gerar URL pública", "Erro", "erro");
+        else alert("Erro ao gerar URL pública");
         return;
       }
       const publicUrl = publicData.publicUrl;
@@ -213,7 +215,8 @@
           .eq("id", state.empresaId);
       if (updateError) {
         console.error(updateError);
-        alert("Erro ao salvar logo no banco");
+        if (typeof window.alerta === "function") window.alerta("Erro ao salvar logo no banco", "Erro", "erro");
+        else alert("Erro ao salvar logo no banco");
         return;
       }
       logoPreview.innerHTML =

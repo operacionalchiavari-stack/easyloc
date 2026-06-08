@@ -292,21 +292,17 @@ function setReadOnly(v) {
    VALIDAÇÃO
 ===================================================== */
 function mostrarAlerta(msg) {
-  const modal = document.getElementById("validationModal");
-  const text = document.getElementById("validationMsg");
-
   try { document.activeElement?.blur(); } catch (e) {}
 
   const pac = document.querySelector(".pac-container");
   if (pac) pac.style.display = "none";
 
-  if (!modal || !text) {
-    alert(msg);
+  if (typeof window.alerta === "function") {
+    window.alerta(msg, "Atenção", "aviso");
     return;
   }
 
-  text.textContent = msg;
-  modal.style.display = "flex";
+  alert(msg);
 }
 
 function fecharValidationModal() {
@@ -535,7 +531,13 @@ function abrirDetalhesCliente(cliente) {
 async function clientes_excluir() {
   if (!clienteAtualId) return;
 
-  if (!confirm("Deseja realmente excluir este cliente?")) return;
+  const confirmou = await window.confirmarGlobal?.(
+    "Deseja realmente excluir este cliente?",
+    "Confirmar exclusão",
+    { confirmarTexto: "Excluir", tipo: "error" }
+  );
+
+  if (!confirmou) return;
 
   const { error } = await supabase
     .from("clientes_empresas")
@@ -637,7 +639,7 @@ function renderizarTagsComoCards(tags, grupo, classe) {
   return `
     <div class="table-tags">
       ${valores
-        .map(v => `<span class="table-tag ${classe}">${v}</span>`)
+        .map(v => `<span class="table-tag ${classe}">${esc(v)}</span>`)
         .join("")}
     </div>
   `;
@@ -890,7 +892,7 @@ function clientes_imprimir() {
     [];
 
   if (!clientes.length) {
-    alert("Nenhum cliente para imprimir.");
+    mostrarAlerta("Nenhum cliente para imprimir.");
     return;
   }
 
@@ -1018,13 +1020,13 @@ window.clientes_imprimir = function () {
     [];
 
   if (!lista.length) {
-    alert("Nenhum cliente para imprimir.");
+    mostrarAlerta("Nenhum cliente para imprimir.");
     return;
   }
 
   const iframe = document.getElementById("printFrame");
   if (!iframe || !iframe.contentWindow) {
-    alert("Iframe de impressão não encontrado.");
+    mostrarAlerta("Iframe de impressão não encontrado.");
     return;
   }
 
@@ -1164,6 +1166,7 @@ function criarInputEndereco(valor = "") {
 
   const input = document.createElement("input");
   input.id = "endereco";
+  input.className = "el-input";
   input.type = "text";
   input.placeholder =
     "Pesquise rua, salão, chácara, buffet, ponto conhecido...";

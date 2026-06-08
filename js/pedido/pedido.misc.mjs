@@ -125,17 +125,8 @@ export function abrirModalAvisoFrete(mensagem) {
     </div>
 
     <div style="text-align:right;">
-      <button id="btnFecharAvisoFrete"
-        style="
-          background:#ff6a00;
-          color:#fff;
-          border:none;
-          padding:10px 18px;
-          border-radius:10px;
-          font-weight:600;
-          cursor:pointer;
-        ">
-        Entendi
+      <button id="btnFecharAvisoFrete" class="btn danger btn-fechar" type="button">
+        Fechar
       </button>
     </div>
   `;

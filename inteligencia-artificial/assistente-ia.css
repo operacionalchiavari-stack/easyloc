@@ -2,7 +2,6 @@
   --azul:#0B1F33;
   --azul-user:#2b4d73;
   --laranja:#FF7A00;
-  --fundo:#F9F4EE;
   --cinza:#E5E7EB;
   --texto:#0F172A;
   --muted:#64748b;
@@ -11,7 +10,7 @@
 }
 
 *{ box-sizing:border-box; font-family:'Inter',sans-serif; }
-body{ margin:0; background:var(--fundo); color:var(--texto); }
+body{ margin:0; color:var(--texto); }
 
 .ia-page{ min-height:100vh; display:flex; flex-direction:column; }
 
@@ -32,15 +31,6 @@ body{ margin:0; background:var(--fundo); color:var(--texto); }
 .ia-avatar img{ width:100%; height:100%; object-fit:cover; }
 
 .ia-header-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-
-/* BUTTONS */
-.btn{
-  border:none; cursor:pointer; border-radius:10px;
-  padding:11px 14px; font-weight:600; font-size:13px;
-}
-.btn-primary{ background:var(--laranja); color:#fff; }
-.btn-outline{ background:#fff; color:var(--azul); border:1px solid var(--cinza); }
-.btn:hover{ filter:brightness(.98); }
 
 .btn-icon{
   width:38px; height:38px; border-radius:10px;
@@ -123,13 +113,24 @@ body{ margin:0; background:var(--fundo); color:var(--texto); }
 
 /* MODAL */
 .modal{ position:fixed; inset:0; display:none; z-index:2000; }
-.modal[aria-hidden="false"]{ display:block; }
-.modal-overlay{ position:absolute; inset:0; background:rgba(0,0,0,.45); }
+.modal[aria-hidden="false"],
+.modal.is-open{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:var(--el-space-5, 20px);
+}
+.modal-overlay{
+  position:absolute;
+  inset:0;
+  background:var(--el-modal-backdrop, rgba(11,31,51,.55));
+  backdrop-filter:var(--el-modal-backdrop-blur, blur(4px));
+}
 
 .modal-card{
   position:relative;
   width:min(760px, calc(100% - 28px));
-  margin:28px auto;
+  margin:0 auto;
   background:#fff;
   border-radius:16px;
   border:1px solid var(--cinza);
@@ -339,8 +340,8 @@ textarea{ min-height:140px; resize:vertical; }
 
 /* overlay mais elegante */
 .modal-overlay{
-  background: rgba(11,31,51,.55);
-  backdrop-filter: blur(3px);
+  background: var(--el-modal-backdrop, rgba(11,31,51,.55));
+  backdrop-filter: var(--el-modal-backdrop-blur, blur(4px));
 }
 
 /* card mais “enterprise” */
@@ -445,18 +446,6 @@ label{
   border-top: 1px solid var(--cinza);
   position: sticky;
   bottom: 0;
-}
-
-/* botões no modal com cara premium */
-.modal-footer .btn{
-  border-radius: 12px;
-  padding: 11px 14px;
-}
-.modal-footer .btn-primary{
-  box-shadow: 0 10px 22px rgba(255,122,0,.20);
-}
-.modal-footer .btn-outline{
-  background:#fff;
 }
 
 /* switch row alinhado */
@@ -837,6 +826,18 @@ label{
   padding: 2px 6px;
   border-radius: 6px;
   margin-left: 4px;
+}
+
+.msg.ia .lia-item-photo {
+  display: block;
+  width: min(260px, 100%);
+  max-height: 260px;
+  object-fit: cover;
+  margin: 12px 0 4px;
+  border: 1px solid var(--el-color-border, #e5e7eb);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
 }
 /* ===== COLUNA PERGUNTAS-EXEMPLO ===== */
 

@@ -1,4 +1,4 @@
-﻿<div class="cronograma-container">
+﻿<div class="cronograma-container el-page">
   <!-- Topbar -->
   <div class="topbar">
 
@@ -14,10 +14,10 @@
     </div>
 
     <div class="top-actions">
-      <button class="btn btn-light" onclick="abrirAgendaNova()">
+      <button type="button" class="btn secondary" onclick="abrirAgendaNova()">
         + Operação Interna
       </button>
-      <button class="btn btn-accent" onclick="abrirNovoPedido()">
+      <button type="button" class="btn primary" onclick="abrirNovoPedido()">
         + Novo Pedido
       </button>
     </div>
@@ -26,12 +26,12 @@
   <!-- Navegação Semana -->
   <div class="toolbar">
     <div class="week-nav">
-      <button class="btn btn-light" onclick="mudarSemana(-7)">Anterior</button>
+      <button type="button" class="btn secondary" onclick="mudarSemana(-7)">Anterior</button>
       <div class="week-badge" id="weekLabel">Carregando semana...</div>
-      <button class="btn btn-light" onclick="mudarSemana(7)">Próxima</button>
+      <button type="button" class="btn secondary" onclick="mudarSemana(7)">Próxima</button>
     </div>
     <div class="toolbar-right">
-      <select id="filtroEtapa" class="filter" onchange="renderCronograma()">
+      <select id="filtroEtapa" class="filter el-select" onchange="renderCronograma()">
         <option value="semAgenda" selected>Somente cronograma</option>
         <option value="comAgenda">Cronograma + Agenda interna</option>
         <option value="triagemAgenda">Triagem + Agenda interna</option>
@@ -41,8 +41,8 @@
         <option value="Montagem">Montagem</option>
         <option value="Desmontagem">Desmontagem</option>
       </select>
-      <input id="filtroResponsavel" class="filter" type="text" placeholder="Filtrar responsável" oninput="renderCronograma()" />
-      <input id="filtroCaminhao" class="filter" type="text" placeholder="Filtrar caminhão" oninput="renderCronograma()" />
+      <input id="filtroResponsavel" class="filter el-input" type="text" placeholder="Filtrar responsável" oninput="renderCronograma()" />
+      <input id="filtroCaminhao" class="filter el-input" type="text" placeholder="Filtrar caminhão" oninput="renderCronograma()" />
     </div>
   </div>
 

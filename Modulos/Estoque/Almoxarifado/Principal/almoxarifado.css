@@ -7,7 +7,6 @@
   --text: #132238;
   --muted: #64748b;
   --line: #dbe5f1;
-  --bg: #f3ede7; /* 🔥 bege EasyLoc */
   --white: #ffffff;
   --success: #16a34a;
   --danger: #dc2626;
@@ -24,7 +23,6 @@ body {
   margin: 0;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  background: var(--bg);
   color: var(--text);
 }
 
@@ -53,31 +51,6 @@ body {
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
-}
-
-.btn {
-  border: none;
-  border-radius: 14px;
-  padding: 12px 18px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 14px;
-  transition: 0.2s;
-}
-
-.btn-primary {
-  background: var(--orange);
-  color: #fff;
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-}
-
-.btn-outline {
-  background: #fff;
-  color: var(--navy);
-  border: 1px solid #cdd9ea;
 }
 
 .container {

@@ -1,6 +1,6 @@
-<div class="container" data-module="controle-qualidade"></div>
+<div class="container el-page" data-module="controle-qualidade"></div>
 
-<div class="container">
+<div class="container el-page">
 
 
  </div> <div class="topbar">
@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  <div class="page">
+  <div class="page el-page">
 
     <div class="cards">
       <div class="card summary-card">
@@ -64,23 +64,23 @@
 
 <div class="tabs">
 
-  <button class="tab active destaque" data-tab="inspecao">
+  <button type="button" class="tab active destaque" data-tab="inspecao">
     Inspeção
   </button>
 
-  <button class="tab alerta" data-tab="pendencias">
+  <button type="button" class="tab alerta" data-tab="pendencias">
     Pendências
   </button>
 
-  <button class="tab" data-tab="itens">
+  <button type="button" class="tab" data-tab="itens">
     Lista de itens
   </button>
 
-  <button class="tab" data-tab="historico">
+  <button type="button" class="tab" data-tab="historico">
     Histórico
   </button>
 
-  <button class="tab" data-tab="metas">
+  <button type="button" class="tab" data-tab="metas">
     Metas
   </button>
 
@@ -129,29 +129,29 @@
           <div>
 
             <div class="form-grid">
-              <div class="field">
+              <div class="field el-field">
                 <label>Responsável</label>
-                <input class="input" id="responsavel" placeholder="Nome do responsável">
+                <input class="input el-input" id="responsavel" placeholder="Nome do responsável">
               </div>
 
-              <div class="field">
+              <div class="field el-field">
                 <label>Data da análise</label>
-                <input class="input" id="dataAnalise" type="date">
+                <input class="input el-input" id="dataAnalise" type="date">
               </div>
             </div>
 
             <div class="status-buttons">
-              <button class="status-btn approved" data-status="Aprovado">
+              <button type="button" class="status-btn approved" data-status="Aprovado">
                 Aprovado
                 <small>Liberado para locação</small>
               </button>
 
-              <button class="status-btn warning" data-status="Aprovado com observação">
+              <button type="button" class="status-btn warning" data-status="Aprovado com observação">
                 Atenção
                 <small>Liberado com observação</small>
               </button>
 
-              <button class="status-btn rejected" data-status="Reprovado">
+              <button type="button" class="status-btn rejected" data-status="Reprovado">
                 Reprovado
                 <small>Bloqueado para uso</small>
               </button>
@@ -161,9 +161,9 @@
             <div class="checklist" id="checklistContainer"></div>
 
             <div class="form-grid">
-              <div class="field">
+              <div class="field el-field">
                 <label>Ação necessária</label>
-                <select class="select" id="acaoNecessaria">
+                <select class="select el-select" id="acaoNecessaria">
                   <option value="">Selecione</option>
                   <option>Nenhuma</option>
                   <option>Revitalização</option>
@@ -177,9 +177,9 @@
                 </select>
               </div>
 
-              <div class="field">
+              <div class="field el-field">
                 <label>Prioridade</label>
-                <select class="select" id="prioridade">
+                <select class="select el-select" id="prioridade">
                   <option value="">Selecione</option>
                   <option>Baixa</option>
                   <option>Média</option>
@@ -188,9 +188,9 @@
                 </select>
               </div>
 
-              <div class="field full">
+              <div class="field full el-field">
                 <label>Destino do item</label>
-                <select class="select" id="destinoItem">
+                <select class="select el-select" id="destinoItem">
                   <option value="">Selecione</option>
                   <option>Liberado para locação</option>
                   <option>Enviar para manutenção</option>
@@ -200,15 +200,15 @@
                 </select>
               </div>
 
-              <div class="field full">
+              <div class="field full el-field">
                 <label>Observações</label>
-                <textarea class="textarea" id="observacoes"></textarea>
+                <textarea class="textarea el-textarea" id="observacoes"></textarea>
               </div>
             </div>
 
             <div class="actions-bar">
-              <button class="btn secondary" id="btnPular">Pular item</button>
-              <button class="btn primary" id="btnSalvarProximo">Salvar e próximo</button>
+              <button type="button" class="btn secondary" id="btnPular">Pular item</button>
+              <button type="button" class="btn primary" id="btnSalvarProximo">Salvar e próximo</button>
             </div>
 
           </div>
@@ -228,8 +228,8 @@
 
       <div class="section-body">
         <div class="toolbar">
-          <input class="input" id="filtroBusca" placeholder="Buscar item, código ou responsável">
-          <select class="select" id="filtroStatus">
+          <input class="input el-input" id="filtroBusca" placeholder="Buscar item, código ou responsável">
+          <select class="select el-select" id="filtroStatus">
             <option value="">Todos os status</option>
             <option>Aprovado</option>
             <option>Aprovado com observação</option>

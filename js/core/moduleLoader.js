@@ -14,6 +14,50 @@ window.carregarNaMain = async function (
   cssPath
 ){
 
+  function reaplicarOverridesGlobais(){
+    document
+      .getElementById("dynamic-module-overrides-css")
+      ?.remove();
+
+    const overrides = document.createElement("link");
+    overrides.rel = "stylesheet";
+    overrides.href = "styles/module-overrides.css";
+    overrides.id = "dynamic-module-overrides-css";
+
+    document.head.appendChild(overrides);
+  }
+
+  function normalizarBotoesGlobais(root){
+    if(!root) return;
+
+    root.querySelectorAll("button").forEach((button) => {
+      const texto = (button.textContent || "").trim().toLowerCase();
+      const aria = (button.getAttribute("aria-label") || "").trim().toLowerCase();
+      const onclick = (button.getAttribute("onclick") || "").toLowerCase();
+      const dataClose = button.hasAttribute("data-close");
+
+      if(texto === "fechar" || aria === "fechar"){
+        button.classList.add("btn", "danger", "btn-fechar");
+        button.classList.remove("secondary", "btn-cancel", "btn-cancelar");
+        return;
+      }
+
+      if(texto === "salvar"){
+        button.classList.add("btn", "primary");
+        return;
+      }
+
+      if(texto === "cancelar"){
+        button.classList.add("btn", "secondary");
+        return;
+      }
+
+      if(texto === "sair" || onclick.includes("sair") || dataClose && texto === "x"){
+        button.classList.add("btn", "danger");
+      }
+    });
+  }
+
   /* =====================
    FINALIZADOR GLOBAL
 ===================== */
@@ -106,6 +150,7 @@ delete window.__caminhoesEventosAtivos;
     const html = await response.text();
 
     main.innerHTML = html;
+    normalizarBotoesGlobais(main);
 
 
     /* =====================
@@ -124,6 +169,8 @@ delete window.__caminhoesEventosAtivos;
 
       document.head.appendChild(link);
     }
+
+    reaplicarOverridesGlobais();
 
 
     /* =====================

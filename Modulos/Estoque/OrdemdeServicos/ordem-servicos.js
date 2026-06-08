@@ -31,6 +31,15 @@ function runPromise(promise, callbacks){
     });
 }
 
+function avisar(mensagem, titulo = "Atenção", tipo = "aviso"){
+  if(typeof window.alerta === "function"){
+    window.alerta(mensagem, titulo, tipo);
+    return;
+  }
+
+  alert(mensagem);
+}
+
 function createScriptRun(callbacks){
   return {
     withSuccessHandler(fn){ callbacks.success = fn; return this; },
@@ -561,16 +570,16 @@ function salvarOSModal(){
 
   // 🔥 VALIDAÇÃO (AQUI É O LUGAR CERTO)
   if(!dados.setor || !dados.nome || !dados.item || !dados.quantidade){
-    alert("Preencha os campos obrigatórios");
+    avisar("Preencha os campos obrigatórios");
     return;
   }
 
   if(dados.ondeDano === "Evento" && !dados.numeroPedido){
-    alert("Preencha o número do pedido");
+    avisar("Preencha o número do pedido");
     return;
   }
 if(!dados.codigoItem){
-  alert("Selecione um item válido da lista (código obrigatório)");
+  avisar("Selecione um item válido da lista (código obrigatório)");
   return;
 }
   // 🔥 ENVIO PRO GS
@@ -578,7 +587,7 @@ scriptRun
   .withSuccessHandler(res => {
 
     if(!res.ok){
-      alert(res.msg);
+      avisar(res.msg);
       return;
     }
 
@@ -752,7 +761,7 @@ function toggleSelecionado(el, id){
 function abrirBaixa(){
 
   if(selecionados.length === 0){
-    alert("Selecione pelo menos uma O.S");
+    avisar("Selecione pelo menos uma O.S");
     return;
   }
 
@@ -768,7 +777,7 @@ function validarSenhaBaixa(){
     .withSuccessHandler(res => {
 
       if(!res.ok){
-        alert("Senha incorreta");
+        avisar("Senha incorreta", "Erro", "erro");
         return;
       }
 
@@ -789,18 +798,18 @@ function confirmarBaixa(){
   const todosOk = checks.every(id => document.getElementById(id).checked);
 
   if(!todosOk){
-    alert("Complete todo o checklist antes de finalizar.");
+    avisar("Complete todo o checklist antes de finalizar.");
     return;
   }
 
   if(!document.getElementById("chkResponsabilidade").checked){
-    alert("Confirme a responsabilidade antes de finalizar.");
+    avisar("Confirme a responsabilidade antes de finalizar.");
     return;
   }
 
   scriptRun
     .withSuccessHandler(() => {
-      alert("Baixa concluída!");
+      avisar("Baixa concluída!", "Sucesso", "sucesso");
       location.reload();
     })
     .darBaixaOS(selecionados);
@@ -848,7 +857,7 @@ function fecharChecklist(){
 function abrirEncaminhamento(){
 
   if(selecionados.length !== 1){
-    alert("Selecione apenas uma O.S");
+    avisar("Selecione apenas uma O.S");
     return;
   }
 
@@ -864,7 +873,7 @@ function confirmarEncaminhar(){
   const setor = document.getElementById("setorEncaminhar").value;
 
   if(!setor){
-    alert("Selecione um setor");
+    avisar("Selecione um setor");
     return;
   }
 

@@ -1,0 +1,63 @@
+:root {
+  --el-color-primary: #0f2a44;
+  --el-color-primary-strong: #0b1f33;
+  --el-color-primary-dark: #081b2d;
+  --el-color-primary-soft: #eef4fb;
+  --el-color-accent: #ff6a00;
+  --el-color-accent-strong: #e85f00;
+  --el-color-accent-soft: #fff3e8;
+  --el-color-bg: #fffaf6;
+  --el-color-surface: #ffffff;
+  --el-color-surface-soft: #f8fafc;
+  --el-color-border: #e5e7eb;
+  --el-color-text: #0f172a;
+  --el-color-muted: #64748b;
+  --el-color-success: #16a34a;
+  --el-color-warning: #f59e0b;
+  --el-color-danger: #dc2626;
+  --el-color-info: #2563eb;
+
+  --el-font-family: "Inter", Arial, sans-serif;
+  --el-radius-xs: 6px;
+  --el-radius-sm: 8px;
+  --el-radius-md: 10px;
+  --el-radius-lg: 14px;
+  --el-radius-xl: 18px;
+
+  --el-shadow-sm: 0 8px 20px rgba(15, 23, 42, 0.08);
+  --el-shadow-md: 0 18px 45px rgba(15, 23, 42, 0.14);
+  --el-shadow-lg: 0 30px 70px rgba(15, 23, 42, 0.22);
+  --el-focus-ring: 0 0 0 3px rgba(255, 106, 0, 0.14);
+  --el-focus-ring-strong: 0 0 0 4px rgba(255, 106, 0, 0.18);
+
+  --el-modal-backdrop: rgba(15, 23, 42, 0.56);
+  --el-modal-backdrop-blur: blur(4px);
+  --el-modal-z-index: 999999;
+
+  --el-table-header-bg: linear-gradient(
+    180deg,
+    var(--el-color-primary),
+    var(--el-color-primary-dark)
+  );
+  --el-table-header-color: #ffffff;
+  --el-table-row-hover: #eaf2ff;
+  --el-table-row-border: rgba(15, 23, 42, 0.08);
+
+  --el-card-padding: 18px;
+  --el-card-min-height: 96px;
+
+  --el-space-1: 4px;
+  --el-space-2: 8px;
+  --el-space-3: 12px;
+  --el-space-4: 16px;
+  --el-space-5: 20px;
+  --el-space-6: 24px;
+  --el-space-8: 32px;
+
+  --azul: var(--el-color-primary);
+  --laranja: var(--el-color-accent);
+  --fundo: var(--el-color-bg);
+  --cinza: var(--el-color-border);
+  --verde: var(--el-color-success);
+  --vermelho: var(--el-color-danger);
+}

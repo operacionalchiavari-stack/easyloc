@@ -1,7 +1,24 @@
 console.log("🔥 assistente-ia.js FOI CARREGADO");
+(function(){
+if (typeof window.__liaAssistenteDestroy === "function") {
+  try { window.__liaAssistenteDestroy(); } catch (err) { console.warn("Erro ao limpar Lia anterior:", err); }
+}
+
+setTimeout(() => {
+  window.finalizarCarregamentoModulo?.();
+}, 0);
+
 window.__SUPABASE_ANON_KEY__ =
   window.__SUPABASE_ANON_KEY__ ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3ZW11b2h0dnd2cmR6Znh3cm1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjE3MjAsImV4cCI6MjA4MTIzNzcyMH0.Q-hy9slxlojDNUlnCCZjZIn7TYhCSvnhT7NxWbP-JfM";
+
+function avisar(mensagem, titulo = "Atenção", tipo = "aviso") {
+  if (typeof window.alerta === "function") {
+    window.alerta(mensagem, titulo, tipo);
+    return;
+  }
+  alert(mensagem);
+}
 
 function getEmpresaIdLogada() {
   if (!window.__CONTEXT || !window.__CONTEXT.empresa_id) {
@@ -10,9 +27,25 @@ function getEmpresaIdLogada() {
   return window.__CONTEXT.empresa_id;
 }
 
+async function getSupabaseAuthHeaders() {
+  if (!window.supabaseClient?.auth) {
+    throw new Error("Cliente Supabase não carregado.");
+  }
+
+  const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+
+  if (error || !session?.access_token) {
+    throw new Error("Sessão expirada. Faça login novamente.");
+  }
+
+  return {
+    apikey: window.supabaseClient?.supabaseKey || window.__SUPABASE_ANON_KEY__,
+    Authorization: `Bearer ${session.access_token}`,
+  };
+}
+
 async function buscarDadosPorFonte({ categoria, empresa_id }) {
   const SUPABASE_URL = 'https://awemuohtvwvrdzfxwrmd.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_tlm-v5vvX9jgChODJmDCtw_JqMxLtpZ';
 
   console.group('🧠 buscarDadosPorFonte');
   console.log('➡️ categoria recebida:', categoria);
@@ -26,10 +59,11 @@ async function buscarDadosPorFonte({ categoria, empresa_id }) {
 
   console.log('📡 URL fontes:', fontesUrl);
 
+  const authHeaders = await getSupabaseAuthHeaders();
+
   const fonteRes = await fetch(fontesUrl, {
     headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      ...authHeaders,
     },
   });
 
@@ -71,8 +105,7 @@ async function buscarDadosPorFonte({ categoria, empresa_id }) {
 
     const dadosRes = await fetch(dadosUrl, {
       headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        ...authHeaders,
       },
     });
 
@@ -170,6 +203,7 @@ const btnClearKB = document.getElementById('btnClearKB');
 
 /* ESTADO */
 let conversa = safeJsonParse(sessionStorage.getItem(SS_CHAT_KEY), []);
+let kb = safeJsonParse(localStorage.getItem(LS_KB_KEY), []);
 
 /* UTIL */
 function safeJsonParse(str, fallback) {
@@ -194,10 +228,14 @@ function stripHtml(html) {
 function openModal(modalEl) {
   if (!modalEl) return;
   modalEl.setAttribute('aria-hidden', 'false');
+  modalEl.classList.add('is-open');
 }
 function closeModalById(id) {
   const el = document.getElementById(id);
-  if (el) el.setAttribute('aria-hidden', 'true');
+  if (el) {
+    el.setAttribute('aria-hidden', 'true');
+    el.classList.remove('is-open');
+  }
 }
 
 /* FECHAR MODAL click overlay/botão */
@@ -244,6 +282,16 @@ function renderChat() {
 
 function persistChat() {
   sessionStorage.setItem(SS_CHAT_KEY, JSON.stringify(conversa));
+}
+
+function persistKB() {
+  localStorage.setItem(LS_KB_KEY, JSON.stringify(kb));
+}
+
+function renderKB() {
+  if (modalKB?.getAttribute("aria-hidden") === "false") {
+    renderMinhaBase();
+  }
 }
 renderChat();
 
@@ -342,14 +390,15 @@ async function buscarConhecimentoSemantico({ pergunta, empresa_id }) {
     console.log("🧠 Pergunta original:", pergunta);
     console.log("🧠 Pergunta com contexto:", perguntaContextualizada);
 
+    const authHeaders = await getSupabaseAuthHeaders();
+
     const response = await fetch(
       "https://awemuohtvwvrdzfxwrmd.supabase.co/functions/v1/rag-buscar-conhecimento",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${window.__SUPABASE_ANON_KEY__}`,
-          apikey: window.__SUPABASE_ANON_KEY__,
+          ...authHeaders,
         },
         body: JSON.stringify({
           empresa_id,
@@ -380,16 +429,15 @@ async function buscarConhecimentoSemantico({ pergunta, empresa_id }) {
 }
 
 async function chamarLia(mensagem, contexto = {}) {
+  const authHeaders = await getSupabaseAuthHeaders();
+
   const response = await fetch(
     "https://awemuohtvwvrdzfxwrmd.supabase.co/functions/v1/lia-chat",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-
-        // 🔑 JWT anon public key
-        "Authorization": `Bearer ${window.__SUPABASE_ANON_KEY__}`,
-        "apikey": window.__SUPABASE_ANON_KEY__
+        ...authHeaders,
       },
       body: JSON.stringify({
         mensagem,
@@ -417,6 +465,225 @@ function montarContextoConversa(max = 4) {
   }));
 }
 
+const LIA_STOPWORDS = new Set([
+  "sobre",
+  "para",
+  "qual",
+  "quais",
+  "quem",
+  "como",
+  "com",
+  "sem",
+  "dos",
+  "das",
+  "por",
+  "que",
+  "uma",
+  "uns",
+  "umas",
+  "esse",
+  "essa",
+  "esses",
+  "essas",
+  "cliente",
+  "clientes",
+  "item",
+  "itens",
+  "produto",
+  "produtos",
+  "cadastrado",
+  "cadastrados",
+  "cadastrada",
+  "cadastradas"
+]);
+
+function extrairTermosBusca(pergunta) {
+  return Array.from(
+    new Set(
+      String(pergunta || "")
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s@._-]/gu, " ")
+        .split(/\s+/)
+        .map(t => t.trim())
+        .filter(t => t.length >= 3 && !LIA_STOPWORDS.has(t))
+    )
+  ).slice(0, 6);
+}
+
+function montarFiltroIlike(campos, termos) {
+  const filtros = [];
+
+  termos.forEach(termo => {
+    const seguro = termo.replaceAll("%", "").replaceAll(",", "").replaceAll("(", "").replaceAll(")", "");
+    if (!seguro) return;
+
+    campos.forEach(campo => {
+      filtros.push(`${campo}.ilike.%${seguro}%`);
+    });
+  });
+
+  return filtros.join(",");
+}
+
+async function contarTabelaEmpresa(tabela, empresa_id) {
+  const { count, error } = await window.supabaseClient
+    .from(tabela)
+    .select("id", { count: "exact", head: true })
+    .eq("empresa_id", empresa_id);
+
+  if (error) {
+    console.warn(`Lia: erro ao contar ${tabela}`, error);
+    return null;
+  }
+
+  return count || 0;
+}
+
+async function buscarClientesParaLia({ pergunta, empresa_id }) {
+  const termos = extrairTermosBusca(pergunta);
+
+  let query = window.supabaseClient
+    .from("clientes_empresas")
+    .select(`
+      id,
+      nome_razao,
+      telefone,
+      email,
+      endereco,
+      numero_endereco,
+      ponto_referencia,
+      tipo_pessoa,
+      status,
+      ultima_locacao,
+      tags
+    `)
+    .eq("empresa_id", empresa_id)
+    .limit(12);
+
+  const filtro = montarFiltroIlike(
+    ["nome_razao", "telefone", "email", "cpf_cnpj", "endereco"],
+    termos
+  );
+
+  if (filtro) {
+    query = query.or(filtro);
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.warn("Lia: erro ao buscar clientes", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+async function buscarItensParaLia({ pergunta, empresa_id }) {
+  const termos = extrairTermosBusca(pergunta);
+
+  let query = window.supabaseClient
+    .from("itens")
+    .select(`
+      id,
+      codigo,
+      produto,
+      descricao_total,
+      material,
+      cor,
+      tipo,
+      familia,
+      categoria,
+      setor_estoque,
+      valor_locacao,
+      valor_reposicao,
+      ativo,
+      foto_url
+    `)
+    .eq("empresa_id", empresa_id)
+    .limit(12);
+
+  const filtro = montarFiltroIlike(
+    ["codigo", "produto", "descricao_total", "material", "cor", "tipo", "familia", "categoria", "setor_estoque"],
+    termos
+  );
+
+  if (filtro) {
+    query = query.or(filtro);
+  } else {
+    query = query.order("produto", { ascending: true });
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.warn("Lia: erro ao buscar itens", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+function formatarClienteParaLia(c) {
+  const tags = c.tags && typeof c.tags === "object"
+    ? Object.entries(c.tags)
+        .map(([chave, valor]) => `${chave}: ${Array.isArray(valor) ? valor.join(", ") : valor}`)
+        .join("; ")
+    : "";
+
+  return {
+    nome: c.nome_razao || "",
+    telefone: c.telefone || "",
+    email: c.email || "",
+    endereco: [c.endereco, c.numero_endereco].filter(Boolean).join(", "),
+    ponto_referencia: c.ponto_referencia || "",
+    tipo_pessoa: c.tipo_pessoa || "",
+    status: c.status || "",
+    ultima_locacao: c.ultima_locacao || "",
+    tags
+  };
+}
+
+function formatarItemParaLia(item) {
+  return {
+    codigo: item.codigo || "",
+    nome: item.descricao_total || item.produto || "",
+    produto: item.produto || "",
+    material: item.material || "",
+    cor: item.cor || "",
+    tipo: item.tipo || "",
+    familia: item.familia || "",
+    categoria: item.categoria || "",
+    setor_estoque: item.setor_estoque || "",
+    valor_locacao: Number(item.valor_locacao || 0),
+    valor_reposicao: Number(item.valor_reposicao || 0),
+    foto_url: item.foto_url || "",
+    ativo: item.ativo !== false
+  };
+}
+
+async function buscarDadosOperacionaisLia({ pergunta, empresa_id }) {
+  const [totalClientes, totalItens, clientes, itens] = await Promise.all([
+    contarTabelaEmpresa("clientes_empresas", empresa_id),
+    contarTabelaEmpresa("itens", empresa_id),
+    buscarClientesParaLia({ pergunta, empresa_id }),
+    buscarItensParaLia({ pergunta, empresa_id })
+  ]);
+
+  return {
+    empresa_id,
+    totais: {
+      clientes: totalClientes,
+      itens: totalItens
+    },
+    clientes: clientes.map(formatarClienteParaLia),
+    itens: itens.map(formatarItemParaLia),
+    observacao: "Dados reais do EasyLoc filtrados por empresa_id da empresa logada. Use somente estes dados quando responder sobre clientes ou itens cadastrados."
+  };
+}
+
 async function askLiaWithText(pergunta) {
   console.log("❓ PERGUNTA RECEBIDA:", pergunta);
   if (!pergunta) return;
@@ -436,13 +703,25 @@ async function askLiaWithText(pergunta) {
 
   try {
     let resposta = '';
+    const empresaId = getEmpresaIdLogada();
+    let dadosOperacionais = null;
+
+    try {
+      dadosOperacionais = await buscarDadosOperacionaisLia({
+        pergunta,
+        empresa_id: empresaId
+      });
+      console.log("📦 DADOS OPERACIONAIS LIA:", dadosOperacionais);
+    } catch (e) {
+      console.warn("Lia: não foi possível buscar clientes/itens.", e);
+    }
 
     // ✅ ÚNICA FONTE DE VERDADE: RAG SEMÂNTICO
 let resultados = null;
 try {
   resultados = await buscarConhecimentoSemantico({
     pergunta,
-    empresa_id: getEmpresaIdLogada()
+    empresa_id: empresaId
   });
 } catch (e) {
   console.error("Falha no RAG, seguindo fallback", e);
@@ -457,13 +736,21 @@ try {
         .join('\n\n---\n\n');
 
 resposta = await chamarLia(pergunta, {
-  empresa_id: getEmpresaIdLogada(),
+  empresa_id: empresaId,
   papel: "assistente_interna",
   publico: "equipe_interna",
   tom: "profissional_proximo",
   origem: "ia_conhecimento",
   tema_ativo: sessionStorage.getItem("lia_tema_ativo"),
   conhecimento: contextoBase,
+  dados_operacionais: dadosOperacionais,
+  instrucao_dados_operacionais: `
+Quando a pergunta envolver clientes ou itens cadastrados, use dados_operacionais.
+Não invente cliente, item, código, preço, telefone, email ou endereço.
+Se o dado não estiver em dados_operacionais, diga que não encontrou no cadastro filtrado.
+Se a pergunta pedir foto/imagem de um item e o item tiver foto_url, mostre a imagem usando <img class="lia-item-photo" src="FOTO_URL" alt="Nome do item">.
+Se o item não tiver foto_url, diga que o item está cadastrado sem foto.
+`,
   historico: montarContextoConversa()
 });
 
@@ -471,16 +758,21 @@ resposta = await chamarLia(pergunta, {
     } else {
       // ✅ Fallback honesto (SEM inventar processo)
 resposta = await chamarLia(pergunta, {
-  empresa_id: getEmpresaIdLogada(),
+  empresa_id: empresaId,
   papel: "assistente_interna",
   publico: "equipe_interna",
   tom: "profissional_proximo",
   origem: "sem_conhecimento",
   tema_ativo: sessionStorage.getItem("lia_tema_ativo"),
+  dados_operacionais: dadosOperacionais,
   instrucao: `
 Seja honesta.
 Diga claramente que esse assunto não está documentado nos processos internos.
 Não invente regras.
+Se a pergunta for sobre clientes ou itens cadastrados, responda com os dados_operacionais reais.
+Não invente cliente, item, código, preço, telefone, email ou endereço.
+Se a pergunta pedir foto/imagem de um item e o item tiver foto_url, mostre a imagem usando <img class="lia-item-photo" src="FOTO_URL" alt="Nome do item">.
+Se o item não tiver foto_url, diga que o item está cadastrado sem foto.
 Explique de forma genérica como isso costuma funcionar no mercado, se fizer sentido.
 `,
   historico: montarContextoConversa()
@@ -579,7 +871,7 @@ if (btnSalvarDoc) {
     const ativo = !!docAtivo?.checked;
 
     const file = docArquivo?.files?.[0];
-    if (!file) { alert('Escolha um arquivo (PDF/DOCX/TXT).'); return; }
+    if (!file) { avisar('Escolha um arquivo (PDF/DOCX/TXT).'); return; }
 
     const item = {
       id: uid(),
@@ -606,7 +898,7 @@ if (btnSalvarTexto) {
     const conteudo = txtConteudo?.value?.trim() || '';
     const ativo = !!txtAtivo?.checked;
 
-    if (!conteudo) { alert('Cole um conteúdo no campo de texto.'); return; }
+    if (!conteudo) { avisar('Cole um conteúdo no campo de texto.'); return; }
 
     const item = {
       id: uid(),
@@ -634,7 +926,7 @@ if (btnConfirmSaveLearning) {
     const conteudo = learnConteudo?.value?.trim() || '';
     const ativo = !!learnAtivo?.checked;
 
-    if (!conteudo) { alert('Conteúdo vazio.'); return; }
+    if (!conteudo) { avisar('Conteúdo vazio.'); return; }
 
     const mode = btnConfirmSaveLearning.dataset.mode || 'create';
     const editId = btnConfirmSaveLearning.dataset.editId || '';
@@ -828,6 +1120,7 @@ document.addEventListener('keydown', (e) => {
   [modalAddKnowledge, modalSaveLearning, modalKB].forEach(m => {
     if (m && m.getAttribute('aria-hidden') === 'false') {
       m.setAttribute('aria-hidden', 'true');
+      m.classList.remove('is-open');
     }
   });
 });
@@ -991,3 +1284,11 @@ r.onresult = (event) => {
   };
 })();
 
+window.__liaAssistenteDestroy = function(){
+  delete window.__liaVoice;
+  delete window.__liaAssistenteDestroy;
+};
+
+window.__activeModuleDestroy = window.__liaAssistenteDestroy;
+window.finalizarCarregamentoModulo?.();
+})();

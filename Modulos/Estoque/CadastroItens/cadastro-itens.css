@@ -1,7 +1,6 @@
 :root {
   --azul: #0f2a44;
   --laranja: #ff6a00;
-  --fundo: #fbf4ef;
   --cinza: #e5e7eb;
   --verde: #16a34a;
   --amarelo: #facc15;
@@ -569,89 +568,6 @@ td {
 .itens-tag-kit {
   background: #fff3e8;
   color: #c2410c;
-}
-
-/* =========================
-   MODAL ALERTA – ITENS
-========================= */
-
-.modal-alert {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(80, 80, 80, 0.55);
-  backdrop-filter: blur(4px);
-  z-index: 999999;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-alert-content {
-  background: #ffffff;
-  width: 100%;
-  max-width: 420px;
-  padding: 32px 28px 28px;
-  border-radius: 20px;
-  box-shadow:
-    0 30px 60px rgba(0, 0, 0, 0.25),
-    0 10px 20px rgba(0, 0, 0, 0.08);
-  text-align: center;
-  position: relative;
-  z-index: 10001;
-}
-
-.modal-alert-content::before {
-  content: "!";
-  width: 56px;
-  height: 56px;
-  background: var(--laranja);
-  color: #fff;
-  font-size: 28px;
-  font-weight: 800;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  top: -28px;
-  left: 50%;
-  transform: translateX(-50%);
-  box-shadow: 0 8px 20px rgba(255, 106, 0, 0.45);
-}
-
-.modal-alert-content h4 {
-  margin: 20px 0 6px;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--azul);
-}
-
-.modal-alert-content p {
-  font-size: 15px;
-  color: #4b5563;
-  margin-bottom: 26px;
-  line-height: 1.4;
-}
-
-.btn-alert {
-  background: var(--laranja);
-  color: #fff;
-  border: none;
-  padding: 12px 36px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-alert:hover {
-  filter: brightness(0.95);
-  transform: translateY(-1px);
-}
-
-.btn-alert:active {
-  transform: translateY(0);
 }
 
 /* =========================
@@ -1233,23 +1149,6 @@ td {
 .modal-actions-right {
   display: flex;
   gap: 12px;
-}
-
-/* botão secundário */
-.btn-secondary {
-  background: #f1f5f9;
-  border: 1.5px solid #e5e7eb;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background: #e5e7eb;
 }
 
 /* =====================================================

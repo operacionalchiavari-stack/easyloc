@@ -1,15 +1,15 @@
-<div class="container">
+<div class="container cadastro-caminhoes-page el-page">
 
   <!-- HEADER -->
   <header class="page-header">
     <h1>Caminhões Cadastrados</h1>
 
     <div class="header-actions">
-      <button class="btn secondary" onclick="imprimirCaminhoes()">
+      <button class="btn secondary" type="button" onclick="imprimirCaminhoes()">
         Imprimir / PDF
       </button>
 
-      <button class="btn primary" onclick="abrirModalCaminhao()">
+      <button class="btn primary" type="button" onclick="abrirModalCaminhao()">
         + Adicionar Caminhão
       </button>
     </div>
@@ -17,15 +17,15 @@
 
   <!-- FILTRO -->
   <div class="filtros">
-    <input type="text" id="filtroTexto" placeholder="Pesquisar caminhão..." />
+    <input class="el-input" type="text" id="filtroTexto" placeholder="Pesquisar caminhão..." />
 
-    <select id="filtroTipo">
+    <select class="el-select" id="filtroTipo">
       <option value="">Todos os tipos</option>
       <option value="proprio">Próprio</option>
       <option value="terceirizado">Terceirizado</option>
     </select>
 
-    <select id="filtroStatus">
+    <select class="el-select" id="filtroStatus">
       <option value="">Todos os status</option>
       <option value="ativo">Ativo</option>
       <option value="inativo">Inativo</option>
@@ -56,29 +56,9 @@
 <!-- =====================================================
      MODAL ALERTA GLOBAL EASYLOC
 ===================================================== -->
-<div id="modalAlerta" class="modal-alert hidden">
-  <div class="modal-alert-box">
-
-    <div class="modal-alert-icon">!</div>
-
-    <div class="modal-alert-title" id="modalAlertaTitulo">
-      Atenção
-    </div>
-
-    <div class="modal-alert-text" id="modalAlertaTexto">
-      Mensagem aqui
-    </div>
-
-    <button class="modal-alert-btn" onclick="fecharAlerta()">
-      Ok
-    </button>
-
-  </div>
-</div>
-
 <!-- ================= MODAL ================= -->
-<div id="modalCaminhao" class="modal-overlay hidden">
-  <div class="modal-box">
+<div id="modalCaminhao" class="modal-overlay el-modal hidden">
+  <div class="modal-box el-modal__box">
 
    <!-- HEADER -->
 <div class="modal-header-caminhao">
@@ -103,6 +83,7 @@
 
 <button type="button"
         class="btn-edit"
+        type="button"
         id="btnEditarCaminhao"
         onclick="prepararEdicaoCaminhao()">
   ✎
@@ -119,19 +100,19 @@
 
 <div class="form-grid">
 
-  <div class="form-group">
+  <div class="form-group el-field">
     <label>CNPJ</label>
-    <input type="text" id="cnpjInput">
+    <input class="el-input" type="text" id="cnpjInput">
   </div>
 
-  <div class="form-group">
+  <div class="form-group el-field">
     <label>Empresa Proprietária</label>
-    <input type="text" id="empresaInput">
+    <input class="el-input" type="text" id="empresaInput">
   </div>
 
-  <div class="form-group">
+  <div class="form-group el-field">
     <label>Telefone</label>
-    <input type="text" id="telefoneInput">
+    <input class="el-input" type="text" id="telefoneInput">
   </div>
 
   <div></div>
@@ -140,18 +121,18 @@
 <div class="form-grid">
 
     <!-- VÍNCULO -->
-  <div class="form-group">
+  <div class="form-group el-field">
     <label>Vínculo *</label>
-    <select id="tipoInput">
+    <select class="el-select" id="tipoInput">
       <option value="proprio">Próprio</option>
       <option value="terceirizado">Terceirizado</option>
     </select>
   </div>
 
   <!-- CATEGORIA DO CAMINHÃO -->
-  <div class="form-group">
+  <div class="form-group el-field">
     <label>Categoria do veículo *</label>
-    <select id="categoriaInput">
+    <select class="el-select" id="categoriaInput">
       <option value="vuc">VUC</option>
       <option value="34">3/4</option>
       <option value="toco">Toco</option>
@@ -161,14 +142,14 @@
       <option value="van">Van</option>
     </select>
   </div>
-  <div class="form-group">
+  <div class="form-group el-field">
     <label>Modelo *</label>
-    <input type="text" id="modeloInput">
+    <input class="el-input" type="text" id="modeloInput">
   </div>
 
-  <div class="form-group">
+  <div class="form-group el-field">
     <label>Placa *</label>
-    <input type="text" id="placaInput">
+    <input class="el-input" type="text" id="placaInput">
   </div>
 
   <div></div>
@@ -177,19 +158,19 @@
     <!-- ================= DIMENSÕES EXTERNAS ================= -->
     <div class="form-grid">
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Comprimento total (m)</label>
-        <input type="number" step="0.01" id="comprimentoTotalInput">
+        <input class="el-input" type="number" step="0.01" id="comprimentoTotalInput">
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Largura total (m)</label>
-        <input type="number" step="0.01" id="larguraTotalInput">
+        <input class="el-input" type="number" step="0.01" id="larguraTotalInput">
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Altura total (m)</label>
-        <input type="number" step="0.01" id="alturaTotalInput">
+        <input class="el-input" type="number" step="0.01" id="alturaTotalInput">
       </div>
 
     </div>
@@ -199,22 +180,22 @@
 
     <div class="form-grid">
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Comprimento interno (m)</label>
-        <input type="number" step="0.01" id="comprimentoInput">
+        <input class="el-input" type="number" step="0.01" id="comprimentoInput">
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Largura interna (m)</label>
-        <input type="number" step="0.01" id="larguraInput">
+        <input class="el-input" type="number" step="0.01" id="larguraInput">
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Altura interna (m)</label>
-        <input type="number" step="0.01" id="alturaInput">
+        <input class="el-input" type="number" step="0.01" id="alturaInput">
       </div>
 
-      <div class="form-group">
+      <div class="form-group el-field">
         <label>Capacidade calculada</label>
         <div id="capacidadePreview" style="font-weight:600;">
           0.00 m³
@@ -226,10 +207,10 @@
 
     <!-- BOTÕES -->
     <div class="modal-actions" style="margin-top:30px;">
-      <button class="btn secondary" onclick="fecharModalCaminhao()">
+      <button class="btn secondary" type="button" onclick="fecharModalCaminhao()">
         Cancelar
       </button>
-      <button class="btn primary" id="btnSalvarCaminhao" onclick="salvarCaminhao()">
+      <button class="btn primary" type="button" id="btnSalvarCaminhao" onclick="salvarCaminhao()">
         Salvar
       </button>
     </div>

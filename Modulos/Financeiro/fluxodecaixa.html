@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasyLoc - Fluxo de Caixa</title>
+
+<link rel="stylesheet" href="../../styles/global.css" />
+<link rel="stylesheet" href="fluxodecaixa.css" />
+</head>
+
+<body>
+
+  <main class="financeiro-page el-page">
+
+    <header class="page-header">
+      <div>
+        <h1>Fluxo de Caixa Detalhado</h1>
+        <p>Visualize todas as movimentações de entradas e saídas.</p>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-outline">Imprimir / PDF</button>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Adicionar Lançamento</button>
+      </div>
+    </header>
+
+    <section class="cards-resumo">
+      <div class="card-resumo entrada">
+        <div class="icone">↓</div>
+        <div>
+          <span>Total de Entradas</span>
+          <strong id="totalEntradas">R$ 0,00</strong>
+          <small id="qtdEntradas">0 lançamentos</small>
+        </div>
+      </div>
+
+      <div class="card-resumo saida">
+        <div class="icone">↑</div>
+        <div>
+          <span>Total de Saídas</span>
+          <strong id="totalSaidas">R$ 0,00</strong>
+          <small id="qtdSaidas">0 lançamentos</small>
+        </div>
+      </div>
+
+      <div class="card-resumo saldo">
+        <div class="icone">▣</div>
+        <div>
+          <span>Saldo do Mês</span>
+          <strong id="saldoMes">R$ 0,00</strong>
+          <small>Resultado final</small>
+        </div>
+      </div>
+
+      <div class="card-resumo previsto">
+        <div class="icone">□</div>
+        <div>
+          <span>Saldo Previsto</span>
+          <strong id="saldoPrevisto">R$ 0,00</strong>
+          <small>Até 30/06/2026</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="filtros">
+      <div class="campo">
+        <label>Data inicial</label>
+        <input type="date" id="filtroDataInicial" value="2026-06-01">
+      </div>
+
+      <div class="campo">
+        <label>Data final</label>
+        <input type="date" id="filtroDataFinal" value="2026-06-30">
+      </div>
+
+      <div class="campo">
+        <label>Tipo</label>
+        <select id="filtroTipo">
+          <option value="">Todos</option>
+          <option value="Entrada">Entrada</option>
+          <option value="Saída">Saída</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label>Categoria</label>
+        <select id="filtroCategoria">
+          <option value="">Todas</option>
+          <option>Eventos</option>
+          <option>Fornecedores</option>
+          <option>Despesas Fixas</option>
+          <option>Locações</option>
+          <option>Logística</option>
+          <option>Recursos Humanos</option>
+          <option>Despesas Gerais</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label>Status</label>
+        <select id="filtroStatus">
+          <option value="">Todos</option>
+          <option>Recebido</option>
+          <option>Pago</option>
+          <option>Pendente</option>
+        </select>
+      </div>
+
+      <button class="btn-filtrar" onclick="filtrarLancamentos()">Filtrar</button>
+    </section>
+
+    <section class="tabela-card">
+
+<div class="tabs">
+
+  <button
+    class="tab active"
+    id="tabDetalhado"
+    onclick="mostrarDetalhado()"
+  >
+    Detalhado
+  </button>
+
+  <button
+    class="tab"
+    id="tabCalendario"
+    onclick="mostrarCalendario()"
+  >
+    Fluxo do Mês
+  </button>
+
+</div>
+
+<!-- DETALHADO -->
+
+<div
+  class="conteudo-tab"
+  id="conteudoDetalhado"
+>
+
+  <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Forma de Pagamento</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody id="tabelaLancamentos"></tbody>
+        </table>
+      </div>
+
+      <footer class="tabela-footer">
+        <span id="contadorTabela">Mostrando 0 lançamentos</span>
+
+        <div class="paginacao">
+          <button disabled>‹</button>
+          <button class="ativo">1</button>
+          <button>2</button>
+          <button>3</button>
+          <button>›</button>
+        </div>
+
+        <div class="total-footer">
+          Total: <strong id="totalFooter">R$ 0,00</strong>
+        </div>
+      </footer>
+
+    </section>
+</div>
+ 
+<!-- CALENDÁRIO -->
+
+<div
+  id="conteudoCalendario"
+  class="conteudo-tab hidden"
+>
+
+  <div class="calendario-header">
+
+<div class="calendario-topo">
+
+  <button
+    class="btn-mes"
+    onclick="mesAnterior()"
+  >
+    ←
+  </button>
+
+  <h2 id="tituloMes">
+    Junho 2026
+  </h2>
+
+  <button
+    class="btn-mes"
+    onclick="proximoMes()"
+  >
+    →
+  </button>
+
+</div>
+
+    <div class="legenda">
+
+      <span class="legenda-item verde">
+        🟢 Caixa confortável
+      </span>
+
+      <span class="legenda-item amarelo">
+        🟡 Atenção
+      </span>
+
+      <span class="legenda-item vermelho">
+        🔴 Risco
+      </span>
+
+    </div>
+
+  </div>
+
+  <div
+    class="calendario-grid"
+    id="calendarioFluxo"
+  >
+  </div>
+
+<!-- DETALHES DO DIA -->
+
+<div
+  id="detalhesDia"
+  class="card-dia hidden"
+>
+
+  <h3 id="tituloDia">
+    Dia
+  </h3>
+
+  <div class="resumo-dia">
+
+    <div class="box-dia entrada">
+
+      <span>Entradas</span>
+
+      <strong id="entradaDia">
+        R$ 0,00
+      </strong>
+
+    </div>
+
+    <div class="box-dia saida">
+
+      <span>Saídas</span>
+
+      <strong id="saidaDia">
+        R$ 0,00
+      </strong>
+
+    </div>
+
+    <div class="box-dia saldo">
+
+      <span>Saldo</span>
+
+      <strong id="saldoDia">
+        R$ 0,00
+      </strong>
+
+    </div>
+
+  </div>
+
+  <div id="listaDia">
+
+    <div
+      style="
+        text-align:center;
+        color:#64748b;
+        padding:20px;
+      "
+    >
+      Clique em um dia do calendário
+    </div>
+
+  </div>
+
+</div>
+
+  </div>
+
+</div>
+  </main>
+
+  <div class="modal" id="modalLancamento">
+    <div class="modal-content">
+      <button class="fechar" onclick="fecharModal()">×</button>
+
+      <h2>Novo Lançamento</h2>
+
+      <input id="novaData" type="date">
+      <input id="novaDescricao" placeholder="Descrição">
+
+      <select id="novaCategoria">
+        <option>Eventos</option>
+        <option>Fornecedores</option>
+        <option>Despesas Fixas</option>
+        <option>Locações</option>
+        <option>Logística</option>
+        <option>Recursos Humanos</option>
+        <option>Despesas Gerais</option>
+      </select>
+
+      <select id="novoTipo">
+        <option>Entrada</option>
+        <option>Saída</option>
+      </select>
+
+      <input id="novoValor" type="number" placeholder="Valor">
+
+      <select id="novoStatus">
+        <option>Recebido</option>
+        <option>Pago</option>
+        <option>Pendente</option>
+      </select>
+
+      <select id="novaForma">
+        <option>PIX</option>
+        <option>Transferência</option>
+        <option>Débito Automático</option>
+        <option>Dinheiro</option>
+        <option>Cartão</option>
+      </select>
+
+      <button class="btn btn-primary full" onclick="salvarLancamento()">Salvar lançamento</button>
+    </div>
+  </div>
+
+<script src="fluxodecaixa.js"></script>
+<!-- MODAL DETALHE DIA -->
+
+<div
+  id="modalDia"
+  class="modal-dia"
+>
+
+  <div class="modal-dia-content">
+
+    <button
+      class="fechar-dia"
+      onclick="fecharDia()"
+    >
+      ×
+    </button>
+
+    <h2 id="modalTituloDia">
+      Dia
+    </h2>
+
+    <div class="resumo-dia">
+
+      <div class="box-dia entrada">
+
+        <span>Entradas</span>
+
+      <strong id="modalEntradaDia">
+        R$ 0,00
+      </strong>
+
+      </div>
+
+      <div class="box-dia saida">
+
+        <span>Saídas</span>
+
+      <strong id="modalSaidaDia">
+        R$ 0,00
+      </strong>
+
+      </div>
+
+      <div class="box-dia saldo">
+
+        <span>Saldo</span>
+
+      <strong id="modalSaldoDia">
+        R$ 0,00
+      </strong>
+
+      </div>
+
+    </div>
+
+    <div id="modalListaDia"></div>
+
+  </div>
+
+</div>
+</body>
+</html>

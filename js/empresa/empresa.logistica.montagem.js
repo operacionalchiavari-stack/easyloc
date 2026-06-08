@@ -299,7 +299,8 @@ listaEl.querySelectorAll(".toggleMontagemAtivo").forEach(el => {
 
     if (upd?.error) {
       console.error("❌ [MONTAGEM] erro update:", upd.error);
-      alert("Erro ao atualizar status (ver console).");
+      if (typeof window.alerta === "function") window.alerta("Erro ao atualizar status (ver console).", "Erro", "erro");
+      else alert("Erro ao atualizar status (ver console).");
 
       // desfaz UI se falhar
       this.dataset.ativo = ativoAtual ? "1" : "0";
@@ -447,7 +448,8 @@ const combinacao = Object.entries(composicao)
           const { error } = await api.insertCategoriaMontagem(payload);
           if (error) {
             console.error("Erro ao criar categoria montagem:", error);
-            alert("Erro ao salvar categoria de montagem.");
+            if (typeof window.alerta === "function") window.alerta("Erro ao salvar categoria de montagem.", "Erro", "erro");
+            else alert("Erro ao salvar categoria de montagem.");
             return;
           }
           await loadCategorias();

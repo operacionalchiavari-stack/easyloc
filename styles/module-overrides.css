@@ -1,0 +1,610 @@
+/* =====================================================
+   EASYLOC MODULE OVERRIDES
+   Carregado depois do CSS de cada modulo pelo moduleLoader.
+   A ideia e padronizar agora e limpar CSS local aos poucos.
+===================================================== */
+
+#main-content,
+#main-content .el-page,
+#main-content .container,
+#main-content .page,
+#main-content .content-page,
+#main-content .cronograma-container,
+#main-content .personalizacoes-page,
+#main-content .cadastro-caminhoes-page,
+#main-content .container-fornecedores,
+#main-content .financeiro-page {
+  background: var(--el-color-bg);
+}
+
+#main-content .btn,
+#main-content .add-btn,
+#main-content .btn-primary,
+#main-content .btn-secondary,
+#main-content .btn-save,
+#main-content .btn-cancel,
+#main-content .btn-delete,
+#main-content .btn-salvar,
+#main-content .btn-cancelar,
+#main-content .btn-sair,
+#main-content .btn-exit,
+#main-content .btn-alert,
+#main-content .modal-alert-btn,
+#main-content .os-btn,
+#main-content .btn-nova-os,
+#main-content .btn-baixa {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--el-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--el-radius-md);
+  padding: 10px 16px;
+  background: var(--el-color-surface);
+  color: var(--el-color-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: none;
+  transform: none;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+
+#main-content .btn:hover,
+#main-content .add-btn:hover,
+#main-content .btn-primary:hover,
+#main-content .btn-secondary:hover,
+#main-content .btn-save:hover,
+#main-content .btn-cancel:hover,
+#main-content .btn-delete:hover,
+#main-content .btn-salvar:hover,
+#main-content .btn-cancelar:hover,
+#main-content .btn-sair:hover,
+#main-content .btn-exit:hover,
+#main-content .btn-alert:hover,
+#main-content .modal-alert-btn:hover,
+#main-content .os-btn:hover,
+#main-content .btn-nova-os:hover,
+#main-content .btn-baixa:hover {
+  box-shadow: var(--el-shadow-sm);
+  filter: none;
+}
+
+#main-content .btn:active,
+#main-content .add-btn:active,
+#main-content .btn-primary:active,
+#main-content .btn-secondary:active,
+#main-content .btn-save:active,
+#main-content .btn-cancel:active,
+#main-content .btn-delete:active,
+#main-content .btn-salvar:active,
+#main-content .btn-cancelar:active,
+#main-content .btn-sair:active,
+#main-content .btn-exit:active,
+#main-content .btn-alert:active,
+#main-content .modal-alert-btn:active,
+#main-content .os-btn:active,
+#main-content .btn-nova-os:active,
+#main-content .btn-baixa:active {
+  transform: translateY(1px);
+}
+
+#main-content .btn.primary,
+#main-content .btn.save,
+#main-content .btn.salvar,
+#main-content .btn-primary,
+#main-content .btn-save,
+#main-content .btn-salvar,
+#main-content .btn-alert,
+#main-content .modal-alert-btn,
+#main-content .os-btn-primary,
+#main-content .btn-nova-os,
+#main-content .btn-baixa,
+#main-content .add-btn:not(.secondary) {
+  background: var(--el-color-accent);
+  border-color: var(--el-color-accent);
+  color: #ffffff;
+}
+
+#main-content .btn.primary:hover,
+#main-content .btn.save:hover,
+#main-content .btn.salvar:hover,
+#main-content .btn-primary:hover,
+#main-content .btn-save:hover,
+#main-content .btn-salvar:hover,
+#main-content .btn-alert:hover,
+#main-content .modal-alert-btn:hover,
+#main-content .os-btn-primary:hover,
+#main-content .btn-nova-os:hover,
+#main-content .btn-baixa:hover,
+#main-content .add-btn:not(.secondary):hover {
+  background: var(--el-color-accent-strong);
+  border-color: var(--el-color-accent-strong);
+}
+
+#main-content .btn.secondary,
+#main-content .btn.cancel,
+#main-content .btn.cancelar,
+#main-content .btn-secondary,
+#main-content .btn-cancel,
+#main-content .btn-cancelar,
+#main-content .os-btn-light,
+#main-content .add-btn.secondary,
+#main-content .btn-outline {
+  background: var(--el-color-surface);
+  border-color: var(--el-color-border);
+  color: var(--el-color-primary);
+}
+
+#main-content .btn.danger,
+#main-content .btn.exit,
+#main-content .btn.sair,
+#main-content .btn-danger,
+#main-content .btn-delete,
+#main-content .btn-sair,
+#main-content .btn-exit {
+  background: var(--el-color-danger);
+  border-color: var(--el-color-danger);
+  color: #ffffff;
+}
+
+#main-content .btn-icon,
+#main-content .btn-close,
+#main-content .modal-close,
+#main-content .os-modal-close,
+#main-content .btn-close-ajuda,
+#main-content .btn-fechar,
+#main-content .btn.fechar,
+#main-content .fechar,
+#main-content .fechar-dia,
+#main-content .btn-icon[aria-label="Fechar"],
+#main-content button[aria-label="Fechar"] {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-md);
+  background: var(--el-color-surface);
+  color: var(--el-color-primary);
+  padding: 0;
+  box-shadow: none;
+}
+
+#main-content .btn-close,
+#main-content .modal-close,
+#main-content .os-modal-close,
+#main-content .btn-close-ajuda,
+#main-content .btn-fechar,
+#main-content .btn.fechar,
+#main-content .fechar,
+#main-content .fechar-dia,
+#main-content .btn-icon[aria-label="Fechar"],
+#main-content button[aria-label="Fechar"] {
+  background: var(--el-color-danger) !important;
+  border-color: var(--el-color-danger) !important;
+  color: #ffffff !important;
+}
+
+#main-content .btn-close:hover,
+#main-content .modal-close:hover,
+#main-content .os-modal-close:hover,
+#main-content .btn-close-ajuda:hover,
+#main-content .btn-fechar:hover,
+#main-content .btn.fechar:hover,
+#main-content .fechar:hover,
+#main-content .fechar-dia:hover,
+#main-content .btn-icon[aria-label="Fechar"]:hover,
+#main-content button[aria-label="Fechar"]:hover {
+  background: #b91c1c !important;
+  border-color: #b91c1c !important;
+  color: #ffffff !important;
+}
+
+#main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+#main-content select,
+#main-content textarea,
+#main-content .input,
+#main-content .select,
+#main-content .el-input,
+#main-content .el-select,
+#main-content .el-textarea {
+  min-height: 40px;
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-md);
+  background: var(--el-color-surface);
+  color: var(--el-color-text);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: none;
+  outline: none;
+}
+
+#main-content textarea,
+#main-content .el-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+#main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+#main-content select:focus,
+#main-content textarea:focus,
+#main-content .input:focus,
+#main-content .select:focus,
+#main-content .el-input:focus,
+#main-content .el-select:focus,
+#main-content .el-textarea:focus {
+  border-color: var(--el-color-accent);
+  box-shadow: var(--el-focus-ring);
+}
+
+#main-content .table-wrapper,
+#main-content .table-wrap,
+#main-content .tabela-card,
+#main-content .el-table-wrap {
+  width: 100%;
+  overflow: auto;
+  background: var(--el-color-surface);
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-lg);
+  box-shadow: var(--el-shadow-sm);
+}
+
+#main-content table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--el-color-surface);
+  color: var(--el-color-text);
+  font-size: 14px;
+}
+
+#main-content table thead th {
+  background: var(--el-table-header-bg);
+  color: var(--el-table-header-color);
+  padding: 14px 16px;
+  border: 0;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#main-content table tbody td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--el-table-row-border);
+  color: var(--el-color-text);
+  vertical-align: middle;
+}
+
+#main-content table tbody tr {
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+#main-content table tbody tr:hover {
+  background: var(--el-table-row-hover);
+}
+
+#main-content table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+#main-content .el-card,
+#main-content .card,
+#main-content .card-resumo,
+#main-content .resumo-card,
+#main-content .info-card,
+#main-content .metric-card,
+#main-content .cards-resumo > * {
+  background: var(--el-color-surface);
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-lg);
+  box-shadow: var(--el-shadow-sm);
+  min-height: var(--el-card-min-height);
+  padding: var(--el-card-padding);
+  color: var(--el-color-text);
+}
+
+#main-content .el-card:hover,
+#main-content .card-resumo:hover,
+#main-content .resumo-card:hover,
+#main-content .info-card:hover,
+#main-content .metric-card:hover {
+  box-shadow: var(--el-shadow-md);
+}
+
+#main-content .modal,
+#main-content .modal-overlay,
+#main-content .modal-alert,
+#main-content .modal-confirmacao {
+  background: var(--el-modal-backdrop);
+  backdrop-filter: var(--el-modal-backdrop-blur);
+}
+
+#main-content .modal-content,
+#main-content .modal-box,
+#main-content .modal-card,
+#main-content .modal-alert-box,
+#main-content .modal-alert-content {
+  background: var(--el-color-surface);
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-xl);
+  box-shadow: var(--el-shadow-lg);
+  color: var(--el-color-text);
+}
+
+#main-content .modal-header,
+#main-content .modal-header-item,
+#main-content .os-modal-header {
+  border-bottom-color: var(--el-color-border);
+}
+
+#main-content .modal-footer,
+#main-content .modal-actions,
+#main-content .os-modal-footer,
+#main-content .modal-acoes {
+  gap: var(--el-space-3);
+  border-top-color: var(--el-color-border);
+}
+
+/* =====================================================
+   MOBILE SIMPLIFICADO
+   Ate 1200px o desktop permanece intacto; abaixo disso
+   o sistema prioriza leitura, filtros basicos e acoes.
+===================================================== */
+
+@media (max-width: 1200px) {
+  #main-content,
+  #main-content .el-page,
+  #main-content .container,
+  #main-content .page,
+  #main-content .content-page,
+  #main-content .cronograma-container,
+  #main-content .personalizacoes-page,
+  #main-content .cadastro-caminhoes-page,
+  #main-content .container-fornecedores,
+  #main-content .financeiro-page,
+  #main-content .orcamento-container,
+  #main-content .almoxarifado-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 0;
+  }
+
+  #main-content .page-header,
+  #main-content .el-page-header,
+  #main-content header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  #main-content .page-header h1,
+  #main-content .el-page-title,
+  #main-content h1 {
+    font-size: 21px;
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+
+  #main-content .page-header p,
+  #main-content .subtitle,
+  #main-content .descricao,
+  #main-content .description {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  #main-content .header-actions,
+  #main-content .el-page-actions,
+  #main-content .header-actions-caminhao,
+  #main-content .separacao-header-actions,
+  #main-content .modal-actions,
+  #main-content .modal-acoes,
+  #main-content .os-modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+
+  #main-content .header-actions > *,
+  #main-content .el-page-actions > *,
+  #main-content .header-actions-caminhao > *,
+  #main-content .separacao-header-actions > *,
+  #main-content .modal-actions > *,
+  #main-content .modal-acoes > * {
+    flex: 1 1 150px;
+  }
+
+  #main-content .btn,
+  #main-content .add-btn,
+  #main-content .btn-primary,
+  #main-content .btn-secondary,
+  #main-content .btn-save,
+  #main-content .btn-cancel,
+  #main-content .btn-salvar,
+  #main-content .btn-cancelar,
+  #main-content .os-btn,
+  #main-content .btn-nova-os,
+  #main-content .btn-baixa {
+    min-height: 44px;
+    padding: 10px 12px;
+    white-space: normal;
+    line-height: 1.15;
+  }
+
+  #main-content .filters,
+  #main-content .filtros,
+  #main-content .filtros-insumos,
+  #main-content .filters-row,
+  #main-content .queue-filters,
+  #main-content .el-form-grid,
+  #main-content .cards-resumo,
+  #main-content .el-card-grid,
+  #main-content .resumo-dia,
+  #main-content .behavior-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #main-content .filters,
+  #main-content .filtros,
+  #main-content .filtros-insumos,
+  #main-content .filters-row,
+  #main-content .queue-filters {
+    padding: 12px;
+    overflow: visible;
+  }
+
+  #main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  #main-content select,
+  #main-content textarea,
+  #main-content .input,
+  #main-content .select,
+  #main-content .el-input,
+  #main-content .el-select,
+  #main-content .el-textarea {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  #main-content .el-card,
+  #main-content .card,
+  #main-content .card-resumo,
+  #main-content .resumo-card,
+  #main-content .info-card,
+  #main-content .metric-card,
+  #main-content .cards-resumo > * {
+    min-height: auto;
+    padding: 14px;
+    border-radius: 8px;
+  }
+
+  #main-content .card-resumo,
+  #main-content .resumo-card,
+  #main-content .info-card,
+  #main-content .metric-card {
+    gap: 12px;
+  }
+
+  #main-content .card-resumo .icone {
+    width: 42px;
+    height: 42px;
+    font-size: 21px;
+  }
+
+  #main-content .card-resumo strong,
+  #main-content .resumo-card strong,
+  #main-content .info-card strong,
+  #main-content .metric-card strong,
+  #main-content .el-card-value {
+    font-size: 19px;
+  }
+
+  #main-content .table-wrapper,
+  #main-content .table-wrap,
+  #main-content .tabela-card,
+  #main-content .table-container,
+  #main-content .el-table-wrap {
+    border-radius: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #main-content table {
+    min-width: 760px;
+    font-size: 13px;
+  }
+
+  #main-content table thead th,
+  #main-content table tbody td {
+    padding: 10px 11px;
+  }
+
+  #main-content .tabela-footer,
+  #main-content .table-footer,
+  #main-content .pagination,
+  #main-content .paginacao {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  #main-content .tabs {
+    gap: 0;
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  #main-content .tab {
+    flex: 1 0 140px;
+    min-height: 44px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  #main-content .modal-content,
+  #main-content .modal-box,
+  #main-content .modal-card,
+  #main-content .modal-alert-box,
+  #main-content .modal-alert-content,
+  #main-content .modal-dia-content,
+  #main-content .el-modal__box {
+    width: min(94vw, 620px) !important;
+    max-width: 94vw !important;
+    max-height: 88vh;
+    overflow: auto;
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  #main-content .modal-content.large,
+  #main-content .modal-content.medium {
+    width: min(94vw, 720px) !important;
+  }
+
+  #main-content .calendario-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+
+  #main-content .dia-fluxo {
+    min-height: 86px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  #main-content .header-actions > *,
+  #main-content .el-page-actions > *,
+  #main-content .header-actions-caminhao > *,
+  #main-content .separacao-header-actions > *,
+  #main-content .modal-actions > *,
+  #main-content .modal-acoes > * {
+    flex-basis: 100%;
+  }
+
+  #main-content table {
+    min-width: 640px;
+  }
+
+  #main-content .calendario-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

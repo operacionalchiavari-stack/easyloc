@@ -1,0 +1,52 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--el-font-family);
+  color: var(--el-color-text);
+  background: var(--el-color-bg);
+}
+
+body {
+  margin: 0;
+  font-family: var(--el-font-family);
+  color: var(--el-color-text);
+  background: var(--el-color-bg);
+}
+
+#main-content,
+.el-page,
+.page,
+.container,
+.content-page {
+  background: var(--el-color-bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(255, 106, 0, 0.28);
+  outline-offset: 2px;
+}
+
+.hidden {
+  display: none !important;
+}

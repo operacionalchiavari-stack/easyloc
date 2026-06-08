@@ -1,0 +1,134 @@
+.el-modal,
+.modal-alert-global {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--el-modal-backdrop);
+  backdrop-filter: var(--el-modal-backdrop-blur);
+  z-index: var(--el-modal-z-index);
+  padding: var(--el-space-5);
+}
+
+.el-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--el-modal-backdrop);
+  backdrop-filter: var(--el-modal-backdrop-blur);
+  z-index: var(--el-modal-z-index);
+}
+
+.el-modal.is-open,
+.modal-alert-global.is-open {
+  display: flex;
+}
+
+.el-modal__box,
+.modal-alert-box {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  background: var(--el-color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--el-radius-xl);
+  box-shadow: var(--el-shadow-lg);
+  color: var(--el-color-text);
+  animation: elModalIn 0.18s ease-out;
+}
+
+.el-modal__header,
+.el-modal__body,
+.el-modal__footer {
+  padding: var(--el-space-5) var(--el-space-6);
+}
+
+.el-modal__header {
+  border-bottom: 1px solid var(--el-color-border);
+}
+
+.el-modal__title,
+.modal-alert-box h4 {
+  margin: 0;
+  color: var(--el-color-primary);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.el-modal__description,
+.modal-alert-box p {
+  margin: var(--el-space-2) 0 0;
+  color: var(--el-color-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.el-modal__footer,
+.modal-actions,
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--el-space-3);
+}
+
+.modal-alert-box {
+  padding: var(--el-space-8);
+  text-align: center;
+}
+
+.modal-alert-box .alert-icon {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--el-space-3);
+  border-radius: 50%;
+  background: var(--el-color-accent);
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.modal-alert-global[data-variant="success"] .alert-icon {
+  background: var(--el-color-success);
+}
+
+.modal-alert-global[data-variant="error"] .alert-icon {
+  background: var(--el-color-danger);
+}
+
+.modal-alert-global[data-variant="warning"] .alert-icon {
+  background: var(--el-color-warning);
+}
+
+.modal-alert-global[data-variant="info"] .alert-icon {
+  background: var(--el-color-info);
+}
+
+.modal-alert-box button {
+  min-width: 110px;
+  margin-top: var(--el-space-5);
+}
+
+@keyframes elModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 560px) {
+  .el-modal,
+  .modal-alert-global {
+    padding: var(--el-space-3);
+  }
+
+  .modal-alert-box {
+    padding: var(--el-space-6);
+  }
+}
