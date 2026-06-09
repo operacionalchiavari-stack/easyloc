@@ -215,7 +215,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 42, 68, 0.35);
+  background: rgba(15, 23, 42, 0.42);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -817,4 +817,177 @@ input[placeholder="Digite para buscar item..."]:focus {
 .badge.complexidade-alta {
   background: #ffecec;
   color: #b42318;
+}
+
+/* =====================================================
+   Ajustes de alinhamento e modal do cadastro
+===================================================== */
+
+.personalizacoes-page .page-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.personalizacoes-page .page-title {
+  min-width: 0;
+}
+
+.personalizacoes-page .page-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.personalizacoes-page .modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(3px);
+  z-index: 1000200;
+}
+
+.personalizacoes-page .modal-overlay:not(.hidden) {
+  display: flex;
+}
+
+.personalizacoes-page .modal-card {
+  width: min(1380px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(15, 42, 68, 0.14);
+  border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.28);
+}
+
+.personalizacoes-page .modal-header {
+  flex: 0 0 auto;
+  padding: 18px 22px;
+  gap: 18px;
+}
+
+.personalizacoes-page .modal-header-left {
+  min-width: 0;
+}
+
+.personalizacoes-page .modal-header-right {
+  flex: 0 0 auto;
+}
+
+.personalizacoes-page .modal-sub {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.personalizacoes-page .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 18px 22px;
+  overflow: auto;
+}
+
+.personalizacoes-page .modal-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 420px);
+  align-items: start;
+  gap: 18px;
+  width: 100%;
+}
+
+.personalizacoes-page .form-col,
+.personalizacoes-page .resume-col {
+  min-width: 0;
+}
+
+.personalizacoes-page .resume-card {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  padding: 22px;
+}
+
+.personalizacoes-page .card-section {
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.personalizacoes-page .modal-footer {
+  flex: 0 0 auto;
+  padding: 14px 22px;
+  background: #ffffff;
+}
+
+@media (max-width: 1200px) {
+  .personalizacoes-page .modal-card {
+    width: min(960px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+  }
+
+  .personalizacoes-page .modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .personalizacoes-page .resume-card {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .personalizacoes-page {
+    padding: 16px;
+  }
+
+  .personalizacoes-page .page-top,
+  .personalizacoes-page .page-actions,
+  .personalizacoes-page .filters-row,
+  .personalizacoes-page .form-row.two,
+  .personalizacoes-page .identificacao-header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .personalizacoes-page .search-wrap,
+  .personalizacoes-page .filters-row select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .personalizacoes-page .modal-overlay {
+    padding: 12px;
+  }
+
+  .personalizacoes-page .modal-card {
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+  }
+
+  .personalizacoes-page .modal-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .personalizacoes-page .modal-header-right {
+    justify-content: space-between;
+  }
+
+  .personalizacoes-page .insumo-row {
+    grid-template-columns: 1fr;
+  }
 }

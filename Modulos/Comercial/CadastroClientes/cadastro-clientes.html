@@ -1,23 +1,11 @@
-<div class="container el-page">
+﻿<div class="container el-page">
 
 <div class="header-list">
   <h2>Clientes Cadastrados</h2>
 
-  <div class="header-actions">
+<div class="header-actions">
 <button class="add-btn secondary btn secondary" type="button" onclick="clientes_imprimir()">Imprimir / PDF</button>
     <button class="add-btn btn primary" type="button" onclick="clientes_openAdd()">+ Adicionar Cliente</button>
-<img
-  src="./logoajuda.png"
-  class="btn-ajuda-img"
-  onclick="abrirModalAjuda()"
-  title="Ajuda"
-  width="26"
-  height="26"
-  alt="Ajuda"
-/>
-
-
-
   </div>
 </div>
 
@@ -39,24 +27,24 @@
 
   <select class="el-select" id="inactiveFilter" onchange="aplicarFiltros()">
     <option value="">Toda inatividade</option>
-    <option value="30">Até 30 dias</option>
+    <option value="30">AtÃ© 30 dias</option>
     <option value="90">31 a 90 dias</option>
     <option value="180">Acima de 90 dias</option>
   </select>
 
   <select class="el-select" id="styleFilter" onchange="aplicarFiltros()">
     <option value="">Todos os estilos</option>
-    <option value="Clássico">Clássico</option>
+    <option value="ClÃ¡ssico">ClÃ¡ssico</option>
     <option value="Moderno">Moderno</option>
-    <option value="Rústico">Rústico</option>
+    <option value="RÃºstico">RÃºstico</option>
     <option value="Boho">Boho</option>
     <option value="Luxo">Luxo</option>
   </select>
 
   <select class="el-select" id="budgetFilter" onchange="aplicarFiltros()">
-    <option value="">Todos os orçamentos</option>
-    <option value="Econômico">Econômico</option>
-    <option value="Intermediário">Intermediário</option>
+    <option value="">Todos os orÃ§amentos</option>
+    <option value="EconÃ´mico">EconÃ´mico</option>
+    <option value="IntermediÃ¡rio">IntermediÃ¡rio</option>
     <option value="Premium">Premium</option>
   </select>
 </div>
@@ -71,7 +59,7 @@
         <th>Email</th>
         <th>Estilo</th>
         <th>Canal</th>
-        <th>Orçamento</th>
+        <th>OrÃ§amento</th>
         <th>Inatividade</th>
         <th>Status</th>
       </tr>
@@ -89,7 +77,7 @@
 
     <div class="modal-header">
       <h3>Detalhes do Cliente</h3>
-      <button class="edit-btn btn-icon" type="button" onclick="clientes_enableEdit()">✏️</button>
+      <button class="edit-btn btn-icon" type="button" onclick="clientes_enableEdit()">âœï¸</button>
     </div>
 
     <div class="form-grid three-cols">
@@ -97,8 +85,8 @@
       <div class="form-group el-field">
         <label>Tipo de Pessoa *</label>
         <select class="el-select" id="tipoPessoa" disabled>
-          <option>Pessoa Física</option>
-          <option>Pessoa Jurídica</option>
+          <option>Pessoa FÃ­sica</option>
+          <option>Pessoa JurÃ­dica</option>
         </select>
       </div>
 
@@ -108,12 +96,12 @@
       </div>
 
       <div class="form-group el-field">
-        <label>Inscrição Estadual</label>
+        <label>InscriÃ§Ã£o Estadual</label>
         <input class="el-input" id="inscricaoEstadual" readonly>
       </div>
 
       <div class="form-group el-field">
-        <label>Nome / Razão Social *</label>
+        <label>Nome / RazÃ£o Social *</label>
         <input class="el-input" id="nome" readonly>
       </div>
 
@@ -127,28 +115,28 @@
         <input class="el-input" id="email" readonly>
       </div>
 
-      <!-- ENDEREÇO COM GOOGLE PLACES -->
+      <!-- ENDEREÃ‡O COM GOOGLE PLACES -->
 <div class="form-group el-field col-2">
-  <label>Endereço completo *</label>
+  <label>EndereÃ§o completo *</label>
 
-  <!-- Wrapper para input dinâmico do Google -->
+  <!-- Wrapper para input dinÃ¢mico do Google -->
   <div id="endereco-wrapper"></div>
 </div>
 
 
 
       <div class="form-group el-field">
-        <label>Número *</label>
+        <label>NÃºmero *</label>
         <input class="el-input" id="numeroEndereco" readonly>
       </div>
 
       <div class="form-group el-field">
-        <label>Ponto de referência *</label>
+        <label>Ponto de referÃªncia *</label>
         <input class="el-input" id="pontoReferencia" readonly>
       </div>
 
       <div class="form-group el-field">
-        <label>Última locação</label>
+        <label>Ãšltima locaÃ§Ã£o</label>
 <input class="el-input" id="ultimaLocacao" type="date">
       </div>
 
@@ -167,9 +155,9 @@
 <div class="tag-group azul" data-group="estilo">
           <span class="tag-title">Estilo</span>
           <div class="tags">
-            <span class="tag">Clássico</span>
+            <span class="tag">ClÃ¡ssico</span>
             <span class="tag">Moderno</span>
-            <span class="tag">Rústico</span>
+            <span class="tag">RÃºstico</span>
             <span class="tag">Boho</span>
             <span class="tag">Luxo</span>
           </div>
@@ -179,15 +167,15 @@
           <span class="tag-title">Canal</span>
           <div class="tags">
             <span class="tag">WhatsApp</span>
-            <span class="tag">Ligação</span>
+            <span class="tag">LigaÃ§Ã£o</span>
             <span class="tag">Email</span>
           </div>
         </div>
 
 <div class="tag-group amarelo single" data-group="horario">
-          <span class="tag-title">Horário</span>
+          <span class="tag-title">HorÃ¡rio</span>
           <div class="tags">
-            <span class="tag">Manhã</span>
+            <span class="tag">ManhÃ£</span>
             <span class="tag">Tarde</span>
             <span class="tag">Noite</span>
           </div>
@@ -195,10 +183,10 @@
 
 <div class="tag-group laranja single" data-group="orcamento">
 
-          <span class="tag-title">Orçamento</span>
+          <span class="tag-title">OrÃ§amento</span>
           <div class="tags">
-            <span class="tag">Econômico</span>
-            <span class="tag">Intermediário</span>
+            <span class="tag">EconÃ´mico</span>
+            <span class="tag">IntermediÃ¡rio</span>
             <span class="tag">Premium</span>
           </div>
         </div>
@@ -226,13 +214,13 @@
   </div>
 </div>
 
-<!-- ================= MODAL CONFIRMAÇÃO ================= -->
+<!-- ================= MODAL CONFIRMAÃ‡ÃƒO ================= -->
 <div class="modal el-modal" id="confirmModal">
   <div class="modal-content el-modal__box confirm-box">
-    <h3>Confirmar exclusão</h3>
+    <h3>Confirmar exclusÃ£o</h3>
     <p>
       Tem certeza que deseja excluir este cadastro?<br>
-      <strong>Essa ação não poderá ser desfeita.</strong>
+      <strong>Essa aÃ§Ã£o nÃ£o poderÃ¡ ser desfeita.</strong>
     </p>
     <div class="modal-actions">
       <button class="btn-fechar btn danger" type="button" onclick="clientes_closeModal()">Fechar</button>
@@ -249,60 +237,3 @@
   id="printFrame"
   style="display:none; width:0; height:0; border:0;"
 ></iframe>
-
-<div class="modal-ajuda el-modal" id="modalAjuda">
-  <div class="modal-ajuda-content el-modal">
-
-<div class="modal-ajuda-header el-modal">
-
-<div class="ajuda-header-left">
-  <h3>Ajuda • Cadastro de Clientes</h3>
-
-  <!-- INDICADOR DE MINI-PLAYER (INFORMATIVO) -->
-<span class="btn-pip-info">
-  📺 Mini-player
-  <span class="pip-tooltip">
-    No vídeo, clique no ícone Picture-in-Picture
-    (quadrado pequeno) para assistir enquanto usa o sistema
-  </span>
-</span>
-
-</div>
-
-  <!-- BOTÃO FECHAR -->
-  <button type="button" class="btn-close-ajuda" onclick="fecharAjuda()">✕</button>
-
-</div>
-
-    <div class="modal-ajuda-body el-modal">
-
-<div class="ajuda-videos">
-
-  <div class="ajuda-video-item active"
-       onclick="trocarVideo('https://www.youtube.com/embed/A8Gn9rZjJic', this)">
-    ▶ Cadastro de clientes – visão geral
-  </div>
-
-  <div class="ajuda-video-item"
-       onclick="trocarVideo('https://www.youtube.com/embed/pzTkdZoUUTg', this)">
-    ▶ Cadastro de clientes – preenchimento
-  </div>
-
-  <div class="ajuda-video-item"
-       onclick="trocarVideo('https://www.youtube.com/embed/A8Gn9rZjJic', this)">
-    ▶ Dicas rápidas e boas práticas
-  </div>
-
-</div>
-
-<div class="ajuda-player">
-  <iframe
-    id="ajudaIframe"
-    src="https://www.youtube.com/embed/A8Gn9rZjJic"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowfullscreen>
-  </iframe>
-</div>
-    </div>
-  </div>
-</div>

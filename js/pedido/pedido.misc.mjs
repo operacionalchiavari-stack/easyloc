@@ -99,7 +99,7 @@ export function abrirModalAvisoFrete(mensagem) {
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
   overlay.style.inset = "0";
-  overlay.style.background = "rgba(15,23,42,.55)";
+  overlay.style.background = "rgba(15,23,42,.42)";
   overlay.style.backdropFilter = "blur(6px)";
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";

@@ -1,0 +1,80 @@
+<div class="central-pedidos-page el-page" data-module-root>
+  <header class="el-page-header central-header">
+    <div>
+      <h1 class="el-page-title">Central de Pedidos</h1>
+      <p>Consulta e gestao dos pedidos, eventos e contratos comerciais.</p>
+    </div>
+    <div class="el-page-actions">
+      <button type="button" class="btn btn-primary" id="btnNovoPedidoCentral">Novo Pedido</button>
+      <button type="button" class="btn btn-secondary" id="btnAtualizarPedidos">Atualizar</button>
+    </div>
+  </header>
+
+  <section class="central-filters el-card">
+    <div class="el-field">
+      <label>Cliente</label>
+      <input class="el-input" id="filtroClientePedido" placeholder="Buscar cliente">
+    </div>
+    <div class="el-field">
+      <label>Pedido</label>
+      <input class="el-input" id="filtroNumeroPedido" placeholder="Numero">
+    </div>
+    <div class="el-field">
+      <label>Local</label>
+      <input class="el-input" id="filtroLocalPedido" placeholder="Local do evento">
+    </div>
+    <div class="el-field">
+      <label>Comercial</label>
+      <input class="el-input" id="filtroComercialPedido" placeholder="Responsavel">
+    </div>
+    <div class="el-field">
+      <label>Status</label>
+      <select class="el-select" id="filtroStatusPedido">
+        <option value="">Todos</option>
+        <option value="orcamento">Orcamento</option>
+        <option value="aprovado">Aprovado</option>
+        <option value="pendente">Pendente</option>
+        <option value="em_separacao">Em separacao</option>
+        <option value="separado">Separado</option>
+        <option value="finalizado">Finalizado</option>
+      </select>
+    </div>
+    <div class="el-field">
+      <label>Data Inicial</label>
+      <input class="el-input" type="date" id="filtroDataInicialPedido">
+    </div>
+    <div class="el-field">
+      <label>Data Final</label>
+      <input class="el-input" type="date" id="filtroDataFinalPedido">
+    </div>
+  </section>
+
+  <section class="central-list el-card">
+    <div class="central-list-header">
+      <div>
+        <span>Pedidos</span>
+        <strong>Pipeline comercial</strong>
+      </div>
+      <div id="centralStatusCarregamento">Carregando...</div>
+    </div>
+
+    <div class="central-table-wrap">
+      <table class="central-table">
+        <thead>
+          <tr>
+            <th>Numero</th>
+            <th>Cliente</th>
+            <th>Evento</th>
+            <th>Local</th>
+            <th>Data</th>
+            <th>Status</th>
+            <th>Valor</th>
+            <th>Comercial</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody id="centralPedidosTbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>

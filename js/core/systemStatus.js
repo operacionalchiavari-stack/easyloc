@@ -45,17 +45,15 @@ async function testInternet(){
   const start = performance.now();
 
   try{
-
-    await fetch(window.supabaseClient.supabaseUrl + "/rest/v1/", {
-      method: "HEAD",
-      headers: {
-        "apikey": window.supabaseClient.supabaseKey
-      }
-    });
-
+    await window.supabaseClient.auth.getSession();
     return performance.now() - start;
 
-  }catch{
+  }catch(err){
+    console.warn("[EasyLoc Debug]", {
+      arquivo: "js/core/systemStatus.js",
+      funcao: "testInternet",
+      erro: err?.message || String(err)
+    });
     return null;
   }
 
@@ -70,15 +68,40 @@ async function testInternet(){
     const start = performance.now();
 
     try{
+      const { data:{ session }, error: sessionError } =
+        await window.supabaseClient.auth.getSession();
 
-      await window.supabaseClient
-        .from("empresas")
-        .select("id")
-        .limit(1);
+      if(sessionError || !session?.access_token){
+        console.warn("[EasyLoc Debug]", {
+          arquivo: "js/core/systemStatus.js",
+          funcao: "testBackend",
+          erro: "Sessao ausente ou invalida antes do teste de autenticacao",
+          detalhes: sessionError?.message || null
+        });
+        return null;
+      }
+
+      const { error } = await window.supabaseClient.auth.getUser();
+
+      if(error){
+        console.warn("[EasyLoc Debug]", {
+          arquivo: "js/core/systemStatus.js",
+          funcao: "testBackend",
+          status: error?.code,
+          erro: error?.message,
+          causaProvavel: "Sessao expirada, token invalido ou usuario sem autenticacao ativa"
+        });
+        return null;
+      }
 
       return performance.now() - start;
 
-    }catch{
+    }catch(err){
+      console.warn("[EasyLoc Debug]", {
+        arquivo: "js/core/systemStatus.js",
+        funcao: "testBackend",
+        erro: err?.message || String(err)
+      });
       return null;
     }
 

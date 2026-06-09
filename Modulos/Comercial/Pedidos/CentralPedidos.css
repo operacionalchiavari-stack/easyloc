@@ -1,0 +1,143 @@
+.central-pedidos-page {
+  width: 100%;
+}
+
+.central-header p {
+  margin: 8px 0 0;
+  color: var(--el-color-muted);
+  font-size: 14px;
+}
+
+.central-filters {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--el-space-3);
+  margin-bottom: var(--el-space-4);
+}
+
+.central-list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--el-space-4);
+  margin-bottom: var(--el-space-4);
+}
+
+.central-list-header span {
+  color: var(--el-color-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.central-list-header strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--el-color-primary);
+  font-size: 18px;
+}
+
+#centralStatusCarregamento {
+  color: var(--el-color-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.central-table-wrap {
+  width: 100%;
+  overflow: auto;
+}
+
+.central-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.central-table th {
+  padding: 13px 14px;
+  background: var(--el-table-header-bg);
+  color: var(--el-table-header-color);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.central-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--el-table-row-border);
+  color: var(--el-color-text);
+  font-size: 14px;
+}
+
+.central-table tr:hover td {
+  background: var(--el-table-row-hover);
+}
+
+.pedido-numero-link {
+  border: none;
+  background: transparent;
+  color: var(--el-color-primary);
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--el-color-primary-soft);
+  color: var(--el-color-primary);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.status-pill.aprovado,
+.status-pill.separado,
+.status-pill.finalizado {
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--el-color-success);
+}
+
+.status-pill.em_separacao,
+.status-pill.pendente {
+  background: rgba(245, 158, 11, 0.14);
+  color: #92400e;
+}
+
+.central-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.central-actions button {
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-sm);
+  background: var(--el-color-surface);
+  color: var(--el-color-primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.central-empty {
+  padding: 30px;
+  color: var(--el-color-muted);
+  text-align: center;
+}
+
+@media (max-width: 1200px) {
+  .central-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .central-list-header {
+    flex-direction: column;
+  }
+}

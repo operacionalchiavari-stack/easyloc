@@ -108,9 +108,9 @@ tr.innerHTML = `
 
     <div class="nome-item-card">
 
-      <select class="nome-item select-servico">
+      <select class="nome-item select-servico" required>
 
-        <option value="">
+        <option value="" selected disabled>
           Selecionar serviço
         </option>
 

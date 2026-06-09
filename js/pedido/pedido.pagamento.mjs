@@ -5,283 +5,214 @@
 import { formatCurrency } from "./pedido.utils.mjs";
 
 export function initPagamento(){
-
-  const tipoEl = document.getElementById("pagamentoTipo");
+  const metodoEl = document.getElementById("pagamentoMetodo");
   const entradaEl = document.getElementById("pagamentoEntradaPercent");
   const parcelasEl = document.getElementById("pagamentoParcelas");
-  const intervaloEl = document.getElementById("pagamentoIntervalo");
-  const dataBaseEl = document.getElementById("pagamentoDataBase");
-  const metodoEl = document.getElementById("pagamentoMetodo");
+  const dataEntradaEl = document.getElementById("pagamentoDataBase");
+  const diaFixoEl = document.getElementById("pagamentoDiaFixo");
+  const descontoComercialEl = document.getElementById("pagamentoDescontoComercial");
+  const bvTotalEl = document.getElementById("bvTotal");
+  const bvAbatidoEl = document.getElementById("bvAbatido");
+  const creditoClienteEl = document.getElementById("pagamentoCreditoCliente");
 
   const tbody = document.getElementById("cronogramaParcelas");
 
   const totalContratoEl = document.getElementById("pgTotalContrato");
+  const totalDescontosEl = document.getElementById("pgTotalDescontos");
+  const totalCreditosEl = document.getElementById("pgTotalCreditos");
+  const valorFinalEl = document.getElementById("pgValorFinal");
   const totalProgramadoEl = document.getElementById("pgTotalProgramado");
+  const diferencaEl = document.getElementById("pgDiferenca");
+
+  const btnLimpar = document.getElementById("btnLimparProgramacao");
 
   if(!tbody){
-    console.warn("⚠️ Tabela de pagamento não encontrada");
+    console.warn("Tabela de pagamento nao encontrada");
     return;
   }
 
-  /* =====================================================
-     FUNÇÃO PRINCIPAL
-  ===================================================== */
+  const moneyValue = (el) => {
+    if(!el) return 0;
+    const raw = String(el.value ?? el.innerText ?? "")
+      .replace("R$", "")
+      .replace(/\./g, "")
+      .replace(",", ".")
+      .trim();
+    return Math.max(0, Number(raw) || 0);
+  };
 
-function calcularPagamento(){
+  const dateToBR = (value) => {
+    if(!value) return "-";
+    const date = new Date(`${value}T00:00:00`);
+    if(Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("pt-BR");
+  };
 
-  const total = Number(window.__TOTAL_PEDIDO || 0);
+  const addMonths = (value, months, fixedDay) => {
+    if(!value) return "";
+    const date = new Date(`${value}T00:00:00`);
+    if(Number.isNaN(date.getTime())) return "";
 
-  const entradaPercent = Number(entradaEl?.value || 0);
-  const parcelas = Number(parcelasEl?.value || 1);
-  const intervalo = Number(intervaloEl?.value || 30);
-  const dataBase = dataBaseEl?.value;
-  const metodo = metodoEl?.value || "-";
-const tipo = tipoEl?.value || "";
+    date.setMonth(date.getMonth() + months);
 
-if(tipo.toLowerCase().includes("vista")){
-  entradaEl.value = 100;
-  parcelasEl.value = 1;
-  parcelasEl.disabled = true;
-} else {
-  parcelasEl.disabled = false;
-}
-  tbody.innerHTML = "";
-
-  if(total <= 0){
-    atualizarResumo(0,0,0);
-    return;
-  }
-
-    let totalProgramado = 0;
-
-    /* =====================================================
-       ENTRADA
-    ===================================================== */
-
-    const valorEntrada = total * (entradaPercent / 100);
-
-    if(valorEntrada > 0){
-
-const tr = document.createElement("tr");
-
-tr.innerHTML = `
-  <td>1</td>
-  <td>Entrada</td>
-<td>${
-  dataBase
-    ? new Date(dataBase + "T00:00:00")
-        .toLocaleDateString("pt-BR")
-    : "—"
-}</td>
-  <td contenteditable="true" class="pg-valor">${formatCurrency(valorEntrada)}</td>
-  <td>
-    <select class="pg-metodo">
-      <option ${metodo === "PIX" ? "selected" : ""}>PIX</option>
-      <option ${metodo === "Boleto" ? "selected" : ""}>Boleto</option>
-      <option ${metodo === "Cartão" ? "selected" : ""}>Cartão</option>
-      <option ${metodo === "Transferência" ? "selected" : ""}>Transferência</option>
-    </select>
-  </td>
-`;
-
-      tbody.appendChild(tr);
-
-      totalProgramado += valorEntrada;
+    const day = Number(fixedDay || 0);
+    if(day > 0){
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      date.setDate(Math.min(day, lastDay));
     }
 
-    /* =====================================================
-       PARCELAS
-    ===================================================== */
+    return date.toISOString().slice(0, 10);
+  };
 
-    const restante = total - valorEntrada;
+  const metodoOptions = (selected) => {
+    const metodos = ["PIX", "Cartao", "Transferencia", "Boleto", "Dinheiro", "A combinar"];
+    return metodos.map((metodo) =>
+      `<option ${metodo === selected ? "selected" : ""}>${metodo}</option>`
+    ).join("");
+  };
 
-    if(parcelas > 0 && restante > 0){
+  const statusOptions = () => `
+    <option>Programado</option>
+    <option>Pago</option>
+    <option>Pendente</option>
+    <option>Cancelado</option>
+  `;
 
-let somaParcelas = 0;
-const valorBase = restante / parcelas;
+  const criarLinha = ({ numero, tipo, vencimento, valor, metodo }) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${numero}</td>
+      <td>${tipo}</td>
+      <td><input class="el-input pg-vencimento" type="date" value="${vencimento || ""}"></td>
+      <td contenteditable="true" class="pg-valor">${formatCurrency(valor)}</td>
+      <td><select class="pg-metodo">${metodoOptions(metodo)}</select></td>
+      <td><select class="pg-status">${statusOptions()}</select></td>
+    `;
+    return tr;
+  };
 
-      for(let i = 0; i < parcelas; i++){
+  const calcularTotais = () => {
+    const totalPedido = Number(window.__TOTAL_PEDIDO || 0);
+    const descontoComercial = moneyValue(descontoComercialEl);
+    const descontoBV = moneyValue(bvTotalEl);
+    const abatimentoBV = moneyValue(bvAbatidoEl);
+    const creditoCliente = moneyValue(creditoClienteEl);
 
-let valorParcela = valorBase;
+    const totalDescontos = descontoComercial + descontoBV;
+    const totalCreditos = abatimentoBV + creditoCliente;
+    const valorFinal = Math.max(0, totalPedido - totalDescontos - totalCreditos);
 
-if(i === parcelas - 1){
-  valorParcela = restante - somaParcelas;
-} else {
-  valorParcela = Math.round(valorParcela * 100) / 100;
-  somaParcelas += valorParcela;
-}
+    return {
+      totalPedido,
+      totalDescontos,
+      totalCreditos,
+      valorFinal
+    };
+  };
 
-const tr = document.createElement("tr");
+  const somarProgramado = () => {
+    let total = 0;
+    tbody.querySelectorAll(".pg-valor").forEach((el) => {
+      total += moneyValue(el);
+    });
+    return total;
+  };
 
-        let dataTexto = "—";
+  const atualizarResumo = () => {
+    const totais = calcularTotais();
+    const totalProgramado = somarProgramado();
+    const diferenca = totais.valorFinal - totalProgramado;
 
-        if(dataBase){
-          const data = new Date(dataBase + "T00:00:00");
-          data.setDate(data.getDate() + (intervalo * (i + 1)));
+    if(totalContratoEl) totalContratoEl.innerText = formatCurrency(totais.totalPedido);
+    if(totalDescontosEl) totalDescontosEl.innerText = formatCurrency(totais.totalDescontos);
+    if(totalCreditosEl) totalCreditosEl.innerText = formatCurrency(totais.totalCreditos);
+    if(valorFinalEl) valorFinalEl.innerText = formatCurrency(totais.valorFinal);
+    if(totalProgramadoEl) totalProgramadoEl.innerText = formatCurrency(totalProgramado);
+    if(diferencaEl) diferencaEl.innerText = formatCurrency(diferenca);
+  };
 
-          dataTexto = data.toLocaleDateString("pt-BR");
+  const gerarParcelas = () => {
+    const { valorFinal } = calcularTotais();
+    const entrada = Math.min(moneyValue(entradaEl), valorFinal);
+    const qtdParcelas = Math.max(0, Number(parcelasEl?.value || 0));
+    const metodo = metodoEl?.value || "PIX";
+    const vencEntrada = dataEntradaEl?.value || "";
+    const primeiroVencimento = vencEntrada;
+    const diaFixo = diaFixoEl?.value || "";
+
+    tbody.innerHTML = "";
+
+    let numero = 1;
+    let restante = valorFinal;
+
+    if(entrada > 0){
+      tbody.appendChild(criarLinha({
+        numero,
+        tipo: "Entrada",
+        vencimento: vencEntrada,
+        valor: entrada,
+        metodo
+      }));
+      numero += 1;
+      restante -= entrada;
+    }
+
+    if(qtdParcelas > 0 && restante > 0){
+      let somaParcelas = 0;
+      const valorBase = restante / qtdParcelas;
+
+      for(let index = 0; index < qtdParcelas; index += 1){
+        let valor = valorBase;
+
+        if(index === qtdParcelas - 1){
+          valor = restante - somaParcelas;
+        } else {
+          valor = Math.round(valor * 100) / 100;
+          somaParcelas += valor;
         }
 
-tr.innerHTML = `
-  <td>${i + 2}</td>
-  <td>Parcela ${i + 1}</td>
-  <td>${dataTexto}</td>
-<td contenteditable="true" class="pg-valor">${formatCurrency(valorParcela)}</td>
-  <td>
-    <select class="pg-metodo">
-      <option ${metodo === "PIX" ? "selected" : ""}>PIX</option>
-      <option ${metodo === "Boleto" ? "selected" : ""}>Boleto</option>
-      <option ${metodo === "Cartão" ? "selected" : ""}>Cartão</option>
-      <option ${metodo === "Transferência" ? "selected" : ""}>Transferência</option>
-    </select>
-  </td>
-`;
+        tbody.appendChild(criarLinha({
+          numero,
+          tipo: `Parcela ${index + 1}`,
+          vencimento: addMonths(primeiroVencimento, index, diaFixo),
+          valor,
+          metodo
+        }));
 
-        tbody.appendChild(tr);
-
-        totalProgramado += valorParcela;
+        numero += 1;
       }
     }
 
-    /* =====================================================
-       RESUMO
-    ===================================================== */
+    atualizarResumo();
+  };
 
-let somaManual = 0;
-
-tbody.querySelectorAll("tr").forEach(tr => {
-
-  const valorTexto = tr.querySelector(".pg-valor")?.innerText || "0";
-
-  const valor = parseFloat(
-    valorTexto.replace("R$", "").replace(/\./g, "").replace(",", ".")
-  ) || 0;
-
-  somaManual += valor;
-});
-atualizarResumo(total, somaManual);
-
-/* =====================================================
-   ESTILO POR MÉTODO
-===================================================== */
-
-tbody.querySelectorAll(".pg-metodo").forEach(select => {
-
-  const valor = select.value.toLowerCase();
-
-  select.classList.remove("pix", "cartao", "boleto", "transferencia");
-
-  if(valor.includes("pix")) select.classList.add("pix");
-  if(valor.includes("cart")) select.classList.add("cartao");
-  if(valor.includes("boleto")) select.classList.add("boleto");
-  if(valor.includes("transfer")) select.classList.add("transferencia");
-
-});
-/* =====================================================
-   DETECTAR MÉTODO HÍBRIDO
-===================================================== */
-
-const metodosUsados = new Set();
-
-tbody.querySelectorAll(".pg-metodo").forEach(select => {
-  if(select.value){
-    metodosUsados.add(select.value);
-  }
-});
-
-if(metodoEl){
-  if(metodosUsados.size > 1){
-    metodoEl.value = "Híbrido";
-  } else if(metodosUsados.size === 1){
-    metodoEl.value = [...metodosUsados][0];
-  }
-}
-  }
-  /* =====================================================
-     ATUALIZA RESUMO
-  ===================================================== */
-
-function atualizarResumo(total, programado){
-
-    if(totalContratoEl){
-      totalContratoEl.innerText = formatCurrency(total);
-    }
-
-    if(totalProgramadoEl){
-      totalProgramadoEl.innerText = formatCurrency(programado);
-    }
-  }
-
-  /* =====================================================
-     BINDS
-  ===================================================== */
+  const limparProgramacao = () => {
+    tbody.innerHTML = "";
+    atualizarResumo();
+  };
 
   [
-    tipoEl,
+    metodoEl,
     entradaEl,
     parcelasEl,
-    intervaloEl,
-    dataBaseEl,
-    metodoEl
-  ].forEach(el => {
-    if(el){
-      el.addEventListener("input", calcularPagamento);
-      el.addEventListener("change", calcularPagamento);
-    }
+    dataEntradaEl,
+    diaFixoEl,
+    descontoComercialEl,
+    bvTotalEl,
+    bvAbatidoEl,
+    creditoClienteEl
+  ].forEach((el) => {
+    if(!el) return;
+    el.addEventListener("input", gerarParcelas);
+    el.addEventListener("change", gerarParcelas);
   });
 
-  /* =====================================================
-     GLOBAL (CHAMADO PELO PEDIDO)
-  ===================================================== */
+  tbody.addEventListener("input", atualizarResumo);
+  tbody.addEventListener("change", atualizarResumo);
 
-  window.atualizarPagamento = calcularPagamento;
+  btnLimpar?.addEventListener("click", limparProgramacao);
 
-  /* =====================================================
-     START
-  ===================================================== */
+  window.atualizarPagamento = gerarParcelas;
 
-calcularPagamento();
-
-/* =====================================================
-   EVENTO MÉTODO HÍBRIDO
-===================================================== */
-
-tbody.addEventListener("change", (e) => {
-  if(e.target.classList.contains("pg-metodo")){
-
-    // 🔥 aplica cor só no select alterado
-    const select = e.target;
-    const valor = select.value.toLowerCase();
-
-    select.classList.remove("pix", "cartao", "boleto", "transferencia");
-
-    if(valor.includes("pix")) select.classList.add("pix");
-    if(valor.includes("cart")) select.classList.add("cartao");
-    if(valor.includes("boleto")) select.classList.add("boleto");
-    if(valor.includes("transfer")) select.classList.add("transferencia");
-
-    // 🔥 continua lógica do híbrido
-    atualizarMetodoTopo();
-  }
-});
-
-function atualizarMetodoTopo(){
-
-  const metodosUsados = new Set();
-
-  tbody.querySelectorAll(".pg-metodo").forEach(select => {
-    if(select.value){
-      metodosUsados.add(select.value);
-    }
-  });
-
-  if(metodoEl){
-    if(metodosUsados.size > 1){
-      metodoEl.value = "Híbrido";
-    } else if(metodosUsados.size === 1){
-      metodoEl.value = [...metodosUsados][0];
-    }
-  }
-}
-
+  gerarParcelas();
 }

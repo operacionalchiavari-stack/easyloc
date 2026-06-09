@@ -55,7 +55,7 @@ function adicionarComponente() {
 
 <td>
   <div class="item-autocomplete-wrapper">
-    <div class="nome-item" contenteditable="true">Novo Componente</div>
+    <div class="nome-item" contenteditable="true" data-placeholder="Preencha o nome do componente"></div>
     <div class="item-autocomplete-list"></div>
   </div>
 </td>
@@ -211,6 +211,7 @@ function atualizarResumo() {
 
   set("resumoFreteBruto", freteBruto);
   set("resumoFreteDesconto", -freteDesconto);
+  set("logisticaDescontoCaminhao", -freteDesconto);
 
   set("resumoMontagemBruto", montagemBruta);
   set("resumoMontagemDesconto", -montagemDesconto);
@@ -338,10 +339,8 @@ function calcularVolumeTotalPedido(){
     const medidas = texto.substring(index).trim();
 
     return `
-      <div>${titulo}</div>
-      <div style="font-size:12px; color:#64748b; font-weight:500;">
-        ${medidas}
-      </div>
+      <div class="item-nome-titulo">${titulo}</div>
+      <div class="item-nome-medidas">${medidas}</div>
     `;
   }
 
@@ -496,7 +495,7 @@ function calcularVolumeTotalPedido(){
 
 <td>
   <div class="item-autocomplete-wrapper">
-    <div class="nome-item" contenteditable="true">Novo Item</div>
+    <div class="nome-item" contenteditable="true" data-placeholder="Preencha o nome do item"></div>
     <div class="item-autocomplete-list"></div>
   </div>
 </td>
@@ -675,9 +674,9 @@ tr.innerHTML = `
 
     <div class="nome-item-card">
 
-      <select class="nome-item select-personalizacao">
+      <select class="nome-item select-personalizacao" required>
 
-        <option value="">
+        <option value="" selected disabled>
           Selecionar personalização
         </option>
 
@@ -805,9 +804,14 @@ select.addEventListener("change", function(){
       handle: ".drag-handle",
       ghostClass: "drag-ghost",
       chosenClass: "drag-chosen",
+      onStart: function () {
+        window.__pedidoOrdenacaoManual = true;
+      },
       onEnd: function () {
+        window.__pedidoOrdenacaoManual = true;
         atualizarResumo();
         calcularVolumeTotalPedido();
+        window.__salvarOrdemPedido?.();
       }
     });
   }

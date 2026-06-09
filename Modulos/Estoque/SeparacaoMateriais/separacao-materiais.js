@@ -7,6 +7,7 @@
     config: "configuracoes_separacao",
     cadastroItens: "itens"
   };
+  const MISSING_SEPARACAO_TABLES_KEY = "easyloc:separacao-tabelas-ausentes";
 
   const STATUS_LABEL = {
     pendente: "Pendente",
@@ -97,6 +98,26 @@
       `;
     }
     window.finalizarCarregamentoModulo?.();
+  }
+
+  function isTabelaAusente(error) {
+    const code = String(error?.code || "");
+    const message = String(error?.message || "");
+    return code === "42P01" || /does not exist|schema cache|could not find/i.test(message);
+  }
+
+  function tabelasSeparacaoAusentes() {
+    try {
+      return localStorage.getItem(MISSING_SEPARACAO_TABLES_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  function marcarTabelasSeparacaoAusentes() {
+    try {
+      localStorage.setItem(MISSING_SEPARACAO_TABLES_KEY, "1");
+    } catch {}
   }
 
   function escapeHtml(value) {
@@ -340,6 +361,11 @@
 
   async function carregarFila() {
     if (!state.supabase || !state.empresaId) return;
+
+    if (tabelasSeparacaoAusentes()) {
+      setupState("As tabelas de separaÃ§Ã£o ainda nÃ£o existem neste Supabase.");
+      return;
+    }
 
     try {
       state.dbReady = true;

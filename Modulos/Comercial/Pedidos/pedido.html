@@ -1,562 +1,397 @@
-<div class="orcamento-page el-page" data-module-root>
-
-<div class="orcamento-container el-page">
-
-<div class="orcamento-header">
-  <span>Pedido</span>
-  <button type="button" class="btn-minimizar">—</button>
-</div>
-
-  <div class="orcamento" id="orcamentoLayout">
-<!-- ================= TOPO ================= -->
-<div class="topo">
-
-<div class="topo-esquerda">
-
-<div class="logo" id="orcamentoLogo">
-  <img id="logoEmpresa" style="display:none;">
-</div>
-   
-</div>
-
-<div class="topo-direita">
-
-<div class="pedido-status" id="pedidoStatus">
-  ORÇAMENTO
-</div>
-
-<div class="pedido-numero">
-  Pedido <strong id="orcamentoNumero">—</strong>
-</div>
-
-</div>
-
-<!-- ALERTA CENTRAL -->
-<div class="area-reserva-topo"> 
-
-  <div class="alerta-reserva-topo" id="alertaReserva">
-    Este orçamento não gera reserva de material.
-  </div>
-
-<div class="pre-reserva-controls">
-
-  <button type="button" id="btnPreReserva" class="btn-pre-reserva primary">
-    Pré-reserva
-  </button>
-
-  <div id="preReservaBox" class="pre-reserva-box hidden">
-
-    <span>Válido até</span>
-
-    <input class="el-input" type="date" id="preReservaData">
-
-  </div>
-
-  <div class="cancelar-pre-reserva-wrapper hidden" id="cancelarPreReservaWrapper">
-
-    <button type="button" id="btnCancelarPreReserva" class="btn-cancelar-pre-reserva secondary">
-      Cancelar
-    </button>
-
-  </div>
-
-</div>
-
-</div> <!-- fecha .area-reserva-topo -->
-
-</div> <!-- fecha .topo -->
-
-<!-- ================= DADOS CLIENTE + DATAS ================= -->
-<div class="dados-grid">
-
-  <div class="dados-cliente">
-
-    <div class="linha-campo el-field">
-      <strong>Cliente:</strong>
-      <div class="autocomplete-wrapper">
-        <input class="el-input" type="text" id="clienteInput" placeholder="Digite o nome do cliente..." autocomplete="off">
-        <input type="hidden" id="clienteIdHidden">
-        <div class="autocomplete-list" id="clienteLista"></div>
-      </div>
-    </div>
-
-    <div class="linha-campo el-field">
-      <strong>Solicitante:</strong>
-      <input class="el-input" type="text" id="responsavelInput">
-    </div>
-
-    <div class="linha-campo el-field">
-      <strong>Telefone:</strong>
-      <input class="el-input" type="text" id="telefoneInput">
-    </div>
-
-    <div class="linha-campo el-field">
-      <strong>Tipo de Evento:</strong>
-      <select class="el-select" id="tipoEventoSelect">
-        <option value="">Selecione</option>
-        <option value="casamento">Casamento</option>
-        <option value="aniversario">Aniversário</option>
-        <option value="15anos">15 Anos</option>
-        <option value="corporativo">Corporativo</option>
-        <option value="editorial">Editorial</option>
-        <option value="outro">Outro</option>
-      </select>
-    </div>
-
-  </div>
-
-
-      <!-- DATAS -->
-      <div class="datas-cards">
-
-        <div class="data-card">
-          <span class="card-label">Entrega</span>
-          <input type="date" id="dataEntrega" class="input-data el-input">
-          <div class="dia-semana" id="diaEntrega">—</div>
-          <input type="time" id="horaEntrega" class="input-hora el-input">
+<div class="pedido-screen orcamento-page el-page" data-module-root>
+  <div class="pedido-shell">
+    <header class="pedido-top">
+      <div class="pedido-title-row">
+        <div class="pedido-title-left">
+          <button type="button" class="btn-voltar-pedido" id="btnVoltarCentralPedidos">
+            <span>&lt;</span>
+            Voltar
+          </button>
+          <h1>#<span id="orcamentoNumero">1548</span></h1>
+          <span class="pedido-status" id="pedidoStatus">Orcamento</span>
         </div>
 
-        <div class="data-card">
-          <span class="card-label">Evento</span>
-          <input type="date" id="dataEvento" class="input-data el-input">
-          <div class="dia-semana" id="diaEvento">—</div>
-          <input type="time" id="horaEvento" class="input-hora el-input">
+        <section class="pedido-timeline-card">
+          <div class="pedido-timeline" id="pedidoTimeline">
+            <button type="button" class="timeline-step active" data-status="orcamento"><span>1</span>Orcamento</button>
+            <button type="button" class="timeline-step" data-status="pre_reserva"><span>2</span>Pre reserva</button>
+            <button type="button" class="timeline-step" data-status="aprovado"><span>3</span>Aprovado</button>
+            <button type="button" class="timeline-step is-locked" data-status="separacao" aria-disabled="true"><span>4</span>Separacao</button>
+            <button type="button" class="timeline-step is-locked" data-status="carregamento" aria-disabled="true"><span>5</span>Carregamento</button>
+            <button type="button" class="timeline-step is-locked" data-status="montagem" aria-disabled="true"><span>6</span>Montagem</button>
+            <button type="button" class="timeline-step is-locked" data-status="desmontagem" aria-disabled="true"><span>7</span>Desmontagem</button>
+            <button type="button" class="timeline-step is-locked" data-status="finalizado" aria-disabled="true"><span>8</span>Finalizado</button>
+            <button type="button" class="timeline-step timeline-cancel" data-status="cancelado"><span>x</span>Cancelar</button>
+          </div>
+        </section>
+
+        <div class="pedido-actions-top">
+          <button type="button" class="btn btn-secondary" id="btnSalvarPedido">Salvar</button>
+          <button type="button" class="btn btn-secondary btn-icon-text" id="btnMaisOpcoesPedido">...</button>
+        </div>
+      </div>
+
+      <section class="pedido-meta-strip">
+        <div class="meta-item">
+          <span>Cliente</span>
+          <div class="autocomplete-wrapper">
+            <input class="meta-input el-input" type="text" id="clienteInput" value="Joao Silva" placeholder="Cliente" autocomplete="off">
+            <input type="hidden" id="clienteIdHidden">
+            <div class="autocomplete-list" id="clienteLista"></div>
+          </div>
         </div>
 
-        <div class="data-card">
-          <span class="card-label">Coleta</span>
-          <input type="date" id="dataColeta" class="input-data el-input">
-          <div class="dia-semana" id="diaColeta">—</div>
-          <input type="time" id="horaColeta" class="input-hora el-input">
+        <div class="meta-item">
+          <span>Evento</span>
+          <select class="meta-input el-select" id="tipoEventoSelect">
+            <option value="">Vale dos Desejos</option>
+            <option value="casamento">Casamento</option>
+            <option value="aniversario">Aniversario</option>
+            <option value="15anos">15 Anos</option>
+            <option value="corporativo">Corporativo</option>
+            <option value="editorial">Editorial</option>
+            <option value="outro">Outro</option>
+          </select>
         </div>
 
+        <div class="meta-item">
+          <span>Data entrega</span>
+          <input class="meta-input el-input" type="date" id="dataEntrega">
+          <div class="dia-semana sr-only" id="diaEntrega">-</div>
+          <input class="sr-only" type="time" id="horaEntrega">
+        </div>
+
+        <div class="meta-item">
+          <span>Data evento</span>
+          <input class="meta-input el-input" type="date" id="dataEvento" value="2026-08-15">
+          <div class="dia-semana sr-only" id="diaEvento">-</div>
+          <input class="sr-only" type="time" id="horaEvento">
+        </div>
+
+        <div class="meta-item">
+          <span>Data coleta</span>
+          <input class="meta-input el-input" type="date" id="dataColeta">
+          <div class="dia-semana sr-only" id="diaColeta">-</div>
+          <input class="sr-only" type="time" id="horaColeta">
+        </div>
+      </section>
+
+      <section class="pedido-location-strip">
+        <div class="location-field">
+          <span>Local do evento</span>
+          <div class="autocomplete-wrapper">
+            <input class="location-input el-input" type="text" id="localInput" value="Vale dos Desejos" placeholder="Local" autocomplete="off">
+            <input type="hidden" id="localIdHidden">
+            <div class="autocomplete-list" id="localLista"></div>
+          </div>
+        </div>
+
+        <div class="location-address">
+          <div class="location-address-label">Endereco do evento</div>
+          <div class="obs-local" id="localObservacoes">
+            <div><strong>Endereco:</strong> Estr. do Passatempo - Alberto Torres, Areal - RJ</div>
+            <div><strong>Referencia:</strong> Entrada principal</div>
+          </div>
+        </div>
+
+        <div class="local-indicadores">
+          <div class="local-tags local-tags-operacionais" id="localTagsInline"></div>
+        </div>
+      </section>
+
+      <div class="pedido-hidden-fields">
+        <input class="el-input" type="text" id="responsavelInput">
+        <input class="el-input" type="text" id="telefoneInput">
+        <input class="el-input" type="text" id="comercialResponsavelInput" value="Rafael Almeida">
+        <strong id="pedidoDataCriacao">01/06/2026 as 10:30</strong>
       </div>
+    </header>
 
+    <div class="pedido-body-grid">
+      <main class="pedido-main">
+        <section class="pedido-items-panel">
+          <div class="pedido-items-head">
+            <h2>Itens do pedido</h2>
+            <div class="acoes-itens">
+              <button id="addItemBtn" type="button" class="btn btn-primary">+ Adicionar item</button>
+              <button id="addComponenteBtn" type="button" class="btn btn-secondary">+ Componente</button>
+              <button id="addEspacoBtn" type="button" class="btn btn-secondary">+ Espaco</button>
+              <button id="addPersonalizacaoBtn" type="button" class="btn btn-secondary">+ Personalizacao</button>
+              <button id="addServicoBtn" type="button" class="btn btn-secondary">+ Servico</button>
+            </div>
+          </div>
+
+          <div class="pedido-items-table-wrap">
+            <table class="tabela pedido-items-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Qtd</th>
+                  <th>Foto</th>
+                  <th>Item</th>
+                  <th>Locacao</th>
+                  <th>Desconto</th>
+                  <th>Total</th>
+                  <th>Reposicao</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody id="listaItens"></tbody>
+            </table>
+          </div>
+
+        </section>
+
+        <section class="finance-card pagamento-card pagamento-card-wide">
+          <div class="pagamento-card-head">
+            <h2>Condicoes comerciais e pagamento</h2>
+            <div class="pagamento-actions">
+              <button type="button" class="btn btn-secondary" id="btnLimparProgramacao">Limpar programacao</button>
+            </div>
+          </div>
+
+          <div class="pagamento-content-grid">
+            <div class="pagamento-form-area">
+              <div class="pagamento-config-grid">
+                <label class="el-field">
+                  <span>Forma de pagamento</span>
+                  <select class="el-select" id="pagamentoMetodo">
+                    <option>PIX</option>
+                    <option>Cartao</option>
+                    <option>Transferencia</option>
+                    <option>Boleto</option>
+                    <option>Dinheiro</option>
+                    <option>A combinar</option>
+                  </select>
+                </label>
+
+                <label class="el-field">
+                  <span>Entrada</span>
+                  <input class="el-input" type="number" id="pagamentoEntradaPercent" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                </label>
+
+                <label class="el-field">
+                  <span>Quantidade de parcelas</span>
+                  <input class="el-input" type="number" id="pagamentoParcelas" value="1" min="0" step="1">
+                </label>
+
+                <label class="el-field">
+                  <span>Vencimento da entrada</span>
+                  <input class="el-input" type="date" id="pagamentoDataBase">
+                </label>
+
+                <label class="el-field">
+                  <span>Dia fixo de vencimento</span>
+                  <input class="el-input" type="number" id="pagamentoDiaFixo" min="1" max="31" step="1" placeholder="Dia">
+                </label>
+
+                <label class="el-field">
+                  <span>Desconto comercial</span>
+                  <input class="el-input" type="number" id="pagamentoDescontoComercial" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                </label>
+
+                <label class="el-field">
+                  <span>Desconto por BV decorador</span>
+                  <input class="el-input" type="number" id="bvTotal" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                </label>
+
+                <label class="el-field">
+                  <span>Abater no pedido</span>
+                  <input class="el-input" type="number" id="bvAbatido" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                </label>
+
+                <label class="el-field">
+                  <span>Credito do cliente</span>
+                  <input class="el-input" type="number" id="pagamentoCreditoCliente" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                </label>
+
+                <input class="sr-only" type="number" id="pagamentoIntervalo" value="30">
+                <select class="sr-only" id="pagamentoTipo"><option value="entrada_parcelado">Entrada + Parcelado</option></select>
+                <input class="sr-only" type="text" id="bvPendente" value="R$ 0,00" readonly>
+
+                <label class="el-field pagamento-observacao">
+                  <span>Observacao financeira</span>
+                  <textarea class="el-textarea" id="pagamentoObservacaoFinanceira" rows="4" placeholder="Observacoes comerciais, combinados ou detalhes financeiros"></textarea>
+                </label>
+              </div>
+            </div>
+
+            <div class="pagamento-summary-area sr-only">
+              <div class="pagamento-resumo pagamento-resumo-completo">
+                <div><span>Total do pedido</span><strong id="pgTotalContrato">R$ 0,00</strong></div>
+                <div><span>Total de descontos</span><strong id="pgTotalDescontos">R$ 0,00</strong></div>
+                <div><span>Total de creditos abatidos</span><strong id="pgTotalCreditos">R$ 0,00</strong></div>
+                <div><span>Valor final a pagar</span><strong id="pgValorFinal">R$ 0,00</strong></div>
+                <div><span>Total programado</span><strong id="pgTotalProgramado">R$ 0,00</strong></div>
+                <div><span>Diferenca</span><strong id="pgDiferenca">R$ 0,00</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pagamento-table-wrap">
+            <table class="cronograma-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Tipo</th>
+                  <th>Vencimento</th>
+                  <th>Valor</th>
+                  <th>Metodo</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="cronogramaParcelas"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="contrato">
+          <h2 contenteditable="true">Contrato de Locacao</h2>
+          <div contenteditable="true" class="texto-contrato">
+            <p><strong>Clausula 1 - Objeto:</strong> Locacao dos materiais descritos neste orcamento.</p>
+            <p><strong>Clausula 2 - Responsabilidade:</strong> O contratante se responsabiliza pela guarda e conservacao.</p>
+            <p><strong>Clausula 3 - Pagamento:</strong> Conforme condicoes acordadas.</p>
+          </div>
+        </section>
+      </main>
+
+      <aside class="pedido-financeiro">
+        <section class="finance-card resumo-card">
+          <h2>Resumo do pedido</h2>
+          <div class="resumo-linha"><span>Valor de locacao</span><strong id="resumoLocacaoBruto">R$ 0,00</strong></div>
+          <div class="resumo-linha"><span>Desconto</span><strong id="resumoLocacaoDesconto">R$ 0,00</strong></div>
+          <div class="resumo-linha"><span>Customizacoes</span><strong id="resumoCustomizacoes">R$ 0,00</strong></div>
+          <div class="resumo-linha subtotal"><span>Subtotal</span><strong>R$ 0,00</strong></div>
+          <div class="resumo-linha"><span>Frete</span><strong id="resumoFreteBruto">R$ 0,00</strong></div>
+          <div class="resumo-linha sr-only"><span>Desconto frete</span><strong id="resumoFreteDesconto">- R$ 0,00</strong></div>
+          <div class="resumo-linha"><span>Montagem</span><strong id="resumoMontagemBruto">R$ 0,00</strong></div>
+          <div class="resumo-linha sr-only"><span>Desconto montagem</span><strong id="resumoMontagemDesconto">- R$ 0,00</strong></div>
+          <div class="resumo-linha sr-only"><span>Servicos</span><strong id="resumoServicos">R$ 0,00</strong></div>
+          <div class="resumo-linha total"><span>Total do pedido</span><strong id="resumoTotalGeral">R$ 0,00</strong></div>
+        </section>
+
+        <section class="finance-card logistica-card" id="cardLogisticaPedido">
+          <h2>Logistica</h2>
+          <div class="logistica-grid">
+            <div><span>Caminhoes</span><strong id="freteQtdCaminhoes">0</strong></div>
+            <div><span>Valor do caminhao</span><strong id="freteValor">R$ 0,00</strong></div>
+            <div><span>Desconto do caminhao</span><strong id="logisticaDescontoCaminhao">R$ 0,00</strong></div>
+            <div><span>Qtd ajudantes</span><strong id="montagemQtd">-</strong></div>
+            <div><span>Valor ajudantes</span><strong id="montagemCusto">-</strong></div>
+            <div><span>Desconto ajudantes</span><strong id="montagemDesconto">- R$ 0,00</strong></div>
+          </div>
+          <div class="logistica-extra">
+            <div><span>Volume</span><strong id="freteVolumeTotal">0 m3</strong></div>
+            <div><span>Distancia</span><strong id="freteDistanciaKm">0 km</strong></div>
+            <div><span>Total montagem</span><strong id="montagemValorFinal">R$ 0,00</strong></div>
+          </div>
+          <div class="montagem-info sr-only" id="montagemInfo">-</div>
+          <div id="freteDetalheCaminhoes" class="frete-detalhe-container el-page"></div>
+        </section>
+      </aside>
     </div>
+  </div>
 
-    <!-- ================= LOCAL ================= -->
-<div class="local">
+  <aside class="onde-esta-panel" id="ondeEstaPanel" aria-hidden="true">
+    <div class="onde-esta-header">
+      <div><span>Disponibilidade</span><strong id="ondeEstaTitulo">Item</strong></div>
+      <button type="button" class="btn-icon" id="btnFecharOndeEsta" aria-label="Fechar">x</button>
+    </div>
+    <div class="onde-esta-content">
+      <div class="onde-metric"><span>Disponivel</span><strong id="ondeQtdDisponivel">A consultar</strong></div>
+      <div class="onde-metric"><span>Reservada</span><strong id="ondeQtdReservada">A consultar</strong></div>
+      <div class="onde-metric"><span>Conflitos</span><strong id="ondeConflitos">Nenhum conflito carregado</strong></div>
+      <div class="onde-lista" id="ondePedidosLista">Selecione um item cadastrado para consultar os pedidos relacionados.</div>
+    </div>
+  </aside>
 
-  <!-- BLOCO 1 - INPUT LOCAL -->
-  <div class="local-topo">
-    <div class="linha-campo el-field">
-      <strong>Local:</strong>
-      <div class="autocomplete-wrapper">
-        <input class="el-input" type="text" id="localInput" placeholder="Digite o nome do local..." autocomplete="off">
-        <input type="hidden" id="localIdHidden">
-        <div class="autocomplete-list" id="localLista"></div>
+  <div class="pedido-modal hidden" id="modalComunicacoesPedido">
+    <div class="pedido-modal-box el-card">
+      <div class="pedido-modal-header">
+        <h3>Comunicacoes por setor</h3>
+        <button type="button" class="btn-icon" id="btnFecharComunicacoes" aria-label="Fechar">x</button>
+      </div>
+      <div class="comunicacoes-tabs">
+        <button type="button" class="active" data-com-tab="entrega">Entrega</button>
+        <button type="button" data-com-tab="separacao">Separacao</button>
+        <button type="button" data-com-tab="coleta">Coleta</button>
+        <button type="button" data-com-tab="financeiro">Financeiro</button>
+      </div>
+      <textarea id="comEntrega" class="el-textarea comunicacao-text active" placeholder="Instrucoes para entrega"></textarea>
+      <textarea id="comSeparacao" class="el-textarea comunicacao-text" placeholder="Instrucoes para separacao"></textarea>
+      <textarea id="comColeta" class="el-textarea comunicacao-text" placeholder="Instrucoes para coleta"></textarea>
+      <textarea id="comFinanceiro" class="el-textarea comunicacao-text" placeholder="Instrucoes para financeiro"></textarea>
+    </div>
+  </div>
+
+  <div class="pedido-modal hidden" id="modalMaisOpcoesPedido">
+    <div class="pedido-modal-box el-card opcoes-modal-box">
+      <div class="pedido-modal-header">
+        <h3>Mais opcoes</h3>
+        <button type="button" class="btn-icon" id="btnFecharMaisOpcoes" aria-label="Fechar">x</button>
+      </div>
+      <div class="opcoes-grid">
+        <button type="button" class="btn btn-secondary" onclick="imprimirPedido()">Imprimir pedido</button>
+        <button type="button" class="btn btn-secondary" id="btnDuplicarPedido">Duplicar pedido</button>
+        <button type="button" class="btn btn-secondary" id="btnMaisOpcoesComunicacoes">Comunicacoes</button>
+        <button type="button" class="btn btn-secondary" id="btnHistoricoPedido">Historico</button>
+        <button type="button" class="btn btn-secondary" id="btnMaisOpcoesContrato">Converter em contrato</button>
+        <button type="button" class="btn btn-secondary" id="btnMaisOpcoesEnviar">Enviar por e-mail / WhatsApp</button>
       </div>
     </div>
   </div>
 
-  <!-- LINHA DIVISÓRIA -->
-  <div class="local-divider"></div>
-
-  <!-- BLOCO 2 - INFORMAÇÕES -->
-  <div class="local-info">
-
-    <div class="obs-local" id="localObservacoes"></div>
-
-    <div class="local-tags" id="localTagsInline"></div>
-
-  </div>
-
-</div>
-
-
-<!-- ================= ITENS ================= -->
-<table class="tabela">
-<thead>
-  <tr>
-    <th class="acao-col"></th>
-    <th>Qtd</th>
-    <th></th>
-    <th>Item</th>
-    <th class="valor">Unitário</th>
-    <th class="valor">Desc %</th>
-    <th class="valor">Total</th>
-    <th class="valor">Reposição</th>
-  </tr>
-</thead>
-
-
-  <tbody id="listaItens">
-  </tbody>
-</table>
-
-<!-- ================= BOTÕES ================= -->
-<div class="acoes-itens">
-
-<button id="addItemBtn" type="button" class="btn-espaco">
-    + Adicionar Item
-</button>
-
-<button id="addComponenteBtn" type="button" class="btn-espaco">
-    + Adicionar Componente
-</button>
-
-<button id="addEspacoBtn" type="button" class="btn-espaco">
-    + Adicionar Espaço
-</button>
-
-<button id="addPersonalizacaoBtn" type="button" class="btn-espaco">
-  + Adicionar Personalização
-</button>
-
-<button id="addServicoBtn" type="button" class="btn-espaco">
-  + Adicionar Serviço
-</button>
-
-</div>
-
-<!-- ================= EXTRAS + RESUMO (3 CARDS ALINHADOS) ================= -->
-
-<div class="extras-grid">
-
-<!-- CARD FRETE INTELIGENTE -->
-<div class="card-extra">
-
-  <h3>Frete</h3>
-
-  <!-- INFO SUPERIOR -->
-  <div class="frete-triplo-info">
-
-    <div class="frete-info">
-      <span>Volume</span>
-      <strong id="freteVolumeTotal">0 m³</strong>
-    </div>
-
-    <div class="frete-info">
-      <span>Distância</span>
-      <strong id="freteDistanciaKm">0 km</strong>
-    </div>
-
-    <div class="frete-info">
-      <span>Caminhões</span>
-      <strong id="freteQtdCaminhoes">0</strong>
-    </div>
-
-  </div>
-
-  <!-- DIVISOR -->
-  <div style="margin:16px 0;border-top:1px solid #eef2f7;"></div>
-
-<!-- LISTA DE CAMINHÕES NECESSÁRIOS -->
-<div id="freteDetalheCaminhoes" class="frete-detalhe-container el-page">
-
-  <!-- Exemplo visual padrão -->
-  <!--
-  <div class="frete-caminhao-linha">
-    <span>XG</span>
-    <span>1</span>
-  </div>
-
-  <div class="frete-caminhao-linha">
-    <span>G</span>
-    <span>1</span>
-  </div>
-  -->
-
-</div>
-
-  <!-- DIVISOR -->
-  <div style="margin:16px 0;border-top:1px solid #eef2f7;"></div>
-
-  <!-- VALOR -->
-  <div class="frete-info frete-valor">
-    <span>Valor selecionado</span>
-    <strong id="freteValor">R$ 0,00</strong>
-  </div>
-
-</div>
-
-<!-- CARD MONTAGEM -->
-<div class="card-extra" id="cardMontagem">
-
-  <h3>Montagem</h3>
-
-  <div id="montagemSugestaoBox">
-
-    <div class="montagem-label">
-      Montagem sugerida
-    </div>
-
-    <div class="montagem-linha">
-      <span>Qtd Montadores</span>
-      <strong id="montagemQtd">—</strong>
-    </div>
-
-    <div class="montagem-linha">
-      <span>Custo sugerido</span>
-      <strong id="montagemCusto">—</strong>
-    </div>
-
-    <div class="montagem-info" id="montagemInfo">
-      —
-    </div>
-
-    <!-- DIVISOR -->
-    <div style="margin:16px 0;border-top:1px solid #eef2f7;"></div>
-
-    <!-- DESCONTO -->
-    <div class="montagem-linha linha-desconto">
-      <span>Desconto</span>
-      <strong id="montagemDesconto">- R$ 0,00</strong>
-    </div>
-
-    <!-- DIVISOR -->
-    <div class="card-divider"></div>
-
-    <!-- VALOR FINAL -->
-    <div class="valor-final-box">
-      <div class="valor-label">
-        Valor final
+  <div class="pedido-modal hidden" id="modalCancelarOrcamento">
+    <div class="pedido-modal-box el-card cancelamento-modal-box">
+      <div class="pedido-modal-header">
+        <h3>Cancelar orcamento</h3>
+        <button type="button" class="btn-icon" id="btnFecharCancelarOrcamento" aria-label="Fechar">x</button>
       </div>
-
-      <div id="montagemValorFinal" class="valor-destaque">
-        R$ 0,00
+      <div class="cancelamento-motivos" id="cancelamentoMotivos">
+        <button type="button" class="cancelamento-motivo-card" data-motivo="Evento remarcado">
+          <strong>Evento remarcado</strong>
+          <span>Cliente mudou a data ou adiou o evento.</span>
+        </button>
+        <button type="button" class="cancelamento-motivo-card" data-motivo="Concorrencia mais barata">
+          <strong>Concorrencia mais barata</strong>
+          <span>Cliente fechou por preco menor.</span>
+        </button>
+        <button type="button" class="cancelamento-motivo-card" data-motivo="Cliente desistiu">
+          <strong>Cliente desistiu</strong>
+          <span>Evento ou contratacao nao vai acontecer.</span>
+        </button>
+        <button type="button" class="cancelamento-motivo-card" data-motivo="Sem retorno">
+          <strong>Sem retorno</strong>
+          <span>Cliente nao respondeu apos follow-up.</span>
+        </button>
+        <button type="button" class="cancelamento-motivo-card" data-motivo="Falta de disponibilidade">
+          <strong>Falta de disponibilidade</strong>
+          <span>Itens, data ou equipe indisponiveis.</span>
+        </button>
+        <button type="button" class="cancelamento-motivo-card" data-motivo="Outro motivo">
+          <strong>Outro motivo</strong>
+          <span>Usar observacao para detalhar.</span>
+        </button>
+      </div>
+      <label class="el-field">
+        <span>Observacao do cancelamento</span>
+        <textarea class="el-textarea" id="motivoCancelamentoPedido" rows="4" placeholder="Detalhe o motivo, se necessario"></textarea>
+      </label>
+      <div class="modal-acoes">
+        <button type="button" class="btn btn-secondary" id="btnCancelarCancelamento">Voltar</button>
+        <button type="button" class="btn btn-primary btn-danger-action" id="btnConfirmarCancelamentoPedido">Confirmar cancelamento</button>
       </div>
     </div>
-
   </div>
 
-</div>
-
-
-<div class="card-resumo">
-
-
-  <div class="resumo-linha">
-    <span>Valor de locação:</span>
-    <strong id="resumoLocacaoBruto">R$ 0,00</strong>
-  </div>
-
-  <div class="resumo-linha desconto">
-    <span>Desconto locação:</span>
-    <strong id="resumoLocacaoDesconto">- R$ 0,00</strong>
-  </div>
-  <div class="resumo-linha">
-  <span>Customizações:</span>
-  <strong id="resumoCustomizacoes">R$ 0,00</strong>
-</div>
-
-  <div class="resumo-linha">
-    <span>Frete:</span>
-    <strong id="resumoFreteBruto">R$ 0,00</strong>
-  </div>
-
-  <div class="resumo-linha desconto">
-    <span>Desconto frete:</span>
-    <strong id="resumoFreteDesconto">- R$ 0,00</strong>
-  </div>
-
-  <div class="resumo-linha">
-    <span>Montagem/Desmontagem:</span>
-    <strong id="resumoMontagemBruto">R$ 0,00</strong>
-  </div>
-
-  <div class="resumo-linha desconto">
-    <span>Desconto Montagem/Desmontagem</span>
-    <strong id="resumoMontagemDesconto">- R$ 0,00</strong>
-  </div>
-
-  <div class="resumo-linha">
-    <span>Serviços:</span>
-    <strong id="resumoServicos">R$ 0,00</strong>
-  </div>
-
-  <div class="resumo-linha resumo-total">
-    <span>Total:</span>
-    <strong id="resumoTotalGeral">R$ 0,00</strong>
-  </div>
-
-</div>
-
-</div>
-
-<!-- ================= FORMA DE PAGAMENTO ================= -->
-
-<div class="card-pagamento-horizontal">
-
-  <h3>Forma de pagamento</h3>
-
-  <!-- CONFIGURAÇÃO -->
-  <div class="pagamento-config-grid">
-
-    <div class="campo el-field">
-      <label>Tipo</label>
-      <select class="el-select" id="pagamentoTipo">
-        <option value="avista">À vista</option>
-        <option value="entrada_parcelado">Entrada + Parcelado</option>
-        <option value="parcelado">Parcelado</option>
-      </select>
-    </div>
-
-    <div class="campo el-field">
-      <label>Entrada (%)</label>
-      <input class="el-input" type="number" id="pagamentoEntradaPercent" value="30">
-    </div>
-
-    <div class="campo el-field">
-      <label>Nº Parcelas</label>
-      <input class="el-input" type="number" id="pagamentoParcelas" value="2">
-    </div>
-
-    <div class="campo el-field">
-      <label>Intervalo (dias)</label>
-      <input class="el-input" type="number" id="pagamentoIntervalo" value="30">
-    </div>
-
-    <div class="campo el-field">
-      <label>Data base</label>
-      <input class="el-input" type="date" id="pagamentoDataBase">
-    </div>
-
-    <div class="campo el-field">
-      <label>Método</label>
-<select class="el-select" id="pagamentoMetodo">
-  <option>PIX</option>
-  <option>Boleto</option>
-  <option>Cartão</option>
-  <option>Transferência</option>
-  <option>Híbrido</option>
-</select>
-    </div>
-
-  </div>
-
-<!-- ================= BV ================= -->
-
-<div class="bv-box">
-
-  <div class="bv-item">
-    <span>BV Decorador</span>
-    <input class="el-input" type="number" id="bvTotal" placeholder="0,00">
-  </div>
-
-  <div class="bv-item">
-    <span>Abater no pedido</span>
-    <input class="el-input" type="number" id="bvAbatido" placeholder="0,00">
-  </div>
-
-  <div class="bv-item">
-    <span><strong>BV pendente</strong></span>
-    <input class="el-input" type="text" id="bvPendente" value="R$ 0,00" readonly>
-  </div>
-
-</div>
-
-<!-- CRONOGRAMA -->
-<div class="cronograma-wrapper">
-    <table class="cronograma-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Tipo</th>
-          <th>Vencimento</th>
-          <th>Valor</th>
-          <th>Método</th>
-        </tr>
-      </thead>
-      <tbody id="cronogramaParcelas">
-        <tr>
-          <td>1</td>
-          <td>Entrada</td>
-          <td>—</td>
-          <td>R$ 0,00</td>
-          <td>PIX</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- RESUMO -->
-  <div class="pagamento-resumo">
-    <div>
-      <span>Total contrato:</span>
-      <strong id="pgTotalContrato">R$ 0,00</strong>
-    </div>
-    <div>
-      <span>Total programado:</span>
-      <strong id="pgTotalProgramado">R$ 0,00</strong>
-    </div>
-    <div>
-      <span>Diferença:</span>
-      <strong id="pgDiferenca">R$ 0,00</strong>
-    </div>
-  </div>
-
-</div>
-
-    <!-- ================= CONTRATO ================= -->
-    <div class="contrato">
-
-      <h2 contenteditable="true">
-        Contrato de Locação
-      </h2>
-
-      <div contenteditable="true" class="texto-contrato">
-        <p><strong>Cláusula 1ª – Objeto:</strong> Locação dos materiais descritos neste orçamento.</p>
-        <p><strong>Cláusula 2ª – Responsabilidade:</strong> O contratante se responsabiliza pela guarda e conservação.</p>
-        <p><strong>Cláusula 3ª – Pagamento:</strong> Conforme condições acordadas.</p>
-        <p><strong>Cláusula 4ª – Cancelamento:</strong> Sujeito à política da empresa.</p>
+  <div class="modal-confirmacao hidden" id="modalConfirmarComponente" style="display:none;">
+    <div class="modal-box">
+      <h3>Confirmar acao</h3>
+      <p>Tem certeza que deseja acrescentar um componente?</p>
+      <div class="modal-acoes">
+        <button type="button" class="btn-confirmar primary" onclick="confirmarAdicionarComponente()">Sim, adicionar</button>
+        <button type="button" class="btn-cancelar secondary" onclick="fecharModalComponente()">Cancelar</button>
       </div>
-
-      <div class="assinaturas">
-        <div class="assinatura">EasyLoc</div>
-        <div class="assinatura">Cliente</div>
-      </div>
-
     </div>
-
   </div>
-
 </div>
-
-
-</div>
-<!-- MODAL CONFIRMAR COMPONENTE -->
-<div class="modal-confirmacao hidden el-modal" id="modalConfirmarComponente" style="display:none;">
-  <div class="modal-box el-modal__box">
-
-    <h3>Confirmar ação</h3>
-    <p>Tem certeza que deseja acrescentar um componente?</p>
-
-<div class="modal-acoes el-modal">
-  <button type="button" class="btn-confirmar primary" onclick="confirmarAdicionarComponente()">
-    Sim, adicionar
-  </button>
-
-  <button type="button" class="btn-cancelar secondary" onclick="fecharModalComponente()">
-    Cancelar
-  </button>
-</div>
-  </div>
-</div> <!-- fecha orcamento -->
-</div> <!-- fecha container -->  
-</div>
-<script>
-window.toggleOrcamento = function(header){
-  const container = header.parentElement;
-  const content = container.querySelector('.orcamento');
-  const btn = header.querySelector('.btn-minimizar');
-
-  content.classList.toggle('hidden');
-
-  btn.textContent = content.classList.contains('hidden') ? '+' : '—';
-}
-</script>
-<script>
-document.addEventListener("click", function(e){
-  const header = e.target.closest(".orcamento-header");
-  if(!header) return;
-
-  const container = header.parentElement;
-  const content = container.querySelector('.orcamento');
-  const btn = header.querySelector('.btn-minimizar');
-
-  content.classList.toggle('hidden');
-
-  btn.textContent = content.classList.contains('hidden') ? '+' : '—';
-});
-</script>

@@ -6,68 +6,143 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+function jsonResponse(body: Record<string, unknown>, status = 200){
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json"
+    }
+  });
+}
+
 serve(async (req: Request) => {
+  const debugBase = {
+    arquivo: "supabase/functions/calcular-distancia/index.ts",
+    funcao: "calcular-distancia",
+    metodo: req.method
+  };
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    const body = await req.json().catch(() => null);
+    const origemRaw = body?.origem ?? body?.origin;
+    const destinoRaw = body?.destino ?? body?.destination;
+    const origem = typeof origemRaw === "string" ? origemRaw.trim() : "";
+    const destino = typeof destinoRaw === "string" ? destinoRaw.trim() : "";
 
-    const body = await req.json();
+    console.log("[EasyLoc Debug]", {
+      ...debugBase,
+      parametrosRecebidos: body,
+      latitudeOrigem: body?.latitudeOrigem ?? null,
+      longitudeOrigem: body?.longitudeOrigem ?? null,
+      latitudeDestino: body?.latitudeDestino ?? null,
+      longitudeDestino: body?.longitudeDestino ?? null,
+      origem,
+      destino,
+      origemVazia: !origem,
+      destinoVazio: !destino,
+      origemNaN: Number.isNaN(Number(origem)),
+      destinoNaN: Number.isNaN(Number(destino))
+    });
 
-    if (!body?.origem || !body?.destino) {
-      return new Response(
-        JSON.stringify({ error: "Origem ou destino não enviados." }),
-        { status: 400, headers: corsHeaders }
-      );
+    if (!origem || !destino) {
+      const campoCausador = !origem ? "origem" : "destino";
+
+      console.warn("[EasyLoc Debug]", {
+        ...debugBase,
+        status: 400,
+        erro: "Origem ou destino nao enviados.",
+        campoCausador,
+        bodyRecebido: body
+      });
+
+      return jsonResponse({
+        error: "Origem ou destino nao enviados.",
+        campoCausador,
+        bodyRecebido: body
+      }, 400);
     }
 
     const GOOGLE_KEY = Deno.env.get("GOOGLE_MAPS_KEY");
 
     if (!GOOGLE_KEY) {
-      return new Response(
-        JSON.stringify({ error: "GOOGLE_MAPS_KEY não configurada." }),
-        { status: 500, headers: corsHeaders }
-      );
+      console.error("[EasyLoc Debug]", {
+        ...debugBase,
+        status: 500,
+        erro: "GOOGLE_MAPS_KEY nao configurada."
+      });
+
+      return jsonResponse({ error: "GOOGLE_MAPS_KEY nao configurada." }, 500);
     }
 
     const url =
       `https://maps.googleapis.com/maps/api/distancematrix/json?` +
-      `origins=${encodeURIComponent(body.origem)}` +
-      `&destinations=${encodeURIComponent(body.destino)}` +
+      `origins=${encodeURIComponent(origem)}` +
+      `&destinations=${encodeURIComponent(destino)}` +
       `&key=${GOOGLE_KEY}`;
+
+    console.log("[EasyLoc Debug]", {
+      ...debugBase,
+      requisicaoEnviada: {
+        api: "Google Distance Matrix",
+        origem,
+        destino,
+        urlSemChave: url.replace(GOOGLE_KEY, "[GOOGLE_MAPS_KEY]")
+      }
+    });
 
     const response = await fetch(url);
     const data = await response.json();
-    console.log("Resposta Google:", data);
 
-    if (
-      !data.rows ||
-      !data.rows[0] ||
-      !data.rows[0].elements ||
-      !data.rows[0].elements[0] ||
-      data.rows[0].elements[0].status !== "OK"
-    ) {
-      return new Response(
-        JSON.stringify({ error: "Erro ao calcular distância.", details: data }),
-        { status: 500, headers: corsHeaders }
-      );
+    console.log("[EasyLoc Debug]", {
+      ...debugBase,
+      respostaRecebida: {
+        statusHttp: response.status,
+        statusGoogle: data?.status,
+        destinoStatus: data?.rows?.[0]?.elements?.[0]?.status,
+        details: data
+      }
+    });
+
+    const element = data?.rows?.[0]?.elements?.[0];
+    if (!element || element.status !== "OK") {
+      const diagnostico = {
+        ok: false,
+        error: "Erro ao calcular distancia.",
+        origem,
+        destino,
+        statusGoogle: data?.status || null,
+        errorMessageGoogle: data?.error_message || null,
+        destinoStatus: element?.status || null,
+        details: data
+      };
+
+      console.error("[EasyLoc Debug]", {
+        ...debugBase,
+        status: 502,
+        diagnostico
+      });
+
+      return jsonResponse(diagnostico);
     }
 
-    const metros = data.rows[0].elements[0].distance.value;
+    const metros = element.distance.value;
     const km = metros / 1000;
 
-    return new Response(
-      JSON.stringify({ km }),
-      { headers: corsHeaders }
-    );
+    return jsonResponse({ km });
 
   } catch (err) {
+    console.error("[EasyLoc Debug]", {
+      ...debugBase,
+      status: 500,
+      erro: "Erro interno",
+      detalhes: String(err)
+    });
 
-    return new Response(
-      JSON.stringify({ error: "Erro interno", details: String(err) }),
-      { status: 500, headers: corsHeaders }
-    );
+    return jsonResponse({ error: "Erro interno", details: String(err) }, 500);
   }
 });

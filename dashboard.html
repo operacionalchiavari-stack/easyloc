@@ -679,8 +679,8 @@
   display: none;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(3px);
   pointer-events: auto;
 }
 
@@ -917,6 +917,7 @@
   </style>
 
   <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/global-help.css">
 </head>
 
 <body>
@@ -941,12 +942,12 @@
 
 <div class="submenu-item"
   onclick="carregarNaMain(
-    'Modulos/Comercial/Pedidos/pedido.html',
-    'js/pedido/pedido.mjs',
+    'Modulos/Comercial/Pedidos/CentralPedidos.html',
+    'Modulos/Comercial/Pedidos/CentralPedidos.js',
     this,
-    'Modulos/Comercial/Pedidos/pedido.css'
+    'Modulos/Comercial/Pedidos/CentralPedidos.css'
   )">
-  Pedido / Orçamento
+  Central de Pedidos
 </div>
 
   <div class="submenu-item"
@@ -1131,6 +1132,16 @@
     Lia - Assistente Comercial
   </div>
 
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/IA/StudioIA/studio-ia.html',
+      'js/studio-ia/studio-ia.mjs',
+      this,
+      'Modulos/IA/StudioIA/studio-ia.css'
+    )">
+    EasyLoc Studio IA
+  </div>
+
 </div>
 
 </nav>
@@ -1238,6 +1249,64 @@
 
 </main>
 
+<button type="button" class="global-help-button" id="globalHelpButton" title="Ajuda">
+  <span>?</span>
+</button>
+
+<div class="global-help-modal hidden" id="globalHelpModal" aria-hidden="true">
+  <div class="global-help-box">
+    <div class="global-help-header">
+      <div>
+        <span>Central de ajuda</span>
+        <h3>Encontre um video pelo que voce esta tentando fazer</h3>
+      </div>
+      <button type="button" class="global-help-close" id="globalHelpClose" aria-label="Fechar">x</button>
+    </div>
+
+    <div class="global-help-search">
+      <input id="globalHelpQuestion" type="text" placeholder="Digite sua duvida. Ex: cadastrar cliente, montar pedido, pagamento...">
+      <button type="button" id="globalHelpSearch">Buscar video</button>
+    </div>
+
+    <div class="global-help-body">
+      <div class="global-help-results" id="globalHelpResults"></div>
+      <div class="global-help-player">
+        <iframe
+          id="globalHelpIframe"
+          src="https://www.youtube.com/embed/A8Gn9rZjJic"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+        <div class="global-help-player-actions">
+          <div>
+            <strong id="globalHelpVideoTitle">Cadastro de clientes - visao geral</strong>
+            <span id="globalHelpVideoDesc">Primeiros passos no cadastro de clientes.</span>
+          </div>
+          <button type="button" id="globalHelpFloat">Assistir flutuante</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="global-help-mini hidden" id="globalHelpMini">
+  <div class="global-help-mini-head">
+    <strong id="globalHelpMiniTitle">Ajuda EasyLoc</strong>
+    <div>
+      <button type="button" id="globalHelpMiniBack" title="Abrir central">□</button>
+      <button type="button" id="globalHelpMiniMinimize" title="Diminuir">-</button>
+      <button type="button" id="globalHelpMiniClose" title="Fechar">x</button>
+    </div>
+  </div>
+  <iframe
+    id="globalHelpMiniIframe"
+    src=""
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+  </iframe>
+  <span class="global-help-resize" aria-hidden="true"></span>
+</div>
+
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1292,6 +1361,7 @@
 <script src="js/empresa/empresa.sections.logistica.js"></script>
 <script src="js/empresa/empresa.sections.financeiro.js"></script>
 <script src="js/empresa/empresa.modal.js"></script>
+<script src="js/core/globalHelp.js"></script>
 
 <!-- =====================================================
    LIBS EXTRAS

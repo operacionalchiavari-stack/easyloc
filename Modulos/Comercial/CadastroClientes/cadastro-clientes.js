@@ -1,4 +1,4 @@
-function initCadastroClientes(){
+﻿function initCadastroClientes(){
   "use strict";
 
   // evita listeners duplicados
@@ -30,10 +30,10 @@ root.dataset.initialized = "true";
   }
 
   /* =====================================================
-     VALIDAÇÕES – CLIENTE
+     VALIDAÃ‡Ã•ES â€“ CLIENTE
   ===================================================== */
 
-  // remove tudo que não é número
+  // remove tudo que nÃ£o Ã© nÃºmero
   function soNumeros(v) {
     return (v || "").replace(/\D/g, "");
   }
@@ -104,79 +104,79 @@ root.dataset.initialized = "true";
     });
 
     if (!valido) {
-      mostrarAlerta("Selecione pelo menos uma opção em cada grupo de tags.");
+      mostrarAlerta("Selecione pelo menos uma opÃ§Ã£o em cada grupo de tags.");
       return false;
     }
 
     return true;
   }
 
-  /* ---------- VALIDAÇÃO COMPLETA DO CLIENTE ---------- */
+  /* ---------- VALIDAÃ‡ÃƒO COMPLETA DO CLIENTE ---------- */
   function validarClienteCompleto() {
 
     const enderecoInput = document.getElementById("endereco");
 
     if (!nome.value.trim()) {
-      mostrarAlerta("Nome / Razão Social é obrigatório");
+      mostrarAlerta("Nome / RazÃ£o Social Ã© obrigatÃ³rio");
       nome.focus();
       return false;
     }
 
     if (!cpfCnpj.value.trim()) {
-      mostrarAlerta("CPF / CNPJ é obrigatório");
+      mostrarAlerta("CPF / CNPJ Ã© obrigatÃ³rio");
       cpfCnpj.focus();
       return false;
     }
 
     if (
       tipoPessoa.value === "PF" ||
-      tipoPessoa.value === "Pessoa Física"
+      tipoPessoa.value === "Pessoa FÃ­sica"
     ) {
       if (!validarCPF(cpfCnpj.value)) {
-        mostrarAlerta("CPF inválido. Verifique os números.");
+        mostrarAlerta("CPF invÃ¡lido. Verifique os nÃºmeros.");
         cpfCnpj.focus();
         return false;
       }
     }
 
     if (!validarEmail(email.value)) {
-      mostrarAlerta("Email inválido. Verifique e tente novamente.");
+      mostrarAlerta("Email invÃ¡lido. Verifique e tente novamente.");
       email.focus();
       return false;
     }
 
     if (!validarTelefoneBR(telefone.value)) {
-      mostrarAlerta("Telefone inválido. Use DDD + número.");
+      mostrarAlerta("Telefone invÃ¡lido. Use DDD + nÃºmero.");
       telefone.focus();
       return false;
     }
 
     if (!enderecoInput || !enderecoInput.value.trim()) {
-      mostrarAlerta("Endereço é obrigatório.");
+      mostrarAlerta("EndereÃ§o Ã© obrigatÃ³rio.");
       enderecoInput?.focus();
       return false;
     }
 
     if (!numeroEndereco.value.trim()) {
-      mostrarAlerta("Número do endereço é obrigatório.");
+      mostrarAlerta("NÃºmero do endereÃ§o Ã© obrigatÃ³rio.");
       numeroEndereco.focus();
       return false;
     }
 
     if (!pontoReferencia.value.trim()) {
-      mostrarAlerta("Ponto de referência é obrigatório.");
+      mostrarAlerta("Ponto de referÃªncia Ã© obrigatÃ³rio.");
       pontoReferencia.focus();
       return false;
     }
 
     if (!statusCliente.value) {
-      mostrarAlerta("Status do cliente é obrigatório.");
+      mostrarAlerta("Status do cliente Ã© obrigatÃ³rio.");
       statusCliente.focus();
       return false;
     }
 
     if (!window.enderecoSelecionadoGoogle) {
-      mostrarAlerta("Selecione um endereço válido da lista do Google.");
+      mostrarAlerta("Selecione um endereÃ§o vÃ¡lido da lista do Google.");
       enderecoInput?.focus();
       return false;
     }
@@ -187,7 +187,7 @@ root.dataset.initialized = "true";
    SUPABASE
 ===================================================== */
 if (!window.supabaseClient) {
-  console.error("SupabaseClient não encontrado");
+  console.error("SupabaseClient nÃ£o encontrado");
   return;
 }
 
@@ -206,7 +206,7 @@ function getEmpresaAtualId() {
 let clienteAtualId = null;
 const modal = document.getElementById("modal");
 
-/* 🔒 ESTADO ÚNICO (LOCAL + GLOBAL) */
+/* ðŸ”’ ESTADO ÃšNICO (LOCAL + GLOBAL) */
 let clientesCache = [];
 window.clientesCache = clientesCache;
 
@@ -218,7 +218,7 @@ function clientes_openAdd() {
 
   modal.style.display = "flex";
 
-  // 🔓 REMOVE MODO READONLY DO MODAL
+  // ðŸ”“ REMOVE MODO READONLY DO MODAL
   modal.classList.remove("readonly");
 
   // cria input limpo
@@ -235,7 +235,7 @@ function clientes_openAdd() {
     .querySelectorAll("#modal select")
     .forEach(e => (e.disabled = false));
 
-  // 🔓 LIBERA TAGS
+  // ðŸ”“ LIBERA TAGS
   document.querySelectorAll(".tag").forEach(tag => {
     tag.classList.remove("selected");
     tag.style.pointerEvents = "auto";
@@ -253,7 +253,7 @@ function clientes_enableEdit() {
   resetEnderecoAutocomplete();
   setReadOnly(false);
 
-  // 🔒 endereço vindo do banco é válido
+  // ðŸ”’ endereÃ§o vindo do banco Ã© vÃ¡lido
   window.enderecoSelecionadoGoogle = true;
 
   setTimeout(() => {
@@ -289,7 +289,7 @@ function setReadOnly(v) {
 }
 
 /* =====================================================
-   VALIDAÇÃO
+   VALIDAÃ‡ÃƒO
 ===================================================== */
 function mostrarAlerta(msg) {
   try { document.activeElement?.blur(); } catch (e) {}
@@ -298,7 +298,7 @@ function mostrarAlerta(msg) {
   if (pac) pac.style.display = "none";
 
   if (typeof window.alerta === "function") {
-    window.alerta(msg, "Atenção", "aviso");
+    window.alerta(msg, "AtenÃ§Ã£o", "aviso");
     return;
   }
 
@@ -365,7 +365,7 @@ async function verificarDuplicidadeCliente({
     }
 
     if (data?.length) {
-      return "Já existe um cliente com este CPF cadastrado nesta empresa.";
+      return "JÃ¡ existe um cliente com este CPF cadastrado nesta empresa.";
     }
   }
 
@@ -386,7 +386,7 @@ async function verificarDuplicidadeCliente({
     }
 
     if (data?.length) {
-      return "Já existe um cliente com este nome cadastrado nesta empresa.";
+      return "JÃ¡ existe um cliente com este nome cadastrado nesta empresa.";
     }
   }
 
@@ -403,12 +403,12 @@ async function clientes_salvar() {
   try {
     const empresaId = await getEmpresaAtualId();
 
-    // 🔒 VERIFICA CPF OU NOME JÁ CADASTRADOS
+    // ðŸ”’ VERIFICA CPF OU NOME JÃ CADASTRADOS
     const existe = await verificarDuplicidadeCliente({
       cpf: soNumeros(cpfCnpj.value),
       nome: nome.value,
       empresaId,
-      clienteId: clienteAtualId // 🔥 ESSENCIAL
+      clienteId: clienteAtualId // ðŸ”¥ ESSENCIAL
     });
 
     if (existe) {
@@ -427,7 +427,7 @@ async function clientes_salvar() {
       status: statusCliente.value,
       ultima_locacao: normalizarDataUltimaLocacao(ultimaLocacao.value),
       tipo_pessoa:
-        tipoPessoa.value === "Pessoa Jurídica" ? "PJ" : "PF",
+        tipoPessoa.value === "Pessoa JurÃ­dica" ? "PJ" : "PF",
       inscricao_estadual: inscricaoEstadual.value || null,
       empresa_id: empresaId,
 
@@ -450,7 +450,7 @@ async function clientes_salvar() {
     }
 
     clientes_closeModal();
-    await carregarClientes(); // 🔒 garante reload consistente
+    await carregarClientes(); // ðŸ”’ garante reload consistente
 
   } catch (err) {
     mostrarAlerta(err.message || "Erro ao salvar cliente");
@@ -464,7 +464,7 @@ function abrirDetalhesCliente(cliente) {
   modal.style.display = "flex";
 
   // =============================
-  // ENDEREÇO (CRIA INPUT + GOOGLE)
+  // ENDEREÃ‡O (CRIA INPUT + GOOGLE)
   // =============================
   criarInputEndereco(cliente.endereco || "");
 
@@ -477,8 +477,8 @@ function abrirDetalhesCliente(cliente) {
   // =============================
   tipoPessoa.value =
     cliente.tipo_pessoa === "PJ"
-      ? "Pessoa Jurídica"
-      : "Pessoa Física";
+      ? "Pessoa JurÃ­dica"
+      : "Pessoa FÃ­sica";
 
   cpfCnpj.value = cliente.cpf_cnpj || "";
   nome.value = cliente.nome_razao || "";
@@ -521,7 +521,7 @@ function abrirDetalhesCliente(cliente) {
   }
 
   // =============================
-  // MODO VISUALIZAÇÃO
+  // MODO VISUALIZAÃ‡ÃƒO
   // =============================
   setReadOnly(true);
 
@@ -533,7 +533,7 @@ async function clientes_excluir() {
 
   const confirmou = await window.confirmarGlobal?.(
     "Deseja realmente excluir este cliente?",
-    "Confirmar exclusão",
+    "Confirmar exclusÃ£o",
     { confirmarTexto: "Excluir", tipo: "error" }
   );
 
@@ -578,7 +578,7 @@ async function carregarClientes() {
         return c;
       });
 
-      // 🔒 SINCRONIZA GLOBAL
+      // ðŸ”’ SINCRONIZA GLOBAL
       window.clientesCache = clientesCache;
 
       aplicarFiltros();
@@ -586,7 +586,7 @@ async function carregarClientes() {
   } catch {}
 }
 /* =====================================================
-   SEGURANÇA HTML (ANTI XSS)
+   SEGURANÃ‡A HTML (ANTI XSS)
 ===================================================== */
 function esc(v){
   return String(v || "")
@@ -666,7 +666,7 @@ clientes.forEach(c => {
 
     <td>${renderizarTagsComoCards(c.tags,"Estilo","tag-estilo")}</td>
     <td>${renderizarTagsComoCards(c.tags,"Canal","tag-canal")}</td>
-    <td>${renderizarTagsComoCards(c.tags,"Orçamento","tag-orcamento")}</td>
+    <td>${renderizarTagsComoCards(c.tags,"OrÃ§amento","tag-orcamento")}</td>
 
     <td>${calcularInatividade(c.ultima_locacao)}</td>
 
@@ -702,7 +702,7 @@ function aplicarFiltros() {
 
   let filtrados = [...base];
 
-  // 🔍 BUSCA
+  // ðŸ” BUSCA
   if (texto) {
     filtrados = filtrados.filter(c =>
       c.nome_razao?.toLowerCase().includes(texto) ||
@@ -711,14 +711,14 @@ function aplicarFiltros() {
     );
   }
 
-  // 🟢 STATUS
+  // ðŸŸ¢ STATUS
   if (status) {
     filtrados = filtrados.filter(
       c => calcularStatusAutomatico(c) === status
     );
   }
 
-  // ⏱️ INATIVIDADE
+  // â±ï¸ INATIVIDADE
   if (inatividade) {
     filtrados = filtrados.filter(c => {
       if (!c.ultima_locacao) return false;
@@ -734,7 +734,7 @@ function aplicarFiltros() {
     });
   }
 
-  // 🎨 ESTILO
+  // ðŸŽ¨ ESTILO
   if (estilo) {
     filtrados = filtrados.filter(c => {
       if (!c.tags || !Array.isArray(c.tags.estilo)) return false;
@@ -742,7 +742,7 @@ function aplicarFiltros() {
     });
   }
 
-  // 💰 ORÇAMENTO
+  // ðŸ’° ORÃ‡AMENTO
   if (orcamento) {
     filtrados = filtrados.filter(c =>
       Array.isArray(c.tags?.orcamento)
@@ -782,15 +782,15 @@ window.clientes_salvar = clientes_salvar;
 window.clientes_excluir = clientes_excluir;
 window.aplicarFiltros = aplicarFiltros;
 
-// inicialização
+// inicializaÃ§Ã£o
 carregarClientes();
 
 /* =====================================================
-   DESTROY DO MÓDULO CLIENTES (SPA SAFE)
+   DESTROY DO MÃ“DULO CLIENTES (SPA SAFE)
 ===================================================== */
 window.__activeModuleDestroy = function(){
 
-  console.log("🧹 destroy Cadastro Clientes");
+  console.log("ðŸ§¹ destroy Cadastro Clientes");
 
   // limpa Google Places
   resetEnderecoAutocomplete();
@@ -806,13 +806,13 @@ window.__activeModuleDestroy = function(){
 window.finalizarCarregamentoModulo?.();
 }
 
-// SPA guard: expõe init
+// SPA guard: expÃµe init
 window.__moduleInit = initCadastroClientes;
 /* =====================================================
-   GOOGLE PLACES – AUTOCOMPLETE + VALIDAÇÃO
+   GOOGLE PLACES â€“ AUTOCOMPLETE + VALIDAÃ‡ÃƒO
 ===================================================== */
 
-// 🔒 estado global (SPA safe)
+// ðŸ”’ estado global (SPA safe)
 window.enderecoAutocomplete = window.enderecoAutocomplete || null;
 window.enderecoSelecionadoGoogle = window.enderecoSelecionadoGoogle || false;
 
@@ -830,7 +830,7 @@ function initEnderecoAutocomplete() {
   const input = document.getElementById("endereco");
 
   if (!input) {
-    console.warn("Input #endereco ainda não existe");
+    console.warn("Input #endereco ainda nÃ£o existe");
     return;
   }
 
@@ -843,7 +843,7 @@ function initEnderecoAutocomplete() {
   }
 
   if (!window.google || !window.google.maps || !window.google.maps.places) {
-    console.error("Google Places não carregado");
+    console.error("Google Places nÃ£o carregado");
     return;
   }
 
@@ -867,7 +867,7 @@ function initEnderecoAutocomplete() {
     window.enderecoSelecionadoGoogle = false;
   });
 
-  console.log("✅ Google Places OK");
+  console.log("âœ… Google Places OK");
 }
 
 function calcularStatusAutomatico(cliente) {
@@ -901,7 +901,7 @@ function clientes_imprimir() {
   win.document.write(`
     <html>
       <head>
-        <title>Clientes • EasyLoc</title>
+        <title>Clientes â€¢ EasyLoc</title>
         <style>
           ${clientes_css_impressao()}
         </style>
@@ -1010,7 +1010,7 @@ document.addEventListener("keydown", function (e) {
   }
 });
 // =====================
-// IMPRESSÃO / PDF
+// IMPRESSÃƒO / PDF
 // =====================
 
 window.clientes_imprimir = function () {
@@ -1026,7 +1026,7 @@ window.clientes_imprimir = function () {
 
   const iframe = document.getElementById("printFrame");
   if (!iframe || !iframe.contentWindow) {
-    mostrarAlerta("Iframe de impressão não encontrado.");
+    mostrarAlerta("Iframe de impressÃ£o nÃ£o encontrado.");
     return;
   }
 
@@ -1036,7 +1036,7 @@ window.clientes_imprimir = function () {
   doc.write(`
     <html>
       <head>
-        <title>Clientes • EasyLoc</title>
+        <title>Clientes â€¢ EasyLoc</title>
         <style>
           ${clientes_css_impressao()}
         </style>
@@ -1052,7 +1052,7 @@ window.clientes_imprimir = function () {
               <th>CPF / CNPJ</th>
               <th>Telefone</th>
               <th>Email</th>
-              <th>Endereço</th>
+              <th>EndereÃ§o</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -1092,7 +1092,7 @@ function clientes_cabecalho_impressao() {
         >
       </div>
       <div class="meta">
-        <div><strong>Relatório de Clientes</strong></div>
+        <div><strong>RelatÃ³rio de Clientes</strong></div>
         <div>Impresso em: ${dataHora}</div>
       </div>
     </div>
@@ -1111,7 +1111,7 @@ function clientes_filtros_impressao() {
   if (searchInput?.value) filtros.push(`Busca: "${searchInput.value}"`);
   if (statusFilter?.value) filtros.push(`Status: ${statusFilter.value}`);
   if (styleFilter?.value) filtros.push(`Estilo: ${styleFilter.value}`);
-  if (budgetFilter?.value) filtros.push(`Orçamento: ${budgetFilter.value}`);
+  if (budgetFilter?.value) filtros.push(`OrÃ§amento: ${budgetFilter.value}`);
   if (inactiveFilter?.value) filtros.push(`Inatividade: ${inactiveFilter.value} dias`);
 
   if (!filtros.length) {
@@ -1121,41 +1121,12 @@ function clientes_filtros_impressao() {
   return `
     <div class="filters">
       <strong>Filtros aplicados:</strong><br>
-      ${filtros.join(" • ")}
+      ${filtros.join(" â€¢ ")}
     </div>
   `;
 }
 
-// =====================
-// MODAL AJUDA
-// =====================
-
-function abrirModalAjuda() {
-  const modal = document.getElementById("modalAjuda");
-  if (modal) modal.style.display = "flex";
-}
-
-function fecharAjuda() {
-  const modal = document.getElementById("modalAjuda");
-
-  if (modal) modal.style.display = "none";
-}
-
-
-function trocarVideo(url, el) {
-  const iframe = document.getElementById("ajudaIframe");
-  if (!iframe) return;
-
-  iframe.src = url;
-
-  document.querySelectorAll(".ajuda-video-item")
-    .forEach(item => item.classList.remove("active"));
-
-  if (el) el.classList.add("active");
-}
-
-// =====================
-// ENDEREÇO
+// ENDEREÃ‡O
 // =====================
 
 function criarInputEndereco(valor = "") {
@@ -1169,32 +1140,10 @@ function criarInputEndereco(valor = "") {
   input.className = "el-input";
   input.type = "text";
   input.placeholder =
-    "Pesquise rua, salão, chácara, buffet, ponto conhecido...";
+    "Pesquise rua, salÃ£o, chÃ¡cara, buffet, ponto conhecido...";
   input.value = valor || "";
   input.autocomplete = "off";
 
   wrapper.appendChild(input);
 }
 
-// =====================
-// MINI PLAYER
-// =====================
-
-function abrirMiniPlayer() {
-  const iframeAjuda = document.getElementById("ajudaIframe");
-  const miniPlayer = document.getElementById("miniPlayer");
-  const miniIframe = document.getElementById("miniPlayerIframe");
-
-  if (!iframeAjuda || !miniIframe || !miniPlayer) return;
-
-  miniIframe.src = iframeAjuda.src;
-  miniPlayer.style.display = "block";
-}
-
-function fecharMiniPlayer() {
-  const miniPlayer = document.getElementById("miniPlayer");
-  const miniIframe = document.getElementById("miniPlayerIframe");
-
-  if (miniIframe) miniIframe.src = "";
-  if (miniPlayer) miniPlayer.style.display = "none";
-}

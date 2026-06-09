@@ -211,7 +211,7 @@ function criarModalPerfil(){
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
   overlay.style.inset = "0";
-  overlay.style.background = "rgba(15,23,42,.55)";
+  overlay.style.background = "rgba(15,23,42,.42)";
   overlay.style.backdropFilter = "blur(6px)";
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";
@@ -414,7 +414,7 @@ async function ativarAusencia(){
   overlay.id = "absence-lock";
   overlay.style.position = "fixed";
   overlay.style.inset = "0";
-  overlay.style.background = "rgba(15,23,42,.85)";
+  overlay.style.background = "rgba(15,23,42,.42)";
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";
   overlay.style.justifyContent = "center";

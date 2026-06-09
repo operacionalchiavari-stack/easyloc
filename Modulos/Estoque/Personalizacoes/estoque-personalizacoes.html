@@ -5,15 +5,14 @@
 <div class="page-wrap personalizacoes-page el-page" data-module-root>
 
   <!-- TOP BAR -->
-  <div class="page-top el-page">
-    <div class="page-title el-page">
+  <div class="page-top">
+    <div class="page-title">
       <h1>Personalizações Cadastradas</h1>
     </div>
 
-    <div class="page-actions el-page">
+    <div class="page-actions">
       <button type="button" class="btn secondary" id="btnPrint">Imprimir / PDF</button>
       <button type="button" class="btn primary" id="btnAddPersonalizacao">+ Adicionar Personalização</button>
-      <button type="button" class="btn btn-icon" id="btnHelp" title="Ajuda">?</button>
     </div>
   </div>
 
@@ -65,14 +64,14 @@
 
   <!-- MODAL ROOT -->
   <div class="modal-overlay hidden el-modal" id="modalOverlay">
-    <div class="modal-card el-modal__box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
 
       <!-- HEADER -->
 <div class="modal-header">
 
   <div class="modal-header-left">
     <h3 id="modalTitle">Adicionar Personalização</h3>
-    <div class="modal-sub el-modal">
+    <div class="modal-sub">
       Vincule a um item ou componente e defina parâmetros de produção para gerar o preço automaticamente.
     </div>
   </div>
@@ -93,6 +92,8 @@
       </button>
     </div>
 
+    <button type="button" class="modal-close" id="btnCloseModal" aria-label="Fechar modal">X</button>
+
   </div>
 
 </div>
@@ -101,7 +102,7 @@
       <div class="modal-body">
 
         <!-- GRID 2 COL -->
-        <div class="modal-grid el-modal">
+        <div class="modal-grid">
 
           <!-- COL 1 (FORM) -->
           <div class="form-col">

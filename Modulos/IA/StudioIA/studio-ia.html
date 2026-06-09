@@ -1,0 +1,170 @@
+<div class="studio-page el-page" data-module-root>
+  <header class="studio-topbar">
+    <div>
+      <span>EasyLoc Studio IA</span>
+      <h1>Montagem visual de ambientes</h1>
+    </div>
+    <div class="studio-project-actions">
+      <input class="el-input" id="studioProjectName" placeholder="Nome do projeto">
+      <button type="button" class="btn btn-secondary" id="studioNewProject">Novo</button>
+      <button type="button" class="btn btn-secondary" id="studioSaveProject">Salvar</button>
+      <button type="button" class="btn btn-primary" id="studioGenerate">Gerar imagem realista</button>
+    </div>
+  </header>
+
+  <section class="studio-shell">
+    <aside class="studio-panel studio-left">
+      <div class="studio-panel-head">
+        <strong>Cena</strong>
+        <span id="studioAutosaveStatus">Autosave pronto</span>
+      </div>
+
+      <label class="studio-field">
+        <span>Tipo de imagem</span>
+        <select class="el-select" id="studioTipoImagem">
+          <option>Evento</option>
+          <option>Catálogo</option>
+          <option>Studio Fundo Branco</option>
+          <option>Ambiente Interno</option>
+          <option>Ambiente Externo</option>
+          <option>Publicitária</option>
+        </select>
+      </label>
+
+      <div class="studio-field">
+        <span>Período</span>
+        <div class="studio-segmented" data-group="periodo">
+          <button type="button" class="active" data-value="Dia">Dia</button>
+          <button type="button" data-value="Noite">Noite</button>
+        </div>
+      </div>
+
+      <div class="studio-field">
+        <span>Convidados</span>
+        <div class="studio-segmented studio-segmented-stack" data-group="convidados">
+          <button type="button" class="active" data-value="Sem convidados">Sem convidados</button>
+          <button type="button" data-value="Poucos convidados">Poucos convidados</button>
+          <button type="button" data-value="Evento cheio">Evento cheio</button>
+        </div>
+      </div>
+
+      <label class="studio-field">
+        <span>Estilo</span>
+        <select class="el-select" id="studioEstilo">
+          <option>Casamento Clássico</option>
+          <option>Casamento Moderno</option>
+          <option>Boho</option>
+          <option>Luxo</option>
+          <option>Minimalista</option>
+          <option>Corporativo</option>
+          <option>Rústico</option>
+          <option>Praia</option>
+          <option>Jardim</option>
+        </select>
+      </label>
+
+      <label class="studio-field">
+        <span>Iluminação</span>
+        <select class="el-select" id="studioIluminacao">
+          <option>Natural</option>
+          <option>Profissional</option>
+          <option>Luz quente</option>
+          <option>Luz fria</option>
+        </select>
+      </label>
+
+      <div class="studio-field">
+        <span>Plano de fundo</span>
+        <div class="studio-upload-row">
+          <button type="button" class="btn btn-secondary" id="studioSelectBackground">Selecionar imagem</button>
+          <input type="file" id="studioBackgroundInput" accept="image/*" hidden>
+        </div>
+        <div class="studio-bg-library">
+          <button type="button" data-bg="white">Branco</button>
+          <button type="button" data-bg="garden">Jardim</button>
+          <button type="button" data-bg="salon">Salão</button>
+        </div>
+        <div class="studio-bg-preview" id="studioBgPreview">Sem fundo</div>
+      </div>
+
+      <div class="studio-field studio-grid-config">
+        <div class="studio-switch-row">
+          <span>Mostrar grade</span>
+          <label class="studio-switch">
+            <input type="checkbox" id="studioShowGrid" checked>
+            <i></i>
+          </label>
+        </div>
+        <select class="el-select" id="studioGridSize">
+          <option value="25">25 cm</option>
+          <option value="50" selected>50 cm</option>
+          <option value="100">100 cm</option>
+        </select>
+      </div>
+
+      <div class="studio-panel-head compact">
+        <strong>Projetos</strong>
+      </div>
+      <div class="studio-project-list" id="studioProjectList"></div>
+    </aside>
+
+    <main class="studio-stage-wrap">
+      <div class="studio-toolbar">
+        <button type="button" title="Duplicar" id="studioDuplicate">Duplicar</button>
+        <button type="button" title="Inverter horizontalmente" id="studioFlip">Inverter</button>
+        <button type="button" title="Cortar foto selecionada" id="studioCrop">Cortar</button>
+        <button type="button" title="Bloquear" id="studioLock">Bloquear</button>
+        <button type="button" title="Excluir" id="studioDelete">Excluir</button>
+        <button type="button" title="Trazer para frente" id="studioBringFront">Frente</button>
+        <button type="button" title="Enviar para trás" id="studioSendBack">Trás</button>
+        <button type="button" title="Zoom -" id="studioZoomOut">-</button>
+        <button type="button" title="Zoom +" id="studioZoomIn">+</button>
+        <button type="button" title="Centralizar" id="studioResetView">Centralizar</button>
+      </div>
+
+      <div class="studio-canvas-frame" id="studioCanvasFrame">
+        <div class="studio-grid-overlay" id="studioGridOverlay"></div>
+        <canvas id="studioCanvas" width="1280" height="760"></canvas>
+      </div>
+
+      <section class="studio-renders">
+        <div class="studio-renders-head">
+          <div>
+            <span>Studio AI Engine</span>
+            <strong>Versões geradas</strong>
+          </div>
+          <button type="button" class="btn btn-secondary" id="studioRegenerate">Gerar novamente</button>
+        </div>
+        <div class="studio-render-grid" id="studioRenderGrid">
+          <div class="studio-empty-render">As versões geradas aparecerão aqui.</div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="studio-panel studio-right">
+      <div class="studio-panel-head">
+        <strong>Catálogo</strong>
+        <span id="studioCatalogStatus">Carregando...</span>
+      </div>
+
+      <input class="el-input" id="studioSearchItem" placeholder="Buscar item">
+
+      <div class="studio-filter-list" id="studioCategoryFilters">
+        <button type="button" class="active" data-category="">Todos</button>
+        <button type="button" data-category="Cadeiras">Cadeiras</button>
+        <button type="button" data-category="Mesas">Mesas</button>
+        <button type="button" data-category="Sofás">Sofás</button>
+        <button type="button" data-category="Aparadores">Aparadores</button>
+        <button type="button" data-category="Bares">Bares</button>
+        <button type="button" data-category="Decoração">Decoração</button>
+      </div>
+
+      <div class="studio-catalog" id="studioCatalog"></div>
+
+      <div class="studio-panel-head compact">
+        <strong>Camadas</strong>
+      </div>
+      <div class="studio-layers" id="studioLayers"></div>
+    </aside>
+  </section>
+</div>
