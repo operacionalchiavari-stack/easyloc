@@ -21,6 +21,11 @@ export function renderMontagemSugerida(payload){
     descontoEl.innerText   = "- R$ 0,00";
     descontoEl.style.color = "#16a34a";
     valorFinalEl.innerText = "R$ 0,00";
+    if(typeof window.__ATUALIZAR_FRETE_CARD === "function"){
+      window.__ATUALIZAR_FRETE_CARD();
+    }else{
+      window.atualizarResumoGlobal?.();
+    }
     return;
   }
 
@@ -61,4 +66,10 @@ valorFinalEl.innerText = final.toLocaleString("pt-BR",{
 valorFinalEl.style.fontSize = "15px";
 valorFinalEl.style.fontWeight = "700";
 valorFinalEl.style.color = "#0f2a44";
+
+if(typeof window.__ATUALIZAR_FRETE_CARD === "function"){
+  window.__ATUALIZAR_FRETE_CARD();
+}else{
+  window.atualizarResumoGlobal?.();
+}
 }

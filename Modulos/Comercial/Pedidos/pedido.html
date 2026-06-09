@@ -35,16 +35,21 @@
         <div class="meta-item">
           <span>Cliente</span>
           <div class="autocomplete-wrapper">
-            <input class="meta-input el-input" type="text" id="clienteInput" value="Joao Silva" placeholder="Cliente" autocomplete="off">
+            <input class="meta-input el-input" type="text" id="clienteInput" placeholder="Cliente" autocomplete="off">
             <input type="hidden" id="clienteIdHidden">
             <div class="autocomplete-list" id="clienteLista"></div>
           </div>
         </div>
 
         <div class="meta-item">
+          <span>Contato</span>
+          <input class="meta-input el-input" type="tel" id="telefoneInput" placeholder="Telefone / WhatsApp" autocomplete="off">
+        </div>
+
+        <div class="meta-item">
           <span>Evento</span>
           <select class="meta-input el-select" id="tipoEventoSelect">
-            <option value="">Vale dos Desejos</option>
+            <option value="">Selecione</option>
             <option value="casamento">Casamento</option>
             <option value="aniversario">Aniversario</option>
             <option value="15anos">15 Anos</option>
@@ -63,7 +68,7 @@
 
         <div class="meta-item">
           <span>Data evento</span>
-          <input class="meta-input el-input" type="date" id="dataEvento" value="2026-08-15">
+          <input class="meta-input el-input" type="date" id="dataEvento">
           <div class="dia-semana sr-only" id="diaEvento">-</div>
           <input class="sr-only" type="time" id="horaEvento">
         </div>
@@ -80,7 +85,7 @@
         <div class="location-field">
           <span>Local do evento</span>
           <div class="autocomplete-wrapper">
-            <input class="location-input el-input" type="text" id="localInput" value="Vale dos Desejos" placeholder="Local" autocomplete="off">
+            <input class="location-input el-input" type="text" id="localInput" placeholder="Local" autocomplete="off">
             <input type="hidden" id="localIdHidden">
             <div class="autocomplete-list" id="localLista"></div>
           </div>
@@ -88,10 +93,7 @@
 
         <div class="location-address">
           <div class="location-address-label">Endereco do evento</div>
-          <div class="obs-local" id="localObservacoes">
-            <div><strong>Endereco:</strong> Estr. do Passatempo - Alberto Torres, Areal - RJ</div>
-            <div><strong>Referencia:</strong> Entrada principal</div>
-          </div>
+          <div class="obs-local" id="localObservacoes"></div>
         </div>
 
         <div class="local-indicadores">
@@ -101,7 +103,6 @@
 
       <div class="pedido-hidden-fields">
         <input class="el-input" type="text" id="responsavelInput">
-        <input class="el-input" type="text" id="telefoneInput">
         <input class="el-input" type="text" id="comercialResponsavelInput" value="Rafael Almeida">
         <strong id="pedidoDataCriacao">01/06/2026 as 10:30</strong>
       </div>
@@ -272,21 +273,22 @@
 
         <section class="finance-card logistica-card" id="cardLogisticaPedido">
           <h2>Logistica</h2>
-          <div class="logistica-grid">
-            <div><span>Caminhoes</span><strong id="freteQtdCaminhoes">0</strong></div>
-            <div><span>Valor do caminhao</span><strong id="freteValor">R$ 0,00</strong></div>
-            <div><span>Desconto do caminhao</span><strong id="logisticaDescontoCaminhao">R$ 0,00</strong></div>
+          <div class="logistica-grid sr-only">
             <div><span>Qtd ajudantes</span><strong id="montagemQtd">-</strong></div>
             <div><span>Valor ajudantes</span><strong id="montagemCusto">-</strong></div>
             <div><span>Desconto ajudantes</span><strong id="montagemDesconto">- R$ 0,00</strong></div>
           </div>
+          <strong class="sr-only" id="freteQtdCaminhoes">0</strong>
+          <strong class="sr-only" id="freteValor">R$ 0,00</strong>
+          <strong class="sr-only" id="logisticaDescontoCaminhao">R$ 0,00</strong>
+          <div id="freteDetalheCaminhoes" class="frete-detalhe-container"></div>
           <div class="logistica-extra">
             <div><span>Volume</span><strong id="freteVolumeTotal">0 m3</strong></div>
             <div><span>Distancia</span><strong id="freteDistanciaKm">0 km</strong></div>
-            <div><span>Total montagem</span><strong id="montagemValorFinal">R$ 0,00</strong></div>
+            <div><span>Montagem + frete</span><strong id="logisticaTotalOperacao">R$ 0,00</strong></div>
           </div>
           <div class="montagem-info sr-only" id="montagemInfo">-</div>
-          <div id="freteDetalheCaminhoes" class="frete-detalhe-container el-page"></div>
+          <strong class="sr-only" id="montagemValorFinal">R$ 0,00</strong>
         </section>
       </aside>
     </div>

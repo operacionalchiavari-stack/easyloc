@@ -3299,7 +3299,7 @@ tr:first-child {
 ===================================================== */
 
 .pedido-screen .pedido-meta-strip {
-  grid-template-columns: 1.15fr 1fr .9fr .9fr .9fr;
+  grid-template-columns: 1.15fr .92fr 1fr .9fr .9fr .9fr;
   gap: 12px;
   margin-top: 14px;
 }
@@ -3670,6 +3670,10 @@ tr:first-child {
   font-size: 16px;
 }
 
+.pedido-screen .finance-card.logistica-card {
+  overflow: visible;
+}
+
 .pedido-screen .logistica-grid,
 .pedido-screen .logistica-extra {
   display: grid;
@@ -3683,6 +3687,7 @@ tr:first-child {
 
 .pedido-screen .logistica-extra {
   padding-top: 0;
+  padding-bottom: 14px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -3720,9 +3725,67 @@ tr:first-child {
 }
 
 .pedido-screen .logistica-card .frete-detalhe-container {
-  margin: 0 16px 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--el-color-border);
+  display: grid;
+  gap: 8px;
+  min-height: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 16px 12px;
+  padding: 0 0 12px;
+  border-top: 0;
+  border-bottom: 1px solid var(--el-color-border);
+  background: transparent !important;
+}
+
+.pedido-screen .logistica-detail-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+  margin-bottom: 0;
+  color: #33496c;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.pedido-screen .logistica-detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.pedido-screen .logistica-detail-row span {
+  display: block;
+  min-width: 0;
+  color: var(--el-color-muted);
+  font-weight: 800;
+}
+
+.pedido-screen .logistica-detail-row strong {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--el-color-primary);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.pedido-screen .logistica-detail-row.is-discount strong {
+  color: var(--el-color-success);
+}
+
+.pedido-screen .logistica-detail-row.is-total {
+  margin-top: 2px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.pedido-screen .logistica-detail-row.is-total strong {
+  font-size: 13px;
 }
 
 @media (max-width: 1200px) {

@@ -339,6 +339,106 @@
     return () => resizeObserver?.disconnect?.();
   }
 
+  function salvarBotaoLayout(){
+    if(!els.button) return;
+    const rect = els.button.getBoundingClientRect();
+    try{
+      localStorage.setItem("easyloc:global-help-button-layout", JSON.stringify({
+        left: rect.left,
+        top: rect.top
+      }));
+    }catch{}
+  }
+
+  function aplicarBotaoLayout(layout){
+    if(!els.button || !layout) return;
+    const rect = els.button.getBoundingClientRect();
+    const width = rect.width || 54;
+    const height = rect.height || 54;
+    const left = clamp(Number(layout.left ?? window.innerWidth - width - 22), 8, window.innerWidth - width - 8);
+    const top = clamp(Number(layout.top ?? window.innerHeight - height - 22), 8, window.innerHeight - height - 8);
+
+    els.button.style.left = `${left}px`;
+    els.button.style.top = `${top}px`;
+    els.button.style.right = "auto";
+    els.button.style.bottom = "auto";
+  }
+
+  function restaurarBotaoLayout(){
+    let layout = null;
+    try{
+      layout = JSON.parse(localStorage.getItem("easyloc:global-help-button-layout") || "null");
+    }catch{}
+    aplicarBotaoLayout(layout || {
+      left: window.innerWidth - 76,
+      top: window.innerHeight - 76
+    });
+  }
+
+  function bindBotaoAjudaLivre(){
+    if(!els.button) return;
+
+    let dragging = null;
+    let moved = false;
+
+    restaurarBotaoLayout();
+
+    els.button.addEventListener("pointerdown", (event) => {
+      const rect = els.button.getBoundingClientRect();
+      dragging = {
+        x: event.clientX,
+        y: event.clientY,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height
+      };
+      moved = false;
+      els.button.setPointerCapture?.(event.pointerId);
+    });
+
+    els.button.addEventListener("pointermove", (event) => {
+      if(!dragging) return;
+      const dx = event.clientX - dragging.x;
+      const dy = event.clientY - dragging.y;
+      if(Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+
+      const left = clamp(dragging.left + dx, 8, window.innerWidth - dragging.width - 8);
+      const top = clamp(dragging.top + dy, 8, window.innerHeight - dragging.height - 8);
+
+      els.button.style.left = `${left}px`;
+      els.button.style.top = `${top}px`;
+      els.button.style.right = "auto";
+      els.button.style.bottom = "auto";
+    });
+
+    els.button.addEventListener("pointerup", (event) => {
+      if(!dragging) return;
+      dragging = null;
+      els.button.releasePointerCapture?.(event.pointerId);
+      salvarBotaoLayout();
+
+      if(moved){
+        event.preventDefault();
+        event.stopPropagation();
+        setTimeout(() => { moved = false; }, 0);
+      }
+    });
+
+    els.button.addEventListener("click", (event) => {
+      if(moved){
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+
+    window.addEventListener("resize", () => {
+      const rect = els.button.getBoundingClientRect();
+      aplicarBotaoLayout({ left: rect.left, top: rect.top });
+      salvarBotaoLayout();
+    });
+  }
+
   function bindEvents(){
     els.button?.addEventListener("click", abrirAjuda);
     els.close?.addEventListener("click", fecharAjuda);
@@ -362,6 +462,7 @@
     els.miniMinimize?.addEventListener("click", toggleMiniPlayerMinimizado);
     els.miniClose?.addEventListener("click", fecharMiniPlayer);
     bindMiniPlayerLivre();
+    bindBotaoAjudaLivre();
 
     document.addEventListener("keydown", (event) => {
       if(event.key === "Escape") fecharAjuda();

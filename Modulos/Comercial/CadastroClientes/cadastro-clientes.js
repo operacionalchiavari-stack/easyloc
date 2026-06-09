@@ -30,10 +30,10 @@ root.dataset.initialized = "true";
   }
 
   /* =====================================================
-     VALIDAÃ‡Ã•ES â€“ CLIENTE
+     VALIDAÇÕES - CLIENTE
   ===================================================== */
 
-  // remove tudo que nÃ£o Ã© nÃºmero
+  // remove tudo que não é número
   function soNumeros(v) {
     return (v || "").replace(/\D/g, "");
   }
@@ -104,79 +104,79 @@ root.dataset.initialized = "true";
     });
 
     if (!valido) {
-      mostrarAlerta("Selecione pelo menos uma opÃ§Ã£o em cada grupo de tags.");
+      mostrarAlerta("Selecione pelo menos uma opção em cada grupo de tags.");
       return false;
     }
 
     return true;
   }
 
-  /* ---------- VALIDAÃ‡ÃƒO COMPLETA DO CLIENTE ---------- */
+  /* ---------- VALIDAÇÃO COMPLETA DO CLIENTE ---------- */
   function validarClienteCompleto() {
 
     const enderecoInput = document.getElementById("endereco");
 
     if (!nome.value.trim()) {
-      mostrarAlerta("Nome / RazÃ£o Social Ã© obrigatÃ³rio");
+      mostrarAlerta("Nome / Razão Social é obrigatório");
       nome.focus();
       return false;
     }
 
     if (!cpfCnpj.value.trim()) {
-      mostrarAlerta("CPF / CNPJ Ã© obrigatÃ³rio");
+      mostrarAlerta("CPF / CNPJ é obrigatório");
       cpfCnpj.focus();
       return false;
     }
 
     if (
       tipoPessoa.value === "PF" ||
-      tipoPessoa.value === "Pessoa FÃ­sica"
+      tipoPessoa.value === "Pessoa Física"
     ) {
       if (!validarCPF(cpfCnpj.value)) {
-        mostrarAlerta("CPF invÃ¡lido. Verifique os nÃºmeros.");
+        mostrarAlerta("CPF inválido. Verifique os números.");
         cpfCnpj.focus();
         return false;
       }
     }
 
     if (!validarEmail(email.value)) {
-      mostrarAlerta("Email invÃ¡lido. Verifique e tente novamente.");
+      mostrarAlerta("Email inválido. Verifique e tente novamente.");
       email.focus();
       return false;
     }
 
     if (!validarTelefoneBR(telefone.value)) {
-      mostrarAlerta("Telefone invÃ¡lido. Use DDD + nÃºmero.");
+      mostrarAlerta("Telefone inválido. Use DDD + número.");
       telefone.focus();
       return false;
     }
 
     if (!enderecoInput || !enderecoInput.value.trim()) {
-      mostrarAlerta("EndereÃ§o Ã© obrigatÃ³rio.");
+      mostrarAlerta("Endereço é obrigatório.");
       enderecoInput?.focus();
       return false;
     }
 
     if (!numeroEndereco.value.trim()) {
-      mostrarAlerta("NÃºmero do endereÃ§o Ã© obrigatÃ³rio.");
+      mostrarAlerta("Número do endereço é obrigatório.");
       numeroEndereco.focus();
       return false;
     }
 
     if (!pontoReferencia.value.trim()) {
-      mostrarAlerta("Ponto de referÃªncia Ã© obrigatÃ³rio.");
+      mostrarAlerta("Ponto de referência é obrigatório.");
       pontoReferencia.focus();
       return false;
     }
 
     if (!statusCliente.value) {
-      mostrarAlerta("Status do cliente Ã© obrigatÃ³rio.");
+      mostrarAlerta("Status do cliente é obrigatório.");
       statusCliente.focus();
       return false;
     }
 
     if (!window.enderecoSelecionadoGoogle) {
-      mostrarAlerta("Selecione um endereÃ§o vÃ¡lido da lista do Google.");
+      mostrarAlerta("Selecione um endereço válido da lista do Google.");
       enderecoInput?.focus();
       return false;
     }
@@ -187,7 +187,7 @@ root.dataset.initialized = "true";
    SUPABASE
 ===================================================== */
 if (!window.supabaseClient) {
-  console.error("SupabaseClient nÃ£o encontrado");
+  console.error("SupabaseClient não encontrado");
   return;
 }
 
@@ -206,7 +206,7 @@ function getEmpresaAtualId() {
 let clienteAtualId = null;
 const modal = document.getElementById("modal");
 
-/* ðŸ”’ ESTADO ÃšNICO (LOCAL + GLOBAL) */
+/* ESTADO ÚNICO (LOCAL + GLOBAL) */
 let clientesCache = [];
 window.clientesCache = clientesCache;
 
@@ -218,7 +218,7 @@ function clientes_openAdd() {
 
   modal.style.display = "flex";
 
-  // ðŸ”“ REMOVE MODO READONLY DO MODAL
+  // REMOVE MODO READONLY DO MODAL
   modal.classList.remove("readonly");
 
   // cria input limpo
@@ -235,7 +235,7 @@ function clientes_openAdd() {
     .querySelectorAll("#modal select")
     .forEach(e => (e.disabled = false));
 
-  // ðŸ”“ LIBERA TAGS
+  // LIBERA TAGS
   document.querySelectorAll(".tag").forEach(tag => {
     tag.classList.remove("selected");
     tag.style.pointerEvents = "auto";
@@ -253,7 +253,7 @@ function clientes_enableEdit() {
   resetEnderecoAutocomplete();
   setReadOnly(false);
 
-  // ðŸ”’ endereÃ§o vindo do banco Ã© vÃ¡lido
+  // endereço vindo do banco é válido
   window.enderecoSelecionadoGoogle = true;
 
   setTimeout(() => {
@@ -277,19 +277,19 @@ function setReadOnly(v) {
     .forEach(e => (e.disabled = v));
 
   document.querySelectorAll(".tag").forEach(tag => {
-    tag.style.pointerEvents = v ? "none" : "auto";
-    tag.style.opacity = v ? 0.6 : 1;
+    tag.style.pointerEvents = v ?"none" : "auto";
+    tag.style.opacity = v ?0.6 : 1;
   });
 
   document.querySelector(".btn-save").style.display =
-    v ? "none" : "inline-block";
+    v ?"none" : "inline-block";
 
   document.querySelector(".btn-delete").style.display =
-    v ? "inline-block" : "none";
+    v ?"inline-block" : "none";
 }
 
 /* =====================================================
-   VALIDAÃ‡ÃƒO
+   VALIDAÇÃO
 ===================================================== */
 function mostrarAlerta(msg) {
   try { document.activeElement?.blur(); } catch (e) {}
@@ -298,7 +298,7 @@ function mostrarAlerta(msg) {
   if (pac) pac.style.display = "none";
 
   if (typeof window.alerta === "function") {
-    window.alerta(msg, "AtenÃ§Ã£o", "aviso");
+    window.alerta(msg, "Atenção", "aviso");
     return;
   }
 
@@ -365,7 +365,7 @@ async function verificarDuplicidadeCliente({
     }
 
     if (data?.length) {
-      return "JÃ¡ existe um cliente com este CPF cadastrado nesta empresa.";
+      return "Já existe um cliente com este CPF cadastrado nesta empresa.";
     }
   }
 
@@ -386,7 +386,7 @@ async function verificarDuplicidadeCliente({
     }
 
     if (data?.length) {
-      return "JÃ¡ existe um cliente com este nome cadastrado nesta empresa.";
+      return "Já existe um cliente com este nome cadastrado nesta empresa.";
     }
   }
 
@@ -403,12 +403,12 @@ async function clientes_salvar() {
   try {
     const empresaId = await getEmpresaAtualId();
 
-    // ðŸ”’ VERIFICA CPF OU NOME JÃ CADASTRADOS
+    // VERIFICA CPF OU NOME JÁ CADASTRADOS
     const existe = await verificarDuplicidadeCliente({
       cpf: soNumeros(cpfCnpj.value),
       nome: nome.value,
       empresaId,
-      clienteId: clienteAtualId // ðŸ”¥ ESSENCIAL
+      clienteId: clienteAtualId // ESSENCIAL
     });
 
     if (existe) {
@@ -423,11 +423,11 @@ async function clientes_salvar() {
       email: email.value,
       endereco: endereco.value,
       numero_endereco: numeroEndereco.value,
-      ponto_referencia: pontoReferencia.value,
+      ponto_referência: pontoReferencia.value,
       status: statusCliente.value,
       ultima_locacao: normalizarDataUltimaLocacao(ultimaLocacao.value),
       tipo_pessoa:
-        tipoPessoa.value === "Pessoa JurÃ­dica" ? "PJ" : "PF",
+        tipoPessoa.value === "Pessoa Jurídica" ?"PJ" : "PF",
       inscricao_estadual: inscricaoEstadual.value || null,
       empresa_id: empresaId,
 
@@ -450,7 +450,7 @@ async function clientes_salvar() {
     }
 
     clientes_closeModal();
-    await carregarClientes(); // ðŸ”’ garante reload consistente
+    await carregarClientes(); // garante reload consistente
 
   } catch (err) {
     mostrarAlerta(err.message || "Erro ao salvar cliente");
@@ -464,7 +464,7 @@ function abrirDetalhesCliente(cliente) {
   modal.style.display = "flex";
 
   // =============================
-  // ENDEREÃ‡O (CRIA INPUT + GOOGLE)
+  // ENDEREÇO (CRIA INPUT + GOOGLE)
   // =============================
   criarInputEndereco(cliente.endereco || "");
 
@@ -477,8 +477,8 @@ function abrirDetalhesCliente(cliente) {
   // =============================
   tipoPessoa.value =
     cliente.tipo_pessoa === "PJ"
-      ? "Pessoa JurÃ­dica"
-      : "Pessoa FÃ­sica";
+      ?"Pessoa Jurídica"
+      : "Pessoa Física";
 
   cpfCnpj.value = cliente.cpf_cnpj || "";
   nome.value = cliente.nome_razao || "";
@@ -487,7 +487,7 @@ function abrirDetalhesCliente(cliente) {
 
   inscricaoEstadual.value = cliente.inscricao_estadual || "";
   numeroEndereco.value = cliente.numero_endereco || "";
-  pontoReferencia.value = cliente.ponto_referencia || "";
+  pontoReferencia.value = cliente.ponto_referência || "";
   ultimaLocacao.value = cliente.ultima_locacao || "";
   statusCliente.value = cliente.status || "";
 
@@ -507,7 +507,7 @@ function abrirDetalhesCliente(cliente) {
       if (!valor) return;
 
       const valores = Array.isArray(valor)
-        ? valor
+        ?valor
         : [valor];
 
       valores.forEach(v => {
@@ -521,7 +521,7 @@ function abrirDetalhesCliente(cliente) {
   }
 
   // =============================
-  // MODO VISUALIZAÃ‡ÃƒO
+  // MODO VISUALIZAÇÃO
   // =============================
   setReadOnly(true);
 
@@ -533,7 +533,7 @@ async function clientes_excluir() {
 
   const confirmou = await window.confirmarGlobal?.(
     "Deseja realmente excluir este cliente?",
-    "Confirmar exclusÃ£o",
+    "Confirmar exclusão",
     { confirmarTexto: "Excluir", tipo: "error" }
   );
 
@@ -578,7 +578,7 @@ async function carregarClientes() {
         return c;
       });
 
-      // ðŸ”’ SINCRONIZA GLOBAL
+      // SINCRONIZA GLOBAL
       window.clientesCache = clientesCache;
 
       aplicarFiltros();
@@ -586,7 +586,7 @@ async function carregarClientes() {
   } catch {}
 }
 /* =====================================================
-   SEGURANÃ‡A HTML (ANTI XSS)
+   SEGURANÇA HTML (ANTI XSS)
 ===================================================== */
 function esc(v){
   return String(v || "")
@@ -617,7 +617,7 @@ function extrairTag(tags, nomeGrupo) {
 
   const valor = tags[chave];
 
-  return Array.isArray(valor) ? valor.join(", ") : valor;
+  return Array.isArray(valor) ?valor.join(", ") : valor;
 }
 
 function renderizarTagsComoCards(tags, grupo, classe) {
@@ -633,7 +633,7 @@ function renderizarTagsComoCards(tags, grupo, classe) {
   if (!chave) return "-";
 
   const valores = Array.isArray(tags[chave])
-    ? tags[chave]
+    ?tags[chave]
     : [tags[chave]];
 
   return `
@@ -666,7 +666,7 @@ clientes.forEach(c => {
 
     <td>${renderizarTagsComoCards(c.tags,"Estilo","tag-estilo")}</td>
     <td>${renderizarTagsComoCards(c.tags,"Canal","tag-canal")}</td>
-    <td>${renderizarTagsComoCards(c.tags,"OrÃ§amento","tag-orcamento")}</td>
+    <td>${renderizarTagsComoCards(c.tags,"Orçamento","tag-orcamento")}</td>
 
     <td>${calcularInatividade(c.ultima_locacao)}</td>
 
@@ -702,7 +702,7 @@ function aplicarFiltros() {
 
   let filtrados = [...base];
 
-  // ðŸ” BUSCA
+  // BUSCA
   if (texto) {
     filtrados = filtrados.filter(c =>
       c.nome_razao?.toLowerCase().includes(texto) ||
@@ -711,14 +711,14 @@ function aplicarFiltros() {
     );
   }
 
-  // ðŸŸ¢ STATUS
+  // STATUS
   if (status) {
     filtrados = filtrados.filter(
       c => calcularStatusAutomatico(c) === status
     );
   }
 
-  // â±ï¸ INATIVIDADE
+  //  INATIVIDADE
   if (inatividade) {
     filtrados = filtrados.filter(c => {
       if (!c.ultima_locacao) return false;
@@ -734,7 +734,7 @@ function aplicarFiltros() {
     });
   }
 
-  // ðŸŽ¨ ESTILO
+  // ESTILO
   if (estilo) {
     filtrados = filtrados.filter(c => {
       if (!c.tags || !Array.isArray(c.tags.estilo)) return false;
@@ -742,11 +742,11 @@ function aplicarFiltros() {
     });
   }
 
-  // ðŸ’° ORÃ‡AMENTO
+  // ORÇAMENTO
   if (orcamento) {
     filtrados = filtrados.filter(c =>
       Array.isArray(c.tags?.orcamento)
-        ? c.tags.orcamento.includes(orcamento)
+        ?c.tags.orcamento.includes(orcamento)
         : false
     );
   }
@@ -782,15 +782,15 @@ window.clientes_salvar = clientes_salvar;
 window.clientes_excluir = clientes_excluir;
 window.aplicarFiltros = aplicarFiltros;
 
-// inicializaÃ§Ã£o
+// inicialização
 carregarClientes();
 
 /* =====================================================
-   DESTROY DO MÃ“DULO CLIENTES (SPA SAFE)
+   DESTROY DO MÓDULO CLIENTES (SPA SAFE)
 ===================================================== */
 window.__activeModuleDestroy = function(){
 
-  console.log("ðŸ§¹ destroy Cadastro Clientes");
+  console.log("destroy Cadastro Clientes");
 
   // limpa Google Places
   resetEnderecoAutocomplete();
@@ -806,13 +806,13 @@ window.__activeModuleDestroy = function(){
 window.finalizarCarregamentoModulo?.();
 }
 
-// SPA guard: expÃµe init
+// SPA guard: expõe init
 window.__moduleInit = initCadastroClientes;
 /* =====================================================
-   GOOGLE PLACES â€“ AUTOCOMPLETE + VALIDAÃ‡ÃƒO
+   GOOGLE PLACES - AUTOCOMPLETE + VALIDAÇÃO
 ===================================================== */
 
-// ðŸ”’ estado global (SPA safe)
+// estado global (SPA safe)
 window.enderecoAutocomplete = window.enderecoAutocomplete || null;
 window.enderecoSelecionadoGoogle = window.enderecoSelecionadoGoogle || false;
 
@@ -830,7 +830,7 @@ function initEnderecoAutocomplete() {
   const input = document.getElementById("endereco");
 
   if (!input) {
-    console.warn("Input #endereco ainda nÃ£o existe");
+    console.warn("Input #endereco ainda não existe");
     return;
   }
 
@@ -843,7 +843,7 @@ function initEnderecoAutocomplete() {
   }
 
   if (!window.google || !window.google.maps || !window.google.maps.places) {
-    console.error("Google Places nÃ£o carregado");
+    console.error("Google Places não carregado");
     return;
   }
 
@@ -867,7 +867,7 @@ function initEnderecoAutocomplete() {
     window.enderecoSelecionadoGoogle = false;
   });
 
-  console.log("âœ… Google Places OK");
+  console.log("Google Places OK");
 }
 
 function calcularStatusAutomatico(cliente) {
@@ -901,7 +901,7 @@ function clientes_imprimir() {
   win.document.write(`
     <html>
       <head>
-        <title>Clientes â€¢ EasyLoc</title>
+        <title>Clientes • EasyLoc</title>
         <style>
           ${clientes_css_impressao()}
         </style>
@@ -1010,7 +1010,7 @@ document.addEventListener("keydown", function (e) {
   }
 });
 // =====================
-// IMPRESSÃƒO / PDF
+// IMPRESSÃO / PDF
 // =====================
 
 window.clientes_imprimir = function () {
@@ -1026,7 +1026,7 @@ window.clientes_imprimir = function () {
 
   const iframe = document.getElementById("printFrame");
   if (!iframe || !iframe.contentWindow) {
-    mostrarAlerta("Iframe de impressÃ£o nÃ£o encontrado.");
+    mostrarAlerta("Iframe de impressão não encontrado.");
     return;
   }
 
@@ -1036,7 +1036,7 @@ window.clientes_imprimir = function () {
   doc.write(`
     <html>
       <head>
-        <title>Clientes â€¢ EasyLoc</title>
+        <title>Clientes • EasyLoc</title>
         <style>
           ${clientes_css_impressao()}
         </style>
@@ -1052,7 +1052,7 @@ window.clientes_imprimir = function () {
               <th>CPF / CNPJ</th>
               <th>Telefone</th>
               <th>Email</th>
-              <th>EndereÃ§o</th>
+              <th>Endereço</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -1092,7 +1092,7 @@ function clientes_cabecalho_impressao() {
         >
       </div>
       <div class="meta">
-        <div><strong>RelatÃ³rio de Clientes</strong></div>
+        <div><strong>Relatório de Clientes</strong></div>
         <div>Impresso em: ${dataHora}</div>
       </div>
     </div>
@@ -1111,7 +1111,7 @@ function clientes_filtros_impressao() {
   if (searchInput?.value) filtros.push(`Busca: "${searchInput.value}"`);
   if (statusFilter?.value) filtros.push(`Status: ${statusFilter.value}`);
   if (styleFilter?.value) filtros.push(`Estilo: ${styleFilter.value}`);
-  if (budgetFilter?.value) filtros.push(`OrÃ§amento: ${budgetFilter.value}`);
+  if (budgetFilter?.value) filtros.push(`Orçamento: ${budgetFilter.value}`);
   if (inactiveFilter?.value) filtros.push(`Inatividade: ${inactiveFilter.value} dias`);
 
   if (!filtros.length) {
@@ -1121,12 +1121,12 @@ function clientes_filtros_impressao() {
   return `
     <div class="filters">
       <strong>Filtros aplicados:</strong><br>
-      ${filtros.join(" â€¢ ")}
+      ${filtros.join(" • ")}
     </div>
   `;
 }
 
-// ENDEREÃ‡O
+// ENDEREÇO
 // =====================
 
 function criarInputEndereco(valor = "") {
@@ -1140,7 +1140,7 @@ function criarInputEndereco(valor = "") {
   input.className = "el-input";
   input.type = "text";
   input.placeholder =
-    "Pesquise rua, salÃ£o, chÃ¡cara, buffet, ponto conhecido...";
+    "Pesquise rua, salão, chácara, buffet, ponto conhecido...";
   input.value = valor || "";
   input.autocomplete = "off";
 

@@ -2,7 +2,7 @@
   position: fixed;
   right: 22px;
   bottom: 22px;
-  z-index: 90000;
+  z-index: 50000;
   width: 54px;
   height: 54px;
   display: grid;
@@ -13,6 +13,8 @@
   color: #ffffff;
   box-shadow: 0 16px 34px rgba(15, 42, 68, .24);
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
 }
 
 .global-help-button span {

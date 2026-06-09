@@ -209,11 +209,12 @@ function atualizarResumo() {
 
   set("resumoCustomizacoes", customizacoes);
 
-  set("resumoFreteBruto", freteBruto);
+  set("resumoFreteBruto", freteFinal);
   set("resumoFreteDesconto", -freteDesconto);
   set("logisticaDescontoCaminhao", -freteDesconto);
+  set("logisticaTotalOperacao", freteFinal + montagemFinal);
 
-  set("resumoMontagemBruto", montagemBruta);
+  set("resumoMontagemBruto", montagemFinal);
   set("resumoMontagemDesconto", -montagemDesconto);
 
   set("resumoServicos", servicos);
