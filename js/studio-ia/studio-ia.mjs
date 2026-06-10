@@ -6,6 +6,23 @@
 (function(){
   const FABRIC_URL = "https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js";
   const AUTOSAVE_MS = 30000;
+  const CANVAS_PRESETS = {
+    wide: { label: "Paisagem livre", width: 1280, height: 760 },
+    reels: { label: "Reels / Stories", width: 1080, height: 1920 },
+    feed: { label: "Feed quadrado", width: 1080, height: 1080 },
+    mobile: { label: "Celular", width: 1080, height: 1920 },
+    slide: { label: "PowerPoint", width: 1920, height: 1080 },
+    a4: { label: "Folha A4", width: 1240, height: 1754 },
+    "a4-landscape": { label: "Folha A4 paisagem", width: 1754, height: 1240 }
+  };
+  const GENERATE_MESSAGES = [
+    "Estou preparando a cena e lendo a composicao do canvas.",
+    "Separando as referencias dos moveis para manter o formato original.",
+    "Ajustando proporcao, profundidade e posicao dos objetos.",
+    "Aplicando estilo, iluminacao e acabamento profissional.",
+    "Estou quase finalizando a imagem.",
+    "Renderizando os ultimos detalhes para abrir o resultado aqui."
+  ];
 
   const state = {
     supabase: null,
@@ -20,6 +37,10 @@
     backgroundInfo: null,
     draggingCanvas: false,
     lastPan: null,
+    canvasPreset: "wide",
+    lastRenderSrc: "",
+    generateMessageTimer: null,
+    generateMessageIndex: 0,
     options: {
       periodo: "Dia",
       convidados: "Sem convidados"
@@ -78,7 +99,10 @@
       "studioGridSize",
       "studioGridOverlay",
       "studioCanvasFrame",
+      "studioCanvasPreset",
+      "studioCanvasPresetHint",
       "studioCanvas",
+      "studioObjectToolbar",
       "studioDuplicate",
       "studioFlip",
       "studioCrop",
@@ -96,7 +120,14 @@
       "studioLayers",
       "studioProjectList",
       "studioRenderGrid",
-      "studioAutosaveStatus"
+      "studioAutosaveStatus",
+      "studioGenerateOverlay",
+      "studioGenerateMessage",
+      "studioResultModal",
+      "studioResultImage",
+      "studioResultClose",
+      "studioResultUse",
+      "studioResultDownload"
     ].forEach((id) => {
       els[id] = $(id);
     });
@@ -164,9 +195,22 @@
     state.canvas.on("object:modified", markDirty);
     state.canvas.on("object:added", markDirty);
     state.canvas.on("object:removed", markDirty);
-    state.canvas.on("selection:created", renderLayers);
-    state.canvas.on("selection:updated", renderLayers);
-    state.canvas.on("selection:cleared", renderLayers);
+    state.canvas.on("selection:created", () => {
+      renderLayers();
+      positionObjectToolbar();
+    });
+    state.canvas.on("selection:updated", () => {
+      renderLayers();
+      positionObjectToolbar();
+    });
+    state.canvas.on("selection:cleared", () => {
+      renderLayers();
+      hideObjectToolbar();
+    });
+    state.canvas.on("object:moving", positionObjectToolbar);
+    state.canvas.on("object:scaling", positionObjectToolbar);
+    state.canvas.on("object:rotating", positionObjectToolbar);
+    state.canvas.on("object:modified", positionObjectToolbar);
 
     state.canvas.on("mouse:down", (opt) => {
       const event = opt.e;
@@ -191,17 +235,48 @@
       state.canvas.selection = true;
     });
 
-    resizeCanvasToFrame();
+    applyCanvasPreset(state.canvasPreset, false);
     window.addEventListener("resize", resizeCanvasToFrame);
   }
 
   function resizeCanvasToFrame(){
     if(!state.canvas || !els.studioCanvasFrame) return;
+    applyCanvasPreset(state.canvasPreset, false);
+  }
+
+  function applyCanvasPreset(presetKey = "wide", dirty = true){
+    if(!state.canvas || !els.studioCanvasFrame) return;
+    const preset = CANVAS_PRESETS[presetKey] || CANVAS_PRESETS.wide;
+    state.canvasPreset = presetKey;
+    els.studioCanvasFrame.dataset.preset = presetKey;
+
     const rect = els.studioCanvasFrame.getBoundingClientRect();
-    const width = Math.max(760, Math.floor(rect.width));
-    const height = Math.max(520, Math.floor(rect.height));
+    const width = Math.max(360, Math.floor(rect.width));
+    const height = Math.max(360, Math.round(width * (preset.height / preset.width)));
     state.canvas.setDimensions({ width, height });
+    fitBackgroundToCanvas();
     state.canvas.requestRenderAll();
+
+    if(els.studioCanvasPresetHint){
+      els.studioCanvasPresetHint.textContent = `${preset.label} - ${preset.width} x ${preset.height} px`;
+    }
+
+    positionObjectToolbar();
+    if(dirty) markDirty();
+  }
+
+  function fitBackgroundToCanvas(){
+    const bg = state.canvas?.backgroundImage;
+    if(!bg || !bg.width || !bg.height) return;
+    const scale = Math.max(state.canvas.width / bg.width, state.canvas.height / bg.height);
+    bg.set({
+      left: 0,
+      top: 0,
+      originX: "left",
+      originY: "top",
+      scaleX: scale,
+      scaleY: scale
+    });
   }
 
   async function carregarItens(){
@@ -385,6 +460,50 @@
     return state.canvas.getActiveObjects ? state.canvas.getActiveObjects() : [];
   }
 
+  function getObjectActions(){
+    return {
+      duplicate: duplicateSelection,
+      flip: flipSelection,
+      crop: cropSelection,
+      lock: toggleLockSelection,
+      front: bringFront,
+      back: sendBack,
+      delete: deleteSelection
+    };
+  }
+
+  function hideObjectToolbar(){
+    if(els.studioObjectToolbar) els.studioObjectToolbar.hidden = true;
+  }
+
+  function positionObjectToolbar(){
+    if(!els.studioObjectToolbar || !state.canvas) return;
+    const active = state.canvas.getActiveObject();
+    if(!active){
+      hideObjectToolbar();
+      return;
+    }
+
+    els.studioObjectToolbar.hidden = false;
+    requestAnimationFrame(() => {
+      const toolbar = els.studioObjectToolbar;
+      const bounds = active.getBoundingRect(true, true);
+      const frameRect = els.studioCanvasFrame.getBoundingClientRect();
+      const canvasRect = state.canvas.upperCanvasEl.getBoundingClientRect();
+      const offsetX = canvasRect.left - frameRect.left;
+      const offsetY = canvasRect.top - frameRect.top;
+
+      let left = offsetX + bounds.left + (bounds.width / 2) - (toolbar.offsetWidth / 2);
+      let top = offsetY + bounds.top - toolbar.offsetHeight - 12;
+      if(top < 10) top = offsetY + bounds.top + bounds.height + 12;
+
+      left = Math.max(10, Math.min(left, frameRect.width - toolbar.offsetWidth - 10));
+      top = Math.max(10, Math.min(top, frameRect.height - toolbar.offsetHeight - 10));
+      toolbar.style.left = `${left}px`;
+      toolbar.style.top = `${top}px`;
+    });
+  }
+
   function duplicateSelection(){
     const active = getActiveObjects();
     if(!active.length) return;
@@ -400,6 +519,7 @@
     });
     state.canvas.discardActiveObject();
     state.canvas.requestRenderAll();
+    positionObjectToolbar();
   }
 
   function flipSelection(){
@@ -414,6 +534,7 @@
     });
 
     state.canvas.requestRenderAll();
+    positionObjectToolbar();
     markDirty();
   }
 
@@ -459,6 +580,7 @@
     });
 
     state.canvas.requestRenderAll();
+    positionObjectToolbar();
     markDirty();
   }
 
@@ -466,6 +588,7 @@
     getActiveObjects().forEach((obj) => state.canvas.remove(obj));
     state.canvas.discardActiveObject();
     state.canvas.requestRenderAll();
+    hideObjectToolbar();
   }
 
   function toggleLockSelection(){
@@ -483,18 +606,21 @@
     });
     state.canvas.requestRenderAll();
     renderLayers();
+    positionObjectToolbar();
   }
 
   function bringFront(){
     getActiveObjects().forEach((obj) => state.canvas.bringToFront(obj));
     state.canvas.requestRenderAll();
     renderLayers();
+    positionObjectToolbar();
   }
 
   function sendBack(){
     getActiveObjects().forEach((obj) => state.canvas.sendToBack(obj));
     state.canvas.requestRenderAll();
     renderLayers();
+    positionObjectToolbar();
   }
 
   function zoom(delta){
@@ -507,6 +633,7 @@
     state.canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
     state.canvas.setZoom(1);
     state.canvas.requestRenderAll();
+    positionObjectToolbar();
   }
 
   function renderLayers(){
@@ -558,8 +685,8 @@
     try{
       return state.canvas.toDataURL({
         format: "jpeg",
-        quality: 0.72,
-        multiplier: 0.6
+        quality: 0.88,
+        multiplier: 1
       });
     }catch(err){
       console.warn("Studio IA: preview indisponivel", err);
@@ -568,35 +695,60 @@
   }
 
   function getSceneOptions(){
+    const preset = CANVAS_PRESETS[state.canvasPreset] || CANVAS_PRESETS.wide;
     return {
       tipoImagem: els.studioTipoImagem.value,
       periodo: state.options.periodo,
       convidados: state.options.convidados,
       estilo: els.studioEstilo.value,
       iluminacao: els.studioIluminacao.value,
-      fundo: state.backgroundInfo
+      fundo: state.backgroundInfo,
+      formato: {
+        id: state.canvasPreset,
+        nome: preset.label,
+        largura: preset.width,
+        altura: preset.height,
+        proporcao: `${preset.width}:${preset.height}`
+      }
     };
   }
 
   function buildPrompt(){
     const options = getSceneOptions();
     const objects = state.canvas.getObjects().filter((obj) => obj.studioType === "item");
+    const convidadosRule = {
+      "Sem convidados": "Regra obrigatoria de convidados: nao incluir pessoas visiveis, convidados, equipes ou figurantes.",
+      "Poucos convidados": "Regra obrigatoria de convidados: incluir poucas pessoas de evento, de forma discreta e elegante, como pequenos grupos ao fundo ou nas laterais. Nao deixar a cena vazia.",
+      "Evento cheio": "Regra obrigatoria de convidados: a cena deve parecer um evento cheio, com publico/convidados visiveis e bem distribuidos sem cobrir os moveis principais."
+    }[options.convidados] || `Regra obrigatoria de convidados: seguir exatamente a opcao ${options.convidados}.`;
     const itemLines = objects.map((obj, index) => {
       const scale = Number((((obj.scaleX || 1) + (obj.scaleY || 1)) / 2).toFixed(2));
-      return `${index + 1}. ${obj.itemName || "Item"} na posicao x:${Math.round(obj.left || 0)}, y:${Math.round(obj.top || 0)}, escala:${scale}, rotacao:${Math.round(obj.angle || 0)} graus`;
+      const orientacao = obj.flipX ? "imagem invertida horizontalmente pelo usuario" : "mesma orientacao/frente da foto original";
+      return `${index + 1}. ${obj.itemName || "Item"} na posicao x:${Math.round(obj.left || 0)}, y:${Math.round(obj.top || 0)}, escala:${scale}, rotacao:${Math.round(obj.angle || 0)} graus, orientacao:${orientacao}`;
     });
 
     return [
-      `Crie uma fotografia hiper-realista de ${options.tipoImagem.toLowerCase()} para evento.`,
-      `Estilo: ${options.estilo}. Periodo: ${options.periodo}. Convidados: ${options.convidados}.`,
-      `Iluminacao: ${options.iluminacao}.`,
-      "Use a imagem do canvas como referencia principal e obrigatoria.",
-      "Preserve fielmente a silhueta, formato, proporcao, cor predominante, angulo e identidade visual de cada movel inserido.",
-      "Nao substitua poltronas, bares, sofas, mesas ou aparadores por modelos diferentes.",
-      "Respeite a composicao visual, posicoes, escala, rotacao, profundidade, camadas e relacao dos moveis com o plano de fundo.",
-      "Se houver conflito entre criatividade e fidelidade ao canvas, priorize a fidelidade ao canvas.",
+      "Modo de trabalho: renderizacao fiel do canvas, como uma planta 3D premium transformada em fotografia realista.",
+      "A imagem do canvas e a referencia principal e obrigatoria. Nao reinvente o cenario.",
+      `Formato de saida: ${options.formato.nome}, proporcao ${options.formato.proporcao}.`,
+      `Tipo: ${options.tipoImagem}. Estilo visual: ${options.estilo}. Periodo: ${options.periodo}. Convidados: ${options.convidados}.`,
+      convidadosRule,
+      "As escolhas de Tipo, Periodo, Convidados, Estilo e Iluminacao sao soberanas e devem aparecer no resultado final.",
+      "A cena deve continuar com linguagem de evento/locacao premium, mesmo quando o fundo for externo, interno, grama, salao, jardim ou outro ambiente.",
+      `Iluminacao desejada: ${options.iluminacao}.`,
+      "Preserve o ambiente/plano de fundo do canvas ao maximo: terreno, piso, parede, grama, ceu, horizonte, montanhas, perspectiva e enquadramento devem continuar reconheciveis.",
+      "Nao trocar grama por salao, salao por jardim, fundo externo por interno, nem transformar o local em outro ambiente.",
+      "Transforme apenas os recortes/objetos chapados em moveis realistas integrados ao mesmo fundo.",
+      "Remova visualmente fundos brancos e caixas das fotos dos moveis, mas preserve fielmente silhueta, formato, proporcao, cor predominante, material, frente, angulo e identidade de cada movel.",
+      "A vista de cada movel na foto e soberana: se a cadeira aparece de frente, renderize de frente; se aparece de lado, renderize de lado; se aparece de costas, renderize de costas.",
+      "Nao girar cadeira, poltrona, sofa, mesa, bar ou aparador para mostrar outro lado diferente da foto enviada pelo usuario.",
+      "Nao transformar uma cadeira de frente em cadeira de costas. A orientacao so pode mudar se o objeto estiver explicitamente invertido/rotacionado no canvas.",
+      "Nao substitua poltronas, bares, sofas, mesas ou aparadores por modelos diferentes e nao adicione moveis novos.",
+      "Respeite posicoes, escala relativa, rotacao, camadas e distancias do canvas. Objetos mais abaixo devem parecer mais proximos; objetos menores e mais altos devem parecer mais distantes.",
+      "Adicionar somente realismo: sombras coerentes, contato com o chao, profundidade, oclusao, perspectiva, textura e acabamento fotografico.",
+      "Se houver conflito entre criatividade e fidelidade ao canvas, priorize a fidelidade ao canvas em 100%.",
       itemLines.length ? `Itens posicionados: ${itemLines.join("; ")}.` : "Sem itens posicionados.",
-      "Resultado com fotografia editorial profissional, realismo alto, materiais preservados, perspectiva coerente e acabamento premium, sem inventar moveis novos."
+      "Resultado final: render 3D/fotografia editorial realista do mesmo layout, preservando composicao e ambiente, sem inventar outro cenario."
     ].join(" ");
   }
 
@@ -698,6 +850,10 @@
       if(options.tipoImagem) els.studioTipoImagem.value = options.tipoImagem;
       if(options.estilo) els.studioEstilo.value = options.estilo;
       if(options.iluminacao) els.studioIluminacao.value = options.iluminacao;
+      if(options.formato?.id && CANVAS_PRESETS[options.formato.id]){
+        els.studioCanvasPreset.value = options.formato.id;
+        applyCanvasPreset(options.formato.id, false);
+      }
       state.backgroundInfo = options.fundo || null;
     }catch{}
   }
@@ -709,6 +865,9 @@
     state.canvas.backgroundImage = null;
     state.canvas.setBackgroundColor("#f8fafc", () => state.canvas.requestRenderAll());
     state.backgroundInfo = null;
+    state.canvasPreset = "wide";
+    if(els.studioCanvasPreset) els.studioCanvasPreset.value = "wide";
+    applyCanvasPreset("wide", false);
     setBackgroundPreview("Sem fundo");
     renderLayers();
     setStatus("Novo projeto");
@@ -717,6 +876,53 @@
   function startAutosave(){
     clearInterval(state.autosaveTimer);
     state.autosaveTimer = setInterval(() => salvarProjeto(true), AUTOSAVE_MS);
+  }
+
+  function setGenerateLoading(active){
+    if(els.studioGenerateOverlay) els.studioGenerateOverlay.hidden = !active;
+    if(els.studioGenerate) els.studioGenerate.disabled = active;
+    if(els.studioRegenerate) els.studioRegenerate.disabled = active;
+
+    clearInterval(state.generateMessageTimer);
+    state.generateMessageTimer = null;
+
+    if(active){
+      state.generateMessageIndex = 0;
+      if(els.studioGenerate) els.studioGenerate.textContent = "Gerando...";
+      if(els.studioGenerateMessage) els.studioGenerateMessage.textContent = GENERATE_MESSAGES[0];
+      state.generateMessageTimer = setInterval(() => {
+        state.generateMessageIndex = (state.generateMessageIndex + 1) % GENERATE_MESSAGES.length;
+        if(els.studioGenerateMessage){
+          els.studioGenerateMessage.textContent = GENERATE_MESSAGES[state.generateMessageIndex];
+        }
+      }, 4200);
+      return;
+    }
+
+    if(els.studioGenerate) els.studioGenerate.textContent = "Gerar imagem realista";
+  }
+
+  function extractImageSrc(image){
+    if(!image) return "";
+    const url = image.url || image.imagem_url || "";
+    if(image.base64){
+      return String(image.base64).startsWith("data:")
+        ? image.base64
+        : `data:image/png;base64,${image.base64}`;
+    }
+    return url;
+  }
+
+  function openResultModal(src){
+    if(!src || !els.studioResultModal || !els.studioResultImage) return;
+    state.lastRenderSrc = src;
+    els.studioResultImage.src = src;
+    if(els.studioResultDownload) els.studioResultDownload.href = src;
+    els.studioResultModal.hidden = false;
+  }
+
+  function closeResultModal(){
+    if(els.studioResultModal) els.studioResultModal.hidden = true;
   }
 
   async function generateScene(){
@@ -731,10 +937,16 @@
       top: obj.top,
       scaleX: obj.scaleX,
       scaleY: obj.scaleY,
-      angle: obj.angle
+      angle: obj.angle,
+      flipX: Boolean(obj.flipX),
+      flipY: Boolean(obj.flipY),
+      orientationRule: obj.flipX
+        ? "Preservar o mesmo lado da foto, apenas invertido horizontalmente como no canvas."
+        : "Preservar exatamente a vista/frente da foto original; nao virar para costas ou outro angulo."
     }));
 
     renderLoadingRenders();
+    setGenerateLoading(true);
 
     try{
       const { data, error } = await state.supabase.functions.invoke("studio-ai-engine", {
@@ -771,13 +983,15 @@
       console.error("Studio IA: erro ao gerar imagem", err);
       renderResults(createFallbackImages(preview), prompt, "preview-local");
       avisar("Studio AI Engine ainda nao retornou imagem real. Mostrei o preview local para comparar a composicao.", "EasyLoc Studio IA", "aviso");
+    }finally{
+      setGenerateLoading(false);
     }
   }
 
   function renderLoadingRenders(){
     els.studioRenderGrid.innerHTML = `
-      <div class="studio-render-card">
-        <div class="studio-empty-render">Gerando imagem realista...</div>
+      <div class="studio-empty-render">
+        Gerando imagem realista...
       </div>
     `;
   }
@@ -796,23 +1010,28 @@
       return;
     }
 
-    els.studioRenderGrid.innerHTML = images.map((image, index) => {
-      const url = image.url || image.base64 || image.imagem_url || "";
-      const src = image.base64 && !String(image.base64).startsWith("data:")
-        ? `data:image/png;base64,${image.base64}`
-        : url;
+    const prepared = images.map((image) => ({
+      ...image,
+      src: extractImageSrc(image)
+    }));
+
+    els.studioRenderGrid.innerHTML = prepared.map((image, index) => {
+      const src = image.src || "";
 
       return `
         <article class="studio-render-card">
-          ${src ? `<img src="${escapeHtml(src)}" alt="Versao ${index + 1}">` : `<div class="studio-empty-render">Sem imagem</div>`}
+          ${src ? `<img src="${escapeHtml(src)}" alt="Imagem gerada ${index + 1}">` : `<div class="studio-empty-render">Sem imagem</div>`}
           <div>
-            <strong>Versao ${index + 1}</strong>
+            <strong>Imagem gerada</strong>
             <button type="button" class="btn btn-secondary" data-use-render="${index}">Usar versao</button>
             ${src ? `<a class="btn btn-secondary" download="studio-ia-${index + 1}.png" href="${escapeHtml(src)}">Baixar</a>` : ""}
           </div>
         </article>
       `;
     }).join("");
+
+    const firstSrc = prepared.find((image) => image.src)?.src;
+    if(firstSrc) openResultModal(firstSrc);
 
     persistRenderHistory(images, prompt, modelo);
   }
@@ -849,6 +1068,9 @@
     els.studioZoomOut.addEventListener("click", () => zoom(-0.1));
     els.studioZoomIn.addEventListener("click", () => zoom(0.1));
     els.studioResetView.addEventListener("click", resetView);
+    els.studioCanvasPreset?.addEventListener("change", () => {
+      applyCanvasPreset(els.studioCanvasPreset.value || "wide");
+    });
 
     els.studioShowGrid.addEventListener("change", updateGrid);
     els.studioGridSize.addEventListener("change", updateGrid);
@@ -929,6 +1151,26 @@
         setBackgroundImage(img.src, "Versao gerada por IA");
       }
     });
+
+    els.studioObjectToolbar?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-action]");
+      if(!button) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const action = getObjectActions()[button.dataset.action];
+      if(typeof action === "function") action();
+    });
+
+    els.studioResultClose?.addEventListener("click", closeResultModal);
+    els.studioResultModal?.addEventListener("click", (event) => {
+      if(event.target === els.studioResultModal) closeResultModal();
+    });
+    els.studioResultUse?.addEventListener("click", () => {
+      if(state.lastRenderSrc){
+        setBackgroundImage(state.lastRenderSrc, "Imagem gerada por IA");
+        closeResultModal();
+      }
+    });
   }
 
   async function init(){
@@ -955,6 +1197,7 @@
   window.__moduleInit = init;
   window.__activeModuleDestroy = function(){
     clearInterval(state.autosaveTimer);
+    clearInterval(state.generateMessageTimer);
     window.removeEventListener("resize", resizeCanvasToFrame);
     try{
       state.canvas?.dispose();

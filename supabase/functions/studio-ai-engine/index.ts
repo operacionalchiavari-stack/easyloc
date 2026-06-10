@@ -78,15 +78,55 @@ function validarPayload(body: Partial<GenerateSceneInput>) {
 
 function normalizarPrompt(input: GenerateSceneInput) {
   const versions = Math.min(Math.max(Number(input.versions || 1), 1), 1);
+  const scene = input.scene || {};
+  const options = typeof scene.options === "object" && scene.options
+    ? scene.options as Record<string, unknown>
+    : {};
+  const convidados = String(options.convidados || "");
+  const convidadosRule = convidados === "Sem convidados"
+    ? "Convidados e pessoas: obrigatoriamente nao incluir pessoas visiveis."
+    : convidados === "Poucos convidados"
+      ? "Convidados e pessoas: obrigatoriamente incluir poucas pessoas de evento, discretas, ao fundo ou laterais; a cena nao pode ficar vazia."
+      : convidados === "Evento cheio"
+        ? "Convidados e pessoas: obrigatoriamente criar sensacao de evento cheio com convidados visiveis, sem esconder os moveis principais."
+        : "Convidados e pessoas: seguir exatamente a opcao indicada pelo usuario, quando existir.";
+
   return {
     prompt: [
       input.prompt.trim(),
-      "Render vertical/horizontal profissional para locacao de moveis de eventos.",
-      "Preserve os itens do EasyLoc, proporcoes relativas, materiais, cores e posicoes definidas pelo canvas.",
-      "Evite textos, marcas d'agua, logotipos inventados e deformacoes de moveis."
+      "As escolhas do usuario sobre tipo de imagem, periodo, convidados, estilo e iluminacao sao regras obrigatorias.",
+      convidadosRule,
+      "O resultado deve parecer sempre uma producao de evento premium, nao uma composicao aleatoria de objetos.",
+      "Tarefa principal: converter o canvas enviado em um render realista, mantendo a mesma composicao.",
+      "O canvas e a autoridade visual principal. Preserve fundo, ambiente, enquadramento, perspectiva, posicoes, escala relativa e ordem dos objetos.",
+      "As imagens individuais dos itens sao referencias obrigatorias de modelo, material, formato e angulo de vista do movel; nao devem substituir a composicao do canvas.",
+      "Preserve a vista/orientacao de cada movel conforme a foto enviada: frente continua frente, lateral continua lateral, costas continua costas.",
+      "Nao virar cadeiras, poltronas, sofas, mesas, bares ou aparadores para outro angulo. Se a foto esta de frente, nao renderizar de costas.",
+      "Apenas aplique inversao horizontal quando o canvas/objeto indicar explicitamente que foi invertido pelo usuario.",
+      "Remova fundos brancos/recortes das fotos dos moveis e integre os itens ao ambiente com sombras, profundidade e contato com o chao.",
+      "Nao alterar o local, nao trocar o fundo, nao criar um novo cenario e nao adicionar moveis que nao estejam no canvas.",
+      "Evite textos, marcas d'agua, logotipos inventados, deformacoes de moveis e mudancas de modelo."
     ].join(" "),
     versions,
   };
+}
+
+function resolverTamanhoImagem(input: GenerateSceneInput) {
+  const tamanhoConfigurado = Deno.env.get("STUDIO_IMAGE_SIZE");
+  if (tamanhoConfigurado) return tamanhoConfigurado;
+
+  const scene = input.scene || {};
+  const options = typeof scene.options === "object" && scene.options
+    ? scene.options as Record<string, unknown>
+    : {};
+  const formato = typeof options.formato === "object" && options.formato
+    ? options.formato as Record<string, unknown>
+    : {};
+  const largura = Number(formato.largura || 1024);
+  const altura = Number(formato.altura || 1024);
+
+  if (Math.abs(largura - altura) < 80) return "1024x1024";
+  return largura > altura ? "1536x1024" : "1024x1536";
 }
 
 function coletarReferencias(input: GenerateSceneInput) {
@@ -119,7 +159,7 @@ function blobFromDataUrl(dataUrl: string) {
   const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : "jpg";
   return {
     blob: new Blob([bytes], { type: mime }),
-    filename: `canvas-reference.${ext}`,
+    filename: `main-canvas-composition-reference.${ext}`,
   };
 }
 
@@ -143,7 +183,7 @@ async function blobFromReference(ref: string, index: number) {
 
   return {
     blob: new Blob([await blob.arrayBuffer()], { type: contentType }),
-    filename: `item-reference-${index + 1}.${ext}`,
+    filename: `furniture-shape-reference-${index + 1}.${ext}`,
   };
 }
 
@@ -159,6 +199,7 @@ async function generateWithOpenAI(input: GenerateSceneInput) {
 
   const { prompt, versions } = normalizarPrompt(input);
   const referencias = coletarReferencias(input);
+  const imageSize = resolverTamanhoImagem(input);
   let response: Response;
 
   if (referencias.length) {
@@ -166,20 +207,16 @@ async function generateWithOpenAI(input: GenerateSceneInput) {
     form.append("model", Deno.env.get("STUDIO_OPENAI_IMAGE_MODEL") || "gpt-image-1.5");
     form.append("prompt", prompt);
     form.append("n", String(versions));
-    form.append("size", Deno.env.get("STUDIO_IMAGE_SIZE") || "1024x1024");
+    form.append("size", imageSize);
     form.append("quality", Deno.env.get("STUDIO_IMAGE_QUALITY") || "high");
     form.append("output_format", Deno.env.get("STUDIO_IMAGE_FORMAT") || "png");
     form.append("input_fidelity", "high");
 
-    let count = 0;
-    for (const ref of referencias) {
-      const file = await blobFromReference(ref, count);
-      if (!file) continue;
-      form.append(referencias.length > 1 ? "image[]" : "image", file.blob, file.filename);
-      count++;
-    }
+    const files = (await Promise.all(
+      referencias.map((ref, index) => blobFromReference(ref, index))
+    )).filter((file): file is { blob: Blob; filename: string } => Boolean(file));
 
-    if (count === 0) {
+    if (files.length === 0) {
       return {
         providerStatus: "error",
         error: { message: "Nenhuma imagem de referencia valida foi enviada ao provedor." },
@@ -187,6 +224,10 @@ async function generateWithOpenAI(input: GenerateSceneInput) {
         modelo: "openai:gpt-image-1.5",
       };
     }
+
+    files.forEach((file) => {
+      form.append(files.length > 1 ? "image[]" : "image", file.blob, file.filename);
+    });
 
     response = await fetch("https://api.openai.com/v1/images/edits", {
       method: "POST",
@@ -206,7 +247,7 @@ async function generateWithOpenAI(input: GenerateSceneInput) {
         model: Deno.env.get("STUDIO_OPENAI_IMAGE_MODEL") || "gpt-image-1.5",
         prompt,
         n: versions,
-        size: Deno.env.get("STUDIO_IMAGE_SIZE") || "1024x1024",
+        size: imageSize,
         quality: Deno.env.get("STUDIO_IMAGE_QUALITY") || "high",
         output_format: Deno.env.get("STUDIO_IMAGE_FORMAT") || "png",
       }),

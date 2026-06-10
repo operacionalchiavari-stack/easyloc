@@ -109,6 +109,21 @@
     </aside>
 
     <main class="studio-stage-wrap">
+      <div class="studio-format-bar">
+        <label>
+          <span>Formato</span>
+          <select class="el-select" id="studioCanvasPreset">
+            <option value="wide">Paisagem livre</option>
+            <option value="reels">Reels / Stories 9:16</option>
+            <option value="feed">Feed quadrado 1:1</option>
+            <option value="mobile">Celular 9:16</option>
+            <option value="slide">PowerPoint 16:9</option>
+            <option value="a4">Folha A4 retrato</option>
+            <option value="a4-landscape">Folha A4 paisagem</option>
+          </select>
+        </label>
+        <div class="studio-format-hint" id="studioCanvasPresetHint">1280 x 760 px</div>
+      </div>
       <div class="studio-toolbar">
         <button type="button" title="Duplicar" id="studioDuplicate">Duplicar</button>
         <button type="button" title="Inverter horizontalmente" id="studioFlip">Inverter</button>
@@ -125,6 +140,15 @@
       <div class="studio-canvas-frame" id="studioCanvasFrame">
         <div class="studio-grid-overlay" id="studioGridOverlay"></div>
         <canvas id="studioCanvas" width="1280" height="760"></canvas>
+        <div class="studio-object-toolbar" id="studioObjectToolbar" hidden>
+          <button type="button" data-action="duplicate" title="Duplicar">Duplicar</button>
+          <button type="button" data-action="flip" title="Inverter">Inverter</button>
+          <button type="button" data-action="crop" title="Cortar">Cortar</button>
+          <button type="button" data-action="lock" title="Bloquear">Bloquear</button>
+          <button type="button" data-action="front" title="Trazer para frente">Frente</button>
+          <button type="button" data-action="back" title="Enviar para tras">Tras</button>
+          <button type="button" data-action="delete" class="danger" title="Excluir">Excluir</button>
+        </div>
       </div>
 
       <section class="studio-renders">
@@ -167,4 +191,31 @@
       <div class="studio-layers" id="studioLayers"></div>
     </aside>
   </section>
+  <div class="studio-generate-overlay" id="studioGenerateOverlay" hidden>
+    <div class="studio-generate-card">
+      <div class="studio-generate-loader"></div>
+      <span>EasyLoc Studio IA</span>
+      <strong class="studio-generate-title">
+        Criando imagem realista
+        <small id="studioGenerateMessage">Estou preparando a cena e lendo a composicao do canvas.</small>
+      </strong>
+    </div>
+  </div>
+
+  <div class="studio-result-modal" id="studioResultModal" hidden>
+    <div class="studio-result-card">
+      <div class="studio-result-head">
+        <div>
+          <span>Imagem gerada</span>
+          <strong>Resultado do Studio IA</strong>
+        </div>
+        <button type="button" id="studioResultClose" title="Fechar">x</button>
+      </div>
+      <img id="studioResultImage" alt="Imagem gerada pelo Studio IA">
+      <div class="studio-result-actions">
+        <button type="button" class="btn btn-secondary" id="studioResultUse">Usar como fundo</button>
+        <a class="btn btn-secondary" id="studioResultDownload" download="studio-ia.png">Baixar</a>
+      </div>
+    </div>
+  </div>
 </div>
