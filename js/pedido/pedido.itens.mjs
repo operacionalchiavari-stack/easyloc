@@ -383,6 +383,7 @@ function calcularVolumeTotalPedido(){
     if(!tr || !it) return;
 
     tr.dataset.itemId = it.id;
+    tr.dataset.codigoItem = it.codigo || "";
     tr.dataset.valorUnitario = Number(it.valor_locacao || 0);
     tr.dataset.valorReposicao = Number(it.valor_reposicao || 0);
     tr.dataset.volume = Number(it.volume_cubico || 0);
@@ -539,6 +540,33 @@ function calcularVolumeTotalPedido(){
 
   });
 
+  window.__restaurarItensPedido = function restaurarItensPedido(itens = []) {
+    tbody.innerHTML = "";
+
+    itens.forEach((item) => {
+      addItemBtn.click();
+      const tr = Array.from(tbody.querySelectorAll("tr.item-row")).at(-1);
+      if(!tr) return;
+
+      aplicarItemNaLinha(tr, {
+        id: item.item_id || item.id,
+        codigo: item.codigo_item || item.codigo || "",
+        produto: item.item_nome || item.produto || "Item",
+        descricao_total: item.item_nome || item.descricao_total || item.produto || "Item",
+        foto_url: item.foto_url || "",
+        valor_locacao: Number(item.valor_locacao || 0),
+        valor_reposicao: Number(item.valor_reposicao || 0),
+        volume_cubico: Number(item.volume_cubico || 0)
+      });
+
+      const qtdEl = tr.querySelector(".qtd");
+      if(qtdEl) qtdEl.innerText = String(Number(item.quantidade_solicitada || item.quantidade || 1));
+      recalcularLinha(tr);
+    });
+
+    atualizarResumo();
+    calcularVolumeTotalPedido();
+  };
   /* =====================================================
      ADICIONAR ESPAÇO
   ===================================================== */

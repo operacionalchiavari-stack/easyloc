@@ -8,7 +8,7 @@
 }
 
 .container-fornecedores{
-  padding:32px;
+  padding:20px 24px;
 }
 
 /* ================= HEADER ================= */
@@ -17,7 +17,8 @@
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:24px;
+  min-height:48px;
+  margin-bottom:16px;
 }
 
 .page-header h1{
@@ -32,7 +33,7 @@
   display:grid;
   grid-template-columns:2fr repeat(3,1fr);
   gap:12px;
-  margin-bottom:20px;
+  margin-bottom:14px;
 }
 
 /* ================= TABELA ================= */

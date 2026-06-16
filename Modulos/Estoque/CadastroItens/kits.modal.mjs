@@ -229,21 +229,21 @@ function kits_updateValores(){
 
   document.querySelectorAll(".kit-item-row").forEach(row=>{
 
-    const qtd = parseFloat(
+    const qtd = Math.max(0, parseFloat(
       row.querySelector(".kit-item-qtd").value || 0
-    );
+    ) || 0);
 
     const valorLocacao = parseFloat(
       row.dataset.valor || 0
-    );
+    ) || 0;
 
     const valorReposicao = parseFloat(
       row.dataset.reposicao || 0
-    );
+    ) || 0;
 
     const custo = parseFloat(
       row.dataset.custo || 0
-    );
+    ) || 0;
 
     const subtotalCusto = custo * qtd;
     const subtotalLocacao = valorLocacao * qtd;
@@ -831,5 +831,6 @@ for(const comp of componentes){
 
 }
 
+kits_updateValores();
 
 };

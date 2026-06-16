@@ -8,6 +8,17 @@ const supabase = window.supabaseClient;
 let itensCache = [];
 window.itensCache = itensCache;
 
+function gerarQrCodeCadastro(){
+  return window.EasyLocQR?.generateValue?.()
+    || window.crypto?.randomUUID?.()
+    || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function colunaQrAusente(error){
+  return error?.code === "42703"
+    || String(error?.message || "").includes("qr_code does not exist");
+}
+
 /* =====================================================
    EMPRESA ATUAL
 ===================================================== */
@@ -265,6 +276,7 @@ if(profundidade){
 const itemData = {
 
   empresa_id: empresaId,
+  qr_code: window.itemAtualQrCode || gerarQrCodeCadastro(),
 
   codigo,
   produto,
@@ -300,10 +312,19 @@ const itemData = {
 
     if(window.itemAtualId){
 
-      const { error } = await supabase
+      let { error } = await supabase
         .from("itens")
         .update(itemData)
         .eq("id", window.itemAtualId);
+
+      if(colunaQrAusente(error)){
+        delete itemData.qr_code;
+        window.itemAtualQrCode = null;
+        ({ error } = await supabase
+          .from("itens")
+          .update(itemData)
+          .eq("id", window.itemAtualId));
+      }
 
       if(error){
         console.error("Erro ao atualizar item:", error);
@@ -311,6 +332,7 @@ const itemData = {
       }
 
       console.log("Item atualizado");
+      window.itemAtualQrCode = itemData.qr_code;
 
     }
 
@@ -320,9 +342,17 @@ const itemData = {
 
     else{
 
-      const { error } = await supabase
+      let { error } = await supabase
         .from("itens")
         .insert(itemData);
+
+      if(colunaQrAusente(error)){
+        delete itemData.qr_code;
+        window.itemAtualQrCode = null;
+        ({ error } = await supabase
+          .from("itens")
+          .insert(itemData));
+      }
 
       if(error){
         console.error("Erro ao criar item:", error);
@@ -330,6 +360,7 @@ const itemData = {
       }
 
       console.log("Item criado");
+      window.itemAtualQrCode = itemData.qr_code;
 
     }
 

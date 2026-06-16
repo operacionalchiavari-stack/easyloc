@@ -11,13 +11,19 @@ export function initAutocompleteClientes({
 
   if(!clienteInput || !clienteLista) return;
 
+  const ocultarLista = () => {
+    clienteLista.innerHTML = "";
+    clienteLista.style.display = "none";
+  };
+
+  window.__ocultarAutocompleteClientePedido = ocultarLista;
+
   const doBusca = debounce(async () => {
 
     const termo = (clienteInput.value || "").trim();
 
     if (termo.length < 2) {
-      clienteLista.innerHTML = "";
-      clienteLista.style.display = "none";
+      ocultarLista();
       return;
     }
 
@@ -57,8 +63,7 @@ export function initAutocompleteClientes({
         if(telefoneInput) telefoneInput.value = cliente.telefone || "";
         if(responsavelInput) responsavelInput.value = cliente.nome_razao;
 
-        clienteLista.innerHTML = "";
-        clienteLista.style.display = "none";
+        ocultarLista();
       });
 
       clienteLista.appendChild(item);
@@ -72,7 +77,7 @@ export function initAutocompleteClientes({
 
   document.addEventListener("click", function (e) {
     if (!e.target.closest(".autocomplete-wrapper")) {
-      clienteLista.style.display = "none";
+      ocultarLista();
     }
   });
 }

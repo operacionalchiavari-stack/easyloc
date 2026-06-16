@@ -1,479 +1,608 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<title>EasyLoc • Login</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EasyLoc - Plataforma para locadoras de eventos</title>
+  <link rel="stylesheet" href="styles/global.css">
+  <style>
+    :root {
+      --page-bg: var(--color-bg, #fbf8f5);
+      --surface: var(--color-surface, #ffffff);
+      --soft: var(--color-surface-soft, #f7f9fc);
+      --navy: var(--color-primary, #0b1f3a);
+      --orange: var(--color-accent, #ff6900);
+      --border: var(--color-border, #dfe7f1);
+      --text: var(--color-text, #0b2239);
+      --muted: var(--color-muted, #667891);
+      --radius-lg: var(--radius-lg, 28px);
+      --radius-md: var(--radius-md, 18px);
+      --shadow-soft: 0 24px 70px rgba(8, 33, 58, .10);
+    }
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="styles/global.css">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/core/supabase.js"></script>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: Inter, Arial, sans-serif;
+    }
 
-<style>
-  /* ===== LOADING BUTTON ===== */
-.login-btn{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-}
+    a { color: inherit; text-decoration: none; }
+    .page { overflow: hidden; }
 
-.login-btn.loading{
-  opacity:.85;
-  cursor:not-allowed;
-}
+    .nav {
+      align-items: center;
+      background: rgba(255,255,255,.84);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(223,231,241,.76);
+      border-radius: 999px;
+      display: flex;
+      gap: 28px;
+      justify-content: space-between;
+      left: 50%;
+      padding: 10px 12px 10px 18px;
+      position: fixed;
+      top: 18px;
+      transform: translateX(-50%);
+      width: min(1180px, calc(100% - 36px));
+      z-index: 40;
+    }
 
-.login-btn .spinner{
-  width:16px;
-  height:16px;
-  border:2px solid rgba(255,255,255,.4);
-  border-top-color:#ffffff;
-  border-radius:50%;
-  animation:spin .8s linear infinite;
-}
+    .brand {
+      align-items: center;
+      color: var(--navy);
+      display: inline-flex;
+      font-size: 21px;
+      font-weight: 800;
+      gap: 10px;
+      letter-spacing: -.02em;
+    }
 
-@keyframes spin{
-  to{ transform:rotate(360deg); }
-}
+    .brand img { height: 36px; width: 36px; object-fit: contain; }
 
-:root{
-  --azul:#0f2a44;
-  --azul-2:#173a5e;
-  --laranja:#ff6a00;
-  --borda:#e5e7eb;
-  --texto:#0f172a;
-  --muted:#6b7280;
-}
+    .nav-links {
+      align-items: center;
+      color: var(--muted);
+      display: flex;
+      font-size: 14px;
+      gap: 24px;
+    }
 
-*{ box-sizing:border-box; font-family:"Inter",sans-serif; }
+    .nav-links a:hover { color: var(--navy); }
 
-body{
-  margin:0;
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+    .btn {
+      align-items: center;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      font-weight: 750;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 22px;
+      transition: .18s ease;
+    }
 
+    .btn-primary { background: var(--orange); color: #fff; box-shadow: 0 16px 36px rgba(255,105,0,.20); }
+    .btn-primary:hover, .btn-light:hover, .btn-outline:hover { transform: translateY(-1px); }
+    .btn-outline { background: #fff; border-color: var(--border); color: var(--navy); }
+    .btn-light { background: #fff; color: var(--navy); }
 
+    .section {
+      margin: 0 auto;
+      padding: 88px 0;
+      width: min(1180px, calc(100% - 40px));
+    }
 
-/* ===== TELA INTEIRA 50/50 ===== */
-.login-screen{
-  width:100%;
-  min-height:100vh;
-  display:flex;
-}
+    .hero {
+      align-items: center;
+      display: grid;
+      gap: 56px;
+      grid-template-columns: minmax(0, .94fr) minmax(460px, 1.06fr);
+      min-height: 700px;
+      padding-top: 118px;
+    }
 
-.visual{
-  width:60%;
-  position:relative;
-  overflow:hidden;
-}
-.visual::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(15,42,68,0) 0%,
-      rgba(15,42,68,0.25) 60%,
-      rgba(15,42,68,0.55) 100%
-    );
-  pointer-events:none;
-  z-index:4;
-}
+    .badge {
+      align-items: center;
+      background: rgba(255,105,0,.09);
+      border: 1px solid rgba(255,105,0,.18);
+      border-radius: 999px;
+      color: var(--orange);
+      display: inline-flex;
+      font-size: 13px;
+      font-weight: 760;
+      min-height: 34px;
+      padding: 0 14px;
+    }
 
-/* slider ocupa 100% da metade esquerda */
-.slider{
-  position:absolute;
-  inset:0;
-}
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      color: var(--navy);
+      font-size: clamp(38px, 4.2vw, 60px);
+      letter-spacing: -.045em;
+      line-height: 1.04;
+      margin: 18px 0 18px;
+      max-width: 700px;
+    }
 
-.slider img{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  opacity:0;
-  transition:opacity .8s ease;
-}
+    .lead {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.62;
+      max-width: 560px;
+    }
 
-.slider img.active{ opacity:1; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 
-/* setas */
-.arrow{
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  background:rgba(0,0,0,.45);
-  border:none;
-  color:#fff;
-  font-size:28px;
-  width:48px;
-  height:48px;
-  border-radius:50%;
-  cursor:pointer;
-  z-index:5;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.arrow.left{ left:18px; }
-.arrow.right{ right:18px; }
+    .hero-visual {
+      min-height: 540px;
+      position: relative;
+    }
 
-/* ===== METADE LOGIN ===== */
-.form{
-  width:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:48px 24px;
-}
+    .screen-stack {
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.82));
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 34px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
 
-.form-card{
-  width:520px;
-  max-width:100%;
-  background:#fff;
-  border-radius:22px;
-  box-shadow:0 30px 80px rgba(0,0,0,.18);
-  border:1px solid var(--borda);
-  padding:40px 40px 34px;
-}
+    .screen-top {
+      align-items: center;
+      background: var(--navy);
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      min-height: 58px;
+      padding: 0 22px;
+    }
 
-.logo{
-  width:120px;
-  margin-bottom:22px;
-  display:block;
-}
+    .screen-dots { display: flex; gap: 7px; }
+    .screen-dots span { background: rgba(255,255,255,.46); border-radius: 50%; height: 9px; width: 9px; }
 
-h2{
-  margin:0 0 8px;
-  font-size:22px;
-  color:var(--texto);
-}
+    .screen-body {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: .78fr 1.22fr;
+      padding: 22px;
+    }
 
-.sub{
-  margin:0 0 26px;
-  font-size:14px;
-  color:var(--muted);
-}
+    .screen-sidebar, .screen-main, .screen-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+    }
 
-/* inputs */
-.field{
-  margin-bottom:16px;
-}
-.field label{
-  display:block;
-  font-size:13px;
-  color:#374151;
-  margin-bottom:6px;
-}
-input{
-  width:100%;
-  padding:14px 14px;
-  border-radius:12px;
-  border:1px solid var(--borda);
-  background:#f8fafc;
-  outline:none;
-}
-input:focus{
-  border-color:#cbd5e1;
-  box-shadow:0 0 0 4px rgba(15,42,68,.08);
-}
+    .screen-sidebar { display: grid; gap: 12px; align-content: start; }
+    .screen-pill { background: var(--soft); border-radius: 999px; height: 38px; }
+    .screen-main { display: grid; gap: 14px; }
+    .screen-header { align-items: center; display: flex; justify-content: space-between; }
+    .screen-header strong { color: var(--navy); font-size: 20px; }
+    .screen-tag { background: rgba(255,105,0,.1); border-radius: 999px; color: var(--orange); font-size: 12px; padding: 8px 11px; }
+    .screen-row { align-items: center; border-top: 1px solid #edf2f7; display: grid; gap: 12px; grid-template-columns: 54px 1fr auto; padding: 13px 0; }
+    .screen-img { background: #eef3f8; border-radius: 14px; height: 52px; }
+    .screen-line strong { color: var(--navy); display: block; font-size: 14px; }
+    .screen-line span { color: var(--muted); font-size: 12px; }
+    .screen-value { color: var(--navy); font-weight: 800; }
 
-/* botão */
-button.login-btn{
-  width:100%;
-  padding:14px;
-  background:var(--laranja);
-  color:#fff;
-  border:none;
-  border-radius:14px;
-  font-size:16px;
-  font-weight:700;
-  cursor:pointer;
-  margin-top:6px;
-}
-button.login-btn:hover{ filter:brightness(.95); }
+    .mini-screen {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: 0 22px 54px rgba(8,33,58,.12);
+      padding: 14px;
+      position: absolute;
+      z-index: 3;
+    }
 
-/* msg erro */
-.erro{
-  margin-top:14px;
-  color:#dc2626;
-  font-size:14px;
-  min-height:18px;
-  text-align:center;
-}
+    .mini-screen.one { bottom: 18px; left: -30px; width: 250px; }
+    .mini-screen.two { right: -22px; top: 96px; width: 230px; }
+    .mini-screen img { border-radius: 16px; display: block; height: 132px; object-fit: cover; width: 100%; }
+    .mini-screen strong { color: var(--navy); display: block; margin-top: 10px; }
+    .mini-screen span { color: var(--muted); font-size: 13px; }
 
-/* link planos */
-.link{
-  margin-top:18px;
-  text-align:center;
-  font-size:14px;
-  color:#374151;
-}
-.link a{
-  color:var(--azul);
-  font-weight:700;
-  text-decoration:none;
-}
-.link a:hover{ text-decoration:underline; }
+    .dark-band {
+      background: var(--navy);
+      color: #fff;
+      margin: 24px 0;
+      padding: 70px 0;
+    }
 
-/* ===== MOBILE ===== */
-@media (max-width: 900px){
-  .login-screen{ flex-direction:column; }
-  .visual{ width:100%; height:240px; }
-  .form{ width:100%; }
-  .form-card{ border-radius:18px; }
-}
+    .stats {
+      display: grid;
+      gap: 26px;
+      grid-template-columns: repeat(3, 1fr);
+      margin: 0 auto;
+      width: min(1180px, calc(100% - 40px));
+    }
 
-/* ===== MODAL CENTRAL ===== */
-.login-wrapper{
-  width:100%;
-  padding:32px;
-  display:flex;
-  justify-content:center;
-}
+    .stat strong {
+      display: block;
+      font-size: clamp(40px, 5vw, 72px);
+      letter-spacing: -.045em;
+      line-height: .94;
+    }
 
-.login-modal{
-  width:100%;
-  max-width:980px;
-  background:#fff;
-  border-radius:26px;
-  display:grid;
-  grid-template-columns: 42% 58%;
-  overflow:hidden;
-  box-shadow:0 40px 90px rgba(0,0,0,.15);
-  border:1px solid var(--borda);
-}
+    .stat span { color: rgba(255,255,255,.72); display: block; font-size: 16px; margin-top: 12px; }
 
-/* ===== FOTO LATERAL ===== */
-.login-visual{
-  position:relative;
-  overflow:hidden;
-}
+    .section-head {
+      align-items: end;
+      display: flex;
+      gap: 28px;
+      justify-content: space-between;
+      margin-bottom: 34px;
+    }
 
-.login-visual::after{
-  display:none;
-}
+    .section-head h2 {
+      color: var(--navy);
+      font-size: clamp(30px, 2.8vw, 44px);
+      letter-spacing: -.038em;
+      line-height: 1.08;
+      margin: 0;
+      max-width: 720px;
+    }
 
+    .section-head p { color: var(--muted); line-height: 1.6; max-width: 420px; }
 
-.login-visual .slider,
-.login-visual img{
-  width:100%;
-  height:100%;
-}
+    .module-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(4, 1fr);
+    }
 
-.login-visual img{
-  object-fit:cover;
-}
+    .module-card, .benefit-card, .ai-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 18px 48px rgba(8,33,58,.055);
+      padding: 24px;
+      transition: .18s ease;
+    }
 
-/* ===== FORM ===== */
-.login-form{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:48px;
-}
+    .module-card:hover, .ai-card:hover { box-shadow: 0 24px 62px rgba(8,33,58,.10); transform: translateY(-3px); }
+    .icon {
+      align-items: center;
+      background: rgba(255,105,0,.10);
+      border-radius: 16px;
+      color: var(--orange);
+      display: inline-flex;
+      font-size: 14px;
+      font-weight: 850;
+      height: 46px;
+      justify-content: center;
+      margin-bottom: 22px;
+      width: 46px;
+    }
 
-.form-card{
-  width:100%;
-  max-width:420px;
-  box-shadow:none;
-  border:none;
-  padding:0;
-}
+    .module-card h3, .ai-card h3, .benefit-card h3 { color: var(--navy); font-size: 20px; letter-spacing: -.018em; margin-bottom: 10px; }
+    .module-card p, .ai-card p, .benefit-card p { color: var(--muted); line-height: 1.55; }
+    .module-card ul { color: var(--muted); display: grid; gap: 8px; list-style: none; margin: 20px 0 0; padding: 0; }
 
-/* ===== MOBILE ===== */
-@media(max-width:900px){
-  .login-modal{
-    grid-template-columns:1fr;
-  }
-  .login-visual{
-    height:220px;
-  }
-}
+    .flow {
+      align-items: center;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(6, 1fr);
+    }
 
-</style>
+    .flow-step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      min-height: 150px;
+      padding: 22px;
+      position: relative;
+    }
+
+    .flow-step:not(:last-child)::after {
+      color: var(--orange);
+      content: "→";
+      font-size: 24px;
+      position: absolute;
+      right: -19px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+    }
+
+    .flow-step span { color: var(--orange); font-size: 13px; font-weight: 800; }
+    .flow-step strong { color: var(--navy); display: block; font-size: 20px; margin-top: 14px; }
+
+    .ai-section {
+      background: linear-gradient(180deg, #fff, var(--soft));
+      border: 1px solid var(--border);
+      border-radius: 36px;
+      padding: 42px;
+    }
+
+    .ai-grid { display: grid; gap: 16px; grid-template-columns: repeat(5, 1fr); margin-top: 30px; }
+    .ai-card { border-radius: 24px; min-height: 170px; padding: 20px; }
+    .ai-card h3 { font-size: 17px; }
+
+    .feature-block {
+      align-items: center;
+      display: grid;
+      gap: 56px;
+      grid-template-columns: 1.05fr .95fr;
+      padding: 50px 0;
+    }
+
+    .feature-block:nth-child(even) { grid-template-columns: .95fr 1.05fr; }
+    .feature-block:nth-child(even) .feature-shot { order: 2; }
+
+    .feature-shot {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      padding: 14px;
+    }
+
+    .feature-shot img { border-radius: 24px; display: block; height: 330px; object-fit: cover; width: 100%; }
+    .feature-copy h3 { color: var(--navy); font-size: clamp(26px, 2.5vw, 36px); letter-spacing: -.032em; line-height: 1.1; }
+    .feature-copy p { color: var(--muted); font-size: 16px; line-height: 1.62; }
+
+    .benefits-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .benefit-card { min-height: 170px; }
+
+    .final-cta {
+      background: var(--navy);
+      border-radius: 38px;
+      color: #fff;
+      display: grid;
+      gap: 20px;
+      justify-items: center;
+      margin-bottom: 80px;
+      padding: 66px 24px;
+      text-align: center;
+    }
+
+    .final-cta h2 { font-size: clamp(30px, 3.2vw, 48px); letter-spacing: -.04em; line-height: 1.06; margin: 0; max-width: 720px; }
+    .final-cta p { color: rgba(255,255,255,.72); font-size: 16px; margin: 0; }
+
+    .footer {
+      align-items: center;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      display: flex;
+      gap: 22px;
+      justify-content: space-between;
+      margin: 0 auto;
+      padding: 34px 0;
+      width: min(1180px, calc(100% - 40px));
+    }
+
+    .footer-links { display: flex; gap: 20px; }
+
+    @media (max-width: 1080px) {
+      .hero, .feature-block, .feature-block:nth-child(even) { grid-template-columns: 1fr; }
+      .feature-block:nth-child(even) .feature-shot { order: 0; }
+      .module-grid, .ai-grid { grid-template-columns: repeat(2, 1fr); }
+      .flow { grid-template-columns: repeat(3, 1fr); }
+      .flow-step::after { display: none; }
+      .hero-visual { min-height: auto; }
+      .mini-screen { position: static; margin-top: 14px; width: auto !important; }
+      .nav-links { display: none; }
+    }
+
+    @media (max-width: 720px) {
+      .nav { border-radius: 22px; position: absolute; }
+      .brand span { display: none; }
+      .section { padding: 68px 0; width: min(100% - 24px, 1180px); }
+      .hero { min-height: auto; padding-top: 120px; }
+      .screen-body, .stats, .module-grid, .ai-grid, .flow, .benefits-grid { grid-template-columns: 1fr; }
+      .section-head, .footer { align-items: flex-start; flex-direction: column; }
+      .hero-actions .btn, .final-cta .btn { width: 100%; }
+      .feature-shot img { height: 240px; }
+    }
+  </style>
 </head>
 
 <body>
-
-<div class="login-wrapper">
-
-  <div class="login-modal">
-
-    <!-- COLUNA ESQUERDA: IMAGEM -->
-    <div class="login-visual">
-      <div class="slider">
-        <img src="slide1.jpg" class="active" alt="slide 1">
-        <img src="slide2.jpg" alt="slide 2">
-        <img src="slide3.jpg" alt="slide 3">
+  <div class="page">
+    <nav class="nav">
+      <a class="brand" href="#">
+        <img src="logosimbolo.png" alt="EasyLoc">
+        <span>EasyLoc</span>
+      </a>
+      <div class="nav-links">
+        <a href="#modulos">Recursos</a>
+        <a href="#ia">IA</a>
+        <a href="planos.html">Planos</a>
+        <a href="#contato">Contato</a>
       </div>
-    </div>
+      <a class="btn btn-primary" href="login.html">Entrar</a>
+    </nav>
 
-    <!-- COLUNA DIREITA: FORM -->
-    <div class="login-form">
-      <div class="form-card">
-
-        <img src="logo.png" class="logo" alt="EasyLoc">
-
-        <h2>Acessar o sistema</h2>
-        <p class="sub">Entre com seu e-mail e senha para continuar</p>
-
-        <div class="field">
-          <label>Email</label>
-          <input id="email" type="email" placeholder="Email">
+    <header class="section hero">
+      <div>
+        <span class="badge">Plataforma completa para locação</span>
+        <h1>Controle comercial, estoque, logística e financeiro em um único sistema.</h1>
+        <p class="lead">A EasyLoc conecta todos os setores da operação e elimina planilhas, retrabalho e falta de informação.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#contato">Solicitar demonstração</a>
+          <a class="btn btn-outline" href="#modulos">Conhecer recursos</a>
         </div>
-
-        <div class="field">
-          <label>Senha</label>
-          <input id="senha" type="password" placeholder="Senha">
-        </div>
-
-        <button class="login-btn" id="loginBtn" onclick="login()">
-          <span class="btn-text">Entrar</span>
-        </button>
-
-        <div id="msg" class="erro"></div>
-
-        <div class="link">
-          Não tem conta?
-          <a href="planos.html">Conheça os planos</a>
-        </div>
-
       </div>
-    </div>
 
+      <div class="hero-visual" aria-label="Mockup do sistema EasyLoc">
+        <div class="screen-stack">
+          <div class="screen-top">
+            <strong>EasyLoc Operação</strong>
+            <div class="screen-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="screen-body">
+            <aside class="screen-sidebar">
+              <div class="screen-pill"></div>
+              <div class="screen-pill"></div>
+              <div class="screen-pill"></div>
+              <div class="screen-pill"></div>
+              <div class="screen-pill"></div>
+            </aside>
+            <main class="screen-main">
+              <div class="screen-header">
+                <strong>Pedido #1548</strong>
+                <span class="screen-tag">Orçamento</span>
+              </div>
+              <div class="screen-row">
+                <div class="screen-img"></div>
+                <div class="screen-line"><strong>Bar Monaco Madeira e Tecido Azul</strong><span>Separação confirmada</span></div>
+                <div class="screen-value">Separado</div>
+              </div>
+              <div class="screen-row">
+                <div class="screen-img"></div>
+                <div class="screen-line"><strong>Mesa Auxiliar Rocco</strong><span>Disponível no estoque</span></div>
+                <div class="screen-value">Disponível</div>
+              </div>
+              <div class="screen-panel">
+                <div class="screen-header">
+                  <strong>Logística</strong>
+                  <span class="screen-tag">30,9 km</span>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+        <div class="mini-screen one">
+          <img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem3.png" alt="Controle por QR Code">
+          <strong>Separação por QR Code</strong>
+          <span>Conferência rápida no estoque.</span>
+        </div>
+        <div class="mini-screen two">
+          <img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem4.png" alt="Studio IA EasyLoc">
+          <strong>Studio IA</strong>
+          <span>Layouts e ambientes para venda.</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="dark-band">
+      <div class="stats">
+        <div class="stat"><strong>100%</strong><span>Operação integrada</span></div>
+        <div class="stat"><strong>4 setores</strong><span>Conectados em tempo real</span></div>
+        <div class="stat"><strong>1 plataforma</strong><span>Para toda empresa</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="modulos">
+      <div class="section-head">
+        <div>
+          <span class="badge">Módulos principais</span>
+          <h2>Tudo que sua operação precisa</h2>
+        </div>
+        <p>Da venda à desmontagem, a operação segue conectada em uma experiência simples e visual.</p>
+      </div>
+      <div class="module-grid">
+        <article class="module-card"><span class="icon">01</span><h3>Comercial</h3><p>Pedidos e contratos com visão clara do cliente.</p><ul><li>Clientes</li><li>Locais</li><li>Pedidos</li><li>Contratos</li></ul></article>
+        <article class="module-card"><span class="icon">02</span><h3>Estoque</h3><p>Itens, kits e reservas conectados ao calendário.</p><ul><li>Itens</li><li>Kits</li><li>Reservas</li><li>QR Code</li></ul></article>
+        <article class="module-card"><span class="icon">03</span><h3>Logística</h3><p>Fretes, equipes e execução organizados por evento.</p><ul><li>Cronograma</li><li>Fretes</li><li>Equipes</li><li>Execução</li></ul></article>
+        <article class="module-card"><span class="icon">04</span><h3>Financeiro</h3><p>Fluxo de caixa e contas conectadas aos pedidos.</p><ul><li>Fluxo de caixa</li><li>Contas a pagar</li><li>Contas a receber</li><li>Indicadores</li></ul></article>
+      </div>
+    </section>
+
+    <section class="section" id="operacao">
+      <div class="section-head">
+        <div>
+          <span class="badge">Fluxo operacional</span>
+          <h2>Do pedido ao retorno, cada etapa no lugar certo.</h2>
+        </div>
+        <p>Um fluxo pensado para locadoras de móveis, decoração e equipamentos de eventos.</p>
+      </div>
+      <div class="flow">
+        <div class="flow-step"><span>01</span><strong>Pedido</strong></div>
+        <div class="flow-step"><span>02</span><strong>Separação</strong></div>
+        <div class="flow-step"><span>03</span><strong>Carregamento</strong></div>
+        <div class="flow-step"><span>04</span><strong>Montagem</strong></div>
+        <div class="flow-step"><span>05</span><strong>Desmontagem</strong></div>
+        <div class="flow-step"><span>06</span><strong>Retorno</strong></div>
+      </div>
+    </section>
+
+    <section class="section" id="ia">
+      <div class="ai-section">
+        <div class="section-head">
+          <div>
+            <span class="badge">IA EasyLoc</span>
+            <h2>Sua operação assistida por IA</h2>
+          </div>
+          <p>A Lia e os motores inteligentes ajudam a equipe a consultar, planejar e decidir com mais velocidade.</p>
+        </div>
+        <div class="ai-grid">
+          <article class="ai-card"><h3>Analisa plantas de eventos</h3><p>Interpreta espaços e apoia o planejamento.</p></article>
+          <article class="ai-card"><h3>Gera layouts automáticos</h3><p>Cria propostas visuais com regras de operação.</p></article>
+          <article class="ai-card"><h3>Consulta estoque</h3><p>Ajuda a encontrar itens, kits e disponibilidade.</p></article>
+          <article class="ai-card"><h3>Responde dúvidas operacionais</h3><p>Centraliza conhecimento para a equipe.</p></article>
+          <article class="ai-card"><h3>Sugere melhorias logísticas</h3><p>Apoia decisões de frete, montagem e equipe.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="feature-block">
+        <div class="feature-shot"><img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem3.png" alt="Separação por QR Code"></div>
+        <div class="feature-copy"><span class="badge">QR Code</span><h3>Separação mais rápida, com menos erro.</h3><p>Etiquetas e leitura por QR Code tornam conferência, triagem e inventário mais objetivos.</p></div>
+      </div>
+      <div class="feature-block">
+        <div class="feature-shot"><img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem2.png" alt="Controle de Almoxarifado"></div>
+        <div class="feature-copy"><span class="badge">Almoxarifado</span><h3>Materiais, insumos e movimentações sob controle.</h3><p>Compras, consumo e disponibilidade ficam conectados ao estoque e à operação.</p></div>
+      </div>
+      <div class="feature-block">
+        <div class="feature-shot"><img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem4.png" alt="Planejamento de Eventos"></div>
+        <div class="feature-copy"><span class="badge">Planejamento</span><h3>Layouts de evento com inteligência operacional.</h3><p>Monte ambientes, organize fluxo e transforme ideias em apresentações melhores.</p></div>
+      </div>
+      <div class="feature-block">
+        <div class="feature-shot"><img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem1.png" alt="Gestão Financeira"></div>
+        <div class="feature-copy"><span class="badge">Financeiro</span><h3>Recebíveis, pagamentos e caixa em uma visão única.</h3><p>O financeiro acompanha a operação sem depender de planilhas paralelas.</p></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <span class="badge">Benefícios</span>
+          <h2>Menos ruído. Mais controle.</h2>
+        </div>
+      </div>
+      <div class="benefits-grid">
+        <article class="benefit-card"><h3>Menos retrabalho</h3><p>Dados passam a circular entre setores.</p></article>
+        <article class="benefit-card"><h3>Mais produtividade</h3><p>Rotinas repetitivas ficam mais simples.</p></article>
+        <article class="benefit-card"><h3>Menos erros</h3><p>Disponibilidade, datas e valores ficam alinhados.</p></article>
+        <article class="benefit-card"><h3>Maior controle</h3><p>Gestão visual de pedidos, estoque e operação.</p></article>
+        <article class="benefit-card"><h3>Informação centralizada</h3><p>Uma base para todos os setores.</p></article>
+        <article class="benefit-card"><h3>Decisões mais rápidas</h3><p>Indicadores e contexto no mesmo lugar.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="contato">
+      <div class="final-cta">
+        <h2>Sua empresa ainda trabalha em planilhas?</h2>
+        <p>Transforme sua operação com a EasyLoc.</p>
+        <a class="btn btn-light" href="mailto:comercial@easyloc.com.br">Solicitar demonstração</a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <a class="brand" href="#"><img src="logosimbolo.png" alt="EasyLoc"><span>EasyLoc</span></a>
+      <div class="footer-links">
+        <a href="#modulos">Recursos</a>
+        <a href="planos.html">Planos</a>
+        <a href="#contato">Contato</a>
+        <a href="login.html">Suporte</a>
+      </div>
+      <span>Versão 2026.06</span>
+    </footer>
   </div>
-
-</div>
-
-
-<script>
-/* SLIDER */
-const slides = document.querySelectorAll(".slider img");
-let slideIndex = 0;
-
-function showSlide(i){
-  slides.forEach(s => s.classList.remove("active"));
-  slides[i].classList.add("active");
-}
-function nextSlide(){
-  slideIndex = (slideIndex + 1) % slides.length;
-  showSlide(slideIndex);
-}
-function prevSlide(){
-  slideIndex = (slideIndex - 1 + slides.length) % slides.length;
-  showSlide(slideIndex);
-}
-setInterval(nextSlide, 6000);
-
-/* SUPABASE */
-const supabaseClient = window.supabaseClient;
-
-async function login(){
-
-  const btn = document.getElementById("loginBtn");
-  const btnText = btn.querySelector(".btn-text");
-
-  // ativa loading
-  btn.classList.add("loading");
-  btn.disabled = true;
-  btnText.innerHTML = `<span class="spinner"></span> Entrando...`;
-
-  const email = document.getElementById("email").value.trim();
-  const senha = document.getElementById("senha").value.trim();
-  const msg = document.getElementById("msg");
-
-  msg.innerText = "";
-
-  if(!email || !senha){
-    msg.innerText = "Preencha e-mail e senha";
-    resetButton();
-    return;
-  }
-
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password: senha
-  });
-
-  if(error || !data.user){
-    msg.innerText = "E-mail ou senha inválidos";
-    resetButton();
-    return;
-  }
-
-  const userId = data.user.id;
-
-  const { data: vinculos, error: erroVinculo } = await supabaseClient
-    .from("usuarios_empresas")
-    .select("empresa_id")
-    .eq("user_id", userId)
-    .limit(1);
-
-  if(erroVinculo || !vinculos || vinculos.length === 0){
-    msg.innerText = "Usuário não está vinculado a nenhuma empresa";
-    resetButton();
-    return;
-  }
-
-  const empresaId = vinculos[0].empresa_id;
-
-const { data: assinatura, error: erroAssinatura } = await supabaseClient
-  .from("assinaturas")
-  .select("status,vencimento")
-  .eq("empresa_id", empresaId)
-  .single();
-
-if(erroAssinatura || !assinatura){
-  location.href = "planos.html";
-  return;
-}
-
-  const vencida =
-    assinatura.status !== "ativo" ||
-    new Date(assinatura.vencimento) < new Date();
-
-  if(vencida){
-    location.href = "planos.html";
-    return;
-  }
-
-  // 🔥 ESSENCIAL PARA O DASHBOARD VALIDAR
-// 🔎 BUSCA O NOME REAL DO USUÁRIO NA TABELA usuarios
-const { data: usuario, error: erroUsuario } = await supabaseClient
-  .from("usuarios")
-  .select("nome")
-  .eq("id", userId)
-  .single();
-
-if(erroUsuario){
-  console.error("Erro ao buscar usuário:", erroUsuario);
-}
-
-// 🔥 SALVA DADOS PARA O BOOT
-sessionStorage.setItem("login_ok", "1");
-sessionStorage.setItem("empresa_id", empresaId);
-sessionStorage.setItem("usuario_nome", usuario?.nome || "Usuário");
-
-// 🚀 REDIRECIONA PARA O BOOT
-location.href = "Modulos/Login/Boot/boot.html";
-}
-
-/* helper */
-function resetButton(){
-  const btn = document.getElementById("loginBtn");
-  const btnText = btn.querySelector(".btn-text");
-  btn.classList.remove("loading");
-  btn.disabled = false;
-  btnText.innerHTML = "Entrar";
-}
-</script>
-
 </body>
 </html>

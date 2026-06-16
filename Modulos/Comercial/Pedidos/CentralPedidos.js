@@ -25,7 +25,12 @@
       "filtroDataInicialPedido",
       "filtroDataFinalPedido",
       "centralStatusCarregamento",
-      "centralPedidosTbody"
+      "centralPedidosTbody",
+      "centralPedidoPreviewModal",
+      "centralPedidoPreviewBody",
+      "centralPreviewTitulo",
+      "btnFecharPreviewPedido",
+      "btnImprimirPreviewPedido"
     ].forEach((id) => {
       els[id] = $(id);
     });
@@ -82,10 +87,11 @@
     }catch{}
   }
 
-  function abrirPedido(pedidoId = ""){
+  function abrirPedido(pedidoId = "", modo = "editar"){
     if(typeof window.carregarNaMain === "function"){
       const suffix = pedidoId ? `?pedido=${encodeURIComponent(pedidoId)}` : "";
       window.__PEDIDO_ATUAL_ID = pedidoId || null;
+      window.__PEDIDO_MODO_ABERTURA = modo;
       window.carregarNaMain(
         `Modulos/Comercial/Pedidos/pedido.html${suffix}`,
         "js/pedido/pedido.mjs",
@@ -108,10 +114,163 @@
       evento: row.tipo_evento || row.evento || row.nome_evento || "Evento",
       local: row.local_nome || row.local || row.endereco || "Local nao informado",
       data: row.data_evento || row.data_hora || row.data || row.created_at,
-      status: row.status || "orcamento",
+      status: row.status_comercial || row.status || "orcamento",
       valor: Number(row.valor_total || row.total || row.valor || 0),
       comercial: row.comercial_nome || row.comercial || row.responsavel || "-"
     };
+  }
+
+  function dataBR(value){
+    if(!value) return "-";
+    const date = new Date(`${String(value).slice(0, 10)}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? "-" : date.toLocaleDateString("pt-BR");
+  }
+
+  function getEnderecoPedido(pedido){
+    const html = pedido.observacoes?.local_html || "";
+    if(!html) return "-";
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    return temp.innerText.replace(/\s+/g, " ").trim() || "-";
+  }
+
+  function getTagsPedido(pedido){
+    const html = pedido.observacoes?.local_tags_html || "";
+    if(!html) return [];
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    return Array.from(temp.querySelectorAll("*"))
+      .map((el) => el.textContent.trim())
+      .filter(Boolean);
+  }
+
+  async function abrirPreviewPedido(pedidoId){
+    if(!pedidoId || !state.supabase || !state.empresaId) return;
+
+    const { data: pedido, error } = await state.supabase
+      .from("separacoes_pedidos")
+      .select("*")
+      .eq("empresa_id", state.empresaId)
+      .eq("id", pedidoId)
+      .single();
+
+    if(error || !pedido){
+      avisar("Nao foi possivel abrir a visualizacao do pedido.", "Visualizar", "erro");
+      return;
+    }
+
+    const { data: itens, error: itensError } = await state.supabase
+      .from("separacoes_itens")
+      .select("*, itens:item_id(codigo,produto,descricao_total,foto_url,valor_locacao,valor_reposicao)")
+      .eq("empresa_id", state.empresaId)
+      .eq("separacao_pedido_id", pedidoId)
+      .order("created_at", { ascending: true });
+
+    if(itensError){
+      console.warn("Erro ao carregar itens do preview:", itensError);
+    }
+
+    const parcelas = Array.isArray(pedido.observacoes?.parcelas_financeiras)
+      ? pedido.observacoes.parcelas_financeiras
+      : [];
+
+    const { data: empresa } = await state.supabase
+      .from("empresas")
+      .select("nome,logo_url")
+      .eq("id", state.empresaId)
+      .maybeSingle();
+
+    const itensRows = (itens || []).map((item) => {
+      const cadastro = item.itens || {};
+      const nome = item.item_nome || cadastro.descricao_total || cadastro.produto || "Item";
+      const qtd = Number(item.quantidade_solicitada || 0);
+      const unit = Number(cadastro.valor_locacao || 0);
+      const total = qtd * unit;
+      return `
+        <tr>
+          <td>${qtd}</td>
+          <td>${item.foto_url || cadastro.foto_url ? `<img src="${escapeHtml(item.foto_url || cadastro.foto_url)}">` : ""}</td>
+          <td><strong>${escapeHtml(nome)}</strong><small>${escapeHtml(item.codigo_item || cadastro.codigo || "")}</small></td>
+          <td>${formatCurrency(unit)}</td>
+          <td>${formatCurrency(total)}</td>
+          <td>${formatCurrency(cadastro.valor_reposicao || 0)}</td>
+        </tr>
+      `;
+    }).join("") || `<tr><td colspan="6" class="empty">Nenhum item salvo neste pedido.</td></tr>`;
+
+    const parcelasRows = parcelas.map((parcela, index) => `
+      <tr>
+        <td>${parcela.numero || index + 1}</td>
+        <td>${escapeHtml(parcela.tipo || `Parcela ${index + 1}`)}</td>
+        <td>${dataBR(parcela.vencimento)}</td>
+        <td>${formatCurrency(parcela.valor || 0)}</td>
+        <td>${escapeHtml(parcela.metodo || "A combinar")}</td>
+        <td><span class="badge-ok">${escapeHtml(parcela.status || "Programado")}</span></td>
+      </tr>
+    `).join("") || `<tr><td colspan="6" class="empty">Programacao de pagamento nao informada.</td></tr>`;
+
+    if(els.centralPreviewTitulo){
+      els.centralPreviewTitulo.textContent = `Pedido #${pedido.numero_pedido || "-"}`;
+    }
+
+    if(els.centralPedidoPreviewBody){
+      const tags = getTagsPedido(pedido);
+      const endereco = getEnderecoPedido(pedido);
+      const logo = empresa?.logo_url
+        ? `<img class="preview-logo" src="${escapeHtml(empresa.logo_url)}" alt="${escapeHtml(empresa.nome || "Logo")}">`
+        : `<div class="preview-logo-fallback">${escapeHtml(empresa?.nome || "EasyLoc")}</div>`;
+
+      els.centralPedidoPreviewBody.innerHTML = `
+        <main class="preview-page">
+          <header class="preview-hero">
+            <div class="preview-brand">
+              ${logo}
+              <div>
+                <h1>Proposta comercial</h1>
+                <p>Locacao de mobiliario e decoracao de eventos.</p>
+              </div>
+            </div>
+            <div class="preview-pedido-box">
+              <span>Pedido</span>
+              <strong>#${escapeHtml(pedido.numero_pedido || "-")}</strong>
+              <em>${escapeHtml(pedido.status_comercial || pedido.status || "orcamento")}</em>
+            </div>
+          </header>
+          <section class="preview-section">
+            <div class="preview-section-title">
+              <h2>Dados do evento</h2>
+              <span>${new Date().toLocaleDateString("pt-BR")}</span>
+            </div>
+          <div class="preview-grid">
+            <div><span>Cliente</span><strong>${escapeHtml(pedido.cliente_nome || "-")}</strong></div>
+            <div><span>Contato</span><strong>${escapeHtml(pedido.contato_cliente || "-")}</strong></div>
+            <div><span>Evento</span><strong>${escapeHtml(pedido.tipo_evento || "-")}</strong></div>
+            <div><span>Data do evento</span><strong>${dataBR(pedido.data_evento || pedido.data_hora)}</strong></div>
+            <div><span>Entrega / Coleta</span><strong>${dataBR(pedido.data_entrega)} / ${dataBR(pedido.data_coleta)}</strong></div>
+            <div class="wide"><span>Local</span><strong>${escapeHtml(pedido.local_nome || "-")}</strong></div>
+            <div class="wide"><span>Endereco e referencia</span><strong>${escapeHtml(endereco)}</strong></div>
+          </div>
+            ${tags.length ? `<div class="preview-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+          </section>
+          <section class="preview-section">
+            <h2>Itens do pedido</h2>
+            <table><thead><tr><th>Qtd</th><th>Foto</th><th>Item</th><th>Locacao</th><th>Total</th><th>Reposicao</th></tr></thead><tbody>${itensRows}</tbody></table>
+          </section>
+          <section class="preview-finance preview-section">
+            <div>
+              <h2>Programacao de pagamento</h2>
+              <table><thead><tr><th>#</th><th>Tipo</th><th>Vencimento</th><th>Valor</th><th>Metodo</th><th>Status</th></tr></thead><tbody>${parcelasRows}</tbody></table>
+            </div>
+            <div>
+              <h2>Resumo financeiro</h2>
+              <div class="preview-total"><span>Total do pedido</span><strong>${formatCurrency(pedido.valor_total || 0)}</strong></div>
+            </div>
+          </section>
+        </main>
+      `;
+    }
+
+    els.centralPedidoPreviewModal?.classList.remove("hidden");
   }
 
   function aplicarFiltros(){
@@ -163,7 +322,7 @@
 
     els.centralPedidosTbody.innerHTML = state.filtrados.map((pedido) => `
       <tr data-pedido-id="${escapeHtml(pedido.id)}">
-        <td><button type="button" class="pedido-numero-link" data-action="abrir">${escapeHtml(pedido.numero)}</button></td>
+        <td><button type="button" class="pedido-numero-link" data-action="editar">${escapeHtml(pedido.numero)}</button></td>
         <td>${escapeHtml(pedido.cliente)}</td>
         <td>${escapeHtml(pedido.evento)}</td>
         <td>${escapeHtml(pedido.local)}</td>
@@ -173,8 +332,8 @@
         <td>${escapeHtml(pedido.comercial)}</td>
         <td>
           <div class="central-actions">
-            <button type="button" data-action="abrir">Visualizar</button>
-            <button type="button" data-action="abrir">Editar</button>
+            <button type="button" data-action="visualizar">Visualizar</button>
+            <button type="button" data-action="editar">Editar</button>
             <button type="button" data-action="duplicar">Duplicar</button>
             <button type="button" data-action="imprimir">Imprimir</button>
             <button type="button" data-action="contrato">Contrato</button>
@@ -190,17 +349,6 @@
     if(!state.supabase || !state.empresaId){
       state.pedidos = [];
       state.filtrados = [];
-      render();
-      window.finalizarCarregamentoModulo?.();
-      return;
-    }
-
-    if(tabelasSeparacaoAusentes()){
-      state.pedidos = [];
-      state.filtrados = [];
-      if(els.centralStatusCarregamento){
-        els.centralStatusCarregamento.textContent = "Tabela de pedidos indisponivel";
-      }
       render();
       window.finalizarCarregamentoModulo?.();
       return;
@@ -252,6 +400,17 @@
   function bindEvents(){
     els.btnNovoPedidoCentral?.addEventListener("click", () => abrirPedido());
     els.btnAtualizarPedidos?.addEventListener("click", carregarPedidos);
+    els.btnFecharPreviewPedido?.addEventListener("click", () => {
+      els.centralPedidoPreviewModal?.classList.add("hidden");
+    });
+    els.btnImprimirPreviewPedido?.addEventListener("click", () => {
+      window.print();
+    });
+    els.centralPedidoPreviewModal?.addEventListener("click", (event) => {
+      if(event.target === els.centralPedidoPreviewModal){
+        els.centralPedidoPreviewModal.classList.add("hidden");
+      }
+    });
 
     [
       els.filtroClientePedido,
@@ -274,8 +433,13 @@
       const pedidoId = row?.dataset?.pedidoId || "";
       const action = button.dataset.action;
 
-      if(action === "abrir"){
-        abrirPedido(pedidoId);
+      if(action === "editar"){
+        abrirPedido(pedidoId, "editar");
+        return;
+      }
+
+      if(action === "visualizar"){
+        abrirPreviewPedido(pedidoId);
         return;
       }
 
@@ -285,7 +449,7 @@
       }
 
       if(action === "imprimir"){
-        avisar("Abra o pedido para imprimir com todos os detalhes.", "Imprimir", "info");
+        abrirPreviewPedido(pedidoId);
         return;
       }
 

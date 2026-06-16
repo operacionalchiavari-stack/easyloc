@@ -22,9 +22,9 @@
 
 .system-status{
   position: relative;
-  margin-bottom: 12px;
   display: flex;
   justify-content: center;
+  margin: 0;
 }
 /* ========================================
    STATUS - SIDEBAR RECOLHIDA
@@ -58,20 +58,24 @@
 .status-indicator{
   display:flex;
   align-items:center;
-  gap:8px;
-  background:#ffffffc2;
-  padding:8px 14px;
-  border-radius:14px;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  gap:0;
+  background:rgba(255,255,255,.10);
+  padding:0;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:10px;
   font-size:13px;
   font-weight:600;
   color:#0f172a;
   cursor:pointer;
-  box-shadow:0 6px 18px rgba(0,0,0,.12);
+  box-shadow:none;
   transition:.2s;
 }
 
 .status-indicator:hover{
-  background:#f8fafc;
+  background:rgba(255,255,255,.16);
 }
 
 .status-dot{
@@ -79,6 +83,10 @@
   height:10px;
   border-radius:50%;
   background:#16a34a;
+}
+
+.sidebar-header .status-text {
+  display: none;
 }
 
 /* ========================================
@@ -252,25 +260,35 @@
 
     /* comportamento original */
 .sidebar:hover {
-  width: 260px;
+  width: 244px;
   transform: translateZ(0);
+  box-shadow: 18px 0 46px rgba(15, 23, 42, 0.2);
 }
 
     .sidebar-header {
-      height: 64px;
-      padding: 0 20px;
+      height: 60px;
+      padding: 0 14px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
+      gap: 10px;
       border-bottom: 1px solid rgba(255,255,255,.08);
     }
 
-    .sidebar-header img {
-      height: 32px;
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 10px;
     }
 
-.sidebar-header span {
-  font-size: 18px;
+    .sidebar-header img {
+      height: 29px;
+      flex-shrink: 0;
+    }
+
+.sidebar-brand span {
+  font-size: 17px;
   font-weight: 700;
   opacity: 0;
   width: 0;
@@ -278,21 +296,175 @@
   transition: opacity .2s ease, width .2s ease;
 }
 
-    .sidebar:hover .sidebar-header span {
+.sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity .18s ease, width .18s ease;
+}
+
+    .sidebar:hover .sidebar-brand span {
       opacity: 1;
       width: auto;
     }
 
+    .sidebar:hover .sidebar-header-actions,
+    .sidebar.expanded .sidebar-header-actions {
+      opacity: 1;
+      width: auto;
+      overflow: visible;
+      pointer-events: auto;
+    }
+
+    .sidebar-top-logout {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 10px;
+      background: rgba(220,38,38,.96);
+      color: #fff;
+      cursor: pointer;
+      padding: 0;
+      transition: transform .18s ease, background .18s ease;
+    }
+
+    .sidebar-top-logout:hover {
+      background: #ef4444;
+      transform: translateY(-1px);
+    }
+
+    .sidebar-top-logout svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .sidebar-header .status-panel {
+      top: calc(100% + 10px);
+      right: 0;
+      bottom: auto;
+      left: auto;
+      transform: none;
+      width: 220px;
+    }
+
     .menu {
-      margin-top: 20px;
+      margin-top: 14px;
       padding-bottom: 90px;
+    }
+
+    .sidebar-search {
+      height: 40px;
+      margin: 12px 12px 5px;
+      padding: 0 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,.07);
+      color: rgba(255,255,255,.78);
+      transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .sidebar-search:focus-within {
+      background: rgba(255,255,255,.11);
+      border-color: rgba(255,106,0,.65);
+      box-shadow: 0 0 0 3px rgba(255,106,0,.12);
+    }
+
+    .sidebar-search svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-search input {
+      width: 0;
+      min-width: 0;
+      flex: 1;
+      border: 0;
+      outline: 0;
+      padding: 0;
+      background: transparent;
+      color: #fff;
+      font: inherit;
+      font-size: 12.5px;
+      opacity: 0;
+      transition: opacity .2s ease;
+    }
+
+    .sidebar-search input::placeholder {
+      color: rgba(255,255,255,.52);
+    }
+
+    .sidebar-search button {
+      width: 24px;
+      height: 24px;
+      border: 0;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.1);
+      color: #fff;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .sidebar-search button:hover {
+      background: rgba(255,255,255,.18);
+    }
+
+    .sidebar-search.has-value button {
+      display: flex;
+    }
+
+    .sidebar:hover .sidebar-search,
+    .sidebar.expanded .sidebar-search {
+      justify-content: flex-start;
+      margin-left: 14px;
+      margin-right: 14px;
+    }
+
+    .sidebar:hover .sidebar-search input,
+    .sidebar.expanded .sidebar-search input {
+      width: auto;
+      opacity: 1;
+    }
+
+    .sidebar:not(:hover):not(.expanded) .sidebar-search {
+      width: 44px;
+      padding: 0;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .sidebar-menu-hidden {
+      display: none !important;
+    }
+
+    .submenu.sidebar-search-open {
+      display: block !important;
+    }
+
+    .menu-item.sidebar-search-match,
+    .submenu-item.sidebar-search-match {
+      background: rgba(255,106,0,.18);
     }
 
     .menu-item {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 14px 0;
+      padding: 12px 0;
       cursor: pointer;
       transition: .2s;
       position: relative;
@@ -307,6 +479,7 @@
     }
 
 .menu-item span {
+  font-size: 15px;
   opacity: 0;
   width: 0;
   overflow: hidden;
@@ -316,8 +489,14 @@
 
     .sidebar:hover .menu-item {
       justify-content: flex-start;
-      padding: 14px 20px;
-      gap: 14px;
+      padding: 12px 18px;
+      gap: 12px;
+    }
+
+    .menu-item > svg {
+      width: 21px;
+      height: 21px;
+      flex-shrink: 0;
     }
 
     .sidebar:hover .menu-item span {
@@ -349,13 +528,18 @@
       display: none !important;
     }
 
+    .sidebar.expanded .submenu.sidebar-search-open,
+    .sidebar:hover .submenu.sidebar-search-open {
+      display: block !important;
+    }
+
     .submenu.open {
       display: block;
     }
 
     .submenu-item {
-      padding: 12px 20px 12px 56px;
-      font-size: 14px;
+      padding: 10px 18px 10px 50px;
+      font-size: 13px;
       color: #fff;
       cursor: pointer;
       transition: .2s;
@@ -379,8 +563,8 @@
 }
 
 .sidebar:hover ~ .main {
-  margin-left: 260px;
-  width: calc(100% - 260px); /* 🔥 ESSENCIAL */
+  margin-left: 72px;
+  width: calc(100% - 72px);
 }
     .sidebar-logout {
       position: absolute;
@@ -421,23 +605,22 @@
     }
 
     /* FIX de expansão por clique (mantém layout) */
-    .sidebar.expanded { width: 260px; }
+    .sidebar.expanded { width: 244px; }
 .sidebar.expanded ~ .main { 
-  margin-left: 260px;
-  width: calc(100% - 260px); /* 🔥 ESSENCIAL */
+  margin-left: 72px;
+  width: calc(100% - 72px);
 }
 
-    .sidebar.expanded .sidebar-header span,
-    .sidebar.expanded .menu-item span,
-    .sidebar.expanded .sidebar-logout span {
+    .sidebar.expanded .sidebar-brand span,
+    .sidebar.expanded .menu-item span {
       opacity: 1;
       width: auto;
     }
 
     .sidebar.expanded .menu-item {
       justify-content: flex-start;
-      padding: 14px 20px;
-      gap: 14px;
+      padding: 12px 18px;
+      gap: 12px;
     }
 
     .sidebar.expanded .menu-item.has-sub::after {
@@ -457,19 +640,19 @@
 
 .sidebar-user{
   position:absolute;
-  bottom:88px;
+  bottom:18px;
   width:100%;
-  padding:0 16px;
+  padding:0 12px;
 }
 
 .user-account{
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:10px;
   background:#ffffff;
   color:#0f172a;
-  padding:10px 12px;
-  border-radius:14px;
+  padding:9px 10px;
+  border-radius:13px;
   cursor:pointer;
   box-shadow:0 6px 18px rgba(0,0,0,.12);
   transition:.2s;
@@ -481,8 +664,8 @@
 
 /* AVATAR */
 .user-avatar{
-  width:36px;
-  height:36px;
+  width:34px;
+  height:34px;
   border-radius:50%;
   background:var(--laranja);
   color:#fff;
@@ -490,7 +673,7 @@
   align-items:center;
   justify-content:center;
   font-weight:700;
-  font-size:13px;
+  font-size:12px;
   flex-shrink:0;
 }
 
@@ -502,12 +685,12 @@
 }
 
 .user-info .empresa{
-  font-size:11px;
+  font-size:10.5px;
   color:#64748b;
 }
 
 .user-info .usuario{
-  font-size:14px;
+  font-size:13px;
   font-weight:600;
   display:flex;
   align-items:center;
@@ -617,45 +800,19 @@
 /* círculo */
 .loader-circle {
   position: relative;
-  width: 48px;
-  height: 48px;
-  animation: loader-spin 1.2s linear infinite;
-}
-
-.loader-circle .dot {
-  position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
+  background: conic-gradient(from 0deg, #ff6a00 0deg, #ff6a00 82deg, #ffd6a8 82deg, #ffd6a8 360deg);
+  animation: loader-spin 0.85s linear infinite;
 }
 
-.loader-circle .blue {
-  background-color: #0f2a44; /* azul marinho EasyLoc */
-}
-
-.loader-circle .orange {
-  background-color: #ff6a00; /* laranja EasyLoc */
-}
-
-.loader-circle .dot:nth-child(1) {
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.loader-circle .dot:nth-child(2) {
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.loader-circle .dot:nth-child(3) {
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.loader-circle .dot:nth-child(4) {
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+.loader-circle::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--el-color-bg);
 }
 
 @keyframes loader-spin {
@@ -828,15 +985,12 @@
     transform: translateX(0);
   }
 
-  .sidebar-header span,
-  .sidebar:hover .sidebar-header span,
-  .sidebar.expanded .sidebar-header span,
+  .sidebar-brand span,
+  .sidebar:hover .sidebar-brand span,
+  .sidebar.expanded .sidebar-brand span,
   .sidebar .menu-item span,
   .sidebar:hover .menu-item span,
-  .sidebar.expanded .menu-item span,
-  .sidebar .sidebar-logout span,
-  .sidebar:hover .sidebar-logout span,
-  .sidebar.expanded .sidebar-logout span {
+  .sidebar.expanded .menu-item span {
     opacity: 1;
     width: auto;
   }
@@ -869,7 +1023,7 @@
   }
 
   .sidebar-user {
-    bottom: 78px;
+    bottom: 18px;
   }
 
   .sidebar:not(:hover):not(.expanded) .user-info {
@@ -926,8 +1080,52 @@
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <img src="logosimbolo.png">
-    <span>EasyLoc</span>
+    <div class="sidebar-brand">
+      <img src="logosimbolo.png">
+      <span>EasyLoc</span>
+    </div>
+    <div class="sidebar-header-actions">
+      <div class="system-status" id="systemStatus">
+        <button type="button" class="status-indicator" id="statusIndicator" aria-label="Status do sistema">
+          <span class="status-dot" id="statusDot"></span>
+          <span class="status-text" id="statusText">Estável</span>
+        </button>
+        <div class="status-panel" id="statusPanel">
+          <div class="status-panel-header">
+            <strong>Status do Sistema</strong>
+          </div>
+          <div class="status-line">
+            <span>Conexão com internet:</span>
+            <span id="statusInternet">Verificando...</span>
+          </div>
+          <div class="status-line">
+            <span>Resposta do sistema:</span>
+            <span id="statusBackend">Verificando...</span>
+          </div>
+          <div class="status-line">
+            <span>Performance geral:</span>
+            <span id="statusGeral">Analisando...</span>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="sidebar-top-logout" onclick="logout()" aria-label="Sair">
+        <i data-lucide="log-out"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="sidebar-search" id="sidebarSearch">
+    <i data-lucide="search"></i>
+    <input
+      id="sidebarSearchInput"
+      type="search"
+      placeholder="Buscar modulo"
+      autocomplete="off"
+      aria-label="Buscar categorias e subcategorias"
+    >
+    <button type="button" id="sidebarSearchClear" aria-label="Limpar busca">
+      <i data-lucide="x"></i>
+    </button>
   </div>
 
 <nav class="menu">
@@ -970,6 +1168,16 @@
     Cadastro de Locais
   </div>
 
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Comercial/PlanejadorEventos/planejador-eventos.html',
+      'Modulos/Comercial/PlanejadorEventos/planejador-eventos.js',
+      this,
+      'Modulos/Comercial/PlanejadorEventos/planejador-eventos.css'
+    )">
+    Planejador Inteligente
+  </div>
+
 </div>
 
 
@@ -993,6 +1201,16 @@
 
 <div class="submenu-item"
   onclick="carregarNaMain(
+    'Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html',
+    'Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js',
+    this,
+    'Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css'
+  )">
+  Disponibilidade de Itens
+</div>
+
+<div class="submenu-item"
+  onclick="carregarNaMain(
     'Modulos/Estoque/Personalizacoes/estoque-personalizacoes.html',
     'js/Estoque/estoque-personalizacoes.mjs',
     this,
@@ -1003,22 +1221,22 @@
 
   <div class="submenu-item"
     onclick="carregarNaMain(
-      'Modulos/Estoque/Almoxarifado/cadastro-insumos.html',
-      'Modulos/Estoque/Almoxarifado/cadastro-insumos.js',
-      this,
-      'Modulos/Estoque/Almoxarifado/cadastro-insumos.css'
-    )">
-    Cadastro de Insumos
-  </div>
-
-  <div class="submenu-item"
-    onclick="carregarNaMain(
       'Modulos/Estoque/CadastroFornecedores/fornecedores.html',
       'Modulos/Estoque/CadastroFornecedores/fornecedores.js',
       this,
       'Modulos/Estoque/CadastroFornecedores/fornecedores.css'
     )">
     Cadastro de Fornecedores
+  </div>
+
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Estoque/Compras/compras.html',
+      'Modulos/Estoque/Compras/compras.js',
+      this,
+      'Modulos/Estoque/Compras/compras.css'
+    )">
+    Compras
   </div>
 
     <div class="submenu-item"
@@ -1038,7 +1256,7 @@
       this,
       'Modulos/Estoque/Almoxarifado/Principal/almoxarifado.css'
     )">
-    Almoxarifado
+    Almoxarifado EasyLoc
   </div>
 
         <div class="submenu-item"
@@ -1090,6 +1308,27 @@
   )">
   Cronograma Logístico
 </div>
+
+<div class="submenu-item"
+  onclick="carregarNaMain(
+    'Modulos/Logistica/PlanejamentoLogistico/planejamento-logistico.html',
+    'Modulos/Logistica/PlanejamentoLogistico/planejamento-logistico.js',
+    this,
+    'Modulos/Logistica/PlanejamentoLogistico/planejamento-logistico.css'
+  )">
+  Planejamento
+</div>
+
+<div class="submenu-item"
+  onclick="carregarNaMain(
+    'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html',
+    'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.js',
+    this,
+    'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.css'
+  )">
+  Separação
+</div>
+
 </div>
 
 
@@ -1148,40 +1387,6 @@
 
 
 <div class="sidebar-user">
-
-  <!-- INDICADOR DE ESTABILIDADE -->
-  <div class="system-status" id="systemStatus">
-
-    <div class="status-indicator" id="statusIndicator">
-      <span class="status-dot" id="statusDot"></span>
-      <span class="status-text" id="statusText">Estável</span>
-    </div>
-
-    <div class="status-panel" id="statusPanel">
-
-      <div class="status-panel-header">
-        <strong>Status do Sistema</strong>
-      </div>
-
-      <div class="status-line">
-        <span>Conexão com internet:</span>
-        <span id="statusInternet">Verificando...</span>
-      </div>
-
-      <div class="status-line">
-        <span>Resposta do sistema:</span>
-        <span id="statusBackend">Verificando...</span>
-      </div>
-
-      <div class="status-line">
-        <span>Performance geral:</span>
-        <span id="statusGeral">Analisando...</span>
-      </div>
-
-    </div>
-
-  </div>
-
   <!-- CARD DO USUÁRIO -->
   <div class="user-account" onclick="toggleUserMenu(event)">
     
@@ -1221,27 +1426,13 @@
 
 </div>
 
-
-
-
-  <div class="sidebar-logout">
-    <button onclick="logout()">
-      <i data-lucide="log-out"></i>
-      <span>Sair</span>
-    </button>
-  </div>
 </aside>
 
 <main class="main">
 
   <!-- LOADER GLOBAL DO DASHBOARD -->
   <div id="global-loader" class="content-loader hidden">
-    <div class="loader-circle">
-      <span class="dot blue"></span>
-      <span class="dot orange"></span>
-      <span class="dot blue"></span>
-      <span class="dot orange"></span>
-    </div>
+    <div class="loader-circle" aria-label="Carregando"></div>
   </div>
 
   <!-- CONTEÚDO DINÂMICO -->
@@ -1319,9 +1510,11 @@
 
 <!-- ALERTA GLOBAL -->
 <script src="js/core/alerta.js"></script>
+<script src="js/core/qrCode.js"></script>
 
 <!-- CONTEXTO GLOBAL -->
 <script src="js/core/context.js"></script>
+<script src="js/core/google.config.js"></script>
 <script src="js/core/google.js"></script>
 
 <!-- AUTENTICAÇÃO -->
@@ -1362,11 +1555,6 @@
 <script src="js/empresa/empresa.sections.financeiro.js"></script>
 <script src="js/empresa/empresa.modal.js"></script>
 <script src="js/core/globalHelp.js"></script>
-
-<!-- =====================================================
-   LIBS EXTRAS
-===================================================== -->
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
 <!-- ROOT GLOBAL DE MODAIS -->
 <div id="modal-root"></div>

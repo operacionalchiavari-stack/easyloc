@@ -54,6 +54,11 @@ window.inserirItemNaTabela = function (item) {
       —
     </td>
 
+    <!-- QR -->
+    <td class="td-qr">
+      <button type="button" class="qr-action-btn" title="Ver QR Code">QR</button>
+    </td>
+
     <!-- STATUS -->
     <td class="td-status">
       <span class="status ${item.status === "Inativo" ? "inativo" : "ativo"}">
@@ -62,6 +67,38 @@ window.inserirItemNaTabela = function (item) {
     </td>
 
   `;
+
+const qrBtn = tr.querySelector(".qr-action-btn");
+if(qrBtn){
+  qrBtn.onclick = async (event) => {
+    event.stopPropagation();
+
+    if(!item.qr_code){
+      item.qr_code = window.EasyLocQR?.generateValue?.() || crypto.randomUUID();
+
+      try{
+        const { error } = await window.supabaseClient
+          ?.from("itens")
+          .update({ qr_code: item.qr_code })
+          .eq("id", item.id);
+
+        if(error?.code === "42703" || String(error?.message || "").includes("qr_code does not exist")){
+          item.qr_code = "";
+          window.alerta?.("A coluna qr_code ainda precisa ser aplicada no banco para gerar etiquetas.", "QR Code", "aviso");
+          return;
+        }
+      }catch(error){
+        console.warn("Nao foi possivel salvar QR Code do item:", error);
+      }
+    }
+
+    window.EasyLocQR?.openQuickModal?.({
+      qr_code: item.qr_code,
+      codigo: item.codigo,
+      nome: item.descricao_total || item.produto
+    });
+  };
+}
 
 /* abrir modal ao clicar */
 

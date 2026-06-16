@@ -1,7 +1,7 @@
 // =========================================
 // STATE
 // =========================================
-// Sempre reinicializar o state quando o módulo é carregado
+// Sempre reinicializar o state quando o modulo e carregado
 window.__cronogramaState = {
   semanaInicioAtual: null,
   cronogramaData: [],
@@ -18,7 +18,7 @@ window.__cronogramaState = {
 // =========================================
 window.initCronograma = async function() {
   try {
-    console.log('[Cronograma] Inicializando módulo');
+    console.log('[Cronograma] Inicializando modulo');
     
     // Aguardar DOM estar pronto
     if (!document.getElementById("cronogramaBody")) {
@@ -30,9 +30,9 @@ window.initCronograma = async function() {
     atualizarCabecalhoSemana();
     console.log('[Cronograma] Carregando dados...');
     await carregarCronograma();
-    console.log('[Cronograma] Módulo carregado com sucesso!');
+    console.log('[Cronograma] Modulo carregado com sucesso!');
   } catch (e) {
-    console.error("[Cronograma] Erro na inicialização:", e);
+    console.error("[Cronograma] Erro na inicializacao:", e);
     // Tentar mostrar mensagem de erro no body
     const tbody = document.getElementById("cronogramaBody");
     if (tbody) {
@@ -51,9 +51,9 @@ window.__moduleInit = window.initCronograma;
 // =========================================
 window.__activeModuleDestroy = function() {
   try {
-    console.log('[Cronograma] Destruindo módulo');
+    console.log('[Cronograma] Destruindo modulo');
     
-    // Cancelar requisições pendentes
+    // Cancelar requisicoes pendentes
     if (window.__cronogramaState && window.__cronogramaState.abortController) {
       window.__cronogramaState.abortController.abort();
     }
@@ -74,15 +74,112 @@ window.__activeModuleDestroy = function() {
 // API (PRONTO PARA SUPABASE)
 // =========================================
 async function buscarCronograma(inicioSemanaStr) {
-  // TODO: Implementar chamada para Supabase
-  // const { data, error } = await supabase
-  //   .from('cronograma')
-  //   .select('*')
-  //   .gte('data_etapa', inicioSemanaStr)
-  //   .lt('data_etapa', new Date(new Date(inicioSemanaStr) + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+  const supabase = window.supabaseClient;
+  const empresaId = window.__CONTEXT?.empresa_id;
 
-  // Mock data para desenvolvimento
-  return gerarMockCronograma();
+  if (!supabase || !empresaId) {
+    return [];
+  }
+
+  const inicio = parseDateAny(inicioSemanaStr);
+  const fim = new Date(inicio);
+  fim.setDate(fim.getDate() + 7);
+
+  const { data, error } = await supabase
+    .from("cronograma_logistico")
+    .select("*")
+    .eq("empresa_id", empresaId)
+    .gte("data_etapa", inicioSemanaStr)
+    .lt("data_etapa", formatDateISO(fim))
+    .order("data_etapa", { ascending: true })
+    .order("horario", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  const pedidos = new Map();
+  const pedidoIds = [...new Set((data || []).map((row) => row.pedido_id).filter(Boolean))];
+  const detalhesPedidos = new Map();
+  const detalhesLocais = new Map();
+
+  if (pedidoIds.length) {
+    const { data: pedidosDetalhes, error: pedidosError } = await supabase
+      .from("separacoes_pedidos")
+      .select("id,numero_pedido,cliente_nome,contato_cliente,tipo_evento,local_id,local_nome,data_evento,data_entrega,data_coleta,valor_total,status,status_comercial,observacoes")
+      .eq("empresa_id", empresaId)
+      .in("id", pedidoIds);
+
+    if (pedidosError) {
+      console.warn("[Cronograma] Nao foi possivel carregar detalhes dos pedidos:", pedidosError);
+    }
+
+    (pedidosDetalhes || []).forEach((pedido) => detalhesPedidos.set(pedido.id, pedido));
+
+    const localIds = [...new Set((pedidosDetalhes || []).map((pedido) => pedido.local_id).filter(Boolean))];
+    if (localIds.length) {
+      let { data: locais, error: locaisError } = await supabase
+        .from("locais_empresas")
+        .select("id,endereco,numero_endereco,ponto_referencia,tags")
+        .eq("empresa_id", empresaId)
+        .in("id", localIds);
+
+      if (locaisError) {
+        const fallback = await supabase
+          .from("locais_empresas")
+          .select("id,endereco,numero_endereco,ponto_referencia")
+          .eq("empresa_id", empresaId)
+          .in("id", localIds);
+        locais = fallback.data || [];
+        locaisError = fallback.error;
+      }
+
+      if (locaisError) {
+        console.warn("[Cronograma] Nao foi possivel carregar detalhes dos locais:", locaisError);
+      }
+
+      (locais || []).forEach((local) => detalhesLocais.set(local.id, local));
+    }
+  }
+
+  (data || []).forEach((row) => {
+    const key = row.pedido_id || row.numero_pedido || row.id;
+    const detalhePedido = detalhesPedidos.get(row.pedido_id) || {};
+    const detalheLocal = detalhesLocais.get(detalhePedido.local_id) || {};
+
+    if (!pedidos.has(key)) {
+      pedidos.set(key, {
+        pedido: detalhePedido.numero_pedido || row.numero_pedido || "-",
+        pedidoId: row.pedido_id,
+        cliente: detalhePedido.cliente_nome || row.cliente_nome || "-",
+        contato: detalhePedido.contato_cliente || "",
+        evento: detalhePedido.tipo_evento || row.tipo_evento || "",
+        local: detalhePedido.local_nome || row.local_nome || "-",
+        endereco: montarEnderecoLocal(detalhePedido, detalheLocal),
+        localTags: montarTagsLocal(detalhePedido, detalheLocal),
+        dataEvento: detalhePedido.data_evento || row.data_evento || "",
+        dataEntrega: detalhePedido.data_entrega || "",
+        dataColeta: detalhePedido.data_coleta || "",
+        valorTotal: detalhePedido.valor_total || 0,
+        statusComercial: detalhePedido.status_comercial || detalhePedido.status || "",
+        etapas: []
+      });
+    }
+
+    pedidos.get(key).etapas.push({
+      id: row.id,
+      etapa: row.etapa,
+      dataEtapa: row.data_etapa,
+      horario: String(row.horario || "08:00").slice(0, 5),
+      caminhao: row.caminhao || "",
+      responsavel: row.responsavel || "",
+      equipe: row.equipe || "",
+      observacao: row.observacao || "",
+      status: row.status || "programado"
+    });
+  });
+
+  return Array.from(pedidos.values());
 }
 
 async function buscarAgenda() {
@@ -106,12 +203,35 @@ async function salvarAgenda(dados) {
   return true;
 }
 
+async function carregarLocalCronograma(localId, empresaId) {
+  const supabase = window.supabaseClient;
+  if (!supabase || !localId || !empresaId) return { data: null };
+
+  let resposta = await supabase
+    .from("locais_empresas")
+    .select("id,endereco,numero_endereco,ponto_referencia,tags")
+    .eq("empresa_id", empresaId)
+    .eq("id", localId)
+    .maybeSingle();
+
+  if (resposta.error) {
+    resposta = await supabase
+      .from("locais_empresas")
+      .select("id,endereco,numero_endereco,ponto_referencia")
+      .eq("empresa_id", empresaId)
+      .eq("id", localId)
+      .maybeSingle();
+  }
+
+  return resposta;
+}
+
 // =========================================
-// UTILITÁRIOS
+// UTILITARIOS
 // =========================================
-// Declarar apenas se não existir (proteção contra re-carregamento)
+// Declarar apenas se nao existir (protecao contra re-carregamento)
 if (typeof window.__DIAS_SEMANA === 'undefined') {
-  window.__DIAS_SEMANA = ["Ter", "Qua", "Qui", "Sex", "Sáb", "Dom", "Seg"];
+  window.__DIAS_SEMANA = ["Ter", "Qua", "Qui", "Sex", "Sab", "Dom", "Seg"];
 }
 
 function getInicioSemanaOperacional(dataBase) {
@@ -173,10 +293,89 @@ function formatDateBR(value) {
   return d.toLocaleDateString("pt-BR");
 }
 
+function extractTextFromHtml(html) {
+  if (!html) return "";
+  const temp = document.createElement("div");
+  temp.innerHTML = html;
+  return limparTextoCronograma(temp.innerText.replace(/\s+/g, " ").trim());
+}
+
+function limparTextoCronograma(value) {
+  return String(value || "")
+    .replace(/Ã£/g, "a")
+    .replace(/Ã¡/g, "a")
+    .replace(/Ã¢/g, "a")
+    .replace(/Ã©/g, "e")
+    .replace(/Ãª/g, "e")
+    .replace(/Ã­/g, "i")
+    .replace(/Ã³/g, "o")
+    .replace(/Ã´/g, "o")
+    .replace(/Ãº/g, "u")
+    .replace(/Ã§/g, "c")
+    .replace(/Ã‰/g, "E")
+    .replace(/Ã‡/g, "C");
+}
+
+function montarEnderecoLocal(pedido = {}, local = {}) {
+  const fromHtml = extractTextFromHtml(pedido.observacoes?.local_html || "");
+  if (fromHtml) return fromHtml;
+
+  const endereco = limparTextoCronograma([local.endereco, local.numero_endereco].filter(Boolean).join(", "));
+  const referencia = local.ponto_referencia ? `Referencia: ${limparTextoCronograma(local.ponto_referencia)}` : "";
+  return [endereco, referencia].filter(Boolean).join(" | ");
+}
+
+function montarTagsLocal(pedido = {}, local = {}) {
+  const html = pedido.observacoes?.local_tags_html || "";
+  if (html) {
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    const tagsHtml = Array.from(temp.querySelectorAll("*"))
+      .map((el) => limparTextoCronograma(el.textContent.trim()))
+      .filter(Boolean);
+    if (tagsHtml.length) return [...new Set(tagsHtml)];
+  }
+
+  let tags = local.tags || {};
+  if (typeof tags === "string") {
+    try {
+      tags = JSON.parse(tags);
+    } catch (_) {
+      tags = {};
+    }
+  }
+  const observacoes = Array.isArray(tags.observacoes)
+    ? tags.observacoes.map(limparTextoCronograma).filter(Boolean)
+    : [];
+  const normalizar = (value) => String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const entradas = [
+    ...Object.entries(tags).filter(([, value]) => value === true).map(([key]) => key),
+    ...Object.values(tags).filter((value) => typeof value === "string")
+  ].map(normalizar);
+  const tem = (...nomes) => nomes.some((nome) => entradas.some((entrada) => entrada.includes(normalizar(nome))));
+  const inferidas = [
+    tem("baldeacao", "baldeacao necessaria") ? "Necessita Baldeacao" : "",
+    tem("escada") ? "Tem escadas" : "",
+    tem("elevador") ? "Tem Elevador" : "",
+    tem("caminhao perto", "caminhao_proximo", "caminhao proximo") ? "Caminhao para perto" : ""
+  ].filter(Boolean);
+  return [...new Set([...observacoes, ...inferidas])];
+}
+
+function formatCurrency(value) {
+  return Number(value || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
+
 function formatWeekRange(startDate) {
   const end = new Date(startDate);
   end.setDate(end.getDate() + 6);
-  return `${formatDateBR(startDate)} até ${formatDateBR(end)}`;
+  return `${formatDateBR(startDate)} ate ${formatDateBR(end)}`;
 }
 
 function slugEtapa(etapa) {
@@ -257,7 +456,7 @@ function filtrarEtapas(etapas) {
     const nomeEtapa = (e.etapa || "").toLowerCase();
 
     const okEtapa = (modo === "triagemAgenda" && nomeEtapa.includes("triagem")) ||
-      (modo !== "triagemAgenda" && (!filtroEtapa || nomeEtapa === filtroEtapa || (filtroEtapa === "Separação" && nomeEtapa.includes("triagem"))));
+      (modo !== "triagemAgenda" && (!filtroEtapa || nomeEtapa === filtroEtapa || (filtroEtapa === "Separacao" && nomeEtapa.includes("triagem"))));
 
     const okResp = !filtroResponsavel || (e.responsavel || "").toLowerCase().includes(filtroResponsavel);
     const okCam = !filtroCaminhao || (e.caminhao || "").toLowerCase().includes(filtroCaminhao);
@@ -278,12 +477,12 @@ function formatarCaminhao(caminhao) {
 }
 
 function etapaTemPendencia(etapa) {
-  // TODO: Implementar lógica de pendências
+  // TODO: Implementar logica de pendencias
   return false;
 }
 
 function analisarCronograma() {
-  // TODO: Implementar análise de conflitos
+  // TODO: Implementar analise de conflitos
   return {
     conflitos: [],
     pendencias: []
@@ -305,7 +504,7 @@ function gerarMockCronograma() {
           dataEtapa: "2026-04-10",
           horario: "08:00",
           caminhao: "G|XL",
-          responsavel: "João Silva",
+          responsavel: "Joao Silva",
           equipe: "Equipe A",
           observacao: ""
         },
@@ -355,7 +554,7 @@ async function carregarCronograma() {
     
     console.log('[Cronograma] Dados carregados, renderizando...');
     renderCronograma();
-    console.log('[Cronograma] Renderização completa');
+    console.log('[Cronograma] Renderizacao completa');
   } catch (error) {
     console.error('[Cronograma] Erro ao carregar dados:', error);
     const tbody = document.getElementById("cronogramaBody");
@@ -369,16 +568,16 @@ async function carregarCronograma() {
 
 function renderCronograma() {
   try {
-    // Garantir que o módulo está inicializado
+    // Garantir que o modulo esta inicializado
     if (!window.__cronogramaState) {
-      console.warn('[Cronograma] Estado não inicializado');
+      console.warn('[Cronograma] Estado nao inicializado');
       return;
     }
 
     const tbody = document.getElementById("cronogramaBody");
     
     if (!tbody) {
-      console.warn('[Cronograma] Elemento cronogramaBody não encontrado no DOM');
+      console.warn('[Cronograma] Elemento cronogramaBody nao encontrado no DOM');
       return;
     }
 
@@ -427,7 +626,7 @@ function renderCronograma() {
 
   ${a.caminhao ? `
   <div class="task-line">
-    <strong>Caminhão:</strong> ${escapeHtml(a.caminhao)}
+    <strong>Caminhao:</strong> ${escapeHtml(a.caminhao)}
   </div>
   ` : ``}
 
@@ -473,16 +672,22 @@ function renderCronograma() {
       });
     });
 
+    const tagsLocal = (pedido.localTags || [])
+      .map((tag) => `<span>${escapeHtml(tag)}</span>`)
+      .join("");
+
     html += `<tr>`;
     html += `
-<td class="col-evento" onclick="editarPedido('${pedido.pedido}')">
+<td class="col-evento" onclick="abrirPreviewPedidoCronograma('${escapeHtml(pedido.pedidoId || "")}')" title="Visualizar pedido">
   <div class="evento-box">
     <span class="pedido-tag">Pedido #${escapeHtml(pedido.pedido || "-")}</span>
     <div class="evento-cliente">${escapeHtml(pedido.cliente || "-")}</div>
     <div class="evento-meta">
-      <span>📍 ${escapeHtml(pedido.local || "-")}</span>
-      <span>📅 ${formatDateBR(pedido.dataEvento)}</span>
+      <span class="evento-local">${escapeHtml(pedido.local || "-")}</span>
+      ${pedido.endereco ? `<span class="evento-endereco">${escapeHtml(pedido.endereco)}</span>` : ""}
+      <span>${formatDateBR(pedido.dataEvento)}</span>
     </div>
+    ${tagsLocal ? `<div class="evento-tags">${tagsLocal}</div>` : ""}
   </div>
 </td>
 `;
@@ -504,7 +709,7 @@ function renderCronograma() {
 
       if (dataEvento === dataDia) {
         html += `
-<div class="task-card task-evento">
+<div class="task-card task-evento" onclick="abrirPreviewPedidoCronograma('${escapeHtml(pedido.pedidoId || "")}')" title="Visualizar pedido" style="cursor:pointer;">
   <div class="task-top">
     <div class="task-title">EVENTO</div>
     <div class="task-time"></div>
@@ -515,9 +720,10 @@ function renderCronograma() {
 
       if (dias[i].length) {
         dias[i].forEach(etapa => {
+          if ((etapa.etapa || "").toLowerCase() === "evento") return;
           const etapaClasse = slugEtapa(etapa.etapa);
           html += `
-<div class="task-card task-${etapaClasse}" style="position:relative;">
+<div class="task-card task-${etapaClasse}" onclick="abrirPreviewPedidoCronograma('${escapeHtml(pedido.pedidoId || "")}')" title="Visualizar pedido" style="position:relative; cursor:pointer;">
   ${etapaTemPendencia(etapa) ? `<div class="pendencia-dot"></div>` : ""}
   <div class="task-top">
     <div class="task-title">${escapeHtml(etapa.etapa || "-")}</div>
@@ -525,7 +731,7 @@ function renderCronograma() {
   </div>
 
   ${!(etapa.etapa || "").toLowerCase().includes("triagem") ? `
-  <div class="task-line"><strong>Caminhão:</strong> ${escapeHtml(formatarCaminhao(etapa.caminhao))}</div>
+  <div class="task-line"><strong>Caminhao:</strong> ${escapeHtml(formatarCaminhao(etapa.caminhao))}</div>
   ` : ``}
   <div class="task-line"><strong>Resp:</strong> ${escapeHtml(etapa.responsavel || "-")}</div>
   <div class="task-line"><strong>Equipe:</strong> ${escapeHtml(etapa.equipe || "-")}</div>
@@ -543,35 +749,7 @@ function renderCronograma() {
 
   tbody.innerHTML = html || `<tr><td colspan="8" class="empty-state">Nenhum pedido encontrado para esta semana.</td></tr>`;
 
-  const analise = analisarCronograma();
-  window.analiseAtual = analise;
-
-  const conflitosCaminhao = analise.conflitos.filter(c => c.tipo === "caminhao").length;
-  const conflitosResp = analise.conflitos.filter(c => c.tipo === "responsavel").length;
-  const pendencias = analise.pendencias.length;
-
-  let htmlAlerta = "";
-
-  if (conflitosCaminhao > 0) {
-    htmlAlerta += `🚛 ${conflitosCaminhao} conflito(s) de caminhão &nbsp;&nbsp;`;
-  }
-
-  if (conflitosResp > 0) {
-    htmlAlerta += `👤 ${conflitosResp} responsável duplicado &nbsp;&nbsp;`;
-  }
-
-  if (pendencias > 0) {
-    htmlAlerta += `🟡 ${pendencias} pendência(s)`;
-  }
-
-  if (!htmlAlerta) {
-    htmlAlerta = "✔️ Nenhum problema no cronograma";
-  }
-
-  const painel = document.getElementById("painelAlertas");
-  if (painel) {
-    painel.innerHTML = htmlAlerta;
-  }
+  window.analiseAtual = analisarCronograma();
   } catch (error) {
     console.error('[Cronograma] Erro ao renderizar cronograma:', error);
     const tbody = document.getElementById("cronogramaBody");
@@ -587,7 +765,7 @@ function renderCronograma() {
 function mudarSemana(qtdDias) {
   try {
     if (!window.__cronogramaState || !window.__cronogramaState.semanaInicioAtual) {
-      console.warn('Módulo cronograma não está inicializado');
+      console.warn('Modulo cronograma nao esta inicializado');
       return;
     }
     
@@ -609,10 +787,10 @@ function esconderLoading() {
   // TODO: Implementar esconder loading
 }
 
-// Funções de interface (placeholders)
+// Funcoes de interface (placeholders)
 function abrirAgendaNova() {
   if (!window.__cronogramaState) {
-    console.warn('Módulo cronograma não está ativo');
+    console.warn('Modulo cronograma nao esta ativo');
     return;
   }
   console.log('Abrir agenda nova');
@@ -620,31 +798,188 @@ function abrirAgendaNova() {
 
 function abrirNovoPedido() {
   if (!window.__cronogramaState) {
-    console.warn('Módulo cronograma não está ativo');
+    console.warn('Modulo cronograma nao esta ativo');
     return;
   }
   console.log('Abrir novo pedido');
 }
 
-function abrirDetalhesAlertas() {
-  if (!window.__cronogramaState) {
-    console.warn('Módulo cronograma não está ativo');
+async function abrirPreviewPedidoCronograma(pedidoId) {
+  if (!window.__cronogramaState || !pedidoId) {
+    console.warn("Pedido sem identificador para visualizacao.");
     return;
   }
-  console.log('Abrir detalhes alertas');
+
+  const supabase = window.supabaseClient;
+  const empresaId = window.__CONTEXT?.empresa_id;
+  if (!supabase || !empresaId) return;
+
+  const modal = document.getElementById("cronogramaPreviewModal");
+  const titulo = document.getElementById("cronogramaPreviewTitulo");
+  const body = document.getElementById("cronogramaPreviewBody");
+  if (!modal || !body) return;
+
+  body.innerHTML = `<div class="empty-state">Carregando visualizacao...</div>`;
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+
+  try {
+    const { data: pedido, error } = await supabase
+      .from("separacoes_pedidos")
+      .select("*")
+      .eq("empresa_id", empresaId)
+      .eq("id", pedidoId)
+      .single();
+
+    if (error || !pedido) throw error || new Error("Pedido nao encontrado");
+
+    const itensPromise = supabase
+      .from("separacoes_itens")
+      .select("*, itens:item_id(codigo,produto,descricao_total,foto_url,valor_locacao,valor_reposicao)")
+      .eq("empresa_id", empresaId)
+      .eq("separacao_pedido_id", pedidoId)
+      .order("created_at", { ascending: true });
+
+    const empresaPromise = supabase
+      .from("empresas")
+      .select("nome,logo_url")
+      .eq("id", empresaId)
+      .maybeSingle();
+
+    const localPromise = pedido.local_id
+      ? carregarLocalCronograma(pedido.local_id, empresaId)
+      : Promise.resolve({ data: null });
+
+    const [{ data: itens, error: itensError }, { data: empresa }, { data: local }] = await Promise.all([
+      itensPromise,
+      empresaPromise,
+      localPromise
+    ]);
+
+    if (itensError) console.warn("[Cronograma] Erro ao carregar itens do preview:", itensError);
+
+    const parcelas = Array.isArray(pedido.observacoes?.parcelas_financeiras)
+      ? pedido.observacoes.parcelas_financeiras
+      : [];
+    const endereco = montarEnderecoLocal(pedido, local || {});
+    const tags = montarTagsLocal(pedido, local || {});
+    const logo = empresa?.logo_url
+      ? `<img class="cron-preview-logo" src="${escapeHtml(empresa.logo_url)}" alt="${escapeHtml(empresa.nome || "Logo")}">`
+      : `<div class="cron-preview-logo-fallback">${escapeHtml(empresa?.nome || "EasyLoc")}</div>`;
+
+    const itensRows = (itens || []).map((item) => {
+      const cadastro = item.itens || {};
+      const nome = item.item_nome || cadastro.descricao_total || cadastro.produto || "Item";
+      const qtd = Number(item.quantidade_solicitada || 0);
+      const unit = Number(cadastro.valor_locacao || 0);
+      return `
+        <tr>
+          <td>${qtd}</td>
+          <td>${item.foto_url || cadastro.foto_url ? `<img src="${escapeHtml(item.foto_url || cadastro.foto_url)}" alt="">` : ""}</td>
+          <td><strong>${escapeHtml(nome)}</strong><small>${escapeHtml(item.codigo_item || cadastro.codigo || "")}</small></td>
+          <td>${formatCurrency(unit)}</td>
+          <td>${formatCurrency(qtd * unit)}</td>
+          <td>${formatCurrency(cadastro.valor_reposicao || 0)}</td>
+        </tr>
+      `;
+    }).join("") || `<tr><td colspan="6" class="empty-state">Nenhum item salvo neste pedido.</td></tr>`;
+
+    const parcelasRows = parcelas.map((parcela, index) => `
+      <tr>
+        <td>${parcela.numero || index + 1}</td>
+        <td>${escapeHtml(parcela.tipo || `Parcela ${index + 1}`)}</td>
+        <td>${formatDateBR(parcela.vencimento)}</td>
+        <td>${formatCurrency(parcela.valor || 0)}</td>
+        <td>${escapeHtml(parcela.metodo || "A combinar")}</td>
+        <td><span class="cron-preview-badge-ok">${escapeHtml(parcela.status || "Programado")}</span></td>
+      </tr>
+    `).join("") || `<tr><td colspan="6" class="empty-state">Programacao de pagamento nao informada.</td></tr>`;
+
+    if (titulo) titulo.textContent = `Pedido #${pedido.numero_pedido || "-"}`;
+
+    body.innerHTML = `
+      <main class="cron-preview-page">
+        <header class="cron-preview-hero">
+          <div class="cron-preview-brand">
+            ${logo}
+            <div>
+              <h1>Proposta comercial</h1>
+              <p>Locacao de mobiliario e decoracao de eventos.</p>
+            </div>
+          </div>
+          <div class="cron-preview-pedido-box">
+            <span>Pedido</span>
+            <strong>#${escapeHtml(pedido.numero_pedido || "-")}</strong>
+            <em>${escapeHtml(pedido.status_comercial || pedido.status || "orcamento")}</em>
+          </div>
+        </header>
+
+        <section class="cron-preview-section">
+          <div class="cron-preview-section-title">
+            <h2>Dados do evento</h2>
+            <span>${new Date().toLocaleDateString("pt-BR")}</span>
+          </div>
+          <div class="cron-preview-grid">
+            <div><span>Cliente</span><strong>${escapeHtml(pedido.cliente_nome || "-")}</strong></div>
+            <div><span>Contato</span><strong>${escapeHtml(pedido.contato_cliente || "-")}</strong></div>
+            <div><span>Evento</span><strong>${escapeHtml(pedido.tipo_evento || "-")}</strong></div>
+            <div><span>Data do evento</span><strong>${formatDateBR(pedido.data_evento || pedido.data_hora)}</strong></div>
+            <div><span>Entrega / Coleta</span><strong>${formatDateBR(pedido.data_entrega)} / ${formatDateBR(pedido.data_coleta)}</strong></div>
+            <div class="wide"><span>Local</span><strong>${escapeHtml(pedido.local_nome || "-")}</strong></div>
+            <div class="wide"><span>Endereco e referencia</span><strong>${escapeHtml(endereco || "-")}</strong></div>
+          </div>
+          ${tags.length ? `<div class="cron-preview-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+        </section>
+
+        <section class="cron-preview-section">
+          <h2>Itens do pedido</h2>
+          <table>
+            <thead><tr><th>Qtd</th><th>Foto</th><th>Item</th><th>Locacao</th><th>Total</th><th>Reposicao</th></tr></thead>
+            <tbody>${itensRows}</tbody>
+          </table>
+        </section>
+
+        <section class="cron-preview-section cron-preview-finance">
+          <div>
+            <h2>Programacao de pagamento</h2>
+            <table>
+              <thead><tr><th>#</th><th>Tipo</th><th>Vencimento</th><th>Valor</th><th>Metodo</th><th>Status</th></tr></thead>
+              <tbody>${parcelasRows}</tbody>
+            </table>
+          </div>
+          <div>
+            <h2>Resumo financeiro</h2>
+            <div class="cron-preview-total-row">
+              <span>Total do pedido</span>
+              <strong>${formatCurrency(pedido.valor_total || 0)}</strong>
+            </div>
+          </div>
+        </section>
+      </main>
+    `;
+  } catch (error) {
+    console.error("[Cronograma] Erro ao abrir preview:", error);
+    body.innerHTML = `<div class="empty-state">Nao foi possivel abrir a visualizacao do pedido.</div>`;
+  }
 }
 
-function editarPedido(pedido) {
-  if (!window.__cronogramaState) {
-    console.warn('Módulo cronograma não está ativo');
-    return;
-  }
-  console.log('Editar pedido:', pedido);
+function fecharPreviewCronograma() {
+  const modal = document.getElementById("cronogramaPreviewModal");
+  modal?.classList.add("hidden");
+  modal?.setAttribute("aria-hidden", "true");
 }
+
+function imprimirPreviewCronograma() {
+  window.print();
+}
+
+window.abrirPreviewPedidoCronograma = abrirPreviewPedidoCronograma;
+window.fecharPreviewCronograma = fecharPreviewCronograma;
+window.imprimirPreviewCronograma = imprimirPreviewCronograma;
 
 function abrirSenhaAgenda(element) {
   if (!window.__cronogramaState) {
-    console.warn('Módulo cronograma não está ativo');
+    console.warn('Modulo cronograma nao esta ativo');
     return;
   }
   console.log('Abrir senha agenda:', element);

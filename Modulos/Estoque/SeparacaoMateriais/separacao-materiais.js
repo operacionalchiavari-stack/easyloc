@@ -362,11 +362,6 @@
   async function carregarFila() {
     if (!state.supabase || !state.empresaId) return;
 
-    if (tabelasSeparacaoAusentes()) {
-      setupState("As tabelas de separaÃ§Ã£o ainda nÃ£o existem neste Supabase.");
-      return;
-    }
-
     try {
       state.dbReady = true;
 
@@ -375,6 +370,7 @@
         .select("*")
         .eq("empresa_id", state.empresaId)
         .in("status", ["pendente", "em_separacao", "pausado", "separado", "separado_com_divergencia"])
+        .in("status_comercial", ["pre_reserva", "aprovado"])
         .order("data_hora", { ascending: true });
 
       if (erroPedidos) throw erroPedidos;

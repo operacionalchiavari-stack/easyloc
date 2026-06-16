@@ -126,7 +126,6 @@ delete window.__activeModuleDestroy;
     ===================================================== */
     delete window.__moduleInit;
 delete window.__caminhoesEventosAtivos;
-    delete window.__insumosInicializado;
     delete window.__fornecedoresInicializado;
     delete window.__caminhoesInicializado;
     delete window.__pedidoInicializado;

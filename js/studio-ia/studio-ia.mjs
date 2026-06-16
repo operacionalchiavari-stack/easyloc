@@ -16,12 +16,12 @@
     "a4-landscape": { label: "Folha A4 paisagem", width: 1754, height: 1240 }
   };
   const GENERATE_MESSAGES = [
-    "Estou preparando a cena e lendo a composicao do canvas.",
-    "Separando as referencias dos moveis para manter o formato original.",
-    "Ajustando proporcao, profundidade e posicao dos objetos.",
-    "Aplicando estilo, iluminacao e acabamento profissional.",
-    "Estou quase finalizando a imagem.",
-    "Renderizando os ultimos detalhes para abrir o resultado aqui."
+    "Lendo a composicao do canvas.",
+    "Preservando o formato dos moveis.",
+    "Ajustando profundidade e posicao.",
+    "Aplicando iluminacao profissional.",
+    "Estou quase finalizando.",
+    "Preparando o resultado na tela."
   ];
 
   const state = {
@@ -43,7 +43,8 @@
     generateMessageIndex: 0,
     options: {
       periodo: "Dia",
-      convidados: "Sem convidados"
+      convidados: "Sem convidados",
+      ambientacao: []
     }
   };
 
@@ -115,6 +116,7 @@
       "studioResetView",
       "studioSearchItem",
       "studioCategoryFilters",
+      "studioEnhancements",
       "studioCatalog",
       "studioCatalogStatus",
       "studioLayers",
@@ -665,6 +667,23 @@
     }).join("");
   }
 
+  function renderEnhancementButtons(){
+    if(!els.studioEnhancements) return;
+    const selected = new Set(state.options.ambientacao || []);
+    els.studioEnhancements.querySelectorAll("button[data-value]").forEach((button) => {
+      button.classList.toggle("active", selected.has(button.dataset.value));
+    });
+  }
+
+  function renderSceneOptionButtons(){
+    document.querySelectorAll(".studio-segmented[data-group]").forEach((group) => {
+      const value = state.options[group.dataset.group];
+      group.querySelectorAll("button[data-value]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.value === value);
+      });
+    });
+  }
+
   function markDirty(){
     renderLayers();
     setStatus("Alteracoes pendentes");
@@ -700,6 +719,7 @@
       tipoImagem: els.studioTipoImagem.value,
       periodo: state.options.periodo,
       convidados: state.options.convidados,
+      ambientacao: [...state.options.ambientacao],
       estilo: els.studioEstilo.value,
       iluminacao: els.studioIluminacao.value,
       fundo: state.backgroundInfo,
@@ -718,13 +738,23 @@
     const objects = state.canvas.getObjects().filter((obj) => obj.studioType === "item");
     const convidadosRule = {
       "Sem convidados": "Regra obrigatoria de convidados: nao incluir pessoas visiveis, convidados, equipes ou figurantes.",
-      "Poucos convidados": "Regra obrigatoria de convidados: incluir poucas pessoas de evento, de forma discreta e elegante, como pequenos grupos ao fundo ou nas laterais. Nao deixar a cena vazia.",
-      "Evento cheio": "Regra obrigatoria de convidados: a cena deve parecer um evento cheio, com publico/convidados visiveis e bem distribuidos sem cobrir os moveis principais."
+      "Poucos convidados": "Regra obrigatoria de convidados: incluir poucas pessoas de evento, de forma discreta e elegante, como pequenos grupos ao fundo ou nas laterais. Nao deixar a cena vazia. Os convidados devem ocupar areas livres e se adaptar aos moveis, nunca mover, cobrir ou substituir as pecas.",
+      "Evento cheio": "Regra obrigatoria de convidados: a cena deve parecer um evento cheio, com publico/convidados visiveis e bem distribuidos. Os convidados devem ocupar areas livres, corredores, fundo e laterais, sem mover, cobrir ou substituir os moveis principais."
     }[options.convidados] || `Regra obrigatoria de convidados: seguir exatamente a opcao ${options.convidados}.`;
+    const ambientacaoRule = options.ambientacao?.length
+      ? `Ambientacao obrigatoria selecionada pelo usuario: ${options.ambientacao.join(", ")}. Esses elementos devem enriquecer a cena de evento premium, usando areas livres, teto, fundo, laterais, quinas, mesas e bar quando fizer sentido, sem alterar a posicao ou identidade dos moveis do canvas.`
+      : "Ambientacao extra: nao adicionar elementos decorativos importantes alem do necessario para realismo.";
     const itemLines = objects.map((obj, index) => {
       const scale = Number((((obj.scaleX || 1) + (obj.scaleY || 1)) / 2).toFixed(2));
       const orientacao = obj.flipX ? "imagem invertida horizontalmente pelo usuario" : "mesma orientacao/frente da foto original";
-      return `${index + 1}. ${obj.itemName || "Item"} na posicao x:${Math.round(obj.left || 0)}, y:${Math.round(obj.top || 0)}, escala:${scale}, rotacao:${Math.round(obj.angle || 0)} graus, orientacao:${orientacao}`;
+      const bounds = obj.getBoundingRect(true, true);
+      const centerX = ((bounds.left + bounds.width / 2) / state.canvas.width) * 100;
+      const centerY = ((bounds.top + bounds.height / 2) / state.canvas.height) * 100;
+      const widthPct = (bounds.width / state.canvas.width) * 100;
+      const heightPct = (bounds.height / state.canvas.height) * 100;
+      const zonaX = centerX < 33 ? "terco esquerdo" : centerX > 66 ? "terco direito" : "centro horizontal";
+      const zonaY = centerY < 33 ? "parte superior/fundo" : centerY > 66 ? "parte inferior/frente" : "meio da cena";
+      return `${index + 1}. ${obj.itemName || "Item"}: ancora visual no ${zonaX}, ${zonaY}; centro aproximado ${centerX.toFixed(1)}% da largura e ${centerY.toFixed(1)}% da altura; tamanho ${widthPct.toFixed(1)}% x ${heightPct.toFixed(1)}% do quadro; posicao original x:${Math.round(obj.left || 0)}, y:${Math.round(obj.top || 0)}; escala:${scale}; rotacao:${Math.round(obj.angle || 0)} graus; orientacao:${orientacao}`;
     });
 
     return [
@@ -733,7 +763,12 @@
       `Formato de saida: ${options.formato.nome}, proporcao ${options.formato.proporcao}.`,
       `Tipo: ${options.tipoImagem}. Estilo visual: ${options.estilo}. Periodo: ${options.periodo}. Convidados: ${options.convidados}.`,
       convidadosRule,
+      ambientacaoRule,
       "As escolhas de Tipo, Periodo, Convidados, Estilo e Iluminacao sao soberanas e devem aparecer no resultado final.",
+      "Regra de hierarquia: moveis e itens do canvas sao fixos. Convidados, noivos, decoracao, paisagismo, velas, lustres, tecidos, bebidas e arranjos devem se adaptar ao layout existente, nunca deslocar ou reorganizar as pecas.",
+      "Regra geometrica obrigatoria: o posicionamento dos itens e soberano. Cada movel deve permanecer na mesma zona visual e ancora percentual do canvas. Se esta no centro, fica no centro; se esta no terco esquerdo, fica no terco esquerdo; se esta no terco direito, fica no terco direito.",
+      "Nao mover bar, mesas, cadeiras, poltronas ou qualquer item para abrir espaco para convidados, noivos, decoracao, lustres, velas, arvores, bebidas ou arranjos. Esses elementos extras devem entrar apenas nos espacos livres.",
+      "E permitido ajustar perspectiva e profundidade apenas sem mudar a leitura de posicao original do item no quadro.",
       "A cena deve continuar com linguagem de evento/locacao premium, mesmo quando o fundo for externo, interno, grama, salao, jardim ou outro ambiente.",
       `Iluminacao desejada: ${options.iluminacao}.`,
       "Preserve o ambiente/plano de fundo do canvas ao maximo: terreno, piso, parede, grama, ceu, horizonte, montanhas, perspectiva e enquadramento devem continuar reconheciveis.",
@@ -850,6 +885,11 @@
       if(options.tipoImagem) els.studioTipoImagem.value = options.tipoImagem;
       if(options.estilo) els.studioEstilo.value = options.estilo;
       if(options.iluminacao) els.studioIluminacao.value = options.iluminacao;
+      if(options.periodo) state.options.periodo = options.periodo;
+      if(options.convidados) state.options.convidados = options.convidados;
+      state.options.ambientacao = Array.isArray(options.ambientacao) ? options.ambientacao : [];
+      renderSceneOptionButtons();
+      renderEnhancementButtons();
       if(options.formato?.id && CANVAS_PRESETS[options.formato.id]){
         els.studioCanvasPreset.value = options.formato.id;
         applyCanvasPreset(options.formato.id, false);
@@ -865,6 +905,11 @@
     state.canvas.backgroundImage = null;
     state.canvas.setBackgroundColor("#f8fafc", () => state.canvas.requestRenderAll());
     state.backgroundInfo = null;
+    state.options.periodo = "Dia";
+    state.options.convidados = "Sem convidados";
+    state.options.ambientacao = [];
+    renderSceneOptionButtons();
+    renderEnhancementButtons();
     state.canvasPreset = "wide";
     if(els.studioCanvasPreset) els.studioCanvasPreset.value = "wide";
     applyCanvasPreset("wide", false);
@@ -929,21 +974,37 @@
     await salvarProjeto(true);
     const prompt = buildPrompt();
     const preview = getPreview();
-    const objects = state.canvas.getObjects().filter((obj) => obj.studioType === "item").map((obj) => ({
-      itemId: obj.itemId,
-      itemName: obj.itemName,
-      itemImage: obj.itemImage,
-      left: obj.left,
-      top: obj.top,
-      scaleX: obj.scaleX,
-      scaleY: obj.scaleY,
-      angle: obj.angle,
-      flipX: Boolean(obj.flipX),
-      flipY: Boolean(obj.flipY),
-      orientationRule: obj.flipX
-        ? "Preservar o mesmo lado da foto, apenas invertido horizontalmente como no canvas."
-        : "Preservar exatamente a vista/frente da foto original; nao virar para costas ou outro angulo."
-    }));
+    const objects = state.canvas.getObjects().filter((obj) => obj.studioType === "item").map((obj) => {
+      const bounds = obj.getBoundingRect(true, true);
+      const centerXPercent = Number((((bounds.left + bounds.width / 2) / state.canvas.width) * 100).toFixed(2));
+      const centerYPercent = Number((((bounds.top + bounds.height / 2) / state.canvas.height) * 100).toFixed(2));
+      const zoneX = centerXPercent < 33 ? "left" : centerXPercent > 66 ? "right" : "center";
+      const zoneY = centerYPercent < 33 ? "back/top" : centerYPercent > 66 ? "front/bottom" : "middle";
+      return {
+        itemId: obj.itemId,
+        itemName: obj.itemName,
+        itemImage: obj.itemImage,
+        left: obj.left,
+        top: obj.top,
+        scaleX: obj.scaleX,
+        scaleY: obj.scaleY,
+        angle: obj.angle,
+        flipX: Boolean(obj.flipX),
+        flipY: Boolean(obj.flipY),
+        anchor: {
+          centerXPercent,
+          centerYPercent,
+          widthPercent: Number(((bounds.width / state.canvas.width) * 100).toFixed(2)),
+          heightPercent: Number(((bounds.height / state.canvas.height) * 100).toFixed(2)),
+          zoneX,
+          zoneY
+        },
+        positionRule: `Manter este item na zona ${zoneX}/${zoneY}, com centro visual perto de ${centerXPercent}% x ${centerYPercent}% do quadro.`,
+        orientationRule: obj.flipX
+          ? "Preservar o mesmo lado da foto, apenas invertido horizontalmente como no canvas."
+          : "Preservar exatamente a vista/frente da foto original; nao virar para costas ou outro angulo."
+      };
+    });
 
     renderLoadingRenders();
     setGenerateLoading(true);
@@ -1097,6 +1158,18 @@
       });
     });
 
+    els.studioEnhancements?.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if(!button) return;
+      const value = button.dataset.value;
+      const selected = new Set(state.options.ambientacao || []);
+      if(selected.has(value)) selected.delete(value);
+      else selected.add(value);
+      state.options.ambientacao = [...selected];
+      renderEnhancementButtons();
+      markDirty();
+    });
+
     ["studioTipoImagem", "studioEstilo", "studioIluminacao", "studioProjectName"].forEach((id) => {
       els[id]?.addEventListener("input", markDirty);
       els[id]?.addEventListener("change", markDirty);
@@ -1184,6 +1257,8 @@
       await carregarItens();
       await carregarProjetos();
       renderLayers();
+      renderSceneOptionButtons();
+      renderEnhancementButtons();
       startAutosave();
       setStatus("Pronto");
       window.finalizarCarregamentoModulo?.();

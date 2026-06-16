@@ -19,6 +19,78 @@ window.itens_gerarCodigoFormatado = function(){
   return codigo;
 
 };
+
+function itens_gerarQrCode(){
+  return window.EasyLocQR?.generateValue?.()
+    || window.crypto?.randomUUID?.()
+    || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function itens_colunaQrAusente(error){
+  return error?.code === "42703"
+    || String(error?.message || "").includes("qr_code does not exist");
+}
+
+function itens_setQrVisual(qrCode){
+  const autoCard = document.getElementById("itensQrAutoCard");
+  const section = document.getElementById("itensQrIdentificacao");
+  const code = document.getElementById("itensQrCodigo");
+  const render = document.getElementById("itensQrRender");
+
+  if(!autoCard || !section) return;
+
+  if(!qrCode){
+    autoCard.style.display = "flex";
+    section.classList.add("hidden");
+    if(code) code.textContent = "";
+    if(render) render.innerHTML = "";
+    return;
+  }
+
+  autoCard.style.display = "none";
+  section.classList.remove("hidden");
+  if(code) code.textContent = qrCode;
+
+  if(window.EasyLocQR?.render && render){
+    window.EasyLocQR.render(render, qrCode, 96);
+  }
+}
+
+async function itens_garantirQrCode(item){
+  if(item?.qr_code) return item.qr_code;
+
+  const qrCode = itens_gerarQrCode();
+  item.qr_code = qrCode;
+
+  try{
+    const { error } = await window.supabaseClient
+      ?.from("itens")
+      .update({ qr_code: qrCode })
+      .eq("id", item.id);
+
+    if(itens_colunaQrAusente(error)){
+      item.qr_code = "";
+      return "";
+    }
+  }catch(error){
+    console.warn("Nao foi possivel salvar QR Code do item antigo:", error);
+  }
+
+  return qrCode;
+}
+
+window.itens_copiarQrCode = function(){
+  if(window.itemAtualQrCode){
+    window.EasyLocQR?.copy?.(window.itemAtualQrCode);
+  }
+};
+
+window.itens_baixarQrCode = function(){
+  const container = document.getElementById("itensQrRender");
+  const codigo = document.getElementById("itensCodigo")?.value || window.itemAtualQrCode;
+  window.EasyLocQR?.downloadFromContainer?.(container, codigo);
+};
+
 window.itens_openAdd = function(){
 
   const modal =
@@ -35,6 +107,7 @@ window.itens_openAdd = function(){
 
   /* limpa item atual */
   window.itemAtualId = null;
+  window.itemAtualQrCode = null;
 
   /* ===============================
      LIMPAR INPUTS
@@ -71,6 +144,8 @@ if(codigoInput){
 if(window.itens_resetarFoto){
   window.itens_resetarFoto();
 }
+
+itens_setQrVisual(null);
 
   /* ===============================
      RESETAR TIPO
@@ -131,9 +206,15 @@ window.abrirDetalhesItem = function(item){
 
   /* guarda id do item */
   window.itemAtualId = item.id;
+  window.itemAtualQrCode = item.qr_code || null;
 
   /* abre modal */
   modal.style.display = "flex";
+
+  itens_garantirQrCode(item).then((qrCode)=>{
+    window.itemAtualQrCode = qrCode;
+    itens_setQrVisual(qrCode);
+  });
 
   /* ===============================
      CAMPOS BÁSICOS

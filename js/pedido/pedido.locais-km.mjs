@@ -142,7 +142,7 @@ export function initAutocompleteLocaisEKm({
 function renderizarObservacoesLocal({ local, obsDiv }){
   if(!obsDiv) return;
 
-  const observacoes = local?.tags?.observacoes || [];
+  const observacoes = getTagsOperacionais(local?.tags || {});
   const tagsDiv = document.getElementById("localTagsInline");
   atualizarIndicadoresLocal(local?.tags || {});
 
@@ -166,10 +166,30 @@ function renderizarObservacoesLocal({ local, obsDiv }){
   `;
 
   if(tagsDiv){
-    tagsDiv.innerHTML = Array.isArray(observacoes) && observacoes.length
+    tagsDiv.innerHTML = observacoes.length
       ? observacoes.map((obs) => `<span class="local-tag-real">${obs}</span>`).join("")
       : "";
   }
+}
+
+function getTagsOperacionais(tags){
+  const observacoes = Array.isArray(tags?.observacoes) ? tags.observacoes.filter(Boolean) : [];
+  const normalizar = (value) => String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const entradas = [
+    ...Object.entries(tags || {}).filter(([, value]) => value === true).map(([key]) => key),
+    ...Object.values(tags || {}).filter((value) => typeof value === "string")
+  ].map(normalizar);
+  const tem = (...nomes) => nomes.some((nome) => entradas.some((entrada) => entrada.includes(normalizar(nome))));
+  const inferidas = [
+    tem("baldeacao", "baldeacao necessaria") ? "Necessita Baldeação" : "",
+    tem("escada") ? "Tem escadas" : "",
+    tem("elevador") ? "Tem Elevador" : "",
+    tem("caminhao perto", "caminhao_proximo", "caminhao proximo") ? "Caminhão para perto" : ""
+  ].filter(Boolean);
+  return [...new Set([...observacoes, ...inferidas])];
 }
 
 function atualizarIndicadoresLocal(tags){

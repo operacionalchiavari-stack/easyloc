@@ -910,6 +910,12 @@ function initEnderecoAutocomplete() {
 
   if (!window.google?.maps?.places) {
     console.error("Google Places não carregado");
+    window.carregarGooglePlaces?.()
+      .then(() => initEnderecoAutocomplete())
+      .catch((error) => {
+        console.error("Google Places nao carregado:", error);
+        mostrarAlerta?.("Google Places nao configurado. Verifique a chave do Google Maps.");
+      });
     return;
   }
 

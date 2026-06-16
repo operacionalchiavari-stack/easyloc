@@ -1,0 +1,237 @@
+<div class="compras-page el-page" data-module="compras-estoque">
+  <header class="compras-hero">
+    <div>
+      <span class="compras-eyebrow">Estoque</span>
+      <h1>Compras</h1>
+      <p>Acompanhe compras, previsões de chegada, pagamentos e recebimentos do almoxarifado.</p>
+    </div>
+    <div class="compras-actions">
+      <button type="button" class="btn secondary" id="btnComprasAtualizar">Atualizar</button>
+      <button type="button" class="btn primary" id="btnComprasNova">Nova compra</button>
+    </div>
+  </header>
+
+  <section class="compras-kpis" id="comprasKpis"></section>
+
+  <section class="compras-card">
+    <div class="compras-card-header">
+      <div>
+        <span class="compras-section-label">Acompanhamento</span>
+        <h2>Compras lançadas</h2>
+      </div>
+      <div class="compras-filters">
+        <input class="el-input" id="comprasBusca" placeholder="Buscar fornecedor, NF ou motivo">
+        <select class="el-select" id="comprasStatusFiltro">
+          <option value="">Todos os status</option>
+          <option value="aguardando_recebimento">Aguardando recebimento</option>
+          <option value="recebido">Recebido</option>
+          <option value="atrasado">Atrasado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+    </div>
+    <div class="compras-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Compra</th>
+            <th>Tipo</th>
+            <th>Fornecedor</th>
+            <th>NF / Documento</th>
+            <th>Previsão</th>
+            <th>Pagamento</th>
+            <th>Motivo</th>
+            <th>Itens</th>
+            <th>Total</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="comprasTabela"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="compras-modal hidden" id="comprasModal" role="dialog" aria-modal="true">
+    <form class="compras-modal-card" id="comprasForm">
+      <div class="compras-modal-header">
+        <div>
+          <span class="compras-section-label">Lançamento de compra</span>
+          <h2>Nova compra</h2>
+          <p>Compra para conferencia no almoxarifado.</p>
+        </div>
+        <button type="button" class="compras-icon-btn" data-compras-close>X</button>
+      </div>
+
+      <section class="compras-purchase-type" aria-label="Tipo de compra">
+        <div>
+          <span class="compras-section-label">Tipo de compra</span>
+          <h3>Destino da compra</h3>
+        </div>
+        <div class="compras-type-options">
+          <label class="compras-type-card">
+            <input type="radio" name="tipo_compra" value="insumos" checked>
+            <span>
+              <strong>Insumos</strong>
+            </span>
+          </label>
+          <label class="compras-type-card">
+            <input type="radio" name="tipo_compra" value="itens_locacao">
+            <span>
+              <strong>Itens de locacao</strong>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="compras-quick-scan">
+        <div>
+          <span class="compras-section-label">Leitura rápida</span>
+          <h3>QR, codigo de barras ou NF-e</h3>
+        </div>
+        <div class="compras-scan-actions">
+          <input class="el-input" id="comprasScanInput" placeholder="Bipe, cole ou digite o código">
+          <button type="button" class="btn primary" id="btnComprasUsarCodigo">Usar código</button>
+          <button type="button" class="btn secondary" id="btnComprasCamera">Câmera</button>
+        </div>
+        <div class="compras-scanner hidden" id="comprasScannerBox">
+          <video id="comprasScannerVideo" playsinline muted></video>
+          <button type="button" class="btn secondary sm" id="btnComprasPararCamera">Parar câmera</button>
+        </div>
+        <div class="compras-scan-feedback" id="comprasScanFeedback"></div>
+      </section>
+
+      <section class="compras-modal-section">
+        <div class="compras-section-title">
+          <span>1</span>
+          <h3>Dados da compra</h3>
+        </div>
+        <div class="compras-form-grid">
+          <label>Fornecedor
+            <input class="el-input" name="fornecedor" required placeholder="Fornecedor">
+          </label>
+          <label>Número da nota
+            <input class="el-input" name="numero_nf" placeholder="NF-e, pedido ou orçamento">
+          </label>
+          <label>Chave NF-e
+            <input class="el-input" name="chave_nfe" placeholder="44 dígitos, se houver">
+          </label>
+          <label>Previsão de chegada
+            <input class="el-input" name="data_prevista" type="date">
+          </label>
+          <label>Responsável pela compra
+            <input class="el-input" name="responsavel" placeholder="Quem comprou">
+          </label>
+          <label>Centro de custo
+            <select class="el-select" name="centro_custo">
+              <option value="Almoxarifado">Almoxarifado</option>
+              <option value="Marcenaria">Marcenaria</option>
+              <option value="Solda">Solda</option>
+              <option value="Acabamento">Acabamento</option>
+              <option value="Tapeçaria">Tapeçaria</option>
+              <option value="Expedição">Expedição</option>
+              <option value="Manutenção">Manutenção</option>
+              <option value="Administrativo">Administrativo</option>
+            </select>
+          </label>
+          <label>Prioridade
+            <select class="el-select" name="prioridade">
+              <option value="normal">Normal</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </label>
+          <label>Status inicial
+            <select class="el-select" name="status">
+              <option value="aguardando_recebimento">Aguardando recebimento</option>
+              <option value="pendente">Pendente</option>
+            </select>
+          </label>
+          <label class="span-2">Descrição
+            <textarea class="el-textarea" name="descricao" rows="2" placeholder="Resumo da compra"></textarea>
+          </label>
+          <label class="span-2">Motivo da compra
+            <textarea class="el-textarea" name="motivo_compra" rows="2" placeholder="Reposição, item crítico, compra para pedido específico, manutenção..."></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="compras-modal-section">
+        <div class="compras-section-title">
+          <span>2</span>
+          <h3>Pagamento e condições</h3>
+        </div>
+        <div class="compras-form-grid payment-grid">
+          <label>Forma de pagamento
+            <select class="el-select" name="forma_pagamento">
+              <option value="A combinar">A combinar</option>
+              <option value="PIX">PIX</option>
+              <option value="Cartão">Cartão</option>
+              <option value="Transferência">Transferência</option>
+              <option value="Boleto">Boleto</option>
+              <option value="Dinheiro">Dinheiro</option>
+            </select>
+          </label>
+          <label>Condição
+            <select class="el-select" name="condicao_pagamento">
+              <option value="À vista">À vista</option>
+              <option value="Parcelado">Parcelado</option>
+              <option value="Faturado">Faturado</option>
+              <option value="Na entrega">Na entrega</option>
+            </select>
+          </label>
+          <label>Quantidade de parcelas
+            <input class="el-input" name="parcelas" type="number" min="1" step="1" value="1">
+          </label>
+          <label>Primeiro vencimento
+            <input class="el-input" name="primeiro_vencimento" type="date">
+          </label>
+          <label>Frete
+            <input class="el-input" name="valor_frete" type="number" min="0" step="0.01" value="0">
+          </label>
+          <label>Desconto
+            <input class="el-input" name="valor_desconto" type="number" min="0" step="0.01" value="0">
+          </label>
+          <label class="span-2">Observação financeira
+            <textarea class="el-textarea" name="observacao_financeira" rows="2" placeholder="Dados de pagamento, combinado com fornecedor ou observações do boleto"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="compras-modal-section">
+        <div class="compras-items-header">
+          <div class="compras-section-title">
+            <span>3</span>
+            <h3>Itens comprados</h3>
+          </div>
+          <button type="button" class="btn secondary sm" id="btnComprasAddItem">Adicionar item</button>
+        </div>
+
+        <div class="compras-table-wrap compact">
+          <table>
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Qtd</th>
+                <th>Valor unit.</th>
+                <th>Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="comprasItensRows"></tbody>
+          </table>
+        </div>
+
+        <div class="compras-total-line">
+          <span>Total da compra</span>
+          <strong id="comprasTotal">R$ 0,00</strong>
+        </div>
+      </section>
+
+      <div class="compras-modal-actions">
+        <button type="button" class="btn secondary" id="btnComprasLimpar">Limpar</button>
+        <button type="button" class="btn secondary" data-compras-close>Cancelar</button>
+        <button type="submit" class="btn primary">Enviar para recebimento</button>
+      </div>
+    </form>
+  </div>
+</div>

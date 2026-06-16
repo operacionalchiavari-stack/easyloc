@@ -842,8 +842,13 @@ function initEnderecoAutocomplete() {
     window.enderecoAutocomplete = null;
   }
 
-  if (!window.google || !window.google.maps || !window.google.maps.places) {
-    console.error("Google Places não carregado");
+  if (!window.google?.maps?.places) {
+    window.carregarGooglePlaces?.()
+      .then(() => initEnderecoAutocomplete())
+      .catch((error) => {
+        console.error("Google Places não carregado:", error);
+        mostrarAlerta?.("Google Places nao configurado. Verifique a chave do Google Maps.");
+      });
     return;
   }
 

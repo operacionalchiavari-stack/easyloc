@@ -121,6 +121,13 @@ button[aria-label="Fechar"],
   color: #ffffff !important;
 }
 
+.btn-fechar,
+.btn.fechar {
+  min-width: 78px;
+  padding-inline: 16px;
+  white-space: nowrap;
+}
+
 .btn-close:hover,
 .modal-close:hover,
 .os-modal-close:hover,

@@ -25,19 +25,24 @@ const empresaId = window.__CONTEXT.empresa_id;
 let autocompleteFornecedor = null;
 
 function iniciarAutocompleteEndereco() {
-
   const input = document.getElementById("enderecoGoogle");
   if (!input) return;
 
   if (!window.google?.maps?.places) {
-    console.warn("⚠️ Google Places não carregado");
+    window.carregarGooglePlaces?.()
+      .then(() => iniciarAutocompleteEndereco())
+      .catch((error) => {
+        console.warn("Google Places nao carregado:", error);
+        mostrarAlerta?.("Google Places nao configurado. Verifique a chave do Google Maps.");
+      });
     return;
   }
 
   if (autocompleteFornecedor) return;
 
   autocompleteFornecedor = new google.maps.places.Autocomplete(input, {
-    componentRestrictions: { country: "br" }
+    componentRestrictions: { country: "br" },
+    fields: ["address_components", "geometry", "formatted_address", "name"]
   });
 
   autocompleteFornecedor.addListener("place_changed", () => {
@@ -63,7 +68,6 @@ function iniciarAutocompleteEndereco() {
     }
   });
 }
-
 function setVal(id, value) {
   const el = document.getElementById(id);
   if (el && value) el.value = value;
@@ -668,7 +672,6 @@ function mostrarAlerta(mensagem, titulo = "Atenção") {
 
   alert(mensagem);
 }
-
 function fecharModalAlerta() {
   window.fecharAlertaGlobal?.();
 }

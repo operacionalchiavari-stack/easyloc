@@ -313,6 +313,7 @@ export function destroyPedido(){
   delete window.__pedidoWorkspaceObserver;
   window.__pedidoOrderObserver?.disconnect?.();
   delete window.__pedidoOrderObserver;
+  delete window.__restaurarItensPedido;
 
   document
     .querySelectorAll(".autocomplete-list")
@@ -355,11 +356,506 @@ function setupPedidoWorkspace({ supabase }){
     window.location.href = "CentralPedidos.html";
   };
 
+  const moedaParaNumero = (valor) => {
+    const limpo = String(valor || "")
+      .replace(/[^\d,.-]/g, "")
+      .replace(/\./g, "")
+      .replace(",", ".");
+    return Number(limpo || 0);
+  };
+
+  const dataParaISO = (valor) => {
+    const texto = String(valor || "").trim();
+    if(!texto) return null;
+    if(/^\d{4}-\d{2}-\d{2}/.test(texto)) return texto.slice(0, 10);
+    const match = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if(match) return `${match[3]}-${match[2]}-${match[1]}`;
+    const data = new Date(texto);
+    return Number.isNaN(data.getTime()) ? null : data.toISOString().slice(0, 10);
+  };
+
+  const statusComercialAtual = () => {
+    return window.__PEDIDO_STATUS_ATUAL
+      || document.querySelector(".timeline-step.active")?.dataset?.status
+      || "orcamento";
+  };
+
+  const coletarItensParaReserva = () => {
+    return Array.from(document.querySelectorAll("#listaItens tr.item-row"))
+      .map((row) => {
+        const itemId = row.dataset.itemId;
+        if(!itemId) return null;
+
+        const quantidadeTexto = row.querySelector(".qtd")?.value
+          || row.querySelector(".qtd")?.innerText
+          || "0";
+        const quantidade = Number(String(quantidadeTexto).replace(",", ".") || 0);
+        if(!quantidade) return null;
+
+        return {
+          item_id: itemId,
+          item_nome: row.querySelector(".nome-item")?.innerText?.trim() || "Item",
+          codigo_item: row.dataset.codigoItem || "",
+          foto_url: row.querySelector(".foto-item img")?.getAttribute("src") || "",
+          quantidade_solicitada: quantidade,
+          quantidade_separada: 0,
+          tipo_controle: "quantidade",
+          status: "pendente"
+        };
+      })
+      .filter(Boolean);
+  };
+
+  async function obterProximoNumeroPedido(){
+    const { data, error } = await supabase
+      .from("separacoes_pedidos")
+      .select("numero_pedido")
+      .eq("empresa_id", window.__CONTEXT.empresa_id);
+
+    if(error) throw error;
+
+    const usados = new Set((data || []).map((row) => String(row.numero_pedido || "").trim()));
+    let proximo = usados.size + 1;
+    let numero = String(proximo).padStart(3, "0");
+
+    while(usados.has(numero)){
+      proximo += 1;
+      numero = String(proximo).padStart(3, "0");
+    }
+
+    return numero;
+  }
+
+  const coletarParcelasFinanceiras = () => {
+    return Array.from(document.querySelectorAll("#cronogramaParcelas tr"))
+      .map((row, index) => {
+        const cells = Array.from(row.children);
+        if(cells.length < 5) return null;
+
+        const tipo = cells[1]?.innerText?.trim() || `Parcela ${index + 1}`;
+        const vencimento = dataParaISO(cells[2]?.innerText);
+        const valor = moedaParaNumero(cells[3]?.innerText);
+        const metodo = row.querySelector("select")?.value
+          || cells[4]?.innerText?.trim()
+          || document.getElementById("pagamentoMetodo")?.value
+          || "A combinar";
+        const status = cells[5]?.innerText?.trim() || "Programado";
+
+        if(!valor) return null;
+        return {
+          numero: index + 1,
+          tipo,
+          vencimento,
+          valor,
+          metodo,
+          status
+        };
+      })
+      .filter(Boolean);
+  };
+
+  const setInputValue = (id, value = "") => {
+    const el = document.getElementById(id);
+    if(el) el.value = value || "";
+  };
+
+  const setTextValue = (id, value = "") => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = value || "";
+  };
+
+  const selecionarOpcaoPorTexto = (id, texto = "") => {
+    const select = document.getElementById(id);
+    if(!select) return;
+    const alvo = String(texto || "").trim().toLowerCase();
+    const option = Array.from(select.options).find((opt) => {
+      return opt.value === texto || opt.textContent.trim().toLowerCase() === alvo;
+    });
+    if(option) select.value = option.value;
+  };
+
+  const aplicarStatusVisual = (status = "orcamento") => {
+    const labels = {
+      orcamento: "Orcamento",
+      pre_reserva: "Pre reserva",
+      aprovado: "Aprovado",
+      cancelado: "Cancelado"
+    };
+    document.querySelectorAll(".timeline-step").forEach((step) => {
+      step.classList.toggle("active", step.dataset.status === status);
+    });
+    setTextValue("pedidoStatus", labels[status] || status);
+    window.__PEDIDO_STATUS_ATUAL = status;
+  };
+
+  const renderizarParcelasSalvas = (parcelas = []) => {
+    const tbody = document.getElementById("cronogramaParcelas");
+    if(!tbody || !Array.isArray(parcelas) || !parcelas.length) return;
+
+    tbody.innerHTML = parcelas.map((parcela, index) => {
+      const data = dataParaISO(parcela.vencimento);
+      const dataBR = data ? new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR") : "-";
+      return `
+        <tr>
+          <td>${parcela.numero || index + 1}</td>
+          <td>${parcela.tipo || `Parcela ${index + 1}`}</td>
+          <td>${dataBR}</td>
+          <td>${Number(parcela.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+          <td>${parcela.metodo || "A combinar"}</td>
+          <td>${parcela.status || "Programado"}</td>
+        </tr>
+      `;
+    }).join("");
+  };
+
+  async function carregarPedidoSalvoSeNecessario(){
+    const pedidoId = window.__PEDIDO_ATUAL_ID;
+    if(!pedidoId || !supabase || !window.__CONTEXT?.empresa_id) return;
+
+    const { data: pedido, error } = await supabase
+      .from("separacoes_pedidos")
+      .select("*")
+      .eq("empresa_id", window.__CONTEXT.empresa_id)
+      .eq("id", pedidoId)
+      .single();
+
+    if(error || !pedido){
+      console.error("Erro ao carregar pedido salvo:", error);
+      avisar("Nao foi possivel carregar os dados deste pedido.", "Editar pedido", "erro");
+      return;
+    }
+
+    setTextValue("orcamentoNumero", pedido.numero_pedido || "");
+    setInputValue("clienteInput", pedido.cliente_nome || "");
+    setInputValue("clienteIdHidden", pedido.cliente_id || "");
+    setInputValue("telefoneInput", pedido.contato_cliente || "");
+    selecionarOpcaoPorTexto("tipoEventoSelect", pedido.tipo_evento || "");
+    setInputValue("localInput", pedido.local_nome || "");
+    setInputValue("localIdHidden", pedido.local_id || "");
+    setInputValue("dataEntrega", dataParaISO(pedido.data_entrega));
+    setInputValue("dataEvento", dataParaISO(pedido.data_evento || pedido.data_hora));
+    setInputValue("dataColeta", dataParaISO(pedido.data_coleta));
+    setInputValue("pagamentoObservacaoFinanceira", pedido.observacoes?.financeiro || "");
+    if(pedido.observacoes?.local_html && document.getElementById("localObservacoes")){
+      document.getElementById("localObservacoes").innerHTML = pedido.observacoes.local_html;
+    }
+    if(pedido.observacoes?.local_tags_html && document.getElementById("localTagsInline")){
+      document.getElementById("localTagsInline").innerHTML = pedido.observacoes.local_tags_html;
+    }
+    if((!pedido.observacoes?.local_html || !pedido.observacoes?.local_tags_html) && pedido.local_id){
+      const { data: localSalvo } = await supabase
+        .from("locais_empresas")
+        .select("endereco,numero_endereco,ponto_referencia,tags")
+        .eq("empresa_id", window.__CONTEXT.empresa_id)
+        .eq("id", pedido.local_id)
+        .maybeSingle();
+      if(localSalvo && !pedido.observacoes?.local_html && document.getElementById("localObservacoes")){
+        document.getElementById("localObservacoes").innerHTML = `
+          ${localSalvo.endereco ? `<div style="margin-bottom:4px;"><strong>Endereco:</strong> <span>${localSalvo.endereco}${localSalvo.numero_endereco ? ", " + localSalvo.numero_endereco : ""}</span></div>` : ""}
+          ${localSalvo.ponto_referencia ? `<div style="margin-bottom:4px;"><strong>Referencia:</strong> <span>${localSalvo.ponto_referencia}</span></div>` : ""}
+        `;
+      }
+      if(localSalvo && !pedido.observacoes?.local_tags_html && document.getElementById("localTagsInline")){
+        const tags = getTagsOperacionaisLocal(localSalvo.tags || {});
+        document.getElementById("localTagsInline").innerHTML = tags
+          .map((tag) => `<span class="local-tag-real">${tag}</span>`)
+          .join("");
+      }
+    }
+    aplicarStatusVisual(pedido.status_comercial || "orcamento");
+    renderizarParcelasSalvas(pedido.observacoes?.parcelas_financeiras || []);
+
+    const { data: itens, error: itensError } = await supabase
+      .from("separacoes_itens")
+      .select("*, itens:item_id(id,codigo,produto,descricao_total,foto_url,valor_locacao,valor_reposicao,volume_cubico)")
+      .eq("empresa_id", window.__CONTEXT.empresa_id)
+      .eq("separacao_pedido_id", pedidoId)
+      .order("created_at", { ascending: true });
+
+    if(itensError){
+      console.error("Erro ao carregar itens do pedido:", itensError);
+      avisar("Pedido carregado, mas os itens nao foram encontrados.", "Itens do pedido", "aviso");
+    }else{
+      const itensTela = (itens || []).map((item) => ({
+        item_id: item.item_id,
+        codigo_item: item.codigo_item || item.itens?.codigo || "",
+        item_nome: item.item_nome || item.itens?.descricao_total || item.itens?.produto || "Item",
+        foto_url: item.foto_url || item.itens?.foto_url || "",
+        quantidade_solicitada: item.quantidade_solicitada || 1,
+        valor_locacao: item.itens?.valor_locacao || 0,
+        valor_reposicao: item.itens?.valor_reposicao || 0,
+        volume_cubico: item.itens?.volume_cubico || 0
+      }));
+      window.__restaurarItensPedido?.(itensTela);
+    }
+
+    document.getElementById("tipoEventoSelect")?.dispatchEvent(new Event("change"));
+    window.__ocultarAutocompleteClientePedido?.();
+
+    if(["visualizar", "imprimir"].includes(window.__PEDIDO_MODO_ABERTURA)){
+      setTimeout(() => window.imprimirPedido?.(), 350);
+    }
+  }
+
+  function getTagsOperacionaisLocal(tags){
+    const observacoes = Array.isArray(tags?.observacoes) ? tags.observacoes.filter(Boolean) : [];
+    const normalizar = (value) => String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    const entradas = [
+      ...Object.entries(tags || {}).filter(([, value]) => value === true).map(([key]) => key),
+      ...Object.values(tags || {}).filter((value) => typeof value === "string")
+    ].map(normalizar);
+    const tem = (...nomes) => nomes.some((nome) => entradas.some((entrada) => entrada.includes(normalizar(nome))));
+    const inferidas = [
+      tem("baldeacao", "baldeacao necessaria") ? "Necessita Baldeação" : "",
+      tem("escada") ? "Tem escadas" : "",
+      tem("elevador") ? "Tem Elevador" : "",
+      tem("caminhao perto", "caminhao_proximo", "caminhao proximo") ? "Caminhão para perto" : ""
+    ].filter(Boolean);
+    return [...new Set([...observacoes, ...inferidas])];
+  }
+
+  function addDaysISO(dateValue, days) {
+    if (!dateValue) return null;
+    const [year, month, day] = String(dateValue).slice(0, 10).split("-").map(Number);
+    if (!year || !month || !day) return null;
+    const date = new Date(year, month - 1, day);
+    date.setDate(date.getDate() + Number(days || 0));
+    return date.toISOString().slice(0, 10);
+  }
+
+  async function carregarRegrasCronograma() {
+    const padrao = {
+      carregamento_dias_antes_entrega: 1,
+      triagem_dias_antes_carregamento: 2,
+      montagem_dias_apos_entrega: 0,
+      desmontagem_dias_apos_coleta: 0,
+      triagem_retorno_dias_apos_coleta: 1,
+      hora_padrao: "08:00"
+    };
+
+    const { data, error } = await supabase
+      .from("empresa_logistica_regras")
+      .select("*")
+      .eq("empresa_id", window.__CONTEXT.empresa_id)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("Regras do cronograma indisponiveis; usando padrao.", error);
+      return padrao;
+    }
+
+    return { ...padrao, ...(data || {}) };
+  }
+
+  async function garantirCronogramaLogistico(pedidoId, pedido) {
+    if (!pedidoId || !pedido?.data_evento || pedido.status_comercial === "cancelado") {
+      return;
+    }
+
+    const { count, error: countError } = await supabase
+      .from("cronograma_logistico")
+      .select("id", { count: "exact", head: true })
+      .eq("empresa_id", window.__CONTEXT.empresa_id)
+      .eq("pedido_id", pedidoId);
+
+    if (countError) {
+      console.warn("Nao foi possivel verificar cronograma existente.", countError);
+      return;
+    }
+
+    if (count && count > 0) {
+      return;
+    }
+
+    const regras = await carregarRegrasCronograma();
+    const entrega = pedido.data_entrega || pedido.data_evento;
+    const coleta = pedido.data_coleta || pedido.data_evento;
+    const carregamento = addDaysISO(entrega, -Number(regras.carregamento_dias_antes_entrega || 0));
+    const triagem = addDaysISO(carregamento, -Number(regras.triagem_dias_antes_carregamento || 0));
+    const montagem = addDaysISO(entrega, Number(regras.montagem_dias_apos_entrega || 0));
+    const desmontagem = addDaysISO(coleta, Number(regras.desmontagem_dias_apos_coleta || 0));
+    const triagemRetorno = addDaysISO(coleta, Number(regras.triagem_retorno_dias_apos_coleta || 0));
+    const horario = String(regras.hora_padrao || "08:00").slice(0, 5);
+
+    const etapas = [
+      { etapa: "Triagem", data_etapa: triagem, observacao: "Separacao previa do pedido." },
+      { etapa: "Carregamento", data_etapa: carregamento, observacao: "Carregamento conforme regra da empresa." },
+      { etapa: "Montagem", data_etapa: montagem, observacao: "Montagem conforme data de entrega." },
+      { etapa: "Evento", data_etapa: pedido.data_evento, observacao: "Data do evento." },
+      { etapa: "Desmontagem", data_etapa: desmontagem, observacao: "Desmontagem conforme coleta." },
+      { etapa: "Triagem Retorno", data_etapa: triagemRetorno, observacao: "Conferencia de retorno." }
+    ].filter((item) => item.data_etapa);
+
+    if (!etapas.length) {
+      return;
+    }
+
+    const payload = etapas.map((item) => ({
+      ...item,
+      empresa_id: window.__CONTEXT.empresa_id,
+      pedido_id: pedidoId,
+      numero_pedido: pedido.numero_pedido,
+      cliente_nome: pedido.cliente_nome,
+      local_nome: pedido.local_nome,
+      tipo_evento: pedido.tipo_evento,
+      data_evento: pedido.data_evento,
+      horario,
+      origem: "pedido",
+      status: "programado",
+      regras_snapshot: regras,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }));
+
+    const { error } = await supabase
+      .from("cronograma_logistico")
+      .insert(payload);
+
+    if (error) {
+      console.warn("Pedido salvo, mas o cronograma logistico nao foi gerado.", error);
+    }
+  }
+
+  async function salvarPedidoOperacional(){
+    if(!supabase || !window.__CONTEXT?.empresa_id){
+      avisar("Sessao ou empresa nao encontrada para salvar o pedido.", "Salvar pedido", "erro");
+      return;
+    }
+
+    const statusComercial = statusComercialAtual();
+    let numeroPedido = document.getElementById("orcamentoNumero")?.textContent?.trim() || "";
+    const clienteNome = document.getElementById("clienteInput")?.value?.trim() || "Cliente nao informado";
+    const clienteId = document.getElementById("clienteIdHidden")?.value || null;
+    const localId = document.getElementById("localIdHidden")?.value || null;
+    const localNome = document.getElementById("localInput")?.value?.trim() || "";
+    const dataEvento = document.getElementById("dataEvento")?.value || null;
+    const dataEntrega = document.getElementById("dataEntrega")?.value || null;
+    const dataColeta = document.getElementById("dataColeta")?.value || null;
+    const valorTotal = moedaParaNumero(document.getElementById("resumoTotalGeral")?.textContent);
+    const deveReservar = ["pre_reserva", "aprovado"].includes(statusComercial);
+    const itensReserva = deveReservar ? coletarItensParaReserva() : [];
+
+    if(deveReservar && !itensReserva.length){
+      avisar("Adicione itens cadastrados antes de criar uma reserva.", "Reserva sem itens", "aviso");
+      return;
+    }
+
+    const payloadPedido = {
+      empresa_id: window.__CONTEXT.empresa_id,
+      numero_pedido: numeroPedido,
+      cliente_id: clienteId || null,
+      cliente_nome: clienteNome,
+      contato_cliente: document.getElementById("telefoneInput")?.value?.trim() || "",
+      tipo_evento: document.getElementById("tipoEventoSelect")?.selectedOptions?.[0]?.textContent?.trim() || "",
+      local_id: localId || null,
+      local_nome: localNome,
+      data_evento: dataEvento,
+      data_entrega: dataEntrega,
+      data_coleta: dataColeta,
+      data_hora: dataEvento ? `${dataEvento}T12:00:00` : null,
+      valor_total: valorTotal,
+      status: statusComercial === "cancelado" ? "pausado" : "pendente",
+      status_comercial: statusComercial,
+      observacoes: {
+        financeiro: document.getElementById("pagamentoObservacaoFinanceira")?.value || "",
+        parcelas_financeiras: coletarParcelasFinanceiras(),
+        cancelamento: window.__PEDIDO_CANCELAMENTO || null,
+        local_html: document.getElementById("localObservacoes")?.innerHTML || "",
+        local_tags_html: document.getElementById("localTagsInline")?.innerHTML || "",
+        origem: "pedido"
+      },
+      atualizado_em: new Date().toISOString()
+    };
+
+    let pedidoId = window.__PEDIDO_ATUAL_ID || null;
+    let result;
+
+    if(pedidoId){
+      result = await supabase
+        .from("separacoes_pedidos")
+        .update(payloadPedido)
+        .eq("id", pedidoId)
+        .select("id")
+        .single();
+    }else{
+      numeroPedido = await obterProximoNumeroPedido();
+      payloadPedido.numero_pedido = numeroPedido;
+      setTextValue("orcamentoNumero", numeroPedido);
+
+      result = await supabase
+        .from("separacoes_pedidos")
+        .insert({ ...payloadPedido, criado_em: new Date().toISOString() })
+        .select("id")
+        .single();
+
+      if(result.error?.code === "23505"){
+        numeroPedido = await obterProximoNumeroPedido();
+        payloadPedido.numero_pedido = numeroPedido;
+        setTextValue("orcamentoNumero", numeroPedido);
+        result = await supabase
+          .from("separacoes_pedidos")
+          .insert({ ...payloadPedido, criado_em: new Date().toISOString() })
+          .select("id")
+          .single();
+      }
+    }
+
+    if(result.error){
+      console.error("Erro ao salvar pedido:", result.error);
+      avisar("Nao foi possivel salvar o pedido. Verifique as tabelas de pedidos no Supabase.", "Salvar pedido", "erro");
+      return;
+    }
+
+    pedidoId = result.data?.id || pedidoId;
+    window.__PEDIDO_ATUAL_ID = pedidoId;
+
+    const deveSincronizarItens = statusComercial !== "cancelado";
+
+    if(deveSincronizarItens){
+      await supabase
+        .from("separacoes_itens")
+        .delete()
+        .eq("empresa_id", window.__CONTEXT.empresa_id)
+        .eq("separacao_pedido_id", pedidoId);
+    }
+
+    if(deveSincronizarItens && itensReserva.length){
+      const itensPayload = itensReserva.map((item) => ({
+        ...item,
+        empresa_id: window.__CONTEXT.empresa_id,
+        separacao_pedido_id: pedidoId
+      }));
+
+      const { error: itensError } = await supabase
+        .from("separacoes_itens")
+        .insert(itensPayload);
+
+      if(itensError){
+        console.error("Erro ao salvar itens do pedido:", itensError);
+        avisar("Pedido salvo, mas os itens nao foram reservados.", "Reserva", "aviso");
+        return;
+      }
+    }
+
+    await garantirCronogramaLogistico(pedidoId, payloadPedido);
+
+    avisar(
+      deveReservar
+        ? "Pedido salvo e disponibilidade atualizada."
+        : "Orcamento salvo sem reservar estoque.",
+      "Salvar pedido",
+      "sucesso"
+    );
+  }
+
+  window.__salvarPedidoOperacional = salvarPedidoOperacional;
+
   document.getElementById("btnVoltarCentralPedidos")?.addEventListener("click", abrirCentral);
 
-  document.getElementById("btnSalvarPedido")?.addEventListener("click", () => {
-    avisar("A tela foi preparada para salvar o pedido quando a persistencia estiver conectada.", "Salvar pedido", "info");
-  });
+  document.getElementById("btnSalvarPedido")?.addEventListener("click", salvarPedidoOperacional);
 
   document.getElementById("btnDuplicarPedido")?.addEventListener("click", () => {
     avisar("Duplicacao preparada para reaproveitar os dados do pedido atual.", "Duplicar pedido", "info");
@@ -414,6 +910,7 @@ function setupPedidoWorkspace({ supabase }){
   setupOndeEsta({ supabase });
   enhanceItemActions();
   setupOrdenacaoPedido();
+  carregarPedidoSalvoSeNecessario();
 }
 
 function setupTimelinePedido({ avisar }){
@@ -500,6 +997,7 @@ function setupTimelinePedido({ avisar }){
 
     aplicarStatus("cancelado");
     fecharCancelamento();
+    window.__salvarPedidoOperacional?.();
     avisar("Orcamento cancelado com motivo registrado.", "Cancelamento", "sucesso");
   });
 }
@@ -636,68 +1134,260 @@ function setupOndeEsta({ supabase }){
   const panel = document.getElementById("ondeEstaPanel");
   const closeBtn = document.getElementById("btnFecharOndeEsta");
   const titulo = document.getElementById("ondeEstaTitulo");
+  const itemNome = document.getElementById("ondeItemNome");
+  const itemCodigo = document.getElementById("ondeItemCodigo");
+  const itemFoto = document.getElementById("ondeItemFoto");
+  const buscaInput = document.getElementById("ondeBuscaItem");
+  const buscaLista = document.getElementById("ondeBuscaLista");
   const disponivel = document.getElementById("ondeQtdDisponivel");
   const reservada = document.getElementById("ondeQtdReservada");
+  const totalEl = document.getElementById("ondeQtdTotal");
+  const manutencaoEl = document.getElementById("ondeQtdManutencao");
   const conflitos = document.getElementById("ondeConflitos");
   const lista = document.getElementById("ondePedidosLista");
+  const empresaId = () => window.__CONTEXT?.empresa_id;
 
-  closeBtn?.addEventListener("click", () => panel?.classList.remove("open"));
+  const escapeHtml = (value = "") => String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
-  document.getElementById("listaItens")?.addEventListener("click", async (event) => {
+  const fotoDoItem = (item = {}) => item.foto_url || "";
+
+  const nomeDoItem = (item = {}, fallback = "Item") => item.descricao_total
+    || item.produto
+    || fallback
+    || "Item";
+
+  const toDateOnly = (value) => {
+    if(!value) return "";
+    const date = new Date(value);
+    if(Number.isNaN(date.getTime())) return "";
+    return date.toISOString().slice(0, 10);
+  };
+
+  const formatDate = (value) => {
+    const normalized = toDateOnly(value);
+    if(!normalized) return "";
+    const [year, month, day] = normalized.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
+  const selectedDate = () => document.getElementById("dataEvento")?.value
+    || document.getElementById("dataEntrega")?.value
+    || "";
+
+  const isDateInsidePedido = (pedido = {}) => {
+    const base = selectedDate();
+    if(!base) return true;
+    const alvo = toDateOnly(base);
+    const inicio = toDateOnly(pedido.data_entrega || pedido.data_evento || pedido.data_hora);
+    const fim = toDateOnly(pedido.data_coleta || pedido.data_evento || pedido.data_hora);
+    if(!inicio && !fim) return true;
+    return alvo >= (inicio || fim) && alvo <= (fim || inicio);
+  };
+
+  const isReservaAtiva = (pedido = {}) => {
+    const comercial = String(pedido.status_comercial || "").toLowerCase();
+    const operacional = String(pedido.status || "").toLowerCase();
+    return !["orcamento", "cancelado"].includes(comercial) && operacional !== "cancelado";
+  };
+
+  const setLoading = (nome = "Item") => {
+    if(titulo) titulo.textContent = nome;
+    if(itemNome) itemNome.textContent = nome;
+    if(itemCodigo) itemCodigo.textContent = "-";
+    if(itemFoto) itemFoto.textContent = "Sem foto";
+    if(disponivel) disponivel.textContent = "...";
+    if(reservada) reservada.textContent = "...";
+    if(totalEl) totalEl.textContent = "...";
+    if(manutencaoEl) manutencaoEl.textContent = "...";
+    if(conflitos) conflitos.textContent = "Consultando disponibilidade na data selecionada.";
+    if(lista) lista.textContent = "Buscando pedidos relacionados...";
+  };
+
+  const setItemVisual = (item = {}, fallback = "Item") => {
+    const nome = nomeDoItem(item, fallback);
+    const codigo = item.codigo || item.id || "-";
+    const foto = fotoDoItem(item);
+    if(titulo) titulo.textContent = nome;
+    if(itemNome) itemNome.textContent = nome;
+    if(itemCodigo) itemCodigo.textContent = `Codigo: ${codigo}`;
+    if(itemFoto){
+      itemFoto.innerHTML = foto
+        ? `<img src="${escapeHtml(foto)}" alt="${escapeHtml(nome)}">`
+        : "Sem foto";
+    }
+  };
+
+  const periodoPedido = (pedido = {}) => {
+    const inicio = formatDate(pedido.data_entrega || pedido.data_evento || pedido.data_hora);
+    const fim = formatDate(pedido.data_coleta);
+    if(inicio && fim && inicio !== fim) return `${inicio} ate ${fim}`;
+    return inicio || "Sem data";
+  };
+
+  const consultarItem = async (itemId, fallbackName = "Item") => {
+    panel?.classList.add("open");
+    panel?.setAttribute("aria-hidden", "false");
+    setLoading(fallbackName);
+
+    if(!itemId || !supabase || !empresaId()){
+      if(conflitos) conflitos.textContent = "Sem item cadastrado selecionado.";
+      if(lista) lista.textContent = "Escolha um item do cadastro para consultar disponibilidade e conflitos.";
+      return;
+    }
+
+    try{
+      const [{ data: itemEstoque, error: estoqueError }, { data, error }] = await Promise.all([
+        supabase
+          .from("itens")
+          .select("id,codigo,produto,descricao_total,foto_url,estoque_total,estoque_manutencao,estoque_indisponivel,categoria")
+          .eq("empresa_id", empresaId())
+          .eq("id", itemId)
+          .maybeSingle(),
+        supabase
+          .from("separacoes_itens")
+          .select("quantidade_solicitada, separacoes_pedidos(numero_pedido, cliente_nome, tipo_evento, data_evento, data_hora, data_entrega, data_coleta, local_nome, status,status_comercial)")
+          .eq("empresa_id", empresaId())
+          .eq("item_id", itemId)
+          .limit(80)
+      ]);
+
+      if(error) throw error;
+      if(estoqueError) console.warn("Estoque do item indisponivel:", estoqueError);
+
+      setItemVisual(itemEstoque || { id: itemId }, fallbackName);
+
+      const reservasDaData = (data || [])
+        .filter((item) => isReservaAtiva(item.separacoes_pedidos || {}))
+        .filter((item) => isDateInsidePedido(item.separacoes_pedidos || {}));
+
+      const totalReservado = reservasDaData.reduce((acc, item) => acc + Number(item.quantidade_solicitada || 0), 0);
+      const totalEstoque = Number(itemEstoque?.estoque_total || 0);
+      const totalManutencao = Number(itemEstoque?.estoque_manutencao || itemEstoque?.estoque_indisponivel || 0);
+      const totalDisponivel = Math.max(0, totalEstoque - totalReservado - totalManutencao);
+
+      if(reservada) reservada.textContent = String(totalReservado);
+      if(disponivel) disponivel.textContent = String(totalDisponivel);
+      if(totalEl) totalEl.textContent = String(totalEstoque);
+      if(manutencaoEl) manutencaoEl.textContent = String(totalManutencao);
+      if(conflitos){
+        conflitos.textContent = reservasDaData.length
+          ? `${reservasDaData.length} pedido(s) usando este item na data selecionada.`
+          : "Nenhum pedido ativo usando este item na data selecionada.";
+      }
+
+      if(lista){
+        lista.innerHTML = reservasDaData.length
+          ? reservasDaData.map((item) => {
+              const pedido = item.separacoes_pedidos || {};
+              const qtd = Number(item.quantidade_solicitada || 0);
+              return `
+                <div class="onde-pedido">
+                  <div class="onde-pedido-top">
+                    <strong>Pedido ${escapeHtml(pedido.numero_pedido || "-")}</strong>
+                    <span class="onde-pedido-qtd">Qtd ${qtd}</span>
+                  </div>
+                  <span>${escapeHtml(pedido.cliente_nome || "Cliente")} - ${escapeHtml(pedido.tipo_evento || "Evento")}</span>
+                  <div class="onde-pedido-meta">
+                    <span>${escapeHtml(periodoPedido(pedido))}</span>
+                    <span>${escapeHtml(pedido.local_nome || "Local nao informado")}</span>
+                  </div>
+                </div>
+              `;
+            }).join("")
+          : "Nenhum pedido usando este item foi encontrado para a data selecionada.";
+      }
+    }catch(err){
+      console.warn("Consulta Onde Esta indisponivel:", err);
+      if(conflitos) conflitos.textContent = "Consulta indisponivel.";
+      if(lista) lista.textContent = "Nao foi possivel consultar a disponibilidade neste momento.";
+    }
+  };
+
+  const fecharSugestoes = () => {
+    buscaLista?.classList.remove("open");
+    if(buscaLista) buscaLista.innerHTML = "";
+  };
+
+  closeBtn?.addEventListener("click", () => {
+    panel?.classList.remove("open");
+    panel?.setAttribute("aria-hidden", "true");
+    fecharSugestoes();
+  });
+
+  document.getElementById("listaItens")?.addEventListener("click", (event) => {
     const btn = event.target.closest(".btn-onde-esta");
     if(!btn) return;
 
     const row = btn.closest("tr.item-row");
     const nome = row?.querySelector(".nome-item")?.innerText?.trim() || "Item";
     const itemId = row?.dataset?.itemId;
+    consultarItem(itemId, nome);
+  });
 
-    if(titulo) titulo.textContent = nome;
-    if(disponivel) disponivel.textContent = "A consultar";
-    if(reservada) reservada.textContent = "A consultar";
-    if(conflitos) conflitos.textContent = "Carregando";
-    if(lista) lista.textContent = "Buscando pedidos que utilizam este item...";
-    panel?.classList.add("open");
-
-    if(!itemId || !supabase || !window.__CONTEXT?.empresa_id){
-      if(conflitos) conflitos.textContent = "Sem item cadastrado selecionado";
-      if(lista) lista.textContent = "Escolha um item do cadastro para consultar disponibilidade e conflitos.";
+  let searchTimer = null;
+  buscaInput?.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    const termo = buscaInput.value.trim();
+    if(termo.length < 2){
+      fecharSugestoes();
       return;
     }
 
-    try{
-      const { data, error } = await supabase
-        .from("separacoes_itens")
-        .select("quantidade_solicitada, separacoes_pedidos(numero_pedido, cliente_nome, tipo_evento, data_evento, data_hora, local_nome, status)")
-        .eq("empresa_id", window.__CONTEXT.empresa_id)
-        .eq("item_id", itemId)
-        .limit(20);
+    searchTimer = setTimeout(async () => {
+      if(!supabase || !empresaId()) return;
+      try{
+        const busca = termo.replace(/[%_,()]/g, " ").replace(/\s+/g, " ").trim();
+        const { data, error } = await supabase
+          .from("itens")
+          .select("id,codigo,produto,descricao_total,foto_url")
+          .eq("empresa_id", empresaId())
+          .or(`descricao_total.ilike.%${busca}%,produto.ilike.%${busca}%,codigo.ilike.%${busca}%`)
+          .limit(8);
+        if(error) throw error;
 
-      if(error) throw error;
+        if(!data?.length){
+          if(buscaLista){
+            buscaLista.innerHTML = `<div class="onde-busca-vazio">Nenhum item encontrado.</div>`;
+            buscaLista.classList.add("open");
+          }
+          return;
+        }
 
-      const totalReservado = (data || []).reduce((acc, item) => acc + Number(item.quantidade_solicitada || 0), 0);
-      if(reservada) reservada.textContent = String(totalReservado);
-      if(disponivel) disponivel.textContent = "Consulte estoque";
-      if(conflitos) conflitos.textContent = data?.length ? `${data.length} uso(s) encontrado(s)` : "Nenhum conflito encontrado";
-      if(lista){
-        lista.innerHTML = (data || []).length
-          ? data.map((item) => {
-              const pedido = item.separacoes_pedidos || {};
-              const dataEvento = pedido.data_evento || pedido.data_hora || "";
-              return `
-                <div class="onde-pedido">
-                  <strong>Pedido ${pedido.numero_pedido || "-"}</strong>
-                  <span>${pedido.cliente_nome || "Cliente"} - ${pedido.tipo_evento || "Evento"}</span>
-                  <span>${dataEvento ? new Date(dataEvento).toLocaleDateString("pt-BR") : "Sem data"} - ${pedido.local_nome || "Local nao informado"}</span>
-                </div>
-              `;
-            }).join("")
-          : "Nenhum pedido usando este item foi encontrado.";
+        if(buscaLista){
+          buscaLista.innerHTML = data.map((item) => {
+            const nome = nomeDoItem(item);
+            const foto = fotoDoItem(item);
+            return `
+              <button type="button" class="onde-busca-opcao" data-item-id="${escapeHtml(item.id)}" data-item-nome="${escapeHtml(nome)}">
+                ${foto ? `<img src="${escapeHtml(foto)}" alt="${escapeHtml(nome)}">` : `<span class="onde-busca-thumb">Sem foto</span>`}
+                <span>
+                  <strong>${escapeHtml(nome)}</strong>
+                  <span>${escapeHtml(item.codigo || item.id || "-")}</span>
+                </span>
+              </button>
+            `;
+          }).join("");
+          buscaLista.classList.add("open");
+        }
+      }catch(err){
+        console.warn("Busca de item no Onde Esta indisponivel:", err);
       }
-    }catch(err){
-      console.warn("Consulta Onde Esta indisponivel:", err);
-      if(conflitos) conflitos.textContent = "Consulta indisponivel";
-      if(lista) lista.textContent = "Nao foi possivel consultar a disponibilidade neste momento.";
-    }
+    }, 250);
+  });
+
+  buscaLista?.addEventListener("click", (event) => {
+    const option = event.target.closest(".onde-busca-opcao");
+    if(!option) return;
+    const itemId = option.dataset.itemId;
+    const nome = option.dataset.itemNome || "Item";
+    if(buscaInput) buscaInput.value = "";
+    fecharSugestoes();
+    consultarItem(itemId, nome);
   });
 }
 

@@ -1,587 +1,604 @@
-<div class="almoxarifado-page el-page" data-module-root>
-
-  <div class="loading" id="loading">Carregando...</div>
-
-<div class="page-header el-page">
-  <h1>Almoxarifado</h1>
-</div>
-
-
-</div>
-
-<div class="almoxarifado-container el-page">
-
-  <div class="cards">
-    <div class="card">
-      <div class="label">Itens cadastrados</div>
-      <div class="value" id="cardTotalItens">0</div>
+<div class="almox-page" data-module="almoxarifado" data-module-root>
+  <header class="almox-hero">
+    <div>
+      <span class="almox-eyebrow">Estoque operacional</span>
+      <h1>Almoxarifado EasyLoc</h1>
+      <p>Controle materiais, ferramentas, solicitações, compras, conferências e auditoria em um único fluxo rastreável.</p>
     </div>
-
-    <div class="card">
-      <div class="label">Estoque total</div>
-      <div class="value" id="cardEstoqueTotal">0</div>
+    <div class="almox-hero-actions">
+      <button type="button" class="btn secondary" id="btnAlmoxHistorico">Histórico</button>
+      <button type="button" class="btn secondary" id="btnAlmoxEtiqueta">Imprimir etiquetas</button>
+      <button type="button" class="btn primary" id="btnAlmoxNovoMaterial">Novo material</button>
     </div>
+  </header>
 
-<div class="card" id="boxAbaixoMinimo" onclick="abrirModalAbaixoMinimo()" style="cursor:pointer;">
-  <div class="label">Abaixo do mínimo</div>
-  <div class="value meta-alerta" id="cardAbaixoMinimo">0</div>
-</div>
+  <nav class="almox-tabs" aria-label="Abas do Almoxarifado">
+    <button type="button" class="active" data-almox-tab="dashboard">Dashboard</button>
+    <button type="button" data-almox-tab="materiais">Materiais</button>
+    <button type="button" data-almox-tab="movimentacoes">Entrada / Saída</button>
+    <button type="button" data-almox-tab="ferramentas">Ferramentas</button>
+    <button type="button" data-almox-tab="conferencia">Conferência</button>
+    <button type="button" data-almox-tab="solicitacoes">Solicitações</button>
+    <button type="button" data-almox-tab="compras">Compras</button>
+    <button type="button" data-almox-tab="auditoria">Auditoria</button>
+    <button type="button" data-almox-tab="relatorios">Relatórios</button>
+    <button type="button" data-almox-tab="configuracoes">Configurações</button>
+  </nav>
 
-<div class="card" id="boxEmprestimos">
-<div class="label">Itens em uso</div>
-  <div class="value" id="cardEmprestimos">0</div>
-</div>
+  <section class="almox-section active" id="almox-tab-dashboard">
+    <div class="almox-kpi-grid" id="almoxKpis"></div>
 
-<div class="card">
-  <div class="label">Meta semanal de contagem</div>
-  <div class="value" id="cardMeta">0%</div>
-  <div class="small" id="semanaAtualLabel"></div>
-</div>
-
-<div class="card">
-  <div class="label">Assertividade da semana</div>
-  <div class="value" id="cardAssertividade">0%</div>
-  <div class="small">Qualidade da contagem</div>
-</div>
-
-<div class="card">
-  <div class="label">Teto de gastos do mês</div>
-  <div class="value" id="cardTetoGastos">0%</div>
-</div>
-  </div>
-
-<!-- 🔥 CÍRCULOS DE METAS -->
-<div id="areaCirculos" style="
-  display:flex;
-  gap:30px;
-  flex-wrap:wrap;
-  margin-bottom:20px;
-"></div>
-
-<div class="tabs">
-    <button type="button" class="tab-btn active" data-tab="dashboard" onclick="abrirTab('dashboard')">Dashboard</button>
-    <button type="button" class="tab-btn" data-tab="cadastro" onclick="abrirTab('cadastro')">Cadastro de insumos</button>
-    <button type="button" class="tab-btn" data-tab="movimentacao" onclick="abrirTab('movimentacao')">Entrada / Saída</button>
-    <button type="button" class="tab-btn" data-tab="emprestimos" onclick="abrirTab('emprestimos')">Retiradas</button>
-    <button type="button" class="tab-btn" data-tab="contagem" onclick="abrirTab('contagem')">Contagem semanal</button>
-    <button type="button" class="tab-btn" data-tab="usuarios" onclick="abrirTab('usuarios')">Usuários</button>
-  </div>
-
-<section class="section active" id="tab-dashboard">
-  <div class="grid-2">
-<div class="panel">
-      <div class="panel-header">
-        <h2>Estoque atual</h2>
-
-        <div class="filtro-box">
-          <span class="filtro-icon">🔍</span>
-          <input class="el-input"
-            type="text" 
-            id="filtroProduto" 
-            placeholder="Buscar produto..." 
-            oninput="renderProdutos()"
-          >
+    <div class="almox-grid dashboard-main">
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <div>
+            <span class="almox-section-label">Consumo por setor</span>
+            <h2>Indicadores circulares</h2>
+          </div>
+          <span class="almox-muted">Mês atual</span>
         </div>
+        <div class="almox-rings" id="almoxSectorRings"></div>
+      </article>
 
-      </div>
-      <div class="panel-body">
-        <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-<th class="col-codigo">Código</th>
-<th class="col-produto">Produto</th>
-<th class="col-categoria">Categoria</th>
-<th class="col-setor">Setor</th>
-<th class="col-unidade">Unid.</th>
-<th class="col-minimo">Mínimo</th>
-<th class="col-status">Status</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyProdutos"></tbody>
-            </table>
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <div>
+            <span class="almox-section-label">Inteligência operacional</span>
+            <h2>Leituras rápidas</h2>
           </div>
         </div>
-      </div>
+        <div class="almox-insights" id="almoxInsights"></div>
+      </article>
+    </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Últimas movimentações</h2>
+    <div class="almox-grid">
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <h2>Itens críticos</h2>
+          <button type="button" class="btn secondary sm" data-almox-tab-shortcut="materiais">Ver materiais</button>
         </div>
-        <div class="panel-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Tipo</th>
-                  <th>Produto</th>
-                  <th>Qtd</th>
-                  <th>Responsável</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyMovRecentes"></tbody>
-            </table>
-          </div>
+        <div class="almox-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Material</th>
+                <th>Tipo</th>
+                <th>Estoque</th>
+                <th>Mínimo</th>
+                <th>Previsão</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="almoxCriticalTable"></tbody>
+          </table>
         </div>
-      </div>
+      </article>
+
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <h2>Movimentações recentes</h2>
+          <button type="button" class="btn secondary sm" data-almox-tab-shortcut="movimentacoes">Nova movimentação</button>
+        </div>
+        <div class="almox-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Material</th>
+                <th>Qtd</th>
+                <th>Setor</th>
+              </tr>
+            </thead>
+            <tbody id="almoxRecentMovements"></tbody>
+          </table>
+        </div>
+      </article>
     </div>
   </section>
 
-  <section class="section" id="tab-cadastro">
-    <div class="panel">
-      <div class="panel-header">
-        <h2>Cadastro de insumos</h2>
-      </div>
-      <div class="panel-body">
-        <div class="form-grid-3">
-          <div class="field el-field">
-            <label>Código</label>
-<input class="el-input" id="prodCodigo" placeholder="Gerado automaticamente" readonly>
-          </div>
-
-          <div class="field el-field">
-            <label>Produto / Insumo</label>
-            <input class="el-input" type="text" id="prodNome" placeholder="Nome do insumo">
-          </div>
-
-          <div class="field el-field">
-            <label>Categoria</label>
-<select class="el-select" id="cadCategoria">
-  <option value="">Selecione</option>
-
-  <!-- Limpeza -->
-  <option value="Limpeza">Limpeza</option>
-
-  <!-- Escritório -->
-  <option value="Escritório">Escritório</option>
-
-  <!-- Manutenção -->
-  <option value="Manutenção">Manutenção</option>
-
-  <!-- Marcenaria -->
-  <option value="Marcenaria">Marcenaria</option>
-
-  <!-- Elétrica -->
-  <option value="Elétrica">Elétrica</option>
-
-  <!-- Pintura -->
-  <option value="Pintura">Pintura</option>
-
-  <!-- Costura -->
-  <option value="Costura">Costura</option>
-
-  <!-- Forração -->
-  <option value="Forração">Forração</option>
-
-  <!-- Ferramentas -->
-  <option value="Ferramentas">Ferramentas</option>
-
-  <!-- Embalagem -->
-  <option value="Embalagem">Embalagem</option>
-
-  <!-- Diversos -->
-  <option value="Diversos">Diversos</option>
-</select>
-          </div>
-
-          <div class="field el-field">
-            <label>Setor</label>
-            <input class="el-input" type="text" id="prodSetor" placeholder="Ex: Almoxarifado">
-          </div>
-
-          <div class="field el-field">
-            <label>Unidade</label>
-<select class="el-select" id="cadUnidade">
-  <option value="">Selecione</option>
-  <option value="UN">UN (Unidade)</option>
-  <option value="KG">KG (Quilo)</option>
-  <option value="G">G (Grama)</option>
-  <option value="LT">LT (Litro)</option>
-  <option value="ML">ML (Mililitro)</option>
-  <option value="M">M (Metro)</option>
-  <option value="CM">CM (Centímetro)</option>
-  <option value="CX">CX (Caixa)</option>
-  <option value="PCT">PCT (Pacote)</option>
-  <option value="ROL">ROL (Rolo)</option>
-</select>
-          </div>
-
-          <div class="field el-field">
-            <label>Estoque atual</label>
-            <input class="el-input" type="number" id="prodEstoqueAtual" placeholder="0" step="0.01">
-          </div>
-
-          <div class="field el-field">
-            <label>Estoque mínimo</label>
-            <input class="el-input" type="number" id="prodEstoqueMinimo" placeholder="0" step="0.01">
-          </div>
-
-          <div class="field el-field">
-            <label>Valor de custo</label>
-            <input class="el-input" type="number" id="prodValorCusto" placeholder="0" step="0.01">
-          </div>
-
-          <div class="field el-field">
-            <label>Valor de reposição</label>
-            <input class="el-input" type="number" id="prodValorReposicao" placeholder="0" step="0.01">
-          </div>
-
-          <div class="field el-field">
-            <label>Status</label>
-            <select class="el-select" id="prodStatus">
-              <option>Ativo</option>
-              <option>Inativo</option>
-            </select>
-          </div>
-          <div class="field el-field" style="grid-column:1/-1;">
-            <label>Observações</label>
-            <textarea class="el-textarea" id="prodObs" placeholder="Observações do item"></textarea>
-          </div>
+  <section class="almox-section" id="almox-tab-materiais">
+    <article class="almox-card">
+      <div class="almox-card-header">
+        <div>
+          <span class="almox-section-label">Cadastro central</span>
+          <h2>Materiais cadastrados</h2>
         </div>
-
-        <div class="actions">
-          <button type="button" class="btn primary" onclick="salvarProdutoFront()">Salvar insumo</button>
-          <button type="button" class="btn secondary" onclick="limparFormProduto()">Limpar</button>
+        <div class="almox-inline-actions">
+          <button type="button" class="btn secondary" id="btnAlmoxExportarMateriais">Exportar</button>
+          <button type="button" class="btn primary" id="btnAlmoxNovoMaterialTabela">Novo material</button>
         </div>
       </div>
-    </div>
+
+      <div class="almox-filters">
+        <input class="el-input" id="almoxBuscaMaterial" placeholder="Buscar por código, nome, categoria, setor ou localização">
+        <select class="el-select" id="almoxFiltroTipo">
+          <option value="">Todos os tipos</option>
+          <option value="consumivel">Consumíveis</option>
+          <option value="retornavel">Retornáveis</option>
+          <option value="epi">EPIs</option>
+        </select>
+        <select class="el-select" id="almoxFiltroStatus">
+          <option value="">Todos os status</option>
+          <option value="ativo">Ativos</option>
+          <option value="baixo">Abaixo do mínimo</option>
+          <option value="inativo">Inativos</option>
+        </select>
+      </div>
+
+      <div class="almox-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Material</th>
+              <th>Tipo</th>
+              <th>Categoria</th>
+              <th>Localização</th>
+              <th>Estoque</th>
+              <th>Valor médio</th>
+              <th>QR</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="almoxMaterialsTable"></tbody>
+        </table>
+      </div>
+    </article>
   </section>
 
-<section class="section" id="tab-movimentacao">
-  <div class="grid-2">
-    <div class="panel" id="cardMovimentacao">
-        <div class="panel-header">
-          <h2>Registrar entrada / saída</h2>
+  <section class="almox-section" id="almox-tab-movimentacoes">
+    <div class="almox-grid movimentacao-layout">
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <div>
+            <span class="almox-section-label">Recebimento e baixa</span>
+            <h2>Entrada / saída de materiais</h2>
+          </div>
+          <button type="button" class="btn primary" id="btnAlmoxNovaEntrada">Nova entrada</button>
         </div>
-        <div class="panel-body">
-          <div class="form-grid">
-            <div class="field el-field">
-              <label>Tipo</label>
-              <select class="el-select" id="movTipo">
+
+        <div class="almox-option-grid">
+          <button type="button" data-entry-mode="manual">Manual</button>
+          <button type="button" data-entry-mode="lote">Lote</button>
+          <button type="button" data-entry-mode="qr">QR Code produto</button>
+          <button type="button" data-entry-mode="barras">Código de barras</button>
+        </div>
+
+        <div class="almox-import-panel hidden" id="almoxImportPanel">
+          <div class="almox-import-panel-header">
+            <div>
+              <span class="almox-section-label" id="almoxImportModeLabel">Leitura inteligente</span>
+              <h3 id="almoxImportTitle">Ler QR Code, código de barras ou nota fiscal</h3>
+              <p id="almoxImportHelp">Use um leitor conectado ao computador, digite o código manualmente ou envie XML/TXT da NF para preencher a entrada em lote.</p>
+            </div>
+            <button type="button" class="almox-icon-btn" id="btnAlmoxFecharImport">X</button>
+          </div>
+
+          <div class="almox-import-actions">
+            <label class="almox-scan-field">Código lido
+              <input class="el-input" id="almoxScanInput" placeholder="Aponte o leitor, cole a chave NF-e ou digite o código">
+            </label>
+            <button type="button" class="btn primary" id="btnAlmoxUsarCodigo">Usar código</button>
+            <button type="button" class="btn secondary" id="btnAlmoxAbrirCamera">Abrir câmera</button>
+          </div>
+
+          <div class="almox-scanner hidden" id="almoxScannerBox">
+            <video id="almoxScannerVideo" playsinline muted></video>
+            <button type="button" class="btn secondary sm" id="btnAlmoxPararCamera">Parar câmera</button>
+          </div>
+
+          <div class="almox-import-preview hidden" id="almoxNotaPreview"></div>
+        </div>
+
+        <form id="almoxMovementForm" class="almox-form">
+          <div class="almox-form-grid">
+            <label>Tipo
+              <select class="el-select" name="tipo" required>
                 <option value="entrada">Entrada</option>
                 <option value="saida">Saída</option>
               </select>
-            </div>
-
-            <div class="field el-field">
-              <label>Produto</label>
-              <select class="el-select" id="movProduto"></select>
-            </div>
-
-            <div class="field el-field">
-              <label>Quantidade</label>
-              <input class="el-input" type="number" id="movQuantidade" step="0.01">
-            </div>
-
-            <div class="field el-field">
-              <label>Responsável</label>
-              <select class="el-select" id="movResponsavel"></select>
-            </div>
-
-            <div class="field el-field">
-              <label>Solicitante / Quem pegou</label>
-<select class="el-select" id="movSolicitante">
-  <option value="">Selecione</option>
-</select>
-            </div>
-
-            <div class="field el-field">
-              <label>Destino</label>
-<select class="el-select" id="movDestino">
-  <option value="">Selecione</option>
-</select>
-            </div>
-
-            <div class="field el-field" style="grid-column:1/-1;">
-              <label>Observações</label>
-              <textarea class="el-textarea" id="movObs"></textarea>
-            </div>
+            </label>
+            <label>Material
+              <select class="el-select" name="material_id" required id="almoxMovMaterial"></select>
+            </label>
+            <label>Quantidade
+              <input class="el-input" name="quantidade" type="number" min="0.01" step="0.01" required>
+            </label>
+            <label>Valor unitário
+              <input class="el-input" name="valor_unitario" type="number" min="0" step="0.01">
+            </label>
+            <label>Fornecedor
+              <input class="el-input" name="fornecedor" placeholder="Fornecedor ou origem">
+            </label>
+            <label>Número NF
+              <input class="el-input" name="numero_nf" placeholder="NF, pedido ou documento">
+            </label>
+            <label>Setor
+              <select class="el-select" name="setor" required id="almoxMovSetor"></select>
+            </label>
+            <label>Solicitante
+              <input class="el-input" name="solicitante" placeholder="Quem solicitou ou retirou">
+            </label>
+            <label>Pedido / Evento
+              <input class="el-input" name="pedido_evento" placeholder="Pedido, evento ou OS">
+            </label>
+            <label>Responsável
+              <input class="el-input" name="responsavel" placeholder="Responsável pelo lançamento">
+            </label>
+            <label class="span-2">Observações
+              <textarea class="el-textarea" name="observacao" rows="3"></textarea>
+            </label>
           </div>
-
-          <div class="actions">
-            <button type="button" class="btn primary" onclick="salvarMovimentacaoFront()">Salvar movimentação</button>
+          <div class="almox-form-actions">
+            <button type="button" class="btn secondary" id="btnAlmoxLimparMov">Limpar</button>
+            <button type="submit" class="btn primary">Registrar movimentação</button>
           </div>
+        </form>
+      </article>
+
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <h2>Entrada em lote</h2>
+          <button type="button" class="btn secondary sm" id="btnAlmoxAddLote">Adicionar linha</button>
         </div>
+        <div class="almox-table-wrap compact">
+          <table>
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Valor</th>
+                <th>Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="almoxBatchRows"></tbody>
+          </table>
+        </div>
+        <div class="almox-total-line">
+          <span>Total do lote</span>
+          <strong id="almoxBatchTotal">R$ 0,00</strong>
+        </div>
+        <div class="almox-form-actions batch-actions">
+          <button type="button" class="btn primary" id="btnAlmoxFinalizarLote">Lançar lote no estoque</button>
+        </div>
+      </article>
+    </div>
+
+    <article class="almox-card">
+      <div class="almox-card-header">
+        <h2>Histórico de movimentações</h2>
       </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Histórico recente</h2>
-        </div>
-        <div class="panel-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Tipo</th>
-                  <th>Produto</th>
-                  <th>Qtd</th>
-                  <th>Solicitante</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyMovimentacoes"></tbody>
-            </table>
-          </div>
-        </div>
+      <div class="almox-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Material</th>
+              <th>Qtd</th>
+              <th>Setor</th>
+              <th>Solicitante</th>
+              <th>Documento</th>
+              <th>Autorização</th>
+            </tr>
+          </thead>
+          <tbody id="almoxMovementsTable"></tbody>
+        </table>
       </div>
+    </article>
+  </section>
+
+  <section class="almox-section" id="almox-tab-ferramentas">
+    <div class="almox-grid">
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <div>
+            <span class="almox-section-label">Retornáveis</span>
+            <h2>Ferramentas em uso</h2>
+          </div>
+          <button type="button" class="btn primary" id="btnAlmoxNovaFerramenta">Registrar retirada</button>
+        </div>
+        <div class="almox-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ferramenta</th>
+                <th>Responsável</th>
+                <th>Setor</th>
+                <th>Retirada</th>
+                <th>Prevista</th>
+                <th>Dias</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="almoxToolsTable"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <h2>Alertas de devolução</h2>
+        </div>
+        <div class="almox-tool-alerts" id="almoxToolAlerts"></div>
+      </article>
     </div>
   </section>
 
-  <section class="section" id="tab-emprestimos">
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Nova Retirada</h2>
+  <section class="almox-section" id="almox-tab-conferencia">
+    <article class="almox-card">
+      <div class="almox-card-header">
+        <div>
+          <span class="almox-section-label">Conferência cega</span>
+          <h2>Contagem física sem exibir o estoque do sistema</h2>
         </div>
-        <div class="panel-body">
-          <div class="form-grid">
-            <div class="field el-field">
-              <label>Produto</label>
-              <select class="el-select" id="empProduto"></select>
-            </div>
-
-            <div class="field el-field">
-              <label>Quantidade</label>
-              <input class="el-input" type="number" id="empQuantidade" step="0.01">
-            </div>
-
-            <div class="field el-field">
-              <label>Responsável pela entrega</label>
-              <select class="el-select" id="empResponsavelEntrega"></select>
-            </div>
-
-            <div class="field el-field">
-              <label>Pessoa que pegou</label>
-<select class="el-select" id="empPessoaPegou">
-  <option value="">Selecione</option>
-</select>
-            </div>
-
-            <div class="field el-field">
-              <label>Setor</label>
-<select class="el-select" id="empSetor">
-  <option value="">Selecione</option>
-</select>
-            </div>
-
-            <div class="field el-field">
-              <label>Previsão de devolução</label>
-              <input class="el-input" type="date" id="empPrevisao">
-            </div>
-
-            <div class="field el-field" style="grid-column:1/-1;">
-              <label>Observações</label>
-              <textarea class="el-textarea" id="empObs"></textarea>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button type="button" class="btn primary" onclick="salvarEmprestimoFront()">Salvar Retirada</button>
-          </div>
-        </div>
+        <button type="button" class="btn primary" id="btnAlmoxFinalizarConferencia">Finalizar conferência</button>
       </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Retiradas registradas</h2>
-        </div>
-        <div class="panel-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Produto</th>
-                  <th>Qtd</th>
-                  <th>Pessoa</th>
-                  <th>Status</th>
-                  <th>Ação</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyEmprestimos"></tbody>
-            </table>
-          </div>
-        </div>
+      <div class="almox-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>QR</th>
+              <th>Código</th>
+              <th>Localização</th>
+              <th>Contagem física</th>
+              <th>Responsável</th>
+            </tr>
+          </thead>
+          <tbody id="almoxBlindCountTable"></tbody>
+        </table>
       </div>
+      <div class="almox-conference-result" id="almoxConferenceResult"></div>
+    </article>
+  </section>
+
+  <section class="almox-section" id="almox-tab-solicitacoes">
+    <div class="almox-card">
+      <div class="almox-card-header">
+        <div>
+          <span class="almox-section-label">Fluxo interno</span>
+          <h2>Requisições de material</h2>
+        </div>
+        <button type="button" class="btn primary" id="btnAlmoxNovaSolicitacao">Nova solicitação</button>
+      </div>
+      <div class="almox-status-board" id="almoxRequestsBoard"></div>
     </div>
   </section>
 
-  <section class="section" id="tab-contagem">
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Conferência semanal de estoque</h2>
-        </div>
-        <div class="panel-body">
-          <div class="form-grid">
-<div class="field el-field">
-  <label>Semana referência</label>
-  <input class="el-input" type="text" id="contSemana" readonly>
-</div>
-
-<div style="grid-column:1/-1;">
-  <label>Itens para contagem</label>
-
-  <div id="listaContagem" style="
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    max-height:400px;
-    overflow:auto;
-  "></div>
-
-</div>
-
-            <div class="field el-field">
-              <label>Responsável pela conferência</label>
-              <select class="el-select" id="contResponsavel"></select>
-            </div>
-
-            <div class="field el-field" style="grid-column:1/-1;">
-              <label>Observações</label>
-              <textarea class="el-textarea" id="contObs"></textarea>
-            </div>
+  <section class="almox-section" id="almox-tab-compras">
+    <div class="almox-grid">
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <div>
+            <span class="almox-section-label">Recebimento</span>
+            <h2>Compras aguardando conferência</h2>
           </div>
-
-          <div class="actions">
-            <button type="button" class="btn primary" onclick="salvarContagemFront()">Salvar contagem</button>
-          </div>
+          <button type="button" class="btn secondary" id="btnAlmoxAtualizarCompras">Atualizar</button>
         </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Últimas contagens</h2>
+        <div class="almox-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Fornecedor</th>
+                <th>Documento</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="almoxPurchasesTable"></tbody>
+          </table>
         </div>
-        <div class="panel-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Semana</th>
-                  <th>Produto</th>
-                  <th>Sistema</th>
-                  <th>Contado</th>
-                  <th>Diferença</th>
-                  <th>Responsável</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyContagens"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <section class="section" id="tab-usuarios">
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Cadastrar usuário</h2>
-        </div>
-        <div class="panel-body">
-          <div class="form-grid">
-            <div class="field el-field">
-              <label>Nome</label>
-              <input class="el-input" type="text" id="userNome">
-            </div>
+      </article>
 
-            <div class="field el-field">
-              <label>Setor</label>
-              <input class="el-input" type="text" id="userSetor">
-            </div>
-
-            <div class="field el-field">
-              <label>Função</label>
-              <input class="el-input" type="text" id="userFuncao">
-            </div>
-
-            <div class="field el-field">
-              <label>Status</label>
-              <select class="el-select" id="userStatus">
-                <option>Ativo</option>
-                <option>Inativo</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button type="button" class="btn primary" onclick="salvarUsuarioFront()">Salvar usuário</button>
-          </div>
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <h2>Conferência de importação</h2>
         </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Usuários ativos</h2>
+        <div class="almox-empty-state">
+          Envie uma nota fiscal para a pré-leitura. Antes de lançar, o sistema exibirá fornecedor, produtos, quantidades e valores para conferência humana.
         </div>
-        <div class="panel-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Setor</th>
-                  <th>Função</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyUsuarios"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      </article>
     </div>
   </section>
 
-</div>
+  <section class="almox-section" id="almox-tab-auditoria">
+    <article class="almox-card">
+      <div class="almox-card-header">
+        <div>
+          <span class="almox-section-label">Rastreabilidade</span>
+          <h2>Auditoria</h2>
+        </div>
+      </div>
+      <div class="almox-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Usuário</th>
+              <th>Ação</th>
+              <th>Tipo</th>
+              <th>IP</th>
+              <th>Dispositivo</th>
+              <th>Detalhes</th>
+            </tr>
+          </thead>
+          <tbody id="almoxAuditTable"></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
 
-<div id="modalConfirm" class="modal hidden el-modal">
-  <div class="modal-box el-modal__box">
+  <section class="almox-section" id="almox-tab-relatorios">
+    <div class="almox-report-grid" id="almoxReportsGrid"></div>
+  </section>
 
-    <h3>Confirmação</h3>
-    <p>Confirmar devolução?</p>
+  <section class="almox-section" id="almox-tab-configuracoes">
+    <div class="almox-grid">
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <h2>Centros de custo e senhas por setor</h2>
+          <button type="button" class="btn primary" id="btnAlmoxSalvarConfig">Salvar configurações</button>
+        </div>
+        <div class="almox-table-wrap compact">
+          <table>
+            <thead>
+              <tr>
+                <th>Setor</th>
+                <th>Senha de saída</th>
+                <th>Ativo</th>
+              </tr>
+            </thead>
+            <tbody id="almoxCostCentersTable"></tbody>
+          </table>
+        </div>
+      </article>
 
-    <input class="el-input"
-      type="text" 
-      id="inputResponsavel" 
-      placeholder="Quem está recebendo?" 
-      style="width:100%; margin-bottom:15px;"
-    >
-
-    <div class="modal-actions">
-      <button type="button" class="btn secondary" onclick="fecharModal()">Cancelar</button>
-      <button type="button" class="btn primary" id="btnConfirmar">Confirmar</button>
+      <article class="almox-card">
+        <div class="almox-card-header">
+          <h2>Perfis de permissão</h2>
+        </div>
+        <div class="almox-permission-list">
+          <span>Administrador</span>
+          <span>Gestor</span>
+          <span>Almoxarife</span>
+          <span>Conferente</span>
+          <span>Solicitante</span>
+          <span>Visualizador</span>
+        </div>
+      </article>
     </div>
+  </section>
 
+  <div class="almox-modal hidden" id="almoxMaterialModal" role="dialog" aria-modal="true">
+    <form class="almox-modal-card" id="almoxMaterialForm">
+      <div class="almox-modal-header">
+        <div>
+          <span class="almox-section-label">Cadastro de material</span>
+          <h2 id="almoxMaterialModalTitle">Novo material</h2>
+        </div>
+        <button type="button" class="almox-icon-btn" data-close-modal="almoxMaterialModal">X</button>
+      </div>
+
+      <input type="hidden" name="id">
+
+      <div class="almox-form-grid modal-grid">
+        <label>Código
+          <input class="el-input" name="codigo" placeholder="Gerado automaticamente">
+        </label>
+        <label>Nome
+          <input class="el-input" name="nome" required placeholder="Ex: Filme stretch 50 cm">
+        </label>
+        <label>Tipo do item
+          <select class="el-select" name="tipo_item" required>
+            <option value="consumivel">Consumível</option>
+            <option value="retornavel">Retornável</option>
+            <option value="epi">EPI</option>
+          </select>
+        </label>
+        <label>Categoria
+          <select class="el-select" name="categoria" required id="almoxMaterialCategoria"></select>
+        </label>
+        <label>Subcategoria
+          <input class="el-input" name="subcategoria" placeholder="Ex: Pintura, embalagem, segurança">
+        </label>
+        <label>Unidade
+          <select class="el-select" name="unidade">
+            <option value="UN">UN</option>
+            <option value="KG">KG</option>
+            <option value="LT">LT</option>
+            <option value="M">M</option>
+            <option value="CX">CX</option>
+            <option value="PCT">PCT</option>
+            <option value="ROL">ROL</option>
+          </select>
+        </label>
+        <label>Estoque atual
+          <input class="el-input" name="estoque_atual" type="number" min="0" step="0.01">
+        </label>
+        <label>Estoque mínimo
+          <input class="el-input" name="estoque_minimo" type="number" min="0" step="0.01">
+        </label>
+        <label>Estoque máximo
+          <input class="el-input" name="estoque_maximo" type="number" min="0" step="0.01">
+        </label>
+        <label>Valor médio
+          <input class="el-input" name="valor_medio" type="number" min="0" step="0.01">
+        </label>
+        <label>Setor principal
+          <select class="el-select" name="setor_principal" id="almoxMaterialSetor"></select>
+        </label>
+        <label>Localização resumida
+          <input class="el-input" name="localizacao" placeholder="Ex: A-03-02">
+        </label>
+        <label>Corredor
+          <input class="el-input" name="corredor" placeholder="A">
+        </label>
+        <label>Prateleira
+          <input class="el-input" name="prateleira" placeholder="03">
+        </label>
+        <label>Nível
+          <input class="el-input" name="nivel" placeholder="02">
+        </label>
+        <label>Posição
+          <input class="el-input" name="posicao" placeholder="04">
+        </label>
+        <label>Código de barras
+          <input class="el-input" name="codigo_barras" placeholder="EAN13, EAN8 ou CODE128">
+        </label>
+        <label>Status
+          <select class="el-select" name="ativo">
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="almox-qr-panel" id="almoxMaterialQrPanel">
+        <div>
+          <span class="almox-section-label">Identificação</span>
+          <strong>QR Code</strong>
+          <p>Será gerado automaticamente ao salvar. O QR armazena somente o identificador único.</p>
+        </div>
+        <div class="almox-qr-render" id="almoxMaterialQrRender"></div>
+        <div class="almox-qr-actions">
+          <code id="almoxMaterialQrCode"></code>
+          <button type="button" class="btn secondary sm" id="btnAlmoxCopiarQr">Copiar código</button>
+          <button type="button" class="btn secondary sm" id="btnAlmoxBaixarQr">Baixar QR</button>
+        </div>
+      </div>
+
+      <div class="almox-modal-actions">
+        <button type="button" class="btn secondary" data-close-modal="almoxMaterialModal">Cancelar</button>
+        <button type="submit" class="btn primary">Salvar material</button>
+      </div>
+    </form>
   </div>
-</div>
-<div id="modalAbaixoMinimo" class="modal hidden el-modal">
-  <div class="modal-box el-modal__box" style="width:900px; max-height:80vh; text-align:left;">
 
-    <h3 style="margin-bottom:15px;">Itens abaixo do mínimo</h3>
-
-    <div class="table-wrap" style="max-height:60vh; overflow:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Produto</th>
-            <th>Categoria</th>
-            <th>Setor</th>
-            <th>Estoque</th>
-            <th>Mínimo</th>
-          </tr>
-        </thead>
-        <tbody id="listaAbaixoMinimo"></tbody>
-      </table>
-    </div>
-
-    <div style="margin-top:15px; text-align:right;">
-      <button type="button" class="btn danger btn-fechar" onclick="fecharModalAbaixoMinimo()">Fechar</button>
-    </div>
-
+  <div class="almox-modal hidden" id="almoxAuthModal" role="dialog" aria-modal="true">
+    <form class="almox-modal-card small" id="almoxAuthForm">
+      <div class="almox-modal-header">
+        <div>
+          <span class="almox-section-label">Validação obrigatória</span>
+          <h2>Autorizar saída</h2>
+        </div>
+        <button type="button" class="almox-icon-btn" data-close-modal="almoxAuthModal">X</button>
+      </div>
+      <p class="almox-muted">Informe a senha do setor para liberar a saída e registrar a autorização.</p>
+      <label>Senha do setor
+        <input class="el-input" name="senha" type="password" required>
+      </label>
+      <div class="almox-modal-actions">
+        <button type="button" class="btn secondary" data-close-modal="almoxAuthModal">Cancelar</button>
+        <button type="submit" class="btn primary">Autorizar</button>
+      </div>
+    </form>
   </div>
-</div>
 </div>

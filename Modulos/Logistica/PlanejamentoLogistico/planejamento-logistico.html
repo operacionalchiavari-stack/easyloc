@@ -1,0 +1,150 @@
+<div class="planejamento-logistico-page el-page">
+  <header class="planejamento-header">
+    <div>
+      <span class="page-kicker">Logistica</span>
+      <h1>Planejamento Logistico</h1>
+      <p>Aloque caminhoes e equipe real para os pedidos aprovados antes da operacao.</p>
+    </div>
+
+    <div class="planejamento-actions">
+      <button type="button" class="btn secondary" id="btnAgendaPlanejamento">
+        <i data-lucide="calendar-days"></i>
+        Agenda
+      </button>
+      <button type="button" class="btn primary" id="btnNovoPlanejamento">
+        <i data-lucide="plus"></i>
+        Novo planejamento
+      </button>
+    </div>
+  </header>
+
+  <section class="planejamento-filtros">
+    <label>
+      Data
+      <input type="date" class="el-input" id="planejamentoFiltroData">
+    </label>
+    <label>
+      Tipo de recurso
+      <select class="el-select" id="planejamentoFiltroRecurso">
+        <option value="">Todos</option>
+        <option value="caminhoes">Caminhoes</option>
+        <option value="equipe">Equipe</option>
+      </select>
+    </label>
+    <label>
+      Situacao
+      <select class="el-select" id="planejamentoFiltroSituacao">
+        <option value="">Todas</option>
+        <option value="aguardando">Aguardando</option>
+        <option value="parcial">Parcial</option>
+        <option value="confirmado">Confirmado</option>
+      </select>
+    </label>
+    <label class="planejamento-search-field">
+      Busca
+      <input type="search" class="el-input" id="planejamentoFiltroBusca" placeholder="Pedido, cliente ou local">
+    </label>
+  </section>
+
+  <main class="planejamento-grid">
+    <aside class="planejamento-panel pedidos-panel">
+      <div class="panel-title">
+        <div>
+          <span>Fila</span>
+          <h2>Pedidos aguardando</h2>
+        </div>
+        <strong id="planejamentoQtdPedidos">0</strong>
+      </div>
+      <div class="pedidos-lista" id="planejamentoPedidosLista"></div>
+    </aside>
+
+    <section class="planejamento-panel pedido-planejado-panel">
+      <div id="planejamentoPedidoVazio" class="planejamento-empty">
+        <i data-lucide="route"></i>
+        <h2>Selecione um pedido</h2>
+        <p>Escolha um pedido na fila para alocar caminhoes e equipe.</p>
+      </div>
+
+      <div id="planejamentoPedidoDetalhe" class="pedido-detalhe hidden">
+        <div class="pedido-detalhe-top">
+          <div>
+            <span id="planejamentoPedidoStatus" class="status-pill status-aguardando">Aguardando</span>
+            <h2 id="planejamentoPedidoTitulo">Pedido</h2>
+            <p id="planejamentoPedidoSubtitulo">Cliente - Local</p>
+          </div>
+          <button type="button" class="btn secondary" id="btnLimparSelecaoPlanejamento">Trocar pedido</button>
+        </div>
+
+        <div class="pedido-info-grid">
+          <div><span>Entrega</span><strong id="planejamentoDataEntrega">-</strong></div>
+          <div><span>Evento</span><strong id="planejamentoDataEvento">-</strong></div>
+          <div><span>Coleta</span><strong id="planejamentoDataColeta">-</strong></div>
+        </div>
+
+        <section class="necessidade-card">
+          <div>
+            <span>Necessidade calculada</span>
+            <h3 id="planejamentoNecessidadeResumo">-</h3>
+          </div>
+          <div class="necessidade-metricas">
+            <div><strong id="planejamentoCaminhoesNecessarios">0</strong><span>Caminhoes</span></div>
+            <div><strong id="planejamentoPessoasNecessarias">0</strong><span>Pessoas</span></div>
+          </div>
+        </section>
+
+        <section class="alocacao-section">
+          <div class="section-heading">
+            <div>
+              <h3>Caminhoes selecionados</h3>
+              <p id="planejamentoResumoCaminhoes">0 / 0 caminhoes alocados</p>
+            </div>
+            <span class="badge-alerta" id="planejamentoAlertaCaminhoes">Pendente</span>
+          </div>
+          <div class="recursos-lista" id="planejamentoCaminhoesLista"></div>
+        </section>
+
+        <section class="alocacao-section">
+          <div class="section-heading">
+            <div>
+              <h3>Equipe selecionada</h3>
+              <p id="planejamentoResumoEquipe">0 / 0 pessoas alocadas</p>
+            </div>
+            <span class="badge-alerta" id="planejamentoAlertaEquipe">Pendente</span>
+          </div>
+          <div class="recursos-lista" id="planejamentoEquipeLista"></div>
+        </section>
+
+        <button type="button" class="btn primary confirmar-planejamento" id="btnConfirmarPlanejamento" disabled>
+          Confirmar planejamento
+        </button>
+      </div>
+    </section>
+
+    <aside class="planejamento-panel agenda-panel">
+      <div class="panel-title">
+        <div>
+          <span>Agenda visual</span>
+          <h2>Recursos do dia</h2>
+        </div>
+      </div>
+
+      <div class="agenda-tabs">
+        <button type="button" class="active" data-agenda-tab="caminhoes">Caminhoes</button>
+        <button type="button" data-agenda-tab="equipe">Equipe</button>
+      </div>
+
+      <div class="agenda-grade" id="planejamentoAgendaGrade"></div>
+
+      <section class="conflitos-card">
+        <div class="panel-title compact">
+          <div>
+            <span>Conflitos</span>
+            <h2>Proximos conflitos</h2>
+          </div>
+          <strong id="planejamentoQtdConflitos">0</strong>
+        </div>
+        <div id="planejamentoConflitosLista" class="conflitos-lista"></div>
+      </section>
+    </aside>
+  </main>
+</div>

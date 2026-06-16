@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>EasyLoc • Escolha seu plano</title>
+  <title>EasyLoc • Planos e comercial</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles/global.css">
 
@@ -123,18 +123,25 @@
       margin: 10px 0;
     }
 
-    /* 💰 PREÇO (delicado) */
     .price {
-      font-size: 32px;
-      font-weight: 500;
+      min-height: 88px;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      background: #f8fafc;
+      padding: 18px;
+      font-size: 18px;
+      line-height: 1.35;
+      font-weight: 700;
       margin: 18px 0 6px;
-      letter-spacing: -0.4px;
+      text-align: left;
     }
 
     .price span {
       font-size: 14px;
       color: var(--muted);
-      font-weight: 400;
+      font-weight: 500;
+      display: block;
+      margin-top: 6px;
     }
 
     ul {
@@ -187,7 +194,7 @@
   <!-- TOPO -->
   <div class="top-bar">
     <button class="back-login" onclick="voltarLogin()">
-      ← Voltar ao login
+      Voltar ao site
     </button>
   </div>
 
@@ -199,9 +206,9 @@
       <img src="logo.png" alt="EasyLoc">
     </div>
 
-    <h1>Escolha seu plano</h1>
+    <h1>Escolha a melhor configuracao</h1>
     <p class="subtitle">
-      Tudo o que você precisa para gerenciar sua locação com eficiência.
+      O time comercial entende sua operacao e monta uma proposta sob medida.
     </p>
 
     <!-- PLANOS -->
@@ -209,7 +216,7 @@
 
       <div class="plan" onclick="selecionarCard(this)">
         <h2>Básico</h2>
-        <div class="price">R$ 2.000 <span>/ mês</span></div>
+        <div class="price">Entre em contato <span>Plano indicado para iniciar a gestao comercial e operacional.</span></div>
 
         <ul>
           <li>Cadastro de clientes</li>
@@ -220,14 +227,14 @@
 
         <button type="button" class="btn"
           onclick="assinarPlano('basico'); event.stopPropagation();">
-          Assinar plano
+          Falar com comercial
         </button>
       </div>
 
       <div class="plan highlight" onclick="selecionarCard(this)">
         <div class="badge">Mais escolhido</div>
         <h2>Profissional</h2>
-        <div class="price">R$ 3.200 <span>/ mês</span></div>
+        <div class="price">Entre em contato <span>Configuracao completa para comercial, estoque, financeiro e logistica.</span></div>
 
         <ul>
           <li>Tudo do plano Básico</li>
@@ -238,13 +245,13 @@
 
         <button type="button" class="btn"
           onclick="assinarPlano('profissional'); event.stopPropagation();">
-          Assinar plano
+          Falar com comercial
         </button>
       </div>
 
       <div class="plan" onclick="selecionarCard(this)">
         <h2>Enterprise</h2>
-        <div class="price">R$ 4.500 <span>/ mês</span></div>
+        <div class="price">Entre em contato <span>Proposta personalizada para operacoes maiores e integracoes avancadas.</span></div>
 
         <ul>
           <li>Todas as funcionalidades</li>
@@ -255,7 +262,7 @@
 
         <button type="button" class="btn"
           onclick="assinarPlano('enterprise'); event.stopPropagation();">
-          Assinar plano
+          Falar com comercial
         </button>
       </div>
 
@@ -272,11 +279,12 @@
 
     function assinarPlano(plano) {
       localStorage.setItem('planoEasyLoc', plano);
-      window.location.href = 'pagamento.html';
+      const assunto = encodeURIComponent('Quero conhecer o plano ' + plano);
+      window.location.href = 'mailto:comercial@easyloc.com.br?subject=' + assunto;
     }
 
     function voltarLogin() {
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
     }
   </script>
 

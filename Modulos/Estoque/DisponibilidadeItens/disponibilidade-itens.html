@@ -1,0 +1,83 @@
+<div class="dispon-page el-page" data-module="disponibilidade-itens">
+  <header class="dispon-hero">
+    <div>
+      <span class="dispon-eyebrow">Estoque</span>
+      <h1>Disponibilidade de Itens</h1>
+      <p>Compare estoque total, reservas por data, manutencao e quantidade disponivel para venda.</p>
+    </div>
+    <button type="button" class="btn secondary" id="btnDisponAtualizar">Atualizar</button>
+  </header>
+
+  <section class="dispon-filters">
+    <label>Data do evento
+      <input class="el-input" type="date" id="disponData">
+    </label>
+    <label>Buscar item
+      <input class="el-input" id="disponBusca" placeholder="Nome, codigo ou categoria">
+    </label>
+    <label>Categoria
+      <select class="el-select" id="disponCategoria">
+        <option value="">Todas</option>
+      </select>
+    </label>
+    <label>Status
+      <select class="el-select" id="disponStatus">
+        <option value="">Todos</option>
+        <option value="disponivel">Disponivel</option>
+        <option value="atencao">Atencao</option>
+        <option value="indisponivel">Indisponivel</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="dispon-kpis" id="disponKpis"></section>
+
+  <section class="dispon-card">
+    <div class="dispon-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Foto</th>
+            <th>Item</th>
+            <th>Categoria</th>
+            <th>Total</th>
+            <th>Reservado na data</th>
+            <th>Manutencao</th>
+            <th>Disponivel</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="disponTabela"></tbody>
+      </table>
+    </div>
+    <div class="dispon-pagination" id="disponPaginacao"></div>
+  </section>
+
+  <div class="dispon-modal hidden" id="disponReservasModal" aria-hidden="true">
+    <div class="dispon-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="disponReservasTitulo">
+      <div class="dispon-modal-head">
+        <div>
+          <span class="dispon-eyebrow">Reservas do item</span>
+          <h2 id="disponReservasTitulo">Locacoes na data</h2>
+        </div>
+        <button type="button" class="btn secondary" id="btnFecharReservasItem">Fechar</button>
+      </div>
+      <div class="dispon-modal-body">
+        <table>
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Cliente</th>
+              <th>Evento</th>
+              <th>Local</th>
+              <th>Data</th>
+              <th>Qtd</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="disponReservasTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

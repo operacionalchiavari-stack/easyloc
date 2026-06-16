@@ -1,0 +1,315 @@
+<div class="planner-page" data-module="planejador-eventos" data-module-root>
+  <header class="planner-wizard-top">
+    <div class="planner-title-block">
+      <span>EasyLoc IA</span>
+      <h1>Planejador Inteligente de Eventos</h1>
+    </div>
+
+    <nav class="planner-steps" id="plannerSteps"></nav>
+
+    <div class="planner-top-actions">
+      <button type="button" class="btn secondary" id="plannerCancel">Cancelar</button>
+      <button type="button" class="btn secondary" id="plannerSaveDraft">Salvar rascunho</button>
+    </div>
+  </header>
+
+  <div class="planner-guidance-banner hidden" id="plannerGuidanceBanner"></div>
+
+  <main class="planner-step-stage">
+    <section class="planner-step active" data-step-panel="1">
+      <div class="planner-local-stage">
+        <div class="planner-card planner-local-picker">
+          <span class="planner-kicker">Etapa 1</span>
+          <h2>Escolha o local do evento</h2>
+          <p>Primeiro busque um local cadastrado. Se ainda não existir, cadastre o local com a planta base e arquivos de referência.</p>
+
+          <div class="planner-search-row">
+            <div class="planner-search-field">
+              <label for="plannerLocalSearch">Local</label>
+              <input class="el-input" id="plannerLocalSearch" autocomplete="off" placeholder="Digite para buscar local cadastrado">
+            </div>
+            <button type="button" class="btn primary" id="plannerOpenNewLocalModal">Adicionar novo local</button>
+          </div>
+
+          <div class="planner-local-list" id="plannerLocalList"></div>
+        </div>
+
+        <div class="planner-card planner-plant-preview-card" id="plannerSelectedPlacePreview">
+          <div class="planner-preview-head">
+            <div>
+              <span class="planner-kicker">Planta do local selecionado</span>
+              <h2 id="plannerPreviewTitle">Nenhum local selecionado</h2>
+            </div>
+            <div class="planner-preview-actions">
+              <span class="planner-preview-chip" id="plannerPreviewChip">Selecione um local</span>
+              <button type="button" class="btn secondary" id="plannerOpenPlantManager">Gerenciar plantas</button>
+              <label class="btn secondary planner-inline-upload">
+                Anexar planta
+                <input type="file" id="plannerAttachRawPlant" accept=".pdf,.png,.jpg,.jpeg">
+              </label>
+              <label class="btn secondary planner-inline-upload">
+                Anexar referências
+                <input type="file" id="plannerAttachReferences" accept=".pdf,.png,.jpg,.jpeg" multiple>
+              </label>
+            </div>
+          </div>
+          <div class="planner-plant-preview" id="plannerRawPlantPreview">
+            <div class="planner-empty-preview">
+              <strong>Busque ou adicione um local</strong>
+              <span>A planta crua principal aparecerá aqui antes de avançar.</span>
+            </div>
+          </div>
+          <div class="planner-reference-strip" id="plannerReferenceStrip"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="planner-step" data-step-panel="2">
+      <div class="planner-card planner-intro-card">
+        <span class="planner-kicker">Etapa 2</span>
+        <h2>Escolha o modo de criação</h2>
+        <p>Defina se a IA deve seguir suas marcações visuais ou criar a primeira versão automaticamente com base nas plantas do local.</p>
+
+        <div class="planner-mode-grid">
+          <button type="button" class="planner-mode-card" data-mode-choice="assistida">
+            <span>01</span>
+            <h3>Criação de planta assistida</h3>
+            <p>O usuário demarca pontos importantes na planta, como palco, pista, buffet, lounges, bares e áreas livres. A IA usa esses direcionamentos para montar o restante da planta.</p>
+          </button>
+
+          <button type="button" class="planner-mode-card" data-mode-choice="automatica">
+            <span>02</span>
+            <h3>Criação de planta automática</h3>
+            <p>A IA usa a planta crua e as plantas de referência já cadastradas para esse local e gera a planta automaticamente.</p>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="planner-step" data-step-panel="3">
+      <div class="planner-canvas-layout">
+        <div class="planner-canvas-card">
+          <div class="planner-canvas-head">
+            <div>
+              <span class="planner-kicker">Etapa 3</span>
+              <h2>Demarcação visual da planta</h2>
+            </div>
+            <div class="planner-canvas-actions">
+              <button type="button" class="btn secondary" data-obstacle-tool="Coluna">Coluna</button>
+              <button type="button" class="btn secondary" data-obstacle-tool="Parede">Parede</button>
+              <button type="button" class="btn secondary" data-obstacle-tool="Área proibida">Área proibida</button>
+              <button type="button" class="btn secondary" id="plannerDeleteMark">Apagar marcação</button>
+            </div>
+          </div>
+          <div class="planner-canvas-wrap" id="plannerCanvasWrap">
+            <div class="planner-canvas grid-on" id="plannerCanvas"></div>
+          </div>
+        </div>
+        <aside class="planner-side-card planner-collapsible-card">
+          <button type="button" class="planner-collapse-toggle" data-collapse-panel="plannerGuidancePanel">Controles</button>
+          <div id="plannerGuidancePanel">
+            <h3>Pontos importantes</h3>
+            <div id="plannerDetectedList"></div>
+            <h3>Áreas principais</h3>
+            <div class="planner-area-tools" id="plannerAreaTools"></div>
+            <div id="plannerAreasList"></div>
+            <div id="plannerAreaConfigPanel"></div>
+            <button type="button" class="btn primary full" id="plannerConfirmMarks">Confirmar demarcações</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="planner-step" data-step-panel="4">
+      <div class="planner-card planner-intro-card">
+        <span class="planner-kicker">Etapa 4</span>
+        <h2>Estilo do evento</h2>
+        <p>Defina como a IA deve se comportar antes de gerar o layout.</p>
+
+        <div class="planner-style-grid" id="plannerStyleGrid"></div>
+
+        <div class="planner-brief-grid">
+          <label>Convidados
+            <input class="el-input" type="number" min="0" id="plannerBriefGuests" data-event-brief="convidados" placeholder="Ex: 120">
+          </label>
+          <label>Mesas desejadas
+            <input class="el-input" type="number" min="0" id="plannerBriefTables" data-event-brief="mesas" placeholder="Automático">
+          </label>
+          <label>Lounges desejados
+            <input class="el-input" type="number" min="0" id="plannerBriefLounges" data-event-brief="lounges" placeholder="Ex: 2">
+          </label>
+        </div>
+
+        <div class="planner-occupancy">
+          <span>Mais confortável</span>
+          <input type="range" id="plannerOccupancy" min="1" max="100" value="45">
+          <span>Mais preenchido</span>
+        </div>
+        <p class="planner-muted">Esse controle define se a IA deve deixar mais circulação ou preencher melhor os espaços vazios.</p>
+
+        <div class="planner-priority-list" id="plannerPriorityList"></div>
+        <div class="planner-preferences" id="plannerPreferences"></div>
+      </div>
+    </section>
+
+    <section class="planner-step" data-step-panel="5">
+      <div class="planner-canvas-layout">
+        <div class="planner-canvas-card">
+          <div class="planner-canvas-head">
+            <div>
+              <span class="planner-kicker">Etapa 5</span>
+              <h2>Gerar layout</h2>
+            </div>
+            <button type="button" class="btn primary" id="plannerStartGeneration">Iniciar geração</button>
+          </div>
+          <div class="planner-canvas-wrap">
+            <div class="planner-canvas grid-on" id="plannerCanvasGenerate"></div>
+          </div>
+        </div>
+        <aside class="planner-side-card">
+          <h3>Decisões do Planejador IA</h3>
+          <div class="planner-progress-list" id="plannerGenerationProgress"></div>
+          <button type="button" class="btn primary full hidden" id="plannerSeeGenerated">Ver layout gerado</button>
+        </aside>
+      </div>
+    </section>
+
+    <section class="planner-step" data-step-panel="6">
+      <div class="planner-canvas-layout">
+        <div class="planner-canvas-card">
+          <div class="planner-canvas-head">
+            <div>
+              <span class="planner-kicker">Etapa 6</span>
+              <h2>Revisar e aprovar</h2>
+            </div>
+            <div class="planner-canvas-actions">
+              <button type="button" class="btn secondary" id="plannerRegenerate">Regenerar</button>
+              <button type="button" class="btn secondary" id="plannerSaveFinalDraft">Salvar rascunho</button>
+              <button type="button" class="btn primary" id="plannerApproveLayout">Aprovar layout</button>
+            </div>
+          </div>
+          <div class="planner-canvas-wrap">
+            <div class="planner-canvas grid-on" id="plannerCanvasReview"></div>
+          </div>
+        </div>
+        <aside class="planner-side-card">
+          <details open>
+            <summary>Lista de itens</summary>
+            <div id="plannerItemsList"></div>
+          </details>
+          <h3>Regras aplicadas</h3>
+          <div id="plannerAppliedRules"></div>
+          <h3>Decisões e justificativas</h3>
+          <div id="plannerReviewNotes"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="planner-footer">
+    <button type="button" class="btn secondary" id="plannerPrev">Voltar</button>
+    <div class="planner-step-hint" id="plannerStepHint"></div>
+    <button type="button" class="btn primary" id="plannerNext">Próximo</button>
+  </footer>
+
+  <div class="planner-modal hidden" id="plannerNewLocalModal" aria-hidden="true">
+    <div class="planner-modal-box" role="dialog" aria-modal="true" aria-labelledby="plannerNewLocalTitle">
+      <div class="planner-modal-head">
+        <div>
+          <span class="planner-kicker">Novo local</span>
+          <h2 id="plannerNewLocalTitle">Adicionar novo local</h2>
+        </div>
+        <button type="button" class="planner-icon-btn" id="plannerCloseNewLocalModal">×</button>
+      </div>
+
+      <div class="planner-modal-body">
+        <div class="planner-form-grid">
+          <label>Nome do local
+            <input class="el-input" id="plannerNewLocalName" placeholder="Ex: Vale dos Desejos">
+          </label>
+          <label>Endereço
+            <input class="el-input" id="plannerNewLocalAddress" placeholder="Digite e selecione no Google">
+          </label>
+        </div>
+
+        <div class="planner-upload-grid">
+          <label class="planner-upload-zone">
+            <input type="file" id="plannerRawPlantUpload" accept=".pdf,.png,.jpg,.jpeg">
+            <strong>Planta crua principal</strong>
+            <span>PDF, PNG ou JPG</span>
+          </label>
+          <label class="planner-upload-zone">
+            <input type="file" id="plannerReferenceUpload" accept=".pdf,.png,.jpg,.jpeg" multiple>
+            <strong>Outras plantas e referências</strong>
+            <span>Arquivos que ajudam a IA a entender o local</span>
+          </label>
+        </div>
+
+        <div class="planner-modal-preview-grid">
+          <div>
+            <span class="planner-kicker">Preview da planta crua</span>
+            <div class="planner-small-preview" id="plannerNewRawPreview"></div>
+          </div>
+          <div>
+            <span class="planner-kicker">Referências adicionadas</span>
+            <div class="planner-reference-list" id="plannerNewReferenceList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="planner-modal-actions">
+        <button type="button" class="btn secondary" id="plannerCancelNewLocal">Cancelar</button>
+        <button type="button" class="btn primary" id="plannerCreateLocal">Salvar local</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="planner-modal hidden" id="plannerPlantManagerModal" aria-hidden="true">
+    <div class="planner-modal-box planner-plant-manager-box" role="dialog" aria-modal="true" aria-labelledby="plannerPlantManagerTitle">
+      <div class="planner-modal-head">
+        <div>
+          <span class="planner-kicker">Local selecionado</span>
+          <h2 id="plannerPlantManagerTitle">Gerenciar plantas</h2>
+          <p class="planner-muted" id="plannerPlantManagerSubtitle"></p>
+        </div>
+        <button type="button" class="planner-icon-btn" id="plannerClosePlantManager">×</button>
+      </div>
+
+      <div class="planner-modal-body">
+        <div class="planner-manager-grid">
+          <section class="planner-manager-section">
+            <div class="planner-manager-section-head">
+              <div>
+                <span class="planner-kicker">Planta base</span>
+                <h3>Planta crua principal</h3>
+              </div>
+              <label class="btn secondary planner-inline-upload">
+                Trocar planta crua
+                <input type="file" id="plannerManagerRawUpload" accept=".pdf,.png,.jpg,.jpeg">
+              </label>
+            </div>
+            <div class="planner-manager-preview" id="plannerManagerRawPreview"></div>
+          </section>
+
+          <section class="planner-manager-section">
+            <div class="planner-manager-section-head">
+              <div>
+                <span class="planner-kicker">Referências</span>
+                <h3>Plantas feitas e arquivos de apoio</h3>
+              </div>
+              <label class="btn secondary planner-inline-upload">
+                Adicionar plantas
+                <input type="file" id="plannerManagerReferenceUpload" accept=".pdf,.png,.jpg,.jpeg" multiple>
+              </label>
+            </div>
+            <div class="planner-manager-list" id="plannerManagerReferenceList"></div>
+          </section>
+        </div>
+      </div>
+
+      <div class="planner-modal-actions">
+        <button type="button" class="btn secondary" id="plannerClosePlantManagerFooter">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>

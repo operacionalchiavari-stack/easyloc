@@ -296,13 +296,31 @@
 
   <aside class="onde-esta-panel" id="ondeEstaPanel" aria-hidden="true">
     <div class="onde-esta-header">
-      <div><span>Disponibilidade</span><strong id="ondeEstaTitulo">Item</strong></div>
+      <div><span>Disponibilidade</span></div>
       <button type="button" class="btn-icon" id="btnFecharOndeEsta" aria-label="Fechar">x</button>
     </div>
     <div class="onde-esta-content">
-      <div class="onde-metric"><span>Disponivel</span><strong id="ondeQtdDisponivel">A consultar</strong></div>
-      <div class="onde-metric"><span>Reservada</span><strong id="ondeQtdReservada">A consultar</strong></div>
-      <div class="onde-metric"><span>Conflitos</span><strong id="ondeConflitos">Nenhum conflito carregado</strong></div>
+      <div class="onde-item-card">
+        <div class="onde-item-photo" id="ondeItemFoto">Sem foto</div>
+        <div>
+          <span class="onde-mini-label">Item consultado</span>
+          <strong id="ondeItemNome">Selecione um item</strong>
+          <small id="ondeItemCodigo">-</small>
+        </div>
+      </div>
+      <div class="onde-busca-wrap">
+        <label for="ondeBuscaItem">Pesquisar outro item</label>
+        <input class="el-input" id="ondeBuscaItem" type="text" placeholder="Digite nome ou codigo">
+        <div class="onde-busca-lista" id="ondeBuscaLista"></div>
+      </div>
+      <div class="onde-metrics-grid">
+        <div class="onde-metric"><span>Disponivel</span><strong id="ondeQtdDisponivel">A consultar</strong></div>
+        <div class="onde-metric"><span>Reservada</span><strong id="ondeQtdReservada">A consultar</strong></div>
+        <div class="onde-metric"><span>Estoque total</span><strong id="ondeQtdTotal">A consultar</strong></div>
+        <div class="onde-metric"><span>Manutencao</span><strong id="ondeQtdManutencao">A consultar</strong></div>
+      </div>
+      <div class="onde-alerta" id="ondeConflitos">Nenhum conflito carregado</div>
+      <div class="onde-lista-title">Onde esta alugado nessa data</div>
       <div class="onde-lista" id="ondePedidosLista">Selecione um item cadastrado para consultar os pedidos relacionados.</div>
     </div>
   </aside>

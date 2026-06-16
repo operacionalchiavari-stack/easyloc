@@ -42,6 +42,23 @@
         .upsert(payload, { onConflict: 'empresa_id' });
     },
 
+    getLogisticaRegras: async (empresaId) => {
+      const { data, error } = await window.supabaseClient
+        .from('empresa_logistica_regras')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .maybeSingle();
+
+      if (error) console.error("getLogisticaRegras error:", error);
+      return data;
+    },
+
+    saveLogisticaRegras: (payload) => {
+      return window.supabaseClient
+        .from('empresa_logistica_regras')
+        .upsert(payload, { onConflict: 'empresa_id' });
+    },
+
     /* =====================================================
    FINANCEIRO
 ===================================================== */

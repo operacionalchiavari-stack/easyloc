@@ -83,22 +83,33 @@ function normalizarPrompt(input: GenerateSceneInput) {
     ? scene.options as Record<string, unknown>
     : {};
   const convidados = String(options.convidados || "");
+  const ambientacao = Array.isArray(options.ambientacao)
+    ? options.ambientacao.filter((item) => typeof item === "string").join(", ")
+    : "";
   const convidadosRule = convidados === "Sem convidados"
     ? "Convidados e pessoas: obrigatoriamente nao incluir pessoas visiveis."
     : convidados === "Poucos convidados"
-      ? "Convidados e pessoas: obrigatoriamente incluir poucas pessoas de evento, discretas, ao fundo ou laterais; a cena nao pode ficar vazia."
+      ? "Convidados e pessoas: obrigatoriamente incluir poucas pessoas de evento, discretas, ao fundo ou laterais; a cena nao pode ficar vazia. Pessoas devem se adaptar ao layout e nunca mover ou cobrir os moveis."
       : convidados === "Evento cheio"
-        ? "Convidados e pessoas: obrigatoriamente criar sensacao de evento cheio com convidados visiveis, sem esconder os moveis principais."
+        ? "Convidados e pessoas: obrigatoriamente criar sensacao de evento cheio com convidados visiveis, sem esconder, mover ou substituir os moveis principais."
         : "Convidados e pessoas: seguir exatamente a opcao indicada pelo usuario, quando existir.";
+  const ambientacaoRule = ambientacao
+    ? `Ambientacao obrigatoria selecionada: ${ambientacao}. Elementos decorativos devem enriquecer o evento em areas livres, teto, fundo, laterais, quinas, mesas e bar, sem deslocar os moveis do canvas.`
+    : "Ambientacao extra: nao adicionar elementos decorativos relevantes que nao foram pedidos.";
 
   return {
     prompt: [
       input.prompt.trim(),
       "As escolhas do usuario sobre tipo de imagem, periodo, convidados, estilo e iluminacao sao regras obrigatorias.",
       convidadosRule,
+      ambientacaoRule,
+      "Hierarquia obrigatoria: primeiro preserve moveis e layout do canvas; depois encaixe convidados, noivos, decoracao, paisagismo, velas, lustres, tecidos, bebidas e arranjos nos espacos livres.",
       "O resultado deve parecer sempre uma producao de evento premium, nao uma composicao aleatoria de objetos.",
       "Tarefa principal: converter o canvas enviado em um render realista, mantendo a mesma composicao.",
       "O canvas e a autoridade visual principal. Preserve fundo, ambiente, enquadramento, perspectiva, posicoes, escala relativa e ordem dos objetos.",
+      "Posicionamento dos itens e soberano e nao negociavel: cada movel deve permanecer na mesma zona visual do canvas. Item no centro permanece no centro; item a esquerda permanece a esquerda; item a direita permanece a direita; item na frente/fundo mantem a mesma leitura de profundidade.",
+      "Nao reposicionar bar, cadeiras, mesas, poltronas, sofas ou aparadores para encaixar convidados, noivos ou decoracao. Pessoas e decoracoes entram nos espacos livres ao redor dos moveis fixos.",
+      "Ajustes de perspectiva, sombra e profundidade so sao permitidos quando nao alteram a posicao percebida do item no quadro.",
       "As imagens individuais dos itens sao referencias obrigatorias de modelo, material, formato e angulo de vista do movel; nao devem substituir a composicao do canvas.",
       "Preserve a vista/orientacao de cada movel conforme a foto enviada: frente continua frente, lateral continua lateral, costas continua costas.",
       "Nao virar cadeiras, poltronas, sofas, mesas, bares ou aparadores para outro angulo. Se a foto esta de frente, nao renderizar de costas.",
