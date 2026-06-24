@@ -68,9 +68,9 @@ O servidor estará em `http://localhost:3000`
 
 ```
 meu-sistema/
-├── index.html                           # Login
+├── index.html                           # Landing page e planos
+├── login.html                           # Login
 ├── dashboard.html                       # Dashboard principal
-├── planos.html                          # Página de planos
 ├── server/
 │   └── index.js                         # Servidor Node.js (proxy + config)
 ├── Modulos/

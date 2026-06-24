@@ -1,128 +1,73 @@
-/* =====================================================
-   SUPABASE CLIENT USADO (instância global em js/core/supabase.js)
-===================================================== */
-/* =====================================================
-   BOOT PRINCIPAL
-===================================================== */
-
-async function iniciarBoot(){
-
+async function iniciarBoot() {
   const sb = window.supabaseClient;
 
-  console.log("🚀 Boot iniciado");
-
-
-  /* ===============================
-     RESTAURA SESSÃO
-  =============================== */
-
-  const {
-    data:{ session }
-  } = await sb.auth.getSession();
-
-
-  if(!session){
-    console.warn("❌ Sessão não encontrada");
-    window.location.href = "/index.html"; // ✅ ABSOLUTO
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    window.location.href = "/index.html";
     return;
   }
 
-  console.log("✅ Sessão restaurada");
+  const empresaId = sessionStorage.getItem("empresa_id");
+  const nomeUsuario = sessionStorage.getItem("usuario_nome") || "Usuario";
 
-
-  /* ===============================
-     CONTEXTO
-  =============================== */
-
-  const empresaId =
-    sessionStorage.getItem("empresa_id");
-
-  const nomeUsuario =
-    sessionStorage.getItem("usuario_nome");
-
-  if(!empresaId){
-    console.warn("❌ empresa_id ausente");
-    window.location.href = "/index.html"; // ✅ ABSOLUTO
+  if (!empresaId) {
+    window.location.href = "/index.html";
     return;
   }
 
+  const primeiroNome = nomeUsuario.split(" ")[0] || "Usuario";
+  const titulo = document.querySelector(".boot-title");
+  const subtitulo = document.querySelector(".boot-subtitle");
+  const logoContainer = document.getElementById("logoContainer");
 
-  /* ===============================
-     TEXO BOOT
-  =============================== */
-
-  const titulo =
-    document.querySelector(".boot-title");
-
-  if(titulo){
-    titulo.innerText =
-      `Olá ${nomeUsuario}, preparando seu ambiente`;
+  if (titulo) titulo.innerText = `Ola ${primeiroNome}, preparando seu ambiente`;
+  if (subtitulo) {
+    subtitulo.innerHTML = "Carregando identidade visual, permissoes e dados da empresa...";
   }
 
+  let empresa = null;
 
-  /* ===============================
-     LOGO EMPRESA
-  =============================== */
+  try {
+    const { data } = await sb
+      .from("empresas")
+      .select("id,nome,logo_url")
+      .eq("id", empresaId)
+      .single();
 
-  try{
+    empresa = data || null;
+    if (empresa) sessionStorage.setItem("empresa_data", JSON.stringify(empresa));
+  } catch (error) {
+    console.warn("[Boot] Nao foi possivel buscar empresa:", error);
+  }
 
-    const { data:empresa } =
-      await sb
-        .from("empresas")
-        .select("id,nome,logo_url")
-        .eq("id",empresaId)
-        .single();
+  let theme = null;
+  if (window.EasyLocTheme?.applyForEmpresa) {
+    theme = await window.EasyLocTheme.applyForEmpresa(empresaId);
+  }
 
-    if(empresa){
-      sessionStorage.setItem(
-        "empresa_data",
-        JSON.stringify(empresa)
-      );
-
-      const logoContainer =
-        document.getElementById("logoContainer");
-
-      if(logoContainer){
-
-        if(empresa.logo_url){
-
-          const img = new Image();
-          img.src = empresa.logo_url;
-          img.style.maxWidth="80%";
-          img.style.maxHeight="80%";
-          img.style.objectFit="contain";
-
-          logoContainer.innerHTML="";
-          logoContainer.appendChild(img);
-
-        }else{
-
-          logoContainer.innerHTML =
-            `<strong>${empresa.nome}</strong>`;
-        }
-      }
+  const logoUrl = theme?.logo_url || empresa?.logo_url || "";
+  if (logoContainer) {
+    if (logoUrl) {
+      const img = new Image();
+      img.src = logoUrl;
+      img.alt = empresa?.nome || "Logo da empresa";
+      img.style.maxWidth = "80%";
+      img.style.maxHeight = "80%";
+      img.style.objectFit = "contain";
+      logoContainer.innerHTML = "";
+      logoContainer.appendChild(img);
+    } else {
+      logoContainer.innerHTML = `<strong>${empresa?.nome || "EasyLoc"}</strong>`;
     }
-
-  }catch(e){
-    console.error("❌ erro boot:",e);
   }
 
+  if (subtitulo) {
+    subtitulo.innerHTML = "Tudo pronto. Abrindo seu painel...";
+  }
 
-  /* ===============================
-     REDIRECT FINAL
-  =============================== */
-
-  console.log("✅ Indo para dashboard");
-
-  setTimeout(()=>{
-    window.location.href = "/dashboard.html"; // ✅ ABSOLUTO
-  },400);
-
+  setTimeout(() => {
+    window.location.href = "/dashboard.html";
+  }, 650);
 }
-
-
-/* =====================================================
-   START
-===================================================== */
 
 iniciarBoot();

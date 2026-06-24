@@ -652,8 +652,13 @@ function renderizarTabelaClientes(clientes) {
   tbody.innerHTML = "";
 
 const fragment = document.createDocumentFragment();
+const paginaClientes = window.EasyLocListPager?.slice(
+  "cadastro-clientes",
+  clientes,
+  renderizarTabelaClientes
+) || clientes;
 
-clientes.forEach(c => {
+paginaClientes.forEach(c => {
 
   const tr = document.createElement("tr");
   tr.style.cursor = "pointer";
@@ -683,6 +688,12 @@ clientes.forEach(c => {
 });
 
 tbody.appendChild(fragment);
+window.EasyLocListPager?.render(
+  "cadastro-clientes",
+  tbody,
+  clientes,
+  renderizarTabelaClientes
+);
 }
 
 function aplicarFiltros() {

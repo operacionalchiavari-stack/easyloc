@@ -150,7 +150,13 @@ function renderizarTabela(lista) {
 
   tabela.innerHTML = "";
 
-  lista.forEach(f => {
+  const paginaFornecedores = window.EasyLocListPager?.slice(
+    "cadastro-fornecedores",
+    lista,
+    renderizarTabela
+  ) || lista;
+
+  paginaFornecedores.forEach(f => {
 
     const tr = document.createElement("tr");
     tr.style.cursor = "pointer";
@@ -194,6 +200,13 @@ function renderizarTabela(lista) {
 
     tabela.appendChild(tr);
   });
+
+  window.EasyLocListPager?.render(
+    "cadastro-fornecedores",
+    tabela,
+    lista,
+    renderizarTabela
+  );
 }
 
 function esc(v) {

@@ -5,135 +5,143 @@
       <h1>Separação de Materiais</h1>
       <p>Controle operacional por leitura de código de barras, respeitando empresa e usuário logados.</p>
     </div>
-
-    <div class="separacao-header-actions">
-      <button type="button" class="btn secondary" id="btnAtualizarSeparacao">
-        <i data-lucide="refresh-cw"></i>
-        Atualizar fila
-      </button>
-      <button type="button" class="btn primary" id="btnFocarLeitor">
-        <i data-lucide="scan-barcode"></i>
-        Focar leitor
-      </button>
-    </div>
   </header>
 
-  <div class="separacao-shell">
-    <aside class="separacao-fila">
-      <div class="panel-heading">
+  <section class="separacao-table-card">
+    <div class="separacao-table-filters">
+      <input class="el-input" id="separacaoBuscaPedido" type="search" placeholder="Buscar pedido, cliente, evento ou local">
+      <select class="el-select" id="separacaoStatusFiltro">
+        <option value="">Todos</option>
+        <option value="pendente">Pendente</option>
+        <option value="em_separacao">Em separação</option>
+        <option value="pausado">Pausado</option>
+        <option value="separado">Separado</option>
+        <option value="separado_com_divergencia">Com divergência</option>
+      </select>
+    </div>
+
+    <div class="separacao-table-wrap">
+      <table class="separacao-orders-table">
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Cliente</th>
+            <th>Evento</th>
+            <th>Local</th>
+            <th>Data</th>
+            <th>Status</th>
+            <th>Progresso</th>
+            <th>Itens</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="separacaoFilaPedidos"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="separacao-modal hidden" id="separacaoOperacaoModal" aria-hidden="true">
+    <div class="separacao-modal-backdrop" data-close-separacao-modal></div>
+    <section class="separacao-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="separacaoModalTitulo">
+      <header class="separacao-modal-header">
         <div>
-          <span>Fila</span>
-          <strong>Pedidos para separação</strong>
+          <span class="pedido-label">Operação de separação</span>
+          <h2 id="separacaoModalTitulo">Pedido selecionado</h2>
+          <p id="separacaoModalMeta">Confira os itens e faça as leituras do pedido.</p>
         </div>
-        <span class="queue-count" id="separacaoFilaCount">0</span>
-      </div>
+        <button type="button" class="modal-close-button" id="btnFecharSeparacaoModal" aria-label="Fechar separação">
+          <i data-lucide="x"></i>
+        </button>
+      </header>
 
-      <div class="queue-filters">
-        <input class="el-input" id="separacaoBuscaPedido" type="search" placeholder="Buscar pedido ou cliente">
-        <select class="el-select" id="separacaoStatusFiltro">
-          <option value="">Todos</option>
-          <option value="pendente">Pendente</option>
-          <option value="em_separacao">Em separação</option>
-          <option value="pausado">Pausado</option>
-          <option value="separado">Separado</option>
-          <option value="separado_com_divergencia">Com divergência</option>
-        </select>
-      </div>
+      <div class="separacao-modal-body">
+        <main class="separacao-workspace">
+          <section class="pedido-aberto-card">
+            <div class="pedido-aberto-top">
+              <div>
+                <span class="pedido-label">Pedido aberto</span>
+                <h2 id="separacaoPedidoTitulo">Nenhum pedido selecionado</h2>
+                <p id="separacaoPedidoMeta">Selecione um pedido na fila para iniciar.</p>
+              </div>
 
-      <div class="queue-list" id="separacaoFilaPedidos"></div>
-    </aside>
-
-    <main class="separacao-workspace">
-      <section class="pedido-aberto-card">
-        <div class="pedido-aberto-top">
-          <div>
-            <span class="pedido-label">Pedido aberto</span>
-            <h2 id="separacaoPedidoTitulo">Nenhum pedido selecionado</h2>
-            <p id="separacaoPedidoMeta">Selecione um pedido na fila para iniciar.</p>
-          </div>
-
-          <span class="status-pill" id="separacaoPedidoStatus">Aguardando</span>
-        </div>
-
-        <div class="progresso-geral">
-          <div class="progress-big-value" id="separacaoProgressoPercent">0%</div>
-          <div class="progress-big-track" aria-label="Progresso geral do pedido">
-            <span id="separacaoProgressoBar"></span>
-          </div>
-          <div class="progress-big-meta">
-            <span id="separacaoProgressoQtd">0 / 0 separados</span>
-            <span id="separacaoProgressoFaltante">0 faltantes</span>
-          </div>
-        </div>
-      </section>
-
-      <nav class="separacao-tabs" aria-label="Filtro de itens da separação">
-        <button type="button" class="tab active" data-tab="pendentes">Pendentes</button>
-        <button type="button" class="tab" data-tab="andamento">Em andamento</button>
-        <button type="button" class="tab" data-tab="concluidos">Concluídos</button>
-      </nav>
-
-      <section class="itens-separacao-list" id="separacaoItens"></section>
-    </main>
-
-    <aside class="scanner-panel">
-      <div class="scanner-card">
-        <div class="scanner-status-row">
-          <span class="scanner-dot" id="scannerDot"></span>
-          <div>
-            <span>Status do leitor</span>
-            <strong id="scannerStatus">Aguardando leitura</strong>
-          </div>
-        </div>
-
-        <div class="scanner-visual">
-          <i data-lucide="scan-barcode"></i>
-          <span></span>
-        </div>
-
-        <label class="scanner-input-label" for="scannerInput">Entrada do leitor</label>
-        <input class="scanner-input el-input" id="scannerInput" autocomplete="off" inputmode="none" placeholder="Passe o código de barras">
-
-        <div class="last-read-card" id="lastReadCard">
-          <span>Última leitura</span>
-          <strong id="lastReadItem">Nenhuma leitura</strong>
-          <dl>
-            <div>
-              <dt>Código</dt>
-              <dd id="lastReadCode">—</dd>
+              <span class="status-pill" id="separacaoPedidoStatus">Aguardando</span>
             </div>
-            <div>
-              <dt>Quantidade</dt>
-              <dd id="lastReadQty">—</dd>
-            </div>
-            <div>
-              <dt>Horário</dt>
-              <dd id="lastReadTime">—</dd>
-            </div>
-          </dl>
-        </div>
 
-        <div class="scanner-actions">
-          <button type="button" class="btn primary" id="btnFinalizarSeparacao">
-            <i data-lucide="check-circle"></i>
-            Finalizar separação
-          </button>
-          <button type="button" class="btn secondary" id="btnPausarSeparacao">
-            <i data-lucide="pause-circle"></i>
-            Pausar separação
-          </button>
-        </div>
-      </div>
+            <div class="progresso-geral">
+              <div class="progress-big-value" id="separacaoProgressoPercent">0%</div>
+              <div class="progress-big-track" aria-label="Progresso geral do pedido">
+                <span id="separacaoProgressoBar"></span>
+              </div>
+              <div class="progress-big-meta">
+                <span id="separacaoProgressoQtd">0 / 0 separados</span>
+                <span id="separacaoProgressoFaltante">0 faltantes</span>
+              </div>
+            </div>
+          </section>
 
-      <div class="scanner-history">
-        <div class="panel-heading compact">
-          <div>
-            <span>Histórico</span>
-            <strong>Leituras recentes</strong>
+          <section class="itens-separacao-list" id="separacaoItens"></section>
+        </main>
+
+        <aside class="scanner-panel">
+          <div class="scanner-card">
+            <div class="scanner-status-row">
+              <span class="scanner-dot" id="scannerDot"></span>
+              <div>
+                <span>Status do leitor</span>
+                <strong id="scannerStatus">Aguardando leitura</strong>
+              </div>
+            </div>
+
+            <div class="scanner-visual">
+              <i data-lucide="scan-barcode"></i>
+              <span></span>
+            </div>
+
+            <label class="scanner-input-label" for="scannerInput">Entrada do leitor</label>
+            <input class="scanner-input el-input" id="scannerInput" autocomplete="off" inputmode="none" placeholder="Passe o código de barras">
+
+            <div class="last-read-card" id="lastReadCard">
+              <span>Última leitura</span>
+              <strong id="lastReadItem">Nenhuma leitura</strong>
+              <dl>
+                <div>
+                  <dt>Código</dt>
+                  <dd id="lastReadCode">-</dd>
+                </div>
+                <div>
+                  <dt>Quantidade</dt>
+                  <dd id="lastReadQty">-</dd>
+                </div>
+                <div>
+                  <dt>Horário</dt>
+                  <dd id="lastReadTime">-</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="scanner-actions">
+              <button type="button" class="btn primary" id="btnFinalizarSeparacao">
+                <i data-lucide="check-circle"></i>
+                Finalizar separação
+              </button>
+              <button type="button" class="btn secondary" id="btnPausarSeparacao">
+                <i data-lucide="pause-circle"></i>
+                Pausar separação
+              </button>
+            </div>
           </div>
-        </div>
-        <div id="separacaoHistorico" class="history-list"></div>
+
+          <div class="scanner-history">
+            <div class="panel-heading compact">
+              <div>
+                <span>Histórico</span>
+                <strong>Leituras recentes</strong>
+              </div>
+            </div>
+            <div id="separacaoHistorico" class="history-list"></div>
+          </div>
+        </aside>
       </div>
-    </aside>
+    </section>
   </div>
 </section>

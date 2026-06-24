@@ -715,7 +715,13 @@ function renderizarTabelaLocais(locais) {
 
   tbody.innerHTML = "";
 
-  locais.forEach(l => {
+  const paginaLocais = window.EasyLocListPager?.slice(
+    "cadastro-locais",
+    locais,
+    renderizarTabelaLocais
+  ) || locais;
+
+  paginaLocais.forEach(l => {
     const tr = document.createElement("tr");
     tr.style.cursor = "pointer";
 
@@ -742,6 +748,13 @@ function renderizarTabelaLocais(locais) {
     tr.addEventListener("click", () => abrirDetalhesLocal(l));
     tbody.appendChild(tr);
   });
+
+  window.EasyLocListPager?.render(
+    "cadastro-locais",
+    tbody,
+    locais,
+    renderizarTabelaLocais
+  );
 }
 
 function Locais_aplicarFiltros() {

@@ -93,8 +93,18 @@
   }
 
   // ✅ Avatar: só chama quando a função existir
+  if (window.EasyLocTheme?.applyForEmpresa) {
+    await window.EasyLocTheme.applyForEmpresa(empresaId);
+  }
+
   if (typeof atualizarAvatarSidebar === "function") {
     await atualizarAvatarSidebar();
   }
+
+  window.dispatchEvent(new CustomEvent("easyloc:context-ready", {
+    detail: window.__CONTEXT
+  }));
+
+  window.EasyLocPreload?.start?.(window.__CONTEXT);
 
 })();

@@ -10,6 +10,7 @@
       config: null,
       financeiro: null,   // ✅ ADICIONE ESTA LINHA
       dashboard: null,
+      identidadeVisual: null,
       sections: {},
       refs: {}
     };
@@ -74,7 +75,7 @@
               <div style="display:flex;gap:12px;margin-bottom:24px;border-bottom:1px solid #e5e7eb;">
 
                 <div class="empresa-tab active" data-tab="dados"
-                  style="padding:10px 16px;font-weight:600;cursor:pointer;border-bottom:3px solid #ff6a00;">
+                  style="padding:10px 16px;font-weight:600;cursor:pointer;border-bottom:3px solid var(--color-primary,#ff6a00);">
                   Dados da Empresa
                 </div>
 
@@ -98,6 +99,11 @@
   Comercial
 </div>
 
+                <div class="empresa-tab" data-tab="identidade"
+                  style="padding:10px 16px;font-weight:600;cursor:pointer;color:#64748b;">
+                  Identidade Visual
+                </div>
+
               </div>
 
               <!-- CONTEÚDOS DAS ABAS -->
@@ -106,6 +112,7 @@
 <div id="aba-logistica" style="display:none;"></div>
 <div id="aba-financeiro" style="display:none;"></div>
 <div id="aba-comercial" style="display:none;"></div>
+<div id="aba-identidade" style="display:none;"></div>
 
           </div>
         </div>
@@ -118,7 +125,7 @@
           </button>
 
           <button id="saveEmpresaBtn"
-            style="padding:10px 20px;border-radius:14px;border:none;background:#ff6a00;color:#fff;font-weight:600;cursor:pointer;">
+            style="padding:10px 20px;border-radius:14px;border:none;background:var(--color-primary,#ff6a00);color:#fff;font-weight:600;cursor:pointer;">
             Salvar
           </button>
         </div>
@@ -132,6 +139,7 @@ function showTab(tipo) {
   modal.querySelector('#aba-logistica').style.display = tipo === 'logistica' ? 'block' : 'none';
   modal.querySelector('#aba-financeiro').style.display = tipo === 'financeiro' ? 'block' : 'none';
   modal.querySelector('#aba-comercial').style.display = tipo === 'comercial' ? 'block' : 'none';
+  modal.querySelector('#aba-identidade').style.display = tipo === 'identidade' ? 'block' : 'none';
 }
 
     async function loadSection(name) {
@@ -154,6 +162,9 @@ function showTab(tipo) {
 } else if (name === 'comercial') {
   renderFn = window.empresa.sections.comercial.render;
   bindFn = window.empresa.sections.comercial.bind;
+} else if (name === 'identidade') {
+  renderFn = window.empresa.sections.identidade.render;
+  bindFn = window.empresa.sections.identidade.bind;
 }
       if (!renderFn) return;
       console.log(`📋 [loadSection] ${name} - render() start`);
@@ -270,6 +281,11 @@ if (window.__salvarServicosComercial) {
   }
 }
 
+if (state.sections.identidade && window.__salvarIdentidadeVisual) {
+  const identidadeOk = await window.__salvarIdentidadeVisual();
+  if (!identidadeOk) return;
+}
+
 document.getElementById('empresaNome').innerText = payloadEmpresa.nome;
 close();
     }
@@ -285,7 +301,7 @@ close();
           t.style.borderBottom = 'none';
           t.style.color = '#64748b';
         });
-        tab.style.borderBottom = '3px solid #ff6a00';
+        tab.style.borderBottom = '3px solid var(--color-primary,#ff6a00)';
         tab.style.color = '#0f2a44';
         const tipo = tab.dataset.tab;
         showTab(tipo);
@@ -294,17 +310,19 @@ close();
     });
 
     // fetch data before showing first tab
-    const [empresa, config, dashboard, financeiro] = await Promise.all([
+    const [empresa, config, dashboard, financeiro, identidadeVisual] = await Promise.all([
       api.getEmpresa(state.empresaId),
       api.getConfig(state.empresaId),
       api.getDashboardEmpresa(state.empresaId),
-      api.getFinanceiro(state.empresaId)
+      api.getFinanceiro(state.empresaId),
+      api.getIdentidadeVisual(state.empresaId)
     ]);
 
     state.empresa = empresa || {};
     state.config = config || {};
     state.dashboard = dashboard || {};
     state.financeiro = financeiro || null;
+    state.identidadeVisual = identidadeVisual || null;
     await loadSection('dados');
     showTab('dados');
   }

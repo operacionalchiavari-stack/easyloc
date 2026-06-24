@@ -20,11 +20,25 @@ function avisar(mensagem, titulo = "Atenção", tipo = "aviso") {
   alert(mensagem);
 }
 
+function getEasyLocContext() {
+  if (window.__CONTEXT?.empresa_id) return window.__CONTEXT;
+  try {
+    if (window.parent && window.parent !== window && window.parent.__CONTEXT?.empresa_id) {
+      window.__CONTEXT = window.parent.__CONTEXT;
+      return window.__CONTEXT;
+    }
+  } catch (error) {
+    console.warn("Lia: contexto do dashboard indisponivel.", error);
+  }
+  return window.__CONTEXT || null;
+}
+
 function getEmpresaIdLogada() {
-  if (!window.__CONTEXT || !window.__CONTEXT.empresa_id) {
+  const context = getEasyLocContext();
+  if (!context?.empresa_id) {
     throw new Error("Empresa não identificada. Contexto global não carregado.");
   }
-  return window.__CONTEXT.empresa_id;
+  return context.empresa_id;
 }
 
 async function getSupabaseAuthHeaders() {
@@ -256,6 +270,13 @@ function renderChat() {
     return;
   }
 
+  const ctx = getEasyLocContext();
+  const userPhoto = ctx?.usuario_foto || ctx?.foto_usuario || ctx?.avatar_url || ctx?.foto_url || document.querySelector("#userAvatar img, .user-avatar img, .sidebar-user img")?.src || window.parent?.document?.querySelector("#userAvatar img, .user-avatar img, .sidebar-user img")?.src || "";
+  const userName = ctx?.usuario_nome || ctx?.nome_usuario || "Voce";
+  const initials = String(userName).trim().split(/\s+/).slice(0, 2).map((p) => p[0] || "").join("").toUpperCase() || "U";
+  const userAvatar = `<div class="msg-avatar user-avatar-msg">${userPhoto ? `<img src="${escapeHtml(userPhoto)}" alt="">` : initials}</div>`;
+  const liaAvatar = `<div class="msg-avatar lia-avatar">✦</div>`;
+
   conversa.forEach((item, idx) => {
     const q = escapeHtml(item.pergunta);
     const a = item.resposta_is_html ? item.resposta : escapeHtml(item.resposta);
@@ -263,9 +284,11 @@ function renderChat() {
     chatBox.innerHTML += `
       <div class="msg-row user">
         <div class="msg user">${q}</div>
+        ${userAvatar}
       </div>
 
       <div class="msg-row ia">
+        ${liaAvatar}
         <div class="msg ia">
           ${a}
           <div class="msg-tools">
@@ -626,6 +649,155 @@ async function buscarItensParaLia({ pergunta, empresa_id }) {
   return data || [];
 }
 
+async function safeLiaQuery(label, queryBuilder) {
+  try {
+    const { data, error } = await queryBuilder();
+    if (error) {
+      console.warn(`Lia: erro ao buscar ${label}`, error);
+      return [];
+    }
+    return data || [];
+  } catch (error) {
+    console.warn(`Lia: falha ao buscar ${label}`, error);
+    return [];
+  }
+}
+
+async function buscarPedidosParaLia({ pergunta, empresa_id }) {
+  const termos = extrairTermosBusca(pergunta);
+
+  return safeLiaQuery("pedidos", async () => {
+    let query = window.supabaseClient
+      .from("separacoes_pedidos")
+      .select("*")
+      .eq("empresa_id", empresa_id)
+      .limit(10);
+
+    const filtro = montarFiltroIlike(
+      [
+        "numero_pedido",
+        "cliente_nome",
+        "contato_cliente",
+        "tipo_evento",
+        "local_nome",
+        "status",
+        "status_comercial"
+      ],
+      termos
+    );
+
+    if (filtro) {
+      query = query.or(filtro);
+    } else {
+      query = query.order("data_evento", { ascending: false });
+    }
+
+    return query;
+  });
+}
+
+async function buscarItensDosPedidosParaLia({ pedidos, empresa_id }) {
+  const ids = (pedidos || []).map(p => p.id).filter(Boolean);
+  if (!ids.length) return [];
+
+  return safeLiaQuery("itens dos pedidos", async () => (
+    window.supabaseClient
+      .from("separacoes_itens")
+      .select("*")
+      .eq("empresa_id", empresa_id)
+      .in("separacao_pedido_id", ids)
+      .order("created_at", { ascending: true })
+      .limit(80)
+  ));
+}
+
+async function buscarCaminhoesParaLia({ pergunta, empresa_id }) {
+  const termos = extrairTermosBusca(pergunta);
+
+  return safeLiaQuery("caminhoes", async () => {
+    let query = window.supabaseClient
+      .from("caminhoes")
+      .select("*")
+      .eq("empresa_id", empresa_id)
+      .limit(20);
+
+    const filtro = montarFiltroIlike(
+      ["modelo", "placa", "tipo", "status"],
+      termos
+    );
+
+    if (filtro) {
+      query = query.or(filtro);
+    } else {
+      query = query.order("modelo", { ascending: true });
+    }
+
+    return query;
+  });
+}
+
+async function buscarColaboradoresParaLia({ pergunta, empresa_id }) {
+  const termos = extrairTermosBusca(pergunta);
+
+  return safeLiaQuery("colaboradores", async () => {
+    let query = window.supabaseClient
+      .from("colaboradores")
+      .select("*")
+      .eq("empresa_id", empresa_id)
+      .limit(20);
+
+    const filtro = montarFiltroIlike(["nome", "funcao", "telefone", "status"], termos);
+
+    if (filtro) {
+      query = query.or(filtro);
+    } else {
+      query = query.order("nome", { ascending: true });
+    }
+
+    return query;
+  });
+}
+
+async function buscarCronogramaParaLia({ pergunta, empresa_id, pedidos }) {
+  const termos = extrairTermosBusca(pergunta);
+  const pedidoIds = (pedidos || []).map(p => p.id).filter(Boolean);
+
+  return safeLiaQuery("cronograma logistico", async () => {
+    let query = window.supabaseClient
+      .from("cronograma_logistico")
+      .select("*")
+      .eq("empresa_id", empresa_id)
+      .limit(30);
+
+    if (pedidoIds.length) {
+      query = query.in("pedido_id", pedidoIds);
+    } else {
+      const filtro = montarFiltroIlike(
+        ["numero_pedido", "cliente_nome", "local_nome", "tipo_evento", "etapa", "responsavel", "caminhao", "equipe", "status"],
+        termos
+      );
+      if (filtro) query = query.or(filtro);
+      else query = query.order("data_etapa", { ascending: true });
+    }
+
+    return query;
+  });
+}
+
+async function buscarPlanejamentosParaLia({ empresa_id, pedidos }) {
+  const pedidoIds = (pedidos || []).map(p => p.id).filter(Boolean);
+  if (!pedidoIds.length) return [];
+
+  return safeLiaQuery("planejamentos logisticos", async () => (
+    window.supabaseClient
+      .from("planejamentos_logisticos")
+      .select("*")
+      .eq("empresa_id", empresa_id)
+      .in("pedido_id", pedidoIds)
+      .limit(20)
+  ));
+}
+
 function formatarClienteParaLia(c) {
   const tags = c.tags && typeof c.tags === "object"
     ? Object.entries(c.tags)
@@ -664,23 +836,152 @@ function formatarItemParaLia(item) {
   };
 }
 
+function formatarPedidoParaLia(pedido, itensPedido, cronograma, planejamentos) {
+  const observacoes = pedido.observacoes && typeof pedido.observacoes === "object"
+    ? pedido.observacoes
+    : {};
+
+  return {
+    id: pedido.id || "",
+    numero: pedido.numero_pedido || pedido.numero || "",
+    cliente: pedido.cliente_nome || "",
+    contato_cliente: pedido.contato_cliente || "",
+    evento: pedido.tipo_evento || "",
+    local: pedido.local_nome || "",
+    local_id: pedido.local_id || "",
+    data_evento: pedido.data_evento || pedido.data_hora || "",
+    data_entrega: pedido.data_entrega || "",
+    data_coleta: pedido.data_coleta || "",
+    status_operacional: pedido.status || "",
+    status_comercial: pedido.status_comercial || "",
+    status_planejamento: pedido.status_planejamento || "",
+    valor_total: Number(pedido.valor_total || 0),
+    endereco: observacoes.endereco_evento || observacoes.endereco || "",
+    referencia: observacoes.referencia_evento || observacoes.referencia || "",
+    logistica: observacoes.logistica || observacoes.resumo_logistica || null,
+    financeiro: {
+      forma_pagamento: observacoes.financeiro?.forma_pagamento || observacoes.forma_pagamento || "",
+      entrada: observacoes.financeiro?.entrada || observacoes.entrada || "",
+      parcelas: observacoes.financeiro?.parcelas || observacoes.parcelas_financeiras || []
+    },
+    itens: itensPedido
+      .filter(item => item.separacao_pedido_id === pedido.id)
+      .map(formatarItemPedidoParaLia),
+    cronograma: cronograma
+      .filter(item => item.pedido_id === pedido.id)
+      .map(formatarCronogramaParaLia),
+    planejamento: planejamentos
+      .filter(item => item.pedido_id === pedido.id)
+      .map(formatarPlanejamentoParaLia)
+  };
+}
+
+function formatarItemPedidoParaLia(item) {
+  return {
+    item_id: item.item_id || "",
+    codigo: item.codigo_item || "",
+    nome: item.item_nome || "",
+    quantidade_solicitada: Number(item.quantidade_solicitada || 0),
+    quantidade_separada: Number(item.quantidade_separada || 0),
+    status: item.status || "",
+    localizacao: item.localizacao || "",
+    tipo_controle: item.tipo_controle || "",
+    foto_url: item.foto_url || ""
+  };
+}
+
+function formatarCaminhaoParaLia(caminhao) {
+  return {
+    id: caminhao.id || "",
+    modelo: caminhao.modelo || caminhao.nome || "",
+    placa: caminhao.placa || "",
+    tipo: caminhao.tipo || "",
+    status: caminhao.status || "",
+    capacidade_m3: Number(caminhao.capacidade_m3 || caminhao.capacidade || 0),
+    largura: Number(caminhao.largura || 0),
+    altura: Number(caminhao.altura || 0),
+    comprimento: Number(caminhao.comprimento || 0),
+    proprietario: caminhao.proprietario_nome || caminhao.proprietario || "",
+    telefone: caminhao.telefone || ""
+  };
+}
+
+function formatarColaboradorParaLia(colaborador) {
+  return {
+    id: colaborador.id || "",
+    nome: colaborador.nome || "",
+    funcao: colaborador.funcao || colaborador.cargo || "",
+    telefone: colaborador.telefone || "",
+    status: colaborador.status || ""
+  };
+}
+
+function formatarCronogramaParaLia(item) {
+  return {
+    pedido: item.numero_pedido || "",
+    etapa: item.etapa || "",
+    data: item.data_etapa || "",
+    horario: item.horario || "",
+    responsavel: item.responsavel || "",
+    caminhao: item.caminhao || "",
+    equipe: item.equipe || "",
+    status: item.status || "",
+    observacao: item.observacao || ""
+  };
+}
+
+function formatarPlanejamentoParaLia(item) {
+  return {
+    status: item.status || "",
+    data_planejamento: item.data_planejamento || "",
+    observacoes: item.observacoes || {}
+  };
+}
+
 async function buscarDadosOperacionaisLia({ pergunta, empresa_id }) {
-  const [totalClientes, totalItens, clientes, itens] = await Promise.all([
+  const [
+    totalClientes,
+    totalItens,
+    totalPedidos,
+    totalCaminhoes,
+    clientes,
+    itens,
+    pedidos,
+    caminhoes,
+    colaboradores
+  ] = await Promise.all([
     contarTabelaEmpresa("clientes_empresas", empresa_id),
     contarTabelaEmpresa("itens", empresa_id),
+    contarTabelaEmpresa("separacoes_pedidos", empresa_id),
+    contarTabelaEmpresa("caminhoes", empresa_id),
     buscarClientesParaLia({ pergunta, empresa_id }),
-    buscarItensParaLia({ pergunta, empresa_id })
+    buscarItensParaLia({ pergunta, empresa_id }),
+    buscarPedidosParaLia({ pergunta, empresa_id }),
+    buscarCaminhoesParaLia({ pergunta, empresa_id }),
+    buscarColaboradoresParaLia({ pergunta, empresa_id })
+  ]);
+
+  const [itensPedido, cronograma, planejamentos] = await Promise.all([
+    buscarItensDosPedidosParaLia({ pedidos, empresa_id }),
+    buscarCronogramaParaLia({ pergunta, empresa_id, pedidos }),
+    buscarPlanejamentosParaLia({ empresa_id, pedidos })
   ]);
 
   return {
     empresa_id,
     totais: {
       clientes: totalClientes,
-      itens: totalItens
+      itens: totalItens,
+      pedidos: totalPedidos,
+      caminhoes: totalCaminhoes
     },
     clientes: clientes.map(formatarClienteParaLia),
     itens: itens.map(formatarItemParaLia),
-    observacao: "Dados reais do EasyLoc filtrados por empresa_id da empresa logada. Use somente estes dados quando responder sobre clientes ou itens cadastrados."
+    pedidos: pedidos.map(p => formatarPedidoParaLia(p, itensPedido, cronograma, planejamentos)),
+    caminhoes: caminhoes.map(formatarCaminhaoParaLia),
+    colaboradores: colaboradores.map(formatarColaboradorParaLia),
+    cronograma: cronograma.map(formatarCronogramaParaLia),
+    observacao: "Dados reais do EasyLoc filtrados por empresa_id da empresa logada. Use somente estes dados quando responder sobre cadastros, pedidos, itens, caminhões, equipe, cronograma, planejamento e logística."
   };
 }
 
@@ -713,7 +1014,7 @@ async function askLiaWithText(pergunta) {
       });
       console.log("📦 DADOS OPERACIONAIS LIA:", dadosOperacionais);
     } catch (e) {
-      console.warn("Lia: não foi possível buscar clientes/itens.", e);
+      console.warn("Lia: não foi possível buscar dados operacionais.", e);
     }
 
     // ✅ ÚNICA FONTE DE VERDADE: RAG SEMÂNTICO
@@ -745,8 +1046,9 @@ resposta = await chamarLia(pergunta, {
   conhecimento: contextoBase,
   dados_operacionais: dadosOperacionais,
   instrucao_dados_operacionais: `
-Quando a pergunta envolver clientes ou itens cadastrados, use dados_operacionais.
-Não invente cliente, item, código, preço, telefone, email ou endereço.
+Quando a pergunta envolver clientes, itens, pedidos, caminhões, equipe, cronograma, planejamento, separação ou logística, use dados_operacionais.
+Quando a pergunta pedir um pedido específico, responda com cliente, contato, evento, datas, local, status, itens, valores, cronograma e logística quando esses dados estiverem disponíveis.
+Não invente cliente, item, pedido, caminhão, equipe, código, preço, telefone, email, data, status ou endereço.
 Se o dado não estiver em dados_operacionais, diga que não encontrou no cadastro filtrado.
 Se a pergunta pedir foto/imagem de um item e o item tiver foto_url, mostre a imagem usando <img class="lia-item-photo" src="FOTO_URL" alt="Nome do item">.
 Se o item não tiver foto_url, diga que o item está cadastrado sem foto.
@@ -769,8 +1071,9 @@ resposta = await chamarLia(pergunta, {
 Seja honesta.
 Diga claramente que esse assunto não está documentado nos processos internos.
 Não invente regras.
-Se a pergunta for sobre clientes ou itens cadastrados, responda com os dados_operacionais reais.
-Não invente cliente, item, código, preço, telefone, email ou endereço.
+Se a pergunta for sobre clientes, itens, pedidos, caminhões, equipe, cronograma, planejamento, separação ou logística, responda com os dados_operacionais reais.
+Se a pergunta pedir um pedido específico, responda com cliente, contato, evento, datas, local, status, itens, valores, cronograma e logística quando esses dados estiverem disponíveis.
+Não invente cliente, item, pedido, caminhão, equipe, código, preço, telefone, email, data, status ou endereço.
 Se a pergunta pedir foto/imagem de um item e o item tiver foto_url, mostre a imagem usando <img class="lia-item-photo" src="FOTO_URL" alt="Nome do item">.
 Se o item não tiver foto_url, diga que o item está cadastrado sem foto.
 Explique de forma genérica como isso costuma funcionar no mercado, se fizer sentido.

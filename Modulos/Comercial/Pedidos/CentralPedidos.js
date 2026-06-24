@@ -67,6 +67,21 @@
     return date.toLocaleDateString("pt-BR");
   }
 
+  function formatStatusLabel(status){
+    const labels = {
+      pre_reserva: "Pre reserva",
+      orcamento: "Orcamento",
+      aprovado: "Aprovado",
+      pendente: "Pendente",
+      em_separacao: "Em separacao",
+      separado: "Separado",
+      finalizado: "Finalizado",
+      cancelado: "cancelado"
+    };
+
+    return labels[status] || String(status || "-").replaceAll("_", " ");
+  }
+
   function isTabelaAusente(error){
     const code = String(error?.code || "");
     const message = String(error?.message || "");
@@ -110,6 +125,8 @@
     return {
       id: row.id,
       numero: row.numero_pedido || row.numero || row.codigo || row.id || "-",
+      cliente_id: row.cliente_id || null,
+      local_id: row.local_id || null,
       cliente: row.cliente_nome || row.cliente || row.nome_cliente || "Cliente nao informado",
       evento: row.tipo_evento || row.evento || row.nome_evento || "Evento",
       local: row.local_nome || row.local || row.endereco || "Local nao informado",
@@ -118,6 +135,91 @@
       valor: Number(row.valor_total || row.total || row.valor || 0),
       comercial: row.comercial_nome || row.comercial || row.responsavel || "-"
     };
+  }
+
+  function dataPedidoParaCadastro(row){
+    const raw = row.data_evento || row.data_coleta || row.data_entrega || row.data_hora || row.created_at;
+    if(!raw) return "";
+    const iso = String(raw).slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : "";
+  }
+
+  function pedidoContaComoUltimaLocacao(row){
+    const status = String(row.status_comercial || row.status || "").toLowerCase();
+    return !["cancelado", "cancelada", "pausado"].includes(status);
+  }
+
+  function escolherMaisRecente(map, key, payload){
+    if(!key || !payload.ultima_locacao) return;
+    const atual = map.get(key);
+    if(!atual || payload.ultima_locacao > atual.ultima_locacao){
+      map.set(key, payload);
+    }
+  }
+
+  async function atualizarCadastroPorIdOuNome(tabela, id, nome, payload){
+    if(!state.supabase || !state.empresaId || !payload.ultima_locacao) return;
+
+    let result = null;
+
+    if(id){
+      result = await state.supabase
+        .from(tabela)
+        .update(payload)
+        .eq("empresa_id", state.empresaId)
+        .eq("id", id);
+    }
+
+    if((!id || result?.error) && nome){
+      result = await state.supabase
+        .from(tabela)
+        .update(payload)
+        .eq("empresa_id", state.empresaId)
+        .eq("nome_razao", nome);
+    }
+
+    if(result?.error && !isTabelaAusente(result.error)){
+      console.warn(`[CentralPedidos] nao foi possivel atualizar ${tabela}:`, result.error);
+    }
+  }
+
+  async function sincronizarInatividadeCadastros(rows){
+    const clientes = new Map();
+    const locais = new Map();
+
+    (rows || []).filter(pedidoContaComoUltimaLocacao).forEach((row) => {
+      const ultima_locacao = dataPedidoParaCadastro(row);
+      if(!ultima_locacao) return;
+
+      escolherMaisRecente(clientes, row.cliente_id || row.cliente_nome, {
+        id: row.cliente_id || null,
+        nome: row.cliente_nome || row.cliente || row.nome_cliente || "",
+        ultima_locacao
+      });
+
+      escolherMaisRecente(locais, row.local_id || row.local_nome, {
+        id: row.local_id || null,
+        nome: row.local_nome || row.local || "",
+        ultima_locacao
+      });
+    });
+
+    const tarefas = [];
+    clientes.forEach((cliente) => {
+      tarefas.push(atualizarCadastroPorIdOuNome("clientes_empresas", cliente.id, cliente.nome, {
+        ultima_locacao: cliente.ultima_locacao
+      }));
+    });
+
+    locais.forEach((local) => {
+      tarefas.push(atualizarCadastroPorIdOuNome("locais", local.id, local.nome, {
+        ultima_locacao: local.ultima_locacao
+      }));
+    });
+
+    if(tarefas.length){
+      await Promise.allSettled(tarefas);
+    }
   }
 
   function dataBR(value){
@@ -321,21 +423,18 @@
     }
 
     els.centralPedidosTbody.innerHTML = state.filtrados.map((pedido) => `
-      <tr data-pedido-id="${escapeHtml(pedido.id)}">
-        <td><button type="button" class="pedido-numero-link" data-action="editar">${escapeHtml(pedido.numero)}</button></td>
+      <tr data-pedido-id="${escapeHtml(pedido.id)}" title="Clique duas vezes para abrir o pedido">
+        <td><span class="pedido-numero-card">${escapeHtml(pedido.numero)}</span></td>
         <td>${escapeHtml(pedido.cliente)}</td>
         <td>${escapeHtml(pedido.evento)}</td>
         <td>${escapeHtml(pedido.local)}</td>
         <td>${escapeHtml(formatDate(pedido.data))}</td>
-        <td><span class="status-pill ${escapeHtml(pedido.status)}">${escapeHtml(pedido.status)}</span></td>
+        <td><span class="status-pill ${escapeHtml(pedido.status)}">${escapeHtml(formatStatusLabel(pedido.status))}</span></td>
         <td>${formatCurrency(pedido.valor)}</td>
         <td>${escapeHtml(pedido.comercial)}</td>
         <td>
           <div class="central-actions">
             <button type="button" data-action="visualizar">Visualizar</button>
-            <button type="button" data-action="editar">Editar</button>
-            <button type="button" data-action="duplicar">Duplicar</button>
-            <button type="button" data-action="imprimir">Imprimir</button>
             <button type="button" data-action="contrato">Contrato</button>
           </div>
         </td>
@@ -385,6 +484,9 @@
         throw error;
       }
       state.pedidos = (data || []).map(normalizarPedido);
+      sincronizarInatividadeCadastros(data || []).catch((error) => {
+        console.warn("[CentralPedidos] sincronizacao de inatividade falhou:", error);
+      });
     }catch(err){
       console.warn("Central de Pedidos sem tabela de pedidos disponivel:", err);
       state.pedidos = [];
@@ -433,22 +535,7 @@
       const pedidoId = row?.dataset?.pedidoId || "";
       const action = button.dataset.action;
 
-      if(action === "editar"){
-        abrirPedido(pedidoId, "editar");
-        return;
-      }
-
       if(action === "visualizar"){
-        abrirPreviewPedido(pedidoId);
-        return;
-      }
-
-      if(action === "duplicar"){
-        avisar("Duplicacao pronta para receber persistencia do pedido selecionado.", "Duplicar", "info");
-        return;
-      }
-
-      if(action === "imprimir"){
         abrirPreviewPedido(pedidoId);
         return;
       }
@@ -456,6 +543,13 @@
       if(action === "contrato"){
         abrirPedido(pedidoId);
       }
+    });
+
+    els.centralPedidosTbody?.addEventListener("dblclick", (event) => {
+      if(event.target.closest("[data-action]")) return;
+      const row = event.target.closest("[data-pedido-id]");
+      const pedidoId = row?.dataset?.pedidoId || "";
+      if(pedidoId) abrirPedido(pedidoId, "editar");
     });
   }
 

@@ -377,6 +377,7 @@
 
   function bindBotaoAjudaLivre(){
     if(!els.button) return;
+    if(els.button.closest(".sidebar-user")) return;
 
     let dragging = null;
     let moved = false;

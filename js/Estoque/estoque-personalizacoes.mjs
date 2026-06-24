@@ -367,7 +367,13 @@ function renderTable(){
     return;
   }
 
-  rows.forEach(r=>{
+  const paginaRows = window.EasyLocListPager?.slice(
+    "cadastro-personalizacoes",
+    rows,
+    renderTable
+  ) || rows;
+
+  paginaRows.forEach(r=>{
 
     const statusBadge = r.status === "ATIVO"
       ? `<span class="badge green">Ativo</span>`
@@ -438,6 +444,13 @@ function renderTable(){
     els.tbody.appendChild(tr);
 
   });
+
+  window.EasyLocListPager?.render(
+    "cadastro-personalizacoes",
+    els.tbody,
+    rows,
+    renderTable
+  );
 
 }
 

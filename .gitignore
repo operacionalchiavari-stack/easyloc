@@ -1,7 +1,6 @@
 # Dependências
 node_modules/
 npm-debug.log
-package-lock.json
 
 # Variáveis de ambiente (NUNCA commitar .env)
 .env
@@ -30,3 +29,4 @@ logs/
 
 # Supabase local
 .supabase/
+supabase/.temp/

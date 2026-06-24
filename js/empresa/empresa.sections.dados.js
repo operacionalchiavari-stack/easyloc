@@ -5,13 +5,11 @@
     container.innerHTML = `
       <div style="display:grid;grid-template-columns:260px 1fr;gap:40px;">
 
-        <div style="display:flex;flex-direction:column;align-items:center;gap:18px;">
+        <div style="display:flex;flex-direction:column;gap:18px;">
 
-          <div id="logoPreview"
-            style="width:100%;height:120px;border-radius:16px;background:#ffffff;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0f2a44;font-size:18px;box-shadow:0 10px 25px rgba(15,42,68,.06);overflow:hidden;">
-          </div>
+          
 
-          <div style="display:flex;align-items:center;justify-content:center;gap:14px;">
+          <div style="display:none;">
 
             <button id="zoomOutBtn"
               style="width:34px;height:34px;border-radius:12px;border:1px solid #e5e7eb;background:#ffffff;cursor:pointer;font-size:16px;font-weight:600;">
@@ -32,7 +30,7 @@
 
           <input type="file" id="logoInput" accept="image/*" style="display:none;">
 
-          <div style="margin-top:14px;width:100%;font-size:13px;color:#334155;line-height:1.7;">
+          <div style="width:100%;font-size:13px;color:#334155;line-height:1.7;border:1px solid #e5e7eb;border-radius:16px;background:#fff;padding:18px;box-shadow:0 10px 25px rgba(15,42,68,.04);">
 
             <hr style="margin:14px 0;border:none;border-top:1px solid #e5e7eb;">
 
@@ -158,6 +156,7 @@
     const logoPreview = container.querySelector("#logoPreview");
     let zoomAtual = 1;
     function aplicarZoom() {
+      if (!logoPreview) return;
       const img = logoPreview.querySelector("img");
       if (!img) return;
       img.style.transform = `scale(${zoomAtual})`;
@@ -165,20 +164,20 @@
       img.style.transformOrigin = "center";
     }
 
-    container.querySelector("#zoomInBtn").addEventListener("click", () => {
+    container.querySelector("#zoomInBtn")?.addEventListener("click", () => {
       zoomAtual = Math.min(3, zoomAtual + 0.1);
       aplicarZoom();
     });
-    container.querySelector("#zoomOutBtn").addEventListener("click", () => {
+    container.querySelector("#zoomOutBtn")?.addEventListener("click", () => {
       zoomAtual = Math.max(0.5, zoomAtual - 0.1);
       aplicarZoom();
     });
 
     const alterarLogoBtn = container.querySelector("#alterarLogo");
     const logoInput = container.querySelector("#logoInput");
-    alterarLogoBtn.addEventListener("click", () => logoInput.click());
+    alterarLogoBtn?.addEventListener("click", () => logoInput?.click());
 
-    logoInput.addEventListener("change", async function () {
+    logoInput?.addEventListener("change", async function () {
       const file = this.files[0];
       if (!file) return;
       const imagemOtimizada = await otimizarImagem(file);
@@ -219,9 +218,11 @@
         else alert("Erro ao salvar logo no banco");
         return;
       }
-      logoPreview.innerHTML =
-        `<img src="${publicUrl}?t=${Date.now()}"
-              style="width:100%;height:100%;object-fit:contain;">`;
+      if (logoPreview) {
+        logoPreview.innerHTML =
+          `<img src="${publicUrl}?t=${Date.now()}"
+                style="width:100%;height:100%;object-fit:contain;">`;
+      }
     });
 
     // stats
@@ -273,7 +274,7 @@
       empresa.endereco_google || "";
 
     // logo initial preview
-    if (empresa.logo_url) {
+    if (logoPreview && empresa.logo_url) {
       logoPreview.innerHTML = `
         <div style="
           width:60%;
@@ -292,7 +293,7 @@
         logoPreview.appendChild(img);
       };
       img.src = empresa.logo_url + "?t=" + Date.now();
-    } else {
+    } else if (logoPreview) {
       logoPreview.innerText = empresa.nome || "LOGO";
     }
 

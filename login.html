@@ -431,7 +431,7 @@ const { data: assinatura, error: erroAssinatura } = await supabaseClient
   .single();
 
 if(erroAssinatura || !assinatura){
-  location.href = "planos.html";
+  location.href = "index.html#planos";
   return;
 }
 
@@ -440,7 +440,7 @@ if(erroAssinatura || !assinatura){
     new Date(assinatura.vencimento) < new Date();
 
   if(vencida){
-    location.href = "planos.html";
+    location.href = "index.html#planos";
     return;
   }
 

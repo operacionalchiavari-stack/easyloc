@@ -50,6 +50,28 @@ window.toggleMenu = function(){
   sidebar.classList.toggle("expanded");
 };
 
+window.toggleNestedSubmenu = function(id, el){
+  const group = document.getElementById(id);
+  if(!group) return;
+
+  const parentSubmenu = el?.closest(".submenu");
+
+  parentSubmenu
+    ?.querySelectorAll(".submenu-group")
+    .forEach(item => {
+      if(item !== group) item.classList.remove("open");
+    });
+
+  parentSubmenu
+    ?.querySelectorAll(".submenu-trigger")
+    .forEach(item => {
+      if(item !== el) item.classList.remove("open");
+    });
+
+  group.classList.toggle("open");
+  el?.classList.toggle("open", group.classList.contains("open"));
+};
+
 function normalizeSidebarSearchText(text){
   return String(text || "")
     .normalize("NFD")
@@ -98,13 +120,42 @@ function filterSidebarMenu(query){
     const categoryMatches = getSidebarItemText(menuItem).includes(normalizedQuery);
     let hasVisibleChild = false;
 
-    submenu?.querySelectorAll(".submenu-item").forEach(submenuItem => {
+    submenu?.querySelectorAll(":scope > .submenu-item").forEach(submenuItem => {
       const itemMatches = getSidebarItemText(submenuItem).includes(normalizedQuery);
       const shouldShow = categoryMatches || itemMatches;
 
       submenuItem.classList.toggle("sidebar-menu-hidden", !shouldShow);
       submenuItem.classList.toggle("sidebar-search-match", itemMatches);
       hasVisibleChild = hasVisibleChild || shouldShow;
+    });
+
+    submenu?.querySelectorAll(":scope > .submenu-trigger").forEach(trigger => {
+      const group = trigger.nextElementSibling?.classList.contains("submenu-group")
+        ? trigger.nextElementSibling
+        : null;
+
+      const triggerMatches = getSidebarItemText(trigger).includes(normalizedQuery);
+      let groupHasMatch = false;
+
+      group?.querySelectorAll(".submenu-item").forEach(submenuItem => {
+        const itemMatches = getSidebarItemText(submenuItem).includes(normalizedQuery);
+        const shouldShow = categoryMatches || triggerMatches || itemMatches;
+
+        submenuItem.classList.toggle("sidebar-menu-hidden", !shouldShow);
+        submenuItem.classList.toggle("sidebar-search-match", itemMatches);
+        groupHasMatch = groupHasMatch || shouldShow;
+      });
+
+      const shouldShowTrigger = categoryMatches || triggerMatches || groupHasMatch;
+      trigger.classList.toggle("sidebar-menu-hidden", !shouldShowTrigger);
+      trigger.classList.toggle("sidebar-search-match", triggerMatches);
+
+      if(group){
+        group.classList.toggle("sidebar-menu-hidden", !shouldShowTrigger);
+        group.classList.toggle("sidebar-search-open", shouldShowTrigger);
+      }
+
+      hasVisibleChild = hasVisibleChild || shouldShowTrigger;
     });
 
     const shouldShowGroup = categoryMatches || hasVisibleChild;

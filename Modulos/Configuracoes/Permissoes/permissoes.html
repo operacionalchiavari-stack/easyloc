@@ -1,0 +1,260 @@
+<div class="perm-page el-page">
+  <header class="perm-header">
+    <div>
+      <span class="perm-eyebrow">Configurações</span>
+      <h1>Usuários e Permissões</h1>
+      <p>Configure os acessos em etapas simples, do usuário até a revisão final.</p>
+    </div>
+    <div class="perm-header-actions">
+      <button class="btn secondary" type="button" id="permRefreshBtn">Atualizar</button>
+      <button class="btn primary" type="button" id="permSaveBtn">Salvar permissões</button>
+    </div>
+  </header>
+
+  <section class="perm-wizard-card">
+    <nav class="perm-steps" aria-label="Etapas de permissões">
+      <button class="active" type="button" data-step="usuario">
+        <span>1</span>
+        <strong>Selecionar usuário</strong>
+        <small>Escolha quem será configurado</small>
+      </button>
+      <button type="button" data-step="perfil">
+        <span>2</span>
+        <strong>Perfil de acesso</strong>
+        <small>Use um modelo como base</small>
+      </button>
+      <button type="button" data-step="acessos">
+        <span>3</span>
+        <strong>Ajustar acessos</strong>
+        <small>Módulos, ações e níveis</small>
+      </button>
+      <button type="button" data-step="revisao">
+        <span>4</span>
+        <strong>Revisar e salvar</strong>
+        <small>Confira antes de aplicar</small>
+      </button>
+    </nav>
+
+    <div class="perm-selected-head">
+      <div class="perm-selected-user">
+        <div class="perm-avatar" id="permAvatar">--</div>
+        <div>
+          <span class="perm-eyebrow">Usuário selecionado</span>
+          <h2 id="permUserName">Selecione um usuário</h2>
+          <p id="permUserMeta">Comece pela etapa 1.</p>
+        </div>
+      </div>
+      <div class="perm-summary" id="permSummary"></div>
+    </div>
+
+    <section class="perm-step-panel active" data-step-panel="usuario">
+      <div class="perm-step-layout two">
+        <div class="perm-panel">
+          <div class="perm-card-head">
+            <div>
+              <span class="perm-eyebrow">Etapa 1</span>
+              <h2>Escolha o usuário</h2>
+            </div>
+            <button class="perm-icon-btn" type="button" id="permNewUserBtn" title="Novo usuário">
+              <i data-lucide="user-plus"></i>
+            </button>
+          </div>
+          <input class="el-input" id="permUserSearch" type="search" placeholder="Buscar por nome, email ou cargo">
+          <div class="perm-user-list" id="permUserList"></div>
+        </div>
+
+        <div class="perm-panel perm-guidance">
+          <span class="perm-eyebrow">Como funciona</span>
+          <h2>Um usuário por vez</h2>
+          <p>Selecione uma pessoa da equipe para carregar as permissões atuais. Depois avance para aplicar um perfil pronto ou ajustar manualmente.</p>
+          <div class="perm-guidance-card">
+            <strong>Mais seguro</strong>
+            <span>As alterações só entram em vigor quando você clicar em salvar.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="perm-step-panel" data-step-panel="perfil">
+      <div class="perm-step-layout two">
+        <div class="perm-panel">
+          <div class="perm-card-head">
+            <div>
+              <span class="perm-eyebrow">Etapa 2</span>
+              <h2>Escolha uma base</h2>
+            </div>
+          </div>
+
+          <div class="perm-profile-grid">
+            <button type="button" data-profile-card="comercial">
+              <strong>Comercial</strong>
+              <span>Clientes, locais, pedidos e Lia.</span>
+            </button>
+            <button type="button" data-profile-card="estoque">
+              <strong>Estoque</strong>
+              <span>Itens, compras, almoxarifado e QR Code.</span>
+            </button>
+            <button type="button" data-profile-card="logistica">
+              <strong>Logística</strong>
+              <span>Cronograma, planejamento e separação.</span>
+            </button>
+            <button type="button" data-profile-card="financeiro">
+              <strong>Financeiro</strong>
+              <span>Fluxo de caixa, contas e valores.</span>
+            </button>
+            <button type="button" data-profile-card="admin">
+              <strong>Administrador</strong>
+              <span>Acesso completo ao sistema.</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="perm-panel">
+          <span class="perm-eyebrow">Atalhos</span>
+          <h2>Copiar ou exportar</h2>
+          <label class="perm-field">
+            <span>Perfil pronto</span>
+            <select class="el-select" id="permProfilePreset">
+              <option value="">Selecione</option>
+              <option value="comercial">Comercial</option>
+              <option value="estoque">Estoque</option>
+              <option value="logistica">Logística</option>
+              <option value="financeiro">Financeiro</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </label>
+          <div class="perm-action-stack">
+            <button class="btn secondary" type="button" id="permApplyPresetBtn">Aplicar perfil</button>
+            <button class="btn secondary" type="button" id="permCopyBtn">Copiar permissões</button>
+            <button class="btn secondary" type="button" id="permExportBtn">Exportar</button>
+            <button class="btn secondary" type="button" id="permPreviewBtn">Visualizar como usuário</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="perm-step-panel" data-step-panel="acessos">
+      <div class="perm-card-head compact">
+        <div>
+          <span class="perm-eyebrow">Etapa 3</span>
+          <h2>Ajuste por módulo</h2>
+        </div>
+        <span id="permDirtyBadge" class="perm-dirty-badge hidden">Alterações pendentes</span>
+      </div>
+
+      <div class="perm-modules-layout">
+        <div class="perm-tree-card">
+          <div class="perm-section-title">
+            <div>
+              <span class="perm-eyebrow">Módulos</span>
+              <h3>Escolha uma área</h3>
+            </div>
+          </div>
+          <div class="perm-module-tree" id="permModuleTree"></div>
+        </div>
+
+        <div class="perm-detail-card">
+          <div class="perm-section-title">
+            <div>
+              <span class="perm-eyebrow" id="permDetailModule">Permissões</span>
+              <h3 id="permDetailTitle">Selecione um módulo</h3>
+            </div>
+          </div>
+          <div class="perm-levels" id="permLevels"></div>
+          <div class="perm-matrix" id="permMatrix"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="perm-step-panel" data-step-panel="revisao">
+      <div class="perm-step-layout two">
+        <div class="perm-panel">
+          <div class="perm-card-head">
+            <div>
+              <span class="perm-eyebrow">Etapa 4</span>
+              <h2>Revisão final</h2>
+            </div>
+          </div>
+          <div class="perm-review-grid">
+            <div class="perm-table-card">
+              <table class="perm-table">
+                <thead>
+                  <tr>
+                    <th>Módulo</th>
+                    <th>Submódulo</th>
+                    <th>Ação</th>
+                    <th>Permitir</th>
+                  </tr>
+                </thead>
+                <tbody id="permDetailedBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="perm-panel">
+          <span class="perm-eyebrow">Campos sensíveis</span>
+          <h2>Dados protegidos</h2>
+          <div class="perm-sensitive-grid" id="permSensitiveGrid"></div>
+          <div class="perm-side-sensitive hidden" id="permSideSensitive"></div>
+        </div>
+      </div>
+
+      <div class="perm-panel perm-history-panel">
+        <span class="perm-eyebrow">Histórico</span>
+        <div class="perm-log-list" id="permLogList"></div>
+      </div>
+    </section>
+
+    <footer class="perm-step-actions">
+      <button class="btn secondary" type="button" id="permPrevStepBtn">Voltar</button>
+      <button class="btn secondary" type="button" id="permNextStepBtn">Próxima etapa</button>
+      <button class="btn primary" type="button" id="permBottomSaveBtn">Salvar permissões</button>
+    </footer>
+  </section>
+</div>
+
+<div class="perm-modal" id="permCopyModal" aria-hidden="true">
+  <div class="perm-modal-box">
+    <div class="perm-modal-head">
+      <div>
+        <span class="perm-eyebrow">Copiar permissões</span>
+        <h2>Escolha o usuário de origem</h2>
+      </div>
+      <button class="perm-close" type="button" data-perm-close="permCopyModal">x</button>
+    </div>
+    <select class="el-select" id="permCopySource"></select>
+    <div class="perm-modal-actions">
+      <button class="btn secondary" type="button" data-perm-close="permCopyModal">Cancelar</button>
+      <button class="btn primary" type="button" id="permConfirmCopyBtn">Copiar</button>
+    </div>
+  </div>
+</div>
+
+<div class="perm-modal" id="permUserModal" aria-hidden="true">
+  <div class="perm-modal-box">
+    <div class="perm-modal-head">
+      <div>
+        <span class="perm-eyebrow">Usuário</span>
+        <h2>Novo usuário</h2>
+      </div>
+      <button class="perm-close" type="button" data-perm-close="permUserModal">x</button>
+    </div>
+    <div class="perm-form-grid">
+      <label>Nome<input class="el-input" id="permNewUserName" placeholder="Nome completo"></label>
+      <label>Email<input class="el-input" id="permNewUserEmail" type="email" placeholder="email@empresa.com"></label>
+      <label>Cargo<input class="el-input" id="permNewUserRole" placeholder="Ex: Comercial"></label>
+      <label>Status
+        <select class="el-select" id="permNewUserStatus">
+          <option>Ativo</option>
+          <option>Bloqueado</option>
+        </select>
+      </label>
+    </div>
+    <p class="perm-note">O cadastro cria o vínculo operacional. Para login real, o convite de autenticação deve ser enviado pelo fluxo de usuários do Supabase quando você habilitar essa etapa.</p>
+    <div class="perm-modal-actions">
+      <button class="btn secondary" type="button" data-perm-close="permUserModal">Cancelar</button>
+      <button class="btn primary" type="button" id="permCreateUserBtn">Salvar usuário</button>
+    </div>
+  </div>
+</div>

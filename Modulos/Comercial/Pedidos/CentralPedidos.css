@@ -86,13 +86,20 @@
   background: var(--el-table-row-hover);
 }
 
-.pedido-numero-link {
-  border: none;
-  background: transparent;
-  color: var(--el-color-primary);
-  font-weight: 900;
-  cursor: pointer;
-  padding: 0;
+.pedido-numero-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  border-radius: 999px;
+  background: rgba(220, 38, 38, 0.10);
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: .02em;
 }
 
 .status-pill {
@@ -120,9 +127,19 @@
   color: #92400e;
 }
 
+.status-pill.pre_reserva {
+  background: rgba(245, 158, 11, 0.18);
+  color: #92400e;
+}
+
+.status-pill.orcamento {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+}
+
 .central-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: inline-flex;
+  flex-wrap: nowrap;
   gap: 6px;
 }
 
@@ -135,6 +152,7 @@
   color: var(--el-color-primary);
   font-size: 12px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .central-empty {

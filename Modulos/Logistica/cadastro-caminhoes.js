@@ -335,7 +335,13 @@ async function carregarCaminhoes() {
     return;
   }
 
-  filtrados.forEach(cam => {
+  const paginaCaminhoes = window.EasyLocListPager?.slice(
+    "cadastro-caminhoes",
+    filtrados,
+    () => carregarCaminhoes()
+  ) || filtrados;
+
+  paginaCaminhoes.forEach(cam => {
 
     const tr = document.createElement("tr");
     tr.style.cursor = "pointer";
@@ -374,6 +380,13 @@ async function carregarCaminhoes() {
   });
 
   // ✅ tabela renderizada
+  window.EasyLocListPager?.render(
+    "cadastro-caminhoes",
+    tbody,
+    filtrados,
+    () => carregarCaminhoes()
+  );
+
   window.finalizarCarregamentoModulo?.();
 }
 /* =====================================================

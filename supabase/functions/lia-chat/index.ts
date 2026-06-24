@@ -132,13 +132,13 @@ serve(async (req) => {
     }
 
     const dadosOperacionais = contexto?.dados_operacionais
-      ? JSON.stringify(contexto.dados_operacionais, null, 2).substring(0, 12000)
+      ? JSON.stringify(contexto.dados_operacionais, null, 2).substring(0, 24000)
       : null;
 
     const instrucaoOperacional =
       contexto?.instrucao_dados_operacionais ||
       contexto?.instrucao ||
-      "Use dados operacionais somente quando a pergunta envolver clientes ou itens cadastrados.";
+      "Use dados operacionais somente quando a pergunta envolver clientes, itens, pedidos, caminhões, equipe, cronograma, planejamento, separação ou logística.";
 
 const systemPrompt = `
 Você é Lia, assistente interna da Chiavari Eventos.
@@ -193,15 +193,16 @@ FORMATO DAS SUGESTÕES:
 REGRA ABSOLUTA DE CONTEÚDO
 ━━━━━━━━━━━━━━━━━━━━━━
 - O conhecimento oficial da Chiavari Eventos é sempre a única fonte de verdade sobre a empresa.
-- Dados operacionais enviados no prompt, como clientes e itens cadastrados, também são fonte autorizada para responder perguntas sobre cadastros do EasyLoc.
-- Quando houver DADOS OPERACIONAIS, use-os para responder sobre clientes, telefones, emails, endereços, itens, códigos, categorias, setores e valores cadastrados.
+- Dados operacionais enviados no prompt também são fonte autorizada para responder perguntas sobre o EasyLoc.
+- Quando houver DADOS OPERACIONAIS, use-os para responder sobre clientes, telefones, emails, endereços, itens, códigos, categorias, setores, valores, pedidos, itens do pedido, caminhões, equipe, cronograma, planejamento, separação e logística.
+- Quando o usuário pedir um pedido específico, localize o pedido nos DADOS OPERACIONAIS e responda com número, cliente, contato, evento, datas, local, status, itens, valores, cronograma e logística disponíveis.
 - Quando a pergunta pedir foto ou imagem de um item, use o campo foto_url do item encontrado e renderize a imagem com <img class="lia-item-photo" src="FOTO_URL" alt="NOME DO ITEM">.
 - Se o item encontrado não tiver foto_url, diga claramente que ele está cadastrado sem foto.
 - Quando ele não existir, você pode falar apenas de práticas gerais do mercado.
 - É PROIBIDO misturar assuntos, processos, sistemas, serviços ou termos que não tenham relação direta com a pergunta.
 - Nunca complemente respostas com informações “úteis”, “relacionadas” ou “parecidas”.
 - Respostas curtas, claras e corretas são sempre melhores do que respostas longas e imprecisas.
-- Nunca invente clientes, itens, códigos, valores, telefones, emails ou endereços. Se não estiver nos dados fornecidos, diga que não encontrou no cadastro consultado.
+- Nunca invente clientes, itens, pedidos, caminhões, equipe, códigos, valores, telefones, emails, datas, status ou endereços. Se não estiver nos dados fornecidos, diga que não encontrou no cadastro consultado.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 ENERGIA, BOM HUMOR E PRESENÇA
@@ -300,7 +301,7 @@ ${instrucaoOperacional}
 
 INSTRUÇÕES:
 - Use apenas o conhecimento acima como base
-- Para clientes e itens cadastrados, use os DADOS OPERACIONAIS DO EASYLOC
+- Para clientes, itens, pedidos, caminhões, equipe, cronograma, planejamento, separação e logística, use os DADOS OPERACIONAIS DO EASYLOC
 - Reescreva com suas próprias palavras
 - Fale com o time comercial
 - Não crie regras novas
@@ -323,7 +324,7 @@ ${instrucaoOperacional}
 
 INSTRUÇÃO:
 Seja honesta.
-Se a pergunta envolver clientes ou itens cadastrados, responda usando os DADOS OPERACIONAIS DO EASYLOC.
+Se a pergunta envolver clientes, itens, pedidos, caminhões, equipe, cronograma, planejamento, separação ou logística, responda usando os DADOS OPERACIONAIS DO EASYLOC.
 Se os dados operacionais não trouxerem o cadastro solicitado, diga que não encontrou no cadastro consultado.
 Para assuntos de processo interno sem conhecimento oficial, diga que esse tema não está documentado nos processos internos.
 Explique como o mercado costuma funcionar somente quando a pergunta não for sobre cadastros reais.

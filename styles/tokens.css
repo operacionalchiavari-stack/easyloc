@@ -1,12 +1,15 @@
 :root {
-  --el-color-primary: #0f2a44;
+  --color-sidebar: #0f2a44;
+  --color-primary: #ff6a00;
+  --color-bg: #fffaf6;
+  --el-color-primary: var(--color-sidebar);
   --el-color-primary-strong: #0b1f33;
   --el-color-primary-dark: #081b2d;
   --el-color-primary-soft: #eef4fb;
-  --el-color-accent: #ff6a00;
+  --el-color-accent: var(--color-primary);
   --el-color-accent-strong: #e85f00;
   --el-color-accent-soft: #fff3e8;
-  --el-color-bg: #fffaf6;
+  --el-color-bg: var(--color-bg);
   --el-color-surface: #ffffff;
   --el-color-surface-soft: #f8fafc;
   --el-color-border: #e5e7eb;

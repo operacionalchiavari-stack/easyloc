@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Lia | EasyLoc</title>
 
+  <script>
+    if (new URLSearchParams(window.location.search).get("widget") === "1") {
+      document.documentElement.classList.add("lia-widget-embedded");
+    }
+    try {
+      if (window.parent && window.parent !== window) {
+        window.__CONTEXT = window.parent.__CONTEXT || window.__CONTEXT;
+        window.__COMPANY_THEME = window.parent.__COMPANY_THEME || window.__COMPANY_THEME;
+
+        const parentStyles = window.parent.getComputedStyle(window.parent.document.documentElement);
+        ["--color-sidebar", "--color-primary", "--color-bg", "--el-color-primary", "--el-color-accent"].forEach((token) => {
+          const value = parentStyles.getPropertyValue(token);
+          if (value) document.documentElement.style.setProperty(token, value.trim());
+        });
+      }
+    } catch (error) {
+      console.warn("Lia: não foi possível herdar contexto do dashboard.", error);
+    }
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles/global.css">
   <link rel="stylesheet" href="/inteligencia-artificial/assistente-ia.css">

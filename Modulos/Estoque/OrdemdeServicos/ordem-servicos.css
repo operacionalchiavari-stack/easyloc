@@ -118,10 +118,22 @@ tbody tr:nth-child(odd) {
 
 /* FILTROS */
 .filtros {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1fr)
+    minmax(190px, 1.15fr)
+    minmax(180px, 1.15fr)
+    minmax(120px, .75fr)
+    minmax(150px, .9fr)
+    minmax(150px, .9fr);
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 14px 30px rgba(15, 42, 68, 0.05);
 }
 
 input,
@@ -138,7 +150,8 @@ select {
 
 .dropdown-multi {
   position: relative;
-  width: 180px;
+  width: 100%;
+  min-width: 0;
 }
 
 .dropdown-header {
@@ -167,7 +180,7 @@ select {
   border-radius: 12px;
   display: none;
   padding: 6px 0;
-  z-index: 20;
+  z-index: 60;
 }
 
 .dropdown-body label {
@@ -195,24 +208,13 @@ select {
   background: #f1f5f9;
 }
 
-#filtroSetor {
-  width: 160px;
-}
-
-#filtroNome {
-  width: 200px;
-}
-
-#filtroOS {
-  width: 120px;
-}
-
-#filtroOnde {
-  width: 140px;
-}
-
+#filtroSetor,
+#filtroNome,
+#filtroOS,
+#filtroOnde,
 #filtroPedido {
-  width: 140px;
+  width: 100%;
+  min-width: 0;
 }
 
 .acoes-topo {
@@ -843,6 +845,7 @@ select {
   }
 
   .filtros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -886,6 +889,25 @@ select {
   th:nth-child(9),
   td:nth-child(9) {
     display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .filtros {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .filtros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .filtros {
+    grid-template-columns: 1fr;
+    padding: 12px;
   }
 }
 

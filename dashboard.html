@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -8,12 +8,46 @@
 
   <!-- Fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="js/core/productionConsole.js"></script>
 
-  <!-- Ícones -->
+  <!-- Ãcones -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+  <script>
+    (function () {
+      try {
+        const empresaId = sessionStorage.getItem("empresa_id") || "default";
+        const cachedTheme = localStorage.getItem("easyloc_theme_" + empresaId);
+        if (!cachedTheme) return;
+
+        const theme = JSON.parse(cachedTheme);
+        const root = document.documentElement;
+
+        if (theme.cor_sidebar) {
+          root.style.setProperty("--color-sidebar", theme.cor_sidebar);
+          root.style.setProperty("--azul", theme.cor_sidebar);
+          root.style.setProperty("--azul-2", theme.cor_sidebar);
+        }
+
+        if (theme.cor_destaque) {
+          root.style.setProperty("--color-primary", theme.cor_destaque);
+          root.style.setProperty("--laranja", theme.cor_destaque);
+        }
+
+        if (theme.cor_fundo) {
+          root.style.setProperty("--color-bg", theme.cor_fundo);
+          root.style.setProperty("--fundo", theme.cor_fundo);
+        }
+
+        window.__COMPANY_THEME_CACHE = theme;
+      } catch (error) {
+        console.warn("[EasyLoc Theme] cache ignorado:", error);
+      }
+    })();
+  </script>
 
   <style>
     /* ========================================
@@ -44,7 +78,7 @@
   display: none;
 }
 
-/* Deixa só a bolinha visível e centralizada */
+/* Deixa sÃ³ a bolinha visÃ­vel e centralizada */
 .sidebar:not(:hover):not(.expanded) .status-dot{
   width: 12px;
   height: 12px;
@@ -134,7 +168,7 @@
   color:#0f172a;
 }
 
-/* animação suave */
+/* animaÃ§Ã£o suave */
 @keyframes statusFade{
   from{
     opacity:0;
@@ -216,6 +250,9 @@
 }
 
     :root {
+      --color-sidebar: #0f2a44;
+      --color-primary: #ff6a00;
+      --color-bg: #fffaf6;
       --azul: #0f2a44;
       --azul-2: #173a5e;
       --laranja: #ff6a00;
@@ -230,6 +267,7 @@
 
     body {
       color: #1f2937;
+      background: var(--color-bg);
     }
 
     .hamburger {
@@ -251,7 +289,7 @@
       left: 0;
       height: 100vh;
       width: 72px;
-      background: linear-gradient(180deg, var(--azul), var(--azul-2));
+      background: linear-gradient(180deg, var(--color-sidebar), var(--azul-2));
       color: white;
       transition: width .25s ease;
       overflow: hidden;
@@ -284,7 +322,32 @@
 
     .sidebar-header img {
       height: 29px;
+      max-width: 118px;
+      object-fit: contain;
       flex-shrink: 0;
+    }
+
+    body.company-logo-active .sidebar-brand {
+      flex: 1;
+      max-width: calc(100% - 78px);
+    }
+
+    body.company-logo-active .sidebar-header img {
+      width: 100%;
+      max-width: 176px;
+      height: 46px;
+      background: transparent;
+      border-radius: 0;
+      padding: 0;
+      object-fit: contain;
+      object-position: left center;
+    }
+
+    body.company-logo-active .sidebar:not(:hover):not(.expanded) .sidebar-header img {
+      width: 34px;
+      height: 34px;
+      border-radius: 0;
+      padding: 0;
     }
 
 .sidebar-brand span {
@@ -310,6 +373,14 @@
     .sidebar:hover .sidebar-brand span {
       opacity: 1;
       width: auto;
+    }
+
+    body.company-logo-active .sidebar-brand span,
+    body.company-logo-active .sidebar:hover .sidebar-brand span,
+    body.company-logo-active .sidebar.expanded .sidebar-brand span {
+      display: none;
+      opacity: 0;
+      width: 0;
     }
 
     .sidebar:hover .sidebar-header-actions,
@@ -451,11 +522,13 @@
       display: none !important;
     }
 
-    .submenu.sidebar-search-open {
+    .submenu.sidebar-search-open,
+    .submenu-group.sidebar-search-open {
       display: block !important;
     }
 
     .menu-item.sidebar-search-match,
+    .submenu-trigger.sidebar-search-match,
     .submenu-item.sidebar-search-match {
       background: rgba(255,106,0,.18);
     }
@@ -475,7 +548,8 @@
     }
 
     .menu-item.active {
-      background: var(--laranja);
+      background: rgba(255,255,255,.12);
+      box-shadow: inset 4px 0 0 var(--color-primary, #ff6a00);
     }
 
 .menu-item span {
@@ -505,7 +579,7 @@
     }
 
     .menu-item.has-sub::after {
-      content: "▶";
+      content: "â–¶";
       position: absolute;
       right: 18px;
       font-size: 12px;
@@ -517,7 +591,7 @@
     }
 
     .menu-item.has-sub.open::after {
-      content: "▼";
+      content: "â–¼";
     }
 
     .submenu {
@@ -529,7 +603,9 @@
     }
 
     .sidebar.expanded .submenu.sidebar-search-open,
-    .sidebar:hover .submenu.sidebar-search-open {
+    .sidebar:hover .submenu.sidebar-search-open,
+    .sidebar.expanded .submenu-group.sidebar-search-open,
+    .sidebar:hover .submenu-group.sidebar-search-open {
       display: block !important;
     }
 
@@ -550,7 +626,55 @@
     }
 
     .submenu-item.active {
-      background: rgba(255, 106, 0, 0.38);
+      background: rgba(255,255,255,.10);
+      box-shadow: inset 4px 0 0 var(--color-primary, #ff6a00);
+    }
+
+    .submenu-group {
+      display: none;
+    }
+
+    .submenu-group.open {
+      display: block;
+    }
+
+    .submenu-trigger {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: rgba(255,255,255,.92);
+      padding: 10px 18px 10px 50px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: .2s;
+    }
+
+    .submenu-trigger:hover {
+      background: rgba(255,255,255,.10);
+    }
+
+    .submenu-trigger::after {
+      content: "â€º";
+      font-size: 16px;
+      line-height: 1;
+      transition: transform .2s ease;
+      opacity: .75;
+    }
+
+    .submenu-trigger.open::after {
+      transform: rotate(90deg);
+    }
+
+    .submenu-group .submenu-item {
+      padding-left: 66px;
+      font-size: 12.5px;
+      color: rgba(255,255,255,.86);
     }
 
 .main {
@@ -559,7 +683,7 @@
   transition: .25s;
   min-height: 100vh;
 
-  width: calc(100% - 72px); /* 🔥 ESSENCIAL */
+  width: calc(100% - 72px); /* ðŸ”¥ ESSENCIAL */
 }
 
 .sidebar:hover ~ .main {
@@ -604,7 +728,7 @@
       width: auto;
     }
 
-    /* FIX de expansão por clique (mantém layout) */
+    /* FIX de expansÃ£o por clique (mantÃ©m layout) */
     .sidebar.expanded { width: 244px; }
 .sidebar.expanded ~ .main { 
   margin-left: 72px;
@@ -631,11 +755,11 @@
       display: block !important;
     }
 /* ===============================
-   USUÁRIO NA SIDEBAR
+   USUÃRIO NA SIDEBAR
 ================================ */
 
 /* ===============================
-   CONTA DO USUÁRIO (SIDEBAR)
+   CONTA DO USUÃRIO (SIDEBAR)
 ================================ */
 
 .sidebar-user{
@@ -645,10 +769,18 @@
   padding:0 12px;
 }
 
+.sidebar-user-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
 .user-account{
   display:flex;
   align-items:center;
   gap:10px;
+  min-width:0;
+  flex:1;
   background:#ffffff;
   color:#0f172a;
   padding:9px 10px;
@@ -682,11 +814,15 @@
   display:flex;
   flex-direction:column;
   gap:2px;
+  min-width:0;
 }
 
 .user-info .empresa{
   font-size:10.5px;
   color:#64748b;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .user-info .usuario{
@@ -695,6 +831,9 @@
   display:flex;
   align-items:center;
   gap:6px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .user-info .arrow{
@@ -704,7 +843,7 @@
 
 
 /* ===============================
-   SIDEBAR RECOLHIDA (APENAS CÍRCULO)
+   SIDEBAR RECOLHIDA (APENAS CÃRCULO)
 ================================ */
 
 .sidebar:not(:hover):not(.expanded) .user-info{
@@ -719,7 +858,15 @@
   justify-content:center;
 }
 
-/* aumenta levemente o avatar para dar presença */
+.sidebar:not(:hover):not(.expanded) .sidebar-user-row{
+  justify-content:center;
+}
+
+.sidebar:not(:hover):not(.expanded) .sidebar-user .global-help-button{
+  display:none;
+}
+
+/* aumenta levemente o avatar para dar presenÃ§a */
 .sidebar:not(:hover):not(.expanded) .user-avatar{
   width:42px;
   height:42px;
@@ -732,7 +879,7 @@
   font-size:14px;
 }
 /* ===============================
-   DROPDOWN USUÁRIO PROFISSIONAL
+   DROPDOWN USUÃRIO PROFISSIONAL
 ================================ */
 
 .sidebar-user .user-dropdown-modern{
@@ -797,7 +944,7 @@
   transition: opacity 0.25s ease;
 }
 
-/* círculo */
+/* cÃ­rculo */
 .loader-circle {
   position: relative;
   width: 38px;
@@ -1072,30 +1219,31 @@
 
   <link rel="stylesheet" href="styles/global.css">
   <link rel="stylesheet" href="styles/global-help.css">
+  <link rel="stylesheet" href="styles/lia-widget.css">
 </head>
 
 <body>
 
-<button class="hamburger" onclick="toggleMenu()">☰</button>
+<button class="hamburger" onclick="toggleMenu()">â˜°</button>
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <div class="sidebar-brand">
-      <img src="logosimbolo.png">
+      <img id="sidebarLogo" src="logosimbolo.png">
       <span>EasyLoc</span>
     </div>
     <div class="sidebar-header-actions">
       <div class="system-status" id="systemStatus">
         <button type="button" class="status-indicator" id="statusIndicator" aria-label="Status do sistema">
           <span class="status-dot" id="statusDot"></span>
-          <span class="status-text" id="statusText">Estável</span>
+          <span class="status-text" id="statusText">EstÃ¡vel</span>
         </button>
         <div class="status-panel" id="statusPanel">
           <div class="status-panel-header">
             <strong>Status do Sistema</strong>
           </div>
           <div class="status-line">
-            <span>Conexão com internet:</span>
+            <span>ConexÃ£o com internet:</span>
             <span id="statusInternet">Verificando...</span>
           </div>
           <div class="status-line">
@@ -1148,6 +1296,10 @@
   Central de Pedidos
 </div>
 
+<button class="submenu-trigger" type="button" onclick="toggleNestedSubmenu('comercial-cadastros-sub', this)">
+  Cadastros
+</button>
+<div class="submenu-group" id="comercial-cadastros-sub">
   <div class="submenu-item"
     onclick="carregarNaMain(
       'Modulos/Comercial/CadastroClientes/cadastro-clientes.html',
@@ -1167,6 +1319,7 @@
     )">
     Cadastro de Locais
   </div>
+</div>
 
   <div class="submenu-item"
     onclick="carregarNaMain(
@@ -1189,6 +1342,10 @@
 
 <div class="submenu" id="estoque-sub">
 
+<button class="submenu-trigger" type="button" onclick="toggleNestedSubmenu('estoque-cadastros-sub', this)">
+  Cadastros
+</button>
+<div class="submenu-group" id="estoque-cadastros-sub">
 <div class="submenu-item"
   onclick="carregarNaMain(
     'Modulos/Estoque/CadastroItens/cadastro-itens.html',
@@ -1201,22 +1358,12 @@
 
 <div class="submenu-item"
   onclick="carregarNaMain(
-    'Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html',
-    'Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js',
-    this,
-    'Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css'
-  )">
-  Disponibilidade de Itens
-</div>
-
-<div class="submenu-item"
-  onclick="carregarNaMain(
     'Modulos/Estoque/Personalizacoes/estoque-personalizacoes.html',
     'js/Estoque/estoque-personalizacoes.mjs',
     this,
     'Modulos/Estoque/Personalizacoes/estoque-personalizacoes.css'
   )">
-    Cadastro de Personalizações
+    Cadastro de PersonalizaÃ§Ãµes
 </div>
 
   <div class="submenu-item"
@@ -1228,6 +1375,17 @@
     )">
     Cadastro de Fornecedores
   </div>
+</div>
+
+<div class="submenu-item"
+  onclick="carregarNaMain(
+    'Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html',
+    'Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js',
+    this,
+    'Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css'
+  )">
+  Disponibilidade de Itens
+</div>
 
   <div class="submenu-item"
     onclick="carregarNaMain(
@@ -1246,7 +1404,7 @@
       this,
       'Modulos/Estoque/OrdemdeServicos/ordem-servicos.css'
     )">
-    Ordem de Serviços
+    Ordem de ServiÃ§os
   </div>
 
       <div class="submenu-item"
@@ -1276,19 +1434,23 @@
       this,
       'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.css'
     )">
-    Separação de Materiais
+    SeparaÃ§Ã£o de Materiais
   </div>
 </div>
 
 
-<!-- ===== LOGÍSTICA ===== -->
+<!-- ===== LOGÃSTICA ===== -->
 <div class="menu-item has-sub" onclick="toggleSubmenu('logistica-sub', this)">
   <i data-lucide="truck"></i>
-  <span>Logística</span>
+  <span>LogÃ­stica</span>
 </div>
 
 <div class="submenu" id="logistica-sub">
 
+  <button class="submenu-trigger" type="button" onclick="toggleNestedSubmenu('logistica-cadastros-sub', this)">
+    Cadastros
+  </button>
+  <div class="submenu-group" id="logistica-cadastros-sub">
   <div class="submenu-item"
     onclick="carregarNaMain(
       'Modulos/Logistica/cadastro-caminhoes.html',
@@ -1296,7 +1458,9 @@
       this,
       'Modulos/Logistica/cadastro-caminhoes.css'
     )">
-    Cadastro de Caminhões
+    Cadastro de CaminhÃµes
+  </div>
+
   </div>
 
 <div class="submenu-item"
@@ -1306,7 +1470,7 @@
     this,
     'Modulos/Logistica/Cronograma/Cronograma.css'
   )">
-  Cronograma Logístico
+  Cronograma LogÃ­stico
 </div>
 
 <div class="submenu-item"
@@ -1326,7 +1490,7 @@
     this,
     'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.css'
   )">
-  Separação
+  SeparaÃ§Ã£o
 </div>
 
 </div>
@@ -1353,23 +1517,34 @@
 </div>
 
 
-<!-- ===== INTELIGÊNCIA ARTIFICIAL ===== -->
-<div class="menu-item has-sub" onclick="toggleSubmenu('ia-sub', this)">
-  <i data-lucide="sparkles"></i>
-  <span>Inteligência Artificial</span>
+<!-- ===== RH ===== -->
+<div class="menu-item has-sub" onclick="toggleSubmenu('rh-sub', this)">
+  <i data-lucide="users-round"></i>
+  <span>RH</span>
 </div>
 
-<div class="submenu" id="ia-sub">
+<div class="submenu" id="rh-sub">
 
   <div class="submenu-item"
     onclick="carregarNaMain(
-      'inteligencia-artificial/assistente-ia.html',
-      'inteligencia-artificial/assistente-ia.js',
+      'Modulos/RH/GestaoPessoas/rh-gestao-pessoas.html',
+      'Modulos/RH/GestaoPessoas/rh-gestao-pessoas.js',
       this,
-      'inteligencia-artificial/assistente-ia.css'
+      'Modulos/RH/GestaoPessoas/rh-gestao-pessoas.css'
     )">
-    Lia - Assistente Comercial
+    GestÃ£o de Pessoas
   </div>
+
+</div>
+
+
+<!-- ===== INTELIGÃŠNCIA ARTIFICIAL ===== -->
+<div class="menu-item has-sub" onclick="toggleSubmenu('ia-sub', this)">
+  <i data-lucide="sparkles"></i>
+  <span>InteligÃªncia Artificial</span>
+</div>
+
+<div class="submenu" id="ia-sub">
 
   <div class="submenu-item"
     onclick="carregarNaMain(
@@ -1383,11 +1558,34 @@
 
 </div>
 
+<!-- ===== CONFIGURAÃ‡Ã•ES ===== -->
+<div class="menu-item has-sub" onclick="toggleSubmenu('configuracoes-sub', this)">
+  <i data-lucide="settings"></i>
+  <span>ConfiguraÃ§Ãµes</span>
+</div>
+
+<div class="submenu" id="configuracoes-sub">
+  <div class="submenu-item"
+    onclick="carregarNaMain(
+      'Modulos/Configuracoes/Permissoes/permissoes.html',
+      'Modulos/Configuracoes/Permissoes/permissoes.js',
+      this,
+      'Modulos/Configuracoes/Permissoes/permissoes.css'
+    )">
+    Usuarios e Permissoes
+  </div>
+
+  <div class="submenu-item" onclick="abrirEmpresa()">
+    Empresa e Parametros
+  </div>
+</div>
+
 </nav>
 
 
 <div class="sidebar-user">
-  <!-- CARD DO USUÁRIO -->
+  <div class="sidebar-user-row">
+  <!-- CARD DO USUÃRIO -->
   <div class="user-account" onclick="toggleUserMenu(event)">
     
     <div class="user-avatar" id="userAvatar">--</div>
@@ -1396,27 +1594,32 @@
       <span class="empresa" id="empresaNome">Carregando...</span>
       <span class="usuario" id="usuarioNome">
         Carregando...
-        <span class="arrow">▾</span>
+        <span class="arrow">â–¾</span>
       </span>
     </div>
 
   </div>
 
+  <button type="button" class="global-help-button sidebar-help-button" id="globalHelpButton" title="Ajuda" aria-label="Ajuda">
+    <span>?</span>
+  </button>
+  </div>
+
   <div class="user-dropdown-modern" id="userDropdown">
 
     <div class="dropdown-item" onclick="abrirEmpresa()">
-      <span class="icon">🏢</span>
+      <span class="icon">ðŸ¢</span>
       <span>Editar empresa</span>
     </div>
 
     <div class="dropdown-item" onclick="abrirPerfil()">
-      <span class="icon">👤</span>
+      <span class="icon">ðŸ‘¤</span>
       <span>Editar perfil</span>
     </div>
 
     <div class="dropdown-item" onclick="ativarAusencia()">
-      <span class="icon">🕒</span>
-      <span>Entrar em ausência</span>
+      <span class="icon">ðŸ•’</span>
+      <span>Entrar em ausÃªncia</span>
     </div>
 
   </div>
@@ -1435,14 +1638,36 @@
     <div class="loader-circle" aria-label="Carregando"></div>
   </div>
 
-  <!-- CONTEÚDO DINÂMICO -->
+  <!-- CONTEÃšDO DINÃ‚MICO -->
   <div id="main-content"></div>
 
 </main>
 
-<button type="button" class="global-help-button" id="globalHelpButton" title="Ajuda">
-  <span>?</span>
-</button>
+<section class="lia-global-widget" id="liaGlobalWidget" aria-label="Lia Assistente">
+  <button class="lia-global-button" type="button" id="liaGlobalButton" aria-label="Abrir Lia">
+    <i data-lucide="sparkles"></i>
+  </button>
+
+  <div class="lia-global-panel hidden" id="liaGlobalPanel" aria-hidden="true">
+    <header class="lia-global-header">
+      <div>
+        <strong>Lia</strong>
+        <span>Assistente EasyLoc</span>
+      </div>
+      <div class="lia-global-actions">
+        <button type="button" id="liaGlobalMinimize" title="Minimizar" aria-label="Minimizar Lia">-</button>
+        <button type="button" id="liaGlobalClose" title="Fechar" aria-label="Fechar Lia">x</button>
+      </div>
+    </header>
+    <iframe
+      id="liaGlobalFrame"
+      title="Lia Assistente"
+      src="about:blank"
+      loading="lazy"
+      allow="microphone; clipboard-write">
+    </iframe>
+  </div>
+</section>
 
 <div class="global-help-modal hidden" id="globalHelpModal" aria-hidden="true">
   <div class="global-help-box">
@@ -1484,7 +1709,7 @@
   <div class="global-help-mini-head">
     <strong id="globalHelpMiniTitle">Ajuda EasyLoc</strong>
     <div>
-      <button type="button" id="globalHelpMiniBack" title="Abrir central">□</button>
+      <button type="button" id="globalHelpMiniBack" title="Abrir central">â–¡</button>
       <button type="button" id="globalHelpMiniMinimize" title="Diminuir">-</button>
       <button type="button" id="globalHelpMiniClose" title="Fechar">x</button>
     </div>
@@ -1505,7 +1730,7 @@
 <script src="js/core/supabase.js"></script>
 
 <!-- =====================================================
-   CORE DO SISTEMA (ORDEM CRÍTICA)
+   CORE DO SISTEMA (ORDEM CRÃTICA)
 ===================================================== -->
 
 <!-- ALERTA GLOBAL -->
@@ -1513,14 +1738,18 @@
 <script src="js/core/qrCode.js"></script>
 
 <!-- CONTEXTO GLOBAL -->
+<script src="js/core/companyTheme.js"></script>
+<script src="js/core/preload.js"></script>
+<script src="js/core/listPager.js"></script>
 <script src="js/core/context.js"></script>
+<script src="js/core/permissions.js"></script>
 <script src="js/core/google.config.js"></script>
 <script src="js/core/google.js"></script>
 
-<!-- AUTENTICAÇÃO -->
+<!-- AUTENTICAÃ‡ÃƒO -->
 <script src="js/core/auth.js"></script>
 
-<!-- LOADER DE MÓDULOS (carregarNaMain) -->
+<!-- LOADER DE MÃ“DULOS (carregarNaMain) -->
 <script src="js/core/moduleLoader.js"></script>
 
 <script src="js/core/systemStatus.js"></script>
@@ -1539,7 +1768,7 @@
    FUNCIONALIDADES
 ===================================================== -->
 
-<!-- USUÁRIO -->
+<!-- USUÃRIO -->
 <script src="js/usuario/usuario.js"></script>
 
 <!-- EMPRESA -->
@@ -1553,8 +1782,10 @@
 <script src="js/empresa/empresa.logistica.montagem.js"></script>
 <script src="js/empresa/empresa.sections.logistica.js"></script>
 <script src="js/empresa/empresa.sections.financeiro.js"></script>
+<script src="js/empresa/empresa.sections.identidade.js"></script>
 <script src="js/empresa/empresa.modal.js"></script>
 <script src="js/core/globalHelp.js"></script>
+<script src="js/core/liaWidget.js"></script>
 
 <!-- ROOT GLOBAL DE MODAIS -->
 <div id="modal-root"></div>
@@ -1575,7 +1806,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <div class="alert-icon" id="alertaGlobalIcon">!</div>
 
-    <h4 id="alertaGlobalTitulo">Atenção</h4>
+    <h4 id="alertaGlobalTitulo">AtenÃ§Ã£o</h4>
 
     <p id="alertaGlobalMsg"></p>
 
@@ -1588,3 +1819,4 @@ document.addEventListener("DOMContentLoaded", () => {
 </div>
 </body>
 </html>
+

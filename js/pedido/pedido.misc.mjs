@@ -202,6 +202,10 @@ export function imprimirPedido() {
   const janela = window.open("", "", "width=980,height=760");
   if(!janela) return;
 
+  const printTheme = window.__COMPANY_THEME || {};
+  const printPrimary = printTheme.cor_sidebar || "#0B1F44";
+  const printAccent = printTheme.cor_destaque || "#F59E0B";
+
   janela.document.write(`
     <!doctype html>
     <html lang="pt-BR">
@@ -209,6 +213,10 @@ export function imprimirPedido() {
         <meta charset="utf-8">
         <title>Pedido #${escapeHtml(numero)}</title>
         <style>
+          :root {
+            --print-primary: ${escapeHtml(printPrimary)};
+            --print-accent: ${escapeHtml(printAccent)};
+          }
           @page { size: A4; margin: 10mm; }
           * { box-sizing: border-box; }
           body {
@@ -253,7 +261,7 @@ export function imprimirPedido() {
           .brand-copy {
             min-width: 0;
           }
-          .brand h1 { margin: 0; color: #0B1F44; font-size: 30px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; }
+          .brand h1 { margin: 0; color: var(--print-primary); font-size: 30px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; }
           .brand p { max-width: 430px; margin: 8px 0 0; color: #475569; font-size: 13px; }
           .doc-badge {
             min-width: 126px;
@@ -266,7 +274,7 @@ export function imprimirPedido() {
             box-shadow: none;
           }
           .doc-badge span:first-child { color: #6B7280; font-size: 9px; font-weight: 600; text-transform: uppercase; }
-          .doc-badge strong { display: block; margin: 3px 0 8px; color: #0B1F44; font-size: 25px; line-height: 1; font-weight: 650; letter-spacing: -0.02em; }
+          .doc-badge strong { display: block; margin: 3px 0 8px; color: var(--print-primary); font-size: 25px; line-height: 1; font-weight: 650; letter-spacing: -0.02em; }
           .doc-status {
             display: inline-flex;
             padding: 5px 9px;
@@ -300,7 +308,7 @@ export function imprimirPedido() {
             align-items: center;
             gap: 0;
             margin: 0;
-            color: #0B1F44;
+            color: var(--print-primary);
             font-size: 16px;
             font-weight: 600;
             letter-spacing: .01em;
@@ -349,7 +357,7 @@ export function imprimirPedido() {
             flex: 0 0 18px;
             border: 0;
             border-radius: 0;
-            background: #F59E0B;
+            background: var(--print-accent);
             -webkit-mask: var(--info-icon) center / contain no-repeat;
             mask: var(--info-icon) center / contain no-repeat;
           }
@@ -385,7 +393,7 @@ export function imprimirPedido() {
           table { width: 100%; border-collapse: separate; border-spacing: 0; }
           th {
             padding: 10px 12px;
-            background: #0B1F44;
+            background: var(--print-primary);
             color: #fff;
             text-align: left;
             font-size: 10px;
@@ -408,21 +416,21 @@ export function imprimirPedido() {
             width: 60px;
             height: 60px;
             object-fit: contain;
-            border: 1px solid #E5E7EB;
-            border-radius: 14px;
-            background: #F8FAFC;
-            box-shadow: 0 8px 16px rgba(17,24,39,.06);
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
           }
           .print-qtd {
             width: 44px;
-            color: #0B1F44;
+            color: var(--print-primary);
             font-size: 15px;
             font-weight: 600;
             text-align: center;
           }
           .print-item strong { display: block; color: #111827; font-size: 13.5px; line-height: 1.25; font-weight: 650; }
           .print-item small { display: block; margin-top: 5px; color: #64748B; font-size: 11px; font-weight: 400; }
-          td strong { color: #0B1F44; font-weight: 600; }
+          td strong { color: var(--print-primary); font-weight: 600; }
           .print-space-row td {
             padding: 16px 14px 10px;
             border-bottom: none;
@@ -434,7 +442,7 @@ export function imprimirPedido() {
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
             gap: 12px;
-            color: #0B1F44;
+            color: var(--print-primary);
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
@@ -464,7 +472,7 @@ export function imprimirPedido() {
           .card-title {
             padding: 10px 14px;
             border-bottom: 1px solid #E5E7EB;
-            color: #0B1F44;
+            color: var(--print-primary);
             background: #F8FAFC;
             font-size: 14px;
             font-weight: 600;
@@ -493,7 +501,7 @@ export function imprimirPedido() {
             border-radius: 18px;
             color: #fff;
             text-align: center;
-            background: linear-gradient(135deg, #0B1F44, #163A72);
+            background: linear-gradient(135deg, var(--print-primary), color-mix(in srgb, var(--print-primary) 84%, #ffffff));
           }
           .summary-row.total span {
             display: block;

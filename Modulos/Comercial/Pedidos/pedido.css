@@ -1064,6 +1064,27 @@
   color: #1f3b73;
   font-size: 18px;
 }
+
+/* Fotos sem fundo: itens e propostas devem respeitar PNG/WEBP transparentes. */
+.orcamento-page .foto-item,
+.pedido-screen .foto-item,
+.pedido-screen .pedido-item-photo,
+.pedido-item-photo,
+.foto-item {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.orcamento-page .foto-item img,
+.pedido-screen .foto-item img,
+.pedido-screen .pedido-item-photo img,
+.pedido-item-photo img,
+.foto-item img {
+  background: transparent !important;
+  object-fit: contain !important;
+}
+
 #freteSugestoes {
   margin: 12px 0;
   max-height: 160px;

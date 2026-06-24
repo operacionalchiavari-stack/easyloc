@@ -3,605 +3,1274 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EasyLoc - Plataforma para locadoras de eventos</title>
-  <link rel="stylesheet" href="styles/global.css">
+  <title>EasyLoc | Sistema para locadoras de eventos</title>
+  <meta name="description" content="EasyLoc conecta comercial, estoque, logística e financeiro para empresas de locação de móveis, eventos e equipamentos.">
+  <link rel="icon" type="image/png" href="logosimbolo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --page-bg: var(--color-bg, #fbf8f5);
-      --surface: var(--color-surface, #ffffff);
-      --soft: var(--color-surface-soft, #f7f9fc);
-      --navy: var(--color-primary, #0b1f3a);
-      --orange: var(--color-accent, #ff6900);
-      --border: var(--color-border, #dfe7f1);
-      --text: var(--color-text, #0b2239);
-      --muted: var(--color-muted, #667891);
-      --radius-lg: var(--radius-lg, 28px);
-      --radius-md: var(--radius-md, 18px);
-      --shadow-soft: 0 24px 70px rgba(8, 33, 58, .10);
+      --navy-950: #071a2f;
+      --navy-900: #0b213b;
+      --navy-800: #10345b;
+      --navy-700: #184875;
+      --blue-soft: #eef5fb;
+      --blue-line: #d9e6f2;
+      --orange: #ff6a00;
+      --orange-soft: #fff2e8;
+      --white: #ffffff;
+      --paper: #fbf8f5;
+      --muted: #667891;
+      --text: #0d2238;
+      --border: rgba(15, 42, 68, .12);
+      --shadow: 0 24px 70px rgba(7, 26, 47, .12);
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
     }
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      background: var(--page-bg);
-      color: var(--text);
       font-family: Inter, Arial, sans-serif;
+      background: var(--paper);
+      color: var(--text);
+      text-rendering: optimizeLegibility;
     }
 
     a { color: inherit; text-decoration: none; }
-    .page { overflow: hidden; }
+    img { max-width: 100%; display: block; }
+
+    .page {
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top right, rgba(255, 106, 0, .08), transparent 28rem),
+        radial-gradient(circle at 12% 8%, rgba(16, 52, 91, .10), transparent 30rem),
+        var(--paper);
+    }
+
+    .container {
+      width: min(1160px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 14px;
+      z-index: 20;
+      margin-top: 14px;
+    }
 
     .nav {
-      align-items: center;
-      background: rgba(255,255,255,.84);
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(223,231,241,.76);
-      border-radius: 999px;
       display: flex;
-      gap: 28px;
+      align-items: center;
       justify-content: space-between;
-      left: 50%;
+      gap: 18px;
       padding: 10px 12px 10px 18px;
-      position: fixed;
-      top: 18px;
-      transform: translateX(-50%);
-      width: min(1180px, calc(100% - 36px));
-      z-index: 40;
+      background: rgba(255,255,255,.82);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      box-shadow: 0 16px 45px rgba(7, 26, 47, .08);
+      backdrop-filter: blur(18px);
     }
 
     .brand {
-      align-items: center;
-      color: var(--navy);
       display: inline-flex;
-      font-size: 21px;
-      font-weight: 800;
+      align-items: center;
       gap: 10px;
+      color: var(--navy-950);
+      font-weight: 800;
+      font-size: 21px;
       letter-spacing: -.02em;
+      white-space: nowrap;
     }
 
-    .brand img { height: 36px; width: 36px; object-fit: contain; }
+    .brand img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+    }
 
     .nav-links {
-      align-items: center;
-      color: var(--muted);
       display: flex;
+      align-items: center;
+      gap: 22px;
+      color: var(--muted);
       font-size: 14px;
-      gap: 24px;
+      font-weight: 600;
     }
 
-    .nav-links a:hover { color: var(--navy); }
+    .nav-links a:hover { color: var(--navy-900); }
 
     .btn {
-      align-items: center;
-      border: 1px solid transparent;
-      border-radius: 999px;
-      cursor: pointer;
       display: inline-flex;
-      font-weight: 750;
+      align-items: center;
       justify-content: center;
+      gap: 8px;
       min-height: 46px;
-      padding: 0 22px;
-      transition: .18s ease;
+      padding: 0 20px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-weight: 700;
+      font-size: 14px;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
     }
 
-    .btn-primary { background: var(--orange); color: #fff; box-shadow: 0 16px 36px rgba(255,105,0,.20); }
-    .btn-primary:hover, .btn-light:hover, .btn-outline:hover { transform: translateY(-1px); }
-    .btn-outline { background: #fff; border-color: var(--border); color: var(--navy); }
-    .btn-light { background: #fff; color: var(--navy); }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(7, 26, 47, .14);
+    }
+
+    .btn-primary {
+      background: var(--navy-900);
+      color: #fff;
+    }
+
+    .btn-accent {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    .btn-outline {
+      background: #fff;
+      border-color: var(--border);
+      color: var(--navy-900);
+    }
+
+    .btn-light {
+      background: #fff;
+      color: var(--navy-900);
+    }
 
     .section {
-      margin: 0 auto;
-      padding: 88px 0;
-      width: min(1180px, calc(100% - 40px));
+      padding: 74px 0;
     }
 
     .hero {
-      align-items: center;
       display: grid;
-      gap: 56px;
-      grid-template-columns: minmax(0, .94fr) minmax(460px, 1.06fr);
-      min-height: 700px;
-      padding-top: 118px;
+      grid-template-columns: minmax(0, .9fr) minmax(480px, 1.1fr);
+      align-items: center;
+      gap: 46px;
+      padding: 94px 0 76px;
     }
 
-    .badge {
-      align-items: center;
-      background: rgba(255,105,0,.09);
-      border: 1px solid rgba(255,105,0,.18);
-      border-radius: 999px;
-      color: var(--orange);
+    .eyebrow {
       display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 13px;
+      border: 1px solid rgba(255, 106, 0, .24);
+      border-radius: 999px;
+      background: var(--orange-soft);
+      color: #b94a00;
       font-size: 13px;
-      font-weight: 760;
-      min-height: 34px;
-      padding: 0 14px;
+      font-weight: 800;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--orange);
     }
 
     h1, h2, h3, p { margin-top: 0; }
+
     h1 {
-      color: var(--navy);
-      font-size: clamp(38px, 4.2vw, 60px);
-      letter-spacing: -.045em;
-      line-height: 1.04;
-      margin: 18px 0 18px;
-      max-width: 700px;
+      max-width: 660px;
+      margin: 24px 0 18px;
+      color: var(--navy-950);
+      font-size: clamp(38px, 5vw, 66px);
+      line-height: 1.02;
+      letter-spacing: -.055em;
+      font-weight: 800;
     }
 
     .lead {
-      color: var(--muted);
-      font-size: 17px;
-      line-height: 1.62;
       max-width: 560px;
+      color: #53677f;
+      font-size: clamp(17px, 2vw, 20px);
+      line-height: 1.65;
     }
 
-    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
 
-    .hero-visual {
-      min-height: 540px;
+    .hero-trust {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .hero-trust span {
+      padding: 8px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.7);
+    }
+
+    .product-showcase {
       position: relative;
+      min-height: 520px;
     }
 
-    .screen-stack {
-      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.82));
-      border: 1px solid rgba(255,255,255,.9);
-      border-radius: 34px;
-      box-shadow: var(--shadow-soft);
+    .browser-card {
+      position: relative;
       overflow: hidden;
-      position: relative;
-      z-index: 2;
+      border-radius: var(--radius-xl);
+      background: #fff;
+      border: 1px solid rgba(15, 42, 68, .13);
+      box-shadow: var(--shadow);
     }
 
-    .screen-top {
-      align-items: center;
-      background: var(--navy);
-      color: #fff;
+    .browser-top {
       display: flex;
       justify-content: space-between;
-      min-height: 58px;
+      align-items: center;
+      height: 62px;
       padding: 0 22px;
+      background: var(--navy-900);
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
     }
 
-    .screen-dots { display: flex; gap: 7px; }
-    .screen-dots span { background: rgba(255,255,255,.46); border-radius: 50%; height: 9px; width: 9px; }
+    .dots {
+      display: flex;
+      gap: 7px;
+    }
 
-    .screen-body {
+    .dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.46);
+    }
+
+    .app-preview {
       display: grid;
-      gap: 18px;
-      grid-template-columns: .78fr 1.22fr;
-      padding: 22px;
+      grid-template-columns: 140px 1fr;
+      min-height: 430px;
     }
 
-    .screen-sidebar, .screen-main, .screen-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 18px;
+    .preview-sidebar {
+      padding: 22px 16px;
+      background: linear-gradient(180deg, #0d2a49, #113b64);
     }
 
-    .screen-sidebar { display: grid; gap: 12px; align-content: start; }
-    .screen-pill { background: var(--soft); border-radius: 999px; height: 38px; }
-    .screen-main { display: grid; gap: 14px; }
-    .screen-header { align-items: center; display: flex; justify-content: space-between; }
-    .screen-header strong { color: var(--navy); font-size: 20px; }
-    .screen-tag { background: rgba(255,105,0,.1); border-radius: 999px; color: var(--orange); font-size: 12px; padding: 8px 11px; }
-    .screen-row { align-items: center; border-top: 1px solid #edf2f7; display: grid; gap: 12px; grid-template-columns: 54px 1fr auto; padding: 13px 0; }
-    .screen-img { background: #eef3f8; border-radius: 14px; height: 52px; }
-    .screen-line strong { color: var(--navy); display: block; font-size: 14px; }
-    .screen-line span { color: var(--muted); font-size: 12px; }
-    .screen-value { color: var(--navy); font-weight: 800; }
+    .preview-pill {
+      height: 34px;
+      margin-bottom: 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.12);
+    }
 
-    .mini-screen {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      box-shadow: 0 22px 54px rgba(8,33,58,.12);
-      padding: 14px;
+    .preview-main {
+      padding: 24px;
+      background: linear-gradient(180deg, #ffffff, #f6f9fc);
+    }
+
+    .preview-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .preview-head h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -.035em;
+      color: var(--navy-950);
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: #e9f8ef;
+      color: #087a35;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      padding: 15px;
+      border: 1px solid var(--blue-line);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .metric small {
+      display: block;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .metric strong {
+      color: var(--navy-950);
+      font-size: 22px;
+    }
+
+    .order-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .order-row {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--blue-line);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #edf3f8;
+      overflow: hidden;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .order-row strong {
+      display: block;
+      color: var(--navy-950);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .order-row span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .floating-card {
       position: absolute;
-      z-index: 3;
+      right: -10px;
+      bottom: 28px;
+      width: min(280px, 46%);
+      padding: 14px;
+      border-radius: 22px;
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 54px rgba(7,26,47,.16);
     }
 
-    .mini-screen.one { bottom: 18px; left: -30px; width: 250px; }
-    .mini-screen.two { right: -22px; top: 96px; width: 230px; }
-    .mini-screen img { border-radius: 16px; display: block; height: 132px; object-fit: cover; width: 100%; }
-    .mini-screen strong { color: var(--navy); display: block; margin-top: 10px; }
-    .mini-screen span { color: var(--muted); font-size: 13px; }
+    .floating-card img {
+      height: 132px;
+      width: 100%;
+      object-fit: cover;
+      border-radius: 16px;
+      margin-bottom: 12px;
+    }
+
+    .floating-card strong {
+      color: var(--navy-950);
+      display: block;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .floating-card span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .section-title {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 460px);
+      gap: 40px;
+      align-items: end;
+      margin-bottom: 34px;
+    }
+
+    .section-title h2 {
+      margin: 12px 0 0;
+      color: var(--navy-950);
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.08;
+      letter-spacing: -.045em;
+      font-weight: 800;
+    }
+
+    .section-title p,
+    .section-copy {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 16px;
+    }
 
     .dark-band {
-      background: var(--navy);
+      background: var(--navy-950);
       color: #fff;
-      margin: 24px 0;
-      padding: 70px 0;
+      padding: 56px 0;
     }
 
     .stats {
       display: grid;
-      gap: 26px;
       grid-template-columns: repeat(3, 1fr);
-      margin: 0 auto;
-      width: min(1180px, calc(100% - 40px));
+      gap: 20px;
+    }
+
+    .stat {
+      padding: 26px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 24px;
+      background: rgba(255,255,255,.06);
     }
 
     .stat strong {
       display: block;
-      font-size: clamp(40px, 5vw, 72px);
-      letter-spacing: -.045em;
-      line-height: .94;
+      font-size: clamp(34px, 4vw, 54px);
+      line-height: 1;
+      letter-spacing: -.05em;
+      margin-bottom: 10px;
     }
 
-    .stat span { color: rgba(255,255,255,.72); display: block; font-size: 16px; margin-top: 12px; }
-
-    .section-head {
-      align-items: end;
-      display: flex;
-      gap: 28px;
-      justify-content: space-between;
-      margin-bottom: 34px;
+    .stat span {
+      color: rgba(255,255,255,.74);
+      font-size: 15px;
     }
 
-    .section-head h2 {
-      color: var(--navy);
-      font-size: clamp(30px, 2.8vw, 44px);
-      letter-spacing: -.038em;
-      line-height: 1.08;
-      margin: 0;
-      max-width: 720px;
+    .answer-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
     }
 
-    .section-head p { color: var(--muted); line-height: 1.6; max-width: 420px; }
+    .answer-card,
+    .module-card,
+    .plan-card,
+    .benefit,
+    .faq-item {
+      background: rgba(255,255,255,.86);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 18px 46px rgba(7,26,47,.06);
+    }
+
+    .answer-card {
+      padding: 26px;
+    }
+
+    .answer-card span {
+      display: inline-flex;
+      width: 38px;
+      height: 38px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: var(--blue-soft);
+      color: var(--navy-800);
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .answer-card h3,
+    .module-card h3,
+    .benefit h3,
+    .plan-card h3,
+    .faq-item h3 {
+      color: var(--navy-950);
+      font-size: 19px;
+      line-height: 1.25;
+      letter-spacing: -.025em;
+      margin-bottom: 10px;
+    }
+
+    .answer-card p,
+    .module-card p,
+    .benefit p,
+    .plan-card p,
+    .faq-item p {
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 0;
+      font-size: 15px;
+    }
 
     .module-grid {
       display: grid;
-      gap: 18px;
       grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
     }
 
-    .module-card, .benefit-card, .ai-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: 0 18px 48px rgba(8,33,58,.055);
+    .module-card {
       padding: 24px;
-      transition: .18s ease;
+      transition: transform .2s ease, box-shadow .2s ease;
     }
 
-    .module-card:hover, .ai-card:hover { box-shadow: 0 24px 62px rgba(8,33,58,.10); transform: translateY(-3px); }
-    .icon {
+    .module-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+
+    .module-icon {
+      display: flex;
+      width: 44px;
+      height: 44px;
       align-items: center;
-      background: rgba(255,105,0,.10);
-      border-radius: 16px;
-      color: var(--orange);
-      display: inline-flex;
-      font-size: 14px;
-      font-weight: 850;
-      height: 46px;
       justify-content: center;
-      margin-bottom: 22px;
-      width: 46px;
+      border-radius: 15px;
+      background: var(--navy-900);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 20px;
     }
 
-    .module-card h3, .ai-card h3, .benefit-card h3 { color: var(--navy); font-size: 20px; letter-spacing: -.018em; margin-bottom: 10px; }
-    .module-card p, .ai-card p, .benefit-card p { color: var(--muted); line-height: 1.55; }
-    .module-card ul { color: var(--muted); display: grid; gap: 8px; list-style: none; margin: 20px 0 0; padding: 0; }
+    .module-card ul,
+    .plan-card ul {
+      display: grid;
+      gap: 9px;
+      padding: 0;
+      margin: 18px 0 0;
+      list-style: none;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .module-card li,
+    .plan-card li {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .module-card li::before,
+    .plan-card li::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--orange);
+      flex: 0 0 auto;
+    }
+
+    .flow-panel {
+      overflow: hidden;
+      border-radius: 30px;
+      background: linear-gradient(135deg, var(--navy-950), var(--navy-800));
+      color: #fff;
+      padding: 34px;
+      box-shadow: var(--shadow);
+    }
 
     .flow {
-      align-items: center;
       display: grid;
-      gap: 14px;
       grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-top: 28px;
     }
 
     .flow-step {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      min-height: 150px;
-      padding: 22px;
-      position: relative;
+      min-height: 130px;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 20px;
+      background: rgba(255,255,255,.07);
     }
 
-    .flow-step:not(:last-child)::after {
-      color: var(--orange);
-      content: "→";
-      font-size: 24px;
-      position: absolute;
-      right: -19px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 2;
+    .flow-step small {
+      color: rgba(255,255,255,.55);
+      font-weight: 700;
     }
 
-    .flow-step span { color: var(--orange); font-size: 13px; font-weight: 800; }
-    .flow-step strong { color: var(--navy); display: block; font-size: 20px; margin-top: 14px; }
-
-    .ai-section {
-      background: linear-gradient(180deg, #fff, var(--soft));
-      border: 1px solid var(--border);
-      border-radius: 36px;
-      padding: 42px;
+    .flow-step strong {
+      display: block;
+      margin-top: 28px;
+      font-size: 16px;
     }
 
-    .ai-grid { display: grid; gap: 16px; grid-template-columns: repeat(5, 1fr); margin-top: 30px; }
-    .ai-card { border-radius: 24px; min-height: 170px; padding: 20px; }
-    .ai-card h3 { font-size: 17px; }
-
-    .feature-block {
-      align-items: center;
+    .ai-panel {
       display: grid;
-      gap: 56px;
-      grid-template-columns: 1.05fr .95fr;
-      padding: 50px 0;
+      grid-template-columns: .95fr 1.05fr;
+      gap: 24px;
+      align-items: center;
+      padding: 34px;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      background: #fff;
+      box-shadow: var(--shadow);
     }
 
-    .feature-block:nth-child(even) { grid-template-columns: .95fr 1.05fr; }
-    .feature-block:nth-child(even) .feature-shot { order: 2; }
+    .ai-orb {
+      min-height: 340px;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 58% 36%, rgba(255,106,0,.28), transparent 7rem),
+        radial-gradient(circle at 42% 54%, rgba(24,72,117,.38), transparent 11rem),
+        linear-gradient(135deg, #071a2f, #10345b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-align: center;
+      padding: 28px;
+    }
+
+    .ai-orb strong {
+      font-size: clamp(30px, 5vw, 54px);
+      letter-spacing: -.05em;
+      line-height: 1;
+    }
+
+    .ai-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .ai-card {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--blue-soft);
+    }
+
+    .ai-card strong {
+      display: block;
+      color: var(--navy-950);
+      margin-bottom: 7px;
+    }
+
+    .ai-card span {
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .feature-list {
+      display: grid;
+      gap: 20px;
+    }
+
+    .feature-row {
+      display: grid;
+      grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+      gap: 26px;
+      align-items: center;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      background: #fff;
+      box-shadow: 0 18px 46px rgba(7,26,47,.06);
+    }
+
+    .feature-row:nth-child(even) {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    }
+
+    .feature-row:nth-child(even) .feature-shot { order: 2; }
 
     .feature-shot {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 32px;
-      box-shadow: var(--shadow-soft);
+      min-height: 300px;
+      border-radius: 24px;
       overflow: hidden;
-      padding: 14px;
+      background: var(--blue-soft);
+      border: 1px solid var(--blue-line);
     }
 
-    .feature-shot img { border-radius: 24px; display: block; height: 330px; object-fit: cover; width: 100%; }
-    .feature-copy h3 { color: var(--navy); font-size: clamp(26px, 2.5vw, 36px); letter-spacing: -.032em; line-height: 1.1; }
-    .feature-copy p { color: var(--muted); font-size: 16px; line-height: 1.62; }
+    .feature-shot img {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+    }
+
+    .feature-copy {
+      padding: 18px 12px;
+    }
+
+    .feature-copy h3 {
+      color: var(--navy-950);
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1.1;
+      letter-spacing: -.04em;
+      margin: 14px 0 12px;
+    }
 
     .benefits-grid {
       display: grid;
-      gap: 16px;
       grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
     }
 
-    .benefit-card { min-height: 170px; }
+    .benefit {
+      padding: 22px;
+    }
 
-    .final-cta {
-      background: var(--navy);
-      border-radius: 38px;
-      color: #fff;
+    .plans {
       display: grid;
-      gap: 20px;
-      justify-items: center;
-      margin-bottom: 80px;
-      padding: 66px 24px;
-      text-align: center;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
     }
 
-    .final-cta h2 { font-size: clamp(30px, 3.2vw, 48px); letter-spacing: -.04em; line-height: 1.06; margin: 0; max-width: 720px; }
-    .final-cta p { color: rgba(255,255,255,.72); font-size: 16px; margin: 0; }
+    .plan-card {
+      position: relative;
+      padding: 28px;
+    }
+
+    .plan-card.featured {
+      border-color: rgba(255,106,0,.38);
+      box-shadow: 0 24px 70px rgba(255,106,0,.10);
+    }
+
+    .plan-label {
+      display: inline-flex;
+      height: 28px;
+      align-items: center;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--navy-800);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .plan-card.featured .plan-label {
+      background: var(--orange-soft);
+      color: #b94a00;
+    }
+
+    .plan-price {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin: 20px 0;
+      padding: 18px;
+      border-radius: 18px;
+      background: var(--blue-soft);
+    }
+
+    .plan-price strong {
+      color: var(--navy-950);
+      font-size: 24px;
+      letter-spacing: -.03em;
+    }
+
+    .plan-price span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .faq-item {
+      padding: 24px;
+    }
+
+    .final {
+      padding: 72px 0;
+    }
+
+    .final-box {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 24px;
+      padding: 42px;
+      border-radius: 32px;
+      background: var(--navy-950);
+      color: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .final-box h2 {
+      font-size: clamp(30px, 4vw, 46px);
+      line-height: 1.08;
+      letter-spacing: -.045em;
+      margin-bottom: 12px;
+    }
+
+    .final-box p {
+      margin: 0;
+      color: rgba(255,255,255,.74);
+      line-height: 1.65;
+    }
 
     .footer {
-      align-items: center;
-      border-top: 1px solid var(--border);
-      color: var(--muted);
       display: flex;
-      gap: 22px;
       justify-content: space-between;
-      margin: 0 auto;
-      padding: 34px 0;
-      width: min(1180px, calc(100% - 40px));
+      gap: 20px;
+      padding: 30px 0 46px;
+      color: var(--muted);
+      font-size: 14px;
+      border-top: 1px solid var(--border);
     }
 
-    .footer-links { display: flex; gap: 20px; }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
 
-    @media (max-width: 1080px) {
-      .hero, .feature-block, .feature-block:nth-child(even) { grid-template-columns: 1fr; }
-      .feature-block:nth-child(even) .feature-shot { order: 0; }
-      .module-grid, .ai-grid { grid-template-columns: repeat(2, 1fr); }
-      .flow { grid-template-columns: repeat(3, 1fr); }
-      .flow-step::after { display: none; }
-      .hero-visual { min-height: auto; }
-      .mini-screen { position: static; margin-top: 14px; width: auto !important; }
+    @media (max-width: 980px) {
+      .container { width: min(100% - 28px, 720px); }
+      .nav { border-radius: 24px; }
       .nav-links { display: none; }
+      .hero,
+      .section-title,
+      .ai-panel,
+      .feature-row,
+      .feature-row:nth-child(even),
+      .final-box {
+        grid-template-columns: 1fr;
+      }
+      .hero { padding-top: 58px; }
+      .product-showcase { min-height: auto; }
+      .floating-card { display: none; }
+      .app-preview { grid-template-columns: 94px 1fr; }
+      .preview-grid,
+      .answer-grid,
+      .module-grid,
+      .benefits-grid,
+      .plans,
+      .faq-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .flow {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .feature-row:nth-child(even) .feature-shot { order: 0; }
     }
 
-    @media (max-width: 720px) {
-      .nav { border-radius: 22px; position: absolute; }
-      .brand span { display: none; }
-      .section { padding: 68px 0; width: min(100% - 24px, 1180px); }
-      .hero { min-height: auto; padding-top: 120px; }
-      .screen-body, .stats, .module-grid, .ai-grid, .flow, .benefits-grid { grid-template-columns: 1fr; }
-      .section-head, .footer { align-items: flex-start; flex-direction: column; }
-      .hero-actions .btn, .final-cta .btn { width: 100%; }
-      .feature-shot img { height: 240px; }
+    @media (max-width: 640px) {
+      .container { width: min(100% - 22px, 520px); }
+      .site-header { top: 8px; margin-top: 8px; }
+      .nav { padding: 9px 9px 9px 13px; }
+      .brand { font-size: 18px; }
+      .brand img { width: 30px; height: 30px; }
+      .btn { min-height: 42px; padding: 0 15px; font-size: 13px; }
+      .section { padding: 52px 0; }
+      .hero { gap: 30px; padding: 50px 0 48px; }
+      h1 { font-size: clamp(34px, 12vw, 46px); }
+      .lead { font-size: 16px; }
+      .hero-actions .btn,
+      .final-box .btn { width: 100%; }
+      .browser-top { height: 52px; }
+      .app-preview { grid-template-columns: 1fr; }
+      .preview-sidebar { display: none; }
+      .preview-main { padding: 16px; }
+      .preview-head { flex-direction: column; }
+      .preview-grid,
+      .answer-grid,
+      .module-grid,
+      .benefits-grid,
+      .plans,
+      .faq-grid,
+      .ai-grid,
+      .flow,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+      .order-row { grid-template-columns: 42px 1fr; }
+      .order-row .status-chip { grid-column: 1 / -1; width: fit-content; }
+      .flow-panel,
+      .ai-panel,
+      .final-box { padding: 24px; }
+      .feature-row { padding: 14px; }
+      .feature-shot,
+      .feature-shot img { min-height: 220px; height: 220px; }
+      .footer { flex-direction: column; }
     }
   </style>
 </head>
 
 <body>
   <div class="page">
-    <nav class="nav">
-      <a class="brand" href="#">
-        <img src="logosimbolo.png" alt="EasyLoc">
-        <span>EasyLoc</span>
-      </a>
-      <div class="nav-links">
-        <a href="#modulos">Recursos</a>
-        <a href="#ia">IA</a>
-        <a href="planos.html">Planos</a>
-        <a href="#contato">Contato</a>
-      </div>
-      <a class="btn btn-primary" href="login.html">Entrar</a>
-    </nav>
+    <header class="site-header">
+      <nav class="nav container" aria-label="Navegação principal">
+        <a class="brand" href="#topo" aria-label="EasyLoc">
+          <img src="logosimbolo.png" alt="">
+          <span>EasyLoc</span>
+        </a>
 
-    <header class="section hero">
-      <div>
-        <span class="badge">Plataforma completa para locação</span>
-        <h1>Controle comercial, estoque, logística e financeiro em um único sistema.</h1>
-        <p class="lead">A EasyLoc conecta todos os setores da operação e elimina planilhas, retrabalho e falta de informação.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#contato">Solicitar demonstração</a>
-          <a class="btn btn-outline" href="#modulos">Conhecer recursos</a>
+        <div class="nav-links">
+          <a href="#sobre">O que é</a>
+          <a href="#recursos">Recursos</a>
+          <a href="#operacao">Operação</a>
+          <a href="#planos">Planos</a>
+          <a href="#duvidas">Dúvidas</a>
         </div>
-      </div>
 
-      <div class="hero-visual" aria-label="Mockup do sistema EasyLoc">
-        <div class="screen-stack">
-          <div class="screen-top">
-            <strong>EasyLoc Operação</strong>
-            <div class="screen-dots"><span></span><span></span><span></span></div>
-          </div>
-          <div class="screen-body">
-            <aside class="screen-sidebar">
-              <div class="screen-pill"></div>
-              <div class="screen-pill"></div>
-              <div class="screen-pill"></div>
-              <div class="screen-pill"></div>
-              <div class="screen-pill"></div>
-            </aside>
-            <main class="screen-main">
-              <div class="screen-header">
-                <strong>Pedido #1548</strong>
-                <span class="screen-tag">Orçamento</span>
-              </div>
-              <div class="screen-row">
-                <div class="screen-img"></div>
-                <div class="screen-line"><strong>Bar Monaco Madeira e Tecido Azul</strong><span>Separação confirmada</span></div>
-                <div class="screen-value">Separado</div>
-              </div>
-              <div class="screen-row">
-                <div class="screen-img"></div>
-                <div class="screen-line"><strong>Mesa Auxiliar Rocco</strong><span>Disponível no estoque</span></div>
-                <div class="screen-value">Disponível</div>
-              </div>
-              <div class="screen-panel">
-                <div class="screen-header">
-                  <strong>Logística</strong>
-                  <span class="screen-tag">30,9 km</span>
-                </div>
-              </div>
-            </main>
-          </div>
-        </div>
-        <div class="mini-screen one">
-          <img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem3.png" alt="Controle por QR Code">
-          <strong>Separação por QR Code</strong>
-          <span>Conferência rápida no estoque.</span>
-        </div>
-        <div class="mini-screen two">
-          <img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem4.png" alt="Studio IA EasyLoc">
-          <strong>Studio IA</strong>
-          <span>Layouts e ambientes para venda.</span>
-        </div>
-      </div>
+        <a class="btn btn-accent" href="login.html">Entrar</a>
+      </nav>
     </header>
 
-    <section class="dark-band">
-      <div class="stats">
-        <div class="stat"><strong>100%</strong><span>Operação integrada</span></div>
-        <div class="stat"><strong>4 setores</strong><span>Conectados em tempo real</span></div>
-        <div class="stat"><strong>1 plataforma</strong><span>Para toda empresa</span></div>
-      </div>
-    </section>
-
-    <section class="section" id="modulos">
-      <div class="section-head">
+    <main id="topo">
+      <section class="hero container">
         <div>
-          <span class="badge">Módulos principais</span>
-          <h2>Tudo que sua operação precisa</h2>
-        </div>
-        <p>Da venda à desmontagem, a operação segue conectada em uma experiência simples e visual.</p>
-      </div>
-      <div class="module-grid">
-        <article class="module-card"><span class="icon">01</span><h3>Comercial</h3><p>Pedidos e contratos com visão clara do cliente.</p><ul><li>Clientes</li><li>Locais</li><li>Pedidos</li><li>Contratos</li></ul></article>
-        <article class="module-card"><span class="icon">02</span><h3>Estoque</h3><p>Itens, kits e reservas conectados ao calendário.</p><ul><li>Itens</li><li>Kits</li><li>Reservas</li><li>QR Code</li></ul></article>
-        <article class="module-card"><span class="icon">03</span><h3>Logística</h3><p>Fretes, equipes e execução organizados por evento.</p><ul><li>Cronograma</li><li>Fretes</li><li>Equipes</li><li>Execução</li></ul></article>
-        <article class="module-card"><span class="icon">04</span><h3>Financeiro</h3><p>Fluxo de caixa e contas conectadas aos pedidos.</p><ul><li>Fluxo de caixa</li><li>Contas a pagar</li><li>Contas a receber</li><li>Indicadores</li></ul></article>
-      </div>
-    </section>
-
-    <section class="section" id="operacao">
-      <div class="section-head">
-        <div>
-          <span class="badge">Fluxo operacional</span>
-          <h2>Do pedido ao retorno, cada etapa no lugar certo.</h2>
-        </div>
-        <p>Um fluxo pensado para locadoras de móveis, decoração e equipamentos de eventos.</p>
-      </div>
-      <div class="flow">
-        <div class="flow-step"><span>01</span><strong>Pedido</strong></div>
-        <div class="flow-step"><span>02</span><strong>Separação</strong></div>
-        <div class="flow-step"><span>03</span><strong>Carregamento</strong></div>
-        <div class="flow-step"><span>04</span><strong>Montagem</strong></div>
-        <div class="flow-step"><span>05</span><strong>Desmontagem</strong></div>
-        <div class="flow-step"><span>06</span><strong>Retorno</strong></div>
-      </div>
-    </section>
-
-    <section class="section" id="ia">
-      <div class="ai-section">
-        <div class="section-head">
-          <div>
-            <span class="badge">IA EasyLoc</span>
-            <h2>Sua operação assistida por IA</h2>
+          <span class="eyebrow">Plataforma completa para locação</span>
+          <h1>Controle sua operação de eventos sem depender de planilhas.</h1>
+          <p class="lead">
+            A EasyLoc conecta venda, estoque, logística, financeiro e equipe em um fluxo único, com informação clara para cada setor trabalhar melhor.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#contato">Solicitar demonstração</a>
+            <a class="btn btn-outline" href="#sobre">Conhecer a EasyLoc</a>
           </div>
-          <p>A Lia e os motores inteligentes ajudam a equipe a consultar, planejar e decidir com mais velocidade.</p>
+          <div class="hero-trust" aria-label="Destaques">
+            <span>Pedidos integrados ao estoque</span>
+            <span>Logística por evento</span>
+            <span>Financeiro conectado</span>
+          </div>
         </div>
-        <div class="ai-grid">
-          <article class="ai-card"><h3>Analisa plantas de eventos</h3><p>Interpreta espaços e apoia o planejamento.</p></article>
-          <article class="ai-card"><h3>Gera layouts automáticos</h3><p>Cria propostas visuais com regras de operação.</p></article>
-          <article class="ai-card"><h3>Consulta estoque</h3><p>Ajuda a encontrar itens, kits e disponibilidade.</p></article>
-          <article class="ai-card"><h3>Responde dúvidas operacionais</h3><p>Centraliza conhecimento para a equipe.</p></article>
-          <article class="ai-card"><h3>Sugere melhorias logísticas</h3><p>Apoia decisões de frete, montagem e equipe.</p></article>
+
+        <div class="product-showcase" aria-label="Prévia visual do sistema EasyLoc">
+          <div class="browser-card">
+            <div class="browser-top">
+              <span>EasyLoc Operação</span>
+              <div class="dots"><span></span><span></span><span></span></div>
+            </div>
+            <div class="app-preview">
+              <aside class="preview-sidebar">
+                <div class="preview-pill"></div>
+                <div class="preview-pill"></div>
+                <div class="preview-pill"></div>
+                <div class="preview-pill"></div>
+                <div class="preview-pill"></div>
+              </aside>
+              <div class="preview-main">
+                <div class="preview-head">
+                  <h2>Pedido #1548</h2>
+                  <span class="status-chip">Aprovado</span>
+                </div>
+                <div class="preview-grid">
+                  <div class="metric"><small>Locação</small><strong>R$ 2.819</strong></div>
+                  <div class="metric"><small>Distância</small><strong>30,9 km</strong></div>
+                  <div class="metric"><small>Separação</small><strong>92%</strong></div>
+                </div>
+                <div class="order-list">
+                  <div class="order-row">
+                    <div class="thumb"><img src="testeitem.png" alt="" loading="lazy" decoding="async"></div>
+                    <div>
+                      <strong>Bar Monaco Madeira e Tecido Azul</strong>
+                      <span>Reservado para casamento</span>
+                    </div>
+                    <span class="status-chip">Em estoque</span>
+                  </div>
+                  <div class="order-row">
+                    <div class="thumb"><img src="logoajuda.png" alt="" loading="lazy" decoding="async"></div>
+                    <div>
+                      <strong>Separação por QR Code</strong>
+                      <span>Conferência rápida para carregamento</span>
+                    </div>
+                    <span class="status-chip">Validado</span>
+                  </div>
+                  <div class="order-row">
+                    <div class="thumb"></div>
+                    <div>
+                      <strong>Cronograma logístico</strong>
+                      <span>Caminhão, equipe e execução no mesmo lugar</span>
+                    </div>
+                    <span class="status-chip">Hoje</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="floating-card">
+            <img src="slide1.jpg" alt="Ambiente de evento" loading="eager" decoding="async">
+            <strong>Do orçamento à desmontagem</strong>
+            <span>Uma visão operacional pensada para locadoras, decoradores e empresas de eventos.</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="section">
-      <div class="feature-block">
-        <div class="feature-shot"><img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem3.png" alt="Separação por QR Code"></div>
-        <div class="feature-copy"><span class="badge">QR Code</span><h3>Separação mais rápida, com menos erro.</h3><p>Etiquetas e leitura por QR Code tornam conferência, triagem e inventário mais objetivos.</p></div>
-      </div>
-      <div class="feature-block">
-        <div class="feature-shot"><img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem2.png" alt="Controle de Almoxarifado"></div>
-        <div class="feature-copy"><span class="badge">Almoxarifado</span><h3>Materiais, insumos e movimentações sob controle.</h3><p>Compras, consumo e disponibilidade ficam conectados ao estoque e à operação.</p></div>
-      </div>
-      <div class="feature-block">
-        <div class="feature-shot"><img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem4.png" alt="Planejamento de Eventos"></div>
-        <div class="feature-copy"><span class="badge">Planejamento</span><h3>Layouts de evento com inteligência operacional.</h3><p>Monte ambientes, organize fluxo e transforme ideias em apresentações melhores.</p></div>
-      </div>
-      <div class="feature-block">
-        <div class="feature-shot"><img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/Easyloc%20-%20page/imagem1.png" alt="Gestão Financeira"></div>
-        <div class="feature-copy"><span class="badge">Financeiro</span><h3>Recebíveis, pagamentos e caixa em uma visão única.</h3><p>O financeiro acompanha a operação sem depender de planilhas paralelas.</p></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head">
-        <div>
-          <span class="badge">Benefícios</span>
-          <h2>Menos ruído. Mais controle.</h2>
+      <section class="dark-band">
+        <div class="stats container">
+          <div class="stat"><strong>1</strong><span>plataforma para toda a operação</span></div>
+          <div class="stat"><strong>4</strong><span>setores conectados em tempo real</span></div>
+          <div class="stat"><strong>100%</strong><span>focado em locação e eventos</span></div>
         </div>
-      </div>
-      <div class="benefits-grid">
-        <article class="benefit-card"><h3>Menos retrabalho</h3><p>Dados passam a circular entre setores.</p></article>
-        <article class="benefit-card"><h3>Mais produtividade</h3><p>Rotinas repetitivas ficam mais simples.</p></article>
-        <article class="benefit-card"><h3>Menos erros</h3><p>Disponibilidade, datas e valores ficam alinhados.</p></article>
-        <article class="benefit-card"><h3>Maior controle</h3><p>Gestão visual de pedidos, estoque e operação.</p></article>
-        <article class="benefit-card"><h3>Informação centralizada</h3><p>Uma base para todos os setores.</p></article>
-        <article class="benefit-card"><h3>Decisões mais rápidas</h3><p>Indicadores e contexto no mesmo lugar.</p></article>
-      </div>
-    </section>
+      </section>
 
-    <section class="section" id="contato">
-      <div class="final-cta">
-        <h2>Sua empresa ainda trabalha em planilhas?</h2>
-        <p>Transforme sua operação com a EasyLoc.</p>
-        <a class="btn btn-light" href="mailto:comercial@easyloc.com.br">Solicitar demonstração</a>
-      </div>
-    </section>
+      <section class="section container" id="sobre">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">Conheça a EasyLoc</span>
+            <h2>O que é a EasyLoc?</h2>
+          </div>
+          <p>A EasyLoc é um sistema de gestão feito para empresas que alugam móveis, peças, estruturas, equipamentos e materiais para eventos.</p>
+        </div>
 
-    <footer class="footer">
-      <a class="brand" href="#"><img src="logosimbolo.png" alt="EasyLoc"><span>EasyLoc</span></a>
+        <div class="answer-grid">
+          <article class="answer-card">
+            <span>01</span>
+            <h3>O que ela tem?</h3>
+            <p>Cadastro de clientes, locais, itens, kits, pedidos, contratos, estoque, compras, logística, financeiro, RH operacional e inteligência artificial.</p>
+          </article>
+          <article class="answer-card">
+            <span>02</span>
+            <h3>Como ela ajuda minha operação?</h3>
+            <p>Ela reduz retrabalho porque cada setor usa a mesma informação: o comercial vende, o estoque reserva, a logística executa e o financeiro acompanha.</p>
+          </article>
+          <article class="answer-card">
+            <span>03</span>
+            <h3>Para quem foi criada?</h3>
+            <p>Para locadoras de mobiliário, decoradores, casas de festas, empresas de produção, logística de eventos e operações com estoque compartilhado.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container" id="recursos">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">Recursos principais</span>
+            <h2>Tudo que sua operação precisa, em uma rotina mais simples.</h2>
+          </div>
+          <p>O sistema organiza o que normalmente fica espalhado entre mensagens, planilhas, agendas e anotações.</p>
+        </div>
+
+        <div class="module-grid">
+          <article class="module-card">
+            <span class="module-icon">01</span>
+            <h3>Comercial</h3>
+            <p>Pedidos, orçamentos e contratos com visão clara do cliente e do evento.</p>
+            <ul><li>Clientes</li><li>Locais</li><li>Pedidos</li><li>Propostas</li></ul>
+          </article>
+          <article class="module-card">
+            <span class="module-icon">02</span>
+            <h3>Estoque</h3>
+            <p>Itens, kits, QR Code, disponibilidade por data e controle operacional.</p>
+            <ul><li>Itens</li><li>Kits</li><li>Reservas</li><li>Inventário</li></ul>
+          </article>
+          <article class="module-card">
+            <span class="module-icon">03</span>
+            <h3>Logística</h3>
+            <p>Cronograma, caminhões, equipe, separação, carregamento e montagem.</p>
+            <ul><li>Cronograma</li><li>Fretes</li><li>Equipe</li><li>Execução</li></ul>
+          </article>
+          <article class="module-card">
+            <span class="module-icon">04</span>
+            <h3>Financeiro</h3>
+            <p>Contas a receber, contas a pagar, fluxo de caixa e programação do pedido.</p>
+            <ul><li>Recebíveis</li><li>Pagamentos</li><li>Caixa</li><li>Indicadores</li></ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container" id="operacao">
+        <div class="flow-panel">
+          <span class="eyebrow">Fluxo operacional</span>
+          <div class="section-title" style="margin: 10px 0 0;">
+            <div>
+              <h2 style="color:#fff;">Da venda ao retorno, cada etapa no lugar certo.</h2>
+            </div>
+            <p style="color:rgba(255,255,255,.72);">A EasyLoc transforma o pedido em tarefas claras para estoque, separação, logística, montagem, desmontagem e financeiro.</p>
+          </div>
+          <div class="flow">
+            <div class="flow-step"><small>01</small><strong>Pedido</strong></div>
+            <div class="flow-step"><small>02</small><strong>Separação</strong></div>
+            <div class="flow-step"><small>03</small><strong>Carregamento</strong></div>
+            <div class="flow-step"><small>04</small><strong>Montagem</strong></div>
+            <div class="flow-step"><small>05</small><strong>Desmontagem</strong></div>
+            <div class="flow-step"><small>06</small><strong>Retorno</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section container" id="ia">
+        <div class="ai-panel">
+          <div class="ai-orb">
+            <strong>Operação assistida por IA</strong>
+          </div>
+          <div>
+            <span class="eyebrow">Lia e Studio IA</span>
+            <h2 style="margin:16px 0 14px;color:var(--navy-950);font-size:clamp(28px,4vw,42px);letter-spacing:-.045em;line-height:1.08;">Inteligência artificial para apoiar decisões reais.</h2>
+            <p class="section-copy">A IA ajuda a consultar dados do sistema, organizar informações, apoiar layouts, responder dúvidas da equipe e acelerar tarefas operacionais.</p>
+            <div class="ai-grid">
+              <div class="ai-card"><strong>Consulta pedidos</strong><span>Busca dados do pedido, cliente, itens e operação.</span></div>
+              <div class="ai-card"><strong>Planeja ambientes</strong><span>Apoia layouts e propostas visuais.</span></div>
+              <div class="ai-card"><strong>Consulta estoque</strong><span>Ajuda a encontrar disponibilidade e peças.</span></div>
+              <div class="ai-card"><strong>Apoia logística</strong><span>Resume cronograma, equipe e caminhões.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section container">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">Destaques</span>
+            <h2>Recursos feitos para a rotina de eventos.</h2>
+          </div>
+          <p>O foco é deixar o sistema bonito, mas principalmente útil para quem vende, separa, carrega, monta e recebe.</p>
+        </div>
+
+        <div class="feature-list">
+          <article class="feature-row">
+            <div class="feature-shot"><img src="slide2.jpg" alt="Evento com operação organizada" loading="lazy" decoding="async"></div>
+            <div class="feature-copy">
+              <span class="eyebrow">Pedidos</span>
+              <h3>Orçamentos completos e prontos para enviar ao cliente.</h3>
+              <p class="section-copy">Monte itens, logística, pagamento, observações e impressão em um único fluxo.</p>
+            </div>
+          </article>
+          <article class="feature-row">
+            <div class="feature-shot"><img src="slide3.jpg" alt="Controle visual de evento" loading="lazy" decoding="async"></div>
+            <div class="feature-copy">
+              <span class="eyebrow">Estoque</span>
+              <h3>Disponibilidade por data antes de prometer para o cliente.</h3>
+              <p class="section-copy">Veja reservas, manutenção, estoque total e conflitos sem depender de conferência manual.</p>
+            </div>
+          </article>
+          <article class="feature-row">
+            <div class="feature-shot"><img src="logoajuda.png" alt="QR Code e conferência" loading="lazy" decoding="async"></div>
+            <div class="feature-copy">
+              <span class="eyebrow">QR Code</span>
+              <h3>Separação e conferência mais rápidas no estoque.</h3>
+              <p class="section-copy">Cada item pode ter identificação própria para apoiar separação, triagem, inventário e retorno.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">Benefícios</span>
+            <h2>O impacto aparece no dia a dia.</h2>
+          </div>
+          <p>Menos ruído entre setores, mais previsibilidade e mais confiança no que está sendo vendido e executado.</p>
+        </div>
+
+        <div class="benefits-grid">
+          <article class="benefit"><h3>Menos retrabalho</h3><p>Informação única para comercial, estoque, logística e financeiro.</p></article>
+          <article class="benefit"><h3>Mais produtividade</h3><p>Rotinas repetitivas ficam centralizadas e mais fáceis de acompanhar.</p></article>
+          <article class="benefit"><h3>Menos erros</h3><p>Datas, itens, valores e disponibilidade ficam no mesmo pedido.</p></article>
+          <article class="benefit"><h3>Mais controle</h3><p>Pedidos, compras, separação, montagem e recebimentos ganham rastreabilidade.</p></article>
+          <article class="benefit"><h3>Equipe alinhada</h3><p>Cada setor sabe o que precisa fazer e quando precisa fazer.</p></article>
+          <article class="benefit"><h3>Decisão mais rápida</h3><p>Indicadores e contexto operacional ajudam a agir antes do problema crescer.</p></article>
+        </div>
+      </section>
+
+      <section class="section container" id="planos">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">Planos</span>
+            <h2>Escolha uma implantação no tamanho da sua operação.</h2>
+          </div>
+          <p>Os valores são personalizados conforme módulos, usuários, volume de operação e necessidade de implantação.</p>
+        </div>
+
+        <div class="plans">
+          <article class="plan-card">
+            <span class="plan-label">Essencial</span>
+            <h3>Para organizar a base</h3>
+            <p>Ideal para empresas que querem sair das planilhas e controlar pedidos, clientes e itens.</p>
+            <div class="plan-price"><strong>Fale com o comercial</strong><span>Plano configurado conforme sua operação.</span></div>
+            <ul><li>Comercial</li><li>Cadastro de itens</li><li>Pedidos</li><li>Suporte inicial</li></ul>
+          </article>
+          <article class="plan-card featured">
+            <span class="plan-label">Mais escolhido</span>
+            <h3>Operação completa</h3>
+            <p>Para locadoras que precisam integrar comercial, estoque, logística e financeiro.</p>
+            <div class="plan-price"><strong>Entre em contato</strong><span>Implantação desenhada com o time EasyLoc.</span></div>
+            <ul><li>Tudo do Essencial</li><li>Logística</li><li>Financeiro</li><li>QR Code</li><li>IA EasyLoc</li></ul>
+          </article>
+          <article class="plan-card">
+            <span class="plan-label">Enterprise</span>
+            <h3>Para operações maiores</h3>
+            <p>Para empresas com múltiplas equipes, processos internos e necessidade de personalização.</p>
+            <div class="plan-price"><strong>Projeto sob medida</strong><span>Com onboarding e configuração avançada.</span></div>
+            <ul><li>Permissões</li><li>RH operacional</li><li>Relatórios</li><li>Customizações</li><li>Acompanhamento dedicado</li></ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container" id="duvidas">
+        <div class="section-title">
+          <div>
+            <span class="eyebrow">Perguntas frequentes</span>
+            <h2>Antes de pedir uma demonstração.</h2>
+          </div>
+          <p>Algumas dúvidas comuns de quem está avaliando trocar planilhas por um sistema integrado.</p>
+        </div>
+
+        <div class="faq-grid">
+          <article class="faq-item">
+            <h3>A EasyLoc substitui minhas planilhas?</h3>
+            <p>Sim. A proposta é centralizar os dados que hoje ficam espalhados em planilhas, mensagens e controles paralelos.</p>
+          </article>
+          <article class="faq-item">
+            <h3>Consigo controlar disponibilidade por data?</h3>
+            <p>Sim. O sistema cruza pedidos, estoque, reservas e manutenção para apoiar a venda com mais segurança.</p>
+          </article>
+          <article class="faq-item">
+            <h3>O financeiro conversa com os pedidos?</h3>
+            <p>Sim. A programação comercial pode abastecer contas a receber, fluxo de caixa e condições de pagamento.</p>
+          </article>
+          <article class="faq-item">
+            <h3>Serve para operações com muitos itens?</h3>
+            <p>Sim. O sistema foi pensado para cadastros grandes, com filtros, busca, paginação, QR Code e organização por categorias.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="final container" id="contato">
+        <div class="final-box">
+          <div>
+            <h2>Sua operação ainda depende de planilhas?</h2>
+            <p>Veja como a EasyLoc pode organizar sua locadora, reduzir erros e deixar sua equipe trabalhando com mais clareza.</p>
+          </div>
+          <a class="btn btn-light" href="mailto:comercial@easyloc.com.br?subject=Quero%20uma%20demonstra%C3%A7%C3%A3o%20da%20EasyLoc">Solicitar demonstração</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer container">
+      <a class="brand" href="#topo">
+        <img src="logosimbolo.png" alt="">
+        <span>EasyLoc</span>
+      </a>
       <div class="footer-links">
-        <a href="#modulos">Recursos</a>
-        <a href="planos.html">Planos</a>
-        <a href="#contato">Contato</a>
-        <a href="login.html">Suporte</a>
+        <a href="#sobre">O que é</a>
+        <a href="#recursos">Recursos</a>
+        <a href="#planos">Planos</a>
+        <a href="login.html">Entrar</a>
       </div>
-      <span>Versão 2026.06</span>
+      <span>EasyLoc v2026</span>
     </footer>
   </div>
 </body>

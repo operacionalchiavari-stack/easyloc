@@ -102,6 +102,7 @@ async function buscarCronograma(inicioSemanaStr) {
   const pedidoIds = [...new Set((data || []).map((row) => row.pedido_id).filter(Boolean))];
   const detalhesPedidos = new Map();
   const detalhesLocais = new Map();
+  const progressoSeparacao = new Map();
 
   if (pedidoIds.length) {
     const { data: pedidosDetalhes, error: pedidosError } = await supabase
@@ -140,6 +141,24 @@ async function buscarCronograma(inicioSemanaStr) {
 
       (locais || []).forEach((local) => detalhesLocais.set(local.id, local));
     }
+
+    const { data: itensSeparacao, error: itensSeparacaoError } = await supabase
+      .from("separacoes_itens")
+      .select("separacao_pedido_id,quantidade_solicitada,quantidade_separada")
+      .eq("empresa_id", empresaId)
+      .in("separacao_pedido_id", pedidoIds);
+
+    if (itensSeparacaoError) {
+      console.warn("[Cronograma] Nao foi possivel carregar progresso da separacao:", itensSeparacaoError);
+    }
+
+    (itensSeparacao || []).forEach((item) => {
+      const pedidoId = item.separacao_pedido_id;
+      const atual = progressoSeparacao.get(pedidoId) || { total: 0, separado: 0 };
+      atual.total += Number(item.quantidade_solicitada || 0);
+      atual.separado += Number(item.quantidade_separada || 0);
+      progressoSeparacao.set(pedidoId, atual);
+    });
   }
 
   (data || []).forEach((row) => {
@@ -162,6 +181,7 @@ async function buscarCronograma(inicioSemanaStr) {
         dataColeta: detalhePedido.data_coleta || "",
         valorTotal: detalhePedido.valor_total || 0,
         statusComercial: detalhePedido.status_comercial || detalhePedido.status || "",
+        separacaoResumo: calcularResumoSeparacao(progressoSeparacao.get(row.pedido_id)),
         etapas: []
       });
     }
@@ -370,6 +390,35 @@ function formatCurrency(value) {
     style: "currency",
     currency: "BRL"
   });
+}
+
+function calcularResumoSeparacao(resumo) {
+  const total = Number(resumo?.total || 0);
+  const separado = Number(resumo?.separado || 0);
+  const percent = total ? Math.min(Math.round((separado / total) * 100), 100) : 0;
+  return {
+    total,
+    separado,
+    faltante: Math.max(total - separado, 0),
+    percent
+  };
+}
+
+function renderProgressoSeparacao(resumo) {
+  const dados = calcularResumoSeparacao(resumo);
+  const statusClass = dados.percent >= 100 ? "done" : dados.percent > 0 ? "started" : "empty";
+  return `
+    <div class="task-separacao-progress progress-${statusClass}">
+      <div class="task-separacao-progress-top">
+        <span>Separado</span>
+        <strong>${dados.percent}%</strong>
+      </div>
+      <div class="task-separacao-progress-track">
+        <span style="width:${dados.percent}%"></span>
+      </div>
+      <div class="task-separacao-progress-meta">${dados.separado} / ${dados.total} itens</div>
+    </div>
+  `;
 }
 
 function formatWeekRange(startDate) {
@@ -722,6 +771,7 @@ function renderCronograma() {
         dias[i].forEach(etapa => {
           if ((etapa.etapa || "").toLowerCase() === "evento") return;
           const etapaClasse = slugEtapa(etapa.etapa);
+          const isTriagem = (etapa.etapa || "").toLowerCase().includes("triagem");
           html += `
 <div class="task-card task-${etapaClasse}" onclick="abrirPreviewPedidoCronograma('${escapeHtml(pedido.pedidoId || "")}')" title="Visualizar pedido" style="position:relative; cursor:pointer;">
   ${etapaTemPendencia(etapa) ? `<div class="pendencia-dot"></div>` : ""}
@@ -735,6 +785,7 @@ function renderCronograma() {
   ` : ``}
   <div class="task-line"><strong>Resp:</strong> ${escapeHtml(etapa.responsavel || "-")}</div>
   <div class="task-line"><strong>Equipe:</strong> ${escapeHtml(etapa.equipe || "-")}</div>
+  ${isTriagem ? renderProgressoSeparacao(pedido.separacaoResumo) : ``}
   ${etapa.observacao || etapa.obs ? `<div class="task-line" style="color:#dc2626;"><strong>Obs:</strong> ${escapeHtml(etapa.observacao || etapa.obs)}</div>` : ``}
 </div>
 `;

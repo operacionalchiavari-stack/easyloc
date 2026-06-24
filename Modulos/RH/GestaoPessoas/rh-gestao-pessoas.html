@@ -1,0 +1,260 @@
+<div class="rh-page el-page">
+  <div class="rh-header">
+    <div>
+      <span class="rh-eyebrow">Pessoas</span>
+      <h1>RH / Gestao de Pessoas</h1>
+      <p>Controle operacional de colaboradores, ocorrencias e solicitacoes.</p>
+    </div>
+    <div class="rh-header-actions">
+      <button class="btn secondary" type="button" id="rhRefreshBtn">Atualizar</button>
+      <button class="btn primary" type="button" id="rhPrimaryBtn">Novo Colaborador</button>
+    </div>
+  </div>
+
+  <div class="rh-tabs" role="tablist" aria-label="RH">
+    <button class="rh-tab active" type="button" data-tab="colaboradores">Colaboradores</button>
+    <button class="rh-tab" type="button" data-tab="ocorrencias">Ocorrencias</button>
+    <button class="rh-tab" type="button" data-tab="solicitacoes">Solicitacoes</button>
+  </div>
+
+  <section class="rh-panel active" data-panel="colaboradores">
+    <div class="rh-filters">
+      <input class="el-input" id="rhColSearch" type="search" placeholder="Buscar colaborador">
+      <select class="el-select" id="rhColSetor">
+        <option value="">Todos os setores</option>
+      </select>
+      <select class="el-select" id="rhColFuncao">
+        <option value="">Todas as funcoes</option>
+      </select>
+      <select class="el-select" id="rhColStatus">
+        <option value="">Todos os status</option>
+        <option>Ativo</option>
+        <option>Ferias</option>
+        <option>Afastado</option>
+        <option>Desligado</option>
+      </select>
+    </div>
+
+    <div class="rh-table-card">
+      <table class="rh-table">
+        <thead>
+          <tr>
+            <th data-sort="foto">Foto</th>
+            <th data-sort="nome_completo">Nome</th>
+            <th data-sort="setor">Setor</th>
+            <th data-sort="funcao">Funcao</th>
+            <th data-sort="telefone">Telefone</th>
+            <th data-sort="data_admissao">Data Admissao</th>
+            <th data-sort="status">Status</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody id="rhColaboradoresBody"></tbody>
+      </table>
+      <div class="rh-pagination" id="rhColaboradoresPagination"></div>
+    </div>
+  </section>
+
+  <section class="rh-panel" data-panel="ocorrencias">
+    <div class="rh-filters">
+      <input class="el-input" id="rhOcData" type="date">
+      <select class="el-select" id="rhOcColaborador">
+        <option value="">Todos os colaboradores</option>
+      </select>
+      <select class="el-select" id="rhOcSetor">
+        <option value="">Todos os setores</option>
+      </select>
+      <select class="el-select" id="rhOcTipo">
+        <option value="">Todos os tipos</option>
+      </select>
+    </div>
+
+    <div class="rh-table-card">
+      <table class="rh-table">
+        <thead>
+          <tr>
+            <th data-sort="data_ocorrencia">Data</th>
+            <th data-sort="colaborador_nome">Colaborador</th>
+            <th data-sort="setor">Setor</th>
+            <th data-sort="tipo">Tipo</th>
+            <th data-sort="responsavel_nome">Responsavel</th>
+            <th>Descricao resumida</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody id="rhOcorrenciasBody"></tbody>
+      </table>
+      <div class="rh-pagination" id="rhOcorrenciasPagination"></div>
+    </div>
+  </section>
+
+  <section class="rh-panel" data-panel="solicitacoes">
+    <div class="rh-filters">
+      <input class="el-input" id="rhSolSearch" type="search" placeholder="Buscar solicitacao">
+      <select class="el-select" id="rhSolColaborador">
+        <option value="">Todos os colaboradores</option>
+      </select>
+      <select class="el-select" id="rhSolTipo">
+        <option value="">Todos os tipos</option>
+      </select>
+      <select class="el-select" id="rhSolStatus">
+        <option value="">Todos os status</option>
+        <option>Pendente</option>
+        <option>Em Analise</option>
+        <option>Aprovada</option>
+        <option>Recusada</option>
+        <option>Concluida</option>
+      </select>
+    </div>
+
+    <div class="rh-table-card">
+      <table class="rh-table">
+        <thead>
+          <tr>
+            <th data-sort="created_at">Data</th>
+            <th data-sort="colaborador_nome">Colaborador</th>
+            <th data-sort="tipo">Tipo</th>
+            <th data-sort="status">Status</th>
+            <th data-sort="responsavel_nome">Responsavel</th>
+            <th data-sort="updated_at">Ultima Atualizacao</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody id="rhSolicitacoesBody"></tbody>
+      </table>
+      <div class="rh-pagination" id="rhSolicitacoesPagination"></div>
+    </div>
+  </section>
+</div>
+
+<div class="rh-modal" id="rhColaboradorModal" aria-hidden="true">
+  <div class="rh-modal-box rh-modal-xl">
+    <div class="rh-modal-header">
+      <div>
+        <span class="rh-eyebrow">Colaborador</span>
+        <h2 id="rhColModalTitle">Novo colaborador</h2>
+      </div>
+      <button class="rh-close" type="button" data-close-modal="rhColaboradorModal">x</button>
+    </div>
+
+    <input type="hidden" id="rhColId">
+
+    <div class="rh-inner-tabs">
+      <button class="active" type="button" data-coltab="dados">Dados pessoais</button>
+      <button type="button" data-coltab="documentos">Documentos</button>
+      <button type="button" data-coltab="historico">Historico</button>
+    </div>
+
+    <div class="rh-col-panel active" data-colpanel="dados">
+      <div class="rh-form-grid three">
+        <label>Nome Completo<input class="el-input" id="rhNomeCompleto"></label>
+        <label>CPF<input class="el-input" id="rhCpf"></label>
+        <label>RG<input class="el-input" id="rhRg"></label>
+        <label>Data Nascimento<input class="el-input" id="rhDataNascimento" type="date"></label>
+        <label>Telefone<input class="el-input" id="rhTelefone"></label>
+        <label>WhatsApp<input class="el-input" id="rhWhatsapp"></label>
+        <label>Email<input class="el-input" id="rhEmail" type="email"></label>
+        <label>Setor<input class="el-input" id="rhSetor" placeholder="Ex: Logistica"></label>
+        <label>Funcao<input class="el-input" id="rhFuncao" placeholder="Ex: Montador"></label>
+        <label>Data Admissao<input class="el-input" id="rhDataAdmissao" type="date"></label>
+        <label>Status
+          <select class="el-select" id="rhStatus">
+            <option>Ativo</option>
+            <option>Ferias</option>
+            <option>Afastado</option>
+            <option>Desligado</option>
+          </select>
+        </label>
+        <label class="span-2">Endereco<input class="el-input" id="rhEndereco"></label>
+        <label class="span-3">Observacoes<textarea class="el-input" id="rhObservacoes" rows="3"></textarea></label>
+      </div>
+    </div>
+
+    <div class="rh-col-panel" data-colpanel="documentos">
+      <div class="rh-doc-grid">
+        <label>RG<input class="el-input" type="file" data-doc-type="RG"></label>
+        <label>CPF<input class="el-input" type="file" data-doc-type="CPF"></label>
+        <label>CNH<input class="el-input" type="file" data-doc-type="CNH"></label>
+        <label>Contrato<input class="el-input" type="file" data-doc-type="Contrato"></label>
+        <label>Outros<input class="el-input" type="file" data-doc-type="Outros" multiple></label>
+      </div>
+      <div class="rh-doc-list" id="rhDocumentosList"></div>
+    </div>
+
+    <div class="rh-col-panel" data-colpanel="historico">
+      <div class="rh-history-grid">
+        <div>
+          <h3>Ocorrencias</h3>
+          <div id="rhColOcorrenciasHistorico" class="rh-history-list"></div>
+        </div>
+        <div>
+          <h3>Solicitacoes</h3>
+          <div id="rhColSolicitacoesHistorico" class="rh-history-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rh-modal-actions">
+      <button class="btn danger" type="button" data-close-modal="rhColaboradorModal">Fechar</button>
+      <button class="btn primary" type="button" id="rhSalvarColaborador">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="rh-modal" id="rhOcorrenciaModal" aria-hidden="true">
+  <div class="rh-modal-box">
+    <div class="rh-modal-header">
+      <div>
+        <span class="rh-eyebrow">Ocorrencia</span>
+        <h2 id="rhOcModalTitle">Nova ocorrencia</h2>
+      </div>
+      <button class="rh-close" type="button" data-close-modal="rhOcorrenciaModal">x</button>
+    </div>
+    <input type="hidden" id="rhOcId">
+    <div class="rh-form-grid two">
+      <label>Colaborador<select class="el-select" id="rhOcFormColaborador"></select></label>
+      <label>Tipo<select class="el-select" id="rhOcFormTipo"></select></label>
+      <label>Data<input class="el-input" id="rhOcFormData" type="date"></label>
+      <label>Responsavel<input class="el-input" id="rhOcFormResponsavel"></label>
+      <label class="span-2">Descricao<textarea class="el-input" id="rhOcFormDescricao" rows="4"></textarea></label>
+      <label class="span-2">Anexos opcionais<input class="el-input" id="rhOcFormAnexos" type="file" multiple></label>
+    </div>
+    <div class="rh-modal-actions">
+      <button class="btn danger" type="button" data-close-modal="rhOcorrenciaModal">Fechar</button>
+      <button class="btn primary" type="button" id="rhSalvarOcorrencia">Salvar ocorrencia</button>
+    </div>
+  </div>
+</div>
+
+<div class="rh-modal" id="rhSolicitacaoModal" aria-hidden="true">
+  <div class="rh-modal-box">
+    <div class="rh-modal-header">
+      <div>
+        <span class="rh-eyebrow">Solicitacao</span>
+        <h2 id="rhSolModalTitle">Nova solicitacao</h2>
+      </div>
+      <button class="rh-close" type="button" data-close-modal="rhSolicitacaoModal">x</button>
+    </div>
+    <input type="hidden" id="rhSolId">
+    <div class="rh-form-grid two">
+      <label>Colaborador<select class="el-select" id="rhSolFormColaborador"></select></label>
+      <label>Tipo<select class="el-select" id="rhSolFormTipo"></select></label>
+      <label>Status<select class="el-select" id="rhSolFormStatus">
+        <option>Pendente</option>
+        <option>Em Analise</option>
+        <option>Aprovada</option>
+        <option>Recusada</option>
+        <option>Concluida</option>
+      </select></label>
+      <label>Responsavel<input class="el-input" id="rhSolFormResponsavel"></label>
+      <label class="span-2">Descricao<textarea class="el-input" id="rhSolFormDescricao" rows="4"></textarea></label>
+      <label class="span-2">Anexo opcional<input class="el-input" id="rhSolFormAnexos" type="file" multiple></label>
+      <label class="span-2">Comentario interno<textarea class="el-input" id="rhSolFormComentario" rows="3"></textarea></label>
+    </div>
+    <div class="rh-history-list" id="rhSolHistorico"></div>
+    <div class="rh-modal-actions">
+      <button class="btn danger" type="button" data-close-modal="rhSolicitacaoModal">Fechar</button>
+      <button class="btn primary" type="button" id="rhSalvarSolicitacao">Salvar solicitacao</button>
+    </div>
+  </div>
+</div>

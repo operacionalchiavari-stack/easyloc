@@ -46,6 +46,23 @@
     </label>
   </section>
 
+  <section class="agenda-drawer hidden" id="planejamentoAgendaDrawer" aria-hidden="true">
+    <div class="agenda-drawer-header">
+      <div>
+        <span>Agenda visual</span>
+        <h2>Recursos do dia</h2>
+      </div>
+      <button type="button" class="btn secondary" id="btnFecharAgendaPlanejamento">Fechar</button>
+    </div>
+
+    <div class="agenda-tabs">
+      <button type="button" class="active" data-agenda-tab="caminhoes">Caminhoes</button>
+      <button type="button" data-agenda-tab="equipe">Equipe</button>
+    </div>
+
+    <div class="agenda-grade" id="planejamentoAgendaGrade"></div>
+  </section>
+
   <main class="planejamento-grid">
     <aside class="planejamento-panel pedidos-panel">
       <div class="panel-title">
@@ -102,38 +119,26 @@
           </div>
           <div class="recursos-lista" id="planejamentoCaminhoesLista"></div>
         </section>
-
-        <section class="alocacao-section">
-          <div class="section-heading">
-            <div>
-              <h3>Equipe selecionada</h3>
-              <p id="planejamentoResumoEquipe">0 / 0 pessoas alocadas</p>
-            </div>
-            <span class="badge-alerta" id="planejamentoAlertaEquipe">Pendente</span>
-          </div>
-          <div class="recursos-lista" id="planejamentoEquipeLista"></div>
-        </section>
-
-        <button type="button" class="btn primary confirmar-planejamento" id="btnConfirmarPlanejamento" disabled>
-          Confirmar planejamento
-        </button>
       </div>
     </section>
 
     <aside class="planejamento-panel agenda-panel">
-      <div class="panel-title">
-        <div>
-          <span>Agenda visual</span>
-          <h2>Recursos do dia</h2>
+      <section class="alocacao-section equipe-side-section">
+        <div class="section-heading">
+          <div>
+            <span>Equipe</span>
+            <h3>Equipe selecionada</h3>
+            <p id="planejamentoResumoEquipe">0 / 0 pessoas alocadas</p>
+          </div>
+          <span class="badge-alerta" id="planejamentoAlertaEquipe">Pendente</span>
         </div>
-      </div>
+        <div class="recursos-lista" id="planejamentoEquipeLista"></div>
+      </section>
 
-      <div class="agenda-tabs">
-        <button type="button" class="active" data-agenda-tab="caminhoes">Caminhoes</button>
-        <button type="button" data-agenda-tab="equipe">Equipe</button>
-      </div>
-
-      <div class="agenda-grade" id="planejamentoAgendaGrade"></div>
+      <button type="button" class="btn secondary agenda-shortcut" id="btnAbrirAgendaLateral">
+        <i data-lucide="calendar-days"></i>
+        Abrir agenda visual
+      </button>
 
       <section class="conflitos-card">
         <div class="panel-title compact">
@@ -145,6 +150,17 @@
         </div>
         <div id="planejamentoConflitosLista" class="conflitos-lista"></div>
       </section>
+
+      <button type="button" class="btn primary confirmar-planejamento" id="btnConfirmarPlanejamento" disabled>
+        Confirmar planejamento
+      </button>
+
+      <div class="agenda-panel-legacy" hidden>
+        <div>
+          <span>Agenda visual</span>
+          <h2>Recursos do dia</h2>
+        </div>
+      </div>
     </aside>
   </main>
 </div>

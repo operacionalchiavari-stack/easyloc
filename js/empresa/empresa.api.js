@@ -42,6 +42,25 @@
         .upsert(payload, { onConflict: 'empresa_id' });
     },
 
+    getIdentidadeVisual: async (empresaId) => {
+      const { data, error } = await window.supabaseClient
+        .from('configuracoes_empresa')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .maybeSingle();
+
+      if (error) console.error("getIdentidadeVisual error:", error);
+      return data;
+    },
+
+    saveIdentidadeVisual: (payload) => {
+      return window.supabaseClient
+        .from('configuracoes_empresa')
+        .upsert(payload, { onConflict: 'empresa_id' })
+        .select()
+        .maybeSingle();
+    },
+
     getLogisticaRegras: async (empresaId) => {
       const { data, error } = await window.supabaseClient
         .from('empresa_logistica_regras')

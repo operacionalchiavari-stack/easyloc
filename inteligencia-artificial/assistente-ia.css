@@ -14,6 +14,66 @@ body{ margin:0; color:var(--texto); }
 
 .ia-page{ min-height:100vh; display:flex; flex-direction:column; }
 
+.lia-widget-embedded {
+  --azul: var(--color-sidebar, #0B1F33);
+  --azul-user: var(--color-sidebar, #2b4d73);
+  --laranja: var(--color-primary, #FF7A00);
+}
+
+.lia-widget-embedded body {
+  overflow: hidden;
+  background: #fff;
+}
+
+.lia-widget-embedded .ia-page {
+  min-height: 100vh;
+  height: 100vh;
+}
+
+.lia-widget-embedded .ia-header {
+  display: none;
+}
+
+.lia-widget-embedded .chat-layout {
+  max-width: none;
+  height: 100vh;
+  padding: 12px;
+  gap: 10px;
+}
+
+.lia-widget-embedded .ia-chat {
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.lia-widget-embedded .msg {
+  max-width: 88%;
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+.lia-widget-embedded .ia-input {
+  padding: 10px;
+  gap: 8px;
+  border-radius: 14px;
+}
+
+.lia-widget-embedded .ia-input input {
+  min-width: 0;
+  padding: 11px 12px;
+  font-size: 13px;
+}
+
+.lia-widget-embedded .ia-input .btn {
+  padding: 0 12px;
+  min-height: 42px;
+}
+
+.lia-widget-embedded .btn-voice {
+  width: 42px;
+  padding: 0;
+}
+
 /* HEADER */
 .ia-header{
   display:flex; align-items:center; justify-content:space-between;
@@ -56,7 +116,7 @@ body{ margin:0; color:var(--texto); }
 }
 .placeholder{ color:#94a3b8; font-size:14px; }
 
-.msg-row{ display:flex; width:100%; }
+.msg-row{ display:flex; width:100%; align-items:flex-end; gap:8px; }
 .msg{
   max-width:75%;
   padding:12px 16px;
@@ -74,6 +134,33 @@ body{ margin:0; color:var(--texto); }
   background:var(--soft); border:1px solid var(--cinza);
   color:var(--texto);
   border-bottom-left-radius:4px;
+}
+.msg-avatar{
+  width:32px;
+  height:32px;
+  border-radius:12px;
+  flex:0 0 32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  font-size:13px;
+  font-weight:700;
+}
+.msg-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.user-avatar-msg{
+  background:#e2e8f0;
+  color:#0f172a;
+}
+.lia-avatar{
+  background:var(--azul);
+  color:#fff;
+  font-size:18px;
 }
 
 .msg-tools{

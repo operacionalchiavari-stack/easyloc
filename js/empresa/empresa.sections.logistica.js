@@ -5,6 +5,7 @@
     montagem_dias_apos_entrega: 0,
     desmontagem_dias_apos_coleta: 0,
     triagem_retorno_dias_apos_coleta: 1,
+    separacao_dias_antes_evento: 2,
     hora_padrao: "08:00"
   };
 
@@ -63,6 +64,7 @@
           ${inputRegra("Montagem", "logRegMontagem", "dias apos entrega")}
           ${inputRegra("Desmontagem", "logRegDesmontagem", "dias apos coleta")}
           ${inputRegra("Triagem retorno", "logRegTriagemRetorno", "dias apos coleta")}
+          ${inputRegra("Liberar separacao", "logRegLiberarSeparacao", "dias antes do evento")}
           <label style="display:grid;gap:7px;font-size:12px;color:#64748b;font-weight:600;">
             Hora padrao
             <input id="logRegHoraPadrao" type="time" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;color:#0f172a;font-size:14px;">
@@ -83,6 +85,7 @@
       montagem_dias_apos_entrega: "logRegMontagem",
       desmontagem_dias_apos_coleta: "logRegDesmontagem",
       triagem_retorno_dias_apos_coleta: "logRegTriagemRetorno",
+      separacao_dias_antes_evento: "logRegLiberarSeparacao",
       hora_padrao: "logRegHoraPadrao"
     };
 

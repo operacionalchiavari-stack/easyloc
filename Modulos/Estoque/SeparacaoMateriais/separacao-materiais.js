@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const TABLES = {
     pedidos: "separacoes_pedidos",
     itens: "separacoes_itens",
@@ -26,6 +26,9 @@
     pedidosFiltrados: [],
     itens: [],
     leituras: [],
+    regrasLogistica: {
+      separacao_dias_antes_evento: 2
+    },
     pedidoAtualId: null,
     tab: "pendentes",
     scanBuffer: "",
@@ -44,6 +47,10 @@
     [
       "btnAtualizarSeparacao",
       "btnFocarLeitor",
+      "separacaoOperacaoModal",
+      "btnFecharSeparacaoModal",
+      "separacaoModalTitulo",
+      "separacaoModalMeta",
       "separacaoFilaCount",
       "separacaoBuscaPedido",
       "separacaoStatusFiltro",
@@ -85,9 +92,13 @@
     state.dbReady = false;
     if (els.separacaoFilaPedidos) {
       els.separacaoFilaPedidos.innerHTML = `
-        <div class="empty-state setup-state">
-          ${escapeHtml(message)}
-        </div>
+        <tr>
+          <td colspan="9">
+            <div class="empty-state setup-state">
+              ${escapeHtml(message)}
+            </div>
+          </td>
+        </tr>
       `;
     }
     if (els.separacaoItens) {
@@ -142,6 +153,13 @@
     });
   }
 
+  function formatDateOnly(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("pt-BR");
+  }
+
   function statusClass(status) {
     if (status === "em_separacao") return "em-separacao";
     if (status === "separado_com_divergencia") return "divergencia";
@@ -177,6 +195,107 @@
     const faltante = Math.max(total - separado, 0);
     const percent = total ? Math.min(Math.round((separado / total) * 100), 100) : 0;
     return { total, separado, faltante, percent };
+  }
+
+  function pedidoLocal(pedido) {
+    return pedido.local_nome || pedido.local_evento || pedido.local || pedido.endereco_local || "-";
+  }
+
+  function parseDataPedido(value) {
+    if (!value) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+      const date = new Date(`${value}T00:00:00`);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function normalizarStatusComercial(status) {
+    return String(status || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "_");
+  }
+
+  function diasAteEvento(pedido) {
+    const dataEvento = parseDataPedido(pedido?.data_evento || pedido?.data_hora || pedido?.data_entrega);
+    if (!dataEvento) return null;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    return Math.ceil((dataEvento.getTime() - hoje.getTime()) / 86400000);
+  }
+
+  function regraSeparacaoPedido(pedido) {
+    if (!pedido) {
+      return { liberado: false, motivo: "Selecione um pedido para iniciar a separacao." };
+    }
+
+    const statusComercial = normalizarStatusComercial(pedido.status_comercial);
+    if (statusComercial !== "aprovado") {
+      return {
+        liberado: false,
+        motivo: "Pedido em pre reserva. A equipe pode visualizar, mas a separacao fica bloqueada ate a aprovacao comercial."
+      };
+    }
+
+    const diasLiberacao = Number(state.regrasLogistica?.separacao_dias_antes_evento ?? 2);
+    const diferencaDias = diasAteEvento(pedido);
+    if (diferencaDias !== null && diferencaDias > diasLiberacao) {
+      return {
+        liberado: false,
+        motivo: `Separacao liberada somente ${diasLiberacao} dia(s) antes do evento. Faltam ${diferencaDias} dia(s).`
+      };
+    }
+
+    return { liberado: true, motivo: "Separacao liberada." };
+  }
+
+  function separacaoLiberada(pedido = getPedidoAtual()) {
+    return regraSeparacaoPedido(pedido).liberado;
+  }
+
+  function aplicarEstadoOperacaoPedido(pedido) {
+    const regra = regraSeparacaoPedido(pedido);
+    els.separacaoOperacaoModal?.classList.toggle("separacao-readonly", !regra.liberado);
+    if (els.scannerInput) {
+      els.scannerInput.disabled = !regra.liberado;
+      els.scannerInput.placeholder = regra.liberado
+        ? "Passe o codigo de barras"
+        : "Separacao bloqueada para este pedido";
+    }
+    if (els.btnFinalizarSeparacao) els.btnFinalizarSeparacao.disabled = !regra.liberado;
+    if (els.btnPausarSeparacao) els.btnPausarSeparacao.disabled = !regra.liberado;
+    if (!regra.liberado) setScannerStatus("Somente visualizacao", "waiting");
+    return regra;
+  }
+
+  function avisarSeparacaoBloqueada(pedido = getPedidoAtual()) {
+    const regra = regraSeparacaoPedido(pedido);
+    avisar(regra.motivo, "Separacao bloqueada", "aviso");
+  }
+
+  function abrirModalSeparacao() {
+    if (!els.separacaoOperacaoModal) return;
+    els.separacaoOperacaoModal.classList.remove("hidden");
+    els.separacaoOperacaoModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("separacao-modal-open");
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => focarLeitor(), 80);
+  }
+
+  function fecharModalSeparacao() {
+    if (!els.separacaoOperacaoModal) return;
+    els.separacaoOperacaoModal.classList.add("hidden");
+    els.separacaoOperacaoModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("separacao-modal-open");
+  }
+
+  function modalSeparacaoAberto() {
+    return Boolean(els.separacaoOperacaoModal && !els.separacaoOperacaoModal.classList.contains("hidden"));
   }
 
   function renderFila() {
@@ -234,6 +353,76 @@
     }).join("");
   }
 
+  renderFila = function renderFilaTabela() {
+    const termo = (els.separacaoBuscaPedido?.value || "").trim().toLowerCase();
+    const status = els.separacaoStatusFiltro?.value || "";
+
+    state.pedidosFiltrados = state.pedidos.filter((pedido) => {
+      const texto = [
+        pedido.numero_pedido,
+        pedido.cliente_nome,
+        pedido.tipo_evento,
+        pedidoLocal(pedido),
+        pedido.status,
+        pedido.status_comercial
+      ].join(" ").toLowerCase();
+
+      return (!termo || texto.includes(termo)) && (!status || pedido.status === status);
+    });
+
+    if (els.separacaoFilaCount) {
+      els.separacaoFilaCount.textContent = state.pedidosFiltrados.length;
+    }
+
+    if (!els.separacaoFilaPedidos) return;
+
+    if (!state.pedidosFiltrados.length) {
+      els.separacaoFilaPedidos.innerHTML = `
+        <tr>
+          <td colspan="9">
+            <div class="empty-state">
+              Nenhum pedido encontrado para separacao.
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    els.separacaoFilaPedidos.innerHTML = state.pedidosFiltrados.map((pedido) => {
+      const resumo = pedidoResumo(pedido.id);
+      const active = pedido.id === state.pedidoAtualId ? " active" : "";
+      const itensLabel = `${resumo.separado} / ${resumo.total}`;
+      const regra = regraSeparacaoPedido(pedido);
+
+      return `
+        <tr class="separacao-order-row${active}${regra.liberado ? "" : " readonly"}" data-pedido-id="${escapeHtml(pedido.id)}" tabindex="0">
+          <td><span class="separacao-order-number">${escapeHtml(pedido.numero_pedido || "-")}</span></td>
+          <td><strong>${escapeHtml(pedido.cliente_nome || "Cliente nao informado")}</strong></td>
+          <td>${escapeHtml(pedido.tipo_evento || "Evento")}</td>
+          <td>${escapeHtml(pedidoLocal(pedido))}</td>
+          <td>${escapeHtml(formatDateOnly(pedido.data_evento || pedido.data_hora))}</td>
+          <td>
+            <span class="status-pill ${statusClass(pedido.status)}">${escapeHtml(STATUS_LABEL[pedido.status] || pedido.status || "Pendente")}</span>
+            ${regra.liberado ? "" : `<div class="separacao-lock-note">${escapeHtml(regra.motivo)}</div>`}
+          </td>
+          <td>
+            <div class="table-progress progress-${resumo.percent >= 100 ? "done" : resumo.percent > 0 ? "started" : "empty"}">
+              <div class="mini-progress"><span style="width:${resumo.percent}%"></span></div>
+              <span>${resumo.percent}%</span>
+            </div>
+          </td>
+          <td><strong>${escapeHtml(itensLabel)}</strong></td>
+          <td>
+            <button type="button" class="btn secondary btn-sm separacao-open-btn" data-pedido-id="${escapeHtml(pedido.id)}">
+              ${regra.liberado ? "Abrir" : "Visualizar"}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  };
+
   function renderPedidoAtual() {
     const pedido = getPedidoAtual();
 
@@ -242,20 +431,27 @@
       els.separacaoPedidoMeta.textContent = "Selecione um pedido na fila para iniciar.";
       els.separacaoPedidoStatus.textContent = "Aguardando";
       els.separacaoPedidoStatus.className = "status-pill";
+      aplicarEstadoOperacaoPedido(null);
+      if (els.separacaoModalTitulo) els.separacaoModalTitulo.textContent = "Pedido selecionado";
+      if (els.separacaoModalMeta) els.separacaoModalMeta.textContent = "Confira os itens e faca as leituras do pedido.";
       renderProgress({ total: 0, separado: 0, faltante: 0, percent: 0 });
       renderItens();
       return;
     }
 
     const resumo = pedidoResumo(pedido.id);
+    const regra = aplicarEstadoOperacaoPedido(pedido);
     els.separacaoPedidoTitulo.textContent = `Pedido ${pedido.numero_pedido || "-"}`;
-    els.separacaoPedidoMeta.textContent = `${pedido.cliente_nome || "Cliente não informado"} · ${pedido.tipo_evento || "Evento"} · ${formatDateTime(pedido.data_evento || pedido.data_hora)}`;
-    els.separacaoPedidoStatus.textContent = STATUS_LABEL[pedido.status] || pedido.status || "Pendente";
-    els.separacaoPedidoStatus.className = `status-pill ${statusClass(pedido.status)}`;
+    els.separacaoPedidoMeta.textContent = `${pedido.cliente_nome || "Cliente nao informado"} · ${pedido.tipo_evento || "Evento"} · ${formatDateTime(pedido.data_evento || pedido.data_hora)}`;
+    els.separacaoPedidoStatus.textContent = regra.liberado ? (STATUS_LABEL[pedido.status] || pedido.status || "Pendente") : "Somente visualizacao";
+    els.separacaoPedidoStatus.className = regra.liberado ? `status-pill ${statusClass(pedido.status)}` : "status-pill bloqueado";
+    if (els.separacaoModalTitulo) els.separacaoModalTitulo.textContent = `Pedido ${pedido.numero_pedido || "-"}`;
+    if (els.separacaoModalMeta) {
+      els.separacaoModalMeta.textContent = `${pedido.cliente_nome || "Cliente nao informado"} · ${pedido.tipo_evento || "Evento"} · ${pedidoLocal(pedido)}`;
+    }
     renderProgress(resumo);
     renderItens();
   }
-
   function renderProgress(resumo) {
     els.separacaoProgressoPercent.textContent = `${resumo.percent}%`;
     els.separacaoProgressoBar.style.width = `${resumo.percent}%`;
@@ -280,53 +476,70 @@
     if (!pedido) {
       els.separacaoItens.innerHTML = `
         <div class="empty-state">
-          A fila está pronta. Selecione um pedido para visualizar os itens pendentes.
+          A fila esta pronta. Selecione um pedido para visualizar os itens pendentes.
         </div>
       `;
       return;
     }
 
     const itens = state.itens
-      .filter((item) => item.separacao_pedido_id === pedido.id)
-      .filter(filtrarItensTab);
+      .filter((item) => item.separacao_pedido_id === pedido.id);
 
     if (!itens.length) {
       els.separacaoItens.innerHTML = `
         <div class="empty-state">
-          Nenhum item nesta aba.
+          Nenhum item encontrado neste pedido.
         </div>
       `;
       return;
     }
 
-    els.separacaoItens.innerHTML = itens.map((item) => {
+    const regra = regraSeparacaoPedido(pedido);
+    const avisoBloqueio = regra.liberado ? "" : `
+      <div class="separacao-readonly-banner">
+        <strong>Somente visualizacao</strong>
+        <span>${escapeHtml(regra.motivo)}</span>
+      </div>
+    `;
+
+    els.separacaoItens.innerHTML = avisoBloqueio + itens.map((item) => {
       const percent = itemPercent(item);
       const cadastro = item.itens || {};
       const nome = item.item_nome || cadastro.descricao_total || cadastro.produto || "Item sem nome";
-      const codigo = item.codigo_item || cadastro.codigo || "Sem código";
       const foto = item.foto_url || cadastro.foto_url;
-      const localizacao = item.localizacao || cadastro.setor_estoque || "Sem localização";
 
       return `
         <article class="item-card" data-separacao-item-id="${escapeHtml(item.id)}">
+          <div class="item-requested" title="Quantidade solicitada">
+            <span>Qtd</span>
+            <strong>${itemTotal(item)}</strong>
+          </div>
           <div class="item-photo">
             ${foto ? `<img src="${escapeHtml(foto)}" alt="${escapeHtml(nome)}">` : `<i data-lucide="package"></i>`}
           </div>
-          <div>
+          <div class="item-content">
             <div class="item-card-top">
-              <div>
+              <div class="item-main-info">
                 <div class="item-name">${escapeHtml(nome)}</div>
-                <div class="item-code">Código ${escapeHtml(codigo)} · Controle ${escapeHtml(item.tipo_controle || "quantidade")}</div>
+              </div>
+              <div class="item-manual-actions" aria-label="Separacao manual">
+                <label class="manual-qty-label">
+                  Manual
+                  <input
+                    class="manual-qty-input"
+                    type="number"
+                    min="0"
+                    max="${itemTotal(item)}"
+                    value="${itemSeparado(item)}"
+                    ${regra.liberado ? "" : "disabled"}
+                    data-manual-qty
+                    data-separacao-item-id="${escapeHtml(item.id)}"
+                    title="Quantidade separada manualmente"
+                  >
+                </label>
               </div>
               <span class="status-pill ${percent >= 100 ? "separado" : percent > 0 ? "em-separacao" : "pendente"}">${percent}%</span>
             </div>
-            <div class="item-location">${escapeHtml(localizacao)}</div>
-            <div class="item-metrics">
-              <div class="item-metric"><span>Solicitado</span><strong>${itemTotal(item)}</strong></div>
-              <div class="item-metric"><span>Separado</span><strong>${itemSeparado(item)}</strong></div>
-              <div class="item-metric"><span>Faltante</span><strong>${itemFaltante(item)}</strong></div>
-            </div>
-            <div class="item-progress"><span style="width:${percent}%"></span></div>
           </div>
         </article>
       `;
@@ -334,7 +547,6 @@
 
     if (window.lucide) lucide.createIcons();
   }
-
   function renderHistorico() {
     if (!els.separacaoHistorico) return;
 
@@ -364,6 +576,7 @@
 
     try {
       state.dbReady = true;
+      await carregarRegrasLogistica();
 
       const { data: pedidos, error: erroPedidos } = await state.supabase
         .from(TABLES.pedidos)
@@ -412,6 +625,25 @@
     }
   }
 
+  async function carregarRegrasLogistica() {
+    try {
+      const { data, error } = await state.supabase
+        .from("empresa_logistica_regras")
+        .select("separacao_dias_antes_evento")
+        .eq("empresa_id", state.empresaId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      state.regrasLogistica = {
+        separacao_dias_antes_evento: Number(data?.separacao_dias_antes_evento ?? 2)
+      };
+    } catch (error) {
+      console.warn("Regras logisticas de separacao indisponiveis; usando padrao.", error);
+      state.regrasLogistica = { separacao_dias_antes_evento: 2 };
+    }
+  }
+
   async function carregarHistorico() {
     if (!state.pedidoAtualId) {
       state.leituras = [];
@@ -440,14 +672,16 @@
   async function selecionarPedido(pedidoId) {
     state.pedidoAtualId = pedidoId;
     const pedido = getPedidoAtual();
+    const regra = regraSeparacaoPedido(pedido);
 
-    if (pedido && pedido.status === "pendente") {
+    if (pedido && pedido.status === "pendente" && regra.liberado) {
       await atualizarPedidoStatus(pedido.id, "em_separacao", false);
     }
 
     await carregarHistorico();
     renderFila();
     renderPedidoAtual();
+    abrirModalSeparacao();
     focarLeitor();
   }
 
@@ -512,6 +746,18 @@
       setScannerStatus("Selecione um pedido", "error");
       setUltimaLeitura({ tipo: "erro", codigo, observacao: "Nenhum pedido selecionado" });
       avisar("Selecione um pedido antes de iniciar as leituras.", "Leitor", "aviso");
+      return;
+    }
+
+    if (!separacaoLiberada(pedido)) {
+      await registrarLeitura({
+        codigo,
+        status: "bloqueado",
+        observacao: regraSeparacaoPedido(pedido).motivo
+      });
+      setScannerStatus("Separacao bloqueada", "error");
+      setUltimaLeitura({ tipo: "erro", codigo, observacao: "Separacao bloqueada" });
+      avisarSeparacaoBloqueada(pedido);
       return;
     }
 
@@ -677,6 +923,74 @@
     leituraSucesso(itemSeparacao, codigo);
   }
 
+  async function ajustarQuantidadeManual(itemSeparacao, delta) {
+    if (!itemSeparacao) return;
+    if (!separacaoLiberada()) {
+      avisarSeparacaoBloqueada();
+      return;
+    }
+
+    const atual = itemSeparado(itemSeparacao);
+    const total = itemTotal(itemSeparacao);
+    const novaQtd = Math.max(0, Math.min(total, atual + delta));
+
+    if (novaQtd === atual) {
+      avisar(
+        delta > 0 ? "A quantidade desse item ja esta completa." : "Esse item ainda nao possui separacao para remover.",
+        "Separacao manual",
+        "aviso"
+      );
+      return;
+    }
+
+    await atualizarItemSeparacao(itemSeparacao, {
+      quantidade_separada: novaQtd,
+      status: novaQtd >= total ? "concluido" : novaQtd > 0 ? "em_andamento" : "pendente"
+    });
+
+    await registrarLeitura({
+      codigo: "manual",
+      itemId: itemSeparacao.item_id,
+      separacaoItemId: itemSeparacao.id,
+      tipoControle: itemSeparacao.tipo_controle || "quantidade",
+      status: "sucesso",
+      observacao: delta > 0 ? "Quantidade separada manualmente" : "Quantidade removida manualmente"
+    });
+
+    leituraSucesso(itemSeparacao, "manual");
+  }
+
+  async function definirQuantidadeManual(itemSeparacao, quantidade) {
+    if (!itemSeparacao) return;
+    if (!separacaoLiberada()) {
+      avisarSeparacaoBloqueada();
+      return;
+    }
+
+    const total = itemTotal(itemSeparacao);
+    const atual = itemSeparado(itemSeparacao);
+    const valor = Number.parseInt(quantidade, 10);
+    const novaQtd = Number.isFinite(valor) ? Math.max(0, Math.min(total, valor)) : atual;
+
+    if (novaQtd === atual) return;
+
+    await atualizarItemSeparacao(itemSeparacao, {
+      quantidade_separada: novaQtd,
+      status: novaQtd >= total ? "concluido" : novaQtd > 0 ? "em_andamento" : "pendente"
+    });
+
+    await registrarLeitura({
+      codigo: "manual",
+      itemId: itemSeparacao.item_id,
+      separacaoItemId: itemSeparacao.id,
+      tipoControle: itemSeparacao.tipo_controle || "quantidade",
+      status: "sucesso",
+      observacao: "Quantidade definida manualmente"
+    });
+
+    leituraSucesso(itemSeparacao, "manual");
+  }
+
   async function atualizarItemSeparacao(itemSeparacao, payload) {
     const { error } = await state.supabase
       .from(TABLES.itens)
@@ -769,6 +1083,11 @@
       return;
     }
 
+    if (!separacaoLiberada(pedido)) {
+      avisarSeparacaoBloqueada(pedido);
+      return;
+    }
+
     const resumo = pedidoResumo(pedido.id);
     let status = "separado";
     let motivo = "";
@@ -807,15 +1126,30 @@
       return;
     }
 
+    if (!separacaoLiberada(pedido)) {
+      avisarSeparacaoBloqueada(pedido);
+      return;
+    }
+
     await atualizarPedidoStatus(pedido.id, "pausado", true);
     avisar("Separação pausada.", "Separação", "info");
   }
 
   function bindEvents() {
     els.btnAtualizarSeparacao?.addEventListener("click", carregarFila);
-    els.btnFocarLeitor?.addEventListener("click", focarLeitor);
+    els.btnFocarLeitor?.addEventListener("click", () => {
+      if (!getPedidoAtual() && state.pedidosFiltrados.length) {
+        selecionarPedido(state.pedidosFiltrados[0].id).catch(console.error);
+        return;
+      }
+      abrirModalSeparacao();
+    });
     els.btnFinalizarSeparacao?.addEventListener("click", finalizarSeparacao);
     els.btnPausarSeparacao?.addEventListener("click", pausarSeparacao);
+    els.btnFecharSeparacaoModal?.addEventListener("click", fecharModalSeparacao);
+    els.separacaoOperacaoModal?.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-separacao-modal]")) fecharModalSeparacao();
+    });
 
     els.separacaoBuscaPedido?.addEventListener("input", renderFila);
     els.separacaoStatusFiltro?.addEventListener("change", renderFila);
@@ -826,13 +1160,32 @@
       selecionarPedido(card.dataset.pedidoId).catch(console.error);
     });
 
-    document.querySelectorAll(".separacao-tabs .tab").forEach((button) => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll(".separacao-tabs .tab").forEach((tab) => tab.classList.remove("active"));
-        button.classList.add("active");
-        state.tab = button.dataset.tab || "pendentes";
-        renderItens();
+    els.separacaoFilaPedidos?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const row = event.target.closest("[data-pedido-id]");
+      if (!row) return;
+      event.preventDefault();
+      selecionarPedido(row.dataset.pedidoId).catch(console.error);
+    });
+
+    els.separacaoItens?.addEventListener("change", (event) => {
+      const input = event.target.closest("[data-manual-qty]");
+      if (!input) return;
+
+      const item = state.itens.find((it) => String(it.id) === String(input.dataset.separacaoItemId));
+      if (!item) return;
+
+      definirQuantidadeManual(item, input.value).catch((error) => {
+        console.error("Erro na separacao manual:", error);
+        avisar("Nao foi possivel ajustar esse item manualmente.", "Separacao manual", "erro");
       });
+    });
+
+    els.separacaoItens?.addEventListener("keydown", (event) => {
+      const input = event.target.closest("[data-manual-qty]");
+      if (!input || event.key !== "Enter") return;
+      event.preventDefault();
+      input.blur();
     });
 
     els.scannerInput?.addEventListener("keydown", (event) => {
@@ -842,6 +1195,13 @@
     });
 
     state.keyHandler = (event) => {
+      if (event.key === "Escape" && modalSeparacaoAberto()) {
+        fecharModalSeparacao();
+        return;
+      }
+
+      if (!modalSeparacaoAberto()) return;
+
       const target = event.target;
       const isEditable = target?.matches?.("input, textarea, select, [contenteditable='true']");
       if (isEditable && target !== els.scannerInput) return;

@@ -32,7 +32,10 @@
       "planejamentoFiltroSituacao",
       "planejamentoFiltroBusca",
       "btnAgendaPlanejamento",
+      "btnFecharAgendaPlanejamento",
+      "btnAbrirAgendaLateral",
       "btnNovoPlanejamento",
+      "planejamentoAgendaDrawer",
       "planejamentoQtdPedidos",
       "planejamentoPedidosLista",
       "planejamentoPedidoVazio",
@@ -58,6 +61,16 @@
       "planejamentoQtdConflitos",
       "planejamentoConflitosLista"
     ].forEach((id) => els[id] = $(id));
+  }
+
+  function toggleAgendaDrawer(forceOpen){
+    if(!els.planejamentoAgendaDrawer) return;
+    const shouldOpen = typeof forceOpen === "boolean"
+      ? forceOpen
+      : els.planejamentoAgendaDrawer.classList.contains("hidden");
+    els.planejamentoAgendaDrawer.classList.toggle("hidden", !shouldOpen);
+    els.planejamentoAgendaDrawer.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+    if(shouldOpen) renderAgenda();
   }
 
   function escapeHtml(value){
@@ -764,16 +777,9 @@
     });
 
     els.btnConfirmarPlanejamento?.addEventListener("click", confirmarPlanejamento);
-    els.btnAgendaPlanejamento?.addEventListener("click", () => {
-      if(typeof window.carregarNaMain === "function"){
-        window.carregarNaMain(
-          "Modulos/Logistica/Cronograma/Cronograma.html",
-          "Modulos/Logistica/Cronograma/Cronograma.js",
-          null,
-          "Modulos/Logistica/Cronograma/Cronograma.css"
-        );
-      }
-    });
+    els.btnAgendaPlanejamento?.addEventListener("click", () => toggleAgendaDrawer());
+    els.btnAbrirAgendaLateral?.addEventListener("click", () => toggleAgendaDrawer(true));
+    els.btnFecharAgendaPlanejamento?.addEventListener("click", () => toggleAgendaDrawer(false));
     els.btnNovoPlanejamento?.addEventListener("click", () => {
       els.planejamentoFiltroSituacao.value = "aguardando";
       state.selectedPedidoId = null;

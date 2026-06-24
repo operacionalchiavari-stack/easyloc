@@ -9,7 +9,7 @@
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: #ff6a00;
+  background: var(--color-primary, #ff6a00);
   color: #ffffff;
   box-shadow: 0 16px 34px rgba(15, 42, 68, .24);
   cursor: pointer;
@@ -20,6 +20,25 @@
 .global-help-button span {
   font-size: 24px;
   font-weight: 900;
+}
+
+.sidebar-user .global-help-button {
+  position: static;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  top: auto;
+  z-index: 1;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(15, 42, 68, .18);
+}
+
+.sidebar-user .global-help-button span {
+  font-size: 19px;
+  line-height: 1;
 }
 
 .global-help-modal {
@@ -107,7 +126,7 @@
   padding: 10px 16px;
   border: 1px solid #ff6a00;
   border-radius: 10px;
-  background: #ff6a00;
+  background: var(--color-primary, #ff6a00);
   color: #ffffff;
   font-size: 14px;
   font-weight: 900;

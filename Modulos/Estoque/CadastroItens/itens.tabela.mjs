@@ -135,8 +135,21 @@ window.renderTabelaItens = function (itens) {
 
   tbody.innerHTML = "";
 
-  itens.forEach(item => {
+  const paginaItens = window.EasyLocListPager?.slice(
+    "cadastro-itens",
+    itens,
+    window.renderTabelaItens
+  ) || itens;
+
+  paginaItens.forEach(item => {
     window.inserirItemNaTabela(item);
   });
+
+  window.EasyLocListPager?.render(
+    "cadastro-itens",
+    tbody,
+    itens,
+    window.renderTabelaItens
+  );
 
 };

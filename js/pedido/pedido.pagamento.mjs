@@ -191,6 +191,57 @@ export function initPagamento(){
     atualizarResumo();
   };
 
+  const coletarConfig = () => ({
+    metodo: metodoEl?.value || "PIX",
+    entrada: entradaEl?.value || "",
+    parcelas: parcelasEl?.value || "",
+    dataEntrada: dataEntradaEl?.value || "",
+    diaFixo: diaFixoEl?.value || "",
+    descontoComercial: descontoComercialEl?.value || "",
+    descontoBV: bvTotalEl?.value || "",
+    abatidoBV: bvAbatidoEl?.value || "",
+    creditoCliente: creditoClienteEl?.value || ""
+  });
+
+  const setIfExists = (el, value) => {
+    if(el && value !== undefined && value !== null) el.value = value;
+  };
+
+  const aplicarConfig = (config = {}, parcelas = []) => {
+    setIfExists(metodoEl, config.metodo);
+    setIfExists(entradaEl, config.entrada);
+    setIfExists(parcelasEl, config.parcelas);
+    setIfExists(dataEntradaEl, config.dataEntrada);
+    setIfExists(diaFixoEl, config.diaFixo);
+    setIfExists(descontoComercialEl, config.descontoComercial);
+    setIfExists(bvTotalEl, config.descontoBV);
+    setIfExists(bvAbatidoEl, config.abatidoBV);
+    setIfExists(creditoClienteEl, config.creditoCliente);
+
+    if(Array.isArray(parcelas) && parcelas.length){
+      tbody.innerHTML = "";
+      parcelas.forEach((parcela, index) => {
+        const valor = typeof parcela.valor === "number"
+          ? parcela.valor
+          : moneyValue({ value: parcela.valor });
+        const tr = criarLinha({
+          numero: parcela.numero || index + 1,
+          tipo: parcela.tipo || (index === 0 ? "Entrada" : `Parcela ${index}`),
+          vencimento: parcela.vencimento || "",
+          valor,
+          metodo: parcela.metodo || metodoEl?.value || "PIX"
+        });
+        const status = tr.querySelector(".pg-status");
+        if(status && parcela.status) status.value = parcela.status;
+        tbody.appendChild(tr);
+      });
+      atualizarResumo();
+      return;
+    }
+
+    gerarParcelas();
+  };
+
   [
     metodoEl,
     entradaEl,
@@ -213,6 +264,8 @@ export function initPagamento(){
   btnLimpar?.addEventListener("click", limparProgramacao);
 
   window.atualizarPagamento = gerarParcelas;
+  window.__pedidoColetarPagamentoConfig = coletarConfig;
+  window.__pedidoAplicarPagamentoConfig = aplicarConfig;
 
   gerarParcelas();
 }

@@ -313,6 +313,10 @@ export function destroyPedido(){
   delete window.__pedidoWorkspaceObserver;
   window.__pedidoOrderObserver?.disconnect?.();
   delete window.__pedidoOrderObserver;
+  if(window.__pedidoAtalhosHandler){
+    document.removeEventListener("keydown", window.__pedidoAtalhosHandler);
+    delete window.__pedidoAtalhosHandler;
+  }
   delete window.__restaurarItensPedido;
 
   document
@@ -342,6 +346,22 @@ function setupPedidoWorkspace({ supabase }){
     }
     alert(mensagem);
   };
+
+  const statusBloqueiaComercial = (status) => ["em_separacao", "pausado"].includes(String(status || ""));
+
+  const aplicarBloqueioComercialSeparacao = (pedido) => {
+    const bloqueado = statusBloqueiaComercial(pedido?.status);
+    window.__PEDIDO_BLOQUEADO_SEPARACAO = bloqueado;
+    const btnSalvar = document.getElementById("btnSalvarPedido");
+    if (btnSalvar) {
+      btnSalvar.dataset.separacaoBloqueada = bloqueado ? "1" : "0";
+      btnSalvar.title = bloqueado
+        ? "Pedido em separacao. A equipe operacional precisa liberar antes de editar."
+        : "";
+    }
+  };
+
+  window.__PEDIDO_BLOQUEADO_SEPARACAO = false;
 
   const abrirCentral = () => {
     if(typeof window.carregarNaMain === "function"){
@@ -454,6 +474,39 @@ function setupPedidoWorkspace({ supabase }){
       .filter(Boolean);
   };
 
+  const textById = (id) => document.getElementById(id)?.textContent?.trim() || "";
+
+  const coletarLogisticaSnapshot = () => ({
+    km: Number(window.kmPedido || 0),
+    volume: textById("freteVolumeTotal"),
+    distancia: textById("freteDistanciaKm"),
+    totalOperacao: textById("logisticaTotalOperacao"),
+    descontoCaminhao: textById("logisticaDescontoCaminhao"),
+    resumoFrete: textById("resumoFreteBruto"),
+    resumoMontagem: textById("resumoMontagemBruto"),
+    descontoMontagem: textById("resumoMontagemDesconto")
+  });
+
+  const aplicarLogisticaSnapshot = (snapshot = null) => {
+    if(!snapshot || typeof snapshot !== "object") return;
+
+    if(Number(snapshot.km)) window.kmPedido = Number(snapshot.km);
+
+    const valores = {
+      freteVolumeTotal: snapshot.volume,
+      freteDistanciaKm: snapshot.distancia,
+      logisticaTotalOperacao: snapshot.totalOperacao,
+      logisticaDescontoCaminhao: snapshot.descontoCaminhao,
+      resumoFreteBruto: snapshot.resumoFrete,
+      resumoMontagemBruto: snapshot.resumoMontagem,
+      resumoMontagemDesconto: snapshot.descontoMontagem
+    };
+
+    Object.entries(valores).forEach(([id, value]) => {
+      if(value) setTextValue(id, value);
+    });
+  };
+
   const setInputValue = (id, value = "") => {
     const el = document.getElementById(id);
     if(el) el.value = value || "";
@@ -525,6 +578,8 @@ function setupPedidoWorkspace({ supabase }){
       return;
     }
 
+    aplicarBloqueioComercialSeparacao(pedido);
+
     setTextValue("orcamentoNumero", pedido.numero_pedido || "");
     setInputValue("clienteInput", pedido.cliente_nome || "");
     setInputValue("clienteIdHidden", pedido.cliente_id || "");
@@ -563,7 +618,15 @@ function setupPedidoWorkspace({ supabase }){
       }
     }
     aplicarStatusVisual(pedido.status_comercial || "orcamento");
-    renderizarParcelasSalvas(pedido.observacoes?.parcelas_financeiras || []);
+    if(window.__pedidoAplicarPagamentoConfig){
+      window.__pedidoAplicarPagamentoConfig(
+        pedido.observacoes?.pagamento_config || {},
+        pedido.observacoes?.parcelas_financeiras || []
+      );
+    }else{
+      renderizarParcelasSalvas(pedido.observacoes?.parcelas_financeiras || []);
+    }
+    aplicarLogisticaSnapshot(pedido.observacoes?.logistica_snapshot || null);
 
     const { data: itens, error: itensError } = await supabase
       .from("separacoes_itens")
@@ -590,6 +653,8 @@ function setupPedidoWorkspace({ supabase }){
     }
 
     document.getElementById("tipoEventoSelect")?.dispatchEvent(new Event("change"));
+    document.getElementById("localInput")?.dispatchEvent(new Event("change", { bubbles: true }));
+    window.atualizarResumoGlobal?.();
     window.__ocultarAutocompleteClientePedido?.();
 
     if(["visualizar", "imprimir"].includes(window.__PEDIDO_MODO_ABERTURA)){
@@ -725,6 +790,15 @@ function setupPedidoWorkspace({ supabase }){
       return;
     }
 
+    if (window.__PEDIDO_BLOQUEADO_SEPARACAO) {
+      avisar(
+        "Este pedido esta em separacao. O comercial so pode alterar depois que a equipe de separacao liberar o pedido.",
+        "Pedido bloqueado",
+        "aviso"
+      );
+      return;
+    }
+
     const statusComercial = statusComercialAtual();
     let numeroPedido = document.getElementById("orcamentoNumero")?.textContent?.trim() || "";
     const clienteNome = document.getElementById("clienteInput")?.value?.trim() || "Cliente nao informado";
@@ -762,6 +836,8 @@ function setupPedidoWorkspace({ supabase }){
       observacoes: {
         financeiro: document.getElementById("pagamentoObservacaoFinanceira")?.value || "",
         parcelas_financeiras: coletarParcelasFinanceiras(),
+        pagamento_config: window.__pedidoColetarPagamentoConfig?.() || null,
+        logistica_snapshot: coletarLogisticaSnapshot(),
         cancelamento: window.__PEDIDO_CANCELAMENTO || null,
         local_html: document.getElementById("localObservacoes")?.innerHTML || "",
         local_tags_html: document.getElementById("localTagsInline")?.innerHTML || "",
@@ -853,6 +929,48 @@ function setupPedidoWorkspace({ supabase }){
 
   window.__salvarPedidoOperacional = salvarPedidoOperacional;
 
+  function isCampoDigitavel(target){
+    const tag = target?.tagName?.toLowerCase();
+    return target?.isContentEditable || ["input", "textarea", "select"].includes(tag);
+  }
+
+  function setupAtalhosPedido(){
+    const atalhos = {
+      F2: { id: "addItemBtn", label: "Adicionar item" },
+      F3: { id: "addComponenteBtn", label: "Adicionar componente" },
+      F4: { id: "addEspacoBtn", label: "Adicionar espaco" },
+      F8: { id: "addPersonalizacaoBtn", label: "Adicionar personalizacao" },
+      F9: { id: "addServicoBtn", label: "Adicionar servico" }
+    };
+
+    Object.entries(atalhos).forEach(([key, config]) => {
+      const button = document.getElementById(config.id);
+      if(button && !button.dataset.shortcutBound){
+        button.dataset.shortcutBound = "1";
+        button.title = `${config.label} (${key})`;
+        button.setAttribute("aria-keyshortcuts", key);
+      }
+    });
+
+    if(window.__pedidoAtalhosHandler){
+      document.removeEventListener("keydown", window.__pedidoAtalhosHandler);
+    }
+
+    window.__pedidoAtalhosHandler = function(event){
+      const config = atalhos[event.key];
+      if(!config || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
+      if(isCampoDigitavel(event.target)) return;
+
+      const button = document.getElementById(config.id);
+      if(!button) return;
+
+      event.preventDefault();
+      button.click();
+    };
+
+    document.addEventListener("keydown", window.__pedidoAtalhosHandler);
+  }
+
   document.getElementById("btnVoltarCentralPedidos")?.addEventListener("click", abrirCentral);
 
   document.getElementById("btnSalvarPedido")?.addEventListener("click", salvarPedidoOperacional);
@@ -868,6 +986,8 @@ function setupPedidoWorkspace({ supabase }){
   document.getElementById("btnAddDropItem")?.addEventListener("click", () => {
     document.getElementById("addItemBtn")?.click();
   });
+
+  setupAtalhosPedido();
 
   const converterContrato = () => {
     document.querySelector(".contrato")?.scrollIntoView({ behavior: "smooth", block: "start" });
