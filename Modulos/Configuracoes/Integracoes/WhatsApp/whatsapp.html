@@ -1,0 +1,141 @@
+<div class="zapi-page el-page" data-module-root>
+  <div class="zapi-header">
+    <div>
+      <h1>WhatsApp</h1>
+      <p>Conecte o WhatsApp da empresa pela Z-API e envie mensagens pelo EasyLoc.</p>
+    </div>
+    <div class="zapi-header-actions">
+      <button type="button" class="btn secondary zapi-top-btn" id="zapiBtnSync"><i data-lucide="refresh-cw"></i>Atualizar</button>
+      <button type="button" class="btn primary zapi-top-btn" id="zapiBtnQr"><i data-lucide="qr-code"></i>Conectar</button>
+    </div>
+  </div>
+
+  <section class="zapi-grid">
+    <article class="zapi-card zapi-status-card">
+      <div class="zapi-card-head">
+        <span>Conexao</span>
+        <strong id="zapiStatusLabel">Carregando...</strong>
+      </div>
+      <div class="zapi-status-line">
+        <span class="zapi-status-dot" id="zapiStatusDot"></span>
+        <div>
+          <strong id="zapiNumero">Nenhum numero conectado</strong>
+          <small id="zapiUltimaSync">Ultima sincronizacao: -</small>
+        </div>
+      </div>
+      <div class="zapi-metrics">
+        <div class="zapi-metric-card">
+          <span class="zapi-metric-icon success"><i data-lucide="send"></i></span>
+          <small>Enviadas</small>
+          <strong id="zapiMensagensOk">0</strong>
+        </div>
+        <div class="zapi-metric-card">
+          <span class="zapi-metric-icon danger"><i data-lucide="circle-alert"></i></span>
+          <small>Falhas</small>
+          <strong id="zapiMensagensFalha">0</strong>
+        </div>
+        <div class="zapi-metric-card">
+          <span class="zapi-metric-icon neutral"><i data-lucide="clock-3"></i></span>
+          <small>Ultimo envio</small>
+          <strong id="zapiUltimoEnvio">-</strong>
+        </div>
+      </div>
+    </article>
+
+    <article class="zapi-card zapi-connection-card" id="zapiConnectionCard">
+      <div class="zapi-card-head">
+        <span id="zapiConnectionEyebrow">QR Code</span>
+        <strong id="zapiQrStatus">Aguardando acao</strong>
+      </div>
+      <div class="zapi-qr-box" id="zapiQrBox">
+        <div class="zapi-qr-empty">Clique em Conectar para buscar o QR Code.</div>
+      </div>
+      <small id="zapiQrUpdated">Atualizacao automatica ativa quando houver QR na tela.</small>
+    </article>
+  </section>
+
+  <section class="zapi-card zapi-test-card">
+    <div class="zapi-card-head">
+      <span>Teste de envio</span>
+      <strong>Mensagem manual</strong>
+    </div>
+    <div class="zapi-test-grid">
+      <label>
+        Numero
+        <input class="el-input" id="zapiTestPhone" inputmode="tel" placeholder="5511999999999">
+      </label>
+      <label>
+        Tipo
+        <select class="el-input" id="zapiTestType">
+          <option value="texto">Texto</option>
+          <option value="imagem">Imagem</option>
+          <option value="pdf">PDF</option>
+          <option value="audio">Audio</option>
+          <option value="documento">Documento</option>
+        </select>
+      </label>
+      <label class="zapi-wide">
+        Mensagem / legenda
+        <textarea class="el-input" id="zapiTestMessage" rows="1" placeholder="Digite a mensagem"></textarea>
+      </label>
+      <label class="zapi-wide" id="zapiFileUrlWrap">
+        URL do arquivo
+        <input class="el-input" id="zapiTestFileUrl" placeholder="https://...">
+      </label>
+      <button type="button" class="btn primary zapi-send-btn" id="zapiBtnSendTest"><i data-lucide="send-horizontal"></i><span>Enviar</span></button>
+    </div>
+  </section>
+
+  <section class="zapi-card zapi-history-card">
+    <div class="zapi-card-head">
+      <span>Historico</span>
+      <strong id="zapiHistoryCount">0 registros</strong>
+    </div>
+    <div class="zapi-history-filters">
+      <label>
+        Buscar numero
+        <input class="el-input" id="zapiHistorySearch" placeholder="Pesquisar por numero">
+      </label>
+      <label>
+        Status
+        <select class="el-input" id="zapiHistoryStatus">
+          <option value="">Todos os status</option>
+          <option value="enviado">Enviado</option>
+          <option value="falha">Erro</option>
+          <option value="pendente">Processando</option>
+          <option value="recebido">Recebido</option>
+          <option value="lido">Lido</option>
+        </select>
+      </label>
+      <label>
+        Periodo
+        <select class="el-input" id="zapiHistoryPeriod">
+          <option value="">Todo periodo</option>
+          <option value="7">Ultimos 7 dias</option>
+          <option value="30">Ultimos 30 dias</option>
+          <option value="90">Ultimos 90 dias</option>
+        </select>
+      </label>
+    </div>
+    <div class="zapi-table-wrap">
+      <table class="zapi-table">
+        <thead>
+          <tr>
+            <th>Data/Hora</th>
+            <th>Numero</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th>Mensagem</th>
+          </tr>
+        </thead>
+        <tbody id="zapiHistoryBody">
+          <tr><td colspan="5">Carregando historico...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="zapi-pagination">
+      <span id="zapiPaginationInfo">Mostrando 0 de 0 mensagens</span>
+      <div class="zapi-pagination-controls" id="zapiPaginationControls"></div>
+    </div>
+  </section>
+</div>

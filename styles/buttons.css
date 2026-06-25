@@ -11,7 +11,7 @@
   background: var(--el-color-surface);
   color: var(--el-color-text);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1;
   text-decoration: none;
   white-space: nowrap;
@@ -60,7 +60,7 @@
 .el-btn--secondary {
   background: var(--el-color-surface);
   border-color: var(--el-color-border);
-  color: var(--el-color-primary);
+  color: var(--el-color-text);
 }
 
 .btn.danger,
@@ -80,7 +80,7 @@
 .el-btn--ghost {
   background: transparent;
   border-color: transparent;
-  color: var(--el-color-primary);
+  color: var(--el-color-text);
 }
 
 .btn-icon,
@@ -94,7 +94,7 @@
   border: 1px solid var(--el-color-border);
   border-radius: var(--el-radius-md);
   background: var(--el-color-surface);
-  color: var(--el-color-primary);
+  color: var(--el-color-text);
   padding: 0;
   transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
 }

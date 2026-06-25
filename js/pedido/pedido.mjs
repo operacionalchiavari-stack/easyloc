@@ -317,7 +317,18 @@ export function destroyPedido(){
     document.removeEventListener("keydown", window.__pedidoAtalhosHandler);
     delete window.__pedidoAtalhosHandler;
   }
+  if(window.__pedidoPixHandler){
+    window.removeEventListener("easyloc:pix-atualizado", window.__pedidoPixHandler);
+    window.removeEventListener("easyloc:pedido-financeiro-atualizado", window.__pedidoPixHandler);
+    delete window.__pedidoPixHandler;
+  }
+  if(window.__pedidoRealtimeChannel && window.supabaseClient?.removeChannel){
+    window.supabaseClient.removeChannel(window.__pedidoRealtimeChannel);
+    delete window.__pedidoRealtimeChannel;
+    delete window.__pedidoRealtimeId;
+  }
   delete window.__restaurarItensPedido;
+  delete window.__PEDIDO_DADOS_ATUAL;
 
   document
     .querySelectorAll(".autocomplete-list")
@@ -453,13 +464,15 @@ function setupPedidoWorkspace({ supabase }){
         if(cells.length < 5) return null;
 
         const tipo = cells[1]?.innerText?.trim() || `Parcela ${index + 1}`;
-        const vencimento = dataParaISO(cells[2]?.innerText);
-        const valor = moedaParaNumero(cells[3]?.innerText);
-        const metodo = row.querySelector("select")?.value
+        const vencimento = dataParaISO(row.querySelector(".pg-vencimento")?.value || cells[2]?.innerText);
+        const valor = moedaParaNumero(row.querySelector(".pg-valor")?.innerText || cells[3]?.innerText);
+        const metodo = row.querySelector(".pg-metodo")?.value
           || cells[4]?.innerText?.trim()
           || document.getElementById("pagamentoMetodo")?.value
           || "A combinar";
-        const status = cells[5]?.innerText?.trim() || "Programado";
+        const status = row.querySelector(".pg-status")?.value
+          || cells[5]?.innerText?.trim()
+          || "Programado";
 
         if(!valor) return null;
         return {
@@ -556,10 +569,40 @@ function setupPedidoWorkspace({ supabase }){
           <td>${Number(parcela.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
           <td>${parcela.metodo || "A combinar"}</td>
           <td>${parcela.status || "Programado"}</td>
+          <td>
+            <button type="button" class="pedido-pix-btn" data-pix-parcela title="Gerar PIX" aria-label="Gerar PIX">
+              <i data-lucide="qr-code"></i>
+            </button>
+          </td>
         </tr>
       `;
     }).join("");
+    window.lucide?.createIcons?.();
   };
+
+  function setupPedidoRealtime(pedidoId){
+    if(!pedidoId || !supabase?.channel || !window.__CONTEXT?.empresa_id) return;
+    if(window.__pedidoRealtimeId === pedidoId && window.__pedidoRealtimeChannel) return;
+
+    if(window.__pedidoRealtimeChannel && supabase.removeChannel){
+      supabase.removeChannel(window.__pedidoRealtimeChannel);
+      window.__pedidoRealtimeChannel = null;
+    }
+
+    window.__pedidoRealtimeId = pedidoId;
+    window.__pedidoRealtimeChannel = supabase
+      .channel(`pedido-${pedidoId}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "separacoes_pedidos",
+        filter: `id=eq.${pedidoId}`
+      }, (payload) => {
+        if(payload?.new?.empresa_id && String(payload.new.empresa_id) !== String(window.__CONTEXT.empresa_id)) return;
+        carregarPedidoSalvoSeNecessario();
+      })
+      .subscribe();
+  }
 
   async function carregarPedidoSalvoSeNecessario(){
     const pedidoId = window.__PEDIDO_ATUAL_ID;
@@ -578,6 +621,8 @@ function setupPedidoWorkspace({ supabase }){
       return;
     }
 
+    window.__PEDIDO_DADOS_ATUAL = pedido;
+    setupPedidoRealtime(pedidoId);
     aplicarBloqueioComercialSeparacao(pedido);
 
     setTextValue("orcamentoNumero", pedido.numero_pedido || "");
@@ -817,6 +862,11 @@ function setupPedidoWorkspace({ supabase }){
       return;
     }
 
+    const observacoesAtuais = window.__PEDIDO_DADOS_ATUAL?.observacoes
+      && typeof window.__PEDIDO_DADOS_ATUAL.observacoes === "object"
+      ? { ...window.__PEDIDO_DADOS_ATUAL.observacoes }
+      : {};
+
     const payloadPedido = {
       empresa_id: window.__CONTEXT.empresa_id,
       numero_pedido: numeroPedido,
@@ -834,6 +884,7 @@ function setupPedidoWorkspace({ supabase }){
       status: statusComercial === "cancelado" ? "pausado" : "pendente",
       status_comercial: statusComercial,
       observacoes: {
+        ...observacoesAtuais,
         financeiro: document.getElementById("pagamentoObservacaoFinanceira")?.value || "",
         parcelas_financeiras: coletarParcelasFinanceiras(),
         pagamento_config: window.__pedidoColetarPagamentoConfig?.() || null,
@@ -887,6 +938,12 @@ function setupPedidoWorkspace({ supabase }){
 
     pedidoId = result.data?.id || pedidoId;
     window.__PEDIDO_ATUAL_ID = pedidoId;
+    setupPedidoRealtime(pedidoId);
+    window.__PEDIDO_DADOS_ATUAL = {
+      ...(window.__PEDIDO_DADOS_ATUAL || {}),
+      id: pedidoId,
+      ...payloadPedido
+    };
 
     const deveSincronizarItens = statusComercial !== "cancelado";
 
@@ -1030,6 +1087,17 @@ function setupPedidoWorkspace({ supabase }){
   setupOndeEsta({ supabase });
   enhanceItemActions();
   setupOrdenacaoPedido();
+  if(window.__pedidoPixHandler){
+    window.removeEventListener("easyloc:pix-atualizado", window.__pedidoPixHandler);
+    window.removeEventListener("easyloc:pedido-financeiro-atualizado", window.__pedidoPixHandler);
+  }
+  window.__pedidoPixHandler = (event) => {
+    const pedidoId = event?.detail?.pedido_id || event?.detail?.pedidoId || "";
+    if(pedidoId && window.__PEDIDO_ATUAL_ID && String(pedidoId) !== String(window.__PEDIDO_ATUAL_ID)) return;
+    carregarPedidoSalvoSeNecessario();
+  };
+  window.addEventListener("easyloc:pix-atualizado", window.__pedidoPixHandler);
+  window.addEventListener("easyloc:pedido-financeiro-atualizado", window.__pedidoPixHandler);
   carregarPedidoSalvoSeNecessario();
 }
 

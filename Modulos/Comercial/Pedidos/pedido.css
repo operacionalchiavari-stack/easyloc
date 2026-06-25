@@ -76,7 +76,7 @@
 .pedido-numero {
   font-size: 16px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--el-color-title);
 }
 
 /* area reserva */
@@ -1013,7 +1013,7 @@
 .card-extra h3 {
   margin: 0 0 18px 0;
   font-size: 16px;
-  color: #0f2a44;
+  color: var(--el-color-title);
 }
 
 /* LINHAS */
@@ -1118,7 +1118,7 @@
 
 .frete-info strong {
   font-size: 16px;
-  color: #0f2a44;
+  color: var(--el-color-title);
 }
 
 .frete-valor {
@@ -1153,7 +1153,7 @@
 
 .frete-info strong {
   font-size: 16px;
-  color: #0f2a44;
+  color: var(--el-color-title);
 }
 .frete-detalhe-container {
   display: flex;
@@ -1193,7 +1193,7 @@
 
 #cardMontagem .montagem-linha strong {
   text-align: right;
-  color: #0f2a44;
+  color: var(--el-color-title);
   font-weight: 800;
 }
 
@@ -1231,7 +1231,7 @@
 .valor-destaque {
   font-size: 22px;
   font-weight: 700;
-  color: #0f2a44;
+  color: var(--el-color-title);
 }
 .resumo-linha {
   display: flex;
@@ -1268,7 +1268,7 @@
 }
 .card-pagamento-horizontal h3 {
   margin-bottom: 20px;
-  color: #0f2a44;
+  color: var(--el-color-title);
 }
 
 .pagamento-config-grid {
@@ -1759,7 +1759,7 @@ tr:first-child {
 .orcamento-header span {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--el-color-title);
 }
 
 .btn-minimizar {
@@ -1802,7 +1802,7 @@ tr:first-child {
   border-radius: 6px;
   border: none;
   background: #e2e8f0;
-  color: #0f172a;
+  color: var(--el-color-title);
   font-size: 16px;
   cursor: pointer;
 
@@ -4672,6 +4672,31 @@ tr:first-child {
 .pedido-screen .pagamento-card-wide .pg-vencimento {
   width: 100%;
   padding: 6px 8px;
+}
+
+.pedido-screen .pedido-pix-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #99f6e4;
+  border-radius: var(--el-radius-sm);
+  background: #f0fdfa;
+  color: #0f766e;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.pedido-screen .pedido-pix-btn:hover {
+  background: #ccfbf1;
+  border-color: #5eead4;
+  transform: translateY(-1px);
+}
+
+.pedido-screen .pedido-pix-btn svg {
+  width: 17px;
+  height: 17px;
 }
 
 .pedido-main > .painel-final-actions {

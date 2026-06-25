@@ -405,6 +405,28 @@ tbody tr:hover {
   color: var(--el-color-danger);
 }
 
+.btn-acao.pix {
+  width: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f766e;
+  background: #f0fdfa;
+  border-color: #99f6e4;
+}
+
+.btn-acao.pix:hover:not(:disabled) {
+  color: #0f766e;
+  background: #ccfbf1;
+  border-color: #5eead4;
+}
+
+.btn-acao.pix svg {
+  width: 16px;
+  height: 16px;
+}
+
 .tabela-footer {
   display: flex;
   align-items: center;

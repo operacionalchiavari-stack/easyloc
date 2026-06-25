@@ -78,6 +78,8 @@ export function initPagamento(){
     <option>Cancelado</option>
   `;
 
+  const refreshIcons = () => window.lucide?.createIcons?.();
+
   const criarLinha = ({ numero, tipo, vencimento, valor, metodo }) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -87,8 +89,61 @@ export function initPagamento(){
       <td contenteditable="true" class="pg-valor">${formatCurrency(valor)}</td>
       <td><select class="pg-metodo">${metodoOptions(metodo)}</select></td>
       <td><select class="pg-status">${statusOptions()}</select></td>
+      <td>
+        <button type="button" class="pedido-pix-btn" data-pix-parcela title="Gerar PIX" aria-label="Gerar PIX">
+          <i data-lucide="qr-code"></i>
+        </button>
+      </td>
     `;
     return tr;
+  };
+
+  const abrirPixParcela = (button) => {
+    const tr = button?.closest("tr");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const index = rows.indexOf(tr);
+    const pedidoId = window.__PEDIDO_ATUAL_ID || null;
+
+    if(!pedidoId){
+      if(typeof window.alerta === "function"){
+        window.alerta("Salve o pedido antes de gerar PIX.", "PIX", "aviso");
+      }else{
+        alert("Salve o pedido antes de gerar PIX.");
+      }
+      return;
+    }
+
+    if(!window.EasyLocPix?.open){
+      if(typeof window.alerta === "function"){
+        window.alerta("Fluxo PIX indisponivel neste momento.", "PIX", "erro");
+      }
+      return;
+    }
+
+    const numeroPedido = document.getElementById("orcamentoNumero")?.textContent?.trim() || "";
+    const cliente = document.getElementById("clienteInput")?.value?.trim() || "Cliente nao informado";
+    const clienteId = document.getElementById("clienteIdHidden")?.value || null;
+    const contato = document.getElementById("telefoneInput")?.value?.trim() || "";
+    const cells = Array.from(tr?.children || []);
+    const parcelaNumero = cells[0]?.textContent?.trim() || String(index + 1);
+    const parcelaLabel = cells[1]?.textContent?.trim() || `Parcela ${index + 1}`;
+    const vencimento = tr.querySelector(".pg-vencimento")?.value || "";
+    const valor = moneyValue(tr.querySelector(".pg-valor"));
+
+    window.EasyLocPix.open({
+      source: "pedido",
+      pedidoId,
+      numeroPedido,
+      clienteId,
+      cliente,
+      contato,
+      valor,
+      vencimento,
+      parcelaIndex: index >= 0 ? index : null,
+      parcelaNumero,
+      parcelaLabel,
+      gateway: "mercado_pago"
+    });
   };
 
   const calcularTotais = () => {
@@ -184,6 +239,7 @@ export function initPagamento(){
     }
 
     atualizarResumo();
+    refreshIcons();
   };
 
   const limparProgramacao = () => {
@@ -236,6 +292,7 @@ export function initPagamento(){
         tbody.appendChild(tr);
       });
       atualizarResumo();
+      refreshIcons();
       return;
     }
 
@@ -260,6 +317,10 @@ export function initPagamento(){
 
   tbody.addEventListener("input", atualizarResumo);
   tbody.addEventListener("change", atualizarResumo);
+  tbody.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-pix-parcela]");
+    if(button) abrirPixParcela(button);
+  });
 
   btnLimpar?.addEventListener("click", limparProgramacao);
 
@@ -268,4 +329,5 @@ export function initPagamento(){
   window.__pedidoAplicarPagamentoConfig = aplicarConfig;
 
   gerarParcelas();
+  refreshIcons();
 }

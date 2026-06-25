@@ -644,6 +644,50 @@ async function Locais_carregar() {
   } catch {}
 }
 
+async function Locais_abrirDetalhesPorIdOuNome({ id, nome } = {}) {
+  const termoNome = String(nome || "").trim().toLowerCase();
+  let local = (window.locaisCache || locaisCache || []).find((item) => {
+    if (id && String(item.id) === String(id)) return true;
+    return termoNome && String(item.nome_razao || "").trim().toLowerCase() === termoNome;
+  });
+
+  if (!local || !("endereco" in local)) {
+    const empresaId = await getEmpresaIdCache();
+    let query = supabase
+      .from("locais_empresas")
+      .select("*")
+      .eq("empresa_id", empresaId);
+
+    query = id
+      ? query.eq("id", id)
+      : query.eq("nome_razao", nome);
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
+      mostrarAlerta("Nao foi possivel abrir o cadastro do local.");
+      return;
+    }
+
+    local = data;
+  }
+
+  if (!local) {
+    mostrarAlerta("Local nao encontrado no cadastro.");
+    return;
+  }
+
+  if (typeof local.tags === "string") {
+    try {
+      local.tags = JSON.parse(local.tags);
+    } catch {
+      local.tags = {};
+    }
+  }
+
+  abrirDetalhesLocal(local);
+}
+
 function calcularInatividade(ultimaLocacao) {
   if (!ultimaLocacao) return "-";
 
@@ -862,6 +906,7 @@ window.Locais_closeModal = Locais_closeModal;
 window.Locais_salvar = Locais_salvar;
 window.Locais_excluir = Locais_excluir;
 window.Locais_aplicarFiltros = Locais_aplicarFiltros;
+window.Locais_abrirDetalhesPorIdOuNome = Locais_abrirDetalhesPorIdOuNome;
 
 // inicialização
 // inicialização

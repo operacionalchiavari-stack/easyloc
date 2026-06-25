@@ -61,7 +61,7 @@
 
 .central-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1080px;
   border-collapse: collapse;
 }
 
@@ -84,6 +84,25 @@
 
 .central-table tr:hover td {
   background: var(--el-table-row-hover);
+}
+
+.central-record-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--el-color-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+  padding: 0;
+  text-align: left;
+  text-decoration: none;
+}
+
+.central-record-link:hover {
+  color: var(--color-primary, #ff6a00);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .pedido-numero-card {
@@ -143,16 +162,125 @@
   gap: 6px;
 }
 
-.central-actions button {
-  min-height: 32px;
-  padding: 6px 9px;
+.central-icon-action {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--el-color-border);
-  border-radius: var(--el-radius-sm);
+  border-radius: 9px;
   background: var(--el-color-surface);
   color: var(--el-color-primary);
-  font-size: 12px;
-  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.central-icon-action svg {
+  width: 17px;
+  height: 17px;
+}
+
+.central-icon-action:hover {
+  transform: translateY(-1px);
+  border-color: rgba(15, 42, 68, .22);
+  background: #f8fafc;
+}
+
+.central-icon-action.whatsapp {
+  color: #16a34a;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.central-icon-action.whatsapp:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.central-icon-action.pix {
+  color: #0f766e;
+  background: #f0fdfa;
+  border-color: #99f6e4;
+}
+
+.central-icon-action.pix:hover {
+  background: #ccfbf1;
+  border-color: #5eead4;
+}
+
+.central-contact-cell {
+  color: var(--el-color-muted);
+  font-weight: 650;
+}
+
+.central-value-cell {
+  min-width: 132px;
+}
+
+.central-finance-indicator {
+  width: min(128px, 100%);
+  display: grid;
+  gap: 4px;
+  align-content: center;
+  color: var(--el-color-text);
+}
+
+.central-finance-value {
+  display: block;
+  color: var(--el-color-title);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.1;
   white-space: nowrap;
+}
+
+.central-finance-track {
+  width: 90%;
+  height: 4px;
+  display: block;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.central-finance-fill {
+  width: var(--finance-progress, 0%);
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: #9ca3af;
+  transition: width .45s ease, background .25s ease;
+}
+
+.central-finance-label {
+  display: block;
+  color: var(--el-color-muted);
+  font-size: 11px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.central-finance-indicator.paid .central-finance-fill {
+  background: #16a34a;
+}
+
+.central-finance-indicator.partial .central-finance-fill {
+  background: #f59e0b;
+}
+
+.central-finance-indicator.empty .central-finance-fill {
+  background: #9ca3af;
+}
+
+.central-finance-indicator.overdue .central-finance-fill {
+  background: #dc2626;
+}
+
+.central-finance-indicator.overdue .central-finance-label {
+  color: #991b1b;
 }
 
 .central-empty {
@@ -176,6 +304,113 @@
   display: none;
 }
 
+.central-whatsapp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.46);
+  backdrop-filter: blur(4px);
+}
+
+.central-whatsapp-modal.hidden {
+  display: none;
+}
+
+.central-whatsapp-dialog {
+  width: min(540px, 94vw);
+  overflow: hidden;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid var(--el-color-border);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+}
+
+.central-whatsapp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--el-color-border);
+}
+
+.central-whatsapp-head span {
+  display: block;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.central-whatsapp-head strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--el-color-primary);
+  font-size: 20px;
+}
+
+.central-whatsapp-body {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 14px;
+  padding: 20px;
+}
+
+.central-whatsapp-body label {
+  display: grid;
+  gap: 7px;
+  color: var(--el-color-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.central-whatsapp-message {
+  grid-column: 1 / -1;
+}
+
+.central-whatsapp-message textarea {
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.central-whatsapp-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px 20px;
+}
+
+.central-whatsapp-send {
+  gap: 8px;
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
+.central-whatsapp-send:hover {
+  background: #15803d !important;
+  border-color: #15803d !important;
+}
+
+.central-whatsapp-send:disabled {
+  opacity: .78;
+  cursor: wait;
+}
+
+.central-whatsapp-send:disabled svg {
+  animation: centralSpin .8s linear infinite;
+}
+
+@keyframes centralSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .central-preview-dialog {
   width: min(1080px, 96vw);
   max-height: 92vh;
@@ -185,6 +420,20 @@
   border-radius: 18px;
   background: var(--el-color-surface);
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+}
+
+@media (max-width: 720px) {
+  .central-whatsapp-body {
+    grid-template-columns: 1fr;
+  }
+
+  .central-whatsapp-actions {
+    flex-direction: column-reverse;
+  }
+
+  .central-whatsapp-actions .btn {
+    width: 100%;
+  }
 }
 
 .central-preview-toolbar {

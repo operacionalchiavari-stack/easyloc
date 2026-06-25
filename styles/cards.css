@@ -29,7 +29,7 @@
 .metric-card span {
   color: var(--el-color-muted);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .el-card-value,
@@ -40,9 +40,9 @@
 .metric-card strong {
   display: block;
   margin-top: 4px;
-  color: var(--el-color-primary);
+  color: var(--el-color-title);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.15;
 }
 

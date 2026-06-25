@@ -21,7 +21,7 @@ window.carregarNaMain = async function (
 
     const overrides = document.createElement("link");
     overrides.rel = "stylesheet";
-    overrides.href = "styles/module-overrides.css";
+    overrides.href = "styles/module-overrides.css?v=" + Date.now();
     overrides.id = "dynamic-module-overrides-css";
 
     document.head.appendChild(overrides);
@@ -163,7 +163,7 @@ delete window.__caminhoesEventosAtivos;
 
       const link = document.createElement("link");
       link.rel = "stylesheet";
-      link.href = cssPath;
+      link.href = cssPath + "?v=" + Date.now();
       link.id = "dynamic-module-css";
 
       document.head.appendChild(link);

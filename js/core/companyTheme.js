@@ -53,6 +53,19 @@
     };
   }
 
+  function logoCacheVersion(theme) {
+    return theme?.logo_cache || theme?.updated_at || "";
+  }
+
+  function withCacheBust(url, version = "") {
+    if (!url) return "";
+    if (url.startsWith("blob:") || url.startsWith("data:")) return url;
+    const cleanUrl = url.replace(/([?&])v=[^&]*(&?)/, (match, prefix, suffix) => suffix ? prefix : "");
+    const cacheValue = version || Date.now();
+    const separator = cleanUrl.includes("?") ? "&" : "?";
+    return `${cleanUrl}${separator}v=${encodeURIComponent(cacheValue)}`;
+  }
+
   function applyTheme(rawTheme) {
     const theme = normalizeTheme(rawTheme);
     const root = document.documentElement;
@@ -63,27 +76,32 @@
     root.style.setProperty("--color-primary", theme.cor_destaque);
     root.style.setProperty("--color-bg", theme.cor_fundo);
 
-    root.style.setProperty("--el-color-primary", theme.cor_sidebar);
-    root.style.setProperty("--el-color-primary-strong", sidebarStrong);
-    root.style.setProperty("--el-color-primary-dark", shade(theme.cor_sidebar, -0.14));
+    root.style.setProperty("--el-color-primary", "#1F2937");
+    root.style.setProperty("--el-color-primary-strong", "#111827");
+    root.style.setProperty("--el-color-primary-dark", "#111827");
+    root.style.setProperty("--el-color-primary-soft", "#F3F4F6");
     root.style.setProperty("--el-color-accent", theme.cor_destaque);
     root.style.setProperty("--el-color-accent-strong", accentStrong);
     root.style.setProperty("--el-color-bg", theme.cor_fundo);
-    root.style.setProperty("--azul", theme.cor_sidebar);
+    root.style.setProperty("--el-color-title", "#1F2937");
+    root.style.setProperty("--el-color-text", "#374151");
+    root.style.setProperty("--el-color-muted", "#6B7280");
+    root.style.setProperty("--el-color-placeholder", "#9CA3AF");
+    root.style.setProperty("--el-table-header-bg", `linear-gradient(180deg, ${theme.cor_sidebar}, ${sidebarStrong})`);
+    root.style.setProperty("--el-table-row-hover", "#F9FAFB");
+    root.style.setProperty("--azul", "#1F2937");
     root.style.setProperty("--azul-2", sidebarStrong);
     root.style.setProperty("--laranja", theme.cor_destaque);
     root.style.setProperty("--fundo", theme.cor_fundo);
     root.style.setProperty("--company-logo-zoom", String(theme.logo_zoom));
-    root.style.setProperty("--el-color-text", "#0f172a");
-    root.style.setProperty("--el-color-muted", "#64748b");
-    root.style.setProperty("--texto-principal", "#0f172a");
-    root.style.setProperty("--texto-secundario", "#64748b");
-    root.style.setProperty("--cor-texto", "#0f172a");
-    root.style.setProperty("--cor-texto-suave", "#64748b");
+    root.style.setProperty("--texto-principal", "#374151");
+    root.style.setProperty("--texto-secundario", "#6B7280");
+    root.style.setProperty("--cor-texto", "#374151");
+    root.style.setProperty("--cor-texto-suave", "#6B7280");
 
     const sidebarLogo = document.getElementById("sidebarLogo");
     if (sidebarLogo) {
-      sidebarLogo.src = theme.logo_url || "logosimbolo.png";
+      sidebarLogo.src = theme.logo_url ? withCacheBust(theme.logo_url, logoCacheVersion(rawTheme)) : "logosimbolo.png";
       sidebarLogo.style.transform = `scale(${theme.logo_zoom})`;
       sidebarLogo.style.transformOrigin = "center";
     }
@@ -162,6 +180,7 @@
     contrast,
     validateTheme,
     applyTheme,
-    applyForEmpresa
+    applyForEmpresa,
+    withCacheBust
   };
 })();

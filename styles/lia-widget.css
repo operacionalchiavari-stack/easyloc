@@ -75,7 +75,7 @@
 }
 
 .lia-global-actions {
-  display: flex;
+  display: none;
   gap: 8px;
 }
 
@@ -103,7 +103,9 @@
 }
 
 body.lia-global-open .lia-global-button {
-  display: none;
+  opacity: .72;
+  transform: scale(.94);
+  box-shadow: 0 12px 30px rgba(15, 42, 68, .20);
 }
 
 @media (max-width: 640px) {

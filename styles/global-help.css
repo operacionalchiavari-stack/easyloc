@@ -19,7 +19,7 @@
 
 .global-help-button span {
   font-size: 24px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .sidebar-user .global-help-button {
@@ -29,15 +29,15 @@
   left: auto;
   top: auto;
   z-index: 1;
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   box-shadow: 0 8px 18px rgba(15, 42, 68, .18);
 }
 
 .sidebar-user .global-help-button span {
-  font-size: 19px;
+  font-size: 16px;
   line-height: 1;
 }
 
@@ -78,16 +78,17 @@
 }
 
 .global-help-header span {
-  color: #64748b;
+  color: var(--el-color-muted, #6B7280);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
 .global-help-header h3 {
   margin: 4px 0 0;
-  color: #0f2a44;
+  color: var(--el-color-title, #1F2937);
   font-size: 21px;
+  font-weight: 700;
 }
 
 .global-help-close,
@@ -98,7 +99,7 @@
   border-radius: 10px;
   background: #dc2626;
   color: #ffffff;
-  font-weight: 900;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -115,9 +116,13 @@
   padding: 10px 14px;
   border: 1px solid #dbe3ec;
   border-radius: 10px;
-  color: #0f2a44;
+  color: var(--el-color-text, #374151);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 400;
+}
+
+.global-help-search input::placeholder {
+  color: var(--el-color-placeholder, #9CA3AF);
 }
 
 .global-help-search button,
@@ -129,7 +134,7 @@
   background: var(--color-primary, #ff6a00);
   color: #ffffff;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -155,7 +160,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #ffffff;
-  color: #0f2a44;
+  color: var(--el-color-text, #374151);
   text-align: left;
   cursor: pointer;
 }
@@ -173,11 +178,13 @@
 
 .global-help-result strong {
   margin-bottom: 5px;
+  color: var(--el-color-title, #1F2937);
+  font-weight: 600;
   font-size: 14px;
 }
 
 .global-help-result span {
-  color: #64748b;
+  color: var(--el-color-muted, #6B7280);
   font-size: 12px;
   line-height: 1.35;
 }
@@ -211,13 +218,14 @@
 }
 
 .global-help-player-actions strong {
-  color: #0f2a44;
+  color: var(--el-color-title, #1F2937);
   font-size: 15px;
+  font-weight: 600;
 }
 
 .global-help-player-actions span {
   margin-top: 3px;
-  color: #64748b;
+  color: var(--el-color-muted, #6B7280);
   font-size: 12px;
 }
 

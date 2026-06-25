@@ -50,9 +50,9 @@
 .el-modal__title,
 .modal-alert-box h4 {
   margin: 0;
-  color: var(--el-color-primary);
+  color: var(--el-color-title);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .el-modal__description,
@@ -87,7 +87,7 @@
   background: var(--el-color-accent);
   color: #ffffff;
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .modal-alert-global[data-variant="success"] .alert-icon {

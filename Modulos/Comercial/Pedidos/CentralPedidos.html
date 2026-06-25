@@ -57,12 +57,12 @@
           <tr>
             <th>Numero</th>
             <th>Cliente</th>
+            <th>Contato</th>
             <th>Evento</th>
             <th>Local</th>
             <th>Data</th>
             <th>Status</th>
             <th>Valor</th>
-            <th>Comercial</th>
             <th>Acoes</th>
           </tr>
         </thead>
@@ -84,6 +84,41 @@
         </div>
       </div>
       <div class="central-preview-body" id="centralPedidoPreviewBody"></div>
+    </div>
+  </div>
+
+  <div class="central-whatsapp-modal hidden" id="centralWhatsappModal" aria-hidden="true">
+    <div class="central-whatsapp-dialog" role="dialog" aria-modal="true" aria-labelledby="centralWhatsappTitulo">
+      <div class="central-whatsapp-head">
+        <div>
+          <span>WhatsApp</span>
+          <strong id="centralWhatsappTitulo">Enviar mensagem</strong>
+        </div>
+        <button type="button" class="central-icon-action" id="btnFecharWhatsappPedido" aria-label="Fechar">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="central-whatsapp-body">
+        <label>
+          Cliente
+          <input class="el-input" id="centralWhatsappCliente" readonly>
+        </label>
+        <label>
+          Numero
+          <input class="el-input" id="centralWhatsappTelefone" readonly>
+        </label>
+        <label class="central-whatsapp-message">
+          Mensagem
+          <textarea class="el-input" id="centralWhatsappMensagem" rows="5"></textarea>
+        </label>
+      </div>
+      <div class="central-whatsapp-actions">
+        <button type="button" class="btn btn-secondary" id="btnCancelarWhatsappPedido">Cancelar</button>
+        <button type="button" class="btn btn-primary central-whatsapp-send" id="btnEnviarWhatsappPedido">
+          <i data-lucide="send-horizontal"></i>
+          Enviar WhatsApp
+        </button>
+      </div>
     </div>
   </div>
 </div>

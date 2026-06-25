@@ -585,6 +585,50 @@ async function carregarClientes() {
     }
   } catch {}
 }
+
+async function clientes_abrirDetalhesPorIdOuNome({ id, nome } = {}) {
+  const termoNome = String(nome || "").trim().toLowerCase();
+  let cliente = (window.clientesCache || clientesCache || []).find((item) => {
+    if (id && String(item.id) === String(id)) return true;
+    return termoNome && String(item.nome_razao || "").trim().toLowerCase() === termoNome;
+  });
+
+  if (!cliente) {
+    const empresaId = await getEmpresaAtualId();
+    let query = supabase
+      .from("clientes_empresas")
+      .select("*")
+      .eq("empresa_id", empresaId);
+
+    query = id
+      ? query.eq("id", id)
+      : query.eq("nome_razao", nome);
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) {
+      mostrarAlerta("Nao foi possivel abrir o cadastro do cliente.");
+      return;
+    }
+
+    cliente = data;
+  }
+
+  if (!cliente) {
+    mostrarAlerta("Cliente nao encontrado no cadastro.");
+    return;
+  }
+
+  if (typeof cliente.tags === "string") {
+    try {
+      cliente.tags = JSON.parse(cliente.tags);
+    } catch {
+      cliente.tags = {};
+    }
+  }
+
+  abrirDetalhesCliente(cliente);
+}
 /* =====================================================
    SEGURANÇA HTML (ANTI XSS)
 ===================================================== */
@@ -791,6 +835,7 @@ window.clientes_enableEdit = clientes_enableEdit;
 window.clientes_closeModal = clientes_closeModal;
 window.clientes_salvar = clientes_salvar;
 window.clientes_excluir = clientes_excluir;
+window.clientes_abrirDetalhesPorIdOuNome = clientes_abrirDetalhesPorIdOuNome;
 window.aplicarFiltros = aplicarFiltros;
 
 // inicialização

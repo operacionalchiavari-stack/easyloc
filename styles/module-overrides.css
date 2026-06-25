@@ -17,6 +17,85 @@
   background: var(--el-color-bg);
 }
 
+#main-content,
+#main-content .el-page,
+#main-content .container,
+#main-content .page,
+#main-content .content-page,
+#main-content .cronograma-container,
+#main-content .personalizacoes-page,
+#main-content .cadastro-caminhoes-page,
+#main-content .container-fornecedores,
+#main-content .financeiro-page {
+  color: var(--el-color-text) !important;
+  font-weight: 400;
+}
+
+#main-content h1,
+#main-content h2,
+#main-content h3,
+#main-content h4,
+#main-content h5,
+#main-content h6,
+#main-content .el-page-title,
+#main-content .page-title,
+#main-content .titulo,
+#main-content .titulo-pagina,
+#main-content .modal-title {
+  color: var(--el-color-title) !important;
+  font-weight: 700 !important;
+}
+
+#main-content p,
+#main-content li,
+#main-content label,
+#main-content td,
+#main-content small {
+  color: inherit;
+}
+
+#main-content span:not([class]),
+#main-content div:not([class]) {
+  color: inherit;
+}
+
+#main-content label,
+#main-content .el-label,
+#main-content .field-label,
+#main-content .form-label {
+  color: var(--el-color-muted) !important;
+  font-weight: 500 !important;
+}
+
+#main-content p,
+#main-content li,
+#main-content td,
+#main-content .text,
+#main-content .descricao,
+#main-content .description {
+  color: var(--el-color-text);
+  font-weight: 400;
+}
+
+#main-content small,
+#main-content .muted,
+#main-content .text-muted,
+#main-content .subtitle,
+#main-content .subtitulo,
+#main-content .helper,
+#main-content .hint,
+#main-content .meta,
+#main-content .description-muted {
+  color: var(--el-color-muted) !important;
+  font-weight: 400 !important;
+}
+
+#main-content strong,
+#main-content b {
+  color: inherit;
+  font-weight: 600;
+}
+
 #main-content .btn,
 #main-content .add-btn,
 #main-content .btn-primary,
@@ -44,7 +123,7 @@
   background: var(--el-color-surface);
   color: var(--el-color-text);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1;
   text-decoration: none;
   white-space: nowrap;
@@ -136,7 +215,7 @@
 #main-content .btn-outline {
   background: var(--el-color-surface);
   border-color: var(--el-color-border);
-  color: var(--el-color-primary);
+  color: var(--el-color-text);
 }
 
 #main-content .btn.danger,
@@ -169,7 +248,7 @@
   border: 1px solid var(--el-color-border);
   border-radius: var(--el-radius-md);
   background: var(--el-color-surface);
-  color: var(--el-color-primary);
+  color: var(--el-color-text);
   padding: 0;
   box-shadow: none;
 }
@@ -234,7 +313,7 @@
   color: var(--el-color-text);
   padding: 10px 12px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   box-shadow: none;
   outline: none;
 }
@@ -257,6 +336,11 @@
   box-shadow: var(--el-focus-ring);
 }
 
+#main-content input::placeholder,
+#main-content textarea::placeholder {
+  color: var(--el-color-placeholder) !important;
+}
+
 #main-content .table-wrapper,
 #main-content .table-wrap,
 #main-content .tabela-card,
@@ -275,6 +359,7 @@
   background: var(--el-color-surface);
   color: var(--el-color-text);
   font-size: 14px;
+  font-weight: 400;
 }
 
 #main-content table thead th {
@@ -284,7 +369,7 @@
   border: 0;
   text-align: left;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -294,6 +379,7 @@
   padding: 13px 16px;
   border-bottom: 1px solid var(--el-table-row-border);
   color: var(--el-color-text);
+  font-weight: 400;
   vertical-align: middle;
 }
 
@@ -323,6 +409,7 @@
   min-height: var(--el-card-min-height);
   padding: var(--el-card-padding);
   color: var(--el-color-text);
+  font-weight: 400;
 }
 
 #main-content .el-card:hover,
@@ -650,4 +737,37 @@
   #main-content .personalizacoes-page .modal-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Refinamento visual especifico do modulo WhatsApp. */
+#main-content .zapi-page .zapi-card {
+  border-radius: 12px;
+  box-shadow: 0 18px 42px rgba(15, 42, 68, .055);
+}
+
+#main-content .zapi-page .zapi-metric-card,
+#main-content .zapi-page .zapi-page-btn,
+#main-content .zapi-page .zapi-table-wrap {
+  border-radius: 10px;
+}
+
+#main-content .zapi-page .zapi-send-btn {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+#main-content .zapi-page .zapi-send-btn:hover {
+  background: #15803d !important;
+  border-color: #15803d !important;
+}
+
+#main-content .zapi-page .zapi-table th {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#main-content .zapi-page .zapi-badge {
+  font-weight: 700;
 }

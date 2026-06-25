@@ -8,6 +8,7 @@ html {
   font-family: var(--el-font-family);
   color: var(--el-color-text);
   background: var(--el-color-bg);
+  font-weight: 400;
 }
 
 body {
@@ -15,6 +16,7 @@ body {
   font-family: var(--el-font-family);
   color: var(--el-color-text);
   background: var(--el-color-bg);
+  font-weight: 400;
 }
 
 #main-content,
@@ -49,4 +51,56 @@ button:disabled,
 
 .hidden {
   display: none !important;
+}
+
+#main-content,
+#main-content .el-page,
+#main-content .page,
+#main-content .container,
+#main-content .content-page {
+  color: var(--el-color-text);
+  font-weight: 400;
+}
+
+#main-content h1,
+#main-content h2,
+#main-content h3,
+#main-content h4,
+#main-content h5,
+#main-content h6,
+.el-title,
+.el-page-title {
+  color: var(--el-color-title);
+  font-weight: 700;
+}
+
+#main-content p,
+#main-content li,
+#main-content td,
+#main-content label,
+#main-content small,
+.el-text {
+  color: inherit;
+}
+
+.el-text-main {
+  color: var(--el-color-text) !important;
+}
+
+.el-text-secondary,
+.el-muted,
+.text-muted {
+  color: var(--el-color-muted) !important;
+}
+
+.el-text-title {
+  color: var(--el-color-title) !important;
+  font-weight: 700;
+}
+
+.el-strong,
+#main-content strong,
+#main-content b {
+  color: inherit;
+  font-weight: 600;
 }

@@ -2,8 +2,6 @@
   const button = document.getElementById("liaGlobalButton");
   const panel = document.getElementById("liaGlobalPanel");
   const frame = document.getElementById("liaGlobalFrame");
-  const close = document.getElementById("liaGlobalClose");
-  const minimize = document.getElementById("liaGlobalMinimize");
 
   if (!button || !panel || !frame) return;
 
@@ -49,11 +47,19 @@
     document.body.classList.remove("lia-global-open");
   }
 
-  button.addEventListener("click", openLia);
+  function toggleLia() {
+    if (panel.classList.contains("hidden")) {
+      openLia();
+      return;
+    }
+
+    hideLia();
+  }
+
+  button.addEventListener("click", toggleLia);
   frame.addEventListener("load", syncFrameContext);
-  close?.addEventListener("click", hideLia);
-  minimize?.addEventListener("click", hideLia);
 
   window.openLiaGlobal = openLia;
   window.closeLiaGlobal = hideLia;
+  window.toggleLiaGlobal = toggleLia;
 })();

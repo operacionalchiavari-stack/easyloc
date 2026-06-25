@@ -431,3 +431,23 @@ entrypoint = "./functions/calcular-distancia/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/studio-ai-engine/index.ts"
+
+[functions.zapi-integration]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/zapi-integration/index.ts"
+
+[functions.zapi-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/zapi-webhook/index.ts"
+
+[functions.payment-gateways]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/payment-gateways/index.ts"
+
+[functions.payment-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/payment-webhook/index.ts"

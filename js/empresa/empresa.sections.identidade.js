@@ -6,23 +6,25 @@
     cor_destaque: "#FF6A00",
     cor_fundo: "#FFFAF6"
   };
+  const LOGO_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+  const LOGO_EXTS = ["png", "jpg", "jpeg", "webp", "svg"];
 
   function render(container) {
     container.innerHTML = `
       <div style="display:grid;grid-template-columns:320px 1fr;gap:22px;">
         <section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;background:#fff;">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:6px;">Logo da empresa</div>
-          <div id="identidadeLogoPreview" style="height:150px;border:1px dashed #cbd5e1;border-radius:16px;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;color:#64748b;">
+          <div id="identidadeLogoPreview" style="height:150px;border:1px dashed #cbd5e1;border-radius:16px;background:linear-gradient(135deg,rgba(15,42,68,.94),rgba(23,58,94,.78));display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;color:#e2e8f0;">
             Nenhuma logo
           </div>
-          <input id="identidadeLogoInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" style="display:none;">
+          <input id="identidadeLogoInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" style="display:none;">
           <button class="btn secondary" type="button" id="identidadeLogoBtn" style="width:100%;">Selecionar logo</button>
           <div style="display:grid;grid-template-columns:42px 1fr 42px;gap:8px;align-items:center;margin-top:10px;">
             <button class="btn secondary" type="button" id="identidadeLogoZoomOut" style="height:40px;padding:0;">-</button>
             <div id="identidadeLogoZoomLabel" style="text-align:center;color:#64748b;font-size:12px;font-weight:700;">100%</div>
             <button class="btn secondary" type="button" id="identidadeLogoZoomIn" style="height:40px;padding:0;">+</button>
           </div>
-          <p style="margin:10px 0 0;color:#64748b;font-size:12px;line-height:1.45;">Use PNG ou WEBP sem fundo para melhor acabamento no menu e nas propostas.</p>
+          <p style="margin:10px 0 0;color:#64748b;font-size:12px;line-height:1.45;">Use PNG, WEBP ou SVG com fundo transparente para melhor acabamento no menu e nas propostas.</p>
         </section>
 
         <section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;background:#fff;">
@@ -44,7 +46,7 @@
             <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;">Preview do sistema</div>
             <div id="identidadePreview" style="display:grid;grid-template-columns:90px 1fr;min-height:170px;background:#fffaf6;">
               <div data-preview-sidebar style="background:#0f2a44;padding:14px;color:#fff;">
-                <div data-preview-logo style="width:34px;height:34px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:#0f2a44;font-weight:800;margin-bottom:28px;">E</div>
+                <div data-preview-logo style="width:54px;height:38px;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;margin-bottom:28px;overflow:hidden;">E</div>
                 <div style="height:8px;background:rgba(255,255,255,.65);border-radius:99px;margin-bottom:10px;"></div>
                 <div style="height:8px;background:rgba(255,255,255,.35);border-radius:99px;margin-bottom:10px;"></div>
                 <div style="height:8px;background:rgba(255,255,255,.35);border-radius:99px;"></div>
@@ -113,6 +115,11 @@
       els.status.style.color = color;
     }
 
+    function logoFileIsValid(file) {
+      const ext = (file.name.split(".").pop() || "").toLowerCase();
+      return LOGO_TYPES.includes(file.type) || LOGO_EXTS.includes(ext);
+    }
+
     function fill(theme) {
       els.sidebar.value = theme.cor_sidebar;
       els.sidebarPicker.value = theme.cor_sidebar;
@@ -130,7 +137,7 @@
       logoZoom = Math.min(2.2, Math.max(0.5, Number(logoZoom || 1)));
       if (els.logoZoomLabel) els.logoZoomLabel.textContent = `${Math.round(logoZoom * 100)}%`;
       if (logoPreviewUrl) {
-        els.logoPreview.innerHTML = `<img src="${logoPreviewUrl}" style="max-width:90%;max-height:110px;object-fit:contain;transform:scale(${logoZoom});transform-origin:center;transition:transform .16s ease;" alt="Logo">`;
+        els.logoPreview.innerHTML = `<img src="${logoPreviewUrl}" style="max-width:90%;max-height:110px;object-fit:contain;transform:scale(${logoZoom});transform-origin:center;transition:transform .16s ease;filter:drop-shadow(0 10px 18px rgba(0,0,0,.18));" alt="Logo">`;
       } else {
         els.logoPreview.textContent = "Nenhuma logo";
       }
@@ -154,6 +161,12 @@
       els.preview.querySelector("[data-preview-button]").style.background = theme.cor_destaque;
       els.preview.querySelector("[data-preview-button]").style.borderColor = theme.cor_destaque;
       els.preview.style.background = theme.cor_fundo;
+      const previewLogo = els.preview.querySelector("[data-preview-logo]");
+      if (previewLogo) {
+        previewLogo.innerHTML = logoPreviewUrl
+          ? `<img src="${logoPreviewUrl}" style="max-width:100%;max-height:100%;object-fit:contain;transform:scale(${Math.min(1.35, Math.max(0.75, logoZoom))});transform-origin:center;" alt="Logo">`
+          : "E";
+      }
 
       if (!validation.ok) {
         els.alert.style.display = "block";
@@ -186,7 +199,8 @@
         .upload(path, logoFile, { upsert: true, cacheControl: "3600" });
       if (error) throw error;
       const { data } = window.supabaseClient.storage.from("empresas-logos").getPublicUrl(path);
-      return data?.publicUrl || "";
+      const publicUrl = data?.publicUrl || "";
+      return publicUrl ? `${publicUrl}?v=${Date.now()}` : "";
     }
 
     async function saveIdentity(showMessage = true) {
@@ -216,6 +230,11 @@
         state.empresa.logo_url = logoUrl || null;
         logoPreviewUrl = payload.logo_url;
         logoFile = null;
+        try {
+          localStorage.removeItem(`easyloc_theme_${state.empresaId}`);
+        } catch (cacheError) {
+          console.warn("[EasyLoc Theme] cache antigo ignorado:", cacheError);
+        }
         window.EasyLocTheme.applyTheme(payload);
         setStatus("Salvo", "#16a34a");
         if (showMessage && typeof window.alerta === "function") window.alerta("Identidade visual salva.", "Empresa", "sucesso");
@@ -225,7 +244,7 @@
         setStatus("Erro ao salvar", "#dc2626");
         const tabelaNaoExiste = error?.code === "PGRST205" || String(error?.message || "").includes("configuracoes_empresa");
         const mensagem = tabelaNaoExiste
-          ? "A tabela configuracoes_empresa ainda nao existe no Supabase. Aplique a migration 20260620000200_empresa_identidade_visual.sql e tente salvar novamente."
+          ? "A tabela configuracoes_empresa ainda nao existe no Supabase. Aplique o SQL supabase/APLICAR_AGORA_identidade_visual_empresa.sql no Supabase e tente salvar novamente."
           : (error.message || "Erro ao salvar identidade visual.");
         if (typeof window.alerta === "function") window.alerta(mensagem, "Identidade Visual", "erro");
         else alert(mensagem);
@@ -252,8 +271,8 @@
     els.logoInput.addEventListener("change", () => {
       const file = els.logoInput.files?.[0];
       if (!file) return;
-      if (!["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
-        if (typeof window.alerta === "function") window.alerta("Formato de logo invalido.", "Identidade Visual", "aviso");
+      if (!logoFileIsValid(file)) {
+        if (typeof window.alerta === "function") window.alerta("Formato de logo invalido. Use PNG, WEBP, SVG ou JPG.", "Identidade Visual", "aviso");
         return;
       }
       logoFile = file;

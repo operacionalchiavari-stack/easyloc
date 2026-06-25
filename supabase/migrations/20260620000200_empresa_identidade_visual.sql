@@ -2,6 +2,7 @@ create table if not exists public.configuracoes_empresa (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null references public.empresas(id) on delete cascade,
   logo_url text,
+  logo_zoom numeric not null default 1,
   cor_sidebar text not null default '#0F2A44',
   cor_destaque text not null default '#FF6A00',
   cor_fundo text not null default '#FFFAF6',

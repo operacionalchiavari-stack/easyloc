@@ -2,10 +2,10 @@
   --color-sidebar: #0f2a44;
   --color-primary: #ff6a00;
   --color-bg: #fffaf6;
-  --el-color-primary: var(--color-sidebar);
-  --el-color-primary-strong: #0b1f33;
-  --el-color-primary-dark: #081b2d;
-  --el-color-primary-soft: #eef4fb;
+  --el-color-primary: #1F2937;
+  --el-color-primary-strong: #111827;
+  --el-color-primary-dark: #111827;
+  --el-color-primary-soft: #F3F4F6;
   --el-color-accent: var(--color-primary);
   --el-color-accent-strong: #e85f00;
   --el-color-accent-soft: #fff3e8;
@@ -13,8 +13,10 @@
   --el-color-surface: #ffffff;
   --el-color-surface-soft: #f8fafc;
   --el-color-border: #e5e7eb;
-  --el-color-text: #0f172a;
-  --el-color-muted: #64748b;
+  --el-color-title: #1F2937;
+  --el-color-text: #374151;
+  --el-color-muted: #6B7280;
+  --el-color-placeholder: #9CA3AF;
   --el-color-success: #16a34a;
   --el-color-warning: #f59e0b;
   --el-color-danger: #dc2626;
@@ -39,11 +41,11 @@
 
   --el-table-header-bg: linear-gradient(
     180deg,
-    var(--el-color-primary),
-    var(--el-color-primary-dark)
+    var(--color-sidebar),
+    var(--color-sidebar)
   );
   --el-table-header-color: #ffffff;
-  --el-table-row-hover: #eaf2ff;
+  --el-table-row-hover: #F9FAFB;
   --el-table-row-border: rgba(15, 23, 42, 0.08);
 
   --el-card-padding: 18px;
@@ -57,7 +59,7 @@
   --el-space-6: 24px;
   --el-space-8: 32px;
 
-  --azul: var(--el-color-primary);
+  --azul: var(--el-color-title);
   --laranja: var(--el-color-accent);
   --fundo: var(--el-color-bg);
   --cinza: var(--el-color-border);

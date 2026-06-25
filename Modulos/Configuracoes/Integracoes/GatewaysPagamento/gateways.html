@@ -1,0 +1,34 @@
+<div class="payment-gateways-page el-page" data-module-root>
+  <header class="pg-header">
+    <div>
+      <span class="pg-eyebrow">Configurações</span>
+      <h1>Gateways de Pagamento</h1>
+      <p>Gerencie integrações de pagamento por empresa com credenciais protegidas no servidor.</p>
+    </div>
+    <button type="button" class="btn secondary pg-refresh-btn" id="pgBtnRefresh">
+      <i data-lucide="refresh-cw"></i>
+      Atualizar
+    </button>
+  </header>
+
+  <section class="pg-layout">
+    <aside class="pg-card pg-left">
+      <div class="pg-card-head">
+        <div>
+          <span>Gateways disponíveis</span>
+          <strong>Integrações</strong>
+        </div>
+        <i data-lucide="plug-zap"></i>
+      </div>
+      <div class="pg-gateway-list" id="pgGatewayList">
+        <div class="pg-empty">Carregando gateways...</div>
+      </div>
+    </aside>
+
+    <main class="pg-card pg-right" id="pgConfigPanel">
+      <div class="pg-empty pg-empty-large">
+        Selecione um gateway para configurar.
+      </div>
+    </main>
+  </section>
+</div>

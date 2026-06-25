@@ -291,16 +291,63 @@ function renderChat() {
         ${liaAvatar}
         <div class="msg ia">
           ${a}
-          <div class="msg-tools">
-            <button class="tool primary" data-save-learning="${idx}">⭐ Salvar como aprendizado</button>
-            <button class="tool" data-copy-answer="${idx}">Copiar</button>
-          </div>
         </div>
       </div>
     `;
   });
 
   chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+let liaTypingTimer = null;
+
+function typeAssistantResponse(index, respostaFinal, respostaIsHtml) {
+  if (liaTypingTimer) {
+    clearTimeout(liaTypingTimer);
+    liaTypingTimer = null;
+  }
+
+  const item = conversa[index];
+  if (!item) return Promise.resolve();
+
+  const texto = stripHtml(respostaIsHtml ? respostaFinal : String(respostaFinal || "")).trim();
+  const tokens = texto.match(/(\s+|[^\s]+)/g) || [];
+
+  if (!tokens.length) {
+    item.resposta = respostaFinal;
+    item.resposta_is_html = respostaIsHtml;
+    renderChat();
+    return Promise.resolve();
+  }
+
+  item.resposta = "";
+  item.resposta_is_html = false;
+  renderChat();
+
+  return new Promise((resolve) => {
+    let cursor = 0;
+    let parcial = "";
+
+    const step = () => {
+      parcial += tokens[cursor] || "";
+      cursor += 1;
+      item.resposta = `${escapeHtml(parcial)}<span class="lia-typing-caret"></span>`;
+      item.resposta_is_html = true;
+      renderChat();
+
+      if (cursor < tokens.length) {
+        liaTypingTimer = setTimeout(step, tokens[cursor - 1]?.trim() ? 22 : 8);
+        return;
+      }
+
+      item.resposta = respostaFinal;
+      item.resposta_is_html = respostaIsHtml;
+      renderChat();
+      resolve();
+    };
+
+    liaTypingTimer = setTimeout(step, 140);
+  });
 }
 
 function persistChat() {
@@ -317,43 +364,6 @@ function renderKB() {
   }
 }
 renderChat();
-
-/* AÇÕES: salvar aprendizado / copiar */
-if (chatBox) {
-  chatBox.addEventListener('click', (e) => {
-    const saveIdx = e.target?.getAttribute?.('data-save-learning');
-    const copyIdx = e.target?.getAttribute?.('data-copy-answer');
-
-    if (saveIdx !== null && saveIdx !== undefined) {
-      const idx = Number(saveIdx);
-      const item = conversa[idx];
-      if (!item) return;
-
-      const text = stripHtml(item.resposta_is_html ? item.resposta : item.resposta);
-
-      if (learnTitulo) learnTitulo.value = suggestTitle(item.pergunta);
-      if (learnCategoria) learnCategoria.value = 'Comercial';
-      if (learnConteudo) learnConteudo.value = text;
-      if (learnAtivo) learnAtivo.checked = true;
-
-      if (btnConfirmSaveLearning) {
-        btnConfirmSaveLearning.dataset.mode = 'create';
-        btnConfirmSaveLearning.dataset.editId = '';
-      }
-
-      openModal(modalSaveLearning);
-    }
-
-    if (copyIdx !== null && copyIdx !== undefined) {
-      const idx = Number(copyIdx);
-      const item = conversa[idx];
-      if (!item) return;
-
-      const text = stripHtml(item.resposta_is_html ? item.resposta : item.resposta);
-      navigator.clipboard?.writeText(text);
-    }
-  });
-}
 
 function suggestTitle(pergunta) {
   const p = (pergunta || '').trim();
@@ -995,12 +1005,13 @@ async function askLiaWithText(pergunta) {
 
   conversa.push({
     pergunta,
-    resposta: '<em>escrevendo...</em>',
+    resposta: '<span class="lia-thinking"><span></span><span></span><span></span></span>',
     resposta_is_html: true,
   });
 
   persistChat();
   renderChat();
+  const respostaIndex = conversa.length - 1;
 
   try {
     let resposta = '';
@@ -1084,19 +1095,22 @@ Explique de forma genérica como isso costuma funcionar no mercado, se fizer sen
 
     }
 
-    conversa[conversa.length - 1].resposta = resposta;
-    conversa[conversa.length - 1].resposta_is_html = true;
+    conversa[respostaIndex].resposta = resposta;
+    conversa[respostaIndex].resposta_is_html = true;
 
   } catch (err) {
     console.error("🔴 ERRO REAL:", err);
 
-    conversa[conversa.length - 1].resposta =
+    conversa[respostaIndex].resposta =
       err?.message || 'Erro ao consultar o sistema.';
-    conversa[conversa.length - 1].resposta_is_html = false;
+    conversa[respostaIndex].resposta_is_html = false;
   }
 
+  const respostaFinal = conversa[respostaIndex].resposta;
+  const respostaFinalIsHtml = conversa[respostaIndex].resposta_is_html;
   persistChat();
-  renderChat();
+  await typeAssistantResponse(respostaIndex, respostaFinal, respostaFinalIsHtml);
+  persistChat();
 
   if (window.__liaVoice) {
     window.__liaVoice.aguardandoResposta = false;

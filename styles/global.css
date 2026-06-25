@@ -1,8 +1,9 @@
-@import url("./tokens.css");
-@import url("./base.css");
-@import url("./buttons.css");
-@import url("./forms.css");
-@import url("./modals.css");
-@import url("./layout.css");
-@import url("./tables.css");
-@import url("./cards.css");
+@import url("./tokens.css?v=20260625-theme-table");
+@import url("./base.css?v=20260625-theme-table");
+@import url("./buttons.css?v=20260625-theme-table");
+@import url("./forms.css?v=20260625-theme-table");
+@import url("./modals.css?v=20260625-theme-table");
+@import url("./layout.css?v=20260625-theme-table");
+@import url("./tables.css?v=20260625-theme-table");
+@import url("./cards.css?v=20260625-theme-table");
+@import url("./paymentPix.css?v=20260625-pix-flow");

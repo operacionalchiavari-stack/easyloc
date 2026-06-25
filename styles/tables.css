@@ -18,6 +18,7 @@
   background: var(--el-color-surface);
   color: var(--el-color-text);
   font-size: 14px;
+  font-weight: 400;
 }
 
 .el-table thead th,
@@ -29,7 +30,7 @@
   border: 0;
   text-align: left;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -41,6 +42,7 @@
   padding: 13px 16px;
   border-bottom: 1px solid var(--el-table-row-border);
   color: var(--el-color-text);
+  font-weight: 400;
   vertical-align: middle;
 }
 

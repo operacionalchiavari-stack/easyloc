@@ -177,11 +177,36 @@ function initSidebarSearch(){
 
   if(!sidebar || !searchBox || !input) return;
 
+  input.setAttribute("autocomplete", "new-password");
+  input.setAttribute("autocapitalize", "none");
+  input.setAttribute("autocorrect", "off");
+  input.setAttribute("spellcheck", "false");
+  input.value = "";
+  filterSidebarMenu("");
+
+  const unlockSearchInput = () => {
+    input.removeAttribute("readonly");
+  };
+
+  const clearAutofillLeak = () => {
+    if(input.value.includes("@")){
+      input.value = "";
+      filterSidebarMenu("");
+    }
+  };
+
+  setTimeout(clearAutofillLeak, 250);
+  setTimeout(clearAutofillLeak, 1000);
+
+  searchBox.addEventListener("pointerdown", unlockSearchInput);
+  input.addEventListener("focus", unlockSearchInput);
+
   searchBox.addEventListener("click", () => {
     if(window.innerWidth <= 1200){
       sidebar.classList.add("expanded");
     }
 
+    unlockSearchInput();
     input.focus();
   });
 

@@ -23,6 +23,61 @@ const meses = [
   "Dezembro"
 ];
 
+function normalizarObservacoes(value) {
+  if (!value) return {};
+  if (typeof value === "object") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+}
+
+function statusPago(status) {
+  const normalized = String(status || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  return ["pago", "recebido", "quitado", "liquidado", "baixado"].includes(normalized);
+}
+
+function statusCancelado(status) {
+  return String(status || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim() === "cancelado";
+}
+
+function statusLancamentoParcela(status) {
+  if (statusPago(status)) return "Recebido";
+  if (statusCancelado(status)) return "Cancelado";
+  return "Pendente";
+}
+
+function numeroMoeda(value) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (value === null || value === undefined) return 0;
+  const parsed = String(value)
+    .replace("R$", "")
+    .replace(/\s/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+  return Math.max(0, Number(parsed) || 0);
+}
+
+function valorRecebidoParcela(parcela) {
+  if (!parcela) return 0;
+  const baixado = numeroMoeda(parcela.baixado);
+  const valorRecebido = numeroMoeda(parcela.valor_recebido);
+  const recebido = numeroMoeda(parcela.recebido);
+  if (baixado > 0) return baixado;
+  if (valorRecebido > 0) return valorRecebido;
+  if (recebido > 0) return recebido;
+  return statusPago(parcela.status) ? numeroMoeda(parcela.valor) : 0;
+}
+
 function normalizarDataISO(value) {
   if (!value) return "";
   const texto = String(value);
@@ -37,33 +92,44 @@ function numeroPedidoFormatado(pedido) {
 }
 
 function lancamentosDoPedido(pedido) {
-  const valor = Number(pedido.valor_total || pedido.total || pedido.valor || 0);
+  const valor = numeroMoeda(pedido.valor_total || pedido.total || pedido.valor || 0);
+  const observacoes = normalizarObservacoes(pedido.observacoes);
   const data = normalizarDataISO(pedido.data_entrega)
     || normalizarDataISO(pedido.data_evento)
     || normalizarDataISO(pedido.data_hora)
     || HOJE;
-  const parcelas = Array.isArray(pedido.observacoes?.parcelas_financeiras)
-    ? pedido.observacoes.parcelas_financeiras
+  const parcelas = Array.isArray(observacoes.parcelas_financeiras)
+    ? observacoes.parcelas_financeiras
     : [];
 
   if (parcelas.length) {
     return parcelas
-      .filter((parcela) => Number(parcela.valor || 0) > 0)
+      .filter((parcela) => numeroMoeda(parcela.valor) > 0)
       .map((parcela, index) => ({
         data: normalizarDataISO(parcela.vencimento) || data,
         descricao: `Recebimento - ${pedido.cliente_nome || "Cliente nao informado"}`,
         categoria: "Eventos",
         tipo: "Entrada",
-        valor: Number(parcela.valor || 0),
-        baixado: 0,
-        status: "Pendente",
+        valor: numeroMoeda(parcela.valor),
+        baixado: valorRecebidoParcela(parcela),
+        status: statusLancamentoParcela(parcela.status),
         forma: parcela.metodo || "A combinar",
         documento: `PED-${String(pedido.numero_pedido || pedido.id || "").replace("#", "")}`,
         parcela: parcela.tipo || `Parcela ${index + 1}`,
         origem: "pedido",
-        pedido_id: pedido.id
+        pedido_id: pedido.id,
+        cliente_id: pedido.cliente_id || null,
+        cliente_nome: pedido.cliente_nome || "Cliente nao informado",
+        contato_cliente: pedido.contato_cliente || "",
+        parcela_index: index,
+        parcela_numero: parcela.numero || index + 1
       }));
   }
+
+  const recebido = numeroMoeda(observacoes.valor_recebido || observacoes.total_recebido || 0);
+  const status = statusPago(observacoes.status_financeiro || observacoes.pagamento_status)
+    ? "Recebido"
+    : recebido > 0 ? "Parcial" : "Pendente";
 
   return [{
     data,
@@ -71,13 +137,16 @@ function lancamentosDoPedido(pedido) {
     categoria: "Eventos",
     tipo: "Entrada",
     valor,
-    baixado: 0,
-    status: "Pendente",
+    baixado: recebido,
+    status,
     forma: "A combinar",
     documento: `PED-${String(pedido.numero_pedido || pedido.id || "").replace("#", "")}`,
     parcela: "Pedido",
     origem: "pedido",
-    pedido_id: pedido.id
+    pedido_id: pedido.id,
+    cliente_id: pedido.cliente_id || null,
+    cliente_nome: pedido.cliente_nome || "Cliente nao informado",
+    contato_cliente: pedido.contato_cliente || ""
   }];
 }
 
@@ -89,7 +158,7 @@ async function sincronizarPedidosFinanceiro() {
   try {
     const { data, error } = await supabase
       .from("separacoes_pedidos")
-      .select("id,numero_pedido,cliente_nome,data_evento,data_entrega,data_hora,valor_total,status_comercial,observacoes")
+      .select("id,numero_pedido,cliente_id,cliente_nome,contato_cliente,data_evento,data_entrega,data_hora,valor_total,status_comercial,observacoes")
       .eq("empresa_id", empresaId)
       .in("status_comercial", ["pre_reserva", "aprovado"])
       .order("data_evento", { ascending: true });
@@ -106,6 +175,107 @@ async function sincronizarPedidosFinanceiro() {
   } catch (err) {
     console.warn("Nao foi possivel sincronizar pedidos no financeiro:", err);
   }
+}
+
+function localizarParcela(parcelas, item) {
+  if (!Array.isArray(parcelas) || !parcelas.length) return -1;
+  if (Number.isInteger(item.parcela_index) && parcelas[item.parcela_index]) return item.parcela_index;
+
+  const numero = String(item.parcela_numero || "").trim();
+  const tipo = String(item.parcela || "").trim().toLowerCase();
+  const vencimento = normalizarDataISO(item.data);
+  const valor = numeroMoeda(item.valor);
+
+  return parcelas.findIndex((parcela) => {
+    const mesmoNumero = numero && String(parcela.numero || "").trim() === numero;
+    const mesmoTipo = tipo && String(parcela.tipo || "").trim().toLowerCase() === tipo;
+    const mesmoVencimento = vencimento && normalizarDataISO(parcela.vencimento) === vencimento;
+    const mesmoValor = Math.abs(numeroMoeda(parcela.valor) - valor) < 0.01;
+    return mesmoNumero || (mesmoTipo && (mesmoVencimento || mesmoValor));
+  });
+}
+
+function resumoFinanceiroObservacoes(observacoes, valorTotal, item) {
+  const parcelas = Array.isArray(observacoes.parcelas_financeiras)
+    ? observacoes.parcelas_financeiras
+    : [];
+
+  const recebidoParcelas = parcelas.reduce((sum, parcela) => sum + valorRecebidoParcela(parcela), 0);
+  const recebidoFallback = numeroMoeda(observacoes.valor_recebido || observacoes.total_recebido || 0);
+  const recebidoItem = item?.origem === "pedido" && !parcelas.length ? numeroMoeda(item.valor) : 0;
+  const total = numeroMoeda(valorTotal);
+  const recebido = Math.min(total, recebidoParcelas || recebidoFallback || recebidoItem);
+  const status = recebido >= total && total > 0
+    ? "Recebido"
+    : recebido > 0 ? "Parcial" : "Pendente";
+
+  return { recebido, status };
+}
+
+async function registrarBaixaPedido(item) {
+  if (!item || item.origem !== "pedido" || !item.pedido_id || normalizarTipo(item.tipo) !== "Entrada") return;
+
+  const supabase = window.supabaseClient;
+  const empresaId = window.__CONTEXT?.empresa_id;
+  if (!supabase || !empresaId) return;
+
+  const { data: pedido, error } = await supabase
+    .from("separacoes_pedidos")
+    .select("id,valor_total,observacoes")
+    .eq("empresa_id", empresaId)
+    .eq("id", item.pedido_id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!pedido) throw new Error("Pedido nao encontrado para registrar baixa.");
+
+  const observacoes = normalizarObservacoes(pedido.observacoes);
+  const parcelas = Array.isArray(observacoes.parcelas_financeiras)
+    ? observacoes.parcelas_financeiras.map((parcela) => ({ ...parcela }))
+    : [];
+  const now = new Date().toISOString();
+
+  if (parcelas.length) {
+    const index = localizarParcela(parcelas, item);
+    if (index < 0) throw new Error("Parcela do pedido nao encontrada para baixa.");
+    parcelas[index] = {
+      ...parcelas[index],
+      status: "Recebido",
+        valor_recebido: numeroMoeda(parcelas[index].valor || item.valor || 0),
+        baixado: numeroMoeda(parcelas[index].valor || item.valor || 0),
+      baixado_em: now
+    };
+    observacoes.parcelas_financeiras = parcelas;
+  }
+
+  const resumo = resumoFinanceiroObservacoes(observacoes, pedido.valor_total || item.valor, item);
+  const nextObservacoes = {
+    ...observacoes,
+    valor_recebido: resumo.recebido,
+    total_recebido: resumo.recebido,
+    status_financeiro: resumo.status,
+    financeiro_atualizado_em: now
+  };
+
+  const { error: updateError } = await supabase
+    .from("separacoes_pedidos")
+    .update({ observacoes: nextObservacoes })
+    .eq("empresa_id", empresaId)
+    .eq("id", item.pedido_id);
+
+  if (updateError) throw updateError;
+
+  item.pedido_baixa_sincronizada = true;
+  item.baixado_em = now;
+
+  const eventPayload = {
+    pedido_id: item.pedido_id,
+    atualizado_em: now
+  };
+  try {
+    localStorage.setItem("easyloc:pedido-financeiro-atualizado", JSON.stringify(eventPayload));
+  } catch {}
+  window.dispatchEvent(new CustomEvent("easyloc:pedido-financeiro-atualizado", { detail: eventPayload }));
 }
 
 function formatarMoeda(valor) {
@@ -312,21 +482,82 @@ function limparModal() {
   document.getElementById("novaParcela").value = "";
 }
 
-function baixarLancamento(index) {
-  const item = listaAtual[index];
+async function concluirBaixa(item, tipoOperacao = "") {
   if (!item) return;
-  item.baixado = item.valor;
-  item.status = normalizarTipo(item.tipo) === "Entrada" ? "Recebido" : "Pago";
-  filtrarLancamentos();
-}
+  const anterior = {
+    baixado: item.baixado,
+    status: item.status,
+    baixado_em: item.baixado_em,
+    pedido_baixa_sincronizada: item.pedido_baixa_sincronizada
+  };
+  const tipo = tipoOperacao || normalizarTipo(item.tipo);
 
-function baixarConta(tipo, index) {
-  const lista = aplicarFiltros(lancamentos.filter(item => normalizarTipo(item.tipo) === tipo));
-  const item = lista[index];
-  if (!item) return;
   item.baixado = item.valor;
   item.status = tipo === "Entrada" ? "Recebido" : "Pago";
   filtrarLancamentos();
+
+  try {
+    await registrarBaixaPedido(item);
+    filtrarLancamentos();
+  } catch (error) {
+    console.error("Nao foi possivel registrar baixa do pedido:", error);
+    item.baixado = anterior.baixado;
+    item.status = anterior.status;
+    item.baixado_em = anterior.baixado_em;
+    item.pedido_baixa_sincronizada = anterior.pedido_baixa_sincronizada;
+    filtrarLancamentos();
+    if (typeof window.alerta === "function") {
+      window.alerta("Nao foi possivel salvar a baixa no pedido. Tente novamente.", "Financeiro", "erro");
+    } else {
+      alert("Nao foi possivel salvar a baixa no pedido. Tente novamente.");
+    }
+  }
+}
+
+async function baixarLancamento(index) {
+  const item = listaAtual[index];
+  if (!item) return;
+  await concluirBaixa(item);
+}
+
+async function baixarConta(tipo, index) {
+  const lista = aplicarFiltros(lancamentos.filter(item => normalizarTipo(item.tipo) === tipo));
+  const item = lista[index];
+  if (!item) return;
+  await concluirBaixa(item, tipo);
+}
+
+function abrirPixContaReceber(index) {
+  const lista = aplicarFiltros(lancamentos.filter(item => normalizarTipo(item.tipo) === "Entrada"));
+  const item = lista[index];
+  if (!item) return;
+
+  if (!window.EasyLocPix?.open) {
+    if (typeof window.alerta === "function") {
+      window.alerta("Fluxo PIX indisponivel neste momento.", "PIX", "erro");
+    } else {
+      alert("Fluxo PIX indisponivel neste momento.");
+    }
+    return;
+  }
+
+  const cliente = item.cliente_nome || String(item.descricao || "").replace("Recebimento - ", "") || "Cliente nao informado";
+  const numeroPedido = String(item.documento || "").replace(/^PED-/i, "");
+
+  window.EasyLocPix.open({
+    source: "contas_receber",
+    pedidoId: item.pedido_id || null,
+    numeroPedido,
+    clienteId: item.cliente_id || null,
+    cliente,
+    contato: item.contato_cliente || item.telefone || "",
+    parcelaIndex: Number.isInteger(item.parcela_index) ? item.parcela_index : null,
+    parcelaNumero: item.parcela_numero || "",
+    parcelaLabel: item.parcela || "Pedido",
+    valor: saldoAberto(item) || item.valor || 0,
+    vencimento: item.data,
+    gateway: "mercado_pago"
+  });
 }
 
 function excluirConta(tipo, index) {
@@ -370,6 +601,9 @@ function renderizarContasReceber() {
       <td><span class="badge status ${status.toLowerCase()}">${status}</span></td>
       <td>${item.forma}</td>
       <td class="acoes-conta">
+        <button class="btn-acao pix" onclick="abrirPixContaReceber(${index})" title="Gerar PIX" aria-label="Gerar PIX">
+          <i data-lucide="qr-code"></i>
+        </button>
         <button class="btn-acao" onclick="baixarConta('Entrada', ${index})" ${isBaixado(item) ? "disabled" : ""}>Baixar</button>
         <button class="btn-acao danger" onclick="excluirConta('Entrada', ${index})">Excluir</button>
       </td>
@@ -382,6 +616,7 @@ function renderizarContasReceber() {
   document.getElementById("receberBaixado").innerText = formatarMoeda(resumo.baixado);
   document.getElementById("receberVencido").innerText = formatarMoeda(resumo.vencido);
   document.getElementById("receberAVencer").innerText = formatarMoeda(resumo.aVencer);
+  window.lucide?.createIcons?.();
 }
 
 function renderizarContasPagar() {
@@ -537,6 +772,34 @@ async function inicializarFinanceiro() {
   await sincronizarPedidosFinanceiro();
   filtrarLancamentos();
   gerarCalendarioFluxo();
+
+  if (window.__financeiroPixHandler) {
+    window.removeEventListener("easyloc:pix-atualizado", window.__financeiroPixHandler);
+    window.removeEventListener("easyloc:pedido-financeiro-atualizado", window.__financeiroPixHandler);
+  }
+  window.__financeiroPixHandler = async () => {
+    await sincronizarPedidosFinanceiro();
+    filtrarLancamentos();
+    gerarCalendarioFluxo();
+  };
+  window.addEventListener("easyloc:pix-atualizado", window.__financeiroPixHandler);
+  window.addEventListener("easyloc:pedido-financeiro-atualizado", window.__financeiroPixHandler);
+
+  if (window.__financeiroRealtimeChannel && window.supabaseClient?.removeChannel) {
+    window.supabaseClient.removeChannel(window.__financeiroRealtimeChannel);
+    window.__financeiroRealtimeChannel = null;
+  }
+  if (window.supabaseClient?.channel && window.__CONTEXT?.empresa_id) {
+    window.__financeiroRealtimeChannel = window.supabaseClient
+      .channel(`financeiro-pedidos-${window.__CONTEXT.empresa_id}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "separacoes_pedidos",
+        filter: `empresa_id=eq.${window.__CONTEXT.empresa_id}`
+      }, window.__financeiroPixHandler)
+      .subscribe();
+  }
   window.finalizarCarregamentoModulo?.();
 }
 
@@ -548,6 +811,7 @@ window.fecharModal = fecharModal;
 window.salvarLancamento = salvarLancamento;
 window.baixarLancamento = baixarLancamento;
 window.baixarConta = baixarConta;
+window.abrirPixContaReceber = abrirPixContaReceber;
 window.excluirConta = excluirConta;
 window.mostrarCalendario = mostrarCalendario;
 window.mostrarDetalhado = mostrarDetalhado;
@@ -559,6 +823,15 @@ window.abrirDia = abrirDia;
 window.fecharDia = fecharDia;
 
 window.__activeModuleDestroy = function financeiroDestroy(){
+  if (window.__financeiroPixHandler) {
+    window.removeEventListener("easyloc:pix-atualizado", window.__financeiroPixHandler);
+    window.removeEventListener("easyloc:pedido-financeiro-atualizado", window.__financeiroPixHandler);
+    delete window.__financeiroPixHandler;
+  }
+  if (window.__financeiroRealtimeChannel && window.supabaseClient?.removeChannel) {
+    window.supabaseClient.removeChannel(window.__financeiroRealtimeChannel);
+    delete window.__financeiroRealtimeChannel;
+  }
   delete window.filtrarLancamentos;
   delete window.abrirModal;
   delete window.abrirModalReceber;
@@ -567,6 +840,7 @@ window.__activeModuleDestroy = function financeiroDestroy(){
   delete window.salvarLancamento;
   delete window.baixarLancamento;
   delete window.baixarConta;
+  delete window.abrirPixContaReceber;
   delete window.excluirConta;
   delete window.mostrarCalendario;
   delete window.mostrarDetalhado;

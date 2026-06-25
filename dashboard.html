@@ -28,8 +28,22 @@
 
         if (theme.cor_sidebar) {
           root.style.setProperty("--color-sidebar", theme.cor_sidebar);
-          root.style.setProperty("--azul", theme.cor_sidebar);
+          root.style.setProperty("--el-color-primary", "#1F2937");
+          root.style.setProperty("--el-color-primary-strong", "#111827");
+          root.style.setProperty("--el-color-primary-dark", "#111827");
+          root.style.setProperty("--el-color-primary-soft", "#F3F4F6");
+          root.style.setProperty("--el-color-title", "#1F2937");
+          root.style.setProperty("--el-color-text", "#374151");
+          root.style.setProperty("--el-color-muted", "#6B7280");
+          root.style.setProperty("--el-color-placeholder", "#9CA3AF");
+          root.style.setProperty("--el-table-header-bg", `linear-gradient(180deg, ${theme.cor_sidebar}, ${theme.cor_sidebar})`);
+          root.style.setProperty("--el-table-row-hover", "#F9FAFB");
+          root.style.setProperty("--azul", "#1F2937");
           root.style.setProperty("--azul-2", theme.cor_sidebar);
+          root.style.setProperty("--texto-principal", "#374151");
+          root.style.setProperty("--texto-secundario", "#6B7280");
+          root.style.setProperty("--cor-texto", "#374151");
+          root.style.setProperty("--cor-texto-suave", "#6B7280");
         }
 
         if (theme.cor_destaque) {
@@ -59,6 +73,7 @@
   display: flex;
   justify-content: center;
   margin: 0;
+  flex-shrink: 0;
 }
 /* ========================================
    STATUS - SIDEBAR RECOLHIDA
@@ -93,13 +108,13 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  width:30px;
-  height:30px;
+  width:18px;
+  height:18px;
   gap:0;
-  background:rgba(255,255,255,.10);
+  background:transparent;
   padding:0;
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:10px;
+  border:0;
+  border-radius:50%;
   font-size:13px;
   font-weight:600;
   color:#0f172a;
@@ -109,7 +124,7 @@
 }
 
 .status-indicator:hover{
-  background:rgba(255,255,255,.16);
+  background:rgba(255,255,255,.12);
 }
 
 .status-dot{
@@ -120,6 +135,10 @@
 }
 
 .sidebar-header .status-text {
+  display: none;
+}
+
+.status-text {
   display: none;
 }
 
@@ -253,7 +272,7 @@
       --color-sidebar: #0f2a44;
       --color-primary: #ff6a00;
       --color-bg: #fffaf6;
-      --azul: #0f2a44;
+      --azul: #1F2937;
       --azul-2: #173a5e;
       --laranja: #ff6a00;
     }
@@ -304,48 +323,72 @@
 }
 
     .sidebar-header {
-      height: 60px;
-      padding: 0 14px;
+      height: 88px;
+      padding: 0 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
       border-bottom: 1px solid rgba(255,255,255,.08);
+      position: relative;
     }
 
     .sidebar-brand {
       display: flex;
       align-items: center;
+      justify-content: center;
       min-width: 0;
       gap: 10px;
+      width: 36px;
+      flex-shrink: 0;
     }
 
     .sidebar-header img {
-      height: 29px;
-      max-width: 118px;
+      height: 44px;
+      max-width: 150px;
       object-fit: contain;
       flex-shrink: 0;
     }
 
     body.company-logo-active .sidebar-brand {
       flex: 1;
-      max-width: calc(100% - 78px);
+      justify-content: center;
+      max-width: 100%;
     }
 
     body.company-logo-active .sidebar-header img {
       width: 100%;
-      max-width: 176px;
-      height: 46px;
+      max-width: 220px;
+      height: 76px;
       background: transparent;
       border-radius: 0;
       padding: 0;
       object-fit: contain;
-      object-position: left center;
+      object-position: center;
+    }
+
+    .sidebar:not(:hover):not(.expanded) .sidebar-brand {
+      width: 100%;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .sidebar:not(:hover):not(.expanded) .sidebar-header-actions {
+      display: none;
+    }
+
+    .sidebar:not(:hover):not(.expanded) .sidebar-header img {
+      width: 48px;
+      height: 48px;
+      max-width: 48px;
+      object-fit: contain;
+      object-position: center;
     }
 
     body.company-logo-active .sidebar:not(:hover):not(.expanded) .sidebar-header img {
-      width: 34px;
-      height: 34px;
+      width: 54px;
+      height: 54px;
+      max-width: 54px;
       border-radius: 0;
       padding: 0;
     }
@@ -375,6 +418,13 @@
       width: auto;
     }
 
+    .sidebar:hover .sidebar-brand,
+    .sidebar.expanded .sidebar-brand {
+      width: auto;
+      flex: 1;
+      justify-content: flex-start;
+    }
+
     body.company-logo-active .sidebar-brand span,
     body.company-logo-active .sidebar:hover .sidebar-brand span,
     body.company-logo-active .sidebar.expanded .sidebar-brand span {
@@ -383,12 +433,27 @@
       width: 0;
     }
 
+    body.company-logo-active .sidebar:hover .sidebar-brand,
+    body.company-logo-active .sidebar.expanded .sidebar-brand {
+      justify-content: center;
+      width: 100%;
+      padding-right: 0;
+    }
+
     .sidebar:hover .sidebar-header-actions,
     .sidebar.expanded .sidebar-header-actions {
       opacity: 1;
       width: auto;
       overflow: visible;
       pointer-events: auto;
+    }
+
+    body.company-logo-active .sidebar:hover .sidebar-header-actions,
+    body.company-logo-active .sidebar.expanded .sidebar-header-actions {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 2;
     }
 
     .sidebar-top-logout {
@@ -416,7 +481,7 @@
       height: 17px;
     }
 
-    .sidebar-header .status-panel {
+    .sidebar-search-row .status-panel {
       top: calc(100% + 10px);
       right: 0;
       bottom: auto;
@@ -427,17 +492,26 @@
 
     .menu {
       margin-top: 14px;
-      padding-bottom: 90px;
+      padding-bottom: 126px;
+    }
+
+    .sidebar-search-row {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin:12px 14px 5px;
     }
 
     .sidebar-search {
       height: 40px;
-      margin: 12px 12px 5px;
+      margin: 0;
       padding: 0 11px;
+      flex:1;
+      min-width:0;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 9px;
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 12px;
       background: rgba(255,255,255,.07);
@@ -476,7 +550,7 @@
       color: rgba(255,255,255,.52);
     }
 
-    .sidebar-search button {
+    .sidebar-search #sidebarSearchClear {
       width: 24px;
       height: 24px;
       border: 0;
@@ -490,19 +564,30 @@
       padding: 0;
     }
 
-    .sidebar-search button:hover {
+    .sidebar-search #sidebarSearchClear:hover {
       background: rgba(255,255,255,.18);
     }
 
-    .sidebar-search.has-value button {
+    .sidebar-search.has-value #sidebarSearchClear {
       display: flex;
+    }
+
+    .sidebar-search-row .system-status {
+      width:20px;
+      height:40px;
+      align-items:center;
+    }
+
+    .sidebar-search-row .status-indicator {
+      width:20px;
+      height:20px;
     }
 
     .sidebar:hover .sidebar-search,
     .sidebar.expanded .sidebar-search {
       justify-content: flex-start;
-      margin-left: 14px;
-      margin-right: 14px;
+      flex:1;
+      min-width:0;
     }
 
     .sidebar:hover .sidebar-search input,
@@ -513,9 +598,20 @@
 
     .sidebar:not(:hover):not(.expanded) .sidebar-search {
       width: 44px;
+      flex:0 0 44px;
       padding: 0;
       margin-left: auto;
       margin-right: auto;
+    }
+
+    .sidebar:not(:hover):not(.expanded) .sidebar-search-row {
+      justify-content:center;
+      margin-left:auto;
+      margin-right:auto;
+    }
+
+    .sidebar:not(:hover):not(.expanded) .sidebar-search-row .system-status {
+      display: none;
     }
 
     .sidebar-menu-hidden {
@@ -579,7 +675,7 @@
     }
 
     .menu-item.has-sub::after {
-      content: "â–¶";
+      content: "\25B8";
       position: absolute;
       right: 18px;
       font-size: 12px;
@@ -591,7 +687,7 @@
     }
 
     .menu-item.has-sub.open::after {
-      content: "â–¼";
+      content: "\25BE";
     }
 
     .submenu {
@@ -660,7 +756,7 @@
     }
 
     .submenu-trigger::after {
-      content: "â€º";
+      content: "\203A";
       font-size: 16px;
       line-height: 1;
       transition: transform .2s ease;
@@ -683,7 +779,7 @@
   transition: .25s;
   min-height: 100vh;
 
-  width: calc(100% - 72px); /* ðŸ”¥ ESSENCIAL */
+  width: calc(100% - 72px); /* essencial */
 }
 
 .sidebar:hover ~ .main {
@@ -775,6 +871,26 @@
   gap:8px;
 }
 
+.sidebar-user-actions{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  flex:0 0 32px;
+}
+
+.sidebar-user-actions .sidebar-top-logout,
+.sidebar-user-actions .global-help-button{
+  width:32px;
+  height:32px;
+  min-height:32px;
+  flex:0 0 32px;
+}
+
+.sidebar-user-actions .sidebar-top-logout{
+  border-radius:12px;
+  box-shadow:0 8px 18px rgba(15, 42, 68, .18);
+}
+
 .user-account{
   display:flex;
   align-items:center;
@@ -862,7 +978,7 @@
   justify-content:center;
 }
 
-.sidebar:not(:hover):not(.expanded) .sidebar-user .global-help-button{
+.sidebar:not(:hover):not(.expanded) .sidebar-user-actions{
   display:none;
 }
 
@@ -917,6 +1033,14 @@
 
 .sidebar-user .dropdown-item span{
   color:#0f172a !important;
+}
+
+.sidebar-user .dropdown-item svg{
+  width:18px;
+  height:18px;
+  flex-shrink:0;
+  color:#0f172a;
+  stroke-width:2.2;
 }
 
 
@@ -1217,14 +1341,14 @@
 
   </style>
 
-  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/global.css?v=20260625-theme-table">
   <link rel="stylesheet" href="styles/global-help.css">
   <link rel="stylesheet" href="styles/lia-widget.css">
 </head>
 
 <body>
 
-<button class="hamburger" onclick="toggleMenu()">â˜°</button>
+<button class="hamburger" onclick="toggleMenu()">☰</button>
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
@@ -1232,48 +1356,50 @@
       <img id="sidebarLogo" src="logosimbolo.png">
       <span>EasyLoc</span>
     </div>
-    <div class="sidebar-header-actions">
-      <div class="system-status" id="systemStatus">
-        <button type="button" class="status-indicator" id="statusIndicator" aria-label="Status do sistema">
-          <span class="status-dot" id="statusDot"></span>
-          <span class="status-text" id="statusText">EstÃ¡vel</span>
-        </button>
-        <div class="status-panel" id="statusPanel">
-          <div class="status-panel-header">
-            <strong>Status do Sistema</strong>
-          </div>
-          <div class="status-line">
-            <span>ConexÃ£o com internet:</span>
-            <span id="statusInternet">Verificando...</span>
-          </div>
-          <div class="status-line">
-            <span>Resposta do sistema:</span>
-            <span id="statusBackend">Verificando...</span>
-          </div>
-          <div class="status-line">
-            <span>Performance geral:</span>
-            <span id="statusGeral">Analisando...</span>
-          </div>
-        </div>
-      </div>
-      <button type="button" class="sidebar-top-logout" onclick="logout()" aria-label="Sair">
-        <i data-lucide="log-out"></i>
-      </button>
-    </div>
   </div>
 
-  <div class="sidebar-search" id="sidebarSearch">
-    <i data-lucide="search"></i>
-    <input
-      id="sidebarSearchInput"
-      type="search"
-      placeholder="Buscar modulo"
-      autocomplete="off"
-      aria-label="Buscar categorias e subcategorias"
-    >
-    <button type="button" id="sidebarSearchClear" aria-label="Limpar busca">
-      <i data-lucide="x"></i>
-    </button>
+  <div class="sidebar-search-row">
+    <div class="sidebar-search" id="sidebarSearch">
+      <i data-lucide="search"></i>
+      <input
+        id="sidebarSearchInput"
+        type="search"
+        name="easyloc_module_search"
+        placeholder="Buscar modulo"
+        autocomplete="new-password"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        readonly
+        aria-label="Buscar categorias e subcategorias"
+      >
+      <button type="button" id="sidebarSearchClear" aria-label="Limpar busca">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="system-status" id="systemStatus">
+      <button type="button" class="status-indicator" id="statusIndicator" aria-label="Status do sistema">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Estável</span>
+      </button>
+      <div class="status-panel" id="statusPanel">
+        <div class="status-panel-header">
+          <strong>Status do Sistema</strong>
+        </div>
+        <div class="status-line">
+          <span>Conexão com internet:</span>
+          <span id="statusInternet">Verificando...</span>
+        </div>
+        <div class="status-line">
+          <span>Resposta do sistema:</span>
+          <span id="statusBackend">Verificando...</span>
+        </div>
+        <div class="status-line">
+          <span>Performance geral:</span>
+          <span id="statusGeral">Analisando...</span>
+        </div>
+      </div>
+    </div>
   </div>
 
 <nav class="menu">
@@ -1363,7 +1489,7 @@
     this,
     'Modulos/Estoque/Personalizacoes/estoque-personalizacoes.css'
   )">
-    Cadastro de PersonalizaÃ§Ãµes
+    Cadastro de Personalizações
 </div>
 
   <div class="submenu-item"
@@ -1404,7 +1530,7 @@
       this,
       'Modulos/Estoque/OrdemdeServicos/ordem-servicos.css'
     )">
-    Ordem de ServiÃ§os
+    Ordem de Serviços
   </div>
 
       <div class="submenu-item"
@@ -1434,15 +1560,15 @@
       this,
       'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.css'
     )">
-    SeparaÃ§Ã£o de Materiais
+    Separação de Materiais
   </div>
 </div>
 
 
-<!-- ===== LOGÃSTICA ===== -->
+<!-- ===== LOGÍSTICA ===== -->
 <div class="menu-item has-sub" onclick="toggleSubmenu('logistica-sub', this)">
   <i data-lucide="truck"></i>
-  <span>LogÃ­stica</span>
+  <span>Logística</span>
 </div>
 
 <div class="submenu" id="logistica-sub">
@@ -1458,7 +1584,7 @@
       this,
       'Modulos/Logistica/cadastro-caminhoes.css'
     )">
-    Cadastro de CaminhÃµes
+    Cadastro de Caminhões
   </div>
 
   </div>
@@ -1470,7 +1596,7 @@
     this,
     'Modulos/Logistica/Cronograma/Cronograma.css'
   )">
-  Cronograma LogÃ­stico
+  Cronograma Logístico
 </div>
 
 <div class="submenu-item"
@@ -1490,7 +1616,7 @@
     this,
     'Modulos/Estoque/SeparacaoMateriais/separacao-materiais.css'
   )">
-  SeparaÃ§Ã£o
+  Separação
 </div>
 
 </div>
@@ -1532,16 +1658,16 @@
       this,
       'Modulos/RH/GestaoPessoas/rh-gestao-pessoas.css'
     )">
-    GestÃ£o de Pessoas
+    Gestão de Pessoas
   </div>
 
 </div>
 
 
-<!-- ===== INTELIGÃŠNCIA ARTIFICIAL ===== -->
+<!-- ===== INTELIGÊNCIA ARTIFICIAL ===== -->
 <div class="menu-item has-sub" onclick="toggleSubmenu('ia-sub', this)">
   <i data-lucide="sparkles"></i>
-  <span>InteligÃªncia Artificial</span>
+  <span>Inteligência Artificial</span>
 </div>
 
 <div class="submenu" id="ia-sub">
@@ -1558,13 +1684,37 @@
 
 </div>
 
-<!-- ===== CONFIGURAÃ‡Ã•ES ===== -->
+<!-- ===== CONFIGURAÇÕES ===== -->
 <div class="menu-item has-sub" onclick="toggleSubmenu('configuracoes-sub', this)">
   <i data-lucide="settings"></i>
-  <span>ConfiguraÃ§Ãµes</span>
+  <span>Configurações</span>
 </div>
 
 <div class="submenu" id="configuracoes-sub">
+  <button class="submenu-trigger" type="button" onclick="toggleNestedSubmenu('configuracoes-integracoes-sub', this)">
+    Integrações
+  </button>
+  <div class="submenu-group" id="configuracoes-integracoes-sub">
+    <div class="submenu-item"
+      onclick="carregarNaMain(
+        'Modulos/Configuracoes/Integracoes/WhatsApp/whatsapp.html',
+        'Modulos/Configuracoes/Integracoes/WhatsApp/whatsapp.js',
+        this,
+        'Modulos/Configuracoes/Integracoes/WhatsApp/whatsapp.css'
+      )">
+      WhatsApp
+    </div>
+    <div class="submenu-item"
+      onclick="carregarNaMain(
+        'Modulos/Configuracoes/Integracoes/GatewaysPagamento/gateways.html',
+        'Modulos/Configuracoes/Integracoes/GatewaysPagamento/gateways.js',
+        this,
+        'Modulos/Configuracoes/Integracoes/GatewaysPagamento/gateways.css'
+      )">
+      Gateways de Pagamento
+    </div>
+  </div>
+
   <div class="submenu-item"
     onclick="carregarNaMain(
       'Modulos/Configuracoes/Permissoes/permissoes.html',
@@ -1572,11 +1722,11 @@
       this,
       'Modulos/Configuracoes/Permissoes/permissoes.css'
     )">
-    Usuarios e Permissoes
+    Usuários e Permissões
   </div>
 
   <div class="submenu-item" onclick="abrirEmpresa()">
-    Empresa e Parametros
+    Empresa e Parâmetros
   </div>
 </div>
 
@@ -1594,32 +1744,37 @@
       <span class="empresa" id="empresaNome">Carregando...</span>
       <span class="usuario" id="usuarioNome">
         Carregando...
-        <span class="arrow">â–¾</span>
+        <span class="arrow">&#9662;</span>
       </span>
     </div>
 
   </div>
 
-  <button type="button" class="global-help-button sidebar-help-button" id="globalHelpButton" title="Ajuda" aria-label="Ajuda">
-    <span>?</span>
-  </button>
+  <div class="sidebar-user-actions">
+    <button type="button" class="global-help-button sidebar-help-button" id="globalHelpButton" title="Ajuda" aria-label="Ajuda">
+      <span>?</span>
+    </button>
+    <button type="button" class="sidebar-top-logout sidebar-user-logout" onclick="logout()" aria-label="Sair">
+      <i data-lucide="log-out"></i>
+    </button>
+  </div>
   </div>
 
   <div class="user-dropdown-modern" id="userDropdown">
 
     <div class="dropdown-item" onclick="abrirEmpresa()">
-      <span class="icon">ðŸ¢</span>
+      <i data-lucide="building-2"></i>
       <span>Editar empresa</span>
     </div>
 
     <div class="dropdown-item" onclick="abrirPerfil()">
-      <span class="icon">ðŸ‘¤</span>
+      <i data-lucide="user-round"></i>
       <span>Editar perfil</span>
     </div>
 
     <div class="dropdown-item" onclick="ativarAusencia()">
-      <span class="icon">ðŸ•’</span>
-      <span>Entrar em ausÃªncia</span>
+      <i data-lucide="clock"></i>
+      <span>Entrar em ausência</span>
     </div>
 
   </div>
@@ -1653,10 +1808,6 @@
       <div>
         <strong>Lia</strong>
         <span>Assistente EasyLoc</span>
-      </div>
-      <div class="lia-global-actions">
-        <button type="button" id="liaGlobalMinimize" title="Minimizar" aria-label="Minimizar Lia">-</button>
-        <button type="button" id="liaGlobalClose" title="Fechar" aria-label="Fechar Lia">x</button>
       </div>
     </header>
     <iframe
@@ -1709,7 +1860,7 @@
   <div class="global-help-mini-head">
     <strong id="globalHelpMiniTitle">Ajuda EasyLoc</strong>
     <div>
-      <button type="button" id="globalHelpMiniBack" title="Abrir central">â–¡</button>
+      <button type="button" id="globalHelpMiniBack" title="Abrir central">□</button>
       <button type="button" id="globalHelpMiniMinimize" title="Diminuir">-</button>
       <button type="button" id="globalHelpMiniClose" title="Fechar">x</button>
     </div>
@@ -1738,7 +1889,7 @@
 <script src="js/core/qrCode.js"></script>
 
 <!-- CONTEXTO GLOBAL -->
-<script src="js/core/companyTheme.js"></script>
+<script src="js/core/companyTheme.js?v=20260625-theme-table"></script>
 <script src="js/core/preload.js"></script>
 <script src="js/core/listPager.js"></script>
 <script src="js/core/context.js"></script>
@@ -1759,7 +1910,7 @@
 ===================================================== -->
 
 <!-- SIDEBAR / MENU -->
-<script src="js/ui/sidebar.js"></script>
+<script src="js/ui/sidebar.js?v=20260625-gateways-loaderfix"></script>
 
 <!-- SISTEMA DE MODAIS -->
 <script src="js/ui/modais.js"></script>
@@ -1784,6 +1935,8 @@
 <script src="js/empresa/empresa.sections.financeiro.js"></script>
 <script src="js/empresa/empresa.sections.identidade.js"></script>
 <script src="js/empresa/empresa.modal.js"></script>
+<script src="js/core/zapiMessaging.js"></script>
+<script src="js/core/paymentPix.js?v=20260625-pix-fix1"></script>
 <script src="js/core/globalHelp.js"></script>
 <script src="js/core/liaWidget.js"></script>
 
@@ -1806,7 +1959,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <div class="alert-icon" id="alertaGlobalIcon">!</div>
 
-    <h4 id="alertaGlobalTitulo">AtenÃ§Ã£o</h4>
+    <h4 id="alertaGlobalTitulo">Atenção</h4>
 
     <p id="alertaGlobalMsg"></p>
 
