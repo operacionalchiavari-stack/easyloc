@@ -169,7 +169,7 @@
       const context = error.context;
       if(context?.json){
         const body = await context.json().catch(() => null);
-        if(body?.erro || body?.details) throw new Error(body.erro || body.details);
+        if(body?.erro || body?.details) throw new Error(body.details || body.erro);
       }
       throw error;
     }
@@ -365,6 +365,12 @@
     setLoading(true);
     try{
       const data = await invoke("get-qr");
+      if(data.integration) state.integration = data.integration;
+      if(data.connected){
+        renderStatus();
+        await loadStatus();
+        return;
+      }
       if(els.zapiQrBox){
         els.zapiQrBox.innerHTML = data.qr
           ? `<img src="${escapeHtml(data.qr)}" alt="QR Code WhatsApp">`
@@ -386,6 +392,10 @@
     try{
       await invoke("save-credentials");
       await loadStatus();
+      if(state.integration?.status === "conectado"){
+        notify("WhatsApp ja esta conectado.", "sucesso");
+        return;
+      }
       await fetchQr();
     }catch(error){
       notify(

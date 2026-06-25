@@ -158,13 +158,13 @@ function envCredentials(empresaId: string) {
   const instanceToken = Deno.env.get("ZAPI_INSTANCE_TOKEN");
   const clientToken = Deno.env.get("ZAPI_CLIENT_TOKEN");
 
-  if (!instanceId || !instanceToken || !clientToken) return null;
+  if (!instanceId || !instanceToken) return null;
 
   return {
     empresa_id: empresaId,
     instance_id: instanceId,
     instance_token: instanceToken,
-    client_token: clientToken,
+    client_token: clientToken || "",
     webhook_secret: Deno.env.get("ZAPI_WEBHOOK_SECRET") || crypto.randomUUID().replaceAll("-", ""),
   };
 }
@@ -190,11 +190,20 @@ function isClientTokenNotConfiguredError(payload: unknown) {
     ? payload
     : JSON.stringify(payload || {});
 
-  return text
+  const normalized = text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .includes("client-token is not configured");
+    .toLowerCase();
+
+  return normalized.includes("client-token")
+    && (
+      normalized.includes("not configured")
+      || normalized.includes("not found")
+      || normalized.includes("invalid")
+      || normalized.includes("unauthorized")
+      || normalized.includes("nao configur")
+      || normalized.includes("invalido")
+    );
 }
 
 function zapiErrorMessage(payload: unknown, status: number) {
@@ -230,6 +239,38 @@ async function zapiFetch(credentials: Record<string, string>, endpoint: string, 
   }
 
   throw new Error(zapiErrorMessage(firstAttempt.payload, firstAttempt.response.status));
+}
+
+function isConnectedPayload(payload: Record<string, any> = {}) {
+  const statusText = String(
+    payload?.status
+    || payload?.state
+    || payload?.connection
+    || payload?.instanceStatus
+    || ""
+  )
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  return Boolean(
+    payload?.connected === true
+    || payload?.value === true
+    || payload?.smartphoneConnected === true
+    || payload?.phoneConnected
+    || payload?.connectedPhone
+    || payload?.phone
+    || ["connected", "conectado", "open", "online", "logged", "logged_in"].includes(statusText)
+  );
+}
+
+function connectedPhone(payload: Record<string, any> = {}) {
+  return payload?.phone
+    || payload?.phoneConnected
+    || payload?.connectedPhone
+    || payload?.number
+    || payload?.connectedNumber
+    || null;
 }
 
 async function configureWebhooks(serviceClient: SupabaseService, credentials: Record<string, string>) {
@@ -328,8 +369,8 @@ async function createPartnerInstance(name: string, secret: string) {
 async function syncStatus(serviceClient: SupabaseService, empresaId: string, credentials: Record<string, string>) {
   try {
     const payload = await zapiFetch(credentials, "status", { method: "GET" });
-    const connected = Boolean(payload?.connected || payload?.value === true || payload?.status === "CONNECTED");
-    const numero = payload?.phone || payload?.phoneConnected || payload?.connectedPhone || null;
+    const connected = isConnectedPayload(payload);
+    const numero = connectedPhone(payload);
     const status = connected ? "conectado" : "aguardando_qr";
 
     const { data, error } = await serviceClient
@@ -351,7 +392,6 @@ async function syncStatus(serviceClient: SupabaseService, empresaId: string, cre
     const { data } = await serviceClient
       .from("zapi_integracoes")
       .update({
-        status: "erro",
         ultima_sincronizacao: new Date().toISOString(),
         ultimo_erro: message,
       })
@@ -364,6 +404,11 @@ async function syncStatus(serviceClient: SupabaseService, empresaId: string, cre
 }
 
 async function getQr(serviceClient: SupabaseService, empresaId: string, credentials: Record<string, string>) {
+  const currentStatus = await syncStatus(serviceClient, empresaId, credentials);
+  if (currentStatus.integration?.status === "conectado") {
+    return { qr: null, integration: currentStatus.integration, connected: true };
+  }
+
   const payload = await zapiFetch(credentials, "qr-code/image", { method: "GET" });
   const image = payload?.value || payload?.image || payload?.qrcode || payload?.qrCode || payload;
   const qr = typeof image === "string" && image.startsWith("data:image")
@@ -498,10 +543,10 @@ serve(async (req) => {
       const fallback = envCredentials(body.empresa_id);
       const instanceId = body.instance_id?.trim() || fallback?.instance_id;
       const instanceToken = body.instance_token?.trim() || fallback?.instance_token;
-      const clientToken = body.client_token?.trim() || fallback?.client_token;
+      const clientToken = body.client_token?.trim() || fallback?.client_token || "";
 
-      if (!instanceId || !instanceToken || !clientToken) {
-        return jsonResponse({ erro: "Informe Instance ID, Token e Client Token" }, 400);
+      if (!instanceId || !instanceToken) {
+        return jsonResponse({ erro: "Informe Instance ID e Token da instancia" }, 400);
       }
 
       const { data: upserted, error } = await serviceClient
@@ -532,7 +577,8 @@ serve(async (req) => {
         configured: false,
         reason: error instanceof Error ? error.message : String(error),
       }));
-      return jsonResponse({ ok: true, webhook });
+      const synced = await syncStatus(serviceClient, body.empresa_id, upserted);
+      return jsonResponse({ ok: true, webhook, ...synced });
     }
 
     const credentials = await getCredentialsOrEnv(serviceClient, body.empresa_id);
@@ -636,9 +682,10 @@ serve(async (req) => {
     return jsonResponse({ erro: "Acao nao suportada" }, 400);
   } catch (error) {
     console.error("zapi-integration erro", error);
+    const message = error instanceof Error ? error.message : String(error);
     return jsonResponse({
-      erro: "Erro interno na integracao Z-API",
-      details: error instanceof Error ? error.message : String(error),
+      erro: message || "Erro interno na integracao Z-API",
+      details: message || "Erro interno na integracao Z-API",
     }, 500);
   }
 });

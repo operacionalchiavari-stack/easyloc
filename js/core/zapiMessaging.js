@@ -79,7 +79,7 @@
       const context = error.context;
       if(context?.json){
         const body = await context.json().catch(() => null);
-        if(body?.erro || body?.details) throw new Error(body.erro || body.details);
+        if(body?.erro || body?.details) throw new Error(body.details || body.erro);
       }
       throw error;
     }
