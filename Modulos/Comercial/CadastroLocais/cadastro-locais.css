@@ -634,6 +634,191 @@ tbody td{
 .btn-save{
   display:none;
 }
+
+/* =====================================================
+   MODAL DE LOCAIS - LAYOUT COMPACTO
+===================================================== */
+#locais-modal .modal-content{
+  width:min(1160px,94vw);
+  height:min(88vh,760px);
+  max-height:none;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  padding:0;
+}
+
+#locais-modal .modal-header{
+  flex:0 0 auto;
+  margin-bottom:0;
+  padding:20px 22px 12px;
+}
+
+#locais-modal .modal-header h3{
+  font-size:19px;
+}
+
+#locais-modal .modal-header p{
+  max-width:760px;
+  font-size:12px;
+}
+
+#locais-modal .edit-btn{
+  width:38px;
+  height:38px;
+}
+
+#locais-modal .form-grid{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  align-content:start;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px 14px;
+  padding:0 22px 16px;
+}
+
+#locais-modal .form-group{
+  min-width:0;
+  gap:5px;
+}
+
+#locais-modal .form-group label{
+  font-size:12px;
+  font-weight:600;
+}
+
+#locais-modal .form-group input,
+#locais-modal .form-group select,
+#locais-modal #locais-endereco-wrapper input{
+  height:38px;
+  min-height:38px;
+  padding:7px 12px;
+  border-radius:10px;
+  font-size:13px;
+}
+
+#locais-modal .local-distance-area{
+  align-items:start;
+  grid-template-columns:minmax(220px,.58fr) minmax(320px,1.42fr);
+  gap:12px;
+  margin:0;
+}
+
+#locais-modal .local-distance-card{
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  border-radius:14px;
+}
+
+#locais-modal .local-distance-icon{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+}
+
+#locais-modal .local-distance-icon svg{
+  width:18px;
+  height:18px;
+}
+
+#locais-modal .local-distance-value{
+  margin-top:3px;
+}
+
+#locais-modal .local-distance-value strong{
+  font-size:23px;
+}
+
+#locais-modal .local-distance-content p{
+  margin:6px 0 9px;
+  font-size:12px;
+  line-height:1.35;
+}
+
+#locais-modal .local-coordinate-chips{
+  gap:5px;
+}
+
+#locais-modal .local-coordinate-chips small{
+  padding:4px 7px;
+  font-size:10px;
+}
+
+#locais-modal .local-map-card{
+  padding:12px;
+  border-radius:14px;
+}
+
+#locais-modal .local-map-head{
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+#locais-modal .local-map-head strong{
+  margin-top:2px;
+  font-size:12px;
+}
+
+#locais-modal .centralizar-endereco{
+  min-height:30px;
+  padding:0 9px;
+  font-size:12px;
+  white-space:nowrap;
+}
+
+#locais-modal .local-map{
+  height:160px;
+  min-height:0;
+  border-radius:12px;
+}
+
+#locais-modal .local-map-tip{
+  margin-top:7px;
+  padding:4px 8px;
+  font-size:10px;
+}
+
+#locais-modal .modal-actions{
+  flex:0 0 auto;
+  margin-top:0;
+  padding:12px 22px;
+  border-top:1px solid #e5e7eb;
+  background:#ffffff;
+  box-shadow:0 -8px 22px rgba(15,23,42,.06);
+  position:relative;
+  z-index:2;
+}
+
+#locais-modal .modal-actions .btn{
+  min-height:38px;
+  padding:0 16px;
+}
+
+@media(max-width:900px){
+  #locais-modal .modal-content{
+    height:92vh;
+  }
+
+  #locais-modal .form-grid,
+  #locais-modal .local-distance-area{
+    grid-template-columns:1fr;
+  }
+
+  #locais-modal .tag-section,
+  #locais-modal .col-3,
+  #locais-modal .col-span-2,
+  #locais-modal .col-span-3,
+  #locais-modal .col-full{
+    grid-column:1 / -1;
+  }
+
+  #locais-modal .local-map{
+    height:180px;
+  }
+}
 /* =====================================================
    MODAL AJUDA
 ===================================================== */
