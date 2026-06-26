@@ -86,14 +86,14 @@
     <div class="modal-header">
       <div>
         <h3>Detalhes do Local</h3>
-        <p>Cadastre ou edite as informaÃ§Ãµes do local do evento. A distÃ¢ncia do galpÃ£o Ã© calculada automaticamente e salva.</p>
+        <p>Cadastre ou edite as informações do local do evento. A distância do galpão é calculada automaticamente e salva.</p>
       </div>
-      <button class="edit-btn btn-icon" type="button" onclick="Locais_enableEdit()">✏️</button>
+      <button class="edit-btn btn-icon" type="button" onclick="Locais_enableEdit()"><i data-lucide="pencil"></i></button>
     </div>
 
     <div class="form-grid four-cols">
 
-      <div class="form-group el-field">
+      <div class="form-group el-field local-field-person-type">
         <label>Tipo de Pessoa *</label>
         <select class="el-select" id="locaisTipoPessoa" disabled>
           <option>Pessoa Física</option>
@@ -101,47 +101,47 @@
         </select>
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field local-field-name">
         <label>Nome / Razão Social *</label>
         <input class="el-input" id="locaisNome" readonly>
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field local-field-document">
         <label>CPF / CNPJ *</label>
         <input class="el-input" id="locaisCpfCnpj" readonly>
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field local-field-registration">
         <label>Inscrição Estadual</label>
         <input class="el-input" id="locaisInscricaoEstadual" readonly>
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field local-field-phone">
         <label>Telefone *</label>
         <input class="el-input" id="locaisTelefone" readonly>
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field local-field-email">
         <label>Email *</label>
         <input class="el-input" id="locaisEmail" readonly>
       </div>
 
-<div class="form-group el-field col-span-3">
+<div class="form-group el-field col-span-3 local-field-address">
   <label>Endereço completo *</label>
   <div id="locais-endereco-wrapper"></div>
 </div>
 
-<div class="form-group el-field">
+<div class="form-group el-field local-field-number">
   <label>Número *</label>
   <input class="el-input" id="locaisNumeroEndereco" readonly>
 </div>
 
-<div class="form-group el-field">
+<div class="form-group el-field local-field-reference">
   <label>Ponto de referência *</label>
   <input class="el-input" id="locaisPontoReferencia" readonly>
 </div>
 
-<div class="form-group el-field">
+<div class="form-group el-field local-field-status">
   <label>Status do Local *</label>
   <select class="el-select" id="locaisStatus" disabled>
     <option>Ativo</option>
@@ -157,12 +157,12 @@
             <i data-lucide="route"></i>
           </div>
           <div class="local-distance-content">
-            <span>KM do galpÃ£o</span>
+            <span>KM do galpão</span>
             <div class="local-distance-value">
               <strong id="locaisDistanciaTexto">-</strong>
               <em id="locaisDistanciaBadge" class="hidden">Salvo</em>
             </div>
-            <p id="locaisDistanciaHint">Selecione um endereÃ§o ou marque o ponto no mapa para calcular.</p>
+            <p id="locaisDistanciaHint">Selecione um endereço ou marque o ponto no mapa para calcular.</p>
             <div class="local-coordinate-chips">
               <small>Latitude: <b id="locaisLatitudeTexto">-</b></small>
               <small>Longitude: <b id="locaisLongitudeTexto">-</b></small>
@@ -173,12 +173,12 @@
         <section class="local-map-card">
           <div class="local-map-head">
             <div>
-              <span>LocalizaÃ§Ã£o no mapa</span>
+              <span>Localização no mapa</span>
               <strong>Marque o ponto exato do evento.</strong>
             </div>
             <button type="button" class="btn centralizar-endereco" id="locaisCentralizarEndereco">
               <i data-lucide="crosshair"></i>
-              Centralizar no endereÃ§o
+              Centralizar no endereço
             </button>
           </div>
           <div id="locaisMapa" class="local-map"></div>
