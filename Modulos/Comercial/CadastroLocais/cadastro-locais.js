@@ -168,6 +168,21 @@ if (!window.enderecoSelecionadoGoogle) {
   return false;
 }
 
+  if (localGeoState.lat === null || localGeoState.lng === null) {
+    mostrarAlerta("Selecione um endereço do Google ou marque o ponto correto no mapa.");
+    return false;
+  }
+
+  if (localGeoState.calculating) {
+    mostrarAlerta("Aguarde o cálculo da distância do galpão terminar.");
+    return false;
+  }
+
+  if (localGeoState.distanciaKm === null) {
+    mostrarAlerta("A distância do galpão ainda não foi calculada. Selecione o endereço novamente ou marque o ponto no mapa.");
+    return false;
+  }
+
 
   if (!numeroEndereco.value.trim()) {
     mostrarAlerta("Número do endereço é obrigatório.");
@@ -250,6 +265,7 @@ const localGeoState = {
   calculadaEm: null,
   map: null,
   marker: null,
+  mapClickListener: null,
   calculating: false
 };
 
@@ -283,6 +299,9 @@ function resetLocalGeoState() {
   if (localGeoState.marker) {
     localGeoState.marker.setMap(null);
     localGeoState.marker = null;
+  }
+  if (localGeoState.map) {
+    atualizarMapaLocal();
   }
   renderLocalGeoCard();
 }
@@ -330,6 +349,15 @@ function setMarkerDraggable() {
   }
 }
 
+function vincularCliqueMapaLocal() {
+  if (!localGeoState.map || localGeoState.mapClickListener) return;
+
+  localGeoState.mapClickListener = localGeoState.map.addListener("click", async (event) => {
+    if (modal.classList.contains("readonly")) return;
+    await selecionarPontoNoMapa(event?.latLng);
+  });
+}
+
 function atualizarMapaLocal() {
   const mapEl = document.getElementById("locaisMapa");
   if (!mapEl || !window.google?.maps) return;
@@ -352,6 +380,8 @@ function atualizarMapaLocal() {
     localGeoState.map.setZoom(hasPoint ? 15 : 12);
   }
 
+  vincularCliqueMapaLocal();
+
   if (!hasPoint) return;
 
   if (!localGeoState.marker) {
@@ -364,13 +394,7 @@ function atualizarMapaLocal() {
 
     localGeoState.marker.addListener("dragend", async () => {
       const pos = localGeoState.marker.getPosition();
-      if (!pos) return;
-      await aplicarPontoLocal({
-        lat: pos.lat(),
-        lng: pos.lng(),
-        placeId: localGeoState.placeId,
-        calcular: true
-      });
+      await selecionarPontoNoMapa(pos);
     });
   } else {
     localGeoState.marker.setPosition(position);
@@ -467,13 +491,46 @@ async function aplicarPontoLocal({ lat, lng, placeId = "", calcular = true }) {
   }
 }
 
-function centralizarMapaNoEndereco() {
+async function centralizarMapaNoEndereco() {
   if (localGeoState.lat === null || localGeoState.lng === null) {
-    mostrarAlerta("Selecione um endereco no Google para centralizar o mapa.");
-    return;
+    const endereco = document.getElementById("locais-endereco")?.value?.trim();
+    if (!endereco) {
+      mostrarAlerta("Selecione um endereço no Google para centralizar o mapa.");
+      return;
+    }
+
+    try {
+      const geocoded = await geocodificarEnderecoLocal(endereco);
+      window.enderecoSelecionadoGoogle = true;
+      await aplicarPontoLocal({
+        lat: geocoded.lat,
+        lng: geocoded.lng,
+        placeId: geocoded.placeId || localGeoState.placeId,
+        calcular: true
+      });
+      return;
+    } catch (error) {
+      console.warn("Nao foi possivel centralizar no endereco:", error);
+      mostrarAlerta("Não consegui localizar esse endereço no mapa. Selecione uma opção da lista do Google.");
+      return;
+    }
   }
 
   atualizarMapaLocal();
+}
+
+async function selecionarPontoNoMapa(latLng) {
+  if (!latLng) {
+    mostrarAlerta("Não foi possível identificar o ponto no mapa.");
+    return;
+  }
+
+  await aplicarPontoLocal({
+    lat: latLng.lat(),
+    lng: latLng.lng(),
+    placeId: localGeoState.placeId,
+    calcular: true
+  });
 }
 
 document.getElementById("locaisCentralizarEndereco")
@@ -872,8 +929,19 @@ async function Locais_carregar() {
   cpf_cnpj,
   telefone,
   email,
+  endereco,
+  numero_endereco,
+  ponto_referencia,
+  tipo_pessoa,
+  inscricao_estadual,
   ultima_locacao,
   status,
+  latitude,
+  longitude,
+  distancia_galpao_km,
+  distancia_galpao_texto,
+  distancia_calculada_em,
+  google_place_id,
   tags
 `)
       .eq("empresa_id", empresaId)
@@ -1160,6 +1228,9 @@ window.Locais_salvar = Locais_salvar;
 window.Locais_excluir = Locais_excluir;
 window.Locais_aplicarFiltros = Locais_aplicarFiltros;
 window.Locais_abrirDetalhesPorIdOuNome = Locais_abrirDetalhesPorIdOuNome;
+window.__locaisAplicarPontoLocal = aplicarPontoLocal;
+window.__locaisResetLocalGeoState = resetLocalGeoState;
+window.__locaisMostrarAlerta = mostrarAlerta;
 
 // inicialização
 // inicialização
@@ -1211,6 +1282,46 @@ function resetEnderecoAutocomplete() {
   window.enderecoSelecionadoGoogle = false;
 }
 
+async function geocodificarEnderecoLocal(endereco) {
+  const address = String(endereco || "").trim();
+  if (!address) throw new Error("Endereço vazio.");
+
+  if (!window.google?.maps) {
+    await window.carregarGooglePlaces?.();
+  }
+
+  if (!window.google?.maps?.Geocoder) {
+    throw new Error("Google Maps Geocoder indisponivel.");
+  }
+
+  const geocoder = new google.maps.Geocoder();
+
+  return new Promise((resolve, reject) => {
+    geocoder.geocode(
+      {
+        address,
+        componentRestrictions: { country: "BR" }
+      },
+      (results, status) => {
+        const result = results?.[0];
+        const location = result?.geometry?.location;
+
+        if (status !== "OK" || !location) {
+          reject(new Error(`Endereco nao encontrado no Google (${status}).`));
+          return;
+        }
+
+        resolve({
+          formattedAddress: result.formatted_address || address,
+          lat: location.lat(),
+          lng: location.lng(),
+          placeId: result.place_id || ""
+        });
+      }
+    );
+  });
+}
+
 function initEnderecoAutocomplete() {
 
   const input = document.getElementById("locais-endereco");
@@ -1225,7 +1336,7 @@ function initEnderecoAutocomplete() {
       .then(() => initEnderecoAutocomplete())
       .catch((error) => {
         console.error("Google Places nao carregado:", error);
-        mostrarAlerta?.("Google Places nao configurado. Verifique a chave do Google Maps.");
+        window.__locaisMostrarAlerta?.("Google Places nao configurado. Verifique a chave do Google Maps.");
       });
     return;
   }
@@ -1238,7 +1349,7 @@ function initEnderecoAutocomplete() {
 
   window.enderecoAutocomplete.addListener(
     "place_changed",
-    () => {
+    async () => {
       const place =
         window.enderecoAutocomplete.getPlace();
 
@@ -1247,23 +1358,42 @@ function initEnderecoAutocomplete() {
         return;
       }
 
-      window.enderecoSelecionadoGoogle = true;
       input.value = place.formatted_address;
       const location = place.geometry?.location;
+
       if (location) {
-        aplicarPontoLocal({
+        window.enderecoSelecionadoGoogle = true;
+        await window.__locaisAplicarPontoLocal?.({
           lat: location.lat(),
           lng: location.lng(),
           placeId: place.place_id || "",
           calcular: true
         });
+        return;
+      }
+
+      try {
+        const geocoded = await geocodificarEnderecoLocal(place.formatted_address);
+        window.enderecoSelecionadoGoogle = true;
+        input.value = geocoded.formattedAddress;
+        await window.__locaisAplicarPontoLocal?.({
+          lat: geocoded.lat,
+          lng: geocoded.lng,
+          placeId: place.place_id || geocoded.placeId || "",
+          calcular: true
+        });
+      } catch (error) {
+        console.warn("Nao foi possivel localizar o endereco selecionado:", error);
+        window.enderecoSelecionadoGoogle = false;
+        window.__locaisResetLocalGeoState?.();
+        window.__locaisMostrarAlerta?.("Não consegui localizar esse endereço no mapa. Selecione uma opção da lista do Google.");
       }
     }
   );
 
   input.addEventListener("input", () => {
     window.enderecoSelecionadoGoogle = false;
-    resetLocalGeoState();
+    window.__locaisResetLocalGeoState?.();
   });
 
   if (input.value.trim()) {
