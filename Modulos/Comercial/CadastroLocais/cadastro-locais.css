@@ -238,10 +238,13 @@ tbody td{
 
 .modal-content{
   background:#fff;
-  width:820px;
+  width:min(1080px,94vw);
+  max-height:92vh;
+  overflow:auto;
   max-width:92%;
   border-radius:18px;
   padding:26px;
+  box-shadow:0 24px 72px rgba(15,23,42,.22);
 }
 
 
@@ -254,6 +257,7 @@ tbody td{
   align-items:center;
   justify-content:space-between;
   margin-bottom:18px;
+  gap:18px;
 }
 
 .modal-header h3{
@@ -261,6 +265,13 @@ tbody td{
   font-size:20px;
   font-weight:700;
   color:#0f172a;
+}
+
+.modal-header p{
+  margin:4px 0 0;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.45;
 }
 
 .edit-btn{
@@ -272,7 +283,7 @@ tbody td{
 ===================================================== */
 .form-grid{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
+  grid-template-columns:repeat(3,minmax(0,1fr));
   gap:16px;
 }
 
@@ -311,6 +322,174 @@ tbody td{
 
 .col-full{
   grid-column: 1 / -1;
+}
+
+/* =====================================================
+   DISTANCIA E MAPA DO LOCAL
+===================================================== */
+.local-distance-area{
+  display:grid;
+  grid-template-columns:minmax(260px,.72fr) minmax(360px,1.28fr);
+  gap:16px;
+  margin:2px 0 4px;
+}
+
+.local-distance-card,
+.local-map-card{
+  min-width:0;
+  border:1px solid #e5e7eb;
+  border-radius:16px;
+  background:#ffffff;
+  box-shadow:0 10px 28px rgba(15,23,42,.06);
+}
+
+.local-distance-card{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  padding:16px;
+  background:linear-gradient(145deg,#eef6ff,#ffffff);
+}
+
+.local-distance-icon{
+  width:44px;
+  height:44px;
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:#dbeafe;
+  color:#2563eb;
+}
+
+.local-distance-icon svg{
+  width:20px;
+  height:20px;
+}
+
+.local-distance-content{
+  min-width:0;
+}
+
+.local-distance-content > span,
+.local-map-head span{
+  display:block;
+  color:#334155;
+  font-size:12px;
+  font-weight:700;
+  text-transform:uppercase;
+}
+
+.local-distance-value{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:5px;
+}
+
+.local-distance-value strong{
+  color:#0f172a;
+  font-size:28px;
+  font-weight:700;
+  line-height:1;
+}
+
+.local-distance-value em{
+  padding:5px 9px;
+  border-radius:999px;
+  background:#dcfce7;
+  color:#15803d;
+  font-size:11px;
+  font-style:normal;
+  font-weight:700;
+}
+
+.local-distance-value em.hidden{
+  display:none;
+}
+
+.local-distance-content p{
+  margin:9px 0 12px;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.45;
+}
+
+.local-coordinate-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.local-coordinate-chips small{
+  padding:6px 8px;
+  border:1px solid #dbeafe;
+  border-radius:999px;
+  background:rgba(255,255,255,.72);
+  color:#475569;
+  font-size:11px;
+}
+
+.local-coordinate-chips b{
+  font-weight:600;
+}
+
+.local-map-card{
+  padding:14px;
+}
+
+.local-map-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+
+.local-map-head strong{
+  display:block;
+  margin-top:3px;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:500;
+}
+
+.centralizar-endereco{
+  min-height:32px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:0 10px;
+  background:#ffffff;
+  color:#475569;
+  font-size:12px;
+}
+
+.centralizar-endereco svg{
+  width:14px;
+  height:14px;
+}
+
+.local-map{
+  width:100%;
+  min-height:190px;
+  overflow:hidden;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  background:#f8fafc;
+}
+
+.local-map-tip{
+  display:inline-flex;
+  margin-top:9px;
+  padding:6px 9px;
+  border-radius:999px;
+  background:#eef2ff;
+  color:#475569;
+  font-size:11px;
 }
 
 /* =====================================================
@@ -643,6 +822,26 @@ tbody td{
 }
 
 @media(max-width:900px){
+  .form-grid,
+  .local-distance-area{
+    grid-template-columns:1fr;
+  }
+
+  .tag-section,
+  .col-3,
+  .col-full{
+    grid-column:1 / -1;
+  }
+
+  .local-map-head{
+    flex-direction:column;
+  }
+
+  .centralizar-endereco{
+    width:100%;
+    justify-content:center;
+  }
+
   .modal-ajuda-body{
     grid-template-columns:1fr;
     grid-template-rows:260px 1fr;

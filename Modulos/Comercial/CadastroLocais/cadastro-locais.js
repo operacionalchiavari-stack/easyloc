@@ -239,6 +239,245 @@ async function getEmpresaIdCache() {
 let localAtualId = null;
 const modal = document.getElementById("locais-modal");
 let locaisCache = [];
+const GALPAO_ORIGEM = "Chiavari Eventos, Estrada Uniao e Industria, Itaipava, Petropolis - RJ, Brasil";
+const GALPAO_COORDS = { lat: -22.3952, lng: -43.1348 };
+const localGeoState = {
+  lat: null,
+  lng: null,
+  placeId: "",
+  distanciaKm: null,
+  distanciaTexto: "",
+  calculadaEm: null,
+  map: null,
+  marker: null,
+  calculating: false
+};
+
+function numeroGeo(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatarCoordenada(value) {
+  const number = numeroGeo(value);
+  return number === null ? "-" : number.toFixed(6);
+}
+
+function formatarKmTexto(km) {
+  const number = numeroGeo(km);
+  if (number === null) return "";
+  return `${number.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  })} km`;
+}
+
+function resetLocalGeoState() {
+  localGeoState.lat = null;
+  localGeoState.lng = null;
+  localGeoState.placeId = "";
+  localGeoState.distanciaKm = null;
+  localGeoState.distanciaTexto = "";
+  localGeoState.calculadaEm = null;
+  localGeoState.calculating = false;
+  if (localGeoState.marker) {
+    localGeoState.marker.setMap(null);
+    localGeoState.marker = null;
+  }
+  renderLocalGeoCard();
+}
+
+function preencherLocalGeoState(local = {}) {
+  localGeoState.lat = numeroGeo(local.latitude);
+  localGeoState.lng = numeroGeo(local.longitude);
+  localGeoState.placeId = local.google_place_id || "";
+  localGeoState.distanciaKm = numeroGeo(local.distancia_galpao_km);
+  localGeoState.distanciaTexto = local.distancia_galpao_texto || formatarKmTexto(localGeoState.distanciaKm);
+  localGeoState.calculadaEm = local.distancia_calculada_em || null;
+  renderLocalGeoCard();
+}
+
+function renderLocalGeoCard() {
+  const distanciaTexto = document.getElementById("locaisDistanciaTexto");
+  const distanciaHint = document.getElementById("locaisDistanciaHint");
+  const distanciaBadge = document.getElementById("locaisDistanciaBadge");
+  const latTexto = document.getElementById("locaisLatitudeTexto");
+  const lngTexto = document.getElementById("locaisLongitudeTexto");
+
+  if (distanciaTexto) {
+    distanciaTexto.textContent = localGeoState.calculating
+      ? "Calculando..."
+      : (localGeoState.distanciaTexto || "-");
+  }
+
+  if (distanciaHint) {
+    distanciaHint.textContent = localGeoState.distanciaKm !== null
+      ? "Distancia calculada automaticamente e salva para uso nos pedidos."
+      : "Selecione um endereco ou marque o ponto no mapa para calcular.";
+  }
+
+  if (distanciaBadge) {
+    distanciaBadge.classList.toggle("hidden", localGeoState.distanciaKm === null);
+  }
+
+  if (latTexto) latTexto.textContent = formatarCoordenada(localGeoState.lat);
+  if (lngTexto) lngTexto.textContent = formatarCoordenada(localGeoState.lng);
+}
+
+function setMarkerDraggable() {
+  if (localGeoState.marker) {
+    localGeoState.marker.setDraggable(!modal.classList.contains("readonly"));
+  }
+}
+
+function atualizarMapaLocal() {
+  const mapEl = document.getElementById("locaisMapa");
+  if (!mapEl || !window.google?.maps) return;
+
+  const hasPoint = localGeoState.lat !== null && localGeoState.lng !== null;
+  const position = hasPoint
+    ? { lat: localGeoState.lat, lng: localGeoState.lng }
+    : GALPAO_COORDS;
+
+  if (!localGeoState.map) {
+    localGeoState.map = new google.maps.Map(mapEl, {
+      center: position,
+      zoom: hasPoint ? 15 : 12,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
+    });
+  } else {
+    localGeoState.map.setCenter(position);
+    localGeoState.map.setZoom(hasPoint ? 15 : 12);
+  }
+
+  if (!hasPoint) return;
+
+  if (!localGeoState.marker) {
+    localGeoState.marker = new google.maps.Marker({
+      map: localGeoState.map,
+      position,
+      draggable: !modal.classList.contains("readonly"),
+      title: "Ponto do evento"
+    });
+
+    localGeoState.marker.addListener("dragend", async () => {
+      const pos = localGeoState.marker.getPosition();
+      if (!pos) return;
+      await aplicarPontoLocal({
+        lat: pos.lat(),
+        lng: pos.lng(),
+        placeId: localGeoState.placeId,
+        calcular: true
+      });
+    });
+  } else {
+    localGeoState.marker.setPosition(position);
+    localGeoState.marker.setMap(localGeoState.map);
+  }
+
+  setMarkerDraggable();
+}
+
+async function initMapaLocal() {
+  if (!window.google?.maps) {
+    try {
+      await window.carregarGooglePlaces?.();
+    } catch (error) {
+      console.warn("Google Maps nao carregado para o mapa do local:", error);
+      return;
+    }
+  }
+  atualizarMapaLocal();
+}
+
+async function calcularDistanciaGalpaoAteLocal(latitude, longitude) {
+  const lat = numeroGeo(latitude);
+  const lng = numeroGeo(longitude);
+  if (lat === null || lng === null) throw new Error("Coordenadas ausentes.");
+
+  const session = await supabase.auth.getSession?.();
+  const token = session?.data?.session?.access_token;
+  const supabaseUrl = supabase.supabaseUrl || "https://awemuohtvwvrdzfxwrmd.supabase.co";
+  const supabaseKey = supabase.supabaseKey || "sb_publishable_tlm-v5vvX9jgChODJmDCtw_JqMxLtpZ";
+  const destino = `${lat},${lng}`;
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/calcular-distancia`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": supabaseKey,
+      "Authorization": `Bearer ${token || supabaseKey}`
+    },
+    body: JSON.stringify({
+      origem: GALPAO_ORIGEM,
+      destino,
+      origin: GALPAO_ORIGEM,
+      destination: destino,
+      latitudeDestino: lat,
+      longitudeDestino: lng
+    })
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok || data?.ok === false || data?.km == null) {
+    throw new Error(data?.error || "Nao foi possivel calcular a distancia.");
+  }
+
+  const km = Number(Number(data.km).toFixed(1));
+  return { km, texto: formatarKmTexto(km) };
+}
+
+async function aplicarPontoLocal({ lat, lng, placeId = "", calcular = true }) {
+  localGeoState.lat = numeroGeo(lat);
+  localGeoState.lng = numeroGeo(lng);
+  localGeoState.placeId = placeId || localGeoState.placeId || "";
+
+  if (localGeoState.lat === null || localGeoState.lng === null) {
+    renderLocalGeoCard();
+    return;
+  }
+
+  atualizarMapaLocal();
+
+  if (!calcular) {
+    renderLocalGeoCard();
+    return;
+  }
+
+  try {
+    localGeoState.calculating = true;
+    renderLocalGeoCard();
+    const distancia = await calcularDistanciaGalpaoAteLocal(localGeoState.lat, localGeoState.lng);
+    localGeoState.distanciaKm = distancia.km;
+    localGeoState.distanciaTexto = distancia.texto;
+    localGeoState.calculadaEm = new Date().toISOString();
+  } catch (error) {
+    console.warn("Nao foi possivel calcular distancia do local:", error);
+    localGeoState.distanciaKm = null;
+    localGeoState.distanciaTexto = "";
+    localGeoState.calculadaEm = null;
+    if (typeof window.alerta === "function") {
+      window.alerta("Nao foi possivel calcular a distancia agora.", "Local", "aviso");
+    }
+  } finally {
+    localGeoState.calculating = false;
+    renderLocalGeoCard();
+  }
+}
+
+function centralizarMapaNoEndereco() {
+  if (localGeoState.lat === null || localGeoState.lng === null) {
+    mostrarAlerta("Selecione um endereco no Google para centralizar o mapa.");
+    return;
+  }
+
+  atualizarMapaLocal();
+}
+
+document.getElementById("locaisCentralizarEndereco")
+  ?.addEventListener("click", centralizarMapaNoEndereco);
 
 /* =====================================================
    MODAL
@@ -249,6 +488,7 @@ function Locais_openAdd() {
   modal.style.display = "flex";
 
   window.enderecoSelecionadoGoogle = false;
+  resetLocalGeoState();
 
   // cria input limpo
   criarInputEndereco("");
@@ -274,6 +514,7 @@ document.querySelectorAll(".tag").forEach(tag => {
 
   setTimeout(() => {
     initEnderecoAutocomplete();
+    initMapaLocal();
   }, 200);
 }
 
@@ -286,6 +527,7 @@ function Locais_enableEdit() {
 
   setTimeout(() => {
     if (window.google?.maps?.places) initEnderecoAutocomplete();
+    initMapaLocal();
   }, 300);
 }
 
@@ -312,6 +554,7 @@ document.querySelectorAll(".tag").forEach(tag => {
 
   document.querySelector(".btn-save").style.display = v ? "none" : "inline-block";
   document.querySelector(".btn-delete").style.display = v ? "inline-block" : "none";
+  setMarkerDraggable();
 }
 
 /* =====================================================
@@ -465,6 +708,12 @@ const payload = {
     locaisTipoPessoa.value === "Pessoa Jurídica" ? "PJ" : "PF",
   inscricao_estadual:
     document.getElementById("locaisInscricaoEstadual")?.value || null,
+  latitude: localGeoState.lat,
+  longitude: localGeoState.lng,
+  distancia_galpao_km: localGeoState.distanciaKm,
+  distancia_galpao_texto: localGeoState.distanciaTexto || null,
+  distancia_calculada_em: localGeoState.calculadaEm,
+  google_place_id: localGeoState.placeId || null,
   empresa_id: empresaId,
   tags: coletarTagsSelecionadas()
 };
@@ -496,6 +745,7 @@ function abrirDetalhesLocal(local) {
   localAtualId = local.id;
 
   modal.style.display = "flex";
+  preencherLocalGeoState(local);
 
   const campos = {
     tipoPessoa: document.getElementById("locaisTipoPessoa"),
@@ -523,7 +773,10 @@ function abrirDetalhesLocal(local) {
      ENDEREÇO
   ============================= */
   criarInputEndereco(local.endereco || "");
-  setTimeout(() => initEnderecoAutocomplete(), 200);
+  setTimeout(() => {
+    initEnderecoAutocomplete();
+    initMapaLocal();
+  }, 200);
 
   /* =============================
      PREENCHIMENTO
@@ -979,7 +1232,8 @@ function initEnderecoAutocomplete() {
 
   window.enderecoAutocomplete =
     new google.maps.places.Autocomplete(input, {
-      componentRestrictions: { country: "br" }
+      componentRestrictions: { country: "br" },
+      fields: ["formatted_address", "geometry", "place_id", "name"]
     });
 
   window.enderecoAutocomplete.addListener(
@@ -995,12 +1249,26 @@ function initEnderecoAutocomplete() {
 
       window.enderecoSelecionadoGoogle = true;
       input.value = place.formatted_address;
+      const location = place.geometry?.location;
+      if (location) {
+        aplicarPontoLocal({
+          lat: location.lat(),
+          lng: location.lng(),
+          placeId: place.place_id || "",
+          calcular: true
+        });
+      }
     }
   );
 
   input.addEventListener("input", () => {
     window.enderecoSelecionadoGoogle = false;
+    resetLocalGeoState();
   });
+
+  if (input.value.trim()) {
+    window.enderecoSelecionadoGoogle = true;
+  }
 
   console.log("✅ Google Places OK");
 }

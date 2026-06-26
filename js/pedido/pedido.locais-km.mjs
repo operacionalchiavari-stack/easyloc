@@ -1,5 +1,7 @@
 import { debounce } from "./pedido.utils.mjs";
 
+const GALPAO_ORIGEM_PADRAO = "Chiavari Eventos, Estrada Uniao e Industria, Itaipava, Petropolis - RJ, Brasil";
+
 export function initAutocompleteLocaisEKm({
   supabase,
   localInput,
@@ -43,6 +45,12 @@ export function initAutocompleteLocaisEKm({
         endereco,
         numero_endereco,
         ponto_referencia,
+        latitude,
+        longitude,
+        distancia_galpao_km,
+        distancia_galpao_texto,
+        distancia_calculada_em,
+        google_place_id,
         tags
       `)
       .eq("empresa_id", window.__CONTEXT?.empresa_id)
@@ -219,6 +227,52 @@ function atualizarIndicadoresLocal(tags){
   set("indCaminhaoPerto", temFlag("caminhao perto", "caminhao_proximo", "caminhao proximo"));
 }
 
+function formatKmTexto(km){
+  const numero = Number(km);
+  if(!Number.isFinite(numero) || numero <= 0) return "";
+  return `${numero.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  })} km`;
+}
+
+function aplicarKmCalculado(km, texto = ""){
+  const numero = Number(Number(km).toFixed(1));
+  const elKm = document.getElementById("freteDistanciaKm");
+  if(elKm) elKm.innerText = texto || formatKmTexto(numero) || `${numero} km`;
+
+  window.kmPedido = numero;
+  window.calcularFreteInteligente?.();
+}
+
+async function salvarDistanciaNoLocal({ supabase, local, km, texto }){
+  if(!local?.id || !window.__CONTEXT?.empresa_id) return;
+
+  const payload = {
+    distancia_galpao_km: Number(Number(km).toFixed(1)),
+    distancia_galpao_texto: texto || formatKmTexto(km),
+    distancia_calculada_em: new Date().toISOString()
+  };
+
+  if(Number.isFinite(Number(local.latitude))) payload.latitude = Number(local.latitude);
+  if(Number.isFinite(Number(local.longitude))) payload.longitude = Number(local.longitude);
+  if(local.google_place_id) payload.google_place_id = local.google_place_id;
+
+  const { error } = await supabase
+    .from("locais_empresas")
+    .update(payload)
+    .eq("empresa_id", window.__CONTEXT.empresa_id)
+    .eq("id", local.id);
+
+  if(error){
+    console.warn("[EasyLoc Debug]", {
+      arquivo: "js/pedido/pedido.locais-km.mjs",
+      funcao: "salvarDistanciaNoLocal",
+      erro: error
+    });
+  }
+}
+
 async function calcularKmAutomatico({ supabase, local }){
   const debugBase = {
     arquivo: "js/pedido/pedido.locais-km.mjs",
@@ -226,6 +280,12 @@ async function calcularKmAutomatico({ supabase, local }){
   };
 
   try{
+    const distanciaSalva = Number(local?.distancia_galpao_km || 0);
+    if(Number.isFinite(distanciaSalva) && distanciaSalva > 0){
+      aplicarKmCalculado(distanciaSalva, local?.distancia_galpao_texto || "");
+      return;
+    }
+
     const empresaId = window.__CONTEXT?.empresa_id;
 
     if(!empresaId){
@@ -252,18 +312,23 @@ async function calcularKmAutomatico({ supabase, local }){
       return;
     }
 
+    const latitudeDestino = Number(local?.latitude);
+    const longitudeDestino = Number(local?.longitude);
+    const temCoordenadasDestino = Number.isFinite(latitudeDestino) && Number.isFinite(longitudeDestino);
     const enderecoLocal = String(local?.endereco || "").trim();
     const numeroLocal = String(local?.numero_endereco || "").trim();
     const enderecoComNumero = numeroLocal && !enderecoLocal.includes(numeroLocal)
       ? `${enderecoLocal}, ${numeroLocal}`
       : enderecoLocal;
 
-    const destinoFinal = [
-      enderecoComNumero,
-      "Brasil"
-    ].filter(Boolean).join(", ").trim();
+    const destinoFinal = temCoordenadasDestino
+      ? `${latitudeDestino},${longitudeDestino}`
+      : [
+          enderecoComNumero,
+          "Brasil"
+        ].filter(Boolean).join(", ").trim();
 
-    const origemFinal = (empresa?.endereco_google || "").trim();
+    const origemFinal = (empresa?.endereco_google || "").trim() || GALPAO_ORIGEM_PADRAO;
 
     console.log("[EasyLoc Debug]", {
       ...debugBase,
@@ -299,8 +364,8 @@ async function calcularKmAutomatico({ supabase, local }){
       destination: destinoFinal,
       latitudeOrigem: null,
       longitudeOrigem: null,
-      latitudeDestino: null,
-      longitudeDestino: null
+      latitudeDestino: temCoordenadasDestino ? latitudeDestino : null,
+      longitudeDestino: temCoordenadasDestino ? longitudeDestino : null
     };
 
     console.log("[EasyLoc Debug]", {
@@ -341,11 +406,9 @@ async function calcularKmAutomatico({ supabase, local }){
 
     if(result?.km != null){
       const km = Number(Number(result.km).toFixed(1));
-      const elKm = document.getElementById("freteDistanciaKm");
-      if(elKm) elKm.innerText = `${km} km`;
-
-      window.kmPedido = km;
-      window.calcularFreteInteligente?.();
+      const texto = formatKmTexto(km);
+      aplicarKmCalculado(km, texto);
+      salvarDistanciaNoLocal({ supabase, local, km, texto });
       return;
     }
 

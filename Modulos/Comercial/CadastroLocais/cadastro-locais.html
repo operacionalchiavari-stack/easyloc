@@ -83,7 +83,10 @@
     <input type="hidden" id="locaisId">
 
     <div class="modal-header">
-      <h3>Detalhes do Local</h3>
+      <div>
+        <h3>Detalhes do Local</h3>
+        <p>Cadastre ou edite as informaÃ§Ãµes do local do evento. A distÃ¢ncia do galpÃ£o Ã© calculada automaticamente e salva.</p>
+      </div>
       <button class="edit-btn btn-icon" type="button" onclick="Locais_enableEdit()">✏️</button>
     </div>
 
@@ -151,6 +154,41 @@
   </select>
 </div>
 
+
+      <div class="local-distance-area col-full">
+        <section class="local-distance-card">
+          <div class="local-distance-icon">
+            <i data-lucide="route"></i>
+          </div>
+          <div class="local-distance-content">
+            <span>KM do galpÃ£o</span>
+            <div class="local-distance-value">
+              <strong id="locaisDistanciaTexto">-</strong>
+              <em id="locaisDistanciaBadge" class="hidden">Salvo</em>
+            </div>
+            <p id="locaisDistanciaHint">Selecione um endereÃ§o ou marque o ponto no mapa para calcular.</p>
+            <div class="local-coordinate-chips">
+              <small>Latitude: <b id="locaisLatitudeTexto">-</b></small>
+              <small>Longitude: <b id="locaisLongitudeTexto">-</b></small>
+            </div>
+          </div>
+        </section>
+
+        <section class="local-map-card">
+          <div class="local-map-head">
+            <div>
+              <span>LocalizaÃ§Ã£o no mapa</span>
+              <strong>Marque o ponto exato do evento.</strong>
+            </div>
+            <button type="button" class="btn centralizar-endereco" id="locaisCentralizarEndereco">
+              <i data-lucide="crosshair"></i>
+              Centralizar no endereÃ§o
+            </button>
+          </div>
+          <div id="locaisMapa" class="local-map"></div>
+          <div class="local-map-tip">Arraste o marcador para ajustar o ponto exato.</div>
+        </section>
+      </div>
 
       <!-- ================= TAGS ================= -->
       <div class="tag-section col-3">
