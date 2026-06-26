@@ -238,7 +238,7 @@ tbody td{
 
 .modal-content{
   background:#fff;
-  width:min(1080px,94vw);
+  width:min(1240px,94vw);
   max-height:92vh;
   overflow:auto;
   max-width:92%;
@@ -283,7 +283,7 @@ tbody td{
 ===================================================== */
 .form-grid{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:16px;
 }
 
@@ -316,9 +316,11 @@ tbody td{
   color:#374151;
 }
 
-.col-3{grid-column:span 2;}
+.col-3{grid-column:1 / -1;}
 
-.col-3{grid-column:span 3;}
+.col-span-2{grid-column:span 2;}
+
+.col-span-3{grid-column:span 3;}
 
 .col-full{
   grid-column: 1 / -1;
@@ -829,6 +831,8 @@ tbody td{
 
   .tag-section,
   .col-3,
+  .col-span-2,
+  .col-span-3,
   .col-full{
     grid-column:1 / -1;
   }
