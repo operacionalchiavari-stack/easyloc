@@ -90,17 +90,17 @@
   appearance: none;
   border: 0;
   background: transparent;
-  color: var(--el-color-primary);
+  color: var(--el-color-text);
   cursor: pointer;
   font: inherit;
-  font-weight: 650;
+  font-weight: 400;
   padding: 0;
   text-align: left;
   text-decoration: none;
 }
 
 .central-record-link:hover {
-  color: var(--color-primary, #ff6a00);
+  color: var(--el-color-title);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -319,6 +319,173 @@
   display: none;
 }
 
+.central-cadastro-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1120;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.46);
+  backdrop-filter: blur(4px);
+}
+
+.central-cadastro-modal.hidden {
+  display: none;
+}
+
+.central-cadastro-dialog {
+  width: min(760px, 94vw);
+  max-height: 88vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  border: 1px solid var(--el-color-border);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+}
+
+.central-cadastro-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--el-color-border);
+}
+
+.central-cadastro-head span {
+  display: block;
+  color: var(--el-color-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.central-cadastro-head strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--el-color-title);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.central-cadastro-body {
+  overflow: auto;
+  padding: 20px;
+}
+
+.central-cadastro-loading {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  color: var(--el-color-muted);
+}
+
+.central-cadastro-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--el-color-border);
+  border-radius: 14px;
+  background: #f9fafb;
+}
+
+.central-cadastro-summary span,
+.central-cadastro-field span,
+.central-cadastro-tags-group span {
+  display: block;
+  color: var(--el-color-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.central-cadastro-summary strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--el-color-title);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.central-cadastro-summary p {
+  margin: 6px 0 0;
+  color: var(--el-color-text);
+  font-size: 14px;
+}
+
+.central-cadastro-summary em {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: var(--el-color-text);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.central-cadastro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.central-cadastro-field {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--el-color-border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.central-cadastro-field.wide {
+  grid-column: 1 / -1;
+}
+
+.central-cadastro-field strong {
+  display: block;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  color: var(--el-color-text);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.central-cadastro-tags {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--el-color-border);
+  border-radius: 14px;
+  background: #f9fafb;
+}
+
+.central-cadastro-tags-group div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.central-cadastro-tags-group em {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid var(--el-color-border);
+  color: var(--el-color-text);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+}
+
 .central-whatsapp-dialog {
   width: min(540px, 94vw);
   overflow: hidden;
@@ -423,6 +590,14 @@
 }
 
 @media (max-width: 720px) {
+  .central-cadastro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .central-cadastro-summary {
+    flex-direction: column;
+  }
+
   .central-whatsapp-body {
     grid-template-columns: 1fr;
   }

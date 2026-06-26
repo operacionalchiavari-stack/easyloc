@@ -43,7 +43,12 @@
       "centralWhatsappMensagem",
       "btnFecharWhatsappPedido",
       "btnCancelarWhatsappPedido",
-      "btnEnviarWhatsappPedido"
+      "btnEnviarWhatsappPedido",
+      "centralCadastroRelacionadoModal",
+      "centralCadastroRelacionadoTitulo",
+      "centralCadastroRelacionadoSubtitulo",
+      "centralCadastroRelacionadoBody",
+      "btnFecharCadastroRelacionado"
     ].forEach((id) => {
       els[id] = $(id);
     });
@@ -90,6 +95,52 @@
     if(digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
     if(digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
     return value || digits;
+  }
+
+  function formatCadastroValue(value){
+    const text = String(value ?? "").trim();
+    return text || "-";
+  }
+
+  function formatEnderecoCadastro(registro){
+    const partes = [
+      registro?.endereco,
+      registro?.numero_endereco,
+      registro?.bairro,
+      registro?.cidade,
+      registro?.estado || registro?.uf
+    ].filter(Boolean);
+    return partes.join(", ") || "-";
+  }
+
+  function tagsCadastroHtml(tags){
+    let parsed = tags;
+    if(typeof parsed === "string"){
+      try{
+        parsed = JSON.parse(parsed);
+      }catch{
+        parsed = {};
+      }
+    }
+    if(!parsed || typeof parsed !== "object") return "";
+
+    return Object.entries(parsed)
+      .filter(([, value]) => {
+        if(Array.isArray(value)) return value.length;
+        return value !== null && value !== undefined && String(value).trim() !== "";
+      })
+      .map(([key, value]) => {
+        const values = Array.isArray(value) ? value : [value];
+        return `
+          <div class="central-cadastro-tags-group">
+            <span>${escapeHtml(key)}</span>
+            <div>
+              ${values.map((item) => `<em>${escapeHtml(item)}</em>`).join("")}
+            </div>
+          </div>
+        `;
+      })
+      .join("");
   }
 
   function moneyNumber(value){
@@ -369,6 +420,85 @@
     });
   }
 
+  function campoCadastro(label, value, extraClass = ""){
+    return `
+      <div class="central-cadastro-field ${extraClass}">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(formatCadastroValue(value))}</strong>
+      </div>
+    `;
+  }
+
+  function renderCadastroRelacionado(tipo, registro, pedido){
+    const isCliente = tipo === "cliente";
+    const tituloFallback = isCliente ? pedido?.cliente : pedido?.local;
+    const nome = registro?.nome_razao || registro?.nome || tituloFallback || "-";
+    const tagsHtml = tagsCadastroHtml(registro?.tags);
+    const status = registro?.status || registro?.status_cliente || (isCliente ? "Cliente" : "Local");
+
+    if(els.centralCadastroRelacionadoSubtitulo){
+      els.centralCadastroRelacionadoSubtitulo.textContent = isCliente ? "Cadastro de cliente" : "Cadastro de local";
+    }
+    if(els.centralCadastroRelacionadoTitulo){
+      els.centralCadastroRelacionadoTitulo.textContent = nome;
+    }
+
+    if(els.centralCadastroRelacionadoBody){
+      els.centralCadastroRelacionadoBody.innerHTML = `
+        <section class="central-cadastro-summary">
+          <div>
+            <span>${isCliente ? "Cliente" : "Local"}</span>
+            <strong>${escapeHtml(nome)}</strong>
+            <p>${escapeHtml(formatEnderecoCadastro(registro))}</p>
+          </div>
+          <em>${escapeHtml(formatCadastroValue(status))}</em>
+        </section>
+
+        <section class="central-cadastro-grid">
+          ${campoCadastro("CPF / CNPJ", registro?.cpf_cnpj)}
+          ${campoCadastro("Telefone", formatPhone(registro?.telefone || registro?.celular || pedido?.contato))}
+          ${campoCadastro("Email", registro?.email)}
+          ${campoCadastro("Ultima locacao", dataBR(registro?.ultima_locacao))}
+          ${campoCadastro("Endereco", formatEnderecoCadastro(registro), "wide")}
+          ${campoCadastro("Ponto de referencia", registro?.ponto_referencia, "wide")}
+          ${isCliente ? campoCadastro("Origem / canal", registro?.canal || registro?.origem) : campoCadastro("Responsavel", registro?.responsavel)}
+          ${campoCadastro("Observacoes", registro?.observacoes || registro?.observacao, "wide")}
+        </section>
+
+        ${tagsHtml ? `<section class="central-cadastro-tags">${tagsHtml}</section>` : ""}
+      `;
+    }
+
+    els.centralCadastroRelacionadoModal?.classList.remove("hidden");
+    window.lucide?.createIcons?.();
+  }
+
+  async function buscarCadastroRelacionado(tipo, pedido){
+    if(!state.supabase || !state.empresaId) throw new Error("Supabase indisponivel.");
+    const isCliente = tipo === "cliente";
+    const table = isCliente ? "clientes_empresas" : "locais_empresas";
+    const id = isCliente ? pedido?.cliente_id : pedido?.local_id;
+    const nome = isCliente ? pedido?.cliente : pedido?.local;
+
+    let query = state.supabase
+      .from(table)
+      .select("*")
+      .eq("empresa_id", state.empresaId)
+      .limit(1);
+
+    if(id){
+      query = query.eq("id", id);
+    }else if(nome){
+      query = query.ilike("nome_razao", nome);
+    }else{
+      return null;
+    }
+
+    const { data, error } = await query.maybeSingle();
+    if(error && !isTabelaAusente(error)) throw error;
+    return data || null;
+  }
+
   async function abrirCadastroRelacionado(tipo, pedido){
     if(!pedido) return;
 
@@ -381,33 +511,29 @@
       return;
     }
 
-    const htmlPath = isCliente
-      ? "Modulos/Comercial/CadastroClientes/cadastro-clientes.html"
-      : "Modulos/Comercial/CadastroLocais/cadastro-locais.html";
-    const jsPath = isCliente
-      ? "Modulos/Comercial/CadastroClientes/cadastro-clientes.js"
-      : "Modulos/Comercial/CadastroLocais/cadastro-locais.js";
-    const cssPath = isCliente
-      ? "Modulos/Comercial/CadastroClientes/cadastro-clientes.css"
-      : "Modulos/Comercial/CadastroLocais/cadastro-locais.css";
-    const openerName = isCliente
-      ? "clientes_abrirDetalhesPorIdOuNome"
-      : "Locais_abrirDetalhesPorIdOuNome";
+    try{
+      if(els.centralCadastroRelacionadoSubtitulo){
+        els.centralCadastroRelacionadoSubtitulo.textContent = isCliente ? "Cadastro de cliente" : "Cadastro de local";
+      }
+      if(els.centralCadastroRelacionadoTitulo){
+        els.centralCadastroRelacionadoTitulo.textContent = "Carregando...";
+      }
+      if(els.centralCadastroRelacionadoBody){
+        els.centralCadastroRelacionadoBody.innerHTML = `<div class="central-cadastro-loading">Buscando cadastro...</div>`;
+      }
+      els.centralCadastroRelacionadoModal?.classList.remove("hidden");
 
-    if(typeof window.carregarNaMain !== "function"){
+      const registro = await buscarCadastroRelacionado(tipo, pedido);
+      renderCadastroRelacionado(tipo, registro || {
+        nome_razao: nome,
+        telefone: pedido.contato,
+        status: "Nao encontrado"
+      }, pedido);
+    }catch(error){
+      console.error("[CentralPedidos] cadastro relacionado:", error);
       avisar("Nao foi possivel abrir o cadastro neste momento.", "Cadastro", "erro");
-      return;
+      els.centralCadastroRelacionadoModal?.classList.add("hidden");
     }
-
-    await window.carregarNaMain(htmlPath, jsPath, null, cssPath);
-
-    const abrir = window[openerName];
-    if(typeof abrir !== "function"){
-      avisar("Cadastro carregado, mas o modal nao ficou disponivel.", "Cadastro", "erro");
-      return;
-    }
-
-    await abrir({ id, nome });
   }
 
   function normalizarPedido(row){
@@ -997,6 +1123,14 @@
     els.btnEnviarWhatsappPedido?.addEventListener("click", enviarWhatsappPedido);
     els.centralWhatsappModal?.addEventListener("click", (event) => {
       if(event.target === els.centralWhatsappModal) fecharModalWhatsapp();
+    });
+    els.btnFecharCadastroRelacionado?.addEventListener("click", () => {
+      els.centralCadastroRelacionadoModal?.classList.add("hidden");
+    });
+    els.centralCadastroRelacionadoModal?.addEventListener("click", (event) => {
+      if(event.target === els.centralCadastroRelacionadoModal){
+        els.centralCadastroRelacionadoModal.classList.add("hidden");
+      }
     });
 
     [
