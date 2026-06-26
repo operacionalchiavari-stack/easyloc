@@ -308,9 +308,13 @@
           </header>
           <div class="el-pix-body">
             <div class="el-pix-summary" id="elPixSummary"></div>
-            <div class="el-pix-parcels" id="elPixParcelas"></div>
-            <div class="el-pix-existing hidden" id="elPixExisting"></div>
-            <div class="el-pix-result" id="elPixResult"></div>
+            <div class="el-pix-layout">
+              <section class="el-pix-parcelas-panel">
+                <div class="el-pix-parcels" id="elPixParcelas"></div>
+                <div class="el-pix-existing hidden" id="elPixExisting"></div>
+              </section>
+              <section class="el-pix-result el-pix-qrcode-panel" id="elPixResult"></section>
+            </div>
           </div>
           <footer class="el-pix-footer" id="elPixFooter"></footer>
         </section>
@@ -566,6 +570,60 @@
     container.innerHTML = `<div class="el-pix-empty-qr">QR Code indisponivel</div>`;
   }
 
+  function renderPixPanel({ payment = null, title = "", text = "" } = {}){
+    const code = payment ? paymentCode(payment) : "";
+    const ctx = state.context || {};
+    const copyButton = code
+      ? `<button type="button" class="el-pix-copy-inline" data-pix-action="copy" title="Copiar codigo PIX" aria-label="Copiar codigo PIX"><i data-lucide="copy"></i></button>`
+      : "";
+
+    return `
+      <div class="el-pix-qrcode-head">
+        <div>
+          <h3>QR Code PIX</h3>
+          <p>Escaneie para pagar esta parcela</p>
+        </div>
+        ${payment ? `<em class="el-pix-status ${badgeClass(payment.status)}">${badgeLabel(payment.status)}</em>` : ""}
+      </div>
+
+      <div class="el-pix-qr" id="elPixQr">
+        ${payment ? "" : `
+          <div class="el-pix-empty-state">
+            <i data-lucide="qr-code"></i>
+            <strong>${escapeHtml(title)}</strong>
+            <span>${escapeHtml(text)}</span>
+          </div>
+        `}
+      </div>
+
+      <div class="el-pix-code">
+        <div class="el-pix-code-head">
+          <span>PIX Copia e Cola</span>
+          ${copyButton}
+        </div>
+        <textarea readonly>${escapeHtml(code || "Codigo PIX indisponivel")}</textarea>
+      </div>
+
+      <div class="el-pix-selected-summary">
+        <span>Resumo da parcela</span>
+        <div>
+          <small>Parcela</small>
+          <strong>${escapeHtml(ctx.parcelaLabel || "-")}</strong>
+        </div>
+        <div>
+          <small>Valor</small>
+          <strong>${escapeHtml(formatCurrency(ctx.valor))}</strong>
+        </div>
+        <div>
+          <small>Vencimento</small>
+          <strong>${escapeHtml(formatDate(ctx.vencimento))}</strong>
+        </div>
+      </div>
+
+      <div class="el-pix-provider-note">Cobranca via Mercado Pago</div>
+    `;
+  }
+
   async function renderPayment(payment){
     state.payment = payment || null;
     if(payment) state.existingPayment = null;
@@ -586,13 +644,7 @@
       const texto = parcelaFechada
         ? "Selecione uma parcela em aberto para gerar uma nova cobranca PIX."
         : "Clique em Gerar PIX para criar a cobranca pelo Mercado Pago.";
-      result.innerHTML = `
-        <div class="el-pix-empty-state">
-          <i data-lucide="qr-code"></i>
-          <strong>${escapeHtml(titulo)}</strong>
-          <span>${escapeHtml(texto)}</span>
-        </div>
-      `;
+      result.innerHTML = renderPixPanel({ title: titulo, text: texto });
       footer.innerHTML = `
         <button type="button" class="el-pix-button secondary" data-pix-action="close">Fechar</button>
         ${parcelaFechada ? "" : `
@@ -606,20 +658,9 @@
       return;
     }
 
-    const code = paymentCode(payment);
-    result.innerHTML = `
-      <div class="el-pix-qr" id="elPixQr"></div>
-      <div class="el-pix-code">
-        <span>PIX Copia e Cola</span>
-        <textarea readonly>${escapeHtml(code || "Codigo PIX indisponivel")}</textarea>
-      </div>
-      <div class="el-pix-meta">
-        <div><span>ID da cobranca</span><strong>${escapeHtml(payment.external_id || "-")}</strong></div>
-        <div><span>Vencimento</span><strong>${escapeHtml(formatDate(payment.due_date || state.context?.vencimento))}</strong></div>
-        <div><span>Status</span><strong><em class="el-pix-status ${badgeClass(payment.status)}">${badgeLabel(payment.status)}</em></strong></div>
-      </div>
-    `;
+    result.innerHTML = renderPixPanel({ payment });
     footer.innerHTML = `
+      <button type="button" class="el-pix-button secondary" data-pix-action="close">Fechar</button>
       <button type="button" class="el-pix-button secondary" data-pix-action="copy">
         <i data-lucide="copy"></i>
         Copiar codigo PIX
