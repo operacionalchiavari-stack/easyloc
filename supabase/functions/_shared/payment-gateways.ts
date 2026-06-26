@@ -415,12 +415,13 @@ export async function saveEncryptedCredentials(
   if (error) throw error;
 }
 
-export function buildWebhookUrl(gateway: string, connectionId: string) {
+export function buildWebhookUrl(gateway: string, connectionId: string, secret?: string) {
   const base = Deno.env.get("PAYMENT_GATEWAY_WEBHOOK_URL");
   if (!base) return null;
   const url = new URL(base);
   url.searchParams.set("gateway", gateway);
   url.searchParams.set("connection_id", connectionId);
+  if (secret) url.searchParams.set("secret", secret);
   return url.toString();
 }
 
@@ -532,7 +533,8 @@ class MercadoPagoProvider implements PaymentProvider {
       ? syntheticPayerEmail(input, context)
       : incomingPayerEmail;
 
-    const notificationUrl = input.notification_url || buildWebhookUrl(this.id, context.connection.id);
+    const notificationUrl = input.notification_url ||
+      buildWebhookUrl(this.id, context.connection.id, context.credentials.webhook_secret);
     const externalReference = input.external_reference || input.pedido_id || crypto.randomUUID();
 
     const buildPayload = (email: string): Record<string, any> => ({
@@ -651,11 +653,22 @@ class MercadoPagoProvider implements PaymentProvider {
     return data;
   }
 
-  async receberWebhook(payload: Record<string, any>) {
-    const dataId = payload?.data?.id || payload?.data_id || payload?.id || null;
+  async receberWebhook(payload: Record<string, any>, req: Request) {
+    const url = new URL(req.url);
+    const queryDataId = url.searchParams.get("data.id") ||
+      url.searchParams.get("data_id") ||
+      url.searchParams.get("id") ||
+      "";
+    const queryType = url.searchParams.get("type") || url.searchParams.get("topic") || "";
+    const dataId = queryDataId ||
+      payload?.data?.id ||
+      payload?.data_id ||
+      payload?.resource?.id ||
+      payload?.id ||
+      null;
     return {
-      event_type: payload?.type || payload?.topic || payload?.action || "payment",
-      provider_event_id: payload?.id ? String(payload.id) : undefined,
+      event_type: queryType || payload?.type || payload?.topic || payload?.action || "payment",
+      provider_event_id: payload?.id ? String(payload.id) : (dataId ? String(dataId) : undefined),
       external_payment_id: dataId ? String(dataId) : undefined,
     };
   }

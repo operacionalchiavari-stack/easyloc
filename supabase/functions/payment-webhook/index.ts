@@ -56,6 +56,26 @@ async function findConnection(serviceClient: ReturnType<typeof createServiceClie
   return data;
 }
 
+async function isKnownPaymentNotification(
+  serviceClient: ReturnType<typeof createServiceClient>,
+  connection: Record<string, any>,
+  gateway: string,
+  externalPaymentId?: string,
+) {
+  if (!externalPaymentId) return false;
+
+  const { data, error } = await serviceClient
+    .from("payment_gateway_payments")
+    .select("id,gateway_connection_id")
+    .eq("empresa_id", connection.empresa_id)
+    .eq("gateway", gateway)
+    .eq("external_id", externalPaymentId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data && String(data.gateway_connection_id) === String(connection.id));
+}
+
 async function aplicarBaixaNoPedido(
   serviceClient: ReturnType<typeof createServiceClient>,
   payment: Record<string, any>,
@@ -165,16 +185,24 @@ serve(async (req) => {
     const fallbackSecret = url.searchParams.get("secret") || req.headers.get("x-easyloc-webhook-secret") || "";
     const allowUnsigned = Deno.env.get("PAYMENT_GATEWAY_ALLOW_UNSIGNED_WEBHOOKS") === "true";
 
-    let authorized = allowUnsigned;
+    let authorized = allowUnsigned || !secret;
     if (gateway === "mercado_pago" && secret) {
       authorized = await validateMercadoPagoWebhookSignature(req, secret, parsed.external_payment_id);
     }
     if (!authorized && secret && fallbackSecret && fallbackSecret === secret) {
       authorized = true;
     }
+    if (!authorized && parsed.external_payment_id) {
+      authorized = await isKnownPaymentNotification(serviceClient, connection, gateway, parsed.external_payment_id);
+    }
     if (!authorized) {
       return jsonResponse({ erro: "Assinatura do webhook invalida." }, 401);
     }
+
+    const eventPayload = {
+      body: payload,
+      query: Object.fromEntries(url.searchParams.entries()),
+    };
 
     const { data: event, error: eventError } = await serviceClient
       .from("payment_gateway_events")
@@ -185,7 +213,7 @@ serve(async (req) => {
         event_type: parsed.event_type,
         provider_event_id: parsed.provider_event_id,
         external_payment_id: parsed.external_payment_id,
-        payload,
+        payload: eventPayload,
       })
       .select("*")
       .single();
