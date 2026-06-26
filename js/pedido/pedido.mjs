@@ -460,26 +460,26 @@ function setupPedidoWorkspace({ supabase }){
   const coletarParcelasFinanceiras = () => {
     return Array.from(document.querySelectorAll("#cronogramaParcelas tr"))
       .map((row, index) => {
-        const cells = Array.from(row.children);
-        if(cells.length < 5) return null;
-
-        const tipo = cells[1]?.innerText?.trim() || `Parcela ${index + 1}`;
-        const vencimento = dataParaISO(row.querySelector(".pg-vencimento")?.value || cells[2]?.innerText);
-        const valor = moedaParaNumero(row.querySelector(".pg-valor")?.innerText || cells[3]?.innerText);
+        const tipo = row.querySelector(".pg-parcela-label")?.textContent?.trim() || `Parcela ${index + 1}`;
+        const numero = row.querySelector(".pg-numero")?.textContent?.trim() || String(index + 1);
+        const vencimento = dataParaISO(row.querySelector(".pg-vencimento")?.value || "");
+        const valor = moedaParaNumero(row.querySelector(".pg-valor")?.innerText || row.querySelector(".pg-valor")?.textContent || "");
+        const recebido = moedaParaNumero(row.querySelector(".pg-recebido")?.innerText || row.querySelector(".pg-recebido")?.textContent || "");
         const metodo = row.querySelector(".pg-metodo")?.value
-          || cells[4]?.innerText?.trim()
+          || row.querySelector(".pg-metodo-text")?.textContent?.trim()
           || document.getElementById("pagamentoMetodo")?.value
           || "A combinar";
         const status = row.querySelector(".pg-status")?.value
-          || cells[5]?.innerText?.trim()
+          || row.querySelector(".pg-status-badge")?.textContent?.trim()
           || "Programado";
 
         if(!valor) return null;
         return {
-          numero: index + 1,
+          numero,
           tipo,
           vencimento,
           valor,
+          recebido,
           metodo,
           status
         };
@@ -557,21 +557,37 @@ function setupPedidoWorkspace({ supabase }){
   const renderizarParcelasSalvas = (parcelas = []) => {
     const tbody = document.getElementById("cronogramaParcelas");
     if(!tbody || !Array.isArray(parcelas) || !parcelas.length) return;
+    const metodos = ["PIX", "Cartao", "Transferencia", "Boleto", "Dinheiro", "A combinar"];
+    const statuses = ["Programado", "Pago", "Pendente", "Cancelado"];
 
     tbody.innerHTML = parcelas.map((parcela, index) => {
       const data = dataParaISO(parcela.vencimento);
-      const dataBR = data ? new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR") : "-";
+      const status = parcela.status || "Programado";
+      const recebido = Number(parcela.recebido || parcela.valor_recebido || 0);
+      const pago = String(status).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes("pago");
       return `
-        <tr>
-          <td>${parcela.numero || index + 1}</td>
-          <td>${parcela.tipo || `Parcela ${index + 1}`}</td>
-          <td>${dataBR}</td>
-          <td>${Number(parcela.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-          <td>${parcela.metodo || "A combinar"}</td>
-          <td>${parcela.status || "Programado"}</td>
+        <tr class="${pago ? "is-paid" : "is-programmed"}">
+          <td>
+            <strong class="pg-parcela-label">${parcela.tipo || `Parcela ${index + 1}`}</strong>
+            <span class="pg-numero sr-only">${parcela.numero || index + 1}</span>
+            <small><span class="pg-metodo-text">${parcela.metodo || "A combinar"}</span></small>
+            <select class="pg-metodo">
+              ${metodos.map((metodo) => `<option ${metodo === (parcela.metodo || "A combinar") ? "selected" : ""}>${metodo}</option>`).join("")}
+            </select>
+          </td>
+          <td><input class="el-input pg-vencimento" type="date" value="${data || ""}"></td>
+          <td contenteditable="true" class="pg-valor">${Number(parcela.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+          <td><span class="pg-recebido">${Number(recebido).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></td>
+          <td>
+            <span class="pg-status-badge ${pago ? "paid" : "programmed"}">${pago ? "Paga" : "Programada"}</span>
+            <select class="pg-status">
+              ${statuses.map((option) => `<option ${option === status || (option === "Pago" && pago) ? "selected" : ""}>${option}</option>`).join("")}
+            </select>
+          </td>
           <td>
             <button type="button" class="pedido-pix-btn" data-pix-parcela title="Gerar PIX" aria-label="Gerar PIX">
               <i data-lucide="qr-code"></i>
+              <span class="pg-action-text">${pago ? "Ver" : "Gerar PIX"}</span>
             </button>
           </td>
         </tr>

@@ -143,108 +143,165 @@
 
         </section>
 
-        <section class="finance-card pagamento-card pagamento-card-wide">
+        <section class="finance-card pagamento-card pagamento-card-wide pagamento-minimal-card">
           <div class="pagamento-card-head">
-            <h2>Condicoes comerciais e pagamento</h2>
+            <div>
+              <h2>Financeiro do pedido</h2>
+              <p>Acompanhe parcelas e recebimentos</p>
+            </div>
             <div class="pagamento-actions">
-              <button type="button" class="btn btn-secondary" id="btnLimparProgramacao">Limpar programacao</button>
+              <button type="button" class="btn btn-secondary" id="btnFinanceiroAcoes">Ações</button>
             </div>
           </div>
 
-          <div class="pagamento-content-grid">
-            <div class="pagamento-form-area">
-              <div class="pagamento-config-grid">
-                <label class="el-field">
-                  <span>Forma de pagamento</span>
-                  <select class="el-select" id="pagamentoMetodo">
-                    <option>PIX</option>
-                    <option>Cartao</option>
-                    <option>Transferencia</option>
-                    <option>Boleto</option>
-                    <option>Dinheiro</option>
-                    <option>A combinar</option>
-                  </select>
-                </label>
+          <div class="pagamento-overview-grid">
+            <div class="pagamento-overview-card">
+              <span>Total</span>
+              <strong id="pgResumoTotal">R$ 0,00</strong>
+            </div>
+            <div class="pagamento-overview-card">
+              <span>Recebido</span>
+              <strong id="pgResumoRecebido">R$ 0,00</strong>
+            </div>
+            <div class="pagamento-overview-card">
+              <span>Em aberto</span>
+              <strong id="pgResumoAberto">R$ 0,00</strong>
+            </div>
+            <div class="pagamento-overview-card">
+              <span>Pagamento</span>
+              <strong id="pgResumoPagamento">PIX • 1x</strong>
+            </div>
+          </div>
 
-                <label class="el-field">
-                  <span>Entrada</span>
-                  <input class="el-input" type="number" id="pagamentoEntradaPercent" value="0" min="0" step="0.01" placeholder="R$ 0,00">
-                </label>
+          <details class="pagamento-conditions" id="pagamentoCondicoes">
+            <summary>
+              <span>Condições comerciais</span>
+              <small>
+                <b id="pgCondEntradaResumo">Entrada R$ 0,00</b>
+                <b id="pgCondVencResumo">Vencimento -</b>
+                <b id="pgCondDescontoResumo">Desconto R$ 0,00</b>
+                <b id="pgCondFormaResumo">PIX</b>
+                <b id="pgCondParcelasResumo">1x</b>
+              </small>
+            </summary>
 
-                <label class="el-field">
-                  <span>Quantidade de parcelas</span>
-                  <input class="el-input" type="number" id="pagamentoParcelas" value="1" min="0" step="1">
-                </label>
+            <div class="pagamento-content-grid">
+              <div class="pagamento-form-area">
+                <div class="pagamento-config-grid">
+                  <label class="el-field">
+                    <span>Forma de pagamento</span>
+                    <select class="el-select" id="pagamentoMetodo">
+                      <option>PIX</option>
+                      <option>Cartao</option>
+                      <option>Transferencia</option>
+                      <option>Boleto</option>
+                      <option>Dinheiro</option>
+                      <option>A combinar</option>
+                    </select>
+                  </label>
 
-                <label class="el-field">
-                  <span>Vencimento da entrada</span>
-                  <input class="el-input" type="date" id="pagamentoDataBase">
-                </label>
+                  <label class="el-field">
+                    <span>Entrada</span>
+                    <input class="el-input" type="number" id="pagamentoEntradaPercent" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                  </label>
 
-                <label class="el-field">
-                  <span>Dia fixo de vencimento</span>
-                  <input class="el-input" type="number" id="pagamentoDiaFixo" min="1" max="31" step="1" placeholder="Dia">
-                </label>
+                  <label class="el-field">
+                    <span>Quantidade de parcelas</span>
+                    <input class="el-input" type="number" id="pagamentoParcelas" value="1" min="0" step="1">
+                  </label>
 
-                <label class="el-field">
-                  <span>Desconto comercial</span>
-                  <input class="el-input" type="number" id="pagamentoDescontoComercial" value="0" min="0" step="0.01" placeholder="R$ 0,00">
-                </label>
+                  <label class="el-field">
+                    <span>Vencimento da entrada</span>
+                    <input class="el-input" type="date" id="pagamentoDataBase">
+                  </label>
 
-                <label class="el-field">
-                  <span>Desconto por BV decorador</span>
-                  <input class="el-input" type="number" id="bvTotal" value="0" min="0" step="0.01" placeholder="R$ 0,00">
-                </label>
+                  <label class="el-field">
+                    <span>Dia fixo de vencimento</span>
+                    <input class="el-input" type="number" id="pagamentoDiaFixo" min="1" max="31" step="1" placeholder="Dia">
+                  </label>
 
-                <label class="el-field">
-                  <span>Abater no pedido</span>
-                  <input class="el-input" type="number" id="bvAbatido" value="0" min="0" step="0.01" placeholder="R$ 0,00">
-                </label>
+                  <label class="el-field">
+                    <span>Desconto comercial</span>
+                    <input class="el-input" type="number" id="pagamentoDescontoComercial" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                  </label>
 
-                <label class="el-field">
-                  <span>Credito do cliente</span>
-                  <input class="el-input" type="number" id="pagamentoCreditoCliente" value="0" min="0" step="0.01" placeholder="R$ 0,00">
-                </label>
+                  <label class="el-field">
+                    <span>Desconto por BV decorador</span>
+                    <input class="el-input" type="number" id="bvTotal" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                  </label>
 
-                <input class="sr-only" type="number" id="pagamentoIntervalo" value="30">
-                <select class="sr-only" id="pagamentoTipo"><option value="entrada_parcelado">Entrada + Parcelado</option></select>
-                <input class="sr-only" type="text" id="bvPendente" value="R$ 0,00" readonly>
+                  <label class="el-field">
+                    <span>Abater no pedido</span>
+                    <input class="el-input" type="number" id="bvAbatido" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                  </label>
 
-                <label class="el-field pagamento-observacao">
-                  <span>Observacao financeira</span>
-                  <textarea class="el-textarea" id="pagamentoObservacaoFinanceira" rows="4" placeholder="Observacoes comerciais, combinados ou detalhes financeiros"></textarea>
-                </label>
+                  <label class="el-field">
+                    <span>Credito do cliente</span>
+                    <input class="el-input" type="number" id="pagamentoCreditoCliente" value="0" min="0" step="0.01" placeholder="R$ 0,00">
+                  </label>
+
+                  <input class="sr-only" type="number" id="pagamentoIntervalo" value="30">
+                  <select class="sr-only" id="pagamentoTipo"><option value="entrada_parcelado">Entrada + Parcelado</option></select>
+                  <input class="sr-only" type="text" id="bvPendente" value="R$ 0,00" readonly>
+
+                  <label class="el-field pagamento-observacao">
+                    <span>Observacao financeira</span>
+                    <textarea class="el-textarea" id="pagamentoObservacaoFinanceira" rows="4" placeholder="Observacoes comerciais, combinados ou detalhes financeiros"></textarea>
+                  </label>
+                </div>
+              </div>
+
+              <div class="pagamento-summary-area sr-only">
+                <div class="pagamento-resumo pagamento-resumo-completo">
+                  <div><span>Total do pedido</span><strong id="pgTotalContrato">R$ 0,00</strong></div>
+                  <div><span>Total de descontos</span><strong id="pgTotalDescontos">R$ 0,00</strong></div>
+                  <div><span>Total de creditos abatidos</span><strong id="pgTotalCreditos">R$ 0,00</strong></div>
+                  <div><span>Valor final a pagar</span><strong id="pgValorFinal">R$ 0,00</strong></div>
+                  <div><span>Total programado</span><strong id="pgTotalProgramado">R$ 0,00</strong></div>
+                  <div><span>Diferenca</span><strong id="pgDiferenca">R$ 0,00</strong></div>
+                </div>
+              </div>
+
+              <div class="pagamento-conditions-actions">
+                <button type="button" class="btn btn-secondary" id="btnLimparProgramacao">Limpar programacao</button>
               </div>
             </div>
+          </details>
 
-            <div class="pagamento-summary-area sr-only">
-              <div class="pagamento-resumo pagamento-resumo-completo">
-                <div><span>Total do pedido</span><strong id="pgTotalContrato">R$ 0,00</strong></div>
-                <div><span>Total de descontos</span><strong id="pgTotalDescontos">R$ 0,00</strong></div>
-                <div><span>Total de creditos abatidos</span><strong id="pgTotalCreditos">R$ 0,00</strong></div>
-                <div><span>Valor final a pagar</span><strong id="pgValorFinal">R$ 0,00</strong></div>
-                <div><span>Total programado</span><strong id="pgTotalProgramado">R$ 0,00</strong></div>
-                <div><span>Diferenca</span><strong id="pgDiferenca">R$ 0,00</strong></div>
-              </div>
+          <div class="pagamento-workflow">
+            <div class="pagamento-table-wrap">
+              <table class="cronograma-table">
+                <thead>
+                  <tr>
+                    <th>Parcela</th>
+                    <th>Vencimento</th>
+                    <th>Valor</th>
+                    <th>Recebido</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="cronogramaParcelas"></tbody>
+              </table>
             </div>
+
+            <aside class="pagamento-selected-panel">
+              <span class="pagamento-panel-kicker">Parcela selecionada</span>
+              <strong id="pgPainelParcela">Selecione uma parcela</strong>
+              <div class="pagamento-panel-list">
+                <div><span>Vencimento</span><b id="pgPainelVencimento">-</b></div>
+                <div><span>Valor</span><b id="pgPainelValor">R$ 0,00</b></div>
+                <div><span>Status</span><b id="pgPainelStatus">-</b></div>
+                <div><span>Forma</span><b id="pgPainelMetodo">-</b></div>
+              </div>
+              <button type="button" class="btn btn-primary pagamento-panel-pix" id="pgPainelPixBtn" data-pix-selected>
+                Gerar QR Code PIX
+              </button>
+              <p>O QR Code será válido até o vencimento da parcela.</p>
+            </aside>
           </div>
 
-          <div class="pagamento-table-wrap">
-            <table class="cronograma-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Tipo</th>
-                  <th>Vencimento</th>
-                  <th>Valor</th>
-                  <th>Metodo</th>
-                  <th>Status</th>
-                  <th>Acoes</th>
-                </tr>
-              </thead>
-              <tbody id="cronogramaParcelas"></tbody>
-            </table>
-          </div>
+          <p class="pagamento-footnote">Selecione uma parcela em aberto para gerar ou acompanhar o PIX.</p>
         </section>
 
         <section class="contrato">

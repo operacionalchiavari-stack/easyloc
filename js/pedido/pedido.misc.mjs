@@ -141,14 +141,13 @@ export function imprimirPedido() {
 
   const parcelas = Array.from(document.querySelectorAll("#cronogramaParcelas tr"))
     .map((tr) => {
-      const cells = Array.from(tr.children);
       return {
-        numero: cells[0]?.innerText?.trim() || "-",
-        tipo: cells[1]?.innerText?.trim() || "-",
-        vencimento: dateBR(cells[2]?.querySelector("input")?.value || cells[2]?.innerText?.trim() || ""),
-        valor: cells[3]?.innerText?.trim() || "-",
-        metodo: cells[4]?.querySelector("select")?.value || cells[4]?.innerText?.trim() || "-",
-        status: cells[5]?.querySelector("select")?.value || cells[5]?.innerText?.trim() || "-"
+        numero: tr.querySelector(".pg-numero")?.textContent?.trim() || "-",
+        tipo: tr.querySelector(".pg-parcela-label")?.textContent?.trim() || "-",
+        vencimento: dateBR(tr.querySelector(".pg-vencimento")?.value || ""),
+        valor: tr.querySelector(".pg-valor")?.innerText?.trim() || "-",
+        metodo: tr.querySelector(".pg-metodo")?.value || tr.querySelector(".pg-metodo-text")?.textContent?.trim() || "-",
+        status: tr.querySelector(".pg-status")?.value || tr.querySelector(".pg-status-badge")?.textContent?.trim() || "-"
       };
     });
 
