@@ -1,8 +1,11 @@
 (function(){
   const state = {
     context: null,
+    parcelas: [],
     payment: null,
     existingPayment: null,
+    realtimeChannel: null,
+    pollTimer: null,
     isBusy: false
   };
 
@@ -75,6 +78,78 @@
     return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
   }
 
+  function normalizeText(value){
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function statusPago(status){
+    return ["approved", "paid", "pago", "recebido", "quitado", "liquidado", "baixado"].includes(normalizeText(status));
+  }
+
+  function statusCancelado(status){
+    return ["cancelled", "canceled", "cancelado", "expired", "expirado"].includes(normalizeText(status));
+  }
+
+  function valorRecebidoParcela(parcela){
+    if(!parcela) return 0;
+    const baixado = moneyNumber(parcela.baixado);
+    const valorRecebido = moneyNumber(parcela.valor_recebido);
+    const recebido = moneyNumber(parcela.recebido);
+    if(baixado > 0) return baixado;
+    if(valorRecebido > 0) return valorRecebido;
+    if(recebido > 0) return recebido;
+    return statusPago(parcela.status) ? moneyNumber(parcela.valor) : 0;
+  }
+
+  function normalizeParcela(raw = {}, index = 0, ctx = state.context || {}){
+    const selectedIndex = parcelaIndex(raw.parcelaIndex ?? raw.parcela_index);
+    const finalIndex = selectedIndex !== null ? selectedIndex : index;
+    const numero = raw.numero || raw.parcelaNumero || raw.parcela_numero || String(finalIndex + 1);
+    const label = raw.label || raw.tipo || raw.parcelaLabel || raw.parcela_label || raw.parcela || `Parcela ${numero}`;
+    const valor = moneyNumber(raw.valor ?? raw.amount ?? raw.total ?? raw.saldo ?? ctx.valor);
+    const baixado = valorRecebidoParcela(raw);
+    const status = raw.pix_status || raw.status || (baixado >= valor && valor > 0 ? "Recebido" : "Pendente");
+
+    return {
+      index: finalIndex,
+      numero,
+      label,
+      valor,
+      baixado,
+      vencimento: isoDate(raw.vencimento || raw.due_date || raw.data || raw.data_vencimento || ctx.vencimento),
+      metodo: raw.metodo || raw.forma || raw.payment_method || "",
+      status,
+      pixStatus: raw.pix_status || "",
+      pixExternalId: raw.pix_external_id || raw.external_id || "",
+      raw
+    };
+  }
+
+  function parcelasFromRaw(rawContext = {}, ctx = state.context || {}){
+    const rawList = rawContext.parcelas
+      || rawContext.parcelasFinanceiras
+      || rawContext.parcelas_financeiras
+      || rawContext.observacoes?.parcelas_financeiras
+      || [];
+    const list = Array.isArray(rawList)
+      ? rawList.map((parcela, index) => normalizeParcela(parcela, index, ctx)).filter((parcela) => parcela.valor > 0)
+      : [];
+
+    if(list.length) return list;
+    return [normalizeParcela({
+      parcela_index: ctx.parcelaIndex,
+      parcela_numero: ctx.parcelaNumero,
+      parcela_label: ctx.parcelaLabel || "Pedido",
+      valor: ctx.valor,
+      vencimento: ctx.vencimento,
+      status: ctx.valor ? "Pendente" : ""
+    }, ctx.parcelaIndex ?? 0, ctx)].filter((parcela) => parcela.valor > 0);
+  }
+
   function normalizeContext(raw = {}){
     const index = parcelaIndex(raw.parcelaIndex ?? raw.parcela_index);
     const numeroPedido = String(raw.numeroPedido || raw.numero_pedido || raw.documento || raw.pedido || "").replace(/^PED-/i, "").replace(/^#/, "");
@@ -94,8 +169,34 @@
       parcelaLabel,
       valor: moneyNumber(raw.valor || raw.amount || raw.total || raw.saldo),
       vencimento: isoDate(raw.vencimento || raw.due_date || raw.data || raw.data_vencimento),
-      descricao: raw.descricao || ""
+      descricao: raw.descricao || "",
+      raw
     };
+  }
+
+  function applySelectedParcela(parcela){
+    if(!parcela || !state.context) return;
+    state.context.parcelaIndex = parcela.index;
+    state.context.parcelaNumero = parcela.numero;
+    state.context.parcelaLabel = parcela.label;
+    state.context.valor = parcela.valor;
+    state.context.vencimento = parcela.vencimento;
+  }
+
+  function selectedParcela(){
+    const selected = state.parcelas.find((parcela) => parcela.index === state.context?.parcelaIndex);
+    return selected || state.parcelas[0] || null;
+  }
+
+  function chooseInitialParcela(){
+    if(!state.parcelas.length) return;
+    const selected = state.parcelas.find((parcela) => parcela.index === state.context?.parcelaIndex);
+    if(selected){
+      applySelectedParcela(selected);
+      return;
+    }
+    const firstOpen = state.parcelas.find((parcela) => !statusPago(parcela.status) && !statusCancelado(parcela.status));
+    applySelectedParcela(firstOpen || state.parcelas[0]);
   }
 
   function randomId(){
@@ -203,6 +304,7 @@
           </header>
           <div class="el-pix-body">
             <div class="el-pix-summary" id="elPixSummary"></div>
+            <div class="el-pix-parcels" id="elPixParcelas"></div>
             <div class="el-pix-existing hidden" id="elPixExisting"></div>
             <div class="el-pix-result" id="elPixResult"></div>
           </div>
@@ -259,6 +361,7 @@
         const action = event.target.closest("[data-pix-action]")?.dataset?.pixAction;
         if(!action) return;
         if(action === "close") close();
+        if(action === "select-parcela") await selectParcela(event.target.closest("[data-pix-action]")?.dataset?.pixIndex);
         if(action === "generate") await generatePix(false);
         if(action === "open-existing") renderPayment(state.existingPayment);
         if(action === "replace-existing") await replaceExisting();
@@ -303,6 +406,24 @@
     return "empty";
   }
 
+  function parcelaStatusLabel(parcela){
+    if(!parcela) return "Nao gerado";
+    const valor = moneyNumber(parcela.valor);
+    const baixado = moneyNumber(parcela.baixado);
+    if(statusCancelado(parcela.status)) return "Cancelada";
+    if(statusPago(parcela.status) || (valor > 0 && baixado + 0.01 >= valor)) return "Paga";
+    if(baixado > 0) return "Parcial";
+    return "Aberta";
+  }
+
+  function parcelaStatusClass(parcela){
+    const label = parcelaStatusLabel(parcela).toLowerCase();
+    if(label.includes("paga")) return "paid";
+    if(label.includes("cancel")) return "cancelled";
+    if(label.includes("parcial")) return "partial";
+    return "pending";
+  }
+
   function paymentCode(payment = state.payment){
     return payment?.qr_code
       || payment?.response?.point_of_interaction?.transaction_data?.qr_code
@@ -332,6 +453,48 @@
       <div><span>Gateway</span><strong>Mercado Pago</strong></div>
       <div><span>Status</span><strong><em class="el-pix-status ${badgeClass(state.payment?.status)}">${badgeLabel(state.payment?.status)}</em></strong></div>
     `;
+    renderParcelas();
+  }
+
+  function renderParcelas(){
+    const container = document.getElementById("elPixParcelas");
+    if(!container) return;
+    if(!state.parcelas.length){
+      container.innerHTML = "";
+      return;
+    }
+
+    const selectedIndex = state.context?.parcelaIndex;
+    container.innerHTML = `
+      <div class="el-pix-parcels-head">
+        <div>
+          <span>Parcelas do pedido</span>
+          <strong>Selecione a parcela para gerar ou acompanhar o PIX</strong>
+        </div>
+      </div>
+      <div class="el-pix-parcels-list">
+        ${state.parcelas.map((parcela) => {
+          const selected = parcela.index === selectedIndex;
+          return `
+            <button type="button"
+              class="el-pix-parcel ${selected ? "is-selected" : ""}"
+              data-pix-action="select-parcela"
+              data-pix-index="${parcela.index}">
+              <span class="el-pix-parcel-title">
+                <strong>${escapeHtml(parcela.label)}</strong>
+                <em class="el-pix-status ${parcelaStatusClass(parcela)}">${escapeHtml(parcelaStatusLabel(parcela))}</em>
+              </span>
+              <span class="el-pix-parcel-info">
+                <span>${escapeHtml(formatCurrency(parcela.valor))}</span>
+                <span>${escapeHtml(formatDate(parcela.vencimento))}</span>
+                ${parcela.baixado > 0 ? `<span>${escapeHtml(formatCurrency(parcela.baixado))} recebido</span>` : ""}
+              </span>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    `;
+    window.lucide?.createIcons?.();
   }
 
   function setBusy(busy, label = "Processando..."){
@@ -371,19 +534,30 @@
     renderSummary();
 
     if(!payment){
+      stopAutoSync();
+      const parcela = selectedParcela();
+      const parcelaFechada = parcela && (statusPago(parcela.status) || statusCancelado(parcela.status));
+      const titulo = parcelaFechada
+        ? (statusPago(parcela.status) ? "Parcela ja paga" : "Parcela cancelada")
+        : "PIX ainda nao gerado";
+      const texto = parcelaFechada
+        ? "Selecione uma parcela em aberto para gerar uma nova cobranca PIX."
+        : "Clique em Gerar PIX para criar a cobranca pelo Mercado Pago.";
       result.innerHTML = `
         <div class="el-pix-empty-state">
           <i data-lucide="qr-code"></i>
-          <strong>PIX ainda nao gerado</strong>
-          <span>Clique em Gerar PIX para criar a cobranca pelo Mercado Pago.</span>
+          <strong>${escapeHtml(titulo)}</strong>
+          <span>${escapeHtml(texto)}</span>
         </div>
       `;
       footer.innerHTML = `
         <button type="button" class="el-pix-button secondary" data-pix-action="close">Fechar</button>
-        <button type="button" class="el-pix-button primary" data-pix-action="generate">
-          <i data-lucide="qr-code"></i>
-          Gerar PIX
-        </button>
+        ${parcelaFechada ? "" : `
+          <button type="button" class="el-pix-button primary" data-pix-action="generate">
+            <i data-lucide="qr-code"></i>
+            Gerar PIX
+          </button>
+        `}
       `;
       window.lucide?.createIcons?.();
       return;
@@ -426,6 +600,7 @@
     `;
     await renderQr(result.querySelector("#elPixQr"), payment);
     window.lucide?.createIcons?.();
+    startAutoSync();
   }
 
   function renderExistingChoice(payment){
@@ -460,6 +635,139 @@
     }catch{}
   }
 
+  function isPaymentWaiting(payment = state.payment){
+    const normalized = normalizeText(payment?.status);
+    return ["pending", "pendente", "aguardando_pagamento", "in_process", "authorized"].includes(normalized);
+  }
+
+  function stopAutoSync(){
+    if(state.pollTimer){
+      clearInterval(state.pollTimer);
+      state.pollTimer = null;
+    }
+
+    if(state.realtimeChannel){
+      try{
+        sb()?.removeChannel?.(state.realtimeChannel);
+      }catch(error){
+        console.warn("[EasyLocPix] realtime nao removido:", error);
+      }
+      state.realtimeChannel = null;
+    }
+  }
+
+  async function syncPedidoFromRealtime(row){
+    if(!row || row.id !== state.context?.pedidoId) return;
+    await carregarParcelasPedido();
+    const selected = selectedParcela();
+    if(selected) applySelectedParcela(selected);
+    renderSummary();
+    dispatchUpdate();
+  }
+
+  async function syncPaymentFromRealtime(row){
+    if(!row || String(row.external_id || "") !== String(state.payment?.external_id || "")) return;
+    const previousStatus = state.payment?.status;
+    state.payment = { ...state.payment, ...row };
+    await carregarParcelasPedido();
+    await renderPayment(state.payment);
+    dispatchUpdate();
+    if(!statusPago(previousStatus) && statusPago(row.status)){
+      notify("Pagamento confirmado e baixa atualizada.", "PIX", "sucesso");
+    }
+  }
+
+  function startAutoSync(){
+    stopAutoSync();
+    if(!state.payment?.external_id || !isPaymentWaiting(state.payment)) return;
+
+    state.pollTimer = setInterval(() => {
+      refreshStatus({ silent: true }).catch((error) => {
+        console.warn("[EasyLocPix] atualizacao automatica ignorada:", error);
+      });
+    }, 12000);
+
+    const client = sb();
+    if(!client?.channel) return;
+
+    const channel = client.channel(`easyloc-pix-${state.payment.external_id}-${Date.now()}`);
+    channel.on("postgres_changes", {
+      event: "UPDATE",
+      schema: "public",
+      table: "payment_gateway_payments",
+      filter: `external_id=eq.${state.payment.external_id}`
+    }, (payload) => {
+      syncPaymentFromRealtime(payload.new).catch((error) => console.warn("[EasyLocPix] realtime pagamento ignorado:", error));
+    });
+
+    if(state.context?.pedidoId){
+      channel.on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "separacoes_pedidos",
+        filter: `id=eq.${state.context.pedidoId}`
+      }, (payload) => {
+        syncPedidoFromRealtime(payload.new).catch((error) => console.warn("[EasyLocPix] realtime pedido ignorado:", error));
+      });
+    }
+
+    channel.subscribe();
+    state.realtimeChannel = channel;
+  }
+
+  async function carregarParcelasPedido(){
+    if(!state.context?.pedidoId) return;
+    const client = sb();
+    const company = empresaId();
+    if(!client?.from || !company) return;
+
+    try{
+      const { data, error } = await client
+        .from("separacoes_pedidos")
+        .select("id,numero_pedido,cliente_id,cliente_nome,contato_cliente,valor_total,data_entrega,data_evento,data_hora,observacoes")
+        .eq("empresa_id", company)
+        .eq("id", state.context.pedidoId)
+        .maybeSingle();
+
+      if(error || !data) throw error || new Error("Pedido nao encontrado.");
+
+      const observacoes = data.observacoes && typeof data.observacoes === "object" ? data.observacoes : {};
+      state.context.numeroPedido = state.context.numeroPedido === "-" || !state.context.numeroPedido
+        ? String(data.numero_pedido || state.context.numeroPedido || "-")
+        : state.context.numeroPedido;
+      state.context.clienteId = state.context.clienteId || data.cliente_id || null;
+      state.context.cliente = state.context.cliente || data.cliente_nome || "Cliente nao informado";
+      state.context.contato = state.context.contato || data.contato_cliente || "";
+
+      const parcelas = Array.isArray(observacoes.parcelas_financeiras)
+        ? observacoes.parcelas_financeiras
+        : [];
+
+      if(parcelas.length){
+        const selectedIndex = state.context.parcelaIndex;
+        state.parcelas = parcelas.map((parcela, index) => normalizeParcela(parcela, index, state.context)).filter((parcela) => parcela.valor > 0);
+        const selected = state.parcelas.find((parcela) => parcela.index === selectedIndex)
+          || state.parcelas.find((parcela) => !statusPago(parcela.status) && !statusCancelado(parcela.status))
+          || state.parcelas[0];
+        applySelectedParcela(selected);
+      }else if(!state.parcelas.length){
+        state.parcelas = parcelasFromRaw({
+          parcelas: [{
+            parcela_index: null,
+            parcela_label: "Pedido",
+            valor: data.valor_total,
+            vencimento: data.data_entrega || data.data_evento || data.data_hora,
+            status: observacoes.status_financeiro || "Pendente",
+            baixado: observacoes.valor_recebido || observacoes.total_recebido || 0
+          }]
+        }, state.context);
+        chooseInitialParcela();
+      }
+    }catch(error){
+      console.warn("[EasyLocPix] parcelas do pedido ignoradas:", error);
+    }
+  }
+
   async function findActive(){
     if(!state.context?.pedidoId) return null;
     const response = await invokePayment("find_active_pix", {
@@ -471,8 +779,34 @@
     return response?.payment || null;
   }
 
+  async function selectParcela(indexValue){
+    const index = parcelaIndex(indexValue);
+    const parcela = state.parcelas.find((item) => item.index === index);
+    if(!parcela) return;
+
+    applySelectedParcela(parcela);
+    state.payment = null;
+    state.existingPayment = null;
+    stopAutoSync(false);
+    renderSummary();
+    await renderPayment(null);
+
+    try{
+      setBusy(true, "Buscando cobrancas...");
+      const active = await findActive();
+      if(active) renderExistingChoice(active);
+    }catch(error){
+      console.warn("[EasyLocPix] busca de PIX da parcela ignorada:", error);
+    }finally{
+      setBusy(false);
+    }
+  }
+
   async function generatePix(forceNew = false){
     try{
+      const parcela = selectedParcela();
+      if(parcela && statusPago(parcela.status)) throw new Error("Esta parcela ja esta paga.");
+      if(parcela && statusCancelado(parcela.status)) throw new Error("Esta parcela esta cancelada.");
       if(!state.context?.valor) throw new Error("Valor da cobranca PIX ausente.");
       setBusy(true, "Gerando PIX...");
       const payerEmail = await resolvePayerEmail(state.context);
@@ -549,21 +883,29 @@
     link.remove();
   }
 
-  async function refreshStatus(){
+  async function refreshStatus(options = {}){
     if(!state.payment?.external_id) return notify("Cobranca PIX nao encontrada.", "PIX", "aviso");
+    const silent = Boolean(options.silent);
+    const previousStatus = state.payment?.status;
     try{
-      setBusy(true, "Atualizando status...");
+      if(!silent) setBusy(true, "Atualizando status...");
       const response = await invokePayment("consultar_pagamento", {
         external_id: state.payment.external_id
       });
+      await carregarParcelasPedido();
       await renderPayment(response.payment || state.payment);
       dispatchUpdate();
-      notify("Status atualizado.", "PIX", "sucesso");
+      if(!silent){
+        notify("Status atualizado.", "PIX", "sucesso");
+      }else if(!statusPago(previousStatus) && statusPago(state.payment?.status)){
+        notify("Pagamento confirmado e baixa atualizada.", "PIX", "sucesso");
+      }
     }catch(error){
       console.error("[EasyLocPix] atualizar status:", error);
-      notify(error.message || "Nao foi possivel atualizar o status.", "PIX", "erro");
+      if(!silent) notify(error.message || "Nao foi possivel atualizar o status.", "PIX", "erro");
+      if(silent) throw error;
     }finally{
-      setBusy(false);
+      if(!silent) setBusy(false);
     }
   }
 
@@ -682,10 +1024,15 @@
 
   async function open(rawContext = {}){
     state.context = normalizeContext(rawContext);
+    state.parcelas = parcelasFromRaw(rawContext, state.context);
+    chooseInitialParcela();
     state.payment = null;
     state.existingPayment = null;
+    stopAutoSync();
     const { main } = ensureModals();
     main.classList.add("is-open");
+    await carregarParcelasPedido();
+    chooseInitialParcela();
     renderSummary();
     await renderPayment(null);
 
@@ -703,6 +1050,7 @@
   }
 
   function close(){
+    stopAutoSync();
     document.getElementById("easylocPixModal")?.classList.remove("is-open");
     closeWhatsapp();
   }

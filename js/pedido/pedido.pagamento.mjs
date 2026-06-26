@@ -129,6 +129,17 @@ export function initPagamento(){
     const parcelaLabel = cells[1]?.textContent?.trim() || `Parcela ${index + 1}`;
     const vencimento = tr.querySelector(".pg-vencimento")?.value || "";
     const valor = moneyValue(tr.querySelector(".pg-valor"));
+    const parcelas = rows.map((row, rowIndex) => {
+      const rowCells = Array.from(row?.children || []);
+      return {
+        numero: rowCells[0]?.textContent?.trim() || String(rowIndex + 1),
+        tipo: rowCells[1]?.textContent?.trim() || `Parcela ${rowIndex + 1}`,
+        vencimento: row.querySelector(".pg-vencimento")?.value || "",
+        valor: moneyValue(row.querySelector(".pg-valor")),
+        metodo: row.querySelector(".pg-metodo")?.value || "",
+        status: row.querySelector(".pg-status")?.value || "Pendente"
+      };
+    }).filter((parcela) => parcela.valor > 0);
 
     window.EasyLocPix.open({
       source: "pedido",
@@ -142,6 +153,7 @@ export function initPagamento(){
       parcelaIndex: index >= 0 ? index : null,
       parcelaNumero,
       parcelaLabel,
+      parcelas,
       gateway: "mercado_pago"
     });
   };

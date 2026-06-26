@@ -19,7 +19,7 @@
 }
 
 .el-pix-dialog {
-  width: min(920px, 100%);
+  width: min(1080px, 100%);
   max-height: min(92vh, 820px);
   overflow: hidden;
   display: flex;
@@ -160,6 +160,93 @@
   border-radius: 14px;
   background: #fff7ed;
   color: #7c2d12;
+}
+
+.el-pix-parcels {
+  margin: -2px 0 18px;
+}
+
+.el-pix-parcels:empty {
+  display: none;
+}
+
+.el-pix-parcels-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.el-pix-parcels-head span {
+  display: block;
+  margin-bottom: 3px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.el-pix-parcels-head strong {
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.el-pix-parcels-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.el-pix-parcel {
+  min-width: 0;
+  display: block;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px;
+  background: #ffffff;
+  color: #374151;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.el-pix-parcel:hover {
+  transform: translateY(-1px);
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.el-pix-parcel.is-selected {
+  border-color: var(--el-color-accent, #ff6600);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--el-color-accent, #ff6600) 14%, transparent);
+}
+
+.el-pix-parcel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.el-pix-parcel-title strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.el-pix-parcel-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  color: #6b7280;
+  font-size: 12px;
 }
 
 .el-pix-existing.hidden {
@@ -364,7 +451,8 @@
 
   .el-pix-summary,
   .el-pix-result,
-  .el-pix-meta {
+  .el-pix-meta,
+  .el-pix-parcels-list {
     grid-template-columns: 1fr;
   }
 

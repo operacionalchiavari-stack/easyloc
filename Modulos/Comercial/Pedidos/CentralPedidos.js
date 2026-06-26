@@ -348,6 +348,10 @@
     }
 
     const parcela = escolherParcelaPix(pedido);
+    const parcelas = Array.isArray(pedido?.observacoes?.parcelas_financeiras)
+      ? pedido.observacoes.parcelas_financeiras
+      : [];
+
     window.EasyLocPix.open({
       source: "central_pedidos",
       pedidoId: pedido.id,
@@ -360,6 +364,7 @@
       parcelaIndex: parcela.index,
       parcelaNumero: parcela.numero,
       parcelaLabel: parcela.label,
+      parcelas,
       gateway: "mercado_pago"
     });
   }
