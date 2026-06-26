@@ -188,6 +188,10 @@
     return selected || state.parcelas[0] || null;
   }
 
+  function isSelectedParcela(parcela){
+    return parcela && parcela.index === state.context?.parcelaIndex;
+  }
+
   function chooseInitialParcela(){
     if(!state.parcelas.length) return;
     const selected = state.parcelas.find((parcela) => parcela.index === state.context?.parcelaIndex);
@@ -410,6 +414,7 @@
     if(!parcela) return "Nao gerado";
     const valor = moneyNumber(parcela.valor);
     const baixado = moneyNumber(parcela.baixado);
+    if(isSelectedParcela(parcela) && statusPago(state.payment?.status)) return "Paga";
     if(statusCancelado(parcela.status)) return "Cancelada";
     if(statusPago(parcela.status) || (valor > 0 && baixado + 0.01 >= valor)) return "Paga";
     if(baixado > 0) return "Parcial";
@@ -422,6 +427,31 @@
     if(label.includes("cancel")) return "cancelled";
     if(label.includes("parcial")) return "partial";
     return "pending";
+  }
+
+  function parcelaVencida(parcela){
+    if(!parcela || statusCancelado(parcela.status)) return false;
+    if(parcelaStatusLabel(parcela).toLowerCase().includes("paga")) return false;
+    const vencimento = isoDate(parcela.vencimento);
+    if(!vencimento) return false;
+    const hoje = new Date();
+    const hojeIso = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString().slice(0, 10);
+    return vencimento < hojeIso;
+  }
+
+  function parcelaRowClass(parcela){
+    const classes = [];
+    if(isSelectedParcela(parcela)) classes.push("is-selected");
+    if(parcelaStatusLabel(parcela).toLowerCase().includes("paga")) classes.push("is-paid");
+    else if(parcelaVencida(parcela)) classes.push("is-overdue");
+    else classes.push("is-current");
+    return classes.join(" ");
+  }
+
+  function parcelaRecebidoValor(parcela){
+    if(!parcela) return 0;
+    if(isSelectedParcela(parcela) && statusPago(state.payment?.status)) return moneyNumber(parcela.valor);
+    return moneyNumber(parcela.baixado);
   }
 
   function paymentCode(payment = state.payment){
@@ -472,26 +502,39 @@
           <strong>Selecione a parcela para gerar ou acompanhar o PIX</strong>
         </div>
       </div>
-      <div class="el-pix-parcels-list">
-        ${state.parcelas.map((parcela) => {
-          const selected = parcela.index === selectedIndex;
-          return `
-            <button type="button"
-              class="el-pix-parcel ${selected ? "is-selected" : ""}"
-              data-pix-action="select-parcela"
-              data-pix-index="${parcela.index}">
-              <span class="el-pix-parcel-title">
-                <strong>${escapeHtml(parcela.label)}</strong>
-                <em class="el-pix-status ${parcelaStatusClass(parcela)}">${escapeHtml(parcelaStatusLabel(parcela))}</em>
-              </span>
-              <span class="el-pix-parcel-info">
-                <span>${escapeHtml(formatCurrency(parcela.valor))}</span>
-                <span>${escapeHtml(formatDate(parcela.vencimento))}</span>
-                ${parcela.baixado > 0 ? `<span>${escapeHtml(formatCurrency(parcela.baixado))} recebido</span>` : ""}
-              </span>
-            </button>
-          `;
-        }).join("")}
+      <div class="el-pix-parcels-table-wrap">
+        <table class="el-pix-parcels-table">
+          <thead>
+            <tr>
+              <th>Parcela</th>
+              <th>Vencimento</th>
+              <th>Valor</th>
+              <th>Recebido</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.parcelas.map((parcela) => {
+              const selected = parcela.index === selectedIndex;
+              const recebido = parcelaRecebidoValor(parcela);
+              return `
+                <tr class="${parcelaRowClass(parcela)}"
+                  data-pix-action="select-parcela"
+                  data-pix-index="${parcela.index}"
+                  aria-selected="${selected ? "true" : "false"}">
+                  <td>
+                    <strong>${escapeHtml(parcela.label)}</strong>
+                    ${selected ? `<span>Selecionada</span>` : ""}
+                  </td>
+                  <td>${escapeHtml(formatDate(parcela.vencimento))}</td>
+                  <td>${escapeHtml(formatCurrency(parcela.valor))}</td>
+                  <td>${recebido > 0 ? escapeHtml(formatCurrency(recebido)) : "-"}</td>
+                  <td><em class="el-pix-status ${parcelaStatusClass(parcela)}">${escapeHtml(parcelaStatusLabel(parcela))}</em></td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
       </div>
     `;
     window.lucide?.createIcons?.();
