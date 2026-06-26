@@ -136,6 +136,19 @@
   <input class="el-input" id="locaisNumeroEndereco" readonly>
 </div>
 
+<div class="form-group el-field local-field-distance">
+  <label>KM do galpão</label>
+  <div class="local-distance-input" aria-live="polite">
+    <span id="locaisDistanciaTexto">-</span>
+    <em id="locaisDistanciaBadge" class="hidden">Salvo</em>
+  </div>
+  <p id="locaisDistanciaHint" class="local-distance-inline-hint">Selecione um endereço ou marque o ponto no mapa para calcular.</p>
+  <div class="local-coordinate-values" aria-hidden="true">
+    <b id="locaisLatitudeTexto">-</b>
+    <b id="locaisLongitudeTexto">-</b>
+  </div>
+</div>
+
 <div class="form-group el-field local-field-reference">
   <label>Ponto de referência *</label>
   <input class="el-input" id="locaisPontoReferencia" readonly>
@@ -152,20 +165,56 @@
 
 
       <div class="local-distance-area col-full">
-        <section class="local-distance-card">
-          <div class="local-distance-icon">
-            <i data-lucide="route"></i>
-          </div>
-          <div class="local-distance-content">
-            <span>KM do galpão</span>
-            <div class="local-distance-value">
-              <strong id="locaisDistanciaTexto">-</strong>
-              <em id="locaisDistanciaBadge" class="hidden">Salvo</em>
+        <!-- ================= TAGS ================= -->
+        <section class="tag-section col-3">
+
+          <div class="tag-group azul single" data-group="tipo">
+            <span class="tag-title">Tipo</span>
+            <div class="tags">
+              <span class="tag">Casa de Festa</span>
+              <span class="tag">Pousada</span>
+              <span class="tag">Residência</span>
+              <span class="tag">Hotel</span>
+              <span class="tag">Clube</span>
             </div>
-            <p id="locaisDistanciaHint">Selecione um endereço ou marque o ponto no mapa para calcular.</p>
-            <div class="local-coordinate-chips">
-              <small>Latitude: <b id="locaisLatitudeTexto">-</b></small>
-              <small>Longitude: <b id="locaisLongitudeTexto">-</b></small>
+          </div>
+
+          <div class="tag-group verde single" data-group="canal">
+            <span class="tag-title">Canal</span>
+            <div class="tags">
+              <span class="tag">WhatsApp</span>
+              <span class="tag">Ligação</span>
+              <span class="tag">Email</span>
+            </div>
+          </div>
+
+          <div class="tag-group amarelo single" data-group="horario">
+            <span class="tag-title">Horário</span>
+            <div class="tags">
+              <span class="tag">Manhã</span>
+              <span class="tag">Tarde</span>
+              <span class="tag">Noite</span>
+            </div>
+          </div>
+
+          <div class="tag-group laranja single" data-group="orcamento">
+            <span class="tag-title">Orçamento</span>
+            <div class="tags">
+              <span class="tag">Econômico</span>
+              <span class="tag">Intermediário</span>
+              <span class="tag">Premium</span>
+            </div>
+          </div>
+
+          <div class="tag-group vermelho" data-group="observacoes">
+            <span class="tag-title">Observações</span>
+            <div class="tags">
+              <span class="tag">Rígido com horários</span>
+              <span class="tag">Necessita Baldeação</span>
+              <span class="tag">Caminhão para em frente</span>
+              <span class="tag">Tem escadas</span>
+              <span class="tag">Tem Elevador</span>
+              <span class="tag">Caminhão para perto</span>
             </div>
           </div>
         </section>
@@ -184,63 +233,6 @@
           <div id="locaisMapa" class="local-map"></div>
           <div class="local-map-tip">Arraste o marcador para ajustar o ponto exato.</div>
         </section>
-      </div>
-
-      <!-- ================= TAGS ================= -->
-      <div class="tag-section col-3">
-
-<div class="tag-group azul single" data-group="tipo">
-  <span class="tag-title">Tipo</span>
-  <div class="tags">
-    <span class="tag">Casa de Festa</span>
-    <span class="tag">Pousada</span>
-    <span class="tag">Residência</span>
-    <span class="tag">Hotel</span>
-    <span class="tag">Clube</span>
-  </div>
-</div>
-
-
-        <div class="tag-group verde single" data-group="canal">
-          <span class="tag-title">Canal</span>
-          <div class="tags">
-            <span class="tag">WhatsApp</span>
-            <span class="tag">Ligação</span>
-            <span class="tag">Email</span>
-          </div>
-        </div>
-
-        <div class="tag-group amarelo single" data-group="horario">
-          <span class="tag-title">Horário</span>
-          <div class="tags">
-            <span class="tag">Manhã</span>
-            <span class="tag">Tarde</span>
-            <span class="tag">Noite</span>
-          </div>
-        </div>
-
-        <div class="tag-group laranja single" data-group="orcamento">
-          <span class="tag-title">Orçamento</span>
-          <div class="tags">
-            <span class="tag">Econômico</span>
-            <span class="tag">Intermediário</span>
-            <span class="tag">Premium</span>
-          </div>
-        </div>
-
-<div class="tag-group vermelho" data-group="observacoes">
-  <span class="tag-title">Observações</span>
-  <div class="tags">
-    <span class="tag">Rígido com horários</span>
-    <span class="tag">Necessita Baldeação</span>
-    <span class="tag">Caminhão para em frente</span>
-    <span class="tag">Tem escadas</span>
-    <span class="tag">Tem Elevador</span>
-    <span class="tag">Caminhão para perto</span>
-  </div>
-</div>
-
-
       </div>
     </div>
 

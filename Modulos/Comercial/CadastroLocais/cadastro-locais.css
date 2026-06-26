@@ -757,8 +757,47 @@ tbody td{
 #locais-modal .local-field-email{grid-column:span 4; order:6;}
 #locais-modal .local-field-status{grid-column:span 2; order:7;}
 #locais-modal .local-field-reference{grid-column:span 3; order:8;}
-#locais-modal .local-field-address{grid-column:span 9; order:9;}
-#locais-modal .local-field-number{grid-column:span 3; order:10;}
+#locais-modal .local-field-address{grid-column:span 7; order:9;}
+#locais-modal .local-field-number{grid-column:span 2; order:10;}
+#locais-modal .local-field-distance{grid-column:span 3; order:11;}
+
+#locais-modal .local-distance-input{
+  width:100%;
+  height:40px;
+  min-height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px 12px;
+  border:1px solid #dce3ee;
+  border-radius:10px;
+  background:#f8fafc;
+  color:#334155;
+  font-size:13px;
+}
+
+#locais-modal .local-distance-input span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+#locais-modal .local-distance-input em{
+  flex:0 0 auto;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#e8f8ee;
+  color:#16833a;
+  font-size:10px;
+  font-style:normal;
+  font-weight:600;
+}
+
+#locais-modal .local-distance-inline-hint,
+#locais-modal .local-coordinate-values{
+  display:none;
+}
 
 #locais-modal .local-distance-area,
 #locais-modal .tag-section{
@@ -768,7 +807,7 @@ tbody td{
 
 #locais-modal .local-distance-area{
   align-items:start;
-  grid-template-columns:minmax(250px,.42fr) minmax(420px,.58fr);
+  grid-template-columns:minmax(360px,.46fr) minmax(480px,.54fr);
   gap:12px;
   margin:2px 0 0;
 }
@@ -854,11 +893,17 @@ tbody td{
 
 #locais-modal .tag-section{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-content:start;
   gap:10px;
   margin-top:0;
   overflow:visible;
   padding-bottom:0;
+}
+
+#locais-modal .local-distance-area > .tag-section{
+  grid-column:auto;
+  order:0;
 }
 
 #locais-modal .tag-group{
@@ -872,7 +917,7 @@ tbody td{
 }
 
 #locais-modal .tag-group.vermelho{
-  grid-column:span 4;
+  grid-column:span 2;
 }
 
 #locais-modal .tag-title{
@@ -936,6 +981,7 @@ tbody td{
   #locais-modal .local-field-reference,
   #locais-modal .local-field-address,
   #locais-modal .local-field-number,
+  #locais-modal .local-field-distance,
   #locais-modal .local-distance-area,
   #locais-modal .tag-section,
   #locais-modal .tag-group.vermelho{
@@ -968,8 +1014,9 @@ tbody td{
   #locais-modal .local-field-email{grid-column:span 3;}
   #locais-modal .local-field-status{grid-column:span 2;}
   #locais-modal .local-field-reference{grid-column:span 3;}
-  #locais-modal .local-field-address{grid-column:span 5;}
-  #locais-modal .local-field-number{grid-column:span 3;}
+  #locais-modal .local-field-address{grid-column:span 4;}
+  #locais-modal .local-field-number{grid-column:span 2;}
+  #locais-modal .local-field-distance{grid-column:span 2;}
   #locais-modal .tag-section{grid-template-columns:repeat(2,minmax(0,1fr));}
   #locais-modal .tag-group.vermelho{grid-column:span 2;}
 }
