@@ -330,19 +330,115 @@ function calcularVolumeTotalPedido(){
     listEl.style.display = "none";
   }
 
+  function escapeHtml(value = ""){
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   function formatarDescricao(texto){
     if(!texto) return "";
 
     const index = texto.indexOf("(L)");
-    if(index === -1) return texto;
+    if(index === -1) return escapeHtml(texto);
 
     const titulo = texto.substring(0, index).trim();
     const medidas = texto.substring(index).trim();
 
     return `
-      <div class="item-nome-titulo">${titulo}</div>
-      <div class="item-nome-medidas">${medidas}</div>
+      <div class="item-nome-titulo">${escapeHtml(titulo)}</div>
+      <div class="item-nome-medidas">${escapeHtml(medidas)}</div>
     `;
+  }
+
+  function toDateOnly(value){
+    if(!value) return "";
+    const date = new Date(value);
+    if(Number.isNaN(date.getTime())) return "";
+    return date.toISOString().slice(0, 10);
+  }
+
+  function selectedDate(){
+    return document.getElementById("dataEvento")?.value
+      || document.getElementById("dataEntrega")?.value
+      || "";
+  }
+
+  function isDateInsidePedido(pedido = {}){
+    const base = selectedDate();
+    if(!base) return true;
+    const alvo = toDateOnly(base);
+    const inicio = toDateOnly(pedido.data_entrega || pedido.data_evento || pedido.data_hora);
+    const fim = toDateOnly(pedido.data_coleta || pedido.data_evento || pedido.data_hora);
+    if(!inicio && !fim) return true;
+    return alvo >= (inicio || fim) && alvo <= (fim || inicio);
+  }
+
+  function isReservaAtiva(pedido = {}){
+    const comercial = String(pedido.status_comercial || "").toLowerCase();
+    const operacional = String(pedido.status || "").toLowerCase();
+    return !["orcamento", "cancelado"].includes(comercial) && operacional !== "cancelado";
+  }
+
+  function calcularDisponibilidadeItem(item = {}, reservas = []){
+    const totalEstoque = Number(item.estoque_total || 0);
+    const totalManutencao = Number(item.estoque_manutencao || item.estoque_indisponivel || 0);
+    const totalReservado = reservas.reduce((acc, reserva) => {
+      const pedido = reserva.separacoes_pedidos || {};
+      if(!isReservaAtiva(pedido) || !isDateInsidePedido(pedido)) return acc;
+      return acc + Number(reserva.quantidade_solicitada || 0);
+    }, 0);
+
+    return Math.max(0, totalEstoque - totalReservado - totalManutencao);
+  }
+
+  function formatarQuantidadeDisponivel(value){
+    const numero = Number(value || 0);
+    return new Intl.NumberFormat("pt-BR", {
+      maximumFractionDigits: 2
+    }).format(numero);
+  }
+
+  async function anexarDisponibilidadeAosItens(itens = [], empresaId){
+    if(!itens.length || !empresaId || !supabase) return itens;
+
+    const ids = itens.map((item) => item.id).filter(Boolean);
+    if(!ids.length){
+      return itens.map((item) => ({
+        ...item,
+        disponibilidade_busca: calcularDisponibilidadeItem(item)
+      }));
+    }
+
+    const { data, error } = await supabase
+      .from("separacoes_itens")
+      .select("item_id, quantidade_solicitada, separacoes_pedidos(data_evento, data_hora, data_entrega, data_coleta, status, status_comercial)")
+      .eq("empresa_id", empresaId)
+      .in("item_id", ids)
+      .limit(1000);
+
+    if(error){
+      console.warn("Disponibilidade dos itens indisponivel:", error);
+      return itens.map((item) => ({
+        ...item,
+        disponibilidade_busca: calcularDisponibilidadeItem(item)
+      }));
+    }
+
+    const reservasPorItem = new Map();
+    (data || []).forEach((reserva) => {
+      const key = reserva.item_id;
+      if(!reservasPorItem.has(key)) reservasPorItem.set(key, []);
+      reservasPorItem.get(key).push(reserva);
+    });
+
+    return itens.map((item) => ({
+      ...item,
+      disponibilidade_busca: calcularDisponibilidadeItem(item, reservasPorItem.get(item.id) || [])
+    }));
   }
 
   function renderizarListaItens(listEl, itens, onPick){
@@ -363,12 +459,24 @@ function calcularVolumeTotalPedido(){
     itens.forEach(it => {
       const div = document.createElement("div");
       div.className = "item-autocomplete-item";
+      const nome = it.descricao_total || it.produto || "-";
+      const foto = it.foto_url || "";
+      const disponivel = Number(it.disponibilidade_busca ?? 0);
+      const disponivelTexto = formatarQuantidadeDisponivel(disponivel);
+      const badgeClass = disponivel > 0 ? "is-available" : "is-unavailable";
+      const badgeText = disponivel > 0 ? `${disponivelTexto} disponivel` : "Indisponivel";
       div.innerHTML = `
-        <div style="font-weight:600;">
-          ${formatarDescricao(it.descricao_total || it.produto || "-")}
+        <div class="item-autocomplete-thumb">
+          ${foto ? `<img src="${escapeHtml(foto)}" alt="${escapeHtml(nome)}">` : `<span>Sem foto</span>`}
         </div>
-        <div style="font-size:12px;color:#64748b;">
-          ${it.codigo ? `Cód: ${it.codigo}` : ""}
+        <div class="item-autocomplete-info">
+          <div class="item-autocomplete-name">
+            ${formatarDescricao(nome)}
+          </div>
+          <div class="item-autocomplete-meta">
+            <span>${it.codigo ? `Cod: ${escapeHtml(it.codigo)}` : "Sem codigo"}</span>
+            <em class="item-autocomplete-stock ${badgeClass}">${escapeHtml(badgeText)}</em>
+          </div>
         </div>
       `;
 
@@ -404,7 +512,7 @@ function calcularVolumeTotalPedido(){
     const fotoBox = tr.querySelector(".foto-item");
     if(fotoBox){
       if(it.foto_url){
-        fotoBox.innerHTML = `<img src="${it.foto_url}" alt="">`;
+        fotoBox.innerHTML = `<img src="${escapeHtml(it.foto_url)}" alt="">`;
       } else {
         fotoBox.innerHTML = "";
       }
@@ -441,13 +549,19 @@ function calcularVolumeTotalPedido(){
           return;
         }
 
+        const busca = termo.replace(/[%_,()]/g, " ").replace(/\s+/g, " ").trim();
+        if(busca.length < 2){
+          limparListaItens(listEl);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("itens")
-          .select("id, codigo, produto, descricao_total, valor_locacao, valor_reposicao, volume_cubico, foto_url")
+          .select("id, codigo, produto, descricao_total, valor_locacao, valor_reposicao, volume_cubico, foto_url, estoque_total, estoque_manutencao, estoque_indisponivel")
           .eq("empresa_id", empresaId)
           .eq("ativo", true)
           .eq("tipo", tipoFiltro)
-          .or(`produto.ilike.%${termo}%,codigo.ilike.%${termo}%`)
+          .or(`descricao_total.ilike.%${busca}%,produto.ilike.%${busca}%,codigo.ilike.%${busca}%`)
           .limit(12);
 
         if(error){
@@ -455,7 +569,8 @@ function calcularVolumeTotalPedido(){
           return;
         }
 
-        renderizarListaItens(listEl, data, (it) => aplicarItemNaLinha(tr, it));
+        const itensComDisponibilidade = await anexarDisponibilidadeAosItens(data || [], empresaId);
+        renderizarListaItens(listEl, itensComDisponibilidade, (it) => aplicarItemNaLinha(tr, it));
 
       }, 250);
     });

@@ -991,6 +991,132 @@
   color: #64748b;
 }
 
+.pedido-screen .item-autocomplete-list,
+.orcamento-page .item-autocomplete-list {
+  min-width: min(520px, calc(100vw - 48px));
+  max-height: 330px;
+  border-radius: 16px;
+  overflow-y: auto;
+}
+
+.pedido-screen .item-autocomplete-item,
+.orcamento-page .item-autocomplete-item {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f7;
+  color: #1f2937;
+}
+
+.pedido-screen .item-autocomplete-item:last-child,
+.orcamento-page .item-autocomplete-item:last-child {
+  border-bottom: 0;
+}
+
+.pedido-screen .item-autocomplete-thumb,
+.orcamento-page .item-autocomplete-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 52px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8fafc;
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.pedido-screen .item-autocomplete-thumb img,
+.orcamento-page .item-autocomplete-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pedido-screen .item-autocomplete-info,
+.orcamento-page .item-autocomplete-info {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.pedido-screen .item-autocomplete-name,
+.orcamento-page .item-autocomplete-name {
+  min-width: 0;
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.pedido-screen .item-autocomplete-name .item-nome-titulo,
+.orcamento-page .item-autocomplete-name .item-nome-titulo {
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.pedido-screen .item-autocomplete-name .item-nome-medidas,
+.orcamento-page .item-autocomplete-name .item-nome-medidas {
+  margin-top: 2px;
+  color: #52637d;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.pedido-screen .item-autocomplete-meta,
+.orcamento-page .item-autocomplete-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.pedido-screen .item-autocomplete-meta > span,
+.orcamento-page .item-autocomplete-meta > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pedido-screen .item-autocomplete-stock,
+.orcamento-page .item-autocomplete-stock {
+  flex: 0 0 auto;
+  min-height: 22px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.pedido-screen .item-autocomplete-stock.is-available,
+.orcamento-page .item-autocomplete-stock.is-available {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.pedido-screen .item-autocomplete-stock.is-unavailable,
+.orcamento-page .item-autocomplete-stock.is-unavailable {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
 /* ================= GRID 3 CARDS ================= */
 
 .extras-grid {
