@@ -433,6 +433,39 @@
     </div>
   </div>
 
+  <div class="pedido-modal hidden item-observacao-modal" id="modalObservacaoItem">
+    <div class="pedido-modal-box el-card item-observacao-box">
+      <div class="pedido-modal-header item-observacao-head">
+        <div>
+          <span>Observação do item</span>
+          <h3 id="itemObservacaoTitulo">Item</h3>
+        </div>
+        <button type="button" class="btn-icon" id="btnFecharObservacaoItem" aria-label="Fechar">x</button>
+      </div>
+
+      <label class="el-field item-observacao-field">
+        <span>Mensagem para a operação</span>
+        <textarea class="el-textarea" id="itemObservacaoTexto" rows="4" placeholder="Ex.: separar com cuidado, conferir tecido, entregar montado..."></textarea>
+      </label>
+
+      <div class="item-observacao-destinos" aria-label="Destino da observação">
+        <label>
+          <input type="checkbox" id="itemObsSeparacao" checked>
+          <span>Separação</span>
+        </label>
+        <label>
+          <input type="checkbox" id="itemObsEntrega">
+          <span>Entrega</span>
+        </label>
+      </div>
+
+      <div class="modal-acoes item-observacao-acoes">
+        <button type="button" class="btn btn-secondary" id="btnLimparObservacaoItem">Limpar</button>
+        <button type="button" class="btn btn-primary" id="btnSalvarObservacaoItem">Salvar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-confirmacao hidden" id="modalConfirmarComponente" style="display:none;">
     <div class="modal-box">
       <h3>Confirmar acao</h3>

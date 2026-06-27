@@ -437,6 +437,47 @@ function setupPedidoWorkspace({ supabase }){
       .filter(Boolean);
   };
 
+  const observacaoOperacionalDaLinha = (row, index = 0) => {
+    const texto = (row?.dataset?.obsTexto || "").trim();
+    const separacao = row?.dataset?.obsSeparacao !== "0";
+    const entrega = row?.dataset?.obsEntrega === "1";
+    if(!texto && !entrega && separacao) return null;
+
+    return {
+      index,
+      item_id: row.dataset.itemId || "",
+      codigo_item: row.dataset.codigoItem || "",
+      item_nome: row.querySelector(".nome-item")?.innerText?.trim()
+        || row.querySelector(".nome-item")?.value?.trim()
+        || "Item",
+      texto,
+      destinos: {
+        separacao,
+        entrega
+      },
+      atualizado_em: new Date().toISOString()
+    };
+  };
+
+  const coletarObservacoesItensOperacionais = () => {
+    return Array.from(document.querySelectorAll("#listaItens tr.item-row"))
+      .map((row, index) => observacaoOperacionalDaLinha(row, index))
+      .filter(Boolean);
+  };
+
+  const encontrarObservacaoItem = (observacoes = [], item = {}, index = 0) => {
+    if(!Array.isArray(observacoes) || !observacoes.length) return null;
+    const itemId = String(item.item_id || item.id || "");
+    const codigo = String(item.codigo_item || item.codigo || "");
+    const nome = String(item.item_nome || item.produto || item.descricao_total || "").trim();
+    return observacoes.find((obs) => {
+      if(itemId && String(obs.item_id || "") === itemId) return true;
+      if(codigo && String(obs.codigo_item || "") === codigo) return true;
+      if(nome && String(obs.item_nome || "").trim() === nome) return true;
+      return Number(obs.index) === Number(index);
+    }) || null;
+  };
+
   async function obterProximoNumeroPedido(){
     const { data, error } = await supabase
       .from("separacoes_pedidos")
@@ -807,7 +848,10 @@ function setupPedidoWorkspace({ supabase }){
       console.error("Erro ao carregar itens do pedido:", itensError);
       avisar("Pedido carregado, mas os itens nao foram encontrados.", "Itens do pedido", "aviso");
     }else{
-      const itensTela = (itens || []).map((item) => ({
+      const observacoesItens = Array.isArray(observacoesPedido.itens_operacionais)
+        ? observacoesPedido.itens_operacionais
+        : [];
+      const itensTela = (itens || []).map((item, index) => ({
         item_id: item.item_id,
         codigo_item: item.codigo_item || item.itens?.codigo || "",
         item_nome: item.item_nome || item.itens?.descricao_total || item.itens?.produto || "Item",
@@ -815,7 +859,8 @@ function setupPedidoWorkspace({ supabase }){
         quantidade_solicitada: item.quantidade_solicitada || 1,
         valor_locacao: item.itens?.valor_locacao || 0,
         valor_reposicao: item.itens?.valor_reposicao || 0,
-        volume_cubico: item.itens?.volume_cubico || 0
+        volume_cubico: item.itens?.volume_cubico || 0,
+        observacao_operacional: encontrarObservacaoItem(observacoesItens, item, index)
       }));
       window.__restaurarItensPedido?.(itensTela);
     }
@@ -1013,6 +1058,7 @@ function setupPedidoWorkspace({ supabase }){
         financeiro: document.getElementById("pagamentoObservacaoFinanceira")?.value || "",
         parcelas_financeiras: coletarParcelasFinanceiras(),
         pagamento_config: window.__pedidoColetarPagamentoConfig?.() || null,
+        itens_operacionais: coletarObservacoesItensOperacionais(),
         logistica_snapshot: coletarLogisticaSnapshot(),
         cancelamento: window.__PEDIDO_CANCELAMENTO || null,
         local_html: document.getElementById("localObservacoes")?.innerHTML || "",
@@ -1410,6 +1456,73 @@ function setupComunicacoes(){
 function enhanceItemActions(){
   const tbody = document.getElementById("listaItens");
   if(!tbody) return;
+  const modal = document.getElementById("modalObservacaoItem");
+  const titulo = document.getElementById("itemObservacaoTitulo");
+  const textarea = document.getElementById("itemObservacaoTexto");
+  const separacao = document.getElementById("itemObsSeparacao");
+  const entrega = document.getElementById("itemObsEntrega");
+  const btnFechar = document.getElementById("btnFecharObservacaoItem");
+  const btnLimpar = document.getElementById("btnLimparObservacaoItem");
+  const btnSalvar = document.getElementById("btnSalvarObservacaoItem");
+  let linhaObservacaoAtual = null;
+
+  const nomeLinha = (row) => row?.querySelector(".nome-item")?.innerText?.trim()
+    || row?.querySelector(".nome-item")?.value?.trim()
+    || "Item";
+
+  const aplicarEstadoObservacao = (row) => {
+    if(!row) return;
+    const temTexto = Boolean((row.dataset.obsTexto || "").trim());
+    row.classList.toggle("has-operational-note", temTexto);
+    const button = row.querySelector(".btn-editar-item");
+    if(button){
+      button.title = temTexto ? "Editar observação operacional" : "Adicionar observação operacional";
+      button.setAttribute("aria-label", button.title);
+    }
+  };
+
+  const fecharModal = () => {
+    modal?.classList.add("hidden");
+    linhaObservacaoAtual = null;
+  };
+
+  const abrirModal = (row) => {
+    if(!modal || !row) return;
+    linhaObservacaoAtual = row;
+    if(titulo) titulo.textContent = nomeLinha(row);
+    if(textarea) textarea.value = row.dataset.obsTexto || "";
+    if(separacao) separacao.checked = row.dataset.obsSeparacao !== "0";
+    if(entrega) entrega.checked = row.dataset.obsEntrega === "1";
+    modal.classList.remove("hidden");
+    setTimeout(() => textarea?.focus?.(), 40);
+  };
+
+  if(modal && !modal.dataset.bound){
+    modal.dataset.bound = "1";
+    btnFechar?.addEventListener("click", fecharModal);
+    modal.addEventListener("click", (event) => {
+      if(event.target === modal) fecharModal();
+    });
+    btnLimpar?.addEventListener("click", () => {
+      if(!linhaObservacaoAtual) return;
+      linhaObservacaoAtual.dataset.obsTexto = "";
+      linhaObservacaoAtual.dataset.obsSeparacao = "1";
+      linhaObservacaoAtual.dataset.obsEntrega = "0";
+      aplicarEstadoObservacao(linhaObservacaoAtual);
+      fecharModal();
+    });
+    btnSalvar?.addEventListener("click", () => {
+      if(!linhaObservacaoAtual) return;
+      if(separacao && entrega && !separacao.checked && !entrega.checked){
+        separacao.checked = true;
+      }
+      linhaObservacaoAtual.dataset.obsTexto = (textarea?.value || "").trim();
+      linhaObservacaoAtual.dataset.obsSeparacao = separacao?.checked ? "1" : "0";
+      linhaObservacaoAtual.dataset.obsEntrega = entrega?.checked ? "1" : "0";
+      aplicarEstadoObservacao(linhaObservacaoAtual);
+      fecharModal();
+    });
+  }
 
   const apply = () => {
     tbody.querySelectorAll("tr.item-row .acoes-linha").forEach((actions) => {
@@ -1418,7 +1531,7 @@ function enhanceItemActions(){
       const edit = document.createElement("button");
       edit.type = "button";
       edit.className = "btn-editar-item";
-      edit.title = "Editar";
+      edit.title = "Adicionar observação operacional";
       edit.textContent = "E";
 
       const onde = document.createElement("button");
@@ -1431,6 +1544,7 @@ function enhanceItemActions(){
       actions.insertBefore(edit, remover || null);
       actions.insertBefore(onde, remover || null);
     });
+    tbody.querySelectorAll("tr.item-row").forEach(aplicarEstadoObservacao);
   };
 
   apply();
@@ -1444,8 +1558,7 @@ function enhanceItemActions(){
     if(!edit) return;
 
     const row = edit.closest("tr.item-row");
-    const field = row?.querySelector(".nome-item");
-    field?.focus?.();
+    abrirModal(row);
   });
 }
 

@@ -5943,3 +5943,120 @@ body.pedido-map-modal-open {
       "repos repos repos" !important;
   }
 }
+
+/* =====================================================
+   MODAL COMPACTO DE OBSERVACAO DO ITEM
+===================================================== */
+
+.pedido-screen .item-observacao-modal {
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, .28);
+  backdrop-filter: blur(2px);
+}
+
+.pedido-screen .item-observacao-box {
+  width: min(420px, calc(100vw - 32px));
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow: 0 24px 54px rgba(15, 23, 42, .18);
+}
+
+.pedido-screen .item-observacao-head {
+  margin-bottom: 12px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pedido-screen .item-observacao-head span {
+  display: block;
+  margin-bottom: 3px;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.pedido-screen .item-observacao-head h3 {
+  max-width: 310px;
+  margin: 0;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.pedido-screen .item-observacao-head .btn-icon {
+  width: 32px;
+  height: 32px;
+  border-color: #e5e7eb;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #6b7280;
+}
+
+.pedido-screen .item-observacao-field {
+  display: grid;
+  gap: 6px;
+}
+
+.pedido-screen .item-observacao-field span {
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pedido-screen .item-observacao-field .el-textarea {
+  min-height: 108px;
+  resize: vertical;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.pedido-screen .item-observacao-destinos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+
+.pedido-screen .item-observacao-destinos label {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid #dbe3ee;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pedido-screen .item-observacao-destinos input {
+  accent-color: var(--el-color-accent);
+}
+
+.pedido-screen .item-observacao-acoes {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 0;
+}
+
+.pedido-screen .item-observacao-acoes .btn {
+  min-height: 36px;
+  padding: 8px 13px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.pedido-screen .pedido-items-table tr.item-row.has-operational-note .btn-editar-item {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+}

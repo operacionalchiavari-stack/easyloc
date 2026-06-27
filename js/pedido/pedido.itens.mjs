@@ -658,6 +658,15 @@ function calcularVolumeTotalPedido(){
   window.__restaurarItensPedido = function restaurarItensPedido(itens = []) {
     tbody.innerHTML = "";
 
+    const aplicarObservacaoOperacional = (tr, observacao = null) => {
+      const destinos = observacao?.destinos || {};
+      const texto = String(observacao?.texto || "").trim();
+      tr.dataset.obsTexto = texto;
+      tr.dataset.obsSeparacao = destinos.separacao === false ? "0" : "1";
+      tr.dataset.obsEntrega = destinos.entrega ? "1" : "0";
+      tr.classList.toggle("has-operational-note", Boolean(texto));
+    };
+
     itens.forEach((item) => {
       addItemBtn.click();
       const tr = Array.from(tbody.querySelectorAll("tr.item-row")).at(-1);
@@ -676,6 +685,7 @@ function calcularVolumeTotalPedido(){
 
       const qtdEl = tr.querySelector(".qtd");
       if(qtdEl) qtdEl.innerText = String(Number(item.quantidade_solicitada || item.quantidade || 1));
+      aplicarObservacaoOperacional(tr, item.observacao_operacional || null);
       recalcularLinha(tr);
     });
 
