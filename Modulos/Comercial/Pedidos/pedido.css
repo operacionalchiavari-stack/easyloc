@@ -4857,25 +4857,30 @@ tr:first-child {
 }
 
 /* =====================================================
-   FINANCEIRO DO PEDIDO - SIMPLES
+   FINANCEIRO DO PEDIDO - OPERACIONAL
 ===================================================== */
 
 .pedido-screen .pagamento-minimal-card {
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
+  border-radius: 16px;
   background: #ffffff;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, .05);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, .06);
 }
 
 .pedido-screen .pagamento-minimal-card .pagamento-card-head {
+  position: relative;
+  display: flex;
   align-items: center;
-  padding: 16px 18px 10px;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
 }
 
 .pedido-screen .pagamento-minimal-card .pagamento-card-head h2 {
-  color: #1f2937;
+  color: #0f2a44;
   font-size: 18px;
-  font-weight: 650;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .pedido-screen .pagamento-minimal-card .pagamento-card-head p {
@@ -4885,96 +4890,169 @@ tr:first-child {
   font-weight: 400;
 }
 
-.pedido-screen .pagamento-minimal-card .pagamento-actions .btn {
-  min-height: 36px;
-  padding: 0 13px;
-  border-radius: 10px;
-  font-size: 13px;
+.pedido-screen .pagamento-title-block {
+  min-width: 190px;
 }
 
-.pedido-screen .pagamento-conditions {
-  margin: 0 18px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #fbfcfe;
-  overflow: hidden;
-}
-
-.pedido-screen .pagamento-conditions summary {
+.pedido-screen .pagamento-head-tools {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  min-height: 42px;
-  padding: 8px 12px;
-  color: #374151;
-  cursor: pointer;
-  list-style: none;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
 }
 
-.pedido-screen .pagamento-conditions summary::-webkit-details-marker {
+.pedido-screen .pagamento-top-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(108px, 1fr));
+  gap: 10px;
+  min-width: min(460px, 52vw);
+}
+
+.pedido-screen .pagamento-mini-card {
+  min-height: 54px;
+  padding: 9px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .035);
+}
+
+.pedido-screen .pagamento-mini-card.positive {
+  border-color: #dcfce7;
+  background: #f0fdf4;
+}
+
+.pedido-screen .pagamento-mini-card span {
+  display: block;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.pedido-screen .pagamento-mini-card strong {
+  display: block;
+  margin-top: 5px;
+  color: #0f2a44;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pedido-screen .pagamento-mini-card.positive strong {
+  color: #16a34a;
+}
+
+.pedido-screen .pagamento-add-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.pedido-screen .pagamento-add-btn {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f2a44;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.pedido-screen .pagamento-add-btn:hover,
+.pedido-screen .pagamento-add-btn[aria-expanded="true"] {
+  border-color: rgba(15, 42, 68, .24);
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.pedido-screen .pagamento-add-btn svg {
+  width: 21px;
+  height: 21px;
+}
+
+.pedido-screen .pagamento-abatimento-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 35;
+  width: 248px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 20px 44px rgba(15, 23, 42, .16);
+}
+
+.pedido-screen .pagamento-abatimento-popover[hidden] {
   display: none;
 }
 
-.pedido-screen .pagamento-conditions summary > span {
-  color: #374151;
+.pedido-screen .pagamento-abatimento-popover > strong {
+  display: block;
+  margin-bottom: 12px;
+  color: #1f2937;
   font-size: 13px;
+  font-weight: 650;
+}
+
+.pedido-screen .pagamento-abatimento-popover label {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.pedido-screen .pagamento-abatimento-popover label span {
+  color: #374151;
+  font-size: 12px;
   font-weight: 500;
 }
 
-.pedido-screen .pagamento-conditions summary small {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 6px;
+.pedido-screen .pagamento-abatimento-popover .el-input {
+  min-height: 34px;
+  border-radius: 8px;
+  font-size: 12px;
 }
 
-.pedido-screen .pagamento-conditions summary b {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #eef2f7;
-  color: #4b5563;
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.pedido-screen .pagamento-conditions[open] summary {
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.pedido-screen .pagamento-minimal-card .pagamento-content-grid {
-  padding: 12px;
-}
-
-.pedido-screen .pagamento-minimal-card .pagamento-config-grid {
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
-}
-
-.pedido-screen .pagamento-conditions-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 10px;
+.pedido-screen .pagamento-abatimento-submit {
+  width: 100%;
+  min-height: 36px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 9px;
+  background: #061b3a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
 }
 
 .pedido-screen .pagamento-minimal-card .pagamento-table-wrap {
-  margin: 0 18px 0;
+  margin: 0 20px 20px;
   padding: 0;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: auto;
 }
 
 .pedido-screen .pagamento-minimal-card .cronograma-table {
-  min-width: 700px;
+  min-width: 940px;
 }
 
 .pedido-screen .pagamento-minimal-card .cronograma-table thead th {
-  padding: 10px 12px;
-  background: var(--el-color-primary);
+  padding: 12px 16px;
+  background: #061b3a;
   color: #ffffff;
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: .01em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
 }
 
 .pedido-screen .pagamento-minimal-card .cronograma-table tbody tr {
@@ -5005,7 +5083,7 @@ tr:first-child {
 }
 
 .pedido-screen .pagamento-minimal-card .cronograma-table td {
-  padding: 10px 12px;
+  padding: 12px 16px;
   vertical-align: middle;
   color: #374151;
   font-size: 13px;
@@ -5021,14 +5099,14 @@ tr:first-child {
 
 .pedido-screen .cronograma-table td small {
   display: block;
-  margin-top: 2px;
+  margin-top: 4px;
   color: #6b7280;
   font-size: 11px;
 }
 
 .pedido-screen .pagamento-card-wide .pg-valor,
 .pedido-screen .pagamento-card-wide .pg-vencimento {
-  min-height: 30px;
+  min-height: 32px;
   border-color: transparent;
   background: transparent;
   color: #374151;
@@ -5082,53 +5160,124 @@ tr:first-child {
 }
 
 .pedido-screen .pagamento-card-wide .pg-status {
-  width: auto;
-  min-height: 26px;
-  margin-left: 6px;
-  padding: 3px 22px 3px 8px;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
   border: 1px solid #e5e7eb;
-  border-radius: 999px;
+  position: absolute;
+}
+
+.pedido-screen .pagamento-minimal-card .pagamento-metodo-select {
+  width: min(190px, 100%);
+  min-height: 34px;
+  padding: 6px 34px 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   background: #ffffff;
-  color: #4b5563;
-  font-size: 11px;
+  color: #374151;
+  font-size: 13px;
   font-weight: 500;
 }
 
-.pedido-screen .pagamento-minimal-card .pg-metodo {
-  display: none;
-}
-
-.pedido-screen .pagamento-minimal-card .pedido-pix-btn {
+.pedido-screen .pedido-cobranca-btn,
+.pedido-screen .pg-action-btn {
   width: 34px;
   min-width: 34px;
   height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
-  border-color: #99f6e4;
+  border: 1px solid #e5e7eb;
   border-radius: 9px;
+  background: #ffffff;
+  color: #0f2a44;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.pedido-screen .pedido-cobranca-btn:hover,
+.pedido-screen .pg-action-btn:hover {
+  transform: translateY(-1px);
+  background: #f8fafc;
+}
+
+.pedido-screen .pedido-cobranca-btn.pix {
+  border-color: #99f6e4;
   background: #f0fdfa;
   color: #0f766e;
 }
 
-.pedido-screen .pagamento-minimal-card .pedido-pix-btn:hover {
+.pedido-screen .pedido-cobranca-btn.pix:hover {
   background: #ccfbf1;
   border-color: #5eead4;
 }
 
-.pedido-screen .pagamento-footnote {
-  margin: 8px 18px 16px;
+.pedido-screen .pedido-cobranca-btn.cartao {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.pedido-screen .pedido-cobranca-btn.boleto {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+  color: #6d28d9;
+}
+
+.pedido-screen .pedido-cobranca-btn.transferencia,
+.pedido-screen .pedido-cobranca-btn.dinheiro,
+.pedido-screen .pedido-cobranca-btn.a-combinar {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.pedido-screen .pg-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pedido-screen .pg-action-btn.danger {
+  color: #b91c1c;
+}
+
+.pedido-screen .pg-action-btn.muted {
   color: #6b7280;
-  font-size: 12px;
-  line-height: 1.4;
+}
+
+.pedido-screen .pedido-cobranca-btn svg,
+.pedido-screen .pg-action-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 @media (max-width: 760px) {
-  .pedido-screen .pagamento-conditions summary {
+  .pedido-screen .pagamento-minimal-card .pagamento-card-head {
     align-items: flex-start;
     flex-direction: column;
+    padding: 16px;
   }
 
-  .pedido-screen .pagamento-conditions summary small {
-    justify-content: flex-start;
+  .pedido-screen .pagamento-head-tools {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .pedido-screen .pagamento-top-summary {
+    min-width: 0;
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .pedido-screen .pagamento-add-wrap {
+    align-self: flex-start;
   }
 
   .pedido-screen .pagamento-minimal-card .cronograma-table {
@@ -5156,7 +5305,7 @@ tr:first-child {
 
   .pedido-screen .pagamento-minimal-card .cronograma-table td {
     display: grid;
-    grid-template-columns: 96px 1fr;
+    grid-template-columns: 118px 1fr;
     gap: 10px;
     border-bottom: 1px solid rgba(229, 231, 235, .8);
   }
@@ -5171,9 +5320,10 @@ tr:first-child {
   .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(1)::before { content: "Parcela"; }
   .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(2)::before { content: "Vencimento"; }
   .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(3)::before { content: "Valor"; }
-  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(4)::before { content: "Recebido"; }
-  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(5)::before { content: "Status"; }
-  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(6)::before { content: "PIX"; }
+  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(4)::before { content: "Status"; }
+  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(5)::before { content: "Forma"; }
+  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(6)::before { content: "Cobrança"; }
+  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(7)::before { content: "Ações"; }
 }
 
 /* =====================================================

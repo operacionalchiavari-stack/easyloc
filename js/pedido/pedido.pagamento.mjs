@@ -16,8 +16,14 @@ export function initPagamento(){
   const creditoClienteEl = document.getElementById("pagamentoCreditoCliente");
 
   const tbody = document.getElementById("cronogramaParcelas");
-  const condicoesEl = document.getElementById("pagamentoCondicoes");
-  const btnFinanceiroAcoes = document.getElementById("btnFinanceiroAcoes");
+  const resumoFaltaDistribuirEl = document.getElementById("pgResumoFaltaDistribuir");
+  const resumoBVEl = document.getElementById("pgResumoBV");
+  const resumoCreditoEl = document.getElementById("pgResumoCredito");
+  const btnAdicionarAbatimento = document.getElementById("btnAdicionarAbatimento");
+  const abatimentoPopover = document.getElementById("pagamentoAbatimentoPopover");
+  const abatimentoBVEl = document.getElementById("pagamentoAbatimentoBV");
+  const abatimentoCreditoEl = document.getElementById("pagamentoAbatimentoCredito");
+  const btnConfirmarAbatimento = document.getElementById("btnConfirmarAbatimento");
 
   const totalContratoEl = document.getElementById("pgTotalContrato");
   const totalDescontosEl = document.getElementById("pgTotalDescontos");
@@ -25,11 +31,6 @@ export function initPagamento(){
   const valorFinalEl = document.getElementById("pgValorFinal");
   const totalProgramadoEl = document.getElementById("pgTotalProgramado");
   const diferencaEl = document.getElementById("pgDiferenca");
-  const condEntradaResumoEl = document.getElementById("pgCondEntradaResumo");
-  const condVencResumoEl = document.getElementById("pgCondVencResumo");
-  const condDescontoResumoEl = document.getElementById("pgCondDescontoResumo");
-  const condFormaResumoEl = document.getElementById("pgCondFormaResumo");
-  const condParcelasResumoEl = document.getElementById("pgCondParcelasResumo");
 
   const btnLimpar = document.getElementById("btnLimparProgramacao");
 
@@ -71,10 +72,38 @@ export function initPagamento(){
     return date.toISOString().slice(0, 10);
   };
 
+  const formasPagamento = [
+    { value: "PIX", label: "PIX", icon: "qr-code" },
+    { value: "Cartao", label: "Cartão de crédito", icon: "credit-card" },
+    { value: "Boleto", label: "Boleto", icon: "barcode" },
+    { value: "Transferencia", label: "Transferência", icon: "banknote" },
+    { value: "Dinheiro", label: "Dinheiro", icon: "wallet" },
+    { value: "A combinar", label: "A combinar", icon: "circle-ellipsis" }
+  ];
+
+  const metodoKey = (value = "") => normalizarStatus(value).replace(/\s+/g, "");
+
+  const normalizarMetodo = (value = "") => {
+    const key = metodoKey(value);
+    if(key.includes("pix")) return "PIX";
+    if(key.includes("cartao") || key.includes("credito")) return "Cartao";
+    if(key.includes("boleto")) return "Boleto";
+    if(key.includes("transferencia")) return "Transferencia";
+    if(key.includes("dinheiro")) return "Dinheiro";
+    return "A combinar";
+  };
+
+  const metodoConfig = (value = "") => {
+    const normalizado = normalizarMetodo(value);
+    return formasPagamento.find((forma) => forma.value === normalizado) || formasPagamento[0];
+  };
+
+  const metodoClass = (value = "") => normalizarMetodo(value).toLowerCase().replace(/\s+/g, "-");
+
   const metodoOptions = (selected) => {
-    const metodos = ["PIX", "Cartao", "Transferencia", "Boleto", "Dinheiro", "A combinar"];
-    return metodos.map((metodo) =>
-      `<option ${metodo === selected ? "selected" : ""}>${metodo}</option>`
+    const normalizado = normalizarMetodo(selected);
+    return formasPagamento.map((metodo) =>
+      `<option value="${metodo.value}" ${metodo.value === normalizado ? "selected" : ""}>${metodo.label}</option>`
     ).join("");
   };
 
@@ -111,8 +140,8 @@ export function initPagamento(){
     const pagaPorBaixa = valor > 0 && recebido >= valor;
     const atrasada = venc && !Number.isNaN(venc.getTime()) && venc < hoje && !pagaPorBaixa && !isPago(status) && !isCancelado(status);
 
-    if(isPago(status) || pagaPorBaixa) return { key: "paid", label: "Paga" };
-    if(atrasada) return { key: "overdue", label: "Atrasada" };
+    if(isPago(status) || pagaPorBaixa) return { key: "paid", label: "Pago" };
+    if(atrasada) return { key: "overdue", label: "Atrasado" };
     if(normalizarStatus(status).includes("pendente") || normalizarStatus(status).includes("abert")) {
       return { key: "open", label: "Em dia" };
     }
@@ -140,64 +169,113 @@ export function initPagamento(){
 
     const valor = valorDaLinha(row);
     const recebido = recebidoDaLinha(row);
-    const metodo = row.querySelector(".pg-metodo")?.value || metodoEl?.value || "A combinar";
+    const metodo = normalizarMetodo(row.querySelector(".pg-metodo")?.value || metodoEl?.value || "A combinar");
+    const metodoAtual = metodoConfig(metodo);
     const recebidoEl = row.querySelector(".pg-recebido");
     const badge = row.querySelector(".pg-status-badge");
     const methodText = row.querySelector(".pg-metodo-text");
+    const cobrancaButton = row.querySelector("[data-cobranca-parcela]");
 
     if(recebidoEl) recebidoEl.textContent = formatCurrency(recebido);
-    if(methodText) methodText.textContent = metodo;
+    if(methodText) methodText.textContent = metodoAtual.label;
     if(badge) {
       badge.className = `pg-status-badge ${meta.key}`;
       badge.textContent = meta.label;
     }
+    if(cobrancaButton) {
+      cobrancaButton.className = `pedido-cobranca-btn ${metodoClass(metodoAtual.value)}`;
+      cobrancaButton.title = `Cobrança via ${metodoAtual.label}`;
+      cobrancaButton.setAttribute("aria-label", `Cobrança via ${metodoAtual.label}`);
+      cobrancaButton.innerHTML = `<i data-lucide="${metodoAtual.icon}"></i>`;
+    }
 
     row.dataset.valor = String(valor);
     row.dataset.status = row.querySelector(".pg-status")?.value || "Programado";
+    row.dataset.metodo = metodo;
   };
 
   const atualizarTodasLinhas = () => {
     tbody.querySelectorAll("tr").forEach(atualizarLinhaVisual);
   };
 
+  const atualizarSequencia = () => {
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    rows.forEach((row, index) => {
+      const numero = String(index + 1);
+      const numeroEl = row.querySelector(".pg-numero");
+      const posEl = row.querySelector(".pg-parcela-pos");
+      if(numeroEl) numeroEl.textContent = numero;
+      if(posEl) posEl.textContent = `${numero} de ${rows.length}`;
+    });
+  };
+
   const criarLinha = ({ numero, tipo, vencimento, valor, metodo, status = "Programado", recebido = "" }) => {
     const tr = document.createElement("tr");
     tr.dataset.recebido = recebido !== undefined && recebido !== null ? String(recebido) : "";
+    const metodoInicial = normalizarMetodo(metodo);
     tr.innerHTML = `
       <td>
         <strong class="pg-parcela-label">${tipo}</strong>
         <span class="pg-numero sr-only">${numero}</span>
-        <small><span class="pg-metodo-text">${metodo || "A combinar"}</span></small>
-        <select class="pg-metodo" aria-label="Forma de pagamento da parcela">${metodoOptions(metodo)}</select>
+        <small class="pg-parcela-pos"></small>
       </td>
       <td><input class="el-input pg-vencimento" type="date" value="${vencimento || ""}"></td>
       <td contenteditable="true" class="pg-valor">${formatCurrency(valor)}</td>
-      <td><span class="pg-recebido">R$ 0,00</span></td>
       <td>
-        <span class="pg-status-badge programmed">Programada</span>
-        <select class="pg-status" aria-label="Status da parcela">${statusOptions(status)}</select>
+        <span class="pg-status-badge programmed">Em dia</span>
+        <select class="pg-status sr-only" aria-label="Status da parcela">${statusOptions(status)}</select>
       </td>
       <td>
-        <button type="button" class="pedido-pix-btn" data-pix-parcela title="Gerar PIX" aria-label="Gerar PIX">
+        <select class="pg-metodo pagamento-metodo-select" aria-label="Forma de pagamento da parcela">${metodoOptions(metodoInicial)}</select>
+        <span class="pg-metodo-text sr-only">${metodoConfig(metodoInicial).label}</span>
+        <span class="pg-recebido sr-only">R$ 0,00</span>
+      </td>
+      <td>
+        <button type="button" class="pedido-cobranca-btn pix" data-cobranca-parcela title="Cobrança" aria-label="Cobrança">
           <i data-lucide="qr-code"></i>
         </button>
+      </td>
+      <td>
+        <div class="pg-row-actions">
+          <button type="button" class="pg-action-btn" data-pg-action="edit" title="Editar parcela" aria-label="Editar parcela">
+            <i data-lucide="pencil"></i>
+          </button>
+          <button type="button" class="pg-action-btn danger" data-pg-action="remove" title="Remover parcela" aria-label="Remover parcela">
+            <i data-lucide="trash-2"></i>
+          </button>
+          <button type="button" class="pg-action-btn muted" data-pg-action="more" title="Mais opções" aria-label="Mais opções">
+            <i data-lucide="grip-vertical"></i>
+          </button>
+        </div>
       </td>
     `;
     atualizarLinhaVisual(tr);
     return tr;
   };
 
-  const abrirPixParcela = (button) => {
+  const abrirCobrancaParcela = (button) => {
     const tr = button?.closest("tr");
     const rows = Array.from(tbody.querySelectorAll("tr"));
     const index = rows.indexOf(tr);
     const pedidoId = window.__PEDIDO_ATUAL_ID || null;
+    const metodo = normalizarMetodo(tr?.querySelector(".pg-metodo")?.value || "PIX");
+    const metodoAtual = metodoConfig(metodo);
 
     if(!pedidoId){
       if(typeof window.alerta === "function"){
-        window.alerta("Salve o pedido antes de gerar PIX.", "PIX", "aviso");
+        window.alerta("Salve o pedido antes de gerar a cobrança.", "Cobrança", "aviso");
       }else{
-        alert("Salve o pedido antes de gerar PIX.");
+        alert("Salve o pedido antes de gerar a cobrança.");
+      }
+      return;
+    }
+
+    if(metodo !== "PIX"){
+      const mensagem = `Cobrança por ${metodoAtual.label} ainda não está integrada neste fluxo.`;
+      if(typeof window.alerta === "function"){
+        window.alerta(mensagem, "Cobrança", "aviso");
+      }else{
+        alert(mensagem);
       }
       return;
     }
@@ -224,7 +302,7 @@ export function initPagamento(){
         vencimento: row.querySelector(".pg-vencimento")?.value || "",
         valor: moneyValue(row.querySelector(".pg-valor")),
         recebido: recebidoDaLinha(row),
-        metodo: row.querySelector(".pg-metodo")?.value || "",
+        metodo: normalizarMetodo(row.querySelector(".pg-metodo")?.value || ""),
         status: row.querySelector(".pg-status")?.value || "Pendente"
       };
     }).filter((parcela) => parcela.valor > 0);
@@ -278,6 +356,9 @@ export function initPagamento(){
     const totais = calcularTotais();
     const totalProgramado = somarProgramado();
     const diferenca = totais.valorFinal - totalProgramado;
+    const faltaDistribuir = Math.max(0, diferenca);
+    const bvDisponivel = moneyValue(bvTotalEl);
+    const creditoDisponivel = moneyValue(creditoClienteEl);
 
     if(totalContratoEl) totalContratoEl.innerText = formatCurrency(totais.totalPedido);
     if(totalDescontosEl) totalDescontosEl.innerText = formatCurrency(totais.totalDescontos);
@@ -285,11 +366,9 @@ export function initPagamento(){
     if(valorFinalEl) valorFinalEl.innerText = formatCurrency(totais.valorFinal);
     if(totalProgramadoEl) totalProgramadoEl.innerText = formatCurrency(totalProgramado);
     if(diferencaEl) diferencaEl.innerText = formatCurrency(diferenca);
-    if(condEntradaResumoEl) condEntradaResumoEl.innerText = `Entrada ${formatCurrency(moneyValue(entradaEl))}`;
-    if(condVencResumoEl) condVencResumoEl.innerText = `Vencimento ${diaFixoEl?.value ? `dia ${diaFixoEl.value}` : dateToBR(dataEntradaEl?.value)}`;
-    if(condDescontoResumoEl) condDescontoResumoEl.innerText = `Desconto ${formatCurrency(totais.totalDescontos)}`;
-    if(condFormaResumoEl) condFormaResumoEl.innerText = metodoEl?.value || "PIX";
-    if(condParcelasResumoEl) condParcelasResumoEl.innerText = `${parcelasEl?.value || 0}x`;
+    if(resumoFaltaDistribuirEl) resumoFaltaDistribuirEl.innerText = formatCurrency(faltaDistribuir);
+    if(resumoBVEl) resumoBVEl.innerText = formatCurrency(bvDisponivel);
+    if(resumoCreditoEl) resumoCreditoEl.innerText = formatCurrency(creditoDisponivel);
   };
 
   const gerarParcelas = () => {
@@ -344,6 +423,7 @@ export function initPagamento(){
       }
     }
 
+    atualizarSequencia();
     atualizarResumo();
     refreshIcons();
   };
@@ -397,6 +477,7 @@ export function initPagamento(){
         });
         tbody.appendChild(tr);
       });
+      atualizarSequencia();
       atualizarResumo();
       refreshIcons();
       return;
@@ -435,14 +516,64 @@ export function initPagamento(){
     atualizarResumo();
   });
   tbody.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-pix-parcela]");
-    if(button) abrirPixParcela(button);
+    const cobrancaButton = event.target.closest("[data-cobranca-parcela]");
+    const actionButton = event.target.closest("[data-pg-action]");
+    const row = event.target.closest("tr");
+
+    if(cobrancaButton) {
+      abrirCobrancaParcela(cobrancaButton);
+      return;
+    }
+
+    if(!actionButton || !row) return;
+
+    const action = actionButton.dataset.pgAction;
+    if(action === "edit"){
+      row.querySelector(".pg-valor")?.focus();
+      return;
+    }
+
+    if(action === "remove"){
+      row.remove();
+      atualizarSequencia();
+      atualizarResumo();
+      refreshIcons();
+    }
   });
 
   btnLimpar?.addEventListener("click", limparProgramacao);
-  btnFinanceiroAcoes?.addEventListener("click", () => {
-    if(condicoesEl) condicoesEl.open = !condicoesEl.open;
+
+  const fecharPopoverAbatimento = () => {
+    if(!abatimentoPopover) return;
+    abatimentoPopover.hidden = true;
+    btnAdicionarAbatimento?.setAttribute("aria-expanded", "false");
+  };
+
+  btnAdicionarAbatimento?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if(!abatimentoPopover) return;
+    const aberto = !abatimentoPopover.hidden;
+    abatimentoPopover.hidden = aberto;
+    btnAdicionarAbatimento.setAttribute("aria-expanded", aberto ? "false" : "true");
   });
+
+  btnConfirmarAbatimento?.addEventListener("click", () => {
+    const bv = moneyValue(abatimentoBVEl);
+    const credito = moneyValue(abatimentoCreditoEl);
+    if(bvTotalEl) bvTotalEl.value = String(moneyValue(bvTotalEl) + bv);
+    if(creditoClienteEl) creditoClienteEl.value = String(moneyValue(creditoClienteEl) + credito);
+    if(abatimentoBVEl) abatimentoBVEl.value = "";
+    if(abatimentoCreditoEl) abatimentoCreditoEl.value = "";
+    atualizarResumo();
+    fecharPopoverAbatimento();
+  });
+
+  document.addEventListener("click", (event) => {
+    if(abatimentoPopover?.hidden) return;
+    if(event.target.closest("#pagamentoAbatimentoPopover") || event.target.closest("#btnAdicionarAbatimento")) return;
+    fecharPopoverAbatimento();
+  });
+
   window.atualizarPagamento = gerarParcelas;
   window.__pedidoColetarPagamentoConfig = coletarConfig;
   window.__pedidoAplicarPagamentoConfig = aplicarConfig;

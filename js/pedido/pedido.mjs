@@ -559,43 +559,85 @@ function setupPedidoWorkspace({ supabase }){
     if(!tbody || !Array.isArray(parcelas) || !parcelas.length) return;
     const metodos = ["PIX", "Cartao", "Transferencia", "Boleto", "Dinheiro", "A combinar"];
     const statuses = ["Programado", "Pago", "Pendente", "Cancelado"];
+    const normalizar = (value = "") => String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+    const normalizarMetodo = (value = "") => {
+      const key = normalizar(value);
+      if(key.includes("pix")) return "PIX";
+      if(key.includes("cartao") || key.includes("credito")) return "Cartao";
+      if(key.includes("boleto")) return "Boleto";
+      if(key.includes("transferencia")) return "Transferencia";
+      if(key.includes("dinheiro")) return "Dinheiro";
+      return "A combinar";
+    };
+    const metodoLabel = (value = "") => ({
+      PIX: "PIX",
+      Cartao: "Cartão de crédito",
+      Boleto: "Boleto",
+      Transferencia: "Transferência",
+      Dinheiro: "Dinheiro",
+      "A combinar": "A combinar"
+    })[normalizarMetodo(value)] || "A combinar";
+    const metodoIcon = (value = "") => ({
+      PIX: "qr-code",
+      Cartao: "credit-card",
+      Boleto: "barcode",
+      Transferencia: "banknote",
+      Dinheiro: "wallet",
+      "A combinar": "circle-ellipsis"
+    })[normalizarMetodo(value)] || "qr-code";
+    const metodoClass = (value = "") => normalizarMetodo(value).toLowerCase().replace(/\s+/g, "-");
 
     tbody.innerHTML = parcelas.map((parcela, index) => {
       const data = dataParaISO(parcela.vencimento);
       const status = parcela.status || "Programado";
       const recebido = Number(parcela.recebido || parcela.valor_recebido || 0);
       const valor = Number(parcela.valor || 0);
-      const normalizado = String(status).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const metodo = normalizarMetodo(parcela.metodo || "PIX");
+      const normalizado = normalizar(status);
       const pago = normalizado.includes("pago") || (valor > 0 && recebido >= valor);
       const venc = data ? new Date(`${data}T00:00:00`) : null;
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
       const atrasado = !pago && venc && !Number.isNaN(venc.getTime()) && venc < hoje;
       const statusKey = pago ? "paid" : atrasado ? "overdue" : "programmed";
-      const statusLabel = pago ? "Paga" : atrasado ? "Atrasada" : "Em dia";
+      const statusLabel = pago ? "Pago" : atrasado ? "Atrasado" : "Em dia";
       return `
         <tr class="is-${statusKey}">
           <td>
             <strong class="pg-parcela-label">${parcela.tipo || `Parcela ${index + 1}`}</strong>
             <span class="pg-numero sr-only">${parcela.numero || index + 1}</span>
-            <small><span class="pg-metodo-text">${parcela.metodo || "A combinar"}</span></small>
-            <select class="pg-metodo">
-              ${metodos.map((metodo) => `<option ${metodo === (parcela.metodo || "A combinar") ? "selected" : ""}>${metodo}</option>`).join("")}
-            </select>
+            <small class="pg-parcela-pos">${index + 1} de ${parcelas.length}</small>
           </td>
           <td><input class="el-input pg-vencimento" type="date" value="${data || ""}"></td>
           <td contenteditable="true" class="pg-valor">${valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-          <td><span class="pg-recebido">${Number(recebido).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></td>
           <td>
             <span class="pg-status-badge ${statusKey}">${statusLabel}</span>
-            <select class="pg-status">
+            <select class="pg-status sr-only">
               ${statuses.map((option) => `<option ${option === status || (option === "Pago" && pago) ? "selected" : ""}>${option}</option>`).join("")}
             </select>
           </td>
           <td>
-            <button type="button" class="pedido-pix-btn" data-pix-parcela title="Gerar PIX" aria-label="Gerar PIX">
-              <i data-lucide="qr-code"></i>
+            <select class="pg-metodo pagamento-metodo-select" aria-label="Forma de pagamento da parcela">
+              ${metodos.map((option) => `<option value="${option}" ${option === metodo ? "selected" : ""}>${metodoLabel(option)}</option>`).join("")}
+            </select>
+            <span class="pg-metodo-text sr-only">${metodoLabel(metodo)}</span>
+            <span class="pg-recebido sr-only">${Number(recebido).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+          </td>
+          <td>
+            <button type="button" class="pedido-cobranca-btn ${metodoClass(metodo)}" data-cobranca-parcela title="Cobrança via ${metodoLabel(metodo)}" aria-label="Cobrança via ${metodoLabel(metodo)}">
+              <i data-lucide="${metodoIcon(metodo)}"></i>
             </button>
+          </td>
+          <td>
+            <div class="pg-row-actions">
+              <button type="button" class="pg-action-btn" data-pg-action="edit" title="Editar parcela" aria-label="Editar parcela"><i data-lucide="pencil"></i></button>
+              <button type="button" class="pg-action-btn danger" data-pg-action="remove" title="Remover parcela" aria-label="Remover parcela"><i data-lucide="trash-2"></i></button>
+              <button type="button" class="pg-action-btn muted" data-pg-action="more" title="Mais opções" aria-label="Mais opções"><i data-lucide="grip-vertical"></i></button>
+            </div>
           </td>
         </tr>
       `;
