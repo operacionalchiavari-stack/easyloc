@@ -6159,3 +6159,64 @@ body.pedido-map-modal-open {
       "repos repos repos" !important;
   }
 }
+
+/* Acoes compactas da lista de itens */
+.pedido-screen .pedido-items-table tr.item-row .item-autocomplete-wrapper::after {
+  content: none !important;
+  display: none !important;
+}
+
+.pedido-screen .pedido-items-table tr.item-row .btn-editar-item,
+.pedido-screen .pedido-items-table tr.item-row .btn-onde-esta,
+.pedido-screen .pedido-items-table tr.item-row .btn-remover-item {
+  position: relative;
+  overflow: visible;
+}
+
+.pedido-screen .pedido-items-table tr.item-row .btn-editar-item::before {
+  content: "O" !important;
+}
+
+.pedido-screen .pedido-items-table tr.item-row .btn-onde-esta::before {
+  content: "C" !important;
+}
+
+.pedido-screen .pedido-items-table tr.item-row .btn-remover-item::before {
+  content: "X" !important;
+}
+
+.pedido-screen .pedido-items-table tr.item-row .btn-editar-item::after,
+.pedido-screen .pedido-items-table tr.item-row .btn-onde-esta::after,
+.pedido-screen .pedido-items-table tr.item-row .btn-remover-item::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 30;
+  width: max-content;
+  max-width: 180px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(17, 24, 39, .94);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .18);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  opacity: 0;
+  pointer-events: none;
+  text-align: center;
+  transform: translateX(-50%) translateY(4px);
+  transition: opacity .14s ease, transform .14s ease;
+  white-space: nowrap;
+}
+
+.pedido-screen .pedido-items-table tr.item-row .btn-editar-item:hover::after,
+.pedido-screen .pedido-items-table tr.item-row .btn-onde-esta:hover::after,
+.pedido-screen .pedido-items-table tr.item-row .btn-remover-item:hover::after,
+.pedido-screen .pedido-items-table tr.item-row .btn-editar-item:focus-visible::after,
+.pedido-screen .pedido-items-table tr.item-row .btn-onde-esta:focus-visible::after,
+.pedido-screen .pedido-items-table tr.item-row .btn-remover-item:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

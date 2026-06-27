@@ -1485,8 +1485,10 @@ function enhanceItemActions(){
     row.classList.toggle("has-operational-note", temTexto);
     const button = row.querySelector(".btn-editar-item");
     if(button){
-      button.title = temTexto ? "Editar observação operacional" : "Adicionar observação operacional";
-      button.setAttribute("aria-label", button.title);
+      const label = temTexto ? "Editar observação do item" : "Adicionar observação do item";
+      button.title = label;
+      button.dataset.tooltip = label;
+      button.setAttribute("aria-label", label);
     }
   };
 
@@ -1567,23 +1569,36 @@ function enhanceItemActions(){
 
   const apply = () => {
     tbody.querySelectorAll("tr.item-row .acoes-linha").forEach((actions) => {
-      if(actions.querySelector(".btn-onde-esta")) return;
-
-      const edit = document.createElement("button");
-      edit.type = "button";
-      edit.className = "btn-editar-item";
-      edit.title = "Adicionar observação operacional";
-      edit.textContent = "E";
-
-      const onde = document.createElement("button");
-      onde.type = "button";
-      onde.className = "btn-onde-esta";
-      onde.title = "Onde esta";
-      onde.textContent = "O";
+      const definirTooltip = (button, label) => {
+        if(!button) return;
+        button.title = label;
+        button.dataset.tooltip = label;
+        button.setAttribute("aria-label", label);
+      };
 
       const remover = actions.querySelector(".btn-remover-item");
-      actions.insertBefore(edit, remover || null);
-      actions.insertBefore(onde, remover || null);
+      let edit = actions.querySelector(".btn-editar-item");
+      let onde = actions.querySelector(".btn-onde-esta");
+
+      if(!edit){
+        edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "btn-editar-item";
+        actions.insertBefore(edit, remover || null);
+      }
+
+      if(!onde){
+        onde = document.createElement("button");
+        onde.type = "button";
+        onde.className = "btn-onde-esta";
+        actions.insertBefore(onde, remover || null);
+      }
+
+      edit.textContent = "O";
+      onde.textContent = "C";
+      definirTooltip(edit, "Observação do item");
+      definirTooltip(onde, "Consultar disponibilidade");
+      definirTooltip(remover, "Excluir item");
     });
     tbody.querySelectorAll("tr.item-row").forEach(aplicarEstadoObservacao);
   };
