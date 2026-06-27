@@ -7,7 +7,7 @@
             <span>&lt;</span>
             Voltar
           </button>
-          <h1>#<span id="orcamentoNumero">1548</span></h1>
+          <h1 class="pedido-numero-destaque">#<span id="orcamentoNumero">1548</span></h1>
           <span class="pedido-status" id="pedidoStatus">Orcamento</span>
         </div>
 
@@ -116,6 +116,9 @@
           </div>
           <button type="button" class="pedido-mini-map-locate" id="pedidoMiniMapaCentralizar" aria-label="Centralizar mapa">
             <i data-lucide="navigation"></i>
+          </button>
+          <button type="button" class="pedido-mini-map-expand" id="pedidoMiniMapaAbrir" aria-label="Abrir mapa ampliado">
+            <i data-lucide="maximize-2"></i>
           </button>
         </div>
       </section>
@@ -297,6 +300,27 @@
         </section>
       </aside>
     </div>
+  </div>
+
+  <div class="pedido-map-modal" id="pedidoMapModal" hidden>
+    <div class="pedido-map-modal-backdrop" data-map-close></div>
+    <section class="pedido-map-dialog" role="dialog" aria-modal="true" aria-labelledby="pedidoMapModalTitulo">
+      <header class="pedido-map-modal-head">
+        <div>
+          <span>Local do evento</span>
+          <h2 id="pedidoMapModalTitulo">Ajustar posição no mapa</h2>
+          <p>Clique no mapa ou arraste o marcador para corrigir o ponto exato.</p>
+        </div>
+        <button type="button" class="pedido-map-modal-close" id="pedidoMapModalFechar" aria-label="Fechar mapa">
+          <i data-lucide="x"></i>
+        </button>
+      </header>
+      <div class="pedido-map-large" id="pedidoMapaAmpliado"></div>
+      <footer class="pedido-map-modal-foot">
+        <span>A distância do galpão será recalculada automaticamente após o ajuste.</span>
+        <button type="button" class="btn btn-secondary" id="pedidoMapModalConcluir">Concluir</button>
+      </footer>
+    </section>
   </div>
 
   <aside class="onde-esta-panel" id="ondeEstaPanel" aria-hidden="true">

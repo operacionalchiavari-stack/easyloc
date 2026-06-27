@@ -5,7 +5,12 @@ const MINI_MAP_CENTER_PADRAO = { lat: -22.3928, lng: -43.1348 };
 const pedidoMiniMapState = {
   map: null,
   marker: null,
-  localId: null
+  localId: null,
+  largeMap: null,
+  largeMarker: null,
+  currentLocal: null,
+  supabase: null,
+  modalBound: false
 };
 
 export function initAutocompleteLocaisEKm({
@@ -248,6 +253,114 @@ async function salvarCoordenadasLocal({ supabase, local, position, placeId = "" 
   }
 }
 
+function sincronizarPosicaoMapas(position){
+  if(!position) return;
+  pedidoMiniMapState.marker?.setPosition(position);
+  pedidoMiniMapState.map?.panTo(position);
+  pedidoMiniMapState.largeMarker?.setPosition(position);
+  pedidoMiniMapState.largeMap?.panTo(position);
+}
+
+async function atualizarPosicaoLocal({ supabase, local, position }){
+  if(!local || !position) return;
+  local.latitude = Number(position.lat);
+  local.longitude = Number(position.lng);
+  sincronizarPosicaoMapas(position);
+  await salvarCoordenadasLocal({ supabase, local, position });
+  await calcularKmAutomatico({ supabase, local, forcarRecalculo: true });
+}
+
+function fecharMapaAmpliado(){
+  const modal = document.getElementById("pedidoMapModal");
+  if(!modal) return;
+  modal.hidden = true;
+  document.body.classList.remove("pedido-map-modal-open");
+}
+
+function bindModalMapaPedido(){
+  if(pedidoMiniMapState.modalBound) return;
+  const modal = document.getElementById("pedidoMapModal");
+  const closeBtn = document.getElementById("pedidoMapModalFechar");
+  const doneBtn = document.getElementById("pedidoMapModalConcluir");
+  if(!modal) return;
+
+  modal.querySelector("[data-map-close]")?.addEventListener("click", fecharMapaAmpliado);
+  closeBtn?.addEventListener("click", fecharMapaAmpliado);
+  doneBtn?.addEventListener("click", fecharMapaAmpliado);
+  document.addEventListener("keydown", (event) => {
+    if(event.key === "Escape" && !modal.hidden) fecharMapaAmpliado();
+  });
+
+  pedidoMiniMapState.modalBound = true;
+}
+
+function abrirMapaAmpliado({ supabase, local, center }){
+  const modal = document.getElementById("pedidoMapModal");
+  const largeEl = document.getElementById("pedidoMapaAmpliado");
+  if(!modal || !largeEl || !local || !window.google?.maps?.Map) return;
+
+  bindModalMapaPedido();
+  pedidoMiniMapState.currentLocal = local;
+  pedidoMiniMapState.supabase = supabase;
+  modal.hidden = false;
+  document.body.classList.add("pedido-map-modal-open");
+
+  requestAnimationFrame(() => {
+    const position = coordenadasLocal(local) || center || MINI_MAP_CENTER_PADRAO;
+
+    if(!pedidoMiniMapState.largeMap || pedidoMiniMapState.largeMap.getDiv?.() !== largeEl){
+      largeEl.innerHTML = "";
+      pedidoMiniMapState.largeMap = new google.maps.Map(largeEl, {
+        center: position,
+        zoom: 16,
+        disableDefaultUI: false,
+        zoomControl: true,
+        gestureHandling: "greedy",
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+      });
+
+      pedidoMiniMapState.largeMap.addListener("click", async (event) => {
+        if(!event?.latLng || !pedidoMiniMapState.currentLocal) return;
+        const nextPosition = { lat: event.latLng.lat(), lng: event.latLng.lng() };
+        await atualizarPosicaoLocal({
+          supabase: pedidoMiniMapState.supabase,
+          local: pedidoMiniMapState.currentLocal,
+          position: nextPosition
+        });
+      });
+    }
+
+    if(!pedidoMiniMapState.largeMarker){
+      pedidoMiniMapState.largeMarker = new google.maps.Marker({
+        map: pedidoMiniMapState.largeMap,
+        position,
+        draggable: true,
+        title: local.nome_razao || "Local do evento"
+      });
+
+      pedidoMiniMapState.largeMarker.addListener("dragend", async () => {
+        const markerPosition = pedidoMiniMapState.largeMarker?.getPosition?.();
+        if(!markerPosition || !pedidoMiniMapState.currentLocal) return;
+        const nextPosition = { lat: markerPosition.lat(), lng: markerPosition.lng() };
+        await atualizarPosicaoLocal({
+          supabase: pedidoMiniMapState.supabase,
+          local: pedidoMiniMapState.currentLocal,
+          position: nextPosition
+        });
+      });
+    }else{
+      pedidoMiniMapState.largeMarker.setMap(pedidoMiniMapState.largeMap);
+      pedidoMiniMapState.largeMarker.setTitle(local.nome_razao || "Local do evento");
+      pedidoMiniMapState.largeMarker.setPosition(position);
+    }
+
+    google.maps.event.trigger(pedidoMiniMapState.largeMap, "resize");
+    pedidoMiniMapState.largeMap.setCenter(position);
+  });
+}
+
 function aplicarMiniMapaFallback(label = "Mapa indisponível"){
   const mapEl = document.getElementById("pedidoMiniMapa");
   if(!mapEl) return;
@@ -263,6 +376,7 @@ function aplicarMiniMapaFallback(label = "Mapa indisponível"){
 async function renderizarMiniMapaPedido({ supabase, local }){
   const mapEl = document.getElementById("pedidoMiniMapa");
   const locateBtn = document.getElementById("pedidoMiniMapaCentralizar");
+  const expandBtn = document.getElementById("pedidoMiniMapaAbrir");
   if(!mapEl || !local) return;
 
   try{
@@ -289,6 +403,9 @@ async function renderizarMiniMapaPedido({ supabase, local }){
     }
 
     center = center || MINI_MAP_CENTER_PADRAO;
+    pedidoMiniMapState.currentLocal = local;
+    pedidoMiniMapState.supabase = supabase;
+    bindModalMapaPedido();
 
     const precisaNovoMapa = !pedidoMiniMapState.map
       || pedidoMiniMapState.localId !== local.id
@@ -314,24 +431,15 @@ async function renderizarMiniMapaPedido({ supabase, local }){
         title: local.nome_razao || "Local do evento"
       });
 
-      pedidoMiniMapState.map.addListener("click", async (event) => {
-        if(!event?.latLng) return;
-        const position = { lat: event.latLng.lat(), lng: event.latLng.lng() };
-        pedidoMiniMapState.marker?.setPosition(position);
-        local.latitude = position.lat;
-        local.longitude = position.lng;
-        await salvarCoordenadasLocal({ supabase, local, position });
-        await calcularKmAutomatico({ supabase, local, forcarRecalculo: true });
+      pedidoMiniMapState.map.addListener("click", () => {
+        abrirMapaAmpliado({ supabase, local, center: coordenadasLocal(local) || center });
       });
 
       pedidoMiniMapState.marker.addListener("dragend", async () => {
         const markerPosition = pedidoMiniMapState.marker?.getPosition?.();
         if(!markerPosition) return;
         const position = { lat: markerPosition.lat(), lng: markerPosition.lng() };
-        local.latitude = position.lat;
-        local.longitude = position.lng;
-        await salvarCoordenadasLocal({ supabase, local, position });
-        await calcularKmAutomatico({ supabase, local, forcarRecalculo: true });
+        await atualizarPosicaoLocal({ supabase, local, position });
       });
 
       pedidoMiniMapState.localId = local.id || null;
@@ -340,10 +448,19 @@ async function renderizarMiniMapaPedido({ supabase, local }){
       pedidoMiniMapState.marker?.setPosition(center);
     }
 
-    locateBtn.onclick = () => {
-      const position = pedidoMiniMapState.marker?.getPosition?.();
-      if(position) pedidoMiniMapState.map?.panTo(position);
-    };
+    if(locateBtn){
+      locateBtn.onclick = () => {
+        const position = pedidoMiniMapState.marker?.getPosition?.();
+        if(position) pedidoMiniMapState.map?.panTo(position);
+      };
+    }
+    if(expandBtn){
+      expandBtn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        abrirMapaAmpliado({ supabase, local, center: coordenadasLocal(local) || center });
+      };
+    }
   }catch(error){
     console.warn("[EasyLoc Debug]", {
       arquivo: "js/pedido/pedido.locais-km.mjs",
