@@ -443,21 +443,23 @@
         <button type="button" class="btn-icon" id="btnFecharObservacaoItem" aria-label="Fechar">x</button>
       </div>
 
+      <div class="item-observacao-tabs" aria-label="Setor da observação">
+        <button type="button" class="active" data-item-observacao-tab="separacao">
+          <i data-lucide="package-check"></i>
+          <span>Separação</span>
+        </button>
+        <button type="button" data-item-observacao-tab="entrega">
+          <i data-lucide="truck"></i>
+          <span>Entrega</span>
+        </button>
+      </div>
+
       <label class="el-field item-observacao-field">
         <span>Mensagem para a operação</span>
-        <textarea class="el-textarea" id="itemObservacaoTexto" rows="4" placeholder="Ex.: separar com cuidado, conferir tecido, entregar montado..."></textarea>
+        <textarea class="el-textarea" id="itemObservacaoTexto" rows="4" placeholder="Ex.: separar com cuidado, conferir acabamento..."></textarea>
       </label>
 
-      <div class="item-observacao-destinos" aria-label="Destino da observação">
-        <label>
-          <input type="checkbox" id="itemObsSeparacao" checked>
-          <span>Separação</span>
-        </label>
-        <label>
-          <input type="checkbox" id="itemObsEntrega">
-          <span>Entrega</span>
-        </label>
-      </div>
+      <p class="item-observacao-hint">Cada aba possui sua própria observação.</p>
 
       <div class="modal-acoes item-observacao-acoes">
         <button type="button" class="btn btn-secondary" id="btnLimparObservacaoItem">Limpar</button>

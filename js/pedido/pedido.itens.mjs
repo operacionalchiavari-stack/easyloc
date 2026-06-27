@@ -660,11 +660,16 @@ function calcularVolumeTotalPedido(){
 
     const aplicarObservacaoOperacional = (tr, observacao = null) => {
       const destinos = observacao?.destinos || {};
-      const texto = String(observacao?.texto || "").trim();
-      tr.dataset.obsTexto = texto;
-      tr.dataset.obsSeparacao = destinos.separacao === false ? "0" : "1";
-      tr.dataset.obsEntrega = destinos.entrega ? "1" : "0";
-      tr.classList.toggle("has-operational-note", Boolean(texto));
+      const observacoes = observacao?.observacoes || {};
+      const textoLegado = String(observacao?.texto || "").trim();
+      const separacaoTexto = String(observacoes.separacao || (!observacoes.separacao && destinos.separacao !== false ? textoLegado : "")).trim();
+      const entregaTexto = String(observacoes.entrega || (!observacoes.entrega && destinos.entrega ? textoLegado : "")).trim();
+      tr.dataset.obsSeparacaoTexto = separacaoTexto;
+      tr.dataset.obsEntregaTexto = entregaTexto;
+      tr.dataset.obsTexto = separacaoTexto || entregaTexto;
+      tr.dataset.obsSeparacao = separacaoTexto ? "1" : "0";
+      tr.dataset.obsEntrega = entregaTexto ? "1" : "0";
+      tr.classList.toggle("has-operational-note", Boolean(separacaoTexto || entregaTexto));
     };
 
     itens.forEach((item) => {

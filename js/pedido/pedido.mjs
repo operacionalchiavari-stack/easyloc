@@ -438,10 +438,10 @@ function setupPedidoWorkspace({ supabase }){
   };
 
   const observacaoOperacionalDaLinha = (row, index = 0) => {
-    const texto = (row?.dataset?.obsTexto || "").trim();
-    const separacao = row?.dataset?.obsSeparacao !== "0";
-    const entrega = row?.dataset?.obsEntrega === "1";
-    if(!texto && !entrega && separacao) return null;
+    const textoLegado = (row?.dataset?.obsTexto || "").trim();
+    const separacaoTexto = (row?.dataset?.obsSeparacaoTexto || (row?.dataset?.obsSeparacao !== "0" ? textoLegado : "")).trim();
+    const entregaTexto = (row?.dataset?.obsEntregaTexto || (row?.dataset?.obsEntrega === "1" ? textoLegado : "")).trim();
+    if(!separacaoTexto && !entregaTexto) return null;
 
     return {
       index,
@@ -450,10 +450,14 @@ function setupPedidoWorkspace({ supabase }){
       item_nome: row.querySelector(".nome-item")?.innerText?.trim()
         || row.querySelector(".nome-item")?.value?.trim()
         || "Item",
-      texto,
+      texto: separacaoTexto || entregaTexto,
+      observacoes: {
+        separacao: separacaoTexto,
+        entrega: entregaTexto
+      },
       destinos: {
-        separacao,
-        entrega
+        separacao: Boolean(separacaoTexto),
+        entrega: Boolean(entregaTexto)
       },
       atualizado_em: new Date().toISOString()
     };
@@ -1459,12 +1463,13 @@ function enhanceItemActions(){
   const modal = document.getElementById("modalObservacaoItem");
   const titulo = document.getElementById("itemObservacaoTitulo");
   const textarea = document.getElementById("itemObservacaoTexto");
-  const separacao = document.getElementById("itemObsSeparacao");
-  const entrega = document.getElementById("itemObsEntrega");
+  const tabButtons = Array.from(document.querySelectorAll("[data-item-observacao-tab]"));
   const btnFechar = document.getElementById("btnFecharObservacaoItem");
   const btnLimpar = document.getElementById("btnLimparObservacaoItem");
   const btnSalvar = document.getElementById("btnSalvarObservacaoItem");
   let linhaObservacaoAtual = null;
+  let abaObservacaoAtual = "separacao";
+  let observacaoDraft = { separacao: "", entrega: "" };
 
   const nomeLinha = (row) => row?.querySelector(".nome-item")?.innerText?.trim()
     || row?.querySelector(".nome-item")?.value?.trim()
@@ -1472,7 +1477,11 @@ function enhanceItemActions(){
 
   const aplicarEstadoObservacao = (row) => {
     if(!row) return;
-    const temTexto = Boolean((row.dataset.obsTexto || "").trim());
+    const temTexto = Boolean(
+      (row.dataset.obsSeparacaoTexto || "").trim()
+      || (row.dataset.obsEntregaTexto || "").trim()
+      || (row.dataset.obsTexto || "").trim()
+    );
     row.classList.toggle("has-operational-note", temTexto);
     const button = row.querySelector(".btn-editar-item");
     if(button){
@@ -1486,14 +1495,42 @@ function enhanceItemActions(){
     linhaObservacaoAtual = null;
   };
 
+  const obterObservacoesLinha = (row) => {
+    const textoLegado = (row?.dataset?.obsTexto || "").trim();
+    return {
+      separacao: (row?.dataset?.obsSeparacaoTexto || (row?.dataset?.obsSeparacao !== "0" ? textoLegado : "")).trim(),
+      entrega: (row?.dataset?.obsEntregaTexto || (row?.dataset?.obsEntrega === "1" ? textoLegado : "")).trim()
+    };
+  };
+
+  const atualizarAbaModal = (tab = "separacao") => {
+    abaObservacaoAtual = tab === "entrega" ? "entrega" : "separacao";
+    tabButtons.forEach((button) => {
+      const active = button.dataset.itemObservacaoTab === abaObservacaoAtual;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    if(textarea){
+      textarea.value = observacaoDraft[abaObservacaoAtual] || "";
+      textarea.placeholder = abaObservacaoAtual === "entrega"
+        ? "Ex.: entregar montado, conferir acesso, orientar motorista..."
+        : "Ex.: separar com cuidado, conferir acabamento...";
+    }
+  };
+
+  const guardarTextoAbaAtual = () => {
+    if(!textarea) return;
+    observacaoDraft[abaObservacaoAtual] = textarea.value || "";
+  };
+
   const abrirModal = (row) => {
     if(!modal || !row) return;
     linhaObservacaoAtual = row;
+    observacaoDraft = obterObservacoesLinha(row);
     if(titulo) titulo.textContent = nomeLinha(row);
-    if(textarea) textarea.value = row.dataset.obsTexto || "";
-    if(separacao) separacao.checked = row.dataset.obsSeparacao !== "0";
-    if(entrega) entrega.checked = row.dataset.obsEntrega === "1";
+    atualizarAbaModal("separacao");
     modal.classList.remove("hidden");
+    window.lucide?.createIcons?.();
     setTimeout(() => textarea?.focus?.(), 40);
   };
 
@@ -1505,22 +1542,26 @@ function enhanceItemActions(){
     });
     btnLimpar?.addEventListener("click", () => {
       if(!linhaObservacaoAtual) return;
-      linhaObservacaoAtual.dataset.obsTexto = "";
-      linhaObservacaoAtual.dataset.obsSeparacao = "1";
-      linhaObservacaoAtual.dataset.obsEntrega = "0";
-      aplicarEstadoObservacao(linhaObservacaoAtual);
-      fecharModal();
+      observacaoDraft[abaObservacaoAtual] = "";
+      if(textarea) textarea.value = "";
     });
     btnSalvar?.addEventListener("click", () => {
       if(!linhaObservacaoAtual) return;
-      if(separacao && entrega && !separacao.checked && !entrega.checked){
-        separacao.checked = true;
-      }
-      linhaObservacaoAtual.dataset.obsTexto = (textarea?.value || "").trim();
-      linhaObservacaoAtual.dataset.obsSeparacao = separacao?.checked ? "1" : "0";
-      linhaObservacaoAtual.dataset.obsEntrega = entrega?.checked ? "1" : "0";
+      guardarTextoAbaAtual();
+      linhaObservacaoAtual.dataset.obsSeparacaoTexto = (observacaoDraft.separacao || "").trim();
+      linhaObservacaoAtual.dataset.obsEntregaTexto = (observacaoDraft.entrega || "").trim();
+      linhaObservacaoAtual.dataset.obsTexto = linhaObservacaoAtual.dataset.obsSeparacaoTexto || linhaObservacaoAtual.dataset.obsEntregaTexto;
+      linhaObservacaoAtual.dataset.obsSeparacao = linhaObservacaoAtual.dataset.obsSeparacaoTexto ? "1" : "0";
+      linhaObservacaoAtual.dataset.obsEntrega = linhaObservacaoAtual.dataset.obsEntregaTexto ? "1" : "0";
       aplicarEstadoObservacao(linhaObservacaoAtual);
       fecharModal();
+    });
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        guardarTextoAbaAtual();
+        atualizarAbaModal(button.dataset.itemObservacaoTab);
+        textarea?.focus?.();
+      });
     });
   }
 

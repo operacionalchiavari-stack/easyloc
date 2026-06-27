@@ -6017,29 +6017,52 @@ body.pedido-map-modal-open {
   line-height: 1.45;
 }
 
-.pedido-screen .item-observacao-destinos {
+.pedido-screen .item-observacao-tabs {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
-  margin: 12px 0 14px;
+  margin: 12px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.pedido-screen .item-observacao-destinos label {
+.pedido-screen .item-observacao-tabs button {
   min-height: 34px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 7px 10px;
+  padding: 7px 12px;
   border: 1px solid #dbe3ee;
-  border-radius: 999px;
+  border-radius: 9px;
   background: #f8fafc;
-  color: #374151;
+  color: #6b7280;
+  cursor: pointer;
   font-size: 12px;
   font-weight: 600;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
 }
 
-.pedido-screen .item-observacao-destinos input {
-  accent-color: var(--el-color-accent);
+.pedido-screen .item-observacao-tabs button:hover {
+  transform: translateY(-1px);
+  border-color: #bfdbfe;
+  color: #1f2937;
+}
+
+.pedido-screen .item-observacao-tabs button.active {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.pedido-screen .item-observacao-tabs svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pedido-screen .item-observacao-hint {
+  margin: 8px 0 14px;
+  color: #6b7280;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .pedido-screen .item-observacao-acoes {
