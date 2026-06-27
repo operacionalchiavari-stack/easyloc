@@ -327,33 +327,6 @@
 
   </div>
 
-  <div class="item-qr-area">
-    <div class="qr-auto-card" id="itensQrAutoCard">
-      <strong>QR Code</strong>
-      <span>Sera gerado automaticamente ao salvar.</span>
-    </div>
-
-    <div class="qr-identificacao hidden" id="itensQrIdentificacao">
-      <div>
-        <span class="qr-section-label">Identificacao</span>
-        <strong>QR CODE</strong>
-      </div>
-
-      <div class="qr-identificacao-body">
-        <div class="qr-render" id="itensQrRender"></div>
-
-        <div class="qr-meta">
-          <span>ID:</span>
-          <code id="itensQrCodigo"></code>
-          <div class="qr-actions">
-            <button type="button" class="btn secondary" onclick="itens_copiarQrCode()">Copiar Codigo</button>
-            <button type="button" class="btn primary" onclick="itens_baixarQrCode()">Baixar QR PNG</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 
@@ -383,6 +356,42 @@
       title="Kits vinculados">
       <span>Kits</span>
     </button>
+
+    <button
+      type="button"
+      class="btn-context"
+      id="itensQrToggle"
+      onclick="itens_toggleQrPanel()"
+      title="QR Code do item">
+      <span>QR Code</span>
+    </button>
+
+    <div class="item-qr-popover hidden" id="itensQrPopover">
+      <div class="qr-auto-card" id="itensQrAutoCard">
+        <strong>QR Code</strong>
+        <span>Sera gerado automaticamente ao salvar.</span>
+      </div>
+
+      <div class="qr-identificacao hidden" id="itensQrIdentificacao">
+        <div>
+          <span class="qr-section-label">Identificacao</span>
+          <strong>QR CODE</strong>
+        </div>
+
+        <div class="qr-identificacao-body">
+          <div class="qr-render" id="itensQrRender"></div>
+
+          <div class="qr-meta">
+            <span>ID:</span>
+            <code id="itensQrCodigo"></code>
+            <div class="qr-actions">
+              <button type="button" class="btn secondary" onclick="itens_copiarQrCode()">Copiar Codigo</button>
+              <button type="button" class="btn primary" onclick="itens_baixarQrCode()">Baixar QR PNG</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </div>
 

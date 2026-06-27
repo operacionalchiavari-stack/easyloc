@@ -56,6 +56,21 @@ function itens_setQrVisual(qrCode){
   }
 }
 
+function itens_fecharQrPanel(){
+  document.getElementById("itensQrPopover")?.classList.add("hidden");
+  document.getElementById("itensQrToggle")?.classList.remove("active");
+}
+
+window.itens_toggleQrPanel = function(){
+  const popover = document.getElementById("itensQrPopover");
+  const toggle = document.getElementById("itensQrToggle");
+  if(!popover) return;
+
+  const abrir = popover.classList.contains("hidden");
+  popover.classList.toggle("hidden", !abrir);
+  toggle?.classList.toggle("active", abrir);
+};
+
 async function itens_garantirQrCode(item){
   if(item?.qr_code) return item.qr_code;
 
@@ -145,6 +160,7 @@ if(window.itens_resetarFoto){
   window.itens_resetarFoto();
 }
 
+itens_fecharQrPanel();
 itens_setQrVisual(null);
 
   /* ===============================
@@ -207,6 +223,7 @@ window.abrirDetalhesItem = function(item){
   /* guarda id do item */
   window.itemAtualId = item.id;
   window.itemAtualQrCode = item.qr_code || null;
+  itens_fecharQrPanel();
 
   /* abre modal */
   modal.style.display = "flex";
