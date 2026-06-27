@@ -530,6 +530,35 @@ function setupPedidoWorkspace({ supabase }){
     if(el) el.textContent = value || "";
   };
 
+  const listaParcelasFinanceiras = (value) => {
+    if(Array.isArray(value)) return value;
+    if(value && typeof value === "object"){
+      return Object.values(value).filter((item) => item && typeof item === "object");
+    }
+    return [];
+  };
+
+  const extrairParcelasFinanceiras = (observacoes = {}, pedido = {}) => {
+    const obs = observacoes && typeof observacoes === "object" ? observacoes : {};
+    const candidatos = [
+      obs.parcelas_financeiras,
+      obs.financeiro?.parcelas_financeiras,
+      obs.financeiro?.parcelas,
+      obs.pagamento?.parcelas_financeiras,
+      obs.pagamento?.parcelas,
+      obs.pix?.parcelas,
+      pedido.parcelas_financeiras,
+      pedido.parcelas_pagamento
+    ];
+
+    for(const candidato of candidatos){
+      const lista = listaParcelasFinanceiras(candidato);
+      if(lista.length) return lista;
+    }
+
+    return [];
+  };
+
   const selecionarOpcaoPorTexto = (id, texto = "") => {
     const select = document.getElementById(id);
     if(!select) return;
@@ -686,7 +715,15 @@ function setupPedidoWorkspace({ supabase }){
       return;
     }
 
-    window.__PEDIDO_DADOS_ATUAL = pedido;
+    const observacoesPedido = pedido.observacoes && typeof pedido.observacoes === "object"
+      ? pedido.observacoes
+      : {};
+    const parcelasFinanceiras = extrairParcelasFinanceiras(observacoesPedido, pedido);
+
+    window.__PEDIDO_DADOS_ATUAL = {
+      ...pedido,
+      observacoes: observacoesPedido
+    };
     setupPedidoRealtime(pedidoId);
     aplicarBloqueioComercialSeparacao(pedido);
 
@@ -700,27 +737,27 @@ function setupPedidoWorkspace({ supabase }){
     setInputValue("dataEntrega", dataParaISO(pedido.data_entrega));
     setInputValue("dataEvento", dataParaISO(pedido.data_evento || pedido.data_hora));
     setInputValue("dataColeta", dataParaISO(pedido.data_coleta));
-    setInputValue("pagamentoObservacaoFinanceira", pedido.observacoes?.financeiro || "");
-    if(pedido.observacoes?.local_html && document.getElementById("localObservacoes")){
-      document.getElementById("localObservacoes").innerHTML = pedido.observacoes.local_html;
+    setInputValue("pagamentoObservacaoFinanceira", typeof observacoesPedido.financeiro === "string" ? observacoesPedido.financeiro : "");
+    if(observacoesPedido.local_html && document.getElementById("localObservacoes")){
+      document.getElementById("localObservacoes").innerHTML = observacoesPedido.local_html;
     }
-    if(pedido.observacoes?.local_tags_html && document.getElementById("localTagsInline")){
-      document.getElementById("localTagsInline").innerHTML = pedido.observacoes.local_tags_html;
+    if(observacoesPedido.local_tags_html && document.getElementById("localTagsInline")){
+      document.getElementById("localTagsInline").innerHTML = observacoesPedido.local_tags_html;
     }
-    if((!pedido.observacoes?.local_html || !pedido.observacoes?.local_tags_html) && pedido.local_id){
+    if((!observacoesPedido.local_html || !observacoesPedido.local_tags_html) && pedido.local_id){
       const { data: localSalvo } = await supabase
         .from("locais_empresas")
         .select("endereco,numero_endereco,ponto_referencia,tags")
         .eq("empresa_id", window.__CONTEXT.empresa_id)
         .eq("id", pedido.local_id)
         .maybeSingle();
-      if(localSalvo && !pedido.observacoes?.local_html && document.getElementById("localObservacoes")){
+      if(localSalvo && !observacoesPedido.local_html && document.getElementById("localObservacoes")){
         document.getElementById("localObservacoes").innerHTML = `
           ${localSalvo.endereco ? `<div style="margin-bottom:4px;"><strong>Endereco:</strong> <span>${localSalvo.endereco}${localSalvo.numero_endereco ? ", " + localSalvo.numero_endereco : ""}</span></div>` : ""}
           ${localSalvo.ponto_referencia ? `<div style="margin-bottom:4px;"><strong>Referencia:</strong> <span>${localSalvo.ponto_referencia}</span></div>` : ""}
         `;
       }
-      if(localSalvo && !pedido.observacoes?.local_tags_html && document.getElementById("localTagsInline")){
+      if(localSalvo && !observacoesPedido.local_tags_html && document.getElementById("localTagsInline")){
         const tags = getTagsOperacionaisLocal(localSalvo.tags || {});
         document.getElementById("localTagsInline").innerHTML = tags
           .map((tag) => `<span class="local-tag-real">${tag}</span>`)
@@ -730,13 +767,13 @@ function setupPedidoWorkspace({ supabase }){
     aplicarStatusVisual(pedido.status_comercial || "orcamento");
     if(window.__pedidoAplicarPagamentoConfig){
       window.__pedidoAplicarPagamentoConfig(
-        pedido.observacoes?.pagamento_config || {},
-        pedido.observacoes?.parcelas_financeiras || []
+        observacoesPedido.pagamento_config || {},
+        parcelasFinanceiras
       );
     }else{
-      renderizarParcelasSalvas(pedido.observacoes?.parcelas_financeiras || []);
+      renderizarParcelasSalvas(parcelasFinanceiras);
     }
-    aplicarLogisticaSnapshot(pedido.observacoes?.logistica_snapshot || null);
+    aplicarLogisticaSnapshot(observacoesPedido.logistica_snapshot || null);
 
     const { data: itens, error: itensError } = await supabase
       .from("separacoes_itens")

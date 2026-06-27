@@ -33,6 +33,7 @@ export function initPagamento(){
   const diferencaEl = document.getElementById("pgDiferenca");
 
   const btnLimpar = document.getElementById("btnLimparProgramacao");
+  let cronogramaManual = false;
 
   if(!tbody){
     console.warn("Tabela de pagamento nao encontrada");
@@ -372,6 +373,7 @@ export function initPagamento(){
   };
 
   const gerarParcelas = () => {
+    cronogramaManual = false;
     const { valorFinal } = calcularTotais();
     const entrada = Math.min(moneyValue(entradaEl), valorFinal);
     const qtdParcelas = Math.max(0, Number(parcelasEl?.value || 0));
@@ -429,6 +431,7 @@ export function initPagamento(){
   };
 
   const limparProgramacao = () => {
+    cronogramaManual = true;
     tbody.innerHTML = "";
     atualizarResumo();
   };
@@ -461,6 +464,7 @@ export function initPagamento(){
     setIfExists(creditoClienteEl, config.creditoCliente);
 
     if(Array.isArray(parcelas) && parcelas.length){
+      cronogramaManual = true;
       tbody.innerHTML = "";
       parcelas.forEach((parcela, index) => {
         const valor = typeof parcela.valor === "number"
@@ -483,6 +487,16 @@ export function initPagamento(){
       return;
     }
 
+    cronogramaManual = false;
+    gerarParcelas();
+  };
+
+  const atualizarPagamentoPorTotal = () => {
+    if(cronogramaManual && tbody.querySelector("tr")){
+      atualizarResumo();
+      refreshIcons();
+      return;
+    }
     gerarParcelas();
   };
 
@@ -505,6 +519,7 @@ export function initPagamento(){
   tbody.addEventListener("input", (event) => {
     const row = event.target.closest("tr");
     if(row) {
+      cronogramaManual = true;
       if(event.target.closest(".pg-valor")) row.dataset.recebido = "";
       atualizarLinhaVisual(row);
     }
@@ -512,7 +527,10 @@ export function initPagamento(){
   });
   tbody.addEventListener("change", (event) => {
     const row = event.target.closest("tr");
-    if(row) atualizarLinhaVisual(row);
+    if(row) {
+      cronogramaManual = true;
+      atualizarLinhaVisual(row);
+    }
     atualizarResumo();
   });
   tbody.addEventListener("click", (event) => {
@@ -534,6 +552,7 @@ export function initPagamento(){
     }
 
     if(action === "remove"){
+      cronogramaManual = true;
       row.remove();
       atualizarSequencia();
       atualizarResumo();
@@ -574,7 +593,7 @@ export function initPagamento(){
     fecharPopoverAbatimento();
   });
 
-  window.atualizarPagamento = gerarParcelas;
+  window.atualizarPagamento = atualizarPagamentoPorTotal;
   window.__pedidoColetarPagamentoConfig = coletarConfig;
   window.__pedidoAplicarPagamentoConfig = aplicarConfig;
 
