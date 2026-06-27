@@ -1,0 +1,298 @@
+<div class="item-detail-page el-page" data-module-root>
+  <header class="item-detail-top">
+    <div>
+      <div class="item-detail-breadcrumb">Estoque &gt; Itens &gt; Detalhes do Item</div>
+      <div class="item-detail-title-row">
+        <button type="button" class="btn btn-secondary item-back-btn" id="btnVoltarItens">
+          <i data-lucide="arrow-left"></i>
+          Voltar para Itens
+        </button>
+        <div>
+          <h1 id="itemDetailTitle">Detalhes do Item</h1>
+          <span class="item-code-pill" id="itemDetailCode">Novo item</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-detail-actions">
+      <span class="item-status-pill ativo" id="itemDetailStatus">Ativo</span>
+      <button type="button" class="btn btn-primary" id="btnSalvarItemDetalhes">
+        <i data-lucide="save"></i>
+        Salvar alteracoes
+      </button>
+    </div>
+  </header>
+
+  <input type="hidden" id="itensId">
+  <input type="hidden" id="itensDescricaoTotal">
+
+  <section class="item-summary-card">
+    <div class="item-summary-photo">
+      <div class="foto-guia-container">
+        <div class="foto-preview-wrapper">
+          <img
+            id="itensFotoPreview"
+            src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+            data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+            alt="Sem foto"
+            draggable="false"
+          >
+        </div>
+        <input type="file" id="itensFotoInput" accept="image/*" hidden>
+        <div class="foto-guia"></div>
+      </div>
+
+      <div class="foto-controles">
+        <button class="btn-zoom" type="button" onmousedown="itens_startZoom(1)" onmouseup="itens_stopZoom()" onmouseleave="itens_stopZoom()">+</button>
+        <button class="btn-foto" type="button" onclick="itens_selecionarFoto()">Alterar foto</button>
+        <button class="btn-zoom" type="button" onmousedown="itens_startZoom(-1)" onmouseup="itens_stopZoom()" onmouseleave="itens_stopZoom()">-</button>
+      </div>
+    </div>
+
+    <div class="item-summary-main">
+      <div class="item-summary-head">
+        <div>
+          <span class="item-section-label">Resumo do item</span>
+          <h2 id="itemDetailSummaryName">Item sem nome</h2>
+        </div>
+        <div class="item-tipo-status-row">
+          <div class="item-tipo-toggle-row">
+            <button type="button" class="tipo-btn active" onclick="itens_setTipo('Item', this)">Item</button>
+            <button type="button" class="tipo-btn" onclick="itens_setTipo('Componente', this)">Componente</button>
+          </div>
+          <div class="item-status-toggle-row">
+            <button type="button" class="status-btn ativo active" data-ativo="true" onclick="itens_setStatus(this)">Ativo</button>
+            <button type="button" class="status-btn inativo" data-ativo="false" onclick="itens_setStatus(this)">Inativo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="item-summary-grid">
+        <div><span>Codigo</span><strong id="itemResumoCodigo">-</strong></div>
+        <div><span>Categoria</span><strong id="itemResumoCategoria">-</strong></div>
+        <div><span>Familia</span><strong id="itemResumoFamilia">-</strong></div>
+        <div><span>Material</span><strong id="itemResumoMaterial">-</strong></div>
+        <div><span>Cor</span><strong id="itemResumoCor">-</strong></div>
+        <div><span>Dimensoes</span><strong id="itemResumoDimensoes">-</strong></div>
+      </div>
+
+      <div class="item-finance-strip">
+        <div><span>Custo</span><strong id="itemResumoCusto">R$ 0,00</strong></div>
+        <div><span>Locacao</span><strong id="itemResumoLocacao">R$ 0,00</strong></div>
+        <div><span>Reposicao</span><strong id="itemResumoReposicao">R$ 0,00</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="item-detail-tabs" aria-label="Abas do item">
+    <button type="button" class="item-tab active" data-item-tab="dados">Dados Gerais</button>
+    <button type="button" class="item-tab" data-item-tab="galeria">Galeria</button>
+    <button type="button" class="item-tab" data-item-tab="visualizacao3d">Visualizacao 3D</button>
+    <button type="button" class="item-tab" data-item-tab="kits">Kits</button>
+    <button type="button" class="item-tab" data-item-tab="historico">Historico</button>
+    <button type="button" class="item-tab" data-item-tab="qrcode">QR Code</button>
+  </nav>
+
+  <main class="item-detail-panels">
+    <section class="item-tab-panel active" data-item-panel="dados">
+      <div class="item-form-grid">
+        <article class="item-card item-card-large">
+          <h3>Informacoes Gerais</h3>
+          <div class="item-fields-grid">
+            <label class="el-field">
+              <span>Produto *</span>
+              <input class="el-input" id="itensProduto">
+            </label>
+            <label class="el-field">
+              <span>Codigo *</span>
+              <input class="el-input" id="itensCodigo" readonly>
+            </label>
+            <label class="el-field">
+              <span>Material</span>
+              <input class="el-input" id="itensMaterial">
+            </label>
+            <label class="el-field">
+              <span>Cor</span>
+              <input class="el-input" id="itensCor">
+            </label>
+            <label class="el-field span-2">
+              <span>Descricao complementar</span>
+              <input class="el-input" id="itensDescricaoComplementar">
+            </label>
+            <label class="el-field">
+              <span>Familia</span>
+              <input class="el-input" id="itensFamilia">
+            </label>
+            <label class="el-field">
+              <span>Categoria *</span>
+              <input class="el-input" id="itensCategoria">
+            </label>
+            <label class="el-field">
+              <span>Setor de estoque *</span>
+              <select class="el-select" id="itensSetor">
+                <option value="">Selecione</option>
+                <option value="Almoxarifado">Almoxarifado</option>
+                <option value="Estoque Geral">Estoque Geral</option>
+                <option value="Decoração">Decoração</option>
+                <option value="Louças">Louças</option>
+                <option value="Iluminação">Iluminação</option>
+                <option value="Móveis">Móveis</option>
+              </select>
+            </label>
+            <label class="el-field">
+              <span>Exibir no site *</span>
+              <select class="el-select" id="itensExibirSite">
+                <option value="">Selecione</option>
+                <option value="true">Sim</option>
+                <option value="false">Nao</option>
+              </select>
+            </label>
+          </div>
+        </article>
+
+        <article class="item-card">
+          <h3>Dimensoes e Cubagem</h3>
+          <div class="item-fields-grid compact">
+            <label class="el-field">
+              <span>Largura / Diametro (m)</span>
+              <input class="el-input" id="itensLargura" oninput="itens_calcularVolume()">
+            </label>
+            <label class="el-field">
+              <span>Altura (m)</span>
+              <input class="el-input" id="itensAltura" oninput="itens_calcularVolume()">
+            </label>
+            <label class="el-field">
+              <span>Profundidade (m)</span>
+              <input class="el-input" id="itensProfundidade" oninput="itens_calcularVolume()">
+            </label>
+            <label class="el-field">
+              <span>Volume cubico (m3)</span>
+              <input class="el-input" id="itensVolumeCubico" placeholder="Auto" readonly tabindex="-1">
+            </label>
+          </div>
+        </article>
+
+        <article class="item-card">
+          <h3>Valores</h3>
+          <div class="item-fields-grid compact">
+            <label class="el-field">
+              <span>Custo (R$)</span>
+              <input class="el-input" id="itensCusto" placeholder="0,00">
+            </label>
+            <label class="el-field">
+              <span>Valor de locacao (R$)</span>
+              <input class="el-input" id="itensValorLocacao" placeholder="0,00">
+            </label>
+            <label class="el-field">
+              <span>Valor de reposicao (R$)</span>
+              <input class="el-input" id="itensValorReposicao" placeholder="0,00">
+            </label>
+          </div>
+        </article>
+      </div>
+      <div id="kitComponentesArea" hidden></div>
+    </section>
+
+    <section class="item-tab-panel" data-item-panel="galeria">
+      <article class="item-card item-empty-state">
+        <i data-lucide="images"></i>
+        <h3>Galeria do item</h3>
+        <p>Area preparada para fotos ambientadas e fotos reais de eventos.</p>
+        <button type="button" class="btn btn-secondary">Adicionar fotos</button>
+      </article>
+    </section>
+
+    <section class="item-tab-panel" data-item-panel="visualizacao3d">
+      <div class="item-3d-layout">
+        <article class="item-card item-3d-viewer">
+          <div class="item-3d-toolbar">
+            <button type="button" class="btn btn-secondary">Girar</button>
+            <button type="button" class="btn btn-secondary">Zoom</button>
+            <button type="button" class="btn btn-secondary">Mover</button>
+            <button type="button" class="btn btn-secondary">Resetar camera</button>
+          </div>
+          <div class="item-3d-empty">
+            <i data-lucide="box"></i>
+            <h3>Este item ainda nao possui modelo 3D.</h3>
+            <p>O viewer esta preparado para arquivos GLB, GLTF, OBJ ou FBX.</p>
+          </div>
+        </article>
+        <aside class="item-card item-3d-side">
+          <h3>Modelo 3D</h3>
+          <dl>
+            <div><dt>Status do modelo</dt><dd>Sem modelo</dd></div>
+            <div><dt>Nome do arquivo</dt><dd>-</dd></div>
+            <div><dt>Formato</dt><dd>GLB / GLTF / OBJ / FBX</dd></div>
+            <div><dt>Origem</dt><dd>-</dd></div>
+            <div><dt>Criado em</dt><dd>-</dd></div>
+            <div><dt>Ultima atualizacao</dt><dd>-</dd></div>
+          </dl>
+          <div class="item-3d-actions">
+            <button type="button" class="btn btn-primary">Gerar modelo 3D com IA</button>
+            <button type="button" class="btn btn-secondary">Enviar arquivo 3D</button>
+            <button type="button" class="btn btn-secondary">Substituir modelo</button>
+            <button type="button" class="btn btn-secondary danger-soft">Remover modelo</button>
+            <button type="button" class="btn btn-secondary">Tela cheia</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="item-tab-panel" data-item-panel="kits">
+      <article class="item-card">
+        <h3>Kits vinculados</h3>
+        <div class="item-table-wrap">
+          <table class="item-detail-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Quantidade</th>
+                <th>Locacao</th>
+                <th>Reposicao</th>
+              </tr>
+            </thead>
+            <tbody id="itemDetalheKitsBody">
+              <tr><td colspan="4">Clique na aba para carregar os dados.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="item-tab-panel" data-item-panel="historico">
+      <article class="item-card item-empty-state">
+        <i data-lucide="history"></i>
+        <h3>Historico do item</h3>
+        <p>Area preparada para movimentacoes e auditoria do item.</p>
+      </article>
+    </section>
+
+    <section class="item-tab-panel" data-item-panel="qrcode">
+      <article class="item-card item-qr-card">
+        <div class="qr-auto-card" id="itensQrAutoCard">
+          <strong>QR Code</strong>
+          <span>Sera gerado automaticamente ao salvar.</span>
+        </div>
+
+        <div class="qr-identificacao hidden" id="itensQrIdentificacao">
+          <div>
+            <span class="qr-section-label">Identificacao</span>
+            <strong>QR CODE</strong>
+          </div>
+
+          <div class="qr-identificacao-body">
+            <div class="qr-render" id="itensQrRender"></div>
+            <div class="qr-meta">
+              <span>ID:</span>
+              <code id="itensQrCodigo"></code>
+              <div class="qr-actions">
+                <button type="button" class="btn secondary" onclick="itens_copiarQrCode()">Copiar Codigo</button>
+                <button type="button" class="btn primary" onclick="itens_baixarQrCode()">Baixar QR PNG</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</div>

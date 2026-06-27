@@ -106,48 +106,48 @@ const valorReposicao = document.getElementById("itensValorReposicao")?.value?.tr
 
 if(!produto){
   alerta("Informe o produto.");
-  return;
+  return false;
 }
 
 if(!material){
   alerta("Informe o material.");
-  return;
+  return false;
 }
 
 if(!cor){
   alerta("Informe a cor.");
-  return;
+  return false;
 }
 
 if(!largura || !altura || !profundidade){
   alerta("Informe todas as dimensões.");
-  return;
+  return false;
 }
 
 if(!categoria){
   alerta("Informe a categoria.");
-  return;
+  return false;
 }
 
 if(!setor){
   alerta("Informe o setor de estoque.");
-  return;
+  return false;
 }
 
 if(!valorLocacao){
   alerta("Informe o valor de locação.");
-  return;
+  return false;
 }
 
 if(!valorReposicao){
   alerta("Informe o valor de reposição.");
-  return;
+  return false;
 }
 try{
 
   if(!supabase){
     console.error("Supabase não encontrado.");
-    return;
+    return false;
   }
     /* =====================================================
        PEGAR EMPRESA
@@ -157,7 +157,7 @@ try{
 
     if(!empresaId){
       console.error("Empresa não encontrada.");
-      return;
+      return false;
     }
 
     /* =====================================================
@@ -328,7 +328,7 @@ const itemData = {
 
       if(error){
         console.error("Erro ao atualizar item:", error);
-        return;
+        return false;
       }
 
       console.log("Item atualizado");
@@ -356,7 +356,7 @@ const itemData = {
 
       if(error){
         console.error("Erro ao criar item:", error);
-        return;
+        return false;
       }
 
       console.log("Item criado");
@@ -375,12 +375,14 @@ const itemData = {
     ===================================================== */
 
     window.itens_closeModal?.();
+    return true;
 
   }
 
   catch(err){
 
     console.error("Erro ao salvar item:",err);
+    return false;
 
   }
 

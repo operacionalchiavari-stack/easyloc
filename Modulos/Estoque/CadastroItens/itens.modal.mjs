@@ -56,6 +56,8 @@ function itens_setQrVisual(qrCode){
   }
 }
 
+window.itens_setQrVisual = itens_setQrVisual;
+
 function itens_fecharQrPanel(){
   document.getElementById("itensQrPopover")?.classList.add("hidden");
   document.getElementById("itensQrToggle")?.classList.remove("active");
@@ -390,6 +392,7 @@ document
 btn.classList.add("active");
 
 const area = document.getElementById("kitComponentesArea");
+if(!area) return;
 
 if(tipo === "Kit"){
   area.style.display = "block";
