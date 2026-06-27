@@ -5990,12 +5990,17 @@ body.pedido-map-modal-open {
 }
 
 .pedido-screen .item-observacao-head .btn-icon {
-  width: 32px;
-  height: 32px;
-  border-color: #e5e7eb;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: #6b7280;
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 !important;
+  border-color: #fecaca !important;
+  border-radius: 10px !important;
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
 }
 
 .pedido-screen .item-observacao-field {
