@@ -41,7 +41,10 @@
 
       <label class="contratos-editor-area">
         <span>Conteúdo do contrato</span>
-        <textarea id="contratoConteudo" spellcheck="true"></textarea>
+        <div class="contratos-editor-highlight-wrap">
+          <pre class="contratos-editor-highlight" id="contratoConteudoHighlight" aria-hidden="true"></pre>
+          <textarea id="contratoConteudo" spellcheck="true"></textarea>
+        </div>
       </label>
 
       <div class="contratos-actions">

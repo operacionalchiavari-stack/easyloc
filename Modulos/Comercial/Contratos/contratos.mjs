@@ -39,6 +39,7 @@ function cacheEls(){
     "contratoModeloPadrao",
     "contratoModeloAtivo",
     "contratoConteudo",
+    "contratoConteudoHighlight",
     "contratoDuplicarModelo",
     "contratoDesativarModelo",
     "contratoExcluirModelo",
@@ -47,6 +48,48 @@ function cacheEls(){
   ].forEach((id) => {
     els[id] = $(id);
   });
+}
+
+function escapeRegex(value){
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function contarTag(conteudo, tag){
+  const match = String(conteudo || "").match(new RegExp(escapeRegex(tag), "g"));
+  return match ? match.length : 0;
+}
+
+function syncEditorScroll(){
+  if(!els.contratoConteudo || !els.contratoConteudoHighlight) return;
+  els.contratoConteudoHighlight.scrollTop = els.contratoConteudo.scrollTop;
+  els.contratoConteudoHighlight.scrollLeft = els.contratoConteudo.scrollLeft;
+}
+
+function atualizarEditorHighlight(){
+  if(!els.contratoConteudo || !els.contratoConteudoHighlight) return;
+  const conteudo = els.contratoConteudo.value || "";
+  const html = escapeHtml(conteudo).replace(/\{\{[a-zA-Z0-9_]+\}\}/g, (tag) => (
+    `<span class="contrato-tag-highlight">${tag}</span>`
+  ));
+  els.contratoConteudoHighlight.innerHTML = html || " ";
+  syncEditorScroll();
+}
+
+function atualizarContadoresTags(){
+  if(!els.contratoConteudo || !els.contratosTags) return;
+  const conteudo = els.contratoConteudo.value || "";
+  els.contratosTags.querySelectorAll(".contrato-tag-btn[data-tag]").forEach((button) => {
+    const count = contarTag(conteudo, button.dataset.tag);
+    const badge = button.querySelector(".contrato-tag-count");
+    if(!badge) return;
+    badge.textContent = String(count);
+    badge.classList.toggle("is-zero", count === 0);
+  });
+}
+
+function atualizarEditorVisual(){
+  atualizarEditorHighlight();
+  atualizarContadoresTags();
 }
 
 function modeloSelecionado(){
@@ -60,6 +103,7 @@ function limparEditor(){
   if(els.contratoModeloPadrao) els.contratoModeloPadrao.checked = !state.modelos.length;
   if(els.contratoModeloAtivo) els.contratoModeloAtivo.checked = true;
   renderLista();
+  atualizarEditorVisual();
 }
 
 function preencherEditor(modelo){
@@ -70,6 +114,7 @@ function preencherEditor(modelo){
   if(els.contratoModeloPadrao) els.contratoModeloPadrao.checked = Boolean(modelo.padrao);
   if(els.contratoModeloAtivo) els.contratoModeloAtivo.checked = modelo.ativo !== false;
   renderLista();
+  atualizarEditorVisual();
 }
 
 function renderLista(){
@@ -107,7 +152,8 @@ function renderTags(){
       <div class="contrato-tag-list">
         ${group.tags.map(([tag, label]) => `
           <button type="button" class="contrato-tag-btn" data-tag="${escapeHtml(tag)}" title="${escapeHtml(tag)}">
-            ${escapeHtml(label)}
+            <span class="contrato-tag-label">${escapeHtml(label)}</span>
+            <span class="contrato-tag-count is-zero">0</span>
           </button>
         `).join("")}
       </div>
@@ -124,6 +170,7 @@ function inserirTag(tag){
   const cursor = inicio + tag.length;
   textarea.focus();
   textarea.setSelectionRange(cursor, cursor);
+  atualizarEditorVisual();
 }
 
 async function carregarModelos(){
@@ -223,6 +270,7 @@ async function duplicarModelo(){
   if(els.contratoModeloPadrao) els.contratoModeloPadrao.checked = false;
   if(els.contratoModeloAtivo) els.contratoModeloAtivo.checked = true;
   renderLista();
+  atualizarEditorVisual();
 }
 
 async function alternarAtivo(){
@@ -283,6 +331,8 @@ function bindEvents(){
   els.contratoDuplicarModelo?.addEventListener("click", duplicarModelo);
   els.contratoDesativarModelo?.addEventListener("click", alternarAtivo);
   els.contratoExcluirModelo?.addEventListener("click", excluirModelo);
+  els.contratoConteudo?.addEventListener("input", atualizarEditorVisual);
+  els.contratoConteudo?.addEventListener("scroll", syncEditorScroll);
 
   els.contratosLista?.addEventListener("click", (event) => {
     const item = event.target.closest("[data-contrato-id]");
@@ -311,6 +361,7 @@ export async function initContratos(){
   cacheEls();
   renderTags();
   bindEvents();
+  atualizarEditorVisual();
 
   if(!state.supabase || !state.empresaId){
     notify("Supabase ou empresa não encontrados.", "erro");

@@ -189,20 +189,54 @@
   height: 16px;
 }
 
-.contratos-editor-area textarea {
+.contratos-editor-highlight-wrap {
+  position: relative;
   width: 100%;
   min-height: 520px;
-  padding: 16px;
   border: 1px solid #dbe3ee;
   border-radius: 14px;
   background: #fbfdff;
-  color: #1f2937;
-  font: 14px/1.6 "Inter", "Segoe UI", sans-serif;
-  resize: vertical;
-  outline: none;
+  overflow: hidden;
 }
 
-.contratos-editor-area textarea:focus {
+.contratos-editor-highlight,
+.contratos-editor-highlight-wrap textarea {
+  width: 100%;
+  min-height: 520px;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  box-sizing: border-box;
+  font: 14px/1.6 "Inter", "Segoe UI", sans-serif;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.contratos-editor-highlight {
+  color: #1f2937;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.contrato-tag-highlight {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.contratos-editor-highlight-wrap textarea {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  background: transparent;
+  color: transparent;
+  caret-color: #1f2937;
+  resize: none;
+  outline: none;
+  overflow: auto;
+}
+
+.contratos-editor-highlight-wrap:focus-within {
   border-color: var(--el-color-accent, #0ea5e9);
   box-shadow: 0 0 0 3px rgba(14, 165, 233, .14);
 }
@@ -261,6 +295,9 @@
 
 .contrato-tag-btn {
   min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 9px;
   border: 1px solid #dbeafe;
   border-radius: 999px;
@@ -275,6 +312,25 @@
 .contrato-tag-btn:hover {
   transform: translateY(-1px);
   background: #dbeafe;
+}
+
+.contrato-tag-count {
+  min-width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #bfdbfe;
+  color: #1d4ed8;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.contrato-tag-count.is-zero {
+  background: #e5e7eb;
+  color: #6b7280;
 }
 
 @media (max-width: 1280px) {
