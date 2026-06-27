@@ -5620,18 +5620,18 @@ tr:first-child {
 ===================================================== */
 
 .pedido-screen .pedido-title-row h1.pedido-numero-destaque {
-  min-width: 54px;
-  min-height: 34px;
+  min-width: 68px;
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin: 0;
-  padding: 7px 12px;
-  border: 1px solid rgba(220, 38, 38, .18);
+  padding: 10px 16px;
+  border: 1px solid rgba(220, 38, 38, .36);
   border-radius: 999px;
-  background: rgba(220, 38, 38, .10);
-  color: #b91c1c;
-  font-size: 13px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 16px;
   font-weight: 850;
   line-height: 1;
   letter-spacing: .02em;
@@ -5640,10 +5640,10 @@ tr:first-child {
 
 .pedido-screen .resumo-card,
 .pedido-screen .finance-card.logistica-card {
-  border-color: #dde3ec;
+  border-color: #cbd5e1;
   background:
-    linear-gradient(180deg, rgba(248, 250, 252, .98), rgba(243, 246, 250, .92));
-  box-shadow: 0 14px 32px rgba(15, 23, 42, .06);
+    linear-gradient(180deg, #f1f5f9 0%, #e9eef5 100%);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, .08);
 }
 
 .pedido-screen .resumo-card h2,
@@ -5653,7 +5653,7 @@ tr:first-child {
 
 .pedido-screen .resumo-card .resumo-linha,
 .pedido-screen .finance-card.logistica-card .logistica-extra div {
-  border-color: rgba(203, 213, 225, .82);
+  border-color: rgba(148, 163, 184, .55);
 }
 
 .pedido-screen .pedido-mini-map-card {
@@ -5709,28 +5709,28 @@ tr:first-child {
   z-index: 10030;
   display: grid;
   place-items: center;
-  padding: 22px;
+  padding: 24px;
 }
 
 .pedido-map-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, .54);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, .36);
+  backdrop-filter: blur(2px);
 }
 
 .pedido-map-dialog {
   position: relative;
   z-index: 1;
-  width: min(1120px, calc(100vw - 44px));
-  height: min(760px, calc(100vh - 44px));
+  width: min(880px, calc(100vw - 48px));
+  height: min(570px, calc(100vh - 56px));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, .92);
-  border-radius: 22px;
+  border-radius: 18px;
   background: #ffffff;
-  box-shadow: 0 30px 80px rgba(15, 23, 42, .28);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, .20);
 }
 
 .pedido-map-modal-head,
@@ -5738,16 +5738,16 @@ tr:first-child {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 18px 22px;
+  gap: 12px;
+  padding: 14px 18px;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .pedido-map-modal-head span {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: #6b7280;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
@@ -5756,44 +5756,44 @@ tr:first-child {
 .pedido-map-modal-head h2 {
   margin: 0;
   color: #1f2937;
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1.15;
 }
 
 .pedido-map-modal-head p,
 .pedido-map-modal-foot span {
-  margin: 5px 0 0;
+  margin: 4px 0 0;
   color: #6b7280;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .pedido-map-modal-close {
-  width: 46px;
-  height: 46px;
+  width: 36px;
+  height: 36px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 0;
-  border-radius: 12px;
-  background: #dc2626;
-  color: #ffffff;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff5f5;
+  color: #dc2626;
   cursor: pointer;
   transition: transform .16s ease, background .16s ease;
 }
 
 .pedido-map-modal-close:hover {
   transform: translateY(-1px);
-  background: #b91c1c;
+  background: #fee2e2;
 }
 
 .pedido-map-modal-close svg {
-  width: 21px;
-  height: 21px;
+  width: 18px;
+  height: 18px;
 }
 
 .pedido-map-large {
-  min-height: 360px;
+  min-height: 320px;
   background:
     linear-gradient(135deg, rgba(230, 244, 234, .92), rgba(219, 234, 254, .78)),
     repeating-linear-gradient(45deg, rgba(15, 42, 68, .08) 0 1px, transparent 1px 14px);
@@ -5802,7 +5802,7 @@ tr:first-child {
 .pedido-map-modal-foot {
   border-top: 1px solid #e5e7eb;
   border-bottom: 0;
-  background: #f8fafc;
+  background: #f9fafb;
 }
 
 body.pedido-map-modal-open {
@@ -5816,7 +5816,7 @@ body.pedido-map-modal-open {
 
   .pedido-map-dialog {
     width: calc(100vw - 20px);
-    height: calc(100vh - 20px);
+    height: min(620px, calc(100vh - 20px));
     border-radius: 18px;
   }
 
