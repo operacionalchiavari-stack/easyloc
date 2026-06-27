@@ -6250,11 +6250,7 @@ body.pedido-map-modal-open {
   }
 }
 
-/* Destaque legivel do status ativo na linha do tempo */
-.pedido-screen .pedido-timeline .timeline-step.active {
-  color: #ffffff !important;
-}
-
+/* Destaque legivel apenas do numero ativo na linha do tempo */
 .pedido-screen .pedido-timeline .timeline-step.active span {
   color: #ffffff !important;
 }
