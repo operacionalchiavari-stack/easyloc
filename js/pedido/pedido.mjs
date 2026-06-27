@@ -564,9 +564,17 @@ function setupPedidoWorkspace({ supabase }){
       const data = dataParaISO(parcela.vencimento);
       const status = parcela.status || "Programado";
       const recebido = Number(parcela.recebido || parcela.valor_recebido || 0);
-      const pago = String(status).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes("pago");
+      const valor = Number(parcela.valor || 0);
+      const normalizado = String(status).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const pago = normalizado.includes("pago") || (valor > 0 && recebido >= valor);
+      const venc = data ? new Date(`${data}T00:00:00`) : null;
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const atrasado = !pago && venc && !Number.isNaN(venc.getTime()) && venc < hoje;
+      const statusKey = pago ? "paid" : atrasado ? "overdue" : "programmed";
+      const statusLabel = pago ? "Paga" : atrasado ? "Atrasada" : "Em dia";
       return `
-        <tr class="${pago ? "is-paid" : "is-programmed"}">
+        <tr class="is-${statusKey}">
           <td>
             <strong class="pg-parcela-label">${parcela.tipo || `Parcela ${index + 1}`}</strong>
             <span class="pg-numero sr-only">${parcela.numero || index + 1}</span>
@@ -576,10 +584,10 @@ function setupPedidoWorkspace({ supabase }){
             </select>
           </td>
           <td><input class="el-input pg-vencimento" type="date" value="${data || ""}"></td>
-          <td contenteditable="true" class="pg-valor">${Number(parcela.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+          <td contenteditable="true" class="pg-valor">${valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
           <td><span class="pg-recebido">${Number(recebido).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></td>
           <td>
-            <span class="pg-status-badge ${pago ? "paid" : "programmed"}">${pago ? "Paga" : "Programada"}</span>
+            <span class="pg-status-badge ${statusKey}">${statusLabel}</span>
             <select class="pg-status">
               ${statuses.map((option) => `<option ${option === status || (option === "Pago" && pago) ? "selected" : ""}>${option}</option>`).join("")}
             </select>
@@ -587,7 +595,6 @@ function setupPedidoWorkspace({ supabase }){
           <td>
             <button type="button" class="pedido-pix-btn" data-pix-parcela title="Gerar PIX" aria-label="Gerar PIX">
               <i data-lucide="qr-code"></i>
-              <span class="pg-action-text">${pago ? "Ver" : "Gerar PIX"}</span>
             </button>
           </td>
         </tr>

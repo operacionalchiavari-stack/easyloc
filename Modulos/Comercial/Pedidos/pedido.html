@@ -147,35 +147,16 @@
           <div class="pagamento-card-head">
             <div>
               <h2>Financeiro do pedido</h2>
-              <p>Acompanhe parcelas e recebimentos</p>
+              <p>Parcelas, baixas e cobranças PIX</p>
             </div>
             <div class="pagamento-actions">
-              <button type="button" class="btn btn-secondary" id="btnFinanceiroAcoes">Ações</button>
-            </div>
-          </div>
-
-          <div class="pagamento-overview-grid">
-            <div class="pagamento-overview-card">
-              <span>Total</span>
-              <strong id="pgResumoTotal">R$ 0,00</strong>
-            </div>
-            <div class="pagamento-overview-card">
-              <span>Recebido</span>
-              <strong id="pgResumoRecebido">R$ 0,00</strong>
-            </div>
-            <div class="pagamento-overview-card">
-              <span>Em aberto</span>
-              <strong id="pgResumoAberto">R$ 0,00</strong>
-            </div>
-            <div class="pagamento-overview-card">
-              <span>Pagamento</span>
-              <strong id="pgResumoPagamento">PIX • 1x</strong>
+              <button type="button" class="btn btn-secondary" id="btnFinanceiroAcoes">Ajustes</button>
             </div>
           </div>
 
           <details class="pagamento-conditions" id="pagamentoCondicoes">
             <summary>
-              <span>Condições comerciais</span>
+              <span>Condições e ajustes</span>
               <small>
                 <b id="pgCondEntradaResumo">Entrada R$ 0,00</b>
                 <b id="pgCondVencResumo">Vencimento -</b>
@@ -268,40 +249,23 @@
             </div>
           </details>
 
-          <div class="pagamento-workflow">
-            <div class="pagamento-table-wrap">
-              <table class="cronograma-table">
-                <thead>
-                  <tr>
-                    <th>Parcela</th>
-                    <th>Vencimento</th>
-                    <th>Valor</th>
-                    <th>Recebido</th>
-                    <th>Status</th>
-                    <th>Ação</th>
-                  </tr>
-                </thead>
-                <tbody id="cronogramaParcelas"></tbody>
-              </table>
-            </div>
-
-            <aside class="pagamento-selected-panel">
-              <span class="pagamento-panel-kicker">Parcela selecionada</span>
-              <strong id="pgPainelParcela">Selecione uma parcela</strong>
-              <div class="pagamento-panel-list">
-                <div><span>Vencimento</span><b id="pgPainelVencimento">-</b></div>
-                <div><span>Valor</span><b id="pgPainelValor">R$ 0,00</b></div>
-                <div><span>Status</span><b id="pgPainelStatus">-</b></div>
-                <div><span>Forma</span><b id="pgPainelMetodo">-</b></div>
-              </div>
-              <button type="button" class="btn btn-primary pagamento-panel-pix" id="pgPainelPixBtn" data-pix-selected>
-                Gerar QR Code PIX
-              </button>
-              <p>O QR Code será válido até o vencimento da parcela.</p>
-            </aside>
+          <div class="pagamento-table-wrap">
+            <table class="cronograma-table">
+              <thead>
+                <tr>
+                  <th>Parcela</th>
+                  <th>Vencimento</th>
+                  <th>Valor</th>
+                  <th>Recebido</th>
+                  <th>Status</th>
+                  <th>PIX</th>
+                </tr>
+              </thead>
+              <tbody id="cronogramaParcelas"></tbody>
+            </table>
           </div>
 
-          <p class="pagamento-footnote">Selecione uma parcela em aberto para gerar ou acompanhar o PIX.</p>
+          <p class="pagamento-footnote">As parcelas pagas ficam verdes, atrasadas ficam vermelhas e o botão de PIX abre a cobrança da linha.</p>
         </section>
 
         <section class="contrato">
