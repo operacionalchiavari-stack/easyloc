@@ -68,8 +68,8 @@ function syncEditorScroll(){
 function atualizarEditorHighlight(){
   if(!els.contratoConteudo || !els.contratoConteudoHighlight) return;
   const conteudo = els.contratoConteudo.value || "";
-  const html = escapeHtml(conteudo).replace(/\{\{[a-zA-Z0-9_]+\}\}/g, (tag) => (
-    `<span class="contrato-tag-highlight">${tag}</span>`
+  const html = escapeHtml(conteudo).replace(/\{\{[^{}]+\}\}/g, (tag) => (
+    `<span class="tag-contrato">${tag}</span>`
   ));
   els.contratoConteudoHighlight.innerHTML = html || " ";
   syncEditorScroll();

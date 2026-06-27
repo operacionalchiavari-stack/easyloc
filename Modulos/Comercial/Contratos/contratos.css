@@ -219,6 +219,7 @@
   overflow: hidden;
 }
 
+.tag-contrato,
 .contrato-tag-highlight {
   color: #1d4ed8;
   font-weight: 700;
