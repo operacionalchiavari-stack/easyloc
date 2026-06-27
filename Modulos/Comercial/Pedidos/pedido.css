@@ -6094,15 +6094,15 @@ body.pedido-map-modal-open {
 ===================================================== */
 
 .pedido-screen .pedido-items-table tbody tr.item-row {
-  grid-template-columns: 44px 72px minmax(230px, 1fr) 88px 66px 92px 92px 112px !important;
+  grid-template-columns: 44px 64px minmax(230px, 1fr) 88px 66px 92px 92px 112px !important;
   gap: 10px !important;
-  min-height: 78px !important;
-  padding: 7px 14px !important;
+  min-height: 72px !important;
+  padding: 6px 14px !important;
 }
 
 .pedido-screen .foto-item {
-  width: 68px !important;
-  height: 58px !important;
+  width: 60px !important;
+  height: 52px !important;
   border-radius: 8px !important;
 }
 
@@ -6146,7 +6146,7 @@ body.pedido-map-modal-open {
 }
 
 .pedido-screen .pedido-items-table thead tr {
-  grid-template-columns: 44px 72px minmax(230px, 1fr) 88px 66px 92px 92px 112px !important;
+  grid-template-columns: 44px 64px minmax(230px, 1fr) 88px 66px 92px 92px 112px !important;
 }
 
 @media (max-width: 1200px) {
