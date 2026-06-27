@@ -6254,3 +6254,19 @@ body.pedido-map-modal-open {
 .pedido-screen .pedido-timeline .timeline-step.active span {
   color: #ffffff !important;
 }
+
+/* Cores fixas por etapa selecionada */
+.pedido-screen .pedido-timeline .timeline-step.active[data-status="orcamento"] span {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+.pedido-screen .pedido-timeline .timeline-step.active[data-status="pre_reserva"] span {
+  background: #f59e0b !important;
+  border-color: #f59e0b !important;
+}
+
+.pedido-screen .pedido-timeline .timeline-step.active[data-status="aprovado"] span {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+}
