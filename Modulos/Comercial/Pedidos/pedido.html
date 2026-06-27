@@ -31,97 +31,99 @@
         </div>
       </div>
 
-      <section class="pedido-meta-strip">
-        <div class="meta-item">
-          <span>Cliente</span>
-          <div class="autocomplete-wrapper">
-            <input class="meta-input el-input" type="text" id="clienteInput" placeholder="Cliente" autocomplete="off">
-            <input type="hidden" id="clienteIdHidden">
-            <div class="autocomplete-list" id="clienteLista"></div>
-          </div>
-        </div>
-
-        <div class="meta-item">
-          <span>Contato</span>
-          <input class="meta-input el-input" type="tel" id="telefoneInput" placeholder="Telefone / WhatsApp" autocomplete="off">
-        </div>
-
-        <div class="meta-item">
-          <span>Evento</span>
-          <select class="meta-input el-select" id="tipoEventoSelect">
-            <option value="">Selecione</option>
-            <option value="casamento">Casamento</option>
-            <option value="aniversario">Aniversario</option>
-            <option value="15anos">15 Anos</option>
-            <option value="corporativo">Corporativo</option>
-            <option value="editorial">Editorial</option>
-            <option value="outro">Outro</option>
-          </select>
-        </div>
-
-        <div class="meta-item">
-          <span>Data entrega</span>
-          <input class="meta-input el-input" type="date" id="dataEntrega">
-          <div class="dia-semana sr-only" id="diaEntrega">-</div>
-        </div>
-
-        <div class="meta-item meta-item-time">
-          <span>Horário entrega</span>
-          <input class="meta-input el-input" type="time" id="horaEntrega">
-        </div>
-
-        <div class="meta-item">
-          <span>Data evento</span>
-          <input class="meta-input el-input" type="date" id="dataEvento">
-          <div class="dia-semana sr-only" id="diaEvento">-</div>
-        </div>
-
-        <div class="meta-item">
-          <span>Data coleta</span>
-          <input class="meta-input el-input" type="date" id="dataColeta">
-          <div class="dia-semana sr-only" id="diaColeta">-</div>
-        </div>
-
-        <div class="meta-item meta-item-time">
-          <span>Horário coleta</span>
-          <input class="meta-input el-input" type="time" id="horaColeta">
-        </div>
-      </section>
-
-      <section class="pedido-location-strip">
-        <div class="location-field">
-          <span>Local do evento</span>
-          <div class="autocomplete-wrapper">
-            <input class="location-input el-input" type="text" id="localInput" placeholder="Local" autocomplete="off">
-            <input type="hidden" id="localIdHidden">
-            <div class="autocomplete-list" id="localLista"></div>
-          </div>
-        </div>
-
-        <div class="location-address">
-          <div class="location-address-label">Endereço do evento</div>
-          <div class="location-address-body">
-            <div class="obs-local" id="localObservacoes"></div>
-            <div class="local-indicadores">
-              <div class="local-tags local-tags-operacionais" id="localTagsInline"></div>
+      <div class="pedido-info-card">
+        <section class="pedido-meta-strip">
+          <div class="meta-item">
+            <span>Cliente</span>
+            <div class="autocomplete-wrapper">
+              <input class="meta-input el-input" type="text" id="clienteInput" placeholder="Cliente" autocomplete="off">
+              <input type="hidden" id="clienteIdHidden">
+              <div class="autocomplete-list" id="clienteLista"></div>
             </div>
           </div>
-        </div>
 
-        <div class="pedido-mini-map-card">
-          <div class="pedido-mini-map" id="pedidoMiniMapa">
-            <div class="pedido-mini-map-placeholder">
-              <i data-lucide="map-pin"></i>
+          <div class="meta-item">
+            <span>Contato</span>
+            <input class="meta-input el-input" type="tel" id="telefoneInput" placeholder="Telefone / WhatsApp" autocomplete="off">
+          </div>
+
+          <div class="meta-item">
+            <span>Evento</span>
+            <select class="meta-input el-select" id="tipoEventoSelect">
+              <option value="">Selecione</option>
+              <option value="casamento">Casamento</option>
+              <option value="aniversario">Aniversario</option>
+              <option value="15anos">15 Anos</option>
+              <option value="corporativo">Corporativo</option>
+              <option value="editorial">Editorial</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+
+          <div class="meta-item">
+            <span>Data entrega</span>
+            <input class="meta-input el-input" type="date" id="dataEntrega">
+            <div class="dia-semana sr-only" id="diaEntrega">-</div>
+          </div>
+
+          <div class="meta-item meta-item-time">
+            <span>Horário entrega</span>
+            <input class="meta-input el-input" type="time" id="horaEntrega">
+          </div>
+
+          <div class="meta-item">
+            <span>Data evento</span>
+            <input class="meta-input el-input" type="date" id="dataEvento">
+            <div class="dia-semana sr-only" id="diaEvento">-</div>
+          </div>
+
+          <div class="meta-item">
+            <span>Data coleta</span>
+            <input class="meta-input el-input" type="date" id="dataColeta">
+            <div class="dia-semana sr-only" id="diaColeta">-</div>
+          </div>
+
+          <div class="meta-item meta-item-time">
+            <span>Horário coleta</span>
+            <input class="meta-input el-input" type="time" id="horaColeta">
+          </div>
+        </section>
+
+        <section class="pedido-location-strip">
+          <div class="location-field">
+            <span>Local do evento</span>
+            <div class="autocomplete-wrapper">
+              <input class="location-input el-input" type="text" id="localInput" placeholder="Local" autocomplete="off">
+              <input type="hidden" id="localIdHidden">
+              <div class="autocomplete-list" id="localLista"></div>
             </div>
           </div>
-          <button type="button" class="pedido-mini-map-locate" id="pedidoMiniMapaCentralizar" aria-label="Centralizar mapa">
-            <i data-lucide="navigation"></i>
-          </button>
-          <button type="button" class="pedido-mini-map-expand" id="pedidoMiniMapaAbrir" aria-label="Abrir mapa ampliado">
-            <i data-lucide="maximize-2"></i>
-          </button>
-        </div>
-      </section>
+
+          <div class="location-address">
+            <div class="location-address-label">Endereço do evento</div>
+            <div class="location-address-body">
+              <div class="obs-local" id="localObservacoes"></div>
+              <div class="local-indicadores">
+                <div class="local-tags local-tags-operacionais" id="localTagsInline"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pedido-mini-map-card">
+            <div class="pedido-mini-map" id="pedidoMiniMapa">
+              <div class="pedido-mini-map-placeholder">
+                <i data-lucide="map-pin"></i>
+              </div>
+            </div>
+            <button type="button" class="pedido-mini-map-locate" id="pedidoMiniMapaCentralizar" aria-label="Centralizar mapa">
+              <i data-lucide="navigation"></i>
+            </button>
+            <button type="button" class="pedido-mini-map-expand" id="pedidoMiniMapaAbrir" aria-label="Abrir mapa ampliado">
+              <i data-lucide="maximize-2"></i>
+            </button>
+          </div>
+        </section>
+      </div>
 
       <div class="pedido-hidden-fields">
         <input class="el-input" type="text" id="responsavelInput">

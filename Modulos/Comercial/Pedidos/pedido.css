@@ -6220,3 +6220,32 @@ body.pedido-map-modal-open {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* Topo do pedido: informacoes e local no mesmo card */
+.pedido-screen .pedido-info-card {
+  margin-top: 10px;
+  padding: 15px 16px 16px;
+  border: 1px solid var(--el-color-border);
+  border-radius: 16px;
+  background: var(--el-color-surface);
+  box-shadow: var(--el-shadow-sm);
+}
+
+.pedido-screen .pedido-info-card .pedido-meta-strip {
+  margin-top: 0 !important;
+}
+
+.pedido-screen .pedido-info-card .pedido-location-strip {
+  margin-top: 14px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 760px) {
+  .pedido-screen .pedido-info-card {
+    padding: 13px;
+  }
+}
