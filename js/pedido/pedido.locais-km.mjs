@@ -1,6 +1,12 @@
 import { debounce } from "./pedido.utils.mjs";
 
 const GALPAO_ORIGEM_PADRAO = "Chiavari Eventos, Estrada Uniao e Industria, Itaipava, Petropolis - RJ, Brasil";
+const MINI_MAP_CENTER_PADRAO = { lat: -22.3928, lng: -43.1348 };
+const pedidoMiniMapState = {
+  map: null,
+  marker: null,
+  localId: null
+};
 
 export function initAutocompleteLocaisEKm({
   supabase,
@@ -13,13 +19,18 @@ export function initAutocompleteLocaisEKm({
 
   let ultimoLocalCalculado = "";
 
+  window.__pedidoRenderizarLocalEvento = (local) => {
+    renderizarObservacoesLocal({ local, obsDiv });
+    renderizarMiniMapaPedido({ supabase, local });
+  };
+
   const selecionarLocal = async (local) => {
     if(!local) return;
 
     localInput.value = local.nome_razao || "";
     if(localIdHidden) localIdHidden.value = local.id || "";
 
-    renderizarObservacoesLocal({ local, obsDiv });
+    window.__pedidoRenderizarLocalEvento?.(local);
 
     localLista.innerHTML = "";
     localLista.style.display = "none";
@@ -154,29 +165,192 @@ function renderizarObservacoesLocal({ local, obsDiv }){
   const tagsDiv = document.getElementById("localTagsInline");
   atualizarIndicadoresLocal(local?.tags || {});
 
-  obsDiv.innerHTML = `
-    ${local.endereco ? `
-      <div style="margin-bottom:4px;">
-        <strong>Endereco:</strong>
-        <span>
-          ${local.endereco}
-          ${local.numero_endereco ? ", " + local.numero_endereco : ""}
-        </span>
-      </div>
-    ` : ""}
+  const endereco = [
+    local.endereco,
+    local.numero_endereco ? String(local.numero_endereco).trim() : ""
+  ].filter(Boolean).join(", ");
+  const referencia = local.ponto_referencia || "-";
 
-    ${local.ponto_referencia ? `
-      <div style="margin-bottom:4px;">
-        <strong>Referencia:</strong>
-        <span>${local.ponto_referencia}</span>
-      </div>
-    ` : ""}
+  obsDiv.innerHTML = `
+    <div class="local-address-row">
+      <strong>Endereço:</strong>
+      <span>${endereco || "-"}</span>
+    </div>
+    <div class="local-reference-row">
+      <strong>Referência:</strong>
+      <span>${referencia}</span>
+    </div>
   `;
 
   if(tagsDiv){
     tagsDiv.innerHTML = observacoes.length
       ? observacoes.map((obs) => `<span class="local-tag-real">${obs}</span>`).join("")
       : "";
+  }
+}
+
+function enderecoCompletoLocal(local = {}){
+  return [
+    local.endereco || "",
+    local.numero_endereco ? String(local.numero_endereco).trim() : "",
+    "Brasil"
+  ].filter(Boolean).join(", ");
+}
+
+function coordenadasLocal(local = {}){
+  const lat = Number(local.latitude);
+  const lng = Number(local.longitude);
+  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+}
+
+async function geocodificarLocal(local = {}){
+  const endereco = enderecoCompletoLocal(local);
+  if(!endereco || !window.google?.maps?.Geocoder) return null;
+
+  const geocoder = new google.maps.Geocoder();
+  return new Promise((resolve) => {
+    geocoder.geocode({ address: endereco }, (results, status) => {
+      if(status !== "OK" || !results?.[0]?.geometry?.location){
+        resolve(null);
+        return;
+      }
+      const location = results[0].geometry.location;
+      resolve({
+        lat: location.lat(),
+        lng: location.lng(),
+        placeId: results[0].place_id || ""
+      });
+    });
+  });
+}
+
+async function salvarCoordenadasLocal({ supabase, local, position, placeId = "" }){
+  if(!supabase || !local?.id || !window.__CONTEXT?.empresa_id || !position) return;
+
+  const payload = {
+    latitude: Number(position.lat),
+    longitude: Number(position.lng)
+  };
+  if(placeId) payload.google_place_id = placeId;
+
+  const { error } = await supabase
+    .from("locais_empresas")
+    .update(payload)
+    .eq("empresa_id", window.__CONTEXT.empresa_id)
+    .eq("id", local.id);
+
+  if(error){
+    console.warn("[EasyLoc Debug]", {
+      arquivo: "js/pedido/pedido.locais-km.mjs",
+      funcao: "salvarCoordenadasLocal",
+      erro: error
+    });
+  }
+}
+
+function aplicarMiniMapaFallback(label = "Mapa indisponível"){
+  const mapEl = document.getElementById("pedidoMiniMapa");
+  if(!mapEl) return;
+  mapEl.innerHTML = `
+    <div class="pedido-mini-map-placeholder">
+      <i data-lucide="map-pin"></i>
+      <span>${label}</span>
+    </div>
+  `;
+  window.lucide?.createIcons?.();
+}
+
+async function renderizarMiniMapaPedido({ supabase, local }){
+  const mapEl = document.getElementById("pedidoMiniMapa");
+  const locateBtn = document.getElementById("pedidoMiniMapaCentralizar");
+  if(!mapEl || !local) return;
+
+  try{
+    if(!window.google?.maps?.Map){
+      if(typeof window.carregarGooglePlaces === "function"){
+        await window.carregarGooglePlaces();
+      }
+    }
+
+    if(!window.google?.maps?.Map){
+      aplicarMiniMapaFallback("Google Maps não carregado");
+      return;
+    }
+
+    let center = coordenadasLocal(local);
+    if(!center){
+      const geocode = await geocodificarLocal(local);
+      if(geocode){
+        center = { lat: geocode.lat, lng: geocode.lng };
+        local.latitude = center.lat;
+        local.longitude = center.lng;
+        salvarCoordenadasLocal({ supabase, local, position: center, placeId: geocode.placeId });
+      }
+    }
+
+    center = center || MINI_MAP_CENTER_PADRAO;
+
+    const precisaNovoMapa = !pedidoMiniMapState.map
+      || pedidoMiniMapState.localId !== local.id
+      || pedidoMiniMapState.map.getDiv?.() !== mapEl;
+
+    if(precisaNovoMapa){
+      mapEl.innerHTML = "";
+      pedidoMiniMapState.map = new google.maps.Map(mapEl, {
+        center,
+        zoom: 15,
+        disableDefaultUI: true,
+        zoomControl: true,
+        gestureHandling: "greedy",
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+      });
+
+      pedidoMiniMapState.marker = new google.maps.Marker({
+        map: pedidoMiniMapState.map,
+        position: center,
+        draggable: true,
+        title: local.nome_razao || "Local do evento"
+      });
+
+      pedidoMiniMapState.map.addListener("click", async (event) => {
+        if(!event?.latLng) return;
+        const position = { lat: event.latLng.lat(), lng: event.latLng.lng() };
+        pedidoMiniMapState.marker?.setPosition(position);
+        local.latitude = position.lat;
+        local.longitude = position.lng;
+        await salvarCoordenadasLocal({ supabase, local, position });
+        await calcularKmAutomatico({ supabase, local, forcarRecalculo: true });
+      });
+
+      pedidoMiniMapState.marker.addListener("dragend", async () => {
+        const markerPosition = pedidoMiniMapState.marker?.getPosition?.();
+        if(!markerPosition) return;
+        const position = { lat: markerPosition.lat(), lng: markerPosition.lng() };
+        local.latitude = position.lat;
+        local.longitude = position.lng;
+        await salvarCoordenadasLocal({ supabase, local, position });
+        await calcularKmAutomatico({ supabase, local, forcarRecalculo: true });
+      });
+
+      pedidoMiniMapState.localId = local.id || null;
+    }else{
+      pedidoMiniMapState.map.setCenter(center);
+      pedidoMiniMapState.marker?.setPosition(center);
+    }
+
+    locateBtn.onclick = () => {
+      const position = pedidoMiniMapState.marker?.getPosition?.();
+      if(position) pedidoMiniMapState.map?.panTo(position);
+    };
+  }catch(error){
+    console.warn("[EasyLoc Debug]", {
+      arquivo: "js/pedido/pedido.locais-km.mjs",
+      funcao: "renderizarMiniMapaPedido",
+      erro: error?.message || String(error)
+    });
+    aplicarMiniMapaFallback("Mapa indisponível");
   }
 }
 
@@ -273,7 +447,7 @@ async function salvarDistanciaNoLocal({ supabase, local, km, texto }){
   }
 }
 
-async function calcularKmAutomatico({ supabase, local }){
+async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }){
   const debugBase = {
     arquivo: "js/pedido/pedido.locais-km.mjs",
     funcao: "calcularKmAutomatico"
@@ -281,7 +455,7 @@ async function calcularKmAutomatico({ supabase, local }){
 
   try{
     const distanciaSalva = Number(local?.distancia_galpao_km || 0);
-    if(Number.isFinite(distanciaSalva) && distanciaSalva > 0){
+    if(!forcarRecalculo && Number.isFinite(distanciaSalva) && distanciaSalva > 0){
       aplicarKmCalculado(distanciaSalva, local?.distancia_galpao_texto || "");
       return;
     }

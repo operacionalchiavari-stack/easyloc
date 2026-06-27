@@ -63,21 +63,28 @@
           <span>Data entrega</span>
           <input class="meta-input el-input" type="date" id="dataEntrega">
           <div class="dia-semana sr-only" id="diaEntrega">-</div>
-          <input class="sr-only" type="time" id="horaEntrega">
+        </div>
+
+        <div class="meta-item meta-item-time">
+          <span>Horário entrega</span>
+          <input class="meta-input el-input" type="time" id="horaEntrega">
         </div>
 
         <div class="meta-item">
           <span>Data evento</span>
           <input class="meta-input el-input" type="date" id="dataEvento">
           <div class="dia-semana sr-only" id="diaEvento">-</div>
-          <input class="sr-only" type="time" id="horaEvento">
         </div>
 
         <div class="meta-item">
           <span>Data coleta</span>
           <input class="meta-input el-input" type="date" id="dataColeta">
           <div class="dia-semana sr-only" id="diaColeta">-</div>
-          <input class="sr-only" type="time" id="horaColeta">
+        </div>
+
+        <div class="meta-item meta-item-time">
+          <span>Horário coleta</span>
+          <input class="meta-input el-input" type="time" id="horaColeta">
         </div>
       </section>
 
@@ -92,12 +99,24 @@
         </div>
 
         <div class="location-address">
-          <div class="location-address-label">Endereco do evento</div>
-          <div class="obs-local" id="localObservacoes"></div>
+          <div class="location-address-label">Endereço do evento</div>
+          <div class="location-address-body">
+            <div class="obs-local" id="localObservacoes"></div>
+            <div class="local-indicadores">
+              <div class="local-tags local-tags-operacionais" id="localTagsInline"></div>
+            </div>
+          </div>
         </div>
 
-        <div class="local-indicadores">
-          <div class="local-tags local-tags-operacionais" id="localTagsInline"></div>
+        <div class="pedido-mini-map-card">
+          <div class="pedido-mini-map" id="pedidoMiniMapa">
+            <div class="pedido-mini-map-placeholder">
+              <i data-lucide="map-pin"></i>
+            </div>
+          </div>
+          <button type="button" class="pedido-mini-map-locate" id="pedidoMiniMapaCentralizar" aria-label="Centralizar mapa">
+            <i data-lucide="navigation"></i>
+          </button>
         </div>
       </section>
 

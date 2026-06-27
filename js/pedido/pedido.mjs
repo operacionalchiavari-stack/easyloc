@@ -530,6 +530,12 @@ function setupPedidoWorkspace({ supabase }){
     if(el) el.textContent = value || "";
   };
 
+  const horaParaInput = (value = "") => {
+    const texto = String(value || "").trim();
+    const match = texto.match(/(?:T|\s)(\d{2}:\d{2})/);
+    return match?.[1] || "";
+  };
+
   const listaParcelasFinanceiras = (value) => {
     if(Array.isArray(value)) return value;
     if(value && typeof value === "object"){
@@ -737,6 +743,15 @@ function setupPedidoWorkspace({ supabase }){
     setInputValue("dataEntrega", dataParaISO(pedido.data_entrega));
     setInputValue("dataEvento", dataParaISO(pedido.data_evento || pedido.data_hora));
     setInputValue("dataColeta", dataParaISO(pedido.data_coleta));
+    const horariosPedido = observacoesPedido.horarios_pedido || observacoesPedido.horarios || {};
+    setInputValue(
+      "horaEntrega",
+      observacoesPedido.horario_entrega || horariosPedido.entrega || horaParaInput(pedido.data_entrega)
+    );
+    setInputValue(
+      "horaColeta",
+      observacoesPedido.horario_coleta || horariosPedido.coleta || horaParaInput(pedido.data_coleta)
+    );
     setInputValue("pagamentoObservacaoFinanceira", typeof observacoesPedido.financeiro === "string" ? observacoesPedido.financeiro : "");
     if(observacoesPedido.local_html && document.getElementById("localObservacoes")){
       document.getElementById("localObservacoes").innerHTML = observacoesPedido.local_html;
@@ -744,24 +759,30 @@ function setupPedidoWorkspace({ supabase }){
     if(observacoesPedido.local_tags_html && document.getElementById("localTagsInline")){
       document.getElementById("localTagsInline").innerHTML = observacoesPedido.local_tags_html;
     }
-    if((!observacoesPedido.local_html || !observacoesPedido.local_tags_html) && pedido.local_id){
+    if(pedido.local_id){
       const { data: localSalvo } = await supabase
         .from("locais_empresas")
-        .select("endereco,numero_endereco,ponto_referencia,tags")
+        .select("id,nome_razao,endereco,numero_endereco,ponto_referencia,latitude,longitude,distancia_galpao_km,distancia_galpao_texto,google_place_id,tags")
         .eq("empresa_id", window.__CONTEXT.empresa_id)
         .eq("id", pedido.local_id)
         .maybeSingle();
-      if(localSalvo && !observacoesPedido.local_html && document.getElementById("localObservacoes")){
-        document.getElementById("localObservacoes").innerHTML = `
-          ${localSalvo.endereco ? `<div style="margin-bottom:4px;"><strong>Endereco:</strong> <span>${localSalvo.endereco}${localSalvo.numero_endereco ? ", " + localSalvo.numero_endereco : ""}</span></div>` : ""}
-          ${localSalvo.ponto_referencia ? `<div style="margin-bottom:4px;"><strong>Referencia:</strong> <span>${localSalvo.ponto_referencia}</span></div>` : ""}
-        `;
-      }
-      if(localSalvo && !observacoesPedido.local_tags_html && document.getElementById("localTagsInline")){
-        const tags = getTagsOperacionaisLocal(localSalvo.tags || {});
-        document.getElementById("localTagsInline").innerHTML = tags
-          .map((tag) => `<span class="local-tag-real">${tag}</span>`)
-          .join("");
+      if(localSalvo){
+        if(typeof window.__pedidoRenderizarLocalEvento === "function"){
+          window.__pedidoRenderizarLocalEvento(localSalvo);
+        }else{
+          if(!observacoesPedido.local_html && document.getElementById("localObservacoes")){
+            document.getElementById("localObservacoes").innerHTML = `
+              ${localSalvo.endereco ? `<div style="margin-bottom:4px;"><strong>Endereco:</strong> <span>${localSalvo.endereco}${localSalvo.numero_endereco ? ", " + localSalvo.numero_endereco : ""}</span></div>` : ""}
+              ${localSalvo.ponto_referencia ? `<div style="margin-bottom:4px;"><strong>Referencia:</strong> <span>${localSalvo.ponto_referencia}</span></div>` : ""}
+            `;
+          }
+          if(!observacoesPedido.local_tags_html && document.getElementById("localTagsInline")){
+            const tags = getTagsOperacionaisLocal(localSalvo.tags || {});
+            document.getElementById("localTagsInline").innerHTML = tags
+              .map((tag) => `<span class="local-tag-real">${tag}</span>`)
+              .join("");
+          }
+        }
       }
     }
     aplicarStatusVisual(pedido.status_comercial || "orcamento");
@@ -955,6 +976,8 @@ function setupPedidoWorkspace({ supabase }){
     const dataEvento = document.getElementById("dataEvento")?.value || null;
     const dataEntrega = document.getElementById("dataEntrega")?.value || null;
     const dataColeta = document.getElementById("dataColeta")?.value || null;
+    const horaEntrega = document.getElementById("horaEntrega")?.value || "";
+    const horaColeta = document.getElementById("horaColeta")?.value || "";
     const valorTotal = moedaParaNumero(document.getElementById("resumoTotalGeral")?.textContent);
     const deveReservar = ["pre_reserva", "aprovado"].includes(statusComercial);
     const itensReserva = deveReservar ? coletarItensParaReserva() : [];
@@ -994,6 +1017,12 @@ function setupPedidoWorkspace({ supabase }){
         cancelamento: window.__PEDIDO_CANCELAMENTO || null,
         local_html: document.getElementById("localObservacoes")?.innerHTML || "",
         local_tags_html: document.getElementById("localTagsInline")?.innerHTML || "",
+        horario_entrega: horaEntrega,
+        horario_coleta: horaColeta,
+        horarios_pedido: {
+          entrega: horaEntrega,
+          coleta: horaColeta
+        },
         origem: "pedido"
       },
       atualizado_em: new Date().toISOString()
