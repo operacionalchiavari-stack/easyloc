@@ -6249,3 +6249,12 @@ body.pedido-map-modal-open {
     padding: 13px;
   }
 }
+
+/* Destaque legivel do status ativo na linha do tempo */
+.pedido-screen .pedido-timeline .timeline-step.active {
+  color: #ffffff !important;
+}
+
+.pedido-screen .pedido-timeline .timeline-step.active span {
+  color: #ffffff !important;
+}
