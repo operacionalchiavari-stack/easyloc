@@ -1,0 +1,75 @@
+<div class="contratos-page el-page" data-module-root>
+  <header class="contratos-header">
+    <div>
+      <h1>Modelos de Contrato</h1>
+      <p>Crie modelos com tags automáticas para preencher os dados do pedido.</p>
+    </div>
+    <button type="button" class="btn btn-primary" id="contratoNovoModelo">
+      <i data-lucide="plus"></i>
+      Novo modelo
+    </button>
+  </header>
+
+  <main class="contratos-layout">
+    <aside class="contratos-list-panel">
+      <div class="contratos-panel-head">
+        <span>Modelos cadastrados</span>
+        <button type="button" class="contratos-icon-btn" id="contratoAtualizar" aria-label="Atualizar modelos">
+          <i data-lucide="refresh-cw"></i>
+        </button>
+      </div>
+      <div class="contratos-list" id="contratosLista"></div>
+    </aside>
+
+    <section class="contratos-editor-panel">
+      <div class="contratos-editor-top">
+        <label>
+          <span>Nome do modelo</span>
+          <input class="el-input" id="contratoNomeModelo" placeholder="Ex.: Contrato de Locação">
+        </label>
+
+        <label class="contratos-check">
+          <input type="checkbox" id="contratoModeloPadrao">
+          <span>Definir como modelo padrão</span>
+        </label>
+
+        <label class="contratos-check">
+          <input type="checkbox" id="contratoModeloAtivo" checked>
+          <span>Modelo ativo</span>
+        </label>
+      </div>
+
+      <label class="contratos-editor-area">
+        <span>Conteúdo do contrato</span>
+        <textarea id="contratoConteudo" spellcheck="true"></textarea>
+      </label>
+
+      <div class="contratos-actions">
+        <button type="button" class="btn btn-secondary" id="contratoDuplicarModelo">
+          <i data-lucide="copy"></i>
+          Duplicar
+        </button>
+        <button type="button" class="btn btn-secondary" id="contratoDesativarModelo">
+          <i data-lucide="power"></i>
+          Ativar/desativar
+        </button>
+        <button type="button" class="btn btn-secondary danger-soft" id="contratoExcluirModelo">
+          <i data-lucide="trash-2"></i>
+          Excluir
+        </button>
+        <button type="button" class="btn btn-primary" id="contratoSalvarModelo">
+          <i data-lucide="save"></i>
+          Salvar modelo
+        </button>
+      </div>
+    </section>
+
+    <aside class="contratos-tags-panel">
+      <div class="contratos-panel-head">
+        <span>Tags disponíveis</span>
+      </div>
+      <p>Clique em uma tag para inserir no ponto atual do editor.</p>
+      <div class="contratos-tags" id="contratosTags"></div>
+    </aside>
+  </main>
+</div>

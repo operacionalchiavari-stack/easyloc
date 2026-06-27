@@ -6270,3 +6270,192 @@ body.pedido-map-modal-open {
   background: #16a34a !important;
   border-color: #16a34a !important;
 }
+
+/* Contrato automatico no pedido */
+.pedido-screen .pedido-contrato-card {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+}
+
+.pedido-screen .pedido-contrato-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.pedido-screen .pedido-contrato-head span {
+  display: block;
+  margin-bottom: 3px;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.pedido-screen .pedido-contrato-head h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.pedido-screen .pedido-contrato-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.pedido-screen .pedido-contrato-actions .btn {
+  min-height: 32px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+}
+
+.pedido-screen .pedido-contrato-alert {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.pedido-screen .pedido-contrato-alert.erro {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.pedido-screen .pedido-contrato-preview {
+  max-height: 360px;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fbfdff;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.72;
+  white-space: normal;
+}
+
+.pedido-screen .pedido-contrato-editor {
+  width: 100%;
+  min-height: 360px;
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1f2937;
+  font: 14px/1.6 "Inter", "Segoe UI", sans-serif;
+  resize: vertical;
+}
+
+.pedido-screen .pedido-contrato-editor:focus {
+  border-color: var(--el-color-accent);
+  box-shadow: var(--el-focus-ring);
+  outline: 0;
+}
+
+.pedido-screen .pedido-contrato-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(15, 23, 42, .38);
+  backdrop-filter: blur(3px);
+}
+
+.pedido-screen .pedido-contrato-modal.hidden {
+  display: none;
+}
+
+.pedido-screen .pedido-contrato-modal-box {
+  width: min(920px, calc(100vw - 40px));
+  max-height: calc(100vh - 56px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, .24);
+  overflow: hidden;
+}
+
+.pedido-screen .pedido-contrato-modal-head,
+.pedido-screen .pedido-contrato-modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pedido-screen .pedido-contrato-modal-foot {
+  justify-content: flex-end;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 0;
+}
+
+.pedido-screen .pedido-contrato-modal-head span {
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.pedido-screen .pedido-contrato-modal-head h2 {
+  margin: 3px 0 0;
+  color: #1f2937;
+  font-size: 20px;
+}
+
+.pedido-screen .pedido-contrato-modal-close {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.pedido-screen .pedido-contrato-modal-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pedido-screen .pedido-contrato-modal-body {
+  overflow: auto;
+  padding: 24px 28px;
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+@media (max-width: 900px) {
+  .pedido-screen .pedido-contrato-head {
+    flex-direction: column;
+  }
+
+  .pedido-screen .pedido-contrato-actions {
+    justify-content: flex-start;
+  }
+}

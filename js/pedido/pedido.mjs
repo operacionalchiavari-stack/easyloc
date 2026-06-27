@@ -8,6 +8,7 @@ import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs";
 import { initPagamento } from "./pedido.pagamento.mjs";
+import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs";
 
 export async function initPedido(){
 
@@ -327,6 +328,8 @@ export function destroyPedido(){
     delete window.__pedidoRealtimeChannel;
     delete window.__pedidoRealtimeId;
   }
+  destroyContratoPedido();
+  delete window.__pedidoContratoInitPromise;
   delete window.__restaurarItensPedido;
   delete window.__PEDIDO_DADOS_ATUAL;
 
@@ -872,6 +875,7 @@ function setupPedidoWorkspace({ supabase }){
     document.getElementById("tipoEventoSelect")?.dispatchEvent(new Event("change"));
     document.getElementById("localInput")?.dispatchEvent(new Event("change", { bubbles: true }));
     window.atualizarResumoGlobal?.();
+    await window.__pedidoContratoRecarregar?.();
     window.__ocultarAutocompleteClientePedido?.();
 
     if(["visualizar", "imprimir"].includes(window.__PEDIDO_MODO_ABERTURA)){
@@ -1017,6 +1021,14 @@ function setupPedidoWorkspace({ supabase }){
     }
 
     const statusComercial = statusComercialAtual();
+    if(["aprovado", "finalizado", "enviado"].includes(statusComercial)){
+      await window.__pedidoContratoInitPromise?.catch?.(() => null);
+      if(typeof window.__pedidoContratoPodeSalvarStatus === "function"){
+        const contratoOk = await window.__pedidoContratoPodeSalvarStatus(statusComercial);
+        if(!contratoOk) return;
+      }
+    }
+
     let numeroPedido = document.getElementById("orcamentoNumero")?.textContent?.trim() || "";
     const clienteNome = document.getElementById("clienteInput")?.value?.trim() || "Cliente nao informado";
     const clienteId = document.getElementById("clienteIdHidden")?.value || null;
@@ -1156,6 +1168,16 @@ function setupPedidoWorkspace({ supabase }){
 
     await garantirCronogramaLogistico(pedidoId, payloadPedido);
 
+    if(["aprovado", "finalizado", "enviado"].includes(statusComercial)){
+      const contratoSalvo = typeof window.__pedidoSalvarContratoFinal === "function"
+        ? await window.__pedidoSalvarContratoFinal(pedidoId, statusComercial)
+        : false;
+      if(!contratoSalvo){
+        avisar("Pedido salvo, mas o contrato final nao foi gravado. Revise o modelo padrao e tente salvar novamente.", "Contrato", "aviso");
+        return;
+      }
+    }
+
     avisar(
       deveReservar
         ? "Pedido salvo e disponibilidade atualizada."
@@ -1262,6 +1284,7 @@ function setupPedidoWorkspace({ supabase }){
   tipoEventoSelect?.addEventListener("change", atualizarTituloEvento);
   atualizarTituloEvento();
 
+  window.__pedidoContratoInitPromise = initContratoPedido({ supabase, avisar });
   setupTimelinePedido({ avisar });
 
   setupComunicacoes();
@@ -1307,7 +1330,7 @@ function setupTimelinePedido({ avisar }){
   }
 
   document.querySelectorAll(".timeline-step").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const status = button.dataset.status || "";
 
       if(status === "cancelado"){
@@ -1321,6 +1344,12 @@ function setupTimelinePedido({ avisar }){
       if(!statusEditaveis.has(status)){
         avisar("Esta etapa sera atualizada automaticamente pelo operacional.", "Etapa bloqueada", "info");
         return;
+      }
+
+      await window.__pedidoContratoInitPromise?.catch?.(() => null);
+      if(typeof window.__pedidoPodeAlterarStatus === "function"){
+        const permitido = await window.__pedidoPodeAlterarStatus(status);
+        if(!permitido) return;
       }
 
       aplicarStatus(status);

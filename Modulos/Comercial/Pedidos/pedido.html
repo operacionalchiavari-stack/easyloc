@@ -256,13 +256,23 @@
           </div>
         </section>
 
-        <section class="contrato">
-          <h2 contenteditable="true">Contrato de Locacao</h2>
-          <div contenteditable="true" class="texto-contrato">
-            <p><strong>Clausula 1 - Objeto:</strong> Locacao dos materiais descritos neste orcamento.</p>
-            <p><strong>Clausula 2 - Responsabilidade:</strong> O contratante se responsabiliza pela guarda e conservacao.</p>
-            <p><strong>Clausula 3 - Pagamento:</strong> Conforme condicoes acordadas.</p>
-          </div>
+        <section class="contrato pedido-contrato-card" id="pedidoContratoCard">
+          <header class="pedido-contrato-head">
+            <div>
+              <span>Documento automático</span>
+              <h2>Contrato de Locação</h2>
+            </div>
+            <div class="pedido-contrato-actions">
+              <button type="button" class="btn btn-secondary" id="btnEditarContratoPedido">Editar texto deste pedido</button>
+              <button type="button" class="btn btn-secondary" id="btnRestaurarContratoPadrao">Restaurar modelo padrão</button>
+              <button type="button" class="btn btn-secondary" id="btnVisualizarContratoPedido">Visualizar completo</button>
+              <button type="button" class="btn btn-secondary" id="btnImprimirContratoPedido">Imprimir</button>
+              <button type="button" class="btn btn-secondary" id="btnGerarPdfContratoPedido">Gerar PDF</button>
+            </div>
+          </header>
+          <div class="pedido-contrato-alert" id="pedidoContratoAviso" hidden></div>
+          <textarea class="pedido-contrato-editor" id="pedidoContratoEditor" hidden></textarea>
+          <div class="texto-contrato pedido-contrato-preview" id="pedidoContratoPreview"></div>
         </section>
       </main>
 
@@ -321,6 +331,26 @@
       <footer class="pedido-map-modal-foot">
         <span>A distância do galpão será recalculada automaticamente após o ajuste.</span>
         <button type="button" class="btn btn-secondary" id="pedidoMapModalConcluir">Concluir</button>
+      </footer>
+    </section>
+  </div>
+
+  <div class="pedido-contrato-modal hidden" id="pedidoContratoModal">
+    <section class="pedido-contrato-modal-box" role="dialog" aria-modal="true" aria-labelledby="pedidoContratoModalTitulo">
+      <header class="pedido-contrato-modal-head">
+        <div>
+          <span>Contrato</span>
+          <h2 id="pedidoContratoModalTitulo">Contrato de Locação</h2>
+        </div>
+        <button type="button" class="pedido-contrato-modal-close" id="btnFecharContratoModal" aria-label="Fechar contrato">
+          <i data-lucide="x"></i>
+        </button>
+      </header>
+      <div class="pedido-contrato-modal-body" id="pedidoContratoModalTexto"></div>
+      <footer class="pedido-contrato-modal-foot">
+        <button type="button" class="btn btn-secondary" id="btnImprimirContratoModal">Imprimir</button>
+        <button type="button" class="btn btn-secondary" id="btnGerarPdfContratoModal">Gerar PDF</button>
+        <button type="button" class="btn btn-primary" id="btnFecharContratoModalFooter">Fechar</button>
       </footer>
     </section>
   </div>
