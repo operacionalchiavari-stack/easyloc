@@ -945,7 +945,8 @@ select.addEventListener("change", function(){
   if (window.Sortable && tbody) {
     new Sortable(tbody, {
       animation: 150,
-      handle: ".drag-handle",
+      filter: "button,input,select,textarea,[contenteditable='true'],.item-autocomplete-wrapper,.item-autocomplete-list,.acoes-linha",
+      preventOnFilter: false,
       ghostClass: "drag-ghost",
       chosenClass: "drag-chosen",
       onStart: function () {

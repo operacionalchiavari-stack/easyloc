@@ -5838,3 +5838,108 @@ body.pedido-map-modal-open {
     font-size: 20px;
   }
 }
+
+/* =====================================================
+   REFINOS: CARDS LATERAIS, TOPO E ACOES DOS ITENS
+===================================================== */
+
+.pedido-screen .pedido-meta-strip {
+  margin-top: 18px !important;
+}
+
+.pedido-screen .pedido-financeiro .finance-card.resumo-card,
+.pedido-screen .pedido-financeiro .finance-card.logistica-card {
+  border-color: #cbd5e1 !important;
+  background: #e9edf3 !important;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, .08) !important;
+}
+
+.pedido-screen .pedido-financeiro .finance-card.resumo-card .resumo-linha,
+.pedido-screen .pedido-financeiro .finance-card.logistica-card .logistica-extra div {
+  border-color: rgba(148, 163, 184, .58) !important;
+}
+
+.pedido-screen .pedido-financeiro .finance-card.logistica-card .logistica-extra div {
+  background: rgba(255, 255, 255, .42) !important;
+}
+
+.pedido-screen .pedido-items-table tbody tr.item-row {
+  grid-template-columns: 44px 88px minmax(230px, 1fr) 92px 68px 96px 94px 116px !important;
+  grid-template-areas: "qtd foto nome unit desc total repos actions" !important;
+  cursor: grab;
+}
+
+.pedido-screen .pedido-items-table tbody tr.item-row:active {
+  cursor: grabbing;
+}
+
+.pedido-screen .pedido-items-table tbody tr.item-row :is(button, input, select, textarea, [contenteditable="true"], .item-autocomplete-wrapper, .acoes-linha) {
+  cursor: auto;
+}
+
+.pedido-screen .pedido-items-table tr.item-row .drag-handle,
+.pedido-screen .pedido-items-table tbody tr.linha-espaco .drag-handle {
+  display: none !important;
+}
+
+.pedido-screen .pedido-items-table tbody tr.item-row td.acao-col {
+  grid-area: actions;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  min-width: 0;
+  padding: 0 !important;
+}
+
+.pedido-screen .pedido-items-table tbody tr.item-row .acoes-linha {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  height: auto;
+}
+
+.pedido-screen .pedido-items-table tr.item-row .btn-editar-item,
+.pedido-screen .pedido-items-table tr.item-row .btn-onde-esta,
+.pedido-screen .pedido-items-table tr.item-row .btn-remover-item {
+  grid-area: auto !important;
+  align-self: center !important;
+  justify-self: center !important;
+  display: inline-flex !important;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+}
+
+.pedido-screen .pedido-items-table thead tr {
+  grid-template-columns: 44px 88px minmax(230px, 1fr) 92px 68px 96px 94px 116px !important;
+}
+
+.pedido-screen .pedido-items-table thead th:first-child {
+  display: none !important;
+}
+
+.pedido-screen .pedido-items-table tbody tr.linha-espaco {
+  cursor: grab;
+}
+
+.pedido-screen .pedido-items-table tbody tr.linha-espaco:active {
+  cursor: grabbing;
+}
+
+.pedido-screen .pedido-items-table tbody tr.linha-espaco :is(button, input, select, textarea, [contenteditable="true"], .acoes-linha) {
+  cursor: auto;
+}
+
+@media (max-width: 1200px) {
+  .pedido-screen .pedido-items-table tbody tr.item-row {
+    grid-template-columns: 44px minmax(0, 1fr) 116px !important;
+    grid-template-areas:
+      "qtd nome actions"
+      "foto foto actions"
+      "unit desc total"
+      "repos repos repos" !important;
+  }
+}
