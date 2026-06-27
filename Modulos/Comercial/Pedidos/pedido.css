@@ -6088,3 +6088,74 @@ body.pedido-map-modal-open {
   background: #fff7ed;
   color: #c2410c;
 }
+
+/* =====================================================
+   DENSIDADE DA LISTA DE ITENS
+===================================================== */
+
+.pedido-screen .pedido-items-table tbody tr.item-row {
+  grid-template-columns: 44px 72px minmax(230px, 1fr) 88px 66px 92px 92px 112px !important;
+  gap: 10px !important;
+  min-height: 78px !important;
+  padding: 7px 14px !important;
+}
+
+.pedido-screen .foto-item {
+  width: 68px !important;
+  height: 58px !important;
+  border-radius: 8px !important;
+}
+
+.pedido-screen .foto-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pedido-screen .nome-item[contenteditable="true"] {
+  min-height: 34px !important;
+  padding: 6px 10px !important;
+}
+
+.pedido-screen .nome-item[contenteditable="true"] .item-nome-titulo {
+  font-size: 13px !important;
+  line-height: 1.18 !important;
+}
+
+.pedido-screen .nome-item[contenteditable="true"] .item-nome-medidas {
+  margin-top: 3px !important;
+  font-size: 11px !important;
+  line-height: 1.18 !important;
+}
+
+.pedido-screen .item-autocomplete-wrapper::after {
+  margin-top: 4px !important;
+  font-size: 10px !important;
+}
+
+.pedido-screen .input-desconto {
+  width: 56px !important;
+  height: 34px !important;
+}
+
+.pedido-screen .pedido-items-table tr.item-row .btn-editar-item,
+.pedido-screen .pedido-items-table tr.item-row .btn-onde-esta,
+.pedido-screen .pedido-items-table tr.item-row .btn-remover-item {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.pedido-screen .pedido-items-table thead tr {
+  grid-template-columns: 44px 72px minmax(230px, 1fr) 88px 66px 92px 92px 112px !important;
+}
+
+@media (max-width: 1200px) {
+  .pedido-screen .pedido-items-table tbody tr.item-row {
+    grid-template-columns: 44px minmax(0, 1fr) 112px !important;
+    grid-template-areas:
+      "qtd nome actions"
+      "foto foto actions"
+      "unit desc total"
+      "repos repos repos" !important;
+  }
+}
