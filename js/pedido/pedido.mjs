@@ -1567,15 +1567,19 @@ function enhanceItemActions(){
     });
   }
 
+  const definirTooltip = (button, label) => {
+    if(!button) return;
+    if(button.title !== label) button.title = label;
+    if(button.dataset.tooltip !== label) button.dataset.tooltip = label;
+    if(button.getAttribute("aria-label") !== label) button.setAttribute("aria-label", label);
+  };
+
+  const definirTextoBotao = (button, text) => {
+    if(button && button.textContent !== text) button.textContent = text;
+  };
+
   const apply = () => {
     tbody.querySelectorAll("tr.item-row .acoes-linha").forEach((actions) => {
-      const definirTooltip = (button, label) => {
-        if(!button) return;
-        button.title = label;
-        button.dataset.tooltip = label;
-        button.setAttribute("aria-label", label);
-      };
-
       const remover = actions.querySelector(".btn-remover-item");
       let edit = actions.querySelector(".btn-editar-item");
       let onde = actions.querySelector(".btn-onde-esta");
@@ -1584,6 +1588,7 @@ function enhanceItemActions(){
         edit = document.createElement("button");
         edit.type = "button";
         edit.className = "btn-editar-item";
+        edit.textContent = "O";
         actions.insertBefore(edit, remover || null);
       }
 
@@ -1591,11 +1596,12 @@ function enhanceItemActions(){
         onde = document.createElement("button");
         onde.type = "button";
         onde.className = "btn-onde-esta";
+        onde.textContent = "C";
         actions.insertBefore(onde, remover || null);
       }
 
-      edit.textContent = "O";
-      onde.textContent = "C";
+      definirTextoBotao(edit, "O");
+      definirTextoBotao(onde, "C");
       definirTooltip(edit, "Observação do item");
       definirTooltip(onde, "Consultar disponibilidade");
       definirTooltip(remover, "Excluir item");
