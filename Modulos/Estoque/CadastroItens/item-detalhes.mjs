@@ -30,6 +30,11 @@ function text(value, fallback = "-"){
   return clean || fallback;
 }
 
+function setText(id, value){
+  const el = $(id);
+  if(el) el.textContent = value;
+}
+
 function notify(message, type = "info", title = "Itens"){
   if(typeof window.alerta === "function") return window.alerta(message, title, type);
   alert(message);
@@ -142,22 +147,24 @@ function atualizarResumo(){
     .filter(Boolean)
     .join(" x ");
 
-  $("itemDetailTitle").textContent = nome;
-  $("itemDetailSummaryName").textContent = nome;
-  $("itemDetailCode").textContent = codigo;
-  $("itemDetailStatus").textContent = status;
-  $("itemDetailStatus").classList.toggle("ativo", status === "Ativo");
-  $("itemDetailStatus").classList.toggle("inativo", status === "Inativo");
+  setText("itemDetailTitle", nome);
+  setText("itemDetailSummaryName", nome);
+  setText("itemDetailCode", codigo);
+  setText("itemDetailStatus", status);
+  $("itemDetailStatus")?.classList.toggle("ativo", status === "Ativo");
+  $("itemDetailStatus")?.classList.toggle("inativo", status === "Inativo");
 
-  $("itemResumoCodigo").textContent = codigo;
-  $("itemResumoCategoria").textContent = text(getValor("itensCategoria"));
-  $("itemResumoFamilia").textContent = text(getValor("itensFamilia"));
-  $("itemResumoMaterial").textContent = text(getValor("itensMaterial"));
-  $("itemResumoCor").textContent = text(getValor("itensCor"));
-  $("itemResumoDimensoes").textContent = dims ? `${dims} m` : "-";
-  $("itemResumoCusto").textContent = money(getValor("itensCusto").replace(",", "."));
-  $("itemResumoLocacao").textContent = money(getValor("itensValorLocacao").replace(",", "."));
-  $("itemResumoReposicao").textContent = money(getValor("itensValorReposicao").replace(",", "."));
+  setText("itemResumoCodigo", codigo);
+  setText("itemResumoCategoria", text(getValor("itensCategoria")));
+  setText("itemResumoFamilia", text(getValor("itensFamilia")));
+  setText("itemResumoSetor", text(getValor("itensSetor")));
+  setText("itemResumoMaterial", text(getValor("itensMaterial")));
+  setText("itemResumoCor", text(getValor("itensCor")));
+  setText("itemResumoDimensoes", dims ? `${dims} m` : "-");
+  setText("itemResumoVolume", getValor("itensVolumeCubico") ? `${getValor("itensVolumeCubico")} m3` : "-");
+  setText("itemResumoCusto", money(getValor("itensCusto").replace(",", ".")));
+  setText("itemResumoLocacao", money(getValor("itensValorLocacao").replace(",", ".")));
+  setText("itemResumoReposicao", money(getValor("itensValorReposicao").replace(",", ".")));
 }
 
 async function carregarItem(){
@@ -290,11 +297,19 @@ function bindEvents(){
       "itensProfundidade",
       "itensFamilia",
       "itensCategoria",
+      "itensSetor",
+      "itensExibirSite",
       "itensCusto",
       "itensValorLocacao",
       "itensValorReposicao",
     ];
     if(ids.includes(event.target.id)){
+      requestAnimationFrame(atualizarResumo);
+    }
+  });
+
+  document.querySelector(".item-detail-page")?.addEventListener("change", (event) => {
+    if(["itensSetor", "itensExibirSite"].includes(event.target.id)){
       requestAnimationFrame(atualizarResumo);
     }
   });
