@@ -362,9 +362,25 @@
   font-weight: 400;
 }
 
-#main-content table thead th {
-  background: var(--el-table-header-bg);
-  color: var(--el-table-header-color);
+body table thead,
+body table thead tr,
+#main-content table thead,
+#main-content table thead tr,
+#main-content .table-header,
+#main-content .tabela-header {
+  background: transparent !important;
+}
+
+body table thead th,
+body table thead td,
+#main-content table thead th,
+#main-content table thead td,
+#main-content .table-header th,
+#main-content .table-header td,
+#main-content .tabela-header th,
+#main-content .tabela-header td {
+  background: var(--el-table-header-bg) !important;
+  color: var(--el-table-header-color) !important;
   padding: 14px 16px;
   border: 0;
   text-align: left;
@@ -387,8 +403,42 @@
   transition: background 0.16s ease, box-shadow 0.16s ease;
 }
 
+body table tbody tr:hover,
 #main-content table tbody tr:hover {
-  background: var(--el-table-row-hover);
+  background: var(--el-table-row-hover) !important;
+}
+
+body table tbody tr:hover td,
+#main-content table tbody tr:hover td {
+  background: var(--el-table-row-hover) !important;
+}
+
+body table tbody tr.selected,
+body table tbody tr.selected td,
+body table tbody tr.linha-selecionada,
+body table tbody tr.linha-selecionada td,
+body table tbody td.selected,
+body table tbody td.is-selected,
+body table tbody td.selected-cell,
+body table tbody td.cell-selected,
+#main-content table tbody tr.selected,
+#main-content table tbody tr.selected td,
+#main-content table tbody tr.linha-selecionada,
+#main-content table tbody tr.linha-selecionada td,
+#main-content table tbody td.selected,
+#main-content table tbody td.is-selected,
+#main-content table tbody td.selected-cell,
+#main-content table tbody td.cell-selected {
+  background: var(--el-table-selected-bg) !important;
+}
+
+#main-content .pedido-screen .pedido-items-table thead tr {
+  background: var(--el-table-header-bg) !important;
+}
+
+#main-content .pedido-screen .pedido-items-table thead th,
+#main-content .pedido-screen .pedido-items-table thead td {
+  background: transparent !important;
 }
 
 #main-content table tbody tr:last-child td {

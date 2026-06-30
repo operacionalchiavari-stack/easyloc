@@ -1,6 +1,6 @@
-.compras-page {
+﻿.compras-page {
   --compras-navy: #08213a;
-  --compras-orange: #ff6900;
+  --compras-orange: #2E1F1F;
   --compras-border: #dfe7f1;
   --compras-bg: #f7fafc;
   --compras-text: #0b2239;
@@ -340,7 +340,7 @@
 }
 
 .compras-type-card:has(input:checked) {
-  background: #fff7ed;
+  background: #f4f1ef;
   border-color: rgba(255, 105, 0, .72);
   box-shadow: 0 0 0 3px rgba(255, 105, 0, .12);
 }

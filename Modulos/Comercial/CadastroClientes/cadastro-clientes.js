@@ -962,7 +962,7 @@ function clientes_imprimir() {
   win.document.write(`
     <html>
       <head>
-        <title>Clientes • EasyLoc</title>
+        <title>Clientes • Acervo</title>
         <style>
           ${clientes_css_impressao()}
         </style>
@@ -1001,7 +1001,7 @@ function clientes_css_impressao() {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 3px solid #ff7a00;
+      border-bottom: 3px solid #2E1F1F;
       padding-bottom: 12px;
       margin-bottom: 20px;
     }
@@ -1009,7 +1009,7 @@ function clientes_css_impressao() {
     .logo {
       font-size: 22px;
       font-weight: 800;
-      color: #1f3b73;
+      color: #2E1F1F;
     }
 
     .logo img {
@@ -1030,7 +1030,7 @@ function clientes_css_impressao() {
     }
 
     thead {
-      background: #1f3b73;
+      background: #2E1F1F;
       color: #ffffff;
     }
 
@@ -1046,7 +1046,7 @@ function clientes_css_impressao() {
 
     .status {
       font-weight: 600;
-      color: #ff7a00;
+      color: #2E1F1F;
     }
   `;
 }
@@ -1097,7 +1097,7 @@ window.clientes_imprimir = function () {
   doc.write(`
     <html>
       <head>
-        <title>Clientes • EasyLoc</title>
+        <title>Clientes • Acervo</title>
         <style>
           ${clientes_css_impressao()}
         </style>
@@ -1148,8 +1148,8 @@ function clientes_cabecalho_impressao() {
     <div class="header">
       <div class="logo">
         <img
-          src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/logo.png"
-          alt="EasyLoc"
+          src="logo%20nova%20-%20com%20fundo%20branco.png"
+          alt="Acervo"
         >
       </div>
       <div class="meta">

@@ -88,7 +88,7 @@
     }
   }else{
     if(elEmpresa){
-      elEmpresa.innerText = "EasyLoc";
+      elEmpresa.innerText = "Acervo";
     }
   }
 

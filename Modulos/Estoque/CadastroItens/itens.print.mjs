@@ -1,5 +1,5 @@
-/* =====================================================
-   IMPRESSÃO DE ITENS
+﻿/* =====================================================
+   IMPRESSÃƒO DE ITENS
 ===================================================== */
 
 window.itens_imprimir = function(){
@@ -11,7 +11,7 @@ window.itens_imprimir = function(){
 
   if(!lista.length){
     if (typeof window.alerta === "function") {
-      window.alerta("Nenhum item para imprimir.", "Atenção", "aviso");
+      window.alerta("Nenhum item para imprimir.", "AtenÃ§Ã£o", "aviso");
     } else {
       alert("Nenhum item para imprimir.");
     }
@@ -27,7 +27,7 @@ window.itens_imprimir = function(){
   doc.write(`
   <html>
   <head>
-  <title>Itens • EasyLoc</title>
+  <title>Itens - Acervo</title>
   </head>
 
   <body>

@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
   async function render(container, state) {
 container.innerHTML = `
   <div style="
@@ -7,7 +7,7 @@ container.innerHTML = `
         <div style="
           font-weight:600;
           font-size:15px;
-          color:#0f2a44;
+          color:#2E1F1F;
           margin-bottom:18px;
         ">
           Frete
@@ -25,10 +25,10 @@ container.innerHTML = `
           <div style="
             font-weight:600;
             font-size:15px;
-            color:#0f2a44;
+            color:#2E1F1F;
             min-width:220px;
           ">
-            Categorias de Caminhão
+            Categorias de CaminhÃ£o
           </div>
 
           <div style="
@@ -39,7 +39,7 @@ container.innerHTML = `
 
             <div>
               <label style="font-size:12px;color:#64748b;">
-                Frete mín (R$)
+                Frete mÃ­n (R$)
               </label>
               <input id="freteMinimoInput"
                 type="text"
@@ -54,7 +54,7 @@ container.innerHTML = `
 
             <div>
               <label style="font-size:12px;color:#64748b;">
-                Frete máx (R$)
+                Frete mÃ¡x (R$)
               </label>
               <input id="freteMaximoInput"
                 type="text"
@@ -75,7 +75,7 @@ container.innerHTML = `
               padding:8px 16px;
               border-radius:12px;
               border:none;
-              background:#ff6a00;
+              background:#2E1F1F;
               color:#ffffff;
               font-weight:600;
               cursor:pointer;
@@ -102,8 +102,8 @@ container.innerHTML = `
             color:#64748b;
           ">
             <div>Nome</div>
-            <div>Volume mín (m³)</div>
-            <div>Volume máx (m³)</div>
+            <div>Volume mÃ­n (mÂ³)</div>
+            <div>Volume mÃ¡x (mÂ³)</div>
             <div>Valor/KM (R$)</div>
             <div>Qtd Carregadores</div>
             <div>Ordem</div>
@@ -200,7 +200,7 @@ container.innerHTML = `
         row.style.padding = "14px 18px";
         row.style.borderTop = "1px solid #e5e7eb";
         row.style.alignItems = "center";
-        row.style.background = "#fff7ed";
+        row.style.background = "#f4f1ef";
 row.innerHTML = `
   <input class="cat-input-nome"
     placeholder="Nome"

@@ -1,4 +1,4 @@
-/* =====================================================
+﻿/* =====================================================
    EASYLOC QR CODE GLOBAL
 ===================================================== */
 (function () {
@@ -39,7 +39,7 @@
         border-radius:10px;
         border:1px solid #e5e7eb;
         background:#fff;
-        color:#0f2a44;
+        color:#2E1F1F;
         display:inline-flex;
         align-items:center;
         justify-content:center;
@@ -48,9 +48,9 @@
         transition:.18s ease;
       }
       .qr-action-btn:hover{
-        border-color:#ff6a00;
-        color:#ff6a00;
-        background:#fff7ed;
+        border-color:#2E1F1F;
+        color:#2E1F1F;
+        background:#f4f1ef;
       }
       .qr-global-modal{
         position:fixed;
@@ -82,7 +82,7 @@
       }
       .qr-global-head h3{
         margin:0;
-        color:#0f2a44;
+        color:#2E1F1F;
         font-size:22px;
         font-weight:700;
       }

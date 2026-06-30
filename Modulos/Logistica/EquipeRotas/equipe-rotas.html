@@ -1,0 +1,204 @@
+<div class="equipe-rotas-page el-page" id="equipeRotasPage">
+  <header class="team-routes-header">
+    <div class="team-title-row">
+      <div>
+        <h1>Equipe das Rotas</h1>
+        <p>Monte as equipes responsaveis por cada rota.</p>
+      </div>
+    </div>
+
+    <section class="team-route-toolbar" aria-label="Filtros de equipe das rotas">
+      <label>
+        <span>Data</span>
+        <input id="teamFilterDate" type="date">
+      </label>
+
+      <label>
+        <span>Tipo da Rota</span>
+        <select id="teamFilterType">
+          <option value="">Todas</option>
+        </select>
+      </label>
+
+      <label>
+        <span>Status</span>
+        <select id="teamFilterStatus">
+          <option value="">Todos</option>
+          <option value="sem-equipe">Sem equipe</option>
+          <option value="com-equipe">Com equipe</option>
+        </select>
+      </label>
+
+      <label>
+        <span>Caminhao / Motorista</span>
+        <select id="teamFilterTruck">
+          <option value="">Todos</option>
+        </select>
+      </label>
+
+      <button type="button" class="team-filter-btn" id="teamFilterBtn">
+        <i data-lucide="filter"></i>
+        Filtrar
+      </button>
+
+      <button type="button" class="team-toolbar-btn" id="teamRouteRefreshBtn">
+        <i data-lucide="refresh-cw"></i>
+        Atualizar
+      </button>
+    </section>
+  </header>
+
+  <main class="team-routes-grid">
+    <aside class="team-panel team-panel-left">
+      <header class="team-panel-head">
+        <div>
+          <span>Rotas</span>
+          <h2>Rotas Disponiveis</h2>
+        </div>
+        <strong id="teamRoutesAvailableCount">0</strong>
+      </header>
+
+      <label class="team-search">
+        <i data-lucide="search"></i>
+        <input id="teamRouteSearch" type="search" placeholder="Buscar rota, pedido ou cliente">
+      </label>
+
+      <div class="team-route-list" id="teamRoutesAvailableList"></div>
+    </aside>
+
+    <section class="team-route-center">
+      <article class="team-panel team-selected-route">
+        <header class="team-selected-head">
+          <div>
+            <span>Rota selecionada</span>
+            <h2 id="teamSelectedRouteName">Selecione uma rota</h2>
+          </div>
+
+          <div class="team-selected-meta">
+            <span><i data-lucide="calendar-days"></i><b id="teamSelectedRouteDate">-</b></span>
+            <span><i data-lucide="clock-3"></i><b id="teamSelectedRouteTime">-</b></span>
+            <span><i data-lucide="truck"></i><b id="teamSelectedRouteTruck">-</b></span>
+          </div>
+        </header>
+
+        <div class="team-selected-main">
+          <section class="team-orders-panel">
+            <div class="team-table-wrap">
+              <table class="team-table">
+                <colgroup>
+                  <col class="team-col-order">
+                  <col class="team-col-client">
+                  <col class="team-col-address">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Local / Endereco</th>
+                  </tr>
+                </thead>
+                <tbody id="teamRouteOrdersBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <div class="team-route-map" id="teamRouteMapShell">
+            <div class="team-route-google-map" id="teamRouteGoogleMap" aria-label="Mapa da rota selecionada"></div>
+            <div class="team-route-map-empty" id="teamRouteMapEmpty">
+              <i data-lucide="map"></i>
+              <span>Nenhuma rota selecionada.</span>
+            </div>
+            <svg class="team-route-fallback-line" id="teamRouteFallbackLine" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div class="team-route-fallback-points" id="teamRouteFallbackPoints"></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="team-panel team-assignment-panel">
+        <header class="team-section-head">
+          <div>
+            <span>Equipe</span>
+            <h2>Equipe da Rota</h2>
+          </div>
+
+          <div class="team-section-actions">
+            <button type="button" class="team-action-light team-compact-action" id="teamClearBtn">
+              <i data-lucide="eraser"></i>
+              Limpar
+            </button>
+            <button type="button" class="team-action-primary team-compact-action" id="teamSaveBtn">
+              <i data-lucide="save"></i>
+              Salvar Equipe
+            </button>
+            <button type="button" class="team-small-btn" id="teamAddRoleBtn">
+              <i data-lucide="plus"></i>
+              Cargo
+            </button>
+          </div>
+        </header>
+
+        <div class="team-drop-grid" id="teamDropZones"></div>
+      </article>
+    </section>
+
+    <aside class="team-right-stack">
+      <article class="team-panel team-panel-with-team">
+        <header class="team-panel-head">
+          <div>
+            <span>Alocadas</span>
+            <h2>Rotas com Equipe</h2>
+          </div>
+          <strong id="teamRoutesAssignedCount">0</strong>
+        </header>
+
+        <div class="team-route-list compact" id="teamRoutesAssignedList"></div>
+      </article>
+
+      <article class="team-panel team-panel-employees">
+        <header class="team-panel-head">
+          <div>
+            <span>Equipe</span>
+            <h2>Funcionarios Disponiveis</h2>
+          </div>
+          <strong id="teamEmployeesCount">0</strong>
+        </header>
+
+        <label class="team-search">
+          <i data-lucide="search"></i>
+          <input id="teamEmployeeSearch" type="search" placeholder="Buscar funcionario">
+        </label>
+
+        <div class="team-employee-list" id="teamEmployeesList"></div>
+      </article>
+    </aside>
+  </main>
+
+  <div class="team-modal-backdrop" id="teamRoleModal" hidden>
+    <section class="team-role-modal" role="dialog" aria-modal="true" aria-labelledby="teamRoleModalTitle">
+      <header>
+        <div>
+          <span>Novo cargo</span>
+          <h2 id="teamRoleModalTitle">Adicionar cargo</h2>
+        </div>
+        <button type="button" id="teamRoleModalClose" aria-label="Fechar">
+          <i data-lucide="x"></i>
+        </button>
+      </header>
+
+      <label>
+        Nome do Cargo
+        <input id="teamRoleName" type="text" placeholder="Ex.: Conferente">
+      </label>
+
+      <label>
+        Quantidade
+        <input id="teamRoleQuantity" type="number" min="1" max="20" value="1">
+      </label>
+
+      <footer>
+        <button type="button" class="team-action-light" id="teamRoleCancel">Cancelar</button>
+        <button type="button" class="team-action-primary" id="teamRoleAdd">Adicionar</button>
+      </footer>
+    </section>
+  </div>
+</div>

@@ -1,6 +1,6 @@
-:root {
-  --azul: #0f2a44;
-  --laranja: #ff6a00;
+﻿:root {
+  --azul: #2E1F1F;
+  --laranja: #2E1F1F;
   --cinza: #e5e7eb;
   --verde: #16a34a;
   --amarelo: #facc15;
@@ -44,12 +44,12 @@
 
 .add-btn.secondary {
   background: #ffffff;
-  color: #ff7a00;
-  border: 2px solid #ff7a00;
+  color: #2E1F1F;
+  border: 2px solid #2E1F1F;
 }
 
 .add-btn.secondary:hover {
-  background: #ff7a00;
+  background: #2E1F1F;
   color: #ffffff;
 }
 
@@ -149,7 +149,7 @@
   z-index: 200;
 }
 
-/* confirmação */
+/* confirmaÃ§Ã£o */
 
 .confirm-box {
   width: 420px;
@@ -174,7 +174,7 @@
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #0f2a44;
+  color: #2E1F1F;
 }
 
 .edit-btn {
@@ -195,7 +195,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-/* wrapper do formulário */
+/* wrapper do formulÃ¡rio */
 
 .item-form-wrapper {
   width: 100%;
@@ -425,7 +425,7 @@
 
 .qr-auto-card strong,
 .qr-identificacao strong {
-  color: #0f2a44;
+  color: #2E1F1F;
   font-size: 15px;
 }
 
@@ -557,7 +557,7 @@
 }
 
 /* =========================
-   LABELS – PADRÃO EASYLOC
+   LABELS â€“ PADRÃƒO EASYLOC
 ========================= */
 
 .modal-content label {
@@ -568,7 +568,7 @@
 }
 
 /* =========================
-   BASE – INPUTS / SELECTS
+   BASE â€“ INPUTS / SELECTS
 ========================= */
 
 .modal-content input,
@@ -625,7 +625,7 @@
 }
 
 /* =========================
-   TABELA – CONTAINER
+   TABELA â€“ CONTAINER
 ========================= */
 
 .table-wrapper {
@@ -644,7 +644,7 @@ table {
 /* HEADER */
 
 thead th {
-  background: linear-gradient(180deg, #0f2a44, #081b2d);
+  background: linear-gradient(180deg, #2E1F1F, #1f1515);
   color: #e5e7eb;
   font-size: 13px;
   font-weight: 600;
@@ -662,7 +662,7 @@ tbody tr {
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
 }
 
-/* CÉLULAS */
+/* CÃ‰LULAS */
 
 td {
   padding: 16px 18px;
@@ -673,7 +673,7 @@ td {
 }
 
 /* =========================
-   TAGS NA TABELA – ITENS
+   TAGS NA TABELA â€“ ITENS
 ========================= */
 
 .itens-table-tags {
@@ -708,7 +708,7 @@ td {
 }
 
 /* =========================
-   TABELA – ITENS
+   TABELA â€“ ITENS
 ========================= */
 
 #itensTable td:first-child {
@@ -722,7 +722,7 @@ td {
 }
 
 /* =========================
-   BOTÃO AJUDA – ITENS
+   BOTÃƒO AJUDA â€“ ITENS
 ========================= */
 
 .btn-ajuda-img {
@@ -733,7 +733,7 @@ td {
 }
 
 /* =========================
-   MODAL AJUDA – ITENS
+   MODAL AJUDA â€“ ITENS
 ========================= */
 
 #itensModalAjuda {
@@ -764,7 +764,7 @@ td {
 ========================= */
 
 #itensModalAjuda .modal-ajuda-header {
-  background: linear-gradient(90deg, var(--azul), #081b2d);
+  background: linear-gradient(90deg, var(--azul), #1f1515);
   color: #fff;
   padding: 16px 22px;
   display: flex;
@@ -837,7 +837,7 @@ td {
 }
 
 #itensModalAjuda .ajuda-video-item:hover {
-  background: #fff7ed;
+  background: #f4f1ef;
   border-left-color: var(--laranja);
 }
 
@@ -849,7 +849,7 @@ td {
 }
 
 /* =========================
-   PLAYER – AJUDA ITENS
+   PLAYER â€“ AJUDA ITENS
 ========================= */
 
 #itensModalAjuda .ajuda-player {
@@ -865,7 +865,7 @@ td {
 }
 
 /* =========================
-   HEADER – AJUDA ITENS
+   HEADER â€“ AJUDA ITENS
 ========================= */
 
 #itensModalAjuda .modal-ajuda-header {
@@ -881,7 +881,7 @@ td {
 }
 
 /* =========================
-   MINI-PLAYER – INFO
+   MINI-PLAYER â€“ INFO
 ========================= */
 
 #itensModalAjuda .btn-pip-info {
@@ -905,7 +905,7 @@ td {
   top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  background: #0f2a44;
+  background: #2E1F1F;
   color: #ffffff;
   padding: 8px 12px;
   border-radius: 10px;
@@ -930,7 +930,7 @@ td {
   transform: translateX(-50%);
   border-width: 6px;
   border-style: solid;
-  border-color: transparent transparent #0f2a44 transparent;
+  border-color: transparent transparent #2E1F1F transparent;
 }
 
 #itensModalAjuda .btn-pip-info:hover .pip-tooltip {
@@ -960,7 +960,7 @@ td {
 #itensModalAjuda .pip-info-box {
   margin-top: 14px;
   padding: 12px 16px;
-  background: #fff7ed;
+  background: #f4f1ef;
   border: 1px dashed var(--laranja);
   border-radius: 12px;
   font-size: 13px;
@@ -970,7 +970,7 @@ td {
 }
 
 /* =========================
-   COLUNA FOTO – TABELA
+   COLUNA FOTO â€“ TABELA
 ========================= */
 
 .col-foto {
@@ -1043,7 +1043,7 @@ td {
 }
 
 /* =====================================================
-   GRID PRINCIPAL DO MODAL – DEFINITIVO
+   GRID PRINCIPAL DO MODAL â€“ DEFINITIVO
 ===================================================== */
 
 .item-layout-advanced {
@@ -1057,7 +1057,7 @@ td {
 }
 
 .btn-foto:hover {
-  background: #ff6a00;
+  background: #2E1F1F;
   color: #ffffff;
 }
 
@@ -1115,8 +1115,8 @@ td {
 }
 
 .tipo-btn.active {
-  background: #ff6a00;
-  border-color: #ff6a00;
+  background: #2E1F1F;
+  border-color: #2E1F1F;
   color: #ffffff;
   box-shadow: 0 14px 30px rgba(255, 106, 0, 0.35);
 }
@@ -1145,7 +1145,7 @@ td {
 }
 
 /* =====================================================
-   PADRÃO DE CAMPOS
+   PADRÃƒO DE CAMPOS
 ===================================================== */
 
 .item-layout-advanced label {
@@ -1169,7 +1169,7 @@ td {
 }
 
 /* =====================================================
-   HEADER COM DESCRIÇÃO TOTAL
+   HEADER COM DESCRIÃ‡ÃƒO TOTAL
 ===================================================== */
 
 .header-line-inline {
@@ -1190,7 +1190,7 @@ td {
 }
 
 /* =====================================================
-   TOGGLE STATUS – ATIVO / INATIVO (ITENS)
+   TOGGLE STATUS â€“ ATIVO / INATIVO (ITENS)
 ===================================================== */
 
 .item-tipo-status-row {
@@ -1269,7 +1269,7 @@ td {
 }
 
 /* =====================================================
-   AÇÕES DO MODAL – ESQUERDA / DIREITA
+   AÃ‡Ã•ES DO MODAL â€“ ESQUERDA / DIREITA
 ===================================================== */
 
 .modal-actions-split {
@@ -1289,7 +1289,7 @@ td {
 }
 
 /* =====================================================
-   OVERRIDE – AÇÕES DO MODAL
+   OVERRIDE â€“ AÃ‡Ã•ES DO MODAL
 ===================================================== */
 
 .modal-actions.modal-actions-split {
@@ -1305,7 +1305,7 @@ td {
 }
 
 /* =====================================================
-   BOTÕES CONTEXTUAIS – PADRÃO EASYLOC
+   BOTÃ•ES CONTEXTUAIS â€“ PADRÃƒO EASYLOC
 ===================================================== */
 
 .modal-actions .btn-context:hover {
@@ -1326,7 +1326,7 @@ td {
   box-shadow: none !important;
 }
 /* =====================================================
-   BOTÕES CONTEXTUAIS – AZUL CLARO (DISCRETO)
+   BOTÃ•ES CONTEXTUAIS â€“ AZUL CLARO (DISCRETO)
 ===================================================== */
 
 .modal-actions .btn-context {
@@ -1369,7 +1369,7 @@ td {
 }
 
 /* =====================================================
-   SUAVIZAR CORES – ITEM / COMPONENTE / ATIVO / INATIVO
+   SUAVIZAR CORES â€“ ITEM / COMPONENTE / ATIVO / INATIVO
 ===================================================== */
 
 .tipo-btn.active {
@@ -1407,7 +1407,7 @@ td {
 }
 
 /* =====================================================
-   FOTO PADRONIZADA – LAYOUT LIMPO
+   FOTO PADRONIZADA â€“ LAYOUT LIMPO
 ===================================================== */
 
 .item-foto-box {
@@ -1522,7 +1522,7 @@ td {
   cursor: pointer;
 }
 
-/* BOTÃO INSERIR FOTO – PADRÃO */
+/* BOTÃƒO INSERIR FOTO â€“ PADRÃƒO */
 .btn-foto {
   background: #ffffff;
   border: 1.5px solid var(--laranja);
@@ -1538,7 +1538,7 @@ td {
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
 }
 
-/* botão do modal de KIT (mesmo estilo, só sem posição absoluta) */
+/* botÃ£o do modal de KIT (mesmo estilo, sÃ³ sem posiÃ§Ã£o absoluta) */
 #kitsModal .btn-foto {
   position: static;
   padding: 6px 14px;
@@ -1585,11 +1585,11 @@ td {
 }
 
 /* =================================
-   BOTÃO ADICIONAR COMPONENTE
+   BOTÃƒO ADICIONAR COMPONENTE
 ================================= */
 
 .kit-componentes-header .btn-add {
-  background: #ff6a00;
+  background: #2E1F1F;
   color: #fff;
 
   border: none;
@@ -1691,7 +1691,7 @@ td {
   display: block;
 }
 /* =================================
-   BOTÃO REMOVER COMPONENTE
+   BOTÃƒO REMOVER COMPONENTE
 ================================= */
 
 .kit-item-row .remove {
@@ -1804,7 +1804,7 @@ td {
   background: #f1f5f9;
 }
 /* =================================
-   TOTAIS DO KIT – ALINHAMENTO ERP
+   TOTAIS DO KIT â€“ ALINHAMENTO ERP
 ================================= */
 
 .kit-componentes-table tfoot td {

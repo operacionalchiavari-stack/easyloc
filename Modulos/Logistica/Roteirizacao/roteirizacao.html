@@ -1,0 +1,205 @@
+<div class="roteirizacao-page el-page" id="roteirizacaoPage">
+  <header class="route-header">
+    <div class="route-title-block">
+      <h1>Criação de Rotas</h1>
+    </div>
+
+    <section class="route-summary-grid" aria-label="Resumo da rota">
+      <article class="route-summary-card">
+        <span class="route-summary-icon route-gold-icon"><i data-lucide="package"></i></span>
+        <div>
+          <small>Pedidos disponíveis</small>
+          <strong id="routeAvailableCount">0</strong>
+        </div>
+      </article>
+
+      <article class="route-summary-card">
+        <span class="route-summary-icon"><i data-lucide="circle-check"></i></span>
+        <div>
+          <small>Selecionados</small>
+          <strong id="routeSelectedCount">0</strong>
+        </div>
+      </article>
+
+      <article class="route-summary-card">
+        <span class="route-summary-icon route-gold-icon"><i data-lucide="box"></i></span>
+        <div>
+          <small>Cubagem atual</small>
+          <strong><span id="routeCurrentVolume">0,0</span> m³</strong>
+        </div>
+      </article>
+
+      <article class="route-summary-card route-capacity-card">
+        <span class="route-summary-icon"><i data-lucide="truck"></i></span>
+        <div>
+          <small>Capacidade do caminhão</small>
+          <strong><span id="routeTruckCapacity">0,0</span> m³</strong>
+        </div>
+        <div class="route-capacity-ring" id="routeCapacityRing" style="--occupancy: 0deg;">
+          <span id="routeOccupancyText">0%</span>
+        </div>
+      </article>
+    </section>
+
+    <button type="button" class="route-refresh-btn" id="routeRefreshBtn">
+      <i data-lucide="refresh-cw"></i>
+      Atualizar entregas
+    </button>
+  </header>
+
+  <main class="route-layout">
+    <section class="route-map-column">
+      <article class="route-map-card">
+        <div class="route-map-shell" id="routeMapShell">
+          <div class="route-google-map" id="routeGoogleMap" aria-label="Mapa Google da rota"></div>
+          <div class="route-map-status" id="routeMapStatus">Carregando Google Maps...</div>
+          <div class="route-map-grid" aria-hidden="true"></div>
+          <svg class="route-map-svg" id="routeMapSvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="route-markers-layer" id="routeMarkersLayer"></div>
+
+          <div class="route-map-controls" aria-label="Controles do mapa">
+            <button type="button" title="Aumentar zoom" data-map-action="zoom-in">+</button>
+            <button type="button" title="Diminuir zoom" data-map-action="zoom-out">-</button>
+          </div>
+
+          <div class="route-map-tools" aria-label="Ferramentas do mapa">
+            <button type="button" title="Centralizar mapa" data-map-action="center">
+              <i data-lucide="crosshair"></i>
+            </button>
+            <button type="button" title="Camadas" data-map-action="layers">
+              <i data-lucide="layers"></i>
+            </button>
+          </div>
+
+          <div class="route-map-legend">
+            <span><i class="dot selected"></i>Selecionadas (<b id="routeLegendSelected">0</b>)</span>
+            <span><i class="dot available"></i>Disponíveis (<b id="routeLegendAvailable">0</b>)</span>
+          </div>
+
+          <button type="button" class="route-recalculate-btn" id="routeRecalculateBtn">
+            <i data-lucide="refresh-cw"></i>
+            Recalcular rota
+          </button>
+        </div>
+
+        <footer class="route-map-footer">
+          <div class="route-footer-hint">
+            <i data-lucide="info"></i>
+            <span id="routeFooterSelectedText">0 entregas selecionadas</span>
+          </div>
+
+          <div class="route-footer-actions">
+            <button type="button" class="route-secondary-btn" id="routeClearBtn">
+              <i data-lucide="trash-2"></i>
+              Limpar seleção
+            </button>
+            <button type="button" class="route-primary-btn" id="routeCreateBtn">
+              <i data-lucide="route"></i>
+              Criar rota
+            </button>
+          </div>
+        </footer>
+      </article>
+    </section>
+
+    <aside class="route-side-column">
+      <div class="route-filters route-side-filters" aria-label="Filtros da roteirização">
+        <label class="route-filter-card">
+          <span>Data da entrega</span>
+          <input type="date" id="routeDeliveryDate">
+        </label>
+
+        <label class="route-filter-card route-region-card">
+          <span>Território / Região</span>
+          <i data-lucide="map-pin"></i>
+          <select id="routeRegion">
+            <option value="all">Todas as regiões</option>
+            <option value="capital">Sao Paulo - Capital</option>
+            <option value="zona-sul">Zona Sul</option>
+            <option value="zona-oeste">Zona Oeste</option>
+          </select>
+        </label>
+      </div>
+
+      <article class="route-side-card route-tab-card">
+        <nav class="route-tabs" aria-label="Painéis da rota">
+          <button type="button" class="route-tab is-active" data-route-tab="sequence">Sequência</button>
+          <button type="button" class="route-tab" data-route-tab="cubage">Cubagem</button>
+          <button type="button" class="route-tab" data-route-tab="trucks">Veículos</button>
+          <button type="button" class="route-tab" data-route-tab="routes">Rotas</button>
+        </nav>
+
+        <section class="route-tab-panel is-active" data-route-panel="sequence">
+          <header class="route-card-heading">
+            <h2>Sequência da rota</h2>
+            <span id="routeSequenceCount">0</span>
+          </header>
+          <div class="route-sequence-list" id="routeSequenceList"></div>
+          <button type="button" class="route-add-stop" id="routeAddStopBtn">
+            <i data-lucide="plus"></i>
+            Adicionar parada
+          </button>
+          <small class="route-drag-hint">
+            <i data-lucide="grip-vertical"></i>
+            Arraste para reordenar as entregas
+          </small>
+        </section>
+
+        <section class="route-tab-panel" data-route-panel="cubage" hidden>
+          <header class="route-card-heading">
+            <h2>Cubagem e veículo</h2>
+            <i data-lucide="info" class="route-muted-icon"></i>
+          </header>
+
+          <div class="route-cubage-grid">
+            <div>
+              <small>Cubagem total selecionada</small>
+              <strong><span id="routeTotalCubage">0,0</span> m³</strong>
+            </div>
+            <div>
+              <small>Capacidade restante</small>
+              <strong><span id="routeRemainingCapacity">0,0</span> m³</strong>
+            </div>
+          </div>
+
+          <div class="route-capacity-line">
+            <div class="route-capacity-track">
+              <span id="routeCapacityFill" style="width: 0%;"></span>
+            </div>
+            <b id="routeCapacityPercent">0%</b>
+          </div>
+
+          <label class="route-truck-select">
+            <span>Escolher caminhão</span>
+            <select id="routeTruckSelect"></select>
+          </label>
+
+          <div class="route-capacity-status" id="routeCapacityStatus">
+            <i data-lucide="check-circle"></i>
+            Capacidade compatível
+          </div>
+        </section>
+
+        <section class="route-tab-panel" data-route-panel="trucks" hidden>
+          <header class="route-card-heading compact">
+            <h2>Veículos disponíveis</h2>
+          </header>
+          <div class="route-truck-cards" id="routeTruckCards"></div>
+        </section>
+
+        <section class="route-tab-panel" data-route-panel="routes" hidden>
+          <header class="route-card-heading">
+            <h2>Rotas criadas hoje</h2>
+            <span id="routeCreatedCount">0</span>
+          </header>
+          <div class="route-created-list" id="routeCreatedList"></div>
+          <button type="button" class="route-view-all" id="routeViewAllBtn">
+            <i data-lucide="list"></i>
+            Ver todas as rotas
+            <i data-lucide="chevron-right"></i>
+          </button>
+        </section>
+      </article>
+    </aside>
+  </main>
+</div>

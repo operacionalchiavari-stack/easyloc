@@ -1,14 +1,14 @@
-/* =====================================================
-   ESTOQUE → PERSONALIZAÇÕES (VISUAL PADRÃO EASYLOC)
+﻿/* =====================================================
+   ESTOQUE â†’ PERSONALIZAÃ‡Ã•ES (VISUAL PADRÃƒO EASYLOC)
    arquivo: estoque-personalizacoes.css
 ===================================================== */
 
 .personalizacoes-page {
   --white: #ffffff;
-  --navy: #0f2a44;
+  --navy: #2E1F1F;
   --navy-2: #123250;
-  --orange: #ff6a00;
-  --orange-2: #ff7b1a;
+  --orange: #2E1F1F;
+  --orange-2: #3A2A2A;
   --text: #0b1b2a;
   --muted: #6b7b8b;
   --border: #e7dcd2;
@@ -47,7 +47,7 @@
 
 .page-title h1 {
   margin: 0;
-  font-size: 26px; /* diminuído */
+  font-size: 26px; /* diminuÃ­do */
   letter-spacing: -0.01em;
   font-weight: 800;
 }
@@ -80,13 +80,13 @@
   width: 100%;
 }
 
-/* Faz os selects crescerem e ocuparem melhor o espaço */
+/* Faz os selects crescerem e ocuparem melhor o espaÃ§o */
 .filters-row select {
   flex: 1;
   min-width: 220px;
 }
 
-/* Aumenta um pouco a busca também */
+/* Aumenta um pouco a busca tambÃ©m */
 .search-wrap {
   flex: 1.4;
   min-width: 420px;
@@ -99,7 +99,7 @@
 }
 
 .search-wrap input {
-  width: 100%; /* faz o input ocupar todo o espaço */
+  width: 100%; /* faz o input ocupar todo o espaÃ§o */
 }
 
 .filters-row input,
@@ -151,7 +151,7 @@
   color: var(--text);
 }
 
-/* garante que nada dentro da célula fique em negrito */
+/* garante que nada dentro da cÃ©lula fique em negrito */
 .data-table tbody td strong {
   font-weight: 400;
 }
@@ -247,7 +247,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  border-bottom: 1px solid var(--border); /* linha elegante de separação */
+  border-bottom: 1px solid var(--border); /* linha elegante de separaÃ§Ã£o */
 }
 
 .modal-header h3 {
@@ -360,7 +360,7 @@ textarea:focus {
   border-color: var(--orange);
   box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.15);
 }
-/* Campo de buscar item específico */
+/* Campo de buscar item especÃ­fico */
 #buscarItemInput {
   background: linear-gradient(180deg, #ffffff, #fdfdfd);
   border-radius: 16px;
@@ -637,7 +637,7 @@ input[placeholder="Digite para buscar item..."]:focus {
   display: none !important;
 }
 /* ================================
-   Lista dinâmica de insumos
+   Lista dinÃ¢mica de insumos
 ================================ */
 
 .insumo-row {
@@ -682,11 +682,11 @@ input[placeholder="Digite para buscar item..."]:focus {
   margin-top: 12px;
 }
 /* =====================================
-   Botão Adicionar Insumo (suave)
+   BotÃ£o Adicionar Insumo (suave)
 ===================================== */
 
 #btnAddInsumo {
-  background: rgba(255, 106, 0, 0.08); /* laranja bem clarinho */
+  background: rgba(46, 31, 31, 0.08); /* laranja bem clarinho */
   border: 1px solid rgba(255, 106, 0, 0.18);
   color: var(--orange);
   font-weight: 600;
@@ -703,7 +703,7 @@ input[placeholder="Digite para buscar item..."]:focus {
   transform: translateY(-1px);
 }
 /* =========================================
-   IDENTIFICAÇÃO HEADER COM RADIO NO TOPO
+   IDENTIFICAÃ‡ÃƒO HEADER COM RADIO NO TOPO
 ========================================= */
 
 .identificacao-card {
@@ -792,7 +792,7 @@ input[placeholder="Digite para buscar item..."]:focus {
   padding: 28px 28px 30px 28px;
 }
 /* =========================================
-   BADGE TIPO PERSONALIZAÇÃO
+   BADGE TIPO PERSONALIZAÃ‡ÃƒO
 ========================================= */
 
 .badge.tipo {

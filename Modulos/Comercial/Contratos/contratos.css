@@ -199,8 +199,71 @@
   overflow: hidden;
 }
 
-.contratos-editor-highlight,
-.contratos-editor-highlight-wrap textarea {
+.contratos-inline-toolbar {
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .14);
+}
+
+.contratos-inline-toolbar[hidden] {
+  display: none !important;
+}
+
+.contratos-inline-toolbar button {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contratos-inline-toolbar button:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.contratos-inline-toolbar svg {
+  width: 15px;
+  height: 15px;
+}
+
+.contratos-inline-toolbar button span:not([style]) {
+  display: none;
+}
+
+.contratos-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 2px;
+  background: #e5e7eb;
+}
+
+.contratos-color-btn span {
+  width: 14px;
+  height: 14px;
+  display: block;
+  border: 1px solid rgba(15, 23, 42, .12);
+  border-radius: 999px;
+  background: var(--contrato-color);
+}
+
+.contratos-rich-editor {
   width: 100%;
   min-height: 520px;
   margin: 0;
@@ -209,32 +272,30 @@
   box-sizing: border-box;
   font: 14px/1.6 "Inter", "Segoe UI", sans-serif;
   letter-spacing: 0;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
+  color: #1f2937;
+  outline: none;
+  overflow: auto;
 }
 
-.contratos-editor-highlight {
-  color: #1f2937;
-  pointer-events: none;
-  overflow: hidden;
+.contratos-rich-editor:empty::before {
+  content: "Digite o conteudo do contrato...";
+  color: #9ca3af;
 }
 
 .tag-contrato,
-.contrato-tag-highlight {
+.contrato-tag-highlight,
+.contratos-rich-editor .tag-contrato {
   color: #1d4ed8;
   font-weight: 700;
 }
 
-.contratos-editor-highlight-wrap textarea {
-  position: absolute;
-  inset: 0;
-  height: 100%;
-  background: transparent;
-  color: transparent;
-  caret-color: #1f2937;
-  resize: none;
-  outline: none;
-  overflow: auto;
+.contratos-rich-editor strong {
+  font-weight: 700;
+}
+
+.contratos-rich-editor em {
+  font-style: italic;
 }
 
 .contratos-editor-highlight-wrap:focus-within {

@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
   const state = {
     context: null,
     parcelas: [],
@@ -895,7 +895,7 @@
       setBusy(true, "Gerando PIX...");
       const payerEmail = await resolvePayerEmail(state.context);
       const description = state.context.descricao
-        || `PIX EasyLoc - Pedido ${state.context.numeroPedido} - ${state.context.parcelaLabel}`;
+        || `PIX Acervo - Pedido ${state.context.numeroPedido} - ${state.context.parcelaLabel}`;
       const response = await invokePayment("create_pix", {
         payment: {
           amount: state.context.valor,

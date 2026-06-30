@@ -32,14 +32,14 @@
         border: 1px solid var(--borda, #e5e7eb);
         border-radius: 10px;
         background: #fff;
-        color: var(--azul, #0f2a44);
+        color: var(--azul, #2E1F1F);
         font: inherit;
         font-weight: 700;
         cursor: pointer;
       }
       .easyloc-list-pager button.active {
-        border-color: var(--color-primary, var(--laranja, #ff6a00));
-        color: var(--color-primary, var(--laranja, #ff6a00));
+        border-color: var(--color-primary, var(--laranja, #2E1F1F));
+        color: var(--color-primary, var(--laranja, #2E1F1F));
       }
       .easyloc-list-pager button:disabled {
         opacity: .45;

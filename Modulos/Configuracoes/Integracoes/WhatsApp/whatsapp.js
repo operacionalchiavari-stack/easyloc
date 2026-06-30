@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
   const state = {
     supabase: null,
     empresaId: null,
@@ -107,14 +107,14 @@
       pendente: "Processando",
     };
     const dots = {
-      enviado: "●",
-      recebido: "●",
-      lido: "●",
-      falha: "●",
-      pendente: "●",
+      enviado: "â—",
+      recebido: "â—",
+      lido: "â—",
+      falha: "â—",
+      pendente: "â—",
     };
     const key = status || "pendente";
-    return `<span class="zapi-badge ${escapeHtml(key)}">${dots[key] || "●"} ${escapeHtml(labels[key] || key)}</span>`;
+    return `<span class="zapi-badge ${escapeHtml(key)}">${dots[key] || "â—"} ${escapeHtml(labels[key] || key)}</span>`;
   }
 
   function typeBadge(type){
@@ -237,7 +237,7 @@
             <span class="zapi-connected-dot"><i data-lucide="check"></i></span>
           </div>
           <h2>Celular conectado</h2>
-          <p>Seu WhatsApp esta conectado e pronto para enviar mensagens automaticamente pelo EasyLoc.</p>
+          <p>Seu WhatsApp esta conectado e pronto para enviar mensagens automaticamente pelo Acervo.</p>
           <span class="zapi-connected-since"><i data-lucide="wifi"></i>Conectado desde: ${escapeHtml(formatDate(connectedAt))}</span>
         </div>
       </div>

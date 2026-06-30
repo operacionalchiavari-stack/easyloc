@@ -1,11 +1,11 @@
-/* =====================================================
-   VARIÁVEIS GLOBAIS
+﻿/* =====================================================
+   VARIÃVEIS GLOBAIS
 ===================================================== */
 :root{
-  --azul:#0f2a44;
-  --azul-escuro:#081b2d;
+  --azul:#2E1F1F;
+  --azul-escuro:#1f1515;
   --azul-claro:#f1f5fb;
-  --laranja:#ff6a00;
+  --laranja:#2E1F1F;
   --cinza:#e5e7eb;
   --cinza-texto:#6b7280;
   --verde:#16a34a;
@@ -62,10 +62,10 @@ html,body{
 }
 
 /* =====================================================
-   BOTÕES
+   BOTÃ•ES
 ===================================================== */
 /* =====================================================
-   BOTÃO AJUDA
+   BOTÃƒO AJUDA
 ===================================================== */
 .btn-ajuda{
   width:40px;
@@ -128,7 +128,7 @@ table{
 }
 
 thead{
-  background:linear-gradient(180deg,#0f2a44,#081a2b);
+  background:linear-gradient(180deg,#2E1F1F,#1f1515);
 }
 
 thead th{
@@ -190,7 +190,7 @@ tbody td{
   color:#166534;
 }
 
-/* ---- ORÇAMENTO ---- */
+/* ---- ORÃ‡AMENTO ---- */
 .table-tag.tag-orcamento{
   background:#ffedd5;
   color:#9a3412;
@@ -591,7 +591,7 @@ tbody td{
 
 /* ===== TAG SELECIONADA ===== */
 .tag.selected{
-  border-color:#ff6a00;
+  border-color:#2E1F1F;
   box-shadow:0 0 0 2px rgba(255,106,0,.15);
   font-weight:600;
 }
@@ -622,7 +622,7 @@ tbody td{
 }
 
 /* =====================================================
-   AÇÕES DO MODAL
+   AÃ‡Ã•ES DO MODAL
 ===================================================== */
 .modal-actions{
   margin-top:24px;
@@ -1130,7 +1130,7 @@ tbody td{
 }
 
 /* =====================================================
-   LISTA DE VÍDEOS
+   LISTA DE VÃDEOS
 ===================================================== */
 .ajuda-videos{
   background:var(--azul-claro);
@@ -1161,7 +1161,7 @@ tbody td{
 }
 
 /* =====================================================
-   PLAYER DE VÍDEO
+   PLAYER DE VÃDEO
 ===================================================== */
 .ajuda-player{
   padding:18px;
@@ -1177,7 +1177,7 @@ tbody td{
 }
 
 /* =====================================================
-   MODAL CONFIRMAÇÃO
+   MODAL CONFIRMAÃ‡ÃƒO
 ===================================================== */
 .confirm-box{
   max-width:420px;

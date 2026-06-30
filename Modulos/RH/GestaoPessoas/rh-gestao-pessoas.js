@@ -21,6 +21,10 @@
     "Uniforme", "EPI", "Manutencao de Ferramenta", "Solicitacao Geral"
   ];
 
+  const PHOTO_BUCKET = "rh-fotos";
+  const PHOTO_MAX_SIZE = 5 * 1024 * 1024;
+  const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
   const state = {
     activeTab: "colaboradores",
     colaboradores: [],
@@ -35,6 +39,12 @@
     },
     page: { colaboradores: 1, ocorrencias: 1, solicitacoes: 1 },
     pageSize: 20,
+    fotoColaborador: {
+      file: null,
+      existingUrl: "",
+      remove: false,
+      previewObjectUrl: ""
+    },
     initialized: false
   };
 
@@ -107,6 +117,118 @@
 
   function getColaborador(id) {
     return state.colaboradores.find(item => String(item.id) === String(id));
+  }
+
+  function safeFileName(name) {
+    return String(name || "foto").normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w.\-]+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 90);
+  }
+
+  function resetColaboradorPhoto(item = null) {
+    if (state.fotoColaborador.previewObjectUrl) {
+      URL.revokeObjectURL(state.fotoColaborador.previewObjectUrl);
+    }
+    state.fotoColaborador = {
+      file: null,
+      existingUrl: item?.foto_url || "",
+      remove: false,
+      previewObjectUrl: ""
+    };
+    $("#rhFotoInput") && ($("#rhFotoInput").value = "");
+    renderColaboradorPhoto(item?.foto_url || "", item?.nome_completo || "");
+  }
+
+  function renderColaboradorPhoto(url = "", nome = "") {
+    const preview = $("#rhFotoPreview");
+    const label = $("#rhFotoLabel");
+    if (!preview) return;
+    if (url) {
+      preview.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(nome || "Colaborador")}">`;
+      if (label) label.textContent = "Foto selecionada";
+    } else {
+      preview.innerHTML = `<i data-lucide="user-round"></i>`;
+      if (label) label.textContent = "Selecionar foto";
+      window.lucide?.createIcons?.();
+    }
+  }
+
+  function handlePhotoFile(file) {
+    if (!file) return;
+    if (!PHOTO_TYPES.has(file.type)) {
+      notify("Use uma imagem JPG, PNG ou WEBP.");
+      return;
+    }
+    if (file.size > PHOTO_MAX_SIZE) {
+      notify("A foto deve ter no maximo 5 MB.");
+      return;
+    }
+    if (state.fotoColaborador.previewObjectUrl) {
+      URL.revokeObjectURL(state.fotoColaborador.previewObjectUrl);
+    }
+    const previewUrl = URL.createObjectURL(file);
+    state.fotoColaborador.file = file;
+    state.fotoColaborador.remove = false;
+    state.fotoColaborador.previewObjectUrl = previewUrl;
+    renderColaboradorPhoto(previewUrl, file.name);
+  }
+
+  function removeColaboradorPhoto() {
+    if (state.fotoColaborador.previewObjectUrl) {
+      URL.revokeObjectURL(state.fotoColaborador.previewObjectUrl);
+    }
+    state.fotoColaborador.file = null;
+    state.fotoColaborador.remove = true;
+    state.fotoColaborador.previewObjectUrl = "";
+    $("#rhFotoInput") && ($("#rhFotoInput").value = "");
+    renderColaboradorPhoto("", "");
+  }
+
+  function storagePathFromPublicUrl(url) {
+    const value = String(url || "");
+    if (!value) return "";
+    const marker = `/storage/v1/object/public/${PHOTO_BUCKET}/`;
+    const index = value.indexOf(marker);
+    if (index >= 0) return decodeURIComponent(value.slice(index + marker.length));
+    if (value.startsWith(`${empresaId()}/`)) return value;
+    return "";
+  }
+
+  async function deleteColaboradorPhoto(url) {
+    const path = storagePathFromPublicUrl(url);
+    if (!path) return;
+    const { error } = await sb().storage.from(PHOTO_BUCKET).remove([path]);
+    if (error) console.warn("[RH] remover foto colaborador:", error);
+  }
+
+  async function syncColaboradorPhoto(recordId, oldUrl) {
+    const client = sb();
+    const photo = state.fotoColaborador;
+    if (photo.remove) {
+      return { changed: Boolean(oldUrl), url: null, deleteUrl: oldUrl || "" };
+    }
+    if (!photo.file) return { changed: false, url: oldUrl || null };
+
+    const fallbackExt = photo.file.type === "image/png" ? "png" : photo.file.type === "image/webp" ? "webp" : "jpg";
+    const ext = safeFileName(photo.file.name).includes(".")
+      ? safeFileName(photo.file.name).split(".").pop()
+      : fallbackExt;
+    const path = `${empresaId()}/${recordId}/foto-${Date.now()}.${ext}`;
+    const { error: uploadError } = await client.storage
+      .from(PHOTO_BUCKET)
+      .upload(path, photo.file, {
+        cacheControl: "3600",
+        contentType: photo.file.type,
+        upsert: false
+      });
+    if (uploadError) {
+      console.error("[RH] upload foto colaborador:", uploadError);
+      throw new Error("Nao foi possivel enviar a foto do colaborador.");
+    }
+    const { data } = client.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+    return { changed: true, url: data?.publicUrl || path, deleteUrl: oldUrl || "" };
   }
 
   async function loadAll() {
@@ -333,6 +455,7 @@
     if (!modal) return;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden", "true");
+    if (id === "rhColaboradorModal") resetColaboradorPhoto();
   }
 
   function openColaborador(item = null) {
@@ -352,6 +475,7 @@
     $("#rhStatus").value = item?.status || "Ativo";
     $("#rhObservacoes").value = item?.observacoes || "";
     $$(".rh-doc-grid input[type=file]").forEach(input => input.value = "");
+    resetColaboradorPhoto(item);
     renderColaboradorHistorico(item?.id || "");
     switchColInnerTab("dados");
     openModal("rhColaboradorModal");
@@ -406,6 +530,26 @@
     if (error) {
       console.error("[RH] salvar colaborador:", error);
       return notify("Nao foi possivel salvar o colaborador.");
+    }
+    let photoResult;
+    try {
+      photoResult = await syncColaboradorPhoto(data.id, state.fotoColaborador.existingUrl || data.foto_url || "");
+    } catch (photoError) {
+      console.error("[RH] salvar foto colaborador:", photoError);
+      return notify(photoError.message || "Nao foi possivel salvar a foto do colaborador.");
+    }
+    if (photoResult?.changed) {
+      const { error: photoDbError } = await client
+        .from(T.colaboradores)
+        .update({ foto_url: photoResult.url, atualizado_por: usuarioId() })
+        .eq("id", data.id)
+        .eq("empresa_id", empresaId());
+      if (photoDbError) {
+        console.error("[RH] atualizar foto colaborador:", photoDbError);
+        if (photoResult.url) await deleteColaboradorPhoto(photoResult.url);
+        return notify("A foto foi enviada, mas nao foi possivel vincular ao colaborador.");
+      }
+      if (photoResult.deleteUrl) await deleteColaboradorPhoto(photoResult.deleteUrl);
     }
     await uploadPendingFiles(data.id, "colaborador");
     closeModal("rhColaboradorModal");
@@ -582,7 +726,33 @@
     $("#rhSalvarColaborador").addEventListener("click", saveColaborador);
     $("#rhSalvarOcorrencia").addEventListener("click", saveOcorrencia);
     $("#rhSalvarSolicitacao").addEventListener("click", saveSolicitacao);
+    bindPhotoEvents();
     document.addEventListener("click", onDocumentClick);
+  }
+
+  function bindPhotoEvents() {
+    const drop = $("#rhPhotoDrop");
+    const input = $("#rhFotoInput");
+    drop?.addEventListener("click", event => {
+      if (event.target === input) return;
+      input?.click();
+    });
+    $("#rhAlterarFoto")?.addEventListener("click", () => input?.click());
+    $("#rhRemoverFoto")?.addEventListener("click", removeColaboradorPhoto);
+    input?.addEventListener("change", event => handlePhotoFile(event.target.files?.[0]));
+    ["dragenter", "dragover"].forEach(type => {
+      drop?.addEventListener(type, event => {
+        event.preventDefault();
+        drop.classList.add("drag-over");
+      });
+    });
+    ["dragleave", "drop"].forEach(type => {
+      drop?.addEventListener(type, event => {
+        event.preventDefault();
+        drop.classList.remove("drag-over");
+        if (type === "drop") handlePhotoFile(event.dataTransfer?.files?.[0]);
+      });
+    });
   }
 
   function onDocumentClick(event) {

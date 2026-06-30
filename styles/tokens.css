@@ -1,14 +1,15 @@
 :root {
-  --color-sidebar: #0f2a44;
-  --color-primary: #ff6a00;
-  --color-bg: #fffaf6;
+  --color-sidebar: #2E1F1F;
+  --color-primary: #2E1F1F;
+  --color-bg: #FFFFFF;
+  --empresa-cor-principal-rgb: 46, 31, 31;
   --el-color-primary: #1F2937;
   --el-color-primary-strong: #111827;
   --el-color-primary-dark: #111827;
   --el-color-primary-soft: #F3F4F6;
   --el-color-accent: var(--color-primary);
-  --el-color-accent-strong: #e85f00;
-  --el-color-accent-soft: #fff3e8;
+  --el-color-accent-strong: #1f1515;
+  --el-color-accent-soft: #F4F1EF;
   --el-color-bg: var(--color-bg);
   --el-color-surface: #ffffff;
   --el-color-surface-soft: #f8fafc;
@@ -32,20 +33,17 @@
   --el-shadow-sm: 0 8px 20px rgba(15, 23, 42, 0.08);
   --el-shadow-md: 0 18px 45px rgba(15, 23, 42, 0.14);
   --el-shadow-lg: 0 30px 70px rgba(15, 23, 42, 0.22);
-  --el-focus-ring: 0 0 0 3px rgba(255, 106, 0, 0.14);
-  --el-focus-ring-strong: 0 0 0 4px rgba(255, 106, 0, 0.18);
+  --el-focus-ring: 0 0 0 3px rgba(46, 31, 31, 0.14);
+  --el-focus-ring-strong: 0 0 0 4px rgba(46, 31, 31, 0.18);
 
   --el-modal-backdrop: rgba(15, 23, 42, 0.42);
   --el-modal-backdrop-blur: blur(3px);
   --el-modal-z-index: 999999;
 
-  --el-table-header-bg: linear-gradient(
-    180deg,
-    var(--color-sidebar),
-    var(--color-sidebar)
-  );
-  --el-table-header-color: #ffffff;
-  --el-table-row-hover: #F9FAFB;
+  --el-table-header-bg: rgba(var(--empresa-cor-principal-rgb), 0.12);
+  --el-table-header-color: #111827;
+  --el-table-row-hover: rgba(var(--empresa-cor-principal-rgb), 0.06);
+  --el-table-selected-bg: rgba(17, 24, 39, 0.055);
   --el-table-row-border: rgba(15, 23, 42, 0.08);
 
   --el-card-padding: 18px;

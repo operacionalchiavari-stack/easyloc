@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
   const u = window.empresa.utils;
 
   function render(container, state) {
@@ -13,11 +13,11 @@
 
             <button id="zoomOutBtn"
               style="width:34px;height:34px;border-radius:12px;border:1px solid #e5e7eb;background:#ffffff;cursor:pointer;font-size:16px;font-weight:600;">
-              −
+              âˆ’
             </button>
 
             <div id="alterarLogo"
-              style="font-size:14px;color:#ff6a00;cursor:pointer;font-weight:600;">
+              style="font-size:14px;color:#2E1F1F;cursor:pointer;font-weight:600;">
               Alterar logo
             </div>
 
@@ -35,11 +35,11 @@
             <hr style="margin:14px 0;border:none;border-top:1px solid #e5e7eb;">
 
             <div style="margin-bottom:16px;">
-              <div style="font-weight:700;font-size:12px;letter-spacing:.5px;color:#0f2a44;margin-bottom:8px;text-transform:uppercase;">
-                Informações da Conta
+              <div style="font-weight:700;font-size:12px;letter-spacing:.5px;color:#2E1F1F;margin-bottom:8px;text-transform:uppercase;">
+                InformaÃ§Ãµes da Conta
               </div>
 
-              <div><strong>Usuários ativos:</strong> <span id="empresaUsuariosAtivos">0</span></div>
+              <div><strong>UsuÃ¡rios ativos:</strong> <span id="empresaUsuariosAtivos">0</span></div>
               <div><strong>Itens cadastrados:</strong> <span id="empresaTotalItens">0</span></div>
               <div><strong>Clientes cadastrados:</strong> <span id="empresaTotalClientes">0</span></div>
               <div><strong>Locais cadastrados:</strong> <span id="empresaTotalLocais">0</span></div>
@@ -48,12 +48,12 @@
             <hr style="margin:12px 0;border:none;border-top:1px solid #f1f5f9;">
 
             <div>
-              <div style="font-weight:700;font-size:12px;letter-spacing:.5px;color:#0f2a44;margin-bottom:8px;text-transform:uppercase;">
+              <div style="font-weight:700;font-size:12px;letter-spacing:.5px;color:#2E1F1F;margin-bottom:8px;text-transform:uppercase;">
                 Assinatura
               </div>
 
-              <div><strong>Plano:</strong> <span id="empresaPlano">EasyLoc Pro</span></div>
-              <div><strong>Limite de usuários:</strong> <span id="empresaLimiteUsuarios">0</span></div>
+              <div><strong>Plano:</strong> <span id="empresaPlano">Acervo Pro</span></div>
+              <div><strong>Limite de usuÃ¡rios:</strong> <span id="empresaLimiteUsuarios">0</span></div>
               <div><strong>Vencimento:</strong> <span id="empresaVencimento">--/--/----</span></div>
               <div><strong>Status:</strong> <span id="empresaStatusPlano" style="color:#16a34a;font-weight:600;">Ativa</span></div>
             </div>
@@ -72,7 +72,7 @@
             </div>
 
             <div style="grid-column:1/-1;">
-              <label>Razão Social</label>
+              <label>RazÃ£o Social</label>
               <input id="razaoSocialInput" style="width:100%;padding:10px;border-radius:12px;border:1px solid #e5e7eb;">
             </div>
 
@@ -82,7 +82,7 @@
             </div>
 
             <div>
-              <label>Inscrição Estadual</label>
+              <label>InscriÃ§Ã£o Estadual</label>
               <input id="ieInput" style="width:100%;padding:10px;border-radius:12px;border:1px solid #e5e7eb;">
             </div>
 
@@ -102,7 +102,7 @@
             </div>
 
             <div>
-              <label>Número</label>
+              <label>NÃºmero</label>
               <input id="numeroInput" style="width:100%;padding:10px;border-radius:12px;border:1px solid #e5e7eb;">
             </div>
 
@@ -126,14 +126,14 @@
               <input id="cepInput" style="width:100%;padding:10px;border-radius:12px;border:1px solid #e5e7eb;">
             </div>
 
-            <!-- 🔥 NOVO CAMPO ENDEREÇO GOOGLE -->
+            <!-- ðŸ”¥ NOVO CAMPO ENDEREÃ‡O GOOGLE -->
             <div style="grid-column:1/-1;">
               <label style="font-weight:600;">
-                Endereço Google (usado para cálculo de frete)
+                EndereÃ§o Google (usado para cÃ¡lculo de frete)
               </label>
               <input
                 id="empresaEnderecoGoogleInput"
-                placeholder="Ex: Rua X, 120 - Centro, Petrópolis - RJ, Brasil"
+                placeholder="Ex: Rua X, 120 - Centro, PetrÃ³polis - RJ, Brasil"
                 style="
                   width:100%;
                   padding:10px;
@@ -202,8 +202,8 @@
           .from("empresas-logos")
           .getPublicUrl(path);
       if (!publicData?.publicUrl) {
-        if (typeof window.alerta === "function") window.alerta("Erro ao gerar URL pública", "Erro", "erro");
-        else alert("Erro ao gerar URL pública");
+        if (typeof window.alerta === "function") window.alerta("Erro ao gerar URL pÃºblica", "Erro", "erro");
+        else alert("Erro ao gerar URL pÃºblica");
         return;
       }
       const publicUrl = publicData.publicUrl;
@@ -237,16 +237,16 @@
         dashboard.locais || 0;
       if (dashboard.assinatura) {
         const a = dashboard.assinatura;
-        container.querySelector("#empresaPlano").innerText = a.plano || "—";
+        container.querySelector("#empresaPlano").innerText = a.plano || "â€”";
         container.querySelector("#empresaLimiteUsuarios").innerText =
-          a.limite_usuarios || "—";
+          a.limite_usuarios || "â€”";
         container.querySelector("#empresaVencimento").innerText =
           a.vencimento
             ? new Date(a.vencimento).toLocaleDateString("pt-BR")
-            : "—";
+            : "â€”";
         const statusEl = container.querySelector("#empresaStatusPlano");
         if (statusEl) {
-          statusEl.innerText = a.status || "—";
+          statusEl.innerText = a.status || "â€”";
           statusEl.style.color =
             a.status === "Ativa"
               ? "#16a34a"
@@ -311,10 +311,10 @@
         autocomplete.addListener("place_changed", function() {
           const place = autocomplete.getPlace();
           if (!place.geometry) {
-            console.warn("Endereço não reconhecido");
+            console.warn("EndereÃ§o nÃ£o reconhecido");
             return;
           }
-          console.log("Endereço selecionado:", place.formatted_address);
+          console.log("EndereÃ§o selecionado:", place.formatted_address);
         });
         state.autocomplete = autocomplete;
       }

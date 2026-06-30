@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
   const state = {
     pedidos: [],
     filtrados: [],
@@ -892,7 +892,7 @@
       const endereco = getEnderecoPedido(pedido);
       const logo = empresa?.logo_url
         ? `<img class="preview-logo" src="${escapeHtml(empresa.logo_url)}" alt="${escapeHtml(empresa.nome || "Logo")}">`
-        : `<div class="preview-logo-fallback">${escapeHtml(empresa?.nome || "EasyLoc")}</div>`;
+        : `<div class="preview-logo-fallback">${escapeHtml(empresa?.nome || "Acervo")}</div>`;
 
       els.centralPedidoPreviewBody.innerHTML = `
         <main class="preview-page">

@@ -10,6 +10,43 @@
   box-shadow: var(--el-shadow-sm);
 }
 
+.el-table-card {
+  width: 100%;
+  margin-top: var(--el-space-3);
+  padding: 22px 24px;
+  overflow: hidden;
+  background: var(--el-color-surface);
+  border: 1px solid var(--el-color-border);
+  border-radius: var(--el-radius-lg);
+  box-shadow: var(--el-shadow-sm);
+}
+
+.el-table-scroll {
+  width: 100%;
+  overflow: auto;
+}
+
+.el-table-card table {
+  min-width: var(--el-table-min-width, 980px);
+}
+
+#main-content .el-table-card,
+#main-content .el-table-card.table-container {
+  padding: 22px 24px !important;
+  background: var(--el-color-surface) !important;
+  border: 1px solid var(--el-color-border) !important;
+  border-radius: var(--el-radius-lg) !important;
+  box-shadow: var(--el-shadow-sm) !important;
+}
+
+#main-content .itens-table-card {
+  --el-table-min-width: 1080px;
+}
+
+#main-content .el-table-card .el-table-scroll {
+  overflow: auto !important;
+}
+
 .el-table,
 .el-page table,
 #main-content table {
@@ -21,11 +58,33 @@
   font-weight: 400;
 }
 
+.el-table thead,
+.el-table thead tr,
+.el-page table thead,
+.el-page table thead tr,
+table thead,
+table thead tr,
+#main-content table thead,
+#main-content table thead tr,
+#main-content .table-header,
+#main-content .tabela-header {
+  background: transparent !important;
+}
+
 .el-table thead th,
+.el-table thead td,
 .el-page table thead th,
-#main-content table thead th {
-  background: var(--el-table-header-bg);
-  color: var(--el-table-header-color);
+.el-page table thead td,
+table thead th,
+table thead td,
+#main-content table thead th,
+#main-content table thead td,
+#main-content .table-header th,
+#main-content .table-header td,
+#main-content .tabela-header th,
+#main-content .tabela-header td {
+  background: var(--el-table-header-bg) !important;
+  color: var(--el-table-header-color) !important;
   padding: 14px 16px;
   border: 0;
   text-align: left;
@@ -46,6 +105,19 @@
   vertical-align: middle;
 }
 
+#main-content .el-table-card table thead th,
+#main-content .el-table-card table thead td {
+  padding: 13px 14px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+#main-content .el-table-card table tbody td {
+  padding: 14px !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+}
+
 .el-table tbody tr,
 .el-page table tbody tr,
 #main-content table tbody tr {
@@ -54,8 +126,39 @@
 
 .el-table tbody tr:hover,
 .el-page table tbody tr:hover,
-#main-content table tbody tr:hover {
-  background: var(--el-table-row-hover);
+table tbody tr:hover,
+table tbody tr:hover td,
+#main-content table tbody tr:hover,
+#main-content table tbody tr:hover td {
+  background: var(--el-table-row-hover) !important;
+}
+
+body table tbody tr.selected,
+body table tbody tr.selected td,
+body table tbody tr.linha-selecionada,
+body table tbody tr.linha-selecionada td,
+body table tbody td.selected,
+body table tbody td.is-selected,
+body table tbody td.selected-cell,
+body table tbody td.cell-selected,
+#main-content table tbody tr.selected,
+#main-content table tbody tr.selected td,
+#main-content table tbody tr.linha-selecionada,
+#main-content table tbody tr.linha-selecionada td,
+#main-content table tbody td.selected,
+#main-content table tbody td.is-selected,
+#main-content table tbody td.selected-cell,
+#main-content table tbody td.cell-selected {
+  background: var(--el-table-selected-bg) !important;
+}
+
+.pedido-screen .pedido-items-table thead tr {
+  background: var(--el-table-header-bg) !important;
+}
+
+.pedido-screen .pedido-items-table thead th,
+.pedido-screen .pedido-items-table thead td {
+  background: transparent !important;
 }
 
 .el-table tbody tr:last-child td,
@@ -80,6 +183,10 @@
 }
 
 @media (max-width: 720px) {
+  .el-table-card {
+    padding: 16px;
+  }
+
   .el-table,
   .el-page table,
   #main-content table {

@@ -1,4 +1,4 @@
-.el-pix-backdrop {
+﻿.el-pix-backdrop {
   position: fixed;
   inset: 0;
   z-index: 99980;
@@ -161,7 +161,7 @@
   padding: 14px;
   border: 1px solid #fed7aa;
   border-radius: 14px;
-  background: #fff7ed;
+  background: #f4f1ef;
   color: #7c2d12;
 }
 
@@ -280,7 +280,7 @@
 }
 
 .el-pix-parcels-table tbody tr.is-current.is-selected {
-  background: #fff7ed;
+  background: #f4f1ef;
 }
 
 .el-pix-parcels-table tbody tr.is-overdue.is-selected {

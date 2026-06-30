@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
   function contextEmpresaId(){
     return window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id") || null;
   }
@@ -90,27 +90,27 @@
   const templates = {
     orcamento: (pedido = {}) => ({
       origin: "comercial_orcamento",
-      text: `Olá! Segue o orçamento ${pedido.numero ? `#${pedido.numero}` : ""} da ${pedido.empresa || "EasyLoc"}. ${pedido.link || ""}`.trim()
+      text: `OlÃ¡! Segue o orÃ§amento ${pedido.numero ? `#${pedido.numero}` : ""} da ${pedido.empresa || "Acervo"}. ${pedido.link || ""}`.trim()
     }),
     proposta: (pedido = {}) => ({
       origin: "comercial_proposta",
-      text: `Olá! Preparamos a proposta ${pedido.numero ? `#${pedido.numero}` : ""}. ${pedido.link || ""}`.trim()
+      text: `OlÃ¡! Preparamos a proposta ${pedido.numero ? `#${pedido.numero}` : ""}. ${pedido.link || ""}`.trim()
     }),
     cobrancaAsaas: (cobranca = {}) => ({
       origin: "financeiro_cobranca_asaas",
-      text: `Olá! Segue a cobrança${cobranca.valor ? ` no valor de ${cobranca.valor}` : ""}: ${cobranca.link || ""}`.trim()
+      text: `OlÃ¡! Segue a cobranÃ§a${cobranca.valor ? ` no valor de ${cobranca.valor}` : ""}: ${cobranca.link || ""}`.trim()
     }),
     pix: (pix = {}) => ({
       origin: "financeiro_pix",
-      text: `Olá! Segue o PIX para pagamento: ${pix.codigo || pix.link || ""}`.trim()
+      text: `OlÃ¡! Segue o PIX para pagamento: ${pix.codigo || pix.link || ""}`.trim()
     }),
     lembrete: (payload = {}) => ({
       origin: "financeiro_lembrete",
-      text: payload.text || "Olá! Passando para lembrar sobre o pagamento em aberto."
+      text: payload.text || "OlÃ¡! Passando para lembrar sobre o pagamento em aberto."
     }),
     separacao: (pedido = {}) => ({
       origin: "separacao_status",
-      text: `Olá! Seu pedido ${pedido.numero ? `#${pedido.numero}` : ""} entrou em separação.`.trim()
+      text: `OlÃ¡! Seu pedido ${pedido.numero ? `#${pedido.numero}` : ""} entrou em separaÃ§Ã£o.`.trim()
     }),
     expedicao: (pedido = {}) => ({
       origin: "expedicao_saida",

@@ -4,9 +4,9 @@
   const DEFAULT_THEME = {
     logo_url: "",
     logo_zoom: 1,
-    cor_sidebar: "#0F2A44",
-    cor_destaque: "#FF6A00",
-    cor_fundo: "#FFFAF6"
+    cor_sidebar: "#2E1F1F",
+    cor_destaque: "#2E1F1F",
+    cor_fundo: "#FFFFFF"
   };
 
   function isHex(value) {
@@ -24,6 +24,13 @@
     const g = clamp(((n >> 8) & 255) + Math.round(255 * percent));
     const b = clamp((n & 255) + Math.round(255 * percent));
     return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  }
+
+  function hexToRgbString(hex) {
+    const value = String(hex || "").trim();
+    if (!isHex(value)) return "46, 31, 31";
+    const n = parseInt(value.slice(1), 16);
+    return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
   }
 
   function luminance(hex) {
@@ -75,6 +82,7 @@
     root.style.setProperty("--color-sidebar", theme.cor_sidebar);
     root.style.setProperty("--color-primary", theme.cor_destaque);
     root.style.setProperty("--color-bg", theme.cor_fundo);
+    root.style.setProperty("--empresa-cor-principal-rgb", hexToRgbString(theme.cor_sidebar));
 
     root.style.setProperty("--el-color-primary", "#1F2937");
     root.style.setProperty("--el-color-primary-strong", "#111827");
@@ -87,8 +95,9 @@
     root.style.setProperty("--el-color-text", "#374151");
     root.style.setProperty("--el-color-muted", "#6B7280");
     root.style.setProperty("--el-color-placeholder", "#9CA3AF");
-    root.style.setProperty("--el-table-header-bg", `linear-gradient(180deg, ${theme.cor_sidebar}, ${sidebarStrong})`);
-    root.style.setProperty("--el-table-row-hover", "#F9FAFB");
+    root.style.setProperty("--el-table-header-bg", "rgba(var(--empresa-cor-principal-rgb), 0.12)");
+    root.style.setProperty("--el-table-header-color", "#111827");
+    root.style.setProperty("--el-table-row-hover", "rgba(var(--empresa-cor-principal-rgb), 0.06)");
     root.style.setProperty("--azul", "#1F2937");
     root.style.setProperty("--azul-2", sidebarStrong);
     root.style.setProperty("--laranja", theme.cor_destaque);
@@ -101,7 +110,7 @@
 
     const sidebarLogo = document.getElementById("sidebarLogo");
     if (sidebarLogo) {
-      sidebarLogo.src = theme.logo_url ? withCacheBust(theme.logo_url, logoCacheVersion(rawTheme)) : "logosimbolo.png";
+      sidebarLogo.src = theme.logo_url ? withCacheBust(theme.logo_url, logoCacheVersion(rawTheme)) : "logo%20nova%20branca%20-%20sem%20fundo.png";
       sidebarLogo.style.transform = `scale(${theme.logo_zoom})`;
       sidebarLogo.style.transformOrigin = "center";
     }
@@ -177,6 +186,7 @@
   window.EasyLocTheme = {
     DEFAULT_THEME,
     isHex,
+    hexToRgbString,
     contrast,
     validateTheme,
     applyTheme,

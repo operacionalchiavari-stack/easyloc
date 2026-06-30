@@ -1,4 +1,4 @@
-// =========================================
+﻿// =========================================
 // STATE
 // =========================================
 // Sempre reinicializar o state quando o modulo e carregado
@@ -322,18 +322,18 @@ function extractTextFromHtml(html) {
 
 function limparTextoCronograma(value) {
   return String(value || "")
-    .replace(/Ã£/g, "a")
-    .replace(/Ã¡/g, "a")
-    .replace(/Ã¢/g, "a")
-    .replace(/Ã©/g, "e")
-    .replace(/Ãª/g, "e")
-    .replace(/Ã­/g, "i")
-    .replace(/Ã³/g, "o")
-    .replace(/Ã´/g, "o")
-    .replace(/Ãº/g, "u")
-    .replace(/Ã§/g, "c")
-    .replace(/Ã‰/g, "E")
-    .replace(/Ã‡/g, "C");
+    .replace(/ÃƒÂ£/g, "a")
+    .replace(/ÃƒÂ¡/g, "a")
+    .replace(/ÃƒÂ¢/g, "a")
+    .replace(/ÃƒÂ©/g, "e")
+    .replace(/ÃƒÂª/g, "e")
+    .replace(/ÃƒÂ­/g, "i")
+    .replace(/ÃƒÂ³/g, "o")
+    .replace(/ÃƒÂ´/g, "o")
+    .replace(/ÃƒÂº/g, "u")
+    .replace(/ÃƒÂ§/g, "c")
+    .replace(/Ãƒâ€°/g, "E")
+    .replace(/Ãƒâ€¡/g, "C");
 }
 
 function montarEnderecoLocal(pedido = {}, local = {}) {
@@ -916,7 +916,7 @@ async function abrirPreviewPedidoCronograma(pedidoId) {
     const tags = montarTagsLocal(pedido, local || {});
     const logo = empresa?.logo_url
       ? `<img class="cron-preview-logo" src="${escapeHtml(empresa.logo_url)}" alt="${escapeHtml(empresa.nome || "Logo")}">`
-      : `<div class="cron-preview-logo-fallback">${escapeHtml(empresa?.nome || "EasyLoc")}</div>`;
+      : `<div class="cron-preview-logo-fallback">${escapeHtml(empresa?.nome || "Acervo")}</div>`;
 
     const itensRows = (itens || []).map((item) => {
       const cadastro = item.itens || {};

@@ -275,6 +275,7 @@ if(profundidade){
 
 const itemData = {
 
+  id: itemId,
   empresa_id: empresaId,
   qr_code: window.itemAtualQrCode || gerarQrCodeCadastro(),
 
@@ -311,6 +312,7 @@ const itemData = {
     ===================================================== */
 
     if(window.itemAtualId){
+      delete itemData.id;
 
       let { error } = await supabase
         .from("itens")
@@ -333,6 +335,8 @@ const itemData = {
 
       console.log("Item atualizado");
       window.itemAtualQrCode = itemData.qr_code;
+      const fotosOk = await window.itens_salvarFotosAdicionais?.(window.itemAtualId, empresaId);
+      if(fotosOk === false) return false;
 
     }
 
@@ -361,6 +365,9 @@ const itemData = {
 
       console.log("Item criado");
       window.itemAtualQrCode = itemData.qr_code;
+      window.itemAtualId = itemId;
+      const fotosOk = await window.itens_salvarFotosAdicionais?.(itemId, empresaId);
+      if(fotosOk === false) return false;
 
     }
 

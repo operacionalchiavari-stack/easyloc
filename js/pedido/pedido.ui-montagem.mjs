@@ -1,4 +1,4 @@
-export function renderMontagemSugerida(payload){
+﻿export function renderMontagemSugerida(payload){
 
   const qtdEl        = document.getElementById("montagemQtd");
   const custoEl      = document.getElementById("montagemCusto");
@@ -7,7 +7,7 @@ export function renderMontagemSugerida(payload){
   const valorFinalEl = document.getElementById("montagemValorFinal");
 
   if(!qtdEl || !custoEl || !infoEl || !descontoEl || !valorFinalEl){
-    console.warn("⚠️ Estrutura fixa do card Montagem não encontrada.");
+    console.warn("âš ï¸ Estrutura fixa do card Montagem nÃ£o encontrada.");
     return;
   }
 
@@ -15,9 +15,9 @@ export function renderMontagemSugerida(payload){
   // CASO SEM DADOS
   // ==============================
   if(!payload || payload.qtd == null){
-    qtdEl.innerText        = "—";
-    custoEl.innerText      = "—";
-    infoEl.innerText       = "—";
+    qtdEl.innerText        = "â€”";
+    custoEl.innerText      = "â€”";
+    infoEl.innerText       = "â€”";
     descontoEl.innerText   = "- R$ 0,00";
     descontoEl.style.color = "#16a34a";
     valorFinalEl.innerText = "R$ 0,00";
@@ -41,15 +41,15 @@ export function renderMontagemSugerida(payload){
 
   qtdEl.innerText = String(qtd);
 
-  // 🔹 Valor Bruto
+  // ðŸ”¹ Valor Bruto
   custoEl.innerText = bruto.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
   });
 
-  infoEl.innerText = payload?.info || "—";
+  infoEl.innerText = payload?.info || "â€”";
 
-  // 🔹 Absorção Empresa (VERDE PADRONIZADO)
+  // ðŸ”¹ AbsorÃ§Ã£o Empresa (VERDE PADRONIZADO)
   descontoEl.innerText = `- ${absorcao.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
@@ -65,7 +65,7 @@ valorFinalEl.innerText = final.toLocaleString("pt-BR",{
 
 valorFinalEl.style.fontSize = "15px";
 valorFinalEl.style.fontWeight = "700";
-valorFinalEl.style.color = "#0f2a44";
+valorFinalEl.style.color = "#2E1F1F";
 
 if(typeof window.__ATUALIZAR_FRETE_CARD === "function"){
   window.__ATUALIZAR_FRETE_CARD();

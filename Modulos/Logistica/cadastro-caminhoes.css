@@ -1,6 +1,6 @@
-:root {
-  --azul: #0f2a44;
-  --laranja: #ff6a00;
+﻿:root {
+  --azul: #2E1F1F;
+  --laranja: #2E1F1F;
   --cinza: #e5e7eb;
   --verde: #16a34a;
   --vermelho: #dc2626;
@@ -51,7 +51,7 @@ body {
 }
 
 /* =====================================================
-   MODAL CAMINHÃO – PADRÃO EASYLOC (COMPACTO)
+   MODAL CAMINHÃƒO â€“ PADRÃƒO EASYLOC (COMPACTO)
 ===================================================== */
 
 .modal-overlay {
@@ -75,7 +75,7 @@ body {
   border-radius: 16px;
   padding: 22px 26px 20px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-  overflow: hidden; /* 🔒 sem scroll */
+  overflow: hidden; /* ðŸ”’ sem scroll */
 }
 
 /* ================= HEADER ================= */
@@ -90,7 +90,7 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  border: 2px solid #ff6a00;
+  border: 2px solid #2E1F1F;
   background: #fff;
   display: flex;
   align-items: center;
@@ -102,11 +102,11 @@ body {
 .btn-editar i {
   width: 18px;
   height: 18px;
-  color: #ff6a00;
+  color: #2E1F1F;
 }
 
 .btn-editar:hover {
-  background: #ff6a00;
+  background: #2E1F1F;
 }
 
 .btn-editar:hover i {
@@ -143,7 +143,7 @@ body {
   border: 1px solid #fecaca;
 }
 
-/* ================= SEÇÕES ================= */
+/* ================= SEÃ‡Ã•ES ================= */
 
 .modal-box h3 {
   margin: 14px 0 6px;
@@ -270,7 +270,7 @@ body {
   border: 1px solid #fecaca;
 }
 
-/* ================= TÍTULOS ================= */
+/* ================= TÃTULOS ================= */
 
 .modal-box h3 {
   margin: 16px 0 6px;
@@ -365,7 +365,7 @@ table {
 }
 
 thead {
-  background: linear-gradient(180deg, #0b1f33, #081a2b);
+  background: linear-gradient(180deg, #0b1f33, #1f1515);
   color: #fff;
 }
 
@@ -386,7 +386,7 @@ tbody tr:hover {
 }
 
 /* =====================================================
-   TABLE CARD BADGES – PADRÃO EASYLOC
+   TABLE CARD BADGES â€“ PADRÃƒO EASYLOC
 ===================================================== */
 
 .table-card {
@@ -417,7 +417,7 @@ tbody tr:hover {
   color: #7e22ce;
 }
 .table-card.carreta {
-  background: #fff7ed;
+  background: #f4f1ef;
   color: #c2410c;
 }
 .table-card.van {
@@ -457,7 +457,7 @@ tbody tr:hover {
   font-weight: 700;
 }
 /* =====================================================
-   BOTÃO EDITAR (LÁPIS) — MODAL CAMINHÃO
+   BOTÃƒO EDITAR (LÃPIS) â€” MODAL CAMINHÃƒO
 ===================================================== */
 
 .btn-edit {
@@ -477,7 +477,7 @@ tbody tr:hover {
 }
 
 .btn-edit:hover {
-  background: rgba(255, 106, 0, 0.08);
+  background: rgba(46, 31, 31, 0.08);
   border-color: rgba(255, 106, 0, 0.55);
   transform: translateY(-1px);
 }
@@ -485,7 +485,7 @@ tbody tr:hover {
 .btn-edit.hidden {
   display: none !important;
 }
-/* ================= VÍNCULO ================= */
+/* ================= VÃNCULO ================= */
 .table-card.vinculo.proprio {
   background: #ede9fe; /* roxo suave */
   color: #6d28d9;

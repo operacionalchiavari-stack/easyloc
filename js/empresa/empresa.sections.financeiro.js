@@ -1,12 +1,12 @@
-(function(){
+﻿(function(){
 
   function render(container, state){
 
     container.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:32px;max-width:760px;">
 
-        <h3 style="margin:0;color:#0f2a44;">
-          Logística
+        <h3 style="margin:0;color:#2E1F1F;">
+          LogÃ­stica
         </h3>
 
         <div style="display:flex;flex-direction:column;gap:18px;">
@@ -21,7 +21,7 @@
             <!-- FRETE -->
             <div style="display:flex;flex-direction:column;gap:6px;min-width:260px;">
               <label style="font-size:14px;font-weight:600;display:block;">
-                Absorção automática de Frete (%)
+                AbsorÃ§Ã£o automÃ¡tica de Frete (%)
               </label>
 
               <div style="display:flex;align-items:center;gap:8px;">
@@ -48,7 +48,7 @@
             <!-- MONTAGEM -->
             <div style="display:flex;flex-direction:column;gap:6px;min-width:300px;">
               <label style="font-size:14px;font-weight:600;display:block;">
-                Absorção automática de Montagem (%)
+                AbsorÃ§Ã£o automÃ¡tica de Montagem (%)
               </label>
 
               <div style="display:flex;align-items:center;gap:8px;">
@@ -75,7 +75,7 @@
           </div>
 
           <div style="font-size:13px;color:#64748b;line-height:1.5;">
-            Esses percentuais serão aplicados automaticamente como desconto
+            Esses percentuais serÃ£o aplicados automaticamente como desconto
             em todos os pedidos da empresa.
           </div>
 
@@ -111,7 +111,7 @@
     inputFrete.addEventListener("input", onFrete);
     inputMont.addEventListener("input", onMont);
 
-    // garante que já entra “limpo”
+    // garante que jÃ¡ entra â€œlimpoâ€
     clampInt(inputFrete);
     clampInt(inputMont);
 

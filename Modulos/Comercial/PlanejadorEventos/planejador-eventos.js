@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   "use strict";
 
   const STORAGE_KEY = "easyloc_planejador_eventos_wizard_v2";
@@ -337,14 +337,14 @@
     }
     target.innerHTML = `
       <div>
-        <span class="planner-kicker">${escapeHtml(guidance.stepLabel || "Orientação")}</span>
+        <span class="planner-kicker">${escapeHtml(guidance.stepLabel || "OrientaÃ§Ã£o")}</span>
         <strong>${escapeHtml(guidance.title)}</strong>
         <p>${escapeHtml(guidance.message)}</p>
       </div>
       <div class="planner-guidance-actions">
         ${guidance.step ? `<button type="button" class="btn secondary" data-guidance-step="${guidance.step}">${escapeHtml(guidance.actionLabel || "Ir para a etapa")}</button>` : ""}
         ${guidance.regenerate ? `<button type="button" class="btn primary" data-guidance-regenerate>Gerar novamente</button>` : ""}
-        <button type="button" class="planner-icon-btn" data-guidance-close>×</button>
+        <button type="button" class="planner-icon-btn" data-guidance-close>Ã—</button>
       </div>
     `;
   }
@@ -381,7 +381,7 @@
         <h3>${escapeHtml(place.nome)}</h3>
         <div class="planner-card-meta">
           <span>${escapeHtml(place.endereco || "Sem endereco")}</span>
-          <span>${place.rawPlant ? "Planta crua cadastrada" : "Sem planta crua"} · ${place.references.length} referencia(s)</span>
+          <span>${place.rawPlant ? "Planta crua cadastrada" : "Sem planta crua"} Â· ${place.references.length} referencia(s)</span>
         </div>
       </button>
     `).join("") || `<div class="planner-muted">Nenhum local encontrado. Use "Adicionar novo local".</div>`;
@@ -412,7 +412,7 @@
       ? place.references.map(file => `
           <span class="planner-reference-mini">
             ${referencePreviewTemplate(file)}
-            <button type="button" title="Excluir planta" data-delete-reference="${file.id}">×</button>
+            <button type="button" title="Excluir planta" data-delete-reference="${file.id}">Ã—</button>
           </span>
         `).join("")
       : `<span class="planner-muted">Sem plantas de referencia cadastradas.</span>`;
@@ -438,7 +438,7 @@
     if (!target || state.currentStep !== 3 || !state.guidance) return;
     target.insertAdjacentHTML("afterbegin", `
       <div class="planner-step-assist">
-        <strong>Você está na etapa certa para corrigir</strong>
+        <strong>VocÃª estÃ¡ na etapa certa para corrigir</strong>
         <span>${escapeHtml(state.guidance.message)}</span>
       </div>
     `);
@@ -475,7 +475,7 @@
         <span class="planner-area-dot" style="background:${areaColor(area.label)}"></span>
         <div>
           <strong>${escapeHtml(area.label)}</strong>
-          <span>${areaRuleSummary(area)} · L ${Math.round(area.w)} x P ${Math.round(area.h)} · ${Math.round(area.rotation || 0)}°</span>
+          <span>${areaRuleSummary(area)} Â· L ${Math.round(area.w)} x P ${Math.round(area.h)} Â· ${Math.round(area.rotation || 0)}Â°</span>
         </div>
         <button type="button" class="planner-mini-danger" data-delete-object="${area.id}">Excluir</button>
       </div>
@@ -489,8 +489,8 @@
     if (!area) {
       target.innerHTML = `
         <div class="planner-area-config empty">
-          <strong>Configuração da área</strong>
-          <span class="planner-muted">Clique em uma demarcação para editar regras, composição e rotação.</span>
+          <strong>ConfiguraÃ§Ã£o da Ã¡rea</strong>
+          <span class="planner-muted">Clique em uma demarcaÃ§Ã£o para editar regras, composiÃ§Ã£o e rotaÃ§Ã£o.</span>
         </div>
       `;
       return;
@@ -501,13 +501,13 @@
     target.innerHTML = `
       <div class="planner-area-config">
         <div class="planner-area-config-head">
-          <span class="planner-kicker">Área selecionada</span>
+          <span class="planner-kicker">Ãrea selecionada</span>
           <strong>${escapeHtml(rule.titulo)}</strong>
         </div>
-        <label>Nome da área
+        <label>Nome da Ã¡rea
           <input class="el-input" data-area-field="label" value="${escapeHtml(area.label)}">
         </label>
-        <label>Tipo da área
+        <label>Tipo da Ã¡rea
           <select class="el-input" data-area-field="areaType">
             ${areaTypes.map(typeName => {
               const value = normalizeAreaType(typeName);
@@ -523,7 +523,7 @@
             <input class="el-input" type="number" min="40" data-area-field="h" value="${Math.round(area.h)}">
           </label>
         </div>
-        <label>Rotação
+        <label>RotaÃ§Ã£o
           <input class="el-input" type="number" min="-180" max="180" data-area-field="rotation" value="${Math.round(area.rotation || 0)}">
         </label>
         ${type === "mesa da familia" ? `
@@ -532,15 +532,15 @@
           </label>
         ` : ""}
         ${type === "lounge" ? `
-          <label>Composição
+          <label>ComposiÃ§Ã£o
             <select class="el-input" data-area-field="composition">
               ${loungeCompositions.map(item => `<option value="${item.id}" ${item.id === area.composition ? "selected" : ""}>${item.nome}</option>`).join("")}
             </select>
           </label>
         ` : ""}
         <div class="planner-rule-box">
-          <strong>${escapeHtml(rule.titulo)} – ${escapeHtml(rule.resumo)}</strong>
-          <span>${escapeHtml(areaRestrictions(area).join(" · ") || "Sem restrições adicionais.")}</span>
+          <strong>${escapeHtml(rule.titulo)} â€“ ${escapeHtml(rule.resumo)}</strong>
+          <span>${escapeHtml(areaRestrictions(area).join(" Â· ") || "Sem restriÃ§Ãµes adicionais.")}</span>
         </div>
       </div>
     `;
@@ -725,7 +725,7 @@
     if (!canUseRemotePlannerAi()) {
       return "Ambiente local detectado: o motor inteligente integrado montou a proposta sem depender da IA remota.";
     }
-    return "O motor inteligente integrado montou a proposta com base nas regras operacionais do EasyLoc.";
+    return "O motor inteligente integrado montou a proposta com base nas regras operacionais do Acervo.";
   }
 
   function groupFurnitureForLegend(furniture) {
@@ -785,7 +785,7 @@
         data-object-id="${object.id}"
         title="${escapeHtml(object.label)}"
         style="left:${object.x}px;top:${object.y}px;width:${object.w}px;height:${object.h}px;transform:rotate(${rotation}deg);${areaStyle}">
-        ${object.kind === "area" ? `<em class="rotation-badge">${Math.round(rotation)}°</em><button type="button" class="rotate-handle" title="Girar área"></button>` : ""}
+        ${object.kind === "area" ? `<em class="rotation-badge">${Math.round(rotation)}Â°</em><button type="button" class="rotate-handle" title="Girar Ã¡rea"></button>` : ""}
         ${object.kind === "obstacle" ? '<span class="planner-halo"></span>' : ""}
         ${symbol || `<span>${escapeHtml(object.label)}</span>`}
         <i class="resize-handle"></i>
@@ -829,7 +829,7 @@
       pista: "#2563eb",
       palco: "#7c3aed",
       bar: "#0891b2",
-      buffet: "#ea580c",
+      buffet: "#1f1515",
       lounge: "#16a34a",
       "mesa da familia": "#db2777",
       "mesa de bolo": "#d97706",
@@ -1336,11 +1336,11 @@
     }
     if (cleanup.removed) {
       state.guidance = {
-        stepLabel: "Ajuste automático",
+        stepLabel: "Ajuste automÃ¡tico",
         title: "Alguns itens sobrepostos foram removidos",
-        message: `${cleanup.removed} item(ns) conflitavam com outros símbolos. A planta foi mantida válida; revise a lista e gere novamente se quiser mais preenchimento.`,
+        message: `${cleanup.removed} item(ns) conflitavam com outros sÃ­mbolos. A planta foi mantida vÃ¡lida; revise a lista e gere novamente se quiser mais preenchimento.`,
         step: 5,
-        actionLabel: "Ver geração",
+        actionLabel: "Ver geraÃ§Ã£o",
         regenerate: true
       };
     }
@@ -1865,8 +1865,8 @@
     if (lower.includes("sobreposicao")) {
       return {
         stepLabel: "Ajuste recomendado: Etapa 3",
-        title: "As áreas estão apertadas para a quantidade de itens",
-        message: "Volte para a Etapa 3 e aumente a área de jantar/lounge ou remova uma área muito pequena. Se preferir, gere novamente para o Planejador tentar outra distribuição.",
+        title: "As Ã¡reas estÃ£o apertadas para a quantidade de itens",
+        message: "Volte para a Etapa 3 e aumente a Ã¡rea de jantar/lounge ou remova uma Ã¡rea muito pequena. Se preferir, gere novamente para o Planejador tentar outra distribuiÃ§Ã£o.",
         step: options.step || 3,
         actionLabel: "Ir para Etapa 3",
         regenerate: true
@@ -1875,18 +1875,18 @@
     if (lower.includes("area livre") || lower.includes("pista") || lower.includes("palco")) {
       return {
         stepLabel: "Ajuste recomendado: Etapa 3",
-        title: "Existe item dentro de uma área livre",
-        message: "Na Etapa 3, confira as demarcações de Pista, Palco, Área livre ou Área técnica. Essas áreas não podem receber móveis.",
+        title: "Existe item dentro de uma Ã¡rea livre",
+        message: "Na Etapa 3, confira as demarcaÃ§Ãµes de Pista, Palco, Ãrea livre ou Ãrea tÃ©cnica. Essas Ã¡reas nÃ£o podem receber mÃ³veis.",
         step: options.step || 3,
-        actionLabel: "Revisar áreas",
+        actionLabel: "Revisar Ã¡reas",
         regenerate: true
       };
     }
     if (lower.includes("lounge")) {
       return {
         stepLabel: "Ajuste recomendado: Etapa 3",
-        title: "O lounge precisa de uma composição completa",
-        message: "Clique na área de Lounge na Etapa 3 e escolha uma composição. O Planejador não monta lounge incompleto.",
+        title: "O lounge precisa de uma composiÃ§Ã£o completa",
+        message: "Clique na Ã¡rea de Lounge na Etapa 3 e escolha uma composiÃ§Ã£o. O Planejador nÃ£o monta lounge incompleto.",
         step: options.step || 3,
         actionLabel: "Configurar lounge",
         regenerate: false
@@ -1894,7 +1894,7 @@
     }
     return {
       stepLabel: "Ajuste recomendado",
-      title: "Revise uma configuração antes de gerar",
+      title: "Revise uma configuraÃ§Ã£o antes de gerar",
       message: cleanMessage,
       step: options.step || 3,
       actionLabel: "Ir para ajuste",

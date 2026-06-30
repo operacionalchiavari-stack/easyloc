@@ -17,7 +17,7 @@
   --navy: #123a6f;
   --navy-dark: #0b1f3a;
   --navy-soft: #eaf2fb;
-  --orange: #ff6a00;
+  --orange: #2E1F1F;
   --orange-soft: #ffe8d9;
   --card: #ffffff;
   --border: #d9e2ec;
@@ -68,14 +68,14 @@ table {
 }
 
 th {
-  background: linear-gradient(180deg, #0b1f33, #081a2b);
+  background: linear-gradient(180deg, #0b1f33, #1f1515);
   color: #fff;
   font-size: 13px;
   padding: 12px;
   text-align: left;
 }
 thead {
-  background: linear-gradient(180deg, #0b1f33, #081a2b);
+  background: linear-gradient(180deg, #0b1f33, #1f1515);
   color: #fff;
 }
 td {
@@ -227,7 +227,7 @@ select {
 /* BOTÕES */
 /* BOTÕES */
 .btn {
-  background: linear-gradient(135deg, #ff6a00, #ea580c);
+  background: linear-gradient(135deg, #2E1F1F, #1f1515);
   color: #fff;
   border: none;
   padding: 10px 16px;
@@ -256,7 +256,7 @@ select {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #ff6a00, #ea580c);
+  background: linear-gradient(135deg, #2E1F1F, #1f1515);
   color: #fff;
   border: none;
   padding: 10px 18px;
@@ -279,7 +279,7 @@ select {
 
 /* BOTÃO BAIXA / CONCLUIR */
 .btn-baixa {
-  background: linear-gradient(135deg, #ff6a00, #ea580c);
+  background: linear-gradient(135deg, #2E1F1F, #1f1515);
   color: #fff;
   border: none;
   padding: 10px 16px;

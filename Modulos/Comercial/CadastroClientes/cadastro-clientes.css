@@ -1,6 +1,6 @@
-:root {
-  --azul: #0f2a44;
-  --laranja: #ff6a00;
+﻿:root {
+  --azul: #2E1F1F;
+  --laranja: #2E1F1F;
   --cinza: #e5e7eb;
   --verde: #16a34a;
   --amarelo: #facc15;
@@ -28,7 +28,7 @@ body {
   gap: 16px;
 }
 
-/* lado direito do header (botões + ajuda) */
+/* lado direito do header (botÃµes + ajuda) */
 .header-actions {
   display: flex;
   align-items: center;
@@ -36,7 +36,7 @@ body {
 }
 
 /* =========================
-   FILTERS – BLINDADO
+   FILTERS â€“ BLINDADO
 ========================= */
 .container .filters {
   display: flex !important;
@@ -124,11 +124,11 @@ body {
   /* altura correta */
   max-height: 94vh;
 
-  /* ⬅️ IMPORTANTE: não rola o modal inteiro */
+  /* â¬…ï¸ IMPORTANTE: nÃ£o rola o modal inteiro */
   overflow: hidden;
 
   border-radius: 18px;
-  padding: 28px 28px 96px; /* ⬅️ espaço reservado pros botões */
+  padding: 28px 28px 96px; /* â¬…ï¸ espaÃ§o reservado pros botÃµes */
 
   border: 1px solid #e5e7eb;
   box-shadow:
@@ -179,7 +179,7 @@ body {
 .edit-btn:hover {
   border-color: var(--laranja);
   color: var(--laranja);
-  background: #fff7ed;
+  background: #f4f1ef;
 }
 
 /* FORM */
@@ -244,11 +244,11 @@ textarea {
   margin-top: 20px;
   margin-bottom: 32px;
 
-  overflow-x: auto; /* ⬅️ scroll horizontal */
-  padding-bottom: 8px; /* espaço para scrollbar */
+  overflow-x: auto; /* â¬…ï¸ scroll horizontal */
+  padding-bottom: 8px; /* espaÃ§o para scrollbar */
 }
 
-/* largura mínima de cada card */
+/* largura mÃ­nima de cada card */
 .tag-group {
   min-width: 260px;
 }
@@ -258,7 +258,7 @@ textarea {
   border-radius: 12px;
   padding: 10px;
 
-  /* ⬇️ GARANTE ESPAÇO PARA TODAS AS OPÇÕES */
+  /* â¬‡ï¸ GARANTE ESPAÃ‡O PARA TODAS AS OPÃ‡Ã•ES */
   min-height: 120px;
 
   display: flex;
@@ -364,7 +364,7 @@ tbody td {
 }
 
 /* =========================
-   FIX ENDEREÇO + GOOGLE
+   FIX ENDEREÃ‡O + GOOGLE
 ========================= */
 #endereco {
   background: #fff !important;
@@ -378,7 +378,7 @@ tbody td {
   box-shadow: 0 0 0 2px rgba(255, 106, 0, 0.15);
 }
 /* ===============================
-   INPUTS + SELECTS – PADRÃO EASYLOC (FIX DEFINITIVO)
+   INPUTS + SELECTS â€“ PADRÃƒO EASYLOC (FIX DEFINITIVO)
 =============================== */
 
 .modal-content label {
@@ -505,7 +505,7 @@ tbody td {
 }
 
 /* ===============================
-   TABELA – CONTAINER BRANCO (FIX DEFINITIVO)
+   TABELA â€“ CONTAINER BRANCO (FIX DEFINITIVO)
 =============================== */
 
 .table-wrapper {
@@ -523,7 +523,7 @@ table {
 
 /* HEADER */
 thead th {
-  background: linear-gradient(180deg, #0f2a44, #081b2d);
+  background: linear-gradient(180deg, #2E1F1F, #1f1515);
   color: #e5e7eb;
   font-size: 13px;
   font-weight: 600;
@@ -540,7 +540,7 @@ tbody tr {
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
 }
 
-/* CÉLULAS */
+/* CÃ‰LULAS */
 td {
   padding: 16px 18px;
   font-size: 14px;
@@ -562,7 +562,7 @@ tbody tr:hover {
 
 /* HEADER */
 thead th {
-  background: linear-gradient(180deg, #0f2a44, #081b2d);
+  background: linear-gradient(180deg, #2E1F1F, #1f1515);
   color: #e5e7eb;
   font-size: 13px;
   font-weight: 600;
@@ -579,7 +579,7 @@ tbody tr {
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
 }
 
-/* CÉLULAS */
+/* CÃ‰LULAS */
 td {
   padding: 16px 18px;
   font-size: 14px;
@@ -601,7 +601,7 @@ tbody tr:hover {
 }
 
 /* =========================
-   BOTÃO AJUDA – TAMANHO CORRIGIDO
+   BOTÃƒO AJUDA â€“ TAMANHO CORRIGIDO
 ========================= */
 .btn-ajuda-img {
   width: 38px;
@@ -610,7 +610,7 @@ tbody tr:hover {
   display: block;
 }
 
-/* ícone interno */
+/* Ã­cone interno */
 .btn-ajuda img {
   width: 20px;
   height: 20px;
@@ -629,7 +629,7 @@ tbody tr:hover {
 }
 
 /* =========================
-   MODAL AJUDA – NOVO PADRÃO EASYLOC
+   MODAL AJUDA â€“ NOVO PADRÃƒO EASYLOC
 ========================= */
 .modal-ajuda {
   position: fixed;
@@ -658,7 +658,7 @@ tbody tr:hover {
    HEADER
 ========================= */
 .modal-ajuda-header {
-  background: linear-gradient(90deg, var(--azul), #081b2d);
+  background: linear-gradient(90deg, var(--azul), #1f1515);
   color: #fff;
   padding: 16px 22px;
   display: flex;
@@ -684,7 +684,7 @@ tbody tr:hover {
   font-weight: 700;
 }
 
-/* botão fechar */
+/* botÃ£o fechar */
 .modal-ajuda-header button {
   background: none;
   border: none;
@@ -730,7 +730,7 @@ tbody tr:hover {
 }
 
 .ajuda-video-item:hover {
-  background: #fff7ed;
+  background: #f4f1ef;
   border-left-color: var(--laranja);
 }
 
@@ -757,7 +757,7 @@ tbody tr:hover {
   border: none;
 }
 
-/* 🔒 GOOGLE PLACES – NÃO SOBREPOR MODAIS */
+/* ðŸ”’ GOOGLE PLACES â€“ NÃƒO SOBREPOR MODAIS */
 .pac-container {
   z-index: 9998 !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -785,7 +785,7 @@ tbody tr:hover {
   justify-content: space-between;
 }
 
-/* lado esquerdo: título + mini-player */
+/* lado esquerdo: tÃ­tulo + mini-player */
 .ajuda-header-left {
   display: flex;
   align-items: center;
@@ -793,7 +793,7 @@ tbody tr:hover {
 }
 
 /* =========================
-   MINI-PLAYER – EXPLICAÇÃO SIMPLES
+   MINI-PLAYER â€“ EXPLICAÃ‡ÃƒO SIMPLES
 ========================= */
 .btn-pip-info {
   position: relative;
@@ -817,7 +817,7 @@ tbody tr:hover {
   top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  background: #0f2a44;
+  background: #2E1F1F;
   color: #ffffff;
   padding: 8px 12px;
   border-radius: 10px;
@@ -843,7 +843,7 @@ tbody tr:hover {
   transform: translateX(-50%);
   border-width: 6px;
   border-style: solid;
-  border-color: transparent transparent #0f2a44 transparent;
+  border-color: transparent transparent #2E1F1F transparent;
 }
 
 /* mostrar tooltip no hover */
@@ -864,13 +864,13 @@ tbody tr:hover {
   color: #9a3412;
 }
 /* =========================
-   INFORMAÇÃO SOBRE MINI-PLAYER
+   INFORMAÃ‡ÃƒO SOBRE MINI-PLAYER
 ========================= */
 .pip-info-box {
   margin-top: 14px;
   padding: 12px 16px;
 
-  background: #fff7ed;
+  background: #f4f1ef;
   border: 1px dashed var(--laranja);
   border-radius: 12px;
 

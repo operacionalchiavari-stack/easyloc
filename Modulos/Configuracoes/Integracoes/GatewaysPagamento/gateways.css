@@ -1,4 +1,4 @@
-.payment-gateways-page {
+﻿.payment-gateways-page {
   width: 100%;
   color: var(--el-color-text, #374151);
 }
@@ -100,7 +100,7 @@
 }
 
 .pg-card-head > svg {
-  color: var(--color-sidebar, #0f2a44);
+  color: var(--color-sidebar, #2E1F1F);
 }
 
 .pg-gateway-list {
@@ -143,7 +143,7 @@
   justify-content: center;
   border-radius: 12px;
   background: var(--el-color-primary-soft, #f3f4f6);
-  color: var(--color-sidebar, #0f2a44);
+  color: var(--color-sidebar, #2E1F1F);
   font-size: 13px;
   font-weight: 700;
 }
@@ -247,7 +247,7 @@
   width: 58px;
   height: 58px;
   border-radius: 16px;
-  background: var(--color-sidebar, #0f2a44);
+  background: var(--color-sidebar, #2E1F1F);
   color: #fff;
   display: inline-flex;
   align-items: center;

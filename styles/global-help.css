@@ -9,7 +9,7 @@
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: var(--color-primary, #ff6a00);
+  background: var(--color-primary, #2E1F1F);
   color: #ffffff;
   box-shadow: 0 16px 34px rgba(15, 42, 68, .24);
   cursor: pointer;
@@ -129,9 +129,9 @@
 .global-help-player-actions button {
   min-height: 46px;
   padding: 10px 16px;
-  border: 1px solid #ff6a00;
+  border: 1px solid var(--color-primary, #2E1F1F);
   border-radius: 10px;
-  background: var(--color-primary, #ff6a00);
+  background: var(--color-primary, #2E1F1F);
   color: #ffffff;
   font-size: 14px;
   font-weight: 500;
@@ -167,8 +167,8 @@
 
 .global-help-result.active,
 .global-help-result:hover {
-  border-color: #ff6a00;
-  background: #fff7ed;
+  border-color: var(--color-primary, #2E1F1F);
+  background: #f4f1ef;
 }
 
 .global-help-result strong,
@@ -255,7 +255,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 0 10px 0 14px;
-  background: #0f2a44;
+  background: var(--color-sidebar, #2E1F1F);
   color: #ffffff;
   cursor: move;
   user-select: none;

@@ -1,6 +1,7 @@
 import {
   CONTRATO_MODELO_INICIAL,
   CONTRATO_TAG_GROUPS,
+  contratoMarkupParaHtml,
   escapeHtml,
 } from "../../../js/core/contracts.mjs";
 
@@ -39,7 +40,8 @@ function cacheEls(){
     "contratoModeloPadrao",
     "contratoModeloAtivo",
     "contratoConteudo",
-    "contratoConteudoHighlight",
+    "contratoConteudoEditor",
+    "contratoEditorToolbar",
     "contratoDuplicarModelo",
     "contratoDesativarModelo",
     "contratoExcluirModelo",
@@ -60,19 +62,15 @@ function contarTag(conteudo, tag){
 }
 
 function syncEditorScroll(){
-  if(!els.contratoConteudo || !els.contratoConteudoHighlight) return;
-  els.contratoConteudoHighlight.scrollTop = els.contratoConteudo.scrollTop;
-  els.contratoConteudoHighlight.scrollLeft = els.contratoConteudo.scrollLeft;
+  posicionarToolbarEditor();
 }
 
 function atualizarEditorHighlight(){
-  if(!els.contratoConteudo || !els.contratoConteudoHighlight) return;
-  const conteudo = els.contratoConteudo.value || "";
-  const html = escapeHtml(conteudo).replace(/\{\{[^{}]+\}\}/g, (tag) => (
-    `<span class="tag-contrato">${tag}</span>`
-  ));
-  els.contratoConteudoHighlight.innerHTML = html || " ";
-  syncEditorScroll();
+  if(!els.contratoConteudo || !els.contratoConteudoEditor) return;
+  els.contratoConteudoEditor.innerHTML = contratoMarkupParaHtml(
+    els.contratoConteudo.value || "",
+    { highlightTags: true }
+  ) || " ";
 }
 
 function atualizarContadoresTags(){
@@ -92,12 +90,114 @@ function atualizarEditorVisual(){
   atualizarContadoresTags();
 }
 
+function sincronizarEditorParaCampo(){
+  if(!els.contratoConteudo || !els.contratoConteudoEditor) return;
+  els.contratoConteudo.value = contratoMarkupParaHtml(els.contratoConteudoEditor.innerHTML || "");
+  atualizarContadoresTags();
+}
+
+function ocultarToolbarEditor(){
+  if(!els.contratoEditorToolbar) return;
+  els.contratoEditorToolbar.hidden = true;
+}
+
+function getEditorSelection(){
+  const editor = els.contratoConteudoEditor;
+  const selection = window.getSelection?.();
+  if(!editor || !selection || !selection.rangeCount) return null;
+  const range = selection.getRangeAt(0);
+  if(range.collapsed || !editor.contains(range.commonAncestorContainer)) return null;
+  return { selection, range };
+}
+
+function posicionarToolbarEditor(){
+  const editor = els.contratoConteudoEditor;
+  const toolbar = els.contratoEditorToolbar;
+  if(!editor || !toolbar) return;
+
+  const selected = getEditorSelection();
+  if(!selected){
+    ocultarToolbarEditor();
+    return;
+  }
+
+  toolbar.hidden = false;
+  const selectionRect = selected.range.getBoundingClientRect();
+  const wrap = editor.closest(".contratos-editor-highlight-wrap");
+  const wrapRect = wrap?.getBoundingClientRect();
+  if(!wrapRect) return;
+
+  const wrapWidth = wrap.clientWidth || editor.clientWidth;
+  const toolbarWidth = toolbar.offsetWidth || 220;
+  const left = Math.max(8, Math.min(selectionRect.left - wrapRect.left, wrapWidth - toolbarWidth - 8));
+  const top = Math.max(8, selectionRect.top - wrapRect.top - toolbar.offsetHeight - 10);
+
+  toolbar.style.left = `${left}px`;
+  toolbar.style.top = `${top}px`;
+}
+
+function inserirNodeNoEditor(node){
+  const editor = els.contratoConteudoEditor;
+  if(!editor) return;
+  const selection = window.getSelection?.();
+  let range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+
+  if(!range || !editor.contains(range.commonAncestorContainer)){
+    range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+  }
+
+  range.deleteContents();
+  range.insertNode(node);
+  range.setStartAfter(node);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  editor.focus();
+  sincronizarEditorParaCampo();
+}
+
+function aplicarMarcacao(tagName, style = {}){
+  const selected = getEditorSelection();
+  if(!selected){
+    els.contratoConteudoEditor?.focus();
+    posicionarToolbarEditor();
+    return;
+  }
+
+  const wrapper = document.createElement(tagName);
+  Object.entries(style).forEach(([key, value]) => {
+    wrapper.style[key] = value;
+  });
+
+  wrapper.appendChild(selected.range.extractContents());
+  selected.range.insertNode(wrapper);
+  selected.selection.removeAllRanges();
+  const range = document.createRange();
+  range.selectNodeContents(wrapper);
+  selected.selection.addRange(range);
+  sincronizarEditorParaCampo();
+  posicionarToolbarEditor();
+}
+
+function aplicarFormatoContrato(action){
+  if(action === "bold") aplicarMarcacao("strong");
+  if(action === "italic") aplicarMarcacao("em");
+}
+
+function aplicarCorContrato(color){
+  if(!/^#[0-9a-f]{6}$/i.test(color || "")) return;
+  aplicarMarcacao("span", { color: color.toLowerCase() });
+}
+
 function modeloSelecionado(){
   return state.modelos.find((modelo) => modelo.id === state.selecionadoId) || null;
 }
 
 function limparEditor(){
   state.selecionadoId = null;
+  ocultarToolbarEditor();
   if(els.contratoNomeModelo) els.contratoNomeModelo.value = "Contrato de Locação";
   if(els.contratoConteudo) els.contratoConteudo.value = CONTRATO_MODELO_INICIAL;
   if(els.contratoModeloPadrao) els.contratoModeloPadrao.checked = !state.modelos.length;
@@ -109,6 +209,7 @@ function limparEditor(){
 function preencherEditor(modelo){
   if(!modelo) return limparEditor();
   state.selecionadoId = modelo.id;
+  ocultarToolbarEditor();
   if(els.contratoNomeModelo) els.contratoNomeModelo.value = modelo.nome_modelo || "";
   if(els.contratoConteudo) els.contratoConteudo.value = modelo.conteudo || "";
   if(els.contratoModeloPadrao) els.contratoModeloPadrao.checked = Boolean(modelo.padrao);
@@ -162,15 +263,12 @@ function renderTags(){
 }
 
 function inserirTag(tag){
-  const textarea = els.contratoConteudo;
-  if(!textarea) return;
-  const inicio = textarea.selectionStart ?? textarea.value.length;
-  const fim = textarea.selectionEnd ?? textarea.value.length;
-  textarea.value = `${textarea.value.slice(0, inicio)}${tag}${textarea.value.slice(fim)}`;
-  const cursor = inicio + tag.length;
-  textarea.focus();
-  textarea.setSelectionRange(cursor, cursor);
-  atualizarEditorVisual();
+  const span = document.createElement("span");
+  span.className = "tag-contrato";
+  span.textContent = tag;
+  inserirNodeNoEditor(span);
+  inserirNodeNoEditor(document.createTextNode(" "));
+  sincronizarEditorParaCampo();
 }
 
 async function carregarModelos(){
@@ -204,8 +302,10 @@ async function salvarModelo(){
     return;
   }
 
+  sincronizarEditorParaCampo();
   const nome = els.contratoNomeModelo?.value?.trim() || "";
   const conteudo = els.contratoConteudo?.value?.trim() || "";
+  const conteudoTexto = els.contratoConteudoEditor?.innerText?.trim() || "";
   const primeiroModelo = !state.modelos.length || !state.selecionadoId && !state.modelos.length;
   const padrao = Boolean(els.contratoModeloPadrao?.checked || primeiroModelo);
   const ativo = padrao ? true : Boolean(els.contratoModeloAtivo?.checked);
@@ -216,9 +316,9 @@ async function salvarModelo(){
     return;
   }
 
-  if(!conteudo){
+  if(!conteudoTexto){
     notify("Informe o conteúdo do contrato.", "aviso");
-    els.contratoConteudo?.focus();
+    els.contratoConteudoEditor?.focus();
     return;
   }
 
@@ -265,6 +365,7 @@ async function duplicarModelo(){
     return;
   }
   state.selecionadoId = null;
+  ocultarToolbarEditor();
   if(els.contratoNomeModelo) els.contratoNomeModelo.value = `${modelo.nome_modelo} - cópia`;
   if(els.contratoConteudo) els.contratoConteudo.value = modelo.conteudo || "";
   if(els.contratoModeloPadrao) els.contratoModeloPadrao.checked = false;
@@ -331,8 +432,31 @@ function bindEvents(){
   els.contratoDuplicarModelo?.addEventListener("click", duplicarModelo);
   els.contratoDesativarModelo?.addEventListener("click", alternarAtivo);
   els.contratoExcluirModelo?.addEventListener("click", excluirModelo);
-  els.contratoConteudo?.addEventListener("input", atualizarEditorVisual);
-  els.contratoConteudo?.addEventListener("scroll", syncEditorScroll);
+  els.contratoConteudoEditor?.addEventListener("input", sincronizarEditorParaCampo);
+  els.contratoConteudoEditor?.addEventListener("scroll", syncEditorScroll);
+  els.contratoConteudoEditor?.addEventListener("mouseup", posicionarToolbarEditor);
+  els.contratoConteudoEditor?.addEventListener("keyup", posicionarToolbarEditor);
+  els.contratoConteudoEditor?.addEventListener("focus", posicionarToolbarEditor);
+  els.contratoConteudoEditor?.addEventListener("blur", () => {
+    setTimeout(() => {
+      if(!els.contratoEditorToolbar?.contains(document.activeElement)) ocultarToolbarEditor();
+    }, 120);
+  });
+
+  els.contratoEditorToolbar?.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+  });
+
+  els.contratoEditorToolbar?.addEventListener("click", (event) => {
+    const formatButton = event.target.closest("[data-contrato-format]");
+    if(formatButton){
+      aplicarFormatoContrato(formatButton.dataset.contratoFormat);
+      return;
+    }
+
+    const colorButton = event.target.closest("[data-contrato-color]");
+    if(colorButton) aplicarCorContrato(colorButton.dataset.contratoColor);
+  });
 
   els.contratosLista?.addEventListener("click", (event) => {
     const item = event.target.closest("[data-contrato-id]");

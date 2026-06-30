@@ -1,0 +1,189 @@
+<div class="exp-page el-page" id="expedicaoPage">
+  <header class="exp-header">
+    <div>
+      <h1>Expedição</h1>
+      <p>Distribua os itens da rota entre os caminhões e inicie a conferência de carregamento.</p>
+    </div>
+    <button type="button" class="exp-btn exp-btn-light" id="expRefreshBtn">
+      <i data-lucide="refresh-cw"></i>
+      Atualizar
+    </button>
+  </header>
+
+  <section class="exp-route-summary" id="expRouteSummary">
+    <div>
+      <span>Rota</span>
+      <strong id="expSummaryRoute">Selecione uma rota</strong>
+    </div>
+    <div>
+      <span>Data</span>
+      <strong id="expSummaryDate">-</strong>
+    </div>
+    <div>
+      <span>Clientes</span>
+      <strong id="expSummaryClients">-</strong>
+    </div>
+    <div>
+      <span>Evento</span>
+      <strong id="expSummaryEvent">-</strong>
+    </div>
+    <div>
+      <span>Pedidos</span>
+      <strong id="expSummaryOrders">0</strong>
+    </div>
+    <div>
+      <span>Caminhoes</span>
+      <strong id="expSummaryTrucks">0</strong>
+    </div>
+  </section>
+
+  <main class="exp-grid">
+    <aside class="exp-panel exp-routes-panel">
+      <header class="exp-panel-head">
+        <div>
+          <span>Rotas</span>
+          <h2>Aguardando distribuição</h2>
+        </div>
+        <strong id="expRoutesCount">0</strong>
+      </header>
+      <div class="exp-routes-list" id="expRoutesList"></div>
+    </aside>
+
+    <section class="exp-panel exp-items-panel">
+      <header class="exp-panel-head">
+        <div>
+          <span>Itens</span>
+          <h2>Itens do pedido</h2>
+        </div>
+        <strong id="expPendingCount">0</strong>
+      </header>
+      <div class="exp-items-list" id="expItemsList"></div>
+    </section>
+
+    <section class="exp-move-panel" aria-label="Movimentação">
+      <button type="button" class="exp-move-btn" id="expMoveQtyBtn" title="Distribuir quantidade selecionada">
+        <i data-lucide="chevron-right"></i>
+      </button>
+      <button type="button" class="exp-move-btn" id="expMoveAllBtn" title="Distribuir todo o restante do item">
+        <i data-lucide="chevrons-right"></i>
+      </button>
+      <button type="button" class="exp-move-btn muted" id="expReturnQtyBtn" title="Remover uma unidade do caminhão selecionado">
+        <i data-lucide="chevron-left"></i>
+      </button>
+      <button type="button" class="exp-move-btn muted" id="expReturnAllBtn" title="Remover todo o item do caminhão selecionado">
+        <i data-lucide="chevrons-left"></i>
+      </button>
+    </section>
+
+    <section class="exp-trucks-column">
+      <div class="exp-trucks-grid" id="expTrucksGrid"></div>
+    </section>
+  </main>
+
+  <footer class="exp-footer-card">
+    <div class="exp-footer-metrics">
+      <span><b id="expFooterOrders">0</b> pedidos</span>
+      <span><b id="expFooterItemTypes">0</b> tipos de item</span>
+      <span><b id="expFooterDistributed">0</b> distribuídos</span>
+      <span><b id="expFooterPending">0</b> pendentes</span>
+      <span><b id="expFooterVolume">0,0</b> m3</span>
+      <span><b id="expFooterWeight">0,0</b> kg</span>
+    </div>
+    <button type="button" class="exp-btn exp-btn-primary" id="expStartLoadingBtn" disabled>
+      <i data-lucide="truck"></i>
+      Iniciar Carregamentos
+    </button>
+  </footer>
+
+  <div class="exp-modal-backdrop" id="expStartModal" hidden>
+    <section class="exp-modal exp-start-modal" role="dialog" aria-modal="true" aria-labelledby="expStartTitle">
+      <header class="exp-modal-head">
+        <div>
+          <span>Carregamento</span>
+          <h2 id="expStartTitle">Iniciar Carregamento</h2>
+          <p>Selecione o caminhão que será carregado.</p>
+        </div>
+        <button type="button" class="exp-modal-close" data-exp-close-start aria-label="Fechar">
+          <i data-lucide="x"></i>
+        </button>
+      </header>
+      <div class="exp-start-layout">
+        <div class="exp-start-trucks" id="expStartTrucks"></div>
+        <div class="exp-start-orders">
+          <h3>Pedidos do caminhão</h3>
+          <div id="expStartOrders"></div>
+        </div>
+      </div>
+      <footer class="exp-modal-actions">
+        <button type="button" class="exp-btn exp-btn-light" data-exp-close-start>Cancelar</button>
+        <button type="button" class="exp-btn exp-btn-primary" id="expOpenConferenceBtn">
+          Iniciar carregamento
+        </button>
+      </footer>
+    </section>
+  </div>
+
+  <div class="exp-modal-backdrop" id="expConferenceModal" hidden>
+    <section class="exp-modal exp-conference-modal" role="dialog" aria-modal="true" aria-labelledby="expConferenceTitle">
+      <header class="exp-modal-head">
+        <div>
+          <span>Conferência de Carregamento</span>
+          <h2 id="expConferenceTitle">Caminhao</h2>
+          <p id="expConferenceSubtitle">Escaneie os QR Codes dos itens ou utilize conferência manual.</p>
+        </div>
+        <button type="button" class="exp-modal-close" data-exp-close-conference aria-label="Fechar">
+          <i data-lucide="x"></i>
+        </button>
+      </header>
+
+      <section class="exp-conference-summary" id="expConferenceSummary"></section>
+      <section class="exp-conference-indicators" id="expConferenceIndicators"></section>
+
+      <div class="exp-conference-toolbar">
+        <div class="exp-alert">
+          <i data-lucide="scan-line"></i>
+          Escaneie os QR Codes dos itens ou utilize conferência manual.
+        </div>
+        <button type="button" class="exp-btn exp-btn-light" id="expManualCheckBtn">
+          Conferência Manual
+        </button>
+      </div>
+
+      <div class="exp-conference-body">
+        <section class="exp-conference-items">
+          <h3>Itens do caminhão</h3>
+          <div id="expConferenceItems"></div>
+        </section>
+
+        <aside class="exp-scanner-panel">
+          <h3>Leitura de QR Code</h3>
+          <label class="exp-scan-input">
+            <i data-lucide="qr-code"></i>
+            <input id="expScanInput" type="text" autocomplete="off" placeholder="Escaneie ou digite o codigo do item">
+          </label>
+
+          <div class="exp-last-read" id="expLastRead">
+            <i data-lucide="scan"></i>
+            <div>
+              <strong>Nenhuma leitura ainda</strong>
+              <span>Aguardando o primeiro item.</span>
+            </div>
+          </div>
+
+          <h4>Últimas leituras</h4>
+          <div class="exp-read-history" id="expReadHistory"></div>
+
+          <button type="button" class="exp-btn exp-btn-light full" id="expFocusScanBtn">
+            Escanear próximo item
+          </button>
+        </aside>
+      </div>
+
+      <footer class="exp-modal-actions">
+        <button type="button" class="exp-btn exp-btn-light" id="expPauseLoadingBtn">Pausar carregamento</button>
+        <button type="button" class="exp-btn exp-btn-danger" id="expCancelLoadingBtn">Cancelar carregamento</button>
+        <button type="button" class="exp-btn exp-btn-primary" id="expFinishLoadingBtn">Finalizar carregamento</button>
+      </footer>
+    </section>
+  </div>
+</div>

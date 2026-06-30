@@ -1,6 +1,6 @@
-.planner-page {
+﻿.planner-page {
   --planner-navy: #08213a;
-  --planner-orange: #ff6900;
+  --planner-orange: #2E1F1F;
   --planner-border: #dfe7f1;
   --planner-bg: #f7fafc;
   --planner-muted: #667891;
@@ -69,7 +69,7 @@
 }
 
 .planner-step-pill.active {
-  background: #fff7ed;
+  background: #f4f1ef;
   border-color: #ffb074;
   color: var(--planner-orange);
 }
@@ -100,7 +100,7 @@
 
 .planner-guidance-banner {
   align-items: center;
-  background: #fff7ed;
+  background: #f4f1ef;
   border: 1px solid #fed7aa;
   border-radius: 18px;
   box-shadow: 0 16px 34px rgba(8,33,58,.08);
@@ -283,7 +283,7 @@
 }
 
 .planner-preview-chip {
-  background: #fff7ed;
+  background: #f4f1ef;
   border: 1px solid #fed7aa;
   border-radius: 999px;
   color: #c2410c;
@@ -439,7 +439,7 @@
 
 .planner-mode-card > span {
   align-items: center;
-  background: #fff7ed;
+  background: #f4f1ef;
   border-radius: 14px;
   color: var(--planner-orange);
   display: inline-flex;
@@ -767,7 +767,7 @@
 }
 
 .planner-rule-box {
-  background: #fff7ed;
+  background: #f4f1ef;
   border: 1px solid #fed7aa;
   border-radius: 14px;
   color: #9a3412;

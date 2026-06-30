@@ -1,6 +1,6 @@
-:root{
-  --azul:#0f2a44;
-  --laranja:#ff6a00;
+﻿:root{
+  --azul:#2E1F1F;
+  --laranja:#2E1F1F;
   --cinza:#e5e7eb;
   --verde:#16a34a;
   --amarelo:#facc15;
@@ -51,7 +51,7 @@ table{
 }
 
 thead{
-  background:linear-gradient(180deg,#0B1F33,#081a2b);
+  background:linear-gradient(180deg,#0B1F33,#1f1515);
   color:#fff;
 }
 
@@ -84,7 +84,7 @@ tbody tr:hover{
 .badge.ativo{ background:#dcfce7; color:#166534; }
 .badge.inativo{ background:#fee2e2; color:#991b1b; }
 
-/* ================= AÇÕES ================= */
+/* ================= AÃ‡Ã•ES ================= */
 
 .actions{
   display:flex;
@@ -105,7 +105,7 @@ tbody tr:hover{
   background:#f3f4f6;
 }
 
-/* ================= MODAL PADRÃO EASYLOC ================= */
+/* ================= MODAL PADRÃƒO EASYLOC ================= */
 
 .modal{
   position:fixed;

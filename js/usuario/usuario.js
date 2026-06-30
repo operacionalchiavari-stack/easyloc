@@ -1,5 +1,5 @@
-/**
- * USUARIO MODULE — User Profile & Preferences
+﻿/**
+ * USUARIO MODULE â€” User Profile & Preferences
  * 
  * Exports:
  * - window.atualizarAvatarSidebar()
@@ -7,7 +7,7 @@
  * - criarModalPerfil()
  */
 
-function avisarUsuario(mensagem, titulo = "Atenção", tipo = "aviso") {
+function avisarUsuario(mensagem, titulo = "AtenÃ§Ã£o", tipo = "aviso") {
   if (typeof window.alerta === "function") {
     window.alerta(mensagem, titulo, tipo);
     return;
@@ -125,7 +125,7 @@ async function salvarPerfilShadow(shadow){
   // Atualiza senha
   if(senha){
     if(senha !== senha2){
-      avisarUsuario("As senhas não coincidem.");
+      avisarUsuario("As senhas nÃ£o coincidem.");
       return;
     }
 
@@ -172,7 +172,7 @@ async function preencherDadosPerfilModal(modal){
     "Criado em: " + (usuario?.created_at ? new Date(usuario.created_at).toLocaleString("pt-BR") : "-");
 
   modal.querySelector("#lastLoginInfo").innerText =
-    "Último login: " +
+    "Ãšltimo login: " +
     (usuario?.ultimo_login
       ? new Date(usuario.ultimo_login).toLocaleString("pt-BR")
       : "-");
@@ -229,11 +229,11 @@ function criarModalPerfil(){
 
   modal.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
-      <h3 style="margin:0;font-size:20px;font-weight:700;color:#0f2a44;">
+      <h3 style="margin:0;font-size:20px;font-weight:700;color:#2E1F1F;">
         Meu Perfil
       </h3>
       <button id="closeModal" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">
-        ✕
+        âœ•
       </button>
     </div>
 
@@ -243,11 +243,11 @@ function criarModalPerfil(){
 
         <div style="text-align:center;">
           <div id="avatarPreview"
-               style="width:120px;height:120px;border-radius:50%;background:#f1f5f9;margin:auto;overflow:hidden;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:#0f2a44;">
+               style="width:120px;height:120px;border-radius:50%;background:#f1f5f9;margin:auto;overflow:hidden;border:2px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:#2E1F1F;">
           </div>
 
           <div id="alterarFoto"
-               style="margin-top:10px;font-size:13px;color:#ff6a00;cursor:pointer;font-weight:600;">
+               style="margin-top:10px;font-size:13px;color:#2E1F1F;cursor:pointer;font-weight:600;">
             Alterar foto
           </div>
 
@@ -259,7 +259,7 @@ function criarModalPerfil(){
           <div><strong>Setor:</strong> <span id="setorInfo"></span></div>
           <div><strong>Cargo:</strong> <span id="cargoInfo"></span></div>
           <div><strong>Perfil:</strong> <span id="perfilInfo"></span></div>
-          <div><strong>Nível:</strong> <span id="nivelInfo"></span></div>
+          <div><strong>NÃ­vel:</strong> <span id="nivelInfo"></span></div>
           <hr style="margin:10px 0;border:none;border-top:1px solid #e5e7eb;">
           <div id="createdInfo"></div>
           <div id="lastLoginInfo"></div>
@@ -310,7 +310,7 @@ function criarModalPerfil(){
           <button id="cancelBtn" style="padding:8px 18px;border-radius:12px;border:none;background:#e5e7eb;cursor:pointer;">
             Cancelar
           </button>
-          <button id="saveBtn" style="padding:8px 18px;border-radius:12px;border:none;background:#ff6a00;color:#fff;font-weight:600;cursor:pointer;">
+          <button id="saveBtn" style="padding:8px 18px;border-radius:12px;border:none;background:#2E1F1F;color:#fff;font-weight:600;cursor:pointer;">
             Salvar
           </button>
         </div>
@@ -395,7 +395,7 @@ function criarModalPerfil(){
 }
 
 /* =====================================================
-   MODO AUSÊNCIA (LOCK SCREEN COM FOTO REAL)
+   MODO AUSÃŠNCIA (LOCK SCREEN COM FOTO REAL)
 ===================================================== */
 
 async function ativarAusencia(){
@@ -435,7 +435,7 @@ async function ativarAusencia(){
          style="width:84px;height:84px;border-radius:50%;object-fit:cover;">`
     : `<div style="
           width:84px;height:84px;border-radius:50%;
-          background:#ff6a00;color:#fff;
+          background:#2E1F1F;color:#fff;
           display:flex;align-items:center;justify-content:center;
           font-weight:700;font-size:26px;">
          ${window.__CONTEXT.usuario_nome
@@ -451,7 +451,7 @@ async function ativarAusencia(){
       ${avatarHTML}
     </div>
 
-    <h3 style="margin:0 0 6px 0;">Sessão em ausência</h3>
+    <h3 style="margin:0 0 6px 0;">SessÃ£o em ausÃªncia</h3>
     <p style="font-size:13px;color:#64748b;margin-bottom:20px;">
       Digite sua senha para retornar
     </p>
@@ -476,7 +476,7 @@ async function ativarAusencia(){
 
     <button id="unlockBtn"
       style="width:100%;padding:12px;border:none;border-radius:14px;
-             background:#ff6a00;color:#fff;font-weight:600;
+             background:#2E1F1F;color:#fff;font-weight:600;
              cursor:pointer;font-size:14px;margin-top:14px;">
       Desbloquear
     </button>
@@ -528,7 +528,7 @@ async function ativarAusencia(){
       return;
     }
 
-    // 🔥 restaura sessão corretamente
+    // ðŸ”¥ restaura sessÃ£o corretamente
     if(data?.session){
       await window.supabaseClient.auth.setSession(data.session);
     }
@@ -538,7 +538,7 @@ async function ativarAusencia(){
 }
 
 /* ========================================
-   INICIALIZAÇÕES DO DASHBOARD
+   INICIALIZAÃ‡Ã•ES DO DASHBOARD
 ======================================== */
 window.addEventListener("load", () => {
 

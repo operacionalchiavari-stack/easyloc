@@ -1,5 +1,5 @@
-/* =====================================================
-   EasyLoc Studio IA
+﻿/* =====================================================
+   Acervo Studio IA
    Modulo independente. Nao usa Lia nem contexto do chat.
 ===================================================== */
 
@@ -54,7 +54,7 @@
     return document.getElementById(id);
   }
 
-  function avisar(mensagem, titulo = "EasyLoc Studio IA", tipo = "info"){
+  function avisar(mensagem, titulo = "Acervo Studio IA", tipo = "info"){
     if(typeof window.alerta === "function"){
       window.alerta(mensagem, titulo, tipo);
       return;
@@ -189,9 +189,9 @@
     });
 
     state.canvas.setDimensions({ width: 1280, height: 760 });
-    fabric.Object.prototype.cornerColor = "#ff6a00";
+    fabric.Object.prototype.cornerColor = "#2E1F1F";
     fabric.Object.prototype.cornerStrokeColor = "#ffffff";
-    fabric.Object.prototype.borderColor = "#ff6a00";
+    fabric.Object.prototype.borderColor = "#2E1F1F";
     fabric.Object.prototype.cornerStyle = "circle";
 
     state.canvas.on("object:modified", markDirty);
@@ -303,7 +303,7 @@
   function categoriaMatch(item, categoria){
     if(!categoria) return true;
     const text = `${item.categoria || ""} ${item.produto || ""} ${item.descricao_total || ""}`.toLowerCase();
-    return text.includes(categoria.toLowerCase().replace("sofás", "sofa"));
+    return text.includes(categoria.toLowerCase().replace("sofÃ¡s", "sofa"));
   }
 
   function renderCatalog(){
@@ -339,7 +339,7 @@
   }
 
   function nomeObjeto(item){
-    return item?.descricao_total || item?.produto || "Item EasyLoc";
+    return item?.descricao_total || item?.produto || "Item Acervo";
   }
 
   function addTextFallback(item){
@@ -359,7 +359,7 @@
         width: 130,
         fontSize: 14,
         fontWeight: "700",
-        fill: "#0f2a44",
+        fill: "#2E1F1F",
         textAlign: "center",
         originX: "center",
         originY: "center"
@@ -447,14 +447,14 @@
 
     const gradients = {
       garden: "linear-gradient(135deg, #dff5e6, #f8fafc 62%, #fef3c7)",
-      salon: "linear-gradient(135deg, #f8fafc, #dbeafe 55%, #fff7ed)"
+      salon: "linear-gradient(135deg, #f8fafc, #dbeafe 55%, #f4f1ef)"
     };
 
     state.backgroundInfo = { type: "library", value: kind, label: kind === "garden" ? "Jardim" : "Salao" };
     state.canvas.backgroundImage = null;
     state.canvas.setBackgroundColor(kind === "garden" ? "#eef8ee" : "#f4f7fb", () => state.canvas.requestRenderAll());
     els.studioCanvasFrame.style.background = gradients[kind] || "#e9edf3";
-    setBackgroundPreview(kind === "garden" ? "Biblioteca: jardim" : "Biblioteca: salão");
+    setBackgroundPreview(kind === "garden" ? "Biblioteca: jardim" : "Biblioteca: salÃ£o");
     markDirty();
   }
 
@@ -527,7 +527,7 @@
   function flipSelection(){
     const active = getActiveObjects();
     if(!active.length){
-      avisar("Selecione uma imagem ou movel para inverter.", "EasyLoc Studio IA", "aviso");
+      avisar("Selecione uma imagem ou movel para inverter.", "Acervo Studio IA", "aviso");
       return;
     }
 
@@ -551,7 +551,7 @@
   function cropSelection(){
     const images = getActiveObjects().filter((obj) => obj.type === "image");
     if(!images.length){
-      avisar("Selecione uma foto no canvas para cortar.", "EasyLoc Studio IA", "aviso");
+      avisar("Selecione uma foto no canvas para cortar.", "Acervo Studio IA", "aviso");
       return;
     }
 
@@ -659,8 +659,8 @@
             <span>${obj.studioLocked ? "Bloqueado" : "Editavel"}</span>
           </div>
           <div class="studio-layer-actions">
-            <button type="button" class="studio-layer-action" data-layer-action="up" title="Subir">↑</button>
-            <button type="button" class="studio-layer-action" data-layer-action="down" title="Descer">↓</button>
+            <button type="button" class="studio-layer-action" data-layer-action="up" title="Subir">â†‘</button>
+            <button type="button" class="studio-layer-action" data-layer-action="down" title="Descer">â†“</button>
           </div>
         </div>
       `;
@@ -822,12 +822,12 @@
       state.projetoId = result.data?.id || state.projetoId;
       setStatus(`Salvo ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`);
       carregarProjetos();
-      if(!silencioso) avisar("Projeto salvo com sucesso.", "EasyLoc Studio IA", "sucesso");
+      if(!silencioso) avisar("Projeto salvo com sucesso.", "Acervo Studio IA", "sucesso");
     }catch(err){
       console.error("Studio IA: erro ao salvar projeto", err);
       setStatus("Erro ao salvar");
       if(!silencioso){
-        avisar("Nao foi possivel salvar. Verifique se a tabela studio_projetos foi criada.", "EasyLoc Studio IA", "erro");
+        avisar("Nao foi possivel salvar. Verifique se a tabela studio_projetos foi criada.", "Acervo Studio IA", "erro");
       }
     }
   }
@@ -868,7 +868,7 @@
       .single();
 
     if(error || !data){
-      avisar("Projeto nao encontrado.", "EasyLoc Studio IA", "erro");
+      avisar("Projeto nao encontrado.", "Acervo Studio IA", "erro");
       return;
     }
 
@@ -1036,14 +1036,14 @@
           : providerMessage
             ? `Provedor de imagem recusou a geracao: ${providerMessage}`
             : "Studio AI Engine respondeu, mas o provedor de imagem ainda nao retornou imagens reais.";
-        avisar(msg, "EasyLoc Studio IA", "aviso");
+        avisar(msg, "Acervo Studio IA", "aviso");
         return;
       }
       renderResults(data?.images || [], data?.prompt || prompt, data?.modelo || "studio-ai-engine");
     }catch(err){
       console.error("Studio IA: erro ao gerar imagem", err);
       renderResults(createFallbackImages(preview), prompt, "preview-local");
-      avisar("Studio AI Engine ainda nao retornou imagem real. Mostrei o preview local para comparar a composicao.", "EasyLoc Studio IA", "aviso");
+      avisar("Studio AI Engine ainda nao retornou imagem real. Mostrei o preview local para comparar a composicao.", "Acervo Studio IA", "aviso");
     }finally{
       setGenerateLoading(false);
     }
@@ -1264,7 +1264,7 @@
       window.finalizarCarregamentoModulo?.();
     }catch(err){
       console.error("Studio IA: erro no init", err);
-      avisar("Nao foi possivel iniciar o Studio IA.", "EasyLoc Studio IA", "erro");
+      avisar("Nao foi possivel iniciar o Studio IA.", "Acervo Studio IA", "erro");
       window.finalizarCarregamentoModulo?.();
     }
   }

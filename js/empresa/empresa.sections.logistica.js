@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
   const DEFAULT_REGRAS = {
     carregamento_dias_antes_entrega: 1,
     triagem_dias_antes_carregamento: 2,
@@ -40,7 +40,7 @@
       <div style="margin-bottom:34px;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:16px;">
           <div>
-            <div style="font-weight:600;font-size:15px;color:#0f2a44;margin-bottom:4px;">
+            <div style="font-weight:600;font-size:15px;color:#2E1F1F;margin-bottom:4px;">
               Regras do cronograma
             </div>
             <div style="font-size:13px;color:#64748b;line-height:1.35;">

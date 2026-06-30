@@ -1,4 +1,4 @@
-console.log("🔥 pedido.misc.mjs REAL carregado");
+﻿console.log("ðŸ”¥ pedido.misc.mjs REAL carregado");
 export async function carregarLogoEmpresa() {
 
   let tentativas = 0;
@@ -15,7 +15,7 @@ export async function carregarLogoEmpresa() {
   const empresaId = window.__CONTEXT?.empresa_id;
 
   if (!supabase || !empresaId) {
-    console.warn("Contexto não pronto para carregar logo");
+    console.warn("Contexto nÃ£o pronto para carregar logo");
     return;
   }
 
@@ -31,7 +31,7 @@ export async function carregarLogoEmpresa() {
   }
 
   if (!data?.logo_url) {
-    console.warn("Empresa não possui logo cadastrada");
+    console.warn("Empresa nÃ£o possui logo cadastrada");
     return;
   }
 
@@ -85,7 +85,7 @@ export function imprimirPedido() {
   const logoUrl =
     window.__EMPRESA_LOGO_URL ||
     document.getElementById("logoEmpresa")?.src ||
-    "logo.png";
+    "logo%20nova%20-%20com%20fundo%20branco.png";
 
   const numero = text("#orcamentoNumero", "Novo");
   const status = text("#pedidoStatus", "Orcamento");
@@ -607,7 +607,7 @@ export function imprimirPedido() {
             <table><thead><tr><th>#</th><th>Tipo</th><th>Vencimento</th><th>Valor</th><th>Metodo</th><th>Status</th></tr></thead><tbody>${parcelaRows}</tbody></table>
           </section>
 
-          <footer class="footer"><span>Este documento foi gerado pelo EasyLoc com base nas informacoes do pedido.</span><span>Pedido #${escapeHtml(numero)}</span></footer>
+          <footer class="footer"><span>Este documento foi gerado pelo Acervo com base nas informacoes do pedido.</span><span>Pedido #${escapeHtml(numero)}</span></footer>
         </main>
       </body>
     </html>
@@ -645,7 +645,7 @@ function imprimirPedidoAntigo() {
   janela.document.write(`
     <html>
       <head>
-        <title>Orçamento</title>
+        <title>OrÃ§amento</title>
         <style>
           @page { size: A4; margin: 20mm; }
           body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #fff; }
@@ -696,8 +696,8 @@ export function abrirModalAvisoFrete(mensagem) {
   modal.style.fontFamily = "Inter, sans-serif";
 
   modal.innerHTML = `
-    <div style="font-size:18px;font-weight:700;color:#0f2a44;margin-bottom:12px;">
-      Atenção
+    <div style="font-size:18px;font-weight:700;color:#2E1F1F;margin-bottom:12px;">
+      AtenÃ§Ã£o
     </div>
 
     <div style="font-size:14px;color:#475569;line-height:1.6;margin-bottom:20px;">
@@ -735,7 +735,7 @@ export async function carregarFinanceiroEmpresaPedido() {
   const empresaId = window.__CONTEXT?.empresa_id;
 
   if (!supabase || !empresaId) {
-    console.warn("Contexto não pronto para carregar financeiro");
+    console.warn("Contexto nÃ£o pronto para carregar financeiro");
     window.__FINANCEIRO = { absorcao_frete_percent: 0, absorcao_montagem_percent: 0 };
     return window.__FINANCEIRO;
   }

@@ -1,6 +1,6 @@
-.studio-page {
-  --studio-navy: var(--el-color-primary, #0f2a44);
-  --studio-orange: var(--el-color-accent, #ff6a00);
+﻿.studio-page {
+  --studio-navy: var(--el-color-primary, #2E1F1F);
+  --studio-orange: var(--el-color-accent, #2E1F1F);
   --studio-border: var(--el-color-border, #e5e7eb);
   --studio-soft: #f8fafc;
   min-height: calc(100vh - 70px);
@@ -463,7 +463,7 @@
 
 .studio-layer-row.active {
   border-color: var(--studio-orange);
-  background: #fff7ed;
+  background: #f4f1ef;
 }
 
 .studio-layer-actions {

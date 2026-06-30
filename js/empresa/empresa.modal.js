@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const api = window.empresa.api;
   const u = window.empresa.utils;
 
@@ -8,7 +8,7 @@
       empresaId,
       empresa: null,
       config: null,
-      financeiro: null,   // ✅ ADICIONE ESTA LINHA
+      financeiro: null,   // âœ… ADICIONE ESTA LINHA
       dashboard: null,
       identidadeVisual: null,
       sections: {},
@@ -47,12 +47,12 @@
 
         <!-- HEADER -->
         <div style="display:flex;justify-content:space-between;align-items:center;padding:28px 36px 18px 36px;flex-shrink:0;">
-          <h3 style="margin:0;font-size:22px;font-weight:700;color:#0f2a44;">
+          <h3 style="margin:0;font-size:22px;font-weight:700;color:#2E1F1F;">
             Editar Empresa
           </h3>
           <button id="closeEmpresaModal"
             style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">
-            ✕
+            âœ•
           </button>
         </div>
 
@@ -75,18 +75,18 @@
               <div style="display:flex;gap:12px;margin-bottom:24px;border-bottom:1px solid #e5e7eb;">
 
                 <div class="empresa-tab active" data-tab="dados"
-                  style="padding:10px 16px;font-weight:600;cursor:pointer;border-bottom:3px solid var(--color-primary,#ff6a00);">
+                  style="padding:10px 16px;font-weight:600;cursor:pointer;border-bottom:3px solid var(--color-primary,#2E1F1F);">
                   Dados da Empresa
                 </div>
 
                 <div class="empresa-tab" data-tab="tributacao"
                   style="padding:10px 16px;font-weight:600;cursor:pointer;color:#64748b;">
-                  Tributação
+                  TributaÃ§Ã£o
                 </div>
 
                 <div class="empresa-tab" data-tab="logistica"
                   style="padding:10px 16px;font-weight:600;cursor:pointer;color:#64748b;">
-                  Logística
+                  LogÃ­stica
                 </div>
 
                 <div class="empresa-tab" data-tab="financeiro"
@@ -106,7 +106,7 @@
 
               </div>
 
-              <!-- CONTEÚDOS DAS ABAS -->
+              <!-- CONTEÃšDOS DAS ABAS -->
 <div id="aba-dados"></div>
 <div id="aba-tributacao" style="display:none;"></div>
 <div id="aba-logistica" style="display:none;"></div>
@@ -125,7 +125,7 @@
           </button>
 
           <button id="saveEmpresaBtn"
-            style="padding:10px 20px;border-radius:14px;border:none;background:var(--color-primary,#ff6a00);color:#fff;font-weight:600;cursor:pointer;">
+            style="padding:10px 20px;border-radius:14px;border:none;background:var(--color-primary,#2E1F1F);color:#fff;font-weight:600;cursor:pointer;">
             Salvar
           </button>
         </div>
@@ -143,7 +143,7 @@ function showTab(tipo) {
 }
 
     async function loadSection(name) {
-      console.log(`📋 [loadSection] ${name} - already rendered?`, !!state.sections[name]?.rendered);
+      console.log(`ðŸ“‹ [loadSection] ${name} - already rendered?`, !!state.sections[name]?.rendered);
       if (state.sections[name]?.rendered) return;
       const container = modal.querySelector(`#aba-${name}`);
       let renderFn, bindFn;
@@ -167,11 +167,11 @@ function showTab(tipo) {
   bindFn = window.empresa.sections.identidade.bind;
 }
       if (!renderFn) return;
-      console.log(`📋 [loadSection] ${name} - render() start`);
+      console.log(`ðŸ“‹ [loadSection] ${name} - render() start`);
       renderFn(container, state);
-      console.log(`📋 [loadSection] ${name} - bind() start`);
+      console.log(`ðŸ“‹ [loadSection] ${name} - bind() start`);
       const cleanup = await bindFn(container, state, api);
-      console.log(`📋 [loadSection] ${name} - OK`);
+      console.log(`ðŸ“‹ [loadSection] ${name} - OK`);
       state.sections[name] = { rendered: true, cleanup };
     }
 
@@ -208,7 +208,7 @@ function showTab(tipo) {
       }
 
 /* =====================================================
-   SALVAR CONFIGURAÇÕES LOGÍSTICAS
+   SALVAR CONFIGURAÃ‡Ã•ES LOGÃSTICAS
 ===================================================== */
 
 const freteMinInput = container.querySelector('#freteMinimoInput');
@@ -227,16 +227,16 @@ if (freteMinInput) {
   const { error: erroConfig } = await api.saveConfig(payloadConfig);
 
   if (erroConfig) {
-    console.error('Erro ao salvar configurações:', erroConfig);
-    if (typeof window.alerta === "function") window.alerta('Erro ao salvar configurações logísticas', 'Erro', 'erro');
-    else alert('Erro ao salvar configurações logísticas');
+    console.error('Erro ao salvar configuraÃ§Ãµes:', erroConfig);
+    if (typeof window.alerta === "function") window.alerta('Erro ao salvar configuraÃ§Ãµes logÃ­sticas', 'Erro', 'erro');
+    else alert('Erro ao salvar configuraÃ§Ãµes logÃ­sticas');
     return;
   }
 
 }
 
 /* =====================================================
-   SALVAR CONFIGURAÇÕES FINANCEIRAS
+   SALVAR CONFIGURAÃ‡Ã•ES FINANCEIRAS
 ===================================================== */
 
 const freteInput = container.querySelector('#financeiroAbsorcaoFrete');
@@ -255,8 +255,8 @@ const { data: financeiroSalvo, error: erroFinanceiro } =
 
 if (erroFinanceiro) {
   console.error('Erro ao salvar financeiro:', erroFinanceiro);
-  if (typeof window.alerta === "function") window.alerta('Erro ao salvar configurações financeiras', 'Erro', 'erro');
-  else alert('Erro ao salvar configurações financeiras');
+  if (typeof window.alerta === "function") window.alerta('Erro ao salvar configuraÃ§Ãµes financeiras', 'Erro', 'erro');
+  else alert('Erro ao salvar configuraÃ§Ãµes financeiras');
   return;
 }
 
@@ -264,7 +264,7 @@ state.financeiro = financeiroSalvo || payloadFinanceiro;
 
 }
 
-// salva serviços comerciais (se a aba existir)
+// salva serviÃ§os comerciais (se a aba existir)
 // garante que a aba comercial foi carregada
 if (!state.sections.comercial) {
   await loadSection('comercial'); 
@@ -274,9 +274,9 @@ if (window.__salvarServicosComercial) {
   try {
     await window.__salvarServicosComercial();
   } catch (e) {
-    console.error("Erro ao salvar serviços comerciais:", e);
-    if (typeof window.alerta === "function") window.alerta("Erro ao salvar serviços comerciais", "Erro", "erro");
-    else alert("Erro ao salvar serviços comerciais");
+    console.error("Erro ao salvar serviÃ§os comerciais:", e);
+    if (typeof window.alerta === "function") window.alerta("Erro ao salvar serviÃ§os comerciais", "Erro", "erro");
+    else alert("Erro ao salvar serviÃ§os comerciais");
     return;
   }
 }
@@ -301,8 +301,8 @@ close();
           t.style.borderBottom = 'none';
           t.style.color = '#64748b';
         });
-        tab.style.borderBottom = '3px solid var(--color-primary,#ff6a00)';
-        tab.style.color = '#0f2a44';
+        tab.style.borderBottom = '3px solid var(--color-primary,#2E1F1F)';
+        tab.style.color = '#2E1F1F';
         const tipo = tab.dataset.tab;
         showTab(tipo);
         await loadSection(tipo);

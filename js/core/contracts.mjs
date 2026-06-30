@@ -91,8 +91,77 @@ export function escapeHtml(value = ""){
     .replaceAll("'", "&#039;");
 }
 
+const CORES_FORMATACAO_CONTRATO = new Set([
+  "#1d4ed8",
+  "#15803d",
+  "#b91c1c",
+  "#374151",
+]);
+
+function renderizarTextoContrato(value = "", { highlightTags = false } = {}){
+  const escaped = escapeHtml(value).replace(/\n/g, "<br>");
+  if(!highlightTags) return escaped;
+  return escaped.replace(/\{\{[^{}]+\}\}/g, (tag) => `<span class="tag-contrato">${tag}</span>`);
+}
+
+function extrairCorPermitida(node){
+  const style = node?.getAttribute?.("style") || "";
+  const hexMatch = style.match(/color\s*:\s*(#[0-9a-f]{6})/i);
+  if(hexMatch?.[1]){
+    const color = hexMatch[1].toLowerCase();
+    return CORES_FORMATACAO_CONTRATO.has(color) ? color : "";
+  }
+
+  const rgbMatch = style.match(/color\s*:\s*rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i);
+  const color = rgbMatch
+    ? `#${rgbMatch.slice(1, 4).map((part) => Math.max(0, Math.min(255, Number(part))).toString(16).padStart(2, "0")).join("")}`
+    : "";
+  return CORES_FORMATACAO_CONTRATO.has(color) ? color : "";
+}
+
+function renderizarNoPermitido(node, options){
+  if(node.nodeType === Node.TEXT_NODE){
+    return renderizarTextoContrato(node.nodeValue || "", options);
+  }
+
+  if(node.nodeType !== Node.ELEMENT_NODE) return "";
+
+  const tag = node.tagName.toLowerCase();
+  const content = Array.from(node.childNodes)
+    .map((child) => renderizarNoPermitido(child, options))
+    .join("");
+
+  if(tag === "br") return "<br>";
+  if(tag === "strong" || tag === "b") return `<strong>${content}</strong>`;
+  if(tag === "em" || tag === "i") return `<em>${content}</em>`;
+
+  if(tag === "span"){
+    const color = extrairCorPermitida(node);
+    return color ? `<span style="color:${color}">${content}</span>` : content;
+  }
+
+  if(tag === "div" || tag === "p"){
+    return content ? `${content}<br>` : "<br>";
+  }
+
+  return content;
+}
+
+export function contratoMarkupParaHtml(value = "", options = {}){
+  const raw = String(value ?? "");
+  if(!/<\/?(strong|b|em|i|span|br|div|p)\b/i.test(raw)){
+    return renderizarTextoContrato(raw, options);
+  }
+
+  const template = document.createElement("template");
+  template.innerHTML = raw.replace(/\n/g, "<br>");
+  return Array.from(template.content.childNodes)
+    .map((node) => renderizarNoPermitido(node, options))
+    .join("") || " ";
+}
+
 export function textoParaHtml(value = ""){
-  return escapeHtml(value).replace(/\n/g, "<br>");
+  return contratoMarkupParaHtml(value);
 }
 
 export function formatarMoeda(value){
@@ -164,6 +233,7 @@ window.EasyLocContratos = {
   CONTRATO_MODELO_INICIAL,
   CONTRATO_TAG_GROUPS,
   escapeHtml,
+  contratoMarkupParaHtml,
   textoParaHtml,
   formatarMoeda,
   formatarData,

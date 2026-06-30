@@ -1,10 +1,10 @@
-(function () {
+﻿(function () {
   const DEFAULT = window.EasyLocTheme?.DEFAULT_THEME || {
     logo_url: "",
     logo_zoom: 1,
-    cor_sidebar: "#0F2A44",
-    cor_destaque: "#FF6A00",
-    cor_fundo: "#FFFAF6"
+    cor_sidebar: "#2E1F1F",
+    cor_destaque: "#2E1F1F",
+    cor_fundo: "#FFFFFF"
   };
   const LOGO_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
   const LOGO_EXTS = ["png", "jpg", "jpeg", "webp", "svg"];
@@ -14,7 +14,7 @@
       <div style="display:grid;grid-template-columns:320px 1fr;gap:22px;">
         <section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;background:#fff;">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:6px;">Logo da empresa</div>
-          <div id="identidadeLogoPreview" style="height:150px;border:1px dashed #cbd5e1;border-radius:16px;background:linear-gradient(135deg,rgba(15,42,68,.94),rgba(23,58,94,.78));display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;color:#e2e8f0;">
+          <div id="identidadeLogoPreview" style="height:150px;border:1px dashed #cbd5e1;border-radius:16px;background:linear-gradient(135deg,rgba(46,31,31,.96),rgba(46,31,31,.78));display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;color:#e2e8f0;">
             Nenhuma logo
           </div>
           <input id="identidadeLogoInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" style="display:none;">
@@ -31,7 +31,7 @@
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px;">
             <div>
               <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:6px;">Identidade Visual</div>
-              <h3 style="margin:0;color:#0f2a44;font-size:20px;">Paleta da empresa</h3>
+              <h3 style="margin:0;color:#2E1F1F;font-size:20px;">Paleta da empresa</h3>
             </div>
             <span id="identidadeStatus" style="font-size:12px;color:#64748b;">Pronto</span>
           </div>
@@ -44,16 +44,16 @@
 
           <div style="border:1px solid #e5e7eb;border-radius:18px;overflow:hidden;background:#fff;">
             <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;">Preview do sistema</div>
-            <div id="identidadePreview" style="display:grid;grid-template-columns:90px 1fr;min-height:170px;background:#fffaf6;">
-              <div data-preview-sidebar style="background:#0f2a44;padding:14px;color:#fff;">
+            <div id="identidadePreview" style="display:grid;grid-template-columns:90px 1fr;min-height:170px;background:#ffffff;">
+              <div data-preview-sidebar style="background:#2E1F1F;padding:14px;color:#fff;">
                 <div data-preview-logo style="width:54px;height:38px;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;margin-bottom:28px;overflow:hidden;">E</div>
                 <div style="height:8px;background:rgba(255,255,255,.65);border-radius:99px;margin-bottom:10px;"></div>
                 <div style="height:8px;background:rgba(255,255,255,.35);border-radius:99px;margin-bottom:10px;"></div>
                 <div style="height:8px;background:rgba(255,255,255,.35);border-radius:99px;"></div>
               </div>
-              <div data-preview-bg style="background:#fffaf6;padding:18px;">
+              <div data-preview-bg style="background:#ffffff;padding:18px;">
                 <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;box-shadow:0 12px 28px rgba(15,23,42,.08);">
-                  <div style="height:12px;width:46%;background:#0f2a44;border-radius:99px;margin-bottom:12px;"></div>
+                  <div style="height:12px;width:46%;background:#2E1F1F;border-radius:99px;margin-bottom:12px;"></div>
                   <div style="height:10px;width:72%;background:#e5e7eb;border-radius:99px;margin-bottom:16px;"></div>
                   <button data-preview-button class="btn primary" type="button" style="pointer-events:none;">Botao principal</button>
                 </div>
@@ -61,10 +61,10 @@
             </div>
           </div>
 
-          <div id="identidadeContrastAlert" style="display:none;margin-top:12px;padding:11px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;"></div>
+          <div id="identidadeContrastAlert" style="display:none;margin-top:12px;padding:11px 12px;border-radius:12px;background:#f4f1ef;border:1px solid #d8d0cc;color:#2E1F1F;font-size:13px;"></div>
 
           <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
-            <button class="btn secondary" type="button" id="identidadeRestaurarBtn">Restaurar padrao EasyLoc</button>
+            <button class="btn secondary" type="button" id="identidadeRestaurarBtn">Restaurar padrao Acervo</button>
             <button class="btn primary" type="button" id="identidadeSalvarBtn">Salvar alteracoes</button>
           </div>
         </section>
@@ -78,7 +78,7 @@
         ${label}
         <div style="display:grid;grid-template-columns:46px 1fr;gap:8px;">
           <input id="${id}Picker" type="color" style="width:46px;height:46px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:4px;">
-          <input id="${id}" class="el-input" maxlength="7" placeholder="#FF6A00">
+          <input id="${id}" class="el-input" maxlength="7" placeholder="#2E1F1F">
         </div>
       </label>
     `;
@@ -211,7 +211,7 @@
         return false;
       }
       try {
-        setStatus("Salvando...", "#f97316");
+        setStatus("Salvando...", "#2E1F1F");
         const logoUrl = await uploadLogoIfNeeded();
         const payload = {
           empresa_id: state.empresaId,
@@ -254,8 +254,8 @@
 
     async function restoreDefault() {
       const ok = typeof window.confirmarGlobal === "function"
-        ? await window.confirmarGlobal("Deseja restaurar a identidade padrao EasyLoc?", "Identidade Visual", { confirmarTexto: "Restaurar", tipo: "warning" })
-        : confirm("Deseja restaurar a identidade padrao EasyLoc?");
+        ? await window.confirmarGlobal("Deseja restaurar a identidade padrao Acervo?", "Identidade Visual", { confirmarTexto: "Restaurar", tipo: "warning" })
+        : confirm("Deseja restaurar a identidade padrao Acervo?");
       if (!ok) return;
       logoFile = null;
       fill({ ...DEFAULT, logo_url: logoPreviewUrl, logo_zoom: logoZoom });

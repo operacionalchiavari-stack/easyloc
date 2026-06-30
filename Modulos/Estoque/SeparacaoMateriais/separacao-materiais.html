@@ -1,85 +1,165 @@
 <section class="separacao-page el-page" data-module-root>
   <header class="separacao-header">
-    <div>
+    <div class="separacao-title-block">
       <span class="separacao-kicker">Estoque</span>
-      <h1>Separação de Materiais</h1>
-      <p>Controle operacional por leitura de código de barras, respeitando empresa e usuário logados.</p>
+      <h1>Central de Pedidos</h1>
+      <p>Acompanhe a separacao de materiais por status operacional.</p>
     </div>
+
+    <label class="separacao-search" for="separacaoBuscaPedido">
+      <i data-lucide="search"></i>
+      <input id="separacaoBuscaPedido" type="search" placeholder="Buscar pedido, cliente, evento ou local">
+    </label>
+
+    <button type="button" class="btn secondary" id="btnAtualizarSeparacao">
+      <i data-lucide="refresh-cw"></i>
+      Atualizar
+    </button>
   </header>
 
-  <section class="separacao-table-card">
-    <div class="separacao-table-filters">
-      <input class="el-input" id="separacaoBuscaPedido" type="search" placeholder="Buscar pedido, cliente, evento ou local">
-      <select class="el-select" id="separacaoStatusFiltro">
-        <option value="">Todos</option>
-        <option value="pendente">Pendente</option>
-        <option value="em_separacao">Em separação</option>
-        <option value="pausado">Pausado</option>
-        <option value="separado">Separado</option>
-        <option value="separado_com_divergencia">Com divergência</option>
-      </select>
-    </div>
+  <section class="separacao-board-card">
+    <select class="sr-only" id="separacaoStatusFiltro" aria-hidden="true" tabindex="-1">
+      <option value="">Todos</option>
+    </select>
 
-    <div class="separacao-table-wrap">
-      <table class="separacao-orders-table">
-        <thead>
-          <tr>
-            <th>Pedido</th>
-            <th>Cliente</th>
-            <th>Evento</th>
-            <th>Local</th>
-            <th>Data</th>
-            <th>Status</th>
-            <th>Progresso</th>
-            <th>Itens</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody id="separacaoFilaPedidos"></tbody>
-      </table>
+    <div class="separacao-kanban" id="separacaoKanban">
+      <section class="separacao-lane separacao-lane-pendente">
+        <header>
+          <div>
+            <span>Fila</span>
+            <h2>Aguardando separacao</h2>
+          </div>
+          <strong id="separacaoLaneAguardandoCount">0</strong>
+        </header>
+        <div class="separacao-lane-list" id="separacaoColunaAguardando"></div>
+      </section>
+
+      <section class="separacao-lane separacao-lane-andamento">
+        <header>
+          <div>
+            <span>Operacao</span>
+            <h2>Em separacao</h2>
+          </div>
+          <strong id="separacaoLaneEmSeparacaoCount">0</strong>
+        </header>
+        <div class="separacao-lane-list" id="separacaoColunaEmSeparacao"></div>
+      </section>
+
+      <section class="separacao-lane separacao-lane-separado">
+        <header>
+          <div>
+            <span>Concluidos</span>
+            <h2>Separados</h2>
+          </div>
+          <strong id="separacaoLaneSeparadosCount">0</strong>
+        </header>
+        <div class="separacao-lane-list" id="separacaoColunaSeparados"></div>
+      </section>
     </div>
   </section>
 
-  <div class="separacao-modal hidden" id="separacaoOperacaoModal" aria-hidden="true">
+  <div class="separacao-modal separacao-mode-modal hidden" id="separacaoModoModal" aria-hidden="true">
     <div class="separacao-modal-backdrop" data-close-separacao-modal></div>
-    <section class="separacao-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="separacaoModalTitulo">
+    <section class="separacao-mode-dialog" role="dialog" aria-modal="true" aria-labelledby="separacaoModoTitulo">
+      <button type="button" class="modal-close-button compact" id="btnFecharModoSeparacao" aria-label="Fechar">
+        <i data-lucide="x"></i>
+      </button>
+      <span class="pedido-label">Escolha o modo</span>
+      <h2 id="separacaoModoTitulo">Pedido selecionado</h2>
+      <p id="separacaoModoMeta">Como deseja separar este pedido?</p>
+      <div class="separacao-mode-options">
+        <button type="button" class="separacao-mode-option" data-separacao-modo="manual">
+          <i data-lucide="list-checks"></i>
+          <strong>Manualmente</strong>
+          <span>Ajustar item por item.</span>
+        </button>
+        <button type="button" class="separacao-mode-option" data-separacao-modo="qr">
+          <i data-lucide="scan-barcode"></i>
+          <strong>QR Code</strong>
+          <span>Ler codigos e acompanhar progresso.</span>
+        </button>
+        <button type="button" class="separacao-mode-option" data-separacao-modo="um-clique">
+          <i data-lucide="check-check"></i>
+          <strong>1 clique</strong>
+          <span>Marcar todos como separados.</span>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="separacao-modal hidden" id="separacaoManualModal" aria-hidden="true">
+    <div class="separacao-modal-backdrop" data-close-separacao-modal></div>
+    <section class="separacao-modal-dialog separacao-manual-dialog" role="dialog" aria-modal="true" aria-labelledby="separacaoManualTitulo">
       <header class="separacao-modal-header">
         <div>
-          <span class="pedido-label">Operação de separação</span>
-          <h2 id="separacaoModalTitulo">Pedido selecionado</h2>
-          <p id="separacaoModalMeta">Confira os itens e faça as leituras do pedido.</p>
+          <span class="pedido-label">Separacao manual</span>
+          <h2 id="separacaoManualTitulo">Pedido selecionado</h2>
+          <p id="separacaoManualMeta">Ajuste as quantidades separadas de cada item.</p>
         </div>
-        <button type="button" class="modal-close-button" id="btnFecharSeparacaoModal" aria-label="Fechar separação">
+        <button type="button" class="modal-close-button" id="btnFecharManualSeparacao" aria-label="Fechar">
           <i data-lucide="x"></i>
         </button>
       </header>
 
-      <div class="separacao-modal-body">
+      <div class="separacao-modal-body separacao-manual-body">
+        <section class="pedido-operacao-card">
+          <div>
+            <span class="pedido-label">Progresso</span>
+            <strong id="separacaoManualPercent">0%</strong>
+          </div>
+          <div class="progress-big-track" aria-label="Progresso da separacao manual">
+            <span id="separacaoManualBar"></span>
+          </div>
+          <div class="progress-big-meta">
+            <span id="separacaoManualQtd">0 / 0 separados</span>
+            <span id="separacaoManualFaltante">0 faltantes</span>
+          </div>
+        </section>
+
+        <section class="itens-separacao-list" id="separacaoManualItens"></section>
+      </div>
+
+      <footer class="separacao-modal-footer">
+        <button type="button" class="btn secondary" id="btnCancelarManualSeparacao">Cancelar</button>
+        <button type="button" class="btn primary" id="btnSalvarManualSeparacao">
+          <i data-lucide="save"></i>
+          Salvar
+        </button>
+      </footer>
+    </section>
+  </div>
+
+  <div class="separacao-modal hidden" id="separacaoQrModal" aria-hidden="true">
+    <div class="separacao-modal-backdrop" data-close-separacao-modal></div>
+    <section class="separacao-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="separacaoQrTitulo">
+      <header class="separacao-modal-header">
+        <div>
+          <span class="pedido-label">Leitura por QR Code</span>
+          <h2 id="separacaoQrTitulo">Pedido selecionado</h2>
+          <p id="separacaoQrMeta">Leia os codigos dos itens para confirmar a separacao.</p>
+        </div>
+        <button type="button" class="modal-close-button" id="btnFecharQrSeparacao" aria-label="Fechar">
+          <i data-lucide="x"></i>
+        </button>
+      </header>
+
+      <div class="separacao-modal-body separacao-qr-body">
         <main class="separacao-workspace">
-          <section class="pedido-aberto-card">
-            <div class="pedido-aberto-top">
-              <div>
-                <span class="pedido-label">Pedido aberto</span>
-                <h2 id="separacaoPedidoTitulo">Nenhum pedido selecionado</h2>
-                <p id="separacaoPedidoMeta">Selecione um pedido na fila para iniciar.</p>
-              </div>
-
-              <span class="status-pill" id="separacaoPedidoStatus">Aguardando</span>
+          <section class="pedido-operacao-card">
+            <div>
+              <span class="pedido-label">Progresso</span>
+              <strong id="separacaoQrPercent">0%</strong>
             </div>
-
-            <div class="progresso-geral">
-              <div class="progress-big-value" id="separacaoProgressoPercent">0%</div>
-              <div class="progress-big-track" aria-label="Progresso geral do pedido">
-                <span id="separacaoProgressoBar"></span>
-              </div>
-              <div class="progress-big-meta">
-                <span id="separacaoProgressoQtd">0 / 0 separados</span>
-                <span id="separacaoProgressoFaltante">0 faltantes</span>
-              </div>
+            <div class="progress-big-track" aria-label="Progresso por leitura">
+              <span id="separacaoQrBar"></span>
+            </div>
+            <div class="progress-big-meta">
+              <span id="separacaoQrQtd">0 / 0 separados</span>
+              <span id="separacaoQrFaltante">0 faltantes</span>
             </div>
           </section>
 
-          <section class="itens-separacao-list" id="separacaoItens"></section>
+          <section class="itens-separacao-list qr-list" id="separacaoQrItens"></section>
         </main>
 
         <aside class="scanner-panel">
@@ -94,18 +174,18 @@
 
             <div class="scanner-visual">
               <i data-lucide="scan-barcode"></i>
-              <span></span>
+              <span>Leia ou digite o codigo</span>
             </div>
 
             <label class="scanner-input-label" for="scannerInput">Entrada do leitor</label>
-            <input class="scanner-input el-input" id="scannerInput" autocomplete="off" inputmode="none" placeholder="Passe o código de barras">
+            <input class="scanner-input el-input" id="scannerInput" autocomplete="off" inputmode="none" placeholder="Passe o codigo de barras">
 
             <div class="last-read-card" id="lastReadCard">
-              <span>Última leitura</span>
+              <span>Ultima leitura</span>
               <strong id="lastReadItem">Nenhuma leitura</strong>
               <dl>
                 <div>
-                  <dt>Código</dt>
+                  <dt>Codigo</dt>
                   <dd id="lastReadCode">-</dd>
                 </div>
                 <div>
@@ -113,34 +193,50 @@
                   <dd id="lastReadQty">-</dd>
                 </div>
                 <div>
-                  <dt>Horário</dt>
+                  <dt>Horario</dt>
                   <dd id="lastReadTime">-</dd>
                 </div>
               </dl>
-            </div>
-
-            <div class="scanner-actions">
-              <button type="button" class="btn primary" id="btnFinalizarSeparacao">
-                <i data-lucide="check-circle"></i>
-                Finalizar separação
-              </button>
-              <button type="button" class="btn secondary" id="btnPausarSeparacao">
-                <i data-lucide="pause-circle"></i>
-                Pausar separação
-              </button>
             </div>
           </div>
 
           <div class="scanner-history">
             <div class="panel-heading compact">
               <div>
-                <span>Histórico</span>
+                <span>Historico</span>
                 <strong>Leituras recentes</strong>
               </div>
             </div>
             <div id="separacaoHistorico" class="history-list"></div>
           </div>
         </aside>
+      </div>
+
+      <footer class="separacao-modal-footer">
+        <button type="button" class="btn secondary" id="btnCancelarQrSeparacao">Cancelar</button>
+        <button type="button" class="btn primary" id="btnFinalizarSeparacao">
+          <i data-lucide="check-circle"></i>
+          Finalizar
+        </button>
+      </footer>
+    </section>
+  </div>
+
+  <div class="separacao-modal hidden" id="separacaoUmCliqueModal" aria-hidden="true">
+    <div class="separacao-modal-backdrop" data-close-separacao-modal></div>
+    <section class="separacao-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="separacaoUmCliqueTitulo">
+      <button type="button" class="modal-close-button compact" id="btnFecharUmCliqueSeparacao" aria-label="Fechar">
+        <i data-lucide="x"></i>
+      </button>
+      <span class="pedido-label">1 clique</span>
+      <h2 id="separacaoUmCliqueTitulo">Concluir separacao?</h2>
+      <p id="separacaoUmCliqueMeta">Tem certeza que deseja marcar todos os itens como separados?</p>
+      <div class="separacao-confirm-actions">
+        <button type="button" class="btn secondary" id="btnCancelarUmCliqueSeparacao">Nao</button>
+        <button type="button" class="btn primary" id="btnConfirmarUmCliqueSeparacao">
+          <i data-lucide="check-check"></i>
+          Sim
+        </button>
       </div>
     </section>
   </div>

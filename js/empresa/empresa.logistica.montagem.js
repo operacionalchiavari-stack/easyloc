@@ -1,4 +1,4 @@
-(function(){
+﻿(function(){
   async function render(container, state) {
     container.innerHTML = `
       <div style="
@@ -13,7 +13,7 @@
         <div style="
           font-weight:600;
           font-size:15px;
-          color:#0f2a44;
+          color:#2E1F1F;
           min-width:220px;
         ">
           Categorias de Montagem
@@ -27,7 +27,7 @@
 
           <div>
             <label style="font-size:11px;color:#64748b;">
-              Montagem mín (R$)
+              Montagem mÃ­n (R$)
             </label>
             <input id="montagemMinimaInput"
               type="number"
@@ -43,7 +43,7 @@
 
           <div>
             <label style="font-size:11px;color:#64748b;">
-              Montagem máx (R$)
+              Montagem mÃ¡x (R$)
             </label>
             <input id="montagemMaximaInput"
               type="number"
@@ -59,7 +59,7 @@
 
           <div>
             <label style="font-size:11px;color:#64748b;">
-              Diária (R$)
+              DiÃ¡ria (R$)
             </label>
             <input id="diariaMontadorInput"
               type="number"
@@ -81,7 +81,7 @@
             padding:8px 16px;
             border-radius:12px;
             border:none;
-            background:#ff6a00;
+            background:#2E1F1F;
             color:#ffffff;
             font-weight:600;
             cursor:pointer;
@@ -108,7 +108,7 @@
           font-weight:600;
           color:#64748b;
         ">
-          <div>Combinação</div>
+          <div>CombinaÃ§Ã£o</div>
           <div>Qtd Montadores</div>
           <div>Ordem</div>
           <div>Ativo</div>
@@ -121,7 +121,7 @@
   }
 
   async function bind(container, state, api) {
-    console.log('🔷 [MONTAGEM] bind START - empresaId:', state.empresaId, 'container:', container.id);
+    console.log('ðŸ”· [MONTAGEM] bind START - empresaId:', state.empresaId, 'container:', container.id);
     
     container.querySelector("#montagemMinimaInput").value =
       state.config?.montagem_minima ?? 0;
@@ -131,17 +131,17 @@
       state.config?.diaria_montador ?? 0;
 
     const listaEl = container.querySelector("#listaCategoriasMontagem");
-    console.log('🔷 [MONTAGEM] listaEl found:', !!listaEl);
+    console.log('ðŸ”· [MONTAGEM] listaEl found:', !!listaEl);
 
 async function loadCategorias() {
-    console.log('🟢 [loadCategorias] START - empresaId:', state.empresaId);
+    console.log('ðŸŸ¢ [loadCategorias] START - empresaId:', state.empresaId);
 
   let resp;
   try {
     resp = await api.listCategoriasMontagem(state.empresaId);
-    console.log('🟢 [loadCategorias] resp recebido:', resp);
+    console.log('ðŸŸ¢ [loadCategorias] resp recebido:', resp);
   } catch (e) {
-    console.error("❌ [loadCategorias] Exceção:", e);
+    console.error("âŒ [loadCategorias] ExceÃ§Ã£o:", e);
     listaEl.innerHTML = `
       <div style="padding:20px;text-align:center;color:#ef4444;font-weight:600;">
         Erro ao carregar categorias (ver console).
@@ -152,16 +152,16 @@ async function loadCategorias() {
 
   const cats  = Array.isArray(resp) ? resp : (resp?.data || []);
   const error = Array.isArray(resp) ? null : (resp?.error || null);
-  console.log('🟢 [loadCategorias] Processado: cats.length =', cats?.length || 0, ', error =', error);
+  console.log('ðŸŸ¢ [loadCategorias] Processado: cats.length =', cats?.length || 0, ', error =', error);
 
-  // Se estiver vindo erro de permissão/RLS, você vai ver aqui
+  // Se estiver vindo erro de permissÃ£o/RLS, vocÃª vai ver aqui
   if (error) {
-    console.error("❌ [loadCategorias] Erro detectado:", error);
+    console.error("âŒ [loadCategorias] Erro detectado:", error);
     listaEl.innerHTML = `
       <div style="padding:20px;text-align:center;color:#ef4444;">
-        Não foi possível listar as categorias. <br>
+        NÃ£o foi possÃ­vel listar as categorias. <br>
         <span style="color:#64748b;font-size:12px;">
-          Verifique permissão/RLS da tabela (ver console).
+          Verifique permissÃ£o/RLS da tabela (ver console).
         </span>
       </div>
     `;
@@ -171,7 +171,7 @@ async function loadCategorias() {
   listaEl.innerHTML = "";
 
   if (!cats || cats.length === 0) {
-    console.log('⚠️ [loadCategorias] Nenhuma categoria encontrada');
+    console.log('âš ï¸ [loadCategorias] Nenhuma categoria encontrada');
     listaEl.innerHTML = `
       <div style="padding:20px;text-align:center;color:#64748b;">
         Nenhuma categoria cadastrada.
@@ -180,7 +180,7 @@ async function loadCategorias() {
     return;
   }
 
-  console.log('✅ [loadCategorias] Renderizando', cats.length, 'categorias');
+  console.log('âœ… [loadCategorias] Renderizando', cats.length, 'categorias');
 
   cats.forEach(cat => {
     const row = document.createElement("div");
@@ -223,7 +223,7 @@ async function loadCategorias() {
         ">
           ${nome}
           <span style="
-            background:#0f2a44;
+            background:#2E1F1F;
             color:#fff;
             padding:2px 6px;
             border-radius:6px;
@@ -285,7 +285,7 @@ listaEl.querySelectorAll(".toggleMontagemAtivo").forEach(el => {
     const ativoAtual = this.dataset.ativo === "1";
     const novoAtivo = !ativoAtual;
 
-    console.log("🟦 [MONTAGEM] toggle click:", { id, ativoAtual, novoAtivo });
+    console.log("ðŸŸ¦ [MONTAGEM] toggle click:", { id, ativoAtual, novoAtivo });
 
     // atualiza UI imediatamente
     this.dataset.ativo = novoAtivo ? "1" : "0";
@@ -298,7 +298,7 @@ listaEl.querySelectorAll(".toggleMontagemAtivo").forEach(el => {
     const upd = await api.updateCategoriaMontagem(id, { ativo: novoAtivo });
 
     if (upd?.error) {
-      console.error("❌ [MONTAGEM] erro update:", upd.error);
+      console.error("âŒ [MONTAGEM] erro update:", upd.error);
       if (typeof window.alerta === "function") window.alerta("Erro ao atualizar status (ver console).", "Erro", "erro");
       else alert("Erro ao atualizar status (ver console).");
 
@@ -309,7 +309,7 @@ listaEl.querySelectorAll(".toggleMontagemAtivo").forEach(el => {
       return;
     }
 
-    // garante consistência
+    // garante consistÃªncia
     await loadCategorias();
   });
 });
@@ -325,7 +325,7 @@ listaEl.querySelectorAll(".toggleMontagemAtivo").forEach(el => {
         row.style.gridTemplateColumns = "2fr 1fr 80px 160px";
         row.style.padding = "14px 18px";
         row.style.borderTop = "1px solid #e5e7eb";
-        row.style.background = "#fff7ed";
+        row.style.background = "#f4f1ef";
         row.style.alignItems = "center";
 row.innerHTML = `
 <div style="
@@ -354,7 +354,7 @@ row.innerHTML = `
           height:22px;
           border-radius:6px;
           cursor:pointer;
-        ">−</button>
+        ">âˆ’</button>
 
       <input
         type="number"

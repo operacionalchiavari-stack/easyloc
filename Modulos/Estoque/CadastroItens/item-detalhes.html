@@ -1,12 +1,16 @@
 <div class="item-detail-page el-page" data-module-root>
   <header class="item-detail-top">
-    <div>
-      <div class="item-detail-breadcrumb">Estoque &gt; Itens &gt; Detalhes do Item</div>
+    <div class="item-detail-heading-row">
       <button type="button" class="btn btn-secondary item-back-btn" id="btnVoltarItens">
         <i data-lucide="arrow-left"></i>
-        Voltar para Itens
+        Voltar
       </button>
+      <h1 class="item-detail-heading" id="itemDetailTitle">Detalhes do Item</h1>
     </div>
+    <button type="button" class="btn btn-primary item-save-top" id="btnSalvarItemDetalhes">
+      <i data-lucide="save"></i>
+      Salvar
+    </button>
   </header>
 
   <input type="hidden" id="itensId">
@@ -15,8 +19,9 @@
 
   <div class="item-detail-shell">
     <aside class="item-profile-card">
-      <section class="item-profile-photo">
-        <div class="foto-guia-container">
+      <section class="item-photo-card item-photo-card-primary">
+        <div class="item-photo-card-title">Foto principal</div>
+        <div class="foto-guia-container item-photo-frame-primary">
           <div class="foto-preview-wrapper">
             <img
               id="itensFotoPreview"
@@ -30,63 +35,57 @@
           <div class="foto-guia"></div>
         </div>
 
-        <div class="foto-controles">
-          <button class="btn-zoom" type="button" onmousedown="itens_startZoom(1)" onmouseup="itens_stopZoom()" onmouseleave="itens_stopZoom()">+</button>
-          <button class="btn-foto" type="button" onclick="itens_selecionarFoto()">Alterar foto</button>
-          <button class="btn-zoom" type="button" onmousedown="itens_startZoom(-1)" onmouseup="itens_stopZoom()" onmouseleave="itens_stopZoom()">-</button>
+        <div class="item-photo-actions">
+          <button class="btn-foto-icon" type="button" title="Aumentar zoom" aria-label="Aumentar zoom" onmousedown="itens_startZoom(1)" onmouseup="itens_stopZoom()" onmouseleave="itens_stopZoom()">+</button>
+          <button class="btn-foto-action" type="button" onclick="itens_selecionarFoto()">Alterar</button>
+          <button class="btn-foto-action" type="button" onclick="itens_selecionarFoto()">Adicionar</button>
+          <button class="btn-foto-action danger" type="button" onclick="itens_resetarFoto()">Remover</button>
+          <button class="btn-foto-icon" type="button" title="Diminuir zoom" aria-label="Diminuir zoom" onmousedown="itens_startZoom(-1)" onmouseup="itens_stopZoom()" onmouseleave="itens_stopZoom()">-</button>
         </div>
       </section>
 
-      <section class="item-profile-main">
-        <h1 id="itemDetailTitle">Detalhes do Item</h1>
-        <span class="item-code-pill" id="itemDetailCode">Novo item</span>
-
-        <div class="item-profile-controls">
-          <div class="item-control-group">
-            <span>Tipo</span>
-            <div class="item-tipo-toggle-row">
-              <button type="button" class="tipo-btn active" onclick="itens_setTipo('Item', this)">Item</button>
-              <button type="button" class="tipo-btn" onclick="itens_setTipo('Componente', this)">Componente</button>
-            </div>
+      <section class="item-photo-card item-3d-compact-card" id="item3DViewerCard">
+        <div class="item-photo-card-title">Visualizador 3D</div>
+        <input type="file" id="item3DInput" accept=".glb,model/gltf-binary" hidden>
+        <div class="item-3d-canvas-host item-3d-canvas-compact" id="item3DCanvasHost">
+          <div class="item-3d-empty item-3d-empty-compact" id="item3DEmpty">
+            <i data-lucide="box"></i>
+            <p>Envie um GLB para visualizar.</p>
           </div>
-
-          <div class="item-control-group">
-            <span>Status</span>
-            <div class="item-status-toggle-row">
-              <button type="button" class="status-btn ativo active" data-ativo="true" onclick="itens_setStatus(this)">Ativo</button>
-              <button type="button" class="status-btn inativo" data-ativo="false" onclick="itens_setStatus(this)">Inativo</button>
-            </div>
-          </div>
+          <div class="item-3d-loading" id="item3DLoading" hidden>Carregando...</div>
         </div>
-      </section>
 
-      <section class="item-profile-section">
-        <h2>Resumo</h2>
-        <dl class="item-profile-list">
-          <div><dt>Categoria</dt><dd id="itemResumoCategoria">-</dd></div>
-          <div><dt>Familia</dt><dd id="itemResumoFamilia">-</dd></div>
-          <div><dt>Setor de estoque</dt><dd id="itemResumoSetor">-</dd></div>
-          <div><dt>Dimensoes</dt><dd id="itemResumoDimensoes">-</dd></div>
-          <div><dt>Volume cubico</dt><dd id="itemResumoVolume">-</dd></div>
-          <div><dt>Codigo</dt><dd id="itemResumoCodigo">-</dd></div>
-        </dl>
-        <span class="item-hidden-summary" id="itemResumoMaterial">-</span>
-        <span class="item-hidden-summary" id="itemResumoCor">-</span>
-      </section>
-
-      <section class="item-profile-section item-values-card">
-        <h2>Valores</h2>
-        <div class="item-values-list">
-          <div><span>Custo</span><strong id="itemResumoCusto">R$ 0,00</strong></div>
-          <div><span>Locacao</span><strong id="itemResumoLocacao">R$ 0,00</strong></div>
-          <div><span>Reposicao</span><strong id="itemResumoReposicao">R$ 0,00</strong></div>
+        <div class="item-3d-compact-meta">
+          <span class="item-3d-status sem-modelo" id="item3DStatus">Sem modelo</span>
+          <span id="item3DNome">-</span>
         </div>
+
+        <div class="item-3d-compact-actions">
+          <button type="button" title="Enviar GLB" aria-label="Enviar GLB" onclick="itens_3d_openFile()">
+            <i data-lucide="upload"></i>
+          </button>
+          <button type="button" title="Girar automaticamente" aria-label="Girar automaticamente" id="item3DRotateBtn" onclick="itens_3d_toggleRotate()">
+            <i data-lucide="rotate-3d"></i>
+          </button>
+          <button type="button" title="Resetar camera" aria-label="Resetar camera" onclick="itens_3d_resetCamera()">
+            <i data-lucide="scan"></i>
+          </button>
+          <button type="button" title="Tela cheia" aria-label="Tela cheia" onclick="itens_3d_fullscreen()">
+            <i data-lucide="maximize-2"></i>
+          </button>
+          <button type="button" class="danger" title="Remover modelo" aria-label="Remover modelo" onclick="itens_3d_remove()">
+            <i data-lucide="trash-2"></i>
+          </button>
+        </div>
+
+        <span class="item-hidden-summary" id="item3DFormato">GLB</span>
+        <span class="item-hidden-summary" id="item3DTamanho">-</span>
+        <span class="item-hidden-summary" id="item3DOrigem">-</span>
+        <span class="item-hidden-summary" id="item3DCriado">-</span>
+        <span class="item-hidden-summary" id="item3DAtualizado">-</span>
       </section>
 
-      <button type="button" class="btn btn-primary item-save-side" id="btnSalvarItemDetalhes">
-        <i data-lucide="save"></i>
-        Salvar alteracoes
-      </button>
+      <span class="item-hidden-summary" id="itemDetailCode">Novo item</span>
     </aside>
 
     <section class="item-detail-workspace">
@@ -98,10 +97,6 @@
         <button type="button" class="item-tab" data-item-tab="galeria">
           <i data-lucide="image"></i>
           Galeria
-        </button>
-        <button type="button" class="item-tab" data-item-tab="visualizacao3d">
-          <i data-lucide="box"></i>
-          Visualizacao 3D
         </button>
         <button type="button" class="item-tab" data-item-tab="kits">
           <i data-lucide="package-plus"></i>
@@ -119,6 +114,24 @@
 
       <main class="item-detail-panels">
         <section class="item-tab-panel active" data-item-panel="dados">
+          <section class="item-state-strip" aria-label="Tipo e status do item">
+            <div class="item-control-group">
+              <span>Tipo</span>
+              <div class="item-tipo-toggle-row">
+                <button type="button" class="tipo-btn active" onclick="itens_setTipo('Item', this)">Item</button>
+                <button type="button" class="tipo-btn" onclick="itens_setTipo('Componente', this)">Componente</button>
+              </div>
+            </div>
+
+            <div class="item-control-group">
+              <span>Status</span>
+              <div class="item-status-toggle-row">
+                <button type="button" class="status-btn ativo active" data-ativo="true" onclick="itens_setStatus(this)">Ativo</button>
+                <button type="button" class="status-btn inativo" data-ativo="false" onclick="itens_setStatus(this)">Inativo</button>
+              </div>
+            </div>
+          </section>
+
           <div class="item-form-grid">
             <article class="item-card">
               <h3>Informacoes Gerais</h3>
@@ -218,48 +231,117 @@
         </section>
 
         <section class="item-tab-panel" data-item-panel="galeria">
-          <article class="item-card item-empty-state">
-            <i data-lucide="images"></i>
-            <h3>Galeria do item</h3>
-            <p>Area preparada para fotos ambientadas e fotos reais de eventos.</p>
-            <button type="button" class="btn btn-secondary">Adicionar fotos</button>
-          </article>
-        </section>
+          <article class="item-card item-gallery-card">
+            <div class="item-card-header-inline">
+              <div>
+                <h3>Fotos de detalhe</h3>
+                <p>Use estas imagens para mostrar angulos ou acabamentos do item.</p>
+              </div>
+            </div>
 
-        <section class="item-tab-panel" data-item-panel="visualizacao3d">
-          <div class="item-3d-layout">
-            <article class="item-card item-3d-viewer">
-              <div class="item-3d-toolbar">
-                <button type="button" class="btn btn-secondary">Girar</button>
-                <button type="button" class="btn btn-secondary">Zoom</button>
-                <button type="button" class="btn btn-secondary">Mover</button>
-                <button type="button" class="btn btn-secondary">Resetar camera</button>
+            <div class="item-gallery-grid item-detail-gallery-grid">
+              <section class="item-photo-card item-gallery-photo-card">
+                <div class="item-photo-card-title">Detalhe 01</div>
+                <div class="item-detail-photo-frame item-gallery-photo-frame">
+                  <img
+                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-item-photo-preview="detalhe_01"
+                    alt="Detalhe 01"
+                  >
+                  <input type="file" accept="image/*" data-item-photo-input="detalhe_01" hidden>
+                </div>
+                <div class="item-photo-actions">
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('detalhe_01')">Alterar</button>
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('detalhe_01')">Adicionar</button>
+                  <button class="btn-foto-action danger" type="button" onclick="itens_removerFotoSlot('detalhe_01')">Remover</button>
+                </div>
+              </section>
+
+              <section class="item-photo-card item-gallery-photo-card">
+                <div class="item-photo-card-title">Detalhe 02</div>
+                <div class="item-detail-photo-frame item-gallery-photo-frame">
+                  <img
+                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-item-photo-preview="detalhe_02"
+                    alt="Detalhe 02"
+                  >
+                  <input type="file" accept="image/*" data-item-photo-input="detalhe_02" hidden>
+                </div>
+                <div class="item-photo-actions">
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('detalhe_02')">Alterar</button>
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('detalhe_02')">Adicionar</button>
+                  <button class="btn-foto-action danger" type="button" onclick="itens_removerFotoSlot('detalhe_02')">Remover</button>
+                </div>
+              </section>
+            </div>
+          </article>
+
+          <article class="item-card item-gallery-card">
+            <div class="item-card-header-inline">
+              <div>
+                <h3>Galeria do item</h3>
+                <p>Adicione ate 3 fotos complementares para este item.</p>
               </div>
-              <div class="item-3d-empty">
-                <i data-lucide="box"></i>
-                <h3>Este item ainda nao possui modelo 3D.</h3>
-                <p>O viewer esta preparado para arquivos GLB, GLTF, OBJ ou FBX.</p>
-              </div>
-            </article>
-            <aside class="item-card item-3d-side">
-              <h3>Modelo 3D</h3>
-              <dl>
-                <div><dt>Status do modelo</dt><dd>Sem modelo</dd></div>
-                <div><dt>Nome do arquivo</dt><dd>-</dd></div>
-                <div><dt>Formato</dt><dd>GLB / GLTF / OBJ / FBX</dd></div>
-                <div><dt>Origem</dt><dd>-</dd></div>
-                <div><dt>Criado em</dt><dd>-</dd></div>
-                <div><dt>Ultima atualizacao</dt><dd>-</dd></div>
-              </dl>
-              <div class="item-3d-actions">
-                <button type="button" class="btn btn-primary">Gerar modelo 3D com IA</button>
-                <button type="button" class="btn btn-secondary">Enviar arquivo 3D</button>
-                <button type="button" class="btn btn-secondary">Substituir modelo</button>
-                <button type="button" class="btn btn-secondary danger-soft">Remover modelo</button>
-                <button type="button" class="btn btn-secondary">Tela cheia</button>
-              </div>
-            </aside>
-          </div>
+            </div>
+
+            <div class="item-gallery-grid">
+              <section class="item-photo-card item-gallery-photo-card">
+                <div class="item-photo-card-title">Galeria 01</div>
+                <div class="item-detail-photo-frame item-gallery-photo-frame">
+                  <img
+                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-item-photo-preview="galeria_01"
+                    alt="Galeria 01"
+                  >
+                  <input type="file" accept="image/*" data-item-photo-input="galeria_01" hidden>
+                </div>
+                <div class="item-photo-actions">
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('galeria_01')">Alterar</button>
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('galeria_01')">Adicionar</button>
+                  <button class="btn-foto-action danger" type="button" onclick="itens_removerFotoSlot('galeria_01')">Remover</button>
+                </div>
+              </section>
+
+              <section class="item-photo-card item-gallery-photo-card">
+                <div class="item-photo-card-title">Galeria 02</div>
+                <div class="item-detail-photo-frame item-gallery-photo-frame">
+                  <img
+                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-item-photo-preview="galeria_02"
+                    alt="Galeria 02"
+                  >
+                  <input type="file" accept="image/*" data-item-photo-input="galeria_02" hidden>
+                </div>
+                <div class="item-photo-actions">
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('galeria_02')">Alterar</button>
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('galeria_02')">Adicionar</button>
+                  <button class="btn-foto-action danger" type="button" onclick="itens_removerFotoSlot('galeria_02')">Remover</button>
+                </div>
+              </section>
+
+              <section class="item-photo-card item-gallery-photo-card">
+                <div class="item-photo-card-title">Galeria 03</div>
+                <div class="item-detail-photo-frame item-gallery-photo-frame">
+                  <img
+                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    data-item-photo-preview="galeria_03"
+                    alt="Galeria 03"
+                  >
+                  <input type="file" accept="image/*" data-item-photo-input="galeria_03" hidden>
+                </div>
+                <div class="item-photo-actions">
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('galeria_03')">Alterar</button>
+                  <button class="btn-foto-action" type="button" onclick="itens_selecionarFotoSlot('galeria_03')">Adicionar</button>
+                  <button class="btn-foto-action danger" type="button" onclick="itens_removerFotoSlot('galeria_03')">Remover</button>
+                </div>
+              </section>
+            </div>
+          </article>
         </section>
 
         <section class="item-tab-panel" data-item-panel="kits">

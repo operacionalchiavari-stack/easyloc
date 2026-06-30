@@ -1,6 +1,7 @@
 import { getEmpresaAtualId } from "./itens.api.mjs";
 import "./itens.modal.mjs";
 import "./itens.foto.mjs";
+import "./itens.3d.mjs";
 
 const supabase = window.supabaseClient;
 const urlParams = new URLSearchParams(window.location.search);
@@ -79,6 +80,8 @@ function resetarFormularioNovo(){
   }
 
   window.itens_resetarFoto?.();
+  window.itens_resetarFotosAdicionais?.();
+  window.itens_3d_reset?.();
   window.itens_setQrVisual?.(null);
 
   document.querySelectorAll(".item-tipo-toggle-row .tipo-btn").forEach((btn) => btn.classList.remove("active"));
@@ -116,6 +119,9 @@ function preencherFormulario(item){
 
   if(item.foto_url) window.itens_carregarFotoExistente?.(item.foto_url);
   else window.itens_resetarFoto?.();
+
+  window.itens_carregarFotosAdicionais?.(item.id);
+  window.itens_3d_init?.({ itemId: item.id, empresaId: state.empresaId });
 
   document.querySelectorAll(".item-tipo-toggle-row .tipo-btn").forEach((btn) => btn.classList.remove("active"));
   const tipoIndex = item.tipo === "Componente" ? 1 : 0;
@@ -328,6 +334,7 @@ export async function initItemDetalhes(){
 }
 
 export function destroyItemDetalhes(){
+  window.itens_3d_destroy?.();
   window.__ITEM_DETALHE_ID = null;
   window.__ITEM_DETALHE_MODO = null;
 }

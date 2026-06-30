@@ -57,7 +57,7 @@ async function iniciarBoot() {
       logoContainer.innerHTML = "";
       logoContainer.appendChild(img);
     } else {
-      logoContainer.innerHTML = `<strong>${empresa?.nome || "EasyLoc"}</strong>`;
+      logoContainer.innerHTML = `<strong>${empresa?.nome || "Acervo"}</strong>`;
     }
   }
 

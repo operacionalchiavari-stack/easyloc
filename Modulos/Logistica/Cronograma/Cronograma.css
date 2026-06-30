@@ -1,8 +1,8 @@
-:root {
+﻿:root {
   --primary: #123a6f;
   --primary-dark: #0b1f3a;
   --primary-soft: #eaf2fb;
-  --accent: #ff6a00;
+  --accent: #2E1F1F;
   --card: #ffffff;
   --border: #d9e2ec;
   --text: #0f172a;
@@ -154,7 +154,7 @@ table.board {
   top: 0;
   z-index: 3;
 
-  background: linear-gradient(180deg, #0b1f33, #081a2b);
+  background: linear-gradient(180deg, #0b1f33, #1f1515);
   color: #fff;
 
   padding: 16px 18px;
@@ -264,7 +264,7 @@ table.board {
 .evento-tags span {
   border: 1px solid #fed7aa;
   border-radius: 999px;
-  background: #fff7ed;
+  background: #f4f1ef;
   color: #c2410c;
   font-size: 10px;
   font-weight: 700;
@@ -656,7 +656,7 @@ table.board {
   margin-top: 8px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: #fff7ed;
+  background: #f4f1ef;
   color: #c2410c;
   font-size: 12px;
   font-style: normal;

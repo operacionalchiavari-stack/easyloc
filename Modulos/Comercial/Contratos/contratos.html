@@ -42,8 +42,31 @@
       <label class="contratos-editor-area">
         <span>Conteúdo do contrato</span>
         <div class="contratos-editor-highlight-wrap">
-          <pre class="contratos-editor-highlight" id="contratoConteudoHighlight" aria-hidden="true"></pre>
-          <textarea id="contratoConteudo" spellcheck="true"></textarea>
+          <div class="contratos-inline-toolbar" id="contratoEditorToolbar" hidden>
+            <button type="button" data-contrato-format="bold" title="Negrito" aria-label="Negrito">
+              <i data-lucide="bold"></i>
+              <span>B</span>
+            </button>
+            <button type="button" data-contrato-format="italic" title="Italico" aria-label="Italico">
+              <i data-lucide="italic"></i>
+              <span>I</span>
+            </button>
+            <span class="contratos-toolbar-divider"></span>
+            <button type="button" class="contratos-color-btn" data-contrato-color="#1d4ed8" title="Azul" aria-label="Azul">
+              <span style="--contrato-color:#1d4ed8"></span>
+            </button>
+            <button type="button" class="contratos-color-btn" data-contrato-color="#15803d" title="Verde" aria-label="Verde">
+              <span style="--contrato-color:#15803d"></span>
+            </button>
+            <button type="button" class="contratos-color-btn" data-contrato-color="#b91c1c" title="Vermelho" aria-label="Vermelho">
+              <span style="--contrato-color:#b91c1c"></span>
+            </button>
+            <button type="button" class="contratos-color-btn" data-contrato-color="#374151" title="Neutro" aria-label="Neutro">
+              <span style="--contrato-color:#374151"></span>
+            </button>
+          </div>
+          <div class="contratos-rich-editor" id="contratoConteudoEditor" contenteditable="true" spellcheck="true"></div>
+          <textarea id="contratoConteudo" hidden></textarea>
         </div>
       </label>
 

@@ -130,43 +130,60 @@
 <div class="rh-modal" id="rhColaboradorModal" aria-hidden="true">
   <div class="rh-modal-box rh-modal-xl">
     <div class="rh-modal-header">
-      <div>
+      <div class="rh-modal-title">
         <span class="rh-eyebrow">Colaborador</span>
         <h2 id="rhColModalTitle">Novo colaborador</h2>
+      </div>
+      <div class="rh-inner-tabs">
+        <button class="active" type="button" data-coltab="dados">Dados pessoais</button>
+        <button type="button" data-coltab="documentos">Documentos</button>
+        <button type="button" data-coltab="historico">Historico</button>
       </div>
       <button class="rh-close" type="button" data-close-modal="rhColaboradorModal">x</button>
     </div>
 
     <input type="hidden" id="rhColId">
 
-    <div class="rh-inner-tabs">
-      <button class="active" type="button" data-coltab="dados">Dados pessoais</button>
-      <button type="button" data-coltab="documentos">Documentos</button>
-      <button type="button" data-coltab="historico">Historico</button>
-    </div>
-
     <div class="rh-col-panel active" data-colpanel="dados">
-      <div class="rh-form-grid three">
-        <label>Nome Completo<input class="el-input" id="rhNomeCompleto"></label>
-        <label>CPF<input class="el-input" id="rhCpf"></label>
-        <label>RG<input class="el-input" id="rhRg"></label>
-        <label>Data Nascimento<input class="el-input" id="rhDataNascimento" type="date"></label>
-        <label>Telefone<input class="el-input" id="rhTelefone"></label>
-        <label>WhatsApp<input class="el-input" id="rhWhatsapp"></label>
-        <label>Email<input class="el-input" id="rhEmail" type="email"></label>
-        <label>Setor<input class="el-input" id="rhSetor" placeholder="Ex: Logistica"></label>
-        <label>Funcao<input class="el-input" id="rhFuncao" placeholder="Ex: Montador"></label>
-        <label>Data Admissao<input class="el-input" id="rhDataAdmissao" type="date"></label>
-        <label>Status
-          <select class="el-select" id="rhStatus">
-            <option>Ativo</option>
-            <option>Ferias</option>
-            <option>Afastado</option>
-            <option>Desligado</option>
-          </select>
-        </label>
-        <label class="span-2">Endereco<input class="el-input" id="rhEndereco"></label>
-        <label class="span-3">Observacoes<textarea class="el-input" id="rhObservacoes" rows="3"></textarea></label>
+      <div class="rh-colaborador-layout">
+        <aside class="rh-photo-card">
+          <span class="rh-photo-title">Foto do colaborador</span>
+          <button class="rh-photo-drop" id="rhPhotoDrop" type="button">
+            <input id="rhFotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <span class="rh-photo-preview" id="rhFotoPreview">
+              <i data-lucide="user-round"></i>
+            </span>
+            <strong id="rhFotoLabel">Selecionar foto</strong>
+            <small>JPG, PNG ou WEBP ate 5 MB</small>
+          </button>
+          <div class="rh-photo-actions">
+            <button class="btn secondary" type="button" id="rhAlterarFoto">Alterar</button>
+            <button class="btn danger" type="button" id="rhRemoverFoto">Remover</button>
+          </div>
+        </aside>
+
+        <div class="rh-form-grid three">
+          <label>Nome Completo<input class="el-input" id="rhNomeCompleto"></label>
+          <label>CPF<input class="el-input" id="rhCpf"></label>
+          <label>RG<input class="el-input" id="rhRg"></label>
+          <label>Data Nascimento<input class="el-input" id="rhDataNascimento" type="date"></label>
+          <label>Telefone<input class="el-input" id="rhTelefone"></label>
+          <label>WhatsApp<input class="el-input" id="rhWhatsapp"></label>
+          <label>Email<input class="el-input" id="rhEmail" type="email"></label>
+          <label>Setor<input class="el-input" id="rhSetor" placeholder="Ex: Logistica"></label>
+          <label>Funcao<input class="el-input" id="rhFuncao" placeholder="Ex: Montador"></label>
+          <label>Data Admissao<input class="el-input" id="rhDataAdmissao" type="date"></label>
+          <label>Status
+            <select class="el-select" id="rhStatus">
+              <option>Ativo</option>
+              <option>Ferias</option>
+              <option>Afastado</option>
+              <option>Desligado</option>
+            </select>
+          </label>
+          <label class="span-2">Endereco<input class="el-input" id="rhEndereco"></label>
+          <label class="span-3">Observacoes<textarea class="el-input" id="rhObservacoes" rows="3"></textarea></label>
+        </div>
       </div>
     </div>
 

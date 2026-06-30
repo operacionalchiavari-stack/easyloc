@@ -1,4 +1,4 @@
-.perm-page {
+﻿.perm-page {
   padding: 32px;
   color: #06213a;
 }
@@ -96,19 +96,19 @@
   align-items: center;
   text-align: left;
   cursor: pointer;
-  color: #0f2a44;
+  color: #2E1F1F;
   transition: .18s ease;
 }
 
 .perm-steps button:hover {
-  border-color: #ff6a00;
-  background: #fff7ed;
+  border-color: #2E1F1F;
+  background: #f4f1ef;
 }
 
 .perm-steps button.active {
-  background: #0f2a44;
+  background: #2E1F1F;
   color: #fff;
-  border-color: #0f2a44;
+  border-color: #2E1F1F;
 }
 
 .perm-steps button.done {
@@ -124,12 +124,12 @@
   display: grid;
   place-items: center;
   background: #eef4fb;
-  color: #0f2a44;
+  color: #2E1F1F;
   font-weight: 800;
 }
 
 .perm-steps button.active span {
-  background: #ff6a00;
+  background: #2E1F1F;
   color: #fff;
 }
 
@@ -163,7 +163,7 @@
   flex: 0 0 auto;
   border-radius: 16px;
   background: #eef4fb;
-  color: #0f2a44;
+  color: #2E1F1F;
   display: grid;
   place-items: center;
   font-weight: 800;
@@ -247,7 +247,7 @@
   border: 1px solid #dbe3ec;
   border-radius: 12px;
   background: #fff;
-  color: #0f2a44;
+  color: #2E1F1F;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -256,9 +256,9 @@
 
 .perm-icon-btn:hover,
 .perm-close:hover {
-  border-color: #ff6a00;
-  color: #ff6a00;
-  background: #fff7ed;
+  border-color: #2E1F1F;
+  color: #2E1F1F;
+  background: #f4f1ef;
 }
 
 .perm-user-list {
@@ -282,13 +282,13 @@
   align-items: center;
   gap: 12px;
   text-align: left;
-  color: #0f2a44;
+  color: #2E1F1F;
 }
 
 .perm-user-card:hover,
 .perm-user-card.active {
-  border-color: #ff6a00;
-  background: #fff7ed;
+  border-color: #2E1F1F;
+  background: #f4f1ef;
 }
 
 .perm-user-card strong {
@@ -306,7 +306,7 @@
 .perm-guidance-card {
   margin-top: 18px;
   border: 1px dashed #ffb27a;
-  background: #fff7ed;
+  background: #f4f1ef;
   border-radius: 14px;
   padding: 14px;
 }
@@ -329,15 +329,15 @@
   border-radius: 16px;
   background: #fff;
   padding: 16px;
-  color: #0f2a44;
+  color: #2E1F1F;
   text-align: left;
   cursor: pointer;
   transition: .18s ease;
 }
 
 .perm-profile-grid button:hover {
-  border-color: #ff6a00;
-  background: #fff7ed;
+  border-color: #2E1F1F;
+  background: #f4f1ef;
 }
 
 .perm-profile-grid strong {
@@ -408,14 +408,14 @@
   border-top: 1px solid #edf1f5;
   background: #fff;
   padding: 12px;
-  color: #0f2a44;
+  color: #2E1F1F;
   text-align: left;
   cursor: pointer;
 }
 
 .perm-submodule.active {
-  background: #fff7ed;
-  box-shadow: inset 3px 0 0 #ff6a00;
+  background: #f4f1ef;
+  box-shadow: inset 3px 0 0 #2E1F1F;
 }
 
 .perm-submodule span {
@@ -428,7 +428,7 @@
 .perm-dirty-badge {
   border-radius: 999px;
   padding: 6px 10px;
-  background: #fff7ed;
+  background: #f4f1ef;
   color: #c2410c;
   font-size: 12px;
   font-weight: 700;
@@ -451,7 +451,7 @@
 .perm-levels button {
   border: 0;
   background: transparent;
-  color: #0f2a44;
+  color: #2E1F1F;
   border-radius: 10px;
   padding: 11px 14px;
   font-size: 14px;
@@ -461,7 +461,7 @@
 }
 
 .perm-levels button.active {
-  background: #0f2a44;
+  background: #2E1F1F;
   color: #fff;
 }
 
@@ -483,7 +483,7 @@
 }
 
 .perm-row.header {
-  background: #0f2a44;
+  background: #2E1F1F;
   color: #fff;
   font-size: 12px;
   font-weight: 800;
@@ -527,7 +527,7 @@
 }
 
 .perm-toggle input:checked + span {
-  background: #ff6a00;
+  background: #2E1F1F;
 }
 
 .perm-toggle input:checked + span::after {
@@ -548,7 +548,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #0f2a44;
+  background: #2E1F1F;
   color: #fff;
   text-align: left;
   font-size: 12px;

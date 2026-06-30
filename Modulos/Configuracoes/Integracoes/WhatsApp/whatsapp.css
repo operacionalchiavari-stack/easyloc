@@ -1,4 +1,4 @@
-.zapi-page {
+﻿.zapi-page {
   width: 100%;
   color: var(--el-color-text, #0f172a);
 }
@@ -19,7 +19,7 @@
 
 .zapi-header h1 {
   margin: 0;
-  color: var(--el-color-primary, #0f2a44);
+  color: var(--el-color-primary, #2E1F1F);
   font-size: 30px;
   line-height: 1.08;
   letter-spacing: 0;
@@ -82,7 +82,7 @@
 }
 
 .zapi-card-head strong {
-  color: var(--el-color-primary, #0f2a44);
+  color: var(--el-color-primary, #2E1F1F);
   font-size: 18px;
   font-weight: 700;
 }
@@ -120,7 +120,7 @@
 
 .zapi-status-line strong {
   display: block;
-  color: var(--el-color-primary, #0f2a44);
+  color: var(--el-color-primary, #2E1F1F);
   font-size: 20px;
   font-weight: 700;
 }
@@ -176,7 +176,7 @@
 }
 
 .zapi-metric-icon.neutral {
-  color: var(--el-color-primary, #0f2a44);
+  color: var(--el-color-primary, #2E1F1F);
   background: #eef2f7;
 }
 
@@ -191,7 +191,7 @@
 .zapi-metric-card strong {
   display: block;
   margin-top: 7px;
-  color: var(--el-color-primary, #0f2a44);
+  color: var(--el-color-primary, #2E1F1F);
   font-size: 20px;
   font-weight: 700;
 }
@@ -274,7 +274,7 @@
   place-items: center;
   margin: 8px auto 18px;
   border-radius: 32px;
-  color: var(--el-color-primary, #0f2a44);
+  color: var(--el-color-primary, #2E1F1F);
   background: #ffffff;
   box-shadow: 0 18px 40px rgba(15, 42, 68, .12);
 }
@@ -315,7 +315,7 @@
 
 .zapi-connected-panel h2 {
   margin: 0 0 9px;
-  color: var(--el-color-primary, #0f2a44);
+  color: var(--el-color-primary, #2E1F1F);
   font-size: 22px;
   font-weight: 700;
 }
@@ -421,7 +421,7 @@
 
 .zapi-table th {
   padding: 14px 16px;
-  background: var(--el-table-header-bg, #0f2a44);
+  background: var(--el-table-header-bg, #2E1F1F);
   color: var(--el-table-header-color, #fff);
   font-size: 11px;
   font-weight: 700;
@@ -482,7 +482,7 @@
 
 .zapi-badge.tipo-pdf,
 .zapi-badge.tipo-documento {
-  background: #fff7ed;
+  background: #f4f1ef;
   color: #c2410c;
 }
 
@@ -530,7 +530,7 @@
   padding: 0 11px;
   border: 1px solid var(--el-color-border, #e5e7eb);
   border-radius: 8px;
-  color: var(--el-color-primary, #0f2a44);
+  color: var(--el-color-primary, #2E1F1F);
   background: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -546,8 +546,8 @@
 
 .zapi-page-btn.active {
   color: #fff;
-  background: var(--el-color-primary, #0f2a44);
-  border-color: var(--el-color-primary, #0f2a44);
+  background: var(--el-color-primary, #2E1F1F);
+  border-color: var(--el-color-primary, #2E1F1F);
 }
 
 .zapi-page-btn:disabled {
