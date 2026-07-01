@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
     :root {
       --brand: #2E1F1F;
@@ -542,6 +543,198 @@
       color: #fff;
     }
 
+    .ai-3d-section {
+      width: min(1240px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 8px 0 78px;
+    }
+
+    .ai-3d-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .ai-3d-copy,
+    .ai-3d-preview {
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 16px 46px rgba(46, 31, 31, .06);
+    }
+
+    .ai-3d-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 460px;
+      padding: clamp(30px, 4vw, 54px);
+    }
+
+    .ai-3d-badge {
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      margin-bottom: 24px;
+      padding: 0 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .ai-3d-badge svg,
+    .viewer-pill svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      fill: none;
+    }
+
+    .ai-3d-copy h2 {
+      max-width: 560px;
+      margin: 0;
+      color: var(--title);
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(38px, 4.4vw, 62px);
+      font-weight: 500;
+      line-height: 1.02;
+      letter-spacing: -.01em;
+    }
+
+    .ai-3d-copy p {
+      max-width: 520px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.68;
+    }
+
+    .ai-3d-preview {
+      position: relative;
+      min-height: 460px;
+      padding: 22px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 72% 20%, rgba(198, 164, 106, .13), transparent 32%),
+        linear-gradient(180deg, #fff 0%, #fbfaf9 100%);
+    }
+
+    .viewer-topbar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .viewer-topbar strong {
+      display: block;
+      color: var(--title);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .viewer-topbar span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .viewer-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 0 13px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .9);
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    .viewer-stage {
+      position: relative;
+      min-height: 348px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(232, 227, 223, .78);
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, .82), rgba(250, 248, 245, .82)),
+        repeating-linear-gradient(90deg, rgba(46,31,31,.035) 0 1px, transparent 1px 56px);
+      overflow: hidden;
+    }
+
+    .viewer-stage model-viewer {
+      width: 100%;
+      height: 342px;
+      --poster-color: transparent;
+      background: transparent;
+    }
+
+    .viewer-controls {
+      position: absolute;
+      top: 50%;
+      right: 16px;
+      z-index: 3;
+      display: grid;
+      gap: 8px;
+      transform: translateY(-50%);
+    }
+
+    .viewer-controls button {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .92);
+      color: var(--brand);
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(46, 31, 31, .08);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .viewer-controls button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(46, 31, 31, .12);
+    }
+
+    .viewer-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 16px;
+      z-index: 3;
+      transform: translateX(-50%);
+      padding: 8px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .86);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 10px 24px rgba(46, 31, 31, .06);
+    }
+
     footer {
       border-top: 1px solid var(--line);
       padding: 30px 24px;
@@ -652,7 +845,8 @@
         padding-bottom: 64px;
       }
 
-      .section {
+      .section,
+      .ai-3d-section {
         width: min(100% - 28px, 1240px);
         padding: 58px 0;
       }
@@ -665,6 +859,7 @@
 
       .section-grid,
       .feature-grid,
+      .ai-3d-grid,
       .workflow,
       .plans,
       .metric-grid {
@@ -673,8 +868,22 @@
 
       .feature-list,
       .quote-panel,
+      .ai-3d-copy,
       .cta {
         padding: 24px;
+      }
+
+      .ai-3d-copy,
+      .ai-3d-preview {
+        min-height: auto;
+      }
+
+      .viewer-stage {
+        min-height: 300px;
+      }
+
+      .viewer-stage model-viewer {
+        height: 298px;
       }
     }
   </style>
@@ -809,6 +1018,62 @@
       </div>
     </section>
 
+    <section class="ai-3d-section" aria-labelledby="ai-3d-title">
+      <div class="ai-3d-grid">
+        <article class="ai-3d-copy reveal">
+          <div class="ai-3d-badge">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"></path>
+              <path d="m4 7.5 8 4.5 8-4.5"></path>
+              <path d="M12 12v9"></path>
+            </svg>
+            Novo
+          </div>
+          <h2 id="ai-3d-title">Crie m&oacute;veis 3D com IA em poucos cliques</h2>
+          <p>Transforme fotos do seu acervo em pe&ccedil;as 3D, acelere o cadastro e apresente seus itens de forma mais moderna para equipes comerciais e operacionais da sua locadora.</p>
+        </article>
+
+        <article class="ai-3d-preview reveal" aria-label="Demonstra&ccedil;&atilde;o de visualiza&ccedil;&atilde;o 3D">
+          <div class="viewer-topbar">
+            <div>
+              <strong>Poltrona Aurora</strong>
+              <span>Acabamento: Linho Areia</span>
+            </div>
+            <div class="viewer-pill">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"></path>
+                <path d="m4 7.5 8 4.5 8-4.5"></path>
+                <path d="M12 12v9"></path>
+              </svg>
+              3D
+            </div>
+          </div>
+
+          <div class="viewer-stage">
+            <model-viewer
+              id="landing3dModel"
+              src="siteglb.glb"
+              alt="Modelo 3D demonstrativo de uma pe&ccedil;a do acervo"
+              camera-controls
+              auto-rotate
+              interaction-prompt="none"
+              shadow-intensity="0.45"
+              exposure="1"
+              camera-orbit="35deg 70deg 3.6m">
+            </model-viewer>
+
+            <div class="viewer-controls" aria-label="Controles visuais do modelo 3D">
+              <button type="button" data-model-action="reset" aria-label="Girar modelo">↻</button>
+              <button type="button" data-model-action="zoom-in" aria-label="Aproximar modelo">+</button>
+              <button type="button" data-model-action="zoom-out" aria-label="Afastar modelo">-</button>
+            </div>
+
+            <div class="viewer-hint">Passe o mouse para girar</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <section class="section" id="implantacao">
       <div class="section-title reveal">
         <h2>Uma implantacao para organizar a casa e preparar escala.</h2>
@@ -869,6 +1134,31 @@
     document.querySelectorAll(".reveal").forEach((card, index) => {
       card.style.transitionDelay = `${index * 90}ms`;
       observer.observe(card);
+    });
+
+    const landingModel = document.getElementById("landing3dModel");
+    let landingModelDistance = 3.6;
+
+    document.querySelectorAll("[data-model-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!landingModel) return;
+
+        const action = button.dataset.modelAction;
+
+        if (action === "reset") {
+          landingModelDistance = 3.6;
+          landingModel.cameraOrbit = "35deg 70deg 3.6m";
+          landingModel.autoRotate = true;
+          return;
+        }
+
+        landingModel.autoRotate = false;
+        landingModelDistance = action === "zoom-in"
+          ? Math.max(2.4, landingModelDistance - 0.35)
+          : Math.min(5.2, landingModelDistance + 0.35);
+
+        landingModel.cameraOrbit = `35deg 70deg ${landingModelDistance}m`;
+      });
     });
   </script>
 </body>
