@@ -6,7 +6,7 @@
 import { carregarItens } from "./itens.api.mjs";
 import "./itens.modal.mjs";
 import "./itens.tabela.mjs";
-import "./itens.foto.mjs";
+import "./itens.foto.mjs?v=20260730-quality-v2";
 import "./itens.filtros.mjs";
 import "./itens.print.mjs";
 import "./kits.modal.mjs";

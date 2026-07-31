@@ -6,7 +6,7 @@
    da caixa .foto-guia-container (240x240 no CSS)
 
    Storage:
-   itens/empresa_id/item_id/principal.jpg
+   itens/empresa_id/item_id/principal.<formato-original>
 ===================================================== */
 
 const supabase = window.supabaseClient;
@@ -15,11 +15,11 @@ const FOTO_PLACEHOLDER =
   "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png";
 
 const FOTO_SLOTS = {
-  detalhe_01: { tipo: "detalhe", titulo: "Detalhe 01", ordem: 1, arquivo: "detalhe-01.jpg" },
-  detalhe_02: { tipo: "detalhe", titulo: "Detalhe 02", ordem: 2, arquivo: "detalhe-02.jpg" },
-  galeria_01: { tipo: "galeria", titulo: "Galeria 01", ordem: 1, arquivo: "galeria-01.jpg" },
-  galeria_02: { tipo: "galeria", titulo: "Galeria 02", ordem: 2, arquivo: "galeria-02.jpg" },
-  galeria_03: { tipo: "galeria", titulo: "Galeria 03", ordem: 3, arquivo: "galeria-03.jpg" },
+  detalhe_01: { tipo: "detalhe", titulo: "Detalhe 01", ordem: 1, arquivo: "detalhe-01" },
+  detalhe_02: { tipo: "detalhe", titulo: "Detalhe 02", ordem: 2, arquivo: "detalhe-02" },
+  galeria_01: { tipo: "galeria", titulo: "Galeria 01", ordem: 1, arquivo: "galeria-01" },
+  galeria_02: { tipo: "galeria", titulo: "Galeria 02", ordem: 2, arquivo: "galeria-02" },
+  galeria_03: { tipo: "galeria", titulo: "Galeria 03", ordem: 3, arquivo: "galeria-03" },
 };
 
 const fotosSlotState = new Map();
@@ -263,27 +263,40 @@ window.itens_gerarImagemFinal = async function(){
 
   if(!fotoBlobOriginal) return null;
 
+  // Sem zoom ou reposicionamento, preserve o arquivo original byte por byte.
+  if(fotoScale === 1 && fotoX === 0 && fotoY === 0){
+    return fotoBlobOriginal;
+  }
+
   const container =
     document.querySelector(".foto-guia-container");
 
   if(!container) return null;
 
-  const width = container.offsetWidth;
-  const height = container.offsetHeight;
+  const previewWidth = container.offsetWidth;
+  const previewHeight = container.offsetHeight;
+
+  const bitmap =
+    await createImageBitmap(fotoBlobOriginal);
+
+  // A resolução final acompanha a original; os 240px são apenas da prévia.
+  const outputScale = Math.max(
+    bitmap.width / previewWidth,
+    bitmap.height / previewHeight,
+    1
+  );
+  const width = Math.max(1, Math.round(previewWidth * outputScale));
+  const height = Math.max(1, Math.round(previewHeight * outputScale));
 
   const canvas = document.createElement("canvas");
 
   canvas.width = width;
   canvas.height = height;
 
-const ctx = canvas.getContext("2d");
-
-/* fundo branco */
-ctx.fillStyle = "#ffffff";
-ctx.fillRect(0,0,width,height);
-
-  const bitmap =
-    await createImageBitmap(fotoBlobOriginal);
+const ctx = canvas.getContext("2d", { alpha: true });
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = "high";
+ctx.clearRect(0,0,width,height);
 
 let ratio = Math.min(
   width / bitmap.width,
@@ -295,16 +308,18 @@ ratio = ratio * fotoScale;
 const imgWidth = bitmap.width * ratio;
 const imgHeight = bitmap.height * ratio;
 
-const drawX = (width - imgWidth) / 2 + fotoX;
-const drawY = (height - imgHeight) / 2 + fotoY;
+const drawX = (width - imgWidth) / 2 + (fotoX * outputScale);
+const drawY = (height - imgHeight) / 2 + (fotoY * outputScale);
 
-ctx.drawImage(
+  ctx.drawImage(
   bitmap,
   drawX,
   drawY,
   imgWidth,
   imgHeight
-);
+  );
+
+  bitmap.close?.();
 
   return new Promise(resolve=>{
 
@@ -312,7 +327,7 @@ ctx.drawImage(
 
       resolve(blob);
 
-    },"image/jpeg",0.92);
+    },"image/png");
 
   });
 
@@ -324,12 +339,14 @@ ctx.drawImage(
 
 async function uploadImagem(blob, path){
 
+  const contentType = normalizarMimeImagem(blob?.type);
+
   const { error } =
     await supabase
       .storage
       .from("itens")
       .upload(path, blob, {
-        contentType:"image/jpeg",
+        contentType,
         upsert:true
       });
 
@@ -342,6 +359,19 @@ async function uploadImagem(blob, path){
 
   return true;
 
+}
+
+function normalizarMimeImagem(mime){
+  const permitidos = ["image/png", "image/webp", "image/jpeg"];
+  return permitidos.includes(mime) ? mime : "image/png";
+}
+
+function extensaoImagem(mime){
+  return ({
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/jpeg": "jpg",
+  })[normalizarMimeImagem(mime)];
 }
 
 async function removerImagem(path){
@@ -372,23 +402,8 @@ function publicUrl(path){
 }
 
 async function gerarBlobImagemSlot(file){
-  const bitmap = await createImageBitmap(file);
-  const maxSide = 1400;
-  const ratio = Math.min(1, maxSide / bitmap.width, maxSide / bitmap.height);
-  const width = Math.max(1, Math.round(bitmap.width * ratio));
-  const height = Math.max(1, Math.round(bitmap.height * ratio));
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  canvas.width = width;
-  canvas.height = height;
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(bitmap, 0, 0, width, height);
-
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.9);
-  });
+  // Preserve resolução, transparência e compressão originais.
+  return file;
 }
 
 /* =====================================================
@@ -412,10 +427,20 @@ window.itens_processarFoto = async function(itemId){
 
   if(!blobFinal) return null;
 
+  const extensao = extensaoImagem(blobFinal.type);
   const path =
-    `${empresaId}/${itemId}/principal.jpg`;
+    `${empresaId}/${itemId}/principal.${extensao}`;
 
-  await uploadImagem(blobFinal, path);
+  const uploaded = await uploadImagem(blobFinal, path);
+  if(!uploaded){
+    throw new Error("A foto principal não foi enviada. O item não será salvo com a imagem antiga.");
+  }
+
+  // Limpe formatos antigos somente após o novo arquivo estar seguro.
+  const pathsAntigos = ["jpg", "jpeg", "png", "webp"]
+    .filter((ext) => ext !== extensao)
+    .map((ext) => `${empresaId}/${itemId}/principal.${ext}`);
+  await supabase.storage.from("itens").remove(pathsAntigos);
 
   const { data } =
     supabase
@@ -491,9 +516,14 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
     const blob = await gerarBlobImagemSlot(state.file);
     if(!blob) return false;
 
-    const path = `${empresaId}/${itemId}/${config.arquivo}`;
+    const mimeType = normalizarMimeImagem(blob.type);
+    const path = `${empresaId}/${itemId}/${config.arquivo}.${extensaoImagem(mimeType)}`;
     const uploaded = await uploadImagem(blob, path);
     if(!uploaded) return false;
+
+    if(state.path && state.path !== path){
+      await removerImagem(state.path);
+    }
 
     const url = publicUrl(path);
 
@@ -508,7 +538,7 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
         ordem: config.ordem,
         path,
         url,
-        mime_type: "image/jpeg",
+        mime_type: mimeType,
         tamanho_bytes: blob.size,
       }, { onConflict: "item_id,slot" });
 
