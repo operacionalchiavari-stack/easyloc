@@ -429,7 +429,9 @@ entrypoint = "./functions/calcular-distancia/index.ts"
 
 [functions.studio-ai-engine]
 enabled = true
-verify_jwt = true
+# O handler valida a sessao do catalogo ou o JWT e o vinculo com a empresa.
+# Chaves publishable do catalogo nao sao JWTs.
+verify_jwt = false
 entrypoint = "./functions/studio-ai-engine/index.ts"
 
 [functions.zapi-integration]

@@ -395,6 +395,31 @@ window.itens_3d_openFile = function(){
   $("item3DInput")?.click();
 };
 
+window.itens_3d_criarComIA = function(){
+  const itemId = state.itemId || window.itemAtualId || null;
+
+  if(!itemId){
+    notify("Salve o item antes de criar o modelo 3D com IA.", "erro");
+    return;
+  }
+
+  window.__ITEM_3D_AI_ID = itemId;
+  window.__ITEM_DETALHE_ID = itemId;
+  window.__ITEM_DETALHE_MODO = "editar";
+
+  if(typeof window.carregarNaMain === "function"){
+    window.carregarNaMain(
+      "Modulos/Estoque/CadastroItens/item-modelo-3d.html",
+      "Modulos/Estoque/CadastroItens/item-modelo-3d.mjs",
+      null,
+      "Modulos/Estoque/CadastroItens/item-modelo-3d.css"
+    );
+    return;
+  }
+
+  notify("Abra esta tela pelo dashboard para usar a criacao 3D com IA.", "erro");
+};
+
 window.itens_3d_toggleRotate = function(){
   state.autoRotate = !state.autoRotate;
   $("item3DRotateBtn")?.classList.toggle("active", state.autoRotate);

@@ -821,3 +821,44 @@ body table tbody td.cell-selected,
 #main-content .zapi-page .zapi-badge {
   font-weight: 700;
 }
+/* Mantém a navegação do dashboard isolada dos estilos dos módulos SPA. */
+@media (min-width: 1201px) {
+  body > .sidebar {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 72px;
+    display: grid;
+    grid-template-columns: minmax(190px, 1fr) auto minmax(190px, 1fr);
+    grid-template-areas: "brand menu user";
+    align-items: center;
+    overflow: visible;
+  }
+
+  body > .sidebar > .sidebar-header { grid-area: brand; }
+  body > .sidebar > .menu {
+    grid-area: menu;
+    position: static;
+    width: max-content;
+    height: 72px;
+    display: flex;
+    align-items: stretch;
+    justify-self: center;
+    overflow: visible;
+  }
+  body > .sidebar > .sidebar-user { grid-area: user; }
+  body > .sidebar .sidebar-header img {
+    width: 180px;
+    height: 54px;
+    max-width: 180px;
+    object-fit: contain;
+  }
+
+  /* Um flyout sem coordenadas nunca pode aparecer sobre a marca. */
+  body > .sidebar .submenu.floating-open:not([style*="left"]),
+  body > .sidebar .submenu-group.floating-open:not([style*="left"]) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}

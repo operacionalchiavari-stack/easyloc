@@ -6,20 +6,27 @@
   "scripts": {
     "generate-embeddings": "node Scripts/gerar-embedding.mjs",
     "start": "node server/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "check": "node --check server/index.js && node --check Scripts/gerar-embedding.mjs",
+    "test": "npm run check",
+    "prepare:pdf": "node Scripts/copiar-pdfjs.cjs",
+    "test:catalogo": "node --test tests/studio-layout.test.mjs tests/studio-ai-engine.test.cjs && node tests/studio-browser.cjs && node tests/catalogo-browser.cjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/model-viewer": "^3.5.0",
     "@supabase/supabase-js": "^2.93.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "express": "^4.18.0",
-    "openai": "^6.17.0"
+    "openai": "^6.17.0",
+    "pdfjs-dist": "^5.4.149",
+    "three": "^0.166.1"
   },
   "devDependencies": {
+    "playwright": "^1.63.0",
     "supabase": "^2.107.0"
   }
 }

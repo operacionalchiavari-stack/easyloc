@@ -879,3 +879,11 @@ tbody tr:hover {
   color: #9a3412;
   line-height: 1.4;
 }
+.cliente-identidade{display:block;padding:18px;border:1px solid #e1e5eb;border-radius:14px;background:#fafbfc}
+.cliente-identidade-logo{display:flex;align-items:center;gap:14px}
+.cliente-identidade-logo img{width:92px;height:68px;object-fit:contain;border:1px dashed #cbd2dc;border-radius:10px;background:#fff}
+.cliente-identidade-logo img.is-empty{background:linear-gradient(135deg,#f4f5f7,#fff)}
+.cliente-identidade-logo div{display:grid;gap:5px}.cliente-identidade-logo small{color:#6b7280}.cliente-identidade-logo .btn{width:max-content;margin-top:5px;cursor:pointer}
+#catalogoSenhaStatus{display:block;margin-top:6px;color:#6b7280;font-size:12px}
+#catalogoSenhaStatus.is-configured{color:#15803d;font-weight:600}
+@media(max-width:760px){.cliente-identidade{grid-template-columns:1fr}.cliente-identidade-logo{align-items:flex-start}}

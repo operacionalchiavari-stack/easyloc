@@ -1,0 +1,11 @@
+﻿import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {fitsPlacement} from '../Modulos/Comercial/Catalogo/studio-layout.mjs';
+const room={width:10,depth:10},rules={wallGap:.5,furnitureGap:.4,tableGap:1.2,aisle:1.2};
+const box={minX:1,maxX:2,minZ:1,maxZ:2,table:true};
+test('permite espaço livre e recusa limite externo',()=>{assert.equal(fitsPlacement(box,[],[],room,rules),true);assert.equal(fitsPlacement({...box,maxX:4.8},[],[],room,rules),false);});
+test('protege corredor central',()=>assert.equal(fitsPlacement({...box,minX:.2},[],[],room,rules),false));
+test('distância entre mesas é medida nas bordas',()=>{assert.equal(fitsPlacement(box,[{...box,minX:3,maxX:4}],[],room,rules),false);assert.equal(fitsPlacement(box,[{...box,minX:3.3,maxX:4}],[],room,rules),true);});
+test('bloqueia parede diagonal atravessando modelo',()=>assert.equal(fitsPlacement(box,[],[{start:{x:0,z:0},end:{x:3,z:3}}],room,rules),false));
+test('parede distante não bloqueia modelo',()=>assert.equal(fitsPlacement(box,[],[{start:{x:-3,z:-3},end:{x:-2,z:3}}],room,rules),true));
+test('aceita distância zero sem permitir sobreposição',()=>{const zero={wallGap:0,furnitureGap:0,tableGap:0,aisle:0};assert.equal(fitsPlacement(box,[{...box,minX:2,maxX:3}],[],room,zero),true);assert.equal(fitsPlacement(box,[box],[],room,zero),false);});

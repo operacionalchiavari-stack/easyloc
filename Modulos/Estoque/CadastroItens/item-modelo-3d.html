@@ -1,0 +1,209 @@
+<section class="ai3d-page el-page" data-module-root data-stage="foto">
+  <header class="ai3d-topbar">
+    <div class="ai3d-title-wrap">
+      <button type="button" class="btn btn-secondary ai3d-back" id="ai3dBackBtn">
+        <i data-lucide="arrow-left"></i>
+        Voltar
+      </button>
+      <div>
+        <span class="ai3d-kicker">Modelo 3D com IA</span>
+        <h1 id="ai3dTitle">Criar modelo 3D</h1>
+        <p id="ai3dSubtitle">Transforme a foto do item em um GLB salvo no cadastro.</p>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary ai3d-save-top" id="ai3dSaveTop" disabled>
+      <i data-lucide="save"></i>
+      Salvar GLB
+    </button>
+  </header>
+
+  <nav class="ai3d-steps" aria-label="Etapas da criacao 3D" role="tablist">
+    <button type="button" class="active" data-step="foto" data-stage-target="foto" role="tab">
+      <i data-lucide="image"></i>
+      Foto e fundo
+    </button>
+    <button type="button" data-step="gerar" data-stage-target="gerar" role="tab">
+      <i data-lucide="box"></i>
+      Gerar GLB
+    </button>
+    <button type="button" data-step="medidas" data-stage-target="medidas" role="tab">
+      <i data-lucide="ruler"></i>
+      Corrigir medidas
+    </button>
+    <button type="button" data-step="salvar" data-stage-target="salvar" role="tab">
+      <i data-lucide="save"></i>
+      Salvar modelo
+    </button>
+  </nav>
+
+  <div class="ai3d-layout">
+    <aside class="ai3d-left">
+      <section class="ai3d-card ai3d-real-card">
+        <div class="ai3d-card-head">
+          <div>
+            <h2>Foto original</h2>
+            <p>Use a foto principal do item ou envie outra imagem.</p>
+          </div>
+          <span class="ai3d-chip" id="ai3dPhotoChip">Carregando</span>
+        </div>
+
+        <label class="ai3d-dropzone" id="ai3dDropzoneOriginal" for="ai3dImageInput">
+          <input type="file" id="ai3dImageInput" accept="image/jpeg,image/png,image/webp" hidden>
+          <img id="ai3dOriginalPreview" alt="Foto original do item" hidden>
+          <div class="ai3d-placeholder" id="ai3dOriginalPlaceholder">
+            <i data-lucide="image-plus"></i>
+            <span>Selecionar foto</span>
+          </div>
+        </label>
+
+        <div class="ai3d-actions">
+          <button type="button" class="btn btn-secondary" id="ai3dSelectPhotoBtn">
+            <i data-lucide="upload"></i>
+            Selecionar
+          </button>
+          <button type="button" class="btn btn-primary" id="ai3dRemoveBgBtn" disabled>
+            <i data-lucide="sparkles"></i>
+            Remover fundo
+          </button>
+        </div>
+      </section>
+
+      <section class="ai3d-card ai3d-current-card">
+        <div class="ai3d-card-head">
+          <div>
+            <h2>Imagem preparada</h2>
+            <p>Previa usada para gerar o GLB.</p>
+          </div>
+          <span class="ai3d-chip muted" id="ai3dBgChip">Pendente</span>
+        </div>
+
+        <div class="ai3d-bg-preview">
+          <img id="ai3dBackgroundPreview" alt="Imagem sem fundo" hidden>
+          <div class="ai3d-placeholder" id="ai3dBackgroundPlaceholder">
+            <i data-lucide="scissors"></i>
+            <span>Aguardando preparo</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary ai3d-wide" id="ai3dGenerateBtn" disabled>
+          <i data-lucide="box"></i>
+          Gerar modelo 3D
+        </button>
+      </section>
+
+      <section class="ai3d-card ai3d-status-card">
+        <h2>Status</h2>
+        <ul id="ai3dCreationStatus">
+          <li data-status="foto" class="done"><i data-lucide="check"></i> Foto carregada</li>
+          <li data-status="fundo"><i data-lucide="circle"></i> Fundo preparado</li>
+          <li data-status="modelo"><i data-lucide="circle"></i> Modelo gerado</li>
+          <li data-status="medidas"><i data-lucide="circle"></i> Medidas conferidas</li>
+          <li data-status="salvo"><i data-lucide="circle"></i> GLB salvo no item</li>
+        </ul>
+      </section>
+    </aside>
+
+    <main class="ai3d-viewer-card">
+      <div class="ai3d-viewer-head">
+        <div>
+          <h2>Visualizacao 3D do modelo</h2>
+          <p>Use o mouse para girar, aproximar e mover a peca.</p>
+        </div>
+        <div class="ai3d-viewer-options">
+          <span>Grade</span>
+          <button type="button" class="active" data-grid-unit="10">10 cm</button>
+          <button type="button" data-grid-unit="50">50 cm</button>
+          <button type="button" data-grid-unit="100">1 m</button>
+          <label>
+            <input type="checkbox" id="ai3dHideRulers">
+            Ocultar reguas
+          </label>
+        </div>
+      </div>
+
+      <div class="ai3d-viewer" id="ai3dViewer">
+        <div class="ai3d-viewer-empty" id="ai3dViewerEmpty">
+          <i data-lucide="box"></i>
+          <strong>Nenhum GLB gerado ainda.</strong>
+          <span>Remova o fundo e gere o modelo para visualizar aqui.</span>
+        </div>
+        <div class="ai3d-loading" id="ai3dLoading" hidden>Processando...</div>
+        <div class="ai3d-measure-label ai3d-measure-width" id="ai3dMeasureWidth" hidden>0 cm</div>
+        <div class="ai3d-measure-label ai3d-measure-height" id="ai3dMeasureHeight" hidden>0 cm</div>
+        <div class="ai3d-measure-label ai3d-measure-depth" id="ai3dMeasureDepth" hidden>0 cm</div>
+      </div>
+
+      <div class="ai3d-viewer-tools">
+        <button type="button" id="ai3dRotateBtn">
+          <i data-lucide="rotate-3d"></i>
+          Girar
+        </button>
+        <button type="button" id="ai3dCenterBtn">
+          <i data-lucide="crosshair"></i>
+          Centralizar
+        </button>
+        <button type="button" id="ai3dResetBtn">
+          <i data-lucide="scan"></i>
+          Resetar camera
+        </button>
+      </div>
+    </main>
+
+    <aside class="ai3d-right">
+      <section class="ai3d-card ai3d-process-card">
+        <div class="ai3d-step-number">1</div>
+        <h2>Gerar o modelo GLB</h2>
+        <p>A imagem preparada vira uma malha GLB baseada nas proporcoes reais do item.</p>
+        <div class="ai3d-progress">
+          <div class="ai3d-progress-top">
+            <span id="ai3dGenerationLabel">Aguardando</span>
+            <strong id="ai3dGenerationPercent">0%</strong>
+          </div>
+          <div class="ai3d-progress-bar"><span id="ai3dGenerationBar"></span></div>
+        </div>
+        <ul class="ai3d-process-list" id="ai3dGenerationSteps">
+          <li data-process="prepare"><i data-lucide="circle"></i> Preparando imagem</li>
+          <li data-process="geometry"><i data-lucide="circle"></i> Gerando geometria</li>
+          <li data-process="texture"><i data-lucide="circle"></i> Aplicando materiais</li>
+          <li data-process="convert"><i data-lucide="circle"></i> Convertendo para GLB</li>
+          <li data-process="done"><i data-lucide="circle"></i> Modelo pronto</li>
+        </ul>
+      </section>
+
+      <section class="ai3d-card ai3d-save-card">
+        <div class="ai3d-step-number">2</div>
+        <h2>Medidas reais</h2>
+        <p>Ajuste a escala usando as medidas cadastradas no item.</p>
+        <div class="ai3d-measure-grid">
+          <label>Largura (cm)<input type="number" id="ai3dRealWidth" min="1" step="0.1"></label>
+          <label>Altura (cm)<input type="number" id="ai3dRealHeight" min="1" step="0.1"></label>
+          <label>Profundidade (cm)<input type="number" id="ai3dRealDepth" min="1" step="0.1"></label>
+        </div>
+      </section>
+
+      <section class="ai3d-card">
+        <div class="ai3d-step-number">3</div>
+        <h2>Medidas do modelo</h2>
+        <dl class="ai3d-current-measures">
+          <div><dt>Largura atual</dt><dd id="ai3dCurrentWidth">-</dd></div>
+          <div><dt>Altura atual</dt><dd id="ai3dCurrentHeight">-</dd></div>
+          <div><dt>Profundidade atual</dt><dd id="ai3dCurrentDepth">-</dd></div>
+        </dl>
+        <button type="button" class="btn btn-secondary ai3d-wide" id="ai3dAdjustBtn" disabled>
+          <i data-lucide="ruler"></i>
+          Ajustar para medidas reais
+        </button>
+      </section>
+
+      <section class="ai3d-card">
+        <div class="ai3d-step-number">4</div>
+        <h2>Salvar no item</h2>
+        <p>O arquivo GLB sera salvo no cadastro e aparecera no visualizador 3D.</p>
+        <button type="button" class="btn btn-primary ai3d-wide" id="ai3dSaveBtn" disabled>
+          <i data-lucide="save"></i>
+          Salvar modelo GLB
+        </button>
+      </section>
+    </aside>
+  </div>
+</section>

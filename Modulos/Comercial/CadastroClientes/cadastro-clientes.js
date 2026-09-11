@@ -205,16 +205,76 @@ function getEmpresaAtualId() {
 ===================================================== */
 let clienteAtualId = null;
 const modal = document.getElementById("modal");
+let catalogoLogoFile = null;
+let catalogoLogoObjectUrl = "";
+let catalogoLogoAtual = "";
+let clienteTinhaAcessoCatalogo = false;
 
 /* ESTADO ÚNICO (LOCAL + GLOBAL) */
 let clientesCache = [];
 window.clientesCache = clientesCache;
+
+function mostrarLogoCatalogo(url = "") {
+  const preview = document.getElementById("catalogoLogoPreview");
+  if(!preview) return;
+  if(url){ preview.src = url; preview.classList.remove("is-empty"); }
+  else { preview.removeAttribute("src"); preview.classList.add("is-empty"); }
+}
+
+function resetarLogoCatalogo(url = "") {
+  if(catalogoLogoObjectUrl) URL.revokeObjectURL(catalogoLogoObjectUrl);
+  catalogoLogoObjectUrl = ""; catalogoLogoFile = null; catalogoLogoAtual = url || "";
+  const input = document.getElementById("catalogoLogoInput");
+  if(input) input.value = "";
+  mostrarLogoCatalogo(catalogoLogoAtual);
+}
+
+async function uploadLogoCatalogo(file, empresaId, clienteId){
+  if(!file) return catalogoLogoAtual || null;
+  const ext = (file.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+  const path = `${empresaId}/${clienteId}/logo-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("catalogo-clientes").upload(path, file, { upsert: false, contentType: file.type, cacheControl: "31536000" });
+  if(error) throw new Error("Não foi possível enviar a logo do decorador: " + error.message);
+  return supabase.storage.from("catalogo-clientes").getPublicUrl(path).data.publicUrl;
+}
+
+document.getElementById("catalogoLogoInput")?.addEventListener("change", event => {
+  const file = event.target.files?.[0];
+  if(!file) return;
+  if(file.size > 5 * 1024 * 1024){ mostrarAlerta("A logo deve ter no máximo 5 MB."); event.target.value = ""; return; }
+  if(!["image/png","image/jpeg","image/webp","image/svg+xml"].includes(file.type)){ mostrarAlerta("Formato de logo não permitido."); event.target.value = ""; return; }
+  if(catalogoLogoObjectUrl) URL.revokeObjectURL(catalogoLogoObjectUrl);
+  catalogoLogoFile = file; catalogoLogoObjectUrl = URL.createObjectURL(file); mostrarLogoCatalogo(catalogoLogoObjectUrl);
+});
+
+function atualizarEstadoSenhaCatalogo(configurada = false){
+  const status = document.getElementById("catalogoSenhaStatus");
+  const senha = document.getElementById("catalogoSenha");
+  const confirmacao = document.getElementById("catalogoSenhaConfirmacao");
+  const ativo = document.getElementById("catalogoAtivo")?.value === "true";
+  if(status){
+    status.textContent = configurada ? "Senha configurada. Preencha somente para substituí-la." : (ativo ? "Defina uma senha com pelo menos 8 caracteres." : "O acesso ao catálogo está desativado.");
+    status.classList.toggle("is-configured", configurada);
+  }
+  if(senha) senha.required = ativo && !configurada;
+  if(confirmacao) confirmacao.required = ativo && !configurada;
+}
+document.getElementById("catalogoAtivo")?.addEventListener("change", () => atualizarEstadoSenhaCatalogo(clienteTinhaAcessoCatalogo));
+document.getElementById("catalogoSenha")?.addEventListener("input", event => {
+  if(event.target.value){
+    const ativo = document.getElementById("catalogoAtivo");
+    if(ativo) ativo.value = "true";
+  }
+  atualizarEstadoSenhaCatalogo(clienteTinhaAcessoCatalogo);
+});
 
 /* =====================================================
    MODAL
 ===================================================== */
 function clientes_openAdd() {
   clienteAtualId = null;
+  clienteTinhaAcessoCatalogo = false;
+  resetarLogoCatalogo();
 
   modal.style.display = "flex";
 
@@ -229,6 +289,7 @@ function clientes_openAdd() {
     .forEach(e => {
       e.value = "";
       e.readOnly = false;
+      e.disabled = false;
     });
 
   document
@@ -243,6 +304,8 @@ function clientes_openAdd() {
   });
 
   document.querySelector(".btn-save").style.display = "inline-block";
+  document.getElementById("catalogoAtivo").value = "false";
+  atualizarEstadoSenhaCatalogo(false);
 
   setTimeout(() => {
     initEnderecoAutocomplete();
@@ -263,6 +326,8 @@ function clientes_enableEdit() {
 
 function clientes_closeModal() {
   modal.style.display = "none";
+  if(catalogoLogoObjectUrl) URL.revokeObjectURL(catalogoLogoObjectUrl);
+  catalogoLogoObjectUrl = "";
 }
 
 function setReadOnly(v) {
@@ -275,6 +340,8 @@ function setReadOnly(v) {
   document
     .querySelectorAll("#modal select")
     .forEach(e => (e.disabled = v));
+  const logoInput = document.getElementById("catalogoLogoInput");
+  if(logoInput) logoInput.disabled = v;
 
   document.querySelectorAll(".tag").forEach(tag => {
     tag.style.pointerEvents = v ?"none" : "auto";
@@ -400,6 +467,24 @@ async function clientes_salvar() {
   if (!validarClienteCompleto()) return;
   if (!validarTagsObrigatorias()) return;
 
+  const senhaDigitada = document.getElementById("catalogoSenha")?.value || "";
+  const acessoAtivo = document.getElementById("catalogoAtivo")?.value === "true" || senhaDigitada.length > 0;
+  if(acessoAtivo && document.getElementById("catalogoAtivo")) document.getElementById("catalogoAtivo").value = "true";
+  const acessoEmail = document.getElementById("catalogoEmail")?.value.trim() || email.value.trim();
+  const acessoSenha = senhaDigitada;
+  const acessoSenhaConfirmacao = document.getElementById("catalogoSenhaConfirmacao")?.value || "";
+  if(acessoSenha !== acessoSenhaConfirmacao){
+    mostrarAlerta("A senha do catálogo e a confirmação não são iguais.");
+    return;
+  }
+  if(acessoAtivo && (!validarEmail(acessoEmail) || (!clienteTinhaAcessoCatalogo && acessoSenha.length < 8))){
+    mostrarAlerta("Para ativar o catálogo, informe um e-mail válido e uma senha com pelo menos 8 caracteres.");
+    return;
+  }
+  const saveButton = document.querySelector(".btn-save");
+  if(saveButton?.disabled) return;
+  if(saveButton) saveButton.disabled = true;
+
   try {
     const empresaId = await getEmpresaAtualId();
 
@@ -423,7 +508,7 @@ async function clientes_salvar() {
       email: email.value,
       endereco: endereco.value,
       numero_endereco: numeroEndereco.value,
-      ponto_referência: pontoReferencia.value,
+      ponto_referencia: pontoReferencia.value,
       status: statusCliente.value,
       ultima_locacao: normalizarDataUltimaLocacao(ultimaLocacao.value),
       tipo_pessoa:
@@ -437,16 +522,34 @@ async function clientes_salvar() {
 
     let query = supabase.from("clientes_empresas");
     let result;
+    const clienteSalvoId = clienteAtualId || crypto.randomUUID();
 
     if (clienteAtualId) {
       result = await query.update(payload).eq("id", clienteAtualId);
     } else {
-      result = await query.insert(payload);
+      result = await query.insert({ ...payload, id: clienteSalvoId });
     }
 
     if (result.error) {
-      mostrarAlerta("Erro ao salvar cliente.");
+      console.error("Erro ao salvar cliente:", result.error);
+      mostrarAlerta(`Erro ao salvar cliente: ${result.error.message || "falha não identificada"}`);
       return;
+    }
+    // A partir daqui o registro existe. Se uma etapa complementar falhar,
+    // uma nova tentativa fará update em vez de criar um cliente duplicado.
+    clienteAtualId = clienteSalvoId;
+
+    if(catalogoLogoFile){
+      const logoUrl = await uploadLogoCatalogo(catalogoLogoFile, empresaId, clienteSalvoId);
+      const { error: logoDbError } = await supabase.from("clientes_empresas").update({ catalogo_logo_url: logoUrl }).eq("id", clienteSalvoId);
+      if(logoDbError) throw new Error("Logo enviada, mas não foi possível vinculá-la ao cliente: " + logoDbError.message);
+      catalogoLogoAtual = logoUrl;
+    }
+    if(acessoAtivo || clienteTinhaAcessoCatalogo){
+      const { error: acessoError } = await supabase.rpc("configurar_acesso_catalogo", { p_cliente_id: clienteSalvoId, p_email: acessoEmail, p_senha: acessoSenha || null, p_ativo: acessoAtivo });
+      if(acessoError) throw new Error("Cliente salvo, mas o acesso ao catálogo falhou: " + acessoError.message);
+      clienteTinhaAcessoCatalogo = acessoAtivo;
+      atualizarEstadoSenhaCatalogo(acessoAtivo);
     }
 
     clientes_closeModal();
@@ -454,10 +557,12 @@ async function clientes_salvar() {
 
   } catch (err) {
     mostrarAlerta(err.message || "Erro ao salvar cliente");
+  } finally {
+    if(saveButton) saveButton.disabled = false;
   }
 }
 
-function abrirDetalhesCliente(cliente) {
+async function abrirDetalhesCliente(cliente) {
   clienteAtualId = cliente.id;
 
   // abre modal
@@ -484,10 +589,18 @@ function abrirDetalhesCliente(cliente) {
   nome.value = cliente.nome_razao || "";
   telefone.value = cliente.telefone || "";
   email.value = cliente.email || "";
+  const { data: acesso } = await supabase.rpc("obter_acesso_catalogo", { p_cliente_id: cliente.id });
+  clienteTinhaAcessoCatalogo = Boolean(acesso?.senha_configurada);
+  document.getElementById("catalogoAtivo").value = acesso?.ativo ? "true" : "false";
+  document.getElementById("catalogoEmail").value = acesso?.email || cliente.email || "";
+  document.getElementById("catalogoSenha").value = "";
+  document.getElementById("catalogoSenhaConfirmacao").value = "";
+  atualizarEstadoSenhaCatalogo(clienteTinhaAcessoCatalogo);
+  resetarLogoCatalogo(cliente.catalogo_logo_url || "");
 
   inscricaoEstadual.value = cliente.inscricao_estadual || "";
   numeroEndereco.value = cliente.numero_endereco || "";
-  pontoReferencia.value = cliente.ponto_referência || "";
+  pontoReferencia.value = cliente.ponto_referencia || "";
   ultimaLocacao.value = cliente.ultima_locacao || "";
   statusCliente.value = cliente.status || "";
 

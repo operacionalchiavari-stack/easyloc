@@ -1,0 +1,22 @@
+﻿const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const fs=require('fs'),express=require('express'),assert=require('assert');
+(async()=>{
+const app=express();app.use(express.static(process.cwd()));const server=app.listen(5519,'127.0.0.1');
+const browser=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.route('**/catalogo-studio3d.mjs*',async route=>{await route.fulfill({contentType:'text/javascript',body:fs.readFileSync('Modulos/Comercial/Catalogo/catalogo-studio3d.mjs','utf8')+'\nwindow.studioTest={studio,ensureScene,createCustomWall,saveProject,openProject,snapshotProject,beginWallDrag,moveWallDrag,finishDirectDrag,showTopView};'});});
+await page.route('**/catalogo.html',async route=>{let html=fs.readFileSync('Modulos/Comercial/Catalogo/catalogo.html','utf8').replace(/<script(?! type="importmap")[\s\S]*?<\/script>/g,'');html+=`<script type="module">import {initCatalogStudio3D} from './catalogo-studio3d.mjs';initCatalogStudio3D({items:[{id:'fixture',name:'Mesa teste',glb:'/siteglb.glb',photo:'',dimensions:{width:1,height:1,depth:1}}],supabase:{},empresaId:'test',ownerId:'test'});document.getElementById('catalogLogin').remove();document.getElementById('catalogStudio').classList.remove('hidden');</script>`;await route.fulfill({contentType:'text/html',body:html});});
+await page.goto('http://127.0.0.1:5519/Modulos/Comercial/Catalogo/catalogo.html');await page.waitForSelector('#studioProjectName');
+await page.evaluate(async()=>{const t=window.studioTest;await t.ensureScene();const V=t.studio.three.THREE.Vector3;t.createCustomWall(new V(-3,0,-3),new V(-3,0,3));document.getElementById('studioProjectName').value='Teste persistência';await t.saveProject(true);});
+assert.match(await page.locator('#studioProjectStatus').innerText(),/Salvo/);
+await page.reload();await page.waitForSelector('#studioProjectList option:nth-child(2)',{state:'attached'});await page.locator('#studioProjectList').selectOption({index:1});await page.waitForFunction(()=>window.studioTest?.studio.customWalls.length===1);
+assert.equal(await page.locator('#studioProjectName').inputValue(),'Teste persistência');
+await page.evaluate(()=>window.studioTest.showTopView());
+const pts=await page.evaluate(()=>{const s=window.studioTest.studio,rect=s.renderer.domElement.getBoundingClientRect();return [s.customWalls[0].start,new s.three.THREE.Vector3(-2,0,-2)].map(v=>{const p=v.clone().project(s.camera);return {x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2};});});
+await page.mouse.move(pts[0].x,pts[0].y);await page.mouse.down();await page.mouse.move(pts[1].x,pts[1].y,{steps:8});await page.mouse.up();
+const start=await page.evaluate(()=>window.studioTest.studio.customWalls[0].start.toArray());assert.ok(Math.abs(start[0]+2)<.2,JSON.stringify(start));
+await page.locator('.studio-project-panel details:nth-child(2) summary').click();
+await page.locator('#studioDesignItems input').check();await page.locator('#design-quantity').fill('3');await page.locator('#studioDesignBuild').click();await page.waitForFunction(()=>document.getElementById('studioDesignStatus').textContent.includes('3 itens adicionados'),{},{timeout:60000});
+await page.locator('#studioProjectSave').click();await page.reload();await page.waitForSelector('#studioProjectList option:nth-child(2)',{state:'attached'});await page.locator('#studioProjectList').selectOption({index:1});await page.waitForFunction(()=>window.studioTest?.studio.objects.length===3);
+await page.screenshot({path:'outputs/studio-projects-test.png'});assert.deepEqual(errors,[]);console.log('PASS: editor initialized, project saved and reloaded, wall endpoint dragged, no page errors');
+await browser.close();server.close();
+})().catch(e=>{console.error(e);process.exit(1)});

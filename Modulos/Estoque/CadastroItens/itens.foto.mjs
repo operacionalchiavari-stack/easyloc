@@ -23,6 +23,7 @@ const FOTO_SLOTS = {
 };
 
 const fotosSlotState = new Map();
+let fotosItemAtualId = null;
 
 /* =====================================================
    ESTADO
@@ -457,13 +458,14 @@ window.itens_resetarFotosAdicionais = function(){
 };
 
 window.itens_carregarFotosAdicionais = async function(itemId){
+  fotosItemAtualId = itemId;
   window.itens_resetarFotosAdicionais();
 
   if(!itemId) return;
 
   const { data, error } = await supabase
     .from("itens_fotos")
-    .select("slot,path,url,titulo,tipo,ordem")
+    .select("slot,path,url,titulo,tipo,ordem,cliente_id")
     .eq("item_id", itemId)
     .order("tipo", { ascending: true })
     .order("ordem", { ascending: true });
@@ -473,7 +475,8 @@ window.itens_carregarFotosAdicionais = async function(itemId){
     return;
   }
 
-  (data || []).forEach((foto) => {
+  const clienteId = document.getElementById("itemGaleriaCliente")?.value || null;
+  (data || []).filter((foto) => foto.tipo === "detalhe" ? !foto.cliente_id : String(foto.cliente_id || "") === String(clienteId || "")).forEach((foto) => {
     if(!getSlotConfig(foto.slot)) return;
 
     const state = getSlotState(foto.slot);
@@ -492,15 +495,22 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
 
   for(const [slot, config] of Object.entries(FOTO_SLOTS)){
     const state = getSlotState(slot);
+    const clienteId = config.tipo === "galeria" ? (document.getElementById("itemGaleriaCliente")?.value || null) : null;
+    if(config.tipo === "galeria" && !clienteId && (state.file || state.removed)){
+      alert("Selecione o cliente/decorador das fotos ambientadas.");
+      return false;
+    }
 
     if(state.removed){
       await removerImagem(state.path);
 
-      const { error: deleteError } = await supabase
+      let deleteQuery = supabase
         .from("itens_fotos")
         .delete()
         .eq("item_id", itemId)
         .eq("slot", slot);
+      deleteQuery = clienteId ? deleteQuery.eq("cliente_id", clienteId) : deleteQuery.is("cliente_id", null);
+      const { error: deleteError } = await deleteQuery;
 
       if(deleteError){
         console.error("Erro ao remover registro da foto:", deleteError);
@@ -517,7 +527,7 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
     if(!blob) return false;
 
     const mimeType = normalizarMimeImagem(blob.type);
-    const path = `${empresaId}/${itemId}/${config.arquivo}.${extensaoImagem(mimeType)}`;
+    const path = `${empresaId}/${itemId}/${clienteId || "geral"}/${config.arquivo}.${extensaoImagem(mimeType)}`;
     const uploaded = await uploadImagem(blob, path);
     if(!uploaded) return false;
 
@@ -527,9 +537,11 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
 
     const url = publicUrl(path);
 
-    const { error: upsertError } = await supabase
-      .from("itens_fotos")
-      .upsert({
+    let existingQuery = supabase.from("itens_fotos").delete().eq("item_id", itemId).eq("slot", slot);
+    existingQuery = clienteId ? existingQuery.eq("cliente_id", clienteId) : existingQuery.is("cliente_id", null);
+    const { error: replaceError } = await existingQuery;
+    if(replaceError) return false;
+    const { error: upsertError } = await supabase.from("itens_fotos").insert({
         empresa_id: empresaId,
         item_id: itemId,
         slot,
@@ -540,7 +552,8 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
         url,
         mime_type: mimeType,
         tamanho_bytes: blob.size,
-      }, { onConflict: "item_id,slot" });
+        cliente_id: clienteId,
+      });
 
     if(upsertError){
       console.error("Erro ao salvar registro da foto:", upsertError);
@@ -557,6 +570,18 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
 
   return true;
 };
+
+async function iniciarSeletorGaleriaCliente(){
+  const select = document.getElementById("itemGaleriaCliente");
+  if(!select || select.dataset.ready) return;
+  select.dataset.ready = "true";
+  const empresaId = window.__CONTEXT?.empresa_id;
+  if(!empresaId) return;
+  const { data } = await supabase.from("clientes_empresas").select("id,nome_razao").eq("empresa_id", empresaId).order("nome_razao");
+  select.innerHTML = `<option value="">Selecione o cliente</option>${(data || []).map((cliente) => `<option value="${cliente.id}">${String(cliente.nome_razao || "Cliente").replace(/[&<>"']/g, "")}</option>`).join("")}`;
+  select.addEventListener("change", () => window.itens_carregarFotosAdicionais(fotosItemAtualId));
+}
+document.addEventListener("click", (event) => { if(event.target.closest('[data-item-tab="galeria"]')) iniciarSeletorGaleriaCliente(); });
 
 /* =====================================================
    CARREGAR FOTO EXISTENTE

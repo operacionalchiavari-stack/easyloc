@@ -68,7 +68,9 @@
     if (!url) return "";
     if (url.startsWith("blob:") || url.startsWith("data:")) return url;
     const cleanUrl = url.replace(/([?&])v=[^&]*(&?)/, (match, prefix, suffix) => suffix ? prefix : "");
-    const cacheValue = version || Date.now();
+    // Sem uma versão informada, use uma chave estável. Date.now() forçava o
+    // navegador a baixar novamente a mesma logo e causava uma piscada.
+    const cacheValue = version || "stable";
     const separator = cleanUrl.includes("?") ? "&" : "?";
     return `${cleanUrl}${separator}v=${encodeURIComponent(cacheValue)}`;
   }
@@ -110,7 +112,9 @@
 
     const sidebarLogo = document.getElementById("sidebarLogo");
     if (sidebarLogo) {
-      sidebarLogo.src = theme.logo_url ? withCacheBust(theme.logo_url, logoCacheVersion(rawTheme)) : "logo%20nova%20branca%20-%20sem%20fundo.png";
+      const nextLogoSrc = theme.logo_url ? withCacheBust(theme.logo_url, logoCacheVersion(rawTheme)) : "logo%20nova%20branca%20-%20sem%20fundo.png";
+      const currentLogoSrc = sidebarLogo.getAttribute("src") || "";
+      if(currentLogoSrc !== nextLogoSrc) sidebarLogo.src = nextLogoSrc;
       sidebarLogo.style.transform = `scale(${theme.logo_zoom})`;
       sidebarLogo.style.transformOrigin = "center";
     }

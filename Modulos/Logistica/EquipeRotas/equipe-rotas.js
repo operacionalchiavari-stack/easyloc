@@ -221,6 +221,27 @@
     };
   }
 
+  function parseRouteStopId(value){
+    const rawId = String(value || "");
+    const match = rawId.match(/^(.*):(entrega|coleta)$/);
+    if(!match){
+      return { rawId, pedidoId: rawId, type: "entrega" };
+    }
+    return {
+      rawId,
+      pedidoId: match[1],
+      type: match[2]
+    };
+  }
+
+  function movementLabel(type){
+    return type === "coleta" ? "Coleta" : "Entrega";
+  }
+
+  function isUuidLike(value){
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
+  }
+
   function loadTeams(){
     const parsed = parseJson(localStorage.getItem(TEAMS_KEY), {});
     state.teams = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
@@ -347,15 +368,17 @@
       return;
     }
 
-    const ids = [...new Set(state.routes.flatMap((route) => route.sequence || []).map(String).filter(Boolean))];
-    if(!ids.length){
+    const stops = state.routes.flatMap((route) => route.sequence || []).map(parseRouteStopId);
+    const ids = [...new Set(stops.map((stop) => stop.pedidoId).filter(Boolean))];
+    const queryIds = ids.filter(isUuidLike);
+    if(!queryIds.length){
       state.routes.forEach((route) => state.routeDetails.set(route.id, fallbackRouteDetails(route)));
       return;
     }
 
     try{
       const pedidos = await safeSelect("separacoes_pedidos", "*", {
-        in: { field: "id", values: ids },
+        in: { field: "id", values: queryIds },
         order: { field: "data_entrega", ascending: true }
       });
       const pedidoRows = Array.isArray(pedidos) ? pedidos : [];
@@ -370,9 +393,10 @@
 
       state.routes.forEach((route) => {
         const details = route.sequence.map((id, index) => {
-          const pedido = pedidoMap.get(String(id));
-          if(!pedido) return fallbackDelivery(route, id, index);
-          return normalizeDeliveryFromPedido(route, pedido, localMap.get(String(pedido.local_id || "")), index);
+          const stop = parseRouteStopId(id);
+          const pedido = pedidoMap.get(String(stop.pedidoId));
+          if(!pedido) return fallbackDelivery(route, id, index, stop);
+          return normalizeDeliveryFromPedido(route, pedido, localMap.get(String(pedido.local_id || "")), index, stop);
         });
         state.routeDetails.set(route.id, details);
       });
@@ -383,17 +407,20 @@
   }
 
   function fallbackRouteDetails(route){
-    return (route.sequence || []).map((id, index) => fallbackDelivery(route, id, index));
+    return (route.sequence || []).map((id, index) => fallbackDelivery(route, id, index, parseRouteStopId(id)));
   }
 
-  function fallbackDelivery(route, id, index){
+  function fallbackDelivery(route, id, index, stop = parseRouteStopId(id)){
     const point = deterministicPoint(index);
+    const label = movementLabel(stop.type);
     return {
-      id: String(id),
-      pedidoId: String(id),
+      id: stop.rawId || String(id),
+      pedidoId: stop.pedidoId || String(id),
+      movementType: stop.type,
+      movementLabel: label,
       number: String(index + 1).padStart(3, "0"),
       cliente: "Cliente nao carregado",
-      event: "Evento",
+      event: label,
       local: route.name,
       address: "Endereco nao carregado",
       date: route.createdAt,
@@ -406,26 +433,29 @@
     };
   }
 
-  function normalizeDeliveryFromPedido(route, pedido, local, index){
+  function normalizeDeliveryFromPedido(route, pedido, local, index, stop = parseRouteStopId(pedido?.id)){
     const obs = parseJson(pedido.observacoes, {});
     const point = deterministicPoint(index);
     const lat = Number(local?.latitude ?? obs.local_latitude ?? obs.latitude);
     const lng = Number(local?.longitude ?? obs.local_longitude ?? obs.longitude);
+    const label = movementLabel(stop.type);
     const endereco = [
       local?.endereco || obs.local_endereco || pedido.local_endereco || pedido.endereco || pedido.local_nome,
       local?.numero_endereco ? `, ${local.numero_endereco}` : ""
     ].join("").trim();
 
     return {
-      id: String(pedido.id),
+      id: stop.rawId || `${pedido.id}:${stop.type}`,
       pedidoId: pedido.id,
+      movementType: stop.type,
+      movementLabel: label,
       number: getPedidoNumero(pedido),
       cliente: pedido.cliente_nome || pedido.cliente || "Cliente",
-      event: pedido.tipo_evento || pedido.evento || "Evento",
+      event: `${label} - ${pedido.tipo_evento || pedido.evento || "Evento"}`,
       local: pedido.local_nome || local?.nome_razao || "Local",
       address: endereco || "Endereco nao informado",
-      date: dataBasePedido(pedido) || route.createdAt,
-      time: horaPedido(pedido) || "08:00",
+      date: dataMovimentoPedido(pedido, stop.type) || dataBasePedido(pedido) || route.createdAt,
+      time: horaPedido(pedido, stop.type) || "08:00",
       volume: Number(pedido.volume_total || 0),
       lat: Number.isFinite(lat) ? lat : null,
       lng: Number.isFinite(lng) ? lng : null,
@@ -443,10 +473,21 @@
     return pedido?.data_entrega || pedido?.data_evento || pedido?.data_hora || pedido?.data_coleta || pedido?.created_at || pedido?.criado_em || "";
   }
 
-  function horaPedido(pedido){
-    const direct = pedido?.hora_entrega || pedido?.horario_entrega || pedido?.hora_evento || "";
+  function dataMovimentoPedido(pedido, type){
+    const obs = parseJson(pedido?.observacoes, {});
+    if(type === "coleta"){
+      return pedido?.data_coleta || obs.data_coleta || obs.coleta_data || obs.logistica?.data_coleta || "";
+    }
+    return pedido?.data_entrega || pedido?.data_evento || pedido?.data_hora || "";
+  }
+
+  function horaPedido(pedido, type = "entrega"){
+    const obs = parseJson(pedido?.observacoes, {});
+    const direct = type === "coleta"
+      ? pedido?.hora_coleta || pedido?.horario_coleta || obs.hora_coleta || obs.horario_coleta || obs.coleta_horario || obs.logistica?.hora_coleta || ""
+      : pedido?.hora_entrega || pedido?.horario_entrega || pedido?.hora_evento || obs.hora_entrega || obs.horario_entrega || obs.entrega_horario || obs.logistica?.hora_entrega || "";
     if(direct) return formatTime(direct);
-    const data = dataBasePedido(pedido);
+    const data = dataMovimentoPedido(pedido, type) || dataBasePedido(pedido);
     return String(data || "").includes("T") ? formatTime(data) : "";
   }
 

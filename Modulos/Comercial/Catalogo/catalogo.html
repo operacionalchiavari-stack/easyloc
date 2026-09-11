@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo — Acervo</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <link rel="stylesheet" href="catalogo.css?v=20260903-floor-finishes-v1">
+  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260905-projects-layout-v1">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../../js/core/supabase.js"></script>
+  <script type="importmap">
+    {"imports":{"three":"../../../js/vendor/three/build/three.module.js","three/addons/":"../../../js/vendor/three/examples/jsm/"}}
+  </script>
+</head>
+<body class="catalog-page">
+  <div class="catalog-login" id="catalogLogin" role="dialog" aria-modal="true" aria-labelledby="catalogLoginTitle">
+    <form class="catalog-login-card" id="catalogLoginForm">
+      <span>CATÁLOGO EXCLUSIVO</span>
+      <h1 id="catalogLoginTitle">Acesse seu catálogo</h1>
+      <p>Entre com o e-mail e a senha fornecidos pela Chiavari.</p>
+      <label>E-mail<input type="email" id="catalogLoginEmail" autocomplete="username" required></label>
+      <label>Senha<input type="password" id="catalogLoginPassword" autocomplete="current-password" required></label>
+      <button type="submit">Entrar</button>
+      <small id="catalogLoginStatus" aria-live="polite"></small>
+    </form>
+  </div>
+  <header class="catalog-header">
+    <a class="catalog-brand" href="#catalogGrid" aria-label="Início do catálogo">
+      <img class="catalog-brand-logo hidden" id="catalogBrandLogo" alt="">
+      <span class="catalog-brand-name" id="catalogBrandName">Acervo</span>
+    </a>
+    <nav class="catalog-header-categories" id="catalogHeaderCategories" aria-label="Categorias"></nav>
+    <div class="catalog-user hidden" id="catalogUser">
+      <img class="hidden" id="catalogUserLogo" alt="">
+      <div><small>CATÁLOGO DE</small><strong id="catalogUserName"></strong></div>
+      <button type="button" id="catalogLogout" aria-label="Sair do catálogo" title="Sair">↪</button>
+    </div>
+    <label class="catalog-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <span class="sr-only">Pesquisar produtos</span>
+      <input type="search" id="catalogSearch" placeholder="Pesquisar" autocomplete="off">
+    </label>
+  </header>
+  <section class="catalog-studio hidden" id="catalogStudio" aria-label="Painel de composição 3D">
+    <aside class="studio-library">
+      <div class="studio-library-heading">
+        <span>Biblioteca</span>
+        <small>Selecione os móveis</small>
+      </div>
+      <label class="studio-library-search">
+        <span class="sr-only">Buscar móvel 3D</span>
+        <input type="search" id="studioLibrarySearch" placeholder="Buscar móvel">
+      </label>
+      <div class="studio-presets" aria-label="Composições automáticas">
+        <span>Montagem automática</span>
+        <button type="button" data-studio-preset="lounge">Lounge compacto</button>
+        <button type="button" data-studio-preset="guest-table">Mesa de convidados</button>
+      </div>
+      <div class="studio-library-list" id="studioLibraryList"></div>
+    </aside>
+    <div class="studio-workspace">
+      <div class="studio-toolbar" id="studioToolbar">
+        <form class="studio-floor-plan" id="studioFloorPlan">
+          <div class="studio-tool-menu studio-tool-menu-space" data-studio-menu>
+            <button type="button" class="studio-tool-menu-trigger" data-studio-menu-trigger aria-expanded="false">
+              <span>Espaço</span><small id="studioSpaceMenuSummary">10 × 10 m</small><i aria-hidden="true">⌄</i>
+            </button>
+            <div class="studio-tool-menu-panel" data-studio-menu-panel hidden>
+              <strong>Dimensões e acabamento</strong>
+              <div class="studio-tool-menu-row">
+                <label><small>Largura</small><input type="number" id="studioRoomWidth" min="1" max="500" step="0.1" value="10" required><b>m</b></label>
+                <label><small>Comprimento</small><input type="number" id="studioRoomDepth" min="1" max="500" step="0.1" value="10" required><b>m</b></label>
+                <button type="submit">Aplicar</button>
+              </div>
+              <label class="studio-floor-finish"><small>Piso</small><select id="studioFloorFinish" aria-label="Acabamento do piso"><option value="neutral">Neutro</option><option value="grass">Grama</option><option value="sand">Areia de praia</option><option value="slatted-wood">Madeira ripada</option><option value="plan" id="studioFloorPlanOption" hidden disabled>Planta importada</option></select></label>
+            </div>
+          </div>
+
+          <div class="studio-tool-menu studio-tool-menu-walls" data-studio-menu>
+            <button type="button" class="studio-tool-menu-trigger" data-studio-menu-trigger aria-expanded="false">
+              <span>Paredes</span><small id="studioWallsMenuSummary">Fundo</small><i aria-hidden="true">⌄</i>
+            </button>
+            <div class="studio-tool-menu-panel" data-studio-menu-panel hidden>
+              <strong>Paredes do ambiente</strong>
+              <div class="studio-wall-builder-actions">
+                <button type="button" id="studioWallDraw" data-studio-toolbar-action="wall-draw" aria-pressed="false">+ Desenhar parede</button>
+                <label><small>Altura</small><input type="number" id="studioWallHeight" min="1" max="12" step="0.1" value="3"><b>m</b></label>
+              </div>
+              <small class="studio-wall-section-label">Lados externos do piso</small>
+              <div class="studio-wall-selector" id="studioWallSelector" aria-label="Escolha um dos quatro lados do piso">
+                <button type="button" class="active" data-wall-side="back">Fundo<i></i></button>
+                <button type="button" data-wall-side="left">Esquerda<i></i></button>
+                <button type="button" data-wall-side="right">Direita<i></i></button>
+                <button type="button" data-wall-side="front">Frente<i></i></button>
+              </div>
+              <div class="studio-custom-wall-section">
+                <small class="studio-wall-section-label">Paredes desenhadas</small>
+                <div class="studio-custom-wall-list" id="studioCustomWallList"><span>Nenhuma parede desenhada</span></div>
+              </div>
+              <select id="studioWallSide" aria-label="Parede selecionada" hidden><option value="back">Fundo</option><option value="left">Esquerda</option><option value="right">Direita</option><option value="front">Frente</option></select>
+              <label class="studio-image-upload" id="studioEnvironmentButton"><span>Adicionar foto</span><input type="file" id="studioEnvironmentInput" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"></label>
+              <button type="button" class="studio-custom-wall-remove hidden" id="studioCustomWallRemove">Excluir parede selecionada</button>
+            </div>
+          </div>
+
+          <div class="studio-tool-menu studio-tool-menu-plan" data-studio-menu>
+            <button type="button" class="studio-tool-menu-trigger" data-studio-menu-trigger aria-expanded="false">
+              <span>Planta</span><small>Medir e ajustar</small><i aria-hidden="true">⌄</i>
+            </button>
+            <div class="studio-tool-menu-panel studio-tool-menu-actions" data-studio-menu-panel hidden>
+              <strong>Ferramentas da planta</strong>
+              <button type="button" id="studioRuler" data-studio-toolbar-action="ruler" aria-pressed="false">Régua</button>
+              <button type="button" id="studioCrop" data-studio-toolbar-action="crop" aria-pressed="false">Cortar</button>
+              <button type="button" id="studioPlanZoomOut" data-studio-toolbar-action="zoom-out" aria-label="Diminuir zoom da planta">Zoom −</button>
+              <button type="button" id="studioPlanZoomIn" data-studio-toolbar-action="zoom-in" aria-label="Aumentar zoom da planta">Zoom +</button>
+              <button type="button" id="studioGridToggle" data-studio-toolbar-action="grid" aria-pressed="true">Ocultar linhas</button>
+              <label class="studio-plan-upload">Importar planta<input type="file" id="studioPlanInput" accept="application/pdf,image/png,image/jpeg,image/webp,.pdf" hidden></label>
+            </div>
+          </div>
+
+          <div class="studio-tool-menu studio-tool-menu-view" data-studio-menu>
+            <button type="button" class="studio-tool-menu-trigger" data-studio-menu-trigger aria-expanded="false">
+              <span>Visualização</span><small id="studioViewMenuSummary">Livre</small><i aria-hidden="true">⌄</i>
+            </button>
+            <div class="studio-tool-menu-panel studio-tool-menu-actions" data-studio-menu-panel hidden>
+              <strong>Câmera e tela</strong>
+              <button type="button" id="studioTopView" data-studio-toolbar-action="top-view" aria-pressed="false">Vista superior</button>
+              <button type="button" id="studioPerspectiveView" data-studio-toolbar-action="perspective-view" aria-pressed="true">Vista 3D livre</button>
+              <button type="button" class="studio-camera-lock" id="studioCameraLock" data-studio-toolbar-action="camera-lock" aria-pressed="false" aria-label="Travar movimentação da câmera">Travar câmera</button>
+              <button type="button" class="studio-fullscreen-button" id="studioFullscreen" data-studio-toolbar-action="fullscreen" aria-pressed="false">Tela cheia</button>
+            </div>
+          </div>
+        </form>
+        <button type="button" class="studio-render-button" id="studioRenderButton" data-studio-toolbar-action="render">Renderizar com IA</button>
+      </div>
+      <div class="studio-canvas-host" id="studioCanvasHost">
+        <div class="studio-room-status" id="studioRoomStatus">Espaço: 10 × 10 m</div>
+        <div class="studio-ruler-status hidden" id="studioRulerStatus">
+          <span id="studioRulerMessage">Clique no primeiro ponto</span>
+          <label class="hidden" id="studioRulerCalibration">Medida real <input type="number" id="studioRulerActual" min="0.01" max="500" step="0.01" placeholder="13"><b>m</b><button type="button" id="studioRulerApply">Calibrar</button></label>
+        </div>
+        <div class="studio-wall-draw-status hidden" id="studioWallDrawStatus"><span id="studioWallDrawMessage">Clique no início da parede</span><button type="button" id="studioWallDrawFinish">Concluir</button></div>
+        <div class="studio-crop-status hidden" id="studioCropStatus">Clique, arraste e solte para marcar a área que deseja manter</div>
+        <div class="studio-crop-selection hidden" id="studioCropSelection" aria-hidden="true"></div>
+        <div class="studio-grouping-bar hidden" id="studioGroupingBar">
+          <span><b id="studioGroupingCount">1</b> móvel selecionado</span>
+          <button type="button" id="studioGroupingFinish">Concluir bloco</button>
+          <button type="button" id="studioGroupingCancel">Cancelar</button>
+        </div>
+        <div class="studio-canvas-empty" id="studioCanvasEmpty"><strong>Crie seu ambiente</strong><span>Escolha um móvel na biblioteca para começar.</span></div>
+        <div class="studio-environment-controls hidden" id="studioEnvironmentControls" aria-label="Ajustar parede e piso">
+          <span id="studioWallControlsTitle">Ajustar parede</span>
+          <div class="studio-environment-group">
+            <small>Foto</small>
+            <button type="button" data-wall-fit="contain">Inteira</button>
+            <button type="button" class="active" data-wall-fit="cover">Preencher</button>
+            <button type="button" data-wall-action="left" aria-label="Mover foto para esquerda">←</button>
+            <button type="button" data-wall-action="up" aria-label="Mover foto para cima">↑</button>
+            <button type="button" data-wall-action="down" aria-label="Mover foto para baixo">↓</button>
+            <button type="button" data-wall-action="right" aria-label="Mover foto para direita">→</button>
+            <button type="button" data-wall-action="zoom-out" aria-label="Diminuir foto">−</button>
+            <button type="button" data-wall-action="zoom-in" aria-label="Aumentar foto">+</button>
+            <button type="button" data-wall-action="remove">Remover</button>
+          </div>
+          <div class="studio-environment-group">
+            <small>Piso 3D</small>
+            <button type="button" data-floor-action="lower">Mais baixo</button>
+            <button type="button" data-floor-action="raise">Mais alto</button>
+            <button type="button" data-floor-action="farther">Afastar</button>
+            <button type="button" data-floor-action="closer">Aproximar</button>
+          </div>
+        </div>
+        <div class="studio-easy-controls hidden" id="studioEasyControls" aria-label="Posicionamento do móvel selecionado">
+          <div class="studio-selected-info"><span class="studio-selected-label" id="studioSelectedLabel">Móvel selecionado</span><small id="studioSelectedDimensions"></small></div>
+          <div class="studio-control-group studio-control-group-secondary">
+            <button type="button" class="studio-control-group-button" id="studioGroupButton">▦<small>Criar bloco</small></button>
+            <button type="button" class="studio-control-ungroup hidden" id="studioUngroupButton">▤<small>Desagrupar</small></button>
+            <button type="button" class="studio-control-rotate" data-studio-rotate-hold aria-label="Segure para girar o móvel">↻<small>Segure para girar</small></button>
+            <button type="button" class="studio-control-remove" data-studio-action="remove" aria-label="Remover móvel">×<small>Remover</small></button>
+          </div>
+        </div>
+      </div>
+      <p class="studio-hint">Na vista superior, arraste o meio da parede para mover ou uma extremidade para mudar seu comprimento e direção. A roda aproxima no ponto do cursor. Arraste para girar, botão direito para mover e dê dois cliques no piso para mudar o foco.</p>
+    </div>
+  </section>
+  <dialog class="studio-preset-dialog" id="studioPresetDialog">
+    <form class="studio-preset-card" id="studioPresetForm">
+      <button type="button" class="studio-preset-close" id="studioPresetClose" aria-label="Fechar">×</button>
+      <span>MONTAGEM AUTOMÁTICA</span>
+      <h2 id="studioPresetTitle">Criar composição</h2>
+      <p id="studioPresetDescription"></p>
+      <div id="studioPresetFields"></div>
+      <button type="submit" class="studio-preset-submit">Montar ambiente</button>
+      <small id="studioPresetStatus" aria-live="polite"></small>
+    </form>
+  </dialog>
+  <dialog class="studio-result-dialog" id="studioResultDialog">
+    <button type="button" class="studio-result-close" id="studioResultClose" aria-label="Fechar render">×</button>
+    <div class="studio-result-copy"><span>Renderização IA</span><strong>Sua composição em uma cena realista</strong></div>
+    <img id="studioResultImage" alt="Renderização da composição 3D">
+    <a id="studioResultDownload" download="composicao-acervo.png">Baixar imagem</a>
+  </dialog>
+  <dialog class="catalog-customize-dialog" id="catalogCustomizeDialog">
+    <button type="button" class="catalog-customize-close" id="catalogCustomizeClose" aria-label="Fechar personalização">×</button>
+    <div class="catalog-customize-copy">
+      <span>Sob medida</span>
+      <h2>Experimente seu tecido</h2>
+      <p>Envie uma foto nítida da trama. A IA aplicará somente o revestimento, preservando desenho, estrutura e proporções do móvel.</p>
+    </div>
+    <div class="catalog-customize-preview">
+      <img id="catalogCustomizeProduct" alt="Produto que será personalizado">
+      <label class="catalog-fabric-upload" id="catalogFabricUpload">
+        <input type="file" id="catalogFabricInput" accept="image/jpeg,image/png,image/webp" hidden>
+        <span>Adicionar tecido</span>
+        <small>JPG, PNG ou WebP</small>
+        <img class="hidden" id="catalogFabricPreview" alt="Amostra do tecido selecionado">
+      </label>
+    </div>
+    <button type="button" class="catalog-customize-generate" id="catalogCustomizeGenerate" disabled>Aplicar tecido com IA</button>
+    <p class="catalog-customize-status" id="catalogCustomizeStatus" aria-live="polite"></p>
+    <div class="catalog-ai-loading hidden" id="catalogAiLoading" role="status" aria-live="polite">
+      <div class="catalog-ai-loading-copy">
+        <span class="catalog-ai-loading-spinner" aria-hidden="true"></span>
+        <strong>Personalizando para você</strong>
+        <p id="catalogAiLoadingMessage">Aplicando o tecido ao seu móvel.</p>
+      </div>
+    </div>
+  </dialog>
+  <main class="catalog-products" id="catalogGrid"></main>
+  <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
+  <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
+  <script type="module" src="catalogo.mjs?v=20260908-fabric-progress"></script>
+</body>
+</html>

@@ -2,6 +2,27 @@
   "use strict";
 
   const STORAGE_KEY = "easyloc_roteirizacao_rotas";
+  const GALPAO_ORIGEM_PADRAO = "Chiavari Eventos, Estrada Uniao e Industria, Itaipava, Petropolis - RJ, Brasil";
+  const CALENDAR_MONTHS = [
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro"
+  ];
+  const ROUTE_MARKER_COLORS = {
+    delivery: "#2563eb",
+    pickup: "#7c3aed",
+    warehouse: "#16a34a",
+    blocked: "#6b7280"
+  };
 
   const deliveries = [
     { id: 1, title: "Condomínio Sunset", address: "R. Funchal, 123 - Vila Olímpia", window: "08:00 - 08:30", volume: 2.4, x: 49, y: 26, lat: -23.5945, lng: -46.6836, region: "capital", event: "Casamento" },
@@ -41,11 +62,17 @@
     supabase: null,
     empresaId: null,
     selectedIds: [],
+    selectedRouteId: null,
     truckId: null,
+    truckIds: [],
     draggedId: null,
     createdRoutes: [],
     region: "all",
     date: "",
+    warehouseOrigin: GALPAO_ORIGEM_PADRAO,
+    warehousePosition: null,
+    calendarYear: new Date().getFullYear(),
+    calendarMonth: new Date().getMonth(),
     destroyed: false
   };
 
@@ -54,6 +81,7 @@
     map: null,
     markers: new Map(),
     routeLine: null,
+    warehouseMarker: null,
     directionsService: null,
     directionsRenderer: null,
     routeToken: 0,
@@ -70,6 +98,10 @@
     [
       "routeDeliveryDate",
       "routeRegion",
+      "routeCalendarTitle",
+      "routeCalendarGrid",
+      "routeCalendarPrev",
+      "routeCalendarNext",
       "routeRefreshBtn",
       "routeAvailableCount",
       "routeSelectedCount",
@@ -112,6 +144,52 @@
     return date.toISOString().slice(0, 10);
   }
 
+  function toDateKey(value){
+    return String(value || "").slice(0, 10);
+  }
+
+  function parseDateKey(value){
+    const parts = toDateKey(value).split("-").map((part) => Number(part));
+    const [year, month, day] = parts;
+    if(!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+  }
+
+  function formatDateKey(date){
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function syncCalendarToDate(){
+    const selected = parseDateKey(state.date) || new Date();
+    state.calendarYear = selected.getFullYear();
+    state.calendarMonth = selected.getMonth();
+  }
+
+  function ensureSelectedDate(){
+    const dates = deliveries
+      .map((delivery) => toDateKey(delivery.date))
+      .filter(Boolean)
+      .sort();
+
+    if(!dates.length){
+      if(!state.date) state.date = isoToday();
+      syncCalendarToDate();
+      return;
+    }
+
+    if(dates.includes(state.date)){
+      syncCalendarToDate();
+      return;
+    }
+
+    const today = isoToday();
+    state.date = dates.includes(today) ? today : dates[0];
+    syncCalendarToDate();
+  }
+
   function escapeHtml(value){
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -136,26 +214,108 @@
     console.log(`[${title}] ${message}`);
   }
 
+  function selectedTruckIds(){
+    const ids = Array.isArray(state.truckIds) && state.truckIds.length
+      ? state.truckIds
+      : (state.truckId ? [state.truckId] : []);
+    return [...new Set(ids.map((id) => String(id)).filter(Boolean))];
+  }
+
+  function setSelectedTruckIds(ids){
+    const available = new Set(trucks.map((truck) => String(truck.id)));
+    state.truckIds = [...new Set((ids || []).map((id) => String(id)).filter((id) => available.has(id)))];
+    state.truckId = state.truckIds[0] || null;
+  }
+
+  function ensureTruckSelection(){
+    if(!trucks.length){
+      state.truckIds = [];
+      state.truckId = null;
+      return;
+    }
+
+    const valid = selectedTruckIds().filter((id) => trucks.some((truck) => String(truck.id) === id));
+    setSelectedTruckIds(valid.length ? valid : [trucks[0].id]);
+  }
+
+  function getSelectedTrucks(){
+    const ids = new Set(selectedTruckIds());
+    return trucks.filter((truck) => ids.has(String(truck.id)));
+  }
+
+  function truckFleetCapacity(items = getSelectedTrucks()){
+    return items.reduce((sum, truck) => sum + Number(truck.capacity || 0), 0);
+  }
+
+  function truckFleetLabel(items = getSelectedTrucks()){
+    if(!items.length) return "Sem veiculo";
+    const capacity = truckFleetCapacity(items);
+    if(items.length === 1) return `${items[0].name} - ${formatNumber(items[0].capacity, 0)} m³`;
+    return `${items.length} veiculos - ${formatNumber(capacity, 0)} m³`;
+  }
+
   function getTruck(){
-    return trucks.find((truck) => String(truck.id) === String(state.truckId)) || trucks[0] || { id: null, name: "Sem caminhao", capacity: 0 };
+    const items = getSelectedTrucks();
+    return {
+      id: selectedTruckIds().join(","),
+      name: items.length === 1 ? items[0].name : `${items.length || 0} veiculos`,
+      capacity: truckFleetCapacity(items),
+      items
+    };
+  }
+
+  function deliveryMatchesId(delivery, id){
+    const value = String(id);
+    if(String(delivery?.id) === value) return true;
+    if(String(delivery?.pedidoId || "") === value && delivery?.movementType === "entrega") return true;
+    return false;
+  }
+
+  function routeOwnsDelivery(route, delivery){
+    if(!route || !delivery) return false;
+    const sequence = Array.isArray(route.sequence) ? route.sequence : [];
+    return sequence.some((id) => deliveryMatchesId(delivery, id));
+  }
+
+  function routedRouteForDelivery(delivery, options = {}){
+    if(!delivery) return null;
+    const ignoreRouteId = options.ignoreRouteId ? String(options.ignoreRouteId) : "";
+    return (state.createdRoutes || []).find((route) => {
+      if(ignoreRouteId && String(route.id) === ignoreRouteId) return false;
+      return routeOwnsDelivery(route, delivery);
+    }) || null;
+  }
+
+  function isDeliveryBlocked(delivery, options = {}){
+    return Boolean(routedRouteForDelivery(delivery, options));
+  }
+
+  function findVisibleDeliveryById(id){
+    return visibleDeliveries().find((delivery) => deliveryMatchesId(delivery, id)) || null;
+  }
+
+  function isSelectedId(id){
+    return state.selectedIds.some((selectedId) => String(selectedId) === String(id));
   }
 
   function selectedDeliveries(){
     const visible = visibleDeliveries();
     return state.selectedIds
-      .map((id) => visible.find((delivery) => String(delivery.id) === String(id)))
+      .map((id) => visible.find((delivery) => deliveryMatchesId(delivery, id)))
       .filter(Boolean);
   }
 
   function availableDeliveries(){
-    return visibleDeliveries().filter((delivery) => !state.selectedIds.some((id) => String(id) === String(delivery.id)));
+    return visibleDeliveries().filter((delivery) => {
+      if(isSelectedId(delivery.id)) return false;
+      return !isDeliveryBlocked(delivery, { ignoreRouteId: state.selectedRouteId });
+    });
   }
 
   function visibleDeliveries(){
     return deliveries.filter((delivery) => {
-      const matchDate = !state.date || String(delivery.date || "").slice(0, 10) === state.date;
-      const matchRegion = !state.region || state.region === "all" || delivery.region === state.region;
-      return matchDate && matchRegion;
+      const matchDate = !state.date || toDateKey(delivery.date) === state.date;
+      return matchDate;
     });
   }
 
@@ -229,6 +389,48 @@
     return data || [];
   }
 
+  async function carregarOrigemGalpao(){
+    state.warehouseOrigin = GALPAO_ORIGEM_PADRAO;
+    state.warehousePosition = null;
+    if(!state.supabase || !state.empresaId) return;
+
+    const selects = [
+      "id,endereco_google,endereco,numero_endereco,latitude,longitude",
+      "id,endereco_google,endereco,numero_endereco",
+      "id,endereco"
+    ];
+
+    for(const select of selects){
+      const { data, error } = await state.supabase
+        .from("empresas")
+        .select(select)
+        .eq("id", state.empresaId)
+        .maybeSingle();
+
+      if(error){
+        if(isTabelaAusente(error)) continue;
+        console.warn("[Roteirizacao] Nao foi possivel carregar origem do galpao:", error);
+        return;
+      }
+
+      if(!data) continue;
+      const lat = Number(data.latitude);
+      const lng = Number(data.longitude);
+      if(Number.isFinite(lat) && Number.isFinite(lng)){
+        state.warehousePosition = { lat, lng };
+      }
+
+      const endereco = [
+        data.endereco_google || data.endereco || "",
+        data.numero_endereco ? String(data.numero_endereco).trim() : "",
+        "Brasil"
+      ].filter(Boolean).join(", ");
+
+      if(endereco.trim()) state.warehouseOrigin = endereco.trim();
+      return;
+    }
+  }
+
   function parseJson(value){
     if(!value) return {};
     if(typeof value === "object") return value;
@@ -270,6 +472,14 @@
     return pedido?.data_entrega || pedido?.data_evento || pedido?.data_hora || pedido?.criado_em || pedido?.created_at || "";
   }
 
+  function dataMovimentoPedido(pedido, tipo){
+    const obs = parseJson(pedido?.observacoes);
+    if(tipo === "coleta"){
+      return pedido?.data_coleta || obs.data_coleta || obs.coleta_data || obs.logistica?.data_coleta || "";
+    }
+    return dataBasePedido(pedido);
+  }
+
   function formatDateShort(value){
     if(!value) return "-";
     const raw = String(value).slice(0, 10);
@@ -278,16 +488,25 @@
     return date.toLocaleDateString("pt-BR");
   }
 
-  function formatTimeFromPedido(pedido){
+  function formatTimeFromPedido(pedido, tipo = "entrega"){
     const obs = parseJson(pedido?.observacoes);
-    const candidates = [
-      pedido?.hora_entrega,
-      pedido?.horario_entrega,
-      obs.hora_entrega,
-      obs.horario_entrega,
-      obs.entrega_horario,
-      obs.logistica?.hora_entrega
-    ].filter(Boolean);
+    const candidates = tipo === "coleta"
+      ? [
+        pedido?.hora_coleta,
+        pedido?.horario_coleta,
+        obs.hora_coleta,
+        obs.horario_coleta,
+        obs.coleta_horario,
+        obs.logistica?.hora_coleta
+      ].filter(Boolean)
+      : [
+        pedido?.hora_entrega,
+        pedido?.horario_entrega,
+        obs.hora_entrega,
+        obs.horario_entrega,
+        obs.entrega_horario,
+        obs.logistica?.hora_entrega
+      ].filter(Boolean);
     const value = String(candidates[0] || "").slice(0, 5);
     return /^\d{2}:\d{2}$/.test(value) ? value : "";
   }
@@ -334,7 +553,7 @@
 
   async function carregarPedidosReais(){
     const selects = [
-      "id,numero_pedido,cliente_nome,tipo_evento,local_nome,local_id,data_evento,data_entrega,data_coleta,data_hora,status,status_comercial,valor_total,observacoes,volume_total,status_planejamento,criado_em,created_at",
+      "id,numero_pedido,cliente_nome,tipo_evento,local_nome,local_id,data_evento,data_entrega,data_coleta,data_hora,hora_entrega,hora_coleta,horario_entrega,horario_coleta,status,status_comercial,valor_total,observacoes,volume_total,status_planejamento,criado_em,created_at",
       "id,numero_pedido,cliente_nome,tipo_evento,local_nome,local_id,data_evento,data_entrega,data_coleta,data_hora,status,status_comercial,valor_total,observacoes,criado_em,created_at",
       "*"
     ];
@@ -387,7 +606,7 @@
 
     const locaisMap = new Map(locais.map((local) => [String(local.id), local]));
 
-    return pedidos.map((pedido, index) => {
+    return pedidos.flatMap((pedido, index) => {
       const local = locaisMap.get(String(pedido.local_id || "")) || {};
       const itensPedido = itensPorPedido.get(String(pedido.id)) || [];
       const obs = parseJson(pedido.observacoes);
@@ -395,31 +614,43 @@
       const lat = Number(local.latitude ?? obs.local_latitude ?? obs.latitude);
       const lng = Number(local.longitude ?? obs.local_longitude ?? obs.longitude);
       const numero = getPedidoNumero(pedido);
-      const data = dataBasePedido(pedido);
-      const hora = formatTimeFromPedido(pedido);
       const endereco = [
         local.endereco || obs.local_endereco || pedido.local_nome,
         local.numero_endereco ? `, ${local.numero_endereco}` : ""
       ].join("").trim();
 
-      return {
-        id: String(pedido.id),
-        pedidoId: pedido.id,
-        number: numero,
-        title: `#${numero} - ${pedido.cliente_nome || "Cliente"}`,
-        address: endereco || pedido.local_nome || "Local nao informado",
-        window: `${formatDateShort(data)}${hora ? ` - ${hora}` : ""}`,
-        date: String(data || "").slice(0, 10),
-        volume: volumePedido(pedido, itensPedido),
-        x: point.x,
-        y: point.y,
-        lat: Number.isFinite(lat) ? lat : null,
-        lng: Number.isFinite(lng) ? lng : null,
-        region: inferRegion(local, pedido),
-        event: pedido.tipo_evento || "Evento",
-        localName: pedido.local_nome || local.nome_razao || "Local",
-        raw: pedido
-      };
+      return ["entrega", "coleta"].flatMap((tipo, typeIndex) => {
+        const data = dataMovimentoPedido(pedido, tipo);
+        if(!data) return [];
+
+        const hora = formatTimeFromPedido(pedido, tipo);
+        const label = tipo === "coleta" ? "Coleta" : "Entrega";
+        const offsetPoint = {
+          x: clamp(point.x + (typeIndex ? 2 : 0), 6, 94),
+          y: clamp(point.y + (typeIndex ? 2 : 0), 6, 94)
+        };
+
+        return {
+          id: `${pedido.id}:${tipo}`,
+          pedidoId: pedido.id,
+          movementType: tipo,
+          movementLabel: label,
+          number: numero,
+          title: `#${numero} - ${label} - ${pedido.cliente_nome || "Cliente"}`,
+          address: endereco || pedido.local_nome || "Local nao informado",
+          window: `${formatDateShort(data)}${hora ? ` - ${hora}` : ""}`,
+          date: String(data || "").slice(0, 10),
+          volume: volumePedido(pedido, itensPedido),
+          x: offsetPoint.x,
+          y: offsetPoint.y,
+          lat: Number.isFinite(lat) ? lat : null,
+          lng: Number.isFinite(lng) ? lng : null,
+          region: inferRegion(local, pedido),
+          event: `${label} - ${pedido.tipo_evento || "Evento"}`,
+          localName: pedido.local_nome || local.nome_razao || "Local",
+          raw: pedido
+        };
+      });
     });
   }
 
@@ -440,24 +671,21 @@
   }
 
   function reconciliarSelecao(){
-    const ids = new Set(deliveries.map((delivery) => String(delivery.id)));
-    state.selectedIds = state.selectedIds.filter((id) => ids.has(String(id)));
-    if(!state.selectedIds.length){
-      const base = deliveries.filter(hasValidPosition);
-      state.selectedIds = (base.length ? base : deliveries).slice(0, 6).map((delivery) => delivery.id);
-    }
+    const visible = visibleDeliveries();
+    state.selectedIds = state.selectedIds.filter((id) => {
+      const delivery = visible.find((item) => deliveryMatchesId(item, id));
+      if(!delivery) return false;
+      return !isDeliveryBlocked(delivery, { ignoreRouteId: state.selectedRouteId });
+    });
 
-    if(!state.truckId || !trucks.some((truck) => String(truck.id) === String(state.truckId))){
-      state.truckId = trucks[0]?.id || null;
-    }
+    ensureTruckSelection();
   }
 
   function filtrarRotasCriadasPelosPedidosReais(){
-    const ids = new Set(deliveries.map((delivery) => String(delivery.id)));
     const antes = state.createdRoutes.length;
     state.createdRoutes = state.createdRoutes.filter((route) => {
       if(!Array.isArray(route.sequence) || !route.sequence.length) return false;
-      return route.sequence.some((id) => ids.has(String(id)));
+      return route.sequence.some((id) => deliveries.some((delivery) => deliveryMatchesId(delivery, id)));
     });
     if(state.createdRoutes.length !== antes) saveCreatedRoutes();
   }
@@ -473,10 +701,12 @@
     if(!state.supabase || !state.empresaId){
       state.selectedIds = [];
       state.truckId = null;
+      state.truckIds = [];
       return;
     }
 
     try{
+      await carregarOrigemGalpao();
       const pedidos = (await carregarPedidosReais()).filter(pedidoRoteirizavel);
       const pedidoIds = pedidos.map((pedido) => pedido.id).filter(Boolean);
       const localIds = [...new Set(pedidos.map((pedido) => pedido.local_id).filter(Boolean))];
@@ -489,6 +719,7 @@
 
       deliveries.push(...montarEntregasReais(pedidos, itens, locais));
       trucks.push(...montarCaminhoesReais(caminhoes));
+      ensureSelectedDate();
       reconciliarSelecao();
       filtrarRotasCriadasPelosPedidosReais();
     }catch(error){
@@ -496,11 +727,13 @@
       notify("Nao foi possivel carregar pedidos e caminhoes reais.", "Roteirizacao", "erro");
       state.selectedIds = [];
       state.truckId = null;
+      state.truckIds = [];
     }
   }
 
   function render(){
     if(state.destroyed) return;
+    renderCalendar();
     renderTruckSelect();
     renderSummary();
     renderMap();
@@ -511,6 +744,102 @@
     window.lucide?.createIcons?.();
   }
 
+  function routedDeliveryIds(){
+    const ids = new Set();
+    (state.createdRoutes || []).forEach((route) => {
+      const sequence = Array.isArray(route.sequence) ? route.sequence : [];
+      sequence.forEach((id) => ids.add(String(id)));
+    });
+    return ids;
+  }
+
+  function isDeliveryRouted(delivery, routedIds){
+    if(routedIds.has(String(delivery?.id))) return true;
+    return delivery?.movementType === "entrega" && routedIds.has(String(delivery?.pedidoId || ""));
+  }
+
+  function calendarStatsByDate(){
+    const routed = routedDeliveryIds();
+    const stats = new Map();
+
+    deliveries.forEach((delivery) => {
+      const date = toDateKey(delivery.date);
+      if(!date) return;
+      const current = stats.get(date) || { total: 0, routed: 0, entrega: 0, coleta: 0 };
+      current.total += 1;
+      if(delivery.movementType === "coleta"){
+        current.coleta += 1;
+      }else{
+        current.entrega += 1;
+      }
+      if(isDeliveryRouted(delivery, routed)) current.routed += 1;
+      stats.set(date, current);
+    });
+
+    return stats;
+  }
+
+  function calendarStatus(stat){
+    if(!stat || !stat.total) return "";
+    if(!stat.routed) return "sem-rota";
+    if(stat.routed < stat.total) return "parcial";
+    return "concluido";
+  }
+
+  function calendarMovementClass(stat){
+    if(!stat || !stat.total) return "";
+    if(stat.entrega && stat.coleta) return "has-mixed-movements";
+    if(stat.coleta) return "has-pickup-movement";
+    return "has-delivery-movement";
+  }
+
+  function renderCalendar(){
+    if(!els.routeCalendarGrid || !els.routeCalendarTitle) return;
+
+    const year = state.calendarYear || new Date().getFullYear();
+    const month = Number.isInteger(state.calendarMonth) ? state.calendarMonth : new Date().getMonth();
+    const firstDay = new Date(year, month, 1);
+    const firstWeekday = firstDay.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const stats = calendarStatsByDate();
+    const cells = [];
+
+    setText(els.routeCalendarTitle, `${CALENDAR_MONTHS[month]} ${year}`);
+
+    for(let index = 0; index < firstWeekday; index += 1){
+      cells.push('<span class="route-calendar-day is-empty" aria-hidden="true"></span>');
+    }
+
+    for(let day = 1; day <= daysInMonth; day += 1){
+      const date = formatDateKey(new Date(year, month, day));
+      const stat = stats.get(date);
+      const status = calendarStatus(stat);
+      const movementClass = calendarMovementClass(stat);
+      const isSelected = date === state.date;
+      const classes = [
+        "route-calendar-day",
+        status ? `is-${status}` : "",
+        movementClass,
+        stat?.total ? "has-deliveries" : "",
+        isSelected ? "is-selected" : ""
+      ].filter(Boolean).join(" ");
+      const total = Number(stat?.total || 0);
+      const movementLabel = stat?.entrega && stat?.coleta
+        ? "entrega e coleta"
+        : (stat?.coleta ? "coleta" : "entrega");
+      const label = total ? `${total} ${total === 1 ? "movimento" : "movimentos"} de ${movementLabel}` : "Sem entregas ou coletas";
+
+      cells.push(`
+        <button type="button" class="${classes}" data-calendar-date="${date}" aria-pressed="${isSelected ? "true" : "false"}" aria-label="${day} de ${CALENDAR_MONTHS[month]}: ${label}">
+          <span class="route-calendar-day-number">${day}</span>
+          <small>${total ? `${total} ${total === 1 ? "mov." : "movs."}` : "&nbsp;"}</small>
+        </button>
+      `);
+    }
+
+    els.routeCalendarGrid.innerHTML = cells.join("");
+  }
+
   function renderSummary(){
     const selectedCount = selectedDeliveries().length;
     const totalDayCount = visibleDeliveries().length;
@@ -519,14 +848,14 @@
     const total = totalVolume();
     const percent = occupancy();
 
-    setText(els.routeAvailableCount, totalDayCount);
+    setText(els.routeAvailableCount, mapAvailableCount);
     setText(els.routeSelectedCount, selectedCount);
     setText(els.routeCurrentVolume, formatNumber(total));
     setText(els.routeTruckCapacity, formatNumber(truck.capacity));
     setText(els.routeOccupancyText, `${percent}%`);
     setText(els.routeLegendSelected, selectedCount);
     setText(els.routeLegendAvailable, mapAvailableCount);
-    setText(els.routeFooterSelectedText, `${selectedCount} ${selectedCount === 1 ? "entrega selecionada" : "entregas selecionadas"}`);
+    setText(els.routeFooterSelectedText, `${selectedCount} ${selectedCount === 1 ? "movimento selecionado" : "movimentos selecionados"}`);
 
     if(els.routeCapacityRing){
       els.routeCapacityRing.style.setProperty("--occupancy", `${clamp(percent, 0, 100) * 3.6}deg`);
@@ -543,6 +872,23 @@
   function hasValidPosition(delivery){
     const position = deliveryPosition(delivery);
     return Number.isFinite(position.lat) && Number.isFinite(position.lng);
+  }
+
+  function warehouseLocation(){
+    if(state.warehousePosition) return state.warehousePosition;
+    return state.warehouseOrigin || GALPAO_ORIGEM_PADRAO;
+  }
+
+  function deliveryDirectionsLocation(delivery){
+    if(hasValidPosition(delivery)) return deliveryPosition(delivery);
+    const address = [delivery?.address || "", "Brasil"].filter(Boolean).join(", ").trim();
+    return address || null;
+  }
+
+  function deliveryDirectionsPath(stops){
+    const origin = warehouseLocation();
+    const destinations = stops.map(deliveryDirectionsLocation).filter(Boolean);
+    return origin && destinations.length ? [origin, ...destinations] : [];
   }
 
   function ensureMapContainers(){
@@ -573,16 +919,61 @@
     els.routeMapStatus.hidden = !message;
   }
 
-  function markerIcon(color){
+  function markerKindForDelivery(delivery){
+    return delivery?.movementType === "coleta" ? "pickup" : "delivery";
+  }
+
+  function markerSvgUrl(svg){
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  }
+
+  function pinSvg(color){
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <path fill="${color}" stroke="#ffffff" stroke-width="2.2" d="M24 4c-8.2 0-14.8 6.4-14.8 14.3 0 10.8 14.8 25.7 14.8 25.7s14.8-14.9 14.8-25.7C38.8 10.4 32.2 4 24 4z"/>
+        <circle cx="24" cy="18.4" r="6.2" fill="#ffffff" opacity=".88"/>
+        <circle cx="24" cy="18.4" r="3.8" fill="${color}"/>
+      </svg>
+    `;
+  }
+
+  function truckPinSvg(color){
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
+        <path fill="${color}" stroke="#ffffff" stroke-width="2.4" d="M28 4.8c-9.5 0-17.2 7.4-17.2 16.6 0 12.5 17.2 29.8 17.2 29.8s17.2-17.3 17.2-29.8C45.2 12.2 37.5 4.8 28 4.8z"/>
+        <g fill="none" stroke="#ffffff" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.8 20.2h14.3v9.1H17.8z"/>
+          <path d="M32.1 23.1h4.4l3 3.5v2.7h-7.4z"/>
+          <circle cx="22" cy="31.8" r="2.2"/>
+          <circle cx="36" cy="31.8" r="2.2"/>
+        </g>
+      </svg>
+    `;
+  }
+
+  function truckGlyphSvg(){
+    return `
+      <svg class="route-marker-truck-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3.5 7.5h10v7h-10z"></path>
+        <path d="M13.5 10h3.7l2.3 2.8v1.7h-6z"></path>
+        <circle cx="7" cy="17" r="1.8"></circle>
+        <circle cx="17" cy="17" r="1.8"></circle>
+      </svg>
+    `;
+  }
+
+  function markerIcon(kind, size = 34){
     if(!window.google?.maps) return null;
 
-    const fileName = color === "red" ? "red-dot.png" : "blue-dot.png";
+    const color = ROUTE_MARKER_COLORS[kind] || ROUTE_MARKER_COLORS.delivery;
+    const isBlocked = kind === "blocked";
+    const svg = isBlocked ? truckPinSvg(color) : pinSvg(color);
 
     return {
-      url: `https://maps.google.com/mapfiles/ms/icons/${fileName}`,
-      scaledSize: new google.maps.Size(32, 32),
-      anchor: new google.maps.Point(16, 32),
-      labelOrigin: new google.maps.Point(16, 10)
+      url: markerSvgUrl(svg),
+      scaledSize: new google.maps.Size(size, size),
+      anchor: new google.maps.Point(size / 2, size),
+      labelOrigin: new google.maps.Point(size / 2, Math.round(size * 0.37))
     };
   }
 
@@ -668,26 +1059,32 @@
     }
   }
 
-  function drawGooglePolyline(path){
-    if(!googleMapState.map || !window.google?.maps?.Polyline) return;
-
-    if(googleMapState.routeLine){
-      googleMapState.routeLine.setMap(null);
-    }
-
-    googleMapState.routeLine = new google.maps.Polyline({
-      map: googleMapState.map,
-      path,
-      geodesic: false,
-      strokeColor: "#4285F4",
-      strokeOpacity: 0.92,
-      strokeWeight: 5
-    });
+  function metricsFromDirections(result){
+    const legs = result?.routes?.[0]?.legs || [];
+    const meters = legs.reduce((sum, leg) => sum + Number(leg.distance?.value || 0), 0);
+    const seconds = legs.reduce((sum, leg) => sum + Number(leg.duration?.value || 0), 0);
+    const distance = meters > 0 ? meters / 1000 : 0;
+    const minutes = Math.max(0, Math.round(seconds / 60));
+    const hours = Math.floor(minutes / 60);
+    const mins = String(minutes % 60).padStart(2, "0");
+    return { distance, duration: `${hours}h${mins}min` };
   }
 
-  function drawGoogleDirections(path){
+  function updateCreatedRouteMetrics(routeId, metrics){
+    if(!routeId || !metrics?.distance) return;
+    const route = state.createdRoutes.find((item) => String(item.id) === String(routeId));
+    if(!route) return;
+    route.distance = metrics.distance;
+    route.duration = metrics.duration;
+    saveCreatedRoutes();
+    renderCreatedRoutes();
+    window.lucide?.createIcons?.();
+  }
+
+  function drawGoogleDirections(path, options = {}){
     if(path.length < 2 || !googleMapState.map || !googleMapState.directionsService){
       clearGoogleRoute();
+      setMapStatus("");
       return;
     }
 
@@ -703,15 +1100,24 @@
       googleMapState.directionsRenderer = new google.maps.DirectionsRenderer({
         map: googleMapState.map,
         suppressMarkers: true,
-        preserveViewport: true,
+        preserveViewport: false,
         polylineOptions: {
-          strokeColor: "#4285F4",
+          strokeColor: options.color || "#4285F4",
           strokeOpacity: 0.92,
           strokeWeight: 5
         }
       });
     }else{
       googleMapState.directionsRenderer.setMap(googleMapState.map);
+      googleMapState.directionsRenderer.setOptions({
+        suppressMarkers: true,
+        preserveViewport: false,
+        polylineOptions: {
+          strokeColor: options.color || "#4285F4",
+          strokeOpacity: 0.92,
+          strokeWeight: 5
+        }
+      });
     }
 
     googleMapState.directionsService.route({
@@ -724,13 +1130,22 @@
       if(state.destroyed || token !== googleMapState.routeToken) return;
 
       if(status === "OK" && result){
+        setMapStatus("");
         googleMapState.directionsRenderer?.setDirections(result);
+        const startLocation = result?.routes?.[0]?.legs?.[0]?.start_location;
+        if(startLocation && googleMapState.warehouseMarker){
+          googleMapState.warehouseMarker.setPosition(startLocation);
+          googleMapState.warehouseMarker.setMap(googleMapState.map);
+        }
+        const metrics = metricsFromDirections(result);
+        if(typeof options.onMetrics === "function") options.onMetrics(metrics);
         return;
       }
 
       googleMapState.directionsRenderer?.setMap(null);
       googleMapState.directionsRenderer = null;
-      drawGooglePolyline(path);
+      setMapStatus("Não foi possível calcular a rota por ruas para este endereço.");
+      notify("Não foi possível calcular a rota por ruas para este endereço.", "Roteirização", "aviso");
     });
   }
 
@@ -743,13 +1158,31 @@
     const selectedMap = new Map(selected.map((delivery, index) => [String(delivery.id), index + 1]));
     const visibleIds = new Set();
 
+    if(!googleMapState.warehouseMarker){
+      googleMapState.warehouseMarker = new google.maps.Marker({
+        map: googleMapState.map,
+        title: "Galpão",
+        icon: markerIcon("warehouse"),
+        zIndex: 40
+      });
+    }
+
+    const warehouse = warehouseLocation();
+    if(typeof warehouse === "object"){
+      googleMapState.warehouseMarker.setPosition(warehouse);
+      googleMapState.warehouseMarker.setMap(googleMapState.map);
+    }else{
+      googleMapState.warehouseMarker.setMap(null);
+    }
+
     visibleDeliveries().forEach((delivery) => {
       if(!hasValidPosition(delivery)) return;
 
       visibleIds.add(String(delivery.id));
       const order = selectedMap.get(String(delivery.id));
       const isSelected = Boolean(order);
-      const color = isSelected ? "blue" : "red";
+      const isBlocked = !isSelected && isDeliveryBlocked(delivery, { ignoreRouteId: state.selectedRouteId });
+      const markerKind = isBlocked ? "blocked" : markerKindForDelivery(delivery);
       let marker = googleMapState.markers.get(String(delivery.id));
 
       if(!marker){
@@ -765,33 +1198,38 @@
 
       marker.setMap(googleMapState.map);
       marker.setPosition(deliveryPosition(delivery));
-      marker.setIcon(markerIcon(color));
-      marker.setLabel(null);
-      marker.setZIndex(isSelected ? 20 + Number(order || 0) : 10);
+      marker.setIcon(markerIcon(markerKind, isBlocked ? 46 : 36));
+      marker.setTitle(isBlocked
+        ? `${delivery.title} - Este endereco ja esta vinculado a uma rota.`
+        : `${delivery.title} - ${formatNumber(delivery.volume)} m³`);
+      marker.setLabel(isSelected ? {
+        text: String(order),
+        color: "#ffffff",
+        fontWeight: "800",
+        fontSize: "12px"
+      } : null);
+      marker.setZIndex(isSelected ? 20 + Number(order || 0) : (isBlocked ? 6 : 10));
     });
 
     googleMapState.markers.forEach((marker, id) => {
       if(!visibleIds.has(id)) marker.setMap(null);
     });
 
-    drawGoogleDirections(selected.filter(hasValidPosition).map(deliveryPosition));
+    drawGoogleDirections(deliveryDirectionsPath(selected), {
+      color: "#4285F4",
+      routeId: state.selectedRouteId,
+      onMetrics: (metrics) => updateCreatedRouteMetrics(state.selectedRouteId, metrics)
+    });
 
     if(googleMapState.needsFit){
-      fitGoogleMap(visibleDeliveries());
+      if(!selected.length) fitGoogleMap(visibleDeliveries());
       googleMapState.needsFit = false;
     }
   }
 
   function renderFallbackMap(selected){
-    const points = selected.map((delivery) => `${delivery.x},${delivery.y}`).join(" ");
-
     if(els.routeMapSvg){
-      els.routeMapSvg.innerHTML = selected.length > 1
-        ? `
-          <polyline class="route-line-shadow" points="${points}"></polyline>
-          <polyline class="route-line" points="${points}"></polyline>
-        `
-        : "";
+      els.routeMapSvg.innerHTML = "";
     }
 
     if(!els.routeMarkersLayer) return;
@@ -801,15 +1239,22 @@
     els.routeMarkersLayer.innerHTML = visibleDeliveries().map((delivery, index) => {
       const order = selectedMap.get(String(delivery.id));
       const isSelected = Boolean(order);
+      const isBlocked = !isSelected && isDeliveryBlocked(delivery, { ignoreRouteId: state.selectedRouteId });
+      const markerKind = markerKindForDelivery(delivery);
       const label = isSelected ? order : (delivery.number || index + 1);
+      const labelMarkup = isBlocked ? truckGlyphSvg() : label;
+      const markerTitle = isBlocked
+        ? "Este endereco ja esta vinculado a uma rota."
+        : `${delivery.title} - ${formatNumber(delivery.volume)} m3`;
       return `
         <button
           type="button"
-          class="route-marker ${isSelected ? "selected" : "available"}"
+          class="route-marker ${markerKind} ${isSelected ? "selected" : ""} ${isBlocked ? "blocked" : ""}"
           data-delivery-id="${escapeHtml(delivery.id)}"
+          aria-disabled="${isBlocked ? "true" : "false"}"
           style="left:${delivery.x}%;top:${delivery.y}%;"
-          title="${escapeHtml(delivery.title)} - ${formatNumber(delivery.volume)} m³">
-          <span>${label}</span>
+          title="${escapeHtml(markerTitle)}">
+          <span>${labelMarkup}</span>
         </button>
       `;
     }).join("");
@@ -883,17 +1328,18 @@
     if(!trucks.length){
       els.routeTruckSelect.innerHTML = `<option value="">Nenhum caminhao cadastrado</option>`;
       state.truckId = null;
+      state.truckIds = [];
       return;
     }
-    if(!state.truckId || !trucks.some((truck) => String(truck.id) === String(state.truckId))){
-      state.truckId = trucks[0].id;
-    }
+    ensureTruckSelection();
+    const selected = new Set(selectedTruckIds());
+    els.routeTruckSelect.multiple = true;
+    els.routeTruckSelect.size = Math.min(Math.max(trucks.length, 2), 4);
     els.routeTruckSelect.innerHTML = trucks.map((truck) => `
-      <option value="${escapeHtml(truck.id)}" ${String(truck.id) === String(state.truckId) ? "selected" : ""}>
+      <option value="${escapeHtml(truck.id)}" ${selected.has(String(truck.id)) ? "selected" : ""}>
         ${truck.name} - ${formatNumber(truck.capacity, 0)} m³
       </option>
     `).join("");
-    els.routeTruckSelect.value = state.truckId;
   }
 
   function renderTrucks(){
@@ -902,8 +1348,9 @@
       els.routeTruckCards.innerHTML = `<div class="route-empty">Nenhum caminhao cadastrado em Logistica.</div>`;
       return;
     }
+    const selected = new Set(selectedTruckIds());
     els.routeTruckCards.innerHTML = trucks.map((truck) => `
-      <button type="button" class="route-truck-card ${String(truck.id) === String(state.truckId) ? "is-selected" : ""}" data-truck-id="${escapeHtml(truck.id)}">
+      <button type="button" class="route-truck-card ${selected.has(String(truck.id)) ? "is-selected" : ""}" data-truck-id="${escapeHtml(truck.id)}" aria-pressed="${selected.has(String(truck.id)) ? "true" : "false"}">
         <i data-lucide="truck"></i>
         <strong>${escapeHtml(truck.name)}</strong>
         <span>${formatNumber(truck.capacity, 0)} m³</span>
@@ -917,15 +1364,15 @@
 
     if(!els.routeCreatedList) return;
     els.routeCreatedList.innerHTML = routes.map((route) => `
-      <div class="route-created-item">
+      <div class="route-created-item ${String(route.id) === String(state.selectedRouteId) ? "is-selected" : ""}" data-route-id="${escapeHtml(route.id)}" role="button" tabindex="0">
         <strong>${escapeHtml(route.name)}</strong>
         <div class="route-created-actions">
-          <button type="button" title="Visualizar"><i data-lucide="eye"></i></button>
+          <button type="button" title="Visualizar" data-view-route="${escapeHtml(route.id)}"><i data-lucide="eye"></i></button>
           <button type="button" title="Editar"><i data-lucide="pencil"></i></button>
           <button type="button" title="Mais opcoes"><i data-lucide="more-horizontal"></i></button>
         </div>
         <div class="route-created-meta">
-          <span>${route.deliveries} entregas</span>
+          <span>${route.deliveries} paradas</span>
           <span>${escapeHtml(route.truck)}</span>
           <span>${formatNumber(route.volume)} m³</span>
           <span>${formatNumber(route.distance)} km</span>
@@ -935,13 +1382,79 @@
     `).join("");
   }
 
+  function findCreatedRoute(routeId){
+    return [...state.createdRoutes, ...defaultRoutes].find((route) => String(route.id) === String(routeId));
+  }
+
+  function routeStops(route){
+    const sequence = Array.isArray(route?.sequence) ? route.sequence : [];
+    if(!sequence.length) return [];
+    return sequence
+      .map((id) => deliveries.find((delivery) => deliveryMatchesId(delivery, id)))
+      .filter(Boolean);
+  }
+
+  function removeDeliveryFromCreatedRoute(routeId, deliveryId){
+    const routeIndex = state.createdRoutes.findIndex((route) => String(route.id) === String(routeId));
+    if(routeIndex < 0) return false;
+
+    const route = state.createdRoutes[routeIndex];
+    const target = deliveries.find((delivery) => deliveryMatchesId(delivery, deliveryId));
+    const sequence = Array.isArray(route.sequence) ? route.sequence : [];
+    route.sequence = sequence.filter((id) => {
+      if(target) return !deliveryMatchesId(target, id);
+      return String(id) !== String(deliveryId);
+    });
+
+    if(!route.sequence.length){
+      state.createdRoutes.splice(routeIndex, 1);
+      if(String(state.selectedRouteId) === String(routeId)) state.selectedRouteId = null;
+      saveCreatedRoutes();
+      return true;
+    }
+
+    const stops = routeStops(route);
+    route.deliveries = stops.length;
+    route.volume = stops.reduce((sum, delivery) => sum + Number(delivery.volume || 0), 0);
+    saveCreatedRoutes();
+    return true;
+  }
+
+  function selectCreatedRoute(routeId){
+    const route = findCreatedRoute(routeId);
+    const stops = routeStops(route);
+    if(!route || !stops.length){
+      notify("Esta rota ainda não possui paradas vinculadas para visualizar no mapa.", "Roteirização", "aviso");
+      return;
+    }
+
+    state.selectedRouteId = String(route.id);
+    const firstDate = toDateKey(stops[0]?.date);
+    if(firstDate){
+      state.date = firstDate;
+      syncCalendarToDate();
+    }
+    state.selectedIds = stops.map((delivery) => String(delivery.id));
+    googleMapState.needsFit = true;
+    render();
+  }
+
   function setText(element, value){
     if(element) element.textContent = value;
   }
 
   function toggleDelivery(id){
     const deliveryId = String(id);
-    if(state.selectedIds.some((selectedId) => String(selectedId) === deliveryId)){
+    const delivery = findVisibleDeliveryById(deliveryId);
+    if(!delivery) return;
+
+    if(!isSelectedId(deliveryId) && isDeliveryBlocked(delivery, { ignoreRouteId: state.selectedRouteId })){
+      notify("Este endereco ja esta vinculado a uma rota.", "Roteirizacao", "aviso");
+      return;
+    }
+
+    state.selectedRouteId = null;
+    if(isSelectedId(deliveryId)){
       state.selectedIds = state.selectedIds.filter((selectedId) => String(selectedId) !== deliveryId);
     } else {
       state.selectedIds = [...state.selectedIds, deliveryId];
@@ -952,14 +1465,16 @@
   function addFirstAvailableStop(){
     const next = availableDeliveries()[0];
     if(!next){
-      notify("Não existem entregas disponíveis nesta região.", "Roteirização", "aviso");
+      notify("Não existem entregas ou coletas disponíveis nesta data.", "Roteirização", "aviso");
       return;
     }
+    state.selectedRouteId = null;
     state.selectedIds = [...state.selectedIds, String(next.id)];
     render();
   }
 
   function clearSelection(){
+    state.selectedRouteId = null;
     state.selectedIds = [];
     render();
   }
@@ -967,28 +1482,42 @@
   function createRoute(){
     const selected = selectedDeliveries();
     if(!selected.length){
-      notify("Selecione ao menos uma entrega para criar a rota.", "Roteirização", "aviso");
+      notify("Selecione ao menos uma entrega ou coleta para criar a rota.", "Roteirização", "aviso");
+      return;
+    }
+
+    const selectedTrucks = getSelectedTrucks();
+    const blocked = selected.filter((delivery) => isDeliveryBlocked(delivery));
+    if(blocked.length){
+      notify("Um ou mais enderecos selecionados ja estao vinculados a outra rota.", "Roteirizacao", "aviso");
       return;
     }
 
     const truck = getTruck();
-    if(!truck.id){
-      notify("Cadastre um caminhao em Logistica antes de criar a rota.", "Roteirizacao", "aviso");
+    if(!selectedTrucks.length){
+      notify("Selecione ao menos um caminhao para criar a rota.", "Roteirizacao", "aviso");
       return;
     }
     const total = totalVolume();
     if(total > truck.capacity){
-      notify("A cubagem selecionada ultrapassa a capacidade do caminhão.", "Roteirização", "erro");
+      notify("A cubagem selecionada ultrapassa a capacidade da frota selecionada.", "Roteirização", "erro");
       return;
     }
 
+    state.selectedRouteId = null;
     const metrics = routeMetrics();
     const nextNumber = state.createdRoutes.length + defaultRoutes.length + 1;
     const route = {
       id: `route-${Date.now()}`,
       name: `Rota ${String(nextNumber).padStart(2, "0")} - ${regionName(state.region)}`,
       deliveries: selected.length,
-      truck: `${truck.name} - ${formatNumber(truck.capacity, 0)} m³`,
+      truck: truckFleetLabel(selectedTrucks),
+      truckIds: selectedTrucks.map((item) => String(item.id)),
+      trucks: selectedTrucks.map((item) => ({
+        id: item.id,
+        name: item.name,
+        capacity: item.capacity
+      })),
       volume: total,
       distance: metrics.distance,
       duration: metrics.duration,
@@ -997,6 +1526,7 @@
     };
 
     state.createdRoutes.unshift(route);
+    state.selectedRouteId = route.id;
     saveCreatedRoutes();
     render();
     notify("Rota criada e adicionada ao painel de rotas de hoje.", "Roteirização", "sucesso");
@@ -1016,7 +1546,7 @@
     const metrics = routeMetrics();
     googleMapState.needsFit = true;
     renderMap();
-    notify(`Rota recalculada: ${formatNumber(metrics.distance)} km, ${metrics.duration}.`, "Roteirização", "sucesso");
+    notify("Recalculando rota real por ruas.", "Roteirização", "info");
   }
 
   function onSequenceDragStart(event){
@@ -1046,6 +1576,7 @@
     const next = state.selectedIds.filter((id) => String(id) !== String(state.draggedId));
     const targetIndex = next.indexOf(targetId);
     next.splice(targetIndex, 0, state.draggedId);
+    state.selectedRouteId = null;
     state.selectedIds = next;
     state.draggedId = null;
     render();
@@ -1087,10 +1618,30 @@
     const messages = {
       "zoom-in": "Zoom visual aumentado.",
       "zoom-out": "Zoom visual reduzido.",
-      "center": "Mapa centralizado nas entregas selecionadas.",
+      "center": "Mapa centralizado nas paradas selecionadas.",
       "layers": "Camadas do mapa alternadas."
     };
     notify(messages[action] || "Mapa atualizado.", "Mapa", "info");
+  }
+
+  function changeCalendarMonth(direction){
+    const current = new Date(state.calendarYear, state.calendarMonth, 1);
+    current.setMonth(current.getMonth() + direction);
+    state.calendarYear = current.getFullYear();
+    state.calendarMonth = current.getMonth();
+    renderCalendar();
+    window.lucide?.createIcons?.();
+  }
+
+  function selectCalendarDate(date){
+    if(!date) return;
+    state.date = date;
+    syncCalendarToDate();
+    state.selectedRouteId = null;
+    state.selectedIds = [];
+    reconciliarSelecao();
+    googleMapState.needsFit = true;
+    render();
   }
 
   function bindEvents(){
@@ -1102,7 +1653,11 @@
     els.routeSequenceList?.addEventListener("click", (event) => {
       const remove = event.target.closest("[data-remove-delivery]");
       if(!remove) return;
-      state.selectedIds = state.selectedIds.filter((id) => String(id) !== String(remove.dataset.removeDelivery));
+      const deliveryId = String(remove.dataset.removeDelivery || "");
+      if(state.selectedRouteId){
+        removeDeliveryFromCreatedRoute(state.selectedRouteId, deliveryId);
+      }
+      state.selectedIds = state.selectedIds.filter((id) => String(id) !== deliveryId);
       render();
     });
 
@@ -1112,21 +1667,51 @@
     els.routeSequenceList?.addEventListener("dragend", onSequenceDragEnd);
 
     els.routeTruckSelect?.addEventListener("change", (event) => {
-      state.truckId = event.target.value;
+      const ids = Array.from(event.target.selectedOptions || []).map((option) => option.value);
+      setSelectedTruckIds(ids);
       render();
     });
 
     els.routeTruckCards?.addEventListener("click", (event) => {
       const card = event.target.closest("[data-truck-id]");
       if(!card) return;
-      state.truckId = card.dataset.truckId;
+      const truckId = String(card.dataset.truckId || "");
+      const current = selectedTruckIds();
+      const next = current.includes(truckId)
+        ? current.filter((id) => id !== truckId)
+        : [...current, truckId];
+      setSelectedTruckIds(next);
       render();
+    });
+
+    els.routeCreatedList?.addEventListener("click", (event) => {
+      const actionButton = event.target.closest("button");
+      if(actionButton && !actionButton.dataset.viewRoute) return;
+      const routeId = event.target.closest("[data-view-route]")?.dataset.viewRoute
+        || event.target.closest("[data-route-id]")?.dataset.routeId;
+      if(!routeId) return;
+      selectCreatedRoute(routeId);
+    });
+
+    els.routeCreatedList?.addEventListener("keydown", (event) => {
+      if(event.key !== "Enter" && event.key !== " ") return;
+      const routeId = event.target.closest("[data-route-id]")?.dataset.routeId;
+      if(!routeId) return;
+      event.preventDefault();
+      selectCreatedRoute(routeId);
     });
 
     els.routeClearBtn?.addEventListener("click", clearSelection);
     els.routeAddStopBtn?.addEventListener("click", addFirstAvailableStop);
     els.routeCreateBtn?.addEventListener("click", createRoute);
     els.routeRecalculateBtn?.addEventListener("click", recalculateRoute);
+    els.routeCalendarPrev?.addEventListener("click", () => changeCalendarMonth(-1));
+    els.routeCalendarNext?.addEventListener("click", () => changeCalendarMonth(1));
+    els.routeCalendarGrid?.addEventListener("click", (event) => {
+      const day = event.target.closest("[data-calendar-date]");
+      if(!day) return;
+      selectCalendarDate(day.dataset.calendarDate || "");
+    });
 
     els.routeRefreshBtn?.addEventListener("click", async () => {
       await carregarDadosReais();
@@ -1137,6 +1722,10 @@
 
     els.routeDeliveryDate?.addEventListener("change", (event) => {
       state.date = event.target.value || "";
+      syncCalendarToDate();
+      state.selectedRouteId = null;
+      state.selectedIds = [];
+      reconciliarSelecao();
       googleMapState.needsFit = true;
       render();
     });
@@ -1201,6 +1790,7 @@
       cacheEls();
       loadCreatedRoutes();
       await carregarDadosReais();
+      ensureSelectedDate();
 
       if(els.routeDeliveryDate) els.routeDeliveryDate.value = state.date || "";
       if(els.routeRegion) els.routeRegion.value = state.region;
@@ -1222,6 +1812,8 @@
     clearGoogleRoute();
     googleMapState.markers.forEach((marker) => marker.setMap(null));
     googleMapState.markers.clear();
+    googleMapState.warehouseMarker?.setMap(null);
+    googleMapState.warehouseMarker = null;
     googleMapState.map = null;
     googleMapState.ready = false;
   };

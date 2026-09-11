@@ -78,6 +78,11 @@
           </button>
         </div>
 
+        <button type="button" class="item-3d-ai-cta" onclick="itens_3d_criarComIA()">
+          <i data-lucide="sparkles"></i>
+          Criar com IA
+        </button>
+
         <span class="item-hidden-summary" id="item3DFormato">GLB</span>
         <span class="item-hidden-summary" id="item3DTamanho">-</span>
         <span class="item-hidden-summary" id="item3DOrigem">-</span>
@@ -281,9 +286,12 @@
           <article class="item-card item-gallery-card">
             <div class="item-card-header-inline">
               <div>
-                <h3>Galeria do item</h3>
-                <p>Adicione ate 3 fotos complementares para este item.</p>
+                <h3>Fotos ambientadas do decorador</h3>
+                <p>Estas imagens aparecerão somente para o cliente selecionado.</p>
               </div>
+              <label class="el-field">Cliente / decorador
+                <select class="el-select" id="itemGaleriaCliente"><option value="">Selecione o cliente</option></select>
+              </label>
             </div>
 
             <div class="item-gallery-grid">

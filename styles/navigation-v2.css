@@ -1,0 +1,46 @@
+:root{--app-nav-height:72px;--app-nav-mobile-width:min(88vw,320px)}
+.app-navigation{position:fixed!important;z-index:5000!important;background:var(--color-sidebar,#2e1f1f);color:#fff}
+.app-navigation .submenu,.app-navigation .submenu-group{display:none;opacity:0;visibility:hidden;pointer-events:none}
+.app-navigation .submenu.is-open,.app-navigation .submenu-group.is-open{display:block;opacity:1;visibility:visible;pointer-events:auto}
+.app-navigation .menu-item,.app-navigation .submenu-item,.app-navigation .submenu-trigger{cursor:pointer;user-select:none}
+.app-navigation .menu-item:focus-visible,.app-navigation .submenu-item:focus-visible,.app-navigation .submenu-trigger:focus-visible{outline:2px solid #fff;outline-offset:-3px}
+.app-navigation .submenu,.app-navigation .submenu-group{border:1px solid rgba(255,255,255,.13);border-radius:12px;background:color-mix(in srgb,var(--color-sidebar,#2e1f1f) 84%,#000 16%);box-shadow:0 18px 48px rgba(0,0,0,.28)}
+.app-navigation .submenu-item,.app-navigation .submenu-trigger{display:flex;width:100%;min-height:42px;align-items:center;padding:10px 13px;border:0;border-radius:8px;background:transparent;color:#fff;font:500 13px/1.25 Inter,sans-serif;text-align:left}
+.app-navigation .submenu-item:hover,.app-navigation .submenu-trigger:hover,.app-navigation .submenu-item.active{background:rgba(255,255,255,.13)}
+.app-navigation .submenu-trigger{justify-content:space-between}
+.app-navigation .submenu-trigger::after{content:"›";font-size:18px;transition:transform .15s ease}
+.app-navigation .submenu-trigger[aria-expanded="true"]::after{transform:rotate(90deg)}
+@media (min-width:1201px){
+  .app-navigation{inset:0 0 auto 0!important;width:100%!important;height:var(--app-nav-height)!important;padding:0 22px!important;display:grid!important;grid-template-columns:minmax(190px,1fr) auto minmax(190px,1fr)!important;grid-template-areas:"brand menu user";align-items:center;overflow:visible!important;transform:none!important;transition:none!important}
+  .app-navigation .sidebar-header{grid-area:brand;width:auto;height:var(--app-nav-height);padding:0;border:0;justify-self:start}
+  .app-navigation .sidebar-brand{width:auto!important;justify-content:flex-start!important}
+  .app-navigation .sidebar-header img{display:block;width:180px!important;height:54px!important;max-width:180px!important;object-fit:contain}
+  .app-navigation .sidebar-search-row,.app-navigation .sidebar-favorites,.app-navigation .sidebar-search-results{display:none!important}
+  .app-navigation>.menu{grid-area:menu;display:flex!important;width:max-content!important;height:var(--app-nav-height)!important;margin:0!important;padding:0!important;align-items:stretch;justify-self:center;gap:2px;overflow:visible!important}
+  .app-navigation>.menu>.menu-item{display:flex;min-width:0;padding:0 10px;align-items:center;justify-content:center;gap:7px;border-radius:10px;color:#fff;white-space:nowrap}
+  .app-navigation>.menu>.menu-item>svg{display:none}
+  .app-navigation>.menu>.menu-item>span{display:block!important;width:auto!important;opacity:1!important;font-size:12.5px}
+  .app-navigation>.menu>.menu-item::after{content:"▾";font-size:9px;opacity:.62}
+  .app-navigation>.menu>.menu-item[aria-expanded="true"],.app-navigation>.menu>.menu-item.active{background:rgba(255,255,255,.11);box-shadow:inset 0 -2px 0 #fff}
+  .app-navigation .submenu,.app-navigation .submenu-group{position:fixed!important;z-index:5010;margin:0!important;padding:7px;width:250px;max-height:calc(100dvh - 88px);overflow:auto;transform:none!important}
+  .app-navigation .submenu-group{z-index:5020;width:240px}
+  .app-navigation>.sidebar-user{grid-area:user;position:relative!important;inset:auto!important;width:auto!important;padding:0!important;justify-self:end}
+  .app-navigation .sidebar-user-row{justify-content:flex-end!important}
+}
+@media (max-width:1200px){
+  .hamburger{display:inline-flex!important;z-index:5100!important}
+  .app-navigation{inset:0 auto 0 0!important;width:var(--app-nav-mobile-width)!important;height:100dvh!important;padding:14px!important;display:flex!important;flex-direction:column;overflow-y:auto!important;transform:translateX(-105%)!important;transition:transform .2s ease!important;box-shadow:20px 0 55px rgba(0,0,0,.3)}
+  .app-navigation.is-mobile-open{transform:translateX(0)!important}
+  body.nav-mobile-open::after{content:"";position:fixed;inset:0;z-index:4900;background:rgba(15,23,42,.48);backdrop-filter:blur(2px)}
+  .app-navigation .sidebar-header{height:62px;padding:0 8px}
+  .app-navigation .sidebar-header img{width:180px!important;height:52px!important;object-fit:contain}
+  .app-navigation .sidebar-search-row{display:none!important}
+  .app-navigation .sidebar-favorites{display:grid!important}
+  .app-navigation>.menu{display:flex!important;width:100%!important;height:auto!important;margin:10px 0 110px!important;padding:0!important;flex-direction:column;gap:4px;overflow:visible!important}
+  .app-navigation>.menu>.menu-item{display:flex!important;min-height:46px;padding:10px 12px!important;align-items:center;justify-content:flex-start!important;gap:11px;border-radius:9px;color:#fff}
+  .app-navigation>.menu>.menu-item>span{display:block!important;width:auto!important;opacity:1!important}
+  .app-navigation>.menu>.menu-item::after{content:"▾";margin-left:auto;transition:transform .15s ease}
+  .app-navigation>.menu>.menu-item[aria-expanded="true"]::after{transform:rotate(180deg)}
+  .app-navigation .submenu,.app-navigation .submenu-group{position:static!important;width:auto!important;max-height:none!important;margin:3px 0 6px 12px!important;padding:6px!important;box-shadow:none;transform:none!important}
+  .app-navigation>.sidebar-user{position:absolute!important;right:14px!important;bottom:14px!important;left:14px!important;width:auto!important}
+}

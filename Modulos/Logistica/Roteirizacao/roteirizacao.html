@@ -8,16 +8,8 @@
       <article class="route-summary-card">
         <span class="route-summary-icon route-gold-icon"><i data-lucide="package"></i></span>
         <div>
-          <small>Pedidos disponíveis</small>
+          <small>Movimentos disponíveis</small>
           <strong id="routeAvailableCount">0</strong>
-        </div>
-      </article>
-
-      <article class="route-summary-card">
-        <span class="route-summary-icon"><i data-lucide="circle-check"></i></span>
-        <div>
-          <small>Selecionados</small>
-          <strong id="routeSelectedCount">0</strong>
         </div>
       </article>
 
@@ -32,7 +24,7 @@
       <article class="route-summary-card route-capacity-card">
         <span class="route-summary-icon"><i data-lucide="truck"></i></span>
         <div>
-          <small>Capacidade do caminhão</small>
+          <small>Capacidade da frota</small>
           <strong><span id="routeTruckCapacity">0,0</span> m³</strong>
         </div>
         <div class="route-capacity-ring" id="routeCapacityRing" style="--occupancy: 0deg;">
@@ -43,7 +35,7 @@
 
     <button type="button" class="route-refresh-btn" id="routeRefreshBtn">
       <i data-lucide="refresh-cw"></i>
-      Atualizar entregas
+      Atualizar agenda
     </button>
   </header>
 
@@ -72,8 +64,11 @@
           </div>
 
           <div class="route-map-legend">
-            <span><i class="dot selected"></i>Selecionadas (<b id="routeLegendSelected">0</b>)</span>
-            <span><i class="dot available"></i>Disponíveis (<b id="routeLegendAvailable">0</b>)</span>
+            <span><i class="dot delivery"></i>Montagem</span>
+            <span><i class="dot pickup"></i>Recolha</span>
+            <span><i class="dot blocked"></i>Ja em rota</span>
+            <span>Selecionadas (<b id="routeLegendSelected">0</b>)</span>
+            <span>Disponíveis (<b id="routeLegendAvailable">0</b>)</span>
           </div>
 
           <button type="button" class="route-recalculate-btn" id="routeRecalculateBtn">
@@ -85,7 +80,7 @@
         <footer class="route-map-footer">
           <div class="route-footer-hint">
             <i data-lucide="info"></i>
-            <span id="routeFooterSelectedText">0 entregas selecionadas</span>
+            <span id="routeFooterSelectedText">0 movimentos selecionados</span>
           </div>
 
           <div class="route-footer-actions">
@@ -103,23 +98,71 @@
     </section>
 
     <aside class="route-side-column">
-      <div class="route-filters route-side-filters" aria-label="Filtros da roteirização">
-        <label class="route-filter-card">
-          <span>Data da entrega</span>
-          <input type="date" id="routeDeliveryDate">
-        </label>
+      <article class="route-side-card route-calendar-card" aria-label="Calendário mensal de entregas e coletas">
+        <header class="route-calendar-header">
+          <button type="button" class="route-calendar-nav" id="routeCalendarPrev" aria-label="Mês anterior">
+            <i data-lucide="chevron-left"></i>
+          </button>
+          <div class="route-calendar-title-slot">
+            <span>Data da rota</span>
+            <div class="route-calendar-title-row">
+              <strong id="routeCalendarTitle">-</strong>
+              <div class="route-calendar-help-wrap">
+                <button type="button" class="route-calendar-help" aria-label="Ver legenda de cores">
+                  <i data-lucide="circle-help"></i>
+                </button>
+                <div class="route-calendar-help-popover" role="tooltip">
+                  <div class="route-calendar-legend-group">
+                    <strong>Tipo de movimento</strong>
+                    <span><i class="tipo-entrega"></i>Entrega (Montagem)</span>
+                    <span><i class="tipo-coleta"></i>Recolha (Desmontagem)</span>
+                    <span><i class="tipo-misto"></i>Entrega + Recolha</span>
+                  </div>
+                  <div class="route-calendar-legend-group">
+                    <strong>Status da rota</strong>
+                    <span><i class="sem-rota"></i>Sem rota</span>
+                    <span><i class="parcial"></i>Rotas parciais</span>
+                    <span><i class="concluido"></i>Rotas concluidas</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="route-calendar-nav" id="routeCalendarNext" aria-label="Próximo mês">
+            <i data-lucide="chevron-right"></i>
+          </button>
+        </header>
 
-        <label class="route-filter-card route-region-card">
-          <span>Território / Região</span>
-          <i data-lucide="map-pin"></i>
-          <select id="routeRegion">
-            <option value="all">Todas as regiões</option>
-            <option value="capital">Sao Paulo - Capital</option>
-            <option value="zona-sul">Zona Sul</option>
-            <option value="zona-oeste">Zona Oeste</option>
-          </select>
-        </label>
-      </div>
+        <div class="route-calendar-weekdays" aria-hidden="true">
+          <span>Dom</span>
+          <span>Seg</span>
+          <span>Ter</span>
+          <span>Qua</span>
+          <span>Qui</span>
+          <span>Sex</span>
+          <span>Sáb</span>
+        </div>
+
+        <div class="route-calendar-grid" id="routeCalendarGrid"></div>
+
+        <div class="route-calendar-legend">
+          <div class="route-calendar-legend-group">
+            <strong>Tipo de movimento</strong>
+            <span><i class="tipo-entrega"></i>Entrega (Montagem)</span>
+            <span><i class="tipo-coleta"></i>Recolha (Desmontagem)</span>
+            <span><i class="tipo-misto"></i>Entrega + Recolha</span>
+          </div>
+          <div class="route-calendar-legend-group">
+            <strong>Status da rota</strong>
+            <span><i class="sem-rota"></i>Sem rota</span>
+            <span><i class="parcial"></i>Rotas parciais</span>
+            <span><i class="concluido"></i>Rotas concluidas</span>
+          </div>
+          <span><i class="sem-rota"></i>Sem rota</span>
+          <span><i class="parcial"></i>Rotas parciais</span>
+          <span><i class="concluido"></i>Rotas concluídas</span>
+        </div>
+      </article>
 
       <article class="route-side-card route-tab-card">
         <nav class="route-tabs" aria-label="Painéis da rota">
@@ -141,7 +184,7 @@
           </button>
           <small class="route-drag-hint">
             <i data-lucide="grip-vertical"></i>
-            Arraste para reordenar as entregas
+            Arraste para reordenar as paradas
           </small>
         </section>
 
@@ -170,8 +213,9 @@
           </div>
 
           <label class="route-truck-select">
-            <span>Escolher caminhão</span>
+            <span>Escolher caminhões</span>
             <select id="routeTruckSelect"></select>
+            <small>Use Ctrl ou clique nos cards de veículos para selecionar mais de um.</small>
           </label>
 
           <div class="route-capacity-status" id="routeCapacityStatus">

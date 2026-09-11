@@ -122,6 +122,29 @@
         <label>Email *</label>
         <input class="el-input" id="email" readonly>
       </div>
+      <div class="form-group el-field">
+        <label>Acesso ao catálogo</label>
+        <select class="el-select" id="catalogoAtivo" disabled><option value="false">Desativado</option><option value="true">Ativado</option></select>
+      </div>
+      <div class="form-group el-field">
+        <label>E-mail de acesso ao catálogo</label>
+        <input class="el-input" id="catalogoEmail" type="email" autocomplete="off" readonly>
+      </div>
+      <div class="form-group el-field">
+        <label>Nova senha do catálogo</label>
+        <input class="el-input" id="catalogoSenha" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" readonly>
+        <small id="catalogoSenhaStatus">Nenhuma senha configurada.</small>
+      </div>
+      <div class="form-group el-field">
+        <label>Confirmar nova senha</label>
+        <input class="el-input" id="catalogoSenhaConfirmacao" type="password" minlength="8" autocomplete="new-password" placeholder="Digite a mesma senha" readonly>
+      </div>
+      <div class="cliente-identidade col-3">
+        <div class="cliente-identidade-logo">
+          <img id="catalogoLogoPreview" alt="Prévia da logo do decorador">
+          <div><strong>Identidade visual do decorador</strong><small>PNG, JPG, WebP ou SVG, até 5 MB.</small><label class="btn secondary">Selecionar logo<input id="catalogoLogoInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></label></div>
+        </div>
+      </div>
 
       <!-- ENDEREÇO COM GOOGLE PLACES -->
 <div class="form-group el-field col-2">
