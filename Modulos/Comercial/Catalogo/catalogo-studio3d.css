@@ -130,3 +130,24 @@
 .studio-project-panel button:disabled {opacity:.5;cursor:wait}
 .studio-project-panel textarea {min-height:80px;resize:vertical}
 .studio-project-panel input:focus-visible,.studio-project-panel button:focus-visible,.studio-project-panel summary:focus-visible {outline:2px solid #8b6a45;outline-offset:2px}
+.studio-render-dialog{border:1px solid #ddd5c9;border-radius:24px;padding:32px;width:min(560px,calc(100vw - 32px));max-height:90dvh;overflow:auto;background:#faf8f4;color:#302d28;box-sizing:border-box;box-shadow:0 24px 90px #0003}
+.studio-render-dialog::backdrop{background:#201c18a6;backdrop-filter:blur(5px)}
+.studio-render-dialog form{position:relative;display:grid;gap:18px}
+.studio-render-close{position:absolute;right:0;top:-12px;border:0;background:none;font-size:28px;cursor:pointer}
+.studio-render-eyebrow{font-size:10px;letter-spacing:.18em;color:#827057;padding-right:25px}
+.studio-render-dialog h2{font-size:28px;font-weight:500;margin:0;line-height:1.15}
+.studio-render-dialog p{margin:0;font-size:14px;line-height:1.6;color:#716a60}
+.studio-render-dialog fieldset{border:0;padding:0;margin:0;min-width:0}
+.studio-render-dialog legend,.studio-render-select{font-size:13px;font-weight:600;margin-bottom:10px}
+.studio-render-choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.studio-render-choices label{position:relative;cursor:pointer}
+.studio-render-choices input{position:absolute;opacity:0}
+.studio-render-choices span{display:block;padding:16px 10px;border:1px solid #d9d1c5;border-radius:12px;font-size:14px}
+.studio-render-choices small{display:block;font-size:10px;margin-top:8px;font-weight:400}
+.studio-render-choices input:checked+span{background:#373c32;color:#fff;border-color:#373c32}
+.studio-render-choices input:focus-visible+span{outline:3px solid #ab946a;outline-offset:3px}
+.studio-render-select{display:grid;gap:8px;margin:0}
+.studio-render-select select{width:100%;padding:13px;border:1px solid #d9d1c5;border-radius:10px;background:#fff;color:#302d28;font-size:16px}
+.studio-render-dialog .studio-render-preserve{padding:14px;border-radius:10px;background:#edece5;font-size:12px}
+.studio-render-confirm{padding:16px;border:0;border-radius:12px;background:#373c32;color:#fff;font-size:15px;cursor:pointer}
+@media(max-width:480px){.studio-render-dialog{padding:24px 18px}.studio-render-dialog h2{font-size:24px}.studio-render-choices span{padding:14px 7px;font-size:12px}}

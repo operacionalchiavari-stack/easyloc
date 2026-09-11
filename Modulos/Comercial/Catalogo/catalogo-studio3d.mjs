@@ -2084,7 +2084,15 @@ function handleToolbarMenuClick(event){
   trigger.setAttribute("aria-expanded", String(willOpen));
 }
 
-async function renderWithAI(){
+function renderAtmospherePrompt(options){
+  const periods = { dia: "Cena diurna com luz natural.", entardecer: "Cena ao entardecer, com luz dourada baixa.", noite: "Cena noturna, sem luz solar, com iluminação artificial plausível." };
+  const lights = { suave: "Iluminação suave e equilibrada, adequada ao horário escolhido.", quente: "Iluminação quente e acolhedora, com sombras suaves.", cenica: "Iluminação cênica sofisticada, com luz indireta e contraste controlado, sem adicionar luminárias ou objetos." };
+  const guests = { nenhum: "Não adicionar pessoas.", poucos: "Adicionar poucos convidados adultos, discretos, em áreas livres, sem encobrir os móveis principais.", moderado: "Adicionar uma quantidade moderada de convidados adultos em áreas livres, sem lotar o ambiente ou encobrir os móveis principais." };
+  return [periods[options.periodo] || periods.dia, lights[options.iluminacao] || lights.suave, guests[options.convidados] || guests.nenhum, "As escolhas de atmosfera nunca autorizam mover móveis, alterar materiais ou mudar a câmera. Pessoas devem se adaptar aos espaços existentes; se não houver espaço, reduzir a quantidade de pessoas."].join(" ");
+}
+
+async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhum", iluminacao: "suave" }){
+  if($("studioRenderButton").disabled) return;
   if(!studio.objects.length){ alert("Adicione pelo menos um móvel à composição."); return; }
   const button = $("studioRenderButton");
   const floorNames = { neutral: "piso neutro", grass: "grama natural", sand: "areia de praia", "slatted-wood": "placas modulares de madeira ripada", plan: "planta técnica importada" };
@@ -2113,7 +2121,7 @@ async function renderWithAI(){
       body: {
         empresa_id: studio.empresaId,
         catalog_token: sessionStorage.getItem("catalogo_token"),
-        prompt: `Converta a captura 3D em uma fotografia arquitetônica ultrarrealista. Preserve rigidamente somente os móveis e o enquadramento: não altere quantidade, modelo, desenho, material, cor, medidas, proporções, escala, posição, rotação nem distância entre os itens. O piso deve ser interpretado como ${selectedFloor}. Trate paredes, teto, piso e as fotos aplicadas nas paredes como referências arquitetônicas flexíveis: conecte quinas e superfícies, complete o teto, harmonize perspectiva, iluminação e continuidade dos materiais e elimine cortes, emendas ou painéis flutuantes sem sentido. As fotos orientam o aspecto e a localização da arquitetura; elas não devem parecer coladas como retângulos. Não acrescente novos móveis, objetos decorativos ou pessoas.`,
+        prompt: `Converta a captura 3D em uma fotografia arquitetônica ultrarrealista. Preserve rigidamente somente os móveis e o enquadramento: não altere quantidade, modelo, desenho, material, cor, medidas, proporções, escala, posição, rotação nem distância entre os itens. O piso deve ser interpretado como ${selectedFloor}. Trate paredes, teto, piso e as fotos aplicadas nas paredes como referências arquitetônicas flexíveis: conecte quinas e superfícies, complete o teto, harmonize perspectiva, iluminação e continuidade dos materiais e elimine cortes, emendas ou painéis flutuantes sem sentido. As fotos orientam o aspecto e a localização da arquitetura; elas não devem parecer coladas como retângulos. Não acrescente novos móveis, objetos decorativos. ${renderAtmospherePrompt(renderOptions)}`,
         scene: {
           preview, objects,
           camera: { position: studio.camera.position.toArray(), target: studio.orbit.target.toArray(), fov: studio.camera.fov },
@@ -2130,7 +2138,7 @@ async function renderWithAI(){
             })),
           },
           referencePolicy: "furniture_strict_architecture_adaptive",
-          options: { formato: { largura: 1536, altura: 1024 }, convidados: "Sem convidados", ambientacao: [], piso: studio.floorFinish },
+          options: { formato: { largura: 1536, altura: 1024 }, ...renderOptions, ambientacao: [], piso: studio.floorFinish },
         },
         provider: "openai", versions: 1,
       },
@@ -2190,7 +2198,10 @@ async function handleToolbarAction(event){
     else if(action === "grid") toggleGrid();
     else if(action === "camera-lock") toggleCameraLock();
     else if(action === "fullscreen") await toggleStudioFullscreen();
-    else if(action === "render") await renderWithAI();
+    else if(action === "render"){
+      if(!studio.objects.length){ alert("Adicione pelo menos um móvel à composição."); return; }
+      $("studioRenderOptions").showModal();
+    }
     refreshToolbarSummaries();
     if(button.closest("[data-studio-menu]")) closeToolbarMenus();
   }catch(error){
@@ -2350,6 +2361,13 @@ export function initCatalogStudio3D({ items, supabase, empresaId, ownerId }){
     }
     const floorAction = event.target.closest("[data-floor-action]");
     if(floorAction) adjustFloor(floorAction.dataset.floorAction);
+  });
+  $("studioRenderCancel")?.addEventListener("click", () => $("studioRenderOptions").close());
+  $("studioRenderForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+    $("studioRenderOptions").close();
+    renderWithAI(values);
   });
   $("studioResultClose")?.addEventListener("click", () => $("studioResultDialog").close());
   window.addEventListener("catalog-studio-open", openStudioScene, { passive: true });

@@ -6,7 +6,7 @@
   <title>Catálogo — Acervo</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
   <link rel="stylesheet" href="catalogo.css?v=20260903-floor-finishes-v1">
-  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260905-projects-layout-v1">
+  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260911-render-options">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../../js/core/supabase.js"></script>
   <script type="importmap">
@@ -195,6 +195,23 @@
       <small id="studioPresetStatus" aria-live="polite"></small>
     </form>
   </dialog>
+  <dialog class="studio-render-dialog" id="studioRenderOptions" aria-labelledby="studioRenderTitle">
+    <form id="studioRenderForm">
+      <button type="button" class="studio-render-close" id="studioRenderCancel" aria-label="Fechar opções">×</button>
+      <span class="studio-render-eyebrow">ATMOSFERA DO AMBIENTE</span>
+      <h2 id="studioRenderTitle">Dê vida à sua composição</h2>
+      <p>Escolha a luz e a presença de convidados para a sua imagem.</p>
+      <fieldset><legend>Momento do dia</legend><div class="studio-render-choices">
+        <label><input type="radio" name="periodo" value="dia" checked><span>Dia<small>Luz natural e leve</small></span></label>
+        <label><input type="radio" name="periodo" value="entardecer"><span>Entardecer<small>Hora dourada</small></span></label>
+        <label><input type="radio" name="periodo" value="noite"><span>Noite<small>Atmosfera intimista</small></span></label>
+      </div></fieldset>
+      <label class="studio-render-select">Convidados<select name="convidados"><option value="nenhum">Sem convidados</option><option value="poucos">Poucos convidados</option><option value="moderado">Evento com convidados</option></select></label>
+      <label class="studio-render-select">Iluminação<select name="iluminacao"><option value="suave">Suave e equilibrada</option><option value="quente">Quente e acolhedora</option><option value="cenica">Cênica e sofisticada</option></select></label>
+      <p class="studio-render-preserve">Móveis e câmera preservados: mesma composição, posição e enquadramento.</p>
+      <button type="submit" class="studio-render-confirm">Gerar imagem</button>
+    </form>
+  </dialog>
   <dialog class="studio-result-dialog" id="studioResultDialog">
     <button type="button" class="studio-result-close" id="studioResultClose" aria-label="Fechar render">×</button>
     <div class="studio-result-copy"><span>Renderização IA</span><strong>Sua composição em uma cena realista</strong></div>
@@ -230,6 +247,6 @@
   <main class="catalog-products" id="catalogGrid"></main>
   <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
   <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
-  <script type="module" src="catalogo.mjs?v=20260908-fabric-progress"></script>
+  <script type="module" src="catalogo.mjs?v=20260911-render-options"></script>
 </body>
 </html>

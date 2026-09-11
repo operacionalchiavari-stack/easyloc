@@ -1,5 +1,5 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260908-pdf-fixes";
+import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260911-render-options";
 
 const supabase = window.supabaseClient;
 const FOTO_PLACEHOLDER = "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png";

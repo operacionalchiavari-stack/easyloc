@@ -178,7 +178,10 @@ function normalizarPrompt(input: GenerateSceneInput) {
       "Pode estender, completar, recortar e reinterpretar somente as imagens e superficies arquitetonicas para produzir continuidade visual, inclusive inferir o teto e completar trechos ausentes quando necessario.",
       "Respeite a localizacao aproximada e a direcao das paredes indicadas, bem como portas, janelas ou aberturas claramente visiveis, mas privilegie encontros construtivos plausiveis e sem cortes artificiais.",
       "Integre os moveis ao ambiente apenas por iluminacao, reflexos e sombras de contato fisicamente plausiveis, sem alterar sua geometria percebida.",
-      "Nao adicionar pessoas, textos, logotipos, marcas d'agua ou novos objetos.",
+      ["poucos", "moderado"].includes(String((input.scene?.options as Record<string, unknown> | undefined)?.convidados))
+        ? "Pessoas autorizadas somente na quantidade solicitada, em areas livres, sem encobrir o mobiliario principal. Nunca mover moveis ou alterar a camera para acomodar convidados. Se faltar espaco, reduzir pessoas."
+        : "Nao adicionar pessoas.",
+      "Nao adicionar textos, logotipos, marcas d'agua ou novos objetos.",
       "O resultado deve parecer uma unica fotografia real do mesmo arranjo de moveis dentro de uma arquitetura continua, e nao uma colagem de fotografias sobre planos."
     ].join(" "),
     versions,
