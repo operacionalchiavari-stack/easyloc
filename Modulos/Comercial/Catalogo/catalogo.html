@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catálogo — Acervo</title>
-  <link rel="stylesheet" href="catalogo-creditos.css?v=20260915-tecido-inline">
+  <link rel="stylesheet" href="catalogo-creditos.css?v=20260915-tecido-compacto">
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <link rel="stylesheet" href="catalogo.css?v=20260915-tecido-inline">
+  <link rel="stylesheet" href="catalogo.css?v=20260915-tecido-compacto">
   <link rel="stylesheet" href="catalogo-studio3d.css?v=20260913a">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../../js/core/supabase.js"></script>
-  <script defer src="catalogo-creditos.js?v=20260915-tecido-inline"></script>
+  <script defer src="catalogo-creditos.js?v=20260915-tecido-compacto"></script>
   <script type="importmap">
     {"imports":{"three":"../../../js/vendor/three/build/three.module.js","three/addons/":"../../../js/vendor/three/examples/jsm/"}}
   </script>
@@ -249,7 +249,10 @@
     <div class="catalog-customize-copy">
       <span>Sob medida</span>
       <h2>Experimente seu tecido</h2>
+      <div class="catalog-customize-intro">
       <p>Envie uma foto nítida da trama. A IA aplicará somente o revestimento, preservando desenho, estrutura e proporções do móvel.</p>
+    <div id="catalogFabricCredits" class="catalog-fabric-credits" hidden aria-live="polite"></div>
+      </div>
     </div>
     <div class="catalog-customize-preview">
       <img id="catalogCustomizeProduct" alt="Produto que será personalizado">
@@ -260,7 +263,6 @@
         <img class="hidden" id="catalogFabricPreview" alt="Amostra do tecido selecionado">
       </label>
     </div>
-    <div id="catalogFabricCredits" class="catalog-fabric-credits" hidden aria-live="polite"></div>
     <button type="button" class="catalog-customize-generate" id="catalogCustomizeGenerate" disabled>Aplicar tecido com IA</button>
     <p class="catalog-customize-status" id="catalogCustomizeStatus" aria-live="polite"></p>
     <div class="catalog-ai-loading hidden" id="catalogAiLoading" role="status" aria-live="polite">
@@ -274,6 +276,6 @@
   <main class="catalog-products" id="catalogGrid"></main>
   <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
   <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
-  <script type="module" src="catalogo.mjs?v=20260915-tecido-inline"></script>
+  <script type="module" src="catalogo.mjs?v=20260915-tecido-compacto"></script>
 </body>
 </html>

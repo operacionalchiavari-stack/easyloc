@@ -1,4 +1,5 @@
 (function(){
+  const coinIcon="<svg viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\" stroke=\"currentColor\" stroke-width=\"1.4\"/><circle cx=\"12\" cy=\"12\" r=\"6.2\" stroke=\"currentColor\" stroke-width=\".8\"/><path d=\"M14 9.5a3.2 3.2 0 1 0 0 5\" stroke=\"currentColor\" stroke-width=\"1.4\" stroke-linecap=\"round\"/></svg>";
   const client=window.supabaseClient;
   const names={tecido:'Personalizar tecido',render:'Renderizar ambiente',planta:'Analisar planta',layout:'Planejar decoração'};
   let wallet=null, refreshing=null, queued=Promise.resolve();
@@ -13,7 +14,7 @@
       if(error)throw new Error('Não foi possível consultar seus créditos. Tente novamente.');
       wallet=data;let button=document.getElementById('catalogCreditBalance');
       if(!button){const user=document.getElementById('catalogUser');if(!user)return data;button=document.createElement('button');button.id='catalogCreditBalance';button.type='button';button.className='catalog-credit-balance';button.addEventListener('click',()=>showWallet());user.prepend(button);}
-      button.innerHTML=`<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="6.2" stroke="currentColor" stroke-width=".8"/><path d="M14 9.5a3.2 3.2 0 1 0 0 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span>${data.saldo.toLocaleString('pt-BR')}</span>`;
+      button.innerHTML=`${coinIcon}<span>${data.saldo.toLocaleString('pt-BR')}</span>`;
       button.title=`${data.saldo.toLocaleString('pt-BR')} créditos · Ver custos e histórico`;
       button.setAttribute('aria-label',`Saldo: ${data.saldo} créditos. Ver custos e histórico`);
       return data;
@@ -39,7 +40,7 @@
     panel.hidden=false;
     if(!fabricQuote){panel.textContent='Consultando seus créditos…';button.disabled=true;return;}
     const {saldo,custo}=fabricQuote,enough=saldo>=custo;
-    panel.innerHTML=`<div><span>Seu saldo <strong>${saldo} créditos</strong></span><span>Esta criação <strong>${custo} créditos</strong></span><span>Após o uso <strong>${enough?`${saldo-custo} créditos`:'Saldo insuficiente'}</strong></span></div><small>${enough?'Ao aplicar o tecido, você confirma o uso dos créditos. Se a geração falhar, eles serão devolvidos.':'Solicite uma recarga à Chiavari para aplicar este tecido.'}</small>`;
+    panel.innerHTML=`<div><span><small>Saldo atual</small><strong>${coinIcon}${saldo.toLocaleString('pt-BR')}</strong></span><span><small>Após o uso</small><strong>${coinIcon}${enough?(saldo-custo).toLocaleString('pt-BR'):'Insuficiente'}</strong></span></div>`;
     if(!document.getElementById('catalogFabricInput').disabled){button.disabled=!enough||!document.getElementById('catalogFabricPreview').getAttribute('src');button.textContent=`Aplicar tecido · ${custo} crédito${custo===1?'':'s'}`;}
   }
   async function prepareFabric(){
