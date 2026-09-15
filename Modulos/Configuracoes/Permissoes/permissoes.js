@@ -698,7 +698,7 @@
 
       const userBtn = event.target.closest("[data-user-id]");
       if (userBtn) {
-        if (state.dirty && !confirm("Existem alterações não salvas. Continuar mesmo assim?")) return;
+        if (state.dirty && !(await window.confirmarGlobal("Existem alterações não salvas. Continuar mesmo assim?"))) return;
         state.selectedUserId = userBtn.dataset.userId;
         state.dirty = false;
         $("#permDirtyBadge")?.classList.add("hidden");

@@ -1,12 +1,39 @@
 /**
  * CONTEXT MODULE — Session & Global State Initialization
- * 
+ *
  * Initializes window.__CONTEXT with:
  * - empresa_id
- * - usuario_id  
+ * - usuario_id
  * - usuario_nome
  * - empresa_nome
  */
+
+/**
+ * Espera window.__CONTEXT estar pronto (ou o evento "easyloc:context-ready").
+ * Cada módulo hoje é um documento próprio, então o script do módulo pode
+ * começar a rodar ANTES desta IIFE terminar de resolver a sessão/empresa no
+ * Supabase. Use sempre isto (em vez de ler window.__CONTEXT direto) antes de
+ * qualquer consulta que dependa de empresa_id, ou a lista pode carregar vazia
+ * de forma intermitente (bug real encontrado nos módulos de Clientes,
+ * Fornecedores e Caminhões).
+ */
+window.aguardarContexto = function (timeoutMs = 10000) {
+  if (window.__CONTEXT?.empresa_id) return Promise.resolve(window.__CONTEXT);
+
+  return new Promise((resolve) => {
+    let timer;
+    const onReady = () => {
+      clearTimeout(timer);
+      window.removeEventListener("easyloc:context-ready", onReady);
+      resolve(window.__CONTEXT || null);
+    };
+    window.addEventListener("easyloc:context-ready", onReady);
+    timer = setTimeout(() => {
+      window.removeEventListener("easyloc:context-ready", onReady);
+      resolve(window.__CONTEXT || null);
+    }, timeoutMs);
+  });
+};
 
 (async () => {
   
@@ -15,26 +42,23 @@
 
   if (!veioDoLogin) {
     try { await window.supabaseClient.auth.signOut(); } catch(e){}
-    window.location.href = "index.html";
+    window.location.href = "login.html";
     return;
   }
-
-  // limpa flag após uso
-  sessionStorage.removeItem("login_ok");
 
   // 🔐 PROTEÇÃO 2 — sessão Supabase válida?
   const { data: { session } } =
     await window.supabaseClient.auth.getSession();
 
   if (!session) {
-    window.location.href = "index.html";
+    window.location.href = "login.html";
     return;
   }
 
   // 🔄 escuta logout
   window.supabaseClient.auth.onAuthStateChange((event) => {
     if (event === "SIGNED_OUT") {
-      window.location.href = "index.html";
+      window.location.href = "login.html";
     }
   });
 
@@ -46,13 +70,28 @@
   const usuarioNome = sessionStorage.getItem("usuario_nome");
 
   if (!empresaId) {
-    window.location.href = "index.html";
+    window.location.href = "login.html";
     return;
   }
 
   // 🔥 PEGA ID REAL DO USUÁRIO LOGADO
   const { data:{ user } } =
     await window.supabaseClient.auth.getUser();
+
+  // Validação por empresa antes de liberar qualquer módulo para a sessão.
+  const { data: acessoFuncionario, error: erroAcessoFuncionario } =
+    await window.supabaseClient.rpc("funcionario_contexto", { p_empresa_id: empresaId });
+  if (!user || erroAcessoFuncionario || !acessoFuncionario?.ativo) {
+    [...document.body.children].filter(el => !['SCRIPT', 'STYLE'].includes(el.tagName)).forEach(el => { el.hidden = true; });
+    const aviso = document.createElement("p");
+    aviso.textContent = erroAcessoFuncionario
+      ? "Não foi possível validar seu acesso. Recarregue a página para tentar novamente."
+      : "Seu acesso está inativo. Consulte o administrador.";
+    aviso.style.cssText = "padding:32px;font:16px system-ui;color:#374151";
+    document.body.appendChild(aviso);
+    if (!erroAcessoFuncionario) await window.supabaseClient.auth.signOut();
+    return;
+  }
 
   window.__CONTEXT = {
     empresa_id: empresaId,

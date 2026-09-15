@@ -196,8 +196,12 @@ const supabase = window.supabaseClient;
 /* =====================================================
    AUTH / EMPRESA
 ===================================================== */
-function getEmpresaAtualId() {
-  return window.__CONTEXT?.empresa_id;
+// ⏳ window.aguardarContexto (js/core/context.js) espera window.__CONTEXT
+// estar pronto — necessário porque cada módulo agora é um documento próprio
+// e pode iniciar antes do contexto terminar de resolver no Supabase.
+async function getEmpresaAtualId() {
+  const ctx = await window.aguardarContexto();
+  return ctx?.empresa_id;
 }
 
 /* =====================================================
@@ -205,6 +209,19 @@ function getEmpresaAtualId() {
 ===================================================== */
 let clienteAtualId = null;
 const modal = document.getElementById("modal");
+const clientesListaView = document.querySelector(".container.el-page");
+
+function mostrarDetalhesCliente() {
+  clientesListaView?.classList.add("hidden");
+  modal.classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function mostrarListaClientes() {
+  modal.classList.add("hidden");
+  clientesListaView?.classList.remove("hidden");
+}
+
 let catalogoLogoFile = null;
 let catalogoLogoObjectUrl = "";
 let catalogoLogoAtual = "";
@@ -276,7 +293,7 @@ function clientes_openAdd() {
   clienteTinhaAcessoCatalogo = false;
   resetarLogoCatalogo();
 
-  modal.style.display = "flex";
+  mostrarDetalhesCliente();
 
   // REMOVE MODO READONLY DO MODAL
   modal.classList.remove("readonly");
@@ -325,7 +342,7 @@ function clientes_enableEdit() {
 }
 
 function clientes_closeModal() {
-  modal.style.display = "none";
+  mostrarListaClientes();
   if(catalogoLogoObjectUrl) URL.revokeObjectURL(catalogoLogoObjectUrl);
   catalogoLogoObjectUrl = "";
 }
@@ -565,8 +582,8 @@ async function clientes_salvar() {
 async function abrirDetalhesCliente(cliente) {
   clienteAtualId = cliente.id;
 
-  // abre modal
-  modal.style.display = "flex";
+  // abre tela de detalhes
+  mostrarDetalhesCliente();
 
   // =============================
   // ENDEREÇO (CRIA INPUT + GOOGLE)
@@ -679,24 +696,53 @@ async function carregarClientes() {
       .eq("empresa_id", empresaId)
       .order("created_at", { ascending: false });
 
-    if (!error) {
-      clientesCache = (data || []).map(c => {
-        if (typeof c.tags === "string") {
-          try {
-            c.tags = JSON.parse(c.tags);
-          } catch {
-            c.tags = {};
-          }
-        }
-        return c;
-      });
-
-      // SINCRONIZA GLOBAL
-      window.clientesCache = clientesCache;
-
-      aplicarFiltros();
+    if (error) {
+      console.error("❌ Erro ao carregar clientes:", error);
+      return;
     }
-  } catch {}
+
+    clientesCache = (data || []).map(c => {
+      if (typeof c.tags === "string") {
+        try {
+          c.tags = JSON.parse(c.tags);
+        } catch {
+          c.tags = {};
+        }
+      }
+      return c;
+    });
+
+    // SINCRONIZA GLOBAL
+    window.clientesCache = clientesCache;
+
+    Clientes_renderizarStats(clientesCache);
+    aplicarFiltros();
+  } catch (err) {
+    console.error("❌ Erro ao carregar clientes:", err);
+  }
+}
+
+function Clientes_renderizarStats(clientes) {
+  const lista = clientes || [];
+  const contagem = { Ativo: 0, Morno: 0, Inativo: 0 };
+
+  lista.forEach(c => {
+    const status = calcularStatusAutomatico(c);
+    if (contagem[status] !== undefined) contagem[status]++;
+  });
+
+  const set = (id, valor) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = valor;
+  };
+
+  const percentAtivos = lista.length ? Math.round((contagem.Ativo / lista.length) * 100) : 0;
+
+  set("clientesStatTotal", lista.length);
+  set("clientesStatAtivos", contagem.Ativo);
+  set("clientesStatAtivosPercent", `${percentAtivos}% do total`);
+  set("clientesStatMornos", contagem.Morno);
+  set("clientesStatInativos", contagem.Inativo);
 }
 
 async function clientes_abrirDetalhesPorIdOuNome({ id, nome } = {}) {
@@ -928,7 +974,7 @@ function aplicarFiltros() {
 ===================================================== */
 document.addEventListener("click", e => {
   const tag = e.target.closest(".tag");
-  if (!tag || tag.closest(".modal.readonly")) return;
+  if (!tag || tag.closest(".readonly")) return;
 
   const group = tag.closest(".tag-group");
   if (group?.classList.contains("single")) {
@@ -976,7 +1022,7 @@ window.finalizarCarregamentoModulo?.();
 }
 
 // SPA guard: expõe init
-window.__moduleInit = initCadastroClientes;
+requestAnimationFrame(() => requestAnimationFrame(initCadastroClientes));
 /* =====================================================
    GOOGLE PLACES - AUTOCOMPLETE + VALIDAÇÃO
 ===================================================== */
@@ -1016,7 +1062,7 @@ function initEnderecoAutocomplete() {
       .then(() => initEnderecoAutocomplete())
       .catch((error) => {
         console.error("Google Places não carregado:", error);
-        mostrarAlerta?.("Google Places nao configurado. Verifique a chave do Google Maps.");
+        window.alerta?.("Google Places nao configurado. Verifique a chave do Google Maps.");
       });
     return;
   }
@@ -1066,7 +1112,7 @@ function clientes_imprimir() {
     [];
 
   if (!clientes.length) {
-    mostrarAlerta("Nenhum cliente para imprimir.");
+    window.alerta("Nenhum cliente para imprimir.");
     return;
   }
 
@@ -1194,13 +1240,13 @@ window.clientes_imprimir = function () {
     [];
 
   if (!lista.length) {
-    mostrarAlerta("Nenhum cliente para imprimir.");
+    window.alerta("Nenhum cliente para imprimir.");
     return;
   }
 
   const iframe = document.getElementById("printFrame");
   if (!iframe || !iframe.contentWindow) {
-    mostrarAlerta("Iframe de impressão não encontrado.");
+    window.alerta("Iframe de impressão não encontrado.");
     return;
   }
 

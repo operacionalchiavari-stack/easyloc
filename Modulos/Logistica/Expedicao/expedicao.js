@@ -1030,7 +1030,7 @@
   }
 
   async function cancelLoading(){
-    if(!confirm("Cancelar este carregamento?")) return;
+    if(!(await window.confirmarGlobal("Cancelar este carregamento?"))) return;
     const loading = getLoading(state.selectedStartTruckId);
     loading.status = "cancelado";
     getExpedition().status = "cancelado";

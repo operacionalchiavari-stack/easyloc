@@ -1,5 +1,5 @@
 ﻿.equipe-rotas-active,
-.equipe-rotas-active #main-content {
+.equipe-rotas-active :is(#main-content, .el-page) {
   overflow: hidden !important;
 }
 
@@ -66,8 +66,8 @@
 .team-route-refresh,
 .team-filter-btn,
 .team-action-primary {
-  background: var(--color-sidebar, #2E1F1F);
-  border-color: var(--color-sidebar, #2E1F1F);
+  background: var(--color-primary, #374151);
+  border-color: var(--color-primary, #374151);
   color: #fff;
 }
 
@@ -941,7 +941,7 @@
 
 @media (max-width: 1340px) {
   .equipe-rotas-active,
-  .equipe-rotas-active #main-content {
+  .equipe-rotas-active :is(#main-content, .el-page) {
     overflow: auto !important;
   }
 

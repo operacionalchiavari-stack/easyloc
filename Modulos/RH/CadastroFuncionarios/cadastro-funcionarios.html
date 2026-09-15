@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Funcionários | Chiavari</title>
+<script src="../../../js/core/themePrepaint.js"></script><link rel="stylesheet" href="../../../styles/global.css"><link rel="stylesheet" href="cadastro-funcionarios.css">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script></head>
+<body><main class="main cadastros-page"><p id="funcMessage" role="status" hidden></p>    <section id="funcionariosView" class="cadastro-view">
+      <header class="section-head">
+        <div>
+          <h2>Funcionários</h2>
+        </div>
+        <button id="newFuncionarioBtn" class="btn btn-primary" data-permission="rh.funcionarios.criar"><i data-lucide="plus"></i> Novo funcionário</button>
+      </header>
+
+      <section class="summary-grid compact-summary" aria-label="Resumo de funcionários">
+        <article class="summary-card blue"><div class="summary-icon"><i data-lucide="users"></i></div><div><span>Total</span><strong id="funcTotal">0</strong><small>Cadastrados</small></div></article>
+        <article class="summary-card green"><div class="summary-icon"><i data-lucide="user-check"></i></div><div><span>Ativos</span><strong id="funcAtivos">0</strong><small>Com acesso</small></div></article>
+        <article class="summary-card red"><div class="summary-icon"><i data-lucide="user-x"></i></div><div><span>Inativos</span><strong id="funcInativos">0</strong><small>Sem acesso</small></div></article>
+        <article class="summary-card orange"><div class="summary-icon"><i data-lucide="shield-check"></i></div><div><span>Administradores</span><strong id="funcAdmins">0</strong><small>Acesso total</small></div></article>
+      </section>
+
+      <section id="funcionarioFormCard" class="cadastro-modal hidden" role="dialog" aria-modal="true" aria-labelledby="funcionarioFormTitle">
+        <div class="content-card cadastro-form-card">
+        <div class="card-title-row">
+          <div>
+            <h2 id="funcionarioFormTitle">Novo funcionário</h2>
+            <p id="funcionarioFormHint">Preencha os dados de acesso e permissões.</p>
+          </div>
+          <button id="closeFuncionarioForm" class="btn btn-secondary"><i data-lucide="x"></i> Fechar</button>
+        </div>
+        <form id="funcionarioForm" class="cadastro-form-grid">
+          <input id="funcionarioId" type="hidden">
+          <input id="funcFotoValue" type="hidden">
+          <div class="employee-photo-field">
+            <button id="funcFotoButton" class="employee-photo-button" type="button" aria-label="Selecionar foto do funcionário">
+              <span id="funcFotoFallback">FT</span>
+              <img id="funcFotoPreview" alt="Foto do funcionário">
+            </button>
+            <input id="funcFotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <small>Foto do funcionário</small>
+          </div>
+          <label>Nome do funcionário *<input id="funcNome" class="tw-field" required></label>
+          <label>Setor *<select id="funcSetor" class="tw-field" required></select></label>
+          <label>Cargo/Função<input id="funcCargo" class="tw-field"></label>
+          <label>Login *<input id="funcLogin" class="tw-field" required autocomplete="off"></label>
+          <label id="funcSenhaLabel">Senha *<input minlength="8" id="funcSenha" class="tw-field" type="password" autocomplete="new-password"></label>
+          <label id="funcWarehousePinLabel">Senha operacional (4 dígitos) *<input id="funcWarehousePin" class="tw-field" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" placeholder="4 dígitos"></label>
+          <label>Nível de acesso *<select id="funcNivel" class="tw-field" required></select></label>
+          <label>Status *<select id="funcStatus" class="tw-field" required><option>Ativo</option><option>Inativo</option></select></label>
+          <label>E-mail<input required id="funcEmail" class="tw-field" type="email"></label>
+          <label>Telefone<input id="funcTelefone" class="tw-field"></label>
+          <fieldset class="permissions-box">
+            <legend>Permissões por módulo</legend>
+            <div id="permissionsGrid" class="permissions-grid"></div>
+          </fieldset>
+          <div class="form-actions">
+            <button type="button" id="cancelFuncionarioBtn" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" id="saveFuncionarioBtn" class="btn btn-primary"><i data-lucide="save"></i> Salvar funcionário</button>
+          </div>
+        </form>
+        </div>
+      </section>
+
+      <section class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="photo-column"><span class="sr-only">Foto</span></th>
+                <th>Nome</th>
+                <th>Setor</th>
+                <th>Cargo/Função</th>
+                <th>Login</th>
+                <th>Nível de acesso</th>
+                <th>Status</th>
+                <th>Último acesso</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="funcionariosTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js"></script><script src="../../../js/core/permissions.js"></script><script src="cadastro-funcionarios.js"></script></body></html>

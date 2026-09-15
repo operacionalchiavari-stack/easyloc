@@ -13,13 +13,7 @@
   padding: var(--el-card-padding);
 }
 
-.el-card:hover,
-.card-resumo:hover,
-.resumo-card:hover,
-.info-card:hover,
-.metric-card:hover {
-  box-shadow: var(--el-shadow-md);
-}
+:is(.el-card, .card, .card-resumo, .resumo-card, .info-card, .metric-card):is(a, button, [role="button"], [onclick], .is-clickable):hover { transform:translateY(-1px); box-shadow:var(--el-shadow-md); border-color:color-mix(in srgb,var(--el-color-border),var(--el-color-text) 15%); }
 
 .el-card-title,
 .card-title,

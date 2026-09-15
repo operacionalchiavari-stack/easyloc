@@ -69,6 +69,8 @@ export async function carregarItens(){
     window.itensCache = itensCache;
 
     window.renderTabelaItens?.(itensCache);
+    Itens_renderizarStats(itensCache);
+    Itens_popularCategorias(itensCache);
 
   }catch(err){
 
@@ -76,6 +78,34 @@ export async function carregarItens(){
 
   }
 
+}
+
+function Itens_renderizarStats(lista){
+  const set = (id, valor) => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = valor;
+  };
+
+  set("itensStatTotal", lista.length);
+  set("itensStatItens", lista.filter(i => i.tipo === "Item").length);
+  set("itensStatComponentes", lista.filter(i => i.tipo === "Componente").length);
+  set("itensStatKits", lista.filter(i => i.tipo === "Kit").length);
+}
+
+function Itens_popularCategorias(lista){
+  const select = document.getElementById("itensCategoriaFilter");
+  if(!select) return;
+
+  const categorias = [...new Set(
+    lista.map(i => i.categoria?.trim()).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  const valorAtual = select.value;
+
+  select.innerHTML = `<option value="">Todas as categorias</option>` +
+    categorias.map(cat => `<option value="${cat.replace(/"/g, "&quot;")}">${cat}</option>`).join("");
+
+  if(categorias.includes(valorAtual)) select.value = valorAtual;
 }
 
 /* =====================================================
@@ -89,6 +119,7 @@ window.itens_salvar = async function(){
 ===================================================== */
 
 const produto = document.getElementById("itensProduto")?.value?.trim();
+const produtoBase = document.getElementById("itensProdutoBase")?.value?.trim() || "";
 const material = document.getElementById("itensMaterial")?.value?.trim();
 const cor = document.getElementById("itensCor")?.value?.trim();
 const descricaoComplementar = document.getElementById("itensDescricaoComplementar")?.value?.trim();
@@ -196,7 +227,20 @@ const volumeCubico = Number(
     const categoria = document.getElementById("itensCategoria")?.value?.trim();
     const setor = document.getElementById("itensSetor")?.value;
 
+    const referencia = document.getElementById("itensReferencia")?.value?.trim() || null;
+    const marcaModelo = document.getElementById("itensMarcaModelo")?.value?.trim() || "";
+    const subcategoria = document.getElementById("itensSubcategoria")?.value?.trim() || "";
+    const grupoSeparacao = document.getElementById("itensGrupoSeparacao")?.value?.trim() || "";
+    const estilo = document.getElementById("itensEstilo")?.value?.trim() || "";
+    const fornecedorId = document.getElementById("itensFornecedor")?.value || null;
+
+    const ordemExposicaoRaw = document.getElementById("itensOrdemExposicao")?.value?.trim();
+    const ordemExposicao = ordemExposicaoRaw ? parseInt(ordemExposicaoRaw, 10) : null;
+
     const exibirSite = document.getElementById("itensExibirSite")?.value === "true";
+    const destaqueSite = document.getElementById("itensDestaqueSite")?.value === "true";
+    const locarSomenteKit = document.getElementById("itensLocarSomenteKit")?.value === "true";
+    const exclusivo = document.getElementById("itensExclusivo")?.value === "true";
 
     const custo = parseFloat(
       document.getElementById("itensCusto")?.value.replace(",",".")
@@ -239,7 +283,7 @@ if(urlFoto){
 /* =====================================================
    GERAR NOME AUTOMÁTICO DO ITEM
 ===================================================== */
-let nomeGerado = produto || "";
+let nomeGerado = produtoBase ? `${produtoBase} ${produto || ""}`.trim() : (produto || "");
 
 /* material */
 if(material && material.length > 0){
@@ -281,6 +325,7 @@ const itemData = {
 
   codigo,
   produto,
+  produto_base: produtoBase,
   material,
   cor,
   descricao_complementar: descricaoComplementar,
@@ -296,6 +341,13 @@ const itemData = {
   categoria,
   setor_estoque: setor,
 
+  referencia,
+  marca_modelo: marcaModelo,
+  subcategoria,
+  grupo_separacao: grupoSeparacao,
+  estilo,
+  fornecedor_id: fornecedorId,
+
   custo,
   valor_locacao: valorLocacao,
   valor_reposicao: valorReposicao,
@@ -303,6 +355,10 @@ const itemData = {
   tipo,
   ativo,
   exibir_no_site: exibirSite,
+  destaque_site: destaqueSite,
+  ordem_exposicao_site: ordemExposicao,
+  locar_somente_kit: locarSomenteKit,
+  exclusivo,
 
   foto_url: fotoUrl || undefined
 

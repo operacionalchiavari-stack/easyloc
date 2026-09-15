@@ -453,3 +453,9 @@ entrypoint = "./functions/payment-gateways/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/payment-webhook/index.ts"
+
+[functions.funcionarios-admin]
+enabled = true
+# Valida JWT no handler; o login de funcionário usa o Auth antes de existir uma sessão.
+verify_jwt = false
+entrypoint = "./functions/funcionarios-admin/index.ts"

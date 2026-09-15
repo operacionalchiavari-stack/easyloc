@@ -1,14 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Cadastro de Caminhões</title>
+  <link rel="icon" type="image/png" href="../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="cadastro-caminhoes.css?v=20260913i">
+</head>
+<body>
 <div class="container cadastro-caminhoes-page el-page">
 
   <!-- HEADER -->
   <header class="page-header">
     <h1>Caminhões Cadastrados</h1>
 
-    <div class="header-actions">
-      <button class="btn secondary" type="button" onclick="imprimirCaminhoes()">
-        Imprimir / PDF
-      </button>
+    <div class="el-stat-row" id="caminhoesStats">
+      <article class="el-stat-card blue">
+        <span aria-hidden="true"><i data-lucide="truck"></i></span>
+        <div><small>Total de caminhões</small><strong id="caminhoesStatTotal">0</strong><em>Cadastrados</em></div>
+      </article>
+      <article class="el-stat-card green">
+        <span aria-hidden="true"><i data-lucide="circle-check"></i></span>
+        <div><small>Ativos</small><strong id="caminhoesStatAtivos">0</strong><em>Em operação</em></div>
+      </article>
+      <article class="el-stat-card gray">
+        <span aria-hidden="true"><i data-lucide="warehouse"></i></span>
+        <div><small>Próprios</small><strong id="caminhoesStatProprios">0</strong><em>Frota própria</em></div>
+      </article>
+      <article class="el-stat-card orange">
+        <span aria-hidden="true"><i data-lucide="handshake"></i></span>
+        <div><small>Terceirizados</small><strong id="caminhoesStatTerceirizados">0</strong><em>Frota parceira</em></div>
+      </article>
+    </div>
 
+    <div class="header-actions">
       <button class="btn primary" type="button" onclick="abrirModalCaminhao()">
         + Adicionar Caminhão
       </button>
@@ -52,16 +81,18 @@
   </table>
 </section>
 
+</div>
 
-<!-- =====================================================
-     MODAL ALERTA GLOBAL EASYLOC
-===================================================== -->
-<!-- ================= MODAL ================= -->
-<div id="modalCaminhao" class="modal-overlay el-modal hidden">
-  <div class="modal-box el-modal__box">
+<!-- ================= DETALHES DO CAMINHAO (tela, nao modal) ================= -->
+<div id="modalCaminhao" class="el-page caminhao-detail-view hidden">
+  <div class="caminhao-detail-card">
 
    <!-- HEADER -->
 <div class="modal-header-caminhao">
+
+  <button class="back-btn btn-icon" type="button" onclick="fecharModalCaminhao()" title="Voltar para a lista">
+    <i data-lucide="arrow-left"></i>
+  </button>
 
   <h2>Cadastrar Caminhão</h2>
 
@@ -89,6 +120,10 @@
   ✎
 </button>
 
+<button type="button" class="btn primary" id="btnSalvarCaminhao" onclick="salvarCaminhao()">
+  Salvar
+</button>
+
   </div>
 
 </div>
@@ -100,28 +135,26 @@
 
 <div class="form-grid">
 
-  <div class="form-group el-field">
+  <div class="form-group el-field" style="grid-column:span 4;">
     <label>CNPJ</label>
     <input class="el-input" type="text" id="cnpjInput">
   </div>
 
-  <div class="form-group el-field">
+  <div class="form-group el-field" style="grid-column:span 5;">
     <label>Empresa Proprietária</label>
     <input class="el-input" type="text" id="empresaInput">
   </div>
 
-  <div class="form-group el-field">
+  <div class="form-group el-field" style="grid-column:span 3;">
     <label>Telefone</label>
     <input class="el-input" type="text" id="telefoneInput">
   </div>
-
-  <div></div>
 
 </div>
 <div class="form-grid">
 
     <!-- VÍNCULO -->
-  <div class="form-group el-field">
+  <div class="form-group el-field" style="grid-column:span 3;">
     <label>Vínculo *</label>
     <select class="el-select" id="tipoInput">
       <option value="proprio">Próprio</option>
@@ -130,7 +163,7 @@
   </div>
 
   <!-- CATEGORIA DO CAMINHÃO -->
-  <div class="form-group el-field">
+  <div class="form-group el-field" style="grid-column:span 3;">
     <label>Categoria do veículo *</label>
     <select class="el-select" id="categoriaInput">
       <option value="vuc">VUC</option>
@@ -142,33 +175,31 @@
       <option value="van">Van</option>
     </select>
   </div>
-  <div class="form-group el-field">
+  <div class="form-group el-field" style="grid-column:span 3;">
     <label>Modelo *</label>
     <input class="el-input" type="text" id="modeloInput">
   </div>
 
-  <div class="form-group el-field">
+  <div class="form-group el-field" style="grid-column:span 3;">
     <label>Placa *</label>
     <input class="el-input" type="text" id="placaInput">
   </div>
-
-  <div></div>
 
 </div>
     <!-- ================= DIMENSÕES EXTERNAS ================= -->
     <div class="form-grid">
 
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 4;">
         <label>Comprimento total (m)</label>
         <input class="el-input" type="number" step="0.01" id="comprimentoTotalInput">
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 4;">
         <label>Largura total (m)</label>
         <input class="el-input" type="number" step="0.01" id="larguraTotalInput">
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 4;">
         <label>Altura total (m)</label>
         <input class="el-input" type="number" step="0.01" id="alturaTotalInput">
       </div>
@@ -180,22 +211,22 @@
 
     <div class="form-grid">
 
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 3;">
         <label>Comprimento interno (m)</label>
         <input class="el-input" type="number" step="0.01" id="comprimentoInput">
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 3;">
         <label>Largura interna (m)</label>
         <input class="el-input" type="number" step="0.01" id="larguraInput">
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 3;">
         <label>Altura interna (m)</label>
         <input class="el-input" type="number" step="0.01" id="alturaInput">
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 3;">
         <label>Capacidade calculada</label>
         <div id="capacidadePreview" style="font-weight:600;">
           0.00 m³
@@ -205,16 +236,18 @@
     </div>
 
 
-    <!-- BOTÕES -->
-    <div class="modal-actions" style="margin-top:30px;">
-      <button class="btn secondary" type="button" onclick="fecharModalCaminhao()">
-        Cancelar
-      </button>
-      <button class="btn primary" type="button" id="btnSalvarCaminhao" onclick="salvarCaminhao()">
-        Salvar
-      </button>
-    </div>
-
   </div>
 </div>
 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../js/core/supabase.js"></script>
+<script src="../../js/core/alerta.js"></script>
+<script src="../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../js/core/listPager.js"></script>
+<script src="../../js/core/context.js?v=20260913b"></script>
+<script src="../../js/core/permissions.js"></script>
+<script src="cadastro-caminhoes.js?v=20260913d"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

@@ -10,6 +10,24 @@ import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./ped
 import { initPagamento } from "./pedido.pagamento.mjs";
 import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs";
 
+/* =====================================================
+   ESTADO VINDO DA URL (documento proprio / navegacao real)
+   Preenche os globals so se ainda nao vieram da CentralPedidos
+   (que ainda roda no mesmo documento na transicao antiga).
+===================================================== */
+(function seedEstadoPedidoDaUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const pedidoIdUrl = params.get("pedido");
+  const modoUrl = params.get("modo");
+
+  if (!window.__PEDIDO_ATUAL_ID && pedidoIdUrl) {
+    window.__PEDIDO_ATUAL_ID = pedidoIdUrl;
+  }
+  if (!window.__PEDIDO_MODO_ABERTURA && modoUrl) {
+    window.__PEDIDO_MODO_ABERTURA = modoUrl;
+  }
+})();
+
 export async function initPedido(){
 
   console.log("✅ initPedido executou");
@@ -350,7 +368,7 @@ export function destroyPedido(){
 ===================================================== */
 window.initPedido = initPedido;
 window.__activeModuleDestroy = destroyPedido;
-window.__moduleInit = initPedido;
+requestAnimationFrame(() => requestAnimationFrame(initPedido));
 
 function setupPedidoWorkspace({ supabase }){
   const avisar = (mensagem, titulo = "Pedido", tipo = "info") => {
@@ -378,15 +396,6 @@ function setupPedidoWorkspace({ supabase }){
   window.__PEDIDO_BLOQUEADO_SEPARACAO = false;
 
   const abrirCentral = () => {
-    if(typeof window.carregarNaMain === "function"){
-      window.carregarNaMain(
-        "Modulos/Comercial/Pedidos/CentralPedidos.html",
-        "Modulos/Comercial/Pedidos/CentralPedidos.js",
-        null,
-        "Modulos/Comercial/Pedidos/CentralPedidos.css"
-      );
-      return;
-    }
     window.location.href = "CentralPedidos.html";
   };
 

@@ -13,12 +13,12 @@
 .el-table-card {
   width: 100%;
   margin-top: var(--el-space-3);
-  padding: 22px 24px;
+  padding: 0;
   overflow: hidden;
   background: var(--el-color-surface);
   border: 1px solid var(--el-color-border);
-  border-radius: var(--el-radius-lg);
-  box-shadow: var(--el-shadow-sm);
+  border-radius: var(--el-radius-sm);
+  box-shadow: none;
 }
 
 .el-table-scroll {
@@ -30,31 +30,31 @@
   min-width: var(--el-table-min-width, 980px);
 }
 
-#main-content .el-table-card,
-#main-content .el-table-card.table-container {
-  padding: 22px 24px !important;
+:is(#main-content, .el-page) .el-table-card,
+:is(#main-content, .el-page) .el-table-card.table-container {
+  padding: 0 !important;
   background: var(--el-color-surface) !important;
   border: 1px solid var(--el-color-border) !important;
-  border-radius: var(--el-radius-lg) !important;
-  box-shadow: var(--el-shadow-sm) !important;
+  border-radius: var(--el-radius-sm) !important;
+  box-shadow: none !important;
 }
 
-#main-content .itens-table-card {
+:is(#main-content, .el-page) .itens-table-card {
   --el-table-min-width: 1080px;
 }
 
-#main-content .el-table-card .el-table-scroll {
+:is(#main-content, .el-page) .el-table-card .el-table-scroll {
   overflow: auto !important;
 }
 
 .el-table,
 .el-page table,
-#main-content table {
+:is(#main-content, .el-page) table {
   width: 100%;
   border-collapse: collapse;
   background: var(--el-color-surface);
   color: var(--el-color-text);
-  font-size: 14px;
+  font-size: var(--el-font-sm);
   font-weight: 400;
 }
 
@@ -64,10 +64,10 @@
 .el-page table thead tr,
 table thead,
 table thead tr,
-#main-content table thead,
-#main-content table thead tr,
-#main-content .table-header,
-#main-content .tabela-header {
+:is(#main-content, .el-page) table thead,
+:is(#main-content, .el-page) table thead tr,
+:is(#main-content, .el-page) .table-header,
+:is(#main-content, .el-page) .tabela-header {
   background: transparent !important;
 }
 
@@ -77,50 +77,52 @@ table thead tr,
 .el-page table thead td,
 table thead th,
 table thead td,
-#main-content table thead th,
-#main-content table thead td,
-#main-content .table-header th,
-#main-content .table-header td,
-#main-content .tabela-header th,
-#main-content .tabela-header td {
+:is(#main-content, .el-page) table thead th,
+:is(#main-content, .el-page) table thead td,
+:is(#main-content, .el-page) .table-header th,
+:is(#main-content, .el-page) .table-header td,
+:is(#main-content, .el-page) .tabela-header th,
+:is(#main-content, .el-page) .tabela-header td {
   background: var(--el-table-header-bg) !important;
   color: var(--el-table-header-color) !important;
-  padding: 14px 16px;
+  padding: 11px 16px;
   border: 0;
+  border-bottom: 1px solid var(--el-color-border);
   text-align: left;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: var(--el-font-xs);
+  font-weight: 750;
+  letter-spacing: 0.025em;
+  text-transform: none;
   white-space: nowrap;
 }
 
 .el-table tbody td,
 .el-page table tbody td,
-#main-content table tbody td {
-  padding: 13px 16px;
-  border-bottom: 1px solid var(--el-table-row-border);
+:is(#main-content, .el-page) table tbody td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--el-color-border-soft);
   color: var(--el-color-text);
   font-weight: 400;
+  line-height: 1.35;
   vertical-align: middle;
 }
 
-#main-content .el-table-card table thead th,
-#main-content .el-table-card table thead td {
-  padding: 13px 14px !important;
-  font-size: 12px !important;
-  font-weight: 800 !important;
+:is(#main-content, .el-page) .el-table-card table thead th,
+:is(#main-content, .el-page) .el-table-card table thead td {
+  padding: 11px 14px !important;
+  font-size: var(--el-font-xs) !important;
+  font-weight: 750 !important;
 }
 
-#main-content .el-table-card table tbody td {
-  padding: 14px !important;
-  font-size: 14px !important;
-  line-height: 1.25 !important;
+:is(#main-content, .el-page) .el-table-card table tbody td {
+  padding: 11px 16px !important;
+  font-size: var(--el-font-sm) !important;
+  line-height: 1.35 !important;
 }
 
 .el-table tbody tr,
 .el-page table tbody tr,
-#main-content table tbody tr {
+:is(#main-content, .el-page) table tbody tr {
   transition: background 0.16s ease, box-shadow 0.16s ease;
 }
 
@@ -128,8 +130,8 @@ table thead td,
 .el-page table tbody tr:hover,
 table tbody tr:hover,
 table tbody tr:hover td,
-#main-content table tbody tr:hover,
-#main-content table tbody tr:hover td {
+:is(#main-content, .el-page) table tbody tr:hover,
+:is(#main-content, .el-page) table tbody tr:hover td {
   background: var(--el-table-row-hover) !important;
 }
 
@@ -141,14 +143,14 @@ body table tbody td.selected,
 body table tbody td.is-selected,
 body table tbody td.selected-cell,
 body table tbody td.cell-selected,
-#main-content table tbody tr.selected,
-#main-content table tbody tr.selected td,
-#main-content table tbody tr.linha-selecionada,
-#main-content table tbody tr.linha-selecionada td,
-#main-content table tbody td.selected,
-#main-content table tbody td.is-selected,
-#main-content table tbody td.selected-cell,
-#main-content table tbody td.cell-selected {
+:is(#main-content, .el-page) table tbody tr.selected,
+:is(#main-content, .el-page) table tbody tr.selected td,
+:is(#main-content, .el-page) table tbody tr.linha-selecionada,
+:is(#main-content, .el-page) table tbody tr.linha-selecionada td,
+:is(#main-content, .el-page) table tbody td.selected,
+:is(#main-content, .el-page) table tbody td.is-selected,
+:is(#main-content, .el-page) table tbody td.selected-cell,
+:is(#main-content, .el-page) table tbody td.cell-selected {
   background: var(--el-table-selected-bg) !important;
 }
 
@@ -163,13 +165,13 @@ body table tbody td.cell-selected,
 
 .el-table tbody tr:last-child td,
 .el-page table tbody tr:last-child td,
-#main-content table tbody tr:last-child td {
+:is(#main-content, .el-page) table tbody tr:last-child td {
   border-bottom: 0;
 }
 
 .el-table .actions,
 .el-page table .actions,
-#main-content table .actions {
+:is(#main-content, .el-page) table .actions {
   display: flex;
   align-items: center;
   gap: var(--el-space-2);
@@ -189,16 +191,16 @@ body table tbody td.cell-selected,
 
   .el-table,
   .el-page table,
-  #main-content table {
+  :is(#main-content, .el-page) table {
     font-size: 13px;
   }
 
   .el-table thead th,
   .el-page table thead th,
-  #main-content table thead th,
+  :is(#main-content, .el-page) table thead th,
   .el-table tbody td,
   .el-page table tbody td,
-  #main-content table tbody td {
+  :is(#main-content, .el-page) table tbody td {
     padding: 11px 12px;
   }
 }

@@ -1343,7 +1343,7 @@
     }
   }
 
-  window.__moduleInit = init;
+  requestAnimationFrame(() => requestAnimationFrame(init));
   window.__activeModuleDestroy = function(){
     state.destroyed = true;
     document.body.classList.remove("equipe-rotas-active");

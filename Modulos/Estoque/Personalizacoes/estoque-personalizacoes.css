@@ -7,7 +7,7 @@
   --white: #ffffff;
   --navy: #2E1F1F;
   --navy-2: #123250;
-  --orange: #2E1F1F;
+  --orange: #374151;
   --orange-2: #3A2A2A;
   --text: #0b1b2a;
   --muted: #6b7b8b;
@@ -23,7 +23,7 @@
 }
 
 .personalizacoes-page {
-  padding: 28px;
+  padding: 20px 24px;
   min-height: calc(100vh - 70px);
   font-family:
     Inter,
@@ -151,13 +151,14 @@
   color: var(--text);
 }
 
-/* garante que nada dentro da cÃ©lula fique em negrito */
-.data-table tbody td strong {
-  font-weight: 400;
-}
-
-.data-table tbody td b {
-  font-weight: 400;
+/* O negrito real nao vinha de <strong>/<b> (a tabela nem usa mais essas
+   tags) — vem de styles/design-system.css: "tbody td:first-child" deixa
+   em negrito a primeira coluna de QUALQUER tabela dentro de .el-page, sem
+   :not() nem excecao por modulo. Precisa de !important pra vencer, porque
+   aquela regra ganha especificidade de ID via :is(#main-content,.el-page)
+   mesmo essa pagina so tendo a classe .el-page. */
+.data-table tbody td:first-child {
+  font-weight: 400 !important;
 }
 .data-table tbody tr:hover {
   background: rgba(15, 42, 68, 0.02);
@@ -845,64 +846,55 @@ input[placeholder="Digite para buscar item..."]:focus {
   flex: 0 0 auto;
 }
 
-.personalizacoes-page .modal-overlay {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(15, 23, 42, 0.42);
-  backdrop-filter: blur(3px);
-  z-index: 1000200;
+/* =====================================================
+   DETALHES DA PERSONALIZACAO COMO TELA (nao mais modal)
+===================================================== */
+.personalizacao-detail-view {
+  width: 100%;
 }
 
-.personalizacoes-page .modal-overlay:not(.hidden) {
-  display: flex;
-}
-
-.personalizacoes-page .modal-card {
-  width: min(1380px, calc(100vw - 48px));
-  max-height: calc(100vh - 48px);
-  margin: auto;
+.personalizacao-detail-card {
+  width: 100%;
+  max-height: none;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background: #ffffff;
-  border: 1px solid rgba(15, 42, 68, 0.14);
-  border-radius: 20px;
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.28);
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.personalizacoes-page .modal-header {
+.personalizacao-detail-view .modal-header {
   flex: 0 0 auto;
-  padding: 18px 22px;
+  padding: 0 0 18px;
   gap: 18px;
+  background: transparent;
+  border-bottom: 1px solid var(--border);
 }
 
-.personalizacoes-page .modal-header-left {
+.personalizacao-detail-view .modal-header-left {
   min-width: 0;
+  flex: 1;
 }
 
-.personalizacoes-page .modal-header-right {
+.personalizacao-detail-view .modal-header-right {
   flex: 0 0 auto;
 }
 
-.personalizacoes-page .modal-sub {
+.personalizacao-detail-view .modal-sub {
   color: var(--muted);
   line-height: 1.35;
 }
 
-.personalizacoes-page .modal-body {
+.personalizacao-detail-view .modal-body {
   flex: 1 1 auto;
-  min-height: 0;
-  padding: 18px 22px;
-  overflow: auto;
+  padding: 0;
+  overflow: visible;
 }
 
-.personalizacoes-page .modal-grid {
+.personalizacao-detail-view .modal-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(330px, 420px);
   align-items: start;
@@ -910,41 +902,56 @@ input[placeholder="Digite para buscar item..."]:focus {
   width: 100%;
 }
 
-.personalizacoes-page .form-col,
-.personalizacoes-page .resume-col {
+.personalizacao-detail-view .form-col,
+.personalizacao-detail-view .resume-col {
   min-width: 0;
 }
 
-.personalizacoes-page .resume-card {
+.personalizacao-detail-view .resume-card {
   position: sticky;
-  top: 0;
+  top: 24px;
   width: 100%;
   padding: 22px;
 }
 
-.personalizacoes-page .card-section {
+.personalizacao-detail-view .card-section {
   border-radius: 14px;
   padding: 14px 16px;
   margin-bottom: 14px;
 }
 
-.personalizacoes-page .modal-footer {
+.personalizacao-detail-view .modal-footer {
   flex: 0 0 auto;
-  padding: 14px 22px;
-  background: #ffffff;
+  padding: 16px 0 0;
+  margin-top: 20px;
+  background: transparent;
+}
+
+.back-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--navy);
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  flex: 0 0 auto;
+}
+
+.back-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 @media (max-width: 1200px) {
-  .personalizacoes-page .modal-card {
-    width: min(960px, calc(100vw - 32px));
-    max-height: calc(100vh - 32px);
-  }
-
-  .personalizacoes-page .modal-grid {
+  .personalizacao-detail-view .modal-grid {
     grid-template-columns: 1fr;
   }
 
-  .personalizacoes-page .resume-card {
+  .personalizacao-detail-view .resume-card {
     position: static;
   }
 }
@@ -969,21 +976,12 @@ input[placeholder="Digite para buscar item..."]:focus {
     width: 100%;
   }
 
-  .personalizacoes-page .modal-overlay {
-    padding: 12px;
-  }
-
-  .personalizacoes-page .modal-card {
-    width: calc(100vw - 24px);
-    max-height: calc(100vh - 24px);
-  }
-
-  .personalizacoes-page .modal-header {
+  .personalizacao-detail-view .modal-header {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .personalizacoes-page .modal-header-right {
+  .personalizacao-detail-view .modal-header-right {
     justify-content: space-between;
   }
 

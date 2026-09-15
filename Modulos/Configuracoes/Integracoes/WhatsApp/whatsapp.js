@@ -58,7 +58,7 @@
     if(typeof window.confirmarGlobal === "function"){
       return await window.confirmarGlobal(message, title, { confirmarTexto: "Confirmar", tipo: "warning" });
     }
-    return confirm(message);
+    return false; // Fail closed if the shared confirmation component is unavailable.
   }
 
   function setLoading(active){

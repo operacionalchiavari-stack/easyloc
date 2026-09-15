@@ -4,6 +4,17 @@ console.log("🚛 cadastro-caminhoes.js carregado");
    INIT (SPA SAFE ✅ sem travar na 2ª vez)
 ===================================================== */
 
+function mostrarDetalhesCaminhao() {
+  document.querySelector(".cadastro-caminhoes-page")?.classList.add("hidden");
+  document.getElementById("modalCaminhao").classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function mostrarListaCaminhoes() {
+  document.getElementById("modalCaminhao").classList.add("hidden");
+  document.querySelector(".cadastro-caminhoes-page")?.classList.remove("hidden");
+}
+
 window.initCadastroCaminhoes = function () {
 
   console.log("🚀 initCadastroCaminhoes");
@@ -67,14 +78,12 @@ window.initCadastroCaminhoes = function () {
 
 };
 
-// (importante no seu loader SPA)
-window.__moduleInit = window.initCadastroCaminhoes;
 /* =====================================================
    MODAL
 ===================================================== */
 
 function fecharModalCaminhao() {
-  document.getElementById("modalCaminhao").classList.add("hidden");
+  mostrarListaCaminhoes();
 }
 
 /* =====================================================
@@ -288,9 +297,13 @@ async function buscarEmpresaPorCNPJ(cnpj) {
 async function carregarCaminhoes() {
 
   const supabase = window.supabaseClient;
-  const empresaId = window.__CONTEXT?.empresa_id;
+  const ctx = await window.aguardarContexto();
+  const empresaId = ctx?.empresa_id;
 
-  if (!empresaId) return;
+  if (!empresaId) {
+    console.error("❌ Erro ao carregar caminhões: empresa_id não encontrado no contexto.");
+    return;
+  }
 
   const filtroTexto  = (document.getElementById("filtroTexto")?.value || "").toLowerCase();
   const filtroTipo   = document.getElementById("filtroTipo")?.value || "";
@@ -311,6 +324,8 @@ async function carregarCaminhoes() {
     console.error("❌ Erro ao carregar caminhões:", error);
     return;
   }
+
+  Caminhoes_renderizarStats(empresaId);
 
   const tbody = document.getElementById("tabelaCaminhoes");
   if (!tbody) {
@@ -389,6 +404,35 @@ async function carregarCaminhoes() {
 
   window.finalizarCarregamentoModulo?.();
 }
+
+async function Caminhoes_renderizarStats(empresaId) {
+  const supabase = window.supabaseClient;
+  const set = (id, valor) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = valor;
+  };
+
+  const { data, error } = await supabase
+    .from("caminhoes")
+    .select("tipo,status")
+    .eq("empresa_id", empresaId);
+
+  if (error) {
+    console.error("❌ Erro ao carregar estatísticas de caminhões:", error);
+    return;
+  }
+
+  const lista = data || [];
+  const total = lista.length;
+  const ativos = lista.filter(c => c.status === "ativo").length;
+  const proprios = lista.filter(c => c.tipo === "proprio").length;
+  const terceirizados = lista.filter(c => c.tipo === "terceirizado").length;
+
+  set("caminhoesStatTotal", total);
+  set("caminhoesStatAtivos", ativos);
+  set("caminhoesStatProprios", proprios);
+  set("caminhoesStatTerceirizados", terceirizados);
+}
 /* =====================================================
    SALVAR
 ===================================================== */
@@ -396,7 +440,8 @@ async function carregarCaminhoes() {
 async function salvarCaminhao() {
 
   const supabase = window.supabaseClient;
-  const empresaId = window.__CONTEXT?.empresa_id;
+  const ctx = await window.aguardarContexto();
+  const empresaId = ctx?.empresa_id;
 
   if (!empresaId) {
     mostrarAlerta("Erro de contexto da empresa.");
@@ -528,7 +573,7 @@ function abrirModalDetalheCaminhao(cam){
 
   mostrarBotaoEditarCaminhao(true);
 
-  document.getElementById("modalCaminhao").classList.remove("hidden");
+  mostrarDetalhesCaminhao();
 }
 function preencherFormularioCaminhao(cam) {
 
@@ -601,8 +646,8 @@ function abrirModalCaminhao(){
   // 🔥 Esconde botão editar
   mostrarBotaoEditarCaminhao(false);
 
-  // 🔥 Mostra modal
-  modal.classList.remove("hidden");
+  // 🔥 Mostra tela de detalhes
+  mostrarDetalhesCaminhao();
 
   inicializarValidacoes();
 }
@@ -636,8 +681,8 @@ function prepararEdicaoCaminhao(){
 
   mostrarBotaoEditarCaminhao(false);
 
-  // mantém o modal aberto
-  document.getElementById("modalCaminhao").classList.remove("hidden");
+  // mantém a tela de detalhes aberta
+  mostrarDetalhesCaminhao();
 
   // garante que preview atualize
   setTimeout(atualizarCapacidadePreview, 50);
@@ -662,4 +707,5 @@ function limparFormularioCaminhao(){
   setStatusCaminhao("ativo");
 
 }
-window.__moduleInit = window.initCadastroCaminhoes;
+
+requestAnimationFrame(() => requestAnimationFrame(window.initCadastroCaminhoes));

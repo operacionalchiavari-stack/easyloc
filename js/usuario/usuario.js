@@ -307,10 +307,10 @@ function criarModalPerfil(){
         </div>
 
         <div style="margin-top:24px;display:flex;justify-content:flex-end;gap:10px;">
-          <button id="cancelBtn" style="padding:8px 18px;border-radius:12px;border:none;background:#e5e7eb;cursor:pointer;">
+          <button id="cancelBtn" style="padding:8px 18px;border-radius:12px;border:1px solid #CBD5E1;background:#fff;color:#374151;cursor:pointer;">
             Cancelar
           </button>
-          <button id="saveBtn" style="padding:8px 18px;border-radius:12px;border:none;background:#2E1F1F;color:#fff;font-weight:600;cursor:pointer;">
+          <button id="saveBtn" style="padding:8px 18px;border-radius:12px;border:none;background:#374151;color:#fff;font-weight:600;cursor:pointer;">
             Salvar
           </button>
         </div>
@@ -476,7 +476,7 @@ async function ativarAusencia(){
 
     <button id="unlockBtn"
       style="width:100%;padding:12px;border:none;border-radius:14px;
-             background:#2E1F1F;color:#fff;font-weight:600;
+             background:#374151;color:#fff;font-weight:600;
              cursor:pointer;font-size:14px;margin-top:14px;">
       Desbloquear
     </button>

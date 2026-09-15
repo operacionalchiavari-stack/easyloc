@@ -407,17 +407,7 @@ window.itens_3d_criarComIA = function(){
   window.__ITEM_DETALHE_ID = itemId;
   window.__ITEM_DETALHE_MODO = "editar";
 
-  if(typeof window.carregarNaMain === "function"){
-    window.carregarNaMain(
-      "Modulos/Estoque/CadastroItens/item-modelo-3d.html",
-      "Modulos/Estoque/CadastroItens/item-modelo-3d.mjs",
-      null,
-      "Modulos/Estoque/CadastroItens/item-modelo-3d.css"
-    );
-    return;
-  }
-
-  notify("Abra esta tela pelo dashboard para usar a criacao 3D com IA.", "erro");
+  window.location.href = `item-modelo-3d.html?id=${encodeURIComponent(itemId)}`;
 };
 
 window.itens_3d_toggleRotate = function(){
@@ -442,7 +432,7 @@ window.itens_3d_remove = async function(){
     return;
   }
 
-  const confirmed = confirm("Remover o modelo 3D deste item?");
+  const confirmed = (await window.confirmarGlobal("Remover o modelo 3D deste item?"));
   if(!confirmed) return;
 
   showLoading(true);

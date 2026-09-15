@@ -44,7 +44,7 @@ window.initCronograma = async function() {
   }
 };
 
-window.__moduleInit = window.initCronograma;
+requestAnimationFrame(() => requestAnimationFrame(window.initCronograma));
 
 // =========================================
 // DESTRUIDOR

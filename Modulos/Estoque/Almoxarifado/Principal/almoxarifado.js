@@ -875,9 +875,9 @@
       return;
     }
 
-    const ok = window.confirm
-      ? window.confirm("Confirmar recebimento físico desta compra e atualizar o estoque?")
-      : true;
+    const ok = window.confirmarGlobal
+      ? await window.confirmarGlobal("Confirmar recebimento físico desta compra e atualizar o estoque?")
+      : false;
     if (!ok) return;
 
     let recebidos = 0;
@@ -1127,11 +1127,16 @@
       renderQr(null);
     }
 
+    document.querySelector(".almox-list-view")?.classList.add("hidden");
     modal.classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   function closeModal(id) {
     document.getElementById(id)?.classList.add("hidden");
+    if (id === "almoxMaterialModal") {
+      document.querySelector(".almox-list-view")?.classList.remove("hidden");
+    }
   }
 
   function renderQr(material) {
@@ -1578,6 +1583,6 @@
     state.initialized = false;
   }
 
-  window.__moduleInit = initAlmoxarifado;
+  requestAnimationFrame(() => requestAnimationFrame(initAlmoxarifado));
   window.__activeModuleDestroy = destroyAlmoxarifado;
 })();

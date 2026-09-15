@@ -922,7 +922,8 @@ async function salvarModeloCorrigido(){
 }
 
 async function carregarItem(){
-  state.itemId = window.__ITEM_3D_AI_ID || window.itemAtualId || window.__ITEM_DETALHE_ID || null;
+  const itemIdFromUrl = new URLSearchParams(window.location.search).get("id");
+  state.itemId = window.__ITEM_3D_AI_ID || window.itemAtualId || window.__ITEM_DETALHE_ID || itemIdFromUrl || null;
   state.empresaId = await getEmpresaAtualId();
 
   if(!state.itemId){
@@ -996,17 +997,8 @@ function voltarParaItem(){
   window.__ITEM_DETALHE_MODO = itemId ? "editar" : "novo";
   window.__ITEM_3D_AI_ID = null;
 
-  if(typeof window.carregarNaMain === "function"){
-    window.carregarNaMain(
-      "Modulos/Estoque/CadastroItens/item-detalhes.html",
-      "Modulos/Estoque/CadastroItens/item-detalhes.mjs",
-      null,
-      "Modulos/Estoque/CadastroItens/item-detalhes.css"
-    );
-    return;
-  }
-
-  window.history.back();
+  const suffix = itemId ? `?id=${encodeURIComponent(itemId)}` : "";
+  window.location.href = `item-detalhes.html${suffix}`;
 }
 
 function bindEvents(){
@@ -1104,7 +1096,7 @@ async function initModelo3DIA(){
 }
 
 window.__activeModuleDestroy = destroyModelo3DIA;
-window.__moduleInit = initModelo3DIA;
+requestAnimationFrame(() => requestAnimationFrame(initModelo3DIA));
 
 export {
   handleImageUpload,

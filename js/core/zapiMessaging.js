@@ -19,7 +19,7 @@
         tipo: "warning"
       });
     }
-    return confirm(message);
+    return false; // Fail closed if the shared confirmation component is unavailable.
   }
 
   async function send(payload = {}){

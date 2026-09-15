@@ -12,6 +12,17 @@ let kitZoomInterval = null;
    ABRIR MODAL
 =============================== */
 
+function kits_mostrarTela(){
+  document.querySelector(".container")?.classList.add("hidden");
+  document.getElementById("kitsModal")?.classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function kits_mostrarLista(){
+  document.getElementById("kitsModal")?.classList.add("hidden");
+  document.querySelector(".container")?.classList.remove("hidden");
+}
+
 window.kits_openAdd = async function(){
 
   const modal = document.getElementById("kitsModal");
@@ -21,7 +32,10 @@ window.kits_openAdd = async function(){
     return;
   }
 
-modal.style.display = "flex";
+kits_mostrarTela();
+
+const titulo = document.getElementById("kitModalTitulo");
+if(titulo) titulo.textContent = "Novo Kit";
 
 kitZoom = 1;
 
@@ -53,7 +67,7 @@ window.kits_closeModal = function(){
   const modal = document.getElementById("kitsModal");
   if(!modal) return;
 
-  modal.style.display = "none";
+  kits_mostrarLista();
 
   /* limpar campos */
 
@@ -134,7 +148,7 @@ window.kits_addItem = function(){
 row.innerHTML = `
 
 <td class="kit-item-foto">
-<img class="kit-foto-preview" src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png">
+<img class="kit-foto-preview" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=">
 </td>
 
 <td class="kit-item-busca">
@@ -205,7 +219,7 @@ function kits_atualizarFoto(row){
 
   img.src = foto
     ? foto
-    : "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png";
+    : "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
 
 }
 function formatarMoeda(valor){
@@ -448,6 +462,20 @@ if(kitIdExistente){
   error = res.error;
 
 }
+
+if(error || !kit){
+  console.error("Erro ao salvar kit:", error);
+  alerta("Não foi possível salvar o kit.", "Erro");
+  return;
+}
+
+// kit.id do registro recem salvo/atualizado — usado no caminho de upload
+// da foto e no vinculo dos componentes logo abaixo. Antes essas duas partes
+// liam uma variavel "kitId" que nunca era declarada em lugar nenhum deste
+// arquivo: qualquer tentativa de salvar um kit com ao menos um componente
+// quebrava com ReferenceError antes de chegar no kits_closeModal() do fim.
+const kitId = kit.id;
+
 /* ===============================
    UPLOAD FOTO DO KIT
 =============================== */
@@ -710,7 +738,7 @@ window.kits_openEdit = async function(kitId){
   const modal = document.getElementById("kitsModal");
   if(!modal) return;
 
-  modal.style.display = "flex";
+  kits_mostrarTela();
 
   await kits_carregarItens();
 
@@ -737,6 +765,9 @@ if(error){
 
   document.getElementById("kitId").value = kit.id;
 
+  const titulo = document.getElementById("kitModalTitulo");
+  if(titulo) titulo.textContent = kit.produto || "Editar Kit";
+
   document.getElementById("kitCodigo").value = kit.codigo || "";
   document.getElementById("kitProduto").value = kit.produto || "";
   document.getElementById("kitMaterial").value = kit.material || "";
@@ -760,7 +791,7 @@ if(error){
 
   if(img){
     img.src = kit.foto_url ||
-    "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png";
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
   }
 
   /* ===============================

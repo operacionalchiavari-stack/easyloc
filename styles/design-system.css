@@ -1,0 +1,210 @@
+/* Design system replicado do Tecnoweld. Cor do menu e cor de destaque dos
+   botoes principais sao as unicas excecoes propositais (tokens.css); todo o
+   restante (tipografia, tabelas, cartoes, modais, avisos, badges) segue os
+   valores exatos do projeto de referencia. */
+body { font-size:var(--el-font-md); line-height:1.45; }
+small, .helper-text, .field-hint { color:var(--el-color-muted); }
+:is(#main-content, .el-page) :is(h1,.page-title,.el-page-title,.titulo-pagina) { margin-block:0 4px; font-size:clamp(21px,2vw,27px)!important; line-height:1.15; font-weight:750!important; letter-spacing:-.02em; }
+:is(#main-content, .el-page) h2 { font-size:var(--el-font-xl); font-weight:750; letter-spacing:-.01em; }
+:is(#main-content, .el-page) :is(label,.el-label,.field-label,.form-label):not(.service-option) { font-size:var(--el-font-sm)!important; font-weight:650!important; color:var(--el-color-text-secondary)!important; }
+
+/* Botoes: metrica identica ao Tecnoweld; cor de destaque continua grafite. */
+:is(#main-content, .el-page) :is(.btn,.el-btn,.add-btn,.btn-primary,.btn-secondary,.btn-save,.btn-cancel,.btn-delete,.btn-salvar,.btn-cancelar,.os-btn) { min-height:var(--el-control-h-md); padding:0 14px; border-radius:var(--el-radius-sm); font-size:var(--el-font-sm); font-weight:700; box-shadow:none; }
+:is(.btn-icon,.el-icon-btn) svg { width:16px; height:16px; }
+
+/* Cartoes e superficies compartilham borda discreta, raio unico e sombra minima. */
+:is(#main-content, .el-page) :is(.card,.el-card,.card-resumo,.resumo-card,.info-card,.metric-card) { border-width:1px; border-color:var(--el-color-border); border-radius:var(--el-radius-lg); background:var(--el-color-surface); box-shadow:var(--el-shadow-sm); }
+:is(#main-content, .el-page) :is(.card,.el-card,.card-resumo,.resumo-card,.info-card,.metric-card):not(a,button,[onclick],[role="button"],.is-clickable):hover { box-shadow:var(--el-shadow-sm); transform:none; }
+
+/* Tabelas: cabecalho compacto e linhas enxutas (11px de respiro vertical). */
+body :is(#main-content, .el-page) table { color:var(--el-color-text); font-size:var(--el-font-sm); }
+body :is(#main-content, .el-page) table thead :is(th,td) { padding-block:11px!important; border-bottom:1px solid var(--el-color-border)!important; background:var(--el-table-header-bg)!important; color:var(--el-table-header-color)!important; font-size:var(--el-font-xs)!important; font-weight:750!important; letter-spacing:.025em; text-transform:none!important; }
+body :is(#main-content, .el-page) table tbody td { padding-block:11px!important; line-height:1.35; border-color:var(--el-color-border-soft)!important; }
+body :is(#main-content, .el-page) table tbody tr:not(.selected,.linha-selecionada):hover { background:var(--el-table-row-hover)!important; }
+body :is(#main-content, .el-page) table tbody tr:not(:hover,.selected,.linha-selecionada) { background:var(--el-color-surface); }
+body :is(#main-content, .el-page) table :is(th,td):is(.actions,.acoes,.col-actions,.col-acoes,.col-status,.col-icon,[data-column="actions"],[data-column="status"]) { width:1%; white-space:nowrap; }
+
+/* Modais e drawers: mesma identidade, um pouco mais largos, sempre centralizados. */
+:is(body,:is(#main-content, .el-page)) :is(.el-modal__box,.modal-content,.modal-box,.modal-card,.rh-modal-box,.perm-modal-box,.planner-modal-box,.compras-modal-card,.pedido-modal-box,.separacao-modal-dialog,.dispon-modal-dialog,.easyloc-modal-box,.cancelamento-modal-box,.opcoes-modal-box,.pedido-contrato-modal-box) {
+ width:min(640px,94vw)!important; max-width:calc(100vw - 24px)!important; max-height:min(85vh,calc(100vh - 108px))!important; height:auto!important; overflow:auto; border-radius:var(--el-radius-lg)!important; box-shadow:var(--el-shadow-lg)!important;
+}
+:is(body,:is(#main-content, .el-page)) :is(.rh-modal-box,.perm-modal-box,.compras-modal-card,.pedido-modal-box), :is(body,:is(#main-content, .el-page)) [data-modal-size="medium"], :is(body,:is(#main-content, .el-page)) .el-modal__box--medium { width:min(880px,94vw)!important; }
+:is(body,:is(#main-content, .el-page)) :is(.modal-content,.modal-box,.modal-card,.el-modal__box):has(table), :is(body,:is(#main-content, .el-page)) [data-modal-size="large"], :is(body,:is(#main-content, .el-page)) .el-modal__box--large { width:min(1100px,96vw)!important; }
+:is(body,:is(#main-content, .el-page)) [data-modal-size="small"], :is(body,:is(#main-content, .el-page)) .el-modal__box--small { width:min(460px,94vw)!important; }
+body :is(#main-content, .el-page) :is(.modal,.el-modal,.modal-overlay,.modal-ajuda,.modal-dia,.modal-confirmacao,.rh-modal,.perm-modal,.planner-modal,.studio-result-modal,.compras-modal,.team-modal-backdrop,.pedido-modal,.pedido-map-modal,.central-preview-modal,.central-whatsapp-modal,.central-cadastro-modal,.separacao-modal,.exp-modal-backdrop,.almox-modal,.cronograma-preview-modal,.dispon-modal), body .easyloc-modal { inset:0!important; max-height:100vh!important; padding:96px 12px 12px!important; background-color:var(--el-modal-backdrop)!important; backdrop-filter:var(--el-modal-backdrop-blur); box-sizing:border-box!important; }
+:is(.el-modal__header,.modal-header,.modal-header-item,.os-modal-header) { padding:16px 24px; border-color:var(--el-color-border-soft); }
+:is(.el-modal__body,.modal-body) { padding:24px; }
+:is(.el-modal__footer,.modal-footer,.modal-actions,.modal-acoes,.os-modal-footer) { display:flex; justify-content:flex-end; padding:16px 24px; gap:12px; border-color:var(--el-color-border-soft); }
+:is(.el-modal__title,.modal-title) { font-size:15px!important; }
+
+.el-spinner, .spinner, .loading-spinner { display:inline-block; width:34px; height:34px; flex-shrink:0; border:3px solid var(--el-color-border); border-top-color:var(--color-primary); border-radius:50%; animation:elSpin .75s linear infinite; }
+.el-spinner--inline, button .el-spinner, button .spinner { width:15px; height:15px; border-width:2px; }
+@keyframes elSpin { to { transform:rotate(360deg); } }
+
+/* Badges/status: paleta semantica exata do Tecnoweld. */
+:is(.el-badge,.badge,.status-badge) { min-height:30px; display:inline-flex; align-items:center; width:fit-content; padding:6px 10px; border:1px solid transparent; border-radius:var(--el-radius-xs); font-size:11px; font-weight:700; line-height:1.1; white-space:nowrap; }
+:is(.el-badge,.badge,.status-badge):is(.success,.sucesso,[data-variant="success"]), body :is(#main-content, .el-page) td .status.ativo { border-color:#bfe5d8; background:#e9f7f2; color:#087255; }
+:is(.el-badge,.badge,.status-badge):is(.warning,.aviso,[data-variant="warning"]), body :is(#main-content, .el-page) td .status.morno { border-color:#f0d6a8; background:#fff6e7; color:#945508; }
+:is(.el-badge,.badge,.status-badge):is(.error,.danger,.erro,[data-variant="error"]), body :is(#main-content, .el-page) td .status.inativo { border-color:#efc2c7; background:#fcecee; color:#a61d2b; }
+:is(.el-badge,.badge,.status-badge):is(.info,[data-variant="info"]) { border-color:#c8d8e8; background:#edf3f8; color:#315f8c; }
+body :is(#main-content, .el-page) td .status { display:inline-flex; align-items:center; min-height:30px; padding:6px 10px; border-radius:var(--el-radius-xs); font-size:11px; font-weight:700; border:1px solid #d9dee5; background:#f1f3f5; color:#5f6875; }
+
+/* Avisos (toast nao bloqueante + confirmacao bloqueante), identicos ao Tecnoweld;
+   o botao de confirmar usa a cor de destaque do projeto (grafite), nao o vermelho. */
+.el-alert-stack { position:fixed; inset:16px 12px auto; z-index:1000001; display:grid; justify-items:center; gap:10px; pointer-events:none; }
+.el-alert { --alert-color:var(--el-color-warning); position:relative; display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; width:min(440px,100%); padding:14px 14px 14px 16px; overflow:hidden; border:1px solid var(--el-color-border); border-radius:var(--el-radius-sm); box-shadow:0 18px 42px rgba(15,23,42,.16); background:var(--el-color-surface); color:var(--el-color-text); pointer-events:auto; }
+.el-alert[data-variant="success"] { --alert-color:#059669; }
+.el-alert[data-variant="warning"] { --alert-color:#d97706; }
+.el-alert[data-variant="error"] { --alert-color:var(--el-color-danger); }
+.el-alert[data-variant="info"] { --alert-color:#005bff; }
+.el-alert__icon { display:grid; place-items:center; width:30px; height:30px; border-radius:999px; background:color-mix(in srgb,var(--alert-color) 12%,white); color:var(--alert-color); }
+.el-alert__icon svg { width:16px; height:16px; stroke-width:2.4; }
+.el-alert h4 { margin:0 0 3px; font-size:15px; line-height:1.15; font-weight:800; color:var(--el-color-title); }
+.el-alert p { margin:0; font-size:13px; font-weight:600; line-height:1.35; color:var(--el-color-muted); overflow-wrap:anywhere; white-space:pre-line; }
+.el-alert button { min-height:34px; padding:0 14px; font-size:13px; font-weight:800; border-radius:var(--el-radius-xs); }
+.el-alert__progress { position:absolute; inset:auto 0 0; height:3px; background:var(--alert-color); opacity:.28; transform-origin:left; animation:elAlertTimer var(--alert-duration,4000ms) linear forwards; }
+@keyframes elAlertTimer { to { transform:scaleX(0); } }
+.el-alert-confirm { position:fixed; inset:0; z-index:1000002; display:grid; place-items:center; padding:22px; background:rgba(15,23,42,.16); }
+.el-alert-confirm .el-alert { width:min(470px,100%); grid-template-columns:30px minmax(0,1fr); align-items:start; box-shadow:0 18px 42px rgba(15,23,42,.16); }
+.el-alert__actions { grid-column:1/-1; display:flex; justify-content:flex-end; gap:8px; margin-top:4px; }
+
+@media(max-width:759px) {
+ :is(.el-modal__header,.modal-header,.el-modal__body,.modal-body,.el-modal__footer,.modal-footer,.modal-actions) { padding:16px; }
+ body .main { margin-left:0!important; width:100%!important; padding:72px 0 0!important; }
+}
+@media(prefers-reduced-motion:reduce) { #sidebar.app-navigation, #sidebar .menu-item > span { transition:none!important; } }
+
+body .loader-circle { width:34px; height:34px; border:3px solid var(--el-color-border); border-top-color:var(--color-primary); border-radius:50%; background:none; animation:elSpin .75s linear infinite; }
+body .loader-circle::after { content:none; }
+
+body, body .main, body :is(#main-content, .el-page) { background:var(--el-color-bg)!important; }
+
+/* Listas: cartao externo com sombra (como .table-card no Tecnoweld); a faixa
+   de rolagem interna (.el-table-scroll/.table-wrap) fica sem sombra propria. */
+body :is(#main-content, .el-page) :is(.el-table-card,.el-table-card.table-container,.table-wrapper,.tabela-card,.table-container) {
+ padding:0!important; border:1px solid var(--el-color-border)!important; border-radius:var(--el-radius-sm)!important;
+ background:var(--el-color-surface)!important; box-shadow:var(--el-shadow-sm)!important; overflow:hidden;
+}
+body :is(#main-content, .el-page) :is(.el-table-wrap,.el-table-scroll,.table-wrap) {
+ border:0!important; border-radius:0!important; box-shadow:none!important; background:transparent!important; overflow-x:auto;
+}
+body :is(#main-content, .el-page) :is(.table-wrapper,.table-container) { overflow-x:auto; }
+body :is(#main-content, .el-page) :is(table,.el-table-card table) tbody td:first-child { font-weight:700; }
+body :is(#main-content, .el-page) :is(table,.el-table-card table) tbody td :is(strong,b,.primary-text) { font-weight:750; }
+body :is(#main-content, .el-page) :is(table,.el-table-card table) :is(th,td):last-child:has(.status,.status-badge,.badge) { width:1%; white-space:nowrap; }
+
+/* Barra de busca/filtro: cartao discreto e baixo, sem altura reservada.
+   ".filtros" e alias de nomenclatura em pt-BR usado por alguns modulos. */
+body :is(#main-content, .el-page) :is(.filters,.filtros) {
+ display:flex!important; align-items:center!important; flex-wrap:wrap!important; min-height:0!important; padding:8px 10px!important; margin-bottom:12px; gap:8px; background:var(--el-color-surface); border:1px solid var(--el-color-border); border-radius:var(--el-radius-md); box-shadow:var(--el-shadow-sm);
+}
+body :is(#main-content, .el-page) :is(.filters,.filtros) :is(input,select) { min-height:var(--el-control-h-md); height:var(--el-control-h-md)!important; border-radius:var(--el-radius-md)!important; border-color:var(--el-color-border)!important; }
+body :is(#main-content, .el-page) .filters input { background:var(--el-color-surface-soft)!important; }
+body :is(#main-content, .el-page) .filters > input { flex:0 1 320px; width:320px; max-width:100%; margin-right:auto; }
+body :is(#main-content, .el-page) .filters > select { width:auto; min-width:160px; }
+body :is(#main-content, .el-page) .filtros > * { width:auto!important; flex:1 1 180px!important; min-width:160px; }
+body :is(#main-content, .el-page) .filtros :is(.dropdown-multi,.dropdown-header) { min-width:0; }
+body :is(#main-content, .el-page) .filtros .dropdown-header { min-height:var(--el-control-h-md); height:var(--el-control-h-md)!important; border-radius:var(--el-radius-md)!important; border-color:var(--el-color-border)!important; }
+body :is(#main-content, .el-page) .filtros .dropdown-body { border-radius:var(--el-radius-lg)!important; border-color:var(--el-color-border)!important; box-shadow:var(--el-shadow-md)!important; }
+@media(max-width:759px) { body :is(#main-content, .el-page) .filters > :is(input,select) { min-width:0!important; width:100%; flex:1 1 100%!important; } }
+
+body :is(#main-content, .el-page) .easyloc-list-pager { min-height:48px; padding:10px 14px; background:var(--el-color-surface); color:var(--el-color-muted); border-top:1px solid var(--el-color-border-soft); flex-wrap:wrap; font-size:var(--el-font-sm); }
+body :is(#main-content, .el-page) .easyloc-list-pager-actions { flex-wrap:wrap; margin-left:auto; }
+body :is(#main-content, .el-page) .easyloc-list-pager :is(button,select) { width:auto; min-width:36px; height:36px; min-height:36px; padding:0 10px; border:1px solid var(--el-color-border); border-radius:var(--el-radius-sm); background:var(--el-color-surface); color:var(--el-color-title); font-size:var(--el-font-sm); }
+body :is(#main-content, .el-page) .easyloc-list-pager button.active { color:var(--el-color-info); border-color:var(--el-color-border); }
+body :is(#main-content, .el-page) :is(.table-wrapper,.table-wrap):has(+ .easyloc-list-pager) { border-bottom-left-radius:0!important; border-bottom-right-radius:0!important; }
+body :is(#main-content, .el-page) :is(.table-wrapper,.table-wrap) + .easyloc-list-pager { border:1px solid var(--el-color-border); border-top:0; border-radius:0 0 var(--el-radius-sm) var(--el-radius-sm); }
+@media(max-width:759px) { body :is(#main-content, .el-page) .easyloc-list-pager-actions { margin-left:0; } }
+
+/* Paleta de acao. Classes explicitas preservam badges de status e graficos. */
+:is(body,:is(#main-content, .el-page)) :is(button,a,[role="button"]):is(.btn.primary,.btn.save,.btn.salvar,.btn-primary,.btn-save,.btn-salvar,.el-btn--primary,.os-btn-primary,.btn-nova-os,.btn-baixa,.add-btn,.btn-alert,.modal-alert-btn,.team-action-primary,.exp-btn-primary,.route-primary,.ai3d-save,.item-save,.sortable-save,.lia-global-button,.global-help-button,.btn-ajuda):not(.secondary,.btn-secondary,.cancel,.cancelar,.danger,.btn-danger,.btn-delete,.success,.btn-success,.warning,.btn-warning,.approve,.approved):not(:disabled,[aria-disabled="true"]) { background:var(--el-color-accent)!important; border-color:var(--el-color-accent)!important; color:var(--el-color-on-accent)!important; background-image:none!important; filter:none!important; text-shadow:none!important; box-shadow:none!important; }
+:is(body,:is(#main-content, .el-page)) :is(button,a,[role="button"]):is(.btn.primary,.btn.save,.btn.salvar,.btn-primary,.btn-save,.btn-salvar,.el-btn--primary,.os-btn-primary,.btn-nova-os,.btn-baixa,.add-btn,.btn-alert,.modal-alert-btn,.team-action-primary,.exp-btn-primary,.route-primary,.ai3d-save,.item-save,.sortable-save,.lia-global-button,.global-help-button,.btn-ajuda):not(.secondary,.btn-secondary,.cancel,.cancelar,.danger,.btn-danger,.btn-delete,.success,.btn-success,.warning,.btn-warning,.approve,.approved):hover:not(:disabled,[aria-disabled="true"]) { background:var(--el-color-accent-strong)!important; border-color:var(--el-color-accent-strong)!important; }
+:is(body,:is(#main-content, .el-page)) :is(button,a,[role="button"]):is(.btn.primary,.btn.save,.btn.salvar,.btn-primary,.btn-save,.btn-salvar,.el-btn--primary,.os-btn-primary,.btn-nova-os,.btn-baixa,.add-btn,.btn-alert,.modal-alert-btn,.team-action-primary,.exp-btn-primary,.route-primary,.ai3d-save,.item-save,.sortable-save,.lia-global-button,.global-help-button,.btn-ajuda):not(.secondary,.btn-secondary,.cancel,.cancelar,.danger,.btn-danger,.btn-delete,.success,.btn-success,.warning,.btn-warning,.approve,.approved):active:not(:disabled,[aria-disabled="true"]) { background:var(--el-color-accent-active)!important; border-color:var(--el-color-accent-active)!important; }
+:is(body,:is(#main-content, .el-page)) :is(button,a,[role="button"]):is(.btn.secondary,.btn.cancel,.btn.cancelar,.btn-secondary,.btn-cancel,.btn-cancelar,.el-btn--secondary,.os-btn-light,.add-btn.secondary,.btn-outline,.route-secondary,.btn-voltar,.btn-atualizar):not(:disabled,[aria-disabled="true"]) { background:var(--el-button-secondary-bg)!important; border-color:var(--el-button-secondary-border)!important; color:var(--el-button-secondary-text)!important; background-image:none!important; filter:none!important; text-shadow:none!important; box-shadow:none!important; }
+:is(body,:is(#main-content, .el-page)) :is(button,a,[role="button"]):is(.btn.secondary,.btn.cancel,.btn.cancelar,.btn-secondary,.btn-cancel,.btn-cancelar,.el-btn--secondary,.os-btn-light,.add-btn.secondary,.btn-outline,.route-secondary,.btn-voltar,.btn-atualizar):hover:not(:disabled,[aria-disabled="true"]) { background:var(--el-button-secondary-hover)!important; border-color:var(--el-button-secondary-border-hover)!important; }
+:is(body,:is(#main-content, .el-page)) :is(button,a,[role="button"]):is(.btn-icon,.el-icon-btn,.icon-btn,.edit-btn,.planner-icon-btn,.rh-icon-btn,.compras-icon-btn,.perm-icon-btn,.almox-icon-btn,.exp-icon-btn,.contratos-icon-btn,.btn-acao:not(.danger,.pix)):not(.danger,.btn-danger,.btn-delete,.success,.warning):not(:disabled,[aria-disabled="true"]) { background:var(--el-button-secondary-bg)!important; color:var(--el-button-secondary-text)!important; border-color:var(--el-button-icon-border)!important; background-image:none!important; filter:none!important; text-shadow:none!important; box-shadow:none!important; }
+:is(body,:is(#main-content, .el-page)) :is(button,a,[role="button"]):is(.btn-icon,.el-icon-btn,.icon-btn,.edit-btn,.planner-icon-btn,.rh-icon-btn,.compras-icon-btn,.perm-icon-btn,.almox-icon-btn,.exp-icon-btn,.contratos-icon-btn,.btn-acao:not(.danger,.pix)):not(.danger,.btn-danger,.btn-delete,.success,.warning):hover:not(:disabled,[aria-disabled="true"]) { background:var(--el-button-secondary-hover)!important; }
+:is(body,:is(#main-content, .el-page)) :is(.lia-global-button,.global-help-button,.btn-ajuda):not(:disabled,[aria-disabled="true"]) { background:var(--el-color-accent)!important; color:var(--el-color-on-accent)!important; border-color:var(--el-color-accent)!important; background-image:none!important; filter:none!important; text-shadow:none!important; box-shadow:none!important; }
+:is(body,:is(#main-content, .el-page)) :is(button,a[role="button"],.btn):focus-visible { outline:3px solid var(--el-focus-color)!important; outline-offset:3px!important; box-shadow:0 0 0 2px var(--el-color-surface)!important; }
+:is(body,:is(#main-content, .el-page)) :is(button,.btn.primary,[role="button"]):is(:disabled,[aria-disabled="true"]), :is(body,:is(#main-content, .el-page)) :is(button,.btn.primary,[role="button"]):is(:disabled,[aria-disabled="true"]):is(:hover,:active) { background:var(--el-button-disabled-bg)!important; border-color:var(--el-button-disabled-bg)!important; color:var(--el-button-disabled-text)!important; opacity:1!important; transform:none!important; cursor:not-allowed!important; background-image:none!important; filter:none!important; text-shadow:none!important; box-shadow:none!important; }
+:is(body,:is(#main-content, .el-page)) :is(button,.btn) :is(svg,i) { color:inherit; }
+
+/* Topo de pagina compacto (titulo + acoes), identico ao Tecnoweld. */
+:is(#main-content, .el-page) :is(.header-list,.page-header,.page-top) { display:flex!important; align-items:center!important; justify-content:space-between!important; flex-wrap:wrap; row-gap:10px; column-gap:16px; margin-bottom:12px!important; min-height:0!important; padding:0!important; }
+:is(#main-content, .el-page) :is(.header-list h2,.page-header h1,.page-top h1,.page-title h1) { margin:0!important; font-size:clamp(20px,1.65vw,26px)!important; font-weight:750!important; letter-spacing:-.025em!important; line-height:1.08!important; color:var(--el-color-title)!important; }
+:is(#main-content, .el-page) :is(.header-actions,.page-actions) { margin:0!important; }
+
+/* Indicadores (cartoes de resumo no topo da pagina). */
+:is(#main-content, .el-page) :is(.header-stats,.summary-grid) { gap:8px!important; }
+:is(#main-content, .el-page) .stat-card { min-height:54px; padding:8px 11px; border:1px solid var(--el-color-border); border-radius:var(--el-radius-md); background:var(--el-color-surface); box-shadow:var(--el-shadow-sm); }
+:is(#main-content, .el-page) .stat-body strong { font-size:18px!important; line-height:1!important; }
+
+/* =====================================================
+   TELA DE DETALHES PADRAO (substitui modal de add/editar registro).
+   Uso: <div class="el-page el-detail-view hidden" id="xModal">
+          <div class="el-detail-card">
+            <div class="el-detail-header">
+              <button class="el-back-btn btn-icon"><i data-lucide="arrow-left"></i></button>
+              <div><h3>Titulo</h3><p>Descricao opcional</p></div>
+              <button class="el-edit-btn btn-icon"><i data-lucide="pencil"></i></button>
+            </div>
+            <div class="el-detail-grid">
+              <div class="form-group el-field" style="grid-column:span 4;">...</div>
+            </div>
+            <div class="el-detail-footer">
+              <button class="btn danger">Voltar</button><button class="btn primary">Salvar</button>
+            </div>
+          </div>
+        </div>
+   JS: alternar .hidden entre a lista e a .el-detail-view (nunca usar display inline).
+===================================================== */
+.el-detail-view { width:100%!important; padding:16px 24px 12px!important; }
+.el-detail-card { width:100%!important; max-width:none!important; background:transparent!important; border:0!important; border-radius:0!important; box-shadow:none!important; max-height:none!important; overflow:visible!important; }
+.el-detail-header { display:flex!important; align-items:center!important; gap:14px!important; margin-bottom:12px!important; padding-bottom:10px!important; border-bottom:1px solid var(--el-color-border-soft)!important; }
+.el-detail-header > *:not(.el-back-btn):not(.el-edit-btn) { flex:1; min-width:0; }
+:is(.el-back-btn,.el-edit-btn) { width:38px; height:38px; display:inline-flex!important; align-items:center; justify-content:center; padding:0; border:1px solid var(--el-color-border); border-radius:10px; background:var(--el-color-surface); flex:0 0 auto; }
+.el-edit-btn { color:#f97316; }
+.el-detail-grid { display:grid!important; grid-template-columns:repeat(12,minmax(0,1fr))!important; gap:10px 16px!important; }
+.el-detail-footer { display:flex!important; justify-content:flex-end!important; gap:12px!important; margin-top:14px!important; padding-top:12px!important; border-top:1px solid var(--el-color-border-soft)!important; background:transparent!important; }
+@media(max-width:760px){
+  .el-detail-grid > * { grid-column:span 12!important; }
+  .el-detail-header { flex-wrap:wrap; }
+}
+
+/* =====================================================
+   CARDS DE RESUMO NO CABECALHO DE UM CADASTRO (Locais, Clientes,
+   Fornecedores, Caminhoes...). Ficam entre o titulo e o botao de
+   adicionar, e SEMPRE preenchem a largura toda ate o botao (cada card
+   com flex:1, sem espaco sobrando), nao importa se sao 3 ou 4 cards.
+   Uso: <div class="header-list">
+          <h2>Titulo</h2>
+          <div class="el-stat-row">
+            <article class="el-stat-card blue">
+              <span><i data-lucide="icone"></i></span>
+              <div><small>Rotulo</small><strong id="x">0</strong><em>legenda</em></div>
+            </article>
+          </div>
+          <div class="header-actions">...</div>
+        </div>
+===================================================== */
+.el-stat-row { display:flex!important; align-items:center!important; gap:10px!important; flex:1 1 auto!important; flex-wrap:wrap!important; min-width:0!important; }
+.el-stat-card { flex:1 1 0!important; min-width:150px!important; min-height:54px!important; display:flex!important; align-items:center!important; gap:14px!important; padding:8px 11px!important; border:1px solid var(--el-color-border, #d9dee6)!important; border-radius:var(--el-radius-md, 10px)!important; background:var(--el-color-surface, #fff)!important; box-shadow:var(--el-shadow-sm)!important; }
+.el-stat-card > span { width:42px; height:42px; flex-shrink:0; display:grid; place-items:center; border-radius:999px; }
+.el-stat-card svg { width:19px; height:19px; }
+.el-stat-card.blue > span { background:#e7f0ff; color:#005bff; }
+.el-stat-card.green > span { background:#dff8ed; color:#009b72; }
+.el-stat-card.orange > span { background:#fff1cc; color:#e27a00; }
+.el-stat-card.red > span { background:#fee2e2; color:#e30613; }
+.el-stat-card.purple > span { background:#f1e7ff; color:#7c3aed; }
+.el-stat-card.gray > span { background:#eef1f5; color:#52667f; }
+.el-stat-card > div { min-width:0; }
+.el-stat-card small,
+.el-stat-card em { display:block; color:#52667f; font-size:10px; font-style:normal; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.el-stat-card strong { display:block; margin:1px 0; color:var(--el-color-title, #142033); font-size:18px; line-height:1; font-weight:900; }
+@media(max-width:1100px) {
+  .el-stat-row { order:3!important; flex-basis:100%!important; }
+}
+@media(max-width:640px) {
+  .el-stat-card { min-width:calc(50% - 5px)!important; }
+}
+:is(#main-content, .el-page) .stat-body small { font-size:10px!important; line-height:1.15!important; }

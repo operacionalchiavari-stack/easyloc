@@ -89,7 +89,7 @@
     if (typeof window.confirmarGlobal === "function") {
       return window.confirmarGlobal(message, "Confirmar", { confirmarTexto: "Confirmar", tipo: "warning" });
     }
-    return confirm(message);
+    return false; // Fail closed if the shared confirmation component is unavailable.
   }
 
   function finishLoading() {

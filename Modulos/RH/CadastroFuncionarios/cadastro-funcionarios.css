@@ -1,0 +1,551 @@
+/* Estrutura visual do cadastro da Tecnoweld, integrada ao tema da Chiavari. */
+:root{--tw-text:#172b45;--tw-muted:#64748b;--tw-line:#d7e0ec;--tw-surface-soft:#f8fafc;--tw-radius-xs:7px;--tw-radius-sm:10px;--tw-font-xs:12px;--tw-font-sm:13px;--tw-font-md:14px;--tw-title-md:22px;--tw-red:#b91c1c;--muted:#64748b;--red:#b91c1c;--line:#d7e0ec}
+body{margin:0;background:#f3f4f6;color:var(--tw-text);font-family:Inter,system-ui,sans-serif}.cadastros-page{padding:24px;max-width:1800px;margin:auto}.hidden,[hidden]{display:none!important}*{box-sizing:border-box}
+.summary-grid,.summary-card{display:grid;align-items:center}.summary-grid{margin:0}
+.summary-card {
+  gap: 10px;
+  min-height: 76px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.summary-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.summary-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.summary-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.summary-card strong {
+  display: block;
+  margin: 1px 0;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.summary-card small { color: var(--muted); font-size: 12px; }
+.summary-card.blue .summary-icon { color: #1d4ed8; background: #e8f0fe; }
+.summary-card.orange .summary-icon { color: #d97706; background: #fff7d6; }
+.summary-card.red .summary-icon { color: var(--red); background: #fee2e2; }
+.summary-card.green .summary-icon { color: #059669; background: #dff7ec; }
+.cadastros-page {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.cadastro-tabs {
+  margin: 0;
+  box-shadow: none;
+}
+
+.cadastro-view {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.section-head h2 {
+  margin: 0 0 4px;
+  color: var(--tw-text);
+  font-size: var(--tw-title-md);
+  line-height: 1.1;
+}
+
+.section-head p {
+  margin: 0;
+  color: var(--tw-muted);
+  font-size: var(--tw-font-md);
+}
+
+.compact-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.header-summary {
+  flex: 0 1 auto;
+  grid-template-columns: repeat(4, minmax(100px, 150px));
+  gap: 8px;
+}
+
+.header-summary .summary-card {
+  min-height: 56px;
+  padding: 8px 10px;
+}
+
+.header-summary .summary-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.header-summary .summary-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.header-summary .summary-card strong {
+  font-size: 18px;
+}
+
+.compact-summary .summary-card {
+  min-height: 78px;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  border-color: #d7e0ec;
+  border-radius: var(--tw-radius-sm);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045);
+}
+
+.compact-summary .summary-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.compact-summary .summary-icon svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 2.25;
+}
+
+.compact-summary .summary-card strong {
+  font-size: 25px;
+  line-height: 1;
+}
+
+.compact-summary .summary-card span {
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.compact-summary .summary-card small {
+  font-size: 12px;
+}
+
+.compact-summary .summary-card.blue {
+  background: #f7faff;
+}
+
+.compact-summary .summary-card.green {
+  background: #f3fff9;
+}
+
+.compact-summary .summary-card.red {
+  background: #fff6f7;
+}
+
+.compact-summary .summary-card.orange {
+  background: #fffaf0;
+}
+
+.cadastro-modal {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 17, 31, 0.58);
+}
+
+.cadastro-form-card {
+  width: min(1120px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  overflow: auto;
+  box-shadow: 0 26px 80px rgba(4, 17, 31, 0.24);
+}
+
+.cadastro-form-grid {
+  display: grid;
+  grid-template-columns: 132px repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cadastro-form-grid label {
+  display: grid;
+  gap: 5px;
+  color: #334155;
+  font-size: var(--tw-font-xs);
+  font-weight: 700;
+}
+
+.cadastro-form-grid input,
+.cadastro-form-grid select,
+.cadastro-form-grid textarea {
+  width: 100%;
+  padding: 0 12px;
+  color: var(--tw-text);
+  font-size: var(--tw-font-sm);
+  font-weight: 650;
+}
+
+.cadastro-form-grid textarea {
+  min-height: 84px;
+  padding-top: 10px;
+  resize: vertical;
+}
+
+.cadastro-form-grid input[type="color"] {
+  padding: 4px;
+}
+
+.cadastro-form-grid .full,
+.permissions-box,
+.form-actions {
+  grid-column: 1 / -1;
+}
+
+.employee-photo-field {
+  grid-row: span 3;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-radius-sm);
+  background: var(--tw-surface-soft);
+}
+
+.employee-photo-button {
+  width: 96px;
+  height: 96px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #cbd7e6;
+  border-radius: 50%;
+  background: #fff;
+  color: #0f4fa8;
+  font-size: 26px;
+  font-weight: 900;
+  overflow: hidden;
+}
+
+.employee-photo-button img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  object-fit: cover;
+}
+
+.employee-photo-button img.show {
+  display: block;
+}
+
+
+.photo-column {
+  width: 54px;
+  min-width: 54px;
+  padding-right: 4px !important;
+  text-align: center;
+}
+
+.employee-table-photo {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #d7e2ee;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #edf4ff, #f8fafc);
+  color: #31506f;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .03em;
+}
+
+.employee-table-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.permissions-box {
+  margin: 2px 0 0;
+  padding: 12px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-radius-sm);
+  background: var(--tw-surface-soft);
+}
+
+.permissions-box legend {
+  padding: 0 6px;
+  color: var(--tw-text);
+  font-size: var(--tw-font-sm);
+  font-weight: 800;
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.permission-module {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #dce5f1;
+  border-radius: var(--tw-radius-sm);
+  background: #fff;
+}
+
+.permission-module header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.permission-module-title {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.permission-module-title > span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  border-radius: 8px;
+  background: #eef4ff;
+  color: #0f4fc7;
+}
+
+.permission-module-title svg {
+  width: 18px;
+  height: 18px;
+}
+
+.permission-module-title strong,
+.permission-module-title small {
+  display: block;
+}
+
+.permission-module-title strong {
+  color: var(--tw-text);
+  font-size: 14px;
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+.permission-module-title small {
+  margin-top: 3px;
+  color: var(--tw-muted);
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 650;
+}
+
+.permission-toggle-all {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid #dbe5f1;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.permission-toggle-all input {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--tw-red);
+}
+
+.permission-module-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.permission-check {
+  min-height: 33px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-radius-xs);
+  background: #fbfdff;
+  color: #334155;
+  font-size: var(--tw-font-xs);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.permission-check input {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  accent-color: var(--tw-red);
+}
+
+.permission-check span {
+  min-width: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* table-layout: fixed (central-os.css) trava a largura das colunas pela
+   1a linha; sem isso, login/e-mail mais longos em linhas seguintes vazam
+   visualmente por cima da coluna vizinha em vez de quebrar dentro da propria
+   celula. */
+#funcionariosTableBody td,
+#maquinasTableBody td {
+  overflow-wrap: anywhere;
+}
+
+.table-group-row td {
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-top: 1px solid var(--tw-line, #d5d9de);
+  color: #203852;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.table-group-count {
+  margin-left: 8px;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.status-pill,
+.access-pill,
+.type-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: var(--tw-radius-xs);
+  font-size: var(--tw-font-xs);
+  font-weight: 800;
+}
+
+.status-pill.active {
+  background: #dff8ed;
+  color: #008060;
+}
+
+.status-pill.inactive {
+  background: #ffe1e4;
+  color: var(--tw-red);
+}
+
+.access-pill {
+  background: #eaf2ff;
+  color: #0050d8;
+}
+
+.type-pill {
+  background: #eef2f7;
+  color: #334155;
+}
+
+
+@media (max-width: 1280px) {
+  .compact-summary,
+  .permissions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cadastro-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .employee-photo-field {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-items: start;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+}
+
+@media (max-width: 760px) {
+  .section-head,
+  .form-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .compact-summary,
+  .cadastro-form-grid,
+  .permissions-grid,
+  .permission-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .setor-machines-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .setor-machines-head .search-box.compact {
+    max-width: none;
+  }
+}
+
+.content-card,.table-card{background:#fff;border:1px solid var(--tw-line);border-radius:10px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:1000px}th,td{padding:12px 10px;text-align:left;border-bottom:1px solid #e5eaf1;font-size:13px}th{background:#f1f5f9;color:#53657e;font-size:12px}th:nth-child(2){width:20%}.subtext{display:block;color:#64748b;font-size:12px;margin-top:4px}.empty-state{text-align:center;padding:32px;color:#64748b}
+.card-title-row{display:flex;justify-content:space-between;align-items:start;gap:12px}.card-title-row h2{font-size:20px;margin:0}.card-title-row p{font-size:13px;color:#64748b;margin:6px 0 0}.tw-field{min-width:0;height:40px;border:1px solid #cbd5e1;border-radius:7px;background:#fff}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font:600 13px Inter,system-ui;cursor:pointer}.btn svg,.icon-btn svg{width:17px;height:17px}.btn-primary{background:#374151;color:white;border-color:#374151}.btn-primary:hover{background:#283241}.btn-primary:active{background:#1f2937}.btn-secondary,.icon-btn{background:white;color:#374151;border:1px solid #cbd5e1}.btn-secondary:hover,.icon-btn:hover{background:#f3f4f6}.icon-btn{width:30px;height:30px;border-radius:7px;display:inline-grid;place-items:center;cursor:pointer}.action-buttons{white-space:nowrap}.action-buttons button+button{margin-left:5px}:focus-visible{outline:3px solid #2563eb;outline-offset:3px}:disabled{cursor:default;background:#e5e7eb!important;color:#6b7280!important}.permissions-grid label{display:flex;align-items:center}.permissions-grid input{padding:0}.permissions-grid input[type=checkbox]{width:14px;height:14px;accent-color:#374151}.permissions-grid .permission-toggle-all{display:inline-flex}.is-disabled{opacity:.65}#funcMessage{padding:12px 16px;border:1px solid #cbd5e1;background:#fff;border-radius:8px}#funcMessage[data-error=true]{color:#b91c1c;border-color:#fecaca}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:760px){.cadastros-page{padding:14px}.cadastro-modal{padding:10px}.cadastro-form-card{width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:14px}.card-title-row{flex-wrap:wrap}}
+.cadastros-page,.table-card,.table-wrap,.cadastro-form-grid,.permissions-box,.permission-module{min-width:0}.table-card{max-width:100%}

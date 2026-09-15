@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Tabelas de Preço</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="tabelas-preco.css?v=20260913a">
+</head>
+<body>
+<div class="container el-page">
+
+  <div class="header-list">
+    <h2>Tabelas de Preço de Locação</h2>
+    <div class="header-actions">
+      <button type="button" class="btn primary" id="btnNovaTabela">+ Nova tabela</button>
+    </div>
+  </div>
+
+  <p class="tp-hint">Cada tabela guarda o preço de locação de cada item num ano/período específico. Ativar uma tabela atualiza automaticamente o preço "atual" de cada item (usado em pedidos, kits, etc.) — as tabelas antigas continuam guardadas, nada é apagado.</p>
+
+  <section class="el-table-card">
+    <div class="el-table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Ano</th>
+            <th>Vigência</th>
+            <th>Itens com preço</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelasBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<!-- ================= DETALHE DA TABELA (tela, nao modal) ================= -->
+<div class="el-page tabela-detail-view hidden" id="tabelaDetalheView">
+<div class="tabela-detail-card">
+
+  <div class="modal-header">
+    <button class="back-btn btn-icon" type="button" onclick="tp_fecharDetalhe()" title="Voltar para a lista">
+      <i data-lucide="arrow-left"></i>
+    </button>
+    <h2 id="tabelaDetalheTitulo">Tabela de preço</h2>
+    <button type="button" class="btn primary" id="btnSalvarPrecosTabela">Salvar preços alterados</button>
+  </div>
+
+  <div class="tp-detalhe-toolbar">
+    <input class="el-input" type="text" id="tabelaDetalheBusca" placeholder="Buscar item por nome ou código...">
+    <label class="el-field tp-reajuste-field">
+      <span>Reajuste geral (%)</span>
+      <div class="tp-reajuste-row">
+        <input class="el-input" type="text" id="tabelaReajustePercentual" placeholder="Ex.: 10 ou -5">
+        <button type="button" class="btn secondary" id="btnAplicarReajuste">Aplicar a todos</button>
+      </div>
+    </label>
+  </div>
+
+  <div class="el-table-card">
+    <div class="el-table-scroll">
+      <table>
+        <thead>
+          <tr><th>Código</th><th>Item</th><th>Categoria</th><th>Preço de locação (R$)</th></tr>
+        </thead>
+        <tbody id="tabelaItensBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ================= NOVA TABELA (modal pequeno) ================= -->
+<div class="modal el-modal" id="novaTabelaModal">
+  <div class="modal-content el-modal__box tp-nova-tabela-box">
+    <h3 class="modal-title">Nova tabela de preço</h3>
+
+    <label class="el-field">
+      <span>Copiar preços de uma tabela existente (opcional)</span>
+      <select class="el-select" id="novaTabelaBase">
+        <option value="">Começar em branco</option>
+      </select>
+    </label>
+
+    <label class="el-field">
+      <span>Nome *</span>
+      <input class="el-input" id="novaTabelaNome" placeholder='Ex.: "Tabela 2027 Padrão"'>
+    </label>
+
+    <div class="el-field-row">
+      <label class="el-field">
+        <span>Ano de referência *</span>
+        <input class="el-input" id="novaTabelaAno" placeholder="2027">
+      </label>
+      <label class="el-field">
+        <span>Vigência início</span>
+        <input class="el-input" type="date" id="novaTabelaVigenciaInicio">
+      </label>
+      <label class="el-field">
+        <span>Vigência fim</span>
+        <input class="el-input" type="date" id="novaTabelaVigenciaFim">
+      </label>
+    </div>
+
+    <label class="el-field">
+      <span>Observações</span>
+      <input class="el-input" id="novaTabelaObservacoes">
+    </label>
+
+    <div class="modal-actions">
+      <button class="btn secondary" type="button" onclick="tp_fecharModalNovaTabela()">Cancelar</button>
+      <button class="btn primary" type="button" id="btnCriarTabela">Criar tabela</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../js/core/permissions.js"></script>
+<script type="module" src="tabelas-preco.mjs?v=20260913a"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

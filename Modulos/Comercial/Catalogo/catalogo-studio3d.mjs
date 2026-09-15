@@ -593,7 +593,7 @@ async function loadFloorPlan(file){
     await ensureScene();
     working = window.catalogNotify?.({ title: "Lendo medidas da planta", message: "A IA está identificando cotas e limites...", status: "working", duration: 60000 });
     const planImage = await fileToDataUrl(file);
-    const { data, error } = await studio.supabase.functions.invoke("studio-ai-engine", { body: {
+    const { data, error } = await window.CatalogCredits.invoke("studio-ai-engine", { body: {
       action: "analyze_floor_plan", empresa_id: studio.empresaId,
       catalog_token: sessionStorage.getItem("catalogo_token"), plan_image: planImage,
     }});
@@ -2117,7 +2117,7 @@ async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhu
       status: "working",
       duration: 0,
     });
-    const { data, error } = await studio.supabase.functions.invoke("studio-ai-engine", {
+    const { data, error } = await window.CatalogCredits.invoke("studio-ai-engine", {
       body: {
         empresa_id: studio.empresaId,
         catalog_token: sessionStorage.getItem("catalogo_token"),
@@ -2535,7 +2535,7 @@ async function buildDesignedSpace(){
     if(rules.brief.trim()){
       status.textContent='A IA está interpretando suas orientações…';
       try{
-        const {data,error}=await studio.supabase.functions.invoke('studio-ai-engine',{body:{action:'plan_layout',empresa_id:studio.empresaId,catalog_token:sessionStorage.getItem('catalogo_token'),prompt:rules.brief,scene:{rules,room:{width:studio.roomWidth,depth:studio.roomDepth},items:chosen.map(i=>({id:String(i.id),name:i.name,dimensions:i.dimensions}))}}});
+        const {data,error}=await window.CatalogCredits.invoke('studio-ai-engine',{body:{action:'plan_layout',empresa_id:studio.empresaId,catalog_token:sessionStorage.getItem('catalogo_token'),prompt:rules.brief,scene:{rules,room:{width:studio.roomWidth,depth:studio.roomDepth},items:chosen.map(i=>({id:String(i.id),name:i.name,dimensions:i.dimensions}))}}});
         if(error||!Array.isArray(data?.plan?.items))throw new Error('Planejamento IA indisponível');
         requests=chosen.map(i=>{const proposal=data.plan.items.find(p=>String(p.itemId)===String(i.id));return {itemId:String(i.id),quantity:rules.quantity,zone:['front','back','left','right','any'].includes(proposal?.zone)?proposal.zone:'any'};});
         strategy='Orientações interpretadas pela IA';

@@ -8,7 +8,7 @@
 .el-field label {
   color: var(--el-color-muted);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 650;
 }
 
 .el-input,
@@ -17,9 +17,9 @@
 .el-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 .el-page select,
 .el-page textarea,
-#main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-#main-content select,
-#main-content textarea {
+:is(#main-content, .el-page) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+:is(#main-content, .el-page) select,
+:is(#main-content, .el-page) textarea {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--el-color-border);
@@ -34,7 +34,7 @@
 
 .el-textarea,
 .el-page textarea,
-#main-content textarea {
+:is(#main-content, .el-page) textarea {
   min-height: 96px;
   resize: vertical;
 }
@@ -45,9 +45,9 @@
 .el-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
 .el-page select:focus,
 .el-page textarea:focus,
-#main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
-#main-content select:focus,
-#main-content textarea:focus {
+:is(#main-content, .el-page) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+:is(#main-content, .el-page) select:focus,
+:is(#main-content, .el-page) textarea:focus {
   border-color: var(--el-color-accent);
   box-shadow: var(--el-focus-ring);
   outline: none;
@@ -57,8 +57,8 @@
 .el-textarea::placeholder,
 .el-page input::placeholder,
 .el-page textarea::placeholder,
-#main-content input::placeholder,
-#main-content textarea::placeholder {
+:is(#main-content, .el-page) input::placeholder,
+:is(#main-content, .el-page) textarea::placeholder {
   color: var(--el-color-placeholder);
 }
 

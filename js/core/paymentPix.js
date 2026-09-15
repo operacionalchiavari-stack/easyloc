@@ -934,7 +934,7 @@
     if(!state.existingPayment?.external_id) return;
     const ok = typeof window.confirmarGlobal === "function"
       ? await window.confirmarGlobal("Cancelar a cobranca PIX ativa e gerar uma nova?", "Gerar novo PIX", { confirmarTexto: "Gerar nova", tipo: "warning" })
-      : confirm("Cancelar a cobranca PIX ativa e gerar uma nova?");
+      : false;
     if(!ok) return;
     state.payment = state.existingPayment;
     await cancelPayment(false);

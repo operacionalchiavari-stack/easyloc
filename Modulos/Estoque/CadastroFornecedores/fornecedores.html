@@ -1,11 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Cadastro de Fornecedores</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="fornecedores.css?v=20260913j">
+</head>
+<body>
 <div class="container-fornecedores el-page">
 
   <!-- HEADER -->
   <header class="page-header">
     <h1>Fornecedores Cadastrados</h1>
 
+    <div class="el-stat-row" id="fornecedoresStats">
+      <article class="el-stat-card blue">
+        <span aria-hidden="true"><i data-lucide="factory"></i></span>
+        <div><small>Total de fornecedores</small><strong id="fornecedoresStatTotal">0</strong><em>Cadastrados</em></div>
+      </article>
+      <article class="el-stat-card green">
+        <span aria-hidden="true"><i data-lucide="circle-check"></i></span>
+        <div><small>Ativos</small><strong id="fornecedoresStatAtivos">0</strong><em id="fornecedoresStatAtivosPercent">0% do total</em></div>
+      </article>
+      <article class="el-stat-card red">
+        <span aria-hidden="true"><i data-lucide="circle-x"></i></span>
+        <div><small>Inativos</small><strong id="fornecedoresStatInativos">0</strong><em>Sem atividade</em></div>
+      </article>
+      <article class="el-stat-card purple">
+        <span aria-hidden="true"><i data-lucide="wrench"></i></span>
+        <div><small>Prestam serviço</small><strong id="fornecedoresStatServicos">0</strong><em>Serviços ou ambos</em></div>
+      </article>
+    </div>
+
     <div class="header-actions">
-      <button class="btn secondary" type="button" id="btnPrint">Imprimir / PDF</button>
       <button class="btn primary" type="button" id="btnNovoFornecedor">
         + Adicionar Fornecedor
       </button>
@@ -61,14 +93,17 @@
 </div>
 
 
-<!-- ================= MODAL FORNECEDOR ================= -->
-<div class="modal el-modal hidden" id="modalFornecedor">
-  <div class="modal-content el-modal__box">
+<!-- ================= DETALHES DO FORNECEDOR (tela, nao modal) ================= -->
+<div class="el-page fornecedor-detail-view hidden" id="modalFornecedor">
+  <div class="fornecedor-detail-card">
 
-    <!-- HEADER MODAL -->
+    <!-- HEADER -->
     <div class="modal-header">
+      <button class="back-btn btn-icon" type="button" onclick="fecharModalFornecedor()" title="Voltar para a lista">
+        <i data-lucide="arrow-left"></i>
+      </button>
       <h2 id="modalTitulo">Novo Fornecedor</h2>
-      <button class="btn-close btn-icon" type="button" onclick="fecharModalFornecedor()">✕</button>
+      <button class="btn primary" type="button" id="btnSalvarFornecedor" onclick="salvarFornecedor()">Salvar fornecedor</button>
     </div>
 
     <!-- BODY -->
@@ -80,22 +115,22 @@
 
         <div class="form-grid">
 
-          <div class="field el-field">
+          <div class="field el-field" style="grid-column:span 4;">
             <label>Nome / Razão Social *</label>
             <input class="el-input" id="fNome">
           </div>
 
-          <div class="field el-field">
+          <div class="field el-field" style="grid-column:span 3;">
             <label>Nome Fantasia</label>
             <input class="el-input" id="fFantasia">
           </div>
 
-          <div class="field el-field">
+          <div class="field el-field" style="grid-column:span 3;">
             <label>CNPJ / CPF *</label>
             <input class="el-input" id="fDocumento">
           </div>
 
-          <div class="field el-field">
+          <div class="field el-field" style="grid-column:span 2;">
             <label>Tipo *</label>
             <select class="el-select" id="fTipo">
               <option value="">Selecione</option>
@@ -106,7 +141,7 @@
             </select>
           </div>
 
-          <div class="field el-field">
+          <div class="field el-field" style="grid-column:span 4;">
             <label>Categoria</label>
             <select class="el-select" id="fCategoria">
               <option value="">Selecione</option>
@@ -118,7 +153,7 @@
             </select>
           </div>
 
-          <div class="field el-field">
+          <div class="field el-field" style="grid-column:span 3;">
             <label>Status</label>
             <select class="el-select" id="fStatus">
               <option value="ativo">Ativo</option>
@@ -156,17 +191,17 @@
         <h3>Contato</h3>
 
         <div class="form-grid">
-          <div class="field el-field">
+          <div class="field el-field" style="grid-column:span 3;">
             <label>Telefone</label>
             <input class="el-input" id="fTelefone">
           </div>
 
-          <div class="field el-field">
+          <div class="field el-field" style="grid-column:span 5;">
             <label>E-mail</label>
             <input class="el-input" id="fEmail">
           </div>
 
-          <div class="field el-field">
+          <div class="field el-field" style="grid-column:span 4;">
             <label>Responsável</label>
             <input class="el-input" id="fContato">
           </div>
@@ -218,11 +253,20 @@
       </div>
 
     </div> <!-- modal-body -->
-    <!-- FOOTER -->
-    <div class="modal-footer">
-      <button class="btn secondary" type="button" onclick="fecharModalFornecedor()">Cancelar</button>
-      <button class="btn primary" type="button" onclick="salvarFornecedor()">Salvar fornecedor</button>
-    </div>
 
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/listPager.js"></script>
+<script src="../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../js/core/permissions.js"></script>
+<script src="../../../js/core/google.config.js"></script>
+<script src="../../../js/core/google.js"></script>
+<script src="fornecedores.js?v=20260913e"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

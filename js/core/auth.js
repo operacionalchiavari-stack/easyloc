@@ -15,7 +15,7 @@ window.garantirSessao = async function(){
     await window.supabaseClient.auth.getSession();
 
   if(!session){
-    window.location.href = "index.html";
+    window.location.href = "login.html";
     return false;
   }
 
@@ -27,5 +27,5 @@ window.garantirSessao = async function(){
 ===================================================== */
 async function logout() {
   await window.supabaseClient.auth.signOut();
-  location.href = "index.html";
+  location.href = "login.html";
 }

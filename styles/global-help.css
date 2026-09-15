@@ -11,7 +11,7 @@
   border-radius: 50%;
   background: var(--color-primary, #2E1F1F);
   color: #ffffff;
-  box-shadow: 0 16px 34px rgba(15, 42, 68, .24);
+  box-shadow: var(--el-shadow-sm);
   cursor: pointer;
   touch-action: none;
   user-select: none;

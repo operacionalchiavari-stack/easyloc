@@ -37,9 +37,9 @@
         width:38px;
         height:38px;
         border-radius:10px;
-        border:1px solid #e5e7eb;
+        border:1px solid #D1D5DB;
         background:#fff;
-        color:#2E1F1F;
+        color:#374151;
         display:inline-flex;
         align-items:center;
         justify-content:center;
@@ -48,9 +48,9 @@
         transition:.18s ease;
       }
       .qr-action-btn:hover{
-        border-color:#2E1F1F;
-        color:#2E1F1F;
-        background:#f4f1ef;
+        border-color:#D1D5DB;
+        color:#374151;
+        background:#F3F4F6;
       }
       .qr-global-modal{
         position:fixed;

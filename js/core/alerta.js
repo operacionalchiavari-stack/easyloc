@@ -1,151 +1,67 @@
-(function () {
-  const nativeAlert = window.alert?.bind(window);
-
-  const VARIANT_MAP = {
-    sucesso: "success",
-    success: "success",
-    erro: "error",
-    error: "error",
-    perigo: "error",
-    danger: "error",
-    aviso: "warning",
-    warning: "warning",
-    atencao: "warning",
-    info: "info",
-    informacao: "info"
-  };
-
-  const ICONS = {
-    success: "✓",
-    error: "!",
-    warning: "!",
-    info: "i"
-  };
-
-  function normalizeVariant(value) {
-    if (!value) return "warning";
-
-    const key = String(value)
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
-
-    return VARIANT_MAP[key] || "warning";
+﻿(function () {
+  "use strict";
+  const variants = { sucesso:"success", success:"success", erro:"error", error:"error", perigo:"error", danger:"error", aviso:"warning", warning:"warning", atencao:"warning", info:"info", informacao:"info" };
+  const normalize = value => variants[String(value || "warning").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()] || "warning";
+  const paths = { success:'<path d="m4 9 3 3 7-7"/>', error:'<path d="m5 5 8 8m0-8-8 8"/>', warning:'<path d="M9 4v6m0 3h.01"/>', info:'<path d="M9 8v6m0-10h.01"/>' };
+  let queue = Promise.resolve();
+  const toasts = new Map();
+  function card(message, title, variant) {
+    const el = document.createElement("section");
+    el.className = "el-alert";
+    el.dataset.variant = normalize(variant);
+    el.innerHTML = '<span class="el-alert__icon" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">'+paths[el.dataset.variant]+'</svg></span><div><h4></h4><p></p></div>';
+    el.querySelector("h4").textContent = title;
+    el.querySelector("p").textContent = String(message ?? "");
+    return el;
   }
-
-  function ensureAlertModal() {
-    let modal = document.getElementById("alertaGlobal");
-
-    if (modal) return modal;
-
-    modal = document.createElement("div");
-    modal.id = "alertaGlobal";
-    modal.className = "modal-alert-global";
-    modal.setAttribute("role", "dialog");
-    modal.setAttribute("aria-modal", "true");
-    modal.setAttribute("aria-labelledby", "alertaGlobalTitulo");
-    modal.setAttribute("aria-describedby", "alertaGlobalMsg");
-
-    modal.innerHTML = `
-      <div class="modal-alert-box">
-        <div class="alert-icon" id="alertaGlobalIcon">!</div>
-        <h4 id="alertaGlobalTitulo">Atenção</h4>
-        <p id="alertaGlobalMsg"></p>
-        <button class="btn danger btn-fechar" type="button" onclick="fecharAlertaGlobal()">Fechar</button>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-    return modal;
+  function button(text, variant, action) {
+    const el = document.createElement("button");
+    el.type = "button"; el.className = "btn " + variant; el.textContent = text;
+    el.addEventListener("click", action); return el;
   }
-
-  window.alerta = function (mensagem, titulo = "Atenção", tipo = "warning") {
-    if (typeof titulo === "object" && titulo !== null) {
-      tipo = titulo.tipo || titulo.variant || tipo;
-      titulo = titulo.titulo || titulo.title || "Atenção";
+  window.fecharAlertaGlobal = function () { for (const close of toasts.values()) close(); document.getElementById("alertaGlobal")?.remove(); };
+  window.alerta = function (message, title = "Atenção", variant = "warning") {
+    let duration = 4000;
+    if (title && typeof title === "object") {
+      const options = title; title = options.titulo || options.title || "Atenção";
+      variant = options.tipo || options.variant || variant;
+      duration = Math.max(1000, Number(options.duracao || options.duration) || 4000);
     }
-
-    const modal = ensureAlertModal();
-    const msg = document.getElementById("alertaGlobalMsg");
-    const tit = document.getElementById("alertaGlobalTitulo");
-    const icon = document.getElementById("alertaGlobalIcon") || modal.querySelector(".alert-icon");
-    const variant = normalizeVariant(tipo);
-
-    if (!msg || !tit) return;
-
-    msg.textContent = mensagem || "";
-    tit.textContent = titulo || "Atenção";
-    modal.dataset.variant = variant;
-
-    if (icon) {
-      icon.textContent = ICONS[variant] || "!";
-    }
-
-    modal.classList.add("is-open");
-    modal.style.display = "flex";
-
-    modal.querySelector("button")?.focus();
+    document.getElementById("alertaGlobal")?.remove();
+    let stack = document.querySelector(".el-alert-stack");
+    if (!stack) { stack = document.createElement("div"); stack.className = "el-alert-stack"; document.body.appendChild(stack); }
+    const el = card(message, title, variant);
+    el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite");
+    const close = () => { clearTimeout(toasts.get(el)?.timer); toasts.delete(el); el.remove(); if (!stack.children.length) stack.remove(); };
+    el.appendChild(button("Fechar", "secondary", close));
+    const progress = document.createElement("span"); progress.className = "el-alert__progress"; progress.setAttribute("aria-hidden", "true");
+    el.style.setProperty("--alert-duration", duration+"ms"); el.appendChild(progress);
+    toasts.set(el, close); close.timer = setTimeout(close, duration); stack.appendChild(el);
   };
-
-  window.alert = function (mensagem) {
-    if (typeof window.alerta === "function") {
-      window.alerta(String(mensagem || ""), "Atenção", "aviso");
-      return;
-    }
-
-    nativeAlert?.(mensagem);
-  };
-
-  window.fecharAlertaGlobal = function () {
-    const modal = document.getElementById("alertaGlobal");
-
-    if (!modal) return;
-
-    modal.classList.remove("is-open");
-    modal.style.display = "none";
-  };
-
-  window.confirmarGlobal = function (mensagem, titulo = "Confirmação", opcoes = {}) {
-    return new Promise((resolve) => {
-      const modal = document.createElement("div");
-      modal.className = "modal-alert-global is-open";
-      modal.style.display = "flex";
-      modal.dataset.variant = opcoes.tipo || "warning";
-      modal.setAttribute("role", "dialog");
-      modal.setAttribute("aria-modal", "true");
-
-      modal.innerHTML = `
-        <div class="modal-alert-box">
-          <div class="alert-icon">?</div>
-          <h4>${titulo}</h4>
-          <p>${mensagem}</p>
-          <div class="el-modal__footer" style="padding:0; border:0; margin-top:20px;">
-            <button class="btn secondary" type="button" data-action="cancelar">${opcoes.cancelarTexto || "Cancelar"}</button>
-            <button class="btn primary" type="button" data-action="confirmar">${opcoes.confirmarTexto || "Confirmar"}</button>
-          </div>
-        </div>
-      `;
-
-      function close(value) {
-        modal.remove();
-        resolve(value);
-      }
-
-      modal.addEventListener("click", (event) => {
-        const action = event.target?.dataset?.action;
-        if (action === "confirmar") close(true);
-        if (action === "cancelar") close(false);
-        if (event.target === modal) close(false);
+  window.alert = message => window.alerta(message);
+  // A native synchronous confirm cannot safely be replaced by a Promise.
+  // Callers explicitly await this API; concurrent requests are serialized.
+  window.confirmarGlobal = function (message, title = "Confirmação", options = {}) {
+    const result = queue.then(() => new Promise(resolve => {
+      const previous = document.activeElement;
+      const overlay = document.createElement("div"); overlay.className = "el-alert-confirm";
+      const el = card(message, title, options.tipo || "warning");
+      el.setAttribute("role", "alertdialog"); el.setAttribute("aria-modal", "true");
+      el.querySelector("h4").id = "el-confirm-title"; el.querySelector("p").id = "el-confirm-message";
+      el.setAttribute("aria-labelledby", "el-confirm-title"); el.setAttribute("aria-describedby", "el-confirm-message");
+      const inertStates = [...document.body.children].map(node => [node, node.inert]);
+      inertStates.forEach(([node]) => { node.inert = true; });
+      const close = value => { overlay.remove(); inertStates.forEach(([node,inert]) => { node.inert = inert; }); if(previous?.isConnected) previous.focus(); resolve(value); };
+      const actions = document.createElement("div"); actions.className = "el-alert__actions";
+      const cancel = button(options.cancelarTexto || "Não", "secondary", () => close(false));
+      const accept = button(options.confirmarTexto || "Sim", "primary", () => close(true));
+      actions.append(cancel, accept); el.appendChild(actions); overlay.appendChild(el); document.body.appendChild(overlay);
+      overlay.addEventListener("keydown", event => {
+        if(event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(false); }
+        if(event.key === "Tab") { event.preventDefault(); (document.activeElement === cancel ? accept : cancel).focus(); }
       });
-
-      document.body.appendChild(modal);
-      modal.querySelector("[data-action='confirmar']")?.focus();
-    });
+      cancel.focus();
+    }));
+    queue = result.catch(() => false); return result;
   };
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      fecharAlertaGlobal();
-    }
-  });
 })();

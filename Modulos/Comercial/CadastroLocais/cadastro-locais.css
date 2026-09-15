@@ -31,9 +31,8 @@ html,body{
    CONTAINER
 ===================================================== */
 .container{
-  max-width:1400px;
   margin:0 auto;
-  padding:24px 24px 16px;
+  padding:8px 24px 16px;
   width:100%;
 }
 
@@ -60,6 +59,10 @@ html,body{
   align-items:center;
   gap:12px;
 }
+
+/* Cards de resumo (Total/Ativos/Mornos/Inativos) agora sao o componente
+   compartilhado .el-stat-row/.el-stat-card em styles/design-system.css —
+   usado por Locais, Clientes, Fornecedores e Caminhoes. */
 
 /* =====================================================
    BOTÃ•ES
@@ -245,6 +248,25 @@ tbody td{
   border-radius:18px;
   padding:26px;
   box-shadow:0 24px 72px rgba(15,23,42,.22);
+}
+
+/* =====================================================
+   DETALHES DO LOCAL COMO TELA (nao mais modal flutuante)
+===================================================== */
+.locais-detail-view{
+  padding:24px 24px 16px;
+  width:100%;
+}
+
+.locais-detail-view .locais-detail-card{
+  width:100%;
+  max-height:none;
+  border-radius:0;
+  box-shadow:none;
+}
+
+.back-btn{
+  font-size:15px;
 }
 
 
@@ -638,23 +660,25 @@ tbody td{
 /* =====================================================
    MODAL DE LOCAIS - LAYOUT REVISADO
 ===================================================== */
-#locais-modal .modal-content{
-  width:min(1180px,95vw);
-  height:min(90vh,780px);
+#locais-modal .locais-detail-card{
+  width:100%;
+  height:auto;
   max-height:none;
-  overflow:hidden;
+  overflow:visible;
   display:flex;
   flex-direction:column;
   padding:0;
-  background:#ffffff;
+  background:transparent;
 }
 
 #locais-modal .modal-header{
   flex:0 0 auto;
-  margin-bottom:0;
-  padding:18px 24px 14px;
-  border-bottom:1px solid #eef2f7;
-  background:linear-gradient(180deg,#ffffff,#fbfdff);
+  margin-bottom:14px;
+  padding:0;
+}
+
+#locais-modal .modal-header > div{
+  flex:1;
 }
 
 #locais-modal .modal-header h3{
@@ -668,18 +692,27 @@ tbody td{
   color:#64748b;
 }
 
-#locais-modal .edit-btn{
+#locais-modal .edit-btn,
+#locais-modal .back-btn{
   width:38px;
   height:38px;
   display:inline-grid;
   place-items:center;
   border:1px solid #e2e8f0;
   background:#ffffff;
-  color:#f97316;
   box-shadow:0 8px 18px rgba(15,23,42,.08);
 }
 
-#locais-modal .edit-btn svg{
+#locais-modal .edit-btn{
+  color:#f97316;
+}
+
+#locais-modal .back-btn{
+  color:#374151;
+}
+
+#locais-modal .edit-btn svg,
+#locais-modal .back-btn svg{
   width:17px;
   height:17px;
   stroke-width:2.2;
@@ -687,13 +720,10 @@ tbody td{
 
 #locais-modal .form-grid{
   flex:1 1 auto;
-  min-height:0;
-  overflow:auto;
   align-content:start;
   grid-template-columns:repeat(12,minmax(0,1fr));
   gap:12px;
-  padding:16px 24px 18px;
-  background:#ffffff;
+  padding:0;
 }
 
 #locais-modal .form-group{
@@ -731,7 +761,7 @@ tbody td{
 
 #locais-modal .form-group input[readonly],
 #locais-modal .form-group select:disabled,
-#locais-modal.modal.readonly #locais-endereco-wrapper input{
+#locais-modal.readonly #locais-endereco-wrapper input{
   color:#334155;
   background:#f8fafc;
 }
@@ -948,13 +978,9 @@ tbody td{
 
 #locais-modal .modal-actions{
   flex:0 0 auto;
-  margin-top:0;
-  padding:12px 24px;
-  border-top:1px solid #e5e7eb;
-  background:#ffffff;
-  box-shadow:0 -8px 22px rgba(15,23,42,.06);
-  position:relative;
-  z-index:2;
+  margin-top:12px;
+  padding:0;
+  border-top:none;
 }
 
 #locais-modal .modal-actions .btn{
@@ -963,10 +989,6 @@ tbody td{
 }
 
 @media(max-width:900px){
-  #locais-modal .modal-content{
-    height:92vh;
-  }
-
   #locais-modal .form-grid{
     grid-template-columns:1fr;
   }

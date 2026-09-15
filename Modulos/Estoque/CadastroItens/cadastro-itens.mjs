@@ -6,26 +6,17 @@
 import { carregarItens } from "./itens.api.mjs";
 import "./itens.modal.mjs";
 import "./itens.tabela.mjs";
-import "./itens.foto.mjs?v=20260730-quality-v2";
+import "./itens.foto.mjs?v=20260913a";
 import "./itens.filtros.mjs";
 import "./itens.print.mjs";
-import "./kits.modal.mjs";
+import "./kits.modal.mjs?v=20260913a";
 
 function abrirPaginaDetalhesItem(itemId = null, modo = "editar"){
-  if(typeof window.carregarNaMain !== "function"){
-    return;
-  }
-
   window.__ITEM_DETALHE_ID = itemId || null;
   window.__ITEM_DETALHE_MODO = modo;
 
   const suffix = itemId ? `?id=${encodeURIComponent(itemId)}` : "?novo=1";
-  window.carregarNaMain(
-    `Modulos/Estoque/CadastroItens/item-detalhes.html${suffix}`,
-    "Modulos/Estoque/CadastroItens/item-detalhes.mjs",
-    null,
-    "Modulos/Estoque/CadastroItens/item-detalhes.css"
-  );
+  window.location.href = `item-detalhes.html${suffix}`;
 }
 
 window.itens_abrirNovoItem = function(){
@@ -112,4 +103,4 @@ window.__activeModuleDestroy = function(){
    REGISTRO DO MÓDULO SPA
 ===================================================== */
 
-window.__moduleInit = window.initCadastroItens;
+requestAnimationFrame(() => requestAnimationFrame(window.initCadastroItens));

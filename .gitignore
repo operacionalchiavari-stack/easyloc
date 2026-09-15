@@ -33,3 +33,10 @@ logs/
 # Supabase local
 .supabase/
 supabase/.temp/
+
+# Local deployment metadata and diagnostic fixtures
+.vercel/
+tmp-*
+
+.vercel
+.env*

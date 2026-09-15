@@ -29,7 +29,7 @@
 .cronograma-container {
   width: 100%;
   max-width: 100%;
-  padding: 32px 32px 24px;
+  padding: 20px 24px;
   transition: 0.3s ease;
   font-family:
     "Inter",
@@ -42,13 +42,6 @@
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* efeito zoom out */
-  transform: scale(1.05);
-  transform-origin: top center;
-}
-body.sidebar-open .cronograma-container {
-  padding-left: 280px; /* largura do menu */
 }
 .topbar {
   display: flex;
@@ -135,7 +128,7 @@ body.sidebar-open .cronograma-container {
 }
 
 .board-wrap {
-  overflow: visible;
+  overflow-x: auto;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);

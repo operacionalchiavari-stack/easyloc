@@ -1,13 +1,13 @@
 (function () {
   "use strict";
 
-  const DEFAULT_THEME = {
+  const DEFAULT_THEME = Object.freeze({
     logo_url: "",
     logo_zoom: 1,
-    cor_sidebar: "#2E1F1F",
-    cor_destaque: "#2E1F1F",
-    cor_fundo: "#FFFFFF"
-  };
+    cor_sidebar: "#290610",
+    cor_destaque: "#374151",
+    cor_fundo: "#F5F6F8"
+  });
 
   function isHex(value) {
     return /^#[0-9A-F]{6}$/i.test(String(value || "").trim());
@@ -54,9 +54,9 @@
     return {
       logo_url: theme?.logo_url || "",
       logo_zoom: Number.isFinite(logoZoom) ? Math.min(2.2, Math.max(0.5, logoZoom)) : 1,
-      cor_sidebar: isHex(theme?.cor_sidebar) ? theme.cor_sidebar : DEFAULT_THEME.cor_sidebar,
-      cor_destaque: isHex(theme?.cor_destaque) ? theme.cor_destaque : DEFAULT_THEME.cor_destaque,
-      cor_fundo: isHex(theme?.cor_fundo) ? theme.cor_fundo : DEFAULT_THEME.cor_fundo
+      cor_sidebar: DEFAULT_THEME.cor_sidebar,
+      cor_destaque: DEFAULT_THEME.cor_destaque,
+      cor_fundo: DEFAULT_THEME.cor_fundo
     };
   }
 
@@ -79,7 +79,7 @@
     const theme = normalizeTheme(rawTheme);
     const root = document.documentElement;
     const sidebarStrong = shade(theme.cor_sidebar, -0.09);
-    const accentStrong = shade(theme.cor_destaque, -0.08);
+    const accentStrong = "#283241";
 
     root.style.setProperty("--color-sidebar", theme.cor_sidebar);
     root.style.setProperty("--color-primary", theme.cor_destaque);
@@ -91,32 +91,40 @@
     root.style.setProperty("--el-color-primary-dark", "#111827");
     root.style.setProperty("--el-color-primary-soft", "#F3F4F6");
     root.style.setProperty("--el-color-accent", theme.cor_destaque);
+    root.style.setProperty("--el-color-on-accent", "#FFFFFF");
+    root.style.setProperty("--el-color-accent-soft", "#F3F4F6");
     root.style.setProperty("--el-color-accent-strong", accentStrong);
     root.style.setProperty("--el-color-bg", theme.cor_fundo);
-    root.style.setProperty("--el-color-title", "#1F2937");
-    root.style.setProperty("--el-color-text", "#374151");
-    root.style.setProperty("--el-color-muted", "#6B7280");
-    root.style.setProperty("--el-color-placeholder", "#9CA3AF");
-    root.style.setProperty("--el-table-header-bg", "rgba(var(--empresa-cor-principal-rgb), 0.12)");
-    root.style.setProperty("--el-table-header-color", "#111827");
-    root.style.setProperty("--el-table-row-hover", "rgba(var(--empresa-cor-principal-rgb), 0.06)");
-    root.style.setProperty("--azul", "#1F2937");
+    root.style.setProperty("--el-color-title", "#142033");
+    root.style.setProperty("--el-color-text", "#142033");
+    root.style.setProperty("--el-color-text-secondary", "#526176");
+    root.style.setProperty("--el-color-muted", "#6b7789");
+    root.style.setProperty("--el-color-placeholder", "#929cab");
+    root.style.setProperty("--el-table-header-bg", "#f3f5f7");
+    root.style.setProperty("--el-table-header-color", "#526176");
+    root.style.setProperty("--el-table-row-hover", "#f7f9fa");
+    root.style.setProperty("--azul", "#142033");
     root.style.setProperty("--azul-2", sidebarStrong);
     root.style.setProperty("--laranja", theme.cor_destaque);
     root.style.setProperty("--fundo", theme.cor_fundo);
     root.style.setProperty("--company-logo-zoom", String(theme.logo_zoom));
-    root.style.setProperty("--texto-principal", "#374151");
-    root.style.setProperty("--texto-secundario", "#6B7280");
-    root.style.setProperty("--cor-texto", "#374151");
-    root.style.setProperty("--cor-texto-suave", "#6B7280");
+    root.style.setProperty("--texto-principal", "#142033");
+    root.style.setProperty("--texto-secundario", "#6b7789");
+    root.style.setProperty("--cor-texto", "#142033");
+    root.style.setProperty("--cor-texto-suave", "#6b7789");
 
     const sidebarLogo = document.getElementById("sidebarLogo");
     if (sidebarLogo) {
       const nextLogoSrc = theme.logo_url ? withCacheBust(theme.logo_url, logoCacheVersion(rawTheme)) : "logo%20nova%20branca%20-%20sem%20fundo.png";
       const currentLogoSrc = sidebarLogo.getAttribute("src") || "";
       if(currentLogoSrc !== nextLogoSrc) sidebarLogo.src = nextLogoSrc;
-      sidebarLogo.style.transform = `scale(${theme.logo_zoom})`;
-      sidebarLogo.style.transformOrigin = "center";
+      // Tamanho da logo do menu e todo em CSS agora (styles/navigation-v2.css,
+      // ".sidebar-header img"), igual ao logo do catalogo (.catalog-brand-logo
+      // em Modulos/Comercial/Catalogo/catalogo.css): mesmo max-height:49px +
+      // transform:scale(3.6), a pedido do usuario ("olha como a logo aparece
+      // no catalogo... quero do mesmo jeito, mesmo tamanho"). O catalogo
+      // tambem nao aplica logo_zoom por JS — por isso essa linha nao mexe
+      // mais em transform aqui, pra os dois lugares ficarem identicos.
     }
 
     document.body?.classList.add("company-theme-loaded");
@@ -148,7 +156,7 @@
     try {
       const { data, error } = await window.supabaseClient
         .from("configuracoes_empresa")
-        .select("logo_url, logo_zoom, cor_sidebar, cor_destaque, cor_fundo")
+        .select("logo_url, logo_zoom")
         .eq("empresa_id", empresaId)
         .maybeSingle();
       if (error) {
@@ -178,12 +186,6 @@
   function validateTheme(theme) {
     const normalized = normalizeTheme(theme);
     const errors = [];
-    if (!isHex(theme?.cor_sidebar)) errors.push("Cor do menu lateral invalida.");
-    if (!isHex(theme?.cor_destaque)) errors.push("Cor de destaque invalida.");
-    if (!isHex(theme?.cor_fundo)) errors.push("Cor do fundo invalida.");
-    if (luminance(normalized.cor_fundo) < 0.82) errors.push("Escolha uma cor de fundo mais clara para manter a leitura.");
-    if (contrast(normalized.cor_sidebar, "#FFFFFF") < 4.5) errors.push("A cor do menu lateral precisa ter mais contraste com texto branco.");
-    if (contrast(normalized.cor_destaque, "#FFFFFF") < 2.4) errors.push("A cor de destaque pode ficar fraca em botoes com texto branco.");
     return { ok: errors.length === 0, errors, theme: normalized };
   }
 

@@ -1,8 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Cadastro de Itens</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="cadastro-itens.css?v=20260914a">
+</head>
+<body>
 <div class="container el-page">
 
   <!-- ================= HEADER ================= -->
   <div class="header-list">
     <h2>Itens Cadastrados</h2>
+
+    <div class="el-stat-row" id="itensStats">
+      <article class="el-stat-card gray">
+        <span aria-hidden="true"><i data-lucide="boxes"></i></span>
+        <div><small>Total</small><strong id="itensStatTotal">0</strong><em>Cadastrados</em></div>
+      </article>
+      <article class="el-stat-card blue">
+        <span aria-hidden="true"><i data-lucide="box"></i></span>
+        <div><small>Itens</small><strong id="itensStatItens">0</strong><em>Avulsos</em></div>
+      </article>
+      <article class="el-stat-card purple">
+        <span aria-hidden="true"><i data-lucide="layers"></i></span>
+        <div><small>Componentes</small><strong id="itensStatComponentes">0</strong><em>De kits</em></div>
+      </article>
+      <article class="el-stat-card green">
+        <span aria-hidden="true"><i data-lucide="puzzle"></i></span>
+        <div><small>Kits</small><strong id="itensStatKits">0</strong><em>Montados</em></div>
+      </article>
+    </div>
 
 <div class="header-actions">
 
@@ -69,7 +102,7 @@
   </div>
 </section>
 
-
+</div> <!-- fecha .container: itensModal/kitsModal precisam ser irmaos dela, nao filhos -->
 
 <!-- ================= MODAL ITENS ================= -->
 <div class="modal el-modal" id="itensModal">
@@ -118,8 +151,8 @@
   <div class="foto-preview-wrapper">
     <img
       id="itensFotoPreview"
-      src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
-      data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+      src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+      data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
       alt="Sem foto"
       draggable="false"
     >
@@ -424,45 +457,52 @@
 </div> <!-- FECHA itensModal -->
 
 <!-- ================= MODAL KIT ================= -->
-<div class="modal el-modal" id="kitsModal">
-<div class="modal-content el-modal__box">
+<!-- ================= DETALHES DO KIT (tela, nao modal) ================= -->
+<div class="el-page kit-detail-view hidden" id="kitsModal">
+<div class="kit-detail-card">
 
 <input type="hidden" id="kitId">
 
 <!-- HEADER -->
-<div class="modal-header-item modal-header-fixed modal-header-horizontal">
+<div class="modal-header kit-modal-header">
 
-<div class="header-line header-line-inline">
+<button class="back-btn btn-icon" type="button" onclick="kits_closeModal()" title="Voltar para a lista">
+<i data-lucide="arrow-left"></i>
+</button>
 
-<h3 class="modal-title">Detalhes do Kit</h3>
+<h2 id="kitModalTitulo">Detalhes do Kit</h2>
 
 <input
 id="kitDescricaoTotal"
-class="header-desc-total el-input"
+class="el-input kit-descricao-total"
 placeholder="Gerado automaticamente"
 readonly
 tabindex="-1"
 >
 
-</div>
+<button type="button" class="btn primary" onclick="kits_salvar()">Salvar</button>
 
 </div>
 
+<!-- BODY -->
+<div class="modal-body">
 
-<div class="item-layout item-layout-advanced">
+<!-- DADOS DO KIT -->
+<div class="form-section">
+<h3>Dados do kit</h3>
 
+<div class="kit-form-layout">
 
 <!-- FOTO -->
-<div class="item-foto-box">
+<div class="kit-foto-box">
 
-<div class="foto-guia-container el-page">
-
+<div class="foto-guia-container">
 <div class="foto-preview-wrapper">
 <img
 id="kitFotoPreview"
-class="kit-foto-preview"
-src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
-data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+class="kit-foto-preview-main"
+src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
 alt="Sem foto"
 draggable="false"
 >
@@ -474,8 +514,6 @@ id="kitFotoInput"
 accept="image/*"
 hidden
 >
-
-<div class="foto-guia"></div>
 
 </div>
 
@@ -508,17 +546,7 @@ onmouseleave="kits_stopZoom()">
 
 </div>
 
-</div>
-
-
-<!-- LATERAL -->
-<div class="item-side-form">
-
-
-<!-- STATUS -->
-<div class="item-tipo-status-row">
-
-<div class="item-status-toggle-row">
+<div class="item-status-toggle-row kit-status-row">
 
 <button
 type="button"
@@ -540,99 +568,76 @@ onclick="kits_setStatus(this)">
 
 </div>
 
+<!-- CAMPOS -->
+<div class="form-grid kit-form-grid">
 
-<!-- LINHA 1 -->
-<div class="foto-form-row">
-
-<div class="form-group el-field">
+<div class="field el-field" style="grid-column:span 3;">
 <label>Código *</label>
 <input class="el-input" id="kitCodigo">
 </div>
 
-<div class="form-group el-field">
+<div class="field el-field" style="grid-column:span 4;">
 <label>Produto *</label>
 <input class="el-input" id="kitProduto">
 </div>
 
-<div class="form-group el-field">
+<div class="field el-field" style="grid-column:span 3;">
 <label>Material</label>
 <input class="el-input" id="kitMaterial">
 </div>
 
-</div>
-
-
-<!-- LINHA 2 -->
-<div class="foto-form-row">
-
-<div class="form-group el-field">
+<div class="field el-field" style="grid-column:span 2;">
 <label>Cor</label>
 <input class="el-input" id="kitCor">
 </div>
 
-<div class="form-group col-2 el-field">
+<div class="field el-field" style="grid-column:span 6;">
 <label>Descrição complementar</label>
 <input class="el-input" id="kitDescricaoComplementar">
 </div>
 
-</div>
-
-
-<!-- LINHA 3 -->
-<div class="foto-form-row">
-
-<div class="form-group el-field">
+<div class="field el-field" style="grid-column:span 3;">
 <label>Família</label>
 <input class="el-input" id="kitFamilia">
 </div>
 
-<div class="form-group el-field">
+<div class="field el-field" style="grid-column:span 3;">
 <label>Categoria *</label>
 <input class="el-input" id="kitCategoria">
 </div>
 
-<div class="form-group el-field">
-<label>Exibir no site *</label>
+<div class="field el-field" style="grid-column:span 3;">
+<label>Largura / Diâmetro (m)</label>
+<input class="el-input" id="kitLargura">
+</div>
 
+<div class="field el-field" style="grid-column:span 3;">
+<label>Altura (m)</label>
+<input class="el-input" id="kitAltura">
+</div>
+
+<div class="field el-field" style="grid-column:span 3;">
+<label>Profundidade (m)</label>
+<input class="el-input" id="kitProfundidade">
+</div>
+
+<div class="field el-field" style="grid-column:span 3;">
+<label>Exibir no site *</label>
 <select class="el-select" id="kitExibirSite">
 <option value="">Selecione</option>
 <option value="true">Sim</option>
 <option value="false">Não</option>
 </select>
-
 </div>
 
 </div>
 
 </div>
-
-
-<!-- PARTE DE BAIXO -->
-<div class="item-bottom-form">
-
-
-<!-- DIMENSÕES -->
-<div class="foto-form-row">
-
-<div class="form-group el-field">
-<label>Largura / Diâmetro (m)</label>
-<input class="el-input" id="kitLargura">
 </div>
-
-<div class="form-group el-field">
-<label>Altura (m)</label>
-<input class="el-input" id="kitAltura">
-</div>
-
-<div class="form-group el-field">
-<label>Profundidade (m)</label>
-<input class="el-input" id="kitProfundidade">
-</div>
-
-</div>
-
 
 <!-- COMPONENTES -->
+<div class="form-section">
+
 <div class="kit-componentes-area">
 
 <div class="kit-componentes-header">
@@ -648,6 +653,7 @@ onclick="kits_addItem()">
 
 </div>
 
+<div class="kit-componentes-scroll">
 <table class="kit-componentes-table">
 
 <thead>
@@ -690,30 +696,7 @@ onclick="kits_addItem()">
 </tfoot>
 
 </table>
-
 </div>
-
-</div>
-
-
-<!-- AÇÕES -->
-<div class="modal-actions modal-actions-fixed modal-actions-split">
-
-<div class="modal-actions-right">
-
-<button
-type="button"
-class="btn btn-fechar danger"
-onclick="kits_closeModal()">
-Fechar
-</button>
-
-<button
-type="button"
-class="btn-save primary"
-onclick="kits_salvar()">
-Salvar
-</button>
 
 </div>
 
@@ -723,3 +706,16 @@ Salvar
 
 </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/listPager.js"></script>
+<script src="../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../js/core/permissions.js"></script>
+<script src="../../../js/core/qrCode.js"></script>
+<script type="module" src="cadastro-itens.mjs?v=20260914a"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

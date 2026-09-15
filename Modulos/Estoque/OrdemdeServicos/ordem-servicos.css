@@ -227,28 +227,23 @@ select {
 /* BOTÕES */
 /* BOTÕES */
 .btn {
-  background: linear-gradient(135deg, #2E1F1F, #1f1515);
+  background: #374151;
   color: #fff;
   border: none;
   padding: 10px 16px;
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    filter 0.2s ease;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  transition: background 0.2s ease;
+  box-shadow: none;
 }
 
 .btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  filter: brightness(1.05);
+  background: #283241;
 }
 
 .btn:active {
-  transform: scale(0.97);
+  background: #1F2937;
 }
 
 /* BOTÃO PRINCIPAL (NOVA OS) */
@@ -437,14 +432,13 @@ select {
 }
 
 .os-modal-box {
-  max-width: 820px;
-  max-height: 92vh;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: var(--card);
-  border-radius: 20px;
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+}
+
+.os-modal-box.el-detail-card {
+  max-width: 1100px !important;
+  margin: 0 auto;
 }
 
 .os-modal-header {
@@ -925,9 +919,8 @@ select {
   }
 }
 .ordem-servicos-page {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+  margin: 0;
+  padding: 20px 24px;
 }
 
 /* =====================================================

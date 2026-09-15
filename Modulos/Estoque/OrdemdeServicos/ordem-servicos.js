@@ -12,6 +12,17 @@
   let itensCache = [];
   let ordemServicosInicializado = false;
 
+  function mostrarTelaOS() {
+    document.querySelector(".ordem-servicos-page")?.classList.add("hidden");
+    document.getElementById("modalOS").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  function mostrarListaOS() {
+    document.getElementById("modalOS").classList.add("hidden");
+    document.querySelector(".ordem-servicos-page")?.classList.remove("hidden");
+  }
+
   function ensureSupabase(){
   if(!window.supabaseClient){
     console.error("window.supabaseClient não encontrado");
@@ -463,7 +474,7 @@ scriptRun.withSuccessHandler(()=> {
 // window.addEventListener("DOMContentLoaded", carregar);
 function abrirModalOS(){
 
-  document.getElementById("modalOS").style.display = "flex";
+  mostrarTelaOS();
 
   // 🔥 LIMPAR INPUTS
   document.querySelectorAll("#modalOS input").forEach(i => i.value = "");
@@ -498,12 +509,12 @@ function abrirModalOS(){
 }
 
 function fecharModalOS(){
-  document.getElementById("modalOS").style.display = "none";
+  mostrarListaOS();
 }
 
 function handleDocumentClick(e){
 
-  // FECHAR MODAL
+  // FECHAR MODAL (clique fora do cartao, na area vazia da tela)
   if(e.target.id === "modalOS"){
     fecharModalOS();
   }
@@ -1401,7 +1412,7 @@ window.confirmarEncaminhar = confirmarEncaminhar;
 window.iniciarPainel = iniciarPainel;
 window.sairPainel = sairPainel;
 window.toggleSelecionado = toggleSelecionado;
-window.__moduleInit = initOrdemServicos;
+requestAnimationFrame(() => requestAnimationFrame(initOrdemServicos));
 window.__activeModuleDestroy = destroyOrdemServicos;
 
 })();

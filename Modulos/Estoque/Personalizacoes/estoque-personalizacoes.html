@@ -1,9 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Personalizações</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="estoque-personalizacoes.css?v=20260913c">
+</head>
+<body>
 <!-- =====================================================
      ESTOQUE → CADASTRO DE PERSONALIZAÇÕES (VISUAL)
      arquivo: estoque-personalizacoes.html
 ===================================================== -->
 <div class="page-wrap personalizacoes-page el-page" data-module-root>
 
+<div class="personalizacao-list-view">
   <!-- TOP BAR -->
   <div class="page-top">
     <div class="page-title">
@@ -11,7 +26,6 @@
     </div>
 
     <div class="page-actions">
-      <button type="button" class="btn secondary" id="btnPrint">Imprimir / PDF</button>
       <button type="button" class="btn primary" id="btnAddPersonalizacao">+ Adicionar Personalização</button>
     </div>
   </div>
@@ -61,13 +75,18 @@
       </tbody>
     </table>
   </div>
+</div>
 
-  <!-- MODAL ROOT -->
-  <div class="modal-overlay hidden el-modal" id="modalOverlay">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+<!-- ================= DETALHES DA PERSONALIZACAO (tela, nao modal) ================= -->
+<div class="personalizacao-detail-view hidden" id="modalOverlay">
+  <div class="personalizacao-detail-card" role="region" aria-labelledby="modalTitle">
 
-      <!-- HEADER -->
+    <!-- HEADER -->
 <div class="modal-header">
+
+  <button class="back-btn btn-icon" type="button" id="btnCloseModal" title="Voltar para a lista">
+    <i data-lucide="arrow-left"></i>
+  </button>
 
   <div class="modal-header-left">
     <h3 id="modalTitle">Adicionar Personalização</h3>
@@ -91,8 +110,6 @@
         ● Inativo
       </button>
     </div>
-
-    <button type="button" class="modal-close" id="btnCloseModal" aria-label="Fechar modal">X</button>
 
   </div>
 
@@ -260,11 +277,22 @@
 
       <!-- FOOTER -->
       <div class="modal-footer">
-        <button type="button" class="btn secondary" id="btnCancelar">Cancelar</button>
+        <button type="button" class="btn secondary" id="btnCancelar">Voltar</button>
         <button type="button" class="btn primary" id="btnSalvar">Salvar</button>
       </div>
 
-    </div>
   </div>
+</div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../js/core/permissions.js"></script>
+<script type="module" src="../../../js/Estoque/estoque-personalizacoes.mjs?v=20260913d"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

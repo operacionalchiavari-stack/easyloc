@@ -12,7 +12,7 @@
 const supabase = window.supabaseClient;
 
 const FOTO_PLACEHOLDER =
-  "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png";
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
 
 const FOTO_SLOTS = {
   detalhe_01: { tipo: "detalhe", titulo: "Detalhe 01", ordem: 1, arquivo: "detalhe-01" },
@@ -496,10 +496,6 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
   for(const [slot, config] of Object.entries(FOTO_SLOTS)){
     const state = getSlotState(slot);
     const clienteId = config.tipo === "galeria" ? (document.getElementById("itemGaleriaCliente")?.value || null) : null;
-    if(config.tipo === "galeria" && !clienteId && (state.file || state.removed)){
-      alert("Selecione o cliente/decorador das fotos ambientadas.");
-      return false;
-    }
 
     if(state.removed){
       await removerImagem(state.path);
@@ -574,11 +570,11 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
 async function iniciarSeletorGaleriaCliente(){
   const select = document.getElementById("itemGaleriaCliente");
   if(!select || select.dataset.ready) return;
-  select.dataset.ready = "true";
   const empresaId = window.__CONTEXT?.empresa_id;
   if(!empresaId) return;
+  select.dataset.ready = "true";
   const { data } = await supabase.from("clientes_empresas").select("id,nome_razao").eq("empresa_id", empresaId).order("nome_razao");
-  select.innerHTML = `<option value="">Selecione o cliente</option>${(data || []).map((cliente) => `<option value="${cliente.id}">${String(cliente.nome_razao || "Cliente").replace(/[&<>"']/g, "")}</option>`).join("")}`;
+  select.innerHTML = `<option value="">Chiavari — catálogo padrão</option>${(data || []).map((cliente) => `<option value="${cliente.id}">${String(cliente.nome_razao || "Cliente").replace(/[&<>"']/g, "")}</option>`).join("")}`;
   select.addEventListener("change", () => window.itens_carregarFotosAdicionais(fotosItemAtualId));
 }
 document.addEventListener("click", (event) => { if(event.target.closest('[data-item-tab="galeria"]')) iniciarSeletorGaleriaCliente(); });

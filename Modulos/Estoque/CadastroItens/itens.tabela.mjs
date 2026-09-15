@@ -2,6 +2,13 @@
    TABELA DE ITENS
 ===================================================== */
 
+// Mesmo placeholder neutro "Sem foto" usado em item-detalhes.html,
+// cadastro-itens.html, itens.foto.mjs, kits.modal.mjs e no Catálogo — sem
+// dependência externa, sem a marca "EasyLoc" (pedido explícito do usuário
+// em outra parte desta sessão). Se precisar trocar o visual, gerar um novo
+// data URI e substituir a mesma string nesses 6 lugares.
+const FOTO_SEM_FOTO_PLACEHOLDER = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
+
 window.inserirItemNaTabela = function (item) {
 
   const tbody = document.getElementById("itensTableBody");
@@ -13,7 +20,10 @@ window.inserirItemNaTabela = function (item) {
 
   const foto = item.foto_url
     ? `<img src="${item.foto_url}" class="itens-foto" />`
-    : `<div class="itens-foto placeholder">📦</div>`;
+    : `<img src="${FOTO_SEM_FOTO_PLACEHOLDER}" class="itens-foto placeholder" alt="Sem foto" />`;
+
+  const tipoClasse = item.tipo === "Kit" ? "kit" : item.tipo === "Componente" ? "componente" : "item";
+  const tipoBadge = item.tipo ? `<span class="tipo-badge ${tipoClasse}">${item.tipo}</span>` : "-";
 
   tr.innerHTML = `
 
@@ -29,7 +39,7 @@ window.inserirItemNaTabela = function (item) {
 
     <!-- TIPO -->
     <td class="td-tipo">
-      ${item.tipo || "-"}
+      ${tipoBadge}
     </td>
 
     <!-- ITEM -->
@@ -61,8 +71,8 @@ window.inserirItemNaTabela = function (item) {
 
     <!-- STATUS -->
     <td class="td-status">
-      <span class="status ${item.status === "Inativo" ? "inativo" : "ativo"}">
-        ${item.status || "Ativo"}
+      <span class="status ${item.ativo === false ? "inativo" : "ativo"}">
+        ${item.ativo === false ? "Inativo" : "Ativo"}
       </span>
     </td>
 

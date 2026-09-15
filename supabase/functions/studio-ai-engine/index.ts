@@ -13,6 +13,8 @@ type GenerateSceneInput = {
   empresa_id: string;
   action?: "generate_scene" | "analyze_floor_plan" | "plan_layout";
   catalog_token?: string;
+  request_id?: string;
+  expected_cost?: number;
   plan_image?: string;
   projeto_id?: string;
   prompt: string;
@@ -358,6 +360,14 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  let reservation: string | null = null;
+  let creditClient: ReturnType<typeof createClient> | null = null;
+  const settle = async (success: boolean) => {
+    if (!reservation || !creditClient) return;
+    const { error } = await creditClient.rpc('creditos_finalizar', { p_id: reservation, p_sucesso: success });
+    if (error) throw error;
+    reservation = null;
+  };
   try {
     if (req.method !== "POST") {
       return respostaJson({ erro: "Metodo nao permitido" }, 405);
@@ -369,6 +379,7 @@ serve(async (req) => {
     }
 
     const action = body.action || "generate_scene";
+    if (!['generate_scene','analyze_floor_plan','plan_layout'].includes(action)) return respostaJson({ erro: 'Ação inválida' }, 400);
     const erroPayload = action === "plan_layout"
       ? (!body.empresa_id || typeof body.prompt !== "string" || !body.scene ? "Parametros ausentes" : null)
       : action === "analyze_floor_plan"
@@ -384,12 +395,27 @@ serve(async (req) => {
     }
 
     const input = body as GenerateSceneInput;
-    if (action === "plan_layout") return respostaJson({ ok: true, plan: await planLayout(input) });
+    if ('catalogSession' in acesso) {
+      if (!body.request_id || !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(body.request_id) || !Number.isInteger(body.expected_cost)) {
+        return respostaJson({ erro: 'Atualize o catálogo e confirme o custo em créditos antes de usar a IA.' }, 400);
+      }
+      const recurso = action === 'analyze_floor_plan' ? 'planta' : action === 'plan_layout' ? 'layout' : body.scene?.referencePolicy === 'fabric_customization' ? 'tecido' : 'render';
+      const { error } = await acesso.serviceClient.rpc('creditos_reservar', { p_empresa: body.empresa_id, p_cliente: acesso.catalogSession.cliente_id, p_recurso: recurso, p_id: body.request_id, p_custo_aceito: body.expected_cost });
+      if (error) return respostaJson({ erro: error.message }, 402);
+      creditClient = acesso.serviceClient;
+      reservation = body.request_id;
+    } else {
+      const { data, error } = await acesso.serviceClient.rpc('funcionario_pode', { p_empresa: body.empresa_id, p_usuario: acesso.user.id, p_chave: 'ia.studio.gerar' });
+      if (error || !data) return respostaJson({ erro: 'Sem permissão para utilizar a IA.' }, 403);
+    }
+    if (action === "plan_layout") { const plan = await planLayout(input); await settle(true); return respostaJson({ ok: true, plan }); }
     if (action === "analyze_floor_plan") {
       const analysis = await analyzeFloorPlan(input);
+      await settle(true);
       return respostaJson({ ok: true, analysis });
     }
     const result = await generateScene(input);
+    await settle(result.providerStatus === 'ok' && result.images.length > 0);
 
     return respostaJson({
       ok: result.providerStatus === "ok",
@@ -400,6 +426,7 @@ serve(async (req) => {
       error: "error" in result ? result.error : undefined,
     });
   } catch (err) {
+    try { await settle(false); } catch (refundError) { console.error('Falha ao liberar reserva de créditos', refundError); }
     console.error("studio-ai-engine erro", err);
     return respostaJson({
       erro: "Erro ao gerar imagem no Studio AI Engine",

@@ -1,6 +1,6 @@
 import { getEmpresaAtualId } from "./itens.api.mjs";
 import "./itens.modal.mjs";
-import "./itens.foto.mjs?v=20260730-quality-v2";
+import "./itens.foto.mjs?v=20260914-fotos-decorador";
 import "./itens.3d.mjs";
 
 const supabase = window.supabaseClient;
@@ -44,18 +44,7 @@ function notify(message, type = "info", title = "Itens"){
 function voltarParaItens(){
   window.__ITEM_DETALHE_ID = null;
   window.__ITEM_DETALHE_MODO = null;
-
-  if(typeof window.carregarNaMain === "function"){
-    window.carregarNaMain(
-      "Modulos/Estoque/CadastroItens/cadastro-itens.html",
-      "Modulos/Estoque/CadastroItens/cadastro-itens.mjs",
-      null,
-      "Modulos/Estoque/CadastroItens/cadastro-itens.css"
-    );
-    return;
-  }
-
-  window.history.back();
+  window.location.href = "cadastro-itens.html";
 }
 
 function statusDoItem(item = state.item){
@@ -89,6 +78,7 @@ function resetarFormularioNovo(){
   document.querySelectorAll(".item-status-toggle-row .status-btn").forEach((btn) => btn.classList.remove("active"));
   document.querySelector(".status-btn.ativo")?.classList.add("active");
 
+  carregarTabelasPreco(null);
   atualizarResumo();
 }
 
@@ -100,6 +90,7 @@ function preencherFormulario(item){
 
   $("itensId").value = item.id || "";
   $("itensCodigo").value = item.codigo || "";
+  $("itensProdutoBase").value = item.produto_base || "";
   $("itensProduto").value = item.produto || "";
   $("itensMaterial").value = item.material || "";
   $("itensCor").value = item.cor || "";
@@ -116,6 +107,19 @@ function preencherFormulario(item){
   $("itensCusto").value = item.custo || "";
   $("itensValorLocacao").value = item.valor_locacao || "";
   $("itensValorReposicao").value = item.valor_reposicao || "";
+
+  $("itensReferencia").value = item.referencia || "";
+  $("itensMarcaModelo").value = item.marca_modelo || "";
+  $("itensSubcategoria").value = item.subcategoria || "";
+  $("itensGrupoSeparacao").value = item.grupo_separacao || "";
+  $("itensEstilo").value = item.estilo || "";
+  $("itensFornecedor").value = item.fornecedor_id || "";
+  $("itensDestaqueSite").value = item.destaque_site ? "true" : "false";
+  $("itensOrdemExposicao").value = item.ordem_exposicao_site ?? "";
+  $("itensLocarSomenteKit").value = item.locar_somente_kit ? "true" : "false";
+  $("itensExclusivo").value = item.exclusivo ? "true" : "false";
+
+  carregarTabelasPreco(item.id);
 
   if(item.foto_url) window.itens_carregarFotoExistente?.(item.foto_url);
   else window.itens_resetarFoto?.();
@@ -140,6 +144,7 @@ function getValor(id){
 
 function atualizarResumo(){
   const nome = getValor("itensDescricaoTotal") || [
+    getValor("itensProdutoBase"),
     getValor("itensProduto"),
     getValor("itensMaterial"),
     getValor("itensCor"),
@@ -173,8 +178,78 @@ function atualizarResumo(){
   setText("itemResumoReposicao", money(getValor("itensValorReposicao").replace(",", ".")));
 }
 
+async function carregarFornecedoresParaSelect(){
+  const select = $("itensFornecedor");
+  if(!select) return;
+
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .select("id,nome_razao_social,nome_fantasia")
+    .eq("empresa_id", state.empresaId)
+    .order("nome_razao_social", { ascending: true });
+
+  if(error){
+    console.error("Erro ao carregar fornecedores:", error);
+    return;
+  }
+
+  const valorAtual = select.value;
+  select.innerHTML = '<option value="">Selecione</option>' + (data || [])
+    .map((f) => `<option value="${f.id}">${(f.nome_fantasia || f.nome_razao_social || "").replace(/[&<>"']/g, "")}</option>`)
+    .join("");
+  if(valorAtual) select.value = valorAtual;
+}
+
+function formatarVigencia(tabela){
+  if(!tabela.vigencia_inicio && !tabela.vigencia_fim) return "-";
+  // Monta a data a partir das partes (YYYY-MM-DD) em vez de `new Date(d)`,
+  // que interpretaria a data como meia-noite UTC e poderia exibir o dia
+  // anterior dependendo do fuso horário de quem está vendo a tela.
+  const fmt = (d) => { if (!d) return "?"; const [y, m, dd] = d.split("-"); return `${dd}/${m}/${y}`; };
+  return `${fmt(tabela.vigencia_inicio)} a ${fmt(tabela.vigencia_fim)}`;
+}
+
+async function carregarTabelasPreco(itemId){
+  const corpo = $("itensTabelasPrecoBody");
+  if(!corpo) return;
+
+  if(!itemId){
+    corpo.innerHTML = '<tr><td colspan="5">Salve o item para ver os precos por tabela.</td></tr>';
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("itens_precos")
+    .select("valor_locacao, tabelas_preco:tabela_preco_id ( nome, ano_referencia, vigencia_inicio, vigencia_fim, ativa )")
+    .eq("item_id", itemId)
+    .order("tabela_preco_id", { ascending: false });
+
+  if(error){
+    console.error("Erro ao carregar tabelas de preco do item:", error);
+    corpo.innerHTML = '<tr><td colspan="5">Nao foi possivel carregar os precos.</td></tr>';
+    return;
+  }
+
+  if(!data || !data.length){
+    corpo.innerHTML = '<tr><td colspan="5">Este item ainda nao tem preco em nenhuma tabela.</td></tr>';
+    return;
+  }
+
+  corpo.innerHTML = data.map((linha) => {
+    const tabela = linha.tabelas_preco || {};
+    return `<tr>
+      <td>${(tabela.nome || "-").replace(/[&<>"']/g, "")}</td>
+      <td>${tabela.ano_referencia ?? "-"}</td>
+      <td>${formatarVigencia(tabela)}</td>
+      <td>${tabela.ativa ? '<span class="item-tabela-preco-ativa">Ativa</span>' : "Inativa"}</td>
+      <td>${money(linha.valor_locacao)}</td>
+    </tr>`;
+  }).join("");
+}
+
 async function carregarItem(){
   state.empresaId = await getEmpresaAtualId();
+  await carregarFornecedoresParaSelect();
 
   if(!state.itemId){
     state.modo = "novo";
@@ -294,6 +369,7 @@ function bindEvents(){
 
   document.querySelector(".item-detail-page")?.addEventListener("input", (event) => {
     const ids = [
+      "itensProdutoBase",
       "itensProduto",
       "itensMaterial",
       "itensCor",
@@ -340,4 +416,4 @@ export function destroyItemDetalhes(){
 }
 
 window.__activeModuleDestroy = destroyItemDetalhes;
-window.__moduleInit = initItemDetalhes;
+requestAnimationFrame(() => requestAnimationFrame(initItemDetalhes));

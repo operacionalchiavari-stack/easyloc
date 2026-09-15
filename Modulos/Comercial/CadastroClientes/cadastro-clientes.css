@@ -16,7 +16,7 @@ body {
 }
 
 .container {
-  padding: 32px;
+  padding: 8px 24px 20px;
 }
 
 /* HEADER */
@@ -149,7 +149,10 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .edit-btn {
@@ -190,7 +193,8 @@ body {
 }
 
 .form-grid.three-cols {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px 16px;
 }
 
 .form-group {
@@ -236,13 +240,60 @@ textarea {
 .btn-save {
   display: none;
 }
+
+/* =====================================================
+   DETALHES DO CLIENTE COMO TELA (nao mais modal flutuante)
+===================================================== */
+.clientes-detail-view {
+  padding: 8px 24px 12px;
+  width: 100%;
+}
+
+.clientes-detail-view .clientes-detail-card {
+  background: transparent;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  position: static;
+}
+
+.back-btn {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--azul);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.back-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+#modal .modal-header > h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
 /* TAGS CLIENTE */
 .tag-section {
   display: flex;
-  gap: 18px;
+  gap: 14px;
 
-  margin-top: 20px;
-  margin-bottom: 32px;
+  margin-top: 12px;
+  margin-bottom: 8px;
 
   overflow-x: auto; /* â¬…ï¸ scroll horizontal */
   padding-bottom: 8px; /* espaÃ§o para scrollbar */
@@ -879,11 +930,52 @@ tbody tr:hover {
   color: #9a3412;
   line-height: 1.4;
 }
-.cliente-identidade{display:block;padding:18px;border:1px solid #e1e5eb;border-radius:14px;background:#fafbfc}
-.cliente-identidade-logo{display:flex;align-items:center;gap:14px}
-.cliente-identidade-logo img{width:92px;height:68px;object-fit:contain;border:1px dashed #cbd2dc;border-radius:10px;background:#fff}
-.cliente-identidade-logo img.is-empty{background:linear-gradient(135deg,#f4f5f7,#fff)}
-.cliente-identidade-logo div{display:grid;gap:5px}.cliente-identidade-logo small{color:#6b7280}.cliente-identidade-logo .btn{width:max-content;margin-top:5px;cursor:pointer}
+/* Foto do cliente/decorador: avatar grande ocupando 2 linhas ao lado de
+   Tipo de Pessoa/Nome (antes era um bloco largo "Identidade visual do
+   decorador" numa linha inteira separada, so 64px de altura). */
+.cliente-foto-field{ height:100%; }
+.cliente-foto-avatar{
+  position:relative;
+  display:block;
+  width:100%;
+  height:100%;
+  min-height:128px;
+  border:1px solid #e1e5eb;
+  border-radius:14px;
+  background:linear-gradient(135deg,#f4f5f7,#fff);
+  cursor:pointer;
+  overflow:hidden;
+}
+.cliente-foto-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.cliente-foto-avatar img.is-empty{visibility:hidden}
+.cliente-foto-edit{
+  position:absolute;
+  right:6px;
+  bottom:6px;
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:#1F2937;
+  color:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);
+  pointer-events:none;
+}
+.cliente-foto-edit svg{width:16px;height:16px}
 #catalogoSenhaStatus{display:block;margin-top:6px;color:#6b7280;font-size:12px}
 #catalogoSenhaStatus.is-configured{color:#15803d;font-weight:600}
-@media(max-width:760px){.cliente-identidade{grid-template-columns:1fr}.cliente-identidade-logo{align-items:flex-start}}
+
+@media(max-width:760px){
+  .form-grid.three-cols .form-group,
+  .form-grid.three-cols .tag-section {
+    grid-column: span 12 !important;
+  }
+  .cliente-foto-field {
+    grid-row: auto !important;
+  }
+  .cliente-foto-avatar {
+    min-height: 96px;
+    max-width: 96px;
+  }
+}

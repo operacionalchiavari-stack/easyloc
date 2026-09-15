@@ -1,3 +1,17 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Itens Danificados</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="ordem-servicos.css?v=20260913b">
+</head>
+<body>
 
 <div class="ordem-servicos-page el-page">
 
@@ -41,13 +55,13 @@
   </div>
 </div>
   <select class="el-select" id="filtroNome"></select>
-  <input class="el-input" id="filtroOS" placeholder="Número O.S">
+  <input class="el-input" id="filtroOS" placeholder="Número O.S" autocomplete="off">
   <select class="el-select" id="filtroOnde">
     <option value="">Dano (todos)</option>
     <option value="Dano Interno">Dano Interno</option>
     <option value="Evento">Evento</option>
   </select>
-  <input class="el-input" id="filtroPedido" placeholder="Número do pedido">
+  <input class="el-input" id="filtroPedido" placeholder="Número do pedido" autocomplete="off">
 </div>
 
 <!-- cards removidos -->
@@ -277,13 +291,15 @@
 </div>
 
 
-<!-- MODAL LANÇAMENTO O.S -->
-<div class="modal el-modal" id="modalOS">
-  <div class="modal-box os-modal-box el-modal__box">
+<!-- TELA LANÇAMENTO O.S (nao mais modal) -->
+<div class="el-page el-detail-view hidden" id="modalOS">
+  <div class="os-modal-box el-detail-card">
 
-    <div class="os-modal-header">
+    <div class="os-modal-header el-detail-header">
+      <button class="el-back-btn btn-icon" type="button" onclick="fecharModalOS()" title="Voltar para a lista">
+        <i data-lucide="arrow-left"></i>
+      </button>
       <h2>O.S Manutenção</h2>
-      <button class="os-modal-close btn-icon" type="button" onclick="fecharModalOS()">✕</button>
     </div>
 
     <div class="os-modal-body">
@@ -423,8 +439,8 @@
 
     </div>
 
-    <div class="os-modal-footer">
-      <button class="os-btn btn secondary" type="button" onclick="fecharModalOS()">Cancelar</button>
+    <div class="os-modal-footer el-detail-footer">
+      <button class="os-btn btn secondary" type="button" onclick="fecharModalOS()">Voltar</button>
       <button class="os-btn btn primary" type="button" onclick="salvarOSModal()">Enviar</button>
     </div>
 
@@ -599,3 +615,14 @@
   </div>
 </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../js/core/permissions.js"></script>
+<script src="ordem-servicos.js?v=20260913b"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

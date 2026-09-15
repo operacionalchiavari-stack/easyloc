@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catálogo — Acervo</title>
+  <link rel="stylesheet" href="catalogo-creditos.css?v=20260915">
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <link rel="stylesheet" href="catalogo.css?v=20260903-floor-finishes-v1">
-  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260911-render-options">
+  <link rel="stylesheet" href="catalogo.css?v=20260915-creditos">
+  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260913a">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../../js/core/supabase.js"></script>
+  <script defer src="catalogo-creditos.js?v=20260915"></script>
   <script type="importmap">
     {"imports":{"three":"../../../js/vendor/three/build/three.module.js","three/addons/":"../../../js/vendor/three/examples/jsm/"}}
   </script>
@@ -25,12 +27,36 @@
       <small id="catalogLoginStatus" aria-live="polite"></small>
     </form>
   </div>
+  <script>
+    // Anti-flash: a tela de login vem visivel por padrao no HTML (evita
+    // depender de JS pra mostrar o caso comum, cliente externo), e o
+    // cabecalho vem no visual normal do catalogo (marca + busca + fundo
+    // escuro). Quando aberto de dentro do sistema (equipe ja logada,
+    // sessionStorage.login_ok presente), os dois deveriam mudar na hora —
+    // mas o script do modulo (catalogo.mjs) so aplicava essas mudancas
+    // DEPOIS de resolver o empresa_id (chamada assincrona ao Supabase), e
+    // nesse meio-tempo a tela de login OU o cabecalho escuro com "Acervo"
+    // (nome generico, antes da empresa real carregar) pintavam na tela e
+    // sumiam — um "pisca" visivel. Esse script roda sincrono, aqui mesmo,
+    // antes do resto da pagina ser desenhado — aplica os dois ajustes na
+    // hora, sem esperar nada assincrono. catalogo.mjs continua fazendo a
+    // mesma coisa dentro de acessoInternoDoSistema(), redundante mas
+    // inofensivo (protecao extra caso esse script seja removido).
+    if (sessionStorage.getItem("login_ok")) {
+      document.getElementById("catalogLogin").classList.add("hidden");
+      document.body.classList.add("catalog-modo-sistema");
+    }
+  </script>
   <header class="catalog-header">
     <a class="catalog-brand" href="#catalogGrid" aria-label="Início do catálogo">
       <img class="catalog-brand-logo hidden" id="catalogBrandLogo" alt="">
       <span class="catalog-brand-name" id="catalogBrandName">Acervo</span>
     </a>
-    <nav class="catalog-header-categories" id="catalogHeaderCategories" aria-label="Categorias"></nav>
+    <div class="catalog-navigation">
+      <button type="button" class="catalog-nav-toggle" aria-expanded="false" aria-controls="catalogHeaderCategories">Catálogo <span aria-hidden="true">⌄</span></button>
+      <nav class="catalog-header-categories" id="catalogHeaderCategories" aria-label="Categorias"></nav>
+      <button type="button" class="catalog-header-category catalog-studio-tab" data-studio-toggle>Painel 3D</button>
+    </div>
     <div class="catalog-user hidden" id="catalogUser">
       <img class="hidden" id="catalogUserLogo" alt="">
       <div><small>CATÁLOGO DE</small><strong id="catalogUserName"></strong></div>
@@ -247,6 +273,6 @@
   <main class="catalog-products" id="catalogGrid"></main>
   <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
   <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
-  <script type="module" src="catalogo.mjs?v=20260911-render-options"></script>
+  <script type="module" src="catalogo.mjs?v=20260915-creditos"></script>
 </body>
 </html>

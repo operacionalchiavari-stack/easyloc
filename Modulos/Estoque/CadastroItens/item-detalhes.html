@@ -1,3 +1,17 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Detalhes do Item</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="item-detalhes.css?v=20260913d">
+</head>
+<body>
 <div class="item-detail-page el-page" data-module-root>
   <header class="item-detail-top">
     <div class="item-detail-heading-row">
@@ -25,8 +39,8 @@
           <div class="foto-preview-wrapper">
             <img
               id="itensFotoPreview"
-              src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
-              data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+              data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
               alt="Sem foto"
               draggable="false"
             >
@@ -139,15 +153,23 @@
 
           <div class="item-form-grid">
             <article class="item-card">
-              <h3>Informacoes Gerais</h3>
+              <h3>Informacoes principais</h3>
               <div class="item-fields-grid info-grid">
                 <label class="el-field">
-                  <span>Produto *</span>
+                  <span>Produto</span>
+                  <input class="el-input" id="itensProdutoBase" placeholder="Ex.: Bar">
+                </label>
+                <label class="el-field">
+                  <span>Especificacao (nome do item) *</span>
                   <input class="el-input" id="itensProduto">
                 </label>
                 <label class="el-field">
                   <span>Codigo *</span>
                   <input class="el-input" id="itensCodigo" readonly>
+                </label>
+                <label class="el-field">
+                  <span>Codigo do cliente (Referencia)</span>
+                  <input class="el-input" id="itensReferencia" placeholder="Ex.: APA001">
                 </label>
                 <label class="el-field">
                   <span>Material</span>
@@ -157,20 +179,42 @@
                   <span>Cor</span>
                   <input class="el-input" id="itensCor">
                 </label>
+                <label class="el-field">
+                  <span>Marca/Modelo</span>
+                  <input class="el-input" id="itensMarcaModelo">
+                </label>
                 <label class="el-field span-4">
                   <span>Descricao complementar</span>
                   <input class="el-input" id="itensDescricaoComplementar">
+                </label>
+              </div>
+            </article>
+
+            <article class="item-card">
+              <h3>Classificacao</h3>
+              <div class="item-fields-grid info-grid">
+                <label class="el-field">
+                  <span>Categoria *</span>
+                  <input class="el-input" id="itensCategoria">
+                </label>
+                <label class="el-field">
+                  <span>Subcategoria</span>
+                  <input class="el-input" id="itensSubcategoria">
                 </label>
                 <label class="el-field">
                   <span>Familia</span>
                   <input class="el-input" id="itensFamilia">
                 </label>
                 <label class="el-field">
-                  <span>Categoria *</span>
-                  <input class="el-input" id="itensCategoria">
+                  <span>Grupo de separacao</span>
+                  <input class="el-input" id="itensGrupoSeparacao" placeholder="Ex.: Aparadores">
                 </label>
                 <label class="el-field">
-                  <span>Setor de estoque *</span>
+                  <span>Estilo</span>
+                  <input class="el-input" id="itensEstilo" placeholder="Ex.: Classico">
+                </label>
+                <label class="el-field">
+                  <span>Setor de estoque</span>
                   <select class="el-select" id="itensSetor">
                     <option value="">Selecione</option>
                     <option value="Almoxarifado">Almoxarifado</option>
@@ -181,14 +225,6 @@
                     <option value="Móveis">Móveis</option>
                   </select>
                 </label>
-                <label class="el-field">
-                  <span>Exibir no site *</span>
-                  <select class="el-select" id="itensExibirSite">
-                    <option value="">Selecione</option>
-                    <option value="true">Sim</option>
-                    <option value="false">Nao</option>
-                  </select>
-                </label>
               </div>
             </article>
 
@@ -196,7 +232,7 @@
               <h3>Dimensoes e Cubagem</h3>
               <div class="item-fields-grid dims-grid">
                 <label class="el-field">
-                  <span>Largura / Diametro (m)</span>
+                  <span>Largura ou Diametro (m)</span>
                   <input class="el-input" id="itensLargura" oninput="itens_calcularVolume()">
                 </label>
                 <label class="el-field">
@@ -215,10 +251,16 @@
             </article>
 
             <article class="item-card">
-              <h3>Valores</h3>
+              <h3>Informacoes comerciais</h3>
               <div class="item-fields-grid values-grid">
                 <label class="el-field">
-                  <span>Custo (R$)</span>
+                  <span>Fornecedor</span>
+                  <select class="el-select" id="itensFornecedor">
+                    <option value="">Selecione</option>
+                  </select>
+                </label>
+                <label class="el-field">
+                  <span>Custo / Valor de Compra (R$)</span>
                   <input class="el-input" id="itensCusto" placeholder="0,00">
                 </label>
                 <label class="el-field">
@@ -229,6 +271,65 @@
                   <span>Valor de reposicao (R$)</span>
                   <input class="el-input" id="itensValorReposicao" placeholder="0,00">
                 </label>
+              </div>
+            </article>
+
+            <article class="item-card">
+              <h3>Exibicao no site</h3>
+              <div class="item-fields-grid info-grid">
+                <label class="el-field">
+                  <span>Exibir no site *</span>
+                  <select class="el-select" id="itensExibirSite">
+                    <option value="">Selecione</option>
+                    <option value="true">Sim</option>
+                    <option value="false">Nao</option>
+                  </select>
+                </label>
+                <label class="el-field">
+                  <span>Destaque no site</span>
+                  <select class="el-select" id="itensDestaqueSite">
+                    <option value="false">Nao</option>
+                    <option value="true">Sim</option>
+                  </select>
+                </label>
+                <label class="el-field">
+                  <span>Ordem de Exposicao no Site</span>
+                  <input class="el-input" id="itensOrdemExposicao" placeholder="Sem ordem definida">
+                </label>
+                <label class="el-field">
+                  <span>Locar somente no kit</span>
+                  <select class="el-select" id="itensLocarSomenteKit">
+                    <option value="false">Nao</option>
+                    <option value="true">Sim</option>
+                  </select>
+                </label>
+                <label class="el-field">
+                  <span>Exclusivo</span>
+                  <select class="el-select" id="itensExclusivo">
+                    <option value="false">Nao</option>
+                    <option value="true">Sim</option>
+                  </select>
+                </label>
+              </div>
+            </article>
+
+            <article class="item-card">
+              <h3>Tabelas de preco</h3>
+              <div class="item-table-wrap">
+                <table class="item-detail-table">
+                  <thead>
+                    <tr>
+                      <th>Tabela</th>
+                      <th>Ano</th>
+                      <th>Vigencia</th>
+                      <th>Status</th>
+                      <th>Valor de locacao</th>
+                    </tr>
+                  </thead>
+                  <tbody id="itensTabelasPrecoBody">
+                    <tr><td colspan="5">Salve o item para ver os precos por tabela.</td></tr>
+                  </tbody>
+                </table>
               </div>
             </article>
           </div>
@@ -249,8 +350,8 @@
                 <div class="item-photo-card-title">Detalhe 01</div>
                 <div class="item-detail-photo-frame item-gallery-photo-frame">
                   <img
-                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
-                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+                    data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
                     data-item-photo-preview="detalhe_01"
                     alt="Detalhe 01"
                   >
@@ -267,8 +368,8 @@
                 <div class="item-photo-card-title">Detalhe 02</div>
                 <div class="item-detail-photo-frame item-gallery-photo-frame">
                   <img
-                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
-                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+                    data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
                     data-item-photo-preview="detalhe_02"
                     alt="Detalhe 02"
                   >
@@ -286,11 +387,11 @@
           <article class="item-card item-gallery-card">
             <div class="item-card-header-inline">
               <div>
-                <h3>Fotos ambientadas do decorador</h3>
-                <p>Estas imagens aparecerão somente para o cliente selecionado.</p>
+                <h3>Fotos ambientadas do catálogo</h3>
+                <p>Chiavari: fotos do catálogo padrão. Ao selecionar um decorador, as fotos serão exclusivas dele e terão prioridade sobre as fotos padrão.</p>
               </div>
               <label class="el-field">Cliente / decorador
-                <select class="el-select" id="itemGaleriaCliente"><option value="">Selecione o cliente</option></select>
+                <select class="el-select" id="itemGaleriaCliente"><option value="">Chiavari — catálogo padrão</option></select>
               </label>
             </div>
 
@@ -299,8 +400,8 @@
                 <div class="item-photo-card-title">Galeria 01</div>
                 <div class="item-detail-photo-frame item-gallery-photo-frame">
                   <img
-                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
-                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+                    data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
                     data-item-photo-preview="galeria_01"
                     alt="Galeria 01"
                   >
@@ -317,8 +418,8 @@
                 <div class="item-photo-card-title">Galeria 02</div>
                 <div class="item-detail-photo-frame item-gallery-photo-frame">
                   <img
-                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
-                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+                    data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
                     data-item-photo-preview="galeria_02"
                     alt="Galeria 02"
                   >
@@ -335,8 +436,8 @@
                 <div class="item-photo-card-title">Galeria 03</div>
                 <div class="item-detail-photo-frame item-gallery-photo-frame">
                   <img
-                    src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
-                    data-placeholder="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png"
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+                    data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
                     data-item-photo-preview="galeria_03"
                     alt="Galeria 03"
                   >
@@ -412,3 +513,15 @@
     </section>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../js/core/permissions.js"></script>
+<script src="../../../js/core/qrCode.js"></script>
+<script type="module" src="item-detalhes.mjs?v=20260914-fotos-decorador"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

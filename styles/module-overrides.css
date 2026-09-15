@@ -4,114 +4,114 @@
    A ideia e padronizar agora e limpar CSS local aos poucos.
 ===================================================== */
 
-#main-content,
-#main-content .el-page,
-#main-content .container,
-#main-content .page,
-#main-content .content-page,
-#main-content .cronograma-container,
-#main-content .personalizacoes-page,
-#main-content .cadastro-caminhoes-page,
-#main-content .container-fornecedores,
-#main-content .financeiro-page {
+:is(#main-content, .el-page),
+:is(#main-content, .el-page) .el-page,
+:is(#main-content, .el-page) .container,
+:is(#main-content, .el-page) .page,
+:is(#main-content, .el-page) .content-page,
+:is(#main-content, .el-page) .cronograma-container,
+:is(#main-content, .el-page) .personalizacoes-page,
+:is(#main-content, .el-page) .cadastro-caminhoes-page,
+:is(#main-content, .el-page) .container-fornecedores,
+:is(#main-content, .el-page) .financeiro-page {
   background: var(--el-color-bg);
 }
 
-#main-content,
-#main-content .el-page,
-#main-content .container,
-#main-content .page,
-#main-content .content-page,
-#main-content .cronograma-container,
-#main-content .personalizacoes-page,
-#main-content .cadastro-caminhoes-page,
-#main-content .container-fornecedores,
-#main-content .financeiro-page {
+:is(#main-content, .el-page),
+:is(#main-content, .el-page) .el-page,
+:is(#main-content, .el-page) .container,
+:is(#main-content, .el-page) .page,
+:is(#main-content, .el-page) .content-page,
+:is(#main-content, .el-page) .cronograma-container,
+:is(#main-content, .el-page) .personalizacoes-page,
+:is(#main-content, .el-page) .cadastro-caminhoes-page,
+:is(#main-content, .el-page) .container-fornecedores,
+:is(#main-content, .el-page) .financeiro-page {
   color: var(--el-color-text) !important;
   font-weight: 400;
 }
 
-#main-content h1,
-#main-content h2,
-#main-content h3,
-#main-content h4,
-#main-content h5,
-#main-content h6,
-#main-content .el-page-title,
-#main-content .page-title,
-#main-content .titulo,
-#main-content .titulo-pagina,
-#main-content .modal-title {
+:is(#main-content, .el-page) h1,
+:is(#main-content, .el-page) h2,
+:is(#main-content, .el-page) h3,
+:is(#main-content, .el-page) h4,
+:is(#main-content, .el-page) h5,
+:is(#main-content, .el-page) h6,
+:is(#main-content, .el-page) .el-page-title,
+:is(#main-content, .el-page) .page-title,
+:is(#main-content, .el-page) .titulo,
+:is(#main-content, .el-page) .titulo-pagina,
+:is(#main-content, .el-page) .modal-title {
   color: var(--el-color-title) !important;
   font-weight: 700 !important;
 }
 
-#main-content p,
-#main-content li,
-#main-content label,
-#main-content td,
-#main-content small {
+:is(#main-content, .el-page) p,
+:is(#main-content, .el-page) li,
+:is(#main-content, .el-page) label,
+:is(#main-content, .el-page) td,
+:is(#main-content, .el-page) small {
   color: inherit;
 }
 
-#main-content span:not([class]),
-#main-content div:not([class]) {
+:is(#main-content, .el-page) span:not([class]),
+:is(#main-content, .el-page) div:not([class]) {
   color: inherit;
 }
 
-#main-content label,
-#main-content .el-label,
-#main-content .field-label,
-#main-content .form-label {
+:is(#main-content, .el-page) label,
+:is(#main-content, .el-page) .el-label,
+:is(#main-content, .el-page) .field-label,
+:is(#main-content, .el-page) .form-label {
   color: var(--el-color-muted) !important;
   font-weight: 500 !important;
 }
 
-#main-content p,
-#main-content li,
-#main-content td,
-#main-content .text,
-#main-content .descricao,
-#main-content .description {
+:is(#main-content, .el-page) p,
+:is(#main-content, .el-page) li,
+:is(#main-content, .el-page) td,
+:is(#main-content, .el-page) .text,
+:is(#main-content, .el-page) .descricao,
+:is(#main-content, .el-page) .description {
   color: var(--el-color-text);
   font-weight: 400;
 }
 
-#main-content small,
-#main-content .muted,
-#main-content .text-muted,
-#main-content .subtitle,
-#main-content .subtitulo,
-#main-content .helper,
-#main-content .hint,
-#main-content .meta,
-#main-content .description-muted {
+:is(#main-content, .el-page) small,
+:is(#main-content, .el-page) .muted,
+:is(#main-content, .el-page) .text-muted,
+:is(#main-content, .el-page) .subtitle,
+:is(#main-content, .el-page) .subtitulo,
+:is(#main-content, .el-page) .helper,
+:is(#main-content, .el-page) .hint,
+:is(#main-content, .el-page) .meta,
+:is(#main-content, .el-page) .description-muted {
   color: var(--el-color-muted) !important;
   font-weight: 400 !important;
 }
 
-#main-content strong,
-#main-content b {
+:is(#main-content, .el-page) strong,
+:is(#main-content, .el-page) b {
   color: inherit;
   font-weight: 600;
 }
 
-#main-content .btn,
-#main-content .add-btn,
-#main-content .btn-primary,
-#main-content .btn-secondary,
-#main-content .btn-save,
-#main-content .btn-cancel,
-#main-content .btn-delete,
-#main-content .btn-salvar,
-#main-content .btn-cancelar,
-#main-content .btn-sair,
-#main-content .btn-exit,
-#main-content .btn-alert,
-#main-content .modal-alert-btn,
-#main-content .os-btn,
-#main-content .btn-nova-os,
-#main-content .btn-baixa {
+:is(#main-content, .el-page) .btn,
+:is(#main-content, .el-page) .add-btn,
+:is(#main-content, .el-page) .btn-primary,
+:is(#main-content, .el-page) .btn-secondary,
+:is(#main-content, .el-page) .btn-save,
+:is(#main-content, .el-page) .btn-cancel,
+:is(#main-content, .el-page) .btn-delete,
+:is(#main-content, .el-page) .btn-salvar,
+:is(#main-content, .el-page) .btn-cancelar,
+:is(#main-content, .el-page) .btn-sair,
+:is(#main-content, .el-page) .btn-exit,
+:is(#main-content, .el-page) .btn-alert,
+:is(#main-content, .el-page) .modal-alert-btn,
+:is(#main-content, .el-page) .os-btn,
+:is(#main-content, .el-page) .btn-nova-os,
+:is(#main-content, .el-page) .btn-baixa {
   min-height: 40px;
   display: inline-flex;
   align-items: center;
@@ -132,113 +132,113 @@
   transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
 }
 
-#main-content .btn:hover,
-#main-content .add-btn:hover,
-#main-content .btn-primary:hover,
-#main-content .btn-secondary:hover,
-#main-content .btn-save:hover,
-#main-content .btn-cancel:hover,
-#main-content .btn-delete:hover,
-#main-content .btn-salvar:hover,
-#main-content .btn-cancelar:hover,
-#main-content .btn-sair:hover,
-#main-content .btn-exit:hover,
-#main-content .btn-alert:hover,
-#main-content .modal-alert-btn:hover,
-#main-content .os-btn:hover,
-#main-content .btn-nova-os:hover,
-#main-content .btn-baixa:hover {
+:is(#main-content, .el-page) .btn:hover,
+:is(#main-content, .el-page) .add-btn:hover,
+:is(#main-content, .el-page) .btn-primary:hover,
+:is(#main-content, .el-page) .btn-secondary:hover,
+:is(#main-content, .el-page) .btn-save:hover,
+:is(#main-content, .el-page) .btn-cancel:hover,
+:is(#main-content, .el-page) .btn-delete:hover,
+:is(#main-content, .el-page) .btn-salvar:hover,
+:is(#main-content, .el-page) .btn-cancelar:hover,
+:is(#main-content, .el-page) .btn-sair:hover,
+:is(#main-content, .el-page) .btn-exit:hover,
+:is(#main-content, .el-page) .btn-alert:hover,
+:is(#main-content, .el-page) .modal-alert-btn:hover,
+:is(#main-content, .el-page) .os-btn:hover,
+:is(#main-content, .el-page) .btn-nova-os:hover,
+:is(#main-content, .el-page) .btn-baixa:hover {
   box-shadow: var(--el-shadow-sm);
   filter: none;
 }
 
-#main-content .btn:active,
-#main-content .add-btn:active,
-#main-content .btn-primary:active,
-#main-content .btn-secondary:active,
-#main-content .btn-save:active,
-#main-content .btn-cancel:active,
-#main-content .btn-delete:active,
-#main-content .btn-salvar:active,
-#main-content .btn-cancelar:active,
-#main-content .btn-sair:active,
-#main-content .btn-exit:active,
-#main-content .btn-alert:active,
-#main-content .modal-alert-btn:active,
-#main-content .os-btn:active,
-#main-content .btn-nova-os:active,
-#main-content .btn-baixa:active {
+:is(#main-content, .el-page) .btn:active,
+:is(#main-content, .el-page) .add-btn:active,
+:is(#main-content, .el-page) .btn-primary:active,
+:is(#main-content, .el-page) .btn-secondary:active,
+:is(#main-content, .el-page) .btn-save:active,
+:is(#main-content, .el-page) .btn-cancel:active,
+:is(#main-content, .el-page) .btn-delete:active,
+:is(#main-content, .el-page) .btn-salvar:active,
+:is(#main-content, .el-page) .btn-cancelar:active,
+:is(#main-content, .el-page) .btn-sair:active,
+:is(#main-content, .el-page) .btn-exit:active,
+:is(#main-content, .el-page) .btn-alert:active,
+:is(#main-content, .el-page) .modal-alert-btn:active,
+:is(#main-content, .el-page) .os-btn:active,
+:is(#main-content, .el-page) .btn-nova-os:active,
+:is(#main-content, .el-page) .btn-baixa:active {
   transform: translateY(1px);
 }
 
-#main-content .btn.primary,
-#main-content .btn.save,
-#main-content .btn.salvar,
-#main-content .btn-primary,
-#main-content .btn-save,
-#main-content .btn-salvar,
-#main-content .btn-alert,
-#main-content .modal-alert-btn,
-#main-content .os-btn-primary,
-#main-content .btn-nova-os,
-#main-content .btn-baixa,
-#main-content .add-btn:not(.secondary) {
+:is(#main-content, .el-page) .btn.primary,
+:is(#main-content, .el-page) .btn.save,
+:is(#main-content, .el-page) .btn.salvar,
+:is(#main-content, .el-page) .btn-primary,
+:is(#main-content, .el-page) .btn-save,
+:is(#main-content, .el-page) .btn-salvar,
+:is(#main-content, .el-page) .btn-alert,
+:is(#main-content, .el-page) .modal-alert-btn,
+:is(#main-content, .el-page) .os-btn-primary,
+:is(#main-content, .el-page) .btn-nova-os,
+:is(#main-content, .el-page) .btn-baixa,
+:is(#main-content, .el-page) .add-btn:not(.secondary) {
   background: var(--el-color-accent);
   border-color: var(--el-color-accent);
   color: #ffffff;
 }
 
-#main-content .btn.primary:hover,
-#main-content .btn.save:hover,
-#main-content .btn.salvar:hover,
-#main-content .btn-primary:hover,
-#main-content .btn-save:hover,
-#main-content .btn-salvar:hover,
-#main-content .btn-alert:hover,
-#main-content .modal-alert-btn:hover,
-#main-content .os-btn-primary:hover,
-#main-content .btn-nova-os:hover,
-#main-content .btn-baixa:hover,
-#main-content .add-btn:not(.secondary):hover {
+:is(#main-content, .el-page) .btn.primary:hover,
+:is(#main-content, .el-page) .btn.save:hover,
+:is(#main-content, .el-page) .btn.salvar:hover,
+:is(#main-content, .el-page) .btn-primary:hover,
+:is(#main-content, .el-page) .btn-save:hover,
+:is(#main-content, .el-page) .btn-salvar:hover,
+:is(#main-content, .el-page) .btn-alert:hover,
+:is(#main-content, .el-page) .modal-alert-btn:hover,
+:is(#main-content, .el-page) .os-btn-primary:hover,
+:is(#main-content, .el-page) .btn-nova-os:hover,
+:is(#main-content, .el-page) .btn-baixa:hover,
+:is(#main-content, .el-page) .add-btn:not(.secondary):hover {
   background: var(--el-color-accent-strong);
   border-color: var(--el-color-accent-strong);
 }
 
-#main-content .btn.secondary,
-#main-content .btn.cancel,
-#main-content .btn.cancelar,
-#main-content .btn-secondary,
-#main-content .btn-cancel,
-#main-content .btn-cancelar,
-#main-content .os-btn-light,
-#main-content .add-btn.secondary,
-#main-content .btn-outline {
+:is(#main-content, .el-page) .btn.secondary,
+:is(#main-content, .el-page) .btn.cancel,
+:is(#main-content, .el-page) .btn.cancelar,
+:is(#main-content, .el-page) .btn-secondary,
+:is(#main-content, .el-page) .btn-cancel,
+:is(#main-content, .el-page) .btn-cancelar,
+:is(#main-content, .el-page) .os-btn-light,
+:is(#main-content, .el-page) .add-btn.secondary,
+:is(#main-content, .el-page) .btn-outline {
   background: var(--el-color-surface);
   border-color: var(--el-color-border);
   color: var(--el-color-text);
 }
 
-#main-content .btn.danger,
-#main-content .btn.exit,
-#main-content .btn.sair,
-#main-content .btn-danger,
-#main-content .btn-delete,
-#main-content .btn-sair,
-#main-content .btn-exit {
+:is(#main-content, .el-page) .btn.danger,
+:is(#main-content, .el-page) .btn.exit,
+:is(#main-content, .el-page) .btn.sair,
+:is(#main-content, .el-page) .btn-danger,
+:is(#main-content, .el-page) .btn-delete,
+:is(#main-content, .el-page) .btn-sair,
+:is(#main-content, .el-page) .btn-exit {
   background: var(--el-color-danger);
   border-color: var(--el-color-danger);
   color: #ffffff;
 }
 
-#main-content .btn-icon,
-#main-content .btn-close,
-#main-content .modal-close,
-#main-content .os-modal-close,
-#main-content .btn-close-ajuda,
-#main-content .fechar,
-#main-content .fechar-dia,
-#main-content .btn-icon[aria-label="Fechar"],
-#main-content button[aria-label="Fechar"] {
+:is(#main-content, .el-page) .btn-icon,
+:is(#main-content, .el-page) .btn-close,
+:is(#main-content, .el-page) .modal-close,
+:is(#main-content, .el-page) .os-modal-close,
+:is(#main-content, .el-page) .btn-close-ajuda,
+:is(#main-content, .el-page) .fechar,
+:is(#main-content, .el-page) .fechar-dia,
+:is(#main-content, .el-page) .btn-icon[aria-label="Fechar"],
+:is(#main-content, .el-page) button[aria-label="Fechar"] {
   width: 38px;
   height: 38px;
   min-height: 38px;
@@ -253,8 +253,8 @@
   box-shadow: none;
 }
 
-#main-content .btn-fechar,
-#main-content .btn.fechar {
+:is(#main-content, .el-page) .btn-fechar,
+:is(#main-content, .el-page) .btn.fechar {
   width: auto;
   min-width: 78px;
   height: 40px;
@@ -268,44 +268,44 @@
   box-shadow: none;
 }
 
-#main-content .btn-close,
-#main-content .modal-close,
-#main-content .os-modal-close,
-#main-content .btn-close-ajuda,
-#main-content .btn-fechar,
-#main-content .btn.fechar,
-#main-content .fechar,
-#main-content .fechar-dia,
-#main-content .btn-icon[aria-label="Fechar"],
-#main-content button[aria-label="Fechar"] {
+:is(#main-content, .el-page) .btn-close,
+:is(#main-content, .el-page) .modal-close,
+:is(#main-content, .el-page) .os-modal-close,
+:is(#main-content, .el-page) .btn-close-ajuda,
+:is(#main-content, .el-page) .btn-fechar,
+:is(#main-content, .el-page) .btn.fechar,
+:is(#main-content, .el-page) .fechar,
+:is(#main-content, .el-page) .fechar-dia,
+:is(#main-content, .el-page) .btn-icon[aria-label="Fechar"],
+:is(#main-content, .el-page) button[aria-label="Fechar"] {
   background: var(--el-color-danger) !important;
   border-color: var(--el-color-danger) !important;
   color: #ffffff !important;
 }
 
-#main-content .btn-close:hover,
-#main-content .modal-close:hover,
-#main-content .os-modal-close:hover,
-#main-content .btn-close-ajuda:hover,
-#main-content .btn-fechar:hover,
-#main-content .btn.fechar:hover,
-#main-content .fechar:hover,
-#main-content .fechar-dia:hover,
-#main-content .btn-icon[aria-label="Fechar"]:hover,
-#main-content button[aria-label="Fechar"]:hover {
+:is(#main-content, .el-page) .btn-close:hover,
+:is(#main-content, .el-page) .modal-close:hover,
+:is(#main-content, .el-page) .os-modal-close:hover,
+:is(#main-content, .el-page) .btn-close-ajuda:hover,
+:is(#main-content, .el-page) .btn-fechar:hover,
+:is(#main-content, .el-page) .btn.fechar:hover,
+:is(#main-content, .el-page) .fechar:hover,
+:is(#main-content, .el-page) .fechar-dia:hover,
+:is(#main-content, .el-page) .btn-icon[aria-label="Fechar"]:hover,
+:is(#main-content, .el-page) button[aria-label="Fechar"]:hover {
   background: #b91c1c !important;
   border-color: #b91c1c !important;
   color: #ffffff !important;
 }
 
-#main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-#main-content select,
-#main-content textarea,
-#main-content .input,
-#main-content .select,
-#main-content .el-input,
-#main-content .el-select,
-#main-content .el-textarea {
+:is(#main-content, .el-page) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+:is(#main-content, .el-page) select,
+:is(#main-content, .el-page) textarea,
+:is(#main-content, .el-page) .input,
+:is(#main-content, .el-page) .select,
+:is(#main-content, .el-page) .el-input,
+:is(#main-content, .el-page) .el-select,
+:is(#main-content, .el-page) .el-textarea {
   min-height: 40px;
   border: 1px solid var(--el-color-border);
   border-radius: var(--el-radius-md);
@@ -318,33 +318,33 @@
   outline: none;
 }
 
-#main-content textarea,
-#main-content .el-textarea {
+:is(#main-content, .el-page) textarea,
+:is(#main-content, .el-page) .el-textarea {
   min-height: 96px;
   resize: vertical;
 }
 
-#main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
-#main-content select:focus,
-#main-content textarea:focus,
-#main-content .input:focus,
-#main-content .select:focus,
-#main-content .el-input:focus,
-#main-content .el-select:focus,
-#main-content .el-textarea:focus {
+:is(#main-content, .el-page) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+:is(#main-content, .el-page) select:focus,
+:is(#main-content, .el-page) textarea:focus,
+:is(#main-content, .el-page) .input:focus,
+:is(#main-content, .el-page) .select:focus,
+:is(#main-content, .el-page) .el-input:focus,
+:is(#main-content, .el-page) .el-select:focus,
+:is(#main-content, .el-page) .el-textarea:focus {
   border-color: var(--el-color-accent);
   box-shadow: var(--el-focus-ring);
 }
 
-#main-content input::placeholder,
-#main-content textarea::placeholder {
+:is(#main-content, .el-page) input::placeholder,
+:is(#main-content, .el-page) textarea::placeholder {
   color: var(--el-color-placeholder) !important;
 }
 
-#main-content .table-wrapper,
-#main-content .table-wrap,
-#main-content .tabela-card,
-#main-content .el-table-wrap {
+:is(#main-content, .el-page) .table-wrapper,
+:is(#main-content, .el-page) .table-wrap,
+:is(#main-content, .el-page) .tabela-card,
+:is(#main-content, .el-page) .el-table-wrap {
   width: 100%;
   overflow: auto;
   background: var(--el-color-surface);
@@ -353,7 +353,7 @@
   box-shadow: var(--el-shadow-sm);
 }
 
-#main-content table {
+:is(#main-content, .el-page) table {
   width: 100%;
   border-collapse: collapse;
   background: var(--el-color-surface);
@@ -364,21 +364,21 @@
 
 body table thead,
 body table thead tr,
-#main-content table thead,
-#main-content table thead tr,
-#main-content .table-header,
-#main-content .tabela-header {
+:is(#main-content, .el-page) table thead,
+:is(#main-content, .el-page) table thead tr,
+:is(#main-content, .el-page) .table-header,
+:is(#main-content, .el-page) .tabela-header {
   background: transparent !important;
 }
 
 body table thead th,
 body table thead td,
-#main-content table thead th,
-#main-content table thead td,
-#main-content .table-header th,
-#main-content .table-header td,
-#main-content .tabela-header th,
-#main-content .tabela-header td {
+:is(#main-content, .el-page) table thead th,
+:is(#main-content, .el-page) table thead td,
+:is(#main-content, .el-page) .table-header th,
+:is(#main-content, .el-page) .table-header td,
+:is(#main-content, .el-page) .tabela-header th,
+:is(#main-content, .el-page) .tabela-header td {
   background: var(--el-table-header-bg) !important;
   color: var(--el-table-header-color) !important;
   padding: 14px 16px;
@@ -391,7 +391,7 @@ body table thead td,
   white-space: nowrap;
 }
 
-#main-content table tbody td {
+:is(#main-content, .el-page) table tbody td {
   padding: 13px 16px;
   border-bottom: 1px solid var(--el-table-row-border);
   color: var(--el-color-text);
@@ -399,17 +399,17 @@ body table thead td,
   vertical-align: middle;
 }
 
-#main-content table tbody tr {
+:is(#main-content, .el-page) table tbody tr {
   transition: background 0.16s ease, box-shadow 0.16s ease;
 }
 
 body table tbody tr:hover,
-#main-content table tbody tr:hover {
+:is(#main-content, .el-page) table tbody tr:hover {
   background: var(--el-table-row-hover) !important;
 }
 
 body table tbody tr:hover td,
-#main-content table tbody tr:hover td {
+:is(#main-content, .el-page) table tbody tr:hover td {
   background: var(--el-table-row-hover) !important;
 }
 
@@ -421,37 +421,37 @@ body table tbody td.selected,
 body table tbody td.is-selected,
 body table tbody td.selected-cell,
 body table tbody td.cell-selected,
-#main-content table tbody tr.selected,
-#main-content table tbody tr.selected td,
-#main-content table tbody tr.linha-selecionada,
-#main-content table tbody tr.linha-selecionada td,
-#main-content table tbody td.selected,
-#main-content table tbody td.is-selected,
-#main-content table tbody td.selected-cell,
-#main-content table tbody td.cell-selected {
+:is(#main-content, .el-page) table tbody tr.selected,
+:is(#main-content, .el-page) table tbody tr.selected td,
+:is(#main-content, .el-page) table tbody tr.linha-selecionada,
+:is(#main-content, .el-page) table tbody tr.linha-selecionada td,
+:is(#main-content, .el-page) table tbody td.selected,
+:is(#main-content, .el-page) table tbody td.is-selected,
+:is(#main-content, .el-page) table tbody td.selected-cell,
+:is(#main-content, .el-page) table tbody td.cell-selected {
   background: var(--el-table-selected-bg) !important;
 }
 
-#main-content .pedido-screen .pedido-items-table thead tr {
+:is(#main-content, .el-page) .pedido-screen .pedido-items-table thead tr {
   background: var(--el-table-header-bg) !important;
 }
 
-#main-content .pedido-screen .pedido-items-table thead th,
-#main-content .pedido-screen .pedido-items-table thead td {
+:is(#main-content, .el-page) .pedido-screen .pedido-items-table thead th,
+:is(#main-content, .el-page) .pedido-screen .pedido-items-table thead td {
   background: transparent !important;
 }
 
-#main-content table tbody tr:last-child td {
+:is(#main-content, .el-page) table tbody tr:last-child td {
   border-bottom: 0;
 }
 
-#main-content .el-card,
-#main-content .card,
-#main-content .card-resumo,
-#main-content .resumo-card,
-#main-content .info-card,
-#main-content .metric-card,
-#main-content .cards-resumo > * {
+:is(#main-content, .el-page) .el-card,
+:is(#main-content, .el-page) .card,
+:is(#main-content, .el-page) .card-resumo,
+:is(#main-content, .el-page) .resumo-card,
+:is(#main-content, .el-page) .info-card,
+:is(#main-content, .el-page) .metric-card,
+:is(#main-content, .el-page) .cards-resumo > * {
   background: var(--el-color-surface);
   border: 1px solid var(--el-color-border);
   border-radius: var(--el-radius-lg);
@@ -462,27 +462,27 @@ body table tbody td.cell-selected,
   font-weight: 400;
 }
 
-#main-content .el-card:hover,
-#main-content .card-resumo:hover,
-#main-content .resumo-card:hover,
-#main-content .info-card:hover,
-#main-content .metric-card:hover {
+:is(#main-content, .el-page) .el-card:hover,
+:is(#main-content, .el-page) .card-resumo:hover,
+:is(#main-content, .el-page) .resumo-card:hover,
+:is(#main-content, .el-page) .info-card:hover,
+:is(#main-content, .el-page) .metric-card:hover {
   box-shadow: var(--el-shadow-md);
 }
 
-#main-content .modal,
-#main-content .modal-overlay,
-#main-content .modal-alert,
-#main-content .modal-confirmacao {
+:is(#main-content, .el-page) .modal,
+:is(#main-content, .el-page) .modal-overlay,
+:is(#main-content, .el-page) .modal-alert,
+:is(#main-content, .el-page) .modal-confirmacao {
   background: var(--el-modal-backdrop);
   backdrop-filter: var(--el-modal-backdrop-blur);
 }
 
-#main-content .modal-content,
-#main-content .modal-box,
-#main-content .modal-card,
-#main-content .modal-alert-box,
-#main-content .modal-alert-content {
+:is(#main-content, .el-page) .modal-content,
+:is(#main-content, .el-page) .modal-box,
+:is(#main-content, .el-page) .modal-card,
+:is(#main-content, .el-page) .modal-alert-box,
+:is(#main-content, .el-page) .modal-alert-content {
   background: var(--el-color-surface);
   border: 1px solid var(--el-color-border);
   border-radius: var(--el-radius-xl);
@@ -490,16 +490,16 @@ body table tbody td.cell-selected,
   color: var(--el-color-text);
 }
 
-#main-content .modal-header,
-#main-content .modal-header-item,
-#main-content .os-modal-header {
+:is(#main-content, .el-page) .modal-header,
+:is(#main-content, .el-page) .modal-header-item,
+:is(#main-content, .el-page) .os-modal-header {
   border-bottom-color: var(--el-color-border);
 }
 
-#main-content .modal-footer,
-#main-content .modal-actions,
-#main-content .os-modal-footer,
-#main-content .modal-acoes {
+:is(#main-content, .el-page) .modal-footer,
+:is(#main-content, .el-page) .modal-actions,
+:is(#main-content, .el-page) .os-modal-footer,
+:is(#main-content, .el-page) .modal-acoes {
   gap: var(--el-space-3);
   border-top-color: var(--el-color-border);
 }
@@ -511,27 +511,27 @@ body table tbody td.cell-selected,
 ===================================================== */
 
 @media (max-width: 1200px) {
-  #main-content,
-  #main-content .el-page,
-  #main-content .container,
-  #main-content .page,
-  #main-content .content-page,
-  #main-content .cronograma-container,
-  #main-content .personalizacoes-page,
-  #main-content .cadastro-caminhoes-page,
-  #main-content .container-fornecedores,
-  #main-content .financeiro-page,
-  #main-content .orcamento-container,
-  #main-content .almoxarifado-container {
+  :is(#main-content, .el-page),
+  :is(#main-content, .el-page) .el-page,
+  :is(#main-content, .el-page) .container,
+  :is(#main-content, .el-page) .page,
+  :is(#main-content, .el-page) .content-page,
+  :is(#main-content, .el-page) .cronograma-container,
+  :is(#main-content, .el-page) .personalizacoes-page,
+  :is(#main-content, .el-page) .cadastro-caminhoes-page,
+  :is(#main-content, .el-page) .container-fornecedores,
+  :is(#main-content, .el-page) .financeiro-page,
+  :is(#main-content, .el-page) .orcamento-container,
+  :is(#main-content, .el-page) .almoxarifado-container {
     width: 100%;
     max-width: 100%;
     min-width: 0;
     padding: 0;
   }
 
-  #main-content .page-header,
-  #main-content .el-page-header,
-  #main-content header {
+  :is(#main-content, .el-page) .page-header,
+  :is(#main-content, .el-page) .el-page-header,
+  :is(#main-content, .el-page) header {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -539,71 +539,71 @@ body table tbody td.cell-selected,
     margin-bottom: 14px;
   }
 
-  #main-content .page-header h1,
-  #main-content .el-page-title,
-  #main-content h1 {
+  :is(#main-content, .el-page) .page-header h1,
+  :is(#main-content, .el-page) .el-page-title,
+  :is(#main-content, .el-page) h1 {
     font-size: 21px;
     line-height: 1.2;
     letter-spacing: 0;
   }
 
-  #main-content .page-header p,
-  #main-content .subtitle,
-  #main-content .descricao,
-  #main-content .description {
+  :is(#main-content, .el-page) .page-header p,
+  :is(#main-content, .el-page) .subtitle,
+  :is(#main-content, .el-page) .descricao,
+  :is(#main-content, .el-page) .description {
     font-size: 13px;
     line-height: 1.35;
   }
 
-  #main-content .header-actions,
-  #main-content .el-page-actions,
-  #main-content .header-actions-caminhao,
-  #main-content .separacao-header-actions,
-  #main-content .modal-actions,
-  #main-content .modal-acoes,
-  #main-content .os-modal-footer {
+  :is(#main-content, .el-page) .header-actions,
+  :is(#main-content, .el-page) .el-page-actions,
+  :is(#main-content, .el-page) .header-actions-caminhao,
+  :is(#main-content, .el-page) .separacao-header-actions,
+  :is(#main-content, .el-page) .modal-actions,
+  :is(#main-content, .el-page) .modal-acoes,
+  :is(#main-content, .el-page) .os-modal-footer {
     display: flex;
     flex-wrap: wrap;
     width: 100%;
     gap: 8px;
   }
 
-  #main-content .header-actions > *,
-  #main-content .el-page-actions > *,
-  #main-content .header-actions-caminhao > *,
-  #main-content .separacao-header-actions > *,
-  #main-content .modal-actions > *,
-  #main-content .modal-acoes > * {
+  :is(#main-content, .el-page) .header-actions > *,
+  :is(#main-content, .el-page) .el-page-actions > *,
+  :is(#main-content, .el-page) .header-actions-caminhao > *,
+  :is(#main-content, .el-page) .separacao-header-actions > *,
+  :is(#main-content, .el-page) .modal-actions > *,
+  :is(#main-content, .el-page) .modal-acoes > * {
     flex: 1 1 150px;
   }
 
-  #main-content .btn,
-  #main-content .add-btn,
-  #main-content .btn-primary,
-  #main-content .btn-secondary,
-  #main-content .btn-save,
-  #main-content .btn-cancel,
-  #main-content .btn-salvar,
-  #main-content .btn-cancelar,
-  #main-content .os-btn,
-  #main-content .btn-nova-os,
-  #main-content .btn-baixa {
+  :is(#main-content, .el-page) .btn,
+  :is(#main-content, .el-page) .add-btn,
+  :is(#main-content, .el-page) .btn-primary,
+  :is(#main-content, .el-page) .btn-secondary,
+  :is(#main-content, .el-page) .btn-save,
+  :is(#main-content, .el-page) .btn-cancel,
+  :is(#main-content, .el-page) .btn-salvar,
+  :is(#main-content, .el-page) .btn-cancelar,
+  :is(#main-content, .el-page) .os-btn,
+  :is(#main-content, .el-page) .btn-nova-os,
+  :is(#main-content, .el-page) .btn-baixa {
     min-height: 44px;
     padding: 10px 12px;
     white-space: normal;
     line-height: 1.15;
   }
 
-  #main-content .filters,
-  #main-content .filtros,
-  #main-content .filtros-insumos,
-  #main-content .filters-row,
-  #main-content .queue-filters,
-  #main-content .el-form-grid,
-  #main-content .cards-resumo,
-  #main-content .el-card-grid,
-  #main-content .resumo-dia,
-  #main-content .behavior-grid {
+  :is(#main-content, .el-page) .filters,
+  :is(#main-content, .el-page) .filtros,
+  :is(#main-content, .el-page) .filtros-insumos,
+  :is(#main-content, .el-page) .filters-row,
+  :is(#main-content, .el-page) .queue-filters,
+  :is(#main-content, .el-page) .el-form-grid,
+  :is(#main-content, .el-page) .cards-resumo,
+  :is(#main-content, .el-page) .el-card-grid,
+  :is(#main-content, .el-page) .resumo-dia,
+  :is(#main-content, .el-page) .behavior-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
@@ -611,110 +611,110 @@ body table tbody td.cell-selected,
     max-width: 100%;
   }
 
-  #main-content .filters,
-  #main-content .filtros,
-  #main-content .filtros-insumos,
-  #main-content .filters-row,
-  #main-content .queue-filters {
+  :is(#main-content, .el-page) .filters,
+  :is(#main-content, .el-page) .filtros,
+  :is(#main-content, .el-page) .filtros-insumos,
+  :is(#main-content, .el-page) .filters-row,
+  :is(#main-content, .el-page) .queue-filters {
     padding: 12px;
     overflow: visible;
   }
 
-  #main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-  #main-content select,
-  #main-content textarea,
-  #main-content .input,
-  #main-content .select,
-  #main-content .el-input,
-  #main-content .el-select,
-  #main-content .el-textarea {
+  :is(#main-content, .el-page) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  :is(#main-content, .el-page) select,
+  :is(#main-content, .el-page) textarea,
+  :is(#main-content, .el-page) .input,
+  :is(#main-content, .el-page) .select,
+  :is(#main-content, .el-page) .el-input,
+  :is(#main-content, .el-page) .el-select,
+  :is(#main-content, .el-page) .el-textarea {
     min-height: 44px;
     font-size: 16px;
   }
 
-  #main-content .el-card,
-  #main-content .card,
-  #main-content .card-resumo,
-  #main-content .resumo-card,
-  #main-content .info-card,
-  #main-content .metric-card,
-  #main-content .cards-resumo > * {
+  :is(#main-content, .el-page) .el-card,
+  :is(#main-content, .el-page) .card,
+  :is(#main-content, .el-page) .card-resumo,
+  :is(#main-content, .el-page) .resumo-card,
+  :is(#main-content, .el-page) .info-card,
+  :is(#main-content, .el-page) .metric-card,
+  :is(#main-content, .el-page) .cards-resumo > * {
     min-height: auto;
     padding: 14px;
     border-radius: 8px;
   }
 
-  #main-content .card-resumo,
-  #main-content .resumo-card,
-  #main-content .info-card,
-  #main-content .metric-card {
+  :is(#main-content, .el-page) .card-resumo,
+  :is(#main-content, .el-page) .resumo-card,
+  :is(#main-content, .el-page) .info-card,
+  :is(#main-content, .el-page) .metric-card {
     gap: 12px;
   }
 
-  #main-content .card-resumo .icone {
+  :is(#main-content, .el-page) .card-resumo .icone {
     width: 42px;
     height: 42px;
     font-size: 21px;
   }
 
-  #main-content .card-resumo strong,
-  #main-content .resumo-card strong,
-  #main-content .info-card strong,
-  #main-content .metric-card strong,
-  #main-content .el-card-value {
+  :is(#main-content, .el-page) .card-resumo strong,
+  :is(#main-content, .el-page) .resumo-card strong,
+  :is(#main-content, .el-page) .info-card strong,
+  :is(#main-content, .el-page) .metric-card strong,
+  :is(#main-content, .el-page) .el-card-value {
     font-size: 19px;
   }
 
-  #main-content .table-wrapper,
-  #main-content .table-wrap,
-  #main-content .tabela-card,
-  #main-content .table-container,
-  #main-content .el-table-wrap {
+  :is(#main-content, .el-page) .table-wrapper,
+  :is(#main-content, .el-page) .table-wrap,
+  :is(#main-content, .el-page) .tabela-card,
+  :is(#main-content, .el-page) .table-container,
+  :is(#main-content, .el-page) .el-table-wrap {
     border-radius: 8px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  #main-content table {
+  :is(#main-content, .el-page) table {
     min-width: 760px;
     font-size: 13px;
   }
 
-  #main-content table thead th,
-  #main-content table tbody td {
+  :is(#main-content, .el-page) table thead th,
+  :is(#main-content, .el-page) table tbody td {
     padding: 10px 11px;
   }
 
-  #main-content .tabela-footer,
-  #main-content .table-footer,
-  #main-content .pagination,
-  #main-content .paginacao {
+  :is(#main-content, .el-page) .tabela-footer,
+  :is(#main-content, .el-page) .table-footer,
+  :is(#main-content, .el-page) .pagination,
+  :is(#main-content, .el-page) .paginacao {
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
     text-align: center;
   }
 
-  #main-content .tabs {
+  :is(#main-content, .el-page) .tabs {
     gap: 0;
     padding: 0;
     overflow-x: auto;
   }
 
-  #main-content .tab {
+  :is(#main-content, .el-page) .tab {
     flex: 1 0 140px;
     min-height: 44px;
     padding: 12px;
     text-align: center;
   }
 
-  #main-content .modal-content,
-  #main-content .modal-box,
-  #main-content .modal-card,
-  #main-content .modal-alert-box,
-  #main-content .modal-alert-content,
-  #main-content .modal-dia-content,
-  #main-content .el-modal__box {
+  :is(#main-content, .el-page) .modal-content,
+  :is(#main-content, .el-page) .modal-box,
+  :is(#main-content, .el-page) .modal-card,
+  :is(#main-content, .el-page) .modal-alert-box,
+  :is(#main-content, .el-page) .modal-alert-content,
+  :is(#main-content, .el-page) .modal-dia-content,
+  :is(#main-content, .el-page) .el-modal__box {
     width: min(94vw, 620px) !important;
     max-width: 94vw !important;
     max-height: 88vh;
@@ -723,44 +723,44 @@ body table tbody td.cell-selected,
     border-radius: 14px;
   }
 
-  #main-content .modal-content.large,
-  #main-content .modal-content.medium {
+  :is(#main-content, .el-page) .modal-content.large,
+  :is(#main-content, .el-page) .modal-content.medium {
     width: min(94vw, 720px) !important;
   }
 
-  #main-content .calendario-grid {
+  :is(#main-content, .el-page) .calendario-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
     padding: 12px;
   }
 
-  #main-content .dia-fluxo {
+  :is(#main-content, .el-page) .dia-fluxo {
     min-height: 86px;
     padding: 10px;
   }
 }
 
 @media (max-width: 640px) {
-  #main-content .header-actions > *,
-  #main-content .el-page-actions > *,
-  #main-content .header-actions-caminhao > *,
-  #main-content .separacao-header-actions > *,
-  #main-content .modal-actions > *,
-  #main-content .modal-acoes > * {
+  :is(#main-content, .el-page) .header-actions > *,
+  :is(#main-content, .el-page) .el-page-actions > *,
+  :is(#main-content, .el-page) .header-actions-caminhao > *,
+  :is(#main-content, .el-page) .separacao-header-actions > *,
+  :is(#main-content, .el-page) .modal-actions > *,
+  :is(#main-content, .el-page) .modal-acoes > * {
     flex-basis: 100%;
   }
 
-  #main-content table {
+  :is(#main-content, .el-page) table {
     min-width: 640px;
   }
 
-  #main-content .calendario-grid {
+  :is(#main-content, .el-page) .calendario-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 /* Excecao: o cadastro de personalizacoes usa modal largo com formacao de preco lateral. */
-#main-content .personalizacoes-page .modal-card {
+:is(#main-content, .el-page) .personalizacoes-page .modal-card {
   width: min(1380px, calc(100vw - 48px)) !important;
   max-width: calc(100vw - 48px) !important;
   max-height: calc(100vh - 48px);
@@ -768,57 +768,57 @@ body table tbody td.cell-selected,
   overflow: hidden;
 }
 
-#main-content .personalizacoes-page .modal-overlay:not(.hidden) {
+:is(#main-content, .el-page) .personalizacoes-page .modal-overlay:not(.hidden) {
   display: flex;
 }
 
-#main-content .personalizacoes-page .modal-grid {
+:is(#main-content, .el-page) .personalizacoes-page .modal-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(330px, 420px);
   gap: 18px;
 }
 
 @media (max-width: 1200px) {
-  #main-content .personalizacoes-page .modal-card {
+  :is(#main-content, .el-page) .personalizacoes-page .modal-card {
     width: min(960px, calc(100vw - 32px)) !important;
     max-width: calc(100vw - 32px) !important;
   }
 
-  #main-content .personalizacoes-page .modal-grid {
+  :is(#main-content, .el-page) .personalizacoes-page .modal-grid {
     grid-template-columns: 1fr;
   }
 }
 
 /* Refinamento visual especifico do modulo WhatsApp. */
-#main-content .zapi-page .zapi-card {
+:is(#main-content, .el-page) .zapi-page .zapi-card {
   border-radius: 12px;
   box-shadow: 0 18px 42px rgba(15, 42, 68, .055);
 }
 
-#main-content .zapi-page .zapi-metric-card,
-#main-content .zapi-page .zapi-page-btn,
-#main-content .zapi-page .zapi-table-wrap {
+:is(#main-content, .el-page) .zapi-page .zapi-metric-card,
+:is(#main-content, .el-page) .zapi-page .zapi-page-btn,
+:is(#main-content, .el-page) .zapi-page .zapi-table-wrap {
   border-radius: 10px;
 }
 
-#main-content .zapi-page .zapi-send-btn {
+:is(#main-content, .el-page) .zapi-page .zapi-send-btn {
   background: #16a34a !important;
   border-color: #16a34a !important;
   color: #ffffff !important;
   font-weight: 700;
 }
 
-#main-content .zapi-page .zapi-send-btn:hover {
+:is(#main-content, .el-page) .zapi-page .zapi-send-btn:hover {
   background: #15803d !important;
   border-color: #15803d !important;
 }
 
-#main-content .zapi-page .zapi-table th {
+:is(#main-content, .el-page) .zapi-page .zapi-table th {
   font-size: 11px;
   font-weight: 700;
 }
 
-#main-content .zapi-page .zapi-badge {
+:is(#main-content, .el-page) .zapi-page .zapi-badge {
   font-weight: 700;
 }
 /* Mantém a navegação do dashboard isolada dos estilos dos módulos SPA. */

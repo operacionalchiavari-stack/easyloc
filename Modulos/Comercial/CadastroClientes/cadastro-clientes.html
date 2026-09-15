@@ -1,10 +1,42 @@
-﻿<div class="container el-page">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Cadastro de Clientes</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="cadastro-clientes.css?v=20260913l">
+</head>
+<body>
+<div class="container el-page">
 
 <div class="header-list">
   <h2>Clientes Cadastrados</h2>
 
+  <div class="el-stat-row" id="clientesStats">
+    <article class="el-stat-card blue">
+      <span aria-hidden="true"><i data-lucide="users-round"></i></span>
+      <div><small>Total de clientes</small><strong id="clientesStatTotal">0</strong><em>Cadastrados</em></div>
+    </article>
+    <article class="el-stat-card green">
+      <span aria-hidden="true"><i data-lucide="circle-check"></i></span>
+      <div><small>Ativos</small><strong id="clientesStatAtivos">0</strong><em id="clientesStatAtivosPercent">0% do total</em></div>
+    </article>
+    <article class="el-stat-card orange">
+      <span aria-hidden="true"><i data-lucide="triangle-alert"></i></span>
+      <div><small>Mornos</small><strong id="clientesStatMornos">0</strong><em>Atenção recomendada</em></div>
+    </article>
+    <article class="el-stat-card red">
+      <span aria-hidden="true"><i data-lucide="circle-x"></i></span>
+      <div><small>Inativos</small><strong id="clientesStatInativos">0</strong><em>Sem locação recente</em></div>
+    </article>
+  </div>
+
 <div class="header-actions">
-<button class="add-btn secondary btn secondary" type="button" onclick="clientes_imprimir()">Imprimir / PDF</button>
     <button class="add-btn btn primary" type="button" onclick="clientes_openAdd()">+ Adicionar Cliente</button>
   </div>
 </div>
@@ -72,13 +104,16 @@
 
 </div>
 
-<!-- ================= MODAL DETALHES ================= -->
-<div class="modal el-modal" id="modal">
-  <div class="modal-content el-modal__box">
+<!-- ================= DETALHES DO CLIENTE (tela, nao modal) ================= -->
+<div class="el-page clientes-detail-view hidden" id="modal">
+  <div class="clientes-detail-card">
 
     <input type="hidden" id="clienteId">
 
     <div class="modal-header">
+      <button class="back-btn btn-icon" type="button" onclick="clientes_closeModal()" title="Voltar para a lista">
+        <i data-lucide="arrow-left"></i>
+      </button>
       <h3>Detalhes do Cliente</h3>
       <button class="edit-btn btn-icon" type="button" onclick="clientes_enableEdit()" aria-label="Editar cliente" title="Editar cliente">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -86,11 +121,21 @@
           <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
         </svg>
       </button>
+      <button class="btn-save btn primary" type="button" onclick="clientes_salvar()">Salvar</button>
     </div>
 
     <div class="form-grid three-cols">
 
-      <div class="form-group el-field">
+      <div class="form-group el-field cliente-foto-field" style="grid-column:span 2;grid-row:span 2;">
+        <label>Foto</label>
+        <label class="cliente-foto-avatar" title="Selecionar foto">
+          <img id="catalogoLogoPreview" alt="Foto do cliente" class="is-empty">
+          <span class="cliente-foto-edit"><i data-lucide="camera"></i></span>
+          <input id="catalogoLogoInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+        </label>
+      </div>
+
+      <div class="form-group el-field" style="grid-column:span 2;">
         <label>Tipo de Pessoa *</label>
         <select class="el-select" id="tipoPessoa" disabled>
           <option>Pessoa Física</option>
@@ -98,80 +143,32 @@
         </select>
       </div>
 
-      <div class="form-group el-field">
-        <label>CPF / CNPJ *</label>
-        <input class="el-input" id="cpfCnpj" readonly>
-      </div>
-
-      <div class="form-group el-field">
-        <label>Inscrição Estadual</label>
-        <input class="el-input" id="inscricaoEstadual" readonly>
-      </div>
-
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 3;">
         <label>Nome / Razão Social *</label>
         <input class="el-input" id="nome" readonly>
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 3;">
+        <label>CPF / CNPJ *</label>
+        <input class="el-input" id="cpfCnpj" readonly>
+      </div>
+
+      <div class="form-group el-field" style="grid-column:span 2;">
+        <label>Inscrição Estadual</label>
+        <input class="el-input" id="inscricaoEstadual" readonly>
+      </div>
+
+      <div class="form-group el-field" style="grid-column:span 2;">
         <label>Telefone *</label>
         <input class="el-input" id="telefone" readonly>
       </div>
 
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 4;">
         <label>Email *</label>
         <input class="el-input" id="email" readonly>
       </div>
-      <div class="form-group el-field">
-        <label>Acesso ao catálogo</label>
-        <select class="el-select" id="catalogoAtivo" disabled><option value="false">Desativado</option><option value="true">Ativado</option></select>
-      </div>
-      <div class="form-group el-field">
-        <label>E-mail de acesso ao catálogo</label>
-        <input class="el-input" id="catalogoEmail" type="email" autocomplete="off" readonly>
-      </div>
-      <div class="form-group el-field">
-        <label>Nova senha do catálogo</label>
-        <input class="el-input" id="catalogoSenha" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" readonly>
-        <small id="catalogoSenhaStatus">Nenhuma senha configurada.</small>
-      </div>
-      <div class="form-group el-field">
-        <label>Confirmar nova senha</label>
-        <input class="el-input" id="catalogoSenhaConfirmacao" type="password" minlength="8" autocomplete="new-password" placeholder="Digite a mesma senha" readonly>
-      </div>
-      <div class="cliente-identidade col-3">
-        <div class="cliente-identidade-logo">
-          <img id="catalogoLogoPreview" alt="Prévia da logo do decorador">
-          <div><strong>Identidade visual do decorador</strong><small>PNG, JPG, WebP ou SVG, até 5 MB.</small><label class="btn secondary">Selecionar logo<input id="catalogoLogoInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></label></div>
-        </div>
-      </div>
 
-      <!-- ENDEREÇO COM GOOGLE PLACES -->
-<div class="form-group el-field col-2">
-  <label>Endereço completo *</label>
-
-  <!-- Wrapper para input dinâmico do Google -->
-  <div id="endereco-wrapper"></div>
-</div>
-
-
-
-      <div class="form-group el-field">
-        <label>Número *</label>
-        <input class="el-input" id="numeroEndereco" readonly>
-      </div>
-
-      <div class="form-group el-field">
-        <label>Ponto de referência *</label>
-        <input class="el-input" id="pontoReferencia" readonly>
-      </div>
-
-      <div class="form-group el-field">
-        <label>Última locação</label>
-<input class="el-input" id="ultimaLocacao" type="date">
-      </div>
-
-      <div class="form-group el-field">
+      <div class="form-group el-field" style="grid-column:span 2;">
         <label>Status do cliente *</label>
         <select class="el-select" id="statusCliente" disabled>
           <option>Ativo</option>
@@ -180,8 +177,48 @@
         </select>
       </div>
 
+      <div class="form-group el-field" style="grid-column:span 2;">
+        <label>Última locação</label>
+<input class="el-input" id="ultimaLocacao" type="date">
+      </div>
+
+      <div class="form-group el-field" style="grid-column:span 2;">
+        <label>Acesso ao catálogo</label>
+        <select class="el-select" id="catalogoAtivo" disabled><option value="false">Desativado</option><option value="true">Ativado</option></select>
+      </div>
+      <div class="form-group el-field" style="grid-column:span 4;">
+        <label>E-mail de acesso ao catálogo</label>
+        <input class="el-input" id="catalogoEmail" type="email" autocomplete="off" readonly>
+      </div>
+      <div class="form-group el-field" style="grid-column:span 3;">
+        <label>Nova senha do catálogo</label>
+        <input class="el-input" id="catalogoSenha" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" readonly>
+        <small id="catalogoSenhaStatus">Nenhuma senha configurada.</small>
+      </div>
+      <div class="form-group el-field" style="grid-column:span 3;">
+        <label>Confirmar nova senha</label>
+        <input class="el-input" id="catalogoSenhaConfirmacao" type="password" minlength="8" autocomplete="new-password" placeholder="Digite a mesma senha" readonly>
+      </div>
+      <!-- ENDEREÇO COM GOOGLE PLACES -->
+<div class="form-group el-field" style="grid-column:span 6;">
+  <label>Endereço completo *</label>
+
+  <!-- Wrapper para input dinâmico do Google -->
+  <div id="endereco-wrapper"></div>
+</div>
+
+      <div class="form-group el-field" style="grid-column:span 2;">
+        <label>Número *</label>
+        <input class="el-input" id="numeroEndereco" readonly>
+      </div>
+
+      <div class="form-group el-field" style="grid-column:span 4;">
+        <label>Ponto de referência *</label>
+        <input class="el-input" id="pontoReferencia" readonly>
+      </div>
+
       <!-- TAGS -->
-      <div class="tag-section col-3">
+      <div class="tag-section" style="grid-column:span 12;">
 
 <div class="tag-group azul" data-group="estilo">
           <span class="tag-title">Estilo</span>
@@ -236,12 +273,6 @@
 
     </div>
 
-    <div class="modal-actions">
-
-      <button class="btn-fechar btn danger" type="button" onclick="clientes_closeModal()">Fechar</button>
-      <button class="btn-save btn primary" type="button" onclick="clientes_salvar()">Salvar</button>
-    </div>
-
   </div>
 </div>
 
@@ -268,3 +299,17 @@
   id="printFrame"
   style="display:none; width:0; height:0; border:0;"
 ></iframe>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/listPager.js"></script>
+<script src="../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../js/core/permissions.js"></script>
+<script src="../../../js/core/google.config.js"></script>
+<script src="../../../js/core/google.js"></script>
+<script src="cadastro-clientes.js?v=20260913d"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

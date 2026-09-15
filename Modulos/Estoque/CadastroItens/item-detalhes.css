@@ -20,11 +20,15 @@
   gap: 14px;
 }
 
-.item-detail-heading {
+/* #itemDetailTitle (ID) para vencer a regra generica com !important de
+   :is(#main-content,.el-page) :is(h1,...) em styles/design-system.css —
+   sem isso o titulo herda o tamanho de pagina inteira (clamp ate 27px),
+   grande demais ao lado do botao "Voltar" nesse cabecalho compacto. */
+#itemDetailTitle.item-detail-heading {
   min-width: 0;
   margin: 0;
   color: #1f2937;
-  font-size: 18px;
+  font-size: 18px !important;
   font-weight: 600;
   line-height: 1.25;
   overflow: hidden;
@@ -748,6 +752,17 @@
   color: #15803d;
 }
 
+.item-tabela-preco-ativa {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .item-3d-status.sem-modelo {
   background: #f1f5f9;
   color: #64748b;
@@ -991,8 +1006,8 @@
     flex: 1 1 100%;
   }
 
-  .item-detail-heading {
-    font-size: 17px;
+  #itemDetailTitle.item-detail-heading {
+    font-size: 17px !important;
     white-space: normal;
   }
 

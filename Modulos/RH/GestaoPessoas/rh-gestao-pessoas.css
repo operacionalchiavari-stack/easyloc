@@ -79,7 +79,7 @@
 
 .rh-tab.active,
 .rh-inner-tabs button.active {
-  background: #2E1F1F;
+  background: #374151;
   color: #fff;
 }
 
@@ -239,14 +239,14 @@
   border-radius: 10px;
   border: 1px solid #dbe3ec;
   background: #fff;
-  color: #2E1F1F;
+  color: #374151;
   font-weight: 700;
   cursor: pointer;
 }
 
 .rh-page-btn.active {
-  border-color: #2E1F1F;
-  color: #2E1F1F;
+  border-color: #374151;
+  color: #374151;
 }
 
 .rh-modal {

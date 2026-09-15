@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const DEFAULT_PER_PAGE = 20;
+  const DEFAULT_PER_PAGE = 10;
   const state = new Map();
 
   function ensureStyle() {
@@ -57,6 +57,7 @@
   function slice(key, rows, renderFn, perPage = DEFAULT_PER_PAGE) {
     const data = Array.isArray(rows) ? rows : [];
     const current = getState(key);
+    perPage = current.selectedPerPage || perPage;
     current.perPage = perPage;
     current.lastRows = data;
     current.renderFn = renderFn;
@@ -73,6 +74,8 @@
 
     const data = Array.isArray(rows) ? rows : [];
     const current = getState(key);
+    perPage = current.selectedPerPage || perPage;
+    current.page = Math.min(current.page, Math.max(1, Math.ceil(data.length / perPage)));
     const totalPages = Math.max(1, Math.ceil(data.length / perPage));
     const start = data.length ? ((current.page - 1) * perPage) + 1 : 0;
     const end = Math.min(current.page * perPage, data.length);
@@ -91,10 +94,6 @@
       host.insertAdjacentElement("afterend", pager);
     }
 
-    if (data.length <= perPage) {
-      pager.innerHTML = `<span>Mostrando ${data.length} de ${data.length} cadastro(s)</span>`;
-      return;
-    }
 
     const pageButtons = [];
     const first = Math.max(1, current.page - 2);
@@ -109,13 +108,22 @@
     }
 
     pager.innerHTML = `
-      <span>Mostrando ${start}-${end} de ${data.length} cadastro(s)</span>
+      <span>Mostrando ${start} a ${end} de ${data.length} cadastro(s)</span>
       <div class="easyloc-list-pager-actions">
-        <button type="button" data-page="${current.page - 1}" ${current.page <= 1 ? "disabled" : ""}>‹</button>
+        <button type="button" aria-label="Página anterior" data-page="${current.page - 1}" ${current.page <= 1 ? "disabled" : ""}>‹</button>
         ${pageButtons.join("")}
-        <button type="button" data-page="${current.page + 1}" ${current.page >= totalPages ? "disabled" : ""}>›</button>
+        <button type="button" aria-label="Próxima página" data-page="${current.page + 1}" ${current.page >= totalPages ? "disabled" : ""}>›</button>
+        <select aria-label="Registros por página" data-page-size>
+          ${[...new Set([10,20,50,100,perPage])].sort((a,b)=>a-b).map(size=>`<option value="${size}" ${size===perPage ? "selected" : ""}>${size} por página</option>`).join("")}
+        </select>
       </div>
     `;
+
+    pager.querySelector("[data-page-size]").addEventListener("change", event => {
+      current.selectedPerPage = Number(event.target.value);
+      current.page = 1;
+      renderFn(data);
+    });
 
     pager.querySelectorAll("button[data-page]").forEach(button => {
       button.addEventListener("click", () => {

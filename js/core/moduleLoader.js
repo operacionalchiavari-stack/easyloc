@@ -13,6 +13,11 @@ window.carregarNaMain = async function (
   el,
   cssPath
 ){
+  await window.EasyLocPermissions?.load();
+  if (!window.EasyLocPermissions?.canNavigate(htmlPath)) {
+    window.alerta?.("Você não possui acesso a esta parte do sistema.");
+    return;
+  }
 
   function reaplicarOverridesGlobais(){
     document
@@ -25,6 +30,12 @@ window.carregarNaMain = async function (
     overrides.id = "dynamic-module-overrides-css";
 
     document.head.appendChild(overrides);
+    document.getElementById("dynamic-design-system-css")?.remove();
+    const dimensions = document.createElement("link");
+    dimensions.id = "dynamic-design-system-css";
+    dimensions.rel = "stylesheet";
+    dimensions.href = "styles/design-system.css?v=" + Date.now();
+    document.head.appendChild(dimensions);
   }
 
   function normalizarBotoesGlobais(root){
@@ -96,11 +107,15 @@ window.finalizarCarregamentoModulo = function(){
 
     loader?.classList.remove("hidden");
 
+    // módulo antigo (fragmento via innerHTML) — garante que o iframe
+    // de módulos novos fique escondido enquanto este é exibido.
+    window.__activarMainContentLegado?.();
+
     /* =====================
        ACTIVE MENU
     ===================== */
     document
-      .querySelectorAll(".submenu-item")
+      .querySelectorAll(".submenu-item, [data-module-href]")
       .forEach(i => i.classList.remove("active"));
 
     el?.classList.add("active");

@@ -1,9 +1,10 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260911-render-options";
+import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260915-creditos";
 
 const supabase = window.supabaseClient;
-const FOTO_PLACEHOLDER = "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/logos/placeholders/sem-foto.png";
-const state = { items: [], company: null, decorator: null, catalogSession: null, sectionObserver: null, modelObserver: null, activeSection: null, eventTimer: null, customizeItem: null, fabricDataUrl: "", fabricFile: null };
+const FOTO_PLACEHOLDER = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
+const DESTAQUES_VIEW = "__destaques__";
+const state = { items: [], activeView: DESTAQUES_VIEW, company: null, decorator: null, catalogSession: null, sectionObserver: null, modelObserver: null, activeSection: null, eventTimer: null, customizeItem: null, fabricDataUrl: "", fabricFile: null };
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -53,17 +54,31 @@ function formatDims(largura, altura, profundidade){
   return values.every((value) => value === null) ? "" : values.map((value) => value ?? "–").join(" × ") + " cm";
 }
 
+function catalogItemAllowed(row){
+  return ['item','kit'].includes(String(row?.tipo || '').trim().toLowerCase());
+}
+
 function mapRow(row){
   const model = Array.isArray(row.itens_modelos_3d) ? row.itens_modelos_3d[0] : row.itens_modelos_3d;
   const photos = (row.itens_fotos || []).filter((photo) => photo.url).sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
   const details = photos.filter((photo) => photo.tipo === "detalhe");
-  const events = photos.filter((photo) => photo.tipo === "galeria" && String(photo.cliente_id || "") === String(state.catalogSession?.cliente_id || ""));
+  // Fotos exclusivas do decorador têm prioridade; sem elas, usa o catálogo padrão.
+  const ownEvents = photos.filter((photo) => photo.tipo === "galeria" && photo.cliente_id && String(photo.cliente_id) === String(state.catalogSession?.cliente_id || ""));
+  const events = ownEvents.length ? ownEvents : photos.filter((photo) => photo.tipo === "galeria" && !photo.cliente_id);
+  // PRODUTO (row.produto_base, ex. "Cadeira") prefixa a ESPECIFICAÇÃO
+  // (row.produto, ex. "Arabesco") no nome exibido — mesmo padrão de
+  // `nomeGerado`/`descricao_total` usado no cadastro manual e na
+  // importação em massa (ver itens.api.mjs / montarDescricaoTotal).
+  const nome = row.produto_base ? `${row.produto_base} ${row.produto || ""}`.trim() : (row.produto || "Item sem nome");
   return {
     id: row.id,
+    tipo: row.tipo,
+    material: row.material || "",
+    cor: row.cor || "",
     personalizable: row.personalizable === true,
     cat: slugify(row.categoria),
     catLabel: row.categoria || "Sem categoria",
-    name: row.produto || "Item sem nome",
+    name: nome,
     dims: formatDims(row.largura, row.altura, row.profundidade),
     dimensions: {
       width: Number(row.largura) > 0 ? Number(row.largura) : null,
@@ -71,41 +86,91 @@ function mapRow(row){
       depth: Number(row.profundidade) > 0 ? Number(row.profundidade) : null,
     },
     desc: row.descricao_complementar || "",
+    destaque: row.destaque_site === true,
+    // Painel técnico (pedido explícito do usuário): algumas informações
+    // relevantes do cadastro do item, além do que já aparece (nome e
+    // medidas). A tela não tem mais nenhum lugar mostrando a categoria por
+    // item (o breadcrumb "← CATEGORIA" foi removido numa edição anterior),
+    // então ela entra aqui também.
+    specs: [
+      { label: "Categoria", value: row.categoria },
+      { label: "Família", value: row.familia },
+      { label: "Material", value: row.material },
+      { label: "Cor", value: row.cor },
+      { label: "Estilo", value: row.estilo },
+      { label: "Marca/Modelo", value: row.marca_modelo },
+      { label: "Código", value: row.referencia },
+    ].filter((spec) => String(spec.value || "").trim()),
     photo: row.foto_url || FOTO_PLACEHOLDER,
     glb: model && model.status !== "removido" ? model.url : null,
-    details: details.map((photo) => ({ img: photo.url, label: photo.titulo || `Detalhe de ${row.produto || "produto"}` })),
-    events: events.map((photo) => ({ img: photo.url, label: photo.titulo || `${row.produto || "Produto"} em evento` })),
+    details: details.map((photo) => ({ img: photo.url, label: photo.titulo || `Detalhe de ${nome}` })),
+    events: events.map((photo) => ({ img: photo.url, label: photo.titulo || `${nome} em evento` })),
   };
 }
 
-async function carregarItens(){
-  if(state.catalogSession?.token){
-    const { data, error } = await catalogRpc("catalogo_carregar", { p_token: state.catalogSession.token });
-    if(error) throw error;
-    state.company = data?.empresa || null;
-    state.decorator = data?.decorador || null;
-    return (data?.itens || []).map(mapRow);
+// Agrupamento de variantes (pedido explícito do usuário): quando duas ou
+// mais linhas do cadastro têm o mesmo nome, categoria, material e medidas
+// — e só diferem em Cor e/ou Descrição complementar (ex.: a mesma poltrona
+// em 5 cores) — elas viram UM card só no catálogo, com miniaturas de cada
+// variante abaixo do card de personalização, estilo marketplace. Chave
+// deliberadamente NÃO inclui cor/descrição complementar (são exatamente o
+// que pode variar dentro do grupo); dims entra na chave pra nunca juntar
+// produtos de tamanhos diferentes (ex.: "P"/"M"/"G") por engano.
+function chaveVariante(item){
+  return [item.cat, item.tipo || "", item.name, item.material || "", item.dims || ""].join("||");
+}
+
+function agruparVariantes(items){
+  const grupos = new Map();
+  items.forEach((item) => {
+    const chave = chaveVariante(item);
+    if(!grupos.has(chave)) grupos.set(chave, []);
+    grupos.get(chave).push(item);
+  });
+  const resultado = [];
+  grupos.forEach((variantes) => {
+    if(variantes.length === 1){
+      resultado.push(variantes[0]);
+      return;
+    }
+    const ordenadas = [...variantes].sort((a, b) =>
+      (a.cor || "").localeCompare(b.cor || "", "pt-BR") || (a.desc || "").localeCompare(b.desc || "", "pt-BR")
+    );
+    // Cada variante guarda a mesma referência de array — dá pra achar as
+    // irmãs a partir de QUALQUER uma delas, não só da principal (necessário
+    // depois de trocar de variante mais de uma vez, ver applyVariant()).
+    ordenadas.forEach((variante) => { variante.variantGroup = ordenadas; });
+    const principal = ordenadas.find((variante) => variante.destaque) || ordenadas[0];
+    principal.destaque = ordenadas.some((variante) => variante.destaque);
+    resultado.push(principal);
+  });
+  return resultado;
+}
+
+// Acha um item (principal OU variante) pelo id — precisa procurar dentro
+// de variantGroup porque, depois de trocar de variante numa seção, o
+// data-product-id daquela seção passa a ser o id de uma variante que não
+// é a "principal" e por isso não está em state.items diretamente.
+function findItemById(id){
+  for(const item of state.items){
+    if(String(item.id) === String(id)) return item;
+    const variante = item.variantGroup?.find((candidate) => String(candidate.id) === String(id));
+    if(variante) return variante;
   }
-  const empresaId = state.catalogSession?.empresa_id || await getEmpresaAtualId();
-  const { data, error } = await supabase.from("itens").select(`
-    id, produto, material, cor, categoria, descricao_total, descricao_complementar,
-    largura, altura, profundidade, foto_url,
-    itens_modelos_3d ( url, status ),
-    itens_fotos ( tipo, titulo, url, ordem, cliente_id )
-  `).eq("empresa_id", empresaId).eq("exibir_no_site", true).eq("ativo", true)
-    .order("categoria", { ascending: true }).order("produto", { ascending: true });
+  return null;
+}
+
+async function carregarItens(){
+  const externo = Boolean(state.catalogSession?.token);
+  const { data, error } = await catalogRpc(
+    externo ? "catalogo_carregar" : "catalogo_carregar_interno",
+    externo ? { p_token: state.catalogSession.token } : { p_empresa_id: state.catalogSession?.empresa_id || await getEmpresaAtualId() }
+  );
   if(error) throw error;
-  const items = (data || []).map(mapRow);
-  const { data: customizations, error: customizationError } = await supabase
-    .from("personalizacoes")
-    .select("vinculo_id,tipo")
-    .eq("empresa_id", empresaId)
-    .eq("alvo", "ITEM")
-    .eq("status", "ATIVO");
-  if(customizationError) console.warn("Personalizações não disponíveis no catálogo:", customizationError);
-  const customizableIds = new Set((customizations || []).map((row) => String(row.vinculo_id)));
-  items.forEach((item) => { item.personalizable = customizableIds.has(String(item.id)); });
-  return items;
+  if(!Array.isArray(data?.itens)) throw new Error("O servidor não retornou os itens do catálogo. Recarregue para tentar novamente.");
+  state.company = data.empresa || null;
+  state.decorator = externo ? data.decorador || null : null;
+  return agruparVariantes(data.itens.filter(catalogItemAllowed).map(mapRow));
 }
 
 async function carregarEmpresa(){
@@ -120,6 +185,18 @@ function getCategories(){
   const map = new Map();
   state.items.forEach((item) => map.set(item.cat, item.catLabel));
   return [...map].map(([cat, label]) => ({ cat, label }));
+}
+
+function groupedCatalogCategories(){
+  const groups = [
+    { label: "Assentos", matches: /banco|banqueta|bistro|cadeira|estofado|poltrona|sofa/, categories: [] },
+    { label: "Mesas", matches: /mesa/, categories: [] },
+    { label: "Apoio e armazenamento", matches: /aparador|armario|estante|bares|buffet|balcao/, categories: [] },
+    { label: "Decoração", matches: /objeto|decoracao|vaso|luminaria|tapete/, categories: [] },
+    { label: "Outras categorias", matches: /.*/, categories: [] }
+  ];
+  getCategories().forEach(category => groups.find(group => group.matches.test(normalizeSearch(category.label))).categories.push(category));
+  return groups.filter(group => group.categories.length);
 }
 
 function renderHeader(){
@@ -143,9 +220,13 @@ function renderHeader(){
     }, { once: true });
   }
 
-  categories.innerHTML = `<button type="button" class="catalog-header-category catalog-studio-tab" data-studio-toggle>PAINEL 3D</button>` + getCategories().map((category, index) =>
-    `<button type="button" class="catalog-header-category ${index === 0 ? "active" : ""}" data-header-category="${escapeAttr(category.cat)}">${escapeHtml(category.label)}</button>`
-  ).join("");
+  categories.innerHTML = `<button type="button" class="catalog-header-category" data-header-category="${DESTAQUES_VIEW}">Destaques</button>`
+    + groupedCatalogCategories().map(group => `<details class="catalog-category-group">
+      <summary class="catalog-group-trigger">${escapeHtml(group.label)}<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary>
+      <div class="catalog-category-panel"><span class="catalog-category-heading">${escapeHtml(group.label)}</span>${group.categories.map(category =>
+        `<button type="button" class="catalog-header-category" data-header-category="${escapeAttr(category.cat)}">${escapeHtml(category.label)}</button>`
+      ).join("")}</div></details>`).join("");
+  setHeaderCategory(state.activeView);
 
   if(state.decorator?.nome){
     userName.textContent = state.decorator.nome;
@@ -158,19 +239,74 @@ function renderHeader(){
   }
 }
 
+// O cabecalho pode ocupar mais de uma linha (categorias quebram quando nao
+// cabem todas lado a lado — pedido explicito do usuario pra nunca esconder
+// nenhuma atras de scroll horizontal, ver .catalog-header-categories no
+// CSS). --header-h e usado em varios lugares (altura de cada secao de
+// produto, do Painel 3D) para descontar exatamente o espaco do cabecalho —
+// por isso precisa refletir a altura REAL renderizada, nao um numero fixo.
+// ResizeObserver acompanha qualquer mudanca (categorias carregadas, janela
+// redimensionada, quebra de linha diferente em telas menores).
+function syncHeaderHeight(){
+  const header = document.querySelector(".catalog-header");
+  const page = document.querySelector(".catalog-page");
+  if(!header || !page) return;
+  page.style.setProperty("--header-h", `${header.offsetHeight}px`);
+}
+
+function watchHeaderHeight(){
+  const header = document.querySelector(".catalog-header");
+  if(!header || !("ResizeObserver" in window)) return;
+  new ResizeObserver(syncHeaderHeight).observe(header);
+  syncHeaderHeight();
+}
+
 function setHeaderCategory(cat){
-  document.querySelectorAll(".catalog-header-category").forEach((button) => {
+  document.querySelectorAll(".catalog-header-category[data-header-category]").forEach((button) => {
     const active = button.dataset.headerCategory === cat;
     button.classList.toggle("active", active);
     if(active) button.setAttribute("aria-current", "true");
     else button.removeAttribute("aria-current");
   });
+  document.querySelectorAll('.catalog-category-group').forEach(group => {
+    group.classList.toggle('has-active', Boolean(group.querySelector('[aria-current="true"]')));
+  });
+}
+
+// O catálogo mostra só UMA categoria (ou só os Destaques) de cada vez —
+// pedido explícito do usuário: antes ele renderizava TODOS os itens de
+// uma vez (uma seção de tela cheia por item, todas empilhadas), pesado
+// pra carregar e sem separação real por categoria (clicar numa categoria
+// só rolava a tela até ela, sem esconder o resto). Trocar de categoria ou
+// ir pra Destaques re-renderiza só o subconjunto certo.
+function itemsForView(view){
+  return view === DESTAQUES_VIEW
+    ? state.items.filter((item) => item.destaque)
+    : state.items.filter((item) => item.cat === view);
+}
+
+function applyView(view){
+  state.activeView = view;
+  setHeaderCategory(view);
+  renderProducts(itemsForView(view));
+  // "auto" aqui respeitaria o `scroll-behavior:smooth` do <html> (definido
+  // em catalogo.css pros outros scrolls do catálogo) e animaria a subida —
+  // exatamente o efeito que o usuário pediu pra tirar ao trocar de
+  // categoria/Destaques. "instant" ignora esse CSS e pula direto pro topo.
+  window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 function categoryButtons(activeCat){
   return getCategories().map((category) =>
     `<button type="button" class="bottom-category ${category.cat === activeCat ? "active" : ""}" data-category-target="${escapeAttr(category.cat)}">${escapeHtml(category.label)}</button>`
   ).join("");
+}
+
+function specsPanel(item){
+  if(!item.specs.length) return "";
+  return `<dl class="product-specs">${item.specs.map((spec) =>
+    `<div class="product-specs-row"><dt>${escapeHtml(spec.label)}</dt><dd>${escapeHtml(spec.value)}</dd></div>`
+  ).join("")}</dl>`;
 }
 
 function detailGallery(item){
@@ -191,20 +327,40 @@ function modelBlock(item, index){
   </div>`;
 }
 
+// Card de variantes (pedido explícito do usuário, estilo marketplace):
+// miniatura de cada variante do grupo (ver agruparVariantes), rotulada
+// pela Cor + Descrição complementar quando existirem. Fica escondido
+// quando o grupo tem só 1 variante (produto sem irmãs de cor).
+function variantSwatchesBlock(item){
+  const grupo = item.variantGroup;
+  if(!grupo || grupo.length < 2) return "";
+  return `<div class="product-variants">
+    <span class="section-kicker">Cores disponíveis</span>
+    <div class="product-variants-row">
+      ${grupo.map((variante) => {
+        const rotulo = [variante.cor, variante.desc].filter((valor) => String(valor || "").trim()).join(" ") || "Padrão";
+        return `<button type="button" class="product-variant-swatch ${String(variante.id) === String(item.id) ? "active" : ""}" data-variant-id="${escapeAttr(variante.id)}" title="${escapeAttr(rotulo)}" aria-label="${escapeAttr(rotulo)}">
+          <span class="product-variant-swatch-photo"><img src="${escapeAttr(variante.photo)}" alt="${escapeAttr(rotulo)}" loading="lazy" decoding="async"></span>
+          <span class="product-variant-swatch-label">${escapeHtml(variante.cor || rotulo)}</span>
+        </button>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+
 function productTemplate(item, index){
   const event = item.events[0];
-  const current = String(index + 1).padStart(2, "0");
-  const total = String(state.items.length).padStart(2, "0");
+  const personalizavel = item.personalizable || item.variantGroup?.some((variante) => variante.personalizable);
   return `<section class="catalog-product-section" id="produto-${escapeAttr(item.id)}" data-product-id="${escapeAttr(item.id)}" data-category="${escapeAttr(item.cat)}" data-search="${escapeAttr(normalizeSearch(`${item.name} ${item.catLabel || ""}`))}">
     <div class="catalog-detail-panel">
       <div class="catalog-detail-top">
         <div class="product-copy product-reveal">
-          <button type="button" class="product-category-back" data-category-target="${escapeAttr(item.cat)}" aria-label="Voltar para ${escapeAttr(item.catLabel)}"><span aria-hidden="true">←</span>${escapeHtml(item.catLabel)}</button>
           <h1 class="product-title">${escapeHtml(item.name)}</h1>
           ${item.dims ? `<p class="product-dimensions">${escapeHtml(item.dims)}</p>` : ""}
           <div class="product-rule" aria-hidden="true"></div>
-          ${item.desc ? `<p class="product-description">${escapeHtml(item.desc)}</p>` : ""}
-          ${item.personalizable ? `<button type="button" class="product-bespoke-card" data-customize-item="${escapeAttr(item.id)}"><span>SOB MEDIDA</span><strong>Experimente outro tecido</strong><small>Personalize com inteligência artificial →</small></button>` : ""}
+          ${specsPanel(item)}
+          ${personalizavel ? `<button type="button" class="product-bespoke-card ${item.personalizable ? "" : "hidden"}" data-customize-item="${escapeAttr(item.id)}"><span>SOB MEDIDA</span><strong>Experimente outro tecido</strong><small>Personalize com inteligência artificial →</small></button>` : ""}
+          ${variantSwatchesBlock(item)}
         </div>
         <div class="product-main-media product-reveal">
           <img class="product-main-image" src="${escapeAttr(item.photo)}" alt="${escapeAttr(item.name)}" data-original-src="${escapeAttr(item.photo)}" data-original-alt="${escapeAttr(item.name)}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
@@ -215,25 +371,22 @@ function productTemplate(item, index){
         <div class="detail-gallery-block"><span class="section-kicker">Detalhes</span>${detailGallery(item)}</div>
         <div class="model-block"><span class="section-kicker">Visualização 3D</span>${modelBlock(item, index)}</div>
       </div>
-      <nav class="catalog-bottom-nav" aria-label="Navegação entre produtos">
-        <div class="product-stepper">
-          <button type="button" class="step-button" data-step="-1" aria-label="Produto anterior" ${index === 0 ? "disabled" : ""}>↑</button>
-          <span class="product-counter">${current} / ${total}</span>
-          <button type="button" class="step-button" data-step="1" aria-label="Próximo produto" ${index === state.items.length - 1 ? "disabled" : ""}>↓</button>
-        </div>
-        <div class="bottom-categories">${categoryButtons(item.cat)}</div>
-      </nav>
     </div>
     <aside class="product-event-panel">
-      ${event ? `<img class="product-event-image" src="${escapeAttr(event.img)}" alt="${escapeAttr(event.label)}" data-event-index="0" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">` : `<div class="event-fallback" aria-hidden="true"></div>`}
+      ${event ? `<img class="product-event-image" src="${escapeAttr(event.img)}" alt="${escapeAttr(event.label)}" data-event-index="0" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">` : `<img class="event-fallback" src="${escapeAttr(FOTO_PLACEHOLDER)}" alt="Sem foto">`}
     </aside>
   </section>`;
 }
 
-function renderProducts(){
+function renderProducts(items){
   const grid = $("catalogGrid");
-  grid.innerHTML = state.items.map(productTemplate).join("");
-  $("catalogEmpty")?.classList.toggle("hidden", state.items.length > 0);
+  grid.innerHTML = items.map((item, index) => productTemplate(item, index, items.length)).join("");
+  $("catalogEmpty")?.classList.toggle("hidden", items.length > 0);
+  // Cada troca de categoria/Destaques substitui o conteúdo de #catalogGrid
+  // inteiro — os observers antigos (setupObservers) ficam apontando pra
+  // elementos que não existem mais, então precisam ser recriados aqui.
+  setupObservers();
+  requestAnimationFrame(() => grid.querySelector(".catalog-product-section")?.classList.add("is-visible"));
 }
 
 function scrollToIndex(index){
@@ -251,7 +404,7 @@ function bindInteractions(){
     }
     const category = event.target.closest("[data-category-target]");
     if(category){
-      document.querySelector(`.catalog-product-section[data-category="${CSS.escape(category.dataset.categoryTarget)}"]`)?.scrollIntoView({ behavior: "smooth" });
+      applyView(category.dataset.categoryTarget);
       return;
     }
     const thumb = event.target.closest("[data-detail-src]");
@@ -278,14 +431,22 @@ function bindInteractions(){
     const modelButton = event.target.closest("[data-model-open]");
     if(modelButton){
       const section = modelButton.closest(".catalog-product-section");
-      const item = state.items.find((candidate) => String(candidate.id) === section?.dataset.productId);
+      const item = findItemById(section?.dataset.productId);
       if(item?.glb) showModelInMain(section, item);
       return;
     }
     const customizeButton = event.target.closest("[data-customize-item]");
     if(customizeButton){
-      const item = state.items.find((candidate) => String(candidate.id) === customizeButton.dataset.customizeItem);
+      const item = findItemById(customizeButton.dataset.customizeItem);
       if(item) openCustomizeDialog(item);
+      return;
+    }
+    const variantSwatch = event.target.closest("[data-variant-id]");
+    if(variantSwatch){
+      const section = variantSwatch.closest(".catalog-product-section");
+      const current = findItemById(section?.dataset.productId);
+      const variante = current?.variantGroup?.find((candidate) => String(candidate.id) === variantSwatch.dataset.variantId);
+      if(variante && section) applyVariant(section, variante);
       return;
     }
     const backButton = event.target.closest("[data-main-back]");
@@ -298,20 +459,31 @@ function bindInteractions(){
     const button = event.target.closest("[data-model-open]");
     if(!button) return;
     const section = button.closest(".catalog-product-section");
-    const item = state.items.find((candidate) => String(candidate.id) === section?.dataset.productId);
+    const item = findItemById(section?.dataset.productId);
     if(item) warmModelExperience(item);
   };
   $("catalogGrid").addEventListener("pointerover", warmHoveredModel, { passive: true });
   $("catalogGrid").addEventListener("focusin", warmHoveredModel);
 
-  $("catalogHeaderCategories")?.addEventListener("click", (event) => {
+  const closeCompactNavigation = () => {
+    document.querySelector('.catalog-navigation')?.classList.remove('is-open');
+    document.querySelector('.catalog-nav-toggle')?.setAttribute('aria-expanded', 'false');
+  };
+  document.querySelector('.catalog-nav-toggle')?.addEventListener('click', event => {
+    const open = document.querySelector('.catalog-navigation').classList.toggle('is-open');
+    event.currentTarget.setAttribute('aria-expanded', String(open));
+  });
+  document.querySelector(".catalog-header")?.addEventListener("click", (event) => {
     const studioToggle = event.target.closest("[data-studio-toggle]");
     if(studioToggle){
+      closeCompactNavigation();
+      document.querySelectorAll('.catalog-category-group[open]').forEach(group => { group.open = false; });
       const opening = $("catalogStudio")?.classList.contains("hidden");
       $("catalogStudio")?.classList.toggle("hidden", !opening);
       $("catalogGrid")?.classList.toggle("hidden", opening);
       $("catalogSearch")?.closest(".catalog-search")?.classList.toggle("hidden", opening);
       studioToggle.classList.toggle("active", opening);
+      setHeaderCategory(opening ? null : state.activeView);
       if(opening) window.dispatchEvent(new Event("catalog-studio-open"));
       return;
     }
@@ -321,18 +493,56 @@ function bindInteractions(){
     $("catalogGrid")?.classList.remove("hidden");
     $("catalogSearch")?.closest(".catalog-search")?.classList.remove("hidden");
     document.querySelector("[data-studio-toggle]")?.classList.remove("active");
-    document.querySelector(`.catalog-product-section[data-category="${CSS.escape(button.dataset.headerCategory)}"]`)?.scrollIntoView({ behavior: "smooth" });
+    if($("catalogSearch")) $("catalogSearch").value = "";
+    applyView(button.dataset.headerCategory);
+    const group = button.closest('.catalog-category-group');
+    if(group){ group.open = false; group.querySelector('summary').focus({ preventScroll: true }); }
+    if(document.querySelector('.catalog-navigation.is-open')){
+      closeCompactNavigation();
+      document.querySelector('.catalog-nav-toggle').focus({ preventScroll: true });
+    }
+  });
+
+  document.querySelectorAll('.catalog-category-group').forEach(group => {
+    group.addEventListener('toggle', () => {
+      if(group.open) document.querySelectorAll('.catalog-category-group[open]').forEach(other => { if(other !== group) other.open = false; });
+    });
+  });
+  document.addEventListener('click', event => {
+    if(!event.target.closest('.catalog-navigation')) closeCompactNavigation();
+    document.querySelectorAll('.catalog-category-group[open]').forEach(group => { if(!group.contains(event.target)) group.open = false; });
+  });
+  document.addEventListener('keydown', event => {
+    if(event.key !== 'Escape') return;
+    if(document.querySelector('.catalog-navigation.is-open')){
+      closeCompactNavigation();
+      document.querySelector('.catalog-nav-toggle').focus();
+    }
+    document.querySelectorAll('.catalog-category-group[open]').forEach(group => {
+      group.open = false;
+      if(group.contains(document.activeElement)) group.querySelector('summary').focus();
+    });
   });
 
   $("catalogSearch")?.addEventListener("input", (event) => {
     const query = normalizeSearch(event.target.value.trim());
-    let visibleCount = 0;
-    document.querySelectorAll(".catalog-product-section").forEach((section) => {
-      const match = !query || section.dataset.search.includes(query);
-      section.classList.toggle("hidden", !match);
-      if(match) visibleCount += 1;
-    });
-    $("catalogEmpty")?.classList.toggle("hidden", visibleCount > 0);
+    // Busca precisa varrer TODAS as categorias, não só a view ativa: como
+    // só a categoria (ou Destaques) atual fica no DOM por vez (ver
+    // itemsForView/applyView, pedido explícito de performance), filtrar
+    // apenas as seções já renderizadas fazia a busca "não achar" um item
+    // que existe mas está numa categoria diferente da aba aberta no
+    // momento — reproduzido de verdade: abrir o catálogo (cai em
+    // Destaques) e buscar "mesa" não encontrava nenhuma das Mesas de
+    // Convidados, que só aparecem ao clicar na aba própria. Corrigido
+    // re-renderizando a partir de `state.items` inteiro quando há busca.
+    if(!query){
+      renderProducts(itemsForView(state.activeView));
+      return;
+    }
+    const matches = state.items.filter((item) =>
+      normalizeSearch(`${item.name} ${item.catLabel || ""}`).includes(query)
+    );
+    renderProducts(matches);
   });
 }
 
@@ -405,7 +615,7 @@ async function generateFabricVariation(){
   const workingToast = notify({ title: "Personalização em andamento", message: `${item.name} está recebendo o novo tecido. Você pode continuar navegando.`, status: "working", duration: 0 });
   try{
     const empresaId = state.catalogSession.empresa_id;
-    const { data, error } = await supabase.functions.invoke("studio-ai-engine", {
+    const { data, error } = await window.CatalogCredits.invoke("studio-ai-engine", {
       body: {
         empresa_id: empresaId,
         catalog_token: state.catalogSession.token,
@@ -608,6 +818,69 @@ function restoreMainPhoto(section){
   section.querySelector("[data-main-back]")?.classList.add("hidden");
 }
 
+// Troca de variante (clique numa miniatura de cor): atualiza no lugar só
+// as partes que podem mudar entre variantes do mesmo grupo (foto, texto
+// complementar, specs, card de personalização, galeria de detalhe, bloco
+// 3D e foto de evento) — nome/medida ficam intactos de propósito, já que
+// são justamente o que garante que as variantes pertencem ao mesmo grupo
+// (ver chaveVariante). Reaproveita specsPanel/detailGallery/modelBlock
+// pra nunca desenhar esses blocos de um jeito diferente do render inicial.
+function applyVariant(section, variant){
+  section.dataset.productId = String(variant.id);
+  section.id = `produto-${variant.id}`;
+
+  const mainImage = section.querySelector(".product-main-image");
+  if(mainImage){
+    section.querySelector(".product-main-model")?.remove();
+    mainImage.classList.remove("hidden");
+    section.querySelector("[data-main-back]")?.classList.add("hidden");
+    if(mainImage.dataset.originalSrc !== variant.photo){
+      mainImage.classList.add("is-changing");
+      setTimeout(() => {
+        mainImage.src = variant.photo;
+        mainImage.alt = variant.name;
+        mainImage.dataset.originalSrc = variant.photo;
+        mainImage.dataset.originalAlt = variant.name;
+        requestAnimationFrame(() => mainImage.classList.remove("is-changing"));
+      }, 120);
+    }
+  }
+
+  section.querySelector(".product-specs")?.remove();
+  const bespokeCard = section.querySelector(".product-bespoke-card");
+  const specsHtml = specsPanel(variant);
+  if(specsHtml){
+    const anchor = bespokeCard || section.querySelector(".product-variants");
+    anchor?.insertAdjacentHTML("beforebegin", specsHtml);
+  }
+
+  if(bespokeCard){
+    bespokeCard.classList.toggle("hidden", !variant.personalizable);
+    bespokeCard.dataset.customizeItem = String(variant.id);
+  }
+
+  const detailBlock = section.querySelector(".detail-gallery-block");
+  if(detailBlock) detailBlock.innerHTML = `<span class="section-kicker">Detalhes</span>${detailGallery(variant)}`;
+
+  const modelBlockEl = section.querySelector(".model-block");
+  if(modelBlockEl){
+    const index = [...document.querySelectorAll(".catalog-product-section")].indexOf(section);
+    modelBlockEl.innerHTML = `<span class="section-kicker">Visualização 3D</span>${modelBlock(variant, index)}`;
+  }
+
+  const eventPanel = section.querySelector(".product-event-panel");
+  if(eventPanel){
+    const event = variant.events[0];
+    eventPanel.innerHTML = event
+      ? `<img class="product-event-image" src="${escapeAttr(event.img)}" alt="${escapeAttr(event.label)}" data-event-index="0" loading="lazy" decoding="async">`
+      : `<img class="event-fallback" src="${escapeAttr(FOTO_PLACEHOLDER)}" alt="Sem foto">`;
+  }
+
+  section.querySelectorAll(".product-variant-swatch").forEach((button) => {
+    button.classList.toggle("active", button.dataset.variantId === String(variant.id));
+  });
+}
+
 async function showModelInMain(section, item){
   const media = section?.querySelector(".product-main-media");
   const image = media?.querySelector(".product-main-image");
@@ -677,7 +950,7 @@ function rotateActiveEvent(){
   if(document.hidden || $("catalogGrid")?.classList.contains("hidden")) return;
   const section = state.activeSection;
   if(!section) return;
-  const item = state.items.find((candidate) => String(candidate.id) === section.dataset.productId);
+  const item = findItemById(section.dataset.productId);
   const image = section.querySelector(".product-event-image");
   const panel = section.querySelector(".product-event-panel");
   if(!image || !panel || panel.dataset.transitioning === "true" || !item || item.events.length < 2) return;
@@ -720,12 +993,80 @@ function startEventRotation(){
   state.eventTimer = window.setInterval(rotateActiveEvent, 10000);
 }
 
+function setupScrollMotion(){
+  state.motionCleanup?.();
+  const sections=[...document.querySelectorAll('.catalog-product-section')];
+  const nearby=new Set();
+  const preference=matchMedia('(prefers-reduced-motion: reduce)');
+  const mobile=matchMedia('(max-width: 767px)');
+  let frame=0;
+  let smoothScroll=window.scrollY;
+  let lastTime=0;
+  function update(time){
+    frame=0;
+    const header=document.querySelector('.catalog-header')?.getBoundingClientRect().height || 0;
+    const target=window.scrollY;
+    const elapsed=lastTime?Math.min(64,time-lastTime):16;
+    lastTime=time;
+    smoothScroll=preference.matches || mobile.matches ? target : smoothScroll+(target-smoothScroll)*(1-Math.exp(-elapsed/190));
+    if(Math.abs(target-smoothScroll)<.1) smoothScroll=target;
+    const snapshots=[...nearby].map(section=>({section,rect:section.getBoundingClientRect(),gap:parseFloat(getComputedStyle(section).marginBottom)||parseFloat(getComputedStyle(section.previousElementSibling || section).marginBottom)||0}));
+    for(const {section,rect,gap} of snapshots){
+      const stride=Math.max(1,rect.height+gap);
+      const relativeTop=rect.top+target-smoothScroll-header;
+      const distance=preference.matches || mobile.matches ? 0 : Math.min(1,Math.abs(relativeTop/stride));
+      // Symmetric curve: outgoing and incoming items share the same visual rhythm.
+      const fade=distance*distance*(3-2*distance);
+      const direction=Math.sign(relativeTop);
+      const travel=preference.matches || mobile.matches ? 0 : direction*fade;
+      const amplitude=Math.min(180,innerWidth*.12);
+      section.style.setProperty('--catalog-photo-x',(-travel*amplitude)+'px');
+      section.style.setProperty('--catalog-copy-x',(-travel*amplitude*.65)+'px');
+      section.style.setProperty('--catalog-details-x',(-travel*amplitude*.35)+'px');
+      section.style.setProperty('--catalog-event-x',(travel*amplitude)+'px');
+      section.style.setProperty('--catalog-photo-opacity',String(1-fade));
+      section.style.setProperty('--catalog-photo-scale',String(1-.035*fade));
+      section.style.setProperty('--catalog-copy-opacity',String(1-.22*fade));
+      section.style.setProperty('--catalog-event-opacity',String(1-fade));
+      section.style.setProperty('--catalog-copy-y',((preference.matches || mobile.matches)?0:Math.max(-10,Math.min(10,relativeTop/stride*10)))+'px');
+    }
+    if(smoothScroll!==target) frame=requestAnimationFrame(update);
+    else lastTime=0;
+  }
+  function schedule(){if(!frame) frame=requestAnimationFrame(update);}
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>entry.isIntersecting?nearby.add(entry.target):nearby.delete(entry.target));
+    schedule();
+  },{rootMargin:'100% 0px',threshold:0});
+  sections.forEach(section=>observer.observe(section));
+  window.addEventListener('scroll',schedule,{passive:true});
+  window.addEventListener('resize',schedule);
+  preference.addEventListener('change',schedule);
+  mobile.addEventListener('change',schedule);
+  state.motionCleanup=()=>{
+    observer.disconnect();cancelAnimationFrame(frame);
+    window.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule);
+    preference.removeEventListener('change',schedule);mobile.removeEventListener('change',schedule);
+  };
+}
+
 function setupObservers(){
+  setupScrollMotion();
+  // Recriado a cada troca de categoria/Destaques (renderProducts substitui
+  // o #catalogGrid inteiro) — desconecta os observers antigos antes, senão
+  // ficam vazando, observando elementos que já não existem mais no DOM.
+  state.sectionObserver?.disconnect();
+  state.modelObserver?.disconnect();
   state.sectionObserver = new IntersectionObserver((entries) => entries.forEach((entry) => {
     if(entry.isIntersecting){
       entry.target.classList.add("is-visible");
       state.activeSection = entry.target;
-      setHeaderCategory(entry.target.dataset.category);
+      // NÃO chama mais setHeaderCategory aqui: agora só uma categoria (ou
+      // só os Destaques, que mistura categorias diferentes) fica no DOM
+      // por vez, então a aba ativa do cabeçalho é controlada só por
+      // applyView() — se isso chamasse setHeaderCategory com a categoria
+      // própria de CADA item, a aba "DESTAQUES" trocaria sozinha assim que
+      // um item de outra categoria entrasse na tela.
     }else{
       entry.target.classList.remove("is-visible");
     }
@@ -734,7 +1075,7 @@ function setupObservers(){
   state.modelObserver = new IntersectionObserver((entries, observer) => entries.forEach((entry) => {
     if(!entry.isIntersecting) return;
     const section = entry.target.closest(".catalog-product-section");
-    const item = state.items.find((candidate) => String(candidate.id) === section?.dataset.productId);
+    const item = findItemById(section?.dataset.productId);
     if(item){
       const warm = () => warmModelExperience(item);
       if("requestIdleCallback" in window) window.requestIdleCallback(warm, { timeout: 1600 });
@@ -796,28 +1137,63 @@ async function requireCatalogLogin(){
   }));
 }
 
+// Aberto de dentro do proprio sistema (equipe ja logada em login.html),
+// nao pelo link publico enviado a um decorador — nesse caso mostra o
+// catalogo padrao da empresa (todos os itens, sem personalizacao de um
+// decorador especifico) e nao pede e-mail/senha de novo.
+function acessoInternoDoSistema(){
+  return Boolean(sessionStorage.getItem("login_ok"));
+}
+
 async function init(){
   ensureFonts();
+  watchHeaderHeight();
   if(!supabase){
     renderGate("Não foi possível conectar ao Acervo", "Abra esta página pelo endereço servido pelo sistema.", "../../../login.html", "Ir para o login");
     return;
   }
   try{
-    await requireCatalogLogin();
+    if(acessoInternoDoSistema()){
+      const empresaId = await getEmpresaAtualId();
+      const { data: access, error: accessError } = await supabase.rpc("funcionario_contexto", { p_empresa_id: empresaId });
+      const { data: auth } = await supabase.auth.getUser();
+      if (accessError || !access?.ativo || !auth?.user) throw new Error("Acesso indisponível. Consulte o administrador.");
+      if (!access.administrador_legado) {
+        const { data: permissions, error } = await supabase.rpc("get_permissoes_usuario_resolvidas", { p_empresa_id: empresaId, p_usuario_id: auth.user.id });
+        if (error || !permissions?.some(p => p.chave === "comercial.catalogo.visualizar" && p.permitido)) throw new Error("Você não possui permissão para acessar o catálogo.");
+      }
+      state.catalogSession = { token: null, cliente_id: null, empresa_id: empresaId };
+      state.company = await carregarEmpresa();
+      $("catalogLogin")?.classList.add("hidden");
+      // Aberto de dentro do sistema: o dashboard ja tem seu proprio menu no
+      // topo, entao a marca/busca/usuario do cabecalho do catalogo somem
+      // (senao fica "menu dentro de menu") e sobram so as categorias, num
+      // visual mais simples de abas — ver .catalog-modo-sistema no CSS.
+      document.body.classList.add("catalog-modo-sistema");
+    }else{
+      await requireCatalogLogin();
+    }
     const empresaId = state.catalogSession.empresa_id;
     state.items = await carregarItens();
+    window.CatalogCredits?.refresh().catch(() => {});
+    // Destaques é a tela de entrada (pedido explícito do usuário) — só cai
+    // pra a primeira categoria se não houver nenhum item marcado como
+    // destaque ainda, nunca pra "todos os itens de uma vez" (isso é
+    // exatamente o carregamento pesado que o usuário pediu pra evitar).
+    if(!state.items.some((item) => item.destaque)){
+      state.activeView = getCategories()[0]?.cat || null;
+    }
     renderHeader();
-    renderProducts();
+    renderProducts(state.activeView ? itemsForView(state.activeView) : state.items);
     bindInteractions();
     bindCatalogSession();
     bindCustomization();
-    setupObservers();
     startEventRotation();
     initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id });
-    requestAnimationFrame(() => document.querySelector(".catalog-product-section")?.classList.add("is-visible"));
   }catch(error){
     console.error("Erro ao carregar catálogo:", error);
-    renderGate("Não foi possível carregar o catálogo", "Verifique sua conexão e o vínculo com a empresa.", "../../../dashboard.html", "Voltar ao painel");
+    const interno = acessoInternoDoSistema();
+    renderGate("Não foi possível carregar o catálogo", "Recarregue para tentar novamente. Se o problema continuar, entre em contato com a Chiavari.", interno ? "../../../dashboard.html" : location.pathname, interno ? "Voltar ao painel" : "Tentar novamente");
   }
 }
 

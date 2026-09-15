@@ -1239,7 +1239,7 @@
           "Finalizar com pendencia",
           { confirmarTexto: "Finalizar", cancelarTexto: "Voltar", tipo: "warning" }
         )
-        : confirm(`Ainda existem ${formatQty(resumo.faltante)} itens faltantes. Finalizar com divergencia?`);
+        : false;
 
       if (!confirmar) return false;
       status = "separado_com_divergencia";
@@ -1470,11 +1470,13 @@
     delete window.__separacaoMateriaisLoaded;
   }
 
-  window.__moduleInit = async function initSeparacaoMateriais() {
+  async function initSeparacaoMateriais() {
     if (window.__separacaoMateriaisLoaded) return;
     window.__separacaoMateriaisLoaded = true;
     await init();
-  };
+  }
+
+  requestAnimationFrame(() => requestAnimationFrame(initSeparacaoMateriais));
 
   window.__activeModuleDestroy = destroy;
 })();

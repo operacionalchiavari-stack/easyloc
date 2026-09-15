@@ -561,6 +561,11 @@ function calcularVolumeTotalPedido(){
           .eq("empresa_id", empresaId)
           .eq("ativo", true)
           .eq("tipo", tipoFiltro)
+          // "Locar somente no kit": o item não pode ser adicionado avulso a um
+          // pedido — só pode aparecer como componente de um kit já montado.
+          // Kits em si (tipo="Kit") sempre têm locar_somente_kit=false, então
+          // esse filtro não os afeta.
+          .eq("locar_somente_kit", false)
           .or(`descricao_total.ilike.%${busca}%,produto.ilike.%${busca}%,codigo.ilike.%${busca}%`)
           .limit(12);
 

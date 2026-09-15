@@ -22,6 +22,7 @@ function pdfFixture(pages = 1, size = 300) {
   try {
     const page=await browser.newPage({viewport:{width:1440,height:1000}});
     const errors=[], requests=[];
+    await page.addLocatorHandler(page.locator('.catalog-credit-dialog[open]'),async dialog=>{await dialog.locator('[value=confirm]').click();},{noWaitAfter:true});
     page.on('pageerror',e=>errors.push(e.message));
     // Simulate static hosts which cannot serve the old worker module.
     await page.route('**/node_modules/pdfjs-dist/**',r=>r.abort());
@@ -29,11 +30,11 @@ function pdfFixture(pages = 1, size = 300) {
     const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
     await page.route('**/rest/v1/rpc/*',async r=>{
       const name=r.request().url().split('/').pop();
-      const response=name==='catalogo_login'?{token:'test-session',empresa_id:'company',cliente_id:'decorator'}:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'decorator'}:{empresa:{nome:'Empresa teste'},decorador:{id:'decorator',nome:'Decoradora teste'},itens:[{id:'fixture',produto:'Mesa teste',categoria:'Mesas',largura:1,altura:1,profundidade:1,foto_url:png,personalizable:true,itens_modelos_3d:[{url:'/siteglb.glb',status:'ativo'}],itens_fotos:[]}]};
+      const response=name==='catalogo_creditos_saldo'?{saldo:100,custos:{tecido:1,render:1,planta:1,layout:1},historico:[]}:name==='catalogo_login'?{token:'test-session',empresa_id:'company',cliente_id:'decorator'}:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'decorator'}:{empresa:{nome:'Empresa teste'},decorador:{id:'decorator',nome:'Decoradora teste'},itens:[{id:'fixture',tipo:'Item',produto:'Mesa teste',categoria:'Mesas',largura:1,altura:1,profundidade:1,foto_url:png,personalizable:true,itens_modelos_3d:[{url:'/siteglb.glb',status:'ativo'}],itens_fotos:[]}]};
       await r.fulfill({json:response});
     });
     await page.route('**/functions/v1/studio-ai-engine',async r=>{
-      const body=r.request().postDataJSON();requests.push(body);
+      const body=r.request().postDataJSON();requests.push(body);assert.equal(body.expected_cost,1);assert.match(body.request_id,/^[0-9a-f-]{36}$/);
       if(body.scene?.referencePolicy==='fabric_customization') await new Promise(resolve=>setTimeout(resolve,1500));
       assert.equal(body.catalog_token,'test-session');assert.equal(body.empresa_id,'company');
       const response=body.action==='analyze_floor_plan'?{ok:true,analysis:{width_m:10,depth_m:10,bounds:{left:0,top:0,right:1,bottom:1},confidence:1}}:body.action==='plan_layout'?{ok:true,plan:{items:[{itemId:'fixture',zone:'back'}]}}:{ok:true,providerStatus:'ok',images:[{url:png}]};
@@ -112,7 +113,7 @@ function pdfFixture(pages = 1, size = 300) {
     await page.locator('#studioProjectNew').click();await page.waitForFunction(()=>window.studioTest.studio.objects.length===0);
     await page.locator('.studio-project-panel details:nth-child(2) summary').click();
     await page.locator('#studioDesignItems input').check();await page.locator('#design-quantity').fill('2');await page.locator('#design-brief').fill('Mesas no fundo');
-    await page.locator('#studioDesignBuild').click();await page.waitForFunction(()=>document.getElementById('studioDesignStatus').textContent.includes('2 itens adicionados'));
+    await page.removeLocatorHandler(page.locator('.catalog-credit-dialog[open]'));await page.locator('#studioDesignBuild').click();await page.locator('.catalog-credit-dialog [value=confirm]').click();await page.waitForFunction(()=>document.getElementById('studioDesignStatus').textContent.includes('2 itens adicionados'));
     assert.ok(requests.some(r=>r.action==='plan_layout'));
     await page.locator('#catalogLogout').click();await page.locator('#catalogLoginEmail').waitFor();
     assert.deepEqual(errors,[]);

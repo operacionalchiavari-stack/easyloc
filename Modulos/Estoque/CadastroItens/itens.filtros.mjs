@@ -22,7 +22,12 @@ window.itens_aplicarFiltros = function(){
 
   if(texto){
     filtrados = filtrados.filter(i =>
-      i.produto?.toLowerCase().includes(texto)
+      i.produto?.toLowerCase().includes(texto) ||
+      i.produto_base?.toLowerCase().includes(texto) ||
+      i.descricao_total?.toLowerCase().includes(texto) ||
+      i.referencia?.toLowerCase().includes(texto) ||
+      i.categoria?.toLowerCase().includes(texto) ||
+      i.subcategoria?.toLowerCase().includes(texto)
     );
   }
 
@@ -35,7 +40,8 @@ window.itens_aplicarFiltros = function(){
   }
 
   if(status){
-    filtrados = filtrados.filter(i => i.status === status);
+    // "itens" não tem coluna status — o cadastro usa o booleano "ativo".
+    filtrados = filtrados.filter(i => (i.ativo !== false) === (status === "Ativo"));
   }
 
   window.itensFiltrados = filtrados;

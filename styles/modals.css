@@ -26,7 +26,7 @@
 
 .el-modal__box,
 .modal-alert-box {
-  width: min(520px, 100%);
+  width: min(640px, 100%);
   max-height: calc(100vh - 40px);
   overflow: auto;
   background: var(--el-color-surface);
@@ -34,7 +34,7 @@
   border-radius: var(--el-radius-xl);
   box-shadow: var(--el-shadow-lg);
   color: var(--el-color-text);
-  animation: elModalIn 0.18s ease-out;
+  animation: elModalIn 0.2s cubic-bezier(0.2, 0.72, 0.25, 1);
 }
 
 .el-modal__header,
@@ -114,11 +114,11 @@
 @keyframes elModalIn {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 

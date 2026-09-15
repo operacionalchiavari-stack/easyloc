@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Importar Itens</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="importar-itens.css?v=20260913g">
+</head>
+<body>
+<div class="el-page importar-itens-page" data-module-root>
+
+  <header class="page-header import-page-header">
+    <h1>Importar Itens</h1>
+    <div class="import-header-actions">
+      <button class="btn secondary" id="btnBaixarModelo" type="button">
+        <i data-lucide="download"></i>
+        Baixar modelo (.xlsx)
+      </button>
+      <button class="btn-icon" id="btnAjudaImportacao" type="button" title="Como funciona / colunas do modelo">
+        <i data-lucide="help-circle"></i>
+      </button>
+    </div>
+  </header>
+
+  <section class="import-card" id="dropSection">
+    <h3>Arquivo</h3>
+
+    <label class="import-dropzone" id="dropzone" for="importFileInput">
+      <i data-lucide="upload-cloud"></i>
+      <strong>Arraste a planilha aqui</strong>
+      <span>ou clique para selecionar um arquivo .xlsx, .xls ou .csv</span>
+      <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" hidden>
+    </label>
+
+    <div class="import-file-chip hidden" id="fileChip">
+      <i data-lucide="file-spreadsheet"></i>
+      <span id="fileChipName"></span>
+      <button type="button" class="btn-icon" id="btnTrocarArquivo" title="Escolher outro arquivo">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+  </section>
+
+  <div class="el-modal" id="ajudaImportacaoModal">
+    <div class="el-modal__box import-ajuda-box" data-modal-size="large">
+      <div class="el-modal__header">
+        <h3 class="el-modal__title">Como funciona a importação</h3>
+        <button type="button" class="btn-icon" id="btnFecharAjudaImportacao" title="Fechar">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="el-modal__body">
+        <ol class="import-steps">
+          <li>Baixe o modelo de planilha (botão no topo da página).</li>
+          <li>Preencha uma linha para cada item — a primeira linha (cabeçalho) não pode ser apagada.</li>
+          <li>Arraste o arquivo preenchido na área de envio.</li>
+          <li>Confira a prévia, corrija o que for necessário e confirme a importação.</li>
+        </ol>
+
+        <h4>Colunas do modelo</h4>
+        <p class="import-hint">Siga esta ordem ao preencher. O sistema também reconhece as colunas se elas forem reorganizadas, contanto que os nomes do cabeçalho não sejam alterados.</p>
+        <div class="import-columns-grid" id="colunasInfoBody"></div>
+
+        <details class="import-ignoradas">
+          <summary>Colunas da planilha do cliente que NÃO são importadas (e por quê)</summary>
+          <div class="import-columns-wrap">
+            <table class="import-columns-table">
+              <thead><tr><th>Coluna</th><th>Motivo</th></tr></thead>
+              <tbody id="colunasIgnoradasBody"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <section class="import-card hidden" id="previewSection">
+    <div class="import-preview-header">
+      <h3>Prévia</h3>
+      <div class="import-preview-summary" id="previewSummary"></div>
+    </div>
+
+    <div class="import-progress-label hidden" id="importProgressLabel"></div>
+    <div class="import-progress hidden" id="importProgress">
+      <div class="import-progress-bar" id="importProgressBar"></div>
+    </div>
+
+    <div class="import-preview-stats" id="previewDetalhes"></div>
+
+    <div class="import-preview-tabelas">
+      <strong>Tabelas de preço identificadas na planilha:</strong>
+      <div id="previewTabelasPreco"></div>
+    </div>
+
+    <div class="import-preview-scroll">
+      <table class="import-preview-table">
+        <thead id="previewThead"></thead>
+        <tbody id="previewTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="import-preview-actions">
+      <button class="btn secondary" type="button" id="btnCancelarPreview">Cancelar</button>
+      <button class="btn primary" type="button" id="btnConfirmarImportacao">Importar itens válidos</button>
+    </div>
+  </section>
+
+  <section class="import-card import-result-card hidden" id="resultSection">
+    <div class="import-result-icon" id="resultIcon"><i data-lucide="check-circle-2"></i></div>
+    <h3 id="resultTitle"></h3>
+    <p id="resultDetail"></p>
+    <div class="import-orphans-warning hidden" id="resultOrfaos"></div>
+    <div class="import-result-actions">
+      <a class="btn secondary" href="../../Estoque/CadastroItens/cadastro-itens.html">Ver itens cadastrados</a>
+      <button class="btn primary" type="button" id="btnNovaImportacao">Importar outro arquivo</button>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../js/core/permissions.js"></script>
+<script type="module" src="importar-itens.mjs?v=20260913l"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

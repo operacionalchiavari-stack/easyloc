@@ -1,20 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Cadastro de Locais</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="cadastro-locais.css?v=20260913h">
+</head>
+<body>
 <div class="container el-page locais-container">
 
   <!-- ================= HEADER ================= -->
   <div class="header-list">
     <h2>Locais Cadastrados</h2>
 
+    <div class="el-stat-row" id="locaisStats">
+      <article class="el-stat-card blue">
+        <span aria-hidden="true"><i data-lucide="building-2"></i></span>
+        <div><small>Total de locais</small><strong id="locaisStatTotal">0</strong><em>Cadastrados</em></div>
+      </article>
+      <article class="el-stat-card green">
+        <span aria-hidden="true"><i data-lucide="circle-check"></i></span>
+        <div><small>Ativos</small><strong id="locaisStatAtivos">0</strong><em id="locaisStatAtivosPercent">0% do total</em></div>
+      </article>
+      <article class="el-stat-card orange">
+        <span aria-hidden="true"><i data-lucide="triangle-alert"></i></span>
+        <div><small>Mornos</small><strong id="locaisStatMornos">0</strong><em>Atenção recomendada</em></div>
+      </article>
+      <article class="el-stat-card red">
+        <span aria-hidden="true"><i data-lucide="circle-x"></i></span>
+        <div><small>Inativos</small><strong id="locaisStatInativos">0</strong><em>Sem locação recente</em></div>
+      </article>
+    </div>
+
     <div class="header-actions">
-      <button class="add-btn secondary btn secondary" type="button" onclick="Locais_imprimir()">
-        Imprimir / PDF
-      </button>
       <button class="add-btn btn primary" type="button" onclick="Locais_openAdd()">
         + Adicionar Local
       </button>
     </div>
   </div>
 
-  <!-- ================= FILTROS ================= -->
+  <!-- ================= FILTROS (igual ao padrao de Clientes) ================= -->
   <div class="filters locais-filters">
 
     <input
@@ -80,14 +110,17 @@
 
 </div>
 
-<!-- ================= MODAL DETALHES ================= -->
-<div class="modal el-modal" id="locais-modal">
-  <div class="modal-content el-modal__box">
+<!-- ================= DETALHES DO LOCAL (tela, nao modal) ================= -->
+<div class="el-page locais-detail-view hidden" id="locais-modal">
+  <div class="locais-detail-card">
 
     <input type="hidden" id="locaisId">
     <input type="hidden" id="locaisUltimaLocacao">
 
     <div class="modal-header">
+      <button class="back-btn btn-icon" type="button" onclick="Locais_closeModal()" title="Voltar para a lista">
+        <i data-lucide="arrow-left"></i>
+      </button>
       <div>
         <h3>Detalhes do Local</h3>
         <p>Cadastre ou edite as informações do local do evento. A distância do galpão é calculada automaticamente e salva.</p>
@@ -241,7 +274,6 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn-fechar btn danger" type="button" onclick="Locais_closeModal()">Fechar</button>
       <button class="btn-save btn primary" type="button" onclick="Locais_salvar()">Salvar</button>
     </div>
 
@@ -310,3 +342,17 @@
 
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/listPager.js"></script>
+<script src="../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../js/core/permissions.js"></script>
+<script src="../../../js/core/google.config.js"></script>
+<script src="../../../js/core/google.js"></script>
+<script src="cadastro-locais.js?v=20260913b"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

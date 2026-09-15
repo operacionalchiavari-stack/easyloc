@@ -1,4 +1,4 @@
-(function () {
+(async function () {
 "use strict";
 
 console.log("📦 cadastro-fornecedores módulo carregado");
@@ -11,12 +11,27 @@ if (!window.supabaseClient) {
   throw new Error("❌ Supabase client não encontrado");
 }
 
-if (!window.__CONTEXT?.empresa_id) {
+// ⏳ window.aguardarContexto (js/core/context.js) espera window.__CONTEXT
+// estar pronto — necessário porque cada módulo agora é um documento próprio
+// e pode carregar antes do contexto terminar de resolver no Supabase.
+const contexto = await window.aguardarContexto();
+if (!contexto?.empresa_id) {
   throw new Error("❌ empresa_id não encontrado no contexto");
 }
+const empresaId = contexto.empresa_id;
 
 const sb = window.supabaseClient;
-const empresaId = window.__CONTEXT.empresa_id;
+
+function mostrarDetalhesFornecedor() {
+  document.querySelector(".container-fornecedores")?.classList.add("hidden");
+  document.getElementById("modalFornecedor").classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function mostrarListaFornecedores() {
+  document.getElementById("modalFornecedor").classList.add("hidden");
+  document.querySelector(".container-fornecedores")?.classList.remove("hidden");
+}
 
 /* =====================================================
    GOOGLE AUTOCOMPLETE
@@ -140,7 +155,27 @@ async function carregarFornecedores() {
     return;
   }
 
+  Fornecedores_renderizarStats(data || []);
   renderizarTabela(data || []);
+}
+
+function Fornecedores_renderizarStats(lista) {
+  const set = (id, valor) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = valor;
+  };
+
+  const total = lista.length;
+  const ativos = lista.filter(f => f.status === "ativo").length;
+  const inativos = lista.filter(f => f.status !== "ativo").length;
+  const servicos = lista.filter(f => f.tipo === "servicos" || f.tipo === "ambos").length;
+  const percentAtivos = total ? Math.round((ativos / total) * 100) : 0;
+
+  set("fornecedoresStatTotal", total);
+  set("fornecedoresStatAtivos", ativos);
+  set("fornecedoresStatAtivosPercent", `${percentAtivos}% do total`);
+  set("fornecedoresStatInativos", inativos);
+  set("fornecedoresStatServicos", servicos);
 }
 
 function renderizarTabela(lista) {
@@ -241,10 +276,10 @@ function abrirModalFornecedor() {
   mostrarBotaoEditar(false);
 
   // 🔥 GARANTE BOTÃO SALVAR VISÍVEL
-  const btnSalvar = document.querySelector("#modalFornecedor .modal-footer .btn.primary");
+  const btnSalvar = document.getElementById("btnSalvarFornecedor");
   if (btnSalvar) btnSalvar.style.display = "inline-flex";
 
-  modal.classList.remove("hidden");
+  mostrarDetalhesFornecedor();
 
   setTimeout(() => {
     iniciarAutocompleteEndereco();
@@ -253,7 +288,7 @@ function abrirModalFornecedor() {
 }
 
 function fecharModalFornecedor() {
-  document.getElementById("modalFornecedor").classList.add("hidden");
+  mostrarListaFornecedores();
 }
 
 window.fecharModalFornecedor = fecharModalFornecedor;
@@ -516,7 +551,7 @@ function abrirModalDetalheFornecedor(f) {
 
   mostrarBotaoEditar(true);
 
-  document.getElementById("modalFornecedor").classList.remove("hidden");
+  mostrarDetalhesFornecedor();
 }
 
 /* =====================================================
@@ -536,7 +571,7 @@ function prepararEdicaoFornecedor(f) {
 
   mostrarBotaoEditar(false);
 
-  document.getElementById("modalFornecedor").classList.remove("hidden");
+  mostrarDetalhesFornecedor();
 
   setTimeout(() => {
     iniciarAutocompleteEndereco();
@@ -607,7 +642,7 @@ function bloquearFormularioFornecedor(bloquear) {
   });
 
   // botão salvar
-  const btnSalvar = document.querySelector("#modalFornecedor .modal-footer .btn.primary");
+  const btnSalvar = document.getElementById("btnSalvarFornecedor");
   if (btnSalvar) {
     btnSalvar.style.display = bloquear ? "none" : "inline-flex";
   }
@@ -694,6 +729,6 @@ function fecharModalAlerta() {
 ===================================================== */
 
 window.initCadastroFornecedores = initCadastroFornecedores;
-window.__moduleInit = window.initCadastroFornecedores;
+requestAnimationFrame(() => requestAnimationFrame(window.initCadastroFornecedores));
 
 })();

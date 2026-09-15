@@ -253,6 +253,19 @@ async function getEmpresaIdCache() {
 ===================================================== */
 let localAtualId = null;
 const modal = document.getElementById("locais-modal");
+const locaisListaView = document.querySelector(".locais-container");
+
+function mostrarDetalhesLocal() {
+  locaisListaView?.classList.add("hidden");
+  modal.classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function mostrarListaLocais() {
+  modal.classList.add("hidden");
+  locaisListaView?.classList.remove("hidden");
+}
+
 let locaisCache = [];
 const GALPAO_ORIGEM = "Chiavari Eventos, Estrada Uniao e Industria, Itaipava, Petropolis - RJ, Brasil";
 const GALPAO_COORDS = { lat: -22.3952, lng: -43.1348 };
@@ -542,7 +555,7 @@ document.getElementById("locaisCentralizarEndereco")
 function Locais_openAdd() {
   localAtualId = null;
 
-  modal.style.display = "flex";
+  mostrarDetalhesLocal();
 
   window.enderecoSelecionadoGoogle = false;
   resetLocalGeoState();
@@ -589,7 +602,7 @@ function Locais_enableEdit() {
 }
 
 function Locais_closeModal() {
-  modal.style.display = "none";
+  mostrarListaLocais();
 }
 
 function setReadOnly(v) {
@@ -801,7 +814,7 @@ const payload = {
 function abrirDetalhesLocal(local) {
   localAtualId = local.id;
 
-  modal.style.display = "flex";
+  mostrarDetalhesLocal();
   preencherLocalGeoState(local);
 
   const campos = {
@@ -960,6 +973,7 @@ async function Locais_carregar() {
         return l;
       });
 
+      Locais_renderizarStats(locaisCache);
       Locais_aplicarFiltros();
     }
   } catch {}
@@ -1204,7 +1218,7 @@ if (!window.__locaisClickBound) {
     const tag = e.target.closest(".tag");
     if (!tag) return;
 
-    if (tag.closest(".modal.readonly")) return;
+    if (tag.closest(".readonly")) return;
 
     const group = tag.closest(".tag-group");
 
@@ -1254,7 +1268,10 @@ window.__activeModuleDestroy = function(){
 window.finalizarCarregamentoModulo?.();
 }
 
-window.__moduleInit = initCadastroLocais;
+// Documento proprio (iframe) - chama a inicializacao diretamente,
+// mantendo o mesmo espacamento de dois frames usado antes pelo
+// moduleLoader.js para garantir que o layout ja esteja pintado.
+requestAnimationFrame(() => requestAnimationFrame(initCadastroLocais));
 
 window.__locaisModuleLoaded = true;
 
@@ -1419,6 +1436,29 @@ function calcularStatusAutomatico(local) {
   if (diffDias > 90) return "Morno";
 
   return "Ativo";
+}
+
+function Locais_renderizarStats(locais) {
+  const lista = locais || [];
+  const contagem = { Ativo: 0, Morno: 0, Inativo: 0 };
+
+  lista.forEach(l => {
+    const status = calcularStatusAutomatico(l);
+    if (contagem[status] !== undefined) contagem[status]++;
+  });
+
+  const set = (id, valor) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = valor;
+  };
+
+  const percentAtivos = lista.length ? Math.round((contagem.Ativo / lista.length) * 100) : 0;
+
+  set("locaisStatTotal", lista.length);
+  set("locaisStatAtivos", contagem.Ativo);
+  set("locaisStatAtivosPercent", `${percentAtivos}% do total`);
+  set("locaisStatMornos", contagem.Morno);
+  set("locaisStatInativos", contagem.Inativo);
 }
 
 /* =====================================================

@@ -1,17 +1,17 @@
 .btn,
 .el-btn {
-  min-height: 40px;
+  min-height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--el-space-2);
   border: 1px solid transparent;
   border-radius: var(--el-radius-md);
-  padding: 10px 16px;
+  padding: 0 14px;
   background: var(--el-color-surface);
   color: var(--el-color-text);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1;
   text-decoration: none;
   white-space: nowrap;

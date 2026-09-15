@@ -1,4 +1,19 @@
-﻿<div class="almox-page" data-module="almoxarifado" data-module-root>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Almoxarifado</title>
+  <link rel="icon" type="image/png" href="../../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="almoxarifado.css?v=20260913b">
+</head>
+<body>
+<div class="almox-page el-page" data-module="almoxarifado" data-module-root>
+<div class="almox-list-view">
   <header class="almox-hero">
     <div>
       <span class="almox-eyebrow">Estoque operacional</span>
@@ -476,15 +491,18 @@
       </article>
     </div>
   </section>
+</div>
 
-  <div class="almox-modal hidden" id="almoxMaterialModal" role="dialog" aria-modal="true">
-    <form class="almox-modal-card" id="almoxMaterialForm">
-      <div class="almox-modal-header">
+  <div class="el-detail-view hidden" id="almoxMaterialModal" role="dialog" aria-modal="true">
+    <form class="almox-modal-card el-detail-card" id="almoxMaterialForm">
+      <div class="almox-modal-header el-detail-header">
+        <button type="button" class="el-back-btn btn-icon" data-close-modal="almoxMaterialModal" title="Voltar para a lista">
+          <i data-lucide="arrow-left"></i>
+        </button>
         <div>
           <span class="almox-section-label">Cadastro de material</span>
           <h2 id="almoxMaterialModalTitle">Novo material</h2>
         </div>
-        <button type="button" class="almox-icon-btn" data-close-modal="almoxMaterialModal">X</button>
       </div>
 
       <input type="hidden" name="id">
@@ -575,8 +593,8 @@
         </div>
       </div>
 
-      <div class="almox-modal-actions">
-        <button type="button" class="btn secondary" data-close-modal="almoxMaterialModal">Cancelar</button>
+      <div class="almox-modal-actions el-detail-footer">
+        <button type="button" class="btn secondary" data-close-modal="almoxMaterialModal">Voltar</button>
         <button type="submit" class="btn primary">Salvar material</button>
       </div>
     </form>
@@ -602,3 +620,15 @@
     </form>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../../js/core/supabase.js"></script>
+<script src="../../../../js/core/alerta.js"></script>
+<script src="../../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../../js/core/context.js?v=20260913b"></script>
+<script src="../../../../js/core/permissions.js"></script>
+<script src="../../../../js/core/qrCode.js"></script>
+<script src="almoxarifado.js?v=20260913b"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

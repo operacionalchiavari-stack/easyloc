@@ -342,22 +342,15 @@
   }
 
   function abrirPedido(pedidoId = "", modo = "editar"){
-    if(typeof window.carregarNaMain === "function"){
-      const suffix = pedidoId ? `?pedido=${encodeURIComponent(pedidoId)}` : "";
-      window.__PEDIDO_ATUAL_ID = pedidoId || null;
-      window.__PEDIDO_MODO_ABERTURA = modo;
-      window.carregarNaMain(
-        `Modulos/Comercial/Pedidos/pedido.html${suffix}`,
-        "js/pedido/pedido.mjs",
-        null,
-        "Modulos/Comercial/Pedidos/pedido.css"
-      );
-      return;
-    }
+    window.__PEDIDO_ATUAL_ID = pedidoId || null;
+    window.__PEDIDO_MODO_ABERTURA = modo;
 
-    window.location.href = pedidoId
-      ? `pedido.html?pedido=${encodeURIComponent(pedidoId)}`
-      : "pedido.html";
+    const params = new URLSearchParams();
+    if (pedidoId) params.set("pedido", pedidoId);
+    if (modo) params.set("modo", modo);
+    const query = params.toString();
+
+    window.location.href = query ? `pedido.html?${query}` : "pedido.html";
   }
 
   function escolherParcelaPix(pedido){
@@ -1228,11 +1221,13 @@
     delete window.__centralPedidosLoaded;
   }
 
-  window.__moduleInit = async function initCentralPedidos(){
+  async function initCentralPedidos(){
     if(window.__centralPedidosLoaded) return;
     window.__centralPedidosLoaded = true;
     await init();
-  };
+  }
+
+  requestAnimationFrame(() => requestAnimationFrame(initCentralPedidos));
 
   window.__activeModuleDestroy = destroy;
 })();

@@ -13,7 +13,7 @@ function avisar(mensagem, titulo = "Atenção", tipo = "aviso"){
   alert(mensagem);
 }
 
-window.__moduleInit = function(){
+requestAnimationFrame(() => requestAnimationFrame(function(){
 
   "use strict";
 
@@ -24,7 +24,7 @@ window.__moduleInit = function(){
 
   initEstoquePersonalizacoes();
 
-};
+}));
 
 /* =====================================================
    INIT REAL DO MÓDULO
@@ -44,6 +44,17 @@ async function initEstoquePersonalizacoes(){
     }
 
     const els = getEls(root);
+
+    function mostrarDetalhesPersonalizacao() {
+      els.listView?.classList.add("hidden");
+      els.modalOverlay.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+
+    function mostrarListaPersonalizacoes() {
+      els.modalOverlay.classList.add("hidden");
+      els.listView?.classList.remove("hidden");
+    }
 
     // ✅ valida elementos obrigatórios (se faltar, mostra quais)
 const missing = getMissingEls(els, [
@@ -106,6 +117,13 @@ const missing = getMissingEls(els, [
 let itens = [];
 let componentes = [];
 let insumos = [];
+
+// Cada modulo hoje e um documento proprio (iframe), entao o script pode
+// comecar a rodar antes de js/core/context.js terminar de resolver
+// empresa_id no Supabase — sem isso, window.__CONTEXT vinha undefined e as
+// consultas abaixo falhavam silenciosamente (personalizacoes cadastradas
+// nunca apareciam). Ver window.aguardarContexto() em js/core/context.js.
+await window.aguardarContexto();
 
 await carregarItensEComponentes();
 await carregarInsumos();
@@ -414,7 +432,7 @@ function renderTable(){
       </td>
 
       <td>
-        <strong>${escapeHtml(r.vinculo_nome || "-")}</strong>
+        <span>${escapeHtml(r.vinculo_nome || "-")}</span>
         <span class="mini-muted">${r.alvo === "ITEM" ? "Item" : "Componente"}</span>
       </td>
 
@@ -486,7 +504,7 @@ async function openModalCreate(){
 
       recalcularResumo();
 
-      els.modalOverlay.classList.remove("hidden");
+      mostrarDetalhesPersonalizacao();
     }
 
 async function openModalEdit(id){
@@ -536,11 +554,11 @@ async function openModalEdit(id){
 
       recalcularResumo();
 
-      els.modalOverlay.classList.remove("hidden");
+      mostrarDetalhesPersonalizacao();
     }
 
     function closeModal(){
-      els.modalOverlay.classList.add("hidden");
+      mostrarListaPersonalizacoes();
     }
 
 function resetModalFields(){
@@ -1017,6 +1035,7 @@ function getEls(root){
     filtroStatus: root.querySelector("#filtroStatus"),
 
     modalOverlay: root.querySelector("#modalOverlay"),
+    listView: root.querySelector(".personalizacao-list-view"),
     modalTitle: root.querySelector("#modalTitle"),
     radioAlvo: root.querySelector("#radioAlvo"),
     lblVinculo: root.querySelector("#lblVinculo"),

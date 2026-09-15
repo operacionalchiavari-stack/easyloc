@@ -11,7 +11,7 @@
 
 <style>
 :root{
-  --brand:#2E1F1F;
+  --brand:#374151;
   --brand-soft:#f6f3f1;
   --surface:#ffffff;
   --surface-soft:#fbfaf9;
@@ -53,16 +53,6 @@ a{
   background:var(--brand);
 }
 
-.login-media::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:
-    linear-gradient(90deg, rgba(20,13,13,.42), rgba(46,31,31,.08)),
-    linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.34));
-  pointer-events:none;
-}
-
 .login-slide{
   position:absolute;
   inset:0;
@@ -71,7 +61,6 @@ a{
   object-fit:cover;
   opacity:0;
   transform:scale(1.04);
-  filter:saturate(.9) contrast(1.02);
   animation:loginSlide 18s infinite;
 }
 
@@ -300,14 +289,16 @@ a{
   font-size:15px;
   font-weight:700;
   cursor:pointer;
-  transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
-  box-shadow:0 14px 30px rgba(46,31,31,.18);
+  transition:background .18s ease;
+  box-shadow:none;
 }
 
 .login-btn:hover{
-  transform:translateY(-1px);
-  filter:brightness(1.05);
-  box-shadow:0 18px 36px rgba(46,31,31,.22);
+  background:#283241;
+}
+
+.login-btn:active{
+  background:#1F2937;
 }
 
 .login-btn.loading{
@@ -424,23 +415,18 @@ a{
 
   <section class="login-panel">
     <div class="login-form" aria-label="Login">
-      <div class="brand">
-        <img src="logo%20nova%20-%20com%20fundo%20branco.png" alt="Acervo">
-        <div class="login-ornament" aria-hidden="true"><span></span></div>
-      </div>
-
       <div class="login-heading">
         <h1>Entrar na sua conta</h1>
         <p>Bem-vindo de volta! Acesse para continuar.</p>
       </div>
 
       <div class="field">
-        <label for="email">Email</label>
+        <label for="email">E-mail ou login</label>
         <div class="input-wrap">
           <span class="input-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
           </span>
-          <input id="email" type="email" placeholder="seu@email.com" autocomplete="email">
+          <input id="email" type="text" placeholder="Seu e-mail ou login" autocomplete="username">
         </div>
       </div>
 
@@ -470,13 +456,6 @@ a{
       </button>
 
       <div id="msg" class="erro"></div>
-
-      <div class="divider">ou</div>
-
-      <div class="link">
-        Ainda n&atilde;o conhece?
-        <a href="index.html">Ver o Acervo &rarr;</a>
-      </div>
     </div>
   </section>
 </main>
@@ -504,7 +483,7 @@ async function login(){
   btnText.innerHTML = `<span class="spinner"></span> Entrando...`;
 
   const email = document.getElementById("email").value.trim();
-  const senha = document.getElementById("senha").value.trim();
+  const senha = document.getElementById("senha").value;
   const msg = document.getElementById("msg");
   msg.innerText = "";
 
@@ -514,12 +493,20 @@ async function login(){
     return;
   }
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password: senha
-  });
+  let data, error;
+  if (email.includes("@")) {
+    ({ data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha }));
+  } else {
+    const result = await supabaseClient.functions.invoke("funcionarios-admin", {
+      body: { action: "login", login: email, password: senha }
+    });
+    error = result.error;
+    if (!error && result.data?.session) {
+      ({ data, error } = await supabaseClient.auth.setSession(result.data.session));
+    }
+  }
 
-  if(error || !data.user){
+  if(error || !data?.user){
     msg.innerText = "E-mail ou senha inválidos";
     resetButton();
     return;
@@ -541,6 +528,14 @@ async function login(){
 
   const empresaId = vinculos[0].empresa_id;
 
+  const acesso = await supabaseClient.rpc("funcionario_contexto", { p_empresa_id: empresaId });
+  if (acesso.error || !acesso.data?.ativo) {
+    msg.innerText = "Acesso indisponível. Consulte o administrador.";
+    await supabaseClient.auth.signOut();
+    resetButton();
+    return;
+  }
+
   const { data: assinatura, error: erroAssinatura } = await supabaseClient
     .from("assinaturas")
     .select("status,vencimento")
@@ -548,7 +543,8 @@ async function login(){
     .single();
 
   if(erroAssinatura || !assinatura){
-    location.href = "index.html#planos";
+    msg.innerText = "Nenhuma assinatura encontrada. Entre em contato com o suporte.";
+    resetButton();
     return;
   }
 
@@ -557,7 +553,8 @@ async function login(){
     new Date(assinatura.vencimento) < new Date();
 
   if(vencida){
-    location.href = "index.html#planos";
+    msg.innerText = "Assinatura inativa ou vencida. Entre em contato com o suporte.";
+    resetButton();
     return;
   }
 
@@ -575,7 +572,7 @@ async function login(){
   sessionStorage.setItem("empresa_id", empresaId);
   sessionStorage.setItem("usuario_nome", usuario?.nome || "Usuário");
 
-  location.href = "Modulos/Login/Boot/boot.html";
+  location.href = "dashboard.html";
 }
 
 function resetButton(){
