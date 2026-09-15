@@ -12,8 +12,9 @@
       const {data,error}=await client.rpc('catalogo_creditos_saldo',{p_token:token()});
       if(error)throw new Error('Não foi possível consultar seus créditos. Tente novamente.');
       wallet=data;let button=document.getElementById('catalogCreditBalance');
-      if(!button){button=document.createElement('button');button.id='catalogCreditBalance';button.type='button';button.className='catalog-credit-balance';button.addEventListener('click',()=>showWallet());document.body.appendChild(button);}
-      button.textContent=`✦ ${data.saldo.toLocaleString('pt-BR')} créditos`;
+      if(!button){const user=document.getElementById('catalogUser');if(!user)return data;button=document.createElement('button');button.id='catalogCreditBalance';button.type='button';button.className='catalog-credit-balance';button.addEventListener('click',()=>showWallet());user.prepend(button);}
+      button.innerHTML=`<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="6.2" stroke="currentColor" stroke-width=".8"/><path d="M14 9.5a3.2 3.2 0 1 0 0 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span>${data.saldo.toLocaleString('pt-BR')}</span>`;
+      button.title=`${data.saldo.toLocaleString('pt-BR')} créditos · Ver custos e histórico`;
       button.setAttribute('aria-label',`Saldo: ${data.saldo} créditos. Ver custos e histórico`);
       return data;
     })().finally(()=>refreshing=null);
