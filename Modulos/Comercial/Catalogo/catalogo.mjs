@@ -599,6 +599,7 @@ function openCustomizeDialog(item){
   $("catalogCustomizeGenerate").disabled = true;
   $("catalogCustomizeStatus").textContent = "";
   $("catalogCustomizeDialog").showModal();
+  window.CatalogCredits.prepareFabric();
 }
 
 async function generateFabricVariation(){
@@ -680,6 +681,7 @@ async function generateFabricVariation(){
     $("catalogAiLoading").classList.add("hidden");
     button.disabled = false;
     button.textContent = "Aplicar tecido com IA";
+    window.CatalogCredits.syncFabric();
   }
 }
 
@@ -703,6 +705,7 @@ function bindCustomization(){
     $("catalogFabricUpload").classList.add("has-fabric");
     $("catalogCustomizeGenerate").disabled = false;
     $("catalogCustomizeStatus").textContent = "Tecido pronto para aplicação.";
+    window.CatalogCredits.syncFabric();
   });
   $("catalogCustomizeGenerate")?.addEventListener("click", generateFabricVariation);
 }

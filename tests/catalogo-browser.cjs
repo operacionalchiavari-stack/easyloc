@@ -49,7 +49,7 @@ function pdfFixture(pages = 1, size = 300) {
     await page.locator('#catalogSearch').fill('mesa');assert.equal(await page.locator('.catalog-product-section').isVisible(),true);
     await page.locator('[data-customize-item]').click();
     await page.locator('#catalogFabricInput').setInputFiles({name:'tecido.png',mimeType:'image/png',buffer:Buffer.from(png.split(',')[1],'base64')});
-    await page.locator('#catalogCustomizeGenerate').click();
+    await page.locator('#catalogFabricCredits strong').first().waitFor();assert.match(await page.locator('#catalogFabricCredits').innerText(),/100/);await page.locator('#catalogCustomizeGenerate').click();assert.equal(await page.locator('.catalog-credit-dialog').count(),0);
     assert.equal(await page.locator('#catalogCustomizeDialog').isVisible(),true);
     assert.equal(await page.locator('#catalogAiLoading').isVisible(),true);
     assert.equal(await page.locator('#catalogFabricInput').isDisabled(),true);

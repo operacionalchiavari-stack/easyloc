@@ -32,8 +32,29 @@
     try{await refresh();await dialog('Sua liberdade para criar',`<div class="credit-hero"><small>Saldo disponível</small><strong>${wallet.saldo.toLocaleString('pt-BR')} <span>créditos</span></strong></div><p>Use seus créditos para transformar ideias em imagens. Para adicionar mais, fale com a Chiavari.</p>${costs()}<h3>Últimas movimentações</h3><div class="credit-history">${wallet.historico.length?wallet.historico.map(m=>`<div><span>${escape(m.tipo==='recarga'?'Créditos adicionados':names[m.recurso])}<small>${new Date(m.created_at).toLocaleDateString('pt-BR')} · ${m.status==='estornado'?'Devolvido':m.status==='reservado'?'Em processamento':'Concluído'}</small></span><b>${m.tipo==='recarga'?'+':m.status==='estornado'?'↩':'−'}${m.quantidade}</b></div>`).join(''):'<p>Seu histórico aparecerá aqui.</p>'}</div>`);}catch(e){await dialog('Créditos indisponíveis',`<p>${escape(e.message)}</p>`);}
   }
   const original=(name,options)=>client.functions.invoke(name,options);
+  let fabricQuote=null;
+  function syncFabric(){
+    const panel=document.getElementById('catalogFabricCredits'),button=document.getElementById('catalogCustomizeGenerate');
+    if(!panel||!external())return;
+    panel.hidden=false;
+    if(!fabricQuote){panel.textContent='Consultando seus créditos…';button.disabled=true;return;}
+    const {saldo,custo}=fabricQuote,enough=saldo>=custo;
+    panel.innerHTML=`<div><span>Seu saldo <strong>${saldo} créditos</strong></span><span>Esta criação <strong>${custo} créditos</strong></span><span>Após o uso <strong>${enough?`${saldo-custo} créditos`:'Saldo insuficiente'}</strong></span></div><small>${enough?'Ao aplicar o tecido, você confirma o uso dos créditos. Se a geração falhar, eles serão devolvidos.':'Solicite uma recarga à Chiavari para aplicar este tecido.'}</small>`;
+    if(!document.getElementById('catalogFabricInput').disabled){button.disabled=!enough||!document.getElementById('catalogFabricPreview').getAttribute('src');button.textContent=`Aplicar tecido · ${custo} crédito${custo===1?'':'s'}`;}
+  }
+  async function prepareFabric(){
+    if(!external())return;
+    fabricQuote=null;syncFabric();
+    try{const data=await refresh();if(!Number.isInteger(data?.custos?.tecido))throw Error('Custo indisponível');fabricQuote={saldo:data.saldo,custo:data.custos.tecido};syncFabric();}
+    catch{document.getElementById('catalogFabricCredits').textContent='Não foi possível consultar os créditos. Feche e abra esta janela para tentar novamente.';}
+  }
   async function invoke(name,options){
     if(name!=='studio-ai-engine'||!options?.body?.catalog_token)return original(name,options);
+    if(options.body.scene?.referencePolicy==='fabric_customization'){
+      if(!fabricQuote||fabricQuote.saldo<fabricQuote.custo)return {data:null,error:new Error('Créditos indisponíveis ou insuficientes.')};
+      const price=fabricQuote.custo;
+      try{return await original(name,{...options,body:{...options.body,request_id:crypto.randomUUID(),expected_cost:price}});}finally{await prepareFabric();}
+    }
     // Confirmações em sequência, sem bloquear gerações já autorizadas.
     let release;const turn=new Promise(r=>release=r);const previous=queued;queued=turn;await previous;
     let price;
@@ -51,6 +72,6 @@
   const start=()=>{if(external())refresh().catch(()=>{});};
   setInterval(start,30000);window.addEventListener('focus',start);
   // O login do catálogo termina depois da carga inicial do script.
-  window.CatalogCredits={refresh,show:showWallet,invoke};
+  window.CatalogCredits={refresh,show:showWallet,invoke,prepareFabric,syncFabric};
   start();
 })();
