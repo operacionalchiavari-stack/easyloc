@@ -10,6 +10,7 @@ begin
  select coalesce((select saldo from catalogo_creditos_carteiras where empresa_id=a.empresa_id and cliente_id=a.cliente_id),0) into saldo_antes;
  perform creditos_adicionar(a.empresa_id,a.cliente_id,10,'Teste transacional',recarga);
  perform creditos_adicionar(a.empresa_id,a.cliente_id,10,'Teste transacional',recarga);
+ if not exists(select 1 from jsonb_array_elements(creditos_painel(a.empresa_id)->'clientes') cliente where cliente->>'id'=a.cliente_id::text and (cliente->>'saldo')::integer=saldo_antes+10) then raise exception 'Cliente ou saldo ausente no painel administrativo'; end if;
  if (select saldo from catalogo_creditos_carteiras where empresa_id=a.empresa_id and cliente_id=a.cliente_id)<>saldo_antes+10 then raise exception 'Recarga duplicada'; end if;
  perform creditos_reservar(a.empresa_id,a.cliente_id,'render',op,2);
  perform creditos_finalizar(op,false);perform creditos_finalizar(op,false);
