@@ -33,21 +33,56 @@
     try{await refresh();await dialog('Sua liberdade para criar',`<div class="credit-hero"><small>Saldo disponível</small><strong>${wallet.saldo.toLocaleString('pt-BR')} <span>créditos</span></strong></div><p>Use seus créditos para transformar ideias em imagens. Para adicionar mais, fale com a Chiavari.</p>${costs()}<h3>Últimas movimentações</h3><div class="credit-history">${wallet.historico.length?wallet.historico.map(m=>`<div><span>${escape(m.tipo==='recarga'?'Créditos adicionados':names[m.recurso])}<small>${new Date(m.created_at).toLocaleDateString('pt-BR')} · ${m.status==='estornado'?'Devolvido':m.status==='reservado'?'Em processamento':'Concluído'}</small></span><b>${m.tipo==='recarga'?'+':m.status==='estornado'?'↩':'−'}${m.quantidade}</b></div>`).join(''):'<p>Seu histórico aparecerá aqui.</p>'}</div>`);}catch(e){await dialog('Créditos indisponíveis',`<p>${escape(e.message)}</p>`);}
   }
   const original=(name,options)=>client.functions.invoke(name,options);
-  let fabricQuote=null;
+  let fabricQuote=null, fabricQuoteError=false;
+  // Achado testando com Playwright (não pedido, mas necessário: o usuário
+  // reportou "seleciono a foto e nada acontece" em "Experimente seu
+  // tecido") — se a consulta de créditos falhar (rede/RPC), o painel
+  // ficava preso pra sempre em "Consultando seus créditos…" e o botão
+  // "Aplicar tecido" continuava desabilitado, sem NENHUM aviso visível de
+  // erro (o texto de erro só existia dentro do próprio painel, mas nunca
+  // chegava a aparecer porque nada disparava essa troca de novo) — do
+  // ponto de vista do cliente, a foto do tecido aparecia normalmente
+  // (isso não depende de créditos), mas clicar em "Aplicar" literalmente
+  // não fazia nada, sem explicação. `fabricQuoteError` agora distingue
+  // "ainda carregando" de "já tentou e falhou", e o painel de erro ganha
+  // um botão "Tentar novamente" (delegado, porque o innerHTML é
+  // reescrito a cada chamada) em vez de só texto estático sem ação.
+  async function fetchFabricQuote(){
+    const data=await refresh();
+    if(!Number.isInteger(data?.custos?.tecido))throw new Error('Custo indisponível');
+    return {saldo:data.saldo,custo:data.custos.tecido};
+  }
   function syncFabric(){
     const panel=document.getElementById('catalogFabricCredits'),button=document.getElementById('catalogCustomizeGenerate');
     if(!panel||!external())return;
+    if(!panel.dataset.fabricRetryBound){
+      panel.dataset.fabricRetryBound='1';
+      panel.addEventListener('click',(event)=>{if(event.target.closest('[data-fabric-retry]'))prepareFabric();});
+    }
     panel.hidden=false;
-    if(!fabricQuote){panel.textContent='Consultando seus créditos…';button.disabled=true;return;}
+    if(!fabricQuote){
+      panel.innerHTML=fabricQuoteError
+        ?'<span>Não foi possível consultar seus créditos.</span> <button type="button" data-fabric-retry class="credit-secondary">Tentar novamente</button>'
+        :'Consultando seus créditos…';
+      button.disabled=true;
+      return;
+    }
     const {saldo,custo}=fabricQuote,enough=saldo>=custo;
     panel.innerHTML=`<div><span><small>Saldo atual</small><strong>${coinIcon}${saldo.toLocaleString('pt-BR')}</strong></span><span><small>Após o uso</small><strong>${coinIcon}${enough?(saldo-custo).toLocaleString('pt-BR'):'Insuficiente'}</strong></span></div>`;
     if(!document.getElementById('catalogFabricInput').disabled){button.disabled=!enough||!document.getElementById('catalogFabricPreview').getAttribute('src');button.textContent=`Aplicar tecido · ${custo} crédito${custo===1?'':'s'}`;}
   }
   async function prepareFabric(){
     if(!external())return;
-    fabricQuote=null;syncFabric();
-    try{const data=await refresh();if(!Number.isInteger(data?.custos?.tecido))throw Error('Custo indisponível');fabricQuote={saldo:data.saldo,custo:data.custos.tecido};syncFabric();}
-    catch{document.getElementById('catalogFabricCredits').textContent='Não foi possível consultar os créditos. Feche e abra esta janela para tentar novamente.';}
+    fabricQuote=null;fabricQuoteError=false;syncFabric();
+    try{fabricQuote=await fetchFabricQuote();}
+    catch{
+      // Uma falha isolada de rede/RPC não pode deixar o botão preso pra
+      // sempre — tenta mais uma vez automaticamente antes de admitir erro
+      // (e só então oferecer o botão "Tentar novamente" acima).
+      try{fabricQuote=await fetchFabricQuote();}
+      catch{fabricQuoteError=true;}
+    }
+    syncFabric();
   }
   async function invoke(name,options){
     if(name!=='studio-ai-engine'||!options?.body?.catalog_token)return original(name,options);

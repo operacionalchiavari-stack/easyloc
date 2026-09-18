@@ -115,6 +115,7 @@ function preencherFormulario(item){
   $("itensEstilo").value = item.estilo || "";
   $("itensFornecedor").value = item.fornecedor_id || "";
   $("itensDestaqueSite").value = item.destaque_site ? "true" : "false";
+  $("itensCapaCategoria").value = item.capa_categoria ? "true" : "false";
   $("itensOrdemExposicao").value = item.ordem_exposicao_site ?? "";
   $("itensLocarSomenteKit").value = item.locar_somente_kit ? "true" : "false";
   $("itensExclusivo").value = item.exclusivo ? "true" : "false";

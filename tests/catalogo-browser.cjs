@@ -30,7 +30,7 @@ function pdfFixture(pages = 1, size = 300) {
     const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
     await page.route('**/rest/v1/rpc/*',async r=>{
       const name=r.request().url().split('/').pop();
-      const response=name==='catalogo_creditos_saldo'?{saldo:100,custos:{tecido:1,render:1,planta:1,layout:1},historico:[]}:name==='catalogo_login'?{token:'test-session',empresa_id:'company',cliente_id:'decorator'}:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'decorator'}:{empresa:{nome:'Empresa teste'},decorador:{id:'decorator',nome:'Decoradora teste'},itens:[{id:'fixture',tipo:'Item',produto:'Mesa teste',categoria:'Mesas',largura:1,altura:1,profundidade:1,foto_url:png,personalizable:true,itens_modelos_3d:[{url:'/siteglb.glb',status:'ativo'}],itens_fotos:[]}]};
+      const response=name==='catalogo_creditos_saldo'?{saldo:100,custos:{tecido:1,render:1,planta:1,layout:1},historico:[]}:name==='catalogo_login'?{token:'test-session',empresa_id:'company',cliente_id:'decorator'}:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'decorator'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Empresa teste'},decorador:{id:'decorator',nome:'Decoradora teste'},itens:[{id:'fixture',tipo:'Item',produto:'Mesa teste',categoria:'Mesas',largura:1,altura:1,profundidade:1,foto_url:png,personalizable:true,itens_modelos_3d:[{url:'/siteglb.glb',status:'ativo'}],itens_fotos:[]}]};
       await r.fulfill({json:response});
     });
     await page.route('**/functions/v1/studio-ai-engine',async r=>{
@@ -44,22 +44,69 @@ function pdfFixture(pages = 1, size = 300) {
     await page.locator('#catalogLoginEmail').fill('teste@example.com');
     await page.locator('#catalogLoginPassword').fill('test-password');
     await page.locator('#catalogLoginForm button[type=submit]').click();
-    await page.locator('.catalog-product-section').waitFor();
+    // Primeira tela agora é o Portal (Catálogo/Biblioteca/Módulo 3D) —
+    // entra pelo bloco "Catálogo" antes de seguir com o resto do teste.
+    await page.locator('[data-gateway-tile="catalogo"]').waitFor();
+    await page.locator('[data-gateway-tile="catalogo"]').click();
+    // Título "Categorias" da Home foi removido (duplicava o rótulo do
+    // cabeçalho, #catalogPageLabel) — espera pela grade de cards em vez
+    // dele.
+    await page.locator('.catalog-home-grid').waitFor();
     await page.locator('#catalogSearch').fill('inexistente');assert.equal(await page.locator('#catalogEmpty').isVisible(),true);
     await page.locator('#catalogSearch').fill('mesa');assert.equal(await page.locator('.catalog-product-section').isVisible(),true);
     await page.locator('[data-customize-item]').click();
     await page.locator('#catalogFabricInput').setInputFiles({name:'tecido.png',mimeType:'image/png',buffer:Buffer.from(png.split(',')[1],'base64')});
     await page.locator('#catalogFabricCredits strong').first().waitFor();assert.match(await page.locator('#catalogFabricCredits').innerText(),/100/);await page.locator('#catalogCustomizeGenerate').click();assert.equal(await page.locator('.catalog-credit-dialog').count(),0);
-    assert.equal(await page.locator('#catalogCustomizeDialog').isVisible(),true);
-    assert.equal(await page.locator('#catalogAiLoading').isVisible(),true);
+    // Pedido explícito do usuário: ao mandar aplicar, o diálogo fecha
+    // sozinho (não fica parado mostrando "Criando sua versão…") — quem
+    // avisa do andamento agora é só a notificação no canto da tela.
+    await page.getByText('Personalização em andamento',{exact:true}).waitFor();
+    assert.equal(await page.locator('#catalogCustomizeDialog').isVisible(),false,'Diálogo fecha sozinho ao mandar aplicar');
     assert.equal(await page.locator('#catalogFabricInput').isDisabled(),true);
+    // Quarto pedido explícito: "no lugar do círculo girando quero que
+    // coloque porcentagem... ele deve ser fiel ao tempo que de fato
+    // demora" — sem spinner girando, com um percentual que sobe de
+    // verdade com o tempo decorrido. Marca o elemento pra confirmar
+    // depois que é o MESMO toast que vira o resultado (não um novo).
+    const workingNotification=page.locator('.catalog-notification.is-working');
+    await workingNotification.evaluate(el=>{el.dataset.mesmoToast='1';});
+    assert.equal(await page.locator('.catalog-notification.is-working .catalog-notification-icon.is-progress').count(),1,'Ícone do toast "working" é o de percentual, não o spinner girando');
+    const percentBefore=Number((await page.locator('.catalog-notification-percent').innerText()).replace('%',''));
+    await page.waitForTimeout(900);
+    const percentAfter=Number((await page.locator('.catalog-notification-percent').innerText()).replace('%',''));
+    assert.ok(percentAfter>percentBefore,`Percentual devia subir com o tempo real decorrido (${percentBefore}% -> ${percentAfter}%)`);
+    assert.ok(percentAfter<100,'Percentual nunca deve bater 100% sozinho, só quando a foto realmente ficar pronta');
     await page.getByText('Sua personalização ficou pronta',{exact:true}).waitFor();
-    assert.match(await page.locator('#catalogCustomizeStatus').innerText(),/Tecido aplicado/);
+    // Segundo pedido explícito: a notificação de "pronto" mostra a
+    // própria foto do resultado, não só texto.
+    const notificationPhoto=page.locator('.catalog-notification.has-photo img.catalog-notification-photo');
+    await notificationPhoto.waitFor();
+    assert.match(await notificationPhoto.getAttribute('src'),/^data:image\/png/);
     assert.equal(await page.locator('#catalogAiLoading').isVisible(),false);
-    assert.equal(await page.locator('#catalogCustomizeProduct').getAttribute('src'),await page.locator('.product-main-image').getAttribute('src'));
-    await page.locator('#catalogCustomizeClose').click();
+    assert.equal(await page.locator('.catalog-notification[data-mesmo-toast="1"].has-photo').count(),1,'O MESMO toast que mostrava o percentual vira o resultado com a foto, não um toast novo criado do zero');
+    // Terceiro pedido explícito: "Ver resultado" NÃO reabre o diálogo
+    // inteiro de "Experimente seu tecido" (upload/dropzone/aplicar não
+    // fazem sentido só pra olhar o resultado já pronto) — abre uma
+    // prévia minimalista só com a foto grande + link de salvar.
+    await page.locator('.catalog-notification-action').click();
+    await page.locator('#catalogFabricResultDialog[open]').waitFor();
+    assert.equal(await page.locator('#catalogCustomizeDialog').isVisible(),false,'"Ver resultado" não reabre o diálogo de upload');
+    assert.equal(await page.locator('#catalogFabricResultTitle').innerText(),'Mesa teste');
+    assert.equal(await page.locator('#catalogFabricResultImage').getAttribute('src'),await page.locator('.product-main-image').getAttribute('src'));
+    assert.match(await page.locator('#catalogFabricResultDownload').getAttribute('href'),/^data:image\/png/);
+    assert.match(await page.locator('#catalogFabricResultDownload').getAttribute('download'),/tecido-personalizado\.png$/);
+    await page.locator('#catalogFabricResultClose').click();
+    assert.equal(await page.locator('#catalogFabricResultDialog').isVisible(),false);
     assert.equal(requests.at(-1).scene.fabricReference,png);
-    await page.locator('[data-studio-toggle]').click();
+    // Botão "Painel 3D" do cabeçalho foi removido (pedido explícito do
+    // usuário — a única porta de entrada agora é o bloco do Portal);
+    // volta pra lá pela logo antes de abrir o Painel 3D. "Módulo 3D" não
+    // abre mais o estúdio direto — leva pro mini-menu novo (pedido
+    // explícito do usuário: "quero que apareça como se fosse outro mini
+    // menu"), o estúdio virou o 1º dos 3 cards ali dentro.
+    await page.locator('.catalog-brand').click();
+    await page.locator('[data-gateway-tile="modulo3d"]').click();
+    await page.locator('[data-modulo3d-card="estudio"]').click();
     await page.waitForFunction(()=>window.studioTest?.studio.renderer);
     await page.locator('#studioPlanInput').setInputFiles({name:'planta.pdf',mimeType:'application/pdf',buffer:pdfFixture()});
     await page.getByText('Planta inteira dimensionada',{exact:true}).waitFor({timeout:30000});
@@ -91,6 +138,12 @@ function pdfFixture(pages = 1, size = 300) {
     await page.locator('[name="iluminacao"]').selectOption('cenica');
     await page.locator('.studio-render-confirm').click();
     await page.getByText('Sua renderização ficou pronta',{exact:true}).waitFor();
+    // Pedido explícito do usuário: "quero que a notificação de todos os
+    // módulos apareça a imagem, igual é em troca de tecido" — a
+    // notificação de sucesso do Estúdio de Ambientes também mostra a foto
+    // direto, mesmo padrão de `.catalog-notification-photo` já usado no
+    // tecido.
+    assert.match(await page.locator('.catalog-notification-photo').getAttribute('src'),/^data:image\/png;base64,/,'Notificação de sucesso do Estúdio já mostra a foto, igual ao tecido');
     assert.equal(requests.at(-1).scene.options.periodo,'noite');
     assert.equal(requests.at(-1).scene.options.convidados,'poucos');
     assert.equal(requests.at(-1).scene.options.iluminacao,'cenica');

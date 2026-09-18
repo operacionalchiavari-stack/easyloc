@@ -239,6 +239,7 @@ const volumeCubico = Number(
 
     const exibirSite = document.getElementById("itensExibirSite")?.value === "true";
     const destaqueSite = document.getElementById("itensDestaqueSite")?.value === "true";
+    const capaCategoria = document.getElementById("itensCapaCategoria")?.value === "true";
     const locarSomenteKit = document.getElementById("itensLocarSomenteKit")?.value === "true";
     const exclusivo = document.getElementById("itensExclusivo")?.value === "true";
 
@@ -356,6 +357,7 @@ const itemData = {
   ativo,
   exibir_no_site: exibirSite,
   destaque_site: destaqueSite,
+  capa_categoria: capaCategoria,
   ordem_exposicao_site: ordemExposicao,
   locar_somente_kit: locarSomenteKit,
   exclusivo,

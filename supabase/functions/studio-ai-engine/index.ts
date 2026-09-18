@@ -165,6 +165,41 @@ function normalizarPrompt(input: GenerateSceneInput) {
     .map(([name, count]) => `${count}x ${name}`)
     .join(", ");
 
+  // Pedido explicito do usuario (Modulo Lounge): "quero que respeite
+  // exatamente o angulo, a distancia e principalmente o preview... e
+  // como se tirasse um print do que eu estou vendo no 3d e desse so o
+  // realismo, mantendo e preservando tudo, sem inventar nada". Politica
+  // separada da usada pelo Estudio de Ambientes (que continua com a
+  // "REGRA FLEXIVEL PARA A ARQUITETURA" abaixo, sem nenhuma mudanca) —
+  // aqui a arquitetura tambem fica rigida, nunca estendida/completada
+  // (nada de inferir teto, paredes ou qualquer coisa fora do que ja
+  // esta visivel na captura).
+  if (input.scene?.referencePolicy === "furniture_strict_literal_scene") {
+    return {
+      prompt: [
+        input.prompt.trim(),
+        "MODO OBRIGATORIO: aplicar um acabamento fotorrealista sobre a EXATA cena da captura 3D, sem recompor, estender ou reinterpretar nada — como revelar a mesma fotografia com materiais, luz e sombra reais.",
+        "PRIORIDADE MAXIMA, ACIMA DE QUALQUER OUTRO AJUSTE: o angulo de camera, a distancia, a altura do ponto de vista, a rotacao e o campo de visao da captura 3D sao IMUTAVEIS e devem ser reproduzidos com fidelidade absoluta. Cada movel, o piso, a parede de fundo e o espaco vazio ao redor devem ocupar EXATAMENTE a mesma posicao, tamanho aparente e enquadramento na imagem final que ocupam na captura original — pixel a pixel, sem recentralizar, reenquadrar, cortar, aproximar, afastar, inclinar, elevar, abaixar ou rotacionar a camera em nenhum grau.",
+        furnitureInventory ? `INVENTARIO DE MOVEIS QUE DEVE PERMANECER IDENTICO: ${furnitureInventory}.` : "Preserve rigidamente todos os moveis visiveis.",
+        "REGRA RIGIDA PARA OS MOVEIS: mantenha quantidade, identidade, desenho, materiais, cores, proporcoes, escala aparente, silhueta, orientacao e posicao de cada item exatamente como na captura 3D.",
+        "Mantenha exatamente as distancias entre os moveis, os pontos de contato, as oclusoes e a ordem de profundidade do mobiliario.",
+        "Nao mover, girar, espelhar, redimensionar, deformar, substituir, remover, duplicar nem acrescentar moveis ou objetos decorativos.",
+        "Bloqueie a camera: nao alterar enquadramento, recorte, zoom, distancia focal, campo de visao, horizonte, perspectiva ou pontos de fuga. O angulo e a distancia da captura sao definitivos.",
+        "REGRA RIGIDA PARA A CENA E A ARQUITETURA: preserve exatamente o que ja esta visivel na captura — piso, a parede de fundo (se houver) e o espaco aberto/vazio acima e ao redor da composicao.",
+        "NAO adicione teto, paredes novas, portas, janelas ou qualquer elemento arquitetonico que nao esteja literalmente visivel na captura original. Se a captura mostra o ambiente aberto, sem teto, o resultado tambem deve ficar aberto, sem teto — nunca inferir ou completar um fechamento que nao existe.",
+        "Nao estenda, corte, complete nem reinterprete a arquitetura alem do que ja esta na imagem — apenas troque o acabamento visual (textura, luz, sombra) do que ja esta la por um resultado fotorrealista.",
+        "Integre os moveis ao ambiente apenas por iluminacao, reflexos e sombras de contato fisicamente plausiveis, sem alterar sua geometria percebida nem adicionar nada que nao esteja na cena original.",
+        ["poucos", "moderado"].includes(String((input.scene?.options as Record<string, unknown> | undefined)?.convidados))
+          ? "Pessoas autorizadas somente na quantidade solicitada, em areas livres, sem encobrir o mobiliario principal. Nunca mover moveis ou alterar a camera para acomodar convidados. Se faltar espaco, reduzir pessoas."
+          : "Nao adicionar pessoas.",
+        "Nao adicionar textos, logotipos, marcas d'agua ou novos objetos.",
+        "O resultado deve parecer literalmente a MESMA fotografia da captura 3D, apenas com acabamento fotorrealista — nunca uma cena nova, estendida ou reinterpretada.",
+        "Confirme antes de finalizar: o angulo de camera e o enquadramento da imagem final devem ser identicos aos da captura 3D fornecida — isso e mais importante do que qualquer refinamento estetico."
+      ].join(" "),
+      versions,
+    };
+  }
+
   return {
     prompt: [
       input.prompt.trim(),

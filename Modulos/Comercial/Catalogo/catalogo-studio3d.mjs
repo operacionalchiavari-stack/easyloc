@@ -2160,6 +2160,12 @@ async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhu
       message: "O cenário já pode ser visualizado e baixado.",
       actionLabel: "Ver resultado",
       duration: 15000,
+      // Pedido explícito do usuário: "quero que a notificação de todos
+      // os módulos apareça a imagem, igual é em troca de tecido" — a
+      // MESMA imagem já usada no diálogo de resultado, sem gerar nada
+      // novo (mesmo padrão de `notify({image:...})` já usado pra "Sob
+      // Medida"/tecido em catalogo.mjs).
+      image: src,
       onAction: () => {
         $("studioResultImage").src = src;
         $("studioResultDownload").href = src;
