@@ -3,7 +3,14 @@
    uma seção na mesma página. Pastas = as próprias categorias do
    catálogo (reaproveita .catalog-grid/.catalog-home-grid/.catalog-home-card
    de catalogo.css, mesma linguagem visual da Home); aqui só o que é
-   específico da Biblioteca: a tela de fotos de UMA categoria aberta. */
+   específico da Biblioteca: a tela de fotos de UMA categoria aberta.
+
+   Histórico: chegou a virar uma "página única" com abas pequenas no
+   topo (ícone de pasta miniatura dentro de cada aba) no lugar desta
+   grade de pastas — revertido por completo a pedido do usuário
+   ("CANCELE ESSA FORMATACAO DAS PAGINAS COMO ABAS, VOLTE NO FORMATO QUE
+   ERA ANTES"). Se pedirem abas de novo, confirmar antes de reimplementar
+   — já foi tentado e desfeito nesta sessão. */
 .catalog-biblioteca{background:var(--bg)}
 /* Ícone de pasta dos cards da Biblioteca (pedido explícito do usuário):
    cada categoria é uma PASTA, não uma foto — mesmo card/grid da Home
@@ -22,41 +29,147 @@
    (#ddd6cc, criada pra ser um contorno bem discreto) tanto pro traço
    quanto pro fundo quase branco (#fbfaf7) sobre um card que já é branco
    — dava CONTRASTE PRATICAMENTE ZERO contra a página, sumindo de vez.
-   Três ajustes, sem abandonar a hierarquia "vazia é mais discreta que
-   cheia" nem recorrer a cor saturada/genérica: (1) o quadrado ganhou um
-   fundo neutro levemente diferente do branco da página + uma borda fina
-   (.catalog-grid-card-photo abaixo), então a pasta sempre tem uma
-   "moldura" própria, mesmo se o ícone em si fosse invisível; (2) pasta
-   vazia trocou var(--line) por var(--muted) (#77716a, um cinza-marrom
-   médio já usado no resto do catálogo pra texto secundário — bem mais
-   escuro que --line, mas ainda claramente "menos" que a cor cheia da
-   pasta com conteúdo); (3) o ícone cresceu de 46% pra 56% do quadrado,
-   mais presença sem mudar a composição. */
-.catalog-home-card .catalog-grid-card-photo.catalog-biblioteca-folder{background:#f7f5f1;border:1px solid var(--line);transition:border-color .25s,background-color .25s}
-.catalog-home-card:hover .catalog-grid-card-photo.catalog-biblioteca-folder,.catalog-home-card:focus-visible .catalog-grid-card-photo.catalog-biblioteca-folder{border-color:var(--accent)}
-.catalog-biblioteca-folder-icon{width:56%;height:56%;overflow:visible}
+   Corrigido então com uma "moldura" (fundo bege sutil + borda) ao redor
+   de cada pasta, só pra dar alguma presença mesmo se o ícone em si
+   fosse quase invisível.
+
+   Essa moldura foi removida DEPOIS, pedido explícito do usuário vendo a
+   tela real com várias pastas vazias lado a lado: "quero deixar essas
+   pastas sem essas caixas em volta, quero que elas fiquem mais bonitas
+   só a pasta mesmo... mas elas precisam ser visíveis, as cores que elas
+   estão hoje está muito claro". Ou seja, dessa vez a correção é no
+   PRÓPRIO ícone (cores bem mais fortes, ver fills abaixo), não mais
+   escondendo o problema atrás de uma caixa — sem a moldura, o quadrado
+   volta a ser só `background:#fff` (herdado de `.catalog-grid-card-
+   photo` em catalogo.css, mesmo fundo branco de qualquer card da Home),
+   e o ícone sozinho precisa ter contraste suficiente contra ele. */
+/* Pedido explícito do usuário, vendo a tela sem a moldura: "o nome da
+   pasta está muito longe dela" — sem a caixa, sobrava um vão grande
+   embaixo do ícone: o quadrado inteiro centraliza o conteúdo
+   (herdado de .catalog-grid-card-photo, pensado pra uma FOTO cheia,
+   que toca as bordas), mas o ícone de pasta só ocupava 56% do quadrado E
+   tem proporção mais larga que alta (viewBox 100×80) — o resultado
+   escalava pra caber na largura e sobrava bastante respiro vertical.
+
+   1ª tentativa (revertida): ancorar o ícone na BASE do quadrado
+   (`align-items:flex-end`) — resolvia o vão até o nome, mas só
+   EMPURRAVA todo aquele mesmo vão pra CIMA do ícone, gerando a queixa
+   seguinte do usuário: "elas também estão aparecendo muito embaixo do
+   menu, elas precisam subir mais, olha o espaço que está entre o menu e
+   a primeira linha". Mover o ancoramento só troca de lado ONDE o vão
+   aparece, nunca reduz o vão em si.
+
+   Corrigido de vez AUMENTANDO o ícone (56%→86% do quadrado) e mantendo
+   centralizado (sem `align-items` especial) — reduz o vão dos DOIS
+   lados ao mesmo tempo, em vez de só realocar o mesmo vão de um lado
+   pro outro. Ainda sobra uma margem pequena e proporcional nos 2 lados
+   (natural da proporção mais larga que alta do ícone, 100×80), mas bem
+   menor que antes dos dois lados ao mesmo tempo. */
+.catalog-biblioteca-folder-icon{width:86%;height:86%;overflow:visible}
+
+/* "Foto saindo da pasta" (pedido explícito do usuário, com print real:
+   "quero que as pastas tenham um efeito de parecer que a foto tá
+   saindo dela") — só desenhada quando a pasta tem pelo menos 1 foto
+   (ver folderIconSvg() em catalogo-biblioteca.mjs; pasta vazia não tem
+   `<g class="catalog-biblioteca-folder-peek">` nenhum no HTML, não é só
+   escondida via CSS). Fica entre `back` e `front` na ordem do SVG —
+   `front` cobre a parte de baixo da foto (a "aba" segurando ela por
+   dentro), só a parte de cima aparece de verdade saindo pra fora do
+   contorno da pasta. `transform-box:fill-box` faz a rotação girar em
+   torno do CENTRO da própria foto (não do canto 0,0 do viewBox), senão
+   a inclinação jogaria a foto pra fora de posição. Sobe mais um pouco
+   (`translateY`) e nivela (some a rotação) no hover — reforça a
+   sensação de a foto estar sendo puxada pra fora da pasta.
+
+   Efeito ampliado depois (pedido explícito do usuário, junto com a
+   foto maior: "quero que o efeito fique maior tambem") — inclinação de
+   repouso quase dobrada (-7deg→-11deg) e o "levantar" no hover também
+   (translateY -4px→-8px), deixando o balanço entre repouso↔hover mais
+   dramático (a diferença de ângulo dobrou: 4deg→8deg); sombra e
+   espessura do contorno branco também cresceram, proporcionais à foto
+   maior. */
+.catalog-biblioteca-folder-peek{transform-box:fill-box;transform-origin:center;transform:rotate(-11deg);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.catalog-home-card:hover .catalog-biblioteca-folder-peek,.catalog-home-card:focus-visible .catalog-biblioteca-folder-peek{transform:rotate(-3deg) translateY(-8px)}
+.catalog-biblioteca-folder-peek-frame{stroke:#fff;stroke-width:3;filter:drop-shadow(0 4px 6px rgba(37,30,25,.32))}
+
 .catalog-biblioteca-folder-tab,.catalog-biblioteca-folder-back{fill:var(--accent);transition:fill .25s}
-.catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--accent) 32%,#fff);transition:fill .25s}
-.catalog-home-card:hover .catalog-biblioteca-folder-front,.catalog-home-card:focus-visible .catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--accent) 46%,#fff)}
+.catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--accent) 55%,#fff);transition:fill .25s}
+.catalog-home-card:hover .catalog-biblioteca-folder-front,.catalog-home-card:focus-visible .catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--accent) 70%,#fff)}
 .catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-tab,.catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-back{fill:var(--muted)}
-.catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--muted) 16%,#fff)}
-.catalog-home-card:hover .catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-front,.catalog-home-card:focus-visible .catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--muted) 26%,#fff)}
-.catalog-biblioteca-detail{max-width:1400px;margin:0 auto;padding:56px clamp(24px,4vw,64px) 100px}
+.catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--muted) 40%,#fff)}
+.catalog-home-card:hover .catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-front,.catalog-home-card:focus-visible .catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--muted) 55%,#fff)}
+/* padding-top reduzido (pedido explícito do usuário: "as fotos podem
+   subir mais também, ficar mais próximas do menu") — mesmo valor de
+   folga já calibrado em `.catalog-detail-panel` (ver seção "Trilha de
+   navegação" no CLAUDE.md: 38px é maior que a altura real da trilha
+   flutuante, ~28px, sem sobrar vão exagerado). Antes eram 56px, sobrando
+   quase 30px de vão morto entre a trilha e o cabeçalho da Biblioteca. */
+.catalog-biblioteca-detail{max-width:1400px;margin:0 auto;padding:38px clamp(24px,4vw,64px) 100px}
+/* Cabeçalho da tela de detalhe (antes tinha o botão "← CATEGORIAS" +
+   nome da categoria, removidos por completo — pedido explícito do
+   usuário, print real: "← CATEGORIAS / Estofados ... quero que apague
+   isso"). Voltar à lista de pastas agora só clicando na logo (Portal) e
+   abrindo "Biblioteca" de novo. `margin-left:auto` no lugar do antigo
+   `flex:1` do <h2> (removido do HTML) é o que mantém o botão de
+   adicionar fotos alinhado à direita do cabeçalho pra quem tem acesso
+   interno. */
 .catalog-biblioteca-detail-header{display:flex;flex-wrap:wrap;align-items:center;gap:18px;margin-bottom:36px}
-.catalog-biblioteca-back{border:0;background:none;padding:0;color:var(--muted);font:600 .7rem "Manrope",sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
-.catalog-biblioteca-back:hover,.catalog-biblioteca-back:focus-visible{color:var(--accent)}
-.catalog-biblioteca-detail-header h2{flex:1;min-width:160px;margin:0;font-family:"Cormorant Garamond",serif;font-size:clamp(1.5rem,2.4vw,2.1rem);font-weight:500;letter-spacing:.02em;color:var(--ink)}
-.catalog-biblioteca-upload{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:10px 18px;color:var(--ink);font:600 .64rem "Manrope",sans-serif;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s}
+.catalog-biblioteca-upload{margin-left:auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:10px 18px;color:var(--ink);font:600 .844rem "Manrope",sans-serif;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s}
 .catalog-biblioteca-upload:hover{border-color:var(--accent);color:var(--accent)}
 .catalog-biblioteca-upload input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
-.catalog-biblioteca-upload-status{color:var(--muted);font-size:.62rem;letter-spacing:.05em}
-.catalog-biblioteca-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:clamp(16px,2vw,24px)}
-.catalog-biblioteca-photo{position:relative;margin:0;aspect-ratio:1/1;overflow:hidden;background:#fff}
+.catalog-biblioteca-upload-status{color:var(--muted);font-size:.844rem;letter-spacing:.05em}
+/* Histórico: já foi mosaico (masonry, altura natural de cada foto, sem
+   cortar) — pedido explícito de então: "não quero que as fotos apareçam
+   todas do mesmo tamanho, quero igual instagram". Revertido de volta a
+   pedido do MESMO usuário, com print real do grid do Instagram (retângulos
+   iguais, lado a lado): "acho melhor todas aparecerem igual ao print que
+   te mandei em retangulos iguais mesmo" — agora é grade uniforme de
+   verdade, cada célula do mesmo tamanho, foto recortada (`object-fit:
+   cover`) pra preencher a célula, igual ao print.
+
+   Trocado de `display:grid` pra `display:flex` depois (pedido explícito
+   do usuário: "as fotos não estão ficando centralizadas... estão mais
+   pro lado direito do que pro esquerdo") — a CAUSA real não era a página
+   descentralizada (`.catalog-biblioteca-detail{margin:0 auto}` já
+   centralizava certinho, confirmado medindo com Playwright), e sim a
+   ÚLTIMA LINHA da grade quando o número de fotos não é múltiplo de 4/3/2:
+   `grid-template-columns` sempre preenche as células a partir da
+   PRIMEIRA coluna, deixando a(s) célula(s) vazia(s) sobrando do lado
+   direito — com poucas fotos (ex.: 2 ou 3), isso empurra visualmente o
+   conjunto pro lado esquerdo/direito de forma desigual, sem nunca ficar
+   centralizado de verdade. `display:flex;flex-wrap:wrap;justify-
+   content:center` resolve isso pra qualquer quantidade de fotos: cada
+   LINHA (completa ou não) centraliza os itens dela mesma, sem depender
+   de células vazias. `flex-basis` com `calc()` reproduz o mesmo tamanho
+   de célula que `1fr` dava (100%/N menos a fatia proporcional do gap
+   entre os N itens da linha), pra manter EXATAMENTE o mesmo tamanho de
+   foto de antes — só a linha incompleta que passa a centralizar.
+
+   Causa raiz de verdade, achada com `getComputedStyle()` (não só lendo o
+   CSS-fonte — cada `.catalog-biblioteca-photo` é um `<figure>`, e o
+   navegador aplica um `margin` PRÓPRIO por padrão a esse elemento
+   (folha de estilo default do user-agent: `figure{margin:1em 40px}`) —
+   40px de margem de CADA LADO, nunca zerado neste arquivo. Isso sempre
+   esteve presente, inclusive na versão em `display:grid` de antes (só
+   não quebrava linha ali, porque `1fr` divide o espaço do container
+   IGUAL, e a margem só encolhia a foto visível dentro da própria
+   célula — mascarando o bug como "foto meio pequena", não como
+   descentralização). Ao trocar pra `display:flex`, essa margem passa a
+   contar de verdade no cálculo de quantas fotos cabem por linha — 4
+   fotos, cada uma com +80px de margem invisível, nunca cabiam juntas
+   numa linha de ~1285px, e a 4ª sempre quebrava sozinha pra uma 2ª
+   linha. Corrigido com `margin:0` — a causa de fundo, não um ajuste de
+   `calc()` por cima do sintoma. */
+.catalog-biblioteca-photos{display:flex;flex-wrap:wrap;justify-content:center;gap:3px}
+.catalog-biblioteca-photo{position:relative;display:block;margin:0;flex:0 0 calc(25% - 2.25px);aspect-ratio:4/5;overflow:hidden;background:#fff}
+.catalog-biblioteca-photo img{cursor:zoom-in}.catalog-biblioteca-photo img:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .catalog-biblioteca-photo img{display:block;width:100%;height:100%;object-fit:cover}
-.catalog-biblioteca-photo-remove{position:absolute;top:8px;right:8px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:rgba(37,30,25,.7);color:#fff;font-size:.9rem;line-height:1;cursor:pointer;opacity:0;transition:opacity .2s}
+.catalog-biblioteca-photo-remove{position:absolute;top:8px;right:8px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:rgba(37,30,25,.7);color:#fff;font-size:.969rem;line-height:1;cursor:pointer;opacity:0;transition:opacity .2s}
 .catalog-biblioteca-photo:hover .catalog-biblioteca-photo-remove,.catalog-biblioteca-photo-remove:focus-visible{opacity:1}
-.catalog-biblioteca-empty{grid-column:1/-1;padding:50px 0;text-align:center;color:var(--muted);font-size:.78rem}
+.catalog-biblioteca-empty{padding:50px 0;text-align:center;color:var(--muted);font-size:.906rem}
+@media(max-width:1200px){.catalog-biblioteca-photo{flex-basis:calc(33.333% - 2px)}}
+@media(max-width:900px){.catalog-biblioteca-photo{flex-basis:calc(50% - 1.5px)}}
 @media(max-width:600px){
   .catalog-biblioteca-detail{padding:32px 18px 70px}
-  .catalog-biblioteca-photos{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .catalog-biblioteca-photo{flex-basis:calc(50% - 1.5px)}
 }

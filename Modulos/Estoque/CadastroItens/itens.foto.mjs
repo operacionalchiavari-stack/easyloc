@@ -281,13 +281,30 @@ window.itens_gerarImagemFinal = async function(){
     await createImageBitmap(fotoBlobOriginal);
 
   // A resolução final acompanha a original; os 240px são apenas da prévia.
-  const outputScale = Math.max(
+  let outputScale = Math.max(
     bitmap.width / previewWidth,
     bitmap.height / previewHeight,
     1
   );
-  const width = Math.max(1, Math.round(previewWidth * outputScale));
-  const height = Math.max(1, Math.round(previewHeight * outputScale));
+  let width = Math.max(1, Math.round(previewWidth * outputScale));
+  let height = Math.max(1, Math.round(previewHeight * outputScale));
+
+  // Teto de resolução: sem isso, uma foto de celular de alta resolução
+  // saía do canvas quase no tamanho nativo (ex.: 4000x3000) e, gravada
+  // como PNG sem compressão logo abaixo, virava um arquivo de 8 a 16MB
+  // (achado real, direto no banco, investigando por que o catálogo
+  // demorava pra carregar fotos). outputScale encolhe pelo MESMO fator
+  // que width/height — ele também controla o deslocamento de
+  // arrastar (drawX/drawY mais abaixo), então precisa acompanhar pra
+  // manter o enquadramento idêntico ao que a pessoa ajustou na prévia.
+  const MAX_OUTPUT_DIMENSION = 2400;
+  const maiorLado = Math.max(width, height);
+  if(maiorLado > MAX_OUTPUT_DIMENSION){
+    const fator = MAX_OUTPUT_DIMENSION / maiorLado;
+    width = Math.max(1, Math.round(width * fator));
+    height = Math.max(1, Math.round(height * fator));
+    outputScale *= fator;
+  }
 
   const canvas = document.createElement("canvas");
 
@@ -297,7 +314,11 @@ window.itens_gerarImagemFinal = async function(){
 const ctx = canvas.getContext("2d", { alpha: true });
 ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = "high";
-ctx.clearRect(0,0,width,height);
+// Fundo branco antes de desenhar: o resultado final vira JPEG (sem canal
+// alpha) — sem isso, qualquer sobra fora da foto no canvas viraria preto
+// em vez de branco.
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(0,0,width,height);
 
 let ratio = Math.min(
   width / bitmap.width,
@@ -322,13 +343,18 @@ const drawY = (height - imgHeight) / 2 + (fotoY * outputScale);
 
   bitmap.close?.();
 
+  // JPEG em vez de PNG sem compressão nenhuma: mesma foto, mesma
+  // resolução, arquivo ordens de grandeza menor (fotografia de produto
+  // não precisa de compressão sem perdas). extensaoImagem()/uploadImagem()
+  // já derivam extensão e content-type do .type do blob, então não
+  // precisam de nenhum ajuste pra refletir essa troca.
   return new Promise(resolve=>{
 
     canvas.toBlob(blob=>{
 
       resolve(blob);
 
-    },"image/png");
+    },"image/jpeg", 0.9);
 
   });
 

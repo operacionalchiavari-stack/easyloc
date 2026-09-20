@@ -209,23 +209,33 @@ const FULLSCREEN_SPY=`(() => {
  // descrição/botão separado) é responsabilidade do mini-menu Módulo 3D —
  // ver tests/catalogo-modulo3d-menu-browser.cjs pra cobertura completa;
  // aqui só confirma que o card certo aparece disponível.
- assert.equal(await page.locator('.catalog-modulo3d-tile:not(.catalog-modulo3d-tile-soon)').count(),2,'Estúdio de Ambientes + Módulo Lounge, os 2 disponíveis');
- assert.match(await page.locator('[data-modulo3d-card="lounge"] .catalog-modulo3d-tile-name').textContent(),/Módulo Lounge/);
+ assert.equal(await page.locator('.catalog-modulo3d-tile:not(.catalog-modulo3d-tile-soon)').count(),2,'3D Livre + Composições, os 2 disponíveis');
+ assert.match(await page.locator('[data-modulo3d-card="lounge"] .catalog-modulo3d-tile-name').textContent(),/^Composições$/);
  const soonTitles=await page.locator('.catalog-modulo3d-tile-soon .catalog-modulo3d-tile-name').allTextContents();
- assert.deepEqual(soonTitles,['Realidade aumentada'],'Só 1 recurso futuro sobrou, com nome próprio');
+ assert.deepEqual(soonTitles,['Em desenvolvimento'],'Só 1 recurso futuro sobrou, sem nome próprio: só "Em desenvolvimento"');
  // :light() restringe ao DOM "claro" do próprio tile — sem isso o
  // seletor atravessa a shadow DOM do <model-viewer> decorativo embutido
  // no tile (que tem seus PRÓPRIOS botões internos), que não tem nada a
  // ver com "o tile não tem elemento clicável" (ver Módulo 3D acima).
  assert.equal(await page.locator('.catalog-modulo3d-tile-soon :light(button), .catalog-modulo3d-tile-soon :light(a)').count(),0,'Recurso futuro continua sem nenhum elemento clicável no próprio DOM');
 
- // Clicar no tile abre o Módulo Lounge — trilha de 3 níveis, rótulo do
+ // Clicar no tile abre o Módulo Lounge — caminho na linha do tempo, rótulo do
  // cabeçalho, mini-menu escondido (só um overlay por vez).
  await page.locator('[data-modulo3d-card="lounge"]').click();
  await page.locator('#catalogLounge:not(.hidden)').waitFor();
- assert.equal(await page.locator('#catalogPageLabel').textContent(),'Módulo Lounge');
- assert.match(await page.locator('#catalogBreadcrumb').innerText(),/CATÁLOGO.*MÓDULO 3D.*MÓDULO LOUNGE/is);
+ assert.equal(await page.locator('#catalogPageLabel').textContent(),'Composições');
+ assert.match(await page.locator('#catalogTimelinePast').innerText(),/m[óo]dulo 3d/i,'a linha do tempo do cabeçalho mostra o caminho até aqui (…› Módulo 3D › Composições)');
+ assert.equal(await page.locator('#catalogBreadcrumb').count(),0,'a trilha abaixo do cabeçalho foi apagada');
  assert.equal(await page.evaluate(()=>document.querySelectorAll('model-viewer').length),0,'model-viewer do mini-menu foi desligado ao abrir o Módulo Lounge');
+ // Pedido do usuário, com print: "ficou muito grudado as abas, precisa dar um respiro melhor" — a
+ // barra de abas não pode ficar colada no cabeçalho. (Na época o "grudado" era contra a trilha
+ // abaixo do cabeçalho, que foi apagada; o respiro agora é só o padding do topo da coluna.)
+ const tabsGap=await page.evaluate(()=>{
+   const hd=document.querySelector('.catalog-header').getBoundingClientRect();
+   const tabs=document.querySelector('.catalog-lounge-tabs').getBoundingClientRect();
+   return tabs.top-hd.bottom;
+ });
+ assert.ok(tabsGap>10,`Barra de abas tem respiro de verdade abaixo do cabeçalho (gap=${tabsGap}px)`);
 
  // Formato "Lounge compacto" ativo por padrão, único da coluna por
  // enquanto (pedido explícito: "só terá lounge mesmo").
@@ -252,6 +262,17 @@ const FULLSCREEN_SPY=`(() => {
  await page.waitForFunction(()=>document.querySelector('#loungeCanvasHost')?.dataset.cameraDistance,null,{timeout:10000});
  const initialDistance=Number(await host.getAttribute('data-camera-distance'));
  assert.ok(initialDistance>0,'câmera inicial resolvida');
+
+ // Abas do lado esquerdo (pedido explícito do usuário: "no lado esquerdo
+ // eu quero que tenha abas, uma aba só pra formatos, uma aba pra itens e
+ // uma aba pra ambiente") — só uma seção fica visível por vez agora,
+ // então interagir com os chips de item precisa abrir a aba "Itens"
+ // primeiro (as checagens de contagem/texto acima não precisam disso —
+ // funcionam em qualquer aba, só ações de clique exigem visibilidade).
+ assert.equal(await page.locator('[data-lounge-panel="formats"].is-active').count(),1,'Aba "Formatos" ativa por padrão ao abrir');
+ await page.locator('[data-lounge-tab="items"]').click();
+ assert.equal(await page.locator('[data-lounge-panel="items"].is-active').count(),1,'Aba "Itens" fica ativa depois do clique');
+ assert.equal(await page.locator('[data-lounge-panel="formats"].is-active').count(),0,'Aba "Formatos" desativa (só uma por vez)');
 
  // Trocar o sofá selecionado remonta a composição (3D real, não
  // ilustrativo) — confere que o chip certo fica marcado.
@@ -307,8 +328,15 @@ const FULLSCREEN_SPY=`(() => {
  // créditos — chama a função direto.
  assert.equal(await page.locator('#loungeRenderButton').count(),1,'Botão de renderizar existe');
  assert.equal(await page.locator('#loungeRenderButton').textContent(),'Renderizar com IA');
+ // O projeto (catalogo-projetos.mjs) precisa saber quais móveis estão na imagem — o módulo avisa quando a IA devolve.
+ await page.evaluate(()=>{const original=window.catalogRegisterRenderItems;window.__registrados=[];window.catalogRegisterRenderItems=(src,objetos)=>{window.__registrados.push({src,objetos});original?.(src,objetos);};});
  await page.locator('[data-lounge-render]').click();
  await page.waitForFunction(()=>window.__renderCalls?.includes('studio-ai-engine'),null,{timeout:10000});
+ await page.waitForFunction(()=>window.__registrados?.length===1,null,{timeout:10000});
+ const registrado=await page.evaluate(()=>window.__registrados[0]);
+ assert.match(registrado.src,/render-result\.png/,'Os móveis ficam atrelados à imagem devolvida');
+ assert.ok(registrado.objetos.length>=2&&registrado.objetos.every(o=>o.itemId&&o.itemName),'Registra cada peça da cena com itemId e nome (sofá + poltronas)');
+ assert.equal(new Set(registrado.objetos.map(o=>o.itemId)).size<registrado.objetos.length,true,'Poltrona repetida na cena conta como mais de uma unidade do mesmo item');
  // Pedido explícito do usuário: "quero que respeite exatamente o
  // ângulo, a distância e principalmente o preview... é como se tirasse
  // um print do que eu estou vendo no 3d e desse só o realismo... sem
@@ -383,6 +411,11 @@ const FULLSCREEN_SPY=`(() => {
  await page.locator('[data-lounge-fullscreen]').click();
  await page.waitForFunction(()=>!document.querySelector('.catalog-lounge-viewer')?.classList.contains('is-fullscreen'));
  assert.equal(await page.evaluate(()=>window.__fullscreenCalls.includes('exit')),true);
+
+ // Abre a aba "Ambiente" — piso e foto de fundo moram lá agora.
+ await page.locator('[data-lounge-tab="environment"]').click();
+ assert.equal(await page.locator('[data-lounge-panel="environment"].is-active').count(),1,'Aba "Ambiente" fica ativa');
+ assert.equal(await page.locator('[data-lounge-panel="items"].is-active').count(),0);
 
  // Piso: 5 opções, "Piso neutro" ativo por padrão, trocar aplica de
  // verdade no chão da cena (pedido explícito: "quero que a pessoa possa
@@ -520,10 +553,10 @@ const FULLSCREEN_SPY=`(() => {
  await page.waitForFunction(()=>document.querySelector('#loungeCanvasHost')?.dataset.backgroundWall==='hidden');
  assert.equal(await page.locator('#loungeBgRemove:not(.hidden)').count(),0,'Remover volta ao estado sem foto (parede escondida, não recriada do zero)');
 
- // Sair do Módulo Lounge (voltar pro mini-menu pela trilha) desliga a
+ // Sair do Módulo Lounge (voltar pro mini-menu pela linha do tempo) desliga a
  // cena Three.js por completo — pedido explícito de não vazar contexto
  // WebGL/memória (mesma disciplina já aplicada ao mini-menu Módulo 3D).
- await page.locator('[data-breadcrumb="modulo3d"]').click();
+ await page.locator('#catalogTimelinePast [data-timeline-entry]').filter({hasText:/m[óo]dulo 3d/i}).last().click();
  await page.locator('.catalog-modulo3d-menu').waitFor();
  assert.equal(await page.evaluate(()=>document.querySelectorAll('#loungeCanvasHost canvas').length),0,'Canvas do Lounge removido ao sair da tela');
 

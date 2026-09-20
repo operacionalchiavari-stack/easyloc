@@ -1057,6 +1057,8 @@ daquela limpeza por terem sido escritos DEPOIS dela, na mesma sessão:
 
 ## Trilha de navegação abaixo do cabeçalho (Catálogo / Categoria / Item)
 
+**Apagada depois a pedido do usuário** — ver "Trilha "Catálogo / Categoria / Item" apagada + logo do cabeçalho maior" mais abaixo. Nada desta seção existe mais no código (`renderBreadcrumb()` virou `syncNavigation()`, sem desenhar trilha); mantida só pelo histórico do raciocínio.
+
 Pedido explícito do usuário: "por baixo do menu, ali embaixo da logo eu
 quero um caminho da pessoa, por exemplo, catálogo, sofás e o nome do
 sofá... pra pessoa saber o caminho que ela percorreu". Um breadcrumb
@@ -1524,6 +1526,209 @@ lado a lado (screenshot, não só lendo os valores de cor) — a diferença
 de contraste entre a versão antiga e a nova só fica óbvia olhando o
 resultado renderizado. Suíte de regressão inteira do catálogo (8
 arquivos) rodada de novo — nenhuma mudança de comportamento, só CSS.
+
+### 2ª rodada, sessão bem mais tarde — a "moldura" virou a própria reclamação
+
+Pedido explícito do usuário, com print da tela de Biblioteca já com
+várias categorias reais (a maioria vazia, "0 fotos"): *"quero deixar
+essas pastas sem essas caixas em volta, quero que elas fiquem mais
+bonitas só a pasta mesmo sabe? só que elas precisam ser visíveis, as
+cores que elas estão hoje está muito claro"*. Ou seja: a "moldura"
+(fundo bege + borda) adicionada na rodada anterior — pra COMPENSAR um
+ícone quase invisível — virou ela mesma o problema (visual "engessado",
+cada pasta numa caixinha) sem nunca resolver de fato a causa raiz: o
+ícone `.is-empty` continuava usando fills bem pálidos (`front` a
+`color-mix(muted 16%, #fff)` — quase branco puro).
+
+**Corrigido removendo a moldura por completo** (`.catalog-home-card
+.catalog-grid-card-photo.catalog-biblioteca-folder{background:#f7f5f1;
+border:1px solid var(--line)}` e o hover de borda correspondente —
+apagados, não só desativados) — o quadrado volta a ser só `background:
+#fff` puro, herdado de `.catalog-grid-card-photo` (o mesmo branco de
+qualquer card da Home, nenhuma regra própria da Biblioteca sobrando.
+**Dessa vez a correção é no PRÓPRIO ícone**, não mais escondida atrás de
+uma caixa: `front` da pasta cheia subiu de `accent 32%` pra `accent 55%`
+(hover `46%→70%`); `front` da pasta vazia subiu de `muted 16%` pra
+`muted 40%` (hover `26%→55%`) — mais que o dobro de opacidade de cor em
+ambos os casos, agora com contraste real contra o branco puro da página,
+sem precisar de nenhuma caixa por trás.
+
+Teste de regressão (`tests/catalogo-biblioteca-browser.cjs`): confirma
+`background-color` computado do quadrado = `rgb(255,255,255)` e
+`border-width` = `0px` (sem moldura de verdade, não só nos valores
+fonte); e mede a distância de cor real entre o `fill` computado do
+`front` (pasta vazia E pasta com fotos) contra branco puro
+(`255 - canalVermelho`), exigindo mais de 30 — prova que a cor é
+genuinamente visível, não um tom que alguém possa relatar de novo como
+"muito claro". Cache-busting bumpado
+(`catalogo-biblioteca.css?v=20260919-pasta-sem-caixa`). Suíte completa
+(15 arquivos) + `tests/creditos-browser.cjs` + `tests/studio-
+browser.cjs` rodadas de novo, todas passando.
+
+### 3ª rodada — ícone flutuando longe do nome, sem a caixa pra "ancorar"
+
+Pedido explícito do usuário, vendo a tela sem a moldura: *"o nome da
+pasta está muito longe dela"*.
+
+**Causa raiz**: `.catalog-grid-card-photo` centraliza o conteúdo
+(`display:flex;align-items:center;justify-content:center` —
+pensado pra uma FOTO cheia, que toca as 4 bordas do quadrado). O ícone
+de pasta só ocupa 56% do quadrado E tem proporção mais larga que alta
+(`viewBox="0 0 100 80"`) — ao escalar mantendo proporção, sobra bastante
+respiro vertical embaixo do desenho, além dos 16px de gap já normais
+até o nome (`.catalog-home-card{gap:16px}`). Enquanto a caixa existia,
+essa borda inferior "ancorava" visualmente o conjunto; sem ela, o vão
+vazio ficou óbvio.
+
+**1ª tentativa, corrigida na rodada seguinte**: `align-items:flex-end`
+só pra pasta — o ícone encostava exatamente na base do quadrado, vão
+até o nome sumia. Parecia resolvido, mas só tinha REALOCADO o mesmo
+vão: como o quadrado inteiro não muda de tamanho, todo aquele espaço
+vazio que antes ficava embaixo do ícone passou pra CIMA dele.
+
+### 4ª rodada — o vão só tinha mudado de lado, agora empurrando as pastas pra baixo do menu
+
+Pedido explícito do usuário, vendo a tela com a correção acima já
+aplicada: *"elas também estão aparecendo muito embaixo do menu, elas
+precisam subir mais, olha o espaço que está entre o menu e a primeira
+linha"*.
+
+**Causa raiz de verdade** (medida com `getBoundingClientRect()`, não só
+lida no CSS): o vão entre a trilha e o topo do quadrado da pasta era só
+~28px, igual a qualquer outro card — o vão de verdade estava DENTRO do
+próprio quadrado, entre o topo dele e o ícone (que só ocupava 56% da
+altura, ainda mais reduzido depois de escalar mantendo a proporção
+100×80 do viewBox). Ancorar o ícone na base (rodada anterior) resolveu
+o vão ATÉ O NOME só transferindo esse mesmo espaço vazio pra ANTES do
+ícone — nunca reduziu a quantidade total de vão, só trocou de lado.
+Mover o `align-items` sozinho nunca resolveria as duas queixas ao mesmo
+tempo, porque as duas queixas são o MESMO vão, só reclamado de lados
+opostos.
+
+**Corrigido de vez**: removido o `align-items:flex-end`, ícone voltou a
+ficar centralizado (sem ancorar em nenhuma borda), e o tamanho subiu de
+56% pra 86% do quadrado — reduz o vão dos DOIS lados ao mesmo tempo (em
+vez de só realocar o mesmo vão de um lado pro outro), com uma margem
+pequena e BALANCEADA sobrando em cima e embaixo do ícone.
+
+Teste de regressão (`tests/catalogo-biblioteca-browser.cjs`): a
+asserção da rodada anterior (`icon.bottom===box.bottom`, provando o
+ancoramento) foi substituída por 4 novas — o ícone ocupa mais de 80% da
+altura do quadrado; a margem acima dele é pequena (<24px, sem vão até o
+topo); a margem acima e a margem abaixo do ícone são praticamente
+IGUAIS (diferença <2px — prova que nenhum lado concentra o vão
+sozinho, a causa raiz de verdade das duas rodadas anteriores); e a
+distância até o nome continua pequena. Cache-busting bumpado
+(`catalogo-biblioteca.css?v=20260919-pasta-icone-grande`). Suíte
+completa (15 arquivos) + `tests/creditos-browser.cjs` + `tests/studio-
+browser.cjs` rodadas de novo, todas passando.
+
+### 5ª rodada — foto "saindo" da pasta (pedido novo, não um bug)
+
+Pedido explícito do usuário, com print da tela já com o ícone maior:
+*"quero que as pastas tenham um efeito de parecer que a foto tá saindo
+dela, sabe?"*.
+
+**Só faz sentido pra pasta com pelo menos 1 foto** — uma pasta vazia
+não tem nenhuma foto pra "sair" dela, então continua só com o ícone
+puro, sem nenhum elemento novo no DOM (não é escondido via CSS, o HTML
+gerado nem inclui o grupo da foto quando `photos.length===0`).
+
+**Implementação, dentro do MESMO `<svg>` do ícone da pasta** — não como
+um `<img>` HTML separado por cima: `folderIconSvg(photoUrl, uid)`
+(`catalogo-biblioteca.mjs`, antes um template fixo `FOLDER_ICON_SVG`,
+agora uma função) insere um `<image>` (SVG, não HTML) ENTRE os rects
+`back` e `front` do ícone, no MESMO sistema de coordenadas do viewBox
+(`0 0 100 80`) — evita ter que calcular posição/escala em CSS por fora,
+o SVG inteiro já escala/centraliza sozinho dentro do quadrado (ver
+`.catalog-biblioteca-folder-icon`). A ordem dentro do SVG É o efeito:
+como `front` é desenhado DEPOIS (pinta por cima), ele cobre a parte de
+baixo da foto — só a parte de CIMA, que ultrapassa onde `front` começa
+(y=32) e principalmente onde `back` nem chega (y<22), fica visível de
+verdade "saindo" pra fora do contorno da pasta. Foto usa a PRIMEIRA
+(`photos[0].url`) da categoria — mesmo critério de "capa" já usado em
+outros lugares do catálogo (`categoryCoverPhoto`, etc.) — recortada num
+retângulo com cantos arredondados (`<clipPath>`, `preserveAspectRatio=
+"xMidYMid slice"`, evita distorcer fotos de qualquer proporção) e uma
+moldura branca com sombra (`.catalog-biblioteca-folder-peek-frame`,
+`stroke:#fff`+`filter:drop-shadow`) pra separar visualmente da pasta,
+como uma foto/polaroid de verdade.
+
+**`uid` = o próprio slug da categoria** (já único por pasta) vira o id
+do `<clipPath>` — evita colisão de id quando várias pastas com foto
+aparecem na mesma página (todas usariam `#peek` se fosse um id fixo).
+
+**Reforço no hover**: a foto gira um pouco menos (`rotate(-7deg)→
+rotate(-3deg)`) e sobe alguns pixels (`translateY(-4px)`) — reforça a
+sensação de estar sendo puxada pra fora, sem exagerar (transição suave,
+`cubic-bezier(.22,1,.36,1)`, mesma curva já usada em outros hovers
+"premium" desta sessão). `transform-box:fill-box` é o que faz a rotação
+girar em torno do CENTRO da própria foto, não do canto (0,0) do viewBox
+inteiro — sem isso a foto sairia de posição ao rotacionar.
+
+Teste de regressão: confirma que a pasta com foto (Sofás, 2 fotos)
+ganha `.catalog-biblioteca-folder-peek` com a `<image href>` apontando
+pra PRIMEIRA foto da categoria; confirma que a pasta vazia (Bares, 0
+fotos) tem ZERO desse elemento — ausente do DOM, não só invisível.
+Cache-busting bumpado (`catalogo-biblioteca.css?v=20260919-foto-saindo`,
+e o import de `catalogo-biblioteca.mjs` dentro de `catalogo.mjs` + a
+própria tag `<script>` de `catalogo.mjs`, todos pra
+`?v=20260919-foto-saindo`). Suíte completa (15 arquivos) + `tests/
+creditos-browser.cjs` + `tests/studio-browser.cjs` rodadas de novo,
+todas passando.
+
+### 6ª rodada — fotos dentro da pasta aberta viram mosaico, não quadrados iguais
+
+Pedido explícito do usuário, depois de abrir uma pasta com fotos de
+verdade: *"não quero que as fotos apareçam todas do mesmo tamanho, quero
+igual instagram, site de fotógrafo profissional"*. Causa: a grade de
+fotos dentro de uma pasta aberta (`.catalog-biblioteca-photos`) forçava
+cada foto num quadrado idêntico (`grid-template-columns:repeat(auto-fill,
+minmax(170px,1fr))` + `aspect-ratio:1/1` + `object-fit:cover` na
+`<img>`) — qualquer foto que não fosse quadrada era cortada pra caber,
+perdendo a proporção original.
+
+**Reaproveitada a MESMA técnica já usada no modo "mosaico" dos produtos
+do catálogo** (`.catalog-mosaic` em `catalogo.css`, ver seção "3º modo de
+visualização: mosaico" mais abaixo — já validada nesta sessão pra
+exatamente esse efeito "bagunçado"/moodboard): `column-count` monta as
+colunas sozinho, cada foto entra com a ALTURA NATURAL dela (`.catalog-
+biblioteca-photo img{width:100%;height:auto}`, sem `object-fit` nem
+`aspect-ratio` nenhum) e `break-inside:avoid` evita que uma foto seja
+cortada ao meio entre duas colunas — o próprio `columns` distribui
+blocos de altura desigual pelas colunas, dando o efeito Pinterest/
+portfólio de fotógrafo sem precisar calcular posição de cada foto em
+JS. `column-count` cai de 4 (desktop) pra 3/2/1 nos mesmos breakpoints
+que a grade antiga já usava.
+
+**Achado verificando com um script Playwright ad-hoc, erro meu, não do
+produto**: a 1ª tentativa de fixture (uma foto "alta" registrada com
+`page.route('https://fixture/biblioteca/sofa-2.png', ...)` ANTES do
+catch-all `page.route('https://fixture/**', ...)`) não mostrava nenhuma
+diferença de altura entre as fotos — o Playwright dá prioridade ao
+route MAIS RECENTEMENTE registrado quando dois batem na mesma URL, então
+o catch-all (registrado depois) sempre vencia, silenciosamente
+sobrescrevendo a foto "alta" de volta pro tamanho padrão 300×300. Dava a
+falsa impressão de que o CSS do mosaico não estava funcionando. Corrigido
+invertendo a ordem (catch-all primeiro, override específico depois) —
+mesma lição já aplicada na suíte permanente de testes.
+
+Teste de regressão (`tests/catalogo-biblioteca-browser.cjs`) ganhou um
+override de tamanho pra uma das fotos do cenário (`sofa-2.png` a
+300×600, bem mais alta que as outras a 300×300) e uma asserção nova
+comparando a altura renderizada das duas fotos
+(`photoHeights[0]!==photoHeights[1]`) — prova que proporções diferentes
+realmente renderizam em alturas diferentes, sem cortar pra um tamanho
+comum. Cache-busting bumpado (`catalogo-biblioteca.css?v=
+20260919-mosaico` em `catalogo.html`) — `catalogo-biblioteca.mjs` não
+mudou nesta rodada (só CSS), então o `?v=` do import em `catalogo.mjs`
+ficou em `20260919-foto-saindo`, sem necessidade de bump. Verificado
+visualmente com Playwright (screenshot com fotos de proporções bem
+variadas — 450/180/300/600/187/380/192/300/500/195px — confirmando um
+layout tipo Pinterest de verdade, sem nenhuma foto cortada num quadrado).
+Suíte completa de regressão do catálogo (15 arquivos) + `tests/
+creditos-browser.cjs` + `tests/studio-browser.cjs` rodadas de novo,
+todas passando.
 
 ## Bug real: "Experimente seu tecido" — selecionar foto não fazia nada
 
@@ -2582,6 +2787,8 @@ nome nunca sobrepõe a imagem. Suíte completa de regressão do catálogo
 passando.
 
 ## Nome do item + círculos de cor no mesmo bloco (bleed sobre a foto de propósito)
+
+**Superado**: os círculos foram para EMBAIXO do nome e as medidas viraram uma linha das specs — ver "Tela do item: círculos de cor EMBAIXO do nome + medidas dentro das specs" mais abaixo. Mantida só pelo histórico.
 
 Pedido explícito do usuário, com print da tela do item: *"agora eu quero
 diminuir um pouco o nome do item e quero colocar ao lado na mesma linha
@@ -4382,7 +4589,7 @@ mascarado em rosca via variável CSS `--pct`), classe própria
 (`.catalog-modulo3d-loading-ring`/`-pct`) sem acoplamento com a das
 notificações.
 
-**2 achados reais testando, os dois corrigidos no PRÓPRIO teste, não no
+**3 achados reais testando, todos corrigidos no PRÓPRIO teste, não no
 produto**: (1) com 2 dos 3 cards caindo no MESMO item por fallback (ex.:
 "Realidade aumentada" sem nada marcado cai pro mesmo item que já é capa
 do Estúdio), os 2 `<model-viewer>` correspondentes terminam de carregar
@@ -4407,13 +4614,31 @@ intermediário) — o 3º `.glb` fica literalmente parado até o teste
 mandar, eliminando a corrida por completo (6/6 execuções seguidas
 passando depois da correção, contra falha ~1 em 5 antes).
 
+(3) **Achado numa sessão posterior, rodando a suíte completa sob carga
+(não isolado)**: mesmo sem NENHUM delay fixo, os OUTROS 2 modelos
+(Estúdio+AR, mesmo item, respondiam instantâneo) ainda causavam uma
+corrida — sob carga do sistema (vários navegadores Playwright em
+sequência), o tempo entre "clicar" e "1ª leitura do percentual" às
+vezes era maior que o tempo real pra os 2 já resolverem por completo
+(fetch instantâneo + `ensureModelViewer()` + evento `load` real + 2
+frames de RAF), fazendo a asserção `pct==='0%'` falhar com `'67%'` —
+mesma classe de corrida do item (2), só que sem nenhum `setTimeout`
+envolvido dessa vez, prova de que qualquer resposta NÃO controlada
+explicitamente pelo teste é uma corrida em potencial, rápida ou não.
+Corrigido replicando o MESMO padrão de portão pro modelo do Estúdio/AR
+(`estudioGate`/`releaseEstudioEAr()`) — agora os 3 modelos ficam
+retidos até o teste liberar cada um explicitamente, na ordem certa
+(Estúdio+AR primeiro, confirmando "67%", só depois Lounge, confirmando
+"100%") — nenhuma resposta de rede reage sozinha, sempre sob comando
+direto do teste.
+
 Teste de regressão (`tests/catalogo-modulo3d-menu-browser.cjs`): Estúdio
-e Realidade aumentada carregam livremente (mesmo item, por fallback),
-Lounge fica retido no portão; confirma que logo ao entrar os 3 cards
-ficam escondidos (opacity 0) com o percentual em 0%, mesmo que o modelo
-mais rápido já tenha terminado por baixo; confirma o degrau intermediário
-(67%, 2 dos 3 prontos) ainda com os cards escondidos, SÓ ENTÃO libera o
-portão; confirma que só depois dos 3 resolverem o percentual chega em
+e Realidade aumentada (mesmo item por fallback) e Lounge ficam retidos
+nos 2 portões até o teste liberar cada um explicitamente; confirma que
+logo ao entrar os 3 cards ficam escondidos (opacity 0) com o percentual
+em 0% — SÓ ENTÃO libera Estúdio/AR; confirma o degrau intermediário
+(67%, 2 dos 3 prontos) ainda com os cards escondidos — SÓ ENTÃO libera
+Lounge; confirma que só depois dos 3 resolverem o percentual chega em
 100% E os cards ficam visíveis juntos E os 3 `<model-viewer>.
 loaded===true` de verdade (não só presentes no DOM) — a prova concreta
 de "não pode piscar". Suíte
@@ -4514,6 +4739,1441 @@ dentro de `catalogo.mjs` (`catalogo-studio3d.mjs?v=20260919-notifyimage`,
 `<script>` de `catalogo.mjs` em `catalogo.html`. Suíte completa (15
 arquivos) + `tests/creditos-browser.cjs` + `tests/studio-browser.cjs`
 rodadas de novo, todas passando.
+
+## Módulo Lounge: coluna esquerda virou abas (Formatos/Itens/Ambiente)
+
+Pedido explícito do usuário: *"dentro do modulo lounge, no lado esquerdo
+eu queo que tenha abas, uma aba so pra formatos, uma aba pra itens e uma
+aba pra ambiente"*. Antes, as 3 seções (Formatos, Itens, Ambiente — piso/
+fundo) ficavam todas empilhadas e sempre visíveis ao mesmo tempo na
+coluna esquerda, com "Itens" rolando internamente e "Ambiente" fixo
+embaixo (ver seção "Piso + fundo por foto" mais acima). Agora só UMA
+seção fica visível por vez, escolhida por uma aba no topo da coluna.
+
+**HTML** (`catalogo.html`): `.catalog-lounge-sidebar` ganhou
+`.catalog-lounge-tabs` (3 `<button data-lounge-tab="formats|items|
+environment">`, `role="tablist"`/`role="tab"`) logo no topo, e as 3
+seções viraram `.catalog-lounge-tab-panel` (`data-lounge-panel="..."`,
+`role="tabpanel"`) dentro de um wrapper `.catalog-lounge-tab-panels`. Os
+`<h3>` de título por seção (`.catalog-lounge-heading`: "Formatos"/
+"Itens"/"Ambiente") foram removidos — o nome da aba já identifica a
+seção, mantê-los duplicaria a informação (mesmo raciocínio já aplicado
+antes ao rótulo do cabeçalho do catálogo, ver "Título duplicado
+removido..." mais acima). Nenhum id interno mudou (`#loungeFormatList`,
+`#loungeItemRoles`, `#loungeFloorRow`, `#loungeBgInput` etc. continuam
+os mesmos, só a estrutura ENVOLVENDO eles mudou) — o JS de renderização
+de cada seção não precisou de nenhuma alteração.
+
+**CSS** (`catalogo-lounge.css`): `.catalog-lounge-tab-panel{display:
+none}`/`.is-active{display:flex;flex-direction:column}` decide qual
+seção aparece. `.catalog-lounge-tab-panels` (não mais só `.catalog-
+lounge-item-roles`) é quem rola agora (`flex:1 1 auto;min-height:0;
+overflow-y:auto`) — funciona igual pras 3 abas, mesmo as que antes nunca
+precisavam rolar (Formatos e Ambiente eram curtas o bastante pra nunca
+estourar a altura disponível). As regras que separavam visualmente as 3
+seções empilhadas (`margin-top`/`padding-top`/`border-top` em `.catalog-
+lounge-items`/`.catalog-lounge-environment`) foram removidas — sem
+seções vizinhas visíveis ao mesmo tempo, não tinha mais nada pra separar.
+
+**JS** (`catalogo-lounge.mjs`): `ui.activeTab` (novo campo no estado,
+`"formats"` por padrão — era a 1ª seção no layout antigo) guarda a aba
+ativa. `syncLoungeTabs()` (nova função) aplica `.is-active`/
+`aria-selected` no botão certo e `.is-active` no painel certo — chamada
+de dentro de `renderSidebar()` (então qualquer re-render já mantém a
+aba certa sincronizada) e no clique de uma aba (`bindInteractions()`
+ganhou o branch `[data-lounge-tab]`, checado ANTES dos outros branches
+de clique da barra lateral). Trocar de aba SÓ muda `ui.activeTab` —
+não mexe em `ui.formatKey`/`ui.selection`/`ui.floorKey`, então trocar de
+aba e voltar nunca perde o que já estava selecionado. `openCatalogLounge()`
+reseta `activeTab` pra `"formats"` toda vez que o módulo é reaberto
+(mesmo raciocínio de sempre: sessão nova, sem lixo da visita anterior).
+
+**Achado ajustando o teste**: `tests/catalogo-lounge-browser.cjs` já
+tinha `.click()` em chips de item (aba "Itens") e no seletor de piso/
+botões de foto de fundo (aba "Ambiente") — com as abas, esses elementos
+ficam `display:none` até a aba certa ser aberta, e `.click()` do
+Playwright exige que o alvo esteja VISÍVEL (diferente de `.count()`/
+`.textContent()`/`.allTextContents()`, que continuam funcionando em
+elementos escondidos — por isso as asserções de contagem/texto que já
+existiam não precisaram de nenhum ajuste). Corrigido adicionando 2
+cliques de aba no teste, um pra "Itens" antes da 1ª interação com chip,
+outro pra "Ambiente" antes da 1ª interação com piso/fundo — cobrindo
+todas as ações de clique subsequentes até o fim do cenário, já que
+trocar de aba não é uma ação repetida a cada interação. Ganhou também
+3 asserções novas confirmando a mecânica da aba em si (padrão "Formatos"
+ativa ao abrir, "Itens" ativa depois do clique, só uma por vez).
+Cache-busting bumpado (`catalogo-lounge.css?v=20260919-loungetabs`, e o
+import de `catalogo-lounge.mjs` dentro de `catalogo.mjs` +  a própria
+tag `<script>` de `catalogo.mjs`, todos pra `?v=20260919-loungetabs`).
+Suíte completa (15 arquivos) + `tests/creditos-browser.cjs` + `tests/
+studio-browser.cjs` rodadas de novo, todas passando.
+
+### Ajuste imediato: abas coladas na trilha de navegação
+
+Pedido do usuário, com print real: *"ficou muito grudado as abas,
+precisa dar um respiro melhor"*.
+
+**Causa raiz, medida no navegador (não só lida no CSS)**: a trilha
+(`#catalogBreadcrumb`) flutua por CIMA do conteúdo, `position:absolute`,
+sem reservar nenhum espaço no layout (ver seção "Trilha de navegação
+abaixo do cabeçalho" mais acima) — ela mede ~27,6px de altura real
+renderizada. `.catalog-lounge-sidebar` tinha `padding-top:26px`, MENOR
+que isso — medido com `getBoundingClientRect()`: a barra de abas
+começava 1,6px ANTES da trilha terminar (sobreposição de verdade, não
+só "parecendo" grudado — por pouco não dava pra notar a olho nu, mas o
+efeito visual batia exatamente com "grudado").
+
+**Corrigido** aumentando só o `padding-top` de `.catalog-lounge-sidebar`
+(26px→44px no desktop, mantendo os outros lados/o padding-bottom
+iguais) — dá ~16px de respiro real medido abaixo da trilha. O mesmo
+ajuste, proporcional, foi replicado no breakpoint `@media(max-width:
+620px)` (`padding-top` de 20px→38px) — sem isso o problema reapareceria
+só em telas estreitas, onde a versão anterior desse breakpoint reduzia o
+padding de volta a um valor menor que a trilha.
+
+Teste de regressão (`tests/catalogo-lounge-browser.cjs`): nova asserção
+logo depois de abrir o módulo, medindo a distância REAL entre
+`#catalogBreadcrumb` e `.catalog-lounge-tabs` via `getBoundingClientRect()`
+(`tabs.top - breadcrumb.bottom > 10`) — prova o respiro de verdade, não
+confia em inspeção visual nem no CSS fonte. Cache-busting bumpado
+(`catalogo-lounge.css?v=20260919-loungetabsgap`). Suíte completa (15
+arquivos) + `tests/creditos-browser.cjs` + `tests/studio-browser.cjs`
+rodadas de novo, todas passando.
+
+## Catálogo lento pra carregar fotos — otimização estratégica de imagens
+
+Pedido explícito do usuário: *"busque formas do catálogo abrir com mais
+agilidade, hoje estou notando que demora pra carregar as fotos... quando
+eu entro em categorias cada foto carrega em um tempo, isso dá a sensação
+de sistema lento... eu quero que as fotos tenha uma qualidade boa, mas eu
+preciso que o sistema seja funcional também"*.
+
+**Investigação (sem supor nada, direto no banco/Storage de produção)**:
+duas causas reais, corrigidas juntas.
+
+1. **O catálogo sempre serviu o arquivo ORIGINAL, nunca uma versão
+   redimensionada** — mesmo um card de 160px na Home baixava a foto
+   inteira. Testado direto (`curl`) se o Storage do Supabase deste
+   projeto tem a transformação de imagem habilitada (recurso do plano
+   Pro): **tem** —
+   `/storage/v1/render/image/public/<bucket>/<path>?width=W&quality=Q`
+   responde 200, redimensiona/recomprime na hora e fica cacheado no CDN
+   da própria Supabase (`CF-Cache-Status: HIT`, `Cache-Control: public,
+   max-age=3600`). **Achado extra, importante**: o navegador manda
+   `Accept: image/webp` nas próprias requisições de `<img>` (padrão de
+   qualquer Chromium/Firefox/Safari moderno) — o transformador da
+   Supabase faz *content negotiation* de verdade e devolve WebP nesse
+   caso, mesmo pra um arquivo fonte em PNG. Verificado numa das fotos de
+   16MB encontradas (item abaixo): original 16,8MB → 380px width **128KB**
+   (com o header `Accept` de navegador real) → mais de **130x menor**.
+   Sem esse header (ex.: testando com `curl` puro), a mesma transformação
+   preserva o formato original (PNG fica PNG) e o ganho é bem menor — não
+   confundir um teste de terminal sem esse header com o que vai acontecer
+   de verdade no navegador.
+
+2. **Bug real, mais grave: fotos de 8 a 16MB CADA, encontradas direto no
+   banco** (`select` nos paths reais de `itens.foto_url`, depois `curl`
+   pra medir o tamanho de verdade — não assumido). Causa: tanto o editor
+   de recorte do Cadastro de Itens (`itens_gerarImagemFinal()` em
+   `Modulos/Estoque/CadastroItens/itens.foto.mjs`) quanto o editor inline
+   de fotos direto no catálogo (`cropSessionBlob()` em `catalogo.mjs`,
+   ver "Editor de fotos do item, direto no catálogo" mais acima)
+   desenhavam o resultado final num `<canvas>` do tamanho quase nativo da
+   foto original (`outputScale` calculado a partir do `bitmap.width/
+   height` real) e gravavam com `canvas.toBlob(...,"image/png")` — PNG é
+   **sem compressão com perdas nenhuma**, então uma foto de celular downscaled pra "quase o
+   tamanho original" e ainda assim salva pixel-a-pixel sem compressão
+   virava um arquivo gigante. Isso só acontecia ao ARRASTAR/DAR ZOOM na
+   foto (o caminho "sem ajuste nenhum" de `itens_gerarImagemFinal()`
+   preserva o arquivo original byte a byte, sem passar pelo canvas —
+   ficou como estava, decisão documentada de propósito, "Preserve
+   resolução, transparência e compressão originais").
+
+**Corrigido nos dois arquivos**: canvas passou a ter um teto de
+resolução (`MAX_OUTPUT_DIMENSION`/`MAX_INLINE_CROP_DIMENSION = 2400px`
+no lado maior — mais que suficiente pra tela cheia em qualquer monitor
+comum, e o transformador do Storage ainda serve uma versão menor em cima
+dessa pro catálogo) e o formato de saída virou `image/jpeg` (quality
+0.9) em vez de PNG puro — mesma foto, mesma resolução útil, arquivo
+ordens de grandeza menor (fotografia de produto não precisa de
+compressão sem perdas). Como reduzir width/height sem reduzir
+`outputScale` na mesma proporção quebraria o enquadramento do
+arrastar/zoom (esse valor também controla o deslocamento `drawX`/`drawY`
+do pan), os dois foram escalados pelo MESMO fator. Fundo branco
+(`ctx.fillStyle="#ffffff"` antes de desenhar) porque JPEG não tem canal
+alpha — sem isso, qualquer sobra transparente no canvas viraria preta em
+vez de branca.
+
+**Bug independente encontrado ao trocar o formato**: `applyInlineEdit()`
+(`catalogo.mjs`) empacotava o blob resultante do crop sempre como
+`new File([blob], "foto.png", { type: "image/png" })` — **fixo**,
+ignorando o `.type` de verdade do blob. Antes da correção isso não dava
+problema porque o blob SEMPRE era PNG mesmo (mentira inofensiva); ao
+trocar `cropSessionBlob()` pra gerar JPEG, esse hardcode continuaria
+dizendo "image/png" pro resto do pipeline
+(`trocarFotoPrincipal`/`trocarFotoSlot` decidem extensão/content-type a
+partir desse `.type`) — geraria um arquivo `.png` com bytes de JPEG
+dentro, content-type errado. Corrigido lendo `blob.type`/
+`extensaoItemFoto(blob.type)` de verdade. **Só achado por ler o código
+que consome o blob, não seria visível testando só o tamanho do arquivo.**
+
+**Correção de leitura, sem mexer em upload nenhum**: `otimizarFoto(url,
+width, quality=74)`, uma função nova em `catalogo.mjs` (duplicada em
+`catalogo-biblioteca.mjs`/`catalogo-lounge.mjs`/`catalogo-studio3d.mjs`
+— cada um self-contido de propósito, mesmo padrão de ícones/helpers já
+duplicados entre esses arquivos nesta sessão) que reescreve uma URL
+pública do Storage (`/storage/v1/object/public/...`) pra pedir a versão
+transformada (`/storage/v1/render/image/public/...?width=...&quality=
+74`) em vez do arquivo cru. Passa direto, sem mexer em nada, qualquer
+URL que não seja do Storage (`data:`, `blob:`, o SVG do placeholder "Sem
+foto") — não precisa de nenhum caso especial pra esses. Resolve fotos
+JÁ CADASTRADAS (mesmo as de 16MB do bug acima) sem precisar reprocessar
+nem uma linha do banco — o Storage transforma e cacheia na hora.
+
+Larguras escolhidas por contexto (`IMG_WIDTH` em `catalogo.mjs`): `hero:
+1600` (foto principal/ambientada em tela cheia — o `<img>` que o usuário
+realmente olha de perto), `gateway: 1920` (foto do Portal, full-bleed),
+`card: 380` (cards da Home/grade), `mosaic: 640` (colunas do mosaico),
+`thumb: 160` (itens relacionados), `swatch: 110` (círculos de cor),
+`toast: 340` (foto da notificação); os pickers pequenos de item em
+Lounge/Estúdio 3D usam 120-160 direto, sem constante própria (números
+soltos, únicos naquele contexto).
+
+**Cuidado central pra não quebrar nada**: `otimizarFoto()` NUNCA é
+aplicado em cima do valor guardado no objeto do item
+(`item.photo`/`detail.img`/`event.img`) — só no exato ponto de montar o
+atributo `src` visível. Dois consumidores dependem da URL CRUA: (1) o
+editor de recorte inline (`startInlineEdit`) faz `fetch()` direto em
+`item.photo` pra carregar a foto atual e deixar a pessoa ajustar — se
+fosse a versão pequena, a pessoa editaria em cima de uma imagem já
+degradada; (2) `generateFabricVariation()` (Experimente outro tecido)
+manda `scene.preview: item.photo` como referência pra IA — mandar uma
+miniatura de 380px pra IA usar como referência do móvel seria um
+downgrade de qualidade sério, sem ninguém pedir. `mainSlides()` resolve
+isso com dois campos por slide: `src` (transformado, só exibição) e
+`rawSrc` (a URL crua, vai pro `data-original-src` — não lido em lugar
+nenhum hoje, mas mantido fiel ao próprio nome pra não confundir leitura
+futura).
+
+**Extra, baixo risco**: `<link rel="preconnect">`/`dns-prefetch` pro
+domínio do Supabase Storage no `<head>` de `catalogo.html` — adianta
+DNS+TLS antes mesmo da primeira `<img>` ser descoberta pelo parser.
+
+**Não mexido, fora do escopo desta rodada**: o caminho "sem ajuste" de
+upload (`gerarBlobImagemSlot()` em `itens.foto.mjs`, e o upload direto de
+fotos da Biblioteca em `catalogo-biblioteca.mjs`) continua preservando o
+arquivo como a pessoa mandou, sem compressão — decisão documentada antes
+desta sessão, e a leitura via `otimizarFoto()` já resolve a velocidade de
+EXIBIÇÃO independente do tamanho do arquivo salvo. Se o custo de
+armazenamento no Storage virar um problema à parte, é uma tarefa
+diferente (comprimir no upload), não decidida aqui.
+
+Testes ajustados pela troca PNG→JPEG do editor de recorte (extensão do
+arquivo de saída mudou de `.png` pra `.jpg`):
+`tests/catalogo-editor-fotos-browser.cjs` (upload da foto principal) e
+`tests/catalogo-portal-browser.cjs` (cenário "Ajustar foto" da capa do
+Portal, que usa o MESMO `cropSessionBlob()`). Suíte completa de
+regressão do catálogo (15 arquivos) + `tests/creditos-browser.cjs` +
+`tests/studio-browser.cjs` rodadas de novo, todas passando. Cache-busting
+bumpado em `catalogo.mjs` (import interno dos 3 módulos +
+`catalogo.html`) e nos dois pontos que importam `itens.foto.mjs`
+(`cadastro-itens.mjs`, `item-detalhes.mjs`), todos pra
+`?v=20260919-imgotimizada`.
+
+### Bug real, achado pelo usuário logo depois de publicado: fotos cortadas/esticadas
+
+Usuário reportou com print (grade de categorias da Home, várias fotos
+mostrando só uma fatia vertical estreita do móvel em vez da foto
+inteira): *"depois dessa atualização que você fez as fotos ficaram
+cortadas"*. Bug real introduzido pela própria otimização acima, não
+impressão — investigado direto contra o Storage de produção antes de
+mexer em qualquer código (`curl` comparando dimensões reais via `file`,
+não só tamanho em bytes, que é o que tinha sido conferido antes de
+publicar e por isso não pegou o problema).
+
+**Causa raiz**: `otimizarFoto()` pedia só `width` ao transformador do
+Supabase, sem `resize`. Sem esse parâmetro, o resizing_type default
+(`fill`) **mantém a ALTURA ORIGINAL inteira** e só encolhe a largura —
+uma foto de 5215×4032px virava 1600×4032 (achatada/cortada), não
+1600×1237 (proporcional). Confirmado testando várias combinações de
+parâmetros direto contra o endpoint: `width` sozinho falha,
+`width+resize=contain` funciona (calcula a altura sozinho a partir da
+proporção real do arquivo, sem precisar informar height), e
+`width+height` também funciona mas exigiria calcular a proporção no
+cliente pra cada foto — `resize=contain` é a solução mais simples.
+
+**Corrigido** adicionando `&resize=contain` fixo em `otimizarFoto()` —
+a MESMA função, duplicada nos 4 arquivos (`catalogo.mjs`,
+`catalogo-biblioteca.mjs`, `catalogo-lounge.mjs`,
+`catalogo-studio3d.mjs`), então uma correção só precisou ser replicada
+nos mesmos 4 lugares. Verificado batendo de novo no Storage real: a
+mesma foto do bug (16,8MB original) virou 1600×1237 (proporção correta,
+igual ao original) em vez de 1600×4032. Suíte completa de regressão do
+catálogo (16 arquivos) + `tests/creditos-browser.cjs` + `tests/
+studio-browser.cjs` rodadas de novo, todas passando (nenhum teste
+automatizado pegou esse bug sozinho, porque os fixtures dos testes usam
+domínios que não batem com o padrão `/storage/v1/object/public/`, então
+`otimizarFoto()` nunca transformava nada neles — só o teste contra o
+Storage real revelou o problema; ver seção seguinte sobre o novo teste
+de zoom, que passou a usar URLs de fixture no formato certo justamente
+por causa disso).
+
+**Lição pra qualquer otimização de imagem futura nesta sessão/projeto**:
+não basta conferir que o TAMANHO em bytes caiu — precisa confirmar as
+DIMENSÕES reais do arquivo resultante (`file`/`identify`/abrir a imagem
+de verdade), porque um arquivo bem menor ainda pode estar
+CORTADO/DISTORCIDO, o que é um problema pior que "não otimizou".
+
+## Visualizador de zoom da foto (clique abre em resolução bem maior)
+
+Pedido explícito do usuário, na mesma conversa da otimização de
+carregamento: depois de entender que a foto exibida normalmente virou
+uma versão reduzida (pro catálogo carregar rápido), perguntou *"eu vou
+ver ela em baixa qualidade no html?"* e, na sequência, *"eu quero que a
+pessoa possa dar zoom e de fato ver os detalhes"*. Perguntado (via
+AskUserQuestion) se bastava um zoom nativo mais nítido (só aumentar a
+resolução/qualidade servida) ou se queria um visualizador dedicado tipo
+loja grande — resposta: **lupa/visualizador dedicado**.
+
+**Como funciona**: clicar na foto principal (qualquer slide do
+carrossel — principal ou Detalhe) ou na foto Ambientada, dentro da
+visualização imersiva, abre `#catalogPhotoZoomDialog` — um `<dialog>`
+em tela cheia, fundo preto (diferente do branco do resto do catálogo,
+de propósito — padrão universal de visualizador de foto, deixa a foto
+ser o centro das atenções), mostrando a MESMA foto numa resolução bem
+maior (`IMG_WIDTH.zoom = 3200`, `IMG_QUALITY_ZOOM = 90` — perto do
+arquivo original, mas ainda passando pelo transformador do Storage, não
+o arquivo cru de verdade, que nos casos do bug de PNG gigante ainda
+chegaria a vários MB). **Carregada só nesse clique, nunca pré-
+carregada** — não pesa a navegação normal, que é exatamente o que a
+otimização de leitura documentada acima resolveu.
+
+**De onde vem a URL**: sempre de `data-original-src` do elemento
+clicado — o atributo que já existia (`.product-main-image`) ou que
+ganhou nesta mudança (`.product-event-image`) guardando a URL CRUA
+(nunca a já otimizada que está no `src` em tela, ver "Cuidado central"
+na seção anterior). Slot vazio (placeholder "+" de Detalhe, equipe
+interna) e o placeholder genérico "Sem foto" nunca abrem o zoom — nada
+pra ampliar.
+
+**Interação — arrastar/roda/botões, sem depender do zoom nativo do
+navegador**: `transform:translate()+scale()` no próprio `<img>`, dirigido
+por Pointer Events (arrastar) e `wheel` (zoom contínuo) + botões +/-/
+redefinir (mesma linguagem visual — ícones, cores translúcidas — já
+usada nos controles do Módulo Lounge/mini-menu Módulo 3D). Zoom nativo
+do navegador (pinça no celular, Ctrl+scroll no desktop) continua
+funcionando por cima disso, sem nenhum bloqueio — o `<meta viewport>` do
+catálogo nunca desativou isso.
+
+**Fecha e reseta**: botão próprio, clique fora (`::backdrop`) ou Esc
+(comportamento nativo de `<dialog aria-modal>` aberto via
+`showModal()`) — o evento `close` do próprio `<dialog>` (dispara em
+qualquer um dos 3 casos) é quem rereseta `scale`/`x`/`y`, então reabrir
+depois nunca começa "herdando" o zoom/posição de uma sessão anterior.
+
+**Não conflita com a edição (equipe interna)**: o lápis de editar
+(`.catalog-inline-edit-badge`) e as setas do carrossel
+(`.product-main-nav`) são elementos IRMÃOS da `<img>`, nunca filhos —
+clicar neles nunca alcança o `closest(".product-main-image")` que abre
+o zoom, então continuam disparando só o comportamento de sempre
+(editar/navegar), sem precisar de nenhuma exclusão explícita no código.
+
+Teste de regressão novo: `tests/catalogo-zoom-foto-browser.cjs` — clique
+abre com `width=3200&resize=contain` (nunca igual à URL pequena que já
+estava na tela); arrastar reflete no `translate()`; roda e os botões +/-
+mudam o `scale()` de verdade; redefinir volta ao estado inicial exato;
+fechar (botão ou Esc) reseta o zoom pra próxima abertura; foto
+Ambientada abre com a URL certa (não confunde com a principal); lápis de
+edição continua abrindo o editor, não o zoom; slot vazio não abre nada;
+sem overflow mobile. **Achado ajustando o próprio teste, não bug de
+produto**: a 1ª versão esperava só `dataset.activeSlot` mudar antes de
+checar a classe `is-empty-slide` do slide seguinte — só o `dataset`
+muda na hora (síncrono), a troca de `src`/classe do `<img>` acontece
+depois do crossfade de 120ms (`commit()` em `renderMainSlide()`) — uma
+corrida real que só aparecia por causa do timing certo, corrigida
+esperando a própria classe mudar em vez do dataset. **Fixtures deste
+teste usam URLs no formato `https://fixture/storage/v1/object/public/
+...`** (não só `https://fixture/...`) de propósito — só assim
+`otimizarFoto()` de verdade transforma a URL; um domínio de fixture sem
+esse trecho no caminho faria a função devolver a URL sem nenhuma
+transformação, e o teste não provaria nada sobre o comportamento real
+(mesma lição do bug de corte acima, que nenhum teste antigo pegou por
+esse motivo). Suíte completa de regressão do catálogo (17 arquivos,
+agora incluindo este) + `tests/creditos-browser.cjs` + `tests/
+studio-browser.cjs` rodadas de novo, todas passando.
+
+## Setas de voltar/avançar no cabeçalho (histórico de navegação)
+
+**Superado pela seção "Linha do tempo das telas visitadas" mais abaixo** —
+os botões de seta (`#catalogNavBack`/`#catalogNavForward`, `.catalog-nav-
+history-*`, `navigateHistory()`, `updateNavHistoryButtons()`) não existem
+mais; o MODELO de histórico descrito aqui (pilhas voltar/avançar, navegação
+nova descarta as "seguintes", `navSuppress`, hook em `renderBreadcrumb()`)
+continua valendo e virou a base da linha do tempo. Mantido por completo
+abaixo pelo raciocínio.
+
+Pedido explícito do usuário: *"ali na parte de cima onde tem estofados,
+home no menu, quero que tenha uma seta uma pra cada lado de avançar e
+voltar... pra pessoa saber onde ela está, aí embaixo disso escrito
+voltar acho que pode ter o nome da tela anterior e no avançar a mesma
+coisa"*. Perguntado (via AskUserQuestion, com preview visual dos dois
+formatos) se preferia compacto/mesma linha ou seta-em-cima-nome-embaixo
+(2 linhas, na faixa abaixo do cabeçalho) — respondeu **compacto, na
+mesma linha**, já que o cabeçalho tem altura FIXA (ver [[project-acervo-
+navbar-limits]] na memória de longo prazo — nunca crescer o cabeçalho) e
+um bloco de 2 linhas não caberia nela. Ajuste rápido em seguida: *"na
+home não precisa ter esses botões, só nos outros"* — "Home" aqui é o
+rótulo do PORTAL no cabeçalho (`GATEWAY_VIEW`), não a grade de
+categorias (que no rótulo chama "Categoria").
+
+**Histórico, não hierarquia**: modelo igual voltar/avançar de navegador
+— diferente da trilha `#catalogBreadcrumb` (que segue Catálogo/
+Categoria/Item, a HIERARQUIA), aqui é a ORDEM REAL em que a pessoa
+navegou, então "voltar" pode levar de uma categoria de volta pra Home,
+da Home pro Portal, do Portal pra Biblioteca se foi por ali antes, etc.
+`state.navBack`/`state.navForward` guardam `{activeView, overlay}` (o
+suficiente pra restaurar via `applyView()`/`openBibliotecaOverlay()`/
+`openStudioOverlay()`/`openLoungeOverlay()` — não tenta preservar
+scroll/item em foco/filtro de subcategoria, só o nível de "tela"
+descrito pelo usuário).
+
+**Um hook só, sem tocar em cada navegação**: `trackNavHistory()` é
+chamado de dentro de `renderBreadcrumb()` — o MESMO ponto central já
+usado por toda navegação do catálogo (`applyView`, `setActiveOverlay`,
+scroll entre seções, busca), então não precisou adicionar chamada em
+cada lugar que muda de tela. Compara a tela atual contra
+`state.navCurrent`: se mudou, empilha a ANTERIOR em `navBack` e limpa
+`navForward` (igual navegador: uma navegação nova descarta o "avançar"
+antigo). **Achado útil, não um bug**: `applyView()` chama
+`renderBreadcrumb()` DUAS vezes por navegação (uma vez dentro de
+`setActiveOverlay(null)`, outra no final) — o guard de "é a mesma tela?"
+já existia pra proteger contra o scroll disparando renderBreadcrumb()
+repetidamente, e também cobre essa chamada duplicada de graça (a 2ª
+chamada vê a tela já igual à que acabou de registrar, vira no-op).
+
+**Clicar em voltar/avançar não deve empilhar de novo**: `state.
+navSuppress` fica `true` só durante `navigateHistory()` — evita que
+restaurar uma tela (que também passa por `renderBreadcrumb()`) seja
+tratado como "navegação nova" e crie um loop (voltar empilhando de volta
+a mesma tela que acabou de sair).
+
+**Legenda de cada seta** (`screenLabelFor(screen)`, extraído de
+`updatePageLabel()` pra virar reaproveitável com qualquer `{activeView,
+overlay}`, não só o atual) mostra o nome da tela PRA ONDE aquela seta
+levaria — "voltar" = topo de `navBack`, "avançar" = topo de
+`navForward`. Cada botão fica desabilitado (não escondido) quando a
+pilha correspondente está vazia — só as DUAS setas juntas somem no
+Portal.
+
+**Formato compacto escolhido**: seta + nome pequeno do lado, na MESMA
+linha do rótulo grande (`#catalogPageLabel`), sem aumentar a altura do
+cabeçalho — `color:inherit`/`currentColor`, igual o resto do cabeçalho,
+funciona tanto no tema escuro padrão quanto no claro de
+`body.catalog-modo-sistema` sem regra própria pros dois casos. Nome da
+tela some em telas ≤1200px (mesmo breakpoint onde o resto do cabeçalho
+já fica apertado) — sobra só o ícone, testado que não estoura o
+cabeçalho nem no mobile.
+
+Teste de regressão novo: `tests/catalogo-nav-history-browser.cjs` —
+somem no Portal; aparecem com o nome certo ao sair dele (voltar =
+"Home"); entrar numa categoria muda a legenda de voltar pra "Categoria";
+clicar voltar retorna de verdade E preenche avançar com o nome de onde
+saiu; clicar avançar retorna àquela tela; navegar pra uma categoria
+DIFERENTE depois de ter usado voltar descarta o avançar antigo (prova
+que não é só um "toggle" entre 2 telas, é uma pilha de verdade);
+overlays (Biblioteca) entram no histórico igual qualquer outra tela;
+ícone-only (`display:none` na legenda, não só menor) em 1100px; sem
+overflow mobile. Suíte completa de regressão do catálogo (18 arquivos,
+agora incluindo este) + `tests/creditos-browser.cjs` + `tests/
+studio-browser.cjs` rodadas de novo, todas passando. Cache-busting
+bumpado (`catalogo.css`/`catalogo.mjs` em `catalogo.html`, pra
+`?v=20260919-navhistoria` — os 3 módulos self-contidos importados por
+`catalogo.mjs` não mudaram nesta rodada, mantiveram a versão anterior).
+
+### Rótulo da tela sempre no centro EXATO da tela (não da coluna do cabeçalho)
+
+Pedido explícito do usuário, com print de "CADEIRAS" ~60px à direita do
+centro: *"o nome da página que eu estou no menu ela sempre deve ficar
+centralizada, sempre"*. Junto, outro ajuste pequeno: o rótulo da grade de
+categorias (`HOME_VIEW`) passou de "Categoria" pra **"Categorias"**
+(plural — `screenLabelFor()`; o singular continua só no campo "Categoria"
+do painel técnico do item e no texto reserva de categoria sem nome).
+
+**Causa raiz**: `.catalog-navigation` era um item do grid do cabeçalho
+(`grid-area:categories`), na coluna entre a marca (esquerda) e a busca +
+usuário (direita) — o rótulo ficava centralizado só DENTRO dessa coluna,
+que nunca é simétrica na tela (à direita ocupa ~219px sem o bloco do
+usuário/~329px com ele; à esquerda ~198-224px), e ainda por cima a seta
+"voltar" com legenda (mais larga que a "avançar" vazia) empurrava o texto
+mais um pouco. Medido com Playwright, não só lido no CSS.
+
+**Corrigido** tirando `.catalog-navigation` do fluxo do grid: `position:
+absolute;left:50%;transform:translateX(-50%)` dentro de `.catalog-header`
+(que ganhou `position:relative`), com largura `100% - 2×--nav-gutter`
+(`350px` acima de 1450px, `224px` até 1450px — calibrados com a largura
+REAL ocupada pela marca e pela busca+usuário em cada faixa, não chutados)
+e, por dentro, um grid `minmax(--nav-side,1fr) auto minmax(--nav-side,1fr)`
+(colunas laterais IGUAIS → o texto fica no meio mesmo com uma seta mais
+larga que a outra ou escondida). **Cada item tem `grid-column` explícito**
+(1/2/3) — sem isso, esconder as setas (`display:none` no Portal) faria o
+rótulo cair na 1ª coluna. `--nav-side` é `140px` com a legenda das setas
+visível (≥1201px, reserva o espaço da legenda pra ela nunca sobrepor a
+marca num nome longo) e `28px` sem legenda.
+
+**Efeito colateral corrigido**: em `body.catalog-modo-sistema` (aberto de
+dentro do dashboard, cabeçalho `display:flex`, marca e usuário escondidos)
+quem empurrava a busca pra direita era o `flex:1` da navegação — com ela
+fora do fluxo, a busca ia parar no canto ESQUERDO. Corrigido com
+`margin-left:auto` na busca nesse modo.
+
+**Exceção real, não escondida: celular (≤767px)** volta ao fluxo normal do
+grid (`position:static`) — marca (~110px) + bloco do usuário (~60px) já
+ocupam ~metade dos 390px e são assimétricos, então centralizar de verdade
+na tela deixaria só ~125px pro nome ("CADE…"). No celular o nome continua
+centralizado ENTRE as duas setas, mas pode ficar até ~40px fora do centro
+da tela. Se pedirem centralização exata também no celular, precisa
+decidir antes o que sacrificar (tamanho da fonte do nome, ou esconder as
+setas).
+
+Verificado medindo `getBoundingClientRect()` em 13 larguras (390–1920px) ×
+3 cenários (decorador com bloco de usuário e nome curto, sem bloco de
+usuário e nome longo "Banquetas e Bistrôs Altos", modo dentro do
+sistema): desvio do centro = 0px em TODAS as larguras ≥768px, sem
+sobreposição com a marca nem com a busca/usuário. Testes:
+`tests/catalogo-nav-history-browser.cjs` (Portal sem setas, grade de
+categorias e categoria com só um lado com legenda, a 1600px e 1280px —
+desvio ≤1px) e `tests/catalogo-editor-fotos-browser.cjs` (modo dentro do
+sistema: centralizado e busca continua à direita); `tests/catalogo-
+portal-browser.cjs`/`catalogo-menu-browser.cjs`/`catalogo-nav-history-
+browser.cjs` ajustados pro texto "Categorias". Cache-busting
+`?v=20260919-centrorotulo`.
+
+## Linha do tempo das telas visitadas (substitui as setas de voltar/avançar)
+
+Pedido explícito do usuário: *"no menu eu quero algo conceitual, eu quero
+que forme tipo uma linha do tempo com todas as páginas que eu acessei,
+então por exemplo, a primeira seria home, a segunda seria categorias, a
+terceira seria bares, entendeu? mas algo que é muito importante, a minha
+tela que eu estou agora ela deve ser sempre centralizada e do jeito que
+está hoje. uma coisa legal também seria se quando eu mudasse de página
+rolasse um efeito no menu trocando de uma tela pra outra, tipo uma
+rolagem"*.
+
+**Decisões tomadas sem perguntar (interpretação mais natural do pedido —
+se estiverem erradas, cada uma é pequena de desfazer)**: (1) as setas
+antigas SAÍRAM — clicar numa entrada vizinha da linha do tempo já é
+voltar/avançar, e clicar numa mais distante pula várias telas de uma vez;
+(2) a linha do tempo mostra as telas ANTERIORES à esquerda E as
+SEGUINTES (as que ficaram "à frente" depois de voltar) à direita, igual
+um navegador — não só o que já foi visitado; (3) **no Portal ("Home")
+as laterais somem** (só o nome, centralizado) — mesmo pedido que já
+valia pras setas ("na home não precisa ter esses botões, só nos outros");
+é só a regra `.catalog-navigation.is-portal .catalog-timeline-side{
+visibility:hidden}` se quiserem mostrar as entradas ali também.
+
+**Estrutura** (`catalogo.html`): `.catalog-navigation` agora tem 3
+filhos — `#catalogTimelinePast` (anteriores), `#catalogPageLabel` (a
+tela ATUAL, o mesmo elemento de sempre, com `data-entry-id`) e
+`#catalogTimelineFuture` (seguintes). São as 3 colunas do MESMO grid
+`minmax(--nav-side,1fr) auto minmax(--nav-side,1fr)` da centralização
+(ver "Rótulo da tela sempre no centro EXATO" acima) — por isso a tela
+atual continua no centro exato, mesmo tamanho, mesma fonte, sem nenhuma
+regra nova pra ela; medido: desvio 0px em todas as larguras ≥768px.
+As laterais só mostram o que couber: as entradas transbordam pra FORA
+(anteriores alinhadas à direita, seguintes à esquerda), e o próprio
+`.catalog-navigation` recorta o excesso (`overflow:hidden`) e esmaece as
+pontas com `mask-image` (`--nav-fade`, 56px, 28px em ≤1200px). Sem
+`overflow:hidden` nas laterais em si — a animação faz o nome atual
+ENCOLHER e deslizar pra dentro de uma lateral, e um recorte ali
+esconderia esse trajeto. Cada entrada fica mais apagada quanto mais longe
+da atual (`--d` → `opacity:max(.14,calc(.7 - (var(--d) - 1) * .2))`); o
+separador "›" é um pseudo-elemento (`::after` nas anteriores, `::before`
+nas seguintes) pra acompanhar a entrada durante a animação.
+
+**Modelo de dados** (`catalogo.mjs`): cada entrada é `{id, activeView,
+overlay}` (o `id` vem de `navEntrySeq`, é o que deixa a animação
+reconhecer a MESMA entrada entre uma renderização e a seguinte).
+`state.navBack`/`navCurrent`/`navForward` guardam entradas (antes eram
+telas sem id). `trackNavHistory()` (chamado de `renderBreadcrumb()`, agora
+ANTES de `updatePageLabel()` — a animação precisa medir o rótulo com o
+texto antigo ainda no lugar) cria a entrada nova quando a tela muda;
+`jumpToHistoryEntry(id)` (substitui `navigateHistory()`) recompõe
+`[...voltar, atual, ...avançar]` em torno do alvo, com `navSuppress` ligado
+durante a restauração. A lista tem teto (`TIMELINE_MAX_HISTORY=60` no total,
+`TIMELINE_MAX_SIDE=14` desenhadas por lado). É o histórico REAL, com
+repetição — Home › Categorias › Mesas › Home › Categorias aparece assim,
+cada visita é uma entrada.
+
+**Animação de "rolagem"** (`renderTimeline()`/`animateTimeline()`, técnica
+FLIP com Web Animations API, sem biblioteca): antes de mexer no DOM,
+`timelineSnapshot()` mede posição/largura/opacidade de cada entrada
+visível e do rótulo, por `id`; depois de redesenhar, mede de novo e anima
+cada elemento do lugar antigo pro novo (`translate` + `scale` pela razão
+de larguras, `640ms cubic-bezier(.22,1,.36,1)`) — o nome que era o atual
+ENCOLHE e desliza virando uma entrada, e a entrada que foi clicada CRESCE
+e assenta no centro; uma tela nova (sem `id` anterior) entra deslizando
+90px vinda da direita. Só redesenha/anima quando a assinatura (ids +
+rótulos) muda — `renderBreadcrumb()` roda várias vezes por navegação
+(`applyView` chama 2×, e o scroll entre itens também) e nada disso pode
+reiniciar a animação. `prefers-reduced-motion:reduce` desliga tudo (troca
+seca). Medido quadro a quadro: o nome novo vai de cx=890 pra 800 (centro
+exato da tela de 1600px) e o nome antigo de 800 pra 649, virando entrada.
+
+**Celular (≤767px)**: mesma exceção já documentada pro centro exato — o
+nome fica no fluxo do grid, e cada lado vira só uma seta (‹ ›) da entrada
+VIZINHA (`.is-near`), clicável, pra continuar dando pra voltar/avançar;
+laterais vazias ou no Portal somem (`display:none`). Só o nome novo anima
+(entra de fora); as entradas não fazem FLIP.
+
+**Bug real achado pela suíte, corrigido**: no celular o nome novo entra
+com `translateX` — `transform` conta pro overflow de rolagem, então sem
+recorte a página GANHAVA rolagem horizontal por ~0,6s a cada troca de tela
+(`tests/catalogo-portal-browser.cjs`, "Portal sem overflow horizontal no
+mobile", falhou). Corrigido com `overflow:hidden` em
+`.catalog-navigation` também no celular; o teste novo mede o
+`scrollWidth` DOIS QUADROS depois de trocar de tela (com a animação ainda
+no começo — conferindo que ela está mesmo rodando) e foi verificado que
+falha se o recorte for desligado.
+
+Testes: `tests/catalogo-nav-history-browser.cjs` reescrito por completo
+(Portal com laterais escondidas e nome centralizado; entradas na ordem
+real; clicar volta/avança/pula 2 telas de verdade; navegação nova descarta
+as "seguintes"; repetição de telas; Biblioteca como entrada e fechando ao
+voltar; animação rodando no 1º quadro com o nome ainda fora do centro e
+assentando em ≤1px; centro exato em 1600/1280/1100px; celular com só a
+seta vizinha e sem overflow — inclusive no meio da animação;
+`reducedMotion:"reduce"` sem nenhuma animação) e `tests/catalogo-editor-
+fotos-browser.cjs` (centro no modo dentro do sistema) passou a esperar o
+fim da animação do rótulo — só a DO RÓTULO, não `document.getAnimations()`,
+porque outras animações da tela (faixa de itens relacionados) são
+infinitas. Cache-busting `?v=20260919-linhadotempo3`.
+
+## Módulo 3D: cards renomeados e sem frases de descrição
+
+Pedido explícito do usuário, olhando o mini-menu (em 2 mensagens seguidas,
+a 2ª cancelando parte da 1ª): *"agora eu quero mudar o nome dos recursos
+3d, o primeiro eu quero que se chame 3D Livre, algo nesse sentido, e na
+descrição você coloca que é indicado pra fazer montagens de espaços
+inteiros; o do meio você coloca que composições, e na descrição coloca
+que esse módulo é indicado pra testar composições novas, não só testar
+composições que nós indicamos, mas pra criar composições também, sair do
+óbvio; e o último você tira o nome e coloca em desenvolvimento e sem
+descrição em baixo"* — e, ainda no meio do trabalho: *"faz o seguinte,
+retire as frases, deixe somente os títulos"*.
+
+**Resultado final**: os 3 cards mostram SÓ o título — "3D Livre" (antigo
+Estúdio de Ambientes), "Composições" (antigo Módulo Lounge) e "Em
+desenvolvimento" (antiga Realidade aumentada, que perdeu o próprio nome).
+**Nenhuma frase de descrição em nenhum card**, e o selo "Em breve" que
+ficava embaixo do card indisponível também saiu (o título já diz isso).
+
+**As frases da "7ª rodada" do mini-menu foram REMOVIDAS por completo, não
+só escondidas** (ver "Mini-menu Módulo 3D: um modelo 3D por card" acima —
+o resumo revelado no hover, `card.description`): campo `description` de
+`MODULO3D_CARDS`, `modulo3dCardDescMarkup()`, as regras
+`.catalog-modulo3d-tile-desc` (repouso invisível + revelado no hover) e as
+asserções do teste que mediam fonte/posição/opacidade do resumo. Se um dia
+pedirem frases de novo, é reescrever esse mecanismo (o histórico do git
+tem a versão).
+
+**Nome do módulo vs. título exibido** (`MODULO3D_CARDS`, `catalogo.mjs`):
+`label` é o NOME do módulo; `title` (só o 3º card) é o que aparece escrito
+no quadro quando é diferente do nome. Assim "Em desenvolvimento" sai do
+card sem tirar o nome da Realidade aumentada dos botões de marcar o
+modelo em destaque (`capaModulo3dToggleMarkup()`, só equipe interna) — a
+equipe continua sabendo qual slot é qual.
+
+**O nome novo vale em TODA parte que mostra o módulo**, não só nos
+cards — `modulo3dLabel(key)` (novo helper, lê `MODULO3D_CARDS`) alimenta
+o rótulo grande do cabeçalho, a trilha "Catálogo / Módulo 3D / 3D Livre" e
+a linha do tempo (antes eram textos soltos "Painel 3D"/"Módulo Lounge"
+repetidos em `screenLabelFor()` e em 2 pontos de `renderBreadcrumb()`),
+mais os `aria-label` de `#catalogStudio` ("3D Livre") e `#catalogLounge`
+("Composições") em `catalogo.html`. Decisão tomada sem perguntar: clicar
+em "3D Livre" e ver o cabeçalho dizer "Painel 3D" seria incoerente. Os
+comentários internos dos arquivos ainda dizem "Painel 3D"/"Estúdio de
+Ambientes"/"Módulo Lounge" (nome de trabalho no código e neste arquivo) —
+os nomes de arquivo (`catalogo-studio3d.mjs`, `catalogo-lounge.mjs`) e as
+chaves (`estudio`, `lounge`, colunas `capa_modulo3d_*`) NÃO mudaram.
+
+Testes ajustados pros nomes novos: `tests/catalogo-modulo3d-menu-browser.
+cjs` (títulos exatos dos 3 cards, `Em desenvolvimento` sem selo e sem
+nenhum outro texto dentro do card, zero `.catalog-modulo3d-tile-desc` na
+tela; assertivas do resumo no hover removidas), `tests/catalogo-lounge-
+browser.cjs`, `tests/catalogo-breadcrumb-browser.cjs` e `tests/catalogo-
+portal-browser.cjs` (rótulo/trilha "3D Livre" e "Composições").
+Cache-busting `?v=20260919-nomes3d`.
+
+## Fontes do catálogo inteiro aumentadas (piso de 12px)
+
+Pedido explícito do usuário, depois de uma reunião com o cliente (com prints
+da linha do tempo do cabeçalho, da trilha, dos rótulos CATEGORIA/MATERIAL/
+COR/CÓDIGO, das dimensões "380 × 110 × 55 cm" e do botão "DEFINIR COMO CAPA
+DE ..."): *"a fonte do catálogo inteiro precisa aumentar pra ficar
+confortável a leitura — encontre essas fontes que estão pequenas e ajuste
+elas pra ficar algo confortável"*.
+
+**Como foi achado o que estava pequeno (não por leitura de CSS)**: um script
+Playwright percorreu Portal, Categorias, grade, mosaico, item imersivo
+(decorador e equipe), "Experimente seu tecido", Biblioteca, Módulo 3D, 3D
+Livre, Composições e o login do cliente, e listou todo texto VISÍVEL com
+`getComputedStyle().fontSize` abaixo de 15px. Resultado: 64 grupos de 7,4px a
+14,7px — o pior eram os nomes de cor sob os círculos (7,4px), "SOB MEDIDA"
+(7,7px), rótulos das especificações (8,6px), "Trocar foto" (9,3px), a trilha
+(9,6px), a linha do tempo (9,9px) e as dimensões do item (10,9px).
+
+**Uma escala só, monotônica, aplicada a todo `font-size` < 16px** dos 5 CSS do
+catálogo (`catalogo.css`, `catalogo-biblioteca.css`, `catalogo-lounge.css`,
+`catalogo-studio3d.css`, `catalogo-creditos.css`; 172 declarações — `font-size:`
+e o tamanho dentro de `font:`): interpolação linear onde **7px vira 12px e
+16px continua 16px**, arredondada em passos de 0,5px (na prática: 7–8px →
+12–12,5px; 9,6px → 13px; 10,9px → 13,5px; 12,5px → 14,5px; 14px → 15px).
+Monotônica de propósito: a hierarquia entre tamanhos continua a mesma (o que
+era menor continua menor), só o piso subiu. `clamp()` e tudo que já era ≥ 16px
+(títulos, nome da página no cabeçalho) ficaram intocados. Se o cliente ainda
+achar pequeno, a mudança é subir o piso e reaplicar a escala inteira, não
+mexer regra por regra — mas atenção: a escala foi aplicada UMA vez sobre os
+valores originais; rodar de novo em cima do resultado empilha o aumento.
+
+**Ajustes que a fonte maior forçou (layout que quebrava)**:
+- *Nomes das cores* (`.product-variant-swatch-label`): o rótulo tinha
+  `max-width:48px` numa linha só, então "Castanho Claro" virava "Casta…".
+  Agora o botão tem 60px (56px em ≤600px), o rótulo quebra em até 2 linhas
+  (`-webkit-line-clamp:2`).
+- *Rótulos das especificações* (`.product-specs-row dt`): coluna de 92px →
+  112px (senão "MARCA/MODELO" empurrava o valor), espaçamento de letras
+  `.1em` → `.06em`, e cor `#a89e92` → `#8f8578` (12,5px em cinza claro sobre
+  branco ficava com pouco contraste — legibilidade também é contraste).
+- *Nome do item relacionado* (`.catalog-related-name`, só no hover): `width:
+  100%` (72px, cortava com "…") → `max-content` até 170px; vaza pra baixo da
+  foto vizinha, onde só existe o nome escondido dela, nunca a foto.
+- *Pesquisa do cabeçalho*: `input{font-size:14.5px}` cortava "Pesquisar" na
+  coluna de 110px (largura ≤1450px) → 13,5px.
+- *Celular (≤767px)*: a trilha passava por baixo dos 3 ícones de visualização
+  no canto direito (`.catalog-breadcrumb{right:142px}` resolve); o selo
+  "Visualização 360°" do Composições batia no botão "Renderizar com IA"
+  (`.catalog-lounge-badge{top:54px}` desce o selo pra baixo da linha do
+  botão); a barra de ferramentas do 3D Livre estourava a largura
+  (`.studio-tool-menu-trigger` 12,5px em ≤620px).
+- *A trilha ficou ~4px mais alta* (fonte maior), e ela flutua por cima do
+  conteúdo — então o respiro reservado abaixo dela subiu junto: Composições
+  `padding-top` da coluna esquerda 44→52px (46px no celular) e do mini-menu
+  Módulo 3D 20–40px → 44–60px (44px no celular; antes o título "Explore os
+  recursos" ficava meio escondido atrás dela no celular).
+- `.studio-project-panel small` (texto "Salvamento automático...") herdava o
+  `small` padrão do navegador (`smaller` = 11,7px, invisível pra qualquer
+  regex que só olhe `font-size:`); ganhou 12,5px explícito. **Lição**: uma
+  auditoria por texto do CSS não acha tamanho herdado/padrão do navegador —
+  só o `getComputedStyle` no navegador renderizado acha.
+
+**O cabeçalho continua com altura FIXA** (72px celular / 76px desktop) — nada
+aqui o fez crescer; o item de menu do cliente continua numa linha só.
+
+**Achado à parte, fora do escopo, NÃO corrigido** (**resolvido depois**: a trilha foi apagada, ver "Trilha ... apagada + logo do cabeçalho maior"; os respiros aumentados por causa dela nesta seção também voltaram ao original): no 3D Livre, a trilha
+(`position:absolute`, fundo `rgba(255,255,255,.85)`) cobre os ~30px de cima da
+barra de ferramentas do estúdio ("Espaço / Paredes / Planta / Visualização"
+e o botão "Renderizar com IA" aparecem cortados na metade). Já era assim antes
+desta mudança (confirmado renderizando o `catalogo-studio3d.css` do `HEAD`
+lado a lado) — a fonte maior só deixou a trilha ~4px mais alta. O Composições
+tem o `padding-top` que resolve isso; o 3D Livre nunca teve. O mesmo vale pro
+layout do 3D Livre em celular, que já sobrepunha a barra de ferramentas ao
+painel de projetos antes.
+
+Teste de regressão novo: `tests/catalogo-fontes-browser.cjs` — percorre as
+mesmas telas (decorador + equipe + login + celular) e falha se qualquer texto
+visível ficar abaixo de 12px (`getComputedStyle`, ignora o que está oculto),
+se o cabeçalho passar de 76px de altura, se a tela do item ganhar rolagem
+horizontal em 390px ou se a trilha passar por baixo dos ícones de
+visualização no celular. Confirmado que ele pega de verdade: subindo o piso
+pra 13px ele lista exatamente os rótulos de especificação, nomes de cor e
+"SOB MEDIDA". Suíte completa (20 arquivos) rodada de novo, tudo passando
+exceto `tests/catalogo-layout-browser.cjs`, que já estava quebrado antes
+(mesma `ReferenceError` de função de template não simulada — agora
+`variantSwatchesBlock`, antes `specsPanel`).
+Cache-busting `?v=20260919-fontes` nos 5 CSS em `catalogo.html`.
+
+## Trilha "Catálogo / Categoria / Item" apagada + logo do cabeçalho maior
+
+Pedido explícito do usuário, com print da tela de um item ("Catálogo / Bares /
+Bar Bistrol G" aparecendo logo abaixo da logo): *"apague isso que fica por baixo
+da logo. e aumente a logo um pouco pro limite da altura do menu"*.
+
+**A trilha `#catalogBreadcrumb` não existe mais** (HTML, CSS e o listener de
+clique apagados; as seções "Trilha de navegação abaixo do cabeçalho" e as que a
+citam ficam só como histórico). O caminho percorrido já estava na linha do tempo
+do cabeçalho (ver "Linha do tempo das telas visitadas"), que também é clicável —
+por isso não foi criado substituto. **`renderBreadcrumb()` virou
+`syncNavigation()`**: a função nunca foi só a trilha — era o ponto único que
+chamava `trackNavHistory()` (histórico/linha do tempo) e `updatePageLabel()` (nome
+da tela no centro do cabeçalho) em toda navegação, então o que saiu foi só o
+desenho da trilha; apagar a função inteira teria matado a linha do tempo. Se um
+dia precisar de algo que rode "a cada mudança de tela", é ela.
+
+**O que a trilha apagada resolve de brinde**: no 3D Livre ela cobria ~30px do topo
+da barra de ferramentas do estúdio (o "achado à parte, não corrigido" da seção
+"Fontes do catálogo") — sumiu junto. E os respiros que foram aumentados só pra
+fugir dela voltaram ao valor original: Composições `padding-top` da coluna
+esquerda 26px (20px no celular) e mini-menu Módulo 3D `clamp(20px,3vh,40px)`
+(16px no celular); a regra do celular `.catalog-breadcrumb{right:142px}` também
+saiu. O `padding-top:38px` de `.catalog-detail-panel` (item) NÃO foi mexido — não
+era só da trilha, é o respiro do título.
+
+**Logo maior — como funciona (é um hack calibrado pra ESTA logo)**: o arquivo da
+logo da Chiavari é um PNG QUADRADO 1254×1254 com margem transparente enorme; a arte
+ocupa x 39–1198, y 448–777 (≈3,5× mais larga que alta, ~26% da altura do arquivo).
+O `<img class="catalog-brand-logo">` é uma caixa de 49px de altura (`max-height:49px`,
+`object-fit:contain` → quadrado de 49px) escalada por `transform:scale(N)` a partir
+da esquerda, e `.catalog-brand{overflow:hidden}` recorta na caixa da marca. Altura
+da arte = 12,86 × N px: com N=3,6 eram ~46px num cabeçalho de 76px. Agora, por
+faixa de largura (cada faixa tem a coluna da marca que sobra antes da linha do
+tempo, que começa em `--nav-gutter` da borda esquerda — 350px acima de 1450px,
+224px até 1450px):
+
+| largura da tela | coluna da marca | `scale` | arte (alt × larg) | folga no cabeçalho de 76px |
+|---|---|---|---|---|
+| > 1450px | 250px (era 200) | 5,1 | 66 × 231px | 5px em cima e embaixo |
+| 1201–1450px | 200px (era 180) | 4,2 | 54 × 190px | 11px |
+| ≤ 1200px | 180px | 3,6 (igual a antes) | 46 × 163px | 15px |
+| ≤ 767px (celular) | fluida | 2,8 (igual a antes) | 32 × 111px | — |
+
+O "limite da altura do menu" só é alcançável no desktop largo: a arte é 3,5× mais
+larga que alta, então 66px de altura já pedem 231px de largura, e abaixo de 1450px
+a coluna da marca não passa de ~200px sem invadir a linha do tempo. **Não crescer
+mais que isso sem mexer no `--nav-gutter`** (o rótulo centralizado e as entradas da
+linha do tempo saem da mesma conta). Celular deliberadamente intocado (mesmo motivo:
+já divide os 390px com a seta, o rótulo e o bloco do decorador).
+
+Cada regra de `.catalog-brand-logo{transform:…}` leva também um `translateY` (3px /
+2px / 2px): a arte fica ~3px ACIMA do meio do arquivo, e sem isso, a 5,1×, ela
+encostava no topo do cabeçalho (2px de folga em cima, 8px embaixo — a swash do "Ch"
+quase cortada). **A ordem das media queries importa**: `.catalog-brand-logo` é
+redeclarada em 5 lugares (base, >1450, ≤1450, ≤1200, ≤767) e o CSS de largura menor
+vem DEPOIS no arquivo — como media query não soma especificidade, a última regra
+que casa vence, então o bloco do celular precisou repetir o `scale(2.8)` (o de 615
+ficaria por baixo do ≤1450/≤1200). Outra empresa com logo de outra proporção
+(ou um PNG já recortado) vai precisar de outros números — `logo_zoom` continua sem
+efeito aqui, como antes.
+
+Descoberta da proporção da arte: baixei a logo real (`empresas.logo_url`, via
+`npx supabase db query --linked`) e medi o bounding box dos pixels não
+transparentes num canvas — nada de chute no `scale`.
+
+Teste de regressão novo, `tests/catalogo-cabecalho-browser.cjs` (substitui
+`tests/catalogo-breadcrumb-browser.cjs`, apagado): (1) a trilha não existe em
+nenhuma tela (Portal, Categorias, grade, item, Biblioteca, Módulo 3D, 3D Livre),
+a foto ambientada encosta no cabeçalho, a barra de ferramentas do 3D Livre não fica
+mais coberta, e o caminho segue na linha do tempo (clicar numa entrada volta de
+verdade); (2) o fixture da logo é um PNG 627×627 transparente com um retângulo
+magenta opaco nas mesmas proporções da arte real, e a altura/posição da arte é
+medida em PIXELS do que o navegador desenha (screenshot do cabeçalho → bounding box
+do magenta) em 1920/1600/1440/1280/1100px: altura mínima (62/50/44px), centrada
+(±2px), com folga em cima e embaixo, sem ser cortada pela caixa da marca, sem
+invadir a linha do tempo, cabeçalho continua com 76px; celular com 72px e sem
+rolagem horizontal. Confirmado que pega: voltando o `scale` antigo, falha em
+"logo ao menos 62px de altura — achou 47px". Os outros testes que usavam a trilha
+para voltar ao mini-menu do Módulo 3D (`catalogo-lounge-browser.cjs`,
+`catalogo-modulo3d-menu-browser.cjs`) agora clicam na entrada "Módulo 3D" da linha
+do tempo. Suíte completa (20 arquivos) rodada de novo, tudo passando exceto
+`tests/catalogo-layout-browser.cjs` (já quebrado antes, mesma `ReferenceError`).
+Cache-busting `?v=20260919-logo-sem-trilha` em `catalogo.css`, `catalogo-lounge.css`
+e `catalogo.mjs`.
+
+## Biblioteca: clicar na foto abre em tela toda
+
+Pedido explícito do usuário, com print da pasta aberta (4 fotos de eventos em grade): *"agora
+eu quero clicar na foto dentro da biblioteca e quero que ela fique em tela toda"*.
+
+**Reaproveita o visualizador que já existia**, não cria um novo: `#catalogPhotoZoomDialog`
+(`openPhotoZoom()` em `catalogo.mjs`, ver "Visualizador de zoom da foto") — `<dialog>` de
+100vw×100vh, fundo preto, foto na resolução grande (`IMG_WIDTH.zoom`, carregada só no clique),
+arrastar/roda/botões +/− de zoom, fecha no ×, no Esc ou clicando fora. A grade da Biblioteca
+mostra as fotos recortadas em 4:5 (`object-fit:cover`, 700px); o visualizador mostra a foto
+INTEIRA, na proporção original.
+
+**Ponte, não import**: `catalogo-biblioteca.mjs` é self-contido e não importa `catalogo.mjs`
+(nem o contrário — ver "Biblioteca"), então `catalogo.mjs` expõe `window.catalogOpenPhotoZoom =
+openPhotoZoom`, mesmo padrão de `window.catalogNotify`/`window.catalogLoadModelAsset`. A
+Biblioteca acha a foto pelo `data-photo-id` em `photosForCategory()` e passa a URL CRUA
+(`photo.url`) — `openPhotoZoom` é quem pede a versão grande ao Storage.
+
+**Quem dispara**: a própria `<img>` (`data-open-photo`, `role="button" tabindex="0"`,
+`aria-label="Ver foto em tela cheia"`, cursor `zoom-in`), com Enter/Espaço também. Não é a
+`<figure>` inteira de propósito: o "×" de remover (só equipe interna, `<button>`) é IRMÃO da
+imagem — um botão dentro de outro `role="button"` é HTML/ARIA inválido (mesma razão dos blocos do
+Portal serem `<div>`). O "×" é checado antes no handler, então nunca abre a foto. Vale igual pra
+decorador externo (só olha) e equipe interna.
+
+**(Implementado depois — ver "Visualizador de fotos: passar de uma foto pra outra sem fechar".)** Antes: setas pra passar pra foto anterior/seguinte da
+pasta dentro do visualizador (hoje precisa fechar e clicar noutra). O visualizador é compartilhado
+com o zoom das fotos do item, então isso mexeria nos dois.
+
+Teste: `tests/catalogo-biblioteca-browser.cjs` — o visualizador ocupa o viewport inteiro (mesmas
+dimensões da janela), mostra a foto clicada (1ª e 2ª, por teclado), fecha com Esc e com o ×;
+equipe abre a foto e o × de remover não abre nada. Cache-busting `?v=20260919-biblioteca-tela-toda`.
+
+## Bug real: o visualizador de zoom abria com a foto da vez anterior e depois "piscava"
+
+Reportado pelo usuário (depois de a Biblioteca passar a usar o visualizador): *"quando eu clico
+pra ampliar uma foto ele abre a última foto que ampliei, aí depois pisca e abre a foto que
+realmente é pra aparecer"*. Vale pro visualizador em geral (fotos do item também), não só pra
+Biblioteca — a Biblioteca só deixou óbvio porque o usuário abre várias fotos em sequência.
+
+**Causa raiz**: `#catalogPhotoZoomImage` é UM `<img>` só, reaproveitado. `openPhotoZoom()` trocava o
+`src` e chamava `showModal()` na hora; enquanto a versão nova (`IMG_WIDTH.zoom` = 3200px) não
+terminava de carregar, o navegador continuava DESENHANDO a imagem anterior — o diálogo abria
+mostrando a foto da última abertura e só depois trocava (o "piscar"). O CLAUDE.md dizia que a
+foto grande era "carregada só nesse clique" — verdade, mas ninguém tratou o intervalo entre o
+clique e a chegada dela.
+
+**Correção** (`openPhotoZoom(src, alt, previewSrc)`, `catalogo.mjs`), a cada abertura:
+1. o `<img>` é esvaziado (`removeAttribute("src")`) e escondido (`opacity:0` até `.is-ready`) —
+   nunca sobra a foto anterior; o `close` do diálogo também esvazia (`clearPhotoZoomImage()`);
+2. **a versão pequena que JÁ está na tela e em cache aparece na hora** (`previewSrc`: o
+   `currentSrc` da `<img>` clicada — a foto principal/ambientada do item, ou a miniatura da
+   Biblioteca), então o clique responde de imediato em vez de abrir preto esperando 3200px;
+3. a grande carrega por trás (`new Image().decode()`) e só então entra no lugar da pequena — se
+   falhar, fica a pequena. `photoZoomOpenId` invalida respostas atrasadas de uma abertura
+   anterior (clique rápido em duas fotos).
+
+**CSS**: `.catalog-photo-zoom-image` deixou de ser `max-width/max-height:92%` (que só encolhe:
+a pequena ficava no tamanho natural de 700px e a troca pra grande "pulava" de tamanho) e virou
+`width:92%;height:92%;object-fit:contain` — preview e grande ocupam exatamente a mesma caixa.
+Zoom/arrasto (`transform`) continuam iguais; `.is-dragging` só mantém a transição de opacidade.
+
+**Efeito colateral no teste**: como a pequena entra primeiro, a URL `width=3200` não está mais
+no `src` no instante em que o diálogo abre — os testes que liam `src` logo após abrir agora
+esperam a troca (`waitForFunction`).
+
+Teste (`tests/catalogo-zoom-foto-browser.cjs`): abre a principal, fecha (o `<img>` fica sem
+`src`), SEGURA a resposta da versão grande da ambientada (rede lenta) e um gravador anota a
+cada quadro `{src, is-ready, opacity}`: nenhum quadro mostra a foto anterior, a primeira coisa
+visível já é a foto certa (a pequena) antes de a grande chegar, e depois da troca a foto nunca
+volta a ficar invisível. **Armadilha do próprio teste**: o navegador guarda em cache a versão
+grande de qualquer foto já ampliada, e uma "grande retida" que já está em cache responde na
+hora e não testa nada — o bloco precisa rodar ANTES de a ambientada ser ampliada pela 1ª vez.
+Confirmado que pega: com o esvaziamento e o preview desligados falha em "Fechar esvazia o
+<img>". Cache-busting `?v=20260919-zoom-sem-piscar`.
+
+## Visualizador de fotos: passar de uma foto pra outra sem fechar (galeria)
+
+Pedido do usuário, logo depois do visualizador em tela cheia da Biblioteca: *"quero poder trocar
+as fotos pelo preview"*. Interpretado como **navegar** entre as fotos dentro do próprio
+visualizador (era a opção que ficou registrada como "não implementado" em "Biblioteca: clicar
+na foto abre em tela toda"). **Não** foi interpretado como trocar/substituir o arquivo da foto —
+se era isso, é outro pedido (edição de foto a partir do visualizador).
+
+**Como funciona**: `openPhotoZoom(src, alt, previewSrc, gallery)` ganhou um 4º parâmetro,
+`gallery = { items: [{ src, alt, preview }], index }` (`src` sempre a URL crua). Com 2+ itens
+aparecem as setas `‹ ›` (`#catalogPhotoZoomPrev/Next`, nas laterais, no meio) e o contador
+`2 / 8` (`#catalogPhotoZoomCounter`, topo, centralizado); com 1 foto ou sem `gallery`, o
+visualizador é idêntico ao de antes (setas `hidden`). Passar de foto: as setas, **← →** do
+teclado, e **arrastar pro lado** (≥90px, predominantemente horizontal) — o gesto do celular. O
+arrasto só troca de foto **sem zoom** (`scale===1`); com zoom, arrastar continua sendo mover a
+foto. Depois da última volta pra primeira (e vice-versa). A foto nova sempre abre centralizada
+(reset do transform) e reaproveita todo o fluxo de `showPhotoZoomPhoto()` — esvazia o `<img>`,
+mostra o preview, troca pela grande decodificada — então o bug do "abre a foto anterior e pisca"
+(seção acima) não volta ao navegar. As duas vizinhas têm o preview pré-carregado
+(`preloadPhotoZoomNeighbors()`, só a versão pequena — não baixa 3200px de fotos que talvez
+ninguém abra). `close` do diálogo zera a galeria.
+
+**Quem passa galeria**:
+- **Biblioteca** (`catalogo-biblioteca.mjs`, `openPhoto`): todas as fotos da pasta, na ordem da
+  grade, cada uma com a miniatura já carregada na grade como preview.
+- **Foto principal do item** (`zoomGalleryForMainImage()`): os slides do carrossel com foto de
+  verdade — principal + Detalhe 1/2 (`mainSlides(item)`); o slot VAZIO que a equipe vê como "+"
+  nunca entra (contador de 2, não 3). Começa no slot ativo (`data-active-slot`).
+- **Ambientada do item** (`zoomGalleryForEventImage()`): as ambientadas cadastradas, começando
+  na que está na tela (`data-event-index`).
+Em ambos os casos a foto CLICADA entra com a URL/alt/preview que estão de fato na tela (pode ser
+a foto personalizada com tecido, que não é `item.photo`), e a lista do resto vem do item.
+Decorador com item de uma foto só (sem Detalhes, 1 ambientada) não vê seta nenhuma.
+
+**Layout**: com galeria o diálogo ganha `.has-gallery`, que desce o bloco de zoom (+/−/redefinir)
+do meio da direita pro canto inferior direito (no celular sobe um pouco, `bottom:64px`, pra não
+bater no texto de dica) — o meio da direita é da seta "próxima". Sem galeria o bloco fica onde
+sempre esteve. Contador em `top:8px` (a 24px encostava na borda de cima da foto no desktop).
+
+Testes: `tests/catalogo-biblioteca-browser.cjs` (pasta com 2 fotos: setas visíveis, contador 1/2 →
+2/2, a próxima da última volta pra primeira, ← → do teclado, arrastar pra esquerda troca sem zoom
+e NÃO troca com zoom, foto nova abre centralizada, fechado esconde as setas; pasta com 1 foto: sem
+setas/contador) e `tests/catalogo-zoom-foto-browser.cjs` (item da equipe com principal + Detalhe 1
++ Detalhe 2 vazio: contador 1/2, próxima mostra o Detalhe 1, ← volta; decorador com foto única:
+sem setas). Cache-busting `?v=20260919-zoom-galeria`.
+
+## Tela do item: círculos de cor EMBAIXO do nome + medidas dentro das specs
+
+Pedido do usuário, com print de uma poltrona com 4 cores ("Poltrona Águines Campo"): *"coloque os
+ícones das cores em baixo do nome do item, coloque as medidas junto com categoria, material..."*.
+**Supera** "Nome do item + círculos de cor no mesmo bloco (bleed sobre a foto de propósito)" — o
+`flex-wrap:nowrap` / nome+círculos vazando lado a lado por cima da foto, o `flex-shrink:0` e a
+exceção do celular descritos lá não existem mais.
+
+**Círculos**: `.product-title-row` virou coluna (`flex-direction:column;align-items:flex-start;
+row-gap:16px`) — nome em cima (continua `white-space:nowrap`, ainda pode vazar por cima da foto se for
+comprido), círculos logo abaixo, alinhados à esquerda com o nome. O HTML não mudou (os círculos já
+moravam dentro de `.product-title-row`). A fileira (`.product-variants-row`) quebra dentro da coluna
+no celular (`max-width:100%`); no desktop (≥768px) tem `width:max-content;max-width:440px` — a
+coluna de texto tem só 30% da largura e com 4 cores quebrava em 3 + 1 órfão; agora até 6 círculos
+cabem numa linha, passando um pouco por cima da margem da foto (o `max-width` sozinho não bastava:
+num flex em coluna o item nunca passa da largura disponível, foi preciso `width:max-content`).
+
+**Medidas**: a linha solta `<p class="product-dimensions">` (letras bem espaçadas, abaixo do nome) foi
+apagada — HTML e CSS. `mapRow()` ganhou `{ label: "Medidas", value: formatDims(...) }` em `item.specs`,
+entre "Marca/Modelo" e "Código" (ordem: Categoria, Família, Material, Cor, Estilo, Marca/Modelo,
+Medidas, Código; campo vazio some, como os outros — item sem nenhuma dimensão não mostra a linha).
+`item.dims` continua existindo e sendo usado pela grade e pelo mosaico (cards mostram as medidas).
+Como `applyVariant()` refaz o painel a partir de `item.specs`, a linha acompanha a troca de cor.
+
+**Grade em vez de flex nas specs**: com a linha "Medidas" o valor "67 × 95 × 57 cm" quebrava em duas
+linhas na coluna estreita, porque o rótulo tinha 112px FIXOS (folga pra "MARCA/MODELO", o maior).
+`.product-specs` virou `display:grid; grid-template-columns:max-content minmax(0,1fr)` com
+`.product-specs-row{display:contents}`: a coluna de rótulos tem a largura do MAIOR rótulo presente
+naquele item — sem "Marca/Modelo" ganha ~30px pros valores. Não sobrou nenhum `flex` em dt/dd.
+
+Teste (`tests/catalogo-titulo-cores-browser.cjs`): círculos abaixo do nome (folga 0–40px), alinhados à
+esquerda e numa linha só; nenhum `.product-dimensions` na tela; rótulos das specs começam por
+Categoria, Material, Cor, Medidas; valor `67 × 95 × 57 cm` e altura do `<dd>` < 24px (uma linha).
+Cache-busting `?v=20260919-cores-embaixo`.
+
+## Filtros na tela "Categorias" (Material, Estilo, Personalizáveis) — resultados agrupados por categoria
+
+Pedido do usuário: *"quero colocar alguns filtros dentro do módulo de categorias, exemplos de
+filtro... Material, Estilo e customizáveis, quando fizermos isso aparece todos os itens com esse
+filtro e separados por categoria, então imagina que aparece aparadores, aí em baixo os móveis, aí
+depois armários e por aí vai"*. "Módulo de categorias" = a tela "Categorias" (`HOME_VIEW`, a grade
+de cards de categoria) — não os filtros de subcategoria de DENTRO de uma categoria (esses continuam
+como estavam). "Customizáveis" = `item.personalizable` (o "Sob medida"/"Experimente outro tecido").
+
+**Sem filtro** a tela é a grade de categorias de sempre. **Com algum filtro ativo** os cards de
+categoria dão lugar aos ITENS que passam por todos os filtros, agrupados por categoria: um título
+serifado por categoria (`.catalog-filter-group-title`, com a contagem) e os cards do item embaixo
+(os mesmos da grade de uma categoria — `gridCardMarkup(item)`, extraído de `renderGridMarkup()`).
+Ordem das categorias = a de `getCategories()` (a do banco, alfabética). Categoria sem item filtrado não
+aparece.
+
+**Regras**: dentro de UM filtro os valores marcados se somam (Madeira OU Ferro); entre filtros
+diferentes todos precisam bater (Madeira E personalizável). A contagem ao lado de cada opção respeita
+os OUTROS filtros já ativos ("quanto resultaria se eu marcasse esta") e uma opção que zeraria o resultado
+fica apagada/desabilitada (por isso não dá pra chegar em "nenhum item" marcando uma opção apagada —
+só combinando de outra ordem, ex.: Vidro primeiro e Personalizáveis depois; aí aparece "Nenhum item com
+esses filtros" + atalho "Limpar filtros"). Valores são comparados por `filterKey()` (sem acento/caixa/espaço
+duplo): "MADEIRA" e "Madeira" contam juntos; o rótulo mostrado é a grafia mais frequente. Item que é um
+GRUPO de variantes (a mesma poltrona em 5 cores, ver `agruparVariantes()`) conta UMA vez e casa se
+qualquer variante casar (material é igual no grupo — faz parte da chave —, estilo pode variar).
+
+**Quais filtros aparecem** (`HOME_FILTER_FIELDS` + o liga/desliga de Personalizáveis): um filtro sem
+nenhuma opção nos itens carregados NÃO vira botão. **Hoje nenhum item do banco tem Estilo cadastrado**
+(594 vazios + 5 nulos — conferido direto no banco), então só Material e Personalizáveis aparecem; Estilo
+entra sozinho quando houver dado (mesma coisa vale pra Personalizáveis se nenhum item for
+personalizável). Material tem ~27 valores reais, alguns com erro de digitação que são valores DIFERENTES
+pro filtro ("Estofado Tecido", "Estofada Tecido", "Estodado Tecido", "EstofadoTecido") — o filtro não
+adivinha typo; limpar isso é no cadastro/na importação. `item.estilo` passou a existir em `mapRow()`
+(antes só estava dentro de `specs`); o banco já devolvia `material`, `estilo` e `personalizable` nas
+duas RPCs (`catalogo_acervo()` é única) — nenhuma migration.
+
+**UI** (`catalogo.css`, logo abaixo das pílulas de subcategoria — mesma linguagem: contorno claro, ativo
+preenchido na cor terrosa): Material/Estilo são botões que abrem um painel com caixinhas (têm dezenas
+de valores, não cabem como pílulas); Personalizáveis é um liga/desliga direto (`aria-pressed`) com a
+contagem. O botão mostra quantos valores estão marcados; "Limpar filtros" e um resumo ("5 itens em 4
+categorias", `aria-live`) aparecem só com filtro ativo. **`refreshHomeFilters()` redesenha só o que
+depende dos filtros** (resultados, contagens, caixinhas marcadas) sem recriar a barra — o painel
+continua aberto e o foco fica na caixinha, então dá pra marcar vários valores seguidos. Fecha com Esc
+(o foco volta pro botão) e clicando fora (dois listeners em `document`, registrados uma vez em
+`bindInteractions()`). No celular o painel ocupa a largura da barra (`.catalog-filter{position:static}`),
+senão o da 2ª pílula estourava a tela.
+
+**Abrir um item dos resultados = tela nova `FILTER_VIEW`** ("Resultados" no cabeçalho/linha do tempo):
+`applyView(FILTER_VIEW, { focusItemId })` mostra a visualização imersiva SÓ dos itens filtrados (rolar
+pro próximo continua nos filtrados, na ordem das categorias) e já cai no item clicado. A primeira ideia
+era `openImmersiveFromGrid()` (imersiva com `activeView` ainda em `HOME_VIEW`), descartada: sem
+navegação nova o cabeçalho continuava dizendo "Categorias" e não sobrava um jeito de voltar. Com
+`FILTER_VIEW` a linha do tempo fica Home › Categorias › Resultados e clicar em "Categorias" volta pra
+grade filtrada. `FILTER_VIEW` esconde o seletor de visualização (grade/imersiva/mosaico não fazem
+sentido ali); se for restaurada pela linha do tempo depois de os filtros terem sido limpos, cai de
+volta em `HOME_VIEW`. `applyView()` ganhou o 2º parâmetro `options` (`focusItemId`).
+
+**Estado**: `state.homeFilters = { material: Set, estilo: Set, personalizable }` (Sets de `filterKey`),
+`state.homeFilterOpen`. Persiste enquanto a pessoa navega entre as telas de dentro do catálogo (abrir
+um item e voltar mantém o filtro) e **zera ao voltar pro Portal** (`applyView(GATEWAY_VIEW)`). A busca
+do cabeçalho continua varrendo tudo e ignora os filtros.
+
+**Desempenho** (610 itens sintéticos, 407 filtrados): marcar um valor redesenha em ~250ms; abrir um
+item na imersiva de 407 seções, ~420ms (as fotos são `loading="lazy"`). Se o catálogo crescer muito e
+isso pesar, o ponto a limitar é `FILTER_VIEW` (renderizar só uma janela de seções), não o filtro.
+
+Teste: `tests/catalogo-filtros-browser.cjs` — barra com Material e Personalizáveis e SEM Estilo quando
+nenhum item tem estilo; opções em ordem alfabética com contagem (grafias juntas); grupos por categoria
+com título e contagem; painel continua aberto entre marcações; OU dentro do filtro, E entre filtros;
+contagem contextual e opção apagada; Esc e clique fora fecham; abrir um item mostra só os filtrados
+("Resultados", item clicado no topo) e voltar mantém os filtros; sem resultado tem mensagem + limpar; o
+Portal zera; com estilo cadastrado o filtro aparece e variantes contam como um item; celular sem
+overflow e com o painel dentro da tela. Cache-busting `?v=20260919-filtros`.
+
+## Bug real: sombra retangular em volta da foto principal do item
+
+Reportado pelo usuário, com print da tela de um item (a poltrona/sofá de listras verdes): *"verifique
+se tem sombras por trás da foto do item principal que causa dessa marcação em volta"*.
+
+**Tinha.** `.product-main-image` levava `filter:drop-shadow(0 16px 12px rgba(50,38,28,.07))`. O
+`drop-shadow` desenha a sombra do FORMATO da imagem: numa PNG recortada (sem fundo) isso vira uma
+sombra de chão bonita, mas as fotos do catálogo são **opacas** (fundo de estúdio) — o formato é um
+retângulo, então saía uma sombra retangular: uma faixa mais escura logo abaixo da foto e um halo
+de ~12px nas laterais/em cima quando a foto é mais estreita que o quadro (o `overflow:hidden` de
+`.product-main-media` só corta na borda da CAIXA, não da foto). Medido em pixels do que o navegador
+desenha (foto com fundo `#fbfbfb`): 4px abaixo da foto `rgb(243,242,242)`, 12px `rgb(246,246,245)`,
+24px `rgb(252,252,251)`, contra `rgb(255,255,255)` da página. Era a "reflexão"/degradê que aparecia
+embaixo da foto em vários prints de teste desta sessão.
+
+**Corrigido**: o `filter` foi removido da regra (`catalogo.css`). Sem `filter`, o entorno da foto é o
+branco puro da página (mesmas medidas, agora `rgb(255,255,255)` nos 4 pontos). É o único
+`drop-shadow` do catálogo em foto de item (o do `.catalog-biblioteca-folder-peek-frame`, do ícone de
+pasta da Biblioteca, é intencional e é de um `<image>` SVG, não de foto). Não existe pseudo-elemento
+(`::before/::after`) nem `box-shadow` atrás da foto.
+
+**O que NÃO é sombra e continua**: o retângulo levemente cinza da PRÓPRIA foto — as fotos de estúdio
+têm fundo `#fbfbfb`/`#fafafa`, não branco puro (medido: `rgb(251,251,251)` dentro da foto contra
+`rgb(255,255,255)` na página), então o contorno da foto ainda é perceptível em monitor bom. É o pixel
+do arquivo. Opções, se incomodar (nenhuma aplicada — a máscara de esmaecer a borda já foi tentada e
+recusada, ver "Esmaecer a borda das fotos contra o branco"): re-exportar as fotos com fundo branco
+puro (a solução de verdade), ou um `filter:brightness(1.02)` na foto que empurra o quase-branco pra
+branco (altera levemente a cor do móvel).
+
+Teste: `tests/catalogo-foto-sem-sombra-browser.cjs` — `filter` computado da foto principal é `none`
+e, em screenshot, 4 distâncias (2/6/12/20px) em volta da foto (embaixo, em cima, esquerda, direita)
+são branco puro, com foto larga (sobra espaço em cima/embaixo) e com foto alta e estreita (sobra
+nas laterais). Confirmado que pega: com o `drop-shadow` de volta, falha. Cache-busting
+`?v=20260919-foto-sem-sombra`.
+
+## Foto ambientada: setas (anterior/próxima) + pausar a troca automática
+
+Pedido do usuário, com print de um sofá ("Sofá Berlim") ao lado da foto ambientada: *"na foto do
+item ambientado eu quero que tenha uma seta de avançar ou voltar e um pause também, bem discreto,
+pra parar de alterar"*.
+
+**O que já existia**: a foto ambientada (`.product-event-panel`, coluna da direita) troca sozinha a
+cada 10s entre as ambientadas do item (`startEventRotation()` → `rotateActiveEvent()`, só a seção que
+está na tela, fundido de 900ms). Não havia jeito de passar na mão nem de parar.
+
+**Agora** (só com 2+ ambientadas — com uma só não há o que trocar; vale pra decorador e equipe):
+- **Setas** `‹ ›` nas laterais, no meio do painel (`.catalog-event-nav`), 32px.
+- **Pausar/retomar** no canto inferior direito (`.catalog-event-pause`, 26px): pausa a troca
+  automática; o ícone vira "tocar" e o `aria-label` "Retomar a troca automática das fotos".
+- **Discretos de propósito**: círculos de vidro escuro (`rgba(20,17,14,.34)` + blur) com ícone
+  branco fino, opacidade .5 em repouso, .75 com o mouse no painel, 1 no próprio botão. `z-index:6`
+  (acima do escurecer/"INSPIRE-SE" do hover do painel e dos pontinhos de edição da equipe, que são
+  5 — os pontinhos ficam embaixo no centro, o pausar embaixo à direita: não se sobrepõem).
+
+**`rotateActiveEvent()` foi quebrada em duas**: `stepEvent(section, direction, {manual})` faz a troca
+(mesmo fundido de sempre; `direction` ±1, com volta ao redor: anterior do 1º = último) e
+`rotateActiveEvent()` só decide SE troca (não pausado, aba visível, há seção ativa) e chama
+`stepEvent(section, 1)`. Um clique manual durante uma troca em andamento (900ms) não se perde:
+guarda o último em `panel._pendingEventStep` e roda quando a troca termina — clicar "próxima" duas
+vezes seguidas avança duas fotos. A foto atual é achada por
+`.product-event-image:not(.product-event-image-next)` (a "próxima" fica no DOM durante a troca).
+
+**Pausar vale pra TODOS os itens** enquanto a página está aberta (`state.eventPaused`, só em
+memória — recarregar volta ao automático): o relógio de 10s é global e só rotaciona a seção da
+tela, então uma pausa por item não faria sentido (rolar pro item seguinte voltaria a trocar).
+`syncEventPauseButtons()` atualiza todos os botões que estão no DOM; painéis re-renderizados
+(`eventPanelMarkup()`, ex.: trocar de cor) já nascem com o estado certo. As setas continuam
+funcionando pausado (e passar na mão NÃO retoma). Clicar numa seta reinicia o relógio de 10s
+(`startEventRotation()`), pra troca automática não disparar logo em seguida; retomar também reinicia.
+Não mexe em `prefers-reduced-motion` (a troca automática continua ligada por padrão — se quiserem
+que ela já comece pausada pra quem pediu menos movimento, é `state.eventPaused` inicial).
+
+Os botões são irmãos da foto (`eventPanelMarkup()` devolve foto + controles + pontinhos), então
+clicar neles nunca alcança o zoom (`closest(".product-event-image")`) nem a edição inline.
+
+Teste: `tests/catalogo-ambientada-controles-browser.cjs` — o teste captura o
+`setInterval(…, 10000)` da página (`window.__ticks`) pra "dar o tick" sem esperar 10s de verdade:
+setas e pausar existem, pequenos (≤36px / ≤30px) e apagados (opacidade ≤.6); próxima/anterior e volta
+ao redor; dois cliques rápidos avançam duas fotos; clicar numa seta recria o relógio; o tick troca
+quando rodando, NÃO troca pausado, passar na mão pausado não retoma, o outro item já nasce pausado;
+retomar volta ao normal; item com uma ambientada não tem controles; equipe: convive com os 3
+pontinhos sem sobreposição e clicar na seta não abre a edição; celular sem overflow. Cache-busting
+`?v=20260919-ambientada-setas`.
+
+## Setas do carrossel da foto principal: sempre aparentes (não só no hover)
+
+**Superado** pela seção "Setas do carrossel principal: só no hover, em preto como o escurecer da Home" (mais abaixo): o círculo branco sempre visível foi trocado por preto a 50% que só aparece no hover. O trecho sobre o teste intermitente do zoom continua valendo.
+
+Pedido do usuário: *"no item principal tem duas setas, eu quero que essas setas fiquem mais
+aparentes... ali dentro da foto do item fica nessa cor mais escura direto, pra pessoa saber que tem
+mais fotos"* — as setas `‹ ›` do carrossel principal (principal + Detalhes, `.product-main-nav`,
+ver "Detalhes + Modelo 3D do item viraram slides") só ficavam nítidas com o mouse em cima.
+
+**Antes**: em repouso `opacity:.55`, cinza claro (`var(--muted)`) num círculo branco 55% — sobre o
+fundo quase branco da foto praticamente sumia ("seta esmaecida premium", o pedido original da
+seção do carrossel). No hover virava opaca, fundo branco e cor terrosa. **Agora o estado de repouso
+já é o firme**: `opacity:1`, círculo branco 92% com contorno fino (`rgba(61,54,48,.2)`) e sombra suave
+(o contorno/sombra é o que destaca o círculo do fundo branco da foto), seta escura `#3d3630`, traço
+mais grosso (`stroke-width:2`, 18px). O hover só troca a cor pra terrosa (`var(--accent)`, contorno
+também) e reforça a sombra — continua dando retorno ao mouse. Os pontinhos de posição
+(`.product-main-dot`) também ficaram um pouco mais firmes (7px, `rgba(61,54,48,.28)` em vez de
+`var(--line)`, que quase não aparecia) pelo mesmo motivo. Só aparecem com 2+ fotos, como antes.
+
+Ao contrário das setas da foto ambientada (essas são "bem discretas", pedido oposto — ver
+"Foto ambientada: setas...").
+
+Teste (`tests/catalogo-editor-fotos-browser.cjs`, junto da checagem de que as setas existem): a seta
+em repouso tem opacidade 1, cor escura (canais < 110) e contorno de 1px.
+
+**Teste que ficava intermitente (1 em ~5 execuções), corrigido de passagem**:
+`tests/catalogo-zoom-foto-browser.cjs` conferia que fechar o visualizador esvazia o `<img>` logo
+depois de `open` virar `false`, mas o evento `close` do `<dialog>` que faz o esvaziamento dispara
+numa tarefa DEPOIS — corrida do teste, não do produto (o intervalo é invisível). Agora espera o
+`src` sumir antes de afirmar. Cache-busting `?v=20260919-setas-visiveis`.
+
+## Setas do carrossel principal: só no hover, em preto como o escurecer da Home
+
+Pedido do usuário, olhando um print do Portal com o bloco "Biblioteca" escurecido no hover: *"só quero
+que apareça as setas quando eu passar o mouse por cima, outra coisa, não quero ela branca, quero com esse
+efeito igual da home"*. **Supera** "Setas do carrossel da foto principal: sempre aparentes" (a versão de
+uma mensagem antes: círculo branco sempre visível) — vale a versão desta seção.
+
+**Comportamento** (`.product-main-nav`, `catalogo.css`): escondidas em repouso (`opacity:0`); aparecem
+quando o mouse está em cima da FOTO (`.product-main-media:hover`) ou com o foco do teclado dentro dela
+(`:focus-within`, e a própria seta com `:focus-visible`) — sem isso não dá pra trocar de foto só com o
+teclado. **"O efeito da home"** = o escurecer dos blocos do Portal (`.catalog-gateway-zone::before`:
+`#000` a `.22` → `.5` no hover, transição de 1s em `cubic-bezier(.22,1,.36,1)`): o círculo da seta é o
+mesmo preto a 50% (`rgba(0,0,0,.5)`) com a seta branca (1.8 de traço), e entra/sai com a mesma curva
+(`opacity .5s`); com o mouse EM CIMA da seta o círculo escurece (`.72`), o mesmo tipo de reforço do
+hover da Home. Não é branco em nenhum estado. **Os pontinhos de posição continuam sempre visíveis**
+(ficaram um pouco mais firmes na versão anterior): sem mouse, são eles que avisam que há mais fotos.
+
+**Tela de toque**: `@media(hover:none){.product-main-nav{opacity:1}}` — sem "passar o mouse" as
+setas ficariam invisíveis pra sempre e não haveria como trocar de foto (só deslizar não existe nesse
+carrossel). Verificado que o Edge com `isMobile:true,hasTouch:true` casa `(hover:none)`.
+`prefers-reduced-motion` desliga a transição.
+
+**As setas da foto AMBIENTADA (painel da direita) NÃO mudaram** — continuam discretas e sempre
+presentes (`opacity:.5`, `.75` com o mouse no painel), pedido de outra mensagem ("bem discreto"). Se o
+usuário quiser o mesmo comportamento delas (só no hover), é o mesmo ajuste em
+`.catalog-event-nav`/`.catalog-event-pause`.
+
+Testes: `tests/catalogo-carrossel-setas-browser.cjs` (novo — desktop: escondidas com o mouse fora,
+aparecem com o mouse na foto em `rgba(0,0,0,.5)` com seta branca, `.72` com o mouse na seta, clicar
+troca de foto, foco do teclado mostra a seta, pontinhos sempre visíveis; toque: sempre visíveis) e o
+bloco equivalente em `tests/catalogo-editor-fotos-browser.cjs` (acesso da equipe). Cache-busting
+`?v=20260919-setas-hover`.
+
+## Portal (Home): foto natural em repouso — o véu preto de .22 saiu
+
+Pedido/pergunta do usuário: *"a foto da home eu acho que ela não está natural, tem algum efeito nela"*.
+
+**Tinha um efeito, e só um**: `.catalog-gateway-zone::before` (o escurecer dos 3 blocos, "igual ao da home" que o
+usuário pediu pra reaproveitar em outras telas) ficava em `opacity:.22` de preto **o tempo todo** — desde o
+Portal de 3 fotos, mantido "pro texto branco não sumir" — e subia pra `.5` no hover. Medido em pixels do que o
+navegador desenha, com a foto real do Portal (`empresas/…/_capas/portal.jpg`, JPEG do Lightroom 1600×1067,
+baixada do Storage): **luminância média 151 → 118 (−22%)** e realces (percentil 95) **225 → 176**, ou seja,
+a foto ficava fosca/acinzentada. Nada mais mexe nela: `.catalog-gateway-photo` não tem `filter`,
+`mix-blend-mode` nem `opacity` (conferido por `getComputedStyle`); o Storage serve a foto em WebP q82 na
+largura da própria foto (1600px, sem ampliar — 716KB → 140KB, perda invisível). Só `object-fit:cover`
+recorta pra preencher a tela (o enquadramento pode ser ajustado pelo botão "Ajustar foto").
+
+**Corrigido**: o véu de repouso é `opacity:0`; o hover continua `0 → .5` com a mesma transição de 1s (o efeito
+que o usuário gosta e pediu em outras telas continua). Em repouso a foto renderizada é idêntica ao arquivo
+(luminância 150,8 nas duas medições). Como o véu era o que garantia a leitura do texto branco, o
+`text-shadow` de `.catalog-gateway-title` ficou mais forte
+(`0 1px 3px .55, 0 2px 18px .6, 0 0 44px .45` em vez de `0 3px 22px .4`) — escurece só em volta das letras, não a
+foto inteira. Sobre paredes brancas/céu claro o título fica legível, mas com menos folga que antes; se algum
+dia a foto do Portal for muito clara e o texto sumir, o caminho é reforçar o sombreado do título (ou
+um degradê pequeno atrás dele), **não** voltar o véu global.
+
+Não mexido: o mini-menu do Módulo 3D tem um véu parecido (`.catalog-modulo3d-tile-stage::before`, `.08`
+em repouso, calibrado numa rodada própria) — outra tela, sem reclamação.
+
+Teste (`tests/catalogo-portal-browser.cjs`): véu computado `0` nos 3 blocos com o mouse fora; a foto sem
+`filter`/blend/opacidade (`none|normal|1`); no hover o bloco vai a `.5` e os outros ficam em `0`.
+Cache-busting `?v=20260919-portal-natural`.
+
+## Projetos: montar o projeto de um evento dentro do catálogo (4º destino do Portal)
+
+Pedido do usuário: *"a ideia é que a pessoa possa montar um pedido de dentro do catálogo, pra que no final ela tenha um
+projeto pra apresentar pro cliente, com os itens que ela selecionou e com as renderizações em 3D... quero que seja fácil
+de usar, prático, porque a maior dor do cliente é o tempo... o projeto venha dividido por ambiente, esses ambientes o
+decorador vai escolher (cerimônia, mesa de convidados, bar, lounge, bistrôs...), com o nome que ela quiser... no final
+quero um projeto em arquivo e landing page bonito e apresentável pro cliente; na criação são obrigatórios data do
+evento, nome dos noivos e local"*. Decisões confirmadas com o usuário (AskUserQuestion): **valores sempre escondidos**
+(nada de preço na apresentação — o catálogo também nunca teve preço), **enviar pedido já na 1ª versão**, **link +
+senha/PIN** pra apresentação.
+
+**O que existe (v1)**
+- **Portal**: 4º bloco "Projetos" (`GATEWAY_TILES` em `catalogo.mjs`; as zonas são `flex:1`, então virou 4 colunas sem CSS
+  novo). Abre o overlay `#catalogProjetos` (`setActiveOverlay("projetos")`, rótulo/linha do tempo "Projetos",
+  `restoreNavScreen` cobre o overlay).
+- **Lista de projetos** (`catalogo-projetos.mjs`): card por evento com data grande, noivos, local, contagens,
+  contagem regressiva ("Faltam 233 dias"), status e "Link ativo". Eventos já realizados vão pra uma seção abaixo. Equipe vê
+  os projetos de TODOS os decoradores (com "Decorador: X"/"Criado pela equipe") e um filtro "Pedidos recebidos".
+- **Criar projeto**: noivos, data e local obrigatórios (validados no diálogo E no servidor). Ambientes: chips de sugestão
+  (Cerimônia, Mesa de convidados, Bar, Lounge, Bistrôs, Recepção, Pista de dança) **nenhum pré-marcado** de propósito (o
+  decorador escolhe; a estrutura não nasce sozinha) + campo "Outro ambiente…" com nome livre.
+- **Espaço de trabalho**: abas de ambiente (criar/renomear/excluir), móveis com quantidade (−/+/digitar/remover),
+  renderizações do ambiente, observações do ambiente (entram na apresentação). Autosave (debounce 800ms) — ver
+  "Autosave" abaixo. Editar dados do evento.
+- **Adicionar móveis em 1 toque**: "＋" no canto da foto de cada card da grade e do mosaico (`.cpj-add-chip`, aparece no
+  hover/foco; sempre visível em toque e quando o item já está no projeto, com a quantidade) e botão "Adicionar ao
+  projeto" na página imersiva do item (`.cpj-add-page`, no fim de `.product-copy` — **de propósito depois do card de
+  personalização e dos toggles de capa**: `applyVariant()` insere as specs "antes" desses dois, colocar o botão entre
+  eles inverteria a ordem ao trocar de cor). O clique é capturado no `document` (fase de captura) e faz
+  `stopPropagation`, então NÃO abre o item da grade. Toast "Adicionado ao projeto" com "Desfazer".
+- **Dock** (`#catalogProjetoDock`, pílula fixa embaixo à ESQUERDA — as notificações moram embaixo à direita): mostra
+  "Projeto · Ana & Bruno" (abre o projeto) e "Ambiente · Bar ▾ [total]" (popover pra trocar de ambiente, criar outro ou
+  trocar de projeto). Só aparece na navegação do catálogo (categorias/itens/Módulo 3D), nunca no Portal nem dentro de um
+  overlay. O projeto/ambiente ativo é lembrado por navegador (`localStorage catalogo_projeto_ativo:<empresa>:<cliente>`).
+  Sem projeto ativo, o "＋" pergunta (escolher projeto+ambiente ou criar).
+- **Renderizações**: botão "Salvar no projeto" nos 3 diálogos de resultado de IA (`#loungeResultDialog` Composições,
+  `#studioResultDialog` 3D Livre, `#catalogFabricResultDialog` tecido) — `data-projeto-save-render data-img data-origem`,
+  tratados por delegação em `catalogo-projetos.mjs` (os módulos Lounge/Studio3D não foram tocados). Sempre mostra o
+  diálogo de destino (o ambiente importa: render de Lounge vai pro "Lounge"). A imagem vira JPEG (máx. 2400px, q .88),
+  sobe pro bucket `projetos` em `<empresa>/<projeto>/renders/<uuid>.jpg` e entra em `ambiente.renders`.
+- **Compartilhar**: link `projeto.html?p=<slug>` (relativo à pasta do catálogo — funciona no subcaminho do GitHub Pages)
+  + senha de 6 números gerada no cliente (editável). **O PIN só existe em texto na hora de criar** (o banco guarda bcrypt):
+  fica na memória da página (`S.pins`) enquanto a aba existir; depois só dá pra "gerar nova senha". "Copiar mensagem pro
+  cliente" monta o texto pro WhatsApp; "Abrir apresentação" abre com `#pin=` no fragmento (nunca vai pro servidor e é
+  apagado do endereço na hora).
+- **Enviar pedido à Chiavari**: resumo por ambiente + observação → `projeto_enviar_pedido` guarda uma FOTOGRAFIA
+  (`pedido_snapshot`: ambiente → item/quantidade/nome/referência), marca `pedido_enviado` e mostra um banner. Editar depois
+  mostra "O projeto foi alterado depois do envio" (compara a assinatura do projeto atual com a do snapshot — não usa
+  `updated_at`, que muda também quando a equipe muda o status) e o botão vira "Reenviar pedido". Equipe vê o snapshot ("Ver
+  o que foi enviado") e troca o status (Pedido enviado → Em análise → Convertido em pedido).
+  **Isto NÃO cria pedido no ERP** (`separacoes_pedidos`/`separacoes_itens`): elas reservam estoque, e uma solicitação de fora
+  ainda não foi analisada. "Convertido" é só o status; virar pedido de verdade é um passo manual/futuro.
+
+**Apresentação pública** (`projeto.html` + `projeto.css` + `projeto.mjs`, sem dependência do `catalogo.mjs`): tela de
+senha (6 dígitos, envia sozinha ao completar) → capa (foto = 1ª renderização, senão fundo creme; noivos grandes, data por
+extenso, local; logo do decorador ou da empresa) → barra fixa com os ambientes + "Baixar PDF" → um bloco por ambiente
+(número, nome, observações, renderizações em grade/destaque com visualizador, móveis com foto, medidas em cm, material/cor e
+`× quantidade`) → rodapé com contato do decorador. Ambientes sem itens/renders/notas não aparecem. Cores do decorador
+(`cor_primaria/secundaria`, só se forem hex válidos) entram por `--pj-ink/--pj-accent`. **Nunca mostra preço** (o teste
+varre o texto por "R$/valor/preço/locação"). `noindex`.
+**PDF = impressão do navegador** com um `@media print` próprio (capa numa página, cada ambiente em página nova, peças e
+fotos sem corte, navegação escondida) — não há biblioteca de PDF no projeto. "Baixar PDF" antes carrega todas as imagens
+lazy, senão sairiam em branco. Verificado: `page.pdf()` gera 5 páginas pro caso de teste.
+
+**Banco** (`supabase/migrations/20260920000100_projetos.sql`, aplicada com `db push --linked`): tabela `projetos`
+(noivos/data/local `NOT NULL` com checagem de vazio; `dados jsonb` = `{ambientes:[{id,nome,itens:[{item_id,quantidade}],
+renders:[{id,url,path,origem,criado_em}],notas}]}`; status `rascunho|pedido_enviado|em_analise|convertido`; `slug` único,
+`pin_hash`, `pin_tentativas`, `pin_bloqueado_ate`, `compartilhar`, `pedido_snapshot`). RLS só pra equipe da empresa; o
+**decorador não tem `auth.uid()`**, então TODO acesso passa por RPCs `security definer` (`projeto_listar/obter/criar/
+salvar/excluir/compartilhar/enviar_pedido`, `projeto_atualizar_status` só equipe, `projeto_publico` anônima) que resolvem o
+chamador em `projeto_ctx(p_token, p_empresa_id)`: token do catálogo (via `catalogo_validar_sessao`) → só os PRÓPRIOS projetos
+(`cliente_id`); sem token → exige login da equipe (`funcionario_pode ... comercial.catalogo.visualizar`), vê a empresa
+toda. `projeto_publico`: 5 senhas erradas bloqueiam o link por 15 minutos; devolve nome/foto/medidas/material/cor dos itens,
+o decorador e a empresa — **nenhuma coluna de preço**. Bucket `projetos` (público pra leitura, 10MB, jpeg/png/webp):
+upload/remoção só em `<empresa>/<projeto>/…` de um projeto que existe (`projeto_existe`).
+**Verificado contra o banco/Storage reais, tudo desfeito depois**: bloco SQL numa transação que termina em `raise
+exception` (só assim dá pra ler o resultado com `db query -f` e ainda fazer rollback) cobrindo campos obrigatórios, PIN
+inválido, bloqueio por 5 erros, link desligado, "anon não executa as funções internas"; e um teste com **dois
+decoradores** (2º criado temporariamente): o segundo não lista/lê/salva/exclui/compartilha o projeto do primeiro, token
+inválido e "sem token e sem login" falham, projeto criado pela equipe não aparece pro decorador, decorador não muda o
+status. Storage com a chave anônima de verdade: upload no caminho certo 200; projeto inexistente, empresa errada e
+`image/svg+xml` recusados; leitura pública 200; remoção 200. (**A URL pública pode continuar respondendo por um tempo
+depois de remover o arquivo — cache do CDN**, não é falha da política.)
+
+**Autosave**: `marcarSujo()` agenda `salvarAgora()` (800ms); salvamentos nunca se sobrepõem e uma edição feita DURANTE um
+salvamento deixa o projeto "sujo" de novo (`S.rev`) em vez de ser dada como salva. Salva ao voltar pra lista, ao trocar de
+projeto, ao sair do overlay (`closeCatalogProjetos`), antes de compartilhar/enviar e quando a aba fica oculta
+(`visibilitychange`). **Duas abas editando o mesmo projeto: vence a última que salvar** (não há controle de conflito —
+sem pedido, não implementado).
+
+**Pegadinhas achadas construindo (todas viraram teste)**
+- Popover do dock fechava na hora: o clique no dock re-desenha o HTML dele, e o listener global de "clique fora" via o
+  `event.target` já fora do documento (`closest("#catalogProjetoDock")` → `null`). Corrigido com `event.composedPath()`.
+- O aviso "alterado depois do envio" não aparecia: o banner só era repintado no envio. `pintarNavegacao()` (chamada em toda
+  edição de dados) agora repinta o banner também.
+- O mock do teste reconhecia o decorador como "equipe com login direto" porque `auth.getUser` devolvia um usuário sempre —
+  só quando NÃO existe sessão Supabase Auth o catálogo cai no login do decorador. Mocks de `auth` precisam depender do
+  cenário.
+- Chip "＋" no canto do card inteiro cobria o texto do card horizontal; ficou dentro de `.catalog-grid-card-photo`
+  (`position:relative`).
+- Mock em variável de JS não sobrevive a `page.reload()` — o banco de mentira mora em `sessionStorage`, semeado ANTES do
+  `installMock`.
+
+Testes: `tests/catalogo-projetos-browser.cjs` (3 cenários: decorador ponta a ponta — criar com validações, ambientes,
+"＋" sem abrir o item, dock, troca de ambiente, autosave agrupado, quantidades, notas, render salva no ambiente escolhido
+com o caminho que a política do Storage exige, compartilhar/PIN/desativar, enviar pedido, aviso de alteração, projeto
+ativo lembrado após recarregar, mobile sem overflow, excluir; equipe — vê todos, filtro de pedidos, snapshot, muda o
+status com `p_empresa_id` e sem token; apresentação pública — senha errada/certa, `#pin=`, bloqueado, link inexistente, cor
+do decorador, sem preço, lightbox, PDF, mobile). Também varre o texto do módulo: nada abaixo de 12px. `catalogo-portal-` e
+`catalogo-menu-browser.cjs` ajustados pra 4 zonas no Portal. Cache-busting `?v=20260920-projetos5`. **Botão "Adicionar ao projeto" da página do item ficou discreto** (pedido: "muito chamativo, precisa ser mais clean"): antes era uma pílula cheia e escura de largura ~300px, mais forte que o próprio móvel; agora é um contorno fino sem preenchimento do tamanho do texto (`align-self:flex-start`, 36px de altura, "＋" na cor terrosa, hover/adicionado só trocam a cor do contorno). O chip "＋" dos cards já era discreto (só aparece no hover).
+
+**Foto dos noivos + tela inteira (pedido logo depois, com print do espaço de trabalho real)**: *"quero que ocupe o espaço da tela inteira, está com muitas bordas nas laterais, outra coisa, quero que seja possível colocar a foto dos noivos"*.
+- **Tela inteira**: `.cpj-wrap` perdeu o `max-width:1280px` e a margem automática — o respiro lateral é o mesmo do cabeçalho do catálogo (`clamp(20px,2.2vw,40px)`), então o conteúdo alinha com a logo. Como o conteúdo agora cresce, as grades encheram por `auto-fill` em vez de largura fixa: lista de projetos em colunas (`minmax(min(520px,100%),1fr)`), móveis `minmax(min(380px,100%),1fr)`, renderizações `minmax(min(280px,100%),1fr)`; navegação de ambientes 260px. Vale para lista e espaço de trabalho. A apresentação pública NÃO mudou (`.pj-content` continua 1240px, é um documento de leitura, não uma tela de trabalho). Teste mede as folgas do cabeçalho do projeto em 1500 e 1900px (≤41px de cada lado).
+- **Foto dos noivos** (opcional): mora em `projetos.dados.foto_casal = {url, path}` — dentro do mesmo jsonb dos ambientes, então nenhuma coluna nova; `normalizar()` preserva chaves que não conhece, e `projeto_salvar` grava `dados` inteiro, então ela acompanha todo salvamento. Migration `20260920000200_projetos_foto_casal.sql` só reescreve as duas funções que DEVOLVEM dados: `projeto_resumo` (novo campo `foto_casal_url`, pro cartão da lista) e `projeto_publico` (`projeto.foto_casal`, só a URL — o `path` não sai na apresentação pública). Verificado no banco real numa transação desfeita (sem foto → `null`; com foto → URL no resumo e na apresentação; nenhum campo de preço).
+  - Entradas: campo "Foto dos noivos (opcional)" no diálogo de criar projeto (com prévia e "Remover") — **a foto só sobe DEPOIS de o projeto existir** (a política de upload do bucket `projetos` exige `projeto_existe`), então o arquivo escolhido fica na memória do diálogo e `fluxoCriarProjeto()` chama `definirFotoCasal()` logo após criar; e o círculo ao lado do nome no cabeçalho do projeto (clicar = escolher/trocar, `×` = remover, aparece no hover/foco e sempre em toque).
+  - `definirFotoCasal()`: só JPG/PNG/WebP até 20MB; reaproveita `paraJpeg()` (mantém a proporção, máx. 1600px, JPEG .88 — o enquadramento em círculo é do CSS, `object-fit:cover` com `object-position:center 30%` porque rosto costuma ficar na parte de cima; **não há editor de recorte**, se pedirem arrastar/zoom é o mesmo padrão do editor de fotos do item); sobe em `<empresa>/<projeto>/casal/<uuid>.jpg`, e a foto anterior é apagada do Storage (melhor esforço). Excluir o projeto agora apaga as pastas `renders` E `casal`.
+  - Onde aparece: cabeçalho do projeto (círculo de 100px, 76px no celular), cartão da lista (50px ao lado do nome) e **capa da apresentação** (círculo de 132–188px branco com sombra, acima de "Projeto do evento"; no PDF sem sombra, 46mm). Sem foto, tudo continua como antes.
+  - Testes: criar com foto (prévia, desistir, escolher de novo) → sobe em `company/proj-1/casal/…jpg`, entra em `dados.foto_casal` e no cabeçalho; trocar pelo cabeçalho (nova sobe, a antiga é removida do Storage); remover (`foto_casal` some do `dados` e do Storage); adicionar de novo; a foto acompanha os salvamentos seguintes; cartão da lista com avatar; apresentação com o círculo (proporção 1:1, `border-radius:50%`) e sem ele quando não há foto.
+
+**Renderização leva os móveis da composição junto (pedido logo depois, com print de um "Lounge" com 0 itens e a renderização dele salva)**: *"quando eu criar uma composição dentro do 3D, renderizar e adicionar ao projeto, eu quero que os móveis venham junto, os mesmos móveis utilizados na composição"*.
+- **Como**: quando a IA devolve a imagem, Composições (`catalogo-lounge.mjs`) e 3D Livre (`catalogo-studio3d.mjs`) chamam `window.catalogRegisterRenderItems(src, objetos)` (uma linha em cada, mesma ponte de `catalogNotify`); `catalogo-projetos.mjs` conta os móveis por `itemId` (uma entrada por peça na cena, então 2 poltronas iguais = quantidade 2) e guarda a lista **atrelada à IMAGEM** (`composicoes`, as últimas 8, comparadas pela URL/data URL). Assim dá pra mexer na composição — ou gerar outra — e ainda salvar a renderização antiga com os móveis certos. A lista é tirada no CLIQUE de renderizar, não quando a imagem chega (a IA leva ~2 min; mexer no 3D nesse tempo não pode mudar os móveis daquela imagem).
+- **No diálogo "Salvar renderização"** aparece "Levar também os móveis desta composição — 1× Sofá Um, 3× Sofá Dois", **já marcado**; desmarcar salva só a imagem. Imagem sem composição por trás (tecido personalizado) não mostra a pergunta.
+- **Regra de quantidade**: cada móvel entra no ambiente escolhido com a quantidade da composição, mas **nunca soma com o que já estava lá** — vale o maior (`levarMoveisParaAmbiente()`). Salvar 2 ângulos da mesma composição não dobra os móveis, e 24 cadeiras já no ambiente não viram 2. O aviso diz quantos vieram ("1 móvel · Cerimônia · Ana e Bruno").
+- **Achado no Composições, não corrigido de propósito**: as peças da cena do Lounge nunca guardaram o item em `userData.item`, então o `objects` que já é ENVIADO À IA (`loungeComposedObjects()`) sai com `itemId`/`itemName` `undefined` (o 3D Livre manda os dois). Não mexi nisso: o prompt/payload do Lounge foi calibrado em várias rodadas de fidelidade com o usuário (ver "Bug real: renderização IA do Lounge...") e mudar o que a IA recebe é decisão dele. Pros móveis do projeto foi criado `loungeCompositionItems()`, que lê o item escolhido em cada papel (`ui.selection`) × as peças de cada papel, sem tocar no payload. Se quiser dar nome/id à IA, é `root.userData.item = item` em `placeRole()` — mas teste a fidelidade antes.
+- Testes: `tests/catalogo-projetos-browser.cjs` (caixa marcada e com a lista certa; Sofá Um ×1 numa Cerimônia que já tinha ×2 não soma, Sofá Dois ×3 entra; desmarcada = só a imagem; a imagem mais recente vale quando a mesma URL foi registrada de novo; tecido sem caixa; pedido soma os móveis que vieram), `tests/catalogo-lounge-browser.cjs` e `tests/catalogo-browser.cjs` (o módulo realmente registra os móveis da cena quando a IA devolve — sofá + 2 poltronas iguais no Lounge, 1 móvel no 3D Livre). Cache-busting `?v=20260920-projetos4` / `20260920-moveis`.
+
+**Mapa de posições das renderizações no ambiente (pedido: *"no projeto que a pessoa está editando eu quero que mostre onde vai ficar as futuras fotos renderizadas, pra pessoa saber onde ficará posicionado"*)**: o bloco "Renderizações" do espaço de trabalho (`pintarPainel()`) deixou de ser só uma lista de miniaturas + um texto de "nenhuma ainda". Agora é um **mapa com a MESMA disposição da apresentação** (`rendersMapaHtml()`, `catalogo-projetos.mjs`): as imagens já salvas ocupam as posições reais, numeradas (`.cpj-slot-num`), e as próximas viram **espaços tracejados** ("Renderização 2 — aparece aqui na apresentação", ícone de câmera). Em **destaque** (padrão) a posição 1 ocupa a largura toda (16:9, com a nota "Destaque · tamanho grande") e as demais ficam em 2 colunas 4:3; em **grade** são todas 4:3, duas por linha; no celular tudo empilha em 1 coluna, como a apresentação. Mostra sempre 3 posições (4 em grade) e, quando já há mais que isso, mais UM espaço pra próxima. A **1ª renderização do PROJETO** (a do primeiro ambiente que tiver alguma — mesma regra de `primeiraRender` em `projeto.mjs`) leva a nota "Também é a foto da capa" quando o estilo de capa do layout usa foto (`foto`/`lateral`); ambiente sem imagem mostra o espaço 1 como destaque, mas sem a nota de capa se outro ambiente já a fornece. Um texto curto embaixo explica ("a primeira em destaque e as demais lado a lado… com poucas imagens a apresentação se ajusta ao espaço").
+  - **Segue o layout do projeto**: `carregarLayoutDoProjeto()` chama `layout_listar(p_projeto_id)` ao abrir o espaço de trabalho, escolhe o layout do projeto → o padrão do dono → o visual original, e guarda só o que o mapa precisa em `S.mapaRender` (`modo` destaque/grade e `capa`). Trocar o layout no diálogo "Link e PDF" refaz a leitura e o mapa muda por trás; voltar da tela de Layouts (`pintarTela`) também. Só `[data-cpj-renders]` é redesenhado (`atualizarMapaRenders()`), **não** o painel inteiro — repintar tudo perderia o foco/o que a pessoa estiver digitando nas observações. Sem resposta do banco o mapa usa o visual original (destaque); nada quebra.
+  - **Honestidade sobre a aproximação**: com 1 ou 2 imagens a apresentação NÃO usa a disposição de 3 (1 = larga, 2 = lado a lado, ver `.pj-renders-1/-2` em `projeto.css`); o mapa sempre mostra a disposição "completa" e o texto avisa disso. Não tenta prever a contagem final.
+  - Teste: `tests/catalogo-projetos-browser.cjs` (1 salva + 2 espaços; numeração 1/2/3; nota de destaque e de capa na legenda; geometria real — posição 1 ocupa a largura toda, 2 e 3 lado a lado abaixo; ambiente vazio com 3 espaços sem nota de capa) e `tests/catalogo-layouts-browser.cjs` (projeto sem escolha usa o padrão "grade" = 4 posições; trocar pro Editorial no diálogo muda o mapa pra "destaque" = 3). Cache-busting `?v=20260921-mapa-renders`.
+
+**Não implementado (não pedido) — possíveis próximos passos**: converter o pedido recebido em `separacoes_pedidos` de
+verdade; PDF gerado no servidor (hoje é a impressão do navegador); pré-visualização da apresentação sem precisar ativar o
+link; reordenar ambientes; duplicar projeto; comentários do casal.
+
+## Cores disponíveis no card da grade de itens
+
+Pedido do usuário, com print da grade de "Estofados" e da fileira de círculos da página do item: *"nessa tela aqui dos itens quero que apareça as cores que temos disponíveis quando tiver mais de uma cor do mesmo item, igual"*.
+
+- **Só com 2+ cores do MESMO item** (o grupo de variantes de `agruparVariantes()`: mesma categoria/nome/material/medidas, cor diferente — a grade já mostrava um card por grupo). Item de uma cor só não muda nada. Só na GRADE (e nos resultados dos filtros de "Categorias", que usam o mesmo `gridCardMarkup()`); o mosaico e a imersiva ficaram como estavam (a imersiva já tinha os círculos).
+- **Bolinhas DISCRETAS** (a 1ª versão usava os mesmos círculos da página do item — 44px com o nome da cor embaixo — e o usuário achou "muito grande, precisa ser um pouco mais discreto"): agora são bolinhas sem texto embaixo — a 2ª versão de 24px ficou "muito pequena" e a atual, de **32px** (34px em tela de toque), é o meio-termo pedido com a foto da cor e SEM texto embaixo (o nome fica em `title`/`aria-label`; `variantLabel()` é função única pros dois lugares), contorno de 1px e 2px terroso na ativa, sem sombra nem "pulo" no hover, logo abaixo das medidas, dentro do card. Cada `<span>` tem `padding:3px`, então a área de clique (~38px) é maior que o desenho. As regras são escopadas em `.catalog-grid-swatches`, então os círculos da página do item não mudaram. Como o card inteiro já é um `<button>` e um botão não pode conter outro, cada círculo é `<span role="button" tabindex="0" data-grid-variant>` (Enter/Espaço tratados no `keydown` delegado; o clique é checado ANTES do `data-grid-item` em `bindInteractions()`, senão abriria o item). Mesmo padrão do "＋" do Projetos.
+- **Clicar numa cor troca o PRÓPRIO card, sem abrir o item** (`selectGridVariant()`): foto, nome, medidas, círculo ativo (`aria-pressed`) e o `data-grid-item` do card, que passa a representar aquela cor. O "＋ adicionar ao projeto" do card também passa a adicionar a cor que está na tela (`data-projeto-add`).
+- **Abrir o card abre a COR escolhida**: a seção imersiva de um grupo é desenhada com o id do item "principal" (`produto-<id>`), então `showItemSection()` acha a seção pelo principal e chama `applyVariant()` nela — **de forma síncrona logo depois de desenhar as seções**, antes do primeiro quadro pintado, pra não aparecer um pisca da cor principal antes de trocar (a foto principal ainda troca num fundido curto, `renderMainSlide`, ~120ms). Vale também pra abrir um item dos resultados filtrados (`applyView(FILTER_VIEW, {focusItemId})`). Antes, `openImmersiveFromGrid()` sempre rolava pro `produto-<id do card>`, o que para uma cor não-principal simplesmente não existia.
+- Teste: `tests/catalogo-cores-grade-browser.cjs` — 3 cores viram 1 card com 3 círculos e nomes (item de uma cor não tem); bolinha de ~32px (30–36px) abaixo das medidas e dentro do card; clicar troca foto/nome/ativo sem abrir o item; o ＋ acompanha a cor; Enter troca; abrir o card cai na cor escolhida (`data-product-id`, círculo ativo e foto principal); card de uma cor abre normal; celular sem overflow e sem círculo fora do card. Cache-busting `?v=20260920-cores-grade3`.
+
+## Layouts de apresentação (cada decorador cria o seu e escolhe qual usar no link e no PDF)
+
+Pedido do usuário: *"cada decorador possa criar o layout dele de projeto, assim cada decorador pode imprimir de uma forma diferente um do outro, quero que ele possa criar mais uma versão também, aí depois ele decide em qual layout [gerar]"* — corrigido no meio: *"imprimir não, desculpa, gerar o link e o PDF"*. Ou seja: um **layout** é o jeito de a apresentação do projeto (a página `projeto.html`) ser desenhada; o decorador pode ter vários e escolhe um por projeto, e essa escolha vale pro **link do casal E pro PDF**.
+
+**Modelo de dados** (`supabase/migrations/20260921000100_projeto_layouts.sql`, aplicada com `db push --linked`): tabela `projeto_layouts` (`empresa_id`, `cliente_id` = dono decorador ou NULL = equipe, `nome` ≤60, `config jsonb`, `padrao`, até 20 por dono) e `projetos.layout_id` (FK `on delete set null` — apagar o layout não apaga projeto nenhum, ele só volta ao padrão). **Um padrão por dono** (índice único parcial em `(empresa_id, coalesce(cliente_id, 0…))`). **Resolução do layout de um projeto**: `projetos.layout_id` → senão o layout marcado `padrao` do dono → senão o visual original embutido (`LAYOUT_PADRAO`, igual ao que já existia antes desta feature). Mesma separação de acesso do resto do Projetos: o decorador não tem `auth.uid()`, então tudo passa por RPCs `security definer` que resolvem o chamador em `projeto_ctx(p_token, p_empresa_id)` (token → só os PRÓPRIOS layouts; sem token → equipe, com os layouts da equipe, separados dos de qualquer decorador). RPCs: `layout_listar` (por dono, ou pelo dono de um projeto), `layout_salvar` (cria/atualiza; `p_padrao=true` desmarca os outros), `layout_excluir`, `projeto_definir_layout`, `projeto_previa` (só o dono; devolve o projeto + os layouts dele) e `projeto_apresentacao(r)` — payload único compartilhado por `projeto_publico` (link) e `projeto_previa`, então o link e o PDF nunca divergem. O servidor só confere "é objeto e tem <20000 caracteres"; **quem valida o conteúdo é o cliente** (abaixo). Verificado contra o banco real com transações revertidas (2 decoradores: um não vê/edita/apaga/escolhe layout do outro; token inválido e "sem token e sem login" falham; apagar o layout solta os projetos; um padrão por dono).
+
+**Formato do layout** (versão ORIGINAL, com ~30 opções — a lista completa de hoje, com ~82, está em "Mais opções no layout" logo abaixo; o mecanismo descrito aqui não mudou) (`projeto-layout.mjs`, compartilhado pelo editor e pela página): `capa{estilo foto|limpa|lateral, alinhamento centro|esquerda, fundo creme|branco|escuro, textoAbertura, mostrarFotoCasal/Logo/Data/Local}`, `cores{usarDoDecorador, principal, destaque}`, `fonte` (classica/moderna/elegante — família do Google Fonts carregada só se preciso), `resumo`, `ambientes{numeracao, notas, renders destaque|grade, umaPorPagina}`, `moveis{estilo cartao|limpo, colunas 2-5, medidas, materialCor, quantidade}`, `rodape{mostrar, mensagem, contato}`, `pdf{orientacao retrato|paisagem}`. **`normalizarLayout()` é a única porta de entrada**: enums fechados, cor só `#rgb/#rrggbb` (nada de CSS solto), inteiros com limite, texto com tamanho máximo e sem caracteres de controle, chaves desconhecidas descartadas, idempotente. Nada do jsonb do banco vira CSS/HTML sem passar por ela (o teste tem um layout adulterado com `<img onerror>`/`url(//evil)`). Layouts prontos pra começar (`MODELOS`): Clássico (= o visual original), Moderno, Editorial (paisagem), Minimalista.
+
+**Telas** (`catalogo-layouts.mjs/.css`, dentro do overlay Projetos): botão **Layouts** na lista de projetos → lista de cards (miniatura de capa desenhada em CSS a partir das opções, selo "Padrão", Editar / Duplicar / "Usar como padrão" / Excluir; vazio mostra os 4 modelos). **Criar**: nome + "Começar de" (modelo pronto ou cópia de um layout seu) — o registro nasce no banco na hora e o 1º layout do decorador vira o padrão. **Editor**: formulário em 8 grupos à esquerda (Capa, Cores, Fonte, Página, Ambientes, Móveis, Rodapé, PDF — eram 7 até "Mais opções no layout") e, à direita, um `<iframe src="projeto.html?modo=editor">` com a apresentação REAL atualizando a cada clique. Se há um projeto ativo a prévia usa os dados dele; senão monta um exemplo com itens do próprio catálogo (2 ambientes). **Autosave** (800ms, mesma disciplina do projeto: contador de revisão, nunca dois salvamentos sobrepostos, salva ao sair/`closeCatalogProjetos`). Editar um layout muda na hora todo projeto que o usa (o editor avisa disso).
+
+**Sem barra de rolagem própria no editor** (pedido logo depois: *"não quero que o projeto fique com barra vertical, quero que ele vá descendo junto com o html e a coluna de edição"*): a coluna de edição (`.lay-form`, antes `max-height`+`overflow-y:auto`) e a prévia (`<iframe>` de altura fixa, com a barra da própria apresentação dentro) rolavam cada uma por dentro. Agora **a página inteira rola e as duas colunas descem juntas**: `.lay-form` mostra tudo, `.lay-previa` deixou de ser `sticky`, e o iframe tem a **altura do conteúdo da apresentação**. Como: em `?modo=editor` a `projeto.html` mede o `#app` com `ResizeObserver` e avisa o catálogo com `pj-altura` (`acompanharAltura()` em `projeto.mjs`); `ajustarAlturaPrevia()` em `catalogo-layouts.mjs` estica o iframe (`style.height`, teto 60000px). **Mede o `#app`, não o documento** — o `scrollHeight` do documento nunca fica menor que o iframe, então a prévia jamais encolheria. **Crescer é na hora; encolher só depois de 500ms estável**: a cada redesenho as imagens colapsam por um instante, e encolher-e-crescer faria a página (que rola por fora) dar um pulo enquanto a pessoa mexe nas opções. **Nada pode depender da altura da janela dentro do iframe** (`svh/vh`): a capa é `min-height:100svh`, e num iframe que cresce com o conteúdo isso realimentaria sem parar — por isso `html[data-modo="editor"]` dá à capa/mensagem/foto lateral alturas que só dependem da LARGURA (`clamp(520px,62vw,760px)` etc.), tira o `sticky` da barra de ambientes, esconde o `overflow` do `html` e desliga o visualizador de foto (um `position:fixed` num iframe de milhares de pixels ficaria fora da vista). O iframe leva `scrolling="no"`. O modo `?modo=previa` (aba nova) e o link público NÃO mudaram — lá a página rola normalmente. Teste (`tests/catalogo-layouts-browser.cjs`): sem `overflow` na coluna, iframe maior que a janela e igual ao conteúdo, prévia não-`sticky`, rolar a página leva a prévia junto (e o iframe não rola por dentro), ligar/desligar o rodapé cresce/encolhe o quadro, altura estável depois de parar. Cache-busting `?v=20260921-previa-inteira`.
+
+**Mais opções no layout (pedido: *"quero mais coisas pra editar, e eu gosto dessa forma que você pensou, que a pessoa seleciona os estilos diferentes e as opções de como fica no layout, achei intuitivo e prático... mantenha isso, só coloque mais opções, alterar a cor do fundo por exemplo... bem mais, porque a ideia é que um projeto de um cliente fique bem diferente de outro"*)**: de ~30 para **~82 opções**, no MESMO formato de sempre (opções em botões, liga/desliga, seletor de cor, texto curto) — nenhum controle novo foi inventado; só ganharam **títulos de seção** (`.lay-sub`: Capa → Estilo / Textos / Fotos e logo; Cores → Fundos; Página → Navegação / Fotos…) pra a lista longa não virar um paredão.
+  - **Capa** (+15): altura (tela toda/alta/média/compacta), fundo "Outra cor" com seletor (`capa.corFundo`; o texto vira claro/escuro sozinho), quanto a foto escurece (não/suave/forte), moldura fina, tamanho do nome (discreto→enorme), nome em MAIÚSCULAS, frase abaixo do local, linha fina, "Ver o projeto", formato (redonda/cantos suaves/quadrada) e tamanho da foto dos noivos, posição (junto do texto/esq./centro/dir.) e tamanho da logo.
+  - **Cores** (+3 seletores): **fundo da página**, **tom suave** (faixas, capa e rodapé "creme") e **fundo dos cartões**. **Fonte** (+2 grupos de opção e +7 famílias): Editorial, Romana (Cinzel), Manuscrita (Great Vibes), Livro, Geométrica, Leve, além das 3 de antes; tamanho do texto (15–19px, escala tudo porque `html{font-size:var(--pj-base)}`) e peso dos títulos (400/500/600 — todas as famílias já trazem esses pesos no link do Google Fonts).
+  - **Página** (grupo NOVO): largura do conteúdo (980/1240/1520/tela toda), espaço entre seções, cantos (retos→bem redondos), linha entre ambientes (fina/na cor de destaque/nenhuma), barra de ambientes (fixa/rola com a página/escondida — escondida só tira a LISTA; o botão "Baixar PDF" continua se estiver ligado), estilo dos botões da barra (pílulas/sublinhado), botão "Baixar PDF", efeito nas fotos, ampliar a foto ao clicar.
+  - **Ambientes** (+10): tamanho, alinhamento e MAIÚSCULAS no título, contagem de peças, renderizações em 1/2/3 colunas, formato (16:9, 4:3, quadrado, em pé), espaço entre elas (coladas→amplo), **o que vem primeiro (renderizações ou móveis)** e o título da lista de móveis (vazio = some). **Móveis** (+9): espaço entre cartões, levantar ao passar o mouse, formato/ajuste/fundo da foto, nome em MAIÚSCULAS, alinhamento do texto, onde aparece a quantidade (selo no canto / junto do nome) e estilo do selo. **Rodapé** (+7): fundo, tamanho e itálico da mensagem, assinatura, logo, nome da marca e crédito "Mobiliário: …" ligáveis. **PDF** (+4): tamanho do papel (A4/Carta/A3), margem, capa ocupando ou não a página inteira, numerar as páginas.
+  - **Contraste automático** (`temaDaPagina()`, `textoSobre()` em `projeto-layout.mjs`): quem escolhe uma página escura (ou cartões escuros/claros) NÃO precisa lembrar de trocar a cor do texto — o texto da página, dos cartões, do rodapé e da capa é a cor principal quando dá contraste ≥4,5 (WCAG) contra o fundo e, senão, claro/escuro conforme o fundo; o cinza suave e as linhas de uma página escura são calculados do texto claro. Os botões usam a cor principal quando ela se destaca do fundo. Numa página clara o cinza suave (#77716a) e a linha (#e7e0d6) continuam os de sempre — o layout padrão renderiza IGUAL ao de antes (o teste confere as variáveis).
+  - **Arquitetura — uma tabela só**: `VALORES` (listas fechadas por caminho `grupo.campo`), `LIMITES`/`LIMITES_TEXTO`/`CAMPOS_COR` e as tabelas de "o que cada opção vale" (`LARGURA`, `CANTOS`, `PROPORCAO_RENDER`…) ficam em `projeto-layout.mjs`; `normalizarGrupo()` normaliza cada grupo A PARTIR DO PADRÃO (só existem as chaves que o padrão conhece; o tipo do valor padrão diz como validar), então **acrescentar uma opção = 1 linha no `LAYOUT_PADRAO` + 1 no `VALORES`/tabela + 1 no `GRUPOS` do editor + o CSS**. `variaveisCss()` devolve TODAS as variáveis `--pj-*` que a página usa e `projeto.mjs` só as aplica; `regraPagina()`/`paginaPdf()` geram o `@page` (papel, orientação, margem, número de página — margin box `@bottom-center` só funciona em navegadores recentes, os antigos ignoram) e a altura da capa impressa (270mm em A4 em pé, 178mm deitado, como sempre; fora da página inteira = fração da altura de capa escolhida). Nada do layout vira CSS por texto solto: o layout guarda só a CHAVE da opção, e o valor CSS vem das tabelas. `.pj-root` ganhou uns 25 `data-*` (`data-nav`, `data-rcols`, `data-ordem`, `data-selo`…) e o CSS de `projeto.css` foi reescrito em cima de variáveis (cor do rodapé, do cartão e da capa deixaram de ser regras por `data-fundo`). **Compatibilidade**: layout salvo antes só tem as chaves antigas → o resto cai no padrão, e a logo do rodapé (que antes seguia a da capa) herda `capa.mostrarLogo` quando `rodape.mostrarLogo` não existe. Nenhuma migration: o servidor continua só conferindo "é objeto <20000 caracteres" (um layout completo tem ~3KB).
+  - **Modelos**: 6 (Clássico, Moderno, Editorial, Minimalista + **Romântico** — rosa suave, manuscrita, moldura, cantos bem redondos — e **Noturno** — página escura com dourado, nome em maiúsculas sobre foto escurecida, letras romanas). Os 4 antigos não mudaram.
+  - **A prévia do editor sem projeto aberto agora tem renderizações e foto dos noivos de exemplo** (as fotos do catálogo fazem o papel; `amostra()` em `catalogo-layouts.mjs`) — antes o exemplo não tinha nenhuma, e as opções de fotos (colunas, formato, espaço, ordem, escurecer, foto dos noivos) não tinham o que mostrar.
+  - **Pendência conhecida**: o formulário ficou longo (~6000px) e a prévia (altura do conteúdo, sem barra própria — pedido anterior) é mais curta: editando os grupos lá de baixo (Rodapé, PDF) a parte correspondente da prévia já passou pra cima. Possíveis saídas, se incomodar: grupos recolhíveis/em abas, ou uma barra fixa com atalhos pros grupos. Não feito por não ter sido pedido e por mudar o que aparece de cara.
+  - **Testes**: `tests/projeto-layout-opcoes.test.mjs` (toda opção do layout tem controle no editor e vice-versa — mesma lista de caminhos; os valores do editor = os do normalizador; CADA valor de CADA opção vira variável válida e regra `@page` válida; layout antigo continua igual e o padrão reproduz as variáveis de sempre; valores hostis caem no padrão; contraste de todos os modelos ≥4,5; PDF A4/Carta/A3, margem e capa fora da página inteira) e `tests/catalogo-layouts-browser.cjs` (editor: ≥8 seções internas, ≥80 controles, cada opção nova mexe na página ao vivo — altura da capa, largura, cantos, tamanho do texto, fonte Romana, formato das fotos, contagem, quantidade, fundo da capa em "Outra cor", página escura com texto que se ajusta; página pública com ~35 opções juntas: contraste real medido no navegador, ordem móveis/renderizações, barra escondida com botão PDF, título de móveis vazio, sem ampliar foto, quantidade junto do nome, assinatura, PDF em **Carta** = 612×792pt; celular com texto muito grande sem overflow). Cache-busting `?v=20260921-mais-opcoes`.
+
+**Escolher e gerar** — o botão de cima do projeto virou **"Link e PDF"** (era "Compartilhar"; `✓` quando o link está ativo). O diálogo tem um bloco novo, **Layout da apresentação**: `<select>` com os layouts do dono ("Usar o meu layout padrão"/"Visual original do sistema" + cada um, o padrão marcado), que grava `projeto_definir_layout` ao mudar, mais **Pré-visualizar**, **Gerar PDF** e **Gerenciar layouts**; abaixo continuam o link e a senha de sempre. O link público usa o mesmo layout (o `projeto_publico` devolve `layout`).
+
+**Página `projeto.html` — 3 modos** (`projeto.mjs`, reescrita orientada a dados: `aplicarTema()` põe as variáveis `--pj-*`, a fonte e o `@page`; `renderizar()` monta o HTML a partir do layout normalizado): (1) **link público** (senha de 6 números, igual antes); (2) **`?modo=previa`** — aberta pelo dono com `window.open` (que TEM que rodar dentro do clique, antes de qualquer `await`, senão o navegador bloqueia o pop-up); os dados NÃO vão na URL: a aba avisa `pj-pronto`, quem abriu responde `pj-dados` com o resultado de `projeto_previa` — só aceita mensagem da MESMA origem e da janela que a abriu (`event.source`). Tem barra própria com um `<select>` pra trocar de layout (só na tela, sem gravar) e **Gerar PDF**; `&pdf=1` já imprime sozinha quando as imagens carregam; (3) **`?modo=editor`** — dentro do iframe do editor: recebe `pj-dados` uma vez e depois `pj-layout` a cada alteração, sem barra.
+
+**PDF = impressão do navegador ("Salvar como PDF")**, como já era: não há biblioteca de PDF no projeto e nada é gerado no servidor. O layout entra por um `<style id="pjPagina">@page{size:A4 retrato|paisagem;margin:12mm}` injetado + regras `@media print` (capa numa página, cada ambiente em página nova se `umaPorPagina`, peças e fotos sem corte). Verificado com `page.pdf({preferCSSPageSize:true})` lendo o `/MediaBox`: retrato = 595×842, paisagem = 842×595. **Limite honesto**: a pessoa precisa escolher "Salvar como PDF" no diálogo de impressão; o cabeçalho/rodapé do navegador ("Cabeçalhos e rodapés") é opção do próprio diálogo e o sistema não controla.
+
+**Cores do decorador** (`coresEfetivas`): com `usarDoDecorador` ligado valem as cores do catálogo dele (`cor_primaria/secundaria`, `#rgb` ou `#rrggbb` válidos); senão as do layout. A equipe não tem "cores do meu catálogo" (não é decorador) — só as do layout.
+
+**Pegadinhas achadas construindo (todas viraram teste)**
+- O campo de nome do editor não salvava sozinho: o delegado ouvia `input[type="text"]` e o `<input class="lay-nome">` não tinha `type`. Todo campo do editor precisa de `type` explícito.
+- Depois de "Usar como padrão" no editor, o card não subia pro topo da lista: `pintarLista()` ordena (padrão primeiro) no começo; o select do diálogo segue a mesma ordem (`['Usar o meu layout padrão','Moderno (padrão)','Editorial']`).
+- A prévia de exemplo com 3 itens do catálogo caía toda num ambiente só (parecia que "ambiente" não funcionava) → o exemplo divide os itens em 2 ambientes (`Math.ceil(n/2)`).
+- Teste com `window.open`: usar `browser.newContext()` (o popup herda rotas e `addInitScript`), stub de `window.print` via `context.addInitScript`, e o mock compartilhado em `tests/mock-projetos.cjs` (o banco de mentira mora em `sessionStorage`, porque variável de JS não sobrevive a `reload`).
+- Cache-busting: `catalogo-layouts.mjs`, `catalogo-projetos.mjs`, `projeto*.{css,mjs}` e `catalogo.mjs` usam todos `?v=20260921-layouts` (havia um `layouts2` solto).
+
+**Testes**: `tests/projeto-layout.test.mjs` (11 casos do normalizador: enums, cor sem CSS solto, colunas, texto, booleanos, chaves desconhecidas, idempotência, modelos, mesclar, cores efetivas) e `tests/catalogo-layouts-browser.cjs` (5 cenários: decorador cria/edita ao vivo/autosave/duplica/define padrão/apaga; diálogo "Link e PDF" escolhe layout + pop-up de prévia + pop-up de PDF com auto-print + editor com projeto real; página pública obedece ao layout, incluindo PDF paisagem e configuração adulterada; equipe; editor no celular) — também varre texto abaixo de 12px. `tests/catalogo-projetos-browser.cjs` passou a usar o mock compartilhado e espera "Link e PDF ✓". Suíte completa rodada de novo, tudo passando (`tests/catalogo-layout-browser.cjs`, antigo, continua quebrado como já registrado).
+
+**Não implementado (não pedido) — possíveis próximos passos**: PDF gerado no servidor (arquivo pronto sem diálogo de impressão); reordenar/ocultar seções da apresentação; a equipe compartilhar layouts com os decoradores; escolher um layout diferente só pra um link específico (hoje é por projeto); miniatura da capa com a foto real do projeto.
 
 ## Anti-flash da logo no menu principal (dashboard.html)
 

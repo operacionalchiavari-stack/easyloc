@@ -35,14 +35,25 @@ const {chromium}=require('playwright');const express=require('express');const as
  assert.equal(await page.locator('.product-title-row .product-title').count(),1,'O nome do item está no mesmo wrapper dos círculos');
  assert.equal(await page.locator('.product-variants').count(),0,'Não existe mais a seção própria "Cores disponíveis" separada');
 
- // Título e círculos na MESMA linha (mesmo bloco flex) — provado indiretamente
- // pela proximidade vertical dos topos (título mais alto que os círculos por
- // causa do texto, mas ambos no topo da coluna, sem centenas de pixels de
- // distância entre eles como na versão antiga, que ficava lá embaixo perto
- // do botão de capa).
- const titleTop=(await page.locator('.product-title').boundingBox()).y;
- const swatchTop=(await page.locator('.product-variant-swatch').first().boundingBox()).y;
- assert.ok(Math.abs(titleTop-swatchTop)<60,'Título e círculos ficam bem próximos verticalmente (mesma linha/bloco), não em seções distantes');
+ // Pedido do usuário, com print de uma poltrona com 4 cores: "coloque os ícones das cores EM BAIXO do nome do
+ // item". Antes ficavam ao lado do nome, vazando por cima da foto; agora o nome tem a sua linha e os círculos a
+ // deles, logo abaixo, alinhados à esquerda com o nome.
+ const titleBox=await page.locator('.product-title').boundingBox();
+ const rowBox=await page.locator('.product-variants-row').boundingBox();
+ const gap=rowBox.y-(titleBox.y+titleBox.height);
+ assert.ok(gap>=0&&gap<40,`Círculos ficam EMBAIXO do nome, encostados nele (folga de ${Math.round(gap)}px entre o fim do nome e o começo dos círculos)`);
+ assert.ok(Math.abs(rowBox.x-titleBox.x)<2,'Círculos alinhados à esquerda com o nome');
+ const swatchTops=await page.locator('.product-variant-swatch').evaluateAll(els=>els.map(el=>Math.round(el.getBoundingClientRect().top)));
+ assert.equal(new Set(swatchTops).size,1,'Os 3 círculos cabem numa linha só (não quebram em 2+1)');
+
+ // As medidas saíram da linha solta abaixo do nome e viraram uma linha das specs, junto de categoria/material/cor.
+ assert.equal(await page.locator('.product-dimensions').count(),0,'Não existe mais a linha de medidas solta abaixo do nome');
+ const rotulos=(await page.locator('#produto-1 .product-specs-row dt').allTextContents()).map(t=>t.trim());
+ assert.deepEqual(rotulos.slice(0,4),['Categoria','Material','Cor','Medidas'],'Medidas entra na lista de specs, depois de Categoria/Material/Cor');
+ assert.match(await page.locator('#produto-1 .product-specs-row',{hasText:'Medidas'}).locator('dd').textContent(),/^\s*67 × 95 × 57 cm\s*$/,'Valor das medidas no mesmo formato de sempre (L × A × P cm)');
+ // ...e o valor cabe numa linha só na coluna estreita do desktop (a coluna de rótulos tem a largura do maior rótulo).
+ const ddAltura=await page.locator('#produto-1 .product-specs-row',{hasText:'Medidas'}).locator('dd').evaluate(el=>Math.round(el.getBoundingClientRect().height));
+ assert.ok(ddAltura<24,`As medidas não quebram em duas linhas (altura ${ddAltura}px)`);
 
  // Clicar num círculo troca de variante — a seção inteira é atualizada
  // (applyVariant), incluindo as specs, mesmo sem bespoke card nem botão de
@@ -90,5 +101,5 @@ const {chromium}=require('playwright');const express=require('express');const as
  await page.close();
 }
 
-console.log('PASS: título+círculos de cor no mesmo bloco (mais compacto, sem seção "Cores disponíveis" separada), specs continuam atualizando ao trocar de variante mesmo sem bespoke/capa, sem círculo quando só há 1 cor, sem overflow mobile');
+console.log('PASS: círculos de cor EMBAIXO do nome (numa linha só, alinhados ao nome), medidas como linha das specs (junto de categoria/material/cor, sem quebrar), sem linha de medidas solta, sem seção "Cores disponíveis" separada, specs continuam atualizando ao trocar de variante mesmo sem bespoke/capa, sem círculo quando só há 1 cor, sem overflow mobile');
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

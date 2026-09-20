@@ -49,6 +49,24 @@ const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
 }[ch]));
 const normalizeSearch = (value) => String(value || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+// Mesma otimiza\u00e7\u00e3o de carregamento de catalogo.mjs (Storage do Supabase
+// com transforma\u00e7\u00e3o de imagem habilitada) \u2014 duplicado aqui porque este
+// m\u00f3dulo \u00e9 self-contido de prop\u00f3sito, sem importar nada de catalogo.mjs.
+function otimizarFoto(url, width, quality = 74){
+  if(!url || typeof url !== "string" || !width) return url;
+  const marcador = "/storage/v1/object/public/";
+  const indice = url.indexOf(marcador);
+  if(indice === -1) return url;
+  const base = url.slice(0, indice);
+  const caminho = url.slice(indice + marcador.length);
+  const separador = caminho.includes("?") ? "&" : "?";
+  // resize=contain é obrigatório aqui: só `width` sem isso faz o Storage
+  // manter a altura ORIGINAL inteira (bug real já visto em produção —
+  // foto virava uma fatia vertical cortada/esticada, não uma miniatura
+  // proporcional). Com resize=contain, a altura é calculada sozinha a
+  // partir da proporção real do arquivo, mesmo sem informar height.
+  return `${base}/storage/v1/render/image/public/${caminho}${separador}width=${width}&quality=${quality}&resize=contain`;
+}
 
 function isTopViewActive(){
   return $("studioTopView")?.getAttribute("aria-pressed") === "true";
@@ -95,7 +113,7 @@ function renderLibrary(query = ""){
     const hidden = normalized && !search.includes(normalized);
     return `
     <button type="button" class="studio-library-item ${loading ? "is-loading" : ""} ${hidden ? "hidden" : ""}" data-studio-add="${escapeHtml(item.id)}" data-search="${escapeHtml(search)}" title="${loading ? "Carregando" : "Adicionar"} ${escapeHtml(item.name)}" ${loading ? 'disabled aria-busy="true"' : ""}>
-      <img src="${escapeHtml(item.photo)}" alt="" loading="lazy">
+      <img src="${escapeHtml(otimizarFoto(item.photo, 120))}" alt="" loading="lazy">
       <span>${escapeHtml(item.name)}</span><b aria-hidden="true">${loading ? "" : "+"}</b>
     </button>`;
   }).join("") + `<div class="studio-library-empty ${available.some((item) => !normalized || normalizeSearch(`${item.name} ${item.catLabel || ""}`).includes(normalized)) ? "hidden" : ""}">Nenhum modelo 3D disponível.</div>`
@@ -584,8 +602,8 @@ async function loadFloorPlan(file){
     window.catalogNotify?.({ title: "Arquivo não compatível", message: "Envie a planta em PDF, PNG, JPG ou WebP.", status: "error" });
     return;
   }
-  if(file.size > 8 * 1024 * 1024){
-    window.catalogNotify?.({ title: "Planta muito grande", message: "Envie uma imagem de até 8 MB.", status: "error" });
+  if(file.size > 15 * 1024 * 1024){
+    window.catalogNotify?.({ title: "Planta muito grande", message: "Envie uma imagem de até 15 MB.", status: "error" });
     return;
   }
   let working;
@@ -1446,7 +1464,7 @@ function itemPicker([key, label, pattern, required]){
       ${required ? "" : `<label class="studio-picker-card studio-picker-none"><input type="radio" name="${key}" value="" checked><span>Não adicionar</span></label>`}
       ${options.map((item) => `<label class="studio-picker-card" data-picker-item data-search="${escapeHtml(normalizeSearch(`${item.name} ${item.catLabel || ""}`))}">
         <input type="radio" name="${key}" value="${escapeHtml(item.id)}" ${required ? "required" : ""}>
-        <img src="${escapeHtml(item.photo)}" alt="${escapeHtml(item.name)}" loading="lazy">
+        <img src="${escapeHtml(otimizarFoto(item.photo, 160))}" alt="${escapeHtml(item.name)}" loading="lazy">
         <span>${escapeHtml(item.name)}</span><b>Selecionado</b>
       </label>`).join("")}
       <p class="studio-picker-empty hidden">Nenhum item encontrado nesta busca.</p>
@@ -2154,6 +2172,8 @@ async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhu
     if(data?.providerStatus !== "ok") throw new Error(data?.error?.message || data?.error?.error?.message || data?.erro || "O Studio IA não conseguiu concluir a imagem.");
     const src = extractResult(data?.images?.[0]);
     if(!src) throw new Error(data?.erro || "A IA não retornou uma imagem.");
+    // Quais móveis estão nesta imagem — o projeto (catalogo-projetos.mjs) leva os mesmos móveis junto ao salvar a renderização.
+    window.catalogRegisterRenderItems?.(src, objects);
     workingToast?.close();
     window.catalogNotify?.({
       title: "Sua renderização ficou pronta",

@@ -34,9 +34,9 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  // existindo e navegando exatamente igual.
  assert.equal(await page.locator('.catalog-gateway-photo').count(),1,'Uma foto só cobrindo a tela, não mais uma por bloco');
  assert.equal(await page.locator('[data-gateway-tile] img').count(),0,'Zonas de clique não têm mais foto própria');
- assert.equal(await page.locator('[data-gateway-tile]').count(),3,'3 zonas de clique continuam existindo: Catálogo, Biblioteca, Módulo 3D');
+ assert.equal(await page.locator('[data-gateway-tile]').count(),4,'4 zonas de clique: Catálogo, Biblioteca, Módulo 3D e Projetos (o 4º destino é novo — ver catalogo-projetos.mjs)');
  const titles=await page.locator('.catalog-gateway-title').allTextContents();
- assert.deepEqual(titles,['Catálogo','Biblioteca','Módulo 3D']);
+ assert.deepEqual(titles,['Catálogo','Biblioteca','Módulo 3D','Projetos']);
  assert.equal(await page.locator('.catalog-gateway-edit').count(),0,'Decorador não vê botão de trocar foto');
  assert.equal(await page.locator('[data-gateway-adjust]').count(),0,'Decorador não vê o ícone de ajustar foto');
  assert.equal(await page.locator('#catalogViewSwitcher').isVisible(),false,'Ícones de imersivo/grade escondidos no Portal');
@@ -53,11 +53,18 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  // Pedido explícito do usuário: mesmo efeito de letter-spacing "abrindo"
  // no hover que já existe em "INSPIRE-SE" (foto ambientada do item).
  const catalogoTitle=page.locator('[data-gateway-tile="catalogo"] .catalog-gateway-title');
+ // Pedido do usuário: "a foto da home eu acho que ela não está natural, tem algum efeito nela" — era o véu preto a .22 que ficava sempre sobre a foto (tirava ~22% da luz). Em repouso a foto tem que aparecer SEM nenhum véu nem filtro; o escurecer (.5) só entra no hover.
+ await page.mouse.move(0,0);await page.waitForTimeout(1200);
+ const veuZona=(chave)=>page.locator(`[data-gateway-tile="${chave}"]`).evaluate((el)=>Number(getComputedStyle(el,"::before").opacity));
+ for(const chave of ["catalogo","biblioteca","modulo3d","projetos"]) assert.equal(await veuZona(chave),0,`Em repouso o bloco ${chave} não escurece a foto (véu 0)`);
+ assert.equal(await page.locator(".catalog-gateway-photo").evaluate((el)=>{const cs=getComputedStyle(el);return cs.filter+"|"+cs.mixBlendMode+"|"+cs.opacity;}),"none|normal|1","A foto do Portal não tem filter, blend nem opacidade — só a foto");
  const spacingBefore=await catalogoTitle.evaluate(el=>getComputedStyle(el).letterSpacing);
  await page.locator('[data-gateway-tile="catalogo"]').hover();
  await page.waitForTimeout(1300);
  const spacingAfter=await catalogoTitle.evaluate(el=>getComputedStyle(el).letterSpacing);
  assert.ok(parseFloat(spacingAfter)>parseFloat(spacingBefore),`Letra do título deve "abrir" no hover (${spacingBefore} -> ${spacingAfter})`);
+ assert.equal(await veuZona("catalogo"),0.5,"No hover o bloco escurece (véu .5) — o efeito que o usuário gosta continua");
+ assert.equal(await veuZona("biblioteca"),0,"...só o bloco com o mouse: os outros continuam naturais");
  await page.mouse.move(0,0);
  await page.screenshot({path:path.join(os.tmpdir(),'catalogo-portal-decorador.png')});
 
@@ -65,7 +72,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  // removido do corpo (duplicava o rótulo do cabeçalho, #catalogPageLabel).
  await page.locator('[data-gateway-tile="catalogo"]').click();
  await page.locator('.catalog-home-grid').waitFor();
- assert.equal(await page.locator('#catalogPageLabel').textContent(),'Categoria');
+ assert.equal(await page.locator('#catalogPageLabel').textContent(),'Categorias');
 
  // Logo volta pro Portal.
  await page.locator('.catalog-brand').click();
@@ -91,7 +98,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  assert.equal(await page.locator('.catalog-modulo3d-tile').count(),3,'3 cards no mini-menu');
  await page.locator('[data-modulo3d-card="estudio"]').click();
  await page.locator('#catalogStudio:not(.hidden)').waitFor();
- assert.equal(await page.locator('#catalogPageLabel').textContent(),'Painel 3D');
+ assert.equal(await page.locator('#catalogPageLabel').textContent(),'3D Livre');
 
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(150);
  await page.locator('.catalog-brand').click();
@@ -278,7 +285,11 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  assert.equal(elAtApplyPoint,'BUTTON','Botão Aplicar não pode ficar coberto por outro elemento');
  await applyBtn.click();
  await page.waitForFunction(()=>window.testUploaded.length===1);
- assert.equal(await page.evaluate(()=>window.testUploaded[0].path),'company/_capas/portal.png','Mesmo caminho fixo por chave usado pela troca instantânea');
+ // O editor de recorte agora grava JPEG, não PNG sem compressão (bug real
+ // corrigido: fotos chegavam a 8-16MB cada só por causa disso) — extensão
+ // segue o blob de verdade, então vira .jpg.
+ assert.equal(await page.evaluate(()=>window.testUploaded[0].path),'company/_capas/portal.jpg','Mesmo caminho fixo por chave usado pela troca instantânea, agora em .jpg (crop grava JPEG)');
+ assert.equal(await page.evaluate(()=>window.testUploaded[0].type),'image/jpeg');
  await page.locator('.catalog-inline-crop-overlay').waitFor({state:'detached',timeout:5000});
  assert.equal(await page.locator('.catalog-gateway').count(),1,'Portal continua de pé depois de aplicar (renderGateway() reconstrói a tela)');
  await page.getByText('Foto atualizada',{exact:true}).waitFor();

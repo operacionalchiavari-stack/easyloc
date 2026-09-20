@@ -136,8 +136,15 @@ function pdfFixture(pages = 1, size = 300) {
     await page.locator('[name="periodo"][value="noite"]').check();
     await page.locator('[name="convidados"]').selectOption('poucos');
     await page.locator('[name="iluminacao"]').selectOption('cenica');
+    await page.evaluate(()=>{const original=window.catalogRegisterRenderItems;window.__registrados=[];window.catalogRegisterRenderItems=(src,objetos)=>{window.__registrados.push({src,objetos});original?.(src,objetos);};});
     await page.locator('.studio-render-confirm').click();
     await page.getByText('Sua renderização ficou pronta',{exact:true}).waitFor();
+    // O projeto leva os mesmos móveis da composição junto com a renderização — o 3D Livre registra a lista quando a imagem chega.
+    const registrado3d=await page.evaluate(()=>window.__registrados);
+    assert.equal(registrado3d.length,1);
+    assert.equal(registrado3d[0].objetos.length,1,'Um móvel na cena, um móvel registrado');
+    assert.ok(registrado3d[0].objetos[0].itemId&&registrado3d[0].objetos[0].itemName);
+    assert.match(registrado3d[0].src,/^data:image\/png;base64,/);
     // Pedido explícito do usuário: "quero que a notificação de todos os
     // módulos apareça a imagem, igual é em troca de tecido" — a
     // notificação de sucesso do Estúdio de Ambientes também mostra a foto

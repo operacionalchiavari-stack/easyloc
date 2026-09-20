@@ -1,7 +1,8 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260919-notifyimage";
-import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20260917-sem-titulo-duplicado";
-import { initCatalogLounge, openCatalogLounge, teardownCatalogLounge } from "./catalogo-lounge.mjs?v=20260919-notifyimage";
+import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260920-moveis";
+import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20260919-zoom-galeria";
+import { initCatalogLounge, openCatalogLounge, teardownCatalogLounge } from "./catalogo-lounge.mjs?v=20260920-moveis";
+import { initCatalogProjetos, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup, atualizarBotoes as atualizarBotoesProjeto } from "./catalogo-projetos.mjs?v=20260921-mais-opcoes";
 
 const supabase = window.supabaseClient;
 const FOTO_PLACEHOLDER = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
@@ -9,6 +10,8 @@ const FOTO_PLACEHOLDER = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3
 // de Destaques e o menu de categorias no cabeçalho — vira o menu do
 // catálogo, mostrando um card por categoria (ver renderHome()).
 const HOME_VIEW = "__home__";
+// Itens que passam pelos filtros da tela "Categorias", na visualização imersiva (ver applyView/renderCurrentView).
+const FILTER_VIEW = "__filtro__";
 // Portal de entrada (pedido explícito do usuário): 3 destinos — Catálogo,
 // Biblioteca, Módulo 3D — primeira tela tanto da equipe quanto do
 // decorador (ver renderGateway()). É o valor inicial de activeView, "na
@@ -28,6 +31,9 @@ const GATEWAY_TILES = [
   { key: "catalogo", label: "Catálogo" },
   { key: "biblioteca", label: "Biblioteca" },
   { key: "modulo3d", label: "Módulo 3D" },
+  // 4º destino (pedido explícito do usuário: montar um projeto por evento, dividido em ambientes, direto do catálogo)
+  // — ver catalogo-projetos.mjs.
+  { key: "projetos", label: "Projetos" },
 ];
 // Mini-menu do Módulo 3D (pedido explícito do usuário: "quando a pessoa
 // clicar em módulo 3D... quero que apareça como se fosse outro mini menu,
@@ -48,13 +54,29 @@ const MODULO3D_MENU_VIEW = "__modulo3d__";
 // "planejador-eventos" virou "Módulo Lounge" (pedido explícito do
 // usuário: "vira o card 'Planejador de eventos'") — tela dedicada e mais
 // simples que o Estúdio de Ambientes, pra montar composições de lounge
-// (sofá + poltronas), ver catalogo-lounge.mjs. "Realidade aumentada"
-// continua "Em breve", sem mudança.
+// (sofá + poltronas), ver catalogo-lounge.mjs.
+//
+// RENOMEADOS (pedido explícito do usuário, olhando o mini-menu): o 1º
+// virou "3D Livre" (montagens de espaços inteiros), o do meio
+// "Composições" (testar/criar composições novas, sair do óbvio) e o
+// último perdeu o nome e passou a mostrar só "Em desenvolvimento". Chegou
+// a ter uma frase de descrição por card (revelada no hover) — o usuário
+// pediu logo em seguida pra tirar: "retire as frases, deixe somente os
+// títulos". `label` é o NOME do módulo (usado também na trilha, no rótulo
+// do cabeçalho e na linha do tempo — ver modulo3dLabel()); `title` (só o
+// 3º card) é o que APARECE escrito no quadro quando é diferente do nome —
+// a Realidade aumentada não mostra mais o próprio nome, mas `label`
+// continua identificando o card pra equipe nos botões de marcar o modelo
+// em destaque.
 const MODULO3D_CARDS = [
-  { key: "estudio", label: "Estúdio de Ambientes", description: "Crie composições com os móveis da Chiavari", action: "studio", available: true },
-  { key: "lounge", label: "Módulo Lounge", description: "Teste formatações e combinações com o nosso acervo de forma rápida e prática", action: "lounge", available: true },
-  { key: "realidade-aumentada", label: "Realidade aumentada", description: "Visualize os móveis no seu espaço", action: null, available: false },
+  { key: "estudio", label: "3D Livre", action: "studio", available: true },
+  { key: "lounge", label: "Composições", action: "lounge", available: true },
+  { key: "realidade-aumentada", label: "Realidade aumentada", title: "Em desenvolvimento", action: null, available: false },
 ];
+// Nome de um módulo pela chave — fonte única pro rótulo do cabeçalho, a
+// trilha e a linha do tempo (antes eram textos soltos "Painel 3D"/"Módulo
+// Lounge" repetidos em 3 lugares).
+const modulo3dLabel = (key) => MODULO3D_CARDS.find((card) => card.key === key)?.label || "";
 // Pedido explícito do usuário: "quero um 3D diferente pra cada módulo" —
 // antes só existia 1 modelo em destaque pra tela inteira (item.
 // capaModulo3d/coluna capa_modulo3d); agora cada card do mini-menu tem
@@ -66,13 +88,78 @@ const MODULO3D_CARDS = [
 // correspondente no banco.
 const MODULO3D_CAPA_FIELD = { estudio: "capaModulo3dEstudio", lounge: "capaModulo3dLounge", "realidade-aumentada": "capaModulo3dAr" };
 const MODULO3D_CAPA_COLUMN = { estudio: "capa_modulo3d_estudio", lounge: "capa_modulo3d_lounge", "realidade-aumentada": "capa_modulo3d_ar" };
-const state = { items: [], activeView: GATEWAY_VIEW, company: null, decorator: null, catalogSession: null, sectionObserver: null, activeSection: null, eventTimer: null, customizeItem: null, fabricDataUrl: "", fabricFile: null, viewMode: "immersive", currentItems: [], currentHeading: "", overlay: null, gatewayCapas: {}, acessoInterno: false, activeSubcat: "", currentCategoryItems: null };
+const state = { items: [], activeView: GATEWAY_VIEW, company: null, decorator: null, catalogSession: null, sectionObserver: null, activeSection: null, eventTimer: null, customizeItem: null, fabricDataUrl: "", fabricFile: null, viewMode: "immersive", currentItems: [], currentHeading: "", overlay: null, gatewayCapas: {}, acessoInterno: false, eventPaused: false, activeSubcat: "", homeFilters: newHomeFilters(), homeFilterOpen: "", currentCategoryItems: null, navBack: [], navForward: [], navCurrent: null, navSuppress: false, timelineSignature: "" };
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
 }[ch]));
 const escapeAttr = (value) => escapeHtml(value).replace(/`/g, "&#96;");
 const normalizeSearch = (value) => String(value || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+// Cat\u00e1logo lento pra carregar fotos ao entrar numa categoria (pedido
+// expl\u00edcito do usu\u00e1rio: "busque formas do cat\u00e1logo abrir com mais
+// agilidade"). Investiga\u00e7\u00e3o confirmou 2 causas reais, corrigidas juntas:
+// (1) o Storage do Supabase deste projeto j\u00e1 tem transforma\u00e7\u00e3o de imagem
+// habilitada (plano Pro, testado direto: /storage/v1/render/image/...
+// responde 200 e devolve um JPEG bem menor, cacheado no CDN da pr\u00f3pria
+// Supabase) \u2014 s\u00f3 faltava o cat\u00e1logo pedir a vers\u00e3o certa pra cada
+// contexto em vez do arquivo original; (2) o editor de recorte (cadastro
+// de item E o ajuste inline dentro do cat\u00e1logo) gravava PNG sem
+// compress\u00e3o no tamanho quase nativo da foto original \u2014 fotos reais
+// encontradas no banco chegavam a 8-16MB CADA, s\u00f3 por causa desse bug
+// (ver corre\u00e7\u00e3o em cropSessionBlob() mais abaixo). otimizarFoto() ataca a
+// causa (1): pede ao Storage uma vers\u00e3o j\u00e1 redimensionada/recomprimida em
+// vez do arquivo cru, sem precisar reprocessar nada que j\u00e1 est\u00e1 salvo \u2014
+// resolve tanto fotos antigas (j\u00e1 gigantes) quanto novas de uma vez.
+const IMG_WIDTH = {
+  hero: 1600,   // foto principal/ambientada em tela cheia (imersiva)
+  gateway: 1920, // foto do Portal, full-bleed
+  card: 380,    // cards da Home/grade de categorias/produtos
+  mosaic: 640,  // colunas do modo mosaico
+  thumb: 160,   // itens relacionados, miniaturas pequenas
+  swatch: 110,  // c\u00edrculos de cor das variantes
+  toast: 340,   // foto dentro da notifica\u00e7\u00e3o
+  zoom: 3200,   // visualizador de zoom (clique na foto) \u2014 perto do original, s\u00f3 sob demanda
+};
+// Qualidade um pouco mais alta s\u00f3 pras fotos GRANDES (tela cheia) \u2014 \u00e9
+// nelas que a pessoa realmente repara em detalhe/textura ("eu quero que
+// as fotos tenha uma qualidade boa"); miniaturas pequenas continuam na
+// qualidade padr\u00e3o de otimizarFoto() (74), onde a diferen\u00e7a visual n\u00e3o
+// se nota mas o peso do arquivo importa mais.
+const IMG_QUALITY_HERO = 82;
+// Qualidade do visualizador de zoom (clique na foto) — mais alta ainda
+// que IMG_QUALITY_HERO porque aqui a pessoa está deliberadamente
+// procurando ver detalhe/textura de perto; IMG_WIDTH.zoom (3200) já é
+// perto do original, então uma perda maior de qualidade seria óbvia
+// justo no lugar onde mais importa não ter.
+const IMG_QUALITY_ZOOM = 90;
+
+// Reescreve uma URL p\u00fablica do Storage pra pedir a vers\u00e3o transformada
+// (redimensionada + recomprimida, cacheada pelo CDN da Supabase) em vez
+// do arquivo original. Nunca mexe em URLs que n\u00e3o sejam do Storage
+// (data:, blob:, o SVG embutido do placeholder "Sem foto") \u2014 passam
+// direto, sem transforma\u00e7\u00e3o nenhuma. Importante: NUNCA aplicar em
+// item.photo/detail.img/event.img guardados no objeto do item \u2014 v\u00e1rias
+// rotinas (crop inline, compara\u00e7\u00e3o de troca de variante) precisam da URL
+// crua original; s\u00f3 transformar no exato ponto de montar o `src` vis\u00edvel.
+// BUG REAL já encontrado e corrigido (usuário reportou com print: fotos
+// da Home cortadas/esticadas, só uma fatia vertical do móvel visível):
+// pedir só `width` ao transformador do Supabase, sem `resize=contain`,
+// faz ele manter a ALTURA ORIGINAL inteira e só encolher a largura — uma
+// foto de 5215x4032 virava 1600x4032 (achatada/cortada), não 1600x1237
+// (proporcional). `resize=contain` corrige isso mesmo sem informar
+// height (o Storage calcula a altura sozinho a partir da proporção real
+// do arquivo) — testado direto contra o Storage antes de aplicar aqui.
+function otimizarFoto(url, width, quality = 74){
+  if(!url || typeof url !== "string" || !width) return url;
+  const marcador = "/storage/v1/object/public/";
+  const indice = url.indexOf(marcador);
+  if(indice === -1) return url;
+  const base = url.slice(0, indice);
+  const caminho = url.slice(indice + marcador.length);
+  const separador = caminho.includes("?") ? "&" : "?";
+  return `${base}/storage/v1/render/image/public/${caminho}${separador}width=${width}&quality=${quality}&resize=contain`;
+}
 
 function notify({ title, message, status = "done", actionLabel = "", onAction = null, duration = 7000, image = "" }){
   const host = $("catalogNotifications");
@@ -110,7 +197,7 @@ function notify({ title, message, status = "done", actionLabel = "", onAction = 
   }
   function paint(){
     toast.className = `catalog-notification is-${state.status}${state.image ? " has-photo" : ""}`;
-    toast.innerHTML = `${state.image ? `<img class="catalog-notification-photo" src="${escapeAttr(state.image)}" alt="">` : ""}${iconHTML()}<div class="catalog-notification-copy"><strong>${escapeHtml(state.title)}</strong><span>${escapeHtml(state.message)}</span></div>${state.actionLabel ? `<button type="button" class="catalog-notification-action">${escapeHtml(state.actionLabel)}</button>` : ""}<button type="button" class="catalog-notification-close" aria-label="Fechar">×</button>`;
+    toast.innerHTML = `${state.image ? `<img class="catalog-notification-photo" src="${escapeAttr(otimizarFoto(state.image, IMG_WIDTH.toast))}" alt="">` : ""}${iconHTML()}<div class="catalog-notification-copy"><strong>${escapeHtml(state.title)}</strong><span>${escapeHtml(state.message)}</span></div>${state.actionLabel ? `<button type="button" class="catalog-notification-action">${escapeHtml(state.actionLabel)}</button>` : ""}<button type="button" class="catalog-notification-close" aria-label="Fechar">×</button>`;
     toast.querySelector(".catalog-notification-close")?.addEventListener("click", close);
     toast.querySelector(".catalog-notification-action")?.addEventListener("click", () => { state.onAction?.(); close(); });
     stopPercentTimer();
@@ -208,6 +295,7 @@ function mapRow(row){
     id: row.id,
     tipo: row.tipo,
     material: row.material || "",
+    estilo: row.estilo || "",
     cor: row.cor || "",
     personalizable: row.personalizable === true,
     cat: slugify(row.categoria),
@@ -254,6 +342,10 @@ function mapRow(row){
       { label: "Cor", value: row.cor },
       { label: "Estilo", value: row.estilo },
       { label: "Marca/Modelo", value: row.marca_modelo },
+      // As medidas moravam numa linha própria abaixo do nome (.product-dimensions,
+      // com letras bem espaçadas); a pedido do usuário ("coloque as medidas junto
+      // com categoria, material...") viraram uma linha das specs, como as outras.
+      { label: "Medidas", value: formatDims(row.largura, row.altura, row.profundidade) },
       { label: "Código", value: row.referencia },
     ].filter((spec) => String(spec.value || "").trim()),
     photo: row.foto_url || FOTO_PLACEHOLDER,
@@ -382,8 +474,8 @@ function renderHeader(){
 // precisa refletir a altura REAL renderizada, nao um numero fixo.
 // ResizeObserver acompanha qualquer mudanca (janela redimensionada etc.).
 // Observa só .catalog-header (não o wrapper .catalog-top-chrome) — a
-// trilha de navegação (ver renderBreadcrumb/.catalog-breadcrumb) é
-// position:absolute, flutua por CIMA do conteúdo em vez de empurrá-lo
+// trilha de navegação ("Catálogo / Categoria / Item", apagada depois a
+// pedido do usuário) era position:absolute, flutuava por CIMA do conteúdo em vez de empurrá-lo
 // pra baixo (pedido explícito do usuário: a foto ambientada em tela
 // cheia precisa encostar no cabeçalho, não parar na trilha), então ela
 // não deve entrar nesta conta — só o cabeçalho reserva espaço de
@@ -416,7 +508,7 @@ function itemsForView(view){
 // (que já são, por natureza, uma grade, sem uma "visualização imersiva"
 // equivalente).
 function updateViewToggleVisibility(){
-  $("catalogViewSwitcher")?.classList.toggle("hidden", state.activeView === HOME_VIEW || state.activeView === GATEWAY_VIEW || state.activeView === MODULO3D_MENU_VIEW || state.overlay);
+  $("catalogViewSwitcher")?.classList.toggle("hidden", state.activeView === HOME_VIEW || state.activeView === FILTER_VIEW || state.activeView === GATEWAY_VIEW || state.activeView === MODULO3D_MENU_VIEW || state.overlay);
 }
 
 // Único jeito de abrir esses dois overlays hoje: os blocos do Portal
@@ -440,6 +532,11 @@ function openLoungeOverlay(){
   openCatalogLounge();
 }
 
+function openProjetosOverlay(options = {}){
+  setActiveOverlay("projetos");
+  openCatalogProjetos(options);
+}
+
 // Clique/Enter num bloco do Portal (ver renderGateway). "Módulo 3D" não
 // abre mais o estúdio direto — leva pro mini-menu novo (MODULO3D_MENU_VIEW),
 // que por sua vez tem o estúdio como um dos 3 cards (ver activateModulo3dCard).
@@ -447,6 +544,7 @@ function activateGatewayTile(key){
   if(key === "catalogo") applyView(HOME_VIEW);
   else if(key === "biblioteca") openBibliotecaOverlay();
   else if(key === "modulo3d") applyView(MODULO3D_MENU_VIEW);
+  else if(key === "projetos") openProjetosOverlay();
 }
 
 // Clique num card disponível (Estúdio, Lounge) — o recurso futuro
@@ -473,18 +571,24 @@ function setActiveOverlay(mode){
   // dele (troca pra outro overlay OU fecha o overlay de vez), diferente
   // do Painel 3D, que só pausa o render loop enquanto escondido.
   if(state.overlay === "lounge" && mode !== "lounge") teardownCatalogLounge();
+  // Projetos salva o que estiver pendente ao sair da tela.
+  if(state.overlay === "projetos" && mode !== "projetos") closeCatalogProjetos();
   state.overlay = mode;
   $("catalogStudio")?.classList.toggle("hidden", mode !== "studio");
   $("catalogBiblioteca")?.classList.toggle("hidden", mode !== "biblioteca");
   $("catalogLounge")?.classList.toggle("hidden", mode !== "lounge");
+  $("catalogProjetos")?.classList.toggle("hidden", mode !== "projetos");
   $("catalogGrid")?.classList.toggle("hidden", Boolean(mode));
   $("catalogSearch")?.closest(".catalog-search")?.classList.toggle("hidden", Boolean(mode));
   updateViewToggleVisibility();
-  renderBreadcrumb();
+  syncNavigation();
 }
 
-function applyView(view){
+function applyView(view, options = {}){
   state.activeView = view;
+  // Voltar pro Portal é recomeçar: os filtros da tela "Categorias" zeram (navegar entre as telas de dentro
+  // do catálogo os mantém — abrir um item e voltar pela linha do tempo não perde o que foi filtrado).
+  if(view === GATEWAY_VIEW){ state.homeFilters = newHomeFilters(); state.homeFilterOpen = ""; }
   // Pedido explícito do usuário, com print mostrando a visualização em
   // grade aberta numa categoria: "quando eu clicar em categoria, eu
   // quero que apareça assim, sempre" — toda vez que a pessoa entra numa
@@ -498,7 +602,10 @@ function applyView(view){
   // só chama renderProducts direto) herdaria esse "grid" sempre que
   // rodasse a partir da Home sem antes ter entrado numa categoria,
   // mudando um comportamento que não foi pedido.
-  if(view !== GATEWAY_VIEW && view !== HOME_VIEW && view !== MODULO3D_MENU_VIEW){
+  if(view === FILTER_VIEW){
+    state.viewMode = "immersive";
+    updateViewToggleButton();
+  }else if(view !== GATEWAY_VIEW && view !== HOME_VIEW && view !== MODULO3D_MENU_VIEW){
     state.viewMode = "grid";
     updateViewToggleButton();
   }
@@ -514,12 +621,18 @@ function applyView(view){
   setActiveOverlay(null);
   if($("catalogSearch")) $("catalogSearch").value = "";
   renderCurrentView();
-  renderBreadcrumb();
+  syncNavigation();
   // "auto" aqui respeitaria o `scroll-behavior:smooth` do <html> (definido
   // em catalogo.css pros outros scrolls do catálogo) e animaria a subida —
   // exatamente o efeito que o usuário pediu pra tirar ao trocar de
   // categoria. "instant" ignora esse CSS e pula direto pro topo.
   window.scrollTo({ top: 0, behavior: "instant" });
+  // Vindo de um card dos resultados filtrados: já cai no item clicado, dentro da lista filtrada.
+  if(options.focusItemId){
+    const focado = findItemById(options.focusItemId);
+    const section = focado ? showItemSection(focado) : null;
+    requestAnimationFrame(() => section?.scrollIntoView({ behavior: "instant", block: "start" }));
+  }
 }
 
 function categoryButtons(activeCat){
@@ -553,13 +666,16 @@ function specsPanel(item){
 // entram slides com foto de verdade (nunca mostra um slide vazio pra
 // quem não pode editar).
 function mainSlides(item){
-  const slides = [{ slot: "principal", src: item.photo, alt: item.name, empty: false }];
+  // `rawSrc` guarda a URL crua (sem transformação) — é o que vai pra
+  // data-original-src, único lugar que precisa da identidade real do
+  // arquivo; `src` (transformado via otimizarFoto) é só pra exibição.
+  const slides = [{ slot: "principal", src: otimizarFoto(item.photo, IMG_WIDTH.hero, IMG_QUALITY_HERO), rawSrc: item.photo, alt: item.name, empty: false }];
   ["detalhe_01", "detalhe_02"].forEach((slot) => {
     const detail = item.details.find((foto) => foto.slot === slot);
     if(detail){
-      slides.push({ slot, src: detail.img, alt: detail.label, empty: false });
+      slides.push({ slot, src: otimizarFoto(detail.img, IMG_WIDTH.hero, IMG_QUALITY_HERO), rawSrc: detail.img, alt: detail.label, empty: false });
     }else if(state.acessoInterno){
-      slides.push({ slot, src: FOTO_PLACEHOLDER, alt: ITEM_PHOTO_SLOTS_CONFIG[slot].label, empty: true });
+      slides.push({ slot, src: FOTO_PLACEHOLDER, rawSrc: FOTO_PLACEHOLDER, alt: ITEM_PHOTO_SLOTS_CONFIG[slot].label, empty: true });
     }
   });
   return slides;
@@ -583,7 +699,7 @@ function renderMainSlide(section, item, slot){
     img.alt = target.alt;
     img.classList.toggle("is-empty-slide", target.empty);
     if(target.slot === "principal"){
-      img.dataset.originalSrc = target.src;
+      img.dataset.originalSrc = target.rawSrc;
       img.dataset.originalAlt = target.alt;
     }
     requestAnimationFrame(() => img.classList.remove("is-changing"));
@@ -643,14 +759,18 @@ function mainCarouselMarkup(item){
 // de cada cor embaixo do círculo (pedido "estilo marketplace" de uma
 // sessão anterior) foi mantido — só o cabeçalho do grupo que sumiu, não
 // a legenda de cada variante.
+function variantLabel(variante){
+  return [variante.cor, variante.desc].filter((valor) => String(valor || "").trim()).join(" ") || "Padrão";
+}
+
 function variantSwatchesBlock(item){
   const grupo = item.variantGroup;
   if(!grupo || grupo.length < 2) return "";
   return `<div class="product-variants-row" role="group" aria-label="Cores disponíveis">
     ${grupo.map((variante) => {
-      const rotulo = [variante.cor, variante.desc].filter((valor) => String(valor || "").trim()).join(" ") || "Padrão";
+      const rotulo = variantLabel(variante);
       return `<button type="button" class="product-variant-swatch ${String(variante.id) === String(item.id) ? "active" : ""}" data-variant-id="${escapeAttr(variante.id)}" title="${escapeAttr(rotulo)}" aria-label="${escapeAttr(rotulo)}">
-        <span class="product-variant-swatch-photo"><img src="${escapeAttr(variante.photo)}" alt="${escapeAttr(rotulo)}" loading="lazy" decoding="async"></span>
+        <span class="product-variant-swatch-photo"><img src="${escapeAttr(otimizarFoto(variante.photo, IMG_WIDTH.swatch))}" alt="${escapeAttr(rotulo)}" loading="lazy" decoding="async"></span>
         <span class="product-variant-swatch-label">${escapeHtml(variante.cor || rotulo)}</span>
       </button>`;
     }).join("")}
@@ -680,15 +800,53 @@ function capaToggleMarkup(item){
 function eventPanelMarkup(item, index){
   const event = item.events[0];
   const img = event
-    ? `<img class="product-event-image" src="${escapeAttr(event.img)}" alt="${escapeAttr(event.label)}" data-event-index="0" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`
+    ? `<img class="product-event-image" src="${escapeAttr(otimizarFoto(event.img, IMG_WIDTH.hero, IMG_QUALITY_HERO))}" alt="${escapeAttr(event.label)}" data-event-index="0" data-original-src="${escapeAttr(event.img)}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`
     : `<img class="event-fallback" src="${escapeAttr(FOTO_PLACEHOLDER)}" alt="Sem foto">`;
-  if(!state.acessoInterno) return img;
+  const controls = eventControlsMarkup(item);
+  if(!state.acessoInterno) return img + controls;
   const slots = ["galeria_01", "galeria_02", "galeria_03"];
   const picker = `<div class="catalog-event-slot-picker">${slots.map((slot) => {
     const filled = item.events.some((foto) => foto.slot === slot);
     return `<button type="button" class="catalog-event-slot-dot ${filled ? "is-filled" : ""}" data-inline-edit="${escapeAttr(slot)}" aria-label="Ajustar ${escapeAttr(ITEM_PHOTO_SLOTS_CONFIG[slot].label)}"></button>`;
   }).join("")}</div>`;
-  return img + picker;
+  return img + controls + picker;
+}
+
+// Setas (anterior/próxima) e "pausar" da foto ambientada (pedido do usuário: "na foto do item ambientado eu
+// quero que tenha uma seta de avançar ou voltar e um pause também, bem discreto, pra parar de alterar").
+// A foto ambientada troca sozinha a cada 10s (startEventRotation); agora dá pra passar na mão e pra parar a
+// troca automática. Só aparecem com 2+ fotos (com uma só não há o que trocar). "Pausar" vale pra TODOS os
+// itens enquanto a página está aberta (state.eventPaused) — as setas continuam funcionando pausado.
+const EVENT_ICONS = {
+  prev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.4" height="14" rx="1"/><rect x="13.6" y="5" width="3.4" height="14" rx="1"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>',
+};
+
+function eventPauseAttrs(){
+  return state.eventPaused
+    ? { label: "Retomar a troca automática das fotos", icon: EVENT_ICONS.play }
+    : { label: "Pausar a troca automática das fotos", icon: EVENT_ICONS.pause };
+}
+
+function eventControlsMarkup(item){
+  if(item.events.length < 2) return "";
+  const pause = eventPauseAttrs();
+  return `<button type="button" class="catalog-event-nav is-prev" data-event-nav="prev" aria-label="Foto ambientada anterior" title="Anterior">${EVENT_ICONS.prev}</button>
+    <button type="button" class="catalog-event-nav is-next" data-event-nav="next" aria-label="Próxima foto ambientada" title="Próxima">${EVENT_ICONS.next}</button>
+    <button type="button" class="catalog-event-pause" data-event-pause aria-pressed="${state.eventPaused}" aria-label="${pause.label}" title="${pause.label}">${pause.icon}</button>`;
+}
+
+// Todos os botões de pausar que estão na tela acompanham o estado (só as seções renderizadas existem no DOM).
+function syncEventPauseButtons(){
+  const pause = eventPauseAttrs();
+  document.querySelectorAll("[data-event-pause]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(state.eventPaused));
+    button.setAttribute("aria-label", pause.label);
+    button.title = pause.label;
+    button.innerHTML = pause.icon;
+  });
 }
 
 // Sugestões de combinação (pedido explícito do usuário, no lugar onde
@@ -736,7 +894,7 @@ function relatedItemsMarkup(item){
     <span class="catalog-related-label">Combine também com</span>
     <div class="catalog-related-track">
       ${looped.map((relacionado, i) => `<button type="button" class="catalog-related-item" data-related-item="${escapeAttr(relacionado.id)}" aria-label="Ver ${escapeAttr(relacionado.name)}"${i >= related.length ? ' tabindex="-1" aria-hidden="true"' : ""}>
-        <img class="catalog-related-photo" src="${escapeAttr(relacionado.photo)}" alt="${escapeAttr(relacionado.name)}" loading="lazy" decoding="async">
+        <img class="catalog-related-photo" src="${escapeAttr(otimizarFoto(relacionado.photo, IMG_WIDTH.thumb))}" alt="${escapeAttr(relacionado.name)}" loading="lazy" decoding="async">
         <span class="catalog-related-name">${escapeHtml(relacionado.name)}</span>
       </button>`).join("")}
     </div>
@@ -753,15 +911,15 @@ function productTemplate(item, index){
             <h1 class="product-title">${escapeHtml(item.name)}</h1>
             ${variantSwatchesBlock(item)}
           </div>
-          ${item.dims ? `<p class="product-dimensions">${escapeHtml(item.dims)}</p>` : ""}
           <div class="product-rule" aria-hidden="true"></div>
           ${specsPanel(item)}
           ${personalizavel ? `<button type="button" class="product-bespoke-card ${item.personalizable ? "" : "hidden"}" data-customize-item="${escapeAttr(item.id)}"><span>SOB MEDIDA</span><strong>Experimente outro tecido</strong><small>Personalize com inteligência artificial →</small></button>` : ""}
           ${capaToggleMarkup(item)}
           ${capaModulo3dToggleMarkup(item)}
+          ${projetoAddMarkup(item.id, "page")}
         </div>
         <div class="product-main-media product-reveal${state.acessoInterno ? " catalog-editable" : ""}" data-active-slot="principal">
-          <img class="product-main-image" src="${escapeAttr(item.photo)}" alt="${escapeAttr(item.name)}" data-original-src="${escapeAttr(item.photo)}" data-original-alt="${escapeAttr(item.name)}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
+          <img class="product-main-image" src="${escapeAttr(otimizarFoto(item.photo, IMG_WIDTH.hero, IMG_QUALITY_HERO))}" alt="${escapeAttr(item.name)}" data-original-src="${escapeAttr(item.photo)}" data-original-alt="${escapeAttr(item.name)}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
           ${mainCarouselMarkup(item)}
           ${state.acessoInterno ? `<span class="catalog-inline-edit-badge" data-inline-edit="principal" role="button" tabindex="0" aria-label="Ajustar foto principal">✎</span>` : ""}
         </div>
@@ -788,80 +946,219 @@ function currentViewLabel(){
 // "Categoria", dentro de uma categoria = o nome dela, overlays =
 // "Biblioteca"/"Painel 3D"). Diferente da trilha logo abaixo, este
 // SEMPRE mostra algo (não some no Portal) — chamado de dentro de
-// renderBreadcrumb(), que já roda em todo ponto de navegação certo.
+// syncNavigation(), que já roda em todo ponto de navegação certo.
+// Extraído de updatePageLabel() pra ser reaproveitado pelas legendas das
+// setas de voltar/avançar (ver trackNavHistory() mais abaixo) — mesmo
+// texto pra QUALQUER screen {activeView, overlay}, não só o atual.
+function screenLabelFor(screen){
+  if(screen.overlay === "biblioteca") return "Biblioteca";
+  if(screen.overlay === "projetos") return "Projetos";
+  if(screen.overlay === "studio") return modulo3dLabel("estudio");
+  if(screen.overlay === "lounge") return modulo3dLabel("lounge");
+  if(screen.activeView === GATEWAY_VIEW) return "Home";
+  if(screen.activeView === HOME_VIEW) return "Categorias";
+  if(screen.activeView === FILTER_VIEW) return "Resultados";
+  if(screen.activeView === MODULO3D_MENU_VIEW) return "Módulo 3D";
+  return getCategories().find((category) => category.cat === screen.activeView)?.label || "Categoria";
+}
+
 function updatePageLabel(){
   const label = $("catalogPageLabel");
   if(!label) return;
-  if(state.overlay === "biblioteca") label.textContent = "Biblioteca";
-  else if(state.overlay === "studio") label.textContent = "Painel 3D";
-  else if(state.overlay === "lounge") label.textContent = "Módulo Lounge";
-  else if(state.activeView === GATEWAY_VIEW) label.textContent = "Home";
-  else if(state.activeView === HOME_VIEW) label.textContent = "Categoria";
-  else if(state.activeView === MODULO3D_MENU_VIEW) label.textContent = "Módulo 3D";
-  else label.textContent = currentViewLabel() || "Categoria";
+  const text = screenLabelFor({ activeView: state.activeView, overlay: state.overlay });
+  if(label.textContent !== text) label.textContent = text;
 }
 
-// Trilha "Catálogo / Categoria / Nome do item" (pedido explícito do
-// usuário, pra saber o caminho percorrido) — cobre TODAS as telas de
-// dentro do módulo Catálogo, não só a navegação de produtos: usuário
-// confirmou depois que faltava também na Biblioteca ("no catálogo tem
-// mas na biblioteca não tem"). Só o Portal fica sem trilha (é o próprio
-// ponto de partida, ainda não existe caminho nenhum percorrido).
-const breadcrumbLink = (label, action) => `<button type="button" class="catalog-breadcrumb-link" data-breadcrumb="${escapeAttr(action)}">${escapeHtml(label)}</button>`;
-const breadcrumbCurrent = (label) => `<span class="catalog-breadcrumb-current" aria-current="page">${escapeHtml(label)}</span>`;
+// LINHA DO TEMPO das telas visitadas, no cabeçalho (pedido explícito do
+// usuário, evoluindo as antigas setas de voltar/avançar: "no menu eu quero
+// algo conceitual, eu quero que forme tipo uma linha do tempo com todas as
+// páginas que eu acessei, então por exemplo, a primeira seria home, a
+// segunda seria categorias, a terceira seria bares... a minha tela que eu
+// estou agora ela deve ser sempre centralizada e do jeito que está hoje...
+// quando eu mudasse de página rolasse um efeito no menu trocando de uma
+// tela pra outra, tipo uma rolagem"). Modelo de HISTÓRICO (a ORDEM em que a
+// pessoa navegou, com repetição — Home › Categorias › Bares › Categorias),
+// diferente da antiga trilha #catalogBreadcrumb (HIERARQUIA Catálogo/
+// Categoria/Item, já removida). Cada entrada é `{id, activeView, overlay}` — o suficiente pra
+// restaurar a tela via applyView()/openXOverlay(), sem tentar preservar
+// estado mais fino (scroll, item em foco, filtro). O `id` é o que permite
+// a animação de rolagem reconhecer a MESMA entrada entre uma renderização
+// e a seguinte (ver renderTimeline()).
+//
+// Estrutura no cabeçalho: [entradas anteriores] [#catalogPageLabel = a
+// tela ATUAL] [entradas seguintes] — as duas laterais são colunas iguais
+// de um grid `1fr auto 1fr`, então a tela atual fica no centro exato como
+// já era (ver .catalog-navigation em catalogo.css); as laterais só
+// mostram o que couber, esmaecendo pra fora.
+let navEntrySeq = 0;
+const TIMELINE_MAX_SIDE = 14;
+const TIMELINE_MAX_HISTORY = 60;
 
-// Chamada por applyView() (troca de categoria/Home), setActiveOverlay()
-// (abrir/fechar Biblioteca/Painel 3D), pelo observer de seção (rolar
-// pra outro item, ver setupObservers()) e pela busca — sempre recalcula
-// do zero a partir de state.activeView/state.overlay/state.activeSection,
-// nunca guardada à parte.
-function renderBreadcrumb(){
-  updatePageLabel();
-  const nav = $("catalogBreadcrumb");
-  if(!nav) return;
-  let segments;
-  // Overlay (Biblioteca/Painel 3D) vem ANTES do cheque de GATEWAY_VIEW:
-  // os dois podem ser abertos direto do Portal (activateGatewayTile),
-  // sem passar pela Home — nesse caso state.activeView ainda é
-  // GATEWAY_VIEW, mas a trilha precisa mostrar o overlay mesmo assim.
-  if(state.overlay === "biblioteca"){
-    segments = [breadcrumbLink("Catálogo", "home"), breadcrumbCurrent("Biblioteca")];
-  }else if(state.overlay === "studio"){
-    // O estúdio virou um dos cards do mini-menu (ver MODULO3D_CARDS) —
-    // por isso a trilha ganhou um 3º nível aqui, "Módulo 3D" no meio,
-    // levando de volta ao mini-menu em vez de reabrir o estúdio direto.
-    segments = [breadcrumbLink("Catálogo", "home"), breadcrumbLink("Módulo 3D", "modulo3d"), breadcrumbCurrent("Painel 3D")];
-  }else if(state.overlay === "lounge"){
-    // Mesmo raciocínio do Painel 3D acima — o Módulo Lounge também é um
-    // dos cards do mini-menu (ver MODULO3D_CARDS, action:"lounge").
-    segments = [breadcrumbLink("Catálogo", "home"), breadcrumbLink("Módulo 3D", "modulo3d"), breadcrumbCurrent("Módulo Lounge")];
-  }else if(state.activeView === GATEWAY_VIEW){
-    nav.classList.add("hidden");
-    nav.innerHTML = "";
-    return;
-  }else if(state.activeView === HOME_VIEW){
-    segments = [breadcrumbCurrent("Catálogo")];
-  }else if(state.activeView === MODULO3D_MENU_VIEW){
-    segments = [breadcrumbLink("Catálogo", "home"), breadcrumbCurrent("Módulo 3D")];
-  }else{
-    const categoryLabel = currentViewLabel();
-    if(!categoryLabel){
-      nav.classList.add("hidden");
-      nav.innerHTML = "";
+function trackNavHistory(){
+  const screen = { activeView: state.activeView, overlay: state.overlay };
+  const current = state.navCurrent;
+  if(!current){
+    state.navCurrent = { id: ++navEntrySeq, ...screen };
+  }else if(state.navSuppress){
+    // navSuppress fica true só durante jumpToHistoryEntry() (clique numa
+    // entrada da linha do tempo) — as pilhas já foram reorganizadas à mão
+    // ali; empilhar de novo aqui criaria um loop. Só sincroniza a tela da
+    // entrada com o que realmente ficou ativo (abrir um overlay não muda
+    // state.activeView, então os dois podem diferir).
+    current.activeView = screen.activeView;
+    current.overlay = screen.overlay;
+  }else if(current.activeView !== screen.activeView || current.overlay !== screen.overlay){
+    state.navBack.push(current);
+    if(state.navBack.length > TIMELINE_MAX_HISTORY) state.navBack.shift();
+    // Navegação NOVA descarta as entradas "seguintes" — igual navegador.
+    state.navForward = [];
+    state.navCurrent = { id: ++navEntrySeq, ...screen };
+  }
+  renderTimeline();
+}
+
+function restoreNavScreen(screen){
+  if(screen.overlay === "biblioteca") openBibliotecaOverlay();
+  else if(screen.overlay === "studio") openStudioOverlay();
+  else if(screen.overlay === "lounge") openLoungeOverlay();
+  else if(screen.overlay === "projetos") openProjetosOverlay();
+  else applyView(screen.activeView);
+}
+
+// Vai direto pra QUALQUER entrada da linha do tempo (anterior ou seguinte,
+// pulando quantas telas forem) — a lista inteira vira [...voltar, atual,
+// ...avançar], o alvo vira a tela atual e o que estava antes/depois dele
+// se reparte de novo nos dois lados.
+function jumpToHistoryEntry(id){
+  const all = [...state.navBack, state.navCurrent, ...state.navForward];
+  const targetIndex = all.findIndex((entry) => String(entry.id) === String(id));
+  if(targetIndex < 0 || targetIndex === state.navBack.length) return;
+  const target = all[targetIndex];
+  state.navBack = all.slice(0, targetIndex);
+  state.navForward = all.slice(targetIndex + 1);
+  state.navCurrent = target;
+  state.navSuppress = true;
+  restoreNavScreen(target);
+  state.navSuppress = false;
+}
+
+function timelineItemMarkup(entry, distance){
+  const label = screenLabelFor(entry);
+  return `<button type="button" class="catalog-timeline-item${distance === 1 ? " is-near" : ""}" data-timeline-entry="${entry.id}" style="--d:${distance}" aria-label="${escapeAttr(`Ir para ${label}`)}"><span>${escapeHtml(label)}</span></button>`;
+}
+
+// Retrato da posição/tamanho/opacidade de cada entrada visível (as das
+// laterais + a tela atual, que é o próprio #catalogPageLabel) — a base da
+// animação "FLIP": mede ANTES de mexer no DOM, mede DEPOIS, e anima cada
+// elemento do lugar antigo pro novo, pelo `id` da entrada.
+function timelineSnapshot(){
+  const snapshot = new Map();
+  const put = (element, id) => {
+    const box = element.getBoundingClientRect();
+    if(!box.width || !box.height || !id) return;
+    snapshot.set(String(id), { cx: box.left + box.width / 2, cy: box.top + box.height / 2, w: box.width, opacity: Number(getComputedStyle(element).opacity) });
+  };
+  document.querySelectorAll("#catalogTimelinePast [data-timeline-entry], #catalogTimelineFuture [data-timeline-entry]").forEach((element) => put(element, element.dataset.timelineEntry));
+  const label = $("catalogPageLabel");
+  if(label) put(label, label.dataset.entryId);
+  return snapshot;
+}
+
+const TIMELINE_ANIMATION = { duration: 640, easing: "cubic-bezier(.22,1,.36,1)" };
+
+// "Rolagem" ao trocar de tela (pedido explícito do usuário): a tela que
+// era a atual ENCOLHE e desliza pro lado virando uma entrada da linha do
+// tempo, e a nova cresce/entra no centro — tudo junto, como uma fita
+// rolando. Entrada que já existia (mesmo id) vai do lugar antigo pro novo;
+// a tela ATUAL nova, quando é uma navegação inédita (não existia antes),
+// entra vinda da direita.
+function animateTimeline(first){
+  if(!first.size || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const last = timelineSnapshot();
+  const label = $("catalogPageLabel");
+  const mobile = window.matchMedia("(max-width: 767px)").matches;
+  const targets = mobile
+    ? [[label, label.dataset.entryId]]
+    : [...document.querySelectorAll("#catalogTimelinePast [data-timeline-entry], #catalogTimelineFuture [data-timeline-entry]")].map((element) => [element, element.dataset.timelineEntry]).concat([[label, label.dataset.entryId]]);
+  targets.forEach(([element, id]) => {
+    const to = last.get(String(id));
+    if(!to) return;
+    const from = first.get(String(id));
+    if(!from || mobile){
+      const isLabel = element === label;
+      const shift = isLabel ? (from ? from.cx - to.cx : 90) : 0;
+      element.animate(
+        [{ transform: `translateX(${shift}px)`, opacity: 0 }, { transform: "none", opacity: to.opacity }],
+        TIMELINE_ANIMATION
+      );
       return;
     }
-    const itemId = state.activeSection?.dataset.productId;
-    const item = itemId ? findItemById(itemId) : null;
-    segments = [breadcrumbLink("Catálogo", "home")];
-    if(item){
-      segments.push(breadcrumbLink(categoryLabel, "category"));
-      segments.push(breadcrumbCurrent(item.name));
-    }else{
-      segments.push(breadcrumbCurrent(categoryLabel));
-    }
-  }
-  nav.innerHTML = segments.join(`<span class="catalog-breadcrumb-sep" aria-hidden="true">/</span>`);
-  nav.classList.remove("hidden");
+    const scale = to.w ? from.w / to.w : 1;
+    element.animate(
+      [
+        { transform: `translate(${from.cx - to.cx}px, ${from.cy - to.cy}px) scale(${scale})`, opacity: from.opacity },
+        { transform: "none", opacity: to.opacity },
+      ],
+      TIMELINE_ANIMATION
+    );
+  });
+}
+
+// Só redesenha (e anima) quando a linha do tempo mudou de verdade —
+// syncNavigation() roda várias vezes por navegação (applyView chama duas)
+// e a cada troca de item por scroll, e nada disso deve reiniciar a
+// animação: a assinatura (ids + rótulos) filtra esses casos.
+function renderTimeline(){
+  const past = $("catalogTimelinePast");
+  const future = $("catalogTimelineFuture");
+  const label = $("catalogPageLabel");
+  const current = state.navCurrent;
+  if(!past || !future || !label || !current) return;
+  const backSlice = state.navBack.slice(-TIMELINE_MAX_SIDE);
+  const forwardSlice = state.navForward.slice(0, TIMELINE_MAX_SIDE);
+  const currentLabel = screenLabelFor(current);
+  const signature = [backSlice.map((entry) => `${entry.id}:${screenLabelFor(entry)}`).join(","), `${current.id}:${currentLabel}`, forwardSlice.map((entry) => `${entry.id}:${screenLabelFor(entry)}`).join(",")].join("|");
+  if(signature === state.timelineSignature) return;
+  const first = timelineSnapshot();
+  past.innerHTML = backSlice.map((entry, index) => timelineItemMarkup(entry, backSlice.length - index)).join("");
+  future.innerHTML = forwardSlice.map((entry, index) => timelineItemMarkup(entry, index + 1)).join("");
+  label.textContent = currentLabel;
+  label.dataset.entryId = String(current.id);
+  // No Portal (rótulo "Home") as laterais somem — mesmo pedido explícito
+  // das antigas setas: "na home não precisa ter esses botões, só nos
+  // outros". A tela atual continua lá, centralizada, como sempre.
+  label.closest(".catalog-navigation")?.classList.toggle("is-portal", state.activeView === GATEWAY_VIEW && !state.overlay);
+  state.timelineSignature = signature;
+  animateTimeline(first);
+}
+
+function bindNavHistory(){
+  const onClick = (event) => {
+    const item = event.target.closest("[data-timeline-entry]");
+    if(item) jumpToHistoryEntry(item.dataset.timelineEntry);
+  };
+  $("catalogTimelinePast")?.addEventListener("click", onClick);
+  $("catalogTimelineFuture")?.addEventListener("click", onClick);
+}
+
+// Estado de navegação do catálogo — chamada por applyView() (troca de
+// categoria/Home), setActiveOverlay() (abrir/fechar Biblioteca/3D
+// Livre/Composições), pelo observer de seção (rolar pra outro item, ver
+// setupObservers()) e pela busca. Sempre recalcula do zero a partir de
+// state.activeView/state.overlay. (Chamava-se renderBreadcrumb() quando
+// também desenhava a trilha "Catálogo / Categoria / Item" abaixo do
+// cabeçalho — a trilha foi apagada a pedido do usuário; o caminho
+// percorrido continua na linha do tempo do cabeçalho.)
+function syncNavigation(){
+  // trackNavHistory() vem ANTES de updatePageLabel() de propósito: a
+  // animação da linha do tempo mede o rótulo com o texto ANTIGO ainda no
+  // lugar (renderTimeline() é quem troca o texto); updatePageLabel() só
+  // garante o texto certo quando a linha do tempo não redesenhou.
+  trackNavHistory();
+  updatePageLabel();
+  // A pílula do projeto ativo aparece na navegação do catálogo (categorias, itens), não no Portal nem dentro dos
+  // overlays (onde o próprio módulo já mostra/pergunta o destino).
+  setProjetoDockVisible(!state.overlay && state.activeView !== GATEWAY_VIEW);
 }
 
 // Foto de capa de uma categoria, pra Home (pedido explícito do usuário):
@@ -884,21 +1181,211 @@ function categoryCoverPhoto(cat){
 // duplicado" — ver #catalogPageLabel no cabeçalho, que já mostra isso).
 // Clicar num card entra na
 // categoria (ver data-home-category em bindInteractions).
-function renderHomeMarkup(categories){
-  return `<div class="catalog-grid-wrap">
-    <div class="catalog-grid catalog-home-grid">${categories.map((category) => `
-      <button type="button" class="catalog-grid-card catalog-home-card" data-home-category="${escapeAttr(category.cat)}">
-        <span class="catalog-grid-card-photo"><img src="${escapeAttr(categoryCoverPhoto(category.cat))}" alt="${escapeAttr(category.label)}" loading="lazy" decoding="async"></span>
-        <span class="catalog-grid-card-body"><span class="catalog-grid-card-name">${escapeHtml(category.label)}</span></span>
-      </button>`).join("")}
+// Filtros da tela "Categorias" (pedido do usuário: "quero colocar alguns filtros dentro do módulo de
+// categorias, exemplos de filtro... Material, Estilo e customizáveis, quando fizermos isso aparece todos
+// os itens com esse filtro e separados por categoria, então imagina que aparece aparadores, aí em baixo os
+// móveis, aí depois armários e por aí vai").
+//
+// Sem nenhum filtro, a tela é a grade de categorias de sempre. Com algum filtro ativo, a grade de
+// categorias dá lugar aos ITENS que passam por todos os filtros, agrupados por categoria (um título por
+// categoria, com a contagem, e os cards do item embaixo). Regras: dentro de um mesmo filtro os valores
+// marcados se somam (Madeira OU Ferro); entre filtros diferentes, todos precisam bater (Madeira E
+// personalizável). As contagens ao lado de cada opção respeitam os OUTROS filtros já ativos (quanto
+// resultaria se marcasse aquela opção) — uma opção que zeraria fica apagada.
+//
+// Um filtro sem nenhuma opção nos itens carregados NÃO aparece (hoje nenhum item tem "Estilo"
+// cadastrado, então só aparecem Material e Personalizáveis — Estilo entra sozinho quando houver dado).
+// O estado (`state.homeFilters`) fica guardado enquanto a pessoa navega (abrir um item e voltar pela
+// linha do tempo mantém os filtros) e só zera ao voltar pro Portal.
+const HOME_FILTER_FIELDS = [
+  { key: "material", label: "Material" },
+  { key: "estilo", label: "Estilo" },
+];
+
+function newHomeFilters(){
+  return { material: new Set(), estilo: new Set(), personalizable: false };
+}
+
+// "Estofado Tecido" e "estofado tecido" (ou com acento diferente) contam como o mesmo valor.
+const filterKey = (value) => normalizeSearch(String(value || "").trim().replace(/\s+/g, " "));
+
+function itemIsPersonalizable(item){
+  return Boolean(item.personalizable || item.variantGroup?.some((variante) => variante.personalizable));
+}
+
+// Um item do catálogo pode ser um GRUPO de variantes (mesma poltrona em 5 cores) — o material é igual
+// dentro do grupo (faz parte da chave), mas o estilo pode variar, então olha o grupo inteiro.
+function homeFilterKeysOf(item, field){
+  const grupo = item.variantGroup?.length ? item.variantGroup : [item];
+  return [...new Set(grupo.map((variante) => filterKey(variante[field])).filter(Boolean))];
+}
+
+// `skip` = campo a IGNORAR na conta (usado pra contar "quanto daria se eu marcasse esta opção").
+function itemMatchesHomeFilters(item, skip = ""){
+  const filters = state.homeFilters;
+  for(const { key } of HOME_FILTER_FIELDS){
+    if(key === skip || !filters[key].size) continue;
+    if(!homeFilterKeysOf(item, key).some((valor) => filters[key].has(valor))) return false;
+  }
+  if(filters.personalizable && skip !== "personalizable" && !itemIsPersonalizable(item)) return false;
+  return true;
+}
+
+function hasHomeFilters(){
+  const filters = state.homeFilters;
+  return filters.personalizable || HOME_FILTER_FIELDS.some(({ key }) => filters[key].size > 0);
+}
+
+function filteredHomeItems(){
+  return state.items.filter((item) => itemMatchesHomeFilters(item));
+}
+
+// Opções de um campo (todas as que existem nos itens, ordem alfabética) com a contagem contextual.
+// O rótulo mostrado é a grafia mais frequente daquele valor.
+function homeFilterOptions(field){
+  const grafias = new Map();
+  const contagens = new Map();
+  state.items.forEach((item) => {
+    (item.variantGroup?.length ? item.variantGroup : [item]).forEach((variante) => {
+      const bruto = String(variante[field] || "").trim();
+      const chave = filterKey(bruto);
+      if(!chave) return;
+      if(!grafias.has(chave)) grafias.set(chave, new Map());
+      grafias.get(chave).set(bruto, (grafias.get(chave).get(bruto) || 0) + 1);
+    });
+    if(itemMatchesHomeFilters(item, field)) homeFilterKeysOf(item, field).forEach((chave) => contagens.set(chave, (contagens.get(chave) || 0) + 1));
+  });
+  return [...grafias].map(([key, opcoes]) => ({
+    key,
+    label: [...opcoes].sort((a, b) => b[1] - a[1])[0][0],
+    count: contagens.get(key) || 0,
+  })).sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+}
+
+function homeFilterFieldMarkup(field, options){
+  return `<div class="catalog-filter" data-home-filter-field="${escapeAttr(field.key)}">
+    <button type="button" class="catalog-filter-chip catalog-filter-trigger" data-home-filter-trigger="${escapeAttr(field.key)}" aria-haspopup="true" aria-expanded="false">
+      <span>${escapeHtml(field.label)}</span><em class="catalog-filter-count" hidden>0</em>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="catalog-filter-panel" role="group" aria-label="${escapeAttr(field.label)}" hidden>
+      ${options.map((option) => `<label class="catalog-filter-option"><input type="checkbox" data-home-filter-option="${escapeAttr(field.key)}" value="${escapeAttr(option.key)}"><span class="catalog-filter-option-label">${escapeHtml(option.label)}</span><em class="catalog-filter-option-count">${option.count}</em></label>`).join("")}
     </div>
   </div>`;
 }
 
+function homeFilterBarMarkup(){
+  const fields = HOME_FILTER_FIELDS.map((field) => ({ field, options: homeFilterOptions(field.key) })).filter(({ options }) => options.length);
+  const hasPersonalizable = state.items.some(itemIsPersonalizable);
+  if(!fields.length && !hasPersonalizable) return "";
+  return `<div class="catalog-home-filters" role="group" aria-label="Filtros">
+    ${fields.map(({ field, options }) => homeFilterFieldMarkup(field, options)).join("")}
+    ${hasPersonalizable ? `<button type="button" class="catalog-filter-chip" data-home-filter-toggle="personalizable" aria-pressed="false"><span>Personalizáveis</span><em class="catalog-filter-count">0</em></button>` : ""}
+    <button type="button" class="catalog-filter-clear" id="catalogHomeFilterClear" data-home-filter-clear hidden>Limpar filtros</button>
+    <p class="catalog-filter-summary" id="catalogHomeFilterSummary" aria-live="polite"></p>
+  </div>`;
+}
+
+function homeCategoriesMarkup(categories){
+  return `<div class="catalog-grid catalog-home-grid">${categories.map((category) => `
+      <button type="button" class="catalog-grid-card catalog-home-card" data-home-category="${escapeAttr(category.cat)}">
+        <span class="catalog-grid-card-photo"><img src="${escapeAttr(otimizarFoto(categoryCoverPhoto(category.cat), IMG_WIDTH.card))}" alt="${escapeAttr(category.label)}" loading="lazy" decoding="async"></span>
+        <span class="catalog-grid-card-body"><span class="catalog-grid-card-name">${escapeHtml(category.label)}</span></span>
+      </button>`).join("")}
+    </div>`;
+}
+
+// O que aparece embaixo da barra de filtros: as categorias (sem filtro) ou os itens filtrados, por categoria.
+function homeResultsMarkup(items){
+  const categories = getCategories();
+  if(!hasHomeFilters()) return homeCategoriesMarkup(categories);
+  if(!items.length){
+    return `<p class="catalog-subcat-empty">Nenhum item com esses filtros. <button type="button" class="catalog-filter-clear-inline" data-home-filter-clear>Limpar filtros</button></p>`;
+  }
+  return categories.map((category) => {
+    const grupo = items.filter((item) => item.cat === category.cat);
+    if(!grupo.length) return "";
+    return `<section class="catalog-filter-group" aria-label="${escapeAttr(category.label)}">
+      <h2 class="catalog-filter-group-title"><span>${escapeHtml(category.label)}</span><em>${grupo.length}</em></h2>
+      <div class="catalog-grid">${grupo.map(gridCardMarkup).join("")}</div>
+    </section>`;
+  }).join("");
+}
+
+function renderHomeMarkup(){
+  return `<div class="catalog-grid-wrap">
+    ${homeFilterBarMarkup()}
+    <div id="catalogHomeResults"></div>
+  </div>`;
+}
+
+// Redesenha só o que depende dos filtros (resultados, contagens, marcações) sem recriar a barra — o painel
+// aberto continua aberto e o foco continua na caixinha clicada, então dá pra marcar vários valores seguidos.
+function refreshHomeFilters(){
+  const results = $("catalogHomeResults");
+  if(!results) return;
+  const filters = state.homeFilters;
+  const active = hasHomeFilters();
+  const items = active ? filteredHomeItems() : [];
+  state.currentItems = items;
+  results.innerHTML = homeResultsMarkup(items);
+  HOME_FILTER_FIELDS.forEach(({ key }) => {
+    const field = document.querySelector(`[data-home-filter-field="${key}"]`);
+    if(!field) return;
+    const selected = filters[key];
+    const trigger = field.querySelector("[data-home-filter-trigger]");
+    trigger.classList.toggle("is-active", selected.size > 0);
+    const badge = trigger.querySelector(".catalog-filter-count");
+    badge.textContent = String(selected.size);
+    badge.hidden = selected.size === 0;
+    const inputs = new Map([...field.querySelectorAll("[data-home-filter-option]")].map((input) => [input.value, input]));
+    homeFilterOptions(key).forEach((option) => {
+      const input = inputs.get(option.key);
+      if(!input) return;
+      input.checked = selected.has(option.key);
+      const vazia = option.count === 0 && !input.checked;
+      input.disabled = vazia;
+      const label = input.closest("label");
+      label.classList.toggle("is-empty", vazia);
+      label.querySelector(".catalog-filter-option-count").textContent = String(option.count);
+    });
+  });
+  const personalizable = document.querySelector('[data-home-filter-toggle="personalizable"]');
+  if(personalizable){
+    personalizable.classList.toggle("is-active", filters.personalizable);
+    personalizable.setAttribute("aria-pressed", String(filters.personalizable));
+    personalizable.querySelector(".catalog-filter-count").textContent = String(state.items.filter((item) => itemMatchesHomeFilters(item, "personalizable") && itemIsPersonalizable(item)).length);
+  }
+  const clear = $("catalogHomeFilterClear");
+  if(clear) clear.hidden = !active;
+  const summary = $("catalogHomeFilterSummary");
+  if(summary){
+    const categorias = new Set(items.map((item) => item.cat)).size;
+    summary.textContent = active && items.length
+      ? `${items.length} ${items.length === 1 ? "item" : "itens"} em ${categorias} ${categorias === 1 ? "categoria" : "categorias"}`
+      : "";
+  }
+}
+
+function setHomeFilterOpen(key){
+  state.homeFilterOpen = key || "";
+  document.querySelectorAll("[data-home-filter-field]").forEach((field) => {
+    const open = field.dataset.homeFilterField === state.homeFilterOpen;
+    field.classList.toggle("is-open", open);
+    field.querySelector(".catalog-filter-panel").hidden = !open;
+    field.querySelector("[data-home-filter-trigger]").setAttribute("aria-expanded", String(open));
+  });
+}
+
+function clearHomeFilters(){
+  state.homeFilters = newHomeFilters();
+  refreshHomeFilters();
+}
+
 function renderHome(){
   const grid = $("catalogGrid");
-  state.currentItems = [];
   state.currentHeading = "Categorias";
+  state.homeFilterOpen = "";
   grid.classList.add("catalog-products-static-mode");
   // Mesma limpeza de observers/animação da visualização em grade — nada
   // disso se aplica à Home (ver renderProducts, ramo "grid").
@@ -906,7 +1393,9 @@ function renderHome(){
   state.motionCleanup?.();
   state.activeSection = null;
   const categories = getCategories();
-  grid.innerHTML = categories.length ? renderHomeMarkup(categories) : "";
+  grid.innerHTML = categories.length ? renderHomeMarkup() : "";
+  state.currentItems = [];
+  refreshHomeFilters();
   $("catalogEmpty")?.classList.toggle("hidden", categories.length > 0);
 }
 
@@ -933,7 +1422,7 @@ function renderGateway(){
   // cliques que caem dentro do data-gateway-edit/data-gateway-adjust —
   // ver bindInteractions().
   grid.innerHTML = `<div class="catalog-gateway">
-    <img class="catalog-gateway-photo" src="${escapeAttr(state.gatewayCapas[GATEWAY_PHOTO_KEY] || FOTO_PLACEHOLDER)}" alt="" loading="eager" decoding="async">
+    <img class="catalog-gateway-photo" src="${escapeAttr(otimizarFoto(state.gatewayCapas[GATEWAY_PHOTO_KEY] || FOTO_PLACEHOLDER, IMG_WIDTH.gateway, IMG_QUALITY_HERO))}" alt="" loading="eager" decoding="async">
     <div class="catalog-gateway-zones">${GATEWAY_TILES.map((tile) => `
       <div class="catalog-gateway-zone" data-gateway-tile="${escapeAttr(tile.key)}" role="button" tabindex="0">
         <span class="catalog-gateway-title">${escapeHtml(tile.label)}</span>
@@ -975,8 +1464,8 @@ function extensaoImagemGateway(mime){
 // a sessão de crop ou deixa aberta pra tentar de novo).
 async function trocarCapaGateway(chave, file){
   if(!state.acessoInterno) return false;
-  if(!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 8 * 1024 * 1024){
-    notify({ title: "Não foi possível trocar a foto", message: "Envie uma imagem PNG, JPG ou WebP de até 8 MB.", status: "error" });
+  if(!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 15 * 1024 * 1024){
+    notify({ title: "Não foi possível trocar a foto", message: "Envie uma imagem PNG, JPG ou WebP de até 15 MB.", status: "error" });
     return false;
   }
   const empresaId = state.catalogSession.empresa_id;
@@ -1163,29 +1652,21 @@ function isEconomyDevice3D(){
   return cores <= 4 || memory <= 4 || matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-// Cards disponíveis (Estúdio de Ambientes, Módulo Lounge) vs. o único
-// "recurso futuro" que sobrou (Realidade aumentada) — pedido explícito do
-// usuário pro recurso futuro: precisa "parecer intencionalmente
-// indisponível, não card quebrado ou incompleto" — sem NENHUM elemento
-// clicável (nem <button>), `aria-disabled`, badge "EM BREVE" pequeno,
-// nome/descrição PRÓPRIOS (nunca só o texto genérico "Em breve" como
-// título).
+// Cards disponíveis (3D Livre, Composições) vs. o único "recurso futuro"
+// que sobrou (Realidade aumentada, hoje só "Em desenvolvimento") — pedido
+// explícito do usuário pro recurso futuro: precisa "parecer
+// intencionalmente indisponível, não card quebrado ou incompleto" — sem
+// NENHUM elemento clicável (nem <button>) e com `aria-disabled`.
 //
-// Redesenho, 2ª rodada (pedido explícito do usuário, depois de já ter
-// aprovado a 1ª versão desta tela, que embutia o 3D pequeno dentro de um
-// card compacto ícone+texto+botão): *"nao quero que fique dentro dos
-// cards, eu quero que fique igual a home, literalmente um 3d do lado do
-// outro, com o nome do modulo por baixo do 3d, esse 3d tem que ser
-// grande"*. Layout agora copia o padrão dos cards de categoria da Home
-// do catálogo (`.catalog-home-card`/`.catalog-home-grid`: foto quadrada
-// GRANDE + nome ABAIXO dela, sem descrição nem botão separado — o
-// próprio quadrado inteiro é o alvo do clique) — não reaproveita as
-// classes da Home 1:1 (são DOM/hover distintos: aqui tem um
-// <model-viewer> vivo + o efeito de "spotlight" que a Home nunca teve),
-// mas os tamanhos/proporções/tipografia foram calibrados pra ficarem
-// visualmente equivalentes. Descrição de cada módulo (`card.description`)
-// parou de ser desenhada aqui — a Home também nunca mostra descrição
-// embaixo do nome da categoria, só o nome.
+// Layout (pedido explícito do usuário, 2ª rodada: "eu quero que fique igual
+// a home, literalmente um 3d do lado do outro... esse 3d tem que ser
+// grande"): copia o padrão dos cards de categoria da Home do catálogo
+// (`.catalog-home-card`/`.catalog-home-grid`) — quadrado GRANDE, o
+// próprio quadrado inteiro é o alvo do clique, só o título, sem descrição
+// nem botão separado. Não reaproveita as classes da Home 1:1 (são
+// DOM/hover distintos: aqui tem um <model-viewer> vivo), mas os
+// tamanhos/proporções/tipografia foram calibrados pra ficarem visualmente
+// equivalentes.
 
 // Nome do módulo ESCRITO DENTRO do quadro (pedido explícito do usuário:
 // "o nome do módulo embaixo está muito escondido... podíamos fazer
@@ -1201,29 +1682,13 @@ function isEconomyDevice3D(){
 // com qualquer troca de conteúdo do stage (ícone↔model-viewer↔erro), ver
 // renderModulo3dModel().
 function modulo3dCardNameMarkup(card){
-  return `<span class="catalog-modulo3d-tile-name">${escapeHtml(card.label)}</span>`;
+  return `<span class="catalog-modulo3d-tile-name">${escapeHtml(card.title || card.label)}</span>`;
 }
 
-// Resumo de pra que serve o módulo, visível SÓ no hover/foco — pedido
-// explícito do usuário: "quando eu passar o mouse quero que apareça um
-// resumo sobre pra que serve aquele módulo... essa frase só aparece
-// quando a gente passa o mouse, ela não deve ficar à mostra sempre".
-// Reaproveita `card.description`, que já existia em MODULO3D_CARDS mas
-// tinha parado de ser desenhada desde o redesenho pros cards atuais (ver
-// comentário acima de MODULO3D_CARDS) — volta a ser usado, só que agora
-// como texto revelado no hover em vez de legenda sempre visível.
-function modulo3dCardDescMarkup(card){
-  return `<span class="catalog-modulo3d-tile-desc">${escapeHtml(card.description)}</span>`;
-}
-
-// Nome + resumo viajam DENTRO de um mesmo wrapper, empilhados um logo
-// abaixo do outro (pedido explícito do usuário, corrigindo a 1ª versão
-// que centralizava o resumo no meio do quadro: "a frase ela deve
-// aparecer não no meio, mais logo abaixo do título... pra não parecer
-// algo aleatório e sem nexo") — ver posição/fonte em CSS
-// (.catalog-modulo3d-tile-caption).
+// O nome fica dentro de um wrapper (`.catalog-modulo3d-tile-caption`) que o
+// posiciona perto do topo do quadro — ver posição/fonte em CSS.
 function modulo3dCardOverlayMarkup(card){
-  return `<div class="catalog-modulo3d-tile-caption">${modulo3dCardNameMarkup(card)}${modulo3dCardDescMarkup(card)}</div>`;
+  return `<div class="catalog-modulo3d-tile-caption">${modulo3dCardNameMarkup(card)}</div>`;
 }
 
 // 1ª pintura do stage, antes do JS montar o <model-viewer> — só o
@@ -1243,9 +1708,11 @@ function modulo3dCardMarkup(card){
       ${modulo3dCardStageMarkup(card)}
     </button>`;
   }
+  // Sem o selo "Em breve" que ficava embaixo do quadro — o próprio título
+  // ("Em desenvolvimento") já diz isso, e o pedido foi "sem descrição em
+  // baixo".
   return `<article class="catalog-modulo3d-tile catalog-modulo3d-tile-soon" aria-disabled="true">
     ${modulo3dCardStageMarkup(card)}
-    <span class="catalog-modulo3d-tile-badge">Em breve</span>
   </article>`;
 }
 
@@ -1414,6 +1881,17 @@ function renderCurrentView(){
     renderHome();
     return;
   }
+  if(state.activeView === FILTER_VIEW){
+    // Restaurada pela linha do tempo depois de os filtros terem sido limpos: não sobra o que mostrar,
+    // volta pra grade de categorias.
+    if(!hasHomeFilters()){
+      state.activeView = HOME_VIEW;
+      renderHome();
+      return;
+    }
+    renderProducts(filteredHomeItems(), "Resultados", null);
+    return;
+  }
   if(state.activeView === MODULO3D_MENU_VIEW){
     renderModulo3dMenu();
     return;
@@ -1452,6 +1930,54 @@ function renderSubcatFilterBar(categoryItems){
   </div>`;
 }
 
+// Card de um item (foto + nome + dimensões) — usado pela grade de uma categoria e pelos resultados dos
+// filtros da tela "Categorias". Clicar nele: ver data-grid-item em bindInteractions.
+// Cores disponíveis no card (pedido do usuário: "quero que apareça as cores que temos disponíveis quando tiver mais de
+// uma cor do mesmo item, igual" ao da página do item) — mesmos círculos (.product-variant-swatch), mas como <span
+// role="button">: o card inteiro já é um <button> e um botão não pode conter outro. Discretos de propósito (pedido: "ficou muito grande"): só a bolinha,
+// sem o nome da cor embaixo — o nome fica no title/aria-label. Clicar numa cor troca a foto/nome/
+// medidas DO PRÓPRIO CARD (selectGridVariant) sem abrir o item; o card passa a abrir aquela cor.
+function gridSwatchesMarkup(item){
+  const grupo = item.variantGroup;
+  if(!grupo || grupo.length < 2) return "";
+  return `<span class="catalog-grid-swatches" role="group" aria-label="Cores disponíveis">${grupo.map((variante) => {
+    const rotulo = variantLabel(variante);
+    const ativa = String(variante.id) === String(item.id);
+    return `<span role="button" tabindex="0" class="product-variant-swatch${ativa ? " active" : ""}" data-grid-variant="${escapeAttr(variante.id)}" title="${escapeAttr(rotulo)}" aria-label="${escapeAttr(rotulo)}" aria-pressed="${ativa}"><span class="product-variant-swatch-photo"><img src="${escapeAttr(otimizarFoto(variante.photo, IMG_WIDTH.swatch))}" alt="" loading="lazy" decoding="async"></span></span>`;
+  }).join("")}</span>`;
+}
+
+function selectGridVariant(card, variante){
+  card.dataset.gridItem = String(variante.id);
+  const img = card.querySelector(".catalog-grid-card-photo > img");
+  if(img){ img.src = otimizarFoto(variante.photo, IMG_WIDTH.card); img.alt = variante.name; }
+  const nome = card.querySelector(".catalog-grid-card-name");
+  if(nome) nome.textContent = variante.name;
+  const dims = card.querySelector(".catalog-grid-card-dims");
+  if(dims && variante.dims) dims.textContent = `Dimensões: ${variante.dims}`;
+  card.querySelectorAll("[data-grid-variant]").forEach((swatch) => {
+    const ativa = swatch.dataset.gridVariant === String(variante.id);
+    swatch.classList.toggle("active", ativa);
+    swatch.setAttribute("aria-pressed", String(ativa));
+  });
+  // O "＋ Adicionar ao projeto" do card passa a adicionar a cor que está na tela.
+  const chip = card.querySelector("[data-projeto-add]");
+  if(chip) chip.dataset.projetoAdd = String(variante.id);
+  atualizarBotoesProjeto(card);
+}
+
+function gridCardMarkup(item){
+  return `
+      <button type="button" class="catalog-grid-card" data-grid-item="${escapeAttr(item.id)}">
+        <span class="catalog-grid-card-photo"><img src="${escapeAttr(otimizarFoto(item.photo, IMG_WIDTH.card))}" alt="${escapeAttr(item.name)}" loading="lazy" decoding="async">${projetoAddMarkup(item.id)}</span>
+        <span class="catalog-grid-card-body">
+          <span class="catalog-grid-card-name">${escapeHtml(item.name)}</span>
+          ${item.dims ? `<span class="catalog-grid-card-dims">Dimensões: ${escapeHtml(item.dims)}</span>` : ""}
+          ${gridSwatchesMarkup(item)}
+        </span>
+      </button>`;
+}
+
 // Card da visualização em grade de produtos (pedido explícito do usuário):
 // só foto do produto + nome + dimensões, agrupados sob o nome da categoria
 // ativa — sem fotos ambientadas/de evento, sem painel técnico, sem galeria
@@ -1474,15 +2000,7 @@ function renderGridMarkup(items, heading, categoryItems){
   return `<div class="catalog-grid-wrap">
     ${showHeading ? `<h2 class="catalog-grid-heading">${escapeHtml(heading)}</h2>` : ""}
     ${subcatBar}
-    ${items.length ? `<div class="catalog-grid">${items.map((item) => `
-      <button type="button" class="catalog-grid-card" data-grid-item="${escapeAttr(item.id)}">
-        <span class="catalog-grid-card-photo"><img src="${escapeAttr(item.photo)}" alt="${escapeAttr(item.name)}" loading="lazy" decoding="async"></span>
-        <span class="catalog-grid-card-body">
-          <span class="catalog-grid-card-name">${escapeHtml(item.name)}</span>
-          ${item.dims ? `<span class="catalog-grid-card-dims">Dimensões: ${escapeHtml(item.dims)}</span>` : ""}
-        </span>
-      </button>`).join("")}
-    </div>` : `<p class="catalog-subcat-empty">Nenhum item nessa subcategoria.</p>`}
+    ${items.length ? `<div class="catalog-grid">${items.map(gridCardMarkup).join("")}</div>` : `<p class="catalog-subcat-empty">Nenhum item nessa subcategoria.</p>`}
   </div>`;
 }
 
@@ -1510,7 +2028,8 @@ function renderMosaicMarkup(items, heading, categoryItems){
     ${subcatBar}
     ${items.length ? `<div class="catalog-mosaic">${items.map((item) => `
       <button type="button" class="catalog-mosaic-tile" data-grid-item="${escapeAttr(item.id)}">
-        <img src="${escapeAttr(item.photo)}" alt="${escapeAttr(item.name)}" loading="lazy" decoding="async">
+        <img src="${escapeAttr(otimizarFoto(item.photo, IMG_WIDTH.mosaic))}" alt="${escapeAttr(item.name)}" loading="lazy" decoding="async">
+        ${projetoAddMarkup(item.id)}
         <span class="catalog-mosaic-info">
           <span class="catalog-mosaic-name">${escapeHtml(item.name)}</span>
           ${item.dims ? `<span class="catalog-mosaic-dims">${escapeHtml(item.dims)}</span>` : ""}
@@ -1590,15 +2109,25 @@ function updateViewToggleButton(){
 // Clique num card da grade: mostra o mesmo produto na visualização
 // imersiva, dentro do mesmo conjunto de itens que já estava na grade
 // (categoria ou resultado de busca — ver state.currentItems).
+// A seção imersiva de um grupo de cores é desenhada com o id do item "principal"; abrir uma cor que não é a principal
+// = abrir a seção e trocar pra ela (a mesma troca dos círculos da página do item).
+// Síncrono, logo depois de desenhar as seções (antes de qualquer quadro pintado) — a troca não aparece como um pisca da cor
+// principal. Devolve a seção pra rolar até ela no quadro seguinte.
+function showItemSection(item){
+  const principal = state.items.find((candidato) => String(candidato.id) === String(item.id) || candidato.variantGroup?.some((v) => String(v.id) === String(item.id))) || item;
+  const section = document.getElementById(`produto-${principal.id}`);
+  if(section && String(principal.id) !== String(item.id)) applyVariant(section, item);
+  return section;
+}
+
 function openImmersiveFromGrid(item){
   if(state.viewMode !== "immersive"){
     state.viewMode = "immersive";
     updateViewToggleButton();
   }
   renderProducts(state.currentItems, state.currentHeading);
-  requestAnimationFrame(() => {
-    document.getElementById(`produto-${item.id}`)?.scrollIntoView({ behavior: "instant", block: "start" });
-  });
+  const section = showItemSection(item);
+  requestAnimationFrame(() => section?.scrollIntoView({ behavior: "instant", block: "start" }));
 }
 
 function scrollToIndex(index){
@@ -1611,15 +2140,23 @@ function bindInteractions(){
     if(button) setViewMode(button.dataset.viewMode);
   });
 
-  // "Catálogo" volta pra Home; a categoria volta pro topo da própria
-  // categoria (applyView de novo) — o último segmento (nome do item) não
-  // é link, é só "você está aqui".
-  $("catalogBreadcrumb")?.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-breadcrumb]");
-    if(!target) return;
-    if(target.dataset.breadcrumb === "home") applyView(HOME_VIEW);
-    else if(target.dataset.breadcrumb === "category") applyView(state.activeView);
-    else if(target.dataset.breadcrumb === "modulo3d") applyView(MODULO3D_MENU_VIEW);
+  // Marcar/desmarcar um valor num filtro da tela "Categorias" — o painel continua aberto pra marcar outros.
+  $("catalogGrid").addEventListener("change", (event) => {
+    const option = event.target.closest("[data-home-filter-option]");
+    if(!option) return;
+    const selected = state.homeFilters[option.dataset.homeFilterOption];
+    if(option.checked) selected.add(option.value); else selected.delete(option.value);
+    refreshHomeFilters();
+  });
+  // Painel de filtro aberto fecha clicando fora dele e com Esc (o foco volta pro botão que o abriu).
+  document.addEventListener("click", (event) => {
+    if(state.homeFilterOpen && !event.target.closest("[data-home-filter-field]")) setHomeFilterOpen("");
+  });
+  document.addEventListener("keydown", (event) => {
+    if(event.key !== "Escape" || !state.homeFilterOpen) return;
+    const trigger = document.querySelector(`[data-home-filter-trigger="${state.homeFilterOpen}"]`);
+    setHomeFilterOpen("");
+    trigger?.focus();
   });
 
   $("catalogGrid").addEventListener("click", (event) => {
@@ -1641,10 +2178,38 @@ function bindInteractions(){
       activateModulo3dCard(modulo3dCard.dataset.modulo3dCard);
       return;
     }
+    // Filtros da tela "Categorias" (ver HOME_FILTER_FIELDS).
+    const filterTrigger = event.target.closest("[data-home-filter-trigger]");
+    if(filterTrigger){
+      const key = filterTrigger.dataset.homeFilterTrigger;
+      setHomeFilterOpen(state.homeFilterOpen === key ? "" : key);
+      return;
+    }
+    const filterToggle = event.target.closest("[data-home-filter-toggle]");
+    if(filterToggle){
+      state.homeFilters.personalizable = !state.homeFilters.personalizable;
+      refreshHomeFilters();
+      return;
+    }
+    if(event.target.closest("[data-home-filter-clear]")){
+      clearHomeFilters();
+      return;
+    }
+    const gridVariant = event.target.closest("[data-grid-variant]");
+    if(gridVariant){
+      const variante = findItemById(gridVariant.dataset.gridVariant);
+      const card = gridVariant.closest(".catalog-grid-card");
+      if(variante && card) selectGridVariant(card, variante);
+      return;
+    }
     const gridCard = event.target.closest("[data-grid-item]");
     if(gridCard){
       const item = findItemById(gridCard.dataset.gridItem);
-      if(item) openImmersiveFromGrid(item);
+      if(!item) return;
+      // Card dos resultados filtrados: abre o item dentro da LISTA FILTRADA (rolar pro próximo item continua
+      // nos itens filtrados), como uma tela nova na linha do tempo — não a categoria inteira.
+      if(state.activeView === HOME_VIEW && hasHomeFilters()) applyView(FILTER_VIEW, { focusItemId: item.id });
+      else openImmersiveFromGrid(item);
       return;
     }
     const subcatFilter = event.target.closest("[data-subcat-filter]");
@@ -1712,6 +2277,39 @@ function bindInteractions(){
       if(item && section) stepMainSlide(section, item, mainNav.dataset.mainNav === "next" ? 1 : -1);
       return;
     }
+    // Clicar na própria foto (principal/detalhe no carrossel, ou a
+    // ambientada) abre o visualizador de zoom em resolução bem maior —
+    // pedido explícito do usuário depois de saber que a exibição normal
+    // usa uma versão reduzida pra carregar rápido ("eu quero que a
+    // pessoa possa dar zoom e de fato ver os detalhes"). `data-original-
+    // src` é sempre a URL crua (nunca a já otimizada que está no `src`
+    // hoje em tela) — ver mainSlides()/rotateActiveEvent(). Badge de
+    // edição e setas de navegação são elementos IRMÃOS da foto (não
+    // filhos), então cliques neles nunca alcançam este `closest`.
+    const zoomableMain = event.target.closest(".product-main-image");
+    if(zoomableMain){
+      if(!zoomableMain.classList.contains("is-empty-slide")) openPhotoZoom(zoomableMain.dataset.originalSrc, zoomableMain.alt, zoomableMain.currentSrc || zoomableMain.src, zoomGalleryForMainImage(zoomableMain));
+      return;
+    }
+    // Setas e pausar da foto ambientada — botões irmãos da foto, nunca alcançam o zoom.
+    const eventNav = event.target.closest("[data-event-nav]");
+    if(eventNav){
+      const section = eventNav.closest(".catalog-product-section");
+      if(section) stepEvent(section, eventNav.dataset.eventNav === "next" ? 1 : -1, { manual: true });
+      startEventRotation();   // recomeça os 10s: a troca automática não dispara logo depois de um clique
+      return;
+    }
+    if(event.target.closest("[data-event-pause]")){
+      state.eventPaused = !state.eventPaused;
+      syncEventPauseButtons();
+      if(!state.eventPaused) startEventRotation();
+      return;
+    }
+    const zoomableEvent = event.target.closest(".product-event-image");
+    if(zoomableEvent){
+      openPhotoZoom(zoomableEvent.dataset.originalSrc, zoomableEvent.alt, zoomableEvent.currentSrc || zoomableEvent.src, zoomGalleryForEventImage(zoomableEvent));
+      return;
+    }
     // Sugestão de combinação (ver relatedItemsMarkup()) — item sempre da
     // MESMA categoria do que está aberto, então a seção dele já está
     // renderizada na imersiva (categoria inteira no DOM de uma vez); só
@@ -1755,6 +2353,8 @@ function bindInteractions(){
       return;
     }
     if(event.key !== "Enter" && event.key !== " ") return;
+    const gridVariantKey = event.target.closest("[data-grid-variant]");
+    if(gridVariantKey){ event.preventDefault(); gridVariantKey.click(); return; }
     const inlineEditTrigger = event.target.closest("[data-inline-edit]");
     if(inlineEditTrigger){
       event.preventDefault();
@@ -1782,8 +2382,8 @@ function bindInteractions(){
       const file = cropSwapInput.files?.[0];
       cropSwapInput.value = "";
       if(!file || !cropSession) return;
-      if(!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 8 * 1024 * 1024){
-        notify({ title: "Arquivo inválido", message: "Envie uma imagem PNG, JPG ou WebP de até 8 MB.", status: "error" });
+      if(!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 15 * 1024 * 1024){
+        notify({ title: "Arquivo inválido", message: "Envie uma imagem PNG, JPG ou WebP de até 15 MB.", status: "error" });
         return;
       }
       try{
@@ -1806,7 +2406,7 @@ function bindInteractions(){
     // há busca. Query vazia volta pra o que estava ativo (Home incluída).
     if(!query){
       renderCurrentView();
-      renderBreadcrumb();
+      syncNavigation();
       return;
     }
     const matches = state.items.filter((item) =>
@@ -1864,7 +2464,11 @@ function openCustomizeDialog(item){
   state.customizeItem = item;
   state.fabricDataUrl = "";
   state.fabricFile = null;
-  $("catalogCustomizeProduct").src = item.customizedPhoto || item.photo;
+  // Só a PRÉVIA visível no diálogo é otimizada — o valor bruto de
+  // item.photo continua sendo mandado como referência pra IA em
+  // generateFabricVariation() (scene.preview), lido direto do objeto do
+  // item, nunca desta <img>.
+  $("catalogCustomizeProduct").src = otimizarFoto(item.customizedPhoto || item.photo, IMG_WIDTH.card);
   $("catalogCustomizeProduct").alt = item.name;
   $("catalogFabricPreview").src = "";
   $("catalogFabricPreview").classList.add("hidden");
@@ -1984,11 +2588,11 @@ function bindCustomization(){
   $("catalogFabricInput")?.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     if(!file) return;
-    if(!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 8 * 1024 * 1024){
+    if(!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 15 * 1024 * 1024){
       state.fabricDataUrl = "";
       state.fabricFile = null;
       $("catalogCustomizeGenerate").disabled = true;
-      $("catalogCustomizeStatus").textContent = "Envie uma imagem PNG, JPG ou WebP de até 8 MB.";
+      $("catalogCustomizeStatus").textContent = "Envie uma imagem PNG, JPG ou WebP de até 15 MB.";
       event.target.value = "";
       return;
     }
@@ -2003,6 +2607,231 @@ function bindCustomization(){
   });
   $("catalogCustomizeGenerate")?.addEventListener("click", generateFabricVariation);
 }
+
+// Visualizador de zoom da foto (pedido explícito do usuário, depois de
+// perguntar sobre a otimização de carregamento: "eu quero que a pessoa
+// possa dar zoom e de fato ver os detalhes" — servir uma versão menor
+// pra deixar o catálogo rápido não podia significar nunca dar pra ver
+// textura/acabamento de perto). Clicar na foto principal ou na
+// ambientada (dentro da visualização imersiva, ver bindInteractions())
+// abre este diálogo em tela cheia com a MESMA foto em IMG_WIDTH.zoom —
+// carregada só nesse clique, nunca pré-carregada, então não pesa a
+// navegação normal que a otimização de leitura resolveu.
+const photoZoom = { scale: 1, x: 0, y: 0, dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 };
+const PHOTO_ZOOM_MIN = 1;
+const PHOTO_ZOOM_MAX = 4;
+const PHOTO_ZOOM_STEP = 0.6;
+const PHOTO_SWIPE_MIN = 90;
+
+function applyPhotoZoomTransform(){
+  $("catalogPhotoZoomImage").style.transform = `translate(${photoZoom.x}px, ${photoZoom.y}px) scale(${photoZoom.scale})`;
+}
+
+function resetPhotoZoom(){
+  photoZoom.scale = 1;
+  photoZoom.x = 0;
+  photoZoom.y = 0;
+  applyPhotoZoomTransform();
+}
+
+// `src` é sempre a URL CRUA (data-original-src do elemento clicado, não
+// o src já otimizado que está na tela) — só aqui, no momento de abrir o
+// zoom, é que pedimos a versão grande; o resto do catálogo continua
+// pedindo a versão pequena o tempo todo.
+// Bug real reportado pelo usuário: "quando eu clico pra ampliar uma foto ele
+// abre a última foto que ampliei, depois pisca e abre a foto que realmente é
+// pra aparecer". Causa: o <img> do diálogo é UM elemento só, reaproveitado; ao
+// trocar o src, o navegador continua desenhando a imagem ANTERIOR até a nova
+// (3200px, demora) terminar de carregar — então o diálogo abria mostrando a
+// foto da vez passada e só depois trocava. Agora, a cada abertura: (1) o <img>
+// é esvaziado e escondido (opacity 0) — nunca sobra a foto anterior; (2) a
+// versão pequena que JÁ está na tela e em cache (`previewSrc`) aparece na hora,
+// então o clique responde de imediato; (3) a grande carrega e é decodificada por
+// trás (new Image().decode()) e só troca quando está pronta — sem piscar,
+// porque preview e grande ocupam exatamente a mesma caixa (ver CSS). `openId`
+// invalida respostas atrasadas de uma abertura anterior.
+let photoZoomOpenId = 0;
+
+function clearPhotoZoomImage(){
+  photoZoomOpenId++;
+  const img = $("catalogPhotoZoomImage");
+  if(!img) return;
+  img.classList.remove("is-ready");
+  img.removeAttribute("src");
+}
+
+// Mostra UMA foto no <img> do diálogo (esvazia, preview, grande por trás) —
+// usada tanto pra abrir quanto pra passar de uma foto pra outra.
+function showPhotoZoomPhoto(src, alt, previewSrc){
+  const img = $("catalogPhotoZoomImage");
+  clearPhotoZoomImage();
+  const openId = photoZoomOpenId;
+  const full = otimizarFoto(src, IMG_WIDTH.zoom, IMG_QUALITY_ZOOM);
+  const reveal = () => { if(openId === photoZoomOpenId) img.classList.add("is-ready"); };
+  img.alt = alt || "";
+  resetPhotoZoom();
+  img.addEventListener("load", reveal, { once: true });
+  if(previewSrc && previewSrc !== full){
+    img.src = previewSrc;
+    const big = new Image();
+    big.src = full;
+    const swapToFull = () => { if(openId === photoZoomOpenId) img.src = full; };
+    // Se a grande falhar, fica a pequena (melhor que trocar por uma imagem quebrada).
+    big.decode().then(swapToFull, () => {});
+  }else{
+    img.src = full;
+  }
+}
+
+// Galeria do visualizador (pedido do usuário: "quero poder trocar as fotos
+// pelo preview"): quem abre pode passar `gallery = { items: [{ src, alt,
+// preview }], index }` — as fotos "irmãs" da clicada (as da pasta da
+// Biblioteca, os slides do carrossel do item, as ambientadas do item). Com 2+
+// fotos aparecem as setas e o contador; com uma só, o visualizador é o mesmo
+// de sempre. `src` é sempre a URL crua; `preview` é a versão pequena (já em
+// cache quando a foto está na tela).
+let photoZoomGallery = null;
+
+function renderPhotoZoomNav(){
+  const dialog = $("catalogPhotoZoomDialog");
+  const multiple = !!photoZoomGallery;
+  dialog.classList.toggle("has-gallery", multiple);
+  [$("catalogPhotoZoomPrev"), $("catalogPhotoZoomNext"), $("catalogPhotoZoomCounter")].forEach((el) => { if(el) el.hidden = !multiple; });
+  if(multiple) $("catalogPhotoZoomCounter").textContent = `${photoZoomGallery.index + 1} / ${photoZoomGallery.items.length}`;
+}
+
+// Só as vizinhas imediatas, e só a versão pequena: passar de foto responde na
+// hora sem baixar 3200px de fotos que talvez ninguém abra.
+function preloadPhotoZoomNeighbors(){
+  if(!photoZoomGallery) return;
+  const { items, index } = photoZoomGallery;
+  [-1, 1].forEach((offset) => {
+    const neighbor = items[(index + offset + items.length) % items.length];
+    const url = neighbor?.preview || (neighbor?.src ? otimizarFoto(neighbor.src, IMG_WIDTH.hero, IMG_QUALITY_HERO) : "");
+    if(url) new Image().src = url;
+  });
+}
+
+function stepPhotoZoom(direction){
+  if(!photoZoomGallery) return;
+  const { items } = photoZoomGallery;
+  photoZoomGallery.index = (photoZoomGallery.index + direction + items.length) % items.length;
+  const target = items[photoZoomGallery.index];
+  showPhotoZoomPhoto(target.src, target.alt, target.preview || otimizarFoto(target.src, IMG_WIDTH.hero, IMG_QUALITY_HERO));
+  renderPhotoZoomNav();
+  preloadPhotoZoomNeighbors();
+}
+
+function openPhotoZoom(src, alt, previewSrc, gallery){
+  // Sem foto de verdade (placeholder genérico "Sem foto") não tem o que
+  // ampliar — silenciosamente não abre, mesmo comportamento de clicar
+  // ali antes desta feature existir.
+  if(!src || src === FOTO_PLACEHOLDER) return;
+  const items = gallery?.items || [];
+  photoZoomGallery = items.length > 1
+    ? { items, index: Math.min(items.length - 1, Math.max(0, gallery.index || 0)) }
+    : null;
+  showPhotoZoomPhoto(src, alt, previewSrc);
+  renderPhotoZoomNav();
+  preloadPhotoZoomNeighbors();
+  const dialog = $("catalogPhotoZoomDialog");
+  if(!dialog.open) dialog.showModal();
+}
+
+// Galerias dos dois lugares do item que abrem o visualizador. A foto clicada
+// entra com a URL/alt/preview que JÁ estão na tela (pode ser, por exemplo, a
+// foto personalizada com tecido, que não é a que está em item.photo).
+function zoomGalleryForMainImage(image){
+  const section = image.closest(".catalog-product-section");
+  const item = section ? findItemById(section.dataset.productId) : null;
+  if(!item) return null;
+  const slides = mainSlides(item).filter((slide) => !slide.empty);
+  const activeSlot = image.closest(".product-main-media")?.dataset.activeSlot || "principal";
+  const index = Math.max(0, slides.findIndex((slide) => slide.slot === activeSlot));
+  const items = slides.map((slide) => ({ src: slide.rawSrc, alt: slide.alt, preview: slide.src }));
+  if(items[index]) items[index] = { src: image.dataset.originalSrc, alt: image.alt, preview: image.currentSrc || image.src };
+  return { items, index };
+}
+
+function zoomGalleryForEventImage(image){
+  const section = image.closest(".catalog-product-section");
+  const item = section ? findItemById(section.dataset.productId) : null;
+  if(!item) return null;
+  const events = item.events.filter((event) => event.img);
+  const index = Math.min(events.length - 1, Number(image.dataset.eventIndex || 0));
+  const items = events.map((event) => ({ src: event.img, alt: event.label, preview: otimizarFoto(event.img, IMG_WIDTH.hero, IMG_QUALITY_HERO) }));
+  if(items[index]) items[index] = { src: image.dataset.originalSrc, alt: image.alt, preview: image.currentSrc || image.src };
+  return { items, index };
+}
+
+function photoZoomBy(delta){
+  photoZoom.scale = Math.min(PHOTO_ZOOM_MAX, Math.max(PHOTO_ZOOM_MIN, photoZoom.scale + delta));
+  // Volta pro centro ao encolher até o mínimo — sem isso, dar zoom de
+  // novo depois de já ter arrastado começaria descentralizado.
+  if(photoZoom.scale === PHOTO_ZOOM_MIN){ photoZoom.x = 0; photoZoom.y = 0; }
+  applyPhotoZoomTransform();
+}
+
+function bindPhotoZoom(){
+  const dialog = $("catalogPhotoZoomDialog");
+  const stage = $("catalogPhotoZoomStage");
+  if(!dialog || !stage) return;
+  $("catalogPhotoZoomClose")?.addEventListener("click", () => dialog.close());
+  // Escape já fecha um <dialog> aberto via showModal() sozinho (nativo do
+  // navegador) — só precisamos resetar o zoom/posição pra próxima vez que
+  // abrir, não importa como foi fechado (botão, Escape, clique fora).
+  dialog.addEventListener("close", () => { resetPhotoZoom(); clearPhotoZoomImage(); photoZoomGallery = null; renderPhotoZoomNav(); });
+  // Passar de foto: setas do teclado, botões e arrastar pro lado (só sem zoom — com zoom, arrastar é mover a foto).
+  $("catalogPhotoZoomPrev")?.addEventListener("click", () => stepPhotoZoom(-1));
+  $("catalogPhotoZoomNext")?.addEventListener("click", () => stepPhotoZoom(1));
+  dialog.addEventListener("keydown", (event) => {
+    if(!photoZoomGallery || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) return;
+    event.preventDefault();
+    stepPhotoZoom(event.key === "ArrowRight" ? 1 : -1);
+  });
+  dialog.querySelector("[data-photo-zoom-in]")?.addEventListener("click", () => photoZoomBy(PHOTO_ZOOM_STEP));
+  dialog.querySelector("[data-photo-zoom-out]")?.addEventListener("click", () => photoZoomBy(-PHOTO_ZOOM_STEP));
+  dialog.querySelector("[data-photo-zoom-reset]")?.addEventListener("click", resetPhotoZoom);
+  stage.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    photoZoomBy(event.deltaY < 0 ? PHOTO_ZOOM_STEP : -PHOTO_ZOOM_STEP);
+  }, { passive: false });
+  stage.addEventListener("pointerdown", (event) => {
+    photoZoom.dragging = true;
+    photoZoom.startX = event.clientX;
+    photoZoom.startY = event.clientY;
+    photoZoom.originX = photoZoom.x;
+    photoZoom.originY = photoZoom.y;
+    stage.classList.add("is-dragging");
+    stage.setPointerCapture(event.pointerId);
+  });
+  stage.addEventListener("pointermove", (event) => {
+    if(!photoZoom.dragging) return;
+    photoZoom.x = photoZoom.originX + (event.clientX - photoZoom.startX);
+    photoZoom.y = photoZoom.originY + (event.clientY - photoZoom.startY);
+    applyPhotoZoomTransform();
+  });
+  const endPhotoZoomDrag = (event) => {
+    if(!photoZoom.dragging) return;
+    photoZoom.dragging = false;
+    stage.classList.remove("is-dragging");
+    try{ stage.releasePointerCapture(event.pointerId); }catch{ /* já liberado */ }
+    // Arrastar pro lado (sem zoom) passa pra próxima/anterior — o gesto natural no celular.
+    const dx = event.clientX - photoZoom.startX;
+    const dy = event.clientY - photoZoom.startY;
+    if(event.type === "pointerup" && photoZoomGallery && photoZoom.scale === PHOTO_ZOOM_MIN && Math.abs(dx) >= PHOTO_SWIPE_MIN && Math.abs(dx) > Math.abs(dy) * 1.5){
+      stepPhotoZoom(dx < 0 ? 1 : -1);
+    }
+  };
+  stage.addEventListener("pointerup", endPhotoZoomDrag);
+  stage.addEventListener("pointercancel", endPhotoZoomDrag);
+}
+
+// A Biblioteca (catalogo-biblioteca.mjs) é um módulo self-contido que não
+// importa este arquivo — mesmo padrão de window.catalogNotify: o visualizador
+// de foto em tela cheia fica aqui e ela o chama por esta ponte. Recebe a URL
+// CRUA da foto (openPhotoZoom pede a versão grande ao Storage).
+window.catalogOpenPhotoZoom = openPhotoZoom;
 
 // Edição de fotos do item, DIRETO no layout real do catálogo (pedido
 // explícito do usuário, depois de rejeitar uma primeira versão em modal:
@@ -2385,18 +3214,44 @@ function cancelInlineEdit(){
 // em vez da caixa fixa de 240×240 daquele arquivo — o que está visível
 // dentro da moldura no momento do clique em "Aplicar" é exatamente o que
 // vira o arquivo final.
+// Teto de resolução do arquivo salvo pelo editor inline — sem isso, uma
+// foto de celular de alta resolução saía do canvas quase no tamanho
+// nativo (ex.: 4000x3000) e, gravada como PNG sem compressão, virava um
+// arquivo de 8 a 16MB (achado real, direto no banco, ao investigar por
+// que o catálogo demorava pra carregar). 2400px no lado maior já é mais
+// que suficiente pra tela cheia em qualquer monitor comum, e o Storage
+// ainda serve uma versão redimensionada em cima dessa pro catálogo (ver
+// otimizarFoto()) — não precisa guardar mais resolução que isso.
+const MAX_INLINE_CROP_DIMENSION = 2400;
+
 async function cropSessionBlob(){
   const { frame, blob, naturalW, naturalH, scale, x, y } = cropSession;
   const rect = frame.getBoundingClientRect();
-  const outputScale = Math.max(naturalW / rect.width, naturalH / rect.height, 1);
-  const width = Math.max(1, Math.round(rect.width * outputScale));
-  const height = Math.max(1, Math.round(rect.height * outputScale));
+  let outputScale = Math.max(naturalW / rect.width, naturalH / rect.height, 1);
+  let width = Math.max(1, Math.round(rect.width * outputScale));
+  let height = Math.max(1, Math.round(rect.height * outputScale));
+  const maiorLado = Math.max(width, height);
+  if(maiorLado > MAX_INLINE_CROP_DIMENSION){
+    // Reduz width/height E outputScale pelo MESMO fator — outputScale
+    // também controla o deslocamento de arrastar (drawX/drawY), então
+    // precisa encolher junto pra manter o enquadramento idêntico ao que
+    // a pessoa viu na tela, só que numa resolução final menor.
+    const fator = MAX_INLINE_CROP_DIMENSION / maiorLado;
+    width = Math.max(1, Math.round(width * fator));
+    height = Math.max(1, Math.round(height * fator));
+    outputScale *= fator;
+  }
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d", { alpha: true });
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
+  // Fundo branco antes de desenhar: o resultado final vira JPEG (sem
+  // canal alpha) — sem isso, qualquer sobra transparente no canvas
+  // (ex.: zoom < 1, se algum dia existir) viraria preto em vez de branco.
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
   const bitmap = await createImageBitmap(blob);
   const baseRatio = Math.min(width / bitmap.width, height / bitmap.height);
   const ratio = baseRatio * scale;
@@ -2406,7 +3261,11 @@ async function cropSessionBlob(){
   const drawY = (height - imgHeight) / 2 + y * outputScale;
   ctx.drawImage(bitmap, drawX, drawY, imgWidth, imgHeight);
   bitmap.close?.();
-  return new Promise((resolve) => canvas.toBlob((result) => resolve(result), "image/png"));
+  // JPEG em vez de PNG sem compressão nenhuma: mesma foto, mesma
+  // resolução, arquivo ordens de grandeza menor (fotografia de produto
+  // não precisa de compressão sem perdas). Ver MAX_INLINE_CROP_DIMENSION
+  // acima pro resto da correção deste bug.
+  return new Promise((resolve) => canvas.toBlob((result) => resolve(result), "image/jpeg", 0.9));
 }
 
 async function applyInlineEdit(){
@@ -2417,7 +3276,12 @@ async function applyInlineEdit(){
   try{
     const blob = await cropSessionBlob();
     if(!blob) throw new Error("Canvas não gerou a imagem final.");
-    const file = new File([blob], "foto.png", { type: "image/png" });
+    // Nome/tipo do File seguem o blob de verdade (agora JPEG, ver
+    // cropSessionBlob) — antes vinham fixos em "image/png" independente
+    // do que o canvas realmente gerasse; trocarFotoPrincipal/trocarFotoSlot
+    // decidem extensão e content-type a partir desse .type, então um valor
+    // hardcoded errado geraria um arquivo .png com bytes de JPEG dentro.
+    const file = new File([blob], `foto.${extensaoItemFoto(blob.type)}`, { type: blob.type });
     if(gatewayKey){
       // trocarCapaGateway() já mostra seu próprio notify() de erro (e,
       // em caso de sucesso, já re-renderiza o Portal via renderGateway()
@@ -2556,7 +3420,7 @@ function applyVariant(section, variant, options = {}){
   const specsHtml = specsPanel(variant);
   if(specsHtml){
     // .product-variants-row (os círculos de cor) mudou de lugar — agora
-    // mora dentro de .product-title-row, ao lado do nome (pedido
+    // mora dentro de .product-title-row, embaixo do nome (pedido
     // explícito do usuário), não é mais irmã das specs. Âncora de
     // inserção passou a ser o botão de capa (próximo irmão fixo depois
     // das specs); sem ele (decorador externo), cai pro fim de
@@ -2577,6 +3441,7 @@ function applyVariant(section, variant, options = {}){
 
   const capaButton = section.querySelector("[data-capa-toggle]");
   if(capaButton) capaButton.outerHTML = capaToggleMarkup(variant);
+  atualizarBotoesProjeto(section);
 
   // Grupo de botões de modelo em destaque do Módulo 3D (1 por módulo):
   // removido e reinserido do zero (em vez de só atualizar outerHTML)
@@ -2596,22 +3461,28 @@ function applyVariant(section, variant, options = {}){
   });
 }
 
-function rotateActiveEvent(){
-  if(document.hidden || $("catalogGrid")?.classList.contains("hidden")) return;
-  const section = state.activeSection;
-  if(!section) return;
+// Troca a foto ambientada de uma seção pra anterior (direction -1) ou próxima (+1), com o mesmo fundido de
+// sempre. Serve à troca automática (rotateActiveEvent) e às setas do painel (manual). Um clique manual
+// durante uma troca em andamento NÃO se perde: guarda o último e roda quando a troca termina.
+function stepEvent(section, direction, { manual = false } = {}){
   const item = findItemById(section.dataset.productId);
-  const image = section.querySelector(".product-event-image");
   const panel = section.querySelector(".product-event-panel");
-  if(!image || !panel || panel.dataset.transitioning === "true" || !item || item.events.length < 2) return;
+  const image = panel?.querySelector(".product-event-image:not(.product-event-image-next)");
+  if(!image || !item || item.events.length < 2) return;
+  if(panel.dataset.transitioning === "true"){
+    if(manual) panel._pendingEventStep = direction;
+    return;
+  }
 
-  const nextIndex = (Number(image.dataset.eventIndex || 0) + 1) % item.events.length;
+  const total = item.events.length;
+  const nextIndex = (Number(image.dataset.eventIndex || 0) + direction + total) % total;
   const nextEvent = item.events[nextIndex];
   panel.dataset.transitioning = "true";
 
   const nextImage = new Image();
   nextImage.className = "product-event-image product-event-image-next";
   nextImage.alt = nextEvent.label;
+  nextImage.dataset.originalSrc = nextEvent.img;
   nextImage.decoding = "async";
   nextImage.onload = () => {
     panel.appendChild(nextImage);
@@ -2630,12 +3501,24 @@ function rotateActiveEvent(){
       nextImage.classList.remove("product-event-image-next", "is-visible");
       image.remove();
       delete panel.dataset.transitioning;
+      const pending = panel._pendingEventStep;
+      panel._pendingEventStep = 0;
+      if(pending) stepEvent(section, pending, { manual: true });
     }, 900);
   };
   nextImage.onerror = () => {
     delete panel.dataset.transitioning;
   };
-  nextImage.src = nextEvent.img;
+  nextImage.src = otimizarFoto(nextEvent.img, IMG_WIDTH.hero, IMG_QUALITY_HERO);
+}
+
+// Troca automática (a cada 10s, ver startEventRotation): só a seção que está na tela, e não com a troca pausada.
+function rotateActiveEvent(){
+  if(state.eventPaused) return;
+  if(document.hidden || $("catalogGrid")?.classList.contains("hidden")) return;
+  const section = state.activeSection;
+  if(!section) return;
+  stepEvent(section, 1);
 }
 
 function startEventRotation(){
@@ -2709,7 +3592,7 @@ function setupObservers(){
     if(entry.isIntersecting){
       entry.target.classList.add("is-visible");
       state.activeSection = entry.target;
-      renderBreadcrumb();
+      syncNavigation();
     }else{
       entry.target.classList.remove("is-visible");
     }
@@ -2895,14 +3778,30 @@ async function init(){
     state.items = await carregarItens();
     window.CatalogCredits?.refresh().catch(() => {});
     await carregarCapasGateway();
+    initCatalogProjetos({
+      supabase,
+      getSession: () => state.catalogSession,
+      isStaff: () => state.acessoInterno,
+      findItem: findItemById,
+      getDecorator: () => state.decorator,
+      getCompany: () => state.company,
+      listItems: () => allItemsFlat(),
+      notify,
+      goCatalog: () => applyView(HOME_VIEW),
+      goLounge: () => openLoungeOverlay(),
+      goStudio: () => openStudioOverlay(),
+      openProjetos: (options) => openProjetosOverlay(options),
+    });
     renderHeader();
     updateViewToggleButton();
     updateViewToggleVisibility();
     renderCurrentView();
-    renderBreadcrumb();
+    syncNavigation();
     bindInteractions();
     bindCatalogSession();
     bindCustomization();
+    bindPhotoZoom();
+    bindNavHistory();
     startEventRotation();
     initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id });
     initCatalogBiblioteca({

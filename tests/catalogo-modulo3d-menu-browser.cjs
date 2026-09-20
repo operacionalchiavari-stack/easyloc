@@ -76,19 +76,23 @@ function itemsFixture(){
  await page.route('https://**/*',r=>r.fulfill({body:'',contentType:'text/javascript'}));
  const svg=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#c9a874"/></svg>');
  await page.route('https://fixture/*.png',r=>r.fulfill({contentType:'image/svg+xml',body:svg}));
- // modelo-b (Lounge) fica SEGURO por um portão controlado pelo teste, em
- // vez de um delay fixo por tempo — um `setTimeout` teria uma corrida
- // real contra a leitura do estado "67%, ainda escondido" logo abaixo
- // (achado rodando o teste repetidas vezes: às vezes o 3º modelo
- // terminava de carregar bem perto do 2º, e o round-trip do Playwright
- // pra ler o snapshot já pegava os 3 prontos). Com o portão, o 3º
- // `.glb` só responde quando o teste manda (`releaseLounge()`), depois
- // de já ter confirmado o estado intermediário com segurança — zero
- // corrida possível.
- let releaseLounge;
+ // Os 2 estágios do carregamento (0%→67%→100%) ficam SEGUROS por
+ // portões controlados pelo teste, em vez de delays fixos por tempo —
+ // um `setTimeout`, mesmo curto, tem uma corrida real contra a leitura
+ // do estado logo abaixo (achado rodando o teste repetidas vezes,
+ // sobretudo sob carga — dentro da suíte completa, não isolado: às
+ // vezes o "0%" imediatamente após o clique já vinha como "67%", porque
+ // modelo-a (Estúdio+AR, mesmo item) resolvia rápido demais, antes até
+ // da 1ª leitura). Com os portões, modelo-a (Estúdio+AR) só responde
+ // depois de `releaseEstudioEAr()`, e modelo-b (Lounge) só depois de
+ // `releaseLounge()` — cada um liberado pelo teste só DEPOIS de já ter
+ // confirmado o estado anterior com segurança. Zero corrida possível.
+ let releaseEstudioEAr, releaseLounge;
+ const estudioGate=new Promise((resolve)=>{ releaseEstudioEAr=resolve; });
  const loungeGate=new Promise((resolve)=>{ releaseLounge=resolve; });
  await page.route('https://fixture/*.glb', async (r)=>{
   const url=r.request().url();
+  if(url.includes('modelo-a.glb')) await estudioGate;
   if(url.includes('modelo-b.glb')) await loungeGate;
   await r.fulfill({contentType:'model/gltf-binary',body:fakeGlbTriangle()});
  });
@@ -128,7 +132,7 @@ function itemsFixture(){
  await page.locator('.catalog-modulo3d-menu').waitFor();
  assert.equal(await page.locator('#catalogStudio:not(.hidden)').count(),0,'Estúdio não abre direto');
  assert.equal(await page.locator('#catalogPageLabel').textContent(),'Módulo 3D');
- assert.match(await page.locator('#catalogBreadcrumb').innerText(),/CATÁLOGO.*MÓDULO 3D/s);
+ assert.equal(await page.locator('#catalogBreadcrumb').count(),0,'a trilha abaixo do cabeçalho foi apagada');
 
  // Carregamento único, pedido explícito do usuário: "quero que tenha um
  // carregamento ali antes de liberar a página, pra não acontecer de
@@ -157,11 +161,12 @@ function itemsFixture(){
  assert.equal(soonAfterEnter.loadingOpacity,1,'Anel de percentual visível');
  assert.equal(soonAfterEnter.exploreOpacity,0,'Cards ficam escondidos atrás do percentual, mesmo com algum modelo já pronto por baixo');
  assert.equal(soonAfterEnter.pct,'0%','Percentual começa em 0%, nenhum dos 3 terminou ainda');
+ releaseEstudioEAr();
 
  // Percentual REAL avança em degraus discretos (um por card que TERMINA
  // DE VERDADE, não uma curva chutada) — prova que não é só decoração:
- // Estúdio e Realidade aumentada (mesmo item por fallback) já terminam
- // livremente, enquanto Lounge fica preso no portão acima — nesse
+ // Estúdio e Realidade aumentada (mesmo item por fallback, liberados
+ // acima) terminam, enquanto Lounge fica preso no portão — nesse
  // meio-tempo o percentual já reflete 2 dos 3 prontos, mas o
  // carregamento continua ativo até o 3º também terminar (sem corrida
  // possível: o 3º só é liberado logo abaixo, DEPOIS de confirmar isso).
@@ -171,19 +176,18 @@ function itemsFixture(){
  assert.equal(midLoad.pct,'67%');
  releaseLounge();
 
- // 3 tiles, igual à Home (foto grande + nome embaixo, sem descrição nem
- // botão separado — pedido explícito do usuário, 2ª rodada: "não quero
- // que fique dentro dos cards, eu quero que fique igual a home,
- // literalmente um 3d do lado do outro, com o nome do módulo por baixo
- // do 3d"): Estúdio de Ambientes + Módulo Lounge (disponíveis, clicáveis)
- // + 1 recurso futuro com NOME PRÓPRIO (não só "Em breve" genérico),
- // inerte.
+ // 3 tiles, igual à Home (foto grande + só o título, sem descrição nem
+ // botão separado). Nomes pedidos pelo usuário olhando o mini-menu: "3D
+ // Livre" (antigo Estúdio de Ambientes), "Composições" (antigo Módulo
+ // Lounge) e o último sem nome, só "Em desenvolvimento" e nada embaixo.
  assert.equal(await page.locator('.catalog-modulo3d-tile').count(),3);
- assert.match(await page.locator('[data-modulo3d-card="estudio"] .catalog-modulo3d-tile-name').textContent(),/Estúdio de Ambientes/);
- assert.match(await page.locator('[data-modulo3d-card="lounge"] .catalog-modulo3d-tile-name').textContent(),/Módulo Lounge/);
+ assert.match(await page.locator('[data-modulo3d-card="estudio"] .catalog-modulo3d-tile-name').textContent(),/^3D Livre$/);
+ assert.match(await page.locator('[data-modulo3d-card="lounge"] .catalog-modulo3d-tile-name').textContent(),/^Composições$/);
  const soonTitles=await page.locator('.catalog-modulo3d-tile-soon .catalog-modulo3d-tile-name').allTextContents();
- assert.deepEqual(soonTitles,['Realidade aumentada'],'Único recurso futuro restante tem nome PRÓPRIO, não o texto genérico "Em breve" como título');
- assert.equal(await page.locator('.catalog-modulo3d-tile-soon .catalog-modulo3d-tile-badge').count(),1);
+ assert.deepEqual(soonTitles,['Em desenvolvimento'],'O recurso futuro perdeu o próprio nome: só "Em desenvolvimento"');
+ assert.equal(await page.locator('.catalog-modulo3d-tile-soon .catalog-modulo3d-tile-badge').count(),0,'Sem o selo "Em breve" embaixo do quadro');
+ assert.equal(await page.locator('.catalog-modulo3d-tile-desc').count(),0,'Pedido do usuário: "retire as frases, deixe somente os títulos" — nenhum card tem frase de descrição');
+ assert.equal(await page.locator('.catalog-modulo3d-tile-soon').evaluate(el=>el.innerText.trim().replace(/\s+/g,' ').toUpperCase()),'EM DESENVOLVIMENTO','Nada além do título dentro/embaixo do card indisponível');
  assert.equal(await page.locator('.catalog-modulo3d-tile-soon[aria-disabled="true"]').count(),1,'O recurso futuro restante tem aria-disabled');
  // :light() restringe a busca ao DOM "claro" do próprio tile — sem isso
  // o seletor do Playwright atravessa a shadow DOM do <model-viewer>
@@ -256,56 +260,41 @@ function itemsFixture(){
  });
  const darkenOpacity=()=>page.evaluate(()=>Number(getComputedStyle(document.querySelector('#__hoverTestCard [data-modulo3d-stage]'),'::before').opacity));
  const nameColor=()=>page.evaluate(()=>getComputedStyle(document.querySelector('#__hoverTestCard .catalog-modulo3d-tile-name')).color);
- const descOpacity=()=>page.evaluate(()=>Number(getComputedStyle(document.querySelector('#__hoverTestCard .catalog-modulo3d-tile-desc')).opacity));
  assert.equal(await stageScale(),1,'3D no tamanho normal fora do hover');
  assert.equal(await darkenOpacity(),0.08,'Quadro fica claro em repouso — só uma tinta bem sutil pro texto não ficar 100% invisível');
  assert.equal(await nameColor(),'rgb(255, 255, 255)','Nome do módulo é branco');
- assert.equal(await descOpacity(),0,'Resumo do módulo fica invisível em repouso — só aparece no hover');
- // Título subiu pro topo do quadro (não fica mais centralizado
- // verticalmente), e o resumo fica logo ABAIXO dele — nunca solto no
- // meio do quadro — com a MESMA font-family serif do título.
+ // Título no topo do quadro (não fica centralizado verticalmente).
  const captionLayout=await page.evaluate(()=>{
    const stage=document.querySelector('#__hoverTestCard [data-modulo3d-stage]');
    const name=stage.querySelector('.catalog-modulo3d-tile-name');
-   const desc=stage.querySelector('.catalog-modulo3d-tile-desc');
    const stageRect=stage.getBoundingClientRect();
    const nameRect=name.getBoundingClientRect();
-   const descRect=desc.getBoundingClientRect();
-   return {
-     nameNearTop: (nameRect.top - stageRect.top) < stageRect.height * 0.25,
-     descRightBelowName: descRect.top >= nameRect.bottom && (descRect.top - nameRect.bottom) < 24,
-     sameFontFamily: getComputedStyle(name).fontFamily === getComputedStyle(desc).fontFamily,
-   };
+   return { nameNearTop: (nameRect.top - stageRect.top) < stageRect.height * 0.25 };
  });
  assert.ok(captionLayout.nameNearTop,'Nome fica perto do topo do quadro, como um título — não mais centralizado verticalmente');
- assert.ok(captionLayout.descRightBelowName,'Resumo fica logo abaixo do título, não solto no meio do quadro');
- assert.ok(captionLayout.sameFontFamily,'Resumo usa a MESMA fonte do título, pra não parecer algo aleatório e sem nexo');
  await estudioCard.hover();
  await page.waitForTimeout(1600); // transição de 1400ms — espera terminar de verdade, sem ler no meio do caminho
  assert.ok(await stageScale()>1.05,'3D recebe um leve zoom no hover');
  assert.equal(await darkenOpacity(),0.6,'Quadro escurece bem mais no hover — é aí que o nome precisa "aparecer" de verdade');
- assert.equal(await descOpacity(),1,'Resumo do módulo aparece de verdade no hover');
- assert.match(await page.locator('#__hoverTestCard .catalog-modulo3d-tile-desc').textContent(),/Crie composições com os móveis da Chiavari/,'Resumo é o texto de card.description');
  await page.mouse.move(5,5);
  await page.waitForTimeout(1600);
  assert.equal(await stageScale(),1,'Zoom desfaz ao tirar o mouse');
  assert.equal(await darkenOpacity(),0.08,'Escurecer volta ao valor claro de repouso ao tirar o mouse');
- assert.equal(await descOpacity(),0,'Resumo volta a ficar invisível ao tirar o mouse');
 
  // Card do estúdio abre o estúdio de verdade — mesma rota/overlay de sempre.
  await page.locator('[data-modulo3d-card="estudio"]').click();
  await page.locator('#catalogStudio:not(.hidden)').waitFor();
- assert.equal(await page.locator('#catalogPageLabel').textContent(),'Painel 3D');
- assert.match(await page.locator('#catalogBreadcrumb').innerText(),/CATÁLOGO.*MÓDULO 3D.*PAINEL 3D/s,'Trilha de 3 níveis dentro do estúdio');
+ assert.equal(await page.locator('#catalogPageLabel').textContent(),'3D Livre');
+ assert.match(await page.locator('#catalogTimelinePast').innerText(),/m[óo]dulo 3d/i,'Linha do tempo do cabeçalho mostra o caminho até o 3D Livre (…› Módulo 3D › 3D Livre)');
  // Os 3 visualizadores do mini-menu foram desligados (não continuam
  // rodando atrás do estúdio) — pedido explícito: "evitar vazamentos de
  // memória... e recursos gráficos quando a tela for fechada".
  assert.equal(await page.evaluate(()=>document.querySelectorAll('model-viewer').length),0,'Os 3 model-viewer do mini-menu são removidos ao abrir o estúdio (sem contextos WebGL sobrando)');
 
- // Voltar pro mini-menu pela trilha — o recurso futuro restante continua
+ // Voltar pro mini-menu pela linha do tempo — o recurso futuro restante continua
  // sem fazer nada ao "clicar" (não têm elemento clicável), e os 3
  // modelos voltam a existir (reconstruídos do zero).
- await page.locator('[data-breadcrumb="modulo3d"]').click();
+ await page.locator('#catalogTimelinePast [data-timeline-entry]').filter({hasText:/m[óo]dulo 3d/i}).last().click();
  await page.locator('.catalog-modulo3d-menu').waitFor();
  await page.locator('[data-modulo3d-stage="estudio"] model-viewer').waitFor({timeout:10000});
  await page.locator('.catalog-modulo3d-tile-soon').first().click({force:true});
@@ -386,7 +375,7 @@ function itemsFixture(){
  // Decorador nunca vê o botão de marcar, nem no item de detalhe.
  await page.locator('[data-modulo3d-card="estudio"]').click();
  await page.locator('#catalogStudio:not(.hidden)').waitFor();
- await page.locator('[data-breadcrumb="modulo3d"]').click();
+ await page.locator('#catalogTimelinePast [data-timeline-entry]').filter({hasText:/m[óo]dulo 3d/i}).last().click();
  await page.locator('.catalog-modulo3d-menu').waitFor();
  await page.locator('.catalog-brand').click();
  await page.locator('[data-gateway-tile="catalogo"]').click();

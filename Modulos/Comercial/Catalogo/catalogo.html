@@ -4,12 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catálogo — Acervo</title>
-  <link rel="stylesheet" href="catalogo-creditos.css?v=20260916-retry-creditos">
+  <!-- Adianta DNS+TLS com o Storage/CDN do Supabase (de onde vêm todas as
+       fotos do catálogo) antes mesmo da primeira <img> ser descoberta —
+       parte da otimização de carregamento pedida pelo usuário ("busque
+       formas do catálogo abrir com mais agilidade"). -->
+  <link rel="preconnect" href="https://awemuohtvwvrdzfxwrmd.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://awemuohtvwvrdzfxwrmd.supabase.co">
+  <link rel="stylesheet" href="catalogo-creditos.css?v=20260919-fontes">
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <link rel="stylesheet" href="catalogo.css?v=20260919-modulo3dloadingpct">
-  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260913a">
-  <link rel="stylesheet" href="catalogo-biblioteca.css?v=20260917-pasta-visivel">
-  <link rel="stylesheet" href="catalogo-lounge.css?v=20260919-loungeia">
+  <link rel="stylesheet" href="catalogo.css?v=20260920-cores-grade3">
+  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260919-fontes">
+  <link rel="stylesheet" href="catalogo-biblioteca.css?v=20260919-biblioteca-tela-toda">
+  <link rel="stylesheet" href="catalogo-lounge.css?v=20260919-logo-sem-trilha">
+  <link rel="stylesheet" href="catalogo-projetos.css?v=20260921-mapa-renders">
+  <link rel="stylesheet" href="catalogo-layouts.css?v=20260921-mais-opcoes">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../../js/core/supabase.js"></script>
   <script defer src="catalogo-creditos.js?v=20260916-retry-creditos"></script>
@@ -67,7 +75,17 @@
         <span class="catalog-brand-name" id="catalogBrandName">Acervo</span>
       </a>
       <div class="catalog-navigation">
+        <!-- Linha do tempo das telas visitadas (pedido explícito do usuário:
+             "eu quero que forme tipo uma linha do tempo com todas as páginas
+             que eu acessei... a minha tela que eu estou agora ela deve ser
+             sempre centralizada"). #catalogPageLabel é a tela ATUAL, no
+             centro exato como sempre; as duas laterais recebem as telas
+             anteriores/seguintes (montadas por renderTimeline() em
+             catalogo.mjs), clicáveis pra pular direto até elas. Substitui as
+             antigas setas de voltar/avançar. -->
+        <div class="catalog-timeline-side catalog-timeline-past" id="catalogTimelinePast" role="group" aria-label="Telas anteriores"></div>
         <span class="catalog-page-label" id="catalogPageLabel" aria-live="polite"></span>
+        <div class="catalog-timeline-side catalog-timeline-future" id="catalogTimelineFuture" role="group" aria-label="Telas seguintes"></div>
       </div>
       <div class="catalog-user hidden" id="catalogUser">
         <img class="hidden" id="catalogUserLogo" alt="">
@@ -80,7 +98,6 @@
         <input type="search" id="catalogSearch" placeholder="Pesquisar" autocomplete="off">
       </label>
     </header>
-    <nav class="catalog-breadcrumb hidden" id="catalogBreadcrumb" aria-label="Caminho percorrido no catálogo"></nav>
     <div class="catalog-view-switcher hidden" id="catalogViewSwitcher" role="group" aria-label="Modo de visualização">
       <button type="button" class="catalog-view-switch-btn" data-view-mode="grid" aria-pressed="false" title="Visualização em grade" aria-label="Visualização em grade">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -93,7 +110,7 @@
       </button>
     </div>
   </div>
-  <section class="catalog-studio hidden" id="catalogStudio" aria-label="Painel de composição 3D">
+  <section class="catalog-studio hidden" id="catalogStudio" aria-label="3D Livre">
     <aside class="studio-library">
       <div class="studio-library-heading">
         <span>Biblioteca</span>
@@ -268,6 +285,7 @@
     <div class="studio-result-copy"><span>Renderização IA</span><strong>Sua composição em uma cena realista</strong></div>
     <img id="studioResultImage" alt="Renderização da composição 3D">
     <a id="studioResultDownload" download="composicao-acervo.png">Baixar imagem</a>
+    <button type="button" class="cpj-save-render" data-projeto-save-render data-img="studioResultImage" data-origem="3D Livre">Salvar no projeto</button>
   </dialog>
   <dialog class="catalog-customize-dialog" id="catalogCustomizeDialog">
     <button type="button" class="catalog-customize-close" id="catalogCustomizeClose" aria-label="Fechar personalização">×</button>
@@ -305,14 +323,36 @@
       <span>Sob medida</span>
       <strong id="catalogFabricResultTitle"></strong>
       <a id="catalogFabricResultDownload" download="tecido-personalizado.png">Salvar imagem</a>
+      <button type="button" class="cpj-save-render" data-projeto-save-render data-img="catalogFabricResultImage" data-origem="Tecido personalizado">Salvar no projeto</button>
+    </div>
+  </dialog>
+  <!-- Visualizador de zoom da foto (pedido explícito do usuário: "eu
+       quero que a pessoa possa dar zoom e de fato ver os detalhes" —
+       depois de descobrir que reduzir o tamanho servido pra deixar o
+       catálogo rápido tirava a chance de ver textura/acabamento de
+       perto). Clicar na foto principal/ambientada abre este diálogo
+       carregando a MESMA foto numa resolução bem maior (ver
+       IMG_WIDTH.zoom em catalogo.mjs) — só sob demanda, nunca pré-
+       carregada, pra não pesar a navegação normal. -->
+  <dialog class="catalog-photo-zoom-dialog" id="catalogPhotoZoomDialog">
+    <button type="button" class="catalog-photo-zoom-close" id="catalogPhotoZoomClose" aria-label="Fechar">×</button>
+    <button type="button" class="catalog-photo-zoom-nav is-prev" id="catalogPhotoZoomPrev" aria-label="Foto anterior" title="Foto anterior" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button type="button" class="catalog-photo-zoom-nav is-next" id="catalogPhotoZoomNext" aria-label="Próxima foto" title="Próxima foto" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    <p class="catalog-photo-zoom-counter" id="catalogPhotoZoomCounter" aria-live="polite" hidden></p>
+    <div class="catalog-photo-zoom-stage" id="catalogPhotoZoomStage">
+      <img class="catalog-photo-zoom-image" id="catalogPhotoZoomImage" alt="" draggable="false">
+    </div>
+    <p class="catalog-photo-zoom-hint" id="catalogPhotoZoomHint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="8" y="3" width="8" height="14" rx="4"/><path d="M12 6v3"/></svg><span>Arraste para mover • Role para aproximar</span></p>
+    <div class="catalog-photo-zoom-controls" role="group" aria-label="Controles de zoom da foto">
+      <button type="button" class="catalog-photo-zoom-control" data-photo-zoom-in aria-label="Aproximar" title="Aproximar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M10.5 7.5v6M7.5 10.5h6"/><path d="m20 20-4.3-4.3"/></svg></button>
+      <button type="button" class="catalog-photo-zoom-control" data-photo-zoom-out aria-label="Afastar" title="Afastar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M7.5 10.5h6"/><path d="m20 20-4.3-4.3"/></svg></button>
+      <button type="button" class="catalog-photo-zoom-control" data-photo-zoom-reset aria-label="Redefinir visualização" title="Redefinir visualização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4.5v5h-5"/></svg></button>
     </div>
   </dialog>
   <section class="catalog-biblioteca hidden" id="catalogBiblioteca" aria-label="Biblioteca de fotos por categoria">
     <div id="catalogBibliotecaFolders"></div>
     <div class="catalog-biblioteca-detail hidden" id="catalogBibliotecaDetail">
       <header class="catalog-biblioteca-detail-header">
-        <button type="button" class="catalog-biblioteca-back" id="catalogBibliotecaBack">← CATEGORIAS</button>
-        <h2 id="catalogBibliotecaDetailTitle"></h2>
         <label class="catalog-biblioteca-upload hidden" id="catalogBibliotecaUpload">
           <span>+ Adicionar fotos</span>
           <input type="file" id="catalogBibliotecaUploadInput" accept="image/png,image/jpeg,image/webp" multiple>
@@ -322,30 +362,34 @@
       <div class="catalog-biblioteca-photos" id="catalogBibliotecaPhotos"></div>
     </div>
   </section>
-  <section class="catalog-lounge hidden" id="catalogLounge" aria-label="Módulo Lounge">
+  <section class="catalog-lounge hidden" id="catalogLounge" aria-label="Composições">
     <aside class="catalog-lounge-sidebar">
-      <div class="catalog-lounge-formats">
-        <h3 class="catalog-lounge-heading">Formatos</h3>
-        <div class="catalog-lounge-format-list" id="loungeFormatList"></div>
+      <div class="catalog-lounge-tabs" role="tablist" aria-label="Seções de Composições">
+        <button type="button" class="catalog-lounge-tab is-active" data-lounge-tab="formats" role="tab" aria-selected="true">Formatos</button>
+        <button type="button" class="catalog-lounge-tab" data-lounge-tab="items" role="tab" aria-selected="false">Itens</button>
+        <button type="button" class="catalog-lounge-tab" data-lounge-tab="environment" role="tab" aria-selected="false">Ambiente</button>
       </div>
-      <div class="catalog-lounge-items">
-        <h3 class="catalog-lounge-heading">Itens</h3>
-        <div class="catalog-lounge-item-roles" id="loungeItemRoles"></div>
-      </div>
-      <div class="catalog-lounge-environment">
-        <h3 class="catalog-lounge-heading">Ambiente</h3>
-        <div class="catalog-lounge-floor-row" id="loungeFloorRow"></div>
-        <label class="catalog-lounge-bg-upload">
-          <span id="loungeBgLabel">Escolher foto de fundo</span>
-          <input type="file" id="loungeBgInput" accept="image/png,image/jpeg,image/webp">
-        </label>
-        <button type="button" class="catalog-lounge-bg-adjust hidden" id="loungeBgAdjust" data-lounge-bg-adjust>Ajustar imagem (arrastar)</button>
-        <div class="catalog-lounge-bg-zoom hidden" id="loungeBgZoom">
-          <button type="button" data-lounge-bg-zoom-out aria-label="Diminuir zoom da foto de fundo" title="Diminuir zoom">−</button>
-          <span>Zoom da foto</span>
-          <button type="button" data-lounge-bg-zoom-in aria-label="Aumentar zoom da foto de fundo" title="Aumentar zoom">+</button>
+      <div class="catalog-lounge-tab-panels">
+        <div class="catalog-lounge-tab-panel catalog-lounge-formats is-active" data-lounge-panel="formats" role="tabpanel">
+          <div class="catalog-lounge-format-list" id="loungeFormatList"></div>
         </div>
-        <button type="button" class="catalog-lounge-bg-remove hidden" id="loungeBgRemove" data-lounge-bg-remove>Remover foto de fundo</button>
+        <div class="catalog-lounge-tab-panel catalog-lounge-items" data-lounge-panel="items" role="tabpanel">
+          <div class="catalog-lounge-item-roles" id="loungeItemRoles"></div>
+        </div>
+        <div class="catalog-lounge-tab-panel catalog-lounge-environment" data-lounge-panel="environment" role="tabpanel">
+          <div class="catalog-lounge-floor-row" id="loungeFloorRow"></div>
+          <label class="catalog-lounge-bg-upload">
+            <span id="loungeBgLabel">Escolher foto de fundo</span>
+            <input type="file" id="loungeBgInput" accept="image/png,image/jpeg,image/webp">
+          </label>
+          <button type="button" class="catalog-lounge-bg-adjust hidden" id="loungeBgAdjust" data-lounge-bg-adjust>Ajustar imagem (arrastar)</button>
+          <div class="catalog-lounge-bg-zoom hidden" id="loungeBgZoom">
+            <button type="button" data-lounge-bg-zoom-out aria-label="Diminuir zoom da foto de fundo" title="Diminuir zoom">−</button>
+            <span>Zoom da foto</span>
+            <button type="button" data-lounge-bg-zoom-in aria-label="Aumentar zoom da foto de fundo" title="Aumentar zoom">+</button>
+          </div>
+          <button type="button" class="catalog-lounge-bg-remove hidden" id="loungeBgRemove" data-lounge-bg-remove>Remover foto de fundo</button>
+        </div>
       </div>
     </aside>
     <div class="catalog-lounge-viewer">
@@ -366,15 +410,19 @@
       </div>
     </div>
   </section>
+  <!-- Projetos (ver catalogo-projetos.mjs): lista + espaço de trabalho de cada projeto do decorador. -->
+  <section class="catalog-projetos hidden" id="catalogProjetos" aria-label="Projetos"></section>
   <dialog class="catalog-lounge-result-dialog" id="loungeResultDialog">
     <button type="button" class="catalog-lounge-result-close" id="loungeResultClose" aria-label="Fechar render">×</button>
     <div class="catalog-lounge-result-copy"><span>Renderização IA</span><strong>Seu lounge em uma cena realista</strong></div>
     <img id="loungeResultImage" alt="Renderização do lounge">
     <a id="loungeResultDownload" download="lounge-acervo.png">Baixar imagem</a>
+    <button type="button" class="cpj-save-render" data-projeto-save-render data-img="loungeResultImage" data-origem="Composições">Salvar no projeto</button>
   </dialog>
   <main class="catalog-products" id="catalogGrid"></main>
   <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
+  <div class="cpj-dock hidden" id="catalogProjetoDock" aria-label="Projeto ativo"></div>
   <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
-  <script type="module" src="catalogo.mjs?v=20260919-notifyimage"></script>
+  <script type="module" src="catalogo.mjs?v=20260921-mais-opcoes"></script>
 </body>
 </html>

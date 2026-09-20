@@ -27,6 +27,24 @@ const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
 }[ch]));
 const escapeAttr = (value) => escapeHtml(value).replace(/`/g, "&#96;");
+// Mesma otimização de carregamento de catalogo.mjs (Storage do Supabase
+// com transformação de imagem habilitada) — duplicado aqui porque este
+// módulo é self-contido de propósito, sem importar nada de catalogo.mjs.
+function otimizarFoto(url, width, quality = 74){
+  if(!url || typeof url !== "string" || !width) return url;
+  const marcador = "/storage/v1/object/public/";
+  const indice = url.indexOf(marcador);
+  if(indice === -1) return url;
+  const base = url.slice(0, indice);
+  const caminho = url.slice(indice + marcador.length);
+  const separador = caminho.includes("?") ? "&" : "?";
+  // resize=contain é obrigatório aqui: só `width` sem isso faz o Storage
+  // manter a altura ORIGINAL inteira (bug real já visto em produção —
+  // foto virava uma fatia vertical cortada/esticada, não uma miniatura
+  // proporcional). Com resize=contain, a altura é calculada sozinha a
+  // partir da proporção real do arquivo, mesmo sem informar height.
+  return `${base}/storage/v1/render/image/public/${caminho}${separador}width=${width}&quality=${quality}&resize=contain`;
+}
 
 // "Lounge compacto" é o único formato por enquanto — pedido explícito do
 // usuário: "imagina que ali será uma coluna com vários que vamos criar no
@@ -97,7 +115,11 @@ let ctx = { items: [] };
 // ensureScene(), destruída por completo em teardownCatalogLounge() (nunca
 // fica "pausada" rodando escondida, diferente do Estúdio de Ambientes).
 let lounge = null;
-let ui = { formatKey: FORMATS[0].key, selection: {}, floorKey: FLOORS[0].key };
+// `activeTab` — pedido explícito do usuário: "no lado esquerdo eu quero
+// que tenha abas, uma aba só pra formatos, uma aba pra itens e uma aba
+// pra ambiente" — "formats" é a aba inicial (era a 1ª seção no layout
+// empilhado antigo).
+let ui = { formatKey: FORMATS[0].key, selection: {}, floorKey: FLOORS[0].key, activeTab: "formats" };
 let fullscreenHandler = null;
 
 function itemById(id){
@@ -142,7 +164,7 @@ function rolePickerMarkup(role){
     <div class="catalog-lounge-role-items">
       ${role.required ? "" : `<button type="button" class="catalog-lounge-item-chip is-none ${!selectedId ? "is-active" : ""}" data-lounge-pick="${escapeAttr(role.key)}" data-lounge-item="" aria-pressed="${!selectedId}">Nenhuma</button>`}
       ${options.map((item) => `<button type="button" class="catalog-lounge-item-chip ${String(item.id) === String(selectedId) ? "is-active" : ""}" data-lounge-pick="${escapeAttr(role.key)}" data-lounge-item="${escapeAttr(item.id)}" aria-pressed="${String(item.id) === String(selectedId)}" title="${escapeAttr(item.name)}">
-        <img src="${escapeHtml(item.photo)}" alt="" loading="lazy">
+        <img src="${escapeHtml(otimizarFoto(item.photo, 120))}" alt="" loading="lazy">
         <span>${escapeHtml(item.name)}</span>
       </button>`).join("")}
       ${options.length === 0 ? `<p class="catalog-lounge-role-empty">Nenhum item com modelo 3D nesta categoria.</p>` : ""}
@@ -158,6 +180,23 @@ function floorsMarkup(){
   return FLOORS.map((floor) => `<button type="button" class="catalog-lounge-floor-swatch ${floor.key === ui.floorKey ? "is-active" : ""}" data-lounge-floor="${escapeAttr(floor.key)}" style="--swatch-color:${floor.color}" title="${escapeAttr(floor.label)}" aria-label="${escapeAttr(floor.label)}" aria-pressed="${floor.key === ui.floorKey}"></button>`).join("");
 }
 
+// Abas do lado esquerdo (Formatos/Itens/Ambiente) — só uma seção
+// visível por vez, ao contrário do layout antigo empilhado. Botões da
+// aba são estáticos no HTML (catalogo.html), só o estado `.is-active`/
+// `aria-selected` muda aqui.
+function syncLoungeTabs(){
+  const root = $("catalogLounge");
+  if(!root) return;
+  root.querySelectorAll("[data-lounge-tab]").forEach((btn) => {
+    const active = btn.dataset.loungeTab === ui.activeTab;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-selected", String(active));
+  });
+  root.querySelectorAll("[data-lounge-panel]").forEach((panel) => {
+    panel.classList.toggle("is-active", panel.dataset.loungePanel === ui.activeTab);
+  });
+}
+
 function renderSidebar(){
   const formatList = $("loungeFormatList");
   const itemRoles = $("loungeItemRoles");
@@ -165,6 +204,7 @@ function renderSidebar(){
   if(formatList) formatList.innerHTML = formatsMarkup();
   if(itemRoles) itemRoles.innerHTML = itemsMarkup();
   if(floorRow) floorRow.innerHTML = floorsMarkup();
+  syncLoungeTabs();
 }
 
 // ---------- Cena 3D ----------
@@ -824,6 +864,19 @@ function loungeComposedObjects(){
   return objects;
 }
 
+// Móveis da composição (uma entrada por peça na cena, então poltronas repetidas contam mais de uma vez) — vêm do item
+// ESCOLHIDO em cada papel, não de loungeComposedObjects(): as peças aqui não guardam o item em userData, e o payload
+// enviado à IA não foi mexido de propósito (o pedido de fidelidade dela é sensível). Tirado no clique, junto com a
+// captura: mexer na composição durante os ~2 minutos da IA não muda os móveis atrelados àquela imagem.
+function loungeCompositionItems(){
+  const itens = [];
+  lounge.pieces.forEach((meshes, role) => {
+    const item = itemById(ui.selection[role]);
+    if(item) meshes.forEach(() => itens.push({ itemId: item.id, itemName: item.name }));
+  });
+  return itens;
+}
+
 function openLoungeRenderResult(src){
   const img = $("loungeResultImage");
   const download = $("loungeResultDownload");
@@ -836,6 +889,7 @@ async function renderLoungeWithAI(){
   const button = $("loungeRenderButton");
   if(!lounge || !button || button.disabled) return;
   const objects = loungeComposedObjects();
+  const composedItems = loungeCompositionItems();
   if(!objects.length){
     window.catalogNotify?.({ title: "Composição vazia", message: "Escolha pelo menos um sofá antes de renderizar.", status: "error" });
     return;
@@ -890,6 +944,8 @@ async function renderLoungeWithAI(){
     if(data?.providerStatus !== "ok") throw new Error(data?.error?.message || data?.error?.error?.message || data?.erro || "O Studio IA não conseguiu concluir a imagem.");
     const src = loungeExtractResult(data?.images?.[0]);
     if(!src) throw new Error(data?.erro || "A IA não retornou uma imagem.");
+    // Quais móveis estão nesta imagem — o projeto (catalogo-projetos.mjs) leva os mesmos móveis junto ao salvar a renderização.
+    window.catalogRegisterRenderItems?.(src, composedItems);
     workingToast?.close();
     window.catalogNotify?.({
       title: "Sua renderização ficou pronta",
@@ -927,6 +983,13 @@ function bindInteractions(){
   if(!root || root.dataset.loungeBound === "true") return;
   root.dataset.loungeBound = "true";
   root.addEventListener("click", (event) => {
+    const tabBtn = event.target.closest("[data-lounge-tab]");
+    if(tabBtn){
+      if(tabBtn.dataset.loungeTab === ui.activeTab) return;
+      ui.activeTab = tabBtn.dataset.loungeTab;
+      syncLoungeTabs();
+      return;
+    }
     const formatBtn = event.target.closest("[data-lounge-format]");
     if(formatBtn){
       if(formatBtn.dataset.loungeFormat === ui.formatKey) return;
@@ -980,7 +1043,7 @@ export function initCatalogLounge({ items, empresaId }){
 }
 
 export async function openCatalogLounge(){
-  ui = { formatKey: FORMATS[0].key, selection: {}, floorKey: FLOORS[0].key };
+  ui = { formatKey: FORMATS[0].key, selection: {}, floorKey: FLOORS[0].key, activeTab: "formats" };
   ensureDefaultSelection();
   renderSidebar();
   syncBackgroundControls();

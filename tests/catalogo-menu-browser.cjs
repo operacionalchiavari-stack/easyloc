@@ -26,7 +26,7 @@ assert.equal(await page.locator('#catalogViewSwitcher').isVisible(),false,'Ícon
 // seguinte: "como o nome está no menu, o que está embaixo pode remover
 // pra não ficar duplicado") e só sobrevive pro título de busca.
 assert.equal(await page.locator('[data-biblioteca-toggle],[data-studio-toggle]').count(),0,'Botões Biblioteca/Painel 3D não existem mais no cabeçalho');
-assert.equal(await page.locator('#catalogPageLabel').textContent(),'Categoria','Rótulo do cabeçalho mostra "Categoria" na Home');
+assert.equal(await page.locator('#catalogPageLabel').textContent(),'Categorias','Rótulo do cabeçalho mostra "Categorias" na Home');
 const estofadosImg=await page.locator('[data-home-category="estofados"] img').getAttribute('src');
 assert.ok(estofadosImg.includes('capa-estofados'),'Categoria com item marcado capa_categoria usa a foto desse item');
 const mesasImg=await page.locator('[data-home-category="mesas"] img').getAttribute('src');
@@ -84,7 +84,7 @@ assert.equal(await page.locator('#catalogViewSwitcher').isVisible(),true,'Dentro
 // Logo agora volta pro Portal (o novo "início"), não direto pra Home.
 await page.locator('.catalog-brand').click();
 await page.locator('.catalog-gateway').waitFor();
-assert.equal(await page.locator('[data-gateway-tile]').count(),3,'Clicar na logo de dentro de uma categoria volta pro Portal');
+assert.equal(await page.locator('[data-gateway-tile]').count(),4,'Clicar na logo de dentro de uma categoria volta pro Portal');
 await page.locator('[data-gateway-tile="catalogo"]').click();
 await page.locator('.catalog-home-grid').waitFor();
 assert.equal(await page.locator('[data-home-category]').count(),3,'Do Portal, o bloco Catálogo volta pra Home de categorias');

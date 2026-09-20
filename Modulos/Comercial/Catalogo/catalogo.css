@@ -9,58 +9,22 @@
    de verdade em tempo de execucao por watchHeaderHeight() em catalogo.mjs;
    o valor aqui e so o palpite inicial antes do JS medir o real. */
 .catalog-header{display:grid;grid-template-columns:auto minmax(150px,230px) auto;grid-template-rows:minmax(var(--header-top-h),auto) auto;grid-template-areas:"brand search user" "categories categories categories";align-items:center;column-gap:clamp(16px,2.2vw,36px);padding:0 clamp(20px,2.2vw,40px);background:#5a5a55;color:#fff;border-bottom:1px solid rgba(255,255,255,.1)}
-/* O cabeçalho fica sticky aqui, no wrapper (não mais em .catalog-header
-   sozinho) — o motivo NÃO é mais reservar espaço extra pra trilha (ver
-   abaixo, ela virou overlay flutuante): é só o ponto de ancoragem pra
-   .catalog-breadcrumb (position:absolute) se posicionar colada embaixo
-   do cabeçalho, acompanhando o scroll junto com ele. */
+/* O cabeçalho fica sticky aqui, no wrapper (não em .catalog-header sozinho):
+   é o ponto de ancoragem do seletor de visualização (.catalog-view-switcher,
+   position:absolute) — colado embaixo do cabeçalho, acompanhando o scroll junto
+   com ele. (A trilha "Catálogo / Categoria / Item" que também morava aqui foi
+   apagada a pedido do usuário; o caminho percorrido está na linha do tempo do
+   cabeçalho.) */
 .catalog-top-chrome{position:sticky;top:0;z-index:200}
-/* Trilha "Catálogo / Categoria / Nome do item" (pedido explícito do
-   usuário: "pra pessoa saber o caminho que ela percorreu") — some no
-   Portal e na Home (não tem caminho nenhum ainda pra mostrar), aparece
-   assim que entra numa categoria. Os dois primeiros segmentos são
-   clicáveis (voltam pra Home / topo da categoria); o último (nome do
-   item atualmente em foco na tela imersiva) é só texto, indicando "você
-   está aqui" — atualizado por renderBreadcrumb() em catalogo.mjs, tanto
-   ao navegar quanto ao rolar entre itens da mesma categoria.
-   position:absolute (não reserva espaço no fluxo normal, flutua por
-   CIMA do que vier logo abaixo) — pedido explícito do usuário depois de
-   ver a primeira versão (a trilha empurrando o conteúdo pra baixo,
-   inclusive a foto ambientada em tela cheia): "a foto está indo só até
-   a linha [da trilha], eu quero que ela vá até o menu". Sem isso a foto
-   ambientada (.product-event-image, cheia até a borda de propósito)
-   ficava cortada logo abaixo da trilha em vez de encostar no cabeçalho.
-   --header-h (usado pra calcular a altura de cada seção em tela cheia)
-   volta a refletir só a altura do PRÓPRIO cabeçalho (watchHeaderHeight
-   observa .catalog-header de novo, não mais o wrapper) — a trilha não
-   entra mais nessa conta, exatamente pra poder sobrepor o topo do
-   conteúdo em vez de empurrá-lo. Fundo semi-transparente com blur (mesmo
-   truque já usado nos outros controles flutuantes sobre foto do
-   catálogo, ex. .product-main-nav) pra continuar legível tanto sobre o
-   fundo branco (coluna de texto) quanto sobre uma foto cheia de detalhe
-   (coluna da Ambientada) — nos dois casos o texto do título do item
-   começa DEPOIS do padding-top de .catalog-detail-panel (38px), maior
-   que a altura da trilha, então ela nunca cobre o título, só o respiro
-   que já existia ali. */
-.catalog-breadcrumb{position:absolute;top:100%;left:0;right:0;z-index:5;display:flex;align-items:center;gap:7px;padding:9px clamp(20px,2.2vw,40px);background:rgba(255,255,255,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:600 .6rem/1 "Manrope",sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);overflow-x:auto;white-space:nowrap;scrollbar-width:none}
-.catalog-breadcrumb::-webkit-scrollbar{display:none}
-.catalog-breadcrumb-link{border:0;background:none;padding:0;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;transition:color .2s}
-.catalog-breadcrumb-link:hover,.catalog-breadcrumb-link:focus-visible{color:var(--ink)}
-.catalog-breadcrumb-current{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
-.catalog-breadcrumb-sep{color:var(--line)}
 /* Ícones de imersivo/grade (pedido explícito do usuário, depois de ver o
    ícone único — que ALTERNAVA entre os dois — espremido ao lado do nome
    da categoria no cabeçalho: "quero colocar no canto direito da tela,
    logo abaixo do menu... quero que tenha um ícone pra cada tipo de
-   visualização... no caso de hoje precisa ter 2 ícones ali"). Mesma
-   âncora/mecânica da trilha logo acima (position:absolute;top:100%,
+   visualização... no caso de hoje precisa ter 2 ícones ali"). position:absolute;top:100%,
    ancorado em .catalog-top-chrome que é sticky — flutua por cima do
-   conteúdo, sem reservar espaço nem empurrar nada pra baixo) e o mesmo
-   truque de fundo translúcido com blur pra continuar legível tanto sobre
-   fundo branco (grade) quanto sobre foto cheia (imersivo). z-index maior
-   que a trilha (5) pra sempre ficar por cima dela nos raros casos de um
-   nome de categoria/item comprido o bastante pra alcançar o canto
-   direito. */
+   conteúdo, sem reservar espaço nem empurrar nada pra baixo — com fundo
+   translúcido e blur pra continuar legível tanto sobre fundo branco (grade)
+   quanto sobre foto cheia (imersivo). */
 .catalog-view-switcher{position:absolute;top:100%;right:0;z-index:6;display:flex;gap:8px;padding:9px clamp(20px,2.2vw,40px)}
 .catalog-view-switch-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--muted);cursor:pointer;transition:border-color .2s,color .2s,background-color .2s}
 .catalog-view-switch-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -68,8 +32,8 @@
 .catalog-view-switch-btn.is-active{background:var(--accent);border-color:var(--accent);color:#fff}
 @media(max-width:600px){.catalog-view-switcher{padding:9px 18px}.catalog-view-switch-btn{width:34px;height:34px}.catalog-view-switch-btn svg{width:14px;height:14px}}
 .catalog-brand{grid-area:brand;display:flex;align-items:center;justify-content:flex-start;width:clamp(270px,21vw,330px);color:inherit;text-decoration:none;overflow:visible}.catalog-brand-logo{display:block;width:100%;max-width:215px;max-height:49px;object-fit:contain;object-position:left center;transform:scale(3.6);transform-origin:left center;pointer-events:none}.catalog-brand-name{font-family:"Cormorant Garamond",serif;font-size:1.5rem;letter-spacing:.02em;white-space:nowrap}
-.catalog-header-categories{grid-area:categories;position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;row-gap:8px;column-gap:clamp(18px,2.2vw,36px);padding:8px 0 14px;overflow:visible}.catalog-header-category{position:relative;border:0;background:none;padding:2px 0 0;color:rgba(255,255,255,.72);font:600 .61rem/1 "Manrope",sans-serif;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap;cursor:pointer}.catalog-header-category:hover,.catalog-header-category.active{color:#fff}.catalog-header-category.active::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#d1b58e}
-.catalog-search{grid-area:search;display:flex;align-items:center;gap:9px;height:29px;padding:0 4px;border-bottom:1px solid rgba(255,255,255,.34);color:rgba(255,255,255,.72);transition:border-color .25s}.catalog-search:focus-within{border-color:#fff}.catalog-search svg{flex:0 0 auto;width:14px;height:14px}.catalog-search input{width:100%;border:0;outline:0;background:transparent;color:#fff;font:400 .7rem "Manrope",sans-serif;letter-spacing:.04em}.catalog-search input::placeholder{color:rgba(255,255,255,.55)}
+.catalog-header-categories{grid-area:categories;position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;row-gap:8px;column-gap:clamp(18px,2.2vw,36px);padding:8px 0 14px;overflow:visible}.catalog-header-category{position:relative;border:0;background:none;padding:2px 0 0;color:rgba(255,255,255,.72);font:600 .813rem/1 "Manrope",sans-serif;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap;cursor:pointer}.catalog-header-category:hover,.catalog-header-category.active{color:#fff}.catalog-header-category.active::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#d1b58e}
+.catalog-search{grid-area:search;display:flex;align-items:center;gap:9px;height:29px;padding:0 4px;border-bottom:1px solid rgba(255,255,255,.34);color:rgba(255,255,255,.72);transition:border-color .25s}.catalog-search:focus-within{border-color:#fff}.catalog-search svg{flex:0 0 auto;width:14px;height:14px}.catalog-search input{width:100%;border:0;outline:0;background:transparent;color:#fff;font:400 .875rem "Manrope",sans-serif;letter-spacing:.04em}.catalog-search input::placeholder{color:rgba(255,255,255,.55)}
 
 /* Aberto de dentro do sistema (ver acessoInternoDoSistema() em catalogo.mjs):
    o dashboard ja tem seu proprio menu — a marca/busca/usuario do cabecalho
@@ -104,17 +68,55 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    do catálogo (var(--accent)), sem nada saturado/genérico. "Todos"
    sempre é a primeira, ativa por padrão ao entrar numa categoria nova. */
 .catalog-subcat-filter{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:0 0 44px}
-.catalog-subcat-chip{border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 18px;color:var(--muted);font:600 .62rem "Manrope",sans-serif;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s,background-color .2s}
+.catalog-subcat-chip{border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 18px;color:var(--muted);font:600 .844rem "Manrope",sans-serif;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s,background-color .2s}
 .catalog-subcat-chip:hover{border-color:var(--accent);color:var(--accent)}
 .catalog-subcat-chip.is-active{border-color:var(--accent);color:#fff;background:var(--accent)}
-.catalog-subcat-empty{padding:48px 0;text-align:center;color:var(--muted);font-size:.78rem}
+/* Filtros da tela "Categorias" (Material, Estilo, Personalizáveis — ver HOME_FILTER_FIELDS em catalogo.mjs):
+   mesma linguagem das pílulas de subcategoria (contorno claro, ativo preenchido na cor terrosa). Material/Estilo
+   abrem um painel com caixinhas (podem ter dezenas de valores, não cabem como pílulas); "Personalizáveis" é um
+   liga/desliga direto. Com filtro ativo, a grade de categorias dá lugar aos itens agrupados por categoria
+   (.catalog-filter-group), um título serifado com a contagem por grupo. */
+.catalog-home-filters{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:0 0 44px}
+.catalog-filter{position:relative}
+.catalog-filter-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 18px;color:var(--muted);font:600 .844rem "Manrope",sans-serif;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s,background-color .2s}
+.catalog-filter-chip:hover,.catalog-filter.is-open .catalog-filter-chip{border-color:var(--accent);color:var(--accent)}
+.catalog-filter-chip.is-active,.catalog-filter-chip.is-active:hover{border-color:var(--accent);color:#fff;background:var(--accent)}
+.catalog-filter-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.catalog-filter-chip svg{width:14px;height:14px;flex:none;transition:transform .2s}
+.catalog-filter.is-open .catalog-filter-chip svg{transform:rotate(180deg)}
+.catalog-filter-count{min-width:20px;padding:1px 6px;border-radius:999px;background:rgba(185,154,114,.18);font-size:.781rem;font-style:normal;font-variant-numeric:tabular-nums;letter-spacing:0;text-align:center}
+.catalog-filter-chip.is-active .catalog-filter-count{background:rgba(255,255,255,.28);color:#fff}
+.catalog-filter-count[hidden]{display:none}
+.catalog-filter-panel{position:absolute;top:calc(100% + 8px);left:0;z-index:30;min-width:250px;max-width:min(340px,calc(100vw - 36px));max-height:min(340px,60vh);overflow-y:auto;padding:8px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 18px 44px rgba(31,24,19,.16)}
+.catalog-filter-panel[hidden]{display:none}
+.catalog-filter-option{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--ink);font-size:.906rem;cursor:pointer;transition:background-color .15s}
+.catalog-filter-option:hover{background:rgba(185,154,114,.1)}
+.catalog-filter-option input{flex:none;width:16px;height:16px;margin:0;accent-color:var(--accent)}
+.catalog-filter-option-label{flex:1;min-width:0}
+.catalog-filter-option-count{color:var(--muted);font-size:.781rem;font-style:normal;font-variant-numeric:tabular-nums}
+.catalog-filter-option.is-empty{opacity:.4;cursor:default}
+.catalog-filter-option.is-empty:hover{background:none}
+.catalog-filter-clear,.catalog-filter-clear-inline{border:0;background:none;padding:8px 6px;color:var(--muted);font:600 .844rem "Manrope",sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.catalog-filter-clear[hidden]{display:none}
+.catalog-filter-clear:hover,.catalog-filter-clear-inline:hover{color:var(--accent)}
+.catalog-filter-summary{flex:0 0 100%;margin:2px 0 0;color:var(--muted);font-size:.844rem;letter-spacing:.03em;text-align:center}
+.catalog-filter-summary:empty{display:none}
+.catalog-filter-group+.catalog-filter-group{margin-top:clamp(48px,6vw,80px)}
+.catalog-filter-group-title{display:flex;align-items:baseline;gap:14px;margin:0 0 clamp(24px,3vw,36px);padding-bottom:14px;border-bottom:1px solid var(--line);font-family:"Cormorant Garamond",serif;font-size:clamp(1.5rem,2.2vw,2rem);font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.catalog-filter-group-title em{font:600 .844rem "Manrope",sans-serif;font-style:normal;letter-spacing:.05em;color:var(--muted)}
+@media(max-width:600px){
+  .catalog-home-filters{gap:8px;margin-bottom:32px}
+  .catalog-filter{position:static}
+  .catalog-filter-panel{left:0;right:0;max-width:none}
+}
+.catalog-subcat-empty{padding:48px 0;text-align:center;color:var(--muted);font-size:.906rem}
 .catalog-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:clamp(24px,3vw,56px);row-gap:clamp(36px,4vw,56px)}
 .catalog-grid-card{display:flex;align-items:flex-start;gap:18px;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .catalog-grid-card-photo{flex:0 0 clamp(110px,11vw,160px);width:clamp(110px,11vw,160px);height:clamp(110px,11vw,160px);display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
 .catalog-grid-card-photo img{width:100%;height:100%;object-fit:contain}
 .catalog-grid-card-body{display:flex;flex-direction:column;gap:8px;padding-top:6px;min-width:0}
 .catalog-grid-card-name{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:1.02rem;line-height:1.3;letter-spacing:.01em;text-transform:uppercase;color:var(--ink);transition:color .2s}
-.catalog-grid-card-dims,.catalog-grid-card-meta{color:var(--muted);font-size:.66rem;letter-spacing:.03em}
+.catalog-grid-card-dims,.catalog-grid-card-meta{color:var(--muted);font-size:.844rem;letter-spacing:.03em}
 .catalog-grid-card:hover .catalog-grid-card-name,.catalog-grid-card:focus-visible .catalog-grid-card-name{color:var(--accent)}
 .catalog-grid-card:focus-visible{outline:1px solid var(--accent);outline-offset:6px}
 @media(max-width:1100px){.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -134,8 +136,8 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 .catalog-mosaic-tile img{display:block;width:100%;height:auto}
 .catalog-mosaic-info{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;padding:16px 14px;background:linear-gradient(to top,rgba(20,16,12,.72),rgba(20,16,12,0) 65%);opacity:0;transition:opacity .3s ease;text-align:left}
 .catalog-mosaic-tile:hover .catalog-mosaic-info,.catalog-mosaic-tile:focus-visible .catalog-mosaic-info{opacity:1}
-.catalog-mosaic-name{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:.92rem;letter-spacing:.01em;text-transform:uppercase;color:#fff}
-.catalog-mosaic-dims{color:rgba(255,255,255,.85);font-size:.6rem;letter-spacing:.03em}
+.catalog-mosaic-name{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:.969rem;letter-spacing:.01em;text-transform:uppercase;color:#fff}
+.catalog-mosaic-dims{color:rgba(255,255,255,.85);font-size:.813rem;letter-spacing:.03em}
 .catalog-mosaic-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(max-width:1200px){.catalog-mosaic{column-count:3}}
 @media(max-width:900px){.catalog-mosaic{column-count:2}}
@@ -164,7 +166,8 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    zoom no hover como antes; o escurecer sozinho já comunica
    interatividade sem precisar reescalar a foto inteira por baixo de
    todas as 3 zonas. */
-.catalog-gateway-zone::before{content:"";position:absolute;inset:0;background:#000;opacity:.22;pointer-events:none;transition:opacity 1000ms cubic-bezier(.22,1,.36,1)}
+/* Foto do Portal NATURAL em repouso (pedido do usuário: "a foto da home eu acho que ela não está natural, tem algum efeito nela"): o véu preto ficava a .22 SEMPRE — tirava ~22% da luz da foto (luminância média 151 → 118, realces 225 → 176), deixando-a fosca/acinzentada. Agora o véu só existe no hover (0 → .5), como o efeito que o usuário gosta; o texto branco continua legível pelo text-shadow forte de .catalog-gateway-title, que escurece só em volta das letras, não a foto inteira. */
+.catalog-gateway-zone::before{content:"";position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity 1000ms cubic-bezier(.22,1,.36,1)}
 .catalog-gateway-zone:hover::before,.catalog-gateway-zone:focus-visible::before{opacity:.5}
 /* Efeito no texto igual ao "INSPIRE-SE" da foto ambientada do item
    (pedido explícito do usuário: "quero que os módulos na home tenham um
@@ -177,7 +180,7 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    continuar legíveis o tempo todo (pedido de sessões anteriores), só a
    letra "respirando"/abrindo é o que muda, não a foto ambientada, que
    normalmente fica escondida até o hover revelar "INSPIRE-SE". */
-.catalog-gateway-title{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;color:#fff;font-family:"Cormorant Garamond",serif;font-size:clamp(1.5rem,2.6vw,2.4rem);font-weight:500;letter-spacing:.14em;text-indent:.14em;text-shadow:0 3px 22px rgba(0,0,0,.4);white-space:nowrap;pointer-events:none;transition:letter-spacing 1200ms cubic-bezier(.22,1,.36,1),text-indent 1200ms cubic-bezier(.22,1,.36,1)}
+.catalog-gateway-title{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;color:#fff;font-family:"Cormorant Garamond",serif;font-size:clamp(1.5rem,2.6vw,2.4rem);font-weight:500;letter-spacing:.14em;text-indent:.14em;text-shadow:0 1px 3px rgba(0,0,0,.55),0 2px 18px rgba(0,0,0,.6),0 0 44px rgba(0,0,0,.45);white-space:nowrap;pointer-events:none;transition:letter-spacing 1200ms cubic-bezier(.22,1,.36,1),text-indent 1200ms cubic-bezier(.22,1,.36,1)}
 @media(hover:hover) and (pointer:fine){
   .catalog-gateway-zone:hover .catalog-gateway-title,.catalog-gateway-zone:focus-visible .catalog-gateway-title{letter-spacing:.32em;text-indent:.32em}
 }
@@ -193,9 +196,9 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    aparecendo também"). Agrupados num wrapper só pra não precisar
    calcular posição de cada um separadamente. */
 .catalog-gateway-controls{position:absolute;z-index:3;right:20px;bottom:20px;display:flex;align-items:center;gap:8px}
-.catalog-gateway-adjust{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:rgba(20,16,12,.4);color:#fff;font-size:.85rem;cursor:pointer;backdrop-filter:blur(6px);transition:background .2s,border-color .2s}
+.catalog-gateway-adjust{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:rgba(20,16,12,.4);color:#fff;font-size:.938rem;cursor:pointer;backdrop-filter:blur(6px);transition:background .2s,border-color .2s}
 .catalog-gateway-adjust:hover{background:rgba(20,16,12,.6);border-color:#fff}
-.catalog-gateway-edit{display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(20,16,12,.4);color:#fff;font:600 .58rem "Manrope",sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(6px);transition:background .2s,border-color .2s}
+.catalog-gateway-edit{display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(20,16,12,.4);color:#fff;font:600 .813rem "Manrope",sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(6px);transition:background .2s,border-color .2s}
 .catalog-gateway-edit:hover{background:rgba(20,16,12,.6);border-color:#fff}
 .catalog-gateway-edit input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 @media(max-width:900px){.catalog-gateway-zones{flex-direction:column}}
@@ -232,35 +235,18 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 .catalog-product-section:not(:last-child){margin-bottom:clamp(48px,7vh,88px)}
 .catalog-detail-panel{position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;min-height:0;overflow:hidden;padding:38px clamp(38px,3.4vw,64px) 32px;min-width:0}
 .catalog-detail-top{display:grid;grid-template-columns:minmax(0,30fr) minmax(0,70fr);align-items:center;min-width:0;min-height:0;gap:clamp(12px,1.5vw,26px)}
-.product-copy{position:relative;z-index:2;align-self:start;padding-top:4px;min-width:0}.product-category-back{display:inline-flex;align-items:center;gap:9px;margin-bottom:clamp(34px,5vh,58px);border:0;background:none;padding:0;color:#514a44;font:600 .68rem/1 "Manrope",sans-serif;letter-spacing:.11em;text-transform:uppercase;cursor:pointer}.product-category-back:hover,.product-category-back:focus-visible{color:var(--accent)}.product-category-back:focus-visible{outline:1px solid var(--accent);outline-offset:6px}
-/* Pedido explícito do usuário, depois de ver a tela de verdade: "quero
-   diminuir um pouco o nome do item e quero colocar ao lado na mesma
-   linha os círculos das cores disponíveis" — os círculos de variante
-   (variantSwatchesBlock()) moraram sempre dentro deste wrapper, nunca
-   mais soltos numa seção própria mais abaixo. align-items:flex-end
-   alinha a base do texto com a base dos círculos.
-   A coluna de texto (30% da largura, contra 70% da foto — ver
-   .catalog-detail-top) é estreita demais pra caber nome+círculos numa
-   linha sem ficar minúsculo, mesmo com o nome menor. Testado com
-   flex-wrap:wrap (círculos caindo pra uma 2ª linha quando não cabiam) e
-   perguntado ao usuário como preferia resolver — resposta explícita:
-   "os círculos e o nome passam por cima da foto, sobrepõe". Por isso
-   flex-wrap:nowrap (nunca quebra linha) — quando o nome é comprido, a
-   linha toda (nome+círculos) simplesmente vaza visualmente pra dentro
-   da área da foto (z-index:2, acima de .product-main-media que é
-   z-index:1), de propósito, em vez de span pra baixo ou espremer o
-   texto. Overflow não é cortado em lugar nenhum da árvore até
-   .catalog-detail-panel (que só corta na própria borda do painel, bem
-   mais longe), então esse vazamento é só visual, nada quebra. */
-.product-title-row{position:relative;z-index:2;display:flex;align-items:flex-end;column-gap:22px;flex-wrap:nowrap}
-/* flex-shrink:0 nos dois filhos é essencial: por padrão um flex item
-   pode ENCOLHER mesmo com flex-wrap:nowrap (nowrap só impede quebrar
-   linha, não impede espremer) — sem isso, o navegador espremia
-   .product-variants-row até ficar mais estreito que um círculo (46px),
-   o que disparava o flex-wrap:wrap INTERNO dela e empilhava os círculos
-   na vertical, um em cima do outro, em vez de ficarem ao lado do nome. */
+.product-copy{position:relative;z-index:2;align-self:start;padding-top:4px;min-width:0}.product-category-back{display:inline-flex;align-items:center;gap:9px;margin-bottom:clamp(34px,5vh,58px);border:0;background:none;padding:0;color:#514a44;font:600 .844rem/1 "Manrope",sans-serif;letter-spacing:.11em;text-transform:uppercase;cursor:pointer}.product-category-back:hover,.product-category-back:focus-visible{color:var(--accent)}.product-category-back:focus-visible{outline:1px solid var(--accent);outline-offset:6px}
+/* Nome do item, com os círculos de cor EMBAIXO dele (pedido do usuário, com print de uma
+   poltrona com 4 cores: "coloque os ícones das cores em baixo do nome do item"). Antes eles
+   ficavam ao lado do nome, na mesma linha, vazando por cima da foto (decisão da época: a
+   coluna de texto tem só 30% da largura e nome+círculos não cabiam lado a lado) — agora cada
+   coisa tem a sua linha e nada sobrepõe a foto além do próprio nome comprido, que continua
+   sem quebrar (white-space:nowrap em .product-title) e vazando por cima dela (z-index:2, acima
+   de .product-main-media que é z-index:1). Os círculos quebram de linha DENTRO da coluna
+   (max-width:100% em .product-variants-row) em vez de vazar. */
+.product-title-row{position:relative;z-index:2;display:flex;flex-direction:column;align-items:flex-start;row-gap:16px}
 .product-title{flex-shrink:0;max-width:none;margin:0;font-family:"Cormorant Garamond",serif;font-size:clamp(2.1rem,2.85vw,3.4rem);font-weight:500;line-height:1;letter-spacing:-.035em;white-space:nowrap}
-.product-dimensions{margin:18px 0 0;color:var(--muted);font-size:.68rem;font-weight:400;letter-spacing:.2em}.product-rule{width:34px;height:1px;margin:22px 0;background:var(--accent)}
+.product-rule{width:34px;height:1px;margin:22px 0;background:var(--accent)}
 /* Painel técnico: algumas informações do cadastro do item (categoria,
    material, cor etc.), pedido explícito do usuário pra aparecer abaixo do
    nome/medida — sem linha nenhuma dividindo, "premium e minimalista": só
@@ -268,36 +254,42 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    entre pares, em vez de bordas. Só entra na tela quando existe pelo
    menos um dado real — ver `specs` em mapRow() (catalogo.mjs), que já
    filtra campo vazio. */
-.product-specs{max-width:340px;margin:16px 0 0;display:flex;flex-direction:column;gap:7px}
-.product-specs-row{display:flex;align-items:baseline;gap:12px}
-.product-specs-row dt{flex:0 0 92px;margin:0;color:#a89e92;font-size:.54rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
-.product-specs-row dd{flex:1;min-width:0;margin:0;color:var(--ink);font-size:.78rem;font-weight:500;line-height:1.3;overflow-wrap:break-word}
-.product-bespoke-card{display:flex;flex-direction:column;align-items:flex-start;width:min(260px,100%);margin-top:22px;padding:13px 15px;border:1px solid rgba(185,154,114,.42);border-radius:11px;background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,255,255,.62));color:var(--ink);text-align:left;cursor:pointer;box-shadow:0 10px 24px rgba(69,51,38,.055);transition:transform .3s,border-color .3s,box-shadow .3s}.product-bespoke-card:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 14px 28px rgba(69,51,38,.09)}.product-bespoke-card span{color:var(--accent);font-size:.48rem;font-weight:600;letter-spacing:.18em}.product-bespoke-card strong{margin-top:5px;font-family:"Cormorant Garamond",serif;font-size:1.06rem;font-weight:600}.product-bespoke-card small{margin-top:3px;color:var(--muted);font-size:.53rem;letter-spacing:.03em}
+/* Grade de 2 colunas: a coluna dos rótulos tem a largura do MAIOR rótulo presente naquele item (max-content), não
+   mais 112px fixos — a coluna de texto é estreita (30% da tela) e, com a linha "Medidas" ali dentro, o valor
+   ("67 × 95 × 57 cm") quebrava em duas linhas; sem "Marca/Modelo" (o rótulo mais largo) sobra ~30px pro valor. */
+.product-specs{max-width:340px;margin:16px 0 0;display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:12px;row-gap:7px;align-items:baseline}
+.product-specs-row{display:contents}
+.product-specs-row dt{margin:0;color:#8f8578;font-size:.781rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.product-specs-row dd{min-width:0;margin:0;color:var(--ink);font-size:.906rem;font-weight:500;line-height:1.3;overflow-wrap:break-word}
+.product-bespoke-card{display:flex;flex-direction:column;align-items:flex-start;width:min(260px,100%);margin-top:22px;padding:13px 15px;border:1px solid rgba(185,154,114,.42);border-radius:11px;background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,255,255,.62));color:var(--ink);text-align:left;cursor:pointer;box-shadow:0 10px 24px rgba(69,51,38,.055);transition:transform .3s,border-color .3s,box-shadow .3s}.product-bespoke-card:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 14px 28px rgba(69,51,38,.09)}.product-bespoke-card span{color:var(--accent);font-size:.781rem;font-weight:600;letter-spacing:.18em}.product-bespoke-card strong{margin-top:5px;font-family:"Cormorant Garamond",serif;font-size:1.06rem;font-weight:600}.product-bespoke-card small{margin-top:3px;color:var(--muted);font-size:.781rem;letter-spacing:.03em}
 /* Variantes de cor (pedido explícito do usuário, estilo marketplace):
-   círculos ao lado do nome do item, dentro de .product-title-row (ver
+   círculos embaixo do nome do item, dentro de .product-title-row (ver
    comentário lá em cima) — ver variantSwatchesBlock()/applyVariant() em
    catalogo.mjs. Miniatura redonda (a própria foto da variante, não uma
    cor sólida chutada) + legenda em versalete pequena, mesma linguagem
    tipográfica do resto da página. Tamanho reduzido em relação à versão
    anterior (que ficava numa seção própria, mais abaixo, com mais
    espaço sobrando) pra caber ao lado do título sem dominar a linha. */
-.product-variants-row{display:flex;flex-shrink:0;flex-wrap:wrap;gap:10px}
-.product-variant-swatch{appearance:none;display:flex;flex-direction:column;align-items:center;gap:5px;width:46px;padding:0;border:0;background:none;color:var(--muted);cursor:pointer}
+.product-variants-row{display:flex;flex-wrap:wrap;gap:10px;max-width:100%}
+/* No desktop a fileira pode passar da coluna de texto (30% da largura) até ~440px — cabem 6 círculos numa linha em vez de 3+1 órfão
+   (com 4 cores, quebrava em 3 + 1); passa por cima da margem da foto, como o nome comprido já fazia. No celular fica na largura da coluna. */
+@media(min-width:768px){.product-variants-row{width:max-content;max-width:440px}}
+.product-variant-swatch{appearance:none;display:flex;flex-direction:column;align-items:center;gap:5px;width:60px;padding:0;border:0;background:none;color:var(--muted);cursor:pointer}
 .product-variant-swatch-photo{display:block;width:44px;height:44px;border-radius:50%;overflow:hidden;background:#fff;border:1.5px solid var(--line);box-shadow:0 4px 10px rgba(69,51,38,.06);transition:border-color .25s,transform .25s,box-shadow .25s}
 .product-variant-swatch-photo img{display:block;width:100%;height:100%;object-fit:cover}
 .product-variant-swatch:hover .product-variant-swatch-photo,.product-variant-swatch:focus-visible .product-variant-swatch-photo{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 18px rgba(69,51,38,.12)}
 .product-variant-swatch:focus-visible{outline:none}
 .product-variant-swatch.active .product-variant-swatch-photo{border-color:var(--accent);border-width:2px;box-shadow:0 8px 20px rgba(185,154,114,.32)}
 .product-variant-swatch.active{color:var(--ink)}
-.product-variant-swatch-label{max-width:48px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 .46rem/1.2 "Manrope",sans-serif;letter-spacing:.03em;text-align:center}
-@media(max-width:600px){.product-variant-swatch{width:42px}.product-variant-swatch-photo{width:40px;height:40px}.product-variant-swatch-label{max-width:44px}}
+.product-variant-swatch-label{max-width:60px;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow-wrap:anywhere;font:600 .75rem/1.15 "Manrope",sans-serif;letter-spacing:.01em;text-align:center}
+@media(max-width:600px){.product-variant-swatch{width:56px}.product-variant-swatch-photo{width:40px;height:40px}.product-variant-swatch-label{max-width:56px}}
 /* Sugestões de combinação (pedido explícito do usuário, no lugar onde
    ficavam as fotos de Detalhe): faixa de fotos pequenas "passando
    sozinha" — ver relatedItemsMarkup() em catalogo.mjs. Loop perfeito:
    a track tem a lista dobrada e anda -50% da própria largura (que é 2x
    a lista real); pausa no hover/foco pra dar tempo de clicar. */
 .catalog-related-items{position:relative;z-index:1;margin-top:20px;padding-top:16px;border-top:1px solid var(--line);overflow:hidden}
-.catalog-related-label{display:block;margin-bottom:10px;color:var(--muted);font:600 .56rem "Manrope",sans-serif;letter-spacing:.11em;text-transform:uppercase}
+.catalog-related-label{display:block;margin-bottom:10px;color:var(--muted);font:600 .813rem "Manrope",sans-serif;letter-spacing:.11em;text-transform:uppercase}
 .catalog-related-track{display:flex;width:max-content;gap:12px;animation:catalog-related-scroll var(--catalog-related-duration,24s) linear infinite}
 .catalog-related-items:hover .catalog-related-track,.catalog-related-items:focus-within .catalog-related-track{animation-play-state:paused}
 @keyframes catalog-related-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
@@ -309,14 +301,15 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    própria imagem; agora o nome é um bloco NORMAL abaixo da foto (nunca
    overlay/position:absolute sobre ela), só com a opacidade animada —
    some/aparece no mesmo lugar, sem nunca tocar a foto. */
-.catalog-related-name{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font:600 .5rem "Manrope",sans-serif;letter-spacing:.02em;text-align:left;opacity:0;transition:opacity .2s}
+.catalog-related-name{display:block;width:max-content;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font:600 .781rem "Manrope",sans-serif;letter-spacing:.02em;text-align:left;opacity:0;transition:opacity .2s}
 .catalog-related-item:hover .catalog-related-name,.catalog-related-item:focus-visible .catalog-related-name{opacity:1;color:var(--ink)}
 .catalog-related-item:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.catalog-related-track{animation:none}}
 @media(max-width:600px){.catalog-related-item{width:60px}.catalog-related-photo{width:60px;height:60px}}
 .product-main-media{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;height:100%;max-height:100%;align-self:stretch;padding:0;overflow:hidden;isolation:isolate}
 /* The image fills its grid area with contain; media clipping prevents overlap. */
-.product-main-image{display:block;width:100%;height:100%;max-width:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 16px 12px rgba(50,38,28,.07));transition:opacity .22s ease,transform .45s cubic-bezier(.22,1,.36,1)}
+.product-main-image{display:block;width:100%;height:100%;max-width:100%;object-fit:contain;object-position:center;transition:opacity .22s ease,transform .45s cubic-bezier(.22,1,.36,1);cursor:zoom-in}
+.product-main-image.is-empty-slide{cursor:default}
 .product-main-image.is-changing{opacity:.22;transform:scale(.985)}
 .product-main-image.is-empty-slide{opacity:.32;filter:none}
 /* Carrossel da foto principal (pedido explícito do usuário, no lugar do
@@ -330,17 +323,28 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    está ativo. Só aparecem quando há mais de 1 slide (mainCarouselMarkup
    já nem desenha a marcação se o item não tem nenhum detalhe cadastrado
    e a pessoa não é da equipe). */
-.product-main-nav{position:absolute;z-index:3;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.55);color:var(--muted);opacity:.55;cursor:pointer;backdrop-filter:blur(6px);transition:opacity .2s,background-color .2s,color .2s}
-.product-main-nav:hover,.product-main-nav:focus-visible{opacity:1;background:rgba(255,255,255,.92);color:var(--accent)}
-.product-main-nav svg{width:17px;height:17px}
+/* Setas do carrossel da foto principal: só aparecem com o mouse em cima da foto (pedido do usuário: "só quero
+   que apareça as setas quando eu passar o mouse por cima... não quero ela branca, quero com esse efeito igual
+   da home"). O "efeito da home" é o escurecer dos blocos do Portal (.catalog-gateway-zone::before: preto,
+   .22 → .5 no hover, transição de 1s com a curva cubic-bezier(.22,1,.36,1)) — aqui o círculo é o mesmo preto
+   a 50% com a seta branca, e entra/sai com a mesma curva. Os pontinhos de posição embaixo ficam sempre
+   visíveis: é eles que avisam, sem mouse, que existem mais fotos. Em tela de toque (sem hover) e com o foco
+   do teclado nas setas elas ficam visíveis — senão não teria como trocar de foto. */
+.product-main-nav{position:absolute;z-index:3;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;opacity:0;cursor:pointer;backdrop-filter:blur(3px);transition:opacity .5s cubic-bezier(.22,1,.36,1),background-color .4s cubic-bezier(.22,1,.36,1)}
+.product-main-media:hover .product-main-nav,.product-main-media:focus-within .product-main-nav{opacity:1}
+.product-main-nav:hover,.product-main-nav:focus-visible{opacity:1;background:rgba(0,0,0,.72)}
+.product-main-nav:focus-visible{outline:1px solid #fff;outline-offset:2px}
+@media(hover:none){.product-main-nav{opacity:1}}
+@media(prefers-reduced-motion:reduce){.product-main-nav{transition:none}}
+.product-main-nav svg{width:18px;height:18px;stroke-width:1.8}
 .product-main-nav-prev{left:10px}
 .product-main-nav-next{right:10px}
 .product-main-dots{position:absolute;z-index:3;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:6px}
-.product-main-dot{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.product-main-dot{width:7px;height:7px;border-radius:50%;background:rgba(61,54,48,.28)}
 .product-main-dot.is-active{background:var(--accent)}
 .catalog-bottom-nav{height:62px;margin:0 calc(clamp(38px,3.4vw,64px) * -1);padding:0 clamp(38px,3.4vw,64px);display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);background:rgba(255,255,255,.96)}
-.product-stepper{display:flex;align-items:center;gap:12px}.step-button{width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:transparent;color:#5e5750;cursor:pointer}.step-button:disabled{opacity:.3;cursor:default}.step-button:not(:disabled):hover{border-color:var(--accent);color:var(--ink)}.product-counter{min-width:48px;text-align:center;color:#706961;font-size:.65rem;letter-spacing:.1em}
-.bottom-categories{display:flex;align-items:stretch;height:100%;overflow-x:auto;scrollbar-width:none}.bottom-categories::-webkit-scrollbar{display:none}.bottom-category{position:relative;border:0;background:none;padding:0 clamp(9px,1.15vw,18px);color:#8a837c;font:600 .55rem/1 "Manrope",sans-serif;letter-spacing:.12em;white-space:nowrap;cursor:pointer}.bottom-category+.bottom-category::before{content:"";position:absolute;left:0;top:24px;width:1px;height:14px;background:var(--line)}.bottom-category.active{color:var(--ink)}.bottom-category.active::after{content:"";position:absolute;left:18px;right:18px;bottom:0;height:1px;background:var(--accent)}
+.product-stepper{display:flex;align-items:center;gap:12px}.step-button{width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:transparent;color:#5e5750;cursor:pointer}.step-button:disabled{opacity:.3;cursor:default}.step-button:not(:disabled):hover{border-color:var(--accent);color:var(--ink)}.product-counter{min-width:48px;text-align:center;color:#706961;font-size:.844rem;letter-spacing:.1em}
+.bottom-categories{display:flex;align-items:stretch;height:100%;overflow-x:auto;scrollbar-width:none}.bottom-categories::-webkit-scrollbar{display:none}.bottom-category{position:relative;border:0;background:none;padding:0 clamp(9px,1.15vw,18px);color:#8a837c;font:600 .813rem/1 "Manrope",sans-serif;letter-spacing:.12em;white-space:nowrap;cursor:pointer}.bottom-category+.bottom-category::before{content:"";position:absolute;left:0;top:24px;width:1px;height:14px;background:var(--line)}.bottom-category.active{color:var(--ink)}.bottom-category.active::after{content:"";position:absolute;left:18px;right:18px;bottom:0;height:1px;background:var(--accent)}
 .product-event-panel{position:relative;min-width:0;width:100%;height:100%;overflow:hidden;contain:layout paint;background:#fff;opacity:1;clip-path:inset(0 0 0 0);transition:clip-path 1.15s cubic-bezier(.22,1,.36,1),opacity .8s ease;will-change:clip-path,opacity}.product-event-image{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center;opacity:1;transform:translateX(0) scale(1);transition:opacity .85s cubic-bezier(.4,0,.2,1),transform 1.25s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}.product-event-image.is-leaving{opacity:0}.product-event-image-next{z-index:2;opacity:0}.product-event-image-next.is-visible{opacity:1}.event-fallback{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:contain;object-position:center;background:#fff}
 /* Motion follows scroll progress instead of restarting on section entry. */
 .product-reveal{opacity:1;transform:none}
@@ -352,7 +356,7 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 }
 
 .catalog-empty,.catalog-gate{max-width:480px;margin:0 auto;padding:120px 24px;text-align:center;color:var(--muted)}.catalog-gate h2{font-family:"Cormorant Garamond",serif;font-size:2rem;color:var(--ink)}.catalog-gate-btn{display:inline-block;margin-top:18px;color:var(--ink);text-underline-offset:5px}
-.catalog-customize-dialog{width:min(840px,92vw);padding:0;border:1px solid rgba(185,154,114,.34);border-radius:19px;background:#fff;color:var(--ink);box-shadow:0 28px 90px rgba(31,24,19,.32)}.catalog-customize-dialog::backdrop{background:rgba(36,31,27,.72);backdrop-filter:blur(6px)}.catalog-customize-close{position:absolute;top:15px;right:17px;width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer}.catalog-customize-copy{padding:30px 34px 22px}.catalog-customize-copy>span{color:var(--accent);font-size:.55rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase}.catalog-customize-copy h2{margin:7px 0 8px;font-family:"Cormorant Garamond",serif;font-size:2.25rem;font-weight:500}.catalog-customize-copy p{max-width:63ch;margin:0;color:var(--muted);font-size:.74rem;line-height:1.65}.catalog-customize-preview{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(180px,.75fr);gap:14px;padding:0 34px}.catalog-customize-preview>img{width:100%;height:300px;object-fit:contain;border-radius:12px;background:#fff}.catalog-fabric-upload{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;overflow:hidden;border:1px dashed #cdbda9;border-radius:12px;background:#fff;cursor:pointer}.catalog-fabric-upload span{font-family:"Cormorant Garamond",serif;font-size:1.25rem}.catalog-fabric-upload small{margin-top:5px;color:var(--muted);font-size:.57rem}.catalog-fabric-upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.catalog-fabric-upload.has-fabric::after{content:"Trocar tecido";position:absolute;right:9px;bottom:9px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.88);color:var(--ink);font-size:.5rem;letter-spacing:.06em}.catalog-customize-generate{display:block;margin:20px 34px 0 auto;border:0;border-radius:999px;background:#5a5a55;color:#fff;padding:12px 20px;font:600 .62rem "Manrope",sans-serif;letter-spacing:.08em;cursor:pointer}.catalog-customize-generate:disabled{opacity:.42;cursor:not-allowed}.catalog-customize-status{min-height:18px;margin:10px 34px 22px;text-align:right;color:var(--muted);font-size:.62rem}
+.catalog-customize-dialog{width:min(840px,92vw);padding:0;border:1px solid rgba(185,154,114,.34);border-radius:19px;background:#fff;color:var(--ink);box-shadow:0 28px 90px rgba(31,24,19,.32)}.catalog-customize-dialog::backdrop{background:rgba(36,31,27,.72);backdrop-filter:blur(6px)}.catalog-customize-close{position:absolute;top:15px;right:17px;width:34px;height:34px;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer}.catalog-customize-copy{padding:30px 34px 22px}.catalog-customize-copy>span{color:var(--accent);font-size:.813rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase}.catalog-customize-copy h2{margin:7px 0 8px;font-family:"Cormorant Garamond",serif;font-size:2.25rem;font-weight:500}.catalog-customize-copy p{max-width:63ch;margin:0;color:var(--muted);font-size:.875rem;line-height:1.65}.catalog-customize-preview{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(180px,.75fr);gap:14px;padding:0 34px}.catalog-customize-preview>img{width:100%;height:300px;object-fit:contain;border-radius:12px;background:#fff}.catalog-fabric-upload{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;overflow:hidden;border:1px dashed #cdbda9;border-radius:12px;background:#fff;cursor:pointer}.catalog-fabric-upload span{font-family:"Cormorant Garamond",serif;font-size:1.25rem}.catalog-fabric-upload small{margin-top:5px;color:var(--muted);font-size:.813rem}.catalog-fabric-upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.catalog-fabric-upload.has-fabric::after{content:"Trocar tecido";position:absolute;right:9px;bottom:9px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.88);color:var(--ink);font-size:.781rem;letter-spacing:.06em}.catalog-customize-generate{display:block;margin:20px 34px 0 auto;border:0;border-radius:999px;background:#5a5a55;color:#fff;padding:12px 20px;font:600 .844rem "Manrope",sans-serif;letter-spacing:.08em;cursor:pointer}.catalog-customize-generate:disabled{opacity:.42;cursor:not-allowed}.catalog-customize-status{min-height:18px;margin:10px 34px 22px;text-align:right;color:var(--muted);font-size:.844rem}
 /* Prévia minimalista do resultado do tecido (pedido explícito do
    usuário: "quando eu clicar em ver foto, não deve abrir o modal, deve
    abrir um preview da foto com o botão de salvar minimalista") — clicar
@@ -367,10 +371,68 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 .catalog-fabric-result-dialog::backdrop{background:rgba(28,24,21,.72);backdrop-filter:blur(5px)}
 .catalog-fabric-result-dialog img{display:block;width:100%;max-height:72vh;object-fit:contain;background:#fff}
 .catalog-fabric-result-copy{display:flex;align-items:baseline;gap:18px;padding:20px 24px}
-.catalog-fabric-result-copy span{font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+.catalog-fabric-result-copy span{font-size:.813rem;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
 .catalog-fabric-result-copy strong{font-family:"Cormorant Garamond",serif;font-size:1.4rem;font-weight:500}
 .catalog-fabric-result-close{position:absolute;z-index:2;top:14px;right:16px;width:34px;height:34px;border:1px solid rgba(255,255,255,.6);border-radius:50%;background:rgba(40,34,30,.35);color:#fff;font-size:1.2rem;cursor:pointer}
-.catalog-fabric-result-dialog a{display:inline-block;margin:0 0 0 auto;color:var(--ink);font-size:.67rem;text-underline-offset:5px}
+.catalog-fabric-result-dialog a{display:inline-block;margin:0 0 0 auto;color:var(--ink);font-size:.844rem;text-underline-offset:5px}
+/* Visualizador de zoom da foto (pedido explícito do usuário, depois de
+   perguntar sobre a otimização de carregamento: "eu quero que a pessoa
+   possa dar zoom e de fato ver os detalhes" — servir uma versão menor
+   pro carregamento rápido não pode significar nunca dar pra ver textura/
+   acabamento de perto). Clicar na foto principal/ambientada abre este
+   diálogo em tela cheia com a MESMA foto numa resolução bem maior
+   (IMG_WIDTH.zoom em catalogo.mjs) — arrastar move, roda do mouse e os
+   botões +/- dão zoom, mesma linguagem visual (ícones, cores) já usada
+   nos controles do Módulo Lounge/mini-menu Módulo 3D. Fundo preto
+   (diferente do branco do resto do catálogo) de propósito — é o padrão
+   universal de visualizador de foto em tela cheia, deixa a própria foto
+   ser o centro das atenções. */
+.catalog-photo-zoom-dialog{width:100vw;height:100vh;max-width:100vw;max-height:100vh;margin:0;padding:0;border:0;background:#000}
+.catalog-photo-zoom-dialog::backdrop{background:#000}
+.catalog-photo-zoom-stage{position:relative;width:100%;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none}
+.catalog-photo-zoom-stage.is-dragging{cursor:grabbing}
+/* width/height fixos + object-fit:contain (não mais só max-*): a versão pequena que aparece na hora e a
+   grande que a substitui têm tamanhos naturais MUITO diferentes (700px x 3200px) — com max-* a pequena
+   ficava no tamanho natural e a troca pulava de tamanho; assim as duas ocupam exatamente a mesma caixa.
+   opacity:0 até .is-ready: nunca aparece a foto da abertura anterior nem uma imagem meio carregada. */
+.catalog-photo-zoom-image{width:92%;height:92%;object-fit:contain;opacity:0;-webkit-user-select:none;user-select:none;will-change:transform;transition:transform .12s ease-out,opacity .18s ease-out}
+.catalog-photo-zoom-image.is-ready{opacity:1}
+.catalog-photo-zoom-stage.is-dragging .catalog-photo-zoom-image{transition:opacity .18s ease-out}
+.catalog-photo-zoom-close{position:absolute;z-index:3;top:18px;right:20px;width:38px;height:38px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(20,17,14,.5);color:#fff;font-size:1.3rem;cursor:pointer;backdrop-filter:blur(4px)}
+.catalog-photo-zoom-close:hover,.catalog-photo-zoom-close:focus-visible{background:rgba(20,17,14,.8)}
+/* Setas + contador pra passar de uma foto pra outra SEM fechar o visualizador (pedido do usuário: "quero
+   poder trocar as fotos pelo preview") — só aparecem quando quem abriu passou uma galeria com 2+ fotos
+   (hidden nas demais). As setas ficam nas laterais, no meio; com galeria, o bloco de zoom (+/−/redefinir),
+   que ficava no meio da direita, desce pro canto inferior direito pra não brigar com a seta "próxima". */
+.catalog-photo-zoom-nav{position:absolute;z-index:3;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:48px;height:48px;padding:0;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(20,17,14,.5);color:#fff;cursor:pointer;backdrop-filter:blur(4px);transition:background .2s}
+.catalog-photo-zoom-nav[hidden]{display:none}
+.catalog-photo-zoom-nav svg{width:22px;height:22px}
+.catalog-photo-zoom-nav.is-prev{left:18px}
+.catalog-photo-zoom-nav.is-next{right:18px}
+.catalog-photo-zoom-nav:hover,.catalog-photo-zoom-nav:focus-visible{background:rgba(20,17,14,.85)}
+.catalog-photo-zoom-nav:focus-visible{outline:1px solid #fff;outline-offset:2px}
+.catalog-photo-zoom-counter{position:absolute;z-index:3;top:8px;left:50%;transform:translateX(-50%);margin:0;padding:5px 14px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:.9rem;letter-spacing:.08em;font-variant-numeric:tabular-nums;backdrop-filter:blur(4px);pointer-events:none}
+.catalog-photo-zoom-counter[hidden]{display:none}
+.catalog-photo-zoom-dialog.has-gallery .catalog-photo-zoom-controls{top:auto;bottom:18px;transform:none}
+.catalog-photo-zoom-hint{position:absolute;z-index:2;left:50%;bottom:20px;transform:translateX(-50%);display:flex;align-items:center;gap:7px;margin:0;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:.844rem;letter-spacing:.01em;backdrop-filter:blur(4px);pointer-events:none}
+.catalog-photo-zoom-hint svg{width:14px;height:14px;flex:none}
+.catalog-photo-zoom-controls{position:absolute;z-index:3;top:50%;right:18px;transform:translateY(-50%);display:flex;flex-direction:column;align-items:stretch;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(255,255,255,.14);backdrop-filter:blur(6px)}
+.catalog-photo-zoom-control{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;background:none;color:#fff;cursor:pointer;transition:background .2s}
+.catalog-photo-zoom-control svg{width:17px;height:17px}
+.catalog-photo-zoom-control:hover,.catalog-photo-zoom-control:focus-visible{background:rgba(255,255,255,.18)}
+.catalog-photo-zoom-control:focus-visible{outline:1px solid #fff;outline-offset:-2px}
+@media(max-width:600px){
+  .catalog-photo-zoom-close{top:12px;right:12px;width:34px;height:34px}
+  .catalog-photo-zoom-controls{right:10px}
+  .catalog-photo-zoom-nav{width:40px;height:40px}
+  .catalog-photo-zoom-nav.is-prev{left:8px}
+  .catalog-photo-zoom-nav.is-next{right:8px}
+  .catalog-photo-zoom-counter{top:18px}
+  .catalog-photo-zoom-dialog.has-gallery .catalog-photo-zoom-controls{bottom:64px}
+  .catalog-photo-zoom-control{width:36px;height:36px}
+  .catalog-photo-zoom-hint{bottom:14px;font-size:.813rem;padding:5px 12px}
+}
+@media(prefers-reduced-motion:reduce){.catalog-photo-zoom-image,.catalog-photo-zoom-nav{transition:none}}
 /* Edição inline das fotos do item (pedido explícito do usuário: "não
    quero que abra um modal... quero que a pessoa adicione no próprio
    html, assim ele pode ajustar, aproximar, chegar pro lado" — a pessoa
@@ -381,18 +443,18 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    usado nesta sessão pra outros controles só-da-equipe (ver
    .catalog-biblioteca-photo-remove/.catalog-gateway-edit). */
 .catalog-editable{position:relative}
-.catalog-inline-edit-badge{position:absolute;z-index:5;right:8px;bottom:8px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:0;border-radius:50%;background:rgba(20,16,12,.5);color:#fff;font-size:.85rem;cursor:pointer;opacity:.8;transition:opacity .2s,background .2s;backdrop-filter:blur(4px)}
+.catalog-inline-edit-badge{position:absolute;z-index:5;right:8px;bottom:8px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:0;border-radius:50%;background:rgba(20,16,12,.5);color:#fff;font-size:.938rem;cursor:pointer;opacity:.8;transition:opacity .2s,background .2s;backdrop-filter:blur(4px)}
 .catalog-inline-edit-badge:hover,.catalog-inline-edit-badge:focus-visible{opacity:1;background:rgba(20,16,12,.8)}
 /* Overlay de ajuste (arrastar/zoom) — fica por cima do conteúdo real do
    contêiner (a própria foto/moldura da página), que só é escondido
    (.catalog-inline-crop-hide), nunca destruído, enquanto dura a sessão. */
 .catalog-inline-crop-overlay{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
 .catalog-inline-crop-hide{visibility:hidden}
-.catalog-inline-crop-loading,.catalog-inline-crop-error{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px;text-align:center;color:var(--muted);font-size:.7rem}
-.catalog-inline-crop-error button{border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 14px;color:var(--ink);font:600 .6rem "Manrope",sans-serif;cursor:pointer}
-.catalog-inline-crop-pick{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;gap:6px;color:var(--muted);font:600 .68rem "Manrope",sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.catalog-inline-crop-loading,.catalog-inline-crop-error{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px;text-align:center;color:var(--muted);font-size:.875rem}
+.catalog-inline-crop-error button{border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 14px;color:var(--ink);font:600 .813rem "Manrope",sans-serif;cursor:pointer}
+.catalog-inline-crop-pick{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;gap:6px;color:var(--muted);font:600 .844rem "Manrope",sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
 .catalog-inline-crop-pick input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
-.catalog-inline-crop-empty-cancel{position:absolute;top:8px;right:8px;width:26px;height:26px;border:0;border-radius:50%;background:rgba(20,16,12,.5);color:#fff;font-size:.7rem;cursor:pointer}
+.catalog-inline-crop-empty-cancel{position:absolute;top:8px;right:8px;width:26px;height:26px;border:0;border-radius:50%;background:rgba(20,16,12,.5);color:#fff;font-size:.875rem;cursor:pointer}
 .catalog-inline-crop-img{position:absolute;top:50%;left:50%;cursor:grab;touch-action:none;user-select:none;will-change:transform}
 .catalog-inline-crop-img:active{cursor:grabbing}
 /* Fica DENTRO da própria moldura (bottom, não top:100%/abaixo dela) —
@@ -407,19 +469,33 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    quadro de Detalhe, painel de Ambientada) de uma vez, sem precisar de
    z-index especial em nenhum ancestral. */
 .catalog-inline-crop-toolbar{position:absolute;z-index:6;left:50%;bottom:8px;transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:5px;border-radius:999px;background:rgba(20,16,12,.88);backdrop-filter:blur(6px);white-space:nowrap}
-.catalog-inline-crop-toolbar button{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:.72rem;cursor:pointer;transition:background .2s}
+.catalog-inline-crop-toolbar button{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:.875rem;cursor:pointer;transition:background .2s}
 .catalog-inline-crop-toolbar button:hover{background:rgba(255,255,255,.3)}
 .catalog-inline-crop-toolbar [data-crop-apply]{background:var(--accent);color:#241d18}
 .catalog-inline-crop-toolbar [data-crop-apply]:hover{background:#c7a97c}
 .catalog-inline-crop-toolbar input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+/* Setas e pausar da foto ambientada — discretos de propósito (pedido do usuário: "bem discreto"): círculos
+   pequenos de vidro escuro com ícone branco fino, meio apagados (.5) até passar o mouse no painel/no botão.
+   z-index 6, acima do escurecer/"INSPIRE-SE" do hover do painel e dos pontinhos de edição (5). */
+.catalog-event-nav,.catalog-event-pause{position:absolute;z-index:6;display:flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:50%;background:rgba(20,17,14,.34);color:#fff;cursor:pointer;opacity:.5;backdrop-filter:blur(4px);transition:opacity .2s,background-color .2s}
+.catalog-event-nav{top:50%;transform:translateY(-50%);width:32px;height:32px}
+.catalog-event-nav svg{width:15px;height:15px}
+.catalog-event-nav.is-prev{left:10px}
+.catalog-event-nav.is-next{right:10px}
+.catalog-event-pause{right:12px;bottom:12px;width:26px;height:26px}
+.catalog-event-pause svg{width:11px;height:11px}
+.product-event-panel:hover .catalog-event-nav,.product-event-panel:hover .catalog-event-pause{opacity:.75}
+.catalog-event-nav:hover,.catalog-event-nav:focus-visible,.catalog-event-pause:hover,.catalog-event-pause:focus-visible{opacity:1;background:rgba(20,17,14,.62)}
+.catalog-event-nav:focus-visible,.catalog-event-pause:focus-visible{outline:1px solid #fff;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.catalog-event-nav,.catalog-event-pause{transition:none}}
 .catalog-event-slot-picker{position:absolute;z-index:5;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:6px}
 .catalog-event-slot-dot{width:8px;height:8px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.25);cursor:pointer}
 .catalog-event-slot-dot.is-filled{background:#fff}
 .catalog-event-slot-dot.is-active{background:var(--accent);border-color:var(--accent)}
-.catalog-capa-toggle{display:inline-flex;align-items:center;gap:6px;margin-top:14px;border:1px solid var(--line);border-radius:999px;background:none;padding:8px 14px;color:var(--muted);font:600 .6rem "Manrope",sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s}
+.catalog-capa-toggle{display:inline-flex;align-items:center;gap:6px;margin-top:14px;border:1px solid var(--line);border-radius:999px;background:none;padding:8px 14px;color:var(--muted);font:600 .813rem "Manrope",sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s}
 .catalog-capa-toggle:hover{border-color:var(--accent);color:var(--accent)}
 .catalog-capa-toggle.is-active{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,#fff)}
-.catalog-capa-toggle-star{font-size:.8rem}
+.catalog-capa-toggle-star{font-size:.906rem}
 /* Grupo de botões "modelo em destaque no Módulo 3D" — pedido explícito
    do usuário: "quero um 3D diferente pra cada módulo", então marcar um
    item como destaque virou 1 escolha POR MÓDULO (Estúdio/Lounge/
@@ -429,7 +505,7 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    porque a margem de respiro agora fica só no grupo, não em cada botão
    individual (senão ficariam desalinhados dentro da mesma linha). */
 .catalog-capa-modulo3d-group{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px}
-.catalog-capa-modulo3d-group-label{flex-basis:100%;color:var(--muted);font-size:.6rem;letter-spacing:.03em;text-transform:uppercase}
+.catalog-capa-modulo3d-group-label{flex-basis:100%;color:var(--muted);font-size:.813rem;letter-spacing:.03em;text-transform:uppercase}
 .catalog-capa-modulo3d-group .catalog-capa-modulo3d-toggle{margin-top:0}
 /* Mini-menu "Módulo 3D" — a tela é só a seção editorial "Explore os
    recursos": o Estúdio de Ambientes e o Módulo Lounge em destaque
@@ -476,8 +552,8 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 .catalog-modulo3d-menu.is-loading .catalog-modulo3d-loading{opacity:1;pointer-events:auto}
 .catalog-modulo3d-loading-ring{position:relative;width:46px;height:46px}
 .catalog-modulo3d-loading-ring::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--pct,0)*1%),rgba(157,124,84,.18) 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));transition:background .35s linear}
-.catalog-modulo3d-loading-pct{position:relative;z-index:1;display:flex;width:100%;height:100%;align-items:center;justify-content:center;color:var(--accent);font:600 .62rem "Manrope",sans-serif;font-variant-numeric:tabular-nums}
-.catalog-modulo3d-loading p{margin:0;font-family:"Manrope",sans-serif;font-size:.58rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.catalog-modulo3d-loading-pct{position:relative;z-index:1;display:flex;width:100%;height:100%;align-items:center;justify-content:center;color:var(--accent);font:600 .844rem "Manrope",sans-serif;font-variant-numeric:tabular-nums}
+.catalog-modulo3d-loading p{margin:0;font-family:"Manrope",sans-serif;font-size:.813rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 @media(prefers-reduced-motion:reduce){
   .catalog-modulo3d-explore,.catalog-modulo3d-loading,.catalog-modulo3d-loading-ring::before{transition:none}
 }
@@ -501,7 +577,6 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 .catalog-modulo3d-tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0;border:0;border-radius:10px;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer}
 .catalog-modulo3d-tile:focus-visible{outline:1px solid var(--accent);outline-offset:6px}
 .catalog-modulo3d-tile-soon{cursor:not-allowed}
-.catalog-modulo3d-tile-badge{border:1px solid var(--line);border-radius:999px;padding:3px 9px;font:600 .46rem "Manrope",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 
 /* Stage do modelo 3D próprio de cada card (pedido explícito: "eu quero
    um 3D diferente pra cada módulo... esse 3d tem que ser grande") —
@@ -556,26 +631,6 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 }
 .catalog-modulo3d-tile-soon .catalog-modulo3d-tile-name{color:rgba(255,255,255,.7)}
 
-/* Resumo do módulo, revelado SÓ no hover/foco (pedido explícito: "quero
-   que apareça um resumo sobre pra que serve aquele módulo... essa frase
-   só aparece quando a gente passa o mouse, ela não deve ficar à mostra
-   sempre") — corrigido logo depois, vendo o resultado centralizado no
-   meio do quadro: "a frase ela deve aparecer não no meio, mais logo
-   abaixo do título e precisa ter a mesma fonte também pra não parecer
-   algo aleatório e sem nexo" — por isso mora no MESMO wrapper que o
-   nome (`.catalog-modulo3d-tile-caption`, ver acima), logo abaixo dele
-   no fluxo normal, e usa a MESMA `font-family` serif do título (não
-   mais Manrope sans-serif) — só sem caixa alta/letter-spacing largo,
-   que ficaria ilegível numa frase inteira. Opacity-only (sem transform),
-   mesmo padrão já usado no nome/dimensões do modo mosaico
-   (.catalog-mosaic-info) — não precisa de tratamento em
-   prefers-reduced-motion, um fade de opacidade não é o tipo de
-   movimento que essa preferência mira. */
-.catalog-modulo3d-tile-desc{color:#fff;font-family:"Cormorant Garamond",serif;font-size:clamp(.82rem,1.05vw,.98rem);font-weight:500;line-height:1.4;letter-spacing:.01em;text-align:center;text-shadow:0 2px 14px rgba(0,0,0,.55);white-space:normal;opacity:0;transition:opacity 400ms ease}
-@media(hover:hover) and (pointer:fine){
-  .catalog-modulo3d-tile:hover .catalog-modulo3d-tile-desc,.catalog-modulo3d-tile:focus-visible .catalog-modulo3d-tile-desc{opacity:1}
-}
-
 @media(prefers-reduced-motion:reduce){
   .catalog-modulo3d-tile-stage model-viewer,.catalog-modulo3d-tile-stage::before{transition:none}
   .catalog-modulo3d-tile-name,.catalog-modulo3d-tile:hover .catalog-modulo3d-tile-name,.catalog-modulo3d-tile:focus-visible .catalog-modulo3d-tile-name{transition:none;letter-spacing:.14em;text-indent:.14em}
@@ -589,33 +644,26 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
   .catalog-modulo3d-explore-title h2{font-size:1.15rem}
   .catalog-modulo3d-cards{grid-template-columns:1fr;row-gap:28px}
 }
-.catalog-ai-loading{position:absolute;z-index:20;left:50%;bottom:24px;width:min(330px,calc(100% - 40px));padding:17px 20px;border:1px solid rgba(185,154,114,.38);border-radius:14px;background:rgba(255,255,255,.97);box-shadow:0 14px 38px rgba(31,24,19,.18);transform:translateX(-50%);backdrop-filter:blur(10px)}.catalog-ai-loading-copy{display:grid;grid-template-columns:28px 1fr;column-gap:12px;align-items:center;color:var(--ink)}.catalog-ai-loading-spinner{grid-row:1/3;width:22px;height:22px;border:1px solid rgba(157,124,84,.25);border-top-color:#b18a5a;border-radius:50%;animation:catalog-ai-spin .85s linear infinite}.catalog-ai-loading-copy strong{font-family:"Cormorant Garamond",serif;font-size:1.15rem;font-weight:600;line-height:1}.catalog-ai-loading-copy p{overflow:hidden;margin:5px 0 0;color:var(--muted);font-size:.52rem;line-height:1.3;white-space:nowrap;text-overflow:ellipsis}@keyframes catalog-ai-spin{to{transform:rotate(360deg)}}
-/* .product-title-row volta a ser flex-wrap:wrap no mobile (ver
-   @media(max-width:767px) abaixo) — o "vaza por cima da foto" só faz
-   sentido no layout de 2 colunas do desktop, onde a foto fica ATRÁS,
-   ao lado; no mobile a foto vem numa linha BAIXO do texto (mesmo
-   fluxo empilhado), então não tem nada ali pra "sobrepor" — sem essa
-   reversão, o nome comprido vazaria pra fora da tela (overflow
-   horizontal de verdade, não decorativo). */
-@media(max-width:1199px){.catalog-product-section{grid-template-columns:minmax(0,66fr) minmax(0,34fr)}.catalog-detail-panel{padding-left:34px;padding-right:34px}.catalog-detail-top{grid-template-columns:minmax(0,42fr) minmax(0,58fr);gap:16px}.product-title{font-size:clamp(1.9rem,3.2vw,2.7rem)}.catalog-bottom-nav{margin-left:-34px;margin-right:-34px;padding:0 34px}.bottom-category{padding:0 8px;font-size:.5rem}}
-@media(max-width:767px){.catalog-page{--header-h:54px;--header-top-h:54px}.catalog-header{grid-template-columns:auto auto;grid-template-areas:"brand user" "categories categories";column-gap:12px;padding:0 18px}.catalog-brand{width:184px}.catalog-brand-logo{max-width:124px;max-height:43px;transform:scale(2.8)}.catalog-brand-name{font-size:1.2rem}.catalog-header-categories{gap:22px}.catalog-search{display:none}.catalog-product-section{display:flex;flex-direction:column;height:auto;min-height:0;overflow:visible;scroll-snap-align:none}.catalog-product-section:not(:last-child){margin-bottom:40px}.catalog-detail-panel{display:flex;flex-direction:column;padding:30px 22px 0}.catalog-detail-top{display:contents}.product-copy{order:1}.product-category-back{margin-bottom:30px}.product-title{font-size:clamp(1.3rem,6vw,2.6rem);max-width:100%}.product-title-row{flex-wrap:wrap;row-gap:10px}.product-main-media{order:2;flex:none;height:340px;max-height:none;padding:24px 0 8px}.catalog-related-items{order:3;margin-top:0}.catalog-bottom-nav{order:5;margin:0 -22px;padding:0 22px;height:auto;min-height:68px;gap:20px;flex-wrap:wrap}.bottom-categories{order:-1;width:100%;height:50px}.product-stepper{padding-bottom:14px}.product-event-panel{order:4;height:min(120vw,620px)}}
+.catalog-ai-loading{position:absolute;z-index:20;left:50%;bottom:24px;width:min(330px,calc(100% - 40px));padding:17px 20px;border:1px solid rgba(185,154,114,.38);border-radius:14px;background:rgba(255,255,255,.97);box-shadow:0 14px 38px rgba(31,24,19,.18);transform:translateX(-50%);backdrop-filter:blur(10px)}.catalog-ai-loading-copy{display:grid;grid-template-columns:28px 1fr;column-gap:12px;align-items:center;color:var(--ink)}.catalog-ai-loading-spinner{grid-row:1/3;width:22px;height:22px;border:1px solid rgba(157,124,84,.25);border-top-color:#b18a5a;border-radius:50%;animation:catalog-ai-spin .85s linear infinite}.catalog-ai-loading-copy strong{font-family:"Cormorant Garamond",serif;font-size:1.15rem;font-weight:600;line-height:1}.catalog-ai-loading-copy p{overflow:hidden;margin:5px 0 0;color:var(--muted);font-size:.781rem;line-height:1.3;white-space:nowrap;text-overflow:ellipsis}@keyframes catalog-ai-spin{to{transform:rotate(360deg)}}
+@media(max-width:1199px){.catalog-product-section{grid-template-columns:minmax(0,66fr) minmax(0,34fr)}.catalog-detail-panel{padding-left:34px;padding-right:34px}.catalog-detail-top{grid-template-columns:minmax(0,42fr) minmax(0,58fr);gap:16px}.product-title{font-size:clamp(1.9rem,3.2vw,2.7rem)}.catalog-bottom-nav{margin-left:-34px;margin-right:-34px;padding:0 34px}.bottom-category{padding:0 8px;font-size:.781rem}}
+@media(max-width:767px){.catalog-page{--header-h:54px;--header-top-h:54px}.catalog-header{grid-template-columns:auto auto;grid-template-areas:"brand user" "categories categories";column-gap:12px;padding:0 18px}.catalog-brand{width:184px}.catalog-brand-logo{max-width:124px;max-height:43px;transform:scale(2.8)}.catalog-brand-name{font-size:1.2rem}.catalog-header-categories{gap:22px}.catalog-search{display:none}.catalog-product-section{display:flex;flex-direction:column;height:auto;min-height:0;overflow:visible;scroll-snap-align:none}.catalog-product-section:not(:last-child){margin-bottom:40px}.catalog-detail-panel{display:flex;flex-direction:column;padding:30px 22px 0}.catalog-detail-top{display:contents}.product-copy{order:1}.product-category-back{margin-bottom:30px}.product-title{font-size:clamp(1.3rem,6vw,2.6rem);max-width:100%}.product-main-media{order:2;flex:none;height:340px;max-height:none;padding:24px 0 8px}.catalog-related-items{order:3;margin-top:0}.catalog-bottom-nav{order:5;margin:0 -22px;padding:0 22px;height:auto;min-height:68px;gap:20px;flex-wrap:wrap}.bottom-categories{order:-1;width:100%;height:50px}.product-stepper{padding-bottom:14px}.product-event-panel{order:4;height:min(120vw,620px)}}
 @media(max-width:600px){.catalog-customize-copy{padding:26px 22px 18px}.catalog-customize-preview{grid-template-columns:1fr;padding:0 22px}.catalog-customize-preview>img{height:220px}.catalog-fabric-upload{min-height:150px}.catalog-customize-generate{margin-right:22px}.catalog-customize-status{margin-right:22px}.product-bespoke-card{width:100%}}
 @media(prefers-reduced-motion:reduce){.catalog-ai-loading-spinner{animation-duration:1.8s}}
-.catalog-notifications{position:fixed;z-index:100;right:22px;bottom:22px;display:flex;width:min(360px,calc(100vw - 32px));flex-direction:column;gap:10px;pointer-events:none}.catalog-notification{position:relative;display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;padding:14px 15px;border:1px solid rgba(185,154,114,.34);border-radius:14px;background:rgba(255,255,255,.97);box-shadow:0 16px 44px rgba(31,24,19,.2);pointer-events:auto;animation:catalog-toast-in .42s cubic-bezier(.2,.8,.2,1) both;backdrop-filter:blur(12px)}.catalog-notification.is-leaving{animation:catalog-toast-out .28s ease both}.catalog-notification-icon{display:grid;width:32px;height:32px;place-items:center;border-radius:50%;background:#5a5a55;color:#fff;font-size:.75rem}.catalog-notification-icon.is-progress{position:relative;background:rgba(177,138,90,.14);color:transparent;transition:background .2s}.catalog-notification-icon.is-progress::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(#b18a5a calc(var(--pct,0)*1%),transparent 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));transition:background .4s linear}.catalog-notification-percent{position:relative;z-index:1;color:#8a6a42;font:600 .5rem "Manrope",sans-serif;font-variant-numeric:tabular-nums}.catalog-notification-copy strong{display:block;font-family:"Cormorant Garamond",serif;font-size:1.05rem;font-weight:600;line-height:1}.catalog-notification-copy span{display:block;margin-top:4px;color:var(--muted);font-size:.55rem;line-height:1.4}.catalog-notification-action{border:0;border-bottom:1px solid #b18a5a;background:transparent;padding:5px 0;color:var(--ink);font:600 .52rem "Manrope",sans-serif;letter-spacing:.06em;cursor:pointer}.catalog-notification-close{position:absolute;top:4px;right:5px;border:0;background:transparent;color:#978f87;font-size:.8rem;cursor:pointer}.catalog-notification.has-photo{grid-template-columns:34px 1fr auto}.catalog-notification-photo{grid-column:1/-1;width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:2px}.catalog-notification:has(.catalog-notification-action) .catalog-notification-close{display:none}@keyframes catalog-toast-in{from{opacity:0;transform:translateX(28px) scale(.97)}to{opacity:1;transform:none}}@keyframes catalog-toast-out{to{opacity:0;transform:translateX(24px)}}
+.catalog-notifications{position:fixed;z-index:100;right:22px;bottom:22px;display:flex;width:min(360px,calc(100vw - 32px));flex-direction:column;gap:10px;pointer-events:none}.catalog-notification{position:relative;display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;padding:14px 15px;border:1px solid rgba(185,154,114,.34);border-radius:14px;background:rgba(255,255,255,.97);box-shadow:0 16px 44px rgba(31,24,19,.2);pointer-events:auto;animation:catalog-toast-in .42s cubic-bezier(.2,.8,.2,1) both;backdrop-filter:blur(12px)}.catalog-notification.is-leaving{animation:catalog-toast-out .28s ease both}.catalog-notification-icon{display:grid;width:32px;height:32px;place-items:center;border-radius:50%;background:#5a5a55;color:#fff;font-size:.875rem}.catalog-notification-icon.is-progress{position:relative;background:rgba(177,138,90,.14);color:transparent;transition:background .2s}.catalog-notification-icon.is-progress::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(#b18a5a calc(var(--pct,0)*1%),transparent 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));transition:background .4s linear}.catalog-notification-percent{position:relative;z-index:1;color:#8a6a42;font:600 .781rem "Manrope",sans-serif;font-variant-numeric:tabular-nums}.catalog-notification-copy strong{display:block;font-family:"Cormorant Garamond",serif;font-size:1.05rem;font-weight:600;line-height:1}.catalog-notification-copy span{display:block;margin-top:4px;color:var(--muted);font-size:.813rem;line-height:1.4}.catalog-notification-action{border:0;border-bottom:1px solid #b18a5a;background:transparent;padding:5px 0;color:var(--ink);font:600 .781rem "Manrope",sans-serif;letter-spacing:.06em;cursor:pointer}.catalog-notification-close{position:absolute;top:4px;right:5px;border:0;background:transparent;color:#978f87;font-size:.906rem;cursor:pointer}.catalog-notification.has-photo{grid-template-columns:34px 1fr auto}.catalog-notification-photo{grid-column:1/-1;width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:2px}.catalog-notification:has(.catalog-notification-action) .catalog-notification-close{display:none}@keyframes catalog-toast-in{from{opacity:0;transform:translateX(28px) scale(.97)}to{opacity:1;transform:none}}@keyframes catalog-toast-out{to{opacity:0;transform:translateX(24px)}}
 @media(max-width:600px){.catalog-notifications{right:16px;bottom:16px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.product-reveal,.product-event-panel{opacity:1!important;transform:none!important;clip-path:none!important;transition:none!important}.product-event-image{transform:none!important;transition-duration:.01ms}}
 .catalog-login{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:24px;background:#fff}
 .catalog-login.hidden{display:none}
 .catalog-login-card{width:min(430px,100%);padding:46px;background:#fff;border:1px solid #d9d0c2;box-shadow:0 24px 80px #40372b26}
-.catalog-login-card>span,.catalog-login-card label{font:600 11px/1.4 Manrope,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#665b50}
+.catalog-login-card>span,.catalog-login-card label{font:600 14px/1.4 Manrope,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#665b50}
 .catalog-login-card h1{margin:12px 0;font:600 40px/1.05 "Cormorant Garamond",serif;color:#241d18}
 .catalog-login-card p{margin:0 0 28px;color:#756b62}
 .catalog-login-card label{display:grid;gap:7px;margin:15px 0}
-.catalog-login-card input{padding:13px 14px;border:1px solid #cfc5b7;background:white;font:14px Manrope,sans-serif}
-.catalog-login-card button{width:100%;margin-top:12px;padding:14px;border:0;background:#5e5e57;color:white;font:600 12px Manrope,sans-serif;text-transform:uppercase;letter-spacing:.12em;cursor:pointer}
+.catalog-login-card input{padding:13px 14px;border:1px solid #cfc5b7;background:white;font:15px Manrope,sans-serif}
+.catalog-login-card button{width:100%;margin-top:12px;padding:14px;border:0;background:#5e5e57;color:white;font:600 14px Manrope,sans-serif;text-transform:uppercase;letter-spacing:.12em;cursor:pointer}
 .catalog-login-card small{display:block;min-height:20px;margin-top:12px;color:#a23d35}
 .catalog-user{grid-area:user;display:flex;min-width:0;align-items:center;gap:9px;margin-left:auto;padding-left:15px;border-left:1px solid rgba(255,255,255,.2);color:#fff}
-.catalog-user.hidden{display:none}.catalog-user img{width:34px;height:34px;object-fit:contain;border-radius:50%;background:#fff}.catalog-user div{display:grid;min-width:0;line-height:1.1}.catalog-user small{font:500 7px Manrope,sans-serif;letter-spacing:.14em;opacity:.65}.catalog-user strong{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 10px Manrope,sans-serif}.catalog-user button{display:grid;width:30px;height:30px;place-items:center;border:0;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;cursor:pointer}.catalog-user button:hover{background:rgba(255,255,255,.2)}
+.catalog-user.hidden{display:none}.catalog-user img{width:34px;height:34px;object-fit:contain;border-radius:50%;background:#fff}.catalog-user div{display:grid;min-width:0;line-height:1.1}.catalog-user small{font:500 12px Manrope,sans-serif;letter-spacing:.14em;opacity:.65}.catalog-user strong{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 13.5px Manrope,sans-serif}.catalog-user button{display:grid;width:30px;height:30px;place-items:center;border:0;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;cursor:pointer}.catalog-user button:hover{background:rgba(255,255,255,.2)}
 @media(max-width:900px){.catalog-user div{display:none}.catalog-user{padding-left:8px}.catalog-user img{width:30px;height:30px}}
 
 /* O progresso ocupa seu espa?o e mant?m os controles e o aviso leg?veis. */
@@ -626,7 +674,6 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 @media(min-width:768px) and (max-height:700px){
  .catalog-detail-panel{padding-top:20px}
  .product-title{font-size:clamp(1.6rem,2.4vw,2.6rem)}
- .product-dimensions{margin-top:12px}
  .product-rule{margin:14px 0}
  .catalog-related-items{margin-top:12px;padding-top:10px}
  .catalog-related-item{width:58px}
@@ -656,6 +703,7 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 .product-event-panel .product-event-image{
  scale:1;transform-origin:center;
  transition:opacity .85s cubic-bezier(.4,0,.2,1),transform 1.25s cubic-bezier(.22,1,.36,1),scale 1400ms cubic-bezier(.22,1,.36,1);
+ cursor:zoom-in;
 }
 @media(hover:hover) and (pointer:fine){
  .product-event-panel:has(.product-event-image):hover::before{opacity:.46}
@@ -669,7 +717,7 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 }
 /* Navegação editorial: grupos legíveis e subcategorias acessíveis por clique/toque. */
 .catalog-header-categories{gap:6px 20px;padding:8px 0;min-width:0}
-.catalog-header-categories>.catalog-header-category,.catalog-group-trigger{display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 4px;font:600 13px/1.4 "Manrope",sans-serif;letter-spacing:.025em;text-transform:none;color:rgba(255,255,255,.88);cursor:pointer;white-space:nowrap}
+.catalog-header-categories>.catalog-header-category,.catalog-group-trigger{display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 4px;font:600 14.5px/1.4 "Manrope",sans-serif;letter-spacing:.025em;text-transform:none;color:rgba(255,255,255,.88);cursor:pointer;white-space:nowrap}
 .catalog-category-group{position:relative}
 .catalog-group-trigger{list-style:none;border-bottom:2px solid transparent}
 .catalog-group-trigger::-webkit-details-marker{display:none}
@@ -677,8 +725,8 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 .catalog-category-group[open] .catalog-group-trigger svg{transform:rotate(180deg)}
 .catalog-category-group[open] .catalog-group-trigger,.catalog-category-group.has-active .catalog-group-trigger{color:#fff;border-bottom-color:var(--accent)}
 .catalog-category-panel{position:absolute;top:100%;left:0;z-index:220;width:310px;max-width:calc(100vw - 40px);padding:12px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 16px 40px #0002;max-height:min(440px,60dvh);overflow:auto}
-.catalog-category-heading{display:block;padding:8px 12px 12px;color:#77716a;font:600 11px/1.4 "Manrope",sans-serif;text-transform:uppercase;letter-spacing:.1em}
-.catalog-page .catalog-category-panel .catalog-header-category{display:block;text-align:left;width:100%;min-height:44px;padding:11px 12px;border-radius:6px;color:#374151;font:500 14px/1.45 "Manrope",sans-serif;text-transform:none;letter-spacing:0;white-space:normal}
+.catalog-category-heading{display:block;padding:8px 12px 12px;color:#77716a;font:600 14px/1.4 "Manrope",sans-serif;text-transform:uppercase;letter-spacing:.1em}
+.catalog-page .catalog-category-panel .catalog-header-category{display:block;text-align:left;width:100%;min-height:44px;padding:11px 12px;border-radius:6px;color:#374151;font:500 15px/1.45 "Manrope",sans-serif;text-transform:none;letter-spacing:0;white-space:normal}
 .catalog-page .catalog-category-panel .catalog-header-category:hover,.catalog-page .catalog-category-panel .catalog-header-category.active{background:#f1f5f3;color:#0d2923}
 .catalog-page .catalog-category-panel .catalog-header-category.active{font-weight:700}
 .catalog-category-panel .catalog-header-category.active::after{display:none}
@@ -687,7 +735,7 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 body.catalog-modo-sistema .catalog-group-trigger{color:#514a44}
 body.catalog-modo-sistema .catalog-category-group[open] .catalog-group-trigger,body.catalog-modo-sistema .catalog-category-group.has-active .catalog-group-trigger{color:#251e19}
 body.catalog-modo-sistema .catalog-studio-tab{border-color:var(--line)}
-.catalog-search input{font-size:13px}
+.catalog-search input{font-size:13.5px;letter-spacing:.02em}
 @media(max-width:820px){
  .catalog-header-categories{gap:0 16px;width:100%}
  .catalog-category-group{position:static}
@@ -699,9 +747,36 @@ body.catalog-modo-sistema .catalog-studio-tab{border-color:var(--line)}
 @media(prefers-reduced-motion:reduce){.catalog-group-trigger svg{transition:none}}
 @media(min-width:821px){.catalog-category-group:last-of-type .catalog-category-panel{left:auto;right:0}}
 /* Cabeçalho em uma única faixa, limitada à altura da marca. */
-.catalog-header{height:76px;grid-template-columns:200px minmax(0,1fr) 130px auto;grid-template-rows:76px;grid-template-areas:"brand categories search user";gap:16px;padding:0 24px}
-.catalog-brand{width:200px;height:76px;overflow:hidden;align-items:center}
-.catalog-navigation{grid-area:categories;display:flex;align-items:center;justify-content:center;gap:18px;min-width:0}
+.catalog-header{height:76px;grid-template-columns:250px minmax(0,1fr) 130px auto;grid-template-rows:76px;grid-template-areas:"brand categories search user";gap:16px;padding:0 24px}
+/* Logo: a arte da logo da Chiavari ocupa só ~26% da altura do arquivo (PNG quadrado com
+   margem transparente), por isso o scale grande sobre uma caixa de 49px — com scale(3.6) a arte
+   tinha ~46px de altura dentro do cabeçalho de 76px. Pedido do usuário: "aumente a logo um pouco
+   pro limite da altura do menu" → scale(5.1) = arte com ~66px, 5px de folga em cima e embaixo (o translateY centra a arte, que fica ~3px acima do meio da imagem)
+   (a caixa .catalog-brand recorta em overflow:hidden, então nunca passa do cabeçalho). Cada faixa
+   de largura tem o seu scale, calibrado pra arte (≈3,5× mais larga que alta) caber na coluna da
+   marca sem invadir a linha do tempo, que começa em --nav-gutter (350/224px) da borda. */
+.catalog-brand{width:250px;height:76px;overflow:hidden;align-items:center}.catalog-brand-logo{transform:translateY(3px) scale(5.1)}
+/* Nome da página SEMPRE centralizado na TELA (pedido explícito do usuário,
+   olhando um print em que "CADEIRAS" ficava ~60px à direita do centro:
+   "o nome da página que eu estou no menu ela sempre deve ficar
+   centralizada, sempre"). Causa: o rótulo morava numa coluna do grid do
+   cabeçalho (entre a marca, à esquerda, e a busca+usuário, à direita) —
+   centralizado só DENTRO dessa coluna, que nunca é simétrica na tela, e
+   a seta "voltar" com legenda (mais larga que a "avançar" vazia)
+   empurrava o texto mais um pouco pro lado. Agora o `.catalog-navigation`
+   sai do fluxo do grid e é ancorado no MEIO do cabeçalho (left:50% +
+   translateX(-50%)), com `--nav-gutter` reservando dos dois lados o
+   espaço ocupado pelo maior dos dois lados (marca vs. busca+usuário), pra
+   nunca encostar em nenhum. Por dentro, um grid `1fr auto 1fr` (colunas
+   laterais IGUAIS) mantém o rótulo no centro exato mesmo com uma seta
+   mais larga que a outra, ou uma delas escondida. Cada item tem coluna
+   explícita — sem isso, esconder as setas (display:none no Portal)
+   faria o rótulo cair na 1ª coluna do grid. */
+.catalog-header{position:relative}
+.catalog-navigation{--nav-gutter:350px;--nav-side:140px;--nav-fade:56px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--nav-fade),#000 calc(100% - var(--nav-fade)),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 var(--nav-fade),#000 calc(100% - var(--nav-fade)),transparent 100%);grid-area:auto;position:absolute;top:0;left:50%;transform:translateX(-50%);width:max(0px,calc(100% - 2 * var(--nav-gutter)));height:100%;display:grid;grid-template-columns:minmax(var(--nav-side),1fr) auto minmax(var(--nav-side),1fr);align-items:center;column-gap:12px;min-width:0}
+.catalog-timeline-past{grid-column:1;justify-content:flex-end}
+.catalog-page-label{grid-column:2}
+.catalog-timeline-future{grid-column:3;justify-content:flex-start}
 .catalog-header-categories{grid-area:auto;flex-wrap:nowrap;justify-content:center;gap:14px;padding:0;width:auto}
 /* Rótulo de "página atual", no lugar onde ficavam os botões "Biblioteca"/
    "Painel 3D" (removidos a pedido do usuário — a única porta de entrada
@@ -724,19 +799,51 @@ body.catalog-modo-sistema .catalog-studio-tab{border-color:var(--line)}
    diminuir a fonte, pra manter o pedido de "mesmo tamanho" intacto no
    caso comum e só truncar no caso extremo (tela estreita + nome longo). */
 .catalog-page-label{flex-shrink:1;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;color:inherit;font-family:"Cormorant Garamond",serif;font-size:clamp(1.9rem,3vw,2.7rem);font-weight:500;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+/* Linha do tempo das telas visitadas (pedido explícito do usuário: "eu
+   quero que forme tipo uma linha do tempo com todas as páginas que eu
+   acessei, então por exemplo, a primeira seria home, a segunda seria
+   categorias, a terceira seria bares... a minha tela que eu estou agora ela
+   deve ser sempre centralizada e do jeito que está hoje"). As duas
+   laterais são as colunas IGUAIS (1fr) do grid de .catalog-navigation — a
+   tela atual (#catalogPageLabel, coluna do meio) continua no centro exato,
+   com o mesmo tamanho/fonte de sempre. As entradas transbordam pra FORA
+   (anteriores: alinhadas à direita, crescendo pra esquerda; seguintes:
+   alinhadas à esquerda, crescendo pra direita) e o próprio
+   .catalog-navigation recorta o excesso e esmaece as pontas (máscara) —
+   sem overflow:hidden nas laterais em si, porque a animação de rolagem
+   faz o nome atual ENCOLHER e deslizar pra dentro de uma lateral, e um
+   recorte ali esconderia esse trajeto. Cada entrada mais distante fica
+   mais apagada (--d = distância da tela atual). `color:inherit` igual ao
+   rótulo: funciona no cabeçalho escuro e no claro de
+   body.catalog-modo-sistema sem regra própria pros dois. O separador "›" é
+   um pseudo-elemento da própria entrada (não um elemento solto) pra
+   acompanhar a entrada durante a animação de rolagem. */
+.catalog-timeline-side{display:flex;align-items:center;min-width:0;height:100%}
+.catalog-navigation.is-portal .catalog-timeline-side{visibility:hidden}
+.catalog-timeline-item{display:flex;align-items:center;flex:none;border:0;background:none;margin:0;padding:8px 0;color:inherit;cursor:pointer;font:600 .844rem "Manrope",sans-serif;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;opacity:max(.14,calc(.7 - (var(--d) - 1) * .2));transition:color .2s}
+.catalog-timeline-item:hover,.catalog-timeline-item:focus-visible{opacity:1;color:var(--accent)}
+.catalog-timeline-item:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+.catalog-timeline-past .catalog-timeline-item::after{content:"›";margin:0 12px;font-size:1rem;font-weight:400;opacity:.7}
+.catalog-timeline-future .catalog-timeline-item::before{content:"›";margin:0 12px;font-size:1rem;font-weight:400;opacity:.7}
 .catalog-nav-toggle{display:none}
 .catalog-user{padding-left:12px;gap:10px}
 .catalog-user img{width:52px;height:52px;flex-shrink:0}
-.catalog-user strong{max-width:115px;font-size:11px}
-.catalog-user small{font-size:8px}
+.catalog-user strong{max-width:115px;font-size:14px}
+.catalog-user small{font-size:12.5px}
 body.catalog-modo-sistema .catalog-header{height:76px;flex-wrap:nowrap;padding:0 24px;gap:20px}
 body.catalog-modo-sistema .catalog-navigation{flex:1}
+/* Sem a marca nem o usuário (escondidos neste modo) e com o rótulo fora do
+   fluxo (ancorado no meio, ver .catalog-navigation acima), nada mais
+   empurrava a busca pra direita — antes era o `flex:1` da navegação. */
+body.catalog-modo-sistema .catalog-search{margin-left:auto}
 body.catalog-modo-sistema .catalog-header-categories{flex:0 1 auto;flex-basis:auto}
 body.catalog-modo-sistema .catalog-page-label{color:var(--ink)}
-@media(max-width:1450px){.catalog-user div{display:none}.catalog-header{grid-template-columns:180px minmax(0,1fr) 110px auto;gap:12px;padding-inline:18px}.catalog-brand{width:180px}.catalog-navigation{gap:12px}.catalog-header-categories{gap:10px}}
+@media(max-width:1450px){.catalog-user div{display:none}.catalog-header{grid-template-columns:200px minmax(0,1fr) 110px auto;gap:12px;padding-inline:18px}.catalog-brand{width:200px}.catalog-brand-logo{transform:translateY(2px) scale(4.2)}.catalog-navigation{--nav-gutter:224px;gap:12px}.catalog-header-categories{gap:10px}}
 @media(max-width:1200px){
+ .catalog-navigation{--nav-side:28px;--nav-fade:28px}
  .catalog-header{grid-template-columns:180px minmax(0,1fr) 110px auto}
- .catalog-nav-toggle{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:8px 12px;border:0;background:none;color:inherit;font:600 14px/1.4 "Manrope",sans-serif;cursor:pointer}
+ .catalog-brand{width:180px}.catalog-brand-logo{transform:translateY(2px) scale(3.6)}
+ .catalog-nav-toggle{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:8px 12px;border:0;background:none;color:inherit;font:600 15px/1.4 "Manrope",sans-serif;cursor:pointer}
  .catalog-navigation .catalog-header-categories{display:none;position:absolute;left:18px;right:18px;top:100%;width:auto;padding:14px;background:#5a5a55;border:1px solid #ffffff30;border-radius:0 0 10px 10px;box-shadow:0 18px 30px #0002;max-height:calc(100dvh - 92px);overflow:auto}
  .catalog-navigation.is-open .catalog-header-categories{display:flex;flex-direction:column;align-items:stretch;gap:4px}
  .catalog-category-group{position:static}
@@ -746,8 +853,32 @@ body.catalog-modo-sistema .catalog-page-label{color:var(--ink)}
 }
 @media(max-width:767px){
  .catalog-header{height:72px;grid-template-columns:minmax(80px,1fr) auto auto;grid-template-rows:72px;grid-template-areas:"brand categories user";gap:8px;padding:0 10px}
- .catalog-brand{width:100%;height:72px}.catalog-brand-logo{max-width:100px}.catalog-brand-name{font-size:16px}
- .catalog-navigation{gap:4px}.catalog-nav-toggle{padding-inline:6px;font-size:13px}
+ .catalog-brand{width:100%;height:72px}.catalog-brand-logo{max-width:100px;transform:scale(2.8)}.catalog-brand-name{font-size:16px}
+ /* Celular: sem espaço pra reservar a mesma folga dos dois lados (marca +
+    usuário já ocupam ~metade da largura de 390px) — volta pro fluxo
+    normal do grid, o rótulo continua centralizado ENTRE as duas setas
+    (colunas laterais iguais), só não no meio exato da tela. */
+ .catalog-navigation{position:static;transform:none;width:auto;height:auto;grid-area:categories;display:flex;align-items:center;justify-content:center;gap:4px;overflow:hidden;-webkit-mask-image:none;mask-image:none}.catalog-nav-toggle{padding-inline:6px;font-size:14.5px}
+ /* Celular: sem espaço pra uma linha do tempo de verdade — cada lado vira
+    só uma seta (‹ ›) da entrada vizinha, clicável, pra continuar dando pra
+    voltar/avançar. */
+ .catalog-timeline-side{flex:none;width:30px;justify-content:center;height:auto}
+ .catalog-timeline-side:empty,.catalog-navigation.is-portal .catalog-timeline-side{display:none}
+ .catalog-timeline-item:not(.is-near){display:none}
+ .catalog-timeline-item span{display:none}
+ .catalog-timeline-item{padding:8px 4px;opacity:.85}
+ .catalog-timeline-past .catalog-timeline-item::after{content:"‹";margin:0;font-size:1.6rem}
+ .catalog-timeline-future .catalog-timeline-item::before{content:"›";margin:0;font-size:1.6rem}
  .catalog-user{gap:4px;padding-left:6px}.catalog-user img{width:44px;height:44px}.catalog-user button{width:26px;height:30px}
  body.catalog-modo-sistema .catalog-header{height:72px;padding-inline:12px;gap:8px}
 }
+
+/* Cores disponíveis no card da grade (mesmos círculos da página do item, ver gridSwatchesMarkup) — versão DISCRETA: bolinhas
+   pequenas, sem o nome da cor (fica no title/aria-label). O padding dá área de clique maior que o desenho. */
+.catalog-grid-swatches{display:flex;flex-wrap:wrap;gap:4px;margin:12px 0 0 -3px}
+.catalog-grid-swatches .product-variant-swatch{width:auto;padding:3px;cursor:pointer}
+.catalog-grid-swatches .product-variant-swatch-photo{width:32px;height:32px;border-width:1px;box-shadow:none}
+.catalog-grid-swatches .product-variant-swatch:hover .product-variant-swatch-photo,.catalog-grid-swatches .product-variant-swatch:focus-visible .product-variant-swatch-photo{transform:none;box-shadow:none;border-color:var(--accent)}
+.catalog-grid-swatches .product-variant-swatch.active .product-variant-swatch-photo{border-width:2px;border-color:var(--accent);box-shadow:none}
+.catalog-grid-swatches .product-variant-swatch:focus-visible .product-variant-swatch-photo{box-shadow:0 0 0 3px rgba(185,154,114,.28)}
+@media(hover:none){.catalog-grid-swatches .product-variant-swatch-photo{width:34px;height:34px}}

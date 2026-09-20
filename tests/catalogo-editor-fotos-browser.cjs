@@ -102,6 +102,20 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  await page.locator('[data-grid-item]').first().click();
  await page.locator('#produto-1').waitFor();
 
+ // Modo "dentro do sistema" (login_ok): o rótulo da página também fica no
+ // centro exato da tela, e a busca continua à direita — como o rótulo saiu
+ // do fluxo do cabeçalho pra ser centralizado de verdade, nada mais
+ // empurrava a busca pra direita neste modo (antes era o flex:1 dele).
+ // Espera a animação de rolagem do rótulo (linha do tempo do cabeçalho, ~640ms
+ // depois de entrar na categoria) terminar — no meio dela o nome ainda está
+ // deslizando pro centro. Só a do próprio rótulo, não document.getAnimations():
+ // outras animações infinitas da tela (ex.: faixa de itens relacionados)
+ // nunca terminam.
+ await page.waitForFunction(()=>document.getElementById('catalogPageLabel').getAnimations().length===0);
+ const centroDoRotulo=await page.evaluate(()=>{const h=document.querySelector('.catalog-header').getBoundingClientRect();const l=document.getElementById('catalogPageLabel').getBoundingClientRect();const s=document.querySelector('.catalog-search').getBoundingClientRect();return {offset:Math.abs((l.left+l.right)/2-(h.left+h.right)/2),buscaAEsquerda:s.left<(h.left+h.right)/2};});
+ assert.ok(centroDoRotulo.offset<=1,'Rótulo da página centralizado também no modo dentro do sistema');
+ assert.equal(centroDoRotulo.buscaAEsquerda,false,'Busca continua no lado direito do cabeçalho neste modo');
+
  // Estrutura: badge na principal, carrossel com 3 posições (principal +
  // Detalhe 1 preenchido + Detalhe 2 vazio — placeholder só aparece pra
  // quem tem acesso interno), 3 pontinhos de Ambientada, botão de capa.
@@ -112,6 +126,23 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  assert.equal(await page.locator('#produto-1 [data-inline-edit="principal"]').count(),1);
  assert.equal(await page.locator('#produto-1 .product-main-dot').count(),3,'Carrossel: principal + Detalhe 1 (preenchido) + Detalhe 2 (placeholder vazio, só equipe)');
  assert.equal(await page.locator('#produto-1 .product-main-nav').count(),2,'Setas de navegação aparecem com 2+ slides');
+ // Pedido do usuário: "só quero que apareça as setas quando eu passar o mouse por cima... não quero ela branca,
+ // quero com esse efeito igual da home" — setas escondidas em repouso, aparecem com o mouse na foto, em preto a
+ // 50% (o mesmo preto/.5 do escurecer dos blocos do Portal) com a seta branca; os pontinhos avisam o resto do tempo.
+ const setaEstado=()=>page.locator('#produto-1 .product-main-nav-next').evaluate(el=>{const cs=getComputedStyle(el);return {opacidade:Number(cs.opacity),cor:cs.color,fundo:cs.backgroundColor};});
+ await page.mouse.move(5,5);await page.waitForTimeout(800);
+ assert.equal((await setaEstado()).opacidade,0,'Sem o mouse na foto as setas ficam escondidas');
+ assert.ok(await page.locator('#produto-1 .product-main-dots').isVisible(),'...mas os pontinhos de posição continuam visíveis (avisam que há mais fotos)');
+ const midia=await page.locator('#produto-1 .product-main-media').boundingBox();
+ await page.mouse.move(midia.x+midia.width/2,midia.y+midia.height/2);await page.waitForTimeout(800);
+ const noHover=await setaEstado();
+ assert.equal(noHover.opacidade,1,'Com o mouse na foto as setas aparecem');
+ assert.equal(noHover.fundo,'rgba(0, 0, 0, 0.5)','Círculo preto a 50% (o mesmo escurecer da home), não branco');
+ assert.equal(noHover.cor,'rgb(255, 255, 255)','Seta branca');
+ await page.mouse.move(5,5);await page.waitForTimeout(800);
+ await page.locator('#produto-1 .product-main-nav-next').focus();await page.waitForTimeout(800);
+ assert.equal((await setaEstado()).opacidade,1,'Com o foco do teclado na seta ela aparece (senão não dá pra trocar de foto sem mouse)');
+ await page.evaluate(()=>document.activeElement?.blur());
  assert.equal(await page.locator('#produto-1 .catalog-event-slot-dot').count(),3);
  assert.equal(await page.locator('#produto-1 .catalog-event-slot-dot.is-filled').count(),1,'Só Ambientada 1 está preenchida');
  assert.match(await page.locator('#produto-1 .catalog-capa-toggle').textContent(),/Definir como capa/);
@@ -141,10 +172,13 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  const elAtApplyPoint=await page.evaluate(({x,y})=>{const el=document.elementFromPoint(x,y);return el?el.tagName:null;},{x:applyBox.x+applyBox.width/2,y:applyBox.y+applyBox.height/2});
  assert.equal(elAtApplyPoint,'BUTTON','Botão Aplicar não pode ficar coberto por outro elemento');
  await applyBtn.click();
- await page.waitForFunction(()=>window.testStorageUploaded.some(u=>u.path==='company/1/principal.png'));
+ // O editor de recorte agora grava JPEG, não PNG sem compressão (bug real
+ // corrigido: fotos chegavam a 8-16MB cada só por causa disso) — o
+ // caminho de upload segue a extensão do blob de verdade, então vira .jpg.
+ await page.waitForFunction(()=>window.testStorageUploaded.some(u=>u.path==='company/1/principal.jpg'&&u.type==='image/jpeg'));
  assert.ok(await page.evaluate(()=>window.testItemUpdates.some(u=>u.val==='1'&&'foto_url' in u.payload)),'itens.foto_url atualizado');
  await page.waitForFunction(()=>!document.querySelector('#produto-1 .catalog-inline-crop-overlay'),null,{timeout:5000});
- await page.waitForFunction(()=>document.querySelector('#produto-1 .product-main-image')?.src.includes('company/1/principal.png'));
+ await page.waitForFunction(()=>document.querySelector('#produto-1 .product-main-image')?.src.includes('company/1/principal.jpg'));
 
  // Navegar pelo carrossel: depois de aplicar a principal, o slide ativo
  // continua "principal" (preserveSlot) — avançar uma vez cai no Detalhe 1
