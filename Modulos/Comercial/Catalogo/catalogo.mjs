@@ -1,7 +1,7 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
 import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260920-moveis";
 import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20260919-zoom-galeria";
-import { initCatalogLounge, openCatalogLounge, teardownCatalogLounge } from "./catalogo-lounge.mjs?v=20260920-moveis";
+import { initCatalogLounge, openCatalogLounge, teardownCatalogLounge } from "./catalogo-lounge.mjs?v=20260921-texturas-piso";
 import { initCatalogProjetos, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup, atualizarBotoes as atualizarBotoesProjeto } from "./catalogo-projetos.mjs?v=20260921-mais-opcoes";
 
 const supabase = window.supabaseClient;
@@ -391,7 +391,9 @@ function agruparVariantes(items){
     // irmãs a partir de QUALQUER uma delas, não só da principal (necessário
     // depois de trocar de variante mais de uma vez, ver applyVariant()).
     ordenadas.forEach((variante) => { variante.variantGroup = ordenadas; });
-    const principal = ordenadas.find((variante) => variante.capaCategoria) || ordenadas[0];
+    const comFoto = ordenadas.filter((variante) => variante.photo && variante.photo !== FOTO_PLACEHOLDER);
+    const candidatas = comFoto.length ? comFoto : ordenadas;
+    const principal = candidatas.find((variante) => variante.capaCategoria) || candidatas[0];
     principal.capaCategoria = ordenadas.some((variante) => variante.capaCategoria);
     resultado.push(principal);
   });
@@ -492,6 +494,35 @@ function watchHeaderHeight(){
   if(!header || !("ResizeObserver" in window)) return;
   new ResizeObserver(syncHeaderHeight).observe(header);
   syncHeaderHeight();
+}
+
+// Centraliza a última linha da grade de categorias da Home quando ela não
+// fecha todas as colunas (pedido explícito do usuário, com print
+// mostrando a 2ª linha "Estofados/Mesas Auxiliares/.../Objetos" grudada
+// à esquerda, com um vão vazio grande à direita). `.catalog-home-grid`
+// continua `auto-fill`/`1fr` de sempre (linhas cheias não mudam nada) —
+// só os cards da última linha, quando incompleta, ganham um
+// `grid-column-start` deslocado pro meio das colunas existentes, em vez
+// de começar sempre na 1ª coluna. Recalculado a cada redesenho da Home E
+// no resize (o número de colunas por linha é responsivo, via auto-fill).
+function centerLastHomeGridRow(){
+  const grid = document.querySelector(".catalog-home-grid");
+  if(!grid) return;
+  const cards = [...grid.children];
+  cards.forEach((card) => { card.style.gridColumnStart = ""; });
+  if(!cards.length) return;
+  const columns = getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length;
+  if(columns <= 1) return;
+  const remainder = cards.length % columns;
+  if(!remainder) return;
+  const start = Math.floor((columns - remainder) / 2) + 1;
+  cards.slice(-remainder).forEach((card, i) => { card.style.gridColumnStart = String(start + i); });
+}
+
+function watchHomeGridWidth(){
+  const grid = $("catalogGrid");
+  if(!grid || !("ResizeObserver" in window)) return;
+  new ResizeObserver(centerLastHomeGridRow).observe(grid);
 }
 
 // O catálogo mostra só UMA categoria de cada vez — pedido explícito do
@@ -1329,6 +1360,7 @@ function refreshHomeFilters(){
   const items = active ? filteredHomeItems() : [];
   state.currentItems = items;
   results.innerHTML = homeResultsMarkup(items);
+  centerLastHomeGridRow();
   HOME_FILTER_FIELDS.forEach(({ key }) => {
     const field = document.querySelector(`[data-home-filter-field="${key}"]`);
     if(!field) return;
@@ -2040,6 +2072,11 @@ function renderMosaicMarkup(items, heading, categoryItems){
 }
 
 function renderProducts(items, heading, categoryItems){
+  // Prioriza itens com foto, preservando a ordem atual dentro de cada grupo.
+  items = [...items].sort((a, b) =>
+    Number(Boolean(b.photo && b.photo !== FOTO_PLACEHOLDER)) -
+    Number(Boolean(a.photo && a.photo !== FOTO_PLACEHOLDER))
+  );
   const grid = $("catalogGrid");
   state.currentItems = items;
   state.currentHeading = heading ?? currentViewLabel();
@@ -3732,6 +3769,7 @@ function acessoInternoDoSistema(){
 async function init(){
   ensureFonts();
   watchHeaderHeight();
+  watchHomeGridWidth();
   if(!supabase){
     renderGate("Não foi possível conectar ao Acervo", "Abra esta página pelo endereço servido pelo sistema.", "../../../login.html", "Ir para o login");
     return;

@@ -417,16 +417,26 @@ const FULLSCREEN_SPY=`(() => {
  assert.equal(await page.locator('[data-lounge-panel="environment"].is-active').count(),1,'Aba "Ambiente" fica ativa');
  assert.equal(await page.locator('[data-lounge-panel="items"].is-active').count(),0);
 
- // Piso: 5 opções, "Piso neutro" ativo por padrão, trocar aplica de
- // verdade no chão da cena (pedido explícito: "quero que a pessoa possa
- // escolher o piso").
- assert.equal(await page.locator('.catalog-lounge-floor-swatch').count(),5);
+ // Piso: 8 opções (pedido depois: "quero que tenha texturas... pedra, aquelas lajota... carpete bege clarinho quase branco,
+ // carpete verde escuro também" — mais pedra/lajota e os 2 carpetes, em cima dos 5 que já existiam), "Piso neutro" ativo por
+ // padrão, trocar aplica de verdade no chão da cena.
+ assert.equal(await page.locator('.catalog-lounge-floor-swatch').count(),8);
  assert.equal(await host.getAttribute('data-floor-key'),'neutral');
  assert.equal(await page.locator('.catalog-lounge-floor-swatch.is-active').count(),1);
  await page.locator('[data-lounge-floor="wood"]').click();
  await page.waitForFunction(()=>document.querySelector('#loungeCanvasHost')?.dataset.floorKey==='wood');
  assert.match(await page.locator('[data-lounge-floor="wood"]').getAttribute('aria-pressed'),/true/);
  assert.equal(await page.locator('[data-lounge-floor="neutral"]').getAttribute('aria-pressed'),'false');
+ // As 3 texturas novas: cada uma troca o piso de verdade, com uma cor de amostra própria (nenhuma repetida).
+ for(const chave of ['stone','carpet-light','carpet-green']){
+  await page.locator(`[data-lounge-floor="${chave}"]`).click();
+  await page.waitForFunction((k)=>document.querySelector('#loungeCanvasHost')?.dataset.floorKey===k,chave);
+  assert.match(await page.locator(`[data-lounge-floor="${chave}"]`).getAttribute('aria-pressed'),/true/);
+ }
+ const cores=await page.locator('.catalog-lounge-floor-swatch').evaluateAll((els)=>els.map((el)=>getComputedStyle(el).backgroundColor));
+ assert.equal(new Set(cores).size,8,'As 8 amostras têm cores diferentes entre si: '+cores.join(' | '));
+ await page.locator('[data-lounge-floor="neutral"]').click();
+ await page.waitForFunction(()=>document.querySelector('#loungeCanvasHost')?.dataset.floorKey==='neutral');
 
  // Fundo por foto: some por padrão, upload cria uma PAREDE de verdade na
  // cena (pedido explícito, corrigindo a 1ª versão que era só CSS: "a foto
@@ -609,5 +619,5 @@ const FULLSCREEN_SPY=`(() => {
  await page.close();
 }
 
-console.log('PASS: Módulo Lounge — card "Módulo Lounge" disponível no mini-menu (só "Realidade aumentada" segue "Em breve"), trilha/rótulo de 3 níveis, formato "Lounge compacto" único e ativo por padrão, papéis obrigatórios (sofá/poltrona) com seleção padrão automática e opcionais com "Nenhuma"/aviso quando vazio, trocar item remonta a composição de verdade, controles de câmera REAIS (aproximar/afastar/redefinir mudam a distância da câmera), botão "Renderizar com IA" chama a MESMA função de borda do Estúdio de Ambientes (studio-ai-engine) de verdade e abre o diálogo de resultado com a imagem devolvida, dica de uso esmaece na interação, tela cheia via Fullscreen API de verdade, piso com 5 opções aplicado de verdade no chão da cena, parede de fundo REAL na cena aplicada com a foto (textura de verdade, mesma técnica do Estúdio de Ambientes) e removida/escondida corretamente, foto de fundo ajustável ARRASTANDO (modo dedicado que desliga a órbita da câmera enquanto ativo, arrastar move a foto de verdade, fora do modo o mesmo gesto continua girando a câmera normalmente) com zoom por BOTÃO +/- (nunca pela roda do mouse, funciona dentro ou fora do modo de arrastar), cena Three.js desligada por completo ao sair (sem canvas/contexto WebGL sobrando) e reconstruída limpa ao reabrir (piso volta ao padrão), decorador externo alcança o mesmo módulo funcional, sem overflow em 390/768/1024px');
+console.log('PASS: Módulo Lounge — card "Módulo Lounge" disponível no mini-menu (só "Realidade aumentada" segue "Em breve"), trilha/rótulo de 3 níveis, formato "Lounge compacto" único e ativo por padrão, papéis obrigatórios (sofá/poltrona) com seleção padrão automática e opcionais com "Nenhuma"/aviso quando vazio, trocar item remonta a composição de verdade, controles de câmera REAIS (aproximar/afastar/redefinir mudam a distância da câmera), botão "Renderizar com IA" chama a MESMA função de borda do Estúdio de Ambientes (studio-ai-engine) de verdade e abre o diálogo de resultado com a imagem devolvida, dica de uso esmaece na interação, tela cheia via Fullscreen API de verdade, piso com 8 opções (incluindo pedra/lajota e os 2 carpetes) aplicado de verdade no chão da cena, parede de fundo REAL na cena aplicada com a foto (textura de verdade, mesma técnica do Estúdio de Ambientes) e removida/escondida corretamente, foto de fundo ajustável ARRASTANDO (modo dedicado que desliga a órbita da câmera enquanto ativo, arrastar move a foto de verdade, fora do modo o mesmo gesto continua girando a câmera normalmente) com zoom por BOTÃO +/- (nunca pela roda do mouse, funciona dentro ou fora do modo de arrastar), cena Three.js desligada por completo ao sair (sem canvas/contexto WebGL sobrando) e reconstruída limpa ao reabrir (piso volta ao padrão), decorador externo alcança o mesmo módulo funcional, sem overflow em 390/768/1024px');
 }catch(error){ console.error(error); process.exitCode=1; }finally{ await browser.close(); server.close(); }})();

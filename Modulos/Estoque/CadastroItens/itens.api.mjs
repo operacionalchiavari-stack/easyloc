@@ -57,15 +57,38 @@ export async function carregarItens(){
 
     const empresaId = await getEmpresaAtualId();
 
-    const { data, error } = await supabase
-      .from("itens")
-      .select("*")
-      .eq("empresa_id", empresaId)
-      .order("produto",{ascending:true});
+    // Uma única chamada .select("*") é limitada pelo teto de linhas por
+    // requisição da API do projeto Supabase (hoje 1000, sem override — ver
+    // Settings > API > Max Rows). Com 1173+ itens cadastrados (empresa já
+    // passou desse teto), a chamada cortava silenciosamente o resto, SEM
+    // erro nenhum — um item classificado depois da posição 1000 na ordem
+    // alfabética por "produto" simplesmente nunca entrava em itensCache,
+    // ficando invisível no Cadastro de Itens (mesmo ativo, mesmo aparecendo
+    // no Catálogo, que lê por RPC agregada em JSON e não sofre esse corte).
+    // Bug real: "Sofá Berlim" (produto="Sofá Berlim") ficava na posição
+    // 1060 dessa ordenação. Corrigido paginando até esgotar de verdade.
+    const PAGE_SIZE = 1000;
+    let todos = [];
+    let offset = 0;
 
-    if(error) throw error;
+    while(true){
+      const { data, error } = await supabase
+        .from("itens")
+        .select("*")
+        .eq("empresa_id", empresaId)
+        .order("produto",{ascending:true})
+        .range(offset, offset + PAGE_SIZE - 1);
 
-    itensCache = data || [];
+      if(error) throw error;
+
+      todos = todos.concat(data || []);
+
+      if(!data || data.length < PAGE_SIZE) break;
+
+      offset += PAGE_SIZE;
+    }
+
+    itensCache = todos;
     window.itensCache = itensCache;
 
     window.renderTabelaItens?.(itensCache);

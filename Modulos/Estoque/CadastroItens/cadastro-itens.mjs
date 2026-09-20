@@ -3,7 +3,7 @@
    EasyLoc
 ===================================================== */
 
-import { carregarItens } from "./itens.api.mjs";
+import { carregarItens } from "./itens.api.mjs?v=20260920-paginacao";
 import "./itens.modal.mjs";
 import "./itens.tabela.mjs";
 import "./itens.foto.mjs?v=20260919-imgotimizada";

@@ -33,7 +33,17 @@
 @media(max-width:600px){.catalog-view-switcher{padding:9px 18px}.catalog-view-switch-btn{width:34px;height:34px}.catalog-view-switch-btn svg{width:14px;height:14px}}
 .catalog-brand{grid-area:brand;display:flex;align-items:center;justify-content:flex-start;width:clamp(270px,21vw,330px);color:inherit;text-decoration:none;overflow:visible}.catalog-brand-logo{display:block;width:100%;max-width:215px;max-height:49px;object-fit:contain;object-position:left center;transform:scale(3.6);transform-origin:left center;pointer-events:none}.catalog-brand-name{font-family:"Cormorant Garamond",serif;font-size:1.5rem;letter-spacing:.02em;white-space:nowrap}
 .catalog-header-categories{grid-area:categories;position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;row-gap:8px;column-gap:clamp(18px,2.2vw,36px);padding:8px 0 14px;overflow:visible}.catalog-header-category{position:relative;border:0;background:none;padding:2px 0 0;color:rgba(255,255,255,.72);font:600 .813rem/1 "Manrope",sans-serif;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap;cursor:pointer}.catalog-header-category:hover,.catalog-header-category.active{color:#fff}.catalog-header-category.active::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#d1b58e}
-.catalog-search{grid-area:search;display:flex;align-items:center;gap:9px;height:29px;padding:0 4px;border-bottom:1px solid rgba(255,255,255,.34);color:rgba(255,255,255,.72);transition:border-color .25s}.catalog-search:focus-within{border-color:#fff}.catalog-search svg{flex:0 0 auto;width:14px;height:14px}.catalog-search input{width:100%;border:0;outline:0;background:transparent;color:#fff;font:400 .875rem "Manrope",sans-serif;letter-spacing:.04em}.catalog-search input::placeholder{color:rgba(255,255,255,.55)}
+/* Pedido explícito do usuário: "a pessoa quase não vê" — era só uma linha fininha embaixo
+   (border-bottom translúcido), sem fundo nenhum, texto/ícone quase da mesma cor do cabeçalho.
+   Virou uma pílula com fundo e contorno sempre visíveis (não só no foco), pra destacar do
+   cinza do cabeçalho sem precisar de mais espaço (largura da coluna não mudou). */
+.catalog-search{grid-area:search;display:flex;align-items:center;gap:7px;height:32px;padding:0 9px;border:1px solid rgba(255,255,255,.4);border-radius:999px;background:rgba(255,255,255,.16);color:rgba(255,255,255,.92);transition:background-color .2s,border-color .2s}.catalog-search:focus-within{background:rgba(255,255,255,.26);border-color:#fff}.catalog-search svg{flex:0 0 auto;width:14px;height:14px}
+/* input[type=search] reserva espaço pro "x" nativo de limpar mesmo com appearance normal (o Chromium/Edge
+   deixa esse espaço mesmo vazio) — sem isso, o "Pesquisar" ficava cortado assim que a pílula ganhou padding
+   de verdade. appearance:none tira a decoração nativa (ícone/"x"), que já é feita pelo <svg> próprio daqui. */
+.catalog-search input{appearance:none;-webkit-appearance:none;width:100%;min-width:0;border:0;outline:0;background:transparent;color:#fff;font:400 .875rem "Manrope",sans-serif;letter-spacing:.04em}
+.catalog-search input::-webkit-search-cancel-button,.catalog-search input::-webkit-search-decoration{-webkit-appearance:none;appearance:none;display:none}
+.catalog-search input::placeholder{color:rgba(255,255,255,.78)}
 
 /* Aberto de dentro do sistema (ver acessoInternoDoSistema() em catalogo.mjs):
    o dashboard ja tem seu proprio menu — a marca/busca/usuario do cabecalho
@@ -47,8 +57,8 @@ body.catalog-modo-sistema .catalog-header-category{color:var(--muted)}
 body.catalog-modo-sistema .catalog-header-category:hover,
 body.catalog-modo-sistema .catalog-header-category.active{color:var(--ink)}
 body.catalog-modo-sistema .catalog-header-category.active::after{background:var(--accent)}
-body.catalog-modo-sistema .catalog-search{border-bottom-color:var(--line);color:var(--muted)}
-body.catalog-modo-sistema .catalog-search:focus-within{border-color:var(--ink)}
+body.catalog-modo-sistema .catalog-search{border-color:var(--line);background:#f3f1ec;color:var(--muted)}
+body.catalog-modo-sistema .catalog-search:focus-within{border-color:var(--accent);background:#fff}
 body.catalog-modo-sistema .catalog-search input{color:var(--ink)}
 body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 .catalog-products{scroll-snap-type:y proximity;background:var(--bg)}
@@ -60,7 +70,7 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    do resto do catálogo (--ink/--muted/--accent, Cormorant Garamond +
    Manrope), só o layout muda. */
 .catalog-products.catalog-products-static-mode{scroll-snap-type:none}
-.catalog-grid-wrap{max-width:1400px;margin:0 auto;padding:56px clamp(24px,4vw,64px) 100px}
+.catalog-grid-wrap{max-width:1400px;margin:0 auto;padding:24px clamp(24px,4vw,64px) 100px}
 .catalog-grid-heading{margin:0 0 48px;text-align:center;font-family:"Cormorant Garamond",serif;font-size:clamp(1.9rem,3vw,2.7rem);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
 /* Filtro premium por subcategoria (pedido explícito do usuário: "quero
    que apareça as subcategorias que tem dentro do cadastro itens... um
@@ -76,7 +86,7 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    abrem um painel com caixinhas (podem ter dezenas de valores, não cabem como pílulas); "Personalizáveis" é um
    liga/desliga direto. Com filtro ativo, a grade de categorias dá lugar aos itens agrupados por categoria
    (.catalog-filter-group), um título serifado com a contagem por grupo. */
-.catalog-home-filters{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:0 0 44px}
+.catalog-home-filters{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:0 0 24px}
 .catalog-filter{position:relative}
 .catalog-filter-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 18px;color:var(--muted);font:600 .844rem "Manrope",sans-serif;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s,background-color .2s}
 .catalog-filter-chip:hover,.catalog-filter.is-open .catalog-filter-chip{border-color:var(--accent);color:var(--accent)}
@@ -105,22 +115,22 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
 .catalog-filter-group-title{display:flex;align-items:baseline;gap:14px;margin:0 0 clamp(24px,3vw,36px);padding-bottom:14px;border-bottom:1px solid var(--line);font-family:"Cormorant Garamond",serif;font-size:clamp(1.5rem,2.2vw,2rem);font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
 .catalog-filter-group-title em{font:600 .844rem "Manrope",sans-serif;font-style:normal;letter-spacing:.05em;color:var(--muted)}
 @media(max-width:600px){
-  .catalog-home-filters{gap:8px;margin-bottom:32px}
+  .catalog-home-filters{gap:8px;margin-bottom:18px}
   .catalog-filter{position:static}
   .catalog-filter-panel{left:0;right:0;max-width:none}
 }
 .catalog-subcat-empty{padding:48px 0;text-align:center;color:var(--muted);font-size:.906rem}
-.catalog-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:clamp(24px,3vw,56px);row-gap:clamp(36px,4vw,56px)}
-.catalog-grid-card{display:flex;align-items:flex-start;gap:18px;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
-.catalog-grid-card-photo{flex:0 0 clamp(110px,11vw,160px);width:clamp(110px,11vw,160px);height:clamp(110px,11vw,160px);display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));column-gap:clamp(20px,2.4vw,40px);row-gap:clamp(32px,3.4vw,48px)}
+.catalog-grid-card{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer}
+.catalog-grid-card-photo{flex:none;width:100%;height:auto;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
 .catalog-grid-card-photo img{width:100%;height:100%;object-fit:contain}
-.catalog-grid-card-body{display:flex;flex-direction:column;gap:8px;padding-top:6px;min-width:0}
+.catalog-grid-card:not(.catalog-home-card) .catalog-grid-card-photo img{object-position:center bottom}
+.catalog-grid-card-body{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:0;min-width:0}
 .catalog-grid-card-name{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:1.02rem;line-height:1.3;letter-spacing:.01em;text-transform:uppercase;color:var(--ink);transition:color .2s}
 .catalog-grid-card-dims,.catalog-grid-card-meta{color:var(--muted);font-size:.844rem;letter-spacing:.03em}
 .catalog-grid-card:hover .catalog-grid-card-name,.catalog-grid-card:focus-visible .catalog-grid-card-name{color:var(--accent)}
 .catalog-grid-card:focus-visible{outline:1px solid var(--accent);outline-offset:6px}
-@media(max-width:1100px){.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){.catalog-grid{grid-template-columns:1fr}.catalog-grid-wrap{padding:40px 18px 70px}.catalog-grid-heading{margin-bottom:32px}}
+@media(max-width:600px){.catalog-grid-wrap{padding:18px 18px 70px}.catalog-grid-heading{margin-bottom:32px}}
 /* Visualização "mosaico" (pedido explícito do usuário, com print de um
    moodboard de referência: "eu quero que tenha mais um estilo de
    visualização que é assim tudo junto, meio que bagunçado mesmo... o
@@ -211,25 +221,31 @@ body.catalog-modo-sistema .catalog-search input::placeholder{color:var(--muted)}
    linha e deixa cada uma bem maior, sem precisar de breakpoint manual
    (auto-fill recalcula sozinho, do mobile a telas grandes). Depois,
    com a Home já cheia de categorias reais, pedido pra diminuir "um
-   pouco" — 190px voltou pra 160px (não os 130px originais, só um
-   meio-termo). */
-.catalog-grid.catalog-home-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));column-gap:clamp(20px,2.4vw,40px);row-gap:clamp(32px,3.4vw,48px)}
+   pouco" — 190px voltou pra 160px. Mais tarde, depois de compactar o
+   espaço acima da grade (ver seção correspondente no CLAUDE.md), pedido
+   de novo pra aumentar ("pra ocupar mais espaço na tela") — 160px subiu
+   pra 200px, o maior valor já usado aqui. */
+.catalog-grid.catalog-home-grid{grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));column-gap:clamp(20px,2.4vw,40px);row-gap:clamp(32px,3.4vw,48px)}
 .catalog-home-card{flex-direction:column;align-items:center;text-align:center;gap:16px}
 .catalog-home-card .catalog-grid-card-photo{width:100%;height:auto;aspect-ratio:1/1;flex:none;overflow:hidden}
 .catalog-home-card .catalog-grid-card-body{align-items:center;padding-top:0;gap:0}
-.catalog-home-card .catalog-grid-card-name{font-size:1.12rem}
-/* Efeito no hover: só o zoom na foto — pedido explícito do usuário
-   depois de ver a primeira versão (escurecer + sombra + "levantar" +
-   sublinhado no nome): "não quero que tenha essa mudança de cor
-   deixando mais escuro, essa sombra. quero apenas que deixe o zoom".
-   Mesmo easing lento do resto do catálogo (cubic-bezier(.22,1,.36,1),
-   1400ms), só que sem nenhum outro efeito por cima. */
+.catalog-home-card .catalog-grid-card-name{font-size:1.12rem;letter-spacing:.02em;transition:color .2s,letter-spacing 900ms cubic-bezier(.22,1,.36,1)}
+/* Efeito no hover: zoom na foto — pedido explícito do usuário depois de
+   ver a primeira versão (escurecer + sombra + "levantar" + sublinhado no
+   nome): "não quero que tenha essa mudança de cor deixando mais escuro,
+   essa sombra. quero apenas que deixe o zoom". Mesmo easing lento do
+   resto do catálogo (cubic-bezier(.22,1,.36,1)), sem escurecer/sombra.
+   Pedido depois, achando o efeito pouco expressivo: zoom mais forte
+   (1.18→1.3) + o nome ganha o mesmo "abrir" de letter-spacing já usado
+   no Portal/mini-menu Módulo 3D (nunca escurecer/sombra de novo). */
 .catalog-home-card .catalog-grid-card-photo img{transition:transform 1400ms cubic-bezier(.22,1,.36,1)}
 @media(hover:hover) and (pointer:fine){
-  .catalog-home-card:hover .catalog-grid-card-photo img{transform:scale(1.18)}
+  .catalog-home-card:hover .catalog-grid-card-photo img{transform:scale(1.3)}
+  .catalog-home-card:hover .catalog-grid-card-name{letter-spacing:.09em}
 }
 @media(prefers-reduced-motion:reduce){
   .catalog-home-card .catalog-grid-card-photo img{transition:none}
+  .catalog-home-card .catalog-grid-card-name{transition:color .2s}
 }
 .catalog-product-section{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,62fr) minmax(0,38fr);height:calc(100dvh - var(--header-h));min-height:0;background:var(--bg);overflow:hidden;scroll-snap-align:start;scroll-margin-top:var(--header-h);content-visibility:auto;contain-intrinsic-size:auto calc(100dvh - var(--header-h))}
 .catalog-product-section:not(:last-child){margin-bottom:clamp(48px,7vh,88px)}

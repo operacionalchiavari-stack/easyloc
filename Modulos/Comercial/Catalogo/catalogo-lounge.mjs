@@ -102,11 +102,20 @@ const FORMATS = [
 // como `background-image` do próprio host do canvas (mesmo truque do
 // Estúdio: o renderer usa `alpha:true`, então a foto aparece por trás de
 // qualquer área da cena sem geometria — o "céu"/entorno acima do chão).
+// Pedido explícito do usuário, depois de já ter piso/fundo: "quero que tenha texturas nos módulos 3D, textura de pedra, aquelas
+// lajota... de grama, de madeira, carpete bege clarinho quase branco, carpete verde escuro também... pensa que é pra um decorador
+// de eventos, não é pra um designer de interiores... coisas simples mas que fazem toda diferença" — mais 3 acabamentos (pedra/
+// lajota, e os 2 carpetes), além dos 5 que já existiam. `tiles`/`fiber` são as duas texturas novas que `createFloorCanvas()`
+// sabe desenhar (a de pedra e a de carpete, respectivamente) — `rough` ajusta o quanto cada uma brilha (carpete bem fosco, pedra
+// com um pouco mais de brilho que os outros, os demais mantêm o padrão de antes).
 const FLOORS = [
   { key: "neutral", label: "Piso neutro", color: "#d8d1c7" },
-  { key: "wood", label: "Madeira", color: "#8a5a35", planks: true },
+  { key: "wood", label: "Madeira", color: "#8a5a35", planks: true, rough: .8 },
+  { key: "stone", label: "Pedra", color: "#a9a29a", tiles: true, rough: .55 },
   { key: "grass", label: "Grama", color: "#5e7d43" },
   { key: "sand", label: "Areia", color: "#d8c294" },
+  { key: "carpet-light", label: "Carpete claro", color: "#efe6d8", fiber: true, rough: .98 },
+  { key: "carpet-green", label: "Carpete verde", color: "#1f4633", fiber: true, rough: .98 },
   { key: "dark", label: "Piso escuro", color: "#3b3530" },
 ];
 
@@ -329,15 +338,37 @@ async function ensureScene(){
 // mais simples aqui: grão sutil + tábuas só pra "madeira", sem replicar
 // toda a elaboração daquele arquivo, consistente com o resto deste
 // módulo mais enxuto).
+// Clareia (delta>0) ou escurece (delta<0) uma cor #rrggbb — usada pra dar um tom levemente diferente a cada placa de pedra
+// (nenhuma pedra de verdade é uma cor chapada só, mesmo numa textura simples).
+function sombrear(hex, delta){
+  const n = parseInt(hex.replace("#", ""), 16);
+  const canal = (v) => Math.max(0, Math.min(255, v + delta));
+  return `rgb(${canal((n >> 16) & 255)},${canal((n >> 8) & 255)},${canal(n & 255)})`;
+}
+
 function createFloorCanvas(floorDef){
   const canvas = document.createElement("canvas");
   canvas.width = 256; canvas.height = 256;
   const context = canvas.getContext("2d");
   context.fillStyle = floorDef.color;
   context.fillRect(0, 0, 256, 256);
-  for(let i = 0; i < 900; i += 1){
+  // Pedra/lajota: cada placa (64×64, 4×4 no canvas) ganha um tom levemente diferente da cor base — o rejunte (as linhas) vem
+  // depois, por cima do grão, pra ficar nítido.
+  if(floorDef.tiles){
+    const lado = 64;
+    for(let ty = 0; ty < 256; ty += lado){
+      for(let tx = 0; tx < 256; tx += lado){
+        context.fillStyle = sombrear(floorDef.color, (Math.random() - .5) * 26);
+        context.fillRect(tx, ty, lado, lado);
+      }
+    }
+  }
+  // Carpete: grão bem mais fino e denso (fibra) do que o piso liso, sem nenhuma linha — dá o efeito "macio" em vez de "pintado".
+  const pontos = floorDef.fiber ? 2400 : 900;
+  const tamanho = floorDef.fiber ? 1 : 1.2;
+  for(let i = 0; i < pontos; i += 1){
     context.fillStyle = Math.random() > 0.5 ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.05)";
-    context.fillRect(Math.random() * 256, Math.random() * 256, 1.2, 1.2);
+    context.fillRect(Math.random() * 256, Math.random() * 256, tamanho, tamanho);
   }
   if(floorDef.planks){
     context.strokeStyle = "rgba(0,0,0,.16)";
@@ -349,6 +380,12 @@ function createFloorCanvas(floorDef){
       context.stroke();
     }
   }
+  if(floorDef.tiles){
+    context.strokeStyle = "rgba(0,0,0,.22)";
+    context.lineWidth = 2;
+    for(let x = 0; x <= 256; x += 64){ context.beginPath(); context.moveTo(x, 0); context.lineTo(x, 256); context.stroke(); }
+    for(let y = 0; y <= 256; y += 64){ context.beginPath(); context.moveTo(0, y); context.lineTo(256, y); context.stroke(); }
+  }
   return canvas;
 }
 
@@ -358,7 +395,7 @@ function floorMaterial(THREE, floorDef){
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(3, 3);
-  return new THREE.MeshStandardMaterial({ map: texture, roughness: .94, metalness: 0 });
+  return new THREE.MeshStandardMaterial({ map: texture, roughness: floorDef.rough ?? .94, metalness: 0 });
 }
 
 function applyFloor(key){

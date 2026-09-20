@@ -154,8 +154,8 @@ function renderizar(){
     : "";
 
   const quantidade = (quantidade, posicao) => `<b class="pj-qty" data-pos="${posicao}" aria-label="Quantidade">× ${quantidade}</b>`;
-  const cartaoMovel = ({ item, quantidade: qtd }) => `
-    <article class="pj-piece">
+  const cartaoMovel = ({ item, quantidade: qtd }, idx) => `
+    <article class="pj-piece pj-reveal" style="--i:${idx % 8}">
       <div class="pj-piece-photo">${item.foto_url ? `<img src="${escapeAttr(otimizarFoto(item.foto_url, 560))}" alt="${escapeAttr(item.nome)}" loading="lazy" decoding="async">` : ""}</div>
       <div class="pj-piece-body">
         <strong>${escapeHtml(item.nome || "Item")}</strong>
@@ -166,7 +166,7 @@ function renderizar(){
       ${m.quantidade && m.posicaoQuantidade === "selo" ? quantidade(qtd, "selo") : ""}
     </article>`;
 
-  const rendersDoAmbiente = (amb, i) => amb.renders.length ? `<div class="pj-renders pj-renders-${a.renders === "grade" ? "grade" : Math.min(amb.renders.length, 3)}">${amb.renders.map((render, n) => `<figure class="pj-render${n === 0 ? " is-first" : ""}"><img src="${escapeAttr(otimizarFoto(render.url, n === 0 && a.renders === "destaque" ? 1800 : 1000, 80))}" alt="Renderização — ${escapeAttr(amb.nome)}" loading="${i === 0 && n === 0 ? "eager" : "lazy"}" decoding="async"${pg.ampliarFotos ? ` data-lightbox="${escapeAttr(render.url)}"` : ""}></figure>`).join("")}</div>` : "";
+  const rendersDoAmbiente = (amb, i) => amb.renders.length ? `<div class="pj-renders pj-renders-${a.renders === "grade" ? "grade" : Math.min(amb.renders.length, 3)}">${amb.renders.map((render, n) => `<figure class="pj-render pj-reveal${n === 0 ? " is-first" : ""}" style="--i:${n}"><img src="${escapeAttr(otimizarFoto(render.url, n === 0 && a.renders === "destaque" ? 1800 : 1000, 80))}" alt="Renderização — ${escapeAttr(amb.nome)}" loading="${i === 0 && n === 0 ? "eager" : "lazy"}" decoding="async"${pg.ampliarFotos ? ` data-lightbox="${escapeAttr(render.url)}"` : ""}></figure>`).join("")}</div>` : "";
   const moveisDoAmbiente = (amb) => amb.linhas.length ? `<div class="pj-furniture">${a.tituloMoveis ? `<h3>${escapeHtml(a.tituloMoveis)}</h3>` : ""}<div class="pj-grid">${amb.linhas.map(cartaoMovel).join("")}</div></div>` : "";
 
   const raizAttrs = {
@@ -218,20 +218,20 @@ function renderizar(){
     </header>
     ${nav}
     <main id="pjConteudo" class="pj-content">
-      ${layout.resumo ? `<section class="pj-intro"><p>${ambientes.length ? `${ambientes.length} ${ambientes.length === 1 ? "ambiente" : "ambientes"}${totalItens ? ` · ${totalItens} ${totalItens === 1 ? "peça" : "peças"} selecionadas` : ""}` : "Projeto em preparação"}</p></section>` : ""}
+      ${layout.resumo ? `<section class="pj-intro pj-reveal"><p>${ambientes.length ? `${ambientes.length} ${ambientes.length === 1 ? "ambiente" : "ambientes"}${totalItens ? ` · ${totalItens} ${totalItens === 1 ? "peça" : "peças"} selecionadas` : ""}` : "Projeto em preparação"}</p></section>` : ""}
       ${ambientes.map((amb, i) => {
         const pecas = amb.linhas.reduce((s, l) => s + l.quantidade, 0);
         const blocos = [rendersDoAmbiente(amb, i), moveisDoAmbiente(amb)];
         if(a.ordem === "moveis") blocos.reverse();
         return `
       <section class="pj-amb" id="amb-${i}">
-        <header class="pj-amb-head">${a.numeracao ? `<span class="pj-amb-num">${String(i + 1).padStart(2, "0")}</span>` : ""}<h2>${escapeHtml(amb.nome)}</h2>${a.contagem && pecas ? `<span class="pj-amb-count">${pecas} ${pecas === 1 ? "peça" : "peças"}</span>` : ""}</header>
-        ${a.notas && (amb.notas || "").trim() ? `<p class="pj-amb-notes">${escapeHtml(amb.notas).replace(/\n/g, "<br>")}</p>` : ""}
+        <header class="pj-amb-head pj-reveal">${a.numeracao ? `<span class="pj-amb-num">${String(i + 1).padStart(2, "0")}</span>` : ""}<h2>${escapeHtml(amb.nome)}</h2>${a.contagem && pecas ? `<span class="pj-amb-count">${pecas} ${pecas === 1 ? "peça" : "peças"}</span>` : ""}</header>
+        ${a.notas && (amb.notas || "").trim() ? `<p class="pj-amb-notes pj-reveal">${escapeHtml(amb.notas).replace(/\n/g, "<br>")}</p>` : ""}
         ${blocos.join("")}
       </section>`;
       }).join("")}
     </main>
-    ${r.mostrar ? `<footer class="pj-footer">
+    ${r.mostrar ? `<footer class="pj-footer pj-reveal">
       ${logo && r.mostrarLogo ? `<img class="pj-logo" src="${escapeAttr(otimizarFoto(logo, 400))}" alt="${escapeAttr(marca)}">` : ""}
       ${r.mensagem ? `<p class="pj-footer-thanks">${escapeHtml(r.mensagem)}</p>` : ""}
       ${r.assinatura ? `<p class="pj-footer-sign">${escapeHtml(r.assinatura)}</p>` : ""}
@@ -247,8 +247,61 @@ function renderizar(){
     estado.layoutId = event.target.value;
     renderizar();
   });
+  configurarRevelacao();
   if(estado.primeira && modo !== "editor") window.scrollTo(0, 0); else window.scrollTo(0, rolagem);
   estado.primeira = false;
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Efeitos de rolagem (pedido explícito: "quero que a landing page do projeto faça efeitos quando estiver descendo, como se fosse um
+// site premium mesmo"): cada bloco de conteúdo revela com fade+leve subida ao entrar na tela (ver .pj-reveal em projeto.css), a capa
+// ganha um parallax sutil na foto e a barra de ambientes solidifica (ganha sombra) depois que a capa fica pra trás.
+
+// renderizar() reescreve o #app inteiro a cada chamada — os elementos .pj-reveal são NOVOS a cada vez, então o observer também
+// precisa ser refeito (desconectando o antigo primeiro, mesmo padrão de setupObservers() no catálogo). No editor (?modo=editor) o
+// preview troca de conteúdo a cada opção mexida — sem instantâneo aqui, a pessoa veria o fade de .9s replay a cada tecla, o que
+// atrapalha edição em vez de ajudar; ali tudo já nasce revelado.
+let revelarObserver = null;
+function configurarRevelacao(){
+  revelarObserver?.disconnect();
+  const alvos = [...document.querySelectorAll(".pj-reveal")];
+  if(!alvos.length) return;
+  if(modo === "editor"){ alvos.forEach((el) => el.classList.add("is-visible")); return; }
+  revelarObserver = new IntersectionObserver((entradas) => {
+    entradas.forEach((entrada) => {
+      if(!entrada.isIntersecting) return;
+      entrada.target.classList.add("is-visible");
+      revelarObserver.unobserve(entrada.target);
+    });
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.12 });
+  alvos.forEach((el) => revelarObserver.observe(el));
+}
+
+// Chamado UMA vez só (não a cada renderizar()): o listener de scroll sempre busca `.pj-cover`/`.pj-nav` de novo na hora, então
+// continua funcionando depois de qualquer re-render sem precisar ser reanexado. O parallax respeita "menos movimento" (é rolagem de
+// verdade, não só uma troca de estado); a sombra da barra fica mesmo assim, só sem a transição animada (ver @media(prefers-reduced-
+// motion:reduce) em projeto.css).
+let efeitosDeRolagemLigados = false;
+function configurarEfeitosDeRolagem(){
+  if(efeitosDeRolagemLigados) return;
+  efeitosDeRolagemLigados = true;
+  const semMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let ticking = false;
+  const atualizar = () => {
+    ticking = false;
+    document.querySelector(".pj-nav")?.classList.toggle("is-scrolled", window.scrollY > 40);
+    if(semMovimento) return;
+    const cover = document.querySelector(".pj-cover");
+    if(!cover) return;
+    const altura = cover.getBoundingClientRect().height;
+    if(!altura) return;
+    const y = Math.min(window.scrollY, altura);
+    // nunca mais que 10% da altura da capa — a foto é 12% maior que o quadro (scale(1.12) em projeto.css) só pra sobrar essa margem;
+    // passar disso revelaria a borda da foto por baixo do deslocamento.
+    document.documentElement.style.setProperty("--pj-parallax", `${Math.round(Math.min(y * 0.22, altura * 0.1))}px`);
+  };
+  window.addEventListener("scroll", () => { if(!ticking){ ticking = true; requestAnimationFrame(atualizar); } }, { passive: true });
+  atualizar();
 }
 
 // Antes de imprimir, carrega todas as imagens (as de baixo da página são lazy e sairiam em branco no PDF).
@@ -327,6 +380,7 @@ function iniciarPrevia(){
 async function iniciar(){
   if(modo === "editor") document.documentElement.dataset.modo = "editor";
   ligarEventosGlobais();
+  configurarEfeitosDeRolagem();
   if(modo){ iniciarPrevia(); return; }
   if(!supabase){ telaMensagem("Não foi possível abrir", "Recarregue a página em alguns instantes."); return; }
   if(!slug){ telaMensagem("Link inválido", "Este endereço está incompleto. Peça o link novamente ao seu decorador."); return; }

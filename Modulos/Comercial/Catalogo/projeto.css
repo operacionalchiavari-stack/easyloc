@@ -45,7 +45,7 @@ a{color:inherit}
 .pj-cover{position:relative;display:grid;grid-template-columns:minmax(0,1fr);min-height:calc(var(--pj-capa-vh) * 1svh);background:var(--pj-capa-bg);color:var(--pj-capa-texto);overflow:hidden}
 .pj-cover.is-dark{color:#fff}
 .pj-cover-main{position:relative;z-index:1;display:grid;grid-template-rows:auto 1fr auto;min-height:calc(var(--pj-capa-vh) * 1svh);padding:34px clamp(24px,6vw,84px) 38px}
-.pj-cover-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pj-cover-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:translateY(var(--pj-parallax,0px)) scale(1.12)}
 .pj-cover-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,16,12,var(--pj-sombra-a)) 0%,rgba(20,16,12,var(--pj-sombra-b)) 100%);opacity:0}
 .pj-cover.has-photo .pj-cover-shade{opacity:1}
 .pj-cover-frame{position:absolute;inset:18px;z-index:2;border:1px solid currentColor;border-radius:calc(var(--pj-raio) * .5);opacity:.45;pointer-events:none}
@@ -80,10 +80,12 @@ a{color:inherit}
 .pj-root[data-capa="lateral"] .pj-cover{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
 .pj-root[data-capa="lateral"] .pj-cover-body h1{font-size:calc(clamp(2.8rem,6vw,5.4rem) * var(--pj-h1-escala))}
 .pj-cover-media{position:relative;z-index:1;min-height:calc(var(--pj-capa-vh) * 1svh);background:color-mix(in srgb,var(--pj-accent) 22%,#fff)}
-.pj-cover-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pj-cover-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:translateY(var(--pj-parallax,0px)) scale(1.12)}
 
 /* Navegação por ambiente */
-.pj-nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px clamp(18px,5vw,64px);border-bottom:1px solid var(--pj-line);background:color-mix(in srgb,var(--pj-fundo) 94%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.pj-nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px clamp(18px,5vw,64px);border-bottom:1px solid var(--pj-line);background:color-mix(in srgb,var(--pj-fundo) 94%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:box-shadow .3s ease}
+/* "Solidifica" ao rolar (ver configurarEfeitosDeRolagem em projeto.mjs) — mesma barra, só ganha profundidade depois que a capa já ficou pra trás. */
+.pj-nav.is-scrolled{box-shadow:0 10px 26px rgba(20,16,12,.09)}
 .pj-nav .pj-btn{margin-left:auto}
 .pj-root[data-nav="normal"] .pj-nav{position:static}
 .pj-nav-list{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
@@ -93,6 +95,15 @@ a{color:inherit}
 .pj-root[data-nav-estilo="sublinhado"] .pj-nav-list{gap:22px}
 .pj-root[data-nav-estilo="sublinhado"] .pj-nav-list a{padding:9px 2px;border-bottom:2px solid transparent;border-radius:0}
 .pj-root[data-nav-estilo="sublinhado"] .pj-nav-list a:hover{border-bottom-color:var(--pj-accent);background:none}
+
+/* Efeitos de rolagem (pedido explícito do usuário: "quero que a landing page do projeto faça efeitos quando estiver descendo, como
+   se fosse um site premium mesmo") — cada bloco de conteúdo entra com um fade + leve subida ao cruzar a viewport
+   (configurarRevelacao() em projeto.mjs, via IntersectionObserver; revela uma vez só e não esconde de novo ao rolar pra cima, pra não
+   ficar "piscando"). --i é o índice do elemento dentro do próprio grupo (fotos/móveis de um mesmo ambiente), o que dá o efeito em
+   cascata sem precisar de uma transition-delay escrita à mão pra cada um. Em `?modo=editor` isso é desligado (ver mesma função) —
+   o preview reconstrói a cada opção mexida, e replay de 900ms a cada tecla ficaria irritante, não elegante. */
+.pj-reveal{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1);transition-delay:calc(var(--i,0) * 70ms)}
+.pj-reveal.is-visible{opacity:1;transform:none}
 
 /* Conteúdo: largura, espaço entre seções, cantos e divisórias vêm da aba "Página" do layout */
 .pj-content{max-width:var(--pj-max);margin:0 auto;padding:0 clamp(20px,5vw,64px)}
@@ -201,7 +212,7 @@ html[data-modo="editor"] [data-lightbox]{cursor:default}
   .pj-piece-body{padding:12px}
   .pj-root[data-moveis="limpo"] .pj-piece-body{padding:10px 0 4px}
 }
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.pj-scroll i{animation:none}.pj-render img,.pj-piece{transition:none}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.pj-scroll i{animation:none}.pj-render img,.pj-piece,.pj-nav{transition:none}.pj-reveal{opacity:1;transform:none;transition:none}}
 
 /* PDF (Ctrl+P → "Salvar como PDF"): capa numa página; ambientes em página nova (se o layout pedir); peças e fotos não são cortadas.
    O papel, a orientação, a margem e a numeração vêm de uma regra @page injetada por projeto.mjs (regraPagina) a partir do layout. */
@@ -209,6 +220,10 @@ html[data-modo="editor"] [data-lightbox]{cursor:default}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   html,body{background:var(--pj-fundo)}
   .pj-nav,.pj-scroll,.pj-lightbox,.pj-toolbar{display:none!important}
+  /* Os efeitos de rolagem são só pra tela: sem isso, qualquer seção que a pessoa nunca rolou até ver (bem comum — "Baixar PDF" no
+     topo da página, antes de rolar nada) sairia em branco no PDF, e a foto da capa poderia congelar a meio caminho do parallax. */
+  .pj-reveal{opacity:1!important;transform:none!important;transition:none!important}
+  .pj-cover-photo,.pj-cover-media img{transform:none!important}
   .pj-cover{min-height:0;height:var(--pj-capa-h);break-after:page}
   .pj-root[data-capa-pagina="corrida"] .pj-cover{break-after:auto}
   .pj-cover-main{min-height:0;padding:20mm 16mm}
