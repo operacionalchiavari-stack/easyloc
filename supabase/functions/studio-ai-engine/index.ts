@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { designPresentation } from "./presentation-design.mjs";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "*",
@@ -11,7 +12,7 @@ type StudioProvider = "openai" | "imagen" | "flux" | "stable-diffusion";
 
 type GenerateSceneInput = {
   empresa_id: string;
-  action?: "generate_scene" | "analyze_floor_plan" | "plan_layout";
+  action?: "generate_scene" | "analyze_floor_plan" | "plan_layout" | "design_presentation";
   catalog_token?: string;
   request_id?: string;
   expected_cost?: number;
@@ -396,6 +397,7 @@ serve(async (req) => {
   }
 
   let reservation: string | null = null;
+  let presentationRequest = false;
   let creditClient: ReturnType<typeof createClient> | null = null;
   const settle = async (success: boolean) => {
     if (!reservation || !creditClient) return;
@@ -414,7 +416,9 @@ serve(async (req) => {
     }
 
     const action = body.action || "generate_scene";
-    if (!['generate_scene','analyze_floor_plan','plan_layout'].includes(action)) return respostaJson({ erro: 'Ação inválida' }, 400);
+    presentationRequest = action === 'design_presentation';
+    if (!['generate_scene','analyze_floor_plan','plan_layout','design_presentation'].includes(action)) return respostaJson({ erro: 'Ação inválida' }, 400);
+    if (action === 'design_presentation' && (typeof body.prompt !== 'string' || body.prompt.trim().length < 12 || body.prompt.length > 3000 || JSON.stringify(body.scene || {}).length > 30000)) return respostaJson({ erro: 'Briefing inválido. Use de 12 a 3000 caracteres.' }, 400);
     const erroPayload = action === "plan_layout"
       ? (!body.empresa_id || typeof body.prompt !== "string" || !body.scene ? "Parametros ausentes" : null)
       : action === "analyze_floor_plan"
@@ -434,7 +438,7 @@ serve(async (req) => {
       if (!body.request_id || !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(body.request_id) || !Number.isInteger(body.expected_cost)) {
         return respostaJson({ erro: 'Atualize o catálogo e confirme o custo em créditos antes de usar a IA.' }, 400);
       }
-      const recurso = action === 'analyze_floor_plan' ? 'planta' : action === 'plan_layout' ? 'layout' : body.scene?.referencePolicy === 'fabric_customization' ? 'tecido' : 'render';
+      const recurso = action === 'analyze_floor_plan' ? 'planta' : ['plan_layout','design_presentation'].includes(action) ? 'layout' : body.scene?.referencePolicy === 'fabric_customization' ? 'tecido' : 'render';
       const { error } = await acesso.serviceClient.rpc('creditos_reservar', { p_empresa: body.empresa_id, p_cliente: acesso.catalogSession.cliente_id, p_recurso: recurso, p_id: body.request_id, p_custo_aceito: body.expected_cost });
       if (error) return respostaJson({ erro: error.message }, 402);
       creditClient = acesso.serviceClient;
@@ -442,6 +446,11 @@ serve(async (req) => {
     } else {
       const { data, error } = await acesso.serviceClient.rpc('funcionario_pode', { p_empresa: body.empresa_id, p_usuario: acesso.user.id, p_chave: 'ia.studio.gerar' });
       if (error || !data) return respostaJson({ erro: 'Sem permissão para utilizar a IA.' }, 403);
+    }
+    if (action === "design_presentation") {
+      const design = await designPresentation(input, { apiKey: Deno.env.get('OPENAI_API_KEY'), model: Deno.env.get('PRESENTATION_OPENAI_MODEL') });
+      await settle(true);
+      return respostaJson({ ok: true, design });
     }
     if (action === "plan_layout") { const plan = await planLayout(input); await settle(true); return respostaJson({ ok: true, plan }); }
     if (action === "analyze_floor_plan") {
@@ -464,7 +473,7 @@ serve(async (req) => {
     try { await settle(false); } catch (refundError) { console.error('Falha ao liberar reserva de créditos', refundError); }
     console.error("studio-ai-engine erro", err);
     return respostaJson({
-      erro: "Erro ao gerar imagem no Studio AI Engine",
+      erro: presentationRequest ? "Não foi possível criar a apresentação com IA. Tente novamente." : "Erro ao gerar imagem no Studio AI Engine",
       details: err instanceof Error ? err.message : String(err),
     }, 500);
   }

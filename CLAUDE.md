@@ -2277,6 +2277,33 @@ ganhou essa checagem no cenário do decorador. Suíte completa de
 regressão do catálogo (8 arquivos) + `tests/creditos-browser.cjs`
 rodadas de novo, todas passando.
 
+## Apresentação do projeto: efeitos de rolagem ("site premium")
+
+Pedido do usuário: *"quero que a landing page do projeto faça efeitos quando estiver descendo, como se fosse um site premium mesmo"*. A apresentação pública (`projeto.html`/`projeto.mjs`, ver seção "Projetos" mais acima) ganhou três efeitos, todos em cima do que já existia (nenhuma mudança na estrutura HTML, só classes/atributos a mais):
+
+- **Revelação em cascata** (`.pj-reveal`/`.is-visible` em `projeto.css`): cada bloco de conteúdo — intro, cabeçalho de cada ambiente, observações, cada foto renderizada, cada móvel, o rodapé — nasce com `opacity:0;transform:translateY(28px)` e ganha um fade + leve subida (`.9s cubic-bezier(.22,1,.36,1)`) ao entrar na tela, via `IntersectionObserver` (`configurarRevelacao()`). Fotos e móveis têm um `--i` (índice dentro do próprio ambiente) que vira `transition-delay:calc(var(--i,0)*70ms)` — dá o efeito "em cascata" sem escrever um delay à mão pra cada elemento. **Revela uma vez só e não esconde de novo ao rolar pra cima** — evita o efeito "piscando" ao ir e voltar.
+- **Parallax sutil na foto da capa** (`configurarEfeitosDeRolagem()`): a foto (`.pj-cover-photo`, e a lateral em `.pj-cover-media img`) já nasce com `scale(1.12)` e se desloca com `translateY(var(--pj-parallax,0px))` conforme rola — um listener de `scroll` (throttled por `requestAnimationFrame`) calcula `min(scrollY*0.22, alturaDaCapa*0.1)`. **O teto de 10% da altura é proposital**: o `scale(1.12)` só dá 12% de folga antes de aparecer a borda da foto; deixar o deslocamento chegar perto disso (sem clamp) mostraria a borda exatamente quando a capa está saindo de vista. Parado assim que `scrollY` passa da altura da capa (a foto já nem está mais na tela).
+- **Barra de ambientes "solidifica"**: `.pj-nav` ganha `.is-scrolled` (sombra, `box-shadow`) depois de ~40px de rolagem — mesmo listener do parallax, sem listener duplicado.
+
+**Por que isso quase saiu errado (achado ao testar, não no produto final)**: ler `getComputedStyle` **na mesma tick síncrona** logo depois de mudar de mídia (`page.emulateMedia('print')` no teste, ou — em tese — um clique real em "Baixar PDF" bem na hora que a `transition` de `.pj-reveal` ainda está rodando) pega o valor **ainda em trânsito**, não o final — mesma classe de corrida já documentada nesta sessão pro campo de busca (seção acima). Isso importa de verdade aqui porque **o PDF pode ser gerado sem a pessoa nunca ter rolado a página** (o botão "Baixar PDF" já fica visível lá no topo) — sem um cuidado a mais, seções nunca vistas sairiam com `opacity:0` e o PDF sairia com trechos em branco. Corrigido com um `@media print{.pj-reveal{opacity:1!important;transform:none!important;transition:none!important}}` — o `transition:none` é o que garante que não sobra NENHUMA janela de "em trânsito", nem por 1 frame.
+
+**Modos que não são a apresentação de verdade, tratados à parte**:
+- **`prefers-reduced-motion:reduce`**: `.pj-reveal` já nasce em `opacity:1;transform:none;transition:none` via CSS (nem precisa de JS pra isso — a mesma regra cobre não importar quando/como a classe `.is-visible` é adicionada); o parallax é JS puro (não dá pra neutralizar só com CSS, já que o valor vem de `style.setProperty` a cada frame), então `configurarEfeitosDeRolagem()` checa `matchMedia` e nunca escreve `--pj-parallax` nesse caso — a barra de navegação continua ganhando sombra (não é bem "movimento"), só sem a transição animada.
+- **`?modo=editor`** (prévia ao vivo dentro do editor de layouts, iframe sem barra de rolagem própria — ver seção "Layouts de apresentação"): `renderizar()` roda a cada opção mexida, reconstruindo o `#app` inteiro — sem tratamento especial, isso replicaria o fade de .9s a CADA tecla, atrapalhando a edição em vez de ajudar. `configurarRevelacao()` detecta `modo==="editor"` e marca tudo `.is-visible` na hora, sem observer nenhum.
+- **`?modo=previa`** (aba separada, decorador testando o link/PDF antes de compartilhar): funciona igual à apresentação real — é uma janela normal, com rolagem de verdade.
+
+Teste novo: `tests/projeto-efeitos-rolagem-browser.cjs` — nada abaixo da capa (tela cheia) começa visível; rolar move o parallax (nunca além de ~10% da altura da capa) e liga a sombra da barra; rolar até o fim revela tudo; **o mais importante**: `@media print` sem ter rolado nada continua com todas as seções em `opacity:1` e o parallax `transform:none`, confirmado com um `page.pdf()` de verdade contando 4 páginas (capa + 2 ambientes + rodapé — nenhuma em branco); `prefers-reduced-motion` mostra tudo de cara e não escreve `--pj-parallax`; `?modo=editor` (com um iframe de verdade — a checagem de origem do postMessage em `iniciarPrevia()` rejeita mensagem de uma página com origem diferente, então o host do teste precisa ser servido pelo MESMO servidor, não um `page.setContent()` comum de origem opaca) revela tudo sem esperar rolagem. Suíte de `catalogo-layouts-browser.cjs`/`catalogo-projetos-browser.cjs` (que geram PDF/abrem a apresentação de outros jeitos) rodada de novo, sem quebra. Cache-busting `?v=20260921-efeitos-rolagem`.
+
+## Campo de busca do cabeçalho, mais visível
+
+Pedido do usuário: *"no canto superior direito da tela existe um campo de pesquisa, quero deixar ele mais visível, do jeito que está hoje a pessoa quase não vê"*. Era só uma linha fininha translúcida embaixo do texto (`border-bottom:1px solid rgba(255,255,255,.34)`), sem fundo nenhum — ícone e placeholder quase da mesma cor do cabeçalho cinza (`#5a5a55`). Virou uma pílula com fundo e contorno **sempre visíveis** (não só no foco): `background:rgba(255,255,255,.16)` + `border:1px solid rgba(255,255,255,.4)` + `border-radius:999px`, ícone/placeholder bem mais opacos (`.72/.55` → `.92/.78`); no foco fica ainda mais forte. No modo interno (`body.catalog-modo-sistema`, aberto de dentro do sistema, cabeçalho claro) a mesma pílula usa um fundo bege-claro (`#f3f1ec`) contra o branco da faixa, ficando branco puro + contorno `var(--accent)` no foco.
+
+**Achado real construindo**: dar padding de verdade à pílula (de `0 4px` pra `0 9px`) cortava o "Pesquisar" na coluna mais estreita do cabeçalho (110px, entre 768 e 1450px de largura) — sobrava menos espaço pro texto. A causa não era só o padding novo: `input[type="search"]` reserva um espaço pro "×" nativo de limpar mesmo vazio (o Chromium/Edge deixa essa folga interna independente de ter valor ou não), e isso nunca tinha incomodado enquanto a pílula não tinha padding nenhum sobrando. Corrigido com `appearance:none` no input + `::-webkit-search-cancel-button{display:none}` — tira a decoração nativa (o próprio `<svg>` da lupa já faz esse papel), sem mudar o tipo do campo nem o comportamento de busca.
+
+Não mexido: o campo continua **escondido no celular** (`.catalog-search{display:none}` em `@media(max-width:767px)`, decisão de espaço já existente — sem espaço sobrando no cabeçalho de 72px ao lado de marca+categorias+usuário) e a largura da coluna do cabeçalho não mudou (não foi pedido "maior", só "mais visível").
+
+Teste (`tests/catalogo-busca-visivel-browser.cjs`): contraste real da pílula contra o cabeçalho escuro (externo) e contra o branco (interno); ícone bem mais opaco que antes; "Pesquisar" cabendo inteiro (medido com um clone invisível no mesmo fonte, não só a largura do input) nas 4 larguras da coluna estreita (768/900/1300/1450px); `appearance:none` de fato aplicado; contorno muda no foco; continua escondido no celular. **Achado no próprio teste**: ler `getComputedStyle` na MESMA tick síncrona logo depois de trocar a classe pro modo interno pegava o valor ainda "em trânsito" da `transition:background-color .2s` (praticamente o valor antigo) — não é bug de CSS, só uma corrida do teste; corrigido esperando a transição terminar antes de comparar (mesma lição já registrada noutros testes desta sessão sobre timing). Cache-busting `?v=20260921-busca-visivel`.
+
 ## Fotos da Home diminuídas "um pouco" (190px → 160px)
 
 Pedido explícito do usuário, com print da Home já cheia de categorias
@@ -3747,6 +3774,23 @@ verdade (via o mock), a notificação de sucesso com "Ver resultado" abre
 `#loungeResultDialog` mostrando a imagem devolvida pela IA, o link de
 download aponta pra ela com o nome `lounge-acervo.png`, e o botão volta
 ao texto/estado original depois.
+
+## Composições: 3 texturas de piso novas (pedra/lajota, carpete claro, carpete verde)
+
+Pedido do usuário, bem depois da seção "Piso + fundo por foto" acima: *"quero que coloque texturas nos módulos 3D, textura de pedra, aquelas lajota... de grama, de madeira, carpete bege clarinho quase branco, carpete verde escuro também... pensa que é pra um decorador de eventos, não é pra um designer de interiores, são coisas diferentes... coloca de areia também... quero que tenha essas opções assim simples mas que fazem toda diferença"*. Grama, madeira e areia já existiam (ver seção "Piso + fundo por foto") — o pedido de verdade era **pedra/lajota** e os **2 carpetes**; os 5 antigos continuam, agora são 8 no total.
+
+**Só em Composições** (o módulo "pro decorador testar os formatos", não no "3D Livre"/Estúdio de Ambientes — que tem o SEU PRÓPRIO seletor de piso independente, `floorFinish` em `catalogo-studio3d.mjs`, mais elaborado e pensado pra quem já manja de 3D, nunca compartilhou motor com Composições desde que o módulo existe). Não pedido pro 3D Livre também — se fizer falta lá, é um ajuste separado.
+
+**Duas texturas novas em `createFloorCanvas()`** (mesma técnica procedural em `<canvas>` 2D já usada pros pisos antigos — sem depender de nenhuma imagem externa, "simples" no sentido literal do pedido):
+- **`tiles` (Pedra)**: a placa 256×256 vira um grid de 4×4 lajotas (64px cada); cada uma ganha um tom levemente clareado/escurecido da cor base (`sombrear()`, ±13 por canal, aleatório) — nenhuma pedra de verdade é uma cor chapada só, mesmo numa textura simples — e por cima entra a linha de rejunte (cinza escuro, 2px, no grid inteiro). O grão fino de sempre (speckle) ainda entra por cima das lajotas, pra não ficar "digital" demais.
+- **`fiber` (Carpete, os 2 novos)**: o MESMO grão de sempre, só que bem mais denso e fino (2400 pontos de 1px, em vez de 900 de 1,2px) — dá o efeito "macio"/tecido em vez do grão mais solto do piso liso, sem precisar de nenhuma técnica nova.
+- **`rough` por piso** (novo campo, opcional): a pedra brilha um pouco mais que o padrão (`.55`), o carpete é bem mais fosco (`.98`) — os pisos antigos que não declaram `rough` continuam no valor de sempre (`.94`, agora um fallback via `floorDef.rough ?? .94` em `floorMaterial()`).
+
+**A lista final** (`FLOORS` em `catalogo-lounge.mjs`): Piso neutro, Madeira, **Pedra**, Grama, Areia, **Carpete claro** (`#efe6d8`, bege bem próximo do branco — literal ao "quase branco" pedido), **Carpete verde** (`#1f4633`, verde escuro), Piso escuro. Cores escolhidas pra não repetir nenhum tom já usado (o teste confere as 8 amostras com cor computada diferente entre si). Mecanismo de escolher/aplicar (`applyFloor()`, os botões em `#loungeFloorRow`) não mudou — só a lista cresceu.
+
+**Achado verificando**: numa captura de tela de longe, o "Carpete claro" parece quase indistinguível do fundo branco da própria UI ao redor do visualizador — isso é o **resultado esperado do pedido** ("quase branco"), não um bug: o botão de escolher (`.catalog-lounge-floor-swatch`) sempre tem um contorno fino (`box-shadow:inset 0 0 0 1px var(--line)`) que já garante ele ser clicável/visível na barra lateral branca, e dentro da cena 3D de verdade (com móveis, sombra e — se o decorador escolher — uma parede de fundo) o chão continua lido como chão, mesmo bem claro. Confirmado que a MESMA técnica (`fiber`) renderiza com uma cor bem mais escura (verde) sem nenhum problema, então o "quase invisível" do claro é só a proximidade de cor com o fundo da tela de teste, não uma falha de render.
+
+Teste (`tests/catalogo-lounge-browser.cjs`, cenário 1): 8 amostras de piso (era 5), cada uma troca o chão de verdade (`dataset.floorKey`) incluindo as 3 novas (`stone`/`carpet-light`/`carpet-green`), e as 8 cores computadas das amostras são todas diferentes entre si. Suíte completa do catálogo (26 arquivos) rodada de novo, tudo passando. Cache-busting `catalogo-lounge.mjs?v=20260921-texturas-piso` (e o import dele + a tag `<script>` de `catalogo.mjs`, já que o próprio `catalogo.mjs` também mudou de bytes — a linha do import).
 
 ## Bug real: não dava pra arrastar a foto de fundo do Lounge "mais pra baixo"
 
@@ -6773,6 +6817,130 @@ ferramenta que faça isso sozinha — ao editar qualquer CSS/JS compartilhado,
 
 Esquecer de bumpar em um único lugar é a causa mais comum de "eu alterei
 mas não aparece".
+
+## Bug real: item ativo "sumido" do Cadastro de Itens (teto de 1000 linhas da API)
+
+Pedido do usuário, com print do item "Sofá Berlim" aberto de dentro do
+Catálogo (com specs, modelo 3D, já usado num Projeto): *"não estou
+encontrando esse sofá no cadastro de item, quero inativar ele mas não
+acho no cadastro de item dentro do sistema, por quê?"*.
+
+**Investigação direto no banco de produção** (`npx supabase db query
+--linked`, nunca suposto): o item existe de verdade, ativo, com os dados
+exatos do print (`categoria:"Sofás"`, `descricao_total:"Sofá Berlim
+Tecido Linho Off White (L) 2.58 m (A) 0.73 m (P) 0.89 m"`, `tipo:"Item"`,
+`ativo:true`) — não é um item fantasma nem duplicado. A empresa tem
+**1173 linhas em `itens`** (194 Item + 568 Componente + 411 Kit), fruto
+da importação em massa desta sessão. `carregarItens()`
+(`Modulos/Estoque/CadastroItens/itens.api.mjs`) sempre fez uma chamada
+**única** `.select("*").eq("empresa_id",...).order("produto")`, sem
+`.range()`/paginação — e a API do projeto Supabase tem um teto de **1000
+linhas por requisição** (`Settings > API > Max Rows`, sem override —
+confirmado com `npx supabase postgres-config get --experimental`, lista
+vazia). Reproduzindo a MESMA ordenação que o código usa (`order by
+produto asc`), o item "Sofá Berlim" cai na **posição 1060 de 1173** —
+depois do corte, então nunca chegava a entrar em `itensCache`. Sem esse
+item no cache, nenhuma busca/filtro no Cadastro de Itens acha ele —
+não é bug de busca nem de filtro, o dado simplesmente nunca baixa do
+banco, sem erro nenhum aparecendo em lugar nenhum (PostgREST corta
+silenciosamente, não lança exceção).
+
+**Não é um caso isolado**: qualquer item classificado depois da posição
+1000 nessa ordenação (por volta de 173 itens hoje, crescendo conforme o
+catálogo cresce) está igualmente invisível no Cadastro de Itens. O
+Catálogo (`catalogo_acervo()`) nunca teve esse problema porque lê via
+RPC que devolve os itens agregados dentro de UM `jsonb_agg` — pra
+PostgREST isso é "1 linha" (a linha que contém o JSON inteiro), o teto de
+1000 nunca entra em jogo.
+
+**Corrigido** em `carregarItens()`: a chamada única virou um laço que pede
+páginas de 1000 em 1000 (`.range(offset, offset+999)`) até a página
+voltar com menos que 1000 linhas — carrega a empresa inteira não importa
+o tamanho. Cache-busting: import de `itens.api.mjs` dentro de
+`cadastro-itens.mjs` ganhou `?v=20260920-paginacao` (nunca tinha
+`?v=` nenhum antes — não existia motivo pra ter, mas como o conteúdo do
+arquivo mudou de verdade agora, ganhou um pra esta mudança em diante) e o
+`<script>` de `cadastro-itens.mjs` em `cadastro-itens.html` foi bumpado
+junto.
+
+**Mesmo padrão de risco encontrado em mais 2 lugares, não corrigidos
+nesta rodada** (fora do escopo do que foi pedido — documentado aqui pra
+não pegar ninguém de surpresa depois): `Modulos/Estoque/TabelasPreco/
+tabelas-preco.mjs` (`select("id,codigo,produto,categoria")` pra montar a
+lista de itens precificáveis) e `Modulos/Importacao/ImportarItens/
+importar-itens.mjs` (`select("id,referencia")` pra montar o mapa de
+idempotência/resolução de kit ao reimportar) fazem a MESMA chamada única
+sem paginação contra `itens`. Com 1173+ linhas, os dois também podem
+deixar de enxergar itens/referências além da posição 1000 — no caso da
+importação, isso poderia fazer um KIT reimportado falhar em achar um
+componente de referência que na verdade existe, só que "invisível" pelo
+mesmo motivo. Se aparecer um sintoma parecido ("item não aparece pra
+precificar"/"reimportação não encontra a referência X que existe"), a
+causa provável é esta — mesma correção (paginar com `.range()`).
+
+## Home de categorias: topo mais compacto, hover mais expressivo, última linha centralizada
+
+Três pedidos do usuário, em sequência, sobre a tela "Categorias" (Home do
+catálogo, grade de cards por categoria).
+
+**1) Espaço no topo** (*"essa parte de cima das categorias mais
+compacta, esta sobrando muito espaco entre as categorias, o filtro e o
+menu"*): `.catalog-grid-wrap` (compartilhado com a grade de itens e o
+mosaico) tinha `padding-top:56px`, e `.catalog-home-filters` (a pílula
+"Material") tinha `margin-bottom:44px` — juntos, ~134px de vão antes da
+1ª linha de cards. Reduzidos pra 24px/24px (18px/18px no celular) — vão
+medido caiu pra ~81px (a própria altura da pílula de filtro já soma boa
+parte disso).
+
+**2) Hover mais expressivo** (*"o efeito de passar o mouse por cima da
+categoria quero que seja mais expressivo do que esta hoje"*): a versão
+anterior só dava zoom (`scale(1.18)`, ver "Fotos maiores + hover premium
+nos cards da Home" mais acima — o usuário já tinha rejeitado escurecer/
+sombra ali antes). Em vez de reintroduzir o que foi explicitamente
+recusado, o zoom subiu pra `scale(1.3)` e o nome ganhou o mesmo efeito de
+"abrir" as letras (`letter-spacing`) já usado no Portal/mini-menu Módulo
+3D (`.02em → .09em` no hover) — mais presença sem escurecer nada.
+
+**3) Última linha centralizada** (*"centralize a linha de baixo de
+categorias"*): com `.catalog-home-grid` em `auto-fill`/`minmax(160px,
+1fr)`, quando o total de categorias não fecha um múltiplo exato de
+colunas, a última linha (ex.: 4 cards numa grade de 6 colunas) ficava
+colada à esquerda, com um vão vazio grande à direita — comportamento
+padrão de CSS Grid (todas as linhas dividem os MESMOS trilhos de
+coluna, e o preenchimento automático sempre começa pela 1ª coluna).
+**Não trocado pra Flexbox** (a solução mais comum pra esse problema)
+porque isso abriria mão do `1fr` que faz os cards crescerem pra
+preencher a largura disponível (pedido de sessão anterior) — flexbox
+com tamanho fixo mudaria o tamanho dos cards em telas largas, mais do
+que foi pedido agora.
+
+**Corrigido só reposicionando os cards da última linha, quando
+incompleta** (`centerLastHomeGridRow()`, `catalogo.mjs`): conta quantas
+colunas a grade tem de verdade no momento (`getComputedStyle(grid).
+gridTemplateColumns.split(" ").length` — resolve o `auto-fill` pro
+número real de colunas naquela largura), calcula quantos cards sobram
+na última linha (`total % colunas`) e, se sobrar algo, desloca só ESSES
+cards pro meio via `grid-column-start` inline — linhas cheias não
+recebem nenhum estilo novo. Como todas as colunas continuam `1fr`
+(mesmo trilho, mesma largura), mover um card pra uma coluna do meio não
+muda o tamanho de nada, só a posição. Recalculado (`watchHomeGridWidth()`,
+um `ResizeObserver` em `#catalogGrid`, elemento estável que nunca é
+recriado — só o `innerHTML` troca) toda vez que a Home é redesenhada
+(`refreshHomeFilters()`) e a cada redimensionamento de janela, já que o
+número de colunas por linha é responsivo. **Só a Home** (`.catalog-home-
+grid`) — a grade de produtos dentro de uma categoria usa `.catalog-grid`
+com 3 colunas fixas, fora do escopo do que foi pedido.
+
+Verificado com Playwright (10 categorias sintéticas, split 6+4 numa
+tela larga): centro da última linha coincide com o centro da grade
+(diferença de 0,008px); redimensionando pra uma tela mais estreita
+(4+4+2), recalcula e centraliza de novo. `tests/catalogo-menu-browser.cjs`,
+`tests/catalogo-filtros-browser.cjs`, `tests/catalogo-browser.cjs` e
+`tests/catalogo-portal-browser.cjs` rodados de novo, todos passando (a
+suíte já cobre "hover dá zoom sem travar o clique" — sem valor fixo de
+escala — e não há teste que dependesse dos valores antigos de espaçamento).
+Cache-busting: `catalogo.css?v=20260921-home-compacta`,
+`catalogo.mjs?v=20260921-centralizar-linha`.
 
 ## Estado da migração (checar antes de assumir o padrão de um módulo)
 

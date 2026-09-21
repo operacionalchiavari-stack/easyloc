@@ -96,11 +96,11 @@
     let price;
     try{
       await refresh();if(!wallet)throw new Error('Sessão do catálogo indisponível. Entre novamente.');
-      const b=options.body;const resource=b.action==='analyze_floor_plan'?'planta':b.action==='plan_layout'?'layout':b.scene?.referencePolicy==='fabric_customization'?'tecido':'render';
+      const b=options.body;const resource=b.action==='analyze_floor_plan'?'planta':['plan_layout','design_presentation'].includes(b.action)?'layout':b.scene?.referencePolicy==='fabric_customization'?'tecido':'render';
       price=wallet.custos[resource];
       if(!Number.isInteger(price))throw new Error('Custo indisponível. Tente novamente.');
       const enough=wallet.saldo>=price;
-      const accepted=await dialog(enough?names[resource]:'Seus créditos precisam de uma recarga',`<p>${enough?'Confira o custo antes de continuar.':'Fale com a Chiavari para adicionar créditos à sua conta.'}</p><div class="credit-cost-list"><div><span>Saldo disponível</span><strong>${wallet.saldo} créditos</strong></div><div><span>Esta operação</span><strong>${price} créditos</strong></div>${enough?`<div><span>Saldo após o uso</span><strong>${wallet.saldo-price} créditos</strong></div>`:''}</div><p class="credit-note">Se a geração falhar, os créditos serão devolvidos.</p>`,enough?'Confirmar e usar IA':null);
+      const accepted=await dialog(enough?(b.action==='design_presentation'?'Designer de apresentações':names[resource]):'Seus créditos precisam de uma recarga',`<p>${enough?'Confira o custo antes de continuar.':'Fale com a Chiavari para adicionar créditos à sua conta.'}</p><div class="credit-cost-list"><div><span>Saldo disponível</span><strong>${wallet.saldo} créditos</strong></div><div><span>Esta operação</span><strong>${price} créditos</strong></div>${enough?`<div><span>Saldo após o uso</span><strong>${wallet.saldo-price} créditos</strong></div>`:''}</div><p class="credit-note">Se a geração falhar, os créditos serão devolvidos.</p>`,enough?'Confirmar e usar IA':null);
       if(!accepted)return{data:null,error:new Error('Operação cancelada. Nenhum crédito utilizado.')};
     }catch(error){return{data:null,error};}finally{release();}
     try{return await original(name,{...options,body:{...options.body,request_id:crypto.randomUUID(),expected_cost:price}});}finally{refresh().catch(()=>{});}

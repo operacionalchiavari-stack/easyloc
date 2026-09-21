@@ -13,14 +13,14 @@
   <link rel="stylesheet" href="catalogo-creditos.css?v=20260919-fontes">
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
   <link rel="stylesheet" href="catalogo.css?v=20260921-fotos-prioritarias">
-  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260919-fontes">
-  <link rel="stylesheet" href="catalogo-biblioteca.css?v=20260919-biblioteca-tela-toda">
-  <link rel="stylesheet" href="catalogo-lounge.css?v=20260919-logo-sem-trilha">
+  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260924-perf1">
+  <link rel="stylesheet" href="catalogo-biblioteca.css?v=20260921-landing">
+  <link rel="stylesheet" href="catalogo-lounge.css?v=20260923-subcategoria">
   <link rel="stylesheet" href="catalogo-projetos.css?v=20260921-mapa-renders">
-  <link rel="stylesheet" href="catalogo-layouts.css?v=20260921-mais-opcoes">
+  <link rel="stylesheet" href="catalogo-layouts.css?v=20260922-designer">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../../js/core/supabase.js"></script>
-  <script defer src="catalogo-creditos.js?v=20260916-retry-creditos"></script>
+  <script defer src="catalogo-creditos.js?v=20260922-designer"></script>
   <script type="importmap">
     {"imports":{"three":"../../../js/vendor/three/build/three.module.js","three/addons/":"../../../js/vendor/three/examples/jsm/"}}
   </script>
@@ -112,20 +112,26 @@
   </div>
   <section class="catalog-studio hidden" id="catalogStudio" aria-label="3D Livre">
     <aside class="studio-library">
-      <div class="studio-library-heading">
-        <span>Biblioteca</span>
-        <small>Selecione os móveis</small>
+      <div class="studio-library-tabs" role="tablist" aria-label="Biblioteca 3D">
+        <button type="button" id="studioItemsTab" role="tab" aria-selected="true" aria-controls="studioItemsPanel" data-studio-library-tab="items">Itens</button>
+        <button type="button" id="studioFormatsTab" role="tab" aria-selected="false" aria-controls="studioFormatsPanel" data-studio-library-tab="formats">Formatos</button>
       </div>
+      <div id="studioItemsPanel" role="tabpanel" aria-labelledby="studioItemsTab">
       <label class="studio-library-search">
-        <span class="sr-only">Buscar móvel 3D</span>
-        <input type="search" id="studioLibrarySearch" placeholder="Buscar móvel">
+        <input type="search" id="studioLibrarySearch" placeholder="Pesquisar móveis" aria-label="Pesquisar móveis por nome ou categoria">
       </label>
-      <div class="studio-presets" aria-label="Composições automáticas">
-        <span>Montagem automática</span>
-        <button type="button" data-studio-preset="lounge">Lounge compacto</button>
-        <button type="button" data-studio-preset="guest-table">Mesa de convidados</button>
-      </div>
       <div class="studio-library-list" id="studioLibraryList"></div>
+      </div>
+      <div id="studioFormatsPanel" role="tabpanel" aria-labelledby="studioFormatsTab" hidden>
+        <label class="studio-library-search"><input type="search" id="studioFormatsSearch" placeholder="Pesquisar formatos" aria-label="Pesquisar formatos pelo nome"></label>
+        <div id="studioFormatsList" class="catalog-lounge-format-list"></div>
+        <nav class="studio-formats-pages" aria-label="Páginas de formatos" id="studioFormatsPages" hidden>
+          <button type="button" id="studioFormatsPrevious" aria-label="Página anterior">‹</button>
+          <span id="studioFormatsPage" aria-live="polite"></span>
+          <button type="button" id="studioFormatsNext" aria-label="Próxima página">›</button>
+        </nav>
+        <p id="studioFormatsStatus" role="status"></p>
+      </div>
     </aside>
     <div class="studio-workspace">
       <div class="studio-toolbar" id="studioToolbar">
@@ -243,7 +249,9 @@
           <div class="studio-selected-info"><span class="studio-selected-label" id="studioSelectedLabel">Móvel selecionado</span><small id="studioSelectedDimensions"></small></div>
           <div class="studio-control-group studio-control-group-secondary">
             <button type="button" class="studio-control-group-button" id="studioGroupButton">▦<small>Criar bloco</small></button>
+            <button type="button" class="studio-control-group-button hidden" id="studioSaveFormatButton">▣<small>Salvar formato</small></button>
             <button type="button" class="studio-control-ungroup hidden" id="studioUngroupButton">▤<small>Desagrupar</small></button>
+            <button type="button" class="studio-control-group-button" id="studioSwapItemButton" aria-label="Trocar o modelo 3D da peça selecionada">⇄<small>Trocar item</small></button>
             <button type="button" class="studio-control-rotate" data-studio-rotate-hold aria-label="Segure para girar o móvel">↻<small>Segure para girar</small></button>
             <button type="button" class="studio-control-remove" data-studio-action="remove" aria-label="Remover móvel">×<small>Remover</small></button>
           </div>
@@ -252,6 +260,42 @@
       <p class="studio-hint">Na vista superior, arraste o meio da parede para mover ou uma extremidade para mudar seu comprimento e direção. A roda aproxima no ponto do cursor. Arraste para girar, botão direito para mover e dê dois cliques no piso para mudar o foco.</p>
     </div>
   </section>
+  <dialog class="studio-preset-dialog studio-format-dialog" id="studioFormatDialog" aria-labelledby="studioFormatTitle">
+    <form class="studio-preset-card" id="studioFormatForm">
+      <button type="button" class="studio-preset-close" id="studioFormatClose" aria-label="Fechar">×</button>
+      <span>FORMATO DO BLOCO</span><h2 id="studioFormatTitle">Salvar formato</h2>
+      <p id="studioFormatDescription"></p>
+      <label>Nome do formato<input id="studioFormatName" required maxlength="60" placeholder="Ex.: Lounge em U" autocomplete="off"></label>
+      <button type="submit" class="studio-preset-submit">Salvar em Composições</button>
+      <small id="studioFormatStatus" role="status"></small>
+    </form>
+  </dialog>
+  <!-- Trocar o modelo 3D de qualquer peça de um formato/bloco já colocado (pedido
+       explícito do usuário: "trocar um item de um formato pronto... alterar esse modelo
+       de sofa por outro sem desfazer o formato", depois reforçado: "eu posso trocar
+       qualquer peça de qualquer lugar do formato, não só o sofá") — duas colunas: a
+       esquerda lista TODAS as peças do bloco (clicar em qualquer uma escolhe o alvo da
+       troca, não só a que estava selecionada no canvas quando o diálogo abriu), a
+       direita é o catálogo pra escolher o modelo novo (mesma lista/estilo da biblioteca
+       lateral, studio-library-item). -->
+  <dialog class="studio-preset-dialog studio-swap-dialog" id="studioSwapDialog" aria-labelledby="studioSwapTitle">
+    <div class="studio-preset-card">
+      <button type="button" class="studio-preset-close" id="studioSwapClose" aria-label="Fechar">×</button>
+      <span>TROCAR MODELO</span><h2 id="studioSwapTitle">Trocar item</h2>
+      <p id="studioSwapDescription"></p>
+      <div class="studio-swap-columns">
+        <div class="studio-swap-col">
+          <span class="studio-swap-col-heading">Peças deste formato</span>
+          <div class="studio-library-list" id="studioSwapCurrentList"></div>
+        </div>
+        <div class="studio-swap-col">
+          <span class="studio-swap-col-heading">Escolher o novo modelo</span>
+          <label class="studio-library-search"><input type="search" id="studioSwapSearch" placeholder="Pesquisar móveis" aria-label="Pesquisar móveis por nome ou categoria"></label>
+          <div class="studio-library-list" id="studioSwapList"></div>
+        </div>
+      </div>
+    </div>
+  </dialog>
   <dialog class="studio-preset-dialog" id="studioPresetDialog">
     <form class="studio-preset-card" id="studioPresetForm">
       <button type="button" class="studio-preset-close" id="studioPresetClose" aria-label="Fechar">×</button>
@@ -371,6 +415,7 @@
       </div>
       <div class="catalog-lounge-tab-panels">
         <div class="catalog-lounge-tab-panel catalog-lounge-formats is-active" data-lounge-panel="formats" role="tabpanel">
+          <p class="catalog-lounge-role-empty">Monte e selecione um bloco no 3D livre para salvar um novo formato.</p>
           <div class="catalog-lounge-format-list" id="loungeFormatList"></div>
         </div>
         <div class="catalog-lounge-tab-panel catalog-lounge-items" data-lounge-panel="items" role="tabpanel">
@@ -423,6 +468,6 @@
   <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
   <div class="cpj-dock hidden" id="catalogProjetoDock" aria-label="Projeto ativo"></div>
   <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
-  <script type="module" src="catalogo.mjs?v=20260921-fotos-prioritarias"></script>
+  <script type="module" src="catalogo.mjs?v=20260924-perf1"></script>
 </body>
 </html>

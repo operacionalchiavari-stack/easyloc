@@ -59,6 +59,9 @@ export const FONTES = {
 // Valores permitidos de cada opção de lista (caminho "grupo.campo"). O editor (catalogo-layouts.mjs) monta as opções na tela com os
 // mesmos valores, e o teste confere que os dois concordam.
 export const VALORES = {
+  "pagina.fluxo": ["ambientes", "continuo"],
+  "pagina.movimento": ["suave", "expressivo", "nenhum"],
+  "pagina.identidade": ["classico", "romantico", "vibrante", "moderno", "editorial", "minimalista", "noturno"],
   "capa.estilo": ["foto", "limpa", "lateral"],
   "capa.alinhamento": ["centro", "esquerda"],
   "capa.fundo": ["creme", "branco", "escuro", "cor"],
@@ -101,7 +104,7 @@ export const VALORES = {
   "pdf.margem": ["estreita", "normal", "ampla"],
 };
 const LIMITES = { "moveis.colunas": [2, 5], "ambientes.colunasFotos": [1, 3] };          // opções numéricas: [mínimo, máximo]
-const LIMITES_TEXTO = { "capa.textoAbertura": 60, "capa.subtitulo": 100, "ambientes.tituloMoveis": 40, "rodape.mensagem": 160, "rodape.assinatura": 80 };
+const LIMITES_TEXTO = { "conteudo.introducao": 600, "capa.textoAbertura": 60, "capa.subtitulo": 100, "ambientes.tituloMoveis": 40, "rodape.mensagem": 160, "rodape.assinatura": 80 };
 const CAMPOS_COR = new Set(["capa.corFundo", "cores.principal", "cores.destaque", "cores.fundoPagina", "cores.tomSuave", "cores.fundoCartoes"]);
 
 // O que cada opção vale de verdade (valores CSS/medidas). Tudo que chega na página passa por aqui — o layout guarda só a CHAVE da opção.
@@ -128,6 +131,7 @@ const MARGEM_MM = { estreita: 8, normal: 12, ampla: 20 };
 
 export const LAYOUT_PADRAO = Object.freeze({
   versao: 1,
+  conteudo: { titulo: "Um cenário para momentos únicos.", introducao: "Conheça os espaços pensados para o seu evento. Escolha um ambiente para explorar cada detalhe." },
   capa: {
     estilo: "foto", alinhamento: "centro", altura: "cheia", fundo: "creme", corFundo: "#efe3d3", escurecer: "suave", moldura: false,
     textoAbertura: "Projeto do evento", tamanhoNome: "grande", caixaNome: "normal", subtitulo: "", linhaFina: true,
@@ -138,7 +142,7 @@ export const LAYOUT_PADRAO = Object.freeze({
   cores: { usarDoDecorador: true, principal: "#251e19", destaque: "#b99a72", fundoPagina: "#ffffff", tomSuave: "#f7f3ec", fundoCartoes: "#ffffff" },
   fonte: "classica",
   texto: { tamanho: "normal", pesoTitulos: "normal" },
-  pagina: { largura: "normal", espaco: "normal", cantos: "redondos", navegacao: "fixa", navegacaoEstilo: "pilulas", mostrarBotaoPdf: true, divisoria: "linha", efeitoFotos: true, ampliarFotos: true },
+  pagina: { fluxo: "ambientes", movimento: "suave", identidade: "classico", largura: "normal", espaco: "normal", cantos: "redondos", navegacao: "fixa", navegacaoEstilo: "pilulas", mostrarBotaoPdf: true, divisoria: "linha", efeitoFotos: true, ampliarFotos: true },
   resumo: true,
   ambientes: {
     numeracao: true, notas: true, tamanhoTitulo: "grande", alinhamento: "esquerda", caixaTitulo: "normal", contagem: false, ordem: "renders",
@@ -154,32 +158,37 @@ export const LAYOUT_PADRAO = Object.freeze({
 
 // Pontos de partida ao criar um layout novo (o decorador ajusta a partir daí).
 export const MODELOS = [
-  { chave: "classico", nome: "Clássico", descricao: "Capa com foto em tela cheia, serifa elegante e móveis em cartões.", config: {} },
+  { chave: "classico", nome: "Clássico", descricao: "Elegância atemporal: fotografia imersiva, títulos serifados e ambientes apresentados como capítulos.", config: {} },
   { chave: "moderno", nome: "Moderno", descricao: "Capa limpa à esquerda, fonte sem serifa e móveis sem moldura.",
     config: { capa: { estilo: "limpa", alinhamento: "esquerda", fundo: "branco" }, fonte: "moderna", cores: { usarDoDecorador: false, principal: "#1f1f1f", destaque: "#3a6ea5" },
-              ambientes: { renders: "grade" }, moveis: { estilo: "limpo", colunas: 3 } } },
+              pagina: { identidade: "moderno" }, ambientes: { renders: "grade" }, moveis: { estilo: "limpo", colunas: 3 } } },
   { chave: "editorial", nome: "Editorial", descricao: "Capa dividida com foto ao lado, fundo escuro e PDF em paisagem.",
     config: { capa: { estilo: "lateral", alinhamento: "esquerda", fundo: "escuro" }, fonte: "elegante", cores: { usarDoDecorador: false, principal: "#14202b", destaque: "#c8a15a" },
-              moveis: { colunas: 3 }, pdf: { orientacao: "paisagem" } } },
+              pagina: { identidade: "editorial" }, moveis: { colunas: 3 }, pdf: { orientacao: "paisagem" } } },
   { chave: "minimalista", nome: "Minimalista", descricao: "Só o essencial: capa branca, sem resumo nem numeração, móveis em 5 colunas.",
     config: { capa: { estilo: "limpa", alinhamento: "centro", fundo: "branco", textoAbertura: "" }, fonte: "moderna", cores: { usarDoDecorador: false, principal: "#111111", destaque: "#8a8a8a" },
-              resumo: false, ambientes: { numeracao: false, renders: "grade" }, moveis: { estilo: "limpo", colunas: 5, materialCor: false }, rodape: { mensagem: "" } } },
-  { chave: "romantico", nome: "Romântico", descricao: "Tons de rosa suave, letras manuscritas, moldura fina na capa e cantos bem arredondados.",
-    config: { capa: { estilo: "limpa", fundo: "cor", corFundo: "#f6e7e4", altura: "alta", moldura: true, tamanhoNome: "enorme", formatoFotoCasal: "redonda" }, fonte: "manuscrita",
+              pagina: { identidade: "minimalista" }, resumo: false, ambientes: { numeracao: false, renders: "grade" }, moveis: { estilo: "limpo", colunas: 5, materialCor: false }, rodape: { mensagem: "" } } },
+  { chave: "romantico", nome: "Romântico", descricao: "Rosé, fotografia em arco e tipografia delicada para uma apresentação intimista e acolhedora.",
+    config: { capa: { estilo: "lateral", fundo: "cor", corFundo: "#f6e7e4", altura: "alta", moldura: false, tamanhoNome: "enorme", formatoFotoCasal: "redonda", textoAbertura: "Um dia para sentir", subtitulo: "Cada detalhe, uma parte da sua história." }, fonte: "elegante",
               cores: { usarDoDecorador: false, principal: "#5a3b3b", destaque: "#c08a86", fundoPagina: "#fffaf8", tomSuave: "#f6e7e4" },
-              pagina: { cantos: "muito", espaco: "amplo", divisoria: "nenhuma" }, ambientes: { alinhamento: "centro", tamanhoTitulo: "grande" },
-              moveis: { colunas: 3, alinhamentoTexto: "centro" }, rodape: { fundo: "creme" } } },
+              pagina: { identidade: "romantico", cantos: "muito", espaco: "amplo", divisoria: "nenhuma" }, ambientes: { alinhamento: "centro", tamanhoTitulo: "grande" },
+              moveis: { estilo: "limpo", colunas: 3, alinhamentoTexto: "centro" }, rodape: { fundo: "creme", mensagem: "O cenário de uma história que está só começando." } } },
+  { chave: "vibrante", nome: "Vibrante", descricao: "Cor, energia e personalidade: títulos marcantes, composição assimétrica e fotografias em destaque.",
+    config: { capa: { estilo: "lateral", alinhamento: "esquerda", fundo: "cor", corFundo: "#ebe8ff", tamanhoNome: "enorme", linhaFina: false, mostrarFotoCasal: false, textoAbertura: "Feito para celebrar", subtitulo: "Um encontro de cores, pessoas e momentos inesquecíveis." }, fonte: "moderna",
+              cores: { usarDoDecorador: false, principal: "#30205c", destaque: "#a33b21", fundoPagina: "#fff9ef", tomSuave: "#ebe8ff", fundoCartoes: "#fff9ef" },
+              pagina: { identidade: "vibrante", cantos: "muito", espaco: "amplo", divisoria: "nenhuma" }, texto: { pesoTitulos: "forte" }, ambientes: { tamanhoTitulo: "enorme", proporcao: "panoramica" },
+              moveis: { estilo: "limpo", colunas: 3, efeito: true }, rodape: { fundo: "destaque", italico: false, mensagem: "Vamos fazer acontecer?", tamanhoMensagem: "enorme" } } },
   { chave: "noturno", nome: "Noturno", descricao: "Página escura com dourado, nome em maiúsculas sobre a foto escurecida e letras romanas.",
     config: { capa: { estilo: "foto", fundo: "cor", corFundo: "#0f1216", escurecer: "forte", caixaNome: "maiusculas", tamanhoNome: "medio" }, fonte: "romantica",
               cores: { usarDoDecorador: false, principal: "#e6d5a8", destaque: "#c8a15a", fundoPagina: "#15181d", tomSuave: "#1e232a", fundoCartoes: "#1e232a" },
-              pagina: { cantos: "suaves", divisoria: "destaque" }, ambientes: { caixaTitulo: "maiusculas", tamanhoTitulo: "medio" }, moveis: { estilo: "cartao", colunas: 3, caixaNome: "maiusculas" },
+              pagina: { identidade: "noturno", cantos: "suaves", divisoria: "destaque" }, ambientes: { caixaTitulo: "maiusculas", tamanhoTitulo: "medio" }, moveis: { estilo: "cartao", colunas: 3, caixaNome: "maiusculas" },
               rodape: { fundo: "creme" } } },
 ];
 
 const escolha = (valor, permitidos, padrao) => (permitidos.includes(valor) ? valor : padrao);
 const booleano = (valor, padrao) => (typeof valor === "boolean" ? valor : padrao);
 const cor = (valor, padrao) => (typeof valor === "string" && /^#[0-9a-f]{6}$/i.test(valor.trim()) ? valor.trim().toLowerCase() : padrao);
-const texto = (valor, padrao, max) => (typeof valor === "string" ? valor.replace(/[ -]/g, " ").slice(0, max).trim() : padrao);
+const texto = (valor, padrao, max) => (typeof valor === "string" ? valor.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, max).trim() : padrao);
 const inteiro = (valor, min, max, padrao) => (Number.isFinite(Number(valor)) && valor !== null && valor !== "" ? Math.min(max, Math.max(min, Math.round(Number(valor)))) : padrao);
 const obj = (valor) => (valor && typeof valor === "object" && !Array.isArray(valor) ? valor : {});
 
@@ -205,6 +214,7 @@ export function normalizarLayout(bruto){
   if(typeof obj(b.rodape).mostrarLogo !== "boolean") rodape.mostrarLogo = capa.mostrarLogo;   // layouts antigos: a logo do rodapé seguia a da capa
   return {
     versao: 1,
+    conteudo: normalizarGrupo("conteudo", b.conteudo, P.conteudo),
     capa,
     cores: normalizarGrupo("cores", b.cores, P.cores),
     fonte: escolha(b.fonte, Object.keys(FONTES), P.fonte),

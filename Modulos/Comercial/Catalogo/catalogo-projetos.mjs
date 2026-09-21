@@ -18,8 +18,8 @@
 // Só o item_id + quantidade ficam salvos por linha — nome/foto/medidas vêm do catálogo em tela e, na apresentação
 // pública, do próprio banco (projeto_publico), então um cadastro corrigido depois já aparece atualizado.
 
-import { initLayouts, pintarLista as pintarListaLayouts, pintarEditor as pintarEditorLayouts, salvarAgora as salvarLayoutAgora } from "./catalogo-layouts.mjs?v=20260921-mais-opcoes";
-import { normalizarLayout } from "./projeto-layout.mjs?v=20260921-mais-opcoes";
+import { initLayouts, pintarLista as pintarListaLayouts, pintarEditor as pintarEditorLayouts, salvarAgora as salvarLayoutAgora } from "./catalogo-layouts.mjs?v=20260922-designer";
+import { normalizarLayout } from "./projeto-layout.mjs?v=20260922-designer";
 
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
@@ -1233,6 +1233,16 @@ export function initCatalogProjetos(contexto){
   ctx = contexto;
   S.enabled = true;
   initLayouts({
+    gerarDesign: async (body) => {
+      const session = ctx.getSession?.();
+      if(!session?.empresa_id) return Promise.resolve({ error: new Error('Sua sessão expirou. Abra o catálogo novamente.') });
+      const invoke = window.CatalogCredits?.invoke || ((name, options) => ctx.supabase.functions.invoke(name, options));
+      const result = await invoke('studio-ai-engine', { body: { ...body, action: 'design_presentation', empresa_id: session.empresa_id, catalog_token: session.token || undefined } });
+      if(result.error?.context?.json) {
+        try { result.data = await result.error.context.json(); } catch {}
+      }
+      return result;
+    },
     rpc, abrirModal, mensagemDe, escapeHtml, escapeAttr, notify: (...args) => ctx.notify(...args),
     decorador: () => ctx.getDecorator?.() || null, empresa: () => ctx.getCompany?.() || null, itens: () => ctx.listItems?.() || [],
     projetoAtual: () => S.current, garantirSalvo: salvarAgora,

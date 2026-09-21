@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
-  <link rel="stylesheet" href="cadastro-itens.css?v=20260914a">
+  <link rel="stylesheet" href="cadastro-itens.css?v=20260920-kittabs">
 </head>
 <body>
 <div class="container el-page">
@@ -487,6 +487,14 @@ tabindex="-1"
 <!-- BODY -->
 <div class="modal-body">
 
+<!-- ABAS -->
+<div class="kit-tabs" role="tablist" aria-label="Abas do kit">
+<button type="button" class="kit-tab active" data-kit-tab="dados" onclick="kits_abrirAba('dados')">Dados do Kit</button>
+<button type="button" class="kit-tab" data-kit-tab="galeria" onclick="kits_abrirAba('galeria')">Galeria</button>
+</div>
+
+<div class="kit-tab-panel active" data-kit-panel="dados">
+
 <!-- DADOS DO KIT -->
 <div class="form-section">
 <h3>Dados do kit</h3>
@@ -565,6 +573,52 @@ onclick="kits_setStatus(this)">
 </button>
 
 </div>
+
+</div>
+
+<!-- MODELO 3D (GLB) -->
+<div class="kit-3d-box" id="item3DViewerCard">
+
+<div class="kit-photo-slot-title">Modelo 3D (GLB)</div>
+
+<input type="file" id="item3DInput" accept=".glb,model/gltf-binary" hidden>
+
+<div class="kit-3d-canvas-host" id="item3DCanvasHost">
+<div class="kit-3d-empty" id="item3DEmpty">
+<i data-lucide="box"></i>
+<p>Envie um GLB para visualizar.</p>
+</div>
+<div class="kit-3d-loading" id="item3DLoading" hidden>Carregando...</div>
+</div>
+
+<div class="kit-3d-meta">
+<span class="kit-3d-status" id="item3DStatus">Sem modelo</span>
+<span id="item3DNome">-</span>
+</div>
+
+<div class="kit-3d-actions">
+<button type="button" title="Enviar GLB" aria-label="Enviar GLB" onclick="itens_3d_openFile()">
+<i data-lucide="upload"></i>
+</button>
+<button type="button" title="Girar automaticamente" aria-label="Girar automaticamente" id="item3DRotateBtn" onclick="itens_3d_toggleRotate()">
+<i data-lucide="rotate-3d"></i>
+</button>
+<button type="button" title="Resetar câmera" aria-label="Resetar câmera" onclick="itens_3d_resetCamera()">
+<i data-lucide="scan"></i>
+</button>
+<button type="button" title="Tela cheia" aria-label="Tela cheia" onclick="itens_3d_fullscreen()">
+<i data-lucide="maximize-2"></i>
+</button>
+<button type="button" class="danger" title="Remover modelo" aria-label="Remover modelo" onclick="itens_3d_remove()">
+<i data-lucide="trash-2"></i>
+</button>
+</div>
+
+<span id="item3DFormato" hidden>GLB</span>
+<span id="item3DTamanho" hidden>-</span>
+<span id="item3DOrigem" hidden>-</span>
+<span id="item3DCriado" hidden>-</span>
+<span id="item3DAtualizado" hidden>-</span>
 
 </div>
 
@@ -704,6 +758,119 @@ onclick="kits_addItem()">
 
 </div>
 
+<!-- FIM DA ABA DADOS -->
+</div>
+
+<div class="kit-tab-panel" data-kit-panel="galeria">
+
+<!-- FOTOS DE DETALHE -->
+<div class="form-section">
+<h3>Fotos de Detalhe</h3>
+
+<div class="kit-gallery-grid">
+
+<div class="kit-photo-slot">
+<div class="kit-photo-slot-title">Detalhe 01</div>
+<div class="kit-photo-slot-frame">
+<img
+src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-item-photo-preview="detalhe_01"
+alt="Detalhe 01"
+>
+<input type="file" accept="image/*" data-item-photo-input="detalhe_01" hidden>
+</div>
+<div class="kit-photo-slot-actions">
+<button type="button" class="kit-photo-action-btn" onclick="itens_selecionarFotoSlot('detalhe_01')">Alterar</button>
+<button type="button" class="kit-photo-action-btn danger" onclick="itens_removerFotoSlot('detalhe_01')">Remover</button>
+</div>
+</div>
+
+<div class="kit-photo-slot">
+<div class="kit-photo-slot-title">Detalhe 02</div>
+<div class="kit-photo-slot-frame">
+<img
+src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-item-photo-preview="detalhe_02"
+alt="Detalhe 02"
+>
+<input type="file" accept="image/*" data-item-photo-input="detalhe_02" hidden>
+</div>
+<div class="kit-photo-slot-actions">
+<button type="button" class="kit-photo-action-btn" onclick="itens_selecionarFotoSlot('detalhe_02')">Alterar</button>
+<button type="button" class="kit-photo-action-btn danger" onclick="itens_removerFotoSlot('detalhe_02')">Remover</button>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- FOTOS AMBIENTADAS -->
+<div class="form-section">
+<h3>Fotos Ambientadas do Catálogo</h3>
+
+<div class="kit-gallery-grid">
+
+<div class="kit-photo-slot">
+<div class="kit-photo-slot-title">Ambientada 01</div>
+<div class="kit-photo-slot-frame">
+<img
+src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-item-photo-preview="galeria_01"
+alt="Ambientada 01"
+>
+<input type="file" accept="image/*" data-item-photo-input="galeria_01" hidden>
+</div>
+<div class="kit-photo-slot-actions">
+<button type="button" class="kit-photo-action-btn" onclick="itens_selecionarFotoSlot('galeria_01')">Alterar</button>
+<button type="button" class="kit-photo-action-btn danger" onclick="itens_removerFotoSlot('galeria_01')">Remover</button>
+</div>
+</div>
+
+<div class="kit-photo-slot">
+<div class="kit-photo-slot-title">Ambientada 02</div>
+<div class="kit-photo-slot-frame">
+<img
+src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-item-photo-preview="galeria_02"
+alt="Ambientada 02"
+>
+<input type="file" accept="image/*" data-item-photo-input="galeria_02" hidden>
+</div>
+<div class="kit-photo-slot-actions">
+<button type="button" class="kit-photo-action-btn" onclick="itens_selecionarFotoSlot('galeria_02')">Alterar</button>
+<button type="button" class="kit-photo-action-btn danger" onclick="itens_removerFotoSlot('galeria_02')">Remover</button>
+</div>
+</div>
+
+<div class="kit-photo-slot">
+<div class="kit-photo-slot-title">Ambientada 03</div>
+<div class="kit-photo-slot-frame">
+<img
+src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-placeholder="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4="
+data-item-photo-preview="galeria_03"
+alt="Ambientada 03"
+>
+<input type="file" accept="image/*" data-item-photo-input="galeria_03" hidden>
+</div>
+<div class="kit-photo-slot-actions">
+<button type="button" class="kit-photo-action-btn" onclick="itens_selecionarFotoSlot('galeria_03')">Alterar</button>
+<button type="button" class="kit-photo-action-btn danger" onclick="itens_removerFotoSlot('galeria_03')">Remover</button>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- FIM DA ABA GALERIA -->
+</div>
+
+</div>
+
 </div>
 </div>
 
@@ -715,7 +882,7 @@ onclick="kits_addItem()">
 <script src="../../../js/core/context.js?v=20260913b"></script>
 <script src="../../../js/core/permissions.js"></script>
 <script src="../../../js/core/qrCode.js"></script>
-<script type="module" src="cadastro-itens.mjs?v=20260920-paginacao"></script>
+<script type="module" src="cadastro-itens.mjs?v=20260920-kittabs"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

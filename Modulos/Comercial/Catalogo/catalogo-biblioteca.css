@@ -12,6 +12,11 @@
    ERA ANTES"). Se pedirem abas de novo, confirmar antes de reimplementar
    — já foi tentado e desfeito nesta sessão. */
 .catalog-biblioteca{background:var(--bg)}
+#catalogBibliotecaFolders > .catalog-grid-wrap{min-height:calc(100svh - var(--header-h,100px));display:flex;flex-direction:column;justify-content:center;padding-block:48px}
+#catalogBibliotecaFolders > .catalog-grid-wrap > .catalog-home-grid{width:100%;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.catalog-biblioteca .catalog-home-card{flex:0 1 200px;max-width:100%}
+.catalog-biblioteca .catalog-home-card{gap:6px}
+.catalog-biblioteca .catalog-home-card .catalog-biblioteca-folder{max-width:160px;aspect-ratio:5/4}
 /* Ícone de pasta dos cards da Biblioteca (pedido explícito do usuário):
    cada categoria é uma PASTA, não uma foto — mesmo card/grid da Home
    (.catalog-grid-card-photo), só que com o SVG de pasta (ver

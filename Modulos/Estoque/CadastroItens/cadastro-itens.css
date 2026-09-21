@@ -1592,6 +1592,49 @@ td {
   font-weight: 700;
 }
 
+/* ================================
+   ABAS DO KIT (Dados do Kit / Galeria)
+   Mesma ideia das abas de item-detalhes.html,
+   so que com classes proprias — kit continua
+   sendo uma tela a parte, sem depender do
+   CSS daquela outra pagina.
+================================ */
+
+.kit-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.kit-tab {
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.kit-tab:hover {
+  color: var(--laranja);
+}
+
+.kit-tab.active {
+  color: var(--laranja);
+  border-bottom-color: var(--laranja);
+}
+
+.kit-tab-panel {
+  display: none;
+}
+
+.kit-tab-panel.active {
+  display: block;
+}
+
 /* FOTO + CAMPOS lado a lado, bem distribuido */
 
 .kit-form-layout {
@@ -1675,13 +1718,258 @@ td {
   overflow-y: auto;
 }
 
+/* ================================
+   MODELO 3D DO KIT (GLB) — mesmo
+   motor de itens.3d.mjs ja usado em
+   item-detalhes.html (Item/Componente),
+   so que com classes proprias pra
+   nao depender de item-detalhes.css.
+================================ */
+
+.kit-3d-box {
+  flex: 0 0 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.kit-photo-slot-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.kit-3d-canvas-host {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  overflow: hidden;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f8fafc, #ffffff);
+}
+
+.kit-3d-canvas-host canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+}
+
+.kit-3d-canvas-host canvas:active {
+  cursor: grabbing;
+}
+
+.kit-3d-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  padding: 10px;
+  text-align: center;
+  background: rgba(248, 250, 252, .82);
+  color: #94a3b8;
+}
+
+.kit-3d-empty svg {
+  width: 22px;
+  height: 22px;
+}
+
+.kit-3d-empty p {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.3;
+}
+
+.kit-3d-loading {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  z-index: 3;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  border: 1px solid #dbe3ee;
+  color: #374151;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.kit-3d-empty[hidden],
+.kit-3d-loading[hidden] {
+  display: none !important;
+}
+
+.kit-3d-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 140px;
+  min-width: 0;
+  color: #6b7280;
+  font-size: 10.5px;
+}
+
+.kit-3d-meta #item3DNome {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kit-3d-status {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.kit-3d-status.ativo {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.kit-3d-actions {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  width: 140px;
+}
+
+.kit-3d-actions button {
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dbe3ee;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+}
+
+.kit-3d-actions button:hover,
+.kit-3d-actions button.active {
+  border-color: var(--laranja);
+  color: var(--laranja);
+}
+
+.kit-3d-actions button.danger {
+  color: #b91c1c;
+}
+
+.kit-3d-actions svg {
+  width: 13px;
+  height: 13px;
+}
+
+.kit-3d-box:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  justify-content: center;
+  padding: 24px;
+  background: #ffffff;
+}
+
+.kit-3d-box:fullscreen .kit-3d-canvas-host {
+  width: min(80vw, 900px);
+  height: min(70vh, 700px);
+}
+
+.kit-3d-box:fullscreen .kit-3d-meta,
+.kit-3d-box:fullscreen .kit-3d-actions {
+  width: min(80vw, 900px);
+}
+
+/* ================================
+   FOTOS DE DETALHE / AMBIENTADAS DO KIT
+   Mesmos slots (detalhe_01/02, galeria_01-03)
+   e as mesmas funcoes globais de itens.foto.mjs
+   ja usadas por Item/Componente — so o layout
+   visual e proprio da tela de Kit.
+================================ */
+
+.kit-gallery-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.kit-photo-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 140px;
+}
+
+.kit-photo-slot-frame {
+  position: relative;
+  width: 140px;
+  aspect-ratio: 1 / 1;
+  background: #f8fafc;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.kit-photo-slot-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.kit-photo-slot-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.kit-photo-action-btn {
+  background: #ffffff;
+  border: 1.5px solid var(--laranja);
+  color: var(--laranja);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kit-photo-action-btn:hover {
+  background: var(--laranja);
+  color: #ffffff;
+}
+
+.kit-photo-action-btn.danger {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.kit-photo-action-btn.danger:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
 @media (max-width: 860px) {
   .kit-form-layout {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .kit-foto-box {
+  .kit-foto-box,
+  .kit-3d-box {
     flex: 0 0 auto;
   }
 

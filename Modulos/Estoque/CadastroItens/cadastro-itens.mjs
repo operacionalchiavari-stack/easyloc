@@ -7,9 +7,13 @@ import { carregarItens } from "./itens.api.mjs?v=20260920-paginacao";
 import "./itens.modal.mjs";
 import "./itens.tabela.mjs";
 import "./itens.foto.mjs?v=20260919-imgotimizada";
+// itens.3d.mjs antes só era carregado em item-detalhes.html (Item/Componente).
+// Kit precisa do mesmo upload direto de GLB (ver kits.modal.mjs) — o módulo é
+// genérico por atributo/id de DOM, não amarrado a nenhuma tela específica.
+import "./itens.3d.mjs?v=20260920-kit3d";
 import "./itens.filtros.mjs";
 import "./itens.print.mjs";
-import "./kits.modal.mjs?v=20260913a";
+import "./kits.modal.mjs?v=20260920-kittabs";
 
 function abrirPaginaDetalhesItem(itemId = null, modo = "editar"){
   window.__ITEM_DETALHE_ID = itemId || null;

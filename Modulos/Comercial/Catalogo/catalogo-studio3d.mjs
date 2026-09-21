@@ -1,4 +1,5 @@
 import { renderPdfPage } from './catalogo-pdf.mjs';
+import { studioFormats, studioFormatPlacements } from './catalogo-lounge.mjs?v=20260924-abas-formatos';
 const THREE_URL = "three";
 const GLTF_URL = "three/addons/loaders/GLTFLoader.js";
 const ORBIT_URL = "three/addons/controls/OrbitControls.js";
@@ -103,11 +104,261 @@ async function loadThree(){
   return studio.threePromise;
 }
 
-function renderLibrary(query = ""){
-  const list = $("studioLibraryList");
+let availableFormats = [];
+let insertingFormat = false;
+const formatPreviewCache = new Map();
+let formatPreviewQueue = Promise.resolve();
+let formatPreviewObserver;
+let formatsPage = 0;
+const FORMATS_PAGE_SIZE = 6;
+
+// Renderer offscreen ÚNICO, reaproveitado por TODA prévia de formato — antes
+// cada chamada de renderFormatPreview() criava (`new THREE.WebGLRenderer`) e
+// destruía (`dispose()`/`forceContextLoss()`) um contexto WebGL novo. Bug
+// real reportado pelo usuário ("alguns formatos aparecendo prévia
+// indisponível, inclusive essa que criei agora" + "esse painel 3d está
+// ficando lento, quando eu movo o 3d ele está indo muito devagar"): os
+// navegadores têm um LIMITE de contextos WebGL simultâneos (o Chromium gira
+// em torno de 16, mas em placas de vídeo integradas/menos memória de vídeo
+// esse teto na prática é mais baixo, e o contexto antigo não é liberado
+// pelo driver INSTANTANEAMENTE só por chamar forceContextLoss() — o
+// navegador ainda precisa coletar aquilo). Rolar a lista de formatos (o
+// IntersectionObserver dispara uma prévia por cartão que entra na tela)
+// criava um contexto atrás do outro rapidamente — estourar esse teto faz o
+// PRÓXIMO `new THREE.WebGLRenderer(...)` falhar (prévia cai no catch, vira
+// "Prévia indisponível"), e a pressão de memória de vídeo acumulada
+// (contextos "zumbis" ainda não coletados) degrada o desempenho do
+// renderer PRINCIPAL do estúdio também — é o mesmo motivo por trás dos dois
+// sintomas reportados. Corrigido criando o contexto UMA vez só (sob
+// demanda, na 1ª prévia) e reaproveitando — nunca mais cria nem destrói um
+// contexto novo depois disso, então o teto do navegador nunca é alcançado.
+let previewRenderer = null;
+function ensurePreviewRenderer(THREE){
+  if(previewRenderer) return previewRenderer;
+  // Mesma lógica adaptativa já usada no renderer principal
+  // (detectPerformanceProfile()) — sem antialiasing em máquina fraca, pra
+  // "conseguir rodar em qualquer máquina facilmente" também valer aqui.
+  previewRenderer = new THREE.WebGLRenderer({
+    antialias: studio.performance.tier !== "economy", alpha: true,
+    preserveDrawingBuffer: true, powerPreference: "low-power",
+  });
+  previewRenderer.outputColorSpace = THREE.SRGBColorSpace;
+  return previewRenderer;
+}
+
+async function renderFormatPreview(format){
+  const placements = studioFormatPlacements(format, studio.items);
+  const key = JSON.stringify(placements);
+  if(formatPreviewCache.has(key)) return formatPreviewCache.get(key);
+  const { THREE, GLTFLoader } = await loadThree();
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color('#f6f4f0');
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x827364, 2.5));
+  const light = new THREE.DirectionalLight(0xffffff, 3);
+  light.position.set(5, 8, 6);
+  scene.add(light);
+  const group = new THREE.Group();
+  scene.add(group);
+  const templates = new Map();
+  // Resolução interna do render menor em máquina fraca (menos pixels pro
+  // driver desenhar E pro loop de detecção de recorte varrer logo abaixo)
+  // — a miniatura final mostrada na tela continua sempre 480×360, só o
+  // render de origem (antes de recortar) muda de tamanho.
+  const economy = studio.performance.tier === "economy";
+  const renderWidth = economy ? 480 : 960, renderHeight = economy ? 360 : 720;
+  try{
+    const loader = new GLTFLoader();
+    for(const placement of placements){
+      const item = placement.item;
+      if(!templates.has(item.glb)) templates.set(item.glb, (await loader.loadAsync(item.glb)).scene);
+      const root = templates.get(item.glb).clone(true);
+      const size = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
+      const dimensions = item.dimensions || {};
+      const scale = (target, current) => Number(target) > 0 && current > 0 ? Number(target) / current : 1;
+      root.scale.multiply(new THREE.Vector3(scale(dimensions.width,size.x),scale(dimensions.height,size.y),scale(dimensions.depth,size.z)));
+      const floor = new THREE.Box3().setFromObject(root).min.y;
+      root.position.set(placement.position[0],placement.position[1] - floor,placement.position[2]);
+      root.rotation.y = placement.rotation;
+      group.add(root);
+    }
+    const bounds = new THREE.Box3().setFromObject(group);
+    if(bounds.isEmpty()) throw new Error('Formato sem móveis');
+    const sphere = bounds.getBoundingSphere(new THREE.Sphere());
+    const camera = new THREE.PerspectiveCamera(35, 4 / 3, .01, 1000);
+    const distance = Math.max(sphere.radius, .1) / Math.sin(35 * Math.PI / 360) * 1.12;
+    camera.position.copy(sphere.center).addScaledVector(new THREE.Vector3(1, .85, 1.3).normalize(), distance);
+    camera.lookAt(sphere.center);
+    scene.background = null;
+    const renderer = ensurePreviewRenderer(THREE);
+    renderer.setSize(renderWidth, renderHeight, false);
+    renderer.render(scene,camera);
+    // Frame the visible furniture rather than the model's often oversized bounds.
+    const source = document.createElement('canvas');
+    source.width = renderWidth; source.height = renderHeight;
+    const sourceContext = source.getContext('2d');
+    sourceContext.drawImage(renderer.domElement, 0, 0);
+    const pixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
+    let left = source.width, top = source.height, right = -1, bottom = -1;
+    for(let y = 0; y < source.height; y++){
+      for(let x = 0; x < source.width; x++){
+        if(pixels[(y * source.width + x) * 4 + 3] < 8) continue;
+        left = Math.min(left, x); right = Math.max(right, x);
+        top = Math.min(top, y); bottom = Math.max(bottom, y);
+      }
+    }
+    const preview = document.createElement('canvas');
+    preview.width = 480; preview.height = 360;
+    const context = preview.getContext('2d');
+    context.fillStyle = '#f6f4f0';
+    context.fillRect(0, 0, preview.width, preview.height);
+    if(right >= left && bottom >= top){
+      const width = right - left + 1, height = bottom - top + 1;
+      const scale = Math.min(preview.width * .9 / width, preview.height * .9 / height);
+      context.drawImage(source, left, top, width, height,
+        (preview.width - width * scale) / 2, (preview.height - height * scale) / 2,
+        width * scale, height * scale);
+    }
+    const image = preview.toDataURL('image/png');
+    if(formatPreviewCache.size >= 60) formatPreviewCache.delete(formatPreviewCache.keys().next().value);
+    formatPreviewCache.set(key,image);
+    return image;
+  }finally{
+    const disposed = new Set();
+    const dispose = value => { if(value && !disposed.has(value)){ disposed.add(value); value.dispose?.(); } };
+    templates.forEach(template => template.traverse(node => {
+      dispose(node.geometry);
+      (Array.isArray(node.material) ? node.material : [node.material]).filter(Boolean).forEach(material => {
+        Object.values(material).filter(value => value?.isTexture).forEach(dispose);
+        dispose(material);
+      });
+    }));
+    scene.remove(group);
+  }
+}
+
+function renderStudioFormatsPage(){
+  formatPreviewObserver?.disconnect();
+  const query = normalizeSearch($("studioFormatsSearch").value.trim());
+  const filtered = availableFormats.filter(format => normalizeSearch(format.title).includes(query));
+  const pages = Math.max(1, Math.ceil(filtered.length / FORMATS_PAGE_SIZE));
+  formatsPage = Math.max(0, Math.min(formatsPage, pages - 1));
+  const visible = filtered.slice(formatsPage * FORMATS_PAGE_SIZE, (formatsPage + 1) * FORMATS_PAGE_SIZE);
+  $("studioFormatsList").innerHTML = visible.map(format => `<button type="button" class="catalog-lounge-format studio-format-card" data-studio-format="${escapeHtml(format.key)}"><strong>${escapeHtml(format.title)}</strong><span class="studio-format-preview" aria-busy="true"><img alt="Prévia de ${escapeHtml(format.title)}" width="480" height="360" hidden><span class="studio-format-spinner" role="status" aria-label="Carregando prévia"></span></span></button>`).join('');
+  $("studioFormatsStatus").textContent = filtered.length ? '' : 'Nenhum formato encontrado.';
+  $("studioFormatsPages").hidden = pages < 2;
+  $("studioFormatsPage").textContent = `${formatsPage + 1} de ${pages}`;
+  $("studioFormatsPrevious").disabled = formatsPage === 0;
+  $("studioFormatsNext").disabled = formatsPage === pages - 1;
+  const observer = new IntersectionObserver(entries => {
+    entries.filter(entry => entry.isIntersecting).forEach(({target}) => {
+      observer.unobserve(target);
+      const format = visible.find(format => format.key === target.dataset.studioFormat);
+      const image = target.querySelector('img');
+      const preview = target.querySelector('.studio-format-preview');
+      formatPreviewQueue = formatPreviewQueue.then(async () => {
+        if(!target.isConnected) return;
+        if($("studioFormatsPanel").hidden){ observer.observe(target); return; }
+        try{
+          image.src = await renderFormatPreview(format);
+          await image.decode();
+          image.hidden = false;
+        }catch{
+          image.alt = 'Prévia indisponível';
+          image.hidden = false;
+        }finally{
+          preview.setAttribute('aria-busy', 'false');
+          preview.querySelector('.studio-format-spinner')?.remove();
+        }
+      });
+    });
+  }, {rootMargin:'120px'});
+  formatPreviewObserver = observer;
+  $("studioFormatsList").querySelectorAll('[data-studio-format]').forEach(card => observer.observe(card));
+}
+
+async function loadStudioFormats(){
+  const status = $("studioFormatsStatus");
+  status.textContent = "Carregando formatos…";
+  try{
+    const { data, error } = await studio.supabase.rpc('lounge_formatos_listar', {
+      p_token: studio.token || null, p_empresa_id: studio.empresaId,
+    });
+    if(error) throw error;
+    availableFormats = studioFormats(Array.isArray(data) ? data : [], studio.items);
+    renderStudioFormatsPage();
+  }catch(error){
+    status.textContent = error?.message || "Não foi possível carregar os formatos. Abra a aba novamente para tentar.";
+  }
+}
+
+async function insertStudioFormat(key){
+  if(insertingFormat) return;
+  const format = availableFormats.find(format => format.key === key);
+  if(!format) return;
+  insertingFormat = true;
+  const added = [];
+  const status = $("studioFormatsStatus");
+  $("studioFormatsList").querySelectorAll('button').forEach(button => button.disabled = true);
+  try{
+    const placements = studioFormatPlacements(format, studio.items);
+    if(!placements.length) throw new Error('Este formato não possui móveis disponíveis.');
+    status.textContent = "Inserindo formato…";
+    await ensureScene();
+    const groupId = crypto.randomUUID();
+    // Insert around the current camera focus; the new block can be moved as a whole.
+    const focus = studio.orbit.target.clone();
+    for(const placement of placements){
+      const [x, y, z] = placement.position;
+      const object = await addItem(placement.item, 0, {position:[x + focus.x, y, z + focus.z], rotation:placement.rotation});
+      object.userData.catalogGroupId = groupId;
+      added.push(object);
+    }
+    cancelGrouping();
+    selectObject(added[0]);
+    status.textContent = `${format.title} inserido. Mova e gire o bloco para posicioná-lo.`;
+  }catch(error){
+    added.forEach(object => studio.scene.remove(object));
+    studio.objects = studio.objects.filter(object => !added.includes(object));
+    if(added.length){ selectObject(null); updateCount(); }
+    status.textContent = error?.message || "Não foi possível inserir o formato.";
+  }finally{
+    insertingFormat = false;
+    $("studioFormatsList").querySelectorAll('button').forEach(button => button.disabled = false);
+  }
+}
+
+function initStudioLibraryTabs(){
+  $("studioFormatsSearch")?.addEventListener('input', () => { formatsPage = 0; renderStudioFormatsPage(); });
+  const changePage = delta => {
+    formatsPage += delta;
+    renderStudioFormatsPage();
+    $("studioFormatsSearch").scrollIntoView({block:'nearest'});
+  };
+  $("studioFormatsPrevious")?.addEventListener('click', () => changePage(-1));
+  $("studioFormatsNext")?.addEventListener('click', () => changePage(1));
+  document.querySelectorAll('[data-studio-library-tab]').forEach(button => button.addEventListener('click', () => {
+    const formats = button.dataset.studioLibraryTab === 'formats';
+    $("studioItemsPanel").hidden = formats;
+    $("studioFormatsPanel").hidden = !formats;
+    $("studioItemsTab").setAttribute('aria-selected', String(!formats));
+    $("studioFormatsTab").setAttribute('aria-selected', String(formats));
+    if(formats && !insertingFormat) loadStudioFormats();
+  }));
+  $("studioFormatsList")?.addEventListener('click', event => {
+    const button = event.target.closest('[data-studio-format]');
+    if(button) insertStudioFormat(button.dataset.studioFormat);
+  });
+}
+
+// Extraído de renderLibrary() pra ser reaproveitado também pelo diálogo de
+// "Trocar item" (renderSwapList() logo abaixo) — a MESMA lista de móveis,
+// com o mesmo botão `data-studio-add`; quem decide se o clique ADICIONA
+// (biblioteca lateral) ou TROCA (diálogo de swap) é o listener de cada
+// lista, não a marcação em si.
+function libraryItemsMarkup(query = ""){
   const normalized = normalizeSearch(query.trim());
   const available = studio.items.filter((item) => item.glb);
-  list.innerHTML = available.length ? available.map((item) => {
+  return available.length ? available.map((item) => {
     const loading = studio.modelProgress.has(String(item.id));
     const search = normalizeSearch(`${item.name} ${item.catLabel || ""}`);
     const hidden = normalized && !search.includes(normalized);
@@ -118,6 +369,16 @@ function renderLibrary(query = ""){
     </button>`;
   }).join("") + `<div class="studio-library-empty ${available.some((item) => !normalized || normalizeSearch(`${item.name} ${item.catLabel || ""}`).includes(normalized)) ? "hidden" : ""}">Nenhum modelo 3D disponível.</div>`
     : `<div class="studio-library-empty">Nenhum modelo 3D disponível.</div>`;
+}
+
+function renderLibrary(query = ""){
+  const list = $("studioLibraryList");
+  if(list) list.innerHTML = libraryItemsMarkup(query);
+}
+
+function renderSwapList(query = ""){
+  const list = $("studioSwapList");
+  if(list) list.innerHTML = libraryItemsMarkup(query);
 }
 
 function filterLibrary(query = ""){
@@ -736,6 +997,7 @@ function refreshGroupHelpers(){
 function toggleGrouping(){
   if(!studio.grouping){
     studio.grouping = true;
+    $("studioSaveFormatButton")?.classList.add("hidden");
     studio.groupSelection = new Set(studio.selected ? groupMembers(studio.selected) : []);
     refreshGroupHelpers();
     $("studioGroupButton").querySelector("small").textContent = "Concluir bloco";
@@ -760,6 +1022,7 @@ function cancelGrouping(){
   studio.grouping = false; studio.groupSelection.clear(); clearGroupHelpers();
   $("studioGroupingBar")?.classList.add("hidden");
   if($("studioGroupButton")) $("studioGroupButton").querySelector("small").textContent = "Criar bloco";
+  selectObject(studio.selected);
 }
 
 function ungroupSelected(){
@@ -941,8 +1204,86 @@ function removeSelectedCustomWall(){
   window.catalogNotify?.({ title: "Parede removida", message: "A parede desenhada foi retirada do ambiente.", status: "success" });
 }
 
+let formatDraft = null;
+let savingFormat = false;
+
+function openSaveFormat(){
+  const members = groupMembers(studio.selected);
+  if(members.length < 2 || studio.grouping) return;
+  const { THREE } = studio.three;
+  const bounds = new THREE.Box3();
+  members.forEach(object => bounds.expandByObject(object));
+  const center = bounds.getCenter(new THREE.Vector3());
+  formatDraft = members.map((object, index) => {
+    const item = object.userData.item;
+    // Both viewers ground the unrotated model before applying its rotation.
+    // Bug real reportado pelo usuário ("clico em Salvar formato e não
+    // acontece nada"): media essa caixa clonando o objeto inteiro
+    // (object.clone(true)) — mas o Three.js clona `userData` via
+    // `JSON.parse(JSON.stringify(...))` por baixo dos panos (ver
+    // Object3D.prototype.copy), e um item com variantes de cor tem
+    // `userData.item.variantGroup` como uma referência CIRCULAR (cada
+    // variante aponta pro MESMO array que já a contém, ver
+    // agruparVariantes() em catalogo.mjs) — JSON.stringify nunca
+    // serializa isso, lançava "Converting circular structure to JSON" e
+    // a exceção, sem try/catch em volta, cancelava o clique inteiro antes
+    // do diálogo sequer abrir. Corrigido medindo o objeto REAL — zera
+    // posição/rotação, mede, restaura — em vez de clonar; tudo síncrono
+    // (sem repaint entre zerar e restaurar), então nunca aparece na tela,
+    // e como nunca passa por clone()/copy(), o problema do userData
+    // circular nem chega a existir.
+    const originalPosition = object.position.clone();
+    const originalRotation = object.rotation.clone();
+    object.position.set(0, 0, 0);
+    object.rotation.set(0, 0, 0);
+    const grounded = new THREE.Box3().setFromObject(object);
+    object.position.copy(originalPosition);
+    object.rotation.copy(originalRotation);
+    return { version: 2, role: `slot:${index}`, item_id: item.id,
+      cat: item.cat || null, subcat: item.subcat || null, label: item.name,
+      position: [object.position.x - center.x, object.position.y + grounded.min.y, object.position.z - center.z],
+      rotation: object.rotation.y * 180 / Math.PI };
+  });
+  $("studioFormatName").value = "";
+  $("studioFormatStatus").textContent = "";
+  $("studioFormatDescription").textContent = `${members.length} móveis, com suas posições e rotações, ficarão disponíveis em Composições.`;
+  $("studioFormatDialog").showModal();
+  $("studioFormatName").focus();
+}
+
+async function saveSelectedFormat(event){
+  event.preventDefault();
+  if(savingFormat || !formatDraft) return;
+  const name = $("studioFormatName").value.trim();
+  const status = $("studioFormatStatus");
+  if(!name){ status.textContent = "Dê um nome ao formato."; return; }
+  if(JSON.stringify(formatDraft).length >= 20000){ status.textContent = "Este bloco é muito grande. Divida-o em formatos menores."; return; }
+  savingFormat = true;
+  const submit = $("studioFormatForm").querySelector('[type="submit"]');
+  submit.disabled = true;
+  $("studioFormatClose").disabled = true;
+  status.textContent = "Salvando formato…";
+  try{
+    const { error } = await studio.supabase.rpc("lounge_formato_salvar", {
+      p_token: studio.token || null, p_empresa_id: studio.empresaId,
+      p_id: null, p_nome: name, p_papeis: formatDraft,
+    });
+    if(error) throw error;
+    $("studioFormatDialog").close();
+    formatDraft = null;
+    window.catalogNotify?.({ title: "Formato salvo", message: "Seu bloco já está disponível em Composições.", status: "success" });
+  }catch(error){
+    status.textContent = error?.message || "Não foi possível salvar. Tente novamente.";
+  }finally{
+    savingFormat = false;
+    submit.disabled = false;
+    $("studioFormatClose").disabled = false;
+  }
+}
+
 function selectObject(object){
   studio.selected = object || null;
+  $("studioSaveFormatButton")?.classList.toggle("hidden", !object || studio.grouping || groupMembers(object).length < 2);
   if(object){
     studio.transform.detach();
     $("studioSelectedLabel").textContent = object.userData.item?.name || "Móvel selecionado";
@@ -1401,6 +1742,88 @@ function removeSelected(){
   removing.forEach((object) => studio.scene.remove(object));
   studio.objects = studio.objects.filter((object) => !removing.has(object));
   studio.selected = null; updateCount(); trimModelTemplateCache();
+}
+
+// Pedido explícito do usuário: "eu quero que seja possivel eu trocar um
+// item de um formato pronto, por exemplo na composicao eu criei com uma
+// modelo de sofa, mas depois eu quero alterar esse modelo de sofa por
+// outro sem desfazer o formato" — troca só o MODELO 3D da peça
+// selecionada (novo .glb, nova escala pelas dimensões do item novo, já
+// calculada dentro de addItem()), preservando a posição (X/Z) e o giro
+// (rotação em Y) exatos e, principalmente, o `catalogGroupId` — se a
+// peça fazia parte de um bloco/formato, a peça nova entra no MESMO
+// bloco, sem precisar desfazer/refazer o agrupamento. Posição Y sempre
+// recalculada do zero (`position[1]=0`, o mesmo "nível do chão" que
+// QUALQUER peça nova já usa) em vez de copiada da peça antiga — modelos
+// diferentes têm alturas/origens de geometria diferentes, copiar o Y
+// antigo poderia deixar a peça nova flutuando ou afundada.
+async function trocarItemSelecionado(newItem){
+  const old = studio.selected;
+  if(!old || !newItem) return null;
+  const groupId = old.userData.catalogGroupId;
+  const placement = { position: [old.position.x, 0, old.position.z], rotation: old.rotation.y };
+  const added = await addItem(newItem, 0, placement);
+  if(groupId) added.userData.catalogGroupId = groupId;
+  studio.scene.remove(old);
+  studio.objects = studio.objects.filter((object) => object !== old);
+  selectObject(added);
+  trimModelTemplateCache();
+  return added;
+}
+
+// Pedido explícito do usuário, reforçado depois de ver a 1ª versão (só um
+// alvo, o que estava selecionado no canvas): "eu posso trocar qualquer
+// peça de qualquer lugar do formato, não só o sofá" — o diálogo passou a
+// ter DUAS colunas: à esquerda TODAS as peças do bloco/formato ao qual a
+// peça selecionada pertence (groupMembers, retorna só ela mesma se não
+// estiver agrupada), clicável pra escolher qual delas é o alvo da troca;
+// à direita, o catálogo de sempre pra escolher o modelo novo. `swapGroup*`
+// é estado só deste diálogo (não faz parte de `studio`, que é o estado da
+// CENA) — só existe enquanto ele está aberto, recalculado do zero a cada
+// abertura. Depois de trocar, o diálogo continua aberto (não fecha
+// sozinho) e a lista da esquerda já mostra a peça nova no lugar da
+// antiga — dá pra trocar mais de uma peça do mesmo formato numa sessão só
+// sem precisar fechar e reabrir pra cada uma.
+let swapGroupMembers = [];
+let swapTargetIndex = 0;
+let swappingItem = false;
+
+function renderSwapCurrentList(){
+  const list = $("studioSwapCurrentList");
+  if(!list) return;
+  list.innerHTML = swapGroupMembers.map((object, index) => {
+    const item = object.userData.item;
+    const active = index === swapTargetIndex;
+    return `
+    <button type="button" class="studio-library-item ${active ? "is-active" : ""}" data-swap-target-index="${index}" aria-pressed="${active}" title="${escapeHtml(item?.name || "Peça")}">
+      <img src="${escapeHtml(otimizarFoto(item?.photo, 120))}" alt="" loading="lazy">
+      <span>${escapeHtml(item?.name || "Peça")}</span><b aria-hidden="true">${active ? "✓" : ""}</b>
+    </button>`;
+  }).join("");
+}
+
+function updateSwapDescription(){
+  const description = $("studioSwapDescription");
+  if(!description) return;
+  const target = swapGroupMembers[swapTargetIndex]?.userData.item;
+  description.textContent = swapGroupMembers.length > 1
+    ? `Escolha à esquerda qual peça do formato trocar — agora: "${target?.name || "peça selecionada"}" — e à direita o novo modelo. A posição e o giro de cada peça continuam os mesmos.`
+    : `Escolha o novo modelo pra "${target?.name || "a peça selecionada"}". A posição e o giro continuam os mesmos.`;
+}
+
+function openSwapDialog(){
+  if(!studio.selected) return;
+  const dialog = $("studioSwapDialog");
+  if(!dialog) return;
+  swapGroupMembers = groupMembers(studio.selected);
+  swapTargetIndex = Math.max(0, swapGroupMembers.indexOf(studio.selected));
+  renderSwapCurrentList();
+  updateSwapDescription();
+  const search = $("studioSwapSearch");
+  if(search) search.value = "";
+  renderSwapList("");
+  dialog.showModal();
+  search?.focus();
 }
 
 function keepObjectAboveFloor(object){
@@ -2240,11 +2663,47 @@ async function handleToolbarAction(event){
   }
 }
 
-export function initCatalogStudio3D({ items, supabase, empresaId, ownerId }){
+export function initCatalogStudio3D({ items, supabase, empresaId, ownerId, token }){
   if(studio.initialized) return;
   studio.initialized = true; studio.items = items; studio.supabase = supabase; studio.empresaId = empresaId;
   studio.ownerId = ownerId;
-  initProjectTools();
+  studio.token = token || null;
+  $("studioSaveFormatButton")?.addEventListener("click", openSaveFormat);
+  $("studioFormatForm")?.addEventListener("submit", saveSelectedFormat);
+  $("studioFormatClose")?.addEventListener("click", () => $("studioFormatDialog").close());
+  $("studioFormatDialog")?.addEventListener("cancel", event => { if(savingFormat) event.preventDefault(); });
+  $("studioSwapItemButton")?.addEventListener("click", openSwapDialog);
+  $("studioSwapClose")?.addEventListener("click", () => $("studioSwapDialog")?.close());
+  $("studioSwapDialog")?.addEventListener("cancel", event => { if(swappingItem) event.preventDefault(); });
+  $("studioSwapSearch")?.addEventListener("input", (event) => renderSwapList(event.target.value));
+  $("studioSwapCurrentList")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-swap-target-index]");
+    if(!button) return;
+    swapTargetIndex = Number(button.dataset.swapTargetIndex);
+    studio.selected = swapGroupMembers[swapTargetIndex] || studio.selected;
+    renderSwapCurrentList();
+    updateSwapDescription();
+  });
+  $("studioSwapList")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-studio-add]");
+    if(!button || button.disabled) return;
+    const item = studio.items.find((candidate) => String(candidate.id) === button.dataset.studioAdd);
+    const target = swapGroupMembers[swapTargetIndex];
+    if(!item || !target) return;
+    studio.selected = target;
+    button.disabled = true; button.setAttribute("aria-busy", "true");
+    swappingItem = true;
+    trocarItemSelecionado(item).then((added) => {
+      swapGroupMembers[swapTargetIndex] = added;
+      renderSwapCurrentList();
+      updateSwapDescription();
+      button.disabled = false; button.removeAttribute("aria-busy");
+    }).catch(() => {
+      button.disabled = false; button.removeAttribute("aria-busy");
+      window.catalogNotify?.({ title: "Modelo indisponível", message: `Não foi possível trocar por ${item.name}. Tente novamente.`, status: "error" });
+    }).finally(() => { swappingItem = false; });
+  });
+  initStudioLibraryTabs();
   renderLibrary();
   $("studioFloorPlan")?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -2510,21 +2969,6 @@ async function openProject(data){
 }
 function readDesignRules(){
   return Object.fromEntries(['wallGap','furnitureGap','tableGap','aisle','quantity','brief'].map(k=>[k,k==='brief'?$('design-'+k)?.value || '':Number($('design-'+k)?.value ?? ({wallGap:.5,furnitureGap:.4,tableGap:1.2,aisle:1.2,quantity:12}[k]))]));
-}
-function initProjectTools(){
-  studio.projectOwner=String(studio.empresaId)+':'+String(studio.ownerId || 'local');
-  const panel=document.createElement('section');panel.className='studio-project-panel';
-  panel.innerHTML=`<details open><summary>Projetos</summary><input id="studioProjectName" aria-label="Nome do projeto" value="Meu projeto" maxlength="120"><div><button id="studioProjectSave">Salvar projeto</button><button id="studioProjectNew">Novo projeto</button></div><select id="studioProjectList" aria-label="Projetos salvos"></select><div><button id="studioProjectExport">Exportar backup</button><label>Importar backup<input id="studioProjectImport" type="file" accept=".json,application/json"></label></div><small id="studioProjectStatus" role="status">Salvamento automático a cada 5 segundos neste navegador. Exporte para usar em outro computador.</small></details><details><summary>Decoradora IA · montar espaço</summary><p>Escolha os modelos e quantidades. A IA interpreta as orientações; a montagem verifica as distâncias em metros e mantém os móveis existentes.</p><label>Distância das paredes (m)<input id="design-wallGap" type="number" min="0" max="10" step=".1" value=".5"></label><label>Entre móveis (m)<input id="design-furnitureGap" type="number" min="0" max="10" step=".1" value=".4"></label><label>Entre mesas, borda a borda (m)<input id="design-tableGap" type="number" min="0" max="10" step=".1" value="1.2"></label><label>Corredor central livre (m)<input id="design-aisle" type="number" min="0" max="10" step=".1" value="1.2"></label><label>Quantidade por modelo<input id="design-quantity" type="number" min="1" max="100" value="6"></label><label>Orientações da decoradora<textarea id="design-brief" maxlength="4000" placeholder="Ex.: mesas próximas ao fundo, lounge acolhedor e entrada livre."></textarea></label><div id="studioDesignItems">${studio.items.filter(i=>i.glb).map(i=>`<label><input type="checkbox" value="${escapeHtml(i.id)}">${escapeHtml(i.name)}</label>`).join('')}</div><button id="studioDesignBuild">Montar espaço automaticamente</button><small id="studioDesignStatus" role="status"></small></details>`;
-  document.querySelector('.studio-library').prepend(panel);
-  $('studioProjectSave').onclick=()=>saveProject(true);
-  $('studioProjectNew').onclick=async()=>{await openProject({version:1,id:crypto.randomUUID(),name:'Novo projeto',objects:[],roomWidth:10,roomDepth:10});};
-  $('studioProjectList').onchange=async e=>{if(!e.target.value)return;try{await openProject(await projectStore('readonly',s=>s.get(e.target.value)));}catch(err){projectStatus(err.message);}};
-  $('studioProjectExport').onclick=()=>{try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(snapshotProject())],{type:'application/json'}));a.download='projeto-acervo.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}catch(e){projectStatus(e.message);}};
-  $('studioProjectImport').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>100*1024*1024)throw new Error('Backup maior que 100 MB');const data=JSON.parse(await f.text());data.id=crypto.randomUUID();await openProject(data);await saveProject(true);}catch(err){projectStatus(err.message);}e.target.value='';};
-  $('studioDesignBuild').onclick=buildDesignedSpace;
-  refreshProjects().catch(e=>projectStatus('Armazenamento indisponível: '+e.message));
-  setInterval(()=>saveProject(),5000);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)saveProject();});
 }
 function beginWallDrag(event){
   if(event.button!==0 || studio.wallDrawActive || studio.rulerActive || studio.cropActive || !isTopViewActive()) return false;

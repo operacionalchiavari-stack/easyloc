@@ -109,14 +109,18 @@ function fakeGlbTriangle(){
 // composição é remontada), Poltrona, Mesa de centro, Aparador — todos com
 // modelo 3D. "Banqueta" não tem nenhum papel do Lounge compacto e não tem
 // .glb — prova que itens sem modelo/sem papel não aparecem nos seletores.
+// `subcategoria` deliberadamente repete "Clássicos" em Estofados E em
+// Assentos (mesma colisão real conferida direto no banco de produção —
+// "Poltronas"/"Puffes" existem cada uma em 2 categorias diferentes) pra
+// exercitar a desambiguação do editor de formatos (Cenário 3).
 function itemsFixture(){
   return [
-    {id:'1',tipo:'Item',produto:'Sofá Lounge 3 Lugares',categoria:'Estofados',material:'Linho',cor:'Bege',largura:2.1,altura:.85,profundidade:.92,foto_url:'https://fixture/1.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/sofa-a.glb',status:'ativo'}]},
-    {id:'2',tipo:'Item',produto:'Sofá Becca',categoria:'Estofados',material:'Veludo',cor:'Verde',largura:2.4,altura:.8,profundidade:.95,foto_url:'https://fixture/2.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/sofa-b.glb',status:'ativo'}]},
-    {id:'3',tipo:'Item',produto:'Poltrona Águines',categoria:'Estofados',material:'Veludo',cor:'Terracota',largura:.7,altura:.9,profundidade:.75,foto_url:'https://fixture/3.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/poltrona.glb',status:'ativo'}]},
-    {id:'4',tipo:'Item',produto:'Mesa de Centro Redonda',categoria:'Mesas',material:'Madeira',cor:'Natural',largura:.6,altura:.4,profundidade:.6,foto_url:'https://fixture/4.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/mesa-centro.glb',status:'ativo'}]},
-    {id:'5',tipo:'Item',produto:'Aparador Baixo',categoria:'Mesas',material:'Madeira',cor:'Escuro',largura:1.4,altura:.75,profundidade:.4,foto_url:'https://fixture/5.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/aparador.glb',status:'ativo'}]},
-    {id:'6',tipo:'Item',produto:'Banqueta Alta',categoria:'Assentos',material:'Metal',cor:'Preto',largura:.4,altura:.75,profundidade:.4,foto_url:'https://fixture/6.png',itens_fotos:[],itens_modelos_3d:[]},
+    {id:'1',tipo:'Item',produto:'Sofá Lounge 3 Lugares',categoria:'Estofados',subcategoria:'Clássicos',material:'Linho',cor:'Bege',largura:2.1,altura:.85,profundidade:.92,foto_url:'https://fixture/1.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/sofa-a.glb',status:'ativo'}]},
+    {id:'2',tipo:'Item',produto:'Sofá Becca',categoria:'Estofados',subcategoria:'Clássicos',material:'Veludo',cor:'Verde',largura:2.4,altura:.8,profundidade:.95,foto_url:'https://fixture/2.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/sofa-b.glb',status:'ativo'}]},
+    {id:'3',tipo:'Item',produto:'Poltrona Águines',categoria:'Estofados',subcategoria:'Poltronas',material:'Veludo',cor:'Terracota',largura:.7,altura:.9,profundidade:.75,foto_url:'https://fixture/3.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/poltrona.glb',status:'ativo'}]},
+    {id:'4',tipo:'Item',produto:'Mesa de Centro Redonda',categoria:'Mesas',subcategoria:'Mesas de Centro',material:'Madeira',cor:'Natural',largura:.6,altura:.4,profundidade:.6,foto_url:'https://fixture/4.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/mesa-centro.glb',status:'ativo'}]},
+    {id:'5',tipo:'Item',produto:'Aparador Baixo',categoria:'Mesas',subcategoria:'Aparadores',material:'Madeira',cor:'Escuro',largura:1.4,altura:.75,profundidade:.4,foto_url:'https://fixture/5.png',itens_fotos:[],itens_modelos_3d:[{url:'https://fixture/aparador.glb',status:'ativo'}]},
+    {id:'6',tipo:'Item',produto:'Banqueta Alta',categoria:'Assentos',subcategoria:'Clássicos',material:'Metal',cor:'Preto',largura:.4,altura:.75,profundidade:.4,foto_url:'https://fixture/6.png',itens_fotos:[],itens_modelos_3d:[]},
   ];
 }
 
@@ -619,5 +623,78 @@ const FULLSCREEN_SPY=`(() => {
  await page.close();
 }
 
-console.log('PASS: Módulo Lounge — card "Módulo Lounge" disponível no mini-menu (só "Realidade aumentada" segue "Em breve"), trilha/rótulo de 3 níveis, formato "Lounge compacto" único e ativo por padrão, papéis obrigatórios (sofá/poltrona) com seleção padrão automática e opcionais com "Nenhuma"/aviso quando vazio, trocar item remonta a composição de verdade, controles de câmera REAIS (aproximar/afastar/redefinir mudam a distância da câmera), botão "Renderizar com IA" chama a MESMA função de borda do Estúdio de Ambientes (studio-ai-engine) de verdade e abre o diálogo de resultado com a imagem devolvida, dica de uso esmaece na interação, tela cheia via Fullscreen API de verdade, piso com 8 opções (incluindo pedra/lajota e os 2 carpetes) aplicado de verdade no chão da cena, parede de fundo REAL na cena aplicada com a foto (textura de verdade, mesma técnica do Estúdio de Ambientes) e removida/escondida corretamente, foto de fundo ajustável ARRASTANDO (modo dedicado que desliga a órbita da câmera enquanto ativo, arrastar move a foto de verdade, fora do modo o mesmo gesto continua girando a câmera normalmente) com zoom por BOTÃO +/- (nunca pela roda do mouse, funciona dentro ou fora do modo de arrastar), cena Three.js desligada por completo ao sair (sem canvas/contexto WebGL sobrando) e reconstruída limpa ao reabrir (piso volta ao padrão), decorador externo alcança o mesmo módulo funcional, sem overflow em 390/768/1024px');
+// ===== Cenário 3: editor de formatos — equipe cria, edita e exclui um formato novo (diagrama arrastável) =====
+{
+ const page=await browser.newPage({viewport:{width:1600,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ page.on('dialog',(d)=>d.accept()); // window.confirm() da exclusão
+ await page.route('https://**/*',r=>r.fulfill({body:'',contentType:'text/javascript'}));
+ const svg=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#c9a874"/></svg>');
+ await page.route('https://fixture/*.png',r=>r.fulfill({contentType:'image/svg+xml',body:svg}));
+ await page.route('https://fixture/*.glb',r=>r.fulfill({contentType:'model/gltf-binary',body:fakeGlbTriangle()}));
+ await page.addInitScript(()=>{
+  // Mesmo login direto da equipe do Cenário 1 — banco de formatos de
+  // mentira guardado em `window.__loungeDb` (não sessionStorage: este
+  // cenário nunca recarrega a página, só precisa sobreviver entre
+  // chamadas de RPC dentro da MESMA aba).
+  function builder(v){return new Proxy({},{get(_t,p){if(p==='then')return(r)=>r(v());return()=>builder(v);}});}
+  window.__loungeDb=[];
+  let seq=1;
+  window.supabaseClient={
+   auth:{getSession:async()=>({data:{session:{user:{id:'u1'}}},error:null}),getUser:async()=>({data:{user:{id:'u1'}},error:null})},
+   from(table){
+    if(table==='usuarios_empresas')return builder(()=>({data:{empresa_id:'company'},error:null}));
+    if(table==='empresas')return {select(){return this;},eq(){return this;},maybeSingle:async()=>({data:{nome:'Chiavari',logo_url:null},error:null})};
+    return builder(()=>({data:[],error:null}));},
+   rpc:async(name,args={})=>{
+    if(name==='funcionario_contexto')return{data:{ativo:true,administrador_legado:true},error:null};
+    if(name==='catalogo_carregar_interno')return{data:{empresa:{nome:'Chiavari'},decorador:null,itens:window.__ITEMS_FIXTURE__}};
+    if(name==='catalogo_capas_carregar_interno')return{data:{}};
+    if(name==='biblioteca_carregar_interno')return{data:{fotos:[]}};
+    if(name==='lounge_formatos_listar'){
+     return {data:window.__loungeDb.map((r)=>({id:r.id,nome:r.nome,papeis:r.papeis,cliente_id:r.cliente_id,equipe:r.cliente_id===null,atualizado_em:r.criado_em})),error:null};
+    }
+    if(name==='lounge_formato_salvar'){
+     window.__lastSalvarArgs=args;
+     if(!Array.isArray(args.p_papeis)||!args.p_papeis.length) return {data:null,error:{message:'Posicione ao menos uma peça antes de salvar'}};
+     if(args.p_id){
+      const row=window.__loungeDb.find((r)=>r.id===args.p_id);
+      if(!row) return {data:null,error:{message:'Formato não encontrado'}};
+      row.nome=args.p_nome; row.papeis=args.p_papeis;
+      return {data:{id:row.id,nome:row.nome,papeis:row.papeis,cliente_id:row.cliente_id,equipe:true},error:null};
+     }
+     const row={id:'f'+(seq++),cliente_id:null,nome:args.p_nome,papeis:args.p_papeis,criado_em:new Date().toISOString()};
+     window.__loungeDb.push(row);
+     return {data:{id:row.id,nome:row.nome,papeis:row.papeis,cliente_id:null,equipe:true},error:null};
+    }
+    if(name==='lounge_formato_excluir'){
+     const idx=window.__loungeDb.findIndex((r)=>r.id===args.p_id);
+     if(idx===-1) return {data:null,error:{message:'Formato não encontrado'}};
+     window.__loungeDb.splice(idx,1);
+     return {data:{ok:true},error:null};
+    }
+    return {data:null,error:null};
+   },
+   storage:{from(bucket){return{getPublicUrl:(p)=>({data:{publicUrl:'https://fixture/x/'+p}})};}},
+   functions:{invoke:async()=>({data:null,error:new Error('não mocado')})},
+  };
+ });
+ await page.addInitScript((items)=>{ window.__ITEMS_FIXTURE__=items; }, itemsFixture());
+ await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
+ await page.locator('.catalog-gateway').waitFor();
+ await page.locator('[data-gateway-tile="modulo3d"]').click();
+ await page.locator('.catalog-modulo3d-menu').waitFor();
+ await page.locator('[data-modulo3d-card="lounge"]').click();
+ await page.locator('#catalogLounge:not(.hidden)').waitFor();
+ await page.locator('.catalog-lounge-canvas-host canvas').waitFor({timeout:10000});
+
+ // Só "Lounge compacto" existe ainda, sem botões de editar/excluir (é
+ // embutido no código, nunca gerenciável pela tela).
+ assert.equal(await page.locator('[data-lounge-format-new],#loungeFormatEditorDialog,[data-lounge-format-edit]').count(),0);
+ assert.equal(await page.locator('.catalog-lounge-format').count(),1);
+ // Creation and restoration from a 3D block are covered by studio-formatos-browser.cjs.
+ assert.deepEqual(errors,[]);
+ await page.close();
+}
+
+console.log("PASS: compositions navigation, furniture, camera, rendering, backgrounds, responsive layout and saved-format library.");
 }catch(error){ console.error(error); process.exitCode=1; }finally{ await browser.close(); server.close(); }})();

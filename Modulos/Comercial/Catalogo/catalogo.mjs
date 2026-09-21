@@ -1,8 +1,8 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260920-moveis";
+import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260924-perf1";
 import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20260919-zoom-galeria";
-import { initCatalogLounge, openCatalogLounge, teardownCatalogLounge } from "./catalogo-lounge.mjs?v=20260921-texturas-piso";
-import { initCatalogProjetos, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup, atualizarBotoes as atualizarBotoesProjeto } from "./catalogo-projetos.mjs?v=20260921-mais-opcoes";
+import { initCatalogLounge, openCatalogLounge, teardownCatalogLounge } from "./catalogo-lounge.mjs?v=20260924-abas-formatos";
+import { initCatalogProjetos, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup, atualizarBotoes as atualizarBotoesProjeto } from "./catalogo-projetos.mjs?v=20260922-designer";
 
 const supabase = window.supabaseClient;
 const FOTO_PLACEHOLDER = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
@@ -3841,12 +3841,16 @@ async function init(){
     bindPhotoZoom();
     bindNavHistory();
     startEventRotation();
-    initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id });
+    initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id, token: state.catalogSession.token });
     initCatalogBiblioteca({
       supabase, empresaId, token: state.catalogSession.token,
       acessoInterno: state.acessoInterno, categories: getCategories(),
     });
-    initCatalogLounge({ items: state.items, empresaId });
+    initCatalogLounge({
+      items: state.items, empresaId, supabase,
+      token: state.catalogSession.token, clienteId: state.catalogSession.cliente_id,
+      acessoInterno: state.acessoInterno,
+    });
   }catch(error){
     console.error("Erro ao carregar catálogo:", error);
     const interno = acessoInternoDoSistema();

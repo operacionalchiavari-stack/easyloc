@@ -46,25 +46,41 @@ function otimizarFoto(url, width, quality = 74){
   return `${base}/storage/v1/render/image/public/${caminho}${separador}width=${width}&quality=${quality}&resize=contain`;
 }
 
-// "Lounge compacto" é o único formato por enquanto — pedido explícito do
-// usuário: "imagina que ali será uma coluna com vários que vamos criar no
-// futuro". Adicionar um novo formato = um novo objeto neste array (título,
-// descrição, papéis com o padrão de busca no catálogo, e layout() com as
-// posições relativas de cada peça). Mesmos papéis/regex do preset
-// original (PRESETS.lounge em catalogo-studio3d.mjs) — copiados, não
-// importados (ver comentário no topo do arquivo).
-const FORMATS = [
+// Papéis possíveis em qualquer formato de Lounge (embutido OU criado pela
+// pessoa no editor de formatos, ver "Novo formato" mais abaixo) — mesmos
+// papéis/regex do preset original (PRESETS.lounge em catalogo-studio3d.mjs),
+// copiados, não importados (ver comentário no topo do arquivo). Um formato
+// custom só inclui os papéis que a pessoa efetivamente posicionou no
+// diagrama (ver toRuntimeFormat()) — sofá e poltrona são sempre
+// obrigatórios, os demais opcionais, mesmo padrão do "Lounge compacto".
+const ROLE_DEFS = {
+  sofa: { label: "Sofá", pattern: /sof[aá]/i },
+  armchair: { label: "Poltrona", pattern: /poltrona/i },
+  center: { label: "Mesa de centro", pattern: /mesa.*centro|centro.*mesa/i },
+  side: { label: "Mesa lateral/canto", pattern: /mesa.*(lateral|canto)|(lateral|canto).*mesa/i },
+  console: { label: "Aparador", pattern: /aparador/i },
+};
+const ROLE_ORDER = ["sofa", "armchair", "center", "side", "console"];
+const REQUIRED_ROLES = new Set(["sofa", "armchair"]);
+
+function roleDefinition(key){
+  return { key, ...ROLE_DEFS[key], required: REQUIRED_ROLES.has(key) };
+}
+
+// "Lounge compacto" é o único formato embutido no código — pedido explícito
+// do usuário, numa sessão anterior: "imagina que ali será uma coluna com
+// vários que vamos criar no futuro". Esse "futuro" chegou: agora a pessoa
+// cria os próprios formatos pelo editor (diagrama arrastável, ver
+// "Editor de formatos" mais abaixo) e eles ficam salvos no banco
+// (`lounge_formatos`), carregados em `ui.customFormats` e combinados com
+// este array embutido por `allFormats()`. Este continua fixo no código —
+// sempre disponível, nunca editável/excluível pela tela.
+const BUILTIN_FORMATS = [
   {
     key: "lounge-compacto",
     title: "Lounge compacto",
     description: "Sofá com poltronas nas pontas, viradas para o centro, sem sobreposições.",
-    roles: [
-      { key: "sofa", label: "Sofá", pattern: /sof[aá]/i, required: true },
-      { key: "armchair", label: "Poltrona", pattern: /poltrona/i, required: true },
-      { key: "center", label: "Mesa de centro", pattern: /mesa.*centro|centro.*mesa/i, required: false },
-      { key: "side", label: "Mesa lateral/canto", pattern: /mesa.*(lateral|canto)|(lateral|canto).*mesa/i, required: false },
-      { key: "console", label: "Aparador", pattern: /aparador/i, required: false },
-    ],
+    roles: ROLE_ORDER.map(roleDefinition),
     // Posições relativas (metros) de cada peça ao redor do sofá,
     // escaladas pela largura/profundidade REAL do sofá escolhido — mesmo
     // raciocínio de posicionamento do preset original (poltronas nas
@@ -91,23 +107,6 @@ const FORMATS = [
   },
 ];
 
-// Pedido explícito do usuário, depois de ver a 1ª versão renderizada:
-// "quero que a pessoa possa escolher o piso, o fundo ela também pode
-// escolher através de foto". Piso = alguns acabamentos prontos pra
-// aplicar no plano do chão (mesma ideia do seletor de piso do Estúdio de
-// Ambientes — `floorFinish`/`createFloorFinishCanvas` em
-// catalogo-studio3d.mjs — texturas procedurais num `<canvas>` 2D, só que
-// mais simples/com menos opções, consistente com o resto deste módulo).
-// Fundo = uma foto de verdade escolhida pelo usuário (upload), aplicada
-// como `background-image` do próprio host do canvas (mesmo truque do
-// Estúdio: o renderer usa `alpha:true`, então a foto aparece por trás de
-// qualquer área da cena sem geometria — o "céu"/entorno acima do chão).
-// Pedido explícito do usuário, depois de já ter piso/fundo: "quero que tenha texturas nos módulos 3D, textura de pedra, aquelas
-// lajota... de grama, de madeira, carpete bege clarinho quase branco, carpete verde escuro também... pensa que é pra um decorador
-// de eventos, não é pra um designer de interiores... coisas simples mas que fazem toda diferença" — mais 3 acabamentos (pedra/
-// lajota, e os 2 carpetes), além dos 5 que já existiam. `tiles`/`fiber` são as duas texturas novas que `createFloorCanvas()`
-// sabe desenhar (a de pedra e a de carpete, respectivamente) — `rough` ajusta o quanto cada uma brilha (carpete bem fosco, pedra
-// com um pouco mais de brilho que os outros, os demais mantêm o padrão de antes).
 const FLOORS = [
   { key: "neutral", label: "Piso neutro", color: "#d8d1c7" },
   { key: "wood", label: "Madeira", color: "#8a5a35", planks: true, rough: .8 },
@@ -128,7 +127,7 @@ let lounge = null;
 // que tenha abas, uma aba só pra formatos, uma aba pra itens e uma aba
 // pra ambiente" — "formats" é a aba inicial (era a 1ª seção no layout
 // empilhado antigo).
-let ui = { formatKey: FORMATS[0].key, selection: {}, floorKey: FLOORS[0].key, activeTab: "formats" };
+let ui = { formatKey: BUILTIN_FORMATS[0].key, selection: {}, floorKey: FLOORS[0].key, activeTab: "formats", customFormats: [] };
 let fullscreenHandler = null;
 
 function itemById(id){
@@ -136,19 +135,175 @@ function itemById(id){
   return ctx.items.find((item) => String(item.id) === String(id)) || null;
 }
 
-function matchingItems(pattern){
-  return ctx.items.filter((item) => item.glb && pattern.test(`${item.catLabel || ""} ${item.name || ""}`));
+function matchingItems(role, items = ctx.items){
+  if(role.subSlug) return items.filter(item => item.glb && item.cat === role.catSlug && item.subcat === role.subSlug);
+  if(role.catSlug) return items.filter(item => item.glb && item.cat === role.catSlug);
+  if(role.categoria) return items.filter(item => item.glb && item.catLabel === role.categoria);
+  if(role.itemId) return items.filter(item => item.glb && String(item.id) === String(role.itemId));
+  return items.filter(item => item.glb && role.pattern?.test((item.catLabel || '') + ' ' + (item.name || '')));
+}
+
+// Legacy role keys remain supported for previously saved formats.
+const LEGACY_ROLE_LABELS = { sofa: "Sofá", armchair: "Poltrona", center: "Mesa de centro", side: "Mesa lateral/canto", console: "Aparador" };
+
+// Resolve um papel a partir só da CHAVE salva — usado por
+// toRuntimeFormat() (aplicar um formato custom) e pelo editor (recriar
+// as peças de um formato existente). 3 formatos de chave possíveis, do
+// mais novo pro mais antigo: "sub:<catSlug>:<subSlug>" (subcategoria,
+// ver availableSubcategories() acima — o único que o editor ainda
+// OFERECE hoje), "cat:<slug>" (categoria inteira — formato salvo entre a
+// virada "sem sofá/poltrona fixos" e esta, ainda reconhecido só pra não
+// quebrar quem já tinha salvo assim) e as chaves fixas de
+// LEGACY_ROLE_LABELS (formato salvo antes daquela). Os rótulos buscam o
+// catálogo ATUAL (pode ter mudado desde que o formato foi salvo — nesse
+// caso cai no slug mesmo, melhor que travar). Nenhum papel de formato
+// custom é obrigatório mais — sem âncora fixa, não sobra nenhuma peça
+// que precise necessariamente existir.
+function roleDefinitionForKey(key, items = ctx.items){
+  if(key.startsWith("sub:")){
+    const [, catSlug, subSlug] = key.split(":");
+    const found = items.find((item) => item.cat === catSlug && item.subcat === subSlug);
+    const subLabel = found?.subcatLabel || subSlug;
+    const catLabel = found?.catLabel || catSlug;
+    const duplicated = items.some((item) => item.subcat === subSlug && item.subcatLabel && item.cat !== catSlug);
+    return { key, label: duplicated ? `${subLabel} (${catLabel})` : subLabel, catSlug, subSlug, required: false };
+  }
+  if(key.startsWith("cat:")){
+    const slug = key.slice(4);
+    const found = items.find((item) => item.cat === slug);
+    const label = found?.catLabel || slug;
+    return { key, label, categoria: label, required: false };
+  }
+  if(LEGACY_ROLE_LABELS[key]){
+    return { key, label: LEGACY_ROLE_LABELS[key], pattern: ROLE_DEFS[key]?.pattern || /(?:)/, required: false };
+  }
+  return null;
+}
+
+// ---------- Formatos custom (criados pela pessoa no editor) ----------
+
+function groupPapeisByRole(papeis){
+  const grouped = {};
+  (Array.isArray(papeis) ? papeis : []).forEach((piece) => {
+    if(!piece?.role) return;
+    if(!grouped[piece.role]) grouped[piece.role] = [];
+    grouped[piece.role].push(piece);
+  });
+  return grouped;
+}
+
+// Área virtual (metros) que o diagrama 2D do editor representa, em
+// QUALQUER formato custom — antes essa escala vinha do tamanho real do
+// sofá escolhido (só fazia sentido enquanto sofá era uma âncora
+// obrigatória); sem âncora, uma composição genérica (lounge, mesa de
+// destaque, qualquer coisa) precisa de um espaço de referência FIXO.
+// Valores calibrados pra ficar na mesma ordem de grandeza do que o
+// "Lounge compacto" embutido já ocupava (um sofá típico de 1,8–2,4m
+// produzia spanX de 4,5–6m/spanZ de 4–4,75m ali).
+const DIAGRAM_SPAN_X = 6;
+const DIAGRAM_SPAN_Z = 5;
+
+// Converte um registro salvo (banco) num formato "de verdade" pro resto do
+// módulo consumir — mesma forma de BUILTIN_FORMATS[0] (key/title/
+// description/roles/layout()), só que os papéis e o layout vêm dos dados
+// salvos, não de código fixo. `layout()` usa a MESMA fórmula de conversão
+// diagrama→3D já usada no preset "Lounge compacto" do Estúdio de
+// Ambientes (diagramPlacement() em catalogo-studio3d.mjs — copiada aqui,
+// não importada, mesmo motivo de sempre), só que com a área FIXA acima em
+// vez de escalar pelo tamanho de uma peça-âncora: posição normalizada
+// (0–1) no diagrama vira metros dentro dessa área.
+function toRuntimeFormat(record, items = ctx.items){
+  const grouped = groupPapeisByRole(record.papeis);
+  const roles = Object.entries(grouped).map(([key, pieces]) => {
+    const piece = pieces[0];
+    return piece.version === 2 ? { key, label: piece.label || "Móvel", catSlug: piece.cat, subSlug: piece.subcat, itemId: piece.item_id, required: false } : roleDefinitionForKey(key, items);
+  }).filter(Boolean);
+  return {
+    key: `custom:${record.id}`,
+    title: record.nome,
+    description: record.equipe ? "Formato criado pela equipe." : "Formato criado por você.",
+    roles,
+    custom: true,
+    recordId: record.id,
+    ownerId: record.cliente_id || null,
+    isTeamFormat: Boolean(record.equipe),
+    rawPapeis: record.papeis,
+    layout(){
+      const out = {};
+      Object.entries(grouped).forEach(([role, list]) => {
+        out[role] = list.map((piece) => ({
+          position: piece.version === 2 ? piece.position : [(Number(piece.x) - .5) * DIAGRAM_SPAN_X, 0, (Number(piece.z) - .23) * DIAGRAM_SPAN_Z],
+          rotation: (Number(piece.rotation) || 0) * Math.PI / 180,
+        }));
+      });
+      return out;
+    },
+  };
+}
+
+function allFormats(){
+  return [...BUILTIN_FORMATS, ...ui.customFormats.map(record => toRuntimeFormat(record))];
+}
+
+export function studioFormats(records, items){
+  return [...BUILTIN_FORMATS, ...records.map(record => toRuntimeFormat(record, items))];
+}
+
+export function studioFormatPlacements(format, items){
+  const selected = new Map(format.roles.map(role => {
+    const options = matchingItems(role, items);
+    const item = options.find(item => String(item.id) === String(role.itemId)) ||
+      ((format.custom || role.required) ? options[0] : null);
+    return [role.key, item];
+  }));
+  const sofa = selected.get('sofa');
+  const layout = format.layout(sofa?.dimensions || { width: 1.8, depth: .9 });
+  const placements = [];
+  for(const role of format.roles){
+    const item = selected.get(role.key);
+    if(!item && (format.custom || role.required)) throw new Error(`Nenhum modelo 3D disponível para ${role.label}.`);
+    if(item) (layout[role.key] || []).forEach(placement => placements.push({item, ...placement}));
+  }
+  return placements;
+}
+
+// Só a equipe (sempre) ou o próprio decorador dono (só o dele) podem
+// editar/excluir um formato custom — mesma regra já aplicada no banco
+// (lounge_formato_salvar/excluir), replicada aqui só pra decidir se
+// mostra os botões de ✎/🗑 na lista. O "Lounge compacto" embutido nunca
+// é editável por ninguém.
+function canManageFormat(format){
+  if(!format.custom) return false;
+  if(ctx.acessoInterno) return true;
+  return Boolean(format.ownerId) && Boolean(ctx.clienteId) && String(format.ownerId) === String(ctx.clienteId);
+}
+
+async function loadCustomFormats(){
+  if(!ctx.supabase || !ctx.empresaId) return;
+  try{
+    const { data, error } = await ctx.supabase.rpc("lounge_formatos_listar", {
+      p_token: ctx.token || null, p_empresa_id: ctx.empresaId,
+    });
+    if(error) throw error;
+    ui.customFormats = Array.isArray(data) ? data : [];
+  }catch(error){
+    console.error("Erro ao carregar formatos do lounge:", error);
+    ui.customFormats = [];
+  }
 }
 
 function currentFormat(){
-  return FORMATS.find((format) => format.key === ui.formatKey) || FORMATS[0];
+  return allFormats().find((format) => format.key === ui.formatKey) || BUILTIN_FORMATS[0];
 }
 
 function ensureDefaultSelection(){
   currentFormat().roles.forEach((role) => {
     if(ui.selection[role.key] !== undefined) return;
-    if(role.required){
-      const first = matchingItems(role.pattern)[0];
+    if(role.itemId){
+      const options = matchingItems(role);
+      ui.selection[role.key] = options.find(item => String(item.id) === String(role.itemId))?.id || options[0]?.id || null;
+    }else if(role.required){
+      const first = matchingItems(role)[0];
       ui.selection[role.key] = first ? first.id : null;
     }else{
       ui.selection[role.key] = null;
@@ -159,14 +314,28 @@ function ensureDefaultSelection(){
 // ---------- Markup ----------
 
 function formatsMarkup(){
-  return FORMATS.map((format) => `<button type="button" class="catalog-lounge-format ${format.key === ui.formatKey ? "is-active" : ""}" data-lounge-format="${escapeAttr(format.key)}" aria-pressed="${format.key === ui.formatKey}">
-    <strong>${escapeHtml(format.title)}</strong>
-    <small>${escapeHtml(format.description)}</small>
-  </button>`).join("");
+  return allFormats().map((format) => {
+    const badge = format.custom
+      ? `<em class="catalog-lounge-format-badge">${format.isTeamFormat ? "Da equipe" : "Meu formato"}</em>`
+      : "";
+    const actions = canManageFormat(format) ? `<div class="catalog-lounge-format-actions">
+        <button type="button" class="catalog-lounge-format-action is-danger" data-lounge-format-delete="${escapeAttr(format.key)}" title="Excluir formato" aria-label="Excluir formato ${escapeAttr(format.title)}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg>
+        </button>
+      </div>` : "";
+    return `<div class="catalog-lounge-format-row">
+      <button type="button" class="catalog-lounge-format ${format.key === ui.formatKey ? "is-active" : ""}" data-lounge-format="${escapeAttr(format.key)}" aria-pressed="${format.key === ui.formatKey}">
+        <strong>${escapeHtml(format.title)}</strong>
+        <small>${escapeHtml(format.description)}</small>
+        ${badge}
+      </button>
+      ${actions}
+    </div>`;
+  }).join("");
 }
 
 function rolePickerMarkup(role){
-  const options = matchingItems(role.pattern);
+  const options = matchingItems(role);
   const selectedId = ui.selection[role.key] || "";
   return `<fieldset class="catalog-lounge-role" data-lounge-role="${escapeAttr(role.key)}">
     <legend>${escapeHtml(role.label)}${role.required ? " *" : ""}</legend>
@@ -746,8 +915,18 @@ async function applySelection(){
   const scene = await ensureScene();
   if(!scene) return;
   const format = currentFormat();
-  const sofaItem = itemById(ui.selection.sofa);
-  if(!sofaItem){
+  const activeRoles = new Set(format.roles.map(role => role.key));
+  [...lounge.pieces.keys()].filter(key => !activeRoles.has(key)).forEach(clearRole);
+  // S?ó o "Lounge compacto" embutido ainda depende de uma peça-âncora
+  // (o sofá escolhido) pra escalar o layout — formatos custom usam a área
+  // FIXA de DIAGRAM_SPAN_X/Z (ver toRuntimeFormat()), então não exigem
+  // nenhum papel específico selecionado, só QUALQUER seleção pra não
+  // renderizar uma cena vazia à toa.
+  const sofaItem = format.custom ? null : itemById(ui.selection.sofa);
+  const hasSelection = format.custom
+    ? format.roles.some((role) => ui.selection[role.key])
+    : Boolean(sofaItem);
+  if(!hasSelection){
     format.roles.forEach((role) => clearRole(role.key));
     showEmptyState();
     return;
@@ -755,11 +934,11 @@ async function applySelection(){
   hideEmptyState();
   setLoading(true);
   try{
-    const sofaSize = { width: sofaItem.dimensions?.width || 1.8, depth: sofaItem.dimensions?.depth || 0.9 };
+    const sofaSize = sofaItem ? { width: sofaItem.dimensions?.width || 1.8, depth: sofaItem.dimensions?.depth || 0.9 } : null;
     const layout = format.layout(sofaSize);
     for(const role of format.roles){
       const item = itemById(ui.selection[role.key]);
-      await placeRole(role.key, item, layout[role.key]);
+      await placeRole(role.key, item, layout[role.key] || []);
     }
     // A parede (se já escolhida) acompanha a composição — troca de sofá/
     // formato muda a profundidade real ocupada, ela precisa encostar de
@@ -1013,6 +1192,33 @@ async function renderLoungeWithAI(){
   }
 }
 
+async function deleteCustomFormat(key){
+  const record = ui.customFormats.find((item) => `custom:${item.id}` === key);
+  if(!record) return;
+  // Mesmo padrão de confirmação já usado no resto do catálogo
+  // (catalogo-biblioteca.mjs) — `window.confirmarGlobal` (usado noutras
+  // telas do sistema) nunca é carregado em catalogo.html.
+  if(!window.confirm(`Excluir o formato "${record.nome}"? Essa ação não pode ser desfeita.`)) return;
+  try{
+    const { error } = await ctx.supabase.rpc("lounge_formato_excluir", {
+      p_token: ctx.token || null, p_empresa_id: ctx.empresaId, p_id: record.id,
+    });
+    if(error) throw error;
+    await loadCustomFormats();
+    if(ui.formatKey === key){
+      ui.formatKey = BUILTIN_FORMATS[0].key;
+      ui.selection = {};
+      ensureDefaultSelection();
+      await applySelection();
+      resetCamera();
+    }
+    renderSidebar();
+  }catch(error){
+    console.error("Erro ao excluir formato do lounge:", error);
+    window.catalogNotify?.({ title: "Não foi possível excluir", message: error?.message || "Tente novamente.", status: "error" });
+  }
+}
+
 // ---------- Interações ----------
 
 function bindInteractions(){
@@ -1027,6 +1233,8 @@ function bindInteractions(){
       syncLoungeTabs();
       return;
     }
+    const deleteFormatBtn = event.target.closest("[data-lounge-format-delete]");
+    if(deleteFormatBtn){ deleteCustomFormat(deleteFormatBtn.dataset.loungeFormatDelete); return; }
     const formatBtn = event.target.closest("[data-lounge-format]");
     if(formatBtn){
       if(formatBtn.dataset.loungeFormat === ui.formatKey) return;
@@ -1070,17 +1278,19 @@ function bindInteractions(){
     if(file) applyBackgroundPhoto(file);
     event.target.value = "";
   });
+
 }
 
 // ---------- Ciclo de vida ----------
 
-export function initCatalogLounge({ items, empresaId }){
-  ctx = { items: items || [], empresaId };
+export function initCatalogLounge({ items, empresaId, supabase, token, clienteId, acessoInterno }){
+  ctx = { items: items || [], empresaId, supabase, token: token || null, clienteId: clienteId || null, acessoInterno: Boolean(acessoInterno) };
   bindInteractions();
 }
 
 export async function openCatalogLounge(){
-  ui = { formatKey: FORMATS[0].key, selection: {}, floorKey: FLOORS[0].key, activeTab: "formats" };
+  ui = { formatKey: BUILTIN_FORMATS[0].key, selection: {}, floorKey: FLOORS[0].key, activeTab: "formats", customFormats: [] };
+  await loadCustomFormats();
   ensureDefaultSelection();
   renderSidebar();
   syncBackgroundControls();

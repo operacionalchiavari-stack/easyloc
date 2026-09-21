@@ -51,7 +51,7 @@ const chave=(page,texto)=>page.locator('.lay-chave',{hasText:texto});
  await page.locator('[data-cpj="layouts"]').click();
  await page.locator('.lay-vazio').waitFor();
  assert.match(await page.locator('.cpj-head h2').textContent(),/Layouts de apresentação/);
- assert.equal(await page.locator('.lay-modelo').count(),6,'Sem layouts ainda: 6 modelos prontos pra começar');
+ assert.equal(await page.locator('.lay-modelo').count(),7,'Sem layouts ainda: 7 estilos prontos para começar');
  await page.screenshot({path:path.join(os.tmpdir(),'lay-1-vazio.png')});
 
  // Criar a partir do "Moderno"

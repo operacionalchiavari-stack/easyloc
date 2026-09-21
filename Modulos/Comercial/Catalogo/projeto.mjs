@@ -9,7 +9,9 @@
 //   • ?modo=editor: a pré-visualização ao vivo dentro do editor de layouts (iframe): recebe os dados uma vez e cada mudança de opção.
 // O layout (projeto-layout.mjs) decide capa, cores, fonte, renderizações, móveis, rodapé e formato do PDF. "Gerar PDF" é a impressão
 // do navegador ("Salvar como PDF") com um @media print próprio: não há biblioteca de PDF no projeto, e o resultado sai idêntico à página.
-import { FONTES, normalizarLayout, temaDaPagina, variaveisCss, regraPagina } from "./projeto-layout.mjs?v=20260921-mais-opcoes";
+import { FONTES, normalizarLayout, temaDaPagina, variaveisCss, regraPagina } from "./projeto-layout.mjs?v=20260922-designer";
+import { iniciarNavegacao } from "./projeto-navegacao.mjs?v=20260922-designer";
+let limparNavegacao = () => {};
 
 const supabase = window.supabaseClient;
 const app = document.getElementById("app");
@@ -122,6 +124,7 @@ function aplicarTema(layout, decorador){
 
 // ---------------------------------------------------------------------------------------------------------------
 function renderizar(){
+  limparNavegacao();
   const { projeto, itens, decorador, empresa } = estado.payload;
   const layout = layoutAtual();
   aplicarTema(layout, decorador);
@@ -140,6 +143,7 @@ function renderizar(){
   const primeiraRender = ambientes.flatMap((amb) => amb.renders).find((render) => render.url)?.url || "";
   const fotoCasal = projeto.foto_casal || "";
   const c = layout.capa, pg = layout.pagina, a = layout.ambientes, m = layout.moveis, r = layout.rodape;
+  const fluxo = pg.navegacao === 'escondida' ? 'continuo' : pg.fluxo;
   document.title = `${projeto.noivos} — Projeto do evento`;
 
   // Foto da capa: "foto" usa a 1ª renderização de fundo; "lateral" usa a renderização (ou, sem ela, a foto dos noivos) ao lado do texto.
@@ -156,7 +160,7 @@ function renderizar(){
   const quantidade = (quantidade, posicao) => `<b class="pj-qty" data-pos="${posicao}" aria-label="Quantidade">× ${quantidade}</b>`;
   const cartaoMovel = ({ item, quantidade: qtd }, idx) => `
     <article class="pj-piece pj-reveal" style="--i:${idx % 8}">
-      <div class="pj-piece-photo">${item.foto_url ? `<img src="${escapeAttr(otimizarFoto(item.foto_url, 560))}" alt="${escapeAttr(item.nome)}" loading="lazy" decoding="async">` : ""}</div>
+      <div class="pj-piece-photo">${item.foto_url ? `<img src="${escapeAttr(otimizarFoto(item.foto_url, 560))}" alt="${escapeAttr(item.nome)}" loading="lazy" decoding="async">` : `<span class="pj-photo-empty">Imagem em breve</span>`}</div>
       <div class="pj-piece-body">
         <strong>${escapeHtml(item.nome || "Item")}</strong>
         ${m.quantidade && m.posicaoQuantidade === "nome" ? quantidade(qtd, "nome") : ""}
@@ -170,6 +174,8 @@ function renderizar(){
   const moveisDoAmbiente = (amb) => amb.linhas.length ? `<div class="pj-furniture">${a.tituloMoveis ? `<h3>${escapeHtml(a.tituloMoveis)}</h3>` : ""}<div class="pj-grid">${amb.linhas.map(cartaoMovel).join("")}</div></div>` : "";
 
   const raizAttrs = {
+    fluxo, movimento: pg.movimento,
+    identidade: pg.identidade,
     modo, capa: c.estilo, alinhamento: c.alinhamento, fundo: c.fundo, moveis: m.estilo, renders: a.renders,
     pagina: a.umaPorPagina ? "uma" : "corrida", orientacao: layout.pdf.orientacao, "capa-pagina": layout.pdf.capaPaginaInteira ? "cheia" : "corrida",
     nav: pg.navegacao, "nav-estilo": pg.navegacaoEstilo, divisoria: pg.divisoria, efeito: pg.efeitoFotos ? "1" : "0",
@@ -183,7 +189,8 @@ function renderizar(){
   const listaNav = pg.navegacao !== "escondida" && ambientes.length;
   const botaoPdf = modo !== "previa" && pg.mostrarBotaoPdf;
   const nav = listaNav || botaoPdf ? `<nav class="pj-nav" aria-label="Ambientes">
-      ${listaNav ? `<div class="pj-nav-list">${ambientes.map((amb, i) => `<a href="#amb-${i}">${escapeHtml(amb.nome)}</a>`).join("")}</div>` : ""}
+      <a class="pj-nav-brand" href="#inicio">${escapeHtml(projeto.noivos)}</a>
+      ${listaNav ? `<div class="pj-nav-list"><a href="#inicio">Visão geral</a>${ambientes.map((amb, i) => `<a href="#amb-${i}">${escapeHtml(amb.nome)}</a>`).join("")}</div>` : ""}
       ${botaoPdf ? `<button type="button" class="pj-btn pj-btn-outline" id="pjPdf">Baixar PDF</button>` : ""}
     </nav>` : "";
 
@@ -197,7 +204,8 @@ function renderizar(){
       </select></label>
       <button type="button" class="pj-btn pj-btn-toolbar" id="pjPdf">Gerar PDF</button>
     </div>` : ""}
-    <header class="pj-cover${fundoFoto ? " has-photo" : ""}${escuro ? " is-dark" : ""}">
+    ${nav}
+    <header id="inicio" class="pj-cover${fundoFoto ? " has-photo" : ""}${escuro ? " is-dark" : ""}">
       ${fundoFoto ? `<img class="pj-cover-photo" src="${escapeAttr(otimizarFoto(fundoFoto, 1920, 80))}" alt="" fetchpriority="high">` : ""}
       <div class="pj-cover-shade"></div>
       ${c.moldura ? `<span class="pj-cover-frame" aria-hidden="true"></span>` : ""}
@@ -212,13 +220,16 @@ function renderizar(){
           ${c.mostrarLocal ? `<p class="pj-cover-place">${escapeHtml(projeto.local_evento)}</p>` : ""}
           ${c.subtitulo ? `<p class="pj-cover-sub">${escapeHtml(c.subtitulo)}</p>` : ""}
         </div>
-        ${c.mostrarRolagem ? `<a class="pj-scroll" href="#pjConteudo" aria-label="Ver o projeto"><span>Ver o projeto</span><i aria-hidden="true"></i></a>` : ""}
+        ${c.mostrarRolagem ? `<a class="pj-scroll" href="${pg.fluxo === "ambientes" && ambientes.length ? '#amb-0' : '#pjConteudo'}" aria-label="Explorar os ambientes"><span>Explorar os ambientes</span><span aria-hidden="true">↗</span></a>` : ""}
       </div>
       ${c.estilo === "lateral" ? `<div class="pj-cover-media">${fotoLateral ? `<img src="${escapeAttr(otimizarFoto(fotoLateral, 1400, 80))}" alt="" fetchpriority="high">` : ""}</div>` : ""}
     </header>
-    ${nav}
     <main id="pjConteudo" class="pj-content">
-      ${layout.resumo ? `<section class="pj-intro pj-reveal"><p>${ambientes.length ? `${ambientes.length} ${ambientes.length === 1 ? "ambiente" : "ambientes"}${totalItens ? ` · ${totalItens} ${totalItens === 1 ? "peça" : "peças"} selecionadas` : ""}` : "Projeto em preparação"}</p></section>` : ""}
+      ${layout.resumo ? `<section class="pj-intro pj-reveal">
+        <div class="pj-intro-heading"><span class="pj-eyebrow">O seu projeto</span><h2>${escapeHtml(layout.conteudo.titulo)}</h2><p class="pj-intro-copy">${escapeHtml(layout.conteudo.introducao)}</p></div>
+        <div class="pj-intro-details"><p>${ambientes.length ? `${ambientes.length} ${ambientes.length === 1 ? "ambiente" : "ambientes"}${totalItens ? ` · ${totalItens} ${totalItens === 1 ? "peça" : "peças"} selecionadas` : ""}` : "Projeto em preparação"}</p>
+        ${ambientes.length ? `<div class="pj-chapters">${ambientes.map((amb, i) => `<a href="#amb-${i}">${amb.renders[0]?.url ? `<img src="${escapeAttr(otimizarFoto(amb.renders[0].url, 200))}" alt="" loading="lazy">` : `<span class="pj-chapter-number">${String(i + 1).padStart(2, "0")}</span>`}<strong>${escapeHtml(amb.nome)}</strong><span aria-hidden="true">↗</span></a>`).join("")}</div>` : ""}</div>
+      </section>` : ""}
       ${ambientes.map((amb, i) => {
         const pecas = amb.linhas.reduce((s, l) => s + l.quantidade, 0);
         const blocos = [rendersDoAmbiente(amb, i), moveisDoAmbiente(amb)];
@@ -228,6 +239,7 @@ function renderizar(){
         <header class="pj-amb-head pj-reveal">${a.numeracao ? `<span class="pj-amb-num">${String(i + 1).padStart(2, "0")}</span>` : ""}<h2>${escapeHtml(amb.nome)}</h2>${a.contagem && pecas ? `<span class="pj-amb-count">${pecas} ${pecas === 1 ? "peça" : "peças"}</span>` : ""}</header>
         ${a.notas && (amb.notas || "").trim() ? `<p class="pj-amb-notes pj-reveal">${escapeHtml(amb.notas).replace(/\n/g, "<br>")}</p>` : ""}
         ${blocos.join("")}
+        <div class="pj-environment-next"><a href="#inicio">← Visão geral</a>${ambientes[i + 1] ? `<a href="#amb-${i + 1}">Próximo ambiente · ${escapeHtml(ambientes[i + 1].nome)} ↗</a>` : ""}</div>
       </section>`;
       }).join("")}
     </main>
@@ -248,6 +260,7 @@ function renderizar(){
     renderizar();
   });
   configurarRevelacao();
+  limparNavegacao = iniciarNavegacao(app.querySelector('.pj-root'), { fluxo, movimento: pg.movimento, editor: modo === 'editor' });
   if(estado.primeira && modo !== "editor") window.scrollTo(0, 0); else window.scrollTo(0, rolagem);
   estado.primeira = false;
 }
@@ -290,7 +303,10 @@ function configurarEfeitosDeRolagem(){
   const atualizar = () => {
     ticking = false;
     document.querySelector(".pj-nav")?.classList.toggle("is-scrolled", window.scrollY > 40);
-    if(semMovimento) return;
+    if(semMovimento || document.querySelector('.pj-root')?.dataset.movimento === 'nenhum') {
+      document.documentElement.style.setProperty('--pj-parallax', '0px');
+      return;
+    }
     const cover = document.querySelector(".pj-cover");
     if(!cover) return;
     const altura = cover.getBoundingClientRect().height;
@@ -369,6 +385,8 @@ function iniciarPrevia(){
     }else if(msg.tipo === "pj-layout" && estado.payload){
       estado.rascunho = msg.layout || null;
       renderizar();
+    }else if(msg.tipo === "pj-imprimir" && estado.payload){
+      imprimir();
     }else if(msg.tipo === "pj-erro"){
       telaMensagem("Não foi possível carregar", String(msg.mensagem || "Tente novamente."));
     }

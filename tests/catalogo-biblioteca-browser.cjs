@@ -39,6 +39,16 @@ const {chromium}=require('playwright');const express=require('express');const as
  await page.locator('.catalog-gateway').waitFor();
  await page.locator('[data-gateway-tile="biblioteca"]').click();
  await page.locator('#catalogBiblioteca:not(.hidden)').waitFor();
+ await page.locator('[data-library-folder]').first().waitFor();
+ const centroPastas = await page.evaluate(() => {
+   const area = document.querySelector('#catalogBibliotecaFolders > .catalog-grid-wrap').getBoundingClientRect();
+   const cards = [...document.querySelectorAll('[data-library-folder]')].map(el => el.getBoundingClientRect());
+   return { x: (Math.min(...cards.map(r => r.left)) + Math.max(...cards.map(r => r.right))) / 2,
+     y: (Math.min(...cards.map(r => r.top)) + Math.max(...cards.map(r => r.bottom))) / 2,
+     esperadoX: area.left + area.width / 2, esperadoY: area.top + area.height / 2 };
+ });
+ assert.ok(Math.abs(centroPastas.x - centroPastas.esperadoX) < 2, 'Pastas centralizadas horizontalmente');
+ assert.ok(Math.abs(centroPastas.y - centroPastas.esperadoY) < 2, 'Pastas centralizadas verticalmente');
  assert.equal(await page.locator('#catalogGrid').isVisible(),false,'Grade de produtos some quando a Biblioteca abre');
  assert.equal(await page.locator('[data-library-folder]').count(),2,'Uma pasta por categoria existente (Sofás, Bares)');
  const sofaMeta=await page.locator('[data-library-folder="sofas"] .catalog-grid-card-meta').textContent();

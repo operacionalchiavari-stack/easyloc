@@ -1,5 +1,5 @@
 .catalog-studio{height:calc(100svh - var(--header-h));min-height:680px;display:grid;grid-template-columns:270px minmax(0,1fr);background:#fff;color:var(--ink)}
-.studio-library{display:flex;flex-direction:column;min-height:0;padding:30px 22px;border-right:1px solid var(--line);background:#fff}
+.studio-library{display:flex;flex-direction:column;min-height:0;padding:30px 22px;border-right:1px solid var(--line);background:#fff;overflow:hidden}
 .studio-library-heading{display:flex;flex-direction:column;gap:5px;margin-bottom:22px}.studio-library-heading span,.studio-scene-title span{font-family:"Cormorant Garamond",serif;font-size:1.75rem}.studio-library-heading small,.studio-scene-title small{color:var(--muted);font-size:.844rem;letter-spacing:.08em}
 .studio-library-search{display:block;margin-bottom:18px;border-bottom:1px solid var(--line)}.studio-library-search input{width:100%;height:34px;border:0;outline:0;background:transparent;color:var(--ink);font:400 .875rem "Manrope",sans-serif}
 .studio-library-list{display:flex;flex-direction:column;gap:9px;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
@@ -52,7 +52,47 @@
 .studio-preset-card p{color:#736960}
 .studio-preset-card #studioPresetFields{display:grid;gap:18px;margin:22px 0}
 .studio-preset-card label{display:grid;gap:6px;font:600 14px Manrope,sans-serif;color:#574e46}
-.studio-preset-card select{min-width:0;padding:10px;border:1px solid #cfc5b7;background:#fff}
+.studio-preset-card select,.studio-preset-card input{min-width:0;padding:10px;border:1px solid #cfc5b7;background:#fff;font:inherit}
+#studioFormatForm label{margin:22px 0}
+.studio-library-tabs{display:flex;gap:6px;margin-bottom:22px;border-bottom:1px solid #ded5c9;padding-bottom:10px}
+.studio-library-tabs button{flex:1;border:0;border-radius:8px;background:transparent;padding:11px 8px;font:600 14px Manrope,sans-serif;color:#72695e;cursor:pointer}
+.studio-library-tabs button[aria-selected="true"]{background:#5b5c54;color:#fff}
+#studioFormatsList{display:grid;gap:10px;margin-top:22px}
+#studioFormatsList button{width:100%;text-align:left}
+#studioFormatsList .studio-format-card{display:flex;flex-direction:column;gap:12px;padding:14px;overflow:hidden}
+.studio-format-card img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;background:#f6f4f0;border-radius:7px;color:#827567;font-size:12px}
+.studio-format-card img[aria-busy="true"]{opacity:.45}
+.studio-format-preview{position:relative;display:grid;place-items:center;width:100%;aspect-ratio:4/3;background:#f6f4f0;border-radius:7px;overflow:hidden}
+.studio-format-preview img[hidden]{display:none}
+.studio-format-spinner{width:20px;height:20px;border:2px solid #dfd7cb;border-top-color:#8b7050;border-radius:50%;animation:studio-format-spin .8s linear infinite}
+@keyframes studio-format-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.studio-format-spinner{animation:none}}
+.studio-formats-pages{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px;font-size:13px;color:#72695e}
+.studio-formats-pages[hidden]{display:none}
+.studio-formats-pages button{border:1px solid #ded5c9;border-radius:8px;background:#fff;width:36px;height:36px;font-size:22px;cursor:pointer}
+.studio-formats-pages button:disabled{opacity:.35;cursor:default}
+#studioFormatsStatus{font-size:13px;line-height:1.6;color:#827567}
+#studioSaveFormatButton{flex-basis:100px;background:#f3ece2;color:#6f5944}
+#studioSwapItemButton{flex-basis:98px}
+/* Pedido explícito do usuário, com print: "esse modal pode ser bem mais
+   compacto" — este diálogo só tem kicker+título+descrição+1 campo+botão
+   (bem menos conteúdo que Montagem automática/Trocar item, que também
+   usam .studio-preset-dialog e continuam largos de propósito) — sem esse
+   scoped override ele herdava os mesmos min(1040px,...) daqueles dois,
+   sobrando bastante vão vazio dos lados. Seletor com as 2 classes juntas
+   (não só .studio-format-dialog sozinho) pra garantir que vence a regra
+   base de largura mesmo se a ordem no arquivo mudar algum dia. */
+.studio-preset-dialog.studio-format-dialog{width:min(440px,94vw)}
+.studio-format-dialog .studio-preset-card{padding:28px}
+.studio-swap-dialog .studio-preset-card{max-width:1040px}
+.studio-swap-columns{display:grid;grid-template-columns:260px minmax(0,1fr);gap:26px;align-items:start;margin-top:18px}
+.studio-swap-col-heading{display:block;margin-bottom:10px;color:#8a7d71;font:700 .781rem "Manrope",sans-serif;letter-spacing:.08em;text-transform:uppercase}
+#studioSwapCurrentList{display:flex;flex-direction:column;gap:7px;max-height:56vh;overflow-y:auto;padding-right:6px}
+#studioSwapCurrentList .studio-library-item.is-active{border-color:#a77e4e;background:#faf4eb;box-shadow:0 0 0 2px #d8b88e}
+#studioSwapCurrentList .studio-library-item b{color:#a77e4e}
+#studioSwapList{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;max-height:56vh;overflow-y:auto;padding-right:6px}
+@media(max-width:760px){.studio-swap-columns{grid-template-columns:1fr}#studioSwapCurrentList{flex-direction:row;overflow-x:auto;overflow-y:hidden;max-height:none}#studioSwapCurrentList .studio-library-item{flex:0 0 200px}}
+@media(max-width:620px){#studioSwapList{grid-template-columns:1fr}}
 .studio-preset-close{position:absolute;right:14px;top:12px;border:0;background:none;font-size:24px;cursor:pointer}
 .studio-preset-submit{width:100%;padding:13px;border:0;background:#5e5e57;color:white;cursor:pointer}
 .studio-picker{min-width:0;margin:0;padding:0 0 17px;border:0;border-bottom:1px solid #ded5ca}.studio-picker-heading{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:10px}.studio-picker-heading>div{display:flex;align-items:baseline;gap:9px}.studio-picker legend{font:600 15.5px "Cormorant Garamond",serif;color:#332b25}.studio-picker-heading small{color:#91877d;font-size:13px}.studio-picker-search{display:flex!important;grid-template-columns:auto 1fr!important;align-items:center;gap:6px!important;width:min(270px,45%);padding:8px 10px;border:1px solid #d7cdc0;border-radius:999px;background:#fff}.studio-picker-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;font:500 14px Manrope,sans-serif}.studio-picker-items{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 9px;scrollbar-width:thin}.studio-picker-card{position:relative!important;display:grid!important;flex:0 0 142px;grid-template-rows:108px auto;gap:7px!important;overflow:hidden;padding:0 0 9px;border:1px solid #ded5ca;border-radius:11px;background:#fff;cursor:pointer}.studio-picker-card input{position:absolute;opacity:0;pointer-events:none}.studio-picker-card img{width:100%;height:108px;object-fit:contain;background:#fff}.studio-picker-card>span{overflow:hidden;padding:0 9px;color:#423932;font-size:13.5px;line-height:1.25;white-space:nowrap;text-overflow:ellipsis}.studio-picker-card>b{display:none;position:absolute;top:7px;right:7px;padding:4px 6px;border-radius:999px;background:#5e5e57;color:#fff;font-size:12px;letter-spacing:.04em}.studio-picker-card:has(input:checked){border-color:#a77e4e;box-shadow:0 0 0 2px #d8b88e}.studio-picker-card:has(input:checked)>b{display:block}.studio-picker-none{place-items:center;grid-template-rows:1fr;background:#fff;border-style:dashed}.studio-picker-none>span{white-space:normal;text-align:center}.studio-picker-empty{align-self:center;margin:auto;color:#8b8178;font-size:13.5px}.studio-preset-quantity{width:min(260px,100%)}
@@ -66,6 +106,21 @@
 
 /* Barra compacta organizada por categorias. */
 .studio-workspace{grid-template-rows:74px minmax(0,1fr) 34px}
+#studioItemsPanel:not([hidden]),#studioFormatsPanel:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.studio-library-tabs,.studio-library-search,.studio-formats-pages,#studioFormatsStatus{flex-shrink:0}
+#studioLibraryList,#studioFormatsList{flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#b9a58c #f5f2ed;padding-right:6px}
+#studioFormatsList{align-content:start;grid-auto-rows:max-content;margin-top:0}
+.studio-format-preview{flex-shrink:0}
+#studioLibraryList>*{flex-shrink:0}
+#studioFormatsList::-webkit-scrollbar,#studioLibraryList::-webkit-scrollbar{width:7px}
+#studioFormatsList::-webkit-scrollbar-thumb,#studioLibraryList::-webkit-scrollbar-thumb{background:#b9a58c;border-radius:8px}
+#studioFormatsList::-webkit-scrollbar-track,#studioLibraryList::-webkit-scrollbar-track{background:#f5f2ed;border-radius:8px}
+#studioFormatsStatus:empty{display:none}
+@media(min-width:621px){
+  .catalog-studio{grid-template-rows:minmax(0,1fr)}
+  .catalog-studio .studio-library{margin-top:0;margin-bottom:48px;padding-top:0;padding-bottom:0}
+  .catalog-studio .studio-library-tabs{height:74px;box-sizing:border-box;align-items:center;margin-bottom:0;padding-bottom:0}
+}
 .studio-toolbar{position:relative;z-index:20;display:flex;align-items:center;gap:10px;min-width:0}
 .studio-floor-plan{display:flex;flex:1 1 auto;align-items:center;gap:8px;overflow:visible}
 .studio-tool-menu{position:relative;flex:0 0 auto}

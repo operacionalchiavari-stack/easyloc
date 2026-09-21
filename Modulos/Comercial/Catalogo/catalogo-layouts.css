@@ -2,15 +2,21 @@
    linguagem de catalogo-projetos.css (.cpj-*) — só o que é próprio dos layouts mora aqui. Piso de 12px em qualquer texto. */
 
 /* Miniatura de capa (desenhada em CSS a partir das opções do layout) */
-.lay-thumb{position:relative;display:block;width:100%;aspect-ratio:3/4;overflow:hidden;border:1px solid var(--line);border-radius:8px;background:var(--lay-fundo,#f7f3ec);color:var(--lay-ink,#251e19)}
+.lay-thumb{position:relative;display:block;width:100%;aspect-ratio:4/3;overflow:hidden;border:1px solid var(--line);border-radius:8px;background:var(--lay-fundo,#f7f3ec);color:var(--lay-ink,#251e19)}
 .lay-thumb-media{position:absolute;display:none}
 .lay-thumb[data-capa="foto"] .lay-thumb-media{display:block;inset:0;background:linear-gradient(160deg,#8b7a66,#3d342b)}
 .lay-thumb[data-capa="lateral"] .lay-thumb-media{display:block;top:0;right:0;bottom:0;width:44%;background:linear-gradient(160deg,#a8957d,#5c4d3c)}
-.lay-thumb-texto{position:absolute;left:12%;right:12%;top:40%;display:grid;gap:6px;justify-items:center}
+.lay-thumb-texto{position:absolute;left:9%;right:9%;top:14%;display:grid;gap:8px;justify-items:center}
 .lay-thumb[data-alinhamento="esquerda"] .lay-thumb-texto{justify-items:start}
 .lay-thumb[data-capa="lateral"] .lay-thumb-texto{right:52%;left:9%}
-.lay-thumb b{display:block;width:72%;height:7px;border-radius:2px;background:currentColor}
-.lay-thumb em{display:block;width:42%;height:3px;background:var(--lay-destaque,#b99a72)}
+.lay-thumb b{display:block;font:400 clamp(24px,2.2vw,32px)/.95 var(--lay-fonte,serif);letter-spacing:-.04em}
+.lay-thumb em{display:block;font:500 12px/1.2 "Manrope",sans-serif;letter-spacing:.04em}
+.lay-thumb .lay-thumb-texto small{color:inherit;font:500 12px/1 "Manrope",sans-serif;letter-spacing:.12em}
+.lay-thumb-bottom{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;padding:12px;background:var(--lay-fundo);color:var(--lay-bottom-ink);font:500 12px "Manrope",sans-serif;letter-spacing:.1em}
+.lay-thumb[data-identidade="romantico"] .lay-thumb-media{top:12%;right:6%;bottom:20%;width:38%;border-radius:90px 90px 4px 4px;background:linear-gradient(145deg,#dab2a8,#887064)}
+.lay-thumb[data-identidade="romantico"] b{font-style:italic}
+.lay-thumb[data-identidade="vibrante"] .lay-thumb-media{top:8%;right:5%;bottom:20%;width:40%;border-radius:50px 10px 10px 10px;background:linear-gradient(130deg,#a33b21,#e8b887)}
+.lay-thumb[data-identidade="vibrante"] b{font-weight:700}
 .lay-thumb s{display:block;width:58%;height:2px;background:currentColor;opacity:.55}
 
 /* Lista */
@@ -26,7 +32,7 @@
 .lay-vazio{display:grid;justify-items:center;gap:10px;padding:56px 20px;border:1px dashed var(--line);border-radius:18px;text-align:center}
 .lay-vazio>strong{font:600 1.7rem/1.1 "Cormorant Garamond",serif}
 .lay-vazio>span{max-width:520px;color:var(--muted);font-size:.9rem;line-height:1.55}
-.lay-modelos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,190px));justify-content:center;gap:14px;margin-top:18px;width:100%}
+.lay-modelos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));justify-content:center;gap:22px;margin-top:30px;width:100%;max-width:1200px}
 .lay-modelo{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s}
 .lay-modelo:hover{border-color:var(--accent);box-shadow:0 10px 26px rgba(37,30,25,.08)}
 .lay-modelo strong{font:600 .95rem "Manrope",sans-serif}
@@ -93,3 +99,20 @@
   .lay-head{gap:10px}
 }
 @media(prefers-reduced-motion:reduce){.lay-card,.lay-chave-trilho,.lay-chave-trilho::after,.lay-seg span{transition:none}}
+
+/* Assistente de direção de arte, antes dos ajustes manuais. */
+.lay-designer{padding:26px;border:1px solid #ded9ef;border-radius:20px;background:linear-gradient(145deg,#f2eff9,#fff9f2);color:#292137;margin-bottom:28px}
+.lay-designer-badge{font:700 12px/1.5 "Manrope",sans-serif;letter-spacing:.13em;color:#62537a}
+.lay-designer h2{font:500 30px/1.05 "Cormorant Garamond",serif;letter-spacing:-.025em;margin:16px 0}
+.lay-designer p{font-size:13px;line-height:1.7}
+.lay-designer-brief{display:grid;gap:16px;margin-top:24px}
+.lay-designer label{display:grid;gap:8px;font-size:13px;font-weight:600}
+.lay-designer textarea,.lay-designer select{box-sizing:border-box;width:100%;min-width:0;padding:12px;border:1px solid #d8cfdf;border-radius:10px;background:#fff;color:#292137;font:400 14px/1.6 "Manrope",sans-serif}
+.lay-designer textarea{resize:vertical;min-height:130px}
+.lay-designer textarea:focus,.lay-designer select:focus{outline:2px solid #8e769f;outline-offset:2px}
+.lay-designer .cpj-btn{min-height:44px;white-space:normal}
+.lay-designer-status{margin:0;min-height:44px;color:#63596d}
+.lay-designer-result{border-top:1px solid #d8cfdf;padding-top:22px;margin-top:22px}
+.lay-designer-result[hidden]{display:none}
+.lay-designer-result h3{font:500 24px "Cormorant Garamond",serif;margin:12px 0}
+.lay-designer-actions{display:flex;flex-wrap:wrap;gap:8px}

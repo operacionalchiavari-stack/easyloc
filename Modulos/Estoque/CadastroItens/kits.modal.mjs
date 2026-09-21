@@ -23,6 +23,22 @@ function kits_mostrarLista(){
   document.querySelector(".container")?.classList.remove("hidden");
 }
 
+/* ===============================
+   ABAS (Dados do Kit / Galeria)
+=============================== */
+
+window.kits_abrirAba = function(aba){
+
+  document.querySelectorAll("#kitsModal .kit-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.kitTab === aba);
+  });
+
+  document.querySelectorAll("#kitsModal .kit-tab-panel").forEach((painel) => {
+    painel.classList.toggle("active", painel.dataset.kitPanel === aba);
+  });
+
+};
+
 window.kits_openAdd = async function(){
 
   const modal = document.getElementById("kitsModal");
@@ -33,6 +49,7 @@ window.kits_openAdd = async function(){
   }
 
 kits_mostrarTela();
+kits_abrirAba("dados");
 
 const titulo = document.getElementById("kitModalTitulo");
 if(titulo) titulo.textContent = "Novo Kit";
@@ -52,6 +69,13 @@ await kits_carregarItens();
   document.getElementById("kitProduto").value="";
   document.getElementById("kitMaterial").value="";
   document.getElementById("kitCor").value="";
+
+  // Fotos de detalhe/ambientada e modelo 3D (GLB) usam os mesmos módulos
+  // globais já carregados pra Item/Componente (itens.foto.mjs/itens.3d.mjs)
+  // — aqui só garantem que a tela de "Novo Kit" nunca herde arquivo/preview
+  // deixado por um kit editado antes.
+  window.itens_resetarFotosAdicionais?.();
+  window.itens_3d_reset?.();
 
   kits_addItem();
 
@@ -98,6 +122,9 @@ window.kits_closeModal = function(){
   if(img){
     img.src = img.dataset.placeholder;
   }
+
+  window.itens_resetarFotosAdicionais?.();
+  window.itens_3d_reset?.();
 
 };
 
@@ -512,6 +539,18 @@ if(fileFoto){
 
 }
 
+/* ===============================
+   FOTOS DE DETALHE/AMBIENTADA DO KIT
+   Mesmas tabelas/slots ja usados por
+   Item e Componente (itens.foto.mjs).
+=============================== */
+
+const fotosAdicionaisOk = await window.itens_salvarFotosAdicionais?.(kitId, empresaId);
+
+if(fotosAdicionaisOk === false){
+  alerta("O kit foi salvo, mas as fotos de detalhe/ambientada não puderam ser gravadas. Tente enviá-las novamente.", "Erro");
+}
+
   const rows = document.querySelectorAll(".kit-item-row");
 
 for(const row of rows){
@@ -739,6 +778,7 @@ window.kits_openEdit = async function(kitId){
   if(!modal) return;
 
   kits_mostrarTela();
+  kits_abrirAba("dados");
 
   await kits_carregarItens();
 
@@ -793,6 +833,16 @@ if(error){
     img.src = kit.foto_url ||
     "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
   }
+
+  /* ===============================
+     FOTOS DE DETALHE/AMBIENTADA + MODELO 3D
+     Mesmos slots/tabelas de Item e Componente
+     (itens_fotos / itens_modelos_3d) — kit é
+     só mais uma linha de "itens".
+  =============================== */
+
+  window.itens_carregarFotosAdicionais?.(kitId);
+  window.itens_3d_init?.({ itemId: kitId, empresaId });
 
   /* ===============================
      LIMPAR COMPONENTES

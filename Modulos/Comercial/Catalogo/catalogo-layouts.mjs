@@ -7,7 +7,8 @@
 // (sempre passando por normalizarLayout, então nunca fica com valor inválido) e SALVA SOZINHO (debounce), como os projetos: a alteração vale
 // na hora pros projetos que usam aquele layout. A pré-visualização é a própria página projeto.html (?modo=editor) dentro de um iframe:
 // ela recebe os dados uma vez e o rascunho a cada mudança por postMessage — o que se vê aqui é exatamente o que o link/PDF vai mostrar.
-import { FONTES, MODELOS, normalizarLayout, layoutDoModelo, temaDaPagina } from "./projeto-layout.mjs?v=20260921-mais-opcoes";
+import { FONTES, MODELOS, normalizarLayout, layoutDoModelo, temaDaPagina } from "./projeto-layout.mjs?v=20260922-designer";
+import { designerMarkup, ligarDesigner } from './catalogo-designer.mjs?v=20260922-designer';
 
 let H = null;
 const L = {
@@ -15,6 +16,7 @@ const L = {
   edit: null,            // { id, nome, config, padrao } — o layout aberto no editor
   save: "idle", rev: 0, timer: 0, salvando: null,
   payload: null, origemPayload: "", iframe: null, pronto: false,
+  reviewConfig: null,
 };
 
 // Campos do editor: uma lista de grupos → o formulário sai desta tabela (e o teste percorre a mesma). Cada opção de lista usa os mesmos
@@ -68,6 +70,11 @@ export const GRUPOS = [
     SEG("texto.pesoTitulos", "Peso dos títulos", [["leve", "Fino"], ["normal", "Normal"], ["forte", "Forte"]]),
   ] },
   { titulo: "Página", campos: [
+    SEG("pagina.fluxo", "Navegação da landing page", [["ambientes", "Um ambiente por vez"], ["continuo", "Página contínua"]]),
+    SEG("pagina.movimento", "Movimentos e transições", [["suave", "Suaves"], ["expressivo", "Expressivos"], ["nenhum", "Sem movimento"]]),
+    TEXTO("conteudo.titulo", "Título de apresentação", 120),
+    TEXTO("conteudo.introducao", "Texto de apresentação", 600),
+    SEG("pagina.identidade", "Estilo da apresentação", MODELOS.map((m) => [m.chave, m.nome])),
     SEG("pagina.largura", "Largura do conteúdo", [["estreita", "Estreita"], ["normal", "Normal"], ["larga", "Larga"], ["total", "Tela toda"]]),
     SEG("pagina.espaco", "Espaço entre as seções", [["compacto", "Compacto"], ["normal", "Normal"], ["amplo", "Amplo"]]),
     SEG("pagina.cantos", "Cantos das fotos e cartões", [["retos", "Retos"], ["suaves", "Suaves"], ["redondos", "Redondos"], ["muito", "Bem redondos"]]),
@@ -168,8 +175,8 @@ const resumoLayout = (config) => `Capa ${({ foto: "com foto", limpa: "limpa", la
 function miniatura(config){
   const tema = temaDaPagina(config, H.decorador());
   const escuro = tema.capaEscura || config.capa.estilo === "foto";
-  return `<span class="lay-thumb" data-capa="${config.capa.estilo}" data-alinhamento="${config.capa.alinhamento}" style="--lay-fundo:${tema.capaFundo};--lay-ink:${escuro ? "#ffffff" : tema.capaTexto};--lay-destaque:${tema.destaque}" aria-hidden="true">
-    <i class="lay-thumb-media"></i><span class="lay-thumb-texto"><b></b><em></em><s></s></span></span>`;
+  return `<span class="lay-thumb" data-identidade="${config.pagina.identidade}" data-capa="${config.capa.estilo}" data-alinhamento="${config.capa.alinhamento}" style="--lay-fundo:${tema.capaFundo};--lay-bottom-ink:${tema.capaTexto};--lay-ink:${escuro ? "#ffffff" : tema.capaTexto};--lay-destaque:${tema.destaque};--lay-fonte:${attr(FONTES[config.fonte].titulo)}" aria-hidden="true">
+    <i class="lay-thumb-media"></i><span class="lay-thumb-texto"><small>UM DIA ESPECIAL</small><b>Ana &amp;<br>Bruno</b><em>Conheça o projeto ↗</em></span><span class="lay-thumb-bottom">OS AMBIENTES <span>01 — 02 — 03</span></span></span>`;
 }
 
 function cartaoLayout(l){
@@ -303,6 +310,7 @@ export async function abrirEditor(id){
 }
 
 export function pintarEditor(root){
+  L.reviewConfig = null;
   const e = L.edit;
   if(!e){ H.setView("layouts"); return; }
   root.innerHTML = `<div class="cpj-wrap lay-editor" data-lay-editor>
@@ -316,6 +324,7 @@ export function pintarEditor(root){
     </header>
     <div class="lay-corpo">
       <form class="lay-form" data-lay-form autocomplete="off" novalidate>
+        ${designerMarkup()}
         <p class="lay-aviso">As alterações são salvas sozinhas e valem na hora para os projetos que usam este layout.</p>
         ${GRUPOS.map((g) => `<fieldset class="lay-grupo"><legend>${esc(g.titulo)}</legend>${g.campos.map((c) => campoHtml(c, e.config)).join("")}</fieldset>`).join("")}
       </form>
@@ -327,7 +336,24 @@ export function pintarEditor(root){
   </div>`;
   L.iframe = root.querySelector("[data-lay-iframe]");
   pintarEstado();
-  prepararPayload();
+  const dadosProntos = prepararPayload();
+  ligarDesigner(root, {
+    contextId: () => `${L.edit?.id}:${H.projetoAtual()?.id || ''}`,
+    payload: async () => { await dadosProntos; return L.payload; },
+    generate: (body) => H.gerarDesign(body),
+    pdf: () => L.iframe?.contentWindow?.postMessage({ tipo: 'pj-imprimir' }, location.origin),
+    preview: (config) => {
+      L.reviewConfig = config;
+      root.querySelectorAll('.lay-grupo').forEach(fieldset => { fieldset.disabled = Boolean(config); });
+      enviarRascunho();
+    },
+    apply: async ({ design, config }) => {
+      await salvarAgora();
+      const novo = await criar(String(design.nome || 'Design com IA').slice(0,60), config);
+      abrirEditor(novo.id);
+      H.notify({ title: 'Nova apresentação salva', message: 'Seu layout anterior foi preservado. Escolha esta versão em Link e PDF quando estiver pronta.', status: 'done' });
+    },
+  });
 }
 
 // Dados da pré-visualização: o projeto aberto (com as renderizações e móveis de verdade) ou, sem projeto, um exemplo com itens do catálogo.
@@ -386,13 +412,13 @@ function ajustarAlturaPrevia(altura){
 
 function enviarDados(){
   if(!L.iframe?.contentWindow || !L.pronto || !L.payload || !L.edit) return;
-  L.iframe.contentWindow.postMessage({ tipo: "pj-dados", payload: L.payload, rascunho: L.edit.config, layoutId: "" }, location.origin);
+  L.iframe.contentWindow.postMessage({ tipo: "pj-dados", payload: L.payload, rascunho: L.reviewConfig || L.edit.config, layoutId: "" }, location.origin);
 }
 let rafPrevia = 0;
 function enviarRascunho(){
   cancelAnimationFrame(rafPrevia);
   rafPrevia = requestAnimationFrame(() => {
-    if(L.iframe?.contentWindow && L.pronto && L.edit) L.iframe.contentWindow.postMessage({ tipo: "pj-layout", layout: L.edit.config }, location.origin);
+    if(L.iframe?.contentWindow && L.pronto && L.edit) L.iframe.contentWindow.postMessage({ tipo: "pj-layout", layout: L.reviewConfig || L.edit.config }, location.origin);
   });
 }
 

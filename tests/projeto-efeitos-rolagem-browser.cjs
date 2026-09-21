@@ -12,7 +12,7 @@ const itens=[1,2,3,4,5,6].map(n=>({id:String(n),nome:'Item '+n,categoria:'Móvei
 const payload={ok:true,projeto:{noivos:'Ana & Bruno',data_evento:'2027-05-10',local_evento:'Sítio Vale Verde',foto_casal:null,ambientes:[
  {id:'a1',nome:'Cerimônia',notas:'Clima leve.',itens:itens.slice(0,3).map(i=>({item_id:i.id,quantidade:2})),renders:[{id:'r1',url:'https://fixture/storage/v1/object/public/projetos/x/1.png'},{id:'r2',url:'https://fixture/storage/v1/object/public/projetos/x/2.png'}]},
  {id:'a2',nome:'Lounge',notas:'',itens:itens.slice(3,6).map(i=>({item_id:i.id,quantidade:1})),renders:[]},
-]},itens,decorador:{nome:'Kelly Decor',logo_url:null,telefone:'(11) 99999-0000',email:'kelly@decor.com'},empresa:{nome:'Chiavari',logo_url:null},layout:null};
+]},itens,decorador:{nome:'Kelly Decor',logo_url:null,telefone:'(11) 99999-0000',email:'kelly@decor.com'},empresa:{nome:'Chiavari',logo_url:null},layout:{pagina:{fluxo:"continuo"}}};
 const abrir=async(viewport={width:1400,height:900},opts={})=>{
  const context=await browser.newContext({viewport,reducedMotion:opts.reducedMotion?'reduce':'no-preference'});
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
