@@ -2,6 +2,15 @@
 .studio-library{display:flex;flex-direction:column;min-height:0;padding:30px 22px;border-right:1px solid var(--line);background:#fff;overflow:hidden}
 .studio-library-heading{display:flex;flex-direction:column;gap:5px;margin-bottom:22px}.studio-library-heading span,.studio-scene-title span{font-family:"Cormorant Garamond",serif;font-size:1.75rem}.studio-library-heading small,.studio-scene-title small{color:var(--muted);font-size:.844rem;letter-spacing:.08em}
 .studio-library-search{display:block;margin-bottom:18px;border-bottom:1px solid var(--line)}.studio-library-search input{width:100%;height:34px;border:0;outline:0;background:transparent;color:var(--ink);font:400 .875rem "Manrope",sans-serif}
+/* Prateleira de favoritos, sempre visível ao lado de "Itens" (pedido explícito do usuário — ver
+   renderFavoritesShelf em catalogo-studio3d.mjs). Fica com .hidden quando não há nenhum favorito ainda. */
+.studio-favorites{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.studio-favorites.hidden{display:none}
+.studio-favorites-heading{display:block;margin-bottom:9px;color:#8a7d71;font:700 .75rem "Manrope",sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.studio-favorites-list{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.studio-favorite-card{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;padding:0;cursor:pointer}
+.studio-favorite-card img,.studio-favorite-placeholder{display:block;width:64px;height:54px;border-radius:8px;object-fit:cover;background:#f3f1ec}
+.studio-favorite-card span{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.688rem;color:var(--ink)}
 .studio-library-list{display:flex;flex-direction:column;gap:9px;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 .studio-library-item{display:grid;grid-template-columns:64px minmax(0,1fr) 24px;align-items:center;gap:12px;min-height:70px;padding:7px;border:1px solid transparent;border-radius:10px;background:transparent;text-align:left;color:var(--ink);cursor:pointer;transition:background .25s,border-color .25s}.studio-library-item:hover{background:#fff;border-color:var(--line)}.studio-library-item img{width:64px;height:54px;object-fit:contain}.studio-library-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.875rem}.studio-library-item b{font-size:1.1rem;font-weight:300;color:var(--accent)}.studio-library-item.is-loading{cursor:wait;background:rgba(255,255,255,.55);border-color:var(--line);opacity:.82}.studio-library-item.is-loading b{width:17px;height:17px;border:2px solid rgba(185,154,114,.25);border-top-color:var(--accent);border-radius:50%;animation:studio-loading-spin .75s linear infinite}@keyframes studio-loading-spin{to{transform:rotate(360deg)}}
 .studio-library-empty{padding:30px 10px;text-align:center;color:var(--muted);font-size:.875rem;line-height:1.6}
@@ -31,6 +40,10 @@
 .studio-camera-lock{position:relative;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;background:transparent;padding:9px 12px;color:#6e665f;font:600 .813rem "Manrope",sans-serif;letter-spacing:.06em;white-space:nowrap;cursor:pointer}.studio-camera-lock::before{content:"";width:9px;height:7px;border:1.5px solid currentColor;border-radius:2px}.studio-camera-lock::after{content:"";position:absolute;left:15px;top:7px;width:6px;height:6px;border:1.5px solid currentColor;border-bottom:0;border-radius:6px 6px 0 0;transform:translateX(2px) rotate(18deg);transform-origin:left bottom;transition:transform .2s}.studio-camera-lock[aria-pressed="true"]{border-color:var(--accent);background:#fff;color:var(--ink)}.studio-camera-lock[aria-pressed="true"]::after{transform:translateX(0) rotate(0)}
 .studio-environment-button{display:inline-flex;align-items:center;justify-content:center;border-bottom:1px solid var(--accent);padding:8px 2px;color:#625a53;font:600 .813rem "Manrope",sans-serif;letter-spacing:.07em;cursor:pointer;white-space:nowrap}
 .studio-render-button{position:absolute;z-index:18;top:78px;right:42px;border:0;border-radius:999px;background:#5a5a55;color:#fff;padding:12px 20px;box-shadow:0 8px 24px rgba(38,32,27,.18);font:600 .844rem "Manrope",sans-serif;letter-spacing:.09em;cursor:pointer}.studio-render-button:hover{background:#403f3b}.studio-render-button:disabled{opacity:.55;cursor:wait}
+/* "Tirar print" reaproveita a MESMA estrutura/posicionamento do botão de renderizar com IA, inclusive nos
+   breakpoints (carrega as duas classes) — só as cores mudam (contorno claro, não preenchido), pra distinguir
+   visualmente "instantâneo e grátis" de "IA, paga, demora". */
+.studio-print-button{background:#fff;color:#3f3832;border:1px solid #d8d0c5;box-shadow:none}.studio-print-button:hover{background:#f4f1ea}
 .studio-canvas-host{position:relative;min-height:0;overflow:hidden;border:1px solid #ded6cb;border-radius:18px;background:#fff center/cover no-repeat}.studio-canvas-host::before{content:"";position:absolute;z-index:0;inset:0;background:rgba(255,255,255,.2);backdrop-filter:blur(2px);opacity:0;transition:opacity .3s}.studio-canvas-host.has-environment::before{opacity:1}.studio-canvas-host canvas{position:relative;z-index:1;display:block;width:100%;height:100%}
 .studio-canvas-empty{position:absolute;z-index:2;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;pointer-events:none;color:#79716a}.studio-canvas-empty strong{font-family:"Cormorant Garamond",serif;font-size:1.8rem;font-weight:500}.studio-canvas-empty span{font-size:.875rem}.studio-canvas-empty button{pointer-events:auto;margin-top:10px;padding:8px 14px;border:1px solid #d6cdc1;border-radius:999px;background:rgba(255,255,255,.9);color:#4c4742;font:600 .813rem "Manrope",sans-serif;letter-spacing:.06em;cursor:pointer}
 .studio-environment-controls{position:absolute;z-index:4;top:14px;left:14px;display:flex;align-items:center;gap:10px;max-width:calc(100% - 28px);padding:7px 9px;border:1px solid rgba(221,214,204,.92);border-radius:13px;background:rgba(255,255,255,.9);box-shadow:0 8px 24px rgba(48,38,30,.08);backdrop-filter:blur(12px)}.studio-environment-controls>span{padding:0 5px;color:#514a44;font:600 .813rem "Manrope",sans-serif;letter-spacing:.07em;white-space:nowrap}.studio-environment-group{display:flex;align-items:center;gap:3px;padding-left:9px;border-left:1px solid var(--line)}.studio-environment-group small{margin-right:3px;color:#8a827a;font:500 .781rem "Manrope",sans-serif;white-space:nowrap}.studio-environment-group button{height:28px;border:0;border-radius:7px;background:transparent;padding:0 7px;color:#665f58;font:500 .781rem "Manrope",sans-serif;white-space:nowrap;cursor:pointer}.studio-environment-group button:hover,.studio-environment-group button.active{background:#fff;color:var(--ink)}
@@ -39,7 +52,7 @@
 .studio-result-dialog{width:min(1080px,92vw);padding:0;border:0;border-radius:18px;background:#fff;color:var(--ink);box-shadow:0 25px 80px rgba(24,19,15,.28)}.studio-result-dialog::backdrop{background:rgba(28,24,21,.72);backdrop-filter:blur(5px)}.studio-result-dialog img{display:block;width:100%;max-height:72vh;object-fit:contain;background:#fff}.studio-result-copy{display:flex;align-items:baseline;gap:18px;padding:20px 24px}.studio-result-copy span{font-size:.813rem;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}.studio-result-copy strong{font-family:"Cormorant Garamond",serif;font-size:1.4rem;font-weight:500}.studio-result-close{position:absolute;z-index:2;top:14px;right:16px;width:34px;height:34px;border:1px solid rgba(255,255,255,.6);border-radius:50%;background:rgba(40,34,30,.35);color:#fff;font-size:1.2rem;cursor:pointer}.studio-result-dialog a{display:inline-block;margin:15px 24px 20px;color:var(--ink);font-size:.844rem;text-underline-offset:5px}
 @media(max-width:1250px){.studio-scene-title{display:none}.studio-toolbar{grid-template-columns:1fr auto auto auto}.studio-transform-tools{display:none}.studio-floor-plan>span,.studio-floor-plan label small{display:none}}
 @media(max-width:850px){.catalog-studio{grid-template-columns:210px minmax(0,1fr)}.studio-library{padding:24px 14px}.studio-workspace{padding-left:14px;padding-right:14px}.studio-toolbar{grid-template-columns:1fr auto}.studio-environment-controls{align-items:flex-start;overflow-x:auto}.studio-environment-controls>span{display:none}.studio-easy-controls{grid-template-columns:1fr;gap:5px;bottom:10px}.studio-selected-label{text-align:center;max-width:none}.studio-control-group{border-left:0;padding-left:0}.studio-control-group button{width:40px}}
-@media(max-width:620px){.catalog-studio{height:auto;min-height:calc(100svh - var(--header-h));display:flex;flex-direction:column}.studio-library{height:170px;border-right:0;border-bottom:1px solid var(--line)}.studio-library-heading{display:none}.studio-library-search{margin-bottom:8px}.studio-library-list{flex-direction:row;overflow-x:auto}.studio-library-item{flex:0 0 150px}.studio-workspace{height:calc(100svh - var(--header-h) - 170px);grid-template-rows:58px minmax(0,1fr) 28px}.studio-render-button{top:68px;right:24px;padding:9px 12px;font-size:.813rem}}
+@media(max-width:620px){.catalog-studio{height:auto;min-height:calc(100svh - var(--header-h));display:flex;flex-direction:column}.studio-library{height:170px;border-right:0;border-bottom:1px solid var(--line)}.studio-library-heading{display:none}.studio-library-search{margin-bottom:8px}.studio-library-list{flex-direction:row;overflow-x:auto}.studio-library-item{flex:0 0 150px}.studio-favorites{margin-bottom:8px;padding-bottom:8px}.studio-favorite-card{flex-basis:46px}.studio-favorite-card img,.studio-favorite-placeholder{width:46px;height:40px}.studio-workspace{height:calc(100svh - var(--header-h) - 170px);grid-template-rows:58px minmax(0,1fr) 28px}.studio-render-button{top:68px;right:24px;padding:9px 12px;font-size:.813rem}}
 @media(max-width:760px){.studio-floor-plan{position:absolute;z-index:8;top:64px;left:20px}.studio-floor-plan>span{display:none}.studio-floor-plan button:last-child{display:none}.studio-room-status{top:58px}}
 .studio-presets{display:grid;gap:7px;padding:14px;border-bottom:1px solid #ddd4c8}
 .studio-presets span{font-size:13.5px;letter-spacing:.13em;text-transform:uppercase;color:#756b61}
@@ -54,12 +67,35 @@
 .studio-preset-card label{display:grid;gap:6px;font:600 14px Manrope,sans-serif;color:#574e46}
 .studio-preset-card select,.studio-preset-card input{min-width:0;padding:10px;border:1px solid #cfc5b7;background:#fff;font:inherit}
 #studioFormatForm label{margin:22px 0}
+/* Categoria obrigatória em formato NOVO (pedido explícito do usuário) — chips de sugestão + campo livre. */
+.studio-format-category{display:grid;gap:9px;margin:22px 0}
+.studio-format-category-label{font:600 14px Manrope,sans-serif;color:#574e46}
+.studio-format-category-label b{margin-left:3px;color:#9b553f;font-weight:700}
+.studio-format-category-chips{display:flex;flex-wrap:wrap;gap:7px}
+.studio-format-category-chip{border:1px solid #cfc5b7;border-radius:999px;background:#fff;padding:7px 13px;color:#574e46;font:500 .813rem Manrope,sans-serif;cursor:pointer;transition:border-color .2s,background .2s,color .2s}
+.studio-format-category-chip:hover{border-color:var(--accent)}
+.studio-format-category-chip.is-active{border-color:var(--accent);background:var(--accent);color:#fff}
+#studioFormatCategoryCustom{min-width:0;padding:10px;border:1px solid #cfc5b7;background:#fff;font:inherit}
 .studio-library-tabs{display:flex;gap:6px;margin-bottom:22px;border-bottom:1px solid #ded5c9;padding-bottom:10px}
 .studio-library-tabs button{flex:1;border:0;border-radius:8px;background:transparent;padding:11px 8px;font:600 14px Manrope,sans-serif;color:#72695e;cursor:pointer}
 .studio-library-tabs button[aria-selected="true"]{background:#5b5c54;color:#fff}
-#studioFormatsList{display:grid;gap:10px;margin-top:22px}
-#studioFormatsList button{width:100%;text-align:left}
-#studioFormatsList .studio-format-card{display:flex;flex-direction:column;gap:12px;padding:14px;overflow:hidden}
+/* "Itens" fica sempre marcado como ativo (só existe um painel de verdade agora — ver comentário no HTML) e
+   nunca precisa de clique, por isso é `disabled`; sem essa regra o navegador esmaeceria o botão (opacidade
+   padrão de :disabled), o que pareceria "desativado" em vez de "esta é a tela atual". */
+.studio-library-tabs button:disabled{opacity:1;cursor:default}
+/* Base do cartão de formato (moldura/hover/estado ativo) — movida de catalogo-lounge.css quando o Módulo Lounge
+   foi removido (ver CLAUDE.md): os formatos reutilizáveis passaram a ser exclusivos do 3D Livre, então essas
+   duas classes (list/cartão) migraram pra cá, seu dono de verdade. .catalog-lounge-format dá border/background/
+   hover/estado ativo/foco — .studio-format-card só soma o layout interno específico do 3D Livre. Reaproveitadas
+   tanto pelo card do modal "Todos os formatos" quanto (com layout próprio) pela prateleira de favoritos.*/
+.catalog-lounge-format-list{display:flex;flex-direction:column;gap:8px}
+.catalog-lounge-format{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;text-align:left;cursor:pointer;transition:border-color .2s,background .2s}
+.catalog-lounge-format strong{font-family:"Cormorant Garamond",serif;font-size:1rem;font-weight:500;color:var(--ink)}
+.catalog-lounge-format small{color:var(--muted);font-size:.844rem;line-height:1.4}
+.catalog-lounge-format:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.catalog-lounge-format.is-active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,#fff)}
+.catalog-lounge-format:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+.studio-format-card{display:flex;flex-direction:column;gap:12px;padding:14px;overflow:hidden;width:100%;text-align:left}
 .studio-format-card img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;background:#f6f4f0;border-radius:7px;color:#827567;font-size:12px}
 .studio-format-card img[aria-busy="true"]{opacity:.45}
 .studio-format-preview{position:relative;display:grid;place-items:center;width:100%;aspect-ratio:4/3;background:#f6f4f0;border-radius:7px;overflow:hidden}
@@ -67,11 +103,8 @@
 .studio-format-spinner{width:20px;height:20px;border:2px solid #dfd7cb;border-top-color:#8b7050;border-radius:50%;animation:studio-format-spin .8s linear infinite}
 @keyframes studio-format-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.studio-format-spinner{animation:none}}
-.studio-formats-pages{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px;font-size:13px;color:#72695e}
-.studio-formats-pages[hidden]{display:none}
-.studio-formats-pages button{border:1px solid #ded5c9;border-radius:8px;background:#fff;width:36px;height:36px;font-size:22px;cursor:pointer}
-.studio-formats-pages button:disabled{opacity:.35;cursor:default}
-#studioFormatsStatus{font-size:13px;line-height:1.6;color:#827567}
+#studioFormatsBrowseStatus{font-size:13px;line-height:1.6;color:#827567}
+#studioFormatsBrowseStatus:empty{display:none}
 #studioSaveFormatButton{flex-basis:100px;background:#f3ece2;color:#6f5944}
 #studioSwapItemButton{flex-basis:98px}
 /* Pedido explícito do usuário, com print: "esse modal pode ser bem mais
@@ -87,12 +120,34 @@
 .studio-swap-dialog .studio-preset-card{max-width:1040px}
 .studio-swap-columns{display:grid;grid-template-columns:260px minmax(0,1fr);gap:26px;align-items:start;margin-top:18px}
 .studio-swap-col-heading{display:block;margin-bottom:10px;color:#8a7d71;font:700 .781rem "Manrope",sans-serif;letter-spacing:.08em;text-transform:uppercase}
-#studioSwapCurrentList{display:flex;flex-direction:column;gap:7px;max-height:56vh;overflow-y:auto;padding-right:6px}
-#studioSwapCurrentList .studio-library-item.is-active{border-color:#a77e4e;background:#faf4eb;box-shadow:0 0 0 2px #d8b88e}
-#studioSwapCurrentList .studio-library-item b{color:#a77e4e}
-#studioSwapList{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;max-height:56vh;overflow-y:auto;padding-right:6px}
-@media(max-width:760px){.studio-swap-columns{grid-template-columns:1fr}#studioSwapCurrentList{flex-direction:row;overflow-x:auto;overflow-y:hidden;max-height:none}#studioSwapCurrentList .studio-library-item{flex:0 0 200px}}
-@media(max-width:620px){#studioSwapList{grid-template-columns:1fr}}
+/* #studioFormatApplyCurrentList/#studioFormatApplyList (diálogo "Escolher os móveis", ver formatCardMarkup/
+   openFormatApplyDialog em catalogo-studio3d.mjs) reaproveitam a MESMA estrutura de 2 colunas do diálogo
+   "Trocar item" — seletores ampliados aqui em vez de duplicar as regras, sem mudar nada do comportamento do
+   diálogo de troca. */
+#studioSwapCurrentList,#studioFormatApplyCurrentList{display:flex;flex-direction:column;gap:7px;max-height:56vh;overflow-y:auto;padding-right:6px}
+#studioSwapCurrentList .studio-library-item.is-active,#studioFormatApplyCurrentList .studio-library-item.is-active{border-color:#a77e4e;background:#faf4eb;box-shadow:0 0 0 2px #d8b88e}
+#studioSwapCurrentList .studio-library-item b,#studioFormatApplyCurrentList .studio-library-item b{color:#a77e4e}
+#studioSwapList,#studioFormatApplyList{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;max-height:56vh;overflow-y:auto;padding-right:6px}
+.studio-format-apply-missing{display:grid;width:64px;height:54px;place-items:center;border:1px dashed #cabfaf;border-radius:8px;color:#a79a86;font-size:1.1rem}
+@media(max-width:760px){.studio-swap-columns{grid-template-columns:1fr}#studioSwapCurrentList,#studioFormatApplyCurrentList{flex-direction:row;overflow-x:auto;overflow-y:hidden;max-height:none}#studioSwapCurrentList .studio-library-item,#studioFormatApplyCurrentList .studio-library-item{flex:0 0 200px}}
+@media(max-width:620px){#studioSwapList,#studioFormatApplyList{grid-template-columns:1fr}}
+/* Modal "Todos os formatos" (pedido explícito do usuário) — maior que os diálogos de troca/aplicar, agrupado
+   por categoria, com pesquisa e estrela de favorito por card. */
+.studio-formats-browse-dialog{width:min(1100px,calc(100% - 32px))}
+.studio-formats-browse-card{display:flex;flex-direction:column;min-height:0;max-height:88vh}
+.studio-formats-browse-card .studio-library-search{flex-shrink:0;margin-top:18px}
+.studio-formats-browse-groups{flex:1;min-height:0;overflow-y:auto;margin-top:18px;padding-right:6px;scrollbar-width:thin;scrollbar-color:#b9a58c #f5f2ed}
+.studio-formats-browse-group{margin-bottom:26px}
+.studio-formats-browse-group:last-child{margin-bottom:0}
+.studio-formats-browse-group h3{display:flex;align-items:baseline;gap:9px;margin:0 0 12px;font:600 1.05rem "Cormorant Garamond",serif;color:#3d342c}
+.studio-formats-browse-group h3 span{color:#9c9084;font:500 .781rem "Manrope",sans-serif}
+.studio-formats-browse-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.studio-format-browse-card{position:relative}
+.studio-format-favorite{position:absolute;top:8px;right:8px;z-index:2;display:grid;place-items:center;width:32px;height:32px;border:1px solid rgba(216,204,184,.8);border-radius:50%;background:rgba(255,255,255,.92);color:#a79a86;font-size:1.05rem;line-height:1;cursor:pointer;backdrop-filter:blur(4px)}
+.studio-format-favorite.is-active{border-color:#c9a15a;background:#fff8ea;color:#a77e28}
+.studio-format-favorite:hover{border-color:#c9a15a}
+@media(max-width:620px){.studio-formats-browse-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.studio-formats-browse-grid{grid-template-columns:1fr}}
 .studio-preset-close{position:absolute;right:14px;top:12px;border:0;background:none;font-size:24px;cursor:pointer}
 .studio-preset-submit{width:100%;padding:13px;border:0;background:#5e5e57;color:white;cursor:pointer}
 .studio-picker{min-width:0;margin:0;padding:0 0 17px;border:0;border-bottom:1px solid #ded5ca}.studio-picker-heading{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:10px}.studio-picker-heading>div{display:flex;align-items:baseline;gap:9px}.studio-picker legend{font:600 15.5px "Cormorant Garamond",serif;color:#332b25}.studio-picker-heading small{color:#91877d;font-size:13px}.studio-picker-search{display:flex!important;grid-template-columns:auto 1fr!important;align-items:center;gap:6px!important;width:min(270px,45%);padding:8px 10px;border:1px solid #d7cdc0;border-radius:999px;background:#fff}.studio-picker-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;font:500 14px Manrope,sans-serif}.studio-picker-items{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 9px;scrollbar-width:thin}.studio-picker-card{position:relative!important;display:grid!important;flex:0 0 142px;grid-template-rows:108px auto;gap:7px!important;overflow:hidden;padding:0 0 9px;border:1px solid #ded5ca;border-radius:11px;background:#fff;cursor:pointer}.studio-picker-card input{position:absolute;opacity:0;pointer-events:none}.studio-picker-card img{width:100%;height:108px;object-fit:contain;background:#fff}.studio-picker-card>span{overflow:hidden;padding:0 9px;color:#423932;font-size:13.5px;line-height:1.25;white-space:nowrap;text-overflow:ellipsis}.studio-picker-card>b{display:none;position:absolute;top:7px;right:7px;padding:4px 6px;border-radius:999px;background:#5e5e57;color:#fff;font-size:12px;letter-spacing:.04em}.studio-picker-card:has(input:checked){border-color:#a77e4e;box-shadow:0 0 0 2px #d8b88e}.studio-picker-card:has(input:checked)>b{display:block}.studio-picker-none{place-items:center;grid-template-rows:1fr;background:#fff;border-style:dashed}.studio-picker-none>span{white-space:normal;text-align:center}.studio-picker-empty{align-self:center;margin:auto;color:#8b8178;font-size:13.5px}.studio-preset-quantity{width:min(260px,100%)}
@@ -104,18 +159,17 @@
 .studio-floor-plan #studioTopView.active,.studio-floor-plan .studio-image-upload{border-color:#a98255;background:#fff;color:#352d26}.studio-floor-plan .studio-image-upload{position:relative;overflow:hidden;font-weight:700;cursor:pointer}.studio-floor-plan .studio-image-upload input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .studio-wall-selector{display:flex;flex:0 0 auto;align-items:center;gap:3px;padding:3px;border:1px solid var(--line);border-radius:999px;background:#fff}.studio-wall-selector>span{padding:0 5px;color:#8a7d71;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.studio-floor-plan .studio-wall-selector button{display:flex;align-items:center;gap:5px;padding:6px 7px;border:0}.studio-wall-selector button.active{background:#fff;color:#2f2822}.studio-wall-selector button i{width:5px;height:5px;border:1px solid #b9aa99;border-radius:50%;background:transparent}.studio-wall-selector button.has-photo i{border-color:#63845d;background:#63845d;box-shadow:0 0 0 2px #dce8d9}.studio-wall-selector button.has-photo::after{content:"Foto";color:#63845d;font-size:.75rem;font-style:normal}
 
-/* Barra compacta organizada por categorias. */
+/* Barra compacta organizada por categorias. Só sobra UM painel de verdade agora (#studioItemsPanel — ver
+   comentário no HTML), então não precisa mais alternar `[hidden]`/flex entre dois painéis. */
 .studio-workspace{grid-template-rows:74px minmax(0,1fr) 34px}
-#studioItemsPanel:not([hidden]),#studioFormatsPanel:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
-.studio-library-tabs,.studio-library-search,.studio-formats-pages,#studioFormatsStatus{flex-shrink:0}
-#studioLibraryList,#studioFormatsList{flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#b9a58c #f5f2ed;padding-right:6px}
-#studioFormatsList{align-content:start;grid-auto-rows:max-content;margin-top:0}
+#studioItemsPanel{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.studio-library-tabs,.studio-library-search,.studio-favorites{flex-shrink:0}
+#studioLibraryList{flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#b9a58c #f5f2ed;padding-right:6px}
 .studio-format-preview{flex-shrink:0}
 #studioLibraryList>*{flex-shrink:0}
-#studioFormatsList::-webkit-scrollbar,#studioLibraryList::-webkit-scrollbar{width:7px}
-#studioFormatsList::-webkit-scrollbar-thumb,#studioLibraryList::-webkit-scrollbar-thumb{background:#b9a58c;border-radius:8px}
-#studioFormatsList::-webkit-scrollbar-track,#studioLibraryList::-webkit-scrollbar-track{background:#f5f2ed;border-radius:8px}
-#studioFormatsStatus:empty{display:none}
+#studioLibraryList::-webkit-scrollbar{width:7px}
+#studioLibraryList::-webkit-scrollbar-thumb{background:#b9a58c;border-radius:8px}
+#studioLibraryList::-webkit-scrollbar-track{background:#f5f2ed;border-radius:8px}
 @media(min-width:621px){
   .catalog-studio{grid-template-rows:minmax(0,1fr)}
   .catalog-studio .studio-library{margin-top:0;margin-bottom:48px;padding-top:0;padding-bottom:0}
@@ -208,3 +262,6 @@
 .studio-render-dialog .studio-render-preserve{padding:14px;border-radius:10px;background:#fff;font-size:14px}
 .studio-render-confirm{padding:16px;border:0;border-radius:12px;background:#373c32;color:#fff;font-size:15.5px;cursor:pointer}
 @media(max-width:480px){.studio-render-dialog{padding:24px 18px}.studio-render-dialog h2{font-size:24px}.studio-render-choices span{padding:14px 7px;font-size:14px}}
+
+/* Respiro pro "Voltar" do catálogo (fica logo abaixo da logo, por cima do topo desta coluna — ver catalogo.css). */
+@media(min-width:768px){body.catalog-tem-voltar .studio-library{padding-top:62px}}

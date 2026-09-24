@@ -83,9 +83,7 @@ const semTrilha=async(page,onde)=>{
   await page.locator('[data-gateway-tile="biblioteca"]').click();await page.locator('#catalogBiblioteca:not(.hidden)').waitFor();
   await semTrilha(page,'Biblioteca');
   await page.locator('.catalog-brand').click();
-  await page.locator('[data-gateway-tile="modulo3d"]').click();await page.locator('.catalog-modulo3d-tile').first().waitFor();
-  await semTrilha(page,'Módulo 3D');
-  await page.locator('[data-modulo3d-card="estudio"]').click();await page.locator('#catalogStudio:not(.hidden)').waitFor();
+  await page.locator('[data-gateway-tile="modulo3d"]').click();await page.locator('#catalogStudio:not(.hidden)').waitFor();
   await semTrilha(page,'3D Livre');
   // Sem a trilha por cima, a barra de ferramentas do estúdio deixa de ficar cortada na metade.
   const barra=await page.locator('.studio-toolbar').boundingBox();

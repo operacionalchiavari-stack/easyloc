@@ -1,4 +1,7 @@
 :root{--app-nav-height:72px;--app-nav-mobile-width:min(88vw,320px)}
+.app-global-back{display:block;border:0;background:transparent;color:inherit;font:500 13px/1.2 Inter,sans-serif;padding:13px 18px;text-align:left;cursor:pointer}
+.app-global-back:focus-visible{outline:2px solid currentColor;outline-offset:-3px}
+@media(min-width:1201px){.app-navigation .app-global-back{position:absolute;left:22px;top:100%;color:#5c6054;background:#fff;border-radius:0 0 5px 5px;padding:9px 14px;box-shadow:0 1px 3px #0000000d}}
 .app-navigation{position:fixed!important;z-index:5000!important;background:var(--color-sidebar,#2e1f1f);color:#fff}
 .app-navigation .submenu,.app-navigation .submenu-group{display:none;opacity:0;visibility:hidden;pointer-events:none}
 .app-navigation .submenu.is-open,.app-navigation .submenu-group.is-open{display:block;opacity:1;visibility:visible;pointer-events:auto}
@@ -70,3 +73,5 @@ body > #sidebar.app-navigation { background:var(--color-sidebar)!important; }
 #sidebar.app-navigation .submenu-item.active { background:var(--el-menu-hover)!important; box-shadow:inset 3px 0 var(--el-menu-selected); }
 #sidebar.app-navigation :is(.menu-item,.submenu-item,.submenu-trigger,.dropdown-item):focus-visible { outline:2px solid var(--el-focus-color)!important; outline-offset:-3px!important; }
 #sidebar.app-navigation > .menu > .menu-item:focus-visible { outline-color:var(--el-menu-text)!important; }
+@media(min-width:1201px){body:has(#appGlobalBack) .main{padding-top:108px!important}body:has(#appGlobalBack) .app-module-frame{min-height:calc(100dvh - 108px)}}
+@media(max-width:1200px){#sidebar:has(#appGlobalBack)>.menu{margin-bottom:8px!important}#sidebar .app-global-back{flex:none;margin-bottom:110px}}

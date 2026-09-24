@@ -2917,6 +2917,15 @@ completa de regressão do catálogo (13 arquivos, agora incluindo este) +
 
 ## Mini-menu "Módulo 3D" (3 funcionalidades, a 1ª sendo o estúdio de sempre)
 
+**Removido numa sessão bem mais tarde** — ver "Mini-menu 'Módulo 3D' e
+Módulo Lounge (Composições) — removidos" mais abaixo (pedido explícito do
+usuário: "dentro do modulo de 3d deixe apenas o 3d livre... pode remover
+os outros"). Clicar em "Módulo 3D" no Portal volta a abrir o Estúdio de
+Ambientes ("3D Livre") direto, sem nenhuma tela intermediária. Todo o
+histórico desta seção e das rodadas seguintes (10 rodadas de refinamento
+visual) mantido abaixo só pelo raciocínio de design, sem nenhum código
+correspondente sobrevivendo.
+
 Pedido explícito do usuário: *"vamos criar uma tela nova quando a pessoa
 clicar em módulo 3D, eu quero que quando a pessoa clicar, eu quero que
 apareça como se fosse outro mini menu, dentro do módulo 3D nós teremos 3
@@ -3324,6 +3333,17 @@ comportamento praticamente idêntico entre si — a lacuna real de
 cobertura é só Safari/WebKit especificamente.
 
 ## Módulo Lounge (tela dedicada pra montar composições de sofá + poltronas)
+
+**Removido numa sessão bem mais tarde** — ver "Mini-menu 'Módulo 3D' e
+Módulo Lounge (Composições) — removidos" mais abaixo (pedido explícito do
+usuário: "dentro do modulo de 3d deixe apenas o 3d livre... pode remover
+os outros"). `catalogo-lounge.mjs`/`.css` não existem mais; a única parte
+desta seção que sobreviveu foi `studioFormats`/`studioFormatPlacements`
+(a feature de "formatos reutilizáveis"), que migrou pra
+`catalogo-formatos.mjs` — o 3D Livre dependia dessas duas funções sem
+isso ter sido percebido até a tentativa de apagar este arquivo. Histórico
+completo mantido abaixo pelo raciocínio de arquitetura (mesmo raciocínio
+de outras seções "superadas" deste arquivo).
 
 Pedido explícito do usuário: *"agora eu quero criar um modulo exclusivo
 pra montagens de lounges, formatoações com sofa, poltrona, imagine que o
@@ -6219,6 +6239,23 @@ Pedido do usuário: *"cada decorador possa criar o layout dele de projeto, assim
 
 **Não implementado (não pedido) — possíveis próximos passos**: PDF gerado no servidor (arquivo pronto sem diálogo de impressão); reordenar/ocultar seções da apresentação; a equipe compartilhar layouts com os decoradores; escolher um layout diferente só pra um link específico (hoje é por projeto); miniatura da capa com a foto real do projeto.
 
+## "Renderizar com IA" em Projetos > Plantas — tentado e revertido
+
+Chegou a ser implementado por completo (botão na barra da planta, máscara + recomposição em canvas restringindo a
+edição só aos móveis marcados, fotos dos ambientes como referência — pedido explícito do usuário, "renderize com as
+imagens que colocamos... apenas nos móveis") e até publicado (`supabase functions deploy studio-ai-engine`,
+autorizado pelo usuário). Mesmo com a garantia por pixel (verificada em teste automatizado), o usuário testou de
+verdade e reportou que não estava funcionando; pediu explicitamente pra remover: *"REMOVA A IA DA PLANTA, NAO ESTA
+FUNCIONANDO VAMOS DEIXAR APENAS NO 3D MESMO"*. Revertido por completo — botão, diálogos de confirmação/resultado,
+todas as funções de preparo/composição no cliente (`catalogo-projetos.mjs`/`.css`), a política de prompt
+`referencePolicy:"floor_plan_literal"` no servidor (`supabase/functions/studio-ai-engine/index.ts`, hoje
+byte-idêntico ao commit anterior a essa tentativa) e o teste de regressão — nada disso existe mais no código, e a
+Edge Function já foi republicada sem essa política. **Renderização por IA continua existindo normalmente nos
+módulos 3D** (Composições/Módulo Lounge e 3D Livre/Estúdio de Ambientes, ver seções própria mais acima) — só a
+tentativa de levar isso pra dentro da tela 2D de Plantas foi descartada. Registrado aqui só pra não propor essa
+mesma ideia de novo se pedirem "IA na planta" no futuro — já foi tentada, publicada, testada de verdade pelo
+usuário e rejeitada.
+
 ## Anti-flash da logo no menu principal (dashboard.html)
 
 Mesma classe de bug do catálogo, só que na logo do menu superior do
@@ -6942,6 +6979,633 @@ escala — e não há teste que dependesse dos valores antigos de espaçamento).
 Cache-busting: `catalogo.css?v=20260921-home-compacta`,
 `catalogo.mjs?v=20260921-centralizar-linha`.
 
+## Mini-menu "Módulo 3D" e Módulo Lounge (Composições) — removidos
+
+Pedido explícito do usuário: *"dentro do modulo de 3d deixe apenas o 3d
+livre, ou seja, pode remover os outros, quando eu clicar em em modulo 3d
+ele ja vai direto, ou seja, nao precisa mais ter os 3 modulos separados,
+pode remover tambem"* — o mini-menu "Módulo 3D" (3 cards: "3D Livre",
+"Composições"/Módulo Lounge, "Em desenvolvimento"/Realidade aumentada,
+ver seções "Mini-menu 'Módulo 3D'..." mais acima) e o Módulo Lounge
+inteiro saíram do catálogo. Clicar em "Módulo 3D" no Portal volta a abrir
+o Estúdio de Ambientes ("3D Livre") **direto**, sem nenhuma tela
+intermediária — exatamente como era antes do mini-menu ter sido criado.
+
+**O que saiu, de verdade removido (não só escondido)**: `catalogo-
+lounge.mjs`/`.css` apagados por completo; em `catalogo.mjs`,
+`MODULO3D_MENU_VIEW`/`MODULO3D_CARDS`/`modulo3dLabel`/
+`MODULO3D_CAPA_FIELD`/`MODULO3D_CAPA_COLUMN` e toda a implementação do
+mini-menu (`renderModulo3dMenu()`, `modulo3dCardMarkup()` e famílias,
+`allItemsFlat()`, `modulo3dFeaturedItem()`, `capaModulo3dToggleMarkup()`,
+`alternarCapaModulo3d()`, `handleCapaModulo3dToggleClick()`,
+`ensureModelViewer()`/`supportsWebGL3D()`/`isEconomyDevice3D()`); em
+`catalogo.html`, a seção `#catalogLounge` inteira (abas Formatos/Itens/
+Ambiente, visualizador, controles) e `#loungeResultDialog`; em
+`catalogo.css`, todo o bloco `.catalog-modulo3d-*`/`.catalog-capa-
+modulo3d-*` (~150 linhas de CSS morto, consequência direta da remoção —
+apagado, não deixado como lixo). O botão "Composições" no espaço de
+trabalho de Projetos (`data-cpj="ir-lounge"`) e seu dispatcher em
+`catalogo-projetos.mjs` também saíram; os 2 textos que mandavam "gerar
+uma imagem em Composições ou 3D Livre" (mapa de renderizações, legenda
+vazia da planta) viraram só "no 3D Livre".
+
+**O banco não foi tocado** (mesma cautela já documentada neste arquivo
+pra outras remoções — `lounge_formatos`/RPCs `lounge_formatos_listar`/
+`lounge_formato_salvar`, a tabela `catalogo_capas` com a chave
+`"lounge"`, as colunas `itens.capa_modulo3d_lounge`/`capa_modulo3d_ar`
+ficam órfãs, não apagadas, sem misturar limpeza de banco não pedida com
+a mudança pedida).
+
+**Achado sério ao tentar apagar `catalogo-lounge.mjs`, não óbvio antes de
+investigar**: `catalogo-studio3d.mjs` **importava `studioFormats`/
+`studioFormatPlacements` de `catalogo-lounge.mjs`** —
+`import { studioFormats, studioFormatPlacements } from
+'./catalogo-lounge.mjs?...'`. Essas duas funções são o motor da feature
+"formatos reutilizáveis" do 3D Livre (aba "Formatos" da biblioteca
+lateral, "Salvar formato"/"Trocar item" — ver "Adiciona formatos
+reutilizaveis no Estudio 3D" no histórico do git, de uma sessão anterior
+a esta), que reaproveitou o `lounge_formatos`/RPCs já existentes do
+Módulo Lounge (mesma tabela/RPCs, nomeadas "lounge_" no banco desde
+quando só o Lounge existia) sem que isso tivesse sido percebido como uma
+dependência cruzada até este momento — inclusive o botão "Salvar formato"
+do 3D Livre dizia literalmente "Salvar em Composições". Apagar
+`catalogo-lounge.mjs` inteiro quebraria o 3D Livre.
+
+**Corrigido extraindo, não apagando**: as duas funções (`studioFormats`/
+`studioFormatPlacements`) são puras — sem DOM, sem Three.js, sem
+Supabase — e dependiam só de um punhado de outras funções/constantes
+igualmente puras dentro do mesmo arquivo (`BUILTIN_FORMATS`,
+`matchingItems()`, `toRuntimeFormat()`, `roleDefinitionForKey()`,
+`groupPapeisByRole()`, `ROLE_DEFS`/`ROLE_ORDER`/`REQUIRED_ROLES`/
+`LEGACY_ROLE_LABELS`/`DIAGRAM_SPAN_X`/`DIAGRAM_SPAN_Z`). Todo esse
+conjunto foi movido pra um arquivo novo, `catalogo-formatos.mjs` — sem
+DOM/estado/import de mais nada, só transformação de dado — e
+`catalogo-studio3d.mjs` passou a importar de lá. Verificado rodando
+`tests/studio-formatos-browser.cjs` (que já cobria essa feature) de
+ponta a ponta contra o arquivo novo — passou sem nenhuma mudança de
+comportamento.
+
+**CSS na mesma situação, resolvida do mesmo jeito**: `#studioFormatsList`
+(painel "Formatos" do 3D Livre) reaproveitava duas classes de
+`catalogo-lounge.css` (`.catalog-lounge-format-list`/`.catalog-lounge-
+format`, incluindo hover/estado ativo/foco — só o layout interno do
+cartão vinha de `.studio-format-card`, próprio do 3D Livre). Confirmado
+por grep que TODO o resto de `catalogo-lounge.css` (badge/controles/
+abas/canvas/diálogo de resultado/editor de formato com diagrama
+arrastável `.lfd-*`) não tinha nenhum uso fora do módulo Lounge — essas
+duas classes migraram pra `catalogo-studio3d.css` (comentário no lugar
+explicando a origem), o resto do arquivo foi apagado junto com
+`catalogo-lounge.css`.
+
+**Nomes ajustados pra não apontar pra um destino que não existe mais**:
+o botão "Salvar em Composições" do 3D Livre virou "Salvar formato"; as 2
+mensagens que citavam "Composições" (`studioFormatDescription`,
+notificação de sucesso) foram reescritas pra descrever o que o 3D Livre
+faz de verdade (reaplicar o bloco em qualquer ambiente / aba Formatos),
+sem inventar nada que não exista.
+
+**Testes**: `tests/catalogo-lounge-browser.cjs` e `tests/catalogo-
+modulo3d-menu-browser.cjs` apagados (testavam só telas que não existem
+mais). `tests/studio-formatos-browser.cjs` perdeu o cenário de
+consistência cruzada "formato salvo no 3D Livre também aparece no
+Lounge" (não tem mais Lounge pra checar) — a cobertura de "o 3D Livre
+sozinho reaplica o formato certo" já bastava e continuou. Ajustados pra
+apontar pro Estúdio direto (sem passar pelo mini-menu que não existe
+mais): `catalogo-browser.cjs`, `catalogo-biblioteca-browser.cjs`,
+`catalogo-cabecalho-browser.cjs`, `catalogo-portal-browser.cjs`,
+`catalogo-fontes-browser.cjs` (que também perdeu os cenários "Módulo 3D"/
+"Composições"/"Composições · Itens"/"Composições · Ambiente", que não
+existem mais). `catalogo-projetos-browser.cjs` tinha 2 cenários que
+abriam literalmente `#loungeResultDialog` (elemento apagado) pra simular
+"renderização de IA salva no projeto" — trocados por `#studioResultDialog`
+(o mesmo padrão `data-projeto-save-render`/`data-img`/`data-origem`, só
+que do 3D Livre, que continua existindo) — **achado ao trocar**: como as
+duas cenas de teste agora reaproveitam o MESMO `#studioResultDialog` que
+um cenário de "Tirar print" mais adiante no mesmo arquivo também usa, foi
+preciso adicionar um `.close()` explícito entre os cenários (`showModal()`
+num `<dialog>` já aberto lança `InvalidStateError`) — sem isso o teste
+quebraria por um motivo totalmente alheio ao que estava sendo migrado.
+Fixtures/comentários com `origem:"Composições"` em dado JÁ SALVO (testando
+que o app continua exibindo corretamente uma renderização antiga com esse
+rótulo) foram mantidos de propósito — é sobre ler dado histórico, não
+sobre a existência do módulo.
+
+**Achado ao rodar a suíte inteira pra validar, não causado por esta
+mudança**: `catalogo-browser.cjs` e `studio-browser.cjs` falham em
+`#studioProjectSave`/`#studioProjectName` — uma feature "Studio Projects"
+(salvar/exportar/importar a cena do 3D Livre) cujo JS existe mas nunca
+ganhou o HTML correspondente em `catalogo.html`. Confirmado pré-existente
+com `git diff`/`git show HEAD` nos dois arquivos de teste (o trecho que
+falha não muda em nenhum dos dois) — já estava quebrado antes desta
+sessão, não é regressão desta mudança. Resto da suíte (24 arquivos
+`catalogo-*-browser.cjs` + `catalogo-decorador.test.cjs` +
+`creditos-browser.cjs`) rodado de novo, tudo passando.
+
+Cache-busting: `catalogo.mjs?v=20260923-sem-lounge`, `catalogo-
+studio3d.mjs?v=20260923-sem-lounge` (import dentro de `catalogo.mjs`) e
+`catalogo-studio3d.css?v=20260923-sem-lounge`; `catalogo-formatos.mjs`
+importado com `?v=20260923-formatos-3d`.
+
+## Formatos do 3D Livre: foto no lugar do 3D ao vivo + escolher os móveis antes de inserir
+
+Pedido explícito do usuário, com print da aba "Formatos" (3D Livre) mostrando a mensagem "Preparando o
+ambiente 3D" no lugar de um cartão: *"ao invés de ficar os 3d já carregados... eu quero que fique fotos das
+composições porque dessa maneira imagino que ficará mais leve o carregamento... só que nessa foto ficará
+gravado de alguma maneira o formato, ou seja, quando a pessoa clicar na foto a ideia que abra um modal pra ela
+selecionar os móveis que ela quer colocar com aquela composição, quando ela escolher os móveis, no painel 3d
+vai aparecer os móveis que ela criou exatamente no formato que ela escolheu através da foto... a forma de criar
+os formatos permanece a mesma isso nao deve ser alterado"*.
+
+**Três mudanças, nenhuma no fluxo de CRIAR um formato** (pedido explícito — "Salvar formato" continua
+exatamente os mesmos passos/telas de antes):
+1. O cartão da lista mostra uma FOTO da composição, não mais uma cena 3D renderizada ao vivo (`renderFormatPreview()`
+   já era pesado — WebGL, GLTFLoader — e só piorava "no futuro serão centenas de formato").
+2. Essa foto é capturada e enviada ao Storage **em silêncio**, logo depois de "Salvar formato" já ter fechado o
+   diálogo e mostrado "Formato salvo" — a pessoa não vê nenhum passo/espera nova.
+3. Clicar na foto **não insere mais direto** — abre um diálogo "Escolher os móveis" (um por papel/peça do
+   formato); só depois de confirmar é que o formato entra no painel 3D, com os móveis escolhidos, nas mesmas
+   posições/giros salvos.
+
+### Banco (`supabase/migrations/20260923000100_lounge_formatos_capa.sql`, aplicada com `db push --linked`)
+
+`lounge_formatos` ganhou `capa_url`/`capa_path` (nullable — formato salvo antes desta sessão fica sem foto até
+o auto-cura abaixo preencher). `lounge_formato_json()` passou a incluir `capa_url`. `lounge_formato_salvar()`
+ganhou 2 parâmetros novos (`p_capa_url`, `p_capa_path`, ambos opcionais) — no INSERT ficam nulos mesmo (o
+cliente ainda não tem o `id` do formato nesse momento pra montar o caminho da foto); no UPDATE usam
+`coalesce(novo, existente)`, então uma 2ª chamada sem foto nunca apaga uma que já existia. Assinatura antiga
+(5 parâmetros) foi derrubada — nada mais no código a chama.
+
+**Bucket novo, `lounge-formatos`, não reaproveita "biblioteca"**: as policies do bucket "biblioteca" exigem
+`auth.uid()` (certo pra Biblioteca/Portal, sempre equipe interna) — mas um DECORADOR pode salvar um formato em
+3D Livre (confirmado no próprio schema de `lounge_formatos`: "formato criado por um decorador... só aparece
+pra ele e pra equipe") e ele não tem `auth.uid()` nenhum (entra por token do catálogo). Mesmo problema que
+"Foto dos noivos"/renders de Projetos já resolveram: `lounge_formato_existe(empresa, formato)` — cópia fiel de
+`projeto_existe()` — autoriza pela EXISTÊNCIA da linha, não pela identidade de quem está logado; as 4 policies
+do bucket (`select`/`insert`/`update`/`delete`) são `to anon, authenticated`, igual ao bucket "projetos".
+Caminho fixo por formato, `${empresa_id}/${formato_id}/capa.jpg` (upsert — trocar a foto no futuro sobrescreve,
+nunca acumula arquivo órfão).
+
+**Verificado direto contra o banco/Storage de produção, não assumido**: SQL num bloco `do $$...$$` (sem
+`raise exception`, só `rollback` no fim, já que aqui é `insert`/`update` direto na tabela, não uma chamada de
+RPC — `lounge_formato_salvar()` exige `auth.uid()`/token válidos via `projeto_ctx()`, que o ambiente de
+`db query` não tem) confirma: `capa_url` nulo até ser setado, `lounge_formato_json()` devolve o campo,
+`lounge_formato_existe()` responde `true`/`false` corretamente pro id certo/errado e pra empresa certa/errada.
+Com a chave ANÔNIMA de verdade (`curl` contra `/storage/v1/object/...`): upload num caminho de formato real
+200; upload num caminho de formato INEXISTENTE 400 (recusado); leitura pública 200; re-upload (upsert) no
+mesmo caminho 200; remoção 200 — os 5 exatamente como o bucket "projetos" já se comporta.
+
+### Frontend — captura da foto (`catalogo-studio3d.mjs`)
+
+`renderFormatPreview(format)` (a prévia ao vivo de sempre) foi dividida em duas: `renderPlacementsCanvas(placements)`
+faz o trabalho pesado de verdade (monta a cena offscreen, enquadra, recorta, devolve o `<canvas>` de 480×360) e
+`renderFormatPreview()` vira um wrapper fino (chama a primeira, guarda o resultado como dataURL no MESMO cache
+em memória de sempre). Isso deixou o núcleo reaproveitável pra CAPTURAR a foto de capa, não só exibi-la.
+
+**`anexarFotoDoFormato(formatoId, nome, pecas)`** roda logo depois de `lounge_formato_salvar()` (1ª chamada)
+responder com sucesso — `pecas` é o MESMO array que acabou de ser salvo (`formatDraft`, capturado numa
+variável local ANTES de `saveSelectedFormat()` zerá-lo), então a foto é fiel ao que a pessoa realmente montou,
+não a uma composição recalculada. Converte cada peça (`item_id`+posição+rotação em GRAUS) num `placement`
+(item resolvido + rotação em RADIANOS), chama `renderPlacementsCanvas()`, comprime o canvas em JPEG
+(`canvasParaJpegBlob()`, qualidade .86 — mesmo padrão de compressão já usado em todo upload de foto desta
+sessão), sobe pro bucket (`upsert:true`) e faz a 2ª chamada a `lounge_formato_salvar()` (mesmo `id`, mesmo
+`nome`/`papeis`, só acrescentando `p_capa_url`/`p_capa_path`). **Nunca lança pra fora** — se qualquer passo
+falhar (upload, RPC, o que for), só cai no console; o formato já está salvo e utilizável de qualquer jeito, e a
+lista tem o fallback abaixo pra formato sem foto.
+
+**Auto-cura pra formato salvo ANTES desta feature existir** (sem `capa_url`): `formatCardMarkup()` decide, por
+formato, entre mostrar a foto direto (`<img src=capaUrl>`, sem custo nenhum de 3D) ou cair no fallback de
+sempre — spinner + `IntersectionObserver` + `renderFormatPreview()` ao vivo, exatamente como era antes desta
+mudança, SÓ pra quem ainda não tem foto. A diferença: assim que essa prévia ao vivo termina de renderizar,
+`backfillFormatCapa(format, dataUrl)` reaproveita a MESMA imagem (decodifica o dataURL de volta num canvas,
+sem renderizar de novo) e faz o mesmo upload+2ª-chamada de `anexarFotoDoFormato` — então esse formato NUNCA
+MAIS precisa renderizar ao vivo. Só formatos CUSTOM (`recordId` — dona linha no banco); o embutido "Lounge
+compacto" não tem onde persistir, continua usando só o cache em memória por sessão de sempre.
+
+### Frontend — diálogo "Escolher os móveis" (`catalogo-studio3d.mjs` + `catalogo.html` + `catalogo-studio3d.css`)
+
+`studioFormatPlacements(format, items, selection)` (`catalogo-formatos.mjs`) ganhou um 3º parâmetro OPCIONAL:
+um mapa `role.key -> item ESCOLHIDO à mão`, que vence sobre a escolha automática de sempre (item originalmente
+salvo, senão o 1º disponível) quando presente pra aquele papel. Sem `selection` (ou papel ausente dela), o
+comportamento é EXATAMENTE o de antes — usado assim por `renderFormatPreview()`/qualquer chamada que não passe
+pelo diálogo novo. `matchingItems(role, items)` (mesmo arquivo) também passou a ser exportada — o diálogo
+precisa dela pra filtrar as opções de CADA papel.
+
+Clicar num cartão da lista chama `openFormatApplyDialog(key)` em vez de inserir direto — monta a seleção
+PADRÃO (mesma lógica que `studioFormatPlacements()` já usava: item salvo originalmente, senão o 1º
+disponível — clicar "Inserir formato" sem mexer em nada reproduz o resultado de sempre) e abre
+`#studioFormatApplyDialog`. **Mesmo padrão visual de 2 colunas do diálogo "Trocar item" já existente**
+(`#studioSwapDialog`) — esquerda lista os PAPÉIS do formato (rótulo = nome de quando foi salvo, ex. "Mesa 2",
+que NUNCA muda — só o item escolhido pra ele muda, mostrado depois do " · "), clicar num papel ativa ele;
+direita mostra só os itens que batem com aquele papel (`matchingItems`), clicar escolhe. CSS reaproveitado por
+seletores AMPLIADOS (`#studioSwapCurrentList,#studioFormatApplyCurrentList{...}` etc.) em vez de duplicar
+regras — zero mudança de comportamento no diálogo de troca já existente.
+
+`insertStudioFormat(format, selection, status, disableTargets)` (antes `insertStudioFormat(key)`, chamada
+direto pelo clique no cartão) virou a função que faz a inserção de verdade — mesma lógica de sempre
+(`studioFormatPlacements` + `addItem` peça a peça + agrupar por `catalogGroupId`), só que agora recebe a
+seleção do diálogo em vez de deixar tudo por conta do auto-pick, e devolve `true`/`false` em vez de só mexer
+em texto de status (pra `confirmFormatApply()` saber se fecha o diálogo). Sucesso agora passa por
+`catalogNotify` (toast, mesmo padrão do resto do catálogo) em vez de só um texto que sumia sozinho.
+
+**Reabrir sempre reseta a seleção** (`formatApplySelection`/`formatApplyRoleIndex` recalculados do zero em
+`openFormatApplyDialog()`, nunca preservados entre aberturas) — evita "herdar" uma escolha de uma tentativa
+anterior sem perceber.
+
+Teste de regressão (`tests/studio-formatos-browser.cjs`, reescrito): mock de `supabase.storage` novo (mesmo
+padrão de `tests/mock-projetos.cjs` — upload registra em `window.uploads`, `getPublicUrl` devolve uma URL
+fixture). Cobre: a foto é capturada e anexada em silêncio (upload no bucket/caminho certos, JPEG, 2ª chamada
+RPC com o `id` certo) sem nenhum passo novo visível; o cartão com foto não usa o indicador de carregamento;
+clicar abre o diálogo sem inserir nada ainda; seleção padrão reproduz o comportamento de antes (nomes originais
+nos 2 papéis); a coluna direita filtra pelo papel ativo; trocar a seleção muda o item mostrado (não o rótulo do
+papel, que é fixo); fechar e reabrir volta pra seleção padrão; inserir com a seleção default dá o MESMO
+resultado de sempre (permitindo que todo o resto do teste — "Trocar item" num objeto já colocado, paginação,
+busca, formato legado, bug do `variantGroup` circular — continuasse validando exatamente as mesmas coisas de
+antes, sem reescrever); formato sem foto cai no fallback ao vivo (mesmo reaproveitamento de 1 contexto WebGL
+já testado) E se auto-cura (a MESMA prévia sobe pro Storage e grava a URL, sem renderizar de novo — só pros
+5 formatos custom, nunca pro embutido "Lounge compacto", que não tem onde persistir).
+
+Cache-busting: `catalogo-formatos.mjs?v=20260924-capa-formato` (export novo + parâmetro novo em
+`studioFormatPlacements`), `catalogo-studio3d.mjs?v=20260924-capa-formato` (import + toda a lógica nova) e
+`catalogo-studio3d.css?v=20260924-capa-formato`, propagados em `catalogo.html`/`catalogo.mjs`.
+
+## Formatos: modal grande + categoria obrigatória + favoritos
+
+Pedido explícito do usuário, com print da aba "Formatos" já com 2 cartões (foto e "Prévia indisponível") na
+barra lateral estreita: *"quando eu clicar em formatos ali do lado de itens eu quero que abra um modal maior
+com todos os formatos criados, e quero que eles sejam separados por categoria. sendo assim a partir de agora no
+momento da criação de algum formato, nós devemos obrigatoriamente colocar qual formato que é, se é lounge, se é
+mesas de convidado, mesas de bolo e doces, enfim.... ali na barra lateral que já existe hoje onde ficam os
+formatos, ali eu quero que fique somente os formatos favoritos, ou seja, dentro desse modal nós poderemos
+selecionar quais são nossos formatos favoritos, esses formatos aparecem ali, o restante aparece no modal."*
+Pergunta de esclarecimento antes de implementar (via AskUserQuestion): clicar em "Formatos" abre o modal
+DIRETO (a barra lateral estreita deixa de ter uma aba que troca de painel — vira só uma prateleira de
+favoritos, sempre visível), em vez de a aba continuar mostrando os favoritos e o modal ser uma ação à parte —
+usuário escolheu a 1ª opção. **A forma de CRIAR um formato continua a mesma** (mesma restrição já valia pra
+foto de capa, ver seção anterior) — só ganhou 1 campo novo obrigatório (categoria).
+
+### Banco (`supabase/migrations/20260924000100_lounge_formatos_categoria_favorito.sql`, aplicada com `db push --linked`)
+
+`lounge_formatos` ganhou `categoria text` (nullable — formato salvo antes desta migration fica sem categoria,
+cai no grupo "Outros" no modal) e `favorito boolean not null default false`. `lounge_formato_json()` passou a
+incluir os dois. `lounge_formato_salvar()` ganhou `p_categoria` (9º→8º parâmetro, já que os outros continuam
+os mesmos) — **obrigatória só no INSERT** (`p_id is null and categoria vazia` → `raise exception 'Escolha uma
+categoria pro formato'`); no UPDATE usa `coalesce(nova, existente)`, então a 2ª chamada de
+`anexarFotoDoFormato`/`backfillFormatCapa` (que só está anexando a FOTO, não editando a categoria) nunca apaga
+o valor já salvo mesmo que mande `null` por engano. "A partir de agora... obrigatoriamente" foi lido como
+valendo pra criação DAQUI PRA FRENTE, não retroativo — nenhum formato já existente foi obrigado a ganhar uma
+categoria.
+
+**`lounge_formato_favoritar()`, endpoint próprio** (não reaproveita `lounge_formato_salvar` — giraria um
+boolean tendo que reenviar nome/papéis à toa). **Favorito é uma flag COMPARTILHADA na própria linha do
+formato, não por pessoa** — o pedido fala em "nossos formatos favoritos", e o formato já é compartilhado por
+natureza (equipe vê tudo; decorador vê os seus + os da equipe). Por isso a regra de quem pode favoritar é a
+MESMA de quem pode VER o formato (`lounge_formatos_listar`), não a mais restrita de "dono ou equipe" que edita/
+exclui — senão um decorador nunca poderia favoritar um formato criado pela equipe.
+
+Verificado direto no banco de produção (`npx supabase db query --linked`, manipulação direta da tabela — as
+RPCs exigem `auth.uid()`/token via `projeto_ctx()`, que o ambiente de `db query` não tem): `categoria`/
+`favorito` nascem `null`/`false`, ficam settáveis; `pg_proc` confirma `lounge_formato_salvar` com 8 argumentos,
+`lounge_formato_favoritar` com 4, `lounge_formato_json` com 1, todos `prosecdef=true`.
+
+### `catalogo-formatos.mjs` — só o dado
+
+`BUILTIN_FORMATS[0]` ("Lounge compacto") ganhou `categoria:"Lounge"` fixa no código (nunca passa pela
+validação, não tem onde ser diferente) e `favorito:false` fixo (sem `recordId` — não é uma linha do banco, não
+tem onde persistir um favorito, então nunca aparece com a estrela ativável no modal). `toRuntimeFormat()`
+ganhou `categoria: record.categoria || null` e `favorito: Boolean(record.favorito)` no objeto devolvido — quem
+decide o rótulo de fallback ("Outros" pra categoria nula) é `catalogo-studio3d.mjs`, não este módulo (que
+continua puramente de dado, sem DOM).
+
+### `catalogo.html` — barra lateral virou prateleira de favoritos + modal novo
+
+**Semântica das abas simplificada**: só sobra UM painel de verdade (`#studioItemsPanel`) — `#studioItemsTab`
+fica sempre `aria-selected="true"` e ganhou `disabled` (nada pra alternar, clicar nele seria um no-op; sem
+`disabled` o CSS de "ativo" continua igual, `.studio-library-tabs button:disabled{opacity:1;...}` evita o
+esmaecimento padrão do navegador pra elemento desabilitado). `#studioFormatsTab` deixou de ser `role="tab"`/
+`aria-controls` (não controla mais nenhum tabpanel) — virou um botão comum que abre
+`#studioFormatsBrowseDialog`. `#studioFormatsPanel` (o painel antigo, com `#studioFormatsList`/pesquisa/
+paginação) foi **removido por completo**, não só escondido.
+
+**Prateleira de favoritos** (`#studioFavorites`, dentro de `#studioItemsPanel`, acima do campo de busca de
+Itens): só aparece quando há pelo menos 1 favorito (`.hidden` por padrão); cartões compactos (foto 64×54 +
+nome, sem estrela — favoritar só acontece dentro do modal). **Nunca dispara renderização 3D ao vivo** — se um
+favorito ainda não tem `capa_url` (formato salvo antes da feature de foto, nunca aberto no modal desde então),
+mostra um retângulo neutro em vez do fallback caro; a foto de verdade só chega quando o formato for aberto ao
+menos uma vez no modal (o auto-cura de `backfillFormatCapa()`, já existente, chama `renderFavoritesShelf()` de
+novo depois de preencher `capaUrl`).
+
+**Modal "Todos os formatos"** (`#studioFormatsBrowseDialog`, `.studio-formats-browse-dialog{width:min(1100px,
+...)}` — bem maior que os diálogos de troca/aplicar, que ficam em 1040px): busca (`#studioFormatsBrowseSearch`,
+filtra por NOME **ou** CATEGORIA) + lista agrupada (`#studioFormatsBrowseList`). Cada card
+(`formatBrowseCardMarkup()`) é o MESMO `formatCardMarkup()` de sempre (foto ou spinner+fallback ao vivo) com
+uma estrela (`.studio-format-favorite`, ★/☆) sobreposta no canto — sem estrela pro "Lounge compacto" embutido
+(sem `recordId`). Clicar na estrela favorita/desfavorita NA HORA (otimista — atualiza a UI antes da RPC
+responder, desfaz se falhar) sem editar o formato nem fechar o modal; clicar em qualquer outro lugar do card
+FECHA o modal e abre `#studioFormatApplyDialog` ("Escolher os móveis", já existente) — mesmo destino de
+clicar num favorito na prateleira, os dois são só pontos de entrada diferentes pro mesmo fluxo.
+
+**Agrupamento por categoria** (`renderFormatsBrowseModal()`): `format.categoria || "Outros"`, ordenado
+alfabeticamente com "Outros" sempre por último (categoria nula não é "prioridade zero", é "não classificado
+ainda"). **Sem paginação** — o modal (maior, com scroll PRÓPRIO em `#studioFormatsBrowseList`, não a página
+inteira) mostra tudo de uma vez, dividido por seção; a categoria já cumpre o papel que a paginação de 6 em 6
+cumpria antes (evitar uma lista longa demais de uma vez). O `IntersectionObserver` do fallback ao vivo
+(formato sem foto) foi ajustado pra usar `root: list` (a própria `#studioFormatsBrowseList`, não o viewport)
+— sem isso, cartões dentro de um contêiner com scroll PRÓPRIO poderiam nunca "intersectar" o viewport da
+janela, mesmo visíveis dentro do modal.
+
+**Categoria obrigatória em "Salvar formato"** (`#studioFormatDialog`): chips de sugestão + campo de texto
+livre — mesmo padrão já usado em "Ambientes" no módulo Projetos (texto livre com sugestões, sem tabela de
+lookup, exatamente como Categoria/Subcategoria de Itens já funcionam neste projeto). Sugestões
+(`FORMAT_CATEGORY_SUGGESTIONS`): Lounge, Mesa de convidados, Mesa de bolo e doces, Bar, Cerimônia, Recepção,
+Buffet — as 3 primeiras foram literalmente citadas pelo usuário como exemplo, as outras 4 seguem o mesmo
+domínio (móveis pra evento). Clicar num chip desmarca o campo de texto (mutuamente exclusivos); digitar no
+campo de texto desmarca qualquer chip ativo (`renderFormatCategoryChips()` decide o estado visual a partir de
+`customFilled`, não guarda 2 fontes de verdade brigando). `effectiveFormatCategory()` (texto customizado, senão
+o chip escolhido) é o valor de verdade enviado — `saveSelectedFormat()` bloqueia o `submit` com "Escolha uma
+categoria pro formato." se vier vazio, ANTES de chamar a RPC (o servidor também valida, mas o cliente não
+precisa de uma ida e volta de rede só pra descobrir isso).
+
+### Fluxo completo (`catalogo-studio3d.mjs`)
+
+`loadStudioFormats()` (antes só chamada ao clicar na aba "Formatos") agora roda **também uma vez no
+`initCatalogStudio3D()`**, sem esperar nenhum clique — a prateleira de favoritos precisa estar povoada desde
+o carregamento inicial da tela, já que não depende mais de abrir nada. Continua sendo chamada de novo toda vez
+que o modal abre (`openFormatsBrowseDialog()`), pra sempre refletir formatos recém-criados/recém-favoritados
+noutra aba. Depois de carregar, chama as duas renderizações: `renderFavoritesShelf()` (prateleira) e
+`renderFormatsBrowseModal()` (conteúdo do modal, mesmo fechado — só fica invisível até `showModal()`).
+
+`toggleFormatFavorite(key)`: atualiza `format.favorito` OTIMISTA (antes de a RPC responder) e redesenha os
+dois lugares (`renderFormatsBrowseModal()` + `renderFavoritesShelf()`) na hora — desfaz e redesenha de novo se
+a RPC falhar, com uma notificação de erro (`catalogNotify`, mesmo padrão do resto do catálogo).
+
+`salvarCapaDoFormato()`/`anexarFotoDoFormato()`/`backfillFormatCapa()` (da feature de foto, sessão anterior)
+ganharam um parâmetro `categoria` a mais, repassado em toda chamada subsequente de `lounge_formato_salvar` —
+o `coalesce` da RPC já protegeria contra apagar a categoria mesmo sem isso, mas mandar o valor de verdade evita
+depender só do `coalesce` do lado do banco.
+
+Teste de regressão (`tests/studio-formatos-browser.cjs`, estendido): categoria bloqueia o `submit` até ser
+escolhida (sem chamar a RPC enquanto vazia); digitar categoria própria desmarca os chips; escolher um chip
+persiste `categoria` na 1ª chamada de salvar; "Formatos" abre o modal grande (não mais um painel que
+alterna) com "Itens" continuando visível por trás; cartões agrupados por categoria (a escolhida ao salvar +
+a fixa do embutido, "Outros" pra categoria nula, ordem alfabética com "Outros" por último); estrela favorita/
+desfavorita na hora (chama `lounge_formato_favoritar`, sem estrela no embutido); formato favoritado aparece na
+prateleira (nunca o embutido); clicar num card — tanto pela prateleira quanto pelo modal — fecha o que estiver
+aberto e abre "Escolher os móveis" com seleção padrão fresca a cada vez; busca do modal filtra por nome OU
+categoria; sem paginação (elementos antigos de página não existem mais); fallback ao vivo/auto-cura pra
+formato sem foto continua funcionando igual dentro do modal (1 contexto WebGL reaproveitado, root do observer
+escopado à lista do modal). **Ambiguidade encontrada rodando o teste**: com um formato favoritado, ele passa a
+existir em DOIS lugares na tela ao mesmo tempo (prateleira + modal aberto) — qualquer seletor
+`[data-studio-format="..."]` sem escopo vira `strict mode violation` no Playwright; corrigido escopando
+explicitamente a `#studioFormatsBrowseList`/`#studioFavoritesList` em todo lugar onde os dois podem coexistir.
+
+Cache-busting: `catalogo-studio3d.mjs?v=20260924-categoria-favorito` (toda a lógica nova) e
+`catalogo-studio3d.css?v=20260924-categoria-favorito`, propagados em `catalogo.html`/`catalogo.mjs`/no import
+de `catalogo-formatos.mjs` dentro de `catalogo-studio3d.mjs` (o próprio módulo de dado não mudou de conteúdo
+nesta rodada — só ganhou 2 campos lidos de um registro que já existia — mas o `?v=` foi bumpado junto por
+higiene, já que `catalogo-studio3d.mjs` importa esse caminho).
+
+## Projetos: status do pedido saiu do espaço de trabalho, virou "Ver pedido" na lista
+
+Pedido explícito do usuário, com print do espaço de trabalho de um projeto já enviado (a caixa "Pedido enviado
+em... · Ver o que foi enviado" aparecendo logo abaixo do cabeçalho, empurrando o conteúdo): *"quero apagar isso,
+quero que na linha de ana e bruno ali tenha o status do pedido, algo bem bonito e simples, por exemplo, pedido
+enviado. aí algo pra clicar e ver o pedido por exemplo, mas esse ver pedido é aquele que a gente envia, bonito
+com foto, com as renderizações"* — ou seja: (1) tirar a caixa fixa de dentro do projeto; (2) o status já aparece
+na linha do projeto na LISTA (`.cpj-status`, já existia); (3) precisa de algo clicável ali que abra o pedido — e
+esse "ver pedido" tem que ser a MESMA prévia bonita (com foto de cada item e as renderizações do projeto) que já
+existe em "Enviar pedido"/"Reenviar pedido" (`pedidoPreviewHtml`, `projeto-apresentacao.mjs`), não inventar uma
+segunda forma de mostrar a mesma coisa.
+
+**A caixa (`#[data-cpj-banner]`/`pintarBanner()`) saiu do espaço de trabalho por completo** — não só escondida,
+removida do HTML gerado por `pintarTela()` e da função que a desenhava. O que ela mostrava (selo de status, data
+de envio, observação do decorador, aviso "alterado depois do envio", e os botões da equipe pra mudar o status)
+não foi descartado — virou o topo do diálogo novo "Ver pedido" (`pedidoStatusHtml()`, reaproveitando as mesmas
+classes CSS `.cpj-banner`/`.cpj-banner-main`/`.cpj-banner-status`/`.cpj-banner-obs`/`.cpj-banner-warn`). **O que
+NÃO foi reaproveitado**: o `<details class="cpj-banner-snap">` que listava "o que foi enviado" em texto cru
+(nome/quantidade/código por ambiente) — essa lista existia justamente pra suprir a falta de uma visão bonita; com
+`pedidoPreviewHtml()` (foto de cada item + seção de renderizações) aparecendo logo abaixo no mesmo diálogo, o
+resumo cru virou redundante e foi apagado (CSS `.cpj-banner-snap*` também removido, não só a marcação).
+
+**O status na linha do projeto (`cartaoProjeto()`) virou o próprio gatilho**: quando `p.status !== "rascunho"`,
+o `<span class="cpj-status">` vira `<button class="cpj-status" data-cpj-ver-pedido="...">` — o mesmo selo colorido
+("Pedido enviado"/"Em análise"/"Convertido em pedido") já era "bonito e simples" o bastante (pedido literal do
+usuário), só precisava ficar clicável; nenhum elemento novo foi adicionado ao lado dele. Projeto ainda em
+rascunho continua com o `<span>` de sempre, sem nada pra "ver" ainda.
+
+**Mesmo selo, também dentro do projeto** — pedido explícito do usuário logo em seguida, com print do espaço de
+trabalho: *"quero que nessa tela, na mesma linha de Ana e Bruno também tenha o status do pedido"*. `pintarCabecalho()`
+ganhou o MESMO botão `.cpj-status[data-cpj-ver-pedido]` (idêntico ao da lista, HTML e classe iguais — não um
+componente novo) ao lado do `<h2>` do nome dos noivos, dentro de um `.cpj-work-title-row{display:flex;align-items:
+center;gap:10px}` novo (só pra alinhar os dois na mesma linha visualmente, já que o `<h2>` serifado e o selo
+`Manrope` têm alturas de linha bem diferentes). Como esse botão já mora DENTRO de `#catalogProjetos` (a `[data-cpj-
+head]` faz parte do overlay, diferente do `<dialog>` do "Ver pedido", que é anexado em `document.body` à parte),
+o clique já era capturado de graça pelo listener delegado que `aoClicarOverlay()` já tinha ganhado pra esse mesmo
+atributo — nenhum listener novo precisou ser registrado.
+
+**`fluxoVerPedido(id)`** busca o projeto completo na hora (`carregarProjeto`, a lista só guarda um resumo sem
+`dados`/`pedido_snapshot`/`pedido_observacao`) e abre um `abrirModal({largo:true, confirmar:null, cancelar:
+"Fechar", ...})` — mesmo padrão "só visualização" já usado no lightbox de renderização (`render-ver`). O corpo é
+`pedidoStatusHtml(project, staff)` + `pedidoPreviewHtml(dadosApresentacao(project, ctx.findItem), {decorador})` —
+a MESMA chamada que `fluxoEnviarPedido()` já fazia pra montar a prévia antes de confirmar o envio, sem duplicar
+lógica. Ganhou também o botão "Baixar PDF" (`imprimirPedido`, idêntico ao que já existia no diálogo de envio) —
+decorador e equipe conseguem baixar o PDF do pedido já enviado sem precisar reenviar pra ver a prévia de novo.
+
+**Mudar o status agora acontece dentro do diálogo, não mais delegado pelo overlay**: como `abrirModal()` sempre
+anexa o `<dialog>` direto em `document.body` (fora de `#catalogProjetos`), o listener delegado do overlay
+(`aoClicarOverlay`) nunca alcança cliques lá dentro — os botões de status (`data-cpj-ver-status`, renomeados de
+`data-cpj-status` pra não colidir com o atributo do gatilho da lista) ganham um listener próprio dentro do
+`onMount`, mesmo padrão que o botão "Baixar PDF" do diálogo de envio já usava. `atualizarStatus(project, status)`
+deixou de operar implicitamente em `S.current` (podia nem existir — "Ver pedido" abre direto da lista, sem entrar
+no espaço de trabalho) — agora recebe o projeto explícito, só sincroniza `S.current` se for o mesmo projeto já
+aberto, e devolve `true`/`false` em vez de pintar a UI sozinho; quem chama decide o que redesenhar (o bloco de
+status dentro do diálogo, via `pedidoStatusHtml()` de novo, e a linha correspondente em `S.list` + `pintarLista()`
+— senão a lista ficaria com o status antigo até um reload).
+
+**Dead code removido junto, não só desativado**: o branch `data-cpj-status` do `aoClicarOverlay` (nunca mais
+alcançável, já que os botões saíram do overlay) e a função antiga `pintarBanner()` foram apagados, não deixados
+comentados. `pintarNavegacao()` também não chama mais `pintarBanner()` — o comentário que explicava esse
+acoplamento ("toda edição de dados repinta a navegação: o aviso... acompanha") não fazia mais sentido sem o
+banner ali dentro.
+
+Teste: `tests/catalogo-projetos-browser.cjs` — os dois cenários que já cobriam "Enviar pedido"/"mudar status"
+foram ajustados pro novo caminho (status na lista → diálogo, em vez da caixa dentro do projeto). **Esse arquivo
+já tinha falhas pré-existentes não relacionadas** (achadas rodando o teste antes de mexer nele: trava em
+`[data-cpj="ir-catalogo"]`, um botão que o handler em `aoClicarOverlay` já trata mas que sumiu do HTML de
+`pintarPainel()` — resíduo de uma refatoração grande e ainda não commitada desta mesma sessão, sem relação com
+"Ver pedido") — não corrigidas aqui, fora do escopo do que foi pedido. Pra não depender dessa suíte quebrada pra
+verificar a mudança, a lógica nova foi confirmada ponta a ponta com um script Playwright avulso (mesmo mock,
+`tests/mock-projetos.cjs`, sem passar pelo trecho quebrado): status na lista vira `<button>` só quando há pedido;
+clicar abre o diálogo com a prévia de foto+renderizações; decorador não vê os botões de mudar status, equipe vê
+e consegue mudar (RPC `projeto_atualizar_status` chamada com os parâmetros certos) e a lista reflete o novo
+status ao fechar o diálogo, sem reload; e (depois do pedido de mostrar o selo também dentro do projeto) o mesmo
+botão aparece em `.cpj-work-title-row`, ao lado do `<h2>`, e abre o mesmo diálogo de dentro do espaço de trabalho.
+
+## Filtros da tela "Categorias" viraram uma pílula só (com print de referência)
+
+Pedido explícito do usuário, com print de referência (barra "Filtre por... | Estilo ⌄ | Material ⌄ |
+Personalizáveis ⌄", de outro site, "quero transformar os filtros do catálogo pra essa maneira"): a barra de
+filtros (Material/Estilo/Personalizáveis, ver "Filtros na tela 'Categorias'..." mais acima) deixou de ser um
+grupo de pílulas soltas lado a lado (cada uma com sua própria borda/fundo branco) e virou UMA pílula só —
+fundo bege bem claro (`#f8f6f0`), contorno fino, sombra suave — com os segmentos separados por um traço vertical
+fino, e um rótulo em itálico serifado ("Filtre por...") abrindo a barra, igual ao print. **Nenhuma lógica de
+filtro mudou** — mesmo `HOME_FILTER_FIELDS`/`refreshHomeFilters()`/`itemMatchesHomeFilters()` de sempre, só o
+HTML/CSS ao redor.
+
+**Ordem invertida pra bater com o print**: `HOME_FILTER_FIELDS` era `[material, estilo]`, virou `[estilo,
+material]` — o único efeito é a ORDEM dos botões no DOM (Estilo aparece primeiro agora); nenhum teste dependia
+da ordem anterior.
+
+**Estrutura nova** (`homeFilterBarMarkup()`, `catalogo.mjs`): a antiga `<div class="catalog-home-filters">`
+única (que continha chips + "Limpar filtros" + resumo, tudo no mesmo flex-wrap) virou um wrapper
+`.catalog-home-filters-wrap` com 3 filhos diretos — a pílula em si (`.catalog-home-filters`, agora só com o
+rótulo + os campos + o toggle "Personalizáveis"), e "Limpar filtros"/o resumo ("5 itens em 4 categorias") logo
+ABAIXO da pílula, centralizados, não mais dentro dela. Os ids (`#catalogHomeFilterClear`/
+`#catalogHomeFilterSummary`) e todos os `data-home-filter-*` não mudaram — só a posição no HTML.
+
+**Divisórias com CSS puro, sem elemento extra por divisória**: `.catalog-home-filters>*+*::before` desenha um
+traço de 1px em CADA filho direto que tem um irmão anterior (rótulo→Estilo, Estilo→Material, Material→
+Personalizáveis) — funciona igual pro `<span>` do rótulo, pros `<div class="catalog-filter">` (Estilo/Material)
+e pro `<button>` solto (Personalizáveis), sem precisar de marcação condicional por tipo.
+
+**Botões perderam a própria pílula branca-com-borda** (`.catalog-filter-chip`: era `border:1px solid
+var(--line);background:#fff;border-radius:999px` — cada um uma pílula própria) — agora é só texto com padding
+(`border:0;background:none`), a MESMA classe/comportamento de antes pro estado ativo (`.is-active{background:
+var(--accent);color:#fff}` continua preenchendo, só que agora fica visualmente uma "pílula dentro da pílula"
+quando um filtro está marcado — mesmo raciocínio de segmented control). Chevron (mesmo SVG de sempre) adicionado
+também no botão "Personalizáveis" só por consistência visual com o print — ele continua sendo um TOGGLE (liga/
+desliga na hora, sem painel), o chevron não gira nem abre nada ali, é só estética; `Estilo`/`Material` continuam
+abrindo painel de verdade e o chevron deles continua girando 180° quando aberto (`.is-open`, sem mudança).
+
+**Contagem do "Personalizáveis" continua sempre visível (mesmo em 0)** — comportamento JÁ EXISTENTE, não mexido:
+diferente do badge de Estilo/Material (que só aparece quando ALGUM valor está marcado —
+`badge.hidden = selected.size === 0`), o de Personalizáveis mostra sempre "quantos itens dariam match se
+marcasse" (`refreshHomeFilters()`), então no print de referência (sem número nenhum) é só o print não ter dado
+pra ver esse estado — a diferença de comportamento entre os dois badges é intencional de uma sessão anterior,
+não foi tocada aqui.
+
+Teste (`tests/catalogo-filtros-browser.cjs`, já existente): rodado sem nenhum ajuste — todos os seletores
+(`.catalog-home-filters`, `[data-home-filter-trigger]`, `[data-home-filter-option]`,
+`[data-home-filter-toggle="personalizable"]`, `#catalogHomeFilterClear`, `#catalogHomeFilterSummary`) continuam
+os mesmos, só o HTML ao redor deles mudou. Verificado visualmente com Playwright (estado parado, painel aberto,
+filtro ativo, e mobile 390px — a pílula cresce em altura e quebra em 2 linhas mantendo o formato arredondado, em
+vez de vazar da tela). Cache-busting `catalogo.css?v=20260924-filtros-pilula` / `catalogo.mjs?v=20260924-
+filtros-pilula`.
+
+**Estendido pro filtro de subcategoria dentro de uma categoria** (pedido explícito do usuário, com print da
+categoria "Armários e Estantes" mostrando "TODOS / BASES INFERIORES.../ BASES SUPERIORES.../ ESTANTES" ainda
+como pílulas soltas: *"dentro da categoria o filtro deve ser o mesmo também"*) — `.catalog-subcat-filter`
+(`renderSubcatFilterBar()`, ver "Filtro premium de subcategoria..." mais acima) ganhou a MESMA fórmula visual:
+pílula única (fundo `#f8f6f0`, contorno, sombra) com os chips ("Todos" + cada subcategoria) sem borda/fundo
+próprios, separados pelas mesmas divisórias finas (`>*+*::before`), ativo preenchido na cor terrosa. **CSS
+duplicado de propósito, não compartilhado com `.catalog-home-filters`** — são dois filtros conceitualmente
+diferentes (um grupo de campos com dropdown vs. uma lista de opções de seleção única) que só coincidem em
+aparência; deixar cada um com sua própria regra evita que um ajuste futuro num afete o outro sem querer. Nenhum
+`data-subcat-filter`/`aria-pressed` mudou — só o HTML ao redor. `.catalog-subcat-filter` virou `width:fit-
+content;margin:0 auto` (antes centralizava os chips soltos via `justify-content:center` num flex de largura
+total) pra a pílula única abraçar só o próprio conteúdo, exatamente como a de cima.
+
+**1ª versão saiu sem o rótulo "Filtre por..."** (a leitura inicial foi "os chips já SÃO o próprio filtro, o
+rótulo seria redundante aqui") — usuário corrigiu na hora, com print comparando lado a lado: *"não ficou a mesma
+coisa, tinha que ter ficado, filtro por ... igualzinho"* — "igualzinho" (idêntico) foi levado ao pé da letra:
+`renderSubcatFilterBar()` ganhou o MESMO `<span class="catalog-filter-label">Filtre por...</span>` (reaproveitado
+tal qual, não uma cópia — é a classe já usada na barra de cima), como primeiro filho da pílula, antes do "Todos".
+**Lição**: quando o usuário manda um print pedindo pra igualar a outro elemento já existente no próprio app
+("do jeito que já fizemos ali"), replicar TODO o elemento de referência (rótulo incluso), não só a moldura visual
+ao redor — a suposição de "essa parte não se aplica aqui" precisa ser confirmada, não assumida.
+
+Teste (`tests/catalogo-subcategoria-browser.cjs`, já existente): rodado sem ajuste, mesmos seletores
+(`[data-subcat-filter]`, `.is-active`) continuam passando. Verificado visualmente (pílula com o rótulo "Filtre
+por..." + "Estantes" ativo, filtrando a grade de verdade). Cache-busting `catalogo.css?v=20260924-subcat-pilula`
+/ `catalogo.mjs?v=20260924-subcat-filtre-por`.
+
+**Superado pela seção seguinte** ("Filtro dentro de uma categoria virou o mesmo grupo..."): o atributo
+`[data-subcat-filter]`/a classe `.catalog-subcat-chip` citados acima não existem mais — a subcategoria virou um
+campo dropdown dentro da mesma barra de Material/Personalizáveis, não mais uma fileira de chips. Histórico
+mantido só pelo raciocínio (visual "pílula única com divisórias", reaproveitado tal qual na versão nova).
+
+## Filtro dentro de uma categoria virou o mesmo grupo Subcategoria + Material + Personalizáveis da tela "Categorias"
+
+Pedido explícito do usuário, na sequência imediata da seção anterior, com print da barra já com "Filtre por..."
+mas só com Subcategoria: *"essas subcategorias precisam estar dentro de todos, entendeu? e do lado vai estar os
+mesmo filtros da categorias, material e personalizaveis, ou seja, quando eu clicar em todos vai aparecer as
+subcategorias, aí eu seleciono qual eu quero ver"*. Ou seja: (1) Subcategoria deixa de ser uma fileira de chips
+soltos e vira mais um CAMPO da barra, rotulado "Todos" (o texto que já significava "sem filtro"); (2) ao lado
+dela, na MESMA barra, aparecem Material e Personalizáveis — os mesmos campos já usados na tela "Categorias"
+(`HOME_FILTER_FIELDS`), só que escopados aos itens DESTA categoria, não do catálogo inteiro.
+
+**"Todos" virou um `<select>` de fato, diferente de Material/Estilo**: o botão que abre o painel de Subcategoria
+mostra o NOME DA SUBCATEGORIA ESCOLHIDA (ou "Todos", sem nada marcado) — não o nome fixo de um campo como
+"Material"/"Estilo" sempre mostram. Dentro do painel, cada linha (`data-cat-subcat-option="slug"`, incluindo
+`""` pra "Todos") é um `<button>`, seleção ÚNICA — clicar já aplica E fecha o painel sozinho, sem precisar de um
+botão "Aplicar" à parte. Material/Estilo continuam como `<label><input type=checkbox>` (seleção múltipla,
+painel fica aberto pra marcar mais de um valor).
+
+**Estado próprio, para não arriscar a tela "Categorias" já testada**: `state.categoryFilters`/
+`state.categoryFilterOpen` (mesmo formato de `state.homeFilters`/`newHomeFilters()`, reaproveitada a função de
+fábrica) — independentes de `state.homeFilters`. `applyView()` já zerava `state.activeSubcat` a cada navegação
+(entrar/trocar de categoria, reentrar pela trilha) — ganhou mais duas linhas zerando `categoryFilters`/
+`categoryFilterOpen` junto, mesmo raciocínio ("tela limpa a cada entrada"). As funções de cálculo
+(`itemMatchesCategoryFilters`, `categoryFieldOptions`, `categorySubcatOptions`, `hasCategoryFilters`) são cópias
+PARALELAS das equivalentes de `state.homeFilters` (`itemMatchesHomeFilters` etc.), não uma generalização
+compartilhada — decisão deliberada: `itemMatchesHomeFilters`/`homeFilterOptions`/`refreshHomeFilters()` já têm
+uma suíte própria passando (`tests/catalogo-filtros-browser.cjs`); refatorar pra compartilhar código arriscaria
+essa suíte por uma economia de ~40 linhas. Mesmo espírito de outras duplicações já documentadas neste arquivo
+(ex. ícones/helpers repetidos entre `catalogo-biblioteca.mjs`/`catalogo-lounge.mjs`/`catalogo-studio3d.mjs`).
+
+**Sem o "refresh cirúrgico" que `refreshHomeFilters()` tem** (que só repinta contagens/marcações, preservando o
+painel aberto e o foco sem recriar nada — pensado pro volume do catálogo inteiro): aqui, TODO clique
+(escolher/marcar/desmarcar/abrir/fechar campo) passa por um `renderCurrentView()` de verdade, reconstruindo a
+barra e a grade inteiras — mesmo padrão simples que a subcategoria sozinha já usava antes desta mudança. **O
+painel continua "aberto" mesmo com esse rebuild total** porque `state.categoryFilterOpen` decide isso NO PRÓPRIO
+ESTADO a cada render (`categoryFilterFieldMarkup()`/`categorySubcatFieldMarkup()` leem
+`state.categoryFilterOpen === field.key` pra decidir `hidden`/`aria-expanded`), não em manipulação de DOM — não
+precisou de nenhuma lógica de "preservar o que já estava aberto". Troca aceita conscientemente: perde o foco do
+teclado a cada clique (o elemento é recriado do zero), diferente da tela "Categorias" — like-for-like custaria
+uma refatoração de `renderGridMarkup()`/`renderMosaicMarkup()` bem maior (separar a grade num container próprio
+pra atualizar só ela) pra um ganho que não foi pedido.
+
+**Material/Estilo já vêm ESCOPADOS pela subcategoria ativa**: `categoryFieldOptions(categoryItems, field)`
+pré-filtra os itens por `state.activeSubcat` antes de calcular grafias/contagens — escolher "Sofás" faz o painel
+de Material listar SÓ os materiais que existem entre os sofás (Madeira/Veludo de outras subcategorias nem
+aparecem como opção, não é só a contagem que muda). `itemMatchesCategoryFilters(item, skip)` combina os TRÊS
+critérios com E: subcategoria (pulada quando `skip==="subcat"`, usado pra contar as próprias opções dela),
+Material/Estilo (mesmo `HOME_FILTER_FIELDS`, pulando a chave em `skip`) e Personalizáveis.
+
+**Campo só aparece com 2+ valores DENTRO DA CATEGORIA INTEIRA — não da subcategoria atual**: diferente da tela
+"Categorias" (catálogo inteiro, onde até um campo com 1 valor só já é mostrado, pensando no catálogo crescer),
+aqui um campo com 1 valor só não ajudaria em nada (mesmo raciocínio já usado pra Subcategoria desde a sessão
+anterior). **Achado implementando**: calcular esse "vale a pena mostrar" usando os itens JÁ ESCOPADOS pela
+subcategoria ativa fazia o campo Material aparecer e desaparecer sozinho conforme a subcategoria escolhida (ex.:
+dentro de "Sofás" só tem 1 material → campo sumia, ficando só "Todos" + Personalizáveis) — sensação de UI
+"pulando". Corrigido calculando esse critério a partir da categoria INTEIRA, sem aplicar o filtro de
+subcategoria ainda (`new Set(categoryItems.flatMap(item => homeFilterKeysOf(item, field.key))).size > 1`) — o
+campo Material, uma vez que existe, nunca some por causa da subcategoria escolhida; só a LISTA DE OPÇÕES dentro
+dele fica mais curta.
+
+**Bug real corrigido ainda na implementação, achado no screenshot antes mesmo de escrever o teste**: as opções
+de Subcategoria (agora `<button>`, não mais `<label>`) apareciam cada uma dentro de uma caixinha com borda —
+`.catalog-filter-option` nunca tinha border/background explícitos porque, como `<label>`, o navegador já não
+desenha nenhum dos dois por padrão; um `<button>` desenha os dois por padrão, e a classe nunca havia sido usada
+num botão antes. Corrigido com `border:0;background:none;font:inherit;text-align:left;width:100%` na MESMA
+regra `.catalog-filter-option` — inofensivo pro `<label>` (que já não tinha nenhum dos dois) e necessário pro
+`<button>`. Achado comparando o screenshot ANTES/DEPOIS da correção, não só lendo o CSS — mesma lição já repetida
+várias vezes neste arquivo (confirmar no navegador renderizado, não só no código-fonte).
+
+Teste (`tests/catalogo-subcategoria-browser.cjs`, reescrito): fixtures ganharam `material`/`personalizable` nos
+itens de "Estofados" pra testar a combinação de verdade — Subcategoria "Sofás" + Material "Estofado Tecido" +
+Personalizáveis chega em 1 item só (dos 5 da categoria); Material dentro de "Sofás" mostra só o valor que existe
+ali; o painel de Material fica aberto entre marcações (mesma UX da tela "Categorias") mas o de Subcategoria
+fecha sozinho ao escolher; imersivo respeita o filtro combinado; sair e reentrar na categoria reseta os três de
+uma vez; categoria com 1 subcategoria e 1 material (Mesas) não mostra barra nenhuma; categoria sem nenhuma
+subcategoria mas com 2 materiais (Aparadores) mostra a barra só com Material, sem o campo Subcategoria nem
+Personalizáveis; busca continua sem o filtro; sem overflow mobile. Suíte de regressão do catálogo (12 arquivos
+tocando renderização/clique compartilhados) rodada de novo, incluindo `tests/catalogo-filtros-browser.cjs` (tela
+"Categorias", intocada) — todas passando; as únicas 2 falhas encontradas
+(`tests/catalogo-browser.cjs`/`#studioProjectSave`, `tests/catalogo-breadcrumb-browser.cjs` inexistente) já eram
+conhecidas/pré-existentes, sem relação com esta mudança (ver "Riscos conhecidos"/"Trilha... apagada" mais
+abaixo/acima). Cache-busting `catalogo.css?v=20260924-filtro-categoria-unificado` /
+`catalogo.mjs?v=20260924-filtro-categoria-unificado`.
+
 ## Estado da migração (checar antes de assumir o padrão de um módulo)
 
 Para saber se um módulo já é "novo" (documento próprio, HTML completo,
@@ -7125,3 +7789,378 @@ como ponto de partida para achar onde uma tela lê/grava uma tabela, mas
 - Prefere ver a estrutura ficar mais fácil de navegar/corrigir ao longo do
   tempo (este arquivo existe por causa disso) em vez de aceitar que o
   sistema "é difícil de mexer" como estado permanente.
+
+## Busca saiu do cabeçalho (canto superior direito) + "Limpar filtros" ao lado da pílula
+
+Pedido explícito do usuário: *"esse limpar filtro na categoria eu quero que fique na mesma linha do card principal,
+outra coisa, quero remover o campo de pesquisa(pesquisar) do menu e quero colocar no canto superior direito"*.
+**Supera** "Campo de busca do cabeçalho, mais visível" (a pílula translúcida dentro do cabeçalho escuro não existe mais).
+
+- **Busca** (`.catalog-search`/`#catalogSearch`, mesmo id e mesmo listener de sempre): saiu do `<header>` e mora num
+  wrapper novo, `.catalog-top-tools` (dentro de `.catalog-top-chrome`, `position:absolute;top:100%;right:0` — o mesmo
+  mecanismo que o `#catalogViewSwitcher` já usava, e o switcher agora mora dentro desse wrapper, ao lado da busca).
+  Visual claro (fundo branco translúcido + blur, contorno `var(--line)`, `var(--accent)` no foco), 180–240px. O
+  wrapper tem `pointer-events:none` e só os filhos recebem clique, pra a faixa vazia não bloquear o conteúdo por baixo.
+  O cabeçalho perdeu a coluna `search` em todas as faixas (`grid-template-areas` sem ela); as regras
+  `body.catalog-modo-sistema .catalog-search*` foram apagadas (a busca não fica mais na faixa clara desse modo).
+  Continua escondida no celular (≤767px) e dentro de overlays (`setActiveOverlay()` já fazia isso).
+- **"Limpar filtros"** (tela Categorias): `.catalog-home-filters-wrap` virou flex em linha com quebra — pílula e
+  "Limpar filtros" lado a lado, centralizados; o resumo ("1 item em 1 categoria") continua embaixo (`flex-basis:100%`).
+
+Teste: `tests/catalogo-busca-visivel-browser.cjs` reescrito (busca fora do header, logo abaixo dele e na borda direita
+em 1100–1920px, "Pesquisar" cabe, não sobrepõe a pílula nem o "Limpar filtros", que fica na mesma linha da pílula;
+some em overlay e no celular). Cache-busting `catalogo.css?v=20260924-busca-canto`.
+
+**Ajuste seguinte** (*"na home não era pra ter campo de pesquisa e não é pra ter o voltar"*): no Portal ("Home") a busca e
+o botão "← Voltar" (`#catalogGlobalBack`, criado por `bindNavHistory()` quando o catálogo abre fora do dashboard) ficam
+escondidos. `syncNavigation()` liga a classe `catalog-no-portal` no `<body>` quando `activeView===GATEWAY_VIEW` sem overlay,
+e o CSS esconde os dois. Nas outras telas eles voltam. Coberto em `tests/catalogo-busca-visivel-browser.cjs`. Cache-busting
+`?v=20260924-portal-sem-busca`.
+
+## Projetos: digitar a quantidade de um item (não só clicar "＋" várias vezes)
+
+Pedido do usuário, com print da grade de estantes: *"hoje temos que ficar clicando, mas eu quero que a pessoa possa clicar
+pra adicionar 1 item ou que ela possa digitar a quantidade, imagina que são 30 itens do mesmo"*.
+
+- **Chip do card** (`.cpj-add-chip`, grade e mosaico) virou duas partes: `＋` (soma 1, como sempre) e o número
+  (`.cpj-add-count[data-projeto-qty]`; mostra "Qtd." antes de o item estar no ambiente). Clicar no número abre
+  `abrirQtdPop()` (`catalogo-projetos.mjs`): um campo pequeno junto do chip com o nome do item e o ambiente, − / campo / ＋ e
+  "Salvar"/"Adicionar". O número já vem selecionado, então basta digitar 30 e dar Enter. Esc ou clique fora cancela, e 0 tira
+  o item do ambiente. O aviso tem "Desfazer", que volta à quantidade anterior. Grava por `mudarQuantidade(..., {definir})`,
+  então o autosave é o de sempre. Sem projeto ativo, pergunta o destino primeiro (`garantirDestino`), igual ao `＋`.
+- **O campo mora no `<body>`, não dentro do chip**: o chip fica dentro do `<button>` do card, e um `<input>` dentro de um
+  botão é HTML inválido (em alguns navegadores nem recebe foco). Posição `fixed`, calculada a partir do chip e mantida dentro da
+  tela. Fecha ao rolar ou redimensionar.
+- **Página do item**: `projetoAddMarkup(id,"page")` agora devolve `.cpj-add-page-wrap` com "Adicionar ao projeto" + um link
+  discreto "Quantidade" (`.cpj-add-page-qty[data-projeto-qty]`), que abre o mesmo campo.
+- O clique em `[data-projeto-qty]` é tratado no mesmo listener de captura do `＋` (antes dele) e faz `stopPropagation`, então
+  nunca abre o item.
+
+Teste: `tests/catalogo-projetos-quantidade-browser.cjs` (＋ soma 1 sem abrir o item; número → digitar 30 + Enter; Esc e clique
+fora não mudam nada; − / ＋ do campo; "Qtd." num item novo; 0 remove; "Quantidade" na página do item; campo dentro da tela no
+celular). Cache-busting `catalogo-projetos.{css,mjs}?v=20260925-quantidade` e `catalogo.mjs?v=20260925-quantidade`.
+
+## Botão "Voltar" abaixo da logo, fora do menu, com respiro
+
+Pedidos do usuário, em sequência: *"quero que o botão voltar seja um pouco maior e não quero que fique assim por cima de outras
+coisas"* → (tentativa dentro do cabeçalho, recusada) *"o botão voltar precisa ficar abaixo da logo fora do menu"* → *"não pode
+ficar nada atrás dele, precisa ter um respiro mínimo"*. `#catalogGlobalBack` (criado por `bindNavHistory()` só quando o catálogo
+abre fora do dashboard) mora em `.catalog-top-chrome` (sticky), `position:absolute;top:100%` + `margin-top:9px`, à esquerda
+alinhado com a logo — pílula clara de 38px com seta SVG + "Voltar". Ao ser criado, liga `body.catalog-tem-voltar`, e cada
+tela reserva o topo esquerdo pra ele (≥768px): grade/mosaico de categoria (`.catalog-grid-wrap` 60px, exceto quando abre com
+uma barra de filtro centralizada, que não encosta nele), página do item (`.catalog-detail-panel` 62px), 3D Livre
+(`.studio-library` 62px, em catalogo-studio3d.css) e Projetos (`.cpj-wrap` 62px, em catalogo-projetos.css). Some no Portal
+(`catalog-no-portal`) e no celular (≤767px, a seta ‹ da linha do tempo faz o mesmo). **Tela nova que começa no canto superior
+esquerdo precisa ganhar a mesma regra `body.catalog-tem-voltar ...{padding-top}`**, senão o conteúdo fica atrás do botão.
+
+Teste: `tests/catalogo-voltar-browser.cjs` — 1100/1440/1920px em Categorias (com e sem filtro), grade, mosaico, imersiva,
+Biblioteca (pastas e pasta aberta), 3D Livre, lista de Projetos e projeto aberto: nenhum texto/imagem/botão a menos de 6px do
+Voltar, botão abaixo do menu, à esquerda, ≥36px; Portal sem ele. Cache-busting `?v=20260925-voltar-respiro`.
+
+## Ordem dos itens na categoria: equipe interna arrasta, decoradores veem
+
+Pedido do usuário, com print da grade de Estantes: *"essa função deve ser somente da equipe interna da Chiavari... se eu
+quiser colocar a estante Lord na frente da estante Cacau eu posso simplesmente arrastar ela pra posição que eu quero, e
+aquela posição passa a ser a padrão que todos os decoradores vão ver"*.
+
+- **Dado**: reaproveita a coluna `itens.ordem_exposicao_site` (existia desde a importação, "NULL = sem ordem"). Migration
+  `20260925000100_catalogo_ordem_itens.sql` (aplicada com `db push --linked`): `catalogo_acervo()` passa a devolver
+  `ordem_exposicao_site` e a ordenar `categoria, ordem nulls last, produto, id`; RPC nova `catalogo_reordenar(p_empresa_id,
+  p_itens jsonb [{id,ordem}])`, `security definer`, só com `auth.uid()` vinculado à empresa em `usuarios_empresas` (mesma
+  regra das outras edições do catálogo — o decorador não tem `auth.uid()`, então nunca grava). Verificado no banco: sem
+  login recusa ("Sem permissão para ordenar o catálogo"); a leitura já traz o campo.
+- **Ordem na tela** (`compararOrdemCatalogo()`, usada em `renderProducts()` → vale pra grade, mosaico e imersiva): quem tem
+  ordem primeiro, por ordem; sem ordem depois, com a regra antiga de "com foto antes" (sort estável). Grupo de variantes
+  (mesma peça em várias cores) fica na posição da variante mais à frente (`agruparVariantes`), e ao reordenar TODAS as
+  variantes do grupo recebem a mesma ordem.
+- **Arrastar** (`bindReordenarCards()`, HTML5 drag & drop em `#catalogGrid`): só `state.acessoInterno`, só na GRADE de uma
+  categoria (`podeReordenar(categoryItems)` — a busca não passa `categoryItems`, e o mosaico/imersiva não arrastam). Card
+  com `draggable`, cursor de mão e uma alça (⋮⋮) no canto superior esquerdo que aparece no hover; o card arrastado fica
+  esmaecido no lugar onde vai cair e os outros andam na hora (reordena o DOM no `dragover`). No `dragend`, se a ordem
+  mudou, `reordenarCategoria()` grava a posição de TODOS os itens da categoria (10, 20, 30…) — com filtro ativo, os
+  visíveis trocam de lugar só entre si e os escondidos pelo filtro ficam onde estavam. Aviso "Ordem salva"; erro volta a
+  ordem anterior e redesenha. Clique normal no card continua abrindo o item.
+- **Categorias também** (pedido seguinte: *"quero que a mesma função seja aplicada dentro de categorias"*): os cards da
+  tela "Categorias" arrastam do mesmo jeito (mesmo `bindReordenarCards()`; o `dragend` decide pela classe
+  `.catalog-home-grid`). Categoria é texto livre, então a ordem mora numa tabela nova, `catalogo_categorias_ordem
+  (empresa_id, categoria, ordem)` (migration `20260925000200_catalogo_ordem_categorias.sql`, aplicada); RPC
+  `catalogo_categorias_reordenar(p_empresa_id, p_categorias text[])` (mesma checagem de equipe) regrava a lista inteira;
+  `catalogo_acervo()` faz `left join` nela, devolve `categoria_ordem` e ordena por ela primeiro. `getCategories()` ordena por
+  `item.catOrdem` (sem ordem no fim, na ordem de sempre). **Pegadinha**: a Home centraliza a última linha com
+  `grid-column-start` inline — limpar isso já no `dragstart` move o card e o Chromium CANCELA o arrasto na hora; por isso a
+  limpeza acontece no 1º `dragover` e `centerLastHomeGridRow()` roda de novo no `dragend`.
+- Não feito (não pedido): reordenar pelo teclado.
+
+Teste: `tests/catalogo-ordem-arrastar-browser.cjs` (equipe: cards arrastáveis + alça, arrastar muda a tela e chama
+`catalogo_reordenar` com todas as posições, ordem mantida ao voltar, clique ainda abre o item; decorador: ordem do banco
+com os sem ordem no fim, sem alça, arrastar não grava nada, imersiva na mesma ordem). Cache-busting
+`catalogo.css?v=20260925-ordem-arrastar`, `catalogo.mjs?v=20260925-ordem-categorias`. O teste também cobre as categorias
+(equipe arrasta e grava pelo nome; decorador vê na ordem do banco, sem arrastar).
+
+## Projeto aberto: noivos na linha do Voltar, abre na aba Geral, 3D antes dos móveis
+
+Pedidos do usuário, com print do projeto "Ana e Bruno":
+- *"a logo dos noivos, o nome deles, precisam ficar na mesma linha do botão voltar"*: só CSS
+  (`catalogo-projetos.css`, fim do arquivo, ≥768px e só com `body.catalog-tem-voltar`): `.cpj-wrap.cpj-work` sobe pro topo
+  (`padding-top:14px`, substitui os 62px de respiro da lista), `.cpj-work-head` abre 116px à esquerda pro botão, e o
+  `#catalogGlobalBack` desce (`margin-top:31px`, via `body:has(#catalogProjetos:not(.hidden) .cpj-work-head)`) pra ficar
+  centrado com a foto de 72px.
+- *"sempre que entrarmos no projeto a aba principal que já deve vir aberta é a aba Geral"*: `definirAtual()` agora põe
+  `S.workTab = "geral"` (antes "ambiente"). O ambiente ativo (`S.activeAmb`) continua lembrado pro "＋" e pro dock. Voltar
+  (`backCatalogProjetos`) de qualquer outra aba cai em Geral, e de Geral sai pra lista.
+- *"dentro de cada ambiente... primeiro aparece o 3D, e depois aparece os itens embaixo"*: em `pintarPainel()` o bloco
+  "Renderizações" veio pra antes de "Móveis".
+
+Teste: `tests/catalogo-projeto-abertura-browser.cjs` (1100/1440/1900px: Voltar centrado com a foto e o nome, foto à direita
+do botão; abre em Geral; no ambiente, Renderizações antes de Móveis; Voltar ambiente→Geral→lista; reabrir volta pra Geral).
+Cache-busting `catalogo-projetos.{css,mjs}?v=20260925-projeto-geral`, `catalogo.mjs?v=20260925-projeto-geral`.
+
+**Ajuste seguinte** (*"pode remover isso que está por cima de renderizações, porque o nome da tela já está identificado na
+coluna de ambientes... renderizações e móveis eu quero que fique centralizado igual fica dentro do módulo Geral"*): o
+`.cpj-amb-head` com o nome do ambiente saiu do painel do ambiente (continua na tela de Plantas). Os títulos "Renderizações" e
+"Móveis" ganharam `.cpj-block-head-center`: centralizados, mesmo tamanho/peso do título de ambiente da aba Geral
+(`.pa-geral .pa-grupo h3`), com a linha fina embaixo; o botão "3D Livre" fica absoluto à direita pra não tirar o título do
+centro. "Observações do ambiente" continua como antes. Coberto em `tests/catalogo-projeto-abertura-browser.cjs`.
+Cache-busting `?v=20260925-ambiente-centro`.
+
+## Cabeçalho do pedido/PDF: faixa escura na cor do menu do catálogo
+
+Pedido do usuário (redesenho do topo da 1ª página do pedido, "mais sofisticado, premium", *"a cor do cabeçalho deve ser a
+mesma do menu do catálogo"*). `cabecalhoPedidoHtml(empresa, decorador)` em `projeto-apresentacao.mjs`, usado por
+`pedidoPreviewHtml()` (prévia de "Enviar pedido"/"Ver pedido") e, por tabela, `imprimirPedido()` (PDF):
+- Faixa `#5a5a55` (a mesma de `.catalog-header`) de ponta a ponta do papel, filete `#c9ad84` de 2px embaixo, `print-color-
+  adjust:exact`. Logo da empresa à esquerda, sempre branca via `filter:brightness(0) invert(1)` (serve qualquer arquivo). A
+  logo da Chiavari é um PNG quadrado com a arte em ~26% da altura: um `onload` inline marca `.is-quadrada` quando a proporção
+  é < 1,6 e o CSS recorta a faixa do meio (`object-fit:cover; object-position:center 49%`, 206×58px). Sem logo: nome da
+  empresa em serifa branca.
+- À direita: foto circular da decoradora, "DECORADOR SOLICITANTE" (caixa alta pequena, bege), nome em branco, divisória
+  vertical fina e "PRÉVIA DO PEDIDO".
+- Conteúdo abaixo não mudou (só o respiro de cima do bloco do evento subiu pra 34px).
+- `pedidoPreviewHtml`/`imprimirPedido` ganharam a opção `empresa` (os 4 pontos de `catalogo-projetos.mjs` passam
+  `ctx.getCompany?.()`).
+- **PDF**: `@page{margin:14mm 0}` + `@page:first{margin-top:0}` e o papel com `padding:0 14mm` — assim a faixa encosta no topo
+  e nas laterais da 1ª página e as páginas seguintes continuam com margem em cima/embaixo.
+
+Teste: `tests/catalogo-pedido-cabecalho-browser.cjs` (cor igual à do menu, ponta a ponta do papel, logo branca e recortada,
+ordem logo → decoradora → divisória → PRÉVIA DO PEDIDO, conteúdo mantido; no documento de impressão a faixa encosta no topo
+e nas laterais e o fundo sai na impressão). `tests/mock-projetos.cjs` ganhou `opts.empresaLogo`. Cache-busting
+`projeto-apresentacao.mjs?v=20260925-cabecalho-pedido`, `catalogo-projetos.{css,mjs}?v=20260925-cabecalho-pedido`.
+
+**Ajuste seguinte, logo abaixo da faixa** (*"coloque Clientes e o nome Ana e Bruno, embaixo data do evento, e embaixo local do
+evento. Ao lado... um aviso em um card amarelo bem bonito... que esse arquivo é uma prévia do pedido, que o pedido oficial
+nossa equipe comercial enviará com todas as disponibilidades e serviços adicionais"*): o rótulo "RELAÇÃO DE MOBILIÁRIO" virou
+"CLIENTES" (em cima do nome grande), e "Data do evento" / "Local do evento" ficam empilhados embaixo
+(`.cpj-order-event-info`, uma `<dl>`). À direita, `.cpj-order-notice` (`role="note"`): card amarelo suave (`#fbf4de`, borda
+`#ead9a8`, filete dourado `#c9a24f` à esquerda, ícone "i"), título "Esta é uma prévia do pedido" e o texto da equipe
+comercial; `print-color-adjust:exact` pra sair no PDF. No celular (≤600px) o card desce pra baixo das informações. Coberto
+em `tests/catalogo-pedido-cabecalho-browser.cjs`. Cache-busting `?v=20260925-pedido-clientes`.
+
+**"Qtd." e "Item" logo acima da 1ª linha** (pedido: *"precisam ficar logo acima da primeira linha da tabela, ou seja, abaixo de
+Lounge, bem em cima do nome do item e da qtd"*): o `<thead>` da tabela do pedido virou só pra leitor de tela (`.pa-sr`), as
+larguras das colunas passaram pro `<colgroup>` (`.cpj-order-col-qty/-photo`), e cada ambiente ganhou uma linha
+`.cpj-order-colhead` ("Qtd. · · Item", `aria-hidden`) logo depois do nome dele, alinhada com a quantidade e o nome dos itens.
+Vale pra todos os ambientes do pedido, na tela e no PDF. Coberto em `tests/catalogo-pedido-cabecalho-browser.cjs`.
+Cache-busting `?v=20260925-pedido-colunas`.
+
+## Valores no catálogo — setembro/2026
+A grade e o detalhe mostram o valor de locação com tipografia discreta em dourado. Referência escolhida explicitamente pelo usuário: **TABELA 2026 Padrão**. `catalogo_acervo` consulta `itens_precos` nessa tabela da mesma empresa; não usa o preço legado nem ativa a tabela em outros módulos. Sem preço = "Sob consulta"; zero explícito é preservado. A troca de variante atualiza o preço na grade e no detalhe. Migração: `20260925000400_catalogo_valores.sql` (aplicada no banco vinculado). Teste: `tests/catalogo-valores-browser.cjs` (interno/externo, variantes, nulo, zero e mobile).
+
+### Correção da referência de preços
+O usuário esclareceu com print que deseja **TABELA 2026**, não "TABELA 2026 Padrão". A migração `20260925000500_tabela_2026_referencia.sql` ativa a TABELA 2026 da empresa e sincroniza os 1.157 preços com `itens.valor_locacao`, usando os triggers existentes para futuras edições. O catálogo também consulta a TABELA 2026. As tabelas históricas são preservadas; itens sem preço nessa tabela não recebem valores inventados. A indicação anterior de usar "2026 Padrão" foi substituída por esse pedido explícito.
+
+## Escolha de projeto ao clicar em Catálogo
+Pedido final do usuário: a seleção aparece **somente ao clicar no bloco Catálogo da Home**, nunca automaticamente depois do login. `activateGatewayTile` chama `escolherProjetoNaEntrada` apenas para decoradores; a equipe segue direto. Lista editorial em tela cheia com foto, nomes dos noivos, data/local, sem cards; permite voltar à Home, tentar novamente em caso de erro e criar projeto quando não há nenhum. Selecionar carrega o projeto autorizado pela RPC existente, define o projeto/ambiente ativo e abre as categorias. Alterações pendentes são salvas antes de trocar. Não restaura automaticamente um projeto antigo para o decorador. Teste: `tests/catalogo-entrada-projetos-browser.cjs`; screenshots em `outputs/catalogo-entrada-projetos-desktop.png` e `outputs/catalogo-entrada-projetos-mobile.png`.
+
+### Seleção integrada ao menu
+A seleção de projeto deixou de ser modal: é uma seção integrada (`project-entry`) com o menu e o botão Voltar padrão visíveis, inclusive no celular. Conteúdo reduzido a "Qual história vamos criar hoje?", foto, local e data; nomes ficam apenas no rótulo acessível do botão. Removidos textos de apoio, numeração, Continuar e Novo projeto. O histórico e a navegação do menu abrem/fecham essa seção normalmente.
+
+### Opções na escolha de projeto
+A pedido do usuário, a seleção voltou a incluir **Novo projeto** e ganhou **Entrar sem projeto** abaixo do título. Novo projeto usa o formulário existente e entra no catálogo com o novo projeto ativo. Entrar sem projeto salva eventuais alterações pendentes e limpa o projeto/ambiente ativo e a lembrança local, sem apagar projetos. Teste de entrada cobre criação, cancelamento e navegação sem vínculo após selecionar um projeto anterior.
+
+## Projeto: valores em colunas (Reposição / Valor un. / Total) na linha do item
+
+Pedido do usuário, depois de um erro `precosHtml is not defined` que impedia abrir qualquer projeto (o Codex tinha colocado a
+chamada `precosHtml(item)` nas linhas e ficou sem créditos antes de criar a função): *"o valor de reposição deve ser uma coluna
+separada, o valor da unidade também e o valor total também, tudo deve ficar na mesma linha do nome do item"*.
+- `projeto-apresentacao.mjs`: `dadosApresentacao()` leva `medidas` (`item.dims`), `preco` (`item.rentalPrice`, TABELA 2026) e
+  `reposicao` (`item.replacementPrice`). `valoresTd()`/`valoresTh()` desenham 3 colunas (Reposição = valor da unidade, Valor un.,
+  Total = quantidade × unidade; sem preço = "—" / "Sob consulta") em TODAS as tabelas: aba Geral, apresentação por ambiente e
+  prévia/PDF do pedido (`VALOR_COLS` soma nos `colspan`). `precosHtml` não existe mais.
+- `catalogo.mjs` `mapRow()` ganhou `replacementPrice` (`row.valor_reposicao`). A RPC só devolve esse campo depois da migration
+  `20260925000600_catalogo_valor_reposicao.sql`, aplicada com `npx supabase db query --linked -f` (o Codex tinha criado e não
+  aplicado). **Atenção**: 20260925000300–600 foram aplicadas por `db query`, não por `db push`, então `migration list` mostra
+  as quatro como pendentes; um `db push` futuro vai tentar reaplicá-las (400–600 são `create or replace`, e a 300 faz
+  `create table`/`create function` sem `if not exists`, então falha). Resolver com `npx supabase migration repair --status applied <versão>`
+  antes do próximo push.
+- Celular (≤700px): a tabela rola de lado dentro do próprio bloco (`min-width`), senão o nome ficava espremido letra por letra.
+- Teste: `tests/catalogo-pedido-cabecalho-browser.cjs` confere as 3 colunas, os valores e que ficam na mesma linha, à direita do
+  nome (o mock `tests/mock-projetos.cjs` ganhou `valor_locacao`/`valor_reposicao` nos itens 1 e 3).
+- **Testes já quebrados, sem relação com esta mudança**: `catalogo-projetos-quantidade-browser.cjs` e `catalogo-valores-browser.cjs`
+  clicam em "Catálogo" como decorador e esperam as categorias, mas agora aparece antes a escolha de projeto.
+- **Medidas fora do nome, logo abaixo dele** (pedidos seguintes): no projeto/pedido, o nome (`nomeCompleto`) passa por
+  `semMedidas()`, que tira "(L) 2.40 m (A) 0.75 m (P) 1.10 m" do `descricao_total`. A linha de baixo (`.pa-medidas`) mostra
+  esse MESMO trecho, no formato do cadastro (`medidasComSiglas()`; sem o trecho no nome, monta "(L) x.xx m..." a partir de
+  `item.dims`), com a mesma fonte, tamanho, peso e cor do nome (`font:inherit` + as mesmas regras do `strong` em cada
+  tabela; o teste compara o `getComputedStyle` dos dois). Só vale nas telas de projeto/pedido.
+- **Títulos das colunas da aba Geral abaixo do nome de cada ambiente** (pedido seguinte): o `<thead>` continua na tabela só
+  para dar a largura das colunas (tabela `table-layout:fixed`) e para leitor de tela, mas fica zerado no CSS
+  (`.pa-geral .pa-itens thead th{height:0;font-size:0;...}`). Os títulos visíveis são uma linha `.pa-colhead` (`COLHEAD_GERAL`,
+  `aria-hidden`) logo depois do título de cada ambiente, igual à `.cpj-order-colhead` do pedido. Essa linha não tem
+  `data-pa-item`, então o arrastar/ordenar ignora ela.
+
+## Projeto: trocar móveis no 3D a partir da imagem do ambiente (editor de cena)
+
+Pedido de uma cliente: clicar no print 3D salvo num ambiente do projeto e abrir, **na mesma tela, um modal com o 3D daquela
+composição**, onde dá pra trocar um móvel por outro. O móvel que sai do 3D sai do pedido, e o que entra, entra. Decisões
+confirmadas com o usuário: (1) imagens salvas antes disto (sem cena) só mostram um aviso ("gere a imagem de novo no 3D Livre");
+(2) cada troca tira **1 unidade** do que saiu e põe 1 do que entrou (se chegar a 0, sai da lista); (3) qualquer item do
+catálogo com modelo 3D (a mesma lista da biblioteca do 3D Livre, com busca); (4) a imagem é substituída sozinha ao concluir;
+(5) vale também para imagens de IA; (6) no modal **só trocar**: nada de mover, girar, adicionar ou apagar; (7) decorador e
+equipe; com pedido já enviado aparece o aviso de sempre ("alterado depois do envio" no "Ver pedido").
+
+- **A cena passa a ser guardada com cada imagem salva no projeto.** `tirarPrintComposicao()` e `renderWithAI()`
+  (`catalogo-studio3d.mjs`) chamam `window.catalogRegisterRenderItems(src, objetos, { tipo:"print"|"ia", snapshot })`. A IA
+  guarda a cena do INÍCIO da renderização. `snapshotCena()` é o mesmo formato de `snapshotProject()`, sem id/nome, com as fotos
+  de parede em JPEG até 1600px. No projeto, `uploadRenderPara()` sobe a cena como `.json` em
+  `<empresa>/<projeto>/cenas/<uuid>.json` (bucket `projetos`) e grava `render.cena = { url, path, tipo }`. O arquivo fica fora de
+  `projetos.dados` de propósito: pode ter vários MB, e o salvamento automático manda `dados` inteiro a cada edição. Migration
+  `20260926000100_projetos_bucket_cena_json.sql` (aplicada e registrada com `migration repair`) liberou `application/json` no
+  bucket. As políticas por pasta já cobriam o resto. Testado no Storage real com a chave anônima: upload, leitura e remoção
+  deram 200. Excluir a imagem ou o projeto apaga também a cena (pasta `cenas` no `excluirProjeto`).
+- **Motor**: `cenaEditor` (exportado por `catalogo-studio3d.mjs`, passado ao projeto como `ctx.cenaEditor` por
+  `catalogo.mjs`) usa a MESMA cena/renderer do 3D Livre, para escala, luz e modelos iguais aos do print. `abrir(host, cena)`
+  guarda um backup da cena do 3D Livre (`snapshotCena(false)`, fotos em PNG, sem perda), move o `<canvas>` para o modal
+  (`studio.cenaModal.host`; `resize()` e o loop de render passam a olhar o modal), carrega a cena com `carregarCena()` e esconde
+  grade e borda. A seleção é por clique sem arrasto (`cenaModalPointerDown/Up`, raio de 6px), destacada com um `BoxHelper` que
+  fica fora dos prints. `selectFromPointer` não age com o modal aberto, então não há arrastar. `trocar(id)` usa
+  `trocarItemSelecionado()` (mantém posição e giro). `capturar()` usa o mesmo `capturarPrintLimpo()` do "Tirar print".
+  `corpoIA()`/`executarIA()` são o `renderWithAI()` separado em "montar o pedido" (síncrono, com a cena atual) e "chamar a IA".
+  `fechar()` devolve o canvas e recarrega o backup. `carregarCena()` saiu de dentro de `openProject()` (que agora só valida e
+  chama). `itemPorId()` também acha variantes de cor.
+- **Modal** (`abrirEditorCena()` em `catalogo-projetos.mjs`, CSS `.cpj-cena-*`): o 3D à esquerda, e à direita o selecionado,
+  a busca e a lista do catálogo, mais "Alterações no pedido" (− 1 X / + 1 Y). Cada troca chama `mudarQuantidade()` na hora.
+  "Concluir" ou Esc fecham: sem troca, nada é enviado; com troca, `substituirImagemDaCena()` sobe o print novo e a cena nova
+  no lugar dos antigos (mesmo `render.id`, mesma posição na lista, arquivos antigos removidos). Se a imagem era de IA, o print
+  entra na hora e a IA roda em segundo plano (notificação "em andamento"); quando termina, a imagem de IA nova substitui o print
+  provisório. Se a IA falhar, fica o print e aparece um aviso. As opções de atmosfera da IA não são guardadas, então a
+  renderização refeita usa o padrão (dia, luz suave, sem convidados). Imagem com cena ganha o selo "Trocar móveis no 3D".
+- Teste: `tests/catalogo-editor-cena-browser.cjs` (6 cenários, 3D de verdade com GLB triangular e clique real no canvas):
+  imagem antiga só com aviso; troca −1/+1 com remoção do item zerado; imagem e cena substituídas e antigas removidas; aviso
+  "alterado depois do envio"; IA refeita com a cena editada; celular; 3D Livre volta com os móveis, posição e giro de antes;
+  "Tirar print" e "Renderizar com IA" reais guardam a cena ao salvar no projeto. `tests/mock-projetos.cjs` ganhou
+  `opts.modelos` (itens com modelo 3D).
+- **"Alterações no pedido" em destaque** (pedido seguinte: "talvez a informação mais importante do modal"): a coluna da
+  direita passou de 340px para 420px (o 3D fica um pouco menor) e o card `.cpj-cena-trocas` fica no TOPO dela, sempre
+  visível (vazio: "Nenhuma alteração ainda..."), com fundo amarelo suave, contador "N trocas" e, em cada troca, uma linha
+  vermelha "− 1 / SAI DO PEDIDO" e uma verde "+ 1 / ENTRA NO PEDIDO", com foto e nome.
+- **Legenda da planta acompanha a troca** (pedido seguinte: "quando eu alterar no 3D eu altero o pedido e a legenda
+  automaticamente"): a legenda e o cartão do ambiente na planta mostram a imagem de `renderAtualDoAmbiente(amb)`, a com
+  `atualizado_em`/`criado_em` mais recente (empate ou sem data: a última da lista, como antes). O editor de cena grava
+  `atualizado_em` na imagem editada, então ela vira a foto da legenda mesmo que não seja a última do ambiente. Os nomes
+  dos móveis na legenda já eram lidos do pedido na hora de desenhar, então também mudam.
+- **Bug corrigido de passagem**: com uma planta aberta (`.cpj-planta-editor`, que cobre a tela inteira), o botão "Voltar"
+  global ficava por cima do "← Plantas" da barra da planta, e o clique caía nele. Agora o "Voltar" global some com a planta
+  aberta (`body:has(.cpj-planta-editor) .catalog-global-back{display:none}`). Isso fazia
+  `tests/catalogo-planta-enquadramento-browser.cjs` falhar, e agora ele passa.
+
+## Login do catálogo: faixa com a logo, frase, cartão e vitrine viva do acervo
+
+Pedido do usuário, com uma imagem de referência e um texto detalhado (a versão atual segue os dois). Antes houve 3
+tentativas recusadas: (1) metade foto de ambiente, "não quero foto"; (2) branco centralizado e pequeno, "falta conceito, cor
+e movimento"; (3) a frase grande à esquerda com nomes de estilo passando e manchas de cor, interrompida pela referência. O
+que vale agora:
+
+- **Estrutura** (`#catalogLogin` em `catalogo.html`, CSS no bloco "Login do catálogo" de `catalogo.css`): faixa escura no
+  topo (`#5a5a55`, a cor do cabeçalho do catálogo) com a logo da empresa em branco (`filter:brightness(0) invert(1)`; logo
+  quadrada recortada na faixa do meio, `.is-quadrada`, mesma técnica do cabeçalho do pedido). No centro, a frase
+  "Transite por vários estilos e encontre *o seu*" (Cormorant, "o seu" em itálico terroso), um filete e um cartão discreto
+  (bordas arredondadas, translúcido, sombra suave) com **só** e-mail, senha e "Entrar →". Pedido explícito: nada de login com
+  Google/Apple/Microsoft, nada de "Mobiliário e decoração para todos os seus projetos", nada de "esqueceu a senha", nada de
+  cenário decorado. Os IDs que o JS usa não mudaram.
+- **Vitrine viva**: ao redor, 12 peças do PRÓPRIO acervo (4 no celular, bem apagadas). Metade nítidas e metade desfocadas e
+  apagadas ao fundo, sempre fora da coluna central. A cada 3,6s uma peça some devagar e volta como outra do acervo que não
+  está na tela (nunca repete). Com movimento reduzido fica tudo parado.
+  `catalogo-login-vitrine.mjs` (`iniciarVitrineLogin()`, self-contido) monta isso; `requireCatalogLogin()` inicia a vitrine
+  quando o login aparece e para quando o login termina. As fotos de estúdio não são branco puro: `brightness` +
+  `mix-blend-mode:multiply` sobre o fundo branco + uma máscara radial fazem só o móvel aparecer, "recortado". **Sem
+  `drop-shadow`**: numa foto opaca ele desenha a sombra do RETÂNGULO (foi o que deixou as peças com um quadro cinza na 1ª
+  versão; mesma lição da foto principal do item).
+- **Dados**: RPC pública nova `catalogo_vitrine_login(p_empresa_id default null)` (migration
+  `20260926000200_catalogo_vitrine_login.sql`, aplicada e registrada), `security definer`, liberada pra `anon`: roda antes do
+  login e devolve só logo e nome da empresa e as fotos de até 24 itens do catálogo (até 3 por categoria, em ordem aleatória). Nada
+  de preço, medida ou código; as fotos já são URLs públicas do bucket "itens". Qual empresa: o link do catálogo não diz, e sem
+  parâmetro vale a ÚNICA empresa com acesso de decorador ativo (hoje só a Chiavari). Se houver mais de uma, não devolve nada (a
+  tela funciona sem vitrine e sem logo) e o link precisa de `?empresa=<id>`, que o front repassa. Testada com a chave anônima de
+  verdade: 22 fotos de 10 categorias.
+- Teste: `tests/catalogo-login-vitrine-browser.cjs` (faixa e logo branca, frase, cartão centralizado só com os 2 campos e o
+  botão, nada do que foi proibido, 12 peças com 6 desfocadas e nenhuma sobre o cartão, troca sem repetir, celular sem rolagem
+  lateral, movimento reduzido parado, `?empresa=` repassado, tela sem vitrine).
+  `tests/catalogo-login-equipe-browser.cjs` continua fazendo login nos 4 cenários (o 4º só para na escolha de projeto,
+  problema antigo).
+- **Ajustes seguintes na mesma tela** (3 pedidos em sequência):
+  1. *"parece que são duas colunas de foto de cada lado, queria mais embaralhado"*: 15 posições irregulares (alturas,
+     tamanhos e distâncias do centro diferentes, mais duas peças pequenas acima da frase e abaixo do formulário, com altura
+     limitada por `--mh`), um sorteio de ±1,6% na posição a cada visita (`JITTER`) e uma flutuação bem lenta por peça, cada uma
+     no seu ritmo (`translate` na imagem, que não briga com o fade do bloco). Em tela baixa ou estreita nem todas cabem:
+     `evitarCentro()` mede cada peça e esconde (`.is-fora`, fora da troca) a que encostaria na frase ou no formulário,
+     recalculando a cada imagem carregada e ao redimensionar. Medido em 1024×768, 1280×720, 1366×768, 1440×900, 1536×864 e
+     1920×1080, 5 sorteios cada: nenhuma peça visível encosta no centro. No celular sobram 1 ou 2 peças apagadas.
+  2. *"quando passar o mouse num item que não estiver esmaecido, quero ver o nome dele bem bonito com uma setinha
+     desconstruída, só o nome"*: a RPC passou a devolver `nome` (produto_base + produto, o mesmo nome do catálogo; migration
+     `20260926000300_catalogo_vitrine_login_nome.sql`, aplicada). Nas peças nítidas, no hover, aparece só o nome (Cormorant
+     itálico) com uma seta de traço curvo que se desenha e a ponta solta aparecendo logo depois. A seta aponta pro lado do
+     centro (`.is-direita` espelha) e fica abaixo da peça nas que estão coladas na faixa de cima (`.is-abaixo`). A peça sobe um
+     pouco e passa pra frente (z-index 3). A peça com o nome aberto não é trocada. Não acontece em tela de toque nem nas peças
+     desfocadas.
+  3. *"retire esse card, deixe mais bonito escrito e-mail, senha, uma mensagem em cima: acesse seu catálogo exclusivo"*: o
+     formulário ficou solto, sem cartão. Em cima, "Acesse seu catálogo exclusivo" (Manrope, caixa alta espaçada, terroso),
+     depois "E-MAIL" e "SENHA" escritos acima de cada campo e só uma linha embaixo (os ícones e placeholders saíram). O
+     autopreenchimento do navegador pintava o campo de azul claro (visto no print do usuário) e foi neutralizado com
+     `-webkit-autofill` + `box-shadow` branco inset.
+  Teste `tests/catalogo-login-vitrine-browser.cjs` atualizado: 15 peças (9 desfocadas), nenhuma peça visível sobre a frase ou
+  o formulário, posições variadas, sem cartão, convite e rótulos, e o nome certo com a seta no hover (e nenhum nas desfocadas).
+  Passa em execuções repetidas, cada uma com um sorteio diferente.
+
+## Catálogo: entrar como visitante (sem acesso exclusivo)
+
+Pedido do usuário: *"existe duas formas de alguém entrar no catálogo: cliente exclusivo, por e-mail e senha, ou um cliente
+qualquer que vai acessar o catálogo que a gente criar, esse será o padrão... como se fosse um convidado"*. O visitante vê o
+MESMO catálogo padrão que a equipe (Home, categorias, itens, filtros) e a Biblioteca, sem edição, com **"Sob consulta" no
+lugar do preço**, e com **Módulo 3D e Projetos visíveis, mas com cadeado** (pedido seguinte: "que ele veja os módulos
+exclusivos, só que com um cadeado").
+
+- **Entrada** (`#catalogLogin`): por padrão só aparece "Explorar o catálogo" (`[data-login-visitante]`) e o link "Tenho
+  acesso exclusivo" (`[data-login-exclusivo]`), que troca a escolha pelo formulário de e-mail e senha
+  (`#catalogLogin.is-exclusivo`). "← Entrar sem acesso exclusivo" (`[data-login-voltar]`) volta. A escolha de visitante fica
+  na aba (`sessionStorage.catalogo_visitante`), então recarregar não passa pela entrada de novo (o script anti-flash também
+  conhece esse sinal e adiciona `body.catalog-visitante`). O "Sair" do cabeçalho (o visitante ganha só o botão, como a
+  equipe no acesso direto) limpa o sinal e volta pra entrada.
+- **Dados**: sem login não há token nem `auth.uid()`, então há 3 leituras públicas (`anon`), cada uma reaproveitando a função
+  que a equipe já usa (migration `20260926000400_catalogo_visitante.sql`, aplicada e registrada):
+  `catalogo_publico_carregar` (= `catalogo_acervo()` **sem `valor_locacao`/`valor_reposicao`, cortados no banco**, então o
+  preço nunca chega ao navegador do visitante), `catalogo_capas_publico` (só a capa padrão da equipe) e
+  `biblioteca_publico_carregar` (só fotos da empresa, `cliente_id is null`, sem `path`). A empresa sai de
+  `catalogo_empresa_publica()`, que não é exposta ao anon: é a única com acesso de decorador ativo, ou `?empresa=<id>` no link
+  (mesma regra da vitrine do login). Testado com a chave anônima: 589 itens e nenhum campo de preço.
+- **Frontend** (`catalogo.mjs`): `ehVisitante()` (`state.catalogSession.visitante`) decide tudo:
+  - carrega pelas leituras públicas;
+  - não inicia Projetos nem o 3D Livre (então não aparece "＋ adicionar ao projeto", dock nem escolha de projeto);
+  - "Experimente outro tecido" (créditos de IA) não aparece;
+  - "Catálogo" no Portal vai direto pras categorias;
+  - nada de edição (`state.acessoInterno` é falso).
+
+  O preço mostra "Sob consulta" porque `rentalPrice` vem nulo. No Portal, `blocoBloqueado()` marca Módulo 3D e Projetos com
+  `.is-bloqueado` (cadeado acima do título, selo "Acesso exclusivo" abaixo, foto levemente escurecida). Clicar mostra um aviso
+  com "Entrar com acesso exclusivo", e `irParaAcessoExclusivo()` recarrega já no formulário
+  (`sessionStorage.catalogo_abrir_exclusivo`). Na Biblioteca (`catalogo-biblioteca.mjs`, `ctx.visitante`) só dá pra ver:
+  sem mover nem remover foto.
+- **Biblioteca do visitante hoje está vazia, e isso é dado, não bug**: as 73 fotos da Biblioteca foram enviadas para
+  decoradoras específicas (Kelly Khawam 44, Fabiane Gabrich 29), ou seja, são exclusivas delas. O visitante vê o mesmo que a
+  equipe vê sem nenhum decorador selecionado (as fotos da empresa), e essas aparecem assim que a equipe subir fotos sem
+  escolher decorador.
+- Testes: `tests/catalogo-visitante-browser.cjs` (entrada, cadeados e aviso, "Entrar com acesso exclusivo" abrindo no
+  formulário, "Sob consulta" sem "R$", item sem tecido/edição/projeto, Biblioteca só de leitura, só leituras públicas chamadas,
+  recarregar mantém, sair volta). `catalogo-login-vitrine-browser.cjs`, `catalogo-login-equipe-browser.cjs` e
+  `catalogo-browser.cjs` passaram a clicar em "Tenho acesso exclusivo" antes de preencher o e-mail.
+  `tests/catalogo-biblioteca-browser.cjs` falha em "Enter numa foto focada abre ESSA foto" **também sem estas mudanças**
+  (confirmado desfazendo as edições da Biblioteca e rodando de novo): problema antigo, não investigado.

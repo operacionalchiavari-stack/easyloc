@@ -1,5 +1,8 @@
 import { renderPdfPage } from './catalogo-pdf.mjs';
-import { studioFormats, studioFormatPlacements } from './catalogo-lounge.mjs?v=20260924-abas-formatos';
+// matchingItems importado sob outro nome: o arquivo já tem uma função local `matchingItems(pattern)` (usada
+// pelo diálogo antigo de "Montagem automática"/PRESETS, assinatura totalmente diferente — um regex solto, não
+// um papel de formato) — nomes iguais, propósitos diferentes, mantidos os dois sem tocar no que já existia.
+import { studioFormats, studioFormatPlacements, matchingItems as formatoRoleItems } from './catalogo-formatos.mjs?v=20260924-categoria-favorito';
 const THREE_URL = "three";
 const GLTF_URL = "three/addons/loaders/GLTFLoader.js";
 const ORBIT_URL = "three/addons/controls/OrbitControls.js";
@@ -109,8 +112,10 @@ let insertingFormat = false;
 const formatPreviewCache = new Map();
 let formatPreviewQueue = Promise.resolve();
 let formatPreviewObserver;
-let formatsPage = 0;
-const FORMATS_PAGE_SIZE = 6;
+
+// Categoria escolhida no diálogo "Salvar formato" (chips de sugestão + campo livre — ver
+// FORMAT_CATEGORY_SUGGESTIONS/renderFormatCategoryChips mais abaixo).
+let formatCategoryChoice = "";
 
 // Renderer offscreen ÚNICO, reaproveitado por TODA prévia de formato — antes
 // cada chamada de renderFormatPreview() criava (`new THREE.WebGLRenderer`) e
@@ -146,10 +151,12 @@ function ensurePreviewRenderer(THREE){
   return previewRenderer;
 }
 
-async function renderFormatPreview(format){
-  const placements = studioFormatPlacements(format, studio.items);
-  const key = JSON.stringify(placements);
-  if(formatPreviewCache.has(key)) return formatPreviewCache.get(key);
+// Núcleo de renderFormatPreview() — extraído pra ser reaproveitado também na captura da FOTO de capa (ver
+// "Formatos: foto no lugar do 3D ao vivo" no CLAUDE.md): monta a cena offscreen a partir de `placements` já
+// prontos (item+posição+rotação), enquadra/recorta e devolve o <canvas> de 480×360 — quem chama decide o que
+// fazer com ele (renderFormatPreview vira dataURL pra mostrar na lista; capturarFotoDoFormato vira JPEG pra
+// subir no Storage). Nenhuma mudança de comportamento pra quem já chamava renderFormatPreview antes.
+async function renderPlacementsCanvas(placements){
   const { THREE, GLTFLoader } = await loadThree();
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#f6f4f0');
@@ -218,10 +225,7 @@ async function renderFormatPreview(format){
         (preview.width - width * scale) / 2, (preview.height - height * scale) / 2,
         width * scale, height * scale);
     }
-    const image = preview.toDataURL('image/png');
-    if(formatPreviewCache.size >= 60) formatPreviewCache.delete(formatPreviewCache.keys().next().value);
-    formatPreviewCache.set(key,image);
-    return image;
+    return preview;
   }finally{
     const disposed = new Set();
     const dispose = value => { if(value && !disposed.has(value)){ disposed.add(value); value.dispose?.(); } };
@@ -236,32 +240,187 @@ async function renderFormatPreview(format){
   }
 }
 
-function renderStudioFormatsPage(){
+// Prévia da LISTA (fallback pra formato sem foto ainda — ver renderFormatsBrowseModal) — mesma função de sempre,
+// só que agora devolvendo o dataURL a partir do <canvas> de renderPlacementsCanvas(), com o mesmo cache em
+// memória por sessão (nunca persiste — quem persiste de verdade é backfillFormatCapa(), chamada por quem exibe
+// a lista assim que essa prévia termina de renderizar).
+async function renderFormatPreview(format){
+  const placements = studioFormatPlacements(format, studio.items);
+  const key = JSON.stringify(placements);
+  if(formatPreviewCache.has(key)) return formatPreviewCache.get(key);
+  const canvas = await renderPlacementsCanvas(placements);
+  const image = canvas.toDataURL('image/png');
+  if(formatPreviewCache.size >= 60) formatPreviewCache.delete(formatPreviewCache.keys().next().value);
+  formatPreviewCache.set(key, image);
+  return image;
+}
+
+// Converte um <canvas> em blob JPEG comprimido — mesma qualidade (.86) já usada em outros uploads de foto desta
+// sessão (Projetos: paraJpeg()). Usada tanto na captura em "Salvar formato" quanto no backfill da lista.
+function canvasParaJpegBlob(canvas, qualidade = .86){
+  return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Não foi possível gerar a imagem.")), "image/jpeg", qualidade));
+}
+
+// Sobe `blob` pro bucket lounge-formatos, no caminho fixo por formato (upsert — trocar a foto de novo no futuro,
+// se algum dia existir edição, sobrescreve em vez de acumular arquivo órfão) e grava a URL/caminho no registro via
+// a MESMA lounge_formato_salvar (2ª chamada, mesmo id — ver migration 20260923000100_lounge_formatos_capa.sql).
+// Nunca lança: quem chama trata qualquer falha como "sem foto ainda", nunca como erro visível pra pessoa (ver
+// anexarFotoDoFormato/backfillFormatCapa, os dois únicos chamadores).
+async function salvarCapaDoFormato(formatoId, nome, papeis, blob, categoria){
+  const path = `${studio.empresaId}/${formatoId}/capa.jpg`;
+  const { error: uploadError } = await studio.supabase.storage.from("lounge-formatos").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+  if(uploadError) throw uploadError;
+  const { data: urlData } = studio.supabase.storage.from("lounge-formatos").getPublicUrl(path);
+  // p_categoria repassada aqui também (não só na 1ª chamada) — o `coalesce` da RPC já protege contra apagar a
+  // categoria existente se vier null, mas mandar o valor de verdade evita depender só do coalesce.
+  const { error: rpcError } = await studio.supabase.rpc("lounge_formato_salvar", {
+    p_token: studio.token || null, p_empresa_id: studio.empresaId,
+    p_id: formatoId, p_nome: nome, p_papeis: papeis,
+    p_capa_url: urlData?.publicUrl || null, p_capa_path: path,
+    p_categoria: categoria || null,
+  });
+  if(rpcError) throw rpcError;
+  return urlData?.publicUrl || null;
+}
+
+// Chamada em SILÊNCIO logo depois de "Salvar formato" ter concluído com sucesso — pedido explícito do usuário:
+// "a forma de criar os formatos permanece a mesma isso nao deve ser alterado". A pessoa não vê nenhum passo novo
+// nem espera extra; se isto falhar, o formato já está salvo e utilizável do mesmo jeito — só cai no console, a
+// o modal "Todos os formatos" tem o fallback de renderFormatsBrowseModal pra formato sem foto. `pecas` = o MESMO array que acabou de
+// ser gravado (formatDraft), então a foto é fiel ao que a pessoa realmente montou, não a uma escolha automática.
+async function anexarFotoDoFormato(formatoId, nome, pecas, categoria){
+  if(!formatoId) return;
+  try{
+    const placements = pecas.map((peca) => {
+      const item = studio.items.find((candidate) => String(candidate.id) === String(peca.item_id));
+      return item ? { item, position: peca.position, rotation: (Number(peca.rotation) || 0) * Math.PI / 180 } : null;
+    }).filter(Boolean);
+    if(!placements.length) return;
+    const canvas = await renderPlacementsCanvas(placements);
+    const blob = await canvasParaJpegBlob(canvas);
+    const url = await salvarCapaDoFormato(formatoId, nome, pecas, blob, categoria);
+    const runtime = availableFormats.find((format) => format.recordId === formatoId);
+    if(runtime && url) runtime.capaUrl = url;
+  }catch(error){
+    console.error("Não foi possível gerar/anexar a foto do formato:", error);
+  }
+}
+
+// Auto-cura pra formato SEM foto ainda (salvo antes desta feature existir): a 1ª vez que o modal "Todos os
+// formatos" precisa renderizar o 3D dele ao vivo (fallback em renderFormatsBrowseModal), a MESMA imagem que
+// acabou de ser gerada é aproveitada pra preencher a foto no banco — nunca mais vai precisar renderizar esse
+// formato de novo. Só pra formato CUSTOM (tem `recordId` — dono da própria linha no banco); o embutido "Lounge
+// compacto" não tem onde persistir, continua usando o cache em memória de sempre (formatPreviewCache). Mesmo
+// tratamento de erro silencioso de anexarFotoDoFormato — nunca atrapalha quem só queria VER a prévia. Se o
+// formato for favorito, a prateleira (que nunca renderiza ao vivo por conta própria) ganha a foto de graça.
+async function backfillFormatCapa(format, dataUrl){
+  if(!format.custom || !format.recordId || format.capaUrl) return;
+  try{
+    const image = new Image();
+    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(new Error("Falha ao decodificar a prévia")); image.src = dataUrl; });
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+    canvas.getContext("2d").drawImage(image, 0, 0);
+    const blob = await canvasParaJpegBlob(canvas);
+    const url = await salvarCapaDoFormato(format.recordId, format.title, format.rawPapeis, blob, format.categoria);
+    if(url){ format.capaUrl = url; renderFavoritesShelf(); }
+  }catch(error){
+    console.error("Não foi possível preencher a foto do formato retroativamente:", error);
+  }
+}
+
+// Prateleira de favoritos, sempre visível ao lado de "Itens" (pedido explícito do usuário — ver
+// "Formatos: modal grande + categoria obrigatória + favoritos" no CLAUDE.md). Só mostra formatos com
+// favorito=true; fica escondida por completo quando não há nenhum. NUNCA dispara renderização 3D ao vivo —
+// se o favorito ainda não tem foto (formato salvo antes desta feature, nunca aberto no modal), mostra um
+// retângulo neutro em vez de um fallback caro; a foto real só chega quando o formato for aberto pelo menos
+// uma vez no modal "Todos os formatos" (backfillFormatCapa chama renderFavoritesShelf() de novo depois).
+function formatFavoriteCardMarkup(format){
+  const titulo = escapeHtml(format.title);
+  const photo = format.capaUrl
+    ? `<img src="${escapeHtml(otimizarFoto(format.capaUrl, 160))}" alt="" loading="lazy">`
+    : `<span class="studio-favorite-placeholder" aria-hidden="true"></span>`;
+  return `<button type="button" class="studio-favorite-card" data-studio-format="${escapeHtml(format.key)}" title="${titulo}">${photo}<span>${titulo}</span></button>`;
+}
+
+function renderFavoritesShelf(){
+  const wrap = $("studioFavorites");
+  const list = $("studioFavoritesList");
+  if(!wrap || !list) return;
+  const favorites = availableFormats.filter((format) => format.favorito);
+  wrap.classList.toggle("hidden", favorites.length === 0);
+  list.innerHTML = favorites.map(formatFavoriteCardMarkup).join("");
+}
+
+// Cartão de formato: mostra a FOTO de capa direto (sem nenhum custo de 3D) quando ela existe — é o caso comum,
+// depois que "Salvar formato"/o backfill já preencheram capaUrl. Só formato SEM foto ainda (built-in "Lounge
+// compacto", que nunca tem onde persistir uma; ou um formato custom salvo antes desta feature) cai no fallback
+// de sempre — spinner + renderização ao vivo sob demanda (IntersectionObserver), exatamente como era antes.
+function formatCardMarkup(format){
+  const titulo = escapeHtml(format.title);
+  if(format.capaUrl){
+    return `<button type="button" class="catalog-lounge-format studio-format-card" data-studio-format="${escapeHtml(format.key)}"><strong>${titulo}</strong><span class="studio-format-preview"><img src="${escapeHtml(otimizarFoto(format.capaUrl, 480))}" alt="Foto de ${titulo}" width="480" height="360" loading="lazy"></span></button>`;
+  }
+  return `<button type="button" class="catalog-lounge-format studio-format-card" data-studio-format="${escapeHtml(format.key)}"><strong>${titulo}</strong><span class="studio-format-preview" aria-busy="true"><img alt="Prévia de ${titulo}" width="480" height="360" hidden><span class="studio-format-spinner" role="status" aria-label="Carregando prévia"></span></span></button>`;
+}
+
+// Card do modal "Todos os formatos": o mesmo cartão de sempre (formatCardMarkup) + uma estrela por cima —
+// clicar na estrela favorita/desfavorita na hora (sem editar o formato), clicar no resto do card fecha o modal
+// e abre "Escolher os móveis" (ver initStudioLibraryTabs). Sem estrela pro "Lounge compacto" embutido (sem
+// `recordId`, não tem onde persistir um favorito).
+function formatBrowseCardMarkup(format){
+  const star = format.recordId
+    ? `<button type="button" class="studio-format-favorite ${format.favorito ? "is-active" : ""}" data-format-favorite="${escapeHtml(format.key)}" aria-pressed="${format.favorito ? "true" : "false"}" aria-label="${format.favorito ? "Remover dos favoritos" : "Marcar como favorito"}" title="${format.favorito ? "Remover dos favoritos" : "Marcar como favorito"}">${format.favorito ? "★" : "☆"}</button>`
+    : "";
+  return `<div class="studio-format-browse-card">${formatCardMarkup(format)}${star}</div>`;
+}
+
+// Modal grande "Todos os formatos" (pedido explícito do usuário) — agrupado por categoria ("Outros" pros
+// formatos salvos antes desta feature, sem categoria), com pesquisa por nome OU categoria. Sem paginação: no
+// lugar da paginação de 6 em 6 que a barra lateral estreita tinha, o modal (maior, com scroll próprio) mostra
+// tudo de uma vez, dividido por seção — a categoria já é o "filtro" principal.
+function renderFormatsBrowseModal(){
+  const list = $("studioFormatsBrowseList");
+  const status = $("studioFormatsBrowseStatus");
+  if(!list) return;
   formatPreviewObserver?.disconnect();
-  const query = normalizeSearch($("studioFormatsSearch").value.trim());
-  const filtered = availableFormats.filter(format => normalizeSearch(format.title).includes(query));
-  const pages = Math.max(1, Math.ceil(filtered.length / FORMATS_PAGE_SIZE));
-  formatsPage = Math.max(0, Math.min(formatsPage, pages - 1));
-  const visible = filtered.slice(formatsPage * FORMATS_PAGE_SIZE, (formatsPage + 1) * FORMATS_PAGE_SIZE);
-  $("studioFormatsList").innerHTML = visible.map(format => `<button type="button" class="catalog-lounge-format studio-format-card" data-studio-format="${escapeHtml(format.key)}"><strong>${escapeHtml(format.title)}</strong><span class="studio-format-preview" aria-busy="true"><img alt="Prévia de ${escapeHtml(format.title)}" width="480" height="360" hidden><span class="studio-format-spinner" role="status" aria-label="Carregando prévia"></span></span></button>`).join('');
-  $("studioFormatsStatus").textContent = filtered.length ? '' : 'Nenhum formato encontrado.';
-  $("studioFormatsPages").hidden = pages < 2;
-  $("studioFormatsPage").textContent = `${formatsPage + 1} de ${pages}`;
-  $("studioFormatsPrevious").disabled = formatsPage === 0;
-  $("studioFormatsNext").disabled = formatsPage === pages - 1;
+  const query = normalizeSearch(($("studioFormatsBrowseSearch")?.value || "").trim());
+  const filtered = availableFormats.filter((format) => !query || normalizeSearch(`${format.title} ${format.categoria || ""}`).includes(query));
+  if(status) status.textContent = filtered.length ? "" : "Nenhum formato encontrado.";
+  if(!filtered.length){ list.innerHTML = ""; return; }
+  const groups = new Map();
+  filtered.forEach((format) => {
+    const categoria = format.categoria || "Outros";
+    if(!groups.has(categoria)) groups.set(categoria, []);
+    groups.get(categoria).push(format);
+  });
+  const ordered = [...groups.keys()].sort((a, b) => {
+    if(a === "Outros") return 1;
+    if(b === "Outros") return -1;
+    return a.localeCompare(b, "pt-BR");
+  });
+  list.innerHTML = ordered.map((categoria) => `
+    <div class="studio-formats-browse-group">
+      <h3>${escapeHtml(categoria)} <span>${groups.get(categoria).length}</span></h3>
+      <div class="studio-formats-browse-grid">${groups.get(categoria).map(formatBrowseCardMarkup).join("")}</div>
+    </div>`).join("");
+  const semFoto = filtered.filter((format) => !format.capaUrl);
+  if(!semFoto.length) return;
   const observer = new IntersectionObserver(entries => {
     entries.filter(entry => entry.isIntersecting).forEach(({target}) => {
       observer.unobserve(target);
-      const format = visible.find(format => format.key === target.dataset.studioFormat);
+      const format = semFoto.find(format => format.key === target.dataset.studioFormat);
       const image = target.querySelector('img');
       const preview = target.querySelector('.studio-format-preview');
       formatPreviewQueue = formatPreviewQueue.then(async () => {
         if(!target.isConnected) return;
-        if($("studioFormatsPanel").hidden){ observer.observe(target); return; }
+        if(!$("studioFormatsBrowseDialog")?.open){ observer.observe(target); return; }
         try{
-          image.src = await renderFormatPreview(format);
+          const dataUrl = await renderFormatPreview(format);
+          image.src = dataUrl;
           await image.decode();
           image.hidden = false;
+          backfillFormatCapa(format, dataUrl);
         }catch{
           image.alt = 'Prévia indisponível';
           image.hidden = false;
@@ -271,38 +430,79 @@ function renderStudioFormatsPage(){
         }
       });
     });
-  }, {rootMargin:'120px'});
+  }, {rootMargin:'120px', root: list});
   formatPreviewObserver = observer;
-  $("studioFormatsList").querySelectorAll('[data-studio-format]').forEach(card => observer.observe(card));
+  semFoto.forEach((format) => {
+    const card = list.querySelector(`[data-studio-format="${CSS.escape(format.key)}"]`);
+    if(card) observer.observe(card);
+  });
+}
+
+// Favoritar/desfavoritar direto do modal (sem editar o formato) — otimista: já atualiza a estrela e a
+// prateleira lateral na hora, desfaz se a RPC falhar.
+async function toggleFormatFavorite(key){
+  const format = availableFormats.find((candidate) => candidate.key === key);
+  if(!format || !format.recordId) return;
+  const next = !format.favorito;
+  format.favorito = next;
+  renderFormatsBrowseModal();
+  renderFavoritesShelf();
+  try{
+    const { error } = await studio.supabase.rpc("lounge_formato_favoritar", {
+      p_token: studio.token || null, p_empresa_id: studio.empresaId,
+      p_id: format.recordId, p_favorito: next,
+    });
+    if(error) throw error;
+  }catch(error){
+    format.favorito = !next;
+    renderFormatsBrowseModal();
+    renderFavoritesShelf();
+    console.error("Não foi possível favoritar o formato:", error);
+    window.catalogNotify?.({ title: "Favorito indisponível", message: "Não foi possível salvar essa alteração. Tente novamente.", status: "error" });
+  }
 }
 
 async function loadStudioFormats(){
-  const status = $("studioFormatsStatus");
-  status.textContent = "Carregando formatos…";
+  const status = $("studioFormatsBrowseStatus");
+  if(status) status.textContent = "Carregando formatos…";
   try{
     const { data, error } = await studio.supabase.rpc('lounge_formatos_listar', {
       p_token: studio.token || null, p_empresa_id: studio.empresaId,
     });
     if(error) throw error;
     availableFormats = studioFormats(Array.isArray(data) ? data : [], studio.items);
-    renderStudioFormatsPage();
+    renderFavoritesShelf();
+    renderFormatsBrowseModal();
   }catch(error){
-    status.textContent = error?.message || "Não foi possível carregar os formatos. Abra a aba novamente para tentar.";
+    if(status) status.textContent = error?.message || "Não foi possível carregar os formatos. Feche e abra o modal novamente pra tentar.";
   }
 }
 
-async function insertStudioFormat(key){
-  if(insertingFormat) return;
-  const format = availableFormats.find(format => format.key === key);
-  if(!format) return;
+// "Formatos" abre o modal direto (pedido explícito do usuário — a barra lateral estreita não troca mais de
+// painel, ver initStudioLibraryTabs). Recarrega toda vez que abre, pra sempre refletir formatos recém-criados.
+function openFormatsBrowseDialog(){
+  const dialog = $("studioFormatsBrowseDialog");
+  if(!dialog) return;
+  const search = $("studioFormatsBrowseSearch");
+  if(search) search.value = "";
+  dialog.showModal();
+  loadStudioFormats();
+  search?.focus();
+}
+
+// Insere de verdade na cena — mesma lógica de sempre, só que `selection` (mapa role.key -> item escolhido no
+// diálogo "Escolher os móveis", ver openFormatApplyDialog abaixo) agora pode vencer a escolha automática de
+// cada papel (ver studioFormatPlacements() em catalogo-formatos.mjs). `status`/`disableTargets` deixam a função
+// reaproveitável — hoje só chamada pelo diálogo novo, mas sem acoplar o texto de status a um elemento fixo.
+async function insertStudioFormat(format, selection, status, disableTargets){
+  if(insertingFormat) return false;
   insertingFormat = true;
   const added = [];
-  const status = $("studioFormatsStatus");
-  $("studioFormatsList").querySelectorAll('button').forEach(button => button.disabled = true);
+  disableTargets?.forEach(button => button.disabled = true);
   try{
-    const placements = studioFormatPlacements(format, studio.items);
+    const placements = studioFormatPlacements(format, studio.items, selection);
     if(!placements.length) throw new Error('Este formato não possui móveis disponíveis.');
-    status.textContent = "Inserindo formato…";
+    if(status) status.textContent = "Inserindo formato…";
     await ensureScene();
     const groupId = crypto.randomUUID();
     // Insert around the current camera focus; the new block can be moved as a whole.
@@ -315,39 +515,152 @@ async function insertStudioFormat(key){
     }
     cancelGrouping();
     selectObject(added[0]);
-    status.textContent = `${format.title} inserido. Mova e gire o bloco para posicioná-lo.`;
+    window.catalogNotify?.({ title: "Formato inserido", message: `${format.title} — mova e gire o bloco pra posicionar.`, status: "success" });
+    return true;
   }catch(error){
     added.forEach(object => studio.scene.remove(object));
     studio.objects = studio.objects.filter(object => !added.includes(object));
     if(added.length){ selectObject(null); updateCount(); }
-    status.textContent = error?.message || "Não foi possível inserir o formato.";
+    if(status) status.textContent = error?.message || "Não foi possível inserir o formato.";
+    return false;
   }finally{
     insertingFormat = false;
-    $("studioFormatsList").querySelectorAll('button').forEach(button => button.disabled = false);
+    disableTargets?.forEach(button => button.disabled = false);
   }
 }
 
-function initStudioLibraryTabs(){
-  $("studioFormatsSearch")?.addEventListener('input', () => { formatsPage = 0; renderStudioFormatsPage(); });
-  const changePage = delta => {
-    formatsPage += delta;
-    renderStudioFormatsPage();
-    $("studioFormatsSearch").scrollIntoView({block:'nearest'});
-  };
-  $("studioFormatsPrevious")?.addEventListener('click', () => changePage(-1));
-  $("studioFormatsNext")?.addEventListener('click', () => changePage(1));
-  document.querySelectorAll('[data-studio-library-tab]').forEach(button => button.addEventListener('click', () => {
-    const formats = button.dataset.studioLibraryTab === 'formats';
-    $("studioItemsPanel").hidden = formats;
-    $("studioFormatsPanel").hidden = !formats;
-    $("studioItemsTab").setAttribute('aria-selected', String(!formats));
-    $("studioFormatsTab").setAttribute('aria-selected', String(formats));
-    if(formats && !insertingFormat) loadStudioFormats();
-  }));
-  $("studioFormatsList")?.addEventListener('click', event => {
-    const button = event.target.closest('[data-studio-format]');
-    if(button) insertStudioFormat(button.dataset.studioFormat);
+// ---------- Diálogo "Escolher os móveis" ----------
+// Pedido explícito do usuário: em vez de a lista renderizar o 3D de cada formato ao vivo (pesado — ver
+// formatCardMarkup/renderFormatsBrowseModal acima), o cartão mostra uma FOTO; clicar nela abre este diálogo pra
+// escolher, peça por peça, QUAL móvel entra em cada papel do formato — só depois disso o formato é inserido no
+// painel 3D, com exatamente essas peças, nas posições/giros salvos. Mesmo padrão visual de 2 colunas do
+// diálogo "Trocar item" (studioSwapDialog): esquerda = papéis do formato (clicar escolhe qual está "ativo"),
+// direita = catálogo FILTRADO pro papel ativo (matchingItems), clicar escolhe o modelo daquele papel. A escolha
+// PADRÃO de cada papel (ao abrir) já reproduz o comportamento de antes desta mudança — o item originalmente
+// salvo, ou o 1º disponível — então só clicar "Inserir formato" sem mexer em nada dá o mesmo resultado de
+// sempre; a novidade é poder trocar antes de inserir.
+let formatApplyTarget = null;
+let formatApplySelection = {};
+let formatApplyRoleIndex = 0;
+
+function formatApplyActiveRole(){
+  return formatApplyTarget?.roles[formatApplyRoleIndex] || null;
+}
+
+function renderFormatApplyCurrentList(){
+  const list = $("studioFormatApplyCurrentList");
+  if(!list || !formatApplyTarget) return;
+  list.innerHTML = formatApplyTarget.roles.map((role, index) => {
+    const item = formatApplySelection[role.key];
+    const active = index === formatApplyRoleIndex;
+    const label = escapeHtml(role.label || "Peça");
+    return `
+    <button type="button" class="studio-library-item ${active ? "is-active" : ""}" data-format-apply-target-index="${index}" aria-pressed="${active}" title="${label}">
+      ${item ? `<img src="${escapeHtml(otimizarFoto(item.photo, 120))}" alt="" loading="lazy">` : `<span class="studio-format-apply-missing" aria-hidden="true">–</span>`}
+      <span>${label}${item ? ` · ${escapeHtml(item.name)}` : " · sem modelo disponível"}</span><b aria-hidden="true">${active ? "✓" : ""}</b>
+    </button>`;
+  }).join("");
+}
+
+function renderFormatApplyList(query = ""){
+  const list = $("studioFormatApplyList");
+  const role = formatApplyActiveRole();
+  if(!list || !role) return;
+  const options = formatoRoleItems(role, studio.items);
+  const normalized = normalizeSearch(query.trim());
+  const chosenId = formatApplySelection[role.key]?.id;
+  list.innerHTML = options.length ? options.map((item) => {
+    const search = normalizeSearch(`${item.name} ${item.catLabel || ""}`);
+    const hidden = normalized && !search.includes(normalized);
+    const active = String(item.id) === String(chosenId);
+    return `
+    <button type="button" class="studio-library-item ${active ? "is-active" : ""} ${hidden ? "hidden" : ""}" data-format-apply-choice="${escapeHtml(item.id)}" data-search="${escapeHtml(search)}">
+      <img src="${escapeHtml(otimizarFoto(item.photo, 120))}" alt="" loading="lazy">
+      <span>${escapeHtml(item.name)}</span><b aria-hidden="true">${active ? "✓" : ""}</b>
+    </button>`;
+  }).join("") : `<div class="studio-library-empty">Nenhum modelo disponível pra "${escapeHtml(role.label || "esta peça")}".</div>`;
+}
+
+function updateFormatApplyDescription(){
+  const description = $("studioFormatApplyDescription");
+  const role = formatApplyActiveRole();
+  if(!description || !formatApplyTarget || !role) return;
+  description.textContent = formatApplyTarget.roles.length > 1
+    ? `"${formatApplyTarget.title}" — escolha à esquerda qual peça ajustar (agora: "${role.label || "peça selecionada"}") e à direita o modelo. As posições e giros do formato continuam os mesmos.`
+    : `Escolha o modelo pra "${role.label || "esta peça"}". A posição continua a do formato.`;
+}
+
+function openFormatApplyDialog(key){
+  const format = availableFormats.find((candidate) => candidate.key === key);
+  if(!format) return;
+  formatApplyTarget = format;
+  formatApplySelection = {};
+  format.roles.forEach((role) => {
+    const options = formatoRoleItems(role, studio.items);
+    formatApplySelection[role.key] = options.find((item) => String(item.id) === String(role.itemId)) || options[0] || null;
   });
+  formatApplyRoleIndex = 0;
+  $("studioFormatApplyStatus").textContent = "";
+  renderFormatApplyCurrentList();
+  updateFormatApplyDescription();
+  const search = $("studioFormatApplySearch");
+  if(search) search.value = "";
+  renderFormatApplyList("");
+  const dialog = $("studioFormatApplyDialog");
+  dialog.showModal();
+  search?.focus();
+}
+
+async function confirmFormatApply(){
+  if(!formatApplyTarget) return;
+  const status = $("studioFormatApplyStatus");
+  const missing = formatApplyTarget.roles.find((role) => !formatApplySelection[role.key]);
+  if(missing){ status.textContent = `Sem modelo disponível pra "${missing.label || "uma das peças"}".`; return; }
+  const buttons = [...$("studioFormatApplyForm").querySelectorAll("button")];
+  const ok = await insertStudioFormat(formatApplyTarget, formatApplySelection, status, buttons);
+  if(ok) $("studioFormatApplyDialog").close();
+}
+
+function initStudioLibraryTabs(){
+  // "Formatos" abre o modal direto — não troca mais painel na barra lateral (ver comentário no HTML/
+  // renderFavoritesShelf). "Itens" não tem mais nada pra alternar (é o único painel real), então fica sem
+  // handler de clique.
+  $("studioFormatsTab")?.addEventListener("click", openFormatsBrowseDialog);
+  $("studioFormatsBrowseClose")?.addEventListener("click", () => $("studioFormatsBrowseDialog")?.close());
+  $("studioFormatsBrowseSearch")?.addEventListener("input", () => renderFormatsBrowseModal());
+  $("studioFormatsBrowseList")?.addEventListener("click", (event) => {
+    const star = event.target.closest("[data-format-favorite]");
+    if(star){ toggleFormatFavorite(star.dataset.formatFavorite); return; }
+    const card = event.target.closest("[data-studio-format]");
+    if(card){ $("studioFormatsBrowseDialog")?.close(); openFormatApplyDialog(card.dataset.studioFormat); }
+  });
+  $("studioFavoritesList")?.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-studio-format]");
+    if(card) openFormatApplyDialog(card.dataset.studioFormat);
+  });
+  $("studioFormatApplyClose")?.addEventListener("click", () => $("studioFormatApplyDialog")?.close());
+  $("studioFormatApplyCurrentList")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-format-apply-target-index]");
+    if(!button) return;
+    formatApplyRoleIndex = Number(button.dataset.formatApplyTargetIndex);
+    renderFormatApplyCurrentList();
+    updateFormatApplyDescription();
+    const search = $("studioFormatApplySearch");
+    if(search) search.value = "";
+    renderFormatApplyList("");
+  });
+  $("studioFormatApplySearch")?.addEventListener("input", (event) => renderFormatApplyList(event.target.value));
+  $("studioFormatApplyList")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-format-apply-choice]");
+    const role = formatApplyActiveRole();
+    if(!button || !role) return;
+    const item = studio.items.find((candidate) => String(candidate.id) === button.dataset.formatApplyChoice);
+    if(!item) return;
+    formatApplySelection[role.key] = item;
+    renderFormatApplyCurrentList();
+    renderFormatApplyList($("studioFormatApplySearch")?.value || "");
+  });
+  $("studioFormatApplyForm")?.addEventListener("submit", (event) => { event.preventDefault(); confirmFormatApply(); });
 }
 
 // Extraído de renderLibrary() pra ser reaproveitado também pelo diálogo de
@@ -501,7 +814,8 @@ async function createScene(){
   resize();
   const loop = (time = 0) => {
     studio.raf = requestAnimationFrame(loop);
-    if(document.hidden || $("catalogStudio")?.classList.contains("hidden")) return;
+    // Com o editor de cena do projeto aberto (cenaEditor), o canvas mora no modal e o overlay do 3D Livre fica escondido.
+    if(document.hidden || (!studio.cenaModal && $("catalogStudio")?.classList.contains("hidden"))) return;
     const minimumFrameTime = 1000 / studio.performance.maxFps;
     if(time - studio.lastFrameAt < minimumFrameTime) return;
     studio.lastFrameAt = time;
@@ -540,7 +854,7 @@ async function openStudioScene(){
 }
 
 function resize(){
-  const host = $("studioCanvasHost");
+  const host = studio.cenaModal?.host || $("studioCanvasHost");
   if(!host || !studio.renderer) return;
   const rect = host.getBoundingClientRect();
   if(rect.width < 2 || rect.height < 2) return;
@@ -1207,6 +1521,22 @@ function removeSelectedCustomWall(){
 let formatDraft = null;
 let savingFormat = false;
 
+// Categoria obrigatória em formato NOVO (pedido explícito do usuário) — chips de sugestão + campo livre,
+// mesmo padrão já usado em "Ambientes" no módulo Projetos (texto livre com sugestões, sem tabela de lookup).
+const FORMAT_CATEGORY_SUGGESTIONS = ["Lounge", "Mesa de convidados", "Mesa de bolo e doces", "Bar", "Cerimônia", "Recepção", "Buffet"];
+
+function renderFormatCategoryChips(){
+  const wrap = $("studioFormatCategoryChips");
+  if(!wrap) return;
+  const customFilled = Boolean($("studioFormatCategoryCustom")?.value.trim());
+  wrap.innerHTML = FORMAT_CATEGORY_SUGGESTIONS.map((categoria) => `<button type="button" class="studio-format-category-chip ${!customFilled && formatCategoryChoice === categoria ? "is-active" : ""}" data-format-category-chip="${escapeHtml(categoria)}">${escapeHtml(categoria)}</button>`).join("");
+}
+
+function effectiveFormatCategory(){
+  const custom = $("studioFormatCategoryCustom")?.value.trim() || "";
+  return (custom || formatCategoryChoice || "").trim();
+}
+
 function openSaveFormat(){
   const members = groupMembers(studio.selected);
   if(members.length < 2 || studio.grouping) return;
@@ -1246,7 +1576,11 @@ function openSaveFormat(){
   });
   $("studioFormatName").value = "";
   $("studioFormatStatus").textContent = "";
-  $("studioFormatDescription").textContent = `${members.length} móveis, com suas posições e rotações, ficarão disponíveis em Composições.`;
+  formatCategoryChoice = "";
+  const categoryCustom = $("studioFormatCategoryCustom");
+  if(categoryCustom) categoryCustom.value = "";
+  renderFormatCategoryChips();
+  $("studioFormatDescription").textContent = `${members.length} móveis, com suas posições e rotações, ficarão disponíveis pra reaplicar em qualquer ambiente.`;
   $("studioFormatDialog").showModal();
   $("studioFormatName").focus();
 }
@@ -1257,21 +1591,27 @@ async function saveSelectedFormat(event){
   const name = $("studioFormatName").value.trim();
   const status = $("studioFormatStatus");
   if(!name){ status.textContent = "Dê um nome ao formato."; return; }
+  const categoria = effectiveFormatCategory();
+  if(!categoria){ status.textContent = "Escolha uma categoria pro formato."; return; }
   if(JSON.stringify(formatDraft).length >= 20000){ status.textContent = "Este bloco é muito grande. Divida-o em formatos menores."; return; }
   savingFormat = true;
   const submit = $("studioFormatForm").querySelector('[type="submit"]');
   submit.disabled = true;
   $("studioFormatClose").disabled = true;
   status.textContent = "Salvando formato…";
+  const pecas = formatDraft;
   try{
-    const { error } = await studio.supabase.rpc("lounge_formato_salvar", {
+    const { data, error } = await studio.supabase.rpc("lounge_formato_salvar", {
       p_token: studio.token || null, p_empresa_id: studio.empresaId,
-      p_id: null, p_nome: name, p_papeis: formatDraft,
+      p_id: null, p_nome: name, p_papeis: pecas, p_categoria: categoria,
     });
     if(error) throw error;
     $("studioFormatDialog").close();
     formatDraft = null;
-    window.catalogNotify?.({ title: "Formato salvo", message: "Seu bloco já está disponível em Composições.", status: "success" });
+    window.catalogNotify?.({ title: "Formato salvo", message: "Seu bloco já está disponível em Formatos.", status: "success" });
+    // Foto de capa capturada em silêncio — ver anexarFotoDoFormato() (não altera nenhum passo visível da
+    // criação, pedido explícito do usuário). Nunca bloqueia/atrasa o "finally" abaixo nem o resto do fluxo.
+    anexarFotoDoFormato(data?.id, name, pecas, categoria);
   }catch(error){
     status.textContent = error?.message || "Não foi possível salvar. Tente novamente.";
   }finally{
@@ -1409,6 +1749,7 @@ function calibrateFromRuler(){
 }
 
 function selectFromPointer(event){
+  if(studio.cenaModal) return; // no editor de cena do projeto a seleção é por clique (cenaModalPointerUp), sem arrastar nada
   if(beginWallDrag(event)) return;
   if(studio.wallDrawActive){ drawWallFromPointer(event); return; }
   if(studio.cropActive){ cropFromPointer(event); return; }
@@ -2444,7 +2785,7 @@ function capturePreview(){
 }
 
 function captureCleanPreview(){
-  const helpers = [studio.grid, studio.roomBorder, studio.rulerVisual, studio.wallDrawPreview, ...studio.customWalls.map((wall) => wall.floorLine), ...studio.groupHelpers].filter(Boolean);
+  const helpers = [studio.grid, studio.roomBorder, studio.rulerVisual, studio.wallDrawPreview, ...studio.customWalls.map((wall) => wall.floorLine), ...studio.groupHelpers, studio.cenaModal?.destaque].filter(Boolean);
   const visibility = helpers.map((helper) => helper.visible);
   helpers.forEach((helper) => { helper.visible = false; });
   studio.renderer.render(studio.scene, studio.camera);
@@ -2452,6 +2793,135 @@ function captureCleanPreview(){
   helpers.forEach((helper, index) => { helper.visible = visibility[index]; });
   studio.renderer.render(studio.scene, studio.camera);
   return preview;
+}
+
+// Retângulo (em pixels do canvas do renderer) que cobre a composição inteira, vista pela câmera ATUAL — projeta os
+// 8 cantos da caixa delimitadora 3D (união de todos os móveis) pro espaço de tela e pega o menor/maior x/y.
+// Achado real, reportado pelo usuário com print: sem isso, o quadro capturado é sempre o estúdio inteiro (a sala
+// toda que a câmera enxerga pra editar), e a composição em si — geralmente uma fração pequena da cena — sobra
+// minúscula no meio de uma folha branca enorme.
+//
+// **Por que NÃO ler os pixels renderizados pra refinar esse recorte** (tentativa real desta mesma sessão,
+// descartada): a ideia óbvia seguinte seria achar o menor retângulo que cobre tudo que "não é fundo branco" nos
+// PIXELS de verdade, em vez de confiar só na geometria 3D. Testado com um modelo .glb real e descartado: vários
+// móveis trazem uma sombra de contato já DESENHADA na própria textura/malha do modelo (não é iluminação da cena,
+// não desliga trocando o piso pra branco nem escondendo luzes) — pra quem só olha pixel, essa sombra é
+// visualmente idêntica a "parte do móvel": sólida, densa, sem ser um degradê fraco que dê pra filtrar por
+// tolerância de cor ou por densidade de pixel por linha/coluna (as duas formas testadas aqui). Ou seja, não dá
+// pra confiar em "o que está pintado na tela" pra decidir onde o móvel termina — só a GEOMETRIA (Box3) sabe isso
+// de verdade. Ficou só o recorte por caixa 3D mesmo, com a margem BEM mais apertada abaixo (pedido explícito:
+// "tem que ser o formato perfeito mesmo no limite pra funcionar").
+function calcularRecorteComposicao(){
+  if(!studio.objects.length) return null;
+  const { THREE } = studio.three;
+  const caixa = new THREE.Box3();
+  studio.objects.forEach((objeto) => caixa.expandByObject(objeto));
+  if(caixa.isEmpty()) return null;
+  const cantos = [];
+  for(const x of [caixa.min.x, caixa.max.x]) for(const y of [caixa.min.y, caixa.max.y]) for(const z of [caixa.min.z, caixa.max.z]) cantos.push(new THREE.Vector3(x, y, z));
+  const larguraFonte = studio.renderer.domElement.width, alturaFonte = studio.renderer.domElement.height;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  cantos.forEach((canto) => {
+    const projetado = canto.project(studio.camera); // espaço normalizado (-1..1)
+    minX = Math.min(minX, (projetado.x * .5 + .5) * larguraFonte);
+    maxX = Math.max(maxX, (projetado.x * .5 + .5) * larguraFonte);
+    minY = Math.min(minY, (1 - (projetado.y * .5 + .5)) * alturaFonte); // eixo Y da tela cresce pra baixo, o de NDC cresce pra cima
+    maxY = Math.max(maxY, (1 - (projetado.y * .5 + .5)) * alturaFonte);
+  });
+  // Respiro proporcional ao tamanho da composição na tela — só o suficiente pra não ficar com o pixel da borda do
+  // móvel colado na borda da foto (um recorte LITERALMENTE zero de folga corta a sombra de contato/o anti-
+  // serrilhado do próprio 3D). Achado real: 12%/19,2% (a versão original desta função) ainda deixava "muito fundo
+  // branco" na opinião do usuário — reduzido bem mais, "no limite" mesmo, é isso que foi pedido explicitamente.
+  const margem = Math.max(maxX - minX, maxY - minY) * .035;
+  minX -= margem; maxX += margem; minY -= margem; maxY += margem * 1.4;
+  minX = Math.max(0, minX); minY = Math.max(0, minY);
+  maxX = Math.min(larguraFonte, maxX); maxY = Math.min(alturaFonte, maxY);
+  if(maxX - minX <= 1 || maxY - minY <= 1) return null; // composição fora do enquadramento da câmera — nada útil pra recortar
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+// Um único quadro do canvas atual, recortado rente à composição — assume que quem chamou já preparou a cena pra
+// captura (piso branco, helpers escondidos) e já posicionou a câmera; só renderiza, recorta e devolve a dataURL.
+function capturarQuadroAtual(){
+  studio.renderer.render(studio.scene, studio.camera);
+  const recorte = calcularRecorteComposicao();
+  const source = studio.renderer.domElement;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  context.imageSmoothingEnabled = true; context.imageSmoothingQuality = "high";
+  const TAMANHO_MAX = 1400;
+  if(recorte){
+    // Recortado + ampliado (até 3× o pixel original, nunca mais que isso — evita borrão) pra imagem final ficar
+    // "rente ao formato do 3D", não a sala inteira sobrando ao redor de uma composição minúscula.
+    const escala = Math.min(TAMANHO_MAX / recorte.width, TAMANHO_MAX / recorte.height, 3);
+    canvas.width = Math.max(1, Math.round(recorte.width * escala));
+    canvas.height = Math.max(1, Math.round(recorte.height * escala));
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(source, recorte.x, recorte.y, recorte.width, recorte.height, 0, 0, canvas.width, canvas.height);
+  }else{
+    // Sem móveis pra enquadrar (não deveria acontecer — já bloqueado antes de chamar) ou fora do enquadramento da
+    // câmera: cai pro quadro inteiro, do jeito que já funcionava antes.
+    canvas.width = 1536; canvas.height = 1024;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    const scale = Math.min(canvas.width / source.width, canvas.height / source.height);
+    const width = source.width * scale, height = source.height * scale;
+    context.drawImage(source, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+  }
+  return canvas.toDataURL("image/png");
+}
+
+// "Tirar print" — pedido explícito do usuário: captura INSTANTÂNEA da composição 3D tal como está montada (sem IA,
+// sem espera, sem custo de créditos), pra usar como foto da legenda na planta baixa (catalogo-projetos.mjs) no
+// lugar da renderização por IA. "no print não aparece o piso 3d, aparece como se o piso fosse branco" — troca o
+// material do piso por um branco liso só durante a captura (preserva sombra/contato dos móveis com o chão, só a
+// COR/textura do piso muda) e restaura o material de verdade logo depois.
+// Pedido explícito numa sessão seguinte: "quando eu tirar print vim 3 versões, quero que venha apenas uma" — a
+// versão anterior reposicionava a câmera em 3 ângulos padronizados calculados a partir da caixa delimitadora da
+// composição (frente/fundo/diagonal — `calcularAngulosPadronizados()`/`posicaoCameraPadronizada()`, removidas por
+// completo, nada mais as usa). Agora captura só o que a câmera já está mostrando na hora do clique, sem mover nada
+// — mais simples, e é exatamente o enquadramento que a pessoa escolheu na tela ("a partir da câmera atual", a
+// mesma ideia que já valia só pro ângulo diagonal na versão anterior).
+// Print limpo da cena como está (piso branco, sem grade/régua/contornos), recortado rente aos móveis. Usado pelo
+// "Tirar print" e pelo editor de cena do projeto (cenaEditor.capturar), que troca a foto sozinho depois de uma troca.
+function capturarPrintLimpo(){
+  const materialOriginal = studio.floor?.material || null;
+  const materialBranco = materialOriginal ? new studio.three.THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .96 }) : null;
+  if(studio.floor && materialBranco) studio.floor.material = materialBranco;
+  const helpers = [studio.grid, studio.roomBorder, studio.rulerVisual, studio.wallDrawPreview, ...studio.customWalls.map((wall) => wall.floorLine), ...studio.groupHelpers, studio.cenaModal?.destaque].filter(Boolean);
+  const visibilidade = helpers.map((helper) => helper.visible);
+  helpers.forEach((helper) => { helper.visible = false; });
+  const foto = capturarQuadroAtual();
+  helpers.forEach((helper, index) => { helper.visible = visibilidade[index]; });
+  if(studio.floor && materialOriginal) studio.floor.material = materialOriginal;
+  materialBranco?.dispose();
+  studio.renderer.render(studio.scene, studio.camera); // devolve o piso de verdade pra tela
+  return foto;
+}
+
+function tirarPrintComposicao(){
+  if(!studio.renderer || !studio.scene || !studio.camera || !studio.objects.length){ alert("Adicione pelo menos um móvel à composição."); return; }
+  selectObject(null);
+  const foto = capturarPrintLimpo();
+
+  // Mesmos móveis registrados que a renderização por IA já registra — o projeto (catalogo-projetos.mjs) leva os
+  // mesmos ao salvar. A cena 3D vai junto: é ela que o projeto reabre quando a pessoa clica no print (editor de cena).
+  const objetos = studio.objects.map((object) => ({ itemId: object.userData.item.id, itemName: object.userData.item.name }));
+  window.catalogRegisterRenderItems?.(foto, objetos, { tipo: "print", snapshot: snapshotCena() });
+
+  const kicker = $("studioResultKicker"), titulo = $("studioResultTitle");
+  if(kicker) kicker.textContent = "Print 3D Livre";
+  if(titulo) titulo.textContent = "Sua montagem, capturada direto do 3D";
+  $("studioResultImage").src = foto;
+  $("studioResultDownload").href = foto;
+  $("studioResultDownload").download = "print-acervo.png";
+  const salvar = $("studioResultDialog")?.querySelector("[data-projeto-save-render]");
+  if(salvar){
+    salvar.dataset.origem = "Print 3D Livre";
+    salvar.__printBatch = null; // limpa um lote antigo, se sobrou de uma versão anterior desta mesma sessão de uso
+  }
+  $("studioResultDialog").showModal();
 }
 
 function toggleCameraLock(){
@@ -2532,25 +3002,75 @@ function renderAtmospherePrompt(options){
   return [periods[options.periodo] || periods.dia, lights[options.iluminacao] || lights.suave, guests[options.convidados] || guests.nenhum, "As escolhas de atmosfera nunca autorizam mover móveis, alterar materiais ou mudar a câmera. Pessoas devem se adaptar aos espaços existentes; se não houver espaço, reduzir a quantidade de pessoas."].join(" ");
 }
 
+// Pedido da IA montado a partir da cena ATUAL (síncrono: captura a prévia na hora). Separado da chamada (executarIA)
+// pra o editor de cena do projeto conseguir montar o pedido com a cena editada e só depois devolver o 3D Livre ao estado dele.
+function montarCorpoIA(renderOptions = { periodo: "dia", convidados: "nenhum", iluminacao: "suave" }){
+  const floorNames = { neutral: "piso neutro", grass: "grama natural", sand: "areia de praia", "slatted-wood": "placas modulares de madeira ripada", plan: "planta técnica importada" };
+  const selectedFloor = floorNames[studio.floorFinish] || floorNames.neutral;
+  const preview = captureCleanPreview();
+  const objects = studio.objects.map((object) => ({
+    itemId: object.userData.item.id,
+    itemName: object.userData.item.name,
+    dimensions: object.userData.item.dimensions || {},
+    position: object.position.toArray(),
+    rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
+    scale: object.scale.toArray(),
+  }));
+  return {
+    empresa_id: studio.empresaId,
+    catalog_token: sessionStorage.getItem("catalogo_token"),
+    prompt: `Converta a captura 3D em uma fotografia arquitetônica ultrarrealista. Preserve rigidamente somente os móveis e o enquadramento: não altere quantidade, modelo, desenho, material, cor, medidas, proporções, escala, posição, rotação nem distância entre os itens. O piso deve ser interpretado como ${selectedFloor}. Trate paredes, teto, piso e as fotos aplicadas nas paredes como referências arquitetônicas flexíveis: conecte quinas e superfícies, complete o teto, harmonize perspectiva, iluminação e continuidade dos materiais e elimine cortes, emendas ou painéis flutuantes sem sentido. As fotos orientam o aspecto e a localização da arquitetura; elas não devem parecer coladas como retângulos. Não acrescente novos móveis, objetos decorativos. ${renderAtmospherePrompt(renderOptions)}`,
+    scene: {
+      preview, objects,
+      camera: { position: studio.camera.position.toArray(), target: studio.orbit.target.toArray(), fov: studio.camera.fov },
+      architecture: {
+        wallHeight: studio.wallHeight,
+        outerWallsWithPhoto: Object.keys(studio.walls),
+        customWalls: studio.customWalls.map((wall) => ({
+          name: wall.name,
+          start: [wall.start.x, wall.start.z],
+          end: [wall.end.x, wall.end.z],
+          length: wall.length,
+          height: wall.height,
+          hasPhotoReference: Boolean(wall.image),
+        })),
+      },
+      referencePolicy: "furniture_strict_architecture_adaptive",
+      options: { formato: { largura: 1536, altura: 1024 }, ...renderOptions, ambientacao: [], piso: studio.floorFinish },
+    },
+    provider: "openai", versions: 1,
+  };
+}
+
+async function executarIA(corpo){
+  const { data, error } = await window.CatalogCredits.invoke("studio-ai-engine", { body: corpo });
+  if(error){
+    let details = "";
+    try{
+      const payload = await error.context?.json();
+      details = payload?.details || payload?.erro || payload?.error?.message || payload?.error || "";
+    }catch{ /* A resposta da função pode não estar em JSON. */ }
+    throw new Error(details || error.message || "A função de renderização recusou a solicitação.");
+  }
+  if(data?.providerStatus !== "ok") throw new Error(data?.error?.message || data?.error?.error?.message || data?.erro || "O Studio IA não conseguiu concluir a imagem.");
+  const src = extractResult(data?.images?.[0]);
+  if(!src) throw new Error(data?.erro || "A IA não retornou uma imagem.");
+  return src;
+}
+
 async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhum", iluminacao: "suave" }){
   if($("studioRenderButton").disabled) return;
   if(!studio.objects.length){ alert("Adicione pelo menos um móvel à composição."); return; }
   const button = $("studioRenderButton");
-  const floorNames = { neutral: "piso neutro", grass: "grama natural", sand: "areia de praia", "slatted-wood": "placas modulares de madeira ripada", plan: "planta técnica importada" };
-  const selectedFloor = floorNames[studio.floorFinish] || floorNames.neutral;
   button.disabled = true; button.textContent = "Preparando…";
   let workingToast = null;
   try{
     selectObject(null);
-    const preview = captureCleanPreview();
-    const objects = studio.objects.map((object) => ({
-      itemId: object.userData.item.id,
-      itemName: object.userData.item.name,
-      dimensions: object.userData.item.dimensions || {},
-      position: object.position.toArray(),
-      rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
-      scale: object.scale.toArray(),
-    }));
+    // Cena no INÍCIO da renderização (a IA leva minutos e a pessoa pode mexer no 3D enquanto isso): é ela que o projeto
+    // reabre quando a imagem salva é clicada (editor de cena).
+    const cena = { tipo: "ia", snapshot: snapshotCena() };
+    const corpo = montarCorpoIA(renderOptions);
+    const objects = corpo.scene.objects;
     button.textContent = "Renderizando…";
     workingToast = window.catalogNotify?.({
       title: "Renderização em andamento",
@@ -2558,45 +3078,9 @@ async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhu
       status: "working",
       duration: 0,
     });
-    const { data, error } = await window.CatalogCredits.invoke("studio-ai-engine", {
-      body: {
-        empresa_id: studio.empresaId,
-        catalog_token: sessionStorage.getItem("catalogo_token"),
-        prompt: `Converta a captura 3D em uma fotografia arquitetônica ultrarrealista. Preserve rigidamente somente os móveis e o enquadramento: não altere quantidade, modelo, desenho, material, cor, medidas, proporções, escala, posição, rotação nem distância entre os itens. O piso deve ser interpretado como ${selectedFloor}. Trate paredes, teto, piso e as fotos aplicadas nas paredes como referências arquitetônicas flexíveis: conecte quinas e superfícies, complete o teto, harmonize perspectiva, iluminação e continuidade dos materiais e elimine cortes, emendas ou painéis flutuantes sem sentido. As fotos orientam o aspecto e a localização da arquitetura; elas não devem parecer coladas como retângulos. Não acrescente novos móveis, objetos decorativos. ${renderAtmospherePrompt(renderOptions)}`,
-        scene: {
-          preview, objects,
-          camera: { position: studio.camera.position.toArray(), target: studio.orbit.target.toArray(), fov: studio.camera.fov },
-          architecture: {
-            wallHeight: studio.wallHeight,
-            outerWallsWithPhoto: Object.keys(studio.walls),
-            customWalls: studio.customWalls.map((wall) => ({
-              name: wall.name,
-              start: [wall.start.x, wall.start.z],
-              end: [wall.end.x, wall.end.z],
-              length: wall.length,
-              height: wall.height,
-              hasPhotoReference: Boolean(wall.image),
-            })),
-          },
-          referencePolicy: "furniture_strict_architecture_adaptive",
-          options: { formato: { largura: 1536, altura: 1024 }, ...renderOptions, ambientacao: [], piso: studio.floorFinish },
-        },
-        provider: "openai", versions: 1,
-      },
-    });
-    if(error){
-      let details = "";
-      try{
-        const payload = await error.context?.json();
-        details = payload?.details || payload?.erro || payload?.error?.message || payload?.error || "";
-      }catch{ /* A resposta da função pode não estar em JSON. */ }
-      throw new Error(details || error.message || "A função de renderização recusou a solicitação.");
-    }
-    if(data?.providerStatus !== "ok") throw new Error(data?.error?.message || data?.error?.error?.message || data?.erro || "O Studio IA não conseguiu concluir a imagem.");
-    const src = extractResult(data?.images?.[0]);
-    if(!src) throw new Error(data?.erro || "A IA não retornou uma imagem.");
+    const src = await executarIA(corpo);
     // Quais móveis estão nesta imagem — o projeto (catalogo-projetos.mjs) leva os mesmos móveis junto ao salvar a renderização.
-    window.catalogRegisterRenderItems?.(src, objects);
+    window.catalogRegisterRenderItems?.(src, objects, cena);
     workingToast?.close();
     window.catalogNotify?.({
       title: "Sua renderização ficou pronta",
@@ -2610,8 +3094,18 @@ async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhu
       // Medida"/tecido em catalogo.mjs).
       image: src,
       onAction: () => {
+        // Sempre define tudo explicitamente (nunca confia no que já estava lá) — o mesmo diálogo é reaproveitado
+        // por "Tirar print" (ver tirarPrintComposicao()), que troca esses textos/atributos; `__printBatch = null`
+        // é defesa extra (o print de hoje já não usa lote nenhum, mas zerar de novo aqui não custa nada e evita
+        // qualquer resíduo de uma versão anterior salvar por engano no lugar da foto da IA de verdade).
+        const kicker = $("studioResultKicker"), titulo = $("studioResultTitle");
+        if(kicker) kicker.textContent = "Renderização IA";
+        if(titulo) titulo.textContent = "Sua composição em uma cena realista";
         $("studioResultImage").src = src;
         $("studioResultDownload").href = src;
+        $("studioResultDownload").download = "composicao-acervo.png";
+        const salvar = $("studioResultDialog")?.querySelector("[data-projeto-save-render]");
+        if(salvar){ salvar.dataset.origem = "3D Livre"; salvar.__printBatch = null; }
         $("studioResultDialog").showModal();
       },
     });
@@ -2651,6 +3145,7 @@ async function handleToolbarAction(event){
       if(!studio.objects.length){ alert("Adicione pelo menos um móvel à composição."); return; }
       $("studioRenderOptions").showModal();
     }
+    else if(action === "print") tirarPrintComposicao();
     refreshToolbarSummaries();
     if(button.closest("[data-studio-menu]")) closeToolbarMenus();
   }catch(error){
@@ -2672,6 +3167,19 @@ export function initCatalogStudio3D({ items, supabase, empresaId, ownerId, token
   $("studioFormatForm")?.addEventListener("submit", saveSelectedFormat);
   $("studioFormatClose")?.addEventListener("click", () => $("studioFormatDialog").close());
   $("studioFormatDialog")?.addEventListener("cancel", event => { if(savingFormat) event.preventDefault(); });
+  $("studioFormatCategoryChips")?.addEventListener("click", (event) => {
+    const chip = event.target.closest("[data-format-category-chip]");
+    if(!chip) return;
+    formatCategoryChoice = chip.dataset.formatCategoryChip;
+    const custom = $("studioFormatCategoryCustom");
+    if(custom) custom.value = "";
+    renderFormatCategoryChips();
+  });
+  $("studioFormatCategoryCustom")?.addEventListener("input", () => renderFormatCategoryChips());
+  // Favoritos ficam visíveis desde o carregamento inicial (pedido explícito do usuário: "na barra lateral que
+  // já existe hoje onde ficam os formatos, ali eu quero que fique somente os formatos favoritos") — não espera
+  // clicar em "Formatos" pra carregar pela 1ª vez.
+  loadStudioFormats();
   $("studioSwapItemButton")?.addEventListener("click", openSwapDialog);
   $("studioSwapClose")?.addEventListener("click", () => $("studioSwapDialog")?.close());
   $("studioSwapDialog")?.addEventListener("cancel", event => { if(swappingItem) event.preventDefault(); });
@@ -2882,15 +3390,30 @@ async function projectStore(mode, operation){
 }
 function projectStatus(message){ $('studioProjectStatus').textContent = message; }
 const savedImageData = new WeakMap();
-function imageData(image){
+// jpeg=true: a cena guardada junto das imagens do projeto (snapshotCena) usa JPEG até 1600px — PNG de foto de parede
+// deixaria o arquivo da cena com vários MB.
+const savedImageJpeg = new WeakMap();
+function imageData(image, jpeg = false){
   if(!image) return null;
-  if(savedImageData.has(image)) return savedImageData.get(image);
+  const cache = jpeg ? savedImageJpeg : savedImageData;
+  if(cache.has(image)) return cache.get(image);
   const canvas = document.createElement('canvas');
-  canvas.width = image.naturalWidth || image.width; canvas.height = image.naturalHeight || image.height;
-  canvas.getContext('2d').drawImage(image, 0, 0);
-  const data=canvas.toDataURL('image/png');savedImageData.set(image,data);return data;
+  const w = image.naturalWidth || image.width, h = image.naturalHeight || image.height;
+  const escala = jpeg ? Math.min(1, 1600 / Math.max(w, h)) : 1;
+  canvas.width = Math.max(1, Math.round(w * escala)); canvas.height = Math.max(1, Math.round(h * escala));
+  canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+  const data=jpeg ? canvas.toDataURL('image/jpeg', .84) : canvas.toDataURL('image/png');cache.set(image,data);return data;
 }
-function wallData(w){ return { name:w.name, start:w.start?.toArray(), end:w.end?.toArray(), height:w.height, image:imageData(w.image), fit:w.fit, x:w.x, y:w.y, zoom:w.zoom }; }
+function wallData(w, jpeg = false){ return { name:w.name, start:w.start?.toArray(), end:w.end?.toArray(), height:w.height, image:imageData(w.image, jpeg), fit:w.fit, x:w.x, y:w.y, zoom:w.zoom }; }
+// Retrato da cena (móveis, posições, giros, sala, paredes com foto, piso, câmera) no mesmo formato que openProject lê,
+// sem os dados de "projeto do 3D Livre" (id/nome/dono). Vai junto de cada print/renderização salvos num projeto.
+function snapshotCena(jpeg = true){
+  return { version:1, roomWidth:studio.roomWidth, roomDepth:studio.roomDepth, wallHeight:studio.wallHeight, floorFinish:studio.floorFinish,
+    floorPlanSource:studio.floorPlanSource, gridVisible:studio.gridVisible,
+    walls:Object.fromEntries(Object.entries(studio.walls).map(([k,w])=>[k,wallData(w, jpeg)])), customWalls:studio.customWalls.map((w)=>wallData(w, jpeg)),
+    objects:studio.objects.map(o=>({itemId:o.userData.item.id, position:o.position.toArray(), rotation:o.rotation.toArray(), scale:o.scale.toArray(), group:o.userData.catalogGroupId})),
+    camera:studio.camera ? {position:studio.camera.position.toArray(), target:studio.orbit.target.toArray(), topView:isTopViewActive()} : null };
+}
 function snapshotProject(){
   return { version:1, id:projectId, owner:studio.projectOwner, name:$('studioProjectName').value.trim() || 'Meu projeto', updatedAt:Date.now(),
     roomWidth:studio.roomWidth, roomDepth:studio.roomDepth, wallHeight:studio.wallHeight, floorFinish:studio.floorFinish,
@@ -2923,19 +3446,33 @@ async function restoreWallImage(w, data){
   w.material=new THREE.MeshBasicMaterial({map:w.texture,side:THREE.DoubleSide}); w.mesh.material=w.material;
   Object.assign(w,{image,fit:data.fit,x:data.x,y:data.y,zoom:data.zoom});
 }
-async function openProject(data){
+function cenaValida(data){
   if(data?.version!==1 || !Array.isArray(data.objects) || data.objects.length>1000 || !Number.isFinite(data.roomWidth) || data.roomWidth<1 || data.roomWidth>500 || !Number.isFinite(data.roomDepth) || data.roomDepth<1 || data.roomDepth>500) throw new Error('Arquivo de projeto inválido');
   const validVector=v=>Array.isArray(v)&&v.length>=3&&v.slice(0,3).every(n=>Number.isFinite(n)&&Math.abs(n)<10000);
   if(data.objects.some(o=>!validVector(o.position)||!validVector(o.rotation)||!validVector(o.scale)) || (data.customWalls||[]).some(w=>!validVector(w.start)||!validVector(w.end))) throw new Error('Coordenadas inválidas');
+}
+async function openProject(data){
+  cenaValida(data);
   await saveProject(true); projectBusy=true;
   try{
+    projectId=data.id || crypto.randomUUID(); $('studioProjectName').value=data.name;
+    const missing=await carregarCena(data,{validar:false});
+    for(const [k,v] of Object.entries(data.rules || {})){const input=$('design-'+k);if(input) input.value=v;}
+    projectStatus(missing ? `Projeto aberto; ${missing} modelos indisponíveis. O original salvo foi preservado; exporte uma cópia.` : 'Projeto aberto. Pode continuar de onde parou.');
+    if(missing) projectId=crypto.randomUUID();
+  }catch(error){ projectId=crypto.randomUUID(); throw error; }finally{projectBusy=false;projectSignature='';}
+}
+// Monta a cena a partir de um retrato (snapshotProject/snapshotCena): limpa móveis e paredes atuais e recria tudo.
+// Devolve quantos móveis não puderam ser recriados (item sem modelo 3D ou fora do catálogo).
+async function carregarCena(data,{validar=true}={}){
+    if(validar) cenaValida(data);
     await ensureScene(); selectObject(null);
     studio.objects.forEach(o=>studio.scene.remove(o)); studio.objects=[];
     for(const w of [...studio.customWalls,...Object.values(studio.walls)]){studio.scene.remove(w.mesh,w.floorLine);w.mesh.geometry.dispose();w.material?.dispose();w.texture?.dispose();}
     studio.customWalls=[];studio.walls={};studio.selectedCustomWallId=null;
-    projectId=data.id || crypto.randomUUID(); $('studioProjectName').value=data.name;
     studio.roomWidth=data.roomWidth;studio.roomDepth=data.roomDepth;studio.wallHeight=data.wallHeight || 4;
-    $('studioRoomWidth').value=data.roomWidth;$('studioRoomDepth').value=data.roomDepth;
+    if($('studioRoomWidth')) $('studioRoomWidth').value=data.roomWidth;
+    if($('studioRoomDepth')) $('studioRoomDepth').value=data.roomDepth;
     studio.floorPlanSource=data.floorPlanSource;
     if(data.floorPlanSource){
       applyFloorPlanTexture(data.floorPlanSource);
@@ -2954,18 +3491,25 @@ async function openProject(data){
     }
     updateRoomPlan(); let missing=0;
     for(const saved of data.objects){
-      const item=studio.items.find(i=>String(i.id)===String(saved.itemId));
+      const item=itemPorId(saved.itemId);
       if(!item?.glb){missing++;continue;}
       try{const o=await addItem(item);o.position.fromArray(saved.position);o.rotation.fromArray(saved.rotation);o.scale.fromArray(saved.scale);o.userData.catalogGroupId=saved.group;rememberValidTransform(o);}catch{missing++;}
     }
     if(data.camera?.topView) showTopView();
     else showPerspectiveView();
     if(data.camera){studio.camera.position.fromArray(data.camera.position);studio.orbit.target.fromArray(data.camera.target);studio.orbit.update();}
-    for(const [k,v] of Object.entries(data.rules || {})){const input=$('design-'+k);if(input) input.value=v;}
     selectObject(null);updateCount();refreshToolbarSummaries();refreshCustomWallSelection();
-    projectStatus(missing ? `Projeto aberto; ${missing} modelos indisponíveis. O original salvo foi preservado; exporte uma cópia.` : 'Projeto aberto. Pode continuar de onde parou.');
-    if(missing) projectId=crypto.randomUUID();
-  }catch(error){ projectId=crypto.randomUUID(); throw error; }finally{projectBusy=false;projectSignature='';}
+    return missing;
+}
+// Item pelo id, incluindo as variantes de cor (studio.items traz só a principal de cada grupo de variantes).
+function itemPorId(id){
+  const alvo=String(id);
+  for(const item of studio.items){
+    if(String(item.id)===alvo) return item;
+    const variante=(item.variantGroup||[]).find(v=>String(v.id)===alvo);
+    if(variante) return variante;
+  }
+  return null;
 }
 function readDesignRules(){
   return Object.fromEntries(['wallGap','furnitureGap','tableGap','aisle','quantity','brief'].map(k=>[k,k==='brief'?$('design-'+k)?.value || '':Number($('design-'+k)?.value ?? ({wallGap:.5,furnitureGap:.4,tableGap:1.2,aisle:1.2,quantity:12}[k]))]));
@@ -3040,3 +3584,109 @@ async function buildDesignedSpace(){
   }catch(e){status.textContent=e.message;}
   finally{projectBusy=false;button.disabled=false;await saveProject(true);}
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Editor de cena do projeto (pedido do usuário: clicar num print/renderização salvo no projeto abre um modal com o 3D
+// daquela composição, onde dá pra TROCAR um móvel por outro — e só isso; o projeto tira do pedido o que saiu e põe o
+// que entrou). Reaproveita a MESMA cena/renderer do 3D Livre (mesma escala, luz e modelos do print original): o canvas
+// é emprestado pro modal (studio.cenaModal.host), a cena do print é carregada e, ao fechar, o canvas volta pro 3D Livre
+// e o estado que a pessoa tinha lá é recarregado (backup em PNG, sem perda). Sem arrastar nem girar móveis: um clique
+// (sem arrastar a câmera) seleciona, e cenaEditor.trocar() troca o selecionado mantendo posição e giro.
+function cenaModalPointerDown(event){
+  if(studio.cenaModal) studio.cenaModal.down = { x: event.clientX, y: event.clientY };
+}
+function cenaModalPointerUp(event){
+  const modal = studio.cenaModal;
+  if(!modal?.down || event.button !== 0) return;
+  const moveu = Math.hypot(event.clientX - modal.down.x, event.clientY - modal.down.y);
+  modal.down = null;
+  if(moveu > 6) return; // foi um arrasto de câmera, não um clique
+  const { THREE } = studio.three;
+  const rect = studio.renderer.domElement.getBoundingClientRect();
+  const ponteiro = new THREE.Vector2(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+  const raio = new THREE.Raycaster(); raio.setFromCamera(ponteiro, studio.camera);
+  const acerto = raio.intersectObjects(studio.objects, true)[0];
+  let raiz = acerto?.object || null;
+  while(raiz && raiz.parent && !studio.objects.includes(raiz)) raiz = raiz.parent;
+  cenaModalSelecionar(raiz && studio.objects.includes(raiz) ? raiz : null);
+}
+function cenaModalSelecionar(objeto){
+  const modal = studio.cenaModal;
+  if(!modal) return;
+  if(modal.destaque){ studio.scene.remove(modal.destaque); modal.destaque.geometry?.dispose(); modal.destaque.material?.dispose(); modal.destaque = null; }
+  studio.selected = objeto || null;
+  if(objeto){
+    modal.destaque = new studio.three.THREE.BoxHelper(objeto, 0xb08a52);
+    modal.destaque.material.depthTest = false; modal.destaque.renderOrder = 10;
+    studio.scene.add(modal.destaque);
+  }
+  const item = objeto?.userData.item;
+  modal.onSelecionar?.(item ? { id: String(item.id), nome: item.name, foto: item.photo || "", categoria: item.catLabel || "" } : null);
+}
+
+export const cenaEditor = {
+  pronto: () => studio.initialized,
+  // Móveis que podem entrar na cena: qualquer item do catálogo com modelo 3D (mesma lista da biblioteca do 3D Livre).
+  itens: () => studio.items.filter((item) => item.glb).map((item) => ({ id: String(item.id), nome: item.name, foto: item.photo || "", categoria: item.catLabel || "", busca: normalizeSearch(`${item.name} ${item.catLabel || ""}`) })),
+  normalizar: normalizeSearch,
+  async abrir(host, snapshot, { onSelecionar } = {}){
+    if(studio.cenaModal) await cenaEditor.fechar();
+    cenaValida(snapshot);
+    await ensureScene();
+    selectObject(null);
+    const modal = { host, casa: $("studioCanvasHost"), backup: snapshotCena(false), onSelecionar, destaque: null, down: null, carregando: null };
+    studio.cenaModal = modal;
+    const canvas = studio.renderer.domElement;
+    host.appendChild(canvas);
+    canvas.addEventListener("pointerdown", cenaModalPointerDown);
+    canvas.addEventListener("pointerup", cenaModalPointerUp);
+    modal.carregando = carregarCena(snapshot, { validar: false });
+    const faltando = await modal.carregando;
+    if(studio.cenaModal !== modal) return { faltando };
+    if(studio.grid) studio.grid.visible = false;
+    if(studio.roomBorder) studio.roomBorder.visible = false;
+    studio.transform.detach();
+    studio.orbit.enabled = true;
+    cenaModalSelecionar(null);
+    resize(); requestAnimationFrame(resize);
+    return { faltando };
+  },
+  selecionado(){
+    const item = studio.cenaModal && studio.selected?.userData.item;
+    return item ? { id: String(item.id), nome: item.name } : null;
+  },
+  // Troca o móvel selecionado. Devolve { antigo, novo } (ids) pro projeto ajustar o pedido.
+  async trocar(novoId){
+    if(!studio.cenaModal || !studio.selected) throw new Error("Clique num móvel da cena para trocar.");
+    const novo = itemPorId(novoId);
+    if(!novo?.glb) throw new Error("Esse item não tem modelo 3D.");
+    const antigo = studio.selected.userData.item;
+    const colocado = await trocarItemSelecionado(novo);
+    studio.transform.detach();
+    cenaModalSelecionar(colocado);
+    return { antigo: String(antigo.id), novo: String(novo.id) };
+  },
+  // Print novo (mesmo recorte/piso branco do "Tirar print") + a cena como está agora.
+  capturar(){
+    const foto = capturarPrintLimpo();
+    return { foto, snapshot: snapshotCena() };
+  },
+  // Pedido da IA com a cena editada (síncrono). A chamada em si (executarIA) pode rodar depois de fechar o modal.
+  corpoIA: () => montarCorpoIA(),
+  executarIA,
+  async fechar(){
+    const modal = studio.cenaModal;
+    if(!modal) return;
+    try{ await modal.carregando; }catch{ /* cena do print não carregou — ainda assim devolve o 3D Livre */ }
+    modal.onSelecionar = null;
+    cenaModalSelecionar(null);
+    const canvas = studio.renderer.domElement;
+    canvas.removeEventListener("pointerdown", cenaModalPointerDown);
+    canvas.removeEventListener("pointerup", cenaModalPointerUp);
+    studio.cenaModal = null;
+    (modal.casa || $("studioCanvasHost"))?.appendChild(canvas);
+    try{ await carregarCena(modal.backup, { validar: false }); }catch(error){ console.warn("Não foi possível restaurar o 3D Livre:", error); }
+    studio.orbit.enabled = shouldEnableOrbit();
+    resize();
+  },
+};

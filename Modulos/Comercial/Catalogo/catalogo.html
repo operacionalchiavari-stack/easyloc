@@ -12,12 +12,11 @@
   <link rel="dns-prefetch" href="https://awemuohtvwvrdzfxwrmd.supabase.co">
   <link rel="stylesheet" href="catalogo-creditos.css?v=20260919-fontes">
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <link rel="stylesheet" href="catalogo.css?v=20260921-fotos-prioritarias">
-  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260924-perf1">
-  <link rel="stylesheet" href="catalogo-biblioteca.css?v=20260921-landing">
-  <link rel="stylesheet" href="catalogo-lounge.css?v=20260923-subcategoria">
-  <link rel="stylesheet" href="catalogo-projetos.css?v=20260921-mapa-renders">
-  <link rel="stylesheet" href="catalogo-layouts.css?v=20260922-designer">
+  <link rel="stylesheet" href="catalogo.css?v=20260926-cadeado">
+  <link rel="stylesheet" href="projeto-apresentacao.css?v=20260926-legenda-cena">
+  <link rel="stylesheet" href="catalogo-studio3d.css?v=20260925-voltar-respiro">
+  <link rel="stylesheet" href="catalogo-biblioteca.css?v=20260925-organizar">
+  <link rel="stylesheet" href="catalogo-projetos.css?v=20260926-planta-voltar">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../../js/core/supabase.js"></script>
   <script defer src="catalogo-creditos.js?v=20260922-designer"></script>
@@ -26,16 +25,35 @@
   </script>
 </head>
 <body class="catalog-page">
+  <!-- Login do catálogo (decorador), seguindo a referência do usuário: faixa escura com a logo em branco; no centro a frase e
+       um cartão discreto (só e-mail, senha e Entrar); ao redor, peças do PRÓPRIO acervo aparecendo e sumindo devagar (vitrine
+       montada por catalogo-login-vitrine.mjs a partir da RPC pública catalogo_vitrine_login). -->
   <div class="catalog-login" id="catalogLogin" role="dialog" aria-modal="true" aria-labelledby="catalogLoginTitle">
-    <form class="catalog-login-card" id="catalogLoginForm">
-      <span>CATÁLOGO EXCLUSIVO</span>
-      <h1 id="catalogLoginTitle">Acesse seu catálogo</h1>
-      <p>Entre com o e-mail e a senha fornecidos pela Chiavari.</p>
-      <label>E-mail<input type="email" id="catalogLoginEmail" autocomplete="username" required></label>
-      <label>Senha<input type="password" id="catalogLoginPassword" autocomplete="current-password" required></label>
-      <button type="submit">Entrar</button>
-      <small id="catalogLoginStatus" aria-live="polite"></small>
-    </form>
+    <header class="catalog-login-bar"><span class="catalog-login-marca" data-login-marca></span></header>
+    <div class="catalog-login-palco">
+      <div class="catalog-login-vitrine" data-login-vitrine aria-hidden="true"></div>
+      <div class="catalog-login-centro">
+        <h1 id="catalogLoginTitle">Transite por vários estilos e encontre <em>o seu</em></h1>
+        <i class="catalog-login-rule" aria-hidden="true"></i>
+        <!-- Duas formas de entrar (pedido do usuário): visitante, sem e-mail/senha, vê o catálogo padrão da empresa e a
+             Biblioteca (sem preços, sem Módulo 3D e sem Projetos); cliente exclusivo clica em "Tenho acesso exclusivo" e aí
+             aparecem e-mail e senha. -->
+        <div class="catalog-login-escolha">
+          <button type="button" class="catalog-login-explorar" data-login-visitante>Explorar o catálogo <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <button type="button" class="catalog-login-link" data-login-exclusivo aria-controls="catalogLoginForm" aria-expanded="false">Tenho acesso exclusivo</button>
+        </div>
+        <form class="catalog-login-card" id="catalogLoginForm">
+          <p class="catalog-login-convite">Acesse seu catálogo exclusivo</p>
+          <label class="catalog-login-campo">E-mail
+            <input type="email" id="catalogLoginEmail" autocomplete="username" required></label>
+          <label class="catalog-login-campo">Senha
+            <input type="password" id="catalogLoginPassword" autocomplete="current-password" required></label>
+          <button type="submit">Entrar <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <small id="catalogLoginStatus" aria-live="polite"></small>
+          <button type="button" class="catalog-login-link catalog-login-voltar" data-login-voltar>← Entrar sem acesso exclusivo</button>
+        </form>
+      </div>
+    </div>
   </div>
   <script>
     // Anti-flash: a tela de login vem visivel por padrao no HTML (evita
@@ -66,6 +84,10 @@
       document.body.classList.add("catalog-modo-sistema");
     } else if (sessionStorage.getItem("catalogo_acesso_interno_direto")) {
       document.getElementById("catalogLogin").classList.add("hidden");
+    } else if (sessionStorage.getItem("catalogo_visitante")) {
+      // Visitante que já escolheu "Explorar o catálogo" nesta aba: não mostra a entrada de novo ao recarregar.
+      document.getElementById("catalogLogin").classList.add("hidden");
+      document.body.classList.add("catalog-visitante");
     }
   </script>
   <div class="catalog-top-chrome">
@@ -89,15 +111,18 @@
       </div>
       <div class="catalog-user hidden" id="catalogUser">
         <img class="hidden" id="catalogUserLogo" alt="">
-        <div><small>CATÁLOGO DE</small><strong id="catalogUserName"></strong></div>
+        <div class="catalog-user-badge"><small>CATÁLOGO DE</small><strong id="catalogUserName"></strong></div>
         <button type="button" id="catalogLogout" aria-label="Sair do catálogo" title="Sair">↪</button>
       </div>
+    </header>
+    <!-- Busca fora do cabeçalho, no canto superior direito logo abaixo dele (pedido explícito do usuário),
+         junto com os ícones de visualização. -->
+    <div class="catalog-top-tools">
       <label class="catalog-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
         <span class="sr-only">Pesquisar produtos</span>
         <input type="search" id="catalogSearch" placeholder="Pesquisar" autocomplete="off">
       </label>
-    </header>
     <div class="catalog-view-switcher hidden" id="catalogViewSwitcher" role="group" aria-label="Modo de visualização">
       <button type="button" class="catalog-view-switch-btn" data-view-mode="grid" aria-pressed="false" title="Visualização em grade" aria-label="Visualização em grade">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -109,28 +134,32 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="9" height="7" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/><rect x="3" y="12" width="9" height="9" rx="1"/><rect x="14" y="16" width="7" height="5" rx="1"/></svg>
       </button>
     </div>
+    </div>
   </div>
   <section class="catalog-studio hidden" id="catalogStudio" aria-label="3D Livre">
     <aside class="studio-library">
-      <div class="studio-library-tabs" role="tablist" aria-label="Biblioteca 3D">
-        <button type="button" id="studioItemsTab" role="tab" aria-selected="true" aria-controls="studioItemsPanel" data-studio-library-tab="items">Itens</button>
-        <button type="button" id="studioFormatsTab" role="tab" aria-selected="false" aria-controls="studioFormatsPanel" data-studio-library-tab="formats">Formatos</button>
+      <!-- Pedido explícito do usuário: "Formatos" deixou de trocar um painel na barra lateral estreita — agora
+           abre um MODAL grande (ver #studioFormatsBrowseDialog mais abaixo), separado por categoria. Só sobra
+           UM painel de verdade aqui (Itens), então a semântica de abas foi simplificada — "Itens" fica sempre
+           "ativo" (não há mais nada pra alternar), "Formatos" virou um botão comum (não é mais role=tab/
+           aria-controls, já que não controla nenhum tabpanel). -->
+      <div class="studio-library-tabs">
+        <button type="button" id="studioItemsTab" aria-selected="true" disabled>Itens</button>
+        <button type="button" id="studioFormatsTab" data-studio-formats-browse>Formatos</button>
       </div>
-      <div id="studioItemsPanel" role="tabpanel" aria-labelledby="studioItemsTab">
+      <div id="studioItemsPanel">
+      <!-- Prateleira de favoritos (pedido explícito: "na barra lateral que já existe hoje onde ficam os
+           formatos, ali eu quero que fique somente os formatos favoritos") — só aparece quando existe pelo
+           menos 1 favorito (ver renderFavoritesShelf em catalogo-studio3d.mjs); nunca renderiza 3D ao vivo,
+           só mostra a foto já capturada (ou um retângulo neutro, sem custo nenhum). -->
+      <div class="studio-favorites hidden" id="studioFavorites">
+        <span class="studio-favorites-heading">★ Formatos favoritos</span>
+        <div class="studio-favorites-list" id="studioFavoritesList"></div>
+      </div>
       <label class="studio-library-search">
         <input type="search" id="studioLibrarySearch" placeholder="Pesquisar móveis" aria-label="Pesquisar móveis por nome ou categoria">
       </label>
       <div class="studio-library-list" id="studioLibraryList"></div>
-      </div>
-      <div id="studioFormatsPanel" role="tabpanel" aria-labelledby="studioFormatsTab" hidden>
-        <label class="studio-library-search"><input type="search" id="studioFormatsSearch" placeholder="Pesquisar formatos" aria-label="Pesquisar formatos pelo nome"></label>
-        <div id="studioFormatsList" class="catalog-lounge-format-list"></div>
-        <nav class="studio-formats-pages" aria-label="Páginas de formatos" id="studioFormatsPages" hidden>
-          <button type="button" id="studioFormatsPrevious" aria-label="Página anterior">‹</button>
-          <span id="studioFormatsPage" aria-live="polite"></span>
-          <button type="button" id="studioFormatsNext" aria-label="Próxima página">›</button>
-        </nav>
-        <p id="studioFormatsStatus" role="status"></p>
       </div>
     </aside>
     <div class="studio-workspace">
@@ -206,6 +235,7 @@
             </div>
           </div>
         </form>
+        <button type="button" class="studio-render-button studio-print-button" id="studioPrintButton" data-studio-toolbar-action="print">Tirar print</button>
         <button type="button" class="studio-render-button" id="studioRenderButton" data-studio-toolbar-action="render">Renderizar com IA</button>
       </div>
       <div class="studio-canvas-host" id="studioCanvasHost">
@@ -266,9 +296,31 @@
       <span>FORMATO DO BLOCO</span><h2 id="studioFormatTitle">Salvar formato</h2>
       <p id="studioFormatDescription"></p>
       <label>Nome do formato<input id="studioFormatName" required maxlength="60" placeholder="Ex.: Lounge em U" autocomplete="off"></label>
-      <button type="submit" class="studio-preset-submit">Salvar em Composições</button>
+      <!-- Categoria obrigatória em formato NOVO (pedido explícito do usuário — ver lounge_formato_salvar);
+           chips de sugestão + campo livre, mesmo padrão já usado em "Ambientes" no módulo Projetos (texto
+           livre com sugestões, sem tabela de lookup). Preenchida/validada em catalogo-studio3d.mjs. -->
+      <div class="studio-format-category">
+        <span class="studio-format-category-label">Categoria<b aria-hidden="true">*</b></span>
+        <div class="studio-format-category-chips" id="studioFormatCategoryChips"></div>
+        <input type="text" id="studioFormatCategoryCustom" maxlength="40" placeholder="Ou digite outra categoria..." autocomplete="off">
+      </div>
+      <button type="submit" class="studio-preset-submit">Salvar formato</button>
       <small id="studioFormatStatus" role="status"></small>
     </form>
+  </dialog>
+  <!-- Pedido explícito do usuário: clicar em "Formatos" abre este modal (maior que os de troca de item),
+       listando TODOS os formatos agrupados por categoria, com pesquisa e uma estrela por card pra
+       favoritar/desfavoritar na hora (sem precisar editar o formato). Clicar no CARD (não na estrela) fecha
+       este modal e abre #studioFormatApplyDialog (escolher os móveis), exatamente como clicar num favorito
+       na barra lateral já faz. -->
+  <dialog class="studio-preset-dialog studio-formats-browse-dialog" id="studioFormatsBrowseDialog" aria-labelledby="studioFormatsBrowseTitle">
+    <div class="studio-preset-card studio-formats-browse-card">
+      <button type="button" class="studio-preset-close" id="studioFormatsBrowseClose" aria-label="Fechar">×</button>
+      <span>FORMATOS</span><h2 id="studioFormatsBrowseTitle">Todos os formatos</h2>
+      <label class="studio-library-search"><input type="search" id="studioFormatsBrowseSearch" placeholder="Pesquisar formatos" aria-label="Pesquisar formatos pelo nome ou categoria"></label>
+      <div id="studioFormatsBrowseList" class="studio-formats-browse-groups"></div>
+      <p id="studioFormatsBrowseStatus" role="status"></p>
+    </div>
   </dialog>
   <!-- Trocar o modelo 3D de qualquer peça de um formato/bloco já colocado (pedido
        explícito do usuário: "trocar um item de um formato pronto... alterar esse modelo
@@ -295,6 +347,32 @@
         </div>
       </div>
     </div>
+  </dialog>
+  <!-- "Escolher os móveis" — pedido explícito do usuário: a lista de formatos (aba "Formatos") passa a mostrar
+       uma FOTO da composição em vez de renderizar o 3D ao vivo (pesado); clicar na foto abre este diálogo pra
+       escolher, papel por papel, qual móvel entra em cada peça do formato, antes de inserir no painel 3D — só
+       depois disso o formato aparece montado, com as peças escolhidas, nas posições/giros salvos. Mesma
+       estrutura de 2 colunas do diálogo "Trocar item" acima (ver catalogo-studio3d.css, seletores ampliados
+       pra cobrir os ids novos também). -->
+  <dialog class="studio-preset-dialog studio-swap-dialog" id="studioFormatApplyDialog" aria-labelledby="studioFormatApplyTitle">
+    <form class="studio-preset-card" id="studioFormatApplyForm">
+      <button type="button" class="studio-preset-close" id="studioFormatApplyClose" aria-label="Fechar">×</button>
+      <span>FORMATO</span><h2 id="studioFormatApplyTitle">Escolher os móveis</h2>
+      <p id="studioFormatApplyDescription"></p>
+      <div class="studio-swap-columns">
+        <div class="studio-swap-col">
+          <span class="studio-swap-col-heading">Peças do formato</span>
+          <div class="studio-library-list" id="studioFormatApplyCurrentList"></div>
+        </div>
+        <div class="studio-swap-col">
+          <span class="studio-swap-col-heading">Modelos disponíveis</span>
+          <label class="studio-library-search"><input type="search" id="studioFormatApplySearch" placeholder="Pesquisar móveis" aria-label="Pesquisar móveis por nome ou categoria"></label>
+          <div class="studio-library-list" id="studioFormatApplyList"></div>
+        </div>
+      </div>
+      <small id="studioFormatApplyStatus" role="status"></small>
+      <button type="submit" class="studio-preset-submit">Inserir formato</button>
+    </form>
   </dialog>
   <dialog class="studio-preset-dialog" id="studioPresetDialog">
     <form class="studio-preset-card" id="studioPresetForm">
@@ -326,7 +404,7 @@
   </dialog>
   <dialog class="studio-result-dialog" id="studioResultDialog">
     <button type="button" class="studio-result-close" id="studioResultClose" aria-label="Fechar render">×</button>
-    <div class="studio-result-copy"><span>Renderização IA</span><strong>Sua composição em uma cena realista</strong></div>
+    <div class="studio-result-copy"><span id="studioResultKicker">Renderização IA</span><strong id="studioResultTitle">Sua composição em uma cena realista</strong></div>
     <img id="studioResultImage" alt="Renderização da composição 3D">
     <a id="studioResultDownload" download="composicao-acervo.png">Baixar imagem</a>
     <button type="button" class="cpj-save-render" data-projeto-save-render data-img="studioResultImage" data-origem="3D Livre">Salvar no projeto</button>
@@ -406,68 +484,12 @@
       <div class="catalog-biblioteca-photos" id="catalogBibliotecaPhotos"></div>
     </div>
   </section>
-  <section class="catalog-lounge hidden" id="catalogLounge" aria-label="Composições">
-    <aside class="catalog-lounge-sidebar">
-      <div class="catalog-lounge-tabs" role="tablist" aria-label="Seções de Composições">
-        <button type="button" class="catalog-lounge-tab is-active" data-lounge-tab="formats" role="tab" aria-selected="true">Formatos</button>
-        <button type="button" class="catalog-lounge-tab" data-lounge-tab="items" role="tab" aria-selected="false">Itens</button>
-        <button type="button" class="catalog-lounge-tab" data-lounge-tab="environment" role="tab" aria-selected="false">Ambiente</button>
-      </div>
-      <div class="catalog-lounge-tab-panels">
-        <div class="catalog-lounge-tab-panel catalog-lounge-formats is-active" data-lounge-panel="formats" role="tabpanel">
-          <p class="catalog-lounge-role-empty">Monte e selecione um bloco no 3D livre para salvar um novo formato.</p>
-          <div class="catalog-lounge-format-list" id="loungeFormatList"></div>
-        </div>
-        <div class="catalog-lounge-tab-panel catalog-lounge-items" data-lounge-panel="items" role="tabpanel">
-          <div class="catalog-lounge-item-roles" id="loungeItemRoles"></div>
-        </div>
-        <div class="catalog-lounge-tab-panel catalog-lounge-environment" data-lounge-panel="environment" role="tabpanel">
-          <div class="catalog-lounge-floor-row" id="loungeFloorRow"></div>
-          <label class="catalog-lounge-bg-upload">
-            <span id="loungeBgLabel">Escolher foto de fundo</span>
-            <input type="file" id="loungeBgInput" accept="image/png,image/jpeg,image/webp">
-          </label>
-          <button type="button" class="catalog-lounge-bg-adjust hidden" id="loungeBgAdjust" data-lounge-bg-adjust>Ajustar imagem (arrastar)</button>
-          <div class="catalog-lounge-bg-zoom hidden" id="loungeBgZoom">
-            <button type="button" data-lounge-bg-zoom-out aria-label="Diminuir zoom da foto de fundo" title="Diminuir zoom">−</button>
-            <span>Zoom da foto</span>
-            <button type="button" data-lounge-bg-zoom-in aria-label="Aumentar zoom da foto de fundo" title="Aumentar zoom">+</button>
-          </div>
-          <button type="button" class="catalog-lounge-bg-remove hidden" id="loungeBgRemove" data-lounge-bg-remove>Remover foto de fundo</button>
-        </div>
-      </div>
-    </aside>
-    <div class="catalog-lounge-viewer">
-      <span class="catalog-lounge-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M12 3 4.5 7v10L12 21l7.5-4V7z"/><path d="M4.5 7 12 11l7.5-4M12 11v10"/></svg><span>Visualização 360°</span></span>
-      <button type="button" class="catalog-lounge-render-btn" id="loungeRenderButton" data-lounge-render>Renderizar com IA</button>
-      <div class="catalog-lounge-canvas-host" id="loungeCanvasHost">
-        <div class="catalog-lounge-loading" role="status"><span class="catalog-lounge-loading-ring"></span><span>Carregando visualização 3D</span></div>
-      </div>
-      <p class="catalog-lounge-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="8" y="3" width="8" height="14" rx="4"/><path d="M12 6v3"/></svg><span>Arraste para girar • Role para aproximar</span></p>
-      <div class="catalog-lounge-controls" role="group" aria-label="Controles de visualização 3D">
-        <button type="button" class="catalog-lounge-control" data-lounge-zoom-in aria-label="Aproximar" title="Aproximar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M10.5 7.5v6M7.5 10.5h6"/><path d="m20 20-4.3-4.3"/></svg></button>
-        <span class="catalog-lounge-control-sep" aria-hidden="true"></span>
-        <button type="button" class="catalog-lounge-control" data-lounge-zoom-out aria-label="Afastar" title="Afastar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M7.5 10.5h6"/><path d="m20 20-4.3-4.3"/></svg></button>
-        <span class="catalog-lounge-control-sep" aria-hidden="true"></span>
-        <button type="button" class="catalog-lounge-control" data-lounge-reset aria-label="Redefinir visualização" title="Redefinir visualização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4.5v5h-5"/></svg></button>
-        <span class="catalog-lounge-control-sep" aria-hidden="true"></span>
-        <button type="button" class="catalog-lounge-control" data-lounge-fullscreen aria-label="Tela cheia" title="Tela cheia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
-      </div>
-    </div>
-  </section>
   <!-- Projetos (ver catalogo-projetos.mjs): lista + espaço de trabalho de cada projeto do decorador. -->
   <section class="catalog-projetos hidden" id="catalogProjetos" aria-label="Projetos"></section>
-  <dialog class="catalog-lounge-result-dialog" id="loungeResultDialog">
-    <button type="button" class="catalog-lounge-result-close" id="loungeResultClose" aria-label="Fechar render">×</button>
-    <div class="catalog-lounge-result-copy"><span>Renderização IA</span><strong>Seu lounge em uma cena realista</strong></div>
-    <img id="loungeResultImage" alt="Renderização do lounge">
-    <a id="loungeResultDownload" download="lounge-acervo.png">Baixar imagem</a>
-    <button type="button" class="cpj-save-render" data-projeto-save-render data-img="loungeResultImage" data-origem="Composições">Salvar no projeto</button>
-  </dialog>
   <main class="catalog-products" id="catalogGrid"></main>
   <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
   <div class="cpj-dock hidden" id="catalogProjetoDock" aria-label="Projeto ativo"></div>
   <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
-  <script type="module" src="catalogo.mjs?v=20260924-perf1"></script>
+  <script type="module" src="catalogo.mjs?v=20260926-cadeado"></script>
 </body>
 </html>

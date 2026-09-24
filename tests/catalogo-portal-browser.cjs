@@ -89,14 +89,12 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  await page.locator('.catalog-brand').click();
  await page.locator('.catalog-gateway').waitFor();
 
- // Bloco Módulo 3D -> abre o mini-menu novo (pedido explícito do
- // usuário: "quero que apareça como se fosse outro mini menu"), não mais
- // o Painel 3D direto — o estúdio virou o 1º dos 3 cards ali dentro.
+ // Bloco Módulo 3D -> abre o Estúdio de Ambientes ("3D Livre") direto. O
+ // mini-menu que existiu entre esta sessão e a anterior (3D Livre/
+ // Composições/Em desenvolvimento) foi removido por pedido explícito do
+ // usuário: "dentro do modulo de 3d deixe apenas o 3d livre... pode
+ // remover os outros" (ver CLAUDE.md).
  await page.locator('[data-gateway-tile="modulo3d"]').click();
- await page.locator('.catalog-modulo3d-menu').waitFor();
- assert.equal(await page.locator('#catalogPageLabel').textContent(),'Módulo 3D');
- assert.equal(await page.locator('.catalog-modulo3d-tile').count(),3,'3 cards no mini-menu');
- await page.locator('[data-modulo3d-card="estudio"]').click();
  await page.locator('#catalogStudio:not(.hidden)').waitFor();
  assert.equal(await page.locator('#catalogPageLabel').textContent(),'3D Livre');
 
@@ -139,7 +137,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
     if(name==='catalogo_carregar_interno') return {data:{empresa:{nome:'Chiavari'},decorador:null,itens:[
      {id:'1',tipo:'Item',produto:'Sofá Um',categoria:'Sofás',foto_url:'https://fixture/sofa.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
     ]}};
-    if(name==='catalogo_capas_carregar_interno') return {data:{}};
+    if(name==='catalogo_capas_carregar_interno') return {data:{clientes:[{id:'kelly',nome:'Kelly Khawam'},{id:'fabi',nome:'Fabiane Gabrich'}],capas_clientes:[{cliente_id:'kelly',chave:'portal',url:'https://fixture/kelly.png'}]}};
     return {data:null,error:null};
    },
    storage:{from(bucket){return {
@@ -156,12 +154,24 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  await page.locator('[data-gateway-file="portal"]').setInputFiles({name:'capa.png',mimeType:'image/png',buffer:Buffer.from('89504e470d0a1a0a','hex')});
  await page.waitForFunction(()=>window.testUploaded.length===1);
  assert.equal(await page.evaluate(()=>window.testUploaded[0].bucket),'biblioteca','Reaproveita o mesmo bucket da Biblioteca');
- assert.equal(await page.evaluate(()=>window.testUploaded[0].path),'company/_capas/portal.png','Caminho fixo pela chave "portal", não por uuid — substitui a foto anterior');
+ assert.equal(await page.evaluate(()=>window.testUploaded[0].path),'company/_capas/equipe/portal.png','Capa da equipe tem caminho separado');
  assert.equal(await page.evaluate(()=>window.testUpserts.length),1);
  assert.equal(await page.evaluate(()=>window.testUpserts[0].row.chave),'portal');
- assert.equal(await page.evaluate(()=>window.testUpserts[0].opts.onConflict),'empresa_id,chave');
+ assert.equal(await page.evaluate(()=>window.testUpserts[0].opts.onConflict),'empresa_id,cliente_id,chave');
  const novoSrc=await page.locator('.catalog-gateway-photo').getAttribute('src');
- assert.ok(novoSrc.includes('company/_capas/portal.png'),'A imagem na tela atualiza pra nova foto sem precisar recarregar');
+ assert.ok(novoSrc.includes('company/_capas/equipe/portal.png'),'A imagem na tela atualiza pra nova foto sem precisar recarregar');
+ await page.locator('[data-gateway-client]').selectOption('kelly');
+ assert.match(await page.locator('.catalog-gateway-photo').getAttribute('src'),/kelly.png/);
+ await page.locator('[data-gateway-client]').selectOption('fabi');
+ assert.doesNotMatch(await page.locator('.catalog-gateway-photo').getAttribute('src'),/kelly.png/,'Sem capa própria, Fabi não herda a foto da Kelly');
+ await page.locator('[data-gateway-file="portal"]').setInputFiles({name:'fabi.png',mimeType:'image/png',buffer:PNG_1X1});
+ await page.waitForFunction(()=>window.testUpserts.length===2);
+ assert.equal(await page.evaluate(()=>window.testUpserts[1].row.cliente_id),'fabi');
+ assert.equal(await page.evaluate(()=>window.testUploaded[1].path),'company/_capas/fabi/portal.png');
+ await page.locator('[data-gateway-client]').selectOption('kelly');
+ assert.match(await page.locator('.catalog-gateway-photo').getAttribute('src'),/kelly.png/,'Trocar foto da Fabi preserva Kelly');
+ await page.locator('[data-gateway-client]').selectOption('fabi');
+ assert.match(await page.locator('.catalog-gateway-photo').getAttribute('src'),/\/fabi\/portal.png/);
  // Clicar dentro do controle de trocar foto não deve navegar pro destino de nenhuma zona.
  assert.equal(await page.locator('#catalogBiblioteca').isVisible(),false);
  assert.equal(await page.locator('#catalogStudio').isVisible(),false);
@@ -288,7 +298,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  // O editor de recorte agora grava JPEG, não PNG sem compressão (bug real
  // corrigido: fotos chegavam a 8-16MB cada só por causa disso) — extensão
  // segue o blob de verdade, então vira .jpg.
- assert.equal(await page.evaluate(()=>window.testUploaded[0].path),'company/_capas/portal.jpg','Mesmo caminho fixo por chave usado pela troca instantânea, agora em .jpg (crop grava JPEG)');
+ assert.equal(await page.evaluate(()=>window.testUploaded[0].path),'company/_capas/equipe/portal.jpg','Ajuste respeita o caminho da capa da equipe');
  assert.equal(await page.evaluate(()=>window.testUploaded[0].type),'image/jpeg');
  await page.locator('.catalog-inline-crop-overlay').waitFor({state:'detached',timeout:5000});
  assert.equal(await page.locator('.catalog-gateway').count(),1,'Portal continua de pé depois de aplicar (renderGateway() reconstrói a tela)');

@@ -16,7 +16,15 @@ function buildSupabaseMock(){
   return `(() => {
     function getSignedInId(){ return sessionStorage.getItem('test_signed_in_id') || null; }
     function setSignedInId(id){ if(id) sessionStorage.setItem('test_signed_in_id', id); else sessionStorage.removeItem('test_signed_in_id'); }
-    window.testSignOutCalls = 0;
+    // Mesmo motivo do getSignedInId/setSignedInId acima: sessionStorage,
+    // não uma variável comum — o cenário do botão de sair recarrega a
+    // página DEPOIS de chamar signOut(), e addInitScript() reinjeta este
+    // mock do zero a cada navegação, resetando qualquer contador que
+    // morasse só em window. Getter em window.testSignOutCalls mantém a
+    // mesma leitura de sempre (window.testSignOutCalls) pros cenários que
+    // já liam isso, só que agora sobrevive a um reload no meio.
+    function bumpSignOutCalls(){ sessionStorage.setItem('test_sign_out_calls', String(Number(sessionStorage.getItem('test_sign_out_calls') || '0') + 1)); }
+    Object.defineProperty(window, 'testSignOutCalls', { get: () => Number(sessionStorage.getItem('test_sign_out_calls') || '0') });
     function builder(resolveValue){
       return new Proxy({},{get(_t,prop){
         if(prop==='then') return (resolve)=>resolve(resolveValue());
@@ -32,7 +40,7 @@ function buildSupabaseMock(){
           if(email === 'semperm@chiavari.com' && password === 'senha-sem-permissao'){ setSignedInId('staff-2'); return { data: { user: { id: 'staff-2' } }, error: null }; }
           return { data: null, error: { message: 'Invalid login credentials' } };
         },
-        signOut: async () => { window.testSignOutCalls++; setSignedInId(null); return { error: null }; },
+        signOut: async () => { bumpSignOutCalls(); setSignedInId(null); return { error: null }; },
       },
       from(table){
         if(table === 'usuarios_empresas') return { select(){return this;}, eq(){return this;}, single: async () => {
@@ -79,8 +87,8 @@ async function newCatalogPage(){
   const { page, errors } = await newCatalogPage();
   await page.addInitScript(buildSupabaseMock());
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
-  await page.locator('#catalogLoginForm').waitFor();
-  await page.locator('#catalogLoginEmail').fill('ninguem@chiavari.com');
+  await page.locator('[data-login-exclusivo]').waitFor();
+  await page.locator('[data-login-exclusivo]').click();await page.locator('#catalogLoginEmail').fill('ninguem@chiavari.com');
   await page.locator('#catalogLoginPassword').fill('errada');
   await page.locator('#catalogLoginForm button[type=submit]').click();
   await page.waitForFunction(()=>document.getElementById('catalogLoginStatus').textContent.length>0);
@@ -95,8 +103,8 @@ async function newCatalogPage(){
   const { page, errors } = await newCatalogPage();
   await page.addInitScript(buildSupabaseMock());
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
-  await page.locator('#catalogLoginForm').waitFor();
-  await page.locator('#catalogLoginEmail').fill('equipe@chiavari.com');
+  await page.locator('[data-login-exclusivo]').waitFor();
+  await page.locator('[data-login-exclusivo]').click();await page.locator('#catalogLoginEmail').fill('equipe@chiavari.com');
   await page.locator('#catalogLoginPassword').fill('senha-equipe');
   await page.locator('#catalogLoginForm button[type=submit]').click();
   await page.locator('.catalog-gateway').waitFor();
@@ -113,7 +121,21 @@ async function newCatalogPage(){
   // resolveAcessoInterno() deve reconhecer de novo sem pedir login.
   await page.reload();
   await page.locator('.catalog-gateway').waitFor();
-  assert.equal(await page.locator('#catalogLoginForm:visible').count(), 0, 'Depois de recarregar, não volta a pedir login (sessão da equipe persistida)');
+  assert.equal(await page.locator('#catalogLogin:not(.hidden)').count(), 0, 'Depois de recarregar, não volta a pedir login (sessão da equipe persistida)');
+
+  // Pedido explícito do usuário: "na versão do decorador tem um botão pra
+  // sair, mas na versão do adm não tem, precisa colocar" — login direto
+  // da equipe (sem dashboard por cima) precisa do mesmo botão de sair que
+  // o decorador já tinha, já que não existe outro jeito de sair daqui.
+  assert.equal(await page.locator('#catalogUser:visible').count(), 1, 'Botão de sair aparece pra equipe logada direto (sem dashboard por cima)');
+  assert.equal(await page.locator('#catalogUser .catalog-user-badge:visible').count(), 0, 'Sem o rótulo "CATÁLOGO DE ..." pra equipe (isso é do decorador, não faz sentido aqui)');
+  await page.locator('#catalogLogout').click();
+  await page.locator('[data-login-exclusivo]:visible').waitFor();
+  assert.equal(await page.evaluate(()=>window.testSignOutCalls), 1, 'Sair da equipe encerra a sessão de verdade do Supabase Auth (senão recarregar autenticaria de novo sozinho)');
+  assert.equal(await page.evaluate(()=>sessionStorage.getItem('catalogo_acesso_interno_direto')), null, 'Hint de acesso direto removido ao sair');
+  await page.reload();
+  await page.locator('[data-login-exclusivo]:visible').waitFor();
+  assert.equal(await page.locator('.catalog-gateway:visible').count(), 0, 'Depois de sair e recarregar, a sessão realmente não volta sozinha — pede login de novo');
   await page.close();
 }
 
@@ -122,8 +144,8 @@ async function newCatalogPage(){
   const { page, errors } = await newCatalogPage();
   await page.addInitScript(buildSupabaseMock());
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
-  await page.locator('#catalogLoginForm').waitFor();
-  await page.locator('#catalogLoginEmail').fill('semperm@chiavari.com');
+  await page.locator('[data-login-exclusivo]').waitFor();
+  await page.locator('[data-login-exclusivo]').click();await page.locator('#catalogLoginEmail').fill('semperm@chiavari.com');
   await page.locator('#catalogLoginPassword').fill('senha-sem-permissao');
   await page.locator('#catalogLoginForm button[type=submit]').click();
   await page.waitForFunction(()=>document.getElementById('catalogLoginStatus').textContent.length>0);
@@ -139,8 +161,8 @@ async function newCatalogPage(){
   const { page, errors } = await newCatalogPage();
   await page.addInitScript(buildSupabaseMock());
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
-  await page.locator('#catalogLoginForm').waitFor();
-  await page.locator('#catalogLoginEmail').fill('decorador@chiavari.com');
+  await page.locator('[data-login-exclusivo]').waitFor();
+  await page.locator('[data-login-exclusivo]').click();await page.locator('#catalogLoginEmail').fill('decorador@chiavari.com');
   await page.locator('#catalogLoginPassword').fill('senha-decorador');
   await page.locator('#catalogLoginForm button[type=submit]').click();
   await page.locator('.catalog-gateway').waitFor();
@@ -150,9 +172,17 @@ async function newCatalogPage(){
   await page.locator('.catalog-product-section').first().waitFor();
   assert.equal(await page.locator('[data-inline-edit]').count(), 0, 'Decorador continua sem nenhum controle de edição');
   assert.equal(await page.evaluate(()=>sessionStorage.getItem('catalogo_token')), 'tok-1');
+  // O botão de sair do decorador (já existia) continua funcionando igual
+  // — a chamada extra a signOut() que o logout ganhou (pro caso da
+  // equipe) precisa ser inofensiva aqui, já que decorador nunca autentica
+  // via Supabase Auth.
+  assert.equal(await page.locator('#catalogUser .catalog-user-badge strong').textContent(), 'Kelly', 'Decorador continua vendo "CATÁLOGO DE Kelly"');
+  await page.locator('#catalogLogout').click();
+  await page.locator('[data-login-exclusivo]:visible').waitFor();
+  assert.equal(await page.evaluate(()=>sessionStorage.getItem('catalogo_token')), null, 'Token do decorador removido ao sair');
   assert.deepEqual(errors, []);
   await page.close();
 }
 
-console.log('PASS: credenciais erradas mostram erro genérico, login direto da equipe libera edição sem passar pelo dashboard, permanece autenticado após recarregar, equipe sem permissão é deslogada com a mesma mensagem genérica, decorador continua funcionando pelo mesmo formulário');
+console.log('PASS: credenciais erradas mostram erro genérico, login direto da equipe libera edição sem passar pelo dashboard, permanece autenticado após recarregar, equipe sem permissão é deslogada com a mesma mensagem genérica, decorador continua funcionando pelo mesmo formulário, e o botão de sair agora aparece e funciona de verdade tanto pra equipe logada direto (sem "CATÁLOGO DE") quanto pro decorador (mantém o rótulo)');
 }finally{await browser.close();server.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -19,7 +19,7 @@ const {chromium}=require('playwright');const express=require('express');const as
  await page.route('https://fixture/biblioteca/sofa-2.png',r=>r.fulfill({contentType:'image/svg+xml',body:tallSvg}));
  await page.addInitScript(()=>{
   sessionStorage.setItem('catalogo_token','test');
-  window.supabaseClient={rpc:async(name)=>{
+  window.libraryCalls=[]; window.confirm=()=>true; window.supabaseClient={rpc:async(name,args)=>{ if(name==='biblioteca_reordenar'||name==='biblioteca_remover'){window.libraryCalls.push({name,args});return {error:null};}
    if(name==='catalogo_validar_sessao') return {data:{valido:true,empresa_id:'company',cliente_id:'client'}};
    if(name==='catalogo_carregar') return {data:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:[
      {id:'1',tipo:'Item',produto:'Sofá Um',categoria:'Sofás',foto_url:'https://fixture/sofa.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
@@ -160,7 +160,7 @@ const {chromium}=require('playwright');const express=require('express');const as
  assert.ok(Math.abs(centering.leftGap-centering.rightGap)<1,`Linha incompleta (2 fotos) fica centralizada de verdade — folga esquerda e direita iguais (medido: ${centering.leftGap.toFixed(2)}px vs ${centering.rightGap.toFixed(2)}px)`);
  assert.equal(await page.locator('.catalog-biblioteca-photo').first().evaluate((el)=>getComputedStyle(el).marginLeft),'0px','<figure> não herda mais a margem padrão do navegador (margin:1em 40px)');
  assert.equal(await page.locator('#catalogBibliotecaUpload').isVisible(),false,'Decorador não vê o botão de adicionar fotos');
- assert.equal(await page.locator('.catalog-biblioteca-photo-remove').count(),0,'Decorador não vê botão de remover foto');
+ assert.equal(await page.locator('.catalog-biblioteca-photo-remove').count(),2,'Decorador pode remover fotos');
  // Pedido do usuário: "quero clicar na foto dentro da biblioteca e quero que ela fique em tela toda"
  // — abre o MESMO visualizador em tela cheia do zoom das fotos do item (#catalogPhotoZoomDialog).
  assert.equal(await page.locator('#catalogPhotoZoomDialog[open]').count(),0,'Visualizador começa fechado');
@@ -215,6 +215,17 @@ const {chromium}=require('playwright');const express=require('express');const as
  await page.keyboard.press('Escape');
  await page.waitForFunction(()=>!document.getElementById('catalogPhotoZoomDialog').open);
  assert.equal(await page.locator('#catalogPhotoZoomPrev').isVisible(),false,'Fechado, as setas ficam escondidas');
+ const handle=page.locator('[data-photo-id="f1"] [data-move-photo]');
+ const a=await handle.boundingBox(); const b=await page.locator('[data-photo-id="f2"]').boundingBox();
+ await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:8});await page.mouse.up();
+ await page.waitForFunction(()=>document.querySelector('[data-photo-id]').dataset.photoId==='f2');
+ assert.deepEqual(await page.evaluate(()=>window.libraryCalls[0].args.p_fotos),['f2','f1']);
+ await page.locator('[data-photo-id="f1"] [data-move-photo]').focus();await page.keyboard.press('ArrowLeft');
+ await page.waitForFunction(()=>document.querySelector('[data-photo-id]').dataset.photoId==='f1');
+ await page.locator('[data-remove-photo="f1"]').click();
+ await page.waitForFunction(()=>document.querySelectorAll('[data-photo-id]').length===1);
+ assert.equal(await page.evaluate(()=>window.libraryCalls.at(-1).args.p_token),'test');
+ assert.equal(await page.locator('#catalogPhotoZoomDialog[open]').count(),0);
  await page.locator('.catalog-brand').click();
  await page.locator('.catalog-gateway').waitFor();
  assert.equal(await page.locator('#catalogBiblioteca').isVisible(),false,'Voltar pro Portal fecha a Biblioteca');
@@ -228,12 +239,12 @@ const {chromium}=require('playwright');const express=require('express');const as
  // Painel 3D e Biblioteca continuam mutuamente exclusivos. Sem o botão
  // "Painel 3D" solto no cabeçalho (removido em sessão anterior), o único
  // jeito de chegar lá agora é voltar pro Portal (a logo já fecha a
- // Biblioteca sozinha) e entrar pelo bloco "Módulo 3D".
+ // Biblioteca sozinha) e entrar pelo bloco "Módulo 3D" (que abre o 3D
+ // Livre direto, sem mini-menu intermediário — removido nesta sessão).
  await page.locator('.catalog-brand').click();
  await page.locator('.catalog-gateway').waitFor();
  assert.equal(await page.locator('#catalogBiblioteca').isVisible(),false,'Voltar pro Portal fecha a Biblioteca de novo');
  await page.locator('[data-gateway-tile="modulo3d"]').click();
- await page.locator('[data-modulo3d-card="estudio"]').click();
  assert.equal(await page.locator('#catalogBiblioteca').isVisible(),false,'Painel 3D e Biblioteca continuam mutuamente exclusivos');
  assert.equal(await page.locator('#catalogStudio').isVisible(),true);
  await page.locator('.catalog-brand').click();
@@ -269,7 +280,7 @@ const {chromium}=require('playwright');const express=require('express');const as
      return {
       insert(row){
        window.testInserted.push(row);
-       const saved={id:'novo-1',categoria:row.categoria,titulo:null,url:row.url,path:row.path,ordem:null};
+       const saved={id:'novo-1',categoria:row.categoria,titulo:null,url:row.url,path:row.path,ordem:null,cliente_id:row.cliente_id};
        return {select:()=>({single:async()=>({data:saved,error:null})})};
       },
       delete(){
@@ -285,7 +296,7 @@ const {chromium}=require('playwright');const express=require('express');const as
     if(name==='catalogo_carregar_interno') return {data:{empresa:{nome:'Chiavari'},decorador:null,itens:[
      {id:'1',tipo:'Item',produto:'Sofá Um',categoria:'Sofás',foto_url:'https://fixture/sofa.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
     ]}};
-    if(name==='biblioteca_carregar_interno') return {data:{fotos:[]}};
+    if(name==='biblioteca_carregar_interno') return {data:{fotos:[],clientes:[{id:'kelly',nome:'Kelly Khawam'},{id:'fabi',nome:'Fabiane Gabrich'}]}};
     return {data:null,error:null};
    },
    storage:{from(bucket){return {
@@ -321,6 +332,15 @@ const {chromium}=require('playwright');const express=require('express');const as
  await page.waitForFunction(()=>document.querySelectorAll('.catalog-biblioteca-photo').length===0);
  assert.equal(await page.evaluate(()=>window.testDeleted.includes('novo-1')),true,'Linha removida da tabela');
  assert.match(await page.evaluate(()=>window.testDeleted[window.testDeleted.length-1]),/^company\/sofas\//,'Arquivo removido do storage também');
+ await page.locator('#catalogBibliotecaCliente select').selectOption('fabi');
+ await page.locator('#catalogBibliotecaUploadInput').setInputFiles({name:'fabi.png',mimeType:'image/png',buffer:Buffer.from('89504e470d0a1a0a','hex')});
+ await page.waitForFunction(()=>document.querySelectorAll('.catalog-biblioteca-photo').length===1);
+ assert.equal(await page.evaluate(()=>window.testInserted.at(-1).cliente_id),'fabi','Upload vinculado à Fabi');
+ assert.match(await page.evaluate(()=>window.testUploaded.at(-1).path),/^company\/fabi\/sofas\//);
+ await page.locator('#catalogBibliotecaCliente select').selectOption('kelly');
+ assert.equal(await page.locator('.catalog-biblioteca-photo').count(),0,'Foto da Fabi não aparece para Kelly');
+ await page.locator('#catalogBibliotecaCliente select').selectOption('fabi');
+ assert.equal(await page.locator('.catalog-biblioteca-photo').count(),1,'Foto preservada na biblioteca da Fabi');
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(150);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Sem overflow horizontal no mobile');
  await page.screenshot({path:path.join(os.tmpdir(),'catalogo-biblioteca-interno-mobile.png'),fullPage:true});

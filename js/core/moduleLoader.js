@@ -110,6 +110,7 @@ window.finalizarCarregamentoModulo = function(){
     // módulo antigo (fragmento via innerHTML) — garante que o iframe
     // de módulos novos fique escondido enquanto este é exibido.
     window.__activarMainContentLegado?.();
+    window.shellRecordLegacy?.(htmlPath, jsPath, cssPath);
 
     /* =====================
        ACTIVE MENU

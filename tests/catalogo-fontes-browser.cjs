@@ -89,11 +89,7 @@ async function tela(page,nome,acao){
   await tela(page,'Experimente seu tecido',async()=>{await page.locator('[data-customize-item]').first().click();await page.locator('#catalogCustomizeDialog[open]').waitFor();});
   await page.evaluate(()=>document.getElementById('catalogCustomizeDialog').close());
   await tela(page,'Biblioteca',async()=>{await page.locator('.catalog-brand').click();await page.locator('[data-gateway-tile="biblioteca"]').click();await page.locator('#catalogBiblioteca:not(.hidden)').waitFor();});
-  await tela(page,'Módulo 3D',async()=>{await page.locator('.catalog-brand').click();await page.locator('[data-gateway-tile="modulo3d"]').click();await page.locator('.catalog-modulo3d-tile').first().waitFor();});
-  await tela(page,'3D Livre',async()=>{await page.locator('[data-modulo3d-card="estudio"]').click();await page.locator('#catalogStudio:not(.hidden)').waitFor();});
-  await tela(page,'Composições',async()=>{await page.locator('.catalog-brand').click();await page.locator('[data-gateway-tile="modulo3d"]').click();await page.locator('[data-modulo3d-card="lounge"]').click();await page.locator('#catalogLounge:not(.hidden)').waitFor();});
-  await tela(page,'Composições · Itens',async()=>{await page.locator('[data-lounge-tab="items"]').click();});
-  await tela(page,'Composições · Ambiente',async()=>{await page.locator('[data-lounge-tab="environment"]').click();});
+  await tela(page,'3D Livre',async()=>{await page.locator('.catalog-brand').click();await page.locator('[data-gateway-tile="modulo3d"]').click();await page.locator('#catalogStudio:not(.hidden)').waitFor();});
   assert.deepEqual(page._errors,[],'nenhum erro de página');
   await page.close();
 }
@@ -131,5 +127,5 @@ async function tela(page,nome,acao){
 }
 await browser.close();server.close();
 assert.deepEqual(problemas,[],`Texto visível abaixo de ${PISO}px:\n`+problemas.join('\n'));
-console.log('PASS: fonte do catálogo confortável — nenhum texto visível abaixo de '+PISO+'px em Portal, Categorias, grade, mosaico, item, tecido, Biblioteca, Módulo 3D, 3D Livre, Composições e login; cabeçalho continua com altura fixa; celular sem rolagem horizontal');
+console.log('PASS: fonte do catálogo confortável — nenhum texto visível abaixo de '+PISO+'px em Portal, Categorias, grade, mosaico, item, tecido, Biblioteca, 3D Livre e login; cabeçalho continua com altura fixa; celular sem rolagem horizontal');
 })().catch(e=>{console.error(e);process.exit(1);});

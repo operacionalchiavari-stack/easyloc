@@ -2,7 +2,7 @@
    #251e19, acento terroso (--accent), títulos em Cormorant Garamond, corpo em Manrope; botão principal no cinza do
    cabeçalho (#5a5a55). Piso de 12,8px em qualquer texto — o cliente pediu leitura confortável no catálogo inteiro. */
 .catalog-projetos{background:var(--bg);min-height:calc(100vh - var(--header-h))}
-.cpj-wrap{max-width:none;margin:0;padding:38px clamp(20px,2.2vw,40px) 140px}
+.cpj-wrap{max-width:none;margin:0;padding:26px clamp(20px,2.2vw,40px) 110px}
 .cpj-wrap h2,.cpj-wrap h3,.cpj-wrap h4,.cpj-modal h3{margin:0;font-family:"Cormorant Garamond",serif;font-weight:600;color:var(--ink)}
 .cpj-wrap p{margin:0}
 
@@ -24,108 +24,128 @@
 .cpj-icon-btn:hover{background:#f3efe8;color:#a23b2f}
 
 /* Lista */
-.cpj-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px}
-.cpj-head h2{font-size:clamp(2rem,3vw,2.7rem);letter-spacing:.02em}
-.cpj-head p{margin-top:6px;color:var(--muted);font-size:.9rem}
-.cpj-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
-.cpj-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(520px,100%),1fr));gap:14px}
-.cpj-list-sep{margin:34px 0 14px!important;color:var(--muted)!important;font:600 .8125rem/1 "Manrope",sans-serif!important;letter-spacing:.14em;text-transform:uppercase}
-.cpj-card{position:relative;display:grid;grid-template-columns:78px minmax(0,1fr) auto;align-items:center;gap:22px;padding:20px 22px;border:1px solid var(--line);border-radius:16px;background:#fff;cursor:pointer;transition:border-color .25s,box-shadow .25s,transform .25s}
-.cpj-card:hover,.cpj-card:focus-visible{border-color:var(--accent);box-shadow:0 14px 34px rgba(37,30,25,.08);outline:none}
+.cpj-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
+.cpj-head h2{font-size:clamp(1.7rem,2.4vw,2.2rem);letter-spacing:.02em}
+.cpj-head p{margin-top:4px;color:var(--muted);font-size:.875rem}
+.cpj-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.cpj-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:12px}
+.cpj-list-sep{margin:24px 0 12px!important;color:var(--muted)!important;font:600 .8125rem/1 "Manrope",sans-serif!important;letter-spacing:.14em;text-transform:uppercase}
+.cpj-card{position:relative;display:grid;grid-template-columns:60px minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;transition:border-color .25s,box-shadow .25s,transform .25s}
+.cpj-card:hover,.cpj-card:focus-visible{border-color:var(--accent);box-shadow:0 10px 26px rgba(37,30,25,.08);outline:none}
 .cpj-card.is-past{opacity:.72}
-.cpj-card-date{display:grid;justify-items:center;align-content:center;width:78px;height:86px;border-radius:12px;background:#f6f2ea;color:#5a4a36;text-align:center}
-.cpj-card-date b{font:600 2rem/1 "Cormorant Garamond",serif}
-.cpj-card-date span{margin-top:2px;font:600 .8125rem/1 "Manrope",sans-serif;letter-spacing:.16em;text-transform:uppercase}
-.cpj-card-date small{margin-top:4px;color:var(--muted);font-size:.8rem}
-.cpj-card-main h3{font-size:1.65rem;line-height:1.1}
-.cpj-card-main p{display:flex;align-items:center;gap:7px;margin-top:7px;color:var(--muted);font-size:.875rem}
-.cpj-card-main p svg{flex:0 0 auto;width:15px;height:15px}
-.cpj-card-meta{margin-top:5px!important}
-.cpj-card-owner{margin-top:5px!important;font-size:.8125rem!important}
-.cpj-card-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.cpj-countdown{color:#7a5f3d;font:600 .875rem/1 "Manrope",sans-serif}
-.cpj-shared{color:var(--muted);font-size:.8rem}
-.cpj-status{display:inline-flex;align-items:center;min-height:26px;padding:0 12px;border-radius:999px;background:#f1efeb;color:#6c665f;font:600 .8rem/1 "Manrope",sans-serif;letter-spacing:.03em}
+.cpj-card-date{display:grid;justify-items:center;align-content:center;width:60px;height:66px;border-radius:10px;background:#f6f2ea;color:#5a4a36;text-align:center}
+.cpj-card-date b{font:600 1.5rem/1 "Cormorant Garamond",serif}
+.cpj-card-date span{margin-top:2px;font:600 .75rem/1 "Manrope",sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.cpj-card-date small{margin-top:2px;color:var(--muted);font-size:.75rem}
+.cpj-card-main h3{font-size:1.3rem;line-height:1.15}
+.cpj-card-main p{display:flex;align-items:center;gap:6px;margin-top:4px;color:var(--muted);font-size:.8125rem}
+.cpj-card-main p svg{flex:0 0 auto;width:13px;height:13px}
+.cpj-card-meta{margin-top:3px!important}
+.cpj-card-owner{margin-top:3px!important;font-size:.75rem!important}
+.cpj-card-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.cpj-countdown{color:#7a5f3d;font:600 .8125rem/1 "Manrope",sans-serif}
+.cpj-status{display:inline-flex;align-items:center;min-height:23px;padding:0 10px;border-radius:999px;background:#f1efeb;color:#6c665f;font:600 .75rem/1 "Manrope",sans-serif;letter-spacing:.03em}
+button.cpj-status{border:0;cursor:pointer;transition:filter .2s}
+button.cpj-status:hover,button.cpj-status:focus-visible{filter:brightness(.94)}
 .cpj-status.is-pedido_enviado{background:#fbf3e4;color:#8a6a42}
 .cpj-status.is-em_analise{background:#e6eefb;color:#2a4d8f}
 .cpj-status.is-convertido{background:#e3f4e8;color:#1f6b3a}
-.cpj-empty{padding:26px 4px;color:var(--muted);font-size:.9rem;line-height:1.55}
-.cpj-empty-big{display:grid;justify-items:center;gap:10px;padding:70px 20px;border:1px dashed var(--line);border-radius:18px;text-align:center}
-.cpj-empty-big svg{width:38px;height:38px;color:var(--accent)}
-.cpj-empty-big strong{font:600 1.7rem/1.1 "Cormorant Garamond",serif;color:var(--ink)}
+.cpj-empty{padding:20px 4px;color:var(--muted);font-size:.875rem;line-height:1.55}
+.cpj-empty-big{display:grid;justify-items:center;gap:8px;padding:44px 20px;border:1px dashed var(--line);border-radius:16px;text-align:center}
+.cpj-empty-big svg{width:32px;height:32px;color:var(--accent)}
+.cpj-empty-big strong{font:600 1.4rem/1.1 "Cormorant Garamond",serif;color:var(--ink)}
 .cpj-empty-big span{max-width:440px}
-.cpj-empty-big .cpj-btn{margin-top:8px}
+.cpj-empty-big .cpj-btn{margin-top:6px}
 
 /* Espaço de trabalho */
-.cpj-work-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.cpj-work-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .cpj-back{border:0;background:none;padding:0;color:var(--muted);font:600 .875rem/1 "Manrope",sans-serif;cursor:pointer}
 .cpj-back:hover{color:var(--ink)}
-.cpj-work-title h2{font-size:clamp(1.9rem,3vw,2.6rem);line-height:1.05}
-.cpj-work-title p{margin-top:8px;color:var(--muted);font-size:.9rem}
-.cpj-work-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px}
-.cpj-save-state{min-width:82px;color:var(--muted);font-size:.8125rem;text-align:right}
+.cpj-work-title-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.cpj-work-title h2{font-size:clamp(1.5rem,2.4vw,2rem);line-height:1.1}
+.cpj-work-title p{margin-top:5px;color:var(--muted);font-size:.8125rem}
+.cpj-work-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
+.cpj-save-state{min-width:82px;color:var(--muted);font-size:.75rem;text-align:right}
 .cpj-save-state[data-state="error"]{color:#a23b2f}
-.cpj-banner{margin:18px 0 0;padding:16px 20px;border:1px solid #eadfca;border-radius:14px;background:#fdf9f0;font-size:.875rem}
+/* Status do pedido: hoje só aparece dentro do diálogo "Ver pedido" (aberto pela linha do projeto na lista) —
+   não mais como uma caixa fixa dentro do espaço de trabalho. */
+.cpj-banner{margin:0;padding:12px 16px;border:1px solid #eadfca;border-radius:12px;background:#fdf9f0;font-size:.8125rem}
 .cpj-banner.is-em_analise{border-color:#d6e1f5;background:#f5f8fe}
 .cpj-banner.is-convertido{border-color:#cfe8d7;background:#f3faf5}
 .cpj-banner-main{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
 .cpj-banner-status{display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto;color:var(--muted)}
 .cpj-banner-obs{margin-top:10px!important;color:#5a4a36;font-style:italic}
 .cpj-banner-warn{margin-top:10px!important;color:#8a4b12;font-weight:600}
-.cpj-banner-snap{margin-top:10px}
-.cpj-banner-snap summary{cursor:pointer;color:#7a5f3d;font-weight:600}
-.cpj-banner-snap ul{margin:10px 0 0;padding-left:18px;line-height:1.7}
-.cpj-banner-snap li ul{margin:2px 0 8px}
-.cpj-work-body{display:grid;grid-template-columns:260px minmax(0,1fr);gap:34px;margin-top:26px;align-items:start}
-.cpj-amb-nav{position:sticky;top:calc(var(--header-h) + 18px);display:flex;flex-direction:column;gap:6px}
-.cpj-amb-tab{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:0 16px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--ink);font:500 .9rem/1.2 "Manrope",sans-serif;text-align:left;cursor:pointer;transition:background-color .2s,border-color .2s}
+.cpj-work-body{display:grid;grid-template-columns:220px minmax(0,1fr);gap:24px;margin-top:18px;align-items:start}
+.cpj-amb-nav{position:sticky;top:calc(var(--header-h) + 14px);display:flex;flex-direction:column;gap:4px}
+.cpj-amb-tab{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px;padding:0 13px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);font:500 .8375rem/1.2 "Manrope",sans-serif;text-align:left;cursor:pointer;transition:background-color .2s,border-color .2s}
 .cpj-amb-tab:hover{background:#f6f2ea}
 .cpj-amb-tab.is-active{border-color:var(--accent);background:#f6f2ea;font-weight:600}
-.cpj-amb-tab b{min-width:24px;padding:3px 7px;border-radius:999px;background:#fff;color:#7a5f3d;font:600 .8rem/1 "Manrope",sans-serif;text-align:center}
-.cpj-amb-new{margin-top:6px;border:1px dashed var(--line);color:#7a5f3d;justify-content:center}
+.cpj-amb-tab[data-cpj-worktab="geral"]{justify-content:center;text-align:center;min-height:34px;margin-bottom:4px;background:#eee7dc;border-color:#c5ad8d;color:#594329;font-size:.8375rem;font-weight:700;letter-spacing:.02em}
+.cpj-amb-tab[data-cpj-worktab="geral"]:hover{background:#e6dccd}
+.cpj-amb-tab[data-cpj-worktab="geral"].is-active{background:#7a5f3d;border-color:#7a5f3d;color:#fff;font-weight:700}
+.cpj-amb-nav>.cpj-amb-nav-entry{margin-left:10px;padding-left:5px;border-left:1px solid var(--line)}
+.cpj-amb-tab b{min-width:20px;padding:2px 6px;border-radius:999px;background:#fff;color:#7a5f3d;font:600 .75rem/1 "Manrope",sans-serif;text-align:center}
+.cpj-amb-new{margin-top:4px;border:1px dashed var(--line);color:#7a5f3d;justify-content:center}
 .cpj-amb-panel{min-width:0}
-.cpj-amb-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:14px}
-.cpj-amb-head h3{font-size:2.1rem;line-height:1.05}
-.cpj-amb-head p{margin-top:8px;color:var(--muted);font-size:.875rem;line-height:1.5}
+.cpj-amb-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px}
+.cpj-amb-head h3{font-size:1.6rem;line-height:1.1}
+.cpj-amb-head p{margin-top:5px;color:var(--muted);font-size:.8125rem;line-height:1.5}
 .cpj-amb-head em{font-style:normal;color:#8a6a42}
-.cpj-amb-actions{display:flex;gap:8px}
-.cpj-block{margin-top:34px}
-.cpj-block-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-.cpj-block-head h4{font-size:1.5rem}
-.cpj-block-actions{display:flex;gap:8px}
-.cpj-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(380px,100%),1fr));gap:12px}
-.cpj-item{display:grid;grid-template-columns:72px minmax(0,1fr) auto auto;align-items:center;gap:14px;padding:10px 12px 10px 10px;border:1px solid var(--line);border-radius:14px;background:#fff}
-.cpj-item img{width:72px;height:72px;border-radius:10px;background:#f4f1ea;object-fit:contain}
+.cpj-amb-nav-entry{display:flex;align-items:center;flex-shrink:0;min-width:0;gap:2px}
+.cpj-amb-nav-entry>.cpj-amb-tab{flex:1 1 auto;min-width:0;padding:6px;gap:4px}
+.cpj-amb-nav-entry>.cpj-amb-tab span{overflow-wrap:anywhere}
+.cpj-amb-actions{display:flex;flex:none;gap:2px}
+.cpj-amb-icon{display:grid;place-items:center;width:26px;height:30px;padding:5px;border:0;border-radius:5px;background:transparent;color:var(--muted);cursor:pointer}
+.cpj-amb-icon svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.cpj-amb-icon:hover{background:#f6f2ea;color:var(--ink)}
+.cpj-amb-icon:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.cpj-block{margin-top:22px}
+.cpj-block-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.cpj-block-head h4{font-size:1.15rem}
+.cpj-block-actions{display:flex;gap:6px}
+/* Renderizações e Móveis dentro de um ambiente: título centralizado, no mesmo estilo dos títulos da aba Geral
+   (.pa-geral .pa-grupo h3), com a linha fina embaixo. Botão da direita (ex. "3D Livre") não empurra o título do centro. */
+.cpj-block-head-center{position:relative;justify-content:center;min-height:40px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.cpj-block-head-center h4{font-size:clamp(22px,2vw,28px);font-weight:600;line-height:1.3;text-align:center}
+.cpj-block-head-center .cpj-block-actions{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+.cpj-block:first-child{margin-top:4px}
+.cpj-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:8px}
+.cpj-item{display:grid;grid-template-columns:52px minmax(0,1fr) auto auto;align-items:center;gap:11px;padding:7px 10px 7px 8px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.cpj-item img{width:52px;height:52px;border-radius:8px;background:#f4f1ea;object-fit:contain}
 .cpj-item-body{min-width:0}
-.cpj-item-body strong{display:block;font:600 .9rem/1.3 "Manrope",sans-serif;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.cpj-item-body small{display:block;margin-top:4px;color:var(--muted);font-size:.8rem}
+.cpj-item-body strong{display:block;font:600 .8375rem/1.3 "Manrope",sans-serif;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cpj-item-body small{display:block;margin-top:2px;color:var(--muted);font-size:.75rem}
 .cpj-qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;overflow:hidden}
 .cpj-qty button{width:32px;height:34px;border:0;background:#fff;color:var(--ink);font-size:1.05rem;cursor:pointer}
 .cpj-qty button:hover{background:#f6f2ea}
 .cpj-qty input{width:44px;height:34px;border:0;border-inline:1px solid var(--line);background:#fff;color:var(--ink);font:600 .875rem "Manrope",sans-serif;text-align:center;-moz-appearance:textfield}
 .cpj-qty input::-webkit-outer-spin-button,.cpj-qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.cpj-renders{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:14px}
-.cpj-render{position:relative;margin:0;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#f4f1ea}
+.cpj-renders{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr));gap:10px}
+.cpj-render{position:relative;margin:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#f4f1ea}
 .cpj-render img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;cursor:zoom-in}
-.cpj-render figcaption{padding:9px 12px;color:var(--muted);font-size:.8125rem}
-.cpj-render .cpj-icon-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92)}
-/* Mapa de posições: mostra onde cada renderização fica na apresentação (ver rendersMapaHtml) — as salvas nas posições reais e as
-   próximas como espaços tracejados numerados. Mesma disposição do layout: destaque = 1ª larga (16:9) + 2 colunas (4:3); grade = 2 colunas. */
-.cpj-renders-map{max-width:760px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.cpj-render figcaption{padding:7px 10px;color:var(--muted);font-size:.75rem}
+.cpj-render .cpj-icon-btn{position:absolute;top:6px;right:6px;background:rgba(255,255,255,.92)}
+/* Mapa de posições: mostra onde cada renderização fica (ver rendersMapaHtml) — as salvas nas posições reais e as
+   próximas como espaços tracejados numerados. A 1ª ocupa a largura toda (16:9) e as demais ficam em 2 colunas (4:3)
+   — `[data-modo="destaque"]` é o único modo que existe hoje (a opção de trocar pra "grade" dependia da escolha de
+   layout, removida). max-width reduzido (760→460px) de propósito: é só uma PRÉVIA da disposição, não precisa
+   ocupar tanta largura — pedido explícito do usuário ("mais compacto, sem ocupar tanto espaço"). */
+.cpj-renders-map{max-width:460px;grid-template-columns:repeat(2,minmax(0,1fr))}
 .cpj-renders-map .cpj-render img,.cpj-render-slot{aspect-ratio:4/3}
 .cpj-renders-map[data-modo="destaque"]>:first-child{grid-column:1/-1}
 .cpj-renders-map[data-modo="destaque"]>.cpj-render:first-child img,.cpj-renders-map[data-modo="destaque"]>.cpj-render-slot:first-child{aspect-ratio:16/9}
-.cpj-render-slot{position:relative;display:grid;place-content:center;justify-items:center;gap:5px;padding:14px;border:1.5px dashed #cfc5b6;border-radius:14px;background:#fbf9f5;color:var(--muted);text-align:center}
-.cpj-render-slot svg{width:28px;height:28px;color:var(--accent)}
-.cpj-render-slot strong{color:var(--ink);font:600 .9375rem/1.2 "Manrope",sans-serif}
-.cpj-render-slot>span:not(.cpj-slot-num){max-width:30ch;font-size:.8125rem;line-height:1.4}
-.cpj-slot-num{position:absolute;top:10px;left:10px;z-index:1;display:grid;place-items:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--ink,#251e19);color:#fff;font:600 .75rem/1 "Manrope",sans-serif}
-.cpj-map-hint{max-width:760px;margin:12px 0 0;color:var(--muted);font-size:.8125rem;line-height:1.55}
+.cpj-render-slot{position:relative;display:grid;place-content:center;justify-items:center;gap:4px;padding:10px;border:1.5px dashed #cfc5b6;border-radius:12px;background:#fbf9f5;color:var(--muted);text-align:center}
+.cpj-render-slot svg{width:22px;height:22px;color:var(--accent)}
+.cpj-render-slot strong{color:var(--ink);font:600 .8125rem/1.2 "Manrope",sans-serif}
+.cpj-render-slot>span:not(.cpj-slot-num){max-width:26ch;font-size:.75rem;line-height:1.4}
+.cpj-slot-num{position:absolute;top:8px;left:8px;z-index:1;display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--ink,#251e19);color:#fff;font:600 .75rem/1 "Manrope",sans-serif}
+.cpj-map-hint{max-width:460px;margin:8px 0 0;color:var(--muted);font-size:.75rem;line-height:1.5}
 @media(max-width:640px){   /* no celular a apresentação empilha tudo em 1 coluna (4:3) */
   .cpj-renders-map{grid-template-columns:1fr}
   .cpj-renders-map[data-modo="destaque"]>.cpj-render:first-child img,.cpj-renders-map[data-modo="destaque"]>.cpj-render-slot:first-child{aspect-ratio:4/3}
 }
-.cpj-notes{width:100%;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:400 .9rem/1.55 "Manrope",sans-serif;resize:vertical}
+.cpj-notes{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:400 .875rem/1.5 "Manrope",sans-serif;resize:vertical}
 .cpj-notes:focus{outline:0;border-color:var(--accent)}
 .cpj-lightbox{display:block;width:100%;max-height:72vh;object-fit:contain;border-radius:10px}
 
@@ -158,7 +178,27 @@
 .cpj-add-chip:hover{border-color:var(--accent);color:#7a5f3d}
 .cpj-add-chip.is-added{border-color:var(--accent);background:var(--accent);color:#fff}
 .cpj-add-plus{font-size:1rem;line-height:1}
-.cpj-add-count:empty{display:none}
+/* Número do chip = abrir o campo de quantidade (antes de adicionar mostra "Qtd."). */
+.cpj-add-count{margin-right:-4px;padding:3px 7px;border-left:1px solid var(--line);border-radius:0 999px 999px 0;font-size:.781rem;font-weight:600;cursor:text}
+.cpj-add-chip:not(.is-added) .cpj-add-count{color:var(--muted);font-weight:500}
+.cpj-add-chip.is-added .cpj-add-count{border-left-color:rgba(255,255,255,.45)}
+.cpj-add-count:hover{text-decoration:underline;text-underline-offset:3px}
+.cpj-add-count:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.cpj-add-page-wrap{align-self:flex-start;display:inline-flex;align-items:center;gap:12px;margin-top:16px}
+.cpj-add-page-wrap .cpj-add-page{margin-top:0}
+.cpj-add-page-qty{border:0;background:none;padding:4px 2px;color:var(--muted);font:500 .844rem "Manrope",sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.cpj-add-page-qty:hover,.cpj-add-page-qty:focus-visible{color:#7a5f3d;outline:0}
+.cpj-qty-pop{position:fixed;z-index:400;width:230px;padding:14px;border:1px solid var(--line,#e7e0d6);border-radius:14px;background:#fff;color:var(--ink,#2b2622);box-shadow:0 18px 44px rgba(31,24,19,.2);font-family:"Manrope",sans-serif}
+.cpj-qty-pop-title{margin:0;font:600 .875rem/1.3 "Manrope",sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cpj-qty-pop-sub{margin:2px 0 10px;color:var(--muted,#77716a);font-size:.781rem}
+.cpj-qty-pop-row{display:grid;grid-template-columns:38px 1fr 38px;gap:6px}
+.cpj-qty-pop-row button{height:40px;border:1px solid var(--line,#e7e0d6);border-radius:10px;background:#fff;color:var(--ink,#2b2622);font-size:1.1rem;cursor:pointer}
+.cpj-qty-pop-row button:hover{border-color:var(--accent,#b99a72)}
+.cpj-qty-pop-row input{width:100%;min-width:0;height:40px;border:1px solid var(--accent,#b99a72);border-radius:10px;text-align:center;font:600 1.05rem "Manrope",sans-serif;color:var(--ink,#2b2622);-moz-appearance:textfield}
+.cpj-qty-pop-row input:focus{outline:0;box-shadow:0 0 0 3px rgba(185,154,114,.22)}
+.cpj-qty-pop-row input::-webkit-inner-spin-button,.cpj-qty-pop-row input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.cpj-qty-pop-ok{width:100%;height:38px;margin-top:10px;border:0;border-radius:999px;background:#5a5a55;color:#fff;font:600 .844rem "Manrope",sans-serif;letter-spacing:.04em;cursor:pointer}
+.cpj-qty-pop-hint{display:block;margin-top:8px;color:var(--muted,#77716a);font-size:.75rem;text-align:center}
 /* Página do item: discreto de propósito — contorno fino e sem preenchimento, do tamanho do texto. O botão cheio e escuro
    chamava mais atenção que o próprio móvel (pedido do usuário: "precisa ser mais clean"). */
 .cpj-add-page{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;min-height:36px;margin-top:16px;padding:0 16px 0 13px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font:500 .875rem/1.1 "Manrope",sans-serif;letter-spacing:.02em;cursor:pointer;transition:border-color .2s,color .2s,background-color .2s}
@@ -198,11 +238,6 @@ dialog.cpj-modal::backdrop{background:rgba(20,16,12,.5)}
 .cpj-order-summary span{color:#77716a}
 .cpj-order-total{margin:0;color:#5a4a36;font-size:.9rem}
 .cpj-share-text{margin:0;color:#5a4a36;font-size:.9rem;line-height:1.6}
-.cpj-copy-row{display:flex;gap:8px}
-.cpj-copy-row input{flex:1;min-width:0;font-size:.8125rem}
-.cpj-pin-input{max-width:190px;font:600 1.4rem "Manrope",sans-serif!important;letter-spacing:.32em;text-align:center}
-.cpj-pin-show{padding:14px;border-radius:12px;background:#f6f2ea;color:#3f2f1c;font:700 2rem/1 "Manrope",sans-serif;letter-spacing:.42em;text-align:center}
-.cpj-share-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 
 /* Telas menores */
 @media(max-width:900px){
@@ -215,12 +250,12 @@ dialog.cpj-modal::backdrop{background:rgba(20,16,12,.5)}
   .cpj-items{grid-template-columns:1fr}
 }
 @media(max-width:640px){
-  .cpj-wrap{padding:30px 16px 130px}
-  .cpj-card{grid-template-columns:64px minmax(0,1fr);gap:14px;padding:16px}
-  .cpj-card-date{width:64px;height:74px}
+  .cpj-wrap{padding:20px 16px 100px}
+  .cpj-card{grid-template-columns:52px minmax(0,1fr);gap:12px;padding:13px}
+  .cpj-card-date{width:52px;height:60px}
   .cpj-card-side{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between}
-  .cpj-item{grid-template-columns:60px minmax(0,1fr) auto;row-gap:8px}
-  .cpj-item img{width:60px;height:60px}
+  .cpj-item{grid-template-columns:52px minmax(0,1fr) auto;row-gap:8px}
+  .cpj-item img{width:52px;height:52px}
   .cpj-item>.cpj-icon-btn{grid-column:3;grid-row:1}
   .cpj-item .cpj-qty{grid-column:2/4;grid-row:2;justify-self:start}
   .cpj-field-row{grid-template-columns:1fr}
@@ -232,30 +267,29 @@ dialog.cpj-modal::backdrop{background:rgba(20,16,12,.5)}
 @media(prefers-reduced-motion:reduce){.cpj-card,.cpj-add-chip,.cpj-btn{transition:none}}
 .cpj-save-state:empty{display:none}
 .cpj-icon-btn svg{width:18px;height:18px}
-[data-share-body]{display:grid;gap:18px}
 .catalog-grid-card-photo{position:relative}
 
 /* Foto dos noivos */
-.cpj-work-id{display:flex;align-items:center;gap:22px;min-width:0}
+.cpj-work-id{display:flex;align-items:center;gap:14px;min-width:0}
 .cpj-avatar-wrap{position:relative;flex:none}
-.cpj-avatar{display:grid;place-items:center;width:100px;height:100px;overflow:hidden;border:1.5px dashed var(--line);border-radius:50%;background:#faf8f4;color:var(--muted);cursor:pointer;transition:border-color .2s,background-color .2s}
+.cpj-avatar{display:grid;place-items:center;width:72px;height:72px;overflow:hidden;border:1.5px dashed var(--line);border-radius:50%;background:#faf8f4;color:var(--muted);cursor:pointer;transition:border-color .2s,background-color .2s}
 .cpj-avatar:hover{border-color:var(--accent);background:#f6f2ea}
-.cpj-avatar span{display:grid;justify-items:center;gap:4px;padding:8px;text-align:center}
-.cpj-avatar svg{width:26px;height:26px;color:var(--accent)}
-.cpj-avatar small{font-size:.75rem;line-height:1.2}
+.cpj-avatar span{display:grid;justify-items:center;gap:3px;padding:6px;text-align:center}
+.cpj-avatar svg{width:20px;height:20px;color:var(--accent)}
+.cpj-avatar small{font-size:.75rem;line-height:1.1}
 .cpj-avatar.has-photo{border:3px solid #fff;box-shadow:0 0 0 1px var(--line),0 8px 22px rgba(37,30,25,.12)}
 .cpj-avatar img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 30%}
 .cpj-avatar-x{position:absolute;top:-2px;right:-2px;width:26px;height:26px;padding:0;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--muted);font-size:1rem;line-height:1;cursor:pointer;opacity:0;transition:opacity .2s,color .2s}
 .cpj-avatar-wrap:hover .cpj-avatar-x,.cpj-avatar-wrap:focus-within .cpj-avatar-x,.cpj-avatar-x:focus-visible{opacity:1}
 .cpj-avatar-x:hover{color:#a23b2f}
 @media(hover:none){.cpj-avatar-x{opacity:1}}
-.cpj-card-title{display:flex;align-items:center;gap:12px;min-width:0}
-.cpj-card-avatar{flex:none;width:50px;height:50px;border-radius:50%;object-fit:cover;object-position:center 30%;box-shadow:0 0 0 1px var(--line)}
+.cpj-card-title{display:flex;align-items:center;gap:10px;min-width:0}
+.cpj-card-avatar{flex:none;width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:center 30%;box-shadow:0 0 0 1px var(--line)}
 .cpj-photo-pick{display:flex;align-items:center;gap:14px}
 .cpj-photo-preview{display:grid;place-items:center;flex:none;width:68px;height:68px;overflow:hidden;border-radius:50%;background:#f6f2ea;color:#b99a72}
 .cpj-photo-preview svg{width:26px;height:26px}
 .cpj-photo-preview img{width:100%;height:100%;object-fit:cover;object-position:center 30%}
-@media(max-width:640px){.cpj-work-id{gap:14px}.cpj-avatar{width:76px;height:76px}.cpj-avatar small{display:none}}
+@media(max-width:640px){.cpj-work-id{gap:12px}.cpj-avatar{width:60px;height:60px}.cpj-avatar small{display:none}}
 
 /* "Levar também os móveis desta composição" (diálogo de salvar renderização) */
 .cpj-check{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1px solid #eadfca;border-radius:12px;background:#fdf9f0;cursor:pointer}
@@ -263,3 +297,395 @@ dialog.cpj-modal::backdrop{background:rgba(20,16,12,.5)}
 .cpj-check span{display:grid;gap:4px;min-width:0}
 .cpj-check strong{color:#3f2f1c;font:600 .875rem/1.3 "Manrope",sans-serif}
 .cpj-check small{color:#77716a;font-size:.8125rem;line-height:1.45}
+
+/* Plantas legendadas — ver seção própria em catalogo-projetos.mjs pro raciocínio completo (pedido explícito do
+   usuário, depois de uma cliente real relatar que o projeto sozinho, sem almofada/flor, nunca dava pra enviar aos
+   noivos como entrega final: virou ferramenta de legendar a planta baixa pra equipe de montagem, ADICIONAL ao que
+   já existia, não substituindo nada). */
+.cpj-amb-tab-plantas{gap:8px}
+.cpj-amb-tab-plantas svg{width:16px;height:16px;flex:none;color:#7a5f3d}
+.cpj-plantas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:22px}
+.cpj-planta-card{display:flex;flex-direction:column;gap:0;overflow:hidden;padding:0;border:1px solid var(--line);border-radius:14px;background:#fff;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.cpj-planta-card:hover,.cpj-planta-card:focus-visible{border-color:var(--accent);box-shadow:0 10px 26px rgba(37,30,25,.08);outline:none}
+.cpj-planta-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#f8f6f2;border-bottom:1px solid var(--line)}
+.cpj-planta-card strong{margin:10px 12px 0;font:600 .9rem "Manrope",sans-serif}
+.cpj-planta-card small{margin:4px 12px 12px;color:var(--muted);font-size:.8rem}
+.cpj-planta-nova{align-items:center;justify-content:center;gap:6px;min-height:180px;padding:20px;border-style:dashed;color:#7a5f3d;text-align:center}
+.cpj-planta-nova svg{width:30px;height:30px;color:var(--accent)}
+.cpj-planta-nova strong{margin:0;color:inherit}
+.cpj-planta-nova small{margin:0;color:var(--muted)}
+
+.cpj-planta-editor{display:flex;flex-direction:column;gap:14px}
+.cpj-planta-viewport{position:relative;width:100%;min-width:0;height:40vh;overflow:hidden;background:#f4f2ee;border-radius:8px}
+.cpj-planta-viewport>.cpj-planta-frame{position:absolute;transform-origin:0 0}
+.cpj-planta-viewport .cpj-planta-pagina{background:#fff;box-shadow:0 2px 10px #00000012}
+.cpj-planta-editor{position:fixed;inset:calc(var(--header-h, 76px) + 10px) 16px 10px;z-index:40;padding:12px;background:#fff;box-sizing:border-box;gap:8px}
+body:has(.cpj-planta-editor){overflow:hidden}
+/* A planta aberta cobre a tela inteira e tem o próprio "← Plantas"; o "Voltar" global ficava por cima dele (o clique caía no Voltar). */
+body:has(.cpj-planta-editor) .catalog-global-back{display:none}
+.cpj-planta-editor>.cpj-planta-toolbar{flex:none;gap:8px}
+.cpj-planta-editor>.cpj-planta-viewport{flex:1;min-height:0;height:auto}
+.cpj-planta-toolbar .cpj-work-actions{gap:6px;flex-wrap:nowrap;flex:none}
+.cpj-planta-toolbar .cpj-btn{min-height:34px;padding:0 12px;letter-spacing:0}
+.cpj-planta-editor>[data-cpj-planta-vazio]{flex:none;font-size:12px}
+@media(max-width:700px){
+  .cpj-planta-editor{inset:calc(var(--header-h, 76px) + 4px) 4px 4px;padding:8px;gap:6px}
+  .cpj-planta-toolbar .cpj-work-actions{justify-content:flex-start}
+}
+.cpj-planta-toolbar{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.cpj-planta-toolbar>.cpj-back{flex:none;white-space:nowrap}
+.cpj-planta-nome-input{flex:0 0 150px;width:150px;min-width:0;min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:600 .875rem "Manrope",sans-serif}
+.cpj-planta-nome-input:focus{outline:0;border-color:var(--accent)}
+.cpj-planta-toggle{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:.8125rem;white-space:nowrap;cursor:pointer}
+.cpj-planta-toggle input{accent-color:#5a5a55}
+.cpj-planta-papel-select{min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:500 .8125rem "Manrope",sans-serif;cursor:pointer}
+.cpj-planta-papel-select:focus{outline:0;border-color:var(--accent)}
+.cpj-planta-ajuste-group{display:inline-flex;align-items:center;gap:6px}
+.cpj-planta-ajuste-zoom{font-size:1.1rem;line-height:1}
+.cpj-planta-ajuste-rotulo{color:var(--muted);font:500 .75rem "Manrope",sans-serif;letter-spacing:.03em}
+/* width:100%+border-box (não margin:0 auto+content-box) de propósito: .cpj-planta-editor é flex-column, e um item
+   flex com margem automática nas duas laterais não estica pro "stretch" padrão — encolhe pro tamanho do conteúdo
+   (fit-content). Sem uma largura definida aqui, `.cpj-planta-pagina` (width:100%, abaixo) não tem contra o que
+   resolver essa porcentagem. Esse `width:100%` é só o PADRÃO — `recalcularPlanta()` troca por um valor em pixel
+   (via `style.width` inline) sempre que a planta (tamanho ajustável, ver `larguraPlanta()`) precisar de mais
+   espaço do que cabe naturalmente, deixando o quadro CRESCER em largura (mesma ideia que a altura dinâmica já
+   usava pras legendas) — nunca encolhe abaixo do espaço disponível. */
+.cpj-planta-frame{position:relative;width:100%;padding:280px;box-sizing:border-box}
+/* Achado real, reportado pelo usuário vendo a tela publicada: "por fora ali dos ambientes 3d precisaria ter uma
+   outra linha que representa de fato a pagina que sera impressa" — o palco (abaixo) só mostrava o espaço da
+   PLANTA, nunca da folha inteira (planta + prints das legendas juntos). `.cpj-planta-pagina` é essa folha de
+   verdade — é só uma linha de REFERÊNCIA (pedido explícito: "a linha sera referencia... nao quero que ajuste o
+   tamanho das fotos automaticamente"), nunca corta nem redimensiona nada; quem ultrapassa ela vira vermelho
+   (`.is-fora-da-folha`, mais abaixo). `pointer-events:none` pra nunca atrapalhar cliques na planta/pontos por
+   baixo dela.
+   `width:100%` aqui é só o PADRÃO antes do JS medir — 2º achado real, reportado depois de publicado: "a marcacao
+   da folha a4 nao condiz com a folha de impressao". `recalcularPlanta()` (catalogo-projetos.mjs) sempre trocou
+   isso por um valor em pixel, mas até então usava `frame.getBoundingClientRect().width` — o espaço que sobrava NA
+   TELA (varia com a largura da janela/painel de cada um), sem nenhuma relação com o tamanho FÍSICO de uma folha
+   A4/A3/Carta de verdade. Corrigido pra usar o tamanho físico real (mm → px a 96dpi, `PX_POR_MM`) — só assim a
+   linha de referência passa a corresponder de fato à folha impressa, e não a "quanto espaço sobrou na tela hoje". */
+.cpj-planta-pagina{position:absolute;left:0;top:0;width:100%;border:2px dashed var(--accent);opacity:.55;pointer-events:none;box-sizing:border-box}
+.cpj-planta-pagina-rotulo{position:absolute;top:8px;left:8px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.9);color:var(--accent);font:600 .75rem "Manrope",sans-serif;letter-spacing:.03em;text-transform:uppercase}
+/* O palco da PLANTA em si — proporção do papel (`aspect-ratio` inline), mas TAMANHO ajustável (`width` inline,
+   calculado de `larguraPlanta()`) — pedido explícito: "aumentar a planta do cliente". A borda + sombra suave fazem
+   ele ler como um recorte de verdade dentro da folha, distinto da linha tracejada de referência acima.
+   `overflow:hidden` é o que permite a imagem (que pode ficar maior que o palco, por causa do arrasto) ser
+   recortada certinho nas bordas dele. */
+.cpj-planta-stage{position:relative;margin:0 auto;overflow:hidden;border:1px solid var(--line);border-radius:2px;background:#fff;box-shadow:0 10px 28px rgba(37,30,25,.1);cursor:crosshair;transition:outline-color .2s}
+.cpj-planta-stage.is-ajustando{cursor:grab}
+.cpj-planta-stage.is-ajustando.is-arrastando-planta{cursor:grabbing}
+/* Tamanho/posição em PIXEL, calculados em JS (posicionarPlantaImg) — "cover" do palco + o arrasto extra que a
+   pessoa ajustar; sem width:100%/height:auto (que só serviriam pro tamanho NATURAL da imagem, sem controle nenhum
+   de posição). */
+.cpj-planta-img{display:block;position:absolute;max-width:none;transform:translate(-50%,-50%);pointer-events:none;user-select:none;-webkit-user-drag:none}
+/* Aviso de "isso passou da folha" — nunca redimensiona nada sozinho (pedido explícito do usuário), só avisa em
+   vermelho pra pessoa decidir se ajusta manualmente. Vale tanto pro palco da planta quanto pra cada legenda. */
+.cpj-planta-stage.is-fora-da-folha{outline:2px solid #a23b2f;outline-offset:2px}
+.cpj-planta-label.is-fora-da-folha .cpj-planta-label-render,
+.cpj-planta-label.is-fora-da-folha .cpj-planta-label-vazio{outline:2px solid #a23b2f;outline-offset:3px}
+/* Marcação por CLIQUE (pedido explícito, substituindo o clicar-e-arrastar de antes): o "ponto" é só um numerozinho
+   pequeno sobre a planta — nada de retângulo/área destacada ficando marcado nela. */
+.cpj-planta-points{position:absolute;inset:0;pointer-events:none}
+/* Sem número, sem badge visível por padrão (pedido explícito: "não quero que apareça número na planta, quero que
+   seja somente a linha") — a caixa em si é só a área de clique (invisível), um pontinho discreto (sem texto) só
+   aparece no hover/foco, pra ainda dar pra localizar/editar no editor sem "pintar" nada na planta impressa. */
+.cpj-planta-point{position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;pointer-events:auto;cursor:pointer}
+.cpj-planta-point::before{content:"";position:absolute;top:50%;left:50%;width:10px;height:10px;transform:translate(-50%,-50%);border-radius:999px;background:var(--accent);border:2px solid #fff;box-shadow:0 2px 6px rgba(37,30,25,.3);opacity:0;transition:opacity .15s}
+.cpj-planta-point:hover::before,.cpj-planta-point:focus-within::before{opacity:1}
+@media(hover:none){.cpj-planta-point::before{opacity:.6}}
+.cpj-planta-point.is-pendente::before{opacity:1;width:14px;height:14px;background:transparent;border:2px dashed var(--accent);box-shadow:none}
+.cpj-planta-point-x{position:absolute;top:-9px;right:-9px;display:grid;place-items:center;width:20px;height:20px;padding:0;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--muted);font-size:.85rem;line-height:1;cursor:pointer;opacity:0;transition:opacity .2s,color .2s}
+.cpj-planta-point:hover .cpj-planta-point-x,.cpj-planta-label:hover .cpj-planta-point-x,.cpj-planta-point-x:focus-visible{opacity:1}
+.cpj-planta-point-x:hover{color:#a23b2f}
+@media(hover:none){.cpj-planta-point-x{opacity:1}}
+.cpj-planta-lines{position:absolute;inset:0;overflow:visible;pointer-events:none;z-index:2}
+.cpj-planta-lines line{stroke:#000;stroke-width:1;stroke-dasharray:none}
+.cpj-planta-seta{fill:none;stroke:#000;stroke-width:1;stroke-linejoin:round}
+.cpj-planta-letra{fill:#000;font:600 14px "Manrope",sans-serif;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.cpj-planta-lines[data-modo="letras"] line,
+.cpj-planta-lines[data-modo="letras"] .cpj-planta-seta,
+.cpj-planta-lines[data-modo="setas"] .cpj-planta-letra{display:none}
+.cpj-planta-labels{position:absolute;inset:0;pointer-events:none}
+/* Sem card nenhum envolvendo o grupo (pedido explícito: "as fotos precisam ser maiores e precisam ficar fora de
+   qualquer card pra ganhar espaço") — e, numa rodada seguinte, também sem cabeçalho (pedido explícito: "retire o
+   card em volta da foto, e retire a descrição também... bar, lounge, bistros... nosso objetivo é ganhar espaço"):
+   nem nome do ambiente, nem borda/moldura na foto — só a foto flutuando sozinha. O "×" de remover (que morava num
+   cabeçalho com o nome do ambiente) virou um botão sobreposto ao canto da própria foto, com o `.cpj-planta-point-x`
+   padrão (position:absolute;top:-9px;right:-9px, só aparece no hover — a regra `.cpj-planta-label:hover
+   .cpj-planta-point-x` na linha acima já cobria esse caso, nenhuma regra nova precisou ser adicionada). Arrastável
+   (pedido explícito: "quero poder arrastar os blocos pra espalhar melhor") — cursor de "pode segurar" já no
+   repouso, `touch-action:none` evita o navegador tentar rolar a página enquanto o dedo arrasta um bloco no
+   celular. */
+.cpj-planta-label{position:absolute;pointer-events:auto;cursor:grab;touch-action:none;text-align:left}
+.cpj-planta-label.is-arrastando{cursor:grabbing;opacity:.85;z-index:4}
+/* A "montagem" renderizada em 3D (pedido explícito, com foto de referência: "não quero que apareça a fotos os
+   itens soltas, quero que apareça a montagem... isso o próprio sistema registrou em 3D") — a mesma imagem já salva
+   em Composições/3D Livre ("Renderizar com IA"), não mais um mosaico de fotos avulsas por item.
+   Achado real, reportado pelo usuário: "eu quero arrastar em qualquer lugar que eu segurar na imagem... basta eu
+   segurar na foto na planta que eu consigo arrastar ela" — sem `draggable="false"`/`-webkit-user-drag:none`, um
+   `<img>` comum dispara o arrasto NATIVO do navegador (arrastar a foto pra salvar/mover, o "fantasma" de imagem
+   seguindo o cursor) assim que o clique começa EM CIMA da foto — esse gesto nativo disputa com o arrasto por
+   Pointer Events já implementado em `.cpj-planta-label` (mesmo raciocínio do `.cpj-planta-img`, a planta de fundo,
+   que já tinha essa proteção — só a foto da legenda tinha ficado de fora). `draggable="false"` no HTML (Firefox,
+   que ignora `-webkit-user-drag`) + a propriedade CSS (Chromium/Edge/Safari) cobrem os dois motores. */
+.cpj-planta-label-render{display:block;width:100%;height:auto;object-fit:contain;-webkit-user-drag:none;user-select:none}
+.cpj-planta-label-itens{margin:10px 0 0;color:var(--muted);font-size:.75rem;line-height:1.4}
+.cpj-planta-label-vazio{margin:0;color:var(--muted);font-size:.8125rem;line-height:1.4}
+
+/* Escolher a que ambiente uma área marcada se refere (mesmo mosaico de fotos em miniatura, só que de um ambiente
+   inteiro em vez de um item só). */
+.cpj-planta-amb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.cpj-planta-amb-card{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;text-align:left;cursor:pointer;transition:border-color .2s,background-color .2s}
+.cpj-planta-amb-card:hover{border-color:var(--accent);background:#f6f2ea}
+.cpj-planta-amb-card.is-active{border-color:var(--accent);background:#f6f2ea}
+.cpj-planta-amb-mosaico{display:grid;grid-template-columns:1fr 1fr;gap:3px;aspect-ratio:1;overflow:hidden;border-radius:8px;background:#f4f1ea}
+.cpj-planta-amb-mosaico img{width:100%;height:100%;object-fit:cover}
+.cpj-planta-amb-mosaico.is-vazio{display:grid;place-items:center;color:var(--muted)}
+.cpj-planta-amb-mosaico.is-vazio svg{width:22px;height:22px}
+/* No "qual é esse ponto da planta?" a capa do card virou o PRINT (a mesma renderização 3D que a legenda da planta
+   usa), não mais o mosaico de fotos soltas por item — pedido explícito do usuário. `.is-print` desliga o grid de
+   2×2 (que só faz sentido pra várias fotos pequenas) pra UMA imagem só preencher o quadrado inteiro. */
+.cpj-planta-amb-mosaico.is-print{display:block}
+.cpj-planta-amb-card strong{font:600 .875rem "Manrope",sans-serif}
+.cpj-planta-amb-card small{color:var(--muted);font-size:.75rem}
+
+@media(max-width:700px){
+  .cpj-planta-frame{padding:170px 14px}
+}
+
+/* PDF/imagem = impressão do navegador (mesmo padrão já usado no resto do catálogo/apresentação, sem gerador de PDF
+   próprio) — só a planta com as legendas, sem o resto da tela do catálogo. */
+#cpjPlantaImpressao{display:none}
+@media print{
+  html:has(body.cpj-imprimindo-planta),body.cpj-imprimindo-planta{
+    margin:0!important;padding:0!important;width:auto!important;height:auto!important;
+    min-height:0!important;overflow:visible!important;
+  }
+  body.cpj-imprimindo-planta>*{display:none!important}
+  body.cpj-imprimindo-planta>#cpjPlantaImpressao{
+    display:block!important;position:relative;overflow:hidden;margin:0;padding:0;
+    box-sizing:border-box;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact;
+  }
+}
+
+/* Pr?via do pedido em folha, antes da confirma??o de envio. */
+dialog.cpj-modal.cpj-order-preview{width:min(940px,calc(100vw - 28px));background:#eeece7}
+.cpj-order-preview .cpj-modal-form{padding:24px;gap:20px}
+.cpj-order-preview .cpj-modal-form>footer{position:sticky;bottom:-24px;background:#eeece7;padding:16px 0;margin-bottom:-8px;border-top:1px solid #d9d3c9;z-index:1}
+.cpj-order-paper{background:#fff;padding:38px 42px;box-shadow:0 3px 18px #30291b12;color:#34352f}
+/* Topo do conteúdo: Clientes (nome grande), Data do evento e Local do evento empilhados à esquerda; à direita, um card
+   amarelo suave explicando que o arquivo é uma prévia e que o pedido oficial vem da equipe comercial. */
+.cpj-order-event{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,300px);align-items:center;gap:32px;padding:26px 0 22px}
+.cpj-order-event-info{display:grid;gap:16px;margin:0;min-width:0}
+.cpj-order-event dt{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#8c795c;margin-bottom:5px}
+.cpj-order-event dd{margin:0;font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.cpj-order-event h2{font:400 34px/1.15 Georgia,serif;margin:2px 0 0;overflow-wrap:anywhere}
+.cpj-order-client{padding-bottom:4px}
+.cpj-order-notice{display:flex;gap:12px;align-items:flex-start;padding:16px 18px;border:1px solid #ead9a8;border-left:3px solid #c9a24f;border-radius:10px;background:#fbf4de;color:#5f4b22;print-color-adjust:exact;-webkit-print-color-adjust:exact;break-inside:avoid}
+.cpj-order-notice-icon{display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:#c9a24f;color:#fff;font:italic 600 13px/1 Georgia,serif}
+.cpj-order-notice strong{display:block;margin-bottom:5px;font:600 11px/1.3 "Manrope",Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7a5c1e}
+.cpj-order-notice p{margin:0;font-size:12px;line-height:1.55}
+.cpj-order-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
+/* "Qtd." e "Item" ficam logo acima da 1ª linha de cada ambiente (abaixo do nome do ambiente), não mais no topo da tabela —
+   o <thead> real fica só pros leitores de tela (.pa-sr) e as larguras das colunas vêm do <colgroup>. */
+.cpj-order-col-qty{width:46px}.cpj-order-col-photo{width:96px}
+.cpj-order-table .cpj-order-colhead td{padding:2px 8px 6px;border-bottom:1px solid #f3f0ec;font-size:10px;font-weight:500;color:#857762;letter-spacing:.04em}
+.cpj-order-table .cpj-order-colhead td:first-child{text-align:center}
+.cpj-order-table td{padding:8px;border-bottom:1px solid #f3f0ec;vertical-align:middle}
+.cpj-order-table tbody tr:last-child td{border-bottom:0}
+.cpj-order-table strong{font-weight:500;line-height:1.5;overflow-wrap:anywhere}
+.cpj-order-table small{display:block;margin-top:4px;color:#8b8479;font-size:10px}
+.cpj-order-table .cpj-order-environment th{padding:18px 8px 10px;text-align:center;font:400 23px/1.3 Georgia,serif;color:#655236;border-bottom:0}
+.cpj-order-qty{text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+.cpj-order-photo img,.cpj-order-photo .pa-sem-foto{display:block;width:80px;height:65px;object-fit:contain}
+.cpj-order-paper-total{display:flex;justify-content:space-between;gap:16px;margin-top:12px;padding-top:4px;font-size:12px;color:#655236}
+@media(max-width:600px){.cpj-order-preview .cpj-modal-form{padding:16px}.cpj-order-paper{padding:22px 14px}.cpj-order-event{grid-template-columns:1fr;gap:18px}.cpj-order-event h2{font-size:27px}.cpj-order-col-qty{width:30px}.cpj-order-col-photo{width:56px}.cpj-order-table td{padding:6px 4px}.cpj-order-photo img,.cpj-order-photo .pa-sem-foto{width:48px;height:48px}.cpj-order-table{font-size:11px}.cpj-order-preview .cpj-modal-form>footer{bottom:-16px}}
+
+.cpj-order-requester{display:flex;align-items:center;gap:14px;padding:22px 0 0}
+.cpj-order-requester>img{width:58px;height:58px;object-fit:cover;border-radius:50%;border:1px solid #ddd2c2;padding:3px;background:#fff}
+.cpj-order-requester span{display:block;font-size:9px;letter-spacing:.12em;color:#8c795c;margin-bottom:5px}
+.cpj-order-requester strong{font-size:14px;font-weight:500}
+.cpj-order-renders{margin-top:28px;padding-top:0}
+.cpj-order-renders>h2{font:400 28px/1.2 Georgia,serif;margin:0 0 24px}
+.cpj-order-render-group{margin-top:24px;break-inside:avoid}
+.cpj-order-render-group h3{text-align:center;font:400 23px/1.3 Georgia,serif;color:#655236;margin:0 0 14px}
+.cpj-order-render-group>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cpj-order-render-group figure{margin:0;break-inside:avoid}
+.cpj-order-render-group figure:first-child{grid-column:1/-1}
+.cpj-order-render-group img{display:block;width:100%;height:auto;object-fit:contain}
+@media(max-width:600px){.cpj-order-logo{width:160px;height:58px}.cpj-order-render-group>div{grid-template-columns:1fr}}
+
+/* Cabeçalho do pedido: faixa escura na MESMA cor do menu do catálogo (#5a5a55, .catalog-header), de ponta a ponta do papel,
+   logo branca à esquerda, decoradora + divisória + "PRÉVIA DO PEDIDO" à direita, filete bege/dourado embaixo. */
+.cpj-order-letterhead{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:-38px -42px 0;padding:26px 42px;background:#5a5a55;color:#fff;border-bottom:2px solid #c9ad84;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.cpj-order-brand{display:flex;align-items:center;min-width:0}
+.cpj-order-logo{display:block;height:58px;width:auto;max-width:250px;object-fit:contain;object-position:left center;filter:brightness(0) invert(1)}
+.cpj-order-logo.is-quadrada{width:206px;height:58px;max-width:none;object-fit:cover;object-position:center 49%}
+.cpj-order-brand-name{font:400 30px/1.1 "Cormorant Garamond",Georgia,serif;letter-spacing:.14em;color:#fff}
+.cpj-order-letterhead-side{display:flex;align-items:center;gap:22px;min-width:0}
+.cpj-order-letterhead .cpj-order-requester{padding:0;min-width:0;gap:12px}
+.cpj-order-letterhead .cpj-order-requester>img{width:50px;height:50px;padding:2px;border:1px solid rgba(201,173,132,.7);background:transparent}
+.cpj-order-letterhead .cpj-order-requester span{margin:0 0 4px;font-size:8.5px;letter-spacing:.2em;color:#d8c29f}
+.cpj-order-letterhead .cpj-order-requester strong{display:block;font:400 15px/1.3 "Manrope",sans-serif;letter-spacing:.01em;color:#fff;overflow-wrap:anywhere}
+.cpj-order-divider{display:block;width:1px;height:40px;background:rgba(255,255,255,.28);flex:none}
+.cpj-order-kind{font-size:9.5px;letter-spacing:.24em;color:rgba(255,255,255,.88);white-space:nowrap}
+.cpj-order-event{padding-top:34px}
+@media(max-width:600px){
+ .cpj-order-letterhead{margin:-22px -14px 0;padding:18px 14px;flex-wrap:wrap;gap:14px}
+ .cpj-order-logo{height:44px}.cpj-order-logo.is-quadrada{width:156px;height:44px}
+ .cpj-order-letterhead-side{gap:12px;flex-wrap:wrap}
+ .cpj-order-divider{height:32px}
+}
+
+/* Respiro pro "Voltar" do catálogo (logo abaixo da logo, ver catalogo.css). */
+@media(min-width:768px){body.catalog-tem-voltar .cpj-wrap{padding-top:62px}}
+
+/* Dentro de um projeto: foto e nome dos noivos na MESMA linha do "Voltar" do catálogo (pedido do usuário). O Voltar fica
+   à esquerda, na mesma margem do conteúdo; o cabeçalho do projeto sobe pro topo e abre espaço à esquerda pro botão, que
+   desce um pouco pra ficar centrado com a foto (72px). Só com o Voltar presente e no desktop (no celular ele some). */
+@media(min-width:768px){
+ body.catalog-tem-voltar .cpj-wrap.cpj-work{padding-top:14px}
+ body.catalog-tem-voltar .cpj-work-head{padding-left:116px}
+ body.catalog-tem-voltar:has(#catalogProjetos:not(.hidden) .cpj-work-head) .catalog-global-back{margin-top:31px}
+}
+/* Escolha do casal na entrada: lista editorial, sem cards. */
+.cpj-entry{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#fff;color:#302c27;overflow:auto}
+.cpj-entry::backdrop{background:#fff}
+.cpj-entry-shell{max-width:1120px;margin:auto;padding:32px clamp(24px,6vw,80px) 50px}
+.cpj-entry-header{display:flex;justify-content:space-between;align-items:center;gap:20px;font:500 11px/1.5 Manrope,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#87765f}
+.cpj-entry button{font-family:Manrope,sans-serif}
+.cpj-entry-header button,.cpj-entry-footer button,.cpj-entry-list>p button{background:none;border:0;padding:12px 0;color:#806342;cursor:pointer}
+.cpj-entry-intro{margin:64px 0 38px}
+.cpj-entry-eyebrow{font:500 10px/1.5 Manrope,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#87765f}
+.cpj-entry-intro h1{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(40px,5.2vw,68px);font-weight:400;line-height:1.06;letter-spacing:-.035em;margin:18px 0}
+.cpj-entry-intro h1 em{font-weight:400;color:#987953}
+.cpj-entry-intro p,.cpj-entry-empty{font:400 13px/1.8 Manrope,sans-serif;color:#817b73}
+.cpj-entry-row{display:grid;grid-template-columns:28px 100px minmax(0,1fr) auto;align-items:center;gap:28px;width:100%;padding:22px 0;border:0;border-top:1px solid #e9e4dd;border-radius:0;box-shadow:none;background:none;text-align:left;cursor:pointer;color:inherit}
+.cpj-entry-number{font:400 10px Manrope,sans-serif;color:#a2998d;letter-spacing:.08em}
+.cpj-entry-portrait{display:flex;width:100px;height:120px;align-items:center;justify-content:center;overflow:hidden;background:#f4f3f1;font:italic 46px Georgia,serif;color:#b69a76}
+.cpj-entry-portrait img{width:100%;height:100%;object-fit:cover;transition:transform .35s}
+.cpj-entry-copy{display:flex;flex-direction:column;gap:10px;min-width:0}
+.cpj-entry-name{font:400 clamp(24px,3vw,38px)/1.12 "Cormorant Garamond",Georgia,serif;overflow-wrap:anywhere;transition:color .2s}
+.cpj-entry-meta{font:400 11px/1.7 Manrope,sans-serif;color:#817b73}
+.cpj-entry-go{display:flex;align-items:center;gap:18px;font:500 10px Manrope,sans-serif;letter-spacing:.06em;color:#92764f}
+.cpj-entry-go>span{font-size:24px;font-weight:400}
+.cpj-entry-row:hover .cpj-entry-name{color:#987953}
+.cpj-entry-row:hover img{transform:scale(1.04)}
+.cpj-entry button:focus-visible{outline:2px solid #987953;outline-offset:5px}
+.cpj-entry button:disabled{opacity:.55;cursor:wait}
+.cpj-entry-footer{display:flex;justify-content:space-between;align-items:center;gap:20px;border-top:1px solid #e9e4dd;padding-top:22px;font:400 12px/1.6 Manrope,sans-serif;color:#817b73}
+.cpj-entry-footer button{font-size:12px;white-space:nowrap}
+.cpj-entry-error{font:400 13px/1.6 Manrope,sans-serif;color:#a33a32}
+@media(max-width:600px){.cpj-entry-shell{padding:22px 24px 32px}.cpj-entry-intro{margin:42px 0 28px}.cpj-entry-row{grid-template-columns:64px minmax(0,1fr) 20px;gap:16px;padding:20px 0}.cpj-entry-number{display:none}.cpj-entry-portrait{width:64px;height:84px}.cpj-entry-go{font-size:0;gap:0}.cpj-entry-meta{font-size:10px}.cpj-entry-footer{align-items:flex-start;flex-direction:column;gap:8px}}
+@media(prefers-reduced-motion:reduce){.cpj-entry-portrait img,.cpj-entry-name{transition:none}}
+/* Selecao integrada a pagina: preserva o menu e o Voltar do catalogo. */
+.cpj-entry{position:relative;inset:auto;width:100%;height:auto;min-height:70vh;overflow:visible;margin:0;padding:0;background:#fff}
+.cpj-entry-shell{padding-top:48px}
+.cpj-entry-intro{margin:24px 0 42px}
+.cpj-entry-row{grid-template-columns:120px minmax(0,1fr);gap:32px}
+.cpj-entry-portrait{width:120px;height:144px}
+.cpj-entry-meta{font-size:13px}
+@media(max-width:600px){.cpj-entry-shell{padding-top:32px}.cpj-entry-row{grid-template-columns:84px minmax(0,1fr);gap:20px}.cpj-entry-portrait{width:84px;height:104px}.cpj-entry-meta{font-size:12px}}
+@media(max-width:767px){body:has(.cpj-entry) .catalog-global-back{display:inline-flex}body:has(.cpj-entry) .cpj-entry-shell{padding-top:56px}}
+.cpj-entry-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px 28px;margin:0 0 30px}
+.cpj-entry-actions button{min-height:42px;padding:10px 18px;border:1px solid #b69a76;border-radius:999px;background:#fff;color:#806342;font-size:12px;cursor:pointer}
+.cpj-entry-actions [data-entry-without]{padding-inline:0;border-color:transparent;color:#817b73;text-decoration:underline;text-underline-offset:5px;text-decoration-color:#d3c9bb}
+.cpj-entry-actions button:hover{color:#493922;border-color:#806342}
+.cpj-entry-actions [data-entry-without]:hover{border-color:transparent;text-decoration-color:currentColor}
+.cpj-entry-actions{justify-content:flex-end;margin:0 0 24px}
+.cpj-entry-catalog-icon{background:#f4f1ec;color:#987953}
+.cpj-entry-catalog-icon svg{width:46px;height:46px}
+.cpj-entry-without-title{font:400 clamp(24px,3vw,34px)/1.2 "Cormorant Garamond",Georgia,serif;color:#806342}
+.cpj-entry-without:hover .cpj-entry-catalog-icon{background:#ece5db}
+.cpj-entry-without:hover .cpj-entry-without-title{color:#493922}
+@media(max-width:600px){.cpj-entry-actions{margin-bottom:22px}.cpj-entry-catalog-icon svg{width:36px;height:36px}}
+/* Tres colunas aproveitam a largura da pagina sem transformar opcoes em cards. */
+.cpj-entry-shell{max-width:none;padding:16px clamp(24px,3vw,64px) 48px}
+.cpj-entry-actions{margin:0 0 18px}
+.cpj-entry-intro{margin:20px 0 36px}
+.cpj-entry-intro h1{font-size:clamp(38px,4vw,60px)}
+.cpj-entry-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 40px;align-items:start}
+.cpj-entry-list{display:contents}
+.cpj-entry-row{grid-template-columns:100px minmax(0,1fr);gap:22px;min-width:0;padding:22px 0;border:0}
+.cpj-entry-portrait{width:100px;height:126px}
+.cpj-entry-meta{overflow-wrap:anywhere}
+.cpj-entry-without-title{font-size:clamp(23px,2vw,30px)}
+@media(min-width:768px){.cpj-entry-actions{min-height:42px}}
+@media(min-width:601px) and (max-width:1050px){.cpj-entry-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}}
+@media(max-width:600px){.cpj-entry-options{grid-template-columns:minmax(0,1fr);gap:12px}.cpj-entry-row{grid-template-columns:84px minmax(0,1fr);gap:20px}.cpj-entry-portrait{width:84px;height:104px}.cpj-entry-intro{margin-top:16px}}
+.cpj-entry-shell{padding-top:58px}
+.cpj-entry-shortcuts{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px}
+@media(min-width:601px) and (max-width:1050px){.cpj-entry-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}}
+@media(max-width:600px){.cpj-entry-shortcuts{grid-template-columns:minmax(0,1fr);gap:12px}}
+/* Titulo e atalhos compartilham a mesma faixa superior. */
+.cpj-entry-heading{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:40px;align-items:center;margin:20px 0 36px}
+.cpj-entry-heading .cpj-entry-intro{margin:0}
+.cpj-entry-heading .cpj-entry-shortcuts{grid-column:auto;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.cpj-entry-heading .cpj-entry-row{grid-template-columns:64px minmax(0,1fr);gap:16px;padding:12px 0}
+.cpj-entry-heading .cpj-entry-portrait{width:64px;height:80px}
+.cpj-entry-heading .cpj-entry-catalog-icon svg{width:34px;height:34px}
+.cpj-entry-heading .cpj-entry-without-title{font-size:clamp(20px,1.7vw,28px)}
+@media(max-width:900px){.cpj-entry-heading{grid-template-columns:minmax(0,1fr);gap:20px}.cpj-entry-heading .cpj-entry-shortcuts{max-width:580px}}
+@media(max-width:480px){.cpj-entry-heading .cpj-entry-shortcuts{gap:16px}.cpj-entry-heading .cpj-entry-row{grid-template-columns:44px minmax(0,1fr);gap:10px}.cpj-entry-heading .cpj-entry-portrait{width:44px;height:58px}.cpj-entry-heading .cpj-entry-catalog-icon svg{width:28px;height:28px}.cpj-entry-heading .cpj-entry-without-title{font-size:19px}}
+/* Colunas de valores do pedido (Reposição / Valor un. / Total), na linha do item. */
+.cpj-order-col-valor{width:96px}
+.cpj-order-table .cpj-order-valor{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cpj-order-table th.cpj-order-valor,.cpj-order-table .cpj-order-colhead td.cpj-order-valor{text-align:right}
+.cpj-order-table .pa-valor-total b{font-weight:600}
+@media(max-width:600px){.cpj-order-col-valor{width:64px}.cpj-order-table .cpj-order-valor{font-size:10px}}
+@media(max-width:700px){.cpj-order-paper{overflow-x:auto}.cpj-order-table{min-width:560px}}
+.cpj-order-table .pa-medidas{display:block;margin-top:0;font:inherit;font-weight:500;line-height:1.5;color:inherit;overflow-wrap:anywhere}
+/* Editor de cena: modal com o 3D do print/renderização, só pra trocar móveis (abrirEditorCena). */
+.cpj-render img[data-cpj="render-ver"]{cursor:pointer}
+.cpj-render-3d{position:absolute;left:10px;bottom:40px;padding:6px 11px;border-radius:999px;background:rgba(37,30,25,.78);color:#fff;font:600 .75rem/1 "Manrope",sans-serif;letter-spacing:.02em;pointer-events:none;opacity:.9;transition:opacity .2s}
+.cpj-render:hover .cpj-render-3d{opacity:1}
+.cpj-cena-aviso{margin:0;padding:10px 14px;border-radius:10px;background:#fbf4de;color:#6b5320;font-size:.85rem;line-height:1.45}
+dialog.cpj-modal.cpj-cena-modal{width:min(1440px,calc(100vw - 32px));height:calc(100dvh - 32px);max-height:none;overflow:hidden}
+.cpj-cena{display:flex;flex-direction:column;height:100%}
+.cpj-cena-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 24px;border-bottom:1px solid var(--line,#e7e0d6)}
+.cpj-cena-head h3{font-size:1.6rem;line-height:1.1}
+.cpj-cena-head p{margin:4px 0 0;color:#77716a;font-size:.875rem}
+.cpj-cena-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 420px}
+.cpj-cena-palco{position:relative;min-height:0;background:#f4f1ea;overflow:hidden}
+.cpj-cena-palco canvas{display:block;width:100%!important;height:100%!important;cursor:pointer}
+.cpj-cena-carregando{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#77716a;font-size:.95rem}
+.cpj-cena-carregando.is-erro{color:#8c2d24}
+.cpj-cena-lado{display:flex;flex-direction:column;gap:12px;min-height:0;padding:18px;border-left:1px solid var(--line,#e7e0d6)}
+.cpj-cena-lado small{display:block;color:#857762;font-size:.75rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.cpj-cena-dica{margin:0;color:#77716a;font-size:.875rem;line-height:1.5}
+.cpj-cena-sel{display:grid;gap:8px}
+.cpj-cena-sel-item{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--accent,#9a7a4a);border-radius:12px}
+.cpj-cena-sel-item img{width:52px;height:52px;object-fit:contain;border-radius:8px;background:#fff}
+.cpj-cena-sel-item strong{font-size:.9rem;font-weight:600;line-height:1.3}
+.cpj-cena-busca{width:100%;padding:10px 14px;border:1px solid var(--line,#e7e0d6);border-radius:999px;font:inherit;font-size:.875rem}
+.cpj-cena-busca:disabled{display:none}
+.cpj-cena-lista{flex:1;min-height:0;overflow-y:auto;display:grid;align-content:start;gap:4px}
+.cpj-cena-item{display:flex;align-items:center;gap:10px;width:100%;padding:6px;border:1px solid transparent;border-radius:10px;background:none;text-align:left;font:inherit;cursor:pointer}
+.cpj-cena-item:hover:not(:disabled),.cpj-cena-item:focus-visible{border-color:var(--line,#e7e0d6);background:#faf8f4}
+.cpj-cena-item:disabled{cursor:default;opacity:.55}
+.cpj-cena-item.is-atual{opacity:1;border-color:var(--accent,#9a7a4a)}
+.cpj-cena-item img{flex:none;width:46px;height:46px;object-fit:contain;border-radius:8px;background:#fff}
+.cpj-cena-item strong{display:block;font-size:.85rem;font-weight:500;line-height:1.3}
+.cpj-cena-item small{text-transform:none;letter-spacing:0;font-weight:400}
+/* "Alterações no pedido": em destaque no topo da coluna (a informação mais importante do modal). */
+.cpj-cena-trocas{flex:none;display:flex;flex-direction:column;gap:10px;padding:14px 16px;border:1px solid #ead9a8;border-left:4px solid #c9a24f;border-radius:14px;background:#fbf4de;print-color-adjust:exact}
+.cpj-cena-trocas header{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.cpj-cena-trocas header strong{font:600 1.35rem/1.1 "Cormorant Garamond",serif;color:#4a3a1c}
+.cpj-cena-trocas header span{padding:3px 10px;border-radius:999px;background:#fff;color:#6b5320;font-size:.8rem;font-weight:700}
+.cpj-cena-trocas p{margin:0;color:#6b5320;font-size:.875rem;line-height:1.45}
+.cpj-cena-trocas ol{margin:0;padding:0;list-style:none;display:grid;gap:8px;max-height:min(260px,32vh);overflow-y:auto}
+.cpj-cena-trocas li{display:grid;gap:4px;padding:8px;border-radius:10px;background:#fff}
+.cpj-cena-troca{display:flex;align-items:center;gap:10px;font-size:.95rem;font-weight:600;line-height:1.25;color:var(--ink,#251e19)}
+.cpj-cena-troca b{flex:none;min-width:40px;padding:4px 0;border-radius:8px;text-align:center;font-size:.9rem;font-weight:800;color:#fff}
+.cpj-cena-troca.is-sai b{background:#b3372b}.cpj-cena-troca.is-entra b{background:#2f7a41}
+.cpj-cena-troca.is-sai>span{color:#8c2d24}
+.cpj-cena-troca.is-entra>span{color:#1f5a2e}
+.cpj-cena-troca img{flex:none;width:40px;height:40px;object-fit:contain;border-radius:6px;background:#faf8f4}
+.cpj-cena-troca small{display:block;margin-bottom:1px;color:#857762;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+@media(max-width:820px){
+  dialog.cpj-modal.cpj-cena-modal{width:100vw;height:100dvh;max-width:none;border-radius:0}
+  .cpj-cena-head{padding:12px 14px}.cpj-cena-head h3{font-size:1.3rem}.cpj-cena-head p{display:none}
+  .cpj-cena-body{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(0,50%)}
+  .cpj-cena-trocas ol{max-height:120px}
+  .cpj-cena-lado{border-left:0;border-top:1px solid var(--line,#e7e0d6);padding:12px 14px}
+}

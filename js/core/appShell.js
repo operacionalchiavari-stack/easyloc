@@ -13,6 +13,54 @@
 
   if (!frame) return;
 
+  const trailKey = 'chiavari:navegacao:' + location.pathname;
+  const base = new URL('.', location.href);
+  function safeModule(href) {
+    try {
+      const url = new URL(href, base);
+      const prefix = new URL('Modulos/', base).pathname;
+      return url.origin === location.origin && url.pathname.startsWith(prefix) && /\.html$/i.test(url.pathname)
+        && !/\/(login|logout|recuperar-senha)\.html$/i.test(url.pathname) ? url.pathname + url.search + url.hash : null;
+    } catch { return null; }
+  }
+  let trail = [];
+  try { trail = JSON.parse(sessionStorage.getItem(trailKey) || '[]').filter(entry => safeModule(entry.href)).slice(-60); } catch {}
+  function persistTrail() { try { sessionStorage.setItem(trailKey, JSON.stringify(trail)); } catch {} }
+  function record(entry) {
+    entry.href = safeModule(entry.href);
+    if(!entry.href) return;
+    if(trail.at(-1)?.href !== entry.href) trail.push(entry);
+    trail = trail.slice(-60); persistTrail();
+  }
+  window.shellRecordLegacy = (href, js, css) => record({href, js, css, legacy:true});
+  let goingBack = false;
+  window.shellGoBack = async function() {
+    if(goingBack) return;
+    goingBack = true;
+    try {
+      if(!frame.classList.contains('hidden')) {
+        try { if(await frame.contentWindow.appGoBack?.()) return; } catch {}
+        try { if(await frame.contentWindow.appBeforeLeave?.() === false) return; } catch { return; }
+      }
+      trail.pop();
+      await window.EasyLocPermissions?.load();
+      while(trail.length && !window.EasyLocPermissions?.canNavigate(trail.at(-1).href)) trail.pop();
+      persistTrail();
+      const previous = trail.at(-1);
+      if(!previous) { location.replace(new URL('dashboard.html',base).href); return; }
+      if(previous.legacy) await window.carregarNaMain(previous.href, previous.js, null, previous.css);
+      else await window.shellNavigate(previous.href, {replace:true});
+    } finally { goingBack = false; }
+  };
+  const nav = document.getElementById('sidebar');
+  if(nav && !document.getElementById('appGlobalBack')) {
+    const button=document.createElement('button');
+    button.id='appGlobalBack'; button.type='button'; button.className='app-global-back';
+    button.textContent='← Voltar'; button.addEventListener('click',()=>window.shellGoBack());
+    const menu=nav.querySelector(':scope > .menu');
+    if(menu) menu.after(button); else nav.append(button);
+  }
+
   function showLoader() {
     loader?.classList.remove("hidden");
   }
@@ -70,36 +118,50 @@
     }
     if (href === "about:blank") return;
 
+    const modulePath = safeModule(href);
+    if(modulePath) {
+      record({href:modulePath});
+      history.replaceState({page:modulePath}, '', 'dashboard.html?page=' + encodeURIComponent(modulePath));
+    }
+
     syncActiveMenu();
     syncTitle();
     hideLoader();
   });
 
-  window.shellNavigate = async function (href) {
+  window.shellNavigate = async function (href, {replace = false} = {}) {
+    href = safeModule(href);
+    if(!href) return;
     await window.EasyLocPermissions?.load();
     if (!window.EasyLocPermissions?.canNavigate(href)) {
       window.alerta?.("Você não possui acesso a esta parte do sistema.");
       hideLoader();
       return;
     }
+    try { if(await frame.contentWindow.appBeforeLeave?.() === false) return; } catch { return; }
     showLoader();
     activateFrame();
     clearActiveMenu();
-    frame.src = href;
+    record({href});
+    try { frame.contentWindow.location.replace(href); } catch { frame.src = href; }
 
     try {
-      history.pushState({ page: href }, "", "dashboard.html?page=" + encodeURIComponent(href));
+      history[replace ? 'replaceState' : 'pushState']({ page: href }, "", "dashboard.html?page=" + encodeURIComponent(href));
     } catch (e) {}
   };
 
   window.addEventListener("popstate", async () => {
     const page = new URLSearchParams(location.search).get("page");
-    if (!page) return;
+    if (!page || !safeModule(page)) { frame.classList.add('hidden'); mainContent?.classList.remove('hidden'); return; }
     await window.EasyLocPermissions?.load();
     if (!window.EasyLocPermissions?.canNavigate(page)) { hideLoader(); return; }
 
     showLoader();
     activateFrame();
-    frame.src = page;
+    const at = trail.findLastIndex(entry=>entry.href===safeModule(page));
+    if(at>=0) { trail=trail.slice(0,at+1); persistTrail(); }
+    frame.contentWindow.location.replace(page);
   });
+  const initialPage = new URLSearchParams(location.search).get('page');
+  if(initialPage && safeModule(initialPage)) window.shellNavigate(initialPage, {replace:true});
 })();

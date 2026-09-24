@@ -98,9 +98,29 @@ function slugify(value){
 
 let ctx = null;
 const state = { loaded: false, loading: false, photos: [], activeCategory: null, uploading: false };
+state.clienteId = null;
+state.saving = false;
+
+function renderClientSelector(clientes){
+  if(!ctx.acessoInterno) return;
+  let host = $("catalogBibliotecaCliente");
+  if(!host){
+    host = document.createElement("label");
+    host.id = "catalogBibliotecaCliente";
+    host.style.cssText = "display:flex;gap:12px;align-items:center;padding:16px 24px;";
+    $("catalogBibliotecaFolders")?.before(host);
+    host.addEventListener("change", (event) => {
+      state.clienteId = event.target.value || null;
+      renderFolders();
+      if(state.activeCategory) renderDetail();
+    });
+  }
+  host.innerHTML = `Fotos de <select aria-label="Cliente da biblioteca"><option value="">Todos os clientes (compartilhadas)</option>${clientes.map(c => `<option value="${escapeAttr(c.id)}">${escapeHtml(c.nome)}</option>`).join("")}</select>`;
+}
 
 function photosForCategory(cat){
-  return state.photos.filter((photo) => slugify(photo.categoria) === cat);
+  return state.photos.filter((photo) => slugify(photo.categoria) === cat
+    && (!ctx.acessoInterno || (photo.cliente_id || null) === state.clienteId));
 }
 
 function renderFolders(){
@@ -135,7 +155,8 @@ function renderDetail(){
   host.innerHTML = photos.length
     ? photos.map((photo) => `<figure class="catalog-biblioteca-photo" data-photo-id="${escapeAttr(photo.id)}">
         <img src="${escapeAttr(otimizarFoto(photo.url, 700))}" alt="${escapeAttr(photo.titulo || category?.label || "")}" loading="lazy" decoding="async" data-open-photo role="button" tabindex="0" aria-label="Ver foto em tela cheia">
-        ${ctx.acessoInterno ? `<button type="button" class="catalog-biblioteca-photo-remove" data-remove-photo="${escapeAttr(photo.id)}" aria-label="Remover foto">×</button>` : ""}
+${ctx.visitante ? "" : `<button type="button" class="catalog-biblioteca-move" data-move-photo aria-label="Arrastar para reorganizar; use as setas do teclado">↔</button>
+        <button type="button" class="catalog-biblioteca-photo-remove" data-remove-photo="${escapeAttr(photo.id)}" aria-label="Remover foto">×</button>`}
       </figure>`).join("")
     : `<p class="catalog-biblioteca-empty">Nenhuma foto nesta categoria ainda.</p>`;
 }
@@ -159,12 +180,16 @@ async function carregarFotos(){
   state.loading = true;
   try{
     const externo = Boolean(ctx.token);
-    const { data, error } = await ctx.supabase.rpc(
-      externo ? "biblioteca_carregar" : "biblioteca_carregar_interno",
-      externo ? { p_token: ctx.token } : { p_empresa_id: ctx.empresaId }
-    );
+    // Visitante (sem login): leitura pública, só as fotos da empresa (ver biblioteca_publico_carregar).
+    const { data, error } = ctx.visitante
+      ? await ctx.supabase.rpc("biblioteca_publico_carregar", ctx.empresaId ? { p_empresa_id: ctx.empresaId } : {})
+      : await ctx.supabase.rpc(
+        externo ? "biblioteca_carregar" : "biblioteca_carregar_interno",
+        externo ? { p_token: ctx.token } : { p_empresa_id: ctx.empresaId }
+      );
     if(error) throw error;
     state.photos = Array.isArray(data?.fotos) ? data.fotos : [];
+    renderClientSelector(Array.isArray(data?.clientes) ? data.clientes : []);
     state.loaded = true;
   }catch(error){
     console.error("Não foi possível carregar a biblioteca:", error);
@@ -181,46 +206,118 @@ function extensaoImagem(mime){
 async function enviarFotos(files){
   if(!ctx.acessoInterno || !state.activeCategory || !files.length) return;
   const category = ctx.categories.find((c) => c.cat === state.activeCategory);
+  const clienteId = state.clienteId;
+  const activeCategory = state.activeCategory;
   state.uploading = true;
+  const selector = $("catalogBibliotecaCliente")?.querySelector("select");
+  if(selector) selector.disabled = true;
   renderDetail();
   for(const file of files){
     if(!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 15 * 1024 * 1024) continue;
-    const path = `${ctx.empresaId}/${state.activeCategory}/${crypto.randomUUID()}.${extensaoImagem(file.type)}`;
+    const path = `${ctx.empresaId}/${clienteId ? `${clienteId}/` : ""}${activeCategory}/${crypto.randomUUID()}.${extensaoImagem(file.type)}`;
     const { error: uploadError } = await ctx.supabase.storage.from("biblioteca").upload(path, file, { contentType: file.type, upsert: false });
     if(uploadError){ console.error("Erro ao subir foto da biblioteca:", uploadError); continue; }
     const { data: urlData } = ctx.supabase.storage.from("biblioteca").getPublicUrl(path);
     const url = `${urlData.publicUrl}?v=${Date.now()}`;
     const { data: row, error: insertError } = await ctx.supabase.from("biblioteca_fotos").insert({
       empresa_id: ctx.empresaId,
+      cliente_id: clienteId,
       categoria: category?.label || state.activeCategory,
       path, url, mime_type: file.type, tamanho_bytes: file.size,
-    }).select("id,categoria,titulo,url,path,ordem").single();
+    }).select("id,categoria,titulo,url,path,ordem,cliente_id").single();
     if(insertError){ console.error("Erro ao salvar foto da biblioteca:", insertError); continue; }
     state.photos.push(row);
   }
   state.uploading = false;
+  if(selector) selector.disabled = false;
   renderDetail();
   renderFolders();
 }
 
 async function removerFoto(id){
-  if(!ctx.acessoInterno) return;
+  if(state.saving) return;
   const photo = state.photos.find((p) => String(p.id) === String(id));
   if(!photo) return;
   if(!window.confirm("Remover esta foto da biblioteca?")) return;
-  const { error } = await ctx.supabase.from("biblioteca_fotos").delete().eq("id", photo.id);
+  state.saving = true;
+  try{
+  const { error } = ctx.acessoInterno
+    ? await ctx.supabase.from("biblioteca_fotos").delete().eq("id", photo.id)
+    : await ctx.supabase.rpc("biblioteca_remover", { p_token: ctx.token, p_foto_id: photo.id });
   if(error){
     console.error("Erro ao remover foto da biblioteca:", error);
     window.catalogNotify?.({ title: "Não foi possível remover", message: "Tente novamente.", status: "error" });
     return;
   }
-  if(photo.path) await ctx.supabase.storage.from("biblioteca").remove([photo.path]);
+  if(ctx.acessoInterno && photo.path) await ctx.supabase.storage.from("biblioteca").remove([photo.path]);
   state.photos = state.photos.filter((p) => String(p.id) !== String(id));
   renderDetail();
   renderFolders();
+  }catch(error){
+    window.catalogNotify?.({ title: "Não foi possível remover", message: "Tente novamente.", status: "error" });
+  }finally{ state.saving = false; }
+}
+
+async function moverFoto(id, targetId){
+  if(state.saving || state.uploading || id === targetId) return;
+  const photos = photosForCategory(state.activeCategory);
+  const from = photos.findIndex(p => String(p.id) === id);
+  const to = photos.findIndex(p => String(p.id) === targetId);
+  if(from < 0 || to < 0) return;
+  photos.splice(to, 0, photos.splice(from, 1)[0]);
+  state.saving = true;
+  try{
+    const { error } = await ctx.supabase.rpc("biblioteca_reordenar", {
+      p_token: ctx.acessoInterno ? null : ctx.token,
+      p_empresa_id: ctx.empresaId, p_fotos: photos.map(p => p.id),
+    });
+    if(error) throw error;
+    const ids = new Set(photos.map(p => p.id));
+    state.photos = [...state.photos.filter(p => !ids.has(p.id)), ...photos];
+    renderDetail();
+    renderFolders();
+  }catch(error){
+    window.catalogNotify?.({ title: "Não foi possível organizar", message: "Tente novamente. A ordem anterior foi mantida.", status: "error" });
+  }finally{ state.saving = false; }
 }
 
 function bindInteractions(){
+  const grid = $("catalogBibliotecaPhotos");
+  let drag = null;
+  grid?.addEventListener("pointerdown", event => {
+    const handle = event.target.closest("[data-move-photo]");
+    if(!handle || state.saving || state.uploading || event.button !== 0) return;
+    event.preventDefault();
+    const card = handle.closest("[data-photo-id]");
+    drag = { id: card.dataset.photoId, target: card.dataset.photoId };
+    handle.setPointerCapture(event.pointerId);
+    card.classList.add("is-dragging");
+  });
+  grid?.addEventListener("pointermove", event => {
+    if(!drag) return;
+    const card = document.elementFromPoint(event.clientX, event.clientY)?.closest("#catalogBibliotecaPhotos [data-photo-id]");
+    grid.querySelectorAll(".is-drop-target").forEach(el => el.classList.remove("is-drop-target"));
+    drag.target = card?.dataset.photoId || drag.id;
+    if(card) card.classList.add("is-drop-target");
+  });
+  const finish = event => {
+    if(!drag) return;
+    const { id, target } = drag;
+    drag = null;
+    grid.querySelectorAll(".is-dragging,.is-drop-target").forEach(el => el.classList.remove("is-dragging", "is-drop-target"));
+    if(event.type === "pointerup") moverFoto(id, target);
+  };
+  grid?.addEventListener("pointerup", finish);
+  grid?.addEventListener("pointercancel", finish);
+  grid?.addEventListener("keydown", event => {
+    if(!event.target.closest("[data-move-photo]") || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    event.preventDefault();
+    const id = event.target.closest("[data-photo-id]").dataset.photoId;
+    const photos = photosForCategory(state.activeCategory);
+    const index = photos.findIndex(p => String(p.id) === id);
+    const target = photos[index + (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1)];
+    if(target) moverFoto(id, String(target.id)).then(() => grid.querySelector(`[data-photo-id="${CSS.escape(id)}"] [data-move-photo]`)?.focus());
+  });
   $("catalogBibliotecaFolders")?.addEventListener("click", (event) => {
     const folder = event.target.closest("[data-library-folder]");
     if(folder) showDetail(folder.dataset.libraryFolder);
@@ -269,8 +366,9 @@ function bindInteractions(){
   });
 }
 
-export function initCatalogBiblioteca({ supabase, empresaId, token, acessoInterno, categories }){
-  ctx = { supabase, empresaId, token, acessoInterno, categories };
+// visitante=true: entrou sem login ("Explorar o catálogo") — só vê as fotos da empresa, sem remover nem reorganizar.
+export function initCatalogBiblioteca({ supabase, empresaId, token, acessoInterno, visitante = false, categories }){
+  ctx = { supabase, empresaId, token, acessoInterno, visitante, categories };
   bindInteractions();
 }
 

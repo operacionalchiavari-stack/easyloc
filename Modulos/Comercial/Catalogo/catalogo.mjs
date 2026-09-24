@@ -1,8 +1,8 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogStudio3D } from "./catalogo-studio3d.mjs?v=20260924-perf1";
-import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20260919-zoom-galeria";
-import { initCatalogLounge, openCatalogLounge, teardownCatalogLounge } from "./catalogo-lounge.mjs?v=20260924-abas-formatos";
-import { initCatalogProjetos, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup, atualizarBotoes as atualizarBotoesProjeto } from "./catalogo-projetos.mjs?v=20260922-designer";
+import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
+import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20260926-legenda-cena";
+import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20260926-visitante";
+import { initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20260926-legenda-cena";
 
 const supabase = window.supabaseClient;
 const FOTO_PLACEHOLDER = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
@@ -27,6 +27,12 @@ const GATEWAY_VIEW = "__gateway__";
 // só cobrindo a tela inteira, com os 3 nomes sobrepostos como zonas de
 // clique, em vez de 3 fotos lado a lado com fotos/bordas próprias.
 const GATEWAY_PHOTO_KEY = "portal";
+// Visitante usa Catálogo e Biblioteca; Módulo 3D e Projetos aparecem com cadeado (pedido do usuário: ele vê que existem,
+// mas são de quem tem acesso exclusivo). Clicar num bloco com cadeado explica e oferece entrar com e-mail e senha.
+const BLOCOS_LIVRES_VISITANTE = ["catalogo", "biblioteca"];
+const blocoBloqueado = (key) => ehVisitante() && !BLOCOS_LIVRES_VISITANTE.includes(key);
+const blocosDoPortal = () => GATEWAY_TILES;
+const ICONE_CADEADO = '<svg class="catalog-gateway-cadeado" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const GATEWAY_TILES = [
   { key: "catalogo", label: "Catálogo" },
   { key: "biblioteca", label: "Biblioteca" },
@@ -35,60 +41,18 @@ const GATEWAY_TILES = [
   // — ver catalogo-projetos.mjs.
   { key: "projetos", label: "Projetos" },
 ];
-// Mini-menu do Módulo 3D (pedido explícito do usuário: "quando a pessoa
-// clicar em módulo 3D... quero que apareça como se fosse outro mini menu,
-// dentro do módulo 3D nós teremos 3 funcionalidades diferentes... no topo
-// centralizado e grande apareça um móvel em 3d e embaixo deixe 3 campos
-// clicáveis"). Bloco do Portal "Módulo 3D" deixou de abrir o estúdio
-// direto (ver activateGatewayTile) e passou a abrir este mini-menu — o
-// estúdio de sempre virou o 1º dos 3 cards (confirmado com o usuário).
-const MODULO3D_MENU_VIEW = "__modulo3d__";
-// Redesenho premium (pedido explícito do usuário, spec detalhada): os 2
-// recursos ainda não construídos deixaram de levar a uma tela "Em breve"
-// genérica ao clicar — agora são cards INERTES (sem elemento clicável,
-// `aria-disabled`, "sem comportamento de clique"), cada um com nome e
-// descrição próprios em vez do texto genérico "Em breve" como título.
-// MODULO3D_CARDS é a fonte única dos 3 cards — `available:false` decide
-// tanto o visual (card apagado, badge "EM BREVE") quanto o roteamento em
-// activateModulo3dCard() (nunca navega).
-// "planejador-eventos" virou "Módulo Lounge" (pedido explícito do
-// usuário: "vira o card 'Planejador de eventos'") — tela dedicada e mais
-// simples que o Estúdio de Ambientes, pra montar composições de lounge
-// (sofá + poltronas), ver catalogo-lounge.mjs.
-//
-// RENOMEADOS (pedido explícito do usuário, olhando o mini-menu): o 1º
-// virou "3D Livre" (montagens de espaços inteiros), o do meio
-// "Composições" (testar/criar composições novas, sair do óbvio) e o
-// último perdeu o nome e passou a mostrar só "Em desenvolvimento". Chegou
-// a ter uma frase de descrição por card (revelada no hover) — o usuário
-// pediu logo em seguida pra tirar: "retire as frases, deixe somente os
-// títulos". `label` é o NOME do módulo (usado também na trilha, no rótulo
-// do cabeçalho e na linha do tempo — ver modulo3dLabel()); `title` (só o
-// 3º card) é o que APARECE escrito no quadro quando é diferente do nome —
-// a Realidade aumentada não mostra mais o próprio nome, mas `label`
-// continua identificando o card pra equipe nos botões de marcar o modelo
-// em destaque.
-const MODULO3D_CARDS = [
-  { key: "estudio", label: "3D Livre", action: "studio", available: true },
-  { key: "lounge", label: "Composições", action: "lounge", available: true },
-  { key: "realidade-aumentada", label: "Realidade aumentada", title: "Em desenvolvimento", action: null, available: false },
-];
-// Nome de um módulo pela chave — fonte única pro rótulo do cabeçalho, a
-// trilha e a linha do tempo (antes eram textos soltos "Painel 3D"/"Módulo
-// Lounge" repetidos em 3 lugares).
-const modulo3dLabel = (key) => MODULO3D_CARDS.find((card) => card.key === key)?.label || "";
-// Pedido explícito do usuário: "quero um 3D diferente pra cada módulo" —
-// antes só existia 1 modelo em destaque pra tela inteira (item.
-// capaModulo3d/coluna capa_modulo3d); agora cada card do mini-menu tem
-// sua PRÓPRIA flag, marcada independentemente no cadastro do item (ver
-// migration 20260919000200_itens_capa_modulo3d_por_modulo.sql). Essas 2
-// tabelas traduzem a chave de MODULO3D_CARDS pro campo do item
-// (mapRow()) e pra coluna do banco (alternarCapaModulo3d()) — um card
-// novo no futuro só precisa de uma entrada nova aqui + a coluna
-// correspondente no banco.
-const MODULO3D_CAPA_FIELD = { estudio: "capaModulo3dEstudio", lounge: "capaModulo3dLounge", "realidade-aumentada": "capaModulo3dAr" };
-const MODULO3D_CAPA_COLUMN = { estudio: "capa_modulo3d_estudio", lounge: "capa_modulo3d_lounge", "realidade-aumentada": "capa_modulo3d_ar" };
-const state = { items: [], activeView: GATEWAY_VIEW, company: null, decorator: null, catalogSession: null, sectionObserver: null, activeSection: null, eventTimer: null, customizeItem: null, fabricDataUrl: "", fabricFile: null, viewMode: "immersive", currentItems: [], currentHeading: "", overlay: null, gatewayCapas: {}, acessoInterno: false, eventPaused: false, activeSubcat: "", homeFilters: newHomeFilters(), homeFilterOpen: "", currentCategoryItems: null, navBack: [], navForward: [], navCurrent: null, navSuppress: false, timelineSignature: "" };
+// O mini-menu do Módulo 3D (3D Livre/Composições/Em desenvolvimento) e o Módulo Lounge (Composições) existiram
+// nesta sessão e foram removidos por pedido explícito do usuário: "dentro do modulo de 3d deixe apenas o 3d livre,
+// ou seja, pode remover os outros, quando eu clicar em em modulo 3d ele ja vai direto... nao precisa mais ter os 3
+// modulos separados, pode remover tambem". "Módulo 3D" no Portal volta a abrir o Estúdio de Ambientes direto (ver
+// activateGatewayTile). Foram junto: catalogo-lounge.mjs/.css (apagados), o botão "Composições" no espaço de
+// trabalho de Projetos, e os botões de marcar "modelo em destaque" por módulo na página do item (o banco —
+// itens.capa_modulo3d_estudio/_lounge/_ar — não foi tocado, mesma cautela já documentada neste arquivo pra outras
+// remoções: fica órfão, não apagado). Achado só ao tentar apagar catalogo-lounge.mjs: catalogo-studio3d.mjs
+// IMPORTAVA `studioFormats`/`studioFormatPlacements` de lá (feature "formatos reutilizáveis" do 3D Livre, de uma
+// sessão anterior) — essas duas funções (puras, sem DOM/Three.js/Supabase) foram extraídas pra um arquivo novo,
+// catalogo-formatos.mjs, antes de apagar o resto do módulo. Ver seção correspondente no CLAUDE.md.
+const state = { items: [], activeView: GATEWAY_VIEW, company: null, decorator: null, catalogSession: null, sectionObserver: null, activeSection: null, eventTimer: null, customizeItem: null, fabricDataUrl: "", fabricFile: null, viewMode: "immersive", currentItems: [], currentHeading: "", overlay: null, gatewayCapas: {}, acessoInterno: false, eventPaused: false, activeSubcat: "", homeFilters: newHomeFilters(), homeFilterOpen: "", categoryFilters: newHomeFilters(), categoryFilterOpen: "", currentCategoryItems: null, navBack: [], navForward: [], navCurrent: null, navSuppress: false, timelineSignature: "" };
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -294,6 +258,8 @@ function mapRow(row){
   return {
     id: row.id,
     tipo: row.tipo,
+    rentalPrice: row.valor_locacao != null && String(row.valor_locacao).trim() !== "" && Number.isFinite(Number(row.valor_locacao)) && Number(row.valor_locacao) >= 0 ? Number(row.valor_locacao) : null,
+    replacementPrice: row.valor_reposicao != null && String(row.valor_reposicao).trim() !== "" && Number.isFinite(Number(row.valor_reposicao)) && Number(row.valor_reposicao) >= 0 ? Number(row.valor_reposicao) : null,
     material: row.material || "",
     estilo: row.estilo || "",
     cor: row.cor || "",
@@ -309,6 +275,7 @@ function mapRow(row){
     subcat: row.subcategoria ? slugify(row.subcategoria) : "",
     subcatLabel: row.subcategoria || "",
     name: nome,
+    fullName: String(row.descricao_total || '').trim() || nome,
     dims: formatDims(row.largura, row.altura, row.profundidade),
     dimensions: {
       width: Number(row.largura) > 0 ? Number(row.largura) : null,
@@ -319,17 +286,14 @@ function mapRow(row){
     // Capa da categoria na Home do catálogo (pedido explícito do usuário) —
     // ver categoryCoverPhoto()/renderHome().
     capaCategoria: row.capa_categoria === true,
-    // Modelo 3D em destaque no mini-menu "Módulo 3D" (pedido explícito do
-    // usuário: "da mesma forma que eu escolho a foto da capa da
-    // categoria, vou escolher o 3D que aparece... um dos que temos
-    // cadastrados no sistema") — mesmo padrão de capaCategoria, só que
-    // UMA FLAG POR MÓDULO (pedido explícito, sessão seguinte: "quero um 3D
-    // diferente pra cada módulo" — antes era 1 flag global pra tela
-    // inteira, `capa_modulo3d`) — ver modulo3dFeaturedItem()/
-    // renderModulo3dMenu().
-    capaModulo3dEstudio: row.capa_modulo3d_estudio === true,
-    capaModulo3dLounge: row.capa_modulo3d_lounge === true,
-    capaModulo3dAr: row.capa_modulo3d_ar === true,
+    // Posição da categoria na tela "Categorias" (equipe arrasta os cards — ver reordenarCategorias()); null = sem ordem.
+    catOrdem: row.categoria_ordem === null || row.categoria_ordem === undefined ? null : Number(row.categoria_ordem),
+    // Posição do item dentro da categoria, definida pela equipe arrastando os cards (ver reordenarCategoria()).
+    // null = sem ordem definida (vai pro fim, na ordem de sempre).
+    ordem: Number.isFinite(Number(row.ordem_exposicao_site)) && row.ordem_exposicao_site !== null ? Number(row.ordem_exposicao_site) : null,
+    // O mini-menu "Módulo 3D" (que usava capa_modulo3d_estudio/_lounge/_ar pra escolher um modelo em destaque por
+    // card) foi removido — colunas continuam existindo no banco (mesma cautela de sempre pra órfãos), só não são
+    // mais lidas aqui.
     // Painel técnico (pedido explícito do usuário): algumas informações
     // relevantes do cadastro do item, além do que já aparece (nome e
     // medidas). A tela não tem mais nenhum lugar mostrando a categoria por
@@ -395,6 +359,9 @@ function agruparVariantes(items){
     const candidatas = comFoto.length ? comFoto : ordenadas;
     const principal = candidatas.find((variante) => variante.capaCategoria) || candidatas[0];
     principal.capaCategoria = ordenadas.some((variante) => variante.capaCategoria);
+    // O card do grupo fica na posição da variante que estiver mais à frente.
+    const ordens = ordenadas.map((variante) => variante.ordem).filter((ordem) => ordem !== null);
+    principal.ordem = ordens.length ? Math.min(...ordens) : null;
     resultado.push(principal);
   });
   return resultado;
@@ -413,7 +380,24 @@ function findItemById(id){
   return null;
 }
 
+// Visitante (pedido do usuário): entrou pela tela de login em "Explorar o catálogo", sem e-mail/senha. Vê o catálogo padrão
+// da empresa (o mesmo da equipe) e a Biblioteca, sem preços, sem edição, sem Módulo 3D e sem Projetos. Os dados vêm de
+// leituras públicas (catalogo_publico_carregar / catalogo_capas_publico / biblioteca_publico_carregar) — o preço é cortado
+// no próprio banco. A escolha fica na aba (sessionStorage.catalogo_visitante) pra recarregar sem passar pela entrada de novo.
+function ehVisitante(){ return Boolean(state.catalogSession?.visitante); }
+const empresaDoLink = () => new URLSearchParams(location.search).get("empresa");
+const paramEmpresaDoLink = () => empresaDoLink() ? { p_empresa_id: empresaDoLink() } : {};
+
 async function carregarItens(){
+  if(ehVisitante()){
+    const { data, error } = await catalogRpc("catalogo_publico_carregar", paramEmpresaDoLink());
+    if(error) throw error;
+    if(!Array.isArray(data?.itens)) throw new Error("O servidor não retornou os itens do catálogo. Recarregue para tentar novamente.");
+    state.company = data.empresa || null;
+    state.decorator = null;
+    state.catalogSession.empresa_id = data.empresa_id || null;
+    return agruparVariantes(data.itens.filter(catalogItemAllowed).map(mapRow));
+  }
   const externo = Boolean(state.catalogSession?.token);
   const { data, error } = await catalogRpc(
     externo ? "catalogo_carregar" : "catalogo_carregar_interno",
@@ -436,8 +420,9 @@ async function carregarEmpresa(){
 
 function getCategories(){
   const map = new Map();
-  state.items.forEach((item) => map.set(item.cat, item.catLabel));
-  return [...map].map(([cat, label]) => ({ cat, label }));
+  state.items.forEach((item) => { if(!map.has(item.cat)) map.set(item.cat, { cat: item.cat, label: item.catLabel, ordem: item.catOrdem ?? null }); });
+  // Ordem definida pela equipe primeiro (sort estável: sem ordem, fica na ordem em que veio do banco).
+  return [...map.values()].sort((a, b) => (a.ordem === null) - (b.ordem === null) || (a.ordem ?? 0) - (b.ordem ?? 0)).map(({ cat, label }) => ({ cat, label }));
 }
 
 function renderHeader(){
@@ -463,11 +448,29 @@ function renderHeader(){
   if(state.decorator?.nome){
     userName.textContent = state.decorator.nome;
     user.classList.remove("hidden");
+    user.querySelector(".catalog-user-badge")?.classList.remove("hidden");
     if(state.decorator.logo_url){
       userLogo.src = state.decorator.logo_url;
       userLogo.alt = `Logo de ${state.decorator.nome}`;
       userLogo.classList.remove("hidden");
     }else userLogo.classList.add("hidden");
+  }else if(state.acessoInterno || ehVisitante()){
+    // Visitante também cai aqui: só o botão de sair, que o leva de volta à tela de entrada (pra entrar com acesso exclusivo).
+    // Pedido explícito do usuário: "na versão do decorador tem um botão
+    // pra sair, mas na versão do adm não tem, precisa colocar" — faltava
+    // só pra quem entra pela EQUIPE direto nesta própria tela (login
+    // direto, ver requireCatalogLogin()/resolveAcessoInterno() acima):
+    // sem dashboard nenhum por cima pra oferecer outro jeito de sair, a
+    // sessão do Supabase Auth simplesmente ficava presa aqui. Quando vem
+    // do dashboard (.catalog-modo-sistema), esse bloco inteiro já fica
+    // escondido por CSS (!important, ver catalogo.css) — o dashboard tem
+    // o próprio logout, mostrar outro aqui seria duplicado; então isso só
+    // aparece de verdade no caminho sem dashboard. Sem "CATÁLOGO DE
+    // {nome}" aqui — essa legenda é do decorador, não faz sentido pra
+    // equipe — só o botão de sair mesmo, ícone sozinho.
+    user.classList.remove("hidden");
+    user.querySelector(".catalog-user-badge")?.classList.add("hidden");
+    userLogo.classList.add("hidden");
   }
 }
 
@@ -539,7 +542,7 @@ function itemsForView(view){
 // (que já são, por natureza, uma grade, sem uma "visualização imersiva"
 // equivalente).
 function updateViewToggleVisibility(){
-  $("catalogViewSwitcher")?.classList.toggle("hidden", state.activeView === HOME_VIEW || state.activeView === FILTER_VIEW || state.activeView === GATEWAY_VIEW || state.activeView === MODULO3D_MENU_VIEW || state.overlay);
+  $("catalogViewSwitcher")?.classList.toggle("hidden", state.activeView === HOME_VIEW || state.activeView === FILTER_VIEW || state.activeView === GATEWAY_VIEW || state.overlay);
 }
 
 // Único jeito de abrir esses dois overlays hoje: os blocos do Portal
@@ -558,56 +561,42 @@ function openBibliotecaOverlay(){
   openCatalogBiblioteca();
 }
 
-function openLoungeOverlay(){
-  setActiveOverlay("lounge");
-  openCatalogLounge();
-}
-
 function openProjetosOverlay(options = {}){
   setActiveOverlay("projetos");
   openCatalogProjetos(options);
 }
 
-// Clique/Enter num bloco do Portal (ver renderGateway). "Módulo 3D" não
-// abre mais o estúdio direto — leva pro mini-menu novo (MODULO3D_MENU_VIEW),
-// que por sua vez tem o estúdio como um dos 3 cards (ver activateModulo3dCard).
+// Clique/Enter num bloco do Portal (ver renderGateway). Pedido explícito do usuário numa sessão seguinte: "dentro
+// do modulo de 3d deixe apenas o 3d livre... quando eu clicar em modulo 3d ele ja vai direto... nao precisa mais
+// ter os 3 modulos separados" — o mini-menu (que tinha 3D Livre/Composições/Em desenvolvimento) e o Módulo Lounge
+// (Composições) foram removidos por completo; "Módulo 3D" agora abre o Estúdio de Ambientes direto, do mesmo jeito
+// que era antes do mini-menu existir.
 function activateGatewayTile(key){
-  if(key === "catalogo") applyView(HOME_VIEW);
+  if(blocoBloqueado(key)){
+    const nome = GATEWAY_TILES.find((t) => t.key === key)?.label || "Este módulo";
+    notify({ title: `${nome} é exclusivo`, message: "Disponível para clientes com acesso exclusivo. Entre com o e-mail e a senha fornecidos pela Chiavari.",
+      actionLabel: "Entrar com acesso exclusivo", duration: 9000, onAction: irParaAcessoExclusivo });
+    return;
+  }
+  if(key === "catalogo"){
+    if(state.acessoInterno || ehVisitante()) applyView(HOME_VIEW);
+    else { setActiveOverlay("project-entry"); escolherProjetoNaEntrada(); }
+  }
   else if(key === "biblioteca") openBibliotecaOverlay();
-  else if(key === "modulo3d") applyView(MODULO3D_MENU_VIEW);
+  else if(key === "modulo3d") openStudioOverlay();
   else if(key === "projetos") openProjetosOverlay();
 }
 
-// Clique num card disponível (Estúdio, Lounge) — o recurso futuro
-// restante não tem elemento clicável nenhum, ver modulo3dCardMarkup()).
-function activateModulo3dCard(key){
-  const card = MODULO3D_CARDS.find((candidate) => candidate.key === key);
-  if(!card || !card.available) return;
-  if(card.action === "studio") openStudioOverlay();
-  else if(card.action === "lounge") openLoungeOverlay();
-}
-
-// Só UMA das quatro telas do catálogo aparece por vez: os produtos/Home
-// (#catalogGrid), o Painel 3D (#catalogStudio), a Biblioteca
-// (#catalogBiblioteca) ou o Módulo Lounge (#catalogLounge). `mode` é
-// "studio", "biblioteca", "lounge" ou null (mostra #catalogGrid).
+// Só UMA das três telas do catálogo aparece por vez: os produtos/Home
+// (#catalogGrid), o Painel 3D (#catalogStudio) ou a Biblioteca
+// (#catalogBiblioteca). `mode` é "studio", "biblioteca" ou null (mostra #catalogGrid).
 function setActiveOverlay(mode){
-  // #catalogGrid só fica ESCONDIDO ao abrir um overlay por cima dele
-  // (nunca destruído) — sem isso o <model-viewer> do mini-menu (se
-  // estava aberto) continuaria renderizando atrás do Painel 3D/
-  // Biblioteca/Lounge, e o listener de fullscreen ficaria vivo à toa.
-  if(mode) modulo3dTeardownViewer();
-  // O Módulo Lounge tem ciclo de vida EXPLÍCITO (cena Three.js própria,
-  // ver catalogo-lounge.mjs) — precisa ser desligado de verdade ao sair
-  // dele (troca pra outro overlay OU fecha o overlay de vez), diferente
-  // do Painel 3D, que só pausa o render loop enquanto escondido.
-  if(state.overlay === "lounge" && mode !== "lounge") teardownCatalogLounge();
   // Projetos salva o que estiver pendente ao sair da tela.
   if(state.overlay === "projetos" && mode !== "projetos") closeCatalogProjetos();
+  if(mode !== "project-entry") document.querySelector(".cpj-entry")?.remove();
   state.overlay = mode;
   $("catalogStudio")?.classList.toggle("hidden", mode !== "studio");
   $("catalogBiblioteca")?.classList.toggle("hidden", mode !== "biblioteca");
-  $("catalogLounge")?.classList.toggle("hidden", mode !== "lounge");
   $("catalogProjetos")?.classList.toggle("hidden", mode !== "projetos");
   $("catalogGrid")?.classList.toggle("hidden", Boolean(mode));
   $("catalogSearch")?.closest(".catalog-search")?.classList.toggle("hidden", Boolean(mode));
@@ -636,14 +625,17 @@ function applyView(view, options = {}){
   if(view === FILTER_VIEW){
     state.viewMode = "immersive";
     updateViewToggleButton();
-  }else if(view !== GATEWAY_VIEW && view !== HOME_VIEW && view !== MODULO3D_MENU_VIEW){
+  }else if(view !== GATEWAY_VIEW && view !== HOME_VIEW){
     state.viewMode = "grid";
     updateViewToggleButton();
   }
   // Mesmo raciocínio do reset de viewMode acima: entrar numa categoria
   // (mesmo que seja a mesma de novo, via clique na trilha) volta pro
-  // estado "limpo" — sem filtro de subcategoria nenhum selecionado.
+  // estado "limpo" — sem filtro de subcategoria nenhum selecionado, e
+  // sem Material/Estilo/Personalizáveis marcados (ver renderCategoryFilterBar).
   state.activeSubcat = "";
+  state.categoryFilters = newHomeFilters();
+  state.categoryFilterOpen = "";
   // Toda navegação (Home, categoria) sai do Painel 3D/Biblioteca se
   // estiverem abertos e limpa a busca — mesma limpeza que antes só
   // acontecia ao clicar numa categoria do cabeçalho (ver antigo bloco
@@ -932,8 +924,14 @@ function relatedItemsMarkup(item){
   </div>`;
 }
 
+const rentalMoney = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+function rentalPriceMarkup(item, detail = false){
+  const value = item.rentalPrice === null ? "Sob consulta" : rentalMoney.format(item.rentalPrice);
+  return `<span class="catalog-rental-price${detail ? " catalog-rental-price--detail" : ""}" aria-label="Locação: ${escapeAttr(value)}">${detail ? '<span class="catalog-rental-price-label">Locação</span>' : ""}<span class="catalog-rental-price-value">${escapeHtml(value)}</span></span>`;
+}
+
 function productTemplate(item, index){
-  const personalizavel = item.personalizable || item.variantGroup?.some((variante) => variante.personalizable);
+  const personalizavel = !ehVisitante() && (item.personalizable || item.variantGroup?.some((variante) => variante.personalizable));
   return `<section class="catalog-product-section" id="produto-${escapeAttr(item.id)}" data-product-id="${escapeAttr(item.id)}" data-category="${escapeAttr(item.cat)}" data-search="${escapeAttr(normalizeSearch(`${item.name} ${item.catLabel || ""}`))}">
     <div class="catalog-detail-panel">
       <div class="catalog-detail-top">
@@ -946,7 +944,7 @@ function productTemplate(item, index){
           ${specsPanel(item)}
           ${personalizavel ? `<button type="button" class="product-bespoke-card ${item.personalizable ? "" : "hidden"}" data-customize-item="${escapeAttr(item.id)}"><span>SOB MEDIDA</span><strong>Experimente outro tecido</strong><small>Personalize com inteligência artificial →</small></button>` : ""}
           ${capaToggleMarkup(item)}
-          ${capaModulo3dToggleMarkup(item)}
+          ${rentalPriceMarkup(item, true)}
           ${projetoAddMarkup(item.id, "page")}
         </div>
         <div class="product-main-media product-reveal${state.acessoInterno ? " catalog-editable" : ""}" data-active-slot="principal">
@@ -982,14 +980,13 @@ function currentViewLabel(){
 // setas de voltar/avançar (ver trackNavHistory() mais abaixo) — mesmo
 // texto pra QUALQUER screen {activeView, overlay}, não só o atual.
 function screenLabelFor(screen){
+  if(screen.overlay === "project-entry") return "Catálogo";
   if(screen.overlay === "biblioteca") return "Biblioteca";
   if(screen.overlay === "projetos") return "Projetos";
-  if(screen.overlay === "studio") return modulo3dLabel("estudio");
-  if(screen.overlay === "lounge") return modulo3dLabel("lounge");
+  if(screen.overlay === "studio") return "3D Livre";
   if(screen.activeView === GATEWAY_VIEW) return "Home";
   if(screen.activeView === HOME_VIEW) return "Categorias";
   if(screen.activeView === FILTER_VIEW) return "Resultados";
-  if(screen.activeView === MODULO3D_MENU_VIEW) return "Módulo 3D";
   return getCategories().find((category) => category.cat === screen.activeView)?.label || "Categoria";
 }
 
@@ -1049,9 +1046,9 @@ function trackNavHistory(){
 }
 
 function restoreNavScreen(screen){
-  if(screen.overlay === "biblioteca") openBibliotecaOverlay();
+  if(screen.overlay === "project-entry") activateGatewayTile("catalogo");
+  else if(screen.overlay === "biblioteca") openBibliotecaOverlay();
   else if(screen.overlay === "studio") openStudioOverlay();
-  else if(screen.overlay === "lounge") openLoungeOverlay();
   else if(screen.overlay === "projetos") openProjetosOverlay();
   else applyView(screen.activeView);
 }
@@ -1164,6 +1161,24 @@ function renderTimeline(){
 }
 
 function bindNavHistory(){
+  window.appBeforeLeave=beforeLeaveProjetos;
+  window.appGoBack=async()=>{
+    if(await backCatalogProjetos()) return true;
+    if(state.navBack.length){ jumpToHistoryEntry(state.navBack.at(-1).id); return true; }
+    if(state.overlay || state.activeView!==GATEWAY_VIEW){ applyView(GATEWAY_VIEW); return true; }
+    return false;
+  };
+  if(window===window.parent && !document.getElementById('catalogGlobalBack')){
+    const back=document.createElement('button'); back.id='catalogGlobalBack'; back.type='button';
+    back.className='catalog-global-back';
+    back.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span>';
+    back.onclick=async()=>{ if(!(await window.appGoBack())) applyView(GATEWAY_VIEW); };
+    // Abaixo da logo, fora do menu (pedido do usuário). Mora em .catalog-top-chrome (sticky), então acompanha o
+    // cabeçalho ao rolar; as telas reservam um respiro no topo pra ele não cobrir nada (ver .catalog-global-back no CSS).
+    const chrome=document.querySelector('.catalog-top-chrome');
+    (chrome||document.body).append(back);
+    document.body.classList.add('catalog-tem-voltar');
+  }
   const onClick = (event) => {
     const item = event.target.closest("[data-timeline-entry]");
     if(item) jumpToHistoryEntry(item.dataset.timelineEntry);
@@ -1190,6 +1205,8 @@ function syncNavigation(){
   // A pílula do projeto ativo aparece na navegação do catálogo (categorias, itens), não no Portal nem dentro dos
   // overlays (onde o próprio módulo já mostra/pergunta o destino).
   setProjetoDockVisible(!state.overlay && state.activeView !== GATEWAY_VIEW);
+  // Na Home (Portal) não tem busca nem "← Voltar" (pedido explícito do usuário) — ver .catalog-no-portal no CSS.
+  document.body.classList.toggle("catalog-no-portal", !state.overlay && state.activeView === GATEWAY_VIEW);
 }
 
 // Foto de capa de uma categoria, pra Home (pedido explícito do usuário):
@@ -1229,8 +1246,8 @@ function categoryCoverPhoto(cat){
 // O estado (`state.homeFilters`) fica guardado enquanto a pessoa navega (abrir um item e voltar pela
 // linha do tempo mantém os filtros) e só zera ao voltar pro Portal.
 const HOME_FILTER_FIELDS = [
-  { key: "material", label: "Material" },
   { key: "estilo", label: "Estilo" },
+  { key: "material", label: "Material" },
 ];
 
 function newHomeFilters(){
@@ -1309,17 +1326,23 @@ function homeFilterBarMarkup(){
   const fields = HOME_FILTER_FIELDS.map((field) => ({ field, options: homeFilterOptions(field.key) })).filter(({ options }) => options.length);
   const hasPersonalizable = state.items.some(itemIsPersonalizable);
   if(!fields.length && !hasPersonalizable) return "";
-  return `<div class="catalog-home-filters" role="group" aria-label="Filtros">
-    ${fields.map(({ field, options }) => homeFilterFieldMarkup(field, options)).join("")}
-    ${hasPersonalizable ? `<button type="button" class="catalog-filter-chip" data-home-filter-toggle="personalizable" aria-pressed="false"><span>Personalizáveis</span><em class="catalog-filter-count">0</em></button>` : ""}
+  const chevron = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+  return `<div class="catalog-home-filters-wrap">
+    <div class="catalog-home-filters" role="group" aria-label="Filtros">
+      <span class="catalog-filter-label">Filtre por...</span>
+      ${fields.map(({ field, options }) => homeFilterFieldMarkup(field, options)).join("")}
+      ${hasPersonalizable ? `<button type="button" class="catalog-filter-chip" data-home-filter-toggle="personalizable" aria-pressed="false"><span>Personalizáveis</span><em class="catalog-filter-count">0</em>${chevron}</button>` : ""}
+    </div>
     <button type="button" class="catalog-filter-clear" id="catalogHomeFilterClear" data-home-filter-clear hidden>Limpar filtros</button>
     <p class="catalog-filter-summary" id="catalogHomeFilterSummary" aria-live="polite"></p>
   </div>`;
 }
 
 function homeCategoriesMarkup(categories){
-  return `<div class="catalog-grid catalog-home-grid">${categories.map((category) => `
-      <button type="button" class="catalog-grid-card catalog-home-card" data-home-category="${escapeAttr(category.cat)}">
+  const reordenavel = Boolean(state.acessoInterno);
+  const alca = `<span class="catalog-grid-drag" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>`;
+  return `<div class="catalog-grid catalog-home-grid${reordenavel ? " is-reorderable" : ""}">${categories.map((category) => `
+      <button type="button" class="catalog-grid-card catalog-home-card${reordenavel ? " is-reorderable" : ""}" data-home-category="${escapeAttr(category.cat)}"${reordenavel ? ` draggable="true" title="Arraste para mudar a posição"` : ""}>${reordenavel ? alca : ""}
         <span class="catalog-grid-card-photo"><img src="${escapeAttr(otimizarFoto(categoryCoverPhoto(category.cat), IMG_WIDTH.card))}" alt="${escapeAttr(category.label)}" loading="lazy" decoding="async"></span>
         <span class="catalog-grid-card-body"><span class="catalog-grid-card-name">${escapeHtml(category.label)}</span></span>
       </button>`).join("")}
@@ -1440,6 +1463,11 @@ function renderHome(){
 // init()); o decorador só clica pra navegar. A foto fica no MESMO bucket
 // "biblioteca" (path `${empresaId}/_capas/portal.ext`, dentro da mesma
 // política de storage por prefixo de empresa) — sem bucket novo.
+state.gatewayClienteId = null;
+state.gatewayClientes = [];
+state.gatewayCapasPorCliente = {};
+state.gatewayCapasEquipe = {};
+
 function renderGateway(){
   const grid = $("catalogGrid");
   grid.classList.add("catalog-products-static-mode");
@@ -1455,12 +1483,16 @@ function renderGateway(){
   // ver bindInteractions().
   grid.innerHTML = `<div class="catalog-gateway">
     <img class="catalog-gateway-photo" src="${escapeAttr(otimizarFoto(state.gatewayCapas[GATEWAY_PHOTO_KEY] || FOTO_PLACEHOLDER, IMG_WIDTH.gateway, IMG_QUALITY_HERO))}" alt="" loading="eager" decoding="async">
-    <div class="catalog-gateway-zones">${GATEWAY_TILES.map((tile) => `
-      <div class="catalog-gateway-zone" data-gateway-tile="${escapeAttr(tile.key)}" role="button" tabindex="0">
-        <span class="catalog-gateway-title">${escapeHtml(tile.label)}</span>
+    <div class="catalog-gateway-zones">${blocosDoPortal().map((tile) => `
+      <div class="catalog-gateway-zone${blocoBloqueado(tile.key) ? " is-bloqueado" : ""}" data-gateway-tile="${escapeAttr(tile.key)}" role="button" tabindex="0"${blocoBloqueado(tile.key) ? ` aria-label="${escapeAttr(tile.label)} — acesso exclusivo"` : ""}>
+        ${blocoBloqueado(tile.key) ? ICONE_CADEADO : ""}<span class="catalog-gateway-title">${escapeHtml(tile.label)}</span>${blocoBloqueado(tile.key) ? '<span class="catalog-gateway-exclusivo">Acesso exclusivo</span>' : ""}
       </div>`).join("")}
     </div>
     ${state.acessoInterno ? `<div class="catalog-gateway-controls">
+      <select class="catalog-gateway-client" data-gateway-client aria-label="Decorador da capa da Home">
+        <option value="">Home da equipe</option>
+        ${state.gatewayClientes.map(c => `<option value="${escapeAttr(c.id)}"${c.id === state.gatewayClienteId ? " selected" : ""}>${escapeHtml(c.nome)}</option>`).join("")}
+      </select>
       <button type="button" class="catalog-gateway-adjust" data-gateway-adjust="${GATEWAY_PHOTO_KEY}" aria-label="Ajustar posição e zoom da foto" title="Ajustar foto">✎</button>
       <label class="catalog-gateway-edit" data-gateway-edit="${GATEWAY_PHOTO_KEY}">
         <span>Trocar foto</span>
@@ -1473,6 +1505,12 @@ function renderGateway(){
 
 async function carregarCapasGateway(){
   try{
+    if(ehVisitante()){
+      const { data, error } = await supabase.rpc("catalogo_capas_publico", paramEmpresaDoLink());
+      if(error) throw error;
+      state.gatewayCapas = data && typeof data === "object" ? data : {};
+      return;
+    }
     const externo = Boolean(state.catalogSession?.token);
     const { data, error } = await supabase.rpc(
       externo ? "catalogo_capas_carregar" : "catalogo_capas_carregar_interno",
@@ -1480,6 +1518,17 @@ async function carregarCapasGateway(){
     );
     if(error) throw error;
     state.gatewayCapas = data && typeof data === "object" ? data : {};
+    if(!externo){
+      const { clientes = [], capas_clientes = [], ...capasEquipe } = state.gatewayCapas;
+      state.gatewayClientes = clientes;
+      state.gatewayCapasEquipe = capasEquipe;
+      state.gatewayCapasPorCliente = {};
+      for(const capa of capas_clientes){
+        (state.gatewayCapasPorCliente[capa.cliente_id] ||= {})[capa.chave] = capa.url;
+      }
+      state.gatewayCapas = state.gatewayClienteId
+        ? (state.gatewayCapasPorCliente[state.gatewayClienteId] ||= {}) : capasEquipe;
+    }
   }catch(error){
     console.error("Não foi possível carregar as fotos do portal:", error);
     state.gatewayCapas = {};
@@ -1501,7 +1550,8 @@ async function trocarCapaGateway(chave, file){
     return false;
   }
   const empresaId = state.catalogSession.empresa_id;
-  const path = `${empresaId}/_capas/${chave}.${extensaoImagemGateway(file.type)}`;
+  const clienteId = state.gatewayClienteId;
+  const path = `${empresaId}/_capas/${clienteId || "equipe"}/${chave}.${extensaoImagemGateway(file.type)}`;
   const { error: uploadError } = await supabase.storage.from("biblioteca").upload(path, file, { contentType: file.type, upsert: true });
   // Achado real (usuário reportou "o botão trocar foto não está
   // funcionando"): antes disso não havia NENHUM aviso quando o upload
@@ -1523,376 +1573,20 @@ async function trocarCapaGateway(chave, file){
   const { data: urlData } = supabase.storage.from("biblioteca").getPublicUrl(path);
   const url = `${urlData.publicUrl}?v=${Date.now()}`;
   const { error: upsertError } = await supabase.from("catalogo_capas")
-    .upsert({ empresa_id: empresaId, chave, path, url }, { onConflict: "empresa_id,chave" });
+    .upsert({ empresa_id: empresaId, cliente_id: clienteId, chave, path, url }, { onConflict: "empresa_id,cliente_id,chave" });
   if(upsertError){
     console.error("Erro ao salvar foto do portal:", upsertError);
     notify({ title: "Não foi possível trocar a foto", message: "Tente novamente em instantes.", status: "error" });
     return false;
   }
-  state.gatewayCapas[chave] = url;
-  if(state.activeView === GATEWAY_VIEW) renderGateway();
+  const capas = clienteId ? (state.gatewayCapasPorCliente[clienteId] ||= {}) : state.gatewayCapasEquipe;
+  capas[chave] = url;
+  if(state.gatewayClienteId === clienteId){
+    state.gatewayCapas = capas;
+    if(state.activeView === GATEWAY_VIEW) renderGateway();
+  }
   notify({ title: "Foto atualizada", message: "Portal", duration: 4000 });
   return true;
-}
-
-// ============================================================
-// Mini-menu "Módulo 3D" (pedido explícito do usuário: "quando a pessoa
-// clicar em módulo 3D... quero que apareça como se fosse outro mini
-// menu, dentro do módulo 3D nós teremos 3 funcionalidades diferentes...
-// no topo do html centralizado e grande apareça um móvel em 3d e embaixo
-// deixe 3 campos clicáveis pra acessar esses 3 módulos que vamos
-// desenvolver"). Confirmado com o usuário antes de implementar: o
-// estúdio já existente (planta/render/câmera) vira o 1º dos 3 cards
-// (MODULO3D_CARDS), os outros 2 ainda não construídos mostram uma tela
-// "Em breve" ao clicar.
-// ============================================================
-
-// Modelo em destaque no topo — procura em TODOS os itens (não só os
-// "principais" pós-agrupamento de variante, já que capaModulo3d pode
-// estar marcado em qualquer variante específica de um grupo, mesmo
-// padrão de findItemById()). Prioriza o item marcado capaModulo3d=true;
-// sem nenhum marcado, cai pro primeiro item com QUALQUER modelo .glb
-// cadastrado (nunca fica sem mostrar nada existindo pelo menos 1 modelo
-// no sistema); sem nenhum modelo em lugar nenhum, retorna null.
-function allItemsFlat(){
-  const seen = new Map();
-  state.items.forEach((item) => {
-    (item.variantGroup || [item]).forEach((variante) => seen.set(String(variante.id), variante));
-  });
-  return [...seen.values()];
-}
-
-// Modelo em destaque de um card específico — procura em TODOS os itens
-// (não só os "principais" pós-agrupamento de variante, já que a flag
-// pode estar marcada em qualquer variante específica de um grupo, mesmo
-// padrão de findItemById()). Prioriza o item marcado pra ESSE módulo;
-// sem nenhum marcado, cai pro primeiro item com QUALQUER modelo .glb
-// cadastrado (nunca fica sem mostrar nada existindo pelo menos 1 modelo
-// no sistema); sem nenhum modelo em lugar nenhum, retorna null.
-function modulo3dFeaturedItem(moduleKey){
-  const field = MODULO3D_CAPA_FIELD[moduleKey];
-  const all = allItemsFlat();
-  return all.find((item) => field && item[field] && item.glb) || all.find((item) => item.glb) || null;
-}
-
-// Botões de marcar o item aberto como o modelo em destaque DE CADA
-// MÓDULO (pedido explícito do usuário: "da mesma forma que eu escolho a
-// foto da capa da categoria, vou escolher o 3D que aparece... um dos que
-// temos cadastrados no sistema", depois "quero um 3D diferente pra cada
-// módulo") — só aparece pra equipe interna, e só em itens que JÁ têm um
-// modelo .glb cadastrado (marcar um item sem modelo não teria o que
-// mostrar). Um grupo com 1 botão por card de MODULO3D_CARDS — inclusive
-// "Realidade aumentada", que ainda não tem funcionalidade nenhuma, mas
-// precisa de um modelo em destaque igual aos outros dois.
-function capaModulo3dToggleMarkup(item){
-  if(!state.acessoInterno || !item.glb) return "";
-  const buttons = MODULO3D_CARDS.map((card) => {
-    const isCapa = Boolean(item[MODULO3D_CAPA_FIELD[card.key]]);
-    return `<button type="button" class="catalog-capa-toggle catalog-capa-modulo3d-toggle ${isCapa ? "is-active" : ""}" data-capa-modulo3d-toggle="${escapeAttr(card.key)}">
-      <span class="catalog-capa-toggle-star" aria-hidden="true">${isCapa ? "★" : "☆"}</span>
-      <span>${escapeHtml(card.label)}</span>
-    </button>`;
-  }).join("");
-  return `<div class="catalog-capa-modulo3d-group" role="group" aria-label="Modelo em destaque no Módulo 3D">
-    <span class="catalog-capa-modulo3d-group-label">Modelo em destaque no Módulo 3D:</span>
-    ${buttons}
-  </div>`;
-}
-
-// Só um item na empresa inteira pode ser o modelo em destaque de um
-// MÓDULO por vez — mesmo padrão de alternarCapaCategoria(), só que
-// GLOBAL por módulo (sem filtrar por categoria): desmarca qualquer outro
-// que já estivesse marcado NESSE MESMO módulo antes de marcar o atual
-// (um item pode ser capa do Estúdio E do Lounge ao mesmo tempo, são
-// flags independentes). Devolve os itens desmarcados — o chamador (ver
-// handleCapaModulo3dToggleClick) precisa disso pra atualizar o GRUPO
-// deles também, caso a seção esteja renderizada na mesma categoria
-// (diferente de alternarCapaCategoria, que é por categoria — aqui um
-// "irmão" desmarcado pode estar em QUALQUER categoria, inclusive a
-// mesma que está aberta na tela agora).
-async function alternarCapaModulo3d(item, moduleKey){
-  const field = MODULO3D_CAPA_FIELD[moduleKey];
-  const column = MODULO3D_CAPA_COLUMN[moduleKey];
-  const novoValor = !item[field];
-  const desmarcados = [];
-  if(novoValor){
-    const marcados = state.items.filter((outro) => String(outro.id) !== String(item.id) && outro[field]);
-    for(const outro of marcados){
-      const { error } = await supabase.from("itens").update({ [column]: false }).eq("id", outro.id);
-      if(error) throw error;
-      outro[field] = false;
-      desmarcados.push(outro);
-    }
-  }
-  const { error } = await supabase.from("itens").update({ [column]: novoValor }).eq("id", item.id);
-  if(error) throw error;
-  item[field] = novoValor;
-  item.variantGroup?.forEach((variante) => { if(String(variante.id) === String(item.id)) variante[field] = novoValor; });
-  return desmarcados;
-}
-
-async function handleCapaModulo3dToggleClick(item, moduleKey, button){
-  button.disabled = true;
-  try{
-    const desmarcados = await alternarCapaModulo3d(item, moduleKey);
-    const group = button.closest(".catalog-capa-modulo3d-group");
-    if(group) group.outerHTML = capaModulo3dToggleMarkup(item);
-    desmarcados.forEach((outro) => {
-      const outroGroup = document.querySelector(`.catalog-product-section[data-product-id="${CSS.escape(String(outro.id))}"] .catalog-capa-modulo3d-group`);
-      if(outroGroup) outroGroup.outerHTML = capaModulo3dToggleMarkup(outro);
-    });
-    const card = MODULO3D_CARDS.find((candidate) => candidate.key === moduleKey);
-    notify({ title: item[MODULO3D_CAPA_FIELD[moduleKey]] ? `Definido como modelo do ${card?.label || "módulo"}` : `Modelo removido do ${card?.label || "módulo"}`, message: item.name, duration: 4000 });
-  }catch(error){
-    console.error("Erro ao definir modelo do Módulo 3D:", error);
-    notify({ title: "Não foi possível salvar", message: "Tente novamente.", status: "error" });
-    button.disabled = false;
-  }
-}
-
-// Carregador do <model-viewer> — mesmo componente vendorizado
-// (js/vendor/model-viewer) que a prévia 3D por item usava antes de ser
-// removida desta tela (ver comentário sobre window.catalogLoadModelAsset
-// mais abaixo: a infraestrutura de download/cache do .glb em si nunca
-// saiu, só o CONSUMIDOR mudou de lugar — de "dentro de cada item" pra
-// "só aqui, uma vez, pro modelo em destaque do mini-menu").
-let modelViewerPromise = null;
-function ensureModelViewer(){
-  if(customElements.get("model-viewer")) return Promise.resolve();
-  if(!modelViewerPromise){
-    modelViewerPromise = import("../../../js/vendor/model-viewer/model-viewer.min.js")
-      .catch((error) => { modelViewerPromise = null; throw error; });
-  }
-  return modelViewerPromise;
-}
-
-function supportsWebGL3D(){
-  try{
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("webgl2") || canvas.getContext("webgl");
-    if(!context) return false;
-    context.getExtension("WEBGL_lose_context")?.loseContext();
-    return true;
-  }catch{
-    return false;
-  }
-}
-
-function isEconomyDevice3D(){
-  const cores = Number(navigator.hardwareConcurrency) || 4;
-  const memory = Number(navigator.deviceMemory) || 4;
-  return cores <= 4 || memory <= 4 || matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-// Cards disponíveis (3D Livre, Composições) vs. o único "recurso futuro"
-// que sobrou (Realidade aumentada, hoje só "Em desenvolvimento") — pedido
-// explícito do usuário pro recurso futuro: precisa "parecer
-// intencionalmente indisponível, não card quebrado ou incompleto" — sem
-// NENHUM elemento clicável (nem <button>) e com `aria-disabled`.
-//
-// Layout (pedido explícito do usuário, 2ª rodada: "eu quero que fique igual
-// a home, literalmente um 3d do lado do outro... esse 3d tem que ser
-// grande"): copia o padrão dos cards de categoria da Home do catálogo
-// (`.catalog-home-card`/`.catalog-home-grid`) — quadrado GRANDE, o
-// próprio quadrado inteiro é o alvo do clique, só o título, sem descrição
-// nem botão separado. Não reaproveita as classes da Home 1:1 (são
-// DOM/hover distintos: aqui tem um <model-viewer> vivo), mas os
-// tamanhos/proporções/tipografia foram calibrados pra ficarem visualmente
-// equivalentes.
-
-// Nome do módulo ESCRITO DENTRO do quadro (pedido explícito do usuário:
-// "o nome do módulo embaixo está muito escondido... podíamos fazer
-// igual a home, escrito dentro e quando passar o mouse dá aquele
-// efeito") — "home" aqui é o Portal (rótulo "Home" no cabeçalho, ver
-// MODULO3D_CAPA_FIELD acima e a seção "Botões Biblioteca/Painel 3D
-// removidos..." no CLAUDE.md), mesmo tratamento visual de
-// `.catalog-gateway-title` (letter-spacing "abrindo" no hover) — ver
-// CSS. Subiu pro TOPO do quadro depois (pedido explícito: "quero subir
-// o nome dos card mais pra cima do card pra ficar tipo um título mesmo")
-// — deixou de ficar centralizado verticalmente, posição via CSS. Fica
-// DENTRO do stage (não mais abaixo dele) pra sobreviver sozinho junto
-// com qualquer troca de conteúdo do stage (ícone↔model-viewer↔erro), ver
-// renderModulo3dModel().
-function modulo3dCardNameMarkup(card){
-  return `<span class="catalog-modulo3d-tile-name">${escapeHtml(card.title || card.label)}</span>`;
-}
-
-// O nome fica dentro de um wrapper (`.catalog-modulo3d-tile-caption`) que o
-// posiciona perto do topo do quadro — ver posição/fonte em CSS.
-function modulo3dCardOverlayMarkup(card){
-  return `<div class="catalog-modulo3d-tile-caption">${modulo3dCardNameMarkup(card)}</div>`;
-}
-
-// 1ª pintura do stage, antes do JS montar o <model-viewer> — só o
-// título+resumo sobre o fundo do quadro. Sem ícone de fallback nenhum
-// (removido por completo: "aparece 3 ícones um em cada card, pode
-// remover eles, são inúteis") — um card sem modelo marcado/`.glb` fica
-// só com o fundo do quadro, nunca com um ícone genérico no lugar.
-function modulo3dCardStageMarkup(card){
-  return `<div class="catalog-modulo3d-tile-stage" data-modulo3d-stage="${escapeAttr(card.key)}">
-    ${modulo3dCardOverlayMarkup(card)}
-  </div>`;
-}
-
-function modulo3dCardMarkup(card){
-  if(card.available){
-    return `<button type="button" class="catalog-modulo3d-tile" data-modulo3d-card="${escapeAttr(card.key)}">
-      ${modulo3dCardStageMarkup(card)}
-    </button>`;
-  }
-  // Sem o selo "Em breve" que ficava embaixo do quadro — o próprio título
-  // ("Em desenvolvimento") já diz isso, e o pedido foi "sem descrição em
-  // baixo".
-  return `<article class="catalog-modulo3d-tile catalog-modulo3d-tile-soon" aria-disabled="true">
-    ${modulo3dCardStageMarkup(card)}
-  </article>`;
-}
-
-// ---- Estado dos visualizadores vivos (só existe enquanto o mini-menu
-// está na tela) — precisa ficar fora de `state` porque são referências a
-// elementos que precisam ser desligados explicitamente ao sair da tela
-// (ver modulo3dTeardownViewer), senão vazam contexto WebGL. Um ARRAY
-// agora (não mais um único elemento) — até 3 <model-viewer> simultâneos,
-// um por card.
-let modulo3dViewerEls = [];
-
-// Desliga tudo que não morre sozinho junto com o innerHTML (contexto
-// WebGL de cada <model-viewer>) — chamada tanto ao navegar pra outra
-// `view` quanto ao abrir um overlay (Estúdio/Biblioteca) por cima do
-// mini-menu, nos dois casos o #catalogGrid só fica ESCONDIDO (não
-// destruído), então sem isso os modelos continuariam renderizando atrás
-// do Painel 3D aberto.
-function modulo3dTeardownViewer(){
-  modulo3dViewerEls.forEach((viewer) => viewer.remove());
-  modulo3dViewerEls = [];
-}
-
-async function renderModulo3dModel(stage, featured, card){
-  if(!stage) return;
-  // Nome + resumo precisam ser reinseridos em CADA estado do stage
-  // (sem modelo, model-viewer de verdade, erro) — stage.innerHTML=""
-  // abaixo apaga tudo que já estava lá dentro, inclusive o que a 1ª
-  // pintura já tinha desenhado (ver modulo3dCardStageMarkup()).
-  const overlayMarkup = modulo3dCardOverlayMarkup(card);
-  if(!featured?.glb || !supportsWebGL3D()){
-    stage.innerHTML = overlayMarkup;
-    return;
-  }
-  try{
-    const [, modelUrl] = await Promise.all([ensureModelViewer(), loadModelAsset(featured.glb)]);
-    if(!stage.isConnected) return;
-    const viewer = document.createElement("model-viewer");
-    viewer.src = modelUrl;
-    viewer.alt = `Modelo 3D de ${featured.name}`;
-    viewer.setAttribute("loading", "eager");
-    viewer.setAttribute("reveal", "auto");
-    // Sem camera-controls de propósito — é um preview pequeno e
-    // decorativo dentro de um card clicável, não um visualizador
-    // interativo (esse papel já é do Estúdio/Lounge, um clique de
-    // distância). bounds="tight" enquadra pela geometria real do
-    // modelo (não uma esfera genérica), 95% do raio de auto-
-    // enquadramento deixa o móvel ocupando quase todo o quadradinho.
-    viewer.setAttribute("bounds", "tight");
-    viewer.setAttribute("camera-orbit", "auto auto 95%");
-    if(!isEconomyDevice3D()) viewer.setAttribute("auto-rotate", "");
-    viewer.setAttribute("auto-rotate-delay", "0");
-    viewer.setAttribute("rotation-per-second", "16deg");
-    viewer.setAttribute("shadow-intensity", isEconomyDevice3D() ? ".25" : ".6");
-    viewer.setAttribute("shadow-softness", "1");
-    viewer.setAttribute("exposure", "1.05");
-    viewer.style.setProperty("--progress-bar-height", "0px");
-    viewer.style.pointerEvents = "none";
-    // Espera o <model-viewer> terminar de carregar DE VERDADE (evento
-    // "load" — o modelo já parseado/pronto pra desenhar, não só o
-    // download do .glb, que `loadModelAsset` acima já cobria sozinho) —
-    // pedido explícito do usuário sobre o carregamento único da tela:
-    // "no momento que o carregando chegar a 100 os módulos 3D já
-    // precisam aparecer juntos e carregados já ao mesmo tempo, não pode
-    // piscar". Sem esperar esse evento, o spinner podia sumir enquanto
-    // o componente ainda estava internamente terminando de revelar o
-    // modelo — reabrindo a mesma sensação de "um aparece, depois o
-    // outro" que o carregamento único deveria evitar.
-    const ready = new Promise((resolve) => {
-      const settle = () => { viewer.removeEventListener("load", settle); resolve(); };
-      viewer.addEventListener("load", settle, { once: true });
-      viewer.addEventListener("error", () => { stage.innerHTML = overlayMarkup; settle(); }, { once: true });
-    });
-    stage.innerHTML = "";
-    stage.appendChild(viewer);
-    stage.insertAdjacentHTML("beforeend", overlayMarkup);
-    modulo3dViewerEls.push(viewer);
-    await ready;
-    // 2 frames de folga pro navegador realmente PINTAR o 1º quadro do
-    // modelo antes de considerar esse card "pronto" — evita revelar um
-    // canvas ainda vazio no exato instante do evento "load".
-    if(stage.isConnected) await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  }catch(error){
-    console.warn(`Não foi possível abrir o modelo 3D do card "${card.key}":`, error);
-    stage.innerHTML = overlayMarkup;
-  }
-}
-
-// Título editorial "Explore os recursos" com linhas finas dos dois lados
-// (pedido explícito) + os 3 cards, na proporção sugerida (estúdio maior,
-// os 2 recursos futuros menores) via CSS (.catalog-modulo3d-cards).
-function modulo3dExploreMarkup(){
-  return `<div class="catalog-modulo3d-explore">
-    <div class="catalog-modulo3d-explore-title">
-      <span class="catalog-modulo3d-explore-line" aria-hidden="true"></span>
-      <h2>Explore os recursos</h2>
-      <span class="catalog-modulo3d-explore-line" aria-hidden="true"></span>
-    </div>
-    <div class="catalog-modulo3d-cards">${MODULO3D_CARDS.map(modulo3dCardMarkup).join("")}</div>
-  </div>`;
-}
-
-// Indicador de carregamento único (ver CSS, `.catalog-modulo3d-loading`)
-// — cobre os 3 cards até TODOS os modelos resolverem juntos. Percentual
-// REAL (0/33/67/100%, um degrau por card que termina de verdade), mesmo
-// princípio já usado nas notificações "em andamento" do catálogo.
-function modulo3dLoadingMarkup(){
-  return `<div class="catalog-modulo3d-loading" aria-hidden="true">
-    <span class="catalog-modulo3d-loading-ring" style="--pct:0"><span class="catalog-modulo3d-loading-pct">0%</span></span>
-    <p>Carregando módulos…</p>
-  </div>`;
-}
-
-function renderModulo3dMenu(){
-  const grid = $("catalogGrid");
-  grid.classList.add("catalog-products-static-mode");
-  state.currentItems = [];
-  state.currentHeading = "";
-  state.sectionObserver?.disconnect();
-  state.motionCleanup?.();
-  state.activeSection = null;
-  grid.innerHTML = `<div class="catalog-modulo3d-menu is-loading">${modulo3dExploreMarkup()}${modulo3dLoadingMarkup()}</div>`;
-  $("catalogEmpty")?.classList.add("hidden");
-  const menu = grid.querySelector(".catalog-modulo3d-menu");
-  const ring = menu.querySelector(".catalog-modulo3d-loading-ring");
-  const pctLabel = menu.querySelector(".catalog-modulo3d-loading-pct");
-  // Pedido explícito do usuário: "quero que tenha um carregamento ali
-  // antes de liberar a página, pra não acontecer de aparecer um 3d aí
-  // depois o outro e depois o outro", reforçado depois: "no momento que
-  // o carregando chegar a 100 os módulos 3D já precisam aparecer juntos
-  // e carregados já ao mesmo tempo, não pode piscar" — os 3 cards ficam
-  // escondidos atrás do anel de progresso até os 3 `renderModulo3dModel()`
-  // resolverem (sucesso, erro ou sem modelo — a função já trata os 3
-  // casos internamente e só resolve depois do <model-viewer> realmente
-  // ter carregado/pintado, nunca rejeita), incrementando o percentual um
-  // degrau por card que termina de verdade — só então a classe sai e os
-  // 3 aparecem juntos, já prontos, no MESMO instante em que bate 100%.
-  let settled = 0;
-  const bumpProgress = () => {
-    settled += 1;
-    const pct = Math.round((settled / MODULO3D_CARDS.length) * 100);
-    ring?.style.setProperty("--pct", pct);
-    if(pctLabel) pctLabel.textContent = `${pct}%`;
-  };
-  const loads = MODULO3D_CARDS.map((card) => {
-    const stage = grid.querySelector(`[data-modulo3d-stage="${CSS.escape(card.key)}"]`);
-    return renderModulo3dModel(stage, modulo3dFeaturedItem(card.key), card).finally(bumpProgress);
-  });
-  Promise.all(loads).then(() => { menu?.classList.remove("is-loading"); });
 }
 
 // Ponto único de decisão do que desenhar em #catalogGrid: o Portal (3
@@ -1900,11 +1594,6 @@ function renderModulo3dMenu(){
 // no modo atual (imersivo/grade/mosaico). Usado por applyView() e
 // sempre que a busca é limpa.
 function renderCurrentView(){
-  // Desliga o visualizador 3D do mini-menu (se estava vivo) antes de
-  // desenhar qualquer outra coisa em #catalogGrid — mesmo raciocínio de
-  // setActiveOverlay() acima, cobrindo o caminho "Home/categoria/Portal
-  // de volta" em vez de "abrir overlay por cima".
-  modulo3dTeardownViewer();
   if(state.activeView === GATEWAY_VIEW){
     renderGateway();
     return;
@@ -1924,41 +1613,137 @@ function renderCurrentView(){
     renderProducts(filteredHomeItems(), "Resultados", null);
     return;
   }
-  if(state.activeView === MODULO3D_MENU_VIEW){
-    renderModulo3dMenu();
-    return;
-  }
-  // categoryItems = TODOS os itens da categoria, sem o filtro de
-  // subcategoria aplicado — precisa deles inteiros pra sempre listar
-  // todas as subcategorias possíveis nos chips (não só as que sobraram
-  // depois do filtro atual, senão escolher uma subcategoria faria as
-  // outras "sumirem" do próprio filtro). `items` é quem realmente
-  // desenha na tela.
+  // categoryItems = TODOS os itens da categoria, sem nenhum filtro
+  // aplicado — precisa deles inteiros pra sempre listar todas as opções
+  // possíveis nos campos (não só as que sobraram depois do filtro atual,
+  // senão escolher um valor faria as outras "sumirem" do próprio filtro).
+  // `items` (Subcategoria/"Todos" + Material/Estilo/Personalizáveis, ver
+  // renderCategoryFilterBar) é quem realmente desenha na tela.
   const categoryItems = itemsForView(state.activeView);
-  const items = state.activeSubcat ? categoryItems.filter((item) => item.subcat === state.activeSubcat) : categoryItems;
+  const items = categoryItems.filter((item) => itemMatchesCategoryFilters(item));
   renderProducts(items, undefined, categoryItems);
 }
 
-// Filtro premium por subcategoria dentro de uma categoria (pedido
-// explícito do usuário, com print da categoria "Estofados" cheia de
-// produtos: "quero que apareça as subcategorias que tem dentro do
-// cadastro itens, por exemplo, Clássicos, e quando eu selecionar ali só
-// vai aparecer os móveis daquela subcategoria... um filtro premium").
-// Só aparece quando a categoria tem PELO MENOS 2 subcategorias
-// distintas cadastradas — com 0 ou 1, filtrar não ajudaria em nada
-// (mostraria um chip só, sem nenhuma alternativa pra escolher).
-function renderSubcatFilterBar(categoryItems){
+// Filtro premium dentro de uma categoria (pedido explícito do usuário, com print da categoria "Estofados" cheia
+// de produtos: "quero que apareça as subcategorias que tem dentro do cadastro itens, por exemplo, Clássicos, e
+// quando eu selecionar ali só vai aparecer os móveis daquela subcategoria... um filtro premium").
+//
+// Virou o MESMO grupo Subcategoria + Material/Estilo/Personalizáveis da tela "Categorias" (ver
+// HOME_FILTER_FIELDS/renderCategoryFilterBar mais acima), pedido explícito numa sessão seguinte, com print da
+// barra antiga (Subcategoria como uma fileira de chips soltos, sem Material/Personalizáveis): "essas
+// subcategorias precisam estar dentro de todos... e do lado vai estar os mesmos filtros da categorias, material
+// e personalizaveis... quando eu clicar em todos vai aparecer as subcategorias, aí eu seleciono qual eu quero
+// ver" — "Todos" (o texto que já servia de "sem filtro") virou o RÓTULO do próprio campo Subcategoria, um
+// dropdown de seleção ÚNICA (não caixinhas como Material/Estilo — só faz sentido UMA subcategoria de cada vez),
+// que troca de nome pro valor escolhido, igual um <select>.
+//
+// Estado PRÓPRIO (`state.categoryFilters`/`state.categoryFilterOpen`), independente de `state.homeFilters` —
+// cada tela reseta o seu sozinha (`applyView()`), então mexer aqui nunca arrisca a barra da tela "Categorias"
+// (já coberta por tests/catalogo-filtros-browser.cjs). Diferente de `refreshHomeFilters()` (que só repinta
+// contagens/marcações, preservando o painel aberto sem recriar nada — pensado pro volume de itens do catálogo
+// inteiro), aqui cada clique passa por um `renderCurrentView()` de verdade (mesmo padrão simples que a
+// subcategoria já usava sozinha antes) — o painel aberto continua aberto porque `state.categoryFilterOpen`
+// decide isso NO PRÓPRIO ESTADO, refeito a cada render, não em manipulação de DOM.
+function categorySubcatOptions(categoryItems){
   const seen = new Map();
   categoryItems.forEach((item) => {
     if(item.subcat && !seen.has(item.subcat)) seen.set(item.subcat, item.subcatLabel);
   });
-  if(seen.size < 2) return "";
-  const options = [...seen].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
-  const chip = (slug, label, active) =>
-    `<button type="button" class="catalog-subcat-chip${active ? " is-active" : ""}" data-subcat-filter="${escapeAttr(slug)}" aria-pressed="${active}">${escapeHtml(label)}</button>`;
-  return `<div class="catalog-subcat-filter">
-    ${chip("", "Todos", !state.activeSubcat)}
-    ${options.map(([slug, label]) => chip(slug, label, state.activeSubcat === slug)).join("")}
+  return [...seen].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
+}
+
+// Igual a itemMatchesHomeFilters, só que escopado a `state.categoryFilters`/`state.activeSubcat` em vez dos da
+// tela "Categorias" — `skip="subcat"` ignora o filtro de subcategoria (pra contar as próprias opções dela).
+function itemMatchesCategoryFilters(item, skip = ""){
+  if(skip !== "subcat" && state.activeSubcat && item.subcat !== state.activeSubcat) return false;
+  const filters = state.categoryFilters;
+  for(const { key } of HOME_FILTER_FIELDS){
+    if(key === skip || !filters[key].size) continue;
+    if(!homeFilterKeysOf(item, key).some((valor) => filters[key].has(valor))) return false;
+  }
+  if(filters.personalizable && skip !== "personalizable" && !itemIsPersonalizable(item)) return false;
+  return true;
+}
+
+function hasCategoryFilters(){
+  return Boolean(state.activeSubcat) || state.categoryFilters.personalizable || HOME_FILTER_FIELDS.some(({ key }) => state.categoryFilters[key].size > 0);
+}
+
+// Opções de Material/Estilo já dentro da subcategoria escolhida (se houver) — escolher "Estantes" precisa
+// restringir o que Material mostra, do contrário marcar um valor ali poderia trazer item de OUTRA subcategoria.
+function categoryFieldOptions(categoryItems, field){
+  const escopo = state.activeSubcat ? categoryItems.filter((item) => item.subcat === state.activeSubcat) : categoryItems;
+  const grafias = new Map();
+  const contagens = new Map();
+  escopo.forEach((item) => {
+    (item.variantGroup?.length ? item.variantGroup : [item]).forEach((variante) => {
+      const bruto = String(variante[field] || "").trim();
+      const chave = filterKey(bruto);
+      if(!chave) return;
+      if(!grafias.has(chave)) grafias.set(chave, new Map());
+      grafias.get(chave).set(bruto, (grafias.get(chave).get(bruto) || 0) + 1);
+    });
+    if(itemMatchesCategoryFilters(item, field)) homeFilterKeysOf(item, field).forEach((chave) => contagens.set(chave, (contagens.get(chave) || 0) + 1));
+  });
+  return [...grafias].map(([key, opcoes]) => ({
+    key, label: [...opcoes].sort((a, b) => b[1] - a[1])[0][0], count: contagens.get(key) || 0,
+  })).sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+}
+
+const CATALOG_FILTER_CHEVRON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+
+// Só aparece quando a categoria tem PELO MENOS 2 subcategorias distintas — com 0 ou 1, escolher não ajudaria em
+// nada (só uma opção além de "Todos"). O rótulo do botão É a subcategoria escolhida (ou "Todos", sem nada
+// marcado) — igual um <select>, diferente de Material/Estilo, que sempre mostram o nome do campo.
+function categorySubcatFieldMarkup(categoryItems){
+  const options = categorySubcatOptions(categoryItems);
+  if(options.length < 2) return "";
+  const ativo = Boolean(state.activeSubcat);
+  const rotulo = ativo ? (options.find(([slug]) => slug === state.activeSubcat)?.[1] || "Todos") : "Todos";
+  const aberto = state.categoryFilterOpen === "subcat";
+  const linhas = [["", "Todos", categoryItems.filter((item) => itemMatchesCategoryFilters(item, "subcat")).length],
+    ...options.map(([slug, label]) => [slug, label, categoryItems.filter((item) => item.subcat === slug && itemMatchesCategoryFilters(item, "subcat")).length])];
+  return `<div class="catalog-filter${aberto ? " is-open" : ""}" data-cat-filter-field="subcat">
+    <button type="button" class="catalog-filter-chip catalog-filter-trigger${ativo ? " is-active" : ""}" data-cat-filter-trigger="subcat" aria-haspopup="true" aria-expanded="${aberto}">
+      <span>${escapeHtml(rotulo)}</span>${CATALOG_FILTER_CHEVRON}
+    </button>
+    <div class="catalog-filter-panel" role="group" aria-label="Subcategoria"${aberto ? "" : " hidden"}>
+      ${linhas.map(([slug, label, count]) => `<button type="button" class="catalog-filter-option${state.activeSubcat === slug ? " is-selected" : ""}" data-cat-subcat-option="${escapeAttr(slug)}"><span class="catalog-filter-option-label">${escapeHtml(label)}</span><em class="catalog-filter-option-count">${count}</em></button>`).join("")}
+    </div>
+  </div>`;
+}
+
+function categoryFilterFieldMarkup(field, options){
+  const selected = state.categoryFilters[field.key];
+  const aberto = state.categoryFilterOpen === field.key;
+  return `<div class="catalog-filter${aberto ? " is-open" : ""}" data-cat-filter-field="${escapeAttr(field.key)}">
+    <button type="button" class="catalog-filter-chip catalog-filter-trigger${selected.size ? " is-active" : ""}" data-cat-filter-trigger="${escapeAttr(field.key)}" aria-haspopup="true" aria-expanded="${aberto}">
+      <span>${escapeHtml(field.label)}</span><em class="catalog-filter-count"${selected.size ? "" : " hidden"}>${selected.size}</em>${CATALOG_FILTER_CHEVRON}
+    </button>
+    <div class="catalog-filter-panel" role="group" aria-label="${escapeAttr(field.label)}"${aberto ? "" : " hidden"}>
+      ${options.map((option) => `<label class="catalog-filter-option"><input type="checkbox" data-cat-filter-option="${escapeAttr(field.key)}" value="${escapeAttr(option.key)}"${selected.has(option.key) ? " checked" : ""}${option.count === 0 && !selected.has(option.key) ? " disabled" : ""}><span class="catalog-filter-option-label">${escapeHtml(option.label)}</span><em class="catalog-filter-option-count">${option.count}</em></label>`).join("")}
+    </div>
+  </div>`;
+}
+
+function renderCategoryFilterBar(categoryItems){
+  const subcatField = categorySubcatFieldMarkup(categoryItems);
+  // Diferente da tela "Categorias" (catálogo inteiro, onde 1 valor só já vale mostrar): aqui, escopado a uma
+  // categoria, um campo com um valor SÓ não ajudaria em nada (mesmo raciocínio de categorySubcatFieldMarkup) —
+  // precisa de 2+ pra virar filtro de verdade. Decidido pelos itens da categoria INTEIRA (sem escopar pela
+  // subcategoria já escolhida) — senão o campo apareceria e sumiria sozinho conforme a pessoa troca de
+  // subcategoria (ex.: "Sofás" só ter 1 material dentro não deve fazer o campo Material desaparecer da barra,
+  // só a lista de opções dentro dele fica mais curta).
+  const fields = HOME_FILTER_FIELDS
+    .filter((field) => new Set(categoryItems.flatMap((item) => homeFilterKeysOf(item, field.key))).size > 1)
+    .map((field) => ({ field, options: categoryFieldOptions(categoryItems, field.key) }));
+  const hasPersonalizable = categoryItems.some(itemIsPersonalizable);
+  if(!subcatField && !fields.length && !hasPersonalizable) return "";
+  return `<div class="catalog-subcat-filter" role="group" aria-label="Filtros">
+    <span class="catalog-filter-label">Filtre por...</span>
+    ${subcatField}
+    ${fields.map(({ field, options }) => categoryFilterFieldMarkup(field, options)).join("")}
+    ${hasPersonalizable ? `<button type="button" class="catalog-filter-chip${state.categoryFilters.personalizable ? " is-active" : ""}" data-cat-filter-toggle="personalizable" aria-pressed="${state.categoryFilters.personalizable}"><span>Personalizáveis</span><em class="catalog-filter-count">${categoryItems.filter((item) => itemMatchesCategoryFilters(item, "personalizable") && itemIsPersonalizable(item)).length}</em>${CATALOG_FILTER_CHEVRON}</button>` : ""}
   </div>`;
 }
 
@@ -1987,6 +1772,8 @@ function selectGridVariant(card, variante){
   if(nome) nome.textContent = variante.name;
   const dims = card.querySelector(".catalog-grid-card-dims");
   if(dims && variante.dims) dims.textContent = `Dimensões: ${variante.dims}`;
+  const price = card.querySelector(".catalog-rental-price");
+  if(price) price.outerHTML = rentalPriceMarkup(variante);
   card.querySelectorAll("[data-grid-variant]").forEach((swatch) => {
     const ativa = swatch.dataset.gridVariant === String(variante.id);
     swatch.classList.toggle("active", ativa);
@@ -1998,13 +1785,15 @@ function selectGridVariant(card, variante){
   atualizarBotoesProjeto(card);
 }
 
-function gridCardMarkup(item){
+function gridCardMarkup(item, { reordenavel = false } = {}){
   return `
-      <button type="button" class="catalog-grid-card" data-grid-item="${escapeAttr(item.id)}">
+      <button type="button" class="catalog-grid-card${reordenavel ? " is-reorderable" : ""}" data-grid-item="${escapeAttr(item.id)}"${reordenavel ? ` draggable="true" title="Arraste para mudar a posição"` : ""}>
+        ${reordenavel ? `<span class="catalog-grid-drag" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>` : ""}
         <span class="catalog-grid-card-photo"><img src="${escapeAttr(otimizarFoto(item.photo, IMG_WIDTH.card))}" alt="${escapeAttr(item.name)}" loading="lazy" decoding="async">${projetoAddMarkup(item.id)}</span>
         <span class="catalog-grid-card-body">
           <span class="catalog-grid-card-name">${escapeHtml(item.name)}</span>
           ${item.dims ? `<span class="catalog-grid-card-dims">Dimensões: ${escapeHtml(item.dims)}</span>` : ""}
+          ${rentalPriceMarkup(item)}
           ${gridSwatchesMarkup(item)}
         </span>
       </button>`;
@@ -2027,12 +1816,12 @@ function renderGridMarkup(items, heading, categoryItems){
   // (reportado com print mostrando "BIBLIOTECA" repetida — mesma lógica
   // vale pro nome da categoria aqui).
   const showHeading = heading && heading !== currentViewLabel();
-  const subcatBar = categoryItems ? renderSubcatFilterBar(categoryItems) : "";
+  const subcatBar = categoryItems ? renderCategoryFilterBar(categoryItems) : "";
   if(!items.length && !subcatBar) return "";
   return `<div class="catalog-grid-wrap">
     ${showHeading ? `<h2 class="catalog-grid-heading">${escapeHtml(heading)}</h2>` : ""}
     ${subcatBar}
-    ${items.length ? `<div class="catalog-grid">${items.map(gridCardMarkup).join("")}</div>` : `<p class="catalog-subcat-empty">Nenhum item nessa subcategoria.</p>`}
+    ${items.length ? `<div class="catalog-grid${podeReordenar(categoryItems) ? " is-reorderable" : ""}">${items.map((item) => gridCardMarkup(item, { reordenavel: podeReordenar(categoryItems) })).join("")}</div>` : `<p class="catalog-subcat-empty">${hasCategoryFilters() ? "Nenhum item com esses filtros." : "Nenhum item nessa subcategoria."}</p>`}
   </div>`;
 }
 
@@ -2053,7 +1842,7 @@ function renderGridMarkup(items, heading, categoryItems){
 // catálogo (ex. escurecer da foto ambientada do item).
 function renderMosaicMarkup(items, heading, categoryItems){
   const showHeading = heading && heading !== currentViewLabel();
-  const subcatBar = categoryItems ? renderSubcatFilterBar(categoryItems) : "";
+  const subcatBar = categoryItems ? renderCategoryFilterBar(categoryItems) : "";
   if(!items.length && !subcatBar) return "";
   return `<div class="catalog-grid-wrap">
     ${showHeading ? `<h2 class="catalog-grid-heading">${escapeHtml(heading)}</h2>` : ""}
@@ -2067,16 +1856,130 @@ function renderMosaicMarkup(items, heading, categoryItems){
           ${item.dims ? `<span class="catalog-mosaic-dims">${escapeHtml(item.dims)}</span>` : ""}
         </span>
       </button>`).join("")}
-    </div>` : `<p class="catalog-subcat-empty">Nenhum item nessa subcategoria.</p>`}
+    </div>` : `<p class="catalog-subcat-empty">${hasCategoryFilters() ? "Nenhum item com esses filtros." : "Nenhum item nessa subcategoria."}</p>`}
   </div>`;
 }
 
+// Ordem de exibição dentro de uma lista: primeiro a ordem definida pela equipe (arrastando os cards — ver
+// reordenarCategoria()), depois quem não tem ordem, priorizando os itens com foto (regra de antes), preservando a
+// ordem atual no resto (sort estável).
+function compararOrdemCatalogo(a, b){
+  const oa = a.ordem ?? null, ob = b.ordem ?? null;
+  if(oa !== null && ob !== null && oa !== ob) return oa - ob;
+  if((oa === null) !== (ob === null)) return oa === null ? 1 : -1;
+  return Number(Boolean(b.photo && b.photo !== FOTO_PLACEHOLDER)) - Number(Boolean(a.photo && a.photo !== FOTO_PLACEHOLDER));
+}
+
+// Arrastar pra reordenar (pedido do usuário: "essa função deve ser somente da equipe interna da Chiavari... se eu quiser
+// colocar a estante Lord na frente da estante Cacau eu posso simplesmente arrastar ela pra posição que eu quero, e
+// aquela posição passa a ser a padrão que todos os decoradores vão ver"). Só na GRADE de uma categoria (não na busca,
+// que mistura categorias), só pra equipe interna. Grava em itens.ordem_exposicao_site via RPC catalogo_reordenar.
+function podeReordenar(categoryItems){
+  return Boolean(state.acessoInterno && Array.isArray(categoryItems) && state.viewMode === "grid");
+}
+
+// O item "da lista" (principal do grupo de variantes) a partir de qualquer id — o card pode estar mostrando outra cor.
+function grupoDoItem(id){
+  return state.items.find((item) => String(item.id) === String(id) || item.variantGroup?.some((variante) => String(variante.id) === String(id))) || null;
+}
+
+async function reordenarCategoria(idsVisiveis){
+  const cat = state.activeView;
+  const todos = itemsForView(cat).sort(compararOrdemCatalogo);
+  const visiveis = idsVisiveis.map(grupoDoItem).filter(Boolean);
+  const setVisiveis = new Set(visiveis);
+  // Com filtro ativo, só os itens visíveis trocam de lugar ENTRE SI; os escondidos pelo filtro ficam onde estavam.
+  let k = 0;
+  const nova = todos.map((item) => setVisiveis.has(item) ? visiveis[k++] : item);
+  const antes = todos.map((item) => item.ordem);
+  if(nova.every((item, i) => item === todos[i]) && todos.every((item) => item.ordem !== null)) return;
+  const payload = [];
+  nova.forEach((item, i) => {
+    const ordem = (i + 1) * 10;
+    item.ordem = ordem;
+    (item.variantGroup || [item]).forEach((variante) => { variante.ordem = ordem; payload.push({ id: variante.id, ordem }); });
+  });
+  const { error } = await supabase.rpc("catalogo_reordenar", { p_empresa_id: state.catalogSession.empresa_id, p_itens: payload });
+  if(error){
+    console.error("Erro ao salvar a ordem do catálogo:", error);
+    todos.forEach((item, i) => { item.ordem = antes[i]; (item.variantGroup || []).forEach((variante) => { variante.ordem = antes[i]; }); });
+    notify({ title: "Não foi possível salvar a ordem", message: "Tente novamente.", status: "error" });
+    renderCurrentView();
+    return;
+  }
+  notify({ title: "Ordem salva", message: "Os decoradores vão ver os itens nessa sequência.", duration: 2600 });
+}
+
+// Mesma função, na tela "Categorias" (pedido do usuário: "quero que a mesma função seja aplicada dentro de categorias").
+// Grava a lista inteira de categorias na nova ordem (catalogo_categorias_reordenar) e atualiza catOrdem em todos os itens.
+async function reordenarCategorias(cats){
+  const antes = new Map(getCategories().map((c, i) => [c.cat, i]));
+  const labels = new Map(getCategories().map((c) => [c.cat, c.label]));
+  const anterior = state.items.map((item) => item.catOrdem);
+  const pos = new Map(cats.map((cat, i) => [cat, (i + 1) * 10]));
+  const aplicar = (item) => { item.catOrdem = pos.get(item.cat) ?? null; };
+  state.items.forEach((item) => { aplicar(item); item.variantGroup?.forEach(aplicar); });
+  // O banco guarda pelo nome original da categoria (itens.categoria), não pelo slug usado na tela.
+  const nomes = cats.map((cat) => state.items.find((item) => item.cat === cat)?.catLabel ?? cat);
+  const { error } = await supabase.rpc("catalogo_categorias_reordenar", { p_empresa_id: state.catalogSession.empresa_id, p_categorias: nomes });
+  if(error){
+    console.error("Erro ao salvar a ordem das categorias:", error, antes);
+    state.items.forEach((item, i) => { item.catOrdem = anterior[i]; item.variantGroup?.forEach((v) => { v.catOrdem = anterior[i]; }); });
+    notify({ title: "Não foi possível salvar a ordem", message: "Tente novamente.", status: "error" });
+    renderCurrentView();
+    return;
+  }
+  notify({ title: "Ordem salva", message: "Os decoradores vão ver as categorias nessa sequência.", duration: 2600 });
+}
+
+function bindReordenarCards(){
+  const grid = $("catalogGrid");
+  if(!grid || grid.dataset.reorderBound) return;
+  grid.dataset.reorderBound = "1";
+  let arrastando = null;
+  let ordemInicial = "";
+  const ordemAtual = (lista) => [...lista.querySelectorAll(".catalog-grid-card")].map((card) => card.dataset.gridItem ?? card.dataset.homeCategory);
+  grid.addEventListener("dragstart", (event) => {
+    const card = event.target.closest?.(".catalog-grid-card.is-reorderable");
+    if(!card) return;
+    arrastando = card;
+    ordemInicial = ordemAtual(card.parentElement).join("|");
+    event.dataTransfer.effectAllowed = "move";
+    try{ event.dataTransfer.setData("text/plain", card.dataset.gridItem); }catch{}
+    requestAnimationFrame(() => card.classList.add("is-dragging"));
+  });
+  grid.addEventListener("dragover", (event) => {
+    if(!arrastando) return;
+    const lista = arrastando.parentElement;
+    event.preventDefault();
+    // A Home centraliza a última linha com grid-column-start inline (centerLastHomeGridRow) — tira durante o arrasto.
+    // Só aqui, no 1º dragover: mexer na posição do card já no dragstart faz o Chromium cancelar o arrasto na hora.
+    if(!lista.dataset.semCentro){ lista.dataset.semCentro = "1"; lista.querySelectorAll(".catalog-grid-card").forEach((outro) => { outro.style.gridColumnStart = ""; }); }
+    event.dataTransfer.dropEffect = "move";
+    const alvo = event.target.closest?.(".catalog-grid-card");
+    if(!alvo || alvo === arrastando || alvo.parentElement !== lista) return;
+    const r = alvo.getBoundingClientRect();
+    const depois = event.clientX > r.left + r.width / 2;
+    const referencia = depois ? alvo.nextElementSibling : alvo;
+    if(referencia !== arrastando && arrastando.nextElementSibling !== referencia) lista.insertBefore(arrastando, referencia);
+  });
+  grid.addEventListener("drop", (event) => { if(arrastando) event.preventDefault(); });
+  grid.addEventListener("dragend", () => {
+    if(!arrastando) return;
+    const card = arrastando;
+    arrastando = null;
+    card.classList.remove("is-dragging");
+    const lista = card.parentElement;
+    const ids = ordemAtual(lista);
+    const categorias = lista.classList.contains("catalog-home-grid");
+    delete lista.dataset.semCentro;
+    if(categorias) centerLastHomeGridRow();
+    if(ids.join("|") !== ordemInicial) (categorias ? reordenarCategorias(ids) : reordenarCategoria(ids));
+  });
+}
+
 function renderProducts(items, heading, categoryItems){
-  // Prioriza itens com foto, preservando a ordem atual dentro de cada grupo.
-  items = [...items].sort((a, b) =>
-    Number(Boolean(b.photo && b.photo !== FOTO_PLACEHOLDER)) -
-    Number(Boolean(a.photo && a.photo !== FOTO_PLACEHOLDER))
-  );
+  items = [...items].sort(compararOrdemCatalogo);
   const grid = $("catalogGrid");
   state.currentItems = items;
   state.currentHeading = heading ?? currentViewLabel();
@@ -2172,6 +2075,7 @@ function scrollToIndex(index){
 }
 
 function bindInteractions(){
+  bindReordenarCards();
   $("catalogViewSwitcher")?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-view-mode]");
     if(button) setViewMode(button.dataset.viewMode);
@@ -2180,20 +2084,44 @@ function bindInteractions(){
   // Marcar/desmarcar um valor num filtro da tela "Categorias" — o painel continua aberto pra marcar outros.
   $("catalogGrid").addEventListener("change", (event) => {
     const option = event.target.closest("[data-home-filter-option]");
-    if(!option) return;
-    const selected = state.homeFilters[option.dataset.homeFilterOption];
-    if(option.checked) selected.add(option.value); else selected.delete(option.value);
-    refreshHomeFilters();
+    if(option){
+      const selected = state.homeFilters[option.dataset.homeFilterOption];
+      if(option.checked) selected.add(option.value); else selected.delete(option.value);
+      refreshHomeFilters();
+      return;
+    }
+    // Mesma marcação, agora dentro de uma categoria (Material/Estilo, ver renderCategoryFilterBar) — aqui não
+    // tem o "refresh cirúrgico" de refreshHomeFilters(): renderCurrentView() de novo já basta (mesmo padrão
+    // simples que a subcategoria sozinha já usava), e o painel continua aberto porque state.categoryFilterOpen
+    // decide isso no próprio estado, não em manipulação de DOM.
+    const catOption = event.target.closest("[data-cat-filter-option]");
+    if(catOption){
+      const selected = state.categoryFilters[catOption.dataset.catFilterOption];
+      if(catOption.checked) selected.add(catOption.value); else selected.delete(catOption.value);
+      renderCurrentView();
+    }
   });
   // Painel de filtro aberto fecha clicando fora dele e com Esc (o foco volta pro botão que o abriu).
   document.addEventListener("click", (event) => {
     if(state.homeFilterOpen && !event.target.closest("[data-home-filter-field]")) setHomeFilterOpen("");
+    if(state.categoryFilterOpen && !event.target.closest("[data-cat-filter-field]")){
+      state.categoryFilterOpen = "";
+      renderCurrentView();
+    }
   });
   document.addEventListener("keydown", (event) => {
-    if(event.key !== "Escape" || !state.homeFilterOpen) return;
-    const trigger = document.querySelector(`[data-home-filter-trigger="${state.homeFilterOpen}"]`);
-    setHomeFilterOpen("");
-    trigger?.focus();
+    if(event.key !== "Escape") return;
+    if(state.homeFilterOpen){
+      const trigger = document.querySelector(`[data-home-filter-trigger="${state.homeFilterOpen}"]`);
+      setHomeFilterOpen("");
+      trigger?.focus();
+    }
+    if(state.categoryFilterOpen){
+      const key = state.categoryFilterOpen;
+      state.categoryFilterOpen = "";
+      renderCurrentView();
+      document.querySelector(`[data-cat-filter-trigger="${key}"]`)?.focus();
+    }
   });
 
   $("catalogGrid").addEventListener("click", (event) => {
@@ -2208,11 +2136,6 @@ function bindInteractions(){
     const gatewayTile = event.target.closest("[data-gateway-tile]");
     if(gatewayTile){
       activateGatewayTile(gatewayTile.dataset.gatewayTile);
-      return;
-    }
-    const modulo3dCard = event.target.closest("[data-modulo3d-card]");
-    if(modulo3dCard){
-      activateModulo3dCard(modulo3dCard.dataset.modulo3dCard);
       return;
     }
     // Filtros da tela "Categorias" (ver HOME_FILTER_FIELDS).
@@ -2232,6 +2155,28 @@ function bindInteractions(){
       clearHomeFilters();
       return;
     }
+    // Filtro dentro de uma categoria (Subcategoria/"Todos" + Material/Estilo/Personalizáveis, ver
+    // renderCategoryFilterBar) — mesma ideia dos de cima, escopados a state.categoryFilters/activeSubcat.
+    const catSubcatOption = event.target.closest("[data-cat-subcat-option]");
+    if(catSubcatOption){
+      state.activeSubcat = catSubcatOption.dataset.catSubcatOption;
+      state.categoryFilterOpen = "";
+      renderCurrentView();
+      return;
+    }
+    const catFilterTrigger = event.target.closest("[data-cat-filter-trigger]");
+    if(catFilterTrigger){
+      const key = catFilterTrigger.dataset.catFilterTrigger;
+      state.categoryFilterOpen = state.categoryFilterOpen === key ? "" : key;
+      renderCurrentView();
+      return;
+    }
+    const catFilterToggle = event.target.closest('[data-cat-filter-toggle="personalizable"]');
+    if(catFilterToggle){
+      state.categoryFilters.personalizable = !state.categoryFilters.personalizable;
+      renderCurrentView();
+      return;
+    }
     const gridVariant = event.target.closest("[data-grid-variant]");
     if(gridVariant){
       const variante = findItemById(gridVariant.dataset.gridVariant);
@@ -2247,12 +2192,6 @@ function bindInteractions(){
       // nos itens filtrados), como uma tela nova na linha do tempo — não a categoria inteira.
       if(state.activeView === HOME_VIEW && hasHomeFilters()) applyView(FILTER_VIEW, { focusItemId: item.id });
       else openImmersiveFromGrid(item);
-      return;
-    }
-    const subcatFilter = event.target.closest("[data-subcat-filter]");
-    if(subcatFilter){
-      state.activeSubcat = subcatFilter.dataset.subcatFilter;
-      renderCurrentView();
       return;
     }
     const homeCard = event.target.closest("[data-home-category]");
@@ -2294,13 +2233,6 @@ function bindInteractions(){
       const section = capaToggle.closest(".catalog-product-section");
       const item = findItemById(section?.dataset.productId);
       if(item) handleCapaToggleClick(item, capaToggle);
-      return;
-    }
-    const capaModulo3dToggle = event.target.closest("[data-capa-modulo3d-toggle]");
-    if(capaModulo3dToggle){
-      const section = capaModulo3dToggle.closest(".catalog-product-section");
-      const item = findItemById(section?.dataset.productId);
-      if(item) handleCapaModulo3dToggleClick(item, capaModulo3dToggle.dataset.capaModulo3dToggle, capaModulo3dToggle);
       return;
     }
     // Setas do carrossel da foto principal (pedido explícito do usuário:
@@ -2407,6 +2339,14 @@ function bindInteractions(){
   });
 
   $("catalogGrid").addEventListener("change", async (event) => {
+    if(event.target.matches("[data-gateway-client]") && state.acessoInterno){
+      cancelInlineEdit();
+      state.gatewayClienteId = event.target.value || null;
+      state.gatewayCapas = state.gatewayClienteId
+        ? (state.gatewayCapasPorCliente[state.gatewayClienteId] ||= {}) : state.gatewayCapasEquipe;
+      renderGateway();
+      return;
+    }
     const gatewayFileInput = event.target.closest("[data-gateway-file]");
     if(gatewayFileInput){
       const file = gatewayFileInput.files?.[0];
@@ -2458,8 +2398,19 @@ function bindInteractions(){
 }
 
 function bindCatalogSession(){
-  $("catalogLogout")?.addEventListener("click", () => {
+  $("catalogLogout")?.addEventListener("click", async () => {
     sessionStorage.removeItem("catalogo_token");
+    // Login direto da equipe (ver resolveAcessoInterno()) persiste como
+    // uma sessão de verdade do Supabase Auth, não só um hint de
+    // sessionStorage — só remover "catalogo_acesso_interno_direto" e
+    // recarregar não bastaria: resolveAcessoInterno() acharia a MESMA
+    // sessão ainda válida e autenticaria de novo sozinho, sem pedir
+    // login, fazendo o botão parecer que não fez nada. signOut() é
+    // seguro de chamar mesmo no fluxo do decorador (que nunca autentica
+    // via Supabase Auth) — vira um no-op inofensivo nesse caso.
+    sessionStorage.removeItem("catalogo_acesso_interno_direto");
+    sessionStorage.removeItem("catalogo_visitante");
+    await supabase?.auth.signOut().catch(() => {});
     location.reload();
   });
 }
@@ -3439,6 +3390,8 @@ window.addEventListener("pagehide", () => {
 // troca de cor de verdade): mantém o carrossel no slide que já estava
 // em vez de voltar pra principal — ver comentário em refreshOpenSection.
 function applyVariant(section, variant, options = {}){
+  const price = section.querySelector(".catalog-rental-price");
+  if(price) price.outerHTML = rentalPriceMarkup(variant, true);
   section.dataset.productId = String(variant.id);
   section.id = `produto-${variant.id}`;
 
@@ -3479,19 +3432,6 @@ function applyVariant(section, variant, options = {}){
   const capaButton = section.querySelector("[data-capa-toggle]");
   if(capaButton) capaButton.outerHTML = capaToggleMarkup(variant);
   atualizarBotoesProjeto(section);
-
-  // Grupo de botões de modelo em destaque do Módulo 3D (1 por módulo):
-  // removido e reinserido do zero (em vez de só atualizar outerHTML)
-  // porque, diferente da capa de categoria, ele pode simplesmente NÃO
-  // EXISTIR pra uma variante sem modelo .glb — precisa cobrir aparecer/
-  // sumir/atualizar ao trocar de variante, não só atualizar um grupo que
-  // já estava lá.
-  section.querySelector(".catalog-capa-modulo3d-group")?.remove();
-  const modulo3dToggleHtml = capaModulo3dToggleMarkup(variant);
-  if(modulo3dToggleHtml){
-    const modulo3dAnchor = section.querySelector("[data-capa-toggle]") || bespokeCard || section.querySelector(".product-rule");
-    modulo3dAnchor?.insertAdjacentHTML("afterend", modulo3dToggleHtml);
-  }
 
   section.querySelectorAll(".product-variant-swatch").forEach((button) => {
     button.classList.toggle("active", button.dataset.variantId === String(variant.id));
@@ -3705,8 +3645,35 @@ async function requireCatalogLogin(){
   // nem o catálogo carregava (sem sessão) nem o login aparecia (ainda
   // escondido pelo script anti-flash).
   sessionStorage.removeItem("catalogo_acesso_interno_direto");
+  if(sessionStorage.getItem("catalogo_visitante")){ entrarComoVisitante(); return; }
   login.classList.remove("hidden");
-  await new Promise((resolve) => form.addEventListener("submit", async (event) => {
+  // Veio de um bloco com cadeado ("Entrar com acesso exclusivo"): já abre no e-mail e senha.
+  const abrirExclusivo = sessionStorage.getItem("catalogo_abrir_exclusivo");
+  sessionStorage.removeItem("catalogo_abrir_exclusivo");
+  login.classList.toggle("is-exclusivo", Boolean(abrirExclusivo));
+  login.querySelector("[data-login-exclusivo]")?.setAttribute("aria-expanded", abrirExclusivo ? "true" : "false");
+  // Peças do acervo ao redor do login (só enquanto ele está na tela). ?empresa=<id> no link escolhe a empresa quando houver
+  // mais de uma com catálogo (ver catalogo_vitrine_login).
+  const pararVitrine = iniciarVitrineLogin(supabase, { empresaId: new URLSearchParams(location.search).get("empresa") });
+  await new Promise((resolve) => {
+  // "Explorar o catálogo" entra como visitante; "Tenho acesso exclusivo" mostra e-mail e senha; "← Entrar sem acesso
+  // exclusivo" volta.
+  const exclusivo = login.querySelector("[data-login-exclusivo]");
+  login.querySelector("[data-login-visitante]")?.addEventListener("click", () => {
+    sessionStorage.setItem("catalogo_visitante", "1");
+    entrarComoVisitante();
+    resolve();
+  });
+  exclusivo?.addEventListener("click", () => {
+    login.classList.add("is-exclusivo"); exclusivo.setAttribute("aria-expanded", "true");
+    $("catalogLoginEmail")?.focus();
+  });
+  login.querySelector("[data-login-voltar]")?.addEventListener("click", () => {
+    login.classList.remove("is-exclusivo"); exclusivo?.setAttribute("aria-expanded", "false");
+    status.textContent = "";
+    login.querySelector("[data-login-visitante]")?.focus();
+  });
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = form.querySelector("button[type=submit]");
     button.disabled = true; status.textContent = "Verificando acesso...";
@@ -3751,7 +3718,21 @@ async function requireCatalogLogin(){
 
     button.disabled = false;
     status.textContent = "E-mail ou senha inválidos.";
-  }));
+  });
+  });
+  pararVitrine();
+}
+
+function irParaAcessoExclusivo(){
+  sessionStorage.removeItem("catalogo_visitante");
+  sessionStorage.setItem("catalogo_abrir_exclusivo", "1");
+  location.reload();
+}
+
+function entrarComoVisitante(){
+  state.catalogSession = { token: null, cliente_id: null, empresa_id: null, visitante: true };
+  document.body.classList.add("catalog-visitante");
+  $("catalogLogin")?.classList.add("hidden");
 }
 
 // Aberto de dentro do proprio sistema (equipe ja logada em login.html),
@@ -3816,18 +3797,17 @@ async function init(){
     state.items = await carregarItens();
     window.CatalogCredits?.refresh().catch(() => {});
     await carregarCapasGateway();
-    initCatalogProjetos({
+    if(!ehVisitante()) initCatalogProjetos({
       supabase,
       getSession: () => state.catalogSession,
       isStaff: () => state.acessoInterno,
       findItem: findItemById,
       getDecorator: () => state.decorator,
       getCompany: () => state.company,
-      listItems: () => allItemsFlat(),
       notify,
       goCatalog: () => applyView(HOME_VIEW),
-      goLounge: () => openLoungeOverlay(),
       goStudio: () => openStudioOverlay(),
+      cenaEditor,
       openProjetos: (options) => openProjetosOverlay(options),
     });
     renderHeader();
@@ -3841,15 +3821,10 @@ async function init(){
     bindPhotoZoom();
     bindNavHistory();
     startEventRotation();
-    initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id, token: state.catalogSession.token });
+    if(!ehVisitante()) initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id, token: state.catalogSession.token });
     initCatalogBiblioteca({
       supabase, empresaId, token: state.catalogSession.token,
-      acessoInterno: state.acessoInterno, categories: getCategories(),
-    });
-    initCatalogLounge({
-      items: state.items, empresaId, supabase,
-      token: state.catalogSession.token, clienteId: state.catalogSession.cliente_id,
-      acessoInterno: state.acessoInterno,
+      acessoInterno: state.acessoInterno, visitante: ehVisitante(), categories: getCategories(),
     });
   }catch(error){
     console.error("Erro ao carregar catálogo:", error);
