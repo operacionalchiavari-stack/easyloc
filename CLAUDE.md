@@ -8164,3 +8164,16 @@ exclusivos, só que com um cadeado").
   `catalogo-browser.cjs` passaram a clicar em "Tenho acesso exclusivo" antes de preencher o e-mail.
   `tests/catalogo-biblioteca-browser.cjs` falha em "Enter numa foto focada abre ESSA foto" **também sem estas mudanças**
   (confirmado desfazendo as edições da Biblioteca e rodando de novo): problema antigo, não investigado.
+
+## Deploy (GitHub Pages e Vercel): duas pegadinhas
+
+- **GitHub Pages não atualiza só com o push.** O site sai do workflow `.github/workflows/deploy-pages.yml`, que em teoria roda
+  a cada push em `main`, mas na prática nenhum push dispara (todas as execuções do histórico foram manuais). Depois do push,
+  rodar `gh workflow run deploy-pages.yml --ref main` e conferir com `gh run watch`. Confirmar no ar buscando um texto novo em
+  `https://operacionalchiavari-stack.github.io/easyloc/...`.
+- **O Vercel (`vercel deploy --prod`) sobe a PASTA LOCAL, não o git**: arquivo não versionado também vai, se não estiver no
+  `.vercelignore`. Aconteceu em 26/09: `outputs/` (com `backup-valores-antes-tabela-2026.json`, preços, e
+  `projeto-apresentacao-dados.json`) ficou público em `easyloc-zeta.vercel.app` por cerca de 3 minutos, até `outputs` entrar
+  no `.vercelignore` e um novo deploy tirar do ar. As URLs próprias de cada deploy (`easyloc-<hash>-jonatan-falcks-projects...`)
+  exigem login no Vercel (302 pro SSO), então não ficaram públicas. Antes de publicar, conferir `git status` por arquivos
+  soltos e, depois, testar com `curl` que nada de `outputs/`, `.env` ou `CLAUDE.md` responde 200.
