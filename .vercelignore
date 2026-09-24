@@ -9,3 +9,5 @@ CLAUDE.md
 server
 Scripts
 *.log
+# Artefatos de trabalho (prints, PDFs de teste, backups de dados) — nunca publicar
+outputs
