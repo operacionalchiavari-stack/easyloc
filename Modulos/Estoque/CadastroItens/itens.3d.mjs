@@ -1,3 +1,5 @@
+import { otimizarGlb } from "./glb-otimizar.mjs?v=20261005";
+
 const supabase = window.supabaseClient;
 
 const THREE_URL = "https://esm.sh/three@0.166.1";
@@ -318,12 +320,16 @@ async function uploadModel(file){
   showLoading(true);
 
   try{
+    // Modelo leve antes de subir (ver glb-otimizar.mjs): modelos de IA chegavam com até 1,8 milhão de triângulos e
+    // travavam o 3D Livre. Se a otimização falhar, sobe o original.
+    const otimizacao = await otimizarGlb(file);
+    file = otimizacao.arquivo;
     const storagePath = `${state.empresaId}/${state.itemId}/modelo-3d/modelo.glb`;
     const { error: uploadError } = await supabase.storage
       .from("itens")
       .upload(storagePath, file, {
         cacheControl: "3600",
-        contentType: file.type || "model/gltf-binary",
+        contentType: "model/gltf-binary",
         upsert: true,
       });
 
@@ -338,8 +344,9 @@ async function uploadModel(file){
       item_id: state.itemId,
       nome_arquivo: name,
       path: storagePath,
-      url: publicData?.publicUrl,
-      mime_type: file.type || "model/gltf-binary",
+      // Versão no endereço: o catálogo busca o modelo com cache forte (force-cache), e o arquivo novo usa o mesmo caminho.
+      url: publicData?.publicUrl ? `${publicData.publicUrl}?v=${Date.now()}` : publicData?.publicUrl,
+      mime_type: "model/gltf-binary",
       tamanho_bytes: file.size,
       status: "ativo",
     };
@@ -355,7 +362,9 @@ async function uploadModel(file){
     state.modelo = data;
     updateMeta(data);
     await renderModel(data);
-    notify("Modelo 3D salvo com sucesso.", "sucesso");
+    notify(otimizacao.otimizado
+      ? `Modelo 3D salvo e otimizado (${(otimizacao.antes.bytes / 1e6).toFixed(1)} MB → ${(otimizacao.depois.bytes / 1e6).toFixed(1)} MB).`
+      : "Modelo 3D salvo com sucesso.", "sucesso");
     return true;
   }catch(error){
     console.error("Erro ao salvar modelo 3D:", error);

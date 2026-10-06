@@ -33,7 +33,7 @@
 .catalog-view-switch-btn svg{width:16px;height:16px;display:block}
 .catalog-view-switch-btn.is-active{background:var(--accent);border-color:var(--accent);color:#fff}
 @media(max-width:600px){.catalog-top-tools{padding:9px 18px}.catalog-view-switch-btn{width:34px;height:34px}.catalog-view-switch-btn svg{width:14px;height:14px}}
-.catalog-brand{grid-area:brand;display:flex;align-items:center;justify-content:flex-start;width:clamp(270px,21vw,330px);color:inherit;text-decoration:none;overflow:visible}.catalog-brand-logo{display:block;width:100%;max-width:215px;max-height:49px;object-fit:contain;object-position:left center;transform:scale(3.6);transform-origin:left center;pointer-events:none}.catalog-brand-name{font-family:"Cormorant Garamond",serif;font-size:1.5rem;letter-spacing:.02em;white-space:nowrap}
+.catalog-brand{grid-area:brand;display:flex;align-items:center;justify-content:flex-start;width:clamp(270px,21vw,330px);color:inherit;text-decoration:none;overflow:visible}.catalog-brand-logo{display:block;width:100%;max-width:215px;max-height:49px;object-fit:contain;object-position:left center;transform:scale(3.2);transform-origin:left center;pointer-events:none}.catalog-brand-name{font-family:"Cormorant Garamond",serif;font-size:1.5rem;letter-spacing:.02em;white-space:nowrap}
 .catalog-header-categories{grid-area:categories;position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;row-gap:8px;column-gap:clamp(18px,2.2vw,36px);padding:8px 0 14px;overflow:visible}.catalog-header-category{position:relative;border:0;background:none;padding:2px 0 0;color:rgba(255,255,255,.72);font:600 .813rem/1 "Manrope",sans-serif;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap;cursor:pointer}.catalog-header-category:hover,.catalog-header-category.active{color:#fff}.catalog-header-category.active::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#d1b58e}
 /* Pedido explícito do usuário: "a pessoa quase não vê" — era só uma linha fininha embaixo
    (border-bottom translúcido), sem fundo nenhum, texto/ícone quase da mesma cor do cabeçalho.
@@ -69,7 +69,7 @@ body.catalog-modo-sistema .catalog-header-category.active::after{background:var(
    Manrope), só o layout muda. */
 .catalog-products.catalog-products-static-mode{scroll-snap-type:none}
 .catalog-grid-wrap{max-width:1400px;margin:0 auto;padding:24px clamp(24px,4vw,64px) 100px}
-.catalog-grid-heading{margin:0 0 48px;text-align:center;font-family:"Cormorant Garamond",serif;font-size:clamp(1.9rem,3vw,2.7rem);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+.catalog-grid-heading{margin:0 0 48px;text-align:center;font-family:"Cormorant Garamond",serif;font-size:clamp(1.5rem,2.2vw,2rem);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
 /* Filtro premium por subcategoria (pedido explícito do usuário: "quero
    que apareça as subcategorias que tem dentro do cadastro itens... um
    filtro premium") — pílulas discretas, mesma paleta terrosa do resto
@@ -557,7 +557,7 @@ body.catalog-no-portal .catalog-search,body.catalog-no-portal .catalog-global-ba
 .catalog-capa-toggle-star{font-size:.906rem}
 .catalog-ai-loading{position:absolute;z-index:20;left:50%;bottom:24px;width:min(330px,calc(100% - 40px));padding:17px 20px;border:1px solid rgba(185,154,114,.38);border-radius:14px;background:rgba(255,255,255,.97);box-shadow:0 14px 38px rgba(31,24,19,.18);transform:translateX(-50%);backdrop-filter:blur(10px)}.catalog-ai-loading-copy{display:grid;grid-template-columns:28px 1fr;column-gap:12px;align-items:center;color:var(--ink)}.catalog-ai-loading-spinner{grid-row:1/3;width:22px;height:22px;border:1px solid rgba(157,124,84,.25);border-top-color:#b18a5a;border-radius:50%;animation:catalog-ai-spin .85s linear infinite}.catalog-ai-loading-copy strong{font-family:"Cormorant Garamond",serif;font-size:1.15rem;font-weight:600;line-height:1}.catalog-ai-loading-copy p{overflow:hidden;margin:5px 0 0;color:var(--muted);font-size:.781rem;line-height:1.3;white-space:nowrap;text-overflow:ellipsis}@keyframes catalog-ai-spin{to{transform:rotate(360deg)}}
 @media(max-width:1199px){.catalog-product-section{grid-template-columns:minmax(0,66fr) minmax(0,34fr)}.catalog-detail-panel{padding-left:34px;padding-right:34px}.catalog-detail-top{grid-template-columns:minmax(0,42fr) minmax(0,58fr);gap:16px}.product-title{font-size:clamp(1.9rem,3.2vw,2.7rem)}.catalog-bottom-nav{margin-left:-34px;margin-right:-34px;padding:0 34px}.bottom-category{padding:0 8px;font-size:.781rem}}
-@media(max-width:767px){.catalog-page{--header-h:54px;--header-top-h:54px}.catalog-header{grid-template-columns:auto auto;grid-template-areas:"brand user" "categories categories";column-gap:12px;padding:0 18px}.catalog-brand{width:184px}.catalog-brand-logo{max-width:124px;max-height:43px;transform:scale(2.8)}.catalog-brand-name{font-size:1.2rem}.catalog-header-categories{gap:22px}.catalog-search{display:none}.catalog-product-section{display:flex;flex-direction:column;height:auto;min-height:0;overflow:visible;scroll-snap-align:none}.catalog-product-section:not(:last-child){margin-bottom:40px}.catalog-detail-panel{display:flex;flex-direction:column;padding:30px 22px 0}.catalog-detail-top{display:contents}.product-copy{order:1}.product-category-back{margin-bottom:30px}.product-title{font-size:clamp(1.3rem,6vw,2.6rem);max-width:100%}.product-main-media{order:2;flex:none;height:340px;max-height:none;padding:24px 0 8px}.catalog-related-items{order:3;margin-top:0}.catalog-bottom-nav{order:5;margin:0 -22px;padding:0 22px;height:auto;min-height:68px;gap:20px;flex-wrap:wrap}.bottom-categories{order:-1;width:100%;height:50px}.product-stepper{padding-bottom:14px}.product-event-panel{order:4;height:min(120vw,620px)}}
+@media(max-width:767px){.catalog-page{--header-h:54px;--header-top-h:54px}.catalog-header{grid-template-columns:auto auto;grid-template-areas:"brand user" "categories categories";column-gap:12px;padding:0 18px}.catalog-brand{width:184px}.catalog-brand-logo{max-width:124px;max-height:43px;transform:scale(2.5)}.catalog-brand-name{font-size:1.2rem}.catalog-header-categories{gap:22px}.catalog-search{display:none}.catalog-product-section{display:flex;flex-direction:column;height:auto;min-height:0;overflow:visible;scroll-snap-align:none}.catalog-product-section:not(:last-child){margin-bottom:40px}.catalog-detail-panel{display:flex;flex-direction:column;padding:30px 22px 0}.catalog-detail-top{display:contents}.product-copy{order:1}.product-category-back{margin-bottom:30px}.product-title{font-size:clamp(1.3rem,6vw,2.6rem);max-width:100%}.product-main-media{order:2;flex:none;height:340px;max-height:none;padding:24px 0 8px}.catalog-related-items{order:3;margin-top:0}.catalog-bottom-nav{order:5;margin:0 -22px;padding:0 22px;height:auto;min-height:68px;gap:20px;flex-wrap:wrap}.bottom-categories{order:-1;width:100%;height:50px}.product-stepper{padding-bottom:14px}.product-event-panel{order:4;height:min(120vw,620px)}}
 @media(max-width:600px){.catalog-customize-copy{padding:26px 22px 18px}.catalog-customize-preview{grid-template-columns:1fr;padding:0 22px}.catalog-customize-preview>img{height:220px}.catalog-fabric-upload{min-height:150px}.catalog-customize-generate{margin-right:22px}.catalog-customize-status{margin-right:22px}.product-bespoke-card{width:100%}}
 @media(prefers-reduced-motion:reduce){.catalog-ai-loading-spinner{animation-duration:1.8s}}
 .catalog-notifications{position:fixed;z-index:100;right:22px;bottom:22px;display:flex;width:min(360px,calc(100vw - 32px));flex-direction:column;gap:10px;pointer-events:none}.catalog-notification{position:relative;display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;padding:14px 15px;border:1px solid rgba(185,154,114,.34);border-radius:14px;background:rgba(255,255,255,.97);box-shadow:0 16px 44px rgba(31,24,19,.2);pointer-events:auto;animation:catalog-toast-in .42s cubic-bezier(.2,.8,.2,1) both;backdrop-filter:blur(12px)}.catalog-notification.is-leaving{animation:catalog-toast-out .28s ease both}.catalog-notification-icon{display:grid;width:32px;height:32px;place-items:center;border-radius:50%;background:#5a5a55;color:#fff;font-size:.875rem}.catalog-notification-icon.is-progress{position:relative;background:rgba(177,138,90,.14);color:transparent;transition:background .2s}.catalog-notification-icon.is-progress::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(#b18a5a calc(var(--pct,0)*1%),transparent 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));transition:background .4s linear}.catalog-notification-percent{position:relative;z-index:1;color:#8a6a42;font:600 .781rem "Manrope",sans-serif;font-variant-numeric:tabular-nums}.catalog-notification-copy strong{display:block;font-family:"Cormorant Garamond",serif;font-size:1.05rem;font-weight:600;line-height:1}.catalog-notification-copy span{display:block;margin-top:4px;color:var(--muted);font-size:.813rem;line-height:1.4}.catalog-notification-action{border:0;border-bottom:1px solid #b18a5a;background:transparent;padding:5px 0;color:var(--ink);font:600 .781rem "Manrope",sans-serif;letter-spacing:.06em;cursor:pointer}.catalog-notification-close{position:absolute;top:4px;right:5px;border:0;background:transparent;color:#978f87;font-size:.906rem;cursor:pointer}.catalog-notification.has-photo{grid-template-columns:34px 1fr auto}.catalog-notification-photo{grid-column:1/-1;width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:2px}.catalog-notification:has(.catalog-notification-action) .catalog-notification-close{display:none}@keyframes catalog-toast-in{from{opacity:0;transform:translateX(28px) scale(.97)}to{opacity:1;transform:none}}@keyframes catalog-toast-out{to{opacity:0;transform:translateX(24px)}}
@@ -754,7 +754,7 @@ body.catalog-modo-sistema .catalog-studio-tab{border-color:var(--line)}
    (a caixa .catalog-brand recorta em overflow:hidden, então nunca passa do cabeçalho). Cada faixa
    de largura tem o seu scale, calibrado pra arte (≈3,5× mais larga que alta) caber na coluna da
    marca sem invadir a linha do tempo, que começa em --nav-gutter (350/224px) da borda. */
-.catalog-brand{width:250px;height:76px;overflow:hidden;align-items:center}.catalog-brand-logo{transform:translateY(3px) scale(5.1)}
+.catalog-brand{width:250px;height:76px;overflow:hidden;align-items:center}.catalog-brand-logo{transform:translateY(3px) scale(4.5)}
 /* Nome da página SEMPRE centralizado na TELA (pedido explícito do usuário,
    olhando um print em que "CADEIRAS" ficava ~60px à direita do centro:
    "o nome da página que eu estou no menu ela sempre deve ficar
@@ -797,7 +797,7 @@ body.catalog-modo-sistema .catalog-studio-tab{border-color:var(--line)}
    em 390px, não aparecia num nome curto. Trunca com "…" em vez de
    diminuir a fonte, pra manter o pedido de "mesmo tamanho" intacto no
    caso comum e só truncar no caso extremo (tela estreita + nome longo). */
-.catalog-page-label{flex-shrink:1;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;color:inherit;font-family:"Cormorant Garamond",serif;font-size:clamp(1.9rem,3vw,2.7rem);font-weight:500;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+.catalog-page-label{flex-shrink:1;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;color:inherit;font-family:"Cormorant Garamond",serif;font-size:clamp(1.5rem,2.2vw,2rem);font-weight:500;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
 /* Linha do tempo das telas visitadas (pedido explícito do usuário: "eu
    quero que forme tipo uma linha do tempo com todas as páginas que eu
    acessei, então por exemplo, a primeira seria home, a segunda seria
@@ -819,7 +819,7 @@ body.catalog-modo-sistema .catalog-studio-tab{border-color:var(--line)}
    acompanhar a entrada durante a animação de rolagem. */
 .catalog-timeline-side{display:flex;align-items:center;min-width:0;height:100%}
 .catalog-navigation.is-portal .catalog-timeline-side{visibility:hidden}
-.catalog-timeline-item{display:flex;align-items:center;flex:none;border:0;background:none;margin:0;padding:8px 0;color:inherit;cursor:pointer;font:600 .844rem "Manrope",sans-serif;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;opacity:max(.14,calc(.7 - (var(--d) - 1) * .2));transition:color .2s}
+.catalog-timeline-item{display:flex;align-items:center;flex:none;border:0;background:none;margin:0;padding:8px 0;color:inherit;cursor:pointer;font:600 .75rem "Manrope",sans-serif;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;opacity:max(.14,calc(.7 - (var(--d) - 1) * .2));transition:color .2s}
 .catalog-timeline-item:hover,.catalog-timeline-item:focus-visible{opacity:1;color:var(--accent)}
 .catalog-timeline-item:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
 .catalog-timeline-past .catalog-timeline-item::after{content:"›";margin:0 12px;font-size:1rem;font-weight:400;opacity:.7}
@@ -833,11 +833,11 @@ body.catalog-modo-sistema .catalog-header{height:76px;flex-wrap:nowrap;padding:0
 body.catalog-modo-sistema .catalog-navigation{flex:1}
 body.catalog-modo-sistema .catalog-header-categories{flex:0 1 auto;flex-basis:auto}
 body.catalog-modo-sistema .catalog-page-label{color:var(--ink)}
-@media(max-width:1450px){.catalog-user div{display:none}.catalog-header{grid-template-columns:200px minmax(0,1fr) auto;gap:12px;padding-inline:18px}.catalog-brand{width:200px}.catalog-brand-logo{transform:translateY(2px) scale(4.2)}.catalog-navigation{--nav-gutter:224px;gap:12px}.catalog-header-categories{gap:10px}}
+@media(max-width:1450px){.catalog-user div{display:none}.catalog-header{grid-template-columns:200px minmax(0,1fr) auto;gap:12px;padding-inline:18px}.catalog-brand{width:200px}.catalog-brand-logo{transform:translateY(2px) scale(3.7)}.catalog-navigation{--nav-gutter:224px;gap:12px}.catalog-header-categories{gap:10px}}
 @media(max-width:1200px){
  .catalog-navigation{--nav-side:28px;--nav-fade:28px}
  .catalog-header{grid-template-columns:180px minmax(0,1fr) auto}
- .catalog-brand{width:180px}.catalog-brand-logo{transform:translateY(2px) scale(3.6)}
+ .catalog-brand{width:180px}.catalog-brand-logo{transform:translateY(2px) scale(3.2)}
  .catalog-nav-toggle{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:8px 12px;border:0;background:none;color:inherit;font:600 15px/1.4 "Manrope",sans-serif;cursor:pointer}
  .catalog-navigation .catalog-header-categories{display:none;position:absolute;left:18px;right:18px;top:100%;width:auto;padding:14px;background:#5a5a55;border:1px solid #ffffff30;border-radius:0 0 10px 10px;box-shadow:0 18px 30px #0002;max-height:calc(100dvh - 92px);overflow:auto}
  .catalog-navigation.is-open .catalog-header-categories{display:flex;flex-direction:column;align-items:stretch;gap:4px}
@@ -848,7 +848,7 @@ body.catalog-modo-sistema .catalog-page-label{color:var(--ink)}
 }
 @media(max-width:767px){
  .catalog-header{height:72px;grid-template-columns:minmax(80px,1fr) auto auto;grid-template-rows:72px;grid-template-areas:"brand categories user";gap:8px;padding:0 10px}
- .catalog-brand{width:100%;height:72px}.catalog-brand-logo{max-width:100px;transform:scale(2.8)}.catalog-brand-name{font-size:16px}
+ .catalog-brand{width:100%;height:72px}.catalog-brand-logo{max-width:100px;transform:scale(2.5)}.catalog-brand-name{font-size:16px}
  /* Celular: sem espaço pra reservar a mesma folga dos dois lados (marca +
     usuário já ocupam ~metade da largura de 390px) — volta pro fluxo
     normal do grid, o rótulo continua centralizado ENTRE as duas setas
@@ -896,3 +896,49 @@ body.catalog-modo-sistema .catalog-page-label{color:var(--ink)}
 .catalog-rental-price-label{color:var(--muted);font-size:.66rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase}
 .catalog-rental-price--detail .catalog-rental-price-value{font-size:1.375rem;font-weight:400;letter-spacing:-.025em}
 @media(max-width:600px){.catalog-rental-price{font-size:.8125rem}.catalog-rental-price--detail{margin-top:20px}.catalog-rental-price--detail .catalog-rental-price-value{font-size:1.25rem}}
+/* Busca no cabeçalho, ao lado dos créditos (pedido explícito do usuário — antes ficava abaixo do menu, no canto
+   direito, junto com os ícones de visualização, que foram escondidos). Pílula translúcida clara no cabeçalho escuro;
+   no modo dentro do sistema (cabeçalho branco) volta ao visual claro de sempre. O recuo da linha do tempo
+   (--nav-gutter) acompanha a largura real deste bloco — ver syncNavGutter() em catalogo.mjs. */
+.catalog-header-right{grid-area:user;justify-self:end;display:flex;align-items:center;gap:14px;min-width:0}
+.catalog-header-right .catalog-user{grid-area:auto}
+.catalog-header .catalog-search{width:clamp(150px,11vw,210px);background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.85);backdrop-filter:none;-webkit-backdrop-filter:none}
+.catalog-header .catalog-search input{color:#fff}
+.catalog-header .catalog-search input::placeholder{color:rgba(255,255,255,.72)}
+.catalog-header .catalog-search:focus-within{background:rgba(255,255,255,.2);border-color:var(--accent)}
+body.catalog-modo-sistema .catalog-header-right{margin-left:auto}
+body.catalog-modo-sistema .catalog-header .catalog-search{background:#f6f3ee;border-color:var(--line);color:var(--muted)}
+body.catalog-modo-sistema .catalog-header .catalog-search input{color:var(--ink)}
+body.catalog-modo-sistema .catalog-header .catalog-search input::placeholder{color:var(--muted)}
+body.catalog-modo-sistema .catalog-header .catalog-search:focus-within{background:#fff}
+/* Ícones de visualização (grade/imersiva/mosaico) removidos da tela a pedido do usuário: a categoria abre
+   em grade e clicar num item abre a visualização imersiva. */
+.catalog-view-switcher{display:none!important}
+/* Medidas com siglas (L × A × P) numa linha só — pode passar um pouco por cima da margem da foto, como o nome do item. */
+.product-specs dd.is-medidas{white-space:nowrap}
+/* Entrada da página do item (openSingleItem marca .is-entering por ~2s). A foto ambientada abre como uma cortina da
+   direita pra esquerda enquanto a própria imagem assenta de um leve zoom; a foto do produto sobe e aparece; o texto
+   (nome, cores, especificações, valor, botões) entra em cascata; as sugestões "Combine também com" chegam por último. */
+.catalog-product-section.is-entering .product-event-panel{animation:catalog-item-cortina 1.25s cubic-bezier(.77,0,.18,1) .08s both}
+.catalog-product-section.is-entering .product-event-image{animation:catalog-item-assenta 1.9s cubic-bezier(.22,1,.36,1) .08s both}
+.catalog-product-section.is-entering .product-main-media{animation:catalog-item-sobe 1s cubic-bezier(.22,1,.36,1) .28s both}
+.catalog-product-section.is-entering .product-copy>*{animation:catalog-item-texto .8s cubic-bezier(.22,1,.36,1) both}
+.catalog-product-section.is-entering .product-copy>:nth-child(1){animation-delay:.42s}
+.catalog-product-section.is-entering .product-copy>:nth-child(2){animation-delay:.5s}
+.catalog-product-section.is-entering .product-copy>:nth-child(3){animation-delay:.58s}
+.catalog-product-section.is-entering .product-copy>:nth-child(4){animation-delay:.66s}
+.catalog-product-section.is-entering .product-copy>:nth-child(5){animation-delay:.74s}
+.catalog-product-section.is-entering .product-copy>:nth-child(6){animation-delay:.82s}
+.catalog-product-section.is-entering .product-copy>:nth-child(n+7){animation-delay:.9s}
+.catalog-product-section.is-entering .catalog-related-items{animation:catalog-item-texto .9s cubic-bezier(.22,1,.36,1) .95s both}
+@keyframes catalog-item-cortina{from{clip-path:inset(0 0 0 100%)}to{clip-path:inset(0 0 0 0)}}
+@keyframes catalog-item-assenta{from{transform:scale(1.14)}to{transform:scale(1)}}
+@keyframes catalog-item-sobe{from{opacity:0;transform:translateY(34px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes catalog-item-texto{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.catalog-product-section.is-entering *,.catalog-product-section.is-entering .product-event-panel{animation:none!important}}
+/* Busca logo abaixo do cabeçalho, à esquerda do card do projeto (pedido do usuário), alinhada no meio dele.
+   --cpj-dock-w = largura do card + respiro (medirDock() em catalogo-projetos.mjs); sem card, a busca vai pro canto. */
+@media(min-width:768px){
+ .catalog-top-tools{padding-top:16px;padding-right:calc(clamp(20px,2.2vw,40px) + var(--cpj-dock-w,0px))}
+ .catalog-top-tools .catalog-search{width:clamp(200px,15vw,260px)}
+}

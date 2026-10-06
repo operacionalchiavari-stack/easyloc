@@ -50,7 +50,7 @@ const {chromium}=require('playwright');const express=require('express');const as
  assert.equal(await page.locator('.product-dimensions').count(),0,'Não existe mais a linha de medidas solta abaixo do nome');
  const rotulos=(await page.locator('#produto-1 .product-specs-row dt').allTextContents()).map(t=>t.trim());
  assert.deepEqual(rotulos.slice(0,4),['Categoria','Material','Cor','Medidas'],'Medidas entra na lista de specs, depois de Categoria/Material/Cor');
- assert.match(await page.locator('#produto-1 .product-specs-row',{hasText:'Medidas'}).locator('dd').textContent(),/^\s*67 × 95 × 57 cm\s*$/,'Valor das medidas no mesmo formato de sempre (L × A × P cm)');
+ assert.match(await page.locator('#produto-1 .product-specs-row',{hasText:'Medidas'}).locator('dd').textContent(),/^\s*\(L\) 67 × \(A\) 95 × \(P\) 57 cm\s*$/,'Valor das medidas com as siglas L, A e P');
  // ...e o valor cabe numa linha só na coluna estreita do desktop (a coluna de rótulos tem a largura do maior rótulo).
  const ddAltura=await page.locator('#produto-1 .product-specs-row',{hasText:'Medidas'}).locator('dd').evaluate(el=>Math.round(el.getBoundingClientRect().height));
  assert.ok(ddAltura<24,`As medidas não quebram em duas linhas (altura ${ddAltura}px)`);

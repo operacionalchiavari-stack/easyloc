@@ -96,11 +96,11 @@ const semTrilha=async(page,onde)=>{
 // ===== 2. Logo maior, dentro da altura do menu, sem cortar e sem invadir a linha do tempo =====
 const casos=[
   // largura, altura mínima da arte, folga mínima em cima/embaixo, o que precisa ficar livre à direita da arte
-  {vw:1920,minH:62,gap:2},
-  {vw:1600,minH:62,gap:2},
-  {vw:1440,minH:50,gap:5},
-  {vw:1280,minH:50,gap:5},
-  {vw:1100,minH:44,gap:8},
+  {vw:1920,minH:55,gap:2},
+  {vw:1600,minH:55,gap:2},
+  {vw:1440,minH:45,gap:5},
+  {vw:1280,minH:45,gap:5},
+  {vw:1100,minH:39,gap:8},
 ];
 for(const c of casos){
   const page=await abrir(c.vw);

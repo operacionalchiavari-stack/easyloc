@@ -1,4 +1,5 @@
 import { getEmpresaAtualId } from "./itens.api.mjs";
+import { otimizarGlb } from "./glb-otimizar.mjs?v=20261005";
 
 const supabase = window.supabaseClient;
 
@@ -868,7 +869,8 @@ async function salvarModeloCorrigido(){
   showLoading(true, "Exportando GLB...");
 
   try{
-    const blob = await exportModelToGlbBlob();
+    // Modelo leve antes de subir (ver glb-otimizar.mjs); se a otimização falhar, sobe o exportado como está.
+    const { arquivo: blob } = await otimizarGlb(await exportModelToGlbBlob(), { onEtapa: (texto) => showLoading(true, texto) });
     const storagePath = `${state.empresaId}/${state.itemId}/modelo-3d/modelo.glb`;
     const { error: uploadError } = await supabase.storage
       .from("itens")
@@ -889,7 +891,8 @@ async function salvarModeloCorrigido(){
       item_id: state.itemId,
       nome_arquivo: `${slug(itemName())}.glb`,
       path: storagePath,
-      url: publicData?.publicUrl,
+      // Versão no endereço: o catálogo busca o modelo com cache forte (force-cache), e o arquivo novo usa o mesmo caminho.
+      url: publicData?.publicUrl ? `${publicData.publicUrl}?v=${Date.now()}` : publicData?.publicUrl,
       mime_type: "model/gltf-binary",
       tamanho_bytes: blob.size,
       status: "ativo",

@@ -1984,6 +1984,7 @@ function loadModelTemplate(item, onProgress){
     return new Promise((resolve, reject) => {
       studio.loader.load(source, (gltf) => {
         gltf.scene.userData.catalogSourceUrl = source;
+        triangulosDoModelo(gltf.scene);
         studio.modelCache.set(key, gltf.scene);
         resolve(gltf.scene);
       }, (event) => {
@@ -2008,7 +2009,35 @@ function disposeTemplate(template){
   if(source) studio.three?.THREE.Cache.remove(source);
 }
 
+// Proteção contra cena pesada (bug real: "Mesa Nice 10 Lugares" travava — a Cadeira Katrina tinha ~970 mil
+// triângulos, 10 cópias = ~10 milhões, desenhados 2× por quadro por causa da sombra). Conta os triângulos da cena e,
+// acima de um limite, tira a sombra projetada dos móveis (corta o passe de sombra) e baixa a resolução do desenho.
+// Volta ao normal sozinho quando a cena fica leve de novo. A correção de verdade é o modelo leve (ver CLAUDE.md).
+const CENA_PESADA_TRIANGULOS = 1_500_000;
+function triangulosDoModelo(root){
+  if(Number.isFinite(root.userData.catalogTris)) return root.userData.catalogTris;
+  let total = 0;
+  root.traverse((node) => {
+    const g = node.isMesh ? node.geometry : null;
+    if(g) total += (g.index ? g.index.count : g.attributes.position?.count || 0) / 3;
+  });
+  root.userData.catalogTris = total;
+  return total;
+}
+function ajustarCargaDaCena(){
+  if(!studio.renderer) return;
+  const total = studio.objects.reduce((soma, object) => soma + triangulosDoModelo(object), 0);
+  const pesada = total > CENA_PESADA_TRIANGULOS;
+  studio.cenaPesada = pesada;
+  const sombra = studio.performance.shadows && !pesada;
+  studio.objects.forEach((object) => object.traverse((node) => { if(node.isMesh) node.castShadow = sombra; }));
+  const ratio = pesada ? 1 : studio.performance.pixelRatio;
+  const alvo = Math.min(devicePixelRatio || 1, ratio);
+  if(studio.renderer.getPixelRatio() !== alvo){ studio.renderer.setPixelRatio(alvo); resize(); }
+}
+
 function trimModelTemplateCache(){
+  ajustarCargaDaCena();
   const limit = studio.performance.tier === "economy" ? 3 : 6;
   if(studio.modelCache.size <= limit) return;
   const activeUrls = new Set(studio.objects.map((object) => String(object.userData.item?.glb || "")));
@@ -2900,28 +2929,24 @@ function capturarPrintLimpo(){
   return foto;
 }
 
-function tirarPrintComposicao(){
-  if(!studio.renderer || !studio.scene || !studio.camera || !studio.objects.length){ alert("Adicione pelo menos um móvel à composição."); return; }
+// "Adicionar ao projeto" (substitui o botão "Tirar print", a pedido do usuário: "algo mais bonito e intuitivo pra
+// adicionarmos essa composição e esses itens no meu projeto"). Captura a composição como está (mesmo print limpo de
+// antes), registra os móveis e a cena (o projeto leva os móveis e reabre essa cena no editor) e abre direto a janela de
+// escolher projeto/ambiente com a foto e a lista de móveis — sem a tela intermediária de resultado.
+function adicionarComposicaoAoProjeto(){
+  if(!studio.renderer || !studio.scene || !studio.camera || !studio.objects.length){
+    window.catalogNotify?.({ title: "Composição vazia", message: "Adicione pelo menos um móvel antes de levar ao projeto.", status: "error" });
+    return;
+  }
+  if(typeof window.catalogAddCompositionToProject !== "function"){
+    window.catalogNotify?.({ title: "Projetos indisponíveis", message: "Entre com seu acesso exclusivo para montar projetos.", status: "error" });
+    return;
+  }
   selectObject(null);
   const foto = capturarPrintLimpo();
-
-  // Mesmos móveis registrados que a renderização por IA já registra — o projeto (catalogo-projetos.mjs) leva os
-  // mesmos ao salvar. A cena 3D vai junto: é ela que o projeto reabre quando a pessoa clica no print (editor de cena).
   const objetos = studio.objects.map((object) => ({ itemId: object.userData.item.id, itemName: object.userData.item.name }));
   window.catalogRegisterRenderItems?.(foto, objetos, { tipo: "print", snapshot: snapshotCena() });
-
-  const kicker = $("studioResultKicker"), titulo = $("studioResultTitle");
-  if(kicker) kicker.textContent = "Print 3D Livre";
-  if(titulo) titulo.textContent = "Sua montagem, capturada direto do 3D";
-  $("studioResultImage").src = foto;
-  $("studioResultDownload").href = foto;
-  $("studioResultDownload").download = "print-acervo.png";
-  const salvar = $("studioResultDialog")?.querySelector("[data-projeto-save-render]");
-  if(salvar){
-    salvar.dataset.origem = "Print 3D Livre";
-    salvar.__printBatch = null; // limpa um lote antigo, se sobrou de uma versão anterior desta mesma sessão de uso
-  }
-  $("studioResultDialog").showModal();
+  window.catalogAddCompositionToProject(foto, "3D Livre");
 }
 
 function toggleCameraLock(){
@@ -3145,7 +3170,7 @@ async function handleToolbarAction(event){
       if(!studio.objects.length){ alert("Adicione pelo menos um móvel à composição."); return; }
       $("studioRenderOptions").showModal();
     }
-    else if(action === "print") tirarPrintComposicao();
+    else if(action === "add-project") adicionarComposicaoAoProjeto();
     refreshToolbarSummaries();
     if(button.closest("[data-studio-menu]")) closeToolbarMenus();
   }catch(error){

@@ -1,8 +1,8 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
-import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20260926-legenda-cena";
+import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261005-cena-pesada";
 import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20260926-visitante";
-import { initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20260926-legenda-cena";
+import { initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261005-busca-dock";
 
 const supabase = window.supabaseClient;
 const FOTO_PLACEHOLDER = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
@@ -239,6 +239,16 @@ function formatDims(largura, altura, profundidade){
   return values.every((value) => value === null) ? "" : values.map((value) => value ?? "–").join(" × ") + " cm";
 }
 
+// Medidas com sigla em cada valor, no painel técnico da página do item (pedido: "nas medidas faltam as siglas"):
+// L = largura, A = altura, P = profundidade — a mesma convenção do cadastro e do projeto ("(L) 2.20 m (A)...").
+function formatDimsSiglas(largura, altura, profundidade){
+  const values = [largura, altura, profundidade].map((value) =>
+    value !== null && value !== "" && Number.isFinite(Number(value)) ? Math.round(Number(value) * 100) : null
+  );
+  if(values.every((value) => value === null)) return "";
+  return ["L", "A", "P"].map((sigla, i) => `(${sigla}) ${values[i] ?? "–"}`).join(" × ") + " cm";
+}
+
 function catalogItemAllowed(row){
   return ['item','kit'].includes(String(row?.tipo || '').trim().toLowerCase());
 }
@@ -309,7 +319,7 @@ function mapRow(row){
       // As medidas moravam numa linha própria abaixo do nome (.product-dimensions,
       // com letras bem espaçadas); a pedido do usuário ("coloque as medidas junto
       // com categoria, material...") viraram uma linha das specs, como as outras.
-      { label: "Medidas", value: formatDims(row.largura, row.altura, row.profundidade) },
+      { label: "Medidas", value: formatDimsSiglas(row.largura, row.altura, row.profundidade) },
       { label: "Código", value: row.referencia },
     ].filter((spec) => String(spec.value || "").trim()),
     photo: row.foto_url || FOTO_PLACEHOLDER,
@@ -492,11 +502,31 @@ function syncHeaderHeight(){
   page.style.setProperty("--header-h", `${header.offsetHeight}px`);
 }
 
+// A busca mora no lado direito do cabeçalho, junto dos créditos e do decorador (.catalog-header-right), e a
+// largura desse bloco muda (créditos carregam depois, nome do decorador etc.). A linha do tempo fica centrada
+// na tela e reserva --nav-gutter dos DOIS lados — então o recuo precisa ser pelo menos a largura real desse
+// bloco, senão o nome da tela passa por baixo da busca. O valor do CSS continua sendo o mínimo (espaço da logo).
+function syncNavGutter(){
+  const header = document.querySelector(".catalog-header");
+  const nav = document.querySelector(".catalog-navigation");
+  const right = document.querySelector(".catalog-header-right");
+  if(!header || !nav || !right) return;
+  nav.style.removeProperty("--nav-gutter");
+  if(!window.matchMedia("(min-width:768px)").matches || getComputedStyle(nav).position !== "absolute") return;
+  const base = parseFloat(getComputedStyle(nav).getPropertyValue("--nav-gutter")) || 0;
+  const rightW = right.offsetWidth ? header.getBoundingClientRect().right - right.getBoundingClientRect().left + 16 : 0;
+  if(rightW > base) nav.style.setProperty("--nav-gutter", `${Math.ceil(rightW)}px`);
+}
+
 function watchHeaderHeight(){
   const header = document.querySelector(".catalog-header");
   if(!header || !("ResizeObserver" in window)) return;
-  new ResizeObserver(syncHeaderHeight).observe(header);
-  syncHeaderHeight();
+  const sync = () => { syncHeaderHeight(); syncNavGutter(); };
+  const observer = new ResizeObserver(sync);
+  observer.observe(header);
+  const right = document.querySelector(".catalog-header-right");
+  if(right) observer.observe(right);
+  sync();
 }
 
 // Centraliza a última linha da grade de categorias da Home quando ela não
@@ -606,6 +636,7 @@ function setActiveOverlay(mode){
 
 function applyView(view, options = {}){
   state.activeView = view;
+  state.itemReturn = null;
   // Voltar pro Portal é recomeçar: os filtros da tela "Categorias" zeram (navegar entre as telas de dentro
   // do catálogo os mantém — abrir um item e voltar pela linha do tempo não perde o que foi filtrado).
   if(view === GATEWAY_VIEW){ state.homeFilters = newHomeFilters(); state.homeFilterOpen = ""; }
@@ -652,9 +683,9 @@ function applyView(view, options = {}){
   window.scrollTo({ top: 0, behavior: "instant" });
   // Vindo de um card dos resultados filtrados: já cai no item clicado, dentro da lista filtrada.
   if(options.focusItemId){
+    // Só o item clicado na tela (sem rolar pros outros resultados); "Voltar" volta pros resultados pela linha do tempo.
     const focado = findItemById(options.focusItemId);
-    const section = focado ? showItemSection(focado) : null;
-    requestAnimationFrame(() => section?.scrollIntoView({ behavior: "instant", block: "start" }));
+    if(focado) openSingleItem(focado, state.currentHeading);
   }
 }
 
@@ -667,7 +698,7 @@ function categoryButtons(activeCat){
 function specsPanel(item){
   if(!item.specs.length) return "";
   return `<dl class="product-specs">${item.specs.map((spec) =>
-    `<div class="product-specs-row"><dt>${escapeHtml(spec.label)}</dt><dd>${escapeHtml(spec.value)}</dd></div>`
+    `<div class="product-specs-row"><dt>${escapeHtml(spec.label)}</dt><dd${spec.label === "Medidas" ? " class=\"is-medidas\"" : ""}>${escapeHtml(spec.value)}</dd></div>`
   ).join("")}</dl>`;
 }
 
@@ -1164,6 +1195,7 @@ function bindNavHistory(){
   window.appBeforeLeave=beforeLeaveProjetos;
   window.appGoBack=async()=>{
     if(await backCatalogProjetos()) return true;
+    if(!state.overlay && closeSingleItem()) return true;
     if(state.navBack.length){ jumpToHistoryEntry(state.navBack.at(-1).id); return true; }
     if(state.overlay || state.activeView!==GATEWAY_VIEW){ applyView(GATEWAY_VIEW); return true; }
     return false;
@@ -2060,14 +2092,45 @@ function showItemSection(item){
   return section;
 }
 
+// A página do item mostra SÓ aquele item (pedido explícito do usuário: "não quero que tenha a opção de arrastar
+// pra baixo, somente voltar pros itens") — antes desenhava a categoria inteira em seções de tela cheia e dava pra
+// rolar de um item pro outro. A lista de onde veio (itens, título, modo e posição da rolagem) fica guardada em
+// state.itemReturn, e "Voltar" (appGoBack) volta exatamente pra ela. Uma sugestão de "Combine também com" troca
+// o item da página, sem empilhar retornos.
 function openImmersiveFromGrid(item){
+  if(!state.itemReturn){
+    state.itemReturn = { items: state.currentItems, heading: state.currentHeading, viewMode: state.viewMode, scrollY: window.scrollY };
+  }
+  openSingleItem(item, state.itemReturn.heading);
+}
+
+function openSingleItem(item, heading){
+  const principal = state.items.find((candidato) => String(candidato.id) === String(item.id) || candidato.variantGroup?.some((v) => String(v.id) === String(item.id))) || item;
   if(state.viewMode !== "immersive"){
     state.viewMode = "immersive";
     updateViewToggleButton();
   }
-  renderProducts(state.currentItems, state.currentHeading);
+  renderProducts([principal], heading);
   const section = showItemSection(item);
-  requestAnimationFrame(() => section?.scrollIntoView({ behavior: "instant", block: "start" }));
+  window.scrollTo({ top: 0, behavior: "instant" });
+  // Entrada animada da página do item (pedido do usuário): a foto ambientada se abre, a foto do produto sobe e o texto
+  // entra em cascata. A classe sai depois, pra trocar de cor/foto não repetir a animação.
+  if(section){
+    section.classList.add("is-entering");
+    clearTimeout(section._entradaTimer);
+    section._entradaTimer = setTimeout(() => section.classList.remove("is-entering"), 2200);
+  }
+}
+
+function closeSingleItem(){
+  const ret = state.itemReturn;
+  if(!ret) return false;
+  state.itemReturn = null;
+  state.viewMode = ret.viewMode === "immersive" ? "grid" : ret.viewMode;
+  updateViewToggleButton();
+  renderProducts(ret.items, ret.heading);
+  requestAnimationFrame(() => window.scrollTo({ top: ret.scrollY || 0, behavior: "instant" }));
+  return true;
 }
 
 function scrollToIndex(index){
@@ -2285,7 +2348,9 @@ function bindInteractions(){
     // precisa rolar até ela, mesmo padrão de scrollToIndex().
     const relatedItem = event.target.closest("[data-related-item]");
     if(relatedItem){
-      document.getElementById(`produto-${relatedItem.dataset.relatedItem}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const relacionado = findItemById(relatedItem.dataset.relatedItem);
+      if(relacionado && state.itemReturn) openSingleItem(relacionado, state.itemReturn.heading);
+      else document.getElementById(`produto-${relatedItem.dataset.relatedItem}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
     const customizeButton = event.target.closest("[data-customize-item]");

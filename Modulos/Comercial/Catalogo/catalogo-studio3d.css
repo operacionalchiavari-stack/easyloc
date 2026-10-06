@@ -265,3 +265,13 @@
 
 /* Respiro pro "Voltar" do catálogo (fica logo abaixo da logo, por cima do topo desta coluna — ver catalogo.css). */
 @media(min-width:768px){body.catalog-tem-voltar .studio-library{padding-top:62px}}
+/* "Adicionar ao projeto" (substitui o "Tirar print"): contorno terroso com ícone de pasta, ao lado do "Renderizar com IA". */
+.studio-add-project-button{display:inline-flex;align-items:center;gap:9px;background:#fff;color:#6f5537;border:1px solid #c9ad84;box-shadow:none;letter-spacing:.04em}
+.studio-add-project-button svg{width:18px;height:18px;flex:none}
+.studio-add-project-button:hover{background:#faf5ec;border-color:#a5845a}
+.studio-render-button+.studio-render-button{margin-left:10px}
+/* "Adicionar ao projeto" é mais largo que o antigo "Tirar print": até 1600px os menus escondem o resumo
+   ("10 × 10 m", "Fundo"...) pra caber tudo na mesma linha sem sobrepor. */
+@media(max-width:1600px){.studio-tool-menu-trigger>small{display:none}.studio-floor-plan .studio-tool-menu-trigger{grid-template-columns:auto 12px}}
+@media(max-width:620px){.studio-add-project-button span{display:none}.studio-render-button+.studio-render-button{margin-left:6px}}
+@media(max-width:1300px){.studio-add-project-button{padding-inline:13px}.studio-add-project-button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}}

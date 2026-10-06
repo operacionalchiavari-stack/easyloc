@@ -66,7 +66,7 @@ async function abrir(tipo,{staff=false}={}){
   await page.route('https://fixture/**',r=>r.fulfill({contentType:'image/png',body:PNG_1X1}));
   await page.route('https://fixture/modelos/**',r=>r.fulfill({contentType:'model/gltf-binary',body:fakeGlbTriangle()}));
   await page.route('https://fixture/cenas/**',r=>r.fulfill({contentType:'application/json',body:JSON.stringify(CENA)}));
-  await page.route('**/catalogo-studio3d.mjs*',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('Modulos/Comercial/Catalogo/catalogo-studio3d.mjs','utf8')+'\nwindow.studioTest={studio,addItem,ensureScene,tirarPrintComposicao,renderWithAI};'}));
+  await page.route('**/catalogo-studio3d.mjs*',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('Modulos/Comercial/Catalogo/catalogo-studio3d.mjs','utf8')+'\nwindow.studioTest={studio,addItem,ensureScene,adicionarComposicaoAoProjeto,renderWithAI};'}));
   await page.addInitScript((db)=>{ if(!sessionStorage.getItem('mockdb')) sessionStorage.setItem('mockdb',JSON.stringify(db)); },seed(tipo));
   await page.addInitScript(()=>{ try{ localStorage.clear(); }catch{} });
   await page.addInitScript(installMock,{token:!staff,staff,modelos:true});
@@ -236,18 +236,20 @@ async function abrir(tipo,{staff=false}={}){
   assert.deepEqual(errors,[]);
   await page.close();
 }
-// --- 6) 3D Livre de verdade: "Tirar print" e "Renderizar com IA" registram a cena, e ela chega ao projeto -------------
+// --- 6) 3D Livre de verdade: "Adicionar ao projeto" e "Renderizar com IA" registram a cena, e ela chega ao projeto -------------
 {
   const {page,errors}=await abrir('print',{staff:true});
   await page.evaluate(async()=>{const st=window.studioTest.studio;await window.studioTest.ensureScene();await window.studioTest.addItem(st.items.find(i=>String(i.id)==='2'));});
-  // Tirar print → Salvar no projeto
-  await page.evaluate(()=>window.studioTest.tirarPrintComposicao());
-  await page.locator('#studioResultDialog[open]').waitFor();
-  assert.equal(await page.locator('#studioResultKicker').textContent(),'Print 3D Livre');
-  await page.locator('#studioResultDialog [data-projeto-save-render]').click();
+  // "Adicionar ao projeto" (substituiu o "Tirar print"): vai direto pra janela de projeto/ambiente, com a foto e os móveis.
+  assert.equal(await page.locator('#studioPrintButton').count(),0,'Sem o botão Tirar print');
+  assert.equal(await page.locator('#studioAddProjectButton').count(),1);
+  await page.evaluate(()=>window.studioTest.adicionarComposicaoAoProjeto());
+  await page.locator('dialog.cpj-modal[open] .cpj-dest-preview img').waitFor();
+  assert.equal(await page.locator('#studioResultDialog[open]').count(),0,'Sem a tela intermediária de resultado');
+  assert.equal(await page.locator('dialog.cpj-modal[open] .cpj-dest-moveis li').count(),1,'Lista os móveis da composição');
+  assert.equal(await page.locator('dialog.cpj-modal[open] input[name="levarMoveis"]').isChecked(),true);
   await page.locator('dialog.cpj-modal[open] button[type="submit"]').click();
   await page.waitForFunction(()=>JSON.parse(sessionStorage.getItem('mockdb')).projetos[0].dados.ambientes[0].renders.length===3);
-  await page.evaluate(()=>document.getElementById('studioResultDialog').close());
   // Renderizar com IA → Ver resultado → Salvar no projeto
   await page.evaluate(()=>window.studioTest.renderWithAI());
   await page.waitForFunction(()=>window.__ia.length===1);

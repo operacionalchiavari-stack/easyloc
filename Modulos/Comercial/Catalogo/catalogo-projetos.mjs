@@ -16,7 +16,7 @@
 // Módulo self-contido, mesmo padrão de catalogo-biblioteca.mjs: não importa nada de
 // catalogo.mjs — recebe o que precisa em initCatalogProjetos(). Três peças de tela:
 //   1. o overlay #catalogProjetos (lista de projetos + espaço de trabalho de UM projeto);
-//   2. o "dock" #catalogProjetoDock — pílula fixa no canto inferior esquerdo que mostra em qual projeto/ambiente as
+//   2. o "dock" #catalogProjetoDock — pílula fixa no canto superior direito (abaixo da busca; no celular, inferior esquerdo) que mostra em qual projeto/ambiente as
 //      próximas ações caem ("Ana & Bruno · Bar") e deixa trocar de ambiente sem sair da navegação;
 //   3. o botão "＋" de cada item (projetoAddMarkup) que adiciona o item ao ambiente ativo em um toque.
 //
@@ -425,7 +425,7 @@ async function criarAmbiente(nome){
 
 // Escolhe onde as próximas ações caem: sem projeto ativo, pergunta (ou cria); `sempre` mostra a escolha mesmo com um
 // ativo (renderização: o ambiente importa). Devolve true quando há projeto + ambiente ativos.
-async function garantirDestino({ titulo, confirmar = "Confirmar", sempre = false, moveis = null } = {}){
+async function garantirDestino({ titulo, confirmar = "Confirmar", sempre = false, moveis = null, imagem = "", sub = "" } = {}){
   if(!sempre && S.current && ambienteAtivo()) return true;
   await carregarLista();
   if(S.listError){ ctx.notify({ title: "Não foi possível abrir seus projetos", message: S.listError, status: "error" }); return false; }
@@ -434,7 +434,7 @@ async function garantirDestino({ titulo, confirmar = "Confirmar", sempre = false
     if(!criado) return false;
     return garantirAmbiente();
   }
-  const escolha = await escolherDestino({ titulo, confirmar, moveis });
+  const escolha = await escolherDestino({ titulo, confirmar, moveis, imagem, sub });
   if(escolha === "novo"){
     const criado = await fluxoCriarProjeto();
     if(!criado) return false;
@@ -450,17 +450,17 @@ async function garantirAmbiente(){
   return true;
 }
 
-function escolherDestino({ titulo = "Escolha o projeto", confirmar = "Confirmar", moveis = null }){
+function escolherDestino({ titulo = "Escolha o projeto", confirmar = "Confirmar", moveis = null, imagem = "", sub = "" }){
   const projetos = S.list.slice();
   if(S.current && !projetos.some((p) => p.id === S.current.id)) projetos.unshift({ id: S.current.id, noivos: S.current.noivos, data_evento: S.current.data_evento });
   const inicial = S.current?.id || projetos[0]?.id;
   return abrirModal({
-    titulo, sub: "Onde isto deve ficar salvo?", confirmar,
+    titulo, sub: sub || "Onde isto deve ficar salvo?", confirmar, largo: Boolean(imagem),
     extra: `<button type="button" class="cpj-btn cpj-btn-link" data-cpj-novo>＋ Novo projeto</button>`,
-    corpo: `<label class="cpj-field"><span>Projeto</span><select name="projeto">${projetos.map((p) => `<option value="${escapeAttr(p.id)}"${p.id === inicial ? " selected" : ""}>${escapeHtml(p.noivos)} · ${escapeHtml(dataLonga(p.data_evento))}</option>`).join("")}</select></label>
+    corpo: `${imagem ? `<figure class="cpj-dest-preview"><img src="${escapeAttr(imagem)}" alt="Composição do 3D"></figure>` : ""}<div class="cpj-dest-campos"><label class="cpj-field"><span>Projeto</span><select name="projeto">${projetos.map((p) => `<option value="${escapeAttr(p.id)}"${p.id === inicial ? " selected" : ""}>${escapeHtml(p.noivos)} · ${escapeHtml(dataLonga(p.data_evento))}</option>`).join("")}</select></label>
       <label class="cpj-field"><span>Ambiente</span><select name="ambiente" disabled><option>Carregando…</option></select></label>
       <label class="cpj-field hidden" data-novo-amb><span>Nome do novo ambiente</span><input name="novoAmbiente" maxlength="60" placeholder="Ex.: Bar" autocomplete="off"></label>
-      ${moveis ? `<label class="cpj-check"><input type="checkbox" name="levarMoveis" checked><span><strong>Levar também os móveis desta composição</strong><small>${escapeHtml(resumoMoveis(moveis.lista))}</small></span></label>` : ""}`,
+      </div>${moveis ? (imagem ? moveisDestinoHtml(moveis.lista) : `<label class="cpj-check"><input type="checkbox" name="levarMoveis" checked><span><strong>Levar também os móveis desta composição</strong><small>${escapeHtml(resumoMoveis(moveis.lista))}</small></span></label>`) : ""}`,
     onMount({ dialog, form, fechar }){
       dialog.querySelector("[data-cpj-novo]").addEventListener("click", () => fechar("novo"));
       const selProjeto = form.elements.projeto, selAmb = form.elements.ambiente, novo = dialog.querySelector("[data-novo-amb]");
@@ -517,6 +517,21 @@ async function adicionarItem(itemId){
   ctx.notify({
     title: "Adicionado ao projeto", message: `${itemNome(itemId)} → ${amb.nome} · ${S.current.noivos}`, status: "done", duration: 3200,
     actionLabel: "Desfazer", onAction: () => mudarQuantidade(amb.id, itemId, -1),
+  });
+}
+
+// "−" ao lado do "＋" (pedido do usuário: "tem botão de mais só que não tem botão de menos pra tirar"): tira 1 do
+// ambiente ativo; chegando a 0 o item sai da lista. Aviso com "Desfazer", como no "＋".
+function removerItem(itemId){
+  const amb = ambienteAtivo();
+  if(!amb) return;
+  const atual = Number(amb.itens.find((i) => String(i.item_id) === String(itemId))?.quantidade) || 0;
+  if(!atual) return;
+  mudarQuantidade(amb.id, itemId, -1);
+  ctx.notify({
+    title: atual > 1 ? "Quantidade no projeto" : "Removido do projeto",
+    message: atual > 1 ? `${atual - 1}× ${itemNome(itemId)} → ${amb.nome}` : `${itemNome(itemId)} saiu de ${amb.nome}`,
+    status: "done", duration: 3200, actionLabel: "Desfazer", onAction: () => mudarQuantidade(amb.id, itemId, 0, { definir: atual }),
   });
 }
 
@@ -639,6 +654,12 @@ function registrarItensDaRenderizacao(src, objetos, cena = null){
 }
 const chaveDeImagem = (src) => { try{ return src.startsWith("data:") ? src : new URL(src, location.href).href; }catch{ return src; } };
 const composicaoDaImagem = (src) => composicoes.find((c) => c.src === src || chaveDeImagem(c.src) === chaveDeImagem(src)) || null;
+// Móveis da composição, com foto e quantidade, na janela "Adicionar ao projeto" do 3D Livre.
+function moveisDestinoHtml(lista){
+  const total = lista.reduce((soma, m) => soma + (Number(m.quantidade) || 1), 0);
+  return `<section class="cpj-dest-moveis"><label class="cpj-check"><input type="checkbox" name="levarMoveis" checked><span><strong>Adicionar também os móveis ao pedido</strong><small>${total} ${total === 1 ? "peça" : "peças"} desta composição</small></span></label>
+    <ul>${lista.map((m) => { const item = ctx.findItem(m.id); return `<li><img src="${escapeAttr(otimizarFoto(item?.photo || "", 120))}" alt="" loading="lazy"><span>${escapeHtml(item?.name || m.nome || "Item")}</span><b>${m.quantidade}×</b></li>`; }).join("")}</ul></section>`;
+}
 const resumoMoveis = (lista) => lista.map((m) => `${m.quantidade}× ${ctx.findItem(m.id)?.name || m.nome || "Item"}`).join(", ");
 
 // Devolve quantos móveis entraram/subiram de quantidade no ambiente.
@@ -681,14 +702,14 @@ async function uploadRenderPara(amb, project, src, origem, cena = null){
   amb.renders.push({ id: novoId("r"), url: imagem.url, path: imagem.path, origem: origem || "Renderização", criado_em: new Date().toISOString(), ...(cenaSalva ? { cena: cenaSalva } : {}) });
 }
 
-async function salvarRender({ src, origem, botao }){
+async function salvarRender({ src, origem, botao, titulo = "Salvar renderização", confirmar = "Salvar aqui", sub = "", comImagem = false }){
   if(!src) return;
   const rotulo = botao?.textContent;
   if(botao){ botao.disabled = true; botao.textContent = "Salvando…"; }
   try{
     const composicao = composicaoDaImagem(src);
     const moveis = composicao?.itens.length ? { lista: composicao.itens, incluir: true } : null;
-    if(!(await garantirDestino({ titulo: "Salvar renderização", confirmar: "Salvar aqui", sempre: true, moveis }))) return;
+    if(!(await garantirDestino({ titulo, confirmar, sempre: true, moveis, sub, imagem: comImagem ? src : "" }))) return;
     const project = S.current, amb = ambienteAtivo();
     await uploadRenderPara(amb, project, src, origem, composicao?.cena || null);
     // Os móveis da composição entram no MESMO ambiente. Quantidade = a da composição, sem somar com o que já estava lá
@@ -698,7 +719,7 @@ async function salvarRender({ src, origem, botao }){
     if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); }
     await salvarAgora();
     if(botao) botao.textContent = "Salvo no projeto ✓";
-    ctx.notify({ title: trazidos ? "Renderização e móveis salvos no projeto" : "Renderização salva no projeto", message: `${trazidos ? `${trazidos} ${trazidos === 1 ? "móvel" : "móveis"} · ` : ""}${amb.nome} · ${project.noivos}`, status: "done", actionLabel: "Ver projeto", onAction: () => ctx.openProjetos({ view: "work" }) });
+    ctx.notify({ title: comImagem ? (trazidos ? "Composição e móveis no projeto" : "Composição no projeto") : trazidos ? "Renderização e móveis salvos no projeto" : "Renderização salva no projeto", image: comImagem ? src : undefined, message: `${trazidos ? `${trazidos} ${trazidos === 1 ? "móvel" : "móveis"} · ` : ""}${amb.nome} · ${project.noivos}`, status: "done", actionLabel: "Ver projeto", onAction: () => ctx.openProjetos({ view: "work" }) });
     setTimeout(() => { if(botao){ botao.textContent = rotulo; botao.disabled = false; } }, 2400);
     return;
   }catch(error){
@@ -1250,7 +1271,9 @@ function pintarPainel(){
   if(!host || !S.current) return;
   if(S.workTab !== "plantas") limparPlantaListeners(); // saindo da aba Plantas (ou nem chegando a entrar) — desliga o listener de resize se algum ficou de uma visita anterior
   if(S.workTab === "geral"){
-    host.innerHTML = geralHtml(dadosApresentacao(S.current,ctx.findItem))
+    // Título da aba Geral (pedido do usuário: "um título bem bonito escrito Lista Completa").
+    host.innerHTML = `<header class="cpj-geral-title"><span class="cpj-geral-title-orn" aria-hidden="true"></span><h2>Lista <em>Completa</em></h2><span class="cpj-geral-title-orn" aria-hidden="true"></span></header>`
+      + geralHtml(dadosApresentacao(S.current,ctx.findItem))
       + `<footer class="pa-geral-footer"><button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`;
     vincularOrdemLista(host);
     return;
@@ -2206,13 +2229,35 @@ function pintarDock(){
   const dock = $("catalogProjetoDock");
   if(!dock) return;
   const p = S.current;
-  if(!S.enabled || !p || S.dockHidden){ dock.classList.add("hidden"); dock.innerHTML = ""; return; }
+  if(!S.enabled || !p || S.dockHidden){ dock.classList.add("hidden"); dock.innerHTML = ""; delete dock.dataset.html; medirDock(); return; }
   const amb = ambienteAtivo();
   const total = totalItens(p);
+  // Animação no contador quando o total muda (mesmo projeto): o número novo sobe no lugar e o selo dá um pulso
+  // com um halo suave. Trocar de projeto não anima (não é "adicionei um item").
+  const anterior = S.dockCount;
+  S.dockCount = { id: p.id, total };
+  const mudou = anterior && anterior.id === p.id && anterior.total !== total;
+  const dir = mudou ? (total > anterior.total ? "up" : "down") : "";
   dock.classList.remove("hidden");
-  dock.innerHTML = `<button type="button" class="cpj-dock-main" data-cpj-dock="abrir" title="Abrir o projeto"><span class="cpj-dock-icon">${ICONE.layers}</span><span class="cpj-dock-text"><small>Projeto</small><strong>${escapeHtml(p.noivos)}</strong></span></button>
-    <button type="button" class="cpj-dock-amb" data-cpj-dock="ambiente" aria-expanded="${S.dockPop}" aria-haspopup="listbox"><span class="cpj-dock-text"><small>Ambiente</small><strong>${escapeHtml(amb?.nome || "Escolher…")}</strong></span><b class="cpj-dock-count" aria-label="${total} itens no projeto">${total}</b><i aria-hidden="true">▾</i></button>
+  const html = `<button type="button" class="cpj-dock-main" data-cpj-dock="abrir" title="Abrir o projeto"><span class="cpj-dock-icon">${ICONE.layers}</span><span class="cpj-dock-text"><small>Projeto</small><strong>${escapeHtml(p.noivos)}</strong></span></button>
+    <button type="button" class="cpj-dock-amb" data-cpj-dock="ambiente" aria-expanded="${S.dockPop}" aria-haspopup="listbox"><span class="cpj-dock-text"><small>Ambiente</small><strong>${escapeHtml(amb?.nome || "Escolher…")}</strong></span><b class="cpj-dock-count${mudou ? " is-bump" : ""}" data-dir="${dir}" aria-label="${total} itens no projeto"><span>${total}</span></b><i aria-hidden="true">▾</i></button>
     ${S.dockPop ? `<div class="cpj-dock-pop" role="listbox" aria-label="Ambientes do projeto">${ambientesDe(p).map((a) => `<button type="button" role="option" aria-selected="${a.id === S.activeAmb}" class="${a.id === S.activeAmb ? "is-active" : ""}" data-cpj-dock-amb="${escapeAttr(a.id)}"><span>${escapeHtml(a.nome)}</span><b>${a.itens.reduce((s, i) => s + (Number(i.quantidade) || 1), 0)}</b></button>`).join("")}<button type="button" data-cpj-dock="novo-ambiente">＋ Novo ambiente</button><button type="button" data-cpj-dock="trocar">Trocar de projeto</button></div>` : ""}`;
+  // Repintar com o mesmo conteúdo (ex.: salvamento automático logo depois de adicionar) não recria o dock —
+  // senão a animação do contador seria cortada no meio.
+  const chave = html.replace(" is-bump", "").replace(/ data-dir="\w*"/, "");
+  if(!mudou && dock.dataset.html === chave && dock.childElementCount) return;
+  dock.dataset.html = chave;
+  dock.innerHTML = html;
+  medirDock();
+}
+
+// A busca do catálogo fica logo abaixo do cabeçalho, à esquerda do dock (pedido do usuário: "coloque esse campo de
+// pesquisa do lado de Projeto"). O dock tem largura variável (nome dos noivos/ambiente), então a largura real dele vai
+// pra --cpj-dock-w, que o CSS usa como recuo da busca. Sem dock, 0 — a busca vai pro canto direito.
+function medirDock(){
+  const dock = $("catalogProjetoDock");
+  const largura = dock && !dock.classList.contains("hidden") ? Math.ceil(dock.getBoundingClientRect().width) + 12 : 0;
+  document.documentElement.style.setProperty("--cpj-dock-w", `${largura}px`);
 }
 
 export function setProjetoDockVisible(visivel){
@@ -2224,12 +2269,12 @@ export function setProjetoDockVisible(visivel){
 export function projetoAddMarkup(itemId, tipo = "chip"){
   if(!S.enabled) return "";
   if(tipo === "page"){
-    return `<span class="cpj-add-page-wrap"><button type="button" class="cpj-add-page" data-projeto-add><span class="cpj-add-plus" aria-hidden="true">＋</span><span class="cpj-add-label">Adicionar ao projeto</span></button><button type="button" class="cpj-add-page-qty" data-projeto-qty title="Digitar a quantidade">Quantidade</button></span>`;
+    return `<span class="cpj-add-page-wrap"><span class="cpj-add-page-step"><button type="button" class="cpj-add-page-minus" data-projeto-remove hidden aria-label="Tirar 1 do projeto" title="Tirar 1 do projeto">−</button><button type="button" class="cpj-add-page" data-projeto-add><span class="cpj-add-plus" aria-hidden="true">＋</span><span class="cpj-add-label">Adicionar ao projeto</span></button></span><button type="button" class="cpj-add-page-qty" data-projeto-qty title="Digitar a quantidade">Quantidade</button></span>`;
   }
-  return `<span class="cpj-add-chip" role="button" tabindex="0" data-projeto-add="${escapeAttr(itemId)}" aria-label="Adicionar ao projeto" title="Adicionar ao projeto"><span class="cpj-add-plus" aria-hidden="true">＋</span><b class="cpj-add-count" role="button" tabindex="0" data-projeto-qty aria-label="Digitar a quantidade" title="Digitar a quantidade">Qtd.</b></span>`;
+  return `<span class="cpj-add-chip" role="button" tabindex="0" data-projeto-add="${escapeAttr(itemId)}" aria-label="Adicionar ao projeto" title="Adicionar ao projeto"><span class="cpj-add-minus" role="button" tabindex="0" data-projeto-remove hidden aria-label="Tirar 1 do projeto" title="Tirar 1 do projeto">−</span><span class="cpj-add-plus" aria-hidden="true">＋</span><b class="cpj-add-count" role="button" tabindex="0" data-projeto-qty aria-label="Digitar a quantidade" title="Digitar a quantidade">Qtd.</b></span>`;
 }
 
-const idDoBotao = (el) => el.dataset.projetoAdd || el.closest(".cpj-add-chip")?.dataset.projetoAdd || el.closest("[data-product-id]")?.dataset.productId || "";
+const idDoBotao = (el) => el.dataset.projetoAdd || el.closest("[data-projeto-add]")?.dataset.projetoAdd || el.closest(".cpj-add-chip")?.dataset.projetoAdd || el.closest("[data-product-id]")?.dataset.productId || "";
 
 export function atualizarBotoes(raiz = document){
   if(!S.enabled) return;
@@ -2244,6 +2289,11 @@ export function atualizarBotoes(raiz = document){
     const rotulo = el.querySelector(".cpj-add-label");
     const texto = qtd ? `No projeto · ${qtd} em ${amb.nome}` : "Adicionar ao projeto";
     if(rotulo && rotulo.textContent !== texto) rotulo.textContent = texto;
+  });
+  // "−" (tirar 1): só aparece quando o item já está no ambiente.
+  raiz.querySelectorAll("[data-projeto-remove]").forEach((el) => {
+    const qtd = Number(amb?.itens.find((i) => String(i.item_id) === String(idDoBotao(el)))?.quantidade) || 0;
+    el.hidden = !qtd;
   });
 }
 
@@ -2434,17 +2484,15 @@ export async function escolherProjetoNaEntrada(){
   dialog.className = "cpj-entry";
   dialog.setAttribute("aria-labelledby", "cpjEntryTitle");
   dialog.innerHTML = `<div class="cpj-entry-shell">
-    <div class="cpj-entry-heading"><div class="cpj-entry-intro"><h1 id="cpjEntryTitle">Qual história vamos<br><em>criar hoje?</em></h1></div>
-    <div class="cpj-entry-shortcuts"><button type="button" class="cpj-entry-row cpj-entry-without" data-entry-without>
-      <span class="cpj-entry-portrait cpj-entry-catalog-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="13" height="13" rx="2"/><rect x="28" y="7" width="13" height="13" rx="2"/><rect x="7" y="28" width="13" height="13" rx="2"/><path d="M28 34.5h13m-6-6 6 6-6 6"/></svg></span>
-      <span class="cpj-entry-copy"><span class="cpj-entry-without-title">Entrar sem projeto</span></span>
-    </button>
-    <button type="button" class="cpj-entry-row cpj-entry-without" data-entry-new>
-      <span class="cpj-entry-portrait cpj-entry-catalog-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14V9h12l5 5h13v25H9z"/><path d="M17 26h14m-7-7v14"/></svg></span>
-      <span class="cpj-entry-copy"><span class="cpj-entry-without-title">Novo projeto</span></span>
-    </button></div></div>
-    <div class="cpj-entry-options"><div class="cpj-entry-list" aria-live="polite"><p>Carregando seus projetos…</p></div></div>
+    <div class="cpj-entry-intro"><h1 id="cpjEntryTitle">Qual história vamos<br><em>criar hoje?</em></h1></div>
+    <span class="cpj-entry-rule" aria-hidden="true"></span>
+    <div class="cpj-entry-shortcuts">
+      <button type="button" class="cpj-entry-action is-primary" data-entry-new><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Novo projeto</button>
+      <button type="button" class="cpj-entry-action" data-entry-without><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="13" height="13" rx="2"/><rect x="28" y="7" width="13" height="13" rx="2"/><rect x="7" y="28" width="13" height="13" rx="2"/><path d="M28 34.5h13m-6-6 6 6-6 6"/></svg>Entrar sem projeto</button>
+    </div>
     <p class="cpj-entry-error" role="alert"></p>
+    <div class="cpj-entry-section"><h2 class="cpj-entry-section-title">Seus projetos</h2>
+      <div class="cpj-entry-list" aria-live="polite"><p>Carregando seus projetos…</p></div></div>
   </div>`;
   $("catalogGrid").before(dialog);
   const list = dialog.querySelector(".cpj-entry-list");
@@ -2457,10 +2505,10 @@ export async function escolherProjetoNaEntrada(){
       list.innerHTML = '<p>Não foi possível carregar seus projetos. <button type="button" data-entry-retry>Tentar novamente</button></p>';
       return;
     }
-    list.innerHTML = S.list.length ? S.list.map((p) => `<button type="button" class="cpj-entry-row" data-entry-project="${escapeAttr(p.id)}" aria-label="${escapeAttr(p.noivos)}">
+    list.innerHTML = S.list.length ? S.list.map((p) => `<button type="button" class="cpj-entry-card" data-entry-project="${escapeAttr(p.id)}" aria-label="${escapeAttr(p.noivos)}">
       <span class="cpj-entry-portrait">${p.foto_casal_url ? `<img src="${escapeAttr(otimizarFoto(p.foto_casal_url, 360))}" alt="" loading="lazy">` : `<span aria-hidden="true">${escapeHtml(String(p.noivos || "").trim().slice(0, 1))}</span>`}</span>
-      <span class="cpj-entry-copy"><span class="cpj-entry-meta">${escapeHtml(p.data_evento ? dataLonga(p.data_evento) : "")}${p.local_evento ? ` · ${escapeHtml(p.local_evento)}` : ""}</span></span>
-    </button>`).join("") : '<p class="cpj-entry-empty">Nenhum projeto disponível.</p>';
+      <span class="cpj-entry-meta">${escapeHtml(p.data_evento ? dataLonga(p.data_evento) : "")}${p.local_evento ? `<br>${escapeHtml(p.local_evento)}` : ""}</span>
+    </button>`).join("") : '<p class="cpj-entry-empty">Você ainda não tem projetos. Comece um novo acima.</p>';
   };
   dialog.addEventListener("error", event => {
     if(event.target.tagName === "IMG") event.target.replaceWith(document.createTextNode("♡"));
@@ -2561,6 +2609,13 @@ export function initCatalogProjetos(contexto){
 
   // "＋" dos itens (grade, mosaico, página do item): capturado ANTES do clique do card/seção inteira.
   document.addEventListener("click", (event) => {
+    const menos = event.target.closest("[data-projeto-remove]");
+    if(menos){
+      event.preventDefault(); event.stopPropagation();
+      const id = idDoBotao(menos);
+      if(id) removerItem(id);
+      return;
+    }
     const qtd = event.target.closest("[data-projeto-qty]");
     if(qtd){
       event.preventDefault(); event.stopPropagation();
@@ -2575,7 +2630,7 @@ export function initCatalogProjetos(contexto){
     if(id) adicionarItem(id);
   }, true);
   document.addEventListener("keydown", (event) => {
-    if((event.key === "Enter" || event.key === " ") && event.target.matches?.("[data-projeto-add],[data-projeto-qty]") && event.target.tagName !== "BUTTON"){
+    if((event.key === "Enter" || event.key === " ") && event.target.matches?.("[data-projeto-add],[data-projeto-qty],[data-projeto-remove]") && event.target.tagName !== "BUTTON"){
       event.preventDefault(); event.target.click();
     }
   }, true);
@@ -2589,6 +2644,9 @@ export function initCatalogProjetos(contexto){
     salvarRender({ src: img?.currentSrc || img?.src, origem: botao.dataset.origem, botao });
   });
   window.catalogRegisterRenderItems = registrarItensDaRenderizacao;
+  // "Adicionar ao projeto" do 3D Livre (substitui o antigo "Tirar print"): a foto da composição + os móveis dela vão
+  // direto pra janela de escolher projeto/ambiente, sem a tela intermediária de resultado.
+  window.catalogAddCompositionToProject = (src, origem = "3D Livre") => salvarRender({ src, origem, titulo: "Adicionar ao projeto", confirmar: "Adicionar ao projeto", sub: "Escolha o projeto e o ambiente desta composição.", comImagem: true });
   document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") salvarAgora(); });
 
   // Os "＋" são desenhados junto com o HTML dos cards; quando o conteúdo do catálogo troca, marca os já adicionados.

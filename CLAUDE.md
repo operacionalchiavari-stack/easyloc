@@ -6081,7 +6081,7 @@ senha/PIN** pra apresentação.
   personalização e dos toggles de capa**: `applyVariant()` insere as specs "antes" desses dois, colocar o botão entre
   eles inverteria a ordem ao trocar de cor). O clique é capturado no `document` (fase de captura) e faz
   `stopPropagation`, então NÃO abre o item da grade. Toast "Adicionado ao projeto" com "Desfazer".
-- **Dock** (`#catalogProjetoDock`, pílula fixa embaixo à ESQUERDA — as notificações moram embaixo à direita): mostra
+- **Dock** (`#catalogProjetoDock`, pílula fixa — desde out/2026 no canto SUPERIOR DIREITO, logo abaixo da linha da busca/ícones de visualização (`top: --header-h + 62px`), com o menu de troca abrindo pra baixo; no celular (≤767px) continua embaixo à esquerda. Antes ficava embaixo à esquerda): mostra
   "Projeto · Ana & Bruno" (abre o projeto) e "Ambiente · Bar ▾ [total]" (popover pra trocar de ambiente, criar outro ou
   trocar de projeto). Só aparece na navegação do catálogo (categorias/itens/Módulo 3D), nunca no Portal nem dentro de um
   overlay. O projeto/ambiente ativo é lembrado por navegador (`localStorage catalogo_projeto_ativo:<empresa>:<cliente>`).
@@ -7977,6 +7977,9 @@ A seleção de projeto deixou de ser modal: é uma seção integrada (`project-e
 ### Opções na escolha de projeto
 A pedido do usuário, a seleção voltou a incluir **Novo projeto** e ganhou **Entrar sem projeto** abaixo do título. Novo projeto usa o formulário existente e entra no catálogo com o novo projeto ativo. Entrar sem projeto salva eventuais alterações pendentes e limpa o projeto/ambiente ativo e a lembrança local, sem apagar projetos. Teste de entrada cobre criação, cancelamento e navegação sem vínculo após selecionar um projeto anterior.
 
+### Layout centralizado (outubro/2026)
+Pedido: "muito espaçada, parece incompleto, quero algo mais centralizado e organizado". A tela virou uma coluna central (máx. 980px): título centralizado, filete, as duas ações lado a lado como pílulas ("Novo projeto" preenchida na cor do cabeçalho #5a5a55, "Entrar sem projeto" com contorno), e abaixo "Seus projetos" (título entre linhas finas) com os projetos em cartões 4:5 (foto + data e local embaixo), grade centralizada. Sem projetos: caixa tracejada "Você ainda não tem projetos. Comece um novo acima." Celular: ações empilhadas na largura toda, projetos em 2 colunas. O CSS antigo (várias camadas de regras sobrepostas) foi substituído por um bloco só em catalogo-projetos.css. Cache-busting ?v=20261005-entrada-centro.
+
 ## Projeto: valores em colunas (Reposição / Valor un. / Total) na linha do item
 
 Pedido do usuário, depois de um erro `precosHtml is not defined` que impedia abrir qualquer projeto (o Codex tinha colocado a
@@ -8177,3 +8180,96 @@ exclusivos, só que com um cadeado").
   no `.vercelignore` e um novo deploy tirar do ar. As URLs próprias de cada deploy (`easyloc-<hash>-jonatan-falcks-projects...`)
   exigem login no Vercel (302 pro SSO), então não ficaram públicas. Antes de publicar, conferir `git status` por arquivos
   soltos e, depois, testar com `curl` que nada de `outputs/`, `.env` ou `CLAUDE.md` responde 200.
+
+## Cabeçalho do catálogo: busca ao lado dos créditos, sem ícones de visualização, dock no topo (out/2026)
+
+Pedidos do usuário em sequência (com prints): fontes do menu menores; dock do projeto no canto superior direito;
+remover os 3 ícones de visualização; busca ao lado do ícone de créditos ("assim projeto e ambiente podem subir
+mais") e o card do projeto com uma cor diferente. **Supera** "Busca saiu do cabeçalho (canto superior direito)".
+- **Fontes**: `.catalog-page-label` (e `.catalog-grid-heading`, que precisa continuar igual a ele) de
+  `clamp(1.9rem,3vw,2.7rem)` para `clamp(1.5rem,2.2vw,2rem)`; entradas da linha do tempo de `.844rem` para `.75rem` (12px, o piso).
+- **Busca** (`.catalog-search`/`#catalogSearch`, mesmo id e listener) mora em `.catalog-header-right` (grid-area
+  `user`) junto com `#catalogUser`; os créditos (`catalogo-creditos.js`) continuam sendo inseridos no começo de
+  `#catalogUser`, então ficam logo à direita da busca. Pílula translúcida clara no cabeçalho escuro; clara no modo
+  dentro do sistema. Continua escondida no Portal, em overlays e no celular. Como a linha do tempo fica centrada
+  e reserva `--nav-gutter` dos dois lados, `syncNavGutter()` (catalogo.mjs, no mesmo ResizeObserver do cabeçalho)
+  aumenta o recuo quando o bloco da direita é mais largo que o valor do CSS.
+- **Ícones de visualização**: `#catalogViewSwitcher` escondido com `display:none!important` (o HTML/JS ficam). A
+  categoria abre em grade e clicar no item abre a imersiva; o **mosaico deixou de ser alcançável**.
+- **Dock** (`#catalogProjetoDock`): ≥768px fica em `top: --header-h + 9px`, à direita (onde ficavam busca/ícones),
+  menu abrindo pra baixo; cinza claro `#8b8b86` (pedido "mais claro" depois de um `#6e6e6a` no tom da busca; o terroso `#8a6c48` foi recusado, "chamativo") com contador branco. Quando o total muda (mesmo projeto), `pintarDock()` marca o contador com `.is-bump`: o selo pulsa com uma mola curta, o número novo sobe (desce, se diminuiu) saindo de um leve desfoque e um halo se expande e some — tudo em VERDE (`#3f9a63`) quando soma e VERMELHO (`#c4453b`) quando tira (o selo acende na cor e volta ao branco); desligado com movimento reduzido. Repintar com o mesmo conteúdo não recria o dock (`dock.dataset.html`), senão o salvamento automático cortaria a animação. A grade sem barra de filtro ganha 76px no topo
+  quando o dock aparece. Celular: continua embaixo à esquerda.
+- `tests/catalogo-busca-visivel-browser.cjs` ainda testa a busca fora do cabeçalho (desatualizado) e, como vários
+  testes do catálogo, já travava antes na escolha de projeto do decorador.
+
+## Página do item mostra só o item + botão "−" (out/2026)
+- Pedido: "quando eu clicar no item... não quero que tenha a opção de arrastar pra baixo, somente voltar pros itens".
+  `openImmersiveFromGrid()` agora desenha SÓ a seção do item clicado (`openSingleItem()`), sem as outras seções da
+  categoria. A lista de onde veio (itens, título, modo, posição da rolagem) fica em `state.itemReturn`, e
+  `appGoBack()` (botão "Voltar") chama `closeSingleItem()` antes de tudo, voltando pra grade na mesma posição.
+  "Combine também com" troca o item da página (sem empilhar). `applyView()` zera `itemReturn`. Os resultados
+  filtrados (`FILTER_VIEW` com `focusItemId`) também mostram só o item clicado.
+- Pedido: "tem botão de mais só que não tem botão de menos pra tirar". `[data-projeto-remove]` (`removerItem()`):
+  "−" no chip do card (antes do "＋") e um círculo "−" ao lado do botão da página do item (no mesmo grupo,
+  `.cpj-add-page-step`, que não quebra linha; o texto do botão encurta com "…" se a coluna for estreita). Tira 1 do
+  ambiente ativo, com aviso e "Desfazer"; só aparece quando o item já está no ambiente (`atualizarBotoes()`).
+- Aba Geral do projeto ganhou o título "Lista *Completa*" (`.cpj-geral-title`, montado em `pintarPainel()` antes de
+  `geralHtml()` — só nessa aba, não no PDF/pedido): Cormorant grande, "Completa" em itálico terroso, entre dois
+  filetes com um losango (pedido: "um título bem bonito escrito Lista Completa").
+- Medidas do painel técnico da página do item com sigla em cada valor: `(L) 200 × (A) 280 × (P) 60 cm`
+  (`formatDimsSiglas()`, mesma convenção L/A/P do cadastro e do projeto), numa linha só (`dd.is-medidas`).
+  Os cards da grade continuam com "Dimensões: 200 × 280 × 60 cm".
+
+## 3D Livre: "Tirar print" virou "Adicionar ao projeto" (out/2026)
+Pedido: "quero tirar o botão tirar print, e quero que tenha algo mais bonito e intuitivo pra adicionarmos essa composição
+e esses itens no meu projeto". `#studioPrintButton` saiu; no lugar, `#studioAddProjectButton` (contorno terroso, ícone de
+pasta com "+", ao lado de "Renderizar com IA"; vira só o ícone ≤1300px e os menus escondem o resumo ≤1600px pra caber).
+`adicionarComposicaoAoProjeto()` (catalogo-studio3d.mjs, substitui `tirarPrintComposicao()`) captura o mesmo print limpo,
+registra móveis + cena e chama `window.catalogAddCompositionToProject(foto)` (catalogo-projetos.mjs), que abre DIRETO a
+janela de projeto/ambiente — sem o `#studioResultDialog` no meio. Essa janela (`escolherDestino` com `imagem`) mostra a
+foto da composição, projeto e ambiente lado a lado e os móveis com foto e quantidade (`moveisDestinoHtml()`), com
+"Adicionar também os móveis ao pedido" marcado. O aviso de sucesso mostra a foto. O `#studioResultDialog` continua só pra
+renderização por IA. Teste: `tests/catalogo-editor-cena-browser.cjs` (cenário 6).
+
+## 3D Livre travando com formatos grandes: modelos 3D pesados demais (out/2026)
+Reportado: "quando eu adiciono esse formato Mesa Nice 10 lugares demora pra caramba... está travando muito".
+**Causa real** (medida abrindo os .glb, não suposta): a Cadeira Katrina tinha 37,6 MB e ~970 mil triângulos numa
+cadeira só (modelo gerado por IA — Meshy — sem otimizar); o formato põe 10 dela = ~10 milhões de triângulos,
+desenhados 2× por quadro por causa da sombra. Não é só ela: os 24 modelos somavam 423 MB, vários Meshy com 0,3–1,8
+milhão de triângulos e texturas 2048–4096 px em JPEG.
+- **Proteção no código** (`ajustarCargaDaCena()` em catalogo-studio3d.mjs, chamada a cada móvel posto/tirado/trocado
+  via `trimModelTemplateCache()`): soma os triângulos da cena (contados uma vez por modelo, `userData.catalogTris`);
+  acima de 1,5 milhão tira a sombra projetada dos móveis e desenha em resolução 1×. Volta sozinho quando a cena alivia.
+  Ajuda, mas não resolve 10 milhões de triângulos — a correção de verdade é o modelo leve.
+- **Otimização dos modelos** com `@gltf-transform/cli@4 optimize` (`--compress false --texture-compress webp
+  --texture-size 2048`, e `--simplify-ratio` calculado pra ~100 mil triângulos só quando o modelo passa de 150 mil).
+  Sem compressão Draco/Meshopt de propósito (o GLTFLoader do 3D Livre e o model-viewer leem webp nativo, mas não estão
+  configurados com decodificador Draco/Meshopt). Comparado visualmente lado a lado: praticamente igual.
+- **Modelos no Storage trocados pelos otimizados** (pedido do usuário: "faz o que for necessário"): cada arquivo antigo
+  ficou guardado como backup em `<empresa>/<item>/modelo-3d/modelo-original.glb` (mesma pasta, tamanho conferido
+  antes de trocar). Pra voltar um modelo, basta copiar o `modelo-original.glb` de volta pra `modelo.glb`. A troca foi
+  feita com `npx supabase storage rm/cp ... --linked --experimental` (o `cp` não sobrescreve; e não aceita caminho
+  local com "C:" — usar caminho relativo). `itens_modelos_3d.url` ganhou `?v=otimizado-20261005` e `tamanho_bytes` o
+  tamanho novo: o catálogo baixa os modelos com `fetch(..., {cache:"force-cache"})`, então sem mudar o endereço quem já
+  tinha o arquivo pesado em cache continuaria com ele.
+- **Envios novos já sobem otimizados**: `Modulos/Estoque/CadastroItens/glb-otimizar.mjs` (`otimizarGlb()`, roda no
+  navegador com `@gltf-transform` 4.5.1 + `meshoptimizer` via esm.sh, mesma receita do lote; texturas regravadas em
+  WebP pelo `<canvas>`). Usado no envio manual de .glb (`itens.3d.mjs`, `uploadModel`) e no "Modelo 3D com IA"
+  (`item-modelo-3d.mjs`, `salvarModeloCorrigido`). Se falhar, sobe o original (nunca bloqueia o envio). As duas telas
+  também passaram a gravar `url` com `?v=<data>`, pelo mesmo motivo do cache forte.
+- **Entrada animada da página do item** (pedido: "quando eu clicar no item quero que essa tela entre animada, aquela
+  que tem a foto do item ambientada"): `openSingleItem()` marca a seção com `.is-entering` por ~2,2s. A foto
+  ambientada abre como cortina da direita pra esquerda (`clip-path`, 1,25s) enquanto a imagem assenta de um zoom
+  leve; a foto do produto sobe e aparece; o texto entra em cascata (`.product-copy>*`, 80ms entre itens); "Combine
+  também com" por último. Vale pra clique na grade, nos resultados filtrados e nas sugestões. A classe sai depois, pra
+  trocar de cor/foto não repetir. Movimento reduzido: sem animação.
+- **Busca saiu do cabeçalho de novo e foi pro lado do card do projeto** (pedido: "coloque esse campo de pesquisa do lado
+  de Projeto, Ana e Bruno"): `.catalog-search` voltou pra `.catalog-top-tools` (logo abaixo do cabeçalho, à direita),
+  alinhada no meio do dock e à esquerda dele. Como o dock tem largura variável, `medirDock()` (catalogo-projetos.mjs,
+  chamada em todo `pintarDock()`) grava `--cpj-dock-w` (largura + 12px de respiro, ou 0 sem dock) e o CSS usa como recuo
+  da direita da busca. Sem projeto ativo, a busca fica no canto direito. **Supera** "busca ao lado dos créditos" acima.
+- **Logo do catálogo diminuída "um pouco"** (pedido do usuário, out/2026): `scale` 5,1→4,5 (>1450px), 4,2→3,7
+  (1201–1450px), 3,6→3,2 (≤1200px e regra base), 2,8→2,5 (celular) — ~12% menor em todas as faixas (arte com ~58px
+  de altura no desktop largo, antes ~66px). A tabela da seção "Trilha ... apagada + logo do cabeçalho maior" ficou com
+  os números antigos; valem estes. `tests/catalogo-cabecalho-browser.cjs` teve as alturas mínimas ajustadas
+  (55/45/39px), mas o teste já travava antes, na escolha de projeto do decorador.
