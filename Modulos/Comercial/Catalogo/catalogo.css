@@ -942,3 +942,21 @@ body.catalog-modo-sistema .catalog-header .catalog-search:focus-within{backgroun
  .catalog-top-tools{padding-top:16px;padding-right:calc(clamp(20px,2.2vw,40px) + var(--cpj-dock-w,0px))}
  .catalog-top-tools .catalog-search{width:clamp(200px,15vw,260px)}
 }
+
+/* "Experimente outro tecido": botão escrito ao lado do nome do item (substitui o cartão "SOB MEDIDA").
+   Sem espaço ao lado do nome, quebra pra linha de baixo. */
+.product-title-line{display:flex;align-items:center;gap:14px;max-width:100%}
+.product-title-line .product-title{min-width:0}
+.product-title-line{flex-wrap:wrap;row-gap:10px}
+.product-bespoke-icon{flex:none;display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px 0 11px;border:1px solid rgba(185,154,114,.55);border-radius:999px;background:#fff;color:var(--accent);font:600 .75rem/1 "Manrope",sans-serif;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;cursor:pointer;transition:border-color .25s,background .25s,color .25s}
+.product-bespoke-icon.hidden{display:none}
+.product-bespoke-icon svg{width:13px;height:13px;fill:currentColor;flex:none}
+.product-bespoke-icon:hover,.product-bespoke-icon:focus-visible{background:var(--accent);border-color:var(--accent);color:#fff;outline:none}
+@media(max-width:767px){.product-title-line{gap:10px}}
+
+/* Página de um item só (openSingleItem marca .is-single): em vez da altura travada na tela, cresce com o conteúdo e a
+   página rola — senão o que passa da tela ("Combine também com", botões) fica cortado em telas mais baixas. */
+@media(min-width:768px){
+ .catalog-product-section.is-single{height:auto;min-height:calc(100dvh - var(--header-h))}
+ .catalog-product-section.is-single .catalog-detail-panel{grid-template-rows:minmax(min(64vh,640px),1fr) auto}
+}

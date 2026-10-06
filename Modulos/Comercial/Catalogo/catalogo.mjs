@@ -961,6 +961,14 @@ function rentalPriceMarkup(item, detail = false){
   return `<span class="catalog-rental-price${detail ? " catalog-rental-price--detail" : ""}" aria-label="Locação: ${escapeAttr(value)}">${detail ? '<span class="catalog-rental-price-label">Locação</span>' : ""}<span class="catalog-rental-price-value">${escapeHtml(value)}</span></span>`;
 }
 
+// "Experimente outro tecido" (personalização com IA): botão pequeno escrito, ao lado do nome do item (pedido do usuário),
+// no lugar do antigo cartão "SOB MEDIDA". Se não couber ao lado do nome, desce pra linha de baixo.
+function bespokeIconMarkup(item){
+  return `<button type="button" class="product-bespoke-icon${item.personalizable ? "" : " hidden"}" data-customize-item="${escapeAttr(item.id)}" aria-label="Experimente outro tecido — personalize com inteligência artificial">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.7 4.8L18.5 9.5l-4.8 1.7L12 16l-1.7-4.8L5.5 9.5l4.8-1.7z"/></svg><span>Experimente outro tecido</span>
+  </button>`;
+}
+
 function productTemplate(item, index){
   const personalizavel = !ehVisitante() && (item.personalizable || item.variantGroup?.some((variante) => variante.personalizable));
   return `<section class="catalog-product-section" id="produto-${escapeAttr(item.id)}" data-product-id="${escapeAttr(item.id)}" data-category="${escapeAttr(item.cat)}" data-search="${escapeAttr(normalizeSearch(`${item.name} ${item.catLabel || ""}`))}">
@@ -968,12 +976,14 @@ function productTemplate(item, index){
       <div class="catalog-detail-top">
         <div class="product-copy product-reveal">
           <div class="product-title-row">
-            <h1 class="product-title">${escapeHtml(item.name)}</h1>
+            <div class="product-title-line">
+              <h1 class="product-title">${escapeHtml(item.name)}</h1>
+              ${personalizavel ? bespokeIconMarkup(item) : ""}
+            </div>
             ${variantSwatchesBlock(item)}
           </div>
           <div class="product-rule" aria-hidden="true"></div>
           ${specsPanel(item)}
-          ${personalizavel ? `<button type="button" class="product-bespoke-card ${item.personalizable ? "" : "hidden"}" data-customize-item="${escapeAttr(item.id)}"><span>SOB MEDIDA</span><strong>Experimente outro tecido</strong><small>Personalize com inteligência artificial →</small></button>` : ""}
           ${capaToggleMarkup(item)}
           ${rentalPriceMarkup(item, true)}
           ${projetoAddMarkup(item.id, "page")}
@@ -2115,6 +2125,9 @@ function openSingleItem(item, heading){
   window.scrollTo({ top: 0, behavior: "instant" });
   // Entrada animada da página do item (pedido do usuário): a foto ambientada se abre, a foto do produto sobe e o texto
   // entra em cascata. A classe sai depois, pra trocar de cor/foto não repetir a animação.
+  // Página de um item só: cresce com o conteúdo e a página rola (as seções da imersiva antiga tinham altura travada
+  // na da tela, e o que passava disso — ex. "Combine também com" — ficava cortado sem rolagem).
+  section?.classList.add("is-single");
   if(section){
     section.classList.add("is-entering");
     clearTimeout(section._entradaTimer);
@@ -3471,7 +3484,7 @@ function applyVariant(section, variant, options = {}){
   }
 
   section.querySelector(".product-specs")?.remove();
-  const bespokeCard = section.querySelector(".product-bespoke-card");
+  const bespokeCard = section.querySelector(".product-bespoke-icon");
   const specsHtml = specsPanel(variant);
   if(specsHtml){
     // .product-variants-row (os círculos de cor) mudou de lugar — agora
@@ -3481,7 +3494,7 @@ function applyVariant(section, variant, options = {}){
     // das specs); sem ele (decorador externo), cai pro fim de
     // .product-rule, que SEMPRE existe, garantindo que as specs nunca
     // fiquem sem lugar pra entrar.
-    const anchor = bespokeCard || section.querySelector("[data-capa-toggle]");
+    const anchor = section.querySelector("[data-capa-toggle]") || section.querySelector(".product-copy > .catalog-rental-price");
     if(anchor) anchor.insertAdjacentHTML("beforebegin", specsHtml);
     else section.querySelector(".product-rule")?.insertAdjacentHTML("afterend", specsHtml);
   }

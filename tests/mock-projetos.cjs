@@ -17,6 +17,8 @@ function installMock(opts){
   ];
   // opts.modelos: os 3 itens ganham modelo 3D (editor de cena / 3D Livre).
   if(opts.modelos) ITENS.forEach(i=>{i.itens_modelos_3d=[{url:'https://fixture/modelos/m'+i.id+'.glb',status:'ativo'}];});
+  // opts.muitos: N itens a mais (com material), pra testar rolagem de listas longas.
+  if(opts.muitos) for(let n=0;n<opts.muitos;n++) ITENS.push({id:'m'+n,tipo:'Item',produto:'Peça '+n,categoria:n%2?'Cadeiras':'Estofados',material:n%3?'Madeira':'Tecido',foto_url:'https://fixture/storage/v1/object/public/itens/m'+n+'.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]});
   const resumo=(p)=>({id:p.id,noivos:p.noivos,data_evento:p.data_evento,local_evento:p.local_evento,status:p.status,pedido_enviado_em:p.pedido_enviado_em,atualizado_em:p.atualizado_em,foto_casal_url:(p.dados.foto_casal&&p.dados.foto_casal.url)||null,
     ambientes:p.dados.ambientes.length,itens:p.dados.ambientes.reduce((s,a)=>s+a.itens.reduce((t,i)=>t+(i.quantidade||1),0),0),renders:p.dados.ambientes.reduce((s,a)=>s+a.renders.length,0),dono:p.cliente_id==='client'?'Kelly Decor':'Equipe'});
   const visiveis=()=>db.projetos.filter(p=>opts.staff||p.cliente_id==='client');

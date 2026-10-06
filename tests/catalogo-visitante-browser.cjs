@@ -67,7 +67,7 @@ assert.doesNotMatch(grade.texto,/R\$/,'Nenhum valor em reais');assert.match(grad
 // Página do item: sem preço, sem "experimente outro tecido", sem edição de fotos/capa, sem projeto
 await page.locator('[data-grid-item]').first().click();
 await page.locator('.catalog-product-section').first().waitFor();
-const item=await page.evaluate(()=>{const s=document.querySelector('.catalog-product-section');return {preco:s.querySelectorAll('.catalog-rental-price').length,tecido:s.querySelectorAll('.product-bespoke-card').length,editar:s.querySelectorAll('[data-inline-edit],[data-capa-toggle]').length,projeto:s.querySelectorAll('[data-projeto-add]').length,texto:s.textContent};});
+const item=await page.evaluate(()=>{const s=document.querySelector('.catalog-product-section');return {preco:s.querySelectorAll('.catalog-rental-price').length,tecido:s.querySelectorAll('.product-bespoke-icon').length,editar:s.querySelectorAll('[data-inline-edit],[data-capa-toggle]').length,projeto:s.querySelectorAll('[data-projeto-add]').length,texto:s.textContent};});
 assert.deepEqual({p:item.preco,t:item.tecido,e:item.editar,j:item.projeto},{p:1,t:0,e:0,j:0},'Item com "Sob consulta", sem tecido, edição ou projeto');
 assert.doesNotMatch(item.texto,/R\$/);assert.match(item.texto,/Sob consulta/);
 // Biblioteca: fotos da empresa, só visualizar
