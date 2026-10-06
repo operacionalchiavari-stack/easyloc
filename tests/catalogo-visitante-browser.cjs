@@ -23,7 +23,7 @@ await page.addInitScript(()=>{
       return {data:{empresa:{nome:'Chiavari'},empresa_id:'company',decorador:null,itens:base.itens.map(({valor_locacao,valor_reposicao,...i})=>({...i,personalizable:true}))},error:null};
     }
     if(nome==='catalogo_capas_publico') return {data:{portal:'https://fixture/capa.png'},error:null};
-    if(nome==='biblioteca_publico_carregar') return {data:{fotos:[{id:'f1',categoria:'Sofás',titulo:'Evento',url:'https://fixture/storage/v1/object/public/biblioteca/e1.png',ordem:1,cliente_id:null},{id:'f2',categoria:'Sofás',titulo:'Evento 2',url:'https://fixture/storage/v1/object/public/biblioteca/e2.png',ordem:2,cliente_id:null}]},error:null};
+    if(nome==='biblioteca_publico_carregar') return {data:{pastas:[{id:'sofas',nome:'Sofás',ordem:1}],fotos:[{id:'f1',pasta_id:'sofas',categoria:'Sofás',titulo:'Evento',url:'https://fixture/storage/v1/object/public/biblioteca/e1.png',ordem:1,cliente_id:null},{id:'f2',pasta_id:'sofas',categoria:'Sofás',titulo:'Evento 2',url:'https://fixture/storage/v1/object/public/biblioteca/e2.png',ordem:2,cliente_id:null}]},error:null};
     return o(nome,par);
   };
 });

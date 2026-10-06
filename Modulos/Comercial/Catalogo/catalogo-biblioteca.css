@@ -183,3 +183,26 @@
 .catalog-biblioteca-photo.is-drop-target{outline:3px solid var(--accent);outline-offset:-3px}
 .catalog-biblioteca-photo:focus-within .catalog-biblioteca-photo-remove{opacity:1}
 @media(hover:none){.catalog-biblioteca-photo-remove{opacity:1;width:34px;height:34px}}
+
+/* Pastas livres (out/2026): a equipe cria, renomeia e exclui as pastas — não são mais as categorias do catálogo. */
+.catalog-biblioteca-folder-title{margin:0;font:500 clamp(1.4rem,2vw,1.9rem)/1.15 "Cormorant Garamond",serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.catalog-biblioteca-folder-actions{display:flex;gap:6px}
+.catalog-biblioteca-folder-actions button{border:0;background:none;padding:6px 10px;border-radius:999px;color:var(--muted);font:600 .75rem "Manrope",sans-serif;letter-spacing:.07em;text-transform:uppercase;cursor:pointer}
+.catalog-biblioteca-folder-actions button:hover,.catalog-biblioteca-folder-actions button:focus-visible{color:var(--accent);background:#f6f2ec}
+.catalog-biblioteca-folder-actions .is-danger:hover,.catalog-biblioteca-folder-actions .is-danger:focus-visible{color:#b3432f;background:#fbefec}
+.catalog-biblioteca-folder-new{fill:none;stroke:color-mix(in srgb,var(--muted) 55%,#fff);stroke-width:2;stroke-dasharray:5 4}
+.catalog-biblioteca-folder-plus{fill:none;stroke:var(--muted);stroke-width:3;stroke-linecap:round}
+.catalog-biblioteca-new:hover .catalog-biblioteca-folder-new{stroke:var(--accent)}
+.catalog-biblioteca-new:hover .catalog-biblioteca-folder-plus{stroke:var(--accent)}
+.catalog-biblioteca-new .catalog-grid-card-name{color:var(--muted)}
+.catalog-biblioteca-pasta-dialog{border:0;border-radius:16px;padding:0;width:min(420px,calc(100vw - 32px));box-shadow:0 24px 60px rgba(30,24,18,.22)}
+.catalog-biblioteca-pasta-dialog::backdrop{background:rgba(20,17,14,.35)}
+.catalog-biblioteca-pasta-dialog form{display:flex;flex-direction:column;gap:18px;padding:26px 26px 22px}
+.catalog-biblioteca-pasta-dialog h2{margin:0;font:500 1.6rem "Cormorant Garamond",serif;color:var(--ink)}
+.catalog-biblioteca-pasta-dialog label{display:flex;flex-direction:column;gap:8px}
+.catalog-biblioteca-pasta-dialog label span{font:600 .75rem "Manrope",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.catalog-biblioteca-pasta-dialog input{border:0;border-bottom:1px solid var(--line);padding:8px 2px;font:500 1rem "Manrope",sans-serif;color:var(--ink);background:none;outline:none}
+.catalog-biblioteca-pasta-dialog input:focus{border-bottom-color:var(--accent)}
+.catalog-biblioteca-pasta-acoes{display:flex;justify-content:flex-end;gap:10px}
+.catalog-biblioteca-pasta-acoes button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 18px;font:600 .8rem "Manrope",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);cursor:pointer}
+.catalog-biblioteca-pasta-acoes .is-primary{background:#5a5a55;border-color:#5a5a55;color:#fff}

@@ -131,25 +131,38 @@ atualizarListaInsumos();
 
 async function carregarItensEComponentes(){
 
-  const { data, error } = await window.supabaseClient
-    .from("itens")
-    .select("id, descricao_total, tipo")
-    .eq("empresa_id", window.__CONTEXT.empresa_id)
-    .order("descricao_total");
+  // Pagina de 1000 em 1000: a API do Supabase corta em 1000 linhas por
+  // requisição e a empresa já tem mais que isso — sem paginar, os itens
+  // depois da posição 1000 (ordem alfabética) nunca apareciam na busca.
+  const data = [];
+  const PAGINA = 1000;
+  for(let inicio = 0; ; inicio += PAGINA){
+    const { data: pagina, error } = await window.supabaseClient
+      .from("itens")
+      .select("id, descricao_total, tipo")
+      .eq("empresa_id", window.__CONTEXT.empresa_id)
+      .order("descricao_total")
+      .order("id")
+      .range(inicio, inicio + PAGINA - 1);
 
-  if(error){
-    console.error("❌ erro ao carregar itens:", error);
-    return;
+    if(error){
+      console.error("❌ erro ao carregar itens:", error);
+      return;
+    }
+    data.push(...(pagina || []));
+    if(!pagina || pagina.length < PAGINA) break;
   }
 
-  itens = (data || [])
-    .filter(i => i.tipo === "Item")
+  // Kit também é um produto alugado inteiro (ex.: Sofá Becca), então entra
+  // na opção "Item" junto com os itens simples.
+  itens = data
+    .filter(i => i.tipo === "Item" || i.tipo === "Kit")
     .map(i => ({
       id: i.id,
       nome: i.descricao_total
     }));
 
-  componentes = (data || [])
+  componentes = data
     .filter(i => i.tipo === "Componente")
     .map(i => ({
       id: i.id,

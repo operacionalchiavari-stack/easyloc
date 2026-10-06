@@ -25,9 +25,9 @@ const {chromium}=require('playwright');const express=require('express');const as
      {id:'1',tipo:'Item',produto:'Sofá Um',categoria:'Sofás',foto_url:'https://fixture/sofa.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
      {id:'2',tipo:'Item',produto:'Bar Um',categoria:'Bares',foto_url:'https://fixture/bar.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
    ]}};
-   if(name==='biblioteca_carregar') return {data:{fotos:[
-     {id:'f1',categoria:'Sofás',titulo:null,url:'https://fixture/biblioteca/sofa-1.png',path:'company/sofas/1.png',ordem:null},
-     {id:'f2',categoria:'Sofás',titulo:null,url:'https://fixture/biblioteca/sofa-2.png',path:'company/sofas/2.png',ordem:null},
+   if(name==='biblioteca_carregar') return {data:{pastas:[{id:'sofas',nome:'Sofás',ordem:1},{id:'bares',nome:'Bares',ordem:2}],fotos:[
+     {id:'f1',pasta_id:'sofas',categoria:'Sofás',titulo:null,url:'https://fixture/biblioteca/sofa-1.png',path:'company/sofas/1.png',ordem:null},
+     {id:'f2',pasta_id:'sofas',categoria:'Sofás',titulo:null,url:'https://fixture/biblioteca/sofa-2.png',path:'company/sofas/2.png',ordem:null},
    ]}};
    return {data:null};
   }};
@@ -50,6 +50,7 @@ const {chromium}=require('playwright');const express=require('express');const as
  assert.ok(Math.abs(centroPastas.x - centroPastas.esperadoX) < 2, 'Pastas centralizadas horizontalmente');
  assert.ok(Math.abs(centroPastas.y - centroPastas.esperadoY) < 2, 'Pastas centralizadas verticalmente');
  assert.equal(await page.locator('#catalogGrid').isVisible(),false,'Grade de produtos some quando a Biblioteca abre');
+ assert.equal(await page.locator('[data-library-new-folder]').count(),0,'Decorador não cria pasta');
  assert.equal(await page.locator('[data-library-folder]').count(),2,'Uma pasta por categoria existente (Sofás, Bares)');
  const sofaMeta=await page.locator('[data-library-folder="sofas"] .catalog-grid-card-meta').textContent();
  assert.equal(sofaMeta.trim(),'2 fotos','Contagem de fotos da pasta Sofás bate com as fotos carregadas');
@@ -267,7 +268,7 @@ const {chromium}=require('playwright');const express=require('express');const as
     return ()=>builder(resolveValue);
    }});
   }
-  window.testInserted=[];window.testDeleted=[];window.testUploaded=[];
+  window.testInserted=[];window.testDeleted=[];window.testUploaded=[];window.testPastas=[];
   window.supabaseClient={
    auth:{
     getSession:async()=>({data:{session:{user:{id:'user-1'}}},error:null}),
@@ -275,12 +276,19 @@ const {chromium}=require('playwright');const express=require('express');const as
    },
    from(table){
     if(table==='usuarios_empresas') return builder(()=>({data:{empresa_id:'company'},error:null}));
+    if(table==='biblioteca_pastas'){
+     return {
+      insert(row){window.testPastas.push({op:'insert',row});return {select:()=>({single:async()=>({data:{id:'pasta-nova',nome:row.nome,ordem:row.ordem},error:null})})};},
+      update(row){return {eq:async(_c,id)=>{window.testPastas.push({op:'update',id,row});return {error:null};}};},
+      delete(){return {eq:async(_c,id)=>{window.testPastas.push({op:'delete',id});return {error:null};}};},
+     };
+    }
     if(table==='biblioteca_fotos'){
      const b=builder(()=>({data:[],error:null}));
      return {
       insert(row){
        window.testInserted.push(row);
-       const saved={id:'novo-1',categoria:row.categoria,titulo:null,url:row.url,path:row.path,ordem:null,cliente_id:row.cliente_id};
+       const saved={id:'novo-1',categoria:row.categoria,pasta_id:row.pasta_id,titulo:null,url:row.url,path:row.path,ordem:null,cliente_id:row.cliente_id};
        return {select:()=>({single:async()=>({data:saved,error:null})})};
       },
       delete(){
@@ -296,7 +304,7 @@ const {chromium}=require('playwright');const express=require('express');const as
     if(name==='catalogo_carregar_interno') return {data:{empresa:{nome:'Chiavari'},decorador:null,itens:[
      {id:'1',tipo:'Item',produto:'Sofá Um',categoria:'Sofás',foto_url:'https://fixture/sofa.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
     ]}};
-    if(name==='biblioteca_carregar_interno') return {data:{fotos:[],clientes:[{id:'kelly',nome:'Kelly Khawam'},{id:'fabi',nome:'Fabiane Gabrich'}]}};
+    if(name==='biblioteca_carregar_interno') return {data:{pastas:[{id:'sofas',nome:'Sofás',ordem:1}],fotos:[],clientes:[{id:'kelly',nome:'Kelly Khawam'},{id:'fabi',nome:'Fabiane Gabrich'}]}};
     return {data:null,error:null};
    },
    storage:{from(bucket){return {
@@ -310,16 +318,41 @@ const {chromium}=require('playwright');const express=require('express');const as
  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
  await page.locator('[data-gateway-tile="biblioteca"]').click();
+ // Pastas livres: a equipe cria, renomeia e exclui pastas com o nome que quiser.
+ await page.locator('[data-library-new-folder]').click();
+ await page.locator('.catalog-biblioteca-pasta-dialog input').fill('  Casamentos   ao ar livre ');
+ await page.locator('.catalog-biblioteca-pasta-dialog button[type=submit]').click();
+ await page.locator('[data-library-folder="pasta-nova"]').waitFor();
+ assert.deepEqual(await page.evaluate(()=>window.testPastas[0]),{op:'insert',row:{empresa_id:'company',nome:'Casamentos ao ar livre',ordem:2}},'Pasta criada com o nome digitado (espaços limpos)');
+ assert.equal((await page.locator('[data-library-folder="pasta-nova"] .catalog-grid-card-name').textContent()).trim(),'Casamentos ao ar livre');
+ await page.locator('[data-library-new-folder]').click();
+ await page.locator('.catalog-biblioteca-pasta-dialog input').fill('sofás');
+ await page.locator('.catalog-biblioteca-pasta-dialog button[type=submit]').click();
+ await page.waitForTimeout(150);
+ assert.equal(await page.evaluate(()=>window.testPastas.length),1,'Nome repetido (sem diferenciar maiúscula) não cria outra pasta');
+ await page.locator('[data-library-folder="pasta-nova"]').click();
+ await page.locator('#catalogBibliotecaRename').click();
+ await page.locator('.catalog-biblioteca-pasta-dialog input').fill('Cerimônias');
+ await page.locator('.catalog-biblioteca-pasta-dialog button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('catalogBibliotecaFolderTitle').textContent==='Cerimônias');
+ assert.deepEqual(await page.evaluate(()=>window.testPastas.at(-1)),{op:'update',id:'pasta-nova',row:{nome:'Cerimônias'}});
+ assert.equal(await page.locator('#catalogBibliotecaFolderActions').isVisible(),true,'Equipe vê Renomear/Excluir pasta');
+ await page.locator('#catalogBibliotecaDelete').click();
+ await page.locator('#catalogBibliotecaFolders:not(.hidden)').waitFor();
+ assert.deepEqual(await page.evaluate(()=>window.testPastas.at(-1)),{op:'delete',id:'pasta-nova'});
+ assert.equal(await page.locator('[data-library-folder="pasta-nova"]').count(),0,'Pasta excluída some da lista');
  await page.locator('[data-library-folder="sofas"]').click();
  await page.locator('#catalogBibliotecaDetail:not(.hidden)').waitFor();
+ assert.equal(await page.locator('#catalogBibliotecaFolderTitle').textContent(),'Sofás','Nome da pasta aberta no topo');
  assert.equal(await page.locator('#catalogBibliotecaUpload').isVisible(),true,'Equipe interna vê o botão de adicionar fotos');
- assert.equal(await page.locator('.catalog-biblioteca-empty').textContent(),'Nenhuma foto nesta categoria ainda.');
+ assert.equal(await page.locator('.catalog-biblioteca-empty').textContent(),'Nenhuma foto nesta pasta ainda.');
  await page.locator('#catalogBibliotecaUploadInput').setInputFiles({name:'foto.png',mimeType:'image/png',buffer:Buffer.from('89504e470d0a1a0a','hex')});
  await page.waitForFunction(()=>document.querySelectorAll('.catalog-biblioteca-photo').length===1);
  assert.equal(await page.evaluate(()=>window.testUploaded.length),1,'Upload chamado no bucket biblioteca');
  assert.equal(await page.evaluate(()=>window.testUploaded[0].bucket),'biblioteca');
- assert.match(await page.evaluate(()=>window.testUploaded[0].path),/^company\/sofas\//,'Caminho do arquivo começa com empresa/categoria');
- assert.equal(await page.evaluate(()=>window.testInserted[0].categoria),'Sofás','Linha gravada usa o rótulo da categoria, não o slug');
+ assert.match(await page.evaluate(()=>window.testUploaded[0].path),/^company\/sofas\//,'Caminho do arquivo começa com empresa/pasta');
+ assert.equal(await page.evaluate(()=>window.testInserted[0].categoria),'Sofás','Linha gravada leva o nome da pasta');
+ assert.equal(await page.evaluate(()=>window.testInserted[0].pasta_id),'sofas','Linha gravada leva o id da pasta');
  assert.equal(await page.locator('.catalog-biblioteca-photo-remove').count(),1,'Equipe interna vê botão de remover foto');
  // A equipe também abre a foto em tela toda; e o "×" de remover NUNCA abre o visualizador.
  await page.locator('.catalog-biblioteca-photo img').click();

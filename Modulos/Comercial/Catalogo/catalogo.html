@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="catalogo.css?v=20261005-logo-menor">
   <link rel="stylesheet" href="projeto-apresentacao.css?v=20260926-legenda-cena">
   <link rel="stylesheet" href="catalogo-studio3d.css?v=20261005-add-projeto3">
-  <link rel="stylesheet" href="catalogo-biblioteca.css?v=20260925-organizar">
+  <link rel="stylesheet" href="catalogo-biblioteca.css?v=20261006-pastas-livres">
   <link rel="stylesheet" href="catalogo-projetos.css?v=20261005-add-projeto">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../../js/core/supabase.js"></script>
@@ -474,10 +474,15 @@
       <button type="button" class="catalog-photo-zoom-control" data-photo-zoom-reset aria-label="Redefinir visualização" title="Redefinir visualização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4.5v5h-5"/></svg></button>
     </div>
   </dialog>
-  <section class="catalog-biblioteca hidden" id="catalogBiblioteca" aria-label="Biblioteca de fotos por categoria">
+  <section class="catalog-biblioteca hidden" id="catalogBiblioteca" aria-label="Biblioteca de fotos">
     <div id="catalogBibliotecaFolders"></div>
     <div class="catalog-biblioteca-detail hidden" id="catalogBibliotecaDetail">
       <header class="catalog-biblioteca-detail-header">
+        <h2 class="catalog-biblioteca-folder-title" id="catalogBibliotecaFolderTitle"></h2>
+        <div class="catalog-biblioteca-folder-actions hidden" id="catalogBibliotecaFolderActions">
+          <button type="button" id="catalogBibliotecaRename">Renomear</button>
+          <button type="button" id="catalogBibliotecaDelete" class="is-danger">Excluir pasta</button>
+        </div>
         <label class="catalog-biblioteca-upload hidden" id="catalogBibliotecaUpload">
           <span>+ Adicionar fotos</span>
           <input type="file" id="catalogBibliotecaUploadInput" accept="image/png,image/jpeg,image/webp" multiple>
@@ -493,6 +498,6 @@
   <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
   <div class="cpj-dock hidden" id="catalogProjetoDock" aria-label="Projeto ativo"></div>
   <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
-  <script type="module" src="catalogo.mjs?v=20261005-busca-dock"></script>
+  <script type="module" src="catalogo.mjs?v=20261006-pastas-livres"></script>
 </body>
 </html>

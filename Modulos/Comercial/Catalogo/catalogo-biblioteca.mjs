@@ -97,7 +97,10 @@ function slugify(value){
 }
 
 let ctx = null;
-const state = { loaded: false, loading: false, photos: [], activeCategory: null, uploading: false };
+// Pastas livres (pedido do usuário: "quero ter liberdade pra criar pastas que eu quiser, ao invés de ter essas pastas
+// por categoria") — vêm da tabela biblioteca_pastas (data.pastas); a equipe cria, renomeia e exclui. Decorador e
+// visitante veem todas as pastas (vazia mostra "0 fotos", como antes), sem criar/renomear/excluir.
+const state = { loaded: false, loading: false, photos: [], folders: [], activeFolder: null, uploading: false };
 state.clienteId = null;
 state.saving = false;
 
@@ -112,67 +115,176 @@ function renderClientSelector(clientes){
     host.addEventListener("change", (event) => {
       state.clienteId = event.target.value || null;
       renderFolders();
-      if(state.activeCategory) renderDetail();
+      if(state.activeFolder) renderDetail();
     });
   }
   host.innerHTML = `Fotos de <select aria-label="Cliente da biblioteca"><option value="">Todos os clientes (compartilhadas)</option>${clientes.map(c => `<option value="${escapeAttr(c.id)}">${escapeHtml(c.nome)}</option>`).join("")}</select>`;
 }
 
-function photosForCategory(cat){
-  return state.photos.filter((photo) => slugify(photo.categoria) === cat
+const folderById = (id) => state.folders.find((f) => String(f.id) === String(id)) || null;
+
+function photosForFolder(id){
+  return state.photos.filter((photo) => String(photo.pasta_id) === String(id)
     && (!ctx.acessoInterno || (photo.cliente_id || null) === state.clienteId));
 }
+
+const NEW_FOLDER_SVG = `<svg class="catalog-biblioteca-folder-icon" viewBox="0 0 100 80" aria-hidden="true">
+    <rect class="catalog-biblioteca-folder-new" x="8" y="18" width="84" height="52" rx="7"/>
+    <path class="catalog-biblioteca-folder-plus" d="M50 32v24M38 44h24"/>
+  </svg>`;
 
 function renderFolders(){
   const host = $("catalogBibliotecaFolders");
   if(!host) return;
-  // Sem título "Biblioteca" aqui dentro — duplicava o rótulo do
-  // cabeçalho (#catalogPageLabel), pedido explícito do usuário: "como o
-  // nome está no menu, o que está embaixo pode remover pra não ficar
-  // duplicado" (reportado com print mostrando "BIBLIOTECA" duas vezes).
-  host.innerHTML = `<div class="catalog-grid-wrap">
-    <div class="catalog-grid catalog-home-grid">${ctx.categories.map((category) => {
-      const photos = photosForCategory(category.cat);
-      return `<button type="button" class="catalog-grid-card catalog-home-card" data-library-folder="${escapeAttr(category.cat)}">
-        <span class="catalog-grid-card-photo catalog-biblioteca-folder${photos.length ? "" : " is-empty"}">${folderIconSvg(photos[0]?.url, category.cat)}</span>
+  // Sem título "Biblioteca" aqui dentro — duplicava o rótulo do cabeçalho (#catalogPageLabel).
+  const folders = state.folders;
+  const cards = folders.map((folder) => {
+    const photos = photosForFolder(folder.id);
+    return `<button type="button" class="catalog-grid-card catalog-home-card" data-library-folder="${escapeAttr(folder.id)}">
+        <span class="catalog-grid-card-photo catalog-biblioteca-folder${photos.length ? "" : " is-empty"}">${folderIconSvg(photos[0]?.url, folder.id)}</span>
         <span class="catalog-grid-card-body">
-          <span class="catalog-grid-card-name">${escapeHtml(category.label)}</span>
+          <span class="catalog-grid-card-name">${escapeHtml(folder.nome)}</span>
           <span class="catalog-grid-card-meta">${photos.length} foto${photos.length === 1 ? "" : "s"}</span>
         </span>
       </button>`;
-    }).join("")}</div>
-  </div>`;
+  }).join("");
+  const novo = ctx.acessoInterno ? `<button type="button" class="catalog-grid-card catalog-home-card catalog-biblioteca-new" data-library-new-folder>
+        <span class="catalog-grid-card-photo catalog-biblioteca-folder">${NEW_FOLDER_SVG}</span>
+        <span class="catalog-grid-card-body"><span class="catalog-grid-card-name">Nova pasta</span></span>
+      </button>` : "";
+  host.innerHTML = folders.length || novo
+    ? `<div class="catalog-grid-wrap"><div class="catalog-grid catalog-home-grid">${cards}${novo}</div></div>`
+    : `<div class="catalog-grid-wrap"><p class="catalog-biblioteca-empty">Nenhuma foto na biblioteca ainda.</p></div>`;
 }
 
 function renderDetail(){
-  const category = ctx.categories.find((c) => c.cat === state.activeCategory);
-  const photos = photosForCategory(state.activeCategory);
+  const folder = folderById(state.activeFolder);
+  const photos = photosForFolder(state.activeFolder);
   $("catalogBibliotecaUpload")?.classList.toggle("hidden", !ctx.acessoInterno);
+  const title = $("catalogBibliotecaFolderTitle");
+  if(title) title.textContent = folder?.nome || "";
+  $("catalogBibliotecaFolderActions")?.classList.toggle("hidden", !ctx.acessoInterno);
   const status = $("catalogBibliotecaUploadStatus");
   if(status) status.textContent = state.uploading ? "Enviando fotos…" : "";
   const host = $("catalogBibliotecaPhotos");
   if(!host) return;
   host.innerHTML = photos.length
     ? photos.map((photo) => `<figure class="catalog-biblioteca-photo" data-photo-id="${escapeAttr(photo.id)}">
-        <img src="${escapeAttr(otimizarFoto(photo.url, 700))}" alt="${escapeAttr(photo.titulo || category?.label || "")}" loading="lazy" decoding="async" data-open-photo role="button" tabindex="0" aria-label="Ver foto em tela cheia">
+        <img src="${escapeAttr(otimizarFoto(photo.url, 700))}" alt="${escapeAttr(photo.titulo || folder?.nome || "")}" loading="lazy" decoding="async" data-open-photo role="button" tabindex="0" aria-label="Ver foto em tela cheia">
 ${ctx.visitante ? "" : `<button type="button" class="catalog-biblioteca-move" data-move-photo aria-label="Arrastar para reorganizar; use as setas do teclado">↔</button>
         <button type="button" class="catalog-biblioteca-photo-remove" data-remove-photo="${escapeAttr(photo.id)}" aria-label="Remover foto">×</button>`}
       </figure>`).join("")
-    : `<p class="catalog-biblioteca-empty">Nenhuma foto nesta categoria ainda.</p>`;
+    : `<p class="catalog-biblioteca-empty">Nenhuma foto nesta pasta ainda.</p>`;
 }
 
 function showFolders(){
-  state.activeCategory = null;
+  state.activeFolder = null;
   $("catalogBibliotecaDetail")?.classList.add("hidden");
   $("catalogBibliotecaFolders")?.classList.remove("hidden");
   renderFolders();
 }
 
-function showDetail(cat){
-  state.activeCategory = cat;
+function showDetail(id){
+  state.activeFolder = id;
   renderDetail();
   $("catalogBibliotecaFolders")?.classList.add("hidden");
   $("catalogBibliotecaDetail")?.classList.remove("hidden");
+}
+
+// Diálogo pequeno pra digitar o nome da pasta (criar/renomear). Resolve com o nome digitado ou null.
+function pedirNomePasta({ titulo, valor = "", acao }){
+  return new Promise((resolve) => {
+    const dialog = document.createElement("dialog");
+    dialog.className = "catalog-biblioteca-pasta-dialog";
+    dialog.innerHTML = `<form method="dialog">
+        <h2>${escapeHtml(titulo)}</h2>
+        <label><span>Nome da pasta</span><input type="text" maxlength="80" required value="${escapeAttr(valor)}" placeholder="Ex.: Casamentos ao ar livre"></label>
+        <div class="catalog-biblioteca-pasta-acoes">
+          <button type="button" data-cancelar>Cancelar</button>
+          <button type="submit" class="is-primary">${escapeHtml(acao)}</button>
+        </div>
+      </form>`;
+    document.body.append(dialog);
+    const input = dialog.querySelector("input");
+    let resposta = null;
+    dialog.querySelector("[data-cancelar]").addEventListener("click", () => dialog.close());
+    dialog.querySelector("form").addEventListener("submit", (event) => {
+      const nome = input.value.replace(/\s+/g, " ").trim();
+      if(!nome){ event.preventDefault(); return; }
+      resposta = nome;
+    });
+    dialog.addEventListener("close", () => { dialog.remove(); resolve(resposta); });
+    dialog.showModal();
+    input.select();
+  });
+}
+
+function nomeJaExiste(nome, ignorarId){
+  const chave = nome.toLowerCase();
+  return state.folders.some((f) => String(f.id) !== String(ignorarId) && f.nome.trim().toLowerCase() === chave);
+}
+
+async function criarPasta(){
+  if(!ctx.acessoInterno || state.saving) return;
+  const nome = await pedirNomePasta({ titulo: "Nova pasta", acao: "Criar pasta" });
+  if(!nome) return;
+  if(nomeJaExiste(nome)){ window.catalogNotify?.({ title: "Essa pasta já existe", message: `Já existe uma pasta chamada "${nome}".`, status: "error" }); return; }
+  state.saving = true;
+  try{
+    const ordem = state.folders.reduce((max, f) => Math.max(max, Number(f.ordem) || 0), 0) + 1;
+    const { data, error } = await ctx.supabase.from("biblioteca_pastas")
+      .insert({ empresa_id: ctx.empresaId, nome, ordem }).select("id,nome,ordem").single();
+    if(error) throw error;
+    state.folders.push(data);
+    renderFolders();
+    window.catalogNotify?.({ title: "Pasta criada", message: nome, status: "done" });
+  }catch(error){
+    console.error("Erro ao criar pasta da biblioteca:", error);
+    window.catalogNotify?.({ title: "Não foi possível criar a pasta", message: error?.code === "23505" ? "Já existe uma pasta com esse nome." : "Tente novamente.", status: "error" });
+  }finally{ state.saving = false; }
+}
+
+async function renomearPasta(){
+  const folder = folderById(state.activeFolder);
+  if(!ctx.acessoInterno || !folder || state.saving) return;
+  const nome = await pedirNomePasta({ titulo: "Renomear pasta", valor: folder.nome, acao: "Salvar" });
+  if(!nome || nome === folder.nome) return;
+  if(nomeJaExiste(nome, folder.id)){ window.catalogNotify?.({ title: "Essa pasta já existe", message: `Já existe uma pasta chamada "${nome}".`, status: "error" }); return; }
+  state.saving = true;
+  try{
+    const { error } = await ctx.supabase.from("biblioteca_pastas").update({ nome }).eq("id", folder.id);
+    if(error) throw error;
+    folder.nome = nome;
+    state.photos.forEach((p) => { if(String(p.pasta_id) === String(folder.id)) p.categoria = nome; });
+    renderDetail();
+  }catch(error){
+    console.error("Erro ao renomear pasta da biblioteca:", error);
+    window.catalogNotify?.({ title: "Não foi possível renomear", message: error?.code === "23505" ? "Já existe uma pasta com esse nome." : "Tente novamente.", status: "error" });
+  }finally{ state.saving = false; }
+}
+
+async function excluirPasta(){
+  const folder = folderById(state.activeFolder);
+  if(!ctx.acessoInterno || !folder || state.saving) return;
+  // Conta TODAS as fotos da pasta (de qualquer cliente), não só as do cliente escolhido na tela.
+  const fotos = state.photos.filter((p) => String(p.pasta_id) === String(folder.id));
+  const aviso = fotos.length
+    ? `Excluir a pasta "${folder.nome}" e as ${fotos.length} foto${fotos.length === 1 ? "" : "s"} dentro dela (de todos os clientes)? Isso não pode ser desfeito.`
+    : `Excluir a pasta "${folder.nome}"?`;
+  if(!window.confirm(aviso)) return;
+  state.saving = true;
+  try{
+    const { error } = await ctx.supabase.from("biblioteca_pastas").delete().eq("id", folder.id);
+    if(error) throw error;
+    const paths = fotos.map((p) => p.path).filter(Boolean);
+    if(paths.length) await ctx.supabase.storage.from("biblioteca").remove(paths);
+    state.folders = state.folders.filter((f) => f !== folder);
+    state.photos = state.photos.filter((p) => String(p.pasta_id) !== String(folder.id));
+    showFolders();
+  }catch(error){
+    console.error("Erro ao excluir pasta da biblioteca:", error);
+    window.catalogNotify?.({ title: "Não foi possível excluir a pasta", message: "Tente novamente.", status: "error" });
+  }finally{ state.saving = false; }
 }
 
 async function carregarFotos(){
@@ -189,6 +301,7 @@ async function carregarFotos(){
       );
     if(error) throw error;
     state.photos = Array.isArray(data?.fotos) ? data.fotos : [];
+    state.folders = Array.isArray(data?.pastas) ? data.pastas : [];
     renderClientSelector(Array.isArray(data?.clientes) ? data.clientes : []);
     state.loaded = true;
   }catch(error){
@@ -204,17 +317,16 @@ function extensaoImagem(mime){
 }
 
 async function enviarFotos(files){
-  if(!ctx.acessoInterno || !state.activeCategory || !files.length) return;
-  const category = ctx.categories.find((c) => c.cat === state.activeCategory);
+  const folder = folderById(state.activeFolder);
+  if(!ctx.acessoInterno || !folder || !files.length) return;
   const clienteId = state.clienteId;
-  const activeCategory = state.activeCategory;
   state.uploading = true;
   const selector = $("catalogBibliotecaCliente")?.querySelector("select");
   if(selector) selector.disabled = true;
   renderDetail();
   for(const file of files){
     if(!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 15 * 1024 * 1024) continue;
-    const path = `${ctx.empresaId}/${clienteId ? `${clienteId}/` : ""}${activeCategory}/${crypto.randomUUID()}.${extensaoImagem(file.type)}`;
+    const path = `${ctx.empresaId}/${clienteId ? `${clienteId}/` : ""}${folder.id}/${crypto.randomUUID()}.${extensaoImagem(file.type)}`;
     const { error: uploadError } = await ctx.supabase.storage.from("biblioteca").upload(path, file, { contentType: file.type, upsert: false });
     if(uploadError){ console.error("Erro ao subir foto da biblioteca:", uploadError); continue; }
     const { data: urlData } = ctx.supabase.storage.from("biblioteca").getPublicUrl(path);
@@ -222,9 +334,10 @@ async function enviarFotos(files){
     const { data: row, error: insertError } = await ctx.supabase.from("biblioteca_fotos").insert({
       empresa_id: ctx.empresaId,
       cliente_id: clienteId,
-      categoria: category?.label || state.activeCategory,
+      categoria: folder.nome,
+      pasta_id: folder.id,
       path, url, mime_type: file.type, tamanho_bytes: file.size,
-    }).select("id,categoria,titulo,url,path,ordem,cliente_id").single();
+    }).select("id,categoria,pasta_id,titulo,url,path,ordem,cliente_id").single();
     if(insertError){ console.error("Erro ao salvar foto da biblioteca:", insertError); continue; }
     state.photos.push(row);
   }
@@ -260,7 +373,7 @@ async function removerFoto(id){
 
 async function moverFoto(id, targetId){
   if(state.saving || state.uploading || id === targetId) return;
-  const photos = photosForCategory(state.activeCategory);
+  const photos = photosForFolder(state.activeFolder);
   const from = photos.findIndex(p => String(p.id) === id);
   const to = photos.findIndex(p => String(p.id) === targetId);
   if(from < 0 || to < 0) return;
@@ -313,15 +426,18 @@ function bindInteractions(){
     if(!event.target.closest("[data-move-photo]") || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
     event.preventDefault();
     const id = event.target.closest("[data-photo-id]").dataset.photoId;
-    const photos = photosForCategory(state.activeCategory);
+    const photos = photosForFolder(state.activeFolder);
     const index = photos.findIndex(p => String(p.id) === id);
     const target = photos[index + (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1)];
     if(target) moverFoto(id, String(target.id)).then(() => grid.querySelector(`[data-photo-id="${CSS.escape(id)}"] [data-move-photo]`)?.focus());
   });
   $("catalogBibliotecaFolders")?.addEventListener("click", (event) => {
+    if(event.target.closest("[data-library-new-folder]")){ criarPasta(); return; }
     const folder = event.target.closest("[data-library-folder]");
     if(folder) showDetail(folder.dataset.libraryFolder);
   });
+  $("catalogBibliotecaRename")?.addEventListener("click", renomearPasta);
+  $("catalogBibliotecaDelete")?.addEventListener("click", excluirPasta);
   // Clicar numa foto abre o visualizador em tela cheia do catálogo (o mesmo do
   // zoom das fotos do item, exposto em window.catalogOpenPhotoZoom — ver
   // catalogo.mjs). O "×" de remover (só equipe interna) é checado ANTES: clicar
@@ -334,10 +450,10 @@ function bindInteractions(){
   // que já está na grade como preview.
   const openPhoto = (opener) => {
     const figure = opener.closest("[data-photo-id]");
-    const photos = photosForCategory(state.activeCategory);
+    const photos = photosForFolder(state.activeFolder);
     const index = photos.findIndex((item) => String(item.id) === figure.dataset.photoId);
     if(index < 0) return;
-    const label = ctx.categories.find((c) => c.cat === state.activeCategory)?.label || "";
+    const label = folderById(state.activeFolder)?.nome || "";
     const items = photos.map((photo) => {
       const thumb = document.querySelector(`#catalogBibliotecaPhotos [data-photo-id="${CSS.escape(String(photo.id))}"] img`);
       return { src: photo.url, alt: photo.titulo || label, preview: thumb ? (thumb.currentSrc || thumb.src) : "" };
