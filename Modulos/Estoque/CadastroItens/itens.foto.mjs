@@ -440,7 +440,7 @@ async function gerarBlobImagemSlot(file){
 window.itens_processarFoto = async function(itemId){
 
   const empresaId =
-    window.__CONTEXT?.empresa_id;
+    (await window.aguardarContexto?.())?.empresa_id || window.__CONTEXT?.empresa_id;
 
   if(!empresaId || !itemId){
 
@@ -596,7 +596,7 @@ window.itens_salvarFotosAdicionais = async function(itemId, empresaId){
 async function iniciarSeletorGaleriaCliente(){
   const select = document.getElementById("itemGaleriaCliente");
   if(!select || select.dataset.ready) return;
-  const empresaId = window.__CONTEXT?.empresa_id;
+  const empresaId = (await window.aguardarContexto?.())?.empresa_id || window.__CONTEXT?.empresa_id;
   if(!empresaId) return;
   select.dataset.ready = "true";
   const { data } = await supabase.from("clientes_empresas").select("id,nome_razao").eq("empresa_id", empresaId).order("nome_razao");

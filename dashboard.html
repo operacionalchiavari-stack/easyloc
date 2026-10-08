@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Acervo</title>
+  <title>Portal Interno • Chiavari Eventos</title>
   <link rel="icon" type="image/png" href="logo%20nova%20-%20com%20fundo%20branco.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="js/core/productionConsole.js"></script>
 
   <!-- Ãcones -->
@@ -32,35 +33,27 @@
   <link rel="stylesheet" href="styles/design-system.css?v=20260913d">
   <link rel="stylesheet" href="styles/global-help.css?v=20260913b">
   <link rel="stylesheet" href="styles/lia-widget.css?v=20260913b">
-  <link rel="stylesheet" href="styles/navigation-v2.css?v=20260924-voltar">
+  <link rel="stylesheet" href="styles/tema-chiavari.css?v=20261008c">
+  <link rel="stylesheet" href="styles/portal-shell.css?v=20261008-tudo-fora2">
 </head>
 
-<body>
+<body class="portal-shell portal-em-inicio">
 
-<button class="hamburger" onclick="toggleMenu()">☰</button>
+<!-- Menu no estilo do Portal Interno da Chiavari: styles/portal-shell.css + js/ui/portalNav.js -->
+<button class="abrir-menu" type="button" aria-label="Abrir menu" onclick="toggleMenu()"><i data-lucide="menu"></i></button>
 
-<aside class="app-navigation" id="sidebar">
-  <div class="sidebar-header">
-    <div class="sidebar-brand">
-      <img id="sidebarLogo" src="logo%20nova%20branca%20-%20sem%20fundo.png">
-      <span>Acervo</span>
-    </div>
+<aside class="portal-menu" id="sidebar" aria-label="Menu">
+  <div class="menu-topo">
+    <!-- Clicar na logo leva ao Início (o botão Início saiu do menu, pedido do usuário). -->
+    <button type="button" class="menu-nome" onclick="portalIrInicio()" title="Início" aria-label="Ir para o Início">
+      <!-- Logo da empresa (EasyLocTheme troca o src em js/core/companyTheme.js). -->
+      <img id="sidebarLogo" class="menu-logo-empresa" src="logo%20nova%20branca%20-%20sem%20fundo.png" alt="Logo da empresa"
+        onload="this.classList.toggle('is-quadrada', !!this.naturalWidth && this.naturalWidth / this.naturalHeight < 1.6)">
+    </button>
   </div>
   <script>
-    // Anti-flash: a logo generica "Acervo" vem no src por padrao no HTML
-    // (fallback correto pra antes de qualquer coisa carregar). A logo real
-    // da empresa (Chiavari) so era aplicada dentro de context.js, DEPOIS de
-    // varias chamadas assincronas ao Supabase (getSession, getUser, busca
-    // da empresa) — nesse meio-tempo a logo generica pintava na tela e
-    // sumia, um "pisca" visivel. companyTheme.js ja tem um cache dessa logo
-    // em localStorage (easyloc_theme_<empresa>) e ja le esse cache de forma
-    // sincrona dentro de applyForEmpresa(), mas so quando chamado — o
-    // problema e o QUANDO, nao o cache em si. Esse script roda aqui mesmo,
-    // sincrono, logo depois da tag <img>, e aplica o mesmo cache antes do
-    // resto da pagina ser desenhado. A logica de cache-busting replica
-    // EasyLocTheme.withCacheBust (js/core/companyTheme.js) pra gerar
-    // exatamente a mesma URL — assim a chamada redundante feita depois por
-    // applyForEmpresa() encontra o src ja igual e nao reatribui nada.
+    // Anti-flash: aplica a logo da empresa guardada em cache (mesma URL que
+    // EasyLocTheme.withCacheBust gera) antes do resto da página carregar.
     try {
       const empresaId = sessionStorage.getItem("empresa_id");
       const cached = empresaId && localStorage.getItem("easyloc_theme_" + empresaId);
@@ -68,118 +61,43 @@
       if (theme?.logo_url) {
         const cleanUrl = theme.logo_url.replace(/([?&])v=[^&]*(&?)/, (m, prefix, suffix) => suffix ? prefix : "");
         const separator = cleanUrl.includes("?") ? "&" : "?";
-        const nextSrc = theme.logo_url.startsWith("blob:") || theme.logo_url.startsWith("data:")
-          ? theme.logo_url
-          : `${cleanUrl}${separator}v=stable`;
-        document.getElementById("sidebarLogo").src = nextSrc;
-        document.body.classList.add("company-logo-active");
+        document.getElementById("sidebarLogo").src = theme.logo_url.startsWith("blob:") || theme.logo_url.startsWith("data:")
+          ? theme.logo_url : cleanUrl + separator + "v=stable";
       }
-    } catch (error) {
-      console.warn("[EasyLoc Theme] pre-paint da logo ignorado:", error);
-    }
+    } catch (error) {}
   </script>
 
-  <div class="sidebar-search-row">
-    <div class="sidebar-search" id="sidebarSearch">
-      <i data-lucide="search"></i>
-      <input
-        id="sidebarSearchInput"
-        type="search"
-        name="easyloc_module_search"
-        placeholder="Buscar modulo"
-        autocomplete="new-password"
-        autocapitalize="none"
-        autocorrect="off"
-        spellcheck="false"
-        readonly
-        aria-label="Buscar categorias e subcategorias"
-      >
-      <button type="button" id="sidebarSearchClear" aria-label="Limpar busca">
-        <i data-lucide="x"></i>
-      </button>
+  <nav class="menu-lista" id="appMenu"></nav>
+  <script src="js/ui/sidebarMenu.js?v=20261008-tudo-fora"></script>
+
+  <div class="menu-rodape">
+    <div class="usuario" role="button" tabindex="0" aria-label="Opções da conta" onclick="toggleUserMenu(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleUserMenu(event);}">
+      <div class="avatar" id="userAvatar">--</div>
+      <div class="usuario-dados"><b id="usuarioNome">Carregando...</b><small id="empresaNome">Carregando...</small></div>
     </div>
-    <div class="system-status" id="systemStatus">
-      <button type="button" class="status-indicator" id="statusIndicator" aria-label="Status do sistema">
-        <span class="status-dot" id="statusDot"></span>
-        <span class="status-text" id="statusText">Estável</span>
-      </button>
-      <div class="status-panel" id="statusPanel">
-        <div class="status-panel-header">
-          <strong>Status do Sistema</strong>
-        </div>
-        <div class="status-line">
-          <span>Conexão com internet:</span>
-          <span id="statusInternet">Verificando...</span>
-        </div>
-        <div class="status-line">
-          <span>Resposta do sistema:</span>
-          <span id="statusBackend">Verificando...</span>
-        </div>
-        <div class="status-line">
-          <span>Performance geral:</span>
-          <span id="statusGeral">Analisando...</span>
-        </div>
+
+    <div class="user-dropdown-modern" id="userDropdown">
+      <div class="dropdown-item" onclick="abrirEmpresa()">
+        <i data-lucide="building-2"></i>
+        <span>Editar empresa</span>
+      </div>
+      <div class="dropdown-item" onclick="abrirPerfil()">
+        <i data-lucide="user-round"></i>
+        <span>Editar perfil</span>
+      </div>
+      <div class="dropdown-item" onclick="ativarAusencia()">
+        <i data-lucide="clock"></i>
+        <span>Entrar em ausência</span>
       </div>
     </div>
+
+    <button class="menu-item" type="button" onclick="logout()"><i data-lucide="log-out"></i><span class="rotulo">Sair</span></button>
   </div>
-
-  <div class="sidebar-favorites" id="appFavoritos" aria-label="Favoritos"></div>
-
-  <div class="sidebar-search-results" id="sidebarSearchResults" role="listbox" aria-label="Resultados da busca"></div>
-
-<nav class="menu" id="appMenu"></nav>
-<script src="js/ui/sidebarMenu.js?v=20260913i"></script>
-
-
-<div class="sidebar-user">
-  <div class="sidebar-user-row">
-  <!-- CARD DO USUÃRIO -->
-  <div class="user-account" onclick="toggleUserMenu(event)">
-    
-    <div class="user-avatar" id="userAvatar">--</div>
-
-    <div class="user-info">
-      <span class="empresa" id="empresaNome">Carregando...</span>
-      <span class="usuario" id="usuarioNome">
-        Carregando...
-        <span class="arrow">&#9662;</span>
-      </span>
-    </div>
-
-  </div>
-
-  <div class="sidebar-user-actions">
-    <button type="button" class="sidebar-top-logout sidebar-user-logout" onclick="logout()" aria-label="Sair">
-      <i data-lucide="log-out"></i>
-    </button>
-  </div>
-  </div>
-
-  <div class="user-dropdown-modern" id="userDropdown">
-
-    <div class="dropdown-item" onclick="abrirEmpresa()">
-      <i data-lucide="building-2"></i>
-      <span>Editar empresa</span>
-    </div>
-
-    <div class="dropdown-item" onclick="abrirPerfil()">
-      <i data-lucide="user-round"></i>
-      <span>Editar perfil</span>
-    </div>
-
-    <div class="dropdown-item" onclick="ativarAusencia()">
-      <i data-lucide="clock"></i>
-      <span>Entrar em ausência</span>
-    </div>
-
-  </div>
-
-</div>
-
-
-</div>
-
 </aside>
+
+<!-- Início: mural do Portal (js/ui/portalMural.js) -->
+<main id="portalInicio" aria-label="Início"></main>
+<div id="luz" onclick="if(event.target === this) fecharLuz()"><button type="button" onclick="fecharLuz()">✕</button><img id="luzImg" alt=""><span id="luzTexto"></span></div>
 
 <main class="main">
 
@@ -291,7 +209,7 @@
 <script src="js/core/preload.js"></script>
 <script src="js/core/listPager.js?v=20260913b"></script>
 <script src="js/core/context.js?v=20260913b"></script>
-<script src="js/core/permissions.js"></script>
+<script src="js/core/permissions.js?v=20261008-sem-planejador"></script>
 <script src="js/core/google.config.js"></script>
 <script src="js/core/google.js"></script>
 
@@ -309,7 +227,8 @@
 ===================================================== -->
 
 <!-- SIDEBAR / MENU -->
-<script src="js/ui/navigation-v2.js?v=20260913b"></script>
+<script src="js/ui/portalNav.js?v=20261008-tudo-fora"></script>
+<script src="js/ui/portalMural.js?v=20261008-servidor"></script>
 
 <!-- SISTEMA DE MODAIS -->
 <script src="js/ui/modais.js"></script>

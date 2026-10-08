@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js" data-projeto="uber"></script>
+  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="uber"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login • Corridas Uber</title>
@@ -158,8 +158,7 @@ function login() {
                     cargo: resp.cargo
                 }));
 
-                window.location.href =
-                "https://script.google.com/macros/s/AKfycbxQfSBIAQ7wTtSDurL2g77a2OETLxDG0ssf-c92i3s3mDU8DbybhhE8YBeLo7wLjM2efQ/exec?page=corridas";
+                window.location.href = "corridas.html";
 
             } else {
                 erro.innerText = "Usuário ou senha incorretos!";

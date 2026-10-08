@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js" data-projeto="uber"></script>
+  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="uber"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle de Corridas Uber</title>
@@ -263,8 +263,8 @@ header{
   background:#ffffff !important; border-bottom:1px solid var(--line) !important; box-shadow:none !important;
 }
 header h2{
-  font-family:var(--serif) !important; font-size:clamp(30px, 4.4vw, 54px) !important; font-weight:500 !important;
-  letter-spacing:.2em; line-height:1.05; text-transform:uppercase; color:var(--text) !important;
+  font-family:var(--serif) !important; font-size:clamp(26px, 2.8vw, 38px) !important; font-weight:500 !important;
+  letter-spacing:.16em; line-height:1.05; text-transform:uppercase; color:var(--text) !important;
 }
 .header-right{ position:absolute; top:14px; right:24px; gap:12px !important; }
 #saudacao{ font-size:13px !important; font-weight:600 !important; color:var(--muted); opacity:1 !important; }
@@ -698,7 +698,7 @@ body.painel-aberto{ overflow:hidden; }
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     let data = localStorage.getItem("usuarioLogado");
-    if (!data) return location.href="https://script.google.com/macros/s/AKfycbxQfSBIAQ7wTtSDurL2g77a2OETLxDG0ssf-c92i3s3mDU8DbybhhE8YBeLo7wLjM2efQ/exec";
+    if (!data) return location.href="login.html";
 
     let user = JSON.parse(data);
     document.getElementById("saudacao").innerText =
@@ -715,8 +715,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function logout() {
     localStorage.removeItem("usuarioLogado");
-    window.top.location.href =
-      "https://script.google.com/macros/s/AKfycbxQfSBIAQ7wTtSDurL2g77a2OETLxDG0ssf-c92i3s3mDU8DbybhhE8YBeLo7wLjM2efQ/exec";
+    window.location.href = "login.html";
 }
 
 function fecharModal(){

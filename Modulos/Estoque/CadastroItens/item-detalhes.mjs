@@ -1,6 +1,6 @@
 import { getEmpresaAtualId } from "./itens.api.mjs";
 import "./itens.modal.mjs";
-import "./itens.foto.mjs?v=20260919-imgotimizada";
+import "./itens.foto.mjs?v=20261008-banco";
 import "./itens.3d.mjs?v=20261005-otimizar";
 
 const supabase = window.supabaseClient;

@@ -1,494 +1,124 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<title>Acervo - Login</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2b2a26">
+<title>Portal Interno • Login</title>
 <link rel="icon" type="image/png" href="logo%20nova%20-%20com%20fundo%20branco.png">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="js/core/supabase.js"></script>
 
 <style>
-:root{
-  --brand:#374151;
-  --brand-soft:#f6f3f1;
-  --surface:#ffffff;
-  --surface-soft:#fbfaf9;
-  --border:#e7e2df;
-  --text:#1f2937;
-  --muted:#6b7280;
-  --muted-light:#9ca3af;
-  --danger:#dc2626;
-}
-
-*{
-  box-sizing:border-box;
-  font-family:"Inter", Arial, sans-serif;
-}
-
-body{
-  margin:0;
-  min-height:100vh;
-  color:var(--text);
-  background:#fff;
-}
-
-a{
-  color:inherit;
-}
-
-.login-shell{
-  min-height:100vh;
-  display:grid;
-  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
-  overflow:hidden;
-  background:#fff;
-}
-
-.login-media{
-  position:relative;
-  min-height:100vh;
-  overflow:hidden;
-  background:var(--brand);
-}
-
-.login-slide{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  opacity:0;
-  transform:scale(1.04);
-  animation:loginSlide 18s infinite;
-}
-
-.login-slide:nth-child(1){ animation-delay:0s; }
-.login-slide:nth-child(2){ animation-delay:6s; }
-.login-slide:nth-child(3){ animation-delay:12s; }
-
-@keyframes loginSlide{
-  0%{
-    opacity:0;
-    transform:scale(1.04);
+  /* =========================================================
+     LOGIN — cópia visual do login do Portal Interno da Chiavari
+     (Modulos/Chiavari/Portal/login.html). Quem entra é a conta do
+     Acervo (Supabase): a lógica de acesso é a mesma de antes.
+  ========================================================= */
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --line:#e7e1d7; --text:#251e19; --muted:#77716a; --suave:#a8a29a;
+    --escuro:#2b2a26; --erro:#dc2626; --erro-soft:#fdeeee; --ok:#166534; --ok-soft:#ecf8ef;
+    --serif:"Cormorant Garamond", Georgia, serif; --sans:"Manrope", system-ui, sans-serif;
   }
-  8%,
-  33%{
-    opacity:1;
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html, body{ height:100%; }
+  body{ font-family:var(--sans); color:var(--text); background:var(--bg); -webkit-font-smoothing:antialiased; }
+
+  .tela{ min-height:100vh; display:grid; grid-template-columns:1.2fr .8fr; }
+
+  .foto{ position:relative; overflow:hidden; background:var(--escuro); }
+  .foto img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scale(1.04); animation:respirar 18s ease-in-out infinite alternate; }
+  @keyframes respirar{ to{ transform:scale(1.12); } }
+  .foto::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(16,15,13,.05) 30%, rgba(16,15,13,.72)); }
+  .foto-texto{ position:absolute; left:56px; right:56px; bottom:56px; z-index:1; color:#f6f4ef; animation:subir .9s ease .2s both; }
+  .foto-texto small{ display:block; font-size:12px; font-weight:800; letter-spacing:.32em; text-transform:uppercase; opacity:.85; }
+  .foto-texto h2{ font-family:var(--serif); font-weight:500; font-size:clamp(40px, 4vw, 64px); line-height:1.02; margin-top:12px; }
+  .foto-texto p{ margin-top:12px; max-width:440px; font-size:15px; opacity:.85; line-height:1.6; }
+
+  .lado{ display:flex; align-items:center; justify-content:center; padding:56px 64px; background:var(--card); }
+  .form{ width:100%; max-width:380px; animation:subir .7s ease both; }
+  @keyframes subir{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:none; } }
+
+  .marca{ font-family:var(--serif); font-size:15px; font-weight:600; letter-spacing:.42em; text-transform:uppercase; color:var(--muted); }
+  .form h1{ font-family:var(--serif); font-weight:600; font-size:44px; line-height:1.02; margin:22px 0 10px; }
+  .form > p{ color:var(--muted); font-size:15px; line-height:1.6; margin-bottom:34px; }
+
+  .campo{ display:block; margin-bottom:20px; }
+  .campo span{ display:block; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .campo input{ width:100%; height:54px; padding:0 16px; border:1px solid var(--line); border-radius:14px; background:#fbfaf7; font:500 16px var(--sans); color:var(--text); outline:none; transition:border-color .2s, box-shadow .2s, background .2s; }
+  .campo input:focus{ border-color:var(--escuro); background:#fff; box-shadow:0 0 0 4px rgba(43,42,38,.07); }
+
+  .entrar{ width:100%; height:56px; border:0; border-radius:16px; background:var(--escuro); color:#fff; font:800 15px var(--sans); letter-spacing:.02em; cursor:pointer; margin-top:6px; transition:transform .15s, opacity .2s, box-shadow .2s; box-shadow:0 14px 30px rgba(43,42,38,.18); }
+  .entrar:hover{ transform:translateY(-1px); box-shadow:0 18px 36px rgba(43,42,38,.24); }
+  .entrar[disabled]{ opacity:.6; cursor:default; transform:none; }
+
+  .msg{ display:none; margin-top:18px; padding:12px 14px; border-radius:12px; font-size:13.5px; font-weight:600; }
+  .msg.erro{ display:block; background:var(--erro-soft); color:var(--erro); }
+  .msg.ok{ display:block; background:var(--ok-soft); color:var(--ok); }
+  .rodape{ margin-top:40px; color:var(--suave); font-size:12.5px; }
+
+  @media (max-width:980px){
+    .tela{ grid-template-columns:1fr; }
+    .foto{ height:34vh; min-height:240px; }
+    .foto-texto{ left:24px; right:24px; bottom:24px; }
+    .foto-texto p{ display:none; }
+    .lado{ padding:36px 22px 50px; align-items:flex-start; }
+    .form h1{ font-size:36px; }
   }
-  40%,
-  100%{
-    opacity:0;
-    transform:scale(1.1);
-  }
-}
-
-.login-panel{
-  min-height:100vh;
-  display:grid;
-  place-items:center;
-  padding:clamp(28px, 5vw, 64px);
-  background:#fff;
-}
-
-.login-form{
-  width:min(100%, 440px);
-}
-
-.brand{
-  display:grid;
-  justify-items:center;
-  gap:18px;
-  margin-bottom:28px;
-  text-align:center;
-}
-
-.brand img{
-  width:min(188px, 58vw);
-  height:auto;
-  display:block;
-}
-
-.login-ornament{
-  width:min(170px, 56vw);
-  display:grid;
-  grid-template-columns:1fr auto 1fr;
-  align-items:center;
-  gap:12px;
-  color:rgba(46,31,31,.42);
-}
-
-.login-ornament::before,
-.login-ornament::after{
-  content:"";
-  height:1px;
-  background:linear-gradient(90deg, transparent, rgba(46,31,31,.2));
-}
-
-.login-ornament::after{
-  background:linear-gradient(90deg, rgba(46,31,31,.2), transparent);
-}
-
-.login-ornament span{
-  width:6px;
-  height:6px;
-  display:block;
-  border-radius:999px;
-  background:currentColor;
-}
-
-.login-heading{
-  margin-bottom:28px;
-  text-align:center;
-}
-
-.login-heading h1{
-  margin:0;
-  color:var(--brand);
-  font-size:clamp(24px, 3.2vw, 30px);
-  font-weight:600;
-  line-height:1.15;
-  letter-spacing:-.01em;
-}
-
-.login-heading p{
-  margin:10px auto 0;
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.55;
-}
-
-.field{
-  display:grid;
-  gap:7px;
-  margin-bottom:16px;
-}
-
-.field label{
-  color:#4b5563;
-  font-size:13px;
-  font-weight:600;
-}
-
-.input-wrap{
-  position:relative;
-  display:flex;
-  align-items:center;
-}
-
-.input-icon{
-  position:absolute;
-  left:14px;
-  width:18px;
-  height:18px;
-  color:#9ca3af;
-  pointer-events:none;
-}
-
-.input-icon svg,
-.password-toggle svg{
-  width:18px;
-  height:18px;
-  stroke:currentColor;
-  stroke-width:1.9;
-  fill:none;
-}
-
-.field input{
-  width:100%;
-  min-height:52px;
-  padding:14px 14px 14px 44px;
-  border:1px solid var(--border);
-  border-radius:15px;
-  background:#fff;
-  color:var(--text);
-  font-size:15px;
-  outline:none;
-  transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
-}
-
-.field input::placeholder{
-  color:var(--muted-light);
-}
-
-.field input:focus{
-  border-color:rgba(46,31,31,.48);
-  background:#fff;
-  box-shadow:0 0 0 4px rgba(46,31,31,.07);
-}
-
-.password-field input{
-  padding-right:46px;
-}
-
-.password-toggle{
-  position:absolute;
-  right:9px;
-  width:38px;
-  height:38px;
-  display:grid;
-  place-items:center;
-  border:0;
-  border-radius:12px;
-  background:transparent;
-  color:#8b949e;
-  cursor:pointer;
-  transition:background .18s ease, color .18s ease;
-}
-
-.password-toggle:hover{
-  background:var(--brand-soft);
-  color:var(--brand);
-}
-
-.login-options{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  margin:2px 0 22px;
-  color:#4b5563;
-  font-size:13px;
-}
-
-.remember{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  cursor:pointer;
-}
-
-.remember input{
-  width:16px;
-  height:16px;
-  accent-color:var(--brand);
-}
-
-.forgot-link{
-  color:var(--brand);
-  text-decoration:none;
-  font-weight:600;
-}
-
-.forgot-link:hover{
-  text-decoration:underline;
-}
-
-.login-btn{
-  width:100%;
-  min-height:52px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  border:0;
-  border-radius:15px;
-  background:var(--brand);
-  color:#fff;
-  font-size:15px;
-  font-weight:700;
-  cursor:pointer;
-  transition:background .18s ease;
-  box-shadow:none;
-}
-
-.login-btn:hover{
-  background:#283241;
-}
-
-.login-btn:active{
-  background:#1F2937;
-}
-
-.login-btn.loading{
-  opacity:.86;
-  cursor:not-allowed;
-  transform:none;
-}
-
-.spinner{
-  width:16px;
-  height:16px;
-  border:2px solid rgba(255,255,255,.4);
-  border-top-color:#fff;
-  border-radius:50%;
-  animation:spin .8s linear infinite;
-}
-
-@keyframes spin{
-  to{ transform:rotate(360deg); }
-}
-
-.erro{
-  min-height:18px;
-  margin-top:14px;
-  color:var(--danger);
-  font-size:13px;
-  text-align:center;
-}
-
-.divider{
-  display:grid;
-  grid-template-columns:1fr auto 1fr;
-  align-items:center;
-  gap:14px;
-  margin:22px 0 18px;
-  color:#9ca3af;
-  font-size:12px;
-  font-weight:600;
-}
-
-.divider::before,
-.divider::after{
-  content:"";
-  height:1px;
-  background:var(--border);
-}
-
-.link{
-  text-align:center;
-  color:#4b5563;
-  font-size:14px;
-}
-
-.link a{
-  color:var(--brand);
-  font-weight:700;
-  text-decoration:none;
-}
-
-.link a:hover{
-  text-decoration:underline;
-}
-
-@media(max-width:900px){
-  .login-shell{
-    grid-template-columns:1fr;
-    min-height:100vh;
-    overflow:auto;
-  }
-
-  .login-media{
-    min-height:28vh;
-  }
-
-  .login-panel{
-    min-height:72vh;
-    padding:34px 20px;
-  }
-
-  .brand img{
-    width:min(160px, 52vw);
-  }
-}
-
-@media(max-width:560px){
-  .login-media{
-    display:none;
-  }
-
-  .login-panel{
-    min-height:100vh;
-  }
-
-  .login-form{
-    width:100%;
-  }
-
-  .login-options{
-    align-items:flex-start;
-    flex-direction:column;
-    gap:10px;
-  }
-}
 </style>
 </head>
-
 <body>
-<main class="login-shell">
-  <section class="login-media" aria-label="Eventos Acervo">
-    <img class="login-slide" src="slide1.jpg" alt="">
-    <img class="login-slide" src="slide2.jpg" alt="">
-    <img class="login-slide" src="slide3.jpg" alt="">
-  </section>
-
-  <section class="login-panel">
-    <div class="login-form" aria-label="Login">
-      <div class="login-heading">
-        <h1>Entrar na sua conta</h1>
-        <p>Bem-vindo de volta! Acesse para continuar.</p>
+  <div class="tela">
+    <div class="foto">
+      <img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/sistema%20interno/007_Ana%20Paula%20Astino_APA_20251216111706.jpg" alt="">
+      <div class="foto-texto">
+        <small>Chiavari Eventos</small>
+        <h2>Cada detalhe,<br>feito por nós.</h2>
+        <p>O portal da nossa equipe: sistemas, avisos, aniversariantes e quem está fazendo a diferença.</p>
       </div>
-
-      <div class="field">
-        <label for="email">E-mail ou login</label>
-        <div class="input-wrap">
-          <span class="input-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
-          </span>
-          <input id="email" type="text" placeholder="Seu e-mail ou login" autocomplete="username">
-        </div>
-      </div>
-
-      <div class="field password-field">
-        <label for="senha">Senha</label>
-        <div class="input-wrap">
-          <span class="input-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M6 10V8a6 6 0 0 1 12 0v2"></path><path d="M5 10h14v10H5z"></path></svg>
-          </span>
-          <input id="senha" type="password" placeholder="Sua senha" autocomplete="current-password">
-          <button class="password-toggle" type="button" id="togglePassword" aria-label="Mostrar senha">
-            <svg class="eye-open" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"></path><path d="M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"></path></svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="login-options">
-        <label class="remember">
-          <input id="lembrar" type="checkbox">
-          <span>Lembrar-me</span>
-        </label>
-        <a class="forgot-link" href="#" onclick="event.preventDefault()">Esqueci minha senha</a>
-      </div>
-
-      <button class="login-btn" id="loginBtn" onclick="login()">
-        <span class="btn-text">Entrar</span>
-      </button>
-
-      <div id="msg" class="erro"></div>
     </div>
-  </section>
-</main>
+
+    <div class="lado">
+      <form class="form" onsubmit="login(event)">
+        <div class="marca">Portal Interno</div>
+        <h1>Bem-vindo de volta</h1>
+        <p>Entre com seu e-mail e senha para continuar.</p>
+
+        <label class="campo"><span>E-mail ou login</span><input type="text" id="email" autocomplete="username" placeholder="seu@email.com" required></label>
+        <label class="campo"><span>Senha</span><input type="password" id="senha" autocomplete="current-password" placeholder="Sua senha" required></label>
+
+        <button class="entrar" id="loginBtn" type="submit">Entrar</button>
+
+        <div class="msg" id="msg"></div>
+        <div class="rodape">Não consegue acessar? Fale com o administrador.</div>
+      </form>
+    </div>
+  </div>
 
 <script>
 const supabaseClient = window.supabaseClient;
 
-const togglePassword = document.getElementById("togglePassword");
-if (togglePassword) {
-  togglePassword.addEventListener("click", () => {
-    const input = document.getElementById("senha");
-    if (!input) return;
-
-    const shouldShow = input.type === "password";
-    input.type = shouldShow ? "text" : "password";
-    togglePassword.setAttribute("aria-label", shouldShow ? "Ocultar senha" : "Mostrar senha");
-  });
+function mensagem(texto, tipo){
+  const el = document.getElementById("msg");
+  el.textContent = texto || "";
+  el.className = "msg " + (texto ? (tipo || "erro") : "");
 }
 
-async function login(){
+async function login(ev){
+  ev?.preventDefault();
   const btn = document.getElementById("loginBtn");
-  const btnText = btn.querySelector(".btn-text");
-  btn.classList.add("loading");
   btn.disabled = true;
-  btnText.innerHTML = `<span class="spinner"></span> Entrando...`;
+  btn.textContent = "Entrando…";
+  mensagem("");
 
   const email = document.getElementById("email").value.trim();
   const senha = document.getElementById("senha").value;
-  const msg = document.getElementById("msg");
-  msg.innerText = "";
 
   if(!email || !senha){
-    msg.innerText = "Preencha e-mail e senha";
+    mensagem("Preencha e-mail e senha.");
     resetButton();
     return;
   }
@@ -507,7 +137,7 @@ async function login(){
   }
 
   if(error || !data?.user){
-    msg.innerText = "E-mail ou senha inválidos";
+    mensagem("E-mail ou senha incorretos.");
     resetButton();
     return;
   }
@@ -521,7 +151,7 @@ async function login(){
     .limit(1);
 
   if(erroVinculo || !vinculos || vinculos.length === 0){
-    msg.innerText = "Usuário não está vinculado a nenhuma empresa";
+    mensagem("Usuário não está vinculado a nenhuma empresa.");
     resetButton();
     return;
   }
@@ -530,7 +160,7 @@ async function login(){
 
   const acesso = await supabaseClient.rpc("funcionario_contexto", { p_empresa_id: empresaId });
   if (acesso.error || !acesso.data?.ativo) {
-    msg.innerText = "Acesso indisponível. Consulte o administrador.";
+    mensagem("Acesso indisponível. Consulte o administrador.");
     await supabaseClient.auth.signOut();
     resetButton();
     return;
@@ -543,7 +173,7 @@ async function login(){
     .single();
 
   if(erroAssinatura || !assinatura){
-    msg.innerText = "Nenhuma assinatura encontrada. Entre em contato com o suporte.";
+    mensagem("Nenhuma assinatura encontrada. Entre em contato com o suporte.");
     resetButton();
     return;
   }
@@ -553,7 +183,7 @@ async function login(){
     new Date(assinatura.vencimento) < new Date();
 
   if(vencida){
-    msg.innerText = "Assinatura inativa ou vencida. Entre em contato com o suporte.";
+    mensagem("Assinatura inativa ou vencida. Entre em contato com o suporte.");
     resetButton();
     return;
   }
@@ -577,10 +207,8 @@ async function login(){
 
 function resetButton(){
   const btn = document.getElementById("loginBtn");
-  const btnText = btn.querySelector(".btn-text");
-  btn.classList.remove("loading");
   btn.disabled = false;
-  btnText.innerHTML = "Entrar";
+  btn.textContent = "Entrar";
 }
 </script>
 </body>

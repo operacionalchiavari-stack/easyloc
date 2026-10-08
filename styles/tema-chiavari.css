@@ -1,0 +1,435 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap");
+
+/* =========================================================
+   IDENTIDADE VISUAL CHIAVARI (padrão do Almoxarifado)
+   Pedido do usuário: todas as telas com a mesma cara do
+   Modulos/Chiavari/Almoxarifado/almoxarifado.html (bloco
+   "tema-chiavari" de lá): fundo branco, título em Cormorant
+   Garamond maiúsculo e espaçado numa faixa centralizada, cartões
+   com rótulo em caixa alta e número em serifa, abas e botões em
+   pílula, tabelas com cabeçalho em caixa alta, campos bege.
+
+   Último arquivo de styles/global.css (todas as telas do Acervo)
+   e também carregado no dashboard.html para os módulos antigos
+   (#main-content). O prefixo html:root :is(body:not(.portal-shell), #main-content)
+   faz valer na página inteira de cada tela (iframe) e, no dashboard,
+   só dentro de #main-content — nunca no menu nem na tela Início.
+========================================================= */
+
+:root{
+  --ch-primary:#5a5a55;
+  --ch-primary-dark:#44443f;
+  --ch-fundo-suave:#f8f6f0;
+  --ch-line:#e7e1d7;
+  --ch-borda-card:#eee8df;
+  --ch-linha-tabela:#f3efe8;
+  --ch-text:#251e19;
+  --ch-label:#3f3a35;
+  --ch-muted:#5f5952;
+  --ch-serif:"Cormorant Garamond", Georgia, serif;
+  --ch-sans:"Manrope", system-ui, sans-serif;
+  --ch-sombra:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+
+  /* tokens do design system apontando para a paleta Chiavari */
+  --color-primary:#44443f;
+  --color-bg:#ffffff;
+  --el-color-primary:#44443f;
+  --el-color-primary-strong:#2f2f2b;
+  --el-color-primary-dark:#2f2f2b;
+  --el-color-primary-soft:#f8f6f0;
+  --el-color-accent:#44443f;
+  --el-color-accent-strong:#2f2f2b;
+  --el-color-accent-active:#2f2f2b;
+  --el-color-accent-soft:#f8f6f0;
+  --el-color-bg:#ffffff;
+  --el-color-surface:#ffffff;
+  --el-color-surface-soft:#f8f6f0;
+  --el-color-border:#e7e1d7;
+  --el-color-border-soft:#f3efe8;
+  --el-color-title:#251e19;
+  --el-color-text:#251e19;
+  --el-color-text-secondary:#3f3a35;
+  --el-color-muted:#5f5952;
+  --el-color-placeholder:#8a847c;
+  --el-button-secondary-text:#251e19;
+  --el-button-secondary-border:#e7e1d7;
+  --el-button-secondary-hover:#f8f6f0;
+  --el-button-secondary-border-hover:#5a5a55;
+  --el-button-icon-border:#e7e1d7;
+  --el-focus-color:#5a5a55;
+  --el-font-family:"Manrope", system-ui, sans-serif;
+  --el-radius-sm:12px;
+  --el-radius-md:12px;
+  --el-radius-lg:18px;
+  --el-radius-xl:18px;
+  --el-shadow-sm:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+  --el-shadow-md:0 2px 4px rgba(37,30,25,.05), 0 16px 34px rgba(37,30,25,.10);
+  --el-shadow-lg:0 24px 70px rgba(37,30,25,.25);
+  --el-modal-backdrop:rgba(37,30,25,.45);
+  --el-table-header-bg:#ffffff;
+  --el-table-header-color:#3f3a35;
+  --el-table-row-hover:#f6f3ec;
+  --el-table-row-border:#f3efe8;
+  --azul:#251e19;
+  --laranja:#44443f;
+  --fundo:#ffffff;
+  --cinza:#e7e1d7;
+}
+
+/* ---------- Base ---------- */
+/* Seletores começam com html:root para vencer as regras de design-system.css
+   (body :is(#main-content,.el-page) ...) e do CSS próprio de cada tela. */
+html:has(> body:not(.portal-shell)){ background:#ffffff !important; }
+body:not(.portal-shell),
+body:not(.portal-shell) :is(#main-content, .el-page),
+body.portal-shell #main-content{
+  background:#ffffff !important;
+  color:var(--ch-text);
+  font-family:var(--ch-sans) !important;
+  -webkit-font-smoothing:antialiased;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(button, input, select, textarea){ font-family:var(--ch-sans); }
+
+/* ---------- Título da página: faixa branca centralizada ---------- */
+html:root :is(body:not(.portal-shell), #main-content) :is(.header-list, .page-header, .page-top){ flex-wrap:wrap !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(
+  .header-list > :is(h1,h2):first-child,
+  .page-header > :is(h1,h2):first-child,
+  .page-top > :is(h1,h2):first-child,
+  .page-header > div:first-child:has(> :is(h1,h2)),
+  .page-top > div:first-child:has(> :is(h1,h2))
+){
+  flex:1 1 100% !important;
+  order:-1;
+  margin:0 0 6px !important;
+  padding:34px 0 22px !important;
+  border-bottom:1px solid var(--ch-line);
+  text-align:center !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(
+  h1, .page-title, .el-page-title, .titulo-pagina,
+  .header-list > h2:first-child, .page-header h1, .page-top h1, .page-header > h2:first-child
+){
+  font-family:var(--ch-serif) !important;
+  font-size:clamp(26px, 2.8vw, 38px) !important;
+  font-weight:500 !important;
+  letter-spacing:.16em !important;
+  line-height:1.05 !important;
+  text-transform:uppercase !important;
+  color:var(--ch-text) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.page-header, .page-top) > div:first-child :is(p, small, span){ display:block; margin-top:6px; color:var(--ch-muted) !important; font-size:14px; letter-spacing:0; text-transform:none; font-family:var(--ch-sans); }
+
+/* Títulos de seção, painéis e janelas */
+html:root :is(body:not(.portal-shell), #main-content) :is(.section-title, .el-detail-header h3, .modal-header h2, .modal-header h3, .el-modal__title, .modal-title, .modal-box h3, .modal-content > h3, .modal-card > h3){
+  font-family:var(--ch-serif) !important;
+  font-size:24px !important;
+  font-weight:500 !important;
+  letter-spacing:.1em !important;
+  text-transform:uppercase !important;
+  color:var(--ch-text) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) .el-detail-header{ border-bottom-color:var(--ch-line) !important; }
+
+/* ---------- Cartões de indicadores ---------- */
+html:root :is(body:not(.portal-shell), #main-content) .el-stat-row{ gap:14px !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card, .stat-card){
+  min-height:96px !important;
+  padding:16px 18px !important;
+  border:1px solid var(--ch-borda-card) !important;
+  border-radius:16px !important;
+  background:#ffffff !important;
+  box-shadow:var(--ch-sombra) !important;
+  transition:transform .15s, box-shadow .15s;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card, .stat-card):hover{ transform:translateY(-2px); box-shadow:0 2px 4px rgba(37,30,25,.05), 0 16px 34px rgba(37,30,25,.10) !important; }
+/* Sem bolinha colorida de ícone: só rótulo + número, como no Almoxarifado */
+html:root :is(body:not(.portal-shell), #main-content) .el-stat-card > span{ display:none !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card small, .stat-card small, .stat-body small){
+  display:block; margin-bottom:6px;
+  color:var(--ch-label) !important;
+  font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card strong, .stat-card strong, .stat-body strong){
+  font-family:var(--ch-serif) !important;
+  font-size:34px !important; font-weight:600 !important; line-height:1.05 !important;
+  color:var(--ch-text) !important;
+  font-variant-numeric:lining-nums tabular-nums; font-feature-settings:"lnum" 1, "tnum" 1;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card em, .stat-card em){ margin-top:4px; color:var(--ch-muted) !important; font-size:13px !important; font-weight:600 !important; text-transform:none; letter-spacing:0; }
+html:root :is(body:not(.portal-shell), #main-content) .el-stat-card.red strong{ color:#dc2626 !important; }
+
+/* ---------- Abas ---------- */
+html:root :is(body:not(.portal-shell), #main-content) :is(.tabs, .el-tabs, .tab-list){ gap:8px !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.tabs, .el-tabs, .tab-list) > :is(button, a, .tab),
+html:root :is(body:not(.portal-shell), #main-content) :is(.tab-btn, [role="tab"]){
+  min-height:40px;
+  padding:0 18px !important;
+  border:1px solid var(--ch-line) !important;
+  border-radius:999px !important;
+  background:#ffffff !important;
+  color:var(--ch-text) !important;
+  font-family:var(--ch-sans) !important;
+  font-size:13px !important; font-weight:800 !important; letter-spacing:.08em; text-transform:uppercase;
+  box-shadow:none !important;
+  transition:background-color .15s, border-color .15s, color .15s;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.tabs, .el-tabs, .tab-list) > :is(button, a, .tab):hover,
+html:root :is(body:not(.portal-shell), #main-content) :is(.tab-btn, [role="tab"]):hover{ border-color:var(--ch-primary) !important; background:var(--ch-fundo-suave) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.tabs, .el-tabs, .tab-list) > :is(button, a, .tab):is(.active, .ativo, .ativa, .is-active, [aria-selected="true"]),
+html:root :is(body:not(.portal-shell), #main-content) :is(.tab-btn, [role="tab"]):is(.active, .ativo, .ativa, .is-active, [aria-selected="true"]){
+  background:var(--ch-primary-dark) !important; border-color:var(--ch-primary-dark) !important; color:#ffffff !important;
+}
+
+/* ---------- Painéis, cartões e listas ---------- */
+html:root :is(body:not(.portal-shell), #main-content) :is(.card, .el-card, .card-resumo, .resumo-card, .info-card, .metric-card, .panel){
+  border-color:var(--ch-borda-card) !important;
+  border-radius:18px !important;
+  box-shadow:var(--ch-sombra) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-table-card, .table-wrapper, .tabela-card, .table-container){
+  border:1px solid var(--ch-borda-card) !important;
+  border-radius:18px !important;
+  background:#ffffff !important;
+  box-shadow:var(--ch-sombra) !important;
+}
+/* Faixa escura no topo dos painéis com cabeçalho próprio (como "Estoque atual") */
+html:root :is(body:not(.portal-shell), #main-content) :is(.panel-header, .card-header, .el-card__header){
+  padding:14px 22px !important;
+  border-bottom:0 !important;
+  background:var(--ch-primary) !important;
+  color:#ffffff !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.panel-header, .card-header, .el-card__header) :is(h2, h3, h4){
+  margin:0;
+  font-family:var(--ch-serif) !important; font-size:22px !important; font-weight:500 !important;
+  letter-spacing:.12em !important; text-transform:uppercase !important; color:#ffffff !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.panel-header, .card-header, .el-card__header) :is(p, small, span, label){ color:rgba(255,255,255,.8) !important; }
+
+/* Barra de busca/filtros */
+html:root :is(body:not(.portal-shell), #main-content) :is(.filters, .filtros){
+  padding:12px 14px !important;
+  border:1px solid var(--ch-borda-card) !important;
+  border-radius:18px !important;
+  box-shadow:var(--ch-sombra) !important;
+}
+
+/* ---------- Tabelas ---------- */
+html:root :is(body:not(.portal-shell), #main-content) table thead :is(th, td),
+html:root :is(body:not(.portal-shell), #main-content) table thead :is(th, td){
+  background:#ffffff !important;
+  color:var(--ch-label) !important;
+  border-bottom:1px solid var(--ch-borda-card) !important;
+  font-family:var(--ch-sans) !important;
+  font-size:11px !important; font-weight:700 !important; letter-spacing:.08em !important; text-transform:uppercase !important;
+  white-space:nowrap;
+}
+html:root :is(body:not(.portal-shell), #main-content) table tbody td{
+  border-color:var(--ch-linha-tabela) !important;
+  color:var(--ch-text);
+  font-size:14px !important; font-weight:500;
+}
+html:root :is(body:not(.portal-shell), #main-content) table tbody tr:nth-child(even):not(:hover, .selected, .linha-selecionada){ background:#fcfbf8 !important; }
+html:root :is(body:not(.portal-shell), #main-content) table tbody tr:not(.selected, .linha-selecionada):hover{ background:#f6f3ec !important; }
+
+/* Rodapé de paginação das listas */
+html:root :is(body:not(.portal-shell), #main-content) .easyloc-list-pager :is(button, select){ border-color:var(--ch-line) !important; border-radius:999px !important; }
+html:root :is(body:not(.portal-shell), #main-content) .easyloc-list-pager button.active{ background:var(--ch-primary-dark) !important; border-color:var(--ch-primary-dark) !important; color:#fff !important; }
+
+/* ---------- Formulários ---------- */
+html:root :is(body:not(.portal-shell), #main-content) :is(label, .el-label, .field-label, .form-label):not(.service-option, .switch, .toggle, .checkbox, .radio, :has(> input[type="checkbox"]), :has(> input[type="radio"])){
+  color:var(--ch-label) !important;
+  font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea){
+  border:1px solid var(--ch-line) !important;
+  border-radius:12px !important;
+  background-color:var(--ch-fundo-suave) !important;
+  box-shadow:none !important;
+  color:var(--ch-text) !important;
+  font-family:var(--ch-sans) !important;
+  font-weight:500;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea):focus{
+  border-color:var(--ch-primary) !important;
+  background-color:#ffffff !important;
+  box-shadow:0 0 0 3px rgba(90,90,85,.12) !important;
+  outline:none;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(input, textarea)::placeholder{ color:#8a847c; font-weight:500; }
+html:root :is(body:not(.portal-shell), #main-content) :is(input, select, textarea):is([readonly], :disabled){ background-color:#efede7 !important; color:var(--ch-muted) !important; }
+
+/* ---------- Botões ---------- */
+html:root :is(body:not(.portal-shell), #main-content) :is(.btn, .el-btn, .add-btn, .btn-primary, .btn-secondary, .btn-save, .btn-cancel, .btn-delete, .btn-salvar, .btn-cancelar, .btn-outline, .os-btn){
+  min-height:42px;
+  padding:0 20px !important;
+  border-radius:999px !important;
+  font-family:var(--ch-sans) !important;
+  font-size:12.5px !important; font-weight:800 !important; letter-spacing:.08em; text-transform:uppercase;
+  transition:background-color .15s, border-color .15s, transform .15s, box-shadow .15s;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(button, a, [role="button"]):is(.btn.primary, .btn.save, .btn.salvar, .btn-primary, .btn-save, .btn-salvar, .el-btn--primary, .os-btn-primary, .add-btn):not(.secondary, :disabled, [aria-disabled="true"]){
+  background:var(--ch-primary-dark) !important; border-color:var(--ch-primary-dark) !important; color:#ffffff !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(button, a, [role="button"]):is(.btn.primary, .btn.save, .btn.salvar, .btn-primary, .btn-save, .btn-salvar, .el-btn--primary, .os-btn-primary, .add-btn):not(.secondary, :disabled, [aria-disabled="true"]):hover{
+  background:#2f2f2b !important; transform:translateY(-1px); box-shadow:0 6px 16px rgba(37,30,25,.18) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.btn-icon, .el-icon-btn, .icon-btn, .el-back-btn, .el-edit-btn){ border-color:var(--ch-line) !important; border-radius:999px !important; }
+
+/* ---------- Etiquetas ---------- */
+:is(.el-badge, .badge, .status-badge),
+html:root :is(body:not(.portal-shell), #main-content) td .status{ border-radius:999px !important; padding:4px 11px !important; min-height:0 !important; font-size:12px !important; }
+
+/* ---------- Janelas ---------- */
+:is(body, #main-content) :is(.el-modal__box, .modal-content, .modal-box, .modal-card){ border-radius:18px !important; }
+
+/* Carregando */
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-spinner, .spinner, .loading-spinner, .loader-circle){ border-color:#ecece6 !important; border-top-color:var(--ch-primary-dark) !important; }
+
+/* ---------- Cabeçalho com sobretítulo/descrição (Fluxo de Caixa etc.) ---------- */
+html:root :is(body:not(.portal-shell), #main-content) .page-eyebrow{ display:block; margin-bottom:8px !important; color:#b08d57 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.page-header, .page-top) > div:first-child p{ max-width:640px; margin:10px auto 0 !important; text-align:center; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.page-header, .page-top) > :is(.header-actions, .page-actions){ margin-left:auto !important; }
+
+/* ---------- Resumos com número grande (Fluxo de Caixa e parecidos) ---------- */
+html:root :is(body:not(.portal-shell), #main-content) :is(.resumo-executivo, .resumo-metricas){ border-color:var(--ch-borda-card) !important; border-radius:18px !important; }
+html:root :is(body:not(.portal-shell), #main-content) .resumo-principal{ background:var(--ch-primary) !important; color:#ffffff !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.resumo-principal, .metrica) > span{ display:block; margin-bottom:8px; font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; }
+html:root :is(body:not(.portal-shell), #main-content) .metrica > span{ color:var(--ch-label) !important; }
+html:root :is(body:not(.portal-shell), #main-content) .resumo-principal > span{ color:rgba(255,255,255,.82) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.resumo-principal, .metrica) > strong{ font-family:var(--ch-serif) !important; font-size:34px !important; font-weight:600 !important; line-height:1.05; font-variant-numeric:lining-nums tabular-nums; font-feature-settings:"lnum" 1, "tnum" 1; }
+html:root :is(body:not(.portal-shell), #main-content) .metrica > strong{ color:var(--ch-text) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.resumo-principal, .metrica) > small{ font-size:13px; font-weight:600; }
+
+/* ---------- Cabeçalhos com nome próprio em algumas telas ---------- */
+/* Central de Pedidos (.el-page-header), Separação (.separacao-header),
+   Créditos de IA (.credits-heading), Funcionários (.cadastro-view > .section-head):
+   o bloco do título vira a mesma faixa centralizada. */
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head){ display:flex !important; flex-wrap:wrap !important; align-items:center !important; gap:12px 14px !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child{
+  flex:1 1 100% !important; order:-1;
+  margin:0 0 6px !important; padding:34px 0 22px !important;
+  border-bottom:1px solid var(--ch-line); text-align:center !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child :is(h1, h2){
+  margin:0 !important;
+  font-family:var(--ch-serif) !important; font-size:clamp(26px, 2.8vw, 38px) !important; font-weight:500 !important;
+  letter-spacing:.16em !important; line-height:1.05 !important; text-transform:uppercase !important; color:var(--ch-text) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child p{ max-width:640px; margin:10px auto 0 !important; color:var(--ch-muted) !important; font-size:14px !important; text-align:center; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > :is(.el-page-actions, .header-actions, button:last-child){ margin-left:auto !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.separacao-kicker, .eyebrow){ display:block; margin-bottom:8px !important; color:#b08d57 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
+
+/* Cartões de resumo de Funcionários (.summary-card) e Créditos de IA */
+html:root :is(body:not(.portal-shell), #main-content) .summary-card{
+  padding:16px 18px !important; border:1px solid var(--ch-borda-card) !important; border-radius:16px !important;
+  background:#ffffff !important; box-shadow:var(--ch-sombra) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) .summary-card .summary-icon{ display:none !important; }
+html:root :is(body:not(.portal-shell), #main-content) .summary-card span{ display:block; margin-bottom:6px; color:var(--ch-label) !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; }
+html:root :is(body:not(.portal-shell), #main-content) .summary-card strong{ font-family:var(--ch-serif) !important; font-size:34px !important; font-weight:600 !important; line-height:1.05; color:var(--ch-text) !important; font-variant-numeric:lining-nums tabular-nums; }
+html:root :is(body:not(.portal-shell), #main-content) .summary-card small{ color:var(--ch-muted) !important; font-size:13px !important; font-weight:600; }
+
+/* Títulos dentro de painéis/cartões (ex.: "Decoradores", "Movimentações recentes") */
+html:root :is(body:not(.portal-shell), #main-content) :is(.panel, .el-card, .content-card) > header :is(h2, h3),
+html:root :is(body:not(.portal-shell), #main-content) .card-title-row :is(h2, h3){
+  font-family:var(--ch-serif) !important; font-size:24px !important; font-weight:500 !important;
+  letter-spacing:.1em !important; text-transform:uppercase !important; color:var(--ch-text) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) .separacao-kanban :is(h2, h3){ font-family:var(--ch-serif) !important; font-size:22px !important; font-weight:500 !important; letter-spacing:.1em !important; text-transform:uppercase !important; }
+
+/* ---------- Módulos antigos (abertos dentro do dashboard) e outras telas ----------
+   Padrão comum: a página (.el-page) começa com um <header>
+   (ou .zapi-header) cujo primeiro <div> tem o título — vira a mesma faixa. */
+html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child{
+  display:flex !important; flex-wrap:wrap !important; align-items:center !important; gap:12px 14px !important;
+  background:transparent !important; box-shadow:none !important; border:0 !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child{
+  flex:1 1 100% !important; order:-1; max-width:none !important;
+  margin:0 0 6px !important; padding:34px 0 22px !important;
+  border-bottom:1px solid var(--ch-line); text-align:center !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child :is(h1, h2){
+  margin:0 !important; max-width:none !important;
+  font-family:var(--ch-serif) !important; font-size:clamp(26px, 2.8vw, 38px) !important; font-weight:500 !important;
+  letter-spacing:.16em !important; line-height:1.05 !important; text-transform:uppercase !important; color:var(--ch-text) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child > span:first-child{
+  display:block; margin-bottom:8px !important; color:#b08d57 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child p{
+  max-width:640px; margin:10px auto 0 !important; color:var(--ch-muted) !important; font-size:14px !important; text-align:center;
+}
+html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > :not(:first-child):last-child{ margin-left:auto !important; }
+
+/* Fundo branco também nas páginas dos módulos antigos */
+html:root body.portal-shell #main-content .el-page{ background:#ffffff !important; }
+
+/* Rótulos de cartões de resumo dos módulos antigos (Compras, Expedição...) */
+html:root #main-content :is(.compras-summary, .compras-cards, .exp-summary, .dispon-summary) :is(span, small, label):first-child{ text-transform:uppercase; letter-spacing:.1em; font-size:12px !important; font-weight:800 !important; color:var(--ch-label) !important; }
+
+/* ---------- Topo igual ao do Almoxarifado em todas as telas ----------
+   Pedido do usuário: "todos os topos precisam ficar no mesmo tamanho de
+   almoxarifado" — título a 34px do topo, linha a ~97px, de ponta a ponta.
+   Cada tela tinha um espaçamento próprio em cima (padding do body, da
+   página, do cabeçalho); aqui todos os "pais" do bloco do título perdem o
+   espaço de cima e o bloco do título passa a ter exatamente 34px/22px. */
+html:root body:not(.portal-shell),
+html:root :is(body:not(.portal-shell), #main-content) *:has(:is(
+  .header-list > :is(h1,h2):first-child,
+  .page-header > :is(h1,h2):first-child,
+  .page-top > :is(h1,h2):first-child,
+  .page-header > div:first-child,
+  .page-top > div:first-child,
+  :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child,
+  .el-page > :is(header, .zapi-header):first-child > div:first-child
+)){
+  padding-top:0 !important;
+  margin-top:0 !important;
+}
+html:root #main-content{ padding-top:0 !important; }
+
+/* Linha embaixo do título de ponta a ponta (dentro das telas que abrem em
+   tela própria; nos módulos antigos do dashboard fica na largura da página). */
+html:root body:not(.portal-shell) :is(
+  .header-list > :is(h1,h2):first-child,
+  .page-header > :is(h1,h2):first-child,
+  .page-top > :is(h1,h2):first-child,
+  .page-header > div:first-child:has(> :is(h1,h2)),
+  .page-top > div:first-child:has(> :is(h1,h2)),
+  :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child,
+  .el-page > :is(header, .zapi-header):first-child > div:first-child
+){
+  position:relative;
+  border-bottom-color:transparent !important;
+}
+html:root body:not(.portal-shell) :is(
+  .header-list > :is(h1,h2):first-child,
+  .page-header > :is(h1,h2):first-child,
+  .page-top > :is(h1,h2):first-child,
+  .page-header > div:first-child:has(> :is(h1,h2)),
+  .page-top > div:first-child:has(> :is(h1,h2)),
+  :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child,
+  .el-page > :is(header, .zapi-header):first-child > div:first-child
+)::after{
+  content:""; position:absolute; bottom:-1px; left:50%; width:100vw; height:1px;
+  transform:translateX(-50%); background:var(--ch-line); pointer-events:none;
+}
+html:has(> body:not(.portal-shell)){ overflow-x:clip; }
+
+/* A faixa do topo tem só o título, como no Almoxarifado: sobretítulo
+   ("Estoque", "Financeiro"…) e frase de descrição ficam escondidos. */
+html:root :is(body:not(.portal-shell), #main-content) :is(
+  .page-header > div:first-child:has(> :is(h1,h2)),
+  .page-top > div:first-child:has(> :is(h1,h2)),
+  :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child,
+  .el-page > :is(header, .zapi-header):first-child > div:first-child
+) > :not(h1, h2){ display:none !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(
+  .page-header > div:first-child:has(> :is(h1,h2)),
+  .page-top > div:first-child:has(> :is(h1,h2)),
+  :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child,
+  .el-page > :is(header, .zapi-header):first-child > div:first-child
+) > :is(h1, h2){ margin:0 !important; padding:0 !important; }

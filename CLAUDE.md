@@ -38,18 +38,28 @@ Resumo:
   antes (dentro de comentário HTML `<!-- -->`), só que agora é um campo,
   não um comentário.
 - **Dois motores de navegação, os dois em uso.** Não são intercambiáveis,
-  cada tela usa só um. Em out/2026 o usuário pediu "tudo que temos
-  disponível no menu": nada mais é `oculto`, e o menu virou 7 categorias
-  (Cadastros — todos os cadastros + Tabelas de Preço, Créditos de IA e
-  Importar Itens; Catálogo; Comercial — Pedidos, Contratos, Planejador de
-  Eventos; Estoque; Logística — inclui o grupo "Cronograma de Montagem" com
-  as telas vindas do Apps Script em `Modulos/Chiavari/Cronograma/`;
-  Financeiro; Gestão — Gestão de Pessoas, Studio IA, Permissões,
-  Integrações). Os módulos que ainda são fragmento (Contratos, Planejador,
-  Compras, Disponibilidade, Controle de Qualidade, Planejamento,
-  Roteirização, Expedição, Gestão de Pessoas, Studio IA, Permissões,
-  WhatsApp, Gateways) abrem pelo `moduleLoader.js` (`legado`). Os favoritos
-  (`ACERVO_MENU.favoritos`) só aparecem no menu do celular (≤1200px).
+  cada tela usa só um. Em out/2026 o usuário pediu "todos os html no menu":
+  nada mais é `oculto`, e **quando um sistema da Chiavari
+  (`Modulos/Chiavari/`, vindo do Apps Script) duplica um módulo do Acervo,
+  vale o da Chiavari** — saíram do menu (arquivos mantidos) Almoxarifado,
+  Cronograma Logístico, Equipe das Rotas, Ordem de Serviços (= Itens
+  Danificados da Central de Metas), Controle de Qualidade e Gestão de
+  Pessoas (= Controle RH). 7 categorias: Cadastros, Catálogo, Comercial
+  (+ Feedback), Estoque (Almoxarifado/Financeiro do almox, Itens Danificados,
+  Costura), Logística (Cronograma, Central de Montagem, App do Montador,
+  Equipe Free, Fretes, Corridas Uber + Planejamento/Roteirização/Expedição
+  legados), Financeiro, Gestão (Controle RH, Metas e Bônus, Ocorrências,
+  Portal Interno, Studio IA, Permissões, Integrações). Fora do menu de
+  propósito: os `index.html` roteadores (exceto Uber/Portal, que entram
+  pelo login próprio), `Uber/main.html` e `Uber/index-antigo.html` (sobras
+  não roteadas), `pedido.html`/`item-detalhes`/`item-modelo-3d` (abertos de
+  dentro de outras telas). Quem vê cada sistema da Chiavari no menu está em
+  `routes` de `js/core/permissions.js` (chaves existentes reaproveitadas;
+  Portal liberado pra todos). Duas telas usavam `window.top.location`, o que
+  tiraria o usuário do dashboard (iframe): trocado por `window.location` em
+  `central-montagem.html` (irParaPainel) e `Uber/corridas.html` (logout, que
+  ainda apontava pro Apps Script antigo — agora vai pro `login.html`). Os
+  favoritos (`ACERVO_MENU.favoritos`) só aparecem no menu do celular (≤1200px).
   - **Antigo** — `js/core/moduleLoader.js`, função `carregarNaMain()`. Busca
     um *fragmento* de HTML (sem `<html>/<head>` próprios) e cola dentro de
     `<div id="main-content">` com `innerHTML`. Roda no mesmo documento do
@@ -84,6 +94,157 @@ Resumo:
   — **confirmar com o navegador renderizado (Playwright/DevTools,
   `getComputedStyle`), não só lendo o código-fonte**, antes de concluir que
   uma correção não teve efeito.
+
+## Login e dashboard com a cara do Portal Interno (out/2026)
+
+Pedido do usuário: copiar o login e o Portal Interno da Chiavari (Apps Script
+`1345MCPO…`, já migrado em `Modulos/Chiavari/Portal/`) para a entrada do
+sistema, "o menu também igual". Confirmado com ele: **a conta continua sendo
+a do Acervo** (Supabase), só o visual é do Portal (o Portal original usa
+Firebase); e **o menu lateral do Portal com todos os itens do Acervo**.
+
+- `login.html`: visual do `Portal/login.html` (foto da equipe à esquerda,
+  "Bem-vindo de volta"), mesma lógica de antes (e-mail ou login, vínculo,
+  `funcionario_contexto`, assinatura, `sessionStorage`).
+- `dashboard.html`: `body.portal-shell`; **não carrega mais
+  `styles/navigation-v2.css` nem `js/ui/navigation-v2.js`** (barra de cima).
+  No lugar: `styles/portal-shell.css` + `js/ui/portalNav.js` (trilho escuro
+  que abre no hover, "Início", grupos com sub-itens, um aberto por vez,
+  usuário + opções + Sair no rodapé). `js/ui/sidebarMenu.js` continua sendo a
+  lista dos itens; só a parte de desenho mudou (nested `grupo` vira um
+  título pequeno dentro do submenu; `favoritos` não é mais desenhado).
+  **Toda seção e todo subgrupo abre para fora do menu** (pedido do usuário:
+  "essas extensões sempre devem abrir pra fora do menu"): a seção abre um painel
+  fixo à direita do trilho e um subgrupo (Cadastros, Fretes, Integrações) abre um
+  segundo painel à direita do primeiro (`portalAlternarFlyout` em `portalNav.js`;
+  fecha ao sair do menu, ao abrir outra seção, ao abrir um sistema ou com Esc).
+  No celular abre logo abaixo. A flag `flyout: true` nos dados ficou sem efeito
+  (todo `grupo` já é extensão).
+  **Não há mais botão "Início" no menu** (pedido do usuário): a logo, centralizada
+  no topo, é um `<button class="menu-nome">` que chama `portalIrInicio()`.
+  `shell.css` ainda é carregado e tem regras antigas de `.menu-item`/
+  `.submenu` — o fim de `portal-shell.css` as neutraliza dentro do menu.
+  O "← Voltar" do `appShell.js` fica escondido (pedido: "remova isso das
+  telas") — volta-se pelo menu ou pelo navegador; os sistemas ocupam a área
+  toda, do topo.
+  No topo do menu fica a **logo da empresa** (`#sidebarLogo`, trocada por
+  `companyTheme.js`, com o mesmo anti-flash por cache descrito em "Anti-flash
+  da logo no menu principal"), branca via `filter`, e PNG quadrado recortado
+  na faixa do meio (`.is-quadrada`) — pedido do usuário no lugar do texto
+  "CHIAVARI / Portal Interno". Como o texto, só aparece com o menu aberto.
+- Tela **Início** (`#portalInicio`, `body.portal-em-inicio`): o mural do
+  Portal (`js/ui/portalMural.js`, gerado a partir do `portal.html`: avisos,
+  números do mês, aniversariantes com fogos, reconhecimentos, boas-vindas,
+  galeria). Dados em `GET api/portal-mural` (Vercel), que confere o token do
+  Supabase e roda `MURAL_dadosPublicos_` do projeto `portal` com
+  `executar(..., {interno:true})` (só o servidor pode chamar função `_`).
+  Sem esse servidor (GitHub Pages) a Início mostra só a capa.
+- Editar o mural continua no Portal (`Gestão > Portal Interno > Mural`).
+
+## Identidade visual Chiavari em todas as telas (out/2026)
+
+Pedido do usuário, com print do Almoxarifado da Chiavari: "tudo precisa ter
+essa identidade". Referência: bloco `<style id="tema-chiavari">` de
+`Modulos/Chiavari/Almoxarifado/almoxarifado.html` (fundo branco; título em
+Cormorant Garamond maiúsculo e espaçado numa faixa centralizada com linha
+embaixo; cartões com rótulo em caixa alta e número em serifa; abas e botões
+em pílula grafite `#44443f`; tabelas com cabeçalho branco em caixa alta;
+campos bege `#f8f6f0`; painéis com faixa `#5a5a55`).
+
+- **`styles/tema-chiavari.css`** aplica isso às telas do Acervo: é o último
+  `@import` de `styles/global.css` (todas as telas novas) e também é linkado
+  no `dashboard.html` (módulos antigos em `#main-content`). Todos os seletores
+  começam com `html:root :is(body:not(.portal-shell), #main-content)`: vale na
+  página inteira de cada tela e, no dashboard, só dentro de `#main-content`
+  (nunca no menu nem na Início); o `html:root` existe para vencer
+  `design-system.css` e o CSS próprio de cada tela. Também redefine os tokens
+  `--el-*` para a paleta Chiavari.
+- Cabeçalhos de página reconhecidos: `.header-list`, `.page-header`,
+  `.page-top`, `.el-page-header`, `.separacao-header`, `.credits-heading`,
+  `.cadastro-view > .section-head` e, genérico, o primeiro `<header>` (ou
+  `.zapi-header`) de `.el-page`. **Tela nova: usar um desses
+  padrões** que o título já sai na faixa centralizada.
+- Os cartões `.el-stat-card` perdem a bolinha de ícone colorida (o Almoxarifado
+  não tem) — o HTML continua com o ícone, só escondido.
+- Sistemas da Chiavari já tinham o tema; ganharam agora (link para o mesmo
+  CSS + um `<style id="tema-chiavari-pagina">` próprio): Feedback,
+  Controle Financeiro do Almoxarifado (título "Controle Financeiro" via
+  `::before`, a página não tinha título) e App do Motorista (só grafite no
+  lugar do preto e títulos em serifa — é um app de celular com mapa).
+- Catálogo não usa `global.css` e não foi tocado (já tem essa identidade).
+- **Topo idêntico ao do Almoxarifado em todas as telas** (pedido seguinte):
+  título 38px (`clamp(26px, 2.8vw, 38px)`, espaçamento `.16em`) a 34px do topo
+  e linha a ~97px, de ponta a ponta. Nas telas do Acervo isso vem do
+  `tema-chiavari.css`: todos os "pais" do bloco do título perdem o espaço de
+  cima (`*:has(<bloco do título>)` — sem `:has` dentro de `:has`, que o
+  navegador recusa) e o bloco ganha `padding:34px 0 22px`; a linha é um
+  `::after` de `100vw`; **sobretítulo e frase de descrição da faixa ficam
+  escondidos** (o Almoxarifado só tem o título). Nos sistemas da Chiavari o
+  tamanho do título foi trocado direto em cada HTML (central, itens-danificados,
+  ControleRH, costura, cronograma, conciliacao, fretes, central-montagem,
+  OcorrenciasOperacionais, PainelQualidade, corridas); os botões que alguns
+  deles têm dentro da faixa (Cronograma, Costura) ficaram onde estavam. Os
+  apps de celular (Montador, Vagas Free, Meu Bônus, Mural) não mudaram.
+  Medido no navegador (título a 34px, linha a 97px).
+- `global.css` está em `?v=20261008-topo` nas 20 telas.
+
+Na mesma rodada: **Acervo Studio IA apagado** (`Modulos/IA/`,
+`js/studio-ia/`, `studio-ia.html`; tirado do menu e de `permissions.js`; o
+banco e a Edge Function `studio-ai-engine`, usada pelo 3D Livre, não foram
+tocados) e **"Portal da Equipe" saiu do menu** (fica só "Mural do Portal"
+em Gestão). Depois, a pedido, **Planejador Inteligente de Eventos também
+apagado** (`Modulos/Comercial/PlanejadorEventos/`, menu e `permissions.js`).
+
+## Revisão geral de segurança e banco (out/2026)
+
+Pedido: "revisão geral, tudo conectado com o banco, encontre os erros, deixe
+seguro e organizado". Migration `20261008000100_seguranca_revisao_geral.sql`
+(aplicada e registrada). **Como o acesso funciona** (ler antes de mexer em RLS):
+as regras `funcionario_acesso_*` são **RESTRICTIVE** (só filtram pela permissão
+do funcionário); quem **dá** acesso são as **PERMISSIVE** (vínculo em
+`usuarios_empresas`, hoje via `public.eh_membro_empresa(empresa)`). Apagar uma
+regra permissiva sem pôr outra no lugar zera o acesso daquela tabela.
+
+Brechas fechadas (todas confirmadas no banco real; testado simulando dono,
+funcionário, dono de outra empresa, conta nova e visitante sem login):
+- `usuarios_empresas`: qualquer logado criava/mudava o próprio vínculo para
+  qualquer empresa (e o cadastro público do Supabase Auth está ligado,
+  `disable_signup:false`) → acesso total. Regras de vínculo próprio removidas.
+- `empresas` sem RLS → ligado (ler: quem é da empresa; alterar: + permissão).
+- Abertas sem login: `clientes_empresas` ("IA pode ler clientes": os 24 clientes
+  legíveis), `personalizacoes(_insumos)`, `servicos_adicionais`,
+  `categorias_caminhao`, `insumos`; e "funcionarios_legacy_authenticated"
+  (qualquer logado) em `usuarios`, `categorias_montagem`,
+  `empresas_configuracoes`, `ia_conhecimento`, `ia_fontes_dados` → trocadas por
+  "quem é da empresa". `usuarios`: o próprio cadastro + os da mesma empresa.
+- `ia_buscar_dados()` lia clientes/itens/locais de qualquer empresa sem login →
+  exige vínculo + permissão (e corrigido erro antigo de ILIKE em coluna de data);
+  `has_permission()` deixou de ser chamável sem login.
+- Storage: `itens`/`empresas-logos` só na pasta da própria empresa; `insumos`
+  sem envio (nada usa); `avatares` por pasta da empresa.
+- Edge Functions (publicadas): `calcular-distancia` exige login (gastava a cota
+  do Google Maps com a chave pública); `gerar-embedding` lê o texto do banco pelo
+  id em vez de aceitar texto de fora. Obs.: o gatilho `fn_chamar_embedding` chama
+  essa função sem token e o `verify_jwt` recusa — embeddings automáticos já não
+  eram gerados antes desta revisão (não mexido).
+- `payment-webhook` analisado e mantido: sempre consulta o status no gateway
+  antes de dar baixa, então aviso falso não marca pagamento.
+
+Ligação com o banco corrigida: `aguardarContexto()` em Central de Pedidos,
+Separação, Fluxo de Caixa, fotos do item e kits; **Fluxo de Caixa não carregava
+supabase/context** (regressão da troca para `href` no menu) → scripts do núcleo
+adicionados; limite de 1000 linhas → `js/core/buscarTodos.mjs` (Tabelas de Preço:
+lista, contagem e cópia de preços; Importar Itens: referências, componentes e
+`kit_itens`; Montar Kit). Varredura das 44 telas do menu no navegador: sem erro
+de JavaScript real. Arquivos mortos removidos: `styles/navigation-v2.css`,
+`js/ui/navigation-v2.js`, `Uber/main.html`, `Uber/index-antigo.html`; Lia
+(`inteligencia-artificial/assistente-ia.html`) com caminhos relativos.
+
+**Riscos que continuam (decisão do usuário):** (1) `/api/gs` (motor dos sistemas
+da Chiavari) aceita qualquer chamada, igual era no Apps Script — os apps de
+celular (montador, free, motorista) são usados sem conta do Acervo; (2) cadastro
+público do Supabase Auth ligado (sem efeito prático depois desta revisão, mas o
+ideal é desligar em Authentication > Providers > Email > "Allow new users").
 
 ## Catálogo — dois jeitos de entrar
 
@@ -8321,8 +8482,8 @@ Fotos antigas e senhas/logins NÃO foram migradas (decisão do usuário: as foto
 - **Para mudar regra/tela desses sistemas, editar aqui** (as pastas do Apps Script no Desktop ficam só de histórico
   depois da virada). Funções terminadas em `_` não são chamáveis do navegador (mesma regra do Apps Script);
   `bloqueadas` em `api/_gas/projetos.js` lista as que só existiam para o editor do Google.
-- **Migrations do motor** foram aplicadas com `db query --linked -f` + `migration repair` (NÃO `db push`), porque há
-  4 migrations antigas do catálogo (20260925000300…600) que nunca foram aplicadas e não são deste trabalho.
+- **Migrations do motor** foram aplicadas com `db query --linked -f` + `migration repair`. As 4 do catálogo
+  (20260925000300…600) estavam no banco mas sem registro; registradas em out/2026 — `migration list` bate.
 - **Sistemas no motor (out/2026)** — chave em `api/_gas/projetos.js` → telas em `Modulos/Chiavari/<Pasta>/`:
   `cronograma` (Cronograma, Free, Montador, RH free), `fretes` (Fretes; `?page=conciliacao`), `costura` (Painel de
   Complexidade/Matriz), `uber` (Controle de viagens; `?page=login|corridas|form`), `ocorrencias`

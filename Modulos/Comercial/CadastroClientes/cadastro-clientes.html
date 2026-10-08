@@ -8,7 +8,7 @@
   <script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
   <link rel="stylesheet" href="cadastro-clientes.css?v=20260913l">
 </head>
 <body>
@@ -37,6 +37,8 @@
   </div>
 
 <div class="header-actions">
+    <!-- Créditos de IA fica aqui dentro (pedido do usuário), não no menu. Some sem permissão (data-module-href, js/core/permissions.js). -->
+    <button class="btn secondary" type="button" id="btnCreditosIA" data-module-href="../CreditosIA/creditos-ia.html" onclick="abrirCreditosIA()">Créditos de IA</button>
     <button class="add-btn btn primary" type="button" onclick="clientes_openAdd()">+ Adicionar Cliente</button>
   </div>
 </div>
@@ -310,6 +312,13 @@
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="cadastro-clientes.js?v=20260913d"></script>
+<script>
+  // Dentro do dashboard abre pelo shell (histórico + permissão); aberta sozinha, navega direto.
+  function abrirCreditosIA() {
+    try { if (window.parent !== window && window.parent.shellNavigate) { window.parent.shellNavigate("Modulos/Comercial/CreditosIA/creditos-ia.html"); return; } } catch (e) {}
+    location.href = "../CreditosIA/creditos-ia.html";
+  }
+</script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

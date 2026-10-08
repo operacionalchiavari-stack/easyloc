@@ -17,8 +17,19 @@ function configuracao(req) {
   };
 }
 
+// As telas também abrem pelo GitHub Pages (outro domínio), que chama este servidor
+// direto: libera a origem (sem cookies — nada aqui depende de sessão do navegador).
+function liberarOrigem(res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", "86400");
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
+  liberarOrigem(res);
+  if (req.method === "OPTIONS") { res.status(204).end(); return; }
   if (req.method !== "POST") { res.status(405).json({ ok: false, erro: "Use POST." }); return; }
 
   let corpo = req.body;
@@ -38,3 +49,4 @@ module.exports = async (req, res) => {
 };
 
 module.exports.configuracao = configuracao;
+module.exports.liberarOrigem = liberarOrigem;

@@ -1448,6 +1448,7 @@
     cacheEls();
 
     state.supabase = window.supabaseClient;
+    await window.aguardarContexto?.(); // espera a empresa ser identificada (ver CLAUDE.md, "aguardarContexto")
     state.empresaId = window.__CONTEXT?.empresa_id;
     state.usuarioId = window.__CONTEXT?.usuario_id;
     state.usuarioNome = window.__CONTEXT?.usuario_nome || "Usuario";

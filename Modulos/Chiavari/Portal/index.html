@@ -3,15 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Portal Interno</title>
+  <title>Mural do Portal</title>
   <style>html,body{margin:0;height:100%;background:#f6f4ef}</style>
   <script>
-    /* Mesmo roteamento do doGet do Portal: ?page=portal, ?page=mural, senão login */
-    (function () {
-      var pagina = new URLSearchParams(location.search).get("page");
-      var destino = pagina === "portal" ? "portal.html" : pagina === "mural" ? "mural-admin.html" : "login.html";
-      location.replace(destino + location.search + location.hash);
-    })();
+    /* O Portal antigo (login Firebase + portal.html) foi substituído pelo próprio
+       Acervo (dashboard.html: menu + mural). Sobrou só a edição do mural. */
+    location.replace("mural-admin.html" + location.search + location.hash);
   </script>
 </head>
 <body></body>

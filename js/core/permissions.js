@@ -121,6 +121,17 @@
   }
 
   const routes = [
+    // Sistemas da Chiavari vindos do Apps Script (Modulos/Chiavari/...).
+    // Cada um continua com o próprio controle de acesso (PIN/login) dentro
+    // da tela; aqui só decide quem vê o item no menu.
+    [/Chiavari\/CentralMetas\/itens-danificados/i, 'estoque.almoxarifado.visualizar'],
+    [/Chiavari\/CentralMetas/i, 'rh.colaboradores.visualizar'],
+    [/Chiavari\/ControleRH/i, 'rh.colaboradores.visualizar'],
+    [/Chiavari\/(Fretes|Uber)/i, 'logistica.planejamento.visualizar'],
+    [/Chiavari\/Ocorrencias/i, 'logistica.expedicao.visualizar'],
+    [/Chiavari\/Costura/i, 'estoque.insumos.visualizar'],
+    [/Chiavari\/Feedback/i, 'comercial.pedidos.visualizar'],
+    [/Chiavari\/Portal/i, null],
     [/CadastroFuncionarios/i, 'rh.funcionarios.visualizar'],
     [/CadastroClientes/i, 'comercial.clientes.visualizar'],
     [/CadastroLocais/i, 'comercial.locais.visualizar'],
@@ -144,7 +155,6 @@
     [/Permissoes/i, 'configuracoes.permissoes.visualizar'],
     [/WhatsApp/i, 'configuracoes.integracoes.whatsapp.visualizar'],
     [/GatewaysPagamento/i, 'configuracoes.integracoes.gateways_pagamento.visualizar'],
-    [/studio-ia|StudioIA/i, 'ia.studio.visualizar'],
     [/empresa/i, 'configuracoes.empresa.visualizar']
   ];
   function canNavigate(href) {

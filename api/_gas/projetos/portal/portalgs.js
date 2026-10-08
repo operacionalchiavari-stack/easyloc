@@ -62,25 +62,21 @@ const PORTAL_MENU = [
   ]}
 ];
 
+// Acervo: os atalhos para sistemas do Apps Script que nunca foram migrados
+// (Controle de Retorno, OS Manutenção, Forração/Limpeza, Inspeções, Controle
+// de Qualidade) foram tirados — o portal antigo (portal.html) foi apagado.
 const PORTAL_LINKS = {
   pagamentoFretes: '/Modulos/Chiavari/Fretes/?page=conciliacao',
   lancamentoUber: '/Modulos/Chiavari/Uber/?page=form',
   controleLogistica: '/Modulos/Chiavari/Uber/',
   lancamentoFrete: '/Modulos/Chiavari/Fretes/',
-  ControleRetorno: 'https://script.google.com/macros/s/AKfycbxCJYdNWIDibvuHkcP_JU7KJ2ihZKouLLlg_M-KKvB0fG4kHhA-Yipn5VSeir1wgXwdUQ/exec',
-  osManutencao: 'https://script.google.com/macros/s/AKfycby_rUc5WpFMKzjJdj05t2KJETWiQfAbS1NAJ1nZjVNAxKAE0IlOy3XgnfHy-N7xd8I8/exec?p=formulario',
   itensDanificados: '/Modulos/Chiavari/CentralMetas/?p=painel',
-  forracaoLimpeza: 'https://script.google.com/macros/s/AKfycbzBWiTh5Zj5kFijBk_fyusy1-Ip9LYdHcFVKXmG-oLs2tvJD2kXec_9d4InLgX07UJw/exec',
   forracaoCostura: '/Modulos/Chiavari/Costura/',
-  forracaoFormularios: 'https://script.google.com/macros/s/AKfycbzBWiTh5Zj5kFijBk_fyusy1-Ip9LYdHcFVKXmG-oLs2tvJD2kXec_9d4InLgX07UJw/exec?p=formulario',
   TetodeGastos: '/Modulos/Chiavari/Almoxarifado/?p=financeiro',
   Feedback: '/Modulos/Chiavari/Feedback/',
   dados: 'https://drive.google.com/drive/folders/1sC1IncUXkUIuXv0l10vaxscWKzs5FtLi',
-  inspecoes: 'https://script.google.com/macros/s/AKfycbyySKRwP3XHYZMMWH_Bih3paatALhAB9_Yl96lWdX705dnaaHCekONsiuNkjv9kihZ3QQ/exec?page=painel_fiscalizacao',
-  inspecaoSetores: 'https://script.google.com/macros/s/AKfycbyySKRwP3XHYZMMWH_Bih3paatALhAB9_Yl96lWdX705dnaaHCekONsiuNkjv9kihZ3QQ/exec?page=Desempenho',
   CentraldeMetas: '/Modulos/Chiavari/CentralMetas/',
   Almoxarifado: '/Modulos/Chiavari/Almoxarifado/',
-  ControleDeQualidade: 'https://script.google.com/macros/s/AKfycbwDKAxlRmh7aaMikcUsD99a_KIVeTop9lr_Mx2bdh_30W2CTciR5XQGWNOnS0gyiUDY/exec',
   cronograma: '/Modulos/Chiavari/Cronograma/',
   'OcorrênciasOperacionais': '/Modulos/Chiavari/Ocorrencias/?page=OcorrenciasOperacionais',
   'paineloperações': '/Modulos/Chiavari/Ocorrencias/?page=PainelQualidade',

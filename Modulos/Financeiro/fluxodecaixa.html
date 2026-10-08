@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Fluxo de Caixa</title>
 
-  <link rel="stylesheet" href="../../styles/global.css" />
+  <link rel="stylesheet" href="../../styles/global.css?v=20261008-topo" />
   <link rel="stylesheet" href="fluxodecaixa.css" />
 </head>
 
@@ -360,6 +360,14 @@
     </div>
   </div>
 
-  <script src="fluxodecaixa.js"></script>
+  <!-- Conexão com o banco e identificação da empresa: a tela abre como documento
+       próprio (iframe do dashboard), então precisa carregar o mesmo núcleo das outras. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../js/core/supabase.js"></script>
+  <script src="../../js/core/alerta.js"></script>
+  <script src="../../js/core/companyTheme.js?v=20260913m"></script>
+  <script src="../../js/core/context.js?v=20260913b"></script>
+  <script src="../../js/core/permissions.js?v=20261008-sem-planejador"></script>
+  <script src="fluxodecaixa.js?v=20261008-banco"></script>
 </body>
 </html>

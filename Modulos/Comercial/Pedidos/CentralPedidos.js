@@ -22,6 +22,7 @@
     [
       "btnNovoPedidoCentral",
       "btnAtualizarPedidos",
+      "btnTabelasPreco",
       "filtroClientePedido",
       "filtroNumeroPedido",
       "filtroLocalPedido",
@@ -1100,6 +1101,12 @@
   function bindEvents(){
     els.btnNovoPedidoCentral?.addEventListener("click", () => abrirPedido());
     els.btnAtualizarPedidos?.addEventListener("click", carregarPedidos);
+    els.btnTabelasPreco?.addEventListener("click", () => {
+      // Dentro do dashboard abre pelo shell (registra no histórico e confere permissão);
+      // aberta sozinha, navega direto.
+      try { if (window.parent !== window && window.parent.shellNavigate) { window.parent.shellNavigate("Modulos/Estoque/TabelasPreco/tabelas-preco.html"); return; } } catch (e) {}
+      location.href = "../../Estoque/TabelasPreco/tabelas-preco.html";
+    });
     els.btnFecharPreviewPedido?.addEventListener("click", () => {
       els.centralPedidoPreviewModal?.classList.add("hidden");
     });
@@ -1198,6 +1205,7 @@
   async function init(){
     cacheEls();
     state.supabase = window.supabaseClient;
+    await window.aguardarContexto?.(); // espera a empresa ser identificada (ver CLAUDE.md, "aguardarContexto")
     state.empresaId = window.__CONTEXT?.empresa_id;
     bindEvents();
     await carregarPedidos();

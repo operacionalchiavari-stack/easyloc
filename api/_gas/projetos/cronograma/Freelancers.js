@@ -75,9 +75,10 @@ const FREE_DIAS_TOKEN = 60;
 const FREE_HORAS_CIMA_DA_HORA = 24;
 const FREE_PROP_PASTA_FOTOS = "FREE_PASTA_FOTOS_ID";
 const FREE_PROP_URL_OFICIAL = "FREE_URL_OFICIAL";
-// Link oficial do cronograma (implantação usada pela equipe)
-const FREE_URL_OFICIAL_PADRAO =
-  "https://script.google.com/macros/s/AKfycbwZrv84kkPeccpbJycpN1TUSK6zK9rVS23HrLon-3UDFLZ8_FA-zJw25pTjvOOseX3L9A/exec";
+// Acervo: o link oficial era a implantação antiga do Google Apps Script — os
+// links de vagas e do líder mandavam o freelancer para o sistema antigo, com os
+// dados antigos. Agora é sempre o endereço deste sistema (ScriptApp.getService().getUrl()).
+const FREE_URL_OFICIAL_PADRAO = "";
 
 // Janela de check-in em volta do horário de encontro
 const FREE_CHECKIN_ANTES_HORAS = 3;

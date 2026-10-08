@@ -1,4 +1,5 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
+import { buscarTodos } from "../../../js/core/buscarTodos.mjs?v=20261008";
 import {
   CAMPOS_ITEM, COLUNAS_IGNORADAS,
   detectarLinhaCabecalho, detectarColunasDePreco, mapearColunas,
@@ -114,7 +115,7 @@ async function carregarContextoEmpresa() {
 
   const [{ data: fornecedores }, { data: itensExistentes }] = await Promise.all([
     supabase.from("fornecedores").select("id,nome_razao_social,nome_fantasia").eq("empresa_id", state.empresaId),
-    supabase.from("itens").select("id,referencia").eq("empresa_id", state.empresaId).not("referencia", "is", null),
+    buscarTodos(() => supabase.from("itens").select("id,referencia").eq("empresa_id", state.empresaId).not("referencia", "is", null).order("id")),
   ]);
 
   state.fornecedoresExistentes = fornecedores || [];
@@ -340,17 +341,19 @@ function renderPreview(colunasPreco) {
    também (não só desta importação específica).
 ===================================================== */
 async function encontrarComponentesOrfaos() {
-  const { data: componentes, error } = await supabase
+  const { data: componentes, error } = await buscarTodos(() => supabase
     .from("itens")
     .select("id, produto, descricao_total, referencia")
     .eq("empresa_id", state.empresaId)
-    .eq("tipo", "Componente");
+    .eq("tipo", "Componente")
+    .order("id"));
   if (error || !componentes?.length) return [];
 
-  const { data: vinculos, error: erroVinculo } = await supabase
+  const { data: vinculos, error: erroVinculo } = await buscarTodos(() => supabase
     .from("kit_itens")
     .select("item_id")
-    .eq("empresa_id", state.empresaId);
+    .eq("empresa_id", state.empresaId)
+    .order("id"));
   if (erroVinculo) return [];
 
   const vinculados = new Set((vinculos || []).map((v) => v.item_id));

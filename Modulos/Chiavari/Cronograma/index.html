@@ -7,7 +7,7 @@
   <style>html,body{margin:0;height:100%;background:#f6f4ef}</style>
   <script>
     /* Mesmo roteamento do doGet do Apps Script: ?page=free, ?page=montador,
-       ?page=rh, ?page=free-qr, ?page=central-montagem, ?operacao=montagem... */
+       ?page=rh, ?page=free-qr, ?operacao=montagem... */
     (function () {
       var p = new URLSearchParams(location.search);
       var pagina = String(p.get("page") || "index").toLowerCase().trim();
@@ -17,7 +17,6 @@
       else if (["montador", "montagens"].indexOf(pagina) >= 0) { destino = "montador.html"; }
       else if (pagina === "rh") { destino = "rh.html"; }
       else if (pagina === "free-qr") { destino = "free-qr.html"; }
-      else if (["central-montagem", "central_montagem", "central-respostas-montagem", "central_respostas_montagem"].indexOf(pagina) >= 0) { destino = "central-montagem.html"; }
       location.replace(destino + location.search + location.hash);
     })();
   </script>

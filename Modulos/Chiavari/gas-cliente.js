@@ -11,7 +11,11 @@
 (function () {
   var script = document.currentScript;
   var PROJETO = script && script.getAttribute("data-projeto");
-  var API = (script && script.getAttribute("data-api")) || "/api/gs";
+  // O servidor (/api/gs) só existe na Vercel. Aberta em outro lugar (GitHub
+  // Pages, servidor local) a tela chama a Vercel direto — antes dava
+  // "Falha de conexão (405)", porque o GitHub Pages não roda servidor.
+  var SERVIDOR = /\.vercel\.app$/i.test(location.hostname) ? "" : "https://easyloc-zeta.vercel.app";
+  var API = (script && script.getAttribute("data-api")) || (SERVIDOR + "/api/gs");
   var STORAGE = "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/gs-arquivos/";
 
   function chamar(nome, args, ok, falha, usuario) {

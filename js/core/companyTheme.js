@@ -118,7 +118,7 @@
       const nextLogoSrc = theme.logo_url ? withCacheBust(theme.logo_url, logoCacheVersion(rawTheme)) : "logo%20nova%20branca%20-%20sem%20fundo.png";
       const currentLogoSrc = sidebarLogo.getAttribute("src") || "";
       if(currentLogoSrc !== nextLogoSrc) sidebarLogo.src = nextLogoSrc;
-      // Tamanho da logo do menu e todo em CSS agora (styles/navigation-v2.css,
+      // Tamanho da logo do menu e todo em CSS (hoje styles/portal-shell.css,
       // ".sidebar-header img"), igual ao logo do catalogo (.catalog-brand-logo
       // em Modulos/Comercial/Catalogo/catalogo.css): mesmo max-height:49px +
       // transform:scale(3.6), a pedido do usuario ("olha como a logo aparece

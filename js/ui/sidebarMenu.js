@@ -14,8 +14,9 @@
  * `href` = tela já convertida para o modelo novo (abre via shellNavigate,
  * dentro do <iframe id="appModuleFrame">).
  * `legado` = tela ainda no modelo antigo (abre via carregarNaMain, cola um
- * fragmento HTML dentro de <div id="main-content">) — hoje só usado pelos
- * itens ocultos, já que todo item visível já foi convertido.
+ * fragmento HTML dentro de <div id="main-content">). Desde out/2026 todos os
+ * módulos existentes estão visíveis (pedido do usuário), então os módulos
+ * antigos Contratos, Compras etc. abrem por esse caminho.
  */
 (function () {
   "use strict";
@@ -36,65 +37,36 @@
       },
     ],
 
+    // Quando um sistema da Chiavari (Modulos/Chiavari, vindo do Apps Script)
+    // faz a mesma coisa que um módulo do Acervo, vale o da Chiavari e o do
+    // Acervo sai do menu (pedido do usuário, out/2026). Saíram: Almoxarifado,
+    // Cronograma Logístico, Equipe das Rotas, Ordem de Serviços, Controle de
+    // Qualidade e Gestão de Pessoas — os arquivos continuam no repositório.
     categorias: [
       {
-        id: "cadastros",
-        icone: "folder",
-        rotulo: "Cadastros",
+        // Primeiro item do menu (logo abaixo do Início), a pedido do usuário.
+        id: "cronograma",
+        icone: "calendar",
+        rotulo: "Cronograma",
+        href: "Modulos/Chiavari/Cronograma/cronograma.html",
+      },
+      {
+        id: "geral",
+        icone: "layout-grid",
+        rotulo: "Geral",
         itens: [
-          { rotulo: "Créditos de IA", href: "Modulos/Comercial/CreditosIA/creditos-ia.html" },
-          { rotulo: "Cadastro de Funcionários", href: "Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html" },
-          { rotulo: "Cadastro de Clientes", href: "Modulos/Comercial/CadastroClientes/cadastro-clientes.html" },
-          { rotulo: "Cadastro de Locais", href: "Modulos/Comercial/CadastroLocais/cadastro-locais.html" },
+          { rotulo: "Catálogo", href: "Modulos/Comercial/Catalogo/catalogo.html" },
+          { rotulo: "Painel de Complexidade", href: "Modulos/Chiavari/Costura/costura.html" },
         ],
       },
       {
-        id: "catalogo",
-        icone: "book-open",
-        rotulo: "Catálogo",
-        href: "Modulos/Comercial/Catalogo/catalogo.html",
-      },
-      {
-        id: "importacao",
-        icone: "upload-cloud",
-        rotulo: "Importar Itens",
-        href: "Modulos/Importacao/ImportarItens/importar-itens.html",
-      },
-      {
         id: "comercial",
-        icone: "briefcase",
+        icone: "handshake",
         rotulo: "Comercial",
-        oculto: true, // oculto a pedido — funcionalidades preservadas, não remover
         itens: [
-          {
-            rotulo: "Central de Pedidos",
-            legado: {
-              html: "Modulos/Comercial/Pedidos/CentralPedidos.html",
-              js: "Modulos/Comercial/Pedidos/CentralPedidos.js",
-              css: "Modulos/Comercial/Pedidos/CentralPedidos.css",
-            },
-          },
-          {
-            rotulo: "Cadastros",
-            grupo: [
-              {
-                rotulo: "Cadastro de Clientes",
-                legado: {
-                  html: "Modulos/Comercial/CadastroClientes/cadastro-clientes.html",
-                  js: "Modulos/Comercial/CadastroClientes/cadastro-clientes.js",
-                  css: "Modulos/Comercial/CadastroClientes/cadastro-clientes.css",
-                },
-              },
-              {
-                rotulo: "Cadastro de Locais",
-                legado: {
-                  html: "Modulos/Comercial/CadastroLocais/cadastro-locais.html",
-                  js: "Modulos/Comercial/CadastroLocais/cadastro-locais.js",
-                  css: "Modulos/Comercial/CadastroLocais/cadastro-locais.css",
-                },
-              },
-            ],
-          },
+          { rotulo: "Cadastro de Clientes", href: "Modulos/Comercial/CadastroClientes/cadastro-clientes.html" },
+          { rotulo: "Cadastro de Locais", href: "Modulos/Comercial/CadastroLocais/cadastro-locais.html" },
+          { rotulo: "Central de Pedidos", href: "Modulos/Comercial/Pedidos/CentralPedidos.html" },
           {
             rotulo: "Contratos",
             legado: {
@@ -103,60 +75,50 @@
               css: "Modulos/Comercial/Contratos/contratos.css",
             },
           },
-        ],
-      },
-      {
-        id: "estoque",
-        icone: "package",
-        rotulo: "Estoque",
-        itens: [
-          {
-            rotulo: "Cadastros",
-            grupo: [
-              { rotulo: "Cadastro de Itens", href: "Modulos/Estoque/CadastroItens/cadastro-itens.html" },
-              { rotulo: "Cadastro de Personalizações", href: "Modulos/Estoque/Personalizacoes/estoque-personalizacoes.html" },
-              { rotulo: "Cadastro de Fornecedores", href: "Modulos/Estoque/CadastroFornecedores/fornecedores.html" },
-              { rotulo: "Tabelas de Preço", href: "Modulos/Estoque/TabelasPreco/tabelas-preco.html" },
-            ],
-          },
+          { rotulo: "Feedback Pós-Evento", href: "Modulos/Chiavari/Feedback/feedback.html" },
           {
             rotulo: "Disponibilidade de Itens",
-            oculto: true, // oculto a pedido — não remover
             legado: {
               html: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html",
               js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js",
               css: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css",
             },
           },
+        ],
+      },
+      {
+        id: "estoque",
+        icone: "warehouse",
+        rotulo: "Estoque",
+        itens: [
+          {
+            // flyout: abre como extensão do menu para a direita (js/ui/portalNav.js)
+            rotulo: "Cadastros",
+            flyout: true,
+            grupo: [
+              { rotulo: "Cadastro de Itens", href: "Modulos/Estoque/CadastroItens/cadastro-itens.html" },
+              { rotulo: "Cadastro de Personalizações", href: "Modulos/Estoque/Personalizacoes/estoque-personalizacoes.html" },
+              { rotulo: "Cadastro de Fornecedores", href: "Modulos/Estoque/CadastroFornecedores/fornecedores.html" },
+            ],
+          },
+          { rotulo: "Almoxarifado", href: "Modulos/Chiavari/Almoxarifado/almoxarifado.html" },
+          { rotulo: "Manutenção", href: "Modulos/Chiavari/CentralMetas/itens-danificados.html" },
           {
             rotulo: "Compras",
-            oculto: true, // oculto a pedido — não remover
             legado: {
               html: "Modulos/Estoque/Compras/compras.html",
               js: "Modulos/Estoque/Compras/compras.js",
               css: "Modulos/Estoque/Compras/compras.css",
             },
           },
-          { rotulo: "Ordem de Serviços", href: "Modulos/Estoque/OrdemdeServicos/ordem-servicos.html" },
-          { rotulo: "Almoxarifado", href: "Modulos/Estoque/Almoxarifado/Principal/almoxarifado.html" },
-          {
-            rotulo: "Controle de Qualidade",
-            oculto: true, // oculto a pedido — não remover
-            legado: {
-              html: "Modulos/Estoque/Controledequalidade/controledequalidade.html",
-              js: "Modulos/Estoque/Controledequalidade/controledequalidade.js",
-              css: "Modulos/Estoque/Controledequalidade/controledequalidade.css",
-            },
-          },
-          {
-            rotulo: "Separação de Materiais",
-            oculto: true, // oculto a pedido — não remover
-            legado: {
-              html: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html",
-              js: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.js",
-              css: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.css",
-            },
-          },
+        ],
+      },
+      {
+        id: "triagem",
+        icone: "package-check",
+        rotulo: "Triagem",
+        itens: [
+          { rotulo: "Separação de Materiais", href: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html" },
         ],
       },
       {
@@ -165,15 +127,18 @@
         rotulo: "Logística",
         itens: [
           {
-            rotulo: "Cadastros",
+            // subcategoria: abre para a direita, igual Estoque > Cadastros
+            rotulo: "Fretes",
+            flyout: true,
             grupo: [
+              { rotulo: "Cadastro de Fretes", href: "Modulos/Chiavari/Fretes/fretes.html" },
+              { rotulo: "Conciliação de Fretes", href: "Modulos/Chiavari/Fretes/conciliacao.html" },
               { rotulo: "Cadastro de Caminhões", href: "Modulos/Logistica/cadastro-caminhoes.html" },
             ],
           },
-          { rotulo: "Cronograma Logístico", href: "Modulos/Logistica/Cronograma/Cronograma.html" },
+          { rotulo: "Corridas Uber", href: "Modulos/Chiavari/Uber/index.html" },
           {
             rotulo: "Planejamento",
-            oculto: true, // oculto a pedido — não remover
             legado: {
               html: "Modulos/Logistica/PlanejamentoLogistico/planejamento-logistico.html",
               js: "Modulos/Logistica/PlanejamentoLogistico/planejamento-logistico.js",
@@ -182,130 +147,146 @@
           },
           {
             rotulo: "Roteirização",
-            oculto: true, // oculto a pedido — não remover
             legado: {
               html: "Modulos/Logistica/Roteirizacao/roteirizacao.html",
               js: "Modulos/Logistica/Roteirizacao/roteirizacao.js",
               css: "Modulos/Logistica/Roteirizacao/roteirizacao.css",
             },
           },
-          { rotulo: "Equipe das Rotas", href: "Modulos/Logistica/EquipeRotas/equipe-rotas.html" },
           {
             rotulo: "Expedição",
-            oculto: true, // oculto a pedido — não remover
             legado: {
               html: "Modulos/Logistica/Expedicao/expedicao.html",
               js: "Modulos/Logistica/Expedicao/expedicao.js",
               css: "Modulos/Logistica/Expedicao/expedicao.css",
             },
           },
-          {
-            rotulo: "Separação",
-            oculto: true, // oculto a pedido — não remover (duplicado do item de Estoque, preservado como estava)
-            legado: {
-              html: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html",
-              js: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.js",
-              css: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.css",
-            },
-          },
+          { rotulo: "Registro de Ocorrências", href: "Modulos/Chiavari/Ocorrencias/OcorrenciasOperacionais.html" },
+          { rotulo: "Indicadores Operacionais", href: "Modulos/Chiavari/Ocorrencias/PainelQualidade.html" },
+        ],
+      },
+      {
+        id: "rh",
+        icone: "users",
+        rotulo: "Recursos Humanos",
+        itens: [
+          { rotulo: "Cadastro de Funcionários", href: "Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html" },
+          { rotulo: "Controle RH", href: "Modulos/Chiavari/ControleRH/rh.html" },
+          { rotulo: "RH da Equipe Free", href: "Modulos/Chiavari/Cronograma/rh.html" },
+          { rotulo: "Mural do Portal (avisos e destaques)", href: "Modulos/Chiavari/Portal/mural-admin.html" },
         ],
       },
       {
         id: "financeiro",
         icone: "wallet",
         rotulo: "Financeiro",
-        oculto: true, // oculto a pedido — funcionalidades preservadas, não remover
         itens: [
+          { rotulo: "Fluxo de Caixa", href: "Modulos/Financeiro/fluxodecaixa.html" },
+          { rotulo: "Controle Financeiro do Almoxarifado", href: "Modulos/Chiavari/Almoxarifado/financeiro.html" },
+        ],
+      },
+      {
+        id: "gestao",
+        icone: "clipboard-list",
+        rotulo: "Gestão",
+        itens: [
+          { rotulo: "Central de Metas", href: "Modulos/Chiavari/CentralMetas/central.html" },
           {
-            rotulo: "Fluxo de Caixa",
+            rotulo: "Permissões",
             legado: {
-              html: "Modulos/Financeiro/fluxodecaixa.html",
-              js: "Modulos/Financeiro/fluxodecaixa.js",
-              css: "Modulos/Financeiro/fluxodecaixa.css",
+              html: "Modulos/Configuracoes/Permissoes/permissoes.html",
+              js: "Modulos/Configuracoes/Permissoes/permissoes.js",
+              css: "Modulos/Configuracoes/Permissoes/permissoes.css",
             },
+          },
+          {
+            rotulo: "Integrações",
+            grupo: [
+              {
+                rotulo: "WhatsApp",
+                legado: {
+                  html: "Modulos/Configuracoes/Integracoes/WhatsApp/whatsapp.html",
+                  js: "Modulos/Configuracoes/Integracoes/WhatsApp/whatsapp.js",
+                  css: "Modulos/Configuracoes/Integracoes/WhatsApp/whatsapp.css",
+                },
+              },
+              {
+                rotulo: "Gateways de Pagamento",
+                legado: {
+                  html: "Modulos/Configuracoes/Integracoes/GatewaysPagamento/gateways.html",
+                  js: "Modulos/Configuracoes/Integracoes/GatewaysPagamento/gateways.js",
+                  css: "Modulos/Configuracoes/Integracoes/GatewaysPagamento/gateways.css",
+                },
+              },
+            ],
           },
         ],
       },
       {
-        id: "rh",
-        icone: "users-round",
-        rotulo: "RH",
-        oculto: true, // oculto a pedido — funcionalidades preservadas, não remover
+        // Apps de celular usados no campo (montadores, freelancers, motoristas, equipe).
+        id: "apps",
+        icone: "smartphone",
+        rotulo: "Apps",
         itens: [
-          {
-            rotulo: "Gestão de Pessoas",
-            legado: {
-              html: "Modulos/RH/GestaoPessoas/rh-gestao-pessoas.html",
-              js: "Modulos/RH/GestaoPessoas/rh-gestao-pessoas.js",
-              css: "Modulos/RH/GestaoPessoas/rh-gestao-pessoas.css",
-            },
-          },
+          { rotulo: "App do Montador", href: "Modulos/Chiavari/Cronograma/montador.html" },
+          { rotulo: "Vagas Free", href: "Modulos/Chiavari/Cronograma/free.html" },
+          { rotulo: "App do Motorista", href: "Modulos/Chiavari/Uber/motorista.html" },
+          { rotulo: "Meu Bônus", href: "Modulos/Chiavari/CentralMetas/equipe.html" },
         ],
       },
       {
-        id: "ia",
-        icone: "sparkles",
-        rotulo: "Inteligência Artificial",
-        oculto: true, // oculto a pedido — funcionalidades preservadas, não remover
-        itens: [
-          {
-            rotulo: "Acervo Studio IA",
-            legado: {
-              html: "Modulos/IA/StudioIA/studio-ia.html",
-              js: "js/studio-ia/studio-ia.mjs",
-              css: "Modulos/IA/StudioIA/studio-ia.css",
-            },
-          },
-        ],
+        // Fora dos módulos, a pedido do usuário: link direto, sem submenu.
+        id: "importacao",
+        icone: "upload-cloud",
+        rotulo: "Importar Itens",
+        href: "Modulos/Importacao/ImportarItens/importar-itens.html",
       },
     ],
   };
 
   window.ACERVO_MENU = ACERVO_MENU;
 
+  /* -------------------------------------------------------------------
+     Desenho no formato do menu do Portal Interno da Chiavari
+     (o antigo Modulos/Chiavari/Portal/portal.html): trilho escuro à esquerda que
+     abre ao passar o mouse, "Início" no topo, uma linha por categoria
+     com ícone, e as categorias com vários destinos abrem os sub-itens
+     logo abaixo (um grupo aberto por vez). Estilo em
+     styles/portal-shell.css; abrir/fechar em js/ui/portalNav.js.
+  ------------------------------------------------------------------- */
   function esc(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  }
-
-  function slugify(str) {
-    return String(str)
-      .normalize("NFD").replace(/[̀-ͯ]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
   }
 
   function legadoOnclick(legado) {
     return `carregarNaMain('${legado.html}', '${legado.js}', this, '${legado.css}')`;
   }
 
-  function renderItem(item) {
+  let contadorFlyout = 0;
+  function slugify(str) {
+    return String(str).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  }
+
+  function renderItem(item, filho) {
     if (item.oculto) return "";
+    const classe = "sub-item" + (filho ? " sub-filho" : "");
 
     if (item.grupo) {
-      const groupId = `${item.__categoriaId}-${item.__slug}-sub`;
-      const filhos = item.grupo.map(renderItem).join("\n");
-      return `
-        <button class="submenu-trigger" type="button" onclick="toggleNestedSubmenu('${groupId}', this)">
-          ${esc(item.rotulo)}
-        </button>
-        <div class="submenu-group" id="${groupId}">
-          ${filhos}
-        </div>`;
+      // Todo grupo abre como extensão para fora (painel à direita do painel da
+      // categoria). No celular abre logo abaixo. Pedido do usuário: "essas extensões
+      // sempre devem abrir pra fora do menu, igual cadastro dentro de estoque".
+      const filhos = item.grupo.map((f) => renderItem(f, false)).join("");
+      if (!filhos) return "";
+      const id = "flyout-" + slugify(item.rotulo) + "-" + (++contadorFlyout);
+      return `<div class="flyout" id="${id}"><button class="sub-item sub-flyout" type="button" aria-expanded="false" onclick="portalAlternarFlyout('${id}')">${esc(item.rotulo)}<i class="seta" data-lucide="chevron-right"></i></button><div class="flyout-painel" role="menu" aria-label="${esc(item.rotulo)}"><div class="flyout-titulo">${esc(item.rotulo)}</div>${filhos}</div></div>`;
     }
 
     if (item.href) {
-      return `
-        <div class="submenu-item" data-module-href="${esc(item.href)}" onclick="shellNavigate('${item.href}')">
-          ${esc(item.rotulo)}
-        </div>`;
+      return `<button class="${classe}" type="button" data-module-href="${esc(item.href)}" onclick="shellNavigate('${item.href}')">${esc(item.rotulo)}</button>`;
     }
 
     if (item.legado) {
-      return `
-        <div class="submenu-item" onclick="${legadoOnclick(item.legado)}">
-          ${esc(item.rotulo)}
-        </div>`;
+      return `<button class="${classe}" type="button" data-legado-href="${esc(item.legado.html)}" onclick="${legadoOnclick(item.legado)}">${esc(item.rotulo)}</button>`;
     }
 
     return "";
@@ -313,50 +294,29 @@
 
   function renderCategoria(categoria) {
     if (categoria.oculto) return "";
+    const icone = `<i data-lucide="${esc(categoria.icone)}"></i>`;
 
-    // Categoria sem lista de itens, so um destino direto (ex.: Catalogo) —
-    // vira um item de menu simples, sem seta de dropdown nem submenu.
+    // Categoria com um destino só (ex.: Catálogo) — linha simples, sem seta.
     if (categoria.href) {
-      return `
-        <div class="menu-item" data-module-href="${esc(categoria.href)}" onclick="shellNavigate('${categoria.href}')">
-          <i data-lucide="${esc(categoria.icone)}"></i>
-          <span>${esc(categoria.rotulo)}</span>
-        </div>`;
+      return `<button class="menu-item" type="button" data-module-href="${esc(categoria.href)}" onclick="shellNavigate('${categoria.href}')">${icone}<span class="rotulo">${esc(categoria.rotulo)}</span></button>`;
     }
 
-    const subId = `${categoria.id}-sub`;
-    categoria.itens.forEach((item) => {
-      item.__categoriaId = categoria.id;
-      item.__slug = item.grupo ? slugify(item.rotulo) : "";
-    });
-    const itens = categoria.itens.map(renderItem).join("\n");
-
+    const itens = categoria.itens.map((item) => renderItem(item, false)).join("");
+    if (!itens) return "";
+    // A categoria abre um painel para fora do menu, à direita (js/ui/portalNav.js).
+    const id = "grupo-" + esc(categoria.id);
     return `
-      <div class="menu-item has-sub" onclick="toggleSubmenu('${subId}', this)">
-        <i data-lucide="${esc(categoria.icone)}"></i>
-        <span>${esc(categoria.rotulo)}</span>
-      </div>
-      <div class="submenu" id="${subId}">
-        ${itens}
+      <div class="flyout flyout-categoria" id="${id}">
+        <button class="menu-item" type="button" aria-expanded="false" onclick="portalAlternarFlyout('${id}')">${icone}<span class="rotulo">${esc(categoria.rotulo)}</span><i class="seta" data-lucide="chevron-right"></i></button>
+        <div class="flyout-painel" role="menu" aria-label="${esc(categoria.rotulo)}"><div class="flyout-titulo">${esc(categoria.rotulo)}</div>${itens}</div>
       </div>`;
   }
 
-  function renderFavorito(fav) {
-    return `
-      <button type="button" class="sidebar-favorite" title="${esc(fav.titulo)}"
-        data-module-href="${esc(fav.href)}" onclick="shellNavigate('${fav.href}')">
-        <i data-lucide="${esc(fav.icone)}"></i>
-        <span>${esc(fav.rotulo)}</span>
-      </button>`;
-  }
-
   function montar() {
-    const nav = document.getElementById("appMenu");
-    if (nav) nav.innerHTML = ACERVO_MENU.categorias.map(renderCategoria).join("\n");
-
-    const favoritos = document.getElementById("appFavoritos");
-    if (favoritos) favoritos.innerHTML = ACERVO_MENU.favoritos.map(renderFavorito).join("\n");
-
+    const lista = document.getElementById("appMenu");
+    if (!lista) return;
+    lista.innerHTML =
+      ACERVO_MENU.categorias.map(renderCategoria).join("");
     if (window.lucide) window.lucide.createIcons();
   }
 

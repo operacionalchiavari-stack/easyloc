@@ -8,7 +8,7 @@
   <script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../../../styles/global.css?v=20260913d">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
   <link rel="stylesheet" href="CentralPedidos.css?v=20260913b">
 </head>
 <body>
@@ -20,6 +20,8 @@
     </div>
     <div class="el-page-actions">
       <button type="button" class="btn btn-primary" id="btnNovoPedidoCentral">Novo Pedido</button>
+      <!-- Tabelas de Preço fica aqui dentro (pedido do usuário), não no menu. data-module-href: some se a pessoa não tiver permissão (js/core/permissions.js). -->
+      <button type="button" class="btn btn-secondary" id="btnTabelasPreco" data-module-href="../../Estoque/TabelasPreco/tabelas-preco.html">Tabelas de Preço</button>
       <button type="button" class="btn btn-secondary" id="btnAtualizarPedidos">Atualizar</button>
     </div>
   </header>
@@ -160,7 +162,7 @@
 <script src="../../../js/core/permissions.js"></script>
 <script src="../../../js/core/paymentPix.js"></script>
 <script src="../../../js/core/zapiMessaging.js"></script>
-<script src="CentralPedidos.js?v=20260913b"></script>
+<script src="CentralPedidos.js?v=20261008-tabelas"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

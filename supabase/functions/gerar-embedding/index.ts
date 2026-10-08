@@ -8,12 +8,23 @@ serve(async (req) => {
     // =========================
     const body = await req.json().catch(() => null);
 
+    // Só o id vem da chamada. O texto é lido do próprio banco (com a chave de
+    // serviço) — antes o texto vinha no corpo e qualquer um com a chave pública
+    // podia gravar um embedding falso em qualquer linha (envenenar a base da Lia).
     const id = body?.id;
-    const assunto = body?.assunto;
-    const respostaBase = body?.resposta_base;
-    const observacoes = body?.observacoes ?? "";
+    if (!id) {
+      return new Response(JSON.stringify({ erro: "id ausente" }), { status: 400 });
+    }
 
-    if (!id || !assunto || !respostaBase) {
+    const supabaseUrlCedo = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKeyCedo = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const banco = createClient(supabaseUrlCedo!, supabaseServiceKeyCedo!);
+    const { data: linha } = await banco.from("ia_conhecimento").select("assunto,resposta_base,observacoes").eq("id", id).maybeSingle();
+    const assunto = linha?.assunto;
+    const respostaBase = linha?.resposta_base;
+    const observacoes = linha?.observacoes ?? "";
+
+    if (!assunto || !respostaBase) {
       return new Response(
         JSON.stringify({ erro: "Dados insuficientes para gerar embedding" }),
         { status: 400 }

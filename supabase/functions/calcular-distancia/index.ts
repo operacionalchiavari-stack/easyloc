@@ -1,4 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Só para quem está logado no Acervo: a chave pública do site também passa no
+// verify_jwt, e cada chamada gasta a cota paga do Google Maps.
+async function usuarioLogado(req: Request){
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!token) return null;
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const cliente = createClient(url, anon, { global: { headers: { Authorization: "Bearer " + token } } });
+  const { data } = await cliente.auth.getUser(token);
+  return data?.user || null;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,6 +41,9 @@ serve(async (req: Request) => {
   }
 
   try {
+    if (!(await usuarioLogado(req))) {
+      return jsonResponse({ error: "Entre no sistema para calcular a distancia." }, 401);
+    }
     const body = await req.json().catch(() => null);
     const origemRaw = body?.origem ?? body?.origin;
     const destinoRaw = body?.destino ?? body?.destination;

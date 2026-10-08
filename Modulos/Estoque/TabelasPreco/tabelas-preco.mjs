@@ -1,3 +1,5 @@
+import { buscarTodos } from "../../../js/core/buscarTodos.mjs?v=20261008";
+
 const supabase = window.supabaseClient;
 
 function $(id) { return document.getElementById(id); }
@@ -37,10 +39,11 @@ async function carregarTabelas() {
     return;
   }
 
-  const { data: contagens } = await supabase
+  const { data: contagens } = await buscarTodos(() => supabase
     .from("itens_precos")
     .select("tabela_preco_id")
-    .eq("empresa_id", state.empresaId);
+    .eq("empresa_id", state.empresaId)
+    .order("id"));
 
   const contagemPorTabela = new Map();
   (contagens || []).forEach((row) => {
@@ -119,8 +122,8 @@ async function abrirDetalheTabela(tabelaId) {
   $("tabelaDetalheTitulo").textContent = `${tabela.nome} (${tabela.ano_referencia})`;
 
   const [{ data: itens, error: erroItens }, { data: precos, error: erroPrecos }] = await Promise.all([
-    supabase.from("itens").select("id,codigo,produto,categoria").eq("empresa_id", state.empresaId).order("produto"),
-    supabase.from("itens_precos").select("item_id,valor_locacao").eq("empresa_id", state.empresaId).eq("tabela_preco_id", tabelaId),
+    buscarTodos(() => supabase.from("itens").select("id,codigo,produto,categoria").eq("empresa_id", state.empresaId).order("produto").order("id")),
+    buscarTodos(() => supabase.from("itens_precos").select("item_id,valor_locacao").eq("empresa_id", state.empresaId).eq("tabela_preco_id", tabelaId).order("item_id")),
   ]);
 
   if (erroItens || erroPrecos) {
@@ -268,7 +271,7 @@ async function criarTabela() {
   }
 
   if (baseId) {
-    const { data: precosBase } = await supabase.from("itens_precos").select("item_id,valor_locacao").eq("empresa_id", state.empresaId).eq("tabela_preco_id", baseId);
+    const { data: precosBase } = await buscarTodos(() => supabase.from("itens_precos").select("item_id,valor_locacao").eq("empresa_id", state.empresaId).eq("tabela_preco_id", baseId).order("item_id"));
     if (precosBase?.length) {
       const copia = precosBase.map((p) => ({ empresa_id: state.empresaId, tabela_preco_id: nova.id, item_id: p.item_id, valor_locacao: p.valor_locacao }));
       await supabase.from("itens_precos").insert(copia);

@@ -504,10 +504,13 @@ function carregarCodigo(projeto) {
   return r;
 }
 
-/** Roda uma função pública do projeto. Devolve o resultado (já pronto para JSON). */
-async function executar(cfg, projeto, nome, args) {
+/** Roda uma função pública do projeto. Devolve o resultado (já pronto para JSON).
+ *  opcoes.interno: chamada feita pelo próprio servidor (ex.: api/portal-mural.js),
+ *  que pode rodar funções terminadas em "_" — o navegador nunca chega aqui com isso. */
+async function executar(cfg, projeto, nome, args, opcoes) {
   const codigo = carregarCodigo(projeto);
-  if (!codigo.funcoes.has(nome) || /_$/.test(nome) || (projeto.bloqueadas || []).indexOf(nome) >= 0) {
+  const interno = !!(opcoes && opcoes.interno);
+  if (!codigo.funcoes.has(nome) || (!interno && /_$/.test(nome)) || (projeto.bloqueadas || []).indexOf(nome) >= 0) {
     throw new Error("Script function not found: " + nome);
   }
   for (let tentativa = 1; ; tentativa++) {

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="../gas-cliente.js" data-projeto="almoxarifado"></script>
+  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="almoxarifado"></script>
 <meta charset="UTF-8">
 
 <style>
@@ -167,6 +167,17 @@ tbody td:nth-child(even){
   display:flex;
   justify-content:flex-end;
 }
+</style>
+<link rel="stylesheet" href="../../../styles/tema-chiavari.css?v=20261008c">
+<style id="tema-chiavari-pagina">
+/* Identidade Chiavari (padrão do Almoxarifado) */
+html:root body{ margin:0; }
+html:root .header-acoes{ display:flex !important; flex-wrap:wrap; justify-content:flex-end; gap:12px; padding:0 24px !important; }
+html:root .header-acoes::before{ content:"Controle Financeiro"; flex:1 1 100%; margin:0 -24px 8px; padding:34px 24px 22px; border-bottom:1px solid #e7e1d7; text-align:center; font-family:var(--ch-serif); font-size:clamp(26px, 2.8vw, 38px); font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:#251e19; }
+html:root .btn{ background:#44443f !important; color:#fff !important; border:1px solid #44443f !important; }
+html:root .modal-header{ background:#5a5a55 !important; color:#fff !important; border-radius:18px 18px 0 0; }
+html:root .modal-header h2{ font-family:var(--ch-serif) !important; font-size:22px !important; font-weight:500 !important; letter-spacing:.12em !important; text-transform:uppercase !important; color:#fff !important; }
+html:root .modal-header .fechar{ color:#fff; cursor:pointer; }
 </style>
 </head>
 

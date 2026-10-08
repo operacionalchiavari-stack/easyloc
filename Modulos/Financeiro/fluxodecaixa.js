@@ -762,6 +762,7 @@ function fecharDia() {
 async function inicializarFinanceiro() {
   if (financeiroInicializado) return;
   financeiroInicializado = true;
+  await window.aguardarContexto?.(); // espera a empresa ser identificada antes de ler o banco
 
   renderizarTabela(listaAtual);
   atualizarResumo(listaAtual);

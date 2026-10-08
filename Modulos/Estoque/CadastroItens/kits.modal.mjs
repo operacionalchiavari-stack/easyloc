@@ -2,6 +2,8 @@
    KITS – MODAL
 ===================================================== */
 
+import { buscarTodos } from "../../../js/core/buscarTodos.mjs?v=20261008";
+
 const supabase = window.supabaseClient;
 
 let kitItensDisponiveis = [];
@@ -135,19 +137,20 @@ window.kits_closeModal = function(){
 
 async function kits_carregarItens(){
 
-  const empresaId = window.__CONTEXT?.empresa_id;
+  const empresaId = (await window.aguardarContexto?.())?.empresa_id || window.__CONTEXT?.empresa_id;
 
   if(!empresaId){
     console.warn("Empresa não encontrada");
     return;
   }
 
-const { data, error } = await supabase
+const { data, error } = await buscarTodos(() => supabase
   .from("itens")
 .select("id,produto,descricao_total,valor_locacao,valor_reposicao,custo,foto_url,tipo")
   .eq("empresa_id",empresaId)
   .neq("tipo","Kit")
-  .order("descricao_total");
+  .order("descricao_total")
+  .order("id"));
 
   if(error){
     console.error(error);
@@ -326,7 +329,7 @@ function kits_updateValores(){
 
 window.kits_salvar = async function(){
 
-  const empresaId = window.__CONTEXT?.empresa_id;
+  const empresaId = (await window.aguardarContexto?.())?.empresa_id || window.__CONTEXT?.empresa_id;
 
   const codigo = document.getElementById("kitCodigo")?.value;
   const produto = document.getElementById("kitProduto")?.value;
@@ -772,7 +775,7 @@ kitStatus = btn.dataset.ativo === "true" ? "Ativo" : "Inativo";
 
 window.kits_openEdit = async function(kitId){
 
-  const empresaId = window.__CONTEXT?.empresa_id;
+  const empresaId = (await window.aguardarContexto?.())?.empresa_id || window.__CONTEXT?.empresa_id;
 
   const modal = document.getElementById("kitsModal");
   if(!modal) return;
