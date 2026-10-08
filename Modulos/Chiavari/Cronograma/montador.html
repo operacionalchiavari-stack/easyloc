@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="cronograma"></script>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>App do Montador</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    /* =========================================================
+       APP DO MONTADOR
+       Etapas do responsável, equipe em tempo real e os registros
+       da montagem/desmontagem (antes em páginas separadas).
+       Identidade do Portal: Cormorant Garamond + Manrope.
+    ========================================================= */
+
+    :root{
+      --bg:#f6f4ef;
+      --card:#ffffff;
+      --campo:#fbfaf7;
+      --line:#e7e1d7;
+      --borda-card:#eee8df;
+      --text:#251e19;
+      --muted:#77716a;
+      --suave:#a8a29a;
+      --soft:#f1eee8;
+      --escuro:#2b2a26;
+      --escuro-2:#44443f;
+      --ok:#16a34a;
+      --ok-forte:#166534;
+      --ok-soft:#ecf8ef;
+      --ok-borda:#c9ecd3;
+      --aviso:#b45309;
+      --aviso-soft:#fdf4e3;
+      --aviso-borda:#f3dfb4;
+      --erro:#dc2626;
+      --erro-soft:#fdeeee;
+      --montagem:#dbe8fb;
+      --montagem-forte:#1d4ed8;
+      --desmontagem:#fde9d3;
+      --desmontagem-forte:#c2410c;
+      --carregamento:#ebe5fb;
+      --carregamento-forte:#6d28d9;
+      --serif:"Cormorant Garamond", Georgia, serif;
+      --sans:"Manrope", system-ui, sans-serif;
+      --sombra:0 1px 2px rgba(37,30,25,.04), 0 8px 28px rgba(37,30,25,.06);
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html{ background:var(--bg); }
+    html, body{ width:100%; overflow-x:hidden; }
+
+    body{
+      max-width:600px;
+      margin:0 auto;
+      padding:calc(16px + env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom));
+      background:var(--bg);
+      color:var(--text);
+      font-family:var(--sans);
+      font-size:15px;
+      line-height:1.45;
+      -webkit-font-smoothing:antialiased;
+      -webkit-text-size-adjust:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    button, input, textarea, select{ font:inherit; color:inherit; }
+    button{ cursor:pointer; }
+    svg{ flex:0 0 auto; }
+
+    .tela{ display:none; }
+    .tela.ativa{ display:block; animation:entrar .22s ease; }
+    @keyframes entrar{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+
+    .carregando{ display:grid; place-items:center; min-height:60vh; color:var(--muted); text-align:center; }
+    .spinner{ width:30px; height:30px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--escuro); animation:girar .8s linear infinite; margin:0 auto 12px; }
+    @keyframes girar{ to{ transform:rotate(360deg); } }
+
+    /* ---------- Login ---------- */
+    .marca{ text-align:center; margin:30px 0 24px; }
+    .marca-selo{ width:58px; height:58px; margin:0 auto 14px; border-radius:18px; background:var(--escuro); color:#f6f4ef; display:grid; place-items:center; }
+    .marca-selo svg{ width:28px; height:28px; }
+    .marca h1{ font-family:var(--serif); font-weight:600; font-size:34px; line-height:1.05; }
+    .marca p{ color:var(--muted); margin-top:8px; font-size:14.5px; }
+
+    .cartao{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:20px; box-shadow:var(--sombra); }
+    .campo{ display:block; margin-bottom:14px; }
+    .campo > span{ display:block; font-size:12.5px; font-weight:700; color:var(--muted); margin-bottom:6px; }
+    .campo input, .campo select, .campo textarea, .input{
+      width:100%; min-height:50px; padding:13px 14px; border-radius:14px;
+      border:1px solid var(--line); background:var(--campo); outline:none; font-size:16px;
+    }
+    .campo textarea, textarea.input{ min-height:96px; resize:vertical; line-height:1.5; }
+    .campo input:focus, .campo select:focus, .input:focus{ border-color:var(--escuro-2); background:#fff; box-shadow:0 0 0 3px rgba(43,42,38,.07); }
+    .input::placeholder{ color:var(--suave); }
+
+    .btn{
+      width:100%; display:flex; align-items:center; justify-content:center; gap:8px;
+      min-height:52px; padding:0 18px; border-radius:14px; border:1px solid var(--escuro);
+      background:var(--escuro); color:#fff; font-weight:800; font-size:15px; text-decoration:none;
+      transition:transform .1s, opacity .15s;
+    }
+    .btn:active{ transform:scale(.985); }
+    .btn[disabled]{ opacity:.5; cursor:default; }
+    .btn svg{ width:18px; height:18px; }
+    .btn-ok{ background:var(--ok); border-color:var(--ok); }
+    .btn-claro{ background:var(--card); border-color:var(--line); color:var(--text); }
+    .btn-texto{ background:none; border-color:transparent; color:var(--muted); min-height:44px; }
+    .btn-pequeno{ min-height:40px; width:auto; padding:0 14px; font-size:13px; border-radius:12px; }
+
+    .link{ background:none; border:0; color:var(--text); font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+    .rodape-form{ text-align:center; margin-top:16px; color:var(--muted); font-size:14px; }
+    .erro{ display:none; margin-bottom:14px; padding:11px 13px; border-radius:12px; background:var(--erro-soft); color:var(--erro); font-size:13.5px; font-weight:600; }
+    .erro.ver{ display:block; }
+
+    /* ---------- Topo ---------- */
+    .topo{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .avatar{ width:46px; height:46px; border-radius:50%; flex:none; background:var(--escuro); color:#fff; display:grid; place-items:center; font-weight:800; font-size:18px; }
+    .topo-texto{ flex:1; min-width:0; }
+    .topo-texto small{ display:block; color:var(--muted); font-size:12.5px; }
+    .topo-texto strong{ display:block; font-family:var(--serif); font-size:24px; font-weight:600; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .icone-btn{ width:42px; height:42px; border-radius:12px; border:1px solid var(--line); background:var(--card); display:grid; place-items:center; color:var(--escuro-2); flex:none; }
+    .icone-btn svg{ width:19px; height:19px; }
+    .icone-btn.girando svg{ animation:girar .8s linear infinite; }
+
+    .abas{ display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:5px; background:var(--soft); border-radius:14px; margin-bottom:14px; }
+    .aba{ border:0; background:none; min-height:42px; border-radius:10px; font-weight:800; font-size:14px; color:var(--muted); }
+    .aba.ativa{ background:var(--card); color:var(--text); box-shadow:0 1px 3px rgba(37,30,25,.08); }
+
+    .dia-titulo{ display:flex; align-items:baseline; gap:8px; margin:18px 4px 10px; }
+    .dia-titulo:first-child{ margin-top:4px; }
+    .dia-titulo strong{ font-family:var(--serif); font-size:22px; font-weight:600; text-transform:capitalize; }
+    .dia-titulo span{ font-size:12px; color:var(--suave); font-weight:700; }
+
+    /* ---------- Card de etapa ---------- */
+    .lista{ display:flex; flex-direction:column; gap:10px; }
+    .etapa{
+      display:block; width:100%; text-align:left; border:1px solid var(--borda-card); border-left:5px solid var(--cor-forte, var(--line));
+      border-radius:18px; padding:14px 16px; background:var(--card); box-shadow:var(--sombra);
+    }
+    .etapa:active{ transform:scale(.99); }
+    .etapa-topo{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .tipo{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; background:var(--cor-fundo, var(--soft)); color:var(--cor-forte, var(--escuro-2)); font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+    .hora{ display:flex; align-items:center; gap:5px; font-weight:800; font-size:15px; }
+    .hora svg{ width:15px; height:15px; color:var(--muted); }
+    .etapa-cliente{ margin-top:8px; font-family:var(--serif); font-size:22px; font-weight:600; line-height:1.15; }
+    .etapa-local{ margin-top:2px; color:var(--muted); font-size:13.5px; }
+    .etapa-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+    .chip{ display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:999px; background:var(--soft); color:var(--escuro-2); font-size:11.5px; font-weight:700; }
+    .chip svg{ width:12px; height:12px; }
+    .chip.ok{ background:var(--ok-soft); color:var(--ok-forte); }
+    .chip.aviso{ background:var(--aviso-soft); color:var(--aviso); }
+    .chip.erro{ background:var(--erro-soft); color:var(--erro); }
+
+    .vazio{ text-align:center; padding:40px 20px; color:var(--muted); }
+    .vazio strong{ display:block; color:var(--text); font-size:16px; margin-bottom:4px; }
+
+    /* ---------- Tela da etapa ---------- */
+    .voltar{ display:inline-flex; align-items:center; gap:6px; border:0; background:none; color:var(--muted); font-weight:800; font-size:14px; padding:6px 0; margin-bottom:8px; }
+    .voltar svg{ width:18px; height:18px; }
+
+    .cabeca{ margin-bottom:16px; }
+    .cabeca-linha{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .pedido{ padding:5px 11px; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--muted); font-size:12px; font-weight:700; }
+    .pedido b{ color:var(--text); }
+    .cabeca h1{ margin-top:12px; font-family:var(--serif); font-size:34px; font-weight:600; line-height:1.03; overflow-wrap:anywhere; }
+    .cabeca-quando{ display:flex; align-items:center; gap:6px; margin-top:6px; color:var(--muted); font-weight:700; }
+    .cabeca-quando svg{ width:16px; height:16px; }
+
+    .secao{ background:var(--card); border:1px solid var(--borda-card); border-radius:20px; padding:16px; box-shadow:var(--sombra); margin-bottom:12px; }
+    .secao-titulo{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+    .secao-titulo h2{ font-family:var(--serif); font-size:22px; font-weight:600; }
+    .secao-titulo small{ color:var(--muted); font-size:12.5px; font-weight:700; }
+
+    .linhas{ display:flex; flex-direction:column; gap:10px; }
+    .linha{ display:flex; gap:11px; align-items:flex-start; }
+    .linha-icone{ width:34px; height:34px; border-radius:10px; background:var(--soft); display:grid; place-items:center; flex:none; color:var(--escuro-2); }
+    .linha-icone svg{ width:17px; height:17px; }
+    .linha small{ display:block; font-size:11px; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:.05em; }
+    .linha strong{ display:block; font-weight:700; overflow-wrap:anywhere; }
+    .linha a{ color:inherit; }
+
+    .obs{ margin-top:12px; padding:11px 13px; border-radius:12px; background:var(--aviso-soft); color:#7c4a0e; font-size:14px; }
+    .alerta{ display:flex; gap:10px; padding:12px 14px; border-radius:16px; background:var(--erro-soft); color:#991b1b; margin-bottom:12px; font-size:14px; }
+    .alerta svg{ width:20px; height:20px; flex:none; }
+    .alerta strong{ display:block; }
+
+    .pessoas{ display:flex; flex-direction:column; gap:8px; }
+    .pessoa{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:14px; }
+    .pessoa-ini{ width:34px; height:34px; border-radius:50%; background:var(--soft); display:grid; place-items:center; font-weight:800; color:var(--muted); flex:none; font-size:13px; }
+    .pessoa-nome{ flex:1; min-width:0; font-weight:700; }
+    .pessoa-nome small{ display:block; font-weight:600; color:var(--muted); font-size:12px; }
+    .pessoa-nome a{ color:var(--ok-forte); text-decoration:none; }
+    .nota{ display:inline-flex; padding:1px 7px; border-radius:999px; background:var(--aviso-soft); color:var(--aviso); font-size:11px; font-weight:800; margin-left:4px; }
+    .subtitulo{ font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--suave); margin:14px 0 8px; }
+    .subtitulo:first-child{ margin-top:0; }
+
+    .linha-tempo{ display:flex; flex-direction:column; gap:8px; }
+    .marco{ display:grid; grid-template-columns:86px 1fr; gap:10px; padding:9px 12px; border-radius:12px; background:var(--campo); border:1px solid var(--line); font-size:13.5px; }
+    .marco b{ display:block; }
+    .marco small{ color:var(--muted); }
+
+    .acoes-linha{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+
+    /* ---------- Registros (montagem / desmontagem) ---------- */
+    .progresso{ margin-bottom:14px; }
+    .progresso-linha{ display:flex; justify-content:space-between; margin-bottom:6px; color:var(--muted); font-size:12px; font-weight:700; }
+    .progresso-barra{ height:6px; border-radius:999px; background:var(--line); overflow:hidden; }
+    .progresso-barra i{ display:block; height:100%; width:0; border-radius:999px; background:var(--escuro); transition:width .4s ease; }
+    .progresso.tudo .progresso-barra i{ background:var(--ok); }
+
+    .passos{ display:flex; flex-direction:column; gap:12px; }
+    .passo{ border:1px solid var(--borda-card); border-radius:18px; padding:16px 14px; background:var(--campo); }
+    .passo.concluido{ border-color:var(--ok-borda); background:#fff; }
+    .passo-topo{ display:grid; grid-template-columns:40px minmax(0,1fr) auto; gap:10px; align-items:center; margin-bottom:14px; }
+    .passo.concluido .passo-topo{ margin-bottom:0; }
+    .passo-num{ width:40px; height:40px; border-radius:12px; background:var(--soft); display:grid; place-items:center; font-weight:800; color:var(--escuro-2); }
+    .passo.concluido .passo-num{ background:var(--ok-soft); color:var(--ok); }
+    .passo-titulo{ font-family:var(--serif); font-size:21px; font-weight:600; line-height:1.1; }
+    .passo-sub{ color:var(--muted); font-size:12.5px; }
+    .passo-status{ padding:4px 9px; border-radius:999px; background:var(--soft); color:var(--muted); font-size:11px; font-weight:800; white-space:nowrap; }
+    .passo.concluido .passo-status{ background:var(--ok-soft); color:var(--ok-forte); }
+    .passo-corpo{ display:flex; flex-direction:column; gap:12px; }
+    .passo.concluido .passo-corpo{ display:none; }
+    .passo-feito{ display:none; margin-top:12px; padding:12px 14px; border-radius:14px; background:var(--ok-soft); color:var(--ok-forte); font-weight:700; font-size:14px; }
+    .passo.concluido .passo-feito{ display:block; }
+    .passo-feito p{ color:var(--text); font-weight:500; margin-top:6px; white-space:pre-wrap; }
+
+    .rotulo{ font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:-4px; }
+    .opcoes{ display:flex; flex-wrap:wrap; gap:8px; }
+    .opcao{ min-height:44px; padding:0 16px; border:1px solid var(--line); border-radius:999px; background:var(--card); font-weight:700; }
+    .opcao.ativa{ background:var(--escuro); border-color:var(--escuro); color:#fff; }
+    .sim-nao{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .sim-nao svg{ width:18px; height:18px; vertical-align:-3px; }
+    .sim-nao button{ min-height:52px; border:1px solid var(--line); border-radius:14px; background:var(--card); font-weight:800; font-size:15px; }
+    .sim-nao .sim.ativa{ background:var(--ok-soft); border-color:var(--ok); color:var(--ok-forte); }
+    .sim-nao .nao.ativa{ background:var(--erro-soft); border-color:var(--erro); color:#991b1b; }
+
+    .foto{ position:relative; display:block; overflow:hidden; border:1.5px dashed #d9d2c6; border-radius:16px; background:#fff; text-align:center; cursor:pointer; }
+    .foto-vazio{ display:flex; align-items:center; justify-content:center; gap:10px; padding:18px; color:var(--escuro-2); font-weight:700; }
+    .foto-vazio svg{ width:22px; height:22px; }
+    .foto img{ display:none; width:100%; max-height:340px; object-fit:cover; }
+    .foto.tem{ border-style:solid; border-color:var(--line); }
+    .foto.tem img{ display:block; }
+    .foto.tem .foto-vazio{ display:none; }
+    .galeria{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+    .galeria:empty{ display:none; }
+    .galeria div{ position:relative; border-radius:14px; overflow:hidden; border:1px solid var(--line); background:#fff; }
+    .galeria img{ display:block; width:100%; height:150px; object-fit:cover; }
+    .galeria span{ display:block; padding:6px 10px; font-size:12px; font-weight:700; color:var(--muted); }
+    .galeria button{ position:absolute; top:6px; right:6px; width:30px; height:30px; border:0; border-radius:50%; background:rgba(16,15,13,.66); color:#fff; font-size:17px; }
+    .sacola{ display:flex; flex-direction:column; gap:10px; padding:12px; border:1px solid var(--borda-card); border-radius:16px; background:#fff; }
+    .sacola-topo{ display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:800; letter-spacing:.12em; color:var(--muted); }
+    .sacola-topo button{ padding:5px 11px; border:1px solid #f3d2d2; border-radius:999px; background:#fff; color:#b91c1c; font-size:12px; font-weight:700; letter-spacing:0; }
+    .links{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .links a{ padding:5px 11px; border:1px solid var(--ok-borda); border-radius:999px; background:#fff; color:var(--ok-forte); font-size:12px; font-weight:700; text-decoration:none; }
+    .conclusao-status{ padding:12px; border-radius:12px; background:var(--soft); color:var(--muted); font-size:13px; font-weight:700; text-align:center; }
+    .conclusao-status.ok{ background:var(--ok-soft); color:var(--ok-forte); }
+    .tudo-pronto{ display:none; margin-top:12px; padding:20px; border-radius:18px; background:var(--ok-soft); border:1px solid var(--ok-borda); color:var(--ok-forte); text-align:center; }
+    .tudo-pronto b{ display:block; font-family:var(--serif); font-size:24px; }
+    .progresso.tudo ~ .passos + .tudo-pronto{ display:block; }
+
+    /* ---------- Folha (confirmações, mapa, QR) ---------- */
+    .folha-fundo{ position:fixed; inset:0; background:rgba(37,30,25,.45); z-index:20; display:none; align-items:flex-end; justify-content:center; }
+    .folha-fundo.ver{ display:flex; }
+    .folha{ width:100%; max-width:600px; max-height:92vh; overflow:auto; background:var(--card); border-radius:24px 24px 0 0; padding:22px 18px calc(18px + env(safe-area-inset-bottom)); animation:subir .22s ease; }
+    @keyframes subir{ from{ transform:translateY(40px); } to{ transform:none; } }
+    .folha h3{ font-family:var(--serif); font-size:26px; font-weight:600; line-height:1.15; margin-bottom:6px; }
+    .folha p{ color:var(--muted); margin-bottom:14px; }
+    .folha .acoes{ display:flex; flex-direction:column; gap:8px; }
+    .mapa-moldura{ width:100%; height:46vh; min-height:260px; border:0; border-radius:16px; background:var(--soft); margin-bottom:12px; }
+    #qrCaixa{ display:flex; justify-content:center; margin:6px 0 10px; }
+    #qrCaixa img, #qrCaixa canvas{ width:min(70vw, 280px) !important; height:auto !important; image-rendering:pixelated; }
+    .qr-codigo{ text-align:center; font-size:34px; font-weight:800; letter-spacing:.28em; padding-left:.28em; }
+    .qr-legenda{ text-align:center; color:var(--muted); font-size:13px; margin-bottom:12px; }
+
+    /* ---------- Sacolas da montagem (na desmontagem) ---------- */
+    .sacolas-montagem{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+    .sacola-montagem{ display:flex; flex-direction:column; gap:8px; padding:8px 8px 10px; border:1px solid var(--line); border-radius:14px; background:var(--campo); }
+    .sacola-montagem img{ display:block; width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:10px; background:var(--soft); }
+    .sacola-montagem a{ font-size:12.5px; font-weight:700; color:var(--ok-forte); text-decoration:none; }
+    .sacola-montagem strong{ font-size:18px; letter-spacing:.04em; color:var(--erro); padding:0 4px; }
+    .sacola-montagem .sem-foto{ display:grid; place-items:center; aspect-ratio:1/1; border-radius:10px; background:var(--soft); color:var(--suave); font-size:12.5px; font-weight:700; }
+
+    /* ---------- Troca de material ---------- */
+    .secao-urgente{ border-color:#f3c7c7; box-shadow:0 0 0 3px var(--erro-soft), var(--sombra); }
+    .trocas{ display:flex; flex-direction:column; gap:10px; }
+    .troca{ display:flex; gap:12px; padding:10px; border:1px solid var(--line); border-radius:14px; }
+    .troca img{ width:76px; height:76px; border-radius:10px; object-fit:cover; background:var(--soft); flex:none; display:block; }
+    .troca-info{ flex:1; min-width:0; font-size:13.5px; }
+    .troca-info strong{ display:block; font-size:15px; }
+    .troca-info span{ display:block; color:var(--escuro-2); }
+    .troca-info small{ display:block; color:var(--muted); font-size:12px; }
+    .sugestoes{ display:flex; flex-direction:column; gap:4px; margin:-8px 0 12px; }
+    .sugestoes:empty{ display:none; }
+    .sugestoes button{ text-align:left; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--campo); font-weight:600; font-size:14px; }
+
+    .toast{ position:fixed; left:50%; bottom:calc(22px + env(safe-area-inset-bottom)); transform:translate(-50%, 20px); background:var(--escuro); color:#fff; padding:12px 18px; border-radius:14px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:30; max-width:calc(100% - 32px); text-align:center; white-space:pre-line; }
+    .toast.ver{ opacity:1; transform:translate(-50%, 0); }
+    .toast.erro{ background:var(--erro); }
+  </style>
+</head>
+<body>
+
+  <!-- CARREGANDO -->
+  <section class="tela ativa" id="telaCarregando">
+    <div class="carregando"><div><div class="spinner"></div>Carregando…</div></div>
+  </section>
+
+  <!-- LOGIN -->
+  <section class="tela" id="telaLogin">
+    <div class="marca">
+      <div class="marca-selo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+      <h1>App do Montador</h1>
+      <p id="loginSubtitulo">Suas montagens, a equipe e os registros num só lugar.</p>
+    </div>
+
+    <form class="cartao" onsubmit="entrar(event)">
+      <div class="erro" id="erroLogin"></div>
+      <label class="campo" id="campoNome"><span>Seu nome</span>
+        <select id="loginNome"><option value="">Carregando nomes…</option></select>
+      </label>
+      <label class="campo"><span id="rotuloSenha">Sua senha</span><input id="loginSenha" type="password" autocomplete="current-password" placeholder="Senha" required></label>
+      <button class="btn" id="btnEntrar" type="submit">Entrar</button>
+    </form>
+
+    <div class="rodape-form"><button class="link" type="button" id="btnModo" onclick="alternarSupervisor()">Entrar como supervisor</button></div>
+  </section>
+
+  <!-- INÍCIO -->
+  <section class="tela" id="telaInicio">
+    <header class="topo">
+      <div class="avatar" id="inicioAvatar">?</div>
+      <div class="topo-texto"><small id="inicioPerfil">Olá,</small><strong id="inicioNome">-</strong></div>
+      <button class="icone-btn" id="btnAtualizar" type="button" onclick="carregar(true)" aria-label="Atualizar"></button>
+      <button class="icone-btn" id="btnSair" type="button" onclick="perguntarSair()" aria-label="Sair"></button>
+    </header>
+
+    <nav class="abas">
+      <button class="aba ativa" id="abaProximas" type="button" onclick="trocarAba('proximas')">Próximas</button>
+      <button class="aba" id="abaAnteriores" type="button" onclick="trocarAba('anteriores')">Anteriores</button>
+    </nav>
+
+    <main id="listaEtapas"></main>
+  </section>
+
+  <!-- ETAPA -->
+  <section class="tela" id="telaEtapa">
+    <button class="voltar" type="button" onclick="voltarInicio()" id="btnVoltar"></button>
+    <div id="etapaCabeca"></div>
+    <div id="etapaInfo"></div>
+    <div id="etapaTrocas"></div>
+    <div id="etapaSacolas"></div>
+    <div id="etapaEquipe"></div>
+    <div id="etapaPedido"></div>
+    <div id="etapaRegistros"></div>
+  </section>
+
+  <div class="folha-fundo" id="folha" onclick="if(event.target === this) fecharFolha()">
+    <div class="folha" id="folhaConteudo"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  /* =========================================================
+     ESTADO E APOIO
+  ========================================================= */
+  const CHAVE_TOKEN = "montadorToken";
+  const DIAS = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+  const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+
+  const estado = {
+    token: lerToken(),
+    dados: null,
+    aba: "proximas",
+    etapaAberta: "",
+    idLink: "",
+    supervisor: false,
+    qrTimer: null
+  };
+
+  const I = {
+    relogio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+    local: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+    caminhao: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62L18.3 9.38a1 1 0 0 0-.78-.38H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>',
+    festa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>',
+    pessoa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    alerta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>',
+    enviar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
+    mais: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
+    qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14v.01"/><path d="M14 20h.01"/><path d="M17 20h4v-3"/></svg>',
+    rota: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 19-9-9 19-2-8-8-2z"/></svg>',
+    voltar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+    atualizar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
+    sair: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>'
+  };
+
+  document.getElementById("btnAtualizar").innerHTML = I.atualizar;
+  document.getElementById("btnSair").innerHTML = I.sair;
+  document.getElementById("btnVoltar").innerHTML = I.voltar + "Minhas etapas";
+
+  function lerToken(){ try{ return localStorage.getItem(CHAVE_TOKEN) || ""; }catch(e){ return ""; } }
+  function salvarToken(t){
+    estado.token = t || "";
+    try{ if(t){ localStorage.setItem(CHAVE_TOKEN, t); } else { localStorage.removeItem(CHAVE_TOKEN); } }catch(e){}
+  }
+
+  function esc(v){
+    return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+
+  function chamar(funcao){
+    const args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function(resolve, reject){
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(function(e){ reject(new Error((e && e.message) || String(e))); })
+        [funcao].apply(null, args);
+    });
+  }
+
+  function mensagemErro(erro, padrao){
+    const texto = String((erro && erro.message) || erro || "").replace(/^(Error|Exception):\s*/, "").replace(/^SESSAO_EXPIRADA:\s*/, "");
+    if(/network|http 0|failed to fetch|connection|conex/i.test(texto)){
+      return "Sem conexão com a internet. Verifique o sinal e tente de novo.";
+    }
+    return padrao ? padrao + (texto ? "\n" + texto : "") : texto;
+  }
+
+  function sessaoExpirou(erro){ return /SESSAO_EXPIRADA/.test(String(erro && erro.message || erro)); }
+
+  function mostrarTela(id){
+    document.querySelectorAll(".tela").forEach(function(t){ t.classList.toggle("ativa", t.id === id); });
+    window.scrollTo(0, 0);
+  }
+
+  let toastTimer = null;
+  function toast(texto, erro){
+    const el = document.getElementById("toast");
+    el.textContent = texto;
+    el.classList.toggle("erro", !!erro);
+    el.classList.add("ver");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove("ver"); }, erro ? 4500 : 2800);
+  }
+
+  function ocupar(btn, texto){ if(!btn){ return; } btn.dataset.html = btn.innerHTML; btn.disabled = true; btn.textContent = texto || "Enviando…"; }
+  function liberar(btn){ if(!btn){ return; } btn.disabled = false; if(btn.dataset.html){ btn.innerHTML = btn.dataset.html; } }
+
+  function abrirFolha(html){ document.getElementById("folhaConteudo").innerHTML = html; document.getElementById("folha").classList.add("ver"); }
+  function fecharFolha(){
+    document.getElementById("folha").classList.remove("ver");
+    clearTimeout(estado.qrTimer);
+    estado.qrTimer = null;
+  }
+
+  // Confirmação no lugar do confirm() do navegador
+  function perguntar(titulo, texto, botao){
+    return new Promise(function(resolve){
+      window._resposta = function(sim){ fecharFolha(); resolve(sim); };
+      abrirFolha(
+        '<h3>' + esc(titulo) + '</h3>' + (texto ? '<p>' + esc(texto) + '</p>' : "") +
+        '<div class="acoes"><button class="btn" type="button" onclick="_resposta(true)">' + esc(botao || "Confirmar") + '</button>' +
+        '<button class="btn btn-texto" type="button" onclick="_resposta(false)">Voltar</button></div>'
+      );
+    });
+  }
+
+  function hoje(){ const d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+
+  function dataObj(iso){ const p = String(iso || "").split("-"); return p.length === 3 ? new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])) : null; }
+
+  function dataCurta(iso){
+    const d = dataObj(iso);
+    return d ? DIAS[d.getDay()].slice(0, 3) + " " + ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) : "-";
+  }
+
+  function tituloDia(iso){
+    const d = dataObj(iso);
+    if(!d){ return "Sem data"; }
+    const h = dataObj(hoje());
+    const dif = Math.round((d - h) / 86400000);
+    if(dif === 0){ return "Hoje"; }
+    if(dif === 1){ return "Amanhã"; }
+    if(dif === -1){ return "Ontem"; }
+    return DIAS[d.getDay()];
+  }
+
+  function hora(texto){ const m = String(texto || "").match(/(\d{1,2}):(\d{2})/); return m ? ("0" + m[1]).slice(-2) + ":" + m[2] : ""; }
+
+  function tipoInfo(nome){
+    const t = String(nome || "").toLowerCase();
+    if(t.indexOf("desmontagem") >= 0){ return { fundo: "var(--desmontagem)", forte: "var(--desmontagem-forte)" }; }
+    if(t.indexOf("montagem") >= 0){ return { fundo: "var(--montagem)", forte: "var(--montagem-forte)" }; }
+    if(t.indexOf("carregamento") >= 0){ return { fundo: "var(--carregamento)", forte: "var(--carregamento-forte)" }; }
+    return { fundo: "var(--soft)", forte: "var(--escuro-2)" };
+  }
+
+  function acharEtapa(id){ return ((estado.dados && estado.dados.etapas) || []).filter(function(e){ return e.id === id; })[0]; }
+
+  const TEXTOS_LOGISTICA = {
+    baldeacao: ["Necessita de baldeação", "Não necessita de baldeação"],
+    escada: ["Tem escada", "Não tem escada"],
+    caminhaoPerto: ["Caminhão para longe", "Caminhão fica próximo"],
+    horarioLimite: ["Tem horário limite", "Não tem horário limite"],
+    lona: ["Precisa de lona", "Não precisa de lona"]
+  };
+
+  function avisosLogistica(e, soSim){
+    const valores = Object.assign({}, e.info || {}, { lona: e.lona });
+    return Object.keys(TEXTOS_LOGISTICA).map(function(k){
+      const v = String(valores[k] || "");
+      if(v !== "Sim" && v !== "Não"){ return ""; }
+      if(soSim && v !== "Sim"){ return ""; }
+      return '<span class="chip ' + (v === "Sim" ? "aviso" : "") + '">' + esc(TEXTOS_LOGISTICA[k][v === "Sim" ? 0 : 1]) + '</span>';
+    }).join("");
+  }
+
+  /* =========================================================
+     LOGIN
+  ========================================================= */
+  function carregarNomes(){
+    chamar("MONT_listarResponsaveis")
+      .then(function(nomes){
+        const sel = document.getElementById("loginNome");
+        sel.innerHTML = '<option value="">Escolha seu nome</option>' + nomes.map(function(n){ return '<option>' + esc(n) + '</option>'; }).join("");
+        try{ const ultimo = localStorage.getItem("montadorUltimoNome"); if(ultimo){ sel.value = ultimo; } }catch(e){}
+      })
+      .catch(function(){ document.getElementById("loginNome").innerHTML = '<option value="">Não foi possível carregar os nomes</option>'; });
+  }
+
+  function alternarSupervisor(){
+    estado.supervisor = !estado.supervisor;
+    document.getElementById("campoNome").style.display = estado.supervisor ? "none" : "";
+    document.getElementById("rotuloSenha").textContent = estado.supervisor ? "Senha do Supervisor de Montagem" : "Sua senha";
+    document.getElementById("btnModo").textContent = estado.supervisor ? "Sou responsável" : "Entrar como supervisor";
+  }
+
+  function mostrarLogin(mensagem){
+    mostrarTela("telaLogin");
+    const erro = document.getElementById("erroLogin");
+    erro.textContent = mensagem || "";
+    erro.classList.toggle("ver", !!mensagem);
+    if(document.getElementById("loginNome").options.length <= 1){ carregarNomes(); }
+  }
+
+  function entrar(ev){
+    ev.preventDefault();
+    const btn = document.getElementById("btnEntrar");
+    const nome = document.getElementById("loginNome").value;
+    ocupar(btn, "Entrando…");
+    document.getElementById("erroLogin").classList.remove("ver");
+
+    chamar("MONT_login", nome, document.getElementById("loginSenha").value, estado.supervisor)
+      .then(function(r){
+        salvarToken(r.token);
+        try{ if(nome){ localStorage.setItem("montadorUltimoNome", nome); } }catch(e){}
+        document.getElementById("loginSenha").value = "";
+        return carregar();
+      })
+      .catch(function(e){ mostrarLogin(mensagemErro(e)); })
+      .finally(function(){ liberar(btn); });
+  }
+
+  function perguntarSair(){
+    perguntar("Sair do app?", "Para entrar de novo você vai precisar da senha.", "Sair").then(function(sim){
+      if(!sim){ return; }
+      const t = estado.token;
+      salvarToken("");
+      estado.dados = null;
+      mostrarLogin("");
+      if(t){ chamar("MONT_sair", t).catch(function(){}); }
+    });
+  }
+
+  /* =========================================================
+     CARREGAR E LISTA DE ETAPAS
+  ========================================================= */
+  function carregar(manual){
+    if(!estado.token){ mostrarLogin(estado.idLink ? "Entre para abrir a etapa." : ""); return Promise.resolve(); }
+
+    const btn = document.getElementById("btnAtualizar");
+    if(manual){ btn.classList.add("girando"); }
+
+    return chamar("MONT_appCarregar", estado.token, estado.idLink || "")
+      .then(function(dados){
+        estado.dados = dados;
+        aplicarDados(manual);
+      })
+      .catch(function(e){
+        if(sessaoExpirou(e)){ salvarToken(""); mostrarLogin("Sua sessão expirou. Entre de novo."); return; }
+        if(!estado.dados){ mostrarLogin(mensagemErro(e, "Não foi possível carregar.")); return; }
+        if(manual){ toast(mensagemErro(e, "Não foi possível atualizar."), true); }
+      })
+      .finally(function(){ btn.classList.remove("girando"); });
+  }
+
+  function aplicarDados(manual){
+    const d = estado.dados;
+    document.getElementById("inicioNome").textContent = String(d.nome || "").split(" ")[0];
+    document.getElementById("inicioPerfil").textContent = d.perfil === "SUPERVISOR" ? "Supervisor · todas as montagens" : "Olá,";
+    document.getElementById("inicioAvatar").textContent = String(d.nome || "?").charAt(0).toUpperCase();
+
+    // Link direto para uma etapa (QR/cronograma): abre assim que carregar
+    if(estado.idLink){
+      const id = estado.idLink;
+      estado.idLink = "";
+      if(acharEtapa(id)){ abrirEtapa(id); return; }
+      if(d.avisoExtra){ toast(d.avisoExtra, true); }
+    }
+
+    if(estado.etapaAberta && document.getElementById("telaEtapa").classList.contains("ativa")){
+      atualizarEtapaAberta();
+      if(manual){ toast("Atualizado"); }
+      return;
+    }
+
+    renderLista();
+    if(!document.getElementById("telaInicio").classList.contains("ativa")){ mostrarTela("telaInicio"); }
+    if(manual){ toast("Atualizado"); }
+  }
+
+  function trocarAba(aba){ estado.aba = aba; renderLista(); }
+
+  function renderLista(){
+    document.getElementById("abaProximas").classList.toggle("ativa", estado.aba === "proximas");
+    document.getElementById("abaAnteriores").classList.toggle("ativa", estado.aba === "anteriores");
+
+    const h = hoje();
+    let etapas = (estado.dados.etapas || []).filter(function(e){
+      return estado.aba === "proximas" ? e.dataISO >= h : e.dataISO < h;
+    });
+    if(estado.aba === "anteriores"){ etapas = etapas.slice().reverse(); }
+
+    const area = document.getElementById("listaEtapas");
+    if(!etapas.length){
+      area.innerHTML = '<div class="vazio"><strong>' + (estado.aba === "proximas" ? "Nenhuma etapa programada" : "Nada nos últimos dias") + '</strong>' +
+        (estado.aba === "proximas" ? "Quando você for escalado como responsável, a etapa aparece aqui." : "") + '</div>';
+      return;
+    }
+
+    let html = "";
+    let diaAtual = "";
+    etapas.forEach(function(e){
+      if(e.dataISO !== diaAtual){
+        if(diaAtual){ html += '</div>'; }
+        diaAtual = e.dataISO;
+        html += '<div class="dia-titulo"><strong>' + esc(tituloDia(e.dataISO)) + '</strong><span>' + esc(dataCurta(e.dataISO)) + '</span></div><div class="lista">';
+      }
+      html += cartaoEtapa(e);
+    });
+    html += '</div>';
+    area.innerHTML = html;
+  }
+
+  function chipsEtapa(e){
+    const chips = [];
+    if(chipTrocas(e)){ chips.push(chipTrocas(e)); }
+    if(e.operacao === "desmontagem" && (e.sacolasMontagem || []).length){
+      chips.push('<span class="chip">' + e.sacolasMontagem.length + (e.sacolasMontagem.length === 1 ? " sacola" : " sacolas") + ' de capa</span>');
+    }
+    if(e.alerta){ chips.push('<span class="chip erro">' + I.alerta + esc(e.alerta.problema) + '</span>'); }
+    if(e.operacao){
+      chips.push(e.confirmadoDecorador ? '<span class="chip ok">' + I.check + 'Decorador confirmou</span>' : '<span class="chip aviso">Decorador não confirmou</span>');
+    }
+    if(e.operacao === "montagem"){
+      chips.push('<span class="chip ' + (e.registros >= 5 ? "ok" : "") + '">' + e.registros + ' de 5 registros</span>');
+    }
+    if(e.free){
+      const chegaram = e.free.pessoas.filter(function(p){ return p.checkinEm; }).length;
+      const conf = e.free.pessoas.length;
+      chips.push('<span class="chip ' + (conf >= e.free.quantidade ? "ok" : "aviso") + '">Free ' + conf + '/' + e.free.quantidade + (chegaram ? ' · ' + chegaram + ' chegaram' : "") + '</span>');
+    }
+    return chips.join("") + avisosLogistica(e, true);
+  }
+
+  function cartaoEtapa(e){
+    const t = tipoInfo(e.etapa);
+    return (
+      '<button class="etapa" type="button" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '" onclick="abrirEtapa(\'' + esc(e.id) + '\')">' +
+        '<div class="etapa-topo"><span class="tipo">' + esc(e.etapa) + '</span><span class="hora">' + I.relogio + esc(hora(e.horario) || "A definir") + '</span></div>' +
+        '<div class="etapa-cliente">' + esc(e.cliente || "-") + '</div>' +
+        '<div class="etapa-local">Pedido #' + esc(e.pedido) + (e.local ? ' · ' + esc(e.local) : "") + '</div>' +
+        '<div class="etapa-chips">' + chipsEtapa(e) + '</div>' +
+      '</button>'
+    );
+  }
+
+  /* =========================================================
+     TELA DA ETAPA
+  ========================================================= */
+  function abrirEtapa(id){
+    const e = acharEtapa(id);
+    if(!e){ return; }
+    estado.etapaAberta = id;
+    try{ history.pushState({ etapa: id }, "", "#etapa"); }catch(err){}
+
+    renderCabeca(e);
+    renderInfo(e);
+    renderTrocas(e);
+    renderSacolasMontagem(e);
+    renderEquipe(e);
+    renderPedido(e);
+    document.getElementById("etapaRegistros").innerHTML = "";
+    if(e.operacao){ montarRegistros(e); }
+
+    mostrarTela("telaEtapa");
+  }
+
+  function voltarInicio(){
+    if(location.hash === "#etapa"){ history.back(); return; }
+    fecharEtapa();
+  }
+
+  function fecharEtapa(){
+    estado.etapaAberta = "";
+    renderLista();
+    mostrarTela("telaInicio");
+  }
+
+  window.addEventListener("popstate", function(){
+    if(document.getElementById("telaEtapa").classList.contains("ativa")){ fecharEtapa(); }
+  });
+
+  // Atualização automática: na etapa, só cabeçalho/equipe (não apaga o que está sendo preenchido)
+  function atualizarEtapaAberta(){
+    const e = acharEtapa(estado.etapaAberta);
+    if(!e){ return; }
+    renderCabeca(e);
+    renderTrocas(e);
+    renderEquipe(e);
+  }
+
+  function renderCabeca(e){
+    const t = tipoInfo(e.etapa);
+    document.getElementById("etapaCabeca").innerHTML =
+      '<div class="cabeca" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '">' +
+        '<div class="cabeca-linha"><span class="tipo">' + esc(e.etapa) + '</span><span class="pedido">Pedido <b>#' + esc(e.pedido) + '</b></span></div>' +
+        '<h1>' + esc(e.cliente || "-") + '</h1>' +
+        '<div class="cabeca-quando">' + I.relogio + esc(tituloDia(e.dataISO)) + ', ' + esc(dataCurta(e.dataISO)) + ' · ' + esc(hora(e.horario) || "horário a definir") + '</div>' +
+      '</div>' +
+      (e.alerta ? '<div class="alerta">' + I.alerta + '<div><strong>' + esc(e.alerta.problema) + '</strong>' + esc(e.alerta.observacao || "") + (e.alerta.enviadoPor ? ' — ' + esc(e.alerta.enviadoPor) : "") + '</div></div>' : "");
+  }
+
+  function renderInfo(e){
+    const linha = function(icone, rotulo, valor){
+      return '<div class="linha"><div class="linha-icone">' + icone + '</div><div><small>' + rotulo + '</small><strong>' + valor + '</strong></div></div>';
+    };
+    const logistica = avisosLogistica(e, false);
+
+    document.getElementById("etapaInfo").innerHTML =
+      '<section class="secao">' +
+        '<div class="secao-titulo"><h2>Informações</h2></div>' +
+        '<div class="linhas">' +
+          linha(I.local, "Local", esc(e.local || "-") + (e.local ? '<br><button class="btn btn-claro btn-pequeno" style="margin-top:6px" type="button" onclick="abrirMapa(\'' + esc(e.id) + '\')">' + I.rota + 'Ver mapa e rota</button>' : "")) +
+          linha(I.festa, "Data do evento", esc(e.dataEvento || "-")) +
+          (String(e.etapa).toLowerCase().indexOf("triagem") < 0 ? linha(I.caminhao, "Caminhão", esc(String(e.caminhao || "-").replace(/\n/g, ", "))) : "") +
+          (e.operacao ? linha(I.check, "Decorador", e.confirmadoDecorador ? '<span class="chip ok">' + I.check + 'Confirmou a data</span>' : '<span class="chip aviso">Ainda não confirmou</span>') : "") +
+        '</div>' +
+        (logistica ? '<div class="etapa-chips" style="margin-top:12px">' + logistica + '</div>' : "") +
+        (e.observacao ? '<div class="obs"><strong>Obs.:</strong> ' + esc(e.observacao) + '</div>' : "") +
+      '</section>';
+  }
+
+  function chipPresenca(p){
+    if(p.checkoutEm){ return '<span class="chip ok">Saiu ' + esc(hora(p.checkoutEm)) + '</span>'; }
+    if(p.checkinEm){ return '<span class="chip ok">Chegou ' + esc(hora(p.checkinEm)) + '</span>'; }
+    if(p.fase === "FALTOU"){ return '<span class="chip erro">Faltou</span>'; }
+    if(p.fase === "CHECKIN"){ return '<span class="chip aviso">Aguardando</span>'; }
+    return '<span class="chip">Confirmado</span>';
+  }
+
+  function renderEquipe(e){
+    const internos = (e.equipe || []).map(function(n){
+      return '<div class="pessoa"><div class="pessoa-ini">' + esc(n.charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(n) + '</div></div>';
+    }).join("");
+
+    let free = "";
+    if(e.free){
+      const f = e.free;
+      free =
+        '<div class="subtitulo">Free · ' + f.pessoas.length + ' de ' + f.quantidade + ' confirmados</div>' +
+        (f.pessoas.length
+          ? '<div class="pessoas">' + f.pessoas.map(function(p){
+              const n = String(p.telefone || "").replace(/\D/g, "");
+              return '<div class="pessoa"><div class="pessoa-ini">' + esc(String(p.nome).charAt(0).toUpperCase()) + '</div>' +
+                '<div class="pessoa-nome">' + esc(p.nome) + '<span class="nota">★ ' + Number(p.nota || 5).toFixed(1).replace(".", ",") + '</span>' +
+                  (n.length >= 10 ? '<small><a href="https://wa.me/55' + n + '" target="_blank" rel="noopener">' + esc(p.telefone) + '</a></small>' : "") + '</div>' +
+                chipPresenca(p) + '</div>';
+            }).join("") + '</div>'
+          : '<div class="vazio" style="padding:14px">Nenhum free confirmou ainda.</div>') +
+        '<div class="acoes-linha">' +
+          '<button class="btn btn-pequeno" type="button" onclick="abrirQr(\'' + esc(e.id) + '\')">' + I.qr + 'QR de presença dos free</button>' +
+        '</div>' +
+        '<div style="margin-top:8px;font-size:12.5px;color:var(--muted)">Encontro dos free: ' + esc(f.horario) + ' · ' + esc(f.pontoEncontro) + '</div>';
+    }
+
+    document.getElementById("etapaEquipe").innerHTML =
+      '<section class="secao">' +
+        '<div class="secao-titulo"><h2>Equipe</h2><small>atualiza sozinho</small></div>' +
+        '<div class="subtitulo">Responsável</div>' +
+        '<div class="pessoas"><div class="pessoa"><div class="pessoa-ini">' + esc(String(e.responsavel || "?").charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(e.responsavel || "-") + '</div></div></div>' +
+        (internos ? '<div class="subtitulo">Equipe interna</div><div class="pessoas">' + internos + '</div>' : "") +
+        free +
+      '</section>';
+  }
+
+  // Link do Drive (…/d/ID/… ou ?id=ID) -> ID do arquivo
+  function idDoDrive(url){
+    const m = String(url || "").match(/\/d\/([\w-]{10,})/) || String(url || "").match(/[?&]id=([\w-]{10,})/);
+    return m ? m[1] : "";
+  }
+
+  /* Desmontagem: sacolas de proteção que a montagem registrou */
+  function renderSacolasMontagem(e){
+    const area = document.getElementById("etapaSacolas");
+    if(e.operacao !== "desmontagem"){ area.innerHTML = ""; return; }
+
+    const sacolas = e.sacolasMontagem || [];
+    area.innerHTML =
+      '<section class="secao">' +
+        '<div class="secao-titulo"><h2>Sacolas de capa de proteção</h2><small>fotos da montagem</small></div>' +
+        (sacolas.length
+          ? '<div class="sacolas-montagem">' + sacolas.map(function(sc){
+              const foto = (sc.fotos || [])[0] || "";
+              const miniatura = fotoDrive(idDoDrive(foto), 600);
+              return '<div class="sacola-montagem">' +
+                (foto
+                  ? '<a href="' + esc(foto) + '" target="_blank" rel="noopener" title="Abrir a foto">' +
+                      (miniatura ? '<img src="' + esc(miniatura) + '" alt="Foto da sacola ' + esc(sc.codigo) + '">' : "Ver foto") +
+                    '</a>'
+                  : '<div class="sem-foto">Sem foto</div>') +
+                '<strong>' + esc(sc.codigo || "Sem código") + '</strong>' +
+              '</div>';
+            }).join("") + '</div>' +
+            '<p style="margin-top:10px;color:var(--muted);font-size:13px">Confira se todas estas sacolas voltam com o material.</p>'
+          : '<p style="color:var(--muted);font-size:13.5px">A montagem deste evento não registrou sacolas.</p>') +
+      '</section>';
+  }
+
+  function renderPedido(e){
+    if(!(e.outrasEtapas || []).length){ document.getElementById("etapaPedido").innerHTML = ""; return; }
+    document.getElementById("etapaPedido").innerHTML =
+      '<section class="secao">' +
+        '<div class="secao-titulo"><h2>Outras etapas do pedido</h2></div>' +
+        '<div class="linha-tempo">' + e.outrasEtapas.map(function(o){
+          return '<div class="marco"><div><b>' + esc(dataCurta(o.dataISO)) + '</b><small>' + esc(hora(o.horario) || "-") + '</small></div>' +
+            '<div><b>' + esc(o.etapa) + '</b><small>' + esc(o.responsavel || "-") + (o.caminhao ? ' · ' + esc(String(o.caminhao).replace(/\n/g, ", ")) : "") + '</small></div></div>';
+        }).join("") + '</div>' +
+      '</section>';
+  }
+
+  /* ---------- Mapa e QR ---------- */
+  function destino(e){
+    return Number(e.lat) && Number(e.lng) ? e.lat + "," + e.lng : String(e.local || "");
+  }
+
+  function abrirMapa(id){
+    const e = acharEtapa(id);
+    if(!e){ return; }
+    abrirFolha(
+      '<h3>Local do evento</h3><p>' + esc(e.local) + '</p>' +
+      '<iframe class="mapa-moldura" src="https://maps.google.com/maps?q=' + encodeURIComponent(destino(e)) + '&z=16&hl=pt-BR&output=embed"></iframe>' +
+      '<div class="acoes">' +
+        '<a class="btn" href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(destino(e)) + '" target="_blank" rel="noopener">' + I.rota + 'Navegar pelo Google Maps</a>' +
+        '<button class="btn btn-texto" type="button" onclick="fecharFolha()">Fechar</button>' +
+      '</div>'
+    );
+  }
+
+  function abrirQr(id){
+    abrirFolha('<div class="carregando" style="min-height:200px"><div><div class="spinner"></div>Gerando QR…</div></div>');
+    buscarQr(id);
+  }
+
+  function buscarQr(id){
+    chamar("MONT_qrVaga", estado.token, id)
+      .then(function(d){
+        if(!document.getElementById("folha").classList.contains("ver")){ return; }
+        const chegaram = d.equipe.filter(function(p){ return p.checkinEm; }).length;
+        document.getElementById("folhaConteudo").innerHTML =
+          '<h3>QR de presença</h3>' +
+          '<p>Os free leem com a câmera do celular na chegada e no fim do serviço. O código muda a cada minuto.</p>' +
+          '<div id="qrCaixa"></div>' +
+          '<div class="qr-codigo">' + esc(d.codigo) + '</div>' +
+          '<div class="qr-legenda">' + chegaram + ' de ' + d.equipe.length + ' já fizeram check-in</div>' +
+          '<div class="acoes"><button class="btn btn-texto" type="button" onclick="fecharFolha()">Fechar</button></div>';
+        if(window.QRCode){
+          new QRCode(document.getElementById("qrCaixa"), { text: d.urlQr, width: 560, height: 560, colorDark: "#251e19", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+        }
+        estado.qrTimer = setTimeout(function(){ buscarQr(id); }, Math.max(3000, d.trocaEm + 800));
+      })
+      .catch(function(e){
+        document.getElementById("folhaConteudo").innerHTML =
+          '<h3>QR de presença</h3><p>' + esc(mensagemErro(e)) + '</p><div class="acoes"><button class="btn" type="button" onclick="fecharFolha()">Fechar</button></div>';
+      });
+  }
+
+  /* =========================================================
+     REGISTROS DA MONTAGEM E DA DESMONTAGEM
+     (mesmas funções do servidor das páginas antigas)
+  ========================================================= */
+  let reg = {};
+  let fotosProcessando = 0;
+
+  // Reduz a foto antes de enviar (foto de celular derruba o envio pelo Apps Script)
+  function comprimirFoto(file, ladoMaximo, qualidade){
+    ladoMaximo = ladoMaximo || 1600;
+    qualidade = qualidade || 0.8;
+    fotosProcessando++;
+    return new Promise(function(resolve, reject){
+      const leitor = new FileReader();
+      leitor.onerror = function(){ reject(new Error("Não foi possível ler a foto. Tire a foto novamente.")); };
+      leitor.onload = function(){
+        const original = leitor.result;
+        const img = new Image();
+        img.onerror = function(){ resolve(original); };
+        img.onload = function(){
+          try{
+            const escala = Math.min(1, ladoMaximo / Math.max(img.width, img.height));
+            const c = document.createElement("canvas");
+            c.width = Math.max(1, Math.round(img.width * escala));
+            c.height = Math.max(1, Math.round(img.height * escala));
+            const ctx = c.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, c.width, c.height);
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+            const jpg = c.toDataURL("image/jpeg", qualidade);
+            resolve(jpg.length < original.length ? jpg : original);
+          }catch(e){ resolve(original); }
+        };
+        img.src = original;
+      };
+      leitor.readAsDataURL(file);
+    }).then(function(f){ fotosProcessando--; return f; }, function(e){ fotosProcessando--; toast(e.message, true); throw e; });
+  }
+
+  function aguardandoFotos(){
+    if(fotosProcessando > 0){ toast("Aguarde a foto terminar de carregar.", true); return true; }
+    return false;
+  }
+
+  function passoHtml(chave, num, titulo, sub, corpo, feito){
+    return '<div class="passo" id="passo_' + chave + '" data-opcional="' + (chave === "observacoes" ? "1" : "") + '">' +
+      '<div class="passo-topo"><div class="passo-num">' + num + '</div><div><div class="passo-titulo">' + titulo + '</div><div class="passo-sub">' + sub + '</div></div><span class="passo-status">' + (chave === "observacoes" ? "Opcional" : "Pendente") + '</span></div>' +
+      '<div class="passo-corpo">' + corpo + '</div>' +
+      '<div class="passo-feito" id="feito_' + chave + '">' + feito + '</div>' +
+    '</div>';
+  }
+
+  function marcarFeito(chave, htmlExtra){
+    const passo = document.getElementById("passo_" + chave);
+    if(!passo){ return; }
+    passo.classList.add("concluido");
+    passo.querySelector(".passo-status").textContent = chave === "conclusao" ? "✓ Concluída" : "✓ Enviado";
+    if(htmlExtra != null){ document.getElementById("feito_" + chave).innerHTML = htmlExtra; }
+    reg.feitos[chave] = true;
+    atualizarProgresso();
+  }
+
+  function atualizarProgresso(){
+    const obrig = reg.obrigatorios || [];
+    const feitos = obrig.filter(function(k){ return reg.feitos[k]; }).length;
+    const pct = obrig.length ? Math.round(feitos / obrig.length * 100) : 0;
+    const box = document.getElementById("regProgresso");
+    if(!box){ return; }
+    box.classList.toggle("tudo", feitos === obrig.length && obrig.length > 0);
+    document.getElementById("regProgressoTexto").textContent = feitos + " de " + obrig.length + (obrig.length === 1 ? " concluída" : " concluídas");
+    document.getElementById("regProgressoPct").textContent = pct + "%";
+    document.getElementById("regProgressoBarra").style.width = pct + "%";
+    if(reg.tipo === "desmontagem"){ atualizarConclusao(); }
+  }
+
+  function fotoTile(id, texto, onchange){
+    return '<label class="foto" id="' + id + '"><input type="file" accept="image/*" capture="environment" hidden onchange="' + onchange + '">' +
+      '<span class="foto-vazio">' + I.camera + esc(texto) + '</span><img alt=""></label>';
+  }
+
+  function linksHtml(urls, rotulo){
+    const lista = (urls || []).filter(String);
+    return lista.length ? '<div class="links">' + lista.map(function(u, i){ return '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(rotulo(i)) + '</a>'; }).join("") + '</div>' : "";
+  }
+
+  function montarRegistros(e){
+    reg = { id: e.id, pedido: e.pedido, cliente: e.cliente, responsavel: e.responsavel, tipo: e.operacao, feitos: {}, empresa: "", qtd: "", fotoEquipe: "", fotosPos: [], posCorreto: null, fotoLista: "", paginas: [] };
+
+    const equipe =
+      '<div class="rotulo">Empresa</div><div class="opcoes" id="regEmpresas"><span style="color:var(--muted)">Carregando…</span></div>' +
+      '<div class="rotulo">Quantidade de ajudantes</div><div class="opcoes" id="regQtd"></div>' +
+      '<input class="input" id="regQtdOutro" type="number" min="1" inputmode="numeric" placeholder="Digite a quantidade" style="display:none">' +
+      '<div class="rotulo">Foto da equipe' + (e.operacao === "desmontagem" ? " (obrigatória)" : "") + '</div>' +
+      fotoTile("regFotoEquipe", "Tirar foto da equipe", "fotoEquipe(event)") +
+      '<textarea class="input" id="regObsEquipe" placeholder="Observações (opcional)"></textarea>' +
+      '<button class="btn" type="button" onclick="enviarEquipe(this)">' + I.enviar + 'Enviar equipe</button>';
+
+    let passos = "";
+
+    if(e.operacao === "montagem"){
+      reg.obrigatorios = ["equipe", "sacolas", "posicionamento", "lista"];
+      passos =
+        passoHtml("equipe", 1, "Equipe terceirizada", "Empresa, quantidade e foto da equipe", equipe, "✓ Equipe enviada") +
+        passoHtml("sacolas", 2, "Sacolas de proteção", "Código e foto de cada sacola usada",
+          '<div id="regSacolas" style="display:flex;flex-direction:column;gap:10px"></div>' +
+          '<button class="btn btn-claro" type="button" onclick="adicionarSacola()">' + I.mais + 'Adicionar outra sacola</button>' +
+          '<button class="btn" type="button" onclick="enviarSacolas(this)">' + I.enviar + 'Enviar sacolas</button>', "✓ Sacolas enviadas") +
+        passoHtml("posicionamento", 3, "Posicionamento", "Os itens ficaram no lugar certo?",
+          '<div class="sim-nao"><button class="sim" type="button" onclick="escolherPosicionamento(true)">' + I.check + ' Sim</button><button class="nao" type="button" onclick="escolherPosicionamento(false)">✕ Não</button></div>' +
+          '<div id="regPosBox" style="display:none;flex-direction:column;gap:12px">' +
+            '<div class="rotulo">Fotos do que ficou fora do lugar</div><div class="galeria" id="regPosGaleria"></div>' +
+            '<button class="btn btn-claro" type="button" onclick="document.getElementById(\'regPosInput\').click()">' + I.camera + 'Adicionar foto</button>' +
+            '<input type="file" id="regPosInput" accept="image/*" capture="environment" hidden onchange="fotoPosicionamento(event)">' +
+            '<textarea class="input" id="regPosObs" placeholder="Explique o que ficou fora do lugar"></textarea>' +
+          '</div>' +
+          '<button class="btn" type="button" onclick="enviarPosicionamento(this)">' + I.enviar + 'Enviar posicionamento</button>', "✓ Posicionamento enviado") +
+        passoHtml("observacoes", 4, "Observações gerais", "Ocorrências ou recados da montagem",
+          '<textarea class="input" id="regObsGerais" placeholder="Escreva aqui o que aconteceu na montagem"></textarea>' +
+          '<button class="btn" type="button" onclick="enviarObservacoes(this)">' + I.enviar + 'Enviar observações</button>', "") +
+        passoHtml("lista", 5, "Lista assinada", "Quem recebeu e a foto da lista",
+          '<div class="rotulo">Quem recebeu</div><input class="input" id="regRecebedor" type="text" autocomplete="name" placeholder="Nome de quem recebeu">' +
+          '<div class="rotulo">Foto da lista</div>' + fotoTile("regFotoLista", "Tirar foto da lista", "fotoLista(event)") +
+          '<button class="btn" type="button" onclick="enviarListaAssinada(this)">' + I.enviar + 'Enviar lista assinada</button>', "✓ Lista assinada enviada");
+    }else{
+      reg.obrigatorios = ["equipe", "conferida", "conclusao"];
+      passos =
+        passoHtml("equipe", 1, "Foto da equipe", "Quem está presente no início da desmontagem", equipe, "✓ Foto da equipe enviada") +
+        passoHtml("conferida", 2, "Lista conferida", "Uma foto para cada página, depois da conferência",
+          '<div class="galeria" id="regPaginas"></div><div style="text-align:center;color:var(--muted);font-size:13px;font-weight:700" id="regPaginasConta">Nenhuma página adicionada</div>' +
+          '<button class="btn btn-claro" type="button" onclick="document.getElementById(\'regPaginaInput\').click()">' + I.camera + 'Adicionar página</button>' +
+          '<input type="file" id="regPaginaInput" accept="image/*" capture="environment" hidden onchange="adicionarPagina(event)">' +
+          '<button class="btn" type="button" onclick="enviarListaConferida(this)">' + I.enviar + 'Enviar todas as páginas</button>', "✓ Lista conferida enviada") +
+        passoHtml("conclusao", 3, "Concluir desmontagem", "Libera depois dos dois registros acima",
+          '<div class="conclusao-status" id="regConclusaoStatus">Conclua os dois registros acima.</div>' +
+          '<button class="btn btn-ok" id="regBtnConcluir" type="button" onclick="concluirDesmontagemApp(this)" disabled>' + I.check + 'Concluir desmontagem</button>', "🎉 Desmontagem concluída");
+    }
+
+    document.getElementById("etapaRegistros").innerHTML =
+      '<section class="secao">' +
+        '<div class="secao-titulo"><h2>Registros da ' + esc(e.operacao) + '</h2></div>' +
+        '<div class="progresso" id="regProgresso"><div class="progresso-linha"><span id="regProgressoTexto">Verificando…</span><span id="regProgressoPct">0%</span></div><div class="progresso-barra"><i id="regProgressoBarra"></i></div></div>' +
+        '<div class="passos">' + passos + '</div>' +
+        (e.operacao === "montagem" ? '<div class="tudo-pronto"><b>Montagem registrada</b>Todos os registros obrigatórios foram enviados.</div>' : "") +
+      '</section>';
+
+    carregarEmpresas();
+    montarBotoesQtd();
+    if(e.operacao === "montagem"){ adicionarSacola(); }
+    verificarRegistros(e);
+    atualizarProgresso();
+  }
+
+  function verificarRegistros(e){
+    const id = e.id;
+    const mesmo = function(){ return reg.id === id; };
+
+    chamar("verificarEquipeTerceirizadaJaEnviada", id).then(function(r){ if(mesmo() && r && r.enviado){ marcarFeito("equipe"); } }).catch(console.error);
+
+    if(e.operacao === "montagem"){
+      chamar("verificarSacolasJaEnviadas", id).then(function(r){ if(mesmo() && r && r.enviado){ sacolasFeitas(r); } }).catch(console.error);
+      chamar("verificarPosicionamentoJaEnviado", id).then(function(r){ if(mesmo() && r && r.enviado){ posicionamentoFeito(r); } }).catch(console.error);
+      chamar("buscarObservacoesMontagem", id).then(function(r){ if(mesmo() && r && r.observacao){ observacoesFeitas(r.observacao); } }).catch(console.error);
+      chamar("verificarListaAssinadaJaEnviada", id).then(function(r){ if(mesmo() && r && r.enviado){ marcarFeito("lista"); } }).catch(console.error);
+    }else{
+      chamar("verificarListaConferidaDesmontagem", id).then(function(r){ if(mesmo() && r && r.enviado){ conferidaFeita(r); } }).catch(console.error);
+      chamar("verificarDesmontagemConcluida", id).then(function(r){ if(mesmo() && r && r.concluida){ marcarFeito("conclusao"); } }).catch(console.error);
+    }
+  }
+
+  /* ---------- 1. Equipe terceirizada ---------- */
+  function carregarEmpresas(){
+    chamar("buscarEmpresasTerceirizadas").then(function(lista){
+      const box = document.getElementById("regEmpresas");
+      if(!box){ return; }
+      box.innerHTML = (lista || []).length
+        ? lista.map(function(n){ return '<button class="opcao" type="button" data-valor="' + esc(n) + '" onclick="escolherEmpresa(this)">' + esc(n) + '</button>'; }).join("")
+        : '<span style="color:var(--muted)">Nenhuma empresa terceirizada ativa encontrada.</span>';
+    }).catch(console.error);
+  }
+
+  function escolherEmpresa(btn){
+    btn.parentElement.querySelectorAll(".opcao").forEach(function(b){ b.classList.remove("ativa"); });
+    btn.classList.add("ativa");
+    reg.empresa = btn.dataset.valor;
+  }
+
+  function montarBotoesQtd(){
+    const box = document.getElementById("regQtd");
+    box.innerHTML = [1, 2, 3, 4, 5, 6].map(function(n){ return '<button class="opcao" type="button" onclick="escolherQtd(this,\'' + n + '\')">' + n + '</button>'; }).join("") +
+      '<button class="opcao" type="button" onclick="escolherQtd(this,\'\')">Outro</button>';
+  }
+
+  function escolherQtd(btn, n){
+    btn.parentElement.querySelectorAll(".opcao").forEach(function(b){ b.classList.remove("ativa"); });
+    btn.classList.add("ativa");
+    reg.qtd = n;
+    document.getElementById("regQtdOutro").style.display = n ? "none" : "block";
+  }
+
+  function mostrarFoto(tile, foto){
+    tile.querySelector("img").src = foto;
+    tile.classList.add("tem");
+  }
+
+  function fotoEquipe(ev){
+    const f = ev.target.files[0]; if(!f){ return; }
+    comprimirFoto(f).then(function(foto){ reg.fotoEquipe = foto; mostrarFoto(document.getElementById("regFotoEquipe"), foto); }).catch(function(){});
+    ev.target.value = "";
+  }
+
+  function enviarEquipe(btn){
+    if(btn.disabled || aguardandoFotos()){ return; }
+    if(!reg.empresa){ toast("Selecione a empresa terceirizada.", true); return; }
+    const quantidade = reg.qtd || document.getElementById("regQtdOutro").value.trim();
+    if(!quantidade){ toast("Informe a quantidade de ajudantes.", true); return; }
+    if(reg.tipo === "desmontagem" && !reg.fotoEquipe){ toast("Tire a foto da equipe antes de enviar.", true); return; }
+
+    ocupar(btn);
+    chamar("salvarEquipeTerceirizada", {
+      idCronograma: reg.id, pedido: reg.pedido, empresa: reg.empresa, quantidade: quantidade,
+      observacao: document.getElementById("regObsEquipe").value.trim(), foto: reg.fotoEquipe || ""
+    }).then(function(){ marcarFeito("equipe"); toast("Equipe enviada"); })
+      .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao salvar a equipe."), true); });
+  }
+
+  /* ---------- 2. Sacolas (montagem) ---------- */
+  function adicionarSacola(){
+    const box = document.getElementById("regSacolas");
+    const n = box.children.length + 1;
+    const div = document.createElement("div");
+    div.className = "sacola";
+    div.innerHTML =
+      '<div class="sacola-topo"><span>SACOLA ' + ("0" + n).slice(-2) + '</span>' + (n > 1 ? '<button type="button" onclick="removerSacola(this)">Remover</button>' : "") + '</div>' +
+      '<input class="input codigo-sacola" type="text" placeholder="Código da sacola">' +
+      '<label class="foto"><input type="file" accept="image/*" capture="environment" hidden onchange="fotoSacola(event)"><span class="foto-vazio">' + I.camera + 'Foto da sacola</span><img alt=""></label>';
+    box.appendChild(div);
+  }
+
+  function removerSacola(btn){
+    btn.closest(".sacola").remove();
+    document.querySelectorAll("#regSacolas .sacola").forEach(function(s, i){ s.querySelector(".sacola-topo span").textContent = "SACOLA " + ("0" + (i + 1)).slice(-2); });
+  }
+
+  function fotoSacola(ev){
+    const f = ev.target.files[0]; if(!f){ return; }
+    const bloco = ev.target.closest(".sacola");
+    comprimirFoto(f).then(function(foto){ bloco.dataset.foto = foto; mostrarFoto(bloco.querySelector(".foto"), foto); }).catch(function(){});
+    ev.target.value = "";
+  }
+
+  function enviarSacolas(btn){
+    if(btn.disabled || aguardandoFotos()){ return; }
+    const sacolas = Array.from(document.querySelectorAll("#regSacolas .sacola")).map(function(b){
+      return { codigo: b.querySelector(".codigo-sacola").value.trim(), foto: b.dataset.foto || "" };
+    });
+    if(!sacolas.length || sacolas.some(function(s){ return !s.codigo || !s.foto; })){ toast("Informe o código e a foto de todas as sacolas.", true); return; }
+
+    ocupar(btn);
+    chamar("salvarSacolasProtecao", { idCronograma: reg.id, pedido: reg.pedido, sacolas: sacolas })
+      .then(function(r){ sacolasFeitas(r || {}); toast("Sacolas enviadas"); })
+      .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao salvar as sacolas."), true); });
+  }
+
+  function sacolasFeitas(r){
+    const sacolas = r.sacolas || [];
+    marcarFeito("sacolas", "✓ Sacolas enviadas" + linksHtml(sacolas.map(function(s){ return (s.fotos || [])[0] || ""; }), function(i){ return sacolas[i].codigo || "Foto " + (i + 1); }));
+  }
+
+  /* ---------- 3. Posicionamento (montagem) ---------- */
+  function escolherPosicionamento(correto){
+    reg.posCorreto = correto;
+    const passo = document.getElementById("passo_posicionamento");
+    passo.querySelector(".sim").classList.toggle("ativa", correto);
+    passo.querySelector(".nao").classList.toggle("ativa", !correto);
+    document.getElementById("regPosBox").style.display = correto ? "none" : "flex";
+  }
+
+  function fotoPosicionamento(ev){
+    const f = ev.target.files[0]; if(!f){ return; }
+    comprimirFoto(f).then(function(foto){ reg.fotosPos.push(foto); desenharFotosPos(); }).catch(function(){});
+    ev.target.value = "";
+  }
+
+  function desenharFotosPos(){
+    document.getElementById("regPosGaleria").innerHTML = reg.fotosPos.map(function(f, i){
+      return '<div><button type="button" onclick="reg.fotosPos.splice(' + i + ',1);desenharFotosPos()">×</button><img src="' + f + '" alt=""></div>';
+    }).join("");
+  }
+
+  function enviarPosicionamento(btn){
+    if(btn.disabled || aguardandoFotos()){ return; }
+    if(reg.posCorreto === null){ toast("Informe se os itens foram posicionados corretamente.", true); return; }
+    if(!reg.posCorreto && !reg.fotosPos.length){ toast("Adicione pelo menos uma foto do posicionamento.", true); return; }
+
+    ocupar(btn);
+    chamar("salvarPosicionamentoItens", {
+      idCronograma: reg.id, pedido: reg.pedido,
+      observacao: reg.posCorreto ? "Itens posicionados corretamente." : document.getElementById("regPosObs").value.trim(),
+      fotos: reg.posCorreto ? [] : reg.fotosPos
+    }).then(function(r){ posicionamentoFeito(r || {}); toast("Posicionamento enviado"); })
+      .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao salvar o posicionamento."), true); });
+  }
+
+  function posicionamentoFeito(r){
+    marcarFeito("posicionamento", "✓ Posicionamento enviado" + linksHtml(r.fotos, function(i){ return "Foto " + (i + 1); }));
+  }
+
+  /* ---------- 4. Observações (montagem, opcional) ---------- */
+  function enviarObservacoes(btn){
+    if(btn.disabled){ return; }
+    const obs = document.getElementById("regObsGerais").value.trim();
+    if(!obs){ toast("Digite uma observação.", true); return; }
+    ocupar(btn);
+    chamar("salvarObservacoesMontagem", { idCronograma: reg.id, pedido: reg.pedido, cliente: reg.cliente, responsavel: reg.responsavel, observacao: obs })
+      .then(function(){ liberar(btn); observacoesFeitas(obs); toast("Observações enviadas"); })
+      .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao salvar as observações."), true); });
+  }
+
+  function observacoesFeitas(obs){
+    document.getElementById("regObsGerais").value = obs;
+    marcarFeito("observacoes", "✓ Observações enviadas<p>" + esc(obs) + '</p><button class="btn btn-claro btn-pequeno" style="margin-top:8px" type="button" onclick="editarObservacoes()">Editar</button>');
+  }
+
+  function editarObservacoes(){
+    const passo = document.getElementById("passo_observacoes");
+    passo.classList.remove("concluido");
+    passo.querySelector(".passo-status").textContent = "Opcional";
+  }
+
+  /* ---------- 5. Lista assinada (montagem) ---------- */
+  function fotoLista(ev){
+    const f = ev.target.files[0]; if(!f){ return; }
+    comprimirFoto(f, 2200, 0.85).then(function(foto){ reg.fotoLista = foto; mostrarFoto(document.getElementById("regFotoLista"), foto); }).catch(function(){});
+    ev.target.value = "";
+  }
+
+  function enviarListaAssinada(btn){
+    if(btn.disabled || aguardandoFotos()){ return; }
+    const nome = document.getElementById("regRecebedor").value.trim();
+    if(!nome){ toast("Informe quem recebeu.", true); return; }
+    if(!reg.fotoLista){ toast("Tire a foto da lista assinada.", true); return; }
+    ocupar(btn);
+    chamar("salvarListaAssinada", { idCronograma: reg.id, pedido: reg.pedido, nome: nome, foto: reg.fotoLista })
+      .then(function(){ marcarFeito("lista"); toast("Lista assinada enviada"); })
+      .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao salvar a lista assinada."), true); });
+  }
+
+  /* ---------- 2. Lista conferida (desmontagem) ---------- */
+  function adicionarPagina(ev){
+    const f = ev.target.files[0]; if(!f){ return; }
+    comprimirFoto(f, 2200, 0.85).then(function(foto){ reg.paginas.push(foto); desenharPaginas(); }).catch(function(){});
+    ev.target.value = "";
+  }
+
+  function desenharPaginas(){
+    document.getElementById("regPaginas").innerHTML = reg.paginas.map(function(f, i){
+      return '<div><button type="button" onclick="reg.paginas.splice(' + i + ',1);desenharPaginas()">×</button><img src="' + f + '" alt=""><span>Página ' + (i + 1) + ' ✓</span></div>';
+    }).join("");
+    const n = reg.paginas.length;
+    document.getElementById("regPaginasConta").textContent = n === 0 ? "Nenhuma página adicionada" : n === 1 ? "1 página adicionada" : n + " páginas adicionadas";
+  }
+
+  function enviarListaConferida(btn){
+    if(btn.disabled || aguardandoFotos()){ return; }
+    const n = reg.paginas.length;
+    if(!n){ toast("Adicione pelo menos uma página da lista.", true); return; }
+    perguntar("Enviar a lista?", "Você adicionou " + n + (n === 1 ? " página" : " páginas") + ". Confirma que fotografou todas as páginas?", "Sim, enviar").then(function(sim){
+      if(!sim){ return; }
+      ocupar(btn, "Enviando páginas…");
+      chamar("salvarListaConferidaDesmontagem", { idCronograma: reg.id, pedido: reg.pedido, fotos: reg.paginas })
+        .then(function(r){ conferidaFeita(r || {}); toast("Lista conferida enviada"); })
+        .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao salvar a lista conferida."), true); });
+    });
+  }
+
+  function conferidaFeita(r){
+    const fotos = Array.isArray(r.fotos) ? r.fotos : [];
+    marcarFeito("conferida", "✓ " + (fotos.length === 1 ? "1 página enviada" : fotos.length + " páginas enviadas") + linksHtml(fotos, function(i){ return "Página " + (i + 1); }));
+  }
+
+  /* ---------- 3. Concluir (desmontagem) ---------- */
+  function atualizarConclusao(){
+    const status = document.getElementById("regConclusaoStatus");
+    const btn = document.getElementById("regBtnConcluir");
+    if(!status || reg.feitos.conclusao){ return; }
+    const faltando = [];
+    if(!reg.feitos.equipe){ faltando.push("foto da equipe"); }
+    if(!reg.feitos.conferida){ faltando.push("lista conferida"); }
+    status.textContent = faltando.length ? "Pendente: " + faltando.join(" e ") + "." : "Tudo certo. A desmontagem pode ser concluída.";
+    status.classList.toggle("ok", !faltando.length);
+    btn.disabled = faltando.length > 0;
+  }
+
+  function concluirDesmontagemApp(btn){
+    if(btn.disabled){ return; }
+    perguntar("Concluir a desmontagem?", "Confirme que a desmontagem terminou.", "Concluir").then(function(sim){
+      if(!sim){ return; }
+      ocupar(btn, "Concluindo…");
+      chamar("concluirDesmontagem", { idCronograma: reg.id, pedido: reg.pedido })
+        .then(function(){ marcarFeito("conclusao"); toast("Desmontagem concluída"); })
+        .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao concluir a desmontagem."), true); });
+    });
+  }
+
+  /* =========================================================
+     TROCA DE MATERIAL
+  ========================================================= */
+  const TROCA_MOTIVOS = ["Danificou no transporte", "Quebrou no local", "Faltou o item"];
+  const TROCA_STATUS = {
+    PENDENTE: ["erro", "Aguardando o galpão"],
+    SEPARADO: ["aviso", "Separado no galpão"],
+    ENVIADO: ["ok", "Enviado"]
+  };
+
+  function fotoDrive(id, largura){
+    return id ? "https://drive.google.com/thumbnail?id=" + encodeURIComponent(id) + "&sz=w" + (largura || 400) : "";
+  }
+
+  function trocasAbertas(e){
+    return (e.trocas || []).filter(function(t){ return t.status !== "ENVIADO"; });
+  }
+
+  function chipTrocas(e){
+    const abertas = trocasAbertas(e);
+    if(!abertas.length){ return ""; }
+    const pendente = abertas.some(function(t){ return t.status === "PENDENTE"; });
+    return '<span class="chip ' + (pendente ? "erro" : "aviso") + '">' + I.alerta + 'Troca: ' + (pendente ? "aguardando galpão" : "separada") + '</span>';
+  }
+
+  function renderTrocas(e){
+    const area = document.getElementById("etapaTrocas");
+    if(e.operacao !== "montagem"){ area.innerHTML = ""; return; }
+
+    const lista = (e.trocas || []).slice().reverse().map(function(t){
+      const s = TROCA_STATUS[t.status] || TROCA_STATUS.PENDENTE;
+      const passos =
+        '<small>Pedido ' + esc(hora(t.solicitadoEm) || "") + ' por ' + esc(t.solicitadoPor) + '</small>' +
+        (t.separadoEm ? '<small>Separado ' + esc(hora(t.separadoEm)) + (t.separadoPor ? ' · ' + esc(t.separadoPor) : "") + '</small>' : "") +
+        (t.enviadoEm ? '<small>Enviado ' + esc(hora(t.enviadoEm)) + (t.enviadoPor ? ' · ' + esc(t.enviadoPor) : "") + '</small>' : "");
+      return '<div class="troca">' +
+        (t.fotoId ? '<a href="' + esc(t.fotoUrl) + '" target="_blank" rel="noopener"><img src="' + fotoDrive(t.fotoId, 300) + '" alt="Foto do item"></a>' : "") +
+        '<div class="troca-info"><strong>' + esc(t.quantidade) + '× ' + esc(t.item) + '</strong>' +
+          '<span>' + esc(t.motivo) + (t.descricao ? ' · ' + esc(t.descricao) : "") + '</span>' + passos +
+          '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="chip ' + s[0] + '">' + s[1] + '</span>' +
+          (t.status === "PENDENTE" ? '<button class="link" type="button" style="font-size:12.5px" onclick="cancelarTroca(\'' + esc(t.id) + '\')">Cancelar pedido</button>' : "") +
+          '</div>' +
+        '</div></div>';
+    }).join("");
+
+    area.innerHTML =
+      '<section class="secao' + (trocasAbertas(e).length ? " secao-urgente" : "") + '">' +
+        '<div class="secao-titulo"><h2>Troca de material</h2>' + (trocasAbertas(e).length ? '<small style="color:var(--erro)">' + trocasAbertas(e).length + ' em aberto</small>' : "") + '</div>' +
+        (lista ? '<div class="trocas">' + lista + '</div>' : '<p style="color:var(--muted);font-size:13.5px;margin-bottom:4px">Chegou algum item danificado ou faltando? Peça a troca aqui; o galpão e o supervisor recebem na hora.</p>') +
+        '<button class="btn btn-claro" style="margin-top:12px;border-color:#f3c7c7;color:#b91c1c" type="button" onclick="abrirPedidoTroca(\'' + esc(e.id) + '\')">' + I.alerta + 'Solicitar troca de material</button>' +
+      '</section>';
+  }
+
+  let trocaForm = {};
+
+  function abrirPedidoTroca(idEtapa){
+    trocaForm = { idEtapa: idEtapa, item: "", motivo: "", foto: "" };
+    abrirFolha(
+      '<h3>Troca de material</h3>' +
+      '<p>O galpão separa e o supervisor envia. Informe o item e tire uma foto.</p>' +
+      '<label class="campo"><span>Item</span><input id="trocaItem" type="text" autocomplete="off" placeholder="Digite parte do nome do item" oninput="buscarItemTroca(this.value)"></label>' +
+      '<div id="trocaSugestoes" class="sugestoes"></div>' +
+      '<label class="campo"><span>Quantidade</span><input id="trocaQtd" type="number" min="1" inputmode="numeric" value="1"></label>' +
+      '<div class="campo"><span>Motivo</span><div class="opcoes" id="trocaMotivos">' +
+        TROCA_MOTIVOS.map(function(m){ return '<button class="opcao" type="button" onclick="escolherMotivoTroca(this)" data-valor="' + esc(m) + '">' + esc(m) + '</button>'; }).join("") +
+      '</div></div>' +
+      '<div class="campo"><span>Foto do item</span>' + fotoTile("trocaFoto", "Tirar foto do item", "fotoTroca(event)") + '</div>' +
+      '<label class="campo"><span>Detalhes (opcional)</span><textarea id="trocaDescricao" maxlength="500" placeholder="Ex.: perna da mesa rachou"></textarea></label>' +
+      '<div class="acoes">' +
+        '<button class="btn" id="btnTroca" type="button" style="background:#b91c1c;border-color:#b91c1c" onclick="enviarTroca(this)">' + I.enviar + 'Enviar pedido de troca</button>' +
+        '<button class="btn btn-texto" type="button" onclick="fecharFolha()">Voltar</button>' +
+      '</div>'
+    );
+  }
+
+  let buscaTrocaTimer = null;
+  function buscarItemTroca(texto){
+    trocaForm.item = texto.trim();
+    clearTimeout(buscaTrocaTimer);
+    const caixa = document.getElementById("trocaSugestoes");
+    if(texto.trim().length < 2){ caixa.innerHTML = ""; return; }
+    buscaTrocaTimer = setTimeout(function(){
+      chamar("buscarItensOperacao", texto).then(function(lista){
+        const atual = document.getElementById("trocaItem");
+        if(!atual || atual.value !== texto){ return; }
+        caixa.innerHTML = (lista || []).map(function(n){
+          return '<button type="button" onclick="escolherItemTroca(this)" data-valor="' + esc(n) + '">' + esc(n) + '</button>';
+        }).join("");
+      }).catch(function(){});
+    }, 300);
+  }
+
+  function escolherItemTroca(btn){
+    const valor = btn.dataset.valor;
+    document.getElementById("trocaItem").value = valor;
+    trocaForm.item = valor;
+    document.getElementById("trocaSugestoes").innerHTML = "";
+  }
+
+  function escolherMotivoTroca(btn){
+    btn.parentElement.querySelectorAll(".opcao").forEach(function(b){ b.classList.remove("ativa"); });
+    btn.classList.add("ativa");
+    trocaForm.motivo = btn.dataset.valor;
+  }
+
+  function fotoTroca(ev){
+    const f = ev.target.files[0]; if(!f){ return; }
+    comprimirFoto(f).then(function(foto){ trocaForm.foto = foto; mostrarFoto(document.getElementById("trocaFoto"), foto); }).catch(function(){});
+    ev.target.value = "";
+  }
+
+  function enviarTroca(btn){
+    if(btn.disabled || aguardandoFotos()){ return; }
+    const item = document.getElementById("trocaItem").value.trim();
+    const qtd = document.getElementById("trocaQtd").value;
+    if(!item){ toast("Informe qual item precisa ser trocado.", true); return; }
+    if(!(Number(qtd) >= 1)){ toast("Informe a quantidade.", true); return; }
+    if(!trocaForm.motivo){ toast("Escolha o motivo.", true); return; }
+    if(!trocaForm.foto){ toast("Tire uma foto do item.", true); return; }
+
+    ocupar(btn, "Enviando pedido…");
+    chamar("MONT_solicitarTroca", estado.token, {
+      idEtapa: trocaForm.idEtapa, item: item, quantidade: qtd, motivo: trocaForm.motivo,
+      descricao: document.getElementById("trocaDescricao").value.trim(), foto: trocaForm.foto
+    }).then(function(lista){
+      fecharFolha();
+      const e = acharEtapa(trocaForm.idEtapa);
+      if(e){ e.trocas = lista; renderTrocas(e); }
+      toast("Pedido de troca enviado. O galpão já foi avisado.");
+    }).catch(function(err){
+      liberar(btn);
+      toast(mensagemErro(err, "Não foi possível enviar o pedido."), true);
+    });
+  }
+
+  function cancelarTroca(idTroca){
+    perguntar("Cancelar o pedido de troca?", "Use isso só se o item não precisa mais ser trocado.", "Cancelar pedido").then(function(sim){
+      if(!sim){ return; }
+      chamar("MONT_cancelarTroca", estado.token, idTroca).then(function(lista){
+        const e = acharEtapa(estado.etapaAberta);
+        if(e){ e.trocas = lista; renderTrocas(e); }
+        toast("Pedido cancelado");
+      }).catch(function(err){ toast(mensagemErro(err), true); });
+    });
+  }
+
+  /* =========================================================
+     INÍCIO
+  ========================================================= */
+  // Links antigos (?operacao=montagem&id=...) e novos (?page=montador&etapa=...)
+  function lerLink(){
+    return new Promise(function(resolve){
+      try{
+        google.script.url.getLocation(function(local){
+          const p = (local && local.parameter) || {};
+          estado.idLink = String(p.etapa || p.id || "");
+          resolve();
+        });
+      }catch(e){ resolve(); }
+    });
+  }
+
+  lerLink().then(function(){ carregar(); });
+
+  // Equipe em tempo real: atualiza a cada 45s com o app aberto
+  setInterval(function(){
+    if(document.visibilityState === "visible" && estado.dados && !document.getElementById("folha").classList.contains("ver")){
+      carregar();
+    }
+  }, 45000);
+
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible" && estado.dados){ carregar(); }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="cronograma"></script>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>RH · Equipe Free</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       PAINEL DA RH — pagamento dos free por ciclo (ter a seg),
+       fotos dos eventos e avaliação de uniforme.
+    ========================================================= */
+    :root{
+      --bg:#f6f4ef; --card:#ffffff; --campo:#fbfaf7; --line:#e7e1d7; --borda:#eee8df;
+      --text:#251e19; --muted:#77716a; --suave:#a8a29a; --soft:#f1eee8;
+      --escuro:#2b2a26; --escuro-2:#44443f;
+      --ok:#16a34a; --ok-forte:#166534; --ok-soft:#ecf8ef; --ok-borda:#c9ecd3;
+      --aviso:#b45309; --aviso-soft:#fdf4e3; --aviso-borda:#f3dfb4;
+      --erro:#dc2626; --erro-soft:#fdeeee;
+      --azul:#1d4ed8; --azul-soft:#e8effd;
+      --serif:"Cormorant Garamond", Georgia, serif; --sans:"Manrope", system-ui, sans-serif;
+      --sombra:0 1px 2px rgba(37,30,25,.04), 0 8px 28px rgba(37,30,25,.06);
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html{ background:var(--bg); }
+    body{ width:100%; margin:0; padding:24px clamp(16px, 2.4vw, 40px) 60px; background:var(--bg); color:var(--text); font-family:var(--sans); font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased; }
+    button, input, select, textarea{ font:inherit; color:inherit; }
+    button{ cursor:pointer; }
+    a{ color:inherit; }
+
+    .tela{ display:none; }
+    .tela.ativa{ display:block; }
+    .carregando{ display:grid; place-items:center; min-height:50vh; color:var(--muted); }
+    .spinner{ width:30px; height:30px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--escuro); animation:girar .8s linear infinite; margin:0 auto 12px; }
+    @keyframes girar{ to{ transform:rotate(360deg); } }
+
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:40px; padding:0 16px; border-radius:12px; border:1px solid var(--escuro); background:var(--escuro); color:#fff; font-weight:800; font-size:13px; white-space:nowrap; }
+    .btn[disabled]{ opacity:.5; cursor:default; }
+    .btn-claro{ background:var(--card); border-color:var(--line); color:var(--text); }
+    .btn-ok{ background:var(--ok); border-color:var(--ok); }
+    .btn-mini{ min-height:30px; padding:0 10px; font-size:12px; border-radius:9px; }
+    .link{ background:none; border:0; font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+
+    .campo{ display:block; margin-bottom:12px; }
+    .campo > span{ display:block; font-size:12px; font-weight:700; color:var(--muted); margin-bottom:6px; }
+    .campo input, .campo select, .campo textarea{ width:100%; min-height:44px; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:var(--campo); outline:none; font-size:15px; }
+    .erro{ display:none; margin-bottom:12px; padding:10px 12px; border-radius:12px; background:var(--erro-soft); color:var(--erro); font-weight:600; font-size:13px; }
+    .erro.ver{ display:block; }
+
+    /* ---------- Login ---------- */
+    .login{ max-width:380px; margin:12vh auto 0; }
+    .login h1{ font-family:var(--serif); font-size:40px; font-weight:600; text-align:center; }
+    .login p{ text-align:center; color:var(--muted); margin:6px 0 22px; }
+    .cartao{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px; box-shadow:var(--sombra); }
+
+    /* ---------- Topo ---------- */
+    .topo{ display:flex; flex-wrap:wrap; align-items:center; gap:14px 20px; margin-bottom:20px; }
+    .topo h1{ font-family:var(--serif); font-size:34px; font-weight:600; letter-spacing:.04em; }
+    .topo small{ display:block; color:var(--muted); font-size:12.5px; }
+    .ciclo{ display:flex; align-items:center; gap:4px; margin-left:auto; }
+    .ciclo button{ width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:var(--card); font-size:18px; }
+    .ciclo strong{ min-width:230px; text-align:center; font-size:15px; }
+    .ciclo strong small{ display:block; font-weight:600; }
+    .topo-acoes{ display:flex; gap:8px; }
+
+    .resumo{ display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px; margin-bottom:18px; }
+    .tile{ background:var(--card); border:1px solid var(--borda); border-radius:16px; padding:14px 16px; box-shadow:var(--sombra); }
+    .tile small{ display:block; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--suave); }
+    .tile strong{ display:block; font-size:24px; font-weight:800; margin-top:4px; }
+    .tile.verde strong{ color:var(--ok-forte); }
+    .tile.ambar strong{ color:var(--aviso); }
+    .tile.vermelho strong{ color:var(--erro); }
+
+    .abas{ display:flex; gap:6px; padding:5px; background:var(--soft); border-radius:14px; margin-bottom:16px; width:max-content; max-width:100%; overflow:auto; }
+    .aba{ border:0; background:none; min-height:38px; padding:0 16px; border-radius:10px; font-weight:800; color:var(--muted); white-space:nowrap; }
+    .aba.ativa{ background:var(--card); color:var(--text); box-shadow:0 1px 3px rgba(37,30,25,.08); }
+
+    /* ---------- Evento ---------- */
+    .evento{ background:var(--card); border:1px solid var(--borda); border-radius:18px; box-shadow:var(--sombra); margin-bottom:14px; overflow:hidden; }
+    .evento-topo{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; padding:14px 18px; border-bottom:1px solid var(--borda); }
+    .evento-titulo{ flex:1; min-width:240px; }
+    .evento-titulo strong{ display:block; font-family:var(--serif); font-size:22px; font-weight:600; line-height:1.15; }
+    .evento-titulo span{ color:var(--muted); font-size:13px; }
+    .evento-total{ text-align:right; }
+    .evento-total small{ display:block; color:var(--suave); font-size:11px; font-weight:800; text-transform:uppercase; }
+    .evento-total strong{ font-size:18px; }
+
+    table{ width:100%; border-collapse:collapse; }
+    th{ text-align:left; font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--suave); padding:10px 12px; background:var(--campo); border-bottom:1px solid var(--borda); white-space:nowrap; }
+    td{ padding:10px 12px; border-bottom:1px solid var(--borda); vertical-align:top; }
+    tr:last-child td{ border-bottom:0; }
+    .num{ text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .pessoa{ display:flex; gap:10px; align-items:center; }
+    .foto{ width:38px; height:38px; border-radius:50%; object-fit:cover; background:var(--soft); flex:none; display:grid; place-items:center; color:var(--muted); font-weight:800; overflow:hidden; }
+    .foto img{ width:100%; height:100%; object-fit:cover; }
+    .pessoa b{ display:block; }
+    .pessoa small{ color:var(--muted); }
+    .nota{ display:inline-flex; padding:1px 7px; border-radius:999px; background:var(--aviso-soft); color:var(--aviso); font-size:11px; font-weight:800; }
+    .chip{ display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:var(--soft); color:var(--escuro-2); font-size:11.5px; font-weight:800; white-space:nowrap; }
+    .chip.PAGAR, .chip.ok{ background:var(--ok-soft); color:var(--ok-forte); }
+    .chip.REVISAR, .chip.aviso{ background:var(--aviso-soft); color:var(--aviso); }
+    .chip.NAO_PAGAR, .chip.erro{ background:var(--erro-soft); color:var(--erro); }
+    .chip.PAGO{ background:var(--azul-soft); color:var(--azul); }
+    .chip.EM_ANDAMENTO{ background:var(--soft); color:var(--muted); }
+    .motivos{ margin-top:4px; font-size:11.5px; color:var(--aviso); }
+    .motivos div::before{ content:"• "; }
+    .hora{ font-weight:700; }
+    .sub{ display:block; font-size:11.5px; color:var(--muted); }
+    .extra label{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; cursor:pointer; }
+    .extra input{ width:16px; height:16px; accent-color:var(--escuro); }
+    .acoes-linha{ display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
+
+    /* ---------- Fotos e uniforme ---------- */
+    .galeria{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; padding:14px 18px; }
+    .miniatura{ position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--line); background:var(--soft); cursor:zoom-in; aspect-ratio:4/3; }
+    .miniatura img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .miniatura span{ position:absolute; left:6px; right:6px; bottom:6px; padding:3px 7px; border-radius:7px; background:rgba(16,15,13,.66); color:#fff; font-size:11px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .uniforme-lista{ display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:10px; padding:0 18px 18px; }
+    .uniforme{ display:grid; grid-template-columns:70px 110px 1fr; gap:10px; padding:10px; border:1px solid var(--line); border-radius:14px; }
+    .uniforme .cad{ width:70px; height:70px; border-radius:12px; object-fit:cover; background:var(--soft); display:grid; place-items:center; color:var(--muted); font-weight:800; overflow:hidden; }
+    .uniforme .cad img{ width:100%; height:100%; object-fit:cover; }
+    .uniforme .uni{ width:110px; height:146px; border-radius:12px; overflow:hidden; background:var(--soft); display:grid; place-items:center; text-align:center; color:var(--suave); font-size:11px; font-weight:700; cursor:zoom-in; }
+    .uniforme .uni img{ width:100%; height:100%; object-fit:cover; }
+    .uniforme b{ display:block; }
+    .botoes-uniforme{ display:flex; flex-wrap:wrap; gap:5px; margin:8px 0 6px; }
+    .botoes-uniforme button{ padding:5px 9px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:12px; font-weight:800; }
+    .botoes-uniforme button.ativo.OK{ background:var(--ok-soft); border-color:var(--ok); color:var(--ok-forte); }
+    .botoes-uniforme button.ativo.INCOMPLETO{ background:var(--aviso-soft); border-color:var(--aviso); color:var(--aviso); }
+    .botoes-uniforme button.ativo.SEM{ background:var(--erro-soft); border-color:var(--erro); color:var(--erro); }
+    .uniforme input{ width:100%; padding:6px 9px; border-radius:9px; border:1px solid var(--line); background:var(--campo); font-size:12.5px; }
+    .rotulo-secao{ padding:12px 18px 0; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--suave); }
+
+    .vazio{ text-align:center; padding:40px; color:var(--muted); }
+    .vazio strong{ display:block; color:var(--text); font-size:16px; margin-bottom:4px; }
+
+    /* ---------- Janela e lightbox ---------- */
+    .fundo{ position:fixed; inset:0; background:rgba(37,30,25,.5); z-index:20; display:none; align-items:center; justify-content:center; padding:20px; }
+    .fundo.ver{ display:flex; }
+    .janela{ width:min(560px, 100%); max-height:90vh; overflow:auto; background:var(--card); border-radius:20px; padding:22px; box-shadow:0 30px 80px rgba(37,30,25,.25); }
+    .janela.larga{ width:min(860px, 100%); }
+    .janela h2{ font-family:var(--serif); font-size:28px; font-weight:600; margin-bottom:6px; }
+    .janela p{ color:var(--muted); margin-bottom:14px; }
+    .janela .acoes{ display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+    .luz{ position:fixed; inset:0; z-index:30; background:rgba(16,15,13,.88); display:none; align-items:center; justify-content:center; flex-direction:column; gap:12px; padding:20px; }
+    .luz.ver{ display:flex; }
+    .luz img{ max-width:100%; max-height:82vh; border-radius:12px; }
+    .luz div{ display:flex; gap:8px; }
+
+    .toast{ position:fixed; left:50%; bottom:22px; transform:translate(-50%, 20px); background:var(--escuro); color:#fff; padding:12px 18px; border-radius:14px; font-weight:700; opacity:0; pointer-events:none; transition:.25s; z-index:40; }
+    .toast.ver{ opacity:1; transform:translate(-50%, 0); }
+    .toast.erro{ background:var(--erro); }
+
+    /* Telas grandes: aproveita a largura toda */
+    @media (min-width:1500px){
+      .galeria{ grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); }
+      .uniforme-lista{ grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); }
+    }
+
+    @media (max-width:1100px){
+      .resumo{ grid-template-columns:repeat(3, minmax(0,1fr)); }
+      .ciclo{ margin-left:0; }
+      .tabela-rolavel{ overflow-x:auto; }
+      table{ min-width:900px; }
+    }
+
+    /* Celular: cada linha da tabela vira um cartão, como num app */
+    @media (max-width:760px){
+      body{ padding:16px 12px 50px; font-size:14.5px; }
+      .topo h1{ font-size:28px; }
+      .ciclo{ width:100%; justify-content:space-between; }
+      .ciclo strong{ min-width:0; flex:1; }
+      .topo-acoes{ width:100%; overflow-x:auto; }
+      .resumo{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+      .tile strong{ font-size:20px; }
+      .abas{ width:100%; }
+      .aba{ flex:1; padding:0 10px; }
+      .evento-topo .btn{ width:100%; }
+      .evento-total{ text-align:left; }
+      .tabela-rolavel{ overflow:visible; }
+      table, tbody, tr, td{ display:block; width:100%; min-width:0; }
+      thead{ display:none; }
+      tr{ padding:12px 14px; border-bottom:1px solid var(--borda); }
+      tr:last-child{ border-bottom:0; }
+      td{ display:grid; grid-template-columns:auto 1fr; column-gap:12px; row-gap:2px; padding:6px 0; border:0; text-align:right; }
+      td > *{ grid-column:2; justify-self:end; }
+      td br{ display:none; }
+      td.num{ text-align:right; }
+      td::before{ grid-column:1; grid-row:1 / span 6; content:attr(data-label); font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--suave); text-align:left; padding-top:2px; }
+      td[data-label="Free"]{ display:block; text-align:left; padding-bottom:8px; }
+      td[data-label="Free"] > *{ justify-self:start; }
+      td[data-label="Free"]::before, td.td-acoes::before{ display:none; }
+      td.td-acoes{ display:block; padding-top:10px; }
+      td.td-acoes .acoes-linha{ justify-content:stretch; }
+      td.td-acoes .btn{ flex:1; min-height:38px; }
+      .motivos{ text-align:right; }
+      .uniforme-lista{ grid-template-columns:1fr; padding:0 12px 12px; }
+      .uniforme{ grid-template-columns:56px 96px 1fr; }
+      .uniforme .cad{ width:56px; height:56px; }
+      .uniforme .uni{ width:96px; height:128px; }
+      .galeria{ grid-template-columns:repeat(2, minmax(0,1fr)); padding:12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="tela ativa" id="telaCarregando"><div class="carregando"><div><div class="spinner"></div>Carregando…</div></div></section>
+
+  <section class="tela" id="telaLogin">
+    <div class="login">
+      <h1>RH · Equipe Free</h1>
+      <p>Pagamentos, presença e uniforme dos free.</p>
+      <form class="cartao" onsubmit="entrar(event)">
+        <div class="erro" id="erroLogin"></div>
+        <label class="campo"><span>Senha da RH</span><input id="loginSenha" type="password" autocomplete="current-password" required></label>
+        <button class="btn" style="width:100%;min-height:48px" id="btnEntrar" type="submit">Entrar</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="tela" id="telaPainel">
+    <header class="topo">
+      <div><h1>RH · Equipe Free</h1><small id="usuarioNome"></small></div>
+      <div class="ciclo">
+        <button type="button" onclick="mudarCiclo(-7)" aria-label="Ciclo anterior">‹</button>
+        <strong id="cicloTexto">-</strong>
+        <button type="button" onclick="mudarCiclo(7)" aria-label="Próximo ciclo">›</button>
+      </div>
+      <div class="topo-acoes">
+        <button class="btn btn-claro" type="button" onclick="abrirConfig()">Valor da hora</button>
+        <button class="btn btn-claro" type="button" id="btnExportar" onclick="exportar(this)">Exportar planilha</button>
+        <button class="btn btn-claro" type="button" onclick="sair()">Sair</button>
+      </div>
+    </header>
+
+    <div class="resumo" id="resumo"></div>
+
+    <nav class="abas">
+      <button class="aba ativa" data-aba="eventos" type="button" onclick="trocarAba('eventos')">Por evento</button>
+      <button class="aba" data-aba="pessoas" type="button" onclick="trocarAba('pessoas')">Por pessoa</button>
+      <button class="aba" data-aba="fotos" type="button" onclick="trocarAba('fotos')">Fotos e uniforme</button>
+    </nav>
+
+    <main id="conteudo"></main>
+  </section>
+
+  <div class="fundo" id="fundo" onclick="if(event.target === this) fecharJanela()"><div class="janela" id="janela"></div></div>
+  <div class="luz" id="luz" onclick="if(event.target === this) fecharLuz()"><img id="luzImg" alt=""><div><a class="btn btn-claro" id="luzLink" target="_blank" rel="noopener">Abrir no Drive</a><button class="btn" type="button" onclick="fecharLuz()">Fechar</button></div></div>
+  <div class="toast" id="toast"></div>
+
+<script>
+  /* =========================================================
+     ESTADO E APOIO
+  ========================================================= */
+  const CHAVE = "rhToken";
+  const estado = { token: lerToken(), ciclo: "", dados: null, aba: "eventos" };
+  const SITUACAO = { PAGAR: "Pagar", REVISAR: "Revisar", NAO_PAGAR: "Não pagar", PAGO: "Pago", EM_ANDAMENTO: "Em andamento" };
+  const UNIFORME = { OK: "✅ Ok", INCOMPLETO: "⚠️ Incompleto", SEM: "❌ Sem uniforme" };
+
+  function lerToken(){ try{ return localStorage.getItem(CHAVE) || ""; }catch(e){ return ""; } }
+  function salvarToken(t){ estado.token = t || ""; try{ t ? localStorage.setItem(CHAVE, t) : localStorage.removeItem(CHAVE); }catch(e){} }
+  function esc(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+  function moeda(n){ return (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
+  function hora(t){ const m = String(t || "").match(/(\d{1,2}):(\d{2})/); return m ? ("0" + m[1]).slice(-2) + ":" + m[2] : ""; }
+  function dataBR(iso){ const p = String(iso || "").split("-"); return p.length === 3 ? p[2] + "/" + p[1] : "-"; }
+  function diaSemana(iso){ const p = String(iso || "").split("-"); if(p.length !== 3){ return ""; } return ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][new Date(+p[0], +p[1] - 1, +p[2]).getDay()]; }
+  function idDrive(url){ const m = String(url || "").match(/\/d\/([\w-]{10,})/) || String(url || "").match(/[?&]id=([\w-]{10,})/); return m ? m[1] : ""; }
+  function miniDrive(url, w){ const id = idDrive(url); return id ? "https://drive.google.com/thumbnail?id=" + id + "&sz=w" + (w || 500) : ""; }
+
+  function chamar(fn){
+    const args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function(ok, falha){
+      google.script.run.withSuccessHandler(ok).withFailureHandler(function(e){ falha(new Error((e && e.message) || String(e))); })[fn].apply(null, args);
+    });
+  }
+  function msg(e){ return String((e && e.message) || e || "").replace(/^(Error|Exception):\s*/, "").replace(/^SESSAO_EXPIRADA:\s*/, ""); }
+  function expirou(e){ return /SESSAO_EXPIRADA/.test(String(e && e.message || e)); }
+
+  let toastT = null;
+  function toast(t, erro){ const el = document.getElementById("toast"); el.textContent = t; el.classList.toggle("erro", !!erro); el.classList.add("ver"); clearTimeout(toastT); toastT = setTimeout(function(){ el.classList.remove("ver"); }, erro ? 4500 : 2500); }
+  function tela(id){ document.querySelectorAll(".tela").forEach(function(t){ t.classList.toggle("ativa", t.id === id); }); }
+
+  function abrirJanela(html, larga){ const j = document.getElementById("janela"); j.innerHTML = html; j.classList.toggle("larga", !!larga); document.getElementById("fundo").classList.add("ver"); }
+  function fecharJanela(){ document.getElementById("fundo").classList.remove("ver"); }
+  function abrirLuz(url){
+    document.getElementById("luzImg").src = miniDrive(url, 1600) || url;
+    document.getElementById("luzLink").href = url;
+    document.getElementById("luz").classList.add("ver");
+  }
+  function fecharLuz(){ document.getElementById("luz").classList.remove("ver"); }
+
+  /* =========================================================
+     LOGIN E CARGA
+  ========================================================= */
+  function entrar(ev){
+    ev.preventDefault();
+    const btn = document.getElementById("btnEntrar");
+    btn.disabled = true;
+    chamar("RH_login", document.getElementById("loginSenha").value)
+      .then(function(r){ salvarToken(r.token); estado.ciclo = r.cicloAtual; document.getElementById("loginSenha").value = ""; return carregar(); })
+      .catch(function(e){ const el = document.getElementById("erroLogin"); el.textContent = msg(e); el.classList.add("ver"); })
+      .finally(function(){ btn.disabled = false; });
+  }
+
+  function sair(){
+    const t = estado.token;
+    salvarToken("");
+    tela("telaLogin");
+    if(t){ chamar("RH_sair", t).catch(function(){}); }
+  }
+
+  function tratar(e){
+    if(expirou(e)){ salvarToken(""); tela("telaLogin"); const el = document.getElementById("erroLogin"); el.textContent = "Sessão expirada. Entre de novo."; el.classList.add("ver"); return; }
+    toast(msg(e), true);
+  }
+
+  function carregar(){
+    if(!estado.token){ tela("telaLogin"); return Promise.resolve(); }
+    return chamar("RH_carregarCiclo", estado.token, estado.ciclo || "").then(aplicar).catch(function(e){
+      if(!estado.dados){ tela("telaLogin"); }
+      tratar(e);
+    });
+  }
+
+  function aplicar(d){
+    estado.dados = d;
+    estado.ciclo = d.inicio;
+    document.getElementById("usuarioNome").textContent = "Olá, " + (d.usuario || "") + " · ciclo de terça a segunda";
+    document.getElementById("cicloTexto").innerHTML = "Ter " + dataBR(d.inicio) + " a Seg " + dataBR(d.fim) +
+      '<small>Hora extra: ' + (d.config.valorHora ? moeda(d.config.valorHora) + "/h" : "valor não definido") + ' · diária cobre ' + d.config.horasDiaria + 'h</small>';
+    renderResumo();
+    render();
+    tela("telaPainel");
+  }
+
+  function mudarCiclo(dias){
+    const p = estado.ciclo.split("-");
+    const d = new Date(+p[0], +p[1] - 1, +p[2] + dias);
+    estado.ciclo = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+    document.getElementById("conteudo").innerHTML = '<div class="carregando"><div><div class="spinner"></div>Carregando ciclo…</div></div>';
+    carregar();
+  }
+
+  function trocarAba(aba){
+    estado.aba = aba;
+    document.querySelectorAll(".aba").forEach(function(b){ b.classList.toggle("ativa", b.dataset.aba === aba); });
+    render();
+  }
+
+  function todasPessoas(){
+    const lista = [];
+    (estado.dados.eventos || []).forEach(function(ev){ ev.pessoas.forEach(function(p){ lista.push({ ev: ev, p: p }); }); });
+    return lista;
+  }
+
+  function renderResumo(){
+    const t = { aPagar: 0, pago: 0, diarias: 0, revisar: 0, faltas: 0 };
+    todasPessoas().forEach(function(x){
+      const c = x.p.calc;
+      if(c.situacao === "PAGAR" || c.situacao === "REVISAR"){ t.aPagar += c.total; t.diarias++; }
+      if(c.situacao === "PAGO"){ t.pago += c.total; t.diarias++; }
+      if(c.situacao === "REVISAR"){ t.revisar++; }
+      if(c.fase === "FALTOU"){ t.faltas++; }
+    });
+    document.getElementById("resumo").innerHTML =
+      '<div class="tile ambar"><small>A pagar</small><strong>' + moeda(t.aPagar) + '</strong></div>' +
+      '<div class="tile verde"><small>Já pago</small><strong>' + moeda(t.pago) + '</strong></div>' +
+      '<div class="tile"><small>Diárias trabalhadas</small><strong>' + t.diarias + '</strong></div>' +
+      '<div class="tile ambar"><small>Para revisar</small><strong>' + t.revisar + '</strong></div>' +
+      '<div class="tile vermelho"><small>Faltas</small><strong>' + t.faltas + '</strong></div>';
+  }
+
+  function render(){
+    const area = document.getElementById("conteudo");
+    if(!(estado.dados.eventos || []).length){
+      area.innerHTML = '<div class="vazio"><strong>Nenhuma vaga de free neste ciclo</strong>Use as setas para ver outros ciclos.</div>';
+      return;
+    }
+    if(estado.aba === "pessoas"){ area.innerHTML = htmlPessoas(); return; }
+    if(estado.aba === "fotos"){ area.innerHTML = htmlFotos(); return; }
+    area.innerHTML = htmlEventos();
+  }
+
+  function fotoCadastro(p){
+    return p.miniatura ? '<div class="foto"><img src="' + esc(p.miniatura) + '" alt=""></div>' : '<div class="foto">' + esc(String(p.nome).charAt(0)) + '</div>';
+  }
+
+  function tituloEvento(ev){
+    return '<div class="evento-titulo"><strong>' + esc(ev.cliente || "-") + '</strong><span>' +
+      diaSemana(ev.dataISO) + ' ' + dataBR(ev.dataISO) + ' · ' + esc(ev.etapa) + ' · encontro ' + esc(ev.horario) + ' · Pedido #' + esc(ev.pedido) +
+      ' · Responsável ' + esc(ev.responsavel || "-") + ' · Diária ' + moeda(ev.valor) + '</span></div>';
+  }
+
+  /* =========================================================
+     POR EVENTO
+  ========================================================= */
+  function htmlEventos(){
+    return estado.dados.eventos.map(function(ev){
+      const pagaveis = ev.pessoas.filter(function(p){ return p.calc.situacao === "PAGAR" || p.calc.situacao === "REVISAR"; });
+      const total = ev.pessoas.reduce(function(s, p){ return s + (p.calc.situacao === "NAO_PAGAR" || p.calc.situacao === "EM_ANDAMENTO" ? 0 : p.calc.total); }, 0);
+
+      const linhas = ev.pessoas.map(function(p){
+        const c = p.calc;
+        const pag = p.pagamento || {};
+        const pago = c.situacao === "PAGO";
+        const editavel = !pago && (c.situacao === "PAGAR" || c.situacao === "REVISAR" || pag.naoPagar);
+        return '<tr>' +
+          '<td data-label="Free"><div class="pessoa">' + fotoCadastro(p) + '<div><b><button class="link" type="button" onclick="abrirFicha(\'' + esc(p.idFree) + '\')">' + esc(p.nome) + '</button></b><small>' + esc(p.cpf) + ' <span class="nota">★ ' + Number(p.nota).toFixed(1).replace(".", ",") + '</span></small></div></div></td>' +
+          '<td data-label="Check-in"><span class="hora">' + (hora(p.checkinEm) || "—") + '</span><span class="sub">' + esc(p.via || "") + (p.distancia !== "" && p.distancia != null ? " · " + (p.distancia >= 1000 ? (p.distancia / 1000).toFixed(1).replace(".", ",") + " km" : p.distancia + " m") : "") + '</span></td>' +
+          '<td data-label="Check-out"><span class="hora">' + (hora(p.checkoutEm) || "—") + '</span></td>' +
+          '<td data-label="Horas" class="num"><span class="hora">' + (c.horas || "—") + '</span></td>' +
+          '<td data-label="Hora extra" class="extra">' + (c.extraMin > 0
+            ? '<label><input type="checkbox"' + (pag.pagarExtra ? " checked" : "") + (editavel ? "" : " disabled") + ' onchange="salvarDiaria(\'' + esc(p.idInscricao) + '\', { pagarExtra: this.checked })">' + esc(c.extraTexto) + ' · ' + moeda(c.extraValor) + '</label>'
+            : '<span class="sub">—</span>') + '</td>' +
+          '<td data-label="Ajuste" class="num">' + (pag.ajuste ? '<b style="color:' + (pag.ajuste < 0 ? "var(--erro)" : "var(--ok-forte)") + '">' + (pag.ajuste > 0 ? "+" : "") + moeda(pag.ajuste) + '</b><span class="sub">' + esc(pag.motivoAjuste) + '</span>' : '<span class="sub">—</span>') +
+            (editavel ? '<br><button class="link" style="font-size:11.5px" type="button" onclick="abrirAjuste(\'' + esc(p.idInscricao) + '\')">ajustar</button>' : "") + '</td>' +
+          '<td data-label="Total" class="num"><b>' + (c.situacao === "NAO_PAGAR" || c.situacao === "EM_ANDAMENTO" ? "—" : moeda(c.total)) + '</b></td>' +
+          '<td data-label="Situação"><span class="chip ' + c.situacao + '">' + SITUACAO[c.situacao] + '</span>' +
+            (pago ? '<span class="sub">' + esc(pag.forma) + ' · ' + esc(String(pag.pagoEm).slice(0, 10)) + '</span>' : "") +
+            (c.motivos.length ? '<div class="motivos">' + c.motivos.map(function(m){ return '<div>' + esc(m) + '</div>'; }).join("") + '</div>' : "") + '</td>' +
+          '<td data-label="" class="td-acoes"><div class="acoes-linha">' +
+            (pago ? '<button class="btn btn-claro btn-mini" type="button" onclick="desfazerPago(\'' + esc(p.idInscricao) + '\')">Desfazer</button>' : "") +
+            (!pago && (c.situacao === "PAGAR" || c.situacao === "REVISAR") ? '<button class="btn btn-mini" type="button" onclick="pagar([\'' + esc(p.idInscricao) + '\'], \'' + esc(p.nome) + '\')">Pago</button>' : "") +
+            (!pago && c.fase !== "FALTOU" && c.situacao !== "EM_ANDAMENTO"
+              ? '<button class="btn btn-claro btn-mini" type="button" onclick="salvarDiaria(\'' + esc(p.idInscricao) + '\', { naoPagar: ' + (pag.naoPagar ? "false" : "true") + ' })">' + (pag.naoPagar ? "Voltar a pagar" : "Não pagar") + '</button>'
+              : "") +
+          '</div></td>' +
+        '</tr>';
+      }).join("");
+
+      return '<section class="evento">' +
+        '<div class="evento-topo">' + tituloEvento(ev) +
+          '<div class="evento-total"><small>Total do evento</small><strong>' + moeda(total) + '</strong></div>' +
+          (pagaveis.length ? '<button class="btn btn-ok" type="button" onclick="pagar(' + esc(JSON.stringify(pagaveis.map(function(p){ return p.idInscricao; }))) + ', \'todos deste evento\')">Marcar evento como pago</button>' : "") +
+        '</div>' +
+        (ev.pessoas.length
+          ? '<div class="tabela-rolavel"><table><thead><tr><th>Free</th><th>Check-in</th><th>Check-out</th><th class="num">Horas</th><th>Hora extra</th><th class="num">Ajuste</th><th class="num">Total</th><th>Situação</th><th></th></tr></thead><tbody>' + linhas + '</tbody></table></div>'
+          : '<div class="vazio" style="padding:18px">Ninguém confirmou nesta vaga.</div>') +
+      '</section>';
+    }).join("");
+  }
+
+  /* =========================================================
+     POR PESSOA (o que pagar a cada um no ciclo)
+  ========================================================= */
+  function agruparPessoas(){
+    const mapa = {};
+    todasPessoas().forEach(function(x){
+      const p = x.p, c = p.calc;
+      const r = mapa[p.idFree] = mapa[p.idFree] || { p: p, dias: [], total: 0, pago: 0, pendentes: [] };
+      if(c.situacao === "NAO_PAGAR" || c.situacao === "EM_ANDAMENTO"){ return; }
+      r.dias.push(x);
+      r.total += c.total;
+      if(c.situacao === "PAGO"){ r.pago += c.total; } else { r.pendentes.push(p.idInscricao); }
+    });
+    return Object.keys(mapa).map(function(k){ return mapa[k]; }).filter(function(r){ return r.dias.length; })
+      .sort(function(a, b){ return (b.total - b.pago) - (a.total - a.pago) || a.p.nome.localeCompare(b.p.nome); });
+  }
+
+  function htmlPessoas(){
+    const grupos = agruparPessoas();
+    if(!grupos.length){ return '<div class="vazio"><strong>Nada a pagar neste ciclo</strong></div>'; }
+
+    const linhas = grupos.map(function(g){
+      const p = g.p;
+      const aPagar = g.total - g.pago;
+      const dias = g.dias.map(function(x){
+        return diaSemana(x.ev.dataISO) + " " + dataBR(x.ev.dataISO) + " · " + x.ev.cliente + " · " + (hora(x.p.checkinEm) || "—") + "–" + (hora(x.p.checkoutEm) || "—") + " · " + moeda(x.p.calc.total);
+      });
+      const tel = String(p.telefone || "").replace(/\D/g, "");
+      const texto = "Oi " + String(p.nome).split(" ")[0] + "! Resumo do seu pagamento (ciclo " + dataBR(estado.dados.inicio) + " a " + dataBR(estado.dados.fim) + "):\n" +
+        dias.map(function(d){ return "• " + d; }).join("\n") + "\nTotal: " + moeda(g.total) + (p.pix ? "\nPIX: " + p.pix : "");
+
+      return '<tr>' +
+        '<td data-label="Free"><div class="pessoa">' + fotoCadastro(p) + '<div><b><button class="link" type="button" onclick="abrirFicha(\'' + esc(p.idFree) + '\')">' + esc(p.nome) + '</button></b><small>' + esc(p.cpf) + ' · ' + esc(p.telefone) + '</small></div></div></td>' +
+        '<td data-label="Chave PIX">' + (p.pix ? '<b>' + esc(p.pix) + '</b><br><button class="link" style="font-size:11.5px" type="button" onclick="copiar(\'' + esc(p.pix) + '\')">copiar</button>' : '<span class="chip erro">Sem PIX</span>') + '</td>' +
+        '<td data-label="Dias trabalhados">' + dias.map(function(d){ return '<div class="sub" style="color:var(--text)">' + esc(d) + '</div>'; }).join("") + '</td>' +
+        '<td data-label="Total" class="num"><b>' + moeda(g.total) + '</b>' + (g.pago ? '<span class="sub">pago ' + moeda(g.pago) + '</span>' : "") + '</td>' +
+        '<td data-label="Situação"><span class="chip ' + (aPagar > 0.004 ? "aviso" : "PAGO") + '">' + (aPagar > 0.004 ? "A pagar " + moeda(aPagar) : "Pago") + '</span></td>' +
+        '<td data-label="" class="td-acoes"><div class="acoes-linha">' +
+          (tel.length >= 10 ? '<a class="btn btn-claro btn-mini" target="_blank" rel="noopener" href="https://wa.me/55' + tel + '?text=' + encodeURIComponent(texto) + '">WhatsApp</a>' : "") +
+          (g.pendentes.length ? '<button class="btn btn-mini" type="button" onclick="pagar(' + esc(JSON.stringify(g.pendentes)) + ', \'' + esc(p.nome) + '\')">Marcar como pago</button>' : "") +
+        '</div></td>' +
+      '</tr>';
+    }).join("");
+
+    return '<section class="evento"><div class="tabela-rolavel"><table><thead><tr><th>Free</th><th>Chave PIX</th><th>Dias trabalhados</th><th class="num">Total</th><th>Situação</th><th></th></tr></thead><tbody>' + linhas + '</tbody></table></div></section>';
+  }
+
+  /* =========================================================
+     FOTOS E UNIFORME
+  ========================================================= */
+  function htmlFotos(){
+    return estado.dados.eventos.map(function(ev){
+      const fotos = (ev.fotos || []).map(function(f){
+        const mini = miniDrive(f.url, 500);
+        return '<div class="miniatura" onclick="abrirLuz(\'' + esc(f.url) + '\')">' + (mini ? '<img src="' + esc(mini) + '" alt="" loading="lazy">' : "") + '<span>' + esc(f.legenda) + '</span></div>';
+      }).join("");
+
+      const pessoas = ev.pessoas.filter(function(p){ return p.checkinEm || p.calc.fase === "FALTOU"; }).map(function(p){
+        const u = p.uniforme || {};
+        const mini = miniDrive(p.fotoUniforme, 400);
+        return '<div class="uniforme">' +
+          '<div class="cad">' + (p.miniatura ? '<img src="' + esc(p.miniatura) + '" alt="Foto do cadastro">' : esc(String(p.nome).charAt(0))) + '</div>' +
+          '<div class="uni"' + (p.fotoUniforme ? ' onclick="abrirLuz(\'' + esc(p.fotoUniforme) + '\')"' : "") + '>' + (mini ? '<img src="' + esc(mini) + '" alt="Foto do uniforme">' : (p.calc.fase === "FALTOU" ? "Faltou" : "Sem foto no check-in")) + '</div>' +
+          '<div><b>' + esc(p.nome) + '</b><span class="sub">Check-in ' + (hora(p.checkinEm) || "—") + '</span>' +
+            (p.calc.fase === "FALTOU" ? "" :
+              '<div class="botoes-uniforme">' + ["OK", "INCOMPLETO", "SEM"].map(function(op){
+                return '<button type="button" class="' + op + (u.avaliacao === op ? " ativo" : "") + '" onclick="avaliar(\'' + esc(p.idInscricao) + '\', \'' + op + '\')">' + UNIFORME[op] + '</button>';
+              }).join("") + '</div>' +
+              '<input type="text" placeholder="Observação (opcional)" value="' + esc(u.observacao || "") + '" id="obsUni_' + esc(p.idInscricao) + '" onchange="avaliar(\'' + esc(p.idInscricao) + '\', null)">' +
+              (u.avaliadoPor ? '<span class="sub">Avaliado por ' + esc(u.avaliadoPor) + '</span>' : "")) +
+          '</div>' +
+        '</div>';
+      }).join("");
+
+      return '<section class="evento">' +
+        '<div class="evento-topo">' + tituloEvento(ev) + '</div>' +
+        '<div class="rotulo-secao">Fotos enviadas pela equipe (' + (ev.fotos || []).length + ')</div>' +
+        (fotos ? '<div class="galeria">' + fotos + '</div>' : '<div class="vazio" style="padding:14px">A equipe ainda não enviou fotos deste evento.</div>') +
+        '<div class="rotulo-secao">Uniforme · foto do cadastro × foto do check-in</div>' +
+        (pessoas ? '<div class="uniforme-lista" style="padding-top:10px">' + pessoas + '</div>' : '<div class="vazio" style="padding:14px">Ninguém fez check-in ainda.</div>') +
+      '</section>';
+    }).join("");
+  }
+
+  /* =========================================================
+     AÇÕES
+  ========================================================= */
+  function salvarDiaria(id, mudanca){
+    const p = todasPessoas().filter(function(x){ return x.p.idInscricao === id; })[0].p;
+    const pag = p.pagamento || {};
+    const dados = Object.assign({ pagarExtra: !!pag.pagarExtra, ajuste: pag.ajuste || 0, motivoAjuste: pag.motivoAjuste || "", naoPagar: !!pag.naoPagar }, mudanca);
+    chamar("RH_salvarDiaria", estado.token, estado.ciclo, id, dados).then(function(d){ aplicar(d); toast("Salvo"); }).catch(tratar);
+  }
+
+  function abrirAjuste(id){
+    const p = todasPessoas().filter(function(x){ return x.p.idInscricao === id; })[0].p;
+    const pag = p.pagamento || {};
+    abrirJanela(
+      '<h2>Ajuste da diária</h2><p>' + esc(p.nome) + ' · valor positivo é bônus, negativo é desconto.</p>' +
+      '<label class="campo"><span>Valor (R$)</span><input id="ajValor" inputmode="decimal" placeholder="Ex.: 30 ou -20" value="' + esc(pag.ajuste ? String(pag.ajuste).replace(".", ",") : "") + '"></label>' +
+      '<label class="campo"><span>Motivo</span><input id="ajMotivo" placeholder="Ex.: ajudou a carregar o caminhão" value="' + esc(pag.motivoAjuste || "") + '"></label>' +
+      '<div class="acoes"><button class="btn btn-claro" type="button" onclick="fecharJanela()">Cancelar</button>' +
+      '<button class="btn" type="button" onclick="salvarAjuste(\'' + esc(id) + '\')">Salvar ajuste</button></div>'
+    );
+  }
+
+  function salvarAjuste(id){
+    const valor = document.getElementById("ajValor").value;
+    const motivo = document.getElementById("ajMotivo").value;
+    fecharJanela();
+    salvarDiaria(id, { ajuste: valor, motivoAjuste: motivo });
+  }
+
+  function pagar(ids, quem){
+    abrirJanela(
+      '<h2>Registrar pagamento</h2><p>' + ids.length + (ids.length === 1 ? " diária" : " diárias") + ' · ' + esc(quem) + '. O valor fica travado depois de pago.</p>' +
+      '<label class="campo"><span>Forma de pagamento</span><select id="pgForma"><option>PIX</option><option>Transferência</option><option>Dinheiro</option></select></label>' +
+      '<div class="acoes"><button class="btn btn-claro" type="button" onclick="fecharJanela()">Cancelar</button>' +
+      '<button class="btn btn-ok" type="button" id="pgBtn">Confirmar pagamento</button></div>'
+    );
+    document.getElementById("pgBtn").onclick = function(){
+      const forma = document.getElementById("pgForma").value;
+      this.disabled = true;
+      chamar("RH_marcarPago", estado.token, estado.ciclo, ids, forma)
+        .then(function(d){ fecharJanela(); aplicar(d); toast("Pagamento registrado"); })
+        .catch(function(e){ fecharJanela(); tratar(e); });
+    };
+  }
+
+  function desfazerPago(id){
+    if(!confirm("Desfazer o pagamento desta diária?")){ return; }
+    chamar("RH_desfazerPago", estado.token, estado.ciclo, id).then(function(d){ aplicar(d); toast("Pagamento desfeito"); }).catch(tratar);
+  }
+
+  function avaliar(id, opcao){
+    const p = todasPessoas().filter(function(x){ return x.p.idInscricao === id; })[0].p;
+    const atual = (p.uniforme && p.uniforme.avaliacao) || "";
+    const avaliacao = opcao === null ? atual : opcao;
+    if(!avaliacao){ toast("Escolha primeiro Ok, Incompleto ou Sem uniforme.", true); return; }
+    const obs = (document.getElementById("obsUni_" + id) || {}).value || "";
+    chamar("RH_avaliarUniforme", estado.token, estado.ciclo, id, avaliacao, obs)
+      .then(function(d){ aplicar(d); toast(avaliacao === "OK" ? "Uniforme ok" : "Avaliação salva · nota do free atualizada"); })
+      .catch(tratar);
+  }
+
+  function abrirConfig(){
+    const c = estado.dados.config;
+    abrirJanela(
+      '<h2>Hora extra</h2><p>O sistema calcula as horas que passaram do que a diária cobre. Você decide em cada diária se paga.</p>' +
+      '<label class="campo"><span>Valor da hora extra (R$)</span><input id="cfValor" inputmode="decimal" value="' + esc(c.valorHora ? String(c.valorHora).replace(".", ",") : "") + '" placeholder="Ex.: 25"></label>' +
+      '<label class="campo"><span>Horas que a diária cobre</span><input id="cfHoras" inputmode="decimal" value="' + esc(String(c.horasDiaria).replace(".", ",")) + '"></label>' +
+      '<div class="acoes"><button class="btn btn-claro" type="button" onclick="fecharJanela()">Cancelar</button><button class="btn" type="button" onclick="salvarConfig()">Salvar</button></div>'
+    );
+  }
+
+  function salvarConfig(){
+    const valor = document.getElementById("cfValor").value;
+    const horas = document.getElementById("cfHoras").value.replace(",", ".");
+    fecharJanela();
+    chamar("RH_salvarConfig", estado.token, estado.ciclo, valor, horas).then(function(d){ aplicar(d); toast("Valores salvos"); }).catch(tratar);
+  }
+
+  function exportar(btn){
+    btn.disabled = true;
+    btn.textContent = "Gerando…";
+    chamar("RH_exportarCiclo", estado.token, estado.ciclo)
+      .then(function(url){
+        abrirJanela('<h2>Planilha pronta</h2><p>Abas "Por pessoa" e "Detalhado", no seu Google Drive.</p><div class="acoes"><button class="btn btn-claro" type="button" onclick="fecharJanela()">Fechar</button><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener">Abrir planilha</a></div>');
+      })
+      .catch(tratar)
+      .finally(function(){ btn.disabled = false; btn.textContent = "Exportar planilha"; });
+  }
+
+  function copiar(texto){
+    (navigator.clipboard ? navigator.clipboard.writeText(texto) : Promise.reject()).then(function(){ toast("PIX copiado"); }).catch(function(){ prompt("Copie a chave PIX:", texto); });
+  }
+
+  /* ---------- Ficha do free ---------- */
+  function abrirFicha(idFree){
+    abrirJanela('<div class="carregando" style="min-height:200px"><div><div class="spinner"></div>Carregando ficha…</div></div>', true);
+    chamar("RH_fichaFree", estado.token, idFree).then(function(f){
+      const n = f.pontuacao || {};
+      const linhas = (f.historico || []).map(function(h){
+        const c = h.calc;
+        const sit = h.status === "CANCELADO" ? '<span class="chip erro">Cancelou' + (h.cimaDaHora ? " em cima" : "") + '</span>' + (h.motivoCancelamento ? '<span class="sub">' + esc(h.motivoCancelamento) + '</span>' : "")
+          : h.status === "REMOVIDO" ? '<span class="chip">Retirado</span>'
+          : c ? '<span class="chip ' + c.situacao + '">' + SITUACAO[c.situacao] + '</span>' : "";
+        return '<tr><td data-label="Data">' + diaSemana(h.dataISO) + ' ' + dataBR(h.dataISO) + '</td><td data-label="Evento">' + esc(h.cliente || "-") + '<span class="sub">' + esc(h.etapa || "") + '</span></td>' +
+          '<td data-label="Horário">' + (hora(h.checkinEm) || "—") + '–' + (hora(h.checkoutEm) || "—") + '</td>' +
+          '<td data-label="Uniforme">' + (h.uniforme ? UNIFORME[h.uniforme] : '<span class="sub">—</span>') + '</td>' +
+          '<td data-label="Valor" class="num">' + (c && c.situacao !== "NAO_PAGAR" && c.situacao !== "EM_ANDAMENTO" ? moeda(c.total) : "—") + '</td><td data-label="Situação">' + sit + '</td></tr>';
+      }).join("");
+      abrirJanela(
+        '<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">' +
+          (f.miniatura ? '<img src="' + esc(f.miniatura) + '" style="width:72px;height:72px;border-radius:50%;object-fit:cover">' : "") +
+          '<div><h2 style="margin:0">' + esc(f.nome) + '</h2><span class="sub">CPF ' + esc(f.cpf) + ' · ' + esc(f.telefone) + ' · PIX ' + esc(f.pix || "não informado") + '</span></div>' +
+        '</div>' +
+        '<div class="resumo" style="grid-template-columns:repeat(4,1fr)">' +
+          '<div class="tile ambar"><small>Nota</small><strong>★ ' + Number(n.nota || 5).toFixed(1).replace(".", ",") + '</strong></div>' +
+          '<div class="tile"><small>Trabalhos / faltas</small><strong>' + (n.trabalhos || 0) + ' / ' + (n.faltas || 0) + '</strong></div>' +
+          '<div class="tile verde"><small>Recebido no mês</small><strong>' + moeda(f.recebidoMes) + '</strong></div>' +
+          '<div class="tile ambar"><small>A pagar</small><strong>' + moeda(f.aPagar) + '</strong></div>' +
+        '</div>' +
+        '<p>Recebido no ano: <b>' + moeda(f.recebidoAno) + '</b> · cadastrado em ' + esc(String(f.cadastradoEm).slice(0, 10)) + '</p>' +
+        (linhas ? '<div class="tabela-rolavel"><table><thead><tr><th>Data</th><th>Evento</th><th>Horário</th><th>Uniforme</th><th class="num">Valor</th><th>Situação</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' : '<div class="vazio">Sem histórico.</div>') +
+        '<div class="acoes"><button class="btn" type="button" onclick="fecharJanela()">Fechar</button></div>', true);
+    }).catch(function(e){ fecharJanela(); tratar(e); });
+  }
+
+  /* ---------- Início ---------- */
+  if(estado.token){ carregar(); } else { tela("telaLogin"); }
+</script>
+</body>
+</html>

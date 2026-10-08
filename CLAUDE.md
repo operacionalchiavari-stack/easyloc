@@ -8286,3 +8286,36 @@ Pedidos do usuário em sequência: tirar o cartão "SOB MEDIDA / Experimente out
 ## Página do item não rolava: altura travada na tela (out/2026)
 Reportado: "nos itens também não estou conseguindo rolar pra baixo... pra ver os itens de baixo". Depois que a página do item passou a mostrar um item só (`openSingleItem()`), a seção continuava com a altura da imersiva antiga (`height:calc(100dvh - var(--header-h))` + `overflow:hidden`): em tela mais baixa, o que passava disso ("Combine também com" e botões) ficava cortado e a página não rolava, porque ela tinha exatamente a altura da tela. `openSingleItem()` agora marca a seção com `.is-single`, e no desktop (≥768px) ela tem `height:auto; min-height` da tela, com a 1ª linha do painel em `minmax(min(64vh,640px),1fr)` (a foto não encolhe). Verificado com o catálogo REAL entrando como visitante (1366×650 e 1735×830): tudo alcançável rolando. O celular já usava altura automática. Cache-busting `?v=20261006-item-rola`. `tests/mock-projetos.cjs` ganhou `opts.muitos` (N itens a mais, com material) pra testar listas longas.
 **Não reproduzido**: "quando seleciono o material no filtro não consigo rolar" — com filtro, a lista rolou até o fim em todos os testes (link direto, dentro de iframe como no painel, decoradora com projeto, catálogo real). Também visto no print do usuário: a busca do canto direito cobre o link "Limpar filtros" quando o card do projeto está aberto (não corrigido, não pedido).
+
+## Sistemas que vieram do Google Apps Script (motor de compatibilidade, out/2026)
+
+Migração dos sistemas Apps Script da Chiavari para o Acervo, **um por vez, mantendo o layout idêntico**. Primeiro:
+Cronograma + Equipe Free + App do Montador + Painel da RH (projeto Apps Script `1Imb261A…`, planilha `14HXOljl…`).
+Fotos antigas e senhas/logins NÃO foram migradas (decisão do usuário: as fotos antigas continuam no Drive).
+
+- **Como funciona**: as telas (`Modulos/Chiavari/<Sistema>/*.html`) são cópias exatas do Apps Script; o único
+  acréscimo é `<script src="../gas-cliente.js" data-projeto="...">` no `<head>`, que recria `google.script.run`
+  (POST `/api/gs`) e `google.script.url.getLocation`. O código de servidor ORIGINAL fica em
+  `api/_gas/projetos/<projeto>/*.js` (sem alterar regra) e roda em `api/_gas/motor.js`, que oferece
+  SpreadsheetApp/Utilities/LockService/CacheService/PropertiesService/DriveApp/Maps/UrlFetchApp em cima do Supabase.
+- **Banco**: `gs_planilhas`, `gs_abas`, `gs_linhas` (cada aba = linhas jsonb na ordem das colunas; datas como
+  `{"$d": ISO}`; `formatos` por coluna e por linha para `getDisplayValues`), `gs_propriedades`, `gs_cache`; bucket
+  público `gs-arquivos` para fotos novas (ids `sb:<caminho>`; `gas-cliente.js` e o motor trocam links do Drive com
+  `id=sb:` pelo link do Storage). RLS ligado sem políticas: **só o service role** (funções da Vercel) acessa. RPCs
+  `gs_ler_aba`, `gs_versoes`, `gs_estado`, `gs_cache_ler`, `gs_gravar` (transação + conflito por versão da aba →
+  o motor refaz a chamada; substitui o LockService).
+- **Fidelidade**: comparado função a função com o Google (getCronogramaSemana de 4 semanas, agenda, listas,
+  central de montagem): respostas idênticas. Gravar texto numa célula imita o Sheets (vira número/data em pt_BR,
+  `'` no começo mantém texto, formato `@` não converte). Variáveis globais começam do zero a cada chamada.
+- **Vercel**: `vercel.json` (região `gru1`, perto do Supabase; `installCommand` vazio porque o site é estático e
+  `api/` só usa o Node; `api/package.json` isola as funções do package.json da raiz, que tem conflito de peer deps
+  three × model-viewer). Variáveis: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_MAPS_KEY`, `CRON_SECRET`.
+  Rotina semanal `FECH_registrarIndicadoresSemana` via Cron (`/api/gs-cron`, seg 23:15 BRT). Planilhas geradas
+  (ex.: exportação da RH) baixam como CSV em `/api/gs-planilha?id=gerada-…`.
+- **Rotas das telas**: `Modulos/Chiavari/Cronograma/` (index.html = roteador igual ao doGet: `?page=free`,
+  `?page=montador`, `?page=rh`, `?page=free-qr`, `?page=central-montagem`, `?operacao=montagem&id=`).
+- **Para mudar regra/tela desses sistemas, editar aqui** (as pastas do Apps Script no Desktop ficam só de histórico
+  depois da virada). Funções terminadas em `_` não são chamáveis do navegador (mesma regra do Apps Script);
+  `bloqueadas` em `api/_gas/projetos.js` lista as que só existiam para o editor do Google.
+- **Migrations do motor** foram aplicadas com `db query --linked -f` + `migration repair` (NÃO `db push`), porque há
+  4 migrations antigas do catálogo (20260925000300…600) que nunca foram aplicadas e não são deste trabalho.

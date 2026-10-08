@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="cronograma"></script>
+  <base target="_top">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central de Respostas da Montagem</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       CENTRAL DE RESPOSTAS DA MONTAGEM
+       Mesma identidade do Portal Interno (Central de Metas,
+       Itens Danificados): Cormorant Garamond nos títulos,
+       Manrope no texto, grafite #5a5a55, cartões brancos.
+    ========================================================= */
+
+    :root{
+      --primary:#5a5a55;
+      --primary-dark:#44443f;
+      --bg:#f8f6f0;
+      --fundo-suave:#f8f6f0;
+      --card:#ffffff;
+      --line:#e7e1d7;
+      --borda-card:#eee8df;
+      --linha-tabela:#f3efe8;
+      --text:#251e19;
+      --muted:#77716a;
+      --accent-soft:#ecece6;
+      --serif:"Cormorant Garamond", Georgia, serif;
+      --sans:"Manrope", system-ui, sans-serif;
+      --green:#16a34a;
+      --green-soft:#dcfce7;
+      --yellow:#d97706;
+      --yellow-soft:#fef3c7;
+      --red:#dc2626;
+      --red-soft:#fee2e2;
+      --sombra-card:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+    }
+
+    *{ box-sizing:border-box; }
+
+    html, body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:var(--sans);
+      font-size:15px;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    button, input, select, textarea{ font-family:inherit; }
+
+    .pagina{
+      width:100%;
+      min-height:100vh;
+      padding:0 24px 40px;
+    }
+
+    /* ---------- Cabeçalho ---------- */
+
+    .cabecalho{
+      padding:34px 0 0;
+      margin-bottom:22px;
+    }
+
+    .cabecalho-titulo{
+      margin:0 0 26px;
+      text-align:center;
+      font-family:var(--serif);
+      font-size:clamp(30px, 3.8vw, 54px);
+      font-weight:500;
+      letter-spacing:.18em;
+      line-height:1.05;
+      text-transform:uppercase;
+    }
+
+    .cabecalho-barra{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:12px 20px;
+      padding-bottom:14px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .resumo{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:10px;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .resumo-pilula{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      min-height:32px;
+      padding:0 14px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:var(--card);
+      color:var(--text);
+      font-weight:600;
+    }
+
+    .ponto-vivo{
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:var(--green);
+    }
+
+    .acoes{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .btn{
+      min-height:38px;
+      padding:0 18px;
+      border:1px solid var(--primary);
+      border-radius:999px;
+      background:var(--primary);
+      color:#ffffff;
+      font-size:13px;
+      font-weight:600;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      white-space:nowrap;
+      cursor:pointer;
+      transition:background-color .2s, border-color .2s, color .2s, opacity .2s;
+    }
+
+    .btn:hover{ background:var(--primary-dark); border-color:var(--primary-dark); }
+
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .btn-contorno{
+      background:var(--card);
+      border-color:var(--line);
+      color:var(--text);
+    }
+
+    .btn-contorno:hover{
+      background:var(--card);
+      border-color:var(--primary);
+      color:var(--primary-dark);
+    }
+
+    /* ---------- Resumo em cartões ---------- */
+
+    .cards-resumo{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:16px;
+      margin:22px 0 18px;
+    }
+
+    .card{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-height:92px;
+      padding:18px 20px;
+      border:1px solid var(--borda-card);
+      border-radius:18px;
+      background:var(--card);
+      box-shadow:var(--sombra-card);
+    }
+
+    .icone-card{
+      width:46px;
+      height:46px;
+      flex:0 0 46px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      font-size:20px;
+      font-weight:800;
+    }
+
+    .icone-total{ background:var(--accent-soft); color:var(--primary-dark); }
+    .icone-ok{ background:var(--green-soft); color:#166534; }
+    .icone-pendente{ background:var(--yellow-soft); color:#92400e; }
+    .icone-alerta{ background:var(--red-soft); color:#b91c1c; }
+
+    .card-label{
+      margin-bottom:4px;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+    }
+
+    .card-valor{
+      color:var(--text);
+      font-size:30px;
+      font-weight:800;
+      line-height:1;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .card-desc{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* ---------- Filtros ---------- */
+
+    .filtros{
+      display:grid;
+      grid-template-columns:180px 180px 220px 220px 210px 1fr;
+      gap:8px;
+      margin:0 0 18px;
+    }
+
+    .campo,
+    .select{
+      width:100%;
+      height:42px;
+      padding:0 16px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:var(--fundo-suave);
+      color:var(--text);
+      font-size:13px;
+      font-weight:600;
+      outline:none;
+    }
+
+    .select{
+      appearance:none;
+      -webkit-appearance:none;
+      padding-right:36px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Cpath d=%27M2.5 4.5 6 8l3.5-3.5%27 fill=%27none%27 stroke=%27%2377716a%27 stroke-width=%271.6%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:right 14px center;
+      cursor:pointer;
+    }
+
+    .campo::placeholder{ color:var(--muted); font-weight:500; }
+
+    .campo:focus,
+    .select:focus{
+      border-color:var(--primary);
+      background-color:#ffffff;
+    }
+
+    /* ---------- Tabela ---------- */
+
+    .tabela-card{
+      overflow:hidden;
+      border:1px solid var(--borda-card);
+      border-radius:18px;
+      background:var(--card);
+      box-shadow:var(--sombra-card);
+    }
+
+    .tabela-titulo{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:8px 16px;
+      padding:18px 22px;
+      background:var(--primary);
+      color:#ffffff;
+    }
+
+    .tabela-titulo span{
+      font-family:var(--serif);
+      font-size:22px;
+      font-weight:500;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+
+    .tabela-titulo small{
+      color:rgba(255,255,255,.75);
+      font-size:13px;
+      font-weight:500;
+    }
+
+    .tabela-wrap{
+      width:100%;
+      overflow:auto;
+    }
+
+    table{
+      width:100%;
+      min-width:1420px;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+
+    thead th{
+      position:sticky;
+      top:0;
+      z-index:2;
+      padding:13px 14px;
+      background:#ffffff;
+      border-bottom:1px solid var(--borda-card);
+      color:var(--muted);
+      font-size:12px;
+      font-weight:500;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      text-align:left;
+      white-space:nowrap;
+    }
+
+    tbody td{
+      padding:12px 14px;
+      border-bottom:1px solid var(--linha-tabela);
+      vertical-align:middle;
+      background:#ffffff;
+    }
+
+    tbody tr:nth-child(even) td{ background:#fcfbf8; }
+
+    tbody tr:hover td{ background:#f6f3ec; }
+
+    .col-pedido{
+      color:#2563eb;
+      font-weight:600;
+      white-space:nowrap;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .col-montador{
+      min-width:190px;
+      font-weight:600;
+    }
+
+    .col-data-evento{
+      min-width:125px;
+      color:var(--muted);
+      white-space:nowrap;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      min-height:28px;
+      padding:4px 12px;
+      border:1px solid transparent;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .badge-ok{
+      background:var(--green-soft);
+      border-color:#bbf7d0;
+      color:#166534;
+      cursor:pointer;
+    }
+
+    .badge-nao{
+      background:var(--red-soft);
+      border-color:#fecaca;
+      color:#991b1b;
+    }
+
+    .badge-vazio{
+      background:#f1efea;
+      border-color:var(--line);
+      color:var(--muted);
+    }
+
+    .celula-conteudo{
+      min-width:160px;
+      max-width:280px;
+      white-space:normal;
+    }
+
+    .conteudo-vazio{ color:#a8a29a; }
+
+    .conteudo-etapa{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      padding:4px 0;
+      cursor:pointer;
+    }
+
+    .conteudo-texto{
+      color:var(--primary-dark);
+      font-size:13px;
+      line-height:1.4;
+      word-break:break-word;
+    }
+
+    .conteudo-etapa:hover .conteudo-texto{ color:var(--text); }
+
+    .conteudo-links{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    .conteudo-links a{
+      display:inline-flex;
+      align-items:center;
+      padding:3px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:var(--fundo-suave);
+      color:var(--primary-dark);
+      font-size:11px;
+      font-weight:700;
+      text-decoration:none;
+    }
+
+    .conteudo-links a:hover{ border-color:var(--primary); background:#ffffff; }
+
+    .btn-ver-envio{
+      padding:0;
+      border:0;
+      background:transparent;
+      color:var(--primary-dark);
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.04em;
+      text-decoration:underline;
+      text-underline-offset:3px;
+      cursor:pointer;
+    }
+
+    .vazio{
+      padding:42px 16px;
+      text-align:center;
+      font-family:var(--serif);
+      font-style:italic;
+      font-size:20px;
+      color:var(--muted);
+    }
+
+    /* ---------- Rodapé da tabela ---------- */
+
+    .rodape-tabela{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:14px 22px;
+      background:#ffffff;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .paginacao{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    .pagina-btn{
+      min-width:36px;
+      height:36px;
+      padding:0 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#ffffff;
+      color:var(--text);
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .pagina-btn:hover{ border-color:var(--primary); }
+
+    .pagina-btn.ativo{
+      background:var(--primary);
+      border-color:var(--primary);
+      color:#ffffff;
+    }
+
+    .linhas-select{
+      height:34px;
+      margin-left:6px;
+      padding:0 12px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:var(--fundo-suave);
+      color:var(--text);
+      font-weight:600;
+    }
+
+    /* ---------- Carregando e aviso ---------- */
+
+    .loading{
+      position:fixed;
+      inset:0;
+      z-index:99;
+      display:none;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      background:rgba(248,246,240,.9);
+      font-family:var(--serif);
+      font-style:italic;
+      font-size:20px;
+      color:var(--muted);
+    }
+
+    .spinner{
+      width:38px;
+      height:38px;
+      border:3px solid var(--line);
+      border-top-color:var(--text);
+      border-radius:50%;
+      animation:girar .8s linear infinite;
+    }
+
+    @keyframes girar{ to{ transform:rotate(360deg); } }
+
+    .toast{
+      position:fixed;
+      right:22px;
+      bottom:22px;
+      z-index:120;
+      display:none;
+      padding:12px 20px;
+      border-radius:999px;
+      background:var(--primary-dark);
+      color:#ffffff;
+      box-shadow:var(--sombra-card);
+      font-size:13px;
+      font-weight:600;
+      letter-spacing:.04em;
+    }
+
+    /* ---------- Modal de detalhes ---------- */
+
+    .modal-fundo{
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(37,30,25,.45);
+    }
+
+    .modal{
+      display:flex;
+      flex-direction:column;
+      width:min(950px, 96vw);
+      max-height:86vh;
+      overflow:hidden;
+      border:1px solid var(--borda-card);
+      border-radius:22px;
+      background:#ffffff;
+      box-shadow:0 30px 80px rgba(37,30,25,.22);
+    }
+
+    .modal-topo{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:18px 24px;
+      background:var(--primary);
+      color:#ffffff;
+    }
+
+    .modal-topo h2{
+      margin:0;
+      font-family:var(--serif);
+      font-size:24px;
+      font-weight:500;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+
+    .fechar{
+      width:36px;
+      height:36px;
+      border:0;
+      border-radius:50%;
+      background:rgba(255,255,255,.14);
+      color:#ffffff;
+      font-size:20px;
+      cursor:pointer;
+    }
+
+    .fechar:hover{ background:rgba(255,255,255,.24); }
+
+    .modal-corpo{
+      padding:20px 24px;
+      overflow:auto;
+    }
+
+    .registro{
+      margin-bottom:14px;
+      overflow:hidden;
+      border:1px solid var(--borda-card);
+      border-radius:16px;
+    }
+
+    .registro-titulo{
+      padding:12px 16px;
+      border-bottom:1px solid var(--borda-card);
+      background:var(--fundo-suave);
+      font-family:var(--serif);
+      font-size:19px;
+      font-weight:600;
+      letter-spacing:.04em;
+      color:var(--text);
+    }
+
+    .registro-grid{
+      display:grid;
+      grid-template-columns:230px 1fr;
+    }
+
+    .kv-label,
+    .kv-valor{
+      padding:10px 16px;
+      border-bottom:1px solid var(--linha-tabela);
+    }
+
+    .kv-label{
+      background:#fdfcf9;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    .kv-valor{
+      color:var(--text);
+      word-break:break-word;
+    }
+
+    /* ---------- Telas menores ---------- */
+
+    @media(max-width:1100px){
+      .pagina{ padding:0 16px 32px; }
+      .cards-resumo{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .filtros{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .cabecalho-barra{ justify-content:center; }
+      .resumo, .acoes{ justify-content:center; }
+    }
+
+    @media(max-width:720px){
+      .cards-resumo, .filtros{ grid-template-columns:1fr; }
+      .acoes{ width:100%; }
+      .acoes .btn{ flex:1; }
+      .rodape-tabela{ flex-direction:column; align-items:flex-start; }
+      .registro-grid{ grid-template-columns:1fr; }
+      .kv-label{ border-bottom:0; padding-bottom:4px; }
+      .kv-valor{ padding-top:4px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="pagina">
+
+    <header class="cabecalho">
+
+      <h1 class="cabecalho-titulo">Respostas da Montagem</h1>
+
+      <div class="cabecalho-barra">
+        <div class="resumo">
+          <span class="resumo-pilula"><span class="ponto-vivo"></span><span id="txtAtualizado">Atualizando...</span></span>
+          <span>Controle dos envios feitos pelos montadores</span>
+        </div>
+
+        <div class="acoes">
+          <button class="btn" id="btnAtualizar" onclick="carregarCentral()">Atualizar</button>
+          <button class="btn btn-contorno" onclick="irParaPainel()">Painel</button>
+        </div>
+      </div>
+
+    </header>
+
+    <div class="cards-resumo">
+      <div class="card">
+        <div class="icone-card icone-total">≡</div>
+        <div>
+          <div class="card-label">Total de pedidos</div>
+          <div class="card-valor" id="cardTotal">0</div>
+          <div class="card-desc">Pedidos de montagem encontrados</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="icone-card icone-ok">✓</div>
+        <div>
+          <div class="card-label">Completos</div>
+          <div class="card-valor" id="cardCompletos">0</div>
+          <div class="card-desc">Todas as etapas enviadas</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="icone-card icone-pendente">!</div>
+        <div>
+          <div class="card-label">Pendentes</div>
+          <div class="card-valor" id="cardPendentes">0</div>
+          <div class="card-desc">Com alguma etapa faltando</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="icone-card icone-alerta">×</div>
+        <div>
+          <div class="card-label">Sem montador</div>
+          <div class="card-valor" id="cardSemMontador">0</div>
+          <div class="card-desc">Não localizado no Cronograma</div>
+        </div>
+      </div>
+    </div>
+
+<div class="filtros">
+
+  <select class="select" id="filtroMes" onchange="aplicarFiltros()">
+    <option value="">Mês (todos)</option>
+  </select>
+
+  <select class="select" id="filtroStatus" onchange="aplicarFiltros()">
+    <option value="">Status (todos)</option>
+    <option value="completo">Completos</option>
+    <option value="pendente">Pendentes</option>
+  </select>
+
+  <select class="select" id="filtroMontador" onchange="aplicarFiltros()">
+    <option value="">Montador (todos)</option>
+  </select>
+
+  <select class="select" id="filtroEtapa" onchange="aplicarFiltros()">
+    <option value="">Etapa pendente (todas)</option>
+  </select>
+
+  <input
+    class="campo"
+    id="filtroPedido"
+    placeholder="Número do pedido"
+    oninput="aplicarFiltros()"
+  >
+
+  <input
+    class="campo"
+    id="filtroBusca"
+    placeholder="Buscar montador ou pedido"
+    oninput="aplicarFiltros()"
+  >
+
+</div>
+
+    <div class="tabela-card">
+      <div class="tabela-titulo">
+        <span>Respostas por pedido</span>
+        <small id="txtContagemTabela">0 registros</small>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+<thead>
+<tr>
+  <th>Nº do pedido</th>
+  <th>Data do evento</th>
+  <th>Montador</th>
+  <th>Equipe</th>
+  <th>Capa</th>
+  <th>Posicionamento</th>
+  <th>Observações</th>
+  <th>Lista assinada</th>
+</tr>
+</thead>
+
+          <tbody id="tbodyCentral">
+            <tr>
+<td colspan="8" class="vazio">Carregando informações...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rodape-tabela">
+        <div id="txtPaginacao">Mostrando 0 registros</div>
+
+        <div class="paginacao" id="paginacao"></div>
+
+        <div>
+          Linhas por página:
+          <select class="linhas-select" id="linhasPorPagina" onchange="alterarLinhasPorPagina()">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div>Buscando respostas da montagem...</div>
+  </div>
+
+  <div class="modal-fundo" id="modalDetalhes">
+    <div class="modal">
+      <div class="modal-topo">
+        <h2 id="modalTitulo">Detalhes</h2>
+        <button class="fechar" onclick="fecharModal()">×</button>
+      </div>
+
+      <div class="modal-corpo" id="modalCorpo"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let DADOS_ORIGINAIS = [];
+    let DADOS_FILTRADOS = [];
+    let ETAPAS = [];
+    let PAGINA_ATUAL = 1;
+    let LINHAS_POR_PAGINA = 20;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      carregarCentral();
+    });
+
+    function abrirMenuDashboard() {
+      try {
+        if (window.parent && typeof window.parent.abrirMenu === "function") {
+          window.parent.abrirMenu();
+          return;
+        }
+
+        if (window.parent && typeof window.parent.toggleMenu === "function") {
+          window.parent.toggleMenu();
+          return;
+        }
+      } catch (e) {}
+
+      mostrarToast("Menu do dashboard");
+    }
+
+    function irParaPainel() {
+      google.script.run
+        .withSuccessHandler(function(url) {
+          if (url) {
+            window.top.location.href = url + "?page=painel";
+          }
+        })
+        .withFailureHandler(function() {
+          mostrarToast("Não foi possível abrir o painel.");
+        })
+        .getUrlCentralMontagem();
+    }
+
+    function carregarCentral() {
+      mostrarLoading(true);
+
+      const btn = document.getElementById("btnAtualizar");
+      btn.disabled = true;
+      btn.innerText = "Atualizando...";
+
+      google.script.run
+        .withSuccessHandler(function(resposta) {
+          mostrarLoading(false);
+
+          btn.disabled = false;
+          btn.innerText = "Atualizar";
+
+          if (!resposta || !resposta.ok) {
+            mostrarErro(resposta && resposta.mensagem ? resposta.mensagem : "Não foi possível carregar a central.");
+            return;
+          }
+
+DADOS_ORIGINAIS = resposta.pedidos || [];
+DADOS_FILTRADOS = [...DADOS_ORIGINAIS];
+
+
+/*
+ * Etapas que NÃO devem mais aparecer
+ * na Central de Respostas da Montagem.
+ */
+/*
+ * Etapas que não devem aparecer
+ * na Central de Respostas da Montagem.
+ *
+ * Usamos as CHAVES reais recebidas
+ * do Code.gs para evitar erro pelo nome.
+ */
+const etapasOcultas = [
+  "checklist",
+  "avarias",
+  "itensNaoEntregues",
+  "percepcao"
+];
+
+
+ETAPAS = (resposta.etapas || []).filter(function(etapa) {
+
+  return !etapasOcultas.includes(
+    etapa.key
+  );
+
+});
+
+          document.getElementById("txtAtualizado").innerText =
+            "Atualizado às " + (resposta.atualizadoEm || "");
+
+          preencherCards(resposta.resumo || {});
+          preencherFiltros();
+          aplicarFiltros(false);
+
+          if (resposta.abasAusentes && resposta.abasAusentes.length) {
+            mostrarToast("Atenção: algumas abas não foram encontradas.");
+          }
+        })
+        .withFailureHandler(function(erro) {
+          mostrarLoading(false);
+
+          btn.disabled = false;
+          btn.innerText = "Atualizar";
+
+          mostrarErro(erro && erro.message ? erro.message : "Erro ao carregar a central.");
+        })
+        .getCentralRespostasMontagem();
+    }
+
+    function preencherCards(resumo) {
+      document.getElementById("cardTotal").innerText = resumo.totalPedidos || 0;
+      document.getElementById("cardCompletos").innerText = resumo.completos || 0;
+      document.getElementById("cardPendentes").innerText = resumo.pendentes || 0;
+      document.getElementById("cardSemMontador").innerText = resumo.semMontador || 0;
+    }
+
+    function preencherFiltros() {
+      const filtroMontador = document.getElementById("filtroMontador");
+      const valorAtualMontador = filtroMontador.value;
+
+      filtroMontador.innerHTML = `<option value="">Montador (todos)</option>`;
+
+      const montadores = [...new Set(
+        DADOS_ORIGINAIS
+          .map(p => p.montador || "")
+          .filter(m => m && m !== "Não informado")
+      )].sort();
+
+      montadores.forEach(function(montador) {
+        const opt = document.createElement("option");
+        opt.value = montador;
+        opt.textContent = montador;
+        filtroMontador.appendChild(opt);
+      });
+
+      filtroMontador.value = valorAtualMontador;
+
+      const filtroEtapa = document.getElementById("filtroEtapa");
+      const valorAtualEtapa = filtroEtapa.value;
+
+      filtroEtapa.innerHTML = `<option value="">Etapa pendente (todas)</option>`;
+
+      ETAPAS.forEach(function(etapa) {
+        const opt = document.createElement("option");
+        opt.value = etapa.key;
+        opt.textContent = etapa.titulo;
+        filtroEtapa.appendChild(opt);
+      });
+
+      filtroEtapa.value = valorAtualEtapa;
+    }
+
+    function aplicarFiltros(resetarPagina = true) {
+      const status = document.getElementById("filtroStatus").value;
+      const montador = document.getElementById("filtroMontador").value;
+      const etapaPendente = document.getElementById("filtroEtapa").value;
+      const pedido = normalizar(document.getElementById("filtroPedido").value);
+      const busca = normalizar(document.getElementById("filtroBusca").value);
+
+      DADOS_FILTRADOS = DADOS_ORIGINAIS.filter(function(item) {
+        const pedidoItem = normalizar(item.pedido);
+        const montadorItem = item.montador || "";
+        const montadorNormalizado = normalizar(montadorItem);
+
+        if (status === "completo" && !item.completo) return false;
+        if (status === "pendente" && item.completo) return false;
+
+        if (montador && montadorItem !== montador) return false;
+
+        if (pedido && !pedidoItem.includes(pedido)) return false;
+
+        if (busca) {
+          const alvo = normalizar(item.pedido + " " + montadorItem);
+          if (!alvo.includes(busca)) return false;
+        }
+
+        if (etapaPendente) {
+          if (item.etapas &&
+              item.etapas[etapaPendente] &&
+              item.etapas[etapaPendente].enviado) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      if (resetarPagina) {
+        PAGINA_ATUAL = 1;
+      }
+
+      renderizarTabela();
+    }
+function renderizarTabela() {
+
+  const tbody = document.getElementById("tbodyCentral");
+  tbody.innerHTML = "";
+
+  const total = DADOS_FILTRADOS.length;
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(total / LINHAS_POR_PAGINA)
+  );
+
+  if (PAGINA_ATUAL > totalPaginas) {
+    PAGINA_ATUAL = totalPaginas;
+  }
+
+  const inicio =
+    (PAGINA_ATUAL - 1) *
+    LINHAS_POR_PAGINA;
+
+  const fim =
+    inicio +
+    LINHAS_POR_PAGINA;
+
+  const pagina =
+    DADOS_FILTRADOS.slice(
+      inicio,
+      fim
+    );
+
+
+  document.getElementById(
+    "txtContagemTabela"
+  ).innerText =
+    total +
+    (
+      total === 1
+        ? " registro"
+        : " registros"
+    );
+
+
+  if (!pagina.length) {
+
+    tbody.innerHTML =
+      '<tr>' +
+        '<td colspan="8" class="vazio">' +
+          'Nenhum pedido encontrado com os filtros selecionados.' +
+        '</td>' +
+      '</tr>';
+
+    document.getElementById(
+      "txtPaginacao"
+    ).innerText =
+      "Mostrando 0 registros";
+
+    renderizarPaginacao(
+      totalPaginas
+    );
+
+    return;
+  }
+
+
+  pagina.forEach(function(item) {
+
+    const tr =
+      document.createElement("tr");
+
+    let html = "";
+
+
+    // PEDIDO
+    html +=
+      '<td class="col-pedido">' +
+        escapar(
+          item.pedido || ""
+        ) +
+      '</td>';
+
+
+    // DATA DO EVENTO
+    html +=
+      '<td class="col-data-evento">' +
+        escapar(
+          item.dataEvento ||
+          item.dataMontagem ||
+          "-"
+        ) +
+      '</td>';
+
+
+    // MONTADOR
+    html +=
+      '<td class="col-montador">' +
+        escapar(
+          item.montador ||
+          "Não informado"
+        ) +
+      '</td>';
+
+
+    // ETAPAS
+    ETAPAS.forEach(function(etapa) {
+
+      const info =
+        item.etapas &&
+        item.etapas[etapa.key]
+          ? item.etapas[etapa.key]
+          : {
+              enviado: false,
+              quantidade: 0,
+              conteudos: []
+            };
+
+
+      html +=
+        '<td class="celula-conteudo">' +
+          montarConteudoEtapa(
+            item.pedido,
+            etapa,
+            info
+          ) +
+        '</td>';
+
+    });
+
+
+    tr.innerHTML = html;
+
+    tbody.appendChild(tr);
+
+  });
+
+
+  const exibindoInicio =
+    total
+      ? inicio + 1
+      : 0;
+
+
+  const exibindoFim =
+    Math.min(
+      fim,
+      total
+    );
+
+
+  document.getElementById(
+    "txtPaginacao"
+  ).innerText =
+    "Mostrando " +
+    exibindoInicio +
+    " a " +
+    exibindoFim +
+    " de " +
+    total +
+    " pedidos";
+
+
+  renderizarPaginacao(
+    totalPaginas
+  );
+}
+
+
+
+function montarConteudoEtapa(
+  pedido,
+  etapa,
+  info
+) {
+
+  if (
+    !info ||
+    !info.enviado
+  ) {
+
+    return (
+      '<span class="conteudo-vazio">' +
+        '-' +
+      '</span>'
+    );
+  }
+
+
+  const conteudos =
+    Array.isArray(
+      info.conteudos
+    )
+      ? info.conteudos
+      : [];
+
+
+  if (!conteudos.length) {
+
+    return (
+      '<button ' +
+        'type="button" ' +
+        'class="btn-ver-envio" ' +
+        'data-pedido="' +
+          escaparAttr(pedido) +
+        '" ' +
+        'data-etapa="' +
+          escaparAttr(etapa.key) +
+        '" ' +
+        'data-titulo="' +
+          escaparAttr(etapa.titulo) +
+        '" ' +
+        'onclick="abrirDetalhesBotao(this)">' +
+        'Ver envio' +
+      '</button>'
+    );
+  }
+
+
+  let html = "";
+
+
+  conteudos.forEach(function(conteudo) {
+
+    conteudo =
+      conteudo || {};
+
+
+    const texto =
+      conteudo.texto ||
+      "Enviado";
+
+
+    const links =
+      Array.isArray(
+        conteudo.links
+      )
+        ? conteudo.links
+        : [];
+
+
+    html +=
+      '<div ' +
+        'class="conteudo-etapa" ' +
+        'data-pedido="' +
+          escaparAttr(pedido) +
+        '" ' +
+        'data-etapa="' +
+          escaparAttr(etapa.key) +
+        '" ' +
+        'data-titulo="' +
+          escaparAttr(etapa.titulo) +
+        '" ' +
+        'onclick="abrirDetalhesConteudo(this)">' ;
+
+
+    html +=
+      '<div class="conteudo-texto">' +
+        escapar(texto) +
+      '</div>';
+
+
+    if (links.length) {
+
+      html +=
+        '<div class="conteudo-links">';
+
+
+      links.forEach(function(link) {
+
+        html +=
+          '<a ' +
+            'href="' +
+              escaparAttr(
+                link.url || ""
+              ) +
+            '" ' +
+            'target="_blank" ' +
+            'onclick="event.stopPropagation()">' +
+            escapar(
+              link.titulo ||
+              "Abrir"
+            ) +
+          '</a>';
+
+      });
+
+
+      html +=
+        '</div>';
+    }
+
+
+    html +=
+      '</div>';
+
+  });
+
+
+  return html;
+}
+
+
+
+function abrirDetalhesBotao(
+  botao
+) {
+
+  abrirDetalhes(
+    botao.dataset.pedido || "",
+    botao.dataset.etapa || "",
+    botao.dataset.titulo || ""
+  );
+}
+
+
+
+function abrirDetalhesConteudo(
+  elemento
+) {
+
+  abrirDetalhes(
+    elemento.dataset.pedido || "",
+    elemento.dataset.etapa || "",
+    elemento.dataset.titulo || ""
+  );
+}
+
+
+
+function renderizarPaginacao(
+  totalPaginas
+) {
+
+  const el =
+    document.getElementById(
+      "paginacao"
+    );
+
+  el.innerHTML = "";
+
+
+  const btnAnterior =
+    document.createElement(
+      "button"
+    );
+
+
+  btnAnterior.className =
+    "pagina-btn";
+
+
+  btnAnterior.innerHTML =
+    "‹";
+
+
+  btnAnterior.disabled =
+    PAGINA_ATUAL === 1;
+
+
+  btnAnterior.onclick =
+    function() {
+
+      if (
+        PAGINA_ATUAL > 1
+      ) {
+
+        PAGINA_ATUAL--;
+
+        renderizarTabela();
+
+      }
+
+    };
+
+
+  el.appendChild(
+    btnAnterior
+  );
+
+
+  const paginas =
+    montarListaPaginas(
+      totalPaginas
+    );
+
+
+  paginas.forEach(
+    function(p) {
+
+      if (
+        p === "..."
+      ) {
+
+        const span =
+          document.createElement(
+            "span"
+          );
+
+        span.style.padding =
+          "0 5px";
+
+        span.innerText =
+          "...";
+
+        el.appendChild(
+          span
+        );
+
+        return;
+      }
+
+
+      const btn =
+        document.createElement(
+          "button"
+        );
+
+
+      btn.className =
+        "pagina-btn" +
+        (
+          p === PAGINA_ATUAL
+            ? " ativo"
+            : ""
+        );
+
+
+      btn.innerText =
+        p;
+
+
+      btn.onclick =
+        function() {
+
+          PAGINA_ATUAL =
+            p;
+
+          renderizarTabela();
+
+        };
+
+
+      el.appendChild(
+        btn
+      );
+
+    }
+  );
+
+
+  const btnProxima =
+    document.createElement(
+      "button"
+    );
+
+
+  btnProxima.className =
+    "pagina-btn";
+
+
+  btnProxima.innerHTML =
+    "›";
+
+
+  btnProxima.disabled =
+    PAGINA_ATUAL ===
+    totalPaginas;
+
+
+  btnProxima.onclick =
+    function() {
+
+      if (
+        PAGINA_ATUAL <
+        totalPaginas
+      ) {
+
+        PAGINA_ATUAL++;
+
+        renderizarTabela();
+
+      }
+
+    };
+
+
+  el.appendChild(
+    btnProxima
+  );
+}
+
+    function montarListaPaginas(totalPaginas) {
+      const paginas = [];
+
+      if (totalPaginas <= 7) {
+        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+        return paginas;
+      }
+
+      paginas.push(1);
+
+      if (PAGINA_ATUAL > 4) paginas.push("...");
+
+      const inicio = Math.max(2, PAGINA_ATUAL - 1);
+      const fim = Math.min(totalPaginas - 1, PAGINA_ATUAL + 1);
+
+      for (let i = inicio; i <= fim; i++) paginas.push(i);
+
+      if (PAGINA_ATUAL < totalPaginas - 3) paginas.push("...");
+
+      paginas.push(totalPaginas);
+
+      return paginas;
+    }
+function alterarLinhasPorPagina() {
+
+  LINHAS_POR_PAGINA =
+    Number(
+      document.getElementById(
+        "linhasPorPagina"
+      ).value || 20
+    );
+
+  PAGINA_ATUAL = 1;
+
+  renderizarTabela();
+}
+
+    function abrirDetalhes(pedido, etapaKey, etapaTitulo) {
+      mostrarLoading(true);
+
+      google.script.run
+        .withSuccessHandler(function(resposta) {
+          mostrarLoading(false);
+
+          if (!resposta || !resposta.ok) {
+            mostrarToast("Não foi possível carregar os detalhes.");
+            return;
+          }
+
+          document.getElementById("modalTitulo").innerText =
+            etapaTitulo + " • Pedido " + pedido;
+
+          const corpo = document.getElementById("modalCorpo");
+          corpo.innerHTML = "";
+
+          if (!resposta.registros || !resposta.registros.length) {
+            corpo.innerHTML = `<div class="vazio">Nenhum detalhe encontrado.</div>`;
+          } else {
+            resposta.registros.forEach(function(registro, index) {
+              corpo.appendChild(montarRegistroDetalhe(registro, index + 1));
+            });
+          }
+
+          document.getElementById("modalDetalhes").style.display = "flex";
+        })
+        .withFailureHandler(function(erro) {
+          mostrarLoading(false);
+          mostrarToast(erro && erro.message ? erro.message : "Erro ao buscar detalhes.");
+        })
+        .getDetalhesRespostaMontagem(pedido, etapaKey);
+    }
+
+    function montarRegistroDetalhe(registro, numero) {
+      const box = document.createElement("div");
+      box.className = "registro";
+
+      let html = `
+        <div class="registro-titulo">Registro ${numero}</div>
+        <div class="registro-grid">
+      `;
+
+      const chaves = Object.keys(registro || {});
+
+      if (!chaves.length) {
+        html += `
+          <div class="kv-label">Informação</div>
+          <div class="kv-valor">Sem dados preenchidos.</div>
+        `;
+      } else {
+        chaves.forEach(function(chave) {
+          html += `
+            <div class="kv-label">${escapar(chave)}</div>
+            <div class="kv-valor">${formatarValorDetalhe(registro[chave])}</div>
+          `;
+        });
+      }
+
+      html += `</div>`;
+
+      box.innerHTML = html;
+      return box;
+    }
+
+    function formatarValorDetalhe(valor) {
+      const v = String(valor || "").trim();
+
+      if (!v) return "-";
+
+      if (v.startsWith("http://") || v.startsWith("https://")) {
+        return `<a href="${escaparAttr(v)}" target="_blank">Abrir arquivo/link</a>`;
+      }
+
+      return escapar(v);
+    }
+
+    function fecharModal() {
+      document.getElementById("modalDetalhes").style.display = "none";
+    }
+
+    function mostrarLoading(status) {
+      document.getElementById("loading").style.display = status ? "flex" : "none";
+    }
+
+function mostrarErro(msg) {
+
+  const tbody =
+    document.getElementById(
+      "tbodyCentral"
+    );
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="8" class="vazio">
+        ${escapar(msg)}
+      </td>
+    </tr>
+  `;
+
+  mostrarToast(msg);
+}
+
+    function mostrarToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.innerText = msg;
+      toast.style.display = "block";
+
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(function() {
+        toast.style.display = "none";
+      }, 3500);
+    }
+
+    function normalizar(valor) {
+      return String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+    }
+
+    function escapar(valor) {
+      return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escaparAttr(valor) {
+      return escapar(valor).replace(/`/g, "&#096;");
+    }
+  </script>
+</body>
+</html>

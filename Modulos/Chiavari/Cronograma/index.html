@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cronograma</title>
+  <style>html,body{margin:0;height:100%;background:#f6f4ef}</style>
+  <script>
+    /* Mesmo roteamento do doGet do Apps Script: ?page=free, ?page=montador,
+       ?page=rh, ?page=free-qr, ?page=central-montagem, ?operacao=montagem... */
+    (function () {
+      var p = new URLSearchParams(location.search);
+      var pagina = String(p.get("page") || "index").toLowerCase().trim();
+      var destino = "cronograma.html";
+      if (p.get("operacao") === "montagem" || p.get("operacao") === "desmontagem") { destino = "montador.html"; }
+      else if (["free", "vagas", "equipe-free"].indexOf(pagina) >= 0) { destino = "free.html"; }
+      else if (["montador", "montagens"].indexOf(pagina) >= 0) { destino = "montador.html"; }
+      else if (pagina === "rh") { destino = "rh.html"; }
+      else if (pagina === "free-qr") { destino = "free-qr.html"; }
+      else if (["central-montagem", "central_montagem", "central-respostas-montagem", "central_respostas_montagem"].indexOf(pagina) >= 0) { destino = "central-montagem.html"; }
+      location.replace(destino + location.search + location.hash);
+    })();
+  </script>
+</head>
+<body></body>
+</html>

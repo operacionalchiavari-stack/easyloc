@@ -1,0 +1,19 @@
+{
+  "installCommand": "echo \"funcoes da pasta api so usam o Node (sem dependencias)\"",
+  "buildCommand": "",
+  "regions": [
+    "gru1"
+  ],
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 60,
+      "includeFiles": "api/_gas/**"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/gs-cron?projeto=cronograma&fn=FECH_registrarIndicadoresSemana",
+      "schedule": "15 2 * * 2"
+    }
+  ]
+}

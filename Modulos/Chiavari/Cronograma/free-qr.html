@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="cronograma"></script>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>QR de presença</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    /* =========================================================
+       QR CODE DE PRESENÇA — tela do líder
+       Fica aberta no celular do líder. O código muda a cada
+       minuto; os free leem com a câmera para check-in/out.
+    ========================================================= */
+    :root{
+      --bg:#f6f4ef; --card:#ffffff; --line:#e7e1d7; --text:#251e19; --muted:#77716a;
+      --suave:#a8a29a; --soft:#f1eee8; --escuro:#2b2a26; --ok:#16a34a; --ok-forte:#166534;
+      --ok-soft:#ecf8ef; --aviso:#b45309; --aviso-soft:#fdf4e3; --erro:#dc2626; --erro-soft:#fdeeee;
+      --serif:"Cormorant Garamond", Georgia, serif; --sans:"Manrope", system-ui, sans-serif;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html{ background:var(--bg); }
+    body{
+      max-width:520px; margin:0 auto; padding:calc(16px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom));
+      background:var(--bg); color:var(--text); font-family:var(--sans); font-size:15px; line-height:1.45;
+      -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:none;
+    }
+    .topo{ text-align:center; margin:6px 0 14px; }
+    .topo small{ display:block; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--suave); }
+    .topo h1{ font-family:var(--serif); font-weight:600; font-size:30px; line-height:1.1; margin-top:4px; }
+    .topo p{ color:var(--muted); font-size:14px; margin-top:4px; }
+
+    .qr-cartao{
+      background:var(--card); border:1px solid var(--line); border-radius:24px; padding:22px 18px 18px;
+      box-shadow:0 1px 2px rgba(37,30,25,.04), 0 8px 28px rgba(37,30,25,.06); text-align:center;
+    }
+    #qr{ display:flex; justify-content:center; }
+    #qr img, #qr canvas{ width:min(78vw, 300px) !important; height:auto !important; image-rendering:pixelated; }
+    .codigo{ font-size:38px; font-weight:800; letter-spacing:.3em; margin:16px 0 4px; padding-left:.3em; }
+    .codigo-legenda{ color:var(--muted); font-size:13px; }
+    .tempo{ height:6px; border-radius:3px; background:var(--soft); overflow:hidden; margin-top:14px; }
+    .tempo i{ display:block; height:100%; background:var(--escuro); border-radius:3px; transition:width 1s linear; }
+
+    .secao{ margin:22px 4px 10px; display:flex; justify-content:space-between; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--suave); }
+    .secao span{ color:var(--text); }
+    .equipe{ display:flex; flex-direction:column; gap:8px; }
+    .pessoa{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; background:var(--card); border:1px solid var(--line); border-radius:14px; }
+    .pessoa strong{ font-size:14.5px; }
+    .chip{ padding:4px 10px; border-radius:999px; font-size:11.5px; font-weight:800; white-space:nowrap; background:var(--soft); color:var(--muted); }
+    .chip.ok{ background:var(--ok-soft); color:var(--ok-forte); }
+    .chip.aviso{ background:var(--aviso-soft); color:var(--aviso); }
+    .chip.erro{ background:var(--erro-soft); color:var(--erro); }
+    .vazio{ padding:14px; text-align:center; color:var(--suave); border:1px dashed var(--line); border-radius:14px; font-size:13.5px; }
+
+    .erro-caixa{ margin-top:30vh; text-align:center; color:var(--erro); font-weight:700; padding:0 10px; }
+    .carregando{ margin-top:30vh; text-align:center; color:var(--muted); }
+    .dica{ text-align:center; color:var(--suave); font-size:12.5px; margin-top:18px; }
+  </style>
+</head>
+<body>
+  <div id="raiz"><div class="carregando">Carregando QR code…</div></div>
+
+<script>
+  const estado = { idVaga: "", chave: "", qr: null, trocaEm: 0, recebidoEm: 0, timer: null };
+
+  function esc(valor){
+    return String(valor == null ? "" : valor)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+
+  function hora(texto){
+    const m = String(texto || "").match(/(\d{1,2}):(\d{2})/);
+    return m ? ("0" + m[1]).slice(-2) + ":" + m[2] : "";
+  }
+
+  function dataCurta(iso){
+    const p = String(iso || "").split("-");
+    if(p.length !== 3){ return "-"; }
+    const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    return ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][d.getDay()] + " " + p[2] + "/" + p[1];
+  }
+
+  function chipPessoa(p){
+    if(p.checkoutEm){ return '<span class="chip ok">Saiu ' + esc(hora(p.checkoutEm)) + '</span>'; }
+    if(p.checkinEm){ return '<span class="chip ok">Chegou ' + esc(hora(p.checkinEm)) + '</span>'; }
+    if(p.fase === "FALTOU"){ return '<span class="chip erro">Não veio</span>'; }
+    return '<span class="chip aviso">Aguardando</span>';
+  }
+
+  function render(d){
+    const chegaram = d.equipe.filter(function(p){ return p.checkinEm; }).length;
+
+    document.getElementById("raiz").innerHTML =
+      '<div class="topo">' +
+        '<small>QR de presença · ' + esc(d.etapa) + '</small>' +
+        '<h1>' + esc(dataCurta(d.dataISO)) + ' · ' + esc(d.horario) + '</h1>' +
+        '<p>' + esc(d.pontoEncontro) + ' · Líder ' + esc(d.lider) + '</p>' +
+      '</div>' +
+      '<div class="qr-cartao">' +
+        '<div id="qr"></div>' +
+        '<div class="codigo">' + esc(d.codigo) + '</div>' +
+        '<div class="codigo-legenda">Os free leem com a câmera ou digitam este código.<br>Ele muda a cada minuto.</div>' +
+        '<div class="tempo"><i id="tempo"></i></div>' +
+      '</div>' +
+      '<div class="secao">Equipe free <span>' + chegaram + ' de ' + d.equipe.length + ' chegaram</span></div>' +
+      (d.equipe.length
+        ? '<div class="equipe">' + d.equipe.map(function(p){
+            return '<div class="pessoa"><strong>' + esc(p.nome) + '</strong>' + chipPessoa(p) + '</div>';
+          }).join("") + '</div>'
+        : '<div class="vazio">Ninguém confirmou nesta vaga ainda.</div>') +
+      '<p class="dica">Deixe esta tela aberta durante o check-in e no fim do serviço para o check-out.</p>';
+
+    if(window.QRCode){
+      new QRCode(document.getElementById("qr"), {
+        text: d.urlQr, width: 600, height: 600,
+        colorDark: "#251e19", colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    atualizarBarra();
+  }
+
+  function atualizarBarra(){
+    const barra = document.getElementById("tempo");
+    if(!barra){ return; }
+    const restante = Math.max(0, estado.trocaEm - (Date.now() - estado.recebidoEm));
+    barra.style.width = Math.round(restante / 60000 * 100) + "%";
+  }
+
+  function buscar(){
+    google.script.run
+      .withSuccessHandler(function(d){
+        estado.trocaEm = d.trocaEm;
+        estado.recebidoEm = Date.now();
+        render(d);
+        clearTimeout(estado.timer);
+        // Busca o próximo código logo depois da troca
+        estado.timer = setTimeout(buscar, Math.max(3000, d.trocaEm + 800));
+      })
+      .withFailureHandler(function(erro){
+        const msg = String((erro && erro.message) || erro).replace(/^(Error|Exception):\s*/, "");
+        if(!estado.recebidoEm){
+          document.getElementById("raiz").innerHTML = '<div class="erro-caixa">' + esc(msg) + '</div>';
+          return;
+        }
+        clearTimeout(estado.timer);
+        estado.timer = setTimeout(buscar, 10000);
+      })
+      .FREE_liderQr(estado.idVaga, estado.chave);
+  }
+
+  // Mantém a tela acesa enquanto o QR estiver aberto (quando o celular deixa)
+  function manterTelaAcesa(){
+    try{
+      if(navigator.wakeLock){ navigator.wakeLock.request("screen").catch(function(){}); }
+    }catch(e){}
+  }
+
+  setInterval(atualizarBarra, 1000);
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible"){ manterTelaAcesa(); buscar(); }
+  });
+
+  google.script.url.getLocation(function(local){
+    const p = (local && local.parameter) || {};
+    estado.idVaga = p.v || "";
+    estado.chave = p.k || "";
+    manterTelaAcesa();
+    buscar();
+  });
+</script>
+</body>
+</html>
