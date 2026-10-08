@@ -3,7 +3,17 @@
 // =====================================================================
 const formatadores = {};
 
+/** O Apps Script aceita "GMT-3", "GMT-03:00"; o Intl só entende "Etc/GMT+3" (sinal invertido). */
+function normalizarFuso(fuso) {
+  const m = String(fuso || "").trim().match(/^(?:GMT|UTC)\s*([+-])\s*(\d{1,2})(?::?(\d{2}))?$/i);
+  if (!m) { return fuso || "America/Sao_Paulo"; }
+  const h = Number(m[2]), min = Number(m[3] || 0);
+  if (min === 0) { return h === 0 ? "UTC" : "Etc/GMT" + (m[1] === "-" ? "+" : "-") + h; }
+  return "America/Sao_Paulo";
+}
+
 function formatador(fuso) {
+  fuso = normalizarFuso(fuso);
   if (!formatadores[fuso]) {
     formatadores[fuso] = new Intl.DateTimeFormat("en-US", {
       timeZone: fuso, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit",

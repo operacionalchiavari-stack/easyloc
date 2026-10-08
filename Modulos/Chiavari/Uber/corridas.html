@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="uber"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Corridas Uber</title>
+
+<style>
+  .menu-btn:hover {
+    background: var(--azul-claro);
+    color: white;
+    border-color: var(--azul-claro);
+    transition: 0.2s ease;
+}
+
+  .menu-btn:active {
+    transform: scale(0.95);
+    transition: 0.05s;
+}
+
+th:last-child, td:last-child { text-align: center !important; }
+td:last-child select.status-select { display: inline-flex; margin: 0 auto; }
+
+:root {
+    --azul: #1E40AF;
+    --azul-claro: #3B82F6;
+    --fundo: #F3F4F6;
+    --texto: #1E293B;
+    --branco: #FFFFFF;
+    --cinza: #E2E8F0;
+
+    --status-pendente: #FACC15;
+    --status-conferido: #3B82F6;
+    --status-pago: #22C55E;
+
+    --shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+
+body {
+    margin: 0;
+    background: var(--fundo);
+    font-family: "Segoe UI", sans-serif;
+    color: var(--texto);
+}
+.hidden { display:none!important; }
+
+header {
+    background: var(--branco);
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--cinza);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+}
+#saudacao {
+    font-size: 17px;
+    font-weight: 600;
+    opacity: .85;
+}
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.btn-sair {
+    padding: 10px 20px;
+    background: #DC2626;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+.btn-sair:hover { background: #B91C1C; }
+
+.menu-wrapper {
+    padding: 18px 28px;
+    margin: 20px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+.menu-btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: 2px solid var(--azul);
+    background: white;
+    color: var(--azul);
+    font-weight: bold;
+    cursor: pointer;
+}
+.menu-btn.active {
+    background: var(--azul);
+    color:white;
+}
+.menu-wrapper input,
+.menu-wrapper select {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--cinza);
+}
+
+.card-tabela {
+    margin: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+thead {
+    background: var(--azul);
+    color: white;
+}
+thead th {
+    padding: 12px;
+    font-size: 14px;
+}
+tbody td {
+    padding: 12px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--cinza);
+}
+tbody tr:hover { background: #EEF2FF; }
+
+/* STATUS COLOR */
+.status-select {
+    padding: 6px 10px;
+    border-radius: 7px;
+    font-weight: bold;
+    color: var(--texto);
+    background: white !important;
+}
+.status-select.status-pendente { background: var(--status-pendente) !important; }
+.status-select.status-conferido { background: var(--status-conferido) !important; color:white!important; }
+.status-select.status-pago { background: var(--status-pago) !important; color:white!important; }
+.status-select.status-recusado { background: #DC2626 !important; color:white!important; }
+
+
+#modalBloqueio {
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,.55);
+    display:none;
+    justify-content:center;
+    align-items:center;
+}
+.modal-box {
+    background:white;
+    width:350px;
+    padding:25px;
+    border-radius:12px;
+    text-align:center;
+    box-shadow: var(--shadow);
+}
+.modal-btn {
+    margin-top:10px;
+    background: var(--azul);
+    color:white;
+    padding:10px 16px;
+    border-radius:7px;
+    border:none;
+    cursor:pointer;
+}
+
+#modalExport {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+.modal-export-box {
+    background: white;
+    padding: 30px;
+    width: 360px;
+    border-radius: 14px;
+    text-align: center;
+    font-family: "Segoe UI", sans-serif;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.2);
+    animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* Remove fundo azul da lista do select */
+.status-select option {
+    background: white !important;
+    color: var(--texto) !important;
+}
+.cardDash {
+    flex: 1;
+    min-width: 220px;
+    background:white;
+    padding:18px;
+    border-radius:12px;
+    box-shadow: var(--shadow);
+    font-family:"Segoe UI";
+}
+
+.cardDash h4 {
+    margin:0;
+    font-size:14px;
+    opacity:.7;
+    color:#1E293B;
+    font-weight:600;
+}
+
+.cardDash p {
+    margin:6px 0 0 0;
+    font-size:22px;
+    font-weight:700;
+    color:var(--azul);
+}
+
+
+.graficoBox {
+    background:white;
+    border-radius:12px;
+    padding:20px;
+    width:340px; /* menor */
+    box-shadow: var(--shadow);
+}
+
+
+</style>
+
+<!-- =====================================================
+     TEMA CHIAVARI (mesmo padrão dos outros sistemas)
+====================================================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style id="tema-chiavari-base">
+:root{
+  --primary:#5a5a55; --primary-dark:#44443f; --fundo-suave:#f8f6f0; --line:#e7e1d7; --borda-card:#eee8df; --linha-tabela:#f3efe8;
+  --text:#251e19; --muted:#5f5952; --serif:"Cormorant Garamond", Georgia, serif; --sans:"Manrope", system-ui, sans-serif;
+  --sombra-card:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+}
+html, body{ font-family:var(--sans) !important; color:var(--text) !important; -webkit-font-smoothing:antialiased; }
+button, input, select, textarea{ font-family:inherit !important; }
+</style>
+<style id="tema-corridas">
+body{ background:#ffffff !important; }
+
+/* Título no padrão; saudação e Sair no canto */
+header{
+  position:relative; display:block !important; padding:34px 24px 22px !important; text-align:center;
+  background:#ffffff !important; border-bottom:1px solid var(--line) !important; box-shadow:none !important;
+}
+header h2{
+  font-family:var(--serif) !important; font-size:clamp(30px, 4.4vw, 54px) !important; font-weight:500 !important;
+  letter-spacing:.2em; line-height:1.05; text-transform:uppercase; color:var(--text) !important;
+}
+.header-right{ position:absolute; top:14px; right:24px; gap:12px !important; }
+#saudacao{ font-size:13px !important; font-weight:600 !important; color:var(--muted); opacity:1 !important; }
+.btn-sair{ min-height:34px; padding:0 16px !important; border:1px solid var(--line) !important; border-radius:999px !important; background:#ffffff !important; color:var(--text) !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; }
+.btn-sair:hover{ border-color:#dc2626 !important; color:#b91c1c !important; background:#fff5f5 !important; }
+
+/* Barra de abas e filtros */
+.menu-wrapper{
+  margin:22px 24px 16px !important; padding:16px 18px !important; align-items:flex-end; gap:12px !important;
+  border:1px solid var(--borda-card); border-radius:18px !important; background:var(--fundo-suave) !important; box-shadow:none !important;
+}
+.menu-wrapper label{ font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#3f3a35; }
+.menu-wrapper br{ display:block; content:""; margin-bottom:4px; }
+.menu-wrapper input, .menu-wrapper select{
+  min-height:40px; padding:0 14px !important; border:1px solid var(--line) !important; border-radius:999px !important;
+  background:#ffffff !important; color:var(--text); font-size:14px; font-weight:600; outline:none;
+}
+.menu-wrapper input:focus, .menu-wrapper select:focus{ border-color:var(--primary) !important; box-shadow:0 0 0 3px rgba(90,90,85,.12); }
+.menu-btn{
+  min-height:40px; padding:0 18px !important; border:1px solid var(--line) !important; border-radius:999px !important;
+  background:#ffffff !important; color:var(--text) !important; font-size:12px !important; font-weight:800 !important;
+  letter-spacing:.1em; text-transform:uppercase; transition:background-color .15s, border-color .15s, color .15s !important;
+}
+.menu-btn:hover{ background:var(--fundo-suave) !important; border-color:var(--primary) !important; color:var(--text) !important; }
+.menu-btn.active{ background:var(--primary-dark) !important; border-color:var(--primary-dark) !important; color:#ffffff !important; }
+#btnDashboard{ margin-right:auto; }
+
+/* Tabela */
+.card-tabela{ margin:0 24px 30px !important; padding:0 !important; overflow:hidden; border:1px solid var(--borda-card); border-radius:18px !important; box-shadow:var(--sombra-card) !important; }
+#corridas::before{
+  content:"Corridas"; display:block; padding:12px 22px; background:var(--primary); color:#ffffff;
+  font-family:var(--serif); font-size:22px; font-weight:500; letter-spacing:.12em; text-transform:uppercase;
+}
+thead{ background:#ffffff !important; color:#3f3a35 !important; }
+thead th{ padding:12px 14px !important; border-bottom:1px solid var(--borda-card); background:#ffffff !important; color:#3f3a35 !important; font-size:12px !important; font-weight:700 !important; letter-spacing:.1em; text-transform:uppercase; text-align:left; white-space:nowrap; }
+tbody td{ padding:11px 14px !important; border-bottom:1px solid var(--linha-tabela) !important; font-size:14px !important; font-weight:500; }
+tbody tr:nth-child(even){ background:#fcfbf8; }
+tbody tr:hover{ background:#f6f3ec !important; }
+
+/* Situação: etiqueta arredondada com cores suaves */
+.status-select{ min-height:32px; padding:0 12px !important; border:0 !important; border-radius:999px !important; font-size:12px !important; font-weight:800 !important; cursor:pointer; }
+.status-select.status-pendente{ background:#fef3c7 !important; color:#92400e !important; }
+.status-select.status-conferido{ background:#e0ecff !important; color:#1e40af !important; }
+.status-select.status-pago{ background:#dcfce7 !important; color:#166534 !important; }
+.status-select.status-recusado{ background:#fee2e2 !important; color:#b91c1c !important; }
+.status-select option{ background:#ffffff; color:var(--text); }
+
+/* Janelas */
+#modalBloqueio, #modalExport, #modalPermissao{ background:rgba(37,30,25,.45) !important; }
+.modal-box, .modal-export-box, #modalPermissao > div{ border-radius:18px !important; border:1px solid var(--borda-card); box-shadow:0 24px 70px rgba(37,30,25,.25) !important; font-family:var(--sans) !important; }
+.modal-box h3, .modal-export-box h3, #modalPermissao h3{ font-family:var(--serif) !important; font-size:24px !important; font-weight:500 !important; letter-spacing:.08em; text-transform:uppercase; color:var(--text) !important; }
+.modal-btn, #modalPermissao button{ min-height:42px; padding:0 20px !important; border:0 !important; border-radius:999px !important; background:var(--primary-dark) !important; color:#ffffff !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; }
+
+/* Dashboard embutido: sem a moldura de tabela */
+#dashboard.card-tabela{ border:0 !important; box-shadow:none !important; overflow:visible; background:transparent !important; margin:0 24px 30px !important; }
+
+@media (max-width:760px){
+  header{ padding:52px 14px 16px !important; }
+  .header-right{ left:14px; right:14px; justify-content:space-between; }
+  .menu-wrapper{ margin:16px 14px !important; }
+  .card-tabela, #dashboard.card-tabela{ margin:0 14px 24px !important; overflow-x:auto; }
+}
+</style>
+
+  <style id="painel-uber">
+/* =========================================================
+   PAINEL DO ALMOXARIFADO (tela cheia, escuro) — mesmo estilo do painel de fretes
+========================================================= */
+.painel-embutido{
+  --p-fundo:#111318; --p-card:#1b1e24; --p-borda:rgba(255,255,255,.07);
+  --p-texto:#f4f5f7; --p-texto2:#a9aeb8; --p-grade:rgba(255,255,255,.06);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --ok:#22c55e; --aviso:#f59e0b; --ruim:#ef4444;
+  position:fixed; inset:0; z-index:1000; display:none; flex-direction:column;
+  background:
+    radial-gradient(900px 380px at 10% -10%, rgba(57,135,229,.16), transparent 60%),
+    radial-gradient(700px 320px at 100% 0%, rgba(217,89,38,.10), transparent 60%),
+    var(--p-fundo);
+  color:var(--p-texto); font-family:"Manrope", system-ui, sans-serif; -webkit-font-smoothing:antialiased;
+}
+.painel-embutido.aberto{ display:flex; }
+body.painel-aberto{ overflow:hidden; }
+
+.pa-topo{ display:flex; align-items:center; flex-wrap:wrap; gap:12px 18px; padding:16px 28px; border-bottom:1px solid var(--p-borda); }
+.pa-topo h2{ margin:0; font-size:20px; font-weight:800; letter-spacing:.02em; }
+.pa-topo p{ margin:2px 0 0; font-size:13px; color:var(--p-texto2); font-weight:600; }
+.pa-topo-dir{ display:flex; align-items:center; gap:12px; margin-left:auto; flex-wrap:wrap; }
+.pa-vivo{ display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; color:var(--p-texto2); }
+.pa-vivo i{ width:8px; height:8px; border-radius:50%; background:var(--ok); animation:pa-pulso 1.8s infinite; }
+.pa-mes{ display:inline-flex; align-items:center; gap:2px; padding:4px; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid var(--p-borda); }
+.pa-mes button{ width:32px; height:32px; border:0; border-radius:50%; background:transparent; color:var(--p-texto); font-size:18px; cursor:pointer; }
+.pa-mes button:hover{ background:rgba(255,255,255,.08); }
+.pa-mes span{ min-width:150px; text-align:center; font-size:14px; font-weight:800; text-transform:capitalize; }
+.pa-fechar{ width:38px; height:38px; border:1px solid var(--p-borda); border-radius:50%; background:transparent; color:var(--p-texto2); font-size:20px; cursor:pointer; }
+.pa-fechar:hover{ color:#fff; border-color:rgba(255,255,255,.25); }
+
+.pa-corpo{ flex:1; overflow-y:auto; padding:20px 28px 34px; display:grid; gap:16px; align-content:start; }
+.pa-secao{ display:flex; align-items:center; gap:12px; margin:6px 0 -4px; font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:#7d8490; }
+.pa-secao::after{ content:""; flex:1; height:1px; background:var(--p-borda); }
+
+.pa-card{
+  position:relative; min-width:0; padding:18px; border:1px solid var(--p-borda); border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)), var(--p-card);
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 12px 30px rgba(0,0,0,.25);
+  animation:pa-subir .6s cubic-bezier(.2,.8,.2,1) both;
+}
+.pa-card h3{ margin:0; font-size:15px; font-weight:800; color:var(--p-texto); }
+.pa-sub{ margin:3px 0 14px; font-size:13px; color:var(--p-texto2); font-weight:600; }
+.pa-card-topo{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+
+.pa-g4{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; }
+.pa-g21{ display:grid; grid-template-columns:minmax(0, 2.1fr) minmax(0, 1fr); gap:14px; }
+.pa-g3{ display:grid; grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap:14px; }
+.pa-g3b{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
+
+/* Indicadores */
+.pa-kpi{ padding:16px 16px 0; overflow:hidden; }
+.pa-kpi:nth-child(2){ animation-delay:.06s; } .pa-kpi:nth-child(3){ animation-delay:.12s; } .pa-kpi:nth-child(4){ animation-delay:.18s; }
+.pa-rot{ display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--p-texto2); }
+.pa-ico{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; flex:0 0 34px; }
+.pa-ico svg{ width:18px; height:18px; }
+.pa-valor{ display:block; margin-top:12px; font-size:28px; font-weight:800; letter-spacing:-.01em; font-variant-numeric:tabular-nums; }
+.pa-valor small{ font-size:15px; color:var(--p-texto2); margin-left:4px; font-weight:700; }
+.pa-rodape{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; font-weight:700; color:var(--p-texto2); }
+.pa-delta{ display:inline-flex; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; }
+.pa-delta.sobe{ background:rgba(239,68,68,.14); color:#f87171; }
+.pa-delta.desce{ background:rgba(34,197,94,.14); color:#4ade80; }
+.pa-delta.neutro{ background:rgba(255,255,255,.07); color:var(--p-texto2); }
+.pa-delta.bom-sobe{ background:rgba(34,197,94,.14); color:#4ade80; }
+.pa-spark{ display:block; width:calc(100% + 32px); height:54px; margin:10px -16px 0; }
+
+/* Alertas */
+.pa-alerta{ display:flex; align-items:center; gap:14px; padding:16px 18px; cursor:default; }
+.pa-alerta .pa-ico{ width:44px; height:44px; flex-basis:44px; border-radius:12px; }
+.pa-alerta .pa-ico svg{ width:22px; height:22px; }
+.pa-alerta strong{ display:block; font-size:28px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; }
+.pa-alerta span{ display:block; margin-top:5px; font-size:13px; font-weight:700; color:var(--p-texto2); }
+.pa-alerta.ruim strong{ color:#f87171; }
+.pa-alerta.aviso strong{ color:#fbbf24; }
+
+/* Gráficos SVG */
+.pa-area{ position:relative; }
+.pa-area svg{ display:block; width:100%; overflow:visible; }
+.pa-area .eixo{ font-size:12px; fill:#7d8490; font-family:"Manrope", sans-serif; font-weight:600; }
+.pa-area .grade{ stroke:var(--p-grade); stroke-width:1; }
+.pa-area .linha{ fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+.pa-area .cruz{ stroke:rgba(255,255,255,.35); stroke-width:1; opacity:0; }
+.pa-area .ponto{ stroke:var(--p-card); stroke-width:3; opacity:0; }
+.pa-area.focado .cruz, .pa-area.focado .ponto{ opacity:1; }
+.pa-legenda{ display:flex; gap:14px; flex-wrap:wrap; font-size:13px; font-weight:700; color:var(--p-texto2); }
+.pa-legenda span{ display:inline-flex; align-items:center; gap:7px; }
+.pa-legenda i{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+.pa-col{ transform-box:fill-box; transform-origin:bottom; transform:scaleY(0); transition:transform .9s cubic-bezier(.2,.8,.2,1); }
+.pa-area.pronto .pa-col{ transform:scaleY(1); }
+.pa-destaque{ display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:rgba(57,135,229,.14); color:#8cbcf3; font-size:13px; font-weight:800; }
+
+/* Medidor */
+.pa-medidor{ display:grid; justify-items:center; gap:12px; }
+.pa-medidor svg{ width:200px; height:200px; }
+.pa-medidor .num{ font-size:42px; font-weight:800; fill:var(--p-texto); font-family:"Manrope", sans-serif; }
+.pa-medidor .txt{ font-size:11px; font-weight:800; letter-spacing:.12em; fill:var(--p-texto2); font-family:"Manrope", sans-serif; }
+.pa-medidor .arco{ transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1); }
+
+/* Rankings */
+.pa-rank-lista{ display:grid; gap:12px; }
+.pa-rank{ display:grid; grid-template-columns:28px minmax(0, 1fr) auto; align-items:center; gap:4px 12px; }
+.pa-rank .pos{ grid-row:span 2; width:28px; height:28px; border-radius:9px; display:grid; place-items:center; background:rgba(255,255,255,.06); font-size:13px; font-weight:800; color:var(--p-texto2); }
+.pa-rank:first-child .pos{ background:rgba(57,135,229,.2); color:#8cbcf3; }
+.pa-rank .nome{ font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pa-rank .vl{ font-weight:800; font-size:14px; font-variant-numeric:tabular-nums; text-align:right; }
+.pa-rank .trilho{ grid-column:2 / -1; height:8px; border-radius:999px; background:rgba(255,255,255,.06); overflow:hidden; }
+.pa-rank .cheio{ display:block; height:100%; width:0; border-radius:999px; transition:width 1.1s cubic-bezier(.2,.8,.2,1); }
+.pa-rank .sub{ grid-column:2 / -1; margin-top:-2px; font-size:12px; color:var(--p-texto2); font-weight:600; }
+.c-azul{ background:linear-gradient(90deg, #256abf, #5fa3f0); box-shadow:0 0 12px rgba(57,135,229,.45); }
+.c-laranja{ background:linear-gradient(90deg, #b5461b, #f08a5d); box-shadow:0 0 12px rgba(217,89,38,.45); }
+.c-verde{ background:linear-gradient(90deg, #127a55, #2fd29a); box-shadow:0 0 12px rgba(25,158,112,.45); }
+.c-vermelho{ background:linear-gradient(90deg, #b91c1c, #f87171); box-shadow:0 0 12px rgba(239,68,68,.45); }
+.c-amarelo{ background:linear-gradient(90deg, #b45309, #fbbf24); box-shadow:0 0 12px rgba(245,158,11,.4); }
+
+/* Estoque crítico */
+.pa-critico{ display:grid; gap:8px; }
+.pa-critico div.linha{ display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:6px 12px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.035); }
+.pa-critico .nome{ font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pa-critico .qtd{ font-size:13px; font-weight:800; font-variant-numeric:tabular-nums; }
+.pa-critico .qtd.zero{ color:#f87171; }
+.pa-critico .trilho{ grid-column:1 / -1; height:6px; border-radius:999px; background:rgba(255,255,255,.06); overflow:hidden; }
+.pa-critico .cheio{ display:block; height:100%; width:0; border-radius:999px; transition:width 1s cubic-bezier(.2,.8,.2,1); }
+
+.pa-vazio{ padding:26px; text-align:center; color:var(--p-texto2); font-weight:600; }
+.pa-carregando{ padding:80px 20px; text-align:center; color:var(--p-texto2); font-weight:700; }
+.pa-carregando i{ display:block; width:34px; height:34px; margin:0 auto 14px; border-radius:50%; border:3px solid rgba(255,255,255,.1); border-top-color:var(--s1); animation:pa-girar .8s linear infinite; }
+
+.pa-dica{
+  position:absolute; z-index:5; min-width:180px; padding:10px 12px; border:1px solid rgba(255,255,255,.12); border-radius:12px;
+  background:rgba(14,16,20,.94); color:#fff; font-size:13px; line-height:1.6; pointer-events:none; opacity:0; transform:translateY(4px);
+  transition:opacity .12s, transform .12s; box-shadow:0 14px 34px rgba(0,0,0,.45);
+}
+.pa-dica.visivel{ opacity:1; transform:none; }
+.pa-dica b{ display:block; margin-bottom:2px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:#a9aeb8; }
+.pa-dica div{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.pa-dica i{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+
+@keyframes pa-subir{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+@keyframes pa-pulso{ 0%{ box-shadow:0 0 0 0 rgba(34,197,94,.55); } 70%{ box-shadow:0 0 0 8px rgba(34,197,94,0); } 100%{ box-shadow:0 0 0 0 rgba(34,197,94,0); } }
+@keyframes pa-girar{ to{ transform:rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce){
+  .pa-card, .pa-vivo i{ animation:none; }
+  .pa-col, .pa-rank .cheio, .pa-critico .cheio, .pa-medidor .arco{ transition:none; }
+}
+@media(max-width:1100px){
+  .pa-g4{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .pa-g21, .pa-g3, .pa-g3b{ grid-template-columns:1fr; }
+}
+@media(max-width:560px){
+  .pa-g4{ grid-template-columns:1fr; }
+  .pa-topo, .pa-corpo{ padding-left:14px; padding-right:14px; }
+  .pa-topo-dir{ margin-left:0; width:100%; justify-content:space-between; }
+  .pa-mes span{ min-width:110px; }
+}
+  </style>
+
+  <style id="painel-uber-claro">
+/* =========================================================
+   PAINEL DO ALMOXARIFADO — VERSÃO CLARA (cores do sistema)
+========================================================= */
+.painel-embutido{
+  --p-fundo:#fbfaf7; --p-card:#ffffff; --p-borda:#eee8df;
+  --p-texto:#251e19; --p-texto2:#5f5952; --p-grade:#efebe4;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --ok:#16a34a; --aviso:#d97706; --ruim:#dc2626;
+  background:
+    radial-gradient(900px 380px at 10% -10%, rgba(42,120,214,.06), transparent 60%),
+    radial-gradient(700px 320px at 100% 0%, rgba(235,104,52,.05), transparent 60%),
+    var(--p-fundo);
+}
+
+.pa-topo{ background:#ffffff; border-bottom:1px solid var(--p-borda); }
+.pa-topo h2{
+  font-family:"Cormorant Garamond", Georgia, serif; font-size:30px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; line-height:1.1;
+}
+.pa-mes{ background:var(--p-fundo); border-color:var(--p-borda); }
+.pa-mes button:hover{ background:#efebe4; }
+.pa-fechar:hover{ color:var(--p-texto); border-color:#cfc8bc; }
+
+.pa-secao{ color:#7d766d; }
+
+.pa-card{
+  background:#ffffff;
+  box-shadow:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+}
+
+/* Indicadores: só 3 agora (sem valor em estoque) */
+
+
+.pa-delta.sobe{ background:#fee2e2; color:#b91c1c; }
+.pa-delta.desce, .pa-delta.bom-sobe{ background:#dcfce7; color:#166534; }
+.pa-delta.neutro{ background:#f1eee8; color:var(--p-texto2); }
+
+.pa-alerta.ruim strong{ color:#dc2626; }
+.pa-alerta.aviso strong{ color:#b45309; }
+
+.pa-area .eixo{ fill:#7d766d; }
+.pa-area .cruz{ stroke:rgba(37,30,25,.3); }
+.pa-area .ponto{ stroke:#ffffff; }
+/* Sem brilho no fundo claro */
+.pa-area .linha, .pa-col, .pa-medidor .arco{ filter:none !important; }
+.pa-destaque{ background:#e8f1fc; color:#1d4ed8; }
+
+.pa-rank .pos{ background:#f4f1eb; }
+.pa-rank:first-child .pos{ background:#e0ecff; color:#1e40af; }
+.pa-rank .trilho, .pa-critico .trilho{ background:#f1eee8; }
+.c-azul, .c-laranja, .c-verde, .c-vermelho, .c-amarelo{ box-shadow:none !important; }
+.c-azul{ background:linear-gradient(90deg, #2a78d6, #5598e7); }
+.c-laranja{ background:linear-gradient(90deg, #d95926, #f08a5d); }
+.c-verde{ background:linear-gradient(90deg, #138a60, #1baf7a); }
+
+.pa-critico div.linha{ background:#faf8f4; }
+.pa-critico .qtd.zero{ color:#dc2626; }
+
+.pa-carregando i{ border-color:#efebe4; border-top-color:var(--s1); }
+
+
+  </style>
+
+<style id="painel-uber-extra">
+.painel-embutido{ position:relative !important; inset:auto !important; z-index:auto !important; display:grid !important; gap:16px; background:none !important; font-family:var(--sans) !important; }
+.painel-embutido .pa-secao{ margin:4px 0 -4px; }
+.ub-kpi{ padding-bottom:16px; }
+.ub-teto{ height:8px; margin-top:10px; border-radius:999px; background:#f1eee8; overflow:hidden; }
+.ub-teto span{ display:block; height:100%; width:0; border-radius:999px; transition:width 1.2s cubic-bezier(.2,.8,.2,1); }
+.ub-divisao{ display:grid; gap:10px; padding:12px 14px; border-radius:14px; background:#faf8f4; }
+.ub-divisao-topo strong{ font-size:14px; }
+.ub-barra{ display:flex; gap:3px; height:14px; border-radius:999px; overflow:hidden; background:#f1eee8; }
+.ub-barra span{ display:block; height:100%; }
+.ub-legenda{ display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; font-weight:600; color:#5f5952; }
+.ub-legenda i{ display:inline-block; width:10px; height:10px; margin-right:6px; border-radius:3px; vertical-align:-1px; }
+.ub-legenda b{ color:#251e19; }
+@media (prefers-reduced-motion: reduce){ .ub-teto span{ transition:none; } }
+</style>
+</head>
+
+<body>
+
+<!-- MODAL BLOQUEIO -->
+<div id="modalBloqueio">
+    <div class="modal-box">
+        <h3>Ação não permitida</h3>
+        <p>Somente o Financeiro, Diretoria ou Gerência podem marcar como Pago.</p>
+        <button class="modal-btn" onclick="fecharModal()">Entendi</button>
+    </div>
+</div>
+
+<!-- MODAL PERMISSAO PROFISSIONAL -->
+<div id="modalPermissao" style="
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.55);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:99999;
+">
+    <div style="
+        background:white;
+        padding:30px;
+        width:380px;
+        border-radius:14px;
+        text-align:center;
+        font-family: 'Segoe UI', sans-serif;
+        box-shadow:0 4px 18px rgba(0,0,0,0.18);
+        animation: fadeIn 0.2s ease;
+    ">
+        <h3 style="margin:0 0 10px 0; color:#1E40AF;">Permissão necessária</h3>
+        <p style="font-size:16px; color:#333; margin-bottom:20px;">
+            Apenas o Supervisor possui permissão para alterar este status.
+        </p>
+        <button onclick="fecharModalPermissao()" style="
+            padding:10px 18px;
+            background:#1E40AF;
+            border:none;
+            color:white;
+            font-size:15px;
+            border-radius:8px;
+            cursor:pointer;
+        ">Entendi</button>
+    </div>
+</div>
+
+<!-- MODAL EXPORT -->
+<div id="modalExport">
+    <div class="modal-export-box">
+        <h3 style="margin-bottom:10px; color:var(--azul); font-size:20px;">Gerando Arquivo...</h3>
+        <p style="font-size:15px;">Aguarde, estamos exportando seu arquivo.</p>
+    </div>
+</div>
+
+<header>
+    <h2 style="margin:0;color:var(--azul);font-weight:700;">Controle de Corridas Uber</h2>
+
+    <div class="header-right">
+        <div id="saudacao">Olá...</div>
+        <button class="btn-sair" onclick="logout()">Sair</button>
+    </div>
+</header>
+
+<div class="menu-wrapper">
+    <button id="btnCorridas" class="menu-btn active" onclick="trocarAba('corridas')">Corridas</button>
+    <button id="btnDashboard" class="menu-btn" onclick="trocarAba('dashboard')">Dashboard</button>
+
+    <div>
+        <label>Data Inicial</label><br>
+        <input type="date" id="dataInicial">
+    </div>
+
+    <div>
+        <label>Data Final</label><br>
+        <input type="date" id="dataFinal">
+    </div>
+
+    <div>
+        <label>Motorista</label><br>
+        <select id="motoristaSelect"></select>
+    </div>
+
+    <div>
+        <label>Status</label><br>
+        <select id="statusFiltro">
+            <option value="">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="conferido">Conferido</option>
+            <option value="pago">Pago</option>
+             <option value="recusado">Recusado</option>
+        </select>
+    </div>
+
+<button class="menu-btn" onclick="carregarCorridas(); carregarDashboard();">Aplicar</button>
+
+
+    <button class="menu-btn" onclick="exportarExcel()">Excel</button>
+    <button class="menu-btn" onclick="exportarPDF()">PDF</button>
+</div>
+
+<!-- TABELA -->
+<div id="corridas" class="card-tabela">
+    <table>
+        <thead>
+            <tr>
+                <th>Quem Enviou</th>
+                <th>Motorista</th>
+                <th>Data</th>
+                <th>Carro</th>
+                <th>Embarque</th>
+                <th>Destino</th>
+                <th>Horas</th>
+                <th>Total</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="tbodyCorridas">
+            <tr><td colspan="9" style="text-align:center;padding:20px;">Carregando...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="dashboard" class="hidden card-tabela"></div>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    let data = localStorage.getItem("usuarioLogado");
+    if (!data) return location.href="https://script.google.com/macros/s/AKfycbxQfSBIAQ7wTtSDurL2g77a2OETLxDG0ssf-c92i3s3mDU8DbybhhE8YBeLo7wLjM2efQ/exec";
+
+    let user = JSON.parse(data);
+    document.getElementById("saudacao").innerText =
+        `Olá, ${user.usuario} (${user.cargo})`;
+
+    google.script.run.withSuccessHandler(m => {
+        let sel = document.getElementById("motoristaSelect");
+        sel.innerHTML = "<option value=''>Todos</option>";
+        m.forEach(x=> sel.innerHTML+=`<option>${x}</option>`);
+    }).getMotoristas();
+
+    carregarCorridas();
+});
+
+function logout() {
+    localStorage.removeItem("usuarioLogado");
+    window.top.location.href =
+      "https://script.google.com/macros/s/AKfycbxQfSBIAQ7wTtSDurL2g77a2OETLxDG0ssf-c92i3s3mDU8DbybhhE8YBeLo7wLjM2efQ/exec";
+}
+
+function fecharModal(){
+    document.getElementById("modalBloqueio").style.display="none";
+}
+
+function trocarAba(x){
+    document.getElementById("corridas").classList.add("hidden");
+    document.getElementById("dashboard").classList.add("hidden");
+    document.getElementById("btnCorridas").classList.remove("active");
+    document.getElementById("btnDashboard").classList.remove("active");
+
+    if(x==="corridas"){
+        document.getElementById("corridas").classList.remove("hidden");
+        document.getElementById("btnCorridas").classList.add("active");
+    } else {
+        document.getElementById("dashboard").classList.remove("hidden");
+        document.getElementById("btnDashboard").classList.add("active");
+
+        carregarDashboard();  // <<< AQUI!
+    }
+}
+
+function mostrarModalPermissao(){
+    document.getElementById("modalPermissao").style.display = "flex";
+}
+
+function fecharModalPermissao(){
+    document.getElementById("modalPermissao").style.display = "none";
+}
+
+
+/* ATUALIZA STATUS NA PLANILHA */
+function alterarStatus(linha, novoStatus) {
+    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
+    const cargo = u.cargo;
+
+    const selectEl = event.target;
+    const statusAnterior = selectEl.getAttribute("data-valor-anterior") || "Pendente";
+
+    /***********************************************
+     * 1 — SUPERVISOR NÃO PODE ALTERAR STATUS PAGO
+     ***********************************************/
+    if (cargo === "Supervisor") {
+
+        // Bloqueia qualquer alteração de status quando atual já é Pago
+        if (statusAnterior === "Pago") {
+            mostrarModalPermissao();
+            selectEl.value = statusAnterior;
+            updateStatusColor(selectEl);
+            return;
+        }
+
+        // Bloqueia tentativa de marcar Pago
+        if (novoStatus === "Pago") {
+            document.getElementById("modalBloqueio").style.display = "flex";
+            selectEl.value = statusAnterior;
+            updateStatusColor(selectEl);
+            return;
+        }
+    }
+
+    /***********************************************
+     * 2 — FINANCEIRO: só pode CONFERIDO → PAGO
+     ***********************************************/
+    if (cargo === "Financeiro") {
+
+        // Só permite Conferido → Pago
+        if (!(statusAnterior === "Conferido" && novoStatus === "Pago")) {
+            mostrarModalPermissao();
+            selectEl.value = statusAnterior;
+            updateStatusColor(selectEl);
+            return;
+        }
+
+        // Atualiza sem senha
+        google.script.run.withSuccessHandler(() => {
+            selectEl.setAttribute("data-valor-anterior", novoStatus);
+        }).marcarStatus(linha, novoStatus, "");
+
+        return;
+    }
+
+    /***********************************************
+     * 3 — GERÊNCIA: pode tudo sem senha
+     ***********************************************/
+    if (cargo === "Gerência" || cargo === "Gerencia") {
+
+        google.script.run.withSuccessHandler(() => {
+            selectEl.setAttribute("data-valor-anterior", novoStatus);
+        }).marcarStatus(linha, novoStatus, "");
+
+        return;
+    }
+
+    /***********************************************
+     * 4 — OUTROS (caso exista)
+     ***********************************************/
+    google.script.run.withSuccessHandler(() => {
+        selectEl.setAttribute("data-valor-anterior", novoStatus);
+    }).marcarStatus(linha, novoStatus, "");
+}
+
+
+/* LISTAR CORRIDAS */
+function carregarCorridas(){
+
+    const filtros = {
+        dataInicial: document.getElementById("dataInicial").value,
+        dataFinal: document.getElementById("dataFinal").value,
+        motorista: document.getElementById("motoristaSelect").value,
+        status: document.getElementById("statusFiltro").value.toLowerCase()
+    };
+
+    document.getElementById("tbodyCorridas").innerHTML =
+        `<tr><td colspan="9" style="padding:20px;text-align:center;">Carregando...</td></tr>`;
+
+    google.script.run.withSuccessHandler(lista=>{
+
+        let tbody="";
+        if(lista.length===0){
+            tbody = `<tr><td colspan="9" style="padding:20px;text-align:center;">Nenhuma corrida encontrada</td></tr>`;
+        } else {
+            lista.forEach(l=>{
+
+                let status = (l.status || "").toLowerCase();
+
+                if(filtros.status && filtros.status !== status) return;
+
+let cls =
+    status === "pendente" ? "status-pendente" :
+    status === "conferido" ? "status-conferido" :
+    status === "pago" ? "status-pago" :
+    status === "recusado" ? "status-recusado" :
+    "status-pendente";
+
+
+                tbody+=`
+                <tr>
+                    <td>${l.quemEnviou}</td>
+                    <td>${l.motorista}</td>
+                    <td>${l.data}</td>
+                    <td>${l.carro}</td>
+                    <td>${l.embarque}</td>
+                    <td>${l.destino}</td>
+                    <td>${l.horas}</td>
+                    <td>R$ ${l.total}</td>
+
+                    <td>
+<select class="status-select ${cls}"
+        data-valor-anterior="${status.charAt(0).toUpperCase() + status.slice(1)}"
+        onchange="updateStatusColor(this); alterarStatus(${l.indexPlanilha}, this.value)">
+
+
+<option value="Pendente" ${status=="pendente"?"selected":""}>Pendente</option>
+<option value="Conferido" ${status=="conferido"?"selected":""}>Conferido</option>
+<option value="Pago" ${status=="pago"?"selected":""}>Pago</option>
+<option value="Recusado" ${status=="recusado"?"selected":""}>Recusado</option>
+
+                        </select>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        document.getElementById("tbodyCorridas").innerHTML = tbody;
+
+    }).getCorridas(filtros);
+}
+
+function updateStatusColor(el) {
+    el.classList.remove("status-pendente", "status-conferido", "status-pago", "status-recusado");
+
+    if (el.value === "Pendente") el.classList.add("status-pendente");
+    else if (el.value === "Conferido") el.classList.add("status-conferido");
+    else if (el.value === "Pago") el.classList.add("status-pago");
+    else if (el.value === "Recusado") el.classList.add("status-recusado");
+}
+
+function mostrarModalExport() {
+    document.getElementById("modalExport").style.display = "flex";
+}
+
+function ocultarModalExport() {
+    document.getElementById("modalExport").style.display = "none";
+}
+
+function exportarExcel() {
+    mostrarModalExport();
+
+    const filtros = {
+        dataInicial: document.getElementById("dataInicial").value,
+        dataFinal: document.getElementById("dataFinal").value,
+        motorista: document.getElementById("motoristaSelect").value,
+        status: document.getElementById("statusFiltro").value
+    };
+
+    google.script.run
+        .withSuccessHandler(url => {
+            ocultarModalExport();
+            window.open(url, "_blank");
+        })
+        .withFailureHandler(() => {
+            ocultarModalExport();
+            alert("Erro ao gerar Excel.");
+        })
+        .exportarExcelCorridas(filtros);
+}
+
+function exportarPDF() {
+    mostrarModalExport();
+
+    const filtros = {
+        dataInicial: document.getElementById("dataInicial").value,
+        dataFinal: document.getElementById("dataFinal").value,
+        motorista: document.getElementById("motoristaSelect").value,
+        status: document.getElementById("statusFiltro").value
+    };
+
+    google.script.run
+        .withSuccessHandler(url => {
+            ocultarModalExport();
+            window.open(url, "_blank");
+        })
+        .withFailureHandler(() => {
+            ocultarModalExport();
+            alert("Erro ao gerar PDF.");
+        })
+        .exportarPDFCorridas(filtros);
+}
+/* ============================================
+   DASHBOARD - CARREGAR DADOS E GERAR GRAFICOS
+   ============================================ */
+function carregarDashboard() {
+
+    const filtros = {
+        dataInicial: document.getElementById("dataInicial").value,
+        dataFinal: document.getElementById("dataFinal").value,
+        motorista: document.getElementById("motoristaSelect").value,
+        status: document.getElementById("statusFiltro").value
+    };
+
+    PainelUber.carregar(filtros);
+}
+
+
+</script>
+
+
+<script>
+/* =========================================================
+   DASHBOARD DAS CORRIDAS — painel claro no padrão Chiavari
+   Números principais: getDashboard (mesma regra de antes: sem as recusadas)
+   Detalhes por dia, motorista, destino e situação: getCorridas
+========================================================= */
+var PainelUber = (function(){
+
+  const COR = { s1:"#2a78d6", s2:"#eb6834", s3:"#1baf7a", ok:"#16a34a", aviso:"#d97706", ruim:"#dc2626" };
+  const STATUS = [
+    { nome:"Pendente", cor:"#d97706", classe:"c-amarelo" },
+    { nome:"Conferido", cor:"#2a78d6", classe:"c-azul" },
+    { nome:"Pago", cor:"#16a34a", classe:"c-verde" },
+    { nome:"Recusado", cor:"#dc2626", classe:"c-vermelho" }
+  ];
+  let pedido = 0;
+  const ref = {};
+
+  const $ = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v === null || v === undefined ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); };
+  const moeda = function(v){ return Number(v || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" }); };
+  const inteiro = function(v){ return Math.round(Number(v || 0)).toLocaleString("pt-BR"); };
+  const decimal = function(v){ return Number(v || 0).toLocaleString("pt-BR", { maximumFractionDigits:1 }); };
+  const curta = function(v){ const a = Math.abs(v); return a >= 1000 ? "R$ " + (v / 1000).toLocaleString("pt-BR", { maximumFractionDigits:1 }) + " mil" : "R$ " + Math.round(v).toLocaleString("pt-BR"); };
+  const quieto = function(){ return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); };
+  const depois = function(fn){ requestAnimationFrame(function(){ requestAnimationFrame(fn); }); };
+  const lerData = function(t){ const m = String(t || "").match(/^(\d{2})\/(\d{2})\/(\d{4})/); return m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12) : null; };
+
+  function contar(el, alvo, formato){
+    if (!el) return;
+    if (quieto()){ el.textContent = formato(alvo); return; }
+    const t0 = performance.now();
+    (function passo(agora){
+      const t = Math.min(1, (agora - t0) / 1100);
+      el.textContent = formato(alvo * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) requestAnimationFrame(passo);
+    })(t0);
+  }
+
+  function curva(pts){
+    const n = pts.length;
+    if (!n) return "";
+    if (n === 1) return "M" + pts[0].x + "," + pts[0].y;
+    const dx = [], m = [], t = [];
+    for (let i = 0; i < n - 1; i++){ dx[i] = pts[i + 1].x - pts[i].x; m[i] = (pts[i + 1].y - pts[i].y) / (dx[i] || 1); }
+    t[0] = m[0]; t[n - 1] = m[n - 2];
+    for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+    for (let i = 0; i < n - 1; i++){
+      if (m[i] === 0){ t[i] = 0; t[i + 1] = 0; continue; }
+      const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+      if (s > 9){ const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+    }
+    let d = "M" + pts[0].x.toFixed(1) + "," + pts[0].y.toFixed(1);
+    for (let i = 0; i < n - 1; i++){
+      const h = dx[i] / 3;
+      d += "C" + (pts[i].x + h).toFixed(1) + "," + (pts[i].y + t[i] * h).toFixed(1) + " " + (pts[i + 1].x - h).toFixed(1) + "," + (pts[i + 1].y - t[i + 1] * h).toFixed(1) + " " + pts[i + 1].x.toFixed(1) + "," + pts[i + 1].y.toFixed(1);
+    }
+    return d;
+  }
+  function desenharTraco(c, atraso){
+    if (!c || quieto()) return;
+    const L = c.getTotalLength();
+    c.style.strokeDasharray = L; c.style.strokeDashoffset = L; c.getBoundingClientRect();
+    c.style.transition = "stroke-dashoffset 1.4s cubic-bezier(.45,.05,.2,1) " + (atraso || 0) + "s";
+    c.style.strokeDashoffset = 0;
+  }
+  function escala(max){ if (max <= 4) return 4; const p = Math.pow(10, Math.floor(Math.log10(max / 4))); return Math.ceil(max / 4 / p) * p * 4; }
+
+  function dica(e, html){
+    const d = $("ubDica"), caixa = $("ubPainel").getBoundingClientRect();
+    d.innerHTML = html; d.classList.add("visivel");
+    let x = e.clientX - caixa.left + 16, y = e.clientY - caixa.top + 16;
+    if (x + d.offsetWidth > caixa.width - 8) x = e.clientX - caixa.left - d.offsetWidth - 16;
+    d.style.left = x + "px"; d.style.top = y + "px";
+  }
+  function semDica(){ const d = $("ubDica"); if (d) d.classList.remove("visivel"); }
+  const linhaDica = function(cor, rot, v){ return '<div><span>' + (cor ? '<i style="background:' + cor + '"></i>' : "") + rot + '</span><strong>' + v + '</strong></div>'; };
+
+  /* ---------- Carregar ---------- */
+  function carregar(filtros){
+    const id = ++pedido;
+    const caixa = $("dashboard");
+    caixa.innerHTML = '<div class="painel-embutido" id="ubPainel"><div class="pa-carregando"><i></i>Carregando o dashboard...</div><div class="pa-dica" id="ubDica"></div></div>';
+
+    // a lista vem sem o filtro de situação para mostrar todas as situações no gráfico
+    const filtrosLista = Object.assign({}, filtros, { status:"" });
+    let resumo = null, lista = null;
+    const pronto = function(){ if (id === pedido && resumo && lista) desenhar(resumo, lista, filtros); };
+
+    google.script.run.withSuccessHandler(function(d){ resumo = d || {}; pronto(); })
+      .withFailureHandler(function(e){ if (id === pedido) erro(e); }).getDashboard(filtros);
+    google.script.run.withSuccessHandler(function(l){ lista = Array.isArray(l) ? l : []; pronto(); })
+      .withFailureHandler(function(e){ if (id === pedido) erro(e); }).getCorridas(filtrosLista);
+  }
+
+  function erro(e){
+    $("ubPainel").innerHTML = '<div class="pa-vazio">Não foi possível carregar o dashboard: ' + esc(e && e.message ? e.message : e) + '</div><div class="pa-dica" id="ubDica"></div>';
+  }
+
+  function periodoTexto(filtros, lista){
+    if (filtros.dataInicial || filtros.dataFinal){
+      const f = function(v){ return v ? v.split("-").reverse().join("/") : "…"; };
+      return f(filtros.dataInicial) + " a " + f(filtros.dataFinal);
+    }
+    const datas = lista.map(function(c){ return lerData(c.data); }).filter(Boolean);
+    if (!datas.length) return "Todo o período";
+    const min = new Date(Math.min.apply(null, datas)), max = new Date(Math.max.apply(null, datas));
+    return min.toLocaleDateString("pt-BR") + " a " + max.toLocaleDateString("pt-BR");
+  }
+
+  /* ---------- Montagem ---------- */
+  function desenhar(d, todas, filtros){
+    const statusFiltro = String(filtros.status || "").toLowerCase();
+    const filtradas = statusFiltro ? todas.filter(function(c){ return String(c.status).toLowerCase() === statusFiltro; }) : todas;
+    const validas = filtradas.filter(function(c){ return c.status !== "Recusado"; });
+
+    const total = Number(d.totalCorridas) || 0, gasto = Number(d.valorTotal) || 0;
+    const media = Number(d.mediaValor) || 0, horas = Number(d.mediaHoras) || 0, pct = Number(d.percentualTeto) || 0;
+    // o servidor manda o % arredondado; arredonda o teto de volta (ex.: 4.000,01 → 4.000)
+    const teto = pct > 0 ? Math.round(gasto * 100 / pct / 10) * 10 : 0;
+
+    $("ubPainel").innerHTML =
+      '<div class="pa-secao" style="margin-top:0">' + esc(periodoTexto(filtros, filtradas)) + (filtros.motorista ? " · " + esc(filtros.motorista) : "") + '</div>' +
+      '<div class="pa-g4">' +
+        kpi("u1", "Corridas", COR.s1, ICO.carro, '<span>sem contar as recusadas</span>') +
+        kpi("u2", "Valor gasto", COR.s2, ICO.dinheiro, '<span>soma das corridas</span>') +
+        kpi("u3", "Média por corrida", COR.s3, ICO.media, '<span>média de ' + decimal(horas) + ' h por corrida</span>') +
+        kpiTeto(pct, teto) +
+      '</div>' +
+      '<div class="pa-g21">' +
+        '<section class="pa-card"><div class="pa-card-topo"><div><h3>Gasto por dia</h3><p class="pa-sub">Valor das corridas em cada dia</p></div><span class="pa-destaque" id="ubPico"></span></div><div class="pa-area" id="ubDias"></div></section>' +
+        '<section class="pa-card"><h3>Situação das corridas</h3><p class="pa-sub">Quantidade e valor em cada situação</p><div class="pa-rank-lista" id="ubStatus"></div></section>' +
+      '</div>' +
+      '<div class="pa-g3b">' +
+        '<section class="pa-card"><h3>Motoristas</h3><p class="pa-sub">Quanto cada um recebeu</p><div class="pa-rank-lista" id="ubMotoristas"></div></section>' +
+        '<section class="pa-card"><h3>Carro e envio</h3><p class="pa-sub">Como as corridas foram feitas e registradas</p><div class="pa-rank-lista" id="ubDivisao"></div></section>' +
+        '<section class="pa-card"><h3>Destinos mais frequentes</h3><p class="pa-sub">Para onde mais se vai</p><div class="pa-rank-lista" id="ubDestinos"></div></section>' +
+      '</div>' +
+      '<div class="pa-dica" id="ubDica"></div>';
+
+    contar($("u1"), total, inteiro);
+    contar($("u2"), gasto, moeda);
+    contar($("u3"), media, moeda);
+    contar($("u4"), pct, function(v){ return decimal(v) + "%"; });
+    depois(function(){ const b = $("u4b"); if (b) b.style.width = Math.min(100, pct) + "%"; });
+
+    dias(validas);
+    situacoes(filtradas);
+    ranking("ubMotoristas", agrupar(validas, function(c){ return c.motorista; }).slice(0, 7), "c-azul", function(r){
+      return { vl:moeda(r.valor), sub:r.qtd + (r.qtd === 1 ? " corrida" : " corridas") + " · média " + moeda(r.valor / r.qtd) };
+    });
+    divisao(d);
+    ranking("ubDestinos", agrupar(validas, function(c){ return c.destino; }).sort(function(a, b){ return b.qtd - a.qtd || b.valor - a.valor; }).slice(0, 7), "c-verde", function(r){
+      return { vl:r.qtd + (r.qtd === 1 ? " corrida" : " corridas"), sub:moeda(r.valor) };
+    }, "qtd");
+  }
+
+  const ICO = {
+    carro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l1.5-6h9L18 17"/><path d="M8 11l1.5-4h5L16 11"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>',
+    dinheiro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>',
+    media:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M4 15l5-5 4 3 7-7"/></svg>',
+    teto:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 12l4-3"/></svg>'
+  };
+  function kpi(id, rot, cor, ico, rodape){
+    return '<div class="pa-card pa-kpi ub-kpi"><div class="pa-rot"><span class="pa-ico" style="background:' + cor + '1f;color:' + cor + '">' + ico + '</span>' + rot + '</div>' +
+      '<strong class="pa-valor" id="' + id + '">0</strong><div class="pa-rodape">' + rodape + '</div></div>';
+  }
+  function kpiTeto(pct, teto){
+    const cor = pct >= 100 ? COR.ruim : pct >= 80 ? COR.aviso : COR.ok;
+    return '<div class="pa-card pa-kpi ub-kpi"><div class="pa-rot"><span class="pa-ico" style="background:' + cor + '1f;color:' + cor + '">' + ICO.teto + '</span>Teto de gastos</div>' +
+      '<strong class="pa-valor" id="u4" style="color:' + cor + '">0%</strong>' +
+      '<div class="ub-teto"><span id="u4b" style="background:' + cor + '"></span></div>' +
+      '<div class="pa-rodape"><span>' + (teto ? "do teto de " + moeda(teto) : "do teto mensal") + '</span></div></div>';
+  }
+
+  function agrupar(lista, chave){
+    const mapa = {};
+    lista.forEach(function(c){
+      const nome = String(chave(c) || "Não informado").replace(/\s+/g, " ").trim() || "Não informado";
+      const k = nome.toLowerCase();
+      (mapa[k] = mapa[k] || { nome:nome, valor:0, qtd:0 });
+      mapa[k].valor += Number(c.total) || 0; mapa[k].qtd++;
+    });
+    return Object.keys(mapa).map(function(k){ return mapa[k]; }).sort(function(a, b){ return b.valor - a.valor || b.qtd - a.qtd; });
+  }
+
+  function ranking(alvo, lista, cor, textos, medida){
+    const caixa = $(alvo);
+    if (!lista.length){ caixa.innerHTML = '<div class="pa-vazio">Sem corridas no período.</div>'; return; }
+    const campo = medida || "valor";
+    const max = Math.max.apply(null, lista.map(function(r){ return r[campo]; }).concat([1]));
+    caixa.innerHTML = lista.map(function(r, i){
+      const t = textos(r), classe = typeof cor === "function" ? cor(r) : cor;
+      return '<div class="pa-rank"><span class="pos">' + (i + 1) + '</span><span class="nome" title="' + esc(r.nome) + '">' + esc(r.nome) + '</span><span class="vl">' + t.vl + '</span>' +
+        '<span class="trilho"><span class="cheio ' + classe + '" data-l="' + (r[campo] / max * 100).toFixed(1) + '" style="transition-delay:' + (0.3 + i * 0.07) + 's"></span></span>' +
+        (t.sub ? '<span class="sub">' + t.sub + '</span>' : "") + '</div>';
+    }).join("");
+    depois(function(){ caixa.querySelectorAll(".cheio").forEach(function(b){ b.style.width = b.dataset.l + "%"; }); });
+  }
+
+  function situacoes(lista){
+    const caixa = $("ubStatus");
+    const totalQtd = lista.length || 1;
+    caixa.innerHTML = STATUS.map(function(s, i){
+      const itens = lista.filter(function(c){ return String(c.status).toLowerCase() === s.nome.toLowerCase(); });
+      const valor = itens.reduce(function(t, c){ return t + (Number(c.total) || 0); }, 0);
+      return '<div class="pa-rank" style="grid-template-columns:12px minmax(0,1fr) auto"><span style="grid-row:span 2;width:12px;height:12px;border-radius:50%;background:' + s.cor + '"></span>' +
+        '<span class="nome">' + s.nome + '</span><span class="vl">' + itens.length + '</span>' +
+        '<span class="trilho"><span class="cheio ' + s.classe + '" data-l="' + (itens.length / totalQtd * 100).toFixed(1) + '" style="transition-delay:' + (0.3 + i * 0.08) + 's"></span></span>' +
+        '<span class="sub">' + Math.round(itens.length / totalQtd * 100) + '% das corridas · ' + moeda(valor) + '</span></div>';
+    }).join("");
+    depois(function(){ caixa.querySelectorAll(".cheio").forEach(function(b){ b.style.width = b.dataset.l + "%"; }); });
+  }
+
+  function divisao(d){
+    const caixa = $("ubDivisao");
+    const blocos = [
+      { titulo:"Carro", dados:d.grafCarro || {}, cores:[COR.s1, COR.s2] },
+      { titulo:"Quem registrou", dados:d.grafEnvio || {}, cores:[COR.s3, "#a8a29a"] }
+    ];
+    caixa.innerHTML = blocos.map(function(b, i){
+      const nomes = Object.keys(b.dados), total = nomes.reduce(function(t, n){ return t + (Number(b.dados[n]) || 0); }, 0) || 1;
+      return '<div class="ub-divisao"><div class="ub-divisao-topo"><strong>' + b.titulo + '</strong></div>' +
+        '<div class="ub-barra">' + nomes.map(function(n, j){
+          const p = (Number(b.dados[n]) || 0) / total * 100;
+          return p ? '<span style="width:' + p.toFixed(1) + '%;background:' + b.cores[j % 2] + ';transition-delay:' + (0.3 + i * 0.1) + 's" class="ub-parte" data-l="' + p.toFixed(1) + '"></span>' : "";
+        }).join("") + '</div>' +
+        '<div class="ub-legenda">' + nomes.map(function(n, j){
+          const v = Number(b.dados[n]) || 0;
+          return '<span><i style="background:' + b.cores[j % 2] + '"></i>' + esc(n) + ' <b>' + v + '</b> <small>' + Math.round(v / total * 100) + '%</small></span>';
+        }).join("") + '</div></div>';
+    }).join("");
+  }
+
+  /* ---------- Gasto por dia ---------- */
+  function dias(lista){
+    const area = $("ubDias");
+    const mapa = {};
+    lista.forEach(function(c){ const d = lerData(c.data); if (!d) return; const k = d.getTime(); (mapa[k] = mapa[k] || { data:d, valor:0, qtd:0 }); mapa[k].valor += Number(c.total) || 0; mapa[k].qtd++; });
+    const chaves = Object.keys(mapa).map(Number).sort(function(a, b){ return a - b; });
+    if (!chaves.length){ area.innerHTML = '<div class="pa-vazio">Sem corridas no período.</div>'; $("ubPico").textContent = ""; return; }
+
+    // preenche os dias sem corrida com zero (até 120 dias; acima disso agrupa por semana)
+    const umDia = 86400000, ini = chaves[0], fim = chaves[chaves.length - 1];
+    let s = [];
+    const porSemana = (fim - ini) / umDia > 120;
+    if (porSemana){
+      const semanas = {};
+      chaves.forEach(function(k){ const d = new Date(k); const seg = new Date(d); seg.setDate(d.getDate() - ((d.getDay() + 6) % 7)); const sk = seg.getTime();
+        (semanas[sk] = semanas[sk] || { data:seg, valor:0, qtd:0 }); semanas[sk].valor += mapa[k].valor; semanas[sk].qtd += mapa[k].qtd; });
+      s = Object.keys(semanas).map(Number).sort(function(a, b){ return a - b; }).map(function(k){ return semanas[k]; });
+    } else {
+      for (let t = ini; t <= fim; t += umDia) s.push(mapa[t] || { data:new Date(t), valor:0, qtd:0 });
+    }
+    const maior = s.reduce(function(a, b){ return b.valor > a.valor ? b : a; });
+    $("ubPico").textContent = "▲ Pico: " + (porSemana ? "semana de " : "") + maior.data.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" }) + " · " + curta(maior.valor);
+
+    const W = Math.max(320, area.clientWidth || 700), H = 300, m = { e:62, d:12, t:16, b:30 };
+    const larg = W - m.e - m.d, alt = H - m.t - m.b, n = s.length, topo = escala(maior.valor);
+    const x = function(i){ return m.e + (n === 1 ? larg / 2 : larg * i / (n - 1)); };
+    const y = function(v){ return m.t + alt - alt * v / topo; };
+    const linha = curva(s.map(function(v, i){ return { x:x(i), y:y(v.valor) }; }));
+    let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" height="' + H + '" role="img" aria-label="Gasto por dia"><defs><linearGradient id="ubG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + COR.s2 + '" stop-opacity=".25"/><stop offset="100%" stop-color="' + COR.s2 + '" stop-opacity="0"/></linearGradient></defs>';
+    for (let i = 0; i <= 4; i++){ const yy = y(topo * i / 4).toFixed(1); svg += '<line class="grade" x1="' + m.e + '" x2="' + (W - m.d) + '" y1="' + yy + '" y2="' + yy + '"/><text class="eixo" x="' + (m.e - 10) + '" y="' + (Number(yy) + 4) + '" text-anchor="end">' + curta(topo * i / 4) + '</text>'; }
+    const salto = Math.max(1, Math.ceil(n / Math.max(1, Math.floor(larg / 60))));
+    s.forEach(function(v, i){ if (!(i % salto) || i === n - 1) svg += '<text class="eixo" x="' + x(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + v.data.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" }) + '</text>'; });
+    svg += (n > 1 ? '<path class="pa-pre" d="' + linha + "L" + x(n - 1).toFixed(1) + "," + y(0) + "L" + x(0).toFixed(1) + "," + y(0) + 'Z" fill="url(#ubG)" style="opacity:0;transition:opacity 1.2s .5s"/>' : "") +
+      '<path class="linha" d="' + linha + '" stroke="' + COR.s2 + '"/>' +
+      (n === 1 ? '<circle cx="' + x(0) + '" cy="' + y(s[0].valor) + '" r="6" fill="' + COR.s2 + '"/>' : "") +
+      '<line class="cruz" id="ubCruz" y1="' + m.t + '" y2="' + (m.t + alt) + '"/><circle class="ponto" id="ubPonto" r="6" fill="' + COR.s2 + '"/>' +
+      '<rect id="ubAlvo" x="' + m.e + '" y="' + m.t + '" width="' + larg + '" height="' + alt + '" fill="transparent"/></svg>';
+    area.innerHTML = svg;
+    desenharTraco(area.querySelector("path.linha"), 0);
+    depois(function(){ const p = area.querySelector(".pa-pre"); if (p) p.style.opacity = 1; });
+    const alvo = $("ubAlvo");
+    alvo.addEventListener("mousemove", function(e){
+      const r = alvo.getBoundingClientRect();
+      const i = n === 1 ? 0 : Math.max(0, Math.min(n - 1, Math.round((e.clientX - r.left) / r.width * (n - 1)))), v = s[i];
+      area.classList.add("focado");
+      $("ubCruz").setAttribute("x1", x(i)); $("ubCruz").setAttribute("x2", x(i));
+      $("ubPonto").setAttribute("cx", x(i)); $("ubPonto").setAttribute("cy", y(v.valor));
+      dica(e, "<b>" + (porSemana ? "Semana de " : "") + v.data.toLocaleDateString("pt-BR") + "</b>" + linhaDica(COR.s2, "Gasto", moeda(v.valor)) + linhaDica("", "Corridas", v.qtd));
+    });
+    alvo.addEventListener("mouseleave", function(){ area.classList.remove("focado"); semDica(); });
+  }
+
+  return { carregar:carregar };
+})();
+</script>
+</body>
+</html>
+

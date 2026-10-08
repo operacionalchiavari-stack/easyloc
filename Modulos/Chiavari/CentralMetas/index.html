@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Central de Metas</title>
+  <style>html,body{margin:0;height:100%;background:#fff}</style>
+  <script>
+    /* Mesmo roteamento do doGet do Apps Script deste sistema */
+    (function () {
+      var p = new URLSearchParams(location.search);
+      var destino = "central.html";
+      if (["equipe"].indexOf(p.get("p")) >= 0) { destino = "equipe.html"; }
+      if (["painel"].indexOf(p.get("p")) >= 0) { destino = "itens-danificados.html"; }
+      location.replace(destino + location.search + location.hash);
+    })();
+  </script>
+</head>
+<body></body>
+</html>

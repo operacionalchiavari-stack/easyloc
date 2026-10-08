@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="central"></script>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meu Bônus</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   MEU BÔNUS — APP DA EQUIPE
+   Mesma identidade da Central de Metas
+========================================================= */
+
+:root{
+  --bg:#f8f6f0;
+  --card:#ffffff;
+  --line:#e7e1d7;
+  --text:#251e19;
+  --muted:#77716a;
+  --soft:#ecece6;
+  --hero:#2b2a26;
+  --hero-text:#f8f6f0;
+  --hero-muted:#b9b4aa;
+  --premiacao:#4f6340;
+  --premiacao-soft:#e6ebdf;
+  --livre:#5a5a55;
+  --ok:#16a34a;
+  --ok-soft:#dcfce7;
+  --nao:#b45309;
+  --nao-soft:#fef3c7;
+  --erro:#dc2626;
+  --serif:"Cormorant Garamond", Georgia, serif;
+  --sans:"Manrope", system-ui, sans-serif;
+  --sombra:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#191816;
+    --card:#232220;
+    --line:#35332f;
+    --text:#f1ede5;
+    --muted:#a39d93;
+    --soft:#2d2b28;
+    --hero:#2e2c28;
+    --premiacao:#8fa77a;
+    --premiacao-soft:#2c3326;
+    --livre:#a8a49b;
+    --ok:#4ade80;
+    --ok-soft:#173222;
+    --nao:#fbbf24;
+    --nao-soft:#3a2e12;
+    --sombra:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+
+*{ box-sizing:border-box; }
+
+html, body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+
+button{ font-family:inherit; }
+
+.app{
+  width:100%;
+  max-width:480px;
+  margin:0 auto;
+  padding:16px 16px calc(32px + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+
+.oculto{ display:none !important; }
+
+/* ---------- Entrada ---------- */
+
+.entrada{
+  min-height:calc(100vh - 48px);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:28px;
+}
+
+.entrada-marca{ text-align:center; }
+
+.entrada-selo{
+  width:64px;
+  height:64px;
+  margin:0 auto 14px;
+  border-radius:20px;
+  background:var(--hero);
+  color:var(--hero-text);
+  display:grid;
+  place-items:center;
+  font-family:var(--serif);
+  font-size:30px;
+  font-weight:600;
+}
+
+.entrada-marca h1{
+  font-family:var(--serif);
+  font-size:40px;
+  font-weight:600;
+  margin:0;
+  line-height:1;
+}
+
+.entrada-marca p{
+  margin:8px 0 0;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.entrada-cartao{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:22px 20px;
+  box-shadow:var(--sombra);
+  display:grid;
+  gap:16px;
+}
+
+.campo label{
+  display:block;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.campo input{
+  width:100%;
+  font:inherit;
+  font-size:18px;
+  font-weight:600;
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:var(--bg);
+  color:var(--text);
+  outline:none;
+}
+
+.campo input:focus{ border-color:var(--text); }
+
+.campo input.pin{
+  letter-spacing:.6em;
+  text-align:center;
+  font-size:24px;
+}
+
+.entrada-erro{
+  color:var(--erro);
+  font-size:14px;
+  font-weight:600;
+  min-height:1em;
+}
+
+.botao{
+  width:100%;
+  border:0;
+  border-radius:14px;
+  padding:16px;
+  font-size:16px;
+  font-weight:700;
+  background:var(--hero);
+  color:var(--hero-text);
+  cursor:pointer;
+}
+
+.botao:disabled{ opacity:.6; cursor:wait; }
+
+.entrada-ajuda{
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+  margin:0;
+}
+
+/* ---------- Cabeçalho / perfil ---------- */
+
+.heroi{
+  background:var(--hero);
+  color:var(--hero-text);
+  border-radius:26px;
+  padding:20px;
+  box-shadow:var(--sombra);
+}
+
+.perfil{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.avatar{
+  width:64px;
+  height:64px;
+  flex:0 0 64px;
+  border-radius:50%;
+  overflow:hidden;
+  background:#4a4843;
+  display:grid;
+  place-items:center;
+  font-family:var(--serif);
+  font-size:26px;
+  font-weight:600;
+  color:var(--hero-text);
+  border:2px solid rgba(248,246,240,.25);
+}
+
+.avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.perfil-texto{ min-width:0; flex:1; }
+
+.perfil-ola{
+  font-size:13px;
+  color:var(--hero-muted);
+  margin:0;
+}
+
+.perfil-nome{
+  font-family:var(--serif);
+  font-size:28px;
+  font-weight:600;
+  line-height:1.05;
+  margin:2px 0 4px;
+  overflow-wrap:anywhere;
+}
+
+.perfil-cargo{
+  font-size:13px;
+  color:var(--hero-muted);
+  margin:0;
+}
+
+.btn-sair{
+  align-self:flex-start;
+  border:1px solid rgba(248,246,240,.25);
+  background:transparent;
+  color:var(--hero-text);
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.heroi-total{
+  margin-top:22px;
+  padding-top:18px;
+  border-top:1px solid rgba(248,246,240,.14);
+}
+
+.heroi-rotulo{
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--hero-muted);
+}
+
+.heroi-valor{
+  font-size:38px;
+  font-weight:800;
+  letter-spacing:-.02em;
+  margin-top:4px;
+  font-variant-numeric:tabular-nums;
+}
+
+.heroi-valor small{
+  font-size:18px;
+  font-weight:700;
+  margin-right:4px;
+  color:var(--hero-muted);
+}
+
+.heroi-mini{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+  gap:10px;
+  margin-top:16px;
+}
+
+.mini{
+  background:rgba(248,246,240,.07);
+  border-radius:16px;
+  padding:12px 14px;
+}
+
+.mini .heroi-rotulo{ font-size:11px; }
+
+.mini-valor{
+  font-size:18px;
+  font-weight:800;
+  margin-top:4px;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- Anos ---------- */
+
+.anos{
+  display:flex;
+  gap:8px;
+  margin:18px 0 4px;
+  overflow-x:auto;
+}
+
+.ano-chip{
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--text);
+  border-radius:999px;
+  padding:8px 16px;
+  font-weight:700;
+  font-size:14px;
+  cursor:pointer;
+}
+
+.ano-chip.ativo{
+  background:var(--text);
+  color:var(--bg);
+  border-color:var(--text);
+}
+
+/* ---------- Seções ---------- */
+
+.secao{
+  min-width:0;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:18px;
+  margin-top:16px;
+  box-shadow:var(--sombra);
+}
+
+.secao h2{
+  font-family:var(--serif);
+  font-size:24px;
+  font-weight:600;
+  margin:0 0 2px;
+}
+
+.secao-sub{
+  color:var(--muted);
+  font-size:13px;
+  margin:0 0 14px;
+}
+
+/* ---------- Gráfico de barras ---------- */
+
+.grafico{
+  display:grid;
+  grid-template-columns:repeat(12, minmax(0, 1fr));
+  gap:6px;
+  align-items:end;
+  height:150px;
+  padding-top:18px;
+}
+
+.barra-col{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  height:100%;
+  gap:6px;
+  cursor:pointer;
+  border:0;
+  background:none;
+  padding:0;
+  color:inherit;
+}
+
+.barra-col:disabled{ cursor:default; }
+
+.barra{
+  width:100%;
+  max-width:22px;
+  border-radius:6px 6px 3px 3px;
+  background:var(--livre);
+  min-height:3px;
+  transition:height .5s ease;
+}
+
+.barra.premiacao{ background:var(--premiacao); }
+
+.barra.vazia{
+  background:var(--soft);
+  height:3px !important;
+}
+
+.barra-mes{
+  font-size:10px;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+
+.legenda{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-top:14px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.legenda i{
+  display:inline-block;
+  width:10px;
+  height:10px;
+  border-radius:3px;
+  margin-right:6px;
+  vertical-align:-1px;
+}
+
+/* ---------- Extrato ---------- */
+
+.extrato{ display:grid; gap:10px; }
+
+.mov{
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+  scroll-margin-top:16px;
+}
+
+.mov.destaque{ animation:piscar 1.2s ease; }
+
+@keyframes piscar{
+  0%,100%{ box-shadow:none; }
+  30%{ box-shadow:0 0 0 3px var(--premiacao); }
+}
+
+.mov-topo{
+  min-width:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border:0;
+  background:none;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+
+.mov-icone{
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  background:var(--soft);
+  color:var(--livre);
+}
+
+.mov-icone.premiacao{
+  background:var(--premiacao-soft);
+  color:var(--premiacao);
+}
+
+.mov-icone svg{ width:20px; height:20px; }
+
+.mov-info{ flex:1; min-width:0; }
+
+.mov-mes{
+  font-weight:800;
+  font-size:15px;
+}
+
+.mov-tipo{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+.mov-valor{
+  text-align:right;
+  font-weight:800;
+  font-size:16px;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+.mov-valor .positivo{ color:var(--ok); }
+.mov-valor .zero{ color:var(--muted); }
+
+.mov-status{
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  margin-top:3px;
+}
+
+.mov-status.pago{ color:var(--ok); }
+.mov-status.aguardando{ color:var(--muted); }
+
+.mov-detalhe{
+  display:none;
+  padding:0 14px 14px;
+}
+
+.mov.aberto .mov-detalhe{ display:block; }
+
+.linhas{
+  border-top:1px dashed var(--line);
+  padding-top:10px;
+  display:grid;
+  gap:8px;
+  font-size:14px;
+}
+
+.linha{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.linha span:first-child{ color:var(--muted); }
+
+.linha strong{ font-variant-numeric:tabular-nums; }
+
+.linha.total{
+  border-top:1px solid var(--line);
+  padding-top:8px;
+  font-weight:800;
+}
+
+.chips{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.chip{
+  font-size:12px;
+  font-weight:700;
+  border-radius:999px;
+  padding:5px 10px;
+}
+
+.chip.sim{ background:var(--ok-soft); color:var(--ok); }
+.chip.nao{ background:var(--nao-soft); color:var(--nao); }
+
+.motivo{
+  margin:10px 0 0;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.mov-itens{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  margin-top:12px;
+}
+
+.mov-item-mini{
+  flex:0 0 72px;
+  height:72px;
+  border-radius:12px;
+  overflow:hidden;
+  background:var(--soft);
+  border:0;
+  padding:0;
+  cursor:pointer;
+}
+
+.mov-item-mini img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+/* ---------- Galeria de premiações ---------- */
+
+.galeria{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+  gap:12px;
+}
+
+.premio{
+  display:flex;
+  flex-direction:column;
+  align-self:start;
+  min-width:0;
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+  background:var(--card);
+  text-align:left;
+  padding:0;
+  color:inherit;
+  cursor:pointer;
+}
+
+.premio-foto{
+  aspect-ratio:1;
+  background:var(--soft);
+  display:grid;
+  place-items:center;
+  color:var(--muted);
+  position:relative;
+}
+
+.premio-foto img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.premio-foto svg{ width:32px; height:32px; opacity:.5; }
+
+.premio-qtd{
+  position:absolute;
+  right:8px;
+  bottom:8px;
+  background:rgba(0,0,0,.6);
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  border-radius:999px;
+  padding:3px 8px;
+}
+
+.premio-texto{ padding:10px 12px 12px; }
+
+.premio-nome{
+  font-weight:700;
+  font-size:14px;
+  line-height:1.25;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.premio-meta{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+.vazio{
+  text-align:center;
+  color:var(--muted);
+  font-size:14px;
+  padding:20px 8px;
+}
+
+/* ---------- Visualizador de fotos ---------- */
+
+.visor{
+  position:fixed;
+  inset:0;
+  background:rgba(16,15,13,.94);
+  z-index:20;
+  display:flex;
+  flex-direction:column;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+  color:#f8f6f0;
+}
+
+.visor-topo{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+
+.visor-titulo{ font-weight:800; font-size:16px; }
+.visor-sub{ font-size:13px; color:#b9b4aa; margin-top:2px; }
+
+.visor-fechar{
+  border:0;
+  background:rgba(248,246,240,.12);
+  color:#f8f6f0;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  font-size:20px;
+  cursor:pointer;
+  flex:0 0 38px;
+}
+
+.visor-fotos{
+  flex:1;
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  margin-top:16px;
+  min-height:0;
+}
+
+.visor-foto{
+  flex:0 0 100%;
+  scroll-snap-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  min-height:0;
+}
+
+.visor-foto img{
+  max-width:100%;
+  max-height:calc(100% - 30px);
+  border-radius:14px;
+  object-fit:contain;
+}
+
+.visor-foto span{
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#b9b4aa;
+}
+
+/* ---------- Carregando / rodapé ---------- */
+
+.carregando{
+  min-height:70vh;
+  display:grid;
+  place-items:center;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.giro{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  border:3px solid var(--line);
+  border-top-color:var(--text);
+  animation:girar .8s linear infinite;
+  margin:0 auto 12px;
+}
+
+@keyframes girar{ to{ transform:rotate(360deg); } }
+
+.rodape{
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- Entrada -->
+  <section id="telaEntrada" class="entrada oculto">
+
+    <div class="entrada-marca">
+      <div class="entrada-selo">B</div>
+      <h1>Meu Bônus</h1>
+      <p>Central de Metas · seu extrato pessoal</p>
+    </div>
+
+    <form class="entrada-cartao" onsubmit="entrar(event)">
+
+      <div class="campo">
+        <label for="cpf">CPF</label>
+        <input id="cpf" inputmode="numeric" autocomplete="username" placeholder="000.000.000-00" maxlength="14" oninput="mascararCpf(this)">
+      </div>
+
+      <div class="campo">
+        <label for="pin">PIN</label>
+        <input id="pin" class="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••" maxlength="4" oninput="this.value = this.value.replace(/\D/g, '')">
+      </div>
+
+      <div class="entrada-erro" id="erroEntrada" role="alert"></div>
+
+      <button type="submit" class="botao" id="btnEntrar">Entrar</button>
+
+    </form>
+
+    <p class="entrada-ajuda">Não tem PIN ou esqueceu? Peça ao seu gestor.</p>
+
+  </section>
+
+  <!-- Carregando -->
+  <section id="telaCarregando" class="carregando">
+    <div><div class="giro"></div>Carregando seu extrato...</div>
+  </section>
+
+  <!-- Extrato -->
+  <section id="telaExtrato" class="oculto">
+
+    <div class="heroi">
+
+      <div class="perfil">
+        <div class="avatar" id="avatar"></div>
+        <div class="perfil-texto">
+          <p class="perfil-ola" id="ola">Olá,</p>
+          <p class="perfil-nome" id="nome"></p>
+          <p class="perfil-cargo" id="cargo"></p>
+        </div>
+        <button type="button" class="btn-sair" onclick="sair()">Sair</button>
+      </div>
+
+      <div class="heroi-total">
+        <div class="heroi-rotulo" id="rotuloTotal">Abastecido no ano</div>
+        <div class="heroi-valor" id="valorTotal"></div>
+
+        <div class="heroi-mini">
+          <div class="mini">
+            <div class="heroi-rotulo">Pago no ano</div>
+            <div class="mini-valor" id="valorPago"></div>
+          </div>
+          <div class="mini">
+            <div class="heroi-rotulo">Saldo premiação</div>
+            <div class="mini-valor" id="valorSaldo"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="anos" id="anos"></div>
+
+    <section class="secao">
+      <h2>Mês a mês</h2>
+      <p class="secao-sub">Bônus abastecido em cada mês fechado. Toque numa barra para ver o mês.</p>
+      <div class="grafico" id="grafico"></div>
+      <div class="legenda">
+        <span><i style="background:var(--premiacao)"></i>Mês de premiação</span>
+        <span><i style="background:var(--livre)"></i>Saldo livre</span>
+      </div>
+    </section>
+
+    <section class="secao">
+      <h2>Extrato</h2>
+      <p class="secao-sub">Toque num mês para ver os detalhes.</p>
+      <div class="extrato" id="extrato"></div>
+    </section>
+
+    <section class="secao">
+      <h2>Minhas premiações</h2>
+      <p class="secao-sub" id="subPremios">O que você ganhou com o seu bônus.</p>
+      <div class="galeria" id="galeria"></div>
+    </section>
+
+    <p class="rodape" id="rodape"></p>
+
+  </section>
+
+</div>
+
+<!-- Visualizador de fotos -->
+<div class="visor oculto" id="visor" onclick="if(event.target === this){ fecharVisor(); }">
+  <div class="visor-topo">
+    <div>
+      <div class="visor-titulo" id="visorTitulo"></div>
+      <div class="visor-sub" id="visorSub"></div>
+    </div>
+    <button type="button" class="visor-fechar" onclick="fecharVisor()" aria-label="Fechar">×</button>
+  </div>
+  <div class="visor-fotos" id="visorFotos"></div>
+</div>
+
+<script>
+/* =========================================================
+   ESTADO
+========================================================= */
+
+const app = {
+  token: "",
+  dados: null,
+  ano: "",
+  premios: []
+};
+
+const NOMES_MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const SIGLAS_MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+const ICONE_PREMIO =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>';
+
+const ICONE_MOEDA =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+
+/* =========================================================
+   APOIO
+========================================================= */
+
+function lerArmazenado(nome){
+  try{ return localStorage.getItem(nome) || ""; } catch(erro){ return ""; }
+}
+
+function guardar(nome, valor){
+  try{
+    if(valor){ localStorage.setItem(nome, valor); }
+    else { localStorage.removeItem(nome); }
+  } catch(erro){}
+}
+
+function escapar(texto){
+  return String(texto === null || texto === undefined ? "" : texto)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function moeda(valor){
+  return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+/* "R$ 1.234,56" com o "R$" menor, para o número grande */
+function moedaGrande(valor){
+  const texto = moeda(valor).replace(/^R\$\s?/, "").replace(/^-R\$\s?/, "-");
+  return "<small>R$</small>" + escapar(texto);
+}
+
+function nomeMes(mes){
+  const partes = String(mes).split("-");
+  return NOMES_MESES[Number(partes[1]) - 1] + " " + partes[0];
+}
+
+function dataBR(texto){
+  const partes = String(texto || "").split("-");
+  return partes.length === 3 ? partes[2] + "/" + partes[1] + "/" + partes[0] : "";
+}
+
+function urlFoto(id, tamanho){
+  return "https://drive.google.com/thumbnail?id=" + encodeURIComponent(id) + "&sz=w" + (tamanho || 400);
+}
+
+function primeiroNome(nome){
+  const texto = String(nome || "").trim().split(/\s+/)[0] || "";
+  return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+}
+
+function nomeBonito(nome){
+  return String(nome || "")
+    .toLowerCase()
+    .replace(/(^|\s)(\S)/g, function(_, espaco, letra){ return espaco + letra.toUpperCase(); })
+    .replace(/\s(De|Da|Do|Das|Dos|E)\s/g, function(trecho){ return trecho.toLowerCase(); });
+}
+
+function iniciais(nome){
+  const partes = String(nome || "").trim().split(/\s+/);
+  return ((partes[0] || "").charAt(0) + (partes.length > 1 ? partes[partes.length - 1].charAt(0) : "")).toUpperCase();
+}
+
+function mostrarTela(id){
+  ["telaEntrada", "telaCarregando", "telaExtrato"].forEach(function(tela){
+    document.getElementById(tela).classList.toggle("oculto", tela !== id);
+  });
+}
+
+/* =========================================================
+   ENTRADA
+========================================================= */
+
+function mascararCpf(campo){
+  const n = campo.value.replace(/\D/g, "").slice(0, 11);
+  let texto = n;
+  if(n.length > 3){ texto = n.slice(0, 3) + "." + n.slice(3); }
+  if(n.length > 6){ texto = texto.slice(0, 7) + "." + n.slice(6); }
+  if(n.length > 9){ texto = texto.slice(0, 11) + "-" + n.slice(9); }
+  campo.value = texto;
+}
+
+function mostrarEntrada(mensagem){
+  app.token = "";
+  guardar("meuBonusToken", "");
+  mostrarTela("telaEntrada");
+  document.getElementById("erroEntrada").textContent = mensagem || "";
+  document.getElementById("pin").value = "";
+
+  const cpf = document.getElementById("cpf");
+  if(!cpf.value){
+    cpf.value = lerArmazenado("meuBonusCpf");
+    mascararCpf(cpf);
+  }
+
+  (cpf.value ? document.getElementById("pin") : cpf).focus();
+}
+
+function entrar(evento){
+
+  evento.preventDefault();
+
+  const cpf = document.getElementById("cpf").value.replace(/\D/g, "");
+  const pin = document.getElementById("pin").value;
+  const erro = document.getElementById("erroEntrada");
+  const botao = document.getElementById("btnEntrar");
+
+  erro.textContent = "";
+  botao.disabled = true;
+  botao.textContent = "Entrando...";
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      botao.disabled = false;
+      botao.textContent = "Entrar";
+      app.token = res.token;
+      guardar("meuBonusToken", res.token);
+      guardar("meuBonusCpf", cpf);
+      carregarExtrato();
+    })
+    .withFailureHandler(function(falha){
+      botao.disabled = false;
+      botao.textContent = "Entrar";
+      erro.textContent = (falha && falha.message) || "Não foi possível entrar.";
+      document.getElementById("pin").value = "";
+      document.getElementById("pin").focus();
+    })
+    .equipeEntrar(cpf, pin);
+
+}
+
+function sair(){
+  google.script.run.equipeSair(app.token);
+  app.dados = null;
+  mostrarEntrada("");
+}
+
+/* =========================================================
+   EXTRATO
+========================================================= */
+
+function carregarExtrato(){
+
+  mostrarTela("telaCarregando");
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      app.dados = res;
+      const anos = anosDisponiveis();
+      app.ano = anos[anos.length - 1] || String(new Date().getFullYear());
+      montarPremios();
+      render();
+      mostrarTela("telaExtrato");
+    })
+    .withFailureHandler(function(falha){
+      const mensagem = String((falha && falha.message) || "");
+      mostrarEntrada(
+        mensagem.indexOf("SESSAO_EXPIRADA") >= 0
+          ? "Sua sessão terminou. Digite seu PIN de novo."
+          : "Não foi possível carregar o extrato: " + mensagem
+      );
+    })
+    .equipeExtrato(app.token);
+
+}
+
+function anosDisponiveis(){
+  const anos = {};
+  (app.dados.meses || []).forEach(function(item){ anos[item.mes.slice(0, 4)] = true; });
+  return Object.keys(anos).sort();
+}
+
+function mesesDoAno(){
+  return app.dados.meses.filter(function(item){ return item.mes.slice(0, 4) === app.ano; });
+}
+
+function trocarAno(ano){
+  app.ano = ano;
+  render();
+}
+
+function render(){
+
+  const dados = app.dados;
+  const pessoa = dados.pessoa;
+  const meses = mesesDoAno();
+
+  /* Perfil */
+  const avatar = document.getElementById("avatar");
+
+  avatar.innerHTML = pessoa.fotoId
+    ? '<img src="' + urlFoto(pessoa.fotoId, 300) + '" alt="" onerror="this.parentNode.textContent=\'' + escapar(iniciais(pessoa.nome)) + '\'">'
+    : escapar(iniciais(pessoa.nome));
+
+  document.getElementById("ola").textContent = "Olá, " + primeiroNome(pessoa.nome);
+  document.getElementById("nome").textContent = nomeBonito(pessoa.nome);
+  document.getElementById("cargo").textContent =
+    [pessoa.cargo, pessoa.setor].filter(Boolean).map(nomeBonito).join(" · ");
+
+  /* Totais do ano */
+  const totalAbastecido = meses.reduce(function(t, m){ return t + (m.abastecido || 0); }, 0);
+  const totalPago = meses.reduce(function(t, m){ return t + (m.pago || 0); }, 0);
+
+  document.getElementById("rotuloTotal").textContent = "Abastecido em " + app.ano;
+  document.getElementById("valorTotal").innerHTML = moedaGrande(totalAbastecido);
+  document.getElementById("valorPago").textContent = moeda(totalPago);
+  document.getElementById("valorSaldo").textContent =
+    dados.saldoPremiacao === null ? "—" : moeda(dados.saldoPremiacao);
+
+  /* Anos */
+  const anos = anosDisponiveis();
+  document.getElementById("anos").innerHTML = anos.length > 1
+    ? anos.map(function(ano){
+        return '<button type="button" class="ano-chip' + (ano === app.ano ? " ativo" : "") + '" onclick="trocarAno(\'' + ano + '\')">' + ano + "</button>";
+      }).join("")
+    : "";
+
+  renderGrafico(meses);
+  renderExtrato(meses);
+  renderGaleria();
+
+  document.getElementById("rodape").textContent = "Atualizado em " + dados.atualizadoEm;
+
+}
+
+function renderGrafico(meses){
+
+  const porMes = {};
+  meses.forEach(function(item){ porMes[item.mes] = item; });
+
+  const maior = Math.max.apply(null, meses.map(function(m){ return m.abastecido || 0; }).concat([1]));
+
+  let html = "";
+
+  for(let i = 1; i <= 12; i++){
+
+    const mes = app.ano + "-" + String(i).padStart(2, "0");
+    const item = porMes[mes];
+    const premiacao = Math.floor((i - 1) / 2) % 2 === 0;
+
+    if(!item){
+      html +=
+        '<button type="button" class="barra-col" disabled>' +
+          '<div class="barra vazia"></div>' +
+          '<span class="barra-mes">' + SIGLAS_MESES[i - 1].charAt(0) + "</span>" +
+        "</button>";
+      continue;
+    }
+
+    const altura = Math.max(3, Math.round((item.abastecido || 0) / maior * 100));
+
+    html +=
+      '<button type="button" class="barra-col" onclick="irParaMes(\'' + mes + '\')" title="' + escapar(nomeMes(mes) + ": " + moeda(item.abastecido)) + '">' +
+        '<div class="barra' + (premiacao ? " premiacao" : "") + '" style="height:' + altura + '%"></div>' +
+        '<span class="barra-mes">' + SIGLAS_MESES[i - 1].charAt(0) + "</span>" +
+      "</button>";
+
+  }
+
+  document.getElementById("grafico").innerHTML = html;
+
+}
+
+function renderExtrato(meses){
+
+  const lista = meses.slice().reverse();
+
+  if(!lista.length){
+    document.getElementById("extrato").innerHTML =
+      '<div class="vazio">Nenhum mês fechado em ' + escapar(app.ano) + " ainda.</div>";
+    return;
+  }
+
+  document.getElementById("extrato").innerHTML = lista.map(function(item, indice){
+
+    const premio = item.itensPremiacao;
+
+    let status = "";
+
+    if(item.pago !== null){
+      status = '<span class="mov-status pago">Pago ' + escapar(moeda(item.pago)) + "</span>";
+    } else if(item.premiacao && premio){
+      status = '<span class="mov-status aguardando">Saldo ' + escapar(moeda(premio.saldo)) + "</span>";
+    } else if(item.abastecido > 0){
+      status = '<span class="mov-status aguardando">Aguardando pagamento</span>';
+    }
+
+    /* Linhas do detalhe */
+    let linhas =
+      '<div class="linha"><span>Bônus abastecido</span><strong>' + escapar(moeda(item.abastecido)) + "</strong></div>";
+
+    if(item.pago !== null){
+      linhas += '<div class="linha"><span>Pago</span><strong>' + escapar(moeda(item.pago)) + "</strong></div>";
+    }
+
+    if(premio){
+      linhas +=
+        '<div class="linha"><span>Saldo da premiação anterior</span><strong>' + escapar(moeda(premio.saldoAnterior)) + "</strong></div>" +
+        '<div class="linha"><span>Disponível para premiação</span><strong>' + escapar(moeda(premio.disponivel)) + "</strong></div>" +
+        '<div class="linha"><span>Usado em prêmios</span><strong>− ' + escapar(moeda(premio.usado)) + "</strong></div>" +
+        '<div class="linha total"><span>Saldo que segue</span><strong>' + escapar(moeda(premio.saldo)) + "</strong></div>";
+    }
+
+    let chips = "";
+
+    if(item.setorAtingiuMeta !== null){
+      chips +=
+        '<span class="chip ' + (item.setorAtingiuMeta ? "sim" : "nao") + '">' + (item.setorAtingiuMeta ? "✓ Setor bateu a meta" : "Setor não bateu a meta") + "</span>";
+    }
+
+    if(item.rhAtingiuMeta !== null){
+      chips +=
+        '<span class="chip ' + (item.rhAtingiuMeta ? "sim" : "nao") + '">' + (item.rhAtingiuMeta ? "✓ Avaliação individual ok" : "Avaliação individual pendente") + "</span>";
+    }
+
+    const motivo =
+      item.motivo && !item.abastecido
+        ? '<p class="motivo">' + escapar(item.motivo) + "</p>"
+        : "";
+
+    const fotos = premio
+      ? premio.itens
+          .map(function(premioItem){
+            const indicePremio = app.premios.indexOf(premioItem);
+            const foto = premioItem.fotoEntregaId || premioItem.fotoId;
+            return foto
+              ? '<button type="button" class="mov-item-mini" onclick="abrirVisor(' + indicePremio + ')"><img src="' + urlFoto(foto, 200) + '" alt="" loading="lazy"></button>'
+              : "";
+          })
+          .join("")
+      : "";
+
+    return (
+      '<div class="mov' + (indice === 0 ? " aberto" : "") + '" id="mov-' + item.mes + '">' +
+        '<button type="button" class="mov-topo" onclick="this.parentNode.classList.toggle(\'aberto\')">' +
+          '<div class="mov-icone' + (item.premiacao ? " premiacao" : "") + '">' + (item.premiacao ? ICONE_PREMIO : ICONE_MOEDA) + "</div>" +
+          '<div class="mov-info">' +
+            '<div class="mov-mes">' + escapar(nomeMes(item.mes)) + "</div>" +
+            '<div class="mov-tipo">' + (item.premiacao ? "Mês de premiação" : "Saldo livre") + "</div>" +
+          "</div>" +
+          '<div class="mov-valor"><span class="' + (item.abastecido > 0 ? "positivo" : "zero") + '">+ ' + escapar(moeda(item.abastecido)) + "</span>" + status + "</div>" +
+        "</button>" +
+        '<div class="mov-detalhe">' +
+          '<div class="linhas">' + linhas + "</div>" +
+          (chips ? '<div class="chips">' + chips + "</div>" : "") +
+          motivo +
+          (fotos ? '<div class="mov-itens">' + fotos + "</div>" : "") +
+        "</div>" +
+      "</div>"
+    );
+
+  }).join("");
+
+}
+
+function irParaMes(mes){
+
+  const cartao = document.getElementById("mov-" + mes);
+
+  if(!cartao){ return; }
+
+  cartao.classList.add("aberto");
+  cartao.classList.remove("destaque");
+  void cartao.offsetWidth;
+  cartao.classList.add("destaque");
+  cartao.scrollIntoView({ behavior: "smooth", block: "start" });
+
+}
+
+/* =========================================================
+   PREMIAÇÕES (todas, de todos os anos, mais recentes primeiro)
+========================================================= */
+
+function montarPremios(){
+
+  app.premios = [];
+
+  app.dados.meses.slice().reverse().forEach(function(item){
+    if(!item.itensPremiacao){ return; }
+    item.itensPremiacao.itens.forEach(function(premio){
+      premio.mes = item.mes;
+      app.premios.push(premio);
+    });
+  });
+
+}
+
+function renderGaleria(){
+
+  const galeria = document.getElementById("galeria");
+
+  document.getElementById("subPremios").textContent = app.premios.length
+    ? app.premios.length + (app.premios.length === 1 ? " prêmio" : " prêmios") + " conquistados com o seu bônus."
+    : "O que você ganhar com o seu bônus aparece aqui.";
+
+  if(!app.premios.length){
+    galeria.innerHTML = '<div class="vazio" style="grid-column:1 / -1">Nenhum prêmio ainda.</div>';
+    return;
+  }
+
+  galeria.innerHTML = app.premios.map(function(premio, indice){
+
+    const foto = premio.fotoEntregaId || premio.fotoId;
+    const quantidade = (premio.fotoId ? 1 : 0) + (premio.fotoEntregaId ? 1 : 0);
+
+    return (
+      '<button type="button" class="premio" onclick="abrirVisor(' + indice + ')">' +
+        '<div class="premio-foto">' +
+          (foto ? '<img src="' + urlFoto(foto, 500) + '" alt="" loading="lazy">' : ICONE_PREMIO) +
+          (quantidade > 1 ? '<span class="premio-qtd">2 fotos</span>' : "") +
+        "</div>" +
+        '<div class="premio-texto">' +
+          '<div class="premio-nome">' + escapar(premio.descricao) + "</div>" +
+          '<div class="premio-meta">' + escapar(moeda(premio.valor)) + " · " + escapar(dataBR(premio.dataCompra) || nomeMes(premio.mes)) + "</div>" +
+        "</div>" +
+      "</button>"
+    );
+
+  }).join("");
+
+}
+
+function abrirVisor(indice){
+
+  const premio = app.premios[indice];
+
+  if(!premio){ return; }
+
+  const fotos = [];
+  if(premio.fotoEntregaId){ fotos.push({ id: premio.fotoEntregaId, rotulo: "Entrega" }); }
+  if(premio.fotoId){ fotos.push({ id: premio.fotoId, rotulo: "Item" }); }
+
+  document.getElementById("visorTitulo").textContent = premio.descricao;
+  document.getElementById("visorSub").textContent =
+    moeda(premio.valor) + " · " + (dataBR(premio.dataCompra) || nomeMes(premio.mes));
+
+  document.getElementById("visorFotos").innerHTML = fotos.length
+    ? fotos.map(function(foto){
+        return '<div class="visor-foto"><img src="' + urlFoto(foto.id, 1600) + '" alt=""><span>' + foto.rotulo + (fotos.length > 1 ? " · deslize" : "") + "</span></div>";
+      }).join("")
+    : '<div class="visor-foto"><span>Sem foto</span></div>';
+
+  document.getElementById("visor").classList.remove("oculto");
+
+}
+
+function fecharVisor(){
+  document.getElementById("visor").classList.add("oculto");
+}
+
+document.addEventListener("keydown", function(evento){
+  if(evento.key === "Escape"){ fecharVisor(); }
+});
+
+/* =========================================================
+   INÍCIO
+========================================================= */
+
+app.token = lerArmazenado("meuBonusToken");
+
+if(app.token){
+  carregarExtrato();
+} else {
+  mostrarEntrada("");
+}
+</script>
+</body>
+</html>

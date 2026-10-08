@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="../gas-cliente.js" data-projeto="almoxarifado"></script>
+<meta charset="UTF-8">
+
+<style>
+
+  .modal-footer{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:15px;
+}
+body{
+  font-family: Inter, sans-serif;
+  background:#f1f5f9;
+  margin:0;
+}
+
+.container{
+  padding:20px;
+}
+
+/* 🔥 MODAL */
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+.hidden{
+  display:none;
+}
+
+.modal-content{
+  background:#fff;
+  width:95vw;
+  max-width:1400px;
+  max-height:85vh;
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.25);
+  display:flex;
+  flex-direction:column;
+}
+.modal-body{
+  flex:unset;
+  overflow:auto;
+}
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
+}
+
+.modal-header h2{
+  margin:0;
+}
+
+.fechar{
+  cursor:pointer;
+  font-size:18px;
+  color:#64748b;
+}
+
+.fechar:hover{
+  color:#000;
+}
+
+.modal-body{
+  flex:1;
+  overflow:auto;
+}
+
+/* 🔥 TABELA */
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+  table-layout:fixed;
+}
+
+thead{
+  background:#123A6F;
+  color:#fff;
+}
+
+th, td{
+  padding:8px;
+  text-align:center;
+  vertical-align:middle;
+  border-bottom:1px solid #eee;
+}
+
+/* 🔥 coluna setor */
+td:first-child{
+  text-align:left;
+  font-weight:600;
+  max-width:140px;
+  white-space:normal;
+  word-break:break-word;
+  line-height:1.2;
+}
+
+/* 🔥 linhas verticais suaves */
+th:not(:last-child),
+td:not(:last-child){
+  border-right:1px solid #e5e7eb;
+}
+
+/* 🔥 leve divisão de colunas */
+tbody td:nth-child(even){
+  background:#f8fafc;
+}
+
+/* 🔥 INPUT */
+.input-percentual{
+  position:relative;
+  width:50px;
+  margin:auto;
+}
+
+.input-percentual input{
+  width:100%;
+  padding:4px 14px 4px 4px;
+  text-align:center;
+  border:1px solid #e2e8f0;
+  border-radius:6px;
+  background:#f8fafc;
+  font-size:12px;
+}
+
+.input-percentual span{
+  position:absolute;
+  right:4px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:10px;
+  color:#64748b;
+  pointer-events:none;
+}
+
+/* 🔥 BOTÃO */
+.btn{
+  margin-top:15px;
+  padding:10px 16px;
+  background:#123A6F;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.btn:hover{
+  opacity:0.9;
+}
+
+.header-acoes{
+  display:flex;
+  justify-content:flex-end;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="container header-acoes">
+  <button class="btn" onclick="abrirModal()">Configurar Percentuais</button>
+</div>
+
+</div>
+
+<!-- 🔥 MODAL -->
+<div id="modal" class="modal hidden">
+
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <h2>Controle Financeiro</h2>
+      <span class="fechar" onclick="fecharModal()">✕</span>
+    </div>
+
+    <div class="modal-body">
+
+      <table id="tabela">
+        <thead>
+          <tr>
+            <th>Setor</th>
+            <th>Jan</th>
+            <th>Fev</th>
+            <th>Mar</th>
+            <th>Abr</th>
+            <th>Mai</th>
+            <th>Jun</th>
+            <th>Jul</th>
+            <th>Ago</th>
+            <th>Set</th>
+            <th>Out</th>
+            <th>Nov</th>
+            <th>Dez</th>
+          </tr>
+        </thead>
+
+        <tbody id="tbody"></tbody>
+      </table>
+
+<div class="modal-footer">
+  <button class="btn" onclick="salvar()">Salvar Tudo</button>
+</div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+function carregar(){
+
+  google.script.run.withSuccessHandler(render).getPercentuaisUI();
+
+}
+
+function render(dados){
+
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+
+  dados.forEach(setor => {
+
+    let tr = `<tr>
+      <td>${setor.nome}</td>`;
+
+    setor.valores.forEach(v => {
+tr += `
+<td>
+  <div class="input-percentual">
+    <input type="number" value="${v}">
+    <span>%</span>
+  </div>
+</td>
+`;
+    });
+
+    tr += "</tr>";
+
+    tbody.innerHTML += tr;
+
+  });
+
+}
+
+function salvar(){
+
+  const linhas = document.querySelectorAll("#tbody tr");
+
+  const dados = [];
+
+  linhas.forEach(tr => {
+
+    const tds = tr.querySelectorAll("td");
+
+    const setor = tds[0].innerText;
+
+    const valores = [];
+
+    for(let i = 1; i < tds.length; i++){
+      valores.push(Number(tds[i].querySelector("input").value || 0));
+    }
+
+    dados.push({
+      setor: setor,
+      valores: valores
+    });
+
+  });
+
+  google.script.run
+    .withSuccessHandler(() => alert("Salvo com sucesso"))
+    .salvarPercentuaisUI(dados);
+
+}
+
+carregar();
+function abrirModal(){
+  document.getElementById("modal").classList.remove("hidden");
+}
+
+function fecharModal(){
+  document.getElementById("modal").classList.add("hidden");
+}
+</script>
+
+</body>
+</html>

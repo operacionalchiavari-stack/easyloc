@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="fretes"></script>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cadastro de Fretes</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   CADASTRO DE FRETES — mesma identidade da Central,
+   Cronograma e Itens Danificados.
+========================================================= */
+
+:root{
+  --primary:#5a5a55;
+  --primary-dark:#44443f;
+  --bg:#ffffff;
+  --fundo-suave:#f8f6f0;
+  --card:#ffffff;
+  --line:#e7e1d7;
+  --borda-card:#eee8df;
+  --linha-tabela:#f3efe8;
+  --text:#251e19;
+  --muted:#77716a;
+  --accent-soft:#ecece6;
+  --serif:"Cormorant Garamond", Georgia, serif;
+  --sans:"Manrope", system-ui, sans-serif;
+  --green:#16a34a;
+  --green-soft:#dcfce7;
+  --yellow-soft:#fef3c7;
+  --red:#dc2626;
+  --red-soft:#fee2e2;
+  --sombra-card:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+}
+
+*{ box-sizing:border-box; }
+
+html, body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+
+body{ padding:0 24px 40px; }
+
+button, input, select, textarea{ font-family:inherit; }
+
+.oculto{ display:none !important; }
+
+/* ---------- Cabeçalho ---------- */
+
+.cabecalho{ padding:34px 0 0; margin-bottom:22px; }
+
+.cabecalho-titulo{
+  margin:0 0 10px;
+  text-align:center;
+  font-family:var(--serif);
+  font-size:clamp(30px, 4.6vw, 60px);
+  font-weight:500;
+  letter-spacing:.22em;
+  line-height:1.05;
+  text-transform:uppercase;
+}
+
+.cabecalho-sub{
+  margin:0 0 22px;
+  text-align:center;
+  color:var(--muted);
+  font-size:16px;
+}
+
+.cabecalho-linha{ border-bottom:1px solid var(--line); }
+
+/* ---------- Botões ---------- */
+
+.btn{
+  min-height:40px;
+  padding:0 20px;
+  border:1px solid var(--primary);
+  border-radius:999px;
+  background:var(--primary);
+  color:#ffffff;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:background-color .2s, border-color .2s, color .2s, opacity .2s;
+}
+
+.btn:hover{ background:var(--primary-dark); border-color:var(--primary-dark); }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+.btn-contorno{ background:#ffffff; border-color:var(--line); color:var(--text); }
+.btn-contorno:hover{ background:#ffffff; border-color:var(--primary); color:var(--primary-dark); }
+
+.btn-sucesso{ background:var(--green); border-color:var(--green); }
+.btn-sucesso:hover{ background:#15803d; border-color:#15803d; }
+
+/* ---------- Layout ---------- */
+
+.pagina{
+  margin:0 auto;
+  display:grid;
+  gap:20px;
+}
+
+.cartao{
+  border:1px solid var(--borda-card);
+  border-radius:18px;
+  background:var(--card);
+  box-shadow:var(--sombra-card);
+  overflow:hidden;
+}
+
+.cartao-cabecalho{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px 16px;
+  padding:18px 22px;
+  background:var(--primary);
+  color:#ffffff;
+}
+
+.cartao-titulo{
+  margin:0;
+  font-family:var(--serif);
+  font-size:22px;
+  font-weight:500;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.cartao-subtitulo{ font-size:15px; color:rgba(255,255,255,.75); }
+
+.cartao-corpo{ padding:20px 22px; display:grid; gap:16px; }
+
+.cartao-rodape{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:10px;
+  padding:14px 22px;
+  border-top:1px solid var(--borda-card);
+}
+
+/* ---------- Campos ---------- */
+
+.grade{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:14px;
+}
+
+.grade .largo{ grid-column:span 2; }
+
+.campo label,
+.campo .rotulo{
+  display:block;
+  margin-bottom:7px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.campo input{
+  width:100%;
+  min-height:42px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--fundo-suave);
+  color:var(--text);
+  font-size:16px;
+  outline:none;
+}
+
+.campo input:focus{ border-color:var(--primary); background:#ffffff; }
+
+.campo input[readonly]{ color:var(--muted); background:#f1efea; cursor:default; }
+
+.campo.erro input{ border-color:#fca5a5; background:#fef2f2; }
+.campo.erro .opcao{ border-color:#fca5a5; }
+
+.campo-senha{ text-align:center; font-size:22px !important; letter-spacing:.5em; }
+
+.opcoes{ display:flex; flex-wrap:wrap; gap:8px; }
+
+.opcao{
+  min-height:40px;
+  padding:0 16px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#ffffff;
+  color:var(--text);
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.opcao:hover{ border-color:var(--primary); }
+.opcao.selecionada{ background:var(--primary-dark); border-color:var(--primary-dark); color:#ffffff; }
+.opcao:disabled{ opacity:.45; cursor:not-allowed; }
+.opcao.selecionada:disabled{ opacity:1; }
+
+.dica{ margin-top:6px; color:var(--muted); font-size:14px; }
+
+/* Lista do Google Maps no mesmo estilo */
+.pac-container{
+  margin-top:6px;
+  border:1px solid var(--borda-card);
+  border-radius:14px;
+  box-shadow:var(--sombra-card);
+  font-family:var(--sans);
+  padding:4px;
+}
+
+.pac-item{ padding:6px 10px; border:0; border-radius:10px; font-size:15px; cursor:pointer; }
+.pac-item:hover{ background:var(--fundo-suave); }
+.pac-logo::after{ margin:4px 8px; }
+
+/* ---------- Tabela ---------- */
+
+.tabela-rolagem{ overflow-x:auto; }
+
+table{ width:100%; border-collapse:collapse; font-size:16px; }
+
+th{
+  padding:12px;
+  background:#ffffff;
+  border-bottom:1px solid var(--borda-card);
+  color:var(--muted);
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  text-align:left;
+  white-space:nowrap;
+}
+
+td{
+  padding:11px 12px;
+  border-bottom:1px solid var(--linha-tabela);
+  vertical-align:middle;
+}
+
+tbody tr:nth-child(even){ background:#fcfbf8; }
+
+.col-pedido{ font-weight:600; color:#2563eb; white-space:nowrap; }
+.col-data{ color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
+.col-local{ color:var(--muted); max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.col-num{ text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+th.col-num{ text-align:right; }
+.col-valor{ font-weight:700; }
+.col-acao{ width:44px; text-align:center; }
+
+.rota-extra{ display:none; }
+
+.btn-remover{
+  width:30px;
+  height:30px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:#ffffff;
+  color:var(--muted);
+  font-size:17px;
+  line-height:1;
+  cursor:pointer;
+}
+
+.btn-remover:hover{ border-color:#fca5a5; background:var(--red-soft); color:#b91c1c; }
+
+.total{
+  margin-right:auto;
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+}
+
+.total span{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.total strong{ font-size:24px; font-weight:800; font-variant-numeric:tabular-nums; }
+
+.mensagem{
+  padding:36px 16px;
+  text-align:center;
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:19px;
+  color:var(--muted);
+}
+
+/* ---------- Modais ---------- */
+
+.modal{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:none;
+  align-items:flex-start;
+  justify-content:center;
+  padding:10vh 16px 24px;
+  background:rgba(37,30,25,.45);
+  overflow-y:auto;
+}
+
+.modal.aberto{ display:flex; }
+
+.modal-caixa{
+  width:min(420px, 100%);
+  border-radius:18px;
+  background:#ffffff;
+  box-shadow:0 24px 70px rgba(37,30,25,.25);
+  display:flex;
+  flex-direction:column;
+}
+
+.modal-topo{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:20px 22px 14px;
+  border-bottom:1px solid var(--borda-card);
+}
+
+.modal-topo h2{
+  margin:0;
+  font-family:var(--serif);
+  font-size:26px;
+  font-weight:500;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.modal-topo p{ margin:4px 0 0; color:var(--muted); font-size:15px; }
+
+.modal-fechar{
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:#ffffff;
+  color:var(--muted);
+  font-size:19px;
+  cursor:pointer;
+}
+
+.modal-corpo{ padding:18px 22px; display:grid; gap:16px; }
+
+.modal-rodape{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  padding:14px 22px;
+  border-top:1px solid var(--borda-card);
+}
+
+.modal-rodape .erro-modal{ flex:1; }
+
+.erro-modal{ color:#b91c1c; font-size:15px; font-weight:600; }
+
+.confirmacao-texto{ margin:0; font-size:17px; line-height:1.55; }
+
+/* Aviso (toast) */
+
+.aviso{
+  position:fixed;
+  left:50%;
+  bottom:24px;
+  z-index:300;
+  transform:translateX(-50%) translateY(20px);
+  opacity:0;
+  pointer-events:none;
+  padding:12px 20px;
+  border-radius:999px;
+  background:var(--primary-dark);
+  color:#ffffff;
+  font-size:16px;
+  font-weight:700;
+  box-shadow:0 12px 40px rgba(37,30,25,.3);
+  transition:opacity .2s, transform .2s;
+  max-width:calc(100% - 32px);
+  text-align:center;
+}
+
+.aviso.visivel{ opacity:1; transform:translateX(-50%) translateY(0); }
+.aviso.sucesso{ background:var(--green); }
+.aviso.erro{ background:var(--red); }
+
+/* ---------- Impressão ---------- */
+
+#impressaoTopo, #impressaoRodape{ display:none; }
+
+@media print{
+  body{ padding:0; }
+  .cabecalho, #cartaoFormulario, .cartao-rodape .btn, .col-acao, .aviso, .modal{ display:none !important; }
+  .cartao{ border:0; box-shadow:none; border-radius:0; }
+  .cartao-cabecalho{ display:none; }
+  .cartao-rodape{ border-top:1px solid #ccc; justify-content:center; }
+  .total{ margin:0; }
+  .rota-extra{ display:none !important; }
+  .m-oculta, .t-oculta{ display:table-cell !important; }
+  .col-resp, .col-transp{ display:none !important; }
+
+  /* Todas as colunas cabem na folha: sem rolagem, texto quebra em várias linhas */
+  @page{ size:A4 landscape; margin:10mm; }
+  .tabela-rolagem{ overflow:visible !important; }
+  table{ width:100%; table-layout:fixed; font-size:11px; }
+  th, td{ padding:7px 5px; vertical-align:top; white-space:normal !important; overflow-wrap:anywhere; }
+  th{ font-size:9px; letter-spacing:.06em; }
+  .col-local{ max-width:none !important; overflow:visible !important; text-overflow:clip !important; white-space:normal !important; }
+  .col-data, .col-pedido, .col-num{ white-space:nowrap !important; }
+  td, .col-local, .col-data{ color:#251e19 !important; }
+  tr{ break-inside:avoid; }
+
+  /* Larguras: Data, Pedido, Caminhão, Origem, Destino, Cidade, KM, Valor, Obs. */
+  th:nth-child(3){ width:9%; }
+  th:nth-child(4){ width:7%; }
+  th:nth-child(5){ width:10%; }
+  th:nth-child(6){ width:22%; }
+  th:nth-child(7){ width:22%; }
+  th:nth-child(8){ width:10%; }
+  th:nth-child(9){ width:6%; }
+  th:nth-child(10){ width:9%; }
+  th:nth-child(11){ width:10%; }
+
+  #impressaoTopo, #impressaoRodape{ display:block; }
+
+  #impressaoTopo{ text-align:center; margin-bottom:18px; }
+  #impressaoTopo h1{
+    margin:0 0 6px;
+    font-family:var(--serif);
+    font-size:30px;
+    font-weight:500;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+  }
+  #impressaoTopo .imp-transp{ font-size:17px; font-weight:700; }
+  #impressaoTopo .imp-data{ margin-top:2px; color:var(--muted); font-size:14px; }
+  #impressaoTopo .imp-aviso{
+    margin:16px auto 0;
+    max-width:90%;
+    padding:10px 14px;
+    border:1px solid #fde68a;
+    border-radius:12px;
+    background:#fffbeb;
+    color:#92400e;
+    font-size:14px;
+    line-height:1.45;
+    text-align:left;
+  }
+
+  #impressaoRodape{ margin-top:30px; text-align:center; color:var(--muted); font-size:12px; }
+}
+
+/* ---------- Tablet / celular ---------- */
+
+@media(max-width:1100px){
+  .t-oculta{ display:none; }
+}
+
+@media(max-width:900px){
+  .grade{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+
+@media(pointer:coarse){
+  .btn, .opcao{ min-height:44px; }
+  .campo input{ min-height:46px; font-size:17px; }
+  .btn-remover{ width:36px; height:36px; }
+}
+
+@media(max-width:760px){
+  body{ padding:0 14px 32px; }
+  .cabecalho{ padding-top:22px; margin-bottom:16px; }
+  .cabecalho-titulo{ font-size:24px; letter-spacing:.1em; }
+  .grade{ grid-template-columns:1fr; }
+  .grade .largo{ grid-column:auto; }
+  .cartao-cabecalho{ padding:14px 16px; }
+  .cartao-titulo{ font-size:19px; }
+  .cartao-corpo{ padding:16px; }
+  .cartao-rodape{ padding:12px 16px; }
+  .cartao-rodape .btn{ flex:1; }
+  .total{ flex:1 0 100%; justify-content:center; }
+  .m-oculta{ display:none; }
+  .rota-extra{ display:block; margin-top:3px; color:var(--muted); font-size:14px; font-weight:600; }
+  th, td{ padding:10px 6px; }
+  th{ font-size:12px; letter-spacing:.08em; }
+  .modal{ padding:6vh 8px 12px; }
+}
+</style>
+</head>
+
+<body>
+
+<header class="cabecalho">
+  <h1 class="cabecalho-titulo">Cadastro de Fretes</h1>
+  <p class="cabecalho-sub">Adicione as corridas e envie o relatório no final</p>
+  <div class="cabecalho-linha"></div>
+</header>
+
+<!-- Cabeçalho que só aparece na impressão -->
+<div id="impressaoTopo">
+  <h1>Relatório de Fretes</h1>
+  <div class="imp-transp" id="impTransportadora"></div>
+  <div class="imp-data" id="impDataHora"></div>
+  <div class="imp-aviso">
+    <b>Aviso:</b> este relatório foi enviado ao sistema interno da Chiavari Eventos,
+    onde passará por uma conferência com os valores internos.
+    Qualquer divergência, o setor responsável entrará em contato.
+  </div>
+</div>
+
+<div class="pagina">
+
+  <!-- ================= FORMULÁRIO ================= -->
+  <section class="cartao" id="cartaoFormulario">
+    <div class="cartao-cabecalho">
+      <h2 class="cartao-titulo">Nova corrida</h2>
+      <span class="cartao-subtitulo">Campos com * são obrigatórios</span>
+    </div>
+
+    <div class="cartao-corpo">
+
+      <div class="grade">
+        <div class="campo largo" id="campo-responsavel">
+          <span class="rotulo">Responsável *</span>
+          <div class="opcoes" data-grupo="responsavel">
+            <button type="button" class="opcao" data-valor="Transportadora">Transportadora</button>
+            <button type="button" class="opcao" data-valor="Supervisor de Montagem">Supervisor de Montagem</button>
+          </div>
+        </div>
+
+        <div class="campo largo" id="campo-transportadora">
+          <span class="rotulo">Transportadora *</span>
+          <div class="opcoes" data-grupo="transportadora">
+            <button type="button" class="opcao" data-valor="Simas Frete">Simas Frete</button>
+            <button type="button" class="opcao" data-valor="Transportes Aguiar">Transportes Aguiar</button>
+            <button type="button" class="opcao" data-valor="Edir&amp;Filho">Edir&amp;Filho</button>
+          </div>
+          <div class="dica oculto" id="dicaTransp">Todas as corridas do relatório são da mesma transportadora.</div>
+        </div>
+      </div>
+
+      <div class="grade">
+        <div class="campo" id="campo-dataFrete">
+          <label for="dataFrete">Data do frete *</label>
+          <input id="dataFrete" type="date">
+        </div>
+
+        <div class="campo" id="campo-numeroPedido">
+          <label for="numeroPedido">Nº do pedido *</label>
+          <input id="numeroPedido" type="text" inputmode="numeric" maxlength="4" placeholder="0000"
+                 oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4)">
+        </div>
+
+        <div class="campo largo" id="campo-caminhao">
+          <label for="caminhao">Caminhão *</label>
+          <input id="caminhao" type="text" placeholder="Modelo do caminhão">
+        </div>
+      </div>
+
+      <div class="grade">
+        <div class="campo largo" id="campo-origem">
+          <label for="origem">De onde *</label>
+          <input id="origem" type="text" placeholder="Onde carregou?" autocomplete="off">
+        </div>
+
+        <div class="campo largo" id="campo-destino">
+          <label for="destino">Para onde *</label>
+          <input id="destino" type="text" placeholder="Onde descarregou?" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="grade">
+        <div class="campo" id="campo-cidade">
+          <label for="cidade">Cidade *</label>
+          <input id="cidade" type="text" placeholder="Preenchida pelo destino" readonly>
+        </div>
+
+        <div class="campo" id="campo-km">
+          <label for="km">KM *</label>
+          <input id="km" type="text" placeholder="Calculado sozinho" readonly>
+        </div>
+
+        <div class="campo" id="campo-valor">
+          <label for="valor">Valor do frete *</label>
+          <input id="valor" type="number" step="0.01" min="0.01" inputmode="decimal" placeholder="0,00">
+        </div>
+
+        <div class="campo" id="campo-obs">
+          <label for="obs">Observação</label>
+          <input id="obs" type="text" placeholder="Opcional" maxlength="300">
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cartao-rodape">
+      <button type="button" class="btn" onclick="adicionarFrete()">+ Adicionar corrida</button>
+    </div>
+  </section>
+
+  <!-- ================= LISTA ================= -->
+  <section class="cartao">
+    <div class="cartao-cabecalho">
+      <h2 class="cartao-titulo">Corridas do relatório</h2>
+      <span class="cartao-subtitulo" id="subtituloLista">Nenhuma corrida adicionada</span>
+    </div>
+
+    <div class="tabela-rolagem">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-resp m-oculta t-oculta">Resp.</th>
+            <th class="col-transp m-oculta t-oculta">Transp.</th>
+            <th>Data</th>
+            <th>Pedido</th>
+            <th class="m-oculta">Caminhão</th>
+            <th class="m-oculta">Origem</th>
+            <th class="m-oculta">Destino</th>
+            <th class="m-oculta t-oculta">Cidade</th>
+            <th class="col-num m-oculta">KM</th>
+            <th class="col-num">Valor</th>
+            <th class="m-oculta t-oculta">Obs.</th>
+            <th class="col-acao"></th>
+          </tr>
+        </thead>
+        <tbody id="listaFretes">
+          <tr><td colspan="12"><div class="mensagem">Nenhuma corrida adicionada ainda.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cartao-rodape">
+      <div class="total"><span>Total</span><strong id="totalFretes">R$ 0,00</strong></div>
+      <button type="button" class="btn btn-contorno" onclick="imprimirDireto()">Imprimir</button>
+      <button type="button" class="btn" id="btnEnviar" onclick="abrirEnviar()">Enviar relatório</button>
+    </div>
+  </section>
+
+</div>
+
+<div id="impressaoRodape">Sistema Interno · Chiavari Eventos</div>
+
+
+<!-- =========================================================
+     MODAL ENVIAR
+========================================================= -->
+<div class="modal" id="modalEnviar">
+  <div class="modal-caixa">
+    <div class="modal-topo">
+      <div>
+        <h2>Enviar relatório</h2>
+        <p id="enviarResumo"></p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalEnviar')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <p class="confirmacao-texto">Quer imprimir antes de enviar? Depois do envio a lista é limpa.</p>
+    </div>
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroEnviar"></span>
+      <button type="button" class="btn btn-contorno" onclick="imprimirDireto()">Imprimir</button>
+      <button type="button" class="btn btn-sucesso" id="btnConfirmarEnvio" onclick="enviarRelatorio()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL SENHA DO SUPERVISOR
+========================================================= -->
+<div class="modal" id="modalSenha">
+  <div class="modal-caixa">
+    <div class="modal-topo">
+      <div>
+        <h2>Autorização</h2>
+        <p>Digite a senha do supervisor de montagem</p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="cancelarSenhaSupervisor()" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <div class="campo">
+        <input type="password" id="senhaSupervisor" class="campo-senha" placeholder="••••" autocomplete="off"
+               onkeydown="if(event.key === 'Enter'){ confirmarSenhaSupervisor(); }">
+      </div>
+    </div>
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroSenhaSup"></span>
+      <button type="button" class="btn btn-contorno" onclick="cancelarSenhaSupervisor()">Cancelar</button>
+      <button type="button" class="btn" onclick="confirmarSenhaSupervisor()">Autorizar</button>
+    </div>
+  </div>
+</div>
+
+<div class="aviso" id="aviso"></div>
+
+
+<script>
+/* =========================================================
+   ESTADO
+========================================================= */
+
+// Senha temporária no navegador (igual à versão anterior)
+const SENHA_SUPERVISOR = "1234";
+
+let fretes = [];
+const escolhas = { responsavel:"", transportadora:"" };
+
+
+/* =========================================================
+   APOIO
+========================================================= */
+
+function el(id){ return document.getElementById(id); }
+
+function escapar(valor){
+  return String(valor === null || valor === undefined ? "" : valor)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function moeda(valor){
+  return Number(valor || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
+}
+
+function dataBR(iso){
+  const p = String(iso || "").split("-");
+  return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : iso;
+}
+
+let temporizadorAviso = null;
+
+function avisar(texto, tipo, duracao){
+  const aviso = el("aviso");
+  aviso.textContent = texto;
+  aviso.className = "aviso visivel " + (tipo || "");
+  clearTimeout(temporizadorAviso);
+  temporizadorAviso = setTimeout(function(){ aviso.className = "aviso " + (tipo || ""); }, duracao || 3200);
+}
+
+function abrirModal(id){ el(id).classList.add("aberto"); }
+function fecharModal(id){ el(id).classList.remove("aberto"); }
+
+
+/* =========================================================
+   OPÇÕES (responsável / transportadora)
+========================================================= */
+
+function marcarOpcao(grupo, valor){
+  escolhas[grupo] = valor;
+  document.querySelectorAll('[data-grupo="' + grupo + '"] .opcao').forEach(function(b){
+    b.classList.toggle("selecionada", b.dataset.valor === valor);
+  });
+  el("campo-" + grupo).classList.remove("erro");
+}
+
+document.querySelectorAll(".opcoes").forEach(function(grupoEl){
+  grupoEl.addEventListener("click", function(e){
+    const botao = e.target.closest(".opcao");
+    if (!botao || botao.disabled) return;
+    const grupo = grupoEl.dataset.grupo;
+    const valor = botao.dataset.valor;
+
+    // Supervisor de Montagem só com senha
+    if (grupo === "responsavel" && valor === "Supervisor de Montagem" && escolhas.responsavel !== valor){
+      el("senhaSupervisor").value = "";
+      el("erroSenhaSup").textContent = "";
+      abrirModal("modalSenha");
+      setTimeout(function(){ el("senhaSupervisor").focus(); }, 50);
+      return;
+    }
+
+    marcarOpcao(grupo, valor);
+  });
+});
+
+function confirmarSenhaSupervisor(){
+  if (el("senhaSupervisor").value === SENHA_SUPERVISOR){
+    fecharModal("modalSenha");
+    marcarOpcao("responsavel", "Supervisor de Montagem");
+  } else {
+    el("erroSenhaSup").textContent = "Senha incorreta.";
+  }
+}
+
+function cancelarSenhaSupervisor(){
+  fecharModal("modalSenha");
+}
+
+/* Com corridas na lista, a transportadora fica travada */
+function travarTransportadora(){
+  const travar = fretes.length > 0;
+  document.querySelectorAll('[data-grupo="transportadora"] .opcao').forEach(function(b){
+    b.disabled = travar && b.dataset.valor !== escolhas.transportadora;
+  });
+  el("dicaTransp").classList.toggle("oculto", !travar);
+}
+
+
+/* =========================================================
+   KM AUTOMÁTICO
+========================================================= */
+
+let calculoKm = 0;          // só vale a resposta do último cálculo pedido
+let ultimaRotaKm = "";
+
+/* Se o Google não calcular, libera o campo para digitar o KM */
+function liberarKmManual(motivo){
+  el("km").readOnly = false;
+  el("km").placeholder = "Digite o KM";
+  avisar(motivo + " Digite o KM manualmente.", "erro");
+}
+
+function calcularDistancia(){
+  const o = el("origem").value.trim();
+  const d = el("destino").value.trim();
+  if (!o || !d) return;
+
+  const rota = o + "→" + d;
+  if (rota === ultimaRotaKm && el("km").value) return;
+  ultimaRotaKm = rota;
+
+  const id = ++calculoKm;
+  el("km").readOnly = true;
+  el("km").value = "";
+  el("km").placeholder = "Calculando...";
+
+  const limite = setTimeout(function(){
+    if (id !== calculoKm) return;
+    calculoKm++;
+    ultimaRotaKm = "";
+    liberarKmManual("O cálculo do KM demorou demais.");
+  }, 20000);
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      if (id !== calculoKm) return;
+      clearTimeout(limite);
+      if (!res || !res.km){
+        ultimaRotaKm = "";
+        liberarKmManual("Não foi possível calcular o KM.");
+        return;
+      }
+      el("km").value = res.km;
+      el("km").placeholder = "Calculado sozinho";
+      el("campo-km").classList.remove("erro");
+    })
+    .withFailureHandler(function(erro){
+      if (id !== calculoKm) return;
+      clearTimeout(limite);
+      ultimaRotaKm = "";
+      liberarKmManual("Não foi possível calcular o KM" + (erro && erro.message ? " (" + erro.message + ")." : "."));
+    })
+    .buscarDistancia(o, d);
+}
+
+function tentarCalcularKM(){
+  if (el("origem").value.trim().length > 3 && el("destino").value.trim().length > 3) calcularDistancia();
+}
+
+/* Também calcula quando o endereço é digitado ou colado (sem escolher da lista) */
+(function(){
+  function ligar(){
+    ["origem", "destino"].forEach(function(id){
+      el(id).addEventListener("change", function(){ setTimeout(tentarCalcularKM, 300); });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ligar); else ligar();
+})();
+
+
+/* =========================================================
+   LISTA
+========================================================= */
+
+const OBRIGATORIOS = ["dataFrete", "numeroPedido", "caminhao", "origem", "destino", "cidade", "km", "valor"];
+
+function validarCampos(){
+  let ok = true;
+
+  ["responsavel", "transportadora"].forEach(function(g){
+    const vazio = !escolhas[g];
+    el("campo-" + g).classList.toggle("erro", vazio);
+    if (vazio) ok = false;
+  });
+
+  OBRIGATORIOS.forEach(function(id){
+    const vazio = !el(id).value.trim();
+    el("campo-" + id).classList.toggle("erro", vazio);
+    if (vazio) ok = false;
+  });
+
+  if (!ok){ avisar("Preencha todos os campos obrigatórios.", "erro"); return false; }
+
+  const kmNum = Number(String(el("km").value).replace(",", "."));
+  if (!(kmNum > 0)){
+    el("campo-km").classList.add("erro");
+    avisar("O KM precisa ser um número maior que zero.", "erro");
+    return false;
+  }
+  return true;
+}
+
+/* =========================================================
+   TRAVAS DE SEGURANÇA
+========================================================= */
+
+const JANELA_PEDIDO_DIAS = 15;   // corridas do mesmo pedido ficam perto umas das outras
+const VALOR_ALTO = 10000;        // acima disso pede confirmação
+const DIAS_ANTIGO = 60;          // data mais antiga que isso pede confirmação
+
+let pedidosExistentes = null;    // { pedido: [[data, transp, origem, destino], ...] }
+let confirmacaoPendente = "";    // segunda clicada confirma o aviso
+
+function carregarPedidosExistentes(){
+  google.script.run
+    .withSuccessHandler(function(mapa){ pedidosExistentes = mapa || {}; })
+    .withFailureHandler(function(){ pedidosExistentes = null; })
+    .pedidosExistentes();
+}
+
+function normalizarTexto(t){
+  return String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/\|/g, "-").replace(/\s+/g, " ").trim();
+}
+
+function dataLocal(iso){ return new Date(iso + "T12:00:00"); }
+
+/* Bloqueios: devolve a mensagem do problema ou "" */
+function bloqueioDaCorrida(f){
+  const hoje = new Date(); hoje.setHours(23, 59, 59, 999);
+  const quando = dataLocal(f.dataFrete);
+
+  if (!/^\d+$/.test(f.numeroPedido)) return "O nº do pedido deve ter só números.";
+  if (quando > hoje) return "A data do frete não pode ser no futuro.";
+  if (normalizarTexto(f.origem) === normalizarTexto(f.destino)) return "Origem e destino não podem ser o mesmo endereço.";
+  if (!(Number(f.valor) > 0)) return "O valor do frete precisa ser maior que zero.";
+
+  const existentes = ((pedidosExistentes && pedidosExistentes[f.numeroPedido]) || []).concat(
+    fretes.filter(function(o){ return o.numeroPedido === f.numeroPedido; })
+      .map(function(o){ return [o.dataFrete, normalizarTexto(o.transp), normalizarTexto(o.origem), normalizarTexto(o.destino)]; }));
+
+  const igual = existentes.some(function(e){
+    return e[0] === f.dataFrete && e[1] === normalizarTexto(f.transp) &&
+      e[2] === normalizarTexto(f.origem) && e[3] === normalizarTexto(f.destino);
+  });
+  if (igual) return "Essa corrida já foi lançada: mesmo pedido, data, transportadora e rota.";
+
+  if (existentes.length){
+    let perto = Infinity, dataPerto = "";
+    existentes.forEach(function(e){
+      const dif = Math.abs(dataLocal(e[0]) - quando) / 86400000;
+      if (dif < perto){ perto = dif; dataPerto = e[0]; }
+    });
+    if (perto > JANELA_PEDIDO_DIAS){
+      return "O pedido " + f.numeroPedido + " já existe, com frete em " + dataBR(dataPerto) +
+        " (" + Math.round(perto) + " dias desta data). Parece ser outro evento — confira o número do pedido.";
+    }
+  }
+  return "";
+}
+
+/* Avisos que só passam se clicar de novo em Adicionar */
+function avisoDaCorrida(f){
+  const antigo = new Date(); antigo.setDate(antigo.getDate() - DIAS_ANTIGO);
+  if (Number(f.valor) > VALOR_ALTO) return "Valor alto: " + moeda(f.valor) + ". Confira e clique em Adicionar de novo para confirmar.";
+  if (dataLocal(f.dataFrete) < antigo) return "A data " + dataBR(f.dataFrete) + " tem mais de " + DIAS_ANTIGO + " dias. Confira e clique em Adicionar de novo para confirmar.";
+  return "";
+}
+
+function adicionarFrete(){
+  if (!validarCampos()) return;
+
+  const nova = {
+    numeroPedido: el("numeroPedido").value.trim(),
+    dataFrete:    el("dataFrete").value,
+    transp:       escolhas.transportadora,
+    origem:       el("origem").value.trim(),
+    destino:      el("destino").value.trim(),
+    valor:        el("valor").value
+  };
+
+  const bloqueio = bloqueioDaCorrida(nova);
+  if (bloqueio){
+    confirmacaoPendente = "";
+    avisar(bloqueio, "erro", 7000);
+    return;
+  }
+
+  const aviso = avisoDaCorrida(nova);
+  const chave = JSON.stringify(nova);
+  if (aviso && confirmacaoPendente !== chave){
+    confirmacaoPendente = chave;
+    avisar(aviso, "erro", 7000);
+    return;
+  }
+  confirmacaoPendente = "";
+
+  if (fretes.length && fretes[0].transp !== escolhas.transportadora){
+    avisar("Todas as corridas devem ser da mesma transportadora.", "erro");
+    return;
+  }
+
+  fretes.push({
+    responsavel:  escolhas.responsavel,
+    transp:       escolhas.transportadora,
+    dataFrete:    el("dataFrete").value,
+    numeroPedido: el("numeroPedido").value,
+    caminhao:     el("caminhao").value.trim(),
+    origem:       el("origem").value.trim(),
+    destino:      el("destino").value.trim(),
+    cidade:       el("cidade").value.trim(),
+    km:           el("km").value,
+    valor:        el("valor").value,
+    obs:          el("obs").value.trim()
+  });
+
+  ["dataFrete", "numeroPedido", "caminhao", "origem", "destino", "cidade", "km", "valor", "obs"].forEach(function(id){
+    el(id).value = "";
+  });
+  calculoKm++;
+  ultimaRotaKm = "";
+  el("km").readOnly = true;
+  el("km").placeholder = "Calculado sozinho";
+
+  renderTabela();
+  avisar("Corrida adicionada", "sucesso");
+}
+
+function removerFrete(i){
+  fretes.splice(i, 1);
+  renderTabela();
+}
+
+function renderTabela(){
+  const tbody = el("listaFretes");
+
+  if (!fretes.length){
+    tbody.innerHTML = '<tr><td colspan="12"><div class="mensagem">Nenhuma corrida adicionada ainda.</div></td></tr>';
+  } else {
+    tbody.innerHTML = fretes.map(function(f, i){
+      return '<tr>' +
+        '<td class="col-resp m-oculta t-oculta">' + escapar(f.responsavel) + '</td>' +
+        '<td class="col-transp m-oculta t-oculta">' + escapar(f.transp) + '</td>' +
+        '<td class="col-data">' + escapar(dataBR(f.dataFrete)) + '</td>' +
+        '<td class="col-pedido">' + escapar(f.numeroPedido) +
+          '<span class="rota-extra">' + escapar(f.origem) + ' → ' + escapar(f.destino) + '</span></td>' +
+        '<td class="m-oculta">' + escapar(f.caminhao) + '</td>' +
+        '<td class="col-local m-oculta" title="' + escapar(f.origem) + '">' + escapar(f.origem) + '</td>' +
+        '<td class="col-local m-oculta" title="' + escapar(f.destino) + '">' + escapar(f.destino) + '</td>' +
+        '<td class="m-oculta t-oculta">' + escapar(f.cidade) + '</td>' +
+        '<td class="col-num m-oculta">' + escapar(f.km) + '</td>' +
+        '<td class="col-num col-valor">' + moeda(f.valor) + '</td>' +
+        '<td class="col-local m-oculta t-oculta">' + escapar(f.obs || "—") + '</td>' +
+        '<td class="col-acao"><button type="button" class="btn-remover" onclick="removerFrete(' + i + ')" aria-label="Remover">×</button></td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  const total = fretes.reduce(function(s, f){ return s + Number(f.valor || 0); }, 0);
+  el("totalFretes").textContent = moeda(total);
+  el("subtituloLista").textContent = fretes.length
+    ? fretes.length + (fretes.length === 1 ? " corrida" : " corridas") + " · " + fretes[0].transp
+    : "Nenhuma corrida adicionada";
+
+  travarTransportadora();
+}
+
+
+/* =========================================================
+   ENVIAR / IMPRIMIR
+========================================================= */
+
+function abrirEnviar(){
+  if (!fretes.length){
+    avisar("Adicione ao menos uma corrida.", "erro");
+    return;
+  }
+  const total = fretes.reduce(function(s, f){ return s + Number(f.valor || 0); }, 0);
+  el("enviarResumo").textContent = fretes.length + (fretes.length === 1 ? " corrida" : " corridas") + " · " + fretes[0].transp + " · " + moeda(total);
+  el("erroEnviar").textContent = "";
+  abrirModal("modalEnviar");
+}
+
+function enviarRelatorio(){
+  const botao = el("btnConfirmarEnvio");
+  botao.disabled = true;
+  botao.textContent = "Enviando...";
+
+  google.script.run
+    .withSuccessHandler(function(){
+      botao.disabled = false;
+      botao.textContent = "Enviar";
+      fecharModal("modalEnviar");
+      fretes = [];
+      renderTabela();
+      carregarPedidosExistentes();
+      avisar("Relatório enviado!", "sucesso");
+    })
+    .withFailureHandler(function(erro){
+      botao.disabled = false;
+      botao.textContent = "Enviar";
+      el("erroEnviar").textContent = "Erro ao enviar: " + (erro && erro.message ? erro.message : erro);
+    })
+    .enviarFretes(fretes);
+}
+
+function imprimirDireto(){
+  if (!fretes.length){
+    avisar("Adicione ao menos uma corrida antes de imprimir.", "erro");
+    return;
+  }
+
+  el("impTransportadora").textContent = "Transportadora: " + fretes[0].transp;
+  el("impDataHora").textContent = "Gerado em " + new Date().toLocaleString("pt-BR", { hour12:false });
+
+  window.print();
+}
+
+
+/* =========================================================
+   INÍCIO
+========================================================= */
+
+document.querySelectorAll(".modal").forEach(function(modal){
+  modal.addEventListener("click", function(e){ if (e.target === modal) modal.classList.remove("aberto"); });
+});
+
+document.addEventListener("keydown", function(e){
+  if (e.key !== "Escape") return;
+  const abertos = document.querySelectorAll(".modal.aberto");
+  if (abertos.length) abertos[abertos.length - 1].classList.remove("aberto");
+});
+
+// Tirar o vermelho do campo assim que a pessoa digita
+document.querySelectorAll(".campo input").forEach(function(input){
+  input.addEventListener("input", function(){
+    const campo = input.closest(".campo");
+    if (campo) campo.classList.remove("erro");
+  });
+});
+
+// Travas: pedidos já lançados e data máxima = hoje
+carregarPedidosExistentes();
+(function(){
+  const h = new Date();
+  el("dataFrete").max = h.getFullYear() + "-" + String(h.getMonth() + 1).padStart(2, "0") + "-" + String(h.getDate()).padStart(2, "0");
+})();
+</script>
+
+<!-- =======================================
+     GOOGLE MAPS AUTOCOMPLETE
+======================================= -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRTnhpv3S0kqV9G56x0npaxd6YABj8dnI&libraries=places"></script>
+
+<script>
+function extrairCidade(place){
+  if (!place.address_components) return "";
+  const comp = place.address_components.find(function(c){
+    return c.types.includes("administrative_area_level_2");
+  });
+  return comp ? comp.long_name : "";
+}
+
+function initAutocomplete(){
+  const autoOrigem = new google.maps.places.Autocomplete(el("origem"), { componentRestrictions:{ country:"br" } });
+  autoOrigem.addListener("place_changed", tentarCalcularKM);
+
+  const autoDestino = new google.maps.places.Autocomplete(el("destino"), { componentRestrictions:{ country:"br" } });
+  autoDestino.addListener("place_changed", function(){
+    el("cidade").value = extrairCidade(autoDestino.getPlace());
+    el("campo-cidade").classList.remove("erro");
+    tentarCalcularKM();
+  });
+}
+
+window.onload = initAutocomplete;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="portal"></script>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Mural • Administração</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* =========================================================
+       ADMINISTRAÇÃO DO MURAL (RH)
+       Avisos, colaboradores (aniversário/boas-vindas),
+       reconhecimentos e galeria. As premiações da Central de
+       Metas entram sozinhas no mural.
+    ========================================================= */
+    :root{
+      --bg:#f6f4ef; --card:#fff; --campo:#fbfaf7; --line:#e7e1d7; --borda:#eee8df; --text:#251e19; --muted:#77716a; --suave:#a8a29a;
+      --soft:#f1eee8; --escuro:#2b2a26; --dourado:#b08d57; --erro:#dc2626; --erro-soft:#fdeeee; --ok:#166534; --ok-soft:#ecf8ef;
+      --serif:"Cormorant Garamond", Georgia, serif; --sans:"Manrope", system-ui, sans-serif;
+      --sombra:0 1px 2px rgba(37,30,25,.04), 0 8px 28px rgba(37,30,25,.06);
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:var(--sans); color:var(--text); background:var(--bg); padding:28px clamp(16px, 3vw, 40px) 60px; -webkit-font-smoothing:antialiased; }
+    button, input, select, textarea{ font:inherit; color:inherit; }
+    button{ cursor:pointer; }
+    .tela{ display:none; }
+    .tela.ativa{ display:block; }
+
+    .login{ max-width:380px; margin:12vh auto 0; text-align:center; }
+    .login h1, .topo h1{ font-family:var(--serif); font-weight:600; font-size:40px; }
+    .login p{ color:var(--muted); margin:6px 0 22px; }
+    .cartao{ background:var(--card); border:1px solid var(--borda); border-radius:20px; padding:22px; box-shadow:var(--sombra); text-align:left; }
+
+    .campo{ display:block; margin-bottom:14px; }
+    .campo span{ display:block; font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .campo input, .campo select, .campo textarea{ width:100%; min-height:46px; padding:10px 14px; border:1px solid var(--line); border-radius:12px; background:var(--campo); outline:none; font-size:15px; }
+    .campo textarea{ min-height:110px; resize:vertical; line-height:1.5; }
+    .campo input:focus, .campo textarea:focus, .campo select:focus{ border-color:var(--escuro); background:#fff; }
+    .linha2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .check{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:14px; }
+    .check input{ width:18px; height:18px; accent-color:var(--escuro); }
+
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:0 18px; border-radius:12px; border:1px solid var(--escuro); background:var(--escuro); color:#fff; font-weight:800; font-size:14px; }
+    .btn[disabled]{ opacity:.55; cursor:default; }
+    .btn.claro{ background:#fff; border-color:var(--line); color:var(--text); }
+    .btn.perigo{ background:#fff; border-color:#f3c7c7; color:var(--erro); }
+    .btn.pequeno{ min-height:32px; padding:0 12px; font-size:12.5px; border-radius:9px; }
+    .erro{ display:none; margin-top:10px; padding:10px 12px; border-radius:10px; background:var(--erro-soft); color:var(--erro); font-weight:700; font-size:13px; }
+    .erro.ver{ display:block; }
+
+    .topo{ display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:18px; }
+    .topo small{ display:block; color:var(--muted); font-size:13px; }
+    .abas{ display:flex; gap:6px; padding:5px; background:var(--soft); border-radius:14px; width:max-content; max-width:100%; overflow:auto; margin-bottom:18px; }
+    .aba{ border:0; background:none; min-height:38px; padding:0 16px; border-radius:10px; font-weight:800; font-size:13.5px; color:var(--muted); white-space:nowrap; }
+    .aba.ativa{ background:#fff; color:var(--text); box-shadow:0 1px 3px rgba(37,30,25,.08); }
+    .aviso-central{ margin-bottom:18px; padding:12px 16px; border-radius:14px; background:var(--ok-soft); color:var(--ok); font-weight:700; font-size:13.5px; }
+
+    .grade{ display:grid; grid-template-columns:minmax(0, 1.3fr) minmax(320px, .9fr); gap:18px; align-items:start; }
+    .lista{ display:flex; flex-direction:column; gap:10px; }
+    .item{ display:flex; gap:14px; align-items:center; padding:12px 14px; background:var(--card); border:1px solid var(--borda); border-radius:16px; }
+    .item .foto{ width:56px; height:56px; border-radius:12px; overflow:hidden; background:var(--soft); flex:none; display:grid; place-items:center; color:var(--muted); font-weight:800; }
+    .item .foto img{ width:100%; height:100%; object-fit:cover; }
+    .item .info{ flex:1; min-width:0; }
+    .item b{ display:block; }
+    .item small{ display:block; color:var(--muted); font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .chip{ display:inline-flex; padding:2px 9px; border-radius:999px; background:var(--soft); font-size:11px; font-weight:800; margin-right:4px; }
+    .chip.vermelho{ background:var(--erro-soft); color:var(--erro); }
+    .chip.cinza{ color:var(--suave); }
+    .item .acoes{ display:flex; gap:6px; }
+    .item .foto.redonda{ border-radius:50%; }
+    .mes-grupo{ margin-bottom:14px; display:flex; flex-direction:column; gap:8px; }
+    .mes-titulo{ font-family:var(--serif); font-size:24px; font-weight:600; margin:4px 2px 2px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .mes-titulo .chip{ text-transform:none; font-family:var(--sans); }
+    .chip.ouro{ background:#f6ecd9; color:#8a6a35; }
+    .mes-grupo.atual .item{ border-color:#ead9b8; background:linear-gradient(180deg, #fff, #fdf8ee); }
+    .vazio{ padding:30px; text-align:center; color:var(--muted); border:1px dashed var(--line); border-radius:16px; }
+    .form-titulo{ font-family:var(--serif); font-size:26px; font-weight:600; margin-bottom:14px; }
+    .foto-campo{ display:flex; align-items:center; gap:12px; padding:10px; border:1px dashed var(--line); border-radius:14px; cursor:pointer; background:var(--campo); }
+    .foto-campo img{ width:64px; height:64px; border-radius:10px; object-fit:cover; background:var(--soft); }
+    .foto-campo span, .campo .foto-campo span{ font-weight:700; font-size:13.5px; color:var(--muted); text-transform:none; letter-spacing:0; margin:0; }
+    .form-acoes{ display:flex; gap:8px; justify-content:flex-end; margin-top:6px; }
+    .toast{ position:fixed; left:50%; bottom:22px; transform:translate(-50%, 20px); background:var(--escuro); color:#fff; padding:12px 18px; border-radius:14px; font-weight:700; opacity:0; pointer-events:none; transition:.25s; }
+    .toast.ver{ opacity:1; transform:translate(-50%, 0); }
+    @media (max-width:900px){ .grade{ grid-template-columns:1fr; } .linha2{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+  <section class="tela ativa" id="telaLogin">
+    <div class="login">
+      <h1>Mural do portal</h1>
+      <p>Área da RH para publicar avisos e destaques.</p>
+      <form class="cartao" onsubmit="entrar(event)">
+        <label class="campo"><span>Senha da RH</span><input type="password" id="senha" required></label>
+        <button class="btn" style="width:100%" id="btnEntrar" type="submit">Entrar</button>
+        <div class="erro" id="erroLogin"></div>
+      </form>
+    </div>
+  </section>
+
+  <section class="tela" id="telaPainel">
+    <div class="topo"><div><h1>Mural do portal</h1><small id="quem"></small></div></div>
+    <nav class="abas" id="abas"></nav>
+    <div class="aviso-central" id="avisoCentral"></div>
+    <div class="grade"><div class="lista" id="lista"></div><form class="cartao" id="form" onsubmit="salvar(event)"></form></div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const ABAS = [
+    { tipo: "colaboradores", rotulo: "Aniversariantes" },
+    { tipo: "avisos", rotulo: "Quadro de avisos" },
+    { tipo: "reconhecimentos", rotulo: "Reconhecimentos" },
+    { tipo: "galeria", rotulo: "Galeria de eventos" }
+  ];
+  const estado = { token: "", usuario: "", dados: null, aba: "colaboradores", editando: null, foto: "" };
+
+  const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  function esc(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+  function chamar(fn){
+    const args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function(ok, falha){ google.script.run.withSuccessHandler(ok).withFailureHandler(function(e){ falha(new Error((e && e.message) || String(e))); })[fn].apply(null, args); });
+  }
+  function msg(e){ return String(e && e.message || e).replace(/^(Error|Exception):\s*/, "").replace(/^LOGIN:\s*/, ""); }
+  let tt = null;
+  function toast(t){ const el = document.getElementById("toast"); el.textContent = t; el.classList.add("ver"); clearTimeout(tt); tt = setTimeout(function(){ el.classList.remove("ver"); }, 2500); }
+  function miniatura(id, w){ return id ? "https://drive.google.com/thumbnail?id=" + encodeURIComponent(id) + "&sz=w" + (w || 200) : ""; }
+
+  function entrar(ev){
+    ev.preventDefault();
+    const btn = document.getElementById("btnEntrar");
+    btn.disabled = true;
+    chamar("MURAL_login", document.getElementById("senha").value)
+      .then(function(r){ estado.token = r.token; estado.usuario = r.usuario; return chamar("MURAL_listarAdmin", r.token); })
+      .then(function(d){
+        estado.dados = d;
+        document.getElementById("quem").textContent = "Publicando como " + estado.usuario;
+        document.getElementById("telaLogin").classList.remove("ativa");
+        document.getElementById("telaPainel").classList.add("ativa");
+        render();
+      })
+      .catch(function(e){ const el = document.getElementById("erroLogin"); el.textContent = msg(e); el.classList.add("ver"); })
+      .finally(function(){ btn.disabled = false; });
+  }
+
+  function trocarAba(tipo){ estado.aba = tipo; estado.editando = null; estado.foto = ""; render(); }
+
+  function render(){
+    document.getElementById("abas").innerHTML = ABAS.map(function(a){
+      return '<button class="aba' + (a.tipo === estado.aba ? " ativa" : "") + '" type="button" onclick="trocarAba(\'' + a.tipo + '\')">' + a.rotulo + ' (' + (estado.dados[a.tipo] || []).length + ')</button>';
+    }).join("");
+
+    const central = estado.dados.premiacoesCentral || 0;
+    const avisoCentral = document.getElementById("avisoCentral");
+    avisoCentral.style.display = estado.aba === "reconhecimentos" || estado.aba === "colaboradores" ? "block" : "none";
+    if(estado.aba === "colaboradores"){
+      const mesAtual = new Date().getMonth() + 1;
+      const doMes = (estado.dados.colaboradores || []).filter(function(c){ return c.c6 !== "NAO" && Number(String(c.c3).split("/")[1]) === mesAtual; }).length;
+      avisoCentral.textContent = "🎂 Cadastre a equipe com o dia do aniversário. Quem faz aniversário no mês aparece sozinho no portal, num espaço especial com fogos de artifício. Em " + MESES[mesAtual - 1] + ": " + doMes + " aniversariante(s).";
+    }else{
+      avisoCentral.textContent = "✓ " + central + " premiação(ões) da Central de Metas aparecem sozinhas no mural (com foto, sem valores). Aqui você cadastra só os reconhecimentos extras.";
+    }
+
+    renderLista();
+    renderForm();
+  }
+
+  function renderLista(){
+    const itens = estado.dados[estado.aba] || [];
+    const hoje = new Date().toISOString().slice(0, 10);
+    const area = document.getElementById("lista");
+
+    if(!itens.length){ area.innerHTML = '<div class="vazio">Nada cadastrado ainda. Use o formulário ao lado.</div>'; return; }
+
+    if(estado.aba === "colaboradores"){ renderAniversariantes(itens, area); return; }
+    area.innerHTML = itens.map(function(it){
+      let titulo = "", sub = "", chips = "", fotoId = "";
+      if(estado.aba === "avisos"){
+        titulo = it.c1; sub = it.c2;
+        chips = (it.c3 === "IMPORTANTE" ? '<span class="chip vermelho">Importante</span>' : "") + (it.c4 === "SIM" ? '<span class="chip">Fixado</span>' : "") +
+          (it.c5 && it.c5 < hoje ? '<span class="chip cinza">Vencido</span>' : it.c5 ? '<span class="chip">até ' + esc(it.c5.split("-").reverse().join("/")) + '</span>' : "");
+      }else if(estado.aba === "colaboradores"){
+        titulo = it.c1; sub = [it.c2, it.c3 ? "Aniversário " + it.c3 : "", it.c4 ? "Admissão " + it.c4.split("-").reverse().join("/") : ""].filter(String).join(" · ");
+        fotoId = it.c5; chips = it.c6 === "NAO" ? '<span class="chip cinza">Inativo</span>' : "";
+      }else if(estado.aba === "reconhecimentos"){
+        titulo = it.c1 + " — " + it.c2; sub = it.c3 || (it.c4 || ""); fotoId = it.c5;
+      }else{
+        titulo = it.c1 || "Foto"; sub = it.c2 ? it.c2.split("-").reverse().join("/") : ""; fotoId = it.c3;
+      }
+      const temFoto = estado.aba !== "avisos";
+      return '<div class="item">' +
+        (temFoto ? '<div class="foto">' + (fotoId ? '<img src="' + esc(miniatura(fotoId, 160)) + '" alt="">' : esc(String(titulo).charAt(0))) + '</div>' : "") +
+        '<div class="info"><b>' + esc(titulo) + '</b>' + (chips ? '<div style="margin:3px 0">' + chips + '</div>' : "") + '<small>' + esc(sub) + '</small></div>' +
+        '<div class="acoes"><button class="btn claro pequeno" type="button" onclick="editar(\'' + esc(it.id) + '\')">Editar</button>' +
+        '<button class="btn perigo pequeno" type="button" onclick="excluir(\'' + esc(it.id) + '\')">Excluir</button></div>' +
+      '</div>';
+    }).join("");
+  }
+
+  function botoesItem(id){
+    return '<div class="acoes"><button class="btn claro pequeno" type="button" onclick="editar(\'' + esc(id) + '\')">Editar</button>' +
+      '<button class="btn perigo pequeno" type="button" onclick="excluir(\'' + esc(id) + '\')">Excluir</button></div>';
+  }
+
+  function renderAniversariantes(itens, area){
+    const mesAtual = new Date().getMonth() + 1;
+    const diaMes = function(c){ const p = String(c.c3 || "").split("/"); return { d: Number(p[0]) || 0, m: Number(p[1]) || 0 }; };
+    const grupos = {};
+    itens.forEach(function(c){ const m = diaMes(c).m; (grupos[m] = grupos[m] || []).push(c); });
+    // Começa pelo mês atual e segue o ano; sem data vai para o fim
+    const ordem = [];
+    for(let i = 0; i < 12; i++){ ordem.push(((mesAtual - 1 + i) % 12) + 1); }
+    ordem.push(0);
+    area.innerHTML = ordem.filter(function(m){ return grupos[m]; }).map(function(m){
+      const lista = grupos[m].sort(function(a, b){ return diaMes(a).d - diaMes(b).d; });
+      return '<div class="mes-grupo' + (m === mesAtual ? " atual" : "") + '"><div class="mes-titulo">' + (m ? MESES[m - 1].charAt(0).toUpperCase() + MESES[m - 1].slice(1) : "Sem data de aniversário") +
+        (m === mesAtual ? ' <span class="chip ouro">Este mês · aparece no portal</span>' : "") + '</div>' +
+        lista.map(function(it){
+          const dm = diaMes(it);
+          return '<div class="item">' +
+            '<div class="foto redonda">' + (it.c5 ? '<img src="' + esc(miniatura(it.c5, 160)) + '" alt="">' : esc(String(it.c1).charAt(0))) + '</div>' +
+            '<div class="info"><b>' + esc(it.c1) + '</b><small>' + esc([it.c2, dm.d ? "Dia " + dm.d : ""].filter(String).join(" · ")) + '</small>' +
+            (it.c6 === "NAO" ? '<span class="chip cinza">Não aparece</span>' : "") + '</div>' + botoesItem(it.id) +
+          '</div>';
+        }).join("") + '</div>';
+    }).join("");
+  }
+
+  function campo(rotulo, html){ return '<label class="campo"><span>' + rotulo + '</span>' + html + '</label>'; }
+  function input(id, valor, extra){ return '<input id="' + id + '" value="' + esc(valor || "") + '" ' + (extra || "") + '>'; }
+  function brParaIso(v){ return v ? String(v).split("/").reverse().join("-") : ""; }
+
+  function fotoCampo(fotoId){
+    return '<label class="foto-campo"><input type="file" accept="image/*" hidden onchange="escolherFoto(this)">' +
+      '<img id="fotoPrevia" src="' + esc(estado.foto || miniatura(fotoId, 200)) + '" alt="" style="' + (estado.foto || fotoId ? "" : "display:none") + '">' +
+      '<span id="fotoTexto">' + (fotoId || estado.foto ? "Trocar foto" : "Escolher foto") + '</span></label>';
+  }
+
+  function renderForm(){
+    const it = estado.editando || {};
+    const editando = !!estado.editando;
+    let html = '<div class="form-titulo">' + (editando ? "Editar" : "Novo") + '</div>';
+
+    if(estado.aba === "avisos"){
+      html += campo("Título", input("fTitulo", it.c1, 'maxlength="120" required')) +
+        campo("Texto", '<textarea id="fTexto" maxlength="1200">' + esc(it.c2 || "") + '</textarea>') +
+        '<div class="linha2">' + campo("Prioridade", '<select id="fPrioridade"><option value="INFO">Informativo</option><option value="IMPORTANTE"' + (it.c3 === "IMPORTANTE" ? " selected" : "") + '>Importante</option></select>') +
+        campo("Mostrar até (opcional)", input("fValidade", it.c5, 'type="date"')) + '</div>' +
+        '<label class="check"><input type="checkbox" id="fFixado"' + (it.c4 === "SIM" ? " checked" : "") + '> Fixar no topo</label>';
+    }else if(estado.aba === "colaboradores"){
+      const p = String(it.c3 || "").split("/");
+      const dia = Number(p[0]) || 0, mes = Number(p[1]) || 0;
+      let dias = '<option value="">Dia</option>', meses = '<option value="">Mês</option>';
+      for(let d = 1; d <= 31; d++){ dias += '<option value="' + d + '"' + (d === dia ? " selected" : "") + '>' + d + '</option>'; }
+      MESES.forEach(function(nome, i){ meses += '<option value="' + (i + 1) + '"' + (i + 1 === mes ? " selected" : "") + '>' + nome + '</option>'; });
+      html += campo("Foto", fotoCampo(it.c5)) +
+        campo("Nome", input("fNome", it.c1, 'required placeholder="Como a equipe conhece a pessoa"')) +
+        campo("Setor", input("fSetor", it.c2, 'placeholder="Ex.: Montagem"')) +
+        '<div class="linha2">' + campo("Dia do aniversário", '<select id="fDia" required>' + dias + '</select>') + campo("Mês", '<select id="fMes" required>' + meses + '</select>') + '</div>' +
+        campo("Data de admissão (opcional, para as boas-vindas)", input("fAdmissao", it.c4, 'type="date"')) +
+        '<label class="check"><input type="checkbox" id="fAtivo"' + (it.c6 === "NAO" ? "" : " checked") + '> Aparece no portal</label>';
+    }else if(estado.aba === "reconhecimentos"){
+      html += campo("Nome", input("fNome", it.c1, 'required')) +
+        campo("Reconhecimento", input("fTitulo", it.c2, 'placeholder="Ex.: Colaborador do mês" required')) +
+        campo("Texto (opcional)", '<textarea id="fTexto" maxlength="600">' + esc(it.c3 || "") + '</textarea>') +
+        campo("Data", input("fData", it.c4, 'type="date"')) + campo("Foto", fotoCampo(it.c5));
+    }else{
+      html += campo("Foto", fotoCampo(it.c3)) + campo("Legenda", input("fLegenda", it.c1, 'placeholder="Ex.: Casamento no Copacabana Palace"')) + campo("Data", input("fData", it.c2, 'type="date"'));
+    }
+
+    html += '<div class="erro" id="erroForm"></div><div class="form-acoes">' +
+      (editando ? '<button class="btn claro" type="button" onclick="cancelar()">Cancelar</button>' : "") +
+      '<button class="btn" id="btnSalvar" type="submit">' + (editando ? "Salvar alterações" : "Publicar") + '</button></div>';
+    document.getElementById("form").innerHTML = html;
+  }
+
+  function editar(id){
+    estado.editando = (estado.dados[estado.aba] || []).filter(function(x){ return x.id === id; })[0] || null;
+    estado.foto = "";
+    renderForm();
+    document.getElementById("form").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function cancelar(){ estado.editando = null; estado.foto = ""; renderForm(); }
+
+  function escolherFoto(inp){
+    const f = inp.files && inp.files[0]; if(!f){ return; }
+    const leitor = new FileReader();
+    leitor.onload = function(){
+      const img = new Image();
+      img.onload = function(){
+        const esc2 = Math.min(1, 1800 / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * esc2); c.height = Math.round(img.height * esc2);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        estado.foto = c.toDataURL("image/jpeg", 0.85);
+        const p = document.getElementById("fotoPrevia"); p.src = estado.foto; p.style.display = "";
+        document.getElementById("fotoTexto").textContent = "Trocar foto";
+      };
+      img.src = leitor.result;
+    };
+    leitor.readAsDataURL(f);
+  }
+
+  function valor(id){ const el = document.getElementById(id); return el ? (el.type === "checkbox" ? el.checked : el.value) : ""; }
+
+  function salvar(ev){
+    ev.preventDefault();
+    const btn = document.getElementById("btnSalvar");
+    const dados = { id: estado.editando ? estado.editando.id : "", foto: estado.foto };
+    if(estado.aba === "avisos"){ Object.assign(dados, { titulo: valor("fTitulo"), texto: valor("fTexto"), prioridade: valor("fPrioridade"), validoAte: valor("fValidade"), fixado: valor("fFixado") }); }
+    else if(estado.aba === "colaboradores"){ Object.assign(dados, { nome: valor("fNome"), setor: valor("fSetor"), aniversario: valor("fDia") && valor("fMes") ? ("0" + valor("fDia")).slice(-2) + "/" + ("0" + valor("fMes")).slice(-2) : "", admissao: valor("fAdmissao"), ativo: valor("fAtivo") }); }
+    else if(estado.aba === "reconhecimentos"){ Object.assign(dados, { nome: valor("fNome"), titulo: valor("fTitulo"), texto: valor("fTexto"), data: valor("fData") }); }
+    else { Object.assign(dados, { legenda: valor("fLegenda"), data: valor("fData") }); }
+
+    btn.disabled = true; btn.textContent = "Salvando…";
+    chamar("MURAL_salvar", estado.token, estado.aba, dados)
+      .then(function(d){ estado.dados = d; estado.editando = null; estado.foto = ""; render(); toast(estado.aba === "colaboradores" ? "Aniversariante salvo" : "Publicado no mural"); })
+      .catch(function(e){
+        btn.disabled = false; btn.textContent = "Tentar de novo";
+        const el = document.getElementById("erroForm"); el.textContent = msg(e); el.classList.add("ver");
+        if(/LOGIN/.test(e.message)){ location.reload(); }
+      });
+  }
+
+  function excluir(id){
+    if(!confirm("Excluir este item do mural?")){ return; }
+    chamar("MURAL_excluir", estado.token, estado.aba, id)
+      .then(function(d){ estado.dados = d; if(estado.editando && estado.editando.id === id){ estado.editando = null; } render(); toast("Excluído"); })
+      .catch(function(e){ alert(msg(e)); });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,3285 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="costura"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Complexidade</title>
+
+<style>
+:root{
+  --primary:#123A6F;          /* azul institucional */
+  --primary-dark:#0B1F3A;     /* azul marinho profundo */
+  --primary-light:#1D4ED8;    /* azul destaque */
+
+  --accent:#ff6a00;
+
+  --success:#16a34a;
+  --warning:#facc15;
+  --danger:#dc2626;
+
+  --border:#D9E2EC;
+  --bg:#FFFFFF;               /* fundo branco */
+  --card:#FFFFFF;
+  --muted:#64748B;
+}
+
+/* ===== BASE ===== */
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  font-family: Inter, sans-serif;
+  background: var(--bg);
+  margin:0;
+  padding:30px;
+  color:#0F172A;
+}
+.btn-pintura{
+  background:linear-gradient(135deg,#1f2937,#000000);
+}
+
+/* MONTAGEM */
+.btn-montagem{
+  background:linear-gradient(
+    135deg,
+    #2563eb,
+    #1e40af
+  ) !important;
+
+  color:#ffffff !important;
+  opacity:.65;
+  border:1px solid #1d4ed8;
+  box-shadow:0 4px 12px rgba(37,99,235,.22);
+}
+
+.btn-montagem:hover{
+  opacity:.9;
+  transform:translateY(-1px);
+}
+
+.btn-montagem.ativo{
+  opacity:1 !important;
+
+  background:linear-gradient(
+    135deg,
+    #2563eb,
+    #1e3a8a
+  ) !important;
+
+  color:#ffffff !important;
+
+  box-shadow:
+    0 6px 16px
+    rgba(37,99,235,.4);
+}
+.container{
+  width:100%;
+  padding:0 20px;
+}
+
+/* ===== HEADER ===== */
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:24px;
+}
+
+.header h1{
+  font-size:24px;
+  font-weight:700;
+  color:var(--primary-dark);
+}
+
+/* ===== BOTÃO ===== */
+
+.add-btn{
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  color:#fff;
+  padding:10px 18px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  transition:.2s;
+  box-shadow:0 6px 18px rgba(29,78,216,0.25);
+}
+
+.add-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 22px rgba(29,78,216,0.35);
+  opacity:.95;
+}
+
+/* ===== TABELA ===== */
+
+table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  background:var(--card);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,0.06);
+}
+
+thead{
+  background:linear-gradient(135deg,var(--primary-dark),var(--primary));
+  color:#fff;
+}
+
+th{
+  padding:10px;
+  font-weight:600;
+  position:relative;
+  overflow:visible;
+  z-index:2;
+}
+
+td{
+  padding:8px;
+}
+
+tbody tr{
+  border-bottom:1px solid var(--border);
+  text-align:center;
+  transition:.2s;
+}
+
+tbody tr:hover{
+  background:rgba(29,78,216,0.06);
+}
+
+thead, tbody, tr{
+  overflow:visible;
+}
+
+table{
+  position:relative;
+  z-index:1;
+}
+
+/* ===== STATUS ===== */
+
+.sim{
+  color:#16a34a; /* verde */
+  font-weight:600;
+}
+
+.nao{
+  color:#dc2626; /* vermelho */
+  font-weight:600;
+}
+.pendente{
+  color:#d97706;
+  font-weight:600;
+}
+/* ===== SCORE ===== */
+
+.score{
+  background:#facc15; /* amarelo */
+  color:#1f2937;
+  padding:6px 12px;
+  border-radius:10px;
+  font-weight:700;
+  display:inline-block;
+}
+/* ===== MODAL ===== */
+
+.modal{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  background:rgba(11,31,58,0.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+  padding:20px;
+}
+
+.modal-content{
+  background:var(--card);
+  padding:28px;
+  border-radius:20px;
+  width:1180px;
+  max-width:100%;
+  max-height:90vh;
+  overflow:auto;
+  box-shadow:0 30px 80px rgba(0,0,0,0.25);
+}
+
+/* ===== FORM ===== */
+
+.form-grid{
+  display:grid;
+  grid-template-columns:150px 1.2fr 1.2fr 170px;
+  gap:12px;
+  margin-bottom:20px;
+  align-items:center;
+}
+
+input{
+  width:100%;
+  min-width:0;
+  padding:11px 12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:14px;
+  color:#111827;
+  background:#fff;
+}
+
+input:focus{
+  outline:none;
+  border-color:var(--primary-light);
+  box-shadow:0 0 0 3px rgba(29,78,216,0.15);
+}
+
+/* ===== PROGRESS ===== */
+
+.progress{
+  margin-bottom:20px;
+}
+
+.progress-bar{
+  height:8px;
+  background:var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:6px;
+}
+
+.progress-inner{
+  height:100%;
+  width:0%;
+  background:var(--primary-light);
+  transition:.3s;
+}
+
+/* ===== GRID ===== */
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:20px;
+}
+
+.bloco{
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+}
+
+.bloco h3{
+  font-size:14px;
+  margin:0 0 10px 0;
+  font-weight:700;
+}
+
+/* ===== PERGUNTAS ===== */
+
+.pergunta{
+  margin-bottom:16px;
+  font-size:14px;
+  line-height:1.35;
+}
+
+.pergunta:last-child{
+  margin-bottom:0;
+}
+
+.botoes{
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+
+.btn{
+  padding:6px 14px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  cursor:pointer;
+  font-size:13px;
+  transition:.2s;
+  background:#fff;
+  color:#374151;
+  user-select:none;
+}
+
+.btn:hover{
+  background:#f1f5f9;
+}
+
+.btn.ativo{
+  background:var(--primary-light);
+  color:#fff;
+  border:1px solid var(--primary-light);
+  font-weight:600;
+}
+
+/* ===== SALVAR ===== */
+
+.salvar{
+  margin-top:20px;
+  background:var(--primary);
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  transition:.2s;
+  user-select:none;
+}
+
+.salvar:hover{
+  background:var(--primary-dark);
+}
+
+/* ===== TOOLTIP ===== */
+
+th[data-tooltip]{
+  cursor:help;
+}
+
+th[data-tooltip]::after{
+  content: attr(data-tooltip);
+  position:absolute;
+  bottom:120%;
+  left:50%;
+  transform:translateX(-50%) scale(0.95);
+  background:#0F172A;
+  color:#fff;
+  padding:10px 14px;
+  border-radius:8px;
+  font-size:13px;
+  font-weight:500;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:0.2s;
+  box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  z-index:9999;
+}
+
+th[data-tooltip]::before{
+  content:"";
+  position:absolute;
+  bottom:105%;
+  left:50%;
+  transform:translateX(-50%);
+  border:6px solid transparent;
+  border-top-color:#0F172A;
+  opacity:0;
+  transition:0.2s;
+  z-index:9999;
+}
+
+th[data-tooltip]:hover::after{
+  opacity:1;
+  transform:translateX(-50%) scale(1);
+}
+
+th[data-tooltip]:hover::before{
+  opacity:1;
+}
+
+/* ===== RESPONSIVO ===== */
+
+@media (max-width: 1100px){
+  .form-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width: 640px){
+  .form-grid{
+    grid-template-columns:1fr;
+  }
+
+  .modal-content{
+    padding:20px;
+  }
+}
+#tabelaLote{
+  width:100%;
+  display:block;
+  clear:both;
+}
+/* ===== BOTÕES SETOR ===== */
+
+.btn-setor{
+  padding:8px 16px;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.2s;
+  color:#fff;
+  opacity:.5;
+}
+
+/* PERSONALIZAÇÃO = VERMELHO PREMIUM */
+.btn-personalizacao{
+  background:linear-gradient(135deg,#dc2626,#991b1b);
+}
+
+/* PINTURA = PRETO PREMIUM */
+.btn-pintura{
+  background:linear-gradient(135deg,#1f2937,#000000);
+}
+
+/* ATIVO */
+.btn-setor.ativo{
+  opacity:1;
+  transform:translateY(-1px);
+  box-shadow:0 6px 16px rgba(0,0,0,0.2);
+}
+/* ===== FILTROS EM UMA LINHA ===== */
+
+.filtros-painel{
+  width:100%;
+
+  display:grid;
+  grid-template-columns: 180px 1fr 1fr 90px;
+  gap:10px;
+
+  align-items:center;
+
+  margin:0 0 18px 0;
+}
+
+.filtros-painel input{
+  width:100%;
+  height:44px;
+
+  border:1px solid var(--border);
+  border-radius:12px;
+
+  background:#fff;
+
+  padding:0 14px;
+
+  font-size:14px;
+  font-weight:500;
+
+  color:#0f172a;
+
+  outline:none;
+}
+
+.filtros-painel input::placeholder{
+  color:#64748b;
+}
+
+.filtros-painel input:focus{
+  border-color:var(--primary-light);
+  box-shadow:0 0 0 3px rgba(29,78,216,0.12);
+}
+
+.filtros-painel button{
+  width:100%;
+  height:44px;
+
+  border:none;
+  border-radius:12px;
+
+  background:#64748b;
+  color:#fff;
+
+  font-size:14px;
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.filtros-painel button:hover{
+  background:#475569;
+}
+
+/* ===== PAGINAÇÃO EM UMA LINHA ===== */
+
+.paginacao-pedidos{
+  width:100%;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:12px;
+
+  margin-top:14px;
+  padding:12px 0 0;
+}
+
+.paginacao-info{
+  font-size:14px;
+  color:#64748b;
+  font-weight:600;
+}
+
+.paginacao-acoes{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.paginacao-acoes button{
+  height:38px;
+
+  border:1px solid var(--border);
+  border-radius:10px;
+
+  background:#fff;
+  color:#0f172a;
+
+  padding:0 14px;
+
+  font-size:13px;
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.paginacao-acoes button:hover:not(:disabled){
+  background:#f1f5f9;
+}
+
+.paginacao-acoes button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+/* ===== SESSÃO DE ACESSO LIBERADA ===== */
+
+.card-sessao-senha{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+
+  transform:translateX(-50%);
+
+  z-index:9000;
+
+  display:none;
+  align-items:center;
+  gap:8px;
+
+  padding:9px 15px;
+
+  border:1px solid rgba(255,255,255,.4);
+  border-radius:999px;
+
+  background:rgba(15,42,68,.78);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+
+  color:#ffffff;
+
+  font-size:13px;
+  font-weight:600;
+
+  box-shadow:
+    0 8px 25px
+    rgba(15,23,42,.22);
+
+  pointer-events:none;
+}
+
+.card-sessao-senha.visivel{
+  display:flex;
+}
+
+.card-sessao-senha .indicador-sessao{
+  width:8px;
+  height:8px;
+
+  border-radius:50%;
+
+  background:#22c55e;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(34,197,94,.18);
+}
+
+.card-sessao-senha strong{
+  min-width:38px;
+
+  color:#dcfce7;
+
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+</style>
+
+<!-- =====================================================
+     TEMA CHIAVARI (mesmo padrão dos outros sistemas)
+====================================================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style id="tema-chiavari">
+:root{
+  --primary:#5a5a55; --primary-dark:#44443f; --primary-light:#44443f; --accent:#44443f;
+  --border:#eee8df; --muted:#5f5952; --fundo-suave:#f8f6f0; --line:#e7e1d7; --linha-tabela:#f3efe8; --text:#251e19;
+  --serif:"Cormorant Garamond", Georgia, serif; --sans:"Manrope", system-ui, sans-serif;
+  --sombra-card:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+}
+body{ font-family:var(--sans) !important; color:var(--text) !important; background:#ffffff !important; padding:0 24px 40px !important; -webkit-font-smoothing:antialiased; }
+button, input, select, textarea{ font-family:inherit !important; }
+.container{ max-width:none !important; margin:0 !important; padding:0 !important; }
+
+/* ---------- Título e setores ---------- */
+.header{
+  flex-direction:column !important; align-items:center !important; gap:16px !important;
+  margin:0 -24px 20px !important; padding:34px 24px 22px !important; border-bottom:1px solid var(--line); text-align:center;
+}
+.header h1{
+  margin:0 !important; font-family:var(--serif) !important; font-size:clamp(32px, 4.6vw, 58px) !important; font-weight:500 !important;
+  letter-spacing:.2em !important; line-height:1.05; text-transform:uppercase; color:var(--text) !important;
+}
+.btn-setor, .btn-personalizacao, .btn-pintura, .btn-montagem, .btn-painel-cx{
+  display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 18px !important;
+  border:1px solid var(--line) !important; border-radius:999px !important; background:#ffffff !important; color:var(--text) !important;
+  font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; box-shadow:none !important; cursor:pointer;
+  transition:background-color .15s, border-color .15s, color .15s;
+}
+.btn-setor, .btn-personalizacao, .btn-pintura, .btn-montagem{ opacity:1 !important; filter:none !important; }
+.btn-setor:hover, .btn-painel-cx:hover{ border-color:var(--primary) !important; background:var(--fundo-suave) !important; }
+.btn-setor.ativo, .btn-montagem.ativo{ background:var(--primary-dark) !important; border-color:var(--primary-dark) !important; color:#ffffff !important; }
+.btn-painel-cx svg{ width:15px; height:15px; }
+
+/* ---------- Filtros ---------- */
+.filtros-painel{ padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; gap:10px !important; margin-bottom:14px !important; }
+.filtros-painel input{
+  min-height:44px; padding:0 18px !important; border:1px solid var(--line) !important; border-radius:999px !important;
+  background:var(--fundo-suave) !important; color:var(--text) !important; font-size:15px !important; font-weight:500 !important; box-shadow:none !important;
+}
+.filtros-painel input:focus{ border-color:var(--primary) !important; background:#ffffff !important; box-shadow:0 0 0 3px rgba(90,90,85,.12) !important; outline:none; }
+.filtros-painel button{
+  min-height:44px; padding:0 20px !important; border:1px solid var(--line) !important; border-radius:999px !important; background:#ffffff !important; color:var(--text) !important;
+  font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; box-shadow:none !important;
+}
+.filtros-painel button:hover{ border-color:var(--primary) !important; background:var(--fundo-suave) !important; }
+
+/* ---------- Tabela de pedidos ---------- */
+#listaPedidos{ border:1px solid var(--border); border-radius:18px; overflow:visible; box-shadow:var(--sombra-card); background:#ffffff; }
+#listaPedidos::before{
+  content:"Pedidos"; display:block; padding:12px 22px; border-radius:18px 18px 0 0; background:var(--primary); color:#ffffff;
+  font-family:var(--serif); font-size:22px; font-weight:500; letter-spacing:.12em; text-transform:uppercase;
+}
+#listaPedidos table{ border-radius:0 !important; }
+#listaPedidos thead{ background:#ffffff !important; color:#3f3a35 !important; }
+#listaPedidos th{ padding:12px 10px !important; border-bottom:1px solid var(--border); background:#ffffff !important; color:#3f3a35 !important; font-size:12px !important; font-weight:700 !important; letter-spacing:.08em; text-transform:uppercase; }
+#listaPedidos td{ padding:10px !important; border-bottom:1px solid var(--linha-tabela) !important; font-size:14px !important; font-weight:500; color:var(--text); }
+#listaPedidos tbody tr:nth-child(even){ background:#fcfbf8; }
+#listaPedidos tbody tr:hover{ background:#f6f3ec !important; }
+.sim{ display:inline-block; padding:3px 10px; border-radius:999px; background:#dcfce7 !important; color:#166534 !important; font-size:12px; font-weight:700; }
+.nao{ display:inline-block; padding:3px 10px; border-radius:999px; background:#f1eee8 !important; color:#5f5952 !important; font-size:12px; font-weight:700; }
+.pendente{ display:inline-block; padding:3px 10px; border-radius:999px; background:#fef3c7 !important; color:#92400e !important; font-size:12px; font-weight:700; }
+.score{ display:inline-block; min-width:52px; padding:4px 10px !important; border-radius:999px !important; background:var(--primary-dark) !important; color:#ffffff !important; font-weight:800 !important; font-size:13px !important; }
+th[data-tooltip]::after{ background:#251e19 !important; color:#ffffff !important; border-radius:10px !important; font-family:var(--sans) !important; text-transform:none; letter-spacing:0; }
+
+.paginacao-pedidos{ padding:12px 18px !important; border-top:1px solid var(--border); color:var(--muted); font-weight:600; }
+.paginacao-acoes button{ min-height:36px; border:1px solid var(--line) !important; border-radius:999px !important; background:#ffffff !important; color:var(--text) !important; font-weight:700 !important; }
+.paginacao-acoes button:hover:not(:disabled){ background:var(--fundo-suave) !important; border-color:var(--primary) !important; }
+
+/* ---------- Janelas ---------- */
+.modal{ background:rgba(37,30,25,.45) !important; }
+.modal-content{ border-radius:18px !important; border:0 !important; box-shadow:0 24px 70px rgba(37,30,25,.25) !important; }
+.modal-content h2, .modal-content h3{ font-family:var(--serif) !important; font-weight:500 !important; letter-spacing:.1em; text-transform:uppercase; color:var(--text) !important; }
+.modal-content h2{ font-size:28px !important; }
+.campo label, .modal-content label{ color:#3f3a35 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; }
+input{ border:1px solid var(--line) !important; border-radius:12px !important; background:var(--fundo-suave) !important; color:var(--text) !important; font-size:15px !important; }
+input:focus{ border-color:var(--primary) !important; background:#ffffff !important; box-shadow:0 0 0 3px rgba(90,90,85,.12) !important; outline:none; }
+.progress{ padding:16px !important; border:1px solid var(--border); border-radius:14px !important; background:var(--fundo-suave) !important; }
+.progress-bar{ height:10px !important; border-radius:999px !important; background:#ebe6dc !important; overflow:hidden; }
+.progress-inner{ border-radius:999px !important; }
+.bloco{ border:1px solid var(--border) !important; border-radius:14px !important; background:#ffffff !important; box-shadow:none !important; }
+.bloco h3{ font-size:18px !important; }
+.btn{ min-height:38px; border:1px solid var(--line) !important; border-radius:999px !important; background:#ffffff !important; color:var(--text) !important; font-weight:700 !important; box-shadow:none !important; }
+.btn:hover{ border-color:var(--primary) !important; background:var(--fundo-suave) !important; }
+.btn.ativo{ background:var(--primary-dark) !important; border-color:var(--primary-dark) !important; color:#ffffff !important; }
+.salvar{ min-height:46px; display:flex; align-items:center; justify-content:center; border-radius:999px !important; background:var(--primary-dark) !important; color:#ffffff !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; box-shadow:none !important; }
+.salvar:hover{ background:#2f2f2b !important; }
+.card-sessao-senha{ border-color:var(--border) !important; border-radius:999px !important; background:#ffffff !important; box-shadow:var(--sombra-card) !important; font-family:var(--sans) !important; }
+
+@media (max-width:760px){
+  body{ padding:0 14px 32px !important; }
+  .header{ margin:0 -14px 16px !important; padding:22px 14px 16px !important; }
+  .header h1{ font-size:28px !important; letter-spacing:.12em !important; }
+  #listaPedidos{ overflow-x:auto; }
+}
+</style>
+
+  <style id="painel-cx">
+/* =========================================================
+   PAINEL DO ALMOXARIFADO (tela cheia, escuro) — mesmo estilo do painel de fretes
+========================================================= */
+#painelCX{
+  --p-fundo:#111318; --p-card:#1b1e24; --p-borda:rgba(255,255,255,.07);
+  --p-texto:#f4f5f7; --p-texto2:#a9aeb8; --p-grade:rgba(255,255,255,.06);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --ok:#22c55e; --aviso:#f59e0b; --ruim:#ef4444;
+  position:fixed; inset:0; z-index:1000; display:none; flex-direction:column;
+  background:
+    radial-gradient(900px 380px at 10% -10%, rgba(57,135,229,.16), transparent 60%),
+    radial-gradient(700px 320px at 100% 0%, rgba(217,89,38,.10), transparent 60%),
+    var(--p-fundo);
+  color:var(--p-texto); font-family:"Manrope", system-ui, sans-serif; -webkit-font-smoothing:antialiased;
+}
+#painelCX.aberto{ display:flex; }
+body.painel-aberto{ overflow:hidden; }
+
+.pa-topo{ display:flex; align-items:center; flex-wrap:wrap; gap:12px 18px; padding:16px 28px; border-bottom:1px solid var(--p-borda); }
+.pa-topo h2{ margin:0; font-size:20px; font-weight:800; letter-spacing:.02em; }
+.pa-topo p{ margin:2px 0 0; font-size:13px; color:var(--p-texto2); font-weight:600; }
+.pa-topo-dir{ display:flex; align-items:center; gap:12px; margin-left:auto; flex-wrap:wrap; }
+.pa-vivo{ display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; color:var(--p-texto2); }
+.pa-vivo i{ width:8px; height:8px; border-radius:50%; background:var(--ok); animation:pa-pulso 1.8s infinite; }
+.pa-mes{ display:inline-flex; align-items:center; gap:2px; padding:4px; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid var(--p-borda); }
+.pa-mes button{ width:32px; height:32px; border:0; border-radius:50%; background:transparent; color:var(--p-texto); font-size:18px; cursor:pointer; }
+.pa-mes button:hover{ background:rgba(255,255,255,.08); }
+.pa-mes span{ min-width:150px; text-align:center; font-size:14px; font-weight:800; text-transform:capitalize; }
+.pa-fechar{ width:38px; height:38px; border:1px solid var(--p-borda); border-radius:50%; background:transparent; color:var(--p-texto2); font-size:20px; cursor:pointer; }
+.pa-fechar:hover{ color:#fff; border-color:rgba(255,255,255,.25); }
+
+.pa-corpo{ flex:1; overflow-y:auto; padding:20px 28px 34px; display:grid; gap:16px; align-content:start; }
+.pa-secao{ display:flex; align-items:center; gap:12px; margin:6px 0 -4px; font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:#7d8490; }
+.pa-secao::after{ content:""; flex:1; height:1px; background:var(--p-borda); }
+
+.pa-card{
+  position:relative; min-width:0; padding:18px; border:1px solid var(--p-borda); border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)), var(--p-card);
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 12px 30px rgba(0,0,0,.25);
+  animation:pa-subir .6s cubic-bezier(.2,.8,.2,1) both;
+}
+.pa-card h3{ margin:0; font-size:15px; font-weight:800; color:var(--p-texto); }
+.pa-sub{ margin:3px 0 14px; font-size:13px; color:var(--p-texto2); font-weight:600; }
+.pa-card-topo{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+
+.pa-g4{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; }
+.pa-g21{ display:grid; grid-template-columns:minmax(0, 2.1fr) minmax(0, 1fr); gap:14px; }
+.pa-g3{ display:grid; grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap:14px; }
+.pa-g3b{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
+
+/* Indicadores */
+.pa-kpi{ padding:16px 16px 0; overflow:hidden; }
+.pa-kpi:nth-child(2){ animation-delay:.06s; } .pa-kpi:nth-child(3){ animation-delay:.12s; } .pa-kpi:nth-child(4){ animation-delay:.18s; }
+.pa-rot{ display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--p-texto2); }
+.pa-ico{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; flex:0 0 34px; }
+.pa-ico svg{ width:18px; height:18px; }
+.pa-valor{ display:block; margin-top:12px; font-size:28px; font-weight:800; letter-spacing:-.01em; font-variant-numeric:tabular-nums; }
+.pa-valor small{ font-size:15px; color:var(--p-texto2); margin-left:4px; font-weight:700; }
+.pa-rodape{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; font-weight:700; color:var(--p-texto2); }
+.pa-delta{ display:inline-flex; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; }
+.pa-delta.sobe{ background:rgba(239,68,68,.14); color:#f87171; }
+.pa-delta.desce{ background:rgba(34,197,94,.14); color:#4ade80; }
+.pa-delta.neutro{ background:rgba(255,255,255,.07); color:var(--p-texto2); }
+.pa-delta.bom-sobe{ background:rgba(34,197,94,.14); color:#4ade80; }
+.pa-spark{ display:block; width:calc(100% + 32px); height:54px; margin:10px -16px 0; }
+
+/* Alertas */
+.pa-alerta{ display:flex; align-items:center; gap:14px; padding:16px 18px; cursor:default; }
+.pa-alerta .pa-ico{ width:44px; height:44px; flex-basis:44px; border-radius:12px; }
+.pa-alerta .pa-ico svg{ width:22px; height:22px; }
+.pa-alerta strong{ display:block; font-size:28px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; }
+.pa-alerta span{ display:block; margin-top:5px; font-size:13px; font-weight:700; color:var(--p-texto2); }
+.pa-alerta.ruim strong{ color:#f87171; }
+.pa-alerta.aviso strong{ color:#fbbf24; }
+
+/* Gráficos SVG */
+.pa-area{ position:relative; }
+.pa-area svg{ display:block; width:100%; overflow:visible; }
+.pa-area .eixo{ font-size:12px; fill:#7d8490; font-family:"Manrope", sans-serif; font-weight:600; }
+.pa-area .grade{ stroke:var(--p-grade); stroke-width:1; }
+.pa-area .linha{ fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+.pa-area .cruz{ stroke:rgba(255,255,255,.35); stroke-width:1; opacity:0; }
+.pa-area .ponto{ stroke:var(--p-card); stroke-width:3; opacity:0; }
+.pa-area.focado .cruz, .pa-area.focado .ponto{ opacity:1; }
+.pa-legenda{ display:flex; gap:14px; flex-wrap:wrap; font-size:13px; font-weight:700; color:var(--p-texto2); }
+.pa-legenda span{ display:inline-flex; align-items:center; gap:7px; }
+.pa-legenda i{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+.pa-col{ transform-box:fill-box; transform-origin:bottom; transform:scaleY(0); transition:transform .9s cubic-bezier(.2,.8,.2,1); }
+.pa-area.pronto .pa-col{ transform:scaleY(1); }
+.pa-destaque{ display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:rgba(57,135,229,.14); color:#8cbcf3; font-size:13px; font-weight:800; }
+
+/* Medidor */
+.pa-medidor{ display:grid; justify-items:center; gap:12px; }
+.pa-medidor svg{ width:200px; height:200px; }
+.pa-medidor .num{ font-size:42px; font-weight:800; fill:var(--p-texto); font-family:"Manrope", sans-serif; }
+.pa-medidor .txt{ font-size:11px; font-weight:800; letter-spacing:.12em; fill:var(--p-texto2); font-family:"Manrope", sans-serif; }
+.pa-medidor .arco{ transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1); }
+
+/* Rankings */
+.pa-rank-lista{ display:grid; gap:12px; }
+.pa-rank{ display:grid; grid-template-columns:28px minmax(0, 1fr) auto; align-items:center; gap:4px 12px; }
+.pa-rank .pos{ grid-row:span 2; width:28px; height:28px; border-radius:9px; display:grid; place-items:center; background:rgba(255,255,255,.06); font-size:13px; font-weight:800; color:var(--p-texto2); }
+.pa-rank:first-child .pos{ background:rgba(57,135,229,.2); color:#8cbcf3; }
+.pa-rank .nome{ font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pa-rank .vl{ font-weight:800; font-size:14px; font-variant-numeric:tabular-nums; text-align:right; }
+.pa-rank .trilho{ grid-column:2 / -1; height:8px; border-radius:999px; background:rgba(255,255,255,.06); overflow:hidden; }
+.pa-rank .cheio{ display:block; height:100%; width:0; border-radius:999px; transition:width 1.1s cubic-bezier(.2,.8,.2,1); }
+.pa-rank .sub{ grid-column:2 / -1; margin-top:-2px; font-size:12px; color:var(--p-texto2); font-weight:600; }
+.c-azul{ background:linear-gradient(90deg, #256abf, #5fa3f0); box-shadow:0 0 12px rgba(57,135,229,.45); }
+.c-laranja{ background:linear-gradient(90deg, #b5461b, #f08a5d); box-shadow:0 0 12px rgba(217,89,38,.45); }
+.c-verde{ background:linear-gradient(90deg, #127a55, #2fd29a); box-shadow:0 0 12px rgba(25,158,112,.45); }
+.c-vermelho{ background:linear-gradient(90deg, #b91c1c, #f87171); box-shadow:0 0 12px rgba(239,68,68,.45); }
+.c-amarelo{ background:linear-gradient(90deg, #b45309, #fbbf24); box-shadow:0 0 12px rgba(245,158,11,.4); }
+
+/* Estoque crítico */
+.pa-critico{ display:grid; gap:8px; }
+.pa-critico div.linha{ display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:6px 12px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.035); }
+.pa-critico .nome{ font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pa-critico .qtd{ font-size:13px; font-weight:800; font-variant-numeric:tabular-nums; }
+.pa-critico .qtd.zero{ color:#f87171; }
+.pa-critico .trilho{ grid-column:1 / -1; height:6px; border-radius:999px; background:rgba(255,255,255,.06); overflow:hidden; }
+.pa-critico .cheio{ display:block; height:100%; width:0; border-radius:999px; transition:width 1s cubic-bezier(.2,.8,.2,1); }
+
+.pa-vazio{ padding:26px; text-align:center; color:var(--p-texto2); font-weight:600; }
+.pa-carregando{ padding:80px 20px; text-align:center; color:var(--p-texto2); font-weight:700; }
+.pa-carregando i{ display:block; width:34px; height:34px; margin:0 auto 14px; border-radius:50%; border:3px solid rgba(255,255,255,.1); border-top-color:var(--s1); animation:pa-girar .8s linear infinite; }
+
+.pa-dica{
+  position:absolute; z-index:5; min-width:180px; padding:10px 12px; border:1px solid rgba(255,255,255,.12); border-radius:12px;
+  background:rgba(14,16,20,.94); color:#fff; font-size:13px; line-height:1.6; pointer-events:none; opacity:0; transform:translateY(4px);
+  transition:opacity .12s, transform .12s; box-shadow:0 14px 34px rgba(0,0,0,.45);
+}
+.pa-dica.visivel{ opacity:1; transform:none; }
+.pa-dica b{ display:block; margin-bottom:2px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:#a9aeb8; }
+.pa-dica div{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.pa-dica i{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+
+@keyframes pa-subir{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+@keyframes pa-pulso{ 0%{ box-shadow:0 0 0 0 rgba(34,197,94,.55); } 70%{ box-shadow:0 0 0 8px rgba(34,197,94,0); } 100%{ box-shadow:0 0 0 0 rgba(34,197,94,0); } }
+@keyframes pa-girar{ to{ transform:rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce){
+  .pa-card, .pa-vivo i{ animation:none; }
+  .pa-col, .pa-rank .cheio, .pa-critico .cheio, .pa-medidor .arco{ transition:none; }
+}
+@media(max-width:1100px){
+  .pa-g4{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .pa-g21, .pa-g3, .pa-g3b{ grid-template-columns:1fr; }
+}
+@media(max-width:560px){
+  .pa-g4{ grid-template-columns:1fr; }
+  .pa-topo, .pa-corpo{ padding-left:14px; padding-right:14px; }
+  .pa-topo-dir{ margin-left:0; width:100%; justify-content:space-between; }
+  .pa-mes span{ min-width:110px; }
+}
+  </style>
+
+  <style id="painel-cx-claro">
+/* =========================================================
+   PAINEL DO ALMOXARIFADO — VERSÃO CLARA (cores do sistema)
+========================================================= */
+#painelCX{
+  --p-fundo:#fbfaf7; --p-card:#ffffff; --p-borda:#eee8df;
+  --p-texto:#251e19; --p-texto2:#5f5952; --p-grade:#efebe4;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --ok:#16a34a; --aviso:#d97706; --ruim:#dc2626;
+  background:
+    radial-gradient(900px 380px at 10% -10%, rgba(42,120,214,.06), transparent 60%),
+    radial-gradient(700px 320px at 100% 0%, rgba(235,104,52,.05), transparent 60%),
+    var(--p-fundo);
+}
+
+.pa-topo{ background:#ffffff; border-bottom:1px solid var(--p-borda); }
+.pa-topo h2{
+  font-family:"Cormorant Garamond", Georgia, serif; font-size:30px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; line-height:1.1;
+}
+.pa-mes{ background:var(--p-fundo); border-color:var(--p-borda); }
+.pa-mes button:hover{ background:#efebe4; }
+.pa-fechar:hover{ color:var(--p-texto); border-color:#cfc8bc; }
+
+.pa-secao{ color:#7d766d; }
+
+.pa-card{
+  background:#ffffff;
+  box-shadow:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+}
+
+/* Indicadores: só 3 agora (sem valor em estoque) */
+
+
+.pa-delta.sobe{ background:#fee2e2; color:#b91c1c; }
+.pa-delta.desce, .pa-delta.bom-sobe{ background:#dcfce7; color:#166534; }
+.pa-delta.neutro{ background:#f1eee8; color:var(--p-texto2); }
+
+.pa-alerta.ruim strong{ color:#dc2626; }
+.pa-alerta.aviso strong{ color:#b45309; }
+
+.pa-area .eixo{ fill:#7d766d; }
+.pa-area .cruz{ stroke:rgba(37,30,25,.3); }
+.pa-area .ponto{ stroke:#ffffff; }
+/* Sem brilho no fundo claro */
+.pa-area .linha, .pa-col, .pa-medidor .arco{ filter:none !important; }
+.pa-destaque{ background:#e8f1fc; color:#1d4ed8; }
+
+.pa-rank .pos{ background:#f4f1eb; }
+.pa-rank:first-child .pos{ background:#e0ecff; color:#1e40af; }
+.pa-rank .trilho, .pa-critico .trilho{ background:#f1eee8; }
+.c-azul, .c-laranja, .c-verde, .c-vermelho, .c-amarelo{ box-shadow:none !important; }
+.c-azul{ background:linear-gradient(90deg, #2a78d6, #5598e7); }
+.c-laranja{ background:linear-gradient(90deg, #d95926, #f08a5d); }
+.c-verde{ background:linear-gradient(90deg, #138a60, #1baf7a); }
+
+.pa-critico div.linha{ background:#faf8f4; }
+.pa-critico .qtd.zero{ color:#dc2626; }
+
+.pa-carregando i{ border-color:#efebe4; border-top-color:var(--s1); }
+
+
+  </style>
+
+<style id="painel-cx-extra">
+#painelCX .pa-topo h2{ font-family:var(--serif) !important; }
+.pa-periodos{ display:inline-flex; padding:4px; gap:2px; border-radius:999px; background:#fbfaf7; border:1px solid #eee8df; }
+.pa-periodos button{ min-height:30px; padding:0 14px; border:0; border-radius:999px; background:transparent; color:#5f5952; font-size:13px; font-weight:700; cursor:pointer; }
+.pa-periodos button:hover{ color:#251e19; }
+.pa-periodos button.ativo{ background:#44443f; color:#ffffff; }
+.cx-kpi{ padding-bottom:16px; }
+.cx-kpi .pa-rodape span{ line-height:1.45; }
+
+.cx-setores{ display:grid; gap:14px; }
+.cx-setor{ display:grid; gap:8px; padding:14px; border-radius:14px; background:#faf8f4; }
+.cx-setor-topo{ display:flex; align-items:baseline; justify-content:space-between; font-size:15px; font-weight:800; }
+.cx-setor-topo i{ display:inline-block; width:10px; height:10px; margin-right:8px; border-radius:3px; }
+.cx-setor-topo strong{ font-size:24px; font-variant-numeric:tabular-nums; }
+.cx-media{ height:8px; border-radius:999px; background:#ebe6dc; overflow:hidden; }
+.cx-media .cheio{ display:block; height:100%; width:0; border-radius:999px; transition:width 1.1s cubic-bezier(.2,.8,.2,1); }
+.cx-faixas{ display:flex; gap:3px; height:10px; border-radius:999px; overflow:hidden; background:#ebe6dc; }
+.cx-f.baixa{ background:#16a34a; } .cx-f.media{ background:#d97706; } .cx-f.alta{ background:#dc2626; }
+.cx-faixas-legenda{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; font-weight:600; color:#5f5952; }
+.cx-faixas-legenda i{ display:inline-block; width:9px; height:9px; margin-right:5px; border-radius:50%; }
+.cx-faixas-legenda i.baixa{ background:#16a34a; } .cx-faixas-legenda i.media{ background:#d97706; } .cx-faixas-legenda i.alta{ background:#dc2626; }
+.cx-faixas-legenda b{ color:#251e19; }
+
+.cx-pedido{ cursor:pointer; transition:background-color .15s; }
+.cx-pedido:hover{ background:#f4f1eb !important; }
+.cx-pedido .nome b{ color:#1d4ed8; }
+.cx-pedido .qtd{ color:#5f5952; font-weight:600; }
+.cx-chips{ grid-column:1 / -1; display:flex; gap:6px; flex-wrap:wrap; }
+.cx-chip{ padding:2px 9px; border-radius:999px; font-size:12px; font-weight:800; font-variant-numeric:tabular-nums; }
+.cx-chip.baixa{ background:#dcfce7; color:#166534; } .cx-chip.media{ background:#fef3c7; color:#92400e; } .cx-chip.alta{ background:#fee2e2; color:#b91c1c; }
+@media (prefers-reduced-motion: reduce){ .cx-media .cheio{ transition:none; } }
+</style>
+
+<style id="fonte-maior">
+/* =========================================================
+   FONTES MAIORES (leitura mais confortável)
+========================================================= */
+
+/* Página: setores, filtros e tabela */
+.btn-setor, .btn-personalizacao, .btn-pintura, .btn-montagem, .btn-painel-cx{ min-height:46px !important; padding:0 22px !important; font-size:14px !important; }
+.btn-painel-cx svg{ width:17px !important; height:17px !important; }
+.filtros-painel input{ min-height:50px !important; font-size:17px !important; }
+.filtros-painel button{ min-height:50px !important; font-size:14px !important; }
+#listaPedidos::before{ font-size:26px !important; }
+#listaPedidos th{ font-size:14px !important; padding:14px 10px !important; }
+#listaPedidos td{ font-size:17px !important; padding:13px 10px !important; }
+.sim, .nao, .pendente{ font-size:14px !important; padding:4px 12px !important; }
+.score{ font-size:16px !important; min-width:60px !important; padding:5px 12px !important; }
+th[data-tooltip]::after{ font-size:14px !important; }
+.paginacao-pedidos, .paginacao-info{ font-size:16px !important; }
+.paginacao-acoes button{ min-height:42px !important; font-size:15px !important; padding:0 16px !important; }
+
+/* Janelas (análise do pedido e senha) */
+.modal-content{ font-size:16px !important; }
+.modal-content h2{ font-size:32px !important; }
+.modal-content h3{ font-size:22px !important; }
+.campo label, .modal-content label{ font-size:14px !important; }
+input{ min-height:50px; font-size:17px !important; }
+.modal-content p, .pergunta, .progress, .progress strong, .progress span{ font-size:17px !important; }
+.btn{ min-height:44px !important; font-size:15px !important; padding:0 16px !important; }
+.salvar{ min-height:52px !important; font-size:14px !important; }
+#erroSenha{ font-size:15px !important; }
+.card-sessao-senha, .card-sessao-senha strong{ font-size:15px !important; }
+
+/* Painel */
+#painelCX .pa-topo h2{ font-size:36px !important; }
+#painelCX .pa-topo p{ font-size:16px !important; }
+#painelCX .pa-vivo{ font-size:14px !important; }
+#painelCX .pa-periodos button{ min-height:38px !important; font-size:15px !important; padding:0 16px !important; }
+#painelCX .pa-card h3{ font-size:19px !important; }
+#painelCX .pa-sub{ font-size:15px !important; }
+#painelCX .pa-rot{ font-size:16px !important; }
+#painelCX .pa-valor{ font-size:36px !important; }
+#painelCX .pa-rodape, #painelCX .pa-rodape span{ font-size:15px !important; }
+#painelCX .pa-legenda{ font-size:15px !important; }
+#painelCX .pa-area .eixo{ font-size:14px !important; }
+#painelCX .pa-rank .nome, #painelCX .pa-rank .vl{ font-size:17px !important; }
+#painelCX .pa-rank .sub{ font-size:14px !important; }
+#painelCX .pa-rank .pos{ width:32px !important; height:32px !important; font-size:15px !important; }
+#painelCX .pa-critico .nome{ font-size:17px !important; }
+#painelCX .pa-critico .qtd{ font-size:15px !important; }
+#painelCX .cx-setor-topo{ font-size:18px !important; }
+#painelCX .cx-setor-topo strong{ font-size:30px !important; }
+#painelCX .cx-faixas-legenda{ font-size:15px !important; }
+#painelCX .cx-chip{ font-size:14px !important; padding:3px 11px !important; }
+#painelCX .pa-dica{ font-size:15px !important; }
+#painelCX .pa-dica b{ font-size:13px !important; }
+#painelCX .pa-vazio{ font-size:16px !important; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+  <h1>Painel de Complexidade</h1>
+
+  <div style="display:flex; gap:10px; align-items:center;">
+
+<div
+  id="btnPersonalizacao"
+  class="btn-setor btn-personalizacao ativo"
+  onclick="mudarSetor('personalizacao')"
+>
+  Estofados
+</div>
+
+<div
+  id="btnPintura"
+  class="btn-setor btn-pintura"
+  onclick="mudarSetor('pintura')"
+>
+  Pintura
+</div>
+
+<div
+  id="btnMontagem"
+  class="btn-setor btn-montagem"
+  onclick="mudarSetor('montagem')"
+>
+  Montagem
+</div>
+
+<button type="button" class="btn-painel-cx" onclick="PainelCX.abrir()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg>Painel
+</button>
+
+  </div>
+</div>
+
+  <div class="filtros-painel">
+
+    <input
+      id="filtroNumeroPedido"
+      type="text"
+      placeholder="Filtrar pedido"
+      oninput="aplicarFiltrosPainel()"
+    >
+
+    <input
+      id="filtroCliente"
+      type="text"
+      placeholder="Filtrar cliente"
+      oninput="aplicarFiltrosPainel()"
+    >
+
+    <input
+      id="filtroLocal"
+      type="text"
+      placeholder="Filtrar local"
+      oninput="aplicarFiltrosPainel()"
+    >
+
+    <button type="button" onclick="limparFiltrosPainel()">
+      Limpar
+    </button>
+
+  </div>
+
+  <div id="listaPedidos"></div>
+
+</div>
+<!-- MINI MODAL SENHA -->
+<div class="modal" id="modalSenha">
+  <div class="modal-content" style="max-width:400px;" onclick="event.stopPropagation()">
+
+    <h3 style="margin-top:0;">Acesso restrito</h3>
+    <p style="color:#64748B; font-size:14px;">Digite a senha para continuar</p>
+
+    <input id="senhaAcesso" type="password" placeholder="Senha" style="margin-top:10px;">
+
+    <div id="erroSenha" style="color:#DC2626; font-size:13px; margin-top:10px; display:none;">
+      Senha incorreta
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <div class="salvar" style="flex:1;" onclick="validarSenha()">Entrar</div>
+      <div class="salvar" style="flex:1; background:#94A3B8;" onclick="fecharModalSenha()">Cancelar</div>
+    </div>
+
+  </div>
+</div>
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content" onclick="event.stopPropagation()">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+<h2 id="tituloModal" style="margin:0;">Análise do Pedido</h2>
+      <div onclick="fecharModal()" style="cursor:pointer; font-size:24px; font-weight:600; color:#6b7280;">
+        ×
+      </div>
+    </div>
+
+<!-- CAMPOS -->
+<div class="form-grid">
+
+  <div class="campo">
+    <label>Data do Evento</label>
+    <input id="dataEvento" type="date">
+  </div>
+
+  <div class="campo">
+    <label>Cliente / Evento</label>
+    <input id="nomeCliente">
+  </div>
+
+  <div class="campo">
+    <label>Local do Evento</label>
+    <input id="localEvento">
+  </div>
+
+  <div class="campo">
+    <label>Número do Pedido</label>
+    <input id="numeroPedido">
+  </div>
+
+</div>
+
+<!-- NOVA LINHA FINANCEIRA -->
+<div class="form-grid">
+
+  <div class="campo">
+    <label>Valor de Locação</label>
+    <input id="valorLocacao" class="moeda">
+  </div>
+
+  <div class="campo">
+    <label>Valor de Montagem</label>
+    <input id="valorMontagem" class="moeda">
+  </div>
+
+  <div class="campo">
+    <label>Valor de Frete</label>
+    <input id="valorFrete" class="moeda">
+  </div>
+
+  <div></div>
+
+</div>
+
+<!-- BARRAS DE COMPLEXIDADE -->
+<div class="progress">
+
+  <!-- ESTOFADOS -->
+  <div style="margin-bottom:12px;">
+    <div>
+      <strong>Estofados:</strong>
+      <span id="scorePersonalizacao">0%</span>
+    </div>
+
+    <div class="progress-bar">
+      <div
+        id="barraPersonalizacao"
+        class="progress-inner"
+      ></div>
+    </div>
+  </div>
+
+  <!-- PINTURA -->
+  <div style="margin-bottom:12px;">
+    <div>
+      <strong>Pintura:</strong>
+      <span id="scorePintura">0%</span>
+    </div>
+
+    <div class="progress-bar">
+      <div
+        id="barraPintura"
+        class="progress-inner"
+      ></div>
+    </div>
+  </div>
+
+  <!-- MONTAGEM -->
+  <div>
+    <div>
+      <strong>Montagem:</strong>
+      <span id="scoreMontagem">0%</span>
+    </div>
+
+    <div class="progress-bar">
+      <div
+        id="barraMontagem"
+        class="progress-inner"
+      ></div>
+    </div>
+  </div>
+
+</div>
+
+    <!-- PERGUNTAS -->
+    <div class="grid">
+
+      <div class="bloco">
+        <h3>Estofados</h3>
+
+        <div class="pergunta">Sofá personalizado?
+          <div class="botoes">
+            <div class="btn" onclick="responder(this,1,true)">Sim</div>
+            <div class="btn" onclick="responder(this,1,false)">Não</div>
+          </div>
+        </div>
+
+        <div class="pergunta">Cadeira ou puff personalizado?
+          <div class="botoes">
+            <div class="btn" onclick="responder(this,2,true)">Sim</div>
+            <div class="btn" onclick="responder(this,2,false)">Não</div>
+          </div>
+        </div>
+
+        <div class="pergunta">Bar personalizado?
+          <div class="botoes">
+            <div class="btn" onclick="responder(this,3,true)">Sim</div>
+            <div class="btn" onclick="responder(this,3,false)">Não</div>
+          </div>
+        </div>
+
+        <div class="pergunta">Mais de 4 itens personalizados?
+          <div class="botoes">
+            <div class="btn" onclick="responder(this,4,true)">Sim</div>
+            <div class="btn" onclick="responder(this,4,false)">Não</div>
+          </div>
+        </div>
+      </div>
+<div class="bloco">
+  <h3>Pintura</h3>
+
+  <div class="pergunta">Cadeira/Poltrona pintadas?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,11,true)">Sim</div>
+      <div class="btn" onclick="responder(this,11,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Bar/Mesa pintadas?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,12,true)">Sim</div>
+      <div class="btn" onclick="responder(this,12,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Aparador/Estante pintadas?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,13,true)">Sim</div>
+      <div class="btn" onclick="responder(this,13,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Mais de 4 itens personalizados?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,14,true)">Sim</div>
+      <div class="btn" onclick="responder(this,14,false)">Não</div>
+    </div>
+  </div>
+</div>
+
+<div class="bloco">
+  <h3>Cliente e Evento</h3>
+
+  <div class="pergunta">Cliente com histórico de reclamação?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,5,true)">Sim</div>
+      <div class="btn" onclick="responder(this,5,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Cliente exclusivo ou recorrente Chiavari?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,6,true)">Sim</div>
+      <div class="btn" onclick="responder(this,6,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Evento fora do padrão (Feira / Mídia)?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,7,true)">Sim</div>
+      <div class="btn" onclick="responder(this,7,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">É um cliente novo?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,8,true)">Sim</div>
+      <div class="btn" onclick="responder(this,8,false)">Não</div>
+    </div>
+  </div>
+</div>
+
+<div class="bloco">
+  <h3>Logística</h3>
+
+  <div class="pergunta">Carregamento entre segunda e quarta?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,9,true)">Sim</div>
+      <div class="btn" onclick="responder(this,9,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Personalização passou por mais de 1 setor?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,10,true)">Sim</div>
+      <div class="btn" onclick="responder(this,10,false)">Não</div>
+    </div>
+  </div>
+</div>
+
+<div style="width:100%; margin-top:20px;">
+  <div
+    id="btnSalvarPedido"
+    class="salvar"
+    style="width:100%;"
+    onclick="salvar()"
+  >
+    Salvar alterações
+  </div>
+</div>
+
+  </div>
+</div>
+
+<script>
+let respostas = {};
+let pedidos = [];
+let lote = [];
+let setorAtual = "personalizacao";
+
+// Pedido que está aberto para edição
+let pedidoEmEdicao = null;
+
+// Pedido clicado, aguardando a validação da senha
+let pedidoAguardandoSenha = null;
+// Painel de complexidade aguardando a senha (mesma senha e mesma sessão da análise do pedido)
+let painelAguardandoSenha = false;
+
+// ===== SESSÃO TEMPORÁRIA DE SENHA =====
+
+const CHAVE_SESSAO_SENHA =
+  "painel_complexidade_acesso_ate";
+
+const DURACAO_SESSAO_SENHA =
+  10 * 60 * 1000;
+
+let intervaloSessaoSenha = null;
+let expiracaoSessaoFallback = 0;
+
+function obterExpiracaoSessaoSenha(){
+
+  try{
+
+    return Number(
+      sessionStorage.getItem(
+        CHAVE_SESSAO_SENHA
+      ) || 0
+    );
+
+  }catch(erro){
+
+    return expiracaoSessaoFallback;
+  }
+}
+
+
+function salvarExpiracaoSessaoSenha(
+  expiracao
+){
+
+  expiracaoSessaoFallback = expiracao;
+
+  try{
+
+    sessionStorage.setItem(
+      CHAVE_SESSAO_SENHA,
+      String(expiracao)
+    );
+
+  }catch(erro){
+
+    console.warn(
+      "SessionStorage indisponível:",
+      erro
+    );
+  }
+}
+
+
+function limparExpiracaoSessaoSenha(){
+
+  expiracaoSessaoFallback = 0;
+
+  try{
+
+    sessionStorage.removeItem(
+      CHAVE_SESSAO_SENHA
+    );
+
+  }catch(erro){
+
+    console.warn(
+      "Não foi possível limpar a sessão:",
+      erro
+    );
+  }
+}
+
+
+function sessaoSenhaAtiva(){
+
+  const expiracao =
+    obterExpiracaoSessaoSenha();
+
+  return expiracao > Date.now();
+}
+
+
+function ativarSessaoSenha(){
+
+  const expiracao =
+    Date.now() +
+    DURACAO_SESSAO_SENHA;
+
+  salvarExpiracaoSessaoSenha(
+    expiracao
+  );
+
+  iniciarTemporizadorSessaoSenha();
+}
+
+
+function formatarTempoSessao(
+  milissegundos
+){
+
+  const totalSegundos = Math.max(
+    0,
+    Math.ceil(
+      milissegundos / 1000
+    )
+  );
+
+  const minutos = Math.floor(
+    totalSegundos / 60
+  );
+
+  const segundos =
+    totalSegundos % 60;
+
+  return (
+    String(minutos).padStart(2, "0") +
+    ":" +
+    String(segundos).padStart(2, "0")
+  );
+}
+
+
+function atualizarCardSessaoSenha(){
+
+  const card =
+    document.getElementById(
+      "cardSessaoSenha"
+    );
+
+  const campoTempo =
+    document.getElementById(
+      "tempoSessaoSenha"
+    );
+
+  if(!card || !campoTempo){
+    return;
+  }
+
+  const expiracao =
+    obterExpiracaoSessaoSenha();
+
+  const tempoRestante =
+    expiracao - Date.now();
+
+  if(tempoRestante <= 0){
+
+    limparExpiracaoSessaoSenha();
+
+    card.classList.remove(
+      "visivel"
+    );
+
+    campoTempo.innerText =
+      "00:00";
+
+    if(intervaloSessaoSenha){
+
+      clearInterval(
+        intervaloSessaoSenha
+      );
+
+      intervaloSessaoSenha = null;
+    }
+
+    return;
+  }
+
+  campoTempo.innerText =
+    formatarTempoSessao(
+      tempoRestante
+    );
+
+  card.classList.add(
+    "visivel"
+  );
+}
+
+
+function iniciarTemporizadorSessaoSenha(){
+
+  if(intervaloSessaoSenha){
+
+    clearInterval(
+      intervaloSessaoSenha
+    );
+  }
+
+  atualizarCardSessaoSenha();
+
+  if(!sessaoSenhaAtiva()){
+    return;
+  }
+
+  intervaloSessaoSenha =
+    setInterval(
+      atualizarCardSessaoSenha,
+      1000
+    );
+}
+
+let paginaAtual = 1;
+const ITENS_POR_PAGINA = 20;
+
+function abrirModal(){
+
+  document.getElementById("modal").style.display = "flex";
+}
+
+
+function fecharModal(){
+
+  document.getElementById("modal").style.display = "none";
+
+  pedidoEmEdicao = null;
+
+  limparFormulario();
+}
+
+
+function converterDataParaInput(data){
+
+  if(!data){
+    return "";
+  }
+
+  const texto = String(data).trim();
+
+  // Já está em yyyy-MM-dd
+  if(/^\d{4}-\d{2}-\d{2}/.test(texto)){
+    return texto.substring(0, 10);
+  }
+
+  // Está em dd/MM/yyyy
+  if(/^\d{2}\/\d{2}\/\d{4}/.test(texto)){
+
+    const partes = texto.substring(0, 10).split("/");
+
+    return (
+      partes[2] +
+      "-" +
+      partes[1] +
+      "-" +
+      partes[0]
+    );
+  }
+
+  return "";
+}
+
+
+function formatarMoedaModal(valor){
+
+  if(
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ){
+    return "R$ 0,00";
+  }
+
+  if(typeof valor === "number"){
+
+    return valor.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    });
+  }
+
+  const texto = String(valor).trim();
+
+  if(texto.indexOf("R$") !== -1){
+    return texto;
+  }
+
+  const numero = Number(
+    texto
+      .replace(/\s/g, "")
+      .replace(/\./g, "")
+      .replace(",", ".")
+      .replace(/[^\d.-]/g, "")
+  );
+
+  if(isNaN(numero)){
+    return "R$ 0,00";
+  }
+
+  return numero.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
+
+
+function marcarBotaoResposta(id, valor){
+
+  if(valor !== true && valor !== false){
+    return;
+  }
+
+  const valorTexto = valor ? "true" : "false";
+
+  const botao = document.querySelector(
+    `.btn[onclick="responder(this,${id},${valorTexto})"]`
+  );
+
+  if(botao){
+    botao.classList.add("ativo");
+  }
+}
+
+
+function abrirPedidoPorId(idCodificado){
+
+  const id = decodeURIComponent(
+    idCodificado
+  );
+
+  const pedido = pedidos.find(item =>
+    String(item.id || "") === String(id)
+  );
+
+  if(!pedido){
+
+    alert(
+      "Não foi possível encontrar o pedido."
+    );
+
+    return;
+  }
+
+/*
+ * Caso a senha já tenha sido validada
+ * nos últimos 10 minutos, abre direto.
+ */
+if(sessaoSenhaAtiva()){
+
+  iniciarTemporizadorSessaoSenha();
+
+  abrirEdicaoPedido(
+    pedido
+  );
+
+  return;
+}
+  /*
+   * Guarda o pedido selecionado,
+   * mas não abre o modal de análise ainda.
+   */
+  pedidoAguardandoSenha = pedido;
+
+  const campoSenha =
+    document.getElementById(
+      "senhaAcesso"
+    );
+
+  campoSenha.value = "";
+
+  document
+    .getElementById("erroSenha")
+    .style.display = "none";
+
+  abrirModalSenha();
+
+  setTimeout(function(){
+
+    campoSenha.focus();
+
+  }, 100);
+}
+
+function abrirEdicaoPedido(pedido){
+
+  pedidoEmEdicao = pedido;
+
+  document.getElementById("tituloModal").innerText =
+    "Análise do Pedido " + (pedido.numero || "");
+
+  document.getElementById("dataEvento").value =
+    converterDataParaInput(pedido.data);
+
+  document.getElementById("numeroPedido").value =
+    pedido.numero || "";
+
+  document.getElementById("nomeCliente").value =
+    pedido.cliente || "";
+
+  document.getElementById("localEvento").value =
+    pedido.local || "";
+
+  document.getElementById("valorLocacao").value =
+    formatarMoedaModal(pedido.valorLocacao);
+
+  document.getElementById("valorMontagem").value =
+    formatarMoedaModal(pedido.valorMontagem);
+
+  document.getElementById("valorFrete").value =
+    formatarMoedaModal(pedido.valorFrete);
+
+// Informações principais permanecem bloqueadas.
+document.getElementById("dataEvento").readOnly = true;
+document.getElementById("numeroPedido").readOnly = true;
+document.getElementById("nomeCliente").readOnly = true;
+document.getElementById("localEvento").readOnly = true;
+
+// Valores financeiros podem ser editados.
+document.getElementById("valorLocacao").readOnly = false;
+document.getElementById("valorMontagem").readOnly = false;
+document.getElementById("valorFrete").readOnly = false;
+
+respostas = {
+
+  // ESTOFADOS
+  1: pedido.r1,
+  2: pedido.r2,
+  3: pedido.r3,
+  4: pedido.r4,
+
+  // CLIENTE E EVENTO
+  5: pedido.r5,
+  6: pedido.r6,
+  7: pedido.r7,
+  8: pedido.r8,
+
+  // LOGÍSTICA
+  9: pedido.r9,
+  10: pedido.r10,
+
+  // PINTURA
+  11: pedido.r11,
+  12: pedido.r12,
+  13: pedido.r13,
+  14: pedido.r14,
+
+  // MONTAGEM — VEM PREENCHIDO DO CRONOGRAMA
+  15: pedido.r15,
+  16: pedido.r16,
+  17: pedido.r17,
+  18: pedido.r18
+};
+
+  // Limpa todas as marcações anteriores.
+  document
+    .querySelectorAll(".btn")
+    .forEach(botao =>
+      botao.classList.remove("ativo")
+    );
+
+  for(let id = 1; id <= 14; id++){
+    marcarBotaoResposta(id, respostas[id]);
+  }
+
+  calcular();
+/*
+ * Segurança:
+ * caso as respostas de Montagem ainda não tenham sido
+ * carregadas por alguma implantação antiga, usa o
+ * score já calculado e salvo na planilha.
+ */
+const possuiRespostasMontagem = [
+  respostas[15],
+  respostas[16],
+  respostas[17],
+  respostas[18]
+].some(valor => valor === true || valor === false);
+
+if(!possuiRespostasMontagem){
+
+  const scoreSalvoMontagem =
+    Number(
+      String(pedido.scoreMontagem || 0)
+        .replace("%", "")
+        .replace(",", ".")
+    ) || 0;
+
+  document
+    .getElementById("scoreMontagem")
+    .innerText = scoreSalvoMontagem + "%";
+
+  const barraMontagem =
+    document.getElementById("barraMontagem");
+
+  barraMontagem.style.width =
+    scoreSalvoMontagem + "%";
+
+  if(scoreSalvoMontagem <= 40){
+
+    barraMontagem.style.background =
+      "#16a34a";
+
+  }else if(scoreSalvoMontagem <= 70){
+
+    barraMontagem.style.background =
+      "#facc15";
+
+  }else{
+
+    barraMontagem.style.background =
+      "#dc2626";
+  }
+}
+  abrirModal();
+}
+
+function responder(el,id,valor){
+  respostas[id] = valor;
+
+  const grupo = el.parentElement;
+  grupo.querySelectorAll(".btn").forEach(b => b.classList.remove("ativo"));
+  el.classList.add("ativo");
+
+  calcular();
+}
+
+function calcular(){
+
+  const pesos = {
+
+    // ESTOFADOS
+    1: { sim:18, nao:6 },
+    2: { sim:14, nao:5 },
+    3: { sim:14, nao:5 },
+    4: { sim:24, nao:8 },
+
+    // CLIENTE E EVENTO — USADAS POR TODOS
+    5: { sim:7, nao:2 },
+    6: { sim:4, nao:5 },
+    7: { sim:4, nao:1 },
+    8: { sim:3, nao:1 },
+
+    // LOGÍSTICA — USADAS POR TODOS
+    9: { sim:5, nao:2 },
+    10: { sim:7, nao:2 },
+
+    // PINTURA
+    11: { sim:18, nao:6 },
+    12: { sim:14, nao:5 },
+    13: { sim:14, nao:5 },
+    14: { sim:24, nao:8 },
+
+    // MONTAGEM
+    15: { sim:18, nao:6 },
+    16: { sim:14, nao:5 },
+    17: { sim:14, nao:5 },
+    18: { sim:24, nao:8 }
+  };
+
+  const perguntasGerais = [
+    5, 6, 7, 8, 9, 10
+  ];
+
+  const perguntasEstofados = [
+    1, 2, 3, 4
+  ];
+
+  const perguntasPintura = [
+    11, 12, 13, 14
+  ];
+
+  const perguntasMontagem = [
+    15, 16, 17, 18
+  ];
+
+  function calcularLista(lista){
+
+    let total = 0;
+
+    lista.forEach(id => {
+
+      if(respostas[id] === true){
+
+        total += pesos[id].sim;
+
+      }else if(respostas[id] === false){
+
+        total += pesos[id].nao;
+      }
+
+    });
+
+    return total;
+  }
+
+  /*
+   * Cada setor usa:
+   * perguntas gerais + perguntas específicas.
+   */
+  const scoreEstofados = calcularLista([
+    ...perguntasGerais,
+    ...perguntasEstofados
+  ]);
+
+  const scorePintura = calcularLista([
+    ...perguntasGerais,
+    ...perguntasPintura
+  ]);
+
+  const scoreMontagem = calcularLista([
+    ...perguntasGerais,
+    ...perguntasMontagem
+  ]);
+
+  // ===== TEXTOS =====
+
+  document
+    .getElementById("scorePersonalizacao")
+    .innerText = scoreEstofados + "%";
+
+  document
+    .getElementById("scorePintura")
+    .innerText = scorePintura + "%";
+
+  document
+    .getElementById("scoreMontagem")
+    .innerText = scoreMontagem + "%";
+
+
+  // ===== BARRAS =====
+
+  const barraEstofados =
+    document.getElementById(
+      "barraPersonalizacao"
+    );
+
+  const barraPintura =
+    document.getElementById(
+      "barraPintura"
+    );
+
+  const barraMontagem =
+    document.getElementById(
+      "barraMontagem"
+    );
+
+  barraEstofados.style.width =
+    Math.min(scoreEstofados, 100) + "%";
+
+  barraPintura.style.width =
+    Math.min(scorePintura, 100) + "%";
+
+  barraMontagem.style.width =
+    Math.min(scoreMontagem, 100) + "%";
+
+
+  // ===== CORES =====
+
+  function aplicarCor(barra, score){
+
+    if(score <= 40){
+
+      barra.style.background =
+        "#16a34a";
+
+    }else if(score <= 70){
+
+      barra.style.background =
+        "#facc15";
+
+    }else{
+
+      barra.style.background =
+        "#dc2626";
+    }
+  }
+
+  aplicarCor(
+    barraEstofados,
+    scoreEstofados
+  );
+
+  aplicarCor(
+    barraPintura,
+    scorePintura
+  );
+
+  aplicarCor(
+    barraMontagem,
+    scoreMontagem
+  );
+}
+function adicionarAoLote(){
+
+let score = parseInt(document.getElementById("scorePersonalizacao").innerText);
+let scorePintura = parseInt(document.getElementById("scorePintura").innerText);
+
+const dados = {
+  data: document.getElementById("dataEvento").value,
+  numero: document.getElementById("numeroPedido").value,
+  cliente: document.getElementById("nomeCliente").value,
+  local: document.getElementById("localEvento").value,
+
+valorLocacao: limparMoeda(document.getElementById("valorLocacao").value),
+valorMontagem: limparMoeda(document.getElementById("valorMontagem").value),
+valorFrete: limparMoeda(document.getElementById("valorFrete").value),
+
+  // 🔥 ESSENCIAL
+  setor: setorAtual === "personalizacao" ? "Forração" : "Acabamento e Pintura",
+
+  score,
+
+    r1: respostas[1] === true,
+    r2: respostas[2] === true,
+    r3: respostas[3] === true,
+    r4: respostas[4] === true,
+    r5: respostas[5] === true,
+    r6: respostas[6] === true,
+    r7: respostas[7] === true,
+    r8: respostas[8] === true,
+    r9: respostas[9] === true,
+r10: respostas[10] === true,
+scorePintura,
+r11: respostas[11] === true,
+r12: respostas[12] === true,
+r13: respostas[13] === true,
+r14: respostas[14] === true,
+  };
+
+  // validação leve
+  if(!dados.data || !dados.cliente){
+    alert("Preencha Data e Cliente");
+    return;
+  }
+
+  lote.push(dados);
+
+  renderLote();
+
+  limparFormulario();
+  respostas = {};
+}
+function renderLote(){
+
+  const div = document.getElementById("tabelaLote");
+
+  if(lote.length === 0){
+    div.innerHTML = "";
+    return;
+  }
+
+  div.innerHTML = `
+    <div style="width:100%;">
+      <table style="width:100%; table-layout:fixed;">
+        <thead>
+          <tr>
+            <th style="width:30%;">Pedido</th>
+            <th style="width:40%;">Cliente</th>
+            <th style="width:20%;">Score</th>
+            <th style="width:10%;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lote.map((p,i) => `
+            <tr>
+              <td>${p.numero || "-"}</td>
+              <td>${p.cliente}</td>
+<td>
+  <div style="display:flex; gap:6px; justify-content:center;">
+    <span class="score">${p.score}%</span>
+    <span class="score" style="background:#6366f1; color:#fff;">${p.scorePintura}%</span>
+  </div>
+</td>
+              <td style="cursor:pointer; color:#dc2626;" onclick="removerItem(${i})">✕</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function removerItem(index){
+  lote.splice(index,1);
+  renderLote();
+}
+function enviarLote(){
+
+  if(lote.length === 0){
+    alert("Nenhum pedido no lote");
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(){
+
+      pedidos = pedidos.concat(lote);
+      render();
+
+      lote = [];
+      renderLote();
+
+      fecharModal();
+
+    })
+    .salvarLotePedidos(lote);
+}
+function obterRespostaAtual(id){
+
+  if(
+    Object.prototype.hasOwnProperty.call(
+      respostas,
+      id
+    )
+  ){
+    return respostas[id];
+  }
+
+  return null;
+}
+
+
+function salvar(){
+
+  if(!pedidoEmEdicao){
+
+    alert("Nenhum pedido foi selecionado.");
+    return;
+  }
+
+  const score = parseInt(
+    document
+      .getElementById("scorePersonalizacao")
+      .innerText
+  ) || 0;
+
+  const scorePintura = parseInt(
+    document
+      .getElementById("scorePintura")
+      .innerText
+  ) || 0;
+
+  const dados = {
+
+    id: pedidoEmEdicao.id,
+
+    data: document
+      .getElementById("dataEvento")
+      .value,
+
+    numero: document
+      .getElementById("numeroPedido")
+      .value,
+
+    cliente: document
+      .getElementById("nomeCliente")
+      .value,
+
+    local: document
+      .getElementById("localEvento")
+      .value,
+
+    valorLocacao: limparMoeda(
+      document
+        .getElementById("valorLocacao")
+        .value
+    ),
+
+    valorMontagem: limparMoeda(
+      document
+        .getElementById("valorMontagem")
+        .value
+    ),
+
+    valorFrete: limparMoeda(
+      document
+        .getElementById("valorFrete")
+        .value
+    ),
+
+    score: score,
+    scorePintura: scorePintura,
+
+    r1: obterRespostaAtual(1),
+    r2: obterRespostaAtual(2),
+    r3: obterRespostaAtual(3),
+    r4: obterRespostaAtual(4),
+
+    r5: obterRespostaAtual(5),
+    r6: obterRespostaAtual(6),
+    r7: obterRespostaAtual(7),
+    r8: obterRespostaAtual(8),
+
+    r9: obterRespostaAtual(9),
+    r10: obterRespostaAtual(10),
+
+    r11: obterRespostaAtual(11),
+    r12: obterRespostaAtual(12),
+    r13: obterRespostaAtual(13),
+    r14: obterRespostaAtual(14)
+  };
+
+  const botaoSalvar =
+    document.getElementById("btnSalvarPedido");
+
+  botaoSalvar.innerText = "Salvando...";
+  botaoSalvar.style.pointerEvents = "none";
+  botaoSalvar.style.opacity = "0.7";
+
+  google.script.run
+
+    .withSuccessHandler(function(){
+
+      google.script.run
+
+        .withSuccessHandler(function(dadosAtualizados){
+
+          pedidos = Array.isArray(dadosAtualizados)
+            ? dadosAtualizados
+            : [];
+
+          render();
+          fecharModal();
+
+          botaoSalvar.innerText =
+            "Salvar alterações";
+
+          botaoSalvar.style.pointerEvents =
+            "auto";
+
+          botaoSalvar.style.opacity =
+            "1";
+
+          alert("Pedido atualizado com sucesso.");
+
+        })
+
+        .withFailureHandler(function(erro){
+
+          console.error(erro);
+
+          botaoSalvar.innerText =
+            "Salvar alterações";
+
+          botaoSalvar.style.pointerEvents =
+            "auto";
+
+          botaoSalvar.style.opacity =
+            "1";
+
+          alert(
+            "O pedido foi salvo, mas a tabela não pôde ser atualizada."
+          );
+
+        })
+
+        .listarPedidos();
+
+    })
+
+    .withFailureHandler(function(erro){
+
+      console.error(erro);
+
+      botaoSalvar.innerText =
+        "Salvar alterações";
+
+      botaoSalvar.style.pointerEvents =
+        "auto";
+
+      botaoSalvar.style.opacity =
+        "1";
+
+      alert(
+        "Erro ao salvar: " +
+        (
+          erro &&
+          erro.message
+            ? erro.message
+            : erro
+        )
+      );
+
+    })
+
+    .atualizarPedido(dados);
+}
+function normalizarTexto(valor){
+
+  return String(valor || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+}
+
+function dataParaOrdenacao(valor){
+
+  if(!valor) return 0;
+
+  const txt = String(valor).trim();
+
+  // yyyy-MM-dd
+  if(/^\d{4}-\d{2}-\d{2}/.test(txt)){
+    return new Date(txt.split("T")[0] + "T00:00:00").getTime();
+  }
+
+  // dd/MM/yyyy
+  if(/^\d{2}\/\d{2}\/\d{4}/.test(txt)){
+    const [d, m, y] = txt.split(" ")[0].split("/");
+    return new Date(Number(y), Number(m) - 1, Number(d)).getTime();
+  }
+
+  const data = new Date(txt);
+
+  if(!isNaN(data.getTime())){
+    return data.getTime();
+  }
+
+  return 0;
+}
+
+function obterPedidosFiltradosOrdenados(){
+
+  const filtroPedido = normalizarTexto(
+    document.getElementById("filtroNumeroPedido")?.value
+  );
+
+  const filtroCliente = normalizarTexto(
+    document.getElementById("filtroCliente")?.value
+  );
+
+  const filtroLocal = normalizarTexto(
+    document.getElementById("filtroLocal")?.value
+  );
+
+  return [...pedidos]
+    .filter(p => {
+
+      const numero = normalizarTexto(p.numero);
+      const cliente = normalizarTexto(p.cliente);
+      const local = normalizarTexto(p.local);
+
+      const okPedido = !filtroPedido || numero.includes(filtroPedido);
+      const okCliente = !filtroCliente || cliente.includes(filtroCliente);
+      const okLocal = !filtroLocal || local.includes(filtroLocal);
+
+      return okPedido && okCliente && okLocal;
+
+    })
+    .sort((a, b) => {
+
+      const dataB = dataParaOrdenacao(b.data);
+      const dataA = dataParaOrdenacao(a.data);
+
+      if(dataB !== dataA){
+        return dataB - dataA;
+      }
+
+      const pedidoB = Number(String(b.numero || "").replace(/\D/g, "")) || 0;
+      const pedidoA = Number(String(a.numero || "").replace(/\D/g, "")) || 0;
+
+      return pedidoB - pedidoA;
+
+    });
+
+}
+
+function aplicarFiltrosPainel(){
+
+  paginaAtual = 1;
+  render();
+
+}
+
+function limparFiltrosPainel(){
+
+  document.getElementById("filtroNumeroPedido").value = "";
+  document.getElementById("filtroCliente").value = "";
+  document.getElementById("filtroLocal").value = "";
+
+  paginaAtual = 1;
+
+  render();
+
+}
+
+function mudarPaginaPainel(direcao){
+
+  paginaAtual += direcao;
+
+  if(paginaAtual < 1){
+    paginaAtual = 1;
+  }
+
+  render();
+
+}
+function respostaTabela(valor){
+
+  if(valor === true){
+
+    return '<span class="sim">Sim</span>';
+  }
+
+  if(valor === false){
+
+    return '<span class="nao">Não</span>';
+  }
+
+  return '<span class="pendente">X</span>';
+}
+function render(){
+
+  const lista = document.getElementById("listaPedidos");
+
+  const pedidosFiltrados = obterPedidosFiltradosOrdenados();
+
+  const totalPedidos = pedidosFiltrados.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalPedidos / ITENS_POR_PAGINA));
+
+  if(paginaAtual > totalPaginas){
+    paginaAtual = totalPaginas;
+  }
+
+  const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
+  const fim = inicio + ITENS_POR_PAGINA;
+
+  const pedidosPagina = pedidosFiltrados.slice(inicio, fim);
+
+  if(!pedidosPagina.length){
+
+    lista.innerHTML = `
+      <div style="
+        background:#fff;
+        border:1px solid #e5e7eb;
+        border-radius:14px;
+        padding:30px;
+        text-align:center;
+        color:#64748b;
+        font-weight:600;
+      ">
+        Nenhum pedido encontrado.
+      </div>
+    `;
+
+    return;
+  }
+
+  lista.innerHTML = `
+    <table style="
+      width:100%;
+      border-collapse:collapse;
+      background:#fff;
+      border-radius:8px;
+      overflow:visible;
+    ">
+<thead style="background:#0f2a44; color:#fff;">
+  <tr>
+    <th>Data</th>
+    <th>Pedido</th>
+    <th>Cliente</th>
+    <th>Local</th>
+
+${setorAtual === "personalizacao" ? `
+
+  <th data-tooltip="Sofá personalizado?">1</th>
+  <th data-tooltip="Cadeira ou puff personalizado?">2</th>
+  <th data-tooltip="Bar personalizado?">3</th>
+  <th data-tooltip="Mais de 4 itens personalizados?">4</th>
+
+` : setorAtual === "pintura" ? `
+
+  <th data-tooltip="Cadeira ou poltrona pintada?">11</th>
+  <th data-tooltip="Bar ou mesa pintada?">12</th>
+  <th data-tooltip="Aparador ou estante pintada?">13</th>
+  <th data-tooltip="Mais de 4 itens pintados?">14</th>
+
+` : `
+
+  <th data-tooltip="Pergunta 1 de Montagem">15</th>
+  <th data-tooltip="Pergunta 2 de Montagem">16</th>
+  <th data-tooltip="Pergunta 3 de Montagem">17</th>
+  <th data-tooltip="Pergunta 4 de Montagem">18</th>
+
+`}
+
+<th data-tooltip="Cliente com histórico de reclamação?">5</th>
+<th data-tooltip="Cliente recorrente/exclusivo?">6</th>
+<th data-tooltip="Evento fora do padrão?">7</th>
+<th data-tooltip="Cliente novo?">8</th>
+
+<th data-tooltip="Carregamento seg a qua?">9</th>
+<th data-tooltip="Passou por mais de 1 setor?">10</th>
+
+    <th>Score</th>
+  </tr>
+</thead>
+
+      <tbody>
+        ${pedidosPagina.map(p => `
+<tr
+  onclick="abrirPedidoPorId('${encodeURIComponent(p.id || "")}')"
+  style="
+    border-bottom:1px solid #e5e7eb;
+    text-align:center;
+    cursor:pointer;
+  "
+>
+            <td>${formatarData(p.data)}</td>
+            <td>${p.numero || ""}</td>
+            <td>${p.cliente || ""}</td>
+            <td>${p.local || ""}</td>
+
+${setorAtual === "personalizacao" ? `
+
+  <td>${respostaTabela(p.r1)}</td>
+  <td>${respostaTabela(p.r2)}</td>
+  <td>${respostaTabela(p.r3)}</td>
+  <td>${respostaTabela(p.r4)}</td>
+
+` : setorAtual === "pintura" ? `
+
+  <td>${respostaTabela(p.r11)}</td>
+  <td>${respostaTabela(p.r12)}</td>
+  <td>${respostaTabela(p.r13)}</td>
+  <td>${respostaTabela(p.r14)}</td>
+
+` : `
+
+  <td>${respostaTabela(p.r15)}</td>
+  <td>${respostaTabela(p.r16)}</td>
+  <td>${respostaTabela(p.r17)}</td>
+  <td>${respostaTabela(p.r18)}</td>
+
+`}
+
+<td>${respostaTabela(p.r5)}</td>
+<td>${respostaTabela(p.r6)}</td>
+<td>${respostaTabela(p.r7)}</td>
+<td>${respostaTabela(p.r8)}</td>
+<td>${respostaTabela(p.r9)}</td>
+<td>${respostaTabela(p.r10)}</td>
+
+            <td>
+              <span class="score">
+${
+  setorAtual === "personalizacao"
+    ? (p.score || 0)
+    : setorAtual === "pintura"
+      ? (p.scorePintura || 0)
+      : (p.scoreMontagem || 0)
+}%
+              </span>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+
+    <div class="paginacao-pedidos">
+
+      <div class="paginacao-info">
+        Mostrando ${inicio + 1} até ${Math.min(fim, totalPedidos)} de ${totalPedidos} pedido(s)
+      </div>
+
+      <div class="paginacao-acoes">
+        <button onclick="mudarPaginaPainel(-1)" ${paginaAtual <= 1 ? "disabled" : ""}>
+          ← Anterior
+        </button>
+
+        <button disabled>
+          Página ${paginaAtual} de ${totalPaginas}
+        </button>
+
+        <button onclick="mudarPaginaPainel(1)" ${paginaAtual >= totalPaginas ? "disabled" : ""}>
+          Próxima →
+      </div>
+
+    </div>
+  `;
+}
+function limparFormulario(){
+
+  // 🔹 CAMPOS TEXTO
+  document.getElementById("dataEvento").value = "";
+  document.getElementById("numeroPedido").value = "";
+  document.getElementById("nomeCliente").value = "";
+  document.getElementById("localEvento").value = "";
+
+  // 🔹 CAMPOS FINANCEIROS (zera bonitinho)
+  document.getElementById("valorLocacao").value = "R$ 0,00";
+  document.getElementById("valorMontagem").value = "R$ 0,00";
+  document.getElementById("valorFrete").value = "R$ 0,00";
+
+  // 🔹 SCORES
+// 🔹 SCORES
+document
+  .getElementById("scorePersonalizacao")
+  .innerText = "0%";
+
+document
+  .getElementById("scorePintura")
+  .innerText = "0%";
+
+document
+  .getElementById("scoreMontagem")
+  .innerText = "0%";
+
+
+// 🔹 BARRAS
+const barra1 =
+  document.getElementById(
+    "barraPersonalizacao"
+  );
+
+const barra2 =
+  document.getElementById(
+    "barraPintura"
+  );
+
+const barra3 =
+  document.getElementById(
+    "barraMontagem"
+  );
+
+barra1.style.width = "0%";
+barra2.style.width = "0%";
+barra3.style.width = "0%";
+
+barra1.style.background = "#16a34a";
+barra2.style.background = "#16a34a";
+barra3.style.background = "#16a34a";
+
+  // 🔹 BOTÕES (remove seleção)
+  document.querySelectorAll(".btn").forEach(btn => btn.classList.remove("ativo"));
+
+  // 🔹 LIMPA RESPOSTAS
+  respostas = {};
+}
+
+
+function formatarData(data){
+  if(!data) return "";
+
+  const partes = data.split("-"); // yyyy-MM-dd
+
+  if(partes.length !== 3) return data;
+
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+function abrirModalSenha(){
+  document.getElementById("modalSenha").style.display = "flex";
+}
+
+function fecharModalSenha(){
+
+  document
+    .getElementById("modalSenha")
+    .style.display = "none";
+
+  document
+    .getElementById("senhaAcesso")
+    .value = "";
+
+  document
+    .getElementById("erroSenha")
+    .style.display = "none";
+
+  /*
+   * Caso a pessoa clique em Cancelar,
+   * remove o pedido que estava aguardando.
+   */
+  pedidoAguardandoSenha = null;
+  painelAguardandoSenha = false;
+}
+
+function validarSenha(){
+
+  const campoSenha =
+    document.getElementById(
+      "senhaAcesso"
+    );
+
+  const senha =
+    campoSenha.value.trim();
+
+  if(!senha){
+
+    document
+      .getElementById("erroSenha")
+      .innerText =
+        "Digite a senha para continuar.";
+
+    document
+      .getElementById("erroSenha")
+      .style.display = "block";
+
+    campoSenha.focus();
+
+    return;
+  }
+
+  if(!pedidoAguardandoSenha && !painelAguardandoSenha){
+
+    alert(
+      "Nenhum pedido foi selecionado."
+    );
+
+    fecharModalSenha();
+
+    return;
+  }
+
+  document
+    .getElementById("erroSenha")
+    .style.display = "none";
+
+  google.script.run
+
+    .withSuccessHandler(function(valido){
+
+if(valido){
+
+  const pedidoLiberado =
+    pedidoAguardandoSenha;
+
+  const painelLiberado =
+    painelAguardandoSenha;
+
+  /*
+   * Libera novas aberturas
+   * pelos próximos 10 minutos.
+   */
+  ativarSessaoSenha();
+
+  fecharModalSenha();
+
+  if(painelLiberado){
+    PainelCX.abrir();
+  } else {
+    abrirEdicaoPedido(
+      pedidoLiberado
+    );
+  }
+
+      }else{
+
+        document
+          .getElementById("erroSenha")
+          .innerText = "Senha incorreta";
+
+        document
+          .getElementById("erroSenha")
+          .style.display = "block";
+
+        campoSenha.select();
+      }
+
+    })
+
+    .withFailureHandler(function(erro){
+
+      console.error(erro);
+
+      document
+        .getElementById("erroSenha")
+        .innerText =
+          "Não foi possível validar a senha.";
+
+      document
+        .getElementById("erroSenha")
+        .style.display = "block";
+
+      campoSenha.focus();
+
+    })
+
+    .validarSenhaPlanilha(senha);
+}
+
+function mudarSetor(setor){
+
+  setorAtual = setor;
+
+  document
+    .getElementById("btnPersonalizacao")
+    .classList.remove("ativo");
+
+  document
+    .getElementById("btnPintura")
+    .classList.remove("ativo");
+
+  document
+    .getElementById("btnMontagem")
+    .classList.remove("ativo");
+
+  if(setor === "personalizacao"){
+
+    document
+      .getElementById("btnPersonalizacao")
+      .classList.add("ativo");
+
+  }else if(setor === "pintura"){
+
+    document
+      .getElementById("btnPintura")
+      .classList.add("ativo");
+
+  }else if(setor === "montagem"){
+
+    document
+      .getElementById("btnMontagem")
+      .classList.add("ativo");
+  }
+
+  paginaAtual = 1;
+
+  render();
+}
+
+function formatarMoedaInput(input){
+  let valor = input.value.replace(/\D/g,"");
+  valor = (valor / 100).toFixed(2) + "";
+  valor = valor.replace(".", ",");
+  valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  input.value = "R$ " + valor;
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    iniciarTemporizadorSessaoSenha();
+
+  // 🔹 Carregar pedidos
+  google.script.run
+    .withSuccessHandler(function(dados){
+      console.log("✅ dados recebidos:", dados);
+      pedidos = Array.isArray(dados) ? dados : [];
+      render();
+    })
+    .withFailureHandler(function(erro){
+      console.error("🔥 ERRO:", erro);
+    })
+    .listarPedidos();
+
+  // 🔹 Ativar máscara de moeda
+  document.querySelectorAll(".moeda").forEach(input => {
+
+    input.value = "R$ 0,00";
+
+    input.addEventListener("input", function(){
+      formatarMoedaInput(this);
+    });
+
+  });
+
+});
+
+function limparMoeda(valor){
+  if(!valor) return 0;
+  return Number(valor.replace(/\D/g,"")) / 100;
+}
+
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    fecharModal();
+    fecharModalSenha();
+  }
+});
+
+document
+  .getElementById("senhaAcesso")
+  .addEventListener(
+    "keydown",
+    function(event){
+
+      if(event.key === "Enter"){
+
+        event.preventDefault();
+
+        validarSenha();
+      }
+    }
+  );
+</script>
+<!-- CARD DA SESSÃO DE SENHA -->
+<div
+  id="cardSessaoSenha"
+  class="card-sessao-senha"
+  aria-live="polite"
+>
+  <span class="indicador-sessao"></span>
+
+  <span>Acesso liberado</span>
+
+  <strong id="tempoSessaoSenha">
+    10:00
+  </strong>
+</div>
+
+<!-- =====================================================
+     PAINEL DE COMPLEXIDADE (abre pelo botão Painel)
+====================================================== -->
+<div id="painelCX" role="dialog" aria-modal="true" aria-label="Painel de Complexidade">
+  <div class="pa-topo">
+    <div>
+      <h2>Painel de Complexidade</h2>
+      <p id="cxSubtitulo"></p>
+    </div>
+    <div class="pa-topo-dir">
+      <span class="pa-vivo"><i></i>Ao vivo</span>
+      <div class="pa-periodos" id="cxPeriodos">
+        <button type="button" data-p="1" onclick="PainelCX.periodo(1)">Este mês</button>
+        <button type="button" data-p="3" onclick="PainelCX.periodo(3)">3 meses</button>
+        <button type="button" data-p="12" onclick="PainelCX.periodo(12)">12 meses</button>
+        <button type="button" data-p="0" onclick="PainelCX.periodo(0)">Tudo</button>
+      </div>
+      <button type="button" class="pa-fechar" onclick="PainelCX.fechar()" aria-label="Fechar">×</button>
+    </div>
+  </div>
+  <div class="pa-corpo" id="cxCorpo"></div>
+  <div class="pa-dica" id="cxDica"></div>
+</div>
+
+<script>
+/* =========================================================
+   PAINEL DE COMPLEXIDADE — calculado com os pedidos já carregados (variável "pedidos")
+   Complexidade de cada setor = score já calculado na planilha
+   Faixas: baixa até 33%, média até 66%, alta a partir de 67%
+========================================================= */
+var PainelCX = (function(){
+
+  const SETORES = [
+    { id:"personalizacao", nome:"Estofados", score:"score", comissao:"valorComissao", perguntas:[["r1", "Sofá personalizado"], ["r2", "Cadeira ou puff personalizado"], ["r3", "Bar personalizado"], ["r4", "Mais de 4 itens personalizados"]], cor:"#2a78d6" },
+    { id:"pintura", nome:"Pintura", score:"scorePintura", comissao:"valorComissaoPintura", perguntas:[["r11", "Cadeira ou poltrona pintada"], ["r12", "Bar ou mesa pintada"], ["r13", "Aparador ou estante pintada"], ["r14", "Mais de 4 itens pintados"]], cor:"#eb6834" },
+    { id:"montagem", nome:"Montagem", score:"scoreMontagem", comissao:"valorComissaoMontagem", perguntas:[["r15", "Montagem — pergunta 1"], ["r16", "Montagem — pergunta 2"], ["r17", "Montagem — pergunta 3"], ["r18", "Montagem — pergunta 4"]], cor:"#1baf7a" }
+  ];
+  const GERAIS = [["r5", "Cliente com histórico de reclamação"], ["r6", "Cliente recorrente ou exclusivo"], ["r7", "Evento fora do padrão"], ["r8", "Cliente novo"], ["r9", "Carregamento de segunda a quarta"], ["r10", "Passou por mais de 1 setor"]];
+  const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  const MESES_LONGOS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+  let meses = 0;
+
+  const $ = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v === null || v === undefined ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); };
+  const moeda = function(v){ return Number(v || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" }); };
+  const inteiro = function(v){ return Math.round(Number(v || 0)).toLocaleString("pt-BR"); };
+  const pct = function(v){ return Math.round(Number(v || 0)) + "%"; };
+  const quieto = function(){ return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); };
+  const depois = function(fn){ requestAnimationFrame(function(){ requestAnimationFrame(fn); }); };
+  const chaveMes = function(d){ return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); };
+  const nomeMes = function(k, longo){ const p = k.split("-"); return longo ? MESES_LONGOS[Number(p[1]) - 1] + " de " + p[0] : MESES[Number(p[1]) - 1] + "/" + p[0].slice(2); };
+
+  /* "45", "45%", "45,5" → 45.5 */
+  function numero(v){
+    const t = String(v === null || v === undefined ? "" : v).replace(/[^\d,.-]/g, "");
+    if (!t) return 0;
+    const n = t.includes(",") ? Number(t.replace(/\./g, "").replace(",", ".")) : Number(t);
+    return isFinite(n) ? n : 0;
+  }
+  function lerData(v){
+    const t = String(v || "").trim();
+    let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12);
+    m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12);
+    return null;
+  }
+  function faixa(v){ return v >= 67 ? "alta" : v >= 34 ? "media" : "baixa"; }
+
+  function contar(el, alvo, formato){
+    if (!el) return;
+    if (quieto()){ el.textContent = formato(alvo); return; }
+    const t0 = performance.now();
+    (function passo(agora){
+      const t = Math.min(1, (agora - t0) / 1100);
+      el.textContent = formato(alvo * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) requestAnimationFrame(passo);
+    })(t0);
+  }
+
+  function curva(pts){
+    const n = pts.length;
+    if (!n) return "";
+    if (n === 1) return "M" + pts[0].x + "," + pts[0].y;
+    const dx = [], m = [], t = [];
+    for (let i = 0; i < n - 1; i++){ dx[i] = pts[i + 1].x - pts[i].x; m[i] = (pts[i + 1].y - pts[i].y) / (dx[i] || 1); }
+    t[0] = m[0]; t[n - 1] = m[n - 2];
+    for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+    for (let i = 0; i < n - 1; i++){
+      if (m[i] === 0){ t[i] = 0; t[i + 1] = 0; continue; }
+      const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+      if (s > 9){ const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+    }
+    let d = "M" + pts[0].x.toFixed(1) + "," + pts[0].y.toFixed(1);
+    for (let i = 0; i < n - 1; i++){
+      const h = dx[i] / 3;
+      d += "C" + (pts[i].x + h).toFixed(1) + "," + (pts[i].y + t[i] * h).toFixed(1) + " " + (pts[i + 1].x - h).toFixed(1) + "," + (pts[i + 1].y - t[i + 1] * h).toFixed(1) + " " + pts[i + 1].x.toFixed(1) + "," + pts[i + 1].y.toFixed(1);
+    }
+    return d;
+  }
+  function desenharTraco(c, atraso){
+    if (!c || quieto()) return;
+    const L = c.getTotalLength();
+    c.style.strokeDasharray = L; c.style.strokeDashoffset = L; c.getBoundingClientRect();
+    c.style.transition = "stroke-dashoffset 1.4s cubic-bezier(.45,.05,.2,1) " + (atraso || 0) + "s";
+    c.style.strokeDashoffset = 0;
+  }
+
+  function dica(e, html){
+    const d = $("cxDica"), caixa = $("painelCX").getBoundingClientRect();
+    d.innerHTML = html; d.classList.add("visivel");
+    let x = e.clientX - caixa.left + 16, y = e.clientY - caixa.top + 16;
+    if (x + d.offsetWidth > caixa.width - 8) x = e.clientX - caixa.left - d.offsetWidth - 16;
+    if (y + d.offsetHeight > caixa.height - 8) y = e.clientY - caixa.top - d.offsetHeight - 16;
+    d.style.left = x + "px"; d.style.top = y + "px";
+  }
+  function semDica(){ $("cxDica").classList.remove("visivel"); }
+  const linhaDica = function(cor, rot, v){ return '<div><span>' + (cor ? '<i style="background:' + cor + '"></i>' : "") + rot + '</span><strong>' + v + '</strong></div>'; };
+
+  /* ---------- Abrir / fechar ---------- */
+  function abrir(){
+    if (typeof sessaoSenhaAtiva === "function" && !sessaoSenhaAtiva()){
+      pedidoAguardandoSenha = null;
+      painelAguardandoSenha = true;
+      const campo = $("senhaAcesso");
+      campo.value = "";
+      $("erroSenha").style.display = "none";
+      abrirModalSenha();
+      setTimeout(function(){ campo.focus(); }, 50);
+      return;
+    }
+    if (typeof iniciarTemporizadorSessaoSenha === "function") iniciarTemporizadorSessaoSenha();
+
+    // o HTML original tem uma <div> sem fechar: garante que o painel fique direto no <body>, fora das janelas escondidas
+    if ($("painelCX").parentElement !== document.body) document.body.appendChild($("painelCX"));
+    $("painelCX").classList.add("aberto"); document.body.classList.add("painel-aberto"); desenhar(); }
+  function fechar(){ $("painelCX").classList.remove("aberto"); document.body.classList.remove("painel-aberto"); semDica(); }
+  function periodo(n){ meses = n; desenhar(); }
+
+  function lista(){
+    return (typeof pedidos !== "undefined" && Array.isArray(pedidos) ? pedidos : []).map(function(p){
+      const o = { p:p, data:lerData(p.data), numero:p.numero, cliente:p.cliente, local:p.local, id:p.id };
+      SETORES.forEach(function(s){ o[s.id] = numero(p[s.score]); o["c_" + s.id] = numero(p[s.comissao]); });
+      o.maximo = Math.max(o.personalizacao, o.pintura, o.montagem);
+      return o;
+    });
+  }
+
+  function desenhar(){
+    document.querySelectorAll("#cxPeriodos button").forEach(function(b){ b.classList.toggle("ativo", Number(b.dataset.p) === meses); });
+    const todos = lista(), hoje = new Date();
+    let filtrados = todos, texto = "Todos os pedidos";
+    if (meses){
+      const ini = new Date(hoje.getFullYear(), hoje.getMonth() - meses + 1, 1), fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59);
+      filtrados = todos.filter(function(o){ return o.data && o.data >= ini && o.data <= fim; });
+      texto = meses === 1 ? "Eventos de " + nomeMes(chaveMes(hoje), true) : "Eventos de " + ini.toLocaleDateString("pt-BR") + " a " + fim.toLocaleDateString("pt-BR");
+    }
+    $("cxSubtitulo").textContent = texto + " · " + inteiro(filtrados.length) + (filtrados.length === 1 ? " pedido" : " pedidos");
+
+    $("cxCorpo").innerHTML =
+      '<div class="pa-g4" id="cxKpis"></div>' +
+      '<div class="pa-g21">' +
+        '<section class="pa-card"><div class="pa-card-topo"><div><h3>Complexidade média por mês</h3><p class="pa-sub">Pela data do evento · últimos 12 meses</p></div>' +
+          '<div class="pa-legenda">' + SETORES.map(function(s){ return '<span><i style="background:' + s.cor + '"></i>' + s.nome + '</span>'; }).join("") + '</div></div>' +
+          '<div class="pa-area" id="cxLinhas"></div></section>' +
+        '<section class="pa-card"><h3>Complexidade por setor</h3><p class="pa-sub">Média e quantidade em cada faixa</p><div class="cx-setores" id="cxSetores"></div></section>' +
+      '</div>' +
+      '<div class="pa-g3b">' +
+        '<section class="pa-card"><h3>Pedidos mais complexos</h3><p class="pa-sub">Clique para abrir a análise do pedido</p><div class="pa-critico" id="cxTop"></div></section>' +
+        '<section class="pa-card"><h3>O que mais aparece</h3><p class="pa-sub">Perguntas gerais respondidas com “Sim”</p><div class="pa-rank-lista" id="cxFatores"></div></section>' +
+        '<section class="pa-card"><h3>Comissões por setor</h3><p class="pa-sub">Soma das comissões no período</p><div class="pa-rank-lista" id="cxComissoes"></div></section>' +
+      '</div>';
+
+    kpis(filtrados);
+    linhas(todos);
+    setores(filtrados);
+    top(filtrados);
+    fatores(filtrados);
+    comissoes(filtrados);
+  }
+
+  /* ---------- Indicadores ---------- */
+  const ICO = [
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6l1 3h3v13H5V7h3l1-3z"/><path d="M9 13h6M9 17h4"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M6 16V11M10 16V7M14 16v-6M18 16V5"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>'
+  ];
+  function media(l, campo){ return l.length ? l.reduce(function(t, o){ return t + o[campo]; }, 0) / l.length : 0; }
+
+  function kpis(l){
+    const medias = SETORES.map(function(s){ return media(l, s.id); });
+    const geral = medias.length ? medias.reduce(function(a, b){ return a + b; }, 0) / medias.length : 0;
+    const altas = l.filter(function(o){ return o.maximo >= 67; }).length;
+    const comissao = l.reduce(function(t, o){ return t + o.c_personalizacao + o.c_pintura + o.c_montagem; }, 0);
+    const cards = [
+      { id:"x1", rot:"Pedidos", cor:"#2a78d6", v:l.length, f:inteiro, sub:"no período" },
+      { id:"x2", rot:"Complexidade média", cor:"#eb6834", v:geral, f:pct, sub:SETORES.map(function(s, i){ return s.nome + " " + pct(medias[i]); }).join(" · ") },
+      { id:"x3", rot:"Alta complexidade", cor:"#dc2626", v:altas, f:inteiro, sub:(l.length ? Math.round(altas / l.length * 100) : 0) + "% dos pedidos têm algum setor a partir de 67%" },
+      { id:"x4", rot:"Comissões", cor:"#1baf7a", v:comissao, f:moeda, sub:"soma dos três setores" }
+    ];
+    $("cxKpis").innerHTML = cards.map(function(c, i){
+      return '<div class="pa-card pa-kpi cx-kpi" style="animation-delay:' + (i * 0.06) + 's"><div class="pa-rot"><span class="pa-ico" style="background:' + c.cor + '1f;color:' + c.cor + '">' + ICO[i] + '</span>' + c.rot + '</div>' +
+        '<strong class="pa-valor" id="' + c.id + '">0</strong><div class="pa-rodape"><span>' + c.sub + '</span></div></div>';
+    }).join("");
+    cards.forEach(function(c){ contar($(c.id), c.v, c.f); });
+  }
+
+  /* ---------- Complexidade média por mês ---------- */
+  function linhas(todos){
+    const area = $("cxLinhas"), hoje = new Date(), s = [];
+    for (let i = 11; i >= 0; i--){ const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1); s.push({ mes:chaveMes(d), qtd:0, personalizacao:0, pintura:0, montagem:0 }); }
+    const idx = {}; s.forEach(function(m, i){ idx[m.mes] = i; });
+    todos.forEach(function(o){
+      if (!o.data) return;
+      const i = idx[chaveMes(o.data)]; if (i === undefined) return;
+      s[i].qtd++; SETORES.forEach(function(st){ s[i][st.id] += o[st.id]; });
+    });
+    s.forEach(function(m){ SETORES.forEach(function(st){ m[st.id] = m.qtd ? m[st.id] / m.qtd : null; }); });
+    if (!s.some(function(m){ return m.qtd; })){ area.innerHTML = '<div class="pa-vazio">Sem pedidos com data nos últimos 12 meses.</div>'; return; }
+
+    const W = Math.max(320, area.clientWidth || 800), H = 320, mg = { e:46, d:14, t:16, b:32 };
+    const larg = W - mg.e - mg.d, alt = H - mg.t - mg.b, n = s.length;
+    const x = function(i){ return mg.e + larg * i / (n - 1); };
+    const y = function(v){ return mg.t + alt - alt * v / 100; };
+    let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" height="' + H + '" role="img" aria-label="Complexidade média por mês">';
+    for (let i = 0; i <= 4; i++){ const yy = y(i * 25).toFixed(1); svg += '<line class="grade" x1="' + mg.e + '" x2="' + (W - mg.d) + '" y1="' + yy + '" y2="' + yy + '"/><text class="eixo" x="' + (mg.e - 10) + '" y="' + (Number(yy) + 4) + '" text-anchor="end">' + (i * 25) + '%</text>'; }
+    s.forEach(function(m, i){ if (!(i % 2) || i === n - 1) svg += '<text class="eixo" x="' + x(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + nomeMes(m.mes) + '</text>'; });
+    SETORES.forEach(function(st){
+      // meses sem pedido não entram na linha
+      const pts = []; s.forEach(function(m, i){ if (m[st.id] !== null) pts.push({ x:x(i), y:y(m[st.id]) }); });
+      if (pts.length) svg += '<path class="linha" d="' + curva(pts) + '" stroke="' + st.cor + '"/>';
+      if (pts.length === 1) svg += '<circle cx="' + pts[0].x + '" cy="' + pts[0].y + '" r="5" fill="' + st.cor + '"/>';
+    });
+    svg += '<line class="cruz" id="cxCruz" y1="' + mg.t + '" y2="' + (mg.t + alt) + '"/>' +
+      SETORES.map(function(st){ return '<circle class="ponto" id="cxP_' + st.id + '" r="6" fill="' + st.cor + '"/>'; }).join("") +
+      '<rect id="cxAlvo" x="' + mg.e + '" y="' + mg.t + '" width="' + larg + '" height="' + alt + '" fill="transparent"/></svg>';
+    area.innerHTML = svg;
+    area.querySelectorAll("path.linha").forEach(function(p, i){ desenharTraco(p, i * 0.15); });
+    const alvo = $("cxAlvo");
+    alvo.addEventListener("mousemove", function(e){
+      const r = alvo.getBoundingClientRect(), i = Math.max(0, Math.min(n - 1, Math.round((e.clientX - r.left) / r.width * (n - 1)))), m = s[i];
+      area.classList.add("focado");
+      $("cxCruz").setAttribute("x1", x(i)); $("cxCruz").setAttribute("x2", x(i));
+      SETORES.forEach(function(st){ const c = $("cxP_" + st.id); if (m[st.id] === null){ c.style.display = "none"; return; } c.style.display = ""; c.setAttribute("cx", x(i)); c.setAttribute("cy", y(m[st.id])); });
+      dica(e, "<b>" + nomeMes(m.mes, true) + "</b>" + SETORES.map(function(st){ return linhaDica(st.cor, st.nome, m[st.id] === null ? "—" : pct(m[st.id])); }).join("") + linhaDica("", "Pedidos", m.qtd));
+    });
+    alvo.addEventListener("mouseleave", function(){ area.classList.remove("focado"); semDica(); });
+  }
+
+  /* ---------- Por setor: média + faixas ---------- */
+  function setores(l){
+    $("cxSetores").innerHTML = SETORES.map(function(st, i){
+      const m = media(l, st.id), f = { baixa:0, media:0, alta:0 };
+      l.forEach(function(o){ f[faixa(o[st.id])]++; });
+      const tot = l.length || 1;
+      return '<div class="cx-setor"><div class="cx-setor-topo"><span><i style="background:' + st.cor + '"></i>' + st.nome + '</span><strong>' + pct(m) + '</strong></div>' +
+        '<div class="cx-media"><span class="cheio" style="background:' + st.cor + ';transition-delay:' + (0.3 + i * 0.1) + 's" data-l="' + Math.min(100, m).toFixed(1) + '"></span></div>' +
+        '<div class="cx-faixas">' +
+          '<span class="cx-f baixa" style="flex:' + (f.baixa || 0) + '"></span><span class="cx-f media" style="flex:' + (f.media || 0) + '"></span><span class="cx-f alta" style="flex:' + (f.alta || 0) + '"></span>' +
+        '</div>' +
+        '<div class="cx-faixas-legenda"><span><i class="baixa"></i>Baixa <b>' + f.baixa + '</b></span><span><i class="media"></i>Média <b>' + f.media + '</b></span><span><i class="alta"></i>Alta <b>' + f.alta + '</b></span></div></div>';
+    }).join("");
+    depois(function(){ document.querySelectorAll("#cxSetores .cheio").forEach(function(b){ b.style.width = b.dataset.l + "%"; }); });
+  }
+
+  /* ---------- Pedidos mais complexos ---------- */
+  function top(l){
+    const caixa = $("cxTop");
+    const t = l.slice().sort(function(a, b){ return b.maximo - a.maximo || (b.personalizacao + b.pintura + b.montagem) - (a.personalizacao + a.pintura + a.montagem); }).slice(0, 7);
+    if (!t.length){ caixa.innerHTML = '<div class="pa-vazio">Sem pedidos no período.</div>'; return; }
+    caixa.innerHTML = t.map(function(o){
+      return '<div class="linha cx-pedido" role="button" tabindex="0" onclick="PainelCX.abrirPedido(\'' + encodeURIComponent(o.id || "") + '\')">' +
+        '<span class="nome"><b>#' + esc(o.numero) + '</b> ' + esc(o.cliente) + '</span>' +
+        '<span class="qtd">' + (o.data ? o.data.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit", year:"2-digit" }) : "") + '</span>' +
+        '<span class="cx-chips">' + SETORES.map(function(st){ return '<span class="cx-chip ' + faixa(o[st.id]) + '" title="' + st.nome + '">' + st.nome.charAt(0) + ' ' + pct(o[st.id]) + '</span>'; }).join("") + '</span></div>';
+    }).join("");
+  }
+  function abrirPedido(id){ fechar(); if (typeof abrirPedidoPorId === "function") abrirPedidoPorId(id); }
+
+  /* ---------- Fatores gerais ---------- */
+  function fatores(l){
+    const caixa = $("cxFatores");
+    const r = GERAIS.map(function(g){
+      const resp = l.filter(function(o){ return o.p[g[0]] === true || o.p[g[0]] === false; });
+      const sim = resp.filter(function(o){ return o.p[g[0]] === true; }).length;
+      return { nome:g[1], sim:sim, total:resp.length, p:resp.length ? sim / resp.length * 100 : 0 };
+    }).sort(function(a, b){ return b.p - a.p; });
+    if (!l.length){ caixa.innerHTML = '<div class="pa-vazio">Sem pedidos no período.</div>'; return; }
+    caixa.innerHTML = r.map(function(f, i){
+      return '<div class="pa-rank"><span class="pos">' + (i + 1) + '</span><span class="nome" title="' + esc(f.nome) + '">' + esc(f.nome) + '</span><span class="vl">' + pct(f.p) + '</span>' +
+        '<span class="trilho"><span class="cheio c-laranja" data-l="' + f.p.toFixed(1) + '" style="transition-delay:' + (0.3 + i * 0.07) + 's"></span></span>' +
+        '<span class="sub">' + f.sim + ' de ' + f.total + ' pedidos respondidos</span></div>';
+    }).join("");
+    depois(function(){ caixa.querySelectorAll(".cheio").forEach(function(b){ b.style.width = b.dataset.l + "%"; }); });
+  }
+
+  /* ---------- Comissões ---------- */
+  function comissoes(l){
+    const caixa = $("cxComissoes");
+    const r = SETORES.map(function(st){ return { nome:st.nome, cor:st.cor, valor:l.reduce(function(t, o){ return t + o["c_" + st.id]; }, 0), qtd:l.filter(function(o){ return o["c_" + st.id] > 0; }).length }; });
+    const max = Math.max.apply(null, r.map(function(x){ return x.valor; }).concat([1]));
+    caixa.innerHTML = r.map(function(x, i){
+      return '<div class="pa-rank" style="grid-template-columns:12px minmax(0,1fr) auto"><span style="grid-row:span 2;width:12px;height:12px;border-radius:50%;background:' + x.cor + '"></span>' +
+        '<span class="nome">' + x.nome + '</span><span class="vl">' + moeda(x.valor) + '</span>' +
+        '<span class="trilho"><span class="cheio" style="background:' + x.cor + ';transition-delay:' + (0.3 + i * 0.08) + 's" data-l="' + (x.valor / max * 100).toFixed(1) + '"></span></span>' +
+        '<span class="sub">' + x.qtd + (x.qtd === 1 ? " pedido com comissão" : " pedidos com comissão") + '</span></div>';
+    }).join("");
+    depois(function(){ caixa.querySelectorAll(".cheio").forEach(function(b){ b.style.width = b.dataset.l + "%"; }); });
+  }
+
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape" && $("painelCX").classList.contains("aberto")) fechar(); });
+  let espera = null;
+  window.addEventListener("resize", function(){ if (!$("painelCX").classList.contains("aberto")) return; clearTimeout(espera); espera = setTimeout(desenhar, 200); });
+
+  return { abrir:abrir, fechar:fechar, periodo:periodo, abrirPedido:abrirPedido };
+})();
+</script>
+</body>
+</html>

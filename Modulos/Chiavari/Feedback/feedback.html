@@ -1,0 +1,4169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="../gas-cliente.js" data-projeto="feedback"></script>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Feedbacks Pós-Evento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+>
+  <style>
+    :root {
+      --azul:#1f416d;
+      --azul-escuro:#0f172a;
+      --vinho:#5d1020;
+      --verde:#16a34a;
+      --vermelho:#dc2626;
+      --amarelo:#f59e0b;
+      --bg:#f3f6fa;
+      --card:#ffffff;
+      --linha:#eef2f7;
+      --borda:#dbe4ef;
+      --texto:#071126;
+      --muted:#64748b;
+      --shadow:0 14px 35px rgba(15,23,42,.12);
+      --radius:14px;
+    }
+
+    * {
+      box-sizing:border-box;
+    }
+
+body {
+  margin:0;
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--texto);
+  padding:22px;
+}
+
+    .topo {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:24px;
+    }
+
+.titulo-area {
+  display:flex;
+  align-items:center;
+  min-width:0;
+}
+.titulo-conteudo {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+h1 {
+  margin:0;
+
+  font-family:'Inter', sans-serif;
+  font-size:30px;
+  line-height:1.15;
+
+  font-weight:650;
+  letter-spacing:-0.035em;
+
+  color:#0b1b3a;
+}
+    .menu-btn {
+      width:54px;
+      height:54px;
+      border:none;
+      border-radius:14px;
+      background:var(--vinho);
+      color:white;
+      font-size:26px;
+      cursor:pointer;
+      box-shadow:0 12px 24px rgba(93,16,32,.28);
+    }
+
+h1 {
+  margin:0;
+  font-size:34px;
+  font-weight:800;
+  letter-spacing:-1px;
+  color:#0f172a;
+}
+
+.atualizado {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+
+  margin:0;
+
+  font-size:13px;
+  line-height:1;
+
+  font-weight:500;
+  color:#64748b;
+}
+    .acoes-topo {
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+.atualizado::before {
+  content:"";
+
+  width:7px;
+  height:7px;
+
+  border-radius:50%;
+  background:#22c55e;
+
+  box-shadow:0 0 0 3px rgba(34,197,94,.10);
+}
+
+.btn {
+  min-height:46px;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+
+  border:1px solid transparent;
+  border-radius:12px;
+
+  padding:0 18px;
+
+  font-family:'Inter', sans-serif;
+  font-size:14px;
+  font-weight:600;
+
+  cursor:pointer;
+  white-space:nowrap;
+
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
+}
+
+.btn:hover {
+  transform:translateY(-1px);
+}
+
+    .btn-primary {
+      background:#2563eb;
+      color:white;
+      box-shadow:0 12px 25px rgba(37,99,235,.28);
+    }
+
+    .btn-green {
+      background:var(--verde);
+      color:white;
+      box-shadow:0 12px 25px rgba(22,163,74,.24);
+    }
+
+.btn-dark {
+  background:#0b1b3a;
+  color:#ffffff;
+
+  box-shadow:0 6px 16px rgba(15,23,42,.12);
+}
+
+.btn-dark:hover {
+  background:#132747;
+}
+
+.btn-green {
+  background:#15803d;
+  color:#ffffff;
+
+  box-shadow:0 6px 16px rgba(21,128,61,.14);
+}
+
+.btn-pendente {
+  background:#ffffff;
+  color:#0f172a;
+
+  border:1px solid #dbe4ef;
+
+  box-shadow:0 5px 14px rgba(15,23,42,.05);
+}
+
+.btn-pendente strong {
+  min-width:28px;
+  height:28px;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#dc2626;
+  color:#ffffff;
+
+  padding:0 8px;
+  margin-left:4px;
+
+  border-radius:999px;
+
+  font-size:12px;
+  font-weight:700;
+}
+
+    .filtros {
+      display:grid;
+      grid-template-columns:1.2fr 1.2fr 1.2fr 1fr 1fr auto;
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+input,
+select,
+textarea {
+  width:100%;
+
+  border:1px solid #dbe4ef;
+  border-radius:12px;
+
+  background:#ffffff;
+  color:#0f172a;
+
+  padding:12px 14px;
+
+  font-family:'Inter', sans-serif;
+  font-size:14px;
+  font-weight:400;
+
+  outline:none;
+
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color:#94a3b8;
+  font-weight:400;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color:#cbd5e1;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  background:#ffffff;
+  border-color:#315f93;
+
+  box-shadow:0 0 0 3px rgba(49,95,147,.08);
+}
+    textarea {
+      resize:vertical;
+      min-height:120px;
+      line-height:1.45;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color:#2563eb;
+      box-shadow:0 0 0 3px rgba(37,99,235,.12);
+    }
+
+    .tabela-wrap {
+      width:100%;
+      background:white;
+      border-radius:var(--radius);
+      overflow:hidden;
+      border:1px solid var(--borda);
+      box-shadow:0 10px 24px rgba(15,23,42,.06);
+    }
+
+table {
+  width:100%;
+  border-collapse:collapse;
+
+  font-family:'Inter', sans-serif;
+  font-size:13px;
+}
+
+thead th {
+  background:#173d6b;
+  color:#ffffff;
+
+  text-align:left;
+  white-space:nowrap;
+
+  padding:15px 13px;
+
+  font-size:12px;
+  line-height:1.3;
+
+  font-weight:600;
+  letter-spacing:.01em;
+}
+
+tbody td {
+  padding:15px 13px;
+
+  border-bottom:1px solid #eef2f7;
+
+  vertical-align:middle;
+
+  font-size:13px;
+  font-weight:400;
+  line-height:1.45;
+
+  color:#334155;
+}
+
+tbody td strong {
+  font-weight:600;
+  color:#0f172a;
+}
+
+tbody tr:nth-child(even) {
+  background:#fbfcfe;
+}
+
+tbody tr:hover {
+  background:#f4f8fc;
+}
+
+    tbody tr:nth-child(even) {
+      background:#f8fafc;
+    }
+
+    tbody tr:hover {
+      background:#eef5ff;
+    }
+
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:800;
+    }
+
+    .badge-excelente {
+      background:#dcfce7;
+      color:#166534;
+    }
+
+    .badge-boa {
+      background:#dbeafe;
+      color:#1d4ed8;
+    }
+
+    .badge-regular {
+      background:#fef3c7;
+      color:#92400e;
+    }
+
+    .badge-ruim {
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .badge-sim {
+      background:#dcfce7;
+      color:#166534;
+    }
+
+    .badge-nao {
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .badge-pendente {
+      background:#fef3c7;
+      color:#92400e;
+    }
+
+    .acao-link {
+      border:none;
+      background:#eef2ff;
+      color:#4338ca;
+      font-weight:800;
+      padding:9px 13px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    .vazio {
+      padding:40px;
+      text-align:center;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .modal-bg {
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:99;
+      padding:24px;
+    }
+
+    .modal-bg.show {
+      display:flex;
+    }
+
+    .modal {
+      width:min(960px, 100%);
+      background:white;
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      max-height:90vh;
+      overflow:auto;
+      animation:subir .18s ease;
+    }
+
+    .modal-menor {
+      width:min(760px, 100%);
+    }
+
+    @keyframes subir {
+      from {
+        opacity:0;
+        transform:translateY(18px);
+      }
+      to {
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding:22px 24px;
+      border-bottom:1px solid var(--linha);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+
+.modal-header h2 {
+  margin:0;
+  font-size:30px;
+  font-weight:800;
+  letter-spacing:-0.6px;
+  color:#0f172a;
+}
+
+    .fechar {
+      border:none;
+      background:#f1f5f9;
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      font-size:22px;
+      cursor:pointer;
+      color:#334155;
+    }
+
+    .modal-body {
+      padding:24px;
+    }
+
+    .modal-footer {
+      padding:18px 24px;
+      border-top:1px solid var(--linha);
+      display:flex;
+      justify-content:flex-end;
+      gap:12px;
+      background:#fbfdff;
+    }
+
+    .grid-form {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+
+    .grid-full {
+      grid-column:1 / -1;
+    }
+
+    label {
+      display:block;
+      font-size:13px;
+      font-weight:800;
+      margin-bottom:7px;
+      color:#243653;
+    }
+
+.info-evento {
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:16px;
+  background:linear-gradient(
+    135deg,
+    #f8fafc,
+    #ffffff
+  );
+  border:1px solid var(--borda);
+  padding:18px;
+  border-radius:16px;
+  margin-bottom:24px;
+}
+
+.info-evento div{
+  display:flex;
+  flex-direction:column;
+}
+
+.info-evento small{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  color:#64748b;
+  margin-bottom:6px;
+}
+
+.info-evento strong{
+  font-size:16px;
+  font-weight:700;
+  color:#0f172a;
+}
+
+    .info-evento small {
+      display:block;
+      color:var(--muted);
+      font-weight:700;
+      margin-bottom:4px;
+    }
+
+    .info-evento strong {
+      font-size:15px;
+    }
+
+    /* =====================================================
+MODAL DE LIGAÇÕES E FOLLOW-UP
+===================================================== */
+
+.modal-followup {
+  width:min(1120px, calc(100vw - 48px));
+  max-height:88vh;
+  overflow:hidden;
+  border-radius:18px;
+  border:1px solid rgba(219,228,239,.9);
+}
+
+.followup-header {
+  padding:22px 26px 16px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+  border-bottom:1px solid #eef2f7;
+}
+
+.followup-header h2 {
+  margin:0;
+  font-size:24px;
+  line-height:1.2;
+  font-weight:650;
+  letter-spacing:-.025em;
+  color:#0f1f3b;
+}
+
+.followup-header p {
+  margin:7px 0 0;
+  font-size:13px;
+  line-height:1.45;
+  font-weight:400;
+  color:#64748b;
+}
+
+.followup-fechar {
+  flex:0 0 auto;
+  width:38px;
+  height:38px;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  background:#f8fafc;
+  color:#334155;
+  font-size:20px;
+  line-height:1;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.followup-fechar:hover {
+  background:#eef2f7;
+  border-color:#cbd5e1;
+}
+
+.followup-body {
+  padding:16px 22px 0;
+  background:#ffffff;
+}
+
+.followup-filtros {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:58px;
+  padding:9px;
+  margin-bottom:14px;
+  border:1px solid #dbe4ef;
+  border-radius:11px;
+  background:#fbfcfe;
+}
+
+.followup-filtro {
+  min-height:36px;
+  padding:0 16px;
+  border:1px solid transparent;
+  border-radius:8px;
+  background:transparent;
+  color:#475569;
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.followup-filtro:hover {
+  background:#ffffff;
+  border-color:#dbe4ef;
+}
+
+.followup-filtro.ativo {
+  background:#173d6b;
+  border-color:#173d6b;
+  color:#ffffff;
+  box-shadow:0 5px 12px rgba(23,61,107,.16);
+}
+
+.followup-filtro[data-filtro="precisa"].ativo {
+  background:#fff8ed;
+  border-color:#f4d8ad;
+  color:#b56414;
+  box-shadow:none;
+}
+
+.followup-filtro[data-filtro="nao-precisa"].ativo {
+  background:#f0faf4;
+  border-color:#cfe9d8;
+  color:#237a48;
+  box-shadow:none;
+}
+
+.followup-cabecalho,
+.followup-linha {
+  display:grid;
+  grid-template-columns:
+    minmax(170px,1.12fr)
+    minmax(210px,1.22fr)
+    minmax(125px,.72fr)
+    minmax(145px,.82fr)
+    minmax(170px,1fr);
+  gap:16px;
+  align-items:center;
+}
+
+.followup-cabecalho {
+  min-height:38px;
+  padding:0 17px;
+  color:#475569;
+  font-size:10px;
+  line-height:1.2;
+  font-weight:700;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+}
+
+.followup-lista {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  max-height:54vh;
+  overflow-y:auto;
+  padding:0 5px 12px 0;
+  scrollbar-width:thin;
+  scrollbar-color:#cbd5e1 transparent;
+}
+
+.followup-lista::-webkit-scrollbar {
+  width:7px;
+}
+
+.followup-lista::-webkit-scrollbar-thumb {
+  background:#cbd5e1;
+  border-radius:999px;
+}
+
+.followup-linha {
+  position:relative;
+  min-height:76px;
+  padding:13px 17px;
+  border:1px solid #e4eaf1;
+  border-radius:11px;
+  background:#ffffff;
+  overflow:hidden;
+  transition:
+    transform .16s ease,
+    border-color .16s ease,
+    box-shadow .16s ease;
+}
+
+.followup-linha::before {
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  background:transparent;
+}
+
+.followup-linha.precisa {
+  background:linear-gradient(90deg,#fffaf2 0%,#fffdf9 42%,#ffffff 100%);
+  border-color:#f3e4ca;
+  cursor:pointer;
+}
+
+.followup-linha.precisa::before {
+  background:#e9a84c;
+}
+
+.followup-linha.nao-precisa {
+  background:linear-gradient(90deg,#f3fbf6 0%,#fbfefc 42%,#ffffff 100%);
+  border-color:#dcefe3;
+}
+
+.followup-linha.nao-precisa::before {
+  background:#49b875;
+}
+
+.followup-linha.precisa:hover {
+  transform:translateY(-1px);
+  border-color:#e7c891;
+  box-shadow:0 6px 16px rgba(15,23,42,.05);
+}
+
+.followup-celula {
+  min-width:0;
+}
+
+.followup-celula strong {
+  display:block;
+  margin:0 0 4px;
+  color:#172033;
+  font-size:12px;
+  line-height:1.35;
+  font-weight:650;
+  overflow-wrap:anywhere;
+}
+
+.followup-celula span,
+.followup-celula small {
+  display:block;
+  color:#64748b;
+  font-size:10.5px;
+  line-height:1.38;
+  font-weight:400;
+  overflow-wrap:anywhere;
+}
+
+.followup-data strong {
+  margin-bottom:3px;
+}
+
+.followup-status {
+  width:max-content;
+  max-width:100%;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 9px;
+  border:1px solid;
+  border-radius:7px;
+  font-size:10px;
+  line-height:1;
+  font-weight:600;
+  white-space:nowrap;
+}
+
+.followup-status::before {
+  width:14px;
+  height:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid currentColor;
+  border-radius:50%;
+  font-size:9px;
+  font-weight:700;
+}
+
+.followup-status.precisa {
+  color:#b96a18;
+  background:#fff9ef;
+  border-color:#f3dec0;
+}
+
+.followup-status.precisa::before {
+  content:"!";
+}
+
+.followup-status.nao-precisa {
+  color:#258052;
+  background:#f2fbf6;
+  border-color:#d5ecdf;
+}
+
+.followup-status.nao-precisa::before {
+  content:"✓";
+}
+
+.followup-motivo {
+  color:#475569;
+  font-size:10.5px;
+  line-height:1.42;
+  font-weight:500;
+  overflow-wrap:anywhere;
+}
+
+.followup-vazio {
+  min-height:180px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  color:#64748b;
+  font-size:13px;
+}
+
+.followup-footer {
+  min-height:48px;
+  padding:0 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  border-top:1px solid #eef2f7;
+  background:#fbfcfe;
+  color:#64748b;
+  font-size:10.5px;
+}
+
+.followup-footer-info {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
+
+.followup-footer-info::before {
+  content:"i";
+  width:14px;
+  height:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #7aa2d4;
+  border-radius:50%;
+  color:#315f93;
+  font-size:9px;
+  font-weight:700;
+}
+
+.followup-footer strong {
+  color:#334155;
+  font-size:10.5px;
+  font-weight:600;
+}
+
+    .toast {
+      position:fixed;
+      right:24px;
+      bottom:24px;
+      background:#0f172a;
+      color:white;
+      padding:16px 20px;
+      border-radius:14px;
+      font-weight:800;
+      box-shadow:var(--shadow);
+      display:none;
+      z-index:200;
+    }
+
+    .toast.show {
+      display:block;
+    }
+/* =====================================================
+ROTEIRO DE LIGAÇÃO
+===================================================== */
+
+.roteiro-ligacao{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.card-pergunta{
+  background:#fff;
+  border:1px solid var(--borda);
+  border-radius:16px;
+  padding:18px;
+}
+
+.card-pergunta h3{
+
+  margin:0 0 14px;
+
+  font-size:16px;
+
+  font-weight:700;
+
+  line-height:1.6;
+
+  color:#0f172a;
+
+}
+
+.grupo-botoes{
+  display:grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(140px,1fr)
+    );
+  gap:10px;
+}
+
+.btn-opcao,
+.btn-setor{
+
+  border:1px solid var(--borda);
+  background:#f8fafc;
+  color:#0f172a;
+
+  border-radius:12px;
+
+  padding:14px;
+
+  font-size:14px;
+  font-weight:600;
+
+  cursor:pointer;
+
+  transition:.2s;
+
+}
+
+.btn-opcao:hover,
+.btn-setor:hover{
+
+  border-color:#2563eb;
+
+  background:#eef5ff;
+
+}
+
+.btn-opcao.ativo,
+.btn-setor.ativo{
+
+  background:#2563eb;
+  color:#fff;
+  border-color:#2563eb;
+
+}
+
+.bloco-comentario{
+
+  margin-top:14px;
+
+}
+
+.bloco-comentario textarea{
+
+  margin-top:10px;
+  min-height:90px;
+
+}
+
+/* =====================================================
+MODAL PREMIUM — REGISTRAR FEEDBACK
+===================================================== */
+
+.modal-feedback-premium {
+  width:min(1280px, calc(100vw - 56px));
+  max-height:92vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid rgba(219,228,239,.9);
+  border-radius:22px;
+  background:#ffffff;
+  box-shadow:
+    0 28px 70px rgba(15,23,42,.22),
+    0 8px 24px rgba(15,23,42,.08);
+}
+
+.feedback-modal-header {
+  flex:0 0 auto;
+  min-height:104px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:24px 34px;
+  border-bottom:1px solid #e9eef5;
+  background:#ffffff;
+}
+
+.feedback-modal-header h2 {
+  margin:0;
+  color:#0b1b3a;
+  font-size:32px;
+  line-height:1.15;
+  font-weight:700;
+  letter-spacing:-.035em;
+}
+
+.feedback-fechar {
+  flex:0 0 auto;
+  width:48px;
+  height:48px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #dbe4ef;
+  border-radius:13px;
+  background:#f8fafc;
+  color:#334155;
+  font-family:'Inter',sans-serif;
+  font-size:25px;
+  line-height:1;
+  cursor:pointer;
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease;
+}
+
+.feedback-fechar:hover {
+  transform:translateY(-1px);
+  background:#eef3f8;
+  border-color:#cbd5e1;
+}
+
+.feedback-modal-body {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding:28px 34px 30px;
+  background:#ffffff;
+  scrollbar-width:thin;
+  scrollbar-color:#cbd5e1 transparent;
+}
+
+.feedback-modal-body::-webkit-scrollbar {
+  width:8px;
+}
+
+.feedback-modal-body::-webkit-scrollbar-thumb {
+  background:#cbd5e1;
+  border-radius:999px;
+}
+
+.modal-feedback-premium .info-evento {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0;
+  margin:0 0 28px;
+  padding:0;
+  overflow:hidden;
+  border:1px solid #dbe4ef;
+  border-radius:17px;
+  background:linear-gradient(180deg,#fbfdff 0%,#f8fafc 100%);
+}
+
+.feedback-info-item {
+  position:relative;
+  min-width:0;
+  min-height:112px;
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr);
+  align-items:center;
+  gap:14px;
+  padding:22px 26px;
+}
+
+.feedback-info-item:not(:last-child)::after {
+  content:"";
+  position:absolute;
+  top:24px;
+  right:0;
+  bottom:24px;
+  width:1px;
+  background:#dfe6ef;
+}
+
+.feedback-info-icon {
+  width:46px;
+  height:46px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:#eaf3ff;
+  color:#1769c2;
+}
+
+.feedback-info-icon svg {
+  width:22px;
+  height:22px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.feedback-info-copy {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+}
+
+.modal-feedback-premium .feedback-info-copy small {
+  margin:0 0 7px;
+  color:#64748b;
+  font-size:12px;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+
+.modal-feedback-premium .feedback-info-copy strong {
+  color:#0f172a;
+  font-size:17px;
+  line-height:1.3;
+  font-weight:650;
+  overflow-wrap:anywhere;
+}
+
+.modal-feedback-premium .roteiro-ligacao {
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.modal-feedback-premium .card-pergunta {
+  position:relative;
+  padding:24px;
+  border:1px solid #dbe4ef;
+  border-radius:17px;
+  background:#ffffff;
+  box-shadow:0 3px 10px rgba(15,23,42,.025);
+}
+
+.feedback-pergunta-topo {
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:20px;
+}
+
+.feedback-numero {
+  flex:0 0 auto;
+  width:36px;
+  height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:linear-gradient(135deg,#0f4b99,#1e63bb);
+  color:#ffffff;
+  box-shadow:0 6px 15px rgba(23,82,154,.18);
+  font-size:15px;
+  line-height:1;
+  font-weight:700;
+}
+
+.modal-feedback-premium .card-pergunta h3 {
+  margin:4px 0 0;
+  color:#17233b;
+  font-size:17px;
+  line-height:1.45;
+  font-weight:600;
+  letter-spacing:-.012em;
+}
+
+.modal-feedback-premium .grupo-botoes {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;
+}
+
+.modal-feedback-premium .grupo-botoes.grupo-duplo {
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+}
+
+.modal-feedback-premium .grupo-botoes.grupo-duplo .btn-opcao {
+  flex:0 0 240px;
+  max-width:280px;
+  min-height:50px;
+}
+
+.modal-feedback-premium .btn-opcao,
+.modal-feedback-premium .btn-setor {
+  min-height:56px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #d7e0eb;
+  border-radius:13px;
+  background:#ffffff;
+  color:#172033;
+  padding:12px 18px;
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:600;
+  cursor:pointer;
+  box-shadow:0 2px 5px rgba(15,23,42,.02);
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease,
+    color .18s ease,
+    box-shadow .18s ease;
+}
+
+.modal-feedback-premium .btn-opcao:hover,
+.modal-feedback-premium .btn-setor:hover {
+  transform:translateY(-1px);
+  border-color:#91b2da;
+  background:#f7faff;
+  box-shadow:0 6px 14px rgba(15,23,42,.05);
+}
+
+.modal-feedback-premium .btn-opcao.ativo,
+.modal-feedback-premium .btn-setor.ativo {
+  border-color:#174f9d;
+  background:linear-gradient(135deg,#11468d,#1c5cb5);
+  color:#ffffff;
+  box-shadow:0 9px 20px rgba(18,76,151,.20);
+}
+
+.modal-feedback-premium .bloco-comentario {
+  margin-top:20px;
+  padding-top:20px;
+  border-top:1px solid #e9eef5;
+}
+
+.modal-feedback-premium .bloco-comentario label {
+  margin:0 0 12px;
+  color:#475569;
+  font-size:12px;
+  line-height:1.2;
+  font-weight:700;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+}
+
+.modal-feedback-premium .bloco-comentario .setores {
+  grid-template-columns:repeat(6,minmax(110px,1fr));
+}
+
+.modal-feedback-premium .btn-setor {
+  min-height:46px;
+  padding:10px 12px;
+  font-size:12px;
+}
+
+.modal-feedback-premium textarea {
+  margin-top:14px;
+  min-height:104px;
+  border:1px solid #d7e0eb;
+  border-radius:13px;
+  background:#fbfcfe;
+  color:#172033;
+  padding:15px 16px;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.modal-feedback-premium textarea:focus {
+  border-color:#5f8fc5;
+  background:#ffffff;
+  box-shadow:0 0 0 4px rgba(49,95,147,.09);
+}
+
+.feedback-modal-footer {
+  flex:0 0 auto;
+  min-height:78px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+  padding:16px 34px;
+  border-top:1px solid #e9eef5;
+  background:#fbfcfe;
+}
+
+.feedback-btn-cancelar,
+.feedback-btn-salvar {
+  min-height:48px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  border-radius:12px;
+  padding:0 20px;
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
+}
+
+.feedback-btn-cancelar {
+  border:1px solid #d7e0eb;
+  background:#ffffff;
+  color:#172033;
+}
+
+.feedback-btn-cancelar:hover {
+  transform:translateY(-1px);
+  background:#f8fafc;
+  border-color:#c4d0de;
+}
+
+.feedback-btn-salvar {
+  border:1px solid #174f9d;
+  background:linear-gradient(135deg,#11468d,#1c5cb5);
+  color:#ffffff;
+  box-shadow:0 9px 20px rgba(18,76,151,.19);
+}
+
+.feedback-btn-salvar:hover {
+  transform:translateY(-1px);
+  box-shadow:0 12px 24px rgba(18,76,151,.24);
+}
+
+.feedback-btn-salvar svg {
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+@media(max-width:900px) {
+  .modal-feedback-premium {
+    width:min(100%,calc(100vw - 20px));
+    max-height:94vh;
+    border-radius:18px;
+  }
+
+  .feedback-modal-header {
+    min-height:82px;
+    padding:18px 20px;
+  }
+
+  .feedback-modal-header h2 {
+    font-size:25px;
+  }
+
+  .feedback-fechar {
+    width:42px;
+    height:42px;
+  }
+
+  .feedback-modal-body {
+    padding:20px;
+  }
+
+  .modal-feedback-premium .info-evento {
+    grid-template-columns:1fr 1fr;
+  }
+
+  .feedback-info-item {
+    min-height:96px;
+    padding:18px;
+  }
+
+  .feedback-info-item:not(:last-child)::after {
+    display:none;
+  }
+
+  .feedback-info-item:nth-child(odd) {
+    border-right:1px solid #dfe6ef;
+  }
+
+  .feedback-info-item:nth-child(-n+2) {
+    border-bottom:1px solid #dfe6ef;
+  }
+
+  .modal-feedback-premium .card-pergunta {
+    padding:20px;
+  }
+
+  .modal-feedback-premium .bloco-comentario .setores {
+    grid-template-columns:repeat(2,minmax(120px,1fr));
+  }
+
+  .feedback-modal-footer {
+    padding:14px 20px;
+  }
+}
+
+@media(max-width:560px) {
+  .modal-feedback-premium .info-evento {
+    grid-template-columns:1fr;
+  }
+
+  .feedback-info-item {
+    border-right:none !important;
+    border-bottom:1px solid #dfe6ef;
+  }
+
+  .feedback-info-item:last-child {
+    border-bottom:none;
+  }
+
+  .feedback-pergunta-topo {
+    gap:11px;
+  }
+
+  .feedback-numero {
+    width:32px;
+    height:32px;
+  }
+
+  .modal-feedback-premium .card-pergunta h3 {
+    font-size:15px;
+  }
+
+  .modal-feedback-premium .grupo-botoes,
+  .modal-feedback-premium .bloco-comentario .setores {
+    grid-template-columns:1fr;
+  }
+
+  .modal-feedback-premium .grupo-botoes.grupo-duplo {
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .modal-feedback-premium .grupo-botoes.grupo-duplo .btn-opcao {
+    flex:initial;
+    max-width:none;
+    width:100%;
+  }
+
+  .feedback-modal-footer {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .feedback-btn-cancelar,
+  .feedback-btn-salvar {
+    width:100%;
+    padding:0 12px;
+  }
+}
+
+    @media(max-width:900px) {
+      body {
+        padding:14px;
+      }
+
+.topo {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+
+  margin-bottom:22px;
+}
+
+.acoes-topo {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+
+  gap:10px;
+  flex-wrap:nowrap;
+}
+
+.filtros {
+  display:grid;
+
+  grid-template-columns:
+    minmax(240px, 1.25fr)
+    repeat(4, minmax(170px, 1fr))
+    auto;
+
+  align-items:center;
+  gap:10px;
+
+  margin-bottom:16px;
+}
+
+      .grid-form {
+        grid-template-columns:1fr;
+      }
+
+      .info-evento {
+        grid-template-columns:1fr;
+      }
+
+.tabela-wrap {
+  width:100%;
+
+  background:#ffffff;
+
+  border:1px solid #dbe4ef;
+  border-radius:16px;
+
+  overflow:hidden;
+
+  box-shadow:0 8px 24px rgba(15,23,42,.05);
+}
+
+      table {
+        min-width:1100px;
+      }
+
+      .followup-cabecalho {
+        display:none;
+      }
+
+      .modal-followup {
+        width:min(100%, calc(100vw - 20px));
+        max-height:94vh;
+      }
+
+      .followup-header {
+        padding:18px;
+      }
+
+      .followup-header h2 {
+        font-size:21px;
+      }
+
+      .followup-body {
+        padding:14px 14px 0;
+      }
+
+      .followup-filtros {
+        overflow-x:auto;
+      }
+
+      .followup-filtro {
+        flex:0 0 auto;
+      }
+
+      .followup-linha {
+        grid-template-columns:1fr;
+        gap:10px;
+        padding:15px 16px;
+      }
+
+      .followup-lista {
+        max-height:62vh;
+      }
+
+      .followup-footer {
+        padding:0 16px;
+      }
+    }
+    .bloco-comentario.oculto{
+  display:none;
+}
+
+
+/* =====================================================
+ESTADOS FUNCIONAIS DO FORMULÁRIO
+===================================================== */
+.card-pergunta.campo-invalido,
+.card-pergunta.campo-invalido-setor {
+  border-color:#ef9a9a;
+  box-shadow:0 0 0 4px rgba(220,38,38,.07);
+}
+
+.card-pergunta.campo-invalido::after,
+.card-pergunta.campo-invalido-setor::after {
+  content:"Selecione uma opção obrigatória";
+  display:block;
+  margin-top:12px;
+  color:#b91c1c;
+  font-size:12px;
+  font-weight:600;
+}
+
+.card-pergunta.campo-invalido-setor::after {
+  content:"Selecione o setor relacionado";
+}
+
+.feedback-btn-salvar:disabled,
+.feedback-btn-cancelar:disabled {
+  cursor:not-allowed;
+  opacity:.65;
+  transform:none;
+  box-shadow:none;
+}
+
+.toast.erro {
+  background:#991b1b;
+}
+
+.toast.sucesso {
+  background:#0f5132;
+}
+
+  
+
+/* =====================================================
+CONFIGURAÇÕES EDITÁVEIS DE FOLLOW-UP
+===================================================== */
+
+.btn-config {
+  background:#ffffff;
+  color:#0f172a;
+  border:1px solid #dbe4ef;
+  box-shadow:0 5px 14px rgba(15,23,42,.05);
+}
+
+.btn-config:hover {
+  background:#f8fafc;
+  border-color:#cbd5e1;
+}
+
+.modal-configuracoes {
+  width:min(920px,calc(100vw - 48px));
+  max-height:90vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid rgba(219,228,239,.95);
+  border-radius:20px;
+  background:#ffffff;
+  box-shadow:0 28px 70px rgba(15,23,42,.22);
+}
+
+.config-header {
+  flex:0 0 auto;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:22px;
+  padding:24px 28px 20px;
+  border-bottom:1px solid #e9eef5;
+}
+
+.config-header h2 {
+  margin:0;
+  color:#0f1f3b;
+  font-size:25px;
+  line-height:1.2;
+  font-weight:700;
+  letter-spacing:-.03em;
+}
+
+.config-header p {
+  max-width:660px;
+  margin:7px 0 0;
+  color:#64748b;
+  font-size:13px;
+  line-height:1.5;
+}
+
+.config-fechar {
+  flex:0 0 auto;
+  width:40px;
+  height:40px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #dbe4ef;
+  border-radius:11px;
+  background:#f8fafc;
+  color:#334155;
+  font-family:'Inter',sans-serif;
+  font-size:21px;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.config-fechar:hover {
+  background:#eef2f7;
+  border-color:#cbd5e1;
+}
+
+.config-body {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding:24px 28px 28px;
+  scrollbar-width:thin;
+  scrollbar-color:#cbd5e1 transparent;
+}
+
+.config-body::-webkit-scrollbar {
+  width:8px;
+}
+
+.config-body::-webkit-scrollbar-thumb {
+  background:#cbd5e1;
+  border-radius:999px;
+}
+
+.config-aviso {
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:20px;
+  padding:13px 15px;
+  border:1px solid #cfe0f2;
+  border-radius:12px;
+  background:#f4f8fd;
+  color:#36516f;
+  font-size:12.5px;
+  line-height:1.48;
+}
+
+.config-aviso::before {
+  content:"i";
+  flex:0 0 auto;
+  width:18px;
+  height:18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:1px;
+  border:1px solid #6890bb;
+  border-radius:50%;
+  color:#315f93;
+  font-size:10px;
+  font-weight:700;
+}
+
+.config-grid {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);
+  gap:18px;
+}
+
+.config-card {
+  min-width:0;
+  padding:20px;
+  border:1px solid #dbe4ef;
+  border-radius:15px;
+  background:#ffffff;
+  box-shadow:0 4px 12px rgba(15,23,42,.025);
+}
+
+.config-card-cabecalho {
+  margin-bottom:18px;
+}
+
+.config-card-cabecalho h3 {
+  margin:0;
+  color:#17233b;
+  font-size:16px;
+  line-height:1.3;
+  font-weight:650;
+}
+
+.config-card-cabecalho p {
+  margin:5px 0 0;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.45;
+}
+
+.config-campos-numericos {
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.config-campo label {
+  margin:0 0 7px;
+  color:#475569;
+  font-size:12px;
+  line-height:1.3;
+  font-weight:650;
+}
+
+.config-input-unidade {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  overflow:hidden;
+  border:1px solid #d7e0eb;
+  border-radius:11px;
+  background:#ffffff;
+  transition:.18s ease;
+}
+
+.config-input-unidade:focus-within {
+  border-color:#5f8fc5;
+  box-shadow:0 0 0 4px rgba(49,95,147,.08);
+}
+
+.config-input-unidade input {
+  min-height:46px;
+  border:none;
+  border-radius:0;
+  box-shadow:none !important;
+  background:transparent;
+  padding:0 13px;
+  font-size:14px;
+  font-weight:600;
+}
+
+.config-input-unidade span {
+  min-width:72px;
+  align-self:stretch;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-left:1px solid #e2e8f0;
+  background:#f8fafc;
+  color:#64748b;
+  padding:0 12px;
+  font-size:11px;
+  font-weight:600;
+}
+
+.config-switches {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.config-switch-linha {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  min-height:67px;
+  padding:12px 13px;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  background:#fbfcfe;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.config-switch-linha:hover {
+  border-color:#cbd8e6;
+  background:#f7faff;
+}
+
+.config-switch-texto {
+  min-width:0;
+}
+
+.config-switch-texto strong {
+  display:block;
+  margin-bottom:4px;
+  color:#17233b;
+  font-size:12.5px;
+  line-height:1.35;
+  font-weight:650;
+}
+
+.config-switch-texto span {
+  display:block;
+  color:#64748b;
+  font-size:10.5px;
+  line-height:1.42;
+}
+
+.config-switch-controle {
+  position:relative;
+  flex:0 0 auto;
+  width:46px;
+  height:26px;
+}
+
+.config-switch-controle input {
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+
+.config-switch-slider {
+  position:absolute;
+  inset:0;
+  border-radius:999px;
+  background:#cbd5e1;
+  box-shadow:inset 0 0 0 1px rgba(15,23,42,.05);
+  transition:.2s ease;
+}
+
+.config-switch-slider::after {
+  content:"";
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:#ffffff;
+  box-shadow:0 2px 6px rgba(15,23,42,.18);
+  transition:.2s ease;
+}
+
+.config-switch-controle input:checked + .config-switch-slider {
+  background:#1e5aa8;
+}
+
+.config-switch-controle input:checked + .config-switch-slider::after {
+  transform:translateX(20px);
+}
+
+.config-switch-controle input:focus-visible + .config-switch-slider {
+  box-shadow:0 0 0 4px rgba(37,99,235,.13);
+}
+
+.config-meta {
+  margin-top:16px;
+  color:#64748b;
+  font-size:11px;
+  line-height:1.45;
+}
+
+.config-estado {
+  min-height:280px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#64748b;
+  font-size:13px;
+  font-weight:600;
+}
+
+.config-oculto {
+  display:none !important;
+}
+
+.config-footer {
+  flex:0 0 auto;
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px 28px;
+  border-top:1px solid #e9eef5;
+  background:#fbfcfe;
+}
+
+.config-footer-direita {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.config-btn-padrao,
+.config-btn-cancelar,
+.config-btn-salvar {
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:11px;
+  padding:0 17px;
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.config-btn-padrao,
+.config-btn-cancelar {
+  border:1px solid #d7e0eb;
+  background:#ffffff;
+  color:#334155;
+}
+
+.config-btn-padrao:hover,
+.config-btn-cancelar:hover {
+  background:#f8fafc;
+  border-color:#c4d0de;
+}
+
+.config-btn-salvar {
+  border:1px solid #174f9d;
+  background:linear-gradient(135deg,#11468d,#1c5cb5);
+  color:#ffffff;
+  box-shadow:0 8px 18px rgba(18,76,151,.18);
+}
+
+.config-btn-salvar:hover {
+  transform:translateY(-1px);
+  box-shadow:0 11px 22px rgba(18,76,151,.23);
+}
+
+.config-footer button:disabled,
+.config-body input:disabled {
+  cursor:not-allowed;
+  opacity:.58;
+}
+
+/* Cores do follow-up com mais presença, mantendo o visual premium. */
+.followup-filtro[data-filtro="precisa"].ativo {
+  background:#fff0d7;
+  border-color:#edc984;
+  color:#a8560d;
+  box-shadow:none;
+}
+
+.followup-filtro[data-filtro="nao-precisa"].ativo {
+  background:#e5f7ec;
+  border-color:#a9dbbb;
+  color:#176c43;
+  box-shadow:none;
+}
+
+.followup-linha.precisa {
+  background:linear-gradient(90deg,#fff1d9 0%,#fff8eb 45%,#ffffff 100%);
+  border-color:#edcf9b;
+  cursor:pointer;
+}
+
+.followup-linha.precisa::before {
+  background:#e49a2d;
+}
+
+.followup-status.precisa {
+  color:#a8560d;
+  background:#fff0d5;
+  border-color:#e9c680;
+}
+
+.followup-linha.nao-precisa {
+  background:linear-gradient(90deg,#e8f8ee 0%,#f3fbf6 45%,#ffffff 100%);
+  border-color:#b9e3c8;
+}
+
+.followup-linha.nao-precisa::before {
+  background:#26a85d;
+}
+
+.followup-status.nao-precisa {
+  color:#176c43;
+  background:#e7f7ed;
+  border-color:#afe0c0;
+}
+
+@media(max-width:900px) {
+  .acoes-topo {
+    flex-wrap:wrap;
+  }
+
+  .modal-configuracoes {
+    width:min(100%,calc(100vw - 20px));
+    max-height:94vh;
+  }
+
+  .config-header,
+  .config-body,
+  .config-footer {
+    padding-left:18px;
+    padding-right:18px;
+  }
+
+  .config-grid {
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:560px) {
+  .config-header h2 {
+    font-size:21px;
+  }
+
+  .config-footer {
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .config-footer-direita {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .config-btn-padrao,
+  .config-btn-cancelar,
+  .config-btn-salvar {
+    width:100%;
+  }
+}
+/* =====================================================
+MODAL DE SENHA — LIGAÇÕES PENDENTES
+===================================================== */
+
+.modal-senha-ligacoes {
+  width:min(470px, 100%);
+  overflow:hidden;
+  border-radius:20px;
+  border:1px solid #dbe4ef;
+  background:#ffffff;
+
+  box-shadow:
+    0 24px 60px rgba(15,23,42,.22),
+    0 8px 22px rgba(15,23,42,.08);
+}
+
+.senha-ligacoes-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+
+  padding:24px 26px 20px;
+
+  border-bottom:1px solid #e9eef5;
+}
+
+.senha-ligacoes-header h2 {
+  margin:0;
+
+  color:#0b1b3a;
+
+  font-size:23px;
+  line-height:1.2;
+  font-weight:700;
+  letter-spacing:-.025em;
+}
+
+.senha-ligacoes-header p {
+  margin:7px 0 0;
+
+  color:#64748b;
+
+  font-size:13px;
+  line-height:1.5;
+  font-weight:400;
+}
+
+.senha-ligacoes-fechar {
+  flex:0 0 auto;
+
+  width:40px;
+  height:40px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border:1px solid #dbe4ef;
+  border-radius:11px;
+
+  background:#f8fafc;
+  color:#334155;
+
+  font-size:21px;
+  cursor:pointer;
+}
+
+.senha-ligacoes-fechar:hover {
+  background:#eef2f7;
+}
+
+.senha-ligacoes-body {
+  padding:24px 26px;
+}
+
+.senha-ligacoes-body label {
+  display:block;
+
+  margin:0 0 8px;
+
+  color:#334155;
+
+  font-size:13px;
+  font-weight:650;
+}
+
+.senha-ligacoes-campo {
+  position:relative;
+}
+
+.senha-ligacoes-campo input {
+  height:52px;
+
+  padding-right:92px;
+
+  border-radius:12px;
+}
+
+.btn-mostrar-senha {
+  position:absolute;
+  top:50%;
+  right:8px;
+
+  transform:translateY(-50%);
+
+  min-height:36px;
+
+  padding:0 12px;
+
+  border:none;
+  border-radius:8px;
+
+  background:#eef3f8;
+  color:#315f93;
+
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  font-weight:650;
+
+  cursor:pointer;
+}
+
+.btn-mostrar-senha:hover {
+  background:#e2eaf3;
+}
+
+.erro-senha-ligacoes {
+  display:none;
+
+  margin-top:12px;
+  padding:10px 12px;
+
+  border:1px solid #fecaca;
+  border-radius:10px;
+
+  background:#fff1f2;
+  color:#b91c1c;
+
+  font-size:12px;
+  line-height:1.4;
+  font-weight:550;
+}
+
+.erro-senha-ligacoes.show {
+  display:block;
+}
+
+.senha-ligacoes-footer {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+
+  padding:16px 26px;
+
+  border-top:1px solid #e9eef5;
+
+  background:#fbfcfe;
+}
+
+#btnConfirmarSenhaLigacoes:disabled {
+  opacity:.65;
+  cursor:not-allowed;
+  transform:none;
+}
+  </style>
+</head>
+
+<body>
+
+  <div class="topo">
+<div class="titulo-area">
+
+  <div class="titulo-conteudo">
+
+    <h1>
+      Feedbacks Pós-Evento
+    </h1>
+
+    <span
+      class="atualizado"
+      id="txtAtualizado"
+    ></span>
+
+  </div>
+
+</div>
+
+    <div class="acoes-topo">
+      <button
+        type="button"
+        class="btn btn-config"
+        onclick="abrirModalConfiguracoes()"
+      >
+        Configurações
+      </button>
+
+<button
+  class="btn btn-pendente"
+  onclick="abrirModalSenhaLigacoes()"
+>
+  Ligações pendentes
+
+  <strong id="contadorPendentes">
+    🔒
+  </strong>
+</button>
+
+      <button class="btn btn-dark" onclick="carregarDados()">
+        Atualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <input
+      id="filtroBusca"
+      placeholder="Buscar cliente, pedido, local ou resumo..."
+      oninput="renderizarTabela()"
+    >
+
+    <select id="filtroSatisfacao" onchange="renderizarTabela()">
+      <option value="">Satisfação (todos)</option>
+      <option>Excelente</option>
+      <option>Boa</option>
+      <option>Regular</option>
+      <option>Ruim</option>
+    </select>
+
+    <select id="filtroElogio" onchange="renderizarTabela()">
+      <option value="">Elogio (todos)</option>
+      <option>Sim</option>
+      <option>Não</option>
+    </select>
+
+    <select id="filtroReclamacao" onchange="renderizarTabela()">
+      <option value="">Ponto de melhoria (todos)</option>
+      <option>Sim</option>
+      <option>Não</option>
+    </select>
+
+    <select id="filtroSetor" onchange="renderizarTabela()">
+      <option value="">Setor (todos)</option>
+      <option>Montagem</option>
+      <option>Desmontagem</option>
+      <option>Material</option>
+      <option>Logística</option>
+      <option>Comercial</option>
+      <option>Separação</option>
+      <option>Outro</option>
+    </select>
+
+    <button class="btn btn-dark" type="button" onclick="limparFiltros()">
+      Limpar
+    </button>
+  </div>
+
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Data Evento</th>
+          <th>Cliente / Parceiro</th>
+          <th>Pedido</th>
+          <th>Satisfação</th>
+          <th>Elogio</th>
+          <th>Setor Elogio</th>
+          <th>Ponto de Melhoria</th>
+          <th>Setor Melhoria</th>
+          <th>Resumo</th>
+          <th>Responsável</th>
+          <th>Data Contato</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+
+      <tbody id="tbodyFeedbacks">
+        <tr>
+          <td colspan="12" class="vazio">Carregando...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+
+  <div class="modal-bg" id="modalConfiguracoes">
+    <div class="modal modal-configuracoes">
+
+      <div class="config-header">
+        <div>
+          <h2>Configurações de Follow-up</h2>
+          <p>
+            Defina quando um cliente precisa receber uma nova ligação. As alterações também ficam registradas na aba RegrasFeedback.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="config-fechar"
+          aria-label="Fechar"
+          onclick="fecharModalConfiguracoes()"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="config-body">
+        <div id="configEstado" class="config-estado">
+          Carregando configurações...
+        </div>
+
+        <div id="configConteudo" class="config-oculto">
+          <div class="config-aviso">
+            As regras entram em vigor assim que forem salvas. A lista de ligações será recalculada automaticamente.
+          </div>
+
+          <div class="config-grid">
+            <section class="config-card">
+              <div class="config-card-cabecalho">
+                <h3>Periodicidade dos contatos</h3>
+                <p>Determine os intervalos e quando um cliente passa a ser considerado recorrente.</p>
+              </div>
+
+              <div class="config-campos-numericos">
+                <div class="config-campo">
+                  <label for="regraDiasClienteNovo">Cliente novo</label>
+                  <div class="config-input-unidade">
+                    <input
+                      type="number"
+                      id="regraDiasClienteNovo"
+                      min="1"
+                      max="3650"
+                      step="1"
+                      inputmode="numeric"
+                    >
+                    <span>dias</span>
+                  </div>
+                </div>
+
+                <div class="config-campo">
+                  <label for="regraDiasClienteRecorrente">Cliente recorrente</label>
+                  <div class="config-input-unidade">
+                    <input
+                      type="number"
+                      id="regraDiasClienteRecorrente"
+                      min="1"
+                      max="3650"
+                      step="1"
+                      inputmode="numeric"
+                    >
+                    <span>dias</span>
+                  </div>
+                </div>
+
+                <div class="config-campo">
+                  <label for="regraPedidosParaRecorrente">Cliente recorrente a partir de</label>
+                  <div class="config-input-unidade">
+                    <input
+                      type="number"
+                      id="regraPedidosParaRecorrente"
+                      min="1"
+                      max="999"
+                      step="1"
+                      inputmode="numeric"
+                    >
+                    <span>pedidos</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="config-card">
+              <div class="config-card-cabecalho">
+                <h3>Comportamento da fila</h3>
+                <p>Ative ou desative as regras que controlam quais eventos aparecem no follow-up.</p>
+              </div>
+
+              <div class="config-switches">
+                <label class="config-switch-linha">
+                  <span class="config-switch-texto">
+                    <strong>Somente eventos já realizados</strong>
+                    <span>Eventos futuros não entram na lista de pós-evento.</span>
+                  </span>
+
+                  <span class="config-switch-controle">
+                    <input type="checkbox" id="regraApenasEventosRealizados">
+                    <span class="config-switch-slider"></span>
+                  </span>
+                </label>
+
+                <label class="config-switch-linha">
+                  <span class="config-switch-texto">
+                    <strong>Mostrar pedidos sem data</strong>
+                    <span>Pedidos sem uma data válida continuam visíveis no follow-up.</span>
+                  </span>
+
+                  <span class="config-switch-controle">
+                    <input type="checkbox" id="regraEventoSemDataAparece">
+                    <span class="config-switch-slider"></span>
+                  </span>
+                </label>
+
+                <label class="config-switch-linha">
+                  <span class="config-switch-texto">
+                    <strong>Um pendente por cliente</strong>
+                    <span>Evita várias ligações pendentes para pedidos do mesmo cliente.</span>
+                  </span>
+
+                  <span class="config-switch-controle">
+                    <input type="checkbox" id="regraUmPendentePorCliente">
+                    <span class="config-switch-slider"></span>
+                  </span>
+                </label>
+
+                <label class="config-switch-linha">
+                  <span class="config-switch-texto">
+                    <strong>Ignorar pedido já respondido</strong>
+                    <span>Pedidos que já possuem feedback permanecem como Não precisa ligação.</span>
+                  </span>
+
+                  <span class="config-switch-controle">
+                    <input type="checkbox" id="regraPedidoComFeedbackNaoLiga">
+                    <span class="config-switch-slider"></span>
+                  </span>
+                </label>
+              </div>
+            </section>
+          </div>
+
+          <div class="config-meta" id="configMeta">
+            As configurações são armazenadas na aba RegrasFeedback.
+          </div>
+        </div>
+      </div>
+
+      <div class="config-footer">
+        <button
+          type="button"
+          class="config-btn-padrao"
+          id="btnRestaurarRegras"
+          onclick="restaurarPadraoConfiguracoes()"
+        >
+          Restaurar padrão
+        </button>
+
+        <div class="config-footer-direita">
+          <button
+            type="button"
+            class="config-btn-cancelar"
+            id="btnCancelarRegras"
+            onclick="fecharModalConfiguracoes()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            class="config-btn-salvar"
+            id="btnSalvarRegras"
+            onclick="salvarConfiguracoesFollowUp()"
+          >
+            <span>Salvar configurações</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<div
+  class="modal-bg"
+  id="modalSenhaLigacoes"
+>
+  <div class="modal modal-senha-ligacoes">
+
+    <div class="senha-ligacoes-header">
+      <div>
+        <h2>Acesso às ligações</h2>
+
+        <p>
+          Digite a senha do setor Comercial
+          para visualizar os pedidos.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="senha-ligacoes-fechar"
+        aria-label="Fechar"
+        onclick="fecharModalSenhaLigacoes()"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="senha-ligacoes-body">
+
+      <label for="senhaLigacoes">
+        Senha de acesso
+      </label>
+
+      <div class="senha-ligacoes-campo">
+        <input
+          type="password"
+          id="senhaLigacoes"
+          placeholder="Digite a senha"
+          autocomplete="off"
+          onkeydown="
+            if(event.key === 'Enter'){
+              confirmarSenhaLigacoes();
+            }
+          "
+        >
+
+        <button
+          type="button"
+          id="btnMostrarSenhaLigacoes"
+          class="btn-mostrar-senha"
+          onclick="alternarVisualizacaoSenhaLigacoes()"
+        >
+          Mostrar
+        </button>
+      </div>
+
+      <div
+        id="erroSenhaLigacoes"
+        class="erro-senha-ligacoes"
+      ></div>
+
+    </div>
+
+    <div class="senha-ligacoes-footer">
+
+      <button
+        type="button"
+        class="feedback-btn-cancelar"
+        onclick="fecharModalSenhaLigacoes()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="feedback-btn-salvar"
+        id="btnConfirmarSenhaLigacoes"
+        onclick="confirmarSenhaLigacoes()"
+      >
+        Acessar
+      </button>
+
+    </div>
+
+  </div>
+</div>
+  <div class="modal-bg" id="modalPendentes">
+    <div class="modal modal-followup">
+
+      <div class="followup-header">
+        <div>
+          <h2>Ligações e Follow-up dos Pedidos</h2>
+          <p>Todos os pedidos aparecem aqui, mesmo quando não precisam de ligação.</p>
+        </div>
+
+        <button
+          class="followup-fechar"
+          type="button"
+          aria-label="Fechar"
+          onclick="fecharModalPendentes()"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="followup-body">
+
+        <div class="followup-filtros">
+          <button
+            type="button"
+            class="followup-filtro ativo"
+            data-filtro="todos"
+            onclick="definirFiltroFollowUp('todos', this)"
+          >
+            Todos
+          </button>
+
+          <button
+            type="button"
+            class="followup-filtro"
+            data-filtro="precisa"
+            onclick="definirFiltroFollowUp('precisa', this)"
+          >
+            Precisa ligação
+          </button>
+
+          <button
+            type="button"
+            class="followup-filtro"
+            data-filtro="nao-precisa"
+            onclick="definirFiltroFollowUp('nao-precisa', this)"
+          >
+            Não precisa ligação
+          </button>
+        </div>
+
+        <div class="followup-cabecalho">
+          <div>Cliente</div>
+          <div>Pedido / Evento</div>
+          <div>Data do evento</div>
+          <div>Status</div>
+          <div>Motivo</div>
+        </div>
+
+        <div id="listaPendentes" class="followup-lista"></div>
+
+      </div>
+
+      <div class="followup-footer">
+        <span class="followup-footer-info" id="followupAtualizado">
+          Atualizado agora há pouco
+        </span>
+
+        <strong id="totalPedidosFollowUp">
+          Total de pedidos: 0
+        </strong>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modalFeedback">
+    <div class="modal modal-feedback-premium">
+
+      <div class="feedback-modal-header">
+        <h2 id="tituloModalFeedback">Registrar Feedback</h2>
+
+        <button
+          class="feedback-fechar"
+          type="button"
+          aria-label="Fechar"
+          onclick="fecharModalFeedback()"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="feedback-modal-body" id="feedbackModalBody">
+
+        <div class="info-evento">
+
+          <div class="feedback-info-item">
+            <span class="feedback-info-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 21a8 8 0 0 0-16 0"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </span>
+
+            <div class="feedback-info-copy">
+              <small>Cliente</small>
+              <strong id="infoCliente">-</strong>
+            </div>
+          </div>
+
+          <div class="feedback-info-item">
+            <span class="feedback-info-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 5h6"></path>
+                <path d="M9 3h6a1 1 0 0 1 1 1v2H8V4a1 1 0 0 1 1-1Z"></path>
+                <rect x="5" y="5" width="14" height="16" rx="2"></rect>
+              </svg>
+            </span>
+
+            <div class="feedback-info-copy">
+              <small>Pedido</small>
+              <strong id="infoEvento">-</strong>
+            </div>
+          </div>
+
+          <div class="feedback-info-item">
+            <span class="feedback-info-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="2.5"></circle>
+              </svg>
+            </span>
+
+            <div class="feedback-info-copy">
+              <small>Local</small>
+              <strong id="infoMotivo">-</strong>
+            </div>
+          </div>
+
+          <div class="feedback-info-item">
+            <span class="feedback-info-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                <path d="M16 3v4M8 3v4M3 10h18"></path>
+              </svg>
+            </span>
+
+            <div class="feedback-info-copy">
+              <small>Data do evento</small>
+              <strong id="infoDataEvento">-</strong>
+            </div>
+          </div>
+
+        </div>
+
+        <input type="hidden" id="idFeedback">
+        <input type="hidden" id="dataEvento">
+        <input type="hidden" id="cliente">
+
+        <div class="roteiro-ligacao">
+
+          <div class="card-pergunta" data-pergunta="satisfacao">
+            <div class="feedback-pergunta-topo">
+              <span class="feedback-numero">1</span>
+
+              <h3>
+                Gostaria só de saber como foi sua experiência com a Chiavari neste evento.
+              </h3>
+            </div>
+
+            <div class="grupo-botoes">
+              <button type="button" class="btn-opcao" onclick="selecionarBotao(this)">Excelente</button>
+              <button type="button" class="btn-opcao" onclick="selecionarBotao(this)">Boa</button>
+              <button type="button" class="btn-opcao" onclick="selecionarBotao(this)">Regular</button>
+              <button type="button" class="btn-opcao" onclick="selecionarBotao(this)">Ruim</button>
+            </div>
+          </div>
+
+          <div class="card-pergunta" data-pergunta="elogio">
+            <div class="feedback-pergunta-topo">
+              <span class="feedback-numero">2</span>
+
+              <h3>
+                Teve alguma coisa que você gostou bastante e gostaria de destacar?
+              </h3>
+            </div>
+
+            <div class="grupo-botoes grupo-duplo">
+              <button type="button" class="btn-opcao" onclick="selecionarBotao(this)">Sim</button>
+              <button type="button" class="btn-opcao" onclick="selecionarBotao(this)">Não</button>
+            </div>
+
+            <div class="bloco-comentario oculto" id="blocoElogio">
+              <label>Qual área você destacaria?</label>
+
+              <div class="grupo-botoes setores" data-setor="setorElogio">
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Montagem</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Desmontagem</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Material</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Logística</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Comercial</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Outro</button>
+              </div>
+
+              <textarea
+                id="textoElogio"
+                placeholder="Descreva brevemente o elogio feito pelo cliente..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="card-pergunta" data-pergunta="melhoria">
+            <div class="feedback-pergunta-topo">
+              <span class="feedback-numero">3</span>
+
+              <h3>
+                E teve alguma coisa que você acha que poderíamos melhorar?
+              </h3>
+            </div>
+
+            <div class="grupo-botoes grupo-duplo">
+              <button type="button" class="btn-opcao" onclick="selecionarBotao(this)">Sim</button>
+              <button type="button" class="btn-opcao" onclick="selecionarBotao(this)">Não</button>
+            </div>
+
+            <div class="bloco-comentario oculto" id="blocoMelhoria">
+              <label>Qual área estava relacionada?</label>
+
+              <div class="grupo-botoes setores" data-setor="setorMelhoria">
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Montagem</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Desmontagem</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Material</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Logística</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Comercial</button>
+                <button type="button" class="btn-setor" onclick="selecionarBotao(this)">Outro</button>
+              </div>
+
+              <textarea
+                id="textoMelhoria"
+                placeholder="Descreva brevemente a sugestão ou crítica feita pelo cliente..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="card-pergunta" data-pergunta="observacoes">
+            <div class="feedback-pergunta-topo">
+              <span class="feedback-numero">4</span>
+              <h3>Observações adicionais da conversa</h3>
+            </div>
+
+            <textarea
+              id="resumo"
+              placeholder="Anote aqui qualquer observação importante percebida durante a ligação..."
+            ></textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="feedback-modal-footer">
+        <button
+          type="button"
+          class="feedback-btn-cancelar"
+          id="btnCancelarFeedback"
+          onclick="fecharModalFeedback()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="feedback-btn-salvar"
+          id="btnSalvarFeedback"
+          onclick="salvar()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m22 2-7 20-4-9-9-4Z"></path>
+            <path d="M22 2 11 13"></path>
+          </svg>
+          <span>Salvar Feedback</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <div class="toast" id="toast"></div>
+  <script>
+    let feedbacks = [];
+    let pendentes = [];
+    let filtroFollowUpAtual = "todos";
+    let salvandoFeedback = false;
+    let salvandoConfiguracoes = false;
+    let regrasPadraoConfiguracao = null;
+
+    document.addEventListener("DOMContentLoaded", function(){
+      configurarEventosGlobais();
+      carregarDados();
+    });
+
+    function configurarEventosGlobais(){
+      document.addEventListener("keydown", function(event){
+        if(event.key !== "Escape") return;
+
+        if(document.getElementById("modalConfiguracoes").classList.contains("show")){
+          fecharModalConfiguracoes();
+          return;
+        }
+
+        if(document.getElementById("modalFeedback").classList.contains("show")){
+          fecharModalFeedback();
+          return;
+        }
+
+        if(document.getElementById("modalPendentes").classList.contains("show")){
+          fecharModalPendentes();
+        }
+      });
+
+      document.getElementById("modalFeedback").addEventListener("click", function(event){
+        if(event.target === this && !salvandoFeedback){
+          fecharModalFeedback();
+        }
+      });
+
+      document.getElementById("modalPendentes").addEventListener("click", function(event){
+        if(event.target === this){
+          fecharModalPendentes();
+        }
+      });
+
+      document.getElementById("modalConfiguracoes").addEventListener("click", function(event){
+        if(event.target === this && !salvandoConfiguracoes){
+          fecharModalConfiguracoes();
+        }
+      });
+    }
+
+    function abrirModalConfiguracoes(){
+      if(salvandoConfiguracoes) return;
+
+      document.getElementById("modalConfiguracoes").classList.add("show");
+      document.getElementById("configEstado").innerText = "Carregando configurações...";
+      document.getElementById("configEstado").classList.remove("config-oculto");
+      document.getElementById("configConteudo").classList.add("config-oculto");
+      definirControlesConfiguracaoDesabilitados(true);
+
+      google.script.run
+        .withSuccessHandler(function(resposta){
+          preencherFormularioConfiguracoes(resposta);
+          definirControlesConfiguracaoDesabilitados(false);
+        })
+        .withFailureHandler(function(erro){
+          definirControlesConfiguracaoDesabilitados(false);
+          document.getElementById("configEstado").innerText =
+            "Não foi possível carregar as configurações.";
+          tratarErroServidor(erro);
+        })
+        .obterRegrasFeedback();
+    }
+
+    function preencherFormularioConfiguracoes(resposta){
+      const regras = resposta && resposta.regras ? resposta.regras : {};
+
+      regrasPadraoConfiguracao =
+        resposta && resposta.padroes
+          ? resposta.padroes
+          : regrasPadraoConfiguracao;
+
+      document.getElementById("regraDiasClienteNovo").value =
+        regras.diasClienteNovo ?? "";
+
+      document.getElementById("regraDiasClienteRecorrente").value =
+        regras.diasClienteRecorrente ?? "";
+
+      document.getElementById("regraPedidosParaRecorrente").value =
+        regras.pedidosParaRecorrente ?? "";
+
+      document.getElementById("regraApenasEventosRealizados").checked =
+        Boolean(regras.apenasEventosRealizados);
+
+      document.getElementById("regraEventoSemDataAparece").checked =
+        Boolean(regras.eventoSemDataAparece);
+
+      document.getElementById("regraUmPendentePorCliente").checked =
+        Boolean(regras.umPendentePorCliente);
+
+      document.getElementById("regraPedidoComFeedbackNaoLiga").checked =
+        Boolean(regras.pedidoComFeedbackNaoLiga);
+
+      const detalhes = [];
+
+      if(resposta && resposta.aba){
+        detalhes.push("Aba: " + resposta.aba);
+      }
+
+      if(resposta && resposta.atualizadoEm){
+        detalhes.push("Última alteração: " + resposta.atualizadoEm);
+      }
+
+      if(resposta && resposta.atualizadoPor){
+        detalhes.push("Responsável: " + resposta.atualizadoPor);
+      }
+
+      document.getElementById("configMeta").innerText =
+        detalhes.length
+          ? detalhes.join(" • ")
+          : "As configurações são armazenadas na aba RegrasFeedback.";
+
+      document.getElementById("configEstado").classList.add("config-oculto");
+      document.getElementById("configConteudo").classList.remove("config-oculto");
+    }
+
+    function restaurarPadraoConfiguracoes(){
+      if(!regrasPadraoConfiguracao || salvandoConfiguracoes) return;
+
+      preencherFormularioConfiguracoes({
+        regras:regrasPadraoConfiguracao,
+        padroes:regrasPadraoConfiguracao,
+        aba:"RegrasFeedback"
+      });
+
+      mostrarToast(
+        "Valores padrão preenchidos. Clique em Salvar configurações para confirmar.",
+        "sucesso"
+      );
+    }
+
+    function salvarConfiguracoesFollowUp(){
+      if(salvandoConfiguracoes) return;
+
+      const diasClienteNovo =
+        Number(document.getElementById("regraDiasClienteNovo").value);
+
+      const diasClienteRecorrente =
+        Number(document.getElementById("regraDiasClienteRecorrente").value);
+
+      const pedidosParaRecorrente =
+        Number(document.getElementById("regraPedidosParaRecorrente").value);
+
+      if(
+        !Number.isInteger(diasClienteNovo) ||
+        diasClienteNovo < 1 ||
+        diasClienteNovo > 3650
+      ){
+        mostrarToast("Informe um intervalo válido para cliente novo.", "erro");
+        document.getElementById("regraDiasClienteNovo").focus();
+        return;
+      }
+
+      if(
+        !Number.isInteger(diasClienteRecorrente) ||
+        diasClienteRecorrente < 1 ||
+        diasClienteRecorrente > 3650
+      ){
+        mostrarToast("Informe um intervalo válido para cliente recorrente.", "erro");
+        document.getElementById("regraDiasClienteRecorrente").focus();
+        return;
+      }
+
+      if(
+        !Number.isInteger(pedidosParaRecorrente) ||
+        pedidosParaRecorrente < 1 ||
+        pedidosParaRecorrente > 999
+      ){
+        mostrarToast("Informe uma quantidade válida de pedidos para cliente recorrente.", "erro");
+        document.getElementById("regraPedidosParaRecorrente").focus();
+        return;
+      }
+
+      const dados = {
+        diasClienteNovo,
+        diasClienteRecorrente,
+        pedidosParaRecorrente,
+        apenasEventosRealizados:
+          document.getElementById("regraApenasEventosRealizados").checked,
+        eventoSemDataAparece:
+          document.getElementById("regraEventoSemDataAparece").checked,
+        umPendentePorCliente:
+          document.getElementById("regraUmPendentePorCliente").checked,
+        pedidoComFeedbackNaoLiga:
+          document.getElementById("regraPedidoComFeedbackNaoLiga").checked
+      };
+
+      alterarEstadoSalvamentoConfiguracoes(true);
+
+      google.script.run
+        .withSuccessHandler(function(resposta){
+          alterarEstadoSalvamentoConfiguracoes(false);
+
+          if(!resposta || resposta.sucesso !== true){
+            mostrarToast(
+              (resposta && resposta.mensagem) ||
+              "Não foi possível salvar as configurações.",
+              "erro"
+            );
+            return;
+          }
+
+          preencherFormularioConfiguracoes(resposta);
+          mostrarToast(
+            resposta.mensagem ||
+            "Configurações salvas com sucesso.",
+            "sucesso"
+          );
+
+          fecharModalConfiguracoes();
+          carregarDados();
+        })
+        .withFailureHandler(function(erro){
+          alterarEstadoSalvamentoConfiguracoes(false);
+          tratarErroServidor(erro);
+        })
+        .salvarRegrasFeedback(dados);
+    }
+
+    function alterarEstadoSalvamentoConfiguracoes(ativo){
+      salvandoConfiguracoes = ativo;
+      definirControlesConfiguracaoDesabilitados(ativo);
+
+      const botao = document.getElementById("btnSalvarRegras");
+      const texto = botao.querySelector("span");
+
+      texto.innerText = ativo
+        ? "Salvando..."
+        : "Salvar configurações";
+    }
+
+    function definirControlesConfiguracaoDesabilitados(ativo){
+      document
+        .querySelectorAll("#modalConfiguracoes input, #modalConfiguracoes button")
+        .forEach(function(controle){
+          if(
+            controle.classList.contains("config-fechar") &&
+            !salvandoConfiguracoes
+          ){
+            controle.disabled = false;
+            return;
+          }
+
+          controle.disabled = ativo;
+        });
+    }
+
+    function fecharModalConfiguracoes(){
+      if(salvandoConfiguracoes) return;
+      document.getElementById("modalConfiguracoes").classList.remove("show");
+    }
+
+function carregarDados() {
+
+  google.script.run
+    .withSuccessHandler(function(lista) {
+
+      feedbacks =
+        Array.isArray(lista)
+          ? lista
+          : [];
+
+      renderizarTabela();
+
+      const agora =
+        new Date();
+
+      const atualizado =
+        document.getElementById(
+          "txtAtualizado"
+        );
+
+      if (atualizado) {
+        atualizado.innerText =
+          "Atualizado às " +
+          agora.toLocaleTimeString(
+            "pt-BR",
+            {
+              hour:"2-digit",
+              minute:"2-digit"
+            }
+          );
+      }
+
+    })
+    .withFailureHandler(function(erro) {
+
+      feedbacks = [];
+
+      document
+        .getElementById(
+          "tbodyFeedbacks"
+        )
+        .innerHTML = `
+          <tr>
+            <td colspan="12" class="vazio">
+              Não foi possível carregar os feedbacks.
+              Atualize a página e tente novamente.
+            </td>
+          </tr>
+        `;
+
+      tratarErroServidor(
+        erro
+      );
+
+    })
+    .listarFeedbacks();
+
+  /*
+    As ligações não são carregadas aqui.
+
+    Elas serão buscadas somente depois
+    que a senha Comercial for validada.
+  */
+  pendentes = [];
+
+  const contador =
+    document.getElementById(
+      "contadorPendentes"
+    );
+
+  if (contador) {
+    contador.innerText =
+      "🔒";
+  }
+
+  const listaPendentes =
+    document.getElementById(
+      "listaPendentes"
+    );
+
+  if (listaPendentes) {
+    listaPendentes.innerHTML =
+      "";
+  }
+
+}
+    function atualizarResumoPendentes(){
+      const totalQuePrecisamLigacao = pendentes.filter(item => item.precisaLigacao).length;
+      document.getElementById("contadorPendentes").innerText = totalQuePrecisamLigacao;
+
+      const agora = new Date();
+      document.getElementById("txtAtualizado").innerText =
+        "Atualizado às " + agora.toLocaleTimeString("pt-BR", {
+          hour:"2-digit",
+          minute:"2-digit"
+        });
+
+      if(document.getElementById("modalPendentes").classList.contains("show")){
+        renderizarFollowUp();
+      }
+    }
+
+    function renderizarTabela(){
+      const tbody = document.getElementById("tbodyFeedbacks");
+      const busca = document.getElementById("filtroBusca").value.trim().toLowerCase();
+      const satisfacao = document.getElementById("filtroSatisfacao").value;
+      const elogio = document.getElementById("filtroElogio").value;
+      const melhoria = document.getElementById("filtroReclamacao").value;
+      const setor = document.getElementById("filtroSetor").value;
+
+      let lista = [...feedbacks];
+
+      lista = lista.filter(function(item){
+        const texto = [
+          item.cliente,
+          item.pedido,
+          item.local,
+          item.resumo,
+          item.textoElogio,
+          item.textoMelhoria,
+          item.setorElogio,
+          item.setorMelhoria,
+          item.responsavel
+        ].join(" ").toLowerCase();
+
+        if(busca && !texto.includes(busca)) return false;
+        if(satisfacao && item.satisfacao !== satisfacao) return false;
+        if(elogio && item.elogio !== elogio) return false;
+        if(melhoria && item.reclamacao !== melhoria) return false;
+        if(setor && item.setorElogio !== setor && item.setorMelhoria !== setor) return false;
+        return true;
+      });
+
+      if(!lista.length){
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12" class="vazio">Nenhum feedback encontrado.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = lista.map(function(item){
+        return `
+          <tr>
+            <td>${escaparHtml(item.dataEvento || "-")}</td>
+            <td><strong>${escaparHtml(item.cliente || "-")}</strong></td>
+            <td>${escaparHtml(formatarNumeroPedido(item.pedido))}</td>
+            <td>${badgeSatisfacao(item.satisfacao)}</td>
+            <td>${badgeSimNao(item.elogio)}</td>
+            <td>${escaparHtml(item.setorElogio || "-")}</td>
+            <td>${badgeSimNao(item.reclamacao)}</td>
+            <td>${escaparHtml(item.setorMelhoria || "-")}</td>
+            <td>${escaparHtml(limitar(item.resumo || item.textoMelhoria || item.textoElogio, 85))}</td>
+            <td>${escaparHtml(item.responsavel || "-")}</td>
+            <td>${escaparHtml(item.dataContato || "-")}</td>
+            <td>
+              <button
+                type="button"
+                class="acao-link"
+                onclick="editarFeedback('${escaparAtributo(item.id)}')"
+              >
+                Abrir
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function limparFiltros(){
+      document.getElementById("filtroBusca").value = "";
+      document.getElementById("filtroSatisfacao").value = "";
+      document.getElementById("filtroElogio").value = "";
+      document.getElementById("filtroReclamacao").value = "";
+      document.getElementById("filtroSetor").value = "";
+      renderizarTabela();
+    }
+
+    function normalizarItemFollowUp(item){
+      const statusOriginal = String(
+        item.statusLigacao ??
+        item.status ??
+        item.precisaLigacao ??
+        item.precisa_ligacao ??
+        ""
+      ).trim().toLowerCase();
+
+      let precisaLigacao = true;
+
+      if(typeof item.precisaLigacao === "boolean"){
+        precisaLigacao = item.precisaLigacao;
+      }else if(
+        statusOriginal.includes("não precisa") ||
+        statusOriginal.includes("nao precisa") ||
+        ["não","nao","false","0"].includes(statusOriginal)
+      ){
+        precisaLigacao = false;
+      }
+
+      return {
+        ...item,
+        precisaLigacao,
+        motivoLigacao:
+          item.motivoLigacao ||
+          item.motivo ||
+          item.regra ||
+          (precisaLigacao
+            ? "Feedback ainda não registrado"
+            : "Contato recente já realizado")
+      };
+    }
+
+    function definirFiltroFollowUp(filtro, botao){
+      filtroFollowUpAtual = filtro;
+
+      document.querySelectorAll(".followup-filtro").forEach(function(btn){
+        btn.classList.remove("ativo");
+      });
+
+      botao.classList.add("ativo");
+      renderizarFollowUp();
+    }
+
+    function abrirModalPendentes(){
+      filtroFollowUpAtual = "todos";
+
+      document.querySelectorAll(".followup-filtro").forEach(function(btn){
+        btn.classList.toggle("ativo", btn.dataset.filtro === "todos");
+      });
+
+      renderizarFollowUp();
+      document.getElementById("modalPendentes").classList.add("show");
+    }
+
+    function renderizarFollowUp(){
+      const lista = document.getElementById("listaPendentes");
+      const pedidos = pendentes.map(normalizarItemFollowUp);
+
+      const pedidosFiltrados = pedidos.filter(function(item){
+        if(filtroFollowUpAtual === "precisa") return item.precisaLigacao;
+        if(filtroFollowUpAtual === "nao-precisa") return !item.precisaLigacao;
+        return true;
+      });
+
+      document.getElementById("totalPedidosFollowUp").innerText =
+        "Total de pedidos: " + pedidos.length;
+
+      document.getElementById("followupAtualizado").innerText =
+        "Atualizado agora há pouco";
+
+      if(!pedidosFiltrados.length){
+        lista.innerHTML = `
+          <div class="followup-vazio">
+            Nenhum pedido encontrado neste filtro.
+          </div>
+        `;
+        return;
+      }
+
+      lista.innerHTML = pedidosFiltrados.map(function(item){
+        const classeStatus = item.precisaLigacao ? "precisa" : "nao-precisa";
+        const textoStatus = item.precisaLigacao ? "Precisa ligação" : "Não precisa ligação";
+        const podeAbrir = item.precisaLigacao;
+        const pedidoSeguro = escaparAtributo(item.pedido);
+
+        return `
+          <div
+            class="followup-linha ${classeStatus}"
+            ${podeAbrir ? `onclick="abrirPendenteAutomatico('${pedidoSeguro}')"` : ""}
+            ${podeAbrir ? `role="button" tabindex="0" onkeydown="if(event.key === 'Enter') abrirPendenteAutomatico('${pedidoSeguro}')"` : ""}
+          >
+            <div class="followup-celula">
+              <strong>${escaparHtml(item.cliente || "-")}</strong>
+              <span>Cliente</span>
+            </div>
+
+            <div class="followup-celula">
+              <strong>${escaparHtml(formatarNumeroPedido(item.pedido))}</strong>
+              <span>${escaparHtml(item.local || "-")}</span>
+            </div>
+
+            <div class="followup-celula followup-data">
+              <strong>${escaparHtml(item.dataEvento || "-")}</strong>
+              <small>${escaparHtml(formatarDiaSemana(item.dataEvento))}</small>
+            </div>
+
+            <div class="followup-celula">
+              <span class="followup-status ${classeStatus}">${textoStatus}</span>
+            </div>
+
+            <div class="followup-celula">
+              <div class="followup-motivo">
+                ${escaparHtml(item.motivoLigacao || "-")}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function fecharModalPendentes(){
+      document.getElementById("modalPendentes").classList.remove("show");
+    }
+
+    function abrirPendenteAutomatico(pedido){
+      const item = pendentes.find(function(registro){
+        return String(registro.pedido) === String(pedido);
+      });
+
+      if(!item || !item.precisaLigacao) return;
+
+      limparFormularioFeedback();
+      preencherContextoEvento(item);
+      document.getElementById("tituloModalFeedback").innerText = "Registrar Feedback";
+
+      fecharModalPendentes();
+      document.getElementById("modalFeedback").classList.add("show");
+    }
+
+    function editarFeedback(id){
+      const item = feedbacks.find(function(registro){
+        return String(registro.id) === String(id);
+      });
+
+      if(!item) return;
+
+      limparFormularioFeedback();
+      preencherContextoEvento(item);
+      document.getElementById("tituloModalFeedback").innerText = "Editar Feedback";
+      document.getElementById("idFeedback").value = item.id || "";
+
+      marcarResposta("satisfacao", item.satisfacao);
+      marcarResposta("elogio", item.elogio);
+      marcarResposta("melhoria", item.reclamacao);
+
+      if(item.elogio === "Sim"){
+        document.getElementById("blocoElogio").classList.remove("oculto");
+        marcarSetor("setorElogio", item.setorElogio);
+      }
+
+      if(item.reclamacao === "Sim"){
+        document.getElementById("blocoMelhoria").classList.remove("oculto");
+        marcarSetor("setorMelhoria", item.setorMelhoria);
+      }
+
+      document.getElementById("textoElogio").value = item.textoElogio || "";
+      document.getElementById("textoMelhoria").value = item.textoMelhoria || "";
+      document.getElementById("resumo").value = item.resumo || "";
+
+      document.getElementById("modalFeedback").classList.add("show");
+    }
+
+    function preencherContextoEvento(item){
+      window.pendenteAtual = {
+        pedido:item.pedido || "",
+        local:item.local || ""
+      };
+
+      document.getElementById("cliente").value = item.cliente || "";
+      document.getElementById("dataEvento").value = item.dataEvento || "";
+      document.getElementById("infoCliente").innerText = item.cliente || "-";
+      document.getElementById("infoEvento").innerText = formatarNumeroPedido(item.pedido);
+      document.getElementById("infoMotivo").innerText = item.local || "-";
+      document.getElementById("infoDataEvento").innerText = item.dataEvento || "-";
+    }
+
+    function selecionarBotao(botao){
+      const grupo = botao.closest(".grupo-botoes");
+      if(!grupo) return;
+
+      grupo.querySelectorAll(":scope > button").forEach(function(item){
+        item.classList.remove("ativo");
+      });
+
+      botao.classList.add("ativo");
+
+      const card = botao.closest(".card-pergunta");
+      if(card){
+        card.classList.remove("campo-invalido", "campo-invalido-setor");
+      }
+
+      if(!card || botao.classList.contains("btn-setor")) return;
+
+      const pergunta = card.dataset.pergunta;
+      const resposta = botao.innerText.trim();
+
+      if(pergunta === "elogio"){
+        controlarBlocoCondicional(card, resposta, "blocoElogio", "textoElogio");
+      }
+
+      if(pergunta === "melhoria"){
+        controlarBlocoCondicional(card, resposta, "blocoMelhoria", "textoMelhoria");
+      }
+    }
+
+    function controlarBlocoCondicional(card, resposta, idBloco, idTextarea){
+      const bloco = document.getElementById(idBloco);
+
+      if(resposta === "Sim"){
+        bloco.classList.remove("oculto");
+        return;
+      }
+
+      bloco.classList.add("oculto");
+      bloco.querySelectorAll(".btn-setor").forEach(function(btn){
+        btn.classList.remove("ativo");
+      });
+      document.getElementById(idTextarea).value = "";
+      card.classList.remove("campo-invalido-setor");
+    }
+
+    function marcarResposta(pergunta, valor){
+      if(!valor) return;
+      const card = document.querySelector(`.card-pergunta[data-pergunta="${pergunta}"]`);
+      if(!card) return;
+
+      const botao = Array.from(card.querySelectorAll(".btn-opcao")).find(function(btn){
+        return btn.innerText.trim() === String(valor).trim();
+      });
+
+      if(botao) botao.classList.add("ativo");
+    }
+
+    function marcarSetor(nomeSetor, valor){
+      if(!valor) return;
+      const grupo = document.querySelector(`[data-setor="${nomeSetor}"]`);
+      if(!grupo) return;
+
+      const botao = Array.from(grupo.querySelectorAll(".btn-setor")).find(function(btn){
+        return btn.innerText.trim() === String(valor).trim();
+      });
+
+      if(botao) botao.classList.add("ativo");
+    }
+
+    function obterResposta(pergunta){
+      const card = document.querySelector(`.card-pergunta[data-pergunta="${pergunta}"]`);
+      const ativo = card ? card.querySelector(".btn-opcao.ativo") : null;
+      return ativo ? ativo.innerText.trim() : "";
+    }
+
+    function obterSetor(nomeSetor){
+      const grupo = document.querySelector(`[data-setor="${nomeSetor}"]`);
+      const ativo = grupo ? grupo.querySelector(".btn-setor.ativo") : null;
+      return ativo ? ativo.innerText.trim() : "";
+    }
+
+    function validarFormularioFeedback(){
+      document.querySelectorAll("#modalFeedback .card-pergunta").forEach(function(card){
+        card.classList.remove("campo-invalido", "campo-invalido-setor");
+      });
+
+      const erros = [];
+      const satisfacao = obterResposta("satisfacao");
+      const elogio = obterResposta("elogio");
+      const melhoria = obterResposta("melhoria");
+      const setorElogio = obterSetor("setorElogio");
+      const setorMelhoria = obterSetor("setorMelhoria");
+
+      if(!satisfacao){
+        erros.push(document.querySelector('[data-pergunta="satisfacao"]'));
+      }
+
+      if(!elogio){
+        erros.push(document.querySelector('[data-pergunta="elogio"]'));
+      }else if(elogio === "Sim" && !setorElogio){
+        const card = document.querySelector('[data-pergunta="elogio"]');
+        card.classList.add("campo-invalido-setor");
+        erros.push(card);
+      }
+
+      if(!melhoria){
+        erros.push(document.querySelector('[data-pergunta="melhoria"]'));
+      }else if(melhoria === "Sim" && !setorMelhoria){
+        const card = document.querySelector('[data-pergunta="melhoria"]');
+        card.classList.add("campo-invalido-setor");
+        erros.push(card);
+      }
+
+      erros.forEach(function(card){
+        if(card && !card.classList.contains("campo-invalido-setor")){
+          card.classList.add("campo-invalido");
+        }
+      });
+
+      if(!window.pendenteAtual || !window.pendenteAtual.pedido){
+        mostrarToast("Não foi possível identificar o pedido deste feedback.", "erro");
+        return false;
+      }
+
+      if(erros.length){
+        const primeiro = erros.find(Boolean);
+        if(primeiro){
+          primeiro.scrollIntoView({behavior:"smooth", block:"center"});
+        }
+        mostrarToast("Preencha as respostas obrigatórias antes de salvar.", "erro");
+        return false;
+      }
+
+      return true;
+    }
+
+    function salvar(){
+      if(salvandoFeedback || !validarFormularioFeedback()) return;
+
+      const elogio = obterResposta("elogio");
+      const melhoria = obterResposta("melhoria");
+
+      const dados = {
+        id:document.getElementById("idFeedback").value.trim(),
+        pedido:window.pendenteAtual.pedido || "",
+        dataEvento:document.getElementById("dataEvento").value || "",
+        cliente:document.getElementById("cliente").value || "",
+        local:window.pendenteAtual.local || "",
+        resultado:"Conversa realizada",
+        satisfacao:obterResposta("satisfacao"),
+        elogio:elogio,
+        setorElogio:elogio === "Sim" ? obterSetor("setorElogio") : "",
+        textoElogio:elogio === "Sim" ? document.getElementById("textoElogio").value.trim() : "",
+        reclamacao:melhoria,
+        setorMelhoria:melhoria === "Sim" ? obterSetor("setorMelhoria") : "",
+        textoMelhoria:melhoria === "Sim" ? document.getElementById("textoMelhoria").value.trim() : "",
+        resumo:document.getElementById("resumo").value.trim()
+      };
+
+      alterarEstadoSalvamento(true);
+
+      google.script.run
+        .withSuccessHandler(function(resposta){
+          alterarEstadoSalvamento(false);
+
+          if(!resposta || resposta.sucesso !== true){
+            mostrarToast((resposta && resposta.mensagem) || "Não foi possível salvar o feedback.", "erro");
+            return;
+          }
+
+          mostrarToast(resposta.mensagem || "Feedback salvo com sucesso.", "sucesso");
+          fecharModalFeedback();
+          carregarDados();
+        })
+        .withFailureHandler(function(erro){
+          alterarEstadoSalvamento(false);
+          tratarErroServidor(erro);
+        })
+        .salvarFeedback(dados);
+    }
+
+    function alterarEstadoSalvamento(ativo){
+      salvandoFeedback = ativo;
+      const salvar = document.getElementById("btnSalvarFeedback");
+      const cancelar = document.getElementById("btnCancelarFeedback");
+      const texto = salvar.querySelector("span");
+
+      salvar.disabled = ativo;
+      cancelar.disabled = ativo;
+      texto.innerText = ativo ? "Salvando..." : "Salvar Feedback";
+    }
+
+    function fecharModalFeedback(){
+      if(salvandoFeedback) return;
+      document.getElementById("modalFeedback").classList.remove("show");
+      limparFormularioFeedback();
+    }
+
+    function limparFormularioFeedback(){
+      window.pendenteAtual = null;
+
+      document.getElementById("idFeedback").value = "";
+      document.getElementById("dataEvento").value = "";
+      document.getElementById("cliente").value = "";
+      document.getElementById("textoElogio").value = "";
+      document.getElementById("textoMelhoria").value = "";
+      document.getElementById("resumo").value = "";
+
+      document.getElementById("infoCliente").innerText = "-";
+      document.getElementById("infoEvento").innerText = "-";
+      document.getElementById("infoMotivo").innerText = "-";
+      document.getElementById("infoDataEvento").innerText = "-";
+      document.getElementById("tituloModalFeedback").innerText = "Registrar Feedback";
+
+      document.querySelectorAll("#modalFeedback .btn-opcao, #modalFeedback .btn-setor").forEach(function(btn){
+        btn.classList.remove("ativo");
+      });
+
+      document.querySelectorAll("#modalFeedback .bloco-comentario").forEach(function(bloco){
+        bloco.classList.add("oculto");
+      });
+
+      document.querySelectorAll("#modalFeedback .card-pergunta").forEach(function(card){
+        card.classList.remove("campo-invalido", "campo-invalido-setor");
+      });
+
+      document.getElementById("feedbackModalBody").scrollTop = 0;
+    }
+
+    function badgeSatisfacao(valor){
+      if(!valor) return "-";
+
+      const classe = {
+        "Excelente":"badge-excelente",
+        "Boa":"badge-boa",
+        "Regular":"badge-regular",
+        "Ruim":"badge-ruim"
+      }[valor] || "badge-boa";
+
+      return `<span class="badge ${classe}">${escaparHtml(valor)}</span>`;
+    }
+
+    function badgeSimNao(valor){
+      if(!valor) return "-";
+      const classe = valor === "Sim" ? "badge-sim" : valor === "Não" ? "badge-nao" : "badge-regular";
+      return `<span class="badge ${classe}">${escaparHtml(valor)}</span>`;
+    }
+
+    function limitar(texto, maximo){
+      const valor = String(texto || "").trim();
+      if(!valor) return "-";
+      return valor.length > maximo ? valor.substring(0, maximo) + "..." : valor;
+    }
+
+    function formatarNumeroPedido(valor){
+      const texto = String(valor || "").trim();
+      if(!texto) return "Pedido -";
+      if(texto.toLowerCase().startsWith("pedido")) return texto;
+      return "Pedido " + texto;
+    }
+
+    function formatarDiaSemana(data){
+      if(!data) return "";
+      const texto = String(data).trim();
+      let dia, mes, ano;
+
+      if(/^\d{2}\/\d{2}\/\d{4}$/.test(texto)){
+        [dia, mes, ano] = texto.split("/");
+      }else if(/^\d{4}-\d{2}-\d{2}/.test(texto)){
+        [ano, mes, dia] = texto.slice(0,10).split("-");
+      }else{
+        return "";
+      }
+
+      const dataObj = new Date(Number(ano), Number(mes) - 1, Number(dia));
+      if(Number.isNaN(dataObj.getTime())) return "";
+
+      const nome = dataObj.toLocaleDateString("pt-BR", {weekday:"long"});
+      return nome.charAt(0).toUpperCase() + nome.slice(1);
+    }
+
+    function escaparHtml(valor){
+      return String(valor ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escaparAtributo(valor){
+      return String(valor ?? "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'")
+        .replaceAll('"', "&quot;")
+        .replaceAll("\n", " ")
+        .replaceAll("\r", " ");
+    }
+
+    function mostrarToast(mensagem, tipo){
+      const toast = document.getElementById("toast");
+      toast.innerText = mensagem;
+      toast.classList.remove("erro", "sucesso", "show");
+      toast.classList.add(tipo === "erro" ? "erro" : "sucesso", "show");
+
+      clearTimeout(window.timerToastFeedback);
+      window.timerToastFeedback = setTimeout(function(){
+        toast.classList.remove("show");
+      }, 3200);
+    }
+
+let validandoSenhaLigacoes = false;
+
+function abrirModalSenhaLigacoes() {
+  const modal =
+    document.getElementById(
+      "modalSenhaLigacoes"
+    );
+
+  const campo =
+    document.getElementById(
+      "senhaLigacoes"
+    );
+
+  const erro =
+    document.getElementById(
+      "erroSenhaLigacoes"
+    );
+
+  if (!modal || !campo || !erro) {
+    console.error(
+      "Os elementos do modal de senha não foram encontrados."
+    );
+
+    return;
+  }
+
+  campo.value = "";
+  campo.type = "password";
+
+  erro.innerText = "";
+  erro.classList.remove("show");
+
+  const botaoMostrar =
+    document.getElementById(
+      "btnMostrarSenhaLigacoes"
+    );
+
+  if (botaoMostrar) {
+    botaoMostrar.innerText =
+      "Mostrar";
+  }
+
+  modal.classList.add("show");
+
+  setTimeout(function() {
+    campo.focus();
+  }, 80);
+}
+
+function fecharModalSenhaLigacoes() {
+  const modal =
+    document.getElementById(
+      "modalSenhaLigacoes"
+    );
+
+  const campo =
+    document.getElementById(
+      "senhaLigacoes"
+    );
+
+  const erro =
+    document.getElementById(
+      "erroSenhaLigacoes"
+    );
+
+  if (modal) {
+    modal.classList.remove("show");
+  }
+
+  if (campo) {
+    campo.value = "";
+    campo.type = "password";
+  }
+
+  if (erro) {
+    erro.innerText = "";
+    erro.classList.remove("show");
+  }
+
+  validandoSenhaLigacoes = false;
+
+  restaurarBotaoSenhaLigacoes();
+}
+
+function alternarVisualizacaoSenhaLigacoes() {
+  const campo =
+    document.getElementById(
+      "senhaLigacoes"
+    );
+
+  const botao =
+    document.getElementById(
+      "btnMostrarSenhaLigacoes"
+    );
+
+  if (!campo || !botao) {
+    return;
+  }
+
+  const senhaVisivel =
+    campo.type === "text";
+
+  campo.type =
+    senhaVisivel
+      ? "password"
+      : "text";
+
+  botao.innerText =
+    senhaVisivel
+      ? "Mostrar"
+      : "Ocultar";
+
+  campo.focus();
+}
+
+function confirmarSenhaLigacoes() {
+  if (validandoSenhaLigacoes) {
+    return;
+  }
+
+  const campo =
+    document.getElementById(
+      "senhaLigacoes"
+    );
+
+  const erro =
+    document.getElementById(
+      "erroSenhaLigacoes"
+    );
+
+  const botao =
+    document.getElementById(
+      "btnConfirmarSenhaLigacoes"
+    );
+
+  if (!campo || !erro || !botao) {
+    console.error(
+      "Os elementos necessários para validar a senha não foram encontrados."
+    );
+
+    return;
+  }
+
+  const senha =
+    campo.value.trim();
+
+  erro.innerText = "";
+  erro.classList.remove("show");
+
+  if (!senha) {
+    erro.innerText =
+      "Digite a senha para continuar.";
+
+    erro.classList.add("show");
+
+    campo.focus();
+
+    return;
+  }
+
+  validandoSenhaLigacoes = true;
+
+  botao.disabled = true;
+  botao.innerText =
+    "Verificando...";
+
+  google.script.run
+    .withSuccessHandler(function(resposta) {
+      validandoSenhaLigacoes = false;
+
+      restaurarBotaoSenhaLigacoes();
+
+      if (
+        !resposta ||
+        resposta.sucesso !== true
+      ) {
+        erro.innerText =
+          resposta &&
+          resposta.mensagem
+            ? resposta.mensagem
+            : "Senha incorreta.";
+
+        erro.classList.add("show");
+
+        campo.value = "";
+        campo.focus();
+
+        return;
+      }
+
+      pendentes =
+        (
+          Array.isArray(
+            resposta.lista
+          )
+            ? resposta.lista
+            : []
+        ).map(
+          normalizarItemFollowUp
+        );
+
+      atualizarResumoPendentes();
+
+      fecharModalSenhaLigacoes();
+
+      abrirModalPendentes();
+    })
+    .withFailureHandler(function(falha) {
+      validandoSenhaLigacoes = false;
+
+      restaurarBotaoSenhaLigacoes();
+
+      const mensagem =
+        falha &&
+        falha.message
+          ? falha.message
+          : "Não foi possível validar a senha.";
+
+      erro.innerText =
+        mensagem;
+
+      erro.classList.add("show");
+
+      campo.value = "";
+      campo.focus();
+
+      console.error(falha);
+    })
+    .autenticarEListarPendentes(
+      senha
+    );
+}
+
+function restaurarBotaoSenhaLigacoes() {
+  const botao =
+    document.getElementById(
+      "btnConfirmarSenhaLigacoes"
+    );
+
+  if (!botao) {
+    return;
+  }
+
+  botao.disabled = false;
+  botao.innerText =
+    "Acessar";
+}
+
+    function tratarErroServidor(erro){
+      const mensagem = erro && erro.message ? erro.message : String(erro || "Erro desconhecido.");
+      console.error(erro);
+      mostrarToast("Erro: " + mensagem, "erro");
+    }
+  </script>
+
+</body>
+</html>

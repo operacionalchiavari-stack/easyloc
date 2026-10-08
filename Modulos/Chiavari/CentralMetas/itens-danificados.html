@@ -1,0 +1,3123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="central"></script>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Itens Danificados</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   ITENS DANIFICADOS — mesma identidade da Central de Metas
+   Cormorant Garamond nos títulos, Manrope no texto,
+   grafite #5a5a55, cartões brancos com sombra suave.
+========================================================= */
+
+:root{
+  --primary:#5a5a55;
+  --primary-dark:#44443f;
+  --bg:#ffffff;
+  --fundo-suave:#f8f6f0;
+  --card:#ffffff;
+  --line:#e7e1d7;
+  --borda-card:#eee8df;
+  --linha-tabela:#f3efe8;
+  --text:#251e19;
+  --muted:#77716a;
+  --accent-soft:#ecece6;
+  --serif:"Cormorant Garamond", Georgia, serif;
+  --sans:"Manrope", system-ui, sans-serif;
+  --green:#16a34a;
+  --green-soft:#dcfce7;
+  --yellow:#d97706;
+  --yellow-soft:#fef3c7;
+  --red:#dc2626;
+  --red-soft:#fee2e2;
+  --sombra-card:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+}
+
+*{ box-sizing:border-box; }
+
+html, body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+
+body{ padding:0 24px 40px; }
+
+button, input, select, textarea{ font-family:inherit; }
+
+.oculto{ display:none !important; }
+
+/* ---------- Cabeçalho ---------- */
+
+.cabecalho{
+  padding:34px 0 0;
+  margin-bottom:22px;
+}
+
+.cabecalho-titulo{
+  margin:0 0 26px;
+  text-align:center;
+  font-family:var(--serif);
+  font-size:clamp(34px, 4.6vw, 60px);
+  font-weight:500;
+  letter-spacing:.22em;
+  line-height:1.05;
+  text-transform:uppercase;
+}
+
+.cabecalho-barra{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:12px 20px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:14px;
+  margin-bottom:4px;
+}
+
+.resumo{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.resumo-pilula{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:32px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--fundo-suave);
+  color:var(--text);
+  font-weight:600;
+}
+
+.resumo-pilula.urgente{
+  background:var(--red-soft);
+  border-color:#fecaca;
+  color:#b91c1c;
+}
+
+.ponto-vivo{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--green);
+}
+
+.ponto-vivo.erro{ background:var(--red); }
+
+.acoes{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.btn{
+  min-height:38px;
+  padding:0 18px;
+  border:1px solid var(--primary);
+  border-radius:999px;
+  background:var(--primary);
+  color:#ffffff;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:background-color .2s, border-color .2s, color .2s, opacity .2s;
+}
+
+.btn:hover{ background:var(--primary-dark); border-color:var(--primary-dark); }
+
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+.btn-contorno{
+  background:#ffffff;
+  border-color:var(--line);
+  color:var(--text);
+}
+
+.btn-contorno:hover{
+  background:#ffffff;
+  border-color:var(--primary);
+  color:var(--primary-dark);
+}
+
+.btn-perigo{
+  background:#ffffff;
+  border-color:#fecaca;
+  color:#b91c1c;
+}
+
+.btn-perigo:hover{
+  background:var(--red-soft);
+  border-color:#fca5a5;
+  color:#991b1b;
+}
+
+.btn-sucesso{ background:var(--green); border-color:var(--green); }
+.btn-sucesso:hover{ background:#15803d; border-color:#15803d; }
+
+/* ---------- Barra de seleção ---------- */
+
+.barra-selecao{
+  position:sticky;
+  top:0;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:0 0 14px;
+  padding:10px 14px;
+  border-radius:14px;
+  background:var(--primary-dark);
+  color:#ffffff;
+  font-size:14px;
+  font-weight:600;
+  box-shadow:var(--sombra-card);
+}
+
+.barra-selecao .texto{ flex:1; min-width:160px; }
+
+.barra-selecao .btn{
+  min-height:34px;
+  background:transparent;
+  border-color:rgba(255,255,255,.35);
+}
+
+.barra-selecao .btn:hover{ background:rgba(255,255,255,.12); }
+
+.barra-selecao .btn.claro{
+  background:#ffffff;
+  color:var(--primary-dark);
+  border-color:#ffffff;
+}
+
+/* ---------- Filtros ---------- */
+
+.filtros{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  flex:1 1 auto;
+  min-width:0;
+}
+
+.filtros > select,
+.filtros > .multi{ flex:0 1 190px; min-width:160px; }
+
+.filtros > .filtro-busca{ flex:0 1 250px; min-width:180px; }
+
+/* Atualização: pequena e discreta no canto superior direito */
+body{ position:relative; }
+
+.status-atualizacao{
+  position:absolute;
+  top:10px;
+  right:24px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:var(--muted);
+  font-size:11px;
+  opacity:.75;
+}
+
+.status-atualizacao .ponto-vivo{ width:6px; height:6px; }
+
+body.modo-painel .status-atualizacao{ right:auto; left:24px; }
+
+.campo-filtro,
+.filtros > select,
+.filtros > input{
+  width:100%;
+  min-height:40px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--fundo-suave);
+  color:var(--text);
+  font-size:13px;
+  font-weight:600;
+  outline:none;
+}
+
+.filtros > input::placeholder{ color:var(--muted); font-weight:500; }
+
+.filtros > select:focus,
+.filtros > input:focus{ border-color:var(--primary); background:#ffffff; }
+
+.multi{ position:relative; }
+
+.multi-botao{
+  white-space:nowrap;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  text-align:left;
+  cursor:pointer;
+}
+
+.multi-botao{
+  padding-right:34px !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Cpath d=%27M2.5 4.5 6 8l3.5-3.5%27 fill=%27none%27 stroke=%27%2377716a%27 stroke-width=%271.6%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E") !important;
+  background-repeat:no-repeat !important;
+  background-position:right 14px center !important;
+}
+
+.multi-botao span{ overflow:hidden; text-overflow:ellipsis; }
+
+.multi-lista{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  z-index:20;
+  display:none;
+  min-width:100%;
+  width:max-content;
+  max-width:320px;
+  max-height:360px;
+  overflow-y:auto;
+  padding:6px;
+  border:1px solid var(--borda-card);
+  border-radius:14px;
+  background:#ffffff;
+  box-shadow:var(--sombra-card);
+}
+
+.multi.aberto .multi-lista{ display:block; }
+
+.multi-lista label{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:7px 10px;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:600;
+  white-space:nowrap;
+  cursor:pointer;
+}
+
+.multi-lista input{
+  appearance:none;
+  -webkit-appearance:none;
+  flex:0 0 16px;
+  width:16px;
+  height:16px;
+  margin:0;
+  border:1.5px solid #c9c2b6;
+  border-radius:5px;
+  background:#ffffff;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+
+.multi-lista input:checked{
+  background:var(--primary-dark);
+  border-color:var(--primary-dark);
+}
+
+.multi-lista input:checked::after{
+  content:"";
+  width:4px;
+  height:8px;
+  border:solid #ffffff;
+  border-width:0 2px 2px 0;
+  transform:rotate(45deg) translate(-1px, -1px);
+}
+
+.multi-lista .ponto-setor{
+  flex:0 0 8px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+}
+
+.multi-lista label:hover{ background:var(--fundo-suave); }
+
+.multi-lista .multi-acoes{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 8px 2px;
+  border-top:1px solid var(--linha-tabela);
+  margin-top:4px;
+}
+
+.multi-lista .multi-acoes button{
+  border:0;
+  background:none;
+  color:var(--primary-dark);
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:underline;
+}
+
+/* ---------- Cartão da tabela ---------- */
+
+.cartao{
+  border:1px solid var(--borda-card);
+  border-radius:18px;
+  background:var(--card);
+  box-shadow:var(--sombra-card);
+  overflow:hidden;
+}
+
+.cartao-cabecalho{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px 16px;
+  padding:18px 22px;
+  background:var(--primary);
+  color:#ffffff;
+}
+
+.cartao-titulo{
+  margin:0;
+  font-family:var(--serif);
+  font-size:22px;
+  font-weight:500;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.cartao-subtitulo{
+  font-size:13px;
+  color:rgba(255,255,255,.75);
+}
+
+.tabela-rolagem{ overflow-x:auto; }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:15px;
+}
+
+th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  padding:12px 12px;
+  background:#ffffff;
+  border-bottom:1px solid var(--borda-card);
+  color:var(--muted);
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  text-align:left;
+  white-space:nowrap;
+}
+
+td{
+  padding:11px 12px;
+  border-bottom:1px solid var(--linha-tabela);
+  vertical-align:middle;
+}
+
+tbody tr{ cursor:pointer; transition:background-color .12s; }
+
+tbody tr:nth-child(even){ background:#fcfbf8; }
+
+tbody tr:hover{ background:#f6f3ec; }
+
+tbody tr.selecionada,
+tbody tr.selecionada:hover{
+  background:#ecebe4;
+  box-shadow:inset 3px 0 0 var(--primary-dark);
+}
+
+.col-check{ width:38px; text-align:center; }
+
+.col-check input{
+  width:16px;
+  height:16px;
+  accent-color:var(--primary-dark);
+  cursor:pointer;
+}
+
+.col-os{ font-weight:500; color:#2563eb; white-space:nowrap; }
+
+.col-item{ font-weight:600; min-width:160px; }
+
+.col-detalhes{
+  max-width:200px;
+  color:var(--muted);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.col-data{ white-space:nowrap; color:var(--muted); }
+
+.col-curta{ white-space:nowrap; }
+
+.col-qtd{ text-align:center; font-weight:700; }
+
+.fluxo{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:4px;
+}
+
+.fluxo-passo{
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid transparent;
+  background:var(--cor-suave, var(--accent-soft));
+  color:var(--cor, var(--muted));
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+}
+
+.fluxo-passo.atual{
+  background:var(--cor, var(--primary-dark));
+  color:var(--cor-texto, #ffffff);
+}
+
+/* Setores anteriores do fluxo: cinza, como apagados */
+.fluxo-passo.sem-setor{
+  background:var(--red-soft);
+  color:#b91c1c;
+  border:1px dashed #fca5a5;
+}
+
+.fluxo-passo.passado{
+  background:#f1efea;
+  color:#a8a29a;
+}
+
+.fluxo-seta{ color:#c9c2b6; font-size:11px; }
+
+.etiqueta{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  background:var(--accent-soft);
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.etiqueta.evento{ background:#e0e7ff; color:#3730a3; }
+.etiqueta.interno{ background:var(--yellow-soft); color:#92400e; }
+.etiqueta.producao{ background:#e6ebdf; color:#4f6340; }
+
+.data-urgencia{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:112px;
+  min-height:34px;
+  padding:0 14px;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#ffffff;
+  color:var(--text);
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.data-urgencia.urgente{ background:var(--red-soft); border-color:#fecaca; color:#991b1b; }
+
+/* Datas vencidas ou até 7 dias: piscam devagar */
+.data-urgencia.urgente{ animation:pulsar-urgente 2.4s ease-in-out infinite; }
+
+@keyframes pulsar-urgente{
+  0%, 100%{ background:var(--red-soft); box-shadow:0 0 0 0 rgba(220,38,38,0); }
+  50%{ background:#fecaca; box-shadow:0 0 0 4px rgba(220,38,38,.14); }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .data-urgencia.urgente{ animation:none; }
+}
+.data-urgencia.atencao{ background:var(--yellow-soft); border-color:#fde68a; color:#92400e; }
+.data-urgencia.salvando{ opacity:.55; }
+.data-urgencia.vazia{ color:var(--muted); font-weight:500; border-style:dashed; }
+
+/* O campo de data fica invisível por cima do texto: tocar abre o calendário */
+.data-urgencia-input{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  margin:0;
+  padding:0;
+  border:0;
+  opacity:0;
+  cursor:pointer;
+}
+
+.data-urgencia-input::-webkit-calendar-picker-indicator{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  cursor:pointer;
+}
+.data-urgencia.salvo{ background:var(--green-soft); border-color:#bbf7d0; color:#166534; }
+
+.grupo-linha td{
+  padding:16px 12px 8px;
+  background:#ffffff !important;
+  border-bottom:1px solid var(--borda-card);
+  cursor:default;
+}
+
+.grupo-linha td{
+  box-shadow:inset 4px 0 0 var(--cor, transparent);
+}
+
+.grupo-linha span{
+  color:var(--cor, var(--text));
+  font-family:var(--serif);
+  font-size:19px;
+  font-weight:600;
+  letter-spacing:.06em;
+}
+
+.grupo-linha small{
+  margin-left:8px;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:600;
+}
+
+.item-extra,
+.item-extra-tablet{ display:none; }
+
+/* ---------- Notebook e tablet deitado ---------- */
+@media(max-width:1440px){
+  .t1-oculta{ display:none; }
+}
+
+@media(max-width:1200px){
+  body{ padding:0 18px 32px; }
+  .cabecalho-titulo{ font-size:44px; }
+  .col-item{ min-width:0; }
+  .grade-setores{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .grade-teto{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+}
+
+/* ---------- Tablet em pé (até 960px) ---------- */
+@media(max-width:960px){
+  .t2-oculta{ display:none; }
+  .item-extra-tablet{
+    display:block;
+    margin-top:3px;
+    color:var(--muted);
+    font-size:13px;
+    font-weight:600;
+  }
+  .filtros{ flex:1 1 100%; }
+  .filtros > .multi{ flex:1 1 40%; }
+  .filtros > .filtro-busca{ flex:1 1 55%; }
+  .cabecalho-barra{ justify-content:center; }
+  .acoes, .resumo{ justify-content:center; }
+  th{ padding:12px 8px; }
+  td{ padding:12px 8px; }
+  .modal-caixa.larga .tabela-rolagem table{ font-size:13px; }
+}
+
+/* ---------- Telas de toque: alvos maiores ---------- */
+@media(pointer:coarse){
+  .btn{ min-height:44px; }
+  .opcao{ min-height:44px; padding:0 16px; }
+  .col-check input,
+  #marcarTodas{ width:22px; height:22px; }
+  .data-urgencia{ min-height:40px; }
+  .multi-lista label{ padding:11px 12px; font-size:14px; }
+  .multi-lista input{ width:20px; height:20px; flex-basis:20px; }
+  .check-itens input,
+  .declaracao input{ width:20px; height:20px; }
+  .check-itens label{ padding:4px 0; }
+  .filtros > select,
+  .filtros > input,
+  .campo-filtro{ min-height:44px; }
+}
+
+.mensagem{
+  padding:42px 16px;
+  text-align:center;
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:20px;
+  color:var(--muted);
+}
+
+.mensagem.erro{ color:#b91c1c; }
+
+/* Dentro das grades do painel, a mensagem ocupa a largura toda */
+.grade-setores > .mensagem,
+.grade-teto > .mensagem,
+.grade-rh > .mensagem{ grid-column:1 / -1; }
+
+/* No painel, a barra (filtros + botões) some, e com ela a linha */
+body.modo-painel .cabecalho-barra{ display:none; }
+
+/* ---------- Painel (TV) ---------- */
+
+.controle-painel{
+  position:fixed;
+  top:12px;
+  right:12px;
+  z-index:50;
+  display:flex;
+  gap:8px;
+  padding:6px;
+  border-radius:999px;
+  background:rgba(255,255,255,.92);
+  box-shadow:var(--sombra-card);
+}
+
+.secao-painel{ margin-top:6px; }
+
+.titulo-secao{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  gap:20px;
+  margin:30px 0 16px;
+  font-family:var(--serif);
+  font-size:24px;
+  font-weight:500;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.titulo-secao::before,
+.titulo-secao::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:var(--line);
+}
+
+.grade-setores{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:16px;
+}
+
+.setor-card{
+  border:1px solid var(--borda-card);
+  border-radius:18px;
+  background:#ffffff;
+  box-shadow:var(--sombra-card);
+  overflow:hidden;
+}
+
+.setor-card-titulo{
+  padding:14px 18px;
+  background:var(--primary);
+  color:#ffffff;
+  font-family:var(--serif);
+  font-size:19px;
+  font-weight:500;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.setor-metricas{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:4px;
+  padding:16px 10px;
+}
+
+.metrica{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  text-align:center;
+}
+
+.metrica-rotulo{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.metrica-numero{
+  font-size:26px;
+  font-weight:800;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+
+.metrica-meta{ color:var(--muted); font-size:11px; }
+
+.anel{
+  --v:0;
+  --cor:var(--green);
+  position:relative;
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  background:conic-gradient(var(--cor) calc(var(--v) * 1%), var(--accent-soft) 0);
+  display:grid;
+  place-items:center;
+}
+
+.anel::before{
+  content:"";
+  position:absolute;
+  inset:7px;
+  border-radius:50%;
+  background:#ffffff;
+}
+
+.anel span{
+  position:relative;
+  font-size:14px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+
+.anel.grande{ width:110px; height:110px; }
+.anel.grande::before{ inset:10px; }
+.anel.grande span{ font-size:22px; }
+
+.grade-teto{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+  gap:16px;
+}
+
+.teto-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  padding:20px 12px;
+  border:1px solid var(--borda-card);
+  border-radius:18px;
+  background:#ffffff;
+  box-shadow:var(--sombra-card);
+  text-align:center;
+}
+
+.teto-nome{ font-weight:700; font-size:14px; }
+.teto-valores{ color:var(--muted); font-size:12px; }
+
+.grade-rh{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+  gap:16px;
+}
+
+.rh-card{
+  padding:16px 18px;
+  border:1px solid var(--borda-card);
+  border-radius:18px;
+  background:#ffffff;
+  box-shadow:var(--sombra-card);
+}
+
+.rh-setor{
+  font-family:var(--serif);
+  font-size:19px;
+  font-weight:600;
+  letter-spacing:.06em;
+  margin-bottom:10px;
+}
+
+.rh-linha{ margin-top:9px; }
+
+.rh-topo{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+}
+
+.rh-topo strong{ font-variant-numeric:tabular-nums; }
+
+.rh-barra{
+  height:6px;
+  margin-top:5px;
+  border-radius:999px;
+  background:var(--accent-soft);
+  overflow:hidden;
+}
+
+.rh-barra div{ height:100%; border-radius:999px; }
+
+.rh-meta{ margin-top:3px; color:var(--muted); font-size:11px; }
+
+/* ---------- Modais ---------- */
+
+.modal{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:none;
+  align-items:flex-start;
+  justify-content:center;
+  padding:6vh 16px 24px;
+  background:rgba(37,30,25,.45);
+  overflow-y:auto;
+}
+
+.modal.aberto{ display:flex; }
+
+.modal-caixa{
+  width:min(560px, 100%);
+  border-radius:18px;
+  background:#ffffff;
+  box-shadow:0 24px 70px rgba(37,30,25,.25);
+  display:flex;
+  flex-direction:column;
+  max-height:88vh;
+}
+
+.modal-caixa.larga{ width:min(1180px, 100%); }
+.modal-caixa.media{ width:min(760px, 100%); }
+.modal-caixa.estreita{ width:min(420px, 100%); }
+
+.modal-topo{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:20px 22px 14px;
+  border-bottom:1px solid var(--borda-card);
+}
+
+.modal-topo h2{
+  margin:0;
+  font-family:var(--serif);
+  font-size:26px;
+  font-weight:500;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.modal-topo p{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.modal-fechar{
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:#ffffff;
+  color:var(--muted);
+  font-size:18px;
+  cursor:pointer;
+}
+
+.modal-corpo{
+  padding:18px 22px;
+  overflow-y:auto;
+  display:grid;
+  gap:16px;
+}
+
+.modal-rodape{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  padding:14px 22px;
+  border-top:1px solid var(--borda-card);
+}
+
+.modal-rodape .erro-modal{ flex:1; }
+
+.erro-modal{
+  color:#b91c1c;
+  font-size:13px;
+  font-weight:600;
+}
+
+.campo label,
+.campo .rotulo{
+  display:block;
+  margin-bottom:7px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.campo input,
+.campo select,
+.campo textarea{
+  width:100%;
+  min-height:42px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--fundo-suave);
+  color:var(--text);
+  font-size:14px;
+  outline:none;
+}
+
+.campo textarea{
+  min-height:90px;
+  padding:12px 14px;
+  resize:vertical;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus{ border-color:var(--primary); background:#ffffff; }
+
+.campo input[readonly]{ color:var(--muted); }
+
+.linha-campos{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.linha-campos.item{ grid-template-columns:1fr 150px; }
+
+.opcoes{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.opcao{
+  min-height:36px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#ffffff;
+  color:var(--text);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.opcao:hover{ border-color:var(--primary); }
+
+.opcao.selecionada{
+  background:var(--primary-dark);
+  border-color:var(--primary-dark);
+  color:#ffffff;
+}
+
+.lista-funcionarios{
+  max-height:150px;
+  overflow-y:auto;
+  padding:2px;
+}
+
+.carregando-texto{ color:var(--muted); font-size:13px; font-style:italic; }
+
+.campo-senha{
+  text-align:center;
+  font-size:22px !important;
+  letter-spacing:.5em;
+}
+
+/* Checklist */
+
+.check-os{
+  border:1px solid var(--borda-card);
+  border-radius:14px;
+  padding:14px 16px;
+  transition:border-color .15s, background-color .15s;
+}
+
+.check-os.aprovado{ border-color:#86efac; background:#f0fdf4; }
+.check-os.reprovado{ border-color:#fca5a5; background:#fef2f2; }
+
+.check-os-titulo{
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:6px;
+  font-size:15px;
+  font-weight:700;
+}
+
+.check-os-titulo small{ color:var(--muted); font-weight:500; }
+
+.check-itens{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px 16px;
+  margin:12px 0;
+  font-size:13px;
+}
+
+.check-itens label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+}
+
+.check-itens input{ accent-color:var(--primary-dark); width:15px; height:15px; }
+
+.check-decisao{ display:flex; gap:8px; }
+
+.check-decisao .btn{ min-height:34px; }
+
+.declaracao{
+  padding:12px 14px;
+  border:1px solid #fde68a;
+  border-radius:12px;
+  background:#fffbeb;
+  color:#92400e;
+  font-size:13px;
+  line-height:1.45;
+}
+
+.declaracao label{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+  color:var(--text);
+  font-weight:700;
+  cursor:pointer;
+}
+
+.declaracao input{ width:17px; height:17px; accent-color:var(--primary-dark); }
+
+/* O.S Concluídas */
+
+.filtros-concluidas{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:10px;
+}
+
+.filtros-concluidas select,
+.filtros-concluidas input{
+  min-height:40px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--fundo-suave);
+  font-size:13px;
+  font-weight:600;
+  outline:none;
+}
+
+.paginacao{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  width:100%;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.paginacao .botoes{ display:flex; gap:8px; }
+
+/* Aviso (toast) */
+
+.aviso{
+  position:fixed;
+  left:50%;
+  bottom:24px;
+  z-index:300;
+  transform:translateX(-50%) translateY(20px);
+  opacity:0;
+  pointer-events:none;
+  padding:12px 20px;
+  border-radius:999px;
+  background:var(--primary-dark);
+  color:#ffffff;
+  font-size:14px;
+  font-weight:700;
+  box-shadow:0 12px 40px rgba(37,30,25,.3);
+  transition:opacity .2s, transform .2s;
+}
+
+.aviso.visivel{ opacity:1; transform:translateX(-50%) translateY(0); }
+.aviso.sucesso{ background:var(--green); }
+.aviso.erro{ background:var(--red); }
+
+/* Confirmação */
+
+.confirmacao-texto{ margin:0; font-size:15px; line-height:1.5; }
+
+@media(max-width:760px){
+  body{ padding:0 14px 32px; }
+  .cabecalho-titulo{ letter-spacing:.12em; }
+  .cabecalho-barra{ flex-direction:column; align-items:stretch; }
+  .acoes{ justify-content:center; }
+  .resumo{ justify-content:center; }
+  .linha-campos, .linha-campos.item, .check-itens, .filtros-concluidas{ grid-template-columns:1fr; }
+  .grade-setores{ grid-template-columns:1fr; }
+  .setor-metricas{ grid-template-columns:repeat(2, 1fr); row-gap:16px; }
+
+  /* Cabeçalho e ações */
+  .cabecalho{ padding-top:22px; }
+  .cabecalho-titulo{ font-size:30px; margin-bottom:18px; }
+  .acoes .btn{ padding:0 14px; font-size:12px; }
+
+  /* Filtros em 2 colunas; o de responsável ocupa a linha toda */
+  .filtros > .multi, .filtros > .filtro-busca{ flex:1 1 100%; min-width:0; }
+  .status-atualizacao{ position:static; justify-content:center; padding-top:8px; }
+  .multi-lista{ width:100%; max-width:none; }
+
+  /* Barra de seleção */
+  .barra-selecao{ gap:6px; padding:10px; }
+  .barra-selecao .texto{ flex:1 0 100%; }
+  .barra-selecao .btn{ min-height:32px; padding:0 12px; font-size:11px; }
+
+  /* Tabela: só as colunas essenciais, sem rolagem lateral */
+  .cartao-cabecalho{ padding:14px 16px; }
+  .cartao-titulo{ font-size:19px; }
+  .cartao-subtitulo{ display:none; }
+  .m-oculta{ display:none; }
+  table{ font-size:14px; }
+  th{ padding:10px 6px; font-size:10px; letter-spacing:.08em; }
+  td{ padding:10px 6px; }
+  .col-check{ width:30px; }
+  .col-item{ min-width:0; font-size:14px; }
+  .item-extra-tablet{ display:none; }
+  .item-extra{
+    display:block;
+    margin-top:3px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:600;
+  }
+  .fluxo .passado,
+  .fluxo .fluxo-seta{ display:none; }
+  .fluxo-passo{ padding:3px 8px; font-size:11px; white-space:normal; text-align:center; }
+  .data-urgencia{ min-width:96px; min-height:32px; padding:0 8px; font-size:12px; }
+  .fluxo-passo{ max-width:86px; }
+  .grupo-linha td{ padding:14px 8px 6px; }
+  .grupo-linha span{ font-size:17px; }
+
+  /* Painel e modais */
+  .grade-teto{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+  .anel.grande{ width:86px; height:86px; }
+  .controle-painel .btn{ padding:0 12px; font-size:11px; }
+  .modal{ padding:2vh 8px 12px; }
+  .modal-caixa{ max-height:96vh; }
+  .modal-corpo{ padding:16px; }
+  .modal-rodape{ flex-wrap:wrap; padding:12px 16px; }
+  .modal-rodape .erro-modal{ flex:1 0 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- Controles do Painel (TV) -->
+<div class="controle-painel oculto" id="controlePainel">
+  <button type="button" class="btn btn-contorno" id="btnPausar" onclick="pausarPainel()">Play</button>
+  <button type="button" class="btn btn-contorno" onclick="avancarPainel()">Avançar</button>
+  <button type="button" class="btn" onclick="sairPainel()">Sair</button>
+</div>
+
+<!-- Atualização: discreta, no canto superior direito -->
+<div class="status-atualizacao"><span class="ponto-vivo" id="pontoVivo"></span><span id="textoAtualizacao">Carregando...</span></div>
+
+<header class="cabecalho">
+
+  <h1 class="cabecalho-titulo">Itens Danificados</h1>
+
+  <div class="cabecalho-barra">
+
+    <div class="filtros" id="filtros">
+      <input id="filtroBusca" class="filtro-busca" type="search" placeholder="Buscar O.S, pedido ou item" oninput="aplicarFiltros()">
+
+      <div class="multi" id="multiFluxo">
+        <button type="button" class="campo-filtro multi-botao" onclick="alternarMulti(event)">
+          <span id="textoMultiFluxo">Responsável (todos)</span>
+        </button>
+        <div class="multi-lista" id="listaMultiFluxo"></div>
+      </div>
+    </div>
+
+    <div class="acoes" id="acoesTopo">
+      <button type="button" class="btn" onclick="abrirNovaOS()">+ Nova O.S</button>
+      <button type="button" class="btn btn-contorno" onclick="abrirOSConcluidas()">O.S Concluídas</button>
+      <button type="button" class="btn btn-contorno" onclick="abrirAddItem()">+ Item</button>
+      <button type="button" class="btn btn-contorno" onclick="iniciarPainel()">Painel</button>
+    </div>
+
+  </div>
+
+</header>
+
+<main id="telaTabela">
+
+  <!-- Barra de seleção: aparece quando há O.S marcadas -->
+  <div class="barra-selecao oculto" id="barraSelecao">
+    <span class="texto" id="textoSelecao"></span>
+    <button type="button" class="btn claro" onclick="iniciarConclusao()">Concluir O.S</button>
+    <button type="button" class="btn" id="btnEncaminhar" onclick="abrirEncaminhar()">Encaminhar</button>
+    <button type="button" class="btn" onclick="iniciarRemocao()">Remover</button>
+    <button type="button" class="btn" onclick="limparSelecao()">Limpar</button>
+  </div>
+
+  <section class="cartao">
+    <div class="cartao-cabecalho">
+      <h2 class="cartao-titulo">O.S em aberto</h2>
+      <span class="cartao-subtitulo" id="subtituloTabela">Clique numa linha para selecionar</span>
+    </div>
+    <div class="tabela-rolagem">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-check"><input type="checkbox" id="marcarTodas" onclick="marcarTodasVisiveis(this.checked)" title="Selecionar todas as visíveis"></th>
+            <th class="m-oculta t1-oculta">Data</th>
+            <th class="m-oculta t1-oculta">Setor</th>
+            <th class="m-oculta t2-oculta">Nome</th>
+            <th class="m-oculta">O.S</th>
+            <th>Item</th>
+            <th class="m-oculta">Qtd</th>
+            <th>Fluxo</th>
+            <th class="m-oculta">Onde aconteceu</th>
+            <th class="m-oculta t2-oculta">Pedido</th>
+            <th class="m-oculta t1-oculta">Detalhes</th>
+            <th>Urgência</th>
+          </tr>
+        </thead>
+        <tbody id="tabela">
+          <tr><td colspan="12"><div class="mensagem">Carregando O.S...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<!-- Painel (TV) -->
+<main id="telaPainel" class="oculto">
+
+  <h2 class="titulo-secao">Desempenho dos setores</h2>
+  <div class="grade-setores" id="gradeSetores"></div>
+
+  <h2 class="titulo-secao">Teto de gastos</h2>
+  <div class="grade-teto" id="gradeTeto"></div>
+
+  <h2 class="titulo-secao">Ocorrências RH</h2>
+  <div class="grade-rh" id="gradeRH"></div>
+
+</main>
+
+
+<!-- =========================================================
+     MODAL NOVA O.S
+========================================================= -->
+<div class="modal" id="modalNovaOS">
+  <div class="modal-caixa media">
+
+    <div class="modal-topo">
+      <div>
+        <h2>Nova O.S</h2>
+        <p>Ordem de serviço da manutenção</p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalNovaOS')" aria-label="Fechar">×</button>
+    </div>
+
+    <div class="modal-corpo">
+
+      <div class="campo">
+        <span class="rotulo">Seu nome *</span>
+        <div class="opcoes lista-funcionarios" id="listaFuncionarios">
+          <span class="carregando-texto">Carregando funcionários...</span>
+        </div>
+      </div>
+
+      <div class="linha-campos">
+        <div class="campo">
+          <span class="rotulo">Seu setor *</span>
+          <div class="opcoes" data-grupo="setor">
+            <button type="button" class="opcao" data-valor="Setor 01">Setor 01</button>
+            <button type="button" class="opcao" data-valor="Setor 02">Setor 02</button>
+            <button type="button" class="opcao" data-valor="Setor 03">Setor 03</button>
+            <button type="button" class="opcao" data-valor="Estoque">Estoque</button>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="osSenha">Senha do setor *</label>
+          <input type="password" id="osSenha" maxlength="10" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="osCategoria">Categoria *</label>
+        <select id="osCategoria" onchange="trocarCategoriaOS()">
+          <option value="">Carregando categorias...</option>
+        </select>
+      </div>
+
+      <div class="linha-campos item">
+        <div class="campo">
+          <label for="osItem">Item *</label>
+          <input id="osItem" list="osItensLista" placeholder="Escolha a categoria e digite para buscar" oninput="conferirItemOS()" autocomplete="off">
+          <datalist id="osItensLista"></datalist>
+        </div>
+        <div class="campo">
+          <label for="osCodigo">Código</label>
+          <input id="osCodigo" readonly>
+        </div>
+      </div>
+
+      <div class="linha-campos">
+        <div class="campo">
+          <label for="osQuantidade">Quantidade *</label>
+          <input type="number" id="osQuantidade" min="1" max="999" step="1" inputmode="numeric">
+        </div>
+        <div class="campo">
+          <span class="rotulo">Tem urgência?</span>
+          <div class="opcoes" data-grupo="urgencia">
+            <button type="button" class="opcao" data-valor="Sim">Sim</button>
+            <button type="button" class="opcao" data-valor="Não">Não</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="campo oculto" id="campoDataLimite">
+        <label for="osDataLimite">Data limite *</label>
+        <input type="date" id="osDataLimite">
+      </div>
+
+      <div class="campo">
+        <span class="rotulo">Setor solicitado *</span>
+        <div class="opcoes" data-grupo="setorSolicitado">
+          <button type="button" class="opcao" data-valor="Marcenaria">Marcenaria</button>
+          <button type="button" class="opcao" data-valor="Solda">Solda</button>
+          <button type="button" class="opcao" data-valor="Acabamento e Pintura">Acabamento e Pintura</button>
+          <button type="button" class="opcao" data-valor="Costura">Costura</button>
+          <button type="button" class="opcao" data-valor="Forração">Forração</button>
+          <button type="button" class="opcao" data-valor="Limpeza de Estofados">Limpeza de Estofados</button>
+        </div>
+      </div>
+
+      <div class="campo">
+        <span class="rotulo">Onde aconteceu o dano? *</span>
+        <div class="opcoes" data-grupo="ondeDano">
+          <button type="button" class="opcao" data-valor="Dano Interno">Dano Interno</button>
+          <button type="button" class="opcao" data-valor="Evento">Evento</button>
+          <button type="button" class="opcao" data-valor="Produção">Produção</button>
+        </div>
+      </div>
+
+      <div class="campo oculto" id="campoPedido">
+        <label for="osPedido">Número do pedido *</label>
+        <input id="osPedido" placeholder="Ex.: 743" maxlength="30">
+      </div>
+
+      <div class="campo">
+        <label for="osDetalhes">Detalhes sobre a avaria</label>
+        <textarea id="osDetalhes" placeholder="Descreva o que aconteceu" maxlength="1000"></textarea>
+      </div>
+
+    </div>
+
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroNovaOS"></span>
+      <button type="button" class="btn btn-contorno" onclick="fecharModal('modalNovaOS')">Cancelar</button>
+      <button type="button" class="btn" id="btnEnviarOS" onclick="enviarNovaOS()">Enviar</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL SENHA DO ESTOQUE
+========================================================= -->
+<div class="modal" id="modalSenha">
+  <div class="modal-caixa estreita">
+    <div class="modal-topo">
+      <div>
+        <h2 id="senhaTitulo">Confirmar</h2>
+        <p>Digite a senha do estoque para continuar</p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalSenha')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <div class="campo">
+        <input type="password" id="senhaEstoque" class="campo-senha" placeholder="••••" autocomplete="off" onkeydown="if(event.key === 'Enter'){ confirmarSenha(); }">
+      </div>
+    </div>
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroSenha"></span>
+      <button type="button" class="btn btn-contorno" onclick="fecharModal('modalSenha')">Cancelar</button>
+      <button type="button" class="btn" id="btnConfirmarSenha" onclick="confirmarSenha()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL ENCAMINHAR
+========================================================= -->
+<div class="modal" id="modalEncaminhar">
+  <div class="modal-caixa estreita">
+    <div class="modal-topo">
+      <div>
+        <h2>Encaminhar</h2>
+        <p id="textoEncaminhar">Escolha o próximo setor</p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalEncaminhar')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <div class="campo">
+        <label for="setorEncaminhar">Próximo setor *</label>
+        <select id="setorEncaminhar">
+          <option value="">Selecione...</option>
+          <option value="Marcenaria">Marcenaria</option>
+          <option value="Solda">Solda</option>
+          <option value="Acabamento e Pintura">Acabamento e Pintura</option>
+          <option value="Costura">Costura</option>
+          <option value="Forração">Forração</option>
+          <option value="Limpeza de Estofados">Limpeza de Estofados</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="dataEncaminhar">Nova data de urgência (opcional)</label>
+        <input type="date" id="dataEncaminhar">
+      </div>
+    </div>
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroEncaminhar"></span>
+      <button type="button" class="btn btn-contorno" onclick="fecharModal('modalEncaminhar')">Cancelar</button>
+      <button type="button" class="btn" onclick="confirmarEncaminhar()">Continuar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL CHECKLIST DE QUALIDADE
+========================================================= -->
+<div class="modal" id="modalChecklist">
+  <div class="modal-caixa media">
+    <div class="modal-topo">
+      <div>
+        <h2>Checklist de qualidade</h2>
+        <p>Confira cada O.S e marque Aprovar ou Reprovar</p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalChecklist')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo" id="listaChecklist"></div>
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroChecklist"></span>
+      <button type="button" class="btn btn-contorno" onclick="fecharModal('modalChecklist')">Cancelar</button>
+      <button type="button" class="btn" id="btnFinalizarBaixa" onclick="finalizarBaixa()">Finalizar baixa</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL O.S CONCLUÍDAS
+========================================================= -->
+<div class="modal" id="modalConcluidas">
+  <div class="modal-caixa larga">
+    <div class="modal-topo">
+      <div>
+        <h2>O.S concluídas</h2>
+        <p id="contadorConcluidas">Carregando...</p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalConcluidas')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <div class="filtros-concluidas">
+        <select id="setorConcluidas" onchange="carregarConcluidas(1)">
+          <option value="">Setor responsável (todos)</option>
+        </select>
+        <input id="buscaConcluidas" placeholder="Buscar por item ou número da O.S" oninput="buscarConcluidasComPausa()">
+      </div>
+      <div class="cartao">
+        <div class="tabela-rolagem">
+          <table>
+            <thead>
+              <tr>
+                <th>Entrada</th>
+                <th>Setor</th>
+                <th>Nome</th>
+                <th>O.S</th>
+                <th>Item</th>
+                <th>Qtd</th>
+                <th>Fluxo</th>
+                <th>Conclusão</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaConcluidas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-rodape">
+      <div class="paginacao">
+        <span id="paginaConcluidas">Página 1</span>
+        <div class="botoes">
+          <button type="button" class="btn btn-contorno" id="btnPaginaAnterior" onclick="mudarPaginaConcluidas(-1)">Anterior</button>
+          <button type="button" class="btn btn-contorno" id="btnPaginaProxima" onclick="mudarPaginaConcluidas(1)">Próxima</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL ADICIONAR ITEM
+========================================================= -->
+<div class="modal" id="modalAddItem">
+  <div class="modal-caixa">
+    <div class="modal-topo">
+      <div>
+        <h2>Adicionar item</h2>
+        <p>Cadastre um item novo na base de itens</p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalAddItem')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <div class="campo">
+        <label for="addCategoria">Categoria *</label>
+        <input id="addCategoria" list="addCategoriasLista" placeholder="Ex.: Aparadores" maxlength="80">
+        <datalist id="addCategoriasLista"></datalist>
+      </div>
+      <div class="campo">
+        <label for="addNome">Nome do item *</label>
+        <input id="addNome" placeholder="Ex.: Aparador Clássico P" maxlength="150">
+      </div>
+      <div class="linha-campos">
+        <div class="campo">
+          <label for="addCodigo">Código *</label>
+          <input id="addCodigo" placeholder="Ex.: APA001" maxlength="30">
+        </div>
+        <div class="campo">
+          <label for="addTipo">Tipo *</label>
+          <select id="addTipo">
+            <option value="ITEM">Item</option>
+            <option value="COMPONENTE">Componente</option>
+            <option value="SERVIÇO">Serviço</option>
+          </select>
+        </div>
+      </div>
+      <div class="linha-campos">
+        <div class="campo">
+          <label for="addValor">Valor de reposição *</label>
+          <input id="addValor" inputmode="numeric" placeholder="R$ 0,00" oninput="mascararMoeda(this)">
+        </div>
+        <div class="campo">
+          <label for="addSenha">Senha do estoque *</label>
+          <input type="password" id="addSenha" autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroAddItem"></span>
+      <button type="button" class="btn btn-contorno" onclick="fecharModal('modalAddItem')">Cancelar</button>
+      <button type="button" class="btn" id="btnSalvarItem" onclick="salvarNovoItem()">Salvar item</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- =========================================================
+     CONFIRMAÇÃO
+========================================================= -->
+<div class="modal" id="modalConfirmacao">
+  <div class="modal-caixa estreita">
+    <div class="modal-topo">
+      <div><h2 id="confirmacaoTitulo">Confirmar</h2></div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalConfirmacao')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <p class="confirmacao-texto" id="confirmacaoTexto"></p>
+    </div>
+    <div class="modal-rodape">
+      <button type="button" class="btn btn-contorno" id="confirmacaoCancelar" onclick="fecharModal('modalConfirmacao')">Cancelar</button>
+      <button type="button" class="btn" id="confirmacaoOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+
+<script>
+/* =========================================================
+   ESTADO
+========================================================= */
+
+const SETORES = [
+  "Limpeza de Estofados",
+  "Costura",
+  "Forração",
+  "Acabamento e Pintura",
+  "Solda",
+  "Marcenaria"
+];
+
+/* Um tom para cada setor (forte = títulos/etiqueta atual, suave = fundo) */
+const CORES_SETOR = {
+  "limpeza de estofados": { forte:"#2563a8", suave:"#e1ecf8" }, // azul
+  "costura":              { forte:"#facc15", suave:"#fef9c3", texto:"#3b2f00" }, // amarelo (texto escuro)
+  "forracao":             { forte:"#4f6a3a", suave:"#e8eedf" }, // verde
+  "acabamento e pintura": { forte:"#d9620f", suave:"#fdebdc" }, // laranja
+  "solda":                { forte:"#2b2a26", suave:"#e9e7e2" }, // preto
+  "marcenaria":           { forte:"#b42318", suave:"#fbe4e1" }  // vermelho
+};
+
+function corSetor(nome){
+  return CORES_SETOR[normalizar(nome)] || { forte:"#5a5a55", suave:"#ecece6" };
+}
+
+function varsSetor(nome){
+  const cor = corSetor(nome);
+  return (cor.texto ? "--cor-texto-claro:#8a6d00;" : "") + "--cor:" + cor.forte + ";--cor-suave:" + cor.suave + ";--cor-texto:" + (cor.texto || "#ffffff");
+}
+
+const estado = {
+  lista: [],              // O.S em aberto vindas do servidor
+  assinatura: "",         // para não redesenhar se nada mudou
+  selecionadas: new Set(),
+  fluxosMarcados: null,   // null = todos
+  carregando: false,
+  catalogo: null,         // { categorias, itens }
+  funcionarios: null,
+  acaoSenha: null,        // função chamada com a senha do estoque
+  conclusao: [],          // O.S do checklist
+  senhaConclusao: "",
+  paginaConcluidas: 1,
+  totalPaginasConcluidas: 1,
+  consultaConcluidas: 0
+};
+
+const ATUALIZAR_A_CADA = 20000;
+const INDICADORES_A_CADA = 60000;
+
+
+/* =========================================================
+   APOIO
+========================================================= */
+
+function el(id){ return document.getElementById(id); }
+
+function escapar(valor){
+  return String(valor === null || valor === undefined ? "" : valor)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function normalizar(texto){
+  return String(texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* google.script.run com promessa */
+function servidor(nome){
+  const argumentos = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function(resolver, rejeitar){
+    google.script.run
+      .withSuccessHandler(resolver)
+      .withFailureHandler(function(erro){
+        rejeitar(new Error(String(erro && erro.message ? erro.message : erro)));
+      })[nome].apply(null, argumentos);
+  });
+}
+
+let temporizadorAviso = null;
+
+function avisar(texto, tipo){
+  const aviso = el("aviso");
+  aviso.textContent = texto;
+  aviso.className = "aviso visivel " + (tipo || "");
+  clearTimeout(temporizadorAviso);
+  temporizadorAviso = setTimeout(function(){ aviso.className = "aviso " + (tipo || ""); }, 3200);
+}
+
+function abrirModal(id){ el(id).classList.add("aberto"); }
+function fecharModal(id){ el(id).classList.remove("aberto"); }
+function algumModalAberto(){ return !!document.querySelector(".modal.aberto"); }
+
+function confirmar(titulo, texto, textoBotao, aoConfirmar){
+  el("confirmacaoTitulo").textContent = titulo;
+  el("confirmacaoTexto").textContent = texto;
+  const ok = el("confirmacaoOk");
+  ok.textContent = textoBotao || "Confirmar";
+  ok.onclick = function(){ fecharModal("modalConfirmacao"); aoConfirmar(); };
+  abrirModal("modalConfirmacao");
+}
+
+function ocupado(botao, texto){
+  botao.dataset.texto = botao.dataset.texto || botao.textContent;
+  botao.disabled = true;
+  botao.textContent = texto;
+}
+
+function livre(botao){
+  botao.disabled = false;
+  if(botao.dataset.texto){ botao.textContent = botao.dataset.texto; }
+}
+
+function diasAte(dataISO){
+  if(!dataISO){ return null; }
+  const p = dataISO.split("-").map(Number);
+  const data = new Date(p[0], p[1] - 1, p[2]);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  return Math.round((data - hoje) / 86400000);
+}
+
+function classeUrgencia(dataISO){
+  const dias = diasAte(dataISO);
+  if(dias === null){ return ""; }
+  return dias <= 7 ? "urgente" : "atencao";
+}
+
+function responsavel(os){
+  return os.fluxo.length ? os.fluxo[os.fluxo.length - 1] : "Sem setor";
+}
+
+
+/* =========================================================
+   CARREGAR O.S EM ABERTO
+========================================================= */
+
+function carregar(forcar){
+
+  if(estado.carregando){ return Promise.resolve(); }
+
+  estado.carregando = true;
+
+  return servidor("itensDanificadosAbertas")
+    .then(function(res){
+
+      el("pontoVivo").classList.remove("erro");
+      el("textoAtualizacao").textContent = "Atualizado às " + res.atualizadoEm;
+
+      const assinatura = JSON.stringify(res.lista);
+
+      if(!forcar && assinatura === estado.assinatura){ return; }
+
+      estado.assinatura = assinatura;
+      estado.lista = res.lista;
+
+      /* Tira da seleção O.S que não estão mais em aberto */
+      const ids = new Set(res.lista.map(function(os){ return os.id; }));
+      estado.selecionadas.forEach(function(id){ if(!ids.has(id)){ estado.selecionadas.delete(id); } });
+
+      montarFiltros();
+      render();
+
+    })
+    .catch(function(erro){
+      el("pontoVivo").classList.add("erro");
+      el("textoAtualizacao").textContent = "Sem conexão — tentando de novo";
+      if(!estado.lista.length){
+        el("tabela").innerHTML =
+          '<tr><td colspan="12"><div class="mensagem erro">Não foi possível carregar as O.S. ' + escapar(erro.message) + "</div></td></tr>";
+      }
+    })
+    .then(function(){ estado.carregando = false; });
+
+}
+
+/* Atualiza sozinho, mas não no meio de um formulário ou digitação */
+setInterval(function(){
+
+  if(document.hidden){ return; }
+  if(algumModalAberto()){ return; }
+
+  const foco = document.activeElement;
+  if(foco && foco.classList && foco.classList.contains("data-urgencia-input")){ return; }
+
+  carregar(false);
+
+}, ATUALIZAR_A_CADA);
+
+document.addEventListener("visibilitychange", function(){
+  if(!document.hidden){ carregar(false); }
+});
+
+
+/* =========================================================
+   FILTROS
+========================================================= */
+
+function preencherSelect(id, rotulo, valores){
+  const select = el(id);
+  const atual = select.value;
+  select.innerHTML =
+    '<option value="">' + escapar(rotulo) + "</option>" +
+    valores.map(function(v){ return '<option value="' + escapar(v) + '">' + escapar(v) + "</option>"; }).join("");
+  /* Mantém o que estava escolhido */
+  if(atual && valores.indexOf(atual) >= 0){ select.value = atual; }
+}
+
+function ordenarTexto(lista){
+  return lista.sort(function(a, b){ return a.localeCompare(b, "pt-BR"); });
+}
+
+function montarFiltros(){
+
+  const fluxos = {};
+
+  estado.lista.forEach(function(os){
+    fluxos[responsavel(os)] = true;
+  });
+
+
+  const disponiveis = SETORES.filter(function(s){ return fluxos[s]; })
+    .concat(ordenarTexto(Object.keys(fluxos).filter(function(s){ return SETORES.indexOf(s) < 0; })));
+
+  el("listaMultiFluxo").innerHTML =
+    disponiveis.map(function(f){
+      const marcado = !estado.fluxosMarcados || estado.fluxosMarcados.indexOf(f) >= 0;
+      return '<label><input type="checkbox" value="' + escapar(f) + '"' + (marcado ? " checked" : "") + ' onchange="lerFluxosMarcados()"><span class="ponto-setor" style="background:' + corSetor(f).forte + '"></span>' + escapar(f) + "</label>";
+    }).join("") +
+    '<div class="multi-acoes"><button type="button" onclick="marcarFluxos(true)">Todos</button><button type="button" onclick="marcarFluxos(false)">Nenhum</button></div>';
+
+  atualizarTextoFluxo(disponiveis.length);
+
+}
+
+function alternarMulti(evento){
+  evento.stopPropagation();
+  el("multiFluxo").classList.toggle("aberto");
+}
+
+document.addEventListener("click", function(evento){
+  if(!evento.target.closest("#multiFluxo")){ el("multiFluxo").classList.remove("aberto"); }
+});
+
+function lerFluxosMarcados(){
+  const caixas = Array.prototype.slice.call(document.querySelectorAll("#listaMultiFluxo input"));
+  const marcados = caixas.filter(function(c){ return c.checked; }).map(function(c){ return c.value; });
+  estado.fluxosMarcados = marcados.length === caixas.length ? null : marcados;
+  atualizarTextoFluxo(caixas.length);
+  render();
+}
+
+function marcarFluxos(marcar){
+  document.querySelectorAll("#listaMultiFluxo input").forEach(function(c){ c.checked = marcar; });
+  lerFluxosMarcados();
+}
+
+function atualizarTextoFluxo(total){
+  const marcados = estado.fluxosMarcados;
+  el("textoMultiFluxo").textContent =
+    !marcados ? "Responsável (todos)"
+    : marcados.length === 1 ? marcados[0]
+    : marcados.length + " de " + total + " setores";
+}
+
+let temporizadorFiltro = null;
+
+function aplicarFiltros(){
+  clearTimeout(temporizadorFiltro);
+  temporizadorFiltro = setTimeout(render, 120);
+}
+
+function filtradas(){
+
+  const fBusca = normalizar(el("filtroBusca").value);
+  const fluxos = estado.fluxosMarcados;
+
+  return estado.lista.filter(function(os){
+    if(fBusca && (normalizar(os.os) + " " + normalizar(os.pedido) + " " + normalizar(os.item)).indexOf(fBusca) < 0){ return false; }
+    if(fluxos && fluxos.indexOf(responsavel(os)) < 0){ return false; }
+    return true;
+  });
+
+}
+
+
+/* =========================================================
+   TABELA
+========================================================= */
+
+function dataBR(dataISO){
+  const p = String(dataISO || "").split("-");
+  return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : "";
+}
+
+/* Mostra 05/10/2026; o calendário (input invisível) abre ao tocar */
+function htmlDataUrgencia(os){
+  return (
+    '<label class="data-urgencia ' + classeUrgencia(os.dataU) + (os.dataU ? "" : " vazia") + '">' +
+      "<span>" + (os.dataU ? dataBR(os.dataU) : "Definir") + "</span>" +
+      '<input type="date" class="data-urgencia-input" value="' + escapar(os.dataU) + '" data-id="' + escapar(os.id) + '"' + (os.id ? "" : " disabled") + ">" +
+    "</label>"
+  );
+}
+
+function etiquetaOnde(onde){
+  if(!onde){ return ""; }
+  return escapar(onde);
+}
+
+function htmlFluxo(fluxo){
+  if(!fluxo.length){ return '<span class="fluxo-passo sem-setor" title="Selecione e use Encaminhar para definir o setor">Sem setor</span>'; }
+  return '<div class="fluxo">' + fluxo.map(function(passo, i){
+    return (i ? '<span class="fluxo-seta">›</span>' : "") +
+      '<span class="fluxo-passo' + (i === fluxo.length - 1 ? " atual" : " passado") + '" style="' + varsSetor(passo) + '">' + escapar(passo) + "</span>";
+  }).join("") + "</div>";
+}
+
+function render(){
+
+  const lista = filtradas();
+  const tbody = el("tabela");
+
+  /* Agrupa pelo setor responsável (último do fluxo), na ordem fixa dos setores */
+  const grupos = {};
+  lista.forEach(function(os){
+    const chave = responsavel(os);
+    (grupos[chave] = grupos[chave] || []).push(os);
+  });
+
+  const ordem = SETORES.filter(function(s){ return grupos[s]; })
+    .concat(ordenarTexto(Object.keys(grupos).filter(function(s){ return SETORES.indexOf(s) < 0; })));
+
+  const linhas = [];
+
+  ordem.forEach(function(grupo){
+
+    const itens = grupos[grupo].sort(function(a, b){
+      const da = a.dataU || "9999-12-31";
+      const db = b.dataU || "9999-12-31";
+      return da < db ? -1 : da > db ? 1 : (a.dataOrdem < b.dataOrdem ? -1 : 1);
+    });
+
+    itens.forEach(function(os){
+
+      const selecionada = estado.selecionadas.has(os.id);
+
+      linhas.push(
+        '<tr data-id="' + escapar(os.id) + '"' + (selecionada ? ' class="selecionada"' : "") + ">" +
+          '<td class="col-check"><input type="checkbox" tabindex="-1"' + (selecionada ? " checked" : "") + (os.id ? "" : " disabled") + "></td>" +
+          '<td class="col-data m-oculta t1-oculta">' + escapar(String(os.data).slice(0, 10)) + "</td>" +
+          '<td class="col-curta m-oculta t1-oculta">' + escapar(os.setor) + "</td>" +
+          '<td class="col-curta m-oculta t2-oculta">' + escapar(os.nome) + "</td>" +
+          '<td class="col-os m-oculta">' + escapar(os.os) + "</td>" +
+          '<td class="col-item">' + escapar(os.item) +
+            /* No celular: O.S, quantidade e onde aconteceu embaixo do item */
+            /* Tablet em pé: quem enviou e pedido embaixo do item */
+            '<span class="item-extra-tablet">' + escapar(os.nome) + (os.pedido ? " · Pedido " + escapar(os.pedido) : "") + "</span>" +
+            '<span class="item-extra">O.S ' + escapar(os.os || "—") + " · " + escapar(os.qtd || 1) + " un." + (os.onde ? " · " + escapar(os.onde) : "") + "</span>" +
+          "</td>" +
+          '<td class="col-qtd m-oculta">' + escapar(os.qtd) + "</td>" +
+          "<td>" + htmlFluxo(os.fluxo) + "</td>" +
+          '<td class="m-oculta">' + etiquetaOnde(os.onde) + "</td>" +
+          '<td class="m-oculta t2-oculta">' + (os.pedido ? escapar(os.pedido) : '<span style="color:var(--muted)">—</span>') + "</td>" +
+          '<td class="col-detalhes m-oculta t1-oculta" title="' + escapar(os.detalhes) + '">' + escapar(os.detalhes) + "</td>" +
+          "<td>" + htmlDataUrgencia(os) + "</td>" +
+        "</tr>"
+      );
+
+    });
+
+  });
+
+  /* Um único innerHTML: rápido mesmo com muitas O.S */
+  tbody.innerHTML = linhas.length
+    ? linhas.join("")
+    : '<tr><td colspan="12"><div class="mensagem">' +
+        (estado.lista.length ? "Nenhuma O.S com esses filtros." : "Nenhuma O.S em aberto.") +
+      "</div></td></tr>";
+
+  atualizarResumo(lista);
+  atualizarSelecao();
+
+}
+
+function atualizarResumo(lista){
+
+  el("subtituloTabela").textContent =
+    lista.length === estado.lista.length
+      ? "Clique numa linha para selecionar"
+      : "Mostrando " + lista.length + " de " + estado.lista.length + " O.S";
+
+}
+
+/* Um único ouvinte para todos os cliques da tabela */
+el("tabela").addEventListener("click", function(evento){
+
+  if(evento.target.closest(".data-urgencia")){
+
+    /* Abre o calendário do navegador (onde houver suporte) */
+    const campo = evento.target.closest(".data-urgencia").querySelector("input");
+    if(campo && !campo.disabled && campo.showPicker){
+      try{ campo.showPicker(); } catch(erro){}
+    }
+
+    return;
+  }
+
+  const linha = evento.target.closest("tr[data-id]");
+  if(!linha || !linha.dataset.id){ return; }
+
+  const id = linha.dataset.id;
+
+  if(estado.selecionadas.has(id)){ estado.selecionadas.delete(id); }
+  else { estado.selecionadas.add(id); }
+
+  const marcada = estado.selecionadas.has(id);
+  linha.classList.toggle("selecionada", marcada);
+  linha.querySelector(".col-check input").checked = marcada;
+
+  atualizarSelecao();
+
+});
+
+function marcarTodasVisiveis(marcar){
+  filtradas().forEach(function(os){
+    if(!os.id){ return; }
+    if(marcar){ estado.selecionadas.add(os.id); } else { estado.selecionadas.delete(os.id); }
+  });
+  render();
+}
+
+function limparSelecao(){
+  estado.selecionadas.clear();
+  render();
+}
+
+function selecionadas(){
+  return estado.lista.filter(function(os){ return estado.selecionadas.has(os.id); });
+}
+
+function atualizarSelecao(){
+
+  const total = estado.selecionadas.size;
+
+  el("barraSelecao").classList.toggle("oculto", total === 0 || painel.ativo);
+  el("textoSelecao").textContent = total === 1 ? "1 O.S selecionada" : total + " O.S selecionadas";
+
+  const visiveis = filtradas().filter(function(os){ return os.id; });
+  const marcarTodas = el("marcarTodas");
+  const marcadasVisiveis = visiveis.filter(function(os){ return estado.selecionadas.has(os.id); }).length;
+  marcarTodas.checked = visiveis.length > 0 && marcadasVisiveis === visiveis.length;
+  marcarTodas.indeterminate = marcadasVisiveis > 0 && marcadasVisiveis < visiveis.length;
+
+}
+
+
+/* =========================================================
+   DATA DE URGÊNCIA (salva na hora, sem recarregar tudo)
+========================================================= */
+
+el("tabela").addEventListener("change", function(evento){
+
+  const campo = evento.target;
+  if(!campo.classList.contains("data-urgencia-input")){ return; }
+
+  const etiqueta = campo.parentNode;
+
+  const id = campo.dataset.id;
+  const novaData = campo.value;
+  if(!id || !novaData){ return; }
+
+  etiqueta.classList.add("salvando");
+  etiqueta.querySelector("span").textContent = dataBR(novaData);
+
+  servidor("atualizarDataUrgencia", id, novaData)
+    .then(function(res){
+      if(res && res.ok === false){ throw new Error(res.msg); }
+      const os = estado.lista.find(function(item){ return item.id === id; });
+      if(os){ os.dataU = novaData; }
+      estado.assinatura = "";
+      etiqueta.className = "data-urgencia salvo";
+      setTimeout(function(){ render(); }, 700);
+    })
+    .catch(function(erro){
+      etiqueta.classList.remove("salvando");
+      avisar("Não foi possível salvar a data: " + erro.message, "erro");
+    });
+
+});
+
+
+/* =========================================================
+   SENHA DO ESTOQUE (concluir, encaminhar, remover)
+========================================================= */
+
+function pedirSenha(titulo, acao){
+  estado.acaoSenha = acao;
+  el("senhaTitulo").textContent = titulo;
+  el("senhaEstoque").value = "";
+  el("erroSenha").textContent = "";
+  livre(el("btnConfirmarSenha"));
+  abrirModal("modalSenha");
+  setTimeout(function(){ el("senhaEstoque").focus(); }, 50);
+}
+
+function confirmarSenha(){
+
+  const senha = el("senhaEstoque").value.trim();
+  const botao = el("btnConfirmarSenha");
+
+  if(!senha){
+    el("erroSenha").textContent = "Digite a senha.";
+    return;
+  }
+
+  el("erroSenha").textContent = "";
+  ocupado(botao, "Conferindo...");
+
+  Promise.resolve(estado.acaoSenha(senha))
+    .then(function(){
+      livre(botao);
+      fecharModal("modalSenha");
+    })
+    .catch(function(erro){
+      livre(botao);
+      el("erroSenha").textContent = erro.message;
+      el("senhaEstoque").select();
+    });
+
+}
+
+
+/* ---------- Concluir (checklist) ---------- */
+
+function iniciarConclusao(){
+
+  const lista = selecionadas();
+  if(!lista.length){ return; }
+
+  pedirSenha("Concluir O.S", function(senha){
+    return servidor("validarSenha", "estoque", senha).then(function(res){
+      if(!res || !res.ok){ throw new Error(res && res.msg === "Senha incorreta" ? "Senha do estoque incorreta." : (res && res.msg) || "Senha incorreta."); }
+      estado.senhaConclusao = senha;
+      abrirChecklist(lista);
+    });
+  });
+
+}
+
+const ITENS_CHECKLIST = [
+  "Item limpo",
+  "Não existem pregos aparentes",
+  "Possui proteção nos pés",
+  "Estrutura firme",
+  "Alinhado (não está torto)",
+  "Acabamento ok"
+];
+
+function abrirChecklist(lista){
+
+  estado.conclusao = lista.map(function(os){ return { id: os.id, os: os.os, item: os.item, qtd: os.qtd, qualidade: "" }; });
+
+  el("listaChecklist").innerHTML =
+    estado.conclusao.map(function(os, i){
+      return (
+        '<div class="check-os" id="checkOS' + i + '">' +
+          '<div class="check-os-titulo">O.S ' + escapar(os.os || "—") + " · " + escapar(os.item) + "<small>(" + escapar(os.qtd || 1) + " un.)</small></div>" +
+          '<div class="check-itens">' +
+            ITENS_CHECKLIST.map(function(texto){ return "<label><input type=\"checkbox\"> " + escapar(texto) + "</label>"; }).join("") +
+          "</div>" +
+          '<div class="check-decisao">' +
+            '<button type="button" class="btn btn-perigo" onclick="decidirChecklist(' + i + ', \'Reprovado\')">Reprovar</button>' +
+            '<button type="button" class="btn btn-contorno" onclick="decidirChecklist(' + i + ', \'Aprovado\')">Aprovar</button>' +
+          "</div>" +
+        "</div>"
+      );
+    }).join("") +
+    '<div class="declaracao">' +
+      "Eu, responsável pelo estoque, declaro que realizei a conferência completa dos itens conforme o checklist acima, " +
+      "assegurando que estão em perfeitas condições de uso e dentro dos padrões de qualidade exigidos." +
+      '<label><input type="checkbox" id="chkResponsabilidade"> Confirmo a responsabilidade pela liberação dos itens</label>' +
+    "</div>";
+
+  el("erroChecklist").textContent = "";
+  livre(el("btnFinalizarBaixa"));
+  abrirModal("modalChecklist");
+
+}
+
+function decidirChecklist(indice, qualidade){
+
+  estado.conclusao[indice].qualidade = qualidade;
+
+  const caixa = el("checkOS" + indice);
+  caixa.classList.toggle("aprovado", qualidade === "Aprovado");
+  caixa.classList.toggle("reprovado", qualidade === "Reprovado");
+
+  const botoes = caixa.querySelectorAll(".check-decisao .btn");
+  botoes[0].className = "btn " + (qualidade === "Reprovado" ? "" : "btn-perigo");
+  botoes[1].className = "btn " + (qualidade === "Aprovado" ? "btn-sucesso" : "btn-contorno");
+
+}
+
+function finalizarBaixa(){
+
+  const erro = el("erroChecklist");
+  const pendente = estado.conclusao.filter(function(os){ return !os.qualidade; }).length;
+
+  if(pendente){
+    erro.textContent = pendente === 1 ? "Falta aprovar ou reprovar 1 O.S." : "Faltam " + pendente + " O.S para aprovar ou reprovar.";
+    return;
+  }
+
+  if(!el("chkResponsabilidade").checked){
+    erro.textContent = "Confirme a responsabilidade pela liberação.";
+    return;
+  }
+
+  erro.textContent = "";
+
+  const botao = el("btnFinalizarBaixa");
+  ocupado(botao, "Finalizando...");
+
+  servidor("darBaixaOS",
+    estado.conclusao.map(function(os){ return { id: os.id, qualidade: os.qualidade }; }),
+    estado.senhaConclusao
+  )
+    .then(function(res){
+      if(res && res.ok === false){ throw new Error(res.msg); }
+      livre(botao);
+      fecharModal("modalChecklist");
+      const aprovadas = estado.conclusao.filter(function(os){ return os.qualidade === "Aprovado"; }).length;
+      avisar("Baixa feita: " + aprovadas + " concluída(s), " + (estado.conclusao.length - aprovadas) + " reprovada(s).", "sucesso");
+      estado.senhaConclusao = "";
+      estado.selecionadas.clear();
+      carregar(true);
+    })
+    .catch(function(falha){
+      livre(botao);
+      erro.textContent = "Erro ao finalizar: " + falha.message;
+    });
+
+}
+
+
+/* ---------- Encaminhar ---------- */
+
+function abrirEncaminhar(){
+
+  const lista = selecionadas();
+
+  if(!lista.length){
+    avisar("Selecione pelo menos uma O.S para encaminhar.", "erro");
+    return;
+  }
+
+  if(lista.length === 1){
+    const os = lista[0];
+    el("textoEncaminhar").textContent = "O.S " + (os.os || "—") + " · " + os.item + " · hoje em " + responsavel(os);
+  } else {
+    const cheias = lista.filter(function(os){ return os.fluxo.length >= 4; }).length;
+    el("textoEncaminhar").textContent =
+      lista.length + " O.S selecionadas vão para o mesmo setor" +
+      (cheias ? " (" + cheias + " já passaram por 4 setores e serão puladas)" : "") + ".";
+  }
+
+  el("setorEncaminhar").value = "";
+  el("dataEncaminhar").value = "";
+  el("erroEncaminhar").textContent = "";
+  abrirModal("modalEncaminhar");
+
+}
+
+function confirmarEncaminhar(){
+
+  const lista = selecionadas();
+  const setor = el("setorEncaminhar").value;
+  const dataU = el("dataEncaminhar").value || "";
+
+  if(!lista.length){ fecharModal("modalEncaminhar"); return; }
+
+  if(!setor){
+    el("erroEncaminhar").textContent = "Escolha o próximo setor.";
+    return;
+  }
+
+  const validas = lista.filter(function(os){ return os.fluxo.length < 4; });
+
+  if(!validas.length){
+    el("erroEncaminhar").textContent = lista.length === 1
+      ? "Esta O.S já passou por 4 setores (limite)."
+      : "Todas as O.S selecionadas já passaram por 4 setores (limite).";
+    return;
+  }
+
+  fecharModal("modalEncaminhar");
+
+  const titulo = validas.length === 1 ? "Encaminhar O.S" : "Encaminhar " + validas.length + " O.S";
+
+  pedirSenha(titulo, function(senha){
+    return servidor("encaminharVariasOS", validas.map(function(os){ return os.id; }), setor, dataU, senha).then(function(res){
+
+      const feitas = (res.encaminhadas || []).length;
+      const puladas = (res.ignoradas || []).length + (lista.length - validas.length);
+
+      avisar(
+        (feitas === 1 ? "1 O.S encaminhada" : feitas + " O.S encaminhadas") + " para " + setor +
+        (puladas ? " · " + puladas + " pulada(s)" : "") + ".",
+        feitas ? "sucesso" : "erro"
+      );
+
+      estado.selecionadas.clear();
+      carregar(true);
+
+    });
+  });
+
+}
+
+
+/* ---------- Remover ---------- */
+
+function iniciarRemocao(){
+
+  const lista = selecionadas();
+  if(!lista.length){ return; }
+
+  const texto = lista.length === 1
+    ? "Remover a O.S " + (lista[0].os || "") + " (" + lista[0].item + ")? Ela some da planilha."
+    : "Remover " + lista.length + " O.S selecionadas? Elas somem da planilha.";
+
+  confirmar("Remover O.S", texto, "Remover", function(){
+    pedirSenha("Remover O.S", function(senha){
+      return servidor("removerOSPorIds", lista.map(function(os){ return os.id; }), senha).then(function(res){
+        if(!res || !res.ok){ throw new Error((res && res.msg) || "Erro ao remover."); }
+        avisar(res.totalRemovidas + " O.S removida(s).", "sucesso");
+        estado.selecionadas.clear();
+        carregar(true);
+      });
+    });
+  });
+
+}
+
+
+/* =========================================================
+   NOVA O.S
+========================================================= */
+
+/* Catálogo e funcionários: carregados uma vez, em segundo plano */
+function carregarCatalogo(){
+  if(estado.catalogo){ return Promise.resolve(estado.catalogo); }
+  return servidor("itensDanificadosCatalogo").then(function(res){
+    estado.catalogo = res;
+    return res;
+  });
+}
+
+function carregarFuncionarios(){
+  if(estado.funcionarios){ return Promise.resolve(estado.funcionarios); }
+  return servidor("buscarFuncionariosOS").then(function(res){
+    if(!res || !res.sucesso){ throw new Error((res && res.mensagem) || "Erro ao carregar funcionários."); }
+    estado.funcionarios = res.funcionarios || [];
+    return estado.funcionarios;
+  });
+}
+
+function abrirNovaOS(){
+
+  /* Limpa o formulário */
+  ["osSenha", "osItem", "osCodigo", "osQuantidade", "osDataLimite", "osPedido", "osDetalhes"].forEach(function(id){ el(id).value = ""; });
+  document.querySelectorAll("#modalNovaOS .opcao.selecionada").forEach(function(b){ b.classList.remove("selecionada"); });
+  el("campoDataLimite").classList.add("oculto");
+  el("campoPedido").classList.add("oculto");
+  const hoje = new Date();
+  el("osDataLimite").min = hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0") + "-" + String(hoje.getDate()).padStart(2, "0");
+  el("osItensLista").innerHTML = "";
+  el("erroNovaOS").textContent = "";
+  livre(el("btnEnviarOS"));
+
+  abrirModal("modalNovaOS");
+
+  carregarFuncionarios()
+    .then(function(lista){
+      el("listaFuncionarios").innerHTML = lista.length
+        ? lista.map(function(f){
+            return '<button type="button" class="opcao" data-nome="' + escapar(f.nome) + '" data-setor="' + escapar(f.setor) + '" title="' + escapar(f.setor) + '">' + escapar(f.nome) + "</button>";
+          }).join("")
+        : '<span class="carregando-texto">Nenhum funcionário encontrado.</span>';
+    })
+    .catch(function(erro){
+      el("listaFuncionarios").innerHTML = '<span class="carregando-texto">' + escapar(erro.message) + "</span>";
+    });
+
+  carregarCatalogo()
+    .then(function(catalogo){
+      const select = el("osCategoria");
+      select.innerHTML =
+        '<option value="">Selecione uma categoria...</option>' +
+        catalogo.categorias.map(function(c){ return '<option value="' + escapar(c) + '">' + escapar(c) + "</option>"; }).join("");
+    })
+    .catch(function(erro){
+      el("osCategoria").innerHTML = '<option value="">Erro ao carregar: ' + escapar(erro.message) + "</option>";
+    });
+
+}
+
+/* Botões de opção (setor, urgência, onde, funcionário) */
+el("modalNovaOS").addEventListener("click", function(evento){
+
+  const botao = evento.target.closest(".opcao");
+  if(!botao){ return; }
+
+  const grupo = botao.parentNode;
+  grupo.querySelectorAll(".opcao").forEach(function(b){ b.classList.remove("selecionada"); });
+  botao.classList.add("selecionada");
+
+  const nomeGrupo = grupo.dataset.grupo;
+
+  if(nomeGrupo === "urgencia"){
+    el("campoDataLimite").classList.toggle("oculto", botao.dataset.valor !== "Sim");
+  }
+
+  if(nomeGrupo === "ondeDano"){
+    el("campoPedido").classList.toggle("oculto", botao.dataset.valor !== "Evento");
+  }
+
+  /* Funcionário: marca o setor dele automaticamente */
+  if(botao.dataset.nome){
+    const setor = document.querySelector('#modalNovaOS [data-grupo="setor"] [data-valor="' + CSS.escape(botao.dataset.setor) + '"]');
+    if(setor){
+      setor.parentNode.querySelectorAll(".opcao").forEach(function(b){ b.classList.remove("selecionada"); });
+      setor.classList.add("selecionada");
+    }
+  }
+
+});
+
+function escolhido(grupo){
+  const botao = document.querySelector('#modalNovaOS [data-grupo="' + grupo + '"] .opcao.selecionada');
+  return botao ? botao.dataset.valor : "";
+}
+
+function trocarCategoriaOS(){
+
+  const categoria = el("osCategoria").value;
+  el("osItem").value = "";
+  el("osCodigo").value = "";
+
+  const itens = categoria && estado.catalogo
+    ? estado.catalogo.itens.filter(function(i){ return i.categoria === categoria; })
+    : [];
+
+  el("osItensLista").innerHTML = itens.map(function(i){ return '<option value="' + escapar(i.nome) + '"></option>'; }).join("");
+
+  if(categoria){ el("osItem").focus(); }
+
+}
+
+function conferirItemOS(){
+
+  const categoria = el("osCategoria").value;
+  const nome = el("osItem").value;
+
+  const item = estado.catalogo && estado.catalogo.itens.find(function(i){
+    return i.categoria === categoria && i.nome === nome;
+  });
+
+  el("osCodigo").value = item ? item.codigo : "";
+
+}
+
+function enviarNovaOS(){
+
+  const funcionario = document.querySelector("#listaFuncionarios .opcao.selecionada");
+
+  const dados = {
+    setor: escolhido("setor"),
+    senha: el("osSenha").value.trim(),
+    nome: funcionario ? funcionario.dataset.nome : "",
+    categoria: el("osCategoria").value,
+    item: el("osItem").value.trim(),
+    codigoItem: el("osCodigo").value,
+    quantidade: el("osQuantidade").value,
+    setorSolicitado: escolhido("setorSolicitado"),
+    saiSemana: escolhido("urgencia") || "Não",
+    dataLimite: el("osDataLimite").value,
+    ondeDano: escolhido("ondeDano"),
+    numeroPedido: el("osPedido").value.trim(),
+    detalhes: el("osDetalhes").value.trim()
+  };
+
+  const quantidade = Number(dados.quantidade);
+
+  const faltando =
+    !dados.nome ? "Escolha seu nome."
+    : !dados.setor ? "Escolha seu setor."
+    : !dados.senha ? "Digite a senha do setor."
+    : !dados.categoria ? "Escolha a categoria."
+    : !dados.item ? "Escolha o item."
+    : !dados.codigoItem ? "Escolha um item da lista (o código precisa aparecer)."
+    : !(Number.isInteger(quantidade) && quantidade >= 1 && quantidade <= 999) ? "Informe a quantidade em número inteiro (1 a 999)."
+    : dados.saiSemana === "Sim" && !dados.dataLimite ? "Informe a data limite."
+    : dados.saiSemana === "Sim" && diasAte(dados.dataLimite) < 0 ? "A data limite não pode ser no passado."
+    : !dados.setorSolicitado ? "Escolha o setor solicitado."
+    : !dados.ondeDano ? "Informe onde aconteceu o dano."
+    : dados.ondeDano === "Evento" && !dados.numeroPedido ? "Informe o número do pedido."
+    : "";
+
+  const erro = el("erroNovaOS");
+
+  if(faltando){
+    erro.textContent = faltando;
+    return;
+  }
+
+  erro.textContent = "";
+
+  const botao = el("btnEnviarOS");
+  ocupado(botao, "Enviando...");
+
+  servidor("salvarOS", dados)
+    .then(function(res){
+      if(!res || !res.ok){ throw new Error((res && res.msg) || "Não foi possível salvar."); }
+      livre(botao);
+      fecharModal("modalNovaOS");
+      avisar("O.S " + (res.os || "") + " criada com sucesso.", "sucesso");
+      carregar(true);
+    })
+    .catch(function(falha){
+      livre(botao);
+      erro.textContent = falha.message;
+    });
+
+}
+
+
+/* =========================================================
+   O.S CONCLUÍDAS
+========================================================= */
+
+function abrirOSConcluidas(){
+  el("buscaConcluidas").value = "";
+  el("setorConcluidas").value = "";
+  abrirModal("modalConcluidas");
+  carregarConcluidas(1);
+}
+
+let temporizadorBusca = null;
+
+function buscarConcluidasComPausa(){
+  clearTimeout(temporizadorBusca);
+  temporizadorBusca = setTimeout(function(){ carregarConcluidas(1); }, 400);
+}
+
+function mudarPaginaConcluidas(direcao){
+  const pagina = estado.paginaConcluidas + direcao;
+  if(pagina < 1 || pagina > estado.totalPaginasConcluidas){ return; }
+  carregarConcluidas(pagina);
+}
+
+function carregarConcluidas(pagina){
+
+  const consulta = ++estado.consultaConcluidas;
+
+  el("tabelaConcluidas").innerHTML = '<tr><td colspan="8"><div class="mensagem">Carregando...</div></td></tr>';
+  el("contadorConcluidas").textContent = "Buscando...";
+
+  servidor("buscarOSConcluidas", {
+    pagina: pagina,
+    limite: 20,
+    busca: el("buscaConcluidas").value.trim(),
+    setor: el("setorConcluidas").value
+  })
+    .then(function(res){
+
+      if(consulta !== estado.consultaConcluidas){ return; }
+      if(!res || !res.sucesso){ throw new Error((res && res.mensagem) || "Erro ao buscar."); }
+
+      estado.paginaConcluidas = res.pagina || 1;
+      estado.totalPaginasConcluidas = res.totalPaginas || 1;
+
+      const select = el("setorConcluidas");
+      const atual = select.value;
+      select.innerHTML = '<option value="">Setor responsável (todos)</option>' +
+        (res.setores || []).map(function(s){ return '<option value="' + escapar(s) + '">' + escapar(s) + "</option>"; }).join("");
+      select.value = atual;
+
+      el("contadorConcluidas").textContent = res.total + (res.total === 1 ? " O.S concluída" : " O.S concluídas");
+      el("paginaConcluidas").textContent = "Página " + estado.paginaConcluidas + " de " + estado.totalPaginasConcluidas;
+      el("btnPaginaAnterior").disabled = estado.paginaConcluidas <= 1;
+      el("btnPaginaProxima").disabled = estado.paginaConcluidas >= estado.totalPaginasConcluidas;
+
+      el("tabelaConcluidas").innerHTML = (res.dados || []).length
+        ? res.dados.map(function(os){
+            const fluxo = [os.coluna7, os.coluna8, os.coluna9, os.coluna10].map(function(v){ return String(v || "").trim(); }).filter(Boolean);
+            return "<tr>" +
+              '<td class="col-data">' + escapar(String(os.data).slice(0, 10)) + "</td>" +
+              "<td>" + escapar(os.setor) + "</td>" +
+              "<td>" + escapar(os.nome) + "</td>" +
+              '<td class="col-os">' + escapar(os.os) + "</td>" +
+              '<td class="col-item">' + escapar(os.item) + "</td>" +
+              '<td class="col-qtd">' + escapar(os.qtd) + "</td>" +
+              "<td>" + htmlFluxo(fluxo) + "</td>" +
+              '<td class="col-data">' + escapar(String(os.dataConclusao).slice(0, 10)) + "</td>" +
+            "</tr>";
+          }).join("")
+        : '<tr><td colspan="8"><div class="mensagem">Nenhuma O.S concluída encontrada.</div></td></tr>';
+
+    })
+    .catch(function(erro){
+      if(consulta !== estado.consultaConcluidas){ return; }
+      el("contadorConcluidas").textContent = "Erro ao buscar.";
+      el("tabelaConcluidas").innerHTML = '<tr><td colspan="8"><div class="mensagem erro">' + escapar(erro.message) + "</div></td></tr>";
+    });
+
+}
+
+
+/* =========================================================
+   ADICIONAR ITEM
+========================================================= */
+
+function abrirAddItem(){
+
+  ["addCategoria", "addNome", "addCodigo", "addValor", "addSenha"].forEach(function(id){ el(id).value = ""; });
+  el("addTipo").value = "ITEM";
+  el("erroAddItem").textContent = "";
+  livre(el("btnSalvarItem"));
+
+  abrirModal("modalAddItem");
+  setTimeout(function(){ el("addCategoria").focus(); }, 50);
+
+  carregarCatalogo().then(function(catalogo){
+    el("addCategoriasLista").innerHTML = catalogo.categorias.map(function(c){ return '<option value="' + escapar(c) + '"></option>'; }).join("");
+  }).catch(function(){});
+
+}
+
+function mascararMoeda(campo){
+  const numeros = campo.value.replace(/\D/g, "");
+  campo.value = numeros
+    ? (Number(numeros) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    : "";
+}
+
+function salvarNovoItem(){
+
+  const dados = {
+    categoria: el("addCategoria").value.trim(),
+    nomeItem: el("addNome").value.trim(),
+    codigo: el("addCodigo").value.trim(),
+    valorReposicao: el("addValor").value.trim(),
+    tipo: el("addTipo").value,
+    senha: el("addSenha").value.trim()
+  };
+
+  const faltando =
+    !dados.categoria ? "Informe a categoria."
+    : !dados.nomeItem ? "Informe o nome do item."
+    : !dados.codigo ? "Informe o código."
+    : !dados.valorReposicao ? "Informe o valor de reposição."
+    : !dados.senha ? "Digite a senha do estoque."
+    : "";
+
+  const erro = el("erroAddItem");
+
+  if(faltando){
+    erro.textContent = faltando;
+    return;
+  }
+
+  erro.textContent = "";
+
+  const botao = el("btnSalvarItem");
+  ocupado(botao, "Salvando...");
+
+  servidor("cadastrarItemDanificado", dados)
+    .then(function(res){
+      if(!res || !res.sucesso){ throw new Error((res && res.mensagem) || "Não foi possível salvar o item."); }
+      livre(botao);
+      fecharModal("modalAddItem");
+      estado.catalogo = null; /* recarrega o catálogo com o item novo */
+      avisar("Item " + dados.nomeItem + " cadastrado.", "sucesso");
+    })
+    .catch(function(falha){
+      livre(botao);
+      erro.textContent = falha.message;
+    });
+
+}
+
+
+/* =========================================================
+   PAINEL (TV)
+   Alterna: indicadores (rola devagar) → tabela → indicadores
+========================================================= */
+
+const painel = {
+  ativo: false,
+  pausado: false,
+  tela: "tabela",
+  temporizador: null,
+  rolagem: null,
+  ultimaCargaIndicadores: 0
+};
+
+function iniciarPainel(){
+
+  painel.ativo = true;
+  painel.pausado = true; /* abre parado; só rola depois do Play */
+
+  document.body.classList.add("modo-painel");
+  el("acoesTopo").classList.add("oculto");
+  el("filtros").classList.add("oculto");
+  el("barraSelecao").classList.add("oculto");
+  el("controlePainel").classList.remove("oculto");
+  el("btnPausar").textContent = "Play";
+
+  mostrarIndicadores();
+
+}
+
+function sairPainel(){
+
+  painel.ativo = false;
+  pararCiclo();
+
+  document.body.classList.remove("modo-painel");
+  el("acoesTopo").classList.remove("oculto");
+  el("filtros").classList.remove("oculto");
+  el("controlePainel").classList.add("oculto");
+
+  mostrarTela("tabela");
+  atualizarSelecao();
+
+}
+
+function pararCiclo(){
+  clearTimeout(painel.temporizador);
+  cancelAnimationFrame(painel.rolagem);
+  painel.temporizador = null;
+  painel.rolagem = null;
+}
+
+function pausarPainel(){
+
+  painel.pausado = !painel.pausado;
+  el("btnPausar").textContent = painel.pausado ? "Play" : "Pausar";
+
+  if(painel.pausado){
+    pararCiclo();
+  } else if(painel.tela === "painel"){
+    mostrarIndicadores();
+  } else {
+    mostrarTabelaPainel();
+  }
+
+}
+
+function avancarPainel(){
+  if(painel.tela === "painel"){ mostrarTabelaPainel(); }
+  else { mostrarIndicadores(); }
+}
+
+function mostrarTela(tela){
+  painel.tela = tela;
+  el("telaTabela").classList.toggle("oculto", tela !== "tabela");
+  el("telaPainel").classList.toggle("oculto", tela !== "painel");
+  window.scrollTo(0, 0);
+}
+
+function mostrarIndicadores(){
+
+  pararCiclo();
+  mostrarTela("painel");
+
+  if(Date.now() - painel.ultimaCargaIndicadores > INDICADORES_A_CADA || !el("gradeSetores").innerHTML){
+    carregarIndicadores();
+  }
+
+  if(painel.pausado){ return; }
+
+  /* 10 s parado no topo, depois rola até o fim e volta para a tabela */
+  painel.temporizador = setTimeout(function(){
+    rolarAteOFim(function(){
+      painel.temporizador = setTimeout(mostrarTabelaPainel, 3000);
+    });
+  }, 10000);
+
+}
+
+function mostrarTabelaPainel(){
+
+  pararCiclo();
+  mostrarTela("tabela");
+  carregar(false);
+
+  if(painel.pausado){ return; }
+
+  /* 8 s no topo, rola a tabela se for comprida, e volta para os indicadores */
+  painel.temporizador = setTimeout(function(){
+    rolarAteOFim(function(){
+      painel.temporizador = setTimeout(mostrarIndicadores, 4000);
+    });
+  }, 8000);
+
+}
+
+function rolarAteOFim(fim){
+
+  let posicao = window.scrollY;
+  let anterior = null;
+
+  function passo(agora){
+
+    if(!painel.ativo || painel.pausado){ return; }
+
+    if(anterior !== null){ posicao += (agora - anterior) * 0.04; } /* ~40 px/s */
+    anterior = agora;
+
+    const limite = document.documentElement.scrollHeight - window.innerHeight;
+
+    if(posicao >= limite){
+      window.scrollTo(0, limite);
+      fim();
+      return;
+    }
+
+    window.scrollTo(0, posicao);
+    painel.rolagem = requestAnimationFrame(passo);
+
+  }
+
+  painel.rolagem = requestAnimationFrame(passo);
+
+}
+
+/* Indicadores atualizam sozinhos enquanto o painel estiver aberto */
+setInterval(function(){
+  if(painel.ativo && !painel.pausado && !document.hidden){ carregarIndicadores(); }
+}, INDICADORES_A_CADA);
+
+function carregarIndicadores(){
+
+  painel.ultimaCargaIndicadores = Date.now();
+
+  ["gradeSetores", "gradeTeto", "gradeRH"].forEach(function(id){
+    if(!el(id).innerHTML){
+      el(id).innerHTML = '<div class="mensagem">Carregando...</div>';
+    }
+  });
+
+  servidor("itensDanificadosIndicadores")
+    .then(function(res){
+      renderSetores(res.metas);
+      renderTeto(res.teto);
+      renderRH(res.rh);
+    })
+    .catch(function(erro){
+      const aviso = '<div class="mensagem erro">Não foi possível carregar: ' + escapar(erro.message) + "</div>";
+      ["gradeSetores", "gradeTeto", "gradeRH"].forEach(function(id){ el(id).innerHTML = aviso; });
+    });
+
+}
+
+function corMeta(valor){
+  if(valor < 70){ return "var(--red)"; }
+  if(valor < 85){ return "var(--yellow)"; }
+  return "var(--green)";
+}
+
+function corTempo(valor, meta){
+  if(!meta){ return "var(--muted)"; }
+  if(valor <= meta){ return "var(--green)"; }
+  if(valor <= meta * 1.5){ return "var(--yellow)"; }
+  return "var(--red)";
+}
+
+function anel(valor, cor, grande){
+  const v = Math.max(0, Math.min(100, Number(valor) || 0));
+  return '<div class="anel' + (grande ? " grande" : "") + '" style="--v:' + v + ";--cor:" + cor + '"><span>' + Math.round(Number(valor) || 0) + "%</span></div>";
+}
+
+function renderSetores(bloco){
+
+  if(!bloco || !bloco.ok){
+    el("gradeSetores").innerHTML = '<div class="mensagem erro">' + escapar((bloco && bloco.erro) || "Sem dados de desempenho.") + "</div>";
+    return;
+  }
+
+  const mapa = {};
+  (bloco.dados || []).forEach(function(item){ mapa[normalizar(item.setor)] = item; });
+
+  el("gradeSetores").innerHTML = SETORES.map(function(nome){
+
+    const info = mapa[normalizar(nome)] || {};
+    const producao = Number(info.producao || 0);
+    const qualidade = Number(info.qualidade || 0);
+    const prazo = Number(info.prazo || 0);
+    const tempo = Number(info.tempo || 0);
+    const metaTempo = Number(info.metaTempo || 0);
+
+    return (
+      '<div class="setor-card" style="' + varsSetor(nome) + '">' +
+        '<div class="setor-card-titulo">' + escapar(nome) + "</div>" +
+        '<div class="setor-metricas">' +
+          '<div class="metrica">' +
+            '<span class="metrica-rotulo">Produção</span>' +
+            '<span class="metrica-numero" style="color:' + corMeta(producao) + '">' + Number(info.concluidas || 0) + "</span>" +
+            '<span class="metrica-meta">Meta: ' + Number(info.metaProducao || 0) + "</span>" +
+          "</div>" +
+          '<div class="metrica">' +
+            anel(qualidade, corMeta(qualidade)) +
+            '<span class="metrica-rotulo">Qualidade</span>' +
+            '<span class="metrica-meta">Meta: ' + Number(info.metaQualidade || 0) + "%</span>" +
+          "</div>" +
+          '<div class="metrica">' +
+            anel(prazo, corMeta(prazo)) +
+            '<span class="metrica-rotulo">Prazo</span>' +
+            '<span class="metrica-meta">Meta: ' + Number(info.metaPrazo || 0) + "%</span>" +
+          "</div>" +
+          '<div class="metrica">' +
+            '<span class="metrica-rotulo">Tempo médio</span>' +
+            '<span class="metrica-numero" style="color:' + corTempo(tempo, metaTempo) + '">' + tempo.toFixed(1) + "</span>" +
+            '<span class="metrica-meta">Meta: ' + metaTempo + " dias</span>" +
+          "</div>" +
+        "</div>" +
+      "</div>"
+    );
+
+  }).join("");
+
+}
+
+function renderTeto(bloco){
+
+  if(!bloco || !bloco.ok){
+    el("gradeTeto").innerHTML = '<div class="mensagem erro">' + escapar((bloco && bloco.erro) || "Sem dados de teto.") + "</div>";
+    return;
+  }
+
+  const mapa = {};
+  (bloco.dados || []).forEach(function(item){ mapa[normalizar(item.setor)] = item; });
+
+
+  el("gradeTeto").innerHTML = SETORES.map(function(nome){
+
+    const info = mapa[normalizar(nome)];
+    const perc = info ? Number(info.percentual || 0) : 0;
+    const cor = perc > 85 ? "var(--red)" : perc > 70 ? "var(--yellow)" : "var(--green)";
+
+    return (
+      '<div class="teto-card" style="' + varsSetor(nome) + '">' +
+        anel(perc, cor, true) +
+        '<div class="teto-nome">' + escapar(nome) + "</div>" +
+      "</div>"
+    );
+
+  }).join("");
+
+}
+
+function renderRH(bloco){
+
+  if(!bloco || !bloco.ok){
+    el("gradeRH").innerHTML = '<div class="mensagem erro">' + escapar((bloco && bloco.erro) || "Sem dados de RH.") + "</div>";
+    return;
+  }
+
+  const mapa = {};
+  (bloco.dados || []).forEach(function(item){ mapa[normalizar(item.setor)] = item; });
+
+  const cartoes = SETORES
+    .filter(function(nome){ return mapa[normalizar(nome)]; })
+    .map(function(nome){
+
+      const setor = mapa[normalizar(nome)];
+
+      return (
+        '<div class="rh-card" style="' + varsSetor(nome) + '">' +
+          '<div class="rh-setor">' + escapar(nome) + "</div>" +
+          setor.ocorrencias.map(function(o){
+            const qtd = Number(o.qtd || 0);
+            const meta = Number(o.meta || 0);
+            const perc = meta > 0 ? Math.min(100, qtd / meta * 100) : 0;
+            const cor = perc >= 80 ? "var(--red)" : perc >= 50 ? "var(--yellow)" : "var(--green)";
+            return (
+              '<div class="rh-linha">' +
+                '<div class="rh-topo"><span>' + escapar(o.tipo) + '</span><strong style="color:' + cor + '">' + qtd + "</strong></div>" +
+                '<div class="rh-barra"><div style="width:' + perc + "%;background:" + cor + '"></div></div>' +
+                '<div class="rh-meta">Limite: ' + meta + "</div>" +
+              "</div>"
+            );
+          }).join("") +
+        "</div>"
+      );
+
+    });
+
+  el("gradeRH").innerHTML = cartoes.length
+    ? cartoes.join("")
+    : '<div class="mensagem">Nenhuma ocorrência dos setores de manutenção neste mês.</div>';
+
+}
+
+
+/* =========================================================
+   TECLADO E INÍCIO
+========================================================= */
+
+document.addEventListener("keydown", function(evento){
+  if(evento.key !== "Escape"){ return; }
+  const abertos = document.querySelectorAll(".modal.aberto");
+  if(abertos.length){ abertos[abertos.length - 1].classList.remove("aberto"); }
+});
+
+carregar(true);
+
+/* Adianta o catálogo e os funcionários para o formulário abrir na hora */
+setTimeout(function(){
+  carregarCatalogo().catch(function(){});
+  carregarFuncionarios().catch(function(){});
+}, 1500);
+</script>
+</body>
+</html>

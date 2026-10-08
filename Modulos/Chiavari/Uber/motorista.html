@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="uber"></script>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>Chiavari • Motorista</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   APP DO MOTORISTA — Chiavari Eventos
+   Mapa em tela cheia + painel que sobe de baixo (estilo Uber / 99)
+========================================================= */
+:root{
+  --preto:#111111; --preto2:#2a2a2a; --texto:#111111; --texto2:#5e5e5e; --linha:#ececec; --fundo:#f6f6f6; --branco:#ffffff;
+  --verde:#05944f; --verde-claro:#e6f4ec; --amarelo:#b26b00; --amarelo-claro:#fff4e0; --azul:#276ef1; --azul-claro:#eaf1fe;
+  --vermelho:#e11900; --vermelho-claro:#fdecea;
+  --sombra:0 -8px 30px rgba(0,0,0,.12);
+  --raio:22px;
+  --seguro-baixo:env(safe-area-inset-bottom, 0px);
+}
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body{ margin:0; height:100%; overflow:hidden; background:#e9e9e9; color:var(--texto); font-family:"Manrope", system-ui, -apple-system, sans-serif; -webkit-font-smoothing:antialiased; }
+button, input, textarea{ font-family:inherit; }
+button{ cursor:pointer; }
+
+/* ---------- Mapa ---------- */
+/* O Google força position:relative no #mapa: quem ocupa a tela é a moldura */
+.mapa-moldura{ position:fixed; inset:0; background:#e9e9e9; }
+#mapa{ width:100%; height:100%; background:#e9e9e9; }
+.mapa-sem{ position:fixed; inset:0; display:grid; place-items:center; background:
+  linear-gradient(#e9e9e9 1px, transparent 1px) 0 0/40px 40px, linear-gradient(90deg, #e9e9e9 1px, #f2f2f2 1px) 0 0/40px 40px; }
+
+/* ---------- Barra do topo ---------- */
+.topo{
+  position:fixed; top:calc(12px + env(safe-area-inset-top, 0px)); left:12px; right:12px; z-index:20;
+  display:flex; align-items:center; gap:10px; pointer-events:none;
+}
+.topo > *{ pointer-events:auto; }
+.botao-redondo{
+  width:46px; height:46px; flex:0 0 46px; border:0; border-radius:50%; background:var(--branco); color:var(--texto);
+  display:grid; place-items:center; box-shadow:0 4px 16px rgba(0,0,0,.16);
+}
+.botao-redondo svg{ width:22px; height:22px; }
+.saudacao{
+  display:flex; align-items:center; gap:10px; height:46px; padding:0 16px 0 6px; border-radius:999px; background:var(--branco);
+  box-shadow:0 4px 16px rgba(0,0,0,.16); font-weight:800; font-size:15px; max-width:calc(100% - 56px);
+}
+.avatar{ width:34px; height:34px; flex:0 0 34px; border-radius:50%; background:var(--preto); color:#fff; display:grid; place-items:center; font-size:14px; font-weight:800; }
+.saudacao span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.selo-supervisor{ margin-left:auto; height:32px; padding:0 12px; border-radius:999px; background:var(--amarelo-claro); color:var(--amarelo); font-size:12px; font-weight:800; display:none; align-items:center; box-shadow:0 4px 16px rgba(0,0,0,.12); }
+.selo-supervisor.ativo{ display:inline-flex; }
+
+/* ---------- Painel de baixo ---------- */
+.painel{
+  position:fixed; left:0; right:0; bottom:0; z-index:30; max-height:78vh; display:flex; flex-direction:column;
+  background:var(--branco); border-radius:var(--raio) var(--raio) 0 0; box-shadow:var(--sombra);
+  transform:translateY(0); transition:transform .35s cubic-bezier(.2,.8,.2,1), max-height .35s;
+}
+.painel.alto{ max-height:92vh; }
+.painel.medio{ max-height:58vh; }
+.barra-acao{ position:sticky; bottom:calc(-20px - var(--seguro-baixo)); margin:16px -20px calc(-20px - var(--seguro-baixo)); padding:12px 20px calc(16px + var(--seguro-baixo)); background:#fff; box-shadow:0 -6px 16px rgba(0,0,0,.06); z-index:2; }
+.tipo strong, .tipo .valor{ color:var(--texto); }
+.tipo-ico{ color:var(--texto); }
+.alca{ width:44px; height:5px; margin:10px auto 2px; border-radius:999px; background:#d6d6d6; flex:0 0 auto; }
+.painel-conteudo{ overflow-y:auto; padding:8px 20px calc(20px + var(--seguro-baixo)); -webkit-overflow-scrolling:touch; }
+.tela{ animation:entrar .3s cubic-bezier(.2,.8,.2,1); }
+@keyframes entrar{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+
+h1.titulo{ margin:6px 0 4px; font-size:26px; font-weight:800; letter-spacing:-.02em; line-height:1.15; }
+p.apoio{ margin:0 0 18px; font-size:15px; color:var(--texto2); font-weight:500; line-height:1.45; }
+.rotulo{ display:block; margin:16px 0 8px; font-size:13px; font-weight:800; color:var(--texto2); text-transform:uppercase; letter-spacing:.06em; }
+
+/* Campos */
+.campo{ display:flex; align-items:center; gap:12px; min-height:56px; padding:0 16px; border:2px solid transparent; border-radius:14px; background:var(--fundo); transition:border-color .15s, background-color .15s; }
+.campo:focus-within{ border-color:var(--preto); background:#fff; }
+.campo svg{ width:20px; height:20px; flex:0 0 20px; color:var(--texto2); }
+.campo input, .campo textarea{ flex:1; min-width:0; border:0; outline:none; background:transparent; font-size:17px; font-weight:600; color:var(--texto); }
+.campo textarea{ padding:14px 0; min-height:70px; resize:none; }
+.campo + .campo{ margin-top:10px; }
+
+/* Botões */
+.botao{
+  width:100%; min-height:58px; border:0; border-radius:14px; background:var(--preto); color:#fff; font-size:17px; font-weight:800;
+  display:flex; align-items:center; justify-content:center; gap:10px; transition:transform .1s, background-color .15s;
+}
+.botao:active{ transform:scale(.98); }
+.botao:disabled{ background:#bdbdbd; }
+.botao.claro{ background:var(--fundo); color:var(--texto); }
+.botao + .botao{ margin-top:10px; }
+.botao .preco{ margin-left:auto; padding-left:12px; border-left:1px solid rgba(255,255,255,.25); }
+.botao.com-preco{ justify-content:flex-start; padding:0 20px; }
+
+/* Segmentos */
+.segmentos{ display:flex; gap:6px; padding:4px; border-radius:999px; background:var(--fundo); margin:4px 0 14px; }
+.segmentos button{ flex:1; min-height:42px; border:0; border-radius:999px; background:transparent; color:var(--texto2); font-size:15px; font-weight:800; }
+.segmentos button.ativo{ background:#fff; color:var(--texto); box-shadow:0 2px 8px rgba(0,0,0,.08); }
+
+.opcoes-carro{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.opcao{ display:grid; justify-items:start; gap:6px; padding:14px; border:2px solid var(--linha); border-radius:14px; background:#fff; text-align:left; font-size:15px; font-weight:800; color:var(--texto); }
+.opcao small{ font-size:13px; font-weight:600; color:var(--texto2); }
+.opcao svg{ width:28px; height:28px; }
+.opcao.ativo{ border-color:var(--preto); background:#fafafa; }
+
+/* Lista de corridas */
+.corrida{
+  display:grid; grid-template-columns:48px minmax(0, 1fr) auto; align-items:center; gap:14px; width:100%;
+  padding:14px 4px; border:0; border-bottom:1px solid var(--linha); background:transparent; text-align:left; color:var(--texto);
+}
+.corrida:last-child{ border-bottom:0; }
+.corrida:active{ background:#fafafa; }
+.corrida-ico{ width:48px; height:48px; border-radius:14px; background:var(--fundo); display:grid; place-items:center; }
+.corrida-ico svg{ width:24px; height:24px; }
+.corrida-info{ min-width:0; }
+.corrida-info strong{ display:block; font-size:17px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.corrida-info span{ display:block; margin-top:3px; font-size:14px; color:var(--texto2); font-weight:600; }
+.corrida-preco{ text-align:right; }
+.corrida-preco strong{ display:block; font-size:18px; font-weight:800; }
+.corrida-preco span{ font-size:12px; color:var(--texto2); font-weight:700; }
+
+.vazio{ padding:28px 10px; text-align:center; color:var(--texto2); font-size:15px; font-weight:600; line-height:1.5; }
+.vazio svg{ display:block; width:44px; height:44px; margin:0 auto 10px; color:#c4c4c4; }
+
+/* Esqueleto (carregando) */
+.esqueleto{ height:76px; margin:8px 0; border-radius:14px; background:linear-gradient(90deg, #f1f1f1, #f8f8f8, #f1f1f1); background-size:200% 100%; animation:brilho 1.2s infinite; }
+@keyframes brilho{ to{ background-position:-200% 0; } }
+
+/* Detalhe da corrida */
+.rota{ display:grid; grid-template-columns:22px 1fr; gap:4px 12px; margin:8px 0 6px; }
+.rota .ponto{ width:12px; height:12px; margin:5px auto 0; border-radius:50%; background:var(--preto); }
+.rota .ponto.fim{ border-radius:3px; }
+.rota .traco{ width:2px; height:26px; margin:2px auto; background:#cfcfcf; }
+.rota strong{ display:block; font-size:16px; font-weight:800; }
+.rota span{ display:block; font-size:14px; color:var(--texto2); font-weight:600; }
+.chips{ display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 4px; }
+.chip{ display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 12px; border-radius:999px; background:var(--fundo); font-size:14px; font-weight:800; }
+.chip svg{ width:16px; height:16px; }
+
+.tipos{ display:grid; gap:10px; margin-top:8px; }
+.tipo{
+  display:grid; grid-template-columns:52px minmax(0, 1fr) auto; align-items:center; gap:14px; width:100%;
+  padding:14px; border:2px solid var(--linha); border-radius:16px; background:#fff; text-align:left; color:var(--texto);
+  transition:border-color .15s, background-color .15s;
+}
+.tipo.ativo{ border-color:var(--preto); background:#fafafa; }
+.tipo-ico{ width:52px; height:52px; border-radius:14px; background:var(--fundo); display:grid; place-items:center; }
+.tipo-ico svg{ width:28px; height:28px; }
+.tipo strong{ display:block; font-size:17px; font-weight:800; }
+.tipo span{ display:block; margin-top:2px; font-size:14px; color:var(--texto2); font-weight:600; }
+.tipo .valor{ font-size:19px; font-weight:800; }
+
+.detalhes{ margin-top:12px; border-radius:14px; background:var(--fundo); }
+.detalhes summary{ list-style:none; display:flex; align-items:center; justify-content:space-between; padding:14px 16px; font-size:15px; font-weight:800; cursor:pointer; }
+.detalhes summary::-webkit-details-marker{ display:none; }
+.detalhes summary svg{ width:18px; height:18px; transition:transform .2s; }
+.detalhes[open] summary svg{ transform:rotate(180deg); }
+.detalhes-corpo{ padding:0 16px 14px; display:grid; gap:8px; }
+.linha-calc{ display:flex; justify-content:space-between; gap:10px; font-size:15px; font-weight:600; color:var(--texto2); }
+.linha-calc b{ color:var(--texto); font-weight:800; font-variant-numeric:tabular-nums; }
+.linha-calc.total{ padding-top:8px; border-top:1px solid #e2e2e2; font-size:17px; color:var(--texto); font-weight:800; }
+
+/* Envio / sucesso */
+.sucesso{ text-align:center; padding:10px 0 4px; }
+.check{ width:86px; height:86px; margin:6px auto 14px; border-radius:50%; background:var(--verde); display:grid; place-items:center; animation:pulo .5s cubic-bezier(.2,1.6,.4,1); }
+.check svg{ width:44px; height:44px; color:#fff; stroke-dasharray:40; stroke-dashoffset:40; animation:riscar .5s .25s forwards; }
+@keyframes pulo{ from{ transform:scale(.3); opacity:0; } to{ transform:scale(1); opacity:1; } }
+@keyframes riscar{ to{ stroke-dashoffset:0; } }
+.valor-grande{ font-size:40px; font-weight:800; letter-spacing:-.02em; margin:4px 0; }
+.recibo{ margin:16px 0; padding:16px; border-radius:16px; background:var(--fundo); text-align:left; display:grid; gap:10px; }
+
+/* Minhas corridas */
+.ganhos{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:6px 0 14px; }
+.ganho{ padding:14px; border-radius:16px; background:var(--fundo); }
+.ganho span{ display:block; font-size:13px; font-weight:800; color:var(--texto2); text-transform:uppercase; letter-spacing:.05em; }
+.ganho strong{ display:block; margin-top:6px; font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; }
+.ganho.verde{ background:var(--verde-claro); } .ganho.verde strong{ color:var(--verde); }
+.status{ display:inline-flex; align-items:center; height:24px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:800; }
+.status.pendente{ background:var(--amarelo-claro); color:var(--amarelo); }
+.status.conferido{ background:var(--azul-claro); color:var(--azul); }
+.status.pago{ background:var(--verde-claro); color:var(--verde); }
+.status.recusado{ background:var(--vermelho-claro); color:var(--vermelho); }
+
+/* Menu lateral */
+.fundo-escuro{ position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .25s; }
+.fundo-escuro.aberto{ opacity:1; pointer-events:auto; }
+.menu{
+  position:fixed; top:0; bottom:0; left:0; z-index:50; width:min(320px, 86vw); padding:calc(24px + env(safe-area-inset-top, 0px)) 20px 24px;
+  background:#fff; transform:translateX(-102%); transition:transform .3s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column; gap:6px;
+}
+.menu.aberto{ transform:none; }
+.menu-perfil{ display:flex; align-items:center; gap:14px; padding-bottom:18px; margin-bottom:8px; border-bottom:1px solid var(--linha); }
+.menu-perfil .avatar{ width:56px; height:56px; flex-basis:56px; font-size:22px; }
+.menu-perfil strong{ display:block; font-size:19px; font-weight:800; }
+.menu-perfil span{ font-size:14px; color:var(--texto2); font-weight:600; }
+.menu button{ display:flex; align-items:center; gap:14px; min-height:54px; padding:0 8px; border:0; border-radius:12px; background:transparent; color:var(--texto); font-size:17px; font-weight:700; text-align:left; }
+.menu button:active{ background:var(--fundo); }
+.menu button svg{ width:22px; height:22px; }
+.menu .rodape-menu{ margin-top:auto; font-size:13px; color:var(--texto2); font-weight:600; }
+
+/* Aviso rápido */
+.toast{ position:fixed; left:50%; top:calc(70px + env(safe-area-inset-top, 0px)); z-index:60; max-width:calc(100vw - 32px); padding:14px 18px; border-radius:14px; background:var(--preto); color:#fff; font-size:15px; font-weight:700; transform:translate(-50%, -20px); opacity:0; transition:all .25s; pointer-events:none; }
+.toast.visivel{ transform:translate(-50%, 0); opacity:1; }
+.toast.erro{ background:var(--vermelho); }
+
+.girando{ width:22px; height:22px; border:3px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:girar .8s linear infinite; }
+@keyframes girar{ to{ transform:rotate(360deg); } }
+
+@media (min-width:700px){
+  .painel{ left:24px; right:auto; bottom:24px; width:420px; border-radius:var(--raio); max-height:calc(100vh - 110px); }
+  .painel.alto, .painel.medio{ max-height:calc(100vh - 110px); }
+  .alca{ display:none; }
+  .topo{ right:auto; }
+}
+
+/* =========================================================
+   NAVEGAÇÃO (estilo Google Maps)
+========================================================= */
+body.navegando .topo, body.navegando .painel{ display:none; }
+.nav-topo, .nav-baixo, .nav-lateral, .nav-chegada{ display:none; }
+body.navegando .nav-topo, body.navegando .nav-baixo, body.navegando .nav-lateral{ display:flex; }
+
+.nav-topo{
+  position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); left:10px; right:10px; z-index:35;
+  flex-direction:column; border-radius:18px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+.nav-manobra{ display:flex; align-items:center; gap:14px; padding:14px 16px; background:#0f7a43; color:#fff; }
+.nav-manobra .nav-ico{ width:52px; height:52px; flex:0 0 52px; display:grid; place-items:center; }
+.nav-manobra .nav-ico svg{ width:48px; height:48px; }
+.nav-manobra strong{ display:block; font-size:28px; font-weight:800; line-height:1.05; letter-spacing:-.01em; }
+.nav-manobra span{ display:block; margin-top:3px; font-size:17px; font-weight:700; line-height:1.3; }
+.nav-depois{ display:flex; align-items:center; gap:8px; padding:9px 16px; background:#0b5e33; color:#e6f4ec; font-size:15px; font-weight:700; }
+.nav-depois svg{ width:20px; height:20px; }
+.nav-depois:empty{ display:none; }
+.nav-aviso{ padding:9px 16px; background:#fff4e0; color:#8a5300; font-size:14px; font-weight:700; line-height:1.35; }
+.nav-aviso:empty{ display:none; }
+
+.nav-baixo{
+  position:fixed; left:0; right:0; bottom:0; z-index:35; align-items:center; gap:12px;
+  padding:14px 16px calc(14px + var(--seguro-baixo)); background:#fff; border-radius:22px 22px 0 0; box-shadow:0 -8px 30px rgba(0,0,0,.15);
+}
+.nav-eta{ flex:1; min-width:0; text-align:center; }
+.nav-eta strong{ display:block; font-size:24px; font-weight:800; color:#0f7a43; }
+.nav-eta span{ display:block; margin-top:2px; font-size:15px; font-weight:700; color:var(--texto2); }
+.nav-sair{ width:52px; height:52px; flex:0 0 52px; border:0; border-radius:50%; background:var(--vermelho-claro); color:var(--vermelho); display:grid; place-items:center; }
+.nav-sair svg, .nav-mais svg{ width:24px; height:24px; }
+.nav-mais{ width:52px; height:52px; flex:0 0 52px; border:0; border-radius:50%; background:var(--fundo); color:var(--texto); display:grid; place-items:center; }
+
+.nav-lateral{ position:fixed; right:12px; bottom:calc(112px + var(--seguro-baixo)); z-index:34; flex-direction:column; gap:10px; }
+.nav-lateral button{ width:52px; height:52px; border:0; border-radius:50%; background:#fff; color:var(--texto); display:grid; place-items:center; box-shadow:0 4px 16px rgba(0,0,0,.2); }
+.nav-lateral button svg{ width:24px; height:24px; }
+.nav-lateral button.ativo{ color:#0f7a43; }
+.nav-lateral .nav-recentrar{ display:none; width:auto; padding:0 18px; border-radius:999px; font-size:15px; font-weight:800; gap:8px; grid-auto-flow:column; }
+.nav-lateral .nav-recentrar.visivel{ display:grid; }
+.nav-passos{ display:none !important; }
+body.nav-previa .nav-passos{ display:grid !important; }
+
+/* Opções da navegação (Google Maps, Waze, voltar) */
+.nav-opcoes{ position:fixed; inset:0; z-index:45; display:none; align-items:flex-end; background:rgba(0,0,0,.4); }
+.nav-opcoes.aberto{ display:flex; }
+.nav-opcoes-caixa{ width:100%; padding:10px 20px calc(20px + var(--seguro-baixo)); border-radius:22px 22px 0 0; background:#fff; animation:entrar .25s; }
+.nav-opcoes-caixa h3{ margin:8px 0 14px; font-size:20px; font-weight:800; }
+.app-externo{ display:flex; align-items:center; gap:14px; width:100%; min-height:62px; padding:0 16px; border:0; border-radius:14px; background:var(--fundo); color:var(--texto); font-size:17px; font-weight:800; text-align:left; }
+.app-externo + .app-externo{ margin-top:10px; }
+.app-externo .logo{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:15px; }
+
+/* Chegada */
+.nav-chegada{ position:fixed; left:0; right:0; bottom:0; z-index:38; flex-direction:column; padding:22px 20px calc(20px + var(--seguro-baixo)); background:#fff; border-radius:22px 22px 0 0; box-shadow:0 -8px 30px rgba(0,0,0,.15); animation:entrar .3s; }
+.nav-chegada.visivel{ display:flex; }
+.nav-chegada h2{ margin:0 0 4px; font-size:24px; font-weight:800; }
+.nav-chegada p{ margin:0 0 16px; font-size:15px; color:var(--texto2); font-weight:600; }
+
+/* Botão de navegar no detalhe */
+.botao.navegar{ background:#0f7a43; }
+.botao.navegar svg{ width:22px; height:22px; }
+
+@media (min-width:700px){
+  .nav-topo{ right:auto; width:420px; }
+  .nav-baixo, .nav-chegada{ left:24px; right:auto; bottom:24px; width:420px; border-radius:22px; }
+  .nav-opcoes-caixa{ max-width:460px; margin:0 auto 24px; border-radius:22px; }
+}
+
+@media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } .check svg{ stroke-dashoffset:0; } }
+</style>
+</head>
+<body>
+
+<div class="mapa-moldura"><div id="mapa"></div></div>
+
+<!-- Topo -->
+<div class="topo">
+  <button type="button" class="botao-redondo" id="btnMenu" onclick="App.menu(true)" aria-label="Abrir menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <div class="saudacao" id="saudacao" style="display:none"><span class="avatar" id="avatarTopo">?</span><span id="nomeTopo"></span></div>
+  <span class="selo-supervisor" id="seloSupervisor">MODO SUPERVISOR</span>
+</div>
+
+<!-- Painel de baixo -->
+<section class="painel" id="painel" aria-live="polite">
+  <div class="alca"></div>
+  <div class="painel-conteudo" id="conteudo"></div>
+</section>
+
+<!-- Menu -->
+<div class="fundo-escuro" id="fundoMenu" onclick="App.menu(false)"></div>
+<nav class="menu" id="menu" aria-label="Menu">
+  <div class="menu-perfil"><span class="avatar" id="avatarMenu">?</span><div><strong id="nomeMenu">Motorista</strong><span id="foneMenu"></span></div></div>
+  <button type="button" onclick="App.ir('inicio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Corridas disponíveis</button>
+  <button type="button" onclick="App.ir('minhas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Minhas corridas</button>
+  <button type="button" onclick="App.ir('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Meus dados</button>
+  <button type="button" id="btnSupervisorMenu" onclick="App.alternarSupervisor()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span id="txtSupervisor">Modo supervisor</span></button>
+  <div class="rodape-menu">Chiavari Eventos · App do Motorista</div>
+</nav>
+
+
+<!-- Navegação -->
+<div class="nav-topo" id="navTopo">
+  <div class="nav-manobra"><span class="nav-ico" id="navIco"></span><div><strong id="navDist">—</strong><span id="navTexto">Calculando a rota…</span></div></div>
+  <div class="nav-depois" id="navDepois"></div>
+  <div class="nav-aviso" id="navAviso"></div>
+</div>
+
+<div class="nav-lateral" id="navLateral">
+  <button type="button" class="nav-recentrar" id="navRecentrar" onclick="App.nav.recentrar()" aria-label="Voltar a seguir o carro">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 19-7-4-7 4z"/></svg>Recentralizar
+  </button>
+  <button type="button" class="nav-passos" onclick="App.nav.passo(-1)" aria-label="Instrução anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
+  <button type="button" class="nav-passos" onclick="App.nav.passo(1)" aria-label="Próxima instrução"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <button type="button" id="navSom" class="ativo" onclick="App.nav.som()" aria-label="Ligar ou desligar a voz"></button>
+</div>
+
+<div class="nav-baixo" id="navBaixo">
+  <button type="button" class="nav-sair" onclick="App.nav.sair()" aria-label="Encerrar navegação"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div class="nav-eta"><strong id="navTempo">—</strong><span id="navResto">—</span></div>
+  <button type="button" class="nav-mais" onclick="App.nav.opcoes(true)" aria-label="Mais opções"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></button>
+</div>
+
+<div class="nav-chegada" id="navChegada">
+  <h2>Você chegou!</h2>
+  <p id="navChegadaTexto"></p>
+  <button type="button" class="botao" onclick="App.nav.sair()">Concluir</button>
+  <button type="button" class="botao claro" onclick="App.nav.voltarBase()">Navegar de volta para a Chiavari</button>
+</div>
+
+<div class="nav-opcoes" id="navOpcoes" onclick="if(event.target===this)App.nav.opcoes(false)">
+  <div class="nav-opcoes-caixa">
+    <div class="alca"></div>
+    <h3>Navegar com outro app</h3>
+    <button type="button" class="app-externo" onclick="App.nav.externo('google')"><span class="logo" style="background:#1a73e8">G</span>Abrir no Google Maps</button>
+    <button type="button" class="app-externo" onclick="App.nav.externo('waze')"><span class="logo" style="background:#33ccff">W</span>Abrir no Waze</button>
+    <button type="button" class="app-externo" onclick="App.nav.opcoes(false)"><span class="logo" style="background:#5e5e5e">×</span>Continuar aqui</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   APP DO MOTORISTA
+   Telas: cadastro → corridas disponíveis → detalhe (rota + valor) → enviada
+          minhas corridas · meus dados · modo supervisor
+========================================================= */
+var App = (function(){
+
+  const BASE = { nome:"Chiavari Eventos", endereco:"Chiavari Eventos - Estrada União e Indústria - Itaipava, Petrópolis - RJ, Brasil", pos:{ lat:-22.4134, lng:-43.1311 } };
+  const CHAVE = "chiavariMotorista";
+
+  const estado = {
+    perfil:null, semana:0, corridas:null, corrida:null, tipo:"IDA", supervisor:false, senhaSupervisor:"",
+    mapa:null, rota:null, marcadores:[], geocoder:null, direcoes:null, cacheRotas:{}
+  };
+
+  /* ---------- Apoio ---------- */
+  const $ = function(id){ return document.getElementById(id); };
+  const esc = function(v){ return String(v === null || v === undefined ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); };
+  const moeda = function(v){ return Number(v || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" }); };
+  const km = function(v){ return Number(v || 0).toLocaleString("pt-BR", { maximumFractionDigits:1 }) + " km"; };
+  const iniciais = function(n){ const p = String(n || "").trim().split(/\s+/); return ((p[0] || "?")[0] + (p.length > 1 ? p[p.length - 1][0] : "")).toUpperCase(); };
+  const primeiroNome = function(n){ const p = String(n || "").trim().split(/\s+/)[0] || ""; return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase(); };
+
+  function ler(){ try { return JSON.parse(localStorage.getItem(CHAVE) || "null"); } catch (e) { return null; } }
+  function gravar(p){ try { localStorage.setItem(CHAVE, JSON.stringify(p)); } catch (e) {} }
+
+  let tempoToast = null;
+  function avisar(texto, erro){
+    const t = $("toast");
+    t.textContent = texto; t.className = "toast visivel" + (erro ? " erro" : "");
+    clearTimeout(tempoToast); tempoToast = setTimeout(function(){ t.className = "toast" + (erro ? " erro" : ""); }, 3200);
+  }
+
+  function servidor(nome){
+    const args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function(ok, falha){
+      google.script.run.withSuccessHandler(ok).withFailureHandler(function(e){ falha(new Error(e && e.message ? e.message : String(e))); })[nome].apply(null, args);
+    });
+  }
+
+  /* Mesma tabela do servidor: até 10 km R$ 4,50 · 10–20 R$ 2,50 · 20–40 R$ 2,00 · acima de 40 R$ 1,80 */
+  const FAIXAS = [ { ate:10, preco:4.5 }, { ate:20, preco:2.5 }, { ate:40, preco:2.0 }, { ate:Infinity, preco:1.8 } ];
+  function calcular(kmTotal){
+    let resto = Number(kmTotal) || 0, inicio = 0, total = 0;
+    const partes = [];
+    FAIXAS.forEach(function(f){
+      if (resto <= 0) return;
+      const tam = Math.min(resto, f.ate - inicio);
+      if (tam > 0){ partes.push({ de:inicio, ate:inicio + tam, km:tam, preco:f.preco, valor:tam * f.preco }); total += tam * f.preco; resto -= tam; }
+      inicio = f.ate;
+    });
+    return { total:Math.round(total * 100) / 100, partes:partes };
+  }
+
+  const ICO = {
+    carro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l1.4-5.6A2 2 0 0 1 9.3 10h5.4a2 2 0 0 1 1.9 1.4L18 17"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/></svg>',
+    ida:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>',
+    idaVolta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>',
+    local:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>',
+    tempo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    data:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>',
+    seta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+    voltar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+    pessoa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>',
+    fone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
+    pix:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 9-9 9-9-9z"/><path d="M8 12h8"/></svg>',
+    nota:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    vazio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l1.4-5.6A2 2 0 0 1 9.3 10h5.4a2 2 0 0 1 1.9 1.4L18 17"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/></svg>',
+    predio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l8-5 8 5v13"/><path d="M10 21v-6h4v6"/></svg>'
+  };
+
+  /* ---------- Mapa ---------- */
+  const ESTILO_MAPA = [
+    { elementType:"geometry", stylers:[{ color:"#f2f2f2" }] },
+    { elementType:"labels.icon", stylers:[{ visibility:"off" }] },
+    { elementType:"labels.text.fill", stylers:[{ color:"#6b6b6b" }] },
+    { elementType:"labels.text.stroke", stylers:[{ color:"#f5f5f5" }] },
+    { featureType:"poi", elementType:"geometry", stylers:[{ color:"#e8e8e8" }] },
+    { featureType:"poi.park", elementType:"geometry", stylers:[{ color:"#dfeedd" }] },
+    { featureType:"road", elementType:"geometry", stylers:[{ color:"#ffffff" }] },
+    { featureType:"road.arterial", elementType:"labels.text.fill", stylers:[{ color:"#757575" }] },
+    { featureType:"road.highway", elementType:"geometry", stylers:[{ color:"#dcdcdc" }] },
+    { featureType:"water", elementType:"geometry", stylers:[{ color:"#cfe0ee" }] },
+    { featureType:"transit", stylers:[{ visibility:"off" }] }
+  ];
+
+  function iniciarMapa(){
+    if (!window.google || !google.maps){ $("mapa").className = "mapa-sem"; return; }
+    estado.mapa = new google.maps.Map($("mapa"), {
+      center:BASE.pos, zoom:12, styles:ESTILO_MAPA, disableDefaultUI:true, gestureHandling:"greedy", clickableIcons:false
+    });
+    estado.geocoder = new google.maps.Geocoder();
+    estado.direcoes = new google.maps.DirectionsService();
+    estado.geocoder.geocode({ address:BASE.endereco }, function(r, s){
+      if (s === "OK" && r[0]){ BASE.pos = r[0].geometry.location.toJSON(); mostrarBase(); }
+    });
+    mostrarBase();
+  }
+
+  function limparMapa(){
+    if (estado.rota){ estado.rota.forEach(function(l){ l.setMap(null); }); estado.rota = null; }
+    estado.marcadores.forEach(function(m){ m.setMap(null); }); estado.marcadores = [];
+  }
+
+  function marcador(pos, tipo){
+    // Ponto de partida: círculo preto · Destino: quadrado preto (como Uber)
+    const svg = tipo === "fim"
+      ? '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><rect x="3" y="3" width="20" height="20" rx="3" fill="#111" stroke="#fff" stroke-width="3"/><rect x="10" y="10" width="6" height="6" fill="#fff"/></svg>'
+      : '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><circle cx="13" cy="13" r="10" fill="#111" stroke="#fff" stroke-width="3"/><circle cx="13" cy="13" r="3.5" fill="#fff"/></svg>';
+    const m = new google.maps.Marker({ position:pos, map:estado.mapa, icon:{ url:"data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg), anchor:new google.maps.Point(13, 13) } });
+    estado.marcadores.push(m);
+    return m;
+  }
+
+  function mostrarBase(){
+    if (!estado.mapa || estado.corrida) return;
+    limparMapa();
+    marcador(BASE.pos, "inicio");
+    estado.mapa.panTo(BASE.pos);
+    estado.mapa.setZoom(12);
+    deslocarParaPainel();
+  }
+
+  /* Mantém o centro do mapa acima do painel de baixo */
+  function deslocarParaPainel(){
+    if (!estado.mapa) return;
+    const alt = $("painel").getBoundingClientRect().height;
+    if (window.innerWidth < 700) estado.mapa.panBy(0, Math.round(alt / 2.4));
+  }
+
+  function desenharRota(corrida, pronto){
+    if (!estado.mapa){ pronto && pronto(null); return; }
+    limparMapa();
+    const destino = corrida.local + ", RJ, Brasil";
+    const chave = corrida.local;
+    const usar = function(res){
+      if (!res){
+        // Sem rota: tenta só achar o ponto
+        estado.geocoder.geocode({ address:destino, region:"br" }, function(r, s){
+          marcador(BASE.pos, "inicio");
+          if (s === "OK" && r[0]){
+            const p = r[0].geometry.location;
+            marcador(p, "fim");
+            const b = new google.maps.LatLngBounds(); b.extend(BASE.pos); b.extend(p);
+            enquadrar(b);
+          }
+          pronto && pronto(null);
+        });
+        return;
+      }
+      const caminho = res.routes[0].overview_path;
+      // Contorno branco + linha preta, como os apps de corrida
+      const fundo = new google.maps.Polyline({ path:caminho, map:estado.mapa, strokeColor:"#ffffff", strokeWeight:9, strokeOpacity:1, zIndex:1 });
+      const linha = new google.maps.Polyline({ path:[], map:estado.mapa, strokeColor:"#111111", strokeWeight:5, strokeOpacity:1, zIndex:2 });
+      estado.rota = [fundo, linha];
+      animarLinha(linha, caminho);
+      const perna = res.routes[0].legs[0];
+      marcador(perna.start_location, "inicio");
+      marcador(perna.end_location, "fim");
+      enquadrar(res.routes[0].bounds);
+      pronto && pronto({ tempo:perna.duration ? perna.duration.text : "", distancia:perna.distance ? perna.distance.value / 1000 : 0 });
+    };
+    if (estado.cacheRotas[chave] !== undefined){ usar(estado.cacheRotas[chave]); return; }
+    estado.direcoes.route({ origin:BASE.endereco, destination:destino, travelMode:"DRIVING", region:"br" }, function(res, s){
+      estado.cacheRotas[chave] = s === "OK" ? res : null;
+      usar(estado.cacheRotas[chave]);
+    });
+  }
+
+  function animarLinha(linha, caminho){
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches){ linha.setPath(caminho); return; }
+    const total = caminho.length, passos = 40;
+    let i = 0;
+    (function passo(){
+      i++;
+      linha.setPath(caminho.slice(0, Math.max(2, Math.round(total * i / passos))));
+      if (i < passos) requestAnimationFrame(passo);
+    })();
+  }
+
+  function enquadrar(bounds){
+    const alt = $("painel").getBoundingClientRect().height;
+    const largo = window.innerWidth >= 700;
+    estado.mapa.fitBounds(bounds, largo ? { top:90, bottom:60, left:470, right:60 } : { top:90, bottom:Math.round(alt) + 30, left:40, right:40 });
+  }
+
+  /* ---------- Navegação ---------- */
+  function mostrar(html, alto){
+    $("conteudo").innerHTML = '<div class="tela">' + html + '</div>';
+    $("painel").classList.toggle("alto", alto === true);
+    $("painel").classList.toggle("medio", alto === "medio");
+    $("conteudo").scrollTop = 0;
+  }
+
+  function ir(tela){
+    menu(false);
+    if (tela !== "detalhe" && tela !== "enviada"){ estado.corrida = null; mostrarBase(); }
+    if (tela === "inicio") return telaInicio();
+    if (tela === "minhas") return telaMinhas();
+    if (tela === "perfil") return telaCadastro(true);
+  }
+
+  function menu(abrir){
+    $("menu").classList.toggle("aberto", abrir);
+    $("fundoMenu").classList.toggle("aberto", abrir);
+  }
+
+  function atualizarTopo(){
+    const p = estado.perfil;
+    $("saudacao").style.display = p ? "flex" : "none";
+    $("btnMenu").style.display = p ? "grid" : "none";
+    if (!p) return;
+    $("avatarTopo").textContent = iniciais(p.nome);
+    $("nomeTopo").textContent = "Olá, " + primeiroNome(p.nome);
+    $("avatarMenu").textContent = iniciais(p.nome);
+    $("nomeMenu").textContent = p.nome;
+    $("foneMenu").textContent = p.telefone;
+    $("seloSupervisor").classList.toggle("ativo", estado.supervisor);
+    $("txtSupervisor").textContent = estado.supervisor ? "Sair do modo supervisor" : "Modo supervisor";
+  }
+
+  /* ---------- Cadastro (primeira vez) / Meus dados ---------- */
+  function telaCadastro(editar){
+    const p = estado.perfil || { nome:"", telefone:"", pix:"", carro:"Carro Próprio" };
+    mostrar(
+      '<h1 class="titulo">' + (editar ? "Meus dados" : "Bem-vindo, motorista") + '</h1>' +
+      '<p class="apoio">' + (editar ? "Esses dados vão em todas as corridas que você enviar." : "Antes de começar, informe seus dados. Eles ficam salvos neste celular.") + '</p>' +
+      '<label class="campo">' + ICO.pessoa + '<input id="cNome" autocomplete="name" placeholder="Nome completo" value="' + esc(p.nome) + '"></label>' +
+      '<label class="campo">' + ICO.fone + '<input id="cFone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Celular com DDD" value="' + esc(p.telefone) + '"></label>' +
+      '<label class="campo">' + ICO.pix + '<input id="cPix" placeholder="Chave Pix para receber" value="' + esc(p.pix) + '"></label>' +
+      '<span class="rotulo">Com qual carro você roda?</span>' +
+      '<div class="opcoes-carro">' +
+        '<button type="button" class="opcao' + (p.carro !== "Carro da Empresa" ? " ativo" : "") + '" data-carro="Carro Próprio">' + ICO.carro + 'Carro próprio<small>Seu veículo</small></button>' +
+        '<button type="button" class="opcao' + (p.carro === "Carro da Empresa" ? " ativo" : "") + '" data-carro="Carro da Empresa">' + ICO.predio + 'Da empresa<small>Veículo Chiavari</small></button>' +
+      '</div>' +
+      '<div style="height:18px"></div>' +
+      '<button type="button" class="botao" id="cSalvar">' + (editar ? "Salvar" : "Começar") + '</button>' +
+      (editar ? '<button type="button" class="botao claro" onclick="App.ir(\'inicio\')">Voltar</button>' : ""), true);
+
+    let carro = p.carro || "Carro Próprio";
+    document.querySelectorAll(".opcao").forEach(function(b){
+      b.onclick = function(){ document.querySelectorAll(".opcao").forEach(function(x){ x.classList.remove("ativo"); }); b.classList.add("ativo"); carro = b.dataset.carro; };
+    });
+    $("cFone").addEventListener("input", function(e){ e.target.value = mascaraFone(e.target.value); });
+    $("cSalvar").onclick = function(){
+      const novo = { nome:$("cNome").value.trim().replace(/\s+/g, " "), telefone:$("cFone").value.trim(), pix:$("cPix").value.trim(), carro:carro };
+      if (novo.nome.split(" ").length < 2) return avisar("Digite seu nome completo.", true);
+      if (novo.telefone.replace(/\D/g, "").length < 10) return avisar("Digite o celular com DDD.", true);
+      if (!novo.pix) return avisar("Digite sua chave Pix.", true);
+      estado.perfil = novo; gravar(novo); atualizarTopo();
+      avisar(editar ? "Dados salvos" : "Tudo pronto, " + primeiroNome(novo.nome) + "!");
+      telaInicio();
+    };
+  }
+
+  function mascaraFone(v){
+    v = String(v).replace(/\D/g, "").slice(0, 11);
+    if (v.length > 10) return v.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+    if (v.length > 6) return v.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+    if (v.length > 2) return v.replace(/(\d{2})(\d{0,5})/, "($1) $2");
+    return v;
+  }
+
+  /* ---------- Corridas disponíveis ---------- */
+  function telaInicio(){
+    mostrar(
+      '<h1 class="titulo">Para onde vamos hoje?</h1>' +
+      '<p class="apoio">Escolha o evento da corrida. Saída da Chiavari, em Itaipava.</p>' +
+      '<div class="segmentos"><button type="button" data-s="0"' + (estado.semana === 0 ? ' class="ativo"' : "") + '>Esta semana</button><button type="button" data-s="1"' + (estado.semana === 1 ? ' class="ativo"' : "") + '>Semana passada</button></div>' +
+      '<div id="lista"><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div></div>');
+    document.querySelectorAll(".segmentos button").forEach(function(b){
+      b.onclick = function(){ estado.semana = Number(b.dataset.s); estado.corridas = null; telaInicio(); };
+    });
+    carregarCorridas();
+  }
+
+  function carregarCorridas(){
+    const semana = estado.semana;
+    servidor("getCorridasDisponiveis", semana).then(function(lista){
+      if (semana !== estado.semana || !$("lista")) return;
+      estado.corridas = lista || [];
+      if (!estado.corridas.length){
+        $("lista").innerHTML = '<div class="vazio">' + ICO.vazio + 'Nenhum evento ' + (semana ? "na semana passada" : "nesta semana") + '.<br>Quando houver, ele aparece aqui.</div>';
+        return;
+      }
+      $("lista").innerHTML = estado.corridas.map(function(c, i){
+        return '<button type="button" class="corrida" data-i="' + i + '">' +
+          '<span class="corrida-ico">' + ICO.local + '</span>' +
+          '<span class="corrida-info"><strong>' + esc(c.local || "Local não informado") + '</strong><span>Pedido ' + esc(c.pedido) + ' · ' + esc(c.data) + ' · ' + km(c.km) + '</span></span>' +
+          '<span class="corrida-preco"><strong>' + moeda(c.valorIda) + '</strong><span>só ida</span></span></button>';
+      }).join("");
+      document.querySelectorAll(".corrida").forEach(function(b){ b.onclick = function(){ telaDetalhe(estado.corridas[Number(b.dataset.i)]); }; });
+    }).catch(function(e){
+      if ($("lista")) $("lista").innerHTML = '<div class="vazio">Não foi possível carregar as corridas.<br>' + esc(e.message) + '</div>';
+    });
+  }
+
+  /* ---------- Detalhe da corrida ---------- */
+  function telaDetalhe(c){
+    estado.corrida = c;
+    estado.tipo = "IDA";
+    const ida = calcular(c.km), volta = calcular(c.km * 2);
+    mostrar(
+      '<div style="display:flex;align-items:center;gap:10px;margin:2px 0 6px"><button type="button" class="botao-redondo" style="box-shadow:none;background:var(--fundo)" onclick="App.ir(\'inicio\')" aria-label="Voltar">' + ICO.voltar + '</button>' +
+        '<strong style="font-size:15px;color:var(--texto2)">Pedido ' + esc(c.pedido) + '</strong></div>' +
+      '<div class="rota">' +
+        '<span class="ponto"></span><div><strong>Chiavari Eventos</strong><span>Itaipava, Petrópolis</span></div>' +
+        '<span class="traco"></span><span></span>' +
+        '<span class="ponto fim"></span><div><strong>' + esc(c.local || "Local não informado") + '</strong><span>Evento em ' + esc(c.data) + '</span></div>' +
+      '</div>' +
+      '<div class="chips"><span class="chip">' + ICO.local + km(c.km) + '</span><span class="chip" id="chipTempo">' + ICO.tempo + 'calculando…</span></div>' +
+      '<span class="rotulo">Escolha a corrida</span>' +
+      '<div class="tipos">' +
+        '<button type="button" class="tipo ativo" data-t="IDA"><span class="tipo-ico">' + ICO.ida + '</span><span><strong>Só ida</strong><span>' + km(c.km) + '</span></span><span class="valor">' + moeda(ida.total) + '</span></button>' +
+        '<button type="button" class="tipo" data-t="IDA_VOLTA"><span class="tipo-ico">' + ICO.idaVolta + '</span><span><strong>Ida e volta</strong><span>' + km(c.km * 2) + '</span></span><span class="valor">' + moeda(volta.total) + '</span></button>' +
+      '</div>' +
+      '<details class="detalhes" id="detCalculo"><summary>Como calculamos ' + ICO.seta + '</summary><div class="detalhes-corpo" id="calculo"></div></details>' +
+      (estado.supervisor ?
+        '<span class="rotulo">Motorista da corrida</span>' +
+        '<label class="campo">' + ICO.pessoa + '<input id="sNome" placeholder="Nome do motorista"></label>' +
+        '<label class="campo">' + ICO.fone + '<input id="sFone" type="tel" inputmode="tel" placeholder="Celular do motorista"></label>' +
+        '<label class="campo">' + ICO.pix + '<input id="sPix" placeholder="Pix do motorista"></label>' : "") +
+      '<span class="rotulo">Observação (opcional)</span>' +
+      '<label class="campo">' + ICO.nota + '<textarea id="obs" rows="2" placeholder="Ex.: levei 3 montadores"></textarea></label>' +
+      '<div class="barra-acao"><button type="button" class="botao navegar" id="btnNavegar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 19-7-4-7 4z"/></svg>Navegar até o evento</button><button type="button" class="botao com-preco" id="btnConfirmar"><span>Confirmar corrida</span><span class="preco" id="precoBotao">' + moeda(ida.total) + '</span></button></div>', "medio");
+
+    if ($("sFone")) $("sFone").addEventListener("input", function(e){ e.target.value = mascaraFone(e.target.value); });
+    document.querySelectorAll(".tipo").forEach(function(b){
+      b.onclick = function(){
+        document.querySelectorAll(".tipo").forEach(function(x){ x.classList.remove("ativo"); });
+        b.classList.add("ativo"); estado.tipo = b.dataset.t; mostrarCalculo();
+      };
+    });
+    $("btnConfirmar").onclick = confirmar;
+    $("btnNavegar").onclick = function(){ nav.iniciar(c.local + ", RJ, Brasil", c.local + " · Pedido " + c.pedido); };
+    mostrarCalculo();
+
+    desenharRota(c, function(info){
+      const chip = $("chipTempo");
+      if (!chip) return;
+      chip.innerHTML = ICO.tempo + (info && info.tempo ? "≈ " + esc(info.tempo) + " de viagem" : "tempo indisponível");
+    });
+  }
+
+  function mostrarCalculo(){
+    const c = estado.corrida;
+    const kmTotal = estado.tipo === "IDA_VOLTA" ? c.km * 2 : c.km;
+    const r = calcular(kmTotal);
+    $("precoBotao").textContent = moeda(r.total);
+    $("calculo").innerHTML =
+      '<div class="linha-calc"><span>Distância do evento</span><b>' + km(c.km) + '</b></div>' +
+      '<div class="linha-calc"><span>' + (estado.tipo === "IDA_VOLTA" ? "Ida e volta (× 2)" : "Só ida") + '</span><b>' + km(kmTotal) + '</b></div>' +
+      r.partes.map(function(p){
+        return '<div class="linha-calc"><span>' + (p.ate === Infinity || p.de >= 40 ? "Acima de 40 km" : p.de + " a " + Math.round(p.de + (p.ate - p.de)) + " km") + ' · ' + km(p.km) + ' × ' + moeda(p.preco) + '</span><b>' + moeda(p.valor) + '</b></div>';
+      }).join("") +
+      '<div class="linha-calc total"><span>Você recebe</span><b>' + moeda(r.total) + '</b></div>';
+  }
+
+  /* ---------- Envio ---------- */
+  function confirmar(){
+    const c = estado.corrida, p = estado.perfil, botao = $("btnConfirmar");
+    const dados = {
+      pedido:c.pedido, semana:estado.semana, tipo:estado.tipo, carro:p.carro, observacoes:$("obs").value.trim(),
+      nome:p.nome, telefone:p.telefone, pix:p.pix, supervisor:estado.supervisor, senhaSupervisor:estado.senhaSupervisor
+    };
+    if (estado.supervisor){
+      dados.nome = $("sNome").value.trim(); dados.telefone = $("sFone").value.trim(); dados.pix = $("sPix").value.trim();
+      if (!dados.nome || dados.telefone.replace(/\D/g, "").length < 10 || !dados.pix) return avisar("Preencha nome, celular e Pix do motorista.", true);
+    }
+    botao.disabled = true;
+    botao.innerHTML = '<span class="girando"></span><span>Enviando…</span>';
+    servidor("enviarCorridaApp", dados).then(function(r){
+      if (!r || !r.ok){
+        botao.disabled = false;
+        botao.innerHTML = '<span>Confirmar corrida</span><span class="preco" id="precoBotao"></span>'; mostrarCalculo();
+        return avisar(r && r.erro ? r.erro : "Não foi possível enviar.", true);
+      }
+      telaEnviada(r, dados);
+    }).catch(function(e){
+      botao.disabled = false;
+      botao.innerHTML = '<span>Confirmar corrida</span><span class="preco" id="precoBotao"></span>'; mostrarCalculo();
+      avisar("Sem conexão. Tente de novo. (" + e.message + ")", true);
+    });
+  }
+
+  function telaEnviada(r, dados){
+    mostrar(
+      '<div class="sucesso"><div class="check">' + ICO.check + '</div>' +
+      '<h1 class="titulo">Corrida enviada!</h1>' +
+      '<div class="valor-grande">' + moeda(r.valor) + '</div>' +
+      '<p class="apoio" style="margin-bottom:0">O financeiro confere e paga no Pix <b>' + esc(dados.pix) + '</b>.</p></div>' +
+      '<div class="recibo">' +
+        '<div class="linha-calc"><span>Pedido</span><b>' + esc(r.pedido) + '</b></div>' +
+        '<div class="linha-calc"><span>Destino</span><b>' + esc(r.destino) + '</b></div>' +
+        '<div class="linha-calc"><span>Data do evento</span><b>' + esc(r.data) + '</b></div>' +
+        '<div class="linha-calc"><span>Corrida</span><b>' + (r.tipo === "IDA_VOLTA" ? "Ida e volta" : "Só ida") + ' · ' + km(r.km) + '</b></div>' +
+        '<div class="linha-calc"><span>Situação</span><b><span class="status pendente">Pendente</span></b></div>' +
+      '</div>' +
+      '<button type="button" class="botao navegar" id="btnNavegarEnviada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 19-7-4-7 4z"/></svg>Navegar até o evento</button>' +
+      '<button type="button" class="botao claro" onclick="App.ir(\'minhas\')">Ver minhas corridas</button>' +
+      '<button type="button" class="botao claro" onclick="App.ir(\'inicio\')">Nova corrida</button>', true);
+    $("btnNavegarEnviada").onclick = function(){ nav.iniciar(r.destino + ", RJ, Brasil", r.destino + " · Pedido " + r.pedido); };
+  }
+
+  /* ---------- Minhas corridas ---------- */
+  function telaMinhas(){
+    mostrar('<h1 class="titulo">Minhas corridas</h1><p class="apoio">Acompanhe a conferência e o pagamento.</p>' +
+      '<div id="ganhos" class="ganhos"><div class="esqueleto" style="height:78px;margin:0"></div><div class="esqueleto" style="height:78px;margin:0"></div></div><div id="minhas"><div class="esqueleto"></div><div class="esqueleto"></div></div>', true);
+    servidor("getMinhasCorridas", estado.perfil.telefone).then(function(lista){
+      if (!$("minhas")) return;
+      lista = lista || [];
+      const aReceber = lista.filter(function(c){ return /pendente|conferido/i.test(c.status); }).reduce(function(t, c){ return t + c.total; }, 0);
+      const mes = new Date().getMonth(), ano = new Date().getFullYear();
+      const pagoMes = lista.filter(function(c){ const d = new Date(c.enviadoEm); return /pago/i.test(c.status) && d.getMonth() === mes && d.getFullYear() === ano; }).reduce(function(t, c){ return t + c.total; }, 0);
+      $("ganhos").innerHTML = '<div class="ganho"><span>A receber</span><strong>' + moeda(aReceber) + '</strong></div><div class="ganho verde"><span>Pago no mês</span><strong>' + moeda(pagoMes) + '</strong></div>';
+      if (!lista.length){ $("minhas").innerHTML = '<div class="vazio">' + ICO.vazio + 'Você ainda não enviou corridas por este app.</div>'; return; }
+      $("minhas").innerHTML = lista.map(function(c){
+        const st = String(c.status).toLowerCase();
+        const classe = /pago/.test(st) ? "pago" : /conferido/.test(st) ? "conferido" : /recusado/.test(st) ? "recusado" : "pendente";
+        return '<div class="corrida" style="cursor:default"><span class="corrida-ico">' + ICO.local + '</span>' +
+          '<span class="corrida-info"><strong>' + esc(c.destino || "—") + '</strong><span>' + esc(c.data) + ' · ' + km(c.km) + '</span></span>' +
+          '<span class="corrida-preco"><strong>' + moeda(c.total) + '</strong><span class="status ' + classe + '">' + esc(c.status) + '</span></span></div>';
+      }).join("");
+    }).catch(function(e){ if ($("minhas")) $("minhas").innerHTML = '<div class="vazio">Não foi possível carregar.<br>' + esc(e.message) + '</div>'; });
+  }
+
+  /* ---------- Modo supervisor ---------- */
+  function alternarSupervisor(){
+    menu(false);
+    if (estado.supervisor){ estado.supervisor = false; estado.senhaSupervisor = ""; atualizarTopo(); avisar("Modo supervisor desligado"); return ir("inicio"); }
+    mostrar('<h1 class="titulo">Modo supervisor</h1><p class="apoio">Para lançar corridas em nome de um motorista. Digite a senha do supervisor de montagem.</p>' +
+      '<label class="campo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><input id="senhaSup" type="password" placeholder="Senha"></label>' +
+      '<div style="height:16px"></div><button type="button" class="botao" id="btnSup">Entrar</button><button type="button" class="botao claro" onclick="App.ir(\'inicio\')">Cancelar</button>');
+    const entrar = function(){
+      const senha = $("senhaSup").value;
+      if (!senha) return avisar("Digite a senha.", true);
+      $("btnSup").disabled = true; $("btnSup").innerHTML = '<span class="girando"></span>';
+      servidor("conferirSenhaSupervisorApp", senha).then(function(ok){
+        if (!ok){ $("btnSup").disabled = false; $("btnSup").textContent = "Entrar"; return avisar("Senha incorreta.", true); }
+        estado.supervisor = true; estado.senhaSupervisor = senha; atualizarTopo(); avisar("Modo supervisor ligado"); ir("inicio");
+      }).catch(function(e){ $("btnSup").disabled = false; $("btnSup").textContent = "Entrar"; avisar(e.message, true); });
+    };
+    $("btnSup").onclick = entrar;
+    $("senhaSup").addEventListener("keydown", function(e){ if (e.key === "Enter") entrar(); });
+    setTimeout(function(){ $("senhaSup").focus(); }, 100);
+  }
+
+  /* ---------- Início ---------- */
+  function iniciar(){
+    estado.perfil = ler();
+    atualizarTopo();
+    if (estado.perfil) telaInicio(); else telaCadastro(false);
+  }
+
+  window.addEventListener("resize", function(){ if (estado.corrida && estado.cacheRotas[estado.corrida.local]) enquadrar(estado.cacheRotas[estado.corrida.local].routes[0].bounds); });
+
+
+  /* =========================================================
+     NAVEGAÇÃO DENTRO DO APP (estilo Google Maps)
+     - Com GPS: o carro anda no mapa, a câmera segue, instruções por voz,
+       troca de instrução automática e recálculo se sair da rota.
+     - Sem GPS (o Google pode bloquear em páginas do Apps Script):
+       rota passo a passo e atalho para Google Maps / Waze.
+  ========================================================= */
+  const nav = (function(){
+
+    const SETAS = {
+      esquerda:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M30 40V22a6 6 0 0 0-6-6H10"/><path d="M17 8l-8 8 8 8"/></svg>',
+      direita:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 40V22a6 6 0 0 1 6-6h14"/><path d="M31 8l8 8-8 8"/></svg>',
+      levesEsquerda:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M28 42V26L16 12"/><path d="M14 22V10h12"/></svg>',
+      levesDireita:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 42V26l12-14"/><path d="M34 22V10H22"/></svg>',
+      retorno:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 42V18a8 8 0 0 0-16 0v10"/><path d="M9 21l7 8 7-8"/></svg>',
+      rotatoria:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="22" r="8"/><path d="M24 42V30M30 16l8-8M30 8h8v8"/></svg>',
+      reto:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 42V8M14 18L24 8l10 10"/></svg>',
+      chegada:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 44V6"/><path d="M12 8h24l-5 8 5 8H12"/></svg>'
+    };
+    const SOM_LIGADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>';
+    const SOM_DESLIGADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+
+    const n = { ativo:false, gps:false, passos:[], i:0, leg:null, caminho:[], linhas:[], carro:null, watch:null, seguir:true,
+      foraDaRota:0, ultimoRecalculo:0, falado:{}, voz:true, destino:"", rotulo:"", travaTela:null, ultimaPos:null, rumo:0 };
+
+    const geo = function(){ return google.maps.geometry && google.maps.geometry.spherical; };
+    const distancia = function(a, b){ return geo().computeDistanceBetween(a instanceof google.maps.LatLng ? a : new google.maps.LatLng(a), b instanceof google.maps.LatLng ? b : new google.maps.LatLng(b)); };
+
+    function textoLimpo(html){
+      const d = document.createElement("div");
+      d.innerHTML = String(html || "").replace(/<div[^>]*>/g, " · ").replace(/<\/div>/g, "");
+      return d.textContent.replace(/\s+/g, " ").replace(/^ · /, "").trim();
+    }
+    function seta(m){
+      m = String(m || "");
+      if (/uturn/.test(m)) return SETAS.retorno;
+      if (/roundabout/.test(m)) return SETAS.rotatoria;
+      if (/slight-left|fork-left|ramp-left|keep-left/.test(m)) return SETAS.levesEsquerda;
+      if (/slight-right|fork-right|ramp-right|keep-right|merge/.test(m)) return SETAS.levesDireita;
+      if (/left/.test(m)) return SETAS.esquerda;
+      if (/right/.test(m)) return SETAS.direita;
+      return SETAS.reto;
+    }
+    function metros(m){
+      if (m >= 1000) return (m / 1000).toLocaleString("pt-BR", { maximumFractionDigits:1 }) + " km";
+      if (m >= 100) return Math.round(m / 50) * 50 + " m";
+      return Math.max(10, Math.round(m / 10) * 10) + " m";
+    }
+    function falar(texto){
+      if (!n.voz || !("speechSynthesis" in window)) return;
+      try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(texto); u.lang = "pt-BR"; u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {}
+    }
+
+    /* ---------- Começar ---------- */
+    function iniciar(destino, rotulo){
+      if (!estado.mapa || !geo()){ return opcoes(true); }
+      n.ativo = true; n.destino = destino; n.rotulo = rotulo || destino; n.falado = {}; n.i = 0; n.seguir = true;
+      document.body.classList.add("navegando");
+      document.body.classList.remove("nav-previa");
+      $("navChegada").classList.remove("visivel");
+      $("navSom").innerHTML = n.voz ? SOM_LIGADO : SOM_DESLIGADO;
+      $("navTexto").textContent = "Procurando sua localização…"; $("navDist").textContent = ""; $("navIco").innerHTML = SETAS.reto;
+      $("navDepois").innerHTML = ""; $("navAviso").textContent = "";
+      travarTela();
+
+      if (!("geolocation" in navigator)) return semGps("Este aparelho não informou a localização.");
+      let respondeu = false;
+      const tempo = setTimeout(function(){ if (!respondeu){ respondeu = true; semGps("A localização demorou para responder."); } }, 9000);
+      try {
+        navigator.geolocation.getCurrentPosition(function(p){
+          if (respondeu) return; respondeu = true; clearTimeout(tempo);
+          n.gps = true;
+          const pos = { lat:p.coords.latitude, lng:p.coords.longitude };
+          calcularRota(pos, function(ok){ if (ok) seguirGps(); });
+        }, function(e){
+          if (respondeu) return; respondeu = true; clearTimeout(tempo);
+          semGps(e && e.code === 1 ? "A localização não foi liberada neste aparelho." : "Não foi possível pegar a localização.");
+        }, { enableHighAccuracy:true, timeout:8000, maximumAge:5000 });
+      } catch (e) { respondeu = true; clearTimeout(tempo); semGps("A localização está bloqueada nesta página."); }
+    }
+
+    function semGps(motivo){
+      n.gps = false;
+      document.body.classList.add("nav-previa");
+      $("navAviso").textContent = motivo + " Mostrando a rota a partir da Chiavari. Para navegar com GPS e voz, toque em ••• e abra no Google Maps ou Waze.";
+      calcularRota(BASE.endereco, function(ok){ if (ok){ mostrarPasso(0, true); } });
+    }
+
+    function calcularRota(origem, pronto){
+      estado.direcoes.route({ origin:origem, destination:n.destino, travelMode:"DRIVING", region:"br", language:"pt-BR" }, function(res, s){
+        if (s !== "OK"){ avisar("Não foi possível traçar a rota até esse local.", true); pronto(false); return; }
+        n.leg = res.routes[0].legs[0];
+        n.passos = n.leg.steps.map(function(p){ return { texto:textoLimpo(p.instructions), manobra:p.maneuver || "", dist:p.distance.value, tempo:p.duration.value, fim:p.end_location, inicio:p.start_location, caminho:p.path }; });
+        n.caminho = res.routes[0].overview_path;
+        desenhar(res);
+        pronto(true);
+      });
+    }
+
+    function desenhar(res){
+      limparMapa();
+      n.linhas.forEach(function(l){ l.setMap(null); });
+      n.linhas = [
+        new google.maps.Polyline({ path:n.caminho, map:estado.mapa, strokeColor:"#0b5e33", strokeWeight:11, strokeOpacity:1, zIndex:1 }),
+        new google.maps.Polyline({ path:n.caminho, map:estado.mapa, strokeColor:"#1aa260", strokeWeight:7, strokeOpacity:1, zIndex:2 })
+      ];
+      marcador(n.leg.end_location, "fim");
+      if (!n.gps) marcador(n.leg.start_location, "inicio");
+      estado.mapa.fitBounds(res.routes[0].bounds, { top:170, bottom:110, left:40, right:40 });
+      atualizarResumo(n.leg.distance.value, n.leg.duration.value);
+    }
+
+    /* ---------- GPS ---------- */
+    function seguirGps(){
+      if (n.watch !== null) navigator.geolocation.clearWatch(n.watch);
+      n.watch = navigator.geolocation.watchPosition(posicao, function(){ $("navAviso").textContent = "Sinal de GPS fraco…"; }, { enableHighAccuracy:true, maximumAge:1000, timeout:15000 });
+      estado.mapa.addListener("dragstart", function(){ if (n.ativo && n.gps){ n.seguir = false; $("navRecentrar").classList.add("visivel"); } });
+      const primeira = n.passos[0];
+      if (primeira) falar("Vamos lá. " + primeira.texto);
+    }
+
+    function iconeCarro(rumo){
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="rgba(26,162,96,.18)"/>' +
+        '<g transform="rotate(' + Math.round(rumo || 0) + ' 22 22)"><path d="M22 8 L32 33 L22 27 L12 33 Z" fill="#0f7a43" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></g></svg>';
+      return { url:"data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg), anchor:new google.maps.Point(22, 22), scaledSize:new google.maps.Size(44, 44) };
+    }
+
+    function posicao(p){
+      if (!n.ativo) return;
+      $("navAviso").textContent = "";
+      const pos = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
+      if (n.ultimaPos && distancia(n.ultimaPos, pos) > 3) n.rumo = geo().computeHeading(n.ultimaPos, pos);
+      else if (typeof p.coords.heading === "number" && !isNaN(p.coords.heading)) n.rumo = p.coords.heading;
+      n.ultimaPos = pos;
+
+      if (!n.carro) n.carro = new google.maps.Marker({ map:estado.mapa, zIndex:10 });
+      n.carro.setPosition(pos); n.carro.setIcon(iconeCarro(n.rumo));
+      if (n.seguir){ estado.mapa.panTo(pos); if (estado.mapa.getZoom() < 16) estado.mapa.setZoom(17); }
+
+      // Chegou?
+      const aoDestino = distancia(pos, n.leg.end_location);
+      if (aoDestino < 40) return chegou();
+
+      // Saiu da rota? (mais de 60 m da linha em 3 leituras seguidas → recalcula)
+      const naRota = google.maps.geometry.poly.isLocationOnEdge(pos, new google.maps.Polyline({ path:n.caminho }), 0.0006);
+      n.foraDaRota = naRota ? 0 : n.foraDaRota + 1;
+      if (n.foraDaRota >= 3 && Date.now() - n.ultimoRecalculo > 15000){
+        n.ultimoRecalculo = Date.now(); n.foraDaRota = 0;
+        $("navTexto").textContent = "Recalculando a rota…"; falar("Recalculando a rota");
+        calcularRota({ lat:pos.lat(), lng:pos.lng() }, function(){ n.i = 0; n.falado = {}; });
+        return;
+      }
+
+      // Qual instrução vale agora: a próxima manobra mais próxima à frente
+      let i = n.i;
+      while (i < n.passos.length - 1 && distancia(pos, n.passos[i].fim) < 25) i++;
+      for (let k = i; k < Math.min(n.passos.length, n.i + 3); k++){
+        if (google.maps.geometry.poly.isLocationOnEdge(pos, new google.maps.Polyline({ path:n.passos[k].caminho }), 0.0004)){ i = k; break; }
+      }
+      n.i = i;
+
+      const ateManobra = distancia(pos, n.passos[i].fim);
+      const proximo = n.passos[i + 1];
+      mostrarInstrucao(proximo || { texto:"Chegada ao destino", manobra:"chegada" }, ateManobra, n.passos[i + 2]);
+
+      // Voz: aviso antes e na hora da manobra
+      const chave = i + 1;
+      if (proximo){
+        if (ateManobra < 350 && ateManobra > 120 && !n.falado[chave + "a"]){ n.falado[chave + "a"] = true; falar("Em " + metros(ateManobra) + ", " + proximo.texto); }
+        if (ateManobra <= 60 && !n.falado[chave + "b"]){ n.falado[chave + "b"] = true; falar(proximo.texto); }
+      }
+
+      // Tempo e distância que faltam
+      let resto = ateManobra, tempo = 0;
+      for (let k = i + 1; k < n.passos.length; k++) resto += n.passos[k].dist;
+      tempo = n.leg.duration.value * (resto / Math.max(1, n.leg.distance.value));
+      atualizarResumo(resto, tempo);
+    }
+
+    function mostrarInstrucao(passo, dist, depois){
+      $("navIco").innerHTML = passo.manobra === "chegada" ? SETAS.chegada : seta(passo.manobra);
+      $("navDist").textContent = dist === null ? "" : metros(dist);
+      $("navTexto").textContent = passo.texto || "Siga em frente";
+      $("navDepois").innerHTML = depois ? '<span>Depois</span>' + seta(depois.manobra) + '<span>' + esc(depois.texto.length > 60 ? depois.texto.slice(0, 58) + "…" : depois.texto) + '</span>' : "";
+    }
+
+    function atualizarResumo(metrosFalta, segundos){
+      const min = Math.max(1, Math.round(segundos / 60));
+      const chegada = new Date(Date.now() + segundos * 1000).toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" });
+      $("navTempo").textContent = min >= 60 ? Math.floor(min / 60) + " h " + (min % 60) + " min" : min + " min";
+      $("navResto").textContent = metros(metrosFalta) + " · chegada " + chegada;
+    }
+
+    /* ---------- Sem GPS: passo a passo ---------- */
+    function mostrarPasso(i, inicio){
+      n.i = Math.max(0, Math.min(n.passos.length - 1, i));
+      const p = n.passos[n.i];
+      mostrarInstrucao(n.i === 0 && inicio ? { texto:"Saída da Chiavari · " + p.texto, manobra:p.manobra } : p, p.dist, n.passos[n.i + 1]);
+      $("navDist").textContent = (n.i + 1) + "/" + n.passos.length + " · " + metros(p.dist);
+      const b = new google.maps.LatLngBounds(); p.caminho.forEach(function(x){ b.extend(x); });
+      estado.mapa.fitBounds(b, { top:200, bottom:130, left:60, right:80 });
+      if (estado.mapa.getZoom() > 17) estado.mapa.setZoom(17);
+      let resto = 0, tempo = 0;
+      for (let k = n.i; k < n.passos.length; k++){ resto += n.passos[k].dist; tempo += n.passos[k].tempo; }
+      atualizarResumo(resto, tempo);
+    }
+    function passo(d){ if (n.ativo && !n.gps) mostrarPasso(n.i + d); }
+
+    /* ---------- Fim ---------- */
+    function chegou(){
+      falar("Você chegou ao destino");
+      $("navChegadaTexto").textContent = n.rotulo;
+      $("navChegada").classList.add("visivel");
+      $("navBaixo").style.display = "none";
+      parar(false);
+    }
+    function parar(sairTela){
+      if (n.watch !== null){ try { navigator.geolocation.clearWatch(n.watch); } catch (e) {} n.watch = null; }
+      if (n.travaTela){ try { n.travaTela.release(); } catch (e) {} n.travaTela = null; }
+      if ("speechSynthesis" in window) try { speechSynthesis.cancel(); } catch (e) {}
+      if (sairTela){
+        n.ativo = false;
+        document.body.classList.remove("navegando", "nav-previa");
+        $("navChegada").classList.remove("visivel"); $("navBaixo").style.display = "";
+        n.linhas.forEach(function(l){ l.setMap(null); }); n.linhas = [];
+        if (n.carro){ n.carro.setMap(null); n.carro = null; }
+        $("navRecentrar").classList.remove("visivel");
+      }
+    }
+    function sair(){
+      parar(true);
+      if (estado.corrida) telaDetalhe(estado.corrida); else ir("inicio");
+    }
+    function voltarBase(){ parar(true); iniciar(BASE.endereco, "Chiavari Eventos · Itaipava"); }
+
+    function recentrar(){ n.seguir = true; $("navRecentrar").classList.remove("visivel"); if (n.ultimaPos){ estado.mapa.panTo(n.ultimaPos); estado.mapa.setZoom(17); } }
+    function som(){ n.voz = !n.voz; $("navSom").innerHTML = n.voz ? SOM_LIGADO : SOM_DESLIGADO; $("navSom").classList.toggle("ativo", n.voz); if (!n.voz && "speechSynthesis" in window) speechSynthesis.cancel(); else falar("Voz ligada"); }
+    function opcoes(abrir){ $("navOpcoes").classList.toggle("aberto", abrir); }
+
+    function externo(qual){
+      const destino = n.destino || (estado.corrida ? estado.corrida.local + ", RJ, Brasil" : "");
+      const url = qual === "waze"
+        ? "https://waze.com/ul?q=" + encodeURIComponent(destino) + "&navigate=yes"
+        : "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destino) + "&travelmode=driving&dir_action=navigate";
+      window.open(url, "_blank");
+      opcoes(false);
+    }
+
+    async function travarTela(){
+      try { if ("wakeLock" in navigator) n.travaTela = await navigator.wakeLock.request("screen"); } catch (e) {}
+    }
+
+    return { iniciar:iniciar, sair:sair, passo:passo, recentrar:recentrar, som:som, opcoes:opcoes, externo:externo, voltarBase:voltarBase, _estado:n };
+  })();
+
+  return { iniciar:iniciar, iniciarMapa:iniciarMapa, ir:ir, menu:menu, alternarSupervisor:alternarSupervisor, nav:nav };
+})();
+
+function iniciarMapaGoogle(){ App.iniciarMapa(); }
+document.addEventListener("DOMContentLoaded", App.iniciar);
+</script>
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRTnhpv3S0kqV9G56x0npaxd6YABj8dnI&libraries=geometry&language=pt-BR&region=BR&callback=iniciarMapaGoogle&loading=async"></script>
+</body>
+</html>

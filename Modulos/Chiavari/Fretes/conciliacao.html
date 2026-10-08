@@ -1,0 +1,2835 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="fretes"></script>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conciliação de Fretes</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   CONCILIAÇÃO DE FRETES — mesma identidade da Central,
+   Cronograma e Itens Danificados.
+   Cormorant Garamond nos títulos, Manrope no texto,
+   grafite #5a5a55, cartões brancos com sombra suave.
+========================================================= */
+
+:root{
+  --primary:#5a5a55;
+  --primary-dark:#44443f;
+  --bg:#ffffff;
+  --fundo-suave:#f8f6f0;
+  --card:#ffffff;
+  --line:#e7e1d7;
+  --borda-card:#eee8df;
+  --linha-tabela:#f3efe8;
+  --text:#251e19;
+  --muted:#5f5952;
+  --accent-soft:#ecece6;
+  --serif:"Cormorant Garamond", Georgia, serif;
+  --sans:"Manrope", system-ui, sans-serif;
+  --green:#16a34a;
+  --green-soft:#dcfce7;
+  --yellow:#d97706;
+  --yellow-soft:#fef3c7;
+  --red:#dc2626;
+  --red-soft:#fee2e2;
+  --sombra-card:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+}
+
+*{ box-sizing:border-box; }
+
+html, body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+
+body{ position:relative; padding:0 24px 40px; }
+
+button, input, select, textarea{ font-family:inherit; }
+
+.oculto{ display:none !important; }
+
+/* ---------- Cabeçalho ---------- */
+
+.cabecalho{ padding:34px 0 0; margin-bottom:22px; }
+
+.cabecalho-titulo{
+  margin:0 0 26px;
+  text-align:center;
+  font-family:var(--serif);
+  font-size:clamp(34px, 4.6vw, 60px);
+  font-weight:500;
+  letter-spacing:.22em;
+  line-height:1.05;
+  text-transform:uppercase;
+}
+
+.cabecalho-barra{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:12px 20px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:14px;
+  margin-bottom:4px;
+}
+
+.status-atualizacao{
+  position:absolute;
+  top:10px;
+  right:24px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:var(--muted);
+  font-size:12px;
+  opacity:.75;
+}
+
+.ponto-vivo{ width:6px; height:6px; border-radius:50%; background:var(--green); }
+.ponto-vivo.erro{ background:var(--red); }
+.ponto-vivo.carregando{ background:var(--yellow); }
+
+/* ---------- Botões ---------- */
+
+.btn{
+  min-height:38px;
+  padding:0 18px;
+  border:1px solid var(--primary);
+  border-radius:999px;
+  background:var(--primary);
+  color:#ffffff;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:background-color .2s, border-color .2s, color .2s, opacity .2s;
+}
+
+.btn:hover{ background:var(--primary-dark); border-color:var(--primary-dark); }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+.btn-contorno{ background:#ffffff; border-color:var(--line); color:var(--text); }
+.btn-contorno:hover{ background:#ffffff; border-color:var(--primary); color:var(--primary-dark); }
+
+.btn-sucesso{ background:var(--green); border-color:var(--green); }
+.btn-sucesso:hover{ background:#15803d; border-color:#15803d; }
+
+/* ---------- Semana + filtros ---------- */
+
+.semana{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.semana-seta{
+  width:38px;
+  height:38px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:#ffffff;
+  color:var(--text);
+  font-size:17px;
+  cursor:pointer;
+}
+
+.semana-seta:hover{ border-color:var(--primary); }
+
+.semana-atual{
+  position:relative;
+  min-height:38px;
+  padding:0 18px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--fundo-suave);
+  color:var(--text);
+  font-size:15px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+}
+
+.semana-atual small{ margin-right:8px; color:var(--muted); font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:12px; }
+
+/* O campo de data fica invisível por cima: tocar abre o calendário */
+.semana-atual input{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  margin:0;
+  border:0;
+  opacity:0;
+  cursor:pointer;
+}
+
+.semana-atual input::-webkit-calendar-picker-indicator{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  cursor:pointer;
+}
+
+.filtros{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  flex:1 1 auto;
+  justify-content:flex-end;
+  min-width:0;
+}
+
+.filtros > input{
+  flex:0 1 220px;
+  min-width:140px;
+  min-height:40px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--fundo-suave);
+  color:var(--text);
+  font-size:15px;
+  font-weight:600;
+  outline:none;
+}
+
+.filtros > input.filtro-pedido{ flex-basis:130px; }
+.filtros > input::placeholder{ color:var(--muted); font-weight:500; }
+.filtros > input:focus{ border-color:var(--primary); background:#ffffff; }
+
+/* ---------- A pagar (card único) ---------- */
+
+.pendentes{ display:flex; flex:0 0 auto; }
+
+.card-apagar{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:40px;
+  padding:0 6px 0 16px;
+  border:1px solid #e60012;
+  border-radius:999px;
+  background:#ffffff;
+  color:#b42318;
+  font-size:15px;
+  font-weight:700;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:background-color .15s;
+}
+
+.card-apagar:hover{ background:#fff1f1; }
+
+.card-apagar-rotulo{ font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+
+.card-apagar-numero{
+  min-width:28px;
+  height:28px;
+  padding:0 9px;
+  border-radius:999px;
+  background:#e60012;
+  color:#ffffff;
+  font-size:15px;
+  display:inline-grid;
+  place-items:center;
+  font-variant-numeric:tabular-nums;
+  box-shadow:0 0 0 0 rgba(230, 0, 18, .42);
+}
+
+/* Pisca enquanto houver pagamento pendente (mesmo alerta do PCP Tecnoweld) */
+button.card-apagar .card-apagar-rotulo{ animation:apagar-alerta 1.15s ease-in-out infinite; }
+button.card-apagar .card-apagar-numero{ animation:apagar-badge 1.15s ease-in-out infinite; }
+
+@keyframes apagar-alerta{
+  0%, 100%{ opacity:1; }
+  50%{ opacity:.48; }
+}
+
+@keyframes apagar-badge{
+  0%, 100%{ box-shadow:0 0 0 0 rgba(230, 0, 18, .42); transform:scale(1); }
+  50%{ box-shadow:0 0 0 7px rgba(230, 0, 18, 0); transform:scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  button.card-apagar .card-apagar-rotulo,
+  button.card-apagar .card-apagar-numero{ animation:none; }
+}
+
+.card-apagar.zerado{ padding-right:16px; border-color:var(--line); color:var(--muted); cursor:default; }
+.card-apagar.zerado:hover{ background:#ffffff; color:var(--muted); }
+
+/* Lista de transportadoras dentro do modal */
+.lista-apagar{ display:grid; gap:8px; }
+
+.linha-apagar{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  width:100%;
+  padding:12px 16px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#ffffff;
+  color:var(--text);
+  text-align:left;
+  cursor:pointer;
+  transition:border-color .15s, background-color .15s;
+}
+
+.linha-apagar:hover{ border-color:var(--primary); background:var(--fundo-suave); }
+.linha-apagar strong{ flex:1; font-size:17px; }
+.linha-apagar .qtd{ font-size:15px; font-weight:600; color:var(--muted); white-space:nowrap; }
+.linha-apagar .valor{ min-width:120px; text-align:right; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.linha-apagar .seta{ color:var(--muted); font-size:19px; }
+
+/* ---------- Botão Gráficos ---------- */
+
+.btn-graficos{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:40px;
+  padding:0 16px;
+  border:1px solid #1b1e24;
+  border-radius:999px;
+  background:#1b1e24;
+  color:#ffffff;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:background-color .15s, transform .15s, box-shadow .15s;
+}
+.btn-graficos:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(57,135,229,.35); }
+.btn-graficos svg{ width:16px; height:16px; color:#5fa3f0; }
+
+/* ---------- Painel (dashboard) ---------- */
+
+.painel{
+  --p-fundo:#111318;
+  --p-card:#1b1e24;
+  --p-borda:rgba(255,255,255,.07);
+  --p-texto:#f4f5f7;
+  --p-texto2:#a9aeb8;
+  --p-grade:rgba(255,255,255,.06);
+  --s1:#3987e5;
+  --s2:#d95926;
+  --ok:#22c55e;
+  --aviso:#f59e0b;
+  --neutro:#6b7280;
+}
+
+#modalGraficos{ background:rgba(5,7,10,.72); backdrop-filter:blur(4px); }
+
+.modal-caixa.painel{
+  width:min(1320px, 100%);
+  max-height:94vh;
+  background:
+    radial-gradient(900px 380px at 10% -10%, rgba(57,135,229,.16), transparent 60%),
+    radial-gradient(700px 320px at 100% 0%, rgba(217,89,38,.10), transparent 60%),
+    var(--p-fundo);
+  color:var(--p-texto);
+  border:1px solid var(--p-borda);
+  box-shadow:0 30px 90px rgba(0,0,0,.55);
+}
+
+.painel .modal-topo{ border-bottom:1px solid var(--p-borda); align-items:center; flex-wrap:wrap; }
+.painel .modal-topo h2{ font-family:var(--sans); font-size:20px; font-weight:800; letter-spacing:.04em; text-transform:none; color:var(--p-texto); }
+.painel .modal-topo p{ color:var(--p-texto2); }
+.painel .modal-fechar{ background:transparent; border-color:var(--p-borda); color:var(--p-texto2); }
+.painel .modal-fechar:hover{ color:#ffffff; border-color:rgba(255,255,255,.25); }
+.painel .modal-corpo{ gap:16px; padding:18px 22px 22px; }
+
+.painel-topo-dir{ display:flex; align-items:center; gap:12px; margin-left:auto; }
+
+.painel-ao-vivo{ display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; color:var(--p-texto2); }
+.painel-ao-vivo i{ width:8px; height:8px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 0 rgba(34,197,94,.6); animation:painel-pulso 1.8s infinite; }
+
+.painel-periodos{ display:inline-flex; padding:4px; gap:2px; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid var(--p-borda); }
+.painel-periodos button{
+  min-height:30px;
+  padding:0 14px;
+  border:0;
+  border-radius:999px;
+  background:transparent;
+  color:var(--p-texto2);
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  transition:background-color .2s, color .2s;
+}
+.painel-periodos button:hover{ color:#ffffff; }
+.painel-periodos button.ativo{ background:var(--s1); color:#ffffff; box-shadow:0 4px 14px rgba(57,135,229,.4); }
+
+.p-card{
+  position:relative;
+  min-width:0;
+  padding:18px;
+  border:1px solid var(--p-borda);
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)) , var(--p-card);
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 12px 30px rgba(0,0,0,.25);
+  animation:painel-subir .6s cubic-bezier(.2,.8,.2,1) both;
+}
+.p-card h3{ margin:0; font-size:15px; font-weight:800; letter-spacing:.02em; color:var(--p-texto); }
+.p-card .p-sub{ margin:3px 0 14px; font-size:13px; color:var(--p-texto2); font-weight:600; }
+.p-card-topo{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+
+/* KPIs */
+.p-kpis{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; }
+.p-kpi{ padding:16px 16px 0; overflow:hidden; }
+.p-kpi:nth-child(2){ animation-delay:.07s; }
+.p-kpi:nth-child(3){ animation-delay:.14s; }
+.p-kpi:nth-child(4){ animation-delay:.21s; }
+.p-kpi-rotulo{ display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--p-texto2); }
+.p-kpi-icone{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; }
+.p-kpi-icone svg{ width:18px; height:18px; }
+.p-kpi-valor{ display:block; margin-top:12px; font-size:28px; font-weight:800; letter-spacing:-.01em; color:var(--p-texto); font-variant-numeric:tabular-nums; }
+.p-kpi-rodape{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; font-weight:700; color:var(--p-texto2); }
+.p-delta{ display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; }
+.p-delta.sobe{ background:rgba(34,197,94,.14); color:#4ade80; }
+.p-delta.desce{ background:rgba(239,68,68,.14); color:#f87171; }
+.p-delta.neutro{ background:rgba(255,255,255,.07); color:var(--p-texto2); }
+.p-spark{ display:block; width:calc(100% + 32px); height:54px; margin:10px -16px 0; }
+
+/* Grade principal */
+.p-grade{ display:grid; grid-template-columns:minmax(0, 2.2fr) minmax(0, 1fr); gap:14px; }
+.p-grade-2{ display:grid; grid-template-columns:minmax(0, 1.25fr) minmax(0, 1fr); gap:14px; }
+
+.p-legenda{ display:flex; gap:14px; font-size:13px; font-weight:700; color:var(--p-texto2); }
+.p-legenda span{ display:inline-flex; align-items:center; gap:7px; }
+.p-legenda i{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+
+.p-area{ position:relative; }
+.p-area svg{ display:block; width:100%; overflow:visible; }
+.p-area .eixo{ font-size:12px; fill:#7d8490; font-family:var(--sans); font-weight:600; }
+.p-area .grade{ stroke:var(--p-grade); stroke-width:1; }
+.p-area .linha{ fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+.p-area .cruz{ stroke:rgba(255,255,255,.35); stroke-width:1; opacity:0; transition:opacity .15s; }
+.p-area .ponto{ stroke:var(--p-card); stroke-width:3; opacity:0; transition:opacity .15s; }
+.p-area.focado .cruz, .p-area.focado .ponto{ opacity:1; }
+
+/* Medidor */
+.p-medidor{ display:grid; justify-items:center; gap:14px; }
+.p-medidor svg{ width:210px; height:210px; }
+.p-medidor .num{ font-size:44px; font-weight:800; fill:var(--p-texto); font-family:var(--sans); }
+.p-medidor .txt{ font-size:12px; font-weight:800; letter-spacing:.12em; fill:var(--p-texto2); text-transform:uppercase; font-family:var(--sans); }
+.p-medidor .arco{ transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1); }
+.p-status{ width:100%; display:grid; gap:8px; }
+.p-status div{ display:grid; grid-template-columns:10px 1fr auto auto; align-items:center; gap:10px; padding:9px 12px; border-radius:12px; background:rgba(255,255,255,.035); font-size:14px; font-weight:600; }
+.p-status i{ width:10px; height:10px; border-radius:50%; }
+.p-status b{ font-variant-numeric:tabular-nums; }
+.p-status small{ min-width:96px; text-align:right; color:var(--p-texto2); font-size:13px; font-variant-numeric:tabular-nums; }
+
+/* Ranking */
+.p-ranking{ display:grid; gap:12px; }
+.p-rank{ display:grid; grid-template-columns:28px minmax(0, 1fr) auto; align-items:center; gap:4px 12px; cursor:default; }
+.p-rank .pos{ grid-row:span 2; width:28px; height:28px; border-radius:9px; display:grid; place-items:center; background:rgba(255,255,255,.06); font-size:13px; font-weight:800; color:var(--p-texto2); }
+.p-rank:first-child .pos{ background:rgba(57,135,229,.2); color:#8cbcf3; }
+.p-rank .nome{ font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.p-rank .valor{ font-weight:800; font-size:14px; font-variant-numeric:tabular-nums; }
+.p-rank .trilho{ grid-column:2 / -1; height:8px; border-radius:999px; background:rgba(255,255,255,.06); overflow:hidden; }
+.p-rank .cheio{ display:block; height:100%; width:0; border-radius:999px; background:linear-gradient(90deg, #256abf, #5fa3f0); box-shadow:0 0 12px rgba(57,135,229,.5); transition:width 1.1s cubic-bezier(.2,.8,.2,1); }
+.p-rank .parte{ font-size:12px; color:var(--p-texto2); font-weight:700; margin-left:6px; }
+
+/* Maiores fretes */
+.p-top{ display:grid; gap:8px; }
+.p-top div{ display:grid; grid-template-columns:auto minmax(0, 1fr) auto auto; align-items:center; gap:12px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.035); font-size:14px; transition:background-color .15s, transform .15s; }
+.p-top div:hover{ background:rgba(255,255,255,.07); transform:translateX(2px); }
+.p-top .ped{ font-weight:800; color:#8cbcf3; font-variant-numeric:tabular-nums; }
+.p-top .tr{ color:var(--p-texto2); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.p-top .vl{ font-weight:800; font-variant-numeric:tabular-nums; }
+.p-pill{ padding:3px 9px; border-radius:999px; font-size:11px; font-weight:800; letter-spacing:.04em; }
+.p-pill.pago{ background:rgba(34,197,94,.16); color:#4ade80; }
+.p-pill.pend{ background:rgba(245,158,11,.16); color:#fbbf24; }
+.p-pill.sem{ background:rgba(255,255,255,.08); color:var(--p-texto2); }
+
+.p-vazio{ padding:28px; text-align:center; color:var(--p-texto2); font-weight:600; }
+
+.p-dica{
+  position:absolute;
+  z-index:5;
+  min-width:180px;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  background:rgba(14,16,20,.94);
+  backdrop-filter:blur(6px);
+  color:#ffffff;
+  font-size:13px;
+  line-height:1.6;
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(4px);
+  transition:opacity .12s, transform .12s;
+  box-shadow:0 14px 34px rgba(0,0,0,.45);
+}
+.p-dica.visivel{ opacity:1; transform:none; }
+.p-dica b{ display:block; margin-bottom:2px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:#a9aeb8; }
+.p-dica div{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.p-dica i{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+
+@keyframes painel-subir{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+@keyframes painel-pulso{ 0%{ box-shadow:0 0 0 0 rgba(34,197,94,.55); } 70%{ box-shadow:0 0 0 8px rgba(34,197,94,0); } 100%{ box-shadow:0 0 0 0 rgba(34,197,94,0); } }
+
+@media (prefers-reduced-motion: reduce){
+  .p-card, .painel-ao-vivo i{ animation:none; }
+  .p-rank .cheio, .p-medidor .arco{ transition:none; }
+}
+
+@media(max-width:1000px){
+  .p-kpis{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .p-grade, .p-grade-2{ grid-template-columns:1fr; }
+}
+@media(max-width:560px){
+  .p-kpis{ grid-template-columns:1fr; }
+  .painel-topo-dir{ margin-left:0; width:100%; justify-content:space-between; }
+  .painel .modal-corpo{ padding:14px; }
+}
+
+/* ---------- Painel em tela cheia ---------- */
+
+#modalGraficos{ padding:0; overflow:hidden; }
+.modal-caixa.painel{
+  width:100vw;
+  max-width:none;
+  height:100vh;
+  max-height:100vh;
+  border:0;
+  border-radius:0;
+}
+.painel .modal-topo{ border-radius:0; padding:16px 28px; }
+.painel .modal-corpo{ flex:1; overflow-y:auto; align-content:start; padding:20px 28px 32px; }
+
+.p-secao{ display:flex; align-items:center; gap:12px; margin:8px 0 -4px; font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:#7d8490; }
+.p-secao::after{ content:""; flex:1; height:1px; background:var(--p-borda); }
+
+/* Indicadores de operação (KM, caminhão) */
+.p-kpi.op{ padding-bottom:16px; }
+.p-kpi-valor small{ font-size:15px; font-weight:700; color:var(--p-texto2); margin-left:4px; }
+.p-kpi-texto{ display:block; margin-top:12px; font-size:22px; font-weight:800; color:var(--p-texto); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.p-kpi-detalhe{ display:block; margin-top:6px; font-size:13px; font-weight:600; color:var(--p-texto2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.p-grade-3{ display:grid; grid-template-columns:minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); gap:14px; }
+.p-grade-3b{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
+
+/* Gasto por mês */
+.p-colunas svg{ display:block; width:100%; overflow:visible; }
+.p-colunas .eixo{ font-size:12px; fill:#7d8490; font-family:var(--sans); font-weight:600; }
+.p-colunas .grade{ stroke:var(--p-grade); stroke-width:1; }
+.p-colunas .col{ transform-box:fill-box; transform-origin:bottom; transform:scaleY(0); transition:transform .9s cubic-bezier(.2,.8,.2,1), opacity .15s; cursor:default; }
+.p-colunas.pronto .col{ transform:scaleY(1); }
+.p-colunas .col:hover{ opacity:.85; }
+.p-colunas .rotulo-max{ font-size:13px; font-weight:800; fill:#ffffff; font-family:var(--sans); opacity:0; transition:opacity .4s .9s; }
+.p-colunas.pronto .rotulo-max{ opacity:1; }
+.p-destaque{ display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:rgba(57,135,229,.14); color:#8cbcf3; font-size:13px; font-weight:800; }
+
+/* Rankings de operação */
+.p-rank .cheio.verde{ background:linear-gradient(90deg, #15803d, #4ade80); box-shadow:0 0 12px rgba(34,197,94,.45); }
+.p-rank .cheio.cinza{ background:linear-gradient(90deg, #4b5563, #9ca3af); box-shadow:none; }
+.p-rank .cheio.laranja{ background:linear-gradient(90deg, #b5461b, #f08a5d); box-shadow:0 0 12px rgba(217,89,38,.45); }
+.p-rank-sub{ grid-column:2 / -1; margin-top:-2px; font-size:12px; color:var(--p-texto2); font-weight:600; }
+
+@media (prefers-reduced-motion: reduce){
+  .p-colunas .col{ transition:none; transform:none; }
+}
+
+@media(max-width:1100px){
+  .p-grade-3, .p-grade-3b{ grid-template-columns:1fr; }
+}
+@media(max-width:560px){
+  .painel .modal-topo, .painel .modal-corpo{ padding-left:14px; padding-right:14px; }
+}
+
+/* ---------- Legenda ---------- */
+
+.legenda{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 14px;
+  font-size:14px;
+  color:rgba(255,255,255,.8);
+}
+
+.legenda span{ display:inline-flex; align-items:center; gap:6px; }
+.legenda i{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+/* ---------- Cartão da tabela ---------- */
+
+.cartao{
+  border:1px solid var(--borda-card);
+  border-radius:18px;
+  background:var(--card);
+  box-shadow:var(--sombra-card);
+  overflow:hidden;
+}
+
+.cartao-cabecalho{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px 16px;
+  padding:10px 22px;
+  background:var(--primary);
+  color:#ffffff;
+}
+
+.cartao-titulo{
+  margin:0;
+  font-family:var(--serif);
+  font-size:22px;
+  font-weight:500;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.cartao-subtitulo{ font-size:15px; color:rgba(255,255,255,.75); }
+
+.tabela-rolagem{ overflow-x:auto; }
+
+table{ width:100%; border-collapse:collapse; font-size:17px; }
+
+th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  padding:12px;
+  background:#ffffff;
+  border-bottom:1px solid var(--borda-card);
+  color:#3f3a35;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  text-align:left;
+  white-space:nowrap;
+}
+
+td{
+  padding:11px 12px;
+  color:var(--text);
+  font-weight:500;
+  border-bottom:1px solid var(--linha-tabela);
+  vertical-align:middle;
+}
+
+tbody tr{ cursor:pointer; transition:background-color .12s; }
+tbody tr:nth-child(even){ background:#fcfbf8; }
+tbody tr:hover{ background:#f6f3ec; }
+
+
+.col-pedido{ font-weight:600; color:#2563eb; white-space:nowrap; }
+.col-transp{ font-weight:600; }
+.col-data{ color:#3f3a35; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:16px; }
+.col-local{ color:#3f3a35; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; }
+.col-valor{ text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+th.col-valor{ text-align:right; }
+.col-final{ font-weight:800; }
+.col-situacao{ white-space:nowrap; text-align:center; }
+th.col-situacao{ text-align:center; }
+
+/* Abrir pedido agrupado em fretes separados */
+.btn-abrir, .btn-abrir-vazio{
+  display:inline-grid;
+  place-items:center;
+  width:26px;
+  height:26px;
+  margin-right:10px;
+  vertical-align:middle;
+}
+.btn-abrir{
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#ffffff;
+  color:var(--primary-dark);
+  cursor:pointer;
+  transition:background-color .15s, border-color .15s;
+}
+.btn-abrir:hover{ border-color:#2563eb; color:#2563eb; }
+.btn-abrir svg{ width:15px; height:15px; transition:transform .2s; }
+.btn-abrir.aberto{ background:#2563eb; border-color:#2563eb; color:#ffffff; }
+.btn-abrir.aberto svg{ transform:rotate(180deg); }
+
+/* Grupo aberto: destaque azul e espaço acima e abaixo */
+tbody tr.espaco, tbody tr.espaco:hover{ background:#ffffff !important; cursor:default; }
+tbody tr.espaco td{ height:14px; padding:0; border:0; }
+
+tbody tr.grupo-aberto, tbody tr.grupo-aberto:hover{ background:#dbe8ff !important; }
+tbody tr.grupo-aberto td{ border-bottom-color:#c3d6f7; }
+tbody tr.grupo-aberto td:first-child{ box-shadow:inset 4px 0 0 #2563eb !important; }
+
+tbody tr.sub-linha, tbody tr.sub-linha:hover{ cursor:default; background:#eef4ff !important; }
+tbody tr.sub-linha td{ padding-top:8px; padding-bottom:8px; font-size:14px; color:#1f2a44; border-bottom-color:#d6e2f8; }
+tbody tr.sub-linha td:first-child{ box-shadow:inset 4px 0 0 #2563eb; padding-left:48px; }
+tbody tr.sub-linha.ultima td{ border-bottom:0; }
+.sub-tipo{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.06em;
+}
+.sub-tipo.transp{ background:#2563eb; color:#ffffff; }
+.sub-tipo.ch{ background:#ffffff; color:#1e3a8a; border:1px solid #bcd0f5; }
+.sub-caminhao{ color:#475569; font-size:13px; }
+
+.local-extra{ display:none; }
+
+.etiqueta{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  background:var(--accent-soft);
+  color:var(--muted);
+  font-size:14px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.etiqueta.economia{ background:var(--green-soft); color:#166534; }
+.etiqueta.acima{ background:var(--red-soft); color:#991b1b; }
+.etiqueta.divergencia{ background:var(--yellow-soft); color:#92400e; }
+.etiqueta.pago{ background:var(--green); color:#ffffff; }
+
+.mensagem{
+  padding:42px 16px;
+  text-align:center;
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:20px;
+  color:var(--muted);
+}
+
+.mensagem.erro{ color:#b91c1c; }
+
+/* ---------- Modais ---------- */
+
+.modal{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:none;
+  align-items:flex-start;
+  justify-content:center;
+  padding:6vh 16px 24px;
+  background:rgba(37,30,25,.45);
+  overflow-y:auto;
+}
+
+.modal.aberto{ display:flex; }
+
+.modal-caixa{
+  width:min(560px, 100%);
+  border-radius:18px;
+  background:#ffffff;
+  box-shadow:0 24px 70px rgba(37,30,25,.25);
+  display:flex;
+  flex-direction:column;
+  max-height:88vh;
+}
+
+.modal-caixa.larga{ width:min(1000px, 100%); }
+.modal-caixa.media{ width:min(820px, 100%); }
+.modal-caixa.estreita{ width:min(420px, 100%); }
+
+.modal-topo{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:20px 22px 14px;
+  border-bottom:1px solid var(--borda-card);
+}
+
+.modal-topo h2{
+  margin:0;
+  font-family:var(--serif);
+  font-size:26px;
+  font-weight:500;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.modal-topo p{ margin:4px 0 0; color:var(--muted); font-size:15px; }
+
+.modal-fechar{
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:#ffffff;
+  color:var(--muted);
+  font-size:19px;
+  cursor:pointer;
+}
+
+.modal-corpo{
+  padding:18px 22px;
+  overflow-y:auto;
+  display:grid;
+  gap:16px;
+}
+
+.modal-rodape{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  padding:14px 22px;
+  border-top:1px solid var(--borda-card);
+}
+
+.modal-rodape .erro-modal{ flex:1; }
+
+.erro-modal{ color:#b91c1c; font-size:15px; font-weight:600; }
+
+.campo label,
+.campo .rotulo{
+  display:block;
+  margin-bottom:7px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.campo input{
+  width:100%;
+  min-height:42px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--fundo-suave);
+  color:var(--text);
+  font-size:16px;
+  outline:none;
+}
+
+.campo input:focus{ border-color:var(--primary); background:#ffffff; }
+
+.campo-senha{ text-align:center; font-size:22px !important; letter-spacing:.5em; }
+
+.opcoes{ display:flex; flex-wrap:wrap; gap:8px; }
+
+.opcao{
+  min-height:40px;
+  padding:0 16px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#ffffff;
+  color:var(--text);
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  font-variant-numeric:tabular-nums;
+}
+
+.opcao:hover{ border-color:var(--primary); }
+.opcao.selecionada{ background:var(--primary-dark); border-color:var(--primary-dark); color:#ffffff; }
+.opcao b{ font-weight:800; margin-left:6px; }
+
+/* Detalhes: duas colunas lado a lado */
+
+.comparativo{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.comparativo-coluna{
+  border:1px solid var(--borda-card);
+  border-radius:14px;
+  background:var(--fundo-suave);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.comparativo-topo{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:8px;
+  padding:12px 16px;
+  border-bottom:1px solid var(--borda-card);
+  background:#ffffff;
+}
+
+.comparativo-topo h3{
+  margin:0;
+  font-family:var(--serif);
+  font-size:20px;
+  font-weight:600;
+  letter-spacing:.06em;
+}
+
+.comparativo-topo strong{ font-variant-numeric:tabular-nums; font-size:17px; }
+
+.comparativo-lista{
+  padding:10px;
+  display:grid;
+  gap:8px;
+  max-height:36vh;
+  overflow-y:auto;
+}
+
+.corrida{
+  padding:12px 14px;
+  border:1px solid var(--borda-card);
+  border-radius:12px;
+  background:#ffffff;
+  font-size:15px;
+  line-height:1.5;
+}
+
+.corrida-topo{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:4px;
+  font-weight:700;
+  font-size:16px;
+}
+
+.corrida-topo span:last-child{ font-variant-numeric:tabular-nums; }
+.corrida-rota{ color:var(--muted); }
+.corrida-caminhao{ color:var(--muted); font-size:14px; font-weight:600; }
+
+.vazio-coluna{
+  padding:22px 10px;
+  text-align:center;
+  color:var(--muted);
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:18px;
+}
+
+.declaracao{
+  padding:12px 14px;
+  border:1px solid #fde68a;
+  border-radius:12px;
+  background:#fffbeb;
+  color:#92400e;
+  font-size:15px;
+  line-height:1.5;
+}
+
+.declaracao strong{ display:block; margin-bottom:4px; }
+.declaracao ul{ margin:0; padding-left:18px; }
+
+.decisao{
+  display:grid;
+  grid-template-columns:auto 140px 1fr;
+  gap:14px;
+  align-items:end;
+}
+
+.valor-final-caixa{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  padding:14px 18px;
+  border-radius:14px;
+  background:var(--fundo-suave);
+  border:1px solid var(--borda-card);
+}
+
+.valor-final-caixa span{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.valor-final-caixa strong{
+  font-size:26px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+
+.valor-final-caixa small{ color:var(--muted); font-size:14px; font-weight:600; }
+
+/* Pagamento */
+
+.tabela-pagamento{ border:1px solid var(--borda-card); border-radius:14px; overflow:hidden; }
+.tabela-pagamento table{ font-size:15px; }
+.tabela-pagamento th{ position:static; padding:10px; font-size:12px; }
+.tabela-pagamento td{ padding:9px 10px; cursor:default; }
+.tabela-pagamento tbody tr{ cursor:default; }
+
+.resumo-grade{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:10px;
+}
+
+.resumo-item{
+  padding:12px 14px;
+  border:1px solid var(--borda-card);
+  border-radius:14px;
+  background:var(--fundo-suave);
+}
+
+.resumo-item span{
+  display:block;
+  margin-bottom:4px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.resumo-item strong{ font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; }
+.resumo-item.destaque{ background:var(--primary-dark); border-color:var(--primary-dark); color:#ffffff; }
+.resumo-item.destaque span{ color:rgba(255,255,255,.75); }
+
+.confirmacao-texto{ margin:0; font-size:17px; line-height:1.55; }
+
+/* Carregando */
+
+.carregando{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,.6);
+}
+
+.carregando.aberto{ display:flex; }
+
+.carregando div{
+  width:42px;
+  height:42px;
+  border:3px solid var(--accent-soft);
+  border-top-color:var(--primary-dark);
+  border-radius:50%;
+  animation:girar .8s linear infinite;
+}
+
+@keyframes girar{ to{ transform:rotate(360deg); } }
+
+/* Aviso (toast) */
+
+.aviso{
+  position:fixed;
+  left:50%;
+  bottom:24px;
+  z-index:300;
+  transform:translateX(-50%) translateY(20px);
+  opacity:0;
+  pointer-events:none;
+  padding:12px 20px;
+  border-radius:999px;
+  background:var(--primary-dark);
+  color:#ffffff;
+  font-size:16px;
+  font-weight:700;
+  box-shadow:0 12px 40px rgba(37,30,25,.3);
+  transition:opacity .2s, transform .2s;
+}
+
+.aviso.visivel{ opacity:1; transform:translateX(-50%) translateY(0); }
+.aviso.sucesso{ background:var(--green); }
+.aviso.erro{ background:var(--red); }
+
+/* ---------- Recibo (só aparece na impressão) ---------- */
+
+#recibo{ display:none; }
+
+@media print{
+  body.imprimindo-recibo > *:not(#recibo){ display:none !important; }
+  body.imprimindo-recibo{ padding:0; }
+  body.imprimindo-recibo #recibo{ display:block; }
+
+  #recibo{ font-family:var(--sans); color:var(--text); font-size:14px; }
+  #recibo h1{
+    margin:0 0 4px;
+    text-align:center;
+    font-family:var(--serif);
+    font-size:30px;
+    font-weight:500;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+  }
+  #recibo .recibo-sub{ text-align:center; color:var(--muted); margin-bottom:22px; }
+  #recibo table{ font-size:12px; }
+  #recibo th{ position:static; padding:6px; font-size:11px; border-bottom:1px solid #ccc; }
+  #recibo td{ padding:6px; border-bottom:1px solid #eee; }
+  #recibo .recibo-resumo{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+    margin-top:22px;
+  }
+  #recibo .recibo-resumo div{ padding:10px 12px; border:1px solid #ddd; border-radius:10px; }
+  #recibo .recibo-resumo span{ display:block; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+  #recibo .recibo-resumo strong{ font-size:17px; }
+  #recibo .recibo-rodape{ margin-top:40px; text-align:center; color:var(--muted); font-size:12px; }
+}
+
+/* ---------- Notebook / tablet ---------- */
+
+@media(max-width:1200px){
+  body{ padding:0 18px 32px; }
+  .cabecalho-titulo{ font-size:44px; }
+  .t1-oculta{ display:none; }
+}
+
+@media(max-width:960px){
+  .t2-oculta{ display:none; }
+  .local-extra{ display:block; margin-top:3px; color:var(--muted); font-size:14px; font-weight:600; }
+  .cabecalho-barra{ justify-content:center; }
+  .filtros{ justify-content:center; flex:1 1 100%; }
+  .resumo-grade{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  th, td{ padding:12px 8px; }
+}
+
+@media(pointer:coarse){
+  .btn, .opcao{ min-height:44px; }
+  .semana-seta{ width:44px; height:44px; }
+  .semana-atual{ min-height:44px; }
+  .filtros > input{ min-height:44px; }
+}
+
+@media(max-width:760px){
+  body{ padding:0 14px 32px; }
+  .cabecalho{ padding-top:22px; }
+  .cabecalho-titulo{ font-size:24px; letter-spacing:.1em; margin-bottom:18px; }
+  .col-situacao{ white-space:normal; }
+  .col-situacao .etiqueta{ white-space:normal; text-align:center; }
+  .cabecalho-barra{ flex-direction:column; align-items:stretch; }
+  .semana{ justify-content:center; }
+  .semana-atual{ flex:1; justify-content:center; }
+  .filtros > input{ flex:1 1 40%; min-width:0; }
+  .status-atualizacao{ position:static; justify-content:center; padding-top:8px; }
+  .pendentes{ flex:1 0 100%; }
+  .card-apagar{ flex:1; justify-content:center; min-height:44px; }
+  .linha-apagar{ flex-wrap:wrap; gap:4px 12px; }
+  .linha-apagar strong{ flex:1 0 100%; }
+  .linha-apagar .valor{ margin-left:auto; min-width:0; }
+  .cartao-cabecalho{ padding:9px 16px; }
+  .cartao-titulo{ font-size:19px; }
+  .legenda{ display:none; }
+  .m-oculta{ display:none; }
+  table{ font-size:16px; }
+  th{ padding:10px 6px; font-size:12px; letter-spacing:.08em; }
+  td{ padding:10px 6px; }
+  .comparativo, .decisao{ grid-template-columns:1fr; }
+  .modal{ padding:2vh 8px 12px; }
+  .modal-caixa{ max-height:96vh; }
+  .modal-corpo{ padding:16px; }
+  .modal-rodape{ flex-wrap:wrap; padding:12px 16px; }
+  .modal-rodape .erro-modal{ flex:1 0 100%; }
+}
+
+/* =========================================================
+   PAINEL DE FRETES — VERSÃO CLARA (mesmo estilo do painel do Almoxarifado)
+========================================================= */
+.painel{
+  --p-fundo:#fbfaf7; --p-card:#ffffff; --p-borda:#eee8df;
+  --p-texto:#251e19; --p-texto2:#5f5952; --p-grade:#efebe4;
+  --s1:#2a78d6; --s2:#eb6834; --ok:#16a34a; --aviso:#d97706; --neutro:#a8a29a;
+}
+#modalGraficos{ background:rgba(37,30,25,.35); }
+.modal-caixa.painel{
+  background:
+    radial-gradient(900px 380px at 10% -10%, rgba(42,120,214,.06), transparent 60%),
+    radial-gradient(700px 320px at 100% 0%, rgba(235,104,52,.05), transparent 60%),
+    var(--p-fundo);
+  border:0;
+  box-shadow:none;
+}
+.painel .modal-topo{ background:#ffffff; border-bottom:1px solid var(--p-borda); }
+.painel .modal-topo h2{
+  font-family:var(--serif); font-size:30px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; line-height:1.1;
+}
+.painel .modal-fechar:hover{ color:var(--p-texto); border-color:#cfc8bc; }
+.painel-periodos{ background:var(--p-fundo); border-color:var(--p-borda); }
+.painel-periodos button:hover{ color:var(--p-texto); }
+.painel-periodos button.ativo{ background:var(--primary-dark); color:#ffffff; box-shadow:none; }
+.p-secao{ color:#7d766d; }
+
+.p-card{ background:#ffffff; box-shadow:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07); }
+
+.p-delta.sobe{ background:#dcfce7; color:#166534; }
+.p-delta.desce{ background:#fee2e2; color:#b91c1c; }
+.p-delta.neutro{ background:#f1eee8; color:var(--p-texto2); }
+
+.p-area .eixo, .p-colunas .eixo{ fill:#7d766d; }
+.p-area .cruz{ stroke:rgba(37,30,25,.3); }
+.p-area .ponto{ stroke:#ffffff; }
+/* Sem brilho no fundo claro */
+.p-area .linha, .p-colunas .col, .p-medidor .arco{ filter:none !important; }
+.p-colunas .rotulo-max{ fill:var(--p-texto); }
+.p-destaque{ background:#e8f1fc; color:#1d4ed8; }
+
+.p-status div{ background:#faf8f4; }
+
+.p-rank .pos{ background:#f4f1eb; }
+.p-rank:first-child .pos{ background:#e0ecff; color:#1e40af; }
+.p-rank .trilho{ background:#f1eee8; }
+.p-rank .cheio{ background:linear-gradient(90deg, #2a78d6, #5598e7); box-shadow:none; }
+.p-rank .cheio.verde{ background:linear-gradient(90deg, #138a60, #1baf7a); box-shadow:none; }
+.p-rank .cheio.cinza{ background:linear-gradient(90deg, #a8a29a, #cfc8bc); }
+.p-rank .cheio.laranja{ background:linear-gradient(90deg, #d95926, #f08a5d); box-shadow:none; }
+
+.p-top div{ background:#faf8f4; }
+.p-top div:hover{ background:#f4f1eb; }
+.p-top .ped{ color:#1d4ed8; }
+.p-pill.pago{ background:#dcfce7; color:#166534; }
+.p-pill.pend{ background:#fef3c7; color:#92400e; }
+.p-pill.sem{ background:#f1eee8; color:var(--p-texto2); }
+
+.btn-graficos{ border-color:var(--primary-dark); background:var(--primary-dark); }
+.btn-graficos svg{ color:#ffffff; }
+.btn-graficos:hover{ box-shadow:0 6px 16px rgba(37,30,25,.18); }
+
+</style>
+</head>
+
+<body>
+
+<!-- Atualização: discreta, no canto superior direito -->
+<div class="status-atualizacao"><span class="ponto-vivo carregando" id="pontoVivo"></span><span id="textoAtualizacao">Carregando...</span></div>
+
+<header class="cabecalho">
+
+  <h1 class="cabecalho-titulo">Conciliação de Fretes</h1>
+
+  <div class="cabecalho-barra">
+
+    <div class="semana">
+      <button type="button" class="semana-seta" onclick="mudarSemana(-1)" aria-label="Semana anterior">‹</button>
+      <label class="semana-atual" title="Escolher semana">
+        <small>Semana</small><span id="textoSemana">—</span>
+        <input type="date" id="seletorSemana" onchange="selecionarSemana(this.value)">
+      </label>
+      <button type="button" class="semana-seta" onclick="mudarSemana(1)" aria-label="Próxima semana">›</button>
+    </div>
+
+    <div class="filtros">
+      <input id="filtroPedido" class="filtro-pedido" type="search" inputmode="numeric" placeholder="Pedido" oninput="renderizar()">
+      <input id="filtroTransportadora" type="search" placeholder="Transportadora" oninput="renderizar()">
+      <button type="button" class="btn-graficos" onclick="abrirGraficos()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg>Gráficos</button>
+      <div class="pendentes" id="pendentes"></div>
+    </div>
+
+  </div>
+
+</header>
+
+<main>
+  <section class="cartao">
+    <div class="cartao-cabecalho">
+      <h2 class="cartao-titulo">Fretes da semana</h2>
+      <div class="legenda">
+        <span><i style="background:var(--green)"></i>Economia</span>
+        <span><i style="background:var(--red)"></i>Acima do CH</span>
+        <span><i style="background:var(--yellow)"></i>Divergência</span>
+        <span><i style="background:#a8a29a"></i>Igual ao CH</span>
+      </div>
+    </div>
+    <div class="tabela-rolagem">
+      <table>
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Transportadora</th>
+            <th class="m-oculta">Datas</th>
+            <th class="m-oculta t2-oculta">Origem</th>
+            <th class="m-oculta t2-oculta">Destino</th>
+            <th class="col-valor m-oculta t1-oculta">Valor CH</th>
+            <th class="col-valor m-oculta t1-oculta">Valor Transp.</th>
+            <th class="col-valor">Valor final</th>
+            <th class="col-situacao">Situação</th>
+          </tr>
+        </thead>
+        <tbody id="tabela">
+          <tr><td colspan="9"><div class="mensagem">Carregando fretes...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+
+<!-- =========================================================
+     MODAL CONCILIAR (detalhes do pedido)
+========================================================= -->
+<div class="modal" id="modalDetalhes">
+  <div class="modal-caixa larga">
+
+    <div class="modal-topo">
+      <div>
+        <h2 id="detalhesTitulo">Pedido</h2>
+        <p id="detalhesSubtitulo"></p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalDetalhes')" aria-label="Fechar">×</button>
+    </div>
+
+    <div class="modal-corpo">
+
+      <div class="comparativo">
+        <div class="comparativo-coluna">
+          <div class="comparativo-topo"><h3>Transportadora</h3><strong id="totalTranspDetalhe">—</strong></div>
+          <div class="comparativo-lista" id="listaFretes"></div>
+        </div>
+        <div class="comparativo-coluna">
+          <div class="comparativo-topo"><h3>Supervisor CH</h3><strong id="totalChDetalhe">—</strong></div>
+          <div class="comparativo-lista" id="listaCh"></div>
+        </div>
+      </div>
+
+      <div class="declaracao oculto" id="alertaDivergencia"></div>
+
+      <div class="decisao">
+        <div class="campo">
+          <span class="rotulo">Pagar pelo valor da</span>
+          <div class="opcoes">
+            <button type="button" class="opcao" id="btnFretes" onclick="selecionarOpcao('FRETES')">Transportadora</button>
+            <button type="button" class="opcao" id="btnCh" onclick="selecionarOpcao('CH')">CH</button>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="abatimento">Abatimento</label>
+          <input id="abatimento" type="number" step="0.01" min="0" value="0" inputmode="decimal" oninput="atualizarValorFinal()">
+        </div>
+        <div class="campo">
+          <label for="observacao">Observação</label>
+          <input id="observacao" type="text" maxlength="300" placeholder="Motivo do abatimento ou da escolha">
+        </div>
+      </div>
+
+      <div class="valor-final-caixa">
+        <div>
+          <span>Valor final</span><br>
+          <small id="valorSalvo"></small>
+        </div>
+        <strong id="valorFinal">—</strong>
+      </div>
+
+    </div>
+
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroDetalhes"></span>
+      <button type="button" class="btn btn-contorno" onclick="fecharModal('modalDetalhes')">Cancelar</button>
+      <button type="button" class="btn" id="btnSalvarDecisao" onclick="salvarDecisao()">Salvar decisão</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL SENHA DA GERÊNCIA
+========================================================= -->
+<div class="modal" id="modalSenha">
+  <div class="modal-caixa estreita">
+    <div class="modal-topo">
+      <div>
+        <h2>Autorização</h2>
+        <p>O valor final passa do valor registrado pelo CH. Digite a senha da gerência.</p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalSenha')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <div class="campo">
+        <input type="password" id="campoSenha" class="campo-senha" placeholder="••••" autocomplete="off" onkeydown="if(event.key === 'Enter'){ confirmarSenha(); }">
+      </div>
+    </div>
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroSenha"></span>
+      <button type="button" class="btn btn-contorno" onclick="fecharModal('modalSenha')">Cancelar</button>
+      <button type="button" class="btn" onclick="confirmarSenha()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL PAGAMENTO POR TRANSPORTADORA
+========================================================= -->
+<div class="modal" id="modalGraficos">
+  <div class="modal-caixa painel">
+    <div class="modal-topo">
+      <div>
+        <h2>Painel de Fretes</h2>
+        <p id="subtituloGraficos"></p>
+      </div>
+      <div class="painel-topo-dir">
+        <span class="painel-ao-vivo"><i></i>Ao vivo</span>
+        <div class="painel-periodos" id="grafPeriodos">
+          <button type="button" data-semanas="4" onclick="mudarPeriodoGraf(4)">4 sem</button>
+          <button type="button" data-semanas="12" onclick="mudarPeriodoGraf(12)">12 sem</button>
+          <button type="button" data-semanas="26" onclick="mudarPeriodoGraf(26)">6 meses</button>
+          <button type="button" data-semanas="0" onclick="mudarPeriodoGraf(0)">Tudo</button>
+        </div>
+        <button type="button" class="modal-fechar" onclick="fecharModal('modalGraficos')" aria-label="Fechar">×</button>
+      </div>
+    </div>
+    <div class="modal-corpo">
+      <div class="p-kpis" id="grafKpis"></div>
+
+      <div class="p-grade">
+        <section class="p-card" style="animation-delay:.12s">
+          <div class="p-card-topo">
+            <div>
+              <h3>Evolução semanal</h3>
+              <p class="p-sub">Transportadora × CH por semana</p>
+            </div>
+            <div class="p-legenda">
+              <span><i style="background:var(--s1)"></i>Transportadora</span>
+              <span><i style="background:var(--s2)"></i>CH</span>
+            </div>
+          </div>
+          <div class="p-area" id="grafLinhas"></div>
+        </section>
+        <section class="p-card" style="animation-delay:.18s">
+          <h3>Pagamentos</h3>
+          <p class="p-sub">Pedidos pagos no período</p>
+          <div class="p-medidor" id="grafMedidor"></div>
+        </section>
+      </div>
+
+      <div class="p-secao">Operação · KM, caminhões e regiões</div>
+      <div class="p-kpis" id="grafKpisOp"></div>
+
+      <div class="p-grade-3">
+        <section class="p-card">
+          <div class="p-card-topo">
+            <div>
+              <h3>Gasto por mês</h3>
+              <p class="p-sub">Valor das transportadoras pela data do frete</p>
+            </div>
+            <span class="p-destaque" id="grafMesMaior"></span>
+          </div>
+          <div class="p-area p-colunas" id="grafMeses"></div>
+        </section>
+        <section class="p-card">
+          <h3>Caminhões que mais rodam</h3>
+          <p class="p-sub">KM total por caminhão</p>
+          <div class="p-ranking" id="grafCaminhoes"></div>
+        </section>
+        <section class="p-card">
+          <h3>Ranking de transportadoras</h3>
+          <p class="p-sub">Valor da transportadora e participação no total</p>
+          <div class="p-ranking" id="grafRanking"></div>
+        </section>
+      </div>
+
+      <div class="p-grade-3b">
+        <section class="p-card">
+          <h3>Onde mais fizemos</h3>
+          <p class="p-sub">Cidades com mais fretes</p>
+          <div class="p-ranking" id="grafRegiaoMais"></div>
+        </section>
+        <section class="p-card">
+          <h3>Onde menos fizemos</h3>
+          <p class="p-sub">Cidades com menos fretes</p>
+          <div class="p-ranking" id="grafRegiaoMenos"></div>
+        </section>
+        <section class="p-card">
+          <h3>Maiores fretes</h3>
+          <p class="p-sub">Os 6 pedidos de maior valor no período</p>
+          <div class="p-top" id="grafTop"></div>
+        </section>
+      </div>
+    </div>
+    <div class="p-dica" id="grafDica"></div>
+  </div>
+</div>
+
+<div class="modal" id="modalAPagar">
+  <div class="modal-caixa">
+    <div class="modal-topo">
+      <div>
+        <h2>A pagar</h2>
+        <p id="subtituloAPagar"></p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalAPagar')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <div class="lista-apagar" id="listaAPagar"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalPagamento">
+  <div class="modal-caixa media">
+
+    <div class="modal-topo">
+      <div>
+        <h2 id="tituloPagamento">Pagamento</h2>
+        <p id="subtituloPagamento"></p>
+      </div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalPagamento')" aria-label="Fechar">×</button>
+    </div>
+
+    <div class="modal-corpo">
+      <div class="tabela-pagamento">
+        <div class="tabela-rolagem">
+          <table>
+            <thead>
+              <tr>
+                <th>Pedido</th>
+                <th class="m-oculta">Datas</th>
+                <th class="m-oculta">Rota</th>
+                <th class="col-valor m-oculta">Transp.</th>
+                <th class="col-valor m-oculta">CH</th>
+                <th class="col-valor">Final</th>
+                <th class="m-oculta">Motivo</th>
+              </tr>
+            </thead>
+            <tbody id="listaCorridasPagamento"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="resumo-grade" id="resumoFinanceiro"></div>
+    </div>
+
+    <div class="modal-rodape">
+      <span class="erro-modal" id="erroPagamento"></span>
+      <button type="button" class="btn btn-contorno" onclick="fecharModal('modalPagamento')">Cancelar</button>
+      <button type="button" class="btn btn-sucesso" id="btnConfirmarPagamento" onclick="confirmarPagamento()">Confirmar pagamento</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL MENSAGEM (pagamento bloqueado / corrida já paga)
+========================================================= -->
+<div class="modal" id="modalMensagem">
+  <div class="modal-caixa estreita">
+    <div class="modal-topo">
+      <div><h2 id="mensagemTitulo">Aviso</h2></div>
+      <button type="button" class="modal-fechar" onclick="fecharModal('modalMensagem')" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-corpo">
+      <p class="confirmacao-texto" id="mensagemTexto"></p>
+    </div>
+    <div class="modal-rodape">
+      <button type="button" class="btn" onclick="fecharModal('modalMensagem')">Entendi</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="carregando" id="carregando"><div></div></div>
+<div class="aviso" id="aviso"></div>
+<div id="recibo"></div>
+
+
+<script>
+/* =========================================================
+   ESTADO
+========================================================= */
+
+const SENHA_GERENCIA = "1234";
+
+const estado = {
+  lista: [],
+  dataSemana: new Date(),
+  atual: null,          // item aberto no modal de detalhes
+  totalFretes: 0,
+  totalCh: 0,
+  selecao: null,        // "FRETES" | "CH"
+  finalPendente: null,  // aguardando senha
+  pagamento: null,      // { transportadora, itens, totais }
+  abertos: {}           // pedidos agrupados abertos na tabela
+};
+
+
+/* =========================================================
+   APOIO
+========================================================= */
+
+function el(id){ return document.getElementById(id); }
+
+function escapar(valor){
+  return String(valor === null || valor === undefined ? "" : valor)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function normalizar(texto){
+  return String(texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function moeda(valor){
+  return Number(valor || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
+}
+
+function temValor(v){ return v !== "" && v !== null && v !== undefined && !isNaN(Number(v)); }
+
+/* google.script.run com promessa */
+function servidor(nome){
+  const argumentos = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function(resolver, rejeitar){
+    google.script.run
+      .withSuccessHandler(resolver)
+      .withFailureHandler(function(erro){
+        rejeitar(new Error(String(erro && erro.message ? erro.message : erro)));
+      })[nome].apply(null, argumentos);
+  });
+}
+
+let temporizadorAviso = null;
+
+function avisar(texto, tipo){
+  const aviso = el("aviso");
+  aviso.textContent = texto;
+  aviso.className = "aviso visivel " + (tipo || "");
+  clearTimeout(temporizadorAviso);
+  temporizadorAviso = setTimeout(function(){ aviso.className = "aviso " + (tipo || ""); }, 3200);
+}
+
+function abrirModal(id){ el(id).classList.add("aberto"); }
+function fecharModal(id){ el(id).classList.remove("aberto"); }
+
+function carregando(sim){ el("carregando").classList.toggle("aberto", !!sim); }
+
+function mostrarMensagem(titulo, html){
+  el("mensagemTitulo").textContent = titulo;
+  el("mensagemTexto").innerHTML = html;
+  abrirModal("modalMensagem");
+}
+
+function ocupado(botao, texto){
+  botao.dataset.texto = botao.dataset.texto || botao.textContent;
+  botao.disabled = true;
+  botao.textContent = texto;
+}
+
+function liberar(botao){
+  botao.disabled = false;
+  if (botao.dataset.texto) botao.textContent = botao.dataset.texto;
+}
+
+function marcarAtualizacao(ok, texto){
+  el("pontoVivo").className = "ponto-vivo" + (ok ? "" : " erro");
+  el("textoAtualizacao").textContent = texto;
+}
+
+
+/* =========================================================
+   CARREGAR
+========================================================= */
+
+function carregar(){
+  servidor("getConciliacao")
+    .then(function(lista){
+      estado.lista = lista || [];
+      const agora = new Date();
+      marcarAtualizacao(true, "Atualizado às " + agora.toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" }));
+      montarPendentes();
+      renderizar();
+    })
+    .catch(function(erro){
+      console.error("Erro ao carregar conciliação:", erro);
+      marcarAtualizacao(false, "Erro ao carregar");
+      el("tabela").innerHTML = '<tr><td colspan="9"><div class="mensagem erro">Não foi possível carregar a conciliação.</div></td></tr>';
+    });
+}
+
+
+/* =========================================================
+   SEMANA (operacional: terça até segunda)
+========================================================= */
+
+function inicioSemana(data){
+  const d = new Date(data);
+  const dia = d.getDay(); // domingo 0, segunda 1, terça 2
+  d.setDate(d.getDate() + (dia >= 2 ? 2 - dia : -5 - dia));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function fimSemana(data){
+  const fim = inicioSemana(data);
+  fim.setDate(fim.getDate() + 6);
+  fim.setHours(23, 59, 59, 999);
+  return fim;
+}
+
+function mudarSemana(passo){
+  estado.dataSemana.setDate(estado.dataSemana.getDate() + 7 * passo);
+  renderizar();
+}
+
+function selecionarSemana(valor){
+  if (!valor) return;
+  const p = valor.split("-");
+  estado.dataSemana = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  renderizar();
+}
+
+/* Datas "dd/mm/aaaa" de um item, já como Date */
+function datasDoItem(item){
+  const textos = String(item.datas || "").match(/\d{2}\/\d{2}\/\d{4}/g) || [];
+  return textos.map(function(t){
+    const p = t.split("/");
+    return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]), 12);
+  }).filter(function(d){ return !isNaN(d.getTime()); });
+}
+
+function datasTexto(item){
+  const textos = String(item.datas || "").match(/\d{2}\/\d{2}\/\d{4}/g) || [];
+  // Sem repetir e sem o ano, para caber na linha
+  const unicas = textos.filter(function(t, i){ return textos.indexOf(t) === i; });
+  return unicas.map(function(t){ return t.slice(0, 5); }).join(", ");
+}
+
+
+/* =========================================================
+   SITUAÇÃO DA LINHA
+========================================================= */
+
+function situacao(item){
+  const ch = Number(item.somaCh) || 0;
+  const trp = Number(item.somaFretes) || 0;
+
+  if (ch === 0 || trp === 0) return { classe:"divergencia", texto: ch === 0 ? "Sem registro CH" : "Sem registro Transp." };
+  if (!temValor(item.valorFinal)) return { classe:"", texto:"Aguardando decisão" };
+
+  const fin = Number(item.valorFinal);
+  if (fin < ch) return { classe:"economia", texto:"Economia " + moeda(ch - fin) };
+  if (fin > ch) return { classe:"acima", texto:"Acima " + moeda(fin - ch) };
+  return { classe:"igual", texto:"Igual ao CH" };
+}
+
+
+/* =========================================================
+   TABELA
+========================================================= */
+
+function filtrados(){
+  const inicio = inicioSemana(estado.dataSemana).getTime();
+  const fim = fimSemana(estado.dataSemana).getTime();
+  const pedido = el("filtroPedido").value.trim();
+  const transp = normalizar(el("filtroTransportadora").value);
+
+  return estado.lista.filter(function(item){
+    const datas = datasDoItem(item);
+    if (!datas.length) return false;
+
+    // A semana é a da data mais antiga do pedido
+    const maisAntiga = Math.min.apply(null, datas.map(function(d){ return d.getTime(); }));
+    if (maisAntiga < inicio || maisAntiga > fim) return false;
+
+    if (pedido && String(item.pedido).indexOf(pedido) === -1) return false;
+    if (transp && normalizar(item.transportadora).indexOf(transp) === -1) return false;
+    return true;
+  });
+}
+
+function renderizar(){
+  const inicio = inicioSemana(estado.dataSemana);
+  const fim = fimSemana(estado.dataSemana);
+  el("textoSemana").textContent =
+    inicio.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" }) + " – " + fim.toLocaleDateString("pt-BR");
+
+  const lista = filtrados();
+
+  if (!lista.length){
+    el("tabela").innerHTML = '<tr><td colspan="9"><div class="mensagem">Nenhum frete encontrado nesta semana.</div></td></tr>';
+    return;
+  }
+
+  el("tabela").innerHTML = lista.map(function(item){
+    const s = situacao(item);
+    const indice = estado.lista.indexOf(item);
+    const pago = item.statusPagamento === "PAGO";
+    const rota = escapar(item.origem) + " → " + escapar(item.destino);
+
+    const chave = item.pedido + "||" + item.transportadora;
+    const itens = item.itens || [];
+    const aberto = !!estado.abertos[chave] && itens.length > 1;
+    const botao = itens.length > 1
+      ? '<button type="button" class="btn-abrir' + (aberto ? " aberto" : "") + '" title="' + (aberto ? "Agrupar fretes" : "Ver fretes separados") + '" onclick="alternarGrupo(event, ' + indice + ')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>'
+      : '<span class="btn-abrir-vazio"></span>';
+    const espaco = '<tr class="espaco"><td colspan="9"></td></tr>';
+
+    return (aberto ? espaco : "") +
+      '<tr class="' + (s.classe ? "s-" + s.classe : "") + (aberto ? " grupo-aberto" : "") + '" onclick="abrirItem(' + indice + ')">' +
+      '<td class="col-pedido">' + botao + escapar(item.pedido) + '</td>' +
+      '<td class="col-transp">' + escapar(item.transportadora) +
+        '<span class="local-extra">' + escapar(datasTexto(item)) + '</span></td>' +
+      '<td class="col-data m-oculta">' + escapar(datasTexto(item)) + '</td>' +
+      '<td class="col-local m-oculta t2-oculta" title="' + escapar(item.origem) + '">' + escapar(item.origem) + '</td>' +
+      '<td class="col-local m-oculta t2-oculta" title="' + escapar(item.destino) + '">' + escapar(item.destino) + '</td>' +
+      '<td class="col-valor m-oculta t1-oculta">' + moeda(item.somaCh) + '</td>' +
+      '<td class="col-valor m-oculta t1-oculta">' + moeda(item.somaFretes) + '</td>' +
+      '<td class="col-valor col-final" title="' + rota + '">' + (temValor(item.valorFinal) ? moeda(item.valorFinal) : "—") + '</td>' +
+      '<td class="col-situacao">' +
+        (pago ? '<span class="etiqueta pago">Pago</span>' : '<span class="etiqueta ' + s.classe + '">' + escapar(s.texto) + '</span>') +
+      '</td>' +
+    '</tr>' + (aberto ? linhasSeparadas(itens) + espaco : "");
+  }).join("");
+}
+
+/* Uma linha por frete, com o valor na coluna da origem (CH ou transportadora) */
+function linhasSeparadas(itens){
+  return itens.map(function(f, i){
+    const ch = f.tipo === "CH";
+    return '<tr class="sub-linha' + (i === itens.length - 1 ? " ultima" : "") + '" onclick="event.stopPropagation()">' +
+      '<td><span class="sub-tipo ' + (ch ? "ch" : "transp") + '">' + (ch ? "CH" : "TRANSP.") + '</span></td>' +
+      '<td><span class="sub-caminhao">' + escapar(f.caminhao || "—") + '</span>' +
+        '<span class="local-extra">' + escapar(String(f.data).slice(0, 5)) + '</span></td>' +
+      '<td class="col-data m-oculta">' + escapar(String(f.data).slice(0, 5)) + '</td>' +
+      '<td class="col-local m-oculta t2-oculta" title="' + escapar(f.origem) + '">' + escapar(f.origem) + '</td>' +
+      '<td class="col-local m-oculta t2-oculta" title="' + escapar(f.destino) + '">' + escapar(f.destino) + '</td>' +
+      '<td class="col-valor m-oculta t1-oculta">' + (ch ? moeda(f.valor) : "") + '</td>' +
+      '<td class="col-valor m-oculta t1-oculta">' + (ch ? "" : moeda(f.valor)) + '</td>' +
+      '<td class="col-valor">' + moeda(f.valor) + '</td>' +
+      '<td></td>' +
+    '</tr>';
+  }).join("");
+}
+
+function alternarGrupo(evento, indice){
+  evento.stopPropagation();
+  const item = estado.lista[indice];
+  if (!item) return;
+  const chave = item.pedido + "||" + item.transportadora;
+  estado.abertos[chave] = !estado.abertos[chave];
+  renderizar();
+}
+
+
+/* =========================================================
+   PENDENTES POR TRANSPORTADORA
+========================================================= */
+
+/* Pedidos ainda não pagos, agrupados por transportadora */
+function gruposAPagar(){
+  const mapa = {};
+  estado.lista.forEach(function(item){
+    if (item.statusPagamento === "PAGO") return;
+    const t = item.transportadora || "—";
+    if (!mapa[t]) mapa[t] = { nome:t, qtd:0, total:0 };
+    mapa[t].qtd++;
+    mapa[t].total += temValor(item.valorFinal) ? Number(item.valorFinal) : 0;
+  });
+  return Object.keys(mapa).map(function(t){ return mapa[t]; })
+    .sort(function(a, b){ return b.qtd - a.qtd || a.nome.localeCompare(b.nome); });
+}
+
+function montarPendentes(){
+  const grupos = gruposAPagar();
+  const pedidos = grupos.reduce(function(t, g){ return t + g.qtd; }, 0);
+
+  if (!pedidos){
+    el("pendentes").innerHTML =
+      '<span class="card-apagar zerado">Nada a pagar</span>';
+    return;
+  }
+
+  el("pendentes").innerHTML =
+    '<button type="button" class="card-apagar" onclick="abrirAPagar()" title="' + pedidos + ' pedidos pendentes em ' + grupos.length + ' transportadoras">' +
+      '<span class="card-apagar-rotulo">A pagar</span>' +
+      '<span class="card-apagar-numero">' + pedidos + '</span>' +
+    '</button>';
+}
+
+/* =========================================================
+   PAINEL (GRÁFICOS)
+========================================================= */
+
+estado.periodoGraf = 12;
+
+const COR = { s1:"#2a78d6", s2:"#eb6834", ok:"#16a34a", aviso:"#d97706", neutro:"#a8a29a" };
+
+function abrirGraficos(){
+  abrirModal("modalGraficos");
+  desenharGraficos();
+}
+
+function mudarPeriodoGraf(semanas){
+  estado.periodoGraf = semanas;
+  desenharGraficos();
+}
+
+/* Data de referência do pedido: a mais antiga (igual à tabela) */
+function dataBase(item){
+  const datas = datasDoItem(item);
+  if (!datas.length) return null;
+  return new Date(Math.min.apply(null, datas.map(function(d){ return d.getTime(); })));
+}
+
+function moedaCurta(v){
+  const a = Math.abs(v);
+  if (a >= 1000000) return "R$ " + (v / 1000000).toLocaleString("pt-BR", { maximumFractionDigits:1 }) + " mi";
+  if (a >= 1000) return "R$ " + Math.round(v / 1000).toLocaleString("pt-BR") + " mil";
+  return "R$ " + Math.round(v).toLocaleString("pt-BR");
+}
+
+function semMovimento(){ return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
+
+/* Número que conta até o valor */
+function contar(elemento, alvo, formato){
+  if (!elemento) return;
+  if (semMovimento()){ elemento.textContent = formato(alvo); return; }
+  const inicio = performance.now(), dur = 1100;
+  function passo(agora){
+    const t = Math.min(1, (agora - inicio) / dur);
+    elemento.textContent = formato(alvo * (1 - Math.pow(1 - t, 3)));
+    if (t < 1) requestAnimationFrame(passo);
+  }
+  requestAnimationFrame(passo);
+}
+
+/* Curva suave que não passa do ponto (monotone X) */
+function curva(pts){
+  const n = pts.length;
+  if (!n) return "";
+  if (n === 1) return "M" + pts[0].x + "," + pts[0].y;
+  const dx = [], m = [], t = [];
+  for (let i = 0; i < n - 1; i++){ dx[i] = pts[i + 1].x - pts[i].x; m[i] = (pts[i + 1].y - pts[i].y) / (dx[i] || 1); }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++){
+    if (m[i] === 0){ t[i] = 0; t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+    if (s > 9){ const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+  }
+  let d = "M" + pts[0].x.toFixed(1) + "," + pts[0].y.toFixed(1);
+  for (let i = 0; i < n - 1; i++){
+    const h = dx[i] / 3;
+    d += "C" + (pts[i].x + h).toFixed(1) + "," + (pts[i].y + t[i] * h).toFixed(1) + " " +
+         (pts[i + 1].x - h).toFixed(1) + "," + (pts[i + 1].y - t[i + 1] * h).toFixed(1) + " " +
+         pts[i + 1].x.toFixed(1) + "," + pts[i + 1].y.toFixed(1);
+  }
+  return d;
+}
+
+/* Linha que se desenha */
+function animarTraco(caminho, atraso){
+  if (semMovimento()) return;
+  const L = caminho.getTotalLength();
+  caminho.style.strokeDasharray = L;
+  caminho.style.strokeDashoffset = L;
+  caminho.getBoundingClientRect();
+  caminho.style.transition = "stroke-dashoffset 1.4s cubic-bezier(.45,.05,.2,1) " + (atraso || 0) + "s";
+  caminho.style.strokeDashoffset = 0;
+}
+
+/* Semanas (terça a segunda) entre início e fim, com os totais */
+function semanasDoPeriodo(lista, inicio, fim){
+  const semanas = [];
+  for (let d = new Date(inicio); d.getTime() <= fim.getTime(); d.setDate(d.getDate() + 7)){
+    semanas.push({ inicio:new Date(d), transp:0, ch:0, pago:0, aPagar:0, qtd:0 });
+  }
+  lista.forEach(function(x){
+    const s = semanas[Math.round((inicioSemana(x.data).getTime() - inicio.getTime()) / (7 * 86400000))];
+    if (!s) return;
+    const fin = temValor(x.item.valorFinal) ? Number(x.item.valorFinal) : 0;
+    s.transp += Number(x.item.somaFretes) || 0;
+    s.ch += Number(x.item.somaCh) || 0;
+    if (x.item.statusPagamento === "PAGO") s.pago += fin; else s.aPagar += fin;
+    s.qtd++;
+  });
+  return semanas;
+}
+
+function totais(lista){
+  const t = { transp:0, ch:0, pago:0, aPagar:0, qtdPago:0, qtdPagar:0, qtdSemFinal:0 };
+  lista.forEach(function(x){
+    const i = x.item, fin = temValor(i.valorFinal) ? Number(i.valorFinal) : 0;
+    t.transp += Number(i.somaFretes) || 0;
+    t.ch += Number(i.somaCh) || 0;
+    if (i.statusPagamento === "PAGO"){ t.pago += fin; t.qtdPago++; }
+    else if (fin > 0){ t.aPagar += fin; t.qtdPagar++; }
+    else t.qtdSemFinal++;
+  });
+  return t;
+}
+
+function desenharGraficos(){
+  document.querySelectorAll("#grafPeriodos button").forEach(function(b){
+    b.classList.toggle("ativo", Number(b.dataset.semanas) === estado.periodoGraf);
+  });
+
+  const fim = fimSemana(new Date());
+  const comData = estado.lista
+    .map(function(item){ return { item:item, data:dataBase(item) }; })
+    .filter(function(x){ return x.data && x.data.getTime() <= fim.getTime(); });
+
+  let inicio, anterior = null;
+  if (estado.periodoGraf){
+    inicio = inicioSemana(new Date());
+    inicio.setDate(inicio.getDate() - 7 * (estado.periodoGraf - 1));
+    const iniAnt = new Date(inicio); iniAnt.setDate(iniAnt.getDate() - 7 * estado.periodoGraf);
+    anterior = comData.filter(function(x){ return x.data >= iniAnt && x.data < inicio; });
+  } else {
+    inicio = comData.length
+      ? inicioSemana(new Date(Math.min.apply(null, comData.map(function(x){ return x.data.getTime(); }))))
+      : inicioSemana(new Date());
+  }
+
+  const lista = comData.filter(function(x){ return x.data >= inicio; });
+  const semanas = semanasDoPeriodo(lista, inicio, fim);
+
+  el("subtituloGraficos").textContent =
+    inicio.toLocaleDateString("pt-BR") + " a " + fim.toLocaleDateString("pt-BR") + " · " +
+    lista.length + (lista.length === 1 ? " pedido" : " pedidos");
+
+  desenharKpis(lista, anterior, semanas);
+  desenharLinhas(semanas, lista.length);
+  desenharMedidor(lista);
+  desenharRanking(lista);
+  desenharTop(lista);
+  desenharOperacao(inicio, fim);
+}
+
+/* ---------- Indicadores com mini-gráfico ---------- */
+
+const ICONES = {
+  caminhao:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v9H3z"/><path d="M14 9h4l3 3v3h-7"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>',
+  predio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-5h6v5"/><path d="M9 9h.01M15 9h.01M9 12h.01M15 12h.01"/></svg>',
+  ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>',
+  relogio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+};
+
+function delta(atual, antes){
+  if (antes === null || antes === undefined) return '<span class="p-delta neutro">período todo</span>';
+  if (!antes) return atual ? '<span class="p-delta sobe">novo</span>' : '<span class="p-delta neutro">—</span>';
+  const p = (atual - antes) / antes * 100;
+  if (Math.abs(p) < 0.5) return '<span class="p-delta neutro">= 0%</span>';
+  return '<span class="p-delta ' + (p > 0 ? "sobe" : "desce") + '">' + (p > 0 ? "▲ " : "▼ ") +
+    Math.abs(p).toLocaleString("pt-BR", { maximumFractionDigits:0 }) + '%</span>';
+}
+
+function desenharKpis(lista, anterior, semanas){
+  const t = totais(lista), a = anterior ? totais(anterior) : null;
+  const cards = [
+    { id:"k1", rotulo:"Transportadoras", cor:COR.s1, icone:ICONES.caminhao, valor:t.transp, antes:a && a.transp, serie:"transp", rodape:"vs período anterior" },
+    { id:"k2", rotulo:"Valor CH", cor:COR.s2, icone:ICONES.predio, valor:t.ch, antes:a && a.ch, serie:"ch", rodape:"vs período anterior" },
+    { id:"k3", rotulo:"Pago", cor:COR.ok, icone:ICONES.ok, valor:t.pago, antes:a && a.pago, serie:"pago", rodape:t.qtdPago + (t.qtdPago === 1 ? " pedido" : " pedidos") },
+    { id:"k4", rotulo:"A pagar", cor:COR.aviso, icone:ICONES.relogio, valor:t.aPagar, antes:a && a.aPagar, serie:"aPagar", rodape:t.qtdPagar + (t.qtdPagar === 1 ? " pedido" : " pedidos") }
+  ];
+
+  el("grafKpis").innerHTML = cards.map(function(c){
+    return '<div class="p-card p-kpi">' +
+      '<div class="p-kpi-rotulo"><span class="p-kpi-icone" style="background:' + c.cor + '22;color:' + c.cor + '">' + c.icone + '</span>' + c.rotulo + '</div>' +
+      '<strong class="p-kpi-valor" id="' + c.id + '">R$ 0,00</strong>' +
+      '<div class="p-kpi-rodape">' + delta(c.valor, anterior ? c.antes : null) + '<span>' + c.rodape + '</span></div>' +
+      '<svg class="p-spark" id="' + c.id + 's" viewBox="0 0 200 54" preserveAspectRatio="none"></svg>' +
+    '</div>';
+  }).join("");
+
+  cards.forEach(function(c){
+    contar(el(c.id), c.valor, moeda);
+    const valores = semanas.map(function(s){ return s[c.serie]; });
+    const max = Math.max.apply(null, valores.concat([1]));
+    const n = valores.length;
+    const pts = valores.map(function(v, i){ return { x: n === 1 ? 100 : 200 * i / (n - 1), y: 50 - 40 * v / max }; });
+    const linha = curva(pts);
+    const g = c.id + "g";
+    const svg = el(c.id + "s");
+    svg.innerHTML =
+      '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="' + c.cor + '" stop-opacity=".35"/><stop offset="100%" stop-color="' + c.cor + '" stop-opacity="0"/>' +
+      '</linearGradient></defs>' +
+      '<path d="' + linha + 'L200,54L0,54Z" fill="url(#' + g + ')" style="opacity:0;transition:opacity 1s .6s"/>' +
+      '<path d="' + linha + '" fill="none" stroke="' + c.cor + '" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/>';
+    animarTraco(svg.querySelectorAll("path")[1], 0.2);
+    requestAnimationFrame(function(){ svg.querySelector("path").style.opacity = 1; });
+  });
+}
+
+/* ---------- Evolução semanal ---------- */
+
+function desenharLinhas(semanas, qtd){
+  const area = el("grafLinhas");
+  if (!qtd){ area.innerHTML = '<div class="p-vazio">Sem fretes no período.</div>'; return; }
+
+  const W = Math.max(320, area.clientWidth || 800), H = 300;
+  const m = { e:70, d:14, t:16, b:32 };
+  const larg = W - m.e - m.d, alt = H - m.t - m.b;
+  const maximo = Math.max(1, Math.max.apply(null, semanas.map(function(s){ return Math.max(s.transp, s.ch); })));
+  const passo = Math.pow(10, Math.floor(Math.log10(maximo / 4)));
+  const topo = Math.ceil(maximo / 4 / passo) * passo * 4;
+  const n = semanas.length;
+  const x = function(i){ return m.e + (n === 1 ? larg / 2 : larg * i / (n - 1)); };
+  const y = function(v){ return m.t + alt - alt * v / topo; };
+  const pts = function(chave){ return semanas.map(function(s, i){ return { x:x(i), y:y(s[chave]) }; }); };
+  const linhaTr = curva(pts("transp")), linhaCh = curva(pts("ch"));
+
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" height="' + H + '" role="img" aria-label="Evolução semanal">' +
+    '<defs>' +
+      '<linearGradient id="pGradTr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + COR.s1 + '" stop-opacity=".45"/><stop offset="100%" stop-color="' + COR.s1 + '" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="pGradCh" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + COR.s2 + '" stop-opacity=".18"/><stop offset="100%" stop-color="' + COR.s2 + '" stop-opacity="0"/></linearGradient>' +
+      '<filter id="pBrilho" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+    '</defs>';
+
+  for (let k = 0; k <= 4; k++){
+    const yy = y(topo * k / 4).toFixed(1);
+    svg += '<line class="grade" x1="' + m.e + '" x2="' + (W - m.d) + '" y1="' + yy + '" y2="' + yy + '"/>' +
+      '<text class="eixo" x="' + (m.e - 12) + '" y="' + (Number(yy) + 4) + '" text-anchor="end">' + moedaCurta(topo * k / 4) + '</text>';
+  }
+  const salto = Math.max(1, Math.ceil(n / Math.max(1, Math.floor(larg / 72))));
+  semanas.forEach(function(s, i){
+    if (i % salto && i !== n - 1) return;
+    svg += '<text class="eixo" x="' + x(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' +
+      s.inicio.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" }) + '</text>';
+  });
+
+  const base = "L" + x(n - 1).toFixed(1) + "," + y(0) + "L" + x(0).toFixed(1) + "," + y(0) + "Z";
+  svg +=
+    '<path class="p-preench" d="' + linhaCh + base + '" fill="url(#pGradCh)" style="opacity:0;transition:opacity 1.2s .7s"/>' +
+    '<path class="p-preench" d="' + linhaTr + base + '" fill="url(#pGradTr)" style="opacity:0;transition:opacity 1.2s .5s"/>' +
+    '<path class="linha" d="' + linhaCh + '" stroke="' + COR.s2 + '" filter="url(#pBrilho)"/>' +
+    '<path class="linha" d="' + linhaTr + '" stroke="' + COR.s1 + '" filter="url(#pBrilho)"/>' +
+    '<line class="cruz" id="pCruz" y1="' + m.t + '" y2="' + (m.t + alt) + '"/>' +
+    '<circle class="ponto" id="pPontoCh" r="6" fill="' + COR.s2 + '"/>' +
+    '<circle class="ponto" id="pPontoTr" r="6" fill="' + COR.s1 + '"/>' +
+    '<rect id="pAlvo" x="' + m.e + '" y="' + m.t + '" width="' + larg + '" height="' + alt + '" fill="transparent"/>' +
+    '</svg>';
+  area.innerHTML = svg;
+
+  area.querySelectorAll("path.linha").forEach(function(p, i){ animarTraco(p, i * 0.18); });
+  requestAnimationFrame(function(){ area.querySelectorAll(".p-preench").forEach(function(p){ p.style.opacity = 1; }); });
+
+  const alvo = el("pAlvo");
+  alvo.addEventListener("mousemove", function(evento){
+    const r = alvo.getBoundingClientRect();
+    const i = n === 1 ? 0 : Math.max(0, Math.min(n - 1, Math.round((evento.clientX - r.left) / r.width * (n - 1))));
+    const s = semanas[i], fimS = new Date(s.inicio); fimS.setDate(fimS.getDate() + 6);
+    area.classList.add("focado");
+    ["x1", "x2"].forEach(function(a){ el("pCruz").setAttribute(a, x(i)); });
+    el("pPontoTr").setAttribute("cx", x(i)); el("pPontoTr").setAttribute("cy", y(s.transp));
+    el("pPontoCh").setAttribute("cx", x(i)); el("pPontoCh").setAttribute("cy", y(s.ch));
+    mostrarDica(evento,
+      '<b>' + s.inicio.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" }) + ' – ' + fimS.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" }) + '</b>' +
+      '<div><span><i style="background:' + COR.s1 + '"></i>Transportadora</span><strong>' + moeda(s.transp) + '</strong></div>' +
+      '<div><span><i style="background:' + COR.s2 + '"></i>CH</span><strong>' + moeda(s.ch) + '</strong></div>' +
+      '<div><span>Pedidos</span><strong>' + s.qtd + '</strong></div>');
+  });
+  alvo.addEventListener("mouseleave", function(){ area.classList.remove("focado"); esconderDica(); });
+}
+
+/* ---------- Medidor de pagamentos ---------- */
+
+function desenharMedidor(lista){
+  const t = totais(lista), total = lista.length;
+  if (!total){ el("grafMedidor").innerHTML = '<div class="p-vazio">Sem fretes no período.</div>'; return; }
+  const pct = t.qtdPago / total;
+  const R = 84, C = 2 * Math.PI * R, arco = C * 0.75; // 270°
+
+  el("grafMedidor").innerHTML =
+    '<svg viewBox="0 0 210 210" role="img" aria-label="Percentual de pedidos pagos">' +
+      '<defs><linearGradient id="pGradOk" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#4ade80"/></linearGradient>' +
+      '<filter id="pBrilhoOk" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>' +
+      '<circle cx="105" cy="105" r="' + R + '" fill="none" stroke="#efebe4" stroke-width="16" stroke-linecap="round"' +
+        ' stroke-dasharray="' + arco.toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(135 105 105)"/>' +
+      '<circle class="arco" id="pArco" cx="105" cy="105" r="' + R + '" fill="none" stroke="url(#pGradOk)" stroke-width="16" stroke-linecap="round" filter="url(#pBrilhoOk)"' +
+        ' stroke-dasharray="' + arco.toFixed(1) + ' ' + C.toFixed(1) + '" stroke-dashoffset="' + arco.toFixed(1) + '" transform="rotate(135 105 105)"/>' +
+      '<text class="num" x="105" y="112" text-anchor="middle" id="pPct">0%</text>' +
+      '<text class="txt" x="105" y="138" text-anchor="middle">pagos</text>' +
+    '</svg>' +
+    '<div class="p-status">' +
+      '<div><i style="background:' + COR.ok + '"></i><span>Pago</span><b>' + t.qtdPago + '</b><small>' + moeda(t.pago) + '</small></div>' +
+      '<div><i style="background:' + COR.aviso + '"></i><span>Aguardando pagamento</span><b>' + t.qtdPagar + '</b><small>' + moeda(t.aPagar) + '</small></div>' +
+      '<div><i style="background:' + COR.neutro + '"></i><span>Sem valor final</span><b>' + t.qtdSemFinal + '</b><small>—</small></div>' +
+    '</div>';
+
+  const alvoOffset = (arco * (1 - pct)).toFixed(1);
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ el("pArco").setAttribute("stroke-dashoffset", alvoOffset); }); });
+  contar(el("pPct"), pct * 100, function(v){ return Math.round(v) + "%"; });
+}
+
+/* ---------- Ranking ---------- */
+
+function desenharRanking(lista){
+  const mapa = {};
+  let total = 0;
+  lista.forEach(function(x){
+    const t = x.item.transportadora || "—", v = Number(x.item.somaFretes) || 0;
+    if (!mapa[t]) mapa[t] = { nome:t, valor:0, qtd:0, ch:0 };
+    mapa[t].valor += v; mapa[t].ch += Number(x.item.somaCh) || 0; mapa[t].qtd++;
+    total += v;
+  });
+  let rank = Object.keys(mapa).map(function(k){ return mapa[k]; }).sort(function(a, b){ return b.valor - a.valor; });
+  if (rank.length > 6){
+    const resto = rank.slice(5);
+    rank = rank.slice(0, 5).concat([{ nome:"Outras (" + resto.length + ")",
+      valor:resto.reduce(function(s, r){ return s + r.valor; }, 0),
+      ch:resto.reduce(function(s, r){ return s + r.ch; }, 0),
+      qtd:resto.reduce(function(s, r){ return s + r.qtd; }, 0) }]);
+  }
+  if (!rank.length || !total){ el("grafRanking").innerHTML = '<div class="p-vazio">Sem fretes no período.</div>'; return; }
+
+  const max = rank[0].valor || 1;
+  window.__pRank = rank;
+  el("grafRanking").innerHTML = rank.map(function(r, i){
+    return '<div class="p-rank" onmousemove="dicaRank(event, ' + i + ')" onmouseleave="esconderDica()">' +
+      '<span class="pos">' + (i + 1) + '</span>' +
+      '<span class="nome" title="' + escapar(r.nome) + '">' + escapar(r.nome) + '</span>' +
+      '<span class="valor">' + moeda(r.valor) + '<span class="parte">' + Math.round(r.valor / total * 100) + '%</span></span>' +
+      '<span class="trilho"><span class="cheio" data-largura="' + (r.valor / max * 100).toFixed(1) + '" style="transition-delay:' + (0.3 + i * 0.08) + 's"></span></span>' +
+    '</div>';
+  }).join("");
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    document.querySelectorAll("#grafRanking .cheio").forEach(function(b){ b.style.width = b.dataset.largura + "%"; });
+  }); });
+}
+
+function dicaRank(evento, i){
+  const r = window.__pRank[i];
+  mostrarDica(evento, '<b>' + escapar(r.nome) + '</b>' +
+    '<div><span><i style="background:' + COR.s1 + '"></i>Transportadora</span><strong>' + moeda(r.valor) + '</strong></div>' +
+    '<div><span><i style="background:' + COR.s2 + '"></i>CH</span><strong>' + moeda(r.ch) + '</strong></div>' +
+    '<div><span>Pedidos</span><strong>' + r.qtd + '</strong></div>');
+}
+
+/* ---------- Maiores fretes ---------- */
+
+function desenharTop(lista){
+  const top = lista.slice().sort(function(a, b){ return (Number(b.item.somaFretes) || 0) - (Number(a.item.somaFretes) || 0); }).slice(0, 6);
+  if (!top.length){ el("grafTop").innerHTML = '<div class="p-vazio">Sem fretes no período.</div>'; return; }
+  el("grafTop").innerHTML = top.map(function(x){
+    const i = x.item, fin = temValor(i.valorFinal) ? Number(i.valorFinal) : 0;
+    const st = i.statusPagamento === "PAGO" ? '<span class="p-pill pago">PAGO</span>'
+      : fin > 0 ? '<span class="p-pill pend">A PAGAR</span>' : '<span class="p-pill sem">SEM FINAL</span>';
+    return '<div><span class="ped">#' + escapar(i.pedido) + '</span><span class="tr">' + escapar(i.transportadora) + '</span>' +
+      '<span class="vl">' + moeda(i.somaFretes) + '</span>' + st + '</div>';
+  }).join("");
+}
+
+/* ---------- Dica flutuante ---------- */
+
+function mostrarDica(evento, html){
+  const dica = el("grafDica"), caixa = dica.parentElement.getBoundingClientRect();
+  dica.innerHTML = html;
+  dica.classList.add("visivel");
+  let esq = evento.clientX - caixa.left + 16, topo = evento.clientY - caixa.top + 16;
+  if (esq + dica.offsetWidth > caixa.width - 8) esq = evento.clientX - caixa.left - dica.offsetWidth - 16;
+  if (topo + dica.offsetHeight > caixa.height - 8) topo = evento.clientY - caixa.top - dica.offsetHeight - 16;
+  dica.style.left = esq + "px";
+  dica.style.top = topo + "px";
+}
+
+function esconderDica(){ el("grafDica").classList.remove("visivel"); }
+
+let temporizadorPainel = null;
+window.addEventListener("resize", function(){
+  if (!el("modalGraficos").classList.contains("aberto")) return;
+  clearTimeout(temporizadorPainel);
+  temporizadorPainel = setTimeout(desenharGraficos, 200);
+});
+
+
+/* ---------- Operação: KM, caminhões, meses e regiões ---------- */
+
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const MESES_LONGOS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+function km(v){ return Math.round(v).toLocaleString("pt-BR") + " km"; }
+
+/* "Truck  baú" e "truck baú" viram o mesmo caminhão */
+function nomeLimpo(texto){
+  const t = String(texto || "").replace(/\s+/g, " ").trim();
+  if (!t) return "";
+  return t.toLowerCase().replace(/(^|\s)(\S+)/g, function(_, e, p, i){
+    return e + (i && /^(de|da|do|das|dos|e)$/.test(p) ? p : p.charAt(0).toUpperCase() + p.slice(1));
+  });
+}
+
+/* Cidade do lado que não é a Chiavari (ida ou volta) */
+function cidadeDoFrete(f){
+  const ponta = /chiavari/i.test(f.destino) && !/chiavari/i.test(f.origem) ? f.origem : f.destino;
+  const m = String(ponta || "").match(/([^,]+?)\s*-\s*[A-Z]{2}\s*,\s*Brasil\s*$/i);
+  return nomeLimpo(m ? m[1] : (f.cidade || "")) || "Sem cidade";
+}
+
+/* Fretes individuais lançados pelas transportadoras dentro do período */
+function fretesDoPeriodo(inicio, fim){
+  const lista = [];
+  estado.lista.forEach(function(item){
+    (item.itens || []).forEach(function(f){
+      if (f.tipo !== "TRANSP") return;
+      const p = String(f.data || "").split("/");
+      if (p.length !== 3) return;
+      const d = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]), 12);
+      if (d < inicio || d > fim) return;
+      lista.push({ data:d, km:Number(f.km) || 0, valor:Number(f.valor) || 0, caminhao:nomeLimpo(f.caminhao) || "Sem caminhão",
+        cidade:cidadeDoFrete(f), pedido:item.pedido, transportadora:item.transportadora, origem:f.origem, destino:f.destino });
+    });
+  });
+  return lista;
+}
+
+function desenharOperacao(inicio, fim){
+  const fretes = fretesDoPeriodo(inicio, fim);
+  desenharKpisOp(fretes, inicio, fim);
+  desenharMeses(fretes);
+  desenharCaminhoes(fretes);
+  desenharRegioes(fretes);
+}
+
+function desenharKpisOp(fretes, inicio, fim){
+  const comKm = fretes.filter(function(f){ return f.km > 0; });
+  const total = comKm.reduce(function(t, f){ return t + f.km; }, 0);
+  const media = comKm.length ? total / comKm.length : 0;
+  const longo = comKm.slice().sort(function(a, b){ return b.km - a.km; })[0];
+  const semanas = Math.max(1, Math.round((fim - inicio) / (7 * 86400000)));
+
+  const cam = {};
+  comKm.forEach(function(f){ (cam[f.caminhao] = cam[f.caminhao] || { km:0, qtd:0 }); cam[f.caminhao].km += f.km; cam[f.caminhao].qtd++; });
+  const topCam = Object.keys(cam).sort(function(a, b){ return cam[b].km - cam[a].km; })[0];
+
+  const icone = function(d){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
+  const cor = function(c){ return 'style="background:' + c + '22;color:' + c + '"'; };
+
+  el("grafKpisOp").innerHTML =
+    '<div class="p-card p-kpi op"><div class="p-kpi-rotulo"><span class="p-kpi-icone" ' + cor(COR.s1) + '>' + icone('<path d="M4 19h16"/><path d="M4 15l4-4 4 3 6-7"/>') + '</span>Média de KM por frete</div>' +
+      '<strong class="p-kpi-valor"><span id="op1">0</span><small>km</small></strong>' +
+      '<span class="p-kpi-detalhe">em ' + comKm.length + (comKm.length === 1 ? " frete com KM" : " fretes com KM") + '</span></div>' +
+
+    '<div class="p-card p-kpi op"><div class="p-kpi-rotulo"><span class="p-kpi-icone" ' + cor(COR.s2) + '>' + icone('<path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>') + '</span>Frete mais longo</div>' +
+      '<strong class="p-kpi-valor"><span id="op2">0</span><small>km</small></strong>' +
+      '<span class="p-kpi-detalhe" title="' + (longo ? escapar(longo.origem + " → " + longo.destino) : "") + '">' +
+        (longo ? escapar(longo.cidade) + ' · pedido #' + escapar(longo.pedido) + ' · ' + longo.data.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" }) : "—") + '</span></div>' +
+
+    '<div class="p-card p-kpi op"><div class="p-kpi-rotulo"><span class="p-kpi-icone" ' + cor(COR.ok) + '>' + icone('<circle cx="12" cy="12" r="9"/><path d="M12 12l4-3"/><path d="M12 7v1M7 12h1M16 12h1"/>') + '</span>KM total rodado</div>' +
+      '<strong class="p-kpi-valor"><span id="op3">0</span><small>km</small></strong>' +
+      '<span class="p-kpi-detalhe">≈ ' + km(total / semanas) + ' por semana</span></div>' +
+
+    '<div class="p-card p-kpi op"><div class="p-kpi-rotulo"><span class="p-kpi-icone" ' + cor(COR.aviso) + '>' + ICONES.caminhao + '</span>Caminhão que mais roda</div>' +
+      '<span class="p-kpi-texto" title="' + escapar(topCam || "") + '">' + escapar(topCam || "—") + '</span>' +
+      '<span class="p-kpi-detalhe">' + (topCam ? km(cam[topCam].km) + ' · ' + cam[topCam].qtd + (cam[topCam].qtd === 1 ? " viagem" : " viagens") : "sem KM no período") + '</span></div>';
+
+  const inteiro = function(v){ return Math.round(v).toLocaleString("pt-BR"); };
+  contar(el("op1"), media, inteiro);
+  contar(el("op2"), longo ? longo.km : 0, inteiro);
+  contar(el("op3"), total, inteiro);
+}
+
+/* ---------- Gasto por mês (colunas) ---------- */
+
+function desenharMeses(fretes){
+  const area = el("grafMeses");
+  if (!fretes.length){ area.innerHTML = '<div class="p-vazio">Sem fretes no período.</div>'; el("grafMesMaior").textContent = ""; return; }
+
+  const mapa = {};
+  fretes.forEach(function(f){
+    const k = f.data.getFullYear() * 12 + f.data.getMonth();
+    (mapa[k] = mapa[k] || { k:k, valor:0, qtd:0, km:0 });
+    mapa[k].valor += f.valor; mapa[k].qtd++; mapa[k].km += f.km;
+  });
+  const chaves = Object.keys(mapa).map(Number);
+  const meses = [];
+  for (let k = Math.min.apply(null, chaves); k <= Math.max.apply(null, chaves); k++) meses.push(mapa[k] || { k:k, valor:0, qtd:0, km:0 });
+  const nome = function(m, longo){ return (longo ? MESES_LONGOS : MESES)[m.k % 12] + (longo ? " de " : "/") + (longo ? Math.floor(m.k / 12) : String(Math.floor(m.k / 12)).slice(2)); };
+
+  const maior = meses.reduce(function(a, b){ return b.valor > a.valor ? b : a; });
+  el("grafMesMaior").innerHTML = "▲ Maior gasto: " + nome(maior, true) + " · " + moedaCurta(maior.valor);
+
+  const W = Math.max(320, area.clientWidth || 700), H = 270;
+  const m = { e:66, d:8, t:26, b:30 };
+  const larg = W - m.e - m.d, alt = H - m.t - m.b;
+  const passo = Math.pow(10, Math.floor(Math.log10(Math.max(1, maior.valor) / 4)));
+  const topo = Math.max(1, Math.ceil(maior.valor / 4 / passo) * passo * 4);
+  const banda = larg / meses.length, bw = Math.max(6, Math.min(56, banda * 0.62));
+  const y = function(v){ return m.t + alt - alt * v / topo; };
+
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" height="' + H + '" role="img" aria-label="Gasto por mês">' +
+    '<defs><linearGradient id="pGradCol" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5fa3f0"/><stop offset="100%" stop-color="#256abf"/></linearGradient>' +
+    '<filter id="pBrilhoCol" x="-50%" y="-20%" width="200%" height="140%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+  for (let k = 0; k <= 4; k++){
+    const yy = y(topo * k / 4).toFixed(1);
+    svg += '<line class="grade" x1="' + m.e + '" x2="' + (W - m.d) + '" y1="' + yy + '" y2="' + yy + '"/>' +
+      '<text class="eixo" x="' + (m.e - 12) + '" y="' + (Number(yy) + 4) + '" text-anchor="end">' + moedaCurta(topo * k / 4) + '</text>';
+  }
+  const salto = Math.max(1, Math.ceil(meses.length / Math.max(1, Math.floor(larg / 52))));
+  meses.forEach(function(mes, i){
+    const cx = m.e + banda * i + banda / 2, h = Math.max(0, alt * mes.valor / topo), top = m.t + alt - h;
+    const r = Math.min(4, bw / 2, h);
+    const ehMaior = mes === maior;
+    // Cantos arredondados só em cima, apoiado na base
+    const d = h <= 0 ? "" : "M" + (cx - bw / 2) + "," + (m.t + alt) + "V" + (top + r) + "Q" + (cx - bw / 2) + "," + top + " " + (cx - bw / 2 + r) + "," + top +
+      "H" + (cx + bw / 2 - r) + "Q" + (cx + bw / 2) + "," + top + " " + (cx + bw / 2) + "," + (top + r) + "V" + (m.t + alt) + "Z";
+    if (d) svg += '<path class="col" d="' + d + '" fill="' + (ehMaior ? "url(#pGradCol)" : "rgba(42,120,214,.32)") + '"' +
+      (ehMaior ? ' filter="url(#pBrilhoCol)"' : "") + ' style="transition-delay:' + (i * 0.05) + 's" onmousemove="dicaMes(event, ' + i + ')" onmouseleave="esconderDica()"/>';
+    if (ehMaior) svg += '<text class="rotulo-max" x="' + cx + '" y="' + (top - 9) + '" text-anchor="middle">' + moedaCurta(mes.valor) + '</text>';
+    if (!(i % salto) || i === meses.length - 1)
+      svg += '<text class="eixo" x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle">' + nome(mes) + '</text>';
+  });
+  svg += '</svg>';
+
+  window.__pMeses = meses.map(function(mes){ return { nome:nome(mes, true), valor:mes.valor, qtd:mes.qtd, km:mes.km }; });
+  area.classList.remove("pronto");
+  area.innerHTML = svg;
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ area.classList.add("pronto"); }); });
+}
+
+function dicaMes(evento, i){
+  const mes = window.__pMeses[i];
+  mostrarDica(evento, '<b>' + mes.nome + '</b>' +
+    '<div><span><i style="background:' + COR.s1 + '"></i>Gasto</span><strong>' + moeda(mes.valor) + '</strong></div>' +
+    '<div><span>Fretes</span><strong>' + mes.qtd + '</strong></div>' +
+    '<div><span>KM rodado</span><strong>' + km(mes.km) + '</strong></div>');
+}
+
+/* ---------- Rankings de caminhões e regiões ---------- */
+
+function rankingOp(alvo, linhas, opcoes){
+  if (!linhas.length){ el(alvo).innerHTML = '<div class="p-vazio">Sem dados no período.</div>'; return; }
+  const max = Math.max.apply(null, linhas.map(function(l){ return l.medida; }).concat([1]));
+  el(alvo).innerHTML = linhas.map(function(l, i){
+    return '<div class="p-rank">' +
+      '<span class="pos">' + (opcoes.posicao ? opcoes.posicao(i) : i + 1) + '</span>' +
+      '<span class="nome" title="' + escapar(l.nome) + '">' + escapar(l.nome) + '</span>' +
+      '<span class="valor">' + l.valorTxt + '</span>' +
+      '<span class="trilho"><span class="cheio ' + (opcoes.cor || "") + '" data-largura="' + (l.medida / max * 100).toFixed(1) + '" style="transition-delay:' + (0.3 + i * 0.08) + 's"></span></span>' +
+      (l.sub ? '<span class="p-rank-sub">' + l.sub + '</span>' : "") +
+    '</div>';
+  }).join("");
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    document.querySelectorAll("#" + alvo + " .cheio").forEach(function(b){ b.style.width = b.dataset.largura + "%"; });
+  }); });
+}
+
+function desenharCaminhoes(fretes){
+  const mapa = {};
+  fretes.forEach(function(f){
+    (mapa[f.caminhao] = mapa[f.caminhao] || { nome:f.caminhao, km:0, qtd:0, valor:0 });
+    mapa[f.caminhao].km += f.km; mapa[f.caminhao].qtd++; mapa[f.caminhao].valor += f.valor;
+  });
+  const linhas = Object.keys(mapa).map(function(k){ return mapa[k]; })
+    .sort(function(a, b){ return b.km - a.km || b.qtd - a.qtd; }).slice(0, 7)
+    .map(function(c){ return { nome:c.nome, medida:c.km, valorTxt:km(c.km),
+      sub:c.qtd + (c.qtd === 1 ? " viagem" : " viagens") + " · média " + km(c.qtd ? c.km / c.qtd : 0) + " · " + moedaCurta(c.valor) }; });
+  rankingOp("grafCaminhoes", linhas, { cor:"laranja" });
+}
+
+function desenharRegioes(fretes){
+  const mapa = {};
+  fretes.forEach(function(f){
+    (mapa[f.cidade] = mapa[f.cidade] || { nome:f.cidade, qtd:0, km:0, valor:0 });
+    mapa[f.cidade].qtd++; mapa[f.cidade].km += f.km; mapa[f.cidade].valor += f.valor;
+  });
+  const cidades = Object.keys(mapa).filter(function(k){ return k !== "Sem cidade"; }).map(function(k){ return mapa[k]; });
+  const linha = function(c){ return { nome:c.nome, medida:c.qtd, valorTxt:c.qtd + (c.qtd === 1 ? " frete" : " fretes"),
+    sub:"média " + km(c.qtd ? c.km / c.qtd : 0) + " · " + moedaCurta(c.valor) }; };
+
+  const mais = cidades.slice().sort(function(a, b){ return b.qtd - a.qtd || b.valor - a.valor; });
+  const menos = cidades.slice().sort(function(a, b){ return a.qtd - b.qtd || a.valor - b.valor; });
+  const n = Math.min(6, Math.ceil(cidades.length / 2));
+  rankingOp("grafRegiaoMais", mais.slice(0, n).map(linha), { cor:"verde" });
+  rankingOp("grafRegiaoMenos", menos.slice(0, n).map(linha), { cor:"cinza" });
+}
+
+function abrirAPagar(){
+  const grupos = gruposAPagar();
+  const pedidos = grupos.reduce(function(t, g){ return t + g.qtd; }, 0);
+
+  el("subtituloAPagar").textContent = pedidos + (pedidos === 1 ? " pedido pendente" : " pedidos pendentes") + " · clique numa transportadora para pagar";
+
+  el("listaAPagar").innerHTML = grupos.map(function(g){
+    return '<button type="button" class="linha-apagar" data-transp="' + escapar(g.nome) + '" onclick="escolherAPagar(this.dataset.transp)">' +
+      '<strong>' + escapar(g.nome) + '</strong>' +
+      '<span class="qtd">' + g.qtd + (g.qtd === 1 ? " pedido" : " pedidos") + '</span>' +
+      '<span class="valor">' + moeda(g.total) + '</span>' +
+      '<span class="seta">›</span>' +
+    '</button>';
+  }).join("");
+
+  abrirModal("modalAPagar");
+}
+
+function escolherAPagar(transp){
+  fecharModal("modalAPagar");
+  abrirPagamento(transp);
+}
+
+
+/* =========================================================
+   ABRIR ITEM → se já pago, só avisa; senão, concilia
+========================================================= */
+
+function abrirItem(indice){
+  const item = estado.lista[indice];
+  if (!item) return;
+
+  carregando(true);
+  servidor("buscarStatusPagamento", item.pedido, item.transportadora)
+    .then(function(res){
+      if (res && res.status === "PAGO"){
+        carregando(false);
+        mostrarMensagem("Já paga",
+          "O pedido <b>" + escapar(item.pedido) + "</b> da <b>" + escapar(item.transportadora) + "</b> já foi pago.<br><br>" +
+          "<b>Data do pagamento:</b> " + escapar(res.dataPagamento) + "<br>" +
+          "<b>Responsável:</b> " + escapar(res.usuario));
+        return;
+      }
+      return abrirDetalhes(item);
+    })
+    .catch(function(erro){
+      carregando(false);
+      avisar("Erro ao abrir: " + erro.message, "erro");
+    });
+}
+
+function abrirDetalhes(item){
+  estado.atual = item;
+  return servidor("getDetalhes", item.pedido, item.transportadora)
+    .then(function(det){
+      carregando(false);
+      montarDetalhes(item, det);
+      abrirModal("modalDetalhes");
+    })
+    .catch(function(erro){
+      carregando(false);
+      avisar("Erro ao carregar detalhes: " + erro.message, "erro");
+    });
+}
+
+function cartaoCorrida(x){
+  return '<div class="corrida">' +
+    '<div class="corrida-topo"><span>' + escapar(x.data) + '</span><span>' + moeda(x.valor) + '</span></div>' +
+    '<div class="corrida-rota">' + escapar(x.origem) + ' → ' + escapar(x.destino) + '</div>' +
+    '<div class="corrida-caminhao">' + escapar(x.caminhao || "Caminhão não informado") + '</div>' +
+  '</div>';
+}
+
+function montarDetalhes(item, d){
+  estado.totalFretes = d.fretes.reduce(function(t, x){ return t + Number(x.valor || 0); }, 0);
+  estado.totalCh = d.ch.reduce(function(t, x){ return t + Number(x.valor || 0); }, 0);
+  estado.selecao = null;
+
+  el("detalhesTitulo").textContent = "Pedido " + item.pedido;
+  el("detalhesSubtitulo").textContent = item.transportadora + " · " + item.origem + " → " + item.destino;
+
+  el("totalTranspDetalhe").textContent = moeda(estado.totalFretes);
+  el("totalChDetalhe").textContent = moeda(estado.totalCh);
+
+  el("listaFretes").innerHTML = d.fretes.length ? d.fretes.map(cartaoCorrida).join("") : '<div class="vazio-coluna">Nada registrado pela transportadora</div>';
+  el("listaCh").innerHTML = d.ch.length ? d.ch.map(cartaoCorrida).join("") : '<div class="vazio-coluna">Nada registrado pelo CH</div>';
+
+  const divergencias = compararListas(d.fretes, d.ch);
+  const alerta = el("alertaDivergencia");
+  if (divergencias.length){
+    alerta.innerHTML = "<strong>Divergências encontradas</strong><ul>" +
+      divergencias.map(function(t){ return "<li>" + escapar(t) + "</li>"; }).join("") + "</ul>";
+    alerta.classList.remove("oculto");
+  } else {
+    alerta.classList.add("oculto");
+  }
+
+  el("btnFretes").innerHTML = "Transportadora <b>" + moeda(estado.totalFretes) + "</b>";
+  el("btnCh").innerHTML = "CH <b>" + moeda(estado.totalCh) + "</b>";
+  el("btnFretes").classList.remove("selecionada");
+  el("btnCh").classList.remove("selecionada");
+
+  el("abatimento").value = 0;
+  el("observacao").value = item.observacao || "";
+  el("valorSalvo").textContent = temValor(item.valorFinal) ? "Salvo hoje: " + moeda(item.valorFinal) : "";
+  el("erroDetalhes").textContent = "";
+  atualizarValorFinal();
+}
+
+/* Compara corrida por corrida (data + origem + destino) */
+function compararListas(fretes, ch){
+  const divergencias = [];
+  const chave = function(x){ return normalizar(x.data) + "|" + normalizar(x.origem) + "|" + normalizar(x.destino); };
+  const mapaF = {};
+  const mapaC = {};
+  fretes.forEach(function(f){ mapaF[chave(f)] = f; });
+  ch.forEach(function(c){ mapaC[chave(c)] = c; });
+
+  const todas = Object.keys(Object.assign({}, mapaF, mapaC));
+
+  todas.forEach(function(k){
+    const f = mapaF[k];
+    const c = mapaC[k];
+
+    if (!f || !c){
+      const data = (f || c).data || "sem data";
+      divergencias.push("Corrida de " + data + " aparece só no registro " + (f ? "da transportadora" : "do CH") + ".");
+      return;
+    }
+
+    if (normalizar(f.caminhao) !== normalizar(c.caminhao))
+      divergencias.push("Caminhão diferente em " + f.data + ": " + (f.caminhao || "—") + " × " + (c.caminhao || "—") + ".");
+    if (Number(f.valor) !== Number(c.valor))
+      divergencias.push("Valor diferente em " + f.data + ": " + moeda(f.valor) + " × " + moeda(c.valor) + ".");
+  });
+
+  return divergencias;
+}
+
+function selecionarOpcao(tipo){
+  estado.selecao = tipo;
+  el("btnFretes").classList.toggle("selecionada", tipo === "FRETES");
+  el("btnCh").classList.toggle("selecionada", tipo === "CH");
+  el("erroDetalhes").textContent = "";
+  atualizarValorFinal();
+}
+
+function calcularFinal(){
+  const abat = Number(el("abatimento").value) || 0;
+  const base = estado.selecao === "FRETES" ? estado.totalFretes : estado.totalCh;
+  return base - abat;
+}
+
+function atualizarValorFinal(){
+  el("valorFinal").textContent = estado.selecao ? moeda(calcularFinal()) : "—";
+}
+
+
+/* =========================================================
+   SALVAR DECISÃO
+========================================================= */
+
+function salvarDecisao(){
+  if (!estado.selecao){
+    el("erroDetalhes").textContent = "Escolha Transportadora ou CH antes de salvar.";
+    return;
+  }
+
+  const final = calcularFinal();
+
+  if (final < 0){
+    el("erroDetalhes").textContent = "O abatimento não pode ser maior que o valor.";
+    return;
+  }
+
+  // Pagar acima do CH precisa da senha da gerência
+  if (final > estado.totalCh){
+    estado.finalPendente = final;
+    el("campoSenha").value = "";
+    el("erroSenha").textContent = "";
+    abrirModal("modalSenha");
+    setTimeout(function(){ el("campoSenha").focus(); }, 50);
+    return;
+  }
+
+  gravarDecisao(final);
+}
+
+function confirmarSenha(){
+  if (el("campoSenha").value !== SENHA_GERENCIA){
+    el("erroSenha").textContent = "Senha incorreta.";
+    return;
+  }
+  fecharModal("modalSenha");
+  gravarDecisao(estado.finalPendente);
+}
+
+function gravarDecisao(final){
+  const item = estado.atual;
+  const botao = el("btnSalvarDecisao");
+
+  const dados = {
+    pedido:         item.pedido,
+    transportadora: item.transportadora,
+    datas:          item.datas,
+    origem:         item.origem,
+    destino:        item.destino,
+    somaCh:         item.somaCh,
+    somaFretes:     item.somaFretes,
+    valorFinal:     final,
+    observacao:     el("observacao").value.trim()
+  };
+
+  ocupado(botao, "Salvando...");
+
+  servidor("salvarDecisaoBD", dados)
+    .then(function(){
+      item.valorFinal = final;
+      item.observacao = dados.observacao;
+      liberar(botao);
+      fecharModal("modalDetalhes");
+      renderizar();
+      avisar("Decisão salva · " + moeda(final), "sucesso");
+    })
+    .catch(function(erro){
+      liberar(botao);
+      el("erroDetalhes").textContent = "Erro ao salvar: " + erro.message;
+    });
+}
+
+
+/* =========================================================
+   PAGAMENTO POR TRANSPORTADORA
+========================================================= */
+
+function abrirPagamento(transp){
+  const itens = estado.lista.filter(function(l){
+    return (l.transportadora || "—") === transp && l.statusPagamento !== "PAGO";
+  });
+
+  const totalTransp = itens.reduce(function(t, x){ return t + Number(x.somaFretes || 0); }, 0);
+  const totalCh = itens.reduce(function(t, x){ return t + Number(x.somaCh || 0); }, 0);
+  const totalFinal = itens.reduce(function(t, x){ return t + (temValor(x.valorFinal) ? Number(x.valorFinal) : 0); }, 0);
+
+  estado.pagamento = {
+    transportadora: transp,
+    corridas: itens,
+    totalTransp: totalTransp,
+    totalCh: totalCh,
+    totalFinal: totalFinal,
+    abatimento: totalTransp - totalFinal
+  };
+
+  el("tituloPagamento").textContent = transp;
+  el("subtituloPagamento").textContent = itens.length + (itens.length === 1 ? " pedido pendente" : " pedidos pendentes") + " de pagamento";
+
+  el("listaCorridasPagamento").innerHTML = itens.map(function(l){
+    const semFinal = !temValor(l.valorFinal) || Number(l.valorFinal) <= 0;
+    return '<tr>' +
+      '<td class="col-pedido">' + escapar(l.pedido) + '</td>' +
+      '<td class="col-data m-oculta">' + escapar(datasTexto(l)) + '</td>' +
+      '<td class="col-local m-oculta" title="' + escapar(l.origem + " → " + l.destino) + '">' + escapar(l.origem) + ' → ' + escapar(l.destino) + '</td>' +
+      '<td class="col-valor m-oculta">' + moeda(l.somaFretes) + '</td>' +
+      '<td class="col-valor m-oculta">' + moeda(l.somaCh) + '</td>' +
+      '<td class="col-valor col-final">' + (semFinal ? '<span class="etiqueta divergencia">Sem valor final</span>' : moeda(l.valorFinal)) + '</td>' +
+      '<td class="col-local m-oculta">' + escapar(l.observacao || "—") + '</td>' +
+    '</tr>';
+  }).join("");
+
+  el("resumoFinanceiro").innerHTML =
+    '<div class="resumo-item"><span>Transportadora</span><strong>' + moeda(totalTransp) + '</strong></div>' +
+    '<div class="resumo-item"><span>CH</span><strong>' + moeda(totalCh) + '</strong></div>' +
+    '<div class="resumo-item"><span>Abatimento</span><strong>' + moeda(totalTransp - totalFinal) + '</strong></div>' +
+    '<div class="resumo-item destaque"><span>Total a pagar</span><strong>' + moeda(totalFinal) + '</strong></div>';
+
+  el("erroPagamento").textContent = "";
+  abrirModal("modalPagamento");
+}
+
+function confirmarPagamento(){
+  const pag = estado.pagamento;
+
+  // Todos os pedidos precisam ter valor final
+  const faltando = pag.corridas.filter(function(l){ return !temValor(l.valorFinal) || Number(l.valorFinal) <= 0; });
+  if (faltando.length){
+    mostrarMensagem("Pagamento bloqueado",
+      "Estes pedidos ainda <b>não têm valor final</b>:<br><br><b>" +
+      faltando.map(function(f){ return escapar(f.pedido); }).join(", ") +
+      "</b><br><br>Concilie cada um antes de pagar.");
+    return;
+  }
+
+  const botao = el("btnConfirmarPagamento");
+  ocupado(botao, "Registrando...");
+
+  servidor("registrarPagamentoLote", pag)
+    .then(function(){
+      liberar(botao);
+      pag.corridas.forEach(function(c){ c.statusPagamento = "PAGO"; });
+      fecharModal("modalPagamento");
+      montarPendentes();
+      renderizar();
+      avisar("Pagamento registrado", "sucesso");
+      imprimirRecibo(pag);
+    })
+    .catch(function(erro){
+      liberar(botao);
+      el("erroPagamento").textContent = "Erro ao registrar: " + erro.message;
+    });
+}
+
+
+/* =========================================================
+   RECIBO
+========================================================= */
+
+function imprimirRecibo(info){
+  const linhas = info.corridas.map(function(c){
+    return '<tr>' +
+      '<td>' + escapar(c.pedido) + '</td>' +
+      '<td>' + escapar(datasTexto(c)) + '</td>' +
+      '<td>' + escapar(c.origem) + ' → ' + escapar(c.destino) + '</td>' +
+      '<td class="col-valor">' + moeda(c.somaFretes) + '</td>' +
+      '<td class="col-valor">' + moeda(c.somaCh) + '</td>' +
+      '<td class="col-valor"><b>' + moeda(c.valorFinal) + '</b></td>' +
+      '<td>' + escapar(c.observacao || "—") + '</td>' +
+    '</tr>';
+  }).join("");
+
+  el("recibo").innerHTML =
+    '<h1>Recibo de Pagamento</h1>' +
+    '<div class="recibo-sub"><b>' + escapar(info.transportadora) + '</b> · ' + new Date().toLocaleString("pt-BR") + '</div>' +
+    '<table><thead><tr>' +
+      '<th>Pedido</th><th>Datas</th><th>Rota</th><th class="col-valor">Transp.</th><th class="col-valor">CH</th><th class="col-valor">Final</th><th>Motivo</th>' +
+    '</tr></thead><tbody>' + linhas + '</tbody></table>' +
+    '<div class="recibo-resumo">' +
+      '<div><span>Total transportadora</span><strong>' + moeda(info.totalTransp) + '</strong></div>' +
+      '<div><span>Abatimento</span><strong>' + moeda(info.abatimento) + '</strong></div>' +
+      '<div><span>Total pago</span><strong>' + moeda(info.totalFinal) + '</strong></div>' +
+    '</div>' +
+    '<div class="recibo-rodape">Sistema Interno · Chiavari Eventos</div>';
+
+  document.body.classList.add("imprimindo-recibo");
+  setTimeout(function(){
+    window.print();
+    document.body.classList.remove("imprimindo-recibo");
+  }, 100);
+}
+
+
+/* =========================================================
+   INÍCIO
+========================================================= */
+
+// Fechar modal clicando fora
+document.querySelectorAll(".modal").forEach(function(modal){
+  modal.addEventListener("click", function(e){ if (e.target === modal) modal.classList.remove("aberto"); });
+});
+
+document.addEventListener("keydown", function(e){
+  if (e.key !== "Escape") return;
+  const abertos = document.querySelectorAll(".modal.aberto");
+  if (abertos.length) abertos[abertos.length - 1].classList.remove("aberto");
+});
+
+renderizar();
+carregar();
+</script>
+
+</body>
+</html>

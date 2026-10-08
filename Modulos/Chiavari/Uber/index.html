@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Controle de viagens</title>
+  <style>html,body{margin:0;height:100%;background:#fff}</style>
+  <script>
+    /* Mesmo roteamento do doGet do Apps Script deste sistema */
+    (function () {
+      var p = new URLSearchParams(location.search);
+      var destino = "login.html";
+      if (["login"].indexOf(String(p.get("page") || "").toLowerCase().trim()) >= 0) { destino = "login.html"; }
+      if (["corridas"].indexOf(String(p.get("page") || "").toLowerCase().trim()) >= 0) { destino = "corridas.html"; }
+      if (["motorista","app","form","formulario","index"].indexOf(String(p.get("page") || "").toLowerCase().trim()) >= 0) { destino = "motorista.html"; }
+      location.replace(destino + location.search + location.hash);
+    })();
+  </script>
+</head>
+<body></body>
+</html>

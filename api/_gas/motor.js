@@ -125,6 +125,11 @@ class Execucao {
   }
 
   _aba(planilha, nome) {
+    // getSheetByName do Google não diferencia maiúsculas de minúsculas
+    if (!this.infoAbas.has(planilha._id + "|" + nome) && !this.abas.has(planilha._id + "|" + nome)) {
+      const igual = this._nomesAbas(planilha._id).find(n => n.toLowerCase() === String(nome).toLowerCase());
+      if (igual) { nome = igual; }
+    }
     const chave = planilha._id + "|" + nome;
     if (this.excluidas.has(chave)) { return null; }
     if (this.abas.has(chave)) { return this.abas.get(chave); }
@@ -254,7 +259,12 @@ class Execucao {
       create: nome => ex.criarPlanilha(nome),
       flush: () => {},
       getUi: () => { throw new Error("Exception: Cannot call SpreadsheetApp.getUi() from this context."); },
-      newDataValidation: () => new Proxy({}, { get: (t, k) => (k === "build" ? () => ({}) : () => t.__self || (t.__self = new Proxy(t, {}))) }),
+      newDataValidation: () => {
+        const regra = { getCriteriaType: () => null, getCriteriaValues: () => [], getAllowInvalid: () => true, getHelpText: () => "", copy: () => construtor };
+        const construtor = new Proxy({}, { get: (t, k) => (k === "build" ? () => regra : k === "then" ? undefined : () => construtor) });
+        return construtor;
+      },
+      DataValidationCriteria: {},
       BorderStyle: {}, WrapStrategy: {}, Dimension: { ROWS: "ROWS", COLUMNS: "COLUMNS" }
     };
 

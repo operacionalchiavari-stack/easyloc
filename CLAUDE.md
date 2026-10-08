@@ -37,15 +37,19 @@ Resumo:
   desenhado — era assim que os módulos "escondidos a pedido" funcionavam
   antes (dentro de comentário HTML `<!-- -->`), só que agora é um campo,
   não um comentário.
-- **Dois motores de navegação existem, mas só um está em uso.** Não são
-  intercambiáveis, cada tela usa só um; hoje **nenhum item visível do menu
-  usa mais o motor antigo** — todo item com `oculto:false` no
-  `ACERVO_MENU` tem `href` (motor novo). `js/core/moduleLoader.js`
-  continua carregado (é o que faria os itens `legado` funcionarem se algum
-  dia um deles virar `oculto:false` sem ainda ter sido convertido para o
-  modelo novo), mas não é chamado por nada visível hoje — antes de
-  considerar removê-lo, confirmar de novo que nenhum item deixou de estar
-  oculto.
+- **Dois motores de navegação, os dois em uso.** Não são intercambiáveis,
+  cada tela usa só um. Em out/2026 o usuário pediu "tudo que temos
+  disponível no menu": nada mais é `oculto`, e o menu virou 7 categorias
+  (Cadastros — todos os cadastros + Tabelas de Preço, Créditos de IA e
+  Importar Itens; Catálogo; Comercial — Pedidos, Contratos, Planejador de
+  Eventos; Estoque; Logística — inclui o grupo "Cronograma de Montagem" com
+  as telas vindas do Apps Script em `Modulos/Chiavari/Cronograma/`;
+  Financeiro; Gestão — Gestão de Pessoas, Studio IA, Permissões,
+  Integrações). Os módulos que ainda são fragmento (Contratos, Planejador,
+  Compras, Disponibilidade, Controle de Qualidade, Planejamento,
+  Roteirização, Expedição, Gestão de Pessoas, Studio IA, Permissões,
+  WhatsApp, Gateways) abrem pelo `moduleLoader.js` (`legado`). Os favoritos
+  (`ACERVO_MENU.favoritos`) só aparecem no menu do celular (≤1200px).
   - **Antigo** — `js/core/moduleLoader.js`, função `carregarNaMain()`. Busca
     um *fragmento* de HTML (sem `<html>/<head>` próprios) e cola dentro de
     `<div id="main-content">` com `innerHTML`. Roda no mesmo documento do
@@ -8319,3 +8323,18 @@ Fotos antigas e senhas/logins NÃO foram migradas (decisão do usuário: as foto
   `bloqueadas` em `api/_gas/projetos.js` lista as que só existiam para o editor do Google.
 - **Migrations do motor** foram aplicadas com `db query --linked -f` + `migration repair` (NÃO `db push`), porque há
   4 migrations antigas do catálogo (20260925000300…600) que nunca foram aplicadas e não são deste trabalho.
+- **Sistemas no motor (out/2026)** — chave em `api/_gas/projetos.js` → telas em `Modulos/Chiavari/<Pasta>/`:
+  `cronograma` (Cronograma, Free, Montador, RH free), `fretes` (Fretes; `?page=conciliacao`), `costura` (Painel de
+  Complexidade/Matriz), `uber` (Controle de viagens; `?page=login|corridas|form`), `ocorrencias`
+  (`?page=PainelQualidade|OcorrenciasOperacionais`), `almoxarifado` (`?p=financeiro` = Teto de Gastos; rotina diária
+  06:00 `atualizarTetoGastosAutomatico`), `controlerh` (Ocorrências RH), `feedback` (pós-evento), `central`
+  (Central de Metas; `?p=equipe`, `?p=painel` = Itens Danificados), `portal` (Portal Interno: login Firebase
+  conferido no servidor, mural; no `portalgs.js` daqui os links do menu dos sistemas migrados são caminhos
+  `/Modulos/Chiavari/...`, os ainda não migrados continuam apontando para o Google).
+  Ainda no Google (sem ID do script): Controle de Retorno, OS Manutenção, Forração Limpeza/Formulários, Inspeções,
+  Controle de Qualidade.
+- **As planilhas são compartilhadas entre os sistemas** (Senhas/133H, Matriz/1btY, Fretes/1uVh, Almoxarifado/1IIW,
+  Controle RH/1Jk1, Itens Danificados/1EvC…). Por isso a virada do Google para cá é de **todos de uma vez**: reimportar
+  todas as planilhas no mesmo momento e trocar os links (portal, QR codes, favoritos).
+- `getSheetByName` ignora maiúsculas/minúsculas (igual ao Google — o Uber pede "Fretes CH" e a aba é "Fretes Ch");
+  fusos "GMT-3"/"GMT-03:00" são aceitos em `Utilities.formatDate`.

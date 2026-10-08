@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../gas-cliente.js" data-projeto="portal"></script>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#2b2a26">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Chiavari">
+  <title>Portal Interno • Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+
+  <style>
+    /* =========================================================
+       LOGIN DO PORTAL INTERNO — identidade Chiavari
+       (Cormorant Garamond + Manrope, grafite e creme)
+    ========================================================= */
+    :root{
+      --bg:#f6f4ef; --card:#ffffff; --line:#e7e1d7; --text:#251e19; --muted:#77716a; --suave:#a8a29a;
+      --escuro:#2b2a26; --erro:#dc2626; --erro-soft:#fdeeee; --ok:#166534; --ok-soft:#ecf8ef;
+      --serif:"Cormorant Garamond", Georgia, serif; --sans:"Manrope", system-ui, sans-serif;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html, body{ height:100%; }
+    body{ font-family:var(--sans); color:var(--text); background:var(--bg); -webkit-font-smoothing:antialiased; }
+
+    .tela{ min-height:100vh; display:grid; grid-template-columns:1.2fr .8fr; }
+
+    .foto{ position:relative; overflow:hidden; background:var(--escuro); }
+    .foto img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scale(1.04); animation:respirar 18s ease-in-out infinite alternate; }
+    @keyframes respirar{ to{ transform:scale(1.12); } }
+    .foto::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(16,15,13,.05) 30%, rgba(16,15,13,.72)); }
+    .foto-texto{ position:absolute; left:56px; right:56px; bottom:56px; z-index:1; color:#f6f4ef; animation:subir .9s ease .2s both; }
+    .foto-texto small{ display:block; font-size:12px; font-weight:800; letter-spacing:.32em; text-transform:uppercase; opacity:.85; }
+    .foto-texto h2{ font-family:var(--serif); font-weight:500; font-size:clamp(40px, 4vw, 64px); line-height:1.02; margin-top:12px; }
+    .foto-texto p{ margin-top:12px; max-width:440px; font-size:15px; opacity:.85; line-height:1.6; }
+
+    .lado{ display:flex; align-items:center; justify-content:center; padding:56px 64px; background:var(--card); }
+    .form{ width:100%; max-width:380px; animation:subir .7s ease both; }
+    @keyframes subir{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:none; } }
+
+    .marca{ font-family:var(--serif); font-size:15px; font-weight:600; letter-spacing:.42em; text-transform:uppercase; color:var(--muted); }
+    .form h1{ font-family:var(--serif); font-weight:600; font-size:44px; line-height:1.02; margin:22px 0 10px; }
+    .form > p{ color:var(--muted); font-size:15px; line-height:1.6; margin-bottom:34px; }
+
+    .campo{ display:block; margin-bottom:20px; }
+    .campo span{ display:block; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+    .campo input{ width:100%; height:54px; padding:0 16px; border:1px solid var(--line); border-radius:14px; background:#fbfaf7; font:500 16px var(--sans); color:var(--text); outline:none; transition:border-color .2s, box-shadow .2s, background .2s; }
+    .campo input:focus{ border-color:var(--escuro); background:#fff; box-shadow:0 0 0 4px rgba(43,42,38,.07); }
+
+    .entrar{ width:100%; height:56px; border:0; border-radius:16px; background:var(--escuro); color:#fff; font:800 15px var(--sans); letter-spacing:.02em; cursor:pointer; margin-top:6px; transition:transform .15s, opacity .2s, box-shadow .2s; box-shadow:0 14px 30px rgba(43,42,38,.18); }
+    .entrar:hover{ transform:translateY(-1px); box-shadow:0 18px 36px rgba(43,42,38,.24); }
+    .entrar[disabled]{ opacity:.6; cursor:default; transform:none; }
+
+    .linha-acoes{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-size:13.5px; }
+    .link{ background:none; border:0; color:var(--text); font:700 13.5px var(--sans); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+    .msg{ display:none; margin-top:18px; padding:12px 14px; border-radius:12px; font-size:13.5px; font-weight:600; }
+    .msg.erro{ display:block; background:var(--erro-soft); color:var(--erro); }
+    .msg.ok{ display:block; background:var(--ok-soft); color:var(--ok); }
+    .rodape{ margin-top:40px; color:var(--suave); font-size:12.5px; }
+
+    @media (max-width:980px){
+      .tela{ grid-template-columns:1fr; }
+      .foto{ height:34vh; min-height:240px; }
+      .foto-texto{ left:24px; right:24px; bottom:24px; }
+      .foto-texto p{ display:none; }
+      .lado{ padding:36px 22px 50px; align-items:flex-start; }
+      .form h1{ font-size:36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="tela">
+    <div class="foto">
+      <img src="https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/sistema%20interno/007_Ana%20Paula%20Astino_APA_20251216111706.jpg" alt="">
+      <div class="foto-texto">
+        <small>Chiavari Eventos</small>
+        <h2>Cada detalhe,<br>feito por nós.</h2>
+        <p>O portal da nossa equipe: sistemas, avisos, aniversariantes e quem está fazendo a diferença.</p>
+      </div>
+    </div>
+
+    <div class="lado">
+      <form class="form" onsubmit="entrar(event)">
+        <div class="marca">Portal Interno</div>
+        <h1>Bem-vindo de volta</h1>
+        <p>Entre com seu e-mail e senha para continuar.</p>
+
+        <label class="campo"><span>E-mail</span><input type="email" id="email" autocomplete="username" placeholder="seu@email.com" required></label>
+        <label class="campo"><span>Senha</span><input type="password" id="senha" autocomplete="current-password" placeholder="Sua senha" required></label>
+
+        <button class="entrar" id="btnEntrar" type="submit">Entrar</button>
+
+        <div class="linha-acoes">
+          <button class="link" type="button" onclick="esqueciSenha()">Esqueci minha senha</button>
+        </div>
+
+        <div class="msg" id="msg"></div>
+        <div class="rodape">Não consegue acessar? Fale com o administrador.</div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  const URL_PORTAL = "./" + "?page=portal";
+
+  firebase.initializeApp({
+    apiKey: "AIzaSyA-GgfOYJ0yyDgmXJ6_CoacAjk3Mc3wlIY",
+    authDomain: "sistema-chiavari.firebaseapp.com",
+    projectId: "sistema-chiavari",
+    storageBucket: "sistema-chiavari.firebasestorage.app",
+    messagingSenderId: "136696956210",
+    appId: "1:136696956210:web:698a7f67c6b8918061832b"
+  });
+  const auth = firebase.auth();
+
+  function mensagem(texto, tipo){
+    const el = document.getElementById("msg");
+    el.textContent = texto;
+    el.className = "msg " + (tipo || "");
+  }
+
+  function entrar(ev){
+    ev.preventDefault();
+    const btn = document.getElementById("btnEntrar");
+    btn.disabled = true;
+    btn.textContent = "Entrando…";
+    mensagem("");
+
+    auth.signInWithEmailAndPassword(document.getElementById("email").value.trim(), document.getElementById("senha").value)
+      .then(function(){ window.location.href = URL_PORTAL; })
+      .catch(function(e){
+        btn.disabled = false;
+        btn.textContent = "Entrar";
+        const codigo = String(e && e.code || "");
+        mensagem(codigo.indexOf("too-many-requests") >= 0
+          ? "Muitas tentativas. Aguarde alguns minutos e tente de novo."
+          : "E-mail ou senha incorretos.", "erro");
+      });
+  }
+
+  function esqueciSenha(){
+    const email = document.getElementById("email").value.trim();
+    if(!email){ mensagem("Digite seu e-mail acima e toque de novo em \"Esqueci minha senha\".", "erro"); return; }
+    auth.sendPasswordResetEmail(email)
+      .then(function(){ mensagem("Enviamos um link para " + email + " com as instruções para criar uma nova senha.", "ok"); })
+      .catch(function(){ mensagem("Não foi possível enviar. Confira o e-mail digitado.", "erro"); });
+  }
+</script>
+</body>
+</html>
