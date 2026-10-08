@@ -118,6 +118,8 @@
     root.querySelectorAll("[data-module-href]").forEach((el) => {
       el.hidden = !canNavigate(el.getAttribute("data-module-href"));
     });
+    // Menu do dashboard: redesenha só com o que a pessoa pode abrir (js/ui/sidebarMenu.js)
+    if (root === document && typeof window.portalRedesenharMenu === "function") window.portalRedesenharMenu();
   }
 
   const routes = [
@@ -131,7 +133,7 @@
     [/Chiavari\/Ocorrencias/i, 'logistica.expedicao.visualizar'],
     [/Chiavari\/Costura/i, 'estoque.insumos.visualizar'],
     [/Chiavari\/Feedback/i, 'comercial.pedidos.visualizar'],
-    [/Chiavari\/Portal/i, null],
+    [/Chiavari\/Portal/i, 'rh.colaboradores.visualizar'], // Mural do Portal (editar o mural) — fica no RH
     [/CadastroFuncionarios/i, 'rh.funcionarios.visualizar'],
     [/CadastroClientes/i, 'comercial.clientes.visualizar'],
     [/CadastroLocais/i, 'comercial.locais.visualizar'],
@@ -161,6 +163,9 @@
     if (!cache.loaded || !cache.active) return false;
     let path;
     try { const url = new URL(href, location.href); if (url.origin !== location.origin) return false; path = decodeURIComponent(url.pathname); } catch (_) { return false; }
+    // Todos os membros ativos podem enviar e acompanhar suas próprias ideias.
+    // A consulta geral e a avaliação são controladas nas RPCs por permissões do RH.
+    if (/\/Modulos\/RH\/IdeiaPremiada\/ideia-premiada\.html$/i.test(path)) return true;
     if (cache.legacyAdmin) return true;
     const match = routes.find(([pattern]) => pattern.test(path));
     return match ? hasPermission(match[1]) : /\/(dashboard|usuario)\.html$/i.test(path);

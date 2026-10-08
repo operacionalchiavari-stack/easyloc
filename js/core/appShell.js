@@ -9,7 +9,6 @@
 (function () {
   const frame = document.getElementById("appModuleFrame");
   const mainContent = document.getElementById("main-content");
-  const loader = document.getElementById("global-loader");
 
   if (!frame) return;
 
@@ -62,11 +61,11 @@
   }
 
   function showLoader() {
-    loader?.classList.remove("hidden");
+    window.moduleLoadingIndicator.show();
   }
 
   function hideLoader() {
-    loader?.classList.add("hidden");
+    window.moduleLoadingIndicator.hide();
   }
 
   function activateFrame() {
@@ -152,7 +151,7 @@
 
   window.addEventListener("popstate", async () => {
     const page = new URLSearchParams(location.search).get("page");
-    if (!page || !safeModule(page)) { frame.classList.add('hidden'); mainContent?.classList.remove('hidden'); return; }
+    if (!page || !safeModule(page)) { hideLoader(); frame.classList.add('hidden'); mainContent?.classList.remove('hidden'); return; }
     await window.EasyLocPermissions?.load();
     if (!window.EasyLocPermissions?.canNavigate(page)) { hideLoader(); return; }
 

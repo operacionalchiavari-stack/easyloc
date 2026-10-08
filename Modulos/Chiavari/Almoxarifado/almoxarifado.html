@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="almoxarifado"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="almoxarifado"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2980,10 +2980,8 @@ function salvarEmprestimoFront(){
 
   window.__RETIRADA_TEMP = dados;
 
-  document.getElementById("inputSenhaSetor").value = "";
-
-  document.getElementById("modalSenha")
-    .classList.remove("hidden");
+  // Sem senha do setor (out/2026): salva direto; quem protege é o login do sistema.
+  confirmarSenha();
 }
 
 function salvarContagemFront(){
@@ -4353,8 +4351,8 @@ const dados = {
 // 🔥 GUARDA TEMPORÁRIO E ABRE MODAL
 window.__MOV_TEMP = dados;
 
-document.getElementById("inputSenhaSetor").value = "";
-document.getElementById("modalSenha").classList.remove("hidden");
+// Sem senha do setor (out/2026): salva direto; quem protege é o login do sistema.
+confirmarSenha();
 }
 function limparFormularioMovimentacao(){
 
@@ -4463,12 +4461,7 @@ function fecharModalSenha(){
 }
 function confirmarSenha(){
 
-  const senha = document.getElementById("inputSenhaSetor").value;
-
-  if(!senha){
-    alert("Digite a senha");
-    return;
-  }
+  const senha = "";
 
   document.getElementById("modalSenha")
     .classList.add("hidden");

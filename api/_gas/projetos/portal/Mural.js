@@ -253,6 +253,15 @@ function MURAL_dadosPublicos_() {
  ****************************************************/
 function MURAL_login(senha) {
 
+  /* Senha da RH removida (out/2026): quem protege é o login do Acervo (api/gs.js).
+     O parâmetro agora traz o nome de quem está logado, mostrado em "Publicando como". */
+  {
+    const usuario = MURAL_texto_(senha, 100) || 'RH';
+    const token = Utilities.getUuid().replace(/-/g, '');
+    CacheService.getScriptCache().put(MURAL_PREFIXO_ADMIN + token, usuario, 6 * 60 * 60);
+    return { token: token, usuario: usuario };
+  }
+
   const s = MURAL_texto_(senha, 100);
   if (!s) { throw new Error('Digite a senha.'); }
 

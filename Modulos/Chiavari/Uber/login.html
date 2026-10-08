@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="uber"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="uber"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login • Corridas Uber</title>
@@ -135,6 +135,9 @@ button:hover{ background:#2f2f2b !important; }
 </div>
 
 <script>
+/* Sem login próprio (out/2026): o controle de corridas usa o login do Acervo. */
+location.replace("corridas.html");
+
 function login() {
     const usuario = document.getElementById("usuario").value.trim();
     const senha = document.getElementById("senha").value.trim();

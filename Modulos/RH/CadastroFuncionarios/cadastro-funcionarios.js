@@ -5,7 +5,7 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const levels = ['Administrador', 'Gestor', 'Financeiro', 'Líder de setor', 'Operador', 'Qualidade', 'Almoxarifado', 'Visualizador'];
   const sectors = ['Administrativo', 'Comercial', 'Financeiro', 'Logística', 'Estoque', 'Almoxarifado', 'Montagem', 'Manutenção'];
-  let context, employees = [], catalog = [], mode = 'create', photo = '', preview = '', busy = false, returnFocus;
+  let proprio = false, context, employees = [], catalog = [], mode = 'create', photo = '', preview = '', busy = false, returnFocus;
   const photoUrls = new Map();
   const can = key => window.EasyLocPermissions.hasPermission(key, false);
   const initials = name => String(name || 'FT').trim().split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase();
@@ -30,6 +30,16 @@
     if (data?.error) throw new Error(data.error);
     return data;
   }
+  /* Foto do menu (perfil "Minha conta"): bucket público avatares em <empresa>/<usuário>.jpg.
+     Quem não tem foto de funcionário (ex.: o dono) aparece com ela — se não existir, o <img>
+     quebra e o listener de erro mostra as iniciais. */
+  function avatarDoMenu(id) {
+    if (!id || !context?.empresa_id) return '';
+    const { data } = client.storage.from('avatares').getPublicUrl(`${context.empresa_id}/${id}.jpg`);
+    return data?.publicUrl ? `${data.publicUrl}?v=${avatarVersao}` : '';
+  }
+  const avatarVersao = Date.now();
+  function fotoDe(e) { return imageUrl(e?.foto_url) || avatarDoMenu(e?.id); }
   function imageUrl(path) {
     if (photoUrls.has(path)) return photoUrls.get(path);
     // URLs de avatar anteriores ao cadastro continuam válidas; nunca injeta esquemas executáveis.
@@ -57,12 +67,12 @@
     });
     $('funcionariosTableBody').innerHTML = [...groups].sort(([a], [b]) => a.localeCompare(b, 'pt-BR')).map(([sector, rows]) => `
       <tr class="table-group-row"><td colspan="9">${esc(sector)}<span class="table-group-count">${rows.length}</span></td></tr>
-      ${rows.map(e => `<tr><td class="photo-column"><span class="employee-table-photo"><span>${esc(initials(e.nome))}</span>${imageUrl(e.foto_url) ? `<img src="${esc(imageUrl(e.foto_url))}" alt="Foto de ${esc(e.nome)}" loading="lazy">` : ''}</span></td>
+      ${rows.map(e => `<tr><td class="photo-column"><span class="employee-table-photo"><span>${esc(initials(e.nome))}</span>${fotoDe(e) ? `<img src="${esc(fotoDe(e))}" alt="Foto de ${esc(e.nome)}" loading="lazy">` : ''}</span></td>
       <td><strong>${esc(e.nome)}</strong><span class="subtext">${esc(e.email)}</span></td><td>${esc(e.setor)}</td><td>${esc(e.cargo || '-')}</td><td>${esc(e.login)}</td>
       <td><span class="status-pill">${esc(e.nivel_acesso)}</span></td><td><span class="status-pill ${e.ativo ? 'active' : 'inactive'}">${e.ativo ? 'Ativo' : 'Inativo'}</span></td>
       <td>${e.ultimo_acesso ? esc(new Date(e.ultimo_acesso).toLocaleString('pt-BR')) : '-'}</td><td class="action-buttons">
       <button class="icon-btn" data-action="view" data-id="${esc(e.id)}" aria-label="Ver ${esc(e.nome)}" title="Ver"><i data-lucide="eye"></i></button>
-      ${can('rh.funcionarios.editar') && e.id !== context.usuario_id ? `<button class="icon-btn" data-action="edit" data-id="${esc(e.id)}" aria-label="Editar ${esc(e.nome)}" title="Editar"><i data-lucide="pencil"></i></button>` : ''}</td></tr>`).join('')}`).join('') || '<tr><td colspan="9" class="empty-state">Nenhum funcionário cadastrado.</td></tr>';
+      ${can('rh.funcionarios.editar') || e.id === context.usuario_id ? `<button class="icon-btn" data-action="edit" data-id="${esc(e.id)}" aria-label="Editar ${esc(e.nome)}" title="Editar"><i data-lucide="pencil"></i></button>` : ''}</td></tr>`).join('')}`).join('') || '<tr><td colspan="9" class="empty-state">Nenhum funcionário cadastrado.</td></tr>';
     $('newFuncionarioBtn').hidden = !can('rh.funcionarios.criar') || !can('configuracoes.permissoes.editar');
     icons();
   }
@@ -73,7 +83,7 @@
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(p);
     });
-    const disabled = mode === 'view' || !can('configuracoes.permissoes.editar');
+    const disabled = mode === 'view' || proprio || !can('configuracoes.permissoes.editar');
     $('permissionsGrid').innerHTML = [...groups].map(([key, rows]) => `<section class="permission-module"><header>
       <div class="permission-module-title"><span><i data-lucide="shield-check"></i></span><div><strong>${esc(rows[0].submodulo)}</strong><small>${esc(rows[0].modulo)}</small></div></div>
       <label class="permission-toggle-all"><input type="checkbox" data-module-toggle ${disabled ? 'disabled' : ''} aria-label="Todas as permissões de ${esc(key)}">Todos</label></header>
@@ -111,7 +121,10 @@
     const employee = employees.find(e => e.id === id);
     if (mode !== 'create' && !employee) return;
     if (mode === 'create' && (!can('rh.funcionarios.criar') || !can('configuracoes.permissoes.editar'))) return;
-    if (mode === 'edit' && !can('rh.funcionarios.editar')) return;
+    // Meu próprio cadastro (out/2026): só dados pessoais e senhas; nível, status, login e
+    // permissões ficam travados (o servidor também confere — funcionario_salvar_proprio).
+    proprio = mode === 'edit' && id === context.usuario_id;
+    if (mode === 'edit' && !proprio && !can('rh.funcionarios.editar')) return;
     let selected = [];
     try {
       if (employee) selected = (await rpc('get_permissoes_usuario_resolvidas', { p_empresa_id: context.empresa_id, p_usuario_id: id })).filter(p => p.permitido).map(p => p.chave);
@@ -130,12 +143,15 @@
     $('funcWarehousePin').placeholder = mode === 'create' ? '4 dígitos' : 'Em branco para manter';
     $('funcEmail').readOnly = false;
     $('funcEmail').title = 'E-mail usado na conta de acesso';
-    $('funcionarioFormTitle').textContent = mode === 'create' ? 'Novo funcionário' : mode === 'view' ? 'Dados do funcionário' : 'Editar funcionário';
+    $('funcionarioFormTitle').textContent = mode === 'create' ? 'Novo funcionário' : mode === 'view' ? 'Dados do funcionário' : proprio ? 'Meu cadastro' : 'Editar funcionário';
     $('funcionarioForm').querySelectorAll('input,select,button').forEach(el => { el.disabled = mode === 'view' && el.id !== 'cancelFuncionarioBtn'; });
-    $('funcStatus').disabled = $('funcNivel').disabled = mode === 'view' || !can('configuracoes.permissoes.editar');
+    $('funcStatus').disabled = $('funcNivel').disabled = mode === 'view' || proprio || !can('configuracoes.permissoes.editar');
+    $('funcLogin').disabled = mode === 'view' || proprio;
+    const avisoProprio = $('funcionarioProprioAviso');
+    if (avisoProprio) avisoProprio.hidden = !proprio;
     $('saveFuncionarioBtn').hidden = mode === 'view';
     renderPermissions(employee ? selected : profile('Visualizador'));
-    setPhoto(imageUrl(employee?.foto_url));
+    setPhoto(fotoDe(employee));
     returnFocus = document.activeElement;
     $('funcionarioFormCard').classList.remove('hidden');
     $('funcionariosView').querySelector('.section-head').inert = true;
@@ -190,7 +206,7 @@
     try {
       const result = await api({ action: 'save', id: $('funcionarioId').value || null, photo: photo || null,
         employee: { nome: $('funcNome').value, setor: $('funcSetor').value, cargo: $('funcCargo').value, login: $('funcLogin').value, senha: $('funcSenha').value, pin: $('funcWarehousePin').value, nivel_acesso: $('funcNivel').value, ativo: $('funcStatus').value === 'Ativo', email: $('funcEmail').value, telefone: $('funcTelefone').value, foto_url: $('funcFotoValue').value },
-        permissions: can('configuracoes.permissoes.editar') ? [...document.querySelectorAll('[data-permission-item]:checked')].map(x => x.value) : null });
+        permissions: !proprio && can('configuracoes.permissoes.editar') ? [...document.querySelectorAll('[data-permission-item]:checked')].map(x => x.value) : null });
       busy = false; closeForm();
       message(result.warning || 'Funcionário salvo com sucesso.', Boolean(result.warning));
       await loadEmployees();

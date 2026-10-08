@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="controlerh"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="controlerh"></script>
   <base target="_top">
 
   <meta charset="UTF-8">
@@ -1929,12 +1929,16 @@ function cancelarLinhaFuncionario(){
 }
 function abrirModalSenhaRH(tipo){
 
+  /* Sem senha do RH (out/2026): abre direto; quem protege é o login do sistema. */
   acaoPendenteRH = tipo;
 
-  document.getElementById("inputSenhaRH").value = "";
+  if(tipo === "ocorrencia"){
+    abrirModal();
+  }
 
-  document.getElementById("modalSenhaRH")
-    .style.display = "flex";
+  if(tipo === "funcionario"){
+    abrirModalFuncionario();
+  }
 
 }
 

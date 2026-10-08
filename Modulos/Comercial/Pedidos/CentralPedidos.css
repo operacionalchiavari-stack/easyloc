@@ -19,6 +19,96 @@
   font-size: 14px;
 }
 
+html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 16px !important;
+}
+
+html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > div:first-child {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0 !important;
+  padding: 34px 0 22px !important;
+  border: 0;
+  text-align: center !important;
+}
+
+html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > .el-page-actions {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  align-self: center;
+  flex-wrap: nowrap;
+  margin: 12px 0 0 !important;
+}
+
+html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > .central-actions-left {
+  grid-column: 1;
+  justify-self: start;
+}
+
+#centralPedidosPage #pesquisaGeralPedidos {
+  width: 240px;
+  min-width: 0;
+}
+
+#btnFiltrosPedidos {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#btnFiltrosPedidos svg {
+  width: 18px;
+  height: 18px;
+}
+
+#centralFiltrosPedidos[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 1350px) {
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > .el-page-actions {
+    grid-row: 2;
+    margin: 0 !important;
+  }
+
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > .central-actions-right {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 760px) {
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > .el-page-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-wrap: wrap;
+    margin: 0 !important;
+  }
+
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > .central-actions-right {
+    grid-row: 3;
+    justify-self: stretch;
+  }
+
+  #centralPedidosPage #pesquisaGeralPedidos {
+    flex: 1 1 200px;
+  }
+}
+
 .central-filters {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));

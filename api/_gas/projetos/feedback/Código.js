@@ -2652,6 +2652,16 @@ function formatarData(valor) {
 function autenticarEListarPendentes(
   senhaInformada
 ) {
+  /* Senha do Comercial removida (out/2026): quem protege é o login do Acervo (api/gs.js). */
+  {
+    const lista = listarPendentesAutomaticos(false);
+    return {
+      sucesso: true,
+      mensagem: "Acesso autorizado.",
+      lista,
+      totalPendentes: lista.filter(item => item.precisaLigacao).length
+    };
+  }
   const senhaDigitada =
     limparTexto_(
       senhaInformada

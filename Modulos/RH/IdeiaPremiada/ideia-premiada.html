@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ideia Premiada — Chiavari</title>
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
+  <link rel="stylesheet" href="ideia-premiada.css?v=20261008-centralizado">
+</head>
+<body>
+<main id="ideiaPremiada" class="el-page">
+  <header class="ideia-heading"><span class="eyebrow">Uma empresa melhor começa com você</span><h1>Ideia Premiada</h1><p>Enxergou uma oportunidade de melhoria? Compartilhe sua ideia e ajude a transformar nosso jeito de trabalhar.</p></header>
+  <div id="avisoIdeias" role="status" aria-live="polite"></div>
+  <nav class="ideia-tabs" aria-label="Ideia Premiada">
+    <button type="button" class="ativo" id="tabEnviar" aria-pressed="true">Enviar uma ideia</button>
+    <button type="button" id="tabMinhas" aria-pressed="false">Minhas ideias</button>
+    <button type="button" id="tabRecebidas" aria-pressed="false" hidden>Ideias recebidas · RH</button>
+  </nav>
+  <section id="painelEnviar" class="ideia-form-layout">
+    <aside><span class="eyebrow">Sua visão faz a diferença</span><h2>Pequenas ideias.<br>Grandes melhorias.</h2><p>Pode ser uma mudança no dia a dia, uma forma de economizar, cuidar da equipe ou encantar nossos clientes.</p><ol><li>Conte o que pode melhorar.</li><li>Explique sua solução.</li><li>Acompanhe o retorno da avaliação.</li></ol><small>As ideias são avaliadas pela empresa. O envio não garante seleção ou premiação.</small></aside>
+    <form id="formIdeia" class="ideia-card">
+      <label>Título da ideia<input class="el-input" name="titulo" required minlength="5" maxlength="120" placeholder="Dê um nome à sua melhoria"></label>
+      <label>Área que pode melhorar<select class="el-select" name="area" required><option value="">Selecione uma área</option><option>Operação e eventos</option><option>Estoque e triagem</option><option>Logística</option><option>Comercial e atendimento</option><option>Financeiro</option><option>Pessoas e bem-estar</option><option>Sustentabilidade</option><option>Outra área</option></select></label>
+      <label>O que pode melhorar?<textarea class="el-input" name="problema" required minlength="10" maxlength="3000" rows="3" placeholder="Descreva a situação atual e a dificuldade que você percebe."></textarea></label>
+      <label>Qual é a sua ideia?<textarea class="el-input" name="proposta" required minlength="10" maxlength="5000" rows="4" placeholder="Como sua solução funcionaria na prática?"></textarea></label>
+      <label>Qual seria o benefício?<textarea class="el-input" name="beneficio" required minlength="10" maxlength="3000" rows="3" placeholder="O que muda para a empresa, a equipe ou os clientes?"></textarea></label>
+      <footer><small id="autorIdeia">Seu nome será registrado junto à ideia.</small><button class="btn primary" id="btnEnviarIdeia" disabled>Enviar minha ideia</button></footer>
+    </form>
+  </section>
+  <section id="painelLista" hidden>
+    <div class="ideia-list-tools"><h2 id="tituloLista">Minhas ideias</h2><input type="search" class="el-input" id="buscaIdeias" aria-label="Pesquisar ideias" placeholder="Pesquisar título, autor ou área"><select id="statusIdeias" class="el-select" aria-label="Filtrar status"><option value="">Todos os status</option><option value="recebida">Recebida</option><option value="em_analise">Em análise</option><option value="selecionada">Selecionada</option><option value="implementada">Implementada</option><option value="premiada">Premiada</option><option value="nao_priorizada">Não priorizada</option></select><button class="btn secondary" id="recarregarIdeias" type="button">Recarregar</button></div>
+    <div id="listaIdeias" class="ideia-lista"></div>
+  </section>
+  <dialog id="detalheIdeia" aria-labelledby="tituloDetalhe"><header><span class="eyebrow">Ideia Premiada</span><button type="button" id="fecharDetalhe" aria-label="Fechar detalhes">×</button></header><h2 id="tituloDetalhe"></h2><div id="conteudoDetalhe"></div><form id="formAvaliacao" hidden><h3>Avaliação do RH</h3><label>Status<select name="status" class="el-select"><option value="recebida">Recebida</option><option value="em_analise">Em análise</option><option value="selecionada">Selecionada</option><option value="implementada">Implementada</option><option value="premiada">Premiada</option><option value="nao_priorizada">Não priorizada</option></select></label><label>Retorno para o autor<textarea class="el-input" name="retorno" maxlength="3000" rows="3" placeholder="Explique a avaliação e os próximos passos."></textarea></label><label>Premiação, quando houver<input class="el-input" name="premio" maxlength="300" placeholder="Descreva o reconhecimento concedido"></label><p id="avisoAvaliacao" role="status"></p><button class="btn primary" id="salvarAvaliacao">Salvar avaliação</button></form></dialog>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script><script src="../../../js/core/context.js"></script>
+<script src="../../../js/core/permissions.js?v=20261008-ideias"></script><script src="../../../js/core/companyTheme.js"></script>
+<script src="ideia-premiada.js?v=20261008"></script>
+</body></html>

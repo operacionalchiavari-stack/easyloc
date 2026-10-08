@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="fretes"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="fretes"></script>
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1357,13 +1357,13 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
   <div class="modal-caixa estreita">
     <div class="modal-topo">
       <div>
-        <h2>Autorização</h2>
-        <p>O valor final passa do valor registrado pelo CH. Digite a senha da gerência.</p>
+        <h2>Confirmar valor</h2>
+        <p>O valor final passa do valor registrado pelo CH. Confirma o pagamento acima do CH?</p>
       </div>
       <button type="button" class="modal-fechar" onclick="fecharModal('modalSenha')" aria-label="Fechar">×</button>
     </div>
     <div class="modal-corpo">
-      <div class="campo">
+      <div class="campo" style="display:none">
         <input type="password" id="campoSenha" class="campo-senha" placeholder="••••" autocomplete="off" onkeydown="if(event.key === 'Enter'){ confirmarSenha(); }">
       </div>
     </div>
@@ -2643,7 +2643,6 @@ function salvarDecisao(){
     el("campoSenha").value = "";
     el("erroSenha").textContent = "";
     abrirModal("modalSenha");
-    setTimeout(function(){ el("campoSenha").focus(); }, 50);
     return;
   }
 
@@ -2651,10 +2650,7 @@ function salvarDecisao(){
 }
 
 function confirmarSenha(){
-  if (el("campoSenha").value !== SENHA_GERENCIA){
-    el("erroSenha").textContent = "Senha incorreta.";
-    return;
-  }
+  /* Sem senha da gerência (out/2026): a janela só confirma o valor acima do CH. */
   fecharModal("modalSenha");
   gravarDecisao(estado.finalPendente);
 }

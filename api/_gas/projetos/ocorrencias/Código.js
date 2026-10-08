@@ -1008,17 +1008,7 @@ function salvarOcorrenciaOperacional(dados) {
      * SENHA
      ************************************************************/
 
-    if (!senha) {
-      throw new Error(
-        'Senha é obrigatória.'
-      );
-    }
-
-
-    validarSenhaOcorrencia_(
-      supervisor,
-      senha
-    );
+    /* Senha do supervisor removida (out/2026): quem protege é o login do Acervo (api/gs.js). */
 
 
     /************************************************************

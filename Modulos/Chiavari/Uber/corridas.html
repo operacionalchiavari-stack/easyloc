@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="uber"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="uber"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle de Corridas Uber</title>
@@ -599,8 +599,8 @@ body.painel-aberto{ overflow:hidden; }
         animation: fadeIn 0.2s ease;
     ">
         <h3 style="margin:0 0 10px 0; color:#1E40AF;">Permissão necessária</h3>
-        <p style="font-size:16px; color:#333; margin-bottom:20px;">
-            Apenas o Supervisor possui permissão para alterar este status.
+        <p id="textoModalPermissao" style="font-size:16px; color:#333; margin-bottom:20px;">
+            Sem permissão para alterar este status.
         </p>
         <button onclick="fecharModalPermissao()" style="
             padding:10px 18px;
@@ -627,7 +627,7 @@ body.painel-aberto{ overflow:hidden; }
 
     <div class="header-right">
         <div id="saudacao">Olá...</div>
-        <button class="btn-sair" onclick="logout()">Sair</button>
+        <button class="btn-sair" onclick="logout()" hidden>Sair</button>
     </div>
 </header>
 
@@ -697,12 +697,13 @@ body.painel-aberto{ overflow:hidden; }
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    let data = localStorage.getItem("usuarioLogado");
-    if (!data) return location.href="login.html";
-
-    let user = JSON.parse(data);
-    document.getElementById("saudacao").innerText =
-        `Olá, ${user.usuario} (${user.cargo})`;
+    /* Sem login próprio (out/2026): quem está logado no Acervo, com o cargo que
+       as permissões dele dão (Gerência / Financeiro / Supervisor / Consulta). */
+    google.script.run.withSuccessHandler(resp => {
+        if (!resp || resp.status !== "OK") { return; }
+        localStorage.setItem("usuarioLogado", JSON.stringify({ usuario: resp.usuario, cargo: resp.cargo }));
+        document.getElementById("saudacao").innerText = `Olá, ${resp.usuario} (${resp.cargo})`;
+    }).uberEntrarComLogin();
 
     google.script.run.withSuccessHandler(m => {
         let sel = document.getElementById("motoristaSelect");
@@ -750,73 +751,29 @@ function fecharModalPermissao(){
 
 /* ATUALIZA STATUS NA PLANILHA */
 function alterarStatus(linha, novoStatus) {
-    const u = JSON.parse(localStorage.getItem("usuarioLogado"));
-    const cargo = u.cargo;
-
+    /* Quem pode mudar o status é decidido no servidor pelo usuário logado no
+       Acervo e as permissões dele (out/2026) — Supervisor muda tudo menos para
+       Pago; Financeiro só Conferido → Pago; Gerência (e o admin) pode tudo. */
     const selectEl = event.target;
     const statusAnterior = selectEl.getAttribute("data-valor-anterior") || "Pendente";
 
-    /***********************************************
-     * 1 — SUPERVISOR NÃO PODE ALTERAR STATUS PAGO
-     ***********************************************/
-    if (cargo === "Supervisor") {
-
-        // Bloqueia qualquer alteração de status quando atual já é Pago
-        if (statusAnterior === "Pago") {
-            mostrarModalPermissao();
-            selectEl.value = statusAnterior;
-            updateStatusColor(selectEl);
-            return;
-        }
-
-        // Bloqueia tentativa de marcar Pago
-        if (novoStatus === "Pago") {
-            document.getElementById("modalBloqueio").style.display = "flex";
-            selectEl.value = statusAnterior;
-            updateStatusColor(selectEl);
-            return;
-        }
+    function voltar(msg) {
+        selectEl.value = statusAnterior;
+        updateStatusColor(selectEl);
+        const texto = document.getElementById("textoModalPermissao");
+        if (texto) { texto.textContent = msg; }
+        mostrarModalPermissao();
     }
 
-    /***********************************************
-     * 2 — FINANCEIRO: só pode CONFERIDO → PAGO
-     ***********************************************/
-    if (cargo === "Financeiro") {
-
-        // Só permite Conferido → Pago
-        if (!(statusAnterior === "Conferido" && novoStatus === "Pago")) {
-            mostrarModalPermissao();
-            selectEl.value = statusAnterior;
-            updateStatusColor(selectEl);
-            return;
-        }
-
-        // Atualiza sem senha
-        google.script.run.withSuccessHandler(() => {
+    google.script.run
+        .withSuccessHandler(function(resp) {
+            if (resp && resp.erro) { voltar(resp.msg || "Sem permissão para esta mudança."); return; }
             selectEl.setAttribute("data-valor-anterior", novoStatus);
-        }).marcarStatus(linha, novoStatus, "");
-
-        return;
-    }
-
-    /***********************************************
-     * 3 — GERÊNCIA: pode tudo sem senha
-     ***********************************************/
-    if (cargo === "Gerência" || cargo === "Gerencia") {
-
-        google.script.run.withSuccessHandler(() => {
-            selectEl.setAttribute("data-valor-anterior", novoStatus);
-        }).marcarStatus(linha, novoStatus, "");
-
-        return;
-    }
-
-    /***********************************************
-     * 4 — OUTROS (caso exista)
-     ***********************************************/
-    google.script.run.withSuccessHandler(() => {
-        selectEl.setAttribute("data-valor-anterior", novoStatus);
-    }).marcarStatus(linha, novoStatus, "");
+        })
+        .withFailureHandler(function(e) {
+            voltar((e && e.message) || "Não foi possível mudar o status.");
+        })
+        .marcarStatus(linha, novoStatus, "");
 }
 
 

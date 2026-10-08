@@ -19,7 +19,7 @@ function parseMoedaInput(raw) {
   return parseFloat(semMilhar);
 }
 
-const state = { empresaId: null, tabelas: [], tabelaAtual: null, precosAlterados: new Map() };
+const state = { empresaId: null, tabelas: [], tabelaAtual: null, precosAlterados: new Map(), agendamento: null };
 
 /* =====================================================
    LISTA DE TABELAS
@@ -284,15 +284,148 @@ async function criarTabela() {
 }
 
 /* =====================================================
+   REAJUSTE AUTOMÁTICO ANUAL
+   Uma linha por empresa em tabelas_preco_agendamento. Quem cria a tabela
+   é a rotina do banco (pg_cron, todo dia às 6h de Brasília) — ver
+   supabase/migrations/20261008000200_tabelas_preco_reajuste_anual.sql.
+===================================================== */
+
+const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+function fmtPercent(p) {
+  return Number(p).toLocaleString("pt-BR", { maximumFractionDigits: 2 }) + "%";
+}
+
+// Próxima data em que a rotina vai agir (dia 31 em mês curto cai no último dia).
+function proximaExecucao(ag) {
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const dataDoAno = (ano) => {
+    const ultimo = new Date(ano, ag.mes, 0).getDate();
+    return new Date(ano, ag.mes - 1, Math.min(ag.dia, ultimo));
+  };
+  let ano = hoje.getFullYear();
+  if (dataDoAno(ano) < hoje || (ag.ultima_execucao_ano || 0) >= ano) ano += 1;
+  const data = dataDoAno(ano);
+  return { data, anoTabela: ano + (ag.ano_seguinte ? 1 : 0) };
+}
+
+function renderReajuste() {
+  const ag = state.agendamento;
+  const resumo = $("tpAutoResumo"), status = $("tpAutoStatus"), ultimo = $("tpAutoUltimo"), btn = $("btnProgramarReajuste");
+  if (!ag) {
+    resumo.textContent = "Não programado. Defina um percentual e uma data para o sistema criar a tabela do ano sozinho.";
+    status.textContent = "Desligado"; status.className = "tp-badge";
+    btn.textContent = "Programar";
+    ultimo.hidden = true;
+    return;
+  }
+  const prox = proximaExecucao(ag);
+  const data = prox.data.toLocaleDateString("pt-BR");
+  resumo.textContent = ag.ativo
+    ? `${fmtPercent(ag.percentual)} todo dia ${ag.dia} de ${MESES[ag.mes - 1]}. Próxima: TABELA ${prox.anoTabela} em ${data}, ${ag.ativar_automaticamente ? "já ativada" : "criada inativa"}.`
+    : `Pausado (${fmtPercent(ag.percentual)} todo dia ${ag.dia} de ${MESES[ag.mes - 1]}). Nenhuma tabela será criada enquanto estiver desligado.`;
+  status.textContent = ag.ativo ? "Ligado" : "Desligado";
+  status.className = "tp-badge" + (ag.ativo ? " tp-badge-ativa" : "");
+  btn.textContent = "Editar";
+  ultimo.hidden = !ag.ultimo_resultado;
+  if (ag.ultimo_resultado) {
+    const quando = ag.ultima_execucao_em ? new Date(ag.ultima_execucao_em).toLocaleDateString("pt-BR") : "";
+    ultimo.textContent = `Última execução${quando ? " (" + quando + ")" : ""}: ${ag.ultimo_resultado}`;
+  }
+}
+
+async function carregarReajuste() {
+  const { data, error } = await supabase.from("tabelas_preco_agendamento").select("*").eq("empresa_id", state.empresaId).maybeSingle();
+  if (error) { console.error(error); $("tpAutoResumo").textContent = "Não foi possível carregar o reajuste automático."; return; }
+  state.agendamento = data || null;
+  renderReajuste();
+}
+
+function lerFormReajuste() {
+  const percentual = parseMoedaInput($("reajustePercentual").value);
+  const dia = parseInt($("reajusteDia").value, 10);
+  const mes = parseInt($("reajusteMes").value, 10);
+  return {
+    ativo: $("reajusteAtivo").checked,
+    percentual, dia, mes,
+    ano_seguinte: $("reajusteAnoSeguinte").value === "true",
+    ativar_automaticamente: $("reajusteAtivar").checked,
+  };
+}
+
+function atualizarPreviaReajuste() {
+  const f = lerFormReajuste();
+  const el = $("reajustePrevia");
+  if (!Number.isFinite(f.percentual) || !(f.dia >= 1 && f.dia <= 31)) { el.textContent = ""; return; }
+  const prox = proximaExecucao({ ...f, ultima_execucao_ano: state.agendamento?.ultima_execucao_ano });
+  const exemplo = 100 * (1 + f.percentual / 100);
+  el.textContent = `Próxima: TABELA ${prox.anoTabela} em ${prox.data.toLocaleDateString("pt-BR")}. Exemplo: um item de ${money(100)} passa a ${money(exemplo)}.`;
+}
+
+function abrirReajuste() {
+  const ag = state.agendamento;
+  $("reajusteAtivo").checked = ag ? ag.ativo : true;
+  $("reajustePercentual").value = ag ? String(ag.percentual).replace(".", ",") : "";
+  $("reajusteDia").value = ag ? ag.dia : 1;
+  $("reajusteMes").value = ag ? String(ag.mes) : "1";
+  $("reajusteAnoSeguinte").value = ag?.ano_seguinte ? "true" : "false";
+  $("reajusteAtivar").checked = ag ? ag.ativar_automaticamente : false;
+  atualizarPreviaReajuste();
+  $("reajusteModal").style.display = "flex";
+  $("reajustePercentual").focus();
+}
+
+function fecharReajuste() { $("reajusteModal").style.display = "none"; }
+
+async function salvarReajuste() {
+  const f = lerFormReajuste();
+  if (!Number.isFinite(f.percentual) || f.percentual < -90 || f.percentual > 500) {
+    window.alerta?.("Informe o reajuste em % (entre -90 e 500).", "Reajuste automático", "aviso"); return;
+  }
+  if (!(f.dia >= 1 && f.dia <= 31)) { window.alerta?.("Informe um dia entre 1 e 31.", "Reajuste automático", "aviso"); return; }
+  f.percentual = Math.round(f.percentual * 100) / 100;
+
+  const btn = $("btnSalvarReajuste");
+  btn.disabled = true;
+  const { error } = await supabase.from("tabelas_preco_agendamento").upsert({ empresa_id: state.empresaId, ...f }, { onConflict: "empresa_id" });
+  btn.disabled = false;
+  if (error) {
+    console.error(error);
+    window.alerta?.(`Não foi possível salvar: ${error.message}`, "Reajuste automático", "erro");
+    return;
+  }
+  fecharReajuste();
+  await carregarReajuste();
+  window.alerta?.(f.ativo ? "Reajuste automático programado." : "Reajuste automático desligado.", "Reajuste automático", "sucesso");
+}
+
+/* =====================================================
    INIT
 ===================================================== */
 
 async function init() {
+  // Voltar: a tela é aberta pela Central de Pedidos, então volta pra ela.
+  // Dentro do dashboard vai pelo shell (registra no histórico); aberta sozinha, navega direto.
+  $("btnVoltarTabelas")?.addEventListener("click", () => {
+    try { if (window.parent !== window && window.parent.shellNavigate) { window.parent.shellNavigate("Modulos/Comercial/Pedidos/CentralPedidos.html"); return; } } catch (e) {}
+    location.href = "../../Comercial/Pedidos/CentralPedidos.html";
+  });
+
+  window.lucide?.createIcons?.();
+
   const contexto = await window.aguardarContexto?.();
   state.empresaId = contexto?.empresa_id;
   if (!state.empresaId) return;
 
-  await carregarTabelas();
+  await Promise.all([carregarTabelas(), carregarReajuste()]);
+
+  $("btnProgramarReajuste").addEventListener("click", abrirReajuste);
+  $("btnCancelarReajuste").addEventListener("click", fecharReajuste);
+  $("btnSalvarReajuste").addEventListener("click", salvarReajuste);
+  ["reajustePercentual", "reajusteDia", "reajusteMes", "reajusteAnoSeguinte"].forEach((id) => {
+    $(id).addEventListener("input", atualizarPreviaReajuste);
+    $(id).addEventListener("change", atualizarPreviaReajuste);
+  });
 
   $("btnNovaTabela").addEventListener("click", () => { $("novaTabelaModal").style.display = "flex"; });
   $("btnCriarTabela").addEventListener("click", criarTabela);

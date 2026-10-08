@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="ocorrencias"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="ocorrencias"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1211,8 +1211,8 @@ tbody tr:hover{ background:#f6f3ec !important; }
   </div>
 
 
-  <!-- SENHA -->
-  <div class="campo">
+  <!-- SENHA (removida em out/2026: quem protege é o login do sistema) -->
+  <div class="campo" style="display:none">
     <label>Senha</label>
 
     <input
@@ -2596,7 +2596,7 @@ if (
 }
 
 
-  if (!dados.senha) {
+  if (false) {
 
     mostrarMensagem(
       "Digite a senha para salvar.",

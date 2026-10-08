@@ -292,7 +292,7 @@ class Execucao {
 
     const Session = {
       getScriptTimeZone: () => FUSO,
-      getActiveUser: () => ({ getEmail: () => "" }),
+      getActiveUser: () => ({ getEmail: () => (ex.usuario && ex.usuario.email) || "" }),
       getEffectiveUser: () => ({ getEmail: () => "" }),
       getTemporaryActiveUserKey: () => "",
       getActiveUserLocale: () => "pt_BR"
@@ -469,9 +469,18 @@ class Execucao {
 
     const Logger = { log: (...a) => { ex.logs.push(a.map(String).join(" ")); console.log(...a); return Logger; }, getLog: () => ex.logs.join("\n"), clear: () => { ex.logs = []; } };
 
+    /* Quem está logado no Acervo (preenchido por api/gs.js). Não existe no Apps
+       Script: é o que substitui as senhas próprias de cada tela (out/2026).
+       Acervo.pode(chave): administrador da empresa pode tudo; os outros, só as
+       permissões marcadas para eles (mesma regra de funcionario_pode no banco). */
+    const Acervo = {
+      usuario: () => (ex.usuario ? { id: ex.usuario.id, nome: ex.usuario.nome, email: ex.usuario.email, admin: !!ex.usuario.admin } : null),
+      pode: chave => !!(ex.usuario && (ex.usuario.admin || (ex.usuario.permissoes || []).indexOf(chave) >= 0))
+    };
+
     return {
       SpreadsheetApp, Utilities, Session, LockService, CacheService, PropertiesService, DriveApp, UrlFetchApp, Maps,
-      ScriptApp, HtmlService, ContentService, Logger, MailApp: semEmail, GmailApp: semEmail
+      ScriptApp, HtmlService, ContentService, Logger, MailApp: semEmail, GmailApp: semEmail, Acervo
     };
   }
 }
@@ -481,7 +490,7 @@ class Execucao {
 // por execução, como no Apps Script).
 // =====================================================================
 const NOMES_SERVICOS = ["SpreadsheetApp", "Utilities", "Session", "LockService", "CacheService", "PropertiesService", "DriveApp", "UrlFetchApp", "Maps",
-  "ScriptApp", "HtmlService", "ContentService", "Logger", "MailApp", "GmailApp"];
+  "ScriptApp", "HtmlService", "ContentService", "Logger", "MailApp", "GmailApp", "Acervo"];
 
 function carregarCodigo(projeto) {
   if (CODIGO.has(projeto.chave)) { return CODIGO.get(projeto.chave); }
@@ -515,6 +524,7 @@ async function executar(cfg, projeto, nome, args, opcoes) {
   }
   for (let tentativa = 1; ; tentativa++) {
     const ex = new Execucao(cfg, projeto);
+    ex.usuario = (opcoes && opcoes.usuario) || null;
     const s = ex.servicos();
     const funcoes = codigo.fabrica(...NOMES_SERVICOS.map(n => s[n]));
     // Como no Apps Script, o que foi gravado antes de um erro continua gravado

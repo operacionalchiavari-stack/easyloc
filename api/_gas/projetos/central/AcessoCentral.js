@@ -54,14 +54,9 @@ function centralEntrar(senhaInformada){
   const senha =
     String(senhaInformada || "").trim();
 
-  if(senha !== CENTRAL_SENHA_ACESSO){
-
-    /* Pequena espera para dificultar tentativas em sequência */
-    Utilities.sleep(800);
-
-    throw new Error("Senha incorreta.");
-
-  }
+  /* Senha de entrada removida (out/2026): quem protege agora é o login
+     do Acervo, conferido em api/gs.js antes de qualquer chamada. */
+  void senha;
 
   const chave =
     Utilities.getUuid();

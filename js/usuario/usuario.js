@@ -80,21 +80,25 @@ async function atualizarAvatarSidebar(){
 
   const avatar = document.getElementById("userAvatar");
 
+  const iniciais = String(window.__CONTEXT.usuario_nome || "")
+    .split(" ")
+    .filter(Boolean)
+    .map(p => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   if(data?.publicUrl){
 
     avatar.innerHTML = `
       <img src="${data.publicUrl}?t=${Date.now()}"
            style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
     `;
+    // Sem foto enviada o endereço existe mas não há arquivo: mostra as iniciais em vez da imagem quebrada.
+    const img = avatar.querySelector("img");
+    if(img) img.addEventListener("error", () => { avatar.innerText = iniciais; }, { once:true });
 
   } else {
-
-    const iniciais = window.__CONTEXT.usuario_nome
-      .split(" ")
-      .map(p => p[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
 
     avatar.innerText = iniciais;
   }

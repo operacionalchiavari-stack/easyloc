@@ -9,8 +9,8 @@
     /* Mesmo roteamento do doGet do Apps Script deste sistema */
     (function () {
       var p = new URLSearchParams(location.search);
-      var destino = "login.html";
-      if (["login"].indexOf(String(p.get("page") || "").toLowerCase().trim()) >= 0) { destino = "login.html"; }
+      var destino = "corridas.html"; /* sem login próprio (out/2026): entra pelo login do Acervo */
+      if (["login"].indexOf(String(p.get("page") || "").toLowerCase().trim()) >= 0) { destino = "corridas.html"; }
       if (["corridas"].indexOf(String(p.get("page") || "").toLowerCase().trim()) >= 0) { destino = "corridas.html"; }
       if (["motorista","app","form","formulario","index"].indexOf(String(p.get("page") || "").toLowerCase().trim()) >= 0) { destino = "motorista.html"; }
       location.replace(destino + location.search + location.hash);

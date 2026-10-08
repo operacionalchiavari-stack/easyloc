@@ -597,6 +597,9 @@ function salvarFuncionarioRH(
 ========================= */
 
 function validarSenhaRH(senhaDigitada) {
+  /* Senha removida (out/2026): quem protege agora é o login do Acervo (api/gs.js). */
+  return true;
+
 
   const ss = SpreadsheetApp.openById(
     '133H-gZXPDZ_H_9ETKRRs35PV_4uAuvQHOQcdyFmAxvk'

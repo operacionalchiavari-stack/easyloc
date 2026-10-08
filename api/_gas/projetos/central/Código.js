@@ -233,7 +233,7 @@ function validarCamposNovaOS_(d){
 
   if(!texto(d.nome)) return "Escolha seu nome.";
   if(OS_SETORES_ORIGEM.indexOf(texto(d.setor)) < 0) return "Escolha seu setor.";
-  if(!texto(d.senha)) return "Digite a senha do setor.";
+  /* Senha do setor removida (out/2026): protege o login do Acervo. */
   if(!texto(d.item) || !texto(d.codigoItem)) return "Escolha um item válido da lista.";
 
   const qtd = Number(d.quantidade);
@@ -308,6 +308,9 @@ function proximoNumeroOS_(sh){
 
 // 🔹 SENHA DO ESTOQUE (concluir, remover e encaminhar O.S)
 function conferirSenhaEstoque_(senha){
+  /* Senha removida (out/2026): quem protege agora é o login do Acervo (api/gs.js). */
+  return;
+
 
   const res = validarSenha("estoque", senha);
 
@@ -346,6 +349,9 @@ function getCategorias(){
   return categorias.sort();
 }
 function validarSenha(setorSelecionado, senhaDigitada){
+  /* Senha removida (out/2026): quem protege agora é o login do Acervo (api/gs.js). */
+  return {ok:true};
+
 
   if(!setorSelecionado || !senhaDigitada){
     return {ok:false, msg:"Setor e senha são obrigatórios"};
@@ -3515,9 +3521,7 @@ function cadastrarItemDanificado(dados) {
       throw new Error('Tipo é obrigatório.');
     }
 
-    if (!senhaDigitada) {
-      throw new Error('Senha do estoque é obrigatória.');
-    }
+    /* Senha do estoque removida (out/2026): protege o login do Acervo. */
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 

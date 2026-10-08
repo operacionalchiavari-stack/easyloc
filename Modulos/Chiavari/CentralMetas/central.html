@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="central"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="central"></script>
 <meta charset="UTF-8">
 <title>Central de Metas</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -4008,16 +4008,9 @@ body.central-bloqueada .tela-acesso-central{
 
     <h1 class="tela-acesso-titulo">Central de Metas</h1>
 
-    <p class="tela-acesso-texto">Digite a senha de acesso para continuar.</p>
+    <p class="tela-acesso-texto">Entrando na Central…</p>
 
-    <input
-      type="password"
-      id="senhaAcessoCentral"
-      class="tela-acesso-campo"
-      placeholder="Senha de acesso"
-      autocomplete="current-password"
-      autofocus
-    >
+    <input type="hidden" id="senhaAcessoCentral" value="">
 
     <div id="erroAcessoCentral" class="tela-acesso-erro" role="alert"></div>
 
@@ -5373,14 +5366,15 @@ function abrirModalSenhaPremiacoes(acao){
   premiacoes.acaoPendente =
     typeof acao === "function" ? acao : null;
 
-  if(premiacoes.senha){
-    if(premiacoes.acaoPendente){
-      const pendente = premiacoes.acaoPendente;
-      premiacoes.acaoPendente = null;
-      pendente();
-    }
-    return;
+  /* Sem senha (out/2026): "Editar premiações" libera a edição direto. */
+  premiacoes.senha = "liberado";
+  renderPremiacoes();
+  if(premiacoes.acaoPendente){
+    const pendente = premiacoes.acaoPendente;
+    premiacoes.acaoPendente = null;
+    pendente();
   }
+  return;
 
   document.getElementById("senhaPremiacoes").value = "";
   document.getElementById("erroSenhaPremiacoes").style.display = "none";
@@ -7393,6 +7387,11 @@ function salvarPagamentosBonus(){
 
 function abrirModalSenhaPagamentos(){
 
+  /* Sem senha (out/2026): "Liberar edição" libera direto. */
+  pagamentosBonus.senha = "liberado";
+  renderPagamentosBonus();
+  return;
+
   document.getElementById("senhaPagamentosBonus").value = "";
   document.getElementById("erroSenhaPagamentos").style.display = "none";
   document.getElementById("modalSenhaPagamentos").style.display = "block";
@@ -8119,11 +8118,12 @@ function mostrarTelaAcessoCentral(mensagem){
   document.getElementById("erroAcessoCentral").textContent =
     mensagem || "";
 
-  const campo =
-    document.getElementById("senhaAcessoCentral");
-
-  campo.value = "";
-  campo.focus();
+  /* Sem senha de entrada (out/2026): quem está logado no sistema entra
+     direto. A tela só continua aparecendo se der algum erro (com o botão
+     para tentar de novo). */
+  if(!mensagem){
+    entrarCentral();
+  }
 
 }
 
@@ -8146,14 +8146,8 @@ function entrarCentral(evento){
   const erro =
     document.getElementById("erroAcessoCentral");
 
-  if(!campo.value.trim()){
-    erro.textContent = "Digite a senha.";
-    campo.focus();
-    return;
-  }
-
   botao.disabled = true;
-  botao.textContent = "Conferindo...";
+  botao.textContent = "Entrando...";
   erro.textContent = "";
 
   google.script.run
@@ -8180,10 +8174,10 @@ function entrarCentral(evento){
           ? falha.message
           : "Não foi possível entrar.";
 
-      campo.select();
+      botao.textContent = "Tentar de novo";
 
     })
-    .centralEntrar(campo.value);
+    .centralEntrar("");
 
 }
 
@@ -12292,7 +12286,7 @@ function abrirModalFechamentoCentral(){
   setTimeout(function(){
 
     document.getElementById(
-      "senhaFechamentoCentral"
+      "btnConfirmarFechamentoCentral"
     ).focus();
 
   }, 50);
@@ -12349,17 +12343,7 @@ function confirmarFechamentoCentral(){
   erro.style.display =
     "none";
 
-  if(!senha){
-
-    erro.textContent =
-      "Digite a senha da Gerência.";
-
-    erro.style.display =
-      "block";
-
-    return;
-
-  }
+  /* Sem senha da Gerência (out/2026): a janela só confirma o fechamento. */
 
   resumoComissoesCentral
     .salvandoFechamento =
@@ -12558,7 +12542,7 @@ function formatarDataHoraFechamentoCentral(
 
     </div>
 
-    <div class="modal-fechamento-campo">
+    <div class="modal-fechamento-campo" style="display:none">
 
       <label for="senhaFechamentoCentral">
         Senha da Gerência

@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="costura"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="costura"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Complexidade</title>
@@ -1449,6 +1449,9 @@ function limparExpiracaoSessaoSenha(){
 
 function sessaoSenhaAtiva(){
 
+  /* Sem senha (out/2026): sempre liberado; quem protege é o login do sistema. */
+  return true;
+
   const expiracao =
     obterExpiracaoSessaoSenha();
 
@@ -1553,6 +1556,9 @@ function atualizarCardSessaoSenha(){
 
 
 function iniciarTemporizadorSessaoSenha(){
+
+  /* Sem senha (out/2026): não existe mais sessão com tempo para mostrar. */
+  return;
 
   if(intervaloSessaoSenha){
 

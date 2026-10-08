@@ -51,11 +51,14 @@ Deno.serve(async (req) => {
     }
     if (body.action !== 'save') return response({ error: 'Ação inválida' }, 400);
     const employee = validateEmployee(body.employee, Boolean(body.id));
+    // O próprio cadastro (out/2026): qualquer pessoa da empresa pode mudar os SEUS dados pessoais
+    // (nome, setor, cargo, telefone, foto, senha de login e senha operacional) por um caminho
+    // restrito — funcionario_salvar_proprio, que nunca toca nível de acesso, status nem permissões.
+    const proprio = Boolean(body.id) && body.id === user.id;
     const permission = body.id ? 'rh.funcionarios.editar' : 'rh.funcionarios.criar';
-    if (!await can(permission)) return response({ error: 'Sem permissão para salvar funcionário' }, 403);
-    if (body.permissions != null && !await can('configuracoes.permissoes.editar')) return response({ error: 'Sem permissão para gerenciar acessos' }, 403);
-    if (!Array.isArray(body.permissions) && body.permissions != null) return response({ error: 'Permissões inválidas' }, 400);
-    if (body.id === user.id) return response({ error: 'Seu próprio acesso deve ser alterado por outro administrador' }, 400);
+    if (!proprio && !await can(permission)) return response({ error: 'Sem permissão para salvar funcionário' }, 403);
+    if (!proprio && body.permissions != null && !await can('configuracoes.permissoes.editar')) return response({ error: 'Sem permissão para gerenciar acessos' }, 403);
+    if (!proprio && !Array.isArray(body.permissions) && body.permissions != null) return response({ error: 'Permissões inválidas' }, 400);
     let id = body.id;
     let created = false;
     let oldPhoto = '';
@@ -74,6 +77,7 @@ Deno.serve(async (req) => {
       created = true;
     }
     let uploaded = '';
+    let avisoProprio = '';
     try {
       let photo = body.employee.foto_url || '';
       if (photo && photo !== oldPhoto) {
@@ -88,16 +92,23 @@ Deno.serve(async (req) => {
         uploaded = `${empresa}/${id}/${crypto.randomUUID()}.jpg`;
         checked(await admin.storage.from('funcionarios-fotos').upload(uploaded, bytes, { contentType: 'image/jpeg', upsert: false }));
         photo = uploaded;
+        // Mesma foto no menu (perfil "Minha conta" lê avatares/<empresa>/<usuário>.jpg) — uma foto só por pessoa.
+        await admin.storage.from('avatares').upload(`${empresa}/${id}.jpg`, bytes, { contentType: 'image/jpeg', upsert: true });
       }
       const { senha, pin, ...fields } = employee;
-      checked(await admin.rpc('funcionario_salvar', { p_empresa: empresa, p_ator: user.id, p_id: id, p_dados: { ...fields, email: currentEmail, foto_url: photo }, p_permissoes: body.permissions ?? null, p_pin: pin || null }));
+      if (proprio) {
+        const r = checked(await admin.rpc('funcionario_salvar_proprio', { p_empresa: empresa, p_ator: user.id, p_dados: { ...fields, foto_url: photo }, p_pin: pin || null }));
+        if (r && r.aviso) avisoProprio = r.aviso;
+      } else {
+        checked(await admin.rpc('funcionario_salvar', { p_empresa: empresa, p_ator: user.id, p_id: id, p_dados: { ...fields, email: currentEmail, foto_url: photo }, p_permissoes: body.permissions ?? null, p_pin: pin || null }));
+      }
     } catch (error) {
       if (uploaded) await admin.storage.from('funcionarios-fotos').remove([uploaded]);
       if (created) await admin.auth.admin.deleteUser(id);
       throw error;
     }
     // Permissões e status já estão persistidos; falha de senha é relatada explicitamente.
-    let warning = '';
+    let warning = avisoProprio;
     if (!created && employee.email !== currentEmail) {
       const result = await admin.auth.admin.updateUserById(id, { email: employee.email, email_confirm: true });
       if (result.error) warning = 'Cadastro salvo, mas o e-mail não foi alterado. Confira se ele já pertence a outra conta.';

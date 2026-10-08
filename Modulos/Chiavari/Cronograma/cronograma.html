@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="cronograma"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="cronograma"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <meta charset="UTF-8" />
 <meta
@@ -12546,9 +12546,12 @@ function abrirExecucaoMontagem(etapa){
 
 
   /* =====================================================
-     SEM SESSÃO DE SUPERVISOR:
-     COMPORTAMENTO NORMAL
+     SEM SESSÃO DE SUPERVISOR: confere o login (out/2026),
+     sem janela de senha.
   ===================================================== */
+
+  validarSenhaExecucao();
+  return;
 
   document
     .getElementById(
@@ -14001,17 +14004,8 @@ function fecharModalSenhaExecucao(){
 }
 function validarSenhaExecucao(){
 
-  const senha =
-    document
-      .getElementById(
-        "senhaExecucao"
-      )
-      .value
-      .trim();
-
-  if(!senha){
-    return;
-  }
+  /* Sem senha (out/2026): o servidor confere o usuário logado. */
+  const senha = "";
 
 
   const etapa =
@@ -14045,12 +14039,10 @@ function validarSenhaExecucao(){
           acesso.valido !== true
         ){
 
-          document
-            .getElementById(
-              "erroSenhaExecucao"
-            )
-            .style.display =
-              "block";
+          mostrarAlerta(
+            "Só o Supervisor de Montagem ou o responsável por esta etapa podem executá-la.",
+            "Sem permissão"
+          );
 
           return;
         }
@@ -14116,8 +14108,8 @@ if(
       }
     )
 
-    .validarSenhaPerfil(
-      senha
+    .CRON_entrarComLogin(
+      "Execução de etapa"
     );
 
 
@@ -15462,6 +15454,12 @@ window.tokenAuditoria = "";
 
 function iniciarTimerEdicaoCronograma(){
 
+  /* Sem senha (out/2026): não há mais contagem de "edição liberada" pra mostrar;
+     a sessão renova sozinha pelo login. */
+  const timerOculto = document.getElementById("timerEdicaoCronograma");
+  if(timerOculto){ timerOculto.style.display = "none"; }
+  return;
+
   const timer = document.getElementById("timerEdicaoCronograma");
   const texto = document.getElementById("timerEdicaoTexto");
 
@@ -15541,18 +15539,42 @@ function pedirSenha(setor, opcoes = {}){
     });
   }
 
+  /* Sem senha (out/2026): o servidor confere o usuário logado no Acervo e as
+     permissões dele (tela Permissões) e devolve a mesma sessão de antes
+     (perfil + nome de quem está logado, usado na auditoria). */
+  const configSenha = window._configSenhaCronograma || {};
+  window._configSenhaCronograma = null;
+
   return new Promise((resolve) => {
 
-    window._resolverSenhaCronograma = resolve;
+    google.script.run
+      .withSuccessHandler(function(resultado){
 
-    document.getElementById("inputSenha").value = "";
-    document.getElementById("erroSenha").style.display = "none";
+        if(resultado && resultado.valido === true && resultado.perfil && resultado.usuario && resultado.token){
 
-    document.getElementById("modalSenha").classList.add("show");
+          window.perfilAcesso = resultado.perfil;
+          window.usuarioAcesso = resultado.usuario;
+          window.tokenAuditoria = resultado.token;
 
-    setTimeout(() => {
-      document.getElementById("inputSenha").focus();
-    }, 200);
+          if(configSenha.salvarSessao !== false){
+            liberarEdicaoCronogramaPor10Minutos(resultado);
+          }
+
+          resolve(resultado);
+          return;
+        }
+
+        mostrarAlerta(
+          "Seu usuário não tem permissão para esta ação (" + setor + "). Peça a liberação na tela Permissões.",
+          "Sem permissão"
+        );
+        resolve(false);
+      })
+      .withFailureHandler(function(erro){
+        mostrarAlerta((erro && erro.message) || "Não foi possível conferir o seu acesso.", "Sem permissão");
+        resolve(false);
+      })
+      .CRON_entrarComLogin(setor);
 
   });
 }
@@ -16846,11 +16868,6 @@ const selecionadosEquipe = [...modal.querySelectorAll('[data-type="equipe"] .mul
     return;
   }
 
-  if(!senha){
-    mostrarAlerta("Digite a senha.");
-    return;
-  }
-
   window._salvandoAgenda = true;
 
   google.script.run
@@ -16858,7 +16875,7 @@ const selecionadosEquipe = [...modal.querySelectorAll('[data-type="equipe"] .mul
 
       if(!ok){
         window._salvandoAgenda = false;
-        mostrarAlerta("Senha incorreta.");
+        mostrarAlerta("Seu usuário não tem permissão para mexer na agenda. Peça a liberação na tela Permissões.", "Sem permissão");
         return;
       }
 
@@ -16917,14 +16934,8 @@ function abrirSenhaAgenda(el){
     dados
   };
 
-  document.getElementById("inputSenhaAgenda").value = "";
-  document.getElementById("erroSenhaAgenda").style.display = "none";
-
-  document.getElementById("modalSenhaAgenda").classList.add("show");
-
-  setTimeout(() => {
-    document.getElementById("inputSenhaAgenda").focus();
-  }, 100);
+  /* Sem senha (out/2026): confere a permissão da Agenda do usuário logado. */
+  confirmarSenhaAgenda();
 }
 
 function fecharSenhaAgenda(){
@@ -16933,16 +16944,14 @@ function fecharSenhaAgenda(){
 
 function confirmarSenhaAgenda(){
 
-  const senha = document.getElementById("inputSenhaAgenda").value;
+  const senha = "";
   const { envio, responsavel, dados } = window._agendaTemp || {};
-
-  if(!senha) return;
 
   google.script.run
     .withSuccessHandler(function(ok){
 
       if(!ok){
-        document.getElementById("erroSenhaAgenda").style.display = "block";
+        mostrarAlerta("Seu usuário não tem permissão para mexer na agenda. Peça a liberação na tela Permissões.", "Sem permissão");
         return;
       }
 
@@ -20648,7 +20657,7 @@ async function freeCopiarLink(){
   .rm-lista{ display:grid; grid-template-columns:1fr 120px; gap:12px; align-items:center; }
   /* Agenda interna: discreta, no início do cronograma */
   .linha-agenda-interna td{ background:#fbfaf7 !important; border-bottom:2px dashed #e7e1d7 !important; }
-  .linha-agenda-interna .ag-cabeca{ vertical-align:top; }
+  .linha-agenda-interna .ag-cabeca{ vertical-align:middle; text-align:center; }
   .ag-titulo{ font:600 18px/1.1 var(--serif); color:#44443f; }
   .ag-sub{ font:600 11.5px/1.4 var(--sans); color:#a8a29a; margin-top:2px; }
   .ag-acoes{ display:flex; gap:6px; margin-top:8px; }
@@ -20852,7 +20861,6 @@ function renderLinhaAgendaInterna(){
   return '<tr class="linha-agenda-interna' + (recolhida ? " recolhida" : "") + '">' +
     '<td class="col-evento ag-cabeca">' +
       '<div class="ag-titulo">Agenda interna</div>' +
-      '<div class="ag-sub">' + (total ? total + (total === 1 ? " compromisso" : " compromissos") : "Nada agendado") + '</div>' +
     '</td>' +
     celulas +
   '</tr>';
@@ -21292,7 +21300,7 @@ async function trocaMudar(idTroca, status){
         </select>
       </div>
 
-      <div class="field" id="blocoAgendaSenha">
+      <div class="field" id="blocoAgendaSenha" hidden>
         <label>Senha</label>
         <input type="password" id="agendaSenha" placeholder="Digite a senha">
       </div>

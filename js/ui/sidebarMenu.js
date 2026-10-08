@@ -170,6 +170,7 @@
         icone: "users",
         rotulo: "Recursos Humanos",
         itens: [
+          { rotulo: "Ideia Premiada", href: "Modulos/RH/IdeiaPremiada/ideia-premiada.html?aba=recebidas" },
           { rotulo: "Cadastro de Funcionários", href: "Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html" },
           { rotulo: "Controle RH", href: "Modulos/Chiavari/ControleRH/rh.html" },
           { rotulo: "RH da Equipe Free", href: "Modulos/Chiavari/Cronograma/rh.html" },
@@ -192,7 +193,10 @@
         itens: [
           { rotulo: "Central de Metas", href: "Modulos/Chiavari/CentralMetas/central.html" },
           {
+            // Fora do menu (out/2026, pedido do usuário): as permissões ficam num lugar só,
+            // no Cadastro de Funcionários (Recursos Humanos), que já tem os bloqueios de acesso.
             rotulo: "Permissões",
+            oculto: true,
             legado: {
               html: "Modulos/Configuracoes/Permissoes/permissoes.html",
               js: "Modulos/Configuracoes/Permissoes/permissoes.js",
@@ -267,8 +271,20 @@
     return String(str).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   }
 
+  /* Só entra no menu o que a pessoa pode abrir (out/2026, pedido do usuário: "o que a pessoa
+     não tiver acesso eu nem quero que apareça no menu... se todos os html daquele módulo ela não
+     tiver acesso, nem o módulo aparece"). Quem decide é EasyLocPermissions.canNavigate — a mesma
+     regra que já barra a tela ao abrir (routes em js/core/permissions.js). Grupo ou categoria
+     sem nenhum item visível some junto. */
+  function podeVer(alvo) {
+    const P = window.EasyLocPermissions;
+    return !!(alvo && P && P.canNavigate && P.canNavigate(alvo));
+  }
+
   function renderItem(item, filho) {
     if (item.oculto) return "";
+    if (item.href && !podeVer(item.href)) return "";
+    if (item.legado && !podeVer(item.legado.html)) return "";
     const classe = "sub-item" + (filho ? " sub-filho" : "");
 
     if (item.grupo) {
@@ -298,6 +314,7 @@
 
     // Categoria com um destino só (ex.: Catálogo) — linha simples, sem seta.
     if (categoria.href) {
+      if (!podeVer(categoria.href)) return "";
       return `<button class="menu-item" type="button" data-module-href="${esc(categoria.href)}" onclick="shellNavigate('${categoria.href}')">${icone}<span class="rotulo">${esc(categoria.rotulo)}</span></button>`;
     }
 
@@ -312,13 +329,28 @@
       </div>`;
   }
 
+  let ultimoMenu = null;
   function montar() {
     const lista = document.getElementById("appMenu");
     if (!lista) return;
-    lista.innerHTML =
-      ACERVO_MENU.categorias.map(renderCategoria).join("");
+    contadorFlyout = 0;
+    const html = ACERVO_MENU.categorias.map(renderCategoria).join("");
+    if (html === ultimoMenu) return; // nada mudou: não redesenha (não fecha o que estiver aberto)
+    ultimoMenu = html;
+    lista.innerHTML = html;
     if (window.lucide) window.lucide.createIcons();
   }
 
-  montar();
+  // Chamado de novo por js/core/permissions.js quando as permissões são revalidadas.
+  window.portalRedesenharMenu = montar;
+
+  /* O menu só é desenhado depois que as permissões carregam (permissions.js vem
+     depois deste arquivo no dashboard): antes disso ninguém vê item nenhum. */
+  (async function () {
+    for (let i = 0; i < 200 && !window.EasyLocPermissions; i++) {
+      await new Promise((ok) => setTimeout(ok, 25));
+    }
+    try { await window.EasyLocPermissions?.load(); } catch (e) { /* sem permissões: menu vazio */ }
+    montar();
+  })();
 })();

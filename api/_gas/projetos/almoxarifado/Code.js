@@ -203,14 +203,7 @@ dados.codigo || gerarCodigoInsumo(),
 
 function salvarMovimentacao(dados) {
 
-  if(String(dados.tipo || "").toLowerCase() === "saida"){
-
-  const senhaCorreta = buscarSenhaSetor(dados.destino || "");
-
-if(String(senhaCorreta).trim() !== String(dados.senha || "").trim()){
-    throw new Error("Senha do setor incorreta");
-  }
-}
+  // Senha do setor removida (out/2026): quem protege agora é o login do Acervo (api/gs.js).
 
   if (String(dados.tipo || "").toLowerCase() !== "saida") {
     throw new Error("Essa função é exclusiva para SAÍDA");
@@ -1816,6 +1809,9 @@ function testeMetasSetores() {
 }
 
 function validarSenhaPorPagina(setor, senhaDigitada) {
+  /* Senha removida (out/2026): quem protege agora é o login do Acervo (api/gs.js). */
+  return true;
+
 
   if (!setor || !senhaDigitada) return false;
 

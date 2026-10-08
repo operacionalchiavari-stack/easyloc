@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Funcionários | Chiavari</title>
-<script src="../../../js/core/themePrepaint.js"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo"><link rel="stylesheet" href="cadastro-funcionarios.css">
+<script src="../../../js/core/themePrepaint.js"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo"><link rel="stylesheet" href="cadastro-funcionarios.css?v=20261008-botao-linha">
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script></head>
 <body><main class="main cadastros-page"><p id="funcMessage" role="status" hidden></p>    <section id="funcionariosView" class="cadastro-view">
       <header class="section-head">
@@ -11,10 +11,10 @@
       </header>
 
       <section class="summary-grid compact-summary" aria-label="Resumo de funcionários">
-        <article class="summary-card blue"><div class="summary-icon"><i data-lucide="users"></i></div><div><span>Total</span><strong id="funcTotal">0</strong><small>Cadastrados</small></div></article>
-        <article class="summary-card green"><div class="summary-icon"><i data-lucide="user-check"></i></div><div><span>Ativos</span><strong id="funcAtivos">0</strong><small>Com acesso</small></div></article>
-        <article class="summary-card red"><div class="summary-icon"><i data-lucide="user-x"></i></div><div><span>Inativos</span><strong id="funcInativos">0</strong><small>Sem acesso</small></div></article>
-        <article class="summary-card orange"><div class="summary-icon"><i data-lucide="shield-check"></i></div><div><span>Administradores</span><strong id="funcAdmins">0</strong><small>Acesso total</small></div></article>
+        <article class="summary-card blue"><div class="summary-icon"><i data-lucide="users"></i></div><div><span>Total</span><strong id="funcTotal">0</strong></div></article>
+        <article class="summary-card green"><div class="summary-icon"><i data-lucide="user-check"></i></div><div><span>Ativos</span><strong id="funcAtivos">0</strong></div></article>
+        <article class="summary-card red"><div class="summary-icon"><i data-lucide="user-x"></i></div><div><span>Inativos</span><strong id="funcInativos">0</strong></div></article>
+        <article class="summary-card orange"><div class="summary-icon"><i data-lucide="shield-check"></i></div><div><span>Administradores</span><strong id="funcAdmins">0</strong></div></article>
       </section>
 
       <section id="funcionarioFormCard" class="cadastro-modal hidden" role="dialog" aria-modal="true" aria-labelledby="funcionarioFormTitle">
@@ -23,6 +23,7 @@
           <div>
             <h2 id="funcionarioFormTitle">Novo funcionário</h2>
             <p id="funcionarioFormHint">Preencha os dados de acesso e permissões.</p>
+            <p id="funcionarioProprioAviso" class="func-proprio-aviso" hidden>Você pode mudar seus dados pessoais e trocar suas senhas. Nível de acesso, status, login e permissões só outro administrador altera.</p>
           </div>
           <button id="closeFuncionarioForm" class="btn btn-secondary"><i data-lucide="x"></i> Fechar</button>
         </div>
@@ -82,4 +83,4 @@
     </section>
 
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js"></script><script src="../../../js/core/permissions.js"></script><script src="cadastro-funcionarios.js"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js"></script><script src="../../../js/core/permissions.js?v=20261008-menu-filtrado"></script><script src="cadastro-funcionarios.js?v=20261008-foto"></script></body></html>

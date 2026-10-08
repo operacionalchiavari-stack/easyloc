@@ -2466,6 +2466,9 @@ function fechamentoCentralFormatarCabecalho_(
 function fechamentoCentralValidarSenhaGerencia_(
   senhaInformada
 ){
+  /* Senha removida (out/2026): quem protege agora é o login do Acervo (api/gs.js). */
+  return;
+
 
   const senha =
     String(

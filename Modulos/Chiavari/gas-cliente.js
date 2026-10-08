@@ -18,13 +18,47 @@
   var API = (script && script.getAttribute("data-api")) || (SERVIDOR + "/api/gs");
   var STORAGE = "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/gs-arquivos/";
 
+  /* Login do Acervo: o servidor só libera as telas internas para quem está
+     logado no sistema (os apps de campo não precisam). O token é o da sessão
+     do Supabase do dashboard — pela janela de cima (a tela roda num iframe)
+     ou, aberta sozinha, pelo que o supabase-js guardou no navegador. */
+  function tokenDoLogin() {
+    try {
+      var topo = window.top && window.top !== window ? window.top : null;
+      var cliente = (topo && topo.supabaseClient) || window.supabaseClient;
+      if (cliente && cliente.auth && cliente.auth.getSession) {
+        return cliente.auth.getSession().then(function (r) {
+          return (r && r.data && r.data.session && r.data.session.access_token) || tokenGuardado();
+        }).catch(tokenGuardado);
+      }
+    } catch (e) { /* outra origem: segue pelo navegador */ }
+    return Promise.resolve(tokenGuardado());
+  }
+  function tokenGuardado() {
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k === "easyloc-auth" || /^sb-.*-auth-token$/.test(k)) {
+          var s = JSON.parse(localStorage.getItem(k) || "null");
+          if (s && s.access_token) { return s.access_token; }
+        }
+      }
+    } catch (e) {}
+    return "";
+  }
+
   function chamar(nome, args, ok, falha, usuario) {
-    fetch(API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projeto: PROJETO, fn: nome, args: args })
+    tokenDoLogin().then(function (token) {
+      var cabecalhos = { "Content-Type": "application/json" };
+      if (token) { cabecalhos.Authorization = "Bearer " + token; }
+      return fetch(API, {
+        method: "POST",
+        headers: cabecalhos,
+        body: JSON.stringify({ projeto: PROJETO, fn: nome, args: args })
+      });
     })
       .then(function (r) {
+        if (r.status === 401) { return r.json().catch(function () { return { ok: false, erro: "Entre no sistema para usar esta tela." }; }); }
         if (!r.ok && r.status !== 200) { throw new Error("Falha de conexão (" + r.status + ")."); }
         return r.json();
       })

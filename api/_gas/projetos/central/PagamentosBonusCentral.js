@@ -28,6 +28,9 @@ const PAGAMENTOS_BONUS_SENHA =
   "Valentina";
 
 function pagamentosBonusValidarSenhaPagamentos_(senhaInformada){
+  /* Senha removida (out/2026): quem protege agora é o login do Acervo (api/gs.js). */
+  return;
+
 
   const senha =
     String(senhaInformada || "").trim();

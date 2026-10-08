@@ -112,9 +112,55 @@ body.portal-shell.portal-em-inicio #portalInicio{ display:block; }
 #portalInicio .hero{ position:relative; height:clamp(400px, 58vh, 580px); overflow:hidden; color:#f6f4ef; display:flex; align-items:flex-end; }
 #portalInicio .hero-foto{ position:absolute; inset:-60px 0 0 0; overflow:hidden; will-change:transform; }
 #portalInicio .hero-img{ position:absolute; inset:0; background:var(--escuro) center/cover no-repeat; transform:scale(1.02); transition:transform 1.8s cubic-bezier(.2,.7,.2,1); }
-#portalInicio .hero-sombra{ position:absolute; inset:0; background:linear-gradient(90deg, rgba(16,15,13,.78) 0%, rgba(16,15,13,.5) 38%, rgba(16,15,13,.12) 72%, rgba(16,15,13,0) 100%), linear-gradient(180deg, rgba(16,15,13,.5), rgba(16,15,13,.08) 30%, rgba(16,15,13,.7)); transition:background-color .9s; }
+#portalInicio .hero-sombra{ position:absolute; inset:0; background:rgba(16,15,13,.46); transition:opacity .8s ease; }
 #portalInicio .hero:hover .hero-img{ transform:scale(1.08); }
-#portalInicio .hero:hover .hero-sombra{ background-color:rgba(16,15,13,.28); }
+#portalInicio .hero-img{ opacity:0; transition:opacity .8s ease, transform 1.8s ease; }
+#portalInicio .hero-img.ativo{ opacity:1; }
+#portalInicio .hero-festa-fundo{ background:radial-gradient(ellipse at 75% 30%,#494036,#24221f 65%); }
+#portalInicio .hero-fogos{ position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; opacity:0; transition:opacity .6s; }
+#portalInicio .hero:has(.hero-aniversario.ativo) .hero-fogos{ opacity:1; }
+#portalInicio .hero .hero-aniversario{ display:flex; align-items:center; justify-content:space-between; gap:36px; z-index:2; }
+#portalInicio .hero-aniversario-texto{ flex:1; min-width:0; }
+#portalInicio .hero-aniversario h1{ font-size:clamp(32px,4vw,60px); overflow-wrap:anywhere; }
+#portalInicio .hero-aniversario-foto{ width:clamp(140px,20vw,260px); aspect-ratio:1; border-radius:50%; overflow:hidden; display:grid; place-items:center; flex:none; background:#3a3631; border:1px solid rgba(233,207,159,.5); box-shadow:0 0 60px rgba(233,207,159,.1); font-family:var(--serif); font-size:90px; color:#e9cf9f; }
+#portalInicio .hero-aniversario-foto img{ width:100%; height:100%; object-fit:cover; }
+#portalInicio .hero-pontos{ display:flex; align-items:center; max-width:240px; overflow-x:auto; scrollbar-width:none; }
+@media(max-width:600px){ #portalInicio .hero .hero-aniversario{ gap:16px; flex-direction:column-reverse; align-items:flex-start; padding-bottom:64px; } #portalInicio .hero-aniversario-foto{ width:100px; font-size:44px; } #portalInicio .hero-aniversario p{ font-size:13px; } #portalInicio .hero-pontos{ max-width:110px; } }
+#portalInicio .hero-img.hero-ideia{ background:radial-gradient(ellipse at 80% 35%,rgba(192,156,91,.2),transparent 50%),linear-gradient(120deg,#f7f4ee,#e8dfcf); }
+#portalInicio .hero-ideia-simbolo{ position:absolute; right:8%; top:23%; width:280px; height:280px; border:1px solid rgba(154,120,64,.2); border-radius:50%; display:grid; place-items:center; }
+#portalInicio .hero-ideia-simbolo::before{ content:""; position:absolute; inset:-40px; border:1px solid rgba(154,120,64,.13); border-radius:50%; background:radial-gradient(circle at 50% 2px,#b7965d 0 3px,transparent 4px); }
+#portalInicio .hero-ideia-simbolo::after{ content:""; position:absolute; inset:-70px; border-radius:50%; background:radial-gradient(circle,rgba(216,182,116,.2),transparent 65%); z-index:-1; }
+#portalInicio .hero-ideia-simbolo svg{ width:130px; height:130px; stroke-width:.65; color:#9b793f; opacity:.85; }
+#portalInicio .hero-img.hero-ideia .hero-ideia-simbolo{ animation:ideiaFlutuar 6s ease-in-out infinite; }
+#portalInicio .hero-img.hero-ideia .hero-ideia-simbolo::before{ animation:ideiaOrbitar 16s linear infinite; }
+#portalInicio .hero-img.hero-ideia .hero-ideia-simbolo::after{ animation:ideiaLuz 4s ease-in-out infinite; }
+#portalInicio .hero:has(.hero-convite.ativo) .hero-sombra{ opacity:0; }
+#portalInicio .hero:has(.hero-convite.ativo) :is(.hero-conteudo,.hero-saudacao){ text-shadow:none; color:#39332a; }
+#portalInicio .hero .hero-convite :is(h1,p){ color:#39332a; }
+#portalInicio .hero .hero-convite .hero-data{ color:#927342; }
+#portalInicio .hero:has(.hero-convite.ativo) .hero-controles button{ color:#655440; }
+#portalInicio .hero:has(.hero-convite.ativo) .hero-ponto::after{ background:rgba(101,84,64,.35); }
+#portalInicio .hero:has(.hero-convite.ativo) .hero-ponto[aria-pressed="true"]::after{ background:#655440; }
+#portalInicio .hero:has(.hero-convite.ativo) .hero-controles button:focus-visible{ outline-color:#655440; }
+#portalInicio .hero:has(.hero-convite.ativo) .rolar{ border-color:rgba(101,84,64,.5); }
+#portalInicio .hero:has(.hero-convite.ativo) .rolar::after{ background:#655440; }
+@keyframes ideiaFlutuar{ 0%,100%{ transform:translateY(6px); } 50%{ transform:translateY(-14px); } }
+@keyframes ideiaOrbitar{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+@keyframes ideiaLuz{ 0%,100%{ opacity:.4; } 50%{ opacity:1; } }
+@media(prefers-reduced-motion:reduce){ #portalInicio .hero-img.hero-ideia .hero-ideia-simbolo, #portalInicio .hero-img.hero-ideia .hero-ideia-simbolo::before, #portalInicio .hero-img.hero-ideia .hero-ideia-simbolo::after{ animation:none; } }
+#portalInicio .hero-convite h1{ max-width:740px; }
+#portalInicio .hero-convite .atalho-ideia{ background:#e9cf9f; border-color:#e9cf9f; color:#29251f; text-shadow:none; }
+@media(max-width:1000px){ #portalInicio .hero-ideia-simbolo{ right:-100px; opacity:.3; } }
+#portalInicio .hero .hero-slide{ position:absolute; left:0; right:0; bottom:0; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .6s ease, visibility .6s; }
+#portalInicio .hero-slide.ativo{ opacity:1; visibility:visible; pointer-events:auto; }
+#portalInicio .hero-controles{ position:absolute; right:28px; bottom:16px; z-index:2; display:flex; align-items:center; gap:10px; }
+#portalInicio .hero-controles button{ display:grid; place-items:center; border:0; background:transparent; color:#fff; min-width:28px; height:30px; font-size:24px; }
+#portalInicio .hero-controles .hero-ponto{ position:relative; font-size:0; }
+#portalInicio .hero-ponto::after{ content:""; width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,.45); }
+#portalInicio .hero-ponto[aria-pressed="true"]::after{ width:18px; border-radius:3px; background:#fff; }
+#portalInicio .hero-controles .hero-pausa{ font-size:11px; padding:0 8px; letter-spacing:.04em; }
+#portalInicio .hero-controles button:focus-visible{ outline:2px solid #fff; outline-offset:2px; border-radius:4px; }
+@media(prefers-reduced-motion:reduce){ #portalInicio .hero-slide, #portalInicio .hero-img{ transition:none; } }
 #portalInicio .hero-saudacao{ position:absolute; z-index:1; top:clamp(22px, 4vh, 36px); left:clamp(24px, 5vw, 72px); right:clamp(24px, 5vw, 72px); display:flex; justify-content:center; text-align:center; }
 #portalInicio .hero-saudacao span{ font-size:11.5px; font-weight:800; letter-spacing:.26em; text-transform:uppercase; opacity:.8; }
 #portalInicio .hero-saudacao, #portalInicio .hero-conteudo{ text-shadow:0 2px 18px rgba(16,15,13,.55), 0 1px 3px rgba(16,15,13,.4); }
@@ -141,6 +187,9 @@ body.portal-shell.portal-em-inicio #portalInicio{ display:block; }
 
 #portalInicio .revelar{ opacity:0; transform:translateY(34px); transition:opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); transition-delay:var(--atraso, 0s); }
 #portalInicio .revelar.visivel{ opacity:1; transform:none; }
+#portalInicio .portal-movimento{ translate:0 var(--portal-deslocamento, 0px); transition:translate .45s cubic-bezier(.2,.7,.2,1); }
+#portalInicio .secao-topo.portal-movimento{ transition:opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1), translate .45s cubic-bezier(.2,.7,.2,1); }
+@media(prefers-reduced-motion:reduce){ #portalInicio .portal-movimento{ translate:none; transition:none; } }
 @media (prefers-reduced-motion:reduce){ #portalInicio .revelar{ opacity:1; transform:none; transition:none; } #portalInicio .hero-foto{ transform:none !important; } }
 
 #portalInicio .avisos{ display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px; }
@@ -154,6 +203,39 @@ body.portal-shell.portal-em-inicio #portalInicio{ display:block; }
 #portalInicio .aviso-data{ margin-top:14px; font-size:12px; color:var(--suave); font-weight:600; }
 #portalInicio .aviso .fixado{ position:absolute; top:20px; right:20px; color:var(--dourado); }
 #portalInicio .aviso .fixado svg{ width:18px; height:18px; }
+
+/* Resumo do dia (out/2026): etapas do Cronograma de hoje + agenda interna */
+#portalInicio .secao.cheia{ max-width:none; padding-left:clamp(20px, 3vw, 44px); padding-right:clamp(20px, 3vw, 44px); }
+#portalInicio .rd-grade{ display:grid; grid-template-columns:repeat(5, minmax(230px, 1fr)); gap:16px; align-items:start; overflow-x:auto; padding-bottom:16px; }
+#portalInicio .rd-cartao{ min-width:0; }
+#portalInicio .rd-agenda{ grid-column:1 / -1; }
+#portalInicio .rd-triagem{ --rd-fundo:#f3efe8; --rd-barra:#4b5563; }
+#portalInicio .rd-carregamento{ --rd-fundo:#ede9fe; --rd-barra:#7c3aed; }
+#portalInicio .rd-montagem{ --rd-fundo:#dbeafe; --rd-barra:#2563eb; }
+#portalInicio .rd-desmontagem{ --rd-fundo:#ffedd5; --rd-barra:#ea580c; }
+#portalInicio .rd-cartao:not(.rd-agenda){ display:flex; flex-direction:column; height:420px; }
+#portalInicio .rd-cartao:not(.rd-agenda) header{ background:var(--rd-fundo); border:0; padding:20px 18px; min-height:80px; }
+#portalInicio .rd-cartao:not(.rd-agenda) header svg{ display:none; }
+#portalInicio .rd-cartao:not(.rd-agenda) h3{ font-size:20px; font-weight:500; }
+#portalInicio .rd-cartao{ background:#fffefd; border:1px solid rgba(70,58,45,.1); border-radius:12px; box-shadow:0 3px 12px rgba(37,30,25,.025); overflow:hidden; }
+#portalInicio .rd-cartao header{ display:flex; align-items:center; gap:10px; padding:16px 20px; border-bottom:1px solid var(--borda); }
+#portalInicio .rd-cartao header svg{ width:18px; height:18px; color:var(--dourado); flex:none; }
+#portalInicio .rd-cartao h3{ flex:1; font-family:var(--serif); font-weight:600; font-size:22px; line-height:1.15; color:var(--text); }
+#portalInicio .rd-cartao header b{ font-family:var(--serif); font-size:23px; font-weight:500; color:var(--muted); }
+#portalInicio .rd-cartao ul{ list-style:none; margin:0; padding:0; max-height:340px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#d9d4cd transparent; }
+#portalInicio .rd-cartao li{ display:block; padding:18px; }
+#portalInicio .rd-cartao li + li{ border-top:1px solid rgba(70,58,45,.07); }
+#portalInicio .rd-hora{ display:block; margin-bottom:7px; font-size:11px; font-weight:500; letter-spacing:.08em; color:var(--muted); font-variant-numeric:tabular-nums; }
+#portalInicio .rd-cartao li strong{ display:block; font-size:13px; font-weight:600; color:var(--text); line-height:1.5; }
+#portalInicio .rd-cartao li small{ display:block; margin-top:6px; font-size:12px; color:var(--muted); line-height:1.65; }
+#portalInicio .rd-vazio{ padding:28px; text-align:center; border:1px dashed var(--line); border-radius:22px; color:var(--muted); font-size:14.5px; background:var(--card); }
+#portalInicio .rd-acoes{ margin-top:18px; }
+#portalInicio .rd-topo-acoes{ display:flex; align-items:center; justify-content:flex-end; gap:24px; flex-wrap:wrap; padding-bottom:4px; }
+#portalInicio .rd-topo-acoes p{ margin:0; }
+#portalInicio .rd-topo-acoes .rd-abrir{ flex:none; }
+#portalInicio .rd-abrir{ display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 18px; border:1px solid var(--escuro-2); border-radius:999px; background:none; color:var(--escuro-2); font-weight:700; font-size:13px; cursor:pointer; transition:background .2s, color .2s; }
+#portalInicio .rd-abrir:hover{ background:var(--escuro-2); color:#fff; }
+#portalInicio .rd-abrir svg{ width:15px; height:15px; }
 
 #portalInicio .secao.larga{ max-width:none; padding-left:clamp(20px, 3vw, 44px); padding-right:clamp(20px, 3vw, 44px); }
 #portalInicio .secao.larga .secao-topo{ max-width:1280px; margin-left:auto; margin-right:auto; padding:0 clamp(4px, 2vw, 28px); }
@@ -285,8 +367,8 @@ body.portal-shell #luz button{ position:absolute; top:18px; right:22px; width:44
    Sempre branca sobre o fundo escuro; logo em PNG quadrado com margem
    transparente (caso da Chiavari) é recortada na faixa do meio — mesma
    técnica do cabeçalho do pedido (.cpj-order-logo.is-quadrada). */
-#sidebar.portal-menu .menu-logo-empresa{ display:block; height:32px; width:auto; max-width:180px; object-fit:contain; object-position:left center; filter:brightness(0) invert(1); }
-#sidebar.portal-menu .menu-logo-empresa.is-quadrada{ width:150px; height:42px; max-width:none; object-fit:cover; object-position:center 49%; }
+#sidebar.portal-menu .menu-logo-empresa{ display:block; height:44px; width:auto; max-width:210px; object-fit:contain; object-position:center; filter:brightness(0) invert(1); }
+#sidebar.portal-menu .menu-logo-empresa.is-quadrada{ width:210px; height:59px; max-width:100%; object-fit:cover; object-position:center 49%; }
 
 /* ---------- Extensão do menu para a direita (grupo flyout, ex.: Estoque > Cadastros) ---------- */
 #sidebar.portal-menu .sub-flyout{ justify-content:space-between; }
@@ -330,3 +412,14 @@ body.portal-shell #luz button{ position:absolute; top:18px; right:22px; width:44
 #sidebar.portal-menu .menu-item .rotulo{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
 #sidebar.portal-menu .menu-item .seta{ flex:none; }
 #sidebar.portal-menu .menu-item{ gap:14px; }
+
+/* ---------- Passar o mouse do menu para a extensão sem o menu fechar ----------
+   O painel fica 8px ao lado do menu. Antes, cruzar esse vão tirava o mouse do
+   menu: ele encolhia e a extensão fechava. Agora (1) uma faixa invisível do
+   próprio painel cobre o vão (conta como "mouse em cima do menu") e (2) o menu
+   continua aberto enquanto houver uma extensão aberta (.tem-flyout). */
+@media (min-width:861px){
+  #sidebar.portal-menu .flyout-painel::before{ content:""; position:absolute; top:-12px; bottom:-12px; left:-16px; width:16px; }
+  body.portal-shell #sidebar.portal-menu.tem-flyout{ width:256px; box-shadow:20px 0 60px rgba(16,15,13,.25); }
+  #sidebar.portal-menu.tem-flyout :is(.menu-nome,.menu-item .rotulo,.usuario-dados){ opacity:1; }
+}

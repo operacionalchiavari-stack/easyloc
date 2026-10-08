@@ -7,6 +7,24 @@
 ===================== */
 window.__loadingModule = false;
 
+// Evita piscar o indicador em navegações rápidas.
+window.moduleLoadingIndicator = (() => {
+  let timer;
+  function hide() {
+    clearTimeout(timer);
+    timer = undefined;
+    document.getElementById("global-loader")?.classList.add("hidden");
+  }
+  function show() {
+    hide();
+    timer = setTimeout(() => {
+      timer = undefined;
+      document.getElementById("global-loader")?.classList.remove("hidden");
+    }, 500);
+  }
+  return { show, hide };
+})();
+
 window.carregarNaMain = async function (
   htmlPath,
   jsPath,
@@ -75,11 +93,11 @@ window.carregarNaMain = async function (
 
 window.finalizarCarregamentoModulo = function(){
 
-  const loader = document.getElementById("global-loader");
+  window.moduleLoadingIndicator.hide();
 
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
-      loader?.classList.add("hidden");
+      window.moduleLoadingIndicator.hide();
     });
   });
 
@@ -96,7 +114,6 @@ window.finalizarCarregamentoModulo = function(){
   window.__loadingModule = true;
 
   const main   = document.getElementById("main-content");
-  const loader = document.getElementById("global-loader");
 
   if(!main){
     window.__loadingModule = false;
@@ -105,7 +122,7 @@ window.finalizarCarregamentoModulo = function(){
 
   try{
 
-    loader?.classList.remove("hidden");
+    window.moduleLoadingIndicator.show();
 
     // módulo antigo (fragmento via innerHTML) — garante que o iframe
     // de módulos novos fique escondido enquanto este é exibido.

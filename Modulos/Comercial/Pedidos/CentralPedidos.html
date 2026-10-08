@@ -9,24 +9,30 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
-  <link rel="stylesheet" href="CentralPedidos.css?v=20260913b">
+  <link rel="stylesheet" href="CentralPedidos.css?v=20261008-pesquisa">
 </head>
 <body>
-<div class="central-pedidos-page el-page" data-module-root>
+<div class="central-pedidos-page el-page" id="centralPedidosPage" data-module-root>
   <header class="el-page-header central-header">
     <div>
       <h1 class="el-page-title">Central de Pedidos</h1>
       <p>Consulta e gestao dos pedidos, eventos e contratos comerciais.</p>
     </div>
-    <div class="el-page-actions">
-      <button type="button" class="btn btn-primary" id="btnNovoPedidoCentral">Novo Pedido</button>
+    <div class="el-page-actions central-actions-left">
       <!-- Tabelas de Preço fica aqui dentro (pedido do usuário), não no menu. data-module-href: some se a pessoa não tiver permissão (js/core/permissions.js). -->
       <button type="button" class="btn btn-secondary" id="btnTabelasPreco" data-module-href="../../Estoque/TabelasPreco/tabelas-preco.html">Tabelas de Preço</button>
-      <button type="button" class="btn btn-secondary" id="btnAtualizarPedidos">Atualizar</button>
+      <button type="button" class="btn btn-secondary" id="btnFiltrosPedidos" aria-expanded="false" aria-controls="centralFiltrosPedidos">
+        <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
+        Filtros
+      </button>
+    </div>
+    <div class="el-page-actions central-actions-right">
+      <button type="button" class="btn btn-primary" id="btnNovoPedidoCentral">Novo Pedido</button>
+      <input type="search" class="el-input" id="pesquisaGeralPedidos" aria-label="Pesquisar pedidos" placeholder="Pesquisar pedido, cliente...">
     </div>
   </header>
 
-  <section class="central-filters el-card">
+  <section class="central-filters el-card" id="centralFiltrosPedidos" aria-label="Filtros de pedidos" hidden>
     <div class="el-field">
       <label>Cliente</label>
       <input class="el-input" id="filtroClientePedido" placeholder="Buscar cliente">
@@ -159,10 +165,10 @@
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20260913b"></script>
-<script src="../../../js/core/permissions.js"></script>
+<script src="../../../js/core/permissions.js?v=20261008-menu-filtrado"></script>
 <script src="../../../js/core/paymentPix.js"></script>
 <script src="../../../js/core/zapiMessaging.js"></script>
-<script src="CentralPedidos.js?v=20261008-tabelas"></script>
+<script src="CentralPedidos.js?v=20261008-pesquisa"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

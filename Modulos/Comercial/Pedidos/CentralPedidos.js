@@ -21,8 +21,10 @@
   function cacheEls(){
     [
       "btnNovoPedidoCentral",
-      "btnAtualizarPedidos",
       "btnTabelasPreco",
+      "btnFiltrosPedidos",
+      "pesquisaGeralPedidos",
+      "centralFiltrosPedidos",
       "filtroClientePedido",
       "filtroNumeroPedido",
       "filtroLocalPedido",
@@ -942,6 +944,8 @@
   }
 
   function aplicarFiltros(){
+    const normalizarBusca = (valor) => String(valor ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const termos = normalizarBusca(els.pesquisaGeralPedidos?.value).trim().split(/\s+/).filter(Boolean);
     const cliente = (els.filtroClientePedido?.value || "").trim().toLowerCase();
     const numero = (els.filtroNumeroPedido?.value || "").trim().toLowerCase();
     const local = (els.filtroLocalPedido?.value || "").trim().toLowerCase();
@@ -956,7 +960,15 @@
         ? dataPedido.toISOString().slice(0, 10)
         : "";
 
-      return (!cliente || pedido.cliente.toLowerCase().includes(cliente))
+      const textoBusca = normalizarBusca([
+        pedido.numero, pedido.cliente, pedido.contato, formatPhone(pedido.contato),
+        pedido.evento, pedido.local, pedido.comercial, pedido.status,
+        formatStatusLabel(pedido.status), pedido.data, formatDate(pedido.data),
+        pedido.valor, formatCurrency(pedido.valor)
+      ].join(" "));
+
+      return termos.every((termo) => textoBusca.includes(termo))
+        && (!cliente || pedido.cliente.toLowerCase().includes(cliente))
         && (!numero || String(pedido.numero).toLowerCase().includes(numero))
         && (!local || pedido.local.toLowerCase().includes(local))
         && (!comercial || pedido.comercial.toLowerCase().includes(comercial))
@@ -1099,8 +1111,15 @@
   }
 
   function bindEvents(){
+    els.pesquisaGeralPedidos?.addEventListener("input", aplicarFiltros);
+    els.btnFiltrosPedidos?.addEventListener("click", () => {
+      const panel = els.centralFiltrosPedidos;
+      if (!panel) return;
+      panel.hidden = !panel.hidden;
+      els.btnFiltrosPedidos.setAttribute("aria-expanded", String(!panel.hidden));
+      if (!panel.hidden) els.filtroClientePedido?.focus();
+    });
     els.btnNovoPedidoCentral?.addEventListener("click", () => abrirPedido());
-    els.btnAtualizarPedidos?.addEventListener("click", carregarPedidos);
     els.btnTabelasPreco?.addEventListener("click", () => {
       // Dentro do dashboard abre pelo shell (registra no histórico e confere permissão);
       // aberta sozinha, navega direto.

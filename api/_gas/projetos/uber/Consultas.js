@@ -97,6 +97,13 @@ function marcarStatus(linha, novoStatus, senha) {
 
   const statusAtual = aba.getRange(linha, 16).getValue();
 
+  /* Quem pode mudar o status: usuário logado no Acervo e as permissões
+     dele (out/2026) — ver AcessoAcervo.js. O parâmetro "senha" não é mais usado. */
+  const bloqueio = UBER_motivoBloqueioStatus_(String(statusAtual || ""), String(novoStatus || ""));
+  if (bloqueio) {
+    return { erro: true, msg: bloqueio };
+  }
+
   /******************************************************
    * SUPERVISOR — NÃO ALTERA STATUS PAGO
    ******************************************************/
@@ -107,11 +114,7 @@ function marcarStatus(linha, novoStatus, senha) {
   /******************************************************
    * FINANCEIRO — SOMENTE: CONFERIDO → PAGO (sem senha)
    ******************************************************/
-  if (senha === "" && novoStatus === "Pago") {
-    if (statusAtual !== "Conferido") {
-      return { erro: true, msg: "O Financeiro só pode marcar como Pago quando o status atual é Conferido." };
-    }
-  }
+  /* (regra antiga por "senha" — agora coberta por UBER_motivoBloqueioStatus_) */
 
   /******************************************************
    * GERÊNCIA — pode tudo (sem senha)
@@ -123,9 +126,7 @@ function marcarStatus(linha, novoStatus, senha) {
   /******************************************************
    * NÃO PERMITIR VOLTAR STATUS PAGO PARA OUTRO
    ******************************************************/
-  if (statusAtual === "Pago" && novoStatus !== "Pago") {
-    return { erro: true, msg: "Este item já está pago e não pode ser alterado." };
-  }
+  /* "já pago não volta" agora fica em UBER_motivoBloqueioStatus_ (a Gerência pode corrigir) */
 
   /******************************************************
    * SALVAR NA PLANILHA

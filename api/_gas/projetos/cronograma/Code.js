@@ -3862,6 +3862,9 @@ function gerarTriagensRetroativas() {
   return "Triagens criadas: " + novasLinhas.length;
 }
 function salvarAgenda(dados){
+  /* Agenda: precisa da permissão da Agenda no Acervo (out/2026). */
+  CRON_exigirAgenda_();
+
 
   const sh = SpreadsheetApp
     .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
@@ -3922,6 +3925,9 @@ function getAgenda(){
   return lista;
 }
 function validarSenhaAgenda(responsavel, senha){
+  /* Senha removida (out/2026): quem protege agora é o login do Acervo (api/gs.js). */
+  return Acervo.pode("logistica.cronograma.agenda");
+
 
   const sh = SpreadsheetApp
     .openById("133H-gZXPDZ_H_9ETKRRs35PV_4uAuvQHOQcdyFmAxvk")
@@ -3946,6 +3952,8 @@ function validarSenhaAgenda(responsavel, senha){
 
 
 function atualizarAgendaPorEnvio(obj){
+  CRON_exigirAgenda_(); /* permissão da Agenda no Acervo (out/2026) */
+
 
   const sh = SpreadsheetApp
     .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
@@ -3979,6 +3987,8 @@ sh.getRange(i + 1, 10).setValue("'" + (obj.dados.horario || ""));
 
 
 function excluirAgendaPorEnvio(envio){
+  CRON_exigirAgenda_(); /* permissão da Agenda no Acervo (out/2026) */
+
 
   const sh = SpreadsheetApp
     .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
@@ -9834,6 +9844,9 @@ function validarAcessoExecucaoEtapa(
   responsavel,
   senha
 ){
+  /* Senha removida (out/2026): quem protege agora é o login do Acervo (api/gs.js). */
+  return CRON_acessoEtapa_(responsavel);
+
 
   const senhaInformada =
     String(

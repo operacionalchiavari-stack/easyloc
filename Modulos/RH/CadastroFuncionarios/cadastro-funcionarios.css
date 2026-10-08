@@ -549,3 +549,34 @@ body{margin:0;background:#f3f4f6;color:var(--tw-text);font-family:Inter,system-u
 .card-title-row{display:flex;justify-content:space-between;align-items:start;gap:12px}.card-title-row h2{font-size:20px;margin:0}.card-title-row p{font-size:13px;color:#64748b;margin:6px 0 0}.tw-field{min-width:0;height:40px;border:1px solid #cbd5e1;border-radius:7px;background:#fff}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font:600 13px Inter,system-ui;cursor:pointer}.btn svg,.icon-btn svg{width:17px;height:17px}.btn-primary{background:#374151;color:white;border-color:#374151}.btn-primary:hover{background:#283241}.btn-primary:active{background:#1f2937}.btn-secondary,.icon-btn{background:white;color:#374151;border:1px solid #cbd5e1}.btn-secondary:hover,.icon-btn:hover{background:#f3f4f6}.icon-btn{width:30px;height:30px;border-radius:7px;display:inline-grid;place-items:center;cursor:pointer}.action-buttons{white-space:nowrap}.action-buttons button+button{margin-left:5px}:focus-visible{outline:3px solid #2563eb;outline-offset:3px}:disabled{cursor:default;background:#e5e7eb!important;color:#6b7280!important}.permissions-grid label{display:flex;align-items:center}.permissions-grid input{padding:0}.permissions-grid input[type=checkbox]{width:14px;height:14px;accent-color:#374151}.permissions-grid .permission-toggle-all{display:inline-flex}.is-disabled{opacity:.65}#funcMessage{padding:12px 16px;border:1px solid #cbd5e1;background:#fff;border-radius:8px}#funcMessage[data-error=true]{color:#b91c1c;border-color:#fecaca}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 @media(max-width:760px){.cadastros-page{padding:14px}.cadastro-modal{padding:10px}.cadastro-form-card{width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:14px}.card-title-row{flex-wrap:wrap}}
 .cadastros-page,.table-card,.table-wrap,.cadastro-form-grid,.permissions-box,.permission-module{min-width:0}.table-card{max-width:100%}
+
+/* Meu cadastro (out/2026): aviso do que pode e do que não pode ser mudado no próprio cadastro */
+.func-proprio-aviso {
+  margin: 8px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fbf4de;
+  border: 1px solid #ead9a8;
+  color: #5c4a1f;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* "+ Novo funcionário" na mesma linha do título (out/2026): o título continua centralizado na
+   faixa do tema; o botão fica por cima, na ponta direita, no meio da altura do título. */
+.cadastro-view > .section-head {
+  position: relative !important;
+}
+
+.cadastro-view > .section-head > #newFuncionarioBtn {
+  position: absolute;
+  right: 0;
+  top: var(--func-btn-top, 33px);
+  margin: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .cadastro-view > .section-head > #newFuncionarioBtn {
+    position: static;
+  }
+}

@@ -51,6 +51,12 @@
       f.classList.remove("aberto");
       f.querySelector(":scope > button")?.setAttribute("aria-expanded", "false");
     });
+    marcarFlyoutAberto();
+  }
+
+  // Enquanto houver uma extensão aberta o menu fica aberto (ver .tem-flyout no CSS).
+  function marcarFlyoutAberto() {
+    menu.classList.toggle("tem-flyout", !!menu.querySelector(".flyout.aberto"));
   }
   window.portalFecharFlyouts = fecharFlyouts;
 
@@ -78,6 +84,7 @@
     flyout.querySelectorAll(".flyout.aberto").forEach((f) => f.classList.remove("aberto"));
     const aberto = flyout.classList.toggle("aberto");
     flyout.querySelector(":scope > button")?.setAttribute("aria-expanded", String(aberto));
+    marcarFlyoutAberto();
     if (aberto) posicionarFlyout(flyout);
   };
 
@@ -85,7 +92,15 @@
   menu.addEventListener("transitionend", (e) => { if (e.target === menu) document.querySelectorAll("#sidebar .flyout-categoria.aberto").forEach(posicionarFlyout); });
   window.addEventListener("resize", () => document.querySelectorAll("#sidebar .flyout-categoria.aberto").forEach(posicionarFlyout));
   // Tirar o mouse do menu (e do painel, que é filho dele) fecha a extensão.
-  menu.addEventListener("mouseleave", () => { if (!celular()) fecharFlyouts(); });
+  // Com uma pequena tolerância: um movimento rápido ou em diagonal que escape
+  // por um instante não fecha nada se o mouse voltar ao menu ou ao painel.
+  let timerFechar = 0;
+  menu.addEventListener("mouseleave", () => {
+    if (celular()) return;
+    clearTimeout(timerFechar);
+    timerFechar = setTimeout(() => fecharFlyouts(), 350);
+  });
+  menu.addEventListener("mouseenter", () => clearTimeout(timerFechar));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharFlyouts(); });
 
   // Nome mantido: o botão do celular e outros pontos antigos chamam toggleMenu().
@@ -122,7 +137,7 @@
       try { frame.contentWindow.location.replace("about:blank"); } catch (e) { frame.src = "about:blank"; }
       frame.classList.add("hidden");
     }
-    document.getElementById("global-loader")?.classList.add("hidden");
+    window.moduleLoadingIndicator?.hide();
     document.title = "Portal Interno • Chiavari Eventos";
     if (semHistorico !== true) { try { history.pushState({ page: null }, "", "dashboard.html"); } catch (e) {} }
     menu.classList.remove("aberto");

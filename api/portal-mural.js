@@ -32,8 +32,16 @@ module.exports = async (req, res) => {
   try {
     const usuario = await usuarioDoToken(cfg, token);
     if (!usuario) { res.status(401).json({ ok: false, erro: "Sessão expirada. Entre de novo." }); return; }
-    const mural = await executar(cfg, PROJETOS.portal, "MURAL_dadosPublicos_", [], { interno: true });
-    res.status(200).json({ ok: true, resultado: mural });
+    // Resumo do dia (etapas do Cronograma de hoje + agenda interna) — out/2026.
+    // Se o Cronograma falhar, o mural continua aparecendo (resumo vem null).
+    const [mural, resumoDia] = await Promise.all([
+      executar(cfg, PROJETOS.portal, "MURAL_dadosPublicos_", [], { interno: true }),
+      executar(cfg, PROJETOS.cronograma, "PORTAL_resumoDia_", [], { interno: true }).catch((e) => {
+        console.error("[portal-mural] resumo do dia", e && e.message || e);
+        return null;
+      })
+    ]);
+    res.status(200).json({ ok: true, resultado: Object.assign({}, mural, { resumoDia }) });
   } catch (e) {
     console.error("[portal-mural]", e && e.stack || e);
     res.status(200).json({ ok: false, erro: String(e && e.message || e) });

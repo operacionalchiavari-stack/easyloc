@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="portal"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="portal"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -92,10 +92,10 @@
   <section class="tela ativa" id="telaLogin">
     <div class="login">
       <h1>Mural do portal</h1>
-      <p>Área da RH para publicar avisos e destaques.</p>
+      <p>Abrindo a área de publicação…</p>
       <form class="cartao" onsubmit="entrar(event)">
-        <label class="campo"><span>Senha da RH</span><input type="password" id="senha" required></label>
-        <button class="btn" style="width:100%" id="btnEntrar" type="submit">Entrar</button>
+        <input type="hidden" id="senha" value="">
+        <button class="btn" style="width:100%" id="btnEntrar" type="submit">Tentar de novo</button>
         <div class="erro" id="erroLogin"></div>
       </form>
     </div>
@@ -130,11 +130,17 @@
   function toast(t){ const el = document.getElementById("toast"); el.textContent = t; el.classList.add("ver"); clearTimeout(tt); tt = setTimeout(function(){ el.classList.remove("ver"); }, 2500); }
   function miniatura(id, w){ return id ? "https://drive.google.com/thumbnail?id=" + encodeURIComponent(id) + "&sz=w" + (w || 200) : ""; }
 
+  /* Sem senha da RH (out/2026): entra direto com o nome de quem está logado
+     no sistema (aparece em "Publicando como"); quem protege é o login. */
+  function nomeDoLogin(){
+    try { return sessionStorage.getItem("usuario_nome") || (window.top && window.top.sessionStorage.getItem("usuario_nome")) || ""; } catch (e) { return ""; }
+  }
+
   function entrar(ev){
-    ev.preventDefault();
+    if (ev) { ev.preventDefault(); }
     const btn = document.getElementById("btnEntrar");
     btn.disabled = true;
-    chamar("MURAL_login", document.getElementById("senha").value)
+    chamar("MURAL_login", nomeDoLogin())
       .then(function(r){ estado.token = r.token; estado.usuario = r.usuario; return chamar("MURAL_listarAdmin", r.token); })
       .then(function(d){
         estado.dados = d;
@@ -146,6 +152,8 @@
       .catch(function(e){ const el = document.getElementById("erroLogin"); el.textContent = msg(e); el.classList.add("ver"); })
       .finally(function(){ btn.disabled = false; });
   }
+
+  entrar();
 
   function trocarAba(tipo){ estado.aba = tipo; estado.editando = null; estado.foto = ""; render(); }
 

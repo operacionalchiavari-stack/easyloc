@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="feedback"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="feedback"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2622,8 +2622,7 @@ html:root table thead{ background:#fff !important; }
         <h2>Acesso às ligações</h2>
 
         <p>
-          Digite a senha do setor Comercial
-          para visualizar os pedidos.
+          Não foi possível carregar os pedidos.
         </p>
       </div>
 
@@ -2639,11 +2638,11 @@ html:root table thead{ background:#fff !important; }
 
     <div class="senha-ligacoes-body">
 
-      <label for="senhaLigacoes">
+      <label for="senhaLigacoes" style="display:none">
         Senha de acesso
       </label>
 
-      <div class="senha-ligacoes-campo">
+      <div class="senha-ligacoes-campo" style="display:none">
         <input
           type="password"
           id="senhaLigacoes"
@@ -3926,6 +3925,10 @@ function carregarDados() {
 let validandoSenhaLigacoes = false;
 
 function abrirModalSenhaLigacoes() {
+  /* Sem senha do Comercial (out/2026): carrega as ligações direto; quem
+     protege é o login do sistema. A janela só aparece se der erro. */
+  confirmarSenhaLigacoes();
+  return;
   const modal =
     document.getElementById(
       "modalSenhaLigacoes"
@@ -4072,17 +4075,6 @@ function confirmarSenhaLigacoes() {
   erro.innerText = "";
   erro.classList.remove("show");
 
-  if (!senha) {
-    erro.innerText =
-      "Digite a senha para continuar.";
-
-    erro.classList.add("show");
-
-    campo.focus();
-
-    return;
-  }
-
   validandoSenhaLigacoes = true;
 
   botao.disabled = true;
@@ -4103,9 +4095,10 @@ function confirmarSenhaLigacoes() {
           resposta &&
           resposta.mensagem
             ? resposta.mensagem
-            : "Senha incorreta.";
+            : "Não foi possível carregar os pedidos.";
 
         erro.classList.add("show");
+        document.getElementById("modalSenhaLigacoes").classList.add("show");
 
         campo.value = "";
         campo.focus();
@@ -4145,6 +4138,7 @@ function confirmarSenhaLigacoes() {
         mensagem;
 
       erro.classList.add("show");
+      document.getElementById("modalSenhaLigacoes").classList.add("show");
 
       campo.value = "";
       campo.focus();

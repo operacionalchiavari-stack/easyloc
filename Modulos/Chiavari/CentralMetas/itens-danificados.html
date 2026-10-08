@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="central"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="central"></script>
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1379,7 +1379,7 @@ body.modo-painel .cabecalho-barra{ display:none; }
             <button type="button" class="opcao" data-valor="Estoque">Estoque</button>
           </div>
         </div>
-        <div class="campo">
+        <div class="campo" style="display:none">
           <label for="osSenha">Senha do setor *</label>
           <input type="password" id="osSenha" maxlength="10" inputmode="numeric" autocomplete="off">
         </div>
@@ -1474,12 +1474,12 @@ body.modo-painel .cabecalho-barra{ display:none; }
     <div class="modal-topo">
       <div>
         <h2 id="senhaTitulo">Confirmar</h2>
-        <p>Digite a senha do estoque para continuar</p>
+        <p>Confirme para continuar.</p>
       </div>
       <button type="button" class="modal-fechar" onclick="fecharModal('modalSenha')" aria-label="Fechar">×</button>
     </div>
     <div class="modal-corpo">
-      <div class="campo">
+      <div class="campo" style="display:none">
         <input type="password" id="senhaEstoque" class="campo-senha" placeholder="••••" autocomplete="off" onkeydown="if(event.key === 'Enter'){ confirmarSenha(); }">
       </div>
     </div>
@@ -1646,7 +1646,7 @@ body.modo-painel .cabecalho-barra{ display:none; }
           <label for="addValor">Valor de reposição *</label>
           <input id="addValor" inputmode="numeric" placeholder="R$ 0,00" oninput="mascararMoeda(this)">
         </div>
-        <div class="campo">
+        <div class="campo" style="display:none">
           <label for="addSenha">Senha do estoque *</label>
           <input type="password" id="addSenha" autocomplete="off">
         </div>
@@ -2196,21 +2196,17 @@ function pedirSenha(titulo, acao){
   el("erroSenha").textContent = "";
   livre(el("btnConfirmarSenha"));
   abrirModal("modalSenha");
-  setTimeout(function(){ el("senhaEstoque").focus(); }, 50);
+  setTimeout(function(){ el("btnConfirmarSenha").focus(); }, 50);
 }
 
 function confirmarSenha(){
 
-  const senha = el("senhaEstoque").value.trim();
+  /* Sem senha do estoque (out/2026): a janela só confirma a ação. */
+  const senha = "";
   const botao = el("btnConfirmarSenha");
 
-  if(!senha){
-    el("erroSenha").textContent = "Digite a senha.";
-    return;
-  }
-
   el("erroSenha").textContent = "";
-  ocupado(botao, "Conferindo...");
+  ocupado(botao, "Salvando...");
 
   Promise.resolve(estado.acaoSenha(senha))
     .then(function(){
@@ -2591,7 +2587,6 @@ function enviarNovaOS(){
   const faltando =
     !dados.nome ? "Escolha seu nome."
     : !dados.setor ? "Escolha seu setor."
-    : !dados.senha ? "Digite a senha do setor."
     : !dados.categoria ? "Escolha a categoria."
     : !dados.item ? "Escolha o item."
     : !dados.codigoItem ? "Escolha um item da lista (o código precisa aparecer)."
@@ -2756,7 +2751,6 @@ function salvarNovoItem(){
     : !dados.nomeItem ? "Informe o nome do item."
     : !dados.codigo ? "Informe o código."
     : !dados.valorReposicao ? "Informe o valor de reposição."
-    : !dados.senha ? "Digite a senha do estoque."
     : "";
 
   const erro = el("erroAddItem");

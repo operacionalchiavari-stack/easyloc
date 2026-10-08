@@ -14,7 +14,10 @@ module.exports = {
     // Rotinas agendadas (vercel.json → /api/gs-cron?projeto=cronograma&fn=...)
     agendadas: ["FECH_registrarIndicadoresSemana"],
     // Funções que existiam só para o editor do Apps Script (gatilhos, testes)
-    bloqueadas: ["doGet", "FECH_criarTriggerSemanal", "configurarAuditoriaCronograma", "testeAuditoriaManual"]
+    bloqueadas: ["doGet", "FECH_criarTriggerSemanal", "configurarAuditoriaCronograma", "testeAuditoriaManual"],
+    // Funções chamadas pelos apps de campo (sem conta no Acervo): liberadas sem login.
+    // Todo o resto exige o login do Acervo de alguém da empresa (ver api/gs.js).
+    publicas: ["FREE_appCadastrar", "FREE_appCancelar", "FREE_appCarregar", "FREE_appCiente", "FREE_appConfirmar", "FREE_appLogin", "FREE_appPresenca", "FREE_appSair", "FREE_appSalvarPix", "FREE_liderQr", "MONT_appCarregar", "MONT_cancelarTroca", "MONT_listarResponsaveis", "MONT_login", "MONT_qrVaga", "MONT_sair", "MONT_solicitarTroca", "buscarEmpresasTerceirizadas", "buscarItensOperacao", "buscarObservacoesMontagem", "concluirDesmontagem", "salvarEquipeTerceirizada", "salvarListaAssinada", "salvarListaConferidaDesmontagem", "salvarObservacoesMontagem", "salvarPosicionamentoItens", "salvarSacolasProtecao", "verificarDesmontagemConcluida", "verificarEquipeTerceirizadaJaEnviada", "verificarListaAssinadaJaEnviada", "verificarListaConferidaDesmontagem", "verificarPosicionamentoJaEnviado", "verificarSacolasJaEnviadas"]
   },
   fretes: {
     chave: "fretes",
@@ -38,7 +41,10 @@ module.exports = {
     planilhaAtiva: "1qYMrypoMvB7t1kwmw-lm_Dye7262OhifKEpXEW5oWow",
     urlApp: base => base + "/Modulos/Chiavari/Uber/",
     agendadas: [],
-    bloqueadas: ["doGet"]
+    bloqueadas: ["doGet"],
+    // Funções chamadas pelos apps de campo (sem conta no Acervo): liberadas sem login.
+    // Todo o resto exige o login do Acervo de alguém da empresa (ver api/gs.js).
+    publicas: ["conferirSenhaSupervisorApp", "enviarCorridaApp", "getCorridasDisponiveis", "getMinhasCorridas"]
   },
   ocorrencias: {
     chave: "ocorrencias",
@@ -78,7 +84,10 @@ module.exports = {
     planilhaAtiva: "1EvCBsoDsB0svzEyrGvH46oHHCH3lCTPJMU4If8-LZgE",
     urlApp: base => base + "/Modulos/Chiavari/CentralMetas/",
     agendadas: [],
-    bloqueadas: ["doGet"]
+    bloqueadas: ["doGet"],
+    // Funções chamadas pelos apps de campo (sem conta no Acervo): liberadas sem login.
+    // Todo o resto exige o login do Acervo de alguém da empresa (ver api/gs.js).
+    publicas: ["equipeEntrar", "equipeExtrato", "equipeSair"]
   },
   portal: {
     chave: "portal",

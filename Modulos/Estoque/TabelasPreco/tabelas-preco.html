@@ -9,19 +9,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
-  <link rel="stylesheet" href="tabelas-preco.css?v=20260913a">
+  <link rel="stylesheet" href="tabelas-preco.css?v=20261008-reajuste">
 </head>
 <body>
 <div class="container el-page">
 
   <div class="header-list">
     <h2>Tabelas de Preço de Locação</h2>
-    <div class="header-actions">
+    <div class="tp-barra">
+      <button type="button" class="btn tp-voltar" id="btnVoltarTabelas" title="Voltar para a Central de Pedidos">
+        <i data-lucide="arrow-left"></i> Voltar
+      </button>
       <button type="button" class="btn primary" id="btnNovaTabela">+ Nova tabela</button>
     </div>
   </div>
 
-  <p class="tp-hint">Cada tabela guarda o preço de locação de cada item num ano/período específico. Ativar uma tabela atualiza automaticamente o preço "atual" de cada item (usado em pedidos, kits, etc.) — as tabelas antigas continuam guardadas, nada é apagado.</p>
+  <div class="tp-hint" role="note">
+    <span class="tp-hint-icone" aria-hidden="true">i</span>
+    <div>
+      <strong>Como funcionam as tabelas</strong>
+      <p>Cada tabela guarda o preço de locação de cada item num ano/período específico. Ativar uma tabela atualiza automaticamente o preço "atual" de cada item (usado em pedidos, kits, etc.) — as tabelas antigas continuam guardadas, nada é apagado.</p>
+    </div>
+  </div>
+
+  <section class="tp-auto" id="tpAutoCard" aria-labelledby="tpAutoTitulo">
+    <div class="tp-auto-icone" aria-hidden="true"><i data-lucide="calendar-clock"></i></div>
+    <div class="tp-auto-texto">
+      <strong id="tpAutoTitulo">Reajuste automático anual</strong>
+      <span id="tpAutoResumo">Carregando…</span>
+      <small id="tpAutoUltimo" hidden></small>
+    </div>
+    <span class="tp-badge" id="tpAutoStatus">—</span>
+    <button type="button" class="btn secondary btn-sm" id="btnProgramarReajuste">Programar</button>
+  </section>
 
   <section class="el-table-card">
     <div class="el-table-scroll">
@@ -81,6 +101,58 @@
 </div>
 
 <!-- ================= NOVA TABELA (modal pequeno) ================= -->
+<div class="modal el-modal" id="reajusteModal">
+  <div class="modal-content el-modal__box tp-nova-tabela-box">
+    <h3 class="modal-title">Reajuste automático anual</h3>
+    <p class="tp-auto-explica">Todo ano, na data escolhida, o sistema cria sozinho a <b>TABELA &lt;ano&gt;</b> com os preços da tabela ativa reajustados pelo percentual abaixo. As tabelas antigas continuam guardadas.</p>
+
+    <label class="tp-switch">
+      <input type="checkbox" id="reajusteAtivo" checked>
+      <span>Reajuste automático ligado</span>
+    </label>
+
+    <div class="el-field-row">
+      <label class="el-field">
+        <span>Reajuste (%) *</span>
+        <input class="el-input" id="reajustePercentual" inputmode="decimal" placeholder="Ex.: 8 ou 5,5">
+      </label>
+      <label class="el-field">
+        <span>Dia *</span>
+        <input class="el-input" id="reajusteDia" inputmode="numeric" placeholder="1">
+      </label>
+      <label class="el-field">
+        <span>Mês *</span>
+        <select class="el-select" id="reajusteMes">
+          <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+          <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+          <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+          <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="el-field">
+      <span>A tabela criada é do ano</span>
+      <select class="el-select" id="reajusteAnoSeguinte">
+        <option value="false">Da própria data (ex.: em 01/01/2027 cria a TABELA 2027)</option>
+        <option value="true">Seguinte (ex.: em 01/12/2026 cria a TABELA 2027)</option>
+      </select>
+    </label>
+
+    <label class="tp-switch">
+      <input type="checkbox" id="reajusteAtivar">
+      <span>Ativar a tabela nova automaticamente <small>(pedidos, kits e catálogo passam a usar o preço novo; a anterior é inativada)</small></span>
+    </label>
+
+    <p class="tp-auto-previa" id="reajustePrevia"></p>
+
+    <div class="modal-actions">
+      <button class="btn secondary" type="button" id="btnCancelarReajuste">Cancelar</button>
+      <button class="btn primary" type="button" id="btnSalvarReajuste">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal el-modal" id="novaTabelaModal">
   <div class="modal-content el-modal__box tp-nova-tabela-box">
     <h3 class="modal-title">Nova tabela de preço</h3>
@@ -129,8 +201,8 @@
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20260913b"></script>
-<script src="../../../js/core/permissions.js"></script>
-<script type="module" src="tabelas-preco.mjs?v=20261008-banco"></script>
+<script src="../../../js/core/permissions.js?v=20261008-menu-filtrado"></script>
+<script type="module" src="tabelas-preco.mjs?v=20261008-reajuste"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261008-servidor" data-projeto="fretes"></script>
+  <script src="../gas-cliente.js?v=20261008-login" data-projeto="fretes"></script>
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -788,14 +788,7 @@ document.querySelectorAll(".opcoes").forEach(function(grupoEl){
     const grupo = grupoEl.dataset.grupo;
     const valor = botao.dataset.valor;
 
-    // Supervisor de Montagem só com senha
-    if (grupo === "responsavel" && valor === "Supervisor de Montagem" && escolhas.responsavel !== valor){
-      el("senhaSupervisor").value = "";
-      el("erroSenhaSup").textContent = "";
-      abrirModal("modalSenha");
-      setTimeout(function(){ el("senhaSupervisor").focus(); }, 50);
-      return;
-    }
+    /* Supervisor de Montagem não pede mais senha (out/2026): quem protege é o login do sistema. */
 
     marcarOpcao(grupo, valor);
   });

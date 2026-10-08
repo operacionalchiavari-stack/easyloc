@@ -35,6 +35,55 @@ body {
   gap: 12px;
 }
 
+/* Título e ações na primeira linha; indicadores abaixo. */
+html:root :is(body:not(.portal-shell), #main-content) .container.el-page .header-list {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+html:root :is(body:not(.portal-shell), #main-content) .container.el-page .header-list > h2:first-child {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  margin: 0 !important;
+  padding: 34px 420px 22px !important;
+  border-bottom: 0;
+  text-align: center !important;
+}
+
+html:root :is(body:not(.portal-shell), #main-content) .container.el-page .header-list > .header-actions {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: center;
+  margin-top: 12px;
+}
+
+html:root :is(body:not(.portal-shell), #main-content) .container.el-page .header-list > .el-stat-row {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+@media (max-width: 1400px) {
+  html:root :is(body:not(.portal-shell), #main-content) .container.el-page .header-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html:root :is(body:not(.portal-shell), #main-content) .container.el-page .header-list > h2:first-child {
+    padding: 34px 0 22px !important;
+  }
+
+  html:root :is(body:not(.portal-shell), #main-content) .container.el-page .header-list > .header-actions {
+    grid-column: 1;
+    grid-row: 2;
+    flex-wrap: wrap;
+    margin-top: 0;
+  }
+
+  html:root :is(body:not(.portal-shell), #main-content) .container.el-page .header-list > .el-stat-row {
+    grid-row: 3;
+  }
+}
+
 /* =========================
    FILTERS â€“ BLINDADO
 ========================= */
