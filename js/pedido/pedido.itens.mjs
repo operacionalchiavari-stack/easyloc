@@ -1,4 +1,5 @@
 import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
+import { iniciarEntradaComercial } from "./pedido.entrada.mjs";
 
 export function initItens({ supabase, els }){
 
@@ -659,6 +660,94 @@ function calcularVolumeTotalPedido(){
     recalcularLinha(tr);
 
   });
+
+
+  // Vitrine comercial integrada ?s linhas e c?lculos existentes do pedido.
+  const vitrine = document.createElement('section');
+  vitrine.className='pedido-vitrine';
+  vitrine.innerHTML='<div class="vitrine-cabecalho"><span>ACERVO PARA O SEU EVENTO</span><h2>Escolha as pe?as do pedido</h2><p>Explore o acervo e adicione as quantidades ? sua sele??o.</p></div><div class="vitrine-filtros"><input type="search" placeholder="Pesquisar nome ou c?digo" aria-label="Pesquisar produtos"><select aria-label="Categoria"><option value="">Todas as categorias</option></select><button type="button" class="vitrine-atualizar">Atualizar disponibilidade</button></div><div class="vitrine-grade" aria-live="polite"></div><div class="vitrine-paginacao"><button type="button">Anterior</button><span></span><button type="button">Pr?xima</button></div>';
+  document.querySelector('.pedido-items-panel')?.before(vitrine);
+  const grade=vitrine.querySelector('.vitrine-grade'),busca=vitrine.querySelector('input'),categoria=vitrine.querySelector('select'),pag=vitrine.querySelector('.vitrine-paginacao');
+  let pagina=0,sequencia=0,timerVitrine;
+  async function carregarVitrine(){
+    const seq=++sequencia,empresa=window.__CONTEXT?.empresa_id;
+    if(!empresa){grade.innerHTML='<p>Entre na empresa para visualizar o acervo.</p>';return;}
+    grade.innerHTML='<p>Carregando acervo...</p>';
+    let consulta=supabase.from('itens').select('id,codigo,produto,descricao_total,valor_locacao,valor_reposicao,volume_cubico,foto_url,estoque_total,estoque_manutencao,estoque_indisponivel,categoria').eq('empresa_id',empresa).eq('ativo',true).eq('tipo','Item').eq('locar_somente_kit',false).order('produto').range(pagina*12,pagina*12+12);
+    const termo=busca.value.replace(/[%_,()]/g,' ').trim();
+    if(termo)consulta=consulta.or('produto.ilike.%'+termo+'%,descricao_total.ilike.%'+termo+'%,codigo.ilike.%'+termo+'%');
+    if(categoria.value)consulta=consulta.eq('categoria',categoria.value);
+    const {data,error}=await consulta;if(seq!==sequencia)return;
+    if(error){grade.innerHTML='<p>N?o foi poss?vel carregar o acervo. Tente atualizar.</p>';return;}
+    const temProxima=(data || []).length>12;
+    const itens=await anexarDisponibilidadeAosItens((data || []).slice(0,12),empresa);if(seq!==sequencia)return;
+    grade.innerHTML=itens.length?itens.map((it,index)=>'<article class="vitrine-produto"><div class="vitrine-foto">'+(it.foto_url?'<img loading="lazy" src="'+escapeHtml(it.foto_url)+'" alt="'+escapeHtml(it.produto || '')+'">':'<span>Sem foto</span>')+'<span class="vitrine-codigo">'+escapeHtml(it.codigo || '')+'</span></div><div class="vitrine-produto-info"><h3>'+escapeHtml(it.produto || it.descricao_total || 'Item')+'</h3><div class="vitrine-preco"><strong>'+formatCurrency(it.valor_locacao || 0)+'</strong><small>'+formatarQuantidadeDisponivel(it.disponibilidade_busca || 0)+' dispon?veis</small></div><div class="vitrine-selecionar"><input type="number" min="1" step="1" value="1" aria-label="Quantidade de '+escapeHtml(it.produto || 'item')+'"><button type="button" data-index="'+index+'">Adicionar</button></div></div></article>').join(''):'<p>Nenhum item encontrado para esta pesquisa.</p>';
+    grade.querySelectorAll('button').forEach(button=>button.onclick=()=>{
+      const it=itens[Number(button.dataset.index)],qtd=Number(button.previousElementSibling.value);
+      if(!Number.isInteger(qtd)||qtd<1){button.previousElementSibling.reportValidity();return;}
+      addItemBtn.click();const tr=tbody.querySelector('tr.item-row:last-child');if(!tr)return;
+      aplicarItemNaLinha(tr,it);tr.querySelector('.qtd').innerText=String(qtd);recalcularLinha(tr);
+      button.textContent='Adicionado';setTimeout(()=>button.textContent='Adicionar',1200);
+    });
+    pag.children[0].disabled=pagina===0;pag.children[2].disabled=!temProxima;pag.children[1].textContent='P?gina '+(pagina+1);
+  }
+  busca.oninput=()=>{clearTimeout(timerVitrine);timerVitrine=setTimeout(()=>{pagina=0;carregarVitrine();},300);};
+  categoria.onchange=()=>{pagina=0;carregarVitrine();};
+  pag.children[0].onclick=()=>{if(pagina>0){pagina--;carregarVitrine();}};pag.children[2].onclick=()=>{pagina++;carregarVitrine();};
+  vitrine.querySelector('.vitrine-atualizar').onclick=carregarVitrine;
+  async function iniciarVitrine(){
+    const empresa=window.__CONTEXT?.empresa_id;
+    if(empresa){const {data}=await supabase.from('itens').select('categoria').eq('empresa_id',empresa).eq('ativo',true).eq('tipo','Item').limit(2000);[...new Set((data || []).map(i=>i.categoria).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;categoria.appendChild(o);});}
+    carregarVitrine();
+  }
+
+  window.pedidoAdicionarDoCatalogo = async function(id){
+    const empresa=window.__CONTEXT?.empresa_id;if(!empresa)throw Error('Empresa n?o identificada.');
+    const {data:it,error}=await supabase.from('itens').select('id,codigo,produto,descricao_total,valor_locacao,valor_reposicao,volume_cubico,foto_url').eq('id',id).eq('empresa_id',empresa).eq('ativo',true).eq('locar_somente_kit',false).single();
+    if(error || !it)throw Error('Este item n?o est? dispon?vel para adicionar avulso.');
+    const existente=Array.from(tbody.querySelectorAll('tr.item-row')).find(tr=>tr.dataset.itemId===id);
+    if(existente){const qtd=existente.querySelector('.qtd');qtd.innerText=String((Number(qtd.innerText)||0)+1);recalcularLinha(existente);return;}
+    addItemBtn.click();const tr=tbody.querySelector('tr.item-row:last-child');aplicarItemNaLinha(tr,it);recalcularLinha(tr);
+  };
+
+  window.pedidoMetadadosCatalogo = () => ({
+    noivos: document.getElementById('clienteInput')?.value || 'Novo pedido',
+    data_evento: document.getElementById('dataEvento')?.value || null,
+    local_evento: document.getElementById('localInput')?.value || ''
+  });
+  window.pedidoProjetoCatalogo = () => {
+    const salvo=window.__pedidoProjetoComercial || window.__PEDIDO_DADOS_ATUAL?.observacoes?.projeto_comercial;
+    if(salvo)return structuredClone({...salvo,...window.pedidoMetadadosCatalogo()});
+    const itens=Array.from(tbody.querySelectorAll('tr.item-row')).filter(tr=>tr.dataset.itemId).map(tr=>({item_id:tr.dataset.itemId,quantidade:Number(tr.querySelector('.qtd')?.innerText)||1}));
+    return {id:window.__PEDIDO_ATUAL_ID || crypto.randomUUID(),...window.pedidoMetadadosCatalogo(),status:'rascunho',dados:{ambientes:[{id:crypto.randomUUID(),nome:'Evento',itens,renders:[],notas:''}],plantas:[]}};
+  };
+  let sincronizacao=Promise.resolve();
+  window.pedidoSincronizarProjetoCatalogo = project => {
+    const snapshot=structuredClone(project);
+    sincronizacao=sincronizacao.catch(()=>{}).then(async()=>{
+      const quantidades=new Map();
+      for(const amb of snapshot.dados.ambientes)for(const item of amb.itens){
+        const qtd=Number(item.quantidade);if(!Number.isFinite(qtd)||qtd<=0)continue;
+        const id=String(item.item_id);quantidades.set(id,(quantidades.get(id)||0)+qtd);
+      }
+      for(const [id,qtd] of quantidades){
+        let tr=Array.from(tbody.querySelectorAll('tr.item-row')).find(row=>row.dataset.itemId===id);
+        if(!tr){await window.pedidoAdicionarDoCatalogo(id);tr=Array.from(tbody.querySelectorAll('tr.item-row')).find(row=>row.dataset.itemId===id);}
+        if(!tr)throw Error('Não foi possível sincronizar um item do pedido.');
+        tr.querySelector('.qtd').innerText=String(qtd);recalcularLinha(tr);
+      }
+      for(const tr of tbody.querySelectorAll('tr.item-row'))if(tr.dataset.itemId&&!quantidades.has(tr.dataset.itemId))tr.remove();
+      window.__pedidoProjetoComercial=snapshot;atualizarResumo();
+    });
+    return sincronizacao;
+  };
+  vitrine.querySelector('.vitrine-cabecalho').innerHTML='<button type="button" class="comercial-ver-selecao">Ver sele??o do pedido</button>';
+  vitrine.querySelector('.comercial-ver-selecao').onclick=()=>document.querySelector('.pedido-items-panel').scrollIntoView({behavior:'smooth'});
+  vitrine.querySelector('.vitrine-filtros').hidden=true;grade.hidden=true;pag.hidden=true;
+  const catalogo=document.createElement('iframe');catalogo.className='pedido-catalogo-real';catalogo.title='Cat?logo comercial';
+  catalogo.dataset.src='../Catalogo/catalogo.html?comercial=pedido';vitrine.appendChild(catalogo);
+  iniciarEntradaComercial(vitrine);
+
 
   window.__restaurarItensPedido = function restaurarItensPedido(itens = []) {
     tbody.innerHTML = "";

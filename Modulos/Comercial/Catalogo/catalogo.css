@@ -960,3 +960,15 @@ body.catalog-modo-sistema .catalog-header .catalog-search:focus-within{backgroun
  .catalog-product-section.is-single{height:auto;min-height:calc(100dvh - var(--header-h))}
  .catalog-product-section.is-single .catalog-detail-panel{grid-template-rows:minmax(min(64vh,640px),1fr) auto}
 }
+.catalogo-comercial-pedido .catalog-pedido-adicionar{position:relative;z-index:4;border:1px solid #d4c4aa;border-radius:24px;background:#faf7f0;color:#6d5533;padding:10px 18px;font:500 12px Manrope,system-ui,sans-serif;cursor:pointer}
+.catalogo-comercial-pedido .catalog-grid-card-photo .catalog-pedido-adicionar{position:absolute;bottom:12px;right:12px}
+.catalogo-comercial-pedido .catalog-pedido-adicionar:disabled{opacity:.6}
+
+/* O comercial usa a navegacao e os dados do pedido na tela principal. */
+.catalogo-comercial-pedido .catalog-navigation,
+.catalogo-comercial-pedido .cpj-work-head{display:none!important}
+.catalogo-comercial-pedido .catalog-grid-drag{display:none!important}
+
+/* Sem a faixa vazia do cabecalho no fluxo comercial. */
+.catalogo-comercial-pedido .catalog-header{display:none!important}
+.catalogo-comercial-pedido .catalog-page{--header-h:0px;--header-top-h:0px}

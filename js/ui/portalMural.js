@@ -31,6 +31,7 @@
       slides.forEach((slide, i) => { slide.classList.toggle("ativo", i === atual); slide.inert = i !== atual; slide.setAttribute("aria-hidden", String(i !== atual)); });
       fotos.forEach((foto, i) => foto.classList.toggle("ativo", i === atual));
       pontos.forEach((ponto, i) => ponto.setAttribute("aria-pressed", String(i === atual)));
+      if(slides[atual].classList.contains("hero-numeros")) slides[atual].querySelectorAll("[data-contar]").forEach(contar);
       hero.dispatchEvent(new Event("hero-slide-change"));
     }
     function atualizarPausa(){ pausa.textContent = pausado ? "Retomar" : "Pausar"; pausa.setAttribute("aria-label", pausado ? "Retomar troca dos destaques" : "Pausar troca dos destaques"); }
@@ -99,7 +100,9 @@
     const linha = function(it){
       const lista = function(v){ return String(v || "").split("|").map(function(x){ return x.trim(); }).filter(Boolean).join(", "); };
       const detalhes = [it.local, it.responsavel && ("Resp.: " + it.responsavel), it.equipe && ("Equipe: " + lista(it.equipe)), it.caminhao && ("Caminhão: " + lista(it.caminhao))].filter(Boolean).join(" · ");
-      return '<li><span class="rd-hora">' + esc(it.horario || "—") + '</span><div><strong>' +
+      const campos = [["Horário",it.horario],["Local",it.local],["Responsável",it.responsavel],["Equipe",lista(it.equipe)],["Caminhão",lista(it.caminhao)]];
+      const painel = '<div class="rd-detalhe-titulo">' + esc(it.pedido ? 'Pedido ' + it.pedido : 'Etapa do dia') + '</div><b>' + esc(it.cliente || '') + '</b><dl>' + campos.filter(c=>c[1]).map(c=>'<div><dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + '</dd></div>').join('') + '</dl>';
+      return '<li tabindex="0" class="rd-item-detalhes"><template>' + painel + '</template><span class="rd-hora">' + esc(it.horario || "—") + '</span><div><strong>' +
         (it.pedido ? "Pedido " + esc(it.pedido) + (it.cliente ? " · " : "") : "") + esc(it.cliente || "") + '</strong>' +
         (detalhes ? '<small>' + esc(detalhes) + '</small>' : "") + '</div></li>';
     };
@@ -124,43 +127,143 @@
       '<div class="rd-topo-acoes"><p>' + esc(textoResumo) + '</p><button class="rd-abrir" type="button" onclick="shellNavigate(\'Modulos/Chiavari/Cronograma/cronograma.html\')"><i data-lucide="calendar"></i>Abrir o cronograma</button></div></div>' + corpo + '</section>';
   }
 
+  function metasSetoresHtml(dados){
+    const setores = dados?.setores || [];
+    const mes = dados?.mes ? mesCurto(dados.mes) : "este mês";
+    const atingidos = setores.filter(s => s.status === true).length;
+    const pendentes = setores.filter(s => s.status === false).length;
+    const semDados = setores.length - atingidos - pendentes;
+    const percentual = atingidos + pendentes ? Math.round(atingidos / (atingidos + pendentes) * 100) : null;
+    const resumo = '<div class="metas-painel revelar"><div class="metas-visao"><span class="metas-eyebrow">VISÃO GERAL</span><h3>Cada setor.<br>Uma mesma direção.</h3><p>Resultados reais, acompanhados ao longo do mês.</p><div class="metas-pulso"><i></i>Parcial do mês</div></div><div class="metas-donut" style="--progresso:' + (percentual || 0) + '%"><div><b>' + (percentual == null ? '—' : percentual + '%') + '</b><span>setores com meta atingida</span></div></div><div class="metas-totais">' + [[atingidos,'Meta atingida','ok'],[pendentes,'Em busca da meta','andamento'],[semDados,'Sem avaliação disponível','neutro']].map(t => '<div><i class="' + t[2] + '"></i><b>' + t[0] + '</b><span>' + t[1] + '</span></div>').join('') + '<small>' + setores.length + ' setores · Percentual considera apenas os avaliados</small></div></div>';
+    const valor = function(v, unidade){
+      if(v == null || !Number.isFinite(Number(v))) return "—";
+      return Number(v).toLocaleString("pt-BR", {maximumFractionDigits:1}) + (unidade === "%" ? "%" : " " + (unidade || ""));
+    };
+    return '<section class="secao cheia" id="metasSetores">' + cabecalho("Evolução em equipe", "Metas por setor", "Parcial de " + esc(mes) + " · Acompanhamento do mês") +
+      (setores.length ? '<div class="metas-dashboard">' + resumo + '<div class="metas-orbitas">' + setores.map(function(s, index){
+        const classe = s.status === true ? "atingida" : s.status === false ? "pendente" : "sem-meta";
+        const status = s.status === true ? "Meta atingida" : s.status === false ? "Ainda não atingida" : (s.motivo || "Sem meta cadastrada");
+        const principal = (s.indicadores || []).find(i => i.nome === "Produção" || i.nome === "Contagem");
+        const progresso = principal && principal.real != null && Number(principal.meta) > 0 ? Math.max(0,Number(principal.real)/Number(principal.meta)*100) : null;
+        const porcentagem = progresso == null ? "—" : progresso.toLocaleString("pt-BR", {maximumFractionDigits:1}) + "%";
+        const detalhe = progresso == null ? (s.motivo || "Sem indicador principal") : progresso >= 100 ? "Meta de " + principal.nome.toLowerCase() + " alcançada" : "Faltam " + (100-progresso).toLocaleString("pt-BR",{maximumFractionDigits:1}) + "% da meta de " + principal.nome.toLowerCase();
+        const tooltip = '<div class="meta-detalhes" id="meta-detalhes-' + index + '" role="tooltip"><b>' + esc(s.setor) + '</b>' + ((s.indicadores || []).length ? '<div class="meta-detalhes-legenda"><span>Indicador</span><span>Atual / Meta</span></div>' + s.indicadores.map(i => '<div class="meta-detalhes-linha"><span>' + esc(i.nome) + '</span><span class="' + (i.atingiu === true ? 'ok' : '') + '">' + esc(valor(i.real,i.unidade)) + ' <em>/ ' + esc(valor(i.meta,i.unidade)) + '</em></span></div>').join('') : '<p>' + esc(s.motivo || 'Sem meta cadastrada') + '</p>') + '<small>' + esc(detalhe) + '</small></div>';
+        return '<div class="meta-orbita revelar ' + classe + '" tabindex="0" aria-describedby="meta-detalhes-' + index + '" style="--atraso:' + (index % 7) * .06 + 's"><div class="meta-anel">' + (s.status === true ? '<span class="meta-medalha" aria-hidden="true"><i data-lucide="medal"></i></span>' : '') + '<svg viewBox="0 0 100 100" aria-hidden="true"><circle class="meta-anel-base" cx="50" cy="50" r="43"/><circle class="meta-anel-valor" cx="50" cy="50" r="43" pathLength="100" style="--anel:' + Math.min(100,progresso || 0) + '"/></svg><strong>' + porcentagem + '</strong></div><h3>' + esc(s.setor) + '</h3><span class="meta-status ' + classe + '">' + esc(status) + '</span>' + tooltip + '</div>';
+      }).join("") + '</div></div><p class="metas-nota">Círculos: percentual da meta de produção ou contagem. O status considera todos os critérios da Central de Metas.</p>' : '<p class="metas-vazio revelar">As metas dos setores estão indisponíveis no momento.</p>') +
+      (dados?.avisos?.length ? '<p class="metas-nota">' + dados.avisos.map(esc).join(" ") + '</p>' : "") + '</section>';
+  }
+
+
+  function mensagensParabens(lista){
+    return (lista || []).map(m => '<div class="parabens-recado"><div class="parabens-avatar">' + fotoOuInicial(/^https?:\/\//i.test(m.foto || '') ? m.foto : '',m.autor) + '</div><div class="parabens-recado-texto"><b>' + esc(m.autor) + '</b><span>' + esc(m.texto) + '</span></div></div>').join('') || '<small class="parabens-vazio">Seja o primeiro a deixar uma mensagem.</small>';
+  }
+  function parabensHtml(a){
+    return '<div class="parabens-mural"><h2>Carinho da equipe</h2><div class="parabens-recados" aria-live="polite">' + mensagensParabens(a.mensagens) + '</div><form class="parabens-form" data-destinatario="' + esc(a.id) + '"><input aria-label="Mensagem de aniversário" required maxlength="300" placeholder="Deixe sua mensagem de parabéns..."><button type="submit">Enviar</button><small role="status"></small></form></div>';
+  }
+  function iniciarParabens(){
+    document.querySelectorAll('#portalInicio .parabens-form').forEach(form => form.addEventListener('submit', async function(e){
+      e.preventDefault();const input=form.querySelector('input'),botao=form.querySelector('button'),status=form.querySelector('small');
+      botao.disabled=true;status.textContent='Enviando...';
+      try{
+        const sessao=await window.supabaseClient.auth.getSession();const token=sessao.data.session?.access_token;
+        const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+        const base=local ? (location.port==='3000' ? '/' : 'http://127.0.0.1:3000/') : /\.vercel\.app$/.test(location.hostname) ? '/' : 'https://easyloc-zeta.vercel.app/';
+        const r=await fetch(base+'api/portal-mural',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({destinatario:form.dataset.destinatario,texto:input.value})});
+        const j=await r.json();if(!r.ok || !j.ok)throw Error(j.erro || 'Não foi possível enviar.');
+        form.previousElementSibling.innerHTML=mensagensParabens(j.resultado);input.value='';status.textContent='Mensagem enviada!';
+        const a=estado.mural?.aniversariantes?.find(a=>a.id===form.dataset.destinatario);if(a)a.mensagens=j.resultado;
+      }catch(err){status.textContent=err.message;}finally{botao.disabled=false;}
+    }));
+  }
+
+
+  window.abrirAvisoPortal = function(){
+    let modal=document.getElementById('novoAvisoPortal');
+    if(!modal){
+      modal=document.createElement('dialog');modal.id='novoAvisoPortal';
+      modal.innerHTML='<form><h2>Novo comunicado</h2><label>Título<input name="titulo" required maxlength="120"></label><label>Mensagem<textarea name="texto" rows="4" required maxlength="1200"></textarea></label><label>Válido até (opcional)<input name="validoAte" type="date"></label><fieldset class="aviso-cores"><legend>Cor do comunicado</legend><label><input type="radio" name="cor" value="neutro" checked><span class="aviso-amostra aviso-cor-neutro"></span>Neutro</label><label><input type="radio" name="cor" value="areia" ><span class="aviso-amostra aviso-cor-areia"></span>Areia</label><label><input type="radio" name="cor" value="verde" ><span class="aviso-amostra aviso-cor-verde"></span>Verde</label><label><input type="radio" name="cor" value="azul" ><span class="aviso-amostra aviso-cor-azul"></span>Azul</label><label><input type="radio" name="cor" value="lavanda" ><span class="aviso-amostra aviso-cor-lavanda"></span>Lavanda</label></fieldset><label class="aviso-check"><input name="importante" type="checkbox">Importante</label><label class="aviso-check"><input name="fixado" type="checkbox">Fixar comunicado</label><p role="status"></p><footer><button type="button">Cancelar</button><button type="submit">Publicar</button></footer></form>';
+      document.body.appendChild(modal);modal.querySelector('[type=button]').onclick=()=>modal.close();
+      modal.querySelector('form').onsubmit=async function(e){
+        e.preventDefault();const f=e.currentTarget,b=f.querySelector('[type=submit]'),status=f.querySelector('[role=status]');b.disabled=true;status.textContent='Publicando...';
+        try{
+          const sessao=await window.supabaseClient.auth.getSession();
+          const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+          const base=local ? (location.port==='3000' ? '/' : 'http://127.0.0.1:3000/') : /\.vercel\.app$/.test(location.hostname) ? '/' : 'https://easyloc-zeta.vercel.app/';
+          const r=await fetch(base+'api/portal-mural',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessao.data.session?.access_token},body:JSON.stringify({acao:'aviso',dados:{titulo:f.elements.titulo.value,texto:f.elements.texto.value,validoAte:f.elements.validoAte.value,importante:f.elements.importante.checked,fixado:f.elements.fixado.checked,cor:f.elements.cor.value}})});
+          const j=await r.json();if(!j.ok)throw Error(j.erro || 'Falha ao publicar.');
+          estado.mural=await buscarMural();montarMural();
+          const pontos=document.querySelectorAll('#portalInicio .hero-ponto');pontos[pontos.length-1]?.click();
+          f.reset();status.textContent='';modal.close();
+        }catch(err){status.textContent=err.message;}finally{b.disabled=false;}
+      };
+    }
+    modal.showModal();
+  };
+
+  function iniciarDetalhesCronograma(){
+    document.getElementById('rdDetalhesFlutuantes')?.remove();
+    const painel=document.createElement('div');painel.id='rdDetalhesFlutuantes';painel.setAttribute('role','tooltip');document.body.appendChild(painel);
+    function esconder(){painel.classList.remove('aberto');}
+    document.querySelectorAll('#portalInicio .rd-item-detalhes').forEach(item=>{
+      function mostrar(){
+        painel.innerHTML=item.querySelector('template').innerHTML;
+        painel.classList.add('aberto');
+        const r=item.getBoundingClientRect(), largura=painel.offsetWidth,altura=painel.offsetHeight;
+        let x=r.right+12;if(x+largura>innerWidth-16)x=r.left-largura-12;
+        if(x<16)x=Math.max(16,Math.min(innerWidth-largura-16,r.left));
+        const y=Math.max(16,Math.min(innerHeight-altura-16,r.top));
+        painel.style.left=x+'px';painel.style.top=y+'px';
+      }
+      item.addEventListener('mouseenter',mostrar);item.addEventListener('mouseleave',esconder);
+      item.addEventListener('focus',mostrar);item.addEventListener('blur',esconder);
+      item.addEventListener('keydown',e=>{if(e.key==='Escape')esconder();});
+    });
+    document.getElementById('portalInicio').addEventListener('scroll',esconder,{passive:true,once:true});
+  }
+
+  window.alterarCorAviso=async function(select){
+    const antigo=estado.mural.avisos.find(a=>a.id===select.dataset.id);select.disabled=true;
+    try{
+      const sessao=await window.supabaseClient.auth.getSession();
+      const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+      const base=local?(location.port==='3000'?'/':'http://127.0.0.1:3000/'):/\.vercel\.app$/.test(location.hostname)?'/':'https://easyloc-zeta.vercel.app/';
+      const r=await fetch(base+'api/portal-mural',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessao.data.session?.access_token},body:JSON.stringify({acao:'corAviso',dados:{id:select.dataset.id,cor:select.value}})});
+      const j=await r.json();if(!j.ok)throw Error(j.erro || 'Falha ao salvar cor.');
+      select.closest('article').className='hero-aviso-item aviso-cor-'+select.value;if(antigo)antigo.cor=select.value;
+    }catch(err){select.value=antigo?.cor || 'neutro';alert(err.message);}finally{select.disabled=false;}
+  };
+
   function montarMural(){
     const m = estado.mural || {};
-    // A capa de boas-vindas usa sempre a equipe; a galeria contém fotos de eventos.
-    const capa = FOTO_PADRAO;
     const aniversariantesHero = (m.aniversariantes || []).slice().sort((a,b) => Number(Boolean(b.hoje))-Number(Boolean(a.hoje)) || Number(a.dia)-Number(b.dia));
-    const fotosHero = [capa, null].concat(aniversariantesHero.map(() => null));
-    const atalhos = (m.resumoDia ? [["#resumoDia", "list-checks", "Resumo do dia"]] : []).concat([["Modulos/Chiavari/Cronograma/cronograma.html", "calendar", "Cronograma"]]).concat(
-      m.aniversariantes && m.aniversariantes.length ? [["#aniversariantes", "cake", "Aniversariantes"]] : []
-    ).concat([["Modulos/RH/IdeiaPremiada/ideia-premiada.html", "lightbulb", "Ideia Premiada"]]);
-
+    const avisosHero = (m.avisos || []).slice().sort((a,b) => Number(Boolean(b.fixado))-Number(Boolean(a.fixado)));
+    const paginasAvisos = [];
+    for(let i = 0; i < avisosHero.length; i += 6) paginasAvisos.push(avisosHero.slice(i,i+6));
+    if(!paginasAvisos.length || paginasAvisos[paginasAvisos.length-1].length===6) paginasAvisos.push([]);
+    const fotosHero = [null].concat(aniversariantesHero.map(() => null), paginasAvisos.map(() => null), m.numeros ? [null] : []);
     let html =
       '<header class="hero" aria-label="Destaques do portal" aria-roledescription="carrossel">' +
-        '<div class="hero-foto" id="heroFoto">' + fotosHero.map((foto, i) => foto ? '<div class="hero-img' + (i === 0 ? ' ativo' : '') + '" style="background-image:url(\'' + esc(foto) + '\')"></div>' : i === 1 ? '<div class="hero-img hero-ideia"><div class="hero-ideia-simbolo" aria-hidden="true"><i data-lucide="lightbulb"></i></div></div>' : '<div class="hero-img hero-festa-fundo"></div>').join('') + '<div class="hero-sombra"></div></div>' +
+        '<div class="hero-foto" id="heroFoto">' + fotosHero.map((foto, i) => foto ? '<div class="hero-img' + (i === 0 ? ' ativo' : '') + '" style="background-image:url(\'' + esc(foto) + '\')"></div>' : i === 0 ? '<div class="hero-img hero-ideia"><div class="hero-ideia-simbolo" aria-hidden="true"><i data-lucide="lightbulb"></i></div></div>' : m.numeros && i === fotosHero.length-1 ? '<div class="hero-img hero-numeros-fundo"></div>' : i < 1 + aniversariantesHero.length ? '<div class="hero-img hero-festa-fundo"></div>' : '<div class="hero-img hero-aviso-fundo"><div class="hero-aviso-emblema" aria-hidden="true"><i data-lucide="megaphone"></i></div></div>').join('') + '<div class="hero-sombra"></div></div>' +
         (aniversariantesHero.length ? '<canvas id="fogos" class="hero-fogos" aria-hidden="true"></canvas>' : '') +
-        '<div class="hero-saudacao revelar visivel"><span>' + esc(dataLonga()) + '</span></div>' +
-        '<div class="hero-conteudo hero-slide ativo" role="group" aria-roledescription="slide" aria-label="Boas-vindas">' +
-          '<div class="hero-data revelar visivel">Chiavari Eventos</div>' +
-          '<h1 class="revelar visivel" style="--atraso:.1s">Bem-vindo ao portal da nossa equipe.</h1>' +
-          '<p class="revelar visivel" style="--atraso:.2s">Avisos da semana, aniversariantes e quem está fazendo a diferença, tudo em um só lugar.</p>' +
-          '<div class="hero-atalhos revelar visivel" style="--atraso:.3s">' + atalhos.map(function(a){
-            const acao = a[0] === "#aniversariantes" ? 'document.querySelectorAll(\'#portalInicio .hero-ponto\')[2].click()' : a[0].charAt(0) === "#" ? 'document.querySelector(\'' + a[0] + '\').scrollIntoView({behavior:\'smooth\'})' : 'shellNavigate(\'' + a[0] + '\')';
-            return '<button class="atalho" type="button" onclick="' + acao + '"><i data-lucide="' + a[1] + '"></i>' + a[2] + '</button>';
-          }).join("") + '</div>' +
-        '</div><div class="hero-conteudo hero-slide hero-convite" role="group" aria-roledescription="slide" aria-label="Participe da Ideia Premiada" aria-hidden="true" inert>' +
+        '<div class="hero-saudacao revelar visivel"><span class="hero-data-dia">' + esc(dataLonga()) + '</span><span class="hero-rotulo-avisos">Quadro de avisos</span></div>' +
+        '<div class="hero-conteudo hero-slide hero-convite ativo" role="group" aria-roledescription="slide" aria-label="Participe da Ideia Premiada">' +
           '<div class="hero-data">Ideia Premiada · Sua visão faz a diferença</div><h1>A próxima melhoria<br>pode começar com você.</h1><p>Uma solução mais simples. Um cuidado com a equipe. Um novo jeito de fazer. Compartilhe sua ideia e ajude a Chiavari a evoluir.</p>' +
           '<div class="hero-atalhos"><button class="atalho atalho-ideia" type="button" onclick="shellNavigate(\'Modulos/RH/IdeiaPremiada/ideia-premiada.html\')"><i data-lucide="lightbulb"></i>Quero participar<i data-lucide="arrow-up-right"></i></button></div></div>' +
-        aniversariantesHero.map(a => '<div class="hero-conteudo hero-slide hero-aniversario" role="group" aria-roledescription="slide" aria-label="Aniversário de ' + esc(a.nome) + '" aria-hidden="true" inert><div class="hero-aniversario-texto"><div class="hero-data">Aniversariantes de ' + MESES[new Date().getMonth()] + '</div><h1>Parabéns,<br>' + esc(a.nome) + '!</h1><p>' + (a.hoje ? 'Hoje é o seu dia!' : 'Celebrando no dia ' + esc(a.dia) + '.') + (a.setor ? ' · ' + esc(a.setor) : '') + '<br>Que seu novo ano venha cheio de conquistas.<br>É uma alegria ter você na nossa equipe.</p></div><div class="hero-aniversario-foto">' + fotoOuInicial(a.foto,a.nome) + '</div></div>').join('') +
+        aniversariantesHero.map(a => '<div class="hero-conteudo hero-slide hero-aniversario" role="group" aria-roledescription="slide" aria-label="Aniversário de ' + esc(a.nome) + '" aria-hidden="true" inert><div class="hero-aniversario-texto"><div class="hero-data">Aniversariantes de ' + MESES[new Date().getMonth()] + '</div><h1>Parabéns,<br>' + esc(a.nome) + '!</h1><p>' + (a.hoje ? 'Hoje é o seu dia!' : 'Celebrando no dia ' + esc(a.dia) + '.') + (a.setor ? ' · ' + esc(a.setor) : '') + '<br>Que seu novo ano venha cheio de conquistas.<br>É uma alegria ter você na nossa equipe.</p></div><div class="hero-aniversario-foto">' + fotoOuInicial(a.foto,a.nome) + '</div>' + parabensHtml(a) + '</div>').join('') +
+        paginasAvisos.map((pagina,i) => '<div class="hero-conteudo hero-slide hero-aviso" role="group" aria-roledescription="slide" aria-label="Quadro de avisos, página ' + (i+1) + '" aria-hidden="true" inert><div class="hero-data">Quadro de avisos</div><div class="hero-avisos-lista">' + Array.from({length:6}, (_, pos) => pagina[pos]).map(a => a ? '<article class="hero-aviso-item aviso-cor-' + (['neutro','areia','verde','azul','lavanda'].includes(a.cor) ? a.cor : 'neutro') + '"><div class="hero-aviso-etiqueta">' + (a.prioridade === 'IMPORTANTE' ? 'Importante' : 'Comunicado') + (a.fixado ? ' &middot; Fixado' : '') + '<time>' + esc(String(a.publicadoEm || '').slice(0,10)) + '</time></div><h2>' + esc(a.titulo) + '</h2><div class="hero-aviso-texto" tabindex="0">' + esc(a.texto || '') + '</div><select class="aviso-cor-seletor" aria-label="Cor do comunicado" data-id="' + esc(a.id) + '" onchange="alterarCorAviso(this)">' + [['neutro','Neutro'],['areia','Areia'],['verde','Verde'],['azul','Azul'],['lavanda','Lavanda']].map(c=>'<option value="' + c[0] + '"' + (c[0]===(a.cor || 'neutro') ? ' selected' : '') + '>' + c[1] + '</option>').join('') + '</select></article>' : '<button type="button" class="hero-aviso-item hero-aviso-vazio" onclick="abrirAvisoPortal()"><i data-lucide="plus" aria-hidden="true"></i><h2>Próximo comunicado</h2><span>Clique para publicar um aviso.</span></button>').join('') + '</div></div>').join('') +
+        (m.numeros ? '<div class="hero-conteudo hero-slide hero-numeros" role="group" aria-roledescription="slide" aria-label="Nossos últimos números" aria-hidden="true" inert><div class="hero-numeros-texto"><div class="hero-data">' + esc(mesCurto(m.numeros.mes)) + ' &middot; Em equipe, vamos mais longe</div><h1>Nossos últimos números.</h1><p>Cada entrega é uma conquista de todos nós.</p><div class="hero-numeros-indicadores">' + [['eventos','Eventos'],['montagens','Montagens'],['desmontagens','Desmontagens']].map(n=>'<div><b data-contar="' + Math.max(0,Number(m.numeros[n[0]]) || 0) + '">0</b><span>' + n[1] + '</span></div>').join('') + '</div></div></div>' : '') +
+        (m.numeros ? '<div class="hero-foguete-cena" aria-hidden="true"><div class="hero-foguete"><div class="hero-foguete-fumaca"><i></i><i></i><i></i><i></i></div><svg viewBox="0 0 100 150"><defs><linearGradient id="rocketMetal"><stop stop-color="#25333d"/><stop offset=".18" stop-color="#75848c"/><stop offset=".36" stop-color="#d9dfe0"/><stop offset=".45" stop-color="#f0f2ee"/><stop offset=".57" stop-color="#b4bfc2"/><stop offset=".8" stop-color="#586972"/><stop offset="1" stop-color="#1e2c36"/></linearGradient><linearGradient id="rocketExhaust" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".18" stop-color="#e1f8ff"/><stop offset=".45" stop-color="#69bde7" stop-opacity=".7"/><stop offset="1" stop-color="#347aae" stop-opacity="0"/></linearGradient><linearGradient id="rocketFin"><stop stop-color="#97a5ac"/><stop offset="1" stop-color="#263740"/></linearGradient></defs><path d="M36 89L23 112L24 119L37 109ZM64 89L77 112L76 119L63 109Z" fill="url(#rocketFin)"/><path d="M38 105L37 44Q38 24 50 3Q62 24 63 44L62 105Z" fill="url(#rocketMetal)"/><path d="M38 35Q41 17 50 3Q59 17 62 35" fill="#c0c9cd" opacity=".25"/><path d="M38 39H62M37 74H63M38 99H62" stroke="#25343e" stroke-width=".55" opacity=".65"/><path d="M42 42V96" stroke="#f2f6f5" stroke-width=".45" opacity=".55"/><path d="M57 45V97" stroke="#202e38" stroke-width=".5" opacity=".45"/><rect x="47" y="46" width="6" height="10" rx="1" fill="#233947"/><path d="M48 47V53" stroke="#a4c1cb" stroke-width=".6"/><path d="M40 105H60L58 112H42Z" fill="#283943"/><path d="M43 112H57L55 118H45Z" fill="#0e202b"/><path d="M45 117H55L53 150H47Z" fill="url(#rocketExhaust)"/><path d="M48 117H52L51 143H49Z" fill="#e4faff" opacity=".9"/><path d="M47 77H53M47 80H53" stroke="#293b45" stroke-width=".5"/></svg></div></div>' : '') +
         '<div class="hero-controles"><button class="hero-anterior" type="button" aria-label="Destaque anterior">‹</button><div class="hero-pontos">' + fotosHero.map((_, i) => '<button class="hero-ponto" type="button" aria-label="Ir para destaque ' + (i + 1) + '" aria-pressed="' + (i === 0) + '"></button>').join('') + '</div><button class="hero-proximo" type="button" aria-label="Próximo destaque">›</button><button class="hero-pausa" type="button">Pausar</button></div>' +
         '<div class="rolar" aria-hidden="true"></div>' +
       '</header>';
 
     // Resumo do dia (out/2026): etapas do Cronograma de hoje + agenda interna (api/portal-mural.js → PORTAL_resumoDia_)
     html += resumoDiaHtml(m.resumoDia);
+    html += metasSetoresHtml(m.metasSetores);
 
     // Reconhecimentos e premiações (sem valores)
     if((m.reconhecimentos || []).length){
-      html += '<section class="secao" id="reconhecimentos">' + cabecalho("Reconhecimentos", "Quem está fazendo a diferença", "Premiações conquistadas pela nossa equipe.") +
+      html += '<section class="secao cheia" id="reconhecimentos">' + cabecalho("Reconhecimentos", "Quem está fazendo a diferença", "Premiações conquistadas pela nossa equipe.") +
         '<div class="fila revelar" id="fila">' + m.reconhecimentos.map(function(r, i){
           return '<figure class="premio" data-i="' + i + '" onclick="cliqueFila(' + i + ', \'' + esc(r.foto) + '\', \'' + esc(String(r.nome).replace(/'/g, "")) + '\')">' +
             (r.foto ? '<img src="' + esc(r.foto) + '" alt="" loading="lazy">' : "") +
@@ -175,44 +278,6 @@
             '<button class="seta" type="button" onclick="moverFila(1)" aria-label="Próxima"><i data-lucide="chevron-right"></i></button></div>'
           : "") +
         '</section>';
-    }
-
-    // Avisos
-    if((m.avisos || []).length){
-      html += '<section class="secao cheia" id="avisos">' + cabecalho("Quadro de avisos", "Fique por dentro", "Comunicados da empresa para toda a equipe.") +
-        '<div class="avisos">' + m.avisos.map(function(a, i){
-          const imp = a.prioridade === "IMPORTANTE";
-          return '<article class="aviso revelar' + (imp ? " importante" : "") + '" style="--atraso:' + (i % 3) * 0.1 + 's">' +
-            (a.fixado ? '<span class="fixado" title="Fixado"><i data-lucide="pin"></i></span>' : "") +
-            '<span class="aviso-tag"><i data-lucide="' + (imp ? "alert-circle" : "megaphone") + '"></i>' + (imp ? "Importante" : "Aviso") + '</span>' +
-            '<h3>' + esc(a.titulo) + '</h3>' + (a.texto ? '<p>' + esc(a.texto) + '</p>' : "") +
-            '<div class="aviso-data">' + esc(String(a.publicadoEm || "").slice(0, 10)) + '</div>' +
-          '</article>';
-        }).join("") + '</div></section>';
-    }
-
-    // Números do mês
-    if(m.numeros){
-      const p = String(m.numeros.mes).split("-");
-      const caminho = "M -20 330 C 260 322, 520 290, 760 200 S 1080 40, 1240 -30";
-      let faixas = "";
-      for(let i = 0; i < 14; i++){
-        faixas += '<i style="left:' + (4 + i * 7) + '%;animation-delay:' + (i * 0.37 % 4.5).toFixed(2) + 's;animation-duration:' + (3.6 + (i % 4) * 0.6).toFixed(1) + 's"></i>';
-      }
-      html += '<section class="secao larga">' + cabecalho("Este mês", "Nossos números de " + MESES[Number(p[1]) - 1], "Sempre para cima.") +
-        '<div class="numeros revelar">' +
-          '<div class="faixas" aria-hidden="true">' + faixas + '</div>' +
-          '<svg class="trajetoria" viewBox="0 0 1200 320" preserveAspectRatio="none" aria-hidden="true">' +
-            '<defs><linearGradient id="gradRastro" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#b08d57" stop-opacity="0"/><stop offset=".55" stop-color="#b08d57" stop-opacity=".55"/><stop offset="1" stop-color="#f3dfb6" stop-opacity="1"/></linearGradient>' +
-            '<radialGradient id="gradCometa"><stop offset="0" stop-color="#fff8e8"/><stop offset=".4" stop-color="#f3dfb6" stop-opacity=".8"/><stop offset="1" stop-color="#f3dfb6" stop-opacity="0"/></radialGradient></defs>' +
-            '<path class="rastro-largo" d="' + caminho + '"/>' +
-            '<path class="rastro" id="rastroNumeros" d="' + caminho + '"/>' +
-            '<circle class="cometa" r="9" fill="url(#gradCometa)"><animateMotion id="voo" dur="2.6s" begin="indefinite" fill="freeze" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".55 .05 .25 1"><mpath href="#rastroNumeros"/></animateMotion></circle>' +
-          '</svg>' +
-          '<div class="numero"><strong><b data-contar="' + m.numeros.eventos + '">0</b><i data-lucide="arrow-up-right"></i></strong><span>Eventos</span></div>' +
-          '<div class="numero"><strong><b data-contar="' + m.numeros.montagens + '">0</b><i data-lucide="arrow-up-right"></i></strong><span>Montagens</span></div>' +
-          '<div class="numero"><strong><b data-contar="' + m.numeros.desmontagens + '">0</b><i data-lucide="arrow-up-right"></i></strong><span>Desmontagens</span></div>' +
-        '</div></section>';
     }
 
     // Boas-vindas
@@ -238,6 +303,8 @@
     iniciarAnimacoes();
     iniciarFila();
     iniciarHero();
+    iniciarDetalhesCronograma();
+    iniciarParabens();
     iniciarFogos();
   }
 
@@ -333,18 +400,31 @@
   function posicionarFila(){
     const cartoes = document.querySelectorAll("#fila .premio");
     const n = cartoes.length;
-    const passo = window.innerWidth < 860 ? 88 : 96;
-    cartoes.forEach(function(c, i){
+    if(!n) return;
+    const larguraFila = document.getElementById("fila")?.clientWidth || window.innerWidth;
+    const larguraCartao = cartoes[0]?.offsetWidth || 300;
+    // Mostra até cinco premiações em telas largas, preservando as fotos verticais.
+    const raio = larguraFila >= larguraCartao * 4 ? 2 : 1;
+    const passo = window.innerWidth < 860 ? 88 : Math.max(88, Math.min(135, ((larguraFila - larguraCartao) / (2 * raio * larguraCartao)) * 100));
+    const posicoes = Array.from(cartoes, function(c, i){
       let d = ((i - fila.atual) % n + n) % n;
       if(d > n / 2){ d -= n; }
       const dist = Math.abs(d);
-      const escala = dist === 0 ? 1 : dist === 1 ? .8 : .64;
+      const escala = dist === 0 ? 1 : dist === 1 ? .94 : .88;
+      return { d, dist, escala };
+    });
+    const visiveis = posicoes.filter(p => p.dist <= raio);
+    const esquerda = Math.min(...visiveis.map(p => (p.d * passo / 100 - p.escala / 2) * larguraCartao));
+    const direita = Math.max(...visiveis.map(p => (p.d * passo / 100 + p.escala / 2) * larguraCartao));
+    const ajusteCentro = -(esquerda + direita) / 2;
+    cartoes.forEach(function(c, i){
+      const { d, dist, escala } = posicoes[i];
       c.classList.toggle("centro", d === 0);
-      c.style.transform = "translateX(calc(-50% + " + (d * passo - Math.sign(d) * (dist - 1) * 18 * (dist > 1 ? 1 : 0)) + "%)) scale(" + escala + ")";
-      c.style.opacity = dist > 2 ? 0 : dist === 2 ? .35 : 1;
-      c.style.filter = dist === 0 ? "none" : "brightness(.55) saturate(.8)";
+      c.style.transform = "translateX(calc(-50% + " + (d * passo) + "% + " + ajusteCentro + "px)) scale(" + escala + ")";
+      c.style.opacity = dist > raio ? 0 : 1;
+      c.style.filter = dist === 0 ? "none" : "brightness(.85) saturate(.95)";
       c.style.zIndex = 10 - dist;
-      c.style.pointerEvents = dist > 2 ? "none" : "";
+      c.style.pointerEvents = dist > raio ? "none" : "";
     });
     document.querySelectorAll(".pontos i").forEach(function(p, i){ p.classList.toggle("ativo", i === fila.atual); });
   }
@@ -409,7 +489,7 @@
     }, { root: area, threshold: 0 });
     area.querySelectorAll(".secao .revelar").forEach(function(el){ observador.observe(el); });
 
-    const blocos = Array.from(area.querySelectorAll(".secao > .secao-topo, .secao > .rd-grade, .secao > .galeria, .secao > .fila"));
+    const blocos = Array.from(area.querySelectorAll(".secao > .secao-topo, .secao > .rd-grade, .secao > .galeria, .secao > .fila, .secao > .metas-dashboard"));
     blocos.forEach(el => el.classList.add("portal-movimento"));
     let quadro = null;
     function atualizar(){
@@ -467,7 +547,8 @@
     const token = sessao?.data?.session?.access_token;
     if(!token){ return null; }
     // O servidor só existe na Vercel; aberto em outro lugar (GitHub Pages) chama a Vercel direto.
-    const servidor = /\.vercel\.app$/i.test(location.hostname) ? "" : "https://easyloc-zeta.vercel.app/";
+    const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    const servidor = local ? (location.port === "3000" ? "/" : "http://127.0.0.1:3000/") : /\.vercel\.app$/i.test(location.hostname) ? "/" : "https://easyloc-zeta.vercel.app/";
     const r = await fetch(servidor + "api/portal-mural", { headers: { Authorization: "Bearer " + token } });
     if(!r.ok){ return null; }
     const j = await r.json().catch(function(){ return null; });

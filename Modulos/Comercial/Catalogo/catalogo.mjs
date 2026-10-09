@@ -2,9 +2,13 @@ import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
 import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261005-cena-pesada";
 import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261006-pastas-livres";
-import { initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261005-busca-dock";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261008-pedido-fluxo";
 
 const supabase = window.supabaseClient;
+const modoPedido = new URLSearchParams(location.search).get('comercial') === 'pedido' && window.parent !== window;
+function projetoAddMarkup(itemId,tipo='chip'){return projetoAddMarkupOriginal(itemId,tipo);}
+if(modoPedido)document.documentElement.classList.add('catalogo-comercial-pedido');
+
 const FOTO_PLACEHOLDER = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M3Y2JkMSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjYwIiB5PSI2OCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI5MCIgcng9IjgiLz48Y2lyY2xlIGN4PSI5MCIgY3k9Ijk2IiByPSIxMCIvPjxwYXRoIGQ9Ik02MCAxNDMgTDEwMCAxMTMgTDEzMCAxMzggTDE1NSAxMTYgTDE4MCAxNDMiLz48L2c+PHRleHQgeD0iMTIwIiB5PSIxODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOWFhMGE4Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=";
 // Home do catálogo (pedido explícito do usuário): substitui a antiga tela
 // de Destaques e o menu de categorias no cabeçalho — vira o menu do
@@ -52,7 +56,7 @@ const GATEWAY_TILES = [
 // IMPORTAVA `studioFormats`/`studioFormatPlacements` de lá (feature "formatos reutilizáveis" do 3D Livre, de uma
 // sessão anterior) — essas duas funções (puras, sem DOM/Three.js/Supabase) foram extraídas pra um arquivo novo,
 // catalogo-formatos.mjs, antes de apagar o resto do módulo. Ver seção correspondente no CLAUDE.md.
-const state = { items: [], activeView: GATEWAY_VIEW, company: null, decorator: null, catalogSession: null, sectionObserver: null, activeSection: null, eventTimer: null, customizeItem: null, fabricDataUrl: "", fabricFile: null, viewMode: "immersive", currentItems: [], currentHeading: "", overlay: null, gatewayCapas: {}, acessoInterno: false, eventPaused: false, activeSubcat: "", homeFilters: newHomeFilters(), homeFilterOpen: "", categoryFilters: newHomeFilters(), categoryFilterOpen: "", currentCategoryItems: null, navBack: [], navForward: [], navCurrent: null, navSuppress: false, timelineSignature: "" };
+const state = { items: [], activeView: modoPedido ? HOME_VIEW : GATEWAY_VIEW, company: null, decorator: null, catalogSession: null, sectionObserver: null, activeSection: null, eventTimer: null, customizeItem: null, fabricDataUrl: "", fabricFile: null, viewMode: modoPedido ? "grid" : "immersive", currentItems: [], currentHeading: "", overlay: null, gatewayCapas: {}, acessoInterno: false, eventPaused: false, activeSubcat: "", homeFilters: newHomeFilters(), homeFilterOpen: "", categoryFilters: newHomeFilters(), categoryFilterOpen: "", currentCategoryItems: null, navBack: [], navForward: [], navCurrent: null, navSuppress: false, timelineSignature: "" };
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -1381,7 +1385,7 @@ function homeFilterBarMarkup(){
 }
 
 function homeCategoriesMarkup(categories){
-  const reordenavel = Boolean(state.acessoInterno);
+  const reordenavel = Boolean(state.acessoInterno && !modoPedido);
   const alca = `<span class="catalog-grid-drag" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>`;
   return `<div class="catalog-grid catalog-home-grid${reordenavel ? " is-reorderable" : ""}">${categories.map((category) => `
       <button type="button" class="catalog-grid-card catalog-home-card${reordenavel ? " is-reorderable" : ""}" data-home-category="${escapeAttr(category.cat)}"${reordenavel ? ` draggable="true" title="Arraste para mudar a posição"` : ""}>${reordenavel ? alca : ""}
@@ -1824,6 +1828,8 @@ function selectGridVariant(card, variante){
   // O "＋ Adicionar ao projeto" do card passa a adicionar a cor que está na tela.
   const chip = card.querySelector("[data-projeto-add]");
   if(chip) chip.dataset.projetoAdd = String(variante.id);
+  const pedidoChip=card.querySelector('[data-pedido-item]');
+  if(pedidoChip)pedidoChip.dataset.pedidoItem=String(variante.id);
   atualizarBotoesProjeto(card);
 }
 
@@ -1917,7 +1923,7 @@ function compararOrdemCatalogo(a, b){
 // aquela posição passa a ser a padrão que todos os decoradores vão ver"). Só na GRADE de uma categoria (não na busca,
 // que mistura categorias), só pra equipe interna. Grava em itens.ordem_exposicao_site via RPC catalogo_reordenar.
 function podeReordenar(categoryItems){
-  return Boolean(state.acessoInterno && Array.isArray(categoryItems) && state.viewMode === "grid");
+  return Boolean(!modoPedido && state.acessoInterno && Array.isArray(categoryItems) && state.viewMode === "grid");
 }
 
 // O item "da lista" (principal do grupo de variantes) a partir de qualquer id — o card pode estar mostrando outra cor.
@@ -1926,6 +1932,7 @@ function grupoDoItem(id){
 }
 
 async function reordenarCategoria(idsVisiveis){
+  if(modoPedido)return;
   const cat = state.activeView;
   const todos = itemsForView(cat).sort(compararOrdemCatalogo);
   const visiveis = idsVisiveis.map(grupoDoItem).filter(Boolean);
@@ -1955,6 +1962,7 @@ async function reordenarCategoria(idsVisiveis){
 // Mesma função, na tela "Categorias" (pedido do usuário: "quero que a mesma função seja aplicada dentro de categorias").
 // Grava a lista inteira de categorias na nova ordem (catalogo_categorias_reordenar) e atualiza catOrdem em todos os itens.
 async function reordenarCategorias(cats){
+  if(modoPedido)return;
   const antes = new Map(getCategories().map((c, i) => [c.cat, i]));
   const labels = new Map(getCategories().map((c) => [c.cat, c.label]));
   const anterior = state.items.map((item) => item.catOrdem);
@@ -1975,6 +1983,7 @@ async function reordenarCategorias(cats){
 }
 
 function bindReordenarCards(){
+  if(modoPedido)return;
   const grid = $("catalogGrid");
   if(!grid || grid.dataset.reorderBound) return;
   grid.dataset.reorderBound = "1";
@@ -2262,6 +2271,7 @@ function bindInteractions(){
     }
     const gridCard = event.target.closest("[data-grid-item]");
     if(gridCard){
+      if(modoPedido)return;
       const item = findItemById(gridCard.dataset.gridItem);
       if(!item) return;
       // Card dos resultados filtrados: abre o item dentro da LISTA FILTRADA (rolar pro próximo item continua
@@ -3876,6 +3886,10 @@ async function init(){
     window.CatalogCredits?.refresh().catch(() => {});
     await carregarCapasGateway();
     if(!ehVisitante()) initCatalogProjetos({
+      pedidoComercial: modoPedido,
+      editarPedidoComercial: () => window.parent.document.querySelector('.comercial-fluxo-bar [data-etapa="dados"]')?.click(),
+      salvarPedidoComercial: project => window.parent.pedidoSincronizarProjetoCatalogo(project),
+      finalizarPedidoComercial: () => window.parent.__salvarPedidoOperacional?.(),
       supabase,
       getSession: () => state.catalogSession,
       isStaff: () => state.acessoInterno,
@@ -3888,6 +3902,19 @@ async function init(){
       cenaEditor,
       openProjetos: (options) => openProjetosOverlay(options),
     });
+    if(modoPedido){
+      definirProjetoComercialPedido(window.parent.pedidoProjetoCatalogo());
+      window.sincronizarPedidoCatalogo = async () => {
+        const project = await sincronizarProjetoComercialPedido(window.parent.pedidoMetadadosCatalogo());
+        await window.parent.pedidoSincronizarProjetoCatalogo(project);
+      };
+      window.abrirProjetoComercialPedido = async () => {
+        await window.sincronizarPedidoCatalogo();openProjetosOverlay({view:'work'});
+      };
+      window.abrirCatalogoComercialPedido = async () => {
+        await window.sincronizarPedidoCatalogo();closeCatalogProjetos();applyView(HOME_VIEW);
+      };
+    }
     renderHeader();
     updateViewToggleButton();
     updateViewToggleVisibility();

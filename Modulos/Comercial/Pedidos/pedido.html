@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
-  <link rel="stylesheet" href="pedido.css?v=20260913b">
+  <link rel="stylesheet" href="pedido.css?v=20261008-topo-compacto">
 </head>
 <body>
 <div class="pedido-screen orcamento-page el-page" data-module-root>
@@ -21,7 +21,7 @@
             <span>&lt;</span>
             Voltar
           </button>
-          <h1 class="pedido-numero-destaque">#<span id="orcamentoNumero">1548</span></h1>
+          <h1 class="pedido-numero-destaque">#<span id="orcamentoNumero"></span></h1>
           <span class="pedido-status" id="pedidoStatus">Orcamento</span>
         </div>
 
@@ -103,6 +103,11 @@
           </div>
         </section>
 
+        <div class="pedido-observacoes-evento">
+          <label class="pedido-observacao-card" for="observacoesEntrega"><span>Observações de entrega</span><textarea id="observacoesEntrega" rows="3" maxlength="3000" placeholder="Orientações para a entrega..."></textarea></label>
+          <label class="pedido-observacao-card" for="observacoesColeta"><span>Observações de coleta</span><textarea id="observacoesColeta" rows="3" maxlength="3000" placeholder="Orientações para a coleta..."></textarea></label>
+          <label class="pedido-observacao-card" for="observacoesSeparacao"><span>Observações de separação</span><textarea id="observacoesSeparacao" rows="3" maxlength="3000" placeholder="Cuidados na separação dos itens..."></textarea></label>
+        </div>
         <section class="pedido-location-strip">
           <div class="location-field">
             <span>Local do evento</span>
@@ -150,7 +155,7 @@
       <main class="pedido-main">
         <section class="pedido-items-panel">
           <div class="pedido-items-head">
-            <h2>Itens do pedido</h2>
+            <h2>Sua seleção</h2>
             <div class="acoes-itens">
               <button id="addItemBtn" type="button" class="btn btn-primary">+ Adicionar item</button>
               <button id="addComponenteBtn" type="button" class="btn btn-secondary">+ Componente</button>
@@ -535,7 +540,7 @@
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/paymentPix.js"></script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20260913b"></script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261008-carregar-contexto"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

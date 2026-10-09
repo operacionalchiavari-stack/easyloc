@@ -6,6 +6,7 @@
   "scripts": {
     "generate-embeddings": "node Scripts/gerar-embedding.mjs",
     "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
     "check": "node --check server/index.js && node --check Scripts/gerar-embedding.mjs",
     "test": "npm run check",
     "prepare:pdf": "node Scripts/copiar-pdfjs.cjs",

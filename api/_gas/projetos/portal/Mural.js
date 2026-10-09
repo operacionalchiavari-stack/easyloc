@@ -18,7 +18,7 @@ const MURAL_PREFIXO_ADMIN = 'MURAL_ADMIN_';
 const MURAL_CACHE_PUBLICO = 'MURAL_PUBLICO_V3';
 
 const MURAL_ABAS = {
-  avisos: { nome: 'Mural_Avisos', cab: ['ID', 'Título', 'Texto', 'Prioridade', 'Fixado', 'Válido até', 'Publicado por', 'Publicado em'] },
+  avisos: { nome: 'Mural_Avisos', cab: ['ID', 'Título', 'Texto', 'Prioridade', 'Fixado', 'Válido até', 'Publicado por', 'Publicado em', 'Cor'] },
   colaboradores: { nome: 'Mural_Colaboradores', cab: ['ID', 'Nome', 'Setor', 'Aniversário (dd/mm)', 'Admissão', 'Foto (ID)', 'Ativo', 'Atualizado em'] },
   reconhecimentos: { nome: 'Mural_Reconhecimentos', cab: ['ID', 'Nome', 'Título', 'Texto', 'Data', 'Foto (ID)', 'Publicado por', 'Publicado em'] },
   galeria: { nome: 'Mural_Galeria', cab: ['ID', 'Legenda', 'Data', 'Foto (ID)', 'Publicado por', 'Publicado em'] }
@@ -180,11 +180,11 @@ function MURAL_numerosMes_() {
 /****************************************************
  *  DADOS DO MURAL (o que a página mostra)
  ****************************************************/
-function MURAL_dadosPublicos_() {
+function MURAL_dadosPublicos_(atualizar) {
 
   const cache = CacheService.getScriptCache();
   const guardado = cache.get(MURAL_CACHE_PUBLICO);
-  if (guardado) { return JSON.parse(guardado); }
+  if (guardado && !atualizar) { return JSON.parse(guardado); }
 
   const hoje = MURAL_hojeISO_();
   const mesAtual = hoje.slice(5, 7);
@@ -192,7 +192,7 @@ function MURAL_dadosPublicos_() {
 
   const avisos = MURAL_ler_('avisos')
     .map(function (x) {
-      return { id: x.v[0], titulo: x.v[1], texto: x.v[2], prioridade: x.v[3] || 'INFO', fixado: x.v[4] === 'SIM', validoAte: x.v[5], publicadoEm: x.v[7] };
+      return { id: x.v[0], titulo: x.v[1], texto: x.v[2], prioridade: x.v[3] || 'INFO', fixado: x.v[4] === 'SIM', validoAte: x.v[5], publicadoEm: x.v[7], cor: x.v[8] || 'neutro' };
     })
     .filter(function (a) { return !a.validoAte || a.validoAte >= hoje; })
     .sort(function (a, b) {
@@ -203,14 +203,14 @@ function MURAL_dadosPublicos_() {
 
   const colaboradores = MURAL_ler_('colaboradores')
     .map(function (x) {
-      return { nome: x.v[1], setor: x.v[2], aniversario: x.v[3], admissao: MURAL_dataISO_(x.v[4]), foto: MURAL_foto_(x.v[5], 400), ativo: x.v[6] !== 'NAO' };
+      return { id:x.v[0], nome: x.v[1], setor: x.v[2], aniversario: x.v[3], admissao: MURAL_dataISO_(x.v[4]), foto: MURAL_foto_(x.v[5], 400), ativo: x.v[6] !== 'NAO' };
     })
     .filter(function (c) { return c.ativo; });
 
   const aniversariantes = colaboradores
     .filter(function (c) { return String(c.aniversario).slice(3, 5) === mesAtual; })
     .map(function (c) {
-      return { nome: c.nome, setor: c.setor, foto: c.foto, dia: String(c.aniversario).slice(0, 2), hoje: String(c.aniversario).slice(0, 2) === diaAtual };
+      return { id:c.id, mensagens:MURAL_parabensLer_(c.id), nome: c.nome, setor: c.setor, foto: c.foto, dia: String(c.aniversario).slice(0, 2), hoje: String(c.aniversario).slice(0, 2) === diaAtual };
     })
     .sort(function (a, b) { return a.dia.localeCompare(b.dia); });
 

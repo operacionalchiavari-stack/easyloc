@@ -29,7 +29,7 @@ export function initAutocompleteClientes({
 
     const { data, error } = await supabase
       .from("clientes_empresas")
-      .select("id, nome_razao, telefone")
+      .select("id, nome_razao, telefone, catalogo_logo_url")
       .eq("empresa_id", window.__CONTEXT?.empresa_id)
       .ilike("nome_razao", `%${termo}%`)
       .limit(10);
@@ -62,6 +62,7 @@ export function initAutocompleteClientes({
         if(clienteIdHidden) clienteIdHidden.value = cliente.id;
         if(telefoneInput) telefoneInput.value = cliente.telefone || "";
         if(responsavelInput) responsavelInput.value = cliente.nome_razao;
+        clienteInput.dispatchEvent(new CustomEvent('cliente-selecionado',{detail:cliente}));
 
         ocultarLista();
       });

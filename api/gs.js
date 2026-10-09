@@ -129,3 +129,4 @@ module.exports = async (req, res) => {
 
 module.exports.configuracao = configuracao;
 module.exports.liberarOrigem = liberarOrigem;
+module.exports.usuarioDaSessao = usuarioDaSessao;

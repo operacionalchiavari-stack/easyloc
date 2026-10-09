@@ -24,6 +24,39 @@
   font-size: 15px;
 }
 
+html:root #main-content #contratosPage > .contratos-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center !important;
+}
+
+html:root #main-content #contratosPage > .contratos-header > div:first-child {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  width: 100%;
+  padding: 34px 220px 22px !important;
+  text-align: center !important;
+}
+
+html:root #main-content #contratosPage #contratoNovoModelo {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: center;
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  html:root #main-content #contratosPage > .contratos-header > div:first-child {
+    padding: 34px 0 22px !important;
+  }
+
+  html:root #main-content #contratosPage #contratoNovoModelo {
+    grid-row: 2;
+    margin-top: 0;
+  }
+}
+
 .contratos-layout {
   display: grid;
   grid-template-columns: minmax(250px, 310px) minmax(0, 1fr) minmax(260px, 330px);

@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
 dotenv.config();
@@ -17,7 +18,7 @@ const allowedOrigins = APP_ORIGIN.split(',').map((origin) => origin.trim()).filt
 app.disable('x-powered-by');
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self)');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
@@ -25,7 +26,7 @@ app.use((req, res, next) => {
 });
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin || allowedOrigins.includes(origin) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return callback(null, true);
     return callback(new Error('Origin not allowed by CORS'));
   },
 }));
@@ -219,5 +220,26 @@ app.post('/api/search', async (req, res) => {
   }
 });
 
+// As mesmas APIs de produção rodam localmente, com a mesma autenticação.
+['gs', 'gs-planilha', 'portal-mural'].forEach((nome) => {
+  app.all('/api/' + nome, async (req, res, next) => {
+    try {
+      const arquivo = require.resolve('../api/' + nome);
+      delete require.cache[arquivo];
+      await require(arquivo)(req, res);
+    } catch (err) { next(err); }
+  });
+});
+app.use('/api', (req, res) => res.status(404).json({ error: 'API não encontrada' }));
+// Serve apenas arquivos do frontend. Configurações e código do servidor ficam privados.
+const raiz = path.resolve(__dirname, '..');
+app.use((req, res, next) => {
+  let caminho;
+  try { caminho = decodeURIComponent(req.path); } catch (_) { return res.sendStatus(400); }
+  const partes = caminho.split('/').filter(Boolean);
+  if (partes.some(p => p.startsWith('.')) || /^(api|server|node_modules|supabase|tests|outputs|Scripts)(\/|$)/i.test(partes.join('/')) || !/\.(html|css|js|mjs|json|png|jpe?g|webp|svg|ico|gif|woff2?|ttf|mp4|webm|pdf|glb|gltf)$/i.test(caminho) && caminho !== '/') return res.sendStatus(404);
+  next();
+});
+app.use(express.static(raiz, { dotfiles: 'deny', index: 'login.html' }));
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+app.listen(port, '127.0.0.1', () => console.log(`Sistema local: http://127.0.0.1:${port}/login.html`));

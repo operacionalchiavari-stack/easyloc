@@ -1795,6 +1795,7 @@ body.painel-aberto{ overflow:hidden; }
 "></div>
 
 <div class="tabs">
+<button class="tab-btn" onclick="document.getElementById('comunicadoPortal').showModal()">Enviar comunicado</button>
     <button class="tab-btn active" data-tab="dashboard" onclick="abrirTab('dashboard')">Dashboard</button>
     <button class="tab-btn" data-tab="cadastro" onclick="abrirTab('cadastro')">Cadastro de insumos</button>
     <button class="tab-btn" data-tab="movimentacao" onclick="abrirTab('movimentacao')">Entrada / Saída</button>
@@ -5640,6 +5641,25 @@ var PainelAlmox = (function(){
 
   return { abrir:abrir, fechar:fechar, mudarMes:mudarMes };
 })();
+</script>
+
+<dialog id="comunicadoPortal" style="margin:auto;width:min(520px,92vw);border:1px solid #e7e1d7;border-radius:20px;padding:28px;background:#fff;color:#292c28">
+<form id="formComunicadoPortal">
+<h2 style="margin:0 0 8px">Comunicado ao portal</h2>
+<p style="margin:0 0 20px;color:#777;font-size:14px">Compartilhe orienta??es sobre o uso dos insumos com a equipe.</p>
+<label>Título<input name="titulo" required maxlength="120" placeholder="Economizem o uso de fita adesiva" style="width:100%;margin:8px 0 16px"></label>
+<label>Orienta??o<textarea name="texto" required maxlength="1200" rows="4" placeholder="Explique o cuidado que a equipe deve ter." style="width:100%;margin:8px 0 16px"></textarea></label>
+<label>Válido até (opcional)<input name="validoAte" type="date" style="width:100%;margin:8px 0 16px"></label>
+<label><input name="importante" type="checkbox"> Marcar como importante</label>
+<p id="retornoComunicado" role="status" style="margin:14px 0;font-size:13px"></p>
+<div style="display:flex;justify-content:flex-end;gap:10px"><button type="button" class="btn" onclick="document.getElementById('comunicadoPortal').close()">Fechar</button><button type="submit" class="btn">Publicar comunicado</button></div>
+</form></dialog>
+<script>
+document.getElementById('formComunicadoPortal').addEventListener('submit',function(e){
+ e.preventDefault();const form=e.currentTarget, botao=form.querySelector('[type=submit]'), retorno=document.getElementById('retornoComunicado');
+ botao.disabled=true;retorno.textContent='Publicando...';
+ google.script.run.withSuccessHandler(function(){botao.disabled=false;form.reset();retorno.textContent='Comunicado publicado no portal.';}).withFailureHandler(function(err){botao.disabled=false;retorno.textContent=err.message || 'Não foi possível publicar.';}).enviarComunicadoPortal({titulo:form.elements.titulo.value,texto:form.elements.texto.value,validoAte:form.elements.validoAte.value,importante:form.elements.importante.checked});
+});
 </script>
 </body>
 </html>

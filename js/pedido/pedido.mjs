@@ -45,6 +45,12 @@ export async function initPedido(){
      CONTEXTO
   ===================================================== */
   const supabase = window.supabaseClient;
+  await window.aguardarContexto?.();
+  if(!window.__CONTEXT?.empresa_id){
+    window.__pedidoModuleLoaded=false;
+    window.alerta?.('Não foi possível identificar a empresa. Recarregue para abrir o pedido.','Carregar pedido','erro');
+    return;
+  }
 
   /* =====================================================
      CARREGAR CONFIGURAÇÃO FINANCEIRA (ABSORÇÃO FRETE/MONTAGEM)
@@ -159,7 +165,7 @@ initServicos({ supabase, els });
    PAGAMENTO 🔥
 ===================================================== */
 initPagamento();
-setupPedidoWorkspace({ supabase });
+await setupPedidoWorkspace({ supabase });
 
 /* =====================================================
    PRÉ RESERVA
@@ -370,7 +376,7 @@ window.initPedido = initPedido;
 window.__activeModuleDestroy = destroyPedido;
 requestAnimationFrame(() => requestAnimationFrame(initPedido));
 
-function setupPedidoWorkspace({ supabase }){
+async function setupPedidoWorkspace({ supabase }){
   const avisar = (mensagem, titulo = "Pedido", tipo = "info") => {
     if(typeof window.alerta === "function"){
       window.alerta(mensagem, titulo, tipo);
@@ -512,6 +518,12 @@ function setupPedidoWorkspace({ supabase }){
     }
 
     return numero;
+  }
+
+  if(!window.__PEDIDO_ATUAL_ID && !new URLSearchParams(location.search).has('pedido')){
+    obterProximoNumeroPedido().then(numero=>{
+      if(!window.__PEDIDO_ATUAL_ID)setTextValue('orcamentoNumero',numero);
+    }).catch(()=>setTextValue('orcamentoNumero','Novo'));
   }
 
   const coletarParcelasFinanceiras = () => {
@@ -794,7 +806,18 @@ function setupPedidoWorkspace({ supabase }){
     setInputValue("clienteInput", pedido.cliente_nome || "");
     setInputValue("clienteIdHidden", pedido.cliente_id || "");
     setInputValue("telefoneInput", pedido.contato_cliente || "");
+    const atualizarIdentidade=cliente=>document.getElementById('clienteInput')?.dispatchEvent(new CustomEvent('cliente-selecionado',{detail:cliente}));
+    atualizarIdentidade({nome_razao:pedido.cliente_nome || 'Cliente',telefone:pedido.contato_cliente || ''});
+    if(pedido.cliente_id){
+      supabase.from('clientes_empresas').select('nome_razao,telefone,catalogo_logo_url')
+        .eq('empresa_id',window.__CONTEXT.empresa_id).eq('id',pedido.cliente_id).maybeSingle()
+        .then(({data})=>{if(data && document.getElementById('clienteIdHidden')?.value===pedido.cliente_id)atualizarIdentidade(data);})
+        .catch(()=>{});
+    }
     selecionarOpcaoPorTexto("tipoEventoSelect", pedido.tipo_evento || "");
+    setInputValue('observacoesEntrega', observacoesPedido.observacoes_entrega || '');
+    setInputValue('observacoesColeta', observacoesPedido.observacoes_coleta || '');
+    setInputValue('observacoesSeparacao', observacoesPedido.observacoes_separacao || '');
     setInputValue("localInput", pedido.local_nome || "");
     setInputValue("localIdHidden", pedido.local_id || "");
     setInputValue("dataEntrega", dataParaISO(pedido.data_entrega));
@@ -1080,6 +1103,10 @@ function setupPedidoWorkspace({ supabase }){
       status_comercial: statusComercial,
       observacoes: {
         ...observacoesAtuais,
+        projeto_comercial: window.__pedidoProjetoComercial || observacoesAtuais.projeto_comercial || null,
+        observacoes_entrega: document.getElementById('observacoesEntrega')?.value.trim() || '',
+        observacoes_coleta: document.getElementById('observacoesColeta')?.value.trim() || '',
+        observacoes_separacao: document.getElementById('observacoesSeparacao')?.value.trim() || '',
         financeiro: document.getElementById("pagamentoObservacaoFinanceira")?.value || "",
         parcelas_financeiras: coletarParcelasFinanceiras(),
         pagamento_config: window.__pedidoColetarPagamentoConfig?.() || null,
@@ -1311,7 +1338,7 @@ function setupPedidoWorkspace({ supabase }){
   };
   window.addEventListener("easyloc:pix-atualizado", window.__pedidoPixHandler);
   window.addEventListener("easyloc:pedido-financeiro-atualizado", window.__pedidoPixHandler);
-  carregarPedidoSalvoSeNecessario();
+  await carregarPedidoSalvoSeNecessario();
 }
 
 function setupTimelinePedido({ avisar }){

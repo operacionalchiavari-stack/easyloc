@@ -108,6 +108,13 @@ function rpcParams(extra){
   return sessao.token ? { p_token: sessao.token, ...extra } : { p_empresa_id: sessao.empresa_id, ...extra };
 }
 async function rpc(nome, extra = {}){
+  if(ctx.pedidoComercial){
+    if(nome === 'projeto_salvar'){
+      await ctx.salvarPedidoComercial(S.current);
+      return {};
+    }
+    throw new Error('Esta ação pertence ao projeto do catálogo.');
+  }
   const { data, error } = await ctx.supabase.rpc(nome, rpcParams(extra));
   if(error) throw error;
   return data;
@@ -194,6 +201,7 @@ function chaveAtivo(){
 }
 function lerAtivo(){ try{ return JSON.parse(localStorage.getItem(chaveAtivo()) || "null"); }catch{ return null; } }
 function gravarAtivo(){
+  if(ctx.pedidoComercial)return;
   try{
     if(S.current) localStorage.setItem(chaveAtivo(), JSON.stringify({ id: S.current.id, amb: S.activeAmb }));
     else localStorage.removeItem(chaveAtivo());
@@ -1274,7 +1282,7 @@ function pintarPainel(){
     // Título da aba Geral (pedido do usuário: "um título bem bonito escrito Lista Completa").
     host.innerHTML = `<header class="cpj-geral-title"><span class="cpj-geral-title-orn" aria-hidden="true"></span><h2>Lista <em>Completa</em></h2><span class="cpj-geral-title-orn" aria-hidden="true"></span></header>`
       + geralHtml(dadosApresentacao(S.current,ctx.findItem))
-      + `<footer class="pa-geral-footer"><button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`;
+      + `<footer class="pa-geral-footer"><button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${ctx.pedidoComercial ? "Salvar pedido" : S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`;
     vincularOrdemLista(host);
     return;
   }
@@ -2333,9 +2341,12 @@ async function aoClicarOverlay(event){
       if(criado){ S.view = "work"; pintarTela(); }
     }else if(tipo === "recarregar"){ S.listLoaded = false; pintarLista(); carregarLista().then(pintarLista); }
     else if(tipo === "voltar"){ await salvarAgora(); S.view = "list"; pintarTela(); carregarLista().then(() => { if(S.open && S.view === "list") pintarLista(); }); }
-    else if(tipo === "editar-info") fluxoEditarInfo();
+    else if(tipo === "editar-info"){if(ctx.pedidoComercial)ctx.editarPedidoComercial();else fluxoEditarInfo();}
     else if(tipo === "foto-remover"){ event.preventDefault?.(); removerFotoCasal(); }
-    else if(tipo === "enviar") fluxoEnviarPedido();
+    else if(tipo === "enviar"){
+      if(ctx.pedidoComercial){if(await beforeLeaveProjetos())await ctx.finalizarPedidoComercial();}
+      else fluxoEnviarPedido();
+    }
     else if(tipo === "novo-ambiente"){
       const nome = await fluxoAmbiente();
       if(nome){ await criarAmbiente(nome); pintarNavegacao(); pintarPainel(); }
@@ -2555,7 +2566,7 @@ export async function escolherProjetoNaEntrada(){
 export async function openCatalogProjetos({ view = "list" } = {}){
   S.open = true;
   S.dockPop = false;
-  S.view = view === "work" && S.current ? "work" : "list";
+  S.view = (view === "work" || ctx.pedidoComercial) && S.current ? "work" : "list";
   pintarTela();
 }
 
@@ -2573,6 +2584,7 @@ export async function beforeLeaveProjetos(){
 export async function backCatalogProjetos(){
   if(!S.open || S.view!=='work') return false;
   if(!(await beforeLeaveProjetos())) return true;
+  if(ctx.pedidoComercial){ctx.goCatalog();return true;}
   if(S.workTab==='apresentacao'){
     if(S.presentationAmb) S.presentationAmb=null;
     else S.workTab='plantas';
@@ -2662,7 +2674,17 @@ export function initCatalogProjetos(contexto){
 
   // Retoma o projeto em que a pessoa estava (segundo plano — nunca atrasa o catálogo).
   const ativo = lerAtivo();
-  if(ctx.isStaff() && ativo?.id){
+  if(!ctx.pedidoComercial && ctx.isStaff() && ativo?.id){
     carregarProjeto(ativo.id).then((project) => definirAtual(project, ativo.amb)).catch(() => { try{ localStorage.removeItem(chaveAtivo()); }catch{} });
   }
+}
+
+export function definirProjetoComercialPedido(project){
+  definirAtual(normalizar(project));
+}
+export async function sincronizarProjetoComercialPedido(meta = {}){
+  await salvarAgora();
+  if(S.save === 'error' || S.save === 'dirty')throw new Error(S.saveError || 'Não foi possível atualizar os itens do pedido.');
+  if(S.current) Object.assign(S.current, meta);
+  return S.current;
 }
