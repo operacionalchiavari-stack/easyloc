@@ -230,31 +230,3 @@
     </div>
   </div>
 </div>
-
-<div class="perm-modal" id="permUserModal" aria-hidden="true">
-  <div class="perm-modal-box">
-    <div class="perm-modal-head">
-      <div>
-        <span class="perm-eyebrow">Usuário</span>
-        <h2>Novo usuário</h2>
-      </div>
-      <button class="perm-close" type="button" data-perm-close="permUserModal">x</button>
-    </div>
-    <div class="perm-form-grid">
-      <label>Nome<input class="el-input" id="permNewUserName" placeholder="Nome completo"></label>
-      <label>Email<input class="el-input" id="permNewUserEmail" type="email" placeholder="email@empresa.com"></label>
-      <label>Cargo<input class="el-input" id="permNewUserRole" placeholder="Ex: Comercial"></label>
-      <label>Status
-        <select class="el-select" id="permNewUserStatus">
-          <option>Ativo</option>
-          <option>Bloqueado</option>
-        </select>
-      </label>
-    </div>
-    <p class="perm-note">O cadastro cria o vínculo operacional. Para login real, o convite de autenticação deve ser enviado pelo fluxo de usuários do Supabase quando você habilitar essa etapa.</p>
-    <div class="perm-modal-actions">
-      <button class="btn secondary" type="button" data-perm-close="permUserModal">Cancelar</button>
-      <button class="btn primary" type="button" id="permCreateUserBtn">Salvar usuário</button>
-    </div>
-  </div>
-</div>

@@ -32,12 +32,13 @@ function itensDanificadosAbertas(){
     Session.getScriptTimeZone();
 
   const lista = [];
+  const ciencias = Acervo.ciencias();
 
   if(ultimaLinha >= 2){
 
     /* A até Q: ID … data de urgência */
     const dados =
-      sh.getRange(2, 1, ultimaLinha - 1, 17).getValues();
+      sh.getRange(2, 1, ultimaLinha - 1, 23).getValues();
 
     dados.forEach(function(l){
 
@@ -56,6 +57,7 @@ function itensDanificadosAbertas(){
           .filter(function(v){ return v; });
 
       lista.push({
+        ciencia: cienciaDanoDaLinha_(l,ciencias),
         id: String(l[0]),
         data: itensDanificadosFormatar_(l[1], fuso, "dd/MM/yyyy HH:mm"),
         dataOrdem: itensDanificadosFormatar_(l[1], fuso, "yyyy-MM-dd'T'HH:mm"),

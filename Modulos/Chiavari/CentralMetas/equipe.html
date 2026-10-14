@@ -1104,7 +1104,7 @@ function render(){
   /* Perfil */
   const avatar = document.getElementById("avatar");
 
-  avatar.innerHTML = pessoa.fotoId
+  avatar.innerHTML = pessoa.fotoUrl ? '<img src="' + escapar(pessoa.fotoUrl) + '" alt="">' : pessoa.fotoId
     ? '<img src="' + urlFoto(pessoa.fotoId, 300) + '" alt="" onerror="this.parentNode.textContent=\'' + escapar(iniciais(pessoa.nome)) + '\'">'
     : escapar(iniciais(pessoa.nome));
 

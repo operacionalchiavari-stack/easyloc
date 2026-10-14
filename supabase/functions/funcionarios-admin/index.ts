@@ -27,8 +27,8 @@ Deno.serve(async (req) => {
       const auth = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { auth: { persistSession: false, autoRefreshToken: false } });
       const { data, error } = await auth.auth.signInWithPassword({ email, password });
       if (error || !data.session) return response({ error: 'Login ou senha inválidos' }, 401);
-      const { data: employee, error: employeeError } = await admin.from('funcionarios_acesso').select('ativo').eq('id', data.user.id).maybeSingle();
-      if (employeeError || employee?.ativo === false) {
+      const { data: employee, error: employeeError } = await admin.from('funcionarios_acesso').select('ativo,acesso_sistema').eq('id', data.user.id).maybeSingle();
+      if (employeeError || employee?.ativo === false || employee?.acesso_sistema === false) {
         await auth.auth.signOut();
         return response({ error: 'Acesso indisponível. Consulte o administrador.' }, 403);
       }
@@ -59,20 +59,44 @@ Deno.serve(async (req) => {
     if (!proprio && !await can(permission)) return response({ error: 'Sem permissão para salvar funcionário' }, 403);
     if (!proprio && body.permissions != null && !await can('configuracoes.permissoes.editar')) return response({ error: 'Sem permissão para gerenciar acessos' }, 403);
     if (!proprio && !Array.isArray(body.permissions) && body.permissions != null) return response({ error: 'Permissões inválidas' }, 400);
+    const cadastroAnterior = body.id ? checked(await admin.from('funcionarios_acesso').select('id,empresa_id,acesso_sistema,foto_url').eq('id', body.id).maybeSingle()) : null;
+    if (cadastroAnterior && cadastroAnterior.empresa_id !== empresa) return response({ error: 'Funcionário não pertence à empresa' }, 403);
+    if (!employee.acesso_sistema) {
+      if (cadastroAnterior?.acesso_sistema) return response({ error: 'Para suspender o acesso desta conta, marque o funcionário como inativo.' }, 400);
+      if (body.photo && (typeof body.photo !== 'string' || body.photo.length > 1_500_000 || !/^data:image\/jpeg;base64,/.test(body.photo))) return response({ error: 'Foto inválida' }, 400);
+      const { senha, pin, ...fields } = employee;
+      const id = checked(await admin.rpc('rh_funcionario_salvar', { p_empresa: empresa, p_ator: user.id, p_id: body.id || null, p_dados: fields, p_pin: pin || null }));
+      if (body.photo) {
+        const bytes = Uint8Array.from(atob(body.photo.split(',')[1]), c => c.charCodeAt(0));
+        if (bytes[0] !== 255 || bytes[1] !== 216 || bytes[2] !== 255) return response({ id, warning: 'Cadastro salvo, mas a foto não é um JPEG válido.' });
+        const path = `${empresa}/${id}/${crypto.randomUUID()}.jpg`;
+        checked(await admin.storage.from('funcionarios-fotos').upload(path, bytes, { contentType: 'image/jpeg', upsert: false }));
+        checked(await admin.from('funcionarios_acesso').update({foto_url:path}).eq('id',id).eq('empresa_id',empresa));
+        await admin.storage.from('avatares').upload(`${empresa}/${id}.jpg`, bytes, { contentType: 'image/jpeg', upsert: true });
+        if (cadastroAnterior?.foto_url?.startsWith(`${empresa}/${id}/`)) await admin.storage.from('funcionarios-fotos').remove([cadastroAnterior.foto_url]);
+      }
+      return response({ id, warning: '' });
+    }
+    const promover = cadastroAnterior?.acesso_sistema === false;
+    if (promover && (!await can('configuracoes.permissoes.editar') || !employee.senha)) return response({ error: 'Um administrador deve informar a senha para liberar o acesso.' }, 403);
     let id = body.id;
     let created = false;
     let oldPhoto = '';
     let currentEmail = employee.email;
-    if (id) {
+    if (id && !promover) {
       const links = checked(await admin.from('usuarios_empresas').select('empresa_id').eq('user_id', id));
       if (!links.length || links.some((l: any) => l.empresa_id !== empresa)) return response({ error: 'Funcionário não pertence exclusivamente a esta empresa' }, 403);
       const old = checked(await admin.from('funcionarios_acesso').select('foto_url,email').eq('id', id).maybeSingle());
       oldPhoto = old?.foto_url || '';
       const existingAuth = checked(await admin.auth.admin.getUserById(id));
       currentEmail = existingAuth.user.email.toLowerCase();
+      if (!proprio && !await can('configuracoes.permissoes.editar')) {
+        const oldLogin = checked(await admin.from('funcionarios_acesso').select('login').eq('id',id).maybeSingle())?.login;
+        if (employee.senha || employee.email !== currentEmail || (oldLogin && employee.login !== oldLogin)) return response({ error: 'Somente um administrador pode alterar o login de outra pessoa.' }, 403);
+      }
     } else {
       if (!await can('configuracoes.permissoes.editar')) return response({ error: 'Sem permissão para criar uma conta de acesso' }, 403);
-      const result = checked(await admin.auth.admin.createUser({ email: employee.email, password: employee.senha, email_confirm: true, user_metadata: { nome: employee.nome } }));
+      const result = checked(await admin.auth.admin.createUser({ ...(promover ? {id:body.id} : {}), email: employee.email, password: employee.senha, email_confirm: true, user_metadata: { nome: employee.nome } }));
       id = result.user.id;
       created = true;
     }
@@ -99,8 +123,10 @@ Deno.serve(async (req) => {
       if (proprio) {
         const r = checked(await admin.rpc('funcionario_salvar_proprio', { p_empresa: empresa, p_ator: user.id, p_dados: { ...fields, foto_url: photo }, p_pin: pin || null }));
         if (r && r.aviso) avisoProprio = r.aviso;
+      } else if (promover) {
+        checked(await admin.rpc('rh_funcionario_promover', { p_empresa: empresa, p_ator: user.id, p_antigo: body.id, p_novo: id, p_dados: { ...fields, foto_url: photo }, p_permissoes: body.permissions ?? null, p_pin: pin || null }));
       } else {
-        checked(await admin.rpc('funcionario_salvar', { p_empresa: empresa, p_ator: user.id, p_id: id, p_dados: { ...fields, email: currentEmail, foto_url: photo }, p_permissoes: body.permissions ?? null, p_pin: pin || null }));
+        checked(await admin.rpc('rh_funcionario_acesso_salvar', { p_empresa: empresa, p_ator: user.id, p_id: id, p_dados: { ...fields, email: currentEmail, foto_url: photo }, p_permissoes: body.permissions ?? null, p_pin: pin || null }));
       }
     } catch (error) {
       if (uploaded) await admin.storage.from('funcionarios-fotos').remove([uploaded]);

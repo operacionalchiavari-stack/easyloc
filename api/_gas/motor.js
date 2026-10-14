@@ -16,6 +16,7 @@ const crypto = require("crypto");
 const { fetchSincrono } = require("./sincrono");
 const { formatarData } = require("./datas");
 const { Aba, Planilha } = require("./planilha");
+const { linhasFuncionarios, fonteFuncionarios } = require('./rh-cadastro');
 
 const FUSO = "America/Sao_Paulo";
 const BUCKET = "gs-arquivos";
@@ -135,6 +136,16 @@ class Execucao {
     if (this.abas.has(chave)) { return this.abas.get(chave); }
     const info = this.infoAbas.get(chave);
     if (!info) { return null; }
+    if (fonteFuncionarios(planilha._id, nome)) {
+      const fontes = rpcSincrono(this.cfg, 'rh_fonte_empresa', { p_planilha: planilha._id, p_aba: nome });
+      const empresa = this.usuario ? this.usuario.empresaId : fontes;
+      const pessoas = empresa ? rpcSincrono(this.cfg, 'rh_funcionarios_operacionais', { p_empresa: empresa }) : [];
+      const linhas = linhasFuncionarios(planilha._id, pessoas);
+      const aba = new Aba(this, planilha, { nome, linhas, colunas: linhas[0].length, formatos: ['@','@','@'], sheet_id: info.sheetId, ordem: info.ordem, versao: info.versao });
+      aba._cadastroRH = true;
+      this.abas.set(chave, aba);
+      return aba;
+    }
     let dados = CACHE_ABAS.get(chave);
     if (!dados || dados.versao !== info.versao) {
       const r = rpcSincrono(this.cfg, "gs_ler_aba", { p_planilha: planilha._id, p_aba: nome });
@@ -178,7 +189,10 @@ class Execucao {
     this.abas.set(aba._planilha._id + "|" + novo, nova);
   }
 
-  _marcarEscrita(aba) { this.escritas.add(aba); }
+  _marcarEscrita(aba) {
+    if (aba._cadastroRH) throw new Error('Cadastre e edite funcionários exclusivamente em RH → Cadastro de Funcionários.');
+    this.escritas.add(aba);
+  }
 
   criarPlanilha(nome) {
     const id = "gerada-" + crypto.randomUUID();
@@ -474,8 +488,31 @@ class Execucao {
        Acervo.pode(chave): administrador da empresa pode tudo; os outros, só as
        permissões marcadas para eles (mesma regra de funcionario_pode no banco). */
     const Acervo = {
-      usuario: () => (ex.usuario ? { id: ex.usuario.id, nome: ex.usuario.nome, email: ex.usuario.email, admin: !!ex.usuario.admin } : null),
-      pode: chave => !!(ex.usuario && (ex.usuario.admin || (ex.usuario.permissoes || []).indexOf(chave) >= 0))
+      usuario: () => (ex.usuario ? { id: ex.usuario.id, nome: ex.usuario.nome, email: ex.usuario.email, empresaId: ex.usuario.empresaId, admin: !!ex.usuario.admin } : null),
+      pode: chave => !!(ex.usuario && (ex.usuario.admin || (ex.usuario.permissoes || []).indexOf(chave) >= 0)),
+      funcionarios: () => {
+        if (!ex.usuario) throw new Error('Sessão necessária');
+        return rpcSincrono(cfg, 'rh_funcionarios_operacionais', { p_empresa: ex.usuario.empresaId }).map(f => ({...f,
+          fotoUrl: !f.foto_url ? '' : /^https?:\/\//.test(f.foto_url) ? f.foto_url : `${cfg.url}/storage/v1/object/public/avatares/${ex.usuario.empresaId}/${f.id}.jpg`
+        }));
+      },
+      pinConferir: (id, pin) => {
+        if (!ex.usuario) throw new Error('Sessão necessária');
+        return rpcSincrono(cfg, 'rh_pin_conferir', { p_empresa: ex.usuario.empresaId, p_funcionario: id, p_pin: pin });
+      },
+      equipeCadastro: cpf => {
+        const f = rpcSincrono(cfg, 'rh_equipe_cadastro', { p_cpf: cpf });
+        return f ? {...f,fotoUrl: !f.foto_url ? '' : /^https?:\/\//.test(f.foto_url) ? f.foto_url : `${cfg.url}/storage/v1/object/public/avatares/${f.empresa_id}/${f.id}.jpg`} : null;
+      },
+      equipePinConferir: (empresa, id, pin) => rpcSincrono(cfg, 'rh_pin_conferir', { p_empresa: empresa, p_funcionario: id, p_pin: pin }),
+      ciencias: () => {
+        if (!ex.usuario) throw new Error('Sessão necessária');
+        return rpcSincrono(cfg, 'rh_danos_ciencias', { p_empresa: ex.usuario.empresaId });
+      },
+      cienciaSalvar: dados => {
+        if (!ex.usuario) throw new Error('Sessão necessária');
+        return rpcSincrono(cfg, 'rh_dano_ciencia_salvar', { p_empresa: ex.usuario.empresaId, p_ator: ex.usuario.id, p_dados: dados });
+      }
     };
 
     return {

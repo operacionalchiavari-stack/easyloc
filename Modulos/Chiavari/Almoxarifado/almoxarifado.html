@@ -2307,41 +2307,7 @@ oninput="renderTabelaProdutos()"
   </section>
   <section class="section" id="tab-usuarios">
     <div class="grid-2">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Cadastrar usuário</h2>
-        </div>
-        <div class="panel-body">
-          <div class="form-grid">
-            <div class="field">
-              <label>Nome</label>
-              <input type="text" id="userNome">
-            </div>
-
-            <div class="field">
-              <label>Setor</label>
-              <input type="text" id="userSetor">
-            </div>
-
-            <div class="field">
-              <label>Função</label>
-              <input type="text" id="userFuncao">
-            </div>
-
-            <div class="field">
-              <label>Status</label>
-              <select id="userStatus">
-                <option>Ativo</option>
-                <option>Inativo</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button class="btn btn-primary" onclick="salvarUsuarioFront()">Salvar usuário</button>
-          </div>
-        </div>
-      </div>
+      <div class="panel"><div class="panel-header"><h2>Cadastro de funcionários</h2></div><div class="panel-body"><p>Funcionários, setores e PINs são cadastrados no RH.</p><button class="btn btn-primary" onclick="salvarUsuarioFront()">Abrir cadastro no RH</button></div></div>
 
       <div class="panel">
         <div class="panel-header">
@@ -3052,32 +3018,7 @@ function salvarContagemFront(){
 
 }
 
-  function salvarUsuarioFront(){
-    const dados = {
-      nome: document.getElementById("userNome").value,
-      setor: document.getElementById("userSetor").value,
-      funcao: document.getElementById("userFuncao").value,
-      status: document.getElementById("userStatus").value
-    };
-
-    if(!dados.nome){
-      alertar("Digite o nome.");
-      return;
-    }
-
-    showLoading(true);
-    google.script.run
-      .withSuccessHandler(() => {
-        showLoading(false);
-        alertar("Usuário salvo.");
-        carregarTudo();
-      })
-      .withFailureHandler(() => {
-        showLoading(false);
-        alertar("Erro ao salvar usuário.");
-      })
-      .salvarUsuario(dados);
-  }
+  function salvarUsuarioFront(){const destino='/Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html';if(window.parent!==window)window.parent.location.href='/dashboard.html?page='+encodeURIComponent(destino);else location.href=destino;}
 
   function formatarNumero(valor){
     return Number(valor || 0).toLocaleString("pt-BR");

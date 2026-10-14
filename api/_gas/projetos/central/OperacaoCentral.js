@@ -187,15 +187,9 @@ function operacaoValores_(planilhaId, aba){
 }
 
 function operacaoFuncionariosRH_(){
-  const linhas = operacaoValores_(COMISSAO_FUNCIONARIOS_PLANILHA_ID, COMISSAO_FUNCIONARIOS_ABA);
-  return linhas.slice(1).map(function(l){
-    return {
-      nome: [l[0], l[1]].map(function(x){ return String(x || "").trim(); }).filter(Boolean).join(" "),
-      setor: String(l[3] || "").trim(),
-      cargo: String(l[4] || "").trim(),
-      salario: converterSalarioComissaoCentral_(l[5], String(l[5] == null ? "" : l[5]))
-    };
-  }).filter(function(f){ return f.nome; });
+  return Acervo.funcionarios().filter(function(f){return f.ativo;}).map(function(f){
+    return {id:f.id,nome:f.nome,setor:f.setor,cargo:f.cargo,salario:Number(f.salario_bruto || 0),equipe:f.equipe_operacional};
+  });
 }
 
 function operacaoEventosMes_(mes){
@@ -268,6 +262,7 @@ function operacaoIndicativos_(){
    M=Onde aconteceu, N=Pedido, F=Item, S=Reposição, U=Reposição total. */
 function operacaoDanosMes_(mes){
   const linhas = operacaoValores_(OPERACAO_DANOS_ID, "Itens Danificados");
+  const ciencias = Acervo.ciencias();
   const danos = [];
   for(let i = 1; i < linhas.length; i++){
     const l = linhas[i];
@@ -277,12 +272,17 @@ function operacaoDanosMes_(mes){
     if(quantidade <= 0) continue;
     if(operacaoTexto_(l[7]).indexOf("limpeza de estofados") >= 0) continue; // desgaste, não dano
     if(onde.indexOf("producao") >= 0) continue;                              // não é da operação
-    const local = onde.indexOf("evento") >= 0 ? "evento" : onde.indexOf("interno") >= 0 ? "interno" : "";
+    const equipeDano = ["triagem", "carregamento", "montagem"].indexOf(onde) >= 0 ? onde : "";
+    const local = equipeDano || (onde.indexOf("evento") >= 0 ? "evento" : onde.indexOf("interno") >= 0 ? "interno" : "");
     if(!local) continue;
     const unitario = operacaoNumero_(l[18]);
     const total = typeof l[20] === "number" && l[20] > 0 ? l[20] : unitario * quantidade;
     danos.push({
-      os: String(l[0] || ""), item: String(l[5] || "").trim(), quantidade: quantidade,
+      id: String(l[0]), ciencia: cienciaDanoDaLinha_(l,ciencias),
+      os: String(l[4] || ""), item: String(l[5] || "").trim(), quantidade: quantidade,
+      setor: String(l[2] || "").trim(),
+      fluxo: l.slice(7, 11).map(function(s){ return String(s || "").trim(); }).filter(Boolean).join(" → "),
+      dano: String(l[12] || "").trim(), detalhes: String(l[14] || "").trim(),
       local: local, pedido: operacaoPedido_(l[13]), reposicaoTotal: total,
       data: l[1] instanceof Date ? Utilities.formatDate(l[1], Session.getScriptTimeZone(), "dd/MM/yyyy") : String(l[1] || "")
     });
@@ -314,7 +314,10 @@ function operacaoCalcular_(d){
   OPERACAO_EQUIPES.forEach(function(e){
     const k = e.chave;
     let membros;
-    if((p.membros[k] || []).length){
+    if(!d.exemplo){
+      membros = d.funcionarios.filter(function(f){return f.equipe===k;})
+        .map(function(f){return {id:f.id,nome:f.nome,setor:f.setor,salario:f.salario,noRH:true};});
+    } else if((p.membros[k] || []).length){
       membros = p.membros[k].map(function(nome){
         const rh = d.funcionarios.filter(function(f){ return operacaoMesmoNome_(f.nome, nome); })[0];
         return { nome: rh ? rh.nome : nome, setor: rh ? rh.setor : "", salario: rh ? rh.salario : 0, noRH: !!rh };
@@ -324,7 +327,7 @@ function operacaoCalcular_(d){
       membros = d.funcionarios.filter(function(f){ return setores.indexOf(operacaoTexto_(f.setor)) >= 0; })
         .map(function(f){ return { nome: f.nome, setor: f.setor, salario: f.salario, noRH: true }; });
     }
-    (p.extras || []).filter(function(x){ return x.equipe === k; }).forEach(function(x){
+    (d.exemplo ? (p.extras || []) : []).filter(function(x){ return x.equipe === k; }).forEach(function(x){
       membros.push({ nome: x.nome, setor: "Pessoa extra", salario: x.salario, noRH: false, extra: true });
     });
     equipes[k] = {
@@ -367,19 +370,31 @@ function operacaoCalcular_(d){
     });
   });
 
+  const controleMontagem = d.montagemRH;
+  if(controleMontagem) {
+    if(controleMontagem.uniformePendente) avisos.push('Montagem: '+controleMontagem.uniformePendente+' foto(s) aguardam avaliação de uniforme pelo RH.');
+    if(controleMontagem.localPendente) avisos.push('Montagem: '+controleMontagem.localPendente+' envio(s) precisam de conferência de localização no cronograma.');
+    if(controleMontagem.semRegistro) avisos.push('Montagem: '+controleMontagem.semRegistro+' etapa(s) sem foto da equipe no mês.');
+  }
   const semValor = (d.eventos || []).filter(function(ev){ return !ev.valorLocacao; }).length;
   if(semValor) avisos.push(semValor + " evento(s) do mês sem valor de locação na Matriz — entram com R$ 0 no bolo.");
 
   /* 2. Portão da meta */
   const ocorr = d.ocorrencias || { internos: {}, externos: {}, carregamento: {} };
   const danosQtd = { internos: 0, externos: 0 };
-  (d.danos || []).forEach(function(x){ if(x.local === "interno") danosQtd.internos += x.quantidade; else danosQtd.externos += x.quantidade; });
+  (d.danos || []).forEach(function(x){
+    if(x.ciencia && x.ciencia.status!=='legado' && x.ciencia.status!=='confirmado') return;
+    if(x.local === "interno" || x.local === "triagem") danosQtd.internos += x.quantidade;
+    else if(x.local === "evento" || x.local === "montagem") danosQtd.externos += x.quantidade;
+  });
 
   /* 3. Atribuição dos danos */
   const desc = p.descontoPercentual / 100;
   (d.danos || []).forEach(function(x){
     let alvo;
-    if(x.local === "interno"){
+    if(["triagem", "carregamento", "montagem"].indexOf(x.local) >= 0){
+      alvo = [x.local];
+    } else if(x.local === "interno"){
       alvo = ["triagem"];
     } else {
       const linhas = cronograma[x.pedido] || [];
@@ -392,9 +407,10 @@ function operacaoCalcular_(d){
     let valor = x.reposicaoTotal * desc;
     if(p.tetoDescontoItem > 0) valor = Math.min(valor, p.tetoDescontoItem * x.quantidade);
     const parte = Math.round(valor / alvo.length * 100) / 100;
+    const confirmado = !x.ciencia || x.ciencia.status==='legado' || x.ciencia.status==='confirmado';
     alvo.forEach(function(k){
-      equipes[k].danos.push(Object.assign({}, x, { desconto: parte, dividido: alvo.length > 1 }));
-      equipes[k].desconto += parte;
+      equipes[k].danos.push(Object.assign({}, x, { desconto: confirmado ? parte : 0, descontoPrevisto: parte, dividido: alvo.length > 1 }));
+      if(confirmado) equipes[k].desconto += parte;
     });
   });
 
@@ -406,16 +422,25 @@ function operacaoCalcular_(d){
     } else {
       lista = (d.indicativos[e.indicativos] || []).map(function(m){ return { nome: m.nome, meta: m.meta }; });
     }
+    if(e.chave === 'montagem') lista = lista.map(function(m){
+      const nome = operacaoTexto_(m.nome);
+      return {nome:nome === 'itens danificados' || nome === 'item danificado' ? 'Sem uniforme' : nome === 'descuido com material' || nome === 'decuido com material' ? 'Atraso' : m.nome,meta:m.meta};
+    });
     lista.forEach(function(m){
       const chave = operacaoTexto_(m.nome);
       let valor = ocorr[e.indicativos] ? (ocorr[e.indicativos][chave] || 0) : 0;
       if(chave === "itens danificados" || chave === "item danificado"){
         if(e.chave === "triagem") valor = danosQtd.internos;
         else if(e.chave === "montagem") valor = danosQtd.externos;
-        else valor = eq.danos.reduce(function(s, x){ return s + x.quantidade; }, 0);
+        else valor = eq.danos.reduce(function(s, x){ return s + ((!x.ciencia || x.ciencia.status==='legado' || x.ciencia.status==='confirmado') ? x.quantidade : 0); }, 0);
+      }
+      if(e.chave === 'montagem' && (chave === 'sem uniforme' || chave === 'atraso')) {
+        const controle = d.montagemRH || {};
+        valor = Number(chave === 'sem uniforme' ? controle.semUniforme : controle.atraso) || 0;
+        m.pendentes = (Number(chave === 'sem uniforme' ? controle.uniformePendente : controle.horarioPendente) || 0) + (Number(controle.semRegistro) || 0);
       }
       m.valor = valor;
-      m.ok = valor <= m.meta;
+      m.ok = valor <= m.meta && !m.pendentes;
       if(!m.ok) eq.metaOk = false;
     });
     eq.indicadores = lista;
@@ -508,6 +533,7 @@ function operacaoCalcularMes(mes){
     ocorrencias: operacaoOcorrenciasMes_(mes),
     indicativos: operacaoIndicativos_(),
     danos: operacaoDanosMes_(mes),
+    montagemRH: operacaoMontagemIndicadores_(mes),
     rh: getAvaliacaoIndividualRH(mes, setoresRH)
   });
 }

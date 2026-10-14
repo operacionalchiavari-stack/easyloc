@@ -3,8 +3,8 @@
   const $ = id => document.getElementById(id);
   const client = window.supabaseClient;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const levels = ['Administrador', 'Gestor', 'Financeiro', 'Líder de setor', 'Operador', 'Qualidade', 'Almoxarifado', 'Visualizador'];
-  const sectors = ['Administrativo', 'Comercial', 'Financeiro', 'Logística', 'Estoque', 'Almoxarifado', 'Montagem', 'Manutenção'];
+  const levels = ['Administrador', 'Recursos Humanos', 'Gestor', 'Financeiro', 'Líder de setor', 'Operador', 'Qualidade', 'Almoxarifado', 'Visualizador'];
+  const sectors = ['Administrativo', 'Comercial', 'Financeiro', 'Logística', 'Estoque', 'Almoxarifado', 'Triagem', 'Carregamento', 'Montagem', 'Produção', 'Manutenção', 'Marcenaria', 'Solda', 'Acabamento e Pintura', 'Costura', 'Forração', 'Limpeza de Estofados', 'Setor 01', 'Setor 02', 'Setor 03'];
   let proprio = false, context, employees = [], catalog = [], mode = 'create', photo = '', preview = '', busy = false, returnFocus;
   const photoUrls = new Map();
   const can = key => window.EasyLocPermissions.hasPermission(key, false);
@@ -69,11 +69,11 @@
       <tr class="table-group-row"><td colspan="9">${esc(sector)}<span class="table-group-count">${rows.length}</span></td></tr>
       ${rows.map(e => `<tr><td class="photo-column"><span class="employee-table-photo"><span>${esc(initials(e.nome))}</span>${fotoDe(e) ? `<img src="${esc(fotoDe(e))}" alt="Foto de ${esc(e.nome)}" loading="lazy">` : ''}</span></td>
       <td><strong>${esc(e.nome)}</strong><span class="subtext">${esc(e.email)}</span></td><td>${esc(e.setor)}</td><td>${esc(e.cargo || '-')}</td><td>${esc(e.login)}</td>
-      <td><span class="status-pill">${esc(e.nivel_acesso)}</span></td><td><span class="status-pill ${e.ativo ? 'active' : 'inactive'}">${e.ativo ? 'Ativo' : 'Inativo'}</span></td>
+      <td><span class="status-pill">${e.acesso_sistema === false ? "Sem login" : esc(e.nivel_acesso)}</span><span class="subtext">${e.tem_pin ? "PIN cadastrado" : "PIN pendente"}</span></td><td><span class="status-pill ${e.ativo ? 'active' : 'inactive'}">${e.ativo ? 'Ativo' : 'Inativo'}</span></td>
       <td>${e.ultimo_acesso ? esc(new Date(e.ultimo_acesso).toLocaleString('pt-BR')) : '-'}</td><td class="action-buttons">
       <button class="icon-btn" data-action="view" data-id="${esc(e.id)}" aria-label="Ver ${esc(e.nome)}" title="Ver"><i data-lucide="eye"></i></button>
       ${can('rh.funcionarios.editar') || e.id === context.usuario_id ? `<button class="icon-btn" data-action="edit" data-id="${esc(e.id)}" aria-label="Editar ${esc(e.nome)}" title="Editar"><i data-lucide="pencil"></i></button>` : ''}</td></tr>`).join('')}`).join('') || '<tr><td colspan="9" class="empty-state">Nenhum funcionário cadastrado.</td></tr>';
-    $('newFuncionarioBtn').hidden = !can('rh.funcionarios.criar') || !can('configuracoes.permissoes.editar');
+    $('newFuncionarioBtn').hidden = !can('rh.funcionarios.criar');
     icons();
   }
   function renderPermissions(selected = []) {
@@ -102,6 +102,7 @@
   function profile(level) {
     return catalog.filter(p => {
       if (level === 'Administrador') return true;
+      if (level === 'Recursos Humanos') return p.chave.startsWith('rh.');
       if (level === 'Gestor') return !p.chave.startsWith('configuracoes.') && !p.chave.startsWith('rh.funcionarios.');
       if (level === 'Financeiro') return p.chave.startsWith('financeiro.') || p.chave === 'comercial.clientes.visualizar';
       if (level === 'Almoxarifado') return p.chave.startsWith('estoque.almoxarifado.') || p.chave.startsWith('logistica.separacao.');
@@ -115,30 +116,45 @@
     $('funcFotoPreview').classList.toggle('show', Boolean(src));
     $('funcFotoFallback').textContent = initials($('funcNome').value);
   }
+  function syncAccess() {
+    const acesso = $('funcAcesso').value === 'true';
+    const employee = employees.find(e => e.id === $('funcionarioId').value);
+    const senhaNova = acesso && (mode === 'create' || employee?.acesso_sistema === false);
+    ['funcLogin','funcSenha','funcNivel'].forEach(id => { $(id).closest('label').hidden = !acesso; });
+    $('funcLogin').required = $('funcEmail').required = acesso;
+    $('funcSenha').required = senhaNova;
+    $('funcWarehousePin').required = mode === 'create' || employee?.tem_pin === false || senhaNova;
+    $('permissionsGrid').closest('fieldset').hidden = !acesso;
+    if ((!employee || employee.acesso_sistema === false) && !can('configuracoes.permissoes.editar')) $('funcAcesso').disabled = true;
+    if (!acesso && !proprio && mode !== 'view') $('funcStatus').disabled = false;
+  }
+  $('funcAcesso').addEventListener('change', syncAccess);
   async function openForm(nextMode, id) {
     if (busy) return;
     mode = nextMode;
     const employee = employees.find(e => e.id === id);
     if (mode !== 'create' && !employee) return;
-    if (mode === 'create' && (!can('rh.funcionarios.criar') || !can('configuracoes.permissoes.editar'))) return;
+    if (mode === 'create' && !can('rh.funcionarios.criar')) return;
     // Meu próprio cadastro (out/2026): só dados pessoais e senhas; nível, status, login e
     // permissões ficam travados (o servidor também confere — funcionario_salvar_proprio).
     proprio = mode === 'edit' && id === context.usuario_id;
     if (mode === 'edit' && !proprio && !can('rh.funcionarios.editar')) return;
     let selected = [];
     try {
-      if (employee) selected = (await rpc('get_permissoes_usuario_resolvidas', { p_empresa_id: context.empresa_id, p_usuario_id: id })).filter(p => p.permitido).map(p => p.chave);
+      if (employee && employee.acesso_sistema !== false) selected = (await rpc('get_permissoes_usuario_resolvidas', { p_empresa_id: context.empresa_id, p_usuario_id: id })).filter(p => p.permitido).map(p => p.chave);
     } catch (error) { message(error.message, true); return; }
     $('funcionarioForm').reset(); photo = ''; preview = '';
     const options = [...new Set([...sectors, ...employees.map(e => e.setor).filter(Boolean)])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
     $('funcSetor').innerHTML = '<option value="">Selecione</option>' + options.map(s => `<option>${esc(s)}</option>`).join('');
     $('funcNivel').innerHTML = levels.map(s => `<option>${esc(s)}</option>`).join('');
     $('funcionarioId').value = id || '';
-    const fields = { funcNome: 'nome', funcSetor: 'setor', funcCargo: 'cargo', funcLogin: 'login', funcEmail: 'email', funcTelefone: 'telefone', funcFotoValue: 'foto_url' };
+    const fields = { funcNome: 'nome', funcSetor: 'setor', funcCargo: 'cargo', funcLogin: 'login', funcEmail: 'email', funcTelefone: 'telefone', funcFotoValue: 'foto_url', funcCpf: 'cpf',funcSalario:'salario_bruto',funcAdmissao:'data_admissao',funcEquipe:'equipe_operacional' };
     Object.entries(fields).forEach(([field, key]) => { $(field).value = employee?.[key] || ''; });
+    Object.entries({funcRg:'rg',funcNascimento:'data_nascimento',funcWhatsapp:'whatsapp',funcEndereco:'endereco',funcObservacoes:'observacoes'}).forEach(([id,key])=>{$(id).value=employee?.dados_rh?.[key] || '';});
     $('funcNivel').value = employee?.nivel_acesso || 'Visualizador';
     $('funcStatus').value = employee?.ativo === false ? 'Inativo' : 'Ativo';
-    $('funcSenha').required = mode === 'create'; $('funcWarehousePin').required = mode === 'create';
+    $('funcAcesso').value = employee ? String(employee.acesso_sistema !== false) : 'false';
+    $('funcWarehousePin').required = mode === 'create' || employee?.tem_pin === false;
     $('funcSenha').placeholder = mode === 'create' ? 'Mínimo de 8 caracteres' : 'Em branco para manter a senha';
     $('funcWarehousePin').placeholder = mode === 'create' ? '4 dígitos' : 'Em branco para manter';
     $('funcEmail').readOnly = false;
@@ -147,10 +163,14 @@
     $('funcionarioForm').querySelectorAll('input,select,button').forEach(el => { el.disabled = mode === 'view' && el.id !== 'cancelFuncionarioBtn'; });
     $('funcStatus').disabled = $('funcNivel').disabled = mode === 'view' || proprio || !can('configuracoes.permissoes.editar');
     $('funcLogin').disabled = mode === 'view' || proprio;
+    $('funcAcesso').disabled = mode === 'view' || proprio || (employee?.acesso_sistema !== false && Boolean(employee));
+    if (!proprio && employee && employee.acesso_sistema !== false && !can('configuracoes.permissoes.editar')) ['funcLogin','funcSenha','funcEmail'].forEach(id=>{$(id).disabled=true;});
+    if (proprio) ['funcSetor','funcCargo','funcCpf','funcSalario','funcAdmissao','funcEquipe','funcRg','funcNascimento','funcWhatsapp','funcEndereco','funcObservacoes'].forEach(id => {$(id).disabled=true;});
     const avisoProprio = $('funcionarioProprioAviso');
     if (avisoProprio) avisoProprio.hidden = !proprio;
     $('saveFuncionarioBtn').hidden = mode === 'view';
     renderPermissions(employee ? selected : profile('Visualizador'));
+    syncAccess();
     setPhoto(fotoDe(employee));
     returnFocus = document.activeElement;
     $('funcionarioFormCard').classList.remove('hidden');
@@ -205,8 +225,8 @@
     busy = true; $('saveFuncionarioBtn').disabled = true; $('closeFuncionarioForm').disabled = true; $('cancelFuncionarioBtn').disabled = true;
     try {
       const result = await api({ action: 'save', id: $('funcionarioId').value || null, photo: photo || null,
-        employee: { nome: $('funcNome').value, setor: $('funcSetor').value, cargo: $('funcCargo').value, login: $('funcLogin').value, senha: $('funcSenha').value, pin: $('funcWarehousePin').value, nivel_acesso: $('funcNivel').value, ativo: $('funcStatus').value === 'Ativo', email: $('funcEmail').value, telefone: $('funcTelefone').value, foto_url: $('funcFotoValue').value },
-        permissions: !proprio && can('configuracoes.permissoes.editar') ? [...document.querySelectorAll('[data-permission-item]:checked')].map(x => x.value) : null });
+        employee: { nome: $('funcNome').value, setor: $('funcSetor').value, cargo: $('funcCargo').value, login: $('funcLogin').value, senha: $('funcSenha').value, pin: $('funcWarehousePin').value, nivel_acesso: $('funcNivel').value, ativo: $('funcStatus').value === 'Ativo', email: $('funcEmail').value, telefone: $('funcTelefone').value, foto_url: $('funcFotoValue').value,cpf:$('funcCpf').value,salario_bruto:$('funcSalario').value,data_admissao:$('funcAdmissao').value,equipe_operacional:$('funcEquipe').value,acesso_sistema:$('funcAcesso').value==='true',dados_rh:{rg:$('funcRg').value,data_nascimento:$('funcNascimento').value,whatsapp:$('funcWhatsapp').value,endereco:$('funcEndereco').value,observacoes:$('funcObservacoes').value} },
+        permissions: $('funcAcesso').value==='true' && !proprio && can('configuracoes.permissoes.editar') ? [...document.querySelectorAll('[data-permission-item]:checked')].map(x => x.value) : null });
       busy = false; closeForm();
       message(result.warning || 'Funcionário salvo com sucesso.', Boolean(result.warning));
       await loadEmployees();
@@ -223,6 +243,8 @@
     if (result.error) throw result.error;
     catalog = result.data;
     await loadEmployees();
+    const solicitado=new URLSearchParams(location.search).get('funcionario');
+    if(solicitado && employees.some(e=>e.id===solicitado)) await openForm(can('rh.funcionarios.editar')?'edit':'view',solicitado);
   } catch (error) { $('newFuncionarioBtn').hidden = true; message(error.message || 'Não foi possível carregar o cadastro.', true); }
   icons();
 })();

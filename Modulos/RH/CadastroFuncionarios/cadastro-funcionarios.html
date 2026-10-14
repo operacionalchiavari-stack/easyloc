@@ -22,8 +22,8 @@
         <div class="card-title-row">
           <div>
             <h2 id="funcionarioFormTitle">Novo funcionário</h2>
-            <p id="funcionarioFormHint">Preencha os dados de acesso e permissões.</p>
-            <p id="funcionarioProprioAviso" class="func-proprio-aviso" hidden>Você pode mudar seus dados pessoais e trocar suas senhas. Nível de acesso, status, login e permissões só outro administrador altera.</p>
+            <p id="funcionarioFormHint">Cadastre a pessoa, seu PIN e, quando autorizado, o acesso ao sistema.</p>
+            <p id="funcionarioProprioAviso" class="func-proprio-aviso" hidden>Você pode atualizar seu nome, contato, foto e senhas. Setor, equipe e dados de trabalho são alterados pelo RH; acesso e permissões são autorizados por um administrador.</p>
           </div>
           <button id="closeFuncionarioForm" class="btn btn-secondary"><i data-lucide="x"></i> Fechar</button>
         </div>
@@ -41,9 +41,19 @@
           <label>Nome do funcionário *<input id="funcNome" class="tw-field" required></label>
           <label>Setor *<select id="funcSetor" class="tw-field" required></select></label>
           <label>Cargo/Função<input id="funcCargo" class="tw-field"></label>
+          <label>CPF<input id="funcCpf" class="tw-field" inputmode="numeric" maxlength="14" placeholder="CPF para o App da Equipe"></label>
+          <label>RG<input id="funcRg" class="tw-field" maxlength="40"></label>
+          <label>Data de nascimento<input id="funcNascimento" class="tw-field" type="date"></label>
+          <label>WhatsApp<input id="funcWhatsapp" class="tw-field" maxlength="40"></label>
+          <label>Endereço<input id="funcEndereco" class="tw-field" maxlength="300"></label>
+          <label>Observações<input id="funcObservacoes" class="tw-field" maxlength="2000"></label>
+          <label>Salário bruto (R$)<input id="funcSalario" class="tw-field" type="number" min="0" step="0.01"></label>
+          <label>Data de admissão<input id="funcAdmissao" class="tw-field" type="date"></label>
+          <label>Equipe responsável por danos<select id="funcEquipe" class="tw-field"><option value="">Não participa das equipes operacionais</option><option value="triagem">Triagem</option><option value="carregamento">Carregamento</option><option value="montagem">Montagem</option><option value="producao">Produção</option></select></label>
+          <label>Acesso ao sistema<select id="funcAcesso" class="tw-field"><option value="false">Somente funcionário e PIN</option><option value="true">Funcionário com login no sistema</option></select></label>
           <label>Login *<input id="funcLogin" class="tw-field" required autocomplete="off"></label>
           <label id="funcSenhaLabel">Senha *<input minlength="8" id="funcSenha" class="tw-field" type="password" autocomplete="new-password"></label>
-          <label id="funcWarehousePinLabel">Senha operacional (4 dígitos) *<input id="funcWarehousePin" class="tw-field" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" placeholder="4 dígitos"></label>
+          <label id="funcWarehousePinLabel">PIN individual (4 dígitos) *<input id="funcWarehousePin" class="tw-field" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" placeholder="4 dígitos"></label>
           <label>Nível de acesso *<select id="funcNivel" class="tw-field" required></select></label>
           <label>Status *<select id="funcStatus" class="tw-field" required><option>Ativo</option><option>Inativo</option></select></label>
           <label>E-mail<input required id="funcEmail" class="tw-field" type="email"></label>
@@ -83,4 +93,4 @@
     </section>
 
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js"></script><script src="../../../js/core/permissions.js?v=20261008-menu-filtrado"></script><script src="cadastro-funcionarios.js?v=20261008-foto"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script><script src="../../../js/core/permissions.js?v=20261009-acesso-estavel"></script><script src="cadastro-funcionarios.js?v=20261014-rh-unico"></script></body></html>

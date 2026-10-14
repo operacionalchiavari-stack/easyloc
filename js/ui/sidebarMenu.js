@@ -174,7 +174,6 @@
           { rotulo: "Cadastro de Funcionários", href: "Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html" },
           { rotulo: "Controle RH", href: "Modulos/Chiavari/ControleRH/rh.html" },
           { rotulo: "RH da Equipe Free", href: "Modulos/Chiavari/Cronograma/rh.html" },
-          { rotulo: "Mural do Portal (avisos e destaques)", href: "Modulos/Chiavari/Portal/mural-admin.html" },
         ],
       },
       {

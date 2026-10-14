@@ -63,6 +63,7 @@ async function main(){
    checked(await admin.from('permissoes_usuario').delete().eq('usuario_id',id));
    checked(await admin.from('usuarios_empresas').delete().eq('user_id',id));
    checked(await admin.from('usuarios').delete().eq('id',id));
+   checked(await admin.from('funcionarios_acesso').delete().eq('id',id));
    checked(await admin.auth.admin.deleteUser(id));
   }
  }

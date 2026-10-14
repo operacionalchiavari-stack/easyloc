@@ -617,44 +617,9 @@
     render();
   }
 
-  async function createUser() {
-    const name = $("#permNewUserName")?.value?.trim();
-    const email = $("#permNewUserEmail")?.value?.trim();
-    const role = $("#permNewUserRole")?.value?.trim();
-    const status = $("#permNewUserStatus")?.value || "Ativo";
-
-    if (!name) {
-      notify("Informe o nome do usuário.", "aviso", "Usuário");
-      return;
-    }
-
-    const id = crypto.randomUUID();
-    try {
-      const { error: userError } = await supabase().from("usuarios").insert({
-        id,
-        nome: name,
-        email,
-        cargo: role,
-        status
-      });
-      if (userError) throw userError;
-
-      const { error: linkError } = await supabase().from("usuarios_empresas").insert({
-        empresa_id: empresaId(),
-        user_id: id
-      });
-      if (linkError) throw linkError;
-
-      closeModal("permUserModal");
-      await loadUsers();
-      state.selectedUserId = id;
-      await loadUserPermissions();
-      render();
-      switchStep("perfil");
-      notify("Usuário operacional cadastrado.", "sucesso", "Usuário");
-    } catch (error) {
-      notify(error.message || "Não foi possível criar o usuário.", "erro", "Erro");
-    }
+  async function createUser(){
+    const destino='/Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html';
+    if(window.parent!==window)window.parent.location.href='/dashboard.html?page='+encodeURIComponent(destino);else location.href=destino;
   }
 
   function exportPermissions() {
@@ -753,7 +718,7 @@
     listen($("#permConfirmCopyBtn"), "click", copyPermissions);
     listen($("#permExportBtn"), "click", exportPermissions);
     listen($("#permPreviewBtn"), "click", () => notify("Pré-visualização pronta para ligar nas próximas telas com requirePermission().", "info", "Visualização"));
-    listen($("#permNewUserBtn"), "click", () => openModal("permUserModal"));
+    listen($("#permNewUserBtn"), "click", createUser);
     listen($("#permCreateUserBtn"), "click", createUser);
   }
 

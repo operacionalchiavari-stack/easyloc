@@ -305,6 +305,7 @@
     .toast.ver{ opacity:1; transform:translate(-50%, 0); }
     .toast.erro{ background:var(--erro); }
   </style>
+  <link rel="stylesheet" href="montador-app.css?v=20261014-pedido">
 </head>
 <body>
 
@@ -342,6 +343,8 @@
       <button class="icone-btn" id="btnSair" type="button" onclick="perguntarSair()" aria-label="Sair"></button>
     </header>
 
+    <div class="agenda-cabecalho"><h1>Cronograma</h1><p>Suas etapas e equipes.</p></div>
+    <div id="apontamentoInicio"></div>
     <nav class="abas">
       <button class="aba ativa" id="abaProximas" type="button" onclick="trocarAba('proximas')">Próximas</button>
       <button class="aba" id="abaAnteriores" type="button" onclick="trocarAba('anteriores')">Anteriores</button>
@@ -354,14 +357,24 @@
   <section class="tela" id="telaEtapa">
     <button class="voltar" type="button" onclick="voltarInicio()" id="btnVoltar"></button>
     <div id="etapaCabeca"></div>
+    <div id="apontamentoEtapa"></div>
+    <div id="etapaTituloPagina" class="pagina-tarefa-titulo"></div>
+    <div id="etapaFotoEquipe"></div>
+    <div id="etapaEquipe"></div>
     <div id="etapaInfo"></div>
     <div id="etapaTrocas"></div>
     <div id="etapaSacolas"></div>
-    <div id="etapaEquipe"></div>
     <div id="etapaPedido"></div>
     <div id="etapaRegistros"></div>
   </section>
 
+  <section class="tela" id="telaSemEvento"><h1 id="semEventoTitulo">Foto da equipe</h1><div class="secao sem-evento"><h2>Nenhum evento iniciado</h2><p>Abra uma etapa no seu cronograma e toque em <strong>Iniciar evento</strong>. A foto e as avarias serão vinculadas a esse evento.</p><button class="btn" type="button" onclick="irAcesso('agenda')">Abrir meu cronograma</button></div></section>
+  <nav class="app-navegacao" id="appNavegacao" aria-label="Navegação principal" hidden>
+    <button type="button" data-acesso="agenda" onclick="irAcesso('agenda')"><span aria-hidden="true">▦</span>Cronograma</button>
+    <button type="button" data-acesso="equipe" onclick="irAcesso('equipe')"><span aria-hidden="true">◎</span>Foto da equipe</button>
+    <button type="button" data-acesso="avarias" onclick="irAcesso('avarias')"><span aria-hidden="true">⚠</span>Avarias</button>
+    <button type="button" data-acesso="registros" onclick="irAcesso('registros')"><span aria-hidden="true">☑</span>Checklist</button>
+  </nav>
   <div class="folha-fundo" id="folha" onclick="if(event.target === this) fecharFolha()">
     <div class="folha" id="folhaConteudo"></div>
   </div>
@@ -380,6 +393,7 @@
     token: lerToken(),
     dados: null,
     aba: "proximas",
+    acesso:"agenda",painel:"info",apontamento:null,
     etapaAberta: "",
     idLink: "",
     supervisor: false,
@@ -439,6 +453,8 @@
   function sessaoExpirou(erro){ return /SESSAO_EXPIRADA/.test(String(erro && erro.message || erro)); }
 
   function mostrarTela(id){
+    document.getElementById("appNavegacao").hidden = id !== "telaInicio" && id !== "telaEtapa" && id !== "telaSemEvento";
+    atualizarNavegacao();
     document.querySelectorAll(".tela").forEach(function(t){ t.classList.toggle("ativa", t.id === id); });
     window.scrollTo(0, 0);
   }
@@ -458,6 +474,7 @@
 
   function abrirFolha(html){ document.getElementById("folhaConteudo").innerHTML = html; document.getElementById("folha").classList.add("ver"); }
   function fecharFolha(){
+    if(window.MontadorMapa)MontadorMapa.parar();
     document.getElementById("folha").classList.remove("ver");
     clearTimeout(estado.qrTimer);
     estado.qrTimer = null;
@@ -606,6 +623,8 @@
 
   function aplicarDados(manual){
     const d = estado.dados;
+    estado.apontamento=d.apontamento || null;
+    renderApontamento();
     document.getElementById("inicioNome").textContent = String(d.nome || "").split(" ")[0];
     document.getElementById("inicioPerfil").textContent = d.perfil === "SUPERVISOR" ? "Supervisor · todas as montagens" : "Olá,";
     document.getElementById("inicioAvatar").textContent = String(d.nome || "?").charAt(0).toUpperCase();
@@ -618,6 +637,7 @@
       if(d.avisoExtra){ toast(d.avisoExtra, true); }
     }
 
+    if(document.getElementById('telaSemEvento').classList.contains('ativa') || (estado.acesso!=='agenda' && !estado.apontamento && document.getElementById('telaEtapa').classList.contains('ativa'))){irAcesso(estado.acesso);return;}
     if(estado.etapaAberta && document.getElementById("telaEtapa").classList.contains("ativa")){
       atualizarEtapaAberta();
       if(manual){ toast("Atualizado"); }
@@ -630,6 +650,80 @@
   }
 
   function trocarAba(aba){ estado.aba = aba; renderLista(); }
+  function atualizarNavegacao(){
+    document.querySelectorAll('[data-acesso]').forEach(function(b){const ativo=b.dataset.acesso===estado.acesso;b.classList.toggle('ativo',ativo);b.setAttribute('aria-current',ativo?'page':'false');});
+  }
+  function irAcesso(acesso){
+    estado.acesso=acesso;atualizarNavegacao();
+    if(acesso==='agenda'){
+      renderLista();renderApontamento();mostrarTela('telaInicio');
+    }else{
+      const p=estado.apontamento;
+      if(!p || !acharEtapa(p.idEtapa)){
+        document.getElementById('semEventoTitulo').textContent=acesso==='equipe'?'Foto da equipe':acesso==='avarias'?'Avarias':'Checklist';
+        mostrarTela('telaSemEvento');
+      }else if(estado.etapaAberta===p.idEtapa && document.getElementById('passo_equipe')){
+        trocarPainelEtapa(acesso);renderApontamento();mostrarTela('telaEtapa');
+      }else abrirEtapa(p.idEtapa);
+    }
+    window.scrollTo({top:0,behavior:'auto'});
+  }
+
+  function renderApontamento(){
+    const p=estado.apontamento,e=p?acharEtapa(p.idEtapa):null;
+    ['apontamentoInicio','apontamentoEtapa'].forEach(function(id){
+      const area=document.getElementById(id);
+      if(!p){
+        const etapa=acharEtapa(estado.etapaAberta);
+        area.innerHTML=id==='apontamentoEtapa' && etapa && etapa.operacao ? '<section class="iniciar-evento"><p>Inicie o evento para registrar a equipe, avarias e tempo de trabalho.</p><button class="btn" type="button" onclick="iniciarEvento(this)">▶ Iniciar evento</button></section>' : '';
+        return;
+      }
+      area.innerHTML='<section class="apontamento-ativo"><div><small>EVENTO EM ANDAMENTO · #'+esc(p.pedido)+'</small><strong>'+esc(e?e.cliente:'Evento em andamento')+'</strong></div><div class="apontamento-relogio"><span class="apontamento-tempo" role="timer" aria-label="Tempo decorrido">00:00:00</span><small>tempo em andamento</small></div><div class="apontamento-acoes">'+(id==='apontamentoInicio'?'<button type="button" class="btn btn-claro" onclick="irAcesso(\'equipe\')">Continuar evento</button>':'<button type="button" class="btn btn-claro" onclick="trocarPainelEtapa(\'info\')">Dados do evento</button>')+'<button type="button" class="encerrar-evento" onclick="encerrarEvento(this)">Encerrar apontamento</button></div></section>';
+    });
+    atualizarCronometro();
+  }
+  function atualizarCronometro(){
+    const p=estado.apontamento;if(!p)return;
+    const inicio=Date.parse(p.inicio);const segundos=Number.isFinite(inicio)?Math.max(0,Math.floor((Date.now()-inicio)/1000)):0;
+    const texto=String(Math.floor(segundos/3600)).padStart(2,'0')+':'+String(Math.floor(segundos/60)%60).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
+    document.querySelectorAll('.apontamento-tempo').forEach(function(el){el.textContent=texto;});
+  }
+  setInterval(atualizarCronometro,1000);
+  function iniciarEvento(btn){
+    if(btn.disabled)return;ocupar(btn,'Iniciando…');
+    chamar('MONT_iniciarApontamento',estado.token,estado.etapaAberta).then(function(p){
+      estado.apontamento=p;estado.dados.apontamento=p;renderApontamento();irAcesso('equipe');toast('Evento iniciado.');
+    }).catch(function(e){liberar(btn);toast(mensagemErro(e,'Não foi possível iniciar o evento.'),true);});
+  }
+  function encerrarEvento(btn){
+    const p=estado.apontamento;if(!p||btn.disabled)return;
+    perguntar('Encerrar apontamento?','O tempo será salvo. Os registros já enviados continuam vinculados ao evento.','Encerrar').then(function(sim){
+      if(!sim)return;ocupar(btn,'Encerrando…');
+      chamar('MONT_finalizarApontamento',estado.token,p.id).then(function(){
+        estado.apontamento=null;estado.dados.apontamento=null;estado.etapaAberta='';renderApontamento();irAcesso('agenda');toast('Apontamento encerrado e tempo salvo.');
+      }).catch(function(e){liberar(btn);toast(mensagemErro(e,'Não foi possível encerrar.'),true);});
+    });
+  }
+
+  function trocarPainelEtapa(painel){
+    if(painel!=='info' && (!estado.apontamento || estado.apontamento.idEtapa!==estado.etapaAberta)){irAcesso(painel);return;}
+    estado.painel=painel;
+    const grupos={info:['etapaInfo','etapaPedido'],equipe:['etapaFotoEquipe'],avarias:['etapaTrocas'],registros:['etapaRegistros','etapaSacolas']};
+    Object.keys(grupos).forEach(function(k){grupos[k].forEach(function(id){document.getElementById(id).hidden=k!==painel;});});
+    document.getElementById('etapaEquipe').hidden=painel!=='info' && painel!=='equipe';
+    document.getElementById('etapaCabeca').hidden=painel!=='info';
+    document.getElementById('etapaTituloPagina').textContent=painel==='equipe'?'Foto da equipe':painel==='avarias'?'Avarias':painel==='registros'?'Checklist':'';
+    estado.acesso=painel==='info'?'agenda':painel;atualizarNavegacao();
+    window.scrollTo({top:0,behavior:'auto'});
+  }
+
+  function organizarPainelEquipe(e){
+    const area=document.getElementById('etapaFotoEquipe');
+    const passo=document.getElementById('passo_equipe');
+    if(passo){area.appendChild(passo);const resumo=document.querySelector('.chegada-resumo');if(resumo)area.prepend(resumo);}
+    else area.innerHTML='<section class="secao"><h2>Foto da equipe</h2><p>O envio da foto fica disponível nas etapas de montagem e desmontagem.</p></section>';
+  }
+
 
   function renderLista(){
     document.getElementById("abaProximas").classList.toggle("ativa", estado.aba === "proximas");
@@ -701,6 +795,8 @@
   function abrirEtapa(id){
     const e = acharEtapa(id);
     if(!e){ return; }
+    if(estado.apontamento && estado.apontamento.idEtapa!==id){toast("Há um evento em andamento. Encerre o apontamento antes de abrir outro.",true);return;}
+    if(estado.etapaAberta===id && document.getElementById("passo_equipe")){trocarPainelEtapa(estado.acesso==='agenda'?'info':estado.acesso);renderApontamento();mostrarTela("telaEtapa");return;}
     estado.etapaAberta = id;
     try{ history.pushState({ etapa: id }, "", "#etapa"); }catch(err){}
 
@@ -711,9 +807,13 @@
     renderEquipe(e);
     renderPedido(e);
     document.getElementById("etapaRegistros").innerHTML = "";
+    document.getElementById("etapaFotoEquipe").innerHTML = "";
     if(e.operacao){ montarRegistros(e); }
-
+    organizarPainelEquipe(e);
+    trocarPainelEtapa(estado.acesso === "agenda" ? "info" : estado.acesso);
+    renderApontamento();
     mostrarTela("telaEtapa");
+    window.scrollTo({top:0,behavior:"auto"});
   }
 
   function voltarInicio(){
@@ -722,7 +822,7 @@
   }
 
   function fecharEtapa(){
-    estado.etapaAberta = "";
+    estado.acesso="agenda";
     renderLista();
     mostrarTela("telaInicio");
   }
@@ -746,7 +846,8 @@
       '<div class="cabeca" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '">' +
         '<div class="cabeca-linha"><span class="tipo">' + esc(e.etapa) + '</span><span class="pedido">Pedido <b>#' + esc(e.pedido) + '</b></span></div>' +
         '<h1>' + esc(e.cliente || "-") + '</h1>' +
-        '<div class="cabeca-quando">' + I.relogio + esc(tituloDia(e.dataISO)) + ', ' + esc(dataCurta(e.dataISO)) + ' · ' + esc(hora(e.horario) || "horário a definir") + '</div>' +
+        '<div class="pedido-agendamento"><div><small>Dia da etapa</small><strong>' + esc(tituloDia(e.dataISO)) + ', ' + esc(dataCurta(e.dataISO)) + '</strong></div><div><small>Horário previsto</small><strong>' + esc(hora(e.horario) || 'A definir') + '</strong></div></div>' +
+        '<div class="pedido-atalhos">' + (e.local || (e.lat && e.lng) ? '<button class="btn btn-claro" type="button" onclick="abrirMapa(\'' + esc(e.id) + '\')">' + I.rota + 'Mapa e rota</button>' : '') + '<button class="btn btn-claro" type="button" onclick="document.getElementById(\'etapaEquipe\').scrollIntoView({behavior:\'smooth\',block:\'start\'})">' + I.pessoa + 'Ver equipe</button></div>' +
       '</div>' +
       (e.alerta ? '<div class="alerta">' + I.alerta + '<div><strong>' + esc(e.alerta.problema) + '</strong>' + esc(e.alerta.observacao || "") + (e.alerta.enviadoPor ? ' — ' + esc(e.alerta.enviadoPor) : "") + '</div></div>' : "");
   }
@@ -759,9 +860,9 @@
 
     document.getElementById("etapaInfo").innerHTML =
       '<section class="secao">' +
-        '<div class="secao-titulo"><h2>Informações</h2></div>' +
+        '<div class="secao-titulo"><h2>Local e orientações</h2></div>' +
         '<div class="linhas">' +
-          linha(I.local, "Local", esc(e.local || "-") + (e.local ? '<br><button class="btn btn-claro btn-pequeno" style="margin-top:6px" type="button" onclick="abrirMapa(\'' + esc(e.id) + '\')">' + I.rota + 'Ver mapa e rota</button>' : "")) +
+          linha(I.local, "Local", esc(e.local || "-") + (e.local ? '<br><button class="btn btn-claro btn-pequeno" style="margin-top:6px" type="button" onclick="abrirMapa(\'' + esc(e.id) + '\')">' + I.rota + 'Abrir mapa no app</button>' : "")) +
           linha(I.festa, "Data do evento", esc(e.dataEvento || "-")) +
           (String(e.etapa).toLowerCase().indexOf("triagem") < 0 ? linha(I.caminhao, "Caminhão", esc(String(e.caminhao || "-").replace(/\n/g, ", "))) : "") +
           (e.operacao ? linha(I.check, "Decorador", e.confirmadoDecorador ? '<span class="chip ok">' + I.check + 'Confirmou a data</span>' : '<span class="chip aviso">Ainda não confirmou</span>') : "") +
@@ -779,6 +880,14 @@
     return '<span class="chip">Confirmado</span>';
   }
 
+  function fotoFreeHtml(p){
+    const nome=String(p.nome||'Free');
+    if(!p.miniatura)return '<div class="pessoa-foto sem-foto" aria-label="Foto não cadastrada">'+esc(nome.charAt(0).toUpperCase())+'</div>';
+    return '<button class="pessoa-foto" type="button" data-foto="'+esc(p.miniatura)+'" data-nome="'+esc(nome)+'" onclick="abrirFotoFree(this)" aria-label="Ver foto de '+esc(nome)+'"><span>'+esc(nome.charAt(0).toUpperCase())+'</span><img src="'+esc(p.miniatura)+'" alt="Foto de '+esc(nome)+'" loading="lazy" onerror="this.remove()"></button>';
+  }
+  function abrirFotoFree(btn){
+    abrirFolha('<h3>'+esc(btn.dataset.nome)+'</h3><img class="foto-free-ampliada" src="'+esc(btn.dataset.foto)+'" alt="Foto do cadastro"><button class="btn btn-claro" type="button" onclick="fecharFolha()">Fechar foto</button>');
+  }
   function renderEquipe(e){
     const internos = (e.equipe || []).map(function(n){
       return '<div class="pessoa"><div class="pessoa-ini">' + esc(n.charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(n) + '</div></div>';
@@ -792,8 +901,9 @@
         (f.pessoas.length
           ? '<div class="pessoas">' + f.pessoas.map(function(p){
               const n = String(p.telefone || "").replace(/\D/g, "");
-              return '<div class="pessoa"><div class="pessoa-ini">' + esc(String(p.nome).charAt(0).toUpperCase()) + '</div>' +
+              return '<div class="pessoa pessoa-free">' + fotoFreeHtml(p) +
                 '<div class="pessoa-nome">' + esc(p.nome) + '<span class="nota">★ ' + Number(p.nota || 5).toFixed(1).replace(".", ",") + '</span>' +
+                  (!p.miniatura ? '<small>Foto não cadastrada</small>' : '') +
                   (n.length >= 10 ? '<small><a href="https://wa.me/55' + n + '" target="_blank" rel="noopener">' + esc(p.telefone) + '</a></small>' : "") + '</div>' +
                 chipPresenca(p) + '</div>';
             }).join("") + '</div>'
@@ -806,7 +916,7 @@
 
     document.getElementById("etapaEquipe").innerHTML =
       '<section class="secao">' +
-        '<div class="secao-titulo"><h2>Equipe</h2><small>atualiza sozinho</small></div>' +
+        '<div class="secao-titulo"><h2>Equipe da etapa</h2><small>presença atualizada</small></div>' +
         '<div class="subtitulo">Responsável</div>' +
         '<div class="pessoas"><div class="pessoa"><div class="pessoa-ini">' + esc(String(e.responsavel || "?").charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(e.responsavel || "-") + '</div></div></div>' +
         (internos ? '<div class="subtitulo">Equipe interna</div><div class="pessoas">' + internos + '</div>' : "") +
@@ -865,16 +975,7 @@
   }
 
   function abrirMapa(id){
-    const e = acharEtapa(id);
-    if(!e){ return; }
-    abrirFolha(
-      '<h3>Local do evento</h3><p>' + esc(e.local) + '</p>' +
-      '<iframe class="mapa-moldura" src="https://maps.google.com/maps?q=' + encodeURIComponent(destino(e)) + '&z=16&hl=pt-BR&output=embed"></iframe>' +
-      '<div class="acoes">' +
-        '<a class="btn" href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(destino(e)) + '" target="_blank" rel="noopener">' + I.rota + 'Navegar pelo Google Maps</a>' +
-        '<button class="btn btn-texto" type="button" onclick="fecharFolha()">Fechar</button>' +
-      '</div>'
-    );
+    const e=acharEtapa(id);if(e && window.MontadorMapa)MontadorMapa.abrir(e);
   }
 
   function abrirQr(id){
@@ -991,23 +1092,26 @@
   }
 
   function montarRegistros(e){
-    reg = { id: e.id, pedido: e.pedido, cliente: e.cliente, responsavel: e.responsavel, tipo: e.operacao, feitos: {}, empresa: "", qtd: "", fotoEquipe: "", fotosPos: [], posCorreto: null, fotoLista: "", paginas: [] };
+    reg = { id: e.id, pedido: e.pedido, cliente: e.cliente, responsavel: e.responsavel, tipo: e.operacao, horario: e.horario, feitos: {}, empresa: "", qtd: "", fotoEquipe: "", fotosPos: [], posCorreto: null, fotoLista: "", paginas: [] };
 
     const equipe =
       '<div class="rotulo">Empresa</div><div class="opcoes" id="regEmpresas"><span style="color:var(--muted)">Carregando…</span></div>' +
-      '<div class="rotulo">Quantidade de ajudantes</div><div class="opcoes" id="regQtd"></div>' +
+      '<div class="rotulo">Quantidade de pessoas na foto</div><div class="opcoes" id="regQtd"></div>' +
       '<input class="input" id="regQtdOutro" type="number" min="1" inputmode="numeric" placeholder="Digite a quantidade" style="display:none">' +
-      '<div class="rotulo">Foto da equipe' + (e.operacao === "desmontagem" ? " (obrigatória)" : "") + '</div>' +
+      '<div class="chegada-info"><b>Registre a chegada da equipe</b><span>Horário previsto: ' + esc(e.horario || 'não informado') + '. Tire a foto de todos com o uniforme. Sua localização será registrada no envio.</span></div>' +
+      '<div class="rotulo">Foto da equipe (obrigatória)</div>' +
       fotoTile("regFotoEquipe", "Tirar foto da equipe", "fotoEquipe(event)") +
       '<textarea class="input" id="regObsEquipe" placeholder="Observações (opcional)"></textarea>' +
       '<button class="btn" type="button" onclick="enviarEquipe(this)">' + I.enviar + 'Enviar equipe</button>';
 
+    const registro = e.chegadaEquipe;
+    const resumoChegada = registro ? '<div class="chegada-resumo"><strong>Chegada registrada</strong><span>'+esc(registro.data)+' às '+esc(registro.hora)+'</span><span>'+(registro.origemChegada === 'CHEGADA_V1' && registro.previsto ? (Number(registro.minutosAtraso)>0 ? esc(registro.minutosAtraso)+' min de atraso' : 'Envio no horário') : 'Horário antigo sem verificação automática')+'</span><span class="pendente">'+(registro.uniformizada === 'SIM' ? 'Uniforme aprovado pelo RH' : registro.uniformizada === 'NAO' ? 'RH: equipe sem uniforme' : 'Uniforme aguardando avaliação do RH')+'</span><span>'+(registro.localStatus === 'NO_LOCAL' ? 'Localização no evento' : 'Localização pendente de conferência')+'</span></div>' : '';
     let passos = "";
 
     if(e.operacao === "montagem"){
       reg.obrigatorios = ["equipe", "sacolas", "posicionamento", "lista"];
       passos =
-        passoHtml("equipe", 1, "Equipe terceirizada", "Empresa, quantidade e foto da equipe", equipe, "✓ Equipe enviada") +
+        passoHtml("equipe", 1, "Chegada da equipe", "Foto, localização e horário do envio", equipe, "✓ Equipe enviada") +
         passoHtml("sacolas", 2, "Sacolas de proteção", "Código e foto de cada sacola usada",
           '<div id="regSacolas" style="display:flex;flex-direction:column;gap:10px"></div>' +
           '<button class="btn btn-claro" type="button" onclick="adicionarSacola()">' + I.mais + 'Adicionar outra sacola</button>' +
@@ -1046,7 +1150,7 @@
       '<section class="secao">' +
         '<div class="secao-titulo"><h2>Registros da ' + esc(e.operacao) + '</h2></div>' +
         '<div class="progresso" id="regProgresso"><div class="progresso-linha"><span id="regProgressoTexto">Verificando…</span><span id="regProgressoPct">0%</span></div><div class="progresso-barra"><i id="regProgressoBarra"></i></div></div>' +
-        '<div class="passos">' + passos + '</div>' +
+        resumoChegada + '<button class="btn btn-claro" type="button" onclick="trocarPainelEtapa(\'equipe\')" style="margin-bottom:14px">Ver foto e chegada da equipe</button>' + '<div class="passos">' + passos + '</div>' +
         (e.operacao === "montagem" ? '<div class="tudo-pronto"><b>Montagem registrada</b>Todos os registros obrigatórios foram enviados.</div>' : "") +
       '</section>';
 
@@ -1077,6 +1181,7 @@
   /* ---------- 1. Equipe terceirizada ---------- */
   function carregarEmpresas(){
     chamar("buscarEmpresasTerceirizadas").then(function(lista){
+      lista = ["Equipe própria"].concat(lista || []);
       const box = document.getElementById("regEmpresas");
       if(!box){ return; }
       box.innerHTML = (lista || []).length
@@ -1120,14 +1225,33 @@
     if(!reg.empresa){ toast("Selecione a empresa terceirizada.", true); return; }
     const quantidade = reg.qtd || document.getElementById("regQtdOutro").value.trim();
     if(!quantidade){ toast("Informe a quantidade de ajudantes.", true); return; }
-    if(reg.tipo === "desmontagem" && !reg.fotoEquipe){ toast("Tire a foto da equipe antes de enviar.", true); return; }
+    if(!reg.fotoEquipe){ toast("Tire a foto da equipe antes de enviar.", true); return; }
 
     ocupar(btn);
-    chamar("salvarEquipeTerceirizada", {
-      idCronograma: reg.id, pedido: reg.pedido, empresa: reg.empresa, quantidade: quantidade,
-      observacao: document.getElementById("regObsEquipe").value.trim(), foto: reg.fotoEquipe || ""
-    }).then(function(){ marcarFeito("equipe"); toast("Equipe enviada"); })
-      .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao salvar a equipe."), true); });
+    btn.textContent = 'Obtendo localização…';
+    localizarChegada().then(function(gps){
+      btn.textContent = 'Enviando foto e chegada…';
+      return chamar('salvarEquipeTerceirizada', {
+        token:estado.token, apontamentoId:estado.apontamento ? estado.apontamento.id : "", idCronograma:reg.id, pedido:reg.pedido, empresa:reg.empresa, quantidade:quantidade,
+        observacao:document.getElementById('regObsEquipe').value.trim(), foto:reg.fotoEquipe,
+        latitude:gps.latitude,longitude:gps.longitude,precisaoGPS:gps.accuracy
+      });
+    }).then(function(r){
+      marcarFeito('equipe');
+      const c = r.chegada;
+      toast(c && c.atraso > 0 ? 'Chegada registrada: '+c.atraso+' min após o previsto.' : 'Foto e chegada registradas.');
+      if(c && c.localStatus !== 'NO_LOCAL') toast(c.localStatus === 'FORA_DO_LOCAL' ? 'Localização fora do raio do evento. O RH poderá conferir o registro.' : 'Evento sem coordenadas. Localização registrada para conferência.',true);
+    }).catch(function(e){ liberar(btn);btn.textContent='Enviar equipe';toast(mensagemErro(e,'Não foi possível registrar a chegada.'),true); });
+  }
+
+  function localizarChegada(){
+    return new Promise(function(resolve,reject){
+      if(!navigator.geolocation){reject(new Error('Este aparelho não disponibilizou localização.'));return;}
+      navigator.geolocation.getCurrentPosition(function(p){
+        if(p.coords.accuracy>100){reject(new Error('GPS impreciso. Vá para uma área aberta e tente novamente.'));return;}
+        resolve(p.coords);
+      },function(e){reject(new Error(e.code===1 ? 'Permita o acesso à localização para registrar a chegada.' : 'Não foi possível obter o GPS. Verifique o sinal e tente novamente.'));}, {enableHighAccuracy:true,maximumAge:0,timeout:25000});
+    });
   }
 
   /* ---------- 2. Sacolas (montagem) ---------- */
@@ -1336,7 +1460,7 @@
 
   function renderTrocas(e){
     const area = document.getElementById("etapaTrocas");
-    if(e.operacao !== "montagem"){ area.innerHTML = ""; return; }
+    if(!e.operacao){ area.innerHTML = '<section class="secao"><h2>Avarias</h2><p>Selecione uma etapa de montagem ou desmontagem para enviar uma avaria.</p></section>'; return; }
 
     const lista = (e.trocas || []).slice().reverse().map(function(t){
       const s = TROCA_STATUS[t.status] || TROCA_STATUS.PENDENTE;
@@ -1356,9 +1480,9 @@
 
     area.innerHTML =
       '<section class="secao' + (trocasAbertas(e).length ? " secao-urgente" : "") + '">' +
-        '<div class="secao-titulo"><h2>Troca de material</h2>' + (trocasAbertas(e).length ? '<small style="color:var(--erro)">' + trocasAbertas(e).length + ' em aberto</small>' : "") + '</div>' +
+        '<div class="secao-titulo"><h2>Avarias e itens faltantes</h2>' + (trocasAbertas(e).length ? '<small style="color:var(--erro)">' + trocasAbertas(e).length + ' em aberto</small>' : "") + '</div>' +
         (lista ? '<div class="trocas">' + lista + '</div>' : '<p style="color:var(--muted);font-size:13.5px;margin-bottom:4px">Chegou algum item danificado ou faltando? Peça a troca aqui; o galpão e o supervisor recebem na hora.</p>') +
-        '<button class="btn btn-claro" style="margin-top:12px;border-color:#f3c7c7;color:#b91c1c" type="button" onclick="abrirPedidoTroca(\'' + esc(e.id) + '\')">' + I.alerta + 'Solicitar troca de material</button>' +
+        '<button class="btn btn-claro" style="margin-top:12px;border-color:#f3c7c7;color:#b91c1c" type="button" onclick="abrirPedidoTroca(\'' + esc(e.id) + '\')">' + I.alerta + 'Informar avaria ou falta</button>' +
       '</section>';
   }
 
@@ -1367,7 +1491,7 @@
   function abrirPedidoTroca(idEtapa){
     trocaForm = { idEtapa: idEtapa, item: "", motivo: "", foto: "" };
     abrirFolha(
-      '<h3>Troca de material</h3>' +
+      '<h3>Informar avaria ou falta</h3>' +
       '<p>O galpão separa e o supervisor envia. Informe o item e tire uma foto.</p>' +
       '<label class="campo"><span>Item</span><input id="trocaItem" type="text" autocomplete="off" placeholder="Digite parte do nome do item" oninput="buscarItemTroca(this.value)"></label>' +
       '<div id="trocaSugestoes" class="sugestoes"></div>' +
@@ -1431,7 +1555,7 @@
 
     ocupar(btn, "Enviando pedido…");
     chamar("MONT_solicitarTroca", estado.token, {
-      idEtapa: trocaForm.idEtapa, item: item, quantidade: qtd, motivo: trocaForm.motivo,
+      idEtapa: trocaForm.idEtapa, apontamentoId:estado.apontamento ? estado.apontamento.id : "", item: item, quantidade: qtd, motivo: trocaForm.motivo,
       descricao: document.getElementById("trocaDescricao").value.trim(), foto: trocaForm.foto
     }).then(function(lista){
       fecharFolha();
@@ -1484,5 +1608,7 @@
     if(document.visibilityState === "visible" && estado.dados){ carregar(); }
   });
 </script>
+<script>window.MONT_MAPS_SDK="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRTnhpv3S0kqV9G56x0npaxd6YABj8dnI&libraries=geometry&language=pt-BR&region=BR&callback=MONT_mapsPronto&loading=async";</script>
+<script src="montador-mapa.js?v=20261014-pedido"></script>
 </body>
 </html>

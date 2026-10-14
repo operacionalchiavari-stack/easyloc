@@ -16,3 +16,7 @@ test('rejeita permissões implícitas, status inválido e identidades conflitant
     assert.throws(() => validateEmployee({ ...employee, ...change }));
   }
 });
+test('RH pode cadastrar uma pessoa com PIN sem credenciais de login',()=>{
+ const r=validateEmployee({...employee,acesso_sistema:false,login:'',email:'',senha:'',nivel_acesso:'Recursos Humanos',equipe_operacional:'triagem',salario_bruto:2500});
+ assert.equal(r.acesso_sistema,false);assert.equal(r.pin,'0123');assert.equal(r.salario_bruto,2500);
+});

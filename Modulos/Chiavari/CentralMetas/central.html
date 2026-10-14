@@ -853,23 +853,21 @@ td{
 .card-comissao-lista{
   border:1px solid #e7e1d7;
   border-radius:13px;
-  overflow:auto;
-  max-height:390px;
+  overflow:hidden;
 }
 .card-comissao-tabela{
-  min-width:740px;
+  width:100%;
 }
 
 .card-comissao-tabela-cabecalho,
 .card-comissao-tabela-linha{
   display:grid;
   grid-template-columns:
-    minmax(190px, 1.1fr)
-    minmax(95px, 0.72fr)
-    minmax(95px, 0.72fr)
-    minmax(105px, 0.8fr)
-    minmax(105px, 0.8fr)
-    minmax(135px, 0.9fr);
+    minmax(0, 1.5fr)
+    minmax(0, 0.8fr)
+    minmax(0, 0.9fr)
+    minmax(0, 0.9fr)
+    minmax(0, 1fr);
   column-gap:10px;
   align-items:center;
 }
@@ -924,6 +922,7 @@ td{
 }
 
 .card-comissao-coluna-funcionario-nome{
+  overflow-wrap:anywhere;
   font-size:15px;
   font-weight:700;
   color:#251e19;
@@ -3145,6 +3144,27 @@ tbody tr:nth-child(even){
 
 .card-tabela-metas-titulo{
   color:#ffffff !important;
+  font-size:16px;
+  font-weight:400;
+  line-height:1.3;
+  letter-spacing:.06em;
+}
+
+/* Faixas compactas nas tabelas de Manutenção e Operações. */
+.card-tabela-metas-header,
+.table-box > div:first-child{
+  padding:10px 18px !important;
+}
+
+.table-box > div:first-child{
+  font-size:16px !important;
+  font-weight:400 !important;
+  line-height:1.3;
+  letter-spacing:.06em;
+}
+
+#cardAvaliacaoIndividualRH + .table-box{
+  margin-top:20px;
 }
 
 /* =========================================================
@@ -4728,7 +4748,7 @@ Carregando...
   <div class="equipe-topo">
     <div class="equipe-topo-texto">
       <strong>Meu Bônus — app da equipe</strong>
-      <span>Cada pessoa entra com o CPF e o PIN gerado aqui e vê só o próprio extrato. Clique na foto para trocar.</span>
+      <span>Cada pessoa entra com o CPF e o PIN individual cadastrado no RH e vê só o próprio extrato.</span>
     </div>
     <div class="equipe-link" id="equipeLink"></div>
   </div>
@@ -4737,31 +4757,6 @@ Carregando...
     <div class="pag-bonus-mensagem">Carregando...</div>
   </div>
 
-  <input type="file" id="equipeArquivoFoto" accept="image/*" style="display:none" onchange="enviarFotoEquipe(this)">
-
-  <!-- Gerar PIN -->
-  <div id="modalPinEquipe" class="modal-full">
-    <div class="modal-fechamento-central">
-
-      <h2 id="equipePinTitulo">Gerar PIN</h2>
-      <p id="equipePinTexto"></p>
-
-      <div class="modal-fechamento-campo" id="equipePinCampoCpf">
-        <label for="equipePinCpf">CPF da pessoa</label>
-        <input type="text" id="equipePinCpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00">
-      </div>
-
-      <div id="equipePinResultado"></div>
-
-      <div class="modal-fechamento-erro" id="erroPinEquipe"></div>
-
-      <div class="modal-fechamento-acoes">
-        <button type="button" class="btn-cancelar-fechamento" id="btnFecharPinEquipe" onclick="fecharModalPremiacoes('modalPinEquipe')">Cancelar</button>
-        <button type="button" class="btn-confirmar-fechamento" id="btnGerarPinEquipe" onclick="gerarPinEquipe()">Gerar PIN</button>
-      </div>
-
-    </div>
-  </div>
 
 </div>
 
@@ -4771,9 +4766,7 @@ Carregando...
 ========================================================= */
 
 const equipeApp = {
-  dados: null,
-  pessoaFoto: null,
-  pessoaPin: null
+  dados: null
 };
 
 function carregarEquipeApp(){
@@ -4815,7 +4808,7 @@ function renderEquipeApp(){
 
   if(!dados.pessoas.length){
     document.getElementById("equipeConteudo").innerHTML =
-      '<div class="pag-bonus-mensagem">Nenhuma pessoa em meses fechados ainda.</div>';
+      '<div class="pag-bonus-mensagem">Nenhum funcionário ativo cadastrado no RH.</div>';
     return;
   }
 
@@ -4839,20 +4832,20 @@ function renderEquipeApp(){
             const pessoa = registro.pessoa;
             const indice = registro.indice;
 
-            const foto = pessoa.fotoId
+            const foto = pessoa.fotoUrl ? '<img src="' + escaparHTMLCentral(pessoa.fotoUrl) + '" alt="">' : pessoa.fotoId
               ? '<img src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(pessoa.fotoId) + '&sz=w200" alt="" ' +
                 'onerror="this.parentNode.textContent=\'' + escaparHTMLCentral(iniciaisEquipe(pessoa.nome)) + '\'">'
               : escaparHTMLCentral(iniciaisEquipe(pessoa.nome));
 
             return (
               '<div class="equipe-pessoa">' +
-                '<button type="button" class="equipe-avatar" id="equipeAvatar' + indice + '" title="Enviar foto" onclick="escolherFotoEquipe(' + indice + ')">' + foto + "</button>" +
+                '<span class="equipe-avatar" id="equipeAvatar' + indice + '">' + foto + "</span>" +
                 '<div class="equipe-info">' +
                   '<div class="equipe-nome" title="' + escaparHTMLCentral(pessoa.nome) + '">' + escaparHTMLCentral(pessoa.nome) + "</div>" +
                   '<div class="equipe-cargo">' + escaparHTMLCentral([pessoa.cargo, pessoa.setor].filter(Boolean).join(" · ")) + "</div>" +
                   '<div class="equipe-acoes">' +
                     '<span class="equipe-selo' + (pessoa.temPin ? " ok" : "") + '">' + (pessoa.temPin ? "PIN ativo" : "Sem PIN") + "</span>" +
-                    '<button type="button" class="equipe-pin-link" onclick="abrirModalPinEquipe(' + indice + ')">' + (pessoa.temPin ? "Gerar novo PIN" : "Gerar PIN") + "</button>" +
+                    '<a class="equipe-pin-link" href="/dashboard.html?page=%2FModulos%2FRH%2FCadastroFuncionarios%2Fcadastro-funcionarios.html" target="_top">Cadastro no RH</a>' +
                   "</div>" +
                 "</div>" +
               "</div>"
@@ -4886,121 +4879,6 @@ function copiarLinkEquipe(botao){
 
 }
 
-/* ---------- Foto ---------- */
-
-function escolherFotoEquipe(indice){
-  equipeApp.pessoaFoto = indice;
-  const campo = document.getElementById("equipeArquivoFoto");
-  campo.value = "";
-  campo.click();
-}
-
-function enviarFotoEquipe(campo){
-
-  const arquivo = campo.files && campo.files[0];
-  const indice = equipeApp.pessoaFoto;
-  const pessoa = equipeApp.dados && equipeApp.dados.pessoas[indice];
-
-  if(!arquivo || !pessoa){ return; }
-
-  const avatar = document.getElementById("equipeAvatar" + indice);
-  if(avatar){ avatar.classList.add("enviando"); }
-
-  prepararFotoPremiacao(arquivo)
-    .then(function(foto){
-
-      centralRun()
-        .withSuccessHandler(function(res){
-          pessoa.fotoId = res.fotoId;
-          renderEquipeApp();
-        })
-        .withFailureHandler(function(erro){
-          if(avatar){ avatar.classList.remove("enviando"); }
-          alert((erro && erro.message) || "Não foi possível enviar a foto.");
-        })
-        .appEquipeSalvarFoto(pessoa.chave, pessoa.nome, foto);
-
-    })
-    .catch(function(erro){
-      if(avatar){ avatar.classList.remove("enviando"); }
-      alert(erro.message);
-    });
-
-}
-
-/* ---------- PIN ---------- */
-
-function abrirModalPinEquipe(indice){
-
-  const pessoa = equipeApp.dados.pessoas[indice];
-
-  equipeApp.pessoaPin = indice;
-
-  document.getElementById("equipePinTitulo").textContent =
-    pessoa.temPin ? "Gerar novo PIN" : "Gerar PIN";
-
-  document.getElementById("equipePinTexto").textContent =
-    pessoa.nome + (pessoa.temPin ? " — o PIN atual deixa de funcionar." : " — o PIN aparece só uma vez; anote e entregue à pessoa.");
-
-  const campoCpf = document.getElementById("equipePinCampoCpf");
-  campoCpf.style.display = pessoa.precisaCpf ? "" : "none";
-  document.getElementById("equipePinCpf").value = pessoa.cpf || "";
-
-  document.getElementById("equipePinResultado").innerHTML = "";
-  document.getElementById("erroPinEquipe").style.display = "none";
-
-  const botao = document.getElementById("btnGerarPinEquipe");
-  botao.style.display = "";
-  botao.disabled = false;
-  botao.textContent = "Gerar PIN";
-
-  document.getElementById("btnFecharPinEquipe").textContent = "Cancelar";
-  document.getElementById("modalPinEquipe").style.display = "block";
-
-}
-
-function gerarPinEquipe(){
-
-  const pessoa = equipeApp.dados.pessoas[equipeApp.pessoaPin];
-  const botao = document.getElementById("btnGerarPinEquipe");
-  const erro = document.getElementById("erroPinEquipe");
-
-  erro.style.display = "none";
-  botao.disabled = true;
-  botao.textContent = "Gerando...";
-
-  centralRun()
-    .withSuccessHandler(function(res){
-
-      pessoa.temPin = true;
-      pessoa.cpf = res.cpf;
-
-      const cpf = res.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-
-      document.getElementById("equipePinCampoCpf").style.display = "none";
-      document.getElementById("equipePinResultado").innerHTML =
-        '<div class="equipe-pin-mostrar"><span>PIN de ' + escaparHTMLCentral(pessoa.nome) + "</span><strong>" + res.pin + "</strong></div>" +
-        '<p style="text-align:center">Entra com o CPF ' + cpf + " e este PIN. Ele não aparece de novo.</p>";
-
-      botao.style.display = "none";
-      document.getElementById("btnFecharPinEquipe").textContent = "Fechar";
-
-      renderEquipeApp();
-
-    })
-    .withFailureHandler(function(falha){
-      botao.disabled = false;
-      botao.textContent = "Gerar PIN";
-      erro.textContent = (falha && falha.message) || "Não foi possível gerar o PIN.";
-      erro.style.display = "block";
-    })
-    .appEquipeGerarPin(
-      pessoa.chave,
-      pessoa.nome,
-      document.getElementById("equipePinCpf").value
-    );
-
-}
 </script>
 
 <!-- =========================================================
@@ -11065,16 +10943,7 @@ const linhasFuncionarios =
 
         </div>
 
-        <div class="card-comissao-coluna-valor">
-
-          ${formatarMoedaCentral(
-            item.salarioBrutoCentavos /
-            100
-          )}
-
-        </div>
-
-        <div class="card-comissao-coluna-valor">
+<div class="card-comissao-coluna-valor">
 
           ${formatarMoedaCentral(
             item.tetoBonusCentavos /
@@ -11151,11 +11020,7 @@ conteudoFuncionarios = `
         Funcionário
       </div>
 
-      <div class="card-comissao-coluna-valor">
-        Salário
-      </div>
-
-      <div class="card-comissao-coluna-valor">
+<div class="card-comissao-coluna-valor">
         Teto (25%)
       </div>
 
@@ -12637,7 +12502,9 @@ function formatarDataHoraFechamentoCentral(
 
   </div>
 </div>
-<link rel="stylesheet" href="operacao.css?v=20261014-largura">
-<script src="operacao.js?v=20261014-largura2"></script>
+<link rel="stylesheet" href="ciencia-danos.css?v=20261014-rh">
+<script src="ciencia-danos.js?v=20261014-rh"></script>
+<link rel="stylesheet" href="operacao.css?v=20261014-rh">
+<script src="operacao.js?v=20261014-distribuicao"></script>
 </body>
 </html>

@@ -29,13 +29,14 @@ const catalog = [
   await page.route('https://**/*',r => r.fulfill({contentType:'text/javascript',body:''}));
   const iconFixture=path.join(os.tmpdir(),'funcionarios-lucide.js');
   if(fs.existsSync(iconFixture)) await page.route('https://unpkg.com/lucide@*/**',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync(iconFixture,'utf8')}));
-  await page.route('**/js/core/context.js',r=>r.fulfill({contentType:'text/javascript',body:'window.aguardarContexto=async()=>window.__CONTEXT'}));
+  await page.route('**/js/core/context.js*',r=>r.fulfill({contentType:'text/javascript',body:'window.aguardarContexto=async()=>window.__CONTEXT'}));
   await page.route('**/js/core/supabase.js',r=>r.fulfill({contentType:'text/javascript',body:''}));
   await page.addInitScript(({catalog}) => {
    window.__CONTEXT={empresa_id:'company',usuario_id:'owner'};
    window.fixtureEmployees=[{id:'employee',nome:'Ana Silva',setor:'Comercial',cargo:'Consultora',login:'ana',email:'ana@example.com',nivel_acesso:'Visualizador',ativo:true,foto_url:'',telefone:''}];
    window.fixturePermission=[];window.fixtureAccess=true;window.fixtureAdmin=true;window.saved=[];
    window.supabaseClient={
+    storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})},
     rpc:async(name)=>({data:name==='funcionario_contexto'?{ativo:window.fixtureAccess,administrador_legado:window.fixtureAdmin}:name==='funcionarios_listar'?window.fixtureEmployees:catalog.map(p=>({...p,permitido:window.fixturePermission.includes(p.chave)}))}),
     from:()=>({select:()=>({order:async()=>({data:catalog})})}),
     functions:{invoke:async(name,{body})=>{window.saved.push(body);return {data:{id:'new'}};}}
@@ -47,6 +48,9 @@ const catalog = [
   assert.equal(await page.locator('.table-group-row').textContent(),'Comercial1');
   await page.screenshot({path:path.join(os.tmpdir(),'chiavari-funcionarios-lista.png')});
   await page.locator('#newFuncionarioBtn').click();
+  assert.equal(await page.locator('#funcAcesso').inputValue(),'false');
+  assert.equal(await page.locator('#funcLogin').isVisible(),false);
+  await page.locator('#funcAcesso').selectOption('true');
   await page.locator('#funcNome').fill('Maria Teste');
   await page.locator('#funcSetor').selectOption('Comercial');
   await page.locator('#funcLogin').fill('maria.teste');

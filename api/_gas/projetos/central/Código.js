@@ -100,10 +100,11 @@ function salvarOS(dados){
   }
 
   // 🔥 SENHA DO SETOR CONFERIDA AQUI (não só na página)
-  const senha = validarSenha(dados.setor, dados.senha);
-  if(!senha.ok){
-    return senha;
+  const pessoa = Acervo.funcionarios().filter(function(f){return f.id===dados.funcionarioId && f.ativo;})[0];
+  if(!pessoa || !Acervo.pinConferir(pessoa.id,String(dados.senha || ''))){
+    return {ok:false,msg:'Selecione seu cadastro do RH e informe seu PIN individual.'};
   }
+  dados.nome=pessoa.nome;
 
   const quantidade = Number(dados.quantidade);
 
@@ -187,7 +188,7 @@ sh.appendRow([
   "",                          // L
 
   dados.ondeDano,              // M (validado)
-  textoSeguro_(dados.ondeDano === "Evento" ? dados.numeroPedido : ""), // N
+  textoSeguro_(["Carregamento", "Montagem"].includes(dados.ondeDano) ? dados.numeroPedido : ""), // N
   textoSeguro_(dados.detalhes), // O
   dados.saiSemana === "Sim" ? "Sim" : "Não", // P
   dataLimite,                  // Q
@@ -214,6 +215,9 @@ try{
 
 SpreadsheetApp.flush();
 
+Acervo.cienciaSalvar({id:id,equipe:cienciaDanoEquipe_(dados.ondeDano),acao:'sincronizar',
+  assinatura:cienciaDanoAssinatura_(sh.getRange(linha,1,1,23).getValues()[0])});
+
 return { ok: true, os: numeroOS };
 
   } finally {
@@ -224,7 +228,7 @@ return { ok: true, os: numeroOS };
 // 🔹 LISTAS VÁLIDAS
 const OS_SETORES_ORIGEM = ["Setor 01", "Setor 02", "Setor 03", "Estoque"];
 const OS_SETORES_MANUTENCAO = ["Marcenaria", "Solda", "Acabamento e Pintura", "Costura", "Forração", "Limpeza de Estofados"];
-const OS_ONDE_DANO = ["Dano Interno", "Evento", "Produção"];
+const OS_ONDE_DANO = ["Triagem", "Carregamento", "Montagem", "Produção"];
 
 // 🔹 CONFERE TODOS OS CAMPOS DA NOVA O.S (devolve a mensagem do primeiro problema)
 function validarCamposNovaOS_(d){
@@ -241,7 +245,7 @@ function validarCamposNovaOS_(d){
 
   if(OS_SETORES_MANUTENCAO.indexOf(texto(d.setorSolicitado)) < 0) return "Escolha o setor solicitado.";
   if(OS_ONDE_DANO.indexOf(texto(d.ondeDano)) < 0) return "Informe onde aconteceu o dano.";
-  if(texto(d.ondeDano) === "Evento" && !texto(d.numeroPedido)) return "Informe o número do pedido.";
+  if(["Carregamento", "Montagem"].includes(texto(d.ondeDano)) && !texto(d.numeroPedido)) return "Informe o número do pedido.";
   if(texto(d.numeroPedido).length > 30) return "Número do pedido muito longo.";
 
   if(texto(d.saiSemana) === "Sim"){
@@ -3639,58 +3643,11 @@ function buscarSenhaEstoqueAddItem_(abaSenhas) {
 }
 
 function buscarFuncionariosOS() {
-  try {
-    const SPREADSHEET_ID = '1EvCBsoDsB0svzEyrGvH46oHHCH3lCTPJMU4If8-LZgE';
-    const SHEET_GID = 1926386833;
-
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-
-    const aba = ss.getSheets().find(function(sheet) {
-      return sheet.getSheetId() === SHEET_GID;
-    });
-
-    if (!aba) {
-      throw new Error('Aba de funcionários não encontrada pelo GID: ' + SHEET_GID);
-    }
-
-    const ultimaLinha = aba.getLastRow();
-
-    if (ultimaLinha < 2) {
-      return {
-        sucesso: true,
-        funcionarios: []
-      };
-    }
-
-    const dados = aba.getRange(2, 1, ultimaLinha - 1, 2).getValues();
-
-    const funcionarios = dados
-      .map(function(linha) {
-        return {
-          nome: String(linha[0] || '').trim(),
-          setor: String(linha[1] || '').trim()
-        };
-      })
-      .filter(function(funcionario) {
-        return funcionario.nome;
-      })
-      .sort(function(a, b) {
-        return a.nome.localeCompare(b.nome, 'pt-BR');
-      });
-
-    return {
-      sucesso: true,
-      funcionarios: funcionarios
-    };
-
-  } catch (erro) {
-    return {
-      sucesso: false,
-      mensagem: erro.message,
-      funcionarios: []
-    };
-  }
+  return {sucesso:true,funcionarios:Acervo.funcionarios().filter(function(f){return f.ativo;})
+    .map(function(f){return {id:f.id,nome:f.nome,setor:f.setor,temPin:f.tem_pin};})};
 }
+
+
 
 function removerOSPorIds(ids, senha) {
   const lock = LockService.getScriptLock();

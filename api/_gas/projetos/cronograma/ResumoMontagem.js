@@ -228,6 +228,13 @@ function MON_lerEquipeTerceirizada_(
 dataHora:
   linha[13] || "",
 
+previsto:linha[15] || '',
+minutosAtraso:linha[16] === '' ? null : Number(linha[16]),
+localStatus:linha[17] || '',
+avaliadoPor:linha[18] || '',
+avaliadoEm:linha[19] || '',
+origemChegada:linha[20] || '',
+enviadoPor:linha[21] || '',
 uniformizada:
   String(linha[14] || "")
     .trim()
@@ -862,17 +869,10 @@ function MON_salvarUniformizacaoEquipe(
   idEtapa,
   uniformizada
 ){
-
-  const planilha =
-    SpreadsheetApp.openById(
-      MON_SPREADSHEET_ID
-    );
-
-  const aba =
-    MON_obterAba_(
-      planilha,
-      MON_ABAS.equipe
-    );
+  if(!Acervo.pode('rh.colaboradores.editar') && !Acervo.pode('rh.funcionarios.editar')) throw new Error('Somente o RH pode avaliar o uniforme da equipe.');
+  const avaliador = Acervo.usuario();
+  const planilha = SpreadsheetApp.openById(MON_SPREADSHEET_ID);
+  const aba = MON_obterAba_(planilha, MON_ABAS.equipe);
 
   if(!aba){
     throw new Error(
@@ -944,6 +944,7 @@ function MON_salvarUniformizacaoEquipe(
             : "NAO"
         );
 
+      aba.getRange(i + 2, 19, 1, 2).setValues([[avaliador.nome || avaliador.id, new Date().toISOString()]]);
       return true;
     }
 

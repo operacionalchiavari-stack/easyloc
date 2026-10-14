@@ -10140,6 +10140,12 @@ function criarTooltipMontagem(
           <div class="rm-dados">
             <div><small>Empresa</small><b>${escapeHtml(equipe.empresa || equipe.nomeEmpresa || "-")}</b></div>
             <div><small>Ajudantes</small><b>${escapeHtml(equipe.quantidade || equipe.qtd || "-")}</b></div>
+            <div><small>Chegada</small><b>${escapeHtml(equipe.data || '')} ${escapeHtml(equipe.hora || '')}</b></div>
+            <div><small>Atraso registrado</small><b>${equipe.origemChegada === 'CHEGADA_V1' && equipe.previsto ? (Number(equipe.minutosAtraso)>0 ? escapeHtml(equipe.minutosAtraso)+' min' : 'No horário') : 'Sem registro verificável'}</b></div>
+            <div><small>Localização no envio</small><b>${equipe.localStatus === 'NO_LOCAL' ? 'No local do evento' : equipe.localStatus === 'FORA_DO_LOCAL' ? 'Fora do raio do evento — conferir' : 'Pendente de conferência'}</b>
+            ${equipe.latitude !== '' && equipe.longitude !== '' ? `<a target="_blank" rel="noopener" href="https://www.google.com/maps?q=${encodeURIComponent(equipe.latitude+','+equipe.longitude)}">Ver localização registrada</a>` : ''}</div>
+            <label><small>Avaliação do uniforme pelo RH</small><select onchange="salvarUniformizacaoEquipe('${escapeHtml(idEtapa)}',this.value)"><option value="">Pendente de avaliação</option><option value="SIM" ${equipe.uniformizada === 'SIM' ? 'selected' : ''}>Equipe uniformizada</option><option value="NAO" ${equipe.uniformizada === 'NAO' ? 'selected' : ''}>Equipe sem uniforme</option></select></label>
+            ${equipe.avaliadoPor ? `<small>Avaliado por ${escapeHtml(equipe.avaliadoPor)}</small>` : ''}
             ${(equipe.observacao || equipe.observacoes) ? `<p>${escapeHtml(equipe.observacao || equipe.observacoes)}</p>` : ""}
           </div>
         </div>`) : ""}
@@ -10394,6 +10400,7 @@ function calcularIndicadoresCronograma(){
      * =====================================================
      */
     etapas.forEach(function(etapa){
+      if(String(etapa.id || '').indexOf('TESTE_MONTADOR_') === 0 || String(etapa.observacao || '').indexOf('[TESTE_APP_MONTADOR]') >= 0) return;
 
       const nomeEtapa =
         String(
@@ -10548,7 +10555,7 @@ function calcularIndicadoresCronograma(){
         );
 
 
-      if(!equipeUniformizada){
+      if(uniforme === "NAO" || uniforme === "NÃO"){
 
         equipesNaoUniformizadas++;
 
@@ -11131,6 +11138,7 @@ function salvarUniformizacaoEquipe(
   valor
 ){
 
+  if(!valor) return;
   if(!idEtapa){
     mostrarAlerta(
       "Não foi possível identificar a montagem."

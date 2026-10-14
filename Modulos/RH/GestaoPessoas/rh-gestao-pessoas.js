@@ -2,7 +2,7 @@
   "use strict";
 
   const T = {
-    colaboradores: "rh_colaboradores",
+    colaboradores: "rh_funcionarios_lista",
     documentos: "rh_colaborador_documentos",
     ocorrencias: "rh_ocorrencias",
     solicitacoes: "rh_solicitacoes",
@@ -458,27 +458,9 @@
     if (id === "rhColaboradorModal") resetColaboradorPhoto();
   }
 
-  function openColaborador(item = null) {
-    $("#rhColModalTitle").textContent = item ? "Editar colaborador" : "Novo colaborador";
-    $("#rhColId").value = item?.id || "";
-    $("#rhNomeCompleto").value = item?.nome_completo || "";
-    $("#rhCpf").value = item?.cpf || "";
-    $("#rhRg").value = item?.rg || "";
-    $("#rhDataNascimento").value = item?.data_nascimento || "";
-    $("#rhTelefone").value = item?.telefone || "";
-    $("#rhWhatsapp").value = item?.whatsapp || "";
-    $("#rhEmail").value = item?.email || "";
-    $("#rhEndereco").value = item?.endereco || "";
-    $("#rhSetor").value = item?.setor || "";
-    $("#rhFuncao").value = item?.funcao || "";
-    $("#rhDataAdmissao").value = item?.data_admissao || "";
-    $("#rhStatus").value = item?.status || "Ativo";
-    $("#rhObservacoes").value = item?.observacoes || "";
-    $$(".rh-doc-grid input[type=file]").forEach(input => input.value = "");
-    resetColaboradorPhoto(item);
-    renderColaboradorHistorico(item?.id || "");
-    switchColInnerTab("dados");
-    openModal("rhColaboradorModal");
+  function openColaborador(item){
+    const destino='/Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html'+(item?.id?'?funcionario='+encodeURIComponent(item.id):'');
+    if(window.parent!==window)window.parent.location.href='/dashboard.html?page='+encodeURIComponent(destino);else location.href=destino;
   }
 
   function switchColInnerTab(tab) {
@@ -501,61 +483,7 @@
     `).join("") : `<div class="rh-empty">Sem solicitacoes.</div>`;
   }
 
-  async function saveColaborador() {
-    const client = sb();
-    if (!client || !empresaId()) return notify("Supabase ou empresa nao encontrados.");
-    const id = $("#rhColId").value;
-    const payload = {
-      empresa_id: empresaId(),
-      nome_completo: $("#rhNomeCompleto").value.trim(),
-      cpf: $("#rhCpf").value.trim(),
-      rg: $("#rhRg").value.trim(),
-      data_nascimento: $("#rhDataNascimento").value || null,
-      telefone: $("#rhTelefone").value.trim(),
-      whatsapp: $("#rhWhatsapp").value.trim(),
-      email: $("#rhEmail").value.trim(),
-      endereco: $("#rhEndereco").value.trim(),
-      setor: $("#rhSetor").value.trim(),
-      funcao: $("#rhFuncao").value.trim(),
-      data_admissao: $("#rhDataAdmissao").value || null,
-      status: $("#rhStatus").value,
-      observacoes: $("#rhObservacoes").value.trim(),
-      atualizado_por: usuarioId()
-    };
-    if (!payload.nome_completo) return notify("Informe o nome do colaborador.");
-    const query = id
-      ? client.from(T.colaboradores).update(payload).eq("id", id).select().single()
-      : client.from(T.colaboradores).insert({ ...payload, criado_por: usuarioId() }).select().single();
-    const { data, error } = await query;
-    if (error) {
-      console.error("[RH] salvar colaborador:", error);
-      return notify("Nao foi possivel salvar o colaborador.");
-    }
-    let photoResult;
-    try {
-      photoResult = await syncColaboradorPhoto(data.id, state.fotoColaborador.existingUrl || data.foto_url || "");
-    } catch (photoError) {
-      console.error("[RH] salvar foto colaborador:", photoError);
-      return notify(photoError.message || "Nao foi possivel salvar a foto do colaborador.");
-    }
-    if (photoResult?.changed) {
-      const { error: photoDbError } = await client
-        .from(T.colaboradores)
-        .update({ foto_url: photoResult.url, atualizado_por: usuarioId() })
-        .eq("id", data.id)
-        .eq("empresa_id", empresaId());
-      if (photoDbError) {
-        console.error("[RH] atualizar foto colaborador:", photoDbError);
-        if (photoResult.url) await deleteColaboradorPhoto(photoResult.url);
-        return notify("A foto foi enviada, mas nao foi possivel vincular ao colaborador.");
-      }
-      if (photoResult.deleteUrl) await deleteColaboradorPhoto(photoResult.deleteUrl);
-    }
-    await uploadPendingFiles(data.id, "colaborador");
-    closeModal("rhColaboradorModal");
-    await loadAll();
-    notify("Colaborador salvo.");
-  }
+  async function saveColaborador(){openColaborador();}
 
   async function uploadPendingFiles(recordId, origemTipo) {
     const files = [];
@@ -775,7 +703,7 @@
     if (!action) return;
     const id = action.dataset.id;
     if (action.dataset.action === "open-col") openColaborador(getColaborador(id));
-    if (action.dataset.action === "delete-col") deleteRow(T.colaboradores, id);
+    if (action.dataset.action === "delete-col") notify("Inative o funcionário no Cadastro de Funcionários do RH; seu histórico será preservado.");
     if (action.dataset.action === "open-oc") openOcorrencia(state.ocorrencias.find(i => i.id === id));
     if (action.dataset.action === "delete-oc") deleteRow(T.ocorrencias, id);
     if (action.dataset.action === "open-sol") openSolicitacao(state.solicitacoes.find(i => i.id === id));

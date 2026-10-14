@@ -11,13 +11,13 @@ function MURAL_parabensLer_(id){
   if(aba.getLastRow()<2)return [];
   return aba.getDataRange().getValues().slice(1).filter(r=>String(r[1])===String(id)&&r[2]===mes).slice(-30).reverse().map(r=>({autorId:r[3],autor:r[4],texto:r[5],data:r[6],foto:r[7] || ''}));
 }
-function MURAL_enviarParabens_(id,texto,autor){
+function MURAL_enviarParabens_(id,texto,autor,colaboradores){
   texto=String(texto || '').trim();
   if(!texto || texto.length>300)throw new Error('Escreva uma mensagem de até 300 caracteres.');
   if(!autor || !autor.id)throw new Error('Entre no sistema para enviar.');
-  const c=MURAL_ler_('colaboradores').find(x=>x.v[0]===id && x.v[6]!=='NAO');
+  const c=(colaboradores || []).find(x=>x.id===id && x.ativo);
   const mes=Utilities.formatDate(new Date(),'America/Sao_Paulo','MM');
-  if(!c || String(c.v[3]).slice(3,5)!==mes)throw new Error('Aniversariante indisponível.');
+  if(!c || String(c.aniversario).slice(3,5)!==mes)throw new Error('Aniversariante indisponível.');
   MURAL_parabensAba_().appendRow([Utilities.getUuid(),id,Utilities.formatDate(new Date(),'America/Sao_Paulo','yyyy-MM'),autor.id,autor.nome,texto,MURAL_agora_(),autor.foto || '']);
   CacheService.getScriptCache().remove(MURAL_CACHE_PUBLICO);
   return MURAL_parabensLer_(id);

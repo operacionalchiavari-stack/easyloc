@@ -288,14 +288,6 @@
         }).join("") + '</div></section>';
     }
 
-    // Galeria
-    if((m.galeria || []).length){
-      html += '<section class="secao">' + cabecalho("Galeria", "Eventos em destaque", "O resultado do nosso trabalho.") +
-        '<div class="galeria">' + m.galeria.map(function(g, i){
-          return '<figure class="revelar" style="--atraso:' + (i % 4) * 0.08 + 's" onclick="abrirLuz(\'' + esc(g.foto) + '\', \'' + esc(String(g.legenda || "").replace(/'/g, "")) + '\')"><img src="' + esc(g.foto) + '" alt="" loading="lazy">' + (g.legenda ? '<figcaption>' + esc(g.legenda) + '</figcaption>' : "") + '</figure>';
-        }).join("") + '</div></section>';
-    }
-
     html += '<footer class="rodape"><b>Chiavari</b><span>Portal Interno · uso exclusivo da equipe</span></footer>';
 
     document.getElementById("portalInicio").innerHTML = html;
@@ -489,7 +481,7 @@
     }, { root: area, threshold: 0 });
     area.querySelectorAll(".secao .revelar").forEach(function(el){ observador.observe(el); });
 
-    const blocos = Array.from(area.querySelectorAll(".secao > .secao-topo, .secao > .rd-grade, .secao > .galeria, .secao > .fila, .secao > .metas-dashboard"));
+    const blocos = Array.from(area.querySelectorAll(".secao > .secao-topo, .secao > .rd-grade, .secao > .fila, .secao > .metas-dashboard"));
     blocos.forEach(el => el.classList.add("portal-movimento"));
     let quadro = null;
     function atualizar(){

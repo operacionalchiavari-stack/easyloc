@@ -466,12 +466,6 @@ body.portal-shell.portal-em-inicio #portalInicio{ display:block; }
 #portalInicio .novo b{ display:block; font-size:14.5px; }
 #portalInicio .novo small{ color:var(--muted); font-size:12.5px; }
 
-#portalInicio .galeria{ display:grid; grid-template-columns:repeat(4, 1fr); grid-auto-rows:220px; gap:12px; }
-#portalInicio .galeria figure{ position:relative; border-radius:18px; overflow:hidden; background:var(--soft); cursor:zoom-in; }
-#portalInicio .galeria figure:nth-child(5n+1){ grid-column:span 2; grid-row:span 2; }
-#portalInicio .galeria img{ width:100%; height:100%; object-fit:cover; transition:transform .8s cubic-bezier(.2,.7,.2,1); }
-#portalInicio .galeria figure:hover img{ transform:scale(1.05); }
-#portalInicio .galeria figcaption{ position:absolute; left:12px; bottom:12px; right:12px; padding:6px 12px; border-radius:10px; background:rgba(16,15,13,.6); color:#fff; font-size:12.5px; font-weight:700; backdrop-filter:blur(6px); }
 
 #portalInicio .rodape{ max-width:1280px; margin:0 auto; padding:40px clamp(24px, 5vw, 72px) 60px; display:flex; justify-content:space-between; color:var(--suave); font-size:12.5px; border-top:1px solid var(--line); margin-top:80px; }
 #portalInicio .rodape b{ font-family:var(--serif); font-size:16px; letter-spacing:.3em; text-transform:uppercase; color:var(--muted); font-weight:600; }
@@ -498,7 +492,6 @@ body.portal-shell #luz button{ position:absolute; top:18px; right:22px; width:44
   #portalInicio .hero-saudacao{ top:72px; }
   #portalInicio .numeros{ grid-template-columns:1fr; }
   #portalInicio .numero{ border-right:0; border-bottom:1px solid rgba(255,255,255,.08); padding:30px 28px; }
-  #portalInicio .galeria{ grid-template-columns:repeat(2, 1fr); grid-auto-rows:160px; }
   #portalInicio .secao-topo{ flex-direction:column; align-items:flex-start; }
   #portalInicio .rodape{ flex-direction:column; gap:8px; }
 }

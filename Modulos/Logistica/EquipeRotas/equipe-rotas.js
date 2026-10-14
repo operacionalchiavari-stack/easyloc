@@ -322,19 +322,12 @@
     }
 
     try{
-      const [rhRows, legacyRows] = await Promise.all([
-        safeSelect("rh_colaboradores", "*", { order: { field: "nome_completo", ascending: true } }),
-        safeSelect("colaboradores", "*", { order: { field: "created_at", ascending: false } })
-      ]);
+      const rhRows = await safeSelect("rh_funcionarios_lista", "*", { order: { field: "nome_completo", ascending: true } });
 
       const merged = new Map();
       (Array.isArray(rhRows) ? rhRows : []).forEach((row) => {
         const employee = normalizeEmployee(row, "rh");
         merged.set(employee.id, employee);
-      });
-      (Array.isArray(legacyRows) ? legacyRows : []).forEach((row) => {
-        const employee = normalizeEmployee(row, "legacy");
-        if(!merged.has(employee.id)) merged.set(employee.id, employee);
       });
 
       state.employees = Array.from(merged.values()).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));

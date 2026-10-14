@@ -198,6 +198,7 @@ function MONT_freePorEtapa_() {
   const inscricoes = FREE_lerInscricoes_();
   const porVaga = FREE_agruparInscricoes_(inscricoes);
   const notas = FREE_mapaPontuacoes_(inscricoes, vagas);
+  const fotos = FREE_mapaMiniaturas_(inscricoes.filter(function(i){return i.status===FREE_INS_CONFIRMADO;}).map(function(i){return i.idFree;}));
   const mapa = {};
 
   vagas.forEach(function (vaga) {
@@ -220,6 +221,7 @@ function MONT_freePorEtapa_() {
       pessoas: confirmados.map(function (i) {
         return {
           nome: i.nome,
+          miniatura:fotos[i.idFree] || "",
           telefone: i.telefone,
           fase: FREE_fasePresenca_(vaga, i),
           checkinEm: i.checkinEm,
@@ -237,6 +239,7 @@ function MONT_appCarregar(token, idExtra) {
 
   const sessao = MONT_autenticar_(token);
   const supervisor = sessao.perfil === MONT_PERFIL_SUPERVISOR;
+  const apontamento = MONT_apontamentoDaSessao_(sessao);
 
   const aba = SpreadsheetApp.openById(FREE_SPREADSHEET_ID).getSheetByName(NOME_ABA);
   const ultima = aba.getLastRow();
@@ -279,7 +282,7 @@ function MONT_appCarregar(token, idExtra) {
 
   const minhas = todas.filter(function (e) {
 
-    const extra = idExtra && e.id === String(idExtra);
+    const extra = (idExtra && e.id === String(idExtra)) || (apontamento && e.id === apontamento.idEtapa);
 
     if (!extra && (!e.dataISO || e.dataISO < inicioISO || e.dataISO > fimISO)) {
       return false;
@@ -310,6 +313,7 @@ function MONT_appCarregar(token, idExtra) {
 
     e.operacao = MONT_ehOperacao_(e.etapa) ? MONT_normalizar_(e.etapa) : "";
     e.registros = MONT_contarRegistros_(resumo[e.id]);
+    e.chegadaEquipe = resumo[e.id] ? resumo[e.id].equipeTerceirizada || null : null;
     e.free = free[e.id] || null;
     e.trocas = trocas[e.id] || [];
 
@@ -349,7 +353,7 @@ function MONT_appCarregar(token, idExtra) {
     return (a.dataISO + " " + a.horario).localeCompare(b.dataISO + " " + b.horario);
   });
 
-  const resposta = { nome: sessao.nome, perfil: sessao.perfil, etapas: etapas };
+  const resposta = { nome: sessao.nome, perfil: sessao.perfil, etapas: etapas, apontamento:apontamento };
 
   // Link direto para uma etapa que não é deste montador
   if (idExtra && !etapas.some(function (e) { return e.id === String(idExtra); })) {

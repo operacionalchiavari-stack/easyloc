@@ -16,7 +16,7 @@ const TROCA_CABECALHO = [
   "ID", "ID Etapa", "Pedido", "Cliente", "Etapa", "Data etapa",
   "Item", "Quantidade", "Motivo", "Descrição", "Foto (Drive)", "ID Foto",
   "Solicitado por", "Solicitado em", "Status",
-  "Separado por", "Separado em", "Enviado por", "Enviado em", "Observação"
+  "Separado por", "Separado em", "Enviado por", "Enviado em", "Observação", "Apontamento"
 ];
 
 const TROCA_PENDENTE = "PENDENTE";
@@ -115,6 +115,7 @@ function MONT_solicitarTroca(token, dados) {
 
   const sessao = MONT_autenticar_(token);
   dados = dados || {};
+  const apontamento = MONT_exigirApontamento_(token,dados.idEtapa,dados.apontamentoId);
 
   const etapa = getEtapaOperacao(dados.idEtapa);
 
@@ -148,12 +149,14 @@ function MONT_solicitarTroca(token, dados) {
 
   return FREE_comLock_(function () {
 
-    TROCA_aba_().appendRow([
+    const abaTroca = TROCA_aba_();
+    abaTroca.getRange(1,21).setValue("Apontamento");
+    abaTroca.appendRow([
       id, String(etapa.id), etapa.pedido, etapa.cliente, etapa.etapa,
       data ? formatISO(data) : etapa.dataEtapa,
       item, String(quantidade), motivo, FREE_texto_(dados.descricao, 500),
       foto.url, foto.id, sessao.nome, FREE_agoraTexto_(), TROCA_PENDENTE,
-      "", "", "", "", ""
+      "", "", "", "", "", apontamento.id
     ]);
 
     return TROCA_mapaPorEtapa_()[String(etapa.id)] || [];

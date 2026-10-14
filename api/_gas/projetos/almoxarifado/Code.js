@@ -1,7 +1,6 @@
 const NOME_ABA_PRODUTOS    = "Produtos";
 const NOME_ABA_MOV         = "Movimentacoes";
 const NOME_ABA_EMPRESTIMOS = "Emprestimos";
-const NOME_ABA_USUARIOS    = "Usuarios";
 const NOME_ABA_CONTAGENS   = "Contagens";
 
 function doGet(e) {
@@ -48,9 +47,6 @@ criarAbaSeNaoExistir_(ss, NOME_ABA_EMPRESTIMOS, [
 ]);
 
 garantirEstruturaEmprestimos_();
-  criarAbaSeNaoExistir_(ss, NOME_ABA_USUARIOS, [
-    "ID","Nome","Setor","Funcao","Status","CriadoEm"
-  ]);
 
 criarAbaSeNaoExistir_(ss, NOME_ABA_CONTAGENS, [
   "ID","MesRef","DataHora","ProdutoID","Codigo","Produto","EstoqueSistema",
@@ -122,58 +118,9 @@ function buscarProdutos() {
     return [];
   }
 }
+function buscarUsuarios(){return Acervo.funcionarios().filter(function(f){return f.ativo;}).map(function(f){return {ID:f.id,Nome:f.nome,Setor:f.setor,Funcao:f.cargo,Status:'Ativo'};});}
 
-function buscarUsuarios() {
-  try {
-    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOME_ABA_USUARIOS);
-    if (!sh) return [];
-
-    const dados = sh.getDataRange().getValues();
-    if (!dados || dados.length <= 1) return [];
-
-    const cab = dados[0];
-    const tz = Session.getScriptTimeZone();
-
-    return dados.slice(1)
-      .filter(l => l && l[0])
-      .map(l => {
-        const obj = {};
-
-        for (let i = 0; i < cab.length; i++) {
-          let valor = l[i];
-
-          if (valor instanceof Date) {
-            valor = Utilities.formatDate(valor, tz, "dd/MM/yyyy HH:mm:ss");
-          }
-
-          obj[cab[i]] = valor;
-        }
-
-        return obj;
-      })
-      .filter(u => String(u.Status || "").toLowerCase() !== "inativo");
-
-  } catch (e) {
-    Logger.log("ERRO buscarUsuarios: " + e);
-    return [];
-  }
-}
-
-function salvarUsuario(dados) {
-  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOME_ABA_USUARIOS);
-  if (!sh) return { ok:false };
-
-  sh.appendRow([
-    gerarId_("USER"),
-    dados.nome || "",
-    dados.setor || "",
-    dados.funcao || "",
-    dados.status || "Ativo",
-    agora_()
-  ]);
-
-  return { ok:true, mensagem:"Usuário cadastrado." };
-}
+function salvarUsuario(){throw new Error('Cadastre funcionários exclusivamente em RH → Cadastro de Funcionários.');}
 
 function salvarProduto(dados) {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOME_ABA_PRODUTOS);

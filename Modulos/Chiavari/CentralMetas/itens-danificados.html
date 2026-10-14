@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<link rel="stylesheet" href="ciencia-danos.css?v=20261014-rh">
+<script src="ciencia-danos.js?v=20261014-rh"></script>
   <script src="../gas-cliente.js?v=20261014-servidor-nuvem" data-projeto="central"></script>
 <base target="_top">
 <meta charset="UTF-8">
@@ -1320,10 +1322,11 @@ body.modo-painel .cabecalho-barra{ display:none; }
             <th class="m-oculta t2-oculta">Pedido</th>
             <th class="m-oculta t1-oculta">Detalhes</th>
             <th>Urgência</th>
+            <th>Ciência do dano</th>
           </tr>
         </thead>
         <tbody id="tabela">
-          <tr><td colspan="12"><div class="mensagem">Carregando O.S...</div></td></tr>
+          <tr><td colspan="13"><div class="mensagem">Carregando O.S...</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1379,9 +1382,9 @@ body.modo-painel .cabecalho-barra{ display:none; }
             <button type="button" class="opcao" data-valor="Estoque">Estoque</button>
           </div>
         </div>
-        <div class="campo" style="display:none">
-          <label for="osSenha">Senha do setor *</label>
-          <input type="password" id="osSenha" maxlength="10" inputmode="numeric" autocomplete="off">
+        <div class="campo">
+          <label for="osSenha">Seu PIN individual *</label>
+          <input type="password" id="osSenha" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="PIN cadastrado no RH">
         </div>
       </div>
 
@@ -1438,8 +1441,9 @@ body.modo-painel .cabecalho-barra{ display:none; }
       <div class="campo">
         <span class="rotulo">Onde aconteceu o dano? *</span>
         <div class="opcoes" data-grupo="ondeDano">
-          <button type="button" class="opcao" data-valor="Dano Interno">Dano Interno</button>
-          <button type="button" class="opcao" data-valor="Evento">Evento</button>
+          <button type="button" class="opcao" data-valor="Triagem">Triagem</button>
+          <button type="button" class="opcao" data-valor="Carregamento">Carregamento</button>
+          <button type="button" class="opcao" data-valor="Montagem">Montagem</button>
           <button type="button" class="opcao" data-valor="Produção">Produção</button>
         </div>
       </div>
@@ -2059,6 +2063,7 @@ function render(){
           '<td class="m-oculta t2-oculta">' + (os.pedido ? escapar(os.pedido) : '<span style="color:var(--muted)">—</span>') + "</td>" +
           '<td class="col-detalhes m-oculta t1-oculta" title="' + escapar(os.detalhes) + '">' + escapar(os.detalhes) + "</td>" +
           "<td>" + htmlDataUrgencia(os) + "</td>" +
+          '<td class="op-dano-ciencia">' + window.danoCienciaHtml(os.id,os.ciencia) + '</td>' +
         "</tr>"
       );
 
@@ -2101,6 +2106,7 @@ el("tabela").addEventListener("click", function(evento){
     return;
   }
 
+  if(evento.target.closest('[data-ciencia-id],[data-ciencia-revisar]')) return;
   const linha = evento.target.closest("tr[data-id]");
   if(!linha || !linha.dataset.id){ return; }
 
@@ -2476,7 +2482,7 @@ function abrirNovaOS(){
     .then(function(lista){
       el("listaFuncionarios").innerHTML = lista.length
         ? lista.map(function(f){
-            return '<button type="button" class="opcao" data-nome="' + escapar(f.nome) + '" data-setor="' + escapar(f.setor) + '" title="' + escapar(f.setor) + '">' + escapar(f.nome) + "</button>";
+            return '<button type="button" class="opcao" data-id="' + escapar(f.id) + '" data-nome="' + escapar(f.nome) + '" data-setor="' + escapar(f.setor) + '" title="' + escapar(f.setor) + '">' + escapar(f.nome) + "</button>";
           }).join("")
         : '<span class="carregando-texto">Nenhum funcionário encontrado.</span>';
     })
@@ -2514,7 +2520,7 @@ el("modalNovaOS").addEventListener("click", function(evento){
   }
 
   if(nomeGrupo === "ondeDano"){
-    el("campoPedido").classList.toggle("oculto", botao.dataset.valor !== "Evento");
+    el("campoPedido").classList.toggle("oculto", !["Carregamento", "Montagem"].includes(botao.dataset.valor));
   }
 
   /* Funcionário: marca o setor dele automaticamente */
@@ -2570,6 +2576,7 @@ function enviarNovaOS(){
     setor: escolhido("setor"),
     senha: el("osSenha").value.trim(),
     nome: funcionario ? funcionario.dataset.nome : "",
+    funcionarioId: funcionario ? funcionario.dataset.id : "",
     categoria: el("osCategoria").value,
     item: el("osItem").value.trim(),
     codigoItem: el("osCodigo").value,
@@ -2586,6 +2593,7 @@ function enviarNovaOS(){
 
   const faltando =
     !dados.nome ? "Escolha seu nome."
+    : !/^[0-9]{4}$/.test(dados.senha) ? "Informe seu PIN individual de 4 dígitos."
     : !dados.setor ? "Escolha seu setor."
     : !dados.categoria ? "Escolha a categoria."
     : !dados.item ? "Escolha o item."
@@ -2595,7 +2603,7 @@ function enviarNovaOS(){
     : dados.saiSemana === "Sim" && diasAte(dados.dataLimite) < 0 ? "A data limite não pode ser no passado."
     : !dados.setorSolicitado ? "Escolha o setor solicitado."
     : !dados.ondeDano ? "Informe onde aconteceu o dano."
-    : dados.ondeDano === "Evento" && !dados.numeroPedido ? "Informe o número do pedido."
+    : ["Carregamento", "Montagem"].includes(dados.ondeDano) && !dados.numeroPedido ? "Informe o número do pedido."
     : "";
 
   const erro = el("erroNovaOS");

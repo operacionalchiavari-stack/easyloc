@@ -1,0 +1,12 @@
+.ciencia-dialog{box-sizing:border-box;width:min(620px,calc(100% - 40px));max-height:85vh;overflow:auto;border:1px solid #e7dfd3;border-radius:16px;padding:24px;color:#2d2c29;background:#fff}
+.ciencia-dialog::backdrop{background:rgba(0,0,0,.35)}
+.ciencia-dialog h2{margin-top:0;font-size:22px}
+.ciencia-dialog label{display:grid;gap:6px;margin:14px 0;font-size:14px}
+.ciencia-dialog label[hidden]{display:none}
+.ciencia-dialog input,.ciencia-dialog select,.ciencia-dialog textarea{font:inherit;padding:10px;border:1px solid #ddd5ca;border-radius:8px;width:100%;box-sizing:border-box}
+.ciencia-dialog button{font:inherit;padding:9px 14px;border:1px solid #ddd5ca;border-radius:8px;cursor:pointer;background:#f8f6f0}
+.ciencia-acoes{display:flex;justify-content:flex-end;gap:8px}
+.ciencia-resumo{padding:12px;background:#f8f6f0;line-height:1.5}
+.ciencia-pendente{color:#92400e}.ciencia-confirmada{color:#008f43}.ciencia-contestada,.ciencia-erro{color:#b91c1c}.ciencia-legado{color:#77716a}
+.op-dano-ciencia small{display:block;font-size:11px;margin-top:4px;white-space:normal}
+.op-dano-ciencia button{font-size:12px;margin-top:6px;padding:5px 10px}

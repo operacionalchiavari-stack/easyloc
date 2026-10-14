@@ -19,9 +19,18 @@
 .op-erro{color:var(--red)}
 
 /* Indicadores dentro da linha da tabela de desempenho */
-.op-inds{display:flex;flex-wrap:wrap;gap:6px 18px}
-.op-ind{display:flex;flex-direction:column;align-items:center;min-width:92px;text-align:center}
-.op-ind span{font-size:12px;color:var(--muted)}
+.op-tabela-desempenho{table-layout:fixed;min-width:1120px}
+.op-tabela-desempenho th,.op-tabela-desempenho td{text-align:center;vertical-align:middle}
+.op-tabela-desempenho th:first-child,.op-tabela-desempenho td:first-child{text-align:left;width:12%}
+.op-tabela-desempenho th:nth-child(2){width:7%}
+.op-tabela-desempenho th:nth-child(3){width:43%}
+.op-tabela-desempenho th:nth-child(4){width:11%}
+.op-tabela-desempenho th:nth-child(5){width:14%}
+.op-tabela-desempenho th:nth-child(6){width:13%}
+.op-tabela-desempenho td:nth-child(3){white-space:normal}
+.op-inds{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.op-ind{display:flex;flex-direction:column;align-items:center;min-width:0;text-align:center}
+.op-ind span{display:flex;align-items:center;justify-content:center;min-height:34px;font-size:12px;line-height:1.4;color:var(--muted)}
 .op-ind b{font-size:15px}
 .op-ind small{font-size:11px;color:#77716a}
 
@@ -33,6 +42,16 @@
 .op-vazio{color:var(--muted);font-style:italic;font-size:13px;text-align:center;padding:18px}
 .op-tag{font-size:11px;font-weight:700;color:var(--muted);background:var(--accent-soft);padding:1px 6px;border-radius:999px}
 .op-alerta{color:#9f2a1f;font-weight:600}
+
+/* Eventos: mesmos destaques de score e valores da Manutenção. */
+.op-tabela-eventos td.op-evento-score{ text-align:center; }
+.op-tabela-eventos td.op-evento-valor{ text-align:right; font-weight:400; }
+
+.op-fluxo-setor{display:inline-block;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:500;margin:2px}
+.op-tabela-danos td.op-dano{color:#b91c1c;text-align:left}
+.op-tabela-danos td.op-dano-detalhes{color:#5c554e;white-space:normal;max-width:250px;text-align:left}
+.op-tabela-danos td.op-dano-equipe{color:var(--text);text-align:left;font-weight:400}
+.op-tabela-danos td.op-dano-valor{text-align:right;font-weight:400}
 
 /* Parâmetros */
 .op-modal{width:min(820px,calc(100% - 32px));max-height:86vh;overflow:auto;margin-top:5vh}

@@ -1,7 +1,7 @@
 // =====================================================================
 // GET /api/portal-mural  (Authorization: Bearer <token do Supabase>)
 // Devolve o mural do Portal Interno (avisos, números do mês,
-// aniversariantes, reconhecimentos, boas-vindas e galeria) para a tela
+// aniversariantes do RH, reconhecimentos da Central e boas-vindas) para a tela
 // "Início" do dashboard. No Portal original isso vinha junto do login
 // do Firebase (PORTAL_iniciar); aqui quem entra é a conta do Acervo,
 // então o servidor confere a sessão do Supabase antes de responder.
@@ -65,11 +65,18 @@ module.exports = async (req, res) => {
   try {
     const usuario = await usuarioDoToken(cfg, token);
     if (!usuario) { res.status(401).json({ ok: false, erro: "Sessão expirada. Entre de novo." }); return; }
+    const membro=await usuarioDaSessao(cfg,token);
+    if(!membro) return res.status(403).json({ok:false,erro:'Sem acesso à empresa.'});
+    const pessoas=await rest(cfg,'funcionarios_acesso?select=id,nome,setor,data_admissao,dados_rh,foto_url&ativo=eq.true&empresa_id=eq.'+encodeURIComponent(membro.empresaId));
+    const colaboradores=pessoas.map(f=>{
+      const nascimento=String(f.dados_rh?.data_nascimento || '');
+      return {id:f.id,nome:f.nome,setor:f.setor,admissao:f.data_admissao || '',ativo:true,
+        aniversario:/^\d{4}-\d{2}-\d{2}$/.test(nascimento) ? nascimento.slice(8,10)+'/'+nascimento.slice(5,7) : f.dados_rh?.aniversario_legado || '',
+        foto: !f.foto_url ? '' : /^https?:\/\//i.test(f.foto_url) ? f.foto_url : cfg.url+'/storage/v1/object/public/avatares/'+caminhoStorage(membro.empresaId+'/'+f.id+'.jpg')};
+    });
     if(req.method === "POST"){
       const corpo = req.body || {};
       if(corpo.acao === 'aviso' || corpo.acao === 'corAviso'){
-        const membro=await usuarioDaSessao(cfg,token);
-        if(!membro) return res.status(403).json({ok:false,erro:'Sem acesso à empresa.'});
         const resultado=await executar(cfg,PROJETOS.portal,corpo.acao === 'corAviso' ? 'MURAL_corAviso_' : 'MURAL_publicarAviso_',[corpo.dados],{interno:true,usuario:membro});
         return res.status(200).json({ok:true,resultado});
       }
@@ -78,14 +85,14 @@ module.exports = async (req, res) => {
       const perfil = perfis[0] || {};
       const foto = perfil.foto_url || perfil.avatar_url || perfil.foto || usuario.user_metadata?.avatar_url || usuario.user_metadata?.picture || '';
       const autor = {id:usuario.id,nome:perfil.nome || usuario.user_metadata?.nome || usuario.user_metadata?.full_name || usuario.email?.split('@')[0] || 'Colega da equipe',foto:/^https?:\/\//i.test(foto) ? foto : ''};
-      const resultado = await executar(cfg,PROJETOS.portal,"MURAL_enviarParabens_",[corpo.destinatario,corpo.texto,autor],{interno:true});
+      const resultado = await executar(cfg,PROJETOS.portal,"MURAL_enviarParabens_",[corpo.destinatario,corpo.texto,autor,colaboradores],{interno:true,usuario:membro});
       await perfisMensagens(cfg,resultado);
       return res.status(200).json({ok:true,resultado});
     }
     // Resumo do dia (etapas do Cronograma de hoje + agenda interna) — out/2026.
     // Se o Cronograma falhar, o mural continua aparecendo (resumo vem null).
     const [mural, resumoDia, metasSetores] = await Promise.all([
-      executar(cfg, PROJETOS.portal, "MURAL_dadosPublicos_", [true], { interno: true }),
+      executar(cfg, PROJETOS.portal, "MURAL_dadosPublicos_", [true,colaboradores], { interno: true,usuario:membro }),
       executar(cfg, PROJETOS.cronograma, "PORTAL_resumoDia_", [], { interno: true }).catch((e) => {
         console.error("[portal-mural] resumo do dia", e && e.message || e);
         return null;

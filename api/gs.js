@@ -62,13 +62,13 @@ async function usuarioDaSessao(cfg, token) {
     const id = encodeURIComponent(u.id);
     const [vinculos, funcionarios, perfis] = await Promise.all([
       rest(cfg, "usuarios_empresas?select=empresa_id,role&user_id=eq." + id),
-      rest(cfg, "funcionarios_acesso?select=empresa_id,ativo,nome&id=eq." + id),
+      rest(cfg, "funcionarios_acesso?select=empresa_id,ativo,nome,acesso_sistema&id=eq." + id),
       rest(cfg, "usuarios?select=nome&id=eq." + id)
     ]);
     const vinc = Array.isArray(vinculos) && vinculos[0];
     if (!vinc) { return null; }
     const func = Array.isArray(funcionarios) && funcionarios[0];
-    if (func && (func.ativo === false || func.empresa_id !== vinc.empresa_id)) { return null; }
+    if (func && (func.ativo === false || func.acesso_sistema === false || func.empresa_id !== vinc.empresa_id)) { return null; }
     const admin = !func && ["admin", "owner", "administrador"].indexOf(String(vinc.role || "").toLowerCase()) >= 0;
     let permissoes = [];
     if (!admin) {

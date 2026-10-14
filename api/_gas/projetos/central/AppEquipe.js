@@ -9,29 +9,8 @@
    - valor transferido (aba "Pagamentos Bonus");
    - premiações: saldo, itens comprados e fotos.
 
-   Foto e PIN de cada pessoa ficam na aba "App Equipe"
-   da planilha de fechamentos e são definidos pela Central
-   (aba "App da Equipe"). O PIN é guardado só como hash:
-   a Central mostra o PIN uma única vez, quando é gerado.
+   Foto, CPF e PIN vêm exclusivamente do Cadastro de Funcionários do RH.
 ========================================================= */
-
-const APP_EQUIPE_ABA =
-  "App Equipe";
-
-const APP_EQUIPE_CABECALHO = [
-  "CHAVE",
-  "NOME",
-  "CPF",
-  "PIN (HASH)",
-  "FOTO (ID NO DRIVE)",
-  "ATUALIZADO EM"
-];
-
-const APP_EQUIPE_PROPRIEDADE_PASTA =
-  "APP_EQUIPE_PASTA_ID";
-
-const APP_EQUIPE_NOME_PASTA =
-  "Central de Metas — Fotos da Equipe";
 
 /* Sessão do funcionário: 6 horas (máximo do cache), renovada a cada uso */
 const APP_EQUIPE_SESSAO_SEGUNDOS =
@@ -78,15 +57,11 @@ function equipeEntrar(cpfInformado, pinInformado){
     throw new Error("Muitas tentativas erradas. Aguarde 15 minutos e tente de novo.");
   }
 
-  const cadastro =
-    appEquipeLerCadastro_()
-      .filter(function(item){
-        return item.cpf === cpf && item.pinHash;
-      })[0];
+  const rh=Acervo.equipeCadastro(cpf);const cadastro=rh?{id:rh.id,empresaId:rh.empresa_id,chave:'CPF:'+rh.cpf,nome:rh.nome,cpf:rh.cpf,pinHash:String(rh.pin_version),fotoId:'',fotoUrl:rh.fotoUrl}:null;
 
   if(
     !cadastro ||
-    appEquipeHashPin_(cadastro.chave, pin) !== cadastro.pinHash
+    !Acervo.equipePinConferir(cadastro.empresaId,cadastro.id,pin)
   ){
 
     cache.put(
@@ -281,7 +256,7 @@ function equipeExtrato(token){
       setor: pessoa.setor,
       cargo: pessoa.cargo,
       grupo: pessoa.grupo,
-      fotoId: cadastro.fotoId
+      fotoId: cadastro.fotoId, fotoUrl: cadastro.fotoUrl
     },
     saldoPremiacao: saldoPremiacao,
     meses: lista,
@@ -339,301 +314,23 @@ function appEquipeCompletarMetas_(chave, idsFechamento, meses){
 ========================================================= */
 
 function appEquipeListar(){
-
-  exigirAcessoCentral_();
-
-  const painelAtual =
-    pagamentosBonusCentralObter("");
-
-  const pessoas = {};
-
-  (painelAtual.anosDisponiveis || []).slice().sort().forEach(function(ano){
-
-    const painel =
-      ano === painelAtual.ano
-        ? painelAtual
-        : pagamentosBonusCentralObter(ano);
-
-    /* Anos em ordem: os dados do ano mais recente prevalecem */
-    painel.pessoas.forEach(function(pessoa){
-      pessoas[pessoa.chave] = {
-        chave: pessoa.chave,
-        nome: pessoa.nome,
-        setor: pessoa.setor,
-        cargo: pessoa.cargo,
-        grupo: pessoa.grupo
-      };
-    });
-
-  });
-
-  const cadastros = {};
-
-  appEquipeLerCadastro_().forEach(function(item){
-    cadastros[item.chave] = item;
-  });
-
-  const ordemGrupo = { SUPERVISOR: 0, ESTOFADOS: 1, ESTRUTURA: 2 };
-
-  const lista =
-    Object.keys(pessoas)
-      .map(function(chave){
-
-        const pessoa = pessoas[chave];
-        const cadastro = cadastros[chave] || {};
-
-        pessoa.cpf =
-          cadastro.cpf || appEquipeCpfDaChave_(chave);
-
-        pessoa.precisaCpf =
-          chave.indexOf("CPF:") !== 0;
-
-        pessoa.temPin =
-          !!cadastro.pinHash;
-
-        pessoa.fotoId =
-          cadastro.fotoId || "";
-
-        return pessoa;
-
-      })
-      .sort(function(a, b){
-
-        const ga = ordemGrupo.hasOwnProperty(a.grupo) ? ordemGrupo[a.grupo] : 9;
-        const gb = ordemGrupo.hasOwnProperty(b.grupo) ? ordemGrupo[b.grupo] : 9;
-
-        return ga !== gb ? ga - gb : a.nome.localeCompare(b.nome);
-
-      });
-
-  let link = "";
-
-  try{
-    link = ScriptApp.getService().getUrl() + "?p=equipe";
-  } catch(erro){}
-
-  return {
-    ok: true,
-    link: link,
-    pessoas: lista
-  };
-
+ exigirAcessoCentral_();
+ const pessoas=Acervo.funcionarios().filter(function(f){return f.ativo;}).map(function(f){
+  const setor=operacaoTexto_(f.setor);
+  const grupo=f.equipe_operacional?'OPERACOES':/costura|forracao|estofados/.test(setor)?'ESTOFADOS':'ESTRUTURA';
+  return {id:f.id,chave:f.cpf?'CPF:'+f.cpf:'RH:'+f.id,nome:f.nome,setor:f.setor,cargo:f.cargo,grupo:grupo,cpf:f.cpf||'',precisaCpf:!f.cpf,temPin:f.tem_pin,fotoId:'',fotoUrl:f.fotoUrl};
+ });
+ return {ok:true,link:ScriptApp.getService().getUrl()+'?p=equipe',pessoas:pessoas};
 }
 
+function appEquipeGerarPin(){throw new Error('O PIN individual é cadastrado e redefinido exclusivamente no RH.');}
 
-/*
-  Gera um PIN novo de 4 números e devolve para a Central
-  mostrar uma única vez. O PIN anterior deixa de valer e
-  quem estava conectado com ele precisa entrar de novo.
-  cpf só é usado para quem não tem CPF na chave (supervisor).
-*/
-function appEquipeGerarPin(chave, nome, cpfInformado){
+function appEquipeSalvarFoto(){throw new Error('A foto é alterada exclusivamente no Cadastro de Funcionários do RH.');}
 
-  exigirAcessoCentral_();
+function appEquipeValidarSessao_(token){const cache=CacheService.getScriptCache();const k='acessoEquipe:'+String(token||'');const valor=token?cache.get(k):null;if(!valor)throw new Error('SESSAO_EXPIRADA');const atual=Acervo.equipeCadastro(valor.split('|')[0]);const cadastro=atual?{id:atual.id,empresaId:atual.empresa_id,chave:'CPF:'+atual.cpf,nome:atual.nome,cpf:atual.cpf,pinHash:String(atual.pin_version),fotoId:'',fotoUrl:atual.fotoUrl}:null;if(!cadastro || appEquipeValorSessao_(cadastro)!==valor){cache.remove(k);throw new Error('SESSAO_EXPIRADA');}cache.put(k,valor,APP_EQUIPE_SESSAO_SEGUNDOS);return cadastro;}
 
-  const chaveSegura =
-    String(chave || "").trim();
+function appEquipeValorSessao_(cadastro){return cadastro.cpf+'|'+cadastro.pinHash;}
 
-  if(!chaveSegura){
-    throw new Error("Pessoa não informada.");
-  }
-
-  const cpf =
-    appEquipeCpfDaChave_(chaveSegura) ||
-    appEquipeCpf_(cpfInformado);
-
-  if(cpf.length !== 11){
-    throw new Error("Informe o CPF da pessoa (11 números) para ela conseguir entrar.");
-  }
-
-  const lock =
-    LockService.getScriptLock();
-
-  lock.waitLock(30000);
-
-  try{
-
-    const outro =
-      appEquipeLerCadastro_().filter(function(item){
-        return item.cpf === cpf && item.chave !== chaveSegura;
-      })[0];
-
-    if(outro){
-      throw new Error("Este CPF já está cadastrado para " + outro.nome + ".");
-    }
-
-    const pin =
-      String(Math.floor(Math.random() * 10000)).padStart(4, "0");
-
-    appEquipeGravar_(chaveSegura, {
-      nome: nome,
-      cpf: cpf,
-      pinHash: appEquipeHashPin_(chaveSegura, pin)
-    });
-
-    return {
-      ok: true,
-      pin: pin,
-      cpf: cpf
-    };
-
-  } finally {
-
-    lock.releaseLock();
-
-  }
-
-}
-
-
-/* foto = { base64, tipo, nome } (já reduzida pela página) */
-function appEquipeSalvarFoto(chave, nome, foto){
-
-  exigirAcessoCentral_();
-
-  const chaveSegura =
-    String(chave || "").trim();
-
-  if(!chaveSegura){
-    throw new Error("Pessoa não informada.");
-  }
-
-  if(!foto || !foto.base64){
-    throw new Error("Escolha uma foto.");
-  }
-
-  const tipo =
-    String(foto.tipo || "image/jpeg");
-
-  if(tipo.indexOf("image/") !== 0){
-    throw new Error("O arquivo precisa ser uma imagem.");
-  }
-
-  const bytes =
-    Utilities.base64Decode(String(foto.base64));
-
-  if(bytes.length > 10 * 1024 * 1024){
-    throw new Error("A foto passou de 10 MB. Envie uma imagem menor.");
-  }
-
-  const nomeArquivo =
-    String(nome || chaveSegura)
-      .replace(/[\\/:*?"<>|]/g, " ")
-      .slice(0, 120) +
-    (tipo === "image/png" ? ".png" : ".jpg");
-
-  const arquivo =
-    appEquipePasta_().createFile(
-      Utilities.newBlob(bytes, tipo, nomeArquivo)
-    );
-
-  /* Qualquer pessoa com o link pode ver, para a foto aparecer no app */
-  try{
-    arquivo.setSharing(
-      DriveApp.Access.ANYONE_WITH_LINK,
-      DriveApp.Permission.VIEW
-    );
-  } catch(erro){}
-
-  const lock =
-    LockService.getScriptLock();
-
-  lock.waitLock(30000);
-
-  try{
-
-    const anterior =
-      appEquipeLerCadastro_().filter(function(item){
-        return item.chave === chaveSegura;
-      })[0];
-
-    appEquipeGravar_(chaveSegura, {
-      nome: nome,
-      fotoId: arquivo.getId()
-    });
-
-    /* Foto antiga vai para a lixeira */
-    if(anterior && anterior.fotoId){
-      try{ DriveApp.getFileById(anterior.fotoId).setTrashed(true); } catch(erro){}
-    }
-
-  } finally {
-
-    lock.releaseLock();
-
-  }
-
-  return {
-    ok: true,
-    fotoId: arquivo.getId()
-  };
-
-}
-
-
-/* =========================================================
-   APOIO
-========================================================= */
-
-function appEquipeValidarSessao_(token){
-
-  const cache =
-    CacheService.getScriptCache();
-
-  const chaveCache =
-    "acessoEquipe:" + String(token || "");
-
-  const valor =
-    token ? cache.get(chaveCache) : null;
-
-  if(!valor){
-    throw new Error("SESSAO_EXPIRADA");
-  }
-
-  const chave =
-    valor.split("|")[0];
-
-  const cadastro =
-    appEquipeLerCadastro_().filter(function(item){
-      return item.chave === chave;
-    })[0];
-
-  /* PIN trocado pela Central: a sessão antiga deixa de valer */
-  if(!cadastro || appEquipeValorSessao_(cadastro) !== valor){
-    cache.remove(chaveCache);
-    throw new Error("SESSAO_EXPIRADA");
-  }
-
-  cache.put(chaveCache, valor, APP_EQUIPE_SESSAO_SEGUNDOS);
-
-  return cadastro;
-
-}
-
-function appEquipeValorSessao_(cadastro){
-
-  return cadastro.chave + "|" + cadastro.pinHash.slice(0, 16);
-
-}
-
-function appEquipeHashPin_(chave, pin){
-
-  const bytes =
-    Utilities.computeDigest(
-      Utilities.DigestAlgorithm.SHA_256,
-      "appEquipe|" + chave + "|" + pin,
-      Utilities.Charset.UTF_8
-    );
-
-  return bytes
-    .map(function(byte){
-      return ((byte + 256) % 256).toString(16).padStart(2, "0");
-    })
-    .join("");
-
-}
-
-/* CPF só com números e com os zeros à esquerda */
 function appEquipeCpf_(valor){
 
   const numeros =
@@ -653,124 +350,7 @@ function appEquipeCpfDaChave_(chave){
 
 }
 
-function appEquipeGarantirAba_(){
 
-  const ss =
-    SpreadsheetApp.openById(FECHAMENTO_CENTRAL_PLANILHA_ID);
-
-  let aba =
-    ss.getSheetByName(APP_EQUIPE_ABA);
-
-  if(aba){
-    return aba;
-  }
-
-  aba = ss.insertSheet(APP_EQUIPE_ABA);
-
-  aba
-    .getRange(1, 1, 1, APP_EQUIPE_CABECALHO.length)
-    .setValues([APP_EQUIPE_CABECALHO]);
-
-  fechamentoCentralFormatarCabecalho_(aba, APP_EQUIPE_CABECALHO.length);
-
-  aba.getRange("A:C").setNumberFormat("@");
-  aba.getRange("F:F").setNumberFormat("dd/MM/yyyy HH:mm:ss");
-
-  return aba;
-
-}
-
-function appEquipeLerCadastro_(){
-
-  const aba =
-    appEquipeGarantirAba_();
-
-  if(aba.getLastRow() < 2){
-    return [];
-  }
-
-  return aba
-    .getRange(2, 1, aba.getLastRow() - 1, APP_EQUIPE_CABECALHO.length)
-    .getValues()
-    .map(function(linha, indice){
-      return {
-        linha: indice + 2,
-        chave: String(linha[0] || "").trim(),
-        nome: String(linha[1] || "").trim(),
-        cpf: appEquipeCpf_(linha[2]),
-        pinHash: String(linha[3] || "").trim(),
-        fotoId: String(linha[4] || "").trim()
-      };
-    })
-    .filter(function(item){
-      return item.chave;
-    });
-
-}
-
-/* Cria ou atualiza a linha da pessoa; campos ausentes ficam como estão */
-function appEquipeGravar_(chave, campos){
-
-  const aba =
-    appEquipeGarantirAba_();
-
-  const atual =
-    appEquipeLerCadastro_().filter(function(item){
-      return item.chave === chave;
-    })[0] || {};
-
-  const linha = [[
-    chave,
-    String(campos.nome || atual.nome || "").trim(),
-    campos.cpf !== undefined ? campos.cpf : (atual.cpf || ""),
-    campos.pinHash !== undefined ? campos.pinHash : (atual.pinHash || ""),
-    campos.fotoId !== undefined ? campos.fotoId : (atual.fotoId || ""),
-    new Date()
-  ]];
-
-  const numeroLinha =
-    atual.linha || aba.getLastRow() + 1;
-
-  aba
-    .getRange(numeroLinha, 1, 1, linha[0].length)
-    .setValues(linha);
-
-  SpreadsheetApp.flush();
-
-}
-
-function appEquipePasta_(){
-
-  const propriedades =
-    PropertiesService.getScriptProperties();
-
-  const id =
-    propriedades.getProperty(APP_EQUIPE_PROPRIEDADE_PASTA);
-
-  if(id){
-    try{
-      const pasta = DriveApp.getFolderById(id);
-      if(!pasta.isTrashed()){
-        return pasta;
-      }
-    } catch(erro){}
-  }
-
-  const nova =
-    DriveApp.createFolder(APP_EQUIPE_NOME_PASTA);
-
-  propriedades.setProperty(APP_EQUIPE_PROPRIEDADE_PASTA, nova.getId());
-
-  return nova;
-
-}
-
-
-/* =========================================================
-   TESTE MANUAL — RODAR PELO EDITOR
-
-   Mostra no log quem já tem PIN e foto.
-========================================================= */
 
 function testarAppEquipe(){
 

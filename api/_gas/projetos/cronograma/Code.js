@@ -627,6 +627,7 @@ function FECH_calcularIndicadoresSemana_(
 
 
     etapas.forEach(function(etapa){
+      if(String(etapa.id || '').indexOf('TESTE_MONTADOR_') === 0 || String(etapa.observacao || '').indexOf('[TESTE_APP_MONTADOR]') >= 0) return;
 
       const nomeEtapa =
         String(
@@ -765,7 +766,7 @@ function FECH_calcularIndicadoresSemana_(
         );
 
 
-      if(!uniformeOk){
+      if(uniforme === "NAO" || uniforme === "NÃO"){
 
         equipeNaoUniformizada++;
 
@@ -4950,6 +4951,8 @@ function obterCoordenadasEndereco(
 }
 
 function salvarEquipeTerceirizada(dados){
+  const recebidoEm = new Date();
+  const apontamento = MONT_exigirApontamento_(dados.token,dados.idCronograma,dados.apontamentoId);
 
   const jaEnviada =
     verificarEquipeTerceirizadaJaEnviada(dados.idCronograma);
@@ -4989,74 +4992,11 @@ ss.getSheetByName(
       .getDataRange()
       .getValues();
 
-  let latEvento = "";
-  let lonEvento = "";
-
-  for(let i = 1; i < dadosCronograma.length; i++){
-
-    const linha = dadosCronograma[i];
-
-    // 🔥 COLUNA A = ID
-    const idLinha =
-      String(linha[0] || "").trim();
-
-    if(
-      idLinha ===
-      String(dados.idCronograma).trim()
-    ){
-
-      // 🔥 COLUNA N
-      latEvento =
-        Number(
-          linha[13] || 0
-        );
-
-      // 🔥 COLUNA O
-      lonEvento =
-        Number(
-          linha[14] || 0
-        );
-
-      break;
-
-    }
-
-  }
-
-  // =========================================
-  // 🔥 GPS USUÁRIO
-  // =========================================
-
-  const latitudeUsuario =
-    coordenadaOperacao_(dados.latitude);
-
-  const longitudeUsuario =
-    coordenadaOperacao_(dados.longitude);
-
-  // =========================================
-  // 🔥 DISTÂNCIA EVENTO
-  // =========================================
-
-  let distanciaEvento = "";
-
-  if(
-    latEvento &&
-    lonEvento
-  ){
-
-    distanciaEvento =
-      calcularDistanciaMetros(
-
-        latEvento,
-        lonEvento,
-
-        latitudeUsuario,
-        longitudeUsuario
-
-      );
-
-  }
-
+  const chegada = MONT_prepararChegada_(dados, dadosCronograma, recebidoEm);
+  aba.getRange(1, 15, 1, 9).setValues([['Uniformizada','Previsto no envio','Atraso (min)','Localização','Avaliado por','Avaliado em','Origem chegada','Enviado por','Apontamento']]);
+  const latitudeUsuario = chegada.latitude;
+  const longitudeUsuario = chegada.longitude;
+  const distanciaEvento = chegada.distancia;
   // =========================================
   // 🔥 FOTO
   // =========================================
@@ -5099,7 +5039,7 @@ ss.getSheetByName(
   // =========================================
 
   const agora =
-    new Date();
+    recebidoEm;
 
   const dataFormatada =
     Utilities.formatDate(
@@ -5154,8 +5094,7 @@ ss.getSheetByName(
     longitudeUsuario,
 
     // I
-    dados.precisaoGPS ||
-    dados.accuracy || "",
+    chegada.precisao,
 
     // J
     distanciaEvento,
@@ -5170,13 +5109,22 @@ ss.getSheetByName(
     horaFormatada,
 
     // N
-    agora
-
+    agora,
+    '', // O: uniforme, avaliado exclusivamente pelo RH
+    chegada.previsto, // P: horário previsto no momento do envio
+    chegada.atraso, // Q: minutos de atraso
+    chegada.localStatus, // R: verificação de localização
+    '', // S: avaliador RH
+    '', // T: avaliado em
+    'CHEGADA_V1', // U: origem auditável
+    chegada.autor, // V: responsável pelo envio
+    apontamento.id // W: apontamento vinculado
   ]);
 
   return {
 
     sucesso:true,
+    chegada:chegada,
 
     distancia:
       distanciaEvento,
