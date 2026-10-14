@@ -1530,6 +1530,25 @@ td{
   cursor:not-allowed;
 }
 
+.btn-fechar-mes-central{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.btn-fechar-mes-central.fechado:disabled{
+  background:#dcfce7;
+  color:#15803d;
+  box-shadow:inset 0 0 0 1px #bbf7d0;
+  cursor:default;
+}
+
+.btn-fechar-mes-central.erro:disabled{
+  background:#fee2e2;
+  color:#b91c1c;
+  box-shadow:inset 0 0 0 1px #fecaca;
+}
+
 .modal-fechamento-central{
   width:min(520px, calc(100% - 32px));
   margin:8vh auto 0;
@@ -3202,12 +3221,43 @@ tbody tr:nth-child(even){
   border-bottom-color:#5a5a55;
 }
 
+/* Linha do título (out/2026): mês à esquerda, título no centro, botões à direita */
+.cabecalho-central-topo{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;
+  gap:16px;
+  margin-bottom:30px;
+}
+.cabecalho-central-topo-lado{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+}
+.cabecalho-central-topo .cabecalho-central-titulo{
+  margin:0 !important;
+  text-align:center;
+}
 .cabecalho-central-acoes{
   display:flex;
   align-items:center;
+  justify-content:flex-end;
   flex-wrap:wrap;
   gap:8px;
-  padding:8px 0;
+}
+.cabecalho-central-acoes .btn-toolbar,
+.cabecalho-central-acoes .btn-fechar-mes-central{
+  padding-left:14px !important;
+  padding-right:14px !important;
+}
+@media(min-width:1251px){
+  .cabecalho-central-acoes{ flex-wrap:nowrap; }
+}
+@media(max-width:1250px){
+  .cabecalho-central-topo{ grid-template-columns:1fr; }
+  .cabecalho-central-topo .cabecalho-central-titulo{ order:-1; }
+  .cabecalho-central-topo-lado,
+  .cabecalho-central-acoes{ justify-content:center; }
 }
 
 @media(max-width:760px){
@@ -4024,7 +4074,35 @@ body.central-bloqueada .tela-acesso-central{
 
 <header class="toolbar cabecalho-central">
 
+  <div class="cabecalho-central-topo">
+    <div class="cabecalho-central-topo-lado">
+      <input type="month" id="mes" onchange="carregarAbaAtual()">
+    </div>
   <h1 class="cabecalho-central-titulo">Central de Metas</h1>
+  <div class="cabecalho-central-acoes">
+    
+
+
+
+<button
+  type="button"
+  id="btnFecharMesCentral"
+  class="btn-fechar-mes-central"
+  onclick="abrirModalFechamentoCentral()"
+  disabled
+>
+  Verificando mês...
+</button>
+
+    <button type="button" class="btn-toolbar" onclick="abrirModalMetas()">
+      Editar Metas
+    </button>
+
+    <button type="button" class="btn-toolbar btn-toolbar-contorno" onclick="window.print()">
+      Imprimir
+    </button>
+  </div>
+  </div>
 
   <div class="cabecalho-central-barra">
 
@@ -4035,6 +4113,14 @@ body.central-bloqueada .tela-acesso-central{
       onclick="abrirAbaCentral('manutencao')"
     >
       Departamento de Manutenção
+    </button>
+
+    <button
+      class="aba-central-btn"
+      id="btnAbaOperacao"
+      onclick="abrirAbaCentral('operacao')"
+    >
+      Departamento de Operações
     </button>
 
     <button
@@ -4053,13 +4139,6 @@ body.central-bloqueada .tela-acesso-central{
       Premiações
     </button>
 
-    <button
-      class="aba-central-btn"
-      id="btnAbaOperacao"
-      onclick="abrirAbaCentral('operacao')"
-    >
-      Operação
-    </button>
 
     <button
       class="aba-central-btn"
@@ -4070,35 +4149,6 @@ body.central-bloqueada .tela-acesso-central{
     </button>
   </nav>
 
-  <div class="cabecalho-central-acoes">
-    
-<input type="month" id="mes" onchange="carregarAbaAtual()">
-
-<span
-  id="statusFechamentoCentral"
-  class="status-fechamento-central"
->
-  Verificando mês...
-</span>
-
-<button
-  type="button"
-  id="btnFecharMesCentral"
-  class="btn-fechar-mes-central"
-  onclick="abrirModalFechamentoCentral()"
-  disabled
->
-  Fechar mês
-</button>
-
-    <button type="button" class="btn-toolbar" onclick="abrirModalMetas()">
-      Editar Metas
-    </button>
-
-    <button type="button" class="btn-toolbar btn-toolbar-contorno" onclick="window.print()">
-      Imprimir
-    </button>
-  </div>
 
   </div>
 
@@ -12131,134 +12181,67 @@ function aplicarFechamentoCentral(res){
 
 function atualizarEstadoFechamentoCentral(){
 
-  const status =
-    document.getElementById(
-      "statusFechamentoCentral"
-    );
-
+  /*
+    Um botão só (out/2026): mostra se o mês está aberto ou
+    fechado e, com o mês aberto, é ele que fecha o mês.
+  */
   const botao =
     document.getElementById(
       "btnFecharMesCentral"
     );
 
-  if(!status || !botao){
+  if(!botao){
     return;
   }
 
   const estaNaManutencao =
     abaCentralAtual === "manutencao";
 
-  status.style.display =
-    estaNaManutencao
-      ? "inline-flex"
-      : "none";
-
   botao.style.display =
     estaNaManutencao
-      ? "inline-block"
+      ? "inline-flex"
       : "none";
 
   if(!estaNaManutencao){
     return;
   }
 
-  status.className =
-    "status-fechamento-central";
+  botao.classList.remove("fechado", "erro");
+  botao.title = "";
 
-  status.title = "";
-
-  if(
-    resumoComissoesCentral
-      .consultandoFechamento
-  ){
-
-    status.textContent =
-      "Verificando mês...";
-
-    botao.textContent =
-      "Fechar mês";
-
-    botao.disabled =
-      true;
-
+  if(resumoComissoesCentral.consultandoFechamento){
+    botao.textContent = "Verificando mês...";
+    botao.disabled = true;
     return;
-
   }
 
-  if(
-    resumoComissoesCentral
-      .erroFechamento
-  ){
-
-    status.textContent =
-      "Erro ao verificar fechamento";
-
-    status.classList.add(
-      "erro"
-    );
-
-    status.title =
-      resumoComissoesCentral
-        .erroFechamento;
-
-    botao.textContent =
-      "Fechar mês";
-
-    botao.disabled =
-      true;
-
+  if(resumoComissoesCentral.erroFechamento){
+    botao.textContent = "Erro ao verificar o mês";
+    botao.classList.add("erro");
+    botao.title = resumoComissoesCentral.erroFechamento;
+    botao.disabled = true;
     return;
-
   }
 
-  if(
-    resumoComissoesCentral
-      .mesFechado
-  ){
-
-    status.textContent =
-      "Mês fechado";
-
-    status.classList.add(
-      "fechado"
-    );
-
-    status.title =
-      resumoComissoesCentral
-        .fechadoPor
-          ? (
-              "Fechado por: " +
-              resumoComissoesCentral
-                .fechadoPor
-            )
-          : "";
-
-    botao.textContent =
-      "Mês fechado";
-
-    botao.disabled =
-      true;
-
+  if(resumoComissoesCentral.mesFechado){
+    botao.textContent = "✓ Mês fechado";
+    botao.classList.add("fechado");
+    botao.title = resumoComissoesCentral.fechadoPor
+      ? "Fechado por: " + resumoComissoesCentral.fechadoPor
+      : "Mês fechado";
+    botao.disabled = true;
     return;
-
   }
-
-  status.textContent =
-    "Mês aberto";
-
-  status.classList.add(
-    "aberto"
-  );
 
   botao.textContent =
-    resumoComissoesCentral
-      .salvandoFechamento
-        ? "Fechando..."
-        : "Fechar mês";
+    resumoComissoesCentral.salvandoFechamento
+      ? "Fechando..."
+      : "Fechar mês";
+
+  botao.title = "O mês está aberto. Clique para fechar.";
 
   botao.disabled =
-    resumoComissoesCentral
-      .salvandoFechamento === true;
+    resumoComissoesCentral.salvandoFechamento === true;
 
 }
 
