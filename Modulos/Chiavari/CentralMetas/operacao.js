@@ -57,7 +57,7 @@
         '<li><b>Desconto dos danos.</b> Cada item danificado da equipe desconta <b>' + pct(p.descontoPercentual) + ' do valor de reposição</b> dele' +
           (p.tetoDescontoItem > 0 ? ' (no máximo ' + brl(p.tetoDescontoItem) + ' por item)' : '') + '. ' +
           'Dano interno vai para a Triagem; dano em evento vai para quem fez o Carregamento e a Montagem daquele pedido no Cronograma (dividido entre as duas, se as duas trabalharam). Limpeza de estofados (desgaste) e danos da produção não contam. O total nunca fica negativo.</li>' +
-        '<li><b>Divisão, igual ao Departamento de Manutenção.</b> O total é dividido em partes iguais entre todos da equipe. Só recebe quem está apto: a equipe ficou dentro dos limites dos indicadores do mês (Triagem = Operações Internas, Montagem = Operações Externas, Carregamento = lista própria) e a pessoa bateu a meta individual do RH. Cada pessoa recebe no máximo ' + pct(p.tetoSalario) + ' do salário. A parte de quem não está apto, e o que passa do teto, não é redistribuída.</li>' +
+        '<li><b>Divisão, igual ao Departamento de Manutenção.</b> O total é dividido em partes iguais entre todos da equipe. Só recebe quem está apto: a equipe ficou dentro dos limites dos indicadores do mês (Triagem = Operações Internas, Montagem = Operações Externas, Carregamento = lista própria) e abaixo do teto de gastos do setor, e a pessoa bateu a meta individual do RH. Cada pessoa recebe no máximo ' + pct(p.tetoSalario) + ' do salário. A parte de quem não está apto, e o que passa do teto, não é redistribuída.</li>' +
       '</ol>' +
       '<p class="op-como-nota">Quem é de cada equipe: a lista dos Parâmetros ou, se estiver vazia, o setor no cadastro do RH.</p>' +
     '</div>';
@@ -114,13 +114,52 @@
       }).join("") : '<span class="op-vazio">Sem indicadores</span>';
       return '<tr><td><b>' + esc(eq.nome) + '</b></td><td style="text-align:center">' + eq.eventos.length + '</td>' +
         '<td><div class="op-inds">' + indicadores + '</div></td>' +
-        '<td style="text-align:center">' + eq.danos.reduce(function(s, x){ return s + x.quantidade; }, 0) + '</td>' +
+        '<td style="text-align:center">' + eq.danos.reduce(function(s, x){ return s + x.quantidade; }, 0) + '</td>' + gastoHtml(eq) +
         '<td class="' + (eq.metaOk ? 'ok' : 'bad') + '">' + (eq.metaOk ? 'OK' : 'Meta não atingida') + '</td></tr>';
     }).join("");
     return '<section class="card-tabela-metas"><div class="card-tabela-metas-header"><div class="card-tabela-metas-header-texto">' +
       '<h3 class="card-tabela-metas-titulo">Desempenho das equipes</h3></div></div>' +
       '<div class="card-tabela-metas-scroll"><table class="tabela-desempenho-setores"><thead><tr>' +
-      '<th>Equipe</th><th>Eventos</th><th>Indicadores do mês</th><th>Itens danificados</th><th>Status</th></tr></thead><tbody>' + linhas + '</tbody></table></div></section>';
+      '<th>Equipe</th><th>Eventos</th><th>Indicadores do mês</th><th>Itens danificados</th><th>Teto de gastos</th><th>Status</th></tr></thead><tbody>' + linhas + '</tbody></table></div></section>';
+  }
+
+  /* Teto de gastos da equipe (setor dos membros): mesma célula da coluna "Gasto" da Manutenção. */
+  function gastoHtml(eq){
+    if(!eq.gastos || !eq.gastos.length){
+      return '<td style="text-align:center"><div style="color:#77716a">—</div><div style="font-size:11px;color:#77716a">Sem teto cadastrado</div></td>';
+    }
+    return '<td style="text-align:center">' + eq.gastos.map(function(g){
+      return '<div style="color:' + (g.ok ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' + Number(g.percentual).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%</div>' +
+        '<div style="font-size:11px;color:#77716a">Meta: 100% · ' + esc(g.setor) + '</div>';
+    }).join('<div style="height:6px"></div>') + '</td>';
+  }
+
+  /* "Avaliação individual — Recursos Humanos": mesmo card e mesmas colunas da Manutenção,
+     com as pessoas das três equipes da operação. */
+  function rhHtml(d){
+    const cel = function(valor, meta){
+      if(valor == null) return '<td style="text-align:center;color:#77716a">—</td>';
+      const n = Number(valor || 0), lim = Number(meta || 0);
+      const cor = n > lim ? 'var(--red)' : n > 0 ? 'var(--yellow)' : 'var(--green)';
+      return '<td style="text-align:center"><div style="color:' + cor + ';font-weight:700">' + n + '</div><div style="margin-top:3px;color:#77716a;font-size:11px">Limite: ' + lim + '</div></td>';
+    };
+    const linhas = [];
+    d.equipes.forEach(function(eq){
+      eq.membros.forEach(function(m){
+        const r = m.rh || {};
+        let status = m.rh ? (m.rh.status || "OK") : (m.extra ? "Pessoa extra" : (op.exemplo ? "Exemplo" : "Sem avaliação"));
+        const classe = status === "Meta não atingida" ? "bad" : status === "Atenção" ? "status-atencao-rh" : status === "OK" ? "ok" : "";
+        linhas.push('<tr><td><b>' + esc(m.nome) + '</b></td><td>' + esc(eq.nome) + '</td>' +
+          cel(r.atraso, r.metaAtraso) + cel(r.semUniforme, r.metaSemUniforme) + cel(r.semEpi, r.metaSemEpi) +
+          cel(r.usoCelular, r.metaUsoCelular) + cel(r.falta, r.metaFalta) + cel(r.advertencia, r.metaAdvertencia) +
+          cel(r.ausenciaJornada, r.metaAusenciaJornada) + '<td class="' + classe + '">' + esc(status) + '</td></tr>');
+      });
+    });
+    return '<section class="card-tabela-metas"><div class="card-tabela-metas-header"><div class="card-tabela-metas-header-texto">' +
+      '<h3 class="card-tabela-metas-titulo">Avaliação individual — Recursos Humanos</h3></div></div>' +
+      '<div class="card-tabela-metas-scroll"><table class="tabela-avaliacao-rh"><thead><tr>' +
+      '<th>Funcionário</th><th>Equipe</th><th>Atraso</th><th>Sem Uniforme</th><th>Sem EPI</th><th>Uso de Celular</th><th>Falta</th><th>Advertência</th><th>Ausência de Jornada</th><th>Status</th>' +
+      '</tr></thead><tbody>' + (linhas.join("") || '<tr><td colspan="10" class="op-vazio">Nenhum funcionário nas equipes.</td></tr>') + '</tbody></table></div></section>';
   }
 
   function eventosHtml(d){
@@ -177,11 +216,10 @@
       (op.comoFunciona ? comoFuncionaHtml(d.parametros) : '') +
       (op.exemplo ? '<div class="op-aviso exemplo">Exemplo: 40 eventos de R$ 15.000, score 45, salário de R$ 2.500. Nada disso é dado real.</div>' : '') +
       (d.avisos.length ? '<div class="op-aviso"><b>Atenção</b><ul>' + d.avisos.map(function(a){ return '<li>' + esc(a) + '</li>'; }).join("") + '</ul></div>' : '') +
-      desempenhoHtml(d) +
+      desempenhoHtml(d) + rhHtml(d) + eventosHtml(d) + danosHtml(d) +
       '<section class="resumo-comissoes-central"><div class="resumo-comissoes-titulo"><div><h2>Distribuição das comissões</h2>' +
         '<p>Valores calculados de acordo com o mês selecionado · Total a pagar: <b>' + brl(total) + '</b></p></div></div>' +
-        '<div class="resumo-comissoes-grid op-grade-equipes">' + d.equipes.map(equipeHtml).join("") + '</div></section>' +
-      eventosHtml(d) + danosHtml(d);
+        '<div class="resumo-comissoes-grid op-grade-equipes">' + d.equipes.map(equipeHtml).join("") + '</div></section>';
   }
 
   /* ---------- Parâmetros ---------- */

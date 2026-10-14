@@ -296,9 +296,9 @@ function operacaoAvaliacaoRH_(lista, m){
   if(!Array.isArray(lista) || m.extra) return { ok: true };
   const item = lista.filter(function(r){ return operacaoMesmoNome_(r.nome, m.nome); })[0];
   if(!item) return { ok: false, motivo: "RH: avaliação não encontrada" };
-  if(item.apto === true) return { ok: true };
+  if(item.apto === true) return { ok: true, item: item };
   const motivos = identificarMotivosRHComissaoCentral_(item);
-  return { ok: false, motivo: motivos.length ? "RH: " + motivos.join(", ") : "RH: meta individual não atingida" };
+  return { ok: false, item: item, motivo: motivos.length ? "RH: " + motivos.join(", ") : "RH: meta individual não atingida" };
 }
 
 /* ---------------------------------------------------------
@@ -420,6 +420,15 @@ function operacaoCalcular_(d){
     });
     eq.indicadores = lista;
 
+    /* Teto de gastos (aba "Metas e Gastos" do Almoxarifado) pelo setor dos membros,
+       igual à Manutenção: abaixo de 100% passa. Setor sem teto cadastrado não conta. */
+    const setoresEquipe = {};
+    eq.membros.forEach(function(m){ if(m.setor && !m.extra) setoresEquipe[operacaoTexto_(m.setor)] = true; });
+    eq.gastos = (d.gastos || []).filter(function(g){ return setoresEquipe[operacaoTexto_(g.setor)]; })
+      .map(function(g){ const pctGasto = Math.round(Number(g.percentual || 0) * 10) / 10; return { setor: String(g.setor || ""), percentual: pctGasto, ok: pctGasto < 100 }; });
+    eq.gastoOk = eq.gastos.every(function(g){ return g.ok; });
+    if(!eq.gastoOk) eq.metaOk = false;
+
     /* 4. Sobra e divisão — mesma regra do Departamento de Manutenção:
        partes iguais entre TODOS da equipe; quem não está apto (meta da equipe
        ou avaliação individual do RH) recebe zero, e a parte dele não é
@@ -437,9 +446,17 @@ function operacaoCalcular_(d){
       m.calculado = (base + (i < restantes ? 1 : 0)) / 100;
       m.teto = m.salario > 0 ? Math.round(m.salario * p.tetoSalario) / 100 : 0;
       const rh = operacaoAvaliacaoRH_(d.rh, m);
+      m.rh = rh.item ? {
+        atraso: rh.item.atraso, semUniforme: rh.item.semUniforme, semEpi: rh.item.semEpi, usoCelular: rh.item.usoCelular,
+        falta: rh.item.falta, advertencia: rh.item.advertencia, ausenciaJornada: rh.item.ausenciaJornada,
+        metaAtraso: rh.item.metaAtraso, metaSemUniforme: rh.item.metaSemUniforme, metaSemEpi: rh.item.metaSemEpi,
+        metaUsoCelular: rh.item.metaUsoCelular, metaFalta: rh.item.metaFalta, metaAdvertencia: rh.item.metaAdvertencia,
+        metaAusenciaJornada: rh.item.metaAusenciaJornada, status: rh.item.status
+      } : null;
       m.motivo = "";
       if(!eq.metaOk){
         const fora = eq.indicadores.filter(function(x){ return !x.ok; }).map(function(x){ return x.nome; });
+        if(!eq.gastoOk) fora.push("Teto de gastos");
         m.motivo = "Equipe: " + (fora.length ? fora.join(", ") : "meta não atingida");
       } else if(!rh.ok){
         m.motivo = rh.motivo;
@@ -477,16 +494,21 @@ function operacaoCalcularMes(mes){
   if(!/^\d{4}-\d{2}$/.test(String(mes || ""))){
     mes = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM");
   }
+  const funcionarios = operacaoFuncionariosRH_();
+  /* A avaliação do RH da Manutenção só olha os setores dela; aqui passa todos os
+     setores do cadastro, e cada pessoa da equipe é achada pelo nome. */
+  const setoresRH = funcionarios.map(function(f){ return f.setor; }).filter(Boolean);
   return operacaoCalcular_({
     mes: mes,
     parametros: operacaoLerParametros_(),
-    funcionarios: operacaoFuncionariosRH_(),
+    funcionarios: funcionarios,
+    gastos: getTetoGastosMensal(mes),
     eventos: operacaoEventosMes_(mes),
     cronograma: operacaoCronogramaPorPedido_(),
     ocorrencias: operacaoOcorrenciasMes_(mes),
     indicativos: operacaoIndicativos_(),
     danos: operacaoDanosMes_(mes),
-    rh: getAvaliacaoIndividualRH(mes)
+    rh: getAvaliacaoIndividualRH(mes, setoresRH)
   });
 }
 

@@ -790,7 +790,9 @@ function gerarIdsOS(){
  * F = Setor
  * G = Tipo da ocorrência
  ************************************************************/
-function getAvaliacaoIndividualRH(mesFiltro){
+/* setoresExtras (opcional, out/2026): a aba Operação passa os setores das equipes
+   dela (Montagem, Expedição, Setor 02...). Sem esse parâmetro (Manutenção), igual a antes. */
+function getAvaliacaoIndividualRH(mesFiltro, setoresExtras){
 
   const ID_PLANILHA_RH =
     "1Jk1ScSsqmdYo70AiD96A5HRmfnVe2zdyljPn5f9EAZo";
@@ -1101,6 +1103,10 @@ const setoresPermitidosRH = [
   "forracao",
   "limpeza de estofados"
 ];
+(Array.isArray(setoresExtras) ? setoresExtras : []).forEach(function(extra){
+  const chaveExtra = normalizarSetorRH(extra);
+  if(chaveExtra && setoresPermitidosRH.indexOf(chaveExtra) < 0){ setoresPermitidosRH.push(chaveExtra); }
+});
 
 /*
   A relação oficial de funcionários vem da aba
