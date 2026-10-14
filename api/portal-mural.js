@@ -9,16 +9,21 @@
 const { executar } = require("./_gas/motor");
 const PROJETOS = require("./_gas/projetos");
 const { configuracao, liberarOrigem, usuarioDaSessao } = require("./gs");
-const { createClient } = require('@supabase/supabase-js');
+// Sem bibliotecas: as funções da pasta api só usam o Node (ver api/package.json).
+async function rest(cfg, caminho){
+  const r = await fetch(cfg.url + "/rest/v1/" + caminho, { headers: { apikey: cfg.chave, Authorization: "Bearer " + cfg.chave } });
+  return r.ok ? r.json().catch(() => []) : [];
+}
+const lista = (ids) => "in.(" + ids.map(encodeURIComponent).join(",") + ")";
+const caminhoStorage = (p) => String(p).split("/").map(encodeURIComponent).join("/");
 
 async function perfisMensagens(cfg, mensagens){
-  const client=createClient(cfg.url,cfg.chave,{auth:{persistSession:false}});
   const ids=[...new Set(mensagens.map(m=>m.autorId).filter(Boolean))];
   if(!ids.length)return;
-  const [{data:funcionarios},{data:vinculos},{data:usuarios}]=await Promise.all([
-    client.from('funcionarios_acesso').select('id,nome,foto_url,empresa_id').in('id',ids),
-    client.from('usuarios_empresas').select('user_id,empresa_id').in('user_id',ids),
-    client.from('usuarios').select('id,nome').in('id',ids)
+  const [funcionarios,vinculos,usuarios]=await Promise.all([
+    rest(cfg,'funcionarios_acesso?select=id,nome,foto_url,empresa_id&id='+lista(ids)),
+    rest(cfg,'usuarios_empresas?select=user_id,empresa_id&user_id='+lista(ids)),
+    rest(cfg,'usuarios?select=id,nome&id='+lista(ids))
   ]);
   const perfis=await Promise.all(ids.map(async id=>{
     const f=(funcionarios || []).find(f=>f.id===id);
@@ -26,9 +31,13 @@ async function perfisMensagens(cfg, mensagens){
     let foto=f?.foto_url || '';
     if(foto && !/^https?:\/\//i.test(foto)){
       if(!empresa || !foto.startsWith(empresa+'/'))foto='';
-      else {const {data}=await client.storage.from('funcionarios-fotos').createSignedUrl(foto,3600);foto=data?.signedUrl || '';}
+      else {
+        const r=await fetch(cfg.url+'/storage/v1/object/sign/funcionarios-fotos/'+caminhoStorage(foto),{method:'POST',headers:{apikey:cfg.chave,Authorization:'Bearer '+cfg.chave,'Content-Type':'application/json'},body:JSON.stringify({expiresIn:3600})}).catch(()=>null);
+        const j=r && r.ok ? await r.json().catch(()=>null) : null;
+        foto=j?.signedURL ? cfg.url+'/storage/v1'+j.signedURL : '';
+      }
     }
-    if(!foto && empresa)foto=client.storage.from('avatares').getPublicUrl(empresa+'/'+id+'.jpg').data.publicUrl;
+    if(!foto && empresa)foto=cfg.url+'/storage/v1/object/public/avatares/'+caminhoStorage(empresa+'/'+id+'.jpg');
     return {id,nome:f?.nome || (usuarios || []).find(u=>u.id===id)?.nome,foto};
   }));
   mensagens.forEach(m=>{const p=perfis.find(p=>p.id===m.autorId);if(p){m.foto=p.foto || m.foto;if(p.nome)m.autor=p.nome;}});
