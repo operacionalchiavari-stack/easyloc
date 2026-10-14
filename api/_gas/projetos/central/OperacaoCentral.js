@@ -24,8 +24,8 @@ const OPERACAO_DANOS_ID = "1EvCBsoDsB0svzEyrGvH46oHHCH3lCTPJMU4If8-LZgE";
 const OPERACAO_CHAVE_PARAMETROS = "OPERACAO_PARAMETROS";
 
 const OPERACAO_EQUIPES = [
-  { chave: "triagem", nome: "Triagem", etapas: ["triagem (separacao)", "triagem (conferencia)"], colunaScore: 38, indicativos: "internos" },
-  { chave: "carregamento", nome: "Carregamento", etapas: ["carregamento"], colunaScore: 44, indicativos: "carregamento" },
+  { chave: "triagem", nome: "Triagem", etapas: ["triagem (separacao)", "triagem (conferencia)"], colunaScore: 39, indicativos: "internos" },
+  { chave: "carregamento", nome: "Carregamento", etapas: ["carregamento"], colunaScore: 46, indicativos: "carregamento" },
   { chave: "montagem", nome: "Montagem", etapas: ["montagem", "desmontagem"], colunaScore: 32, indicativos: "externos" }
 ];
 
@@ -213,7 +213,7 @@ function operacaoEventosMes_(mes){
       pedido: operacaoPedido_(l[2]),
       cliente: String(l[3] || "").trim(),
       data: l[1] instanceof Date ? Utilities.formatDate(l[1], Session.getScriptTimeZone(), "dd/MM/yyyy") : String(l[1] || ""),
-      valorLocacao: operacaoNumero_(l[5]) || operacaoNumero_(l[46]),
+      valorLocacao: operacaoNumero_(l[5]),
       scores: scores
     });
   }

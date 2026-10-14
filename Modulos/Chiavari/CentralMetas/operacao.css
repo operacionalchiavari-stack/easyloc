@@ -25,9 +25,7 @@
 .op-ind b{font-size:15px}
 .op-ind small{font-size:11px;color:#77716a}
 
-/* Uma equipe por linha, na largura toda: com 3 lado a lado a tabela de
-   funcionários cortava "Valor a receber" e "Status". */
-.op-grade-equipes{grid-template-columns:1fr}
+/* Cards de distribuição: mesma grade da Manutenção (.resumo-comissoes-grid, 2 por linha). */
 .op-desconto{color:#9f2a1f}
 
 .op-box-titulo{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:600;font-size:15px}

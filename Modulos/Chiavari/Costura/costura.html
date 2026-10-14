@@ -1065,6 +1065,22 @@ input{ min-height:50px; font-size:17px !important; }
   Montagem
 </div>
 
+<div
+  id="btnTriagem"
+  class="btn-setor"
+  onclick="mudarSetor('triagem')"
+>
+  Triagem
+</div>
+
+<div
+  id="btnCarregamento"
+  class="btn-setor"
+  onclick="mudarSetor('carregamento')"
+>
+  Carregamento
+</div>
+
 <button type="button" class="btn-painel-cx" onclick="PainelCX.abrir()">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg>Painel
 </button>
@@ -1230,6 +1246,36 @@ input{ min-height:50px; font-size:17px !important; }
     </div>
   </div>
 
+  <!-- TRIAGEM -->
+  <div style="margin-top:12px;">
+    <div>
+      <strong>Triagem:</strong>
+      <span id="scoreTriagem">0%</span>
+    </div>
+
+    <div class="progress-bar">
+      <div
+        id="barraTriagem"
+        class="progress-inner"
+      ></div>
+    </div>
+  </div>
+
+  <!-- CARREGAMENTO -->
+  <div style="margin-top:12px;">
+    <div>
+      <strong>Carregamento:</strong>
+      <span id="scoreCarregamento">0%</span>
+    </div>
+
+    <div class="progress-bar">
+      <div
+        id="barraCarregamento"
+        class="progress-inner"
+      ></div>
+    </div>
+  </div>
+
 </div>
 
     <!-- PERGUNTAS -->
@@ -1294,6 +1340,70 @@ input{ min-height:50px; font-size:17px !important; }
     <div class="botoes">
       <div class="btn" onclick="responder(this,14,true)">Sim</div>
       <div class="btn" onclick="responder(this,14,false)">Não</div>
+    </div>
+  </div>
+</div>
+
+<div class="bloco">
+  <h3>Triagem</h3>
+
+  <div class="pergunta">Mais de 50 itens no pedido?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,19,true)">Sim</div>
+      <div class="btn" onclick="responder(this,19,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Itens frágeis (vidro, espelho, laca)?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,20,true)">Sim</div>
+      <div class="btn" onclick="responder(this,20,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Itens personalizados ou sob medida?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,21,true)">Sim</div>
+      <div class="btn" onclick="responder(this,21,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Pedido fechado a menos de 48h do evento?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,22,true)">Sim</div>
+      <div class="btn" onclick="responder(this,22,false)">Não</div>
+    </div>
+  </div>
+</div>
+
+<div class="bloco">
+  <h3>Carregamento</h3>
+
+  <div class="pergunta">Carga volumosa (sofás, bares, painéis)?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,23,true)">Sim</div>
+      <div class="btn" onclick="responder(this,23,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Itens frágeis na carga?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,24,true)">Sim</div>
+      <div class="btn" onclick="responder(this,24,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Mais de uma viagem?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,25,true)">Sim</div>
+      <div class="btn" onclick="responder(this,25,false)">Não</div>
+    </div>
+  </div>
+
+  <div class="pergunta">Carregamento fora do horário (noite/fim de semana)?
+    <div class="botoes">
+      <div class="btn" onclick="responder(this,26,true)">Sim</div>
+      <div class="btn" onclick="responder(this,26,false)">Não</div>
     </div>
   </div>
 </div>
@@ -1817,7 +1927,19 @@ respostas = {
   15: pedido.r15,
   16: pedido.r16,
   17: pedido.r17,
-  18: pedido.r18
+  18: pedido.r18,
+
+  // TRIAGEM
+  19: pedido.r19,
+  20: pedido.r20,
+  21: pedido.r21,
+  22: pedido.r22,
+
+  // CARREGAMENTO
+  23: pedido.r23,
+  24: pedido.r24,
+  25: pedido.r25,
+  26: pedido.r26
 };
 
   // Limpa todas as marcações anteriores.
@@ -1827,7 +1949,7 @@ respostas = {
       botao.classList.remove("ativo")
     );
 
-  for(let id = 1; id <= 14; id++){
+  for(let id = 1; id <= 26; id++){
     marcarBotaoResposta(id, respostas[id]);
   }
 
@@ -1923,7 +2045,19 @@ function calcular(){
     15: { sim:18, nao:6 },
     16: { sim:14, nao:5 },
     17: { sim:14, nao:5 },
-    18: { sim:24, nao:8 }
+    18: { sim:24, nao:8 },
+
+    // TRIAGEM
+    19: { sim:18, nao:6 },
+    20: { sim:14, nao:5 },
+    21: { sim:14, nao:5 },
+    22: { sim:24, nao:8 },
+
+    // CARREGAMENTO
+    23: { sim:18, nao:6 },
+    24: { sim:14, nao:5 },
+    25: { sim:14, nao:5 },
+    26: { sim:24, nao:8 }
   };
 
   const perguntasGerais = [
@@ -2058,6 +2192,26 @@ function calcular(){
     barraMontagem,
     scoreMontagem
   );
+
+  // ===== TRIAGEM E CARREGAMENTO =====
+  [
+    { id:"Triagem", perguntas:[19, 20, 21, 22] },
+    { id:"Carregamento", perguntas:[23, 24, 25, 26] }
+  ].forEach(setor => {
+
+    const scoreSetor = calcularLista([
+      ...perguntasGerais,
+      ...setor.perguntas
+    ]);
+
+    document
+      .getElementById("score" + setor.id)
+      .innerText = scoreSetor + "%";
+
+    const barra = document.getElementById("barra" + setor.id);
+    barra.style.width = Math.min(scoreSetor, 100) + "%";
+    aplicarCor(barra, scoreSetor);
+  });
 }
 function adicionarAoLote(){
 
@@ -2265,7 +2419,17 @@ function salvar(){
     r11: obterRespostaAtual(11),
     r12: obterRespostaAtual(12),
     r13: obterRespostaAtual(13),
-    r14: obterRespostaAtual(14)
+    r14: obterRespostaAtual(14),
+
+    r19: obterRespostaAtual(19),
+    r20: obterRespostaAtual(20),
+    r21: obterRespostaAtual(21),
+    r22: obterRespostaAtual(22),
+
+    r23: obterRespostaAtual(23),
+    r24: obterRespostaAtual(24),
+    r25: obterRespostaAtual(25),
+    r26: obterRespostaAtual(26)
   };
 
   const botaoSalvar =
@@ -2545,6 +2709,20 @@ ${setorAtual === "personalizacao" ? `
   <th data-tooltip="Aparador ou estante pintada?">13</th>
   <th data-tooltip="Mais de 4 itens pintados?">14</th>
 
+` : setorAtual === "triagem" ? `
+
+  <th data-tooltip="Mais de 50 itens no pedido?">19</th>
+  <th data-tooltip="Itens frágeis (vidro, espelho, laca)?">20</th>
+  <th data-tooltip="Itens personalizados ou sob medida?">21</th>
+  <th data-tooltip="Pedido fechado a menos de 48h do evento?">22</th>
+
+` : setorAtual === "carregamento" ? `
+
+  <th data-tooltip="Carga volumosa (sofás, bares, painéis)?">23</th>
+  <th data-tooltip="Itens frágeis na carga?">24</th>
+  <th data-tooltip="Mais de uma viagem?">25</th>
+  <th data-tooltip="Carregamento fora do horário (noite/fim de semana)?">26</th>
+
 ` : `
 
   <th data-tooltip="Pergunta 1 de Montagem">15</th>
@@ -2595,6 +2773,20 @@ ${setorAtual === "personalizacao" ? `
   <td>${respostaTabela(p.r13)}</td>
   <td>${respostaTabela(p.r14)}</td>
 
+` : setorAtual === "triagem" ? `
+
+  <td>${respostaTabela(p.r19)}</td>
+  <td>${respostaTabela(p.r20)}</td>
+  <td>${respostaTabela(p.r21)}</td>
+  <td>${respostaTabela(p.r22)}</td>
+
+` : setorAtual === "carregamento" ? `
+
+  <td>${respostaTabela(p.r23)}</td>
+  <td>${respostaTabela(p.r24)}</td>
+  <td>${respostaTabela(p.r25)}</td>
+  <td>${respostaTabela(p.r26)}</td>
+
 ` : `
 
   <td>${respostaTabela(p.r15)}</td>
@@ -2618,7 +2810,11 @@ ${
     ? (p.score || 0)
     : setorAtual === "pintura"
       ? (p.scorePintura || 0)
-      : (p.scoreMontagem || 0)
+      : setorAtual === "triagem"
+        ? (p.scoreTriagem || 0)
+        : setorAtual === "carregamento"
+          ? (p.scoreCarregamento || 0)
+          : (p.scoreMontagem || 0)
 }%
               </span>
             </td>
@@ -2700,6 +2896,13 @@ barra3.style.width = "0%";
 barra1.style.background = "#16a34a";
 barra2.style.background = "#16a34a";
 barra3.style.background = "#16a34a";
+
+["Triagem", "Carregamento"].forEach(id => {
+  document.getElementById("score" + id).innerText = "0%";
+  const barra = document.getElementById("barra" + id);
+  barra.style.width = "0%";
+  barra.style.background = "#16a34a";
+});
 
   // 🔹 BOTÕES (remove seleção)
   document.querySelectorAll(".btn").forEach(btn => btn.classList.remove("ativo"));
@@ -2853,36 +3056,19 @@ function mudarSetor(setor){
 
   setorAtual = setor;
 
-  document
-    .getElementById("btnPersonalizacao")
-    .classList.remove("ativo");
+  const botoes = {
+    personalizacao: "btnPersonalizacao",
+    pintura: "btnPintura",
+    montagem: "btnMontagem",
+    triagem: "btnTriagem",
+    carregamento: "btnCarregamento"
+  };
 
-  document
-    .getElementById("btnPintura")
-    .classList.remove("ativo");
-
-  document
-    .getElementById("btnMontagem")
-    .classList.remove("ativo");
-
-  if(setor === "personalizacao"){
-
+  Object.keys(botoes).forEach(chave => {
     document
-      .getElementById("btnPersonalizacao")
-      .classList.add("ativo");
-
-  }else if(setor === "pintura"){
-
-    document
-      .getElementById("btnPintura")
-      .classList.add("ativo");
-
-  }else if(setor === "montagem"){
-
-    document
-      .getElementById("btnMontagem")
-      .classList.add("ativo");
-  }
+      .getElementById(botoes[chave])
+      .classList.toggle("ativo", chave === setor);
+  });
 
   paginaAtual = 1;
 
@@ -3003,7 +3189,9 @@ var PainelCX = (function(){
   const SETORES = [
     { id:"personalizacao", nome:"Estofados", score:"score", comissao:"valorComissao", perguntas:[["r1", "Sofá personalizado"], ["r2", "Cadeira ou puff personalizado"], ["r3", "Bar personalizado"], ["r4", "Mais de 4 itens personalizados"]], cor:"#2a78d6" },
     { id:"pintura", nome:"Pintura", score:"scorePintura", comissao:"valorComissaoPintura", perguntas:[["r11", "Cadeira ou poltrona pintada"], ["r12", "Bar ou mesa pintada"], ["r13", "Aparador ou estante pintada"], ["r14", "Mais de 4 itens pintados"]], cor:"#eb6834" },
-    { id:"montagem", nome:"Montagem", score:"scoreMontagem", comissao:"valorComissaoMontagem", perguntas:[["r15", "Montagem — pergunta 1"], ["r16", "Montagem — pergunta 2"], ["r17", "Montagem — pergunta 3"], ["r18", "Montagem — pergunta 4"]], cor:"#1baf7a" }
+    { id:"montagem", nome:"Montagem", score:"scoreMontagem", comissao:"valorComissaoMontagem", perguntas:[["r15", "Necessita de baldeação"], ["r16", "Tem escada"], ["r17", "Caminhão para perto"], ["r18", "Mais de 2 caminhões"]], cor:"#1baf7a" },
+    { id:"triagem", nome:"Triagem", score:"scoreTriagem", comissao:"valorComissaoTriagem", perguntas:[["r19", "Mais de 50 itens"], ["r20", "Itens frágeis"], ["r21", "Itens sob medida"], ["r22", "Fechado a menos de 48h"]], cor:"#8b5cf6" },
+    { id:"carregamento", nome:"Carregamento", score:"scoreCarregamento", comissao:"valorComissaoCarregamento", perguntas:[["r23", "Carga volumosa"], ["r24", "Itens frágeis na carga"], ["r25", "Mais de uma viagem"], ["r26", "Fora do horário"]], cor:"#c08a1e" }
   ];
   const GERAIS = [["r5", "Cliente com histórico de reclamação"], ["r6", "Cliente recorrente ou exclusivo"], ["r7", "Evento fora do padrão"], ["r8", "Cliente novo"], ["r9", "Carregamento de segunda a quarta"], ["r10", "Passou por mais de 1 setor"]];
   const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -3112,7 +3300,9 @@ var PainelCX = (function(){
     return (typeof pedidos !== "undefined" && Array.isArray(pedidos) ? pedidos : []).map(function(p){
       const o = { p:p, data:lerData(p.data), numero:p.numero, cliente:p.cliente, local:p.local, id:p.id };
       SETORES.forEach(function(s){ o[s.id] = numero(p[s.score]); o["c_" + s.id] = numero(p[s.comissao]); });
-      o.maximo = Math.max(o.personalizacao, o.pintura, o.montagem);
+      o.maximo = Math.max.apply(null, SETORES.map(function(s){ return o[s.id]; }));
+      o.soma = SETORES.reduce(function(t, s){ return t + o[s.id]; }, 0);
+      o.comissaoTotal = SETORES.reduce(function(t, s){ return t + o["c_" + s.id]; }, 0);
       return o;
     });
   }
@@ -3163,12 +3353,12 @@ var PainelCX = (function(){
     const medias = SETORES.map(function(s){ return media(l, s.id); });
     const geral = medias.length ? medias.reduce(function(a, b){ return a + b; }, 0) / medias.length : 0;
     const altas = l.filter(function(o){ return o.maximo >= 67; }).length;
-    const comissao = l.reduce(function(t, o){ return t + o.c_personalizacao + o.c_pintura + o.c_montagem; }, 0);
+    const comissao = l.reduce(function(t, o){ return t + o.comissaoTotal; }, 0);
     const cards = [
       { id:"x1", rot:"Pedidos", cor:"#2a78d6", v:l.length, f:inteiro, sub:"no período" },
       { id:"x2", rot:"Complexidade média", cor:"#eb6834", v:geral, f:pct, sub:SETORES.map(function(s, i){ return s.nome + " " + pct(medias[i]); }).join(" · ") },
       { id:"x3", rot:"Alta complexidade", cor:"#dc2626", v:altas, f:inteiro, sub:(l.length ? Math.round(altas / l.length * 100) : 0) + "% dos pedidos têm algum setor a partir de 67%" },
-      { id:"x4", rot:"Comissões", cor:"#1baf7a", v:comissao, f:moeda, sub:"soma dos três setores" }
+      { id:"x4", rot:"Comissões", cor:"#1baf7a", v:comissao, f:moeda, sub:"soma dos setores" }
     ];
     $("cxKpis").innerHTML = cards.map(function(c, i){
       return '<div class="pa-card pa-kpi cx-kpi" style="animation-delay:' + (i * 0.06) + 's"><div class="pa-rot"><span class="pa-ico" style="background:' + c.cor + '1f;color:' + c.cor + '">' + ICO[i] + '</span>' + c.rot + '</div>' +
@@ -3180,7 +3370,7 @@ var PainelCX = (function(){
   /* ---------- Complexidade média por mês ---------- */
   function linhas(todos){
     const area = $("cxLinhas"), hoje = new Date(), s = [];
-    for (let i = 11; i >= 0; i--){ const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1); s.push({ mes:chaveMes(d), qtd:0, personalizacao:0, pintura:0, montagem:0 }); }
+    for (let i = 11; i >= 0; i--){ const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1); const m = { mes:chaveMes(d), qtd:0 }; SETORES.forEach(function(st){ m[st.id] = 0; }); s.push(m); }
     const idx = {}; s.forEach(function(m, i){ idx[m.mes] = i; });
     todos.forEach(function(o){
       if (!o.data) return;
@@ -3238,7 +3428,7 @@ var PainelCX = (function(){
   /* ---------- Pedidos mais complexos ---------- */
   function top(l){
     const caixa = $("cxTop");
-    const t = l.slice().sort(function(a, b){ return b.maximo - a.maximo || (b.personalizacao + b.pintura + b.montagem) - (a.personalizacao + a.pintura + a.montagem); }).slice(0, 7);
+    const t = l.slice().sort(function(a, b){ return b.maximo - a.maximo || b.soma - a.soma; }).slice(0, 7);
     if (!t.length){ caixa.innerHTML = '<div class="pa-vazio">Sem pedidos no período.</div>'; return; }
     caixa.innerHTML = t.map(function(o){
       return '<div class="linha cx-pedido" role="button" tabindex="0" onclick="PainelCX.abrirPedido(\'' + encodeURIComponent(o.id || "") + '\')">' +

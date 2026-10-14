@@ -53,7 +53,7 @@
       '<ol>' +
         '<li><b>Bolo do mês.</b> Para cada evento do mês na Matriz, cada equipe ganha <code>valor de locação × score de dificuldade × % da equipe</code>. ' +
           'Hoje: Triagem ' + pct(p.percentual.triagem) + ', Carregamento ' + pct(p.percentual.carregamento) + ', Montagem ' + pct(p.percentual.montagem) + '. ' +
-          'Enquanto a Matriz não tiver o score da Separação e do Carregamento, usa o score padrão (' + p.scorePadrao.triagem + ' e ' + p.scorePadrao.carregamento + ').</li>' +
+          'O score de cada equipe vem do Painel de Complexidade (abas Triagem, Carregamento e Montagem). Evento ainda sem resposta usa o score padrão (' + p.scorePadrao.triagem + ', ' + p.scorePadrao.carregamento + ' e ' + p.scorePadrao.montagem + ').</li>' +
         '<li><b>Desconto dos danos.</b> Cada item danificado da equipe desconta <b>' + pct(p.descontoPercentual) + ' do valor de reposição</b> dele' +
           (p.tetoDescontoItem > 0 ? ' (no máximo ' + brl(p.tetoDescontoItem) + ' por item)' : '') + '. ' +
           'Dano interno vai para a Triagem; dano em evento vai para quem fez o Carregamento e a Montagem daquele pedido no Cronograma (dividido entre as duas, se as duas trabalharam). Limpeza de estofados (desgaste) e danos da produção não contam. O total nunca fica negativo.</li>' +
@@ -69,7 +69,12 @@
     const subtitulo = { triagem: "Separação e conferência", carregamento: "Carregamento dos caminhões", montagem: "Montagem e desmontagem" }[eq.chave] || "";
     const linhas = eq.membros.map(function(m){
       let classeLinha = "", classeStatus = "ok", texto = "Dentro do teto", complemento = "";
-      if(!m.apto){ classeLinha = "negada"; classeStatus = "negado"; texto = m.motivo || "Não apto ao bônus"; }
+      if(!m.apto){
+        classeLinha = "negada"; classeStatus = "negado";
+        // selo curto como na Manutenção; o detalhe aparece ao passar o mouse
+        const motivo = String(m.motivo || "");
+        texto = /^Equipe:/.test(motivo) ? "Meta da equipe não atingida" : /^RH:/.test(motivo) ? "Meta individual não atingida" : (motivo || "Não apto ao bônus");
+      }
       else if(m.limitadoPeloTeto){ classeLinha = "limitada"; classeStatus = "limitado"; texto = "Limitado pelo teto"; complemento = "Excedente: " + brl(m.excedente); }
       return '<div class="card-comissao-tabela-linha ' + classeLinha + '">' +
         '<div class="card-comissao-coluna-funcionario"><div class="card-comissao-coluna-funcionario-nome">' + esc(m.nome) + '</div>' +
@@ -78,7 +83,7 @@
         '<div class="card-comissao-coluna-valor">' + brl(m.teto) + '</div>' +
         '<div class="card-comissao-coluna-valor">' + brl(m.calculado) + '</div>' +
         '<div class="card-comissao-coluna-receber ' + classeLinha + '">' + brl(m.recebe) + '</div>' +
-        '<div class="card-comissao-coluna-status"><span class="card-comissao-status ' + classeStatus + '">' + esc(texto) + '</span>' +
+        '<div class="card-comissao-coluna-status" title="' + esc(m.motivo || texto) + '"><span class="card-comissao-status ' + classeStatus + '">' + esc(texto) + '</span>' +
           (complemento ? '<span class="card-comissao-status-complemento">' + esc(complemento) + '</span>' : '') + '</div>' +
       '</div>';
     }).join("");

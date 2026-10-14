@@ -156,7 +156,19 @@ function calcularScoreSetor(respostas, perguntasEspecificas){
     15: { sim: 18, nao: 6 },
     16: { sim: 14, nao: 5 },
     17: { sim: 14, nao: 5 },
-    18: { sim: 24, nao: 8 }
+    18: { sim: 24, nao: 8 },
+
+    // TRIAGEM — MESMOS PESOS DE ESTOFADOS
+    19: { sim: 18, nao: 6 },
+    20: { sim: 14, nao: 5 },
+    21: { sim: 14, nao: 5 },
+    22: { sim: 24, nao: 8 },
+
+    // CARREGAMENTO — MESMOS PESOS DE ESTOFADOS
+    23: { sim: 18, nao: 6 },
+    24: { sim: 14, nao: 5 },
+    25: { sim: 14, nao: 5 },
+    26: { sim: 24, nao: 8 }
   };
 
   const perguntasGerais = [
@@ -196,7 +208,7 @@ function calcularScoreSetor(respostas, perguntasEspecificas){
 // ================= GARANTIR COLUNAS ATÉ AI =================
 function garantirColunasMontagem(sheet){
 
-  const totalNecessario = 35;
+  const totalNecessario = 49;
 
   const totalAtual = sheet.getMaxColumns();
 
@@ -207,6 +219,130 @@ function garantirColunasMontagem(sheet){
       totalNecessario - totalAtual
     );
   }
+
+  garantirCabecalhoOperacao_(sheet);
+}
+
+// ================= TRIAGEM E CARREGAMENTO (out/2026) =================
+/*
+ * AJ até AP = Triagem      (4 perguntas, Score, Comissão, Valor Comissão)
+ * AQ até AW = Carregamento (4 perguntas, Score, Comissão, Valor Comissão)
+ * Respondidas no Painel de Complexidade; o valor é o de locação (coluna F).
+ * A % de cada uma fica na aba "Comissão" (criada com 0,003 se não existir).
+ */
+const SETORES_OPERACAO_MATRIZ = [
+  {
+    nome: "Triagem",
+    coluna: 36,
+    perguntas: [19, 20, 21, 22],
+    titulos: [
+      "Mais de 50 itens no pedido?",
+      "Itens frágeis (vidro, espelho, laca)?",
+      "Itens personalizados ou sob medida?",
+      "Pedido fechado a menos de 48h do evento?"
+    ]
+  },
+  {
+    nome: "Carregamento",
+    coluna: 43,
+    perguntas: [23, 24, 25, 26],
+    titulos: [
+      "Carga volumosa (sofás, bares, painéis)?",
+      "Itens frágeis na carga?",
+      "Mais de uma viagem?",
+      "Carregamento fora do horário (noite/fim de semana)?"
+    ]
+  }
+];
+
+function garantirCabecalhoOperacao_(sheet){
+
+  const cabecalho = [];
+
+  SETORES_OPERACAO_MATRIZ.forEach(setor => {
+    cabecalho.push(...setor.titulos, "Score", "Comissão", "Valor Comissão");
+  });
+
+  const atual = sheet
+    .getRange(1, 36, 1, cabecalho.length)
+    .getDisplayValues()[0];
+
+  if(atual.join("|") !== cabecalho.join("|")){
+    sheet
+      .getRange(1, 36, 1, cabecalho.length)
+      .setValues([cabecalho]);
+  }
+}
+
+function comissaoSetorOperacao_(nome){
+
+  const sheet = SpreadsheetApp
+    .openById("1btYPbmM0-uwwjHx2Yu6zbFFUefv3IXHwcMXY_qw0p78")
+    .getSheetByName("Comissão");
+
+  if(!sheet) return 0;
+
+  const dados = sheet.getDataRange().getValues();
+
+  for(let i = 1; i < dados.length; i++){
+    if(String(dados[i][0]).trim() === nome){
+      return Number(dados[i][1] || 0);
+    }
+  }
+
+  sheet.appendRow([nome, 0.003]);
+  return 0.003;
+}
+
+/*
+ * Devolve as 14 células de AJ até AW.
+ * dados = { r5..r10 (gerais), r19..r26 } em qualquer formato aceito.
+ * Setor sem nenhuma resposta própria fica com Score/Comissão/Valor vazios.
+ */
+function celulasOperacaoMatriz_(dados, valorLocacao){
+
+  // dados chega com r5, r6... (como o resto do arquivo); o cálculo usa 5, 6...
+  const respostas = {};
+  [5, 6, 7, 8, 9, 10, 19, 20, 21, 22, 23, 24, 25, 26].forEach(id => {
+    respostas[id] = dados['r' + id];
+  });
+
+  const celulas = [];
+
+  SETORES_OPERACAO_MATRIZ.forEach(setor => {
+
+    setor.perguntas.forEach(id => {
+      celulas.push(respostaParaPlanilha(respostas[id]));
+    });
+
+    const respondido = setor.perguntas.some(id => possuiResposta(respostas[id]));
+
+    if(!respondido){
+      celulas.push("", "", "");
+      return;
+    }
+
+    const score = calcularScoreSetor(respostas, setor.perguntas);
+    const comissao = comissaoSetorOperacao_(setor.nome);
+
+    celulas.push(
+      score,
+      comissao,
+      calcularComissao(valorLocacao, score, comissao)
+    );
+  });
+
+  return celulas;
+}
+
+function formatarCelulasOperacao_(sheet, numeroLinha){
+
+  SETORES_OPERACAO_MATRIZ.forEach(setor => {
+    const c = setor.coluna + 4;
+    sheet.getRange(numeroLinha, c).setNumberFormat("0");
+    sheet.getRange(numeroLinha, c + 1).setNumberFormat("0.000");
+    sheet.getRange(numeroLinha, c + 2).setNumberFormat("R$ #,##0.00");
+  });
 }
 
 // ================= ATUALIZAR MONTAGEM DE UMA LINHA =================
@@ -628,7 +764,10 @@ function salvarPedido(dados) {
     // AG até AI — Resultado e comissão
     scoreMontagem,
     comissaoMontagem,
-    valorComissaoMontagem
+    valorComissaoMontagem,
+
+    // AJ até AW — Triagem e Carregamento
+    ...celulasOperacaoMatriz_(dados, dados.valorLocacao)
   ]);
 
   const novaLinha = sheet.getLastRow();
@@ -636,6 +775,8 @@ function salvarPedido(dados) {
   sheet
     .getRange(novaLinha, 35)
     .setNumberFormat("R$ #,##0.00");
+
+  formatarCelulasOperacao_(sheet, novaLinha);
 
   return {
     sucesso: true,
@@ -733,7 +874,27 @@ function listarPedidos(){
       scoreMontagem: linha[32] || "0",
       comissaoMontagem: linha[33] || "0",
       valorComissaoMontagem:
-        linha[34] || "0"
+        linha[34] || "0",
+
+      // TRIAGEM
+      r19: respostaParaFront(linha[35]),
+      r20: respostaParaFront(linha[36]),
+      r21: respostaParaFront(linha[37]),
+      r22: respostaParaFront(linha[38]),
+
+      scoreTriagem: linha[39] || "0",
+      comissaoTriagem: linha[40] || "0",
+      valorComissaoTriagem: linha[41] || "0",
+
+      // CARREGAMENTO
+      r23: respostaParaFront(linha[42]),
+      r24: respostaParaFront(linha[43]),
+      r25: respostaParaFront(linha[44]),
+      r26: respostaParaFront(linha[45]),
+
+      scoreCarregamento: linha[46] || "0",
+      comissaoCarregamento: linha[47] || "0",
+      valorComissaoCarregamento: linha[48] || "0"
 
     }));
 }
@@ -995,6 +1156,16 @@ function atualizarPedido(dados){
     sheet,
     numeroLinha
   );
+
+  /*
+   * AJ até AW — Triagem e Carregamento
+   * (perguntas próprias + gerais r5 até r10).
+   */
+  sheet
+    .getRange(numeroLinha, 36, 1, 14)
+    .setValues([celulasOperacaoMatriz_(dados, valorLocacao)]);
+
+  formatarCelulasOperacao_(sheet, numeroLinha);
 
   SpreadsheetApp.flush();
 
