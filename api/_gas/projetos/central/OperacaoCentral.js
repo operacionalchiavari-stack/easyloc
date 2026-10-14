@@ -290,6 +290,17 @@ function operacaoDanosMes_(mes){
   return danos;
 }
 
+/* Avaliação individual do RH (mesma da Manutenção). Sem lista (exemplo) ou
+   pessoa extra de teste: considera apta. */
+function operacaoAvaliacaoRH_(lista, m){
+  if(!Array.isArray(lista) || m.extra) return { ok: true };
+  const item = lista.filter(function(r){ return operacaoMesmoNome_(r.nome, m.nome); })[0];
+  if(!item) return { ok: false, motivo: "RH: avaliação não encontrada" };
+  if(item.apto === true) return { ok: true };
+  const motivos = identificarMotivosRHComissaoCentral_(item);
+  return { ok: false, motivo: motivos.length ? "RH: " + motivos.join(", ") : "RH: meta individual não atingida" };
+}
+
 /* ---------------------------------------------------------
    Cálculo (puro: recebe os dados, não lê planilha)
 --------------------------------------------------------- */
@@ -306,15 +317,15 @@ function operacaoCalcular_(d){
     if((p.membros[k] || []).length){
       membros = p.membros[k].map(function(nome){
         const rh = d.funcionarios.filter(function(f){ return operacaoMesmoNome_(f.nome, nome); })[0];
-        return { nome: rh ? rh.nome : nome, salario: rh ? rh.salario : 0, noRH: !!rh };
+        return { nome: rh ? rh.nome : nome, setor: rh ? rh.setor : "", salario: rh ? rh.salario : 0, noRH: !!rh };
       });
     } else {
       const setores = (p.setoresRH[k] || []).map(operacaoTexto_);
       membros = d.funcionarios.filter(function(f){ return setores.indexOf(operacaoTexto_(f.setor)) >= 0; })
-        .map(function(f){ return { nome: f.nome, salario: f.salario, noRH: true }; });
+        .map(function(f){ return { nome: f.nome, setor: f.setor, salario: f.salario, noRH: true }; });
     }
     (p.extras || []).filter(function(x){ return x.equipe === k; }).forEach(function(x){
-      membros.push({ nome: x.nome, salario: x.salario, noRH: false, extra: true });
+      membros.push({ nome: x.nome, setor: "Pessoa extra", salario: x.salario, noRH: false, extra: true });
     });
     equipes[k] = {
       chave: k, nome: e.nome, percentual: p.percentual[k], bolo: 0, eventos: [],
@@ -409,33 +420,43 @@ function operacaoCalcular_(d){
     });
     eq.indicadores = lista;
 
-    /* 4. Sobra e divisão */
+    /* 4. Sobra e divisão — mesma regra do Departamento de Manutenção:
+       partes iguais entre TODOS da equipe; quem não está apto (meta da equipe
+       ou avaliação individual do RH) recebe zero, e a parte dele não é
+       redistribuída; cada um recebe no máximo o teto do salário. */
     eq.bolo = Math.round(eq.bolo * 100) / 100;
     eq.desconto = Math.round(eq.desconto * 100) / 100;
-    eq.sobra = eq.metaOk ? Math.max(0, Math.round((eq.bolo - eq.desconto) * 100) / 100) : 0;
-    const totalPart = eq.membros.reduce(function(s, m){ return s + m.participacoes; }, 0);
+    eq.sobra = Math.max(0, Math.round((eq.bolo - eq.desconto) * 100) / 100);
     const sobraC = operacaoCentavos_(eq.sobra);
+    const n = eq.membros.length;
+    const base = n ? Math.floor(sobraC / n) : 0;
+    const restantes = n ? sobraC % n : 0;
     let distribuido = 0;
-    const centavos = eq.membros.map(function(m){ return totalPart ? Math.floor(sobraC * m.participacoes / totalPart) : 0; });
-    /* Centavos que sobram do arredondamento vão para quem participou mais. */
-    let resto = totalPart ? sobraC - centavos.reduce(function(s, c){ return s + c; }, 0) : 0;
-    eq.membros.map(function(m, i){ return i; })
-      .sort(function(a, b){ return eq.membros[b].participacoes - eq.membros[a].participacoes; })
-      .forEach(function(i){ if(resto > 0 && eq.membros[i].participacoes > 0){ centavos[i]++; resto--; } });
+    eq.aptos = 0;
     eq.membros.forEach(function(m, i){
-      m.calculado = centavos[i] / 100;
-      m.teto = m.salario > 0 ? Math.round(m.salario * p.tetoSalario) / 100 : null;
-      m.recebe = m.teto == null ? m.calculado : Math.min(m.calculado, m.teto);
-      m.limitadoPeloTeto = m.teto != null && m.calculado > m.teto;
+      m.calculado = (base + (i < restantes ? 1 : 0)) / 100;
+      m.teto = m.salario > 0 ? Math.round(m.salario * p.tetoSalario) / 100 : 0;
+      const rh = operacaoAvaliacaoRH_(d.rh, m);
+      m.motivo = "";
+      if(!eq.metaOk){
+        const fora = eq.indicadores.filter(function(x){ return !x.ok; }).map(function(x){ return x.nome; });
+        m.motivo = "Equipe: " + (fora.length ? fora.join(", ") : "meta não atingida");
+      } else if(!rh.ok){
+        m.motivo = rh.motivo;
+      } else if(!(m.salario > 0)){
+        m.motivo = "Salário não informado";
+      }
+      m.apto = !m.motivo;
+      m.recebe = m.apto ? Math.min(m.calculado, m.teto) : 0;
+      m.limitadoPeloTeto = m.apto && m.calculado > m.teto;
+      m.excedente = m.limitadoPeloTeto ? Math.round((m.calculado - m.teto) * 100) / 100 : 0;
+      if(m.apto) eq.aptos++;
       distribuido += m.recebe;
     });
     eq.totalPago = Math.round(distribuido * 100) / 100;
     eq.naoPago = Math.round((eq.sobra - eq.totalPago) * 100) / 100;
     eq.foraDoCadastro = Object.keys(eq.foraDoCadastro).sort();
     if(!eq.membros.length) avisos.push(eq.nome + ": nenhum membro na equipe (ajuste em Parâmetros).");
-    eq.membros.filter(function(m){ return !m.salario; }).forEach(function(m){
-      avisos.push(eq.nome + ": " + m.nome + " sem salário cadastrado — recebe sem teto.");
-    });
   });
 
   return {
@@ -464,7 +485,8 @@ function operacaoCalcularMes(mes){
     cronograma: operacaoCronogramaPorPedido_(),
     ocorrencias: operacaoOcorrenciasMes_(mes),
     indicativos: operacaoIndicativos_(),
-    danos: operacaoDanosMes_(mes)
+    danos: operacaoDanosMes_(mes),
+    rh: getAvaliacaoIndividualRH(mes)
   });
 }
 
@@ -500,12 +522,12 @@ function operacaoCalcularExemplo(){
     { item: "Cadeira", quantidade: 2, local: "interno", pedido: "", reposicaoTotal: 500, data: "" },
     { item: "Espelho", quantidade: 1, local: "interno", pedido: "", reposicaoTotal: 1200, data: "" },
     { item: "Aparador", quantidade: 1, local: "interno", pedido: "", reposicaoTotal: 2000, data: "" },
-    { item: "Sofá", quantidade: 1, local: "evento", pedido: "SOMENTE-CARREGAMENTO", reposicaoTotal: 6000, data: "" },
-    { item: "Banqueta", quantidade: 5, local: "evento", pedido: "SOMENTE-MONTAGEM", reposicaoTotal: 2000, data: "" },
-    { item: "Mesa", quantidade: 1, local: "evento", pedido: "SOMENTE-MONTAGEM", reposicaoTotal: 3000, data: "" }
+    { item: "Sofá", quantidade: 1, local: "evento", pedido: "EX-CARREGAMENTO", reposicaoTotal: 6000, data: "" },
+    { item: "Banqueta", quantidade: 5, local: "evento", pedido: "EX-MONTAGEM", reposicaoTotal: 2000, data: "" },
+    { item: "Mesa", quantidade: 1, local: "evento", pedido: "EX-MONTAGEM", reposicaoTotal: 3000, data: "" }
   ];
-  cronograma["SOMENTE-CARREGAMENTO"] = [{ etapa: "carregamento", nomes: [] }];
-  cronograma["SOMENTE-MONTAGEM"] = [{ etapa: "montagem", nomes: [] }];
+  cronograma["EX-CARREGAMENTO"] = [{ etapa: "carregamento", nomes: [] }];
+  cronograma["EX-MONTAGEM"] = [{ etapa: "montagem", nomes: [] }];
   return operacaoCalcular_({
     mes: "exemplo", exemplo: true, parametros: p, funcionarios: pessoas, eventos: eventos,
     cronograma: cronograma, ocorrencias: { internos: {}, externos: { "feedback negativo do decorador": 2 }, carregamento: {} },
