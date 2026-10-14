@@ -48,21 +48,21 @@
       safeQuery("clientes", () =>
         client
           .from("clientes_empresas")
-          .select("id,nome,telefone,email,empresa_id")
+          .select("id,nome_razao,telefone,email,empresa_id")
           .eq("empresa_id", empresaId)
           .limit(20)
       ),
       safeQuery("locais", () =>
         client
-          .from("locais")
-          .select("id,nome,endereco,referencia,empresa_id")
+          .from("locais_empresas")
+          .select("id,nome_razao,endereco,ponto_referencia,empresa_id")
           .eq("empresa_id", empresaId)
           .limit(20)
       ),
       safeQuery("itens", () =>
         client
           .from("itens")
-          .select("id,nome,codigo,foto_url,imagem_url,url_imagem,empresa_id")
+          .select("id,produto,descricao_total,codigo,foto_url,empresa_id")
           .eq("empresa_id", empresaId)
           .limit(24)
       )

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="../gas-cliente.js?v=20261008-login" data-projeto="central"></script>
+  <script src="../gas-cliente.js?v=20261014-servidor-nuvem" data-projeto="central"></script>
 <meta charset="UTF-8">
 <title>Central de Metas</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -4055,6 +4055,14 @@ body.central-bloqueada .tela-acesso-central{
 
     <button
       class="aba-central-btn"
+      id="btnAbaOperacao"
+      onclick="abrirAbaCentral('operacao')"
+    >
+      Operação
+    </button>
+
+    <button
+      class="aba-central-btn"
       id="btnAbaEquipe"
       onclick="abrirAbaCentral('equipe')"
     >
@@ -4505,6 +4513,10 @@ Carregando...
 <!-- =========================================================
      PAINEL DE PAGAMENTOS DE BÔNUS
 ========================================================= -->
+<div id="secaoOperacao" class="secao-central">
+  <div id="operacaoConteudo"><div class="pag-bonus-mensagem">Carregando...</div></div>
+</div>
+
 <div id="secaoPagamentos" class="secao-central">
 
   <header class="pag-bonus-topo">
@@ -7559,6 +7571,12 @@ function abrirAbaCentral(aba){
   document.getElementById("secaoEquipe")
     .classList.toggle("active", aba === "equipe");
 
+  document.getElementById("btnAbaOperacao")
+    .classList.toggle("active", aba === "operacao");
+
+  document.getElementById("secaoOperacao")
+    .classList.toggle("active", aba === "operacao");
+
   /* Pagamentos, Premiações e App da Equipe não usam o filtro de mês. */
   document.getElementById("mes").style.display =
     aba === "pagamentos" || aba === "premiacoes" || aba === "equipe" ? "none" : "";
@@ -7569,6 +7587,11 @@ atualizarEstadoFechamentoCentral();
 }
 
 function carregarAbaAtual(){
+
+  if(abaCentralAtual === "operacao"){
+    carregarOperacao();
+    return;
+  }
 
   if(abaCentralAtual === "equipe"){
     carregarEquipeApp();
@@ -12631,5 +12654,7 @@ function formatarDataHoraFechamentoCentral(
 
   </div>
 </div>
+<link rel="stylesheet" href="operacao.css?v=20261014-operacao">
+<script src="operacao.js?v=20261014-operacao"></script>
 </body>
 </html>

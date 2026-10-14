@@ -42,7 +42,11 @@ const CENTRAL_FUNCOES_PERMITIDAS = [
   "premiacoesExcluirItem",
   "appEquipeListar",
   "appEquipeGerarPin",
-  "appEquipeSalvarFoto"
+  "appEquipeSalvarFoto",
+  "operacaoCalcularMes",
+  "operacaoCalcularExemplo",
+  "operacaoObterParametros",
+  "operacaoSalvarParametros"
 ];
 
 /* Liberado só durante a execução atual */
@@ -112,7 +116,11 @@ function centralChamar(chave, nomeFuncao, argumentos){
     premiacoesExcluirItem: premiacoesExcluirItem,
     appEquipeListar: appEquipeListar,
     appEquipeGerarPin: appEquipeGerarPin,
-    appEquipeSalvarFoto: appEquipeSalvarFoto
+    appEquipeSalvarFoto: appEquipeSalvarFoto,
+    operacaoCalcularMes: operacaoCalcularMes,
+    operacaoCalcularExemplo: operacaoCalcularExemplo,
+    operacaoObterParametros: operacaoObterParametros,
+    operacaoSalvarParametros: operacaoSalvarParametros
   };
 
   acessoCentralLiberado_ = true;

@@ -167,7 +167,7 @@
       try{
         const sessao=await window.supabaseClient.auth.getSession();const token=sessao.data.session?.access_token;
         const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-        const base=local ? (location.port==='3000' ? '/' : 'http://127.0.0.1:3000/') : /\.vercel\.app$/.test(location.hostname) ? '/' : 'https://easyloc-zeta.vercel.app/';
+        const base=(local && location.port==='3000') ? '/' : /\.vercel\.app$/.test(location.hostname) ? '/' : 'https://easyloc-zeta.vercel.app/';
         const r=await fetch(base+'api/portal-mural',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({destinatario:form.dataset.destinatario,texto:input.value})});
         const j=await r.json();if(!r.ok || !j.ok)throw Error(j.erro || 'Não foi possível enviar.');
         form.previousElementSibling.innerHTML=mensagensParabens(j.resultado);input.value='';status.textContent='Mensagem enviada!';
@@ -188,7 +188,7 @@
         try{
           const sessao=await window.supabaseClient.auth.getSession();
           const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-          const base=local ? (location.port==='3000' ? '/' : 'http://127.0.0.1:3000/') : /\.vercel\.app$/.test(location.hostname) ? '/' : 'https://easyloc-zeta.vercel.app/';
+          const base=(local && location.port==='3000') ? '/' : /\.vercel\.app$/.test(location.hostname) ? '/' : 'https://easyloc-zeta.vercel.app/';
           const r=await fetch(base+'api/portal-mural',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessao.data.session?.access_token},body:JSON.stringify({acao:'aviso',dados:{titulo:f.elements.titulo.value,texto:f.elements.texto.value,validoAte:f.elements.validoAte.value,importante:f.elements.importante.checked,fixado:f.elements.fixado.checked,cor:f.elements.cor.value}})});
           const j=await r.json();if(!j.ok)throw Error(j.erro || 'Falha ao publicar.');
           estado.mural=await buscarMural();montarMural();
@@ -226,7 +226,7 @@
     try{
       const sessao=await window.supabaseClient.auth.getSession();
       const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-      const base=local?(location.port==='3000'?'/':'http://127.0.0.1:3000/'):/\.vercel\.app$/.test(location.hostname)?'/':'https://easyloc-zeta.vercel.app/';
+      const base=(local&&location.port==='3000')?'/':/\.vercel\.app$/.test(location.hostname)?'/':'https://easyloc-zeta.vercel.app/';
       const r=await fetch(base+'api/portal-mural',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessao.data.session?.access_token},body:JSON.stringify({acao:'corAviso',dados:{id:select.dataset.id,cor:select.value}})});
       const j=await r.json();if(!j.ok)throw Error(j.erro || 'Falha ao salvar cor.');
       select.closest('article').className='hero-aviso-item aviso-cor-'+select.value;if(antigo)antigo.cor=select.value;
@@ -548,7 +548,7 @@
     if(!token){ return null; }
     // O servidor só existe na Vercel; aberto em outro lugar (GitHub Pages) chama a Vercel direto.
     const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-    const servidor = local ? (location.port === "3000" ? "/" : "http://127.0.0.1:3000/") : /\.vercel\.app$/i.test(location.hostname) ? "/" : "https://easyloc-zeta.vercel.app/";
+    const servidor = (local && location.port === "3000") ? "/" : /\.vercel\.app$/i.test(location.hostname) ? "/" : "https://easyloc-zeta.vercel.app/";
     const r = await fetch(servidor + "api/portal-mural", { headers: { Authorization: "Bearer " + token } });
     if(!r.ok){ return null; }
     const j = await r.json().catch(function(){ return null; });
