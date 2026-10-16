@@ -8,7 +8,7 @@
 // Self-contido: não importa catalogo.mjs nem o contrário (recebe tudo por initCatalogAssistente).
 
 let ctx = null;
-const S = { aberto: false, carregado: false, enviando: false, nome: "Helena", mensagens: [], fila: Promise.resolve(), naoLidas: 0 };
+const S = { pendentes: [], aberto: false, carregado: false, enviando: false, nome: "Helena", mensagens: [], fila: Promise.resolve(), naoLidas: 0 };
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function texto(v){
@@ -59,7 +59,10 @@ function montar(){
         <div class="cas-ligacao" data-cas-ligacao hidden></div>
         <div class="cas-msgs" data-cas-msgs aria-live="polite"><div class="cas-coluna" data-cas-coluna></div></div>
         <form class="cas-form" data-cas-form>
+          <div class="cas-anexos-pend" data-cas-pend hidden></div>
           <div class="cas-form-in">
+            <button type="button" class="cas-clip" data-cas-clip aria-label="Anexar arquivo (planta em PDF ou foto)" title="Anexar arquivo (planta em PDF ou foto)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5l-8.2 8.2a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg></button>
+            <input type="file" data-cas-arquivo accept="image/*,application/pdf" multiple hidden>
             <textarea rows="1" maxlength="2000" placeholder="Escreva ou mande um áudio…" aria-label="Mensagem" data-cas-input></textarea>
             <div class="cas-gravando" data-cas-gravando hidden>
               <button type="button" class="cas-grav-cancelar" data-cas-cancelar-audio aria-label="Descartar o áudio" title="Descartar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg></button>
@@ -89,7 +92,14 @@ function montar(){
   if(!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) painel.querySelector("[data-cas-ligar]").hidden = true;
   painel.querySelector("[data-cas-pedido]").addEventListener("click", () => alternarPedido());
   const input = painel.querySelector("[data-cas-input]");
-  const ajustar = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; painel.querySelector("[data-cas-form]").classList.toggle("tem-texto", Boolean(input.value.trim())); };
+  const ajustar = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; painel.querySelector("[data-cas-form]").classList.toggle("tem-texto", Boolean(input.value.trim() || S.pendentes.length)); };
+  S.ajustarForm = ajustar;
+  painel.querySelector("[data-cas-clip]").addEventListener("click", () => painel.querySelector("[data-cas-arquivo]").click());
+  painel.querySelector("[data-cas-arquivo]").addEventListener("change", (event) => { escolherArquivos([...event.target.files]); event.target.value = ""; });
+  painel.querySelector("[data-cas-pend]").addEventListener("click", (event) => {
+    const x = event.target.closest("[data-cas-tirar]");
+    if(x){ S.pendentes.splice(Number(x.dataset.casTirar), 1); pintarPendentes(); }
+  });
   const temMicrofone = Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
   if(!temMicrofone) painel.querySelector("[data-cas-form]").classList.add("sem-mic");
   painel.querySelector("[data-cas-mic]").addEventListener("click", () => (gravacao ? pararGravacao(true) : iniciarGravacao()));
@@ -102,9 +112,10 @@ function montar(){
     event.preventDefault();
     if(gravacao){ pararGravacao(true); return; }
     const valor = input.value.trim();
-    if(!valor || S.enviando) return;
-    input.value = ""; ajustar();
-    enviar(valor);
+    if((!valor && !S.pendentes.length) || S.enviando) return;
+    const arquivos = S.pendentes.splice(0);
+    input.value = ""; pintarPendentes(); ajustar();
+    enviar(valor, { arquivos });
   });
   painel.addEventListener("click", aoClicar);
   painel.addEventListener("keydown", (event) => { if(event.key === "Escape"){ event.stopPropagation(); if(lig) return; if(gravacao) pararGravacao(false); else alternar(false); } });
@@ -230,9 +241,14 @@ function pendentesHtml(){
 function mensagemHtml(m){
   const bot = m.papel !== "user";
   const anexos = (m.anexos || []).map((a) => {
+    if(a.tipo === "arquivo"){
+      const apagar = m.id ? `<button type="button" class="cas-link cas-link-apagar" data-cas-apagar-img="${esc(m.id)}">Apagar</button>` : "";
+      if(a.mime === "application/pdf") return `<div class="cas-arquivo"><a class="cas-arquivo-pdf" href="${esc(a.url || "#")}" target="_blank" rel="noopener"><i class="cas-pdf-ico">PDF</i><span>${esc(a.nome || "arquivo.pdf")}</span></a>${a.enviando ? `<small>enviando…</small>` : apagar}</div>`;
+      return `<figure class="cas-arquivo"><button type="button" class="cas-foto-ver" data-cas-zoom="${esc(a.url)}" aria-label="Ver o arquivo"><img src="${esc(a.url?.startsWith("blob:") ? a.url : miniatura(a.url, 520))}" alt="${esc(a.nome || "Arquivo")}" loading="lazy"></button>${a.enviando ? `<small>enviando…</small>` : apagar}</figure>`;
+    }
     if(a.tipo === "itens") return `<div class="cas-itens">${a.itens.map(itemHtml).join("")}</div>`;
     if(a.tipo === "imagem") return `<figure class="cas-foto"><button type="button" class="cas-foto-ver" data-cas-zoom="${esc(a.url)}" aria-label="Ver a composição em tela cheia"><img src="${esc(miniatura(a.url, 720))}" alt="Composição: ${esc((a.itens || []).join(", "))}" loading="lazy"></button>
-      <figcaption>${a.itens?.length ? `<small>${esc(a.itens.join(" · "))}</small>` : ""}<span><button type="button" class="cas-link" data-cas-salvar-img="${esc(a.url)}" data-cena="${esc(a.cena_url || "")}">Adicionar ao projeto</button><a class="cas-link" href="${esc(a.url)}" download target="_blank" rel="noopener">Baixar</a></span></figcaption></figure>`;
+      <figcaption>${a.itens?.length ? `<small>${esc(a.itens.join(" · "))}</small>` : ""}<span><button type="button" class="cas-link" data-cas-salvar-img="${esc(a.url)}" data-cena="${esc(a.cena_url || "")}">Adicionar ao projeto</button><a class="cas-link" href="${esc(a.url)}" download target="_blank" rel="noopener">Baixar</a>${m.id ? `<button type="button" class="cas-link cas-link-apagar" data-cas-apagar-img="${esc(m.id)}">Apagar</button>` : ""}</span></figcaption></figure>`;
     return "";
   }).join("");
   if(!m.conteudo && !anexos) return "";
@@ -258,6 +274,8 @@ async function aoClicar(event){
   if(abrir){ alternar(false); ctx.abrirItem?.(abrir.dataset.casAbrir); return; }
   const zoom = event.target.closest("[data-cas-zoom]");
   if(zoom){ window.catalogOpenPhotoZoom?.(zoom.dataset.casZoom, "Composição", zoom.querySelector("img")?.currentSrc); return; }
+  const apagar = event.target.closest("[data-cas-apagar-img]");
+  if(apagar){ apagarFoto(apagar); return; }
   const salvar = event.target.closest("[data-cas-salvar-img]");
   if(salvar){ salvarImagemNoProjeto(salvar); }
 }
@@ -281,6 +299,21 @@ async function salvarImagemNoProjeto(botao){
   }finally{ botao.disabled = false; }
 }
 
+// Apaga a foto só da conversa (o que já foi adicionado ao projeto continua lá).
+async function apagarFoto(botao){
+  if(!confirm("Apagar esta foto da conversa? Se ela já foi adicionada ao projeto, continua lá.")) return;
+  botao.disabled = true;
+  try{
+    await chamar("apagar_imagem", { mensagem_id: botao.dataset.casApagarImg });
+    S.mensagens = S.mensagens.filter((m) => m.id !== botao.dataset.casApagarImg);
+    pintar();
+    ctx.notify({ title: "Foto apagada", message: "Saiu da conversa.", status: "done", duration: 3000 });
+  }catch(error){
+    botao.disabled = false;
+    ctx.notify({ title: "Não foi possível apagar", message: error.message, status: "error" });
+  }
+}
+
 async function limpar(){
   if(!S.mensagens.length) return;
   if(!confirm("Começar uma nova conversa? O que eu já sei sobre o seu gosto continua guardado.")) return;
@@ -290,12 +323,17 @@ async function limpar(){
 
 // ---------------------------------------------------------------------------------------------------------------
 // Conversa
-async function enviar(valor, { porAudio = false } = {}){
+async function enviar(valor, { porAudio = false, arquivos = [] } = {}){
   if(!S.carregado) await carregarHistorico();
-  S.mensagens.push({ papel: "user", conteudo: valor, anexos: porAudio ? [{ tipo: "audio" }] : [] });
-  S.enviando = true; pintar(); statusTopo("digitando…");
+  const local = { papel: "user", conteudo: valor, anexos: [...(porAudio ? [{ tipo: "audio" }] : []), ...arquivos.map((a) => ({ tipo: "arquivo", nome: a.nome, mime: a.mime, url: a.preview, enviando: true }))] };
+  S.mensagens.push(local);
+  S.enviando = true; pintar(); statusTopo(arquivos.length ? "recebendo o arquivo…" : "digitando…");
   try{
-    const data = await chamar("conversar", { mensagem: valor, por_audio: porAudio, projeto: window.catalogAssistenteProjeto?.retrato() || null, modo: ctx.modoPedido ? "pedido" : "catalogo" });
+    for(const a of arquivos) await subirArquivo(a);
+    local.anexos = local.anexos.map((x) => (x.tipo === "arquivo" ? { ...x, enviando: false } : x));
+    pintar(); statusTopo("digitando…");
+    const data = await chamar("conversar", { mensagem: valor, por_audio: porAudio, arquivos: arquivos.map((a) => ({ path: a.path, mime: a.mime, nome: a.nome })), projeto: window.catalogAssistenteProjeto?.retrato() || null, modo: ctx.modoPedido ? "pedido" : "catalogo" });
+    if(data?.pergunta) Object.assign(local, data.pergunta);
     if(data?.nome && data.nome !== S.nome){ S.nome = data.nome; atualizarNome(); }
     if(data?.mensagem) S.mensagens.push(data.mensagem);
     S.enviando = false; pintar(); statusTopo();
@@ -303,9 +341,45 @@ async function enviar(valor, { porAudio = false } = {}){
     pintarLado();
   }catch(error){
     S.enviando = false; statusTopo();
+    local.anexos = (local.anexos || []).map((x) => ({ ...x, enviando: false }));
     S.mensagens.push({ papel: "assistant", conteudo: error.message, anexos: [] });
     pintar();
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Arquivos (planta em PDF ou foto). Foto vira JPEG de até 2400 px (planta precisa de detalhe); PDF vai como está
+// (até 20 MB). Sobe direto pro Storage com a URL assinada que o servidor dá; a conversa recebe só o caminho.
+const MAX_ARQUIVO = 20 * 1024 * 1024;
+function escolherArquivos(lista){
+  for(const file of lista){
+    if(S.pendentes.length >= 4){ ctx.notify({ title: "Até 4 arquivos por mensagem", status: "error", duration: 4000 }); break; }
+    const pdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    if(!pdf && !file.type.startsWith("image/")){ ctx.notify({ title: "Arquivo não aceito", message: "Mande a planta em PDF ou em foto.", status: "error" }); continue; }
+    if(file.size > MAX_ARQUIVO){ ctx.notify({ title: "Arquivo grande demais", message: "O máximo é 20 MB.", status: "error" }); continue; }
+    S.pendentes.push({ file, nome: file.name || (pdf ? "planta.pdf" : "foto.jpg"), mime: pdf ? "application/pdf" : "image/jpeg", pdf, preview: pdf ? "" : URL.createObjectURL(file) });
+  }
+  pintarPendentes();
+  $("catalogAssistente")?.querySelector("[data-cas-input]")?.focus();
+}
+function pintarPendentes(){
+  const el = $("catalogAssistente")?.querySelector("[data-cas-pend]");
+  if(!el) return;
+  el.hidden = !S.pendentes.length;
+  el.innerHTML = S.pendentes.map((a, i) => `<span class="cas-pend">${a.pdf ? `<i class="cas-pdf-ico">PDF</i>` : `<img src="${esc(a.preview)}" alt="">`}<span>${esc(a.nome)}</span><button type="button" data-cas-tirar="${i}" aria-label="Tirar ${esc(a.nome)}">×</button></span>`).join("");
+  S.ajustarForm?.();
+}
+async function subirArquivo(a){
+  let blob = a.file;
+  if(!a.pdf){
+    try{ const dataUrl = await paraJpegDataUrl(URL.createObjectURL(a.file), 2400); blob = await (await fetch(dataUrl)).blob(); }
+    catch{ throw new Error("Não consegui abrir essa foto. Tente tirar um print ou mandar em PDF."); }
+  }
+  const prep = await chamar("arquivo_upload", { mime: a.mime, tamanho: blob.size });
+  const { error } = await ctx.supabase.storage.from("catalogo-assistente").uploadToSignedUrl(prep.path, prep.token, blob, { contentType: a.mime });
+  if(error) throw new Error("Não consegui enviar o arquivo. Tente de novo.");
+  a.path = prep.path; a.url = prep.url;
+  return { path: prep.path, url: prep.url };
 }
 
 function statusTopo(texto = ""){
@@ -327,6 +401,7 @@ async function aplicarAcoes(acoes){
       }
       else if(acao.tipo === "enviar_pedido") projeto?.enviarPedido();
       else if(acao.tipo === "renderizar") enfileirarRender(acao);
+      else if(acao.tipo === "apagar_imagem"){ S.mensagens = S.mensagens.filter((m) => m.id !== acao.mensagem_id); pintar(); }
     }catch(error){
       ctx.notify({ title: "Não consegui concluir", message: error.message, status: "error" });
     }
@@ -587,7 +662,7 @@ async function iniciarLigacao(){
     const pc = new RTCPeerConnection();
     lig.pc = pc;
     const audio = $("catalogAssistente").querySelector("[data-lig-audio]");
-    pc.ontrack = (event) => { audio.srcObject = event.streams[0]; audio.play?.().catch(() => {}); animarVoz(event.streams[0], stream); };
+    pc.ontrack = (event) => { audio.srcObject = event.streams[0]; audio.play?.().catch(() => {}); };
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
     const dc = pc.createDataChannel("oai-events");
     lig.dc = dc;
@@ -637,8 +712,10 @@ async function aoEventoLigacao(ev){
       if(it?.type === "message" && (it.role === "user" || it.role === "assistant")) falaDoItem(it.id, it.role);
       break;
     }
-    case "input_audio_buffer.speech_started": ligEstado("Ouvindo você…"); ligVoce("…"); break;
-    case "input_audio_buffer.speech_stopped": ligEstado("Em ligação"); break;
+    case "input_audio_buffer.speech_started": ligEstado("Ouvindo você…"); ligVoce("…"); ligAvatar("ouvindo", true); break;
+    case "input_audio_buffer.speech_stopped": ligEstado("Em ligação"); ligAvatar("ouvindo", false); break;
+    case "output_audio_buffer.started": ligAvatar("falando", true); break;
+    case "output_audio_buffer.stopped": case "output_audio_buffer.cleared": ligAvatar("falando", false); break;
     case "conversation.item.input_audio_transcription.completed": {
       const t = String(ev.transcript || "").trim();
       if(!t || /^(A consultora se chama|Conversa de decoradora)/i.test(t)) break;
@@ -717,35 +794,18 @@ function enviarAviso(texto){
   enviarEvento({ type: "response.create" });
 }
 
-// O avatar "respira" com a voz dela; o anel interno acompanha a sua.
-function animarVoz(remoto, local){
-  try{
-    const ac = new (window.AudioContext || window.webkitAudioContext)();
-    ac.resume?.();
-    const medidor = (stream) => { const a = ac.createAnalyser(); a.fftSize = 512; ac.createMediaStreamSource(stream).connect(a); return a; };
-    const ela = medidor(remoto), voce = medidor(local), buf = new Uint8Array(512);
-    const nivel = (a) => { a.getByteTimeDomainData(buf); let s = 0; for(const x of buf){ const d = (x - 128) / 128; s += d * d; } return Math.min(1, Math.sqrt(s / buf.length) * 5); };
-    lig.ac = ac;
-    const passo = () => {
-      if(!lig || lig.ac !== ac) return;
-      const av = $("catalogAssistente")?.querySelector("[data-lig-avatar]");
-      if(av){ av.style.setProperty("--ela", nivel(ela).toFixed(3)); av.style.setProperty("--voce", (lig.mudo ? 0 : nivel(voce)).toFixed(3)); }
-      lig.raf = requestAnimationFrame(passo);
-    };
-    passo();
-  }catch(error){ console.warn("medidor de voz:", error); }
-}
+// O avatar "respira" enquanto ela fala e o anel acende quando você fala — pelos avisos da própria ligação.
+// Antes media o volume do áudio (Web Audio); no celular isso, com o microfone aberto, deixava a ligação chiando.
+function ligAvatar(classe, ligado){ $("catalogAssistente")?.querySelector("[data-lig-avatar]")?.classList.toggle(classe, ligado); }
 
 async function encerrarLigacao(motivo = ""){
   const atual = lig;
   if(!atual) return;
   lig = null;
   clearInterval(atual.relogio);
-  cancelAnimationFrame(atual.raf);
   try{ atual.dc?.close(); }catch{}
   try{ atual.pc?.getSenders().forEach((s) => s.track?.stop()); atual.pc?.close(); }catch{}
   atual.stream?.getTracks().forEach((t) => t.stop());
-  atual.ac?.close?.().catch(() => {});
   const painel = $("catalogAssistente");
   const audio = painel.querySelector("[data-lig-audio]"); if(audio) audio.srcObject = null;
   painel.querySelector("[data-cas-ligacao]").innerHTML = "";

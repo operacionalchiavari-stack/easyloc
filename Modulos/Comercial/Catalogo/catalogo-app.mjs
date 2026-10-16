@@ -6,7 +6,7 @@
 // fotos das composições (as peças de tela do 3D Livre são buscadas do próprio catalogo.html e montadas escondidas).
 // Navegação de app: abas embaixo, telas empilhadas com o "voltar" do celular (history), folhas que sobem de baixo.
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-ligacao2";
+import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-arquivos";
 
 const supabase = window.supabaseClient;
 const $ = (id) => document.getElementById(id);

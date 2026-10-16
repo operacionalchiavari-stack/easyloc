@@ -418,12 +418,23 @@ Hoje é ${hoje}. Você está falando com ${ctx.nome || "um(a) decorador(a)"}${ct
 QUEM VOCÊ É
 - Uma pessoa de verdade do comercial: calorosa, segura, com bom gosto e olho de decoradora. Fala português do Brasil natural, como no WhatsApp profissional — frases curtas, sem listas enormes, sem jargão, sem "Como posso ajudar?" repetido, sem soar robô.
 - Nunca diga que é uma IA, um robô ou um sistema, a menos que perguntem diretamente; se perguntarem, seja honesta com leveza.
-- Responda primeiro o que foi perguntado, de forma natural. Depois, conduza com delicadeza para o próximo passo do fechamento (montar o projeto, escolher peças que faltam, confirmar quantidades, ver a imagem da composição, enviar o pedido). Uma pergunta por vez. Nada de pressão nem de empurrar o que não combina.
+- Responda primeiro o que foi perguntado, de forma natural. Uma pergunta por vez. Nada de pressão nem de empurrar o que não combina.
+- Sem bordões também por escrito: não abra as mensagens sempre com "Perfeito", "Ótimo", "Claro" ou com o nome da pessoa; varie e vá direto ao ponto.
+- Não afirme dados do evento que a pessoa não disse nesta conversa e que não estão no projeto aberto (ex.: data e local); se forem do histórico, confirme como pergunta.
 - Use o que você já sabe da pessoa (perfil abaixo) sem anunciar que "aprendeu" ou que "vai lembrar": só aja como quem já conhece o gosto dela.
 - Mensagens curtas: normalmente 1 a 4 frases. Pode usar *itálico* ou **negrito** com moderação. Sem emojis em excesso (no máximo um, às vezes).
 
-O OBJETIVO
-Fechar o pedido: o decorador sair com o projeto montado (ambientes, peças e quantidades) e enviado para a equipe da Chiavari. O caminho típico: entender o evento (noivos/cliente, data, local, estilo, número de convidados, ambientes) → sugerir peças e combinações → colocar no projeto → mandar imagem da composição quando ajudar a decidir → revisar → enviar o pedido.
+COMO CONDUZIR O ATENDIMENTO (o lado humano vem antes do produto)
+O objetivo final é a pessoa sair com o projeto montado e o pedido enviado à Chiavari — mas você chega lá como uma consultora atenciosa, não como uma vendedora apressada. Siga estas etapas, no ritmo da pessoa:
+1. Acolher: cumprimente com calma e deixe a pessoa falar. Não ofereça produto, categoria ou ambiente nesse momento ("vamos começar pelo lounge?" logo de cara é proibido).
+2. Conhecer o evento: que tipo de evento é, para quem (os noivos, a família, a empresa — a história), data, local e número de convidados. Pergunte uma coisa por vez, com interesse genuíno, e comente o que ouviu antes da próxima pergunta. Não é questionário.
+3. Entender a visão: o clima que imaginam, estilo, cores, o que já está definido, o que ainda está em aberto e o que a decoradora quer causar nos convidados. Escute mais do que fala.
+4. Confirmar o entendimento: resuma em poucas palavras o que entendeu e pergunte se é isso mesmo. Só siga depois da confirmação.
+5. Sugerir com propósito: comece pelo espaço que a pessoa disser ser o mais importante (pergunte qual é, não escolha por ela). Explique por que cada peça combina com o que ela contou. Poucas opções por vez.
+6. Montar junto: confirme quantidades e ambientes antes de colocar no pedido; mostre fotos quando ajudarem a decidir.
+7. Fechar sem pressão: revise o pedido com ela e combine o próximo passo (enviar à equipe).
+Quando a pessoa confirmar e pedir para começar ("pode montar", "começa pelo lounge"), PROPONHA JÁ NA MESMA RESPOSTA: peças concretas do acervo (buscadas com as ferramentas e mostradas em cartões), quantidades e o porquê — nunca responda "vou sugerir" e faça mais perguntas no lugar da proposta. No máximo uma pergunta, no fim.
+Exceções: se a pessoa já chega com um pedido objetivo ("preciso de 20 cadeiras Tiffany para o dia 25"), atenda direto, sem obrigar a passar pelas etapas — só pergunte o que faltar. Se você já sabe algo (projeto aberto com data/local, perfil da pessoa, conversa anterior), não pergunte de novo: use e siga de onde parou. Se a pessoa mudar de assunto, acompanhe.
 
 REGRAS DE VERDADE (MUITO IMPORTANTES)
 - Só fale de itens que existem no acervo: use as ferramentas para buscar. Nunca invente peça, medida, cor, preço ou disponibilidade.
@@ -444,7 +455,16 @@ IMAGENS DE COMPOSIÇÃO
 - Antes de dizer que uma peça não existe, procure com buscar_itens. Nunca diga que uma peça "não está no acervo" se ela existe.
 - Se a peça existe mas NÃO tem modelo 3D (tem_modelo_3d: false), deixe claro que ela está no acervo e pode entrar no pedido — mostre-a com mostrar_itens —, mas que dela ainda não dá pra montar a foto da composição. Ofereça montar a imagem com a alternativa com 3D mais próxima (mesmo estilo/tipo), deixando claro que é uma alternativa.
 - Se não existir formato que receba as peças pedidas, diga com naturalidade que dessa combinação você ainda não consegue montar a imagem e ofereça a alternativa mais próxima.
+- Se a pessoa pedir para apagar uma foto que você mandou, use apagar_foto com a ref da foto (aparece na conversa). Se houver mais de uma e não estiver claro qual, pergunte antes. Apagar tira só da conversa; o que já foi para o projeto continua lá.
 - A imagem é uma fotografia de estúdio feita a partir do 3D real das peças — nada é inventado. Ela leva 1 a 2 minutos e aparece aqui na conversa; avise a pessoa disso em uma frase.
+
+ARQUIVOS E PLANTAS
+- A pessoa pode mandar arquivos (planta do espaço em PDF ou foto, foto do local, referência de decoração). Você os enxerga.
+- Ao receber uma planta: diga em poucas palavras o que entendeu (áreas — cerimônia, lounge, bar, pista, buffet, mesas —, a forma do espaço e, SE a planta tiver cotas ou escala, as medidas aproximadas). Nunca invente medida que a planta não mostra; sem medidas, pergunte ou trabalhe com proporções. Se estiver ilegível ou cortada, diga e peça outra.
+- Depois siga o roteiro: confirme se entendeu certo e pergunte o que faltar (estilo, número de convidados, data, quais áreas ela quer montar com a Chiavari).
+- Proponha a montagem área por área, no estilo pedido: quais peças e quantas, por que combinam e por que cabem no espaço (use as medidas das peças e deixe circulação). Peças disponíveis na data, se houver data. Mostre os itens.
+- Só coloque no pedido depois que a pessoa aprovar a proposta (pode ser área por área). Use os nomes das áreas da planta como ambientes do pedido.
+- Se pedirem para apagar um arquivo, use apagar_foto com a ref do arquivo (arquivo-xxxxxx).
 
 ACERVO
 - Categorias e subcategorias que existem (use estes nomes nos filtros; para um TIPO de peça — sofá, poltrona, puff, mesa de centro — filtre pela subcategoria): ${subcats()}.
@@ -493,6 +513,7 @@ const FERRAMENTAS = (modo: string) => [
   { name: "gerar_imagem_composicao", description: "Monta um formato cadastrado com os móveis escolhidos e gera a fotografia de estúdio da composição (aparece na conversa em 1-2 min).", parameters: { type: "object", properties: {
     formato_id: { type: "string" }, pecas: { type: "array", items: { type: "object", properties: { papel: { type: "string" }, item_id: { type: "string" } }, required: ["papel", "item_id"] } },
     legenda: { type: "string", description: "Frase curta que acompanha a imagem." } }, required: ["formato_id", "pecas"] } },
+  { name: "apagar_foto", description: "Apaga da conversa uma foto de composição que você mandou (a pessoa pediu para apagar). Não mexe no projeto: se a foto já foi adicionada ao projeto, continua lá. Se não estiver claro qual foto, pergunte antes.", parameters: { type: "object", properties: { ref: { type: "string", description: "Referência da foto (ex.: foto-1a2b3c), como aparece na conversa." } }, required: ["ref"] } },
   { name: "atualizar_perfil", description: "Guarda o que você aprendeu sobre o gosto/hábitos desta pessoa (use sempre que ela revelar algo).", parameters: { type: "object", properties: {
     tons: { type: "array", items: { type: "string" } }, cores: { type: "array", items: { type: "string" } }, estilos: { type: "array", items: { type: "string" } },
     materiais: { type: "array", items: { type: "string" } }, categorias_preferidas: { type: "array", items: { type: "string" } }, evita: { type: "array", items: { type: "string" } },
@@ -681,6 +702,12 @@ function criarExecutor(ctx: Ctx, E: any) {
         E.acoes.push({ tipo: "renderizar", formato_id: f.id, formato_nome: f.nome, selecao, legenda: String(a?.legenda || "").slice(0, 200), itens });
         return { ok: true, observacao: "A imagem está sendo gerada (1 a 2 minutos) e aparece na conversa quando ficar pronta." };
       }
+      case "apagar_foto": {
+        const r = await apagarFoto(ctx, String(a?.ref || ""));
+        if ("erro" in r) return r;
+        E.acoes.push({ tipo: "apagar_imagem", mensagem_id: r.id });
+        return { ok: true, observacao: "A foto foi apagada da conversa. Se ela tinha sido adicionada ao projeto, continua lá." };
+      }
       case "atualizar_perfil": {
         E.perfil = mesclarPerfil(E.perfil, a); E.perfilMudou = true;
         return { ok: true };
@@ -691,8 +718,9 @@ function criarExecutor(ctx: Ctx, E: any) {
 }
 
 async function conversar(ctx: Ctx, body: any) {
+  const arquivos = arquivosValidos(ctx, body?.arquivos);
   const mensagem = String(body?.mensagem || "").trim().slice(0, 2000);
-  if (!mensagem) return json({ erro: "Mensagem vazia" }, 400);
+  if (!mensagem && !arquivos.length) return json({ erro: "Mensagem vazia" }, 400);
   const modo = body?.modo === "pedido" ? "pedido" : "catalogo";
 
   // Freio simples contra uso abusivo: até 20 mensagens por minuto por pessoa.
@@ -712,16 +740,30 @@ async function conversar(ctx: Ctx, body: any) {
   const mostrados = new Set<string>();
 
   const porAudio = Boolean(body?.por_audio);
-  await gravarMensagem(ctx, "user", mensagem, porAudio ? [{ tipo: "audio" }] : [], projeto?.id || null);
+  const pergunta = await gravarMensagem(ctx, "user", mensagem, [...(porAudio ? [{ tipo: "audio" }] : []), ...arquivos], projeto?.id || null);
 
   const mapas = new Map<string, Map<string, { total: number; livre: number }>>();
   const dataDoEvento = /^\d{4}-\d{2}-\d{2}$/.test(String(projeto?.data_evento || "")) ? String(projeto!.data_evento) : "";
   if (dataDoEvento) mapas.set(dataDoEvento, await mapaDisponibilidade(ctx, dataDoEvento));
   const messages: any[] = [
     { role: "system", content: promptDoSistema({ ctx, perfil, projeto, modo, empresa: empresa?.nome, formatos, acervo, dispEvento: dataDoEvento ? mapas.get(dataDoEvento) : null }) },
-    ...passadas.map((m: any) => ({ role: m.papel, content: m.conteudo + ((m.anexos || []).some((a: any) => a.tipo === "imagem") ? "\n[imagem da composição enviada na conversa]" : "") })),
+    ...passadas.map((m: any) => ({ role: m.papel, content: textoComArquivos(m) + ((m.anexos || []).some((a: any) => a.tipo === "imagem") ? `\n[foto da composição enviada na conversa — ref ${refFoto(m.id)}: ${((m.anexos || []).find((a: any) => a.tipo === "imagem")?.itens || []).join(", ")}]` : "") })),
     { role: "user", content: porAudio ? `[mensagem de voz transcrita — pode ter pequenos erros de transcrição em nomes; interprete pelo contexto e pelo acervo]\n${mensagem}` : mensagem },
   ];
+  // Arquivos (planta em PDF/foto): o modelo enxerga os da mensagem atual e os de até 2 mensagens anteriores com arquivo.
+  {
+    const comArquivo = passadas.filter((m: any) => m.papel === "user" && (m.anexos || []).some((a: any) => a.tipo === "arquivo")).slice(-2).map((m: any) => m.id);
+    for (const id of comArquivo) {
+      const i = passadas.findIndex((m: any) => m.id === id);
+      const m = passadas[i];
+      messages[i + 1] = { role: "user", content: [{ type: "text", text: textoComArquivos(m) || "[arquivo]" }, ...(await partesDosArquivos(ctx, m.anexos))] };
+    }
+    if (arquivos.length) {
+      const atual = messages[messages.length - 1];
+      const texto = (atual.content || "") + "\n" + arquivos.map((a) => `[arquivo enviado agora: ${a.nome}]`).join("\n");
+      messages[messages.length - 1] = { role: "user", content: [{ type: "text", text: texto.trim() }, ...(await partesDosArquivos(ctx, arquivos))] };
+    }
+  }
   const tools = FERRAMENTAS(modo);
   const rastro: any[] = [];
   const encontrados = new Set<string>(); // itens que as ferramentas devolveram nesta mensagem (pros cartões automáticos)
@@ -776,7 +818,7 @@ async function conversar(ctx: Ctx, body: any) {
     ...acoes.filter((x) => x.tipo === "renderizar").map((x) => ({ tipo: "renderizando", formato: x.formato_nome, itens: x.itens })),
   ];
   const gravada = await gravarMensagem(ctx, "assistant", resposta, anexos, E.projeto?.id || null);
-  return json({ mensagem: gravada, acoes, nome: NOME_ASSISTENTE, ...(body?.debug ? { rastro } : {}) });
+  return json({ mensagem: gravada, pergunta, acoes, nome: NOME_ASSISTENTE, ...(body?.debug ? { rastro } : {}) });
 }
 
 // Áudio (mensagem de voz do decorador). Transcrição com o modelo mais preciso da OpenAI (CATALOGO_ASSISTENTE_TRANSCRICAO,
@@ -855,6 +897,63 @@ async function transcrever(ctx: Ctx, body: any) {
   return json({ texto: revisado.slice(0, 2000), ...(body?.debug ? { bruto: texto } : {}) });
 }
 
+// Arquivos enviados pela pessoa (planta em PDF ou foto). O navegador sobe direto pro Storage com uma URL assinada
+// (ação arquivo_upload) e depois manda só o caminho; aqui só aceitamos caminhos da pasta da própria pessoa.
+const TIPOS_ARQUIVO: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf" };
+const pastaArquivos = (ctx: Ctx) => `${ctx.empresaId}/${ctx.dono.replace(":", "-")}/arquivos/`;
+function arquivosValidos(ctx: Ctx, lista: unknown) {
+  return (Array.isArray(lista) ? lista : []).slice(0, 4).map((a: any) => ({
+    tipo: "arquivo", path: String(a?.path || ""), mime: String(a?.mime || ""), nome: String(a?.nome || "arquivo").slice(0, 120),
+  })).filter((a) => a.path.startsWith(pastaArquivos(ctx)) && !a.path.includes("..") && TIPOS_ARQUIVO[a.mime])
+    .map((a) => ({ ...a, url: ctx.service.storage.from(BUCKET).getPublicUrl(a.path).data.publicUrl }));
+}
+function textoComArquivos(m: any) {
+  const arqs = (m.anexos || []).filter((a: any) => a.tipo === "arquivo");
+  return String(m.conteudo || "") + arqs.map((a: any) => `\n[arquivo enviado: ${a.nome} — ref ${refFoto(m.id).replace("foto-", "arquivo-")}]`).join("");
+}
+async function partesDosArquivos(ctx: Ctx, anexos: any[]) {
+  const partes: any[] = [];
+  for (const a of (anexos || []).filter((x: any) => x.tipo === "arquivo")) {
+    if (a.mime === "application/pdf") {
+      const { data } = await ctx.service.storage.from(BUCKET).download(a.path);
+      if (!data) continue;
+      const bytes = new Uint8Array(await data.arrayBuffer());
+      let bin = ""; for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      partes.push({ type: "file", file: { filename: /\.pdf$/i.test(a.nome) ? a.nome : a.nome + ".pdf", file_data: `data:application/pdf;base64,${btoa(bin)}` } });
+    } else partes.push({ type: "image_url", image_url: { url: a.url, detail: "high" } });
+  }
+  return partes;
+}
+async function urlDeUpload(ctx: Ctx, body: any) {
+  const mime = String(body?.mime || "");
+  if (!TIPOS_ARQUIVO[mime]) return json({ erro: "Envie uma imagem (JPG, PNG) ou um PDF." }, 400);
+  if (Number(body?.tamanho) > 20 * 1024 * 1024) return json({ erro: "Arquivo grande demais (máximo 20 MB)." }, 400);
+  const path = `${pastaArquivos(ctx)}${crypto.randomUUID()}.${TIPOS_ARQUIVO[mime]}`;
+  const { data, error } = await ctx.service.storage.from(BUCKET).createSignedUploadUrl(path);
+  if (error || !data) return json({ erro: error?.message || "Não consegui preparar o envio." }, 500);
+  return json({ path, token: data.token, url: ctx.service.storage.from(BUCKET).getPublicUrl(path).data.publicUrl });
+}
+
+// Fotos da conversa: a referência curta ("foto-1a2b3c" = começo do id da mensagem) é o que o modelo vê e usa.
+const refFoto = (id: unknown) => "foto-" + String(id || "").replace(/-/g, "").slice(0, 6);
+async function apagarFoto(ctx: Ctx, ref: string): Promise<{ id: string } | { erro: string }> {
+  const prefixo = String(ref).replace(/^(foto|arquivo)-/i, "").trim().toLowerCase();
+  const { data } = await ctx.service.from("catalogo_assistente_mensagens").select("id,anexos")
+    .eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono).order("criado_em", { ascending: false }).limit(300);
+  const fotos = (data || []).filter((m: any) => (m.anexos || []).some((x: any) => x.tipo === "imagem" || x.tipo === "arquivo"));
+  const alvo = prefixo.length === 36 ? fotos.find((m: any) => m.id === prefixo)
+    : fotos.find((m: any) => m.id.replace(/-/g, "").startsWith(prefixo));
+  if (!alvo || !prefixo) return { erro: "Não achei essa foto na conversa." };
+  const caminhos: string[] = [];
+  for (const x of alvo.anexos || []) for (const u of [x.url, x.cena_url]) {
+    const m = String(u || "").match(/\/object\/public\/catalogo-assistente\/(.+)$/);
+    if (m) caminhos.push(decodeURIComponent(m[1].split("?")[0]));
+  }
+  if (caminhos.length) await ctx.service.storage.from(BUCKET).remove(caminhos);
+  await ctx.service.from("catalogo_assistente_mensagens").delete().eq("id", alvo.id).eq("dono", ctx.dono);
+  return { id: alvo.id };
+}
+
 async function salvarImagem(ctx: Ctx, body: any) {
   const imagem = String(body?.imagem || "");
   const m = imagem.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
@@ -899,6 +998,7 @@ AGORA É UMA LIGAÇÃO DE VOZ (isto vale acima das regras de formato de texto)
 - Frases curtas. Normalmente uma ou duas frases por vez (três só quando realmente necessário) e então pare e deixe a pessoa falar. Nada de listas, tópicos, markdown, asteriscos ou códigos. Se houver várias peças, cite no máximo três.
 - NUNCA RESPONDA A SI MESMA: quando fizer uma pergunta, termine a fala ali e espere a pessoa responder — não sugira a resposta, não continue falando, não pergunte e responda em seguida. Se você ainda vai consultar algo, não faça pergunta antes.
 - Ferramentas: só fale antes de usar uma se a consulta for demorar, e aí uma frase muito curta e neutra, diferente a cada vez (sem pergunta). Depois que o resultado chegar, siga direto para a resposta — não cumprimente de novo, não repita o que já disse, não anuncie "pronto" toda vez.
+- Não narre o que acontece por dentro ("não encontrei esse nome", "vou buscar parecidos", tentativas): fale só o resultado, como quem já sabe.
 - Números, valores e datas por extenso, do jeito que se fala ("trezentos e cinquenta reais a diária", "vinte e cinco de outubro"). Medidas só se perguntarem, arredondadas.
 - Descreva peças como uma vendedora descreveria, sem recitar ficha técnica. NÃO comente se uma peça tem ou não modelo 3D/imagem de composição (mesmo que a ferramenta diga tem_modelo_3d false) — só se a pessoa pedir uma foto da composição.
 - Quando citar peças, chame mostrar_itens: as fotos aparecem na tela da pessoa enquanto vocês conversam (pode mencionar isso de vez em quando, não sempre).
@@ -931,7 +1031,7 @@ async function ligacaoIniciar(ctx: Ctx, body: any) {
     historico(ctx, 12), vocabulario(ctx).catch(() => ({ prompt: "" })),
   ]);
   const recente = passadas.length ? "\n\nÚLTIMAS MENSAGENS DA CONVERSA POR ESCRITO (continue de onde pararam, sem repetir):\n" +
-    passadas.map((m: any) => `${m.papel === "user" ? "Pessoa" : NOME_ASSISTENTE}: ${String(m.conteudo).slice(0, 300)}`).join("\n") : "";
+    passadas.map((m: any) => `${m.papel === "user" ? "Pessoa" : NOME_ASSISTENTE}: ${String(m.conteudo).slice(0, 300)}${(m.anexos || []).some((a: any) => a.tipo === "imagem") ? ` [foto enviada — ref ${refFoto(m.id)}]` : ""}${(m.anexos || []).filter((a: any) => a.tipo === "arquivo").map((a: any) => ` [enviou o arquivo ${a.nome} no chat]`).join("")}`).join("\n") : "";
   const primeiro = String(ctx.nome || "").trim().split(/\s+/)[0] || "a pessoa";
   const instructions = promptDoSistema({ ctx, perfil, projeto, modo, empresa: empresa?.nome, formatos, acervo, dispEvento }) + recente + JEITO_DE_FALAR.replace("{{PRIMEIRO_NOME}}", primeiro);
   const tools = FERRAMENTAS(modo).map((t: any) => ({ type: "function", ...t.function }));
@@ -1043,6 +1143,11 @@ serve(async (req) => {
       return json({ data, itens: Object.fromEntries(ids.map((id) => [id, mapa.get(id) || null])) });
     }
     if (acao === "salvar_imagem") return await salvarImagem(ctx, body);
+    if (acao === "arquivo_upload") return await urlDeUpload(ctx, body);
+    if (acao === "apagar_imagem") {
+      const r = await apagarFoto(ctx, String(body?.mensagem_id || ""));
+      return "erro" in r ? json(r, 404) : json({ ok: true, id: r.id });
+    }
     if (acao === "falha_imagem") {
       const texto = String(body?.mensagem || "").trim().slice(0, 300) || "Não consegui terminar a imagem dessa vez. Quer que eu tente de novo?";
       return json({ mensagem: await gravarMensagem(ctx, "assistant", texto) });

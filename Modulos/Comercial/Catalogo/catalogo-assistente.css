@@ -191,10 +191,16 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-lig-topo{display:flex;align-items:center;gap:10px;font:600 .75rem "Manrope",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.72)}
 .cas-lig-tempo{font-variant-numeric:tabular-nums;letter-spacing:.06em}
 .cas-lig-centro{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:min(640px,100%);text-align:center}
-.cas-lig-avatar{--ela:0;--voce:0;position:relative;display:grid;width:150px;height:150px;margin-bottom:14px;place-items:center}
-.cas-lig-avatar .cas-avatar.is-xl{width:118px;height:118px;font-size:3.4rem;box-shadow:0 18px 44px rgba(0,0,0,.35),0 0 0 calc(3px + var(--voce) * 10px) rgba(255,255,255,.14);transform:scale(calc(1 + var(--ela) * .07));transition:transform .08s linear,box-shadow .08s linear}
-.cas-lig-onda{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(201,173,132,.42),rgba(201,173,132,0) 70%);opacity:calc(.25 + var(--ela) * 1.4);transform:scale(calc(1 + var(--ela) * .55));transition:transform .1s linear,opacity .1s linear}
-.cas-lig-onda+.cas-lig-onda{inset:-18px;opacity:calc(var(--ela) * .9);transform:scale(calc(.9 + var(--ela) * .8))}
+.cas-lig-avatar{position:relative;display:grid;width:150px;height:150px;margin-bottom:14px;place-items:center}
+.cas-lig-avatar .cas-avatar.is-xl{width:118px;height:118px;font-size:3.4rem;box-shadow:0 18px 44px rgba(0,0,0,.35),0 0 0 3px rgba(255,255,255,.14);transition:box-shadow .3s}
+.cas-lig-avatar.ouvindo .cas-avatar.is-xl{box-shadow:0 18px 44px rgba(0,0,0,.35),0 0 0 8px rgba(255,255,255,.22)}
+.cas-lig-onda{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(201,173,132,.42),rgba(201,173,132,0) 70%);opacity:.25;transition:opacity .4s}
+.cas-lig-onda+.cas-lig-onda{inset:-18px;opacity:0}
+.cas-lig-avatar.falando .cas-lig-onda{animation:cas-lig-fala 1.3s ease-in-out infinite}
+.cas-lig-avatar.falando .cas-lig-onda+.cas-lig-onda{animation-delay:.35s}
+.cas-lig-avatar.falando .cas-avatar.is-xl{animation:cas-lig-respira 1.3s ease-in-out infinite}
+@keyframes cas-lig-fala{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:.85;transform:scale(1.3)}}
+@keyframes cas-lig-respira{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 .cas-lig-centro h2{margin:0;font:500 clamp(2rem,4vw,2.6rem) "Cormorant Garamond",serif;letter-spacing:.02em}
 .cas-lig-quem{margin:0 0 14px;font:500 .78rem "Manrope",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6)}
 .cas-lig-legenda{min-height:2.8em;margin:0;font:italic 400 clamp(1.15rem,2.2vw,1.45rem)/1.4 "Cormorant Garamond",serif;color:#fff}
@@ -226,6 +232,28 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 @keyframes cas-lig-entra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @keyframes cas-lig-pulso{from{opacity:.9;transform:scale(.92)}to{opacity:0;transform:scale(1.35)}}
 @media(max-width:760px){.cas-lig-avatar{width:124px;height:124px}.cas-lig-avatar .cas-avatar.is-xl{width:98px;height:98px;font-size:2.8rem}.cas-ligacao{padding:16px 14px 20px}}
-@media(prefers-reduced-motion:reduce){.cas-ligacao,.cas-lig-itens .cas-item,.cas-launcher.em-ligacao .cas-avatar::after{animation:none}.cas-lig-onda,.cas-lig-avatar .cas-avatar.is-xl{transition:none}}
+@media(prefers-reduced-motion:reduce){.cas-ligacao,.cas-lig-itens .cas-item,.cas-launcher.em-ligacao .cas-avatar::after{animation:none}.cas-lig-onda,.cas-lig-avatar .cas-avatar.is-xl{transition:none;animation:none!important}}
 /* Celular: com o botão Ligar o topo não comporta o nome (sobrava uma letra cortada); o "−" repete o "‹" e sai. */
 @media(max-width:520px){.cas-head .cas-head-copy,.cas-head .cas-head-btn[data-cas-fechar]{display:none}.cas-pedido-btn{max-width:none;flex:1;min-width:0}}
+
+.cas-link-apagar{color:#b0473d}
+
+/* Arquivos (planta em PDF ou foto) ----------------------------------------------------------------------------------- */
+.cas-clip{display:grid;flex:none;width:44px;height:48px;place-items:center;border:0;background:transparent;color:#77716a;cursor:pointer;border-radius:50%}
+.cas-clip:hover,.cas-clip:focus-visible{color:#5a5a55;background:#f1ede6;outline:none}
+.cas-clip svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cas-form:has(.cas-gravando:not([hidden])) .cas-clip{display:none}
+.cas-anexos-pend{display:flex;flex-wrap:wrap;gap:8px;width:min(720px,100%);margin:0 auto 10px}
+.cas-anexos-pend[hidden]{display:none}
+.cas-pend{display:inline-flex;align-items:center;gap:8px;max-width:260px;padding:5px 6px 5px 5px;border:1px solid #e3dccf;border-radius:12px;background:#fff;font-size:.8rem;color:#3d3630}
+.cas-pend img{width:38px;height:38px;object-fit:cover;border-radius:8px}
+.cas-pend>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cas-pend button{flex:none;width:26px;height:26px;border:0;border-radius:50%;background:#f1ede6;color:#5a5a55;font-size:1rem;cursor:pointer}
+.cas-pdf-ico{display:grid;flex:none;width:38px;height:38px;place-items:center;border-radius:8px;background:#b0473d;color:#fff;font:700 .75rem "Manrope",sans-serif;font-style:normal;letter-spacing:.04em}
+.cas-arquivo{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin:6px 0 0}
+.cas-arquivo .cas-foto-ver{display:block;padding:0;border:0;background:none;cursor:zoom-in}
+.cas-arquivo img{display:block;max-width:min(320px,70vw);max-height:340px;border-radius:14px;border:1px solid #e3dccf;object-fit:contain;background:#fff}
+.cas-arquivo-pdf{display:inline-flex;align-items:center;gap:10px;max-width:min(320px,80vw);padding:8px 14px 8px 8px;border:1px solid #e3dccf;border-radius:14px;background:#fff;color:#3d3630;text-decoration:none;font-size:.9rem}
+.cas-arquivo-pdf span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cas-arquivo small{color:#8f8578;font-size:.75rem}
+.is-bot .cas-arquivo{align-items:flex-start}

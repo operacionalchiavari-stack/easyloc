@@ -8978,3 +8978,23 @@ usuário: ligação de verdade (OpenAI Realtime, ~1 s de resposta, dá pra inter
   própria voz pela caixa de som: `ehEco()` (≥85% das palavras, mínimo 4, iguais às 2 últimas falas dela) cancela a
   resposta disparada (`response.cancel`) e apaga a fala falsa (`conversation.item.delete`); `noise_reduction` passou a
   `far_field` (notebook/celular no viva-voz). Ação `amostra_voz` (texto fixo) gera mp3 de uma voz pra comparar.
+- **Roteiro de atendimento, apagar fotos e chiado no celular (16/10)**: o prompt ganhou "COMO CONDUZIR O ATENDIMENTO"
+  (acolher → conhecer o evento → entender a visão → confirmar o entendimento → sugerir pelo espaço que a pessoa escolher →
+  montar junto → fechar sem pressão; pedido objetivo é atendido direto; o que já se sabe não se pergunta de novo) — vale
+  no chat e na ligação; proibido abrir com "vamos começar pelo lounge?". **Apagar foto**: botão "Apagar" em cada foto da
+  conversa e ferramenta `apagar_foto` (a Helena vê as fotos como `foto-xxxxxx` = 6 primeiros caracteres do id da
+  mensagem); ação `apagar_imagem`/`apagarFoto()` apaga a mensagem e os arquivos (jpg + json da cena) do bucket — **só da
+  conversa**: o que já foi adicionado ao projeto continua (escolha do usuário). **Chiado no app**: a ligação não usa mais
+  Web Audio (AnalyserNode no áudio remoto com o microfone aberto chiava/estourava no celular); o avatar anima pelos
+  eventos `output_audio_buffer.started/stopped` e `input_audio_buffer.speech_started/stopped` (classes `.falando`/`.ouvindo`).
+- **Arquivos pra Helena (planta em PDF ou foto, 16/10)**: clipe (📎) no campo da conversa (computador e app; no celular
+  abre câmera/galeria), até 4 arquivos de até 20 MB, prévia antes de enviar e dá pra mandar sem texto. Foto vira JPEG de
+  até 2400 px; PDF vai como está. O navegador pede `arquivo_upload` (URL assinada do Storage, pasta
+  `<empresa>/<dono>/arquivos/`) e sobe direto; `conversar` recebe só `{path,mime,nome}` (aceita só caminhos da pasta da
+  pessoa) e o modelo (gpt-4.1) enxerga: imagem por URL (`detail:"high"`), PDF baixado e mandado como `file` em base64 —
+  os da mensagem atual e de até 2 mensagens anteriores com arquivo. Bucket aceita PDF e 20 MB (migration
+  `20261016000100_catalogo_assistente_arquivos.sql`). Prompt "ARQUIVOS E PLANTAS": dizer o que entendeu (áreas e medidas
+  só se a planta tiver cotas), confirmar, propor por área no estilo, só pôr no pedido após aprovação; ao pedir pra começar,
+  propõe na mesma resposta (não "vou sugerir"). Arquivo na conversa tem "Apagar" (mesma `apagarFoto`, ref `arquivo-xxxxxx`).
+  Na ligação ela sabe que houve arquivo, mas não o enxerga. Testado com planta de exemplo (PDF no computador, foto no app):
+  leu áreas e medidas certas e propôs o lounge boho com peças reais.
