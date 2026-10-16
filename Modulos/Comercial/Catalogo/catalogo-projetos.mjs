@@ -25,7 +25,7 @@
 // (ambientes → itens/renders/notas) vive num jsonb só, salvo por projeto_salvar com autosave (debounce). Nada aqui
 // mostra ou envia preço: o catálogo nunca teve valores.
 
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao } from './projeto-apresentacao.mjs?v=20261009-renderizar-projeto';
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao } from './projeto-apresentacao.mjs?v=20261016-conversa-pedido';
 
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
@@ -183,6 +183,48 @@ function normalizar(project){
   return project;
 }
 
+const TIPOS_EVENTO = ["Casamento", "Aniversário", "15 anos", "Corporativo", "Bodas", "Batizado", "Formatura", "Chá de bebê"];
+function nomePadraoProjeto(noivos, ev, local){
+  const n = String(noivos || "").trim();
+  if(n) return n;
+  const tipo = String(ev?.tipo || "").trim();
+  return [tipo ? tipo[0].toUpperCase() + tipo.slice(1) : "", String(local || "").trim()].filter(Boolean).join(" · ") || "Evento";
+}
+function camposEventoHtml(ev = {}, project = {}){
+  const v = (x) => escapeAttr(String(x || ""));
+  return `<div class="cpj-field-row">
+      <label class="cpj-field"><span>Tipo de evento</span><input name="ev_tipo" list="cpjTiposEvento" maxlength="80" value="${v(ev.tipo)}" placeholder="Ex.: Casamento" autocomplete="off"></label>
+      <label class="cpj-field"><span>Nome dos noivos <small>(opcional)</small></span><input name="noivos" maxlength="120" value="${v(project.noivos && project.noivos !== nomePadraoProjeto("", ev, project.local_evento) ? project.noivos : "")}" placeholder="Ex.: Ana &amp; Bruno" autocomplete="off"></label>
+    </div>
+    <datalist id="cpjTiposEvento">${TIPOS_EVENTO.map((t) => `<option value="${escapeAttr(t)}">`).join("")}</datalist>
+    <div class="cpj-field-row">
+      <label class="cpj-field"><span>Entrega</span><input type="date" name="ev_data_entrega" value="${v(ev.data_entrega)}"></label>
+      <label class="cpj-field"><span>Horário da entrega</span><input type="time" name="ev_hora_entrega" value="${v(ev.hora_entrega)}"></label>
+    </div>
+    <div class="cpj-field-row">
+      <label class="cpj-field"><span>Data do evento <b>*</b></span><input type="date" name="data" required value="${v(String(project.data_evento || "").slice(0, 10))}"></label>
+      <label class="cpj-field"><span>Até <small>(se durar vários dias)</small></span><input type="date" name="ev_data_fim" value="${v(ev.data_fim)}"></label>
+    </div>
+    <div class="cpj-field-row">
+      <label class="cpj-field"><span>Coleta</span><input type="date" name="ev_data_coleta" value="${v(ev.data_coleta)}"></label>
+      <label class="cpj-field"><span>Horário da coleta</span><input type="time" name="ev_hora_coleta" value="${v(ev.hora_coleta)}"></label>
+    </div>
+    <label class="cpj-field"><span>Local <b>*</b></span><input name="local" required maxlength="160" value="${v(project.local_evento)}" placeholder="Ex.: Sítio Vale Verde" autocomplete="off"></label>`;
+}
+// Lê os campos acima; devolve { noivos, data, local, evento } ou lança o erro a mostrar.
+function lerCamposEvento(form, eventoAnterior = {}){
+  const val = (n) => String(form.elements[n]?.value || "").trim();
+  const data = val("data"), local = val("local");
+  if(!data){ form.elements.data.focus(); throw new Error("Informe a data do evento."); }
+  if(!local){ form.elements.local.focus(); throw new Error("Informe o local do evento."); }
+  const ev = { ...eventoAnterior };
+  for(const k of ["tipo", "data_entrega", "hora_entrega", "data_fim", "data_coleta", "hora_coleta"]){ const x = val("ev_" + k); if(x) ev[k] = x; else delete ev[k]; }
+  if(ev.data_fim && ev.data_fim <= data) delete ev.data_fim;
+  if(ev.data_entrega && ev.data_entrega > data) throw new Error("A entrega está depois do evento.");
+  if(ev.data_coleta && ev.data_coleta < (ev.data_fim || data)) throw new Error("A coleta está antes do fim do evento.");
+  return { noivos: nomePadraoProjeto(val("noivos"), ev, local), data, local, evento: ev };
+}
+
 async function copiar(texto){
   try{ await navigator.clipboard.writeText(texto); return true; }catch{}
   const area = document.createElement("textarea");
@@ -337,18 +379,14 @@ function pintarEstadoSalvo(){
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Criar projeto (noivos, data e local são obrigatórios — o servidor valida de novo)
+// Criar projeto (data e local são obrigatórios — o servidor valida de novo; noivos é opcional)
 async function fluxoCriarProjeto(){
   let fotoEscolhida = null;
   const chips = SUGESTOES_AMBIENTE.map((nome) => `<button type="button" class="cpj-chip" data-chip aria-pressed="false">${escapeHtml(nome)}</button>`).join("");
   const project = await abrirModal({
     titulo: "Novo projeto", sub: "Informações do evento — usadas na capa da apresentação.", confirmar: "Criar projeto",
     corpo: `
-      <label class="cpj-field"><span>Nome dos noivos <b>*</b></span><input name="noivos" required maxlength="120" placeholder="Ex.: Ana &amp; Bruno" autocomplete="off" autofocus></label>
-      <div class="cpj-field-row">
-        <label class="cpj-field"><span>Data do evento <b>*</b></span><input type="date" name="data" required></label>
-        <label class="cpj-field"><span>Local <b>*</b></span><input name="local" required maxlength="160" placeholder="Ex.: Sítio Vale Verde" autocomplete="off"></label>
-      </div>
+      ${camposEventoHtml()}
       <div class="cpj-field">
         <span>Foto dos noivos <small>(opcional — aparece na capa da apresentação)</small></span>
         <div class="cpj-photo-pick">
@@ -395,12 +433,9 @@ async function fluxoCriarProjeto(){
     },
     async onSubmit(api){
       const campo = (nome) => api.form.elements[nome];
-      const noivos = campo("noivos").value.trim(), data = campo("data").value, local = campo("local").value.trim();
-      if(!noivos){ campo("noivos").focus(); throw new Error("Informe o nome dos noivos."); }
-      if(!data){ campo("data").focus(); throw new Error("Informe a data do evento."); }
-      if(!local){ campo("local").focus(); throw new Error("Informe o local do evento."); }
+      const { noivos, data, local, evento } = lerCamposEvento(api.form);
       const ambientes = [...api.dialog.querySelectorAll('[data-chip][aria-pressed="true"]')].map((chip) => chip.textContent.trim());
-      return normalizar(await rpc("projeto_criar", { p_noivos: noivos, p_data_evento: data, p_local_evento: local, p_ambientes: ambientes }));
+      return normalizar(await rpc("projeto_criar", { p_noivos: noivos, p_data_evento: data, p_local_evento: local, p_ambientes: ambientes, p_evento: evento }));
     },
   });
   if(!project) return null;
@@ -1176,17 +1211,11 @@ async function fluxoEditarInfo(){
   const project = S.current;
   const feito = await abrirModal({
     titulo: "Dados do evento", confirmar: "Salvar",
-    corpo: `<label class="cpj-field"><span>Nome dos noivos <b>*</b></span><input name="noivos" required maxlength="120" value="${escapeAttr(project.noivos)}" autocomplete="off" autofocus></label>
-      <div class="cpj-field-row">
-        <label class="cpj-field"><span>Data do evento <b>*</b></span><input type="date" name="data" required value="${escapeAttr(String(project.data_evento).slice(0, 10))}"></label>
-        <label class="cpj-field"><span>Local <b>*</b></span><input name="local" required maxlength="160" value="${escapeAttr(project.local_evento)}" autocomplete="off"></label>
-      </div>`,
+    corpo: camposEventoHtml(project.dados?.evento || {}, project),
     async onSubmit(api){
-      const noivos = api.form.elements.noivos.value.trim(), data = api.form.elements.data.value, local = api.form.elements.local.value.trim();
-      if(!noivos) throw new Error("Informe o nome dos noivos.");
-      if(!data) throw new Error("Informe a data do evento.");
-      if(!local) throw new Error("Informe o local do evento.");
+      const { noivos, data, local, evento } = lerCamposEvento(api.form, project.dados?.evento || {});
       project.noivos = noivos; project.data_evento = data; project.local_evento = local;
+      project.dados.evento = evento;
       return true;
     },
   });
@@ -2830,7 +2859,7 @@ const assistenteProjeto = {
   retrato(){
     const p = S.current;
     if(!p) return null;
-    return { id: p.id, noivos: p.noivos, data_evento: p.data_evento, local_evento: p.local_evento, status: p.status, ambiente_ativo: S.activeAmb,
+    return { id: p.id, noivos: p.noivos, data_evento: p.data_evento, local_evento: p.local_evento, evento: p.dados?.evento || {}, status: p.status, ambiente_ativo: S.activeAmb,
       ambientes: ambientesDe(p).map((amb) => ({ id: amb.id, nome: amb.nome, itens: amb.itens.map((i) => ({ item_id: String(i.item_id), quantidade: Number(i.quantidade) || 1 })) })) };
   },
   async quantidade({ item_id, quantidade, ambiente }){
@@ -2851,6 +2880,16 @@ const assistenteProjeto = {
     S.list = []; S.listLoaded = false;
   },
   enviarPedido(){ return S.current ? fluxoEnviarPedido() : null; },
+  async atualizarEvento({ data_evento, local_evento, evento, noivos }){
+    const p = S.current;
+    if(!p) throw new Error("Abra um projeto primeiro.");
+    if(data_evento) p.data_evento = data_evento;
+    if(local_evento) p.local_evento = local_evento;
+    if(evento) p.dados.evento = evento;
+    if(noivos !== undefined) p.noivos = nomePadraoProjeto(noivos, p.dados.evento, p.local_evento);
+    marcarSujo(); pintarCabecalho(); pintarDock();
+    await salvarAgora();
+  },
 };
 
 export function definirProjetoComercialPedido(project){

@@ -6,7 +6,7 @@
 // fotos das composições (as peças de tela do 3D Livre são buscadas do próprio catalogo.html e montadas escondidas).
 // Navegação de app: abas embaixo, telas empilhadas com o "voltar" do celular (history), folhas que sobem de baixo.
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-arquivos";
+import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-helena-catalogo2";
 
 const supabase = window.supabaseClient;
 const $ = (id) => document.getElementById(id);
@@ -355,6 +355,27 @@ const dataCurta = (d) => new Date(String(d).slice(0, 10) + "T00:00:00").toLocale
 
 function abrirItem(id){ const i = acharItem(id); if(i) empurrar(telaItem(i)); }
 
+// A Helena mostra as peças no próprio catálogo: uma categoria só → a tela da categoria; várias → "Seleção da Helena".
+// Rola até a primeira e circula as indicadas (mesmo desenho do computador).
+const SVG_CIRCULO = `<svg class="helena-circulo" viewBox="0 0 200 160" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M58 22 C112 4 184 22 190 74 C196 128 120 156 66 146 C14 136 2 86 22 52 C36 28 74 14 118 16"/></svg>`;
+function principalApp(id){ const i = S.itens.find((x) => String(x.id) === String(id) || x.variantGroup?.some((v) => String(v.id) === String(id))); return i || null; }
+function mostrarPelaHelena(ids, { circular = true } = {}){
+  const itens = [...new Map((ids || []).map(principalApp).filter(Boolean).map((i) => [String(i.id), i])).values()];
+  if(!itens.length) return;
+  if(S.aba !== "catalogo") irParaAba("catalogo");
+  const cats = new Set(itens.map((i) => i.cat));
+  const tela = cats.size === 1 ? telaCategoria(itens[0].cat)
+    : (() => { const el = novaTela(`${topo("Seleção da Helena", { extra: chipProjeto() })}<div class="tela-rolagem"><div class="grade-produtos">${itens.map(cardProduto).join("")}</div></div>`, ""); el.addEventListener("click", aoClicarComum); return el; })();
+  empurrar(tela);
+  setTimeout(() => {
+    const ids2 = itens.map((i) => String(i.id));
+    const cards = [...tela.querySelectorAll("[data-item]")].filter((c) => ids2.includes(String(principalApp(c.dataset.item)?.id)));
+    if(!cards.length) return;
+    cards[0].scrollIntoView({ behavior: "smooth", block: "center" });
+    if(circular) cards.forEach((card, n) => { card.classList.add("helena-alvo"); card.insertAdjacentHTML("beforeend", SVG_CIRCULO); card.querySelector(".helena-circulo").style.animationDelay = `${600 + n * 350}ms`; });
+  }, 380);
+}
+
 function telaItem(itemInicial){
   let item = itemInicial;
   let livres = null;
@@ -523,8 +544,12 @@ async function escolherAmbiente(){
 }
 async function criarProjeto(){
   const r = await folha({ titulo: "Novo projeto", sub: "Os dados do evento. Depois é só ir colocando as peças.",
-    corpo: `<form data-form><label class="campo"><span>Noivos ou cliente</span><input name="noivos" required maxlength="120" autocomplete="off" placeholder="Ex.: Ana e Bruno"></label>
+    corpo: `<form data-form><label class="campo"><span>Tipo de evento</span><input name="tipo" maxlength="80" autocomplete="off" placeholder="Ex.: Casamento, aniversário"></label>
+      <label class="campo"><span>Noivos ou homenageado (opcional)</span><input name="noivos" maxlength="120" autocomplete="off" placeholder="Ex.: Ana e Bruno"></label>
+      <label class="campo"><span>Entrega dos móveis</span><input name="entrega" type="date"></label>
       <label class="campo"><span>Data do evento</span><input name="data" type="date" required></label>
+      <label class="campo"><span>Até (se durar vários dias)</span><input name="fim" type="date"></label>
+      <label class="campo"><span>Coleta dos móveis</span><input name="coleta" type="date"></label>
       <label class="campo"><span>Local</span><input name="local" required maxlength="160" autocomplete="off" placeholder="Ex.: Fazenda Vila Rica"></label>
       <p class="folha-erro" data-erro></p><button class="btn btn-bloco" type="submit">Criar projeto</button></form>`,
     aoMontar: ({ el, fechar }) => el.querySelector("[data-form]").addEventListener("submit", async (e) => {
@@ -532,7 +557,8 @@ async function criarProjeto(){
       const f = e.target, btn = f.querySelector("button");
       btn.disabled = true;
       try{
-        const p = await rpc("projeto_criar", { p_noivos: f.noivos.value.trim(), p_data_evento: f.data.value, p_local_evento: f.local.value.trim(), p_ambientes: [] });
+        const evento = Object.fromEntries([["tipo", f.tipo.value.trim()], ["data_entrega", f.entrega.value], ["data_fim", f.fim.value > f.data.value ? f.fim.value : ""], ["data_coleta", f.coleta.value]].filter(([, v]) => v));
+        const p = await rpc("projeto_criar", { p_noivos: f.noivos.value.trim() || null, p_data_evento: f.data.value, p_local_evento: f.local.value.trim(), p_ambientes: [], p_evento: evento });
         fechar(p);
       }catch(error){ el.querySelector("[data-erro]").textContent = mensagem(error); btn.disabled = false; }
     }) });
@@ -679,7 +705,7 @@ window.catalogAssistenteProjeto = {
   retrato(){
     const p = S.projeto;
     if(!p) return null;
-    return { id: p.id, noivos: p.noivos, data_evento: p.data_evento, local_evento: p.local_evento, status: p.status, ambiente_ativo: S.ambAtivo,
+    return { id: p.id, noivos: p.noivos, data_evento: p.data_evento, local_evento: p.local_evento, evento: p.dados?.evento || {}, status: p.status, ambiente_ativo: S.ambAtivo,
       ambientes: ambientes().map((a) => ({ id: a.id, nome: a.nome, itens: a.itens.map((i) => ({ item_id: String(i.item_id), quantidade: Number(i.quantidade) || 1 })) })) };
   },
   async quantidade({ item_id, quantidade, ambiente }){
@@ -691,6 +717,18 @@ window.catalogAssistenteProjeto = {
   },
   async usarProjeto(id){ await usarProjeto(id); atualizarTelaAtual(); },
   enviarPedido(){ setTimeout(() => { irParaAba("projeto"); enviarPedido().then(atualizarTelaAtual); }, 320); },
+  async atualizarEvento({ data_evento, local_evento, evento, noivos }){
+    const p = S.projeto;
+    if(!p) throw new Error("Abra um projeto primeiro.");
+    if(data_evento) p.data_evento = data_evento;
+    if(local_evento) p.local_evento = local_evento;
+    if(evento){ p.dados ||= { ambientes: [] }; p.dados.evento = evento; }
+    if(noivos !== undefined){
+      const tipo = String(p.dados?.evento?.tipo || "").trim();
+      p.noivos = String(noivos || "").trim() || [tipo ? tipo[0].toUpperCase() + tipo.slice(1) : "", p.local_evento].filter(Boolean).join(" · ") || "Evento";
+    }
+    marcarSujo(); await salvarAgora(); atualizarTelaAtual();
+  },
 };
 // Fotos de composição da Helena: "Adicionar ao projeto" leva a imagem (e os móveis dela) pra um ambiente.
 window.catalogRegisterRenderItems = (src, objetos, cena) => {
@@ -851,6 +889,7 @@ async function iniciar(){
         supabase, getSession: () => S.sessao, modoPedido: false, notify, temProjetos: true,
         // Fechar a Helena dispara um "voltar" (history); espera ele passar antes de empilhar a tela do item.
         findItem: acharItem, abrirItem: (id) => setTimeout(() => abrirItem(id), 320),
+        mostrarNoCatalogo: (ids, opcoes) => { setTimeout(() => mostrarPelaHelena(ids, opcoes), 340); return true; },
       }));
       // Fechar a Helena (voltar/minimizar) devolve pra aba de antes; foto nova com ela fechada vira um ponto na aba.
       new MutationObserver(() => {

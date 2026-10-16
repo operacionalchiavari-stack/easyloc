@@ -38,11 +38,10 @@ function installMock(opts){
     projeto_listar:()=>ok(visiveis().map(resumo)),
     projeto_obter:(p)=>{const r=achar(p.p_id);return ok({...resumo(r),dados:r.dados,slug:r.slug,pin_definido:Boolean(r.pin),pedido_observacao:r.pedido_observacao,pedido_snapshot:r.pedido_snapshot});},
     projeto_criar:(p)=>{
-      if(!String(p.p_noivos||'').trim()) return fail('Informe o nome dos noivos');
       if(!p.p_data_evento) return fail('Informe a data do evento');
       if(!String(p.p_local_evento||'').trim()) return fail('Informe o local do evento');
-      const r={id:'proj-'+(db.seq++),cliente_id:opts.staff?null:'client',noivos:p.p_noivos.trim(),data_evento:p.p_data_evento,local_evento:p.p_local_evento.trim(),status:'rascunho',compartilhar:false,slug:null,pin:null,pedido_enviado_em:null,atualizado_em:new Date().toISOString(),
-        dados:{ambientes:(p.p_ambientes||[]).filter(n=>n.trim()).map((n,i)=>({id:'amb'+db.seq+'x'+i,nome:n.trim(),itens:[],renders:[],notas:''}))}};
+      const r={id:'proj-'+(db.seq++),cliente_id:opts.staff?null:'client',noivos:(String(p.p_noivos||'').trim()||[p.p_evento?.tipo,String(p.p_local_evento||'').trim()].filter(Boolean).join(' · ')||'Evento'),data_evento:p.p_data_evento,local_evento:p.p_local_evento.trim(),status:'rascunho',compartilhar:false,slug:null,pin:null,pedido_enviado_em:null,atualizado_em:new Date().toISOString(),
+        dados:{...(p.p_evento&&Object.keys(p.p_evento).length?{evento:p.p_evento}:{}),ambientes:(p.p_ambientes||[]).filter(n=>n.trim()).map((n,i)=>({id:'amb'+db.seq+'x'+i,nome:n.trim(),itens:[],renders:[],notas:''}))}};
       db.projetos.push(r);return ok({...resumo(r),dados:r.dados,slug:null,pin_definido:false});
     },
     projeto_salvar:(p)=>{const r=achar(p.p_id);r.noivos=p.p_noivos;r.data_evento=p.p_data_evento;r.local_evento=p.p_local_evento;r.dados=p.p_dados;r.atualizado_em=new Date().toISOString();return ok(resumo(r));},

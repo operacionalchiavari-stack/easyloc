@@ -14,7 +14,7 @@ function medidasComSiglas(nome, dims){
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function dadosApresentacao(project, findItem){
   return {
-    nome: project.noivos || 'Projeto', local: project.local_evento || '', data: project.data_evento || '', dataFim: project.data_evento_fim || '',
+    nome: project.noivos || 'Projeto', local: project.local_evento || '', data: project.data_evento || '', dataFim: project.data_evento_fim || project.dados?.evento?.data_fim || '', evento: project.dados?.evento || {},
     ambientes: (project.dados?.ambientes || []).map(amb => {
       const grupos = new Map();
       for(const linha of amb.itens || []){
@@ -103,6 +103,9 @@ export function pedidoPreviewHtml(model, { decorador = null, empresa = null } = 
       <dl class="cpj-order-event-info">
         <div class="cpj-order-client"><dt>Clientes</dt><dd><h2>${esc(model.nome)}</h2></dd></div>
         <div><dt>Data do evento</dt><dd>${esc(model.data ? [model.data, model.dataFim].filter(Boolean).map(d => String(d).slice(0,10).split('-').reverse().join('/')).join(' a ') : 'Não informada')}</dd></div>
+        ${model.evento?.tipo ? `<div><dt>Tipo de evento</dt><dd>${esc(model.evento.tipo)}</dd></div>` : ""}
+        ${model.evento?.data_entrega ? `<div><dt>Entrega</dt><dd>${esc(String(model.evento.data_entrega).split("-").reverse().join("/") + (model.evento.hora_entrega ? " às " + model.evento.hora_entrega : ""))}</dd></div>` : ""}
+        ${model.evento?.data_coleta ? `<div><dt>Coleta</dt><dd>${esc(String(model.evento.data_coleta).split("-").reverse().join("/") + (model.evento.hora_coleta ? " às " + model.evento.hora_coleta : ""))}</dd></div>` : ""}
         <div><dt>Local do evento</dt><dd>${esc(model.local || 'Não informado')}</dd></div>
       </dl>
       <aside class="cpj-order-notice" role="note"><span class="cpj-order-notice-icon" aria-hidden="true">i</span><div><strong>Esta é uma prévia do pedido</strong><p>Este arquivo reúne os itens escolhidos para o projeto. O pedido oficial será enviado pela nossa equipe comercial, com todas as disponibilidades e os serviços adicionais.</p></div></aside>

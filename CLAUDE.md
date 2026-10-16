@@ -8998,3 +8998,69 @@ usuário: ligação de verdade (OpenAI Realtime, ~1 s de resposta, dá pra inter
   propõe na mesma resposta (não "vou sugerir"). Arquivo na conversa tem "Apagar" (mesma `apagarFoto`, ref `arquivo-xxxxxx`).
   Na ligação ela sabe que houve arquivo, mas não o enxerga. Testado com planta de exemplo (PDF no computador, foto no app):
   leu áreas e medidas certas e propôs o lounge boho com peças reais.
+- **Uma conversa por pedido, ligação do zero, regras do pedido novo e respostas curtas (16/10)**:
+  - **Conversa por pedido**: `catalogo_assistente_mensagens.projeto_id` (já existia) passou a separar as conversas:
+    `historico(ctx, n, projetoId)` traz só as do pedido aberto (ou só as sem pedido). A tela recarrega a conversa quando o
+    pedido aberto muda (`sincronizarConversa`, a cada 1,5 s com o painel aberto, e depois de `usar_projeto`). Ao criar
+    um pedido pela conversa, as mensagens sem pedido das últimas 12 h vão junto pra ele (`levarConversaParaProjeto`).
+    A transcrição da ligação grava no pedido aberto no fim dela (registro do que foi combinado). "Nova conversa" só
+    aparece fora de pedido, e o servidor recusa apagar a conversa de um pedido.
+  - **Ligação começa do zero**: não leva mais as últimas mensagens escritas. Ela recebe só a lista de pedidos futuros da
+    pessoa, cumprimenta, pergunta em que pode ajudar e de qual pedido se trata, e usa `abrir_projeto` (ou cria um novo).
+  - **Pedido novo** (`criar_projeto`): exige tipo de evento, data de entrega, data do evento (+ `data_evento_fim` se for
+    período), data de coleta e local; horário só se a pessoa disser (período vago vira observação); noivos opcional;
+    cliente/contato nunca perguntados (é quem está logado); observações de entrega/coleta/separação só se ela mencionar;
+    entrega/coleta podem ser previsão. Resumo + "sim" antes de criar. `atualizar_evento` muda depois (vira ação na tela,
+    que grava pelo salvamento automático). `listar_projetos`/`abrir_projeto` trocam de pedido.
+  - **Banco** (migration `20261016000200_projetos_evento_noivos_opcional.sql`, aplicada): dados do evento em
+    `projetos.dados.evento` ({tipo, data_entrega, hora_entrega, data_fim, data_coleta, hora_coleta, obs_entrega,
+    obs_coleta, obs_separacao}); `projeto_criar` ganhou `p_evento` e não exige mais noivos — sem nome, a coluna
+    `noivos` vira "<Tipo> · <local>" (`projeto_nome_padrao`), então todas as telas continuam com um título;
+    `projeto_resumo` devolve `evento`. Os diálogos "Novo projeto"/"Dados do evento" do catálogo e do app ganharam esses
+    campos (noivos opcional); a prévia/PDF do pedido mostra tipo, entrega e coleta.
+  - **Objetividade**: lembrete `OBJETIVIDADE` no FIM do prompt da conversa (o modelo segue mais o que vem por último):
+    no máximo 2 frases (3 numa proposta), uma pergunta por mensagem, não reconfirmar o que já foi respondido. Na
+    ligação, `JEITO_DE_FALAR`: uma frase sempre que der, no máximo duas.
+- **Eco no começo da ligação (16/10)**: a voz dela saía pela caixa, voltava pelo microfone e a detecção de fala
+  cortava a própria resposta (ela "travava e começava outra coisa"). Não dá pra separar esse eco da voz da pessoa
+  enquanto ela fala, então o **microfone fecha enquanto ela fala** (`atualizarMicrofone`/`elaFalando`, pelos eventos
+  `output_audio_buffer.started/stopped`, com 450 ms de folga) e já começa fechado até o fim do cumprimento (abre sozinho
+  em 12 s se o cumprimento não vier). Pra cortar a fala dela: botão **Interromper** (`response.cancel` +
+  `output_audio_buffer.clear`), que só aparece enquanto ela fala. Testado com microfone simulado falando sem parar desde
+  o início: o cumprimento saiu inteiro. O "Mudo" continua valendo por cima disso.
+- **Pedido ao lado da conversa se mexe (16/10)**: quando um item entra, muda de quantidade ou sai, a lista do pedido
+  (`.cas-lado-ambs`) rola sozinha até a linha (centralizada, suave) e a linha anima: entra deslizando com fundo verde,
+  quantidade pula verde/vermelha, e a que sai fica 1,7 s vermelha sumindo antes de desaparecer. Redesenhar não volta
+  mais a lista pro topo (guarda a rolagem). Movimento reduzido: sem animação.
+- **Chiado no início da ligação (16/10)**: o cumprimento só sai com a conexão de áudio estável (`connected` + áudio
+  dela chegando + 700 ms; no máximo 5 s de espera), a voz voltou à velocidade normal (tirado `speed: 1.02`) e a primeira
+  fala entra numa rampa de volume de 260 ms (`rampaDeVolume`; no iPhone o volume é só leitura e a rampa não tem efeito).
+- **Local do evento com mapa (16/10)**: ferramenta `buscar_local` — primeiro os locais cadastrados (`locais_empresas`,
+  todas as palavras que importam precisam bater; "Villa Bisutti" não vira "Villa Imperial"), senão Google (Places API
+  New → Places legado → Geocoding, chave `GOOGLE_MAPS_KEY` do servidor). Os resultados vão como anexo `locais` e
+  aparecem com mapa (iframe `maps.google.com/maps?q=lat,lng&output=embed`, sem chave), selo "Local cadastrado"/"Google
+  Maps" e botão "É este" (na conversa e na tela da ligação; na ligação o toque vira fala dela). Vários com o mesmo
+  nome → ela pergunta qual. Cada local tem apelido curto (`local1`…) — com o código comprido do Google o modelo errava
+  letra —, resolvido pelo servidor a partir do que foi mostrado (`localMostrado`). `criar_projeto`/`atualizar_evento`
+  recebem `local_ref` e gravam em `dados.evento` endereco, lat, lng, local_id (cadastro) ou place_id (Google).
+  Local novo do Google NÃO é cadastrado em `locais_empresas` (não pedido).
+- **Datas no passado**: data sem ano que o modelo gravou no ano corrente já passado vai sozinha pro ano seguinte
+  (`ajustarAno`, todas as datas juntas; em `atualizar_evento` só quando a mudança é de data).
+- **Montar um ambiente**: ela pergunta primeiro se a pessoa já sabe as peças (muitas clientes conhecem a linha); se
+  sabe, só coloca; se não, pergunta o estilo e mostra opções em cartões sem dizer qual é melhor; recomendação só se a
+  pessoa pedir.
+- **Bug corrigido**: `.contains("anexos", [{...}])` do supabase-js monta filtro de ARRAY, não de jsonb, e voltava vazio
+  — usar `JSON.stringify(...)`. Por isso o limite de 6 ligações/hora nunca tinha funcionado.
+- **Local na ligação (16/10)**: na ligação cada ferramenta é uma chamada separada ao servidor e a conversa só é gravada
+  no fim, então o "É este" não achava o local mostrado. Os últimos locais buscados ficam também no perfil
+  (`perfil._locais`) e entram na resolução do `local_ref`. Resultado do Google sem nome usa o começo do endereço. Mapa
+  maior (440×280 na conversa, 460×260 na ligação).
+- **Helena mostra no próprio catálogo (16/10)**: quando ela mostra peças (`mostrar_itens`, por escrito ou na
+  ligação), a conversa vira uma barra pequena no canto (`#catalogAssistenteMini`: foto dela, legenda — começo da
+  mensagem por escrito, fala atual na ligação — e, na ligação, Interromper/Mudo/Desligar; tocar abre a conversa
+  inteira) e o catálogo vai até as peças: uma categoria só → `applyView(cat)`; várias → grade "Seleção da Helena"
+  (`renderProducts(..., "Seleção da Helena")`). Rola até a primeira e, com até 3 peças (indicação), desenha um círculo
+  "à mão" animado em volta de cada card (`.helena-circulo`, SVG com `pathLength=1`); 4+ peças = opções, sem círculo.
+  Computador: `mostrarPelaHelena` em catalogo.mjs (passado como `ctx.mostrarNoCatalogo`); app: o mesmo em
+  catalogo-app.mjs (tela da categoria ou "Seleção da Helena" empilhada). Os cartões continuam gravados na conversa
+  como registro. O resultado de `mostrar_itens` diz a ela se ficou circulado ou não.

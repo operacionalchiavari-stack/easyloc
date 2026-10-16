@@ -257,3 +257,66 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-arquivo-pdf span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cas-arquivo small{color:#8f8578;font-size:.75rem}
 .is-bot .cas-arquivo{align-items:flex-start}
+.cas-head-btn[hidden]{display:none!important}
+.cas-lig-btn.is-interromper span{background:#fff;color:#3d3630}
+.cas-lig-btn.is-interromper:hover span{background:#f1ece4}
+.cas-lig-btn.is-interromper svg{stroke-width:2.6}
+.cas-lig-btn[hidden]{display:none!important}
+
+/* Pedido ao lado da conversa: a linha que entra, muda ou sai do pedido se anima (e a lista rola até ela). */
+.cas-lado-ambs{position:relative}
+.cas-lado-ambs li.anima-entrou{animation:cas-entrou .7s cubic-bezier(.22,1,.36,1)}
+.cas-lado-ambs li.anima-subiu b,.cas-lado-ambs li.anima-desceu b{display:inline-block;animation:cas-qtd .7s cubic-bezier(.22,1,.36,1)}
+.cas-lado-ambs li.anima-subiu b{color:#3f9a63}
+.cas-lado-ambs li.anima-desceu b{color:#c4453b}
+.cas-lado-ambs li.anima-saiu{animation:cas-saiu 1.7s ease forwards;pointer-events:none}
+@keyframes cas-entrou{from{opacity:0;transform:translateX(26px);background:#e9f6ee}to{opacity:1;transform:none}}
+@keyframes cas-qtd{0%{transform:scale(1)}40%{transform:scale(1.45)}100%{transform:scale(1)}}
+@keyframes cas-saiu{0%{opacity:1;background:#fbeceb}55%{opacity:1;background:#fbeceb;transform:none}100%{opacity:0;transform:translateX(-26px);background:#fbeceb}}
+@media(prefers-reduced-motion:reduce){.cas-lado-ambs li{animation:none!important}}
+/* Local do evento encontrado pela Helena: mapa pra confirmar */
+.cas-locais{display:flex;gap:12px;overflow-x:auto;max-width:100%;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.cas-local{display:flex;flex:none;flex-direction:column;width:min(300px,78vw);overflow:hidden;border:1px solid #e8e1d6;border-radius:14px;background:#fff;scroll-snap-align:start}
+.cas-local iframe{display:block;width:100%;height:170px;border:0;background:#eef1ee}
+.cas-local-copy{display:flex;flex-direction:column;gap:3px;padding:12px 14px 4px}
+.cas-local-fonte{color:#b18a5a;font:700 .7rem "Manrope",sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.cas-local-copy strong{font:600 1.05rem "Cormorant Garamond",serif;line-height:1.2}
+.cas-local-copy small{color:#77716a;font-size:.8rem;line-height:1.4}
+.cas-local-ok{align-self:flex-start;margin:8px 14px 14px;padding:8px 18px;border:1px solid #5a5a55;border-radius:999px;background:#5a5a55;color:#fff;font:600 .8rem "Manrope",sans-serif;cursor:pointer}
+.cas-local-ok:hover{background:#44443f}
+.cas-lig-itens .cas-local{width:240px}
+.cas-lig-itens .cas-local iframe{height:130px}
+/* Mapa maior (pedido): na conversa e na tela da ligação */
+.cas-local{width:min(440px,86vw)}
+.cas-local iframe{height:280px}
+.cas-lig-itens .cas-local{width:min(460px,88vw)}
+.cas-lig-itens .cas-local iframe{height:260px}
+/* Helena mostrando no catálogo: a conversa vira uma barra pequena no canto */
+.cas-mini{position:fixed;z-index:205;right:20px;bottom:20px;display:flex;align-items:center;gap:6px;width:min(440px,calc(100vw - 32px));padding:10px 10px 10px 12px;border:1px solid #e8e1d6;border-radius:20px;background:rgba(255,255,255,.97);box-shadow:0 18px 50px rgba(40,34,28,.22);font-family:"Manrope",sans-serif;color:#2f2b27;animation:cas-mini-in .4s cubic-bezier(.22,1,.36,1) both;backdrop-filter:blur(10px)}
+.cas-mini[hidden]{display:none}
+@keyframes cas-mini-in{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.cas-mini-abrir{display:flex;flex:1;align-items:center;gap:12px;min-width:0;padding:2px;border:0;background:none;color:inherit;text-align:left;cursor:pointer;font:inherit}
+.cas-mini .cas-avatar{flex:none;width:44px;height:44px;font-size:1.2rem}
+.cas-mini.falando .cas-avatar{animation:cas-mini-fala 1.1s ease-in-out infinite}
+@keyframes cas-mini-fala{0%,100%{box-shadow:0 0 0 0 rgba(177,138,90,.45)}50%{box-shadow:0 0 0 7px rgba(177,138,90,0)}}
+.cas-mini-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cas-mini-copy b{font:600 1rem "Cormorant Garamond",serif;line-height:1.1}
+.cas-mini-copy span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:#5f5a54;font-size:.82rem;line-height:1.35}
+.cas-mini-acoes{display:flex;flex:none;gap:6px}
+.cas-mini-btn{display:grid;width:40px;height:40px;place-items:center;border:0;border-radius:50%;background:#f1ece4;color:#3d3630;cursor:pointer}
+.cas-mini-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cas-mini-btn.ativo{background:#3d3630;color:#fff}
+.cas-mini-btn.is-desligar{background:#d0453b;color:#fff}
+.cas-mini-btn.is-desligar svg{fill:currentColor;stroke:none}
+.cas-mini-x{flex:none;width:28px;height:28px;border:0;border-radius:50%;background:none;color:#9a938a;font-size:1.2rem;line-height:1;cursor:pointer}
+.cas-mini-x:hover{background:#f1ece4;color:#3d3630}
+body.cas-mini-aberta .cas-launcher{display:none}
+body.cas-mini-aberta .catalog-notifications{bottom:120px}
+@media(max-width:767px){.cas-mini{right:12px;left:12px;width:auto;bottom:calc(84px + env(safe-area-inset-bottom))}}
+
+/* O círculo "feito à mão" em volta das peças que ela indicou */
+.helena-alvo{position:relative;overflow:visible!important}
+.helena-circulo{position:absolute;z-index:4;top:-14px;left:-14px;width:calc(100% + 28px);height:calc(100% + 28px);overflow:visible;pointer-events:none}
+.helena-circulo path{fill:none;stroke:#b18a5a;stroke-width:3.2;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:1;animation:helena-desenha 1.1s cubic-bezier(.65,0,.35,1) forwards;animation-delay:inherit}
+@keyframes helena-desenha{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.helena-circulo path{animation:none;stroke-dashoffset:0}}

@@ -121,25 +121,101 @@ function montar(){
   painel.addEventListener("keydown", (event) => { if(event.key === "Escape"){ event.stopPropagation(); if(lig) return; if(gravacao) pararGravacao(false); else alternar(false); } });
 }
 
-async function alternar(abrir){
+// ---------------------------------------------------------------------------------------------------------------
+// Mostrar no catálogo (pedido do usuário): em vez de só cartões na conversa, a Helena leva a pessoa até as peças no
+// próprio catálogo — a conversa vira uma barra pequena no canto (com a legenda dela e, na ligação, os botões da
+// ligação), o catálogo abre a categoria (ou a "Seleção da Helena") e as peças que ela indicou ganham um círculo.
+// Até 3 peças = indicação (circula); mais que isso = opções pra escolher (só mostra). Os cartões continuam na conversa
+// por escrito, como registro.
+function irAoCatalogo(ids){
+  if(!ctx.mostrarNoCatalogo || !ids?.length) return;
+  mostrarMini(true);
+  ctx.mostrarNoCatalogo(ids, { circular: ids.length <= 3 });
+}
+function mini(){
+  let el = $("catalogAssistenteMini");
+  if(el) return el;
+  el = document.createElement("div");
+  el.id = "catalogAssistenteMini"; el.className = "cas-mini"; el.hidden = true;
+  el.setAttribute("role", "region"); el.setAttribute("aria-label", `Conversa com a ${S.nome}`);
+  el.innerHTML = `<button type="button" class="cas-mini-abrir" data-mini-abrir aria-label="Abrir a conversa inteira"><span class="cas-avatar" aria-hidden="true">${esc(S.nome[0])}</span><span class="cas-mini-copy"><b>${esc(S.nome)}</b><span data-mini-texto></span></span></button>
+    <div class="cas-mini-acoes" data-mini-acoes></div>
+    <button type="button" class="cas-mini-x" data-mini-fechar aria-label="Esconder">×</button>`;
+  document.body.appendChild(el);
+  el.addEventListener("click", (e) => {
+    if(e.target.closest("[data-mini-abrir]")){ mostrarMini(false); alternar(true); if(lig) mostrarTelaLigacao(true); return; }
+    if(e.target.closest("[data-mini-fechar]")){ mostrarMini(false); return; }
+    if(e.target.closest("[data-mini-interromper]")){ interromperHelena(); return; }
+    if(e.target.closest("[data-mini-mudo]")){ $("catalogAssistente")?.querySelector("[data-lig-mudo]")?.click(); pintarMini(); return; }
+    if(e.target.closest("[data-mini-desligar]")){ encerrarLigacao(); return; }
+  });
+  return el;
+}
+function mostrarMini(ver){
+  const el = mini();
+  if(ver){
+    if(S.aberto) alternar(false, { semFoco: true });
+    el.hidden = false;
+    document.body.classList.add("cas-mini-aberta");
+    if(!lig){ const ultima = [...S.mensagens].reverse().find((m) => m.papel === "assistant" && m.conteudo); miniTexto(ultima?.conteudo || "", true); }
+    pintarMini();
+  }else{
+    el.hidden = true;
+    document.body.classList.remove("cas-mini-aberta");
+  }
+}
+// Por escrito mostra o começo da mensagem (onde está a indicação); na ligação, a fala mais recente.
+function miniTexto(t, doComeco = false){
+  const el = $("catalogAssistenteMini")?.querySelector("[data-mini-texto]");
+  if(!el) return;
+  const frases = String(t || "").replace(/[*_#>]/g, "").match(/[^.!?]+[.!?]*\s*/g) || [];
+  let fim = (doComeco ? frases.slice(0, 2) : frases.slice(-2)).join("").trim();
+  if(fim.length > 180) fim = doComeco ? fim.slice(0, 180).replace(/\s\S*$/, "") + "…" : "…" + fim.slice(-180).replace(/^\S*\s/, "");
+  el.textContent = fim;
+}
+function pintarMini(){
+  const el = $("catalogAssistenteMini");
+  if(!el || el.hidden) return;
+  el.classList.toggle("em-ligacao", Boolean(lig));
+  el.classList.toggle("falando", Boolean(lig?.elaFalando));
+  el.querySelector("[data-mini-acoes]").innerHTML = lig ? `
+    ${lig.elaFalando ? `<button type="button" class="cas-mini-btn" data-mini-interromper aria-label="Interromper"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>` : ""}
+    <button type="button" class="cas-mini-btn${lig.mudo ? " ativo" : ""}" data-mini-mudo aria-label="${lig.mudo ? "Desligar o mudo" : "Mudo"}" aria-pressed="${lig.mudo ? "true" : "false"}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <button type="button" class="cas-mini-btn is-desligar" data-mini-desligar aria-label="Desligar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15.5c5-4.7 13-4.7 18 0l-2.4 2.6-3.4-1.3v-2.6a10 10 0 0 0-6.4 0v2.6l-3.4 1.3z"/></svg></button>` : "";
+}
+
+async function alternar(abrir, { semFoco = false } = {}){
   const painel = $("catalogAssistente"), botao = $("catalogAssistenteBotao");
   S.aberto = abrir;
   painel.hidden = !abrir;
   botao.setAttribute("aria-expanded", String(abrir));
   document.body.classList.toggle("assistente-aberta", abrir);
   document.documentElement.classList.toggle("cas-trava-rolagem", abrir);
-  if(!abrir){ if(gravacao) pararGravacao(false); alternarPedido(false); botao.focus(); return; }
+  if(!abrir){ if(gravacao) pararGravacao(false); alternarPedido(false); if(!semFoco) botao.focus(); return; }
+  if($("catalogAssistenteMini") && !$("catalogAssistenteMini").hidden) mostrarMini(false);
   S.naoLidas = 0; pintarBadge(); pintarLado();
   painel.querySelector("[data-cas-input]").focus();
-  if(!S.carregado) await carregarHistorico();
+  if(!S.carregado || projetoAtualId() !== S.conversaDe) await carregarHistorico();
   rolarFim();
 }
+
+const projetoAtualId = () => window.catalogAssistenteProjeto?.retrato()?.id || null;
+// Trocou o pedido aberto (no catálogo, no app ou pela própria Helena)? A conversa na tela passa a ser a do novo pedido.
+async function sincronizarConversa(){
+  if(!S.carregado || S.enviando || S.carregandoConversa) return;
+  if(projetoAtualId() === S.conversaDe) return;
+  S.carregandoConversa = true;
+  try{ await carregarHistorico(); rolarFim(); }finally{ S.carregandoConversa = false; }
+}
+setInterval(() => { if(S.aberto) sincronizarConversa(); }, 1500);
 
 async function carregarHistorico(){
   const lista = coluna();
   lista.innerHTML = `<div class="cas-carregando">Abrindo a conversa…</div>`;
   try{
-    const data = await chamar("historico");
+    const id = projetoAtualId();
+    const data = await chamar("historico", { projeto_id: id });
+    S.conversaDe = id;
     S.nome = data?.nome || S.nome;
     S.cliente = data?.cliente || "";
     S.mensagens = Array.isArray(data?.mensagens) ? data.mensagens : [];
@@ -179,11 +255,15 @@ function alternarPedido(abrir){
 // Destaque do que mudou desde a última vez que o pedido foi desenhado (ela pôs/tirou/trocou quantidade): a linha fica
 // marcada por alguns segundos e, com o pedido fechado no celular, o botão do topo ganha um ponto.
 const destaques = new Map();
+const animar = new Map();   // mudanças desta pintura (entrou/subiu/desceu/saiu) → animação + rolar até a linha
+const saindo = new Map();   // linhas tiradas do pedido, mostradas saindo por um instante
 let retratoAnterior = null;
 function pintarLado(){
   const lado = $("catalogAssistente")?.querySelector("[data-cas-lado]");
   if(!lado) return;
   const p = window.catalogAssistenteProjeto?.retrato();
+  const limparBtn = $("catalogAssistente")?.querySelector("[data-cas-limpar]");
+  if(limparBtn) limparBtn.hidden = Boolean(p);
   const botao = $("catalogAssistente")?.querySelector("[data-cas-pedido]");
   if(botao){
     const total = p ? p.ambientes.reduce((t, a) => t + a.itens.reduce((q, i) => q + i.quantidade, 0), 0) : 0;
@@ -194,8 +274,12 @@ function pintarLado(){
     const atual = new Map(p.ambientes.flatMap((a) => a.itens.map((i) => [`${a.id}:${i.item_id}`, i.quantidade])));
     if(retratoAnterior && retratoAnterior.id === p.id){
       let mudou = false;
-      for(const [k, q] of atual) if(retratoAnterior.mapa.get(k) !== q){ destaques.set(k, Date.now() + 8000); mudou = true; }
-      for(const k of retratoAnterior.mapa.keys()) if(!atual.has(k)) mudou = true;
+      for(const [k, q] of atual) if(retratoAnterior.mapa.get(k) !== q){
+        destaques.set(k, Date.now() + 8000); mudou = true;
+        animar.set(k, retratoAnterior.mapa.has(k) ? (q > retratoAnterior.mapa.get(k) ? "subiu" : "desceu") : "entrou");
+      }
+      // Saiu do pedido: a linha continua um instante na tela, saindo, pra dar pra ver o que foi tirado.
+      for(const [k, q] of retratoAnterior.mapa) if(!atual.has(k)){ mudou = true; saindo.set(k, { quantidade: q, ate: Date.now() + 1700 }); animar.set(k, "saiu"); setTimeout(pintarLado, 1750); }
       if(mudou && !$("catalogAssistente").classList.contains("mostra-pedido")) botao?.classList.add("tem-novidade");
     }
     retratoAnterior = { id: p.id, mapa: atual };
@@ -207,9 +291,22 @@ function pintarLado(){
   const data = p.data_evento ? new Date(p.data_evento + "T00:00:00").toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" }) : "";
   const soma = (a) => a.itens.reduce((t, i) => t + i.quantidade, 0);
   const total = p.ambientes.reduce((t, a) => t + soma(a), 0);
-  const linha = (a) => (i) => { const it = ctx.findItem?.(i.item_id); const novo = (destaques.get(`${a.id}:${i.item_id}`) || 0) > Date.now(); return `<li class="${novo ? "mudou" : ""}"><img src="${esc(miniatura(it?.photo || "", 120))}" alt="" loading="lazy"><span>${esc(it?.name || "Item")}${it?.cor ? `<small>${esc(it.cor)}</small>` : ""}</span><b>${i.quantidade}×</b></li>`; };
+  for(const [k, v] of saindo) if(v.ate < Date.now()) saindo.delete(k);
+  const linha = (a) => (i) => { const k = `${a.id}:${i.item_id}`; const it = ctx.findItem?.(i.item_id); const novo = (destaques.get(k) || 0) > Date.now(); const anim = animar.get(k); return `<li class="${[novo ? "mudou" : "", anim ? "anima-" + anim : "", saindo.has(k) && !anim ? "anima-saiu" : ""].filter(Boolean).join(" ")}"${anim ? " data-foco" : ""}><img src="${esc(miniatura(it?.photo || "", 120))}" alt="" loading="lazy"><span>${esc(it?.name || "Item")}${it?.cor ? `<small>${esc(it.cor)}</small>` : ""}</span><b>${i.quantidade}×</b></li>`; };
+  const rolagemAntes = lado.querySelector(".cas-lado-ambs")?.scrollTop || 0;
+  queueMicrotask(() => {
+    const lista = lado.querySelector(".cas-lado-ambs");
+    if(!lista) return;
+    lista.scrollTop = rolagemAntes;
+    const foco = [...lista.querySelectorAll("[data-foco]")].pop();
+    animar.clear();
+    if(!foco) return;
+    const alvo = foco.offsetTop - (lista.clientHeight - foco.offsetHeight) / 2;
+    const reduzir = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    lista.scrollTo({ top: Math.max(0, alvo), behavior: reduzir ? "auto" : "smooth" });
+  });
   lado.innerHTML = `<button type="button" class="cas-lado-fechar" data-cas-pedido-fechar aria-label="Fechar o pedido">×</button><p class="cas-lado-kicker">Pedido que estamos alterando</p><h3>${esc(p.noivos)}</h3><p class="cas-lado-sub">${esc([data, p.local_evento].filter(Boolean).join(" · "))}</p>
-    <div class="cas-lado-ambs">${p.ambientes.map((a) => `<section><h4>${esc(a.nome)}<b>${soma(a)}</b></h4>${a.itens.length ? `<ul>${a.itens.map(linha(a)).join("")}</ul>` : `<p class="cas-lado-nada">Ainda sem peças</p>`}</section>`).join("") || `<p class="cas-lado-nada">Sem ambientes ainda</p>`}</div>
+    <div class="cas-lado-ambs">${p.ambientes.map((a) => { const fora = [...saindo].filter(([k]) => k.startsWith(a.id + ":") && !a.itens.some((i) => `${a.id}:${i.item_id}` === k)).map(([k, v]) => ({ item_id: k.slice(a.id.length + 1), quantidade: v.quantidade })); const todas = [...a.itens, ...fora]; return `<section><h4>${esc(a.nome)}<b>${soma(a)}</b></h4>${todas.length ? `<ul>${todas.map(linha(a)).join("")}</ul>` : `<p class="cas-lado-nada">Ainda sem peças</p>`}</section>`; }).join("") || `<p class="cas-lado-nada">Sem ambientes ainda</p>`}</div>
     <p class="cas-lado-total">${total} ${total === 1 ? "peça" : "peças"} no total</p>
     ${ctx.modoPedido || !total ? "" : `<button type="button" class="cas-lado-enviar" data-cas-enviar>${p.status && p.status !== "rascunho" ? "Reenviar pedido" : "Revisar e enviar pedido"}</button>`}`;
 }
@@ -217,6 +314,8 @@ function pintarLado(){
 function boasVindas(){
   const primeiro = String(S.cliente || "").trim().split(/\s+/)[0];
   const ola = primeiro ? `Oi, ${esc(primeiro)}! ` : "Oi! ";
+  const pedido = window.catalogAssistenteProjeto?.retrato();
+  if(pedido) return `<div class="cas-boasvindas"><span class="cas-avatar is-xl" aria-hidden="true">${esc(S.nome[0])}</span><h2>${ola}Conversa do pedido ${esc(pedido.noivos)}</h2><p>Tudo o que combinarmos sobre este pedido — por escrito ou por ligação — fica guardado aqui.</p></div>`;
   return `<div class="cas-boasvindas"><span class="cas-avatar is-xl" aria-hidden="true">${esc(S.nome[0])}</span><h2>${ola}Eu sou a ${esc(S.nome)}.</h2><p>Sou do comercial. Me conta do seu evento que eu te ajudo a escolher as peças, monto as composições em foto e deixo seu pedido prontinho.</p></div>
     <div class="cas-sugestoes">${["Quero montar um lounge", "Tenho um casamento e queria ideias", "Me manda uma foto de uma composição", "O que vocês têm em tons claros?"].map((s) => `<button type="button" data-cas-sugestao>${esc(s)}</button>`).join("")}</div>`;
 }
@@ -247,6 +346,7 @@ function mensagemHtml(m){
       return `<figure class="cas-arquivo"><button type="button" class="cas-foto-ver" data-cas-zoom="${esc(a.url)}" aria-label="Ver o arquivo"><img src="${esc(a.url?.startsWith("blob:") ? a.url : miniatura(a.url, 520))}" alt="${esc(a.nome || "Arquivo")}" loading="lazy"></button>${a.enviando ? `<small>enviando…</small>` : apagar}</figure>`;
     }
     if(a.tipo === "itens") return `<div class="cas-itens">${a.itens.map(itemHtml).join("")}</div>`;
+    if(a.tipo === "locais") return `<div class="cas-locais">${(a.locais || []).map(localHtml).join("")}</div>`;
     if(a.tipo === "imagem") return `<figure class="cas-foto"><button type="button" class="cas-foto-ver" data-cas-zoom="${esc(a.url)}" aria-label="Ver a composição em tela cheia"><img src="${esc(miniatura(a.url, 720))}" alt="Composição: ${esc((a.itens || []).join(", "))}" loading="lazy"></button>
       <figcaption>${a.itens?.length ? `<small>${esc(a.itens.join(" · "))}</small>` : ""}<span><button type="button" class="cas-link" data-cas-salvar-img="${esc(a.url)}" data-cena="${esc(a.cena_url || "")}">Adicionar ao projeto</button><a class="cas-link" href="${esc(a.url)}" download target="_blank" rel="noopener">Baixar</a>${m.id ? `<button type="button" class="cas-link cas-link-apagar" data-cas-apagar-img="${esc(m.id)}">Apagar</button>` : ""}</span></figcaption></figure>`;
     return "";
@@ -258,6 +358,17 @@ function mensagemHtml(m){
   const naLigacao = tipos.includes("voz") || tipos.includes("voz_helena");
   return `<div class="cas-msg${naLigacao ? " is-voz" : ""} ${bot ? "is-bot" : "is-eu"}">${m.conteudo ? `<div class="cas-bubble">${deAudio ? `<span class="cas-audio-tag"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Áudio</span>` : ""}${texto(m.conteudo)}</div>` : ""}${anexos}</div>`;
 }
+// Local encontrado pela Helena (cadastro ou Google): mapa + nome + endereço + "É este" (manda a confirmação pra ela).
+function mapaUrl(l){
+  const q = l.lat != null && l.lng != null ? `${l.lat},${l.lng}` : encodeURIComponent([l.nome, l.endereco].filter(Boolean).join(", "));
+  return `https://maps.google.com/maps?q=${q}&z=15&output=embed`;
+}
+function localHtml(l){
+  const resposta = `É este: ${l.nome}${l.endereco ? " — " + l.endereco : ""}`;
+  return `<article class="cas-local"><iframe src="${esc(mapaUrl(l))}" title="Mapa de ${esc(l.nome)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <div class="cas-local-copy"><span class="cas-local-fonte">${l.fonte === "cadastro" ? "Local cadastrado" : "Google Maps"}</span><strong>${esc(l.nome)}</strong>${l.endereco ? `<small>${esc(l.endereco)}</small>` : ""}</div>
+    <button type="button" class="cas-local-ok" data-cas-local="${esc(resposta)}">É este</button></article>`;
+}
 function itemHtml(i){
   return `<article class="cas-item"><button type="button" class="cas-item-foto" data-cas-abrir="${esc(i.id)}" aria-label="Abrir ${esc(i.nome)}"><img src="${esc(miniatura(i.foto))}" alt="" loading="lazy"></button>
     <div class="cas-item-copy"><strong>${esc(i.nome)}</strong>${i.medidas ? `<small>${esc(i.medidas)}</small>` : ""}${i.livres > 0 ? `<small class="cas-livres">${i.livres} ${i.livres === 1 ? "livre" : "livres"} no dia do evento</small>` : ""}</div>
@@ -265,6 +376,18 @@ function itemHtml(i){
 }
 
 async function aoClicar(event){
+  const local = event.target.closest("[data-cas-local]");
+  if(local){
+    const texto = local.dataset.casLocal;
+    // Na ligação, o toque vira uma fala dela na conversa de voz; fora dela, uma mensagem normal.
+    if(lig?.dc?.readyState === "open"){
+      enviarEvento({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: texto }] } });
+      enviarEvento({ type: "response.create" });
+      lig.falas.push({ id: "local-" + Date.now(), papel: "user", texto });
+      ligVoce(texto);
+    }else enviar(texto);
+    return;
+  }
   const sugestao = event.target.closest("[data-cas-sugestao]");
   if(sugestao){ enviar(sugestao.textContent.trim()); return; }
   if(event.target.closest("[data-cas-pedido-fechar]")){ alternarPedido(false); return; }
@@ -317,14 +440,14 @@ async function apagarFoto(botao){
 async function limpar(){
   if(!S.mensagens.length) return;
   if(!confirm("Começar uma nova conversa? O que eu já sei sobre o seu gosto continua guardado.")) return;
-  try{ await chamar("limpar"); S.mensagens = []; pintar(); }
+  try{ await chamar("limpar", { projeto_id: projetoAtualId() }); S.mensagens = []; pintar(); }
   catch(error){ ctx.notify({ title: "Não foi possível limpar", message: error.message, status: "error" }); }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
 // Conversa
 async function enviar(valor, { porAudio = false, arquivos = [] } = {}){
-  if(!S.carregado) await carregarHistorico();
+  if(!S.carregado || projetoAtualId() !== S.conversaDe) await carregarHistorico();
   const local = { papel: "user", conteudo: valor, anexos: [...(porAudio ? [{ tipo: "audio" }] : []), ...arquivos.map((a) => ({ tipo: "arquivo", nome: a.nome, mime: a.mime, url: a.preview, enviando: true }))] };
   S.mensagens.push(local);
   S.enviando = true; pintar(); statusTopo(arquivos.length ? "recebendo o arquivo…" : "digitando…");
@@ -339,6 +462,9 @@ async function enviar(valor, { porAudio = false, arquivos = [] } = {}){
     S.enviando = false; pintar(); statusTopo();
     await aplicarAcoes(data?.acoes || []);
     pintarLado();
+    const mostrados = (data?.mensagem?.anexos || []).find((x) => x.tipo === "itens")?.itens?.map((i) => i.id) || [];
+    if(mostrados.length) irAoCatalogo(mostrados);
+    else if(!$("catalogAssistenteMini")?.hidden) miniTexto(data?.mensagem?.conteudo || "", true);
   }catch(error){
     S.enviando = false; statusTopo();
     local.anexos = (local.anexos || []).map((x) => ({ ...x, enviando: false }));
@@ -391,7 +517,11 @@ async function aplicarAcoes(acoes){
   const projeto = window.catalogAssistenteProjeto;
   for(const acao of acoes){
     try{
-      if(acao.tipo === "usar_projeto") await projeto?.usarProjeto(acao.projeto_id);
+      if(acao.tipo === "usar_projeto"){ await projeto?.usarProjeto(acao.projeto_id); if(!lig) await carregarHistorico(); }
+      else if(acao.tipo === "atualizar_evento"){
+        await projeto?.atualizarEvento?.(acao);
+        ctx.notify({ title: "Dados do pedido atualizados", message: "Entrega, evento, coleta e local conferidos.", status: "done", duration: 3500 });
+      }
       else if(acao.tipo === "quantidade"){
         const r = await projeto.quantidade(acao);
         const nome = ctx.findItem?.(acao.item_id)?.name || "Item";
@@ -439,7 +569,7 @@ function enfileirarRender(acao){
     }catch(error){
       console.warn("Composição da assistente:", error);
       const motivo = /cr[eé]dito/i.test(error?.message || "") ? "Pra gerar a foto precisa de créditos de imagem." : "";
-      try{ const data = await chamar("falha_imagem", { mensagem: `Não consegui terminar a foto dessa composição agora. ${motivo} Quer que eu tente de novo?`.replace(/\s+/g, " ") }); if(data?.mensagem) S.mensagens.push(data.mensagem); }catch{}
+      try{ const data = await chamar("falha_imagem", { projeto_id: projetoAtualId(), mensagem: `Não consegui terminar a foto dessa composição agora. ${motivo} Quer que eu tente de novo?`.replace(/\s+/g, " ") }); if(data?.mensagem) S.mensagens.push(data.mensagem); }catch{}
     }finally{
       S.renderizando.delete(marca); pintar(); statusTopo();
     }
@@ -595,6 +725,7 @@ function telaLigacao(){
     </div>
     <div class="cas-lig-itens" data-lig-itens hidden></div>
     <div class="cas-lig-botoes">
+      <button type="button" class="cas-lig-btn is-interromper" data-lig-interromper hidden><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></span><small>Interromper</small></button>
       <button type="button" class="cas-lig-btn" data-lig-mudo aria-pressed="false"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><small>Mudo</small></button>
       <button type="button" class="cas-lig-btn is-desligar" data-lig-desligar><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15.5c5-4.7 13-4.7 18 0l-2.4 2.6-3.4-1.3v-2.6a10 10 0 0 0-6.4 0v2.6l-3.4 1.3z"/></svg></span><small>Desligar</small></button>
       <button type="button" class="cas-lig-btn" data-lig-chat><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></span><small>Conversa</small></button>
@@ -602,10 +733,11 @@ function telaLigacao(){
     <audio data-lig-audio autoplay playsinline></audio>`;
   el.hidden = false;
   el.querySelector("[data-lig-desligar]").addEventListener("click", () => encerrarLigacao());
+  el.querySelector("[data-lig-interromper]").addEventListener("click", interromperHelena);
   el.querySelector("[data-lig-mudo]").addEventListener("click", (event) => {
     if(!lig?.stream) return;
     lig.mudo = !lig.mudo;
-    lig.stream.getAudioTracks().forEach((t) => { t.enabled = !lig.mudo; });
+    atualizarMicrofone();
     event.currentTarget.setAttribute("aria-pressed", String(lig.mudo));
     event.currentTarget.querySelector("small").textContent = lig.mudo ? "Mudo ligado" : "Mudo";
   });
@@ -630,6 +762,7 @@ function ligLegenda(texto){
   let fim = frases.slice(-2).join("").trim();
   if(fim.length > 220) fim = "…" + fim.slice(-220).replace(/^\S*\s/, "");
   el.textContent = fim;
+  miniTexto(texto);
 }
 function ligVoce(texto){ const el = $("catalogAssistente")?.querySelector("[data-lig-voce]"); if(el) el.textContent = texto ? `Você: ${texto}` : ""; }
 function ligItens(itens){
@@ -640,7 +773,7 @@ function ligItens(itens){
   if(!el) return;
   el.hidden = false;
   el.closest("[data-cas-ligacao]")?.classList.add("tem-itens");
-  el.innerHTML = lig.itens.map((i) => i.tipo === "imagem"
+  el.innerHTML = lig.itens.map((i) => i.tipo === "local" ? localHtml(i) : i.tipo === "imagem"
     ? `<figure class="cas-lig-foto"><button type="button" class="cas-foto-ver" data-cas-zoom="${esc(i.url)}" aria-label="Ver a composição"><img src="${esc(miniatura(i.url, 520))}" alt="Composição"></button></figure>`
     : itemHtml(i)).join("");
 }
@@ -657,12 +790,13 @@ async function iniciarLigacao(){
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
     if(lig !== atual){ stream.getTracks().forEach((t) => t.stop()); return; }
     lig.stream = stream;
+    lig.elaFalando = true; atualizarMicrofone(); // começa fechado: o primeiro som é o cumprimento dela
     const data = await chamar("ligacao_iniciar", { projeto: window.catalogAssistenteProjeto?.retrato() || null, modo: ctx.modoPedido ? "pedido" : "catalogo" });
     if(lig !== atual) return;
     const pc = new RTCPeerConnection();
     lig.pc = pc;
     const audio = $("catalogAssistente").querySelector("[data-lig-audio]");
-    pc.ontrack = (event) => { audio.srcObject = event.streams[0]; audio.play?.().catch(() => {}); };
+    pc.ontrack = (event) => { audio.srcObject = event.streams[0]; audio.play?.().catch(() => {}); lig.temAudio = true; };
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
     const dc = pc.createDataChannel("oai-events");
     lig.dc = dc;
@@ -676,7 +810,18 @@ async function iniciarLigacao(){
         if(s >= LIG_MAX_S) encerrarLigacao("A ligação chegou ao limite de 20 minutos. O que conversamos já está na conversa.");
       }, 1000);
       // Ela atende: só o cumprimento (sem ferramentas nem retomar assunto antigo de cara).
-      enviarEvento({ type: "response.create", response: { tool_choice: "none" } });
+      // Chiado no começo: só cumprimenta quando a conexão de áudio já está estável (conectada, com o áudio dela chegando)
+      // e mais um respiro — falar no instante em que o canal abre fazia os primeiros pedaços chegarem picotados.
+      const pronto = () => lig === atual && pc.connectionState === "connected" && lig.temAudio;
+      const t0 = Date.now();
+      const esperar = () => {
+        if(lig !== atual) return;
+        if(pronto() || Date.now() - t0 > 5000) setTimeout(() => { if(lig === atual) enviarEvento({ type: "response.create", response: { tool_choice: "none" } }); }, 700);
+        else setTimeout(esperar, 100);
+      };
+      esperar();
+      // Garantia: se o cumprimento não chegar, o microfone abre mesmo assim.
+      lig.timerMic = setTimeout(() => { if(lig === atual && !lig.falouAlgo){ lig.elaFalando = false; atualizarMicrofone(); } }, 12000);
     });
     dc.addEventListener("message", (event) => { try{ aoEventoLigacao(JSON.parse(event.data)); }catch(error){ console.warn("ligação:", error); } });
     pc.addEventListener("connectionstatechange", () => {
@@ -693,6 +838,43 @@ async function iniciarLigacao(){
     const negado = error?.name === "NotAllowedError" || error?.name === "SecurityError";
     encerrarLigacao(negado ? "Para ligar, permita o uso do microfone neste navegador." : (error.message || "Não consegui completar a ligação."));
   }
+}
+
+// Eco: a voz dela sai pela caixa de som e volta pelo microfone. Não dá pra separar esse eco da voz da pessoa enquanto
+// ela fala, então o microfone fecha durante a fala dela (e já começa fechado, até ela terminar o cumprimento) e abre de
+// novo logo que ela termina. Pra cortar a fala dela, o botão "Interromper".
+function atualizarMicrofone(){
+  if(!lig?.stream) return;
+  const aberto = !lig.mudo && !lig.elaFalando;
+  lig.stream.getAudioTracks().forEach((t) => { t.enabled = aberto; });
+  const b = $("catalogAssistente")?.querySelector("[data-lig-interromper]");
+  if(b) b.hidden = !lig.elaFalando;
+  pintarMini();
+}
+function elaFalando(sim){
+  if(!lig) return;
+  clearTimeout(lig.timerMic);
+  if(sim){ lig.elaFalando = true; atualizarMicrofone(); return; }
+  // Uma folga curta: o fim do áudio ainda está saindo da caixa quando o aviso chega.
+  lig.timerMic = setTimeout(() => { if(lig){ lig.elaFalando = false; atualizarMicrofone(); } }, 450);
+}
+function rampaDeVolume(){
+  const audio = $("catalogAssistente")?.querySelector("[data-lig-audio]");
+  if(!audio) return;
+  try{
+    audio.volume = .15;
+    const t0 = performance.now();
+    const passo = () => { const k = Math.min(1, (performance.now() - t0) / 260); audio.volume = .15 + .85 * k; if(k < 1) requestAnimationFrame(passo); };
+    requestAnimationFrame(passo);
+  }catch{}
+}
+function interromperHelena(){
+  if(!lig) return;
+  enviarEvento({ type: "response.cancel" });
+  enviarEvento({ type: "output_audio_buffer.clear" });
+  clearTimeout(lig.timerMic);
+  lig.elaFalando = false; atualizarMicrofone();
+  ligAvatar("falando", false); ligEstado("Pode falar");
 }
 
 function enviarEvento(evento){ if(lig?.dc?.readyState === "open") lig.dc.send(JSON.stringify(evento)); }
@@ -714,8 +896,8 @@ async function aoEventoLigacao(ev){
     }
     case "input_audio_buffer.speech_started": ligEstado("Ouvindo você…"); ligVoce("…"); ligAvatar("ouvindo", true); break;
     case "input_audio_buffer.speech_stopped": ligEstado("Em ligação"); ligAvatar("ouvindo", false); break;
-    case "output_audio_buffer.started": ligAvatar("falando", true); break;
-    case "output_audio_buffer.stopped": case "output_audio_buffer.cleared": ligAvatar("falando", false); break;
+    case "output_audio_buffer.started": if(!lig.falouAlgo) rampaDeVolume(); lig.falouAlgo = true; ligAvatar("falando", true); elaFalando(true); break;
+    case "output_audio_buffer.stopped": case "output_audio_buffer.cleared": ligAvatar("falando", false); elaFalando(false); break;
     case "conversation.item.input_audio_transcription.completed": {
       const t = String(ev.transcript || "").trim();
       if(!t || /^(A consultora se chama|Conversa de decoradora)/i.test(t)) break;
@@ -775,6 +957,8 @@ async function executarFerramentas(chamadas){
       await aplicarAcoes(data?.acoes || []);
       pintarLado();
       ligItens(data?.itens);
+      if(data?.itens?.length) irAoCatalogo(data.itens.map((i) => i.id));
+      ligItens((data?.locais || []).map((l) => ({ ...l, id: "local:" + l.ref, tipo: "local" })));
     }catch(error){ saida = JSON.stringify({ erro: error.message || "Falha na ferramenta" }); }
     if(lig !== atual) return;
     enviarEvento({ type: "conversation.item.create", item: { type: "function_call_output", call_id: c.call_id, output: saida } });
@@ -810,6 +994,7 @@ async function encerrarLigacao(motivo = ""){
   const audio = painel.querySelector("[data-lig-audio]"); if(audio) audio.srcObject = null;
   painel.querySelector("[data-cas-ligacao]").innerHTML = "";
   mostrarTelaLigacao(false);
+  pintarMini();
   statusTopo();
   if(motivo) ctx.notify({ title: atual.inicio ? "Ligação encerrada" : "Não foi possível ligar", message: motivo, status: atual.inicio ? "done" : "error", duration: 6000 });
   const falas = atual.falas.map((f) => ({ papel: f.papel, texto: (f.texto || f.parcial || "").trim() })).filter((f) => f.texto);

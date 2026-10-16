@@ -78,11 +78,9 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.locator('.cpj-empty-big').waitFor();
  assert.match(await page.locator('.cpj-empty-big').textContent(),/Nenhum projeto ainda/);
 
- // Criar: noivos, data e local são obrigatórios
+ // Criar: data e local são obrigatórios (nome dos noivos é opcional)
  await page.locator('[data-cpj="novo"]').first().click();
  await modal(page).waitFor();
- await modal(page).locator('button[type=submit]').click();
- assert.match(await modal(page).locator('.cpj-modal-error').textContent(),/nome dos noivos/i,'Sem noivos não cria');
  await page.screenshot({path:path.join(os.tmpdir(),'cpj-1-criar-vazio.png')});
  await modal(page).locator('[name=noivos]').fill('Ana & Bruno');
  await modal(page).locator('button[type=submit]').click();

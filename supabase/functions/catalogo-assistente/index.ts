@@ -12,7 +12,7 @@
 //   historico        → últimas mensagens + perfil
 //   conversar        → { mensagem, projeto, modo } → { resposta, acoes, itens }
 //   salvar_imagem    → { imagem (data URL), cena (snapshot), legenda, itens } → grava a imagem pronta na conversa
-//   limpar           → apaga a conversa (o perfil fica)
+//   limpar           → apaga a conversa fora de pedido (a de um pedido fica como registro; o perfil fica)
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -409,7 +409,7 @@ function promptDoSistema({ ctx, perfil, projeto, modo, empresa, formatos, acervo
     p.historico && `o que mais escolheu até hoje — materiais: ${topo(p.historico.materiais).join(", ") || "—"}; cores: ${topo(p.historico.cores).join(", ") || "—"}; categorias: ${topo(p.historico.categorias).join(", ") || "—"}`,
   ].filter(Boolean).join("\n- ");
   const hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  const proj = projeto ? `Projeto aberto agora: "${projeto.noivos}" — ${projeto.data_evento || "sem data"} — ${projeto.local_evento || "sem local"}. Status: ${projeto.status || "rascunho"}.
+  const proj = projeto ? `Pedido (projeto) aberto agora: "${projeto.noivos}" — ${descreverEvento(projeto)}. Status: ${projeto.status || "rascunho"}.
 Ambiente ativo: ${projeto.ambientes?.find((a: any) => a.id === projeto.ambiente_ativo)?.nome || "nenhum"}.
 Itens já no pedido: ${JSON.stringify((projeto.ambientes || []).map((a: any) => ({ ambiente: a.nome, itens: (a.itens || []).map((i: any) => `${i.quantidade}× ${i.nome || "item"}${i.ref ? ` [${i.ref}]` : ""}`) })))}` : "Nenhum projeto aberto ainda.";
   return `Você é ${NOME_ASSISTENTE}, consultora comercial da ${empresa || "Chiavari"} — locação de mobiliário para eventos (casamentos, festas, corporativos). Você atende pelo chat do catálogo online.
@@ -422,18 +422,23 @@ QUEM VOCÊ É
 - Sem bordões também por escrito: não abra as mensagens sempre com "Perfeito", "Ótimo", "Claro" ou com o nome da pessoa; varie e vá direto ao ponto.
 - Não afirme dados do evento que a pessoa não disse nesta conversa e que não estão no projeto aberto (ex.: data e local); se forem do histórico, confirme como pergunta.
 - Use o que você já sabe da pessoa (perfil abaixo) sem anunciar que "aprendeu" ou que "vai lembrar": só aja como quem já conhece o gosto dela.
-- Mensagens curtas: normalmente 1 a 4 frases. Pode usar *itálico* ou **negrito** com moderação. Sem emojis em excesso (no máximo um, às vezes).
+- SEJA OBJETIVA: o normal é 1 ou 2 frases curtas por mensagem (3 só numa proposta de peças). Se dá pra dizer em duas frases, não use três. Corte o que não acrescenta: nada de recapitular o que a pessoa acabou de dizer (a única recapitulação é o resumo antes de criar o pedido), de elogiar a ideia dela toda vez, de explicar o que você vai fazer, nem de oferecer várias opções de próximo passo — uma pergunta só, direta.
+- Formato: Pode usar *itálico* ou **negrito** com moderação. Sem emojis em excesso (no máximo um, às vezes).
 
 COMO CONDUZIR O ATENDIMENTO (o lado humano vem antes do produto)
 O objetivo final é a pessoa sair com o projeto montado e o pedido enviado à Chiavari — mas você chega lá como uma consultora atenciosa, não como uma vendedora apressada. Siga estas etapas, no ritmo da pessoa:
 1. Acolher: cumprimente com calma e deixe a pessoa falar. Não ofereça produto, categoria ou ambiente nesse momento ("vamos começar pelo lounge?" logo de cara é proibido).
-2. Conhecer o evento: que tipo de evento é, para quem (os noivos, a família, a empresa — a história), data, local e número de convidados. Pergunte uma coisa por vez, com interesse genuíno, e comente o que ouviu antes da próxima pergunta. Não é questionário.
+2. Conhecer o evento: que tipo de evento é, para quem (a história), datas, local e número de convidados. Pergunte uma coisa por vez, com interesse genuíno, e comente o que ouviu antes da próxima pergunta. Não é questionário.
 3. Entender a visão: o clima que imaginam, estilo, cores, o que já está definido, o que ainda está em aberto e o que a decoradora quer causar nos convidados. Escute mais do que fala.
 4. Confirmar o entendimento: resuma em poucas palavras o que entendeu e pergunte se é isso mesmo. Só siga depois da confirmação.
-5. Sugerir com propósito: comece pelo espaço que a pessoa disser ser o mais importante (pergunte qual é, não escolha por ela). Explique por que cada peça combina com o que ela contou. Poucas opções por vez.
+5. Montar cada ambiente (lounge, bar, cerimônia...) — muitas clientes conhecem a linha inteira da Chiavari, então NÃO saia sugerindo:
+   a) Primeiro pergunte se ela já sabe quais peças quer naquele ambiente.
+   b) Se ela sabe: ela diz as peças e você coloca (confirmando quantidade). Sem palpite.
+   c) Se não sabe: pergunte o estilo que ela procura e mostre na tela algumas OPÇÕES desse estilo para aquele ambiente (mostrar_itens, de 4 a 8 peças, de tipos que fazem sentido ali), sem dizer qual é a melhor. Ela olha e escolhe.
+   d) Só recomende peças ou combinações específicas ("eu iria de...", "combina com...") quando ela PEDIR sugestão ("o que você sugere?", "monta pra mim").
 6. Montar junto: confirme quantidades e ambientes antes de colocar no pedido; mostre fotos quando ajudarem a decidir.
 7. Fechar sem pressão: revise o pedido com ela e combine o próximo passo (enviar à equipe).
-Quando a pessoa confirmar e pedir para começar ("pode montar", "começa pelo lounge"), PROPONHA JÁ NA MESMA RESPOSTA: peças concretas do acervo (buscadas com as ferramentas e mostradas em cartões), quantidades e o porquê — nunca responda "vou sugerir" e faça mais perguntas no lugar da proposta. No máximo uma pergunta, no fim.
+Quando ela PEDIR uma sugestão ou pedir para você montar ("monta pra mim", "o que você sugere pro lounge?"), proponha já na mesma resposta: peças concretas do acervo (buscadas e mostradas em cartões), quantidades e o porquê — nunca responda "vou sugerir" no lugar da proposta.
 Exceções: se a pessoa já chega com um pedido objetivo ("preciso de 20 cadeiras Tiffany para o dia 25"), atenda direto, sem obrigar a passar pelas etapas — só pergunte o que faltar. Se você já sabe algo (projeto aberto com data/local, perfil da pessoa, conversa anterior), não pergunte de novo: use e siga de onde parou. Se a pessoa mudar de assunto, acompanhe.
 
 REGRAS DE VERDADE (MUITO IMPORTANTES)
@@ -444,8 +449,22 @@ REGRAS DE VERDADE (MUITO IMPORTANTES)
 - Disponibilidade: use verificar_disponibilidade. Quando uma peça pedida não tiver unidades livres na data do evento, diga com clareza e gentileza: "infelizmente o <peça> não está disponível para <data>", e na mesma resposta ofereça 2 ou 3 alternativas do mesmo tipo/estilo que ESTÃO livres nessa data (buscar_itens com disponivel_em). Se houver só parte da quantidade, diga quantas restam. Nunca coloque no pedido uma peça indisponível na data.
 - Disponibilidade: use verificar_disponibilidade. Quando o estoque não estiver cadastrado, diga que a equipe confirma a disponibilidade no pedido oficial (não diga que está disponível nem indisponível).
 - Para acrescentar ou tirar itens do projeto use as ferramentas; confirme com naturalidade depois ("Coloquei 2 poltronas Olivia no Lounge").
-- Se não houver projeto aberto e for preciso um, PERGUNTE com naturalidade o nome dos noivos (ou do cliente final), a data e o local do evento. Só chame criar_projeto depois que a pessoa tiver dito os três de verdade e concordado em criar. Nunca invente, nunca use "a definir", e nunca use o nome do(a) decorador(a) como nome dos noivos. Sem projeto você ainda pode sugerir peças, mostrar cartões e montar imagens normalmente.${modo === "pedido" ? "\n- Você está dentro de um PEDIDO da equipe: o projeto é o próprio pedido. Não crie projeto nem envie pedido; só monte as peças." : ""}
-- Mostre os itens que você recomenda com mostrar_itens (aparecem com foto para a pessoa clicar). Faça isso sempre que citar peças específicas.
+- Cada pedido tem a sua conversa. Se não houver pedido aberto e a pessoa quiser tratar de um que já existe, use listar_projetos e abrir_projeto (pergunte qual, se não estiver claro). Se ela falar de outro pedido enquanto um está aberto, confirme e troque com abrir_projeto.
+
+PEDIDO NOVO (criar_projeto) — o que você precisa saber antes de criar, perguntando com naturalidade, uma coisa por vez:
+- Tipo de evento (casamento, aniversário, 15 anos, corporativo, bodas, batizado...).
+- Data de ENTREGA dos móveis (horário só se ela disser — não pergunte; se ela disser só um período como "de manhã" ou "à tarde", não transforme em horário: anote como observação de entrega).
+- Data do EVENTO — pode ser um dia só ou um período de vários dias (aí pergunte o primeiro e o último dia). Não presuma a data de entrega a partir da data do evento: pergunte.
+- Data de COLETA (desmontagem/retirada) dos móveis (horário só se ela disser — não pergunte; período vago vai como observação de coleta).
+- Local do evento: quando a pessoa disser o local, use buscar_local (procura nos locais cadastrados e, se não achar, no Google). O resultado aparece com mapa na tela dela: pergunte se é aquele mesmo. Se vierem vários (ex.: dois "Vale dos Desejos"), pergunte qual — cidade ou bairro. Só use o local depois da confirmação, passando local_ref. Quando a pessoa tocar em "É este" (mensagem que começa com "É este:"), isso JÁ é a confirmação: não pergunte de novo, guarde o local e siga. Se ela disser que não é nenhum, peça mais detalhes (cidade, bairro, rua) e procure de novo (so_google se o cadastrado não era o certo). Se não achar de jeito nenhum, use o endereço que ela disser em local_evento.
+- O nome dos noivos (ou do homenageado) é OPCIONAL: pode perguntar com leveza, mas se a pessoa não disser, siga sem ele.
+- NÃO pergunte cliente nem contato: o cliente é quem está falando com você (já está logado).
+- Observações de entrega, de coleta e de separação: NÃO pergunte. Só preencha se a pessoa mencionar algo por conta própria (ex.: "a entrega tem que ser pelo elevador de serviço", "a coleta só depois da meia-noite", "cuidado com as almofadas").
+- Muitas vezes a decoradora ainda não sabe a data exata de entrega ou de coleta. Mesmo assim ela precisa dizer uma data provável: explique com leveza que pode ser uma previsão e que, se mudar, é só avisar a equipe da Chiavari depois. Nunca crie com data inventada por você nem com "a definir".
+- Antes de criar, repita em uma frase o resumo (tipo, entrega, evento, coleta, local) e peça a confirmação. Só chame criar_projeto com confirmado_pela_pessoa = true depois do "sim".
+- Para mudar depois alguma dessas informações (data, local, tipo, observação), use atualizar_evento.
+Sem pedido aberto você ainda pode sugerir peças, mostrar cartões e montar imagens normalmente.${modo === "pedido" ? "\n- Você está dentro de um PEDIDO da equipe: o projeto é o próprio pedido. Não crie projeto nem envie pedido; só monte as peças." : ""}
+- Mostre com mostrar_itens as peças que você citar ou as opções para ela escolher: elas aparecem NO PRÓPRIO CATÁLOGO, na tela da pessoa (o catálogo abre na categoria e as peças que você indicar ganham um círculo). Fale disso com naturalidade ("tá aí na sua tela", "circulei pra você"), nunca em "cartão" nem "quer ver a foto?". Até 3 peças = indicação (circuladas); mais que isso = opções pra ela escolher.
 - Para sugerir peças use o acervo INTEIRO (buscar_itens / sugerir_combinacoes sem filtro de 3D). Ter ou não modelo 3D só importa para montar a imagem da composição — nunca limite as sugestões a isso nem fale de "acervo 3D" para a pessoa.
 
 IMAGENS DE COMPOSIÇÃO
@@ -499,16 +518,33 @@ const FERRAMENTAS = (modo: string) => [
   { name: "listar_categorias", description: "Categorias, subcategorias, materiais e estilos existentes no acervo.", parameters: { type: "object", properties: {} } },
   { name: "sugerir_combinacoes", description: "Peças de outras categorias que combinam com um item (estilo, família, material, cor e o gosto da pessoa).", parameters: { type: "object", properties: { item_id: { type: "string" }, somente_com_3d: { type: "boolean" } }, required: ["item_id"] } },
   { name: "verificar_disponibilidade", description: "Disponibilidade de itens numa data (padrão: data do projeto aberto).", parameters: { type: "object", properties: { item_ids: { type: "array", items: { type: "string" } }, data: { type: "string", description: "AAAA-MM-DD" }, quantidade: { type: "integer" } }, required: ["item_ids"] } },
-  { name: "mostrar_itens", description: "Mostra cartões com foto dos itens citados, para a pessoa ver e abrir.", parameters: { type: "object", properties: { item_ids: { type: "array", items: { type: "string" } } }, required: ["item_ids"] } },
+  { name: "mostrar_itens", description: "Leva a pessoa até as peças no próprio catálogo (abre a categoria; até 3 peças ganham um círculo de indicação).", parameters: { type: "object", properties: { item_ids: { type: "array", items: { type: "string" } } }, required: ["item_ids"] } },
   { name: "adicionar_ao_pedido", description: "Coloca (ou define a quantidade de) um item num ambiente do projeto aberto. Cria o ambiente se não existir.", parameters: { type: "object", properties: {
     item_id: { type: "string" }, quantidade: { type: "integer", description: "Quantidade final desejada desse item no ambiente." }, ambiente: { type: "string", description: "Nome do ambiente (ex.: Lounge, Cerimônia, Bar). Vazio = ambiente ativo." } }, required: ["item_id", "quantidade"] } },
   { name: "remover_do_pedido", description: "Tira um item de um ambiente do projeto aberto.", parameters: { type: "object", properties: { item_id: { type: "string" }, ambiente: { type: "string" } }, required: ["item_id"] } },
   ...(modo === "pedido" ? [] : [
-    { name: "criar_projeto", description: "Cria um projeto novo (necessário para montar o pedido). Precisa de noivos/cliente, data e local.", parameters: { type: "object", properties: {
-      noivos: { type: "string" }, data_evento: { type: "string", description: "AAAA-MM-DD" }, local_evento: { type: "string" }, ambientes: { type: "array", items: { type: "string" } },
-      confirmado_pela_pessoa: { type: "boolean", description: "true só se a pessoa informou noivos, data e local e concordou em criar." } }, required: ["noivos", "data_evento", "local_evento", "confirmado_pela_pessoa"] } },
+    { name: "criar_projeto", description: "Cria um pedido novo (projeto). Precisa de tipo de evento, data de entrega, data do evento (ou período), data de coleta e local, todos ditos pela pessoa.", parameters: { type: "object", properties: {
+      tipo_evento: { type: "string", description: "Casamento, aniversário, 15 anos, corporativo..." },
+      data_entrega: { type: "string", description: "AAAA-MM-DD (pode ser previsão dita pela pessoa)" }, hora_entrega: { type: "string", description: "HH:MM, só se ela disser um horário (\"14h\", \"às 9\"). \"De manhã\"/\"à tarde\" não é horário: vai em observacao_entrega." },
+      data_evento: { type: "string", description: "AAAA-MM-DD — primeiro (ou único) dia do evento" }, data_evento_fim: { type: "string", description: "AAAA-MM-DD — último dia, só se o evento durar vários dias" },
+      data_coleta: { type: "string", description: "AAAA-MM-DD (pode ser previsão dita pela pessoa)" }, hora_coleta: { type: "string", description: "HH:MM, só se ela disser um horário. \"De manhã\"/\"à noite\" não é horário: vai em observacao_coleta." },
+      local_evento: { type: "string", description: "Só se não houver local_ref (local que não foi achado nem no cadastro nem no Google)." }, local_ref: { type: "string", description: "O local_ref (ex.: local2) do local que a pessoa confirmou no mapa, como veio de buscar_local." },
+      noivos: { type: "string", description: "Opcional: nome dos noivos/homenageado, só se a pessoa disser." },
+      observacao_entrega: { type: "string", description: "Só se a pessoa mencionar." }, observacao_coleta: { type: "string", description: "Só se a pessoa mencionar." }, observacao_separacao: { type: "string", description: "Só se a pessoa mencionar." },
+      ambientes: { type: "array", items: { type: "string" } },
+      confirmado_pela_pessoa: { type: "boolean", description: "true só depois de você repetir o resumo e a pessoa confirmar." } },
+      required: ["tipo_evento", "data_entrega", "data_evento", "data_coleta", "confirmado_pela_pessoa"] } },
+    { name: "atualizar_evento", description: "Muda dados do pedido aberto: tipo, datas (entrega, evento, coleta), horários, local, nome dos noivos ou observações de entrega/coleta/separação. Mande só o que mudou.", parameters: { type: "object", properties: {
+      tipo_evento: { type: "string" }, data_entrega: { type: "string" }, hora_entrega: { type: "string" }, data_evento: { type: "string" }, data_evento_fim: { type: "string", description: "AAAA-MM-DD, ou \"\" para voltar a ser um dia só" },
+      data_coleta: { type: "string" }, hora_coleta: { type: "string" }, local_evento: { type: "string" }, local_ref: { type: "string", description: "Ref do local confirmado no mapa (buscar_local)." }, noivos: { type: "string" },
+      observacao_entrega: { type: "string" }, observacao_coleta: { type: "string" }, observacao_separacao: { type: "string" } } } },
     { name: "enviar_pedido", description: "Abre para a pessoa a revisão final e o envio do pedido à equipe da Chiavari (ela confirma na tela).", parameters: { type: "object", properties: { observacao: { type: "string" } } } },
   ]),
+  { name: "buscar_local", description: "Procura o local do evento: primeiro nos locais cadastrados da Chiavari, depois no Google. Os resultados aparecem com mapa na tela da pessoa, pra ela confirmar qual é.", parameters: { type: "object", properties: {
+    texto: { type: "string", description: "Nome do local como a pessoa disse, com cidade/bairro se ela tiver dito." },
+    so_google: { type: "boolean", description: "true para procurar direto no Google (ex.: o cadastrado não era o certo)." } }, required: ["texto"] } },
+  { name: "listar_projetos", description: "Os pedidos (projetos) desta pessoa: nome, tipo, data e local. Use para saber de qual pedido ela quer falar.", parameters: { type: "object", properties: {} } },
+  { name: "abrir_projeto", description: "Abre um pedido existente (a conversa passa a ser a dele).", parameters: { type: "object", properties: { projeto_id: { type: "string" } }, required: ["projeto_id"] } },
   { name: "listar_formatos", description: "Formatos de composição cadastrados no 3D (lounges, mesas...), com as posições e o tipo de móvel que cada uma aceita.", parameters: { type: "object", properties: { categoria: { type: "string" } } } },
   { name: "gerar_imagem_composicao", description: "Monta um formato cadastrado com os móveis escolhidos e gera a fotografia de estúdio da composição (aparece na conversa em 1-2 min).", parameters: { type: "object", properties: {
     formato_id: { type: "string" }, pecas: { type: "array", items: { type: "object", properties: { papel: { type: "string" }, item_id: { type: "string" } }, required: ["papel", "item_id"] } },
@@ -575,10 +611,162 @@ async function gravarPerfil(ctx: Ctx, perfil: any) {
     perfil, atualizado_em: new Date().toISOString(),
   }, { onConflict: "empresa_id,dono" });
 }
-async function historico(ctx: Ctx, limite = 40) {
-  const { data } = await ctx.service.from("catalogo_assistente_mensagens").select("id,papel,conteudo,anexos,criado_em")
-    .eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono).order("criado_em", { ascending: false }).limit(limite);
+async function historico(ctx: Ctx, limite = 40, projetoId: string | null = null) {
+  let q = ctx.service.from("catalogo_assistente_mensagens").select("id,papel,conteudo,anexos,criado_em")
+    .eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono);
+  q = projetoId ? q.eq("projeto_id", projetoId) : q.is("projeto_id", null);
+  const { data } = await q.order("criado_em", { ascending: false }).limit(limite);
   return (data || []).reverse();
+}
+// Ao criar um pedido pela conversa, o que foi falado antes (sem pedido) vira a conversa dele — fica junto, como registro.
+async function levarConversaParaProjeto(ctx: Ctx, projetoId: string) {
+  const desde = new Date(Date.now() - 12 * 3600000).toISOString();
+  await ctx.service.from("catalogo_assistente_mensagens").update({ projeto_id: projetoId })
+    .eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono).is("projeto_id", null).gte("criado_em", desde);
+}
+const DATA_RE = /^\d{4}-\d{2}-\d{2}$/, HORA_RE = /^\d{2}:\d{2}$/;
+const CAMPOS_EVENTO = ["tipo", "data_entrega", "hora_entrega", "data_fim", "data_coleta", "hora_coleta", "obs_entrega", "obs_coleta", "obs_separacao", "endereco", "lat", "lng", "local_id", "place_id"];
+function eventoLimpo(e: any) {
+  const out: Record<string, string> = {};
+  for (const k of CAMPOS_EVENTO) {
+    const v = String(e?.[k] ?? "").trim();
+    if (!v) continue;
+    if (k.startsWith("data_") && !DATA_RE.test(v)) continue;
+    if (k.startsWith("hora_") && !HORA_RE.test(v)) continue;
+    if ((k === "lat" || k === "lng") && !/^-?\d{1,3}(\.\d+)?$/.test(v)) continue;
+    out[k] = v.slice(0, k.startsWith("obs_") || k === "endereco" ? 600 : k === "place_id" ? 300 : 80);
+  }
+  return out;
+}
+// Ordem das datas: entrega ≤ 1º dia do evento ≤ último dia ≤ coleta.
+function conferirDatas(data: string, ev: Record<string, string>) {
+  if (ev.data_fim && ev.data_fim < data) return "O último dia do evento ficou antes do primeiro. Confirme as datas com a pessoa.";
+  if (ev.data_entrega && ev.data_entrega > data) return "A entrega ficou depois do evento. Confirme com a pessoa.";
+  if (ev.data_coleta && ev.data_coleta < (ev.data_fim || data)) return "A coleta ficou antes do fim do evento. Confirme com a pessoa.";
+  return "";
+}
+// Locais: primeiro os cadastrados da empresa (locais_empresas); sem resultado bom, Google (Places, com fallback no
+// Geocoding). Cada candidato tem uma ref ("c:<id>" cadastro, "g:<place_id>" Google) que a Helena usa ao criar/atualizar
+// o pedido — assim o endereço e o ponto no mapa vêm da fonte, nunca digitados por ela.
+const PALAVRAS_GENERICAS = new Set(["espaco", "sitio", "casa", "fazenda", "chacara", "buffet", "salao", "de", "do", "da", "dos", "das", "e", "festas", "eventos", "evento", "em", "no", "na"]);
+function tokensLocal(t: string) { return normalizar(t).split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !PALAVRAS_GENERICAS.has(w)); }
+async function locaisCadastrados(ctx: Ctx, texto: string) {
+  const { data } = await ctx.service.from("locais_empresas").select("id,nome_razao,endereco,numero_endereco,latitude,longitude,google_place_id,status")
+    .eq("empresa_id", ctx.empresaId).limit(1000);
+  const q = tokensLocal(texto);
+  if (!q.length) return [];
+  return (data || []).map((l: any) => {
+    const alvo = new Set(tokensLocal(`${l.nome_razao || ""} ${l.endereco || ""}`));
+    const nome = new Set(tokensLocal(l.nome_razao || ""));
+    const acertos = q.filter((w) => alvo.has(w)).length, noNome = q.filter((w) => nome.has(w)).length;
+    // Todas as palavras que importam precisam bater ("Villa Bisutti" não pode virar "Villa Imperial"); com 3+ palavras, pode faltar uma.
+    const minimo = q.length <= 2 ? q.length : q.length - 1;
+    return { l, nota: acertos >= minimo && noNome ? acertos / q.length : 0 };
+  }).filter((x: any) => x.nota > 0 && String(x.l.status || "ativo").toLowerCase() !== "inativo").sort((a: any, b: any) => b.nota - a.nota).slice(0, 4)
+    .map(({ l }: any) => ({ ref: "c:" + l.id, nome: l.nome_razao, endereco: [l.endereco, l.numero_endereco].filter(Boolean).join(", "),
+      lat: l.latitude != null ? Number(l.latitude) : null, lng: l.longitude != null ? Number(l.longitude) : null, place_id: l.google_place_id || null, fonte: "cadastro" }));
+}
+async function locaisGoogle(texto: string) {
+  const key = Deno.env.get("GOOGLE_MAPS_KEY");
+  if (!key) return [];
+  try {
+    const r = await fetch("https://places.googleapis.com/v1/places:searchText", { method: "POST", signal: AbortSignal.timeout(12000),
+      headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location" },
+      body: JSON.stringify({ textQuery: texto, languageCode: "pt-BR", regionCode: "BR", maxResultCount: 5 }) });
+    const d = await r.json();
+    if (r.ok && Array.isArray(d.places)) return d.places.map((p: any) => ({ ref: "g:" + p.id, nome: p.displayName?.text || String(p.formattedAddress || texto).split(",")[0], endereco: p.formattedAddress || "", lat: p.location?.latitude ?? null, lng: p.location?.longitude ?? null, place_id: p.id, fonte: "google" }));
+    console.warn("places(new):", d?.error?.message || r.status);
+  } catch (e) { console.warn("places(new):", e); }
+  try {
+    const r = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(texto)}&language=pt-BR&region=br&key=${key}`, { signal: AbortSignal.timeout(12000) });
+    const d = await r.json();
+    if (d.status === "OK") return d.results.slice(0, 5).map((p: any) => ({ ref: "g:" + p.place_id, nome: p.name || String(p.formatted_address || texto).split(",")[0], endereco: p.formatted_address || "", lat: p.geometry?.location?.lat ?? null, lng: p.geometry?.location?.lng ?? null, place_id: p.place_id, fonte: "google" }));
+    if (d.status !== "ZERO_RESULTS") console.warn("places(legado):", d.status, d.error_message);
+  } catch (e) { console.warn("places(legado):", e); }
+  try {
+    const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(texto)}&language=pt-BR&region=br&key=${key}`, { signal: AbortSignal.timeout(12000) });
+    const d = await r.json();
+    if (d.status === "OK") return d.results.slice(0, 3).map((p: any) => ({ ref: "g:" + p.place_id, nome: String(p.formatted_address || texto).split(",").slice(0, 2).join(","), endereco: p.formatted_address || "", lat: p.geometry?.location?.lat ?? null, lng: p.geometry?.location?.lng ?? null, place_id: p.place_id, fonte: "google" }));
+  } catch (e) { console.warn("geocode:", e); }
+  return [];
+}
+async function resolverLocal(ctx: Ctx, ref: string) {
+  if (ref.startsWith("c:")) {
+    const { data: l } = await ctx.service.from("locais_empresas").select("id,nome_razao,endereco,numero_endereco,latitude,longitude,google_place_id")
+      .eq("empresa_id", ctx.empresaId).eq("id", ref.slice(2)).maybeSingle();
+    if (!l) return null;
+    return { nome: l.nome_razao, endereco: [l.endereco, l.numero_endereco].filter(Boolean).join(", "), lat: l.latitude, lng: l.longitude, local_id: l.id, place_id: l.google_place_id || "" };
+  }
+  if (ref.startsWith("g:")) {
+    const key = Deno.env.get("GOOGLE_MAPS_KEY"), id = ref.slice(2);
+    if (!key) return null;
+    try {
+      const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(id)}?languageCode=pt-BR`, { signal: AbortSignal.timeout(12000), headers: { "X-Goog-Api-Key": key, "X-Goog-FieldMask": "id,displayName,formattedAddress,location" } });
+      const p = await r.json();
+      if (r.ok && p?.id) return { nome: p.displayName?.text || "", endereco: p.formattedAddress || "", lat: p.location?.latitude, lng: p.location?.longitude, local_id: "", place_id: p.id };
+    } catch (e) { console.warn("place details:", e); }
+    try {
+      const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?place_id=${encodeURIComponent(id)}&language=pt-BR&key=${key}`, { signal: AbortSignal.timeout(12000) });
+      const d = await r.json();
+      const p = d.results?.[0];
+      if (p) return { nome: p.address_components?.[0]?.long_name || "", endereco: p.formatted_address || "", lat: p.geometry?.location?.lat, lng: p.geometry?.location?.lng, local_id: "", place_id: id };
+    } catch (e) { console.warn("geocode place:", e); }
+  }
+  return null;
+}
+// Aplica o local escolhido (ref) no evento: nome do local, endereço completo e o ponto no mapa.
+async function localMostrado(ctx: Ctx, ref: string, agora: any[] = []) {
+  const alvo = String(ref || "").trim();
+  const bate = (l: any) => l && (l.apelido === alvo || l.ref === alvo || l.place_id === alvo || l.ref === "g:" + alvo || l.ref === "c:" + alvo);
+  const daqui = agora.find(bate);
+  if (daqui) return daqui;
+  const { data } = await ctx.service.from("catalogo_assistente_mensagens").select("anexos").eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono)
+    .contains("anexos", JSON.stringify([{ tipo: "locais" }])).order("criado_em", { ascending: false }).limit(10);
+  for (const m of data || []) { const l = ((m.anexos || []).find((a: any) => a.tipo === "locais")?.locais || []).find(bate); if (l) return l; }
+  return null;
+}
+async function aplicarLocalRef(ctx: Ctx, ref: string, ev: Record<string, string>, agora: any[] = []) {
+  const visto = await localMostrado(ctx, ref, agora);
+  const l = visto ? { nome: visto.nome, endereco: visto.endereco, lat: visto.lat, lng: visto.lng, local_id: String(visto.ref || "").startsWith("c:") ? visto.ref.slice(2) : "", place_id: visto.place_id || "" }
+    : await resolverLocal(ctx, ref) || (!/^[cg]:/.test(ref) ? await resolverLocal(ctx, "g:" + ref) : null);
+  if (!l) return null;
+  ev.endereco = String(l.endereco || "").slice(0, 600);
+  if (l.lat != null && l.lng != null) { ev.lat = String(Number(l.lat)); ev.lng = String(Number(l.lng)); } else { delete ev.lat; delete ev.lng; }
+  if (l.local_id) ev.local_id = l.local_id; else delete ev.local_id;
+  if (l.place_id) ev.place_id = l.place_id; else delete ev.place_id;
+  return String(l.nome || l.endereco || "").slice(0, 160);
+}
+
+// Locais mostrados numa mensagem anterior (com a ref), pra ela usar quando a pessoa confirmar depois.
+function locaisDaMensagem(m: any) {
+  const l = (m.anexos || []).find((a: any) => a.tipo === "locais")?.locais || [];
+  return l.length ? "\n[locais mostrados com mapa: " + l.map((x: any) => `${x.nome} — ${x.endereco} (${x.fonte === "cadastro" ? "cadastrado" : "Google"}, local_ref ${x.apelido || x.ref})`).join("; ") + "]" : "";
+}
+// Datas no passado (o modelo pôs o ano corrente numa data sem ano que já passou): todas vão pro ano seguinte, juntas.
+// Devolve a nova data do evento, ou null se nada mudou.
+function ajustarAno(ev: Record<string, string>, data: string) {
+  const hoje = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+  if ((ev.data_entrega || data) >= hoje) return null;
+  const mais1 = (d: string) => (DATA_RE.test(d || "") ? `${Number(d.slice(0, 4)) + 1}${d.slice(4)}` : d);
+  for (const k of ["data_entrega", "data_fim", "data_coleta"]) if (ev[k]) ev[k] = mais1(ev[k]);
+  return mais1(data);
+}
+// Data sem ano é a próxima ocorrência: o modelo às vezes põe o ano corrente numa data que já passou.
+function dataNoPassado(d: string) {
+  const hoje = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+  return d && d < hoje ? `A data ${d.split("-").reverse().join("/")} já passou. Se a pessoa não disse o ano, ela quis dizer a próxima vez que essa data acontece (${Number(d.slice(0, 4)) + 1}): corrija TODAS as datas para o ano certo e chame a ferramenta de novo agora, sem perguntar nada à pessoa. Só pergunte se ela tiver dito explicitamente um ano que já passou.` : "";
+}
+const fmtData = (d: string) => (DATA_RE.test(d || "") ? d.split("-").reverse().join("/") : "");
+function descreverEvento(p: any) {
+  const e = p?.evento || {};
+  return [
+    `tipo: ${e.tipo || "não informado"}`,
+    `entrega: ${fmtData(e.data_entrega) || "não informada"}${e.hora_entrega ? " às " + e.hora_entrega : ""}`,
+    `evento: ${fmtData(p?.data_evento) || "sem data"}${e.data_fim ? " a " + fmtData(e.data_fim) : ""}`,
+    `coleta: ${fmtData(e.data_coleta) || "não informada"}${e.hora_coleta ? " às " + e.hora_coleta : ""}`,
+    `local: ${p?.local_evento || "sem local"}${e.endereco ? " (" + e.endereco + ")" : ""}${e.lat ? " [local confirmado no mapa]" : ""}`,
+    ...(e.obs_entrega ? [`obs. entrega: ${e.obs_entrega}`] : []), ...(e.obs_coleta ? [`obs. coleta: ${e.obs_coleta}`] : []), ...(e.obs_separacao ? [`obs. separação: ${e.obs_separacao}`] : []),
+  ].join("; ");
 }
 async function gravarMensagem(ctx: Ctx, papel: string, conteudo: string, anexos: any[] = [], projetoId: string | null = null) {
   const { data } = await ctx.service.from("catalogo_assistente_mensagens").insert({
@@ -590,7 +778,7 @@ async function gravarMensagem(ctx: Ctx, papel: string, conteudo: string, anexos:
 function limparProjeto(p: any, acervo: Item[]) {
   if (!p || typeof p !== "object" || !p.id) return null;
   return {
-    id: String(p.id), noivos: String(p.noivos || "").slice(0, 120), data_evento: String(p.data_evento || "").slice(0, 10),
+    id: String(p.id), noivos: String(p.noivos || "").slice(0, 120), data_evento: String(p.data_evento || "").slice(0, 10), evento: eventoLimpo(p.evento),
     local_evento: String(p.local_evento || "").slice(0, 160), status: String(p.status || ""), ambiente_ativo: p.ambiente_ativo ? String(p.ambiente_ativo) : null,
     ambientes: (Array.isArray(p.ambientes) ? p.ambientes : []).slice(0, 30).map((a: any) => ({
       id: String(a.id), nome: String(a.nome || "").slice(0, 60),
@@ -619,7 +807,7 @@ function criarExecutor(ctx: Ctx, E: any) {
       case "mostrar_itens": {
         const ids = (Array.isArray(a?.item_ids) ? a.item_ids : []).map((x: unknown) => itemValido(x)?.id).filter(Boolean).slice(0, 8) as string[];
         ids.forEach((id: string) => E.mostrados.add(id));
-        return { mostrados: ids.length };
+        return { mostrados: ids.length, na_tela: E.mostrados.size <= 3 ? "o catálogo foi até elas e elas estão circuladas (indicação)" : "o catálogo mostra essas opções, SEM círculo (são opções pra ela escolher)" };
       }
       case "adicionar_ao_pedido": case "remover_do_pedido": {
         const item = itemValido(a?.item_id);
@@ -653,19 +841,91 @@ function criarExecutor(ctx: Ctx, E: any) {
       }
       case "criar_projeto": {
         if (E.modo === "pedido") return { erro: "Indisponível dentro do pedido." };
-        const noivos = String(a?.noivos || "").trim(), data = String(a?.data_evento || "").trim(), local = String(a?.local_evento || "").trim();
-        if (!noivos || !/^\d{4}-\d{2}-\d{2}$/.test(data) || !local) return { erro: "Preciso de noivos/cliente, data (AAAA-MM-DD) e local." };
+        let data = String(a?.data_evento || "").trim();
+        const tipo = String(a?.tipo_evento || "").trim();
+        let local = String(a?.local_evento || "").trim();
+        const noivos = String(a?.noivos || "").trim();
+        const ev = eventoLimpo({ tipo, data_entrega: a?.data_entrega, hora_entrega: a?.hora_entrega, data_fim: a?.data_evento_fim, data_coleta: a?.data_coleta, hora_coleta: a?.hora_coleta,
+          obs_entrega: a?.observacao_entrega, obs_coleta: a?.observacao_coleta, obs_separacao: a?.observacao_separacao });
+        if (a?.local_ref) { const nomeLocal = await aplicarLocalRef(ctx, String(a.local_ref), ev, [...(E.locais || []), ...(E.perfil?._locais || [])]); if (!nomeLocal) return { erro: "Não achei esse local. Use buscar_local de novo." }; local = nomeLocal; }
+        const faltam = [!tipo && "tipo de evento", !ev.data_entrega && "data de entrega", !DATA_RE.test(data) && "data do evento", !ev.data_coleta && "data de coleta", !local && "local (use buscar_local e confirme no mapa)"].filter(Boolean);
+        if (faltam.length) return { erro: `Ainda falta: ${faltam.join(", ")}. Pergunte à pessoa (datas no formato AAAA-MM-DD; entrega e coleta podem ser uma previsão que ela disser).` };
         // Trava: nada de projeto com dado inventado/provisório (já aconteceu em teste: local "(definir)" e o nome da decoradora como noivos).
-        if (local.length < 3 || /defin|confirmar|\?|^-+$|^n\/?a$|sem local/i.test(local)) return { erro: "O local ainda não foi informado. Pergunte o local do evento antes de criar o projeto." };
-        if (ctx.nome && normalizar(noivos) === normalizar(ctx.nome)) return { erro: "Esse é o nome do(a) decorador(a), não dos noivos. Pergunte o nome dos noivos ou do cliente final." };
-        if (!a?.confirmado_pela_pessoa) return { erro: "Confirme com a pessoa os dados (noivos, data e local) antes de criar o projeto." };
+        if (local.length < 3 || /defin|confirmar|\?|^-+$|^n\/?a$|sem local/i.test(local)) return { erro: "O local ainda não foi informado. Pergunte o local do evento antes de criar." };
+        if (noivos && ctx.nome && normalizar(noivos) === normalizar(ctx.nome)) return { erro: "Esse é o nome do(a) decorador(a), não dos noivos. Deixe o nome dos noivos em branco ou pergunte." };
+        if (ev.data_fim === data) delete ev.data_fim;
+        const anoAjustado = DATA_RE.test(data) ? ajustarAno(ev, data) : null;
+        if (anoAjustado) data = anoAjustado;
+        const problema = conferirDatas(data, ev) || dataNoPassado(ev.data_entrega || data);
+        if (problema) return { erro: problema };
+        if (!a?.confirmado_pela_pessoa) return { erro: "Repita o resumo (tipo, entrega, evento, coleta e local) e peça a confirmação da pessoa antes de criar." };
         const ambientes = (Array.isArray(a?.ambientes) ? a.ambientes : []).map((x: unknown) => String(x).trim().slice(0, 60)).filter(Boolean).slice(0, 12);
-        const criado = await ctx.rpc("projeto_criar", { p_noivos: noivos, p_data_evento: data, p_local_evento: local, p_ambientes: ambientes });
+        const criado = await ctx.rpc("projeto_criar", { p_noivos: noivos || null, p_data_evento: data, p_local_evento: local, p_ambientes: ambientes, p_evento: ev });
         const dados = criado?.dados || {};
-        E.projeto = { id: String(criado.id), noivos, data_evento: data, local_evento: local, status: "rascunho", ambiente_ativo: dados.ambientes?.[0]?.id || null,
+        E.projeto = { id: String(criado.id), noivos: String(criado.noivos || noivos), data_evento: data, local_evento: local, evento: ev, status: "rascunho", ambiente_ativo: dados.ambientes?.[0]?.id || null,
           ambientes: (dados.ambientes || []).map((x: any) => ({ id: String(x.id), nome: x.nome, itens: [] })) };
+        E.projetoCriado = E.projeto.id;
+        await levarConversaParaProjeto(ctx, E.projeto.id);
         E.acoes.push({ tipo: "usar_projeto", projeto_id: E.projeto.id });
-        return { ok: true, projeto: E.projeto.noivos, ambientes: E.projeto.ambientes.map((x: any) => x.nome) };
+        return { ok: true, projeto: E.projeto.noivos, ambientes: E.projeto.ambientes.map((x: any) => x.nome),
+          ...(anoAjustado ? { observacao: `As datas tinham ficado num ano que já passou; foram gravadas em ${anoAjustado.slice(0, 4)}. Diga isso à pessoa numa frase curta.` } : {}) };
+      }
+      case "atualizar_evento": {
+        if (E.modo === "pedido") return { erro: "Dentro do pedido da equipe, os dados do evento são editados na tela do pedido." };
+        if (!E.projeto) return { erro: "Não há pedido aberto." };
+        const atual = { ...(E.projeto.evento || {}) };
+        const mapa: Record<string, string> = { tipo_evento: "tipo", data_entrega: "data_entrega", hora_entrega: "hora_entrega", data_evento_fim: "data_fim", data_coleta: "data_coleta", hora_coleta: "hora_coleta",
+          observacao_entrega: "obs_entrega", observacao_coleta: "obs_coleta", observacao_separacao: "obs_separacao" };
+        const mudou: string[] = [];
+        for (const [de, para] of Object.entries(mapa)) if (a && de in a) { atual[para] = String(a[de] ?? "").trim(); mudou.push(de); }
+        const ev = eventoLimpo(atual);
+        for (const k of ["data_entrega", "data_fim", "data_coleta", "hora_entrega", "hora_coleta"]) if (atual[k] && !ev[k]) return { erro: `Formato inválido em ${k} (datas AAAA-MM-DD, horários HH:MM).` };
+        let data = a?.data_evento !== undefined && String(a.data_evento).trim() ? String(a.data_evento).trim() : E.projeto.data_evento;
+        if (!DATA_RE.test(data)) return { erro: "Data do evento inválida (AAAA-MM-DD)." };
+        const anoAjustado = ["data_evento", "data_entrega", "data_coleta", "data_evento_fim"].some((k) => a && k in a) ? ajustarAno(ev, data) : null;
+        if (anoAjustado) data = anoAjustado;
+        if (ev.data_fim === data) delete ev.data_fim;
+        const problema = conferirDatas(data, ev);
+        if (problema) return { erro: problema };
+        let local = a?.local_evento !== undefined && String(a.local_evento).trim() ? String(a.local_evento).trim().slice(0, 160) : E.projeto.local_evento;
+        if (a?.local_ref) { const nomeLocal = await aplicarLocalRef(ctx, String(a.local_ref), ev, [...(E.locais || []), ...(E.perfil?._locais || [])]); if (!nomeLocal) return { erro: "Não achei esse local. Use buscar_local de novo." }; local = nomeLocal; }
+        else if (a?.local_evento !== undefined && String(a.local_evento).trim()) { delete ev.endereco; delete ev.lat; delete ev.lng; delete ev.local_id; delete ev.place_id; }
+        const noivos = a?.noivos !== undefined ? String(a.noivos || "").trim().slice(0, 120) : undefined;
+        E.projeto = { ...E.projeto, data_evento: data, local_evento: local, evento: ev, ...(noivos !== undefined && noivos ? { noivos } : {}) };
+        E.acoes.push({ tipo: "atualizar_evento", data_evento: data, local_evento: local, evento: ev, ...(noivos !== undefined ? { noivos } : {}) });
+        return { ok: true, pedido: descreverEvento(E.projeto) };
+      }
+      case "buscar_local": {
+        const texto = String(a?.texto || "").trim().slice(0, 160);
+        if (texto.length < 3) return { erro: "Diga o nome do local." };
+        const cad = a?.so_google ? [] : await locaisCadastrados(ctx, texto);
+        const google = cad.length ? [] : await locaisGoogle(texto);
+        const lista = [...cad, ...google].slice(0, 5);
+        if (!lista.length) return { encontrados: 0, observacao: "Não achei esse local nem no cadastro nem no Google. Peça o endereço completo (rua, número, cidade) e procure de novo." };
+        lista.forEach((l: any, i: number) => { l.apelido = "local" + (i + 1); });
+        E.locais = lista;
+        // Guardado no perfil também: na ligação, cada ferramenta é uma chamada separada ao servidor e a confirmação
+        // ("É este") chega depois, sem nada disso na conversa gravada.
+        E.perfil = { ...(E.perfil || {}), _locais: lista }; E.perfilMudou = true;
+        return { encontrados: lista.length, fonte: cad.length ? "cadastro" : "google", locais: lista.map((l: any) => ({ local_ref: l.apelido, nome: l.nome, endereco: l.endereco })),
+          observacao: (cad.length ? "Vieram dos locais CADASTRADOS da Chiavari. " : "Vieram do Google Maps (não são locais cadastrados; não diga que estão cadastrados). ") + (lista.length > 1 ? "Os locais aparecem com mapa na tela. Pergunte qual é (cidade/bairro), sem ler todos os endereços inteiros." : "O local aparece com mapa na tela. Pergunte se é esse mesmo.") };
+      }
+      case "listar_projetos": {
+        if (E.modo === "pedido") return { erro: "Dentro do pedido da equipe não dá para trocar de pedido." };
+        const lista = (await ctx.rpc("projeto_listar", {})) || [];
+        const hoje = new Date().toISOString().slice(0, 10);
+        return { pedidos: lista.filter((p: any) => String(p.data_evento || "") >= hoje || p.id === E.projeto?.id).slice(0, 30)
+          .map((p: any) => ({ id: p.id, nome: p.noivos, tipo: p.evento?.tipo || "", data: p.data_evento, local: p.local_evento, status: p.status, aberto: p.id === E.projeto?.id })) };
+      }
+      case "abrir_projeto": {
+        if (E.modo === "pedido") return { erro: "Dentro do pedido da equipe não dá para trocar de pedido." };
+        const id = String(a?.projeto_id || "");
+        const p = await ctx.rpc("projeto_obter", { p_id: id }).catch(() => null);
+        if (!p?.id) return { erro: "Pedido não encontrado. Use listar_projetos." };
+        E.projeto = limparProjeto({ ...p, evento: p.evento || p.dados?.evento, ambientes: (p.dados?.ambientes || []), ambiente_ativo: p.dados?.ambientes?.[0]?.id }, E.acervo);
+        E.dataDoEvento = DATA_RE.test(String(p.data_evento || "")) ? String(p.data_evento) : "";
+        E.acoes.push({ tipo: "usar_projeto", projeto_id: id });
+        return { ok: true, pedido: `${p.noivos} — ${descreverEvento(E.projeto)}`, itens: (E.projeto?.ambientes || []).map((x: any) => `${x.nome}: ${x.itens.length} peça(s)`) };
       }
       case "enviar_pedido": {
         if (!E.projeto) return { erro: "Não há projeto aberto." };
@@ -717,6 +977,16 @@ function criarExecutor(ctx: Ctx, E: any) {
   };
 }
 
+// Lembrete final (vem por último no prompt, que é o que o modelo mais segue): respostas curtas e diretas.
+const OBJETIVIDADE = `
+
+ANTES DE RESPONDER, CONFIRA (vale mais que qualquer exemplo acima):
+- No máximo 2 frases curtas (3 só quando estiver propondo peças). Se der pra dizer em menos palavras, diga em menos.
+- No máximo UMA pergunta por mensagem.
+- Não pergunte de novo nem "confirme" o que a pessoa já respondeu nesta conversa; use e siga.
+- Horário/período de entrega e coleta: é opcional. Se a pessoa não disser junto com a data, não pergunte.
+- Sem abrir com "Perfeito", "Ótimo", "Claro" ou o nome da pessoa; sem repetir o que ela acabou de dizer.`;
+
 async function conversar(ctx: Ctx, body: any) {
   const arquivos = arquivosValidos(ctx, body?.arquivos);
   const mensagem = String(body?.mensagem || "").trim().slice(0, 2000);
@@ -730,7 +1000,7 @@ async function conversar(ctx: Ctx, body: any) {
   if ((count || 0) >= 20) return json({ erro: "Muitas mensagens em pouco tempo. Aguarde um instante." }, 429);
 
   const [acervo, perfilInicial, passadas, { data: empresa }] = await Promise.all([
-    carregarAcervo(ctx), carregarPerfil(ctx), historico(ctx, 24),
+    carregarAcervo(ctx), carregarPerfil(ctx), historico(ctx, 24, (body?.projeto?.id && String(body.projeto.id)) || null),
     ctx.service.from("empresas").select("nome").eq("id", ctx.empresaId).maybeSingle(),
   ]);
   const perfil = perfilInicial;
@@ -746,8 +1016,8 @@ async function conversar(ctx: Ctx, body: any) {
   const dataDoEvento = /^\d{4}-\d{2}-\d{2}$/.test(String(projeto?.data_evento || "")) ? String(projeto!.data_evento) : "";
   if (dataDoEvento) mapas.set(dataDoEvento, await mapaDisponibilidade(ctx, dataDoEvento));
   const messages: any[] = [
-    { role: "system", content: promptDoSistema({ ctx, perfil, projeto, modo, empresa: empresa?.nome, formatos, acervo, dispEvento: dataDoEvento ? mapas.get(dataDoEvento) : null }) },
-    ...passadas.map((m: any) => ({ role: m.papel, content: textoComArquivos(m) + ((m.anexos || []).some((a: any) => a.tipo === "imagem") ? `\n[foto da composição enviada na conversa — ref ${refFoto(m.id)}: ${((m.anexos || []).find((a: any) => a.tipo === "imagem")?.itens || []).join(", ")}]` : "") })),
+    { role: "system", content: promptDoSistema({ ctx, perfil, projeto, modo, empresa: empresa?.nome, formatos, acervo, dispEvento: dataDoEvento ? mapas.get(dataDoEvento) : null }) + OBJETIVIDADE },
+    ...passadas.map((m: any) => ({ role: m.papel, content: textoComArquivos(m) + locaisDaMensagem(m) + ((m.anexos || []).some((a: any) => a.tipo === "imagem") ? `\n[foto da composição enviada na conversa — ref ${refFoto(m.id)}: ${((m.anexos || []).find((a: any) => a.tipo === "imagem")?.itens || []).join(", ")}]` : "") })),
     { role: "user", content: porAudio ? `[mensagem de voz transcrita — pode ter pequenos erros de transcrição em nomes; interprete pelo contexto e pelo acervo]\n${mensagem}` : mensagem },
   ];
   // Arquivos (planta em PDF/foto): o modelo enxerga os da mensagem atual e os de até 2 mensagens anteriores com arquivo.
@@ -815,6 +1085,7 @@ async function conversar(ctx: Ctx, body: any) {
   const itens = [...mostrados].map((id) => { const i = itemValido(id)!; const d = dispCartoes?.get(i.id); return { id: i.id, nome: i.nome, foto: i.foto, medidas: i.medidas, categoria: i.categoria, ...(d && d.total ? { livres: d.livre, data: dataDoEvento } : {}) }; });
   const anexos = [
     ...(itens.length ? [{ tipo: "itens", itens }] : []),
+    ...(E.locais?.length ? [{ tipo: "locais", locais: E.locais }] : []),
     ...acoes.filter((x) => x.tipo === "renderizar").map((x) => ({ tipo: "renderizando", formato: x.formato_nome, itens: x.itens })),
   ];
   const gravada = await gravarMensagem(ctx, "assistant", resposta, anexos, E.projeto?.id || null);
@@ -995,17 +1266,17 @@ const JEITO_DE_FALAR = `
 AGORA É UMA LIGAÇÃO DE VOZ (isto vale acima das regras de formato de texto)
 - Você está ao telefone com a pessoa. Fale como uma consultora brasileira experiente: calorosa, segura, ritmo de conversa, entonação viva, ênfase nas palavras que importam e pausas naturais.
 - VÍCIOS DE LINGUAGEM SÃO PROIBIDOS. Não comece as respostas sempre do mesmo jeito; não use bordões nem muletas ("olha", "perfeito", "ótimo", "maravilha", "com certeza", "prontinho", "deixa eu ver aqui", "só um segundinho", "entendi", "show"). No máximo uma interjeição curta a cada várias falas, e nunca a mesma duas vezes na ligação. Não repita o nome da pessoa a toda hora (só no cumprimento e, se fizer sentido, uma vez mais). Não repita o que a pessoa acabou de dizer antes de responder. Varie as palavras como uma pessoa real varia.
-- Frases curtas. Normalmente uma ou duas frases por vez (três só quando realmente necessário) e então pare e deixe a pessoa falar. Nada de listas, tópicos, markdown, asteriscos ou códigos. Se houver várias peças, cite no máximo três.
+- Seja objetiva: uma frase curta sempre que der, no máximo duas por vez. Nada de recapitular o que a pessoa disse nem de explicar o que vai fazer e então pare e deixe a pessoa falar. Nada de listas, tópicos, markdown, asteriscos ou códigos. Se houver várias peças, cite no máximo três.
 - NUNCA RESPONDA A SI MESMA: quando fizer uma pergunta, termine a fala ali e espere a pessoa responder — não sugira a resposta, não continue falando, não pergunte e responda em seguida. Se você ainda vai consultar algo, não faça pergunta antes.
 - Ferramentas: só fale antes de usar uma se a consulta for demorar, e aí uma frase muito curta e neutra, diferente a cada vez (sem pergunta). Depois que o resultado chegar, siga direto para a resposta — não cumprimente de novo, não repita o que já disse, não anuncie "pronto" toda vez.
 - Não narre o que acontece por dentro ("não encontrei esse nome", "vou buscar parecidos", tentativas): fale só o resultado, como quem já sabe.
 - Números, valores e datas por extenso, do jeito que se fala ("trezentos e cinquenta reais a diária", "vinte e cinco de outubro"). Medidas só se perguntarem, arredondadas.
 - Descreva peças como uma vendedora descreveria, sem recitar ficha técnica. NÃO comente se uma peça tem ou não modelo 3D/imagem de composição (mesmo que a ferramenta diga tem_modelo_3d false) — só se a pessoa pedir uma foto da composição.
-- Quando citar peças, chame mostrar_itens: as fotos aparecem na tela da pessoa enquanto vocês conversam (pode mencionar isso de vez em quando, não sempre).
+- Quando citar peças, chame mostrar_itens: o catálogo da pessoa vai até elas enquanto vocês conversam e circula as que você indicar (pode mencionar isso de vez em quando, não sempre).
 - Se a pessoa interromper, pare e escute. Se não entendeu algum nome, confirme de forma leve. Se o que você ouviu parecer só ruído, eco ou um pedaço da sua própria fala, não responda como se fosse uma pergunta: espere a pessoa falar.
 - Confirme com naturalidade o que colocou ou tirou do pedido (quantidade, peça e ambiente), cada vez com palavras diferentes.
 - Para encerrar, despeça-se com carinho e diga que o que conversaram já está no pedido e na conversa por escrito.
-- A sua PRIMEIRA fala é só atender: cumprimente pelo primeiro nome ("{{PRIMEIRO_NOME}}") numa frase curta e calorosa e pergunte em que pode ajudar com o evento (se houver projeto aberto, pode citar os noivos). Não retome assunto antigo nem use ferramentas nessa primeira fala.`;
+- A sua PRIMEIRA fala é só atender: cumprimente pelo primeiro nome ("{{PRIMEIRO_NOME}}") numa frase curta e calorosa e pergunte em que pode ajudar. Não cite pedido, evento, peça nem nada da conversa anterior, e não use ferramentas nessa primeira fala. Depois descubra de qual pedido ela quer falar.`;
 
 async function estadoDaConversa(ctx: Ctx, body: any) {
   const modo = body?.modo === "pedido" ? "pedido" : "catalogo";
@@ -1021,17 +1292,22 @@ async function ligacaoIniciar(ctx: Ctx, body: any) {
   // Freio: até 6 ligações por hora por pessoa (cada uma custa por minuto).
   const umaHora = new Date(Date.now() - 3600000).toISOString();
   const { count } = await ctx.service.from("catalogo_assistente_mensagens").select("id", { count: "exact", head: true })
-    .eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono).eq("papel", "assistant").gte("criado_em", umaHora).contains("anexos", [{ tipo: "ligacao" }]);
+    .eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono).eq("papel", "assistant").gte("criado_em", umaHora).contains("anexos", JSON.stringify([{ tipo: "ligacao" }]));
   if ((count || 0) >= 6) return json({ erro: "Muitas ligações em pouco tempo. Tente de novo daqui a pouco ou fale por mensagem." }, 429);
   const { acervo, modo, projeto, dataDoEvento } = await estadoDaConversa(ctx, body);
   const [perfil, formatos, { data: empresa }, dispEvento, passadas, vocab] = await Promise.all([
     carregarPerfil(ctx), carregarFormatos(ctx, acervo),
     ctx.service.from("empresas").select("nome").eq("id", ctx.empresaId).maybeSingle(),
     dataDoEvento ? mapaDisponibilidade(ctx, dataDoEvento) : Promise.resolve(null),
-    historico(ctx, 12), vocabulario(ctx).catch(() => ({ prompt: "" })),
+    modo === "pedido" ? Promise.resolve([]) : ctx.rpc("projeto_listar", {}).catch(() => []), vocabulario(ctx).catch(() => ({ prompt: "" })),
   ]);
-  const recente = passadas.length ? "\n\nÚLTIMAS MENSAGENS DA CONVERSA POR ESCRITO (continue de onde pararam, sem repetir):\n" +
-    passadas.map((m: any) => `${m.papel === "user" ? "Pessoa" : NOME_ASSISTENTE}: ${String(m.conteudo).slice(0, 300)}${(m.anexos || []).some((a: any) => a.tipo === "imagem") ? ` [foto enviada — ref ${refFoto(m.id)}]` : ""}${(m.anexos || []).filter((a: any) => a.tipo === "arquivo").map((a: any) => ` [enviou o arquivo ${a.nome} no chat]`).join("")}`).join("\n") : "";
+  // A ligação começa do zero: nada da conversa por escrito entra aqui (pode ser sobre outro pedido). Ela só sabe quais
+  // pedidos a pessoa tem, pra perguntar de qual quer falar (ou se é um novo).
+  const hojeIso = new Date().toISOString().slice(0, 10);
+  const pedidos = (Array.isArray(passadas) ? passadas : []).filter((p: any) => String(p.data_evento || "") >= hojeIso).slice(0, 20);
+  const recente = "\n\nLIGAÇÃO: esta ligação começa do zero. Não continue nem cite a conversa por escrito anterior. Primeiro entenda a necessidade da pessoa e SOBRE QUAL PEDIDO ela quer falar — pode ser um pedido existente (mesmo que não seja o aberto na tela) ou um novo. Quando souber qual, use abrir_projeto (ou siga as regras de PEDIDO NOVO)." +
+    (pedidos.length ? "\nPedidos desta pessoa: " + pedidos.map((p: any) => `${p.noivos} (${p.evento?.tipo || "evento"}, ${fmtData(p.data_evento)}, ${p.local_evento}) [id ${p.id}]`).join("; ") + "." : "\nEla ainda não tem pedidos.") +
+    (projeto ? `\nNa tela dela está aberto o pedido "${projeto.noivos}", mas não presuma que a ligação é sobre ele.` : "");
   const primeiro = String(ctx.nome || "").trim().split(/\s+/)[0] || "a pessoa";
   const instructions = promptDoSistema({ ctx, perfil, projeto, modo, empresa: empresa?.nome, formatos, acervo, dispEvento }) + recente + JEITO_DE_FALAR.replace("{{PRIMEIRO_NOME}}", primeiro);
   const tools = FERRAMENTAS(modo).map((t: any) => ({ type: "function", ...t.function }));
@@ -1045,7 +1321,7 @@ async function ligacaoIniciar(ctx: Ctx, body: any) {
           turn_detection: { type: "semantic_vad", eagerness: "medium", create_response: true, interrupt_response: true },
           noise_reduction: { type: "far_field" },
         },
-        output: { voice: VOZ, speed: 1.02 },
+        output: { voice: VOZ },
       },
     },
   });
@@ -1080,7 +1356,7 @@ async function ferramentaDaLigacao(ctx: Ctx, body: any) {
   if (E.perfilMudou) await gravarPerfil(ctx, E.perfil);
   const disp = dataDoEvento ? mapas.get(dataDoEvento) || null : null;
   const itens = [...E.mostrados].map((id: string) => { const i = acharItem(acervo, id)!; const d = disp?.get(i.id); return { id: i.id, nome: i.nome, foto: i.foto, medidas: i.medidas, categoria: i.categoria, ...(d && d.total ? { livres: d.livre, data: dataDoEvento } : {}) }; });
-  return json({ resultado: JSON.stringify(resultado).slice(0, 14000), acoes: E.acoes, itens });
+  return json({ resultado: JSON.stringify(resultado).slice(0, 14000), acoes: E.acoes, itens, locais: E.locais || [] });
 }
 
 // No fim da ligação a transcrição vira parte da conversa por escrito (fica no histórico e alimenta o perfil).
@@ -1111,7 +1387,7 @@ serve(async (req) => {
     if ("erro" in ctx) return json({ erro: ctx.erro }, ctx.status);
     const acao = String(body?.action || "conversar");
     if (acao === "historico") {
-      const [mensagens, perfil] = await Promise.all([historico(ctx, 40), carregarPerfil(ctx)]);
+      const [mensagens, perfil] = await Promise.all([historico(ctx, 60, body?.projeto_id ? String(body.projeto_id) : null), carregarPerfil(ctx)]);
       return json({ mensagens, perfil, nome: NOME_ASSISTENTE, cliente: ctx.nome });
     }
     if (acao === "conversar") return await conversar(ctx, body);
@@ -1150,10 +1426,12 @@ serve(async (req) => {
     }
     if (acao === "falha_imagem") {
       const texto = String(body?.mensagem || "").trim().slice(0, 300) || "Não consegui terminar a imagem dessa vez. Quer que eu tente de novo?";
-      return json({ mensagem: await gravarMensagem(ctx, "assistant", texto) });
+      return json({ mensagem: await gravarMensagem(ctx, "assistant", texto, [], body?.projeto_id ? String(body.projeto_id) : null) });
     }
     if (acao === "limpar") {
-      await ctx.service.from("catalogo_assistente_mensagens").delete().eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono);
+      // Conversa de um pedido é o registro do que foi combinado: não se apaga. "Nova conversa" só vale fora de pedido.
+      if (body?.projeto_id) return json({ erro: "A conversa de um pedido fica guardada como registro do que foi combinado." }, 400);
+      await ctx.service.from("catalogo_assistente_mensagens").delete().eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono).is("projeto_id", null);
       return json({ ok: true });
     }
     return json({ erro: "Ação desconhecida" }, 400);

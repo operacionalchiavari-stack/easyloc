@@ -1,9 +1,9 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
 import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261015-assistente";
-import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-arquivos";
+import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-helena-catalogo2";
 import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261006-pastas-livres";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261015-presenca";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261016-conversa-pedido";
 
 const supabase = window.supabaseClient;
 const modoPedido = new URLSearchParams(location.search).get('comercial') === 'pedido' && window.parent !== window;
@@ -2120,6 +2120,43 @@ function showItemSection(item){
 // state.itemReturn, e "Voltar" (appGoBack) volta exatamente pra ela. Uma sugestão de "Combine também com" troca
 // o item da página, sem empilhar retornos.
 // Cartões de itens da assistente comercial: abre o item na página dele, voltando pra categoria dele.
+// A Helena mostra as peças no PRÓPRIO catálogo (pedido do usuário: "a tela vai mexendo sozinha e ela circula quando
+// fizer uma indicação específica"). Peças de uma categoria só → abre a categoria; de várias → a grade "Seleção da
+// Helena" (como o resultado da busca). Rola até a primeira e, com `circular`, desenha um círculo à mão em volta de cada.
+const SVG_CIRCULO = `<svg class="helena-circulo" viewBox="0 0 200 160" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M58 22 C112 4 184 22 190 74 C196 128 120 156 66 146 C14 136 2 86 22 52 C36 28 74 14 118 16"/></svg>`;
+function principalDaGrade(id){
+  const alvo = String(id);
+  const item = state.items.find((i) => String(i.id) === alvo || i.variantGroup?.some((v) => String(v.id) === alvo));
+  return item ? String(item.id) : null;
+}
+function mostrarPelaHelena(ids, { circular = true } = {}){
+  const principais = [...new Set((ids || []).map(principalDaGrade).filter(Boolean))];
+  if(!principais.length) return false;
+  const itens = principais.map((id) => state.items.find((i) => String(i.id) === id));
+  const cats = new Set(itens.map((i) => i.cat));
+  if(cats.size === 1) applyView(itens[0].cat);
+  else{
+    if(state.overlay) setActiveOverlay(null);
+    state.itemReturn = null;
+    state.viewMode = "grid"; updateViewToggleButton();
+    renderProducts(itens, "Seleção da Helena", null);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const cards = [...document.querySelectorAll("#catalogGrid [data-grid-item]")].filter((c) => principais.includes(principalDaGrade(c.dataset.gridItem)));
+    if(!cards.length) return;
+    cards[0].scrollIntoView({ behavior: "smooth", block: "center" });
+    if(!circular) return;
+    cards.forEach((card, n) => {
+      card.classList.add("helena-alvo");
+      card.querySelector(".helena-circulo")?.remove();
+      card.insertAdjacentHTML("beforeend", SVG_CIRCULO);
+      card.querySelector(".helena-circulo").style.animationDelay = `${500 + n * 350}ms`;
+    });
+  }));
+  return true;
+}
+
 function abrirItemPelaAssistente(id){
   const item = findItemById(id);
   if(!item) return;
@@ -3959,7 +3996,7 @@ async function init(){
     // Assistente comercial (out/2026): decorador e equipe; visitante não (não tem projeto nem pedido).
     if(!ehVisitante()) initCatalogAssistente({
       supabase, getSession: () => state.catalogSession, modoPedido, cenaEditor, notify, temProjetos: true,
-      findItem: findItemById, abrirItem: abrirItemPelaAssistente,
+      findItem: findItemById, abrirItem: abrirItemPelaAssistente, mostrarNoCatalogo: mostrarPelaHelena,
     });
     initCatalogBiblioteca({
       supabase, empresaId, token: state.catalogSession.token,
