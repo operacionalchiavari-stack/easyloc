@@ -578,6 +578,118 @@ function limparProjeto(p: any, acervo: Item[]) {
   };
 }
 
+// Executor das ferramentas da Helena — o mesmo para a conversa por texto e para a ligação (voz em tempo real).
+// E = estado da conversa: acervo, modo, perfil, projeto (retrato que vai se atualizando), formatos, ações para a tela,
+// itens a mostrar em cartão e o mapa de disponibilidade por data.
+function criarExecutor(ctx: Ctx, E: any) {
+  const itemValido = (id: unknown) => acharItem(E.acervo, id);
+  return async (nome: string, a: any): Promise<unknown> => {
+    switch (nome) {
+      case "buscar_itens": {
+        // Com projeto numa data, a busca já filtra pelo que está livre nesse dia (a não ser que peça incluir_indisponiveis).
+        const data = /^\d{4}-\d{2}-\d{2}$/.test(String(a?.disponivel_em || "")) ? String(a.disponivel_em) : (a?.incluir_indisponiveis ? "" : E.dataDoEvento);
+        if (data && !a?.disponivel_em) a = { ...a, disponivel_em: data };
+        if (data && !E.mapas.has(data)) E.mapas.set(data, await mapaDisponibilidade(ctx, data));
+        return buscarItens(E.acervo, a, data ? E.mapas.get(data) : null);
+      }
+      case "listar_categorias": return listarCategorias(E.acervo);
+      case "sugerir_combinacoes": return sugerirCombinacoes(E.acervo, a, E.perfil);
+      case "verificar_disponibilidade": return verificarDisponibilidade(ctx, E.acervo, a, E.projeto?.data_evento || null);
+      case "mostrar_itens": {
+        const ids = (Array.isArray(a?.item_ids) ? a.item_ids : []).map((x: unknown) => itemValido(x)?.id).filter(Boolean).slice(0, 8) as string[];
+        ids.forEach((id: string) => E.mostrados.add(id));
+        return { mostrados: ids.length };
+      }
+      case "adicionar_ao_pedido": case "remover_do_pedido": {
+        const item = itemValido(a?.item_id);
+        if (!item) return { erro: "Item não existe no acervo." };
+        if (!E.projeto) return { erro: E.modo === "pedido" ? "O pedido ainda não está pronto." : "Não há projeto aberto. Peça noivos/cliente, data e local e use criar_projeto." };
+        const ambNome = String(a?.ambiente || "").trim().slice(0, 60);
+        const amb = ambNome ? E.projeto.ambientes.find((x: any) => normalizar(x.nome) === normalizar(ambNome)) : E.projeto.ambientes.find((x: any) => x.id === E.projeto!.ambiente_ativo) || E.projeto.ambientes[0];
+        const quantidade = nome === "remover_do_pedido" ? 0 : Math.max(1, Math.min(999, Math.round(Number(a?.quantidade) || 1)));
+        if (!amb && !ambNome && nome === "adicionar_ao_pedido") return { erro: "O projeto não tem ambientes. Informe o nome do ambiente (ex.: Lounge)." };
+        if (!amb && nome === "remover_do_pedido") return { erro: "Ambiente não encontrado no projeto." };
+        // Trava de disponibilidade na data do evento: conta a mesma peça nos OUTROS ambientes do pedido também.
+        const dataEvento = /^\d{4}-\d{2}-\d{2}$/.test(String(E.projeto.data_evento || "")) ? E.projeto.data_evento : "";
+        if (quantidade && dataEvento) {
+          if (!E.mapas.has(dataEvento)) E.mapas.set(dataEvento, await mapaDisponibilidade(ctx, dataEvento));
+          const d = E.mapas.get(dataEvento)!.get(item.id);
+          const outros = E.projeto.ambientes.filter((x: any) => x !== amb).reduce((t: number, x: any) => t + x.itens.filter((i: any) => i.item_id === item.id).reduce((q: number, i: any) => q + i.quantidade, 0), 0);
+          if (d && d.total && quantidade + outros > d.livre) {
+            const restam = Math.max(0, d.livre - outros);
+            return { erro: restam
+              ? `INDISPONÍVEL nessa quantidade: em ${dataEvento} só há ${restam} unidade(s) livre(s) de ${item.nome}${outros ? ` (já há ${outros} em outro ambiente deste pedido)` : ""}. Nada foi adicionado. Diga isso à pessoa e pergunte se quer essa quantidade ou uma alternativa.`
+              : `INDISPONÍVEL: ${item.nome} não tem unidades livres em ${dataEvento}. Nada foi adicionado. Diga à pessoa que infelizmente não está disponível nessa data e ofereça alternativas disponíveis (buscar_itens com disponivel_em).` };
+          }
+        }
+        E.acoes.push({ tipo: "quantidade", item_id: item.id, quantidade, ambiente: amb?.nome || ambNome });
+        // Mantém o retrato do projeto em dia para as próximas ferramentas desta mesma resposta.
+        let alvo = amb;
+        if (!alvo) { alvo = { id: `novo:${ambNome}`, nome: ambNome, itens: [] }; E.projeto.ambientes.push(alvo); }
+        alvo.itens = alvo.itens.filter((i: any) => i.item_id !== item.id);
+        if (quantidade) { alvo.itens.push({ item_id: item.id, quantidade, nome: item.nome, ref: item.ref }); registrarEscolha(E.perfil, item); E.perfilMudou = true; }
+        return { ok: true, item: item.nome, ambiente: alvo.nome, quantidade_no_ambiente: quantidade };
+      }
+      case "criar_projeto": {
+        if (E.modo === "pedido") return { erro: "Indisponível dentro do pedido." };
+        const noivos = String(a?.noivos || "").trim(), data = String(a?.data_evento || "").trim(), local = String(a?.local_evento || "").trim();
+        if (!noivos || !/^\d{4}-\d{2}-\d{2}$/.test(data) || !local) return { erro: "Preciso de noivos/cliente, data (AAAA-MM-DD) e local." };
+        // Trava: nada de projeto com dado inventado/provisório (já aconteceu em teste: local "(definir)" e o nome da decoradora como noivos).
+        if (local.length < 3 || /defin|confirmar|\?|^-+$|^n\/?a$|sem local/i.test(local)) return { erro: "O local ainda não foi informado. Pergunte o local do evento antes de criar o projeto." };
+        if (ctx.nome && normalizar(noivos) === normalizar(ctx.nome)) return { erro: "Esse é o nome do(a) decorador(a), não dos noivos. Pergunte o nome dos noivos ou do cliente final." };
+        if (!a?.confirmado_pela_pessoa) return { erro: "Confirme com a pessoa os dados (noivos, data e local) antes de criar o projeto." };
+        const ambientes = (Array.isArray(a?.ambientes) ? a.ambientes : []).map((x: unknown) => String(x).trim().slice(0, 60)).filter(Boolean).slice(0, 12);
+        const criado = await ctx.rpc("projeto_criar", { p_noivos: noivos, p_data_evento: data, p_local_evento: local, p_ambientes: ambientes });
+        const dados = criado?.dados || {};
+        E.projeto = { id: String(criado.id), noivos, data_evento: data, local_evento: local, status: "rascunho", ambiente_ativo: dados.ambientes?.[0]?.id || null,
+          ambientes: (dados.ambientes || []).map((x: any) => ({ id: String(x.id), nome: x.nome, itens: [] })) };
+        E.acoes.push({ tipo: "usar_projeto", projeto_id: E.projeto.id });
+        return { ok: true, projeto: E.projeto.noivos, ambientes: E.projeto.ambientes.map((x: any) => x.nome) };
+      }
+      case "enviar_pedido": {
+        if (!E.projeto) return { erro: "Não há projeto aberto." };
+        const total = E.projeto.ambientes.reduce((s: number, x: any) => s + x.itens.length, 0);
+        if (!total) return { erro: "O projeto ainda não tem itens." };
+        E.acoes.push({ tipo: "enviar_pedido", observacao: String(a?.observacao || "").slice(0, 1000) });
+        return { ok: true, observacao: "A revisão do pedido foi aberta na tela; a pessoa confirma o envio por lá." };
+      }
+      case "listar_formatos": {
+        E.formatos ||= await carregarFormatos(ctx, E.acervo);
+        // Sempre todos (são poucos): formato sem categoria cairia fora de um filtro e é justamente o da equipe.
+        return { formatos: (E.formatos as Formato[]).map((f) => formatoParaIA(f, E.acervo)) };
+      }
+      case "gerar_imagem_composicao": {
+        E.formatos ||= await carregarFormatos(ctx, E.acervo);
+        const f = (E.formatos as Formato[]).find((x) => x.id === String(a?.formato_id));
+        if (!f) return { erro: "Formato não encontrado. Use listar_formatos." };
+        const selecao: Record<string, string> = {};
+        const problemas: string[] = [];
+        for (const p of Array.isArray(a?.pecas) ? a.pecas : []) {
+          const peca = f.pecas.find((x) => x.papel === String(p?.papel));
+          const item = itemValido(p?.item_id);
+          if (!peca) { problemas.push(`posição "${p?.papel}" não existe neste formato`); continue; }
+          if (!item) { problemas.push(`item ${p?.item_id} não existe`); continue; }
+          if (!item.tem3d) { problemas.push(`${item.nome} não tem modelo 3D`); continue; }
+          if (!peca.aceita(item)) { problemas.push(`${item.nome} não serve na posição "${peca.rotulo}" (aceita: ${peca.descricao})`); continue; }
+          selecao[peca.papel] = item.id;
+        }
+        if (problemas.length) return { erro: "Ajuste as peças: " + problemas.join("; ") };
+        if (!Object.keys(selecao).length) return { erro: "Escolha ao menos um móvel." };
+        const faltaObrigatorio = f.pecas.filter((p) => p.obrigatorio && !selecao[p.papel]);
+        if (faltaObrigatorio.length) return { erro: `Neste formato é obrigatório: ${faltaObrigatorio.map((p) => p.rotulo).join(", ")}.` };
+        const itens = Object.values(selecao).map((id) => itemValido(id)!.nome);
+        E.acoes.push({ tipo: "renderizar", formato_id: f.id, formato_nome: f.nome, selecao, legenda: String(a?.legenda || "").slice(0, 200), itens });
+        return { ok: true, observacao: "A imagem está sendo gerada (1 a 2 minutos) e aparece na conversa quando ficar pronta." };
+      }
+      case "atualizar_perfil": {
+        E.perfil = mesclarPerfil(E.perfil, a); E.perfilMudou = true;
+        return { ok: true };
+      }
+    }
+    return { erro: "Ferramenta desconhecida" };
+  };
+}
+
 async function conversar(ctx: Ctx, body: any) {
   const mensagem = String(body?.mensagem || "").trim().slice(0, 2000);
   if (!mensagem) return json({ erro: "Mensagem vazia" }, 400);
@@ -593,10 +705,9 @@ async function conversar(ctx: Ctx, body: any) {
     carregarAcervo(ctx), carregarPerfil(ctx), historico(ctx, 24),
     ctx.service.from("empresas").select("nome").eq("id", ctx.empresaId).maybeSingle(),
   ]);
-  let perfil = perfilInicial;
-  let perfilMudou = false;
-  let projeto = limparProjeto(body?.projeto, acervo);
-  let formatos: Formato[] | null = await carregarFormatos(ctx, acervo);
+  const perfil = perfilInicial;
+  const projeto = limparProjeto(body?.projeto, acervo);
+  const formatos: Formato[] | null = await carregarFormatos(ctx, acervo);
   const acoes: any[] = [];
   const mostrados = new Set<string>();
 
@@ -623,113 +734,10 @@ async function conversar(ctx: Ctx, body: any) {
   }
   const itemValido = (id: unknown) => acharItem(acervo, id);
 
-  const executar = async (nome: string, a: any): Promise<unknown> => {
-    switch (nome) {
-      case "buscar_itens": {
-        // Com projeto numa data, a busca já filtra pelo que está livre nesse dia (a não ser que peça incluir_indisponiveis).
-        const data = /^\d{4}-\d{2}-\d{2}$/.test(String(a?.disponivel_em || "")) ? String(a.disponivel_em) : (a?.incluir_indisponiveis ? "" : dataDoEvento);
-        if (data && !a?.disponivel_em) a = { ...a, disponivel_em: data };
-        if (data && !mapas.has(data)) mapas.set(data, await mapaDisponibilidade(ctx, data));
-        return buscarItens(acervo, a, data ? mapas.get(data) : null);
-      }
-      case "listar_categorias": return listarCategorias(acervo);
-      case "sugerir_combinacoes": return sugerirCombinacoes(acervo, a, perfil);
-      case "verificar_disponibilidade": return verificarDisponibilidade(ctx, acervo, a, projeto?.data_evento || null);
-      case "mostrar_itens": {
-        const ids = (Array.isArray(a?.item_ids) ? a.item_ids : []).map((x: unknown) => itemValido(x)?.id).filter(Boolean).slice(0, 8) as string[];
-        ids.forEach((id: string) => mostrados.add(id));
-        return { mostrados: ids.length };
-      }
-      case "adicionar_ao_pedido": case "remover_do_pedido": {
-        const item = itemValido(a?.item_id);
-        if (!item) return { erro: "Item não existe no acervo." };
-        if (!projeto) return { erro: modo === "pedido" ? "O pedido ainda não está pronto." : "Não há projeto aberto. Peça noivos/cliente, data e local e use criar_projeto." };
-        const ambNome = String(a?.ambiente || "").trim().slice(0, 60);
-        const amb = ambNome ? projeto.ambientes.find((x: any) => normalizar(x.nome) === normalizar(ambNome)) : projeto.ambientes.find((x: any) => x.id === projeto!.ambiente_ativo) || projeto.ambientes[0];
-        const quantidade = nome === "remover_do_pedido" ? 0 : Math.max(1, Math.min(999, Math.round(Number(a?.quantidade) || 1)));
-        if (!amb && !ambNome && nome === "adicionar_ao_pedido") return { erro: "O projeto não tem ambientes. Informe o nome do ambiente (ex.: Lounge)." };
-        if (!amb && nome === "remover_do_pedido") return { erro: "Ambiente não encontrado no projeto." };
-        // Trava de disponibilidade na data do evento: conta a mesma peça nos OUTROS ambientes do pedido também.
-        const dataEvento = /^\d{4}-\d{2}-\d{2}$/.test(String(projeto.data_evento || "")) ? projeto.data_evento : "";
-        if (quantidade && dataEvento) {
-          if (!mapas.has(dataEvento)) mapas.set(dataEvento, await mapaDisponibilidade(ctx, dataEvento));
-          const d = mapas.get(dataEvento)!.get(item.id);
-          const outros = projeto.ambientes.filter((x: any) => x !== amb).reduce((t: number, x: any) => t + x.itens.filter((i: any) => i.item_id === item.id).reduce((q: number, i: any) => q + i.quantidade, 0), 0);
-          if (d && d.total && quantidade + outros > d.livre) {
-            const restam = Math.max(0, d.livre - outros);
-            return { erro: restam
-              ? `INDISPONÍVEL nessa quantidade: em ${dataEvento} só há ${restam} unidade(s) livre(s) de ${item.nome}${outros ? ` (já há ${outros} em outro ambiente deste pedido)` : ""}. Nada foi adicionado. Diga isso à pessoa e pergunte se quer essa quantidade ou uma alternativa.`
-              : `INDISPONÍVEL: ${item.nome} não tem unidades livres em ${dataEvento}. Nada foi adicionado. Diga à pessoa que infelizmente não está disponível nessa data e ofereça alternativas disponíveis (buscar_itens com disponivel_em).` };
-          }
-        }
-        acoes.push({ tipo: "quantidade", item_id: item.id, quantidade, ambiente: amb?.nome || ambNome });
-        // Mantém o retrato do projeto em dia para as próximas ferramentas desta mesma resposta.
-        let alvo = amb;
-        if (!alvo) { alvo = { id: `novo:${ambNome}`, nome: ambNome, itens: [] }; projeto.ambientes.push(alvo); }
-        alvo.itens = alvo.itens.filter((i: any) => i.item_id !== item.id);
-        if (quantidade) { alvo.itens.push({ item_id: item.id, quantidade, nome: item.nome, ref: item.ref }); registrarEscolha(perfil, item); perfilMudou = true; }
-        return { ok: true, item: item.nome, ambiente: alvo.nome, quantidade_no_ambiente: quantidade };
-      }
-      case "criar_projeto": {
-        if (modo === "pedido") return { erro: "Indisponível dentro do pedido." };
-        const noivos = String(a?.noivos || "").trim(), data = String(a?.data_evento || "").trim(), local = String(a?.local_evento || "").trim();
-        if (!noivos || !/^\d{4}-\d{2}-\d{2}$/.test(data) || !local) return { erro: "Preciso de noivos/cliente, data (AAAA-MM-DD) e local." };
-        // Trava: nada de projeto com dado inventado/provisório (já aconteceu em teste: local "(definir)" e o nome da decoradora como noivos).
-        if (local.length < 3 || /defin|confirmar|\?|^-+$|^n\/?a$|sem local/i.test(local)) return { erro: "O local ainda não foi informado. Pergunte o local do evento antes de criar o projeto." };
-        if (ctx.nome && normalizar(noivos) === normalizar(ctx.nome)) return { erro: "Esse é o nome do(a) decorador(a), não dos noivos. Pergunte o nome dos noivos ou do cliente final." };
-        if (!a?.confirmado_pela_pessoa) return { erro: "Confirme com a pessoa os dados (noivos, data e local) antes de criar o projeto." };
-        const ambientes = (Array.isArray(a?.ambientes) ? a.ambientes : []).map((x: unknown) => String(x).trim().slice(0, 60)).filter(Boolean).slice(0, 12);
-        const criado = await ctx.rpc("projeto_criar", { p_noivos: noivos, p_data_evento: data, p_local_evento: local, p_ambientes: ambientes });
-        const dados = criado?.dados || {};
-        projeto = { id: String(criado.id), noivos, data_evento: data, local_evento: local, status: "rascunho", ambiente_ativo: dados.ambientes?.[0]?.id || null,
-          ambientes: (dados.ambientes || []).map((x: any) => ({ id: String(x.id), nome: x.nome, itens: [] })) };
-        acoes.push({ tipo: "usar_projeto", projeto_id: projeto.id });
-        return { ok: true, projeto: projeto.noivos, ambientes: projeto.ambientes.map((x: any) => x.nome) };
-      }
-      case "enviar_pedido": {
-        if (!projeto) return { erro: "Não há projeto aberto." };
-        const total = projeto.ambientes.reduce((s: number, x: any) => s + x.itens.length, 0);
-        if (!total) return { erro: "O projeto ainda não tem itens." };
-        acoes.push({ tipo: "enviar_pedido", observacao: String(a?.observacao || "").slice(0, 1000) });
-        return { ok: true, observacao: "A revisão do pedido foi aberta na tela; a pessoa confirma o envio por lá." };
-      }
-      case "listar_formatos": {
-        formatos ||= await carregarFormatos(ctx, acervo);
-        // Sempre todos (são poucos): formato sem categoria cairia fora de um filtro e é justamente o da equipe.
-        return { formatos: formatos.map((f) => formatoParaIA(f, acervo)) };
-      }
-      case "gerar_imagem_composicao": {
-        formatos ||= await carregarFormatos(ctx, acervo);
-        const f = formatos.find((x) => x.id === String(a?.formato_id));
-        if (!f) return { erro: "Formato não encontrado. Use listar_formatos." };
-        const selecao: Record<string, string> = {};
-        const problemas: string[] = [];
-        for (const p of Array.isArray(a?.pecas) ? a.pecas : []) {
-          const peca = f.pecas.find((x) => x.papel === String(p?.papel));
-          const item = itemValido(p?.item_id);
-          if (!peca) { problemas.push(`posição "${p?.papel}" não existe neste formato`); continue; }
-          if (!item) { problemas.push(`item ${p?.item_id} não existe`); continue; }
-          if (!item.tem3d) { problemas.push(`${item.nome} não tem modelo 3D`); continue; }
-          if (!peca.aceita(item)) { problemas.push(`${item.nome} não serve na posição "${peca.rotulo}" (aceita: ${peca.descricao})`); continue; }
-          selecao[peca.papel] = item.id;
-        }
-        if (problemas.length) return { erro: "Ajuste as peças: " + problemas.join("; ") };
-        if (!Object.keys(selecao).length) return { erro: "Escolha ao menos um móvel." };
-        const faltaObrigatorio = f.pecas.filter((p) => p.obrigatorio && !selecao[p.papel]);
-        if (faltaObrigatorio.length) return { erro: `Neste formato é obrigatório: ${faltaObrigatorio.map((p) => p.rotulo).join(", ")}.` };
-        const itens = Object.values(selecao).map((id) => itemValido(id)!.nome);
-        acoes.push({ tipo: "renderizar", formato_id: f.id, formato_nome: f.nome, selecao, legenda: String(a?.legenda || "").slice(0, 200), itens });
-        return { ok: true, observacao: "A imagem está sendo gerada (1 a 2 minutos) e aparece na conversa quando ficar pronta." };
-      }
-      case "atualizar_perfil": {
-        perfil = mesclarPerfil(perfil, a); perfilMudou = true;
-        return { ok: true };
-      }
-    }
-    return { erro: "Ferramenta desconhecida" };
-  };
+  const E: any = { acervo, modo, perfil, perfilMudou: false, projeto, formatos, acoes, mostrados, mapas, dataDoEvento };
+  const executar = criarExecutor(ctx, E);
 
-  const gostos = extrairGostos(mensagem, perfil);
+  const gostos = extrairGostos(mensagem, E.perfil);
   let resposta = "";
   // Pedido de ação ("coloca", "inclui", "tira", "quero o sofá X no lounge"...): na 1ª rodada a ferramenta é obrigatória —
   // em teste ela respondeu "vou incluir" sem chamar nada (não incluiu nem conferiu a data).
@@ -759,15 +767,15 @@ async function conversar(ctx: Ctx, body: any) {
     for (const i of candidatos) { const k = normalizar(i.nome); if (vistosNome.has(k) || mostrados.size >= 8) continue; vistosNome.add(k); mostrados.add(i.id); }
   }
   const aprendido = await gostos;
-  if (aprendido) { perfil = mesclarPerfil(perfil, aprendido); perfilMudou = true; }
-  if (perfilMudou) await gravarPerfil(ctx, perfil);
+  if (aprendido) { E.perfil = mesclarPerfil(E.perfil, aprendido); E.perfilMudou = true; }
+  if (E.perfilMudou) await gravarPerfil(ctx, E.perfil);
   const dispCartoes = dataDoEvento ? mapas.get(dataDoEvento) : null;
   const itens = [...mostrados].map((id) => { const i = itemValido(id)!; const d = dispCartoes?.get(i.id); return { id: i.id, nome: i.nome, foto: i.foto, medidas: i.medidas, categoria: i.categoria, ...(d && d.total ? { livres: d.livre, data: dataDoEvento } : {}) }; });
   const anexos = [
     ...(itens.length ? [{ tipo: "itens", itens }] : []),
     ...acoes.filter((x) => x.tipo === "renderizar").map((x) => ({ tipo: "renderizando", formato: x.formato_nome, itens: x.itens })),
   ];
-  const gravada = await gravarMensagem(ctx, "assistant", resposta, anexos, projeto?.id || null);
+  const gravada = await gravarMensagem(ctx, "assistant", resposta, anexos, E.projeto?.id || null);
   return json({ mensagem: gravada, acoes, nome: NOME_ASSISTENTE, ...(body?.debug ? { rastro } : {}) });
 }
 
@@ -875,6 +883,126 @@ async function salvarImagem(ctx: Ctx, body: any) {
   return json({ mensagem: gravada });
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+// LIGAÇÃO (voz em tempo real). O navegador fala direto com a OpenAI por WebRTC (é o que dá ~1 s de resposta e deixa a
+// pessoa interromper); a chave de verdade nunca sai daqui: o servidor entrega uma chave temporária da sessão, já com as
+// instruções e as ferramentas. Cada ferramenta que ela chama durante a ligação volta pra cá (ação "ferramenta") e roda
+// no MESMO executor da conversa por texto — mesmas regras, inclusive a trava de peça esgotada na data do evento.
+const MODELO_VOZ = Deno.env.get("CATALOGO_ASSISTENTE_REALTIME_MODEL") || "gpt-realtime-2.1";
+const VOZ = Deno.env.get("CATALOGO_ASSISTENTE_VOZ") || "marin";
+
+const JEITO_DE_FALAR = `
+
+AGORA É UMA LIGAÇÃO DE VOZ (isto vale acima das regras de formato de texto)
+- Você está ao telefone com a pessoa. Fale como uma consultora brasileira experiente: calorosa, segura, ritmo de conversa, entonação viva, ênfase nas palavras que importam e pausas naturais.
+- VÍCIOS DE LINGUAGEM SÃO PROIBIDOS. Não comece as respostas sempre do mesmo jeito; não use bordões nem muletas ("olha", "perfeito", "ótimo", "maravilha", "com certeza", "prontinho", "deixa eu ver aqui", "só um segundinho", "entendi", "show"). No máximo uma interjeição curta a cada várias falas, e nunca a mesma duas vezes na ligação. Não repita o nome da pessoa a toda hora (só no cumprimento e, se fizer sentido, uma vez mais). Não repita o que a pessoa acabou de dizer antes de responder. Varie as palavras como uma pessoa real varia.
+- Frases curtas. Normalmente uma ou duas frases por vez (três só quando realmente necessário) e então pare e deixe a pessoa falar. Nada de listas, tópicos, markdown, asteriscos ou códigos. Se houver várias peças, cite no máximo três.
+- NUNCA RESPONDA A SI MESMA: quando fizer uma pergunta, termine a fala ali e espere a pessoa responder — não sugira a resposta, não continue falando, não pergunte e responda em seguida. Se você ainda vai consultar algo, não faça pergunta antes.
+- Ferramentas: só fale antes de usar uma se a consulta for demorar, e aí uma frase muito curta e neutra, diferente a cada vez (sem pergunta). Depois que o resultado chegar, siga direto para a resposta — não cumprimente de novo, não repita o que já disse, não anuncie "pronto" toda vez.
+- Números, valores e datas por extenso, do jeito que se fala ("trezentos e cinquenta reais a diária", "vinte e cinco de outubro"). Medidas só se perguntarem, arredondadas.
+- Descreva peças como uma vendedora descreveria, sem recitar ficha técnica. NÃO comente se uma peça tem ou não modelo 3D/imagem de composição (mesmo que a ferramenta diga tem_modelo_3d false) — só se a pessoa pedir uma foto da composição.
+- Quando citar peças, chame mostrar_itens: as fotos aparecem na tela da pessoa enquanto vocês conversam (pode mencionar isso de vez em quando, não sempre).
+- Se a pessoa interromper, pare e escute. Se não entendeu algum nome, confirme de forma leve. Se o que você ouviu parecer só ruído, eco ou um pedaço da sua própria fala, não responda como se fosse uma pergunta: espere a pessoa falar.
+- Confirme com naturalidade o que colocou ou tirou do pedido (quantidade, peça e ambiente), cada vez com palavras diferentes.
+- Para encerrar, despeça-se com carinho e diga que o que conversaram já está no pedido e na conversa por escrito.
+- A sua PRIMEIRA fala é só atender: cumprimente pelo primeiro nome ("{{PRIMEIRO_NOME}}") numa frase curta e calorosa e pergunte em que pode ajudar com o evento (se houver projeto aberto, pode citar os noivos). Não retome assunto antigo nem use ferramentas nessa primeira fala.`;
+
+async function estadoDaConversa(ctx: Ctx, body: any) {
+  const modo = body?.modo === "pedido" ? "pedido" : "catalogo";
+  const acervo = await carregarAcervo(ctx);
+  const projeto = limparProjeto(body?.projeto, acervo);
+  const dataDoEvento = /^\d{4}-\d{2}-\d{2}$/.test(String(projeto?.data_evento || "")) ? String(projeto!.data_evento) : "";
+  return { acervo, modo, projeto, dataDoEvento };
+}
+
+async function ligacaoIniciar(ctx: Ctx, body: any) {
+  const key = Deno.env.get("OPENAI_API_KEY");
+  if (!key) return json({ erro: "Ligação indisponível agora." }, 500);
+  // Freio: até 6 ligações por hora por pessoa (cada uma custa por minuto).
+  const umaHora = new Date(Date.now() - 3600000).toISOString();
+  const { count } = await ctx.service.from("catalogo_assistente_mensagens").select("id", { count: "exact", head: true })
+    .eq("empresa_id", ctx.empresaId).eq("dono", ctx.dono).eq("papel", "assistant").gte("criado_em", umaHora).contains("anexos", [{ tipo: "ligacao" }]);
+  if ((count || 0) >= 6) return json({ erro: "Muitas ligações em pouco tempo. Tente de novo daqui a pouco ou fale por mensagem." }, 429);
+  const { acervo, modo, projeto, dataDoEvento } = await estadoDaConversa(ctx, body);
+  const [perfil, formatos, { data: empresa }, dispEvento, passadas, vocab] = await Promise.all([
+    carregarPerfil(ctx), carregarFormatos(ctx, acervo),
+    ctx.service.from("empresas").select("nome").eq("id", ctx.empresaId).maybeSingle(),
+    dataDoEvento ? mapaDisponibilidade(ctx, dataDoEvento) : Promise.resolve(null),
+    historico(ctx, 12), vocabulario(ctx).catch(() => ({ prompt: "" })),
+  ]);
+  const recente = passadas.length ? "\n\nÚLTIMAS MENSAGENS DA CONVERSA POR ESCRITO (continue de onde pararam, sem repetir):\n" +
+    passadas.map((m: any) => `${m.papel === "user" ? "Pessoa" : NOME_ASSISTENTE}: ${String(m.conteudo).slice(0, 300)}`).join("\n") : "";
+  const primeiro = String(ctx.nome || "").trim().split(/\s+/)[0] || "a pessoa";
+  const instructions = promptDoSistema({ ctx, perfil, projeto, modo, empresa: empresa?.nome, formatos, acervo, dispEvento }) + recente + JEITO_DE_FALAR.replace("{{PRIMEIRO_NOME}}", primeiro);
+  const tools = FERRAMENTAS(modo).map((t: any) => ({ type: "function", ...t.function }));
+  const sessao = (model: string) => ({
+    expires_after: { anchor: "created_at", seconds: 600 },
+    session: {
+      type: "realtime", model, instructions, tools, tool_choice: "auto",
+      audio: {
+        input: {
+          transcription: { model: "gpt-4o-transcribe", language: "pt", prompt: `A consultora se chama ${NOME_ASSISTENTE}. ` + String(vocab.prompt || "").slice(0, 900) },
+          turn_detection: { type: "semantic_vad", eagerness: "medium", create_response: true, interrupt_response: true },
+          noise_reduction: { type: "far_field" },
+        },
+        output: { voice: VOZ, speed: 1.02 },
+      },
+    },
+  });
+  let ultimoErro = "";
+  for (const model of [...new Set([MODELO_VOZ, "gpt-realtime"])]) {
+    const r = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
+      method: "POST", signal: AbortSignal.timeout(20000),
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify(sessao(model)),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d?.value) {
+      return json({ chave: d.value, modelo: model, nome: NOME_ASSISTENTE, cliente: ctx.nome || "", duracao_max: 20 * 60 });
+    }
+    ultimoErro = d?.error?.message || `Falha ao abrir a ligação (${r.status})`;
+    console.warn("ligacao:", model, ultimoErro);
+  }
+  return json({ erro: "Não consegui abrir a ligação agora. " + ultimoErro }, 502);
+}
+
+async function ferramentaDaLigacao(ctx: Ctx, body: any) {
+  const nome = String(body?.nome || "");
+  if (!FERRAMENTAS("catalogo").some((t: any) => t.function.name === nome)) return json({ erro: "Ferramenta desconhecida" }, 400);
+  let args: any = body?.args;
+  if (typeof args === "string") { try { args = JSON.parse(args || "{}"); } catch { args = {}; } }
+  const { acervo, modo, projeto, dataDoEvento } = await estadoDaConversa(ctx, body);
+  const mapas = new Map<string, Map<string, { total: number; livre: number }>>();
+  const E: any = { acervo, modo, perfil: await carregarPerfil(ctx), perfilMudou: false, projeto, formatos: null, acoes: [], mostrados: new Set<string>(), mapas, dataDoEvento };
+  let resultado: unknown;
+  try { resultado = await criarExecutor(ctx, E)(nome, args || {}); }
+  catch (e) { resultado = { erro: (e as Error).message || "Falha na ferramenta" }; }
+  if (E.perfilMudou) await gravarPerfil(ctx, E.perfil);
+  const disp = dataDoEvento ? mapas.get(dataDoEvento) || null : null;
+  const itens = [...E.mostrados].map((id: string) => { const i = acharItem(acervo, id)!; const d = disp?.get(i.id); return { id: i.id, nome: i.nome, foto: i.foto, medidas: i.medidas, categoria: i.categoria, ...(d && d.total ? { livres: d.livre, data: dataDoEvento } : {}) }; });
+  return json({ resultado: JSON.stringify(resultado).slice(0, 14000), acoes: E.acoes, itens });
+}
+
+// No fim da ligação a transcrição vira parte da conversa por escrito (fica no histórico e alimenta o perfil).
+async function ligacaoRegistrar(ctx: Ctx, body: any) {
+  const falas = (Array.isArray(body?.falas) ? body.falas : []).slice(0, 120)
+    .map((f: any) => ({ papel: f?.papel === "user" ? "user" : "assistant", texto: String(f?.texto || "").trim().slice(0, 2000) }))
+    .filter((f: any) => f.texto && !(f.papel === "user" && /^(A consultora se chama|Conversa de decoradora)/i.test(f.texto)));
+  const segundos = Math.max(0, Math.min(7200, Math.round(Number(body?.segundos) || 0)));
+  const projetoId = body?.projeto_id ? String(body.projeto_id) : null;
+  const gravadas: any[] = [];
+  for (const f of falas) gravadas.push(await gravarMensagem(ctx, f.papel, f.texto, [{ tipo: f.papel === "user" ? "voz" : "voz_helena" }], projetoId));
+  const fim = `Ligação encerrada${segundos ? ` · ${Math.floor(segundos / 60)} min ${segundos % 60} s` : ""}.`;
+  gravadas.push(await gravarMensagem(ctx, "assistant", fim, [{ tipo: "ligacao", segundos }], projetoId));
+  const fala = falas.filter((f: any) => f.papel === "user").map((f: any) => f.texto).join("\n").slice(0, 4000);
+  if (fala) {
+    const perfil = await carregarPerfil(ctx);
+    const aprendido = await extrairGostos(fala, perfil);
+    if (aprendido) await gravarPerfil(ctx, mesclarPerfil(perfil, aprendido));
+  }
+  return json({ mensagens: gravadas.filter(Boolean) });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -888,6 +1016,24 @@ serve(async (req) => {
     }
     if (acao === "conversar") return await conversar(ctx, body);
     if (acao === "transcrever") return await transcrever(ctx, body);
+    if (acao === "ligacao_iniciar") return await ligacaoIniciar(ctx, body);
+    if (acao === "ferramenta") return await ferramentaDaLigacao(ctx, body);
+    if (acao === "ligacao_registrar") return await ligacaoRegistrar(ctx, body);
+    // Amostra de voz (texto fixo) pra escolher a voz da Helena.
+    if (acao === "amostra_voz") {
+      const voz = String(body?.voz || "");
+      if (!["marin", "coral", "shimmer", "sage", "alloy", "ballad", "verse", "ash", "echo", "cedar"].includes(voz)) return json({ erro: "Voz inválida" }, 400);
+      const r = await fetch("https://api.openai.com/v1/audio/speech", {
+        method: "POST", headers: { Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "gpt-4o-mini-tts", voice: voz, response_format: "mp3",
+          input: "Oi, Lis! Que bom falar com você. Me conta do evento: já tem data e local? Pro lounge, eu pensei no sofá Becca com duas poltronas Olivia. Fica lindo, bem leve, e as duas estão livres no dia vinte e cinco.",
+          instructions: "Fale em português do Brasil, com sotaque brasileiro natural, como uma consultora comercial simpática e segura numa ligação." }),
+      });
+      if (!r.ok) return json({ erro: (await r.text()).slice(0, 300) }, 502);
+      const bytes = new Uint8Array(await r.arrayBuffer());
+      let bin = ""; for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      return json({ audio: btoa(bin) });
+    }
     // Disponibilidade de algumas peças numa data (o app mostra "X livres em 25/10" na tela do item).
     if (acao === "disponibilidade") {
       const data = String(body?.data || "");

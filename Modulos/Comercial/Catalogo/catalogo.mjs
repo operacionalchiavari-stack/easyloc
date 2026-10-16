@@ -1,7 +1,7 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
 import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261015-assistente";
-import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261015-esgotado";
+import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-ligacao2";
 import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261006-pastas-livres";
 import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261015-presenca";
 

@@ -6,7 +6,7 @@
 // fotos das composições (as peças de tela do 3D Livre são buscadas do próprio catalogo.html e montadas escondidas).
 // Navegação de app: abas embaixo, telas empilhadas com o "voltar" do celular (history), folhas que sobem de baixo.
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261015-esgotado";
+import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-ligacao2";
 
 const supabase = window.supabaseClient;
 const $ = (id) => document.getElementById(id);
@@ -230,6 +230,13 @@ window.addEventListener("popstate", () => {
     anterior.querySelectorAll("[data-atualizar]").forEach((x) => x.dispatchEvent(new Event("atualizar")));
   }
 });
+// Em qual projeto/ambiente as peças estão entrando (pedido do usuário: "no app eu não consigo ver qual pedido estamos
+// alterando"). Tocar abre a aba Projeto.
+function chipProjeto(){
+  if(visitante()) return "";
+  if(!S.projeto) return `<button type="button" class="chip-projeto vazio" data-ir-aba="projeto">${ico("projeto")}<span>Escolher projeto</span></button>`;
+  return `<button type="button" class="chip-projeto" data-ir-aba="projeto" aria-label="Projeto ${esc(S.projeto.noivos)}">${ico("projeto")}<span>${esc(S.projeto.noivos)}${ambienteAtivo() ? `<small>${esc(ambienteAtivo().nome)} · ${totalPecas()} ${totalPecas() === 1 ? "peça" : "peças"}</small>` : ""}</span></button>`;
+}
 function topo(titulo, { voltar: comVoltar = true, extra = "" } = {}){
   return `<header class="topo">${comVoltar ? `<button type="button" class="btn-icone" data-voltar aria-label="Voltar">${ico("voltar")}</button>` : ""}<h1>${esc(titulo)}</h1>${extra}</header>`;
 }
@@ -294,13 +301,14 @@ function aoClicarComum(e){
 
 function telaCatalogo(){
   const cats = categorias();
-  const el = novaTela(`${topo("Catálogo", { voltar: false })}<div class="tela-rolagem">
+  const el = novaTela(`${topo("Catálogo", { voltar: false, extra: chipProjeto() })}<div class="tela-rolagem">
     <label class="busca"><svg viewBox="0 0 24 24" aria-hidden="true">${ICO.busca}</svg><input type="search" placeholder="Buscar sofá, cadeira, boho…" aria-label="Buscar no catálogo" data-busca enterkeyhint="search"></label>
     <div data-resultado><div class="grade-cats">${cats.map((c) => `<button type="button" class="cat-card" data-cat="${esc(c.cat)}"><img src="${esc(otimizar(capaDaCategoria(c), 420))}" alt="" loading="lazy"><span>${esc(c.label)}<small>${c.itens.length} ${c.itens.length === 1 ? "peça" : "peças"}</small></span></button>`).join("")}</div></div>
   </div>`);
   el.addEventListener("click", aoClicarComum);
   const res = el.querySelector("[data-resultado]"), padrao = res.innerHTML;
   let t = null;
+  el.setAttribute("data-atualizar", ""); el.addEventListener("atualizar", () => { const chip = el.querySelector(".chip-projeto"); if(chip) chip.outerHTML = chipProjeto(); });
   el.querySelector("[data-busca]").addEventListener("input", (e) => {
     clearTimeout(t);
     t = setTimeout(() => {
@@ -318,10 +326,10 @@ function telaCategoria(cat){
   if(!c) return novaTela(`${topo("Categoria")}<p class="vazio">Categoria não encontrada.</p>`);
   const subs = [...new Map(c.itens.filter((i) => i.subcat).map((i) => [i.subcat, i.subcatLabel])).entries()];
   let filtro = "";
-  const el = novaTela(`${topo(c.label)}<div class="tela-rolagem">
+  const el = novaTela(`${topo(c.label, { extra: chipProjeto() })}<div class="tela-rolagem">
     ${subs.length > 1 ? `<div class="chips">${[["", "Todos"], ...subs].map(([k, v]) => `<button type="button" class="chip${k === "" ? " ativo" : ""}" data-sub="${esc(k)}">${esc(v)}</button>`).join("")}</div>` : ""}
     <div class="grade-produtos" data-grade></div></div>`, "");
-  const pintar = () => { el.querySelector("[data-grade]").innerHTML = c.itens.filter((i) => !filtro || i.subcat === filtro).sort(ordenarNaCategoria).map(cardProduto).join(""); };
+  const pintar = () => { const chip = el.querySelector(".chip-projeto"); if(chip) chip.outerHTML = chipProjeto(); el.querySelector("[data-grade]").innerHTML = c.itens.filter((i) => !filtro || i.subcat === filtro).sort(ordenarNaCategoria).map(cardProduto).join(""); };
   pintar();
   el.addEventListener("click", (e) => {
     const sub = e.target.closest("[data-sub]");
@@ -371,7 +379,7 @@ function telaItem(itemInicial){
         ${item.specs.length ? `<dl class="specs">${item.specs.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
         ${!visitante() ? `<button type="button" class="item-perguntar" data-perguntar><span class="cas-avatar">H</span><span><strong>Perguntar à Helena</strong><small>Disponibilidade, combinações, foto em composição…</small></span></button>` : ""}
       </div></div>
-      ${!visitante() ? `<div class="barra-acao"><div class="passos"><button type="button" data-passo="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" min="1" max="999" value="${qtd || 1}" aria-label="Quantidade" data-qtd><button type="button" data-passo="1" aria-label="Mais">+</button></div>
+      ${!visitante() ? `<div class="barra-acao"><div class="barra-destino">${S.projeto ? `${ico("projeto")}<span>Projeto <b>${esc(S.projeto.noivos)}</b>${amb ? ` · ${esc(amb.nome)}` : ""}${qtd ? ` · já tem ${qtd}` : ""}</span><button type="button" class="link" data-trocar-amb>${amb ? "trocar" : "escolher"}</button>` : `${ico("projeto")}<span>Nenhum projeto aberto</span><button type="button" class="link" data-trocar-amb>escolher</button>`}</div><div class="passos"><button type="button" data-passo="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" min="1" max="999" value="${qtd || 1}" aria-label="Quantidade" data-qtd><button type="button" data-passo="1" aria-label="Mais">+</button></div>
         <button type="button" class="btn" data-adicionar>${qtd ? `Atualizar${amb ? ` · ${esc(amb.nome)}` : ""}` : `Adicionar${amb ? ` · ${esc(amb.nome)}` : " ao projeto"}`}</button></div>` : ""}`;
     const atual = item;
     disponibilidade(item.id).then((d) => {
@@ -407,6 +415,7 @@ function telaItem(itemInicial){
       if(ok) pintar();
       return;
     }
+    if(e.target.closest("[data-trocar-amb]")){ if(!S.projeto){ await garantirDestino(); } else { await escolherAmbiente(); } pintar(); return; }
     if(e.target.closest("[data-perguntar]")){ abrirHelena(`Me fala sobre o ${item.name}${item.cor ? ` (${item.cor})` : ""}: tem disponível pro meu evento e com o que combina?`); return; }
     if(e.target.closest("[data-compartilhar]")){
       const url = location.href.split("#")[0];

@@ -49,11 +49,14 @@ function montar(){
       <button type="button" class="cas-icon cas-voltar" data-cas-fechar title="Voltar ao catálogo" aria-label="Minimizar a conversa e voltar ao catálogo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
       <span class="cas-avatar is-lg" aria-hidden="true">${esc(S.nome[0])}</span>
       <div class="cas-head-copy"><strong data-cas-nome>${esc(S.nome)}</strong><small><i class="cas-dot" aria-hidden="true"></i><span data-cas-status>Consultora comercial · online</span></small></div>
+      <button type="button" class="cas-pedido-btn" data-cas-pedido aria-expanded="false" title="Ver o pedido que está sendo alterado"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg><span data-cas-pedido-nome>Pedido</span><b data-cas-pedido-qtd></b><i class="cas-pedido-novo" aria-hidden="true"></i></button>
+      <button type="button" class="cas-head-btn cas-ligar" data-cas-ligar title="Ligar para a Helena e conversar por voz"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5l2.6.4 1.3 4-1.9 1.5a12 12 0 0 0 6 6l1.5-1.9 4 1.3.4 2.6a2 2 0 0 1-2 2.2A17 17 0 0 1 4.4 5.5a2 2 0 0 1 2.2-2z"/></svg><span>Ligar</span></button>
       <button type="button" class="cas-head-btn" data-cas-limpar title="Começar uma nova conversa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg><span>Nova conversa</span></button>
       <button type="button" class="cas-head-btn" data-cas-fechar title="Minimizar e voltar ao catálogo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg><span>Minimizar</span></button>
     </header>
     <div class="cas-corpo">
       <div class="cas-conversa">
+        <div class="cas-ligacao" data-cas-ligacao hidden></div>
         <div class="cas-msgs" data-cas-msgs aria-live="polite"><div class="cas-coluna" data-cas-coluna></div></div>
         <form class="cas-form" data-cas-form>
           <div class="cas-form-in">
@@ -62,11 +65,12 @@ function montar(){
               <button type="button" class="cas-grav-cancelar" data-cas-cancelar-audio aria-label="Descartar o áudio" title="Descartar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg></button>
               <i class="cas-grav-ponto" aria-hidden="true"></i><span class="cas-grav-tempo" data-cas-tempo>0:00</span>
               <span class="cas-grav-ondas" data-cas-ondas aria-hidden="true"></span>
+              <span class="cas-grav-auto" data-cas-auto>envia quando você parar</span>
             </div>
             <button type="button" class="cas-send cas-mic" data-cas-mic aria-label="Gravar áudio" title="Gravar áudio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
             <button type="submit" class="cas-send cas-enviar" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-2-7z"/></svg></button>
           </div>
-          <small class="cas-form-dica" data-cas-dica>Enter envia · Shift+Enter quebra a linha · o microfone grava um áudio</small>
+          <small class="cas-form-dica" data-cas-dica>Enter envia · Shift+Enter quebra a linha · no microfone, é só falar e parar que o áudio vai sozinho</small>
         </form>
       </div>
       <aside class="cas-lado" data-cas-lado aria-label="Seu pedido"></aside>
@@ -77,6 +81,13 @@ function montar(){
   botao.addEventListener("click", () => alternar(true));
   painel.querySelectorAll("[data-cas-fechar]").forEach((b) => b.addEventListener("click", () => alternar(false)));
   painel.querySelector("[data-cas-limpar]").addEventListener("click", limpar);
+  painel.querySelector("[data-cas-ligar]").addEventListener("click", () => {
+    if(!lig) iniciarLigacao();
+    else if(painel.querySelector("[data-cas-ligacao]").hidden) mostrarTelaLigacao(true);
+    else encerrarLigacao();
+  });
+  if(!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) painel.querySelector("[data-cas-ligar]").hidden = true;
+  painel.querySelector("[data-cas-pedido]").addEventListener("click", () => alternarPedido());
   const input = painel.querySelector("[data-cas-input]");
   const ajustar = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; painel.querySelector("[data-cas-form]").classList.toggle("tem-texto", Boolean(input.value.trim())); };
   const temMicrofone = Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
@@ -96,7 +107,7 @@ function montar(){
     enviar(valor);
   });
   painel.addEventListener("click", aoClicar);
-  painel.addEventListener("keydown", (event) => { if(event.key === "Escape"){ event.stopPropagation(); if(gravacao) pararGravacao(false); else alternar(false); } });
+  painel.addEventListener("keydown", (event) => { if(event.key === "Escape"){ event.stopPropagation(); if(lig) return; if(gravacao) pararGravacao(false); else alternar(false); } });
 }
 
 async function alternar(abrir){
@@ -106,8 +117,8 @@ async function alternar(abrir){
   botao.setAttribute("aria-expanded", String(abrir));
   document.body.classList.toggle("assistente-aberta", abrir);
   document.documentElement.classList.toggle("cas-trava-rolagem", abrir);
-  if(!abrir){ if(gravacao) pararGravacao(false); botao.focus(); return; }
-  S.naoLidas = 0; pintarBadge();
+  if(!abrir){ if(gravacao) pararGravacao(false); alternarPedido(false); botao.focus(); return; }
+  S.naoLidas = 0; pintarBadge(); pintarLado();
   painel.querySelector("[data-cas-input]").focus();
   if(!S.carregado) await carregarHistorico();
   rolarFim();
@@ -146,20 +157,48 @@ function pintarBadge(){
   b.hidden = !S.naoLidas; b.textContent = S.naoLidas > 9 ? "9+" : String(S.naoLidas);
 }
 // Coluna da direita (telas largas): o pedido em andamento, pra ver o que já foi montado sem sair da conversa.
+// No celular (sem espaço pra coluna) o pedido abre por cima da conversa pelo botão do topo.
+function alternarPedido(abrir){
+  const painel = $("catalogAssistente");
+  const aberto = abrir ?? !painel.classList.contains("mostra-pedido");
+  painel.classList.toggle("mostra-pedido", aberto);
+  painel.querySelector("[data-cas-pedido]")?.setAttribute("aria-expanded", String(aberto));
+  if(aberto) painel.querySelector("[data-cas-pedido]")?.classList.remove("tem-novidade");
+}
+// Destaque do que mudou desde a última vez que o pedido foi desenhado (ela pôs/tirou/trocou quantidade): a linha fica
+// marcada por alguns segundos e, com o pedido fechado no celular, o botão do topo ganha um ponto.
+const destaques = new Map();
+let retratoAnterior = null;
 function pintarLado(){
   const lado = $("catalogAssistente")?.querySelector("[data-cas-lado]");
   if(!lado) return;
   const p = window.catalogAssistenteProjeto?.retrato();
+  const botao = $("catalogAssistente")?.querySelector("[data-cas-pedido]");
+  if(botao){
+    const total = p ? p.ambientes.reduce((t, a) => t + a.itens.reduce((q, i) => q + i.quantidade, 0), 0) : 0;
+    botao.querySelector("[data-cas-pedido-nome]").textContent = p ? p.noivos : "Sem projeto";
+    botao.querySelector("[data-cas-pedido-qtd]").textContent = p ? String(total) : "";
+  }
+  if(p){
+    const atual = new Map(p.ambientes.flatMap((a) => a.itens.map((i) => [`${a.id}:${i.item_id}`, i.quantidade])));
+    if(retratoAnterior && retratoAnterior.id === p.id){
+      let mudou = false;
+      for(const [k, q] of atual) if(retratoAnterior.mapa.get(k) !== q){ destaques.set(k, Date.now() + 8000); mudou = true; }
+      for(const k of retratoAnterior.mapa.keys()) if(!atual.has(k)) mudou = true;
+      if(mudou && !$("catalogAssistente").classList.contains("mostra-pedido")) botao?.classList.add("tem-novidade");
+    }
+    retratoAnterior = { id: p.id, mapa: atual };
+  }
   if(!p){
-    lado.innerHTML = `<div class="cas-lado-vazio"><p class="cas-lado-kicker">Seu pedido</p><strong>Nenhum projeto aberto</strong><p>Conte pra ${esc(S.nome)} sobre o evento (noivos, data e local) que ela cria o projeto e vai montando o pedido com você.</p></div>`;
+    lado.innerHTML = `<button type="button" class="cas-lado-fechar" data-cas-pedido-fechar aria-label="Fechar">×</button><div class="cas-lado-vazio"><p class="cas-lado-kicker">Seu pedido</p><strong>Nenhum projeto aberto</strong><p>Conte pra ${esc(S.nome)} sobre o evento (noivos, data e local) que ela cria o projeto e vai montando o pedido com você.</p></div>`;
     return;
   }
   const data = p.data_evento ? new Date(p.data_evento + "T00:00:00").toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" }) : "";
   const soma = (a) => a.itens.reduce((t, i) => t + i.quantidade, 0);
   const total = p.ambientes.reduce((t, a) => t + soma(a), 0);
-  const linha = (i) => { const it = ctx.findItem?.(i.item_id); return `<li><img src="${esc(miniatura(it?.photo || "", 120))}" alt="" loading="lazy"><span>${esc(it?.name || "Item")}</span><b>${i.quantidade}×</b></li>`; };
-  lado.innerHTML = `<p class="cas-lado-kicker">Seu pedido</p><h3>${esc(p.noivos)}</h3><p class="cas-lado-sub">${esc([data, p.local_evento].filter(Boolean).join(" · "))}</p>
-    <div class="cas-lado-ambs">${p.ambientes.map((a) => `<section><h4>${esc(a.nome)}<b>${soma(a)}</b></h4>${a.itens.length ? `<ul>${a.itens.map(linha).join("")}</ul>` : `<p class="cas-lado-nada">Ainda sem peças</p>`}</section>`).join("") || `<p class="cas-lado-nada">Sem ambientes ainda</p>`}</div>
+  const linha = (a) => (i) => { const it = ctx.findItem?.(i.item_id); const novo = (destaques.get(`${a.id}:${i.item_id}`) || 0) > Date.now(); return `<li class="${novo ? "mudou" : ""}"><img src="${esc(miniatura(it?.photo || "", 120))}" alt="" loading="lazy"><span>${esc(it?.name || "Item")}${it?.cor ? `<small>${esc(it.cor)}</small>` : ""}</span><b>${i.quantidade}×</b></li>`; };
+  lado.innerHTML = `<button type="button" class="cas-lado-fechar" data-cas-pedido-fechar aria-label="Fechar o pedido">×</button><p class="cas-lado-kicker">Pedido que estamos alterando</p><h3>${esc(p.noivos)}</h3><p class="cas-lado-sub">${esc([data, p.local_evento].filter(Boolean).join(" · "))}</p>
+    <div class="cas-lado-ambs">${p.ambientes.map((a) => `<section><h4>${esc(a.nome)}<b>${soma(a)}</b></h4>${a.itens.length ? `<ul>${a.itens.map(linha(a)).join("")}</ul>` : `<p class="cas-lado-nada">Ainda sem peças</p>`}</section>`).join("") || `<p class="cas-lado-nada">Sem ambientes ainda</p>`}</div>
     <p class="cas-lado-total">${total} ${total === 1 ? "peça" : "peças"} no total</p>
     ${ctx.modoPedido || !total ? "" : `<button type="button" class="cas-lado-enviar" data-cas-enviar>${p.status && p.status !== "rascunho" ? "Reenviar pedido" : "Revisar e enviar pedido"}</button>`}`;
 }
@@ -197,8 +236,11 @@ function mensagemHtml(m){
     return "";
   }).join("");
   if(!m.conteudo && !anexos) return "";
-  const deAudio = (m.anexos || []).some((a) => a.tipo === "audio");
-  return `<div class="cas-msg ${bot ? "is-bot" : "is-eu"}">${m.conteudo ? `<div class="cas-bubble">${deAudio ? `<span class="cas-audio-tag"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Áudio</span>` : ""}${texto(m.conteudo)}</div>` : ""}${anexos}</div>`;
+  const tipos = (m.anexos || []).map((a) => a.tipo);
+  if(tipos.includes("ligacao")) return `<div class="cas-lig-marca"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5l2.6.4 1.3 4-1.9 1.5a12 12 0 0 0 6 6l1.5-1.9 4 1.3.4 2.6a2 2 0 0 1-2 2.2A17 17 0 0 1 4.4 5.5a2 2 0 0 1 2.2-2z"/></svg>${esc(m.conteudo)}</div>`;
+  const deAudio = tipos.includes("audio");
+  const naLigacao = tipos.includes("voz") || tipos.includes("voz_helena");
+  return `<div class="cas-msg${naLigacao ? " is-voz" : ""} ${bot ? "is-bot" : "is-eu"}">${m.conteudo ? `<div class="cas-bubble">${deAudio ? `<span class="cas-audio-tag"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Áudio</span>` : ""}${texto(m.conteudo)}</div>` : ""}${anexos}</div>`;
 }
 function itemHtml(i){
   return `<article class="cas-item"><button type="button" class="cas-item-foto" data-cas-abrir="${esc(i.id)}" aria-label="Abrir ${esc(i.nome)}"><img src="${esc(miniatura(i.foto))}" alt="" loading="lazy"></button>
@@ -209,6 +251,7 @@ function itemHtml(i){
 async function aoClicar(event){
   const sugestao = event.target.closest("[data-cas-sugestao]");
   if(sugestao){ enviar(sugestao.textContent.trim()); return; }
+  if(event.target.closest("[data-cas-pedido-fechar]")){ alternarPedido(false); return; }
   if(event.target.closest("[data-cas-enviar]")){ alternar(false); window.catalogAssistenteProjeto?.enviarPedido(); return; }
   if(event.target.closest("[data-cas-recarregar]")){ carregarHistorico(); return; }
   const abrir = event.target.closest("[data-cas-abrir]");
@@ -314,6 +357,7 @@ function enfileirarRender(acao){
         S.mensagens.push(data.mensagem);
         const anexo = data.mensagem.anexos?.find((a) => a.tipo === "imagem");
         if(anexo) window.catalogRegisterRenderItems?.(anexo.url, (montado.snapshot.objects || []).map((o) => ({ itemId: o.itemId })), { tipo: "ia", snapshot: montado.snapshot });
+        if(lig && anexo) ligacaoAvisarImagem(anexo.url, acao.itens || []);
         if(!S.aberto){ S.naoLidas += 1; pintarBadge(); }
         if(!S.aberto) ctx.notify({ title: `${S.nome} mandou a foto da composição`, message: (acao.itens || []).join(" · "), status: "done", image: anexo?.url, actionLabel: "Ver", onAction: () => alternar(true) });
       }
@@ -375,11 +419,37 @@ async function iniciarGravacao(){
     if(audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
     const ondas = form.querySelector("[data-cas-ondas]");
     ondas.innerHTML = "<i></i>".repeat(28);
-    const barras = [...ondas.children], dados = new Uint8Array(analisador.frequencyBinCount);
+    const barras = [...ondas.children], dados = new Uint8Array(analisador.frequencyBinCount), onda = new Uint8Array(analisador.fftSize);
+    // Envio automático (pedido do usuário: "quero ter a opção de simplesmente parar de falar e a mensagem ser enviada"):
+    // mede o volume da voz; os primeiros 400 ms calibram o ruído do ambiente. Depois que a pessoa FALOU (volume acima do
+    // limiar por 250 ms), 1,5 s de silêncio envia sozinho. Sem fala nenhuma em 12 s, descarta. Os botões continuam valendo.
+    const auto = form.querySelector("[data-cas-auto]");
+    const vad = { ruido: 0, amostras: 0, falando: 0, falou: false, silencioDesde: 0, ultimo: performance.now() };
     const desenhar = () => {
       if(!gravacao) return;
       analisador.getByteFrequencyData(dados);
       barras.forEach((b, i) => { const v = dados[Math.floor(i * dados.length / barras.length / 1.6)] / 255; b.style.transform = `scaleY(${Math.max(.12, v)})`; });
+      analisador.getByteTimeDomainData(onda);
+      let soma = 0; for(const x of onda){ const d = (x - 128) / 128; soma += d * d; }
+      const rms = Math.sqrt(soma / onda.length), agora = performance.now(), dt = agora - vad.ultimo, decorrido = Date.now() - gravacao.inicio;
+      vad.ultimo = agora;
+      if(decorrido < 400){ vad.ruido = (vad.ruido * vad.amostras + rms) / (vad.amostras + 1); vad.amostras++; }
+      else{
+        const limiar = Math.max(0.018, vad.ruido * 2.2 + 0.008);
+        if(rms > limiar){ vad.falando += dt; vad.silencioDesde = 0; if(vad.falando > 250 && !vad.falou){ vad.falou = true; auto.textContent = "ouvindo…"; } }
+        else{
+          vad.falando = Math.max(0, vad.falando - dt);
+          if(vad.falou){
+            vad.silencioDesde ||= agora;
+            const falta = 1500 - (agora - vad.silencioDesde);
+            auto.textContent = falta < 1100 ? "enviando…" : "ouvindo…";
+            if(falta <= 0){ pararGravacao(true); return; }
+          }else if(decorrido > 12000){
+            ctx.notify({ title: "Não ouvi nada", message: "Toque no microfone e fale de novo, um pouco mais perto.", status: "error", duration: 5000 });
+            pararGravacao(false); return;
+          }
+        }
+      }
       gravacao.raf = requestAnimationFrame(desenhar);
     };
     desenhar();
@@ -403,6 +473,7 @@ async function finalizarGravacao(){
     form.classList.remove("is-gravando");
     form.querySelector("[data-cas-gravando]").hidden = true;
     form.querySelector("[data-cas-tempo]").textContent = "0:00";
+    const auto = form.querySelector("[data-cas-auto]"); if(auto) auto.textContent = "envia quando você parar";
     form.querySelector("[data-cas-mic]").setAttribute("aria-label", "Gravar áudio");
     form.querySelector("[data-cas-mic]").title = "Gravar áudio";
   }
@@ -426,6 +497,273 @@ async function finalizarGravacao(){
   if(textoFalado) enviar(textoFalado, { porAudio: true });
   else pintar();
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Ligação (voz em tempo real, como um telefonema). O áudio vai direto do aparelho para a OpenAI por WebRTC (resposta em
+// ~1 s, dá pra interromper a Helena falando); o servidor só entrega uma chave temporária já com as instruções e as
+// ferramentas. Quando ela consulta o acervo ou mexe no pedido, a ferramenta roda no NOSSO servidor (ação "ferramenta"),
+// com as mesmas regras da conversa por texto. No fim, a transcrição entra na conversa.
+let lig = null;
+const LIG_MAX_S = 20 * 60;
+const tempoFmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+function telaLigacao(){
+  const el = $("catalogAssistente").querySelector("[data-cas-ligacao]");
+  el.innerHTML = `
+    <div class="cas-lig-topo"><span class="cas-lig-estado" data-lig-estado>Chamando…</span><span class="cas-lig-tempo" data-lig-tempo></span></div>
+    <div class="cas-lig-centro">
+      <div class="cas-lig-avatar" data-lig-avatar><span class="cas-lig-onda" aria-hidden="true"></span><span class="cas-lig-onda" aria-hidden="true"></span><span class="cas-avatar is-xl" aria-hidden="true">${esc(S.nome[0])}</span></div>
+      <h2>${esc(S.nome)}</h2>
+      <p class="cas-lig-quem">Consultora comercial</p>
+      <p class="cas-lig-legenda" data-lig-legenda aria-live="polite"></p>
+      <p class="cas-lig-voce" data-lig-voce></p>
+    </div>
+    <div class="cas-lig-itens" data-lig-itens hidden></div>
+    <div class="cas-lig-botoes">
+      <button type="button" class="cas-lig-btn" data-lig-mudo aria-pressed="false"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><small>Mudo</small></button>
+      <button type="button" class="cas-lig-btn is-desligar" data-lig-desligar><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15.5c5-4.7 13-4.7 18 0l-2.4 2.6-3.4-1.3v-2.6a10 10 0 0 0-6.4 0v2.6l-3.4 1.3z"/></svg></span><small>Desligar</small></button>
+      <button type="button" class="cas-lig-btn" data-lig-chat><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></span><small>Conversa</small></button>
+    </div>
+    <audio data-lig-audio autoplay playsinline></audio>`;
+  el.hidden = false;
+  el.querySelector("[data-lig-desligar]").addEventListener("click", () => encerrarLigacao());
+  el.querySelector("[data-lig-mudo]").addEventListener("click", (event) => {
+    if(!lig?.stream) return;
+    lig.mudo = !lig.mudo;
+    lig.stream.getAudioTracks().forEach((t) => { t.enabled = !lig.mudo; });
+    event.currentTarget.setAttribute("aria-pressed", String(lig.mudo));
+    event.currentTarget.querySelector("small").textContent = lig.mudo ? "Mudo ligado" : "Mudo";
+  });
+  // "Conversa": esconde a tela da ligação (que continua) para ver as mensagens; o botão Ligar do topo vira "Voltar à ligação".
+  el.querySelector("[data-lig-chat]").addEventListener("click", () => mostrarTelaLigacao(false));
+  return el;
+}
+function mostrarTelaLigacao(ver){
+  const painel = $("catalogAssistente");
+  painel.querySelector("[data-cas-ligacao]").hidden = !ver;
+  const b = painel.querySelector("[data-cas-ligar]");
+  b.classList.toggle("em-ligacao", Boolean(lig));
+  b.querySelector("span").textContent = lig ? (ver ? "Desligar" : "Voltar à ligação") : "Ligar";
+  b.title = lig ? (ver ? "Encerrar a ligação" : "Voltar para a tela da ligação") : "Ligar para a Helena e conversar por voz";
+  $("catalogAssistenteBotao")?.classList.toggle("em-ligacao", Boolean(lig));
+}
+function ligEstado(texto){ const el = $("catalogAssistente")?.querySelector("[data-lig-estado]"); if(el) el.textContent = texto; }
+function ligLegenda(texto){
+  const el = $("catalogAssistente")?.querySelector("[data-lig-legenda]");
+  if(!el) return;
+  const frases = String(texto || "").match(/[^.!?]+[.!?]*\s*/g) || [];
+  let fim = frases.slice(-2).join("").trim();
+  if(fim.length > 220) fim = "…" + fim.slice(-220).replace(/^\S*\s/, "");
+  el.textContent = fim;
+}
+function ligVoce(texto){ const el = $("catalogAssistente")?.querySelector("[data-lig-voce]"); if(el) el.textContent = texto ? `Você: ${texto}` : ""; }
+function ligItens(itens){
+  if(!lig || !itens?.length) return;
+  for(const i of itens){ lig.itens = lig.itens.filter((x) => x.id !== i.id); lig.itens.unshift(i); }
+  lig.itens = lig.itens.slice(0, 8);
+  const el = $("catalogAssistente")?.querySelector("[data-lig-itens]");
+  if(!el) return;
+  el.hidden = false;
+  el.closest("[data-cas-ligacao]")?.classList.add("tem-itens");
+  el.innerHTML = lig.itens.map((i) => i.tipo === "imagem"
+    ? `<figure class="cas-lig-foto"><button type="button" class="cas-foto-ver" data-cas-zoom="${esc(i.url)}" aria-label="Ver a composição"><img src="${esc(miniatura(i.url, 520))}" alt="Composição"></button></figure>`
+    : itemHtml(i)).join("");
+}
+
+async function iniciarLigacao(){
+  if(lig) return;
+  if(gravacao) pararGravacao(false);
+  if(!S.carregado) await carregarHistorico();
+  lig = { estado: "chamando", falas: [], ordem: [], mudo: false, itens: [], feitas: new Set(), respondendo: false, avisos: [], inicio: 0, legenda: "" };
+  const atual = lig;
+  telaLigacao(); mostrarTelaLigacao(true);
+  try{
+    ligEstado("Chamando…");
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    if(lig !== atual){ stream.getTracks().forEach((t) => t.stop()); return; }
+    lig.stream = stream;
+    const data = await chamar("ligacao_iniciar", { projeto: window.catalogAssistenteProjeto?.retrato() || null, modo: ctx.modoPedido ? "pedido" : "catalogo" });
+    if(lig !== atual) return;
+    const pc = new RTCPeerConnection();
+    lig.pc = pc;
+    const audio = $("catalogAssistente").querySelector("[data-lig-audio]");
+    pc.ontrack = (event) => { audio.srcObject = event.streams[0]; audio.play?.().catch(() => {}); animarVoz(event.streams[0], stream); };
+    stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+    const dc = pc.createDataChannel("oai-events");
+    lig.dc = dc;
+    dc.addEventListener("open", () => {
+      if(lig !== atual) return;
+      lig.estado = "ligado"; lig.inicio = Date.now();
+      ligEstado("Em ligação"); statusTopo("em ligação");
+      lig.relogio = setInterval(() => {
+        const s = (Date.now() - lig.inicio) / 1000;
+        const el = $("catalogAssistente").querySelector("[data-lig-tempo]"); if(el) el.textContent = tempoFmt(s);
+        if(s >= LIG_MAX_S) encerrarLigacao("A ligação chegou ao limite de 20 minutos. O que conversamos já está na conversa.");
+      }, 1000);
+      // Ela atende: só o cumprimento (sem ferramentas nem retomar assunto antigo de cara).
+      enviarEvento({ type: "response.create", response: { tool_choice: "none" } });
+    });
+    dc.addEventListener("message", (event) => { try{ aoEventoLigacao(JSON.parse(event.data)); }catch(error){ console.warn("ligação:", error); } });
+    pc.addEventListener("connectionstatechange", () => {
+      if(lig === atual && ["failed", "closed"].includes(pc.connectionState)) encerrarLigacao("A ligação caiu. O que conversamos já está na conversa.");
+    });
+    const oferta = await pc.createOffer();
+    await pc.setLocalDescription(oferta);
+    const r = await fetch("https://api.openai.com/v1/realtime/calls", { method: "POST", body: oferta.sdp, headers: { Authorization: `Bearer ${data.chave}`, "Content-Type": "application/sdp" } });
+    if(!r.ok) throw new Error("Não consegui completar a ligação agora. Tente de novo em instantes.");
+    if(lig !== atual) return;
+    await pc.setRemoteDescription({ type: "answer", sdp: await r.text() });
+  }catch(error){
+    if(lig !== atual) return;
+    const negado = error?.name === "NotAllowedError" || error?.name === "SecurityError";
+    encerrarLigacao(negado ? "Para ligar, permita o uso do microfone neste navegador." : (error.message || "Não consegui completar a ligação."));
+  }
+}
+
+function enviarEvento(evento){ if(lig?.dc?.readyState === "open") lig.dc.send(JSON.stringify(evento)); }
+
+// Falas na ordem em que entraram na conversa (a transcrição da pessoa pode chegar depois da resposta começar).
+function falaDoItem(id, papel){
+  let f = lig.falas.find((x) => x.id === id);
+  if(!f){ f = { id, papel, texto: "" }; lig.falas.push(f); }
+  return f;
+}
+
+async function aoEventoLigacao(ev){
+  if(!lig) return;
+  switch(ev.type){
+    case "conversation.item.added": case "conversation.item.created": {
+      const it = ev.item;
+      if(it?.type === "message" && (it.role === "user" || it.role === "assistant")) falaDoItem(it.id, it.role);
+      break;
+    }
+    case "input_audio_buffer.speech_started": ligEstado("Ouvindo você…"); ligVoce("…"); break;
+    case "input_audio_buffer.speech_stopped": ligEstado("Em ligação"); break;
+    case "conversation.item.input_audio_transcription.completed": {
+      const t = String(ev.transcript || "").trim();
+      if(!t || /^(A consultora se chama|Conversa de decoradora)/i.test(t)) break;
+      // Eco: o microfone pegou a própria voz dela (caixa de som). Sem isso ela "responde a si mesma":
+      // cancela a resposta que o eco disparou e tira a fala falsa da conversa.
+      if(ehEco(t)){
+        enviarEvento({ type: "response.cancel" });
+        enviarEvento({ type: "conversation.item.delete", item_id: ev.item_id });
+        lig.falas = lig.falas.filter((f) => f.id !== ev.item_id);
+        ligVoce("");
+        break;
+      }
+      falaDoItem(ev.item_id, "user").texto = t; ligVoce(t);
+      break;
+    }
+    case "response.created": lig.respondendo = true; lig.legenda = ""; break;
+    case "response.output_audio_transcript.delta": {
+      lig.legenda += ev.delta || ""; ligLegenda(lig.legenda);
+      if(ev.item_id){ const f = falaDoItem(ev.item_id, "assistant"); f.parcial = (f.parcial || "") + (ev.delta || ""); }
+      break;
+    }
+    case "response.output_audio_transcript.done": {
+      const t = String(ev.transcript || lig.legenda).trim();
+      if(t){ falaDoItem(ev.item_id, "assistant").texto = t; ligLegenda(t); }
+      break;
+    }
+    case "response.done": {
+      lig.respondendo = false;
+      const chamadas = (ev.response?.output || []).filter((o) => o.type === "function_call" && !lig.feitas.has(o.call_id));
+      if(chamadas.length){ await executarFerramentas(chamadas); break; }
+      if(lig.avisos.length){ const a = lig.avisos.shift(); enviarAviso(a); }
+      break;
+    }
+    case "error": console.warn("ligação (OpenAI):", ev.error); break;
+  }
+}
+
+// A "fala da pessoa" é quase toda feita de palavras que a Helena acabou de dizer? Então é eco, não pergunta.
+function ehEco(texto){
+  const palavras = (v) => String(v || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").match(/[a-z0-9]+/g) || [];
+  const dela = new Set(lig.falas.filter((f) => f.papel === "assistant").slice(-2).flatMap((f) => palavras(f.texto || f.parcial)));
+  const p = palavras(texto).filter((w) => w.length > 2);
+  if(p.length < 4 || !dela.size) return false;
+  return p.filter((w) => dela.has(w)).length / p.length >= 0.85;
+}
+
+async function executarFerramentas(chamadas){
+  const atual = lig;
+  chamadas.forEach((c) => lig.feitas.add(c.call_id));
+  ligEstado("Consultando…");
+  // Uma de cada vez: a próxima pode depender do pedido que a anterior acabou de mudar.
+  for(const c of chamadas){
+    let saida = "";
+    try{
+      const data = await chamar("ferramenta", { nome: c.name, args: c.arguments || "{}", projeto: window.catalogAssistenteProjeto?.retrato() || null, modo: ctx.modoPedido ? "pedido" : "catalogo" });
+      saida = data?.resultado || "{}";
+      await aplicarAcoes(data?.acoes || []);
+      pintarLado();
+      ligItens(data?.itens);
+    }catch(error){ saida = JSON.stringify({ erro: error.message || "Falha na ferramenta" }); }
+    if(lig !== atual) return;
+    enviarEvento({ type: "conversation.item.create", item: { type: "function_call_output", call_id: c.call_id, output: saida } });
+  }
+  ligEstado("Em ligação");
+  enviarEvento({ type: "response.create" });
+}
+
+// A foto da composição ficou pronta durante a ligação: aparece na tela e ela comenta (sem interromper uma fala dela).
+function ligacaoAvisarImagem(url, itens){
+  ligItens([{ id: `img:${url}`, tipo: "imagem", url }]);
+  const aviso = `[Aviso do sistema: a fotografia da composição com ${itens.join(", ") || "as peças"} ficou pronta e já está aparecendo na tela da pessoa e na conversa. Avise com naturalidade, em uma frase, e pergunte o que ela achou.]`;
+  if(lig.respondendo) lig.avisos.push(aviso); else enviarAviso(aviso);
+}
+function enviarAviso(texto){
+  enviarEvento({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: texto }] } });
+  enviarEvento({ type: "response.create" });
+}
+
+// O avatar "respira" com a voz dela; o anel interno acompanha a sua.
+function animarVoz(remoto, local){
+  try{
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    ac.resume?.();
+    const medidor = (stream) => { const a = ac.createAnalyser(); a.fftSize = 512; ac.createMediaStreamSource(stream).connect(a); return a; };
+    const ela = medidor(remoto), voce = medidor(local), buf = new Uint8Array(512);
+    const nivel = (a) => { a.getByteTimeDomainData(buf); let s = 0; for(const x of buf){ const d = (x - 128) / 128; s += d * d; } return Math.min(1, Math.sqrt(s / buf.length) * 5); };
+    lig.ac = ac;
+    const passo = () => {
+      if(!lig || lig.ac !== ac) return;
+      const av = $("catalogAssistente")?.querySelector("[data-lig-avatar]");
+      if(av){ av.style.setProperty("--ela", nivel(ela).toFixed(3)); av.style.setProperty("--voce", (lig.mudo ? 0 : nivel(voce)).toFixed(3)); }
+      lig.raf = requestAnimationFrame(passo);
+    };
+    passo();
+  }catch(error){ console.warn("medidor de voz:", error); }
+}
+
+async function encerrarLigacao(motivo = ""){
+  const atual = lig;
+  if(!atual) return;
+  lig = null;
+  clearInterval(atual.relogio);
+  cancelAnimationFrame(atual.raf);
+  try{ atual.dc?.close(); }catch{}
+  try{ atual.pc?.getSenders().forEach((s) => s.track?.stop()); atual.pc?.close(); }catch{}
+  atual.stream?.getTracks().forEach((t) => t.stop());
+  atual.ac?.close?.().catch(() => {});
+  const painel = $("catalogAssistente");
+  const audio = painel.querySelector("[data-lig-audio]"); if(audio) audio.srcObject = null;
+  painel.querySelector("[data-cas-ligacao]").innerHTML = "";
+  mostrarTelaLigacao(false);
+  statusTopo();
+  if(motivo) ctx.notify({ title: atual.inicio ? "Ligação encerrada" : "Não foi possível ligar", message: motivo, status: atual.inicio ? "done" : "error", duration: 6000 });
+  const falas = atual.falas.map((f) => ({ papel: f.papel, texto: (f.texto || f.parcial || "").trim() })).filter((f) => f.texto);
+  if(!atual.inicio && !falas.length) return;
+  const segundos = atual.inicio ? Math.round((Date.now() - atual.inicio) / 1000) : 0;
+  try{
+    const data = await chamar("ligacao_registrar", { falas, segundos, projeto_id: window.catalogAssistenteProjeto?.retrato()?.id || null });
+    if(Array.isArray(data?.mensagens)) S.mensagens.push(...data.mensagens);
+  }catch(error){
+    falas.forEach((f) => S.mensagens.push({ papel: f.papel, conteudo: f.texto, anexos: [{ tipo: f.papel === "user" ? "voz" : "voz_helena" }] }));
+  }
+  pintar();
+}
+window.addEventListener("pagehide", () => { if(lig) encerrarLigacao(); });
 
 async function paraJpegDataUrl(src, lado = 2000){
   const blob = await (await fetch(src)).blob();

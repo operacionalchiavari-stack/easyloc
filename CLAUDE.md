@@ -8933,3 +8933,48 @@ Pedido: "quero de fato um app e não um site que abre no celular... vou acessar 
 - Testado em iPhone 13 emulado contra o servidor real (sessão temporária da Lis): link normal → app, navegação/voltar,
   criar projeto 25/10, Gomus "Esgotado em 25 de outubro" (botão travado), Richard "4 livres", Helena recusa o Gomus e
   oferece livres, cartões "Esgotado no dia", sem rolagem lateral, instalável, motor 3D montado, sem erros.
+
+### Áudio que envia sozinho + pedido visível no celular (16/10/2026)
+- **Envio automático** (pedido: "quero simplesmente parar de falar e a mensagem ser enviada"): no loop das ondas, mede o
+  volume (RMS); 400 ms calibram o ruído; depois de 250 ms de fala, 1,5 s de silêncio chama `pararGravacao(true)`. Sem fala
+  em 12 s, descarta com aviso. Texto na barra: "envia quando você parar" → "ouvindo…" → "enviando…". Botões continuam.
+- **Qual pedido está sendo alterado** (pedido: "no app não consigo ver qual pedido estamos alterando"): botão no topo da
+  Helena (`[data-cas-pedido]`, nome do projeto + nº de peças) em telas < 1100px abre a coluna do pedido como gaveta por
+  cima da conversa (`.cas-panel.mostra-pedido`). `pintarLado()` compara com o retrato anterior: linha alterada fica
+  destacada 8 s (`li.mudou`) e, com a gaveta fechada, o botão ganha um ponto (`.tem-novidade`). No app: `chipProjeto()`
+  no topo de Catálogo/Categoria e linha "Projeto X · Ambiente · trocar" na barra do item.
+- Testado no iPhone emulado com microfone falso (fala + 6 s de silêncio): sem tocar em enviar, o áudio foi sozinho,
+  a Helena pôs o Sofá Richard, o botão avisou, a gaveta mostrou a linha destacada.
+
+## Helena: ligação por voz em tempo real (out/2026)
+Pedido: "colocar pra Helena responder em áudio, como se fosse uma ligação... bem natural, parecer um humano". Escolha do
+usuário: ligação de verdade (OpenAI Realtime, ~1 s de resposta, dá pra interromper, custo ~R$1–2/min).
+- **Botão "Ligar"** no topo da conversa (desktop e app; some se o navegador não tiver WebRTC). Tela da ligação por cima da
+  coluna da conversa (`[data-cas-ligacao]`): avatar que "respira" com a voz dela (anel interno com a sua), legenda das 2
+  últimas frases dela, "Você: …", cartões com foto do que ela mostra (e a foto da composição quando fica pronta — ela avisa
+  em voz), botões Mudo / Desligar / Conversa (esconde a tela; o botão do topo vira "Voltar à ligação"). O pedido do lado
+  continua visível e atualiza na hora. Minimizar não desliga. Limite de 20 min.
+- **Como funciona**: o navegador fala direto com a OpenAI por WebRTC (`POST https://api.openai.com/v1/realtime/calls` com
+  SDP + data channel `oai-events`). A chave de verdade nunca sai do servidor: ação `ligacao_iniciar` da Edge Function
+  `catalogo-assistente` cria uma chave temporária (`/v1/realtime/client_secrets`, 10 min) já com instruções
+  (`promptDoSistema` + últimas 12 mensagens + `JEITO_DE_FALAR`), ferramentas, voz `marin`, `semantic_vad` com interrupção,
+  transcrição gpt-4o-transcribe com o vocabulário do acervo. Modelo `CATALOGO_ASSISTENTE_REALTIME_MODEL` (padrão
+  `gpt-realtime-2.1`, cai pra `gpt-realtime`); voz `CATALOGO_ASSISTENTE_VOZ`. Até 6 ligações/hora por pessoa.
+- **Ferramentas na ligação** rodam no servidor (ação `ferramenta`) com o MESMO executor da conversa por texto:
+  `criarExecutor(ctx, E)` (antes era uma closure dentro de `conversar`) — mesmas travas (peça esgotada na data, criar
+  projeto só com dados confirmados). O cliente pega as chamadas em `response.done`, aplica as ações (`aplicarAcoes`) e
+  devolve `function_call_output` + `response.create`.
+- **No fim** (`ligacao_registrar`) a transcrição vira mensagens da conversa (anexos `voz`/`voz_helena`, balão com "Na
+  ligação") + marcador "Ligação encerrada · X min" (`ligacao`), e o que a pessoa disse alimenta o perfil (extrairGostos).
+  Fala dela cortada pelo desligar entra pelo parcial. Transcrição que "devolve" o vocabulário (acontece em silêncio) é
+  descartada.
+- **Pegadinha**: `response.create` com `instructions` SUBSTITUI as instruções da sessão naquela resposta (ela esqueceu até
+  o nome da pessoa). O cumprimento usa só `tool_choice:"none"`; a regra da 1ª fala está no prompt.
+- Testado de verdade (Edge headless + microfone simulado com voz do Windows): conecta em ~7 s, busca e mostra peça, coloca
+  no pedido, recusa peça esgotada no dia 25 com alternativas livres. Celular: no topo o nome e o "−" somem (≤520px).
+- Versões `?v=20261016-ligacao`.
+- **Ajustes da ligação (16/10)**: a regra de voz não dá mais exemplos de expressões (o modelo copiava e virava bordão:
+  "olha", "perfeito", "só um segundinho"); proíbe bordões, repetir o nome e "perguntar e responder a si mesma". Eco da
+  própria voz pela caixa de som: `ehEco()` (≥85% das palavras, mínimo 4, iguais às 2 últimas falas dela) cancela a
+  resposta disparada (`response.cancel`) e apaga a fala falsa (`conversation.item.delete`); `noise_reduction` passou a
+  `far_field` (notebook/celular no viva-voz). Ação `amostra_voz` (texto fixo) gera mp3 de uma voz pra comparar.
