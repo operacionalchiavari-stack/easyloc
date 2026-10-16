@@ -9,7 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
-  <link rel="stylesheet" href="CentralPedidos.css?v=20261008-pesquisa">
+  <link rel="stylesheet" href="CentralPedidos.css?v=20261015-presenca">
+  <!-- Visualização do pedido = prévia do catálogo (cabeçalho, itens por ambiente, PDF). -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261009-ver-pedido">
+  <link rel="stylesheet" href="../Catalogo/projeto-apresentacao.css?v=20261009-ver-pedido">
 </head>
 <body>
 <div class="central-pedidos-page el-page" id="centralPedidosPage" data-module-root>
@@ -19,7 +23,7 @@
       <p>Consulta e gestao dos pedidos, eventos e contratos comerciais.</p>
     </div>
     <div class="el-page-actions central-actions-left">
-      <!-- Tabelas de Preço fica aqui dentro (pedido do usuário), não no menu. data-module-href: some se a pessoa não tiver permissão (js/core/permissions.js). -->
+      <!-- Tabelas de Preço fica aqui dentro (pedido do usuário), não no menu. data-module-href: some se a pessoa não tiver permissão (js/core/permissions.js?v=20261009-acesso-estavel). -->
       <button type="button" class="btn btn-secondary" id="btnTabelasPreco" data-module-href="../../Estoque/TabelasPreco/tabelas-preco.html">Tabelas de Preço</button>
       <button type="button" class="btn btn-secondary" id="btnFiltrosPedidos" aria-expanded="false" aria-controls="centralFiltrosPedidos">
         <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
@@ -60,6 +64,8 @@
         <option value="em_separacao">Em separacao</option>
         <option value="separado">Separado</option>
         <option value="finalizado">Finalizado</option>
+        <option value="catalogo_rascunho">Catálogo: em montagem</option>
+        <option value="catalogo_pedido_enviado">Catálogo: pedido enviado</option>
       </select>
     </div>
     <div class="el-field">
@@ -92,22 +98,6 @@
       </table>
     </div>
   </section>
-
-  <div class="central-preview-modal hidden" id="centralPedidoPreviewModal" aria-hidden="true">
-    <div class="central-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="centralPreviewTitulo">
-      <div class="central-preview-toolbar">
-        <div>
-          <span>Visualizacao do pedido</span>
-          <strong id="centralPreviewTitulo">Pedido</strong>
-        </div>
-        <div class="central-preview-actions">
-          <button type="button" class="btn btn-secondary" id="btnImprimirPreviewPedido">Imprimir</button>
-          <button type="button" class="btn btn-secondary" id="btnFecharPreviewPedido">Fechar</button>
-        </div>
-      </div>
-      <div class="central-preview-body" id="centralPedidoPreviewBody"></div>
-    </div>
-  </div>
 
   <div class="central-whatsapp-modal hidden" id="centralWhatsappModal" aria-hidden="true">
     <div class="central-whatsapp-dialog" role="dialog" aria-modal="true" aria-labelledby="centralWhatsappTitulo">
@@ -164,11 +154,11 @@
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../../js/core/context.js?v=20260913b"></script>
-<script src="../../../js/core/permissions.js?v=20261008-menu-filtrado"></script>
+<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/permissions.js?v=20261009-acesso-estavel"></script>
 <script src="../../../js/core/paymentPix.js"></script>
 <script src="../../../js/core/zapiMessaging.js"></script>
-<script src="CentralPedidos.js?v=20261008-pesquisa"></script>
+<script src="CentralPedidos.js?v=20261015-presenca"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -689,3 +689,14 @@ body.portal-shell #luz button{ position:absolute; top:18px; right:22px; width:44
 @media(max-width:850px){#portalInicio .metas-painel{grid-template-columns:1fr 1fr;padding:28px;gap:30px}#portalInicio .metas-totais{grid-column:1/-1}}
 @media(max-width:500px){#portalInicio .metas-painel{grid-template-columns:1fr}#portalInicio .metas-visao h3{font-size:34px}#portalInicio .metas-grade{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){#portalInicio :is(.metas-painel::before,.metas-pulso i,.metas-donut::after,.meta-trilho i,.meta-trilho i::after){animation:none}}
+
+/* Menu fechado: no lugar vazio do topo aparece a própria logo recortada no "Ch" (js/ui/menuMonograma.js); com o menu
+   aberto volta a logo inteira. Só no computador — no celular o menu fechado nem aparece. */
+#sidebar.portal-menu .menu-monograma{ display:none; height:34px; width:auto; max-width:46px; object-fit:contain; }
+@media (min-width:861px){
+  #sidebar.portal-menu .menu-nome.tem-monograma{ opacity:1; }
+  #sidebar.portal-menu:not(:hover):not(.aberto):not(.tem-flyout):not(:has(:focus-visible)) .menu-nome.tem-monograma .menu-logo-empresa{ display:none; }
+  #sidebar.portal-menu:not(:hover):not(.aberto):not(.tem-flyout):not(:has(:focus-visible)) .menu-nome.tem-monograma .menu-monograma{ display:block; animation:menu-monograma-entra .35s ease both; }
+}
+@keyframes menu-monograma-entra{ from{ opacity:0; } to{ opacity:1; } }
+@media (prefers-reduced-motion:reduce){ #sidebar.portal-menu .menu-monograma{ animation:none !important; } }

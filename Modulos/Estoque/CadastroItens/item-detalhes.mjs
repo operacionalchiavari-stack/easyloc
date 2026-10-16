@@ -1,4 +1,4 @@
-import { getEmpresaAtualId } from "./itens.api.mjs";
+import { getEmpresaAtualId } from "./itens.api.mjs?v=20261015-estoque";
 import "./itens.modal.mjs";
 import "./itens.foto.mjs?v=20261008-banco";
 import "./itens.3d.mjs?v=20261005-otimizar";
@@ -113,6 +113,7 @@ function preencherFormulario(item){
   $("itensSubcategoria").value = item.subcategoria || "";
   $("itensGrupoSeparacao").value = item.grupo_separacao || "";
   $("itensEstilo").value = item.estilo || "";
+  $("itensEstoqueTotal").value = item.estoque_total ?? "";
   $("itensFornecedor").value = item.fornecedor_id || "";
   $("itensDestaqueSite").value = item.destaque_site ? "true" : "false";
   $("itensCapaCategoria").value = item.capa_categoria ? "true" : "false";

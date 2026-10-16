@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <!-- App do catálogo no celular (out/2026). O mesmo link do catálogo (catalogo.html) abre esta página quando o aparelho é um
+       celular — ver o redirecionamento no <head> de catalogo.html. Instalável (PWA): ícone, tela cheia, sem barra do navegador. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#5a5a55">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Chiavari">
+  <meta name="robots" content="noindex">
+  <title>Catálogo Chiavari</title>
+  <link rel="manifest" href="catalogo-app.webmanifest">
+  <link rel="icon" href="app-icone-192.png">
+  <link rel="apple-touch-icon" href="app-icone-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="catalogo-app.css?v=20261015-app2">
+  <link rel="stylesheet" href="catalogo-assistente.css?v=20261015-esgotado">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../../js/core/supabase.js"></script>
+  <script defer src="catalogo-creditos.js?v=20260922-designer"></script>
+  <script type="importmap">
+    {"imports":{"three":"../../../js/vendor/three/build/three.module.js","three/addons/":"../../../js/vendor/three/examples/jsm/"}}
+  </script>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="app-abertura" id="appAbertura" aria-live="polite">
+      <img class="app-abertura-logo" id="appAberturaLogo" alt="" hidden>
+      <span class="app-abertura-texto">Chiavari</span>
+      <i class="app-abertura-linha" aria-hidden="true"></i>
+    </div>
+    <main class="app-telas" id="appTelas"></main>
+    <nav class="app-abas" id="appAbas" aria-label="Navegação" hidden></nav>
+    <div class="app-toasts" id="appToasts" aria-live="polite"></div>
+  </div>
+  <!-- O motor 3D do catálogo (usado pela Helena para montar as fotos das composições) é montado aqui, escondido. -->
+  <div id="appStudioHost" hidden aria-hidden="true"></div>
+  <script type="module" src="catalogo-app.mjs?v=20261015-app2"></script>
+</body>
+</html>

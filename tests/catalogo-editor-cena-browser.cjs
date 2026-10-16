@@ -183,7 +183,7 @@ async function abrir(tipo,{staff=false}={}){
   const ia=await page.evaluate(()=>window.__ia[0]);
   assert.equal(ia.name,'studio-ai-engine');
   assert.deepEqual(ia.body.scene.objects.map(o=>String(o.itemId)).sort(),['2','3'],'IA recebe a cena editada');
-  assert.match(ia.body.scene.preview,/^data:image\/png/);
+  assert.match(ia.body.scene.preview,/^data:image\/(png|jpeg)/); // a captura de estúdio sai em JPEG (out/2026)
   await page.locator('.catalog-notification',{hasText:'Renderização atualizada'}).waitFor();
   const fim=await page.evaluate(()=>{const db=JSON.parse(sessionStorage.getItem('mockdb'));const amb=db.projetos[0].dados.ambientes[0];
     return {itens:Object.fromEntries(amb.itens.map(i=>[i.item_id,i.quantidade])),r1:amb.renders[0],uploads:db.uploads.filter(u=>u.path.includes('/renders/')).length,removed:db.removed};});
@@ -261,8 +261,8 @@ async function abrir(tipo,{staff=false}={}){
   const r=await page.evaluate(()=>{const rs=JSON.parse(sessionStorage.getItem('mockdb')).projetos[0].dados.ambientes[0].renders;return {print:rs[2],ia:rs[3],cenas:window.__cenas,ia0:window.__ia[0]};});
   assert.equal(r.print.cena.tipo,'print');assert.equal(r.ia.cena.tipo,'ia');assert.equal(r.ia.origem,'3D Livre');
   for(const x of [r.print,r.ia]) assert.deepEqual(r.cenas.find(c=>c.path===x.cena.path).cena.objects.map(o=>o.itemId),['2'],'Cena com o móvel do 3D Livre');
-  assert.equal(r.ia0.name,'studio-ai-engine');assert.equal(r.ia0.body.scene.referencePolicy,'furniture_strict_architecture_adaptive','Pedido da IA igual ao de antes');
-  assert.match(r.ia0.body.prompt,/fotografia arquitetônica ultrarrealista/);
+  assert.equal(r.ia0.name,'studio-ai-engine');assert.equal(r.ia0.body.scene.referencePolicy,'furniture_studio_catalog','Pedido da IA igual ao de antes');
+  assert.match(r.ia0.body.prompt,/Lighting style/); // prompt da fotografia de estúdio (o resto vai no servidor)
   assert.deepEqual(errors,[]);
   await page.close();
 }

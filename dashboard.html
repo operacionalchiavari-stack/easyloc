@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="styles/global-help.css?v=20260913b">
   <link rel="stylesheet" href="styles/lia-widget.css?v=20260913b">
   <link rel="stylesheet" href="styles/tema-chiavari.css?v=20261008c">
-  <link rel="stylesheet" href="styles/portal-shell.css?v=20261008-avisos-subidos">
+  <link rel="stylesheet" href="styles/portal-shell.css?v=20261009-monograma">
 </head>
 
 <body class="portal-shell portal-em-inicio">
@@ -49,6 +49,8 @@
       <!-- Logo da empresa (EasyLocTheme troca o src em js/core/companyTheme.js). -->
       <img id="sidebarLogo" class="menu-logo-empresa" src="logo%20nova%20branca%20-%20sem%20fundo.png" alt="Logo da empresa"
         onload="this.classList.toggle('is-quadrada', !!this.naturalWidth && this.naturalWidth / this.naturalHeight < 1.6)">
+      <!-- Menu fechado: a própria logo recortada no 1º bloco de letras ("Ch"), gerado por js/ui/menuMonograma.js. -->
+      <img id="sidebarMonograma" class="menu-monograma" alt="" aria-hidden="true" hidden>
     </button>
   </div>
   <script>
@@ -63,6 +65,12 @@
         const separator = cleanUrl.includes("?") ? "&" : "?";
         document.getElementById("sidebarLogo").src = theme.logo_url.startsWith("blob:") || theme.logo_url.startsWith("data:")
           ? theme.logo_url : cleanUrl + separator + "v=stable";
+        // Recorte do menu fechado já pronto (mesma logo): aparece sem esperar o recorte ser refeito.
+        const mono = JSON.parse(localStorage.getItem("easyloc_monograma") || "null");
+        if (mono?.img && mono.url === cleanUrl) {
+          const el = document.getElementById("sidebarMonograma");
+          el.src = mono.img; el.hidden = false; el.closest(".menu-nome").classList.add("tem-monograma");
+        }
       }
     } catch (error) {}
   </script>
@@ -110,7 +118,7 @@
   <div id="main-content"></div>
 
   <!-- CONTEÃšDO DINÃ‚MICO (mÃ³dulos novos - documento prÃ³prio, carregado no iframe) -->
-  <iframe id="appModuleFrame" name="appModuleFrame" class="app-module-frame hidden" title="ConteÃºdo do sistema" src="about:blank"></iframe>
+  <iframe id="appModuleFrame" name="appModuleFrame" class="app-module-frame hidden" allow="microphone; fullscreen; clipboard-write" title="ConteÃºdo do sistema" src="about:blank"></iframe>
 
 </main>
 
@@ -206,10 +214,10 @@
 
 <!-- CONTEXTO GLOBAL -->
 <script src="js/core/companyTheme.js?v=20260913m"></script>
-<script src="js/core/preload.js"></script>
+<script src="js/core/preload.js?v=20261014-colunas"></script>
 <script src="js/core/listPager.js?v=20260913b"></script>
-<script src="js/core/context.js?v=20260913b"></script>
-<script src="js/core/permissions.js?v=20261008-ideia-premiada"></script>
+<script src="js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="js/core/permissions.js?v=20261009-acesso-estavel"></script>
 <script src="js/core/google.config.js"></script>
 <script src="js/core/google.js"></script>
 
@@ -228,6 +236,7 @@
 
 <!-- SIDEBAR / MENU -->
 <script src="js/ui/portalNav.js?v=20261008-loading"></script>
+<script src="js/ui/menuMonograma.js?v=20261009-monograma"></script>
 <script src="js/ui/portalMural.js?v=20261014-home-rh"></script>
 
 <!-- SISTEMA DE MODAIS -->

@@ -14,7 +14,7 @@ function medidasComSiglas(nome, dims){
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function dadosApresentacao(project, findItem){
   return {
-    nome: project.noivos || 'Projeto', local: project.local_evento || '', data: project.data_evento || '',
+    nome: project.noivos || 'Projeto', local: project.local_evento || '', data: project.data_evento || '', dataFim: project.data_evento_fim || '',
     ambientes: (project.dados?.ambientes || []).map(amb => {
       const grupos = new Map();
       for(const linha of amb.itens || []){
@@ -102,7 +102,7 @@ export function pedidoPreviewHtml(model, { decorador = null, empresa = null } = 
     <div class="cpj-order-event">
       <dl class="cpj-order-event-info">
         <div class="cpj-order-client"><dt>Clientes</dt><dd><h2>${esc(model.nome)}</h2></dd></div>
-        <div><dt>Data do evento</dt><dd>${esc(model.data ? model.data.slice(0,10).split('-').reverse().join('/') : 'Não informada')}</dd></div>
+        <div><dt>Data do evento</dt><dd>${esc(model.data ? [model.data, model.dataFim].filter(Boolean).map(d => String(d).slice(0,10).split('-').reverse().join('/')).join(' a ') : 'Não informada')}</dd></div>
         <div><dt>Local do evento</dt><dd>${esc(model.local || 'Não informado')}</dd></div>
       </dl>
       <aside class="cpj-order-notice" role="note"><span class="cpj-order-notice-icon" aria-hidden="true">i</span><div><strong>Esta é uma prévia do pedido</strong><p>Este arquivo reúne os itens escolhidos para o projeto. O pedido oficial será enviado pela nossa equipe comercial, com todas as disponibilidades e os serviços adicionais.</p></div></aside>
@@ -142,6 +142,36 @@ export async function imprimirPedido(model, { decorador = null, empresa = null, 
   const estilos = `@page{size:A4 portrait;margin:14mm 0}@page:first{margin-top:0}body{margin:0;font-family:Arial,sans-serif;color:#34352f}.cpj-order-paper{padding:0 14mm;box-shadow:none}.cpj-order-paper .cpj-order-letterhead{margin:0 -14mm;padding:9mm 14mm}.cpj-order-notes{padding:0 14mm}.cpj-order-table thead{display:table-header-group}.cpj-order-table tr,figure,.cpj-order-requester{break-inside:avoid}.cpj-order-render-group{break-inside:auto}.cpj-order-render-group>div{display:block}.cpj-order-render-group figure{margin:0 0 14px}.cpj-order-render-group img{max-height:230mm}.cpj-order-renders{break-before:auto}.cpj-order-renders>h2,.cpj-order-render-group h3{break-after:avoid}.cpj-order-notes{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:24px;font-size:12px;line-height:1.6}.pa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}*{print-color-adjust:exact}`;
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(model.nome)} — Pedido Chiavari</title><link rel="stylesheet" href="${esc(css)}"><style>${estilos}</style></head><body>${pedidoPreviewHtml(model,{decorador,empresa})}${observacao.trim() ? `<section class="cpj-order-notes"><strong>Observação para a equipe</strong><p>${esc(observacao.trim())}</p></section>` : ''}</body></html>`;
   return imprimirDocumento(html);
+}
+// A mesma janela "Ver pedido" do catálogo (fundo cinza, papel com a faixa escura, Baixar PDF e Fechar), para quem não usa
+// o abrirModal de catalogo-projetos.mjs: Central de Pedidos e a "Lista Completa" do pedido comercial (out/2026). Precisa
+// de catalogo-projetos.css carregado na página.
+// extra: HTML de botões a mais no rodapé; onMount({ dialog, atualizar }) — atualizar(model) redesenha a prévia (e o PDF
+// passa a usar o model novo), usado pelo "Renderizar projeto com IA" da Lista Completa.
+export function abrirVisualizacaoPedido({ titulo = 'Pedido', model, decorador = null, empresa = null, observacao = '', extra = '', onMount = null }){
+  const dialog = document.createElement('dialog');
+  dialog.className = 'cpj-modal is-wide cpj-order-preview';
+  dialog.innerHTML = `<form class="cpj-modal-form" method="dialog" novalidate>
+    <header><h3>${esc(titulo)}</h3></header>
+    <div class="cpj-modal-body">${pedidoPreviewHtml(model, { decorador, empresa })}</div>
+    <p class="cpj-modal-error" role="alert" hidden></p>
+    <footer><button type="button" class="cpj-btn cpj-btn-ghost cpj-btn-link" data-pedido-pdf>Baixar PDF</button>${extra}<button type="button" class="cpj-btn cpj-btn-ghost" data-pedido-fechar>Fechar</button></footer>
+  </form>`;
+  document.body.appendChild(dialog);
+  const erro = dialog.querySelector('.cpj-modal-error');
+  dialog.addEventListener('close', () => dialog.remove());
+  dialog.addEventListener('click', event => { if(event.target === dialog) dialog.close(); });
+  dialog.querySelector('[data-pedido-fechar]').addEventListener('click', () => dialog.close());
+  dialog.querySelector('[data-pedido-pdf]').addEventListener('click', async event => {
+    const botao = event.currentTarget;
+    botao.disabled = true; botao.textContent = 'Preparando PDF…'; erro.hidden = true;
+    try{ await imprimirPedido(model, { decorador, empresa, observacao }); }
+    catch(error){ erro.textContent = error?.message || 'Não foi possível gerar o PDF.'; erro.hidden = false; }
+    finally{ botao.disabled = false; botao.textContent = 'Baixar PDF'; }
+  });
+  onMount?.({ dialog, atualizar(novo){ model = novo; const corpo = dialog.querySelector('.cpj-modal-body'); if(corpo) corpo.innerHTML = pedidoPreviewHtml(model, { decorador, empresa }); } });
+  dialog.showModal();
+  return dialog;
 }
 async function imprimirDocumento(html){
   const frame = document.createElement('iframe');

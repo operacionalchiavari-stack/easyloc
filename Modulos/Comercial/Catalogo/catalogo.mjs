@@ -1,8 +1,9 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
-import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261005-cena-pesada";
+import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261015-assistente";
+import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261015-esgotado";
 import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261006-pastas-livres";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261008-pedido-fluxo";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261015-presenca";
 
 const supabase = window.supabaseClient;
 const modoPedido = new URLSearchParams(location.search).get('comercial') === 'pedido' && window.parent !== window;
@@ -629,6 +630,8 @@ function setActiveOverlay(mode){
   if(state.overlay === "projetos" && mode !== "projetos") closeCatalogProjetos();
   if(mode !== "project-entry") document.querySelector(".cpj-entry")?.remove();
   state.overlay = mode;
+  // Pedido comercial: a barra de etapas do pedido (tela de cima) acompanha se está no catálogo ou na lista.
+  if(modoPedido) window.parent.__pedidoSincronizarEtapa?.(mode === "projetos" ? "lista" : mode === "studio" ? "modulo3d" : "catalogo");
   $("catalogStudio")?.classList.toggle("hidden", mode !== "studio");
   $("catalogBiblioteca")?.classList.toggle("hidden", mode !== "biblioteca");
   $("catalogProjetos")?.classList.toggle("hidden", mode !== "projetos");
@@ -2116,6 +2119,16 @@ function showItemSection(item){
 // rolar de um item pro outro. A lista de onde veio (itens, título, modo e posição da rolagem) fica guardada em
 // state.itemReturn, e "Voltar" (appGoBack) volta exatamente pra ela. Uma sugestão de "Combine também com" troca
 // o item da página, sem empilhar retornos.
+// Cartões de itens da assistente comercial: abre o item na página dele, voltando pra categoria dele.
+function abrirItemPelaAssistente(id){
+  const item = findItemById(id);
+  if(!item) return;
+  if(state.overlay) setActiveOverlay(null);
+  applyView(item.cat);
+  state.itemReturn = null;
+  openImmersiveFromGrid(item);
+}
+
 function openImmersiveFromGrid(item){
   if(!state.itemReturn){
     state.itemReturn = { items: state.currentItems, heading: state.currentHeading, viewMode: state.viewMode, scrollY: window.scrollY };
@@ -3887,7 +3900,8 @@ async function init(){
     await carregarCapasGateway();
     if(!ehVisitante()) initCatalogProjetos({
       pedidoComercial: modoPedido,
-      editarPedidoComercial: () => window.parent.document.querySelector('.comercial-fluxo-bar [data-etapa="dados"]')?.click(),
+      editarPedidoComercial: () => window.parent.__pedidoIrPara?.("dados"),
+      decoradoraPedido: () => window.parent.__pedidoClienteAtual || null,
       salvarPedidoComercial: project => window.parent.pedidoSincronizarProjetoCatalogo(project),
       finalizarPedidoComercial: () => window.parent.__salvarPedidoOperacional?.(),
       supabase,
@@ -3901,6 +3915,7 @@ async function init(){
       goStudio: () => openStudioOverlay(),
       cenaEditor,
       openProjetos: (options) => openProjetosOverlay(options),
+      ondeEsta: () => state.overlay === "studio" ? "No 3D Livre" : state.overlay === "projetos" ? "No projeto" : state.overlay === "biblioteca" ? "Na Biblioteca" : "No catálogo",
     });
     if(modoPedido){
       definirProjetoComercialPedido(window.parent.pedidoProjetoCatalogo());
@@ -3910,6 +3925,20 @@ async function init(){
       };
       window.abrirProjetoComercialPedido = async () => {
         await window.sincronizarPedidoCatalogo();openProjetosOverlay({view:'work'});
+      };
+      // "← Voltar" da barra do pedido: volta uma tela dentro do catálogo (item → categoria → categorias).
+      // Devolve false quando já está nas categorias (ou na lista do projeto), aí o pedido volta uma etapa.
+      window.voltarCatalogoComercial = () => {
+        if(state.overlay) return false;
+        if(closeSingleItem()) return true;
+        const anterior = state.navBack.at(-1);
+        if(anterior && anterior.activeView !== GATEWAY_VIEW && !anterior.overlay){ jumpToHistoryEntry(anterior.id); return true; }
+        if(state.activeView !== HOME_VIEW){ applyView(HOME_VIEW); return true; }
+        return false;
+      };
+      // Módulo 3D dentro do pedido: "Adicionar ao projeto" do 3D Livre grava a composição e os móveis no pedido.
+      window.abrirModulo3dComercialPedido = async () => {
+        await window.sincronizarPedidoCatalogo();closeCatalogProjetos();openStudioOverlay();
       };
       window.abrirCatalogoComercialPedido = async () => {
         await window.sincronizarPedidoCatalogo();closeCatalogProjetos();applyView(HOME_VIEW);
@@ -3927,6 +3956,11 @@ async function init(){
     bindNavHistory();
     startEventRotation();
     if(!ehVisitante()) initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id, token: state.catalogSession.token });
+    // Assistente comercial (out/2026): decorador e equipe; visitante não (não tem projeto nem pedido).
+    if(!ehVisitante()) initCatalogAssistente({
+      supabase, getSession: () => state.catalogSession, modoPedido, cenaEditor, notify, temProjetos: true,
+      findItem: findItemById, abrirItem: abrirItemPelaAssistente,
+    });
     initCatalogBiblioteca({
       supabase, empresaId, token: state.catalogSession.token,
       acessoInterno: state.acessoInterno, visitante: ehVisitante(), categories: getCategories(),

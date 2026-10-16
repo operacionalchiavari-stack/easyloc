@@ -6646,3 +6646,57 @@ body.pedido-map-modal-open {
 .pedido-screen .entrada-numero,
 .pedido-screen .comercial-numero{display:inline-flex;align-items:center;justify-content:center;padding:9px 18px;border:1px solid #d6c4a5;border-radius:12px;background:#eee6d8;color:#514631;font-size:22px;font-weight:600;letter-spacing:.025em;font-variant-numeric:tabular-nums;box-shadow:0 3px 12px rgba(90,71,42,.06)}
 @media(max-width:700px){.pedido-screen .entrada-numero,.pedido-screen .comercial-numero{font-size:18px;padding:8px 12px}}
+
+/* A tela antiga do pedido nunca aparece (out/2026, pedido do usuário: "essa tela não deve existir mais").
+   A página já nasce em .em-entrada (que esconde .pedido-shell); enquanto o JS não monta a entrada nova,
+   aparece só "Carregando…", e se a abertura falhar, uma mensagem no lugar da tela antiga. */
+.pedido-screen.em-entrada:not(:has(.pedido-entrada))::before{content:"Carregando pedido…";display:block;padding:120px 24px;text-align:center;font-family:"Cormorant Garamond",serif;font-size:28px;letter-spacing:.06em;color:#77716a}
+.pedido-screen.pedido-falhou:not(:has(.pedido-entrada))::before{content:"Não foi possível abrir o pedido. Recarregue a página."}
+
+/* ===== Barra de etapas do pedido comercial, no topo (out/2026) =====
+   Mesmo desenho do cabeçalho do catálogo: etapas já vistas à esquerda (pequenas, clicáveis), a atual no centro
+   em Cormorant maiúsculo, as próximas à direita apagadas; o botão de avançar fica aqui em cima. */
+.pedido-screen .comercial-trilha{--ct-h:76px;position:sticky;top:0;z-index:40;display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,auto) minmax(150px,1fr);align-items:center;gap:16px;min-height:var(--ct-h);padding:0 28px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid #ebe5da;box-sizing:border-box}
+.pedido-screen .comercial-trilha .ct-voltar{justify-self:start;border:0;background:none;color:#8c7554;font:inherit;font-size:13px;cursor:pointer;padding:6px 0}
+.pedido-screen .comercial-trilha .ct-voltar:hover{color:#41463c}
+.pedido-screen .comercial-trilha .ct-linha{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:18px;min-width:0}
+.pedido-screen .comercial-trilha .ct-antes{display:flex;justify-content:flex-end;align-items:center;gap:6px;min-width:0}
+.pedido-screen .comercial-trilha .ct-depois{display:flex;justify-content:flex-start;align-items:center;gap:6px;min-width:0}
+.pedido-screen .comercial-trilha .ct-passo{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:4px 2px;font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;color:#77716a;transform-origin:center}
+.pedido-screen .comercial-trilha button.ct-passo{cursor:pointer}
+.pedido-screen .comercial-trilha button.ct-passo:hover{color:#41463c}
+.pedido-screen .comercial-trilha .ct-antes .ct-passo::after{content:"›";margin-left:8px;color:#b7ae9f}
+.pedido-screen .comercial-trilha .ct-depois .ct-passo::before{content:"›";margin-right:8px;color:#cfc8bc}
+.pedido-screen .comercial-trilha .ct-futuro{color:#b9b2a6}
+.pedido-screen .comercial-trilha .ct-atual{margin:0;font-family:"Cormorant Garamond",serif;font-size:clamp(1.4rem,2vw,1.9rem);font-weight:500;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;color:#2b2a26;transform-origin:center}
+.pedido-screen .comercial-trilha .ct-acoes{justify-self:end;display:flex;align-items:center;gap:14px}
+.pedido-screen .comercial-trilha .ct-numero{color:#8c7554;font-size:14px;letter-spacing:.06em;white-space:nowrap}
+.pedido-screen .comercial-trilha .ct-avancar{border:0;border-radius:999px;background:#41453e;color:#fff;font:inherit;font-size:14px;padding:12px 24px;cursor:pointer;white-space:nowrap;transition:background .2s,transform .2s}
+.pedido-screen .comercial-trilha .ct-avancar:hover{background:#565c4f;transform:translateY(-1px)}
+.pedido-screen .comercial-trilha .ct-avancar:disabled,.pedido-screen .comercial-trilha.is-ocupado .ct-avancar{opacity:.6;cursor:wait}
+.pedido-screen .comercial-trilha .ct-erro{position:absolute;right:28px;top:100%;margin:6px 0 0;padding:0;color:#b4412f;font-size:13px}
+.pedido-screen .comercial-trilha .ct-erro:empty{display:none}
+.pedido-screen .comercial-trilha .ct-erro:not(:empty){background:#fff6f3;border:1px solid #f0cfc6;border-radius:10px;padding:8px 12px}
+.pedido-screen .comercial-trilha.em-intro .ct-linha,.pedido-screen .comercial-trilha.em-intro .ct-avancar{visibility:hidden}
+/* Avançar mora na barra: o botão de baixo e a barra antiga do catálogo saíram. */
+.pedido-screen .entrada-avancar,.pedido-screen .comercial-fluxo-bar{display:none!important}
+.pedido-screen.em-catalogo-comercial .pedido-catalogo-real{height:calc(100dvh - 76px)!important;min-height:400px}
+@media(max-width:900px){
+  .pedido-screen .comercial-trilha{grid-template-columns:auto 1fr;grid-template-areas:"voltar acoes" "linha linha";padding:10px 16px;gap:8px}
+  .pedido-screen .comercial-trilha .ct-voltar{grid-area:voltar}.pedido-screen .comercial-trilha .ct-acoes{grid-area:acoes}
+  .pedido-screen .comercial-trilha .ct-linha{grid-area:linha;grid-template-columns:auto auto;justify-content:center}
+  .pedido-screen .comercial-trilha .ct-depois{display:none}
+  .pedido-screen .comercial-trilha .ct-antes .ct-passo:not(:last-child){display:none}
+  .pedido-screen .comercial-trilha .ct-numero{display:none}
+}
+
+/* Card Evento: um dia ou vários dias (out/2026). */
+.pedido-screen .entrada-data-card.entrada-card-evento{grid-template-columns:minmax(0,1fr)}
+.pedido-screen .entrada-data-card.entrada-card-evento.is-periodo{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.pedido-screen .entrada-data-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.pedido-screen .entrada-data-head h4{margin:0!important}
+.pedido-screen .evento-modo{display:inline-flex;padding:2px;border:1px solid #e5ddd0;border-radius:999px;background:#faf8f4}
+.pedido-screen .evento-modo button{border:0;background:none;border-radius:999px;padding:4px 10px;font:inherit;font-size:11.5px;color:#77716a;cursor:pointer;white-space:nowrap}
+.pedido-screen .evento-modo button.is-ativo{background:#41453e;color:#fff}
+.pedido-screen .entrada-data-card .meta-item[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.pedido-screen .comercial-trilha .ct-avancar{transition:none}}

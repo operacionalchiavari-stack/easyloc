@@ -75,12 +75,23 @@ window.aguardarContexto = function (timeoutMs = 10000) {
   }
 
   // 🔥 PEGA ID REAL DO USUÁRIO LOGADO
-  const { data:{ user } } =
-    await window.supabaseClient.auth.getUser();
-
-  // Validação por empresa antes de liberar qualquer módulo para a sessão.
-  const { data: acessoFuncionario, error: erroAcessoFuncionario } =
-    await window.supabaseClient.rpc("funcionario_contexto", { p_empresa_id: empresaId });
+  // Out/2026: getUser e a validação tentam até 4 vezes (0, 1, 2 e 4 s). Antes, uma falha de rede passageira
+  // escondia a tela; e um getUser sem resposta era lido como "acesso inativo" e DESLOGAVA a pessoa.
+  let user = null, acessoFuncionario = null, erroAcessoFuncionario = null;
+  for (const espera of [0, 1000, 2000, 4000]) {
+    if (espera) await new Promise((ok) => setTimeout(ok, espera));
+    const resUser = await Promise.resolve().then(() => window.supabaseClient.auth.getUser()).catch((e) => ({ data: {}, error: e }));
+    user = resUser?.data?.user || null;
+    if (!user) { erroAcessoFuncionario = resUser?.error || new Error("Sessão não confirmada"); continue; }
+    // Validação por empresa antes de liberar qualquer módulo para a sessão.
+    // try/catch, não .catch(): o que o rpc devolve aceita await, mas não tem .catch.
+    let res;
+    try { res = await window.supabaseClient.rpc("funcionario_contexto", { p_empresa_id: empresaId }); }
+    catch (e) { res = { data: null, error: e }; }
+    acessoFuncionario = res.data;
+    erroAcessoFuncionario = res.error || null;
+    if (!erroAcessoFuncionario) break;
+  }
   if (!user || erroAcessoFuncionario || !acessoFuncionario?.ativo) {
     [...document.body.children].filter(el => !['SCRIPT', 'STYLE'].includes(el.tagName)).forEach(el => { el.hidden = true; });
     const aviso = document.createElement("p");

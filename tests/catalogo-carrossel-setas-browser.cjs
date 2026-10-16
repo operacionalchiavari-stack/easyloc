@@ -10,7 +10,7 @@ const ITENS=[{id:'1',tipo:'Item',produto:'Sofá Berlim',categoria:'Sofás',mater
   {slot:'detalhe_02',tipo:'detalhe',titulo:'Detalhe 2',url:ST+'d2.png',path:'x/2',ordem:2,cliente_id:null}],itens_modelos_3d:[]}];
 (async()=>{const app=express();app.use(express.static(process.cwd()));const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.on('listening',r));
 const browser=await chromium.launch({channel:'msedge',headless:true});
-async function abrir(opcoes){
+async function abrir(opcoes,busca=''){
   const ctx=await browser.newContext(opcoes);const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page._errors=errors;
   await page.route('https://**/*',r=>r.fulfill({body:'',contentType:'text/javascript'}));
   await page.route('https://fixture/**',r=>r.fulfill({contentType:'image/svg+xml',body:svg}));
@@ -18,7 +18,7 @@ async function abrir(opcoes){
     if(n==='catalogo_validar_sessao')return {data:{valido:true,empresa_id:'company',cliente_id:'client'}};
     if(n==='catalogo_carregar')return {data:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens}};
     if(n==='catalogo_capas_carregar')return {data:{}};return {data:null};}};},{itens:ITENS});
-  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
+  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html'+busca);
   await page.locator('.catalog-gateway').waitFor();
   await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('#catalogGrid .catalog-home-grid').waitFor();
   await page.locator('[data-home-category="sofas"]').click();await page.locator('[data-grid-item="1"]').click();
@@ -58,7 +58,7 @@ const estado=(page,lado='next')=>page.locator(`#produto-1 .product-main-nav-${la
 }
 // ===== Tela de toque: sem hover, as setas ficam sempre visíveis =====
 {
-  const page=await abrir({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+  const page=await abrir({viewport:{width:390,height:844},hasTouch:true,isMobile:true},"?versao=site");
   assert.equal(await page.evaluate(()=>matchMedia('(hover:none)').matches),true,'o teste roda com um ambiente sem hover');
   await page.waitForTimeout(800);
   for(const lado of ['prev','next']) assert.equal((await estado(page,lado)).op,1,`toque: seta ${lado} sempre visível (não existe "passar o mouse")`);

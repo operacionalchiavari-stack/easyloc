@@ -2,11 +2,11 @@ console.log("✅ pedido.mjs carregado");
 
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
-import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs";
-import { initItens } from "./pedido.itens.mjs";
+import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261009-satelite";
+import { initItens } from "./pedido.itens.mjs?v=20261015-microfone";
 import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
-import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs";
+import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261009-periodo";
 import { initPagamento } from "./pedido.pagamento.mjs";
 import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs";
 
@@ -48,6 +48,7 @@ export async function initPedido(){
   await window.aguardarContexto?.();
   if(!window.__CONTEXT?.empresa_id){
     window.__pedidoModuleLoaded=false;
+    document.querySelector(".pedido-screen")?.classList.add("pedido-falhou");
     window.alerta?.('Não foi possível identificar a empresa. Recarregue para abrir o pedido.','Carregar pedido','erro');
     return;
   }
@@ -374,7 +375,10 @@ export function destroyPedido(){
 ===================================================== */
 window.initPedido = initPedido;
 window.__activeModuleDestroy = destroyPedido;
-requestAnimationFrame(() => requestAnimationFrame(initPedido));
+requestAnimationFrame(() => requestAnimationFrame(() => Promise.resolve().then(initPedido).catch(error => {
+  console.error("[Pedido] não abriu:", error);
+  document.querySelector(".pedido-screen")?.classList.add("pedido-falhou");
+})));
 
 async function setupPedidoWorkspace({ supabase }){
   const avisar = (mensagem, titulo = "Pedido", tipo = "info") => {
@@ -822,6 +826,8 @@ async function setupPedidoWorkspace({ supabase }){
     setInputValue("localIdHidden", pedido.local_id || "");
     setInputValue("dataEntrega", dataParaISO(pedido.data_entrega));
     setInputValue("dataEvento", dataParaISO(pedido.data_evento || pedido.data_hora));
+    setInputValue("dataEventoFim", pedido.data_evento_fim ? dataParaISO(pedido.data_evento_fim) : "");
+    window.__definirModoEvento?.(pedido.data_evento_fim ? "periodo" : "dia");
     setInputValue("dataColeta", dataParaISO(pedido.data_coleta));
     const horariosPedido = observacoesPedido.horarios_pedido || observacoesPedido.horarios || {};
     setInputValue(
@@ -1067,6 +1073,13 @@ async function setupPedidoWorkspace({ supabase }){
     const localId = document.getElementById("localIdHidden")?.value || null;
     const localNome = document.getElementById("localInput")?.value?.trim() || "";
     const dataEvento = document.getElementById("dataEvento")?.value || null;
+    // Evento de mais de um dia: o fim só vale no modo "Vários dias" (out/2026).
+    const eventoEmPeriodo = document.querySelector(".evento-fim-item") && !document.querySelector(".evento-fim-item").hidden;
+    const dataEventoFim = eventoEmPeriodo ? (document.getElementById("dataEventoFim")?.value || null) : null;
+    if(dataEventoFim && (!dataEvento || dataEventoFim <= dataEvento)){
+      avisar("O último dia do evento precisa ser depois do primeiro.", "Data do evento", "aviso");
+      return;
+    }
     const dataEntrega = document.getElementById("dataEntrega")?.value || null;
     const dataColeta = document.getElementById("dataColeta")?.value || null;
     const horaEntrega = document.getElementById("horaEntrega")?.value || "";
@@ -1095,6 +1108,7 @@ async function setupPedidoWorkspace({ supabase }){
       local_id: localId || null,
       local_nome: localNome,
       data_evento: dataEvento,
+      data_evento_fim: dataEventoFim,
       data_entrega: dataEntrega,
       data_coleta: dataColeta,
       data_hora: dataEvento ? `${dataEvento}T12:00:00` : null,

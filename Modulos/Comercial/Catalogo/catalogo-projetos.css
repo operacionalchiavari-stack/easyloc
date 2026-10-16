@@ -727,3 +727,16 @@ dialog.cpj-modal.cpj-cena-modal{width:min(1440px,calc(100vw - 32px));height:calc
 .cpj-dest-moveis li b{color:#7a5f3d;font-weight:700}
 .cpj-dest-moveis:has(input:not(:checked)) ul{opacity:.4}
 @media(max-width:600px){.cpj-dest-campos{grid-template-columns:1fr}}
+/* Decorador solicitante acima da "Lista Completa" no pedido comercial (out/2026). */
+.cpj-solicitante{display:flex;align-items:center;justify-content:center;gap:16px;margin:4px 0 18px}
+.cpj-solicitante-foto{width:72px;height:72px;flex:none;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#f4efe6;border:1px solid #e3d9c8;box-shadow:0 6px 18px rgba(40,30,20,.08);font:400 30px "Cormorant Garamond",Georgia,serif;color:#987953}
+.cpj-solicitante-foto img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block}
+.cpj-solicitante-txt{display:flex;flex-direction:column;gap:3px}
+.cpj-solicitante-txt small{font:600 11px "Manrope",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#987953}
+.cpj-solicitante-txt strong{font:500 24px/1.1 "Cormorant Garamond",Georgia,serif;color:var(--ink,#251e19)}
+/* Solicitante e "Lista Completa" na mesma linha: solicitante à esquerda, título no centro exato. */
+.cpj-geral-topo{display:grid;grid-template-columns:minmax(max-content,1fr) auto minmax(0,1fr);align-items:center;gap:20px;margin:6px 0 34px}
+.cpj-geral-topo .cpj-solicitante{justify-self:start;margin:0;justify-content:flex-start}
+.cpj-geral-topo .cpj-geral-title{margin:0}
+@media(max-width:1100px){.cpj-geral-topo{grid-template-columns:1fr}.cpj-geral-topo .cpj-solicitante{justify-self:center}.cpj-geral-topo>span:last-child{display:none}}
+.cpj-geral-topo .cpj-geral-title-orn{flex:0 0 clamp(40px,6vw,120px)}

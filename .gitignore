@@ -40,3 +40,6 @@ tmp-*
 
 .vercel
 .env*
+
+# Artefatos de trabalho (prints, PDFs de teste, backups de dados com preços) — nunca publicar
+outputs/

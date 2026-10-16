@@ -970,5 +970,11 @@ body.catalog-modo-sistema .catalog-header .catalog-search:focus-within{backgroun
 .catalogo-comercial-pedido .catalog-grid-drag{display:none!important}
 
 /* Sem a faixa vazia do cabecalho no fluxo comercial. */
-.catalogo-comercial-pedido .catalog-header{display:none!important}
+/* html + body: precisa vencer "body.catalog-modo-sistema .catalog-header{display:flex!important}" (linha ~54). */
+html.catalogo-comercial-pedido body .catalog-header{display:none!important}
 .catalogo-comercial-pedido .catalog-page{--header-h:0px;--header-top-h:0px}
+/* Catálogo dentro do pedido: a busca vai pro canto ESQUERDO (pedido do usuário, out/2026) — à direita ela
+   esbarrava no filtro "Filtre por..." e no card do projeto. */
+@media(min-width:768px){
+ html.catalogo-comercial-pedido .catalog-top-tools{left:0;right:auto;padding-left:clamp(20px,2.2vw,40px);padding-right:0}
+}

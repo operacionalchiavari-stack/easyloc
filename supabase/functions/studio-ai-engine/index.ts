@@ -166,6 +166,40 @@ function normalizarPrompt(input: GenerateSceneInput) {
     .map(([name, count]) => `${count}x ${name}`)
     .join(", ");
 
+  // Fotografia de estudio de catalogo (out/2026, padrao do 3D Livre). Pedido do usuario: fundo branco infinito,
+  // moveis de perto, materiais e sombras realistas, fidelidade absoluta aos moveis — nada de sala, paredes ou janelas.
+  // O enquadramento ja chega pronto da captura (catalogo-studio3d.mjs, capturarFotoEstudio: camera ~50 mm levemente
+  // elevada, composicao ocupando ~84% do quadro); o prompt pede para a IA manter esse enquadramento.
+  if (input.scene?.referencePolicy === "furniture_studio_catalog") {
+    const inventario = furnitureInventory
+      ? `FURNITURE INVENTORY THAT MUST REMAIN IDENTICAL (exact quantities): ${furnitureInventory}.`
+      : "Keep every visible furniture piece exactly as it is.";
+    return {
+      prompt: [
+        "Transform the provided furniture composition into an ultra-photorealistic, luxury furniture catalog studio photograph.",
+        "Use the supplied image as the strict visual reference for all furniture objects, shapes, proportions, colors, materials, quantities and spatial relationships.",
+        "Preserve every original furniture design faithfully. Do not redesign, replace, remove, invent or add any furniture, accessories or decorative elements.",
+        inventario,
+        "Keep the exact quantity of pieces, models, shapes, proportions, relative dimensions, colors, materials, upholstery, arms, legs and structures, seams and cushion divisions, construction details, and the exact positions and spatial relationships between the pieces. Do not add cushions, change arms, or change the number of seats.",
+        "Place the exact original furniture composition inside a seamless infinite pure white photography studio with a clean white floor and white background, without visible corners, walls, windows, architecture, floor tiles or horizon lines.",
+        "Create extremely realistic physically accurate materials, including detailed leather grain, natural fabric fibers, authentic wood grain, subtle wood finish reflections, realistic cane and rattan weaving, precise seams, accurate upholstery folds and natural material imperfections. Improve only the rendering of materials, light and shadows; never change the product design or its original colors.",
+        "Use large professional softbox lighting, sophisticated global illumination, physically plausible indirect light, ambient occlusion and natural soft contact shadows beneath every furniture leg and base.",
+        "The shadows must anchor the furniture naturally to the studio floor, with realistic softness, depth and direction.",
+        "The composition is already framed close to the camera in the supplied image, filling about 75 to 90 percent of the frame: keep this framing, camera angle and perspective. Keep the furniture large, centered and completely visible, with elegant minimal margins. Do not zoom out, do not shrink the furniture, do not add empty space.",
+        "Use premium commercial furniture photography composition, realistic photographic perspective equivalent to a 50 mm lens, a natural camera viewpoint and precise visual balance, without wide-angle distortion.",
+        "Make the image look like a real photograph taken with a high-end professional camera in a luxury furniture photography studio.",
+        "The furniture must appear tangible, physically present, professionally lit and exceptionally detailed.",
+        "No architectural environment. No room. No windows. No scenery. No additional objects. No people. No text, logos or watermarks. No exaggerated reflections. No artificial-looking textures. No floating furniture.",
+        "Avoid: wide empty room, distant furniture, architectural interior, concrete walls, windows, doors, ceiling, visible room corners, floor tiles, large empty spaces, miniature furniture, unrealistic materials, cartoon appearance, illustration, artificial 3D rendering, distorted proportions, altered furniture designs, additional cushions, additional objects, floating objects, harsh shadows, excessive gloss, plastic-looking leather, blurry textures, changed camera composition.",
+        input.prompt.trim(),
+        "If realism and fidelity ever conflict, fidelity to the original furniture always wins.",
+        "Preserve the exact original furniture arrangement and design.",
+        "The result must look like an authentic professional studio photograph, not a 3D viewport, illustration, SketchUp screenshot or stylized CGI render.",
+      ].join(" "),
+      versions,
+    };
+  }
+
   // Pedido explicito do usuario (Modulo Lounge): "quero que respeite
   // exatamente o angulo, a distancia e principalmente o preview... e
   // como se tirasse um print do que eu estou vendo no 3d e desse so o
@@ -239,6 +273,16 @@ function resolverTamanhoImagem(input: GenerateSceneInput) {
     : {};
   const largura = Number(formato.largura || 1024);
   const altura = Number(formato.altura || 1024);
+
+  // Estudio (out/2026): o gpt-image-2 aceita tamanhos livres — lados multiplos de 16, lado maior <= 3840,
+  // proporcao <= 3:1 e entre 655.360 e 8.294.400 pixels (guia oficial da OpenAI). A captura ja manda ~2K.
+  if (scene.referencePolicy === "furniture_studio_catalog") {
+    const pixels = largura * altura;
+    const valido = Number.isInteger(largura) && Number.isInteger(altura) && largura % 16 === 0 && altura % 16 === 0
+      && Math.max(largura, altura) <= 3840 && Math.max(largura, altura) / Math.min(largura, altura) <= 3
+      && pixels >= 655360 && pixels <= 8294400;
+    if (valido) return `${largura}x${altura}`;
+  }
 
   if (Math.abs(largura - altura) < 80) return "1024x1024";
   return largura > altura ? "1536x1024" : "1024x1536";
@@ -345,7 +389,7 @@ async function generateWithOpenAI(input: GenerateSceneInput) {
   form.append("background", "opaque");
   form.append("output_format", Deno.env.get("STUDIO_IMAGE_FORMAT") || "png");
 
-  const response = await fetch("https://api.openai.com/v1/images/edits", {
+  let response = await fetch("https://api.openai.com/v1/images/edits", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${openaiKey}`,
@@ -353,7 +397,21 @@ async function generateWithOpenAI(input: GenerateSceneInput) {
     body: form,
   });
 
-  const payload = await response.json().catch(() => ({}));
+  let payload = await response.json().catch(() => ({}));
+  // Tamanho ~2K recusado (modelo da conta sem tamanhos livres): tenta de novo no tamanho classico do mesmo formato.
+  const tamanhoClassico = (tamanho: string) => {
+    const [l, a] = tamanho.split("x").map(Number);
+    return Math.abs(l - a) < 80 ? "1024x1024" : l > a ? "1536x1024" : "1024x1536";
+  };
+  if (!response.ok && /size/i.test(JSON.stringify(payload?.error || "")) && tamanhoClassico(imageSize) !== imageSize) {
+    form.set("size", tamanhoClassico(imageSize));
+    response = await fetch("https://api.openai.com/v1/images/edits", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${openaiKey}` },
+      body: form,
+    });
+    payload = await response.json().catch(() => ({}));
+  }
   if (!response.ok) {
     return {
       providerStatus: "error",

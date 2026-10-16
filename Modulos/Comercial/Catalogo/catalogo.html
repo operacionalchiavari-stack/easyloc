@@ -3,6 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Celular abre o APP do catálogo (catalogo-app.html), com o mesmo link (pedido do usuário, out/2026). Fica no site: computador,
+    // tablet grande, dentro do sistema (iframe), dentro do pedido, ou quem escolheu "versão completa" (?versao=site, lembrado na aba).
+    (function(){try{
+      var q=new URLSearchParams(location.search);
+      if(q.get("versao")==="site")sessionStorage.setItem("catalogo_versao","site");
+      if(q.get("versao")==="app")sessionStorage.removeItem("catalogo_versao");
+      var celular=matchMedia("(max-width: 820px)").matches&&(("ontouchstart" in window)||navigator.maxTouchPoints>0);
+      if(celular&&window.top===window&&q.get("comercial")!=="pedido"&&sessionStorage.getItem("catalogo_versao")!=="site"&&!sessionStorage.getItem("login_ok"))
+        location.replace("catalogo-app.html"+location.search+location.hash);
+    }catch(e){}})();
+  </script>
   <title>Catálogo — Acervo</title>
   <!-- Adianta DNS+TLS com o Storage/CDN do Supabase (de onde vêm todas as
        fotos do catálogo) antes mesmo da primeira <img> ser descoberta —
@@ -12,11 +24,12 @@
   <link rel="dns-prefetch" href="https://awemuohtvwvrdzfxwrmd.supabase.co">
   <link rel="stylesheet" href="catalogo-creditos.css?v=20260919-fontes">
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <link rel="stylesheet" href="catalogo.css?v=20261008-topo-compacto">
-  <link rel="stylesheet" href="projeto-apresentacao.css?v=20260926-legenda-cena">
+  <link rel="stylesheet" href="catalogo.css?v=20261009-busca-esquerda">
+  <link rel="stylesheet" href="projeto-apresentacao.css?v=20261009-ver-pedido">
   <link rel="stylesheet" href="catalogo-studio3d.css?v=20261005-add-projeto3">
   <link rel="stylesheet" href="catalogo-biblioteca.css?v=20261006-pastas-livres">
-  <link rel="stylesheet" href="catalogo-projetos.css?v=20261005-add-projeto">
+  <link rel="stylesheet" href="catalogo-projetos.css?v=20261009-solicitante-linha2">
+  <link rel="stylesheet" href="catalogo-assistente.css?v=20261015-esgotado">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../../js/core/supabase.js"></script>
   <script defer src="catalogo-creditos.js?v=20260922-designer"></script>
@@ -391,23 +404,17 @@
   <dialog class="studio-render-dialog" id="studioRenderOptions" aria-labelledby="studioRenderTitle">
     <form id="studioRenderForm">
       <button type="button" class="studio-render-close" id="studioRenderCancel" aria-label="Fechar opções">×</button>
-      <span class="studio-render-eyebrow">ATMOSFERA DO AMBIENTE</span>
+      <span class="studio-render-eyebrow">FOTOGRAFIA DE ESTÚDIO</span>
       <h2 id="studioRenderTitle">Dê vida à sua composição</h2>
-      <p>Escolha a luz e a presença de convidados para a sua imagem.</p>
-      <fieldset><legend>Momento do dia</legend><div class="studio-render-choices">
-        <label><input type="radio" name="periodo" value="dia" checked><span>Dia<small>Luz natural e leve</small></span></label>
-        <label><input type="radio" name="periodo" value="entardecer"><span>Entardecer<small>Hora dourada</small></span></label>
-        <label><input type="radio" name="periodo" value="noite"><span>Noite<small>Atmosfera intimista</small></span></label>
-      </div></fieldset>
-      <label class="studio-render-select">Convidados<select name="convidados"><option value="nenhum">Sem convidados</option><option value="poucos">Poucos convidados</option><option value="moderado">Evento com convidados</option></select></label>
-      <label class="studio-render-select">Iluminação<select name="iluminacao"><option value="suave">Suave e equilibrada</option><option value="quente">Quente e acolhedora</option><option value="cenica">Cênica e sofisticada</option></select></label>
-      <p class="studio-render-preserve">Móveis e câmera preservados: mesma composição, posição e enquadramento.</p>
+      <p>A IA fotografa seus móveis em um estúdio branco profissional, de perto, com materiais e sombras realistas.</p>
+      <label class="studio-render-select">Iluminação<select name="iluminacao"><option value="suave">Suave e equilibrada</option><option value="cenica">Contraste sofisticado</option></select></label>
+      <p class="studio-render-preserve">Os mesmos móveis, na mesma posição, vistos do lado que você escolheu no 3D.</p>
       <button type="submit" class="studio-render-confirm">Gerar imagem</button>
     </form>
   </dialog>
   <dialog class="studio-result-dialog" id="studioResultDialog">
     <button type="button" class="studio-result-close" id="studioResultClose" aria-label="Fechar render">×</button>
-    <div class="studio-result-copy"><span id="studioResultKicker">Renderização IA</span><strong id="studioResultTitle">Sua composição em uma cena realista</strong></div>
+    <div class="studio-result-copy"><span id="studioResultKicker">Renderização IA</span><strong id="studioResultTitle">Sua composição em fotografia de estúdio</strong></div>
     <img id="studioResultImage" alt="Renderização da composição 3D">
     <a id="studioResultDownload" download="composicao-acervo.png">Baixar imagem</a>
     <button type="button" class="cpj-save-render" data-projeto-save-render data-img="studioResultImage" data-origem="3D Livre">Salvar no projeto</button>
@@ -498,6 +505,6 @@
   <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
   <div class="cpj-dock hidden" id="catalogProjetoDock" aria-label="Projeto ativo"></div>
   <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
-  <script type="module" src="catalogo.mjs?v=20261008-comercial-limpo"></script>
+  <script type="module" src="catalogo.mjs?v=20261015-esgotado"></script>
 </body>
 </html>

@@ -8,7 +8,9 @@
     onFinanceiroAtualizado: null,
     onPixAtualizado: null,
     onStorageFinanceiroAtualizado: null,
-    realtimeChannel: null
+    realtimeChannel: null,
+    presenca: new Map(),
+    presencaTimer: null
   };
 
   const els = {};
@@ -34,11 +36,6 @@
       "filtroDataFinalPedido",
       "centralStatusCarregamento",
       "centralPedidosTbody",
-      "centralPedidoPreviewModal",
-      "centralPedidoPreviewBody",
-      "centralPreviewTitulo",
-      "btnFecharPreviewPedido",
-      "btnImprimirPreviewPedido",
       "centralWhatsappModal",
       "centralWhatsappTitulo",
       "centralWhatsappCliente",
@@ -318,7 +315,11 @@
       em_separacao: "Em separacao",
       separado: "Separado",
       finalizado: "Finalizado",
-      cancelado: "cancelado"
+      cancelado: "cancelado",
+      catalogo_rascunho: "Em montagem",
+      catalogo_pedido_enviado: "Pedido enviado",
+      catalogo_em_analise: "Em analise",
+      catalogo_convertido: "Convertido"
     };
 
     return labels[status] || String(status || "-").replaceAll("_", " ");
@@ -796,151 +797,195 @@
     return Number.isNaN(date.getTime()) ? "-" : date.toLocaleDateString("pt-BR");
   }
 
-  function getEnderecoPedido(pedido){
-    const html = pedido.observacoes?.local_html || "";
-    if(!html) return "-";
-    const temp = document.createElement("div");
-    temp.innerHTML = html;
-    return temp.innerText.replace(/\s+/g, " ").trim() || "-";
-  }
-
-  function getTagsPedido(pedido){
-    const html = pedido.observacoes?.local_tags_html || "";
-    if(!html) return [];
-    const temp = document.createElement("div");
-    temp.innerHTML = html;
-    return Array.from(temp.querySelectorAll("*"))
-      .map((el) => el.textContent.trim())
-      .filter(Boolean);
-  }
-
+  // Visualização do pedido = a MESMA prévia que o decorador envia pelo catálogo (projeto-apresentacao.mjs): faixa escura
+  // com a logo, decorador solicitante, cliente/data/local, itens por ambiente com foto, medidas e valores, renderizações,
+  // e "Baixar PDF" (pedido do usuário, out/2026: "quero um pedido igual aquele que criamos lá dentro do catálogo").
+  // Ambientes e renderizações vêm de observacoes.projeto_comercial (gravado pela tela nova do pedido). Pedido antigo, sem
+  // isso, vira um ambiente só com os itens de separacoes_itens; item do pedido que não está em nenhum ambiente entra em
+  // "Outros itens".
+  let apresentacaoModulo = null;
   async function abrirPreviewPedido(pedidoId){
     if(!pedidoId || !state.supabase || !state.empresaId) return;
+    try{
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261009-renderizar-projeto");
+      const { data: pedido, error } = await state.supabase.from("separacoes_pedidos").select("*")
+        .eq("empresa_id", state.empresaId).eq("id", pedidoId).single();
+      if(error || !pedido) throw error || new Error("Pedido não encontrado.");
 
-    const { data: pedido, error } = await state.supabase
-      .from("separacoes_pedidos")
-      .select("*")
-      .eq("empresa_id", state.empresaId)
-      .eq("id", pedidoId)
-      .single();
+      const { data: linhas } = await state.supabase.from("separacoes_itens")
+        .select("item_id,item_nome,codigo_item,foto_url,quantidade_solicitada")
+        .eq("empresa_id", state.empresaId).eq("separacao_pedido_id", pedidoId).order("created_at", { ascending: true });
 
-    if(error || !pedido){
+      const projeto = pedido.observacoes?.projeto_comercial;
+      let ambientes = (projeto?.dados?.ambientes || []).map((amb) => ({ ...amb, itens: [...(amb.itens || [])] }));
+      const noProjeto = new Set(ambientes.flatMap((amb) => amb.itens.map((i) => String(i.item_id))));
+      const soltos = (linhas || []).filter((l) => l.item_id && !noProjeto.has(String(l.item_id)))
+        .map((l) => ({ item_id: l.item_id, quantidade: Number(l.quantidade_solicitada) || 1, nome: l.item_nome }));
+      if(soltos.length) ambientes.push({ id: "outros", nome: ambientes.length ? "Outros itens" : "Itens do pedido", itens: soltos, renders: [] });
+
+      const ids = [...new Set(ambientes.flatMap((amb) => amb.itens.map((i) => String(i.item_id))))];
+      const cadastro = new Map();
+      for(let i = 0; i < ids.length; i += 150){
+        const { data } = await state.supabase.from("itens")
+          .select("id,produto,produto_base,descricao_total,foto_url,referencia,codigo,categoria,largura,altura,profundidade,valor_locacao,valor_reposicao")
+          .eq("empresa_id", state.empresaId).in("id", ids.slice(i, i + 150));
+        (data || []).forEach((row) => cadastro.set(String(row.id), row));
+      }
+      const fotoDaLinha = new Map((linhas || []).map((l) => [String(l.item_id), l.foto_url]));
+      const numero = (v) => v !== null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : null;
+      const findItem = (id) => {
+        const row = cadastro.get(String(id));
+        if(!row) return null;
+        const nome = row.produto_base ? `${row.produto_base} ${row.produto || ""}`.trim() : (row.produto || "Item");
+        const dims = [row.largura, row.altura, row.profundidade].map((v) => numero(v) === null ? null : Math.round(numero(v) * 100));
+        return {
+          name: nome, fullName: String(row.descricao_total || "").trim() || nome,
+          photo: row.foto_url || fotoDaLinha.get(String(id)) || "", referencia: row.referencia || row.codigo || "",
+          catLabel: row.categoria || "",
+          dims: dims.every((v) => v === null) ? "" : dims.map((v) => v ?? "–").join(" × ") + " cm",
+          rentalPrice: numero(row.valor_locacao), replacementPrice: numero(row.valor_reposicao)
+        };
+      };
+
+      const [{ data: empresa }, { data: cliente }] = await Promise.all([
+        state.supabase.from("empresas").select("nome,logo_url").eq("id", state.empresaId).maybeSingle(),
+        pedido.cliente_nome
+          ? state.supabase.from("clientes_empresas").select("nome_razao,catalogo_logo_url").eq("empresa_id", state.empresaId).eq("nome_razao", pedido.cliente_nome).limit(1).maybeSingle()
+          : Promise.resolve({ data: null })
+      ]);
+      const logoCliente = String(cliente?.catalogo_logo_url || "");
+      const foto = /^https?:/i.test(logoCliente) ? logoCliente : "";
+
+      const { dadosApresentacao, abrirVisualizacaoPedido } = apresentacaoModulo;
+      const model = dadosApresentacao({
+        noivos: pedido.cliente_nome || projeto?.noivos || "Pedido",
+        data_evento: pedido.data_evento || projeto?.data_evento || "",
+        data_evento_fim: pedido.data_evento_fim || "",
+        local_evento: pedido.local_nome || projeto?.local_evento || "",
+        dados: { ambientes }
+      }, findItem);
+      abrirVisualizacaoPedido({
+        titulo: `Pedido #${pedido.numero_pedido || "-"}`, model, empresa,
+        decorador: pedido.cliente_nome ? { nome: pedido.cliente_nome, logo_url: foto } : null
+      });
+    }catch(error){
+      console.error("Visualizar pedido:", error);
       avisar("Nao foi possivel abrir a visualizacao do pedido.", "Visualizar", "erro");
-      return;
     }
+  }
 
-    const { data: itens, error: itensError } = await state.supabase
-      .from("separacoes_itens")
-      .select("*, itens:item_id(codigo,produto,descricao_total,foto_url,valor_locacao,valor_reposicao)")
-      .eq("empresa_id", state.empresaId)
-      .eq("separacao_pedido_id", pedidoId)
-      .order("created_at", { ascending: true });
+  // Projetos que os decoradores montam no catálogo (pedido do usuário, out/2026: "a central de pedidos do comercial é a
+  // base principal do sistema... todo projeto que ele criar já tem que aparecer para a gente lá dentro, com alguma coisa
+  // sinalizando que foi criado através do catálogo"). Só os de decorador (cliente_id); os da equipe já são pedidos.
+  // Valor = soma de quantidade × valor de locação do cadastro (mesma base da prévia).
+  // Presença do decorador (projetos_presenca, sinal do catálogo a cada minuto e a cada edição): "Montando agora" quando o
+  // último sinal tem menos de 2 minutos; até 30 minutos mostra "Visto há N min".
+  const PRESENCA_ATIVA_MS = 2 * 60 * 1000;
+  async function carregarPresenca(){
+    const { data, error } = await state.supabase.from("projetos_presenca").select("projeto_id,visto_em,detalhe")
+      .eq("empresa_id", state.empresaId).gte("visto_em", new Date(Date.now() - 30 * 60 * 1000).toISOString());
+    if(error) return;
+    state.presenca = new Map((data || []).map((p) => [String(p.projeto_id), p]));
+  }
+  function presencaDe(pedido){
+    const p = pedido?.origemCatalogo ? state.presenca.get(String(pedido.projetoId)) : null;
+    if(!p) return null;
+    const idade = Date.now() - new Date(p.visto_em).getTime();
+    if(!(idade >= -60000)) return null;
+    return { ativo: idade < PRESENCA_ATIVA_MS, minutos: Math.max(1, Math.round(idade / 60000)), detalhe: p.detalhe || "" };
+  }
+  function presencaHtml(pedido){
+    const p = presencaDe(pedido);
+    if(!p) return "";
+    return p.ativo
+      ? `<span class="pedido-presenca is-ativa" title="O decorador está com este projeto aberto no catálogo"><i aria-hidden="true"></i>Montando agora${p.detalhe ? ` · ${escapeHtml(p.detalhe)}` : ""}</span>`
+      : `<span class="pedido-presenca" title="Último sinal do decorador neste projeto">Visto há ${p.minutos} min</span>`;
+  }
+  // Só a presença é relida a cada 30 s (a lista inteira não); quem está montando sobe pro topo.
+  function iniciarPresenca(){
+    clearInterval(state.presencaTimer);
+    state.presencaTimer = setInterval(async () => {
+      if(document.visibilityState !== "visible") return;
+      await carregarPresenca().catch(() => {});
+      aplicarFiltros();
+    }, 30000);
+  }
 
-    if(itensError){
-      console.warn("Erro ao carregar itens do preview:", itensError);
+  async function carregarProjetosCatalogo(){
+    const { data, error } = await state.supabase.from("projetos")
+      .select("id,cliente_id,noivos,data_evento,local_evento,status,dados,created_at,updated_at,pedido_enviado_em")
+      .eq("empresa_id", state.empresaId).not("cliente_id", "is", null)
+      .order("updated_at", { ascending: false }).limit(200);
+    if(error) throw error;
+    const projetos = data || [];
+    if(!projetos.length) return [];
+    await carregarPresenca().catch(() => {});
+    const linhas = (p) => (p.dados?.ambientes || []).flatMap((amb) => amb.itens || []);
+    const ids = [...new Set(projetos.flatMap((p) => linhas(p).map((i) => String(i.item_id))))];
+    const precos = new Map();
+    for(let i = 0; i < ids.length; i += 150){
+      const { data: itens } = await state.supabase.from("itens").select("id,valor_locacao").eq("empresa_id", state.empresaId).in("id", ids.slice(i, i + 150));
+      (itens || []).forEach((row) => precos.set(String(row.id), Number(row.valor_locacao) || 0));
     }
+    const clientes = new Map();
+    const clienteIds = [...new Set(projetos.map((p) => p.cliente_id))];
+    const { data: cadastros } = await state.supabase.from("clientes_empresas").select("id,nome_razao").in("id", clienteIds);
+    (cadastros || []).forEach((c) => clientes.set(String(c.id), c.nome_razao));
+    return projetos.map((p) => ({
+      id: `projeto:${p.id}`, projetoId: p.id, origemCatalogo: true,
+      numero: "Catálogo", cliente_id: p.cliente_id, local_id: null,
+      cliente: clientes.get(String(p.cliente_id)) || "Decorador",
+      contato: "", evento: p.noivos || "Projeto", local: p.local_evento || "Local nao informado",
+      data: p.data_evento || p.created_at,
+      status: `catalogo_${p.status || "rascunho"}`,
+      valor: linhas(p).reduce((soma, i) => soma + (Number(i.quantidade) || 1) * (precos.get(String(i.item_id)) || 0), 0),
+      observacoes: {}, comercial: "Catálogo"
+    }));
+  }
 
-    const parcelas = Array.isArray(pedido.observacoes?.parcelas_financeiras)
-      ? pedido.observacoes.parcelas_financeiras
-      : [];
-
-    const { data: empresa } = await state.supabase
-      .from("empresas")
-      .select("nome,logo_url")
-      .eq("id", state.empresaId)
-      .maybeSingle();
-
-    const itensRows = (itens || []).map((item) => {
-      const cadastro = item.itens || {};
-      const nome = item.item_nome || cadastro.descricao_total || cadastro.produto || "Item";
-      const qtd = Number(item.quantidade_solicitada || 0);
-      const unit = Number(cadastro.valor_locacao || 0);
-      const total = qtd * unit;
-      return `
-        <tr>
-          <td>${qtd}</td>
-          <td>${item.foto_url || cadastro.foto_url ? `<img src="${escapeHtml(item.foto_url || cadastro.foto_url)}">` : ""}</td>
-          <td><strong>${escapeHtml(nome)}</strong><small>${escapeHtml(item.codigo_item || cadastro.codigo || "")}</small></td>
-          <td>${formatCurrency(unit)}</td>
-          <td>${formatCurrency(total)}</td>
-          <td>${formatCurrency(cadastro.valor_reposicao || 0)}</td>
-        </tr>
-      `;
-    }).join("") || `<tr><td colspan="6" class="empty">Nenhum item salvo neste pedido.</td></tr>`;
-
-    const parcelasRows = parcelas.map((parcela, index) => `
-      <tr>
-        <td>${parcela.numero || index + 1}</td>
-        <td>${escapeHtml(parcela.tipo || `Parcela ${index + 1}`)}</td>
-        <td>${dataBR(parcela.vencimento)}</td>
-        <td>${formatCurrency(parcela.valor || 0)}</td>
-        <td>${escapeHtml(parcela.metodo || "A combinar")}</td>
-        <td><span class="badge-ok">${escapeHtml(parcela.status || "Programado")}</span></td>
-      </tr>
-    `).join("") || `<tr><td colspan="6" class="empty">Programacao de pagamento nao informada.</td></tr>`;
-
-    if(els.centralPreviewTitulo){
-      els.centralPreviewTitulo.textContent = `Pedido #${pedido.numero_pedido || "-"}`;
+  async function abrirPreviewProjetoCatalogo(pedido){
+    try{
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261009-renderizar-projeto");
+      const { data: projeto, error } = await state.supabase.from("projetos").select("*")
+        .eq("empresa_id", state.empresaId).eq("id", pedido.projetoId).single();
+      if(error || !projeto) throw error || new Error("Projeto não encontrado.");
+      const ambientes = projeto.dados?.ambientes || [];
+      const ids = [...new Set(ambientes.flatMap((amb) => (amb.itens || []).map((i) => String(i.item_id))))];
+      const cadastro = new Map();
+      for(let i = 0; i < ids.length; i += 150){
+        const { data } = await state.supabase.from("itens")
+          .select("id,produto,produto_base,descricao_total,foto_url,referencia,codigo,categoria,largura,altura,profundidade,valor_locacao,valor_reposicao")
+          .eq("empresa_id", state.empresaId).in("id", ids.slice(i, i + 150));
+        (data || []).forEach((row) => cadastro.set(String(row.id), row));
+      }
+      const numero = (v) => v !== null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : null;
+      const findItem = (id) => {
+        const row = cadastro.get(String(id));
+        if(!row) return null;
+        const nome = row.produto_base ? `${row.produto_base} ${row.produto || ""}`.trim() : (row.produto || "Item");
+        const dims = [row.largura, row.altura, row.profundidade].map((v) => numero(v) === null ? null : Math.round(numero(v) * 100));
+        return {
+          name: nome, fullName: String(row.descricao_total || "").trim() || nome, photo: row.foto_url || "",
+          referencia: row.referencia || row.codigo || "", catLabel: row.categoria || "",
+          dims: dims.every((v) => v === null) ? "" : dims.map((v) => v ?? "–").join(" × ") + " cm",
+          rentalPrice: numero(row.valor_locacao), replacementPrice: numero(row.valor_reposicao)
+        };
+      };
+      const [{ data: empresa }, { data: cliente }] = await Promise.all([
+        state.supabase.from("empresas").select("nome,logo_url").eq("id", state.empresaId).maybeSingle(),
+        state.supabase.from("clientes_empresas").select("nome_razao,catalogo_logo_url").eq("id", projeto.cliente_id).maybeSingle()
+      ]);
+      const logo = String(cliente?.catalogo_logo_url || "");
+      const { dadosApresentacao, abrirVisualizacaoPedido } = apresentacaoModulo;
+      abrirVisualizacaoPedido({
+        titulo: `Projeto do catálogo · ${projeto.noivos || ""}`,
+        model: dadosApresentacao(projeto, findItem), empresa,
+        decorador: { nome: cliente?.nome_razao || pedido.cliente, logo_url: /^https?:/i.test(logo) ? logo : "" }
+      });
+    }catch(error){
+      console.error("Visualizar projeto do catálogo:", error);
+      avisar("Nao foi possivel abrir o projeto do catalogo.", "Visualizar", "erro");
     }
-
-    if(els.centralPedidoPreviewBody){
-      const tags = getTagsPedido(pedido);
-      const endereco = getEnderecoPedido(pedido);
-      const logo = empresa?.logo_url
-        ? `<img class="preview-logo" src="${escapeHtml(empresa.logo_url)}" alt="${escapeHtml(empresa.nome || "Logo")}">`
-        : `<div class="preview-logo-fallback">${escapeHtml(empresa?.nome || "Acervo")}</div>`;
-
-      els.centralPedidoPreviewBody.innerHTML = `
-        <main class="preview-page">
-          <header class="preview-hero">
-            <div class="preview-brand">
-              ${logo}
-              <div>
-                <h1>Proposta comercial</h1>
-                <p>Locacao de mobiliario e decoracao de eventos.</p>
-              </div>
-            </div>
-            <div class="preview-pedido-box">
-              <span>Pedido</span>
-              <strong>#${escapeHtml(pedido.numero_pedido || "-")}</strong>
-              <em>${escapeHtml(pedido.status_comercial || pedido.status || "orcamento")}</em>
-            </div>
-          </header>
-          <section class="preview-section">
-            <div class="preview-section-title">
-              <h2>Dados do evento</h2>
-              <span>${new Date().toLocaleDateString("pt-BR")}</span>
-            </div>
-          <div class="preview-grid">
-            <div><span>Cliente</span><strong>${escapeHtml(pedido.cliente_nome || "-")}</strong></div>
-            <div><span>Contato</span><strong>${escapeHtml(pedido.contato_cliente || "-")}</strong></div>
-            <div><span>Evento</span><strong>${escapeHtml(pedido.tipo_evento || "-")}</strong></div>
-            <div><span>Data do evento</span><strong>${dataBR(pedido.data_evento || pedido.data_hora)}</strong></div>
-            <div><span>Entrega / Coleta</span><strong>${dataBR(pedido.data_entrega)} / ${dataBR(pedido.data_coleta)}</strong></div>
-            <div class="wide"><span>Local</span><strong>${escapeHtml(pedido.local_nome || "-")}</strong></div>
-            <div class="wide"><span>Endereco e referencia</span><strong>${escapeHtml(endereco)}</strong></div>
-          </div>
-            ${tags.length ? `<div class="preview-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
-          </section>
-          <section class="preview-section">
-            <h2>Itens do pedido</h2>
-            <table><thead><tr><th>Qtd</th><th>Foto</th><th>Item</th><th>Locacao</th><th>Total</th><th>Reposicao</th></tr></thead><tbody>${itensRows}</tbody></table>
-          </section>
-          <section class="preview-finance preview-section">
-            <div>
-              <h2>Programacao de pagamento</h2>
-              <table><thead><tr><th>#</th><th>Tipo</th><th>Vencimento</th><th>Valor</th><th>Metodo</th><th>Status</th></tr></thead><tbody>${parcelasRows}</tbody></table>
-            </div>
-            <div>
-              <h2>Resumo financeiro</h2>
-              <div class="preview-total"><span>Total do pedido</span><strong>${formatCurrency(pedido.valor_total || 0)}</strong></div>
-            </div>
-          </section>
-        </main>
-      `;
-    }
-
-    els.centralPedidoPreviewModal?.classList.remove("hidden");
   }
 
   function aplicarFiltros(){
@@ -976,6 +1021,8 @@
         && (!inicial || dataISO >= inicial)
         && (!final || dataISO <= final);
     });
+    const ativo = (p) => (presencaDe(p)?.ativo ? 1 : 0);
+    state.filtrados.sort((a, b) => ativo(b) - ativo(a));
 
     render();
   }
@@ -1001,8 +1048,10 @@
     }
 
     els.centralPedidosTbody.innerHTML = state.filtrados.map((pedido) => `
-      <tr data-pedido-id="${escapeHtml(pedido.id)}" title="Clique duas vezes para abrir o pedido">
-          <td><span class="pedido-numero-card">${escapeHtml(pedido.numero)}</span></td>
+      <tr data-pedido-id="${escapeHtml(pedido.id)}" class="${pedido.origemCatalogo ? "is-catalogo" : ""}${presencaDe(pedido)?.ativo ? " is-montando" : ""}" title="${pedido.origemCatalogo ? "Projeto do catálogo: clique duas vezes para ver" : "Clique duas vezes para abrir o pedido"}">
+          <td>${pedido.origemCatalogo
+            ? `<span class="pedido-selo-catalogo" title="Projeto montado pelo decorador no catálogo">Veio do catálogo</span>${presencaHtml(pedido)}`
+            : `<span class="pedido-numero-card">${escapeHtml(pedido.numero)}</span>`}</td>
         <td>
           <button type="button" class="central-record-link" data-action="abrir-cliente" title="Abrir cadastro do cliente">
             ${escapeHtml(pedido.cliente)}
@@ -1023,15 +1072,15 @@
             <button type="button" class="central-icon-action" data-action="visualizar" title="Visualizar pedido" aria-label="Visualizar pedido">
               <i data-lucide="eye"></i>
             </button>
-            <button type="button" class="central-icon-action" data-action="contrato" title="Abrir contrato" aria-label="Abrir contrato">
+            ${pedido.origemCatalogo ? "" : `<button type="button" class="central-icon-action" data-action="contrato" title="Abrir contrato" aria-label="Abrir contrato">
               <i data-lucide="file-text"></i>
-            </button>
+            </button>`}
             <button type="button" class="central-icon-action whatsapp" data-action="whatsapp" title="Enviar WhatsApp" aria-label="Enviar WhatsApp">
               <i data-lucide="message-circle"></i>
             </button>
-            <button type="button" class="central-icon-action pix" data-action="pix" title="Gerar PIX" aria-label="Gerar PIX">
+            ${pedido.origemCatalogo ? "" : `<button type="button" class="central-icon-action pix" data-action="pix" title="Gerar PIX" aria-label="Gerar PIX">
               <i data-lucide="qr-code"></i>
-            </button>
+            </button>`}
           </div>
         </td>
       </tr>
@@ -1080,7 +1129,12 @@
         if(isTabelaAusente(error)) marcarTabelasSeparacaoAusentes();
         throw error;
       }
-      state.pedidos = await enriquecerContatosClientes((data || []).map(normalizarPedido));
+      const doCatalogo = await carregarProjetosCatalogo().catch((error) => {
+        console.warn("[CentralPedidos] projetos do catalogo indisponiveis:", error);
+        return [];
+      });
+      state.pedidos = await enriquecerContatosClientes([...(data || []).map(normalizarPedido), ...doCatalogo]);
+      state.pedidos.sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
       sincronizarInatividadeCadastros(data || []).catch((error) => {
         console.warn("[CentralPedidos] sincronizacao de inatividade falhou:", error);
       });
@@ -1125,17 +1179,6 @@
       // aberta sozinha, navega direto.
       try { if (window.parent !== window && window.parent.shellNavigate) { window.parent.shellNavigate("Modulos/Estoque/TabelasPreco/tabelas-preco.html"); return; } } catch (e) {}
       location.href = "../../Estoque/TabelasPreco/tabelas-preco.html";
-    });
-    els.btnFecharPreviewPedido?.addEventListener("click", () => {
-      els.centralPedidoPreviewModal?.classList.add("hidden");
-    });
-    els.btnImprimirPreviewPedido?.addEventListener("click", () => {
-      window.print();
-    });
-    els.centralPedidoPreviewModal?.addEventListener("click", (event) => {
-      if(event.target === els.centralPedidoPreviewModal){
-        els.centralPedidoPreviewModal.classList.add("hidden");
-      }
     });
     els.btnFecharWhatsappPedido?.addEventListener("click", fecharModalWhatsapp);
     els.btnCancelarWhatsappPedido?.addEventListener("click", fecharModalWhatsapp);
@@ -1185,6 +1228,7 @@
       }
 
       if(action === "visualizar"){
+        if(pedido?.origemCatalogo){ abrirPreviewProjetoCatalogo(pedido); return; }
         abrirPreviewPedido(pedidoId);
         return;
       }
@@ -1208,6 +1252,8 @@
       if(event.target.closest("[data-action]")) return;
       const row = event.target.closest("[data-pedido-id]");
       const pedidoId = row?.dataset?.pedidoId || "";
+      const doCatalogo = state.pedidos.find((item) => String(item.id) === String(pedidoId) && item.origemCatalogo);
+      if(doCatalogo){ abrirPreviewProjetoCatalogo(doCatalogo); return; }
       if(pedidoId) abrirPedido(pedidoId, "editar");
     });
 
@@ -1229,9 +1275,11 @@
     bindEvents();
     await carregarPedidos();
     setupRealtime();
+    iniciarPresenca();
   }
 
   function destroy(){
+    clearInterval(state.presencaTimer);
     if(state.onFinanceiroAtualizado){
       window.removeEventListener("easyloc:pedido-financeiro-atualizado", state.onFinanceiroAtualizado);
     }

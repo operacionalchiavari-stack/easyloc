@@ -25,7 +25,7 @@
 // (ambientes → itens/renders/notas) vive num jsonb só, salvo por projeto_salvar com autosave (debounce). Nada aqui
 // mostra ou envia preço: o catálogo nunca teve valores.
 
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao } from './projeto-apresentacao.mjs?v=20260926-legenda-cena';
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao } from './projeto-apresentacao.mjs?v=20261009-renderizar-projeto';
 
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
@@ -276,13 +276,27 @@ function definirAtual(project, ambienteId){
   // pro "＋" do catálogo e pro dock.
   S.workTab = "geral"; S.activePlanta = null;
   gravarAtivo(); pintarDock(); atualizarBotoes();
+  sinalPresenca(true);
 }
 
 // ---------------------------------------------------------------------------------------------------------------
 // Autosave: cada edição marca "sujo" e agenda um salvamento; salvamentos nunca se sobrepõem (o seguinte espera o
 // anterior) e uma edição feita DURANTE um salvamento deixa o projeto "sujo" de novo (rev) em vez de ser dada como salva.
+// Presença do decorador (Central de Pedidos mostra "Montando agora"): sinal a cada minuto com a aba visível e projeto
+// ativo, e logo depois de uma edição (no máximo 1 a cada 20 s). Só decorador — a equipe nunca conta como presença.
+let presencaUltima = 0;
+function sinalPresenca(forcar = false){
+  if(!S.current || !ctx || ctx.isStaff() || ctx.pedidoComercial || document.visibilityState !== "visible") return;
+  if(!forcar && Date.now() - presencaUltima < 20000) return;
+  presencaUltima = Date.now();
+  const amb = ambienteAtivo();
+  const detalhe = [ctx.ondeEsta?.() || "Catálogo", amb?.nome].filter(Boolean).join(" · ");
+  rpc("projeto_presenca", { p_id: S.current.id, p_detalhe: detalhe }).catch(() => {});
+}
+
 function marcarSujo(){
   if(!S.current) return;
+  sinalPresenca();
   S.rev += 1; S.save = "dirty";
   pintarEstadoSalvo();
   clearTimeout(S.saveTimer);
@@ -435,6 +449,12 @@ async function criarAmbiente(nome){
 // ativo (renderização: o ambiente importa). Devolve true quando há projeto + ambiente ativos.
 async function garantirDestino({ titulo, confirmar = "Confirmar", sempre = false, moveis = null, imagem = "", sub = "" } = {}){
   if(!sempre && S.current && ambienteAtivo()) return true;
+  // Pedido comercial: o projeto é o próprio pedido — só escolhe o ambiente (out/2026, Módulo 3D dentro do pedido).
+  if(ctx.pedidoComercial){
+    if(!S.current) return false;
+    const escolha = await escolherDestino({ titulo, confirmar, moveis, imagem, sub });
+    return Boolean(escolha) && escolha !== "novo";
+  }
   await carregarLista();
   if(S.listError){ ctx.notify({ title: "Não foi possível abrir seus projetos", message: S.listError, status: "error" }); return false; }
   if(!S.list.length && !S.current){
@@ -464,13 +484,13 @@ function escolherDestino({ titulo = "Escolha o projeto", confirmar = "Confirmar"
   const inicial = S.current?.id || projetos[0]?.id;
   return abrirModal({
     titulo, sub: sub || "Onde isto deve ficar salvo?", confirmar, largo: Boolean(imagem),
-    extra: `<button type="button" class="cpj-btn cpj-btn-link" data-cpj-novo>＋ Novo projeto</button>`,
+    extra: ctx.pedidoComercial ? "" : `<button type="button" class="cpj-btn cpj-btn-link" data-cpj-novo>＋ Novo projeto</button>`,
     corpo: `${imagem ? `<figure class="cpj-dest-preview"><img src="${escapeAttr(imagem)}" alt="Composição do 3D"></figure>` : ""}<div class="cpj-dest-campos"><label class="cpj-field"><span>Projeto</span><select name="projeto">${projetos.map((p) => `<option value="${escapeAttr(p.id)}"${p.id === inicial ? " selected" : ""}>${escapeHtml(p.noivos)} · ${escapeHtml(dataLonga(p.data_evento))}</option>`).join("")}</select></label>
       <label class="cpj-field"><span>Ambiente</span><select name="ambiente" disabled><option>Carregando…</option></select></label>
       <label class="cpj-field hidden" data-novo-amb><span>Nome do novo ambiente</span><input name="novoAmbiente" maxlength="60" placeholder="Ex.: Bar" autocomplete="off"></label>
       </div>${moveis ? (imagem ? moveisDestinoHtml(moveis.lista) : `<label class="cpj-check"><input type="checkbox" name="levarMoveis" checked><span><strong>Levar também os móveis desta composição</strong><small>${escapeHtml(resumoMoveis(moveis.lista))}</small></span></label>`) : ""}`,
     onMount({ dialog, form, fechar }){
-      dialog.querySelector("[data-cpj-novo]").addEventListener("click", () => fechar("novo"));
+      dialog.querySelector("[data-cpj-novo]")?.addEventListener("click", () => fechar("novo"));
       const selProjeto = form.elements.projeto, selAmb = form.elements.ambiente, novo = dialog.querySelector("[data-novo-amb]");
       let ativo = null;
       const carregar = async () => {
@@ -896,6 +916,93 @@ async function substituirImagemDaCena(project, ambId, renderId, captura, corpoIA
   }
 }
 
+// "Renderizar projeto com IA" (pedido do usuário, out/2026: "a IA vai pegar todos os prints 3D que eu fiz e vai renderizar
+// eles como se eu tivesse renderizando dentro do 3D"). Para cada imagem do projeto que é um PRINT do 3D com a cena guardada
+// (render.cena.tipo === "print"): carrega a cena no motor do 3D Livre num palco escondido, monta o MESMO pedido de IA do botão
+// "Renderizar com IA" (foto de estúdio, montarCorpoIA) e, quando a IA devolve, troca a imagem no MESMO lugar do ambiente
+// (render.cena.tipo vira "ia", então rodar de novo não refaz; o editor de cena continua abrindo a cena). Imagens já de IA
+// ficam como estão; prints antigos sem cena não têm como ser renderizados (avisa quantos).
+function printsParaRenderizar(project){
+  const alvos = []; let semCena = 0;
+  for(const amb of ambientesDe(project)) for(const render of amb.renders || []){
+    if(render.cena?.tipo === "ia") continue;
+    if(render.cena?.url) alvos.push({ ambId: amb.id, renderId: render.id, cenaUrl: render.cena.url });
+    else semCena++;
+  }
+  return { alvos, semCena };
+}
+let renderizandoProjeto = false;
+async function renderizarProjetoComIA(project, { aoProgresso = () => {}, aoAtualizar = () => {} } = {}){
+  const editor = ctx.cenaEditor;
+  if(renderizandoProjeto) return 0;
+  if(!editor?.pronto?.()){ ctx.notify({ title: "3D indisponível", message: "Abra o catálogo de novo e tente outra vez.", status: "error" }); return 0; }
+  const { alvos, semCena } = printsParaRenderizar(project);
+  if(!alvos.length){
+    ctx.notify({ title: "Nada para renderizar", message: semCena ? "As imagens deste projeto foram salvas antes do 3D guardar a cena. Gere de novo no 3D Livre." : "Todas as imagens do projeto já estão renderizadas.", status: "error" });
+    return 0;
+  }
+  renderizandoProjeto = true;
+  const total = alvos.length; let prontas = 0; const falhas = [];
+  const titulo = () => `Renderizando o projeto (${prontas + falhas.length} de ${total})`;
+  const aviso = ctx.notify({ title: titulo(), message: "Cada imagem do projeto é trocada quando fica pronta. Pode continuar usando o sistema.", status: "working", duration: 0 });
+  const progresso = () => { aoProgresso(prontas + falhas.length, total); aviso?.update?.({ title: titulo(), status: "working" }); };
+  const localizar = (alvo) => {
+    const dono = S.current?.id === project.id ? S.current : project;
+    return { dono, render: ambientesDe(dono).find((a) => a.id === alvo.ambId)?.renders.find((r) => r.id === alvo.renderId) };
+  };
+  let gravando = Promise.resolve();
+  const persistir = (dono) => (gravando = gravando.catch(() => {}).then(async () => {
+    if(dono === S.current){ marcarSujo(); if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); } await salvarAgora(); }
+    else await rpc("projeto_salvar", { p_id: dono.id, p_noivos: dono.noivos, p_data_evento: dono.data_evento, p_local_evento: dono.local_evento, p_dados: dono.dados });
+  }));
+  // 1) Um por vez no 3D (só existe um motor): carrega a cena do print e monta o pedido da IA.
+  const pedidos = [];
+  const palco = document.createElement("div");
+  palco.setAttribute("aria-hidden", "true");
+  palco.style.cssText = "position:fixed;left:-12000px;top:0;width:1200px;height:800px;overflow:hidden;pointer-events:none";
+  document.body.appendChild(palco);
+  try{
+    for(const alvo of alvos){
+      try{
+        const resposta = await fetch(alvo.cenaUrl);
+        if(!resposta.ok) throw new Error("A cena 3D desta imagem não foi encontrada.");
+        await editor.abrir(palco, await resposta.json());
+        pedidos.push({ alvo, corpo: editor.corpoIA() });
+      }catch(error){ falhas.push({ alvo, error }); progresso(); }
+    }
+  }finally{
+    await editor.fechar().catch(() => {});
+    palco.remove();
+  }
+  // 2) Chamadas à IA, duas por vez; cada imagem troca no projeto assim que fica pronta.
+  const fila = [...pedidos];
+  const trabalhar = async () => {
+    for(let p = fila.shift(); p; p = fila.shift()){
+      try{
+        const src = await editor.executarIA(p.corpo);
+        const imagem = await subirImagemRender(project, src);
+        const { dono, render } = localizar(p.alvo);
+        if(!render){ ctx.supabase.storage.from("projetos").remove([imagem.path]).catch(() => {}); throw new Error("A imagem foi removida do projeto enquanto renderizava."); }
+        const antigo = render.path;
+        Object.assign(render, { url: imagem.url, path: imagem.path, origem: "Renderização IA", atualizado_em: new Date().toISOString(), cena: { ...render.cena, tipo: "ia" } });
+        await persistir(dono);
+        if(antigo) ctx.supabase.storage.from("projetos").remove([antigo]).catch(() => {});
+        prontas++; aoAtualizar(dono);
+      }catch(error){ falhas.push({ alvo: p.alvo, error }); }
+      progresso();
+    }
+  };
+  try{ await Promise.all([trabalhar(), trabalhar()]); }
+  finally{ renderizandoProjeto = false; aviso?.close?.(); }
+  const ultima = localizar(alvos.at(-1)).render?.url;
+  if(prontas) ctx.notify({ title: `Projeto renderizado: ${prontas} de ${total} ${total === 1 ? "imagem" : "imagens"}`,
+    message: falhas.length ? `${falhas.length} não ${falhas.length === 1 ? "foi concluída" : "foram concluídas"}: ${mensagemDe(falhas[0].error)}` : "As imagens do projeto já foram trocadas pelas renderizações.",
+    status: falhas.length ? "error" : "done", image: ultima });
+  else ctx.notify({ title: "A renderização não foi concluída", message: mensagemDe(falhas[0]?.error), status: "error" });
+  if(semCena) ctx.notify({ title: `${semCena} ${semCena === 1 ? "imagem ficou" : "imagens ficaram"} como estava`, message: "Foram salvas antes do 3D guardar a cena. Gere de novo no 3D Livre para poder renderizar.", status: "error" });
+  return prontas;
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Foto dos noivos (opcional): vive em dados.foto_casal = {url, path} e aparece no cabeçalho do projeto, no cartão da lista
 // e na capa da apresentação. Sobe no bucket "projetos" em <empresa>/<projeto>/casal/<uuid>.jpg (a mesma política de
@@ -1274,15 +1381,27 @@ function vincularOrdemLista(host){
     });
 }
 
+// No pedido comercial, a decoradora solicitante (cliente escolhida na tela do pedido) aparece acima da lista (out/2026).
+function solicitanteHtml(){
+  if(!ctx.pedidoComercial) return "";
+  const d = ctx.decoradoraPedido?.();
+  if(!d?.nome) return "";
+  const inicial = (d.nome.trim()[0] || "?").toUpperCase();
+  const foto = d.foto ? `<img src="${escapeAttr(d.foto)}" alt="" data-inicial="${escapeAttr(inicial)}" onerror="this.parentNode.textContent=this.dataset.inicial">` : escapeHtml(inicial);
+  return `<div class="cpj-solicitante"><div class="cpj-solicitante-foto">${foto}</div><div class="cpj-solicitante-txt"><small>Decorador solicitante</small><strong>${escapeHtml(d.nome)}</strong></div></div>`;
+}
 function pintarPainel(){
   const host = document.querySelector("[data-cpj-panel]");
   if(!host || !S.current) return;
   if(S.workTab !== "plantas") limparPlantaListeners(); // saindo da aba Plantas (ou nem chegando a entrar) — desliga o listener de resize se algum ficou de uma visita anterior
   if(S.workTab === "geral"){
     // Título da aba Geral (pedido do usuário: "um título bem bonito escrito Lista Completa").
-    host.innerHTML = `<header class="cpj-geral-title"><span class="cpj-geral-title-orn" aria-hidden="true"></span><h2>Lista <em>Completa</em></h2><span class="cpj-geral-title-orn" aria-hidden="true"></span></header>`
+    // Pedido comercial: decorador solicitante à esquerda, na MESMA linha do título (pedido do usuário, out/2026).
+    const solicitante = solicitanteHtml();
+    const titulo = `<header class="cpj-geral-title"><span class="cpj-geral-title-orn" aria-hidden="true"></span><h2>Lista <em>Completa</em></h2><span class="cpj-geral-title-orn" aria-hidden="true"></span></header>`;
+    host.innerHTML = (solicitante ? `<div class="cpj-geral-topo">${solicitante}${titulo}<span aria-hidden="true"></span></div>` : titulo)
       + geralHtml(dadosApresentacao(S.current,ctx.findItem))
-      + `<footer class="pa-geral-footer"><button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${ctx.pedidoComercial ? "Salvar pedido" : S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`;
+      + `<footer class="pa-geral-footer">${ctx.pedidoComercial ? '<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="ver-pedido-comercial">Ver pedido e PDF</button>' : ''}<button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${ctx.pedidoComercial ? "Salvar pedido" : S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`;
     vincularOrdemLista(host);
     return;
   }
@@ -2343,6 +2462,29 @@ async function aoClicarOverlay(event){
     else if(tipo === "voltar"){ await salvarAgora(); S.view = "list"; pintarTela(); carregarLista().then(() => { if(S.open && S.view === "list") pintarLista(); }); }
     else if(tipo === "editar-info"){if(ctx.pedidoComercial)ctx.editarPedidoComercial();else fluxoEditarInfo();}
     else if(tipo === "foto-remover"){ event.preventDefault?.(); removerFotoCasal(); }
+    else if(tipo === "ver-pedido-comercial"){
+      // Pedido comercial: abrir o pedido no mesmo formato da prévia do catálogo, com Baixar PDF (pedido do usuário, out/2026).
+      const d = ctx.decoradoraPedido?.();
+      const project = S.current;
+      const qtd = printsParaRenderizar(project).alvos.length;
+      const rotulo = (n) => `Renderizar projeto com IA (${n} ${n === 1 ? "imagem" : "imagens"})`;
+      abrirVisualizacaoPedido({ titulo: project.noivos || "Pedido", model: dadosApresentacao(project, ctx.findItem),
+        decorador: d?.nome ? { nome: d.nome, logo_url: d.foto || "" } : null, empresa: ctx.getCompany?.(),
+        extra: qtd ? `<button type="button" class="cpj-btn cpj-btn-primary" data-pedido-renderizar>${rotulo(qtd)}</button>` : "",
+        onMount({ dialog, atualizar }){
+          const botao = dialog.querySelector("[data-pedido-renderizar]");
+          botao?.addEventListener("click", async () => {
+            botao.disabled = true; botao.textContent = "Preparando as cenas…";
+            await renderizarProjetoComIA(project, {
+              aoProgresso: (feitas, total) => { if(botao.isConnected) botao.textContent = `Renderizando ${feitas} de ${total}…`; },
+              aoAtualizar: (dono) => { if(dialog.isConnected) atualizar(dadosApresentacao(dono, ctx.findItem)); },
+            });
+            const resta = printsParaRenderizar(S.current?.id === project.id ? S.current : project).alvos.length;
+            if(!botao.isConnected) return;
+            if(resta){ botao.disabled = false; botao.textContent = rotulo(resta); } else botao.remove();
+          });
+        } });
+    }
     else if(tipo === "enviar"){
       if(ctx.pedidoComercial){if(await beforeLeaveProjetos())await ctx.finalizarPedidoComercial();}
       else fluxoEnviarPedido();
@@ -2659,7 +2801,9 @@ export function initCatalogProjetos(contexto){
   // "Adicionar ao projeto" do 3D Livre (substitui o antigo "Tirar print"): a foto da composição + os móveis dela vão
   // direto pra janela de escolher projeto/ambiente, sem a tela intermediária de resultado.
   window.catalogAddCompositionToProject = (src, origem = "3D Livre") => salvarRender({ src, origem, titulo: "Adicionar ao projeto", confirmar: "Adicionar ao projeto", sub: "Escolha o projeto e o ambiente desta composição.", comImagem: true });
-  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") salvarAgora(); });
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") salvarAgora(); else sinalPresenca(true); });
+  setInterval(() => sinalPresenca(true), 60000);
+  window.catalogAssistenteProjeto = assistenteProjeto;
 
   // Os "＋" são desenhados junto com o HTML dos cards; quando o conteúdo do catálogo troca, marca os já adicionados.
   const grade = $("catalogGrid");
@@ -2678,6 +2822,36 @@ export function initCatalogProjetos(contexto){
     carregarProjeto(ativo.id).then((project) => definirAtual(project, ativo.amb)).catch(() => { try{ localStorage.removeItem(chaveAtivo()); }catch{} });
   }
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Ponte com a assistente comercial (catalogo-assistente.mjs): ela lê o projeto aberto e devolve "ações" que caem aqui,
+// pelos MESMOS caminhos do "＋"/quantidade (mudarQuantidade → autosave). Nada é gravado por fora do autosave.
+const assistenteProjeto = {
+  retrato(){
+    const p = S.current;
+    if(!p) return null;
+    return { id: p.id, noivos: p.noivos, data_evento: p.data_evento, local_evento: p.local_evento, status: p.status, ambiente_ativo: S.activeAmb,
+      ambientes: ambientesDe(p).map((amb) => ({ id: amb.id, nome: amb.nome, itens: amb.itens.map((i) => ({ item_id: String(i.item_id), quantidade: Number(i.quantidade) || 1 })) })) };
+  },
+  async quantidade({ item_id, quantidade, ambiente }){
+    if(!S.current) throw new Error("Abra ou crie um projeto primeiro.");
+    const nome = String(ambiente || "").trim();
+    let amb = nome ? ambientesDe().find((a) => a.nome.trim().toLowerCase() === nome.toLowerCase()) : ambienteAtivo();
+    if(!amb && nome) amb = await criarAmbiente(nome);
+    if(!amb) throw new Error("O projeto não tem ambientes.");
+    if(S.activeAmb !== amb.id){ S.activeAmb = amb.id; gravarAtivo(); pintarDock(); atualizarBotoes(); }
+    const antes = Number(amb.itens.find((i) => String(i.item_id) === String(item_id))?.quantidade) || 0;
+    mudarQuantidade(amb.id, item_id, 0, { definir: Math.max(0, Math.min(999, Number(quantidade) || 0)) });
+    return { ambiente: amb.nome, antes, desfazer: () => mudarQuantidade(amb.id, item_id, 0, { definir: antes }) };
+  },
+  async usarProjeto(id){
+    if(S.current?.id === id) return;
+    await salvarAgora();
+    definirAtual(await carregarProjeto(id), null);
+    S.list = []; S.listLoaded = false;
+  },
+  enviarPedido(){ return S.current ? fluxoEnviarPedido() : null; },
+};
 
 export function definirProjetoComercialPedido(project){
   definirAtual(normalizar(project));

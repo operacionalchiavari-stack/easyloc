@@ -94,7 +94,8 @@ export function imprimirPedido() {
   const evento = value("#tipoEventoSelect", "Evento nao informado");
   const local = value("#localInput", "Local nao informado");
   const dataEntrega = dateBR(value("#dataEntrega", ""));
-  const dataEvento = dateBR(value("#dataEvento", ""));
+  const fimEvento = !document.querySelector(".evento-fim-item")?.hidden ? value("#dataEventoFim", "") : "";
+  const dataEvento = dateBR(value("#dataEvento", "")) + (fimEvento ? " a " + dateBR(fimEvento) : "");
   const dataColeta = dateBR(value("#dataColeta", ""));
   const endereco = text("#localObservacoes", "Endereco e referencia nao informados");
   const observacaoFinanceira = value("#pagamentoObservacaoFinanceira", "");

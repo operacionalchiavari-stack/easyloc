@@ -9,10 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
-  <link rel="stylesheet" href="pedido.css?v=20261008-topo-compacto">
+  <link rel="stylesheet" href="pedido.css?v=20261009-trilha2">
 </head>
 <body>
-<div class="pedido-screen orcamento-page el-page" data-module-root>
+<div class="pedido-screen orcamento-page el-page em-entrada" data-module-root>
   <div class="pedido-shell">
     <header class="pedido-top">
       <div class="pedido-title-row">
@@ -89,6 +89,10 @@
             <span>Data evento</span>
             <input class="meta-input el-input" type="date" id="dataEvento">
             <div class="dia-semana sr-only" id="diaEvento">-</div>
+          </div>
+          <div class="meta-item evento-fim-item" hidden>
+            <span>Até</span>
+            <input class="meta-input el-input" type="date" id="dataEventoFim">
           </div>
 
           <div class="meta-item">
@@ -535,12 +539,12 @@
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../../js/core/context.js?v=20260913b"></script>
-<script src="../../../js/core/permissions.js?v=20261008-menu-filtrado"></script>
+<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/permissions.js?v=20261009-acesso-estavel"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/paymentPix.js"></script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20261008-carregar-contexto"></script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261015-microfone"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -317,6 +317,7 @@ function abrirMapaAmpliado({ supabase, local, center }){
         zoomControl: true,
         gestureHandling: "greedy",
         mapTypeControl: false,
+        mapTypeId: "hybrid", // satélite com nomes de ruas (out/2026, pedido do usuário)
         streetViewControl: false,
         fullscreenControl: false
       });
@@ -420,6 +421,7 @@ async function renderizarMiniMapaPedido({ supabase, local }){
         zoomControl: true,
         gestureHandling: "greedy",
         mapTypeControl: false,
+        mapTypeId: "hybrid", // satélite com nomes de ruas (out/2026, pedido do usuário)
         streetViewControl: false,
         fullscreenControl: false
       });

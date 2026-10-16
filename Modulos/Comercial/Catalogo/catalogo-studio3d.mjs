@@ -2929,6 +2929,132 @@ function capturarPrintLimpo(){
   return foto;
 }
 
+// Captura para a renderização de ESTÚDIO com IA (out/2026, pedido do usuário: fotografia de catálogo de luxo, fundo
+// branco infinito, móveis de perto). Não depende só da IA para corrigir uma câmera distante:
+//  1. Só os móveis e as luzes ficam visíveis (paredes, fotos de parede, grade, régua e ajudantes somem); o piso vira
+//     "só sombra" (ShadowMaterial) sobre fundo branco — sombra de contato real, sem linha entre chão e fundo.
+//  2. Câmera própria da captura, sem mexer na da tela: mantém o lado escolhido pela pessoa (o giro em volta da
+//     composição), mas com altura levemente elevada (10° a 30°) e lente equivalente a ~50 mm (FOV vertical 27°), a uma
+//     distância que enquadra a caixa de todos os móveis.
+//  3. Renderiza em alta resolução, recorta rente à composição (caixa 3D projetada na tela) e centraliza num quadro no
+//     formato da composição (2160×1440, 1440×2160 ou 1856×1856) ocupando ~84% do lado que limita.
+// Devolve { src, largura, altura } ou null se não houver móvel enquadrável.
+const FOTO_ESTUDIO_OCUPACAO = .84;
+// Menor retângulo com pixel não branco na imagem renderizada (lido numa cópia reduzida, rápido mesmo em 3200 px).
+function limitesVisiveis(fonte){
+  const passo = Math.max(1, Math.round(fonte.width / 800));
+  const w = Math.round(fonte.width / passo), h = Math.round(fonte.height / passo);
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(fonte, 0, 0, w, h);
+  const d = ctx.getImageData(0, 0, w, h).data;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+    const i = (y * w + x) * 4;
+    if(d[i] < 250 || d[i + 1] < 250 || d[i + 2] < 250){
+      if(x < minX) minX = x; if(x > maxX) maxX = x; if(y < minY) minY = y; if(y > maxY) maxY = y;
+    }
+  }
+  if(maxX < 0) return null;
+  return { minX: minX * passo, minY: minY * passo, maxX: (maxX + 1) * passo, maxY: (maxY + 1) * passo };
+}
+function capturarFotoEstudio(){
+  if(!studio.objects.length || !studio.renderer) return null;
+  const { THREE } = studio.three;
+  const caixa = new THREE.Box3();
+  studio.objects.forEach((objeto) => caixa.expandByObject(objeto));
+  if(caixa.isEmpty()) return null;
+  const centro = caixa.getCenter(new THREE.Vector3());
+  const raio = Math.max(caixa.getBoundingSphere(new THREE.Sphere()).radius, .2);
+
+  // --- prepara a cena (tudo restaurado no finally) ---
+  const escondidos = [];
+  studio.scene.children.forEach((filho) => {
+    if(filho.isLight || filho === studio.floor || studio.objects.includes(filho) || !filho.visible) return;
+    filho.visible = false; escondidos.push(filho);
+  });
+  const materialPiso = studio.floor?.material || null;
+  const fundoAntes = studio.scene.background;
+  const corAntes = studio.renderer.getClearColor(new THREE.Color()), alfaAntes = studio.renderer.getClearAlpha();
+  const pixelAntes = studio.renderer.getPixelRatio();
+  const camera = new THREE.PerspectiveCamera(27, 1.5, .01, 500);
+  try{
+    if(studio.floor) studio.floor.material = studio.shadowFloorMaterial;
+    studio.scene.background = new THREE.Color(0xffffff);
+    studio.renderer.setClearColor(0xffffff, 1);
+    studio.renderer.setPixelRatio(1);
+
+    // Lado escolhido pela pessoa (azimute), altura limitada a uma vista frontal levemente elevada.
+    const alvo = studio.orbit?.target || centro;
+    const dir = studio.camera.position.clone().sub(alvo);
+    const horizontal = Math.hypot(dir.x, dir.z) || 1;
+    const azimute = Math.atan2(dir.x, dir.z);
+    const elevacao = Math.min(Math.max(Math.atan2(dir.y, horizontal), THREE.MathUtils.degToRad(10)), THREE.MathUtils.degToRad(30));
+    const posicionar = (aspecto) => {
+      camera.aspect = aspecto;
+      const vfov = THREE.MathUtils.degToRad(camera.fov);
+      const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspecto);
+      const distancia = raio / Math.sin(Math.min(vfov, hfov) / 2) * 1.04;
+      camera.position.set(
+        centro.x + distancia * Math.cos(elevacao) * Math.sin(azimute),
+        centro.y + distancia * Math.sin(elevacao),
+        centro.z + distancia * Math.cos(elevacao) * Math.cos(azimute));
+      camera.lookAt(centro);
+      camera.near = Math.max(.01, distancia - raio * 3); camera.far = distancia + raio * 6;
+      camera.updateProjectionMatrix();
+    };
+    // Retângulo da composição na tela (cantos da caixa 3D projetados), em pixels do quadro largura×altura.
+    const projetar = (largura, altura) => {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for(const x of [caixa.min.x, caixa.max.x]) for(const y of [caixa.min.y, caixa.max.y]) for(const z of [caixa.min.z, caixa.max.z]){
+        const p = new THREE.Vector3(x, y, z).project(camera);
+        const px = (p.x * .5 + .5) * largura, py = (1 - (p.y * .5 + .5)) * altura;
+        minX = Math.min(minX, px); maxX = Math.max(maxX, px); minY = Math.min(minY, py); maxY = Math.max(maxY, py);
+      }
+      return { minX, minY, maxX, maxY };
+    };
+    // 1ª passada só para saber o formato da composição e escolher o tamanho de saída.
+    posicionar(1.5);
+    const previa = projetar(1500, 1000);
+    const proporcao = (previa.maxX - previa.minX) / Math.max(1, previa.maxY - previa.minY);
+    // Tamanhos ~2K aceitos pelo gpt-image-2 (lados múltiplos de 16; o servidor volta para 1536×1024 se a conta recusar).
+    const saida = proporcao > 1.25 ? { largura: 2160, altura: 1440 } : proporcao < .8 ? { largura: 1440, altura: 2160 } : { largura: 1856, altura: 1856 };
+    const aspecto = saida.largura / saida.altura;
+    posicionar(aspecto);
+    const larguraRender = 3200, alturaRender = Math.round(larguraRender / aspecto);
+    studio.renderer.setSize(larguraRender, alturaRender, false);
+    studio.renderer.render(studio.scene, camera);
+    // Recorte pelo que APARECE na imagem (móveis + sombras), não pela caixa 3D: com fundo branco puro, todo pixel
+    // não branco é móvel ou sombra — e a sombra também deve entrar no quadro. A caixa 3D, vista de lado, sobra bem
+    // além dos móveis (teste real: 580 px de margem de um lado e 254 do outro). Sem nenhum pixel encontrado (falha de
+    // leitura), cai para a caixa 3D projetada.
+    const r = limitesVisiveis(studio.renderer.domElement) || projetar(larguraRender, alturaRender);
+    // Folga mínima para o antisserrilhado e o fim da sombra.
+    const folga = Math.max(r.maxX - r.minX, r.maxY - r.minY) * .015;
+    const rx = Math.max(0, r.minX - folga), ry = Math.max(0, r.minY - folga);
+    const rw = Math.min(larguraRender, r.maxX + folga) - rx, rh = Math.min(alturaRender, r.maxY + folga) - ry;
+    if(rw <= 2 || rh <= 2) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = saida.largura; canvas.height = saida.altura;
+    const ctx2d = canvas.getContext("2d");
+    ctx2d.imageSmoothingEnabled = true; ctx2d.imageSmoothingQuality = "high";
+    ctx2d.fillStyle = "#ffffff"; ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+    const escala = Math.min(saida.largura * FOTO_ESTUDIO_OCUPACAO / rw, saida.altura * FOTO_ESTUDIO_OCUPACAO / rh);
+    const dw = rw * escala, dh = rh * escala;
+    ctx2d.drawImage(studio.renderer.domElement, rx, ry, rw, rh, (saida.largura - dw) / 2, (saida.altura - dh) / 2, dw, dh);
+    // JPEG de alta qualidade: com fundo branco fica leve (PNG de 2K passava de 4 MB no envio) e sem perda visível.
+    return { src: canvas.toDataURL("image/jpeg", .93), largura: saida.largura, altura: saida.altura, ocupacao: { largura: dw / saida.largura, altura: dh / saida.altura } };
+  }finally{
+    escondidos.forEach((filho) => { filho.visible = true; });
+    if(studio.floor && materialPiso) studio.floor.material = materialPiso;
+    studio.scene.background = fundoAntes;
+    studio.renderer.setClearColor(corAntes, alfaAntes);
+    studio.renderer.setPixelRatio(pixelAntes);
+    resize();
+    studio.renderer.render(studio.scene, studio.camera);
+  }
+}
+
 // "Adicionar ao projeto" (substitui o botão "Tirar print", a pedido do usuário: "algo mais bonito e intuitivo pra
 // adicionarmos essa composição e esses itens no meu projeto"). Captura a composição como está (mesmo print limpo de
 // antes), registra os móveis e a cena (o projeto leva os móveis e reabre essa cena no editor) e abre direto a janela de
@@ -3020,19 +3146,19 @@ function handleToolbarMenuClick(event){
   trigger.setAttribute("aria-expanded", String(willOpen));
 }
 
-function renderAtmospherePrompt(options){
-  const periods = { dia: "Cena diurna com luz natural.", entardecer: "Cena ao entardecer, com luz dourada baixa.", noite: "Cena noturna, sem luz solar, com iluminação artificial plausível." };
-  const lights = { suave: "Iluminação suave e equilibrada, adequada ao horário escolhido.", quente: "Iluminação quente e acolhedora, com sombras suaves.", cenica: "Iluminação cênica sofisticada, com luz indireta e contraste controlado, sem adicionar luminárias ou objetos." };
-  const guests = { nenhum: "Não adicionar pessoas.", poucos: "Adicionar poucos convidados adultos, discretos, em áreas livres, sem encobrir os móveis principais.", moderado: "Adicionar uma quantidade moderada de convidados adultos em áreas livres, sem lotar o ambiente ou encobrir os móveis principais." };
-  return [periods[options.periodo] || periods.dia, lights[options.iluminacao] || lights.suave, guests[options.convidados] || guests.nenhum, "As escolhas de atmosfera nunca autorizam mover móveis, alterar materiais ou mudar a câmera. Pessoas devem se adaptar aos espaços existentes; se não houver espaço, reduzir a quantidade de pessoas."].join(" ");
-}
 
-// Pedido da IA montado a partir da cena ATUAL (síncrono: captura a prévia na hora). Separado da chamada (executarIA)
-// pra o editor de cena do projeto conseguir montar o pedido com a cena editada e só depois devolver o 3D Livre ao estado dele.
-function montarCorpoIA(renderOptions = { periodo: "dia", convidados: "nenhum", iluminacao: "suave" }){
-  const floorNames = { neutral: "piso neutro", grass: "grama natural", sand: "areia de praia", "slatted-wood": "placas modulares de madeira ripada", plan: "planta técnica importada" };
-  const selectedFloor = floorNames[studio.floorFinish] || floorNames.neutral;
-  const preview = captureCleanPreview();
+// Pedido da IA montado a partir da cena ATUAL (síncrono: captura na hora). Separado da chamada (executarIA) pra o editor
+// de cena do projeto conseguir montar o pedido com a cena editada e só depois devolver o 3D Livre ao estado dele.
+// Desde out/2026 a renderização é uma FOTOGRAFIA DE ESTÚDIO de catálogo (fundo branco infinito, móveis de perto) — o
+// prompt principal, em inglês, mora no servidor (studio-ai-engine, referencePolicy "furniture_studio_catalog"), pra
+// não depender do que o navegador manda; aqui vai só o inventário e o estilo de luz escolhido.
+const LUZ_ESTUDIO = {
+  suave: "Lighting style: large soft key light and fill softboxes, gentle and even, natural soft contact shadows.",
+  cenica: "Lighting style: refined directional softbox key light from one side with controlled contrast, sculpting the materials, still soft and natural, never harsh.",
+};
+function montarCorpoIA(renderOptions = { iluminacao: "suave" }){
+  const foto = capturarFotoEstudio();
+  const preview = foto?.src || captureCleanPreview();
   const objects = studio.objects.map((object) => ({
     itemId: object.userData.item.id,
     itemName: object.userData.item.name,
@@ -3041,27 +3167,16 @@ function montarCorpoIA(renderOptions = { periodo: "dia", convidados: "nenhum", i
     rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
     scale: object.scale.toArray(),
   }));
+  const iluminacao = LUZ_ESTUDIO[renderOptions.iluminacao] ? renderOptions.iluminacao : "suave";
   return {
     empresa_id: studio.empresaId,
     catalog_token: sessionStorage.getItem("catalogo_token"),
-    prompt: `Converta a captura 3D em uma fotografia arquitetônica ultrarrealista. Preserve rigidamente somente os móveis e o enquadramento: não altere quantidade, modelo, desenho, material, cor, medidas, proporções, escala, posição, rotação nem distância entre os itens. O piso deve ser interpretado como ${selectedFloor}. Trate paredes, teto, piso e as fotos aplicadas nas paredes como referências arquitetônicas flexíveis: conecte quinas e superfícies, complete o teto, harmonize perspectiva, iluminação e continuidade dos materiais e elimine cortes, emendas ou painéis flutuantes sem sentido. As fotos orientam o aspecto e a localização da arquitetura; elas não devem parecer coladas como retângulos. Não acrescente novos móveis, objetos decorativos. ${renderAtmospherePrompt(renderOptions)}`,
+    prompt: LUZ_ESTUDIO[iluminacao],
     scene: {
       preview, objects,
       camera: { position: studio.camera.position.toArray(), target: studio.orbit.target.toArray(), fov: studio.camera.fov },
-      architecture: {
-        wallHeight: studio.wallHeight,
-        outerWallsWithPhoto: Object.keys(studio.walls),
-        customWalls: studio.customWalls.map((wall) => ({
-          name: wall.name,
-          start: [wall.start.x, wall.start.z],
-          end: [wall.end.x, wall.end.z],
-          length: wall.length,
-          height: wall.height,
-          hasPhotoReference: Boolean(wall.image),
-        })),
-      },
-      referencePolicy: "furniture_strict_architecture_adaptive",
-      options: { formato: { largura: 1536, altura: 1024 }, ...renderOptions, ambientacao: [], piso: studio.floorFinish },
+      referencePolicy: "furniture_studio_catalog",
+      options: { formato: { largura: foto?.largura || 1536, altura: foto?.altura || 1024 }, iluminacao, convidados: "nenhum" },
     },
     provider: "openai", versions: 1,
   };
@@ -3083,7 +3198,7 @@ async function executarIA(corpo){
   return src;
 }
 
-async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhum", iluminacao: "suave" }){
+async function renderWithAI(renderOptions = { iluminacao: "suave" }){
   if($("studioRenderButton").disabled) return;
   if(!studio.objects.length){ alert("Adicione pelo menos um móvel à composição."); return; }
   const button = $("studioRenderButton");
@@ -3099,7 +3214,7 @@ async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhu
     button.textContent = "Renderizando…";
     workingToast = window.catalogNotify?.({
       title: "Renderização em andamento",
-      message: "A IA está conectando a arquitetura e preservando rigorosamente todos os móveis.",
+      message: "A IA está fotografando sua composição em estúdio, preservando rigorosamente todos os móveis.",
       status: "working",
       duration: 0,
     });
@@ -3125,7 +3240,7 @@ async function renderWithAI(renderOptions = { periodo: "dia", convidados: "nenhu
         // qualquer resíduo de uma versão anterior salvar por engano no lugar da foto da IA de verdade).
         const kicker = $("studioResultKicker"), titulo = $("studioResultTitle");
         if(kicker) kicker.textContent = "Renderização IA";
-        if(titulo) titulo.textContent = "Sua composição em uma cena realista";
+        if(titulo) titulo.textContent = "Sua composição em fotografia de estúdio";
         $("studioResultImage").src = src;
         $("studioResultDownload").href = src;
         $("studioResultDownload").download = "composicao-acervo.png";
@@ -3698,6 +3813,33 @@ export const cenaEditor = {
   },
   // Pedido da IA com a cena editada (síncrono). A chamada em si (executarIA) pode rodar depois de fechar o modal.
   corpoIA: () => montarCorpoIA(),
+  // Assistente comercial (catalogo-assistente.mjs): monta um FORMATO cadastrado do 3D Livre num palco escondido, só com os
+  // móveis escolhidos para cada posição (selecao = { chaveDaPosição: itemId }; posição sem móvel fica fora da cena), e
+  // devolve o mesmo pedido de "Renderizar com IA" (foto de estúdio) + o retrato da cena. Quem chama fecha com fechar().
+  async montarFormato(host, formatoId, selecao = {}){
+    if(!availableFormats.length) await loadStudioFormats();
+    const format = availableFormats.find((f) => f.key === formatoId);
+    if(!format) throw new Error("Esse formato não está mais cadastrado.");
+    await cenaEditor.abrir(host, { version: 1, roomWidth: 12, roomDepth: 12, wallHeight: 4, floorFinish: "neutral", walls: {}, customWalls: [], objects: [], camera: null });
+    const escolhidos = {};
+    for(const role of format.roles){
+      const item = selecao[role.key] ? itemPorId(selecao[role.key]) : null;
+      if(item?.glb) escolhidos[role.key] = item;
+    }
+    if(!Object.keys(escolhidos).length) throw new Error("Nenhum dos móveis escolhidos tem modelo 3D.");
+    const layout = format.layout(escolhidos.sofa?.dimensions || { width: 1.8, depth: .9 });
+    const grupo = crypto.randomUUID();
+    for(const role of format.roles){
+      const item = escolhidos[role.key];
+      if(!item) continue;
+      for(const lugar of layout[role.key] || []){
+        const objeto = await addItem(item, 0, { position: lugar.position, rotation: lugar.rotation });
+        objeto.userData.catalogGroupId = grupo;
+      }
+    }
+    selectObject(null); updateCount();
+    return { corpo: montarCorpoIA(), snapshot: snapshotCena(), formato: format.title };
+  },
   executarIA,
   async fechar(){
     const modal = studio.cenaModal;

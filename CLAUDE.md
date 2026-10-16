@@ -8479,6 +8479,13 @@ Fotos antigas e senhas/logins NÃO foram migradas (decisão do usuário: as foto
   (ex.: exportação da RH) baixam como CSV em `/api/gs-planilha?id=gerada-…`.
 - **Rotas das telas**: `Modulos/Chiavari/Cronograma/` (index.html = roteador igual ao doGet: `?page=free`,
   `?page=montador`, `?page=rh`, `?page=free-qr`, `?page=central-montagem`, `?operacao=montagem&id=`).
+- **Servidor local (Live Server, porta 5501)**: as telas e a Início chamam o servidor da NUVEM
+  (`https://easyloc-zeta.vercel.app`) de qualquer endereço que não seja a Vercel — igual a Tecnoweld
+  chama o Supabase. Só a porta 3000 (`vercel dev`) usa servidor local. Antes, localhost apontava pra
+  `127.0.0.1:3000`, onde não havia nada, e dava "Sem conexão com o servidor" (out/2026). Mudança no
+  HTML/CSS/JS aparece na hora no Live Server; mudança em `api/` só depois de publicar na Vercel.
+  As funções de `api/` não podem usar biblioteca npm (a Vercel não instala nada): `portal-mural.js`
+  usou `@supabase/supabase-js` em 09/10 e a Início ficou sem metas/avisos/aniversariantes até 14/10.
 - **Para mudar regra/tela desses sistemas, editar aqui** (as pastas do Apps Script no Desktop ficam só de histórico
   depois da virada). Funções terminadas em `_` não são chamáveis do navegador (mesma regra do Apps Script);
   `bloqueadas` em `api/_gas/projetos.js` lista as que só existiam para o editor do Google.
@@ -8499,3 +8506,430 @@ Fotos antigas e senhas/logins NÃO foram migradas (decisão do usuário: as foto
   todas as planilhas no mesmo momento e trocar os links (portal, QR codes, favoritos).
 - `getSheetByName` ignora maiúsculas/minúsculas (igual ao Google — o Uber pede "Fretes CH" e a aba é "Fretes Ch");
   fusos "GMT-3"/"GMT-03:00" são aceitos em `Utilities.formatDate`.
+
+## Senhas das telas removidas; servidor dos sistemas da Chiavari exige o login do Acervo (out/2026)
+
+Pedido: "remover todas essas senhas que existem dentro do sistema, porque depois faremos o bloqueio do acesso pelo
+login igual um sistema profissional". Decisões do usuário: tirar só as **travas** (senhas que trancam tela/ação) e
+**já exigir o login do Acervo** no servidor; os **logins dos apps de campo continuam** (dizem QUEM é a pessoa).
+
+- **Servidor (`api/gs.js`)**: toda função que não está em `publicas` (em `api/_gas/projetos.js`, só cronograma/uber/
+  central) exige `Authorization: Bearer <token do Supabase>` de alguém com vínculo em `usuarios_empresas` (conferido em
+  `/auth/v1/user` + REST com a service key, guardado 5 min em memória). Sem isso: 401 "Entre no sistema para usar esta
+  tela." `publicas` = as funções que os apps de campo chamam (Montador, Vagas Free e QR, Motorista, Meu Bônus),
+  levantadas varrendo as páginas (nomes de função do servidor citados nelas). **Função nova chamada por um app de
+  campo precisa entrar em `publicas`**, senão o app recebe 401. `gs-cron` (CRON_SECRET) e `portal-mural` não passam por aqui.
+- **`gas-cliente.js`** manda o token: o da sessão do dashboard (`window.top.supabaseClient`) ou o guardado em
+  `localStorage["easyloc-auth"]` (o `storageKey` do `js/core/supabase.js`).
+- **Travas removidas** (padrão: a conferência do servidor ganha um `return` no topo com o comentário "Senha removida
+  (out/2026)"; a tela pula a janela ou só esconde o campo):
+  - Almoxarifado (senha do setor na retirada/saída);
+  - Central de Metas (entrada — `centralEntrar` dá a chave sem senha e a tela entra sozinha; pagamentos/premiações —
+    o botão "Liberar edição" continua, só não pede senha; fechamento — a janela só confirma);
+  - Itens Danificados (senha do estoque/setor; a janela de concluir/remover O.S. só confirma);
+  - Controle RH;
+  - Costura (sessão sempre liberada);
+  - Fretes (supervisor de montagem) e Conciliação (valor acima do CH: só confirma);
+  - Ocorrências (senha do supervisor);
+  - Feedback (ligações pendentes);
+  - Mural do Portal (entra com o nome de quem está logado em "Publicando como").
+- **Ficaram, de propósito**: logins dos apps de campo (Vagas Free, Montador, Painel RH Free, Meu Bônus/PIN, modo
+  supervisor do app do Motorista — o app é aberto sem login, então tirar daria supervisor a qualquer motorista);
+  senhas de conta (catálogo do cliente, cadastro de funcionário, trocar a própria senha); módulos antigos do Acervo
+  fora do menu (Ordem de Serviços, Almoxarifado, Cronograma Logístico).
+- **Cronograma e Controle de corridas do Uber seguem o usuário logado** (pedido seguinte: "se for um usuário que tem
+  permissão pode fazer, se não tiver não pode... o meu usuário Jonatan Falck é o adm e precisa ter acesso a tudo").
+  - **Motor**: `executar(..., { usuario })` — `api/gs.js` (`usuarioDaSessao`) monta { id, nome, email, admin,
+    permissoes[] } pela regra de `funcionario_pode` (vínculo em usuarios_empresas; funcionário inativo fica fora;
+    role admin/owner/administrador sem cadastro de funcionário = admin; os outros = `get_permissoes_usuario_resolvidas`).
+    O código dos sistemas recebe o serviço novo `Acervo`: `Acervo.usuario()` e `Acervo.pode(chave)` (admin: sempre true).
+  - **Permissões novas** (migration `20261008000300_permissoes_cronograma_uber.sql`, aparecem sozinhas nas telas
+    Permissões e Cadastro de Funcionários): `logistica.cronograma.montagem / internas / expedicao / motorista / agenda`
+    e `logistica.uber.supervisor / financeiro / gerencia`. O usuário Jonatan Falck é `role=admin` → passa em todas.
+  - **Cronograma** (`api/_gas/projetos/cronograma/AcessoAcervo.js`): `CRON_entrarComLogin(contexto)` substitui a senha —
+    devolve a MESMA sessão de antes (`AUD_criarTokenSessao_` com o nome de quem está logado + perfil), escolhendo o perfil
+    que a pessoa tem para aquela ação (Expedição → expedicao; Troca → montagem/internas; resto → montagem > internas >
+    expedicao > frete). Por isso auditoria, trocas, Equipe Free e carregamento continuam conferindo como antes, sem
+    mudança. Execução de etapa: Supervisor de Montagem (ou admin) ou a própria pessoa responsável (nome do Acervo
+    IGUAL ao do responsável). Agenda: permissão `agenda`, conferida também em salvar/atualizar/excluir no servidor;
+    o "Enviado por" (setor) continua sendo escolhido. Na tela, `pedirSenha()` chama o servidor em vez de abrir a
+    janela; sem permissão aparece "Sem permissão… peça a liberação na tela Permissões". O cronômetro "edição liberada"
+    foi escondido. **`validarSenhaPerfil`/`validarSenhaResponsavel` NÃO mudaram** — o App do Montador e o Painel RH
+    Free ainda entram por elas.
+  - **Uber** (`api/_gas/projetos/uber/AcessoAcervo.js`): `uberEntrarComLogin()` dá nome + cargo (Gerência >
+    Financeiro > Supervisor > Consulta); `marcarStatus` agora confere no servidor (`UBER_motivoBloqueioStatus_`):
+    Supervisor muda tudo menos para/de Pago, Financeiro só Conferido → Pago, Gerência/admin pode tudo (inclusive
+    corrigir uma corrida paga — antes ninguém podia), sem permissão não muda nada. `login.html` e o roteador vão
+    direto para `corridas.html`; o botão Sair ficou escondido. A tela mostra o motivo quando o servidor recusa.
+- Teste de verdade feito com mock: `api/gs.js` (sem login/ token ruim/ conta sem empresa → 401; logado → executa;
+  função de app de campo → executa sem login) e as 10 telas no navegador (abrem sem senha, sem erro, token em toda chamada).
+
+## Reajuste anual automático das tabelas de preço (out/2026)
+
+Pedido: "programar criação de tabela automática todo ano com a % que a pessoa escolher". Tela Tabelas de Preço
+(`Modulos/Estoque/TabelasPreco/`), bloco "Reajuste automático anual" (abaixo do aviso amarelo) → modal com
+ligado/desligado, %, dia/mês, ano da tabela (da própria data ou o seguinte) e "ativar automaticamente" (escolha do
+usuário: opcional, na tela). Migration `20261008000200_tabelas_preco_reajuste_anual.sql` (aplicada e registrada):
+- `tabelas_preco_agendamento` (uma linha por empresa; RLS `eh_membro_empresa`; um gatilho impede a tela de escrever
+  os campos de resultado da execução);
+- `tabelas_preco_rodar_agendamentos(p_hoje)` (security definer, só postgres): no dia (ou depois, uma vez por ano)
+  cria `TABELA <ano>` copiando os preços da tabela ativa mais recente com `round(valor*(1+%/100),2)`; se já existir
+  uma tabela com esse nome/ano, não cria; com "ativar", inativa as outras e ativa a nova (o gatilho antigo propaga o
+  preço pros itens);
+- **pg_cron ligado** (`create extension pg_cron`), job `tabelas-preco-reajuste-anual` todo dia 09:00 UTC (6h Brasília).
+- **Catálogo passou a mostrar o preço da tabela ATIVA** (a de ano mais recente) em vez da "TABELA 2026" fixa pelo nome
+  (escolha do usuário) — hoje dá o mesmo resultado, só a 2026 está ativa.
+Testado no banco numa transação desfeita: antes da data não cria; no dia cria a 2027 com 1157 preços +8%, ativa e o
+catálogo/itens recebem o preço novo; no dia seguinte não repete. Tela ganhou também: Voltar (vai pra Central de
+Pedidos) e "+ Nova tabela" na linha do título, respiro lateral e o aviso em card amarelo.
+
+## Editar o próprio cadastro de funcionário (out/2026)
+
+Pedido: "por que eu não posso editar meu próprio cadastro? ... libera, troca de senha por exemplo". A trava
+"Seu próprio acesso deve ser alterado por outro administrador" (Edge Function `funcionarios-admin` + RPC
+`funcionario_salvar`) continua para nível/status/permissões — evita alguém se trancar fora. Caminho novo e restrito:
+- **RPC `funcionario_salvar_proprio`** (migration `20261008000400_…`, aplicada; só service_role executa): muda nome,
+  setor, cargo, telefone, foto e a senha operacional de 4 dígitos. Nunca toca nível, status, permissões nem login, e
+  **nunca cria a linha em `funcionarios_acesso`** para quem não tem — o dono/admin (Jonatan) não tem essa linha, e
+  criá-la faria `funcionario_pode` deixar de tratá-lo como "admin pode tudo". Para ele a senha de 4 dígitos não se
+  aplica (devolve um aviso). Testado no banco numa transação desfeita (Jonatan continua admin; Carol mantém nível/status).
+- **Edge Function `funcionarios-admin`** (republicada, v3): `body.id === user.id` → `proprio`, pula as checagens de
+  `rh.funcionarios.editar`/`configuracoes.permissoes.editar` e chama a RPC acima; senha de login e e-mail seguem pelo
+  Auth como antes.
+- **Tela** (`Modulos/RH/CadastroFuncionarios/`): o lápis aparece na própria linha mesmo sem permissão de editar
+  funcionários; título "Meu cadastro", aviso amarelo, nível/status/login/permissões travados, `permissions: null`.
+- A tela "Permissões" saiu do menu (Gestão): permissões ficam só no Cadastro de Funcionários (`oculto: true` no
+  `sidebarMenu.js`). Cronograma: a linha "Agenda interna" perdeu o "N compromissos" e o título ficou centralizado.
+
+## Menu mostra só o que a pessoa pode acessar (out/2026)
+
+Pedido: "o que a pessoa não tiver acesso eu nem quero que apareça no menu... se todos os html daquele módulo ela não
+tiver acesso, nem o módulo aparece". Antes o menu desenhava tudo e `applyVisibility` só punha `hidden` nos botões — que
+o `display:flex` do `portal-shell.css` anulava (a Carol, Operador, via tudo). Agora `js/ui/sidebarMenu.js` espera
+`EasyLocPermissions.load()` e desenha só os itens em que `canNavigate(href | legado.html)` é verdadeiro (a mesma regra
+de `routes` em `js/core/permissions.js` que já barra a tela ao abrir); grupo/categoria sem item visível some.
+`window.portalRedesenharMenu` é chamado por `applyVisibility` (revalidação a cada 30s) e só redesenha se mudou.
+**Item de menu novo precisa de uma regra em `routes`** — sem regra, só o admin vê. Mural do Portal passou de "todos" para
+`rh.colaboradores.visualizar`. Conferido: os 39 itens têm regra; Operador vê só Disponibilidade de Itens, Cadastro de
+Itens e Separação de Materiais; admin vê os 39.
+
+## Início do Portal: "Resumo do dia" (out/2026)
+Pedido: "um resumo do dia, o que temos naquele dia... puxa do cronograma, o que temos de montagem, de triagem".
+Logo abaixo da capa da tela Início (antes dos avisos), `resumoDiaHtml()` em `js/ui/portalMural.js`: um cartão por
+etapa de hoje (Triagem Separação/Conferência, Carregamento, Montagem, Desmontagem, nessa ordem) com a contagem e,
+por linha, horário, pedido, cliente, local, responsável, equipe e caminhão (os "|" da planilha viram vírgula), mais um
+cartão "Agenda interna" quando há compromisso. Sem nada no dia: "Nada no cronograma para hoje.". Atalho "Resumo do
+dia" na capa e botão "Abrir o cronograma". Dados: `PORTAL_resumoDia_` (novo, `api/_gas/projetos/cronograma/
+ResumoDia.js`, só leitura das abas Cronograma e Agenda, fuso do script), chamado por `api/portal-mural.js` junto com o
+mural (se falhar, o mural aparece sem o resumo). Como o resto da Início, só funciona com o servidor da Vercel.
+Versões `?v=20261008-resumo-dia`.
+**Atualização (mesmo dia):** o resumo passou a ser lido direto do Supabase pelo navegador, sem depender da Vercel
+(pedido: "quero que deixe igual itens, projetos, clientes, quero ter acesso igual"). Migration
+`20261008000500_gs_leitura_equipe.sql` (aplicada e registrada): `gs_planilhas`, `gs_abas` e `gs_linhas` ganharam
+leitura (só SELECT) para quem tem vínculo em `usuarios_empresas` e não está com o cadastro de funcionário inativo
+(`gs_eh_da_equipe()`). **Continuam fechadas** (`gs_aba_protegida()`): Senhas e Acessos (Itens e Códigos), Login e Senha
+(Uber), Montador_Sessoes e Free_Cadastros (Cronograma — tokens, hash de senha, CPF, PIX), App Equipe (Itens Danificados —
+PIN) e Funcionarios (Controle RH — CPF, salário). Aba nova com dado sensível precisa entrar nessa lista. Gravar continua só
+pelo servidor (`/api/gs`, regras e versão de cada aba); `gs_propriedades`/`gs_cache` continuam fechadas. Testado no banco:
+logado lê o cronograma, abas protegidas voltam vazias, visitante e conta sem empresa não leem nada.
+`buscarResumoDia()` em `portalMural.js` filtra no banco pela data (`valores->6->>$d` / `valores->2->>$d`) e confere o dia
+no fuso de São Paulo (os horários são datas de 1899, convertidas com `Intl`); resultado conferido igual ao de
+`PORTAL_resumoDia_`. O botão "Resumo do dia" só aparece quando o resumo existe. Versão `portalMural.js?v=20261008-resumo-banco`.
+
+## Pedido: a tela antiga nunca aparece (out/2026)
+
+Pedido (com print da tela antiga de `pedido.html`: linha do tempo Orçamento…Finalizado, campos soltos, "Sua seleção" e
+"Resumo do pedido"): *"essa tela não deve existir mais"*; clicar em "Novo pedido" na Central de Pedidos abre a tela nova
+(com a foto do cliente). A Central de Pedidos continua igual. A tela nova (`js/pedido/pedido.entrada.mjs`, "Qual história
+vamos criar hoje?" → dados do evento com o retrato do cliente → catálogo → ambientes e lista → salvar) é montada pelo JS
+**em cima** da antiga e reaproveita os mesmos campos (`clienteInput`, `dataEvento`…), então o HTML antigo não pode ser
+apagado — só nunca é mostrado. Antes, a antiga aparecia até o JS terminar (≈1,5s ou mais, esperando contexto e banco) e
+ficava de vez se a abertura falhasse. Agora `.pedido-screen` já nasce com `em-entrada` (que esconde `.pedido-shell`):
+enquanto a entrada não existe aparece "Carregando pedido…", e se a abertura falhar (sem empresa ou erro em `initPedido`,
+classe `pedido-falhou`) aparece "Não foi possível abrir o pedido. Recarregue a página." Corrigidos também textos com
+acento quebrado em `pedido.itens.mjs` ("Ver sele??o do pedido", "Cat?logo"…). Versões `?v=20261009-sem-tela-antiga`
+(pedido.css, pedido.mjs e o import de pedido.itens.mjs).
+
+### Barra de etapas no topo, evento de vários dias e mapa satélite (out/2026)
+Pedidos do usuário na tela nova do pedido: *"o mapa aqui eu quero que apareça igual de satélite"*, *"no card de evento
+tem que ter a opção de colocar uma data só ou um período"* e *"o botão de avançar precisa ficar na parte de cima...
+parecido com o catálogo, vai tendo uma animação no nome da página e vão ficando as páginas anteriores"*.
+- **Barra** (`.comercial-trilha`, criada em `pedido.entrada.mjs`, fixa no topo nas duas fases): "← Central de pedidos" à
+  esquerda; no centro as etapas Dados do pedido › Catálogo › Ambientes e lista (já vistas à esquerda, clicáveis; a
+  atual em Cormorant maiúsculo; as próximas apagadas à direita); à direita o número e o botão de avançar ("Avançar para
+  o catálogo →" / "Ambientes e lista →" / "Salvar pedido"). Trocar de etapa anima os nomes (FLIP com Web Animations,
+  desligado com movimento reduzido). Erros de validação aparecem logo abaixo da barra. O botão de baixo
+  (`.entrada-avancar`) e a barra antiga do catálogo (`.comercial-fluxo-bar`) saíram. **É uma `<div>`, não `<header>`**:
+  o `tema-chiavari.css` trata o primeiro `<header>` de `.el-page` como título de página e muda o layout dele.
+  O catálogo (iframe) conversa com ela por `window.parent.__pedidoIrPara('dados')` (botão "editar dados" do projeto) e
+  `__pedidoSincronizarEtapa('catalogo'|'lista')` (chamado em `setActiveOverlay`, para a barra acompanhar quando o
+  próprio catálogo abre/fecha a lista).
+- **Evento de vários dias**: coluna nova `separacoes_pedidos.data_evento_fim` (migration
+  `20261009000100_pedidos_evento_periodo.sql`, aplicada; check `fim > data_evento`). `data_evento` continua sendo o 1º dia
+  (cronograma, disponibilidade e Central seguem lendo ela). No card Evento, "Um dia | Vários dias"; em vários dias
+  aparece "Até" e o rótulo vira "Primeiro dia". Validado na tela e ao salvar; a prévia/PDF mostra "20/11/2026 a 22/11/2026".
+- **Mapa**: `mapTypeId: "hybrid"` (satélite com nomes de ruas) no mapa pequeno e no ampliado (`pedido.locais-km.mjs`).
+Versões: `pedido.mjs/css?v=20261009-trilha2`, imports com `?v=` próprio (itens, entrada, locais-km, misc) e
+`catalogo.mjs?v=20261009-trilha-pedido`.
+- **Faixa vazia no catálogo dentro do pedido** (pedido: "olha a distância do menu... pro filtro, precisamos tirar esse
+  espaço vazio"): era o cabeçalho do próprio catálogo (76px + linha), que devia sumir no modo pedido. A regra
+  `.catalogo-comercial-pedido .catalog-header{display:none!important}` perdia para
+  `body.catalog-modo-sistema .catalog-header{display:flex!important}` (o catálogo dentro do pedido também está em modo
+  sistema, e essa tem mais especificidade). Virou `html.catalogo-comercial-pedido body .catalog-header`.
+  `catalogo.css?v=20261009-sem-faixa-pedido`. Medido no navegador: filtro a 24px do topo do iframe (antes ~100px).
+- **Decorador solicitante na lista do pedido** (pedido: "aqui precisa aparecer a foto da decoradora solicitante também",
+  na aba Geral/"Lista Completa" do catálogo dentro do pedido): a tela do pedido guarda a cliente escolhida em
+  `window.__pedidoClienteAtual = {nome, foto}` (no evento `cliente-selecionado`, que também roda ao abrir um pedido salvo;
+  digitar outro nome limpa); o catálogo lê por `ctx.decoradoraPedido()` e `solicitanteHtml()` (catalogo-projetos.mjs)
+  desenha foto redonda 72px + "DECORADOR SOLICITANTE" + nome, centralizado acima de "Lista Completa". Sem foto (ou se
+  ela falhar ao carregar) aparece a inicial. Só no modo pedido. Versões `?v=20261009-solicitante`.
+- **"← Voltar" no lugar de "← Central de pedidos"** (pedido: "precisa ser sempre o botão voltar, que é voltar pra
+  página anterior, porque às vezes a pessoa clica ali sem querer e volta tudo"). Volta UMA tela por clique: Ambientes e
+  lista → Catálogo; no Catálogo usa o histórico do próprio catálogo (`window.voltarCatalogoComercial()` em catalogo.mjs:
+  item → categoria → categorias; devolve false quando já está nas categorias) e só então Dados do pedido; nos dados de
+  um pedido novo → a abertura "Qual história vamos criar hoje?" (o que foi preenchido continua); só da abertura (ou dos
+  dados de um pedido já salvo) vai para a Central de pedidos. Testado clicando 6 vezes a partir da lista.
+  Depois (pedido: "Decorador solicitante precisa ficar na mesma linha de Lista Completa"): `.cpj-geral-topo` (grid
+  `minmax(max-content,1fr) auto minmax(0,1fr)`): solicitante à esquerda e o título no centro; em tela mais estreita o
+  título anda um pouco para a direita em vez de encostar no nome; ≤1100px empilha. CSS `?v=20261009-solicitante-linha2`.
+- **Módulo 3D dentro do pedido** (pedido: "um lugar que clicasse e fosse pro módulo 3D, e quando criasse algo naquele
+  módulo 3D fosse abastecido no pedido da cliente, igual é feito no catálogo"): a barra ganhou a etapa **Módulo 3D**
+  (Dados do pedido › Catálogo › Módulo 3D › Ambientes e lista). As etapas seguintes viraram clicáveis depois dos dados;
+  "Avançar" do 3D vai para a lista; "Voltar" do 3D vai para o Catálogo. No iframe, `window.abrirModulo3dComercialPedido()`
+  abre o 3D Livre e `setActiveOverlay("studio")` avisa a barra (`__pedidoSincronizarEtapa("modulo3d")`). O
+  "Adicionar ao projeto" (e o "Salvar no projeto" da renderização com IA) usa o mesmo `salvarRender()` do catálogo; no
+  modo pedido `garantirDestino()` não lista projetos — o projeto é o próprio pedido, só escolhe o ambiente (sem
+  "＋ Novo projeto") — e o salvamento cai em `ctx.salvarPedidoComercial` → os móveis entram nas linhas do pedido.
+  **Storage**: o projeto do pedido não existe em `public.projetos`, então `projeto_existe` recusava a imagem; migration
+  `20261009000200_projetos_bucket_pedido_comercial.sql` (aplicada) libera a pasta `<empresa>/…` do bucket `projetos`
+  para quem é da equipe da empresa (`projetos_pasta_da_equipe`, testado: membro sim, outra empresa/lixo/sem vínculo não).
+  Bug achado testando: `escolherDestino` fazia `querySelector("[data-cpj-novo]").addEventListener` sem `?.`.
+
+## "Renderizar com IA" do 3D Livre virou fotografia de estúdio de catálogo (out/2026)
+
+Pedido longo do usuário: a IA gerava salas grandes com paredes/janelas e móveis distantes; o padrão agora é foto de
+estúdio de mobiliário de luxo — fundo branco infinito, móveis de perto (75–90% da largura), sombras de contato,
+materiais realistas, fidelidade absoluta aos móveis (nada inventado). Vale para o botão "Renderizar com IA" do 3D
+Livre e para a renderização refeita pelo editor de cena do projeto (os dois usam `montarCorpoIA`).
+- **Causa do resultado antigo**: o prompt do cliente pedia "fotografia arquitetônica… complete o teto, conecte
+  paredes" e a política `furniture_strict_architecture_adaptive` do servidor mandava reconstruir a arquitetura; a
+  captura era a tela inteira (sala 10×10 com piso, paredes e grade).
+- **Captura** (`capturarFotoEstudio()` em catalogo-studio3d.mjs): esconde tudo que não é luz, piso ou móvel; piso vira
+  `shadowFloorMaterial` (só a sombra) sobre fundo branco; câmera PRÓPRIA (não mexe na da tela) com o azimute escolhido
+  pela pessoa, elevação limitada a 10°–30°, FOV vertical 27° (~50 mm), distância que enquadra a esfera dos móveis;
+  render a 3200 px; recorte pelos pixels não brancos (`limitesVisiveis`, móveis + sombras — a caixa 3D sobrava muito
+  de um lado na vista diagonal) e centraliza ocupando 84% do lado que limita, em 2160×1440, 1440×2160 ou 1856×1856
+  conforme o formato da composição; JPEG .93 (PNG de 2K passava de 4 MB). Medido com modelos reais (sofá isolado; sofá
+  + 2 mesas de canto + centro; mesa + 4 cadeiras; sofá + 2 poltronas + centro + aparador): 81–82% da largura, margens
+  iguais, cantos 255,255,255.
+- **Servidor** (`studio-ai-engine`, política nova `furniture_studio_catalog`): prompt principal em inglês do pedido +
+  inventário com quantidades + restrições negativas no próprio prompt (a API de edição não tem negative prompt) + o
+  estilo de luz. Modelo `gpt-image-2` em `/v1/images/edits` com a captura como imagem de referência, `quality: high`.
+  Tamanho livre ~2K (guia oficial da OpenAI: lados múltiplos de 16, ≤3840, proporção ≤3:1, 655.360–8.294.400 px); se a
+  API recusar o tamanho, repete em 1536×1024/1024×1536/1024×1024. **`input_fidelity` NÃO é enviado**: o guia diz que
+  não funciona no gpt-image-2 (já é alta fidelidade). As outras políticas (tecido, literal) não mudaram.
+- **Diálogo** "Dê vida à sua composição": saíram "Momento do dia" e "Convidados" (contradiziam o estúdio); ficou só
+  Iluminação (Suave e equilibrada / Contraste sofisticado). `renderAtmospherePrompt` apagada.
+- `tests/mock-projetos.cjs` aceita `opts.extras` (itens a mais, ex.: modelos reais).
+- **Publicado** (`supabase functions deploy studio-ai-engine`, 09/10/2026) depois de o usuário gerar uma imagem com o
+  servidor antigo: a tela nova mandava `furniture_studio_catalog`, o servidor antigo não conhecia a política e caía no
+  prompt de "fotografia arquitetônica" (saiu sala com parede, quadro, planta e aparador inventados).
+
+## "Você não possui acesso" aparecendo do nada e o menu sumindo (out/2026)
+
+Reportado: às vezes aparecia "Você não possui acesso a esta parte do sistema", ou o menu sumia, com os ícones e tudo. Não era permissão errada, era instabilidade tratada como "sem acesso". Causas em `js/core/permissions.js`:
+- qualquer falha passageira (rede, token sendo renovado) na carga OU na revalidação de 30 s zerava as permissões;
+- a revalidação punha `loaded=false` antes de buscar, então durante a consulta tudo ficava negado;
+- `guardPage()` escondia a tela e nunca mais mostrava, mesmo com o acesso de volta;
+- `waitForContext` desistia em 6 s.
+E em `js/core/context.js`, um `getUser()` sem resposta por rede era lido como "acesso inativo" e chamava `signOut()`, o que deslogava a pessoa.
+
+Corrigido:
+- `buscar()` lança erro em falha passageira e só devolve "inativo" quando o banco responde inativo;
+- `load()` tenta 4 vezes (0/1/2/4 s);
+- `revalidar()` só aplica quando o banco responde, senão mantém o estado anterior;
+- a revalidação roda a cada 30 s, a cada 10 s enquanto a última falhou, e ao voltar para a aba;
+- `guardPage()` mostra a tela de novo quando o acesso volta;
+- `waitForContext` espera 20 s;
+- `context.js` tenta 4 vezes e só desloga quando o banco diz que o acesso está inativo.
+
+Teste: `tests/permissoes-instabilidade-browser.cjs`. Cache-busting `permissions.js`/`context.js` `?v=20261009-acesso-estavel` nas 22 páginas.
+**Pegadinha (quebrou o login logo depois):** o que `supabase.rpc(...)` devolve aceita `await`, mas NÃO tem `.catch`
+— `rpc(...).catch(...)` lança TypeError, o `context.js` parava e o menu ficava vazio em "Carregando...". Usar
+`try { await rpc(...) } catch {}`. O banco simulado do teste agora devolve um objeto só com `then`, igual ao real.
+`context.js` em `?v=20261009-acesso-estavel2`.
+
+## Central de Pedidos: "Visualizar pedido" = a prévia do catálogo (out/2026)
+
+Pedido (com print da "Proposta comercial" antiga): *"isso aqui pode remover, eu quero um pedido igual aquele que criamos lá
+dentro do catálogo, que o decorador envia... exatamente igual"* e *"dentro de lista completa, em salvar, quero ter a opção de
+abrir ele por ali também, salvar em PDF"*.
+- `abrirVisualizacaoPedido({titulo, model, decorador, empresa})` (novo, `projeto-apresentacao.mjs`): a mesma janela "Ver
+  pedido" do catálogo (`dialog.cpj-modal.cpj-order-preview` + `pedidoPreviewHtml`) com "Baixar PDF" (`imprimirPedido`) e
+  "Fechar". Precisa de `catalogo-projetos.css` + `projeto-apresentacao.css` na página. `pedidoPreviewHtml` mostra período
+  ("11/11/2026 a 13/11/2026") quando `model.dataFim` existe (`dadosApresentacao` lê `project.data_evento_fim`).
+- **Central** (`CentralPedidos.js` `abrirPreviewPedido`, carregada por `import()` dinâmico): ambientes e renderizações vêm de
+  `separacoes_pedidos.observacoes.projeto_comercial`; pedido sem isso vira um ambiente "Itens do pedido" com
+  `separacoes_itens`; item do pedido fora de qualquer ambiente vai pra "Outros itens". Nome/medidas/foto/valores do cadastro
+  `itens` (preços = cadastro, como a tela antiga). Decorador solicitante = `cliente_nome`, foto =
+  `clientes_empresas.catalogo_logo_url` pelo nome. Modal antigo ("Proposta comercial", parcelas, total) apagado: HTML,
+  JS e ~44 regras `preview` do CSS, incluindo o `@media print{body *{visibility:hidden}}` que só servia pra ele.
+- **Lista Completa do pedido comercial**: botão "Ver pedido e PDF" ao lado de "Salvar pedido" (`data-cpj="ver-pedido-comercial"`).
+- Testes: `tests/central-ver-pedido-browser.cjs` (Supabase simulado; cabeçalho, solicitante com foto, período, ambientes +
+  "Outros itens", valores, renderização, PDF, celular) e `tests/catalogo-lista-ver-pedido-browser.cjs` (página "pai" que
+  imita a tela do pedido com o catálogo `?comercial=pedido` no iframe). Versões `?v=20261009-ver-pedido`.
+
+### "Renderizar projeto com IA" na janela do pedido (out/2026)
+Pedido: *"aqui eu quero ter a opção de renderizar o projeto, a IA vai pegar todos os prints 3D que eu fiz e vai renderizar
+eles como se eu tivesse renderizando dentro do 3D"*. Na janela "Ver pedido e PDF" da Lista Completa do pedido comercial,
+botão "Renderizar projeto com IA (N imagens)" (só aparece com N>0). `renderizarProjetoComIA()` (catalogo-projetos.mjs):
+- alvos = imagens com `render.cena.tipo === "print"` e cena guardada (`printsParaRenderizar`); imagens já de IA ficam;
+  prints antigos sem cena não dá (aviso);
+- uma por vez, carrega a cena no motor do 3D Livre num palco escondido (`cenaEditor.abrir` num div fora da tela) e monta o
+  MESMO pedido do botão do 3D Livre (`cenaEditor.corpoIA` → foto de estúdio, `furniture_studio_catalog`); no fim
+  `cenaEditor.fechar()` devolve o 3D Livre;
+- chama a IA duas por vez; cada resultado troca a imagem no MESMO lugar (`cena.tipo` vira "ia", a cena continua guardada
+  pro editor de cena), grava o projeto e apaga o print antigo do Storage; a janela se redesenha (`abrirVisualizacaoPedido`
+  ganhou `extra` + `onMount({dialog, atualizar})`). Aviso "Renderizando o projeto (k de N)" e um resumo no fim.
+- Para decorador cada imagem pediria confirmação de créditos (`CatalogCredits.invoke`); hoje o botão só existe no pedido
+  comercial (equipe, sem créditos).
+Teste: cenário 2 de `tests/catalogo-lista-ver-pedido-browser.cjs` (2 prints com cena viram IA, a de IA e o print sem
+cena ficam, gravado no pedido, prints antigos removidos). `tests/catalogo-editor-cena-browser.cjs` tinha 3 expectativas
+da renderização antiga (PNG, política "architecture_adaptive", prompt de "fotografia arquitetônica"): atualizadas para a
+fotografia de estúdio. Versões `?v=20261009-renderizar-projeto`.
+
+## Menu fechado: a logo recortada no "Ch" (out/2026)
+Pedido: *"crie um ícone com o Ch como se você cortasse a logo... vai ficar nesse espaço vazio que fica por cima do ícone do
+cronograma"* — e em seguida *"não é um ícone, é a própria logo cortada"*. Com o menu recolhido (trilho de 76px), o topo
+mostra `#sidebarMonograma` (dentro do botão da logo, então clicar leva ao Início); aberto, volta a logo inteira.
+`js/ui/menuMonograma.js` recorta a partir dos PIXELS da logo atual (`#sidebarLogo`, Storage com CORS liberado): primeiro
+bloco de colunas com tinta até a primeira separação vertical (≥0,5% da largura); na Chiavari = x 39–418, y 448–777 do PNG
+1254×1254. Pintado de branco, guardado em `localStorage.easyloc_monograma` (por endereço da logo, sem `?v=`) e aplicado
+já no script anti-flash do `dashboard.html`. Logo sem um bloco inicial separado (ou com o 1º bloco > 60% da largura) não
+ganha recorte — o trilho fica como antes. Só ≥861px (no celular o menu fechado não aparece). CSS no fim de
+`portal-shell.css` (`?v=20261009-monograma`). Teste: `LOGO=<png da logo> node tests/menu-monograma-browser.cjs`.
+
+## Assistente comercial do catálogo ("Helena", out/2026)
+
+Pedido do usuário: uma IA dentro do catálogo que atende como representante comercial (conversa humanizada que sempre
+conduz ao fechamento do pedido), consulta disponibilidade, acrescenta itens ao pedido, sugere combinações pelo estilo,
+manda fotos de composições e **aprende com cada decorador**. As imagens usam **os formatos já cadastrados no 3D Livre**
+(pedido explícito: "são esses formatos que devemos utilizar pra direcionar a montagem"). Junto, todo projeto que um
+decorador cria no catálogo aparece na Central de Pedidos com o selo "Veio do catálogo".
+
+- **Servidor**: Edge Function `catalogo-assistente` (`verify_jwt=false`; o handler valida o token do catálogo ou o JWT
+  da equipe + vínculo, igual `studio-ai-engine`). OpenAI Chat Completions com ferramentas (`CATALOGO_ASSISTENTE_MODEL`,
+  padrão `gpt-4.1`; nome em `CATALOGO_ASSISTENTE_NOME`, padrão "Helena"). Ferramentas: buscar_itens, listar_categorias,
+  sugerir_combinacoes, verificar_disponibilidade (mesma conta da tela Disponibilidade; **sem estoque cadastrado diz que a
+  equipe confirma** — hoje só 4 de 1174 itens têm `estoque_total`), mostrar_itens, adicionar/remover_do_pedido,
+  criar_projeto (RPC `projeto_criar`), enviar_pedido, listar_formatos, gerar_imagem_composicao, atualizar_perfil.
+  Os formatos (com os móveis com 3D que cabem em cada posição) já vão no prompt — corta rodadas (~5–8 s por resposta).
+  **O modelo vê apelidos curtos dos itens ("m12"), nunca UUID**: com UUID ele errava uma letra e a ferramenta recusava.
+- **O servidor não grava o projeto nem renderiza**: devolve ações (`quantidade`, `usar_projeto`, `enviar_pedido`,
+  `renderizar`) que o navegador executa — quantidades por `window.catalogAssistenteProjeto` (catalogo-projetos.mjs, mesmo
+  `mudarQuantidade` do "＋", autosave de sempre); envio abre o `fluxoEnviarPedido` (a pessoa confirma).
+- **Imagem**: `cenaEditor.montarFormato(host, formatoId, {papel: itemId})` (catalogo-studio3d.mjs) monta o formato num
+  palco escondido **só com as posições preenchidas** (posição vazia fica fora da imagem) e devolve o mesmo pedido do
+  "Renderizar com IA" (foto de estúdio, `furniture_studio_catalog`) + a cena; `executarIA` passa por `CatalogCredits`
+  (decorador paga créditos, como no 3D Livre). A imagem e a cena vão pro bucket público `catalogo-assistente`
+  (`<empresa>/<dono>/<uuid>.jpg|.json`, só a função grava) e entram na conversa com "Adicionar ao projeto" (leva os móveis
+  junto, mesmo fluxo do 3D Livre) e "Baixar".
+- **Aprendizado**: `catalogo_assistente_perfis.perfil` (por `dono` = `cliente:<id>` ou `usuario:<id>`): (1) a cada
+  mensagem uma chamada separada (`gpt-4.1-mini`, saída estruturada, em paralelo) extrai tons/cores/estilos/materiais/
+  evita/tipos de evento — **não depende do modelo principal lembrar de chamar atualizar_perfil** (testado: sem isso ele
+  não guardava); (2) cada item posto no projeto soma em `perfil.historico` (material, cor, estilo, categoria). O perfil
+  entra no prompt seguinte. Conversa em `catalogo_assistente_mensagens` (últimas 24 vão de contexto). RLS: só a função
+  grava; a equipe lê (`eh_membro_empresa`). Migration `20261015000100_catalogo_assistente.sql` (aplicada e registrada).
+- **Tela** (`catalogo-assistente.mjs/.css`): botão "Fale com a Helena" no canto inferior direito (as notificações sobem
+  pra cima dele, com contador de fotos que chegaram minimizada). A conversa abre em **TELA CHEIA** (pedido: "como se fosse
+  uma conversa de WhatsApp, a tela toda"): faixa grafite com Minimizar/Nova conversa, coluna de mensagens de 720px e, a
+  partir de 1100px, à direita o **pedido em andamento** (`clamp(400px,40vw,680px)` — o usuário pediu chat menor e mais
+  espaço pro pedido: ambientes, peças com foto e quantidade, total e "Revisar e enviar pedido" sempre visíveis, a lista
+  rola). Minimizar volta ao catálogo; abrir um item pelo cartão também minimiza. Decorador e equipe (inclusive dentro do pedido, modo
+  "pedido": sem criar projeto/enviar); visitante não tem. Nova conversa apaga só as mensagens (o perfil fica).
+- **Central de Pedidos**: `carregarProjetosCatalogo()` lista `projetos` com `cliente_id` (os da equipe ficam de fora),
+  selo "Veio do catálogo", status `catalogo_<status>` (com filtro), valor = quantidade × locação, sem contrato/PIX;
+  "Visualizar" e duplo clique abrem a prévia do pedido (`abrirPreviewProjetoCatalogo`). Não vira `separacoes_pedidos`.
+- **Estilo e quantidade de todos os itens (15/10/2026, pedido do usuário pra testar a IA)**: os 1173 itens ganharam
+  `estilo` (8 valores: Clássico, Provençal, Contemporâneo, Minimalista, Rústico, Boho, Industrial, Vintage) por regras de
+  nome da família + material (componentes herdam pelo nome — primeira passada, editável no cadastro), e `estoque_total`:
+  1111 com a coluna **Qt** real da planilha "Cálculo Estoque (script Alessandro) - 02.04.2026 - BASE PARA IMPORTAÇÃO.xlsx"
+  (Downloads, casada por `referencia` = Código; 31 estão com 0 na própria planilha), 4 já preenchidos mantidos e 58
+  **estimados** por tipo de peça (sem código ou código fora da planilha). Backup dos valores anteriores em
+  `itens_backup_estilo_estoque_20261015` (RLS ligado, sem política — só servidor). Desfazer:
+  `update itens i set estilo=b.estilo, estoque_total=b.estoque_total from itens_backup_estilo_estoque_20261015 b where b.id=i.id`.
+- **Travas aprendidas em teste**: ela chegou a criar um projeto sozinha (noivos = nome da decoradora, local "(definir)").
+  Agora `criar_projeto` exige `confirmado_pela_pessoa` e recusa local provisório e noivos iguais ao nome do decorador.
+  Ela pedia "boho" na categoria inexistente "Lounge": o prompt recebe a lista real de categorias e estilos e manda
+  filtrar por `estilo`.
+- **Áudio (mensagem de voz)**: microfone no lugar do "enviar" com o campo vazio (WhatsApp); grava com MediaRecorder
+  (webm/opus, mp4 no Safari), barra com cronômetro, ondas ao vivo (AnalyserNode — o AudioContext precisa de `resume()`,
+  criado depois do await da permissão ele nasce suspenso), lixeira descarta, até 2 min. Ação `transcrever` da função:
+  `gpt-4o-transcribe` (`CATALOGO_ASSISTENTE_TRANSCRICAO`; cai pro whisper-1) em pt com o vocabulário INTEIRO do acervo
+  como prompt, e depois `corrigirNomes` (gpt-4.1-mini) troca nome de peça mal transcrito pela grafia da lista sem mexer
+  no resto (protegido: se mudar mais de 20% do texto, fica o original). Testado com voz sintética: "Beca/Agnes/Elo/Gomos"
+  viraram Becca/Águines/Elô/Gomus, "cerimônia" como ambiente ficou. O texto aparece no balão com a etiqueta "Áudio" e vai
+  pra conversa marcado `por_audio`. Microfone desativado enquanto ela transcreve/responde. Iframes `appModuleFrame`
+  (dashboard) e o do catálogo dentro do pedido ganharam `allow="microphone; fullscreen; clipboard-write"`.
+- **Fundamentação no servidor (aprendido em teste)**: com mensagem longa o modelo dizia que peça existente "não está no
+  acervo" (Becca/Águines existem, só não têm 3D) e prometia "vou checar" sem checar. Agora `pecasCitadas()` acha no
+  acervo as peças que a pessoa citou e entra como mensagem de sistema antes do modelo responder; e os cartões com foto
+  são anexados pelo servidor pra toda peça encontrada cujo nome completo aparece na resposta (não depende de mostrar_itens).
+- **Limites conhecidos**: só ~14 itens têm modelo 3D, então imagens só saem com essas peças; a resposta não é em
+  streaming (indicador "digitando").
+- **Presença do decorador na Central** (pedido: "quero ver que o decorador está dentro daquele pedido"): tabela
+  `projetos_presenca` (uma linha por projeto; à parte de `projetos` pra não mexer no `updated_at`) + RPC
+  `projeto_presenca(p_token, p_empresa_id, p_id, p_detalhe)` — só grava quando quem chama é o DECORADOR dono (equipe
+  abrindo o projeto não conta). O catálogo manda o sinal ao escolher o projeto, a cada 60 s com a aba visível e após
+  edições (no máximo 1 a cada 20 s), com o detalhe "No catálogo / No 3D Livre / No projeto / Na Biblioteca · <ambiente>".
+  A Central relê só a presença a cada 30 s: "Montando agora · …" (verde, linha sobe pro topo) com sinal < 2 min,
+  "Visto há N min" até 30 min. Migration `20261015000200_projetos_presenca.sql`.
+- Testes: `tests/central-projetos-catalogo-browser.cjs` (inclui presença). A conversa e a imagem foram testadas contra o servidor real com
+  uma sessão temporária de decorador (apagada depois, junto com as mensagens/perfil/arquivos do teste).
+
+## Teste do dia 25 e disponibilidade na Helena (out/2026)
+
+- **Pedido de teste "TESTE-IA-25"** (`separacoes_pedidos`, cliente "TESTE IA — reservas do dia 25 (apagar depois)",
+  status `pendente`/`aprovado`, 25/10/2026, `observacoes.teste_ia=true`, 29 linhas / 1587 peças): esgota no dia 25 Sofá
+  Gomus, Becca, Orka, Alex, Chesterfield Whisky, Poltrona Haus, Mesa Auxiliar Centro Elô e Aparador Cerimony; deixa 1
+  Sofá Berlim, metade do Sofá Junco e 20 de cada Cadeira Tiffany. Aparece na Central e na Separação. **Apagar quando
+  terminar os testes**: `delete from separacoes_pedidos where numero_pedido='TESTE-IA-25'` (as linhas de
+  `separacoes_itens` vão junto se houver cascade; senão apagar antes por `separacao_pedido_id`).
+- **Quantidade em estoque no cadastro do item** (`#itensEstoqueTotal`, seção comercial de `item-detalhes.html`, grava
+  `estoque_total` em `itens_salvar`; sem o campo na tela não mexe no valor).
+- **Servidor** (`catalogo-assistente`): `mapaDisponibilidade(ctx, data)` — itens em páginas de 1000 (a API corta em 1000)
+  e reservas só dos pedidos a ±60 dias da data. `adicionar_ao_pedido` **recusa** peça sem unidades livres na data do
+  evento do projeto (conta a mesma peça nos outros ambientes) e devolve a mensagem pra ela dizer "infelizmente não está
+  disponível"; `buscar_itens` filtra pela data do evento por padrão (`incluir_indisponiveis` pra ver tudo) e agrupa por
+  peça (variações juntas — antes 12 resultados viravam 12 variações do mesmo sofá modular); o prompt traz as
+  subcategorias; pedido de ação ("coloca", "quero o X") força ferramenta na 1ª rodada (`tool_choice: required`) — em
+  teste ela dizia "vou incluir" sem incluir; a lista de formatos avisa que 3D ≠ disponível. Ação nova `disponibilidade`
+  ({data, item_ids}) usada pelo app. Cartões dos itens trazem `livres` na data do evento: "Esgotado no dia" no lugar do
+  "＋ Projeto" quando 0.
+
+## App do catálogo no celular (out/2026)
+
+Pedido: "quero de fato um app e não um site que abre no celular... vou acessar pelo mesmo link", com a Helena.
+- **Mesmo link**: script no `<head>` de `catalogo.html` manda pra `catalogo-app.html` quando a tela é ≤820px E tem toque,
+  fora de iframe, fora de `?comercial=pedido`, sem `login_ok` e sem a escolha "versão completa" (`?versao=site`,
+  lembrada em `sessionStorage.catalogo_versao`; `?versao=app` desfaz). O login (`catalogo_token`/visitante/equipe) passa
+  junto (mesma aba). `tests/catalogo-carrossel-setas-browser.cjs` (o único que simula toque) abre com `?versao=site`.
+- **PWA**: `catalogo-app.webmanifest` (standalone, grafite), ícones `app-icone-180/192/512/512-maskable.png` (monograma
+  "Ch" da logo, branco no grafite, gerado da "Logo Chiavari - Cinza Chumbo.png"), service worker `catalogo-app-sw.js`
+  (rede primeiro; cache só do próprio site, nunca Supabase). Conta > "Instalar o app" (Android: convite; iPhone: instrução).
+- **`catalogo-app.mjs/.css`**: abas Início / Catálogo / Helena / Projeto / Conta (visitante sem Helena/Projeto); telas
+  empilhadas com o "voltar" do celular (history; folhas e zoom ocupam uma entrada — fechar por código espera o popstate,
+  senão o voltar atrasado derrubava a folha seguinte). Início (foto do Portal, saudação, Helena, projeto, categorias,
+  destaques), Catálogo (busca + categorias), categoria (chips de subcategoria), item (carrossel principal/detalhes/
+  ambientadas, cores, specs, disponibilidade na data do projeto, +/− e "Adicionar · <ambiente>", "Perguntar à Helena"),
+  Projeto (trocar/criar, ambientes, linhas com +/−, imagens, total, "Enviar pedido" → `projeto_enviar_pedido`), Conta
+  (saldo de créditos via `#catalogUser`, versão completa, sair). Mesmos dados/RPCs/projeto ativo
+  (`catalogo_projeto_ativo:*`) do computador, autosave 800 ms, presença "No app · <ambiente>".
+- **Helena no app**: mesmo `catalogo-assistente.mjs` (sem o botão flutuante; a aba abre a conversa em tela cheia).
+  `window.catalogAssistenteProjeto`, `catalogRegisterRenderItems`, `catalogAddCompositionToProject`,
+  `catalogOpenPhotoZoom` e `catalogNotify` são implementados pelo app. O motor 3D (fotos de composição) é montado
+  escondido: o app busca `catalogo.html`, importa `#catalogStudio` + `dialog[id^=studio]` pra `#appStudioHost` e chama
+  `initCatalogStudio3D` (1,5 s depois de abrir, carregado sob demanda).
+- Testado em iPhone 13 emulado contra o servidor real (sessão temporária da Lis): link normal → app, navegação/voltar,
+  criar projeto 25/10, Gomus "Esgotado em 25 de outubro" (botão travado), Richard "4 livres", Helena recusa o Gomus e
+  oferece livres, cartões "Esgotado no dia", sem rolagem lateral, instalável, motor 3D montado, sem erros.

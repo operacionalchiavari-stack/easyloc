@@ -255,6 +255,10 @@ const volumeCubico = Number(
     const subcategoria = document.getElementById("itensSubcategoria")?.value?.trim() || "";
     const grupoSeparacao = document.getElementById("itensGrupoSeparacao")?.value?.trim() || "";
     const estilo = document.getElementById("itensEstilo")?.value?.trim() || "";
+    // Quantidade em estoque (estoque_total): usada pela Disponibilidade de Itens, pelo pedido e pela assistente comercial.
+    // Sem o campo na tela (outros formulários), não mexe no valor gravado.
+    const estoqueRaw = document.getElementById("itensEstoqueTotal")?.value?.trim();
+    const estoqueTotal = estoqueRaw === undefined ? undefined : (estoqueRaw === "" ? null : Math.max(0, Math.round(Number(estoqueRaw.replace(",", ".")) || 0)));
     const fornecedorId = document.getElementById("itensFornecedor")?.value || null;
 
     const ordemExposicaoRaw = document.getElementById("itensOrdemExposicao")?.value?.trim();
@@ -370,6 +374,7 @@ const itemData = {
   subcategoria,
   grupo_separacao: grupoSeparacao,
   estilo,
+  ...(estoqueTotal === undefined ? {} : { estoque_total: estoqueTotal }),
   fornecedor_id: fornecedorId,
 
   custo,

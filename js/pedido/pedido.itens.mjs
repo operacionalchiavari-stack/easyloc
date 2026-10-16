@@ -1,5 +1,5 @@
 import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
-import { iniciarEntradaComercial } from "./pedido.entrada.mjs";
+import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261009-modulo3d";
 
 export function initItens({ supabase, els }){
 
@@ -662,10 +662,10 @@ function calcularVolumeTotalPedido(){
   });
 
 
-  // Vitrine comercial integrada ?s linhas e c?lculos existentes do pedido.
+  // Vitrine comercial integrada às linhas e cálculos existentes do pedido.
   const vitrine = document.createElement('section');
   vitrine.className='pedido-vitrine';
-  vitrine.innerHTML='<div class="vitrine-cabecalho"><span>ACERVO PARA O SEU EVENTO</span><h2>Escolha as pe?as do pedido</h2><p>Explore o acervo e adicione as quantidades ? sua sele??o.</p></div><div class="vitrine-filtros"><input type="search" placeholder="Pesquisar nome ou c?digo" aria-label="Pesquisar produtos"><select aria-label="Categoria"><option value="">Todas as categorias</option></select><button type="button" class="vitrine-atualizar">Atualizar disponibilidade</button></div><div class="vitrine-grade" aria-live="polite"></div><div class="vitrine-paginacao"><button type="button">Anterior</button><span></span><button type="button">Pr?xima</button></div>';
+  vitrine.innerHTML='<div class="vitrine-cabecalho"><span>ACERVO PARA O SEU EVENTO</span><h2>Escolha as peças do pedido</h2><p>Explore o acervo e adicione as quantidades à sua seleção.</p></div><div class="vitrine-filtros"><input type="search" placeholder="Pesquisar nome ou código" aria-label="Pesquisar produtos"><select aria-label="Categoria"><option value="">Todas as categorias</option></select><button type="button" class="vitrine-atualizar">Atualizar disponibilidade</button></div><div class="vitrine-grade" aria-live="polite"></div><div class="vitrine-paginacao"><button type="button">Anterior</button><span></span><button type="button">Próxima</button></div>';
   document.querySelector('.pedido-items-panel')?.before(vitrine);
   const grade=vitrine.querySelector('.vitrine-grade'),busca=vitrine.querySelector('input'),categoria=vitrine.querySelector('select'),pag=vitrine.querySelector('.vitrine-paginacao');
   let pagina=0,sequencia=0,timerVitrine;
@@ -678,10 +678,10 @@ function calcularVolumeTotalPedido(){
     if(termo)consulta=consulta.or('produto.ilike.%'+termo+'%,descricao_total.ilike.%'+termo+'%,codigo.ilike.%'+termo+'%');
     if(categoria.value)consulta=consulta.eq('categoria',categoria.value);
     const {data,error}=await consulta;if(seq!==sequencia)return;
-    if(error){grade.innerHTML='<p>N?o foi poss?vel carregar o acervo. Tente atualizar.</p>';return;}
+    if(error){grade.innerHTML='<p>Não foi possível carregar o acervo. Tente atualizar.</p>';return;}
     const temProxima=(data || []).length>12;
     const itens=await anexarDisponibilidadeAosItens((data || []).slice(0,12),empresa);if(seq!==sequencia)return;
-    grade.innerHTML=itens.length?itens.map((it,index)=>'<article class="vitrine-produto"><div class="vitrine-foto">'+(it.foto_url?'<img loading="lazy" src="'+escapeHtml(it.foto_url)+'" alt="'+escapeHtml(it.produto || '')+'">':'<span>Sem foto</span>')+'<span class="vitrine-codigo">'+escapeHtml(it.codigo || '')+'</span></div><div class="vitrine-produto-info"><h3>'+escapeHtml(it.produto || it.descricao_total || 'Item')+'</h3><div class="vitrine-preco"><strong>'+formatCurrency(it.valor_locacao || 0)+'</strong><small>'+formatarQuantidadeDisponivel(it.disponibilidade_busca || 0)+' dispon?veis</small></div><div class="vitrine-selecionar"><input type="number" min="1" step="1" value="1" aria-label="Quantidade de '+escapeHtml(it.produto || 'item')+'"><button type="button" data-index="'+index+'">Adicionar</button></div></div></article>').join(''):'<p>Nenhum item encontrado para esta pesquisa.</p>';
+    grade.innerHTML=itens.length?itens.map((it,index)=>'<article class="vitrine-produto"><div class="vitrine-foto">'+(it.foto_url?'<img loading="lazy" src="'+escapeHtml(it.foto_url)+'" alt="'+escapeHtml(it.produto || '')+'">':'<span>Sem foto</span>')+'<span class="vitrine-codigo">'+escapeHtml(it.codigo || '')+'</span></div><div class="vitrine-produto-info"><h3>'+escapeHtml(it.produto || it.descricao_total || 'Item')+'</h3><div class="vitrine-preco"><strong>'+formatCurrency(it.valor_locacao || 0)+'</strong><small>'+formatarQuantidadeDisponivel(it.disponibilidade_busca || 0)+' disponíveis</small></div><div class="vitrine-selecionar"><input type="number" min="1" step="1" value="1" aria-label="Quantidade de '+escapeHtml(it.produto || 'item')+'"><button type="button" data-index="'+index+'">Adicionar</button></div></div></article>').join(''):'<p>Nenhum item encontrado para esta pesquisa.</p>';
     grade.querySelectorAll('button').forEach(button=>button.onclick=()=>{
       const it=itens[Number(button.dataset.index)],qtd=Number(button.previousElementSibling.value);
       if(!Number.isInteger(qtd)||qtd<1){button.previousElementSibling.reportValidity();return;}
@@ -689,7 +689,7 @@ function calcularVolumeTotalPedido(){
       aplicarItemNaLinha(tr,it);tr.querySelector('.qtd').innerText=String(qtd);recalcularLinha(tr);
       button.textContent='Adicionado';setTimeout(()=>button.textContent='Adicionar',1200);
     });
-    pag.children[0].disabled=pagina===0;pag.children[2].disabled=!temProxima;pag.children[1].textContent='P?gina '+(pagina+1);
+    pag.children[0].disabled=pagina===0;pag.children[2].disabled=!temProxima;pag.children[1].textContent='Página '+(pagina+1);
   }
   busca.oninput=()=>{clearTimeout(timerVitrine);timerVitrine=setTimeout(()=>{pagina=0;carregarVitrine();},300);};
   categoria.onchange=()=>{pagina=0;carregarVitrine();};
@@ -702,9 +702,9 @@ function calcularVolumeTotalPedido(){
   }
 
   window.pedidoAdicionarDoCatalogo = async function(id){
-    const empresa=window.__CONTEXT?.empresa_id;if(!empresa)throw Error('Empresa n?o identificada.');
+    const empresa=window.__CONTEXT?.empresa_id;if(!empresa)throw Error('Empresa não identificada.');
     const {data:it,error}=await supabase.from('itens').select('id,codigo,produto,descricao_total,valor_locacao,valor_reposicao,volume_cubico,foto_url').eq('id',id).eq('empresa_id',empresa).eq('ativo',true).eq('locar_somente_kit',false).single();
-    if(error || !it)throw Error('Este item n?o est? dispon?vel para adicionar avulso.');
+    if(error || !it)throw Error('Este item não está disponível para adicionar avulso.');
     const existente=Array.from(tbody.querySelectorAll('tr.item-row')).find(tr=>tr.dataset.itemId===id);
     if(existente){const qtd=existente.querySelector('.qtd');qtd.innerText=String((Number(qtd.innerText)||0)+1);recalcularLinha(existente);return;}
     addItemBtn.click();const tr=tbody.querySelector('tr.item-row:last-child');aplicarItemNaLinha(tr,it);recalcularLinha(tr);
@@ -713,6 +713,7 @@ function calcularVolumeTotalPedido(){
   window.pedidoMetadadosCatalogo = () => ({
     noivos: document.getElementById('clienteInput')?.value || 'Novo pedido',
     data_evento: document.getElementById('dataEvento')?.value || null,
+    data_evento_fim: document.querySelector('.evento-fim-item:not([hidden]) #dataEventoFim')?.value || null,
     local_evento: document.getElementById('localInput')?.value || ''
   });
   window.pedidoProjetoCatalogo = () => {
@@ -741,10 +742,10 @@ function calcularVolumeTotalPedido(){
     });
     return sincronizacao;
   };
-  vitrine.querySelector('.vitrine-cabecalho').innerHTML='<button type="button" class="comercial-ver-selecao">Ver sele??o do pedido</button>';
+  vitrine.querySelector('.vitrine-cabecalho').innerHTML='<button type="button" class="comercial-ver-selecao">Ver seleção do pedido</button>';
   vitrine.querySelector('.comercial-ver-selecao').onclick=()=>document.querySelector('.pedido-items-panel').scrollIntoView({behavior:'smooth'});
   vitrine.querySelector('.vitrine-filtros').hidden=true;grade.hidden=true;pag.hidden=true;
-  const catalogo=document.createElement('iframe');catalogo.className='pedido-catalogo-real';catalogo.title='Cat?logo comercial';
+  const catalogo=document.createElement('iframe');catalogo.className='pedido-catalogo-real';catalogo.allow='microphone; fullscreen; clipboard-write';catalogo.title='Catálogo comercial';
   catalogo.dataset.src='../Catalogo/catalogo.html?comercial=pedido';vitrine.appendChild(catalogo);
   iniciarEntradaComercial(vitrine);
 
