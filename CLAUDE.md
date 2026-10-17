@@ -9086,3 +9086,7 @@ O repositório `easyloc` é PÚBLICO e o GitHub Pages publicava a pasta inteira 
   enviar/apagar arquivos de qualquer projeto existente (o catálogo do cliente sobe por ali sem login) — o certo é subir por link
   assinado gerado pelo servidor após conferir o token do catálogo (como `catalogo-assistente` já faz). Chave do Google Maps
   fixa no código (`fretes/Código.js:126` e telas): restringir por domínio/API no Google Cloud.
+- (16/out, 2ª parte) Leitura direta das planilhas (`gs_*`) só das abas Cronograma e Agenda da planilha do Cronograma
+  (o que o mural do Portal usa); o resto só pelo `/api/gs` (migration `20261016000400_gs_leitura_so_resumo.sql`).
+  Senha "1994" trocada nas linhas 9 (Superv Montagem) e 29 (Jonathan) da aba Senhas (subindo `gs_abas.versao`, senão o
+  cache em memória do motor continua aceitando a antiga). Editar a planilha direto no banco = sempre subir a versão da aba.
