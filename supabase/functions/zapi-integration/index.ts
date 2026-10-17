@@ -478,6 +478,12 @@ serve(async (req) => {
 
     const { serviceClient, user, vinculo } = acesso;
 
+    // (out/2026) configurar a conexão do WhatsApp exige a permissão da tela de Integrações (antes bastava ser da empresa)
+    if (["create-instance", "save-credentials", "reconnect", "disconnect"].includes(String(body.action))) {
+      const { data: pode, error: podeError } = await serviceClient.rpc("funcionario_pode", { p_empresa: body.empresa_id, p_usuario: user.id, p_chave: "configuracoes.integracoes.whatsapp.editar" });
+      if (podeError || !pode) return jsonResponse({ erro: "Sem permissão para alterar a integração do WhatsApp." }, 403);
+    }
+
     if (body.action === "get-status") {
       const { data: integration, error: integrationError } = await serviceClient
         .from("zapi_integracoes")

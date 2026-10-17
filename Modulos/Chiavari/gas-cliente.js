@@ -53,6 +53,8 @@
     tokenDoLogin().then(function (token) {
       var cabecalhos = { "Content-Type": "application/json" };
       if (token) { cabecalhos.Authorization = "Bearer " + token; }
+      // Sessão do App do Montador: o servidor exige para as funções do app (ver exigeSessaoApp em api/_gas/projetos.js)
+      try { var app = localStorage.getItem("montadorToken"); if (app) { cabecalhos["X-App-Token"] = app; } } catch (e) {}
       return fetch(API, {
         method: "POST",
         headers: cabecalhos,
@@ -60,6 +62,7 @@
       });
     })
       .then(function (r) {
+        if (r.status === 429) { return r.json().catch(function () { return { ok: false, erro: "Muitas tentativas. Aguarde alguns minutos e tente de novo." }; }); }
         if (r.status === 401) { return r.json().catch(function () { return { ok: false, erro: "Entre no sistema para usar esta tela." }; }); }
         if (!r.ok && r.status !== 200) { throw new Error("Falha de conexão (" + r.status + ")."); }
         return r.json();

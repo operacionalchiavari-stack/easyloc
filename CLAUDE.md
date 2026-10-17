@@ -9064,3 +9064,25 @@ usuário: ligação de verdade (OpenAI Realtime, ~1 s de resposta, dá pra inter
   Computador: `mostrarPelaHelena` em catalogo.mjs (passado como `ctx.mostrarNoCatalogo`); app: o mesmo em
   catalogo-app.mjs (tela da categoria ou "Seleção da Helena" empilhada). Os cartões continuam gravados na conversa
   como registro. O resultado de `mostrar_itens` diz a ela se ficou circulado ou não.
+
+## Auditoria de segurança (16/out/2026)
+
+O repositório `easyloc` é PÚBLICO e o GitHub Pages publicava a pasta inteira (código do servidor em `api/_gas`, CLAUDE.md).
+- Pages: o workflow apaga `api server supabase tests Scripts docs outputs .github *.md tmp-* package*.json` antes de publicar;
+  `.vercelignore` também tira `docs` e `*.md`. **Nunca escrever senha/token no código** (o repositório é público).
+- Senha mestra "1994" do Supervisor de Montagem saiu do código (`CRON_SENHA_SUPERVISOR_MONTAGEM = null`): o supervisor entra
+  pela senha do perfil "montagem" da aba Senhas. "1994" ficou no histórico público: trocar na aba Senhas.
+- `api/gs.js`: só conta da empresa dona (`EMPRESA_DONA`, igual a `public.gs_empresa_dona()` no banco; a EMPRESATESTE lia as
+  planilhas da Chiavari). Funções do App do Montador que eram públicas sem conferir nada estão em `exigeSessaoApp`
+  (`api/_gas/projetos.js`): exigem login do Acervo OU a sessão do montador, que o `gas-cliente.js` manda no cabeçalho
+  `X-App-Token` (localStorage `montadorToken`). Função nova do app do montador sem token próprio = incluir em `exigeSessaoApp`.
+  Logins dos apps (`loginsApp`) têm limite de 15 tentativas por IP a cada 10 min (429).
+- Banco (migration `20261016000300_seguranca_auditoria.sql`): `gs_eh_da_equipe()` só para a empresa dona;
+  `vw_assinaturas_com_empresa` (visitante sem login lia a assinatura de todas as empresas) e `v_almoxarifado_dashboard` com
+  `security_invoker`; `ia_buscar_dados_teste` sem acesso anônimo.
+- Edge Functions: `payment-gateways` (salvar/desconectar/testar) e `zapi-integration` (configurar a conexão) exigem a permissão
+  `configuracoes.integracoes.*` (antes bastava ser da empresa).
+- Pendente (decisão/mexe em arquivos em andamento): buckets `projetos` e `lounge-formatos` deixam o visitante listar e
+  enviar/apagar arquivos de qualquer projeto existente (o catálogo do cliente sobe por ali sem login) — o certo é subir por link
+  assinado gerado pelo servidor após conferir o token do catálogo (como `catalogo-assistente` já faz). Chave do Google Maps
+  fixa no código (`fretes/Código.js:126` e telas): restringir por domínio/API no Google Cloud.

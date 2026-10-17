@@ -22,7 +22,7 @@ function configuracao(req) {
 function liberarOrigem(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-App-Token");
   res.setHeader("Access-Control-Max-Age", "86400");
 }
 
@@ -35,6 +35,45 @@ function liberarOrigem(res) {
 // ---------------------------------------------------------------------
 const sessoes = new Map(); // token -> { ate, usuario }; evita conferir no Supabase a cada clique
 const VALIDADE_SESSAO = 5 * 60 * 1000;
+// (out/2026) Os sistemas da Chiavari (planilhas) são só desta empresa: conta de outra empresa não entra
+// (mesma regra de public.gs_empresa_dona() no banco).
+const EMPRESA_DONA = "bb1260f0-99cd-4d17-ab9b-23c299b4c50b";
+
+// Sessão dos apps de campo (ex.: App do Montador): as funções em `exigeSessaoApp` antes rodavam sem
+// conferir nada; agora precisam do login do Acervo OU da sessão do app (cabeçalho X-App-Token).
+const sessoesApp = new Map(); // projeto:token -> validade
+async function sessaoAppValida(cfg, projeto, token) {
+  if (!token || !projeto.autenticarApp) { return false; }
+  const chave = projeto.chave + ":" + token;
+  const agora = Date.now();
+  if ((sessoesApp.get(chave) || 0) > agora) { return true; }
+  try {
+    await executar(cfg, projeto, projeto.autenticarApp, [token], { interno: true });
+    if (sessoesApp.size > 1000) { sessoesApp.clear(); }
+    sessoesApp.set(chave, agora + VALIDADE_SESSAO);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Funções de login dos apps de campo são públicas: limita as tentativas por IP (senhas curtas).
+const tentativas = new Map(); // ip:fn -> { ate, n }
+const LIMITE_TENTATIVAS = 15;
+const JANELA_TENTATIVAS = 10 * 60 * 1000;
+function excedeuTentativas(req, fn) {
+  const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "").split(",")[0].trim();
+  const chave = ip + ":" + fn;
+  const agora = Date.now();
+  const atual = tentativas.get(chave);
+  if (!atual || atual.ate < agora) {
+    if (tentativas.size > 5000) { tentativas.clear(); }
+    tentativas.set(chave, { ate: agora + JANELA_TENTATIVAS, n: 1 });
+    return false;
+  }
+  atual.n++;
+  return atual.n > LIMITE_TENTATIVAS;
+}
 
 async function rest(cfg, caminho, corpo) {
   const r = await fetch(cfg.url + "/rest/v1/" + caminho, {
@@ -61,7 +100,7 @@ async function usuarioDaSessao(cfg, token) {
     if (!u || !u.id) { return null; }
     const id = encodeURIComponent(u.id);
     const [vinculos, funcionarios, perfis] = await Promise.all([
-      rest(cfg, "usuarios_empresas?select=empresa_id,role&user_id=eq." + id),
+      rest(cfg, "usuarios_empresas?select=empresa_id,role&user_id=eq." + id + "&empresa_id=eq." + EMPRESA_DONA),
       rest(cfg, "funcionarios_acesso?select=empresa_id,ativo,nome,acesso_sistema&id=eq." + id),
       rest(cfg, "usuarios?select=nome&id=eq." + id)
     ]);
@@ -116,6 +155,14 @@ module.exports = async (req, res) => {
       res.status(401).json({ ok: false, erro: "Entre no sistema para usar esta tela.", login: true });
       return;
     }
+  } else if (!usuario && (projeto.exigeSessaoApp || []).indexOf(fn) >= 0) {
+    if (!(await sessaoAppValida(cfg, projeto, String(req.headers["x-app-token"] || "").trim()))) {
+      res.status(401).json({ ok: false, erro: "SESSAO_EXPIRADA: entre de novo." });
+      return;
+    }
+  } else if (!usuario && (projeto.loginsApp || []).indexOf(fn) >= 0 && excedeuTentativas(req, corpo.projeto + ":" + fn)) {
+    res.status(429).json({ ok: false, erro: "Muitas tentativas. Aguarde alguns minutos e tente de novo." });
+    return;
   }
 
   try {

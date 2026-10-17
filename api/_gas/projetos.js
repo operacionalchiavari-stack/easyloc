@@ -17,7 +17,13 @@ module.exports = {
     bloqueadas: ["doGet", "FECH_criarTriggerSemanal", "configurarAuditoriaCronograma", "testeAuditoriaManual"],
     // Funções chamadas pelos apps de campo (sem conta no Acervo): liberadas sem login.
     // Todo o resto exige o login do Acervo de alguém da empresa (ver api/gs.js).
-    publicas: ["FREE_appCadastrar", "FREE_appCancelar", "FREE_appCarregar", "FREE_appCiente", "FREE_appConfirmar", "FREE_appLogin", "FREE_appPresenca", "FREE_appSair", "FREE_appSalvarPix", "FREE_liderQr", "MONT_appCarregar", "MONT_iniciarApontamento", "MONT_finalizarApontamento", "MONT_apontamentoAtual", "MONT_cancelarTroca", "MONT_listarResponsaveis", "MONT_login", "MONT_qrVaga", "MONT_sair", "MONT_solicitarTroca", "buscarEmpresasTerceirizadas", "buscarItensOperacao", "buscarObservacoesMontagem", "concluirDesmontagem", "salvarEquipeTerceirizada", "salvarListaAssinada", "salvarListaConferidaDesmontagem", "salvarObservacoesMontagem", "salvarPosicionamentoItens", "salvarSacolasProtecao", "verificarDesmontagemConcluida", "verificarEquipeTerceirizadaJaEnviada", "verificarListaAssinadaJaEnviada", "verificarListaConferidaDesmontagem", "verificarPosicionamentoJaEnviado", "verificarSacolasJaEnviadas"]
+    publicas: ["FREE_appCadastrar", "FREE_appCancelar", "FREE_appCarregar", "FREE_appCiente", "FREE_appConfirmar", "FREE_appLogin", "FREE_appPresenca", "FREE_appSair", "FREE_appSalvarPix", "FREE_liderQr", "MONT_appCarregar", "MONT_iniciarApontamento", "MONT_finalizarApontamento", "MONT_apontamentoAtual", "MONT_cancelarTroca", "MONT_listarResponsaveis", "MONT_login", "MONT_qrVaga", "MONT_sair", "MONT_solicitarTroca", "buscarEmpresasTerceirizadas", "buscarItensOperacao", "buscarObservacoesMontagem", "concluirDesmontagem", "salvarEquipeTerceirizada", "salvarListaAssinada", "salvarListaConferidaDesmontagem", "salvarObservacoesMontagem", "salvarPosicionamentoItens", "salvarSacolasProtecao", "verificarDesmontagemConcluida", "verificarEquipeTerceirizadaJaEnviada", "verificarListaAssinadaJaEnviada", "verificarListaConferidaDesmontagem", "verificarPosicionamentoJaEnviado", "verificarSacolasJaEnviadas"],
+    // (out/2026) Destas públicas, as do App do Montador não conferiam nada: agora exigem o login do Acervo
+    // ou a sessão do montador (cabeçalho X-App-Token, conferido por autenticarApp — ver api/gs.js).
+    autenticarApp: "MONT_autenticar_",
+    exigeSessaoApp: ["buscarEmpresasTerceirizadas", "buscarItensOperacao", "buscarObservacoesMontagem", "concluirDesmontagem", "salvarListaAssinada", "salvarListaConferidaDesmontagem", "salvarObservacoesMontagem", "salvarPosicionamentoItens", "salvarSacolasProtecao", "verificarDesmontagemConcluida", "verificarEquipeTerceirizadaJaEnviada", "verificarListaAssinadaJaEnviada", "verificarListaConferidaDesmontagem", "verificarPosicionamentoJaEnviado", "verificarSacolasJaEnviadas"],
+    // Logins dos apps de campo: limite de tentativas por IP
+    loginsApp: ["FREE_appLogin", "MONT_login", "FREE_liderQr"]
   },
   fretes: {
     chave: "fretes",
@@ -44,7 +50,8 @@ module.exports = {
     bloqueadas: ["doGet"],
     // Funções chamadas pelos apps de campo (sem conta no Acervo): liberadas sem login.
     // Todo o resto exige o login do Acervo de alguém da empresa (ver api/gs.js).
-    publicas: ["conferirSenhaSupervisorApp", "enviarCorridaApp", "getCorridasDisponiveis", "getMinhasCorridas"]
+    publicas: ["conferirSenhaSupervisorApp", "enviarCorridaApp", "getCorridasDisponiveis", "getMinhasCorridas"],
+    loginsApp: ["conferirSenhaSupervisorApp"]
   },
   ocorrencias: {
     chave: "ocorrencias",
@@ -87,7 +94,8 @@ module.exports = {
     bloqueadas: ["doGet"],
     // Funções chamadas pelos apps de campo (sem conta no Acervo): liberadas sem login.
     // Todo o resto exige o login do Acervo de alguém da empresa (ver api/gs.js).
-    publicas: ["equipeEntrar", "equipeExtrato", "equipeSair"]
+    publicas: ["equipeEntrar", "equipeExtrato", "equipeSair"],
+    loginsApp: ["equipeEntrar"]
   },
   portal: {
     chave: "portal",

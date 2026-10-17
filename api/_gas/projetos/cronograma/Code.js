@@ -9658,7 +9658,9 @@ function concluirDesmontagem(
  ****************************************************/
 
 const CRON_COL_CONFIRMADO_DECORADOR = 17; // Q
-const CRON_SENHA_SUPERVISOR_MONTAGEM = "1994";
+// (out/2026) A senha mestra fixa no código saiu (o repositório é público). Supervisor de Montagem entra
+// pela senha do perfil "montagem" na aba Senhas (validarSenhaPerfil); null = nenhuma senha mestra.
+const CRON_SENHA_SUPERVISOR_MONTAGEM = null;
 
 
 function CRON_garantirColunaConfirmacao_(

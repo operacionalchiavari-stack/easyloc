@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261014-servidor-nuvem" data-projeto="fretes"></script>
+  <script src="../gas-cliente.js?v=20261016-seguranca" data-projeto="fretes"></script>
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -724,8 +724,6 @@ th.col-num{ text-align:right; }
    ESTADO
 ========================================================= */
 
-// Senha temporária no navegador (igual à versão anterior)
-const SENHA_SUPERVISOR = "1234";
 
 let fretes = [];
 const escolhas = { responsavel:"", transportadora:"" };
@@ -794,13 +792,10 @@ document.querySelectorAll(".opcoes").forEach(function(grupoEl){
   });
 });
 
+/* Senha fixa no navegador removida (out/2026): quem protege é o login do sistema. */
 function confirmarSenhaSupervisor(){
-  if (el("senhaSupervisor").value === SENHA_SUPERVISOR){
-    fecharModal("modalSenha");
-    marcarOpcao("responsavel", "Supervisor de Montagem");
-  } else {
-    el("erroSenhaSup").textContent = "Senha incorreta.";
-  }
+  fecharModal("modalSenha");
+  marcarOpcao("responsavel", "Supervisor de Montagem");
 }
 
 function cancelarSenhaSupervisor(){

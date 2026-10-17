@@ -244,6 +244,20 @@ serve(async (req) => {
 
     const { serviceClient, user } = acesso;
 
+    // (out/2026) trocar/testar credenciais exige a permissão da tela de Integrações (antes bastava ser da empresa)
+    const permissaoDaAcao: Record<string, string> = {
+      save: "configuracoes.integracoes.gateways_pagamento.editar",
+      disconnect: "configuracoes.integracoes.gateways_pagamento.editar",
+      test: "configuracoes.integracoes.gateways_pagamento.testar",
+    };
+    const permissao = permissaoDaAcao[String(body.action)];
+    if (permissao) {
+      const { data: pode, error: podeError } = await serviceClient.rpc("funcionario_pode", { p_empresa: empresaId, p_usuario: user.id, p_chave: permissao });
+      if (podeError || !pode) {
+        return jsonResponse({ erro: "Sem permissão para alterar os gateways de pagamento." }, 403);
+      }
+    }
+
     if (body.action === "list") {
       return jsonResponse({
         ok: true,
