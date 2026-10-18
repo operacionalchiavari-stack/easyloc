@@ -9518,7 +9518,7 @@ confirmações de sucesso deixam de ser janela (avisos de conflito, perguntas ob
 - **Semana, título e Agenda na mesma linha** (≥1200px; abaixo continua empilhado), no mesmo `<style id="cabecalho-cronograma">`.
 - **Informações do local saíram da coluna do pedido** (baldeação, escada, caminhão próximo, horário limite, lona): entram na Obs de cada etapa, menos na triagem, depois da observação escrita, separadas por " · " (`obsEtapaCompleta`, nos 3 quadros: computador, agenda do celular e modo app).
 - **Dias largos + arrastar com o mouse** (≥900px): cada dia e a coluna do pedido têm 260px (tabela de 2080px; regras antigas travavam o pedido em 180–190px com max-width), a tabela rola dentro da própria caixa (`.board-wrap`, altura da tela) com cabeçalho e coluna do pedido parados; segurar e puxar rola para o lado (e para cima/baixo), um clique sem arrastar continua abrindo o pedido/etapa (o clique que sai de um arrasto é engolido). Altura mínima das linhas de 150px para 96px, agenda vazia 64px. Teste: `tests/cronograma-arrastar-browser.cjs`.
-- **Número do pedido e nome da cliente na mesma linha** na coluna do pedido (grid no `.evento-box`, ≥900px).
+- **Número do pedido (só o número, sem "Pedido #") e nome da cliente na mesma linha** na coluna do pedido (grid no `.evento-box`, ≥900px).
 - **Sucesso sem janela**: `avisoRapido(msg)` (pílula grafite embaixo, some em 2,6 s) em pedido salvo, responsável/equipe/
   caminhão salvos, item salvo/atualizado/excluído, carregamento concluído e alerta enviado/resolvido.
 - Teste: `tests/cronograma-limpeza-browser.cjs`. `permissions.js`/`sidebarMenu.js` em `?v=20261018-free`.
