@@ -143,14 +143,7 @@
             ],
           },
           { rotulo: "Corridas Uber", href: "Modulos/Chiavari/Uber/index.html" },
-          {
-            rotulo: "Expedição",
-            legado: {
-              html: "Modulos/Logistica/Expedicao/expedicao.html",
-              js: "Modulos/Logistica/Expedicao/expedicao.js",
-              css: "Modulos/Logistica/Expedicao/expedicao.css",
-            },
-          },
+          { rotulo: "Expedição", href: "Modulos/Logistica/Expedicao/expedicao.html" },
         ],
       },
       {

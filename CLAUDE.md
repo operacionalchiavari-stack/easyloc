@@ -9348,3 +9348,18 @@ etiquetas e leituras por cascade).
   separação e assinaturas Separado por / Conferido por / Data e hora. Imprime por um iframe escondido.
 - Cabeçalho da fila: grid de 3 colunas — título "Separação de Materiais" centralizado, busca à direita na mesma linha
   (até 380px); a linha fina do tema virou `border-bottom` do cabeçalho. ≤1000px empilha. CSS `?v=20261018-centro`.
+
+### Expedição: quadro de carregamento (out/2026)
+Pedido: "dentro de logística um campo chamado Expedição, interface parecida com a de separação, 3 colunas, e clicar
+num carregamento abre a conferência". `Modulos/Logistica/Expedicao/expedicao.html` foi REESCRITA (a antiga, fragmento
+legado que dependia da Roteirização apagada, saiu) e o menu passou de `legado` para `href`. Usa o próprio CSS da Separação
+(`separacao-materiais.css`, mesmas classes de colunas/cartões/cabeçalho) + `expedicao.css` pequeno.
+- Pedidos com `status_comercial` aprovado/finalizado/enviado e entrega a partir de 15 dias atrás; colunas:
+  **Aguardando carregamento** (nenhuma etiqueta lida no carregamento; avisa "Ainda em separação" ou "Sem etiquetas de
+  envio"), **Em carregamento** (alguma etiqueta com `lida_carregamento_em`, com barra lidas/total) e **Carregados**
+  (`status_operacional` carregado/retornado ou `operacao.carregamento.concluido_em`; mostra quando, quem e pendências).
+  Busca, atualização a cada 30 s e ao voltar pra aba.
+- Clicar abre `Conferencia/conferencia.html?pedido=<id>&etapa=carregamento&de=expedicao`; com `de=expedicao` a
+  conferência mostra "← Voltar" na linha do título (fora do `.header-list`, senão o tema desmonta a faixa; posição
+  calculada no JS) que volta pra Expedição. Aberta pelo cronograma, não tem o botão.
+- Teste: `tests/expedicao-browser.cjs`.

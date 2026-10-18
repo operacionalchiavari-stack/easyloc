@@ -139,6 +139,21 @@
 
   async function iniciar() {
     $("cfTitulo").textContent = cfg.titulo;
+    if (params.get("de") === "expedicao") {
+      const voltar = $("cfVoltar"); voltar.hidden = false;
+      // na mesma linha do título (centralizado pelo tema), alinhado à esquerda do conteúdo
+      const alinhar = () => {
+        if (matchMedia("(max-width:760px)").matches) return;
+        const pg = voltar.parentElement.getBoundingClientRect(), t = $("cfTitulo").getBoundingClientRect(), ref = $("cfPedido").getBoundingClientRect();
+        voltar.parentElement.style.setProperty("--cf-voltar-y", Math.round(t.top - pg.top + t.height / 2 - voltar.offsetHeight / 2) + "px");
+        voltar.parentElement.style.setProperty("--cf-voltar-x", Math.round((ref.width ? ref.left : pg.left + 24) - pg.left) + "px");
+      };
+      alinhar(); setTimeout(alinhar, 400); addEventListener("resize", alinhar);
+      voltar.addEventListener("click", () => {
+        try { if (window.top !== window && typeof window.top.shellNavigate === "function") { window.top.shellNavigate("Modulos/Logistica/Expedicao/expedicao.html"); return; } } catch (_) {}
+        location.href = "../Expedicao/expedicao.html";
+      });
+    }
     $("cfEtapaRotulo").textContent = cfg.rotulo;
     const ctx = await window.aguardarContexto?.();
     s.sb = window.supabaseClient;

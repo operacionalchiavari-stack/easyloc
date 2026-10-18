@@ -44,3 +44,9 @@
   .cf-corpo{grid-template-columns:1fr}
   .cf-leitor{position:static}
 }
+
+/* "← Voltar" (só quando veio da Expedição), na altura do título, à esquerda; fora do .header-list p/ não mexer no tema */
+html:root .cf-page{position:relative}
+html:root .cf-page > .cf-voltar{position:absolute!important;left:var(--cf-voltar-x,0px);top:var(--cf-voltar-y,40px);z-index:3;margin:0!important}
+html:root .cf-page > .cf-voltar[hidden]{display:none!important}
+@media(max-width:760px){html:root .cf-page > .cf-voltar{position:static!important;margin:12px 0 0!important}}
