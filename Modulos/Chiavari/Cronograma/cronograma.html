@@ -8903,6 +8903,11 @@ textarea{ font-family:inherit; }
     /* altura mínima menor (era 150px por linha): a linha cresce só o que os cartões pedem */
     html body .board td.day-cell{ height:96px !important; }
     html body .board .linha-agenda-interna td{ height:64px !important; }
+    /* número do pedido e nome da cliente na mesma linha */
+    html body .board .col-evento .evento-box{ display:grid !important; grid-template-columns:auto minmax(0,1fr) !important; column-gap:10px !important; align-items:center !important; }
+    html body .board .col-evento .evento-box > *{ grid-column:1 / -1; }
+    html body .board .col-evento .evento-box > .pedido-tag{ grid-column:1 !important; justify-self:start; white-space:nowrap; }
+    html body .board .col-evento .evento-box > .evento-cliente{ grid-column:2 !important; margin:0 !important; }
   }
 </style>
 </head>

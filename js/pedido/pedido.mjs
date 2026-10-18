@@ -507,15 +507,18 @@ async function setupPedidoWorkspace({ supabase }){
   async function obterProximoNumeroPedido(){
     const { data, error } = await supabase
       .from("separacoes_pedidos")
-      .select("numero_pedido")
+      .select("numero_pedido, observacoes")
       .eq("empresa_id", window.__CONTEXT.empresa_id);
 
     if(error) throw error;
 
     // Numeração própria do sistema, começando do 1 (out/2026): o maior número já usado + 1.
     // O cronograma separa estes pedidos dos antigos de mesmo número pelo código interno.
+    // Pedidos de teste (observacoes.teste_cronograma / teste_ia) têm número de 4 dígitos e não entram na conta.
     const usados = new Set((data || []).map((row) => String(row.numero_pedido || "").trim()));
-    let proximo = Math.max(0, ...[...usados].map((n) => /^\d+$/.test(n) ? Number(n) : 0)) + 1;
+    const ehTeste = (row) => { const o = row && row.observacoes; return !!(o && typeof o === "object" && (o.teste_cronograma || o.teste_ia)); };
+    const reais = (data || []).filter((row) => !ehTeste(row)).map((row) => String(row.numero_pedido || "").trim());
+    let proximo = Math.max(0, ...reais.map((n) => /^\d+$/.test(n) ? Number(n) : 0)) + 1;
     while(usados.has(String(proximo)) || usados.has(String(proximo).padStart(3, "0"))) proximo += 1;
     return String(proximo);
   }

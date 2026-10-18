@@ -9294,6 +9294,7 @@ da volta (`abrirConferenciaCronograma`). Pedido antigo da planilha continua com 
 - A volta ainda não marca avaria nem gera cobrança/manutenção (etapa 5). Teste: `tests/conferencia-bipagem-browser.cjs`.
 
 ### Pedidos fictícios de teste no cronograma (17/out/2026)
+**Renumerados (18/out)**: TESTE-01..05 → 2104, 2117, 2123, 2136, 2149 e TESTE-IA-25 → 2158 (pedido, etiquetas `2104-001…` e coluna B da aba Cronograma); a linha antiga do App do Montador "TESTE-IGOR-1410" → 2165. `obterProximoNumeroPedido` ignora pedidos com `observacoes.teste_cronograma`/`teste_ia`, então a numeração real continua do 012.
 A pedido do usuário ("preencha o cronograma com testes"), 5 pedidos reais no banco, `numero_pedido` TESTE-01..05,
 cliente "TESTE · <nome>", `observacoes.teste_cronograma = true`, 19 a 25/10/2026, itens e locais reais; cada um com as
 5 etapas na planilha do Cronograma (sincronizadas pelo mesmo `CRON_sincronizarPedidoAcervo`). TESTE-01 já vem
@@ -9517,6 +9518,7 @@ confirmações de sucesso deixam de ser janela (avisos de conflito, perguntas ob
 - **Semana, título e Agenda na mesma linha** (≥1200px; abaixo continua empilhado), no mesmo `<style id="cabecalho-cronograma">`.
 - **Informações do local saíram da coluna do pedido** (baldeação, escada, caminhão próximo, horário limite, lona): entram na Obs de cada etapa, menos na triagem, depois da observação escrita, separadas por " · " (`obsEtapaCompleta`, nos 3 quadros: computador, agenda do celular e modo app).
 - **Dias largos + arrastar com o mouse** (≥900px): cada dia e a coluna do pedido têm 260px (tabela de 2080px; regras antigas travavam o pedido em 180–190px com max-width), a tabela rola dentro da própria caixa (`.board-wrap`, altura da tela) com cabeçalho e coluna do pedido parados; segurar e puxar rola para o lado (e para cima/baixo), um clique sem arrastar continua abrindo o pedido/etapa (o clique que sai de um arrasto é engolido). Altura mínima das linhas de 150px para 96px, agenda vazia 64px. Teste: `tests/cronograma-arrastar-browser.cjs`.
+- **Número do pedido e nome da cliente na mesma linha** na coluna do pedido (grid no `.evento-box`, ≥900px).
 - **Sucesso sem janela**: `avisoRapido(msg)` (pílula grafite embaixo, some em 2,6 s) em pedido salvo, responsável/equipe/
   caminhão salvos, item salvo/atualizado/excluído, carregamento concluído e alerta enviado/resolvido.
 - Teste: `tests/cronograma-limpeza-browser.cjs`. `permissions.js`/`sidebarMenu.js` em `?v=20261018-free`.
