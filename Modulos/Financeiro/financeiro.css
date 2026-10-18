@@ -1,25 +1,25 @@
 /* Financeiro (out/2026) — no tema Chiavari (global.css). */
 .fin-page{padding-bottom:48px}
 .fin-abas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 20px}
-.fin-abas button{border:1px solid #dfe4ea;background:#fff;color:#2b3240;border-radius:999px;padding:9px 18px;font:600 14px Inter,sans-serif;cursor:pointer}
+.fin-abas button{border:1px solid #dfe4ea;background:#fff;color:#2b2b2b;border-radius:999px;padding:9px 18px;font:600 14px Inter,sans-serif;cursor:pointer}
 .fin-abas button.ativa{background:#123f86;border-color:#123f86;color:#fff}
 .fin-conta-aba{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#b0362d;color:#fff;font-size:11px;margin-left:4px}
 .fin-conta-aba:empty{display:none}
 .fin-aviso{background:#fbf6ea;border:1px solid #ead9a8;border-radius:12px;padding:12px 16px;color:#5b4a2a;font-size:14px;margin:0 0 16px}
-.fin-vazio{padding:40px;text-align:center;color:#6b7280;border:1px dashed #dfe4ea;border-radius:14px;background:#fff}
+.fin-vazio{padding:40px;text-align:center;color:#6b6b6b;border:1px dashed #dfe4ea;border-radius:14px;background:#fff}
 
 .fin-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
 .fin-card{background:#fff;border:1px solid #e3e7ec;border-radius:14px;padding:16px 18px}
-.fin-card span{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#6b7280}
+.fin-card span{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#6b6b6b}
 .fin-card strong{display:block;font:500 26px "Cormorant Garamond",Georgia,serif;color:#2c2a26;margin-top:6px}
-.fin-card small{color:#6b7280;font-size:12px}
+.fin-card small{color:#6b6b6b;font-size:12px}
 .fin-card.is-vermelho strong{color:#b0362d}
 .fin-card.is-verde strong{color:#2f7a4b}
 
 .fin-grade{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:16px}
 .fin-bloco{background:#fff;border:1px solid #e3e7ec;border-radius:16px;padding:18px;margin-bottom:16px;min-width:0}
 .fin-bloco > h3{margin:0 0 12px;font-size:16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.fin-bloco > h3 small{font-weight:500;color:#6b7280;font-size:13px}
+.fin-bloco > h3 small{font-weight:500;color:#6b6b6b;font-size:13px}
 
 .fin-barra-ferr{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
 .fin-barra-ferr input,.fin-barra-ferr select{height:40px;border:1px solid #dfe4ea;border-radius:10px;padding:0 12px;background:#fff;font:14px Inter,sans-serif}
@@ -27,14 +27,14 @@
 .fin-barra-ferr .fin-esp{flex:1}
 
 .fin-btn{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 16px;border-radius:999px;border:1px solid #123f86;background:#123f86;color:#fff;font:600 13px Inter,sans-serif;cursor:pointer;white-space:nowrap}
-.fin-btn.claro{background:#fff;color:#2b3240;border-color:#d3d9e0}
+.fin-btn.claro{background:#fff;color:#2b2b2b;border-color:#d3d9e0}
 .fin-btn.peq{height:30px;padding:0 11px;font-size:12px}
 .fin-btn.verde{background:#2f7a4b;border-color:#2f7a4b}
 .fin-btn.verm{background:#fff;color:#b0362d;border-color:#efc2bf}
 .fin-btn:disabled{opacity:.45;cursor:not-allowed}
 
 .fin-tabela{width:100%;border-collapse:collapse;font-size:14px}
-.fin-tabela th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;padding:8px 10px;border-bottom:1px solid #e3e7ec;white-space:nowrap}
+.fin-tabela th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;padding:8px 10px;border-bottom:1px solid #e3e7ec;white-space:nowrap}
 .fin-tabela td{padding:10px;border-bottom:1px solid #eef0f3;vertical-align:middle}
 .fin-tabela td.num,.fin-tabela th.num{text-align:right;white-space:nowrap}
 .fin-tabela .acoes{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
@@ -44,27 +44,27 @@
 .fin-pedido{background:#fff;border:1px solid #e3e7ec;border-radius:16px;margin-bottom:14px;overflow:hidden}
 .fin-pedido-topo{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;padding:14px 18px;background:#f8f9fb;border-bottom:1px solid #e9ecf0}
 .fin-pedido-topo strong{font-size:16px}
-.fin-pedido-topo small{color:#5b6372;font-size:13px}
-.fin-pedido-tot{text-align:right;font-size:13px;color:#5b6372}
+.fin-pedido-topo small{color:#5f5f5f;font-size:13px}
+.fin-pedido-tot{text-align:right;font-size:13px;color:#5f5f5f}
 .fin-pedido-tot b{color:#2c2a26;font-size:15px}
 .fin-divisoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .fin-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid transparent;white-space:nowrap}
 .fin-chip.locacao{background:#eaf1ff;color:#1d4ea3;border-color:#cfdcf6}
 .fin-chip.frete{background:#fff4dd;color:#8a5a00;border-color:#f0dcae}
 .fin-chip.montagem{background:#e8f6ee;color:#23693f;border-color:#c7e6d3}
-.fin-chip.outro{background:#eef0f3;color:#5b6372}
+.fin-chip.outro{background:#eef0f3;color:#5f5f5f}
 .fin-conta-cel{font-size:13px;line-height:1.35}
 .fin-conta-cel b{display:block;font-weight:600}
-.fin-conta-cel small{color:#6b7280}
+.fin-conta-cel small{color:#6b6b6b}
 .fin-conta-cel.sem{color:#b0362d;font-weight:600}
 .fin-alerta-dif{font-size:12px;color:#8a5a00;background:#fff4dd;border-radius:8px;padding:4px 8px}
 
-.fin-status{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#eef0f3;color:#5b6372;white-space:nowrap}
-.fin-status.aberto{background:#eef0f3;color:#5b6372}
+.fin-status{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#eef0f3;color:#5f5f5f;white-space:nowrap}
+.fin-status.aberto{background:#eef0f3;color:#5f5f5f}
 .fin-status.vencido{background:#fbeceb;color:#b0362d}
 .fin-status.parcial{background:#fff4dd;color:#8a5a00}
 .fin-status.recebido,.fin-status.pago{background:#e8f6ee;color:#23693f}
-.fin-status.cancelado{background:#eef0f3;color:#959ca6;text-decoration:line-through}
+.fin-status.cancelado{background:#eef0f3;color:#999999;text-decoration:line-through}
 .fin-status.programado,.fin-status.aprovado{background:#eaf1ff;color:#1d4ea3}
 .fin-status.aguardando{background:#f4effc;color:#5b3fae}
 
@@ -72,7 +72,7 @@
 .fin-conta{background:#fff;border:1px solid #e3e7ec;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}
 .fin-conta.inativa{opacity:.55}
 .fin-conta h4{margin:0;font-size:16px}
-.fin-conta .linha{font-size:13px;color:#5b6372}
+.fin-conta .linha{font-size:13px;color:#5f5f5f}
 .fin-conta .saldo{font:500 24px "Cormorant Garamond",Georgia,serif;margin-top:4px}
 .fin-conta .saldo.neg{color:#b0362d}
 .fin-padroes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:end}
@@ -92,18 +92,18 @@
 .fin-modal-caixa{display:flex;flex-direction:column;max-height:92vh;margin:0}
 .fin-modal header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #e9ecf0}
 .fin-modal header h3{margin:0;font-size:18px}
-.fin-x{border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:#6b7280}
+.fin-x{border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:#6b6b6b}
 .fin-modal-corpo{padding:18px 22px;overflow:auto}
 .fin-modal footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid #e9ecf0}
 .fin-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.fin-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5b6372}
+.fin-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5f5f5f}
 .fin-form label.inteiro{grid-column:1 / -1}
 .fin-form input,.fin-form select,.fin-form textarea{height:40px;border:1px solid #dfe4ea;border-radius:10px;padding:0 12px;font:14px Inter,sans-serif;background:#fff;color:#2c2a26}
 .fin-form textarea{height:70px;padding:10px 12px;resize:vertical}
 .fin-form label.check{flex-direction:row;align-items:center;gap:8px;font-weight:500}
 .fin-form label.check input{height:auto}
 .fin-sub{grid-column:1 / -1;margin:6px 0 0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#8a6c48}
-.fin-info{grid-column:1 / -1;font-size:13px;color:#5b6372;background:#f8f9fb;border-radius:10px;padding:10px 12px}
+.fin-info{grid-column:1 / -1;font-size:13px;color:#5f5f5f;background:#f8f9fb;border-radius:10px;padding:10px 12px}
 .fin-erro{color:#b0362d;font-size:13px;margin-top:8px}
 
 @media(max-width:900px){

@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 /* =========================================================
    FUNDO CLARO + CARDS EM DESTAQUE nas telas da Chiavari (out/2026)
    Mesmos valores do fim de styles/tema-chiavari.css (referência
@@ -22,19 +23,35 @@ html body :is(input[type="checkbox"], input[type="radio"]){ accent-color:#123f86
 /* Cabeçalhos de tabela/painel sem cor de fundo (pedido: "tire o azul... retire os grafites tbm, devem ficar sem nada"):
    fundo branco, texto escuro e uma linha fina embaixo. */
 html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-header, .board thead th, .board thead th:first-child, .table-box > div:first-child:not(:has(table))){
-  background:#ffffff !important; color:#1d2330 !important; border-bottom:1px solid #e3e7ec !important;
+  background:#ffffff !important; color:#1f2020 !important; border-bottom:1px solid #e3e7ec !important;
 }
-html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-header, .board thead th, .table-box > div:first-child:not(:has(table))) :is(h1,h2,h3,h4,span,small,p,strong,div,label):not(button, button *, .btn, .btn *, [role=button], [role=button] *){ color:#1d2330 !important; }
+html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-header, .board thead th, .table-box > div:first-child:not(:has(table))) :is(h1,h2,h3,h4,span,small,p,strong,div,label):not(button, button *, .btn, .btn *, [role=button], [role=button] *){ color:#1f2020 !important; }
 /* Sistema todo: QUALQUER cabeçalho de tabela e as faixas de título dos painéis ficam sem cor.
    O ":is(..., #ch-a#ch-b)" dá peso de 2 IDs para vencer regras de tela como "#areaItensEntrada thead th". */
 html body :is(table, #ch-a#ch-b) :is(thead, thead tr, thead th, thead td),
 html body :is(table, #ch-a#ch-b) tr > th,
 html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-comissao-header,
   .pag-bonus-card-cabecalho, .grafico-consumo-card-header, .mobile-dia-header, .agenda-mobile-header, .card-header, #ch-a#ch-b){
-  background:#ffffff !important; background-image:none !important; color:#3b4250 !important; border-color:#e3e7ec !important; text-shadow:none !important;
+  background:#ffffff !important; background-image:none !important; color:#3d3d3d !important; border-color:#e3e7ec !important; text-shadow:none !important;
 }
 html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-comissao-header,
   .pag-bonus-card-cabecalho, .grafico-consumo-card-header, .mobile-dia-header, .agenda-mobile-header, .card-header, #ch-a#ch-b){ border-bottom:1px solid #e3e7ec !important; }
 html body :is(table, #ch-a#ch-b) thead th :not(button, button *, .btn, .btn *, input, select, [role=button], [role=button] *),
 html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-comissao-header,
-  .pag-bonus-card-cabecalho, .grafico-consumo-card-header, .mobile-dia-header, .agenda-mobile-header, .card-header, #ch-a#ch-b) :not(button, button *, .btn, .btn *, input, select, [role=button], [role=button] *){ color:#1d2330 !important; }
+  .pag-bonus-card-cabecalho, .grafico-consumo-card-header, .mobile-dia-header, .agenda-mobile-header, .card-header, #ch-a#ch-b) :not(button, button *, .btn, .btn *, input, select, [role=button], [role=button] *){ color:#1f2020 !important; }
+
+/* =========================================================
+   FONTE DO SISTEMA (out/2026) — pedido: "a fonte do sistema inteiro precisa ser fácil de entender,
+   de sistema mesmo, igual à Tecnoweld; apenas os títulos podem usar a fonte bonita". Tudo em Inter
+   (a da Tecnoweld); a Cormorant fica só em h1–h4 e em classes de título. Números dos cards, tabelas,
+   campos e botões passam para Inter. ":is(*, #ch-a#ch-b)" dá peso de 2 IDs para vencer regras de tela.
+   Também: nenhum texto azul (o azul fica no fundo dos botões, bordas e seleções).
+========================================================= */
+:root{ --sans:"Inter", system-ui, "Segoe UI", Roboto, Arial, sans-serif; --ch-sans:"Inter", system-ui, "Segoe UI", Roboto, Arial, sans-serif; }
+html body :is(*, #ch-a#ch-b):not(
+  :is(h1, h2, h3, h4, [class*="title"], [class*="titulo"], [class*="heading"]),
+  :is(h1, h2, h3, h4, [class*="title"], [class*="titulo"], [class*="heading"]) *,
+  i, [class*="icon"], [class*="Icon"], [class*="material-symbols"], [class*="fa-"], svg, svg *, code, pre, kbd, samp
+){ font-family:"Inter", system-ui, "Segoe UI", Roboto, Arial, sans-serif !important; }
+/* títulos de página e de seção com a fonte bonita, sempre em grafite */
+html body :is(h1, h2, h3, [class*="title"], [class*="titulo"], #ch-a#ch-b):not(button, button *, .btn, .btn *, [role="button"], [role="button"] *, a.btn){ color:#1f2020; }

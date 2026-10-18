@@ -1,7 +1,7 @@
 .cf-page{padding-bottom:90px}
 .cf-pedido{display:flex;justify-content:space-between;gap:20px;align-items:center;background:#fff;border:1px solid #e3e7ec;border-radius:16px;padding:18px 22px;margin:0 0 16px}
 .cf-pedido strong{display:block;font-size:22px;color:#2c2a26}
-.cf-pedido small{color:#5b6372;font-size:13px}
+.cf-pedido small{color:#5f5f5f;font-size:13px}
 .cf-rotulo{display:block;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8a6c48;margin-bottom:4px}
 .cf-progresso{min-width:220px;text-align:right}
 .cf-progresso strong{font-size:30px}
@@ -17,24 +17,24 @@
 .cf-mira{position:absolute;inset:18%;border:2px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.28)}
 .cf-btn-camera{width:100%;justify-content:center}
 .cf-ultima{border-radius:12px;padding:12px 14px;background:#f7f9fb;border:1px solid #e3e7ec}
-.cf-ultima span{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b7280}
+.cf-ultima span{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b6b6b}
 .cf-ultima strong{display:block;font-size:16px;margin:4px 0}
-.cf-ultima small{color:#5b6372;font-size:13px}
+.cf-ultima small{color:#5f5f5f;font-size:13px}
 .cf-ultima.is-ok{background:#ecf6ef;border-color:#bfe0c9}
 .cf-ultima.is-ok strong{color:#2f7a4b}
 .cf-ultima.is-erro{background:#fbeceb;border-color:#efc2bf}
 .cf-ultima.is-erro strong{color:#b0362d}
 .cf-lista-topo{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .cf-lista-topo h3{margin:0;font-size:16px}
-.cf-so-faltando{display:flex;gap:6px;align-items:center;font-size:13px;color:#5b6372}
+.cf-so-faltando{display:flex;gap:6px;align-items:center;font-size:13px;color:#5f5f5f}
 .cf-item{border-top:1px solid #eef0f3;padding:12px 0}
 .cf-item-topo{display:flex;justify-content:space-between;gap:10px;font-size:14px}
 .cf-item-topo span{font-weight:700;white-space:nowrap}
 .cf-item.is-ok .cf-item-topo span{color:#2f7a4b}
 .cf-etiquetas{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.cf-etq{font:600 12px "Courier New",monospace;padding:4px 8px;border-radius:8px;background:#eef0f3;color:#6b7280}
+.cf-etq{font:600 12px "Courier New",monospace;padding:4px 8px;border-radius:8px;background:#eef0f3;color:#6b6b6b}
 .cf-etq.is-ok{background:#3f9a63;color:#fff}
-.cf-vazio{color:#6b7280;font-size:14px}
+.cf-vazio{color:#6b6b6b;font-size:14px}
 .cf-rodape{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px max(16px,4vw);background:#fff;border-top:1px solid #e3e7ec;box-shadow:0 -8px 24px rgba(0,0,0,.06);z-index:5}
 .cf-rodape span{font-weight:600;color:#b0362d}
 .cf-rodape.is-completo span{color:#2f7a4b}

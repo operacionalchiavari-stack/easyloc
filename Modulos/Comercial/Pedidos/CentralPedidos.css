@@ -341,7 +341,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   height: 100%;
   display: block;
   border-radius: inherit;
-  background: #9ca3af;
+  background: #9e9e9e;
   transition: width .45s ease, background .25s ease;
 }
 
@@ -362,7 +362,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 }
 
 .central-finance-indicator.empty .central-finance-fill {
-  background: #9ca3af;
+  background: #9e9e9e;
 }
 
 .central-finance-indicator.overdue .central-finance-fill {
@@ -696,9 +696,9 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 }
 
 /* Projetos montados pelo decorador no catálogo (out/2026) — selo no lugar do número do pedido. */
-.pedido-selo-catalogo{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #c9d7ee;border-radius:999px;background:#eaf0fa;color:#123f86;font-size:12px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.pedido-selo-catalogo{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #c9d7ee;border-radius:999px;background:#eaf0fa;color:#1f2020;font-size:12px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
 .pedido-selo-catalogo::before{content:"";width:6px;height:6px;border-radius:50%;background:#b18a5a}
-.status-pill.catalogo_rascunho{background:#eef1f4;color:#4b5563}
+.status-pill.catalogo_rascunho{background:#eef1f4;color:#4f4f4f}
 .status-pill.catalogo_pedido_enviado{background:#fbf4de;color:#7a5b12}
 .status-pill.catalogo_em_analise{background:#e8f0fb;color:#1e3a8a}
 .status-pill.catalogo_convertido{background:#dcfce7;color:#166534}

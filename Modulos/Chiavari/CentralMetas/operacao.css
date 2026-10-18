@@ -32,7 +32,7 @@
 .op-ind{display:flex;flex-direction:column;align-items:center;min-width:0;text-align:center}
 .op-ind span{display:flex;align-items:center;justify-content:center;min-height:34px;font-size:12px;line-height:1.4;color:var(--muted)}
 .op-ind b{font-size:15px}
-.op-ind small{font-size:11px;color:#6b7280}
+.op-ind small{font-size:11px;color:#6b6b6b}
 
 /* Cards de distribuição: mesma grade da Manutenção (.resumo-comissoes-grid, 2 por linha). */
 .op-desconto{color:#9f2a1f}
@@ -49,7 +49,7 @@
 
 .op-fluxo-setor{display:inline-block;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:500;margin:2px}
 .op-tabela-danos td.op-dano{color:#b91c1c;text-align:left}
-.op-tabela-danos td.op-dano-detalhes{color:#4b5563;white-space:normal;max-width:250px;text-align:left}
+.op-tabela-danos td.op-dano-detalhes{color:#4f4f4f;white-space:normal;max-width:250px;text-align:left}
 .op-tabela-danos td.op-dano-equipe{color:var(--text);text-align:left;font-weight:400}
 .op-tabela-danos td.op-dano-valor{text-align:right;font-weight:400}
 

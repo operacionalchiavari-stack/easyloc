@@ -248,7 +248,7 @@ tbody tr:hover { background: #EEF2FF; }
 <style id="tema-chiavari-base">
 :root{
   --primary:#123f86; --primary-dark:#123f86; --fundo-suave:#f7f9fb; --line:#e3e7ec; --borda-card:#e3e7ec; --linha-tabela:#edf0f3;
-  --text:#1d2330; --muted:#5b6372; --serif:"Cormorant Garamond", Georgia, serif; --sans:"Manrope", system-ui, sans-serif;
+  --text:#1f2020; --muted:#5f5f5f; --serif:"Cormorant Garamond", Georgia, serif; --sans:"Manrope", system-ui, sans-serif;
   --sombra-card:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
 }
 html, body{ font-family:var(--sans) !important; color:var(--text) !important; -webkit-font-smoothing:antialiased; }
@@ -276,7 +276,7 @@ header h2{
   margin:22px 24px 16px !important; padding:16px 18px !important; align-items:flex-end; gap:12px !important;
   border:1px solid var(--borda-card); border-radius:18px !important; background:var(--fundo-suave) !important; box-shadow:none !important;
 }
-.menu-wrapper label{ font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#3b4250; }
+.menu-wrapper label{ font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#3d3d3d; }
 .menu-wrapper br{ display:block; content:""; margin-bottom:4px; }
 .menu-wrapper input, .menu-wrapper select{
   min-height:40px; padding:0 14px !important; border:1px solid var(--line) !important; border-radius:999px !important;
@@ -298,8 +298,8 @@ header h2{
   content:"Corridas"; display:block; padding:12px 22px; background:var(--primary); color:#ffffff;
   font-family:var(--serif); font-size:22px; font-weight:500; letter-spacing:.12em; text-transform:uppercase;
 }
-thead{ background:#ffffff !important; color:#3b4250 !important; }
-thead th{ padding:12px 14px !important; border-bottom:1px solid var(--borda-card); background:#ffffff !important; color:#3b4250 !important; font-size:12px !important; font-weight:700 !important; letter-spacing:.1em; text-transform:uppercase; text-align:left; white-space:nowrap; }
+thead{ background:#ffffff !important; color:#3d3d3d !important; }
+thead th{ padding:12px 14px !important; border-bottom:1px solid var(--borda-card); background:#ffffff !important; color:#3d3d3d !important; font-size:12px !important; font-weight:700 !important; letter-spacing:.1em; text-transform:uppercase; text-align:left; white-space:nowrap; }
 tbody td{ padding:11px 14px !important; border-bottom:1px solid var(--linha-tabela) !important; font-size:14px !important; font-weight:500; }
 tbody tr:nth-child(even){ background:#fafbfc; }
 tbody tr:hover{ background:#eef3fb !important; }
@@ -492,7 +492,7 @@ body.painel-aberto{ overflow:hidden; }
 ========================================================= */
 .painel-embutido{
   --p-fundo:#fafbfc; --p-card:#ffffff; --p-borda:#e3e7ec;
-  --p-texto:#1d2330; --p-texto2:#5b6372; --p-grade:#eceff3;
+  --p-texto:#1f2020; --p-texto2:#5f5f5f; --p-grade:#eceff3;
   --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --ok:#16a34a; --aviso:#d97706; --ruim:#dc2626;
   background:
     radial-gradient(900px 380px at 10% -10%, rgba(42,120,214,.06), transparent 60%),
@@ -509,7 +509,7 @@ body.painel-aberto{ overflow:hidden; }
 .pa-mes button:hover{ background:#eceff3; }
 .pa-fechar:hover{ color:var(--p-texto); border-color:#cdd4dc; }
 
-.pa-secao{ color:#6b7280; }
+.pa-secao{ color:#6b6b6b; }
 
 .pa-card{
   background:#ffffff;
@@ -526,7 +526,7 @@ body.painel-aberto{ overflow:hidden; }
 .pa-alerta.ruim strong{ color:#dc2626; }
 .pa-alerta.aviso strong{ color:#b45309; }
 
-.pa-area .eixo{ fill:#6b7280; }
+.pa-area .eixo{ fill:#6b6b6b; }
 .pa-area .cruz{ stroke:rgba(15,23,42,.3); }
 .pa-area .ponto{ stroke:#ffffff; }
 /* Sem brilho no fundo claro */
@@ -559,12 +559,12 @@ body.painel-aberto{ overflow:hidden; }
 .ub-divisao-topo strong{ font-size:14px; }
 .ub-barra{ display:flex; gap:3px; height:14px; border-radius:999px; overflow:hidden; background:#edf0f3; }
 .ub-barra span{ display:block; height:100%; }
-.ub-legenda{ display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; font-weight:600; color:#5b6372; }
+.ub-legenda{ display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; font-weight:600; color:#5f5f5f; }
 .ub-legenda i{ display:inline-block; width:10px; height:10px; margin-right:6px; border-radius:3px; vertical-align:-1px; }
-.ub-legenda b{ color:#1d2330; }
+.ub-legenda b{ color:#1f2020; }
 @media (prefers-reduced-motion: reduce){ .ub-teto span{ transition:none; } }
 </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-sem-faixa2">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-inter">
 </head>
 
 <body>
@@ -1141,7 +1141,7 @@ var PainelUber = (function(){
     const caixa = $("ubDivisao");
     const blocos = [
       { titulo:"Carro", dados:d.grafCarro || {}, cores:[COR.s1, COR.s2] },
-      { titulo:"Quem registrou", dados:d.grafEnvio || {}, cores:[COR.s3, "#9ca3af"] }
+      { titulo:"Quem registrou", dados:d.grafEnvio || {}, cores:[COR.s3, "#9e9e9e"] }
     ];
     caixa.innerHTML = blocos.map(function(b, i){
       const nomes = Object.keys(b.dados), total = nomes.reduce(function(t, n){ return t + (Number(b.dados[n]) || 0); }, 0) || 1;

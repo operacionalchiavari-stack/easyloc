@@ -9476,3 +9476,11 @@ mantidas. Só cor — nada de estrutura/posição mudou.
   `pedido.css` — abertura "Qual história…", cartão do cliente, campos, cartões de observação, barra de etapas, vitrine e
   número do pedido passaram de bege para o cinza `#f3f5f6`/branco; botão "Avançar" e "Um dia/Vários dias" em azul.
   `CentralPedidos.css`: selo "Veio do catálogo" em azul suave. Versões `?v=20261018-sem-bege`.
+- **Fonte Inter e texto sem azul** (pedido seguinte: "não quero fonte na cor azul... a fonte do sistema inteiro precisa
+  ser fácil de entender, de sistema mesmo, igual à Tecnoweld; apenas os títulos podem usar a fonte bonita"): bloco
+  "FONTE DO SISTEMA" no fim de `tema-chiavari.css` e de `fundo-claro.css` — tudo em Inter (a da Tecnoweld), a
+  Cormorant só em h1–h4 e classes com "title/titulo/heading" (números dos cards viraram Inter); ícones/svg/código fora.
+  Textos que tinham ficado cinza-azulado (`#1d2330`, `#4b5563`, `#6b7280`…) viraram grafite neutro (`#1f2020`,
+  `#4f4f4f`, `#6b6b6b`…) e todo `color:` azul virou grafite; botão secundário com texto grafite e borda azul. O azul
+  fica só no fundo dos botões, bordas e seleções. Conferido no navegador: nenhum texto azul nas telas do menu.
+  Versões `?v=20261018-inter`.

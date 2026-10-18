@@ -28,8 +28,8 @@
   --line:#e3e7ec;
   --borda-card:#e3e7ec;
   --linha-tabela:#edf0f3;
-  --text:#1d2330;
-  --muted:#5b6372;
+  --text:#1f2020;
+  --muted:#5f5f5f;
   --accent-soft:#e9ecef;
   --serif:"Cormorant Garamond", Georgia, serif;
   --sans:"Manrope", system-ui, sans-serif;
@@ -336,7 +336,7 @@ button.card-apagar .card-apagar-numero{ animation:apagar-badge 1.15s ease-in-out
   --s2:#d95926;
   --ok:#22c55e;
   --aviso:#f59e0b;
-  --neutro:#6b7280;
+  --neutro:#6b6b6b;
 }
 
 #modalGraficos{ background:rgba(5,7,10,.72); backdrop-filter:blur(4px); }
@@ -546,7 +546,7 @@ button.card-apagar .card-apagar-numero{ animation:apagar-badge 1.15s ease-in-out
 
 /* Rankings de operação */
 .p-rank .cheio.verde{ background:linear-gradient(90deg, #15803d, #4ade80); box-shadow:0 0 12px rgba(34,197,94,.45); }
-.p-rank .cheio.cinza{ background:linear-gradient(90deg, #4b5563, #9ca3af); box-shadow:none; }
+.p-rank .cheio.cinza{ background:linear-gradient(90deg, #4f4f4f, #9e9e9e); box-shadow:none; }
 .p-rank .cheio.laranja{ background:linear-gradient(90deg, #b5461b, #f08a5d); box-shadow:0 0 12px rgba(217,89,38,.45); }
 .p-rank-sub{ grid-column:2 / -1; margin-top:-2px; font-size:12px; color:var(--p-texto2); font-weight:600; }
 
@@ -617,7 +617,7 @@ th{
   padding:12px;
   background:#ffffff;
   border-bottom:1px solid var(--borda-card);
-  color:#3b4250;
+  color:#3d3d3d;
   font-size:14px;
   font-weight:700;
   letter-spacing:.12em;
@@ -641,8 +641,8 @@ tbody tr:hover{ background:#eef3fb; }
 
 .col-pedido{ font-weight:600; color:#2563eb; white-space:nowrap; }
 .col-transp{ font-weight:600; }
-.col-data{ color:#3b4250; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:16px; }
-.col-local{ color:#3b4250; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; }
+.col-data{ color:#3d3d3d; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:16px; }
+.col-local{ color:#3d3d3d; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; }
 .col-valor{ text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
 th.col-valor{ text-align:right; }
 .col-final{ font-weight:800; }
@@ -1157,8 +1157,8 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
 ========================================================= */
 .painel{
   --p-fundo:#fafbfc; --p-card:#ffffff; --p-borda:#e3e7ec;
-  --p-texto:#1d2330; --p-texto2:#5b6372; --p-grade:#eceff3;
-  --s1:#2a78d6; --s2:#eb6834; --ok:#16a34a; --aviso:#d97706; --neutro:#9ca3af;
+  --p-texto:#1f2020; --p-texto2:#5f5f5f; --p-grade:#eceff3;
+  --s1:#2a78d6; --s2:#eb6834; --ok:#16a34a; --aviso:#d97706; --neutro:#9e9e9e;
 }
 #modalGraficos{ background:rgba(15,23,42,.35); }
 .modal-caixa.painel{
@@ -1177,7 +1177,7 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
 .painel-periodos{ background:var(--p-fundo); border-color:var(--p-borda); }
 .painel-periodos button:hover{ color:var(--p-texto); }
 .painel-periodos button.ativo{ background:var(--primary-dark); color:#ffffff; box-shadow:none; }
-.p-secao{ color:#6b7280; }
+.p-secao{ color:#6b6b6b; }
 
 .p-card{ background:#ffffff; box-shadow:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07); }
 
@@ -1185,7 +1185,7 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
 .p-delta.desce{ background:#fee2e2; color:#b91c1c; }
 .p-delta.neutro{ background:#edf0f3; color:var(--p-texto2); }
 
-.p-area .eixo, .p-colunas .eixo{ fill:#6b7280; }
+.p-area .eixo, .p-colunas .eixo{ fill:#6b6b6b; }
 .p-area .cruz{ stroke:rgba(15,23,42,.3); }
 .p-area .ponto{ stroke:#ffffff; }
 /* Sem brilho no fundo claro */
@@ -1200,7 +1200,7 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
 .p-rank .trilho{ background:#edf0f3; }
 .p-rank .cheio{ background:linear-gradient(90deg, #2a78d6, #5598e7); box-shadow:none; }
 .p-rank .cheio.verde{ background:linear-gradient(90deg, #138a60, #1baf7a); box-shadow:none; }
-.p-rank .cheio.cinza{ background:linear-gradient(90deg, #9ca3af, #cdd4dc); }
+.p-rank .cheio.cinza{ background:linear-gradient(90deg, #9e9e9e, #cdd4dc); }
 .p-rank .cheio.laranja{ background:linear-gradient(90deg, #d95926, #f08a5d); box-shadow:none; }
 
 .p-top div{ background:#f8f9fb; }
@@ -1215,7 +1215,7 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
 .btn-graficos:hover{ box-shadow:0 6px 16px rgba(15,23,42,.18); }
 
 </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-sem-faixa2">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-inter">
 </head>
 
 <body>
@@ -1257,7 +1257,7 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
         <span><i style="background:var(--green)"></i>Economia</span>
         <span><i style="background:var(--red)"></i>Acima do CH</span>
         <span><i style="background:var(--yellow)"></i>Divergência</span>
-        <span><i style="background:#9ca3af"></i>Igual ao CH</span>
+        <span><i style="background:#9e9e9e"></i>Igual ao CH</span>
       </div>
     </div>
     <div class="tabela-rolagem">
@@ -1879,7 +1879,7 @@ function montarPendentes(){
 
 estado.periodoGraf = 12;
 
-const COR = { s1:"#2a78d6", s2:"#eb6834", ok:"#16a34a", aviso:"#d97706", neutro:"#9ca3af" };
+const COR = { s1:"#2a78d6", s2:"#eb6834", ok:"#16a34a", aviso:"#d97706", neutro:"#9e9e9e" };
 
 function abrirGraficos(){
   abrirModal("modalGraficos");

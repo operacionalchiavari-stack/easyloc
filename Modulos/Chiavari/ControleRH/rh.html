@@ -707,8 +707,8 @@ tbody tr:hover{
   --line:#e3e7ec;
   --borda-card:#e3e7ec;
   --linha-tabela:#edf0f3;
-  --text:#1d2330;
-  --muted:#5b6372;
+  --text:#1f2020;
+  --muted:#5f5f5f;
   --serif:"Cormorant Garamond", Georgia, serif;
   --sans:"Manrope", system-ui, sans-serif;
   --sombra-card:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
@@ -799,12 +799,12 @@ body{ background:#ffffff !important; color:var(--text) !important; -webkit-font-
 }
 .rh-cartao-cabecalho span{ font-size:13px; color:rgba(255,255,255,.78); font-weight:600; }
 
-thead{ background:#ffffff !important; color:#3b4250 !important; }
+thead{ background:#ffffff !important; color:#3d3d3d !important; }
 th{
   padding:12px 16px !important;
   border-bottom:1px solid var(--borda-card);
   background:#ffffff !important;
-  color:#3b4250 !important;
+  color:#3d3d3d !important;
   font-size:12px !important;
   font-weight:700 !important;
   letter-spacing:.1em;
@@ -841,7 +841,7 @@ tbody tr:hover{ background:#eef3fb !important; }
 .modalContent > *:last-child{ margin-bottom:24px; }
 
 .campo label{
-  color:#3b4250 !important;
+  color:#3d3d3d !important;
   font-size:12px !important;
   font-weight:800 !important;
   letter-spacing:.1em;
@@ -912,7 +912,7 @@ tbody tr:hover{ background:#eef3fb !important; }
 .btnFecharFuncionarios{ border-color:rgba(255,255,255,.3) !important; background:transparent !important; color:#ffffff !important; }
 .btnNovoFuncionarioTabela{ background:#ffffff !important; color:var(--text) !important; border-color:#ffffff !important; }
 .tabelaFuncionariosWrapper{ margin:0 24px 24px; border-color:var(--borda-card) !important; border-radius:14px !important; }
-.tabelaFuncionariosCadastro thead, .tabelaFuncionariosCadastro th{ background:#ffffff !important; color:#3b4250 !important; }
+.tabelaFuncionariosCadastro thead, .tabelaFuncionariosCadastro th{ background:#ffffff !important; color:#3d3d3d !important; }
 .tabelaFuncionariosCadastro th{ font-size:11px !important; }
 .tabelaFuncionariosCadastro td{ font-size:14px !important; }
 .linhaFuncionarioEdicao{ background:var(--fundo-suave) !important; }
@@ -1091,7 +1091,7 @@ body.painel-aberto{ overflow:hidden; }
 ========================================================= */
 #painelRH{
   --p-fundo:#fafbfc; --p-card:#ffffff; --p-borda:#e3e7ec;
-  --p-texto:#1d2330; --p-texto2:#5b6372; --p-grade:#eceff3;
+  --p-texto:#1f2020; --p-texto2:#5f5f5f; --p-grade:#eceff3;
   --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --ok:#16a34a; --aviso:#d97706; --ruim:#dc2626;
   background:
     radial-gradient(900px 380px at 10% -10%, rgba(42,120,214,.06), transparent 60%),
@@ -1108,7 +1108,7 @@ body.painel-aberto{ overflow:hidden; }
 .pa-mes button:hover{ background:#eceff3; }
 .pa-fechar:hover{ color:var(--p-texto); border-color:#cdd4dc; }
 
-.pa-secao{ color:#6b7280; }
+.pa-secao{ color:#6b6b6b; }
 
 .pa-card{
   background:#ffffff;
@@ -1125,7 +1125,7 @@ body.painel-aberto{ overflow:hidden; }
 .pa-alerta.ruim strong{ color:#dc2626; }
 .pa-alerta.aviso strong{ color:#b45309; }
 
-.pa-area .eixo{ fill:#6b7280; }
+.pa-area .eixo{ fill:#6b6b6b; }
 .pa-area .cruz{ stroke:rgba(15,23,42,.3); }
 .pa-area .ponto{ stroke:#ffffff; }
 /* Sem brilho no fundo claro */
@@ -1149,16 +1149,16 @@ body.painel-aberto{ overflow:hidden; }
   </style>
   <style id="painel-rh-extra">
 .pa-periodos{ display:inline-flex; padding:4px; gap:2px; border-radius:999px; background:#fafbfc; border:1px solid #e3e7ec; }
-.pa-periodos button{ min-height:30px; padding:0 14px; border:0; border-radius:999px; background:transparent; color:#5b6372; font-size:13px; font-weight:700; cursor:pointer; }
-.pa-periodos button:hover{ color:#1d2330; }
+.pa-periodos button{ min-height:30px; padding:0 14px; border:0; border-radius:999px; background:transparent; color:#5f5f5f; font-size:13px; font-weight:700; cursor:pointer; }
+.pa-periodos button:hover{ color:#1f2020; }
 .pa-periodos button.ativo{ background:#123f86; color:#ffffff; }
 #painelRH .pa-critico div.linha{ align-items:center; }
 #painelRH .pa-critico .tag{ justify-self:end; }
 #painelRH .pa-topo h2{ font-family:var(--serif) !important; }
-#painelRH .sub-linha{ grid-column:1 / -1; font-size:12px; color:#5b6372; font-weight:600; }
+#painelRH .sub-linha{ grid-column:1 / -1; font-size:12px; color:#5f5f5f; font-weight:600; }
 #painelRH .pa-rank .vl{ min-width:32px; }
   </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-sem-faixa2">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-inter">
 </head>
 
 <body>
