@@ -16,21 +16,21 @@
    CONCILIAÇÃO DE FRETES — mesma identidade da Central,
    Cronograma e Itens Danificados.
    Cormorant Garamond nos títulos, Manrope no texto,
-   grafite #5a5a55, cartões brancos com sombra suave.
+   grafite #123f86, cartões brancos com sombra suave.
 ========================================================= */
 
 :root{
-  --primary:#5a5a55;
-  --primary-dark:#44443f;
+  --primary:#123f86;
+  --primary-dark:#123f86;
   --bg:#ffffff;
-  --fundo-suave:#f8f6f0;
+  --fundo-suave:#f7f9fb;
   --card:#ffffff;
-  --line:#e7e1d7;
-  --borda-card:#eee8df;
-  --linha-tabela:#f3efe8;
-  --text:#251e19;
-  --muted:#5f5952;
-  --accent-soft:#ecece6;
+  --line:#e3e7ec;
+  --borda-card:#e3e7ec;
+  --linha-tabela:#edf0f3;
+  --text:#1d2330;
+  --muted:#5b6372;
+  --accent-soft:#e9ecef;
   --serif:"Cormorant Garamond", Georgia, serif;
   --sans:"Manrope", system-ui, sans-serif;
   --green:#16a34a;
@@ -39,7 +39,7 @@
   --yellow-soft:#fef3c7;
   --red:#dc2626;
   --red-soft:#fee2e2;
-  --sombra-card:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+  --sombra-card:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
 }
 
 *{ box-sizing:border-box; }
@@ -617,7 +617,7 @@ th{
   padding:12px;
   background:#ffffff;
   border-bottom:1px solid var(--borda-card);
-  color:#3f3a35;
+  color:#3b4250;
   font-size:14px;
   font-weight:700;
   letter-spacing:.12em;
@@ -635,14 +635,14 @@ td{
 }
 
 tbody tr{ cursor:pointer; transition:background-color .12s; }
-tbody tr:nth-child(even){ background:#fcfbf8; }
-tbody tr:hover{ background:#f6f3ec; }
+tbody tr:nth-child(even){ background:#fafbfc; }
+tbody tr:hover{ background:#eef3fb; }
 
 
 .col-pedido{ font-weight:600; color:#2563eb; white-space:nowrap; }
 .col-transp{ font-weight:600; }
-.col-data{ color:#3f3a35; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:16px; }
-.col-local{ color:#3f3a35; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; }
+.col-data{ color:#3b4250; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:16px; }
+.col-local{ color:#3b4250; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; }
 .col-valor{ text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
 th.col-valor{ text-align:right; }
 .col-final{ font-weight:800; }
@@ -735,7 +735,7 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
   align-items:flex-start;
   justify-content:center;
   padding:6vh 16px 24px;
-  background:rgba(37,30,25,.45);
+  background:rgba(15,23,42,.45);
   overflow-y:auto;
 }
 
@@ -745,7 +745,7 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
   width:min(560px, 100%);
   border-radius:18px;
   background:#ffffff;
-  box-shadow:0 24px 70px rgba(37,30,25,.25);
+  box-shadow:0 24px 70px rgba(15,23,42,.25);
   display:flex;
   flex-direction:column;
   max-height:88vh;
@@ -1054,7 +1054,7 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
   color:#ffffff;
   font-size:16px;
   font-weight:700;
-  box-shadow:0 12px 40px rgba(37,30,25,.3);
+  box-shadow:0 12px 40px rgba(15,23,42,.3);
   transition:opacity .2s, transform .2s;
 }
 
@@ -1156,11 +1156,11 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
    PAINEL DE FRETES — VERSÃO CLARA (mesmo estilo do painel do Almoxarifado)
 ========================================================= */
 .painel{
-  --p-fundo:#fbfaf7; --p-card:#ffffff; --p-borda:#eee8df;
-  --p-texto:#251e19; --p-texto2:#5f5952; --p-grade:#efebe4;
-  --s1:#2a78d6; --s2:#eb6834; --ok:#16a34a; --aviso:#d97706; --neutro:#a8a29a;
+  --p-fundo:#fafbfc; --p-card:#ffffff; --p-borda:#e3e7ec;
+  --p-texto:#1d2330; --p-texto2:#5b6372; --p-grade:#eceff3;
+  --s1:#2a78d6; --s2:#eb6834; --ok:#16a34a; --aviso:#d97706; --neutro:#9ca3af;
 }
-#modalGraficos{ background:rgba(37,30,25,.35); }
+#modalGraficos{ background:rgba(15,23,42,.35); }
 .modal-caixa.painel{
   background:
     radial-gradient(900px 380px at 10% -10%, rgba(42,120,214,.06), transparent 60%),
@@ -1173,49 +1173,49 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
 .painel .modal-topo h2{
   font-family:var(--serif); font-size:30px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; line-height:1.1;
 }
-.painel .modal-fechar:hover{ color:var(--p-texto); border-color:#cfc8bc; }
+.painel .modal-fechar:hover{ color:var(--p-texto); border-color:#cdd4dc; }
 .painel-periodos{ background:var(--p-fundo); border-color:var(--p-borda); }
 .painel-periodos button:hover{ color:var(--p-texto); }
 .painel-periodos button.ativo{ background:var(--primary-dark); color:#ffffff; box-shadow:none; }
-.p-secao{ color:#7d766d; }
+.p-secao{ color:#6b7280; }
 
-.p-card{ background:#ffffff; box-shadow:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07); }
+.p-card{ background:#ffffff; box-shadow:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07); }
 
 .p-delta.sobe{ background:#dcfce7; color:#166534; }
 .p-delta.desce{ background:#fee2e2; color:#b91c1c; }
-.p-delta.neutro{ background:#f1eee8; color:var(--p-texto2); }
+.p-delta.neutro{ background:#edf0f3; color:var(--p-texto2); }
 
-.p-area .eixo, .p-colunas .eixo{ fill:#7d766d; }
-.p-area .cruz{ stroke:rgba(37,30,25,.3); }
+.p-area .eixo, .p-colunas .eixo{ fill:#6b7280; }
+.p-area .cruz{ stroke:rgba(15,23,42,.3); }
 .p-area .ponto{ stroke:#ffffff; }
 /* Sem brilho no fundo claro */
 .p-area .linha, .p-colunas .col, .p-medidor .arco{ filter:none !important; }
 .p-colunas .rotulo-max{ fill:var(--p-texto); }
 .p-destaque{ background:#e8f1fc; color:#1d4ed8; }
 
-.p-status div{ background:#faf8f4; }
+.p-status div{ background:#f8f9fb; }
 
-.p-rank .pos{ background:#f4f1eb; }
+.p-rank .pos{ background:#f1f3f6; }
 .p-rank:first-child .pos{ background:#e0ecff; color:#1e40af; }
-.p-rank .trilho{ background:#f1eee8; }
+.p-rank .trilho{ background:#edf0f3; }
 .p-rank .cheio{ background:linear-gradient(90deg, #2a78d6, #5598e7); box-shadow:none; }
 .p-rank .cheio.verde{ background:linear-gradient(90deg, #138a60, #1baf7a); box-shadow:none; }
-.p-rank .cheio.cinza{ background:linear-gradient(90deg, #a8a29a, #cfc8bc); }
+.p-rank .cheio.cinza{ background:linear-gradient(90deg, #9ca3af, #cdd4dc); }
 .p-rank .cheio.laranja{ background:linear-gradient(90deg, #d95926, #f08a5d); box-shadow:none; }
 
-.p-top div{ background:#faf8f4; }
-.p-top div:hover{ background:#f4f1eb; }
+.p-top div{ background:#f8f9fb; }
+.p-top div:hover{ background:#f1f3f6; }
 .p-top .ped{ color:#1d4ed8; }
 .p-pill.pago{ background:#dcfce7; color:#166534; }
 .p-pill.pend{ background:#fef3c7; color:#92400e; }
-.p-pill.sem{ background:#f1eee8; color:var(--p-texto2); }
+.p-pill.sem{ background:#edf0f3; color:var(--p-texto2); }
 
 .btn-graficos{ border-color:var(--primary-dark); background:var(--primary-dark); }
 .btn-graficos svg{ color:#ffffff; }
-.btn-graficos:hover{ box-shadow:0 6px 16px rgba(37,30,25,.18); }
+.btn-graficos:hover{ box-shadow:0 6px 16px rgba(15,23,42,.18); }
 
 </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-azul">
 </head>
 
 <body>
@@ -1257,7 +1257,7 @@ tbody tr.sub-linha.ultima td{ border-bottom:0; }
         <span><i style="background:var(--green)"></i>Economia</span>
         <span><i style="background:var(--red)"></i>Acima do CH</span>
         <span><i style="background:var(--yellow)"></i>Divergência</span>
-        <span><i style="background:#a8a29a"></i>Igual ao CH</span>
+        <span><i style="background:#9ca3af"></i>Igual ao CH</span>
       </div>
     </div>
     <div class="tabela-rolagem">
@@ -1879,7 +1879,7 @@ function montarPendentes(){
 
 estado.periodoGraf = 12;
 
-const COR = { s1:"#2a78d6", s2:"#eb6834", ok:"#16a34a", aviso:"#d97706", neutro:"#a8a29a" };
+const COR = { s1:"#2a78d6", s2:"#eb6834", ok:"#16a34a", aviso:"#d97706", neutro:"#9ca3af" };
 
 function abrirGraficos(){
   abrirModal("modalGraficos");
@@ -2162,7 +2162,7 @@ function desenharMedidor(lista){
     '<svg viewBox="0 0 210 210" role="img" aria-label="Percentual de pedidos pagos">' +
       '<defs><linearGradient id="pGradOk" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#4ade80"/></linearGradient>' +
       '<filter id="pBrilhoOk" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>' +
-      '<circle cx="105" cy="105" r="' + R + '" fill="none" stroke="#efebe4" stroke-width="16" stroke-linecap="round"' +
+      '<circle cx="105" cy="105" r="' + R + '" fill="none" stroke="#eceff3" stroke-width="16" stroke-linecap="round"' +
         ' stroke-dasharray="' + arco.toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(135 105 105)"/>' +
       '<circle class="arco" id="pArco" cx="105" cy="105" r="' + R + '" fill="none" stroke="url(#pGradOk)" stroke-width="16" stroke-linecap="round" filter="url(#pBrilhoOk)"' +
         ' stroke-dasharray="' + arco.toFixed(1) + ' ' + C.toFixed(1) + '" stroke-dashoffset="' + arco.toFixed(1) + '" transform="rotate(135 105 105)"/>' +

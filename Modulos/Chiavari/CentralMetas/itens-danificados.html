@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<link rel="stylesheet" href="ciencia-danos.css?v=20261014-rh">
+<link rel="stylesheet" href="ciencia-danos.css?v=20261018-azul">
 <script src="ciencia-danos.js?v=20261014-rh"></script>
   <script src="../gas-cliente.js?v=20261016-seguranca" data-projeto="central"></script>
 <base target="_top">
@@ -17,21 +17,21 @@
 /* =========================================================
    ITENS DANIFICADOS — mesma identidade da Central de Metas
    Cormorant Garamond nos títulos, Manrope no texto,
-   grafite #5a5a55, cartões brancos com sombra suave.
+   grafite #123f86, cartões brancos com sombra suave.
 ========================================================= */
 
 :root{
-  --primary:#5a5a55;
-  --primary-dark:#44443f;
+  --primary:#123f86;
+  --primary-dark:#123f86;
   --bg:#ffffff;
-  --fundo-suave:#f8f6f0;
+  --fundo-suave:#f7f9fb;
   --card:#ffffff;
-  --line:#e7e1d7;
-  --borda-card:#eee8df;
-  --linha-tabela:#f3efe8;
-  --text:#251e19;
-  --muted:#77716a;
-  --accent-soft:#ecece6;
+  --line:#e3e7ec;
+  --borda-card:#e3e7ec;
+  --linha-tabela:#edf0f3;
+  --text:#1d2330;
+  --muted:#6b7280;
+  --accent-soft:#e9ecef;
   --serif:"Cormorant Garamond", Georgia, serif;
   --sans:"Manrope", system-ui, sans-serif;
   --green:#16a34a;
@@ -40,7 +40,7 @@
   --yellow-soft:#fef3c7;
   --red:#dc2626;
   --red-soft:#fee2e2;
-  --sombra-card:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+  --sombra-card:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
 }
 
 *{ box-sizing:border-box; }
@@ -331,7 +331,7 @@ body.modo-painel .status-atualizacao{ right:auto; left:24px; }
   width:16px;
   height:16px;
   margin:0;
-  border:1.5px solid #c9c2b6;
+  border:1.5px solid #c8cfd8;
   border-radius:5px;
   background:#ffffff;
   display:grid;
@@ -447,13 +447,13 @@ td{
 
 tbody tr{ cursor:pointer; transition:background-color .12s; }
 
-tbody tr:nth-child(even){ background:#fcfbf8; }
+tbody tr:nth-child(even){ background:#fafbfc; }
 
-tbody tr:hover{ background:#f6f3ec; }
+tbody tr:hover{ background:#eef3fb; }
 
 tbody tr.selecionada,
 tbody tr.selecionada:hover{
-  background:#ecebe4;
+  background:#e9ecef;
   box-shadow:inset 3px 0 0 var(--primary-dark);
 }
 
@@ -515,11 +515,11 @@ tbody tr.selecionada:hover{
 }
 
 .fluxo-passo.passado{
-  background:#f1efea;
-  color:#a8a29a;
+  background:#eef0f3;
+  color:#9ca3af;
 }
 
-.fluxo-seta{ color:#c9c2b6; font-size:11px; }
+.fluxo-seta{ color:#c8cfd8; font-size:11px; }
 
 .etiqueta{
   display:inline-block;
@@ -895,7 +895,7 @@ body.modo-painel .cabecalho-barra{ display:none; }
   align-items:flex-start;
   justify-content:center;
   padding:6vh 16px 24px;
-  background:rgba(37,30,25,.45);
+  background:rgba(15,23,42,.45);
   overflow-y:auto;
 }
 
@@ -905,7 +905,7 @@ body.modo-painel .cabecalho-barra{ display:none; }
   width:min(560px, 100%);
   border-radius:18px;
   background:#ffffff;
-  box-shadow:0 24px 70px rgba(37,30,25,.25);
+  box-shadow:0 24px 70px rgba(15,23,42,.25);
   display:flex;
   flex-direction:column;
   max-height:88vh;
@@ -1174,7 +1174,7 @@ body.modo-painel .cabecalho-barra{ display:none; }
   color:#ffffff;
   font-size:14px;
   font-weight:700;
-  box-shadow:0 12px 40px rgba(37,30,25,.3);
+  box-shadow:0 12px 40px rgba(15,23,42,.3);
   transition:opacity .2s, transform .2s;
 }
 
@@ -1248,7 +1248,7 @@ body.modo-painel .cabecalho-barra{ display:none; }
   .modal-rodape .erro-modal{ flex:1 0 100%; }
 }
 </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-azul">
 </head>
 
 <body>
@@ -1708,12 +1708,12 @@ const CORES_SETOR = {
   "costura":              { forte:"#facc15", suave:"#fef9c3", texto:"#3b2f00" }, // amarelo (texto escuro)
   "forracao":             { forte:"#4f6a3a", suave:"#e8eedf" }, // verde
   "acabamento e pintura": { forte:"#d9620f", suave:"#fdebdc" }, // laranja
-  "solda":                { forte:"#2b2a26", suave:"#e9e7e2" }, // preto
+  "solda":                { forte:"#2b2a26", suave:"#e7eaee" }, // preto
   "marcenaria":           { forte:"#b42318", suave:"#fbe4e1" }  // vermelho
 };
 
 function corSetor(nome){
-  return CORES_SETOR[normalizar(nome)] || { forte:"#5a5a55", suave:"#ecece6" };
+  return CORES_SETOR[normalizar(nome)] || { forte:"#123f86", suave:"#e9ecef" };
 }
 
 function varsSetor(nome){

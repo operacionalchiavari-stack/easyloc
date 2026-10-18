@@ -9457,3 +9457,17 @@ Pedido: "o fundo de todas as telas branco ou cinza bem clarinho, pega a Tecnowel
   sombra nos cards; não muda a cor dos cards). Fora de propósito: Catálogo (branco, pedido antigo) e os apps de celular
   (Montador, Free, Free QR, RH Free, Meu Bônus, Motorista, login do Uber).
 - `global.css?v=20261018-fundo` em todas as telas; `tema-chiavari.css?v=20261018-fundo`.
+
+## Paleta azul-marinho em todo o sistema (out/2026)
+Pedido (com prompt de referência): secundária azul-marinho `#123F86`, fundo `#F3F5F6`, cards e tabelas brancos, menu
+lateral continua grafite `#292A28`, botões principais azuis com texto branco, secundários brancos com detalhe azul,
+campos sem bege (branco/cinza-claro), seleções em azul suave (`#eaf0fa`), cores de status (vermelho/laranja/verde/amarelo)
+mantidas. Só cor — nada de estrutura/posição mudou.
+- Trocado por mapeamento de cores nos arquivos (não só variáveis, porque as telas da Chiavari têm cores escritas
+  direto): grafite `#44443f/#5a5a55` → `#123f86` em fundo/borda/botão; quando é COR DE TEXTO (`color:`) vira grafite frio
+  `#2b3240/#4b5563` (texto não fica azul); `#2f2f2b` (hover) → `#0d2f66`; bege `#f8f6f0` → `#f7f9fb`; linhas quentes
+  `#e7e1d7…` → `#e3e7ec`; textos marrom-acinzentados (`#251e19`, `#77716a`, `#a8a29a`…) → cinzas frios. Sombras
+  `rgba(37,30,25,…)` → `rgba(15,23,42,…)`. Não tocados: `portal-shell.css` (menu), Catálogo, apps de celular, login.
+- Fim de `styles/tema-chiavari.css`: bloco "PALETA AZUL-MARINHO" (variáveis `--ch-azul*`, campos brancos, botão
+  secundário branco/azul, hover de aba e linha selecionada em azul suave, `accent-color` azul).
+- Versões `?v=20261018-azul` (global.css, tema, fundo-claro e os CSS de módulo alterados).

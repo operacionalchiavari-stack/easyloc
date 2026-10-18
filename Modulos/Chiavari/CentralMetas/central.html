@@ -12,17 +12,17 @@
 <style>
 :root{
   /* Identidade do catálogo (meu-sistema/Modulos/Comercial/Catalogo) */
-  --primary:#5a5a55;
-  --primary-dark:#44443f;
-  --bg:#f8f6f0;
+  --primary:#123f86;
+  --primary-dark:#123f86;
+  --bg:#f7f9fb;
   --card:#ffffff;
-  --border:#e7e1d7;
-  --line:#ddd6cc;
-  --text:#251e19;
-  --muted:#77716a;
-  --accent:#5a5a55;
-  --accent-dark:#44443f;
-  --accent-soft:#ecece6;
+  --border:#e3e7ec;
+  --line:#d9dee5;
+  --text:#1d2330;
+  --muted:#6b7280;
+  --accent:#123f86;
+  --accent-dark:#123f86;
+  --accent-soft:#e9ecef;
   --serif:"Cormorant Garamond", Georgia, serif;
   --sans:"Manrope", system-ui, sans-serif;
   --green:#16a34a;
@@ -87,30 +87,30 @@ h1{
 }
 
 .card-almox{
-  background:linear-gradient(180deg, #f8f8f5, #ecece6);
-  border:1px solid #cfcfc7;
+  background:linear-gradient(180deg, #f8f8f5, #e9ecef);
+  border:1px solid #ced4da;
   border-radius:16px;
   padding:18px;
   box-shadow:
-    0 10px 30px rgba(90, 90, 85, 0.14),
-    0 0 0 1px rgba(90, 90, 85, 0.10);
+    0 10px 30px rgba(18,63,134, 0.14),
+    0 0 0 1px rgba(18,63,134, 0.10);
 }
 
 .card-almox .label{
   font-size:15px;
-  color:#44443f;
+  color:#2b3240;
   margin-bottom:8px;
 }
 
 .card-almox .value{
   font-size:32px;
   font-weight:800;
-  color:#251e19;
+  color:#1d2330;
 }
 
 .card-almox .small{
   font-size:14px;
-  color:#44443f;
+  color:#2b3240;
   margin-top:4px;
 }
 
@@ -168,12 +168,12 @@ th{
 
 td{
   padding:12px;
-  border-bottom:1px solid #f8f6f0;
+  border-bottom:1px solid #f7f9fb;
   font-size:16px;
 }
 
 tbody tr:nth-child(even){
-  background:#fbfaf6;
+  background:#fafbfc;
 }
 
 .ok{color:var(--green); font-weight:700;}
@@ -254,7 +254,7 @@ td{
   font-size:15px;
 }
 .pedido{
-  color:#44443f; /* 🔥 azul mais vivo */
+  color:#2b3240; /* 🔥 azul mais vivo */
   font-weight:600;
   letter-spacing:0.2px;
 }
@@ -322,7 +322,7 @@ td{
 
 /* 🟤 EMPALHADOR */
 .Empalhador {
-  background:#ede9e3;
+  background:#eaedf1;
   color:#5c4033;
 }
 
@@ -341,7 +341,7 @@ td{
 
 /* ⚫ PEÇA FALTANDO */
 .PecaFaltando {
-  background:#e7e1d7;
+  background:#e3e7ec;
   color:#374151;
 }
 
@@ -397,9 +397,9 @@ td{
 }
 .linha-total td{
   background:#ffffff !important;
-  color:#251e19;
+  color:#1d2330;
   font-weight:700;
-  border-top:2px solid #d4d4cc !important;
+  border-top:2px solid #d3d8de !important;
 }
 .linha-total td{
   white-space: nowrap;
@@ -469,7 +469,7 @@ td{
   }
 
   th{
-    background:#5a5a55 !important;
+    background:#123f86 !important;
     color:#fff !important;
 
     -webkit-print-color-adjust:exact !important;
@@ -743,15 +743,15 @@ td{
   border:1px solid var(--border);
   border-radius:18px;
   overflow:hidden;
-  box-shadow:0 10px 30px rgba(37, 30, 25, 0.07);
+  box-shadow:0 10px 30px rgba(15,23,42, 0.07);
 }
 
 .card-comissao-header{
   padding:20px 22px;
   background:linear-gradient(
     135deg,
-    #5a5a55,
-    #44443f
+    #123f86,
+    #123f86
   );
   color:#ffffff;
 }
@@ -781,8 +781,8 @@ td{
 }
 
 .card-comissao-valor{
-  background:#fbfaf6;
-  border:1px solid #e7e1d7;
+  background:#fafbfc;
+  border:1px solid #e3e7ec;
   border-radius:12px;
   padding:13px 14px;
 }
@@ -790,7 +790,7 @@ td{
 .card-comissao-valor .label{
   display:block;
   font-size:13px;
-  color:#77716a;
+  color:#6b7280;
   margin-bottom:6px;
 }
 
@@ -798,16 +798,16 @@ td{
   display:block;
   font-size:20px;
   font-weight:700;
-  color:#251e19;
+  color:#1d2330;
 }
 
 .card-comissao-total{
   background:linear-gradient(
     180deg,
     #f8f8f5,
-    #ecece6
+    #e9ecef
   );
-  border:1px solid #cfcfc7;
+  border:1px solid #ced4da;
   border-radius:14px;
   padding:16px;
   margin-bottom:18px;
@@ -819,13 +819,13 @@ td{
 
 .card-comissao-total .label{
   font-size:15px;
-  color:#44443f;
+  color:#2b3240;
 }
 
 .card-comissao-total .valor{
   font-size:26px;
   font-weight:800;
-  color:#251e19;
+  color:#1d2330;
   white-space:nowrap;
 }
 
@@ -838,12 +838,12 @@ td{
 
 .card-comissao-funcionarios-header strong{
   font-size:16px;
-  color:#251e19;
+  color:#1d2330;
 }
 
 .card-comissao-funcionarios-header span{
-  background:#f0f0eb;
-  color:#44443f;
+  background:#eff1f4;
+  color:#2b3240;
   border-radius:999px;
   padding:4px 9px;
   font-size:13px;
@@ -851,7 +851,7 @@ td{
 }
 
 .card-comissao-lista{
-  border:1px solid #e7e1d7;
+  border:1px solid #e3e7ec;
   border-radius:13px;
   overflow:hidden;
 }
@@ -875,9 +875,9 @@ td{
 .card-comissao-tabela-cabecalho{
   min-height:44px;
   padding:0 14px;
-  background:#fbfaf6;
-  border-bottom:1px solid #e7e1d7;
-  color:#5c554e;
+  background:#fafbfc;
+  border-bottom:1px solid #e3e7ec;
+  color:#4b5563;
   font-size:13px;
   font-weight:700;
 }
@@ -895,7 +895,7 @@ td{
 .card-comissao-tabela-linha{
   min-height:66px;
   padding:0 14px;
-  border-bottom:1px solid #efeae2;
+  border-bottom:1px solid #eceff3;
 }
 
 .card-comissao-tabela-linha:last-child{
@@ -903,7 +903,7 @@ td{
 }
 
 .card-comissao-tabela-linha:nth-child(odd){
-  background:#fbfaf6;
+  background:#fafbfc;
 }
 
 .card-comissao-tabela-linha.limitada{
@@ -922,12 +922,12 @@ td{
   overflow-wrap:anywhere;
   font-size:15px;
   font-weight:700;
-  color:#251e19;
+  color:#1d2330;
 }
 
 .card-comissao-coluna-funcionario-setor{
   margin-top:3px;
-  color:#77716a;
+  color:#6b7280;
   font-size:13px;
 }
 
@@ -1002,7 +1002,7 @@ td{
   justify-content:space-between;
   gap:14px;
   padding:12px 14px;
-  border-bottom:1px solid #efeae2;
+  border-bottom:1px solid #eceff3;
 }
 
 .card-comissao-funcionario:last-child{
@@ -1010,7 +1010,7 @@ td{
 }
 
 .card-comissao-funcionario:nth-child(even){
-  background:#fbfaf6;
+  background:#fafbfc;
 }
 
 .card-comissao-funcionario-info{
@@ -1020,7 +1020,7 @@ td{
 .card-comissao-funcionario-nome{
   font-size:15px;
   font-weight:700;
-  color:#251e19;
+  color:#1d2330;
 }
 
 .card-comissao-funcionario-nome-linha{
@@ -1064,13 +1064,13 @@ td{
 .card-comissao-funcionario-setor{
   margin-top:3px;
   font-size:13px;
-  color:#77716a;
+  color:#6b7280;
 }
 
 .card-comissao-funcionario-valor{
   font-size:16px;
   font-weight:800;
-  color:#5a5a55;
+  color:#4b5563;
   white-space:nowrap;
 }
 
@@ -1079,7 +1079,7 @@ td{
 .card-comissao-erro{
   padding:28px 20px;
   text-align:center;
-  color:#77716a;
+  color:#6b7280;
   font-size:15px;
 }
 
@@ -1151,14 +1151,14 @@ td{
 .card-supervisor-titulo{
   font-size:20px;
   font-weight:700;
-  color:#251e19;
+  color:#1d2330;
 }
 
 .card-supervisor-subtitulo{
   margin-top:6px;
   font-size:14px;
   line-height:1.45;
-  color:#77716a;
+  color:#6b7280;
 }
 
 .card-supervisor-aviso{
@@ -1192,7 +1192,7 @@ td{
 .card-supervisor-indicador{
   min-width:0;
   padding:18px 26px;
-  border-left:1px solid #e7e1d7;
+  border-left:1px solid #e3e7ec;
   display:flex;
   justify-content:center;
   flex-direction:column;
@@ -1200,7 +1200,7 @@ td{
 
 .card-supervisor-indicador .label{
   font-size:14px;
-  color:#77716a;
+  color:#6b7280;
   margin-bottom:10px;
 }
 
@@ -1208,13 +1208,13 @@ td{
   font-size:26px;
   line-height:1;
   font-weight:800;
-  color:#251e19;
+  color:#1d2330;
   white-space:nowrap;
 }
 
 .card-supervisor-indicador.resultado{
   margin-left:0;
-  border-left:1px solid #e7e1d7;
+  border-left:1px solid #e3e7ec;
   border-radius:0;
   background:transparent;
   text-align:left;
@@ -1239,7 +1239,7 @@ td{
   .card-supervisor-identificacao{
     grid-column:1 / -1;
     padding:0 0 20px;
-    border-bottom:1px solid #e7e1d7;
+    border-bottom:1px solid #e3e7ec;
     margin-bottom:6px;
   }
 
@@ -1249,7 +1249,7 @@ td{
   }
 
   .card-supervisor-indicador:nth-child(n + 3){
-    border-left:1px solid #e7e1d7;
+    border-left:1px solid #e3e7ec;
   }
 
   .card-supervisor-indicador:nth-child(5){
@@ -1270,7 +1270,7 @@ td{
 
   .card-supervisor-indicador{
     border-left:none !important;
-    border-top:1px solid #e7e1d7;
+    border-top:1px solid #e3e7ec;
     padding:16px 0;
   }
 
@@ -1306,7 +1306,7 @@ td{
   border-radius:14px;
   overflow:hidden;
   margin-top:18px;
-  box-shadow:0 8px 24px rgba(37, 30, 25, 0.05);
+  box-shadow:0 8px 24px rgba(15,23,42, 0.05);
 }
 
 .card-tabela-metas:first-child{
@@ -1321,8 +1321,8 @@ td{
   padding:13px 16px;
   background:linear-gradient(
     135deg,
-    #5a5a55,
-    #44443f
+    #123f86,
+    #123f86
   );
   color:#ffffff;
 }
@@ -1384,7 +1384,7 @@ td{
 }
 
 .status-aguardando-rh{
-  color:#77716a;
+  color:#6b7280;
   font-weight:600;
 }
 
@@ -1406,7 +1406,7 @@ td{
   }
 
   .card-tabela-metas-header{
-    background:#5a5a55 !important;
+    background:#123f86 !important;
 
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
@@ -1432,14 +1432,14 @@ td{
   padding:5px 8px;
   border:1px solid #dbe4ee;
   border-radius:999px;
-  background:#fbfaf6;
-  color:#77716a;
+  background:#fafbfc;
+  color:#6b7280;
   font-size:12px;
   line-height:1.2;
 }
 
 .card-supervisor-limite strong{
-  color:#251e19;
+  color:#1d2330;
   font-weight:700;
 }
 
@@ -1468,7 +1468,7 @@ td{
 .card-supervisor-valor-calculado{
   display:block;
   margin-top:7px;
-  color:#77716a;
+  color:#6b7280;
   font-size:12px;
   font-weight:600;
   white-space:nowrap;
@@ -1483,9 +1483,9 @@ td{
   min-height:36px;
   padding:0 11px;
   border-radius:999px;
-  border:1px solid #d4d4cc;
-  background:#fbfaf6;
-  color:#5c554e;
+  border:1px solid #d3d8de;
+  background:#fafbfc;
+  color:#4b5563;
   font-size:13px;
   font-weight:700;
   white-space:nowrap;
@@ -1493,8 +1493,8 @@ td{
 
 .status-fechamento-central.aberto{
   border-color:#e2d3bb;
-  background:#f0f0eb;
-  color:#44443f;
+  background:#eff1f4;
+  color:#2b3240;
 }
 
 .status-fechamento-central.fechado{
@@ -1514,15 +1514,15 @@ td{
   border:none;
   border-radius:8px;
   padding:0 14px;
-  background:#44443f;
+  background:#123f86;
   color:#ffffff;
   font-weight:700;
   cursor:pointer;
 }
 
 .btn-fechar-mes-central:disabled{
-  background:#d4d4cc;
-  color:#77716a;
+  background:#d3d8de;
+  color:#6b7280;
   cursor:not-allowed;
 }
 
@@ -1551,18 +1551,18 @@ td{
   padding:22px;
   border-radius:16px;
   background:#ffffff;
-  box-shadow:0 24px 70px rgba(37, 30, 25, 0.25);
+  box-shadow:0 24px 70px rgba(15,23,42, 0.25);
 }
 
 .modal-fechamento-central h2{
   margin:0;
   font-size:22px;
-  color:#251e19;
+  color:#1d2330;
 }
 
 .modal-fechamento-central p{
   margin:8px 0 0;
-  color:#77716a;
+  color:#6b7280;
   font-size:15px;
   line-height:1.5;
 }
@@ -1623,20 +1623,20 @@ td{
 }
 
 .btn-cancelar-fechamento{
-  border:1px solid #d4d4cc;
+  border:1px solid #d3d8de;
   background:#ffffff;
-  color:#5c554e;
+  color:#4b5563;
 }
 
 .btn-confirmar-fechamento{
   border:none;
-  background:#44443f;
+  background:#123f86;
   color:#ffffff;
 }
 
 .btn-confirmar-fechamento:disabled{
-  background:#d4d4cc;
-  color:#77716a;
+  background:#d3d8de;
+  color:#6b7280;
   cursor:not-allowed;
 }
 /* =========================================================
@@ -1656,12 +1656,12 @@ td{
 .resumo-perdas-almox-card{
   min-width:0;
   padding:16px 18px;
-  border:1px solid #e7e1d7;
+  border:1px solid #e3e7ec;
   border-radius:14px;
   background:#ffffff;
   box-shadow:
     0 7px 20px
-    rgba(37, 30, 25, 0.05);
+    rgba(15,23,42, 0.05);
 }
 
 .resumo-perdas-almox-card.destaque{
@@ -1676,13 +1676,13 @@ td{
 .resumo-perdas-almox-label{
   display:block;
   margin-bottom:8px;
-  color:#77716a;
+  color:#6b7280;
   font-size:14px;
 }
 
 .resumo-perdas-almox-valor{
   display:block;
-  color:#251e19;
+  color:#1d2330;
   font-size:28px;
   font-weight:800;
   line-height:1.1;
@@ -1698,7 +1698,7 @@ td{
   display:block;
   min-height:16px;
   margin-top:6px;
-  color:#77716a;
+  color:#6b7280;
   font-size:12px;
   line-height:1.4;
 }
@@ -1746,11 +1746,11 @@ td{
   margin:20px 0 0;
   padding:20px;
   background:#ffffff;
-  border:1px solid #e7e1d7;
+  border:1px solid #e3e7ec;
   border-radius:16px;
   box-shadow:
     0 10px 28px
-    rgba(37, 30, 25, 0.06);
+    rgba(15,23,42, 0.06);
 }
 
 .bonus-almoxarifado-card::before{
@@ -1760,7 +1760,7 @@ td{
   left:0;
   right:0;
   height:4px;
-  background:#5a5a55;
+  background:#123f86;
 }
 
 .bonus-almoxarifado-card.elegivel::before{
@@ -1789,14 +1789,14 @@ td{
 
 .bonus-almoxarifado-titulo{
   margin:0;
-  color:#251e19;
+  color:#1d2330;
   font-size:20px;
   font-weight:700;
 }
 
 .bonus-almoxarifado-subtitulo{
   margin:5px 0 0;
-  color:#77716a;
+  color:#6b7280;
   font-size:14px;
   line-height:1.5;
 }
@@ -1809,8 +1809,8 @@ td{
   min-height:28px;
   padding:5px 11px;
   border-radius:999px;
-  background:#e7e1d7;
-  color:#5c554e;
+  background:#e3e7ec;
+  color:#4b5563;
   font-size:13px;
   font-weight:700;
   white-space:nowrap;
@@ -1849,22 +1849,22 @@ td{
 .bonus-almoxarifado-item{
   min-width:0;
   padding:13px 14px;
-  background:#fbfaf6;
-  border:1px solid #e7e1d7;
+  background:#fafbfc;
+  border:1px solid #e3e7ec;
   border-radius:12px;
 }
 
 .bonus-almoxarifado-item-label{
   display:block;
   margin-bottom:6px;
-  color:#77716a;
+  color:#6b7280;
   font-size:12px;
   line-height:1.35;
 }
 
 .bonus-almoxarifado-item-valor{
   display:block;
-  color:#251e19;
+  color:#1d2330;
   font-size:19px;
   font-weight:700;
   line-height:1.2;
@@ -1892,10 +1892,10 @@ td{
   padding:16px 18px;
   background:linear-gradient(
     135deg,
-    #fbfaf6,
-    #f3eee5
+    #fafbfc,
+    #f0f2f5
   );
-  border:1px solid #e7e1d7;
+  border:1px solid #e3e7ec;
   border-radius:14px;
 }
 
@@ -1903,13 +1903,13 @@ td{
 .bonus-almoxarifado-valor-label{
   display:block;
   margin-bottom:4px;
-  color:#77716a;
+  color:#6b7280;
   font-size:12px;
 }
 
 .bonus-almoxarifado-percentual-valor{
   display:block;
-  color:#5a5a55;
+  color:#4b5563;
   font-size:20px;
   font-weight:800;
 }
@@ -1946,7 +1946,7 @@ td{
 
 .bonus-almoxarifado-mensagem{
   margin-top:11px;
-  color:#77716a;
+  color:#6b7280;
   font-size:13px;
   line-height:1.5;
 }
@@ -1999,7 +1999,7 @@ td{
    TEMA CATÁLOGO — tipografia e acabamento da Central
    Mesma identidade do catálogo (meu-sistema):
    Cormorant Garamond nos títulos, Manrope no texto,
-   grafite #5a5a55 como cor predominante, fundo #f8f6f0.
+   grafite #123f86 como cor predominante, fundo #f7f9fb.
 ========================================================= */
 
 body{
@@ -2035,7 +2035,7 @@ h1{
   padding:20px 24px;
   border-color:var(--line);
   border-radius:18px;
-  box-shadow:0 1px 3px rgba(37, 30, 25, 0.05);
+  box-shadow:0 1px 3px rgba(15,23,42, 0.05);
 }
 
 .toolbar input[type="month"]{
@@ -2043,7 +2043,7 @@ h1{
   padding:0 14px;
   border:1px solid var(--line);
   border-radius:999px;
-  background:#f8f6f0;
+  background:#f7f9fb;
   color:var(--text);
   font-weight:600;
 }
@@ -2072,8 +2072,8 @@ h1{
   padding:5px 6px;
   border:1px solid var(--line);
   border-radius:999px;
-  background:#f8f6f0;
-  box-shadow:0 1px 3px rgba(37, 30, 25, 0.05);
+  background:#f7f9fb;
+  box-shadow:0 1px 3px rgba(15,23,42, 0.05);
 }
 
 .aba-central-btn{
@@ -2336,7 +2336,7 @@ th{
   border:1px solid var(--line);
   border-radius:18px;
   background:#ffffff;
-  box-shadow:0 1px 3px rgba(37, 30, 25, 0.05);
+  box-shadow:0 1px 3px rgba(15,23,42, 0.05);
 }
 
 .pag-bonus-kpi-rotulo{
@@ -2415,7 +2415,7 @@ th{
   border:1px solid var(--line);
   border-radius:18px;
   background:#ffffff;
-  box-shadow:0 1px 3px rgba(37, 30, 25, 0.05);
+  box-shadow:0 1px 3px rgba(15,23,42, 0.05);
 }
 
 .pag-bonus-card-largo{
@@ -2498,7 +2498,7 @@ th{
 }
 
 .pag-bonus-grafico .grade{
-  stroke:#efeae2;
+  stroke:#eceff3;
   stroke-width:1;
 }
 
@@ -2518,7 +2518,7 @@ th{
 
 .pag-bonus-grafico g.item:hover .faixa,
 .pag-bonus-grafico g.item:focus .faixa{
-  fill:#f8f6f0;
+  fill:#f7f9fb;
 }
 
 .pag-bonus-grafico g.item:hover .marca,
@@ -2546,7 +2546,7 @@ th{
   align-items:center;
   gap:12px;
   padding:11px 0;
-  border-top:1px solid #efeae2;
+  border-top:1px solid #eceff3;
   font-size:15px;
 }
 
@@ -2664,7 +2664,7 @@ th{
 
 .btn-pag-bonus-liberar:hover,
 .btn-pag-bonus-salvar:hover{
-  background:#2f2f2b;
+  background:#0d2f66;
 }
 
 .btn-pag-bonus-descartar{
@@ -2680,8 +2680,8 @@ th{
 
 .pag-bonus-controles button:disabled,
 .pag-bonus-controles button:disabled:hover{
-  background:#e7e1d7;
-  color:#77716a;
+  background:#e3e7ec;
+  color:#6b7280;
   cursor:not-allowed;
 }
 
@@ -2718,7 +2718,7 @@ th{
 .tabela-pag-bonus td{
   padding:9px 12px;
   font-size:15px;
-  border-bottom:1px solid #efeae2;
+  border-bottom:1px solid #eceff3;
   text-align:right !important;
   white-space:nowrap;
   font-weight:500;
@@ -2728,7 +2728,7 @@ th{
 .tabela-pag-bonus thead th{
   position:sticky;
   z-index:2;
-  background:#fbfaf6;
+  background:#fafbfc;
   color:var(--text);
   font-size:13px;
   font-weight:700;
@@ -2772,7 +2772,7 @@ th{
 
 .tabela-pag-bonus thead .col-pessoa{
   z-index:3;
-  background:#fbfaf6;
+  background:#fafbfc;
   font-family:var(--sans) !important;
   font-size:13px !important;
   font-weight:700 !important;
@@ -2796,7 +2796,7 @@ th{
 }
 
 .tabela-pag-bonus td.sem-valor{
-  color:#d4d4cc;
+  color:#d3d8de;
   text-align:center !important;
 }
 
@@ -2818,7 +2818,7 @@ th{
 .tabela-pag-bonus input.pag-bonus-input:focus{
   outline:none;
   border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(90, 90, 85, 0.2);
+  box-shadow:0 0 0 3px rgba(18,63,134, 0.2);
 }
 
 .tabela-pag-bonus input.pag-bonus-input:disabled{
@@ -2829,7 +2829,7 @@ th{
 
 .tabela-pag-bonus input.pag-bonus-input.alterado{
   border-color:var(--accent-dark);
-  background:#f0f0eb;
+  background:#eff1f4;
 }
 
 .tabela-pag-bonus td.status-ok{
@@ -2861,13 +2861,13 @@ th{
 
 .tabela-pag-bonus td.coluna-total{
   font-weight:700;
-  background:#fbfaf6;
+  background:#fafbfc;
 }
 
 .tabela-pag-bonus tfoot td{
   position:sticky;
   bottom:0;
-  background:#f3eee5;
+  background:#f0f2f5;
   color:var(--text);
   font-weight:700;
   border-top:1px solid var(--line);
@@ -2875,7 +2875,7 @@ th{
 
 .tabela-pag-bonus tfoot td.col-pessoa{
   z-index:2;
-  background:#f3eee5;
+  background:#f0f2f5;
   font-family:var(--serif);
   font-size:17px;
   letter-spacing:.12em;
@@ -3018,10 +3018,10 @@ th{
 
 :root{
   --bg:#ffffff;
-  --borda-card:#eee8df;
+  --borda-card:#e3e7ec;
   --sombra-card:
-    0 1px 2px rgba(37, 30, 25, 0.04),
-    0 10px 30px rgba(37, 30, 25, 0.07);
+    0 1px 2px rgba(15,23,42, 0.04),
+    0 10px 30px rgba(15,23,42, 0.07);
 }
 
 html,
@@ -3075,11 +3075,11 @@ th,
 }
 
 td{
-  border-bottom-color:#f3efe8;
+  border-bottom-color:#edf0f3;
 }
 
 tbody tr:nth-child(even){
-  background:#fcfbf8;
+  background:#fafbfc;
 }
 
 .tabela-pag-bonus thead th{
@@ -3097,7 +3097,7 @@ tbody tr:nth-child(even){
 
 .tabela-pag-bonus tfoot td,
 .tabela-pag-bonus tfoot td.col-pessoa{
-  background:#faf7f2;
+  background:#f8f9fb;
 }
 
 /* Indicador principal: branco, valor em bronze */
@@ -3127,14 +3127,14 @@ tbody tr:nth-child(even){
 }
 
 .abas-central{
-  background:#faf8f4;
+  background:#f8f9fb;
   box-shadow:none;
 }
 
 /* Títulos das tabelas: barra no grafite do catálogo */
 .table-box > div:first-child,
 .card-tabela-metas-header{
-  background:#5a5a55 !important;
+  background:#123f86 !important;
   color:#ffffff !important;
   border-bottom:none !important;
 }
@@ -3235,7 +3235,7 @@ tbody tr:nth-child(even){
 .cabecalho-central .aba-central-btn.active,
 .cabecalho-central .aba-central-btn.active:hover{
   color:var(--text);
-  border-bottom-color:#5a5a55;
+  border-bottom-color:#123f86;
 }
 
 /* Linha do título (out/2026): mês à esquerda, título no centro, botões à direita */
@@ -3361,8 +3361,8 @@ body.central-bloqueada .tela-acesso-central{
 
 .tela-acesso-campo:focus{
   outline:none;
-  border-color:#5a5a55;
-  box-shadow:0 0 0 3px rgba(90, 90, 85, 0.15);
+  border-color:#123f86;
+  box-shadow:0 0 0 3px rgba(18,63,134, 0.15);
 }
 
 .tela-acesso-erro{
@@ -3377,7 +3377,7 @@ body.central-bloqueada .tela-acesso-central{
   height:46px;
   border:0;
   border-radius:999px;
-  background:#5a5a55;
+  background:#123f86;
   color:#ffffff;
   font:700 14px var(--sans);
   letter-spacing:.16em;
@@ -3386,11 +3386,11 @@ body.central-bloqueada .tela-acesso-central{
 }
 
 .tela-acesso-botao:hover{
-  background:#44443f;
+  background:#123f86;
 }
 
 .tela-acesso-botao:disabled{
-  background:#9a9a92;
+  background:#959ca6;
   cursor:wait;
 }
 
@@ -3439,9 +3439,9 @@ body.central-bloqueada .tela-acesso-central{
   margin-left:auto;
   height:38px;
   padding:0 18px;
-  border:1px solid #5a5a55;
+  border:1px solid #123f86;
   border-radius:999px;
-  background:#5a5a55;
+  background:#123f86;
   color:#ffffff;
   font:700 13px var(--sans);
   letter-spacing:.08em;
@@ -3564,7 +3564,7 @@ body.central-bloqueada .tela-acesso-central{
   border:1px solid var(--line);
   border-radius:12px;
   overflow:hidden;
-  background:#fcfbf8;
+  background:#fafbfc;
 }
 
 .prem-item-foto{
@@ -3572,7 +3572,7 @@ body.central-bloqueada .tela-acesso-central{
   align-items:center;
   justify-content:center;
   height:130px;
-  background:#ecece6;
+  background:#e9ecef;
   color:var(--muted);
   font-size:13px;
   text-decoration:none;
@@ -3625,10 +3625,10 @@ body.central-bloqueada .tela-acesso-central{
 
 .prem-item-novo{
   min-height:130px;
-  border:1px dashed #9a9a92;
+  border:1px dashed #959ca6;
   border-radius:12px;
   background:transparent;
-  color:#5a5a55;
+  color:#4b5563;
   font:600 14px var(--sans);
   cursor:pointer;
 }
@@ -3685,7 +3685,7 @@ body.central-bloqueada .tela-acesso-central{
   bottom:6px;
   padding:1px 7px;
   border-radius:999px;
-  background:rgba(37, 30, 25, 0.62);
+  background:rgba(15,23,42, 0.62);
   color:#ffffff;
   font-size:10.5px;
   font-weight:700;
@@ -3778,7 +3778,7 @@ body.central-bloqueada .tela-acesso-central{
 }
 
 .pag-bonus-aba.ativa{
-  background:#5a5a55;
+  background:#123f86;
   color:#ffffff;
 }
 
@@ -3790,7 +3790,7 @@ body.central-bloqueada .tela-acesso-central{
 .pag-bonus-card-tabela .pag-bonus-card-cabecalho{
   align-items:center;
   padding:14px 16px !important;
-  background:#5a5a55;
+  background:#123f86;
   border-bottom:none !important;
 }
 
@@ -3802,12 +3802,12 @@ body.central-bloqueada .tela-acesso-central{
 .pag-bonus-card-tabela .btn-pag-bonus-liberar,
 .pag-bonus-card-tabela .btn-pag-bonus-salvar{
   background:#ffffff;
-  color:#44443f;
+  color:#2b3240;
 }
 
 .pag-bonus-card-tabela .btn-pag-bonus-liberar:hover,
 .pag-bonus-card-tabela .btn-pag-bonus-salvar:hover{
-  background:#ecece6;
+  background:#e9ecef;
 }
 
 .pag-bonus-card-tabela .btn-pag-bonus-descartar{
@@ -3924,17 +3924,17 @@ body.central-bloqueada .tela-acesso-central{
 .equipe-btn{
   height:36px;
   padding:0 14px;
-  border:1px solid #5a5a55;
+  border:1px solid #123f86;
   border-radius:999px;
   background:#ffffff;
-  color:#44443f;
+  color:#2b3240;
   font:700 12px var(--sans);
   letter-spacing:.06em;
   text-transform:uppercase;
   cursor:pointer;
 }
 
-.equipe-btn.cheio{ background:#44443f; color:#ffffff; }
+.equipe-btn.cheio{ background:#123f86; color:#ffffff; }
 
 .equipe-btn:disabled{ opacity:.55; cursor:wait; }
 
@@ -3972,7 +3972,7 @@ body.central-bloqueada .tela-acesso-central{
   display:grid;
   place-items:center;
   font:600 24px var(--serif);
-  color:#44443f;
+  color:#2b3240;
   cursor:pointer;
   border:0;
   padding:0;
@@ -4030,7 +4030,7 @@ body.central-bloqueada .tela-acesso-central{
 .equipe-pin-link{
   border:0;
   background:none;
-  color:#44443f;
+  color:#2b3240;
   font:700 12px var(--sans);
   text-decoration:underline;
   cursor:pointer;
@@ -4062,7 +4062,7 @@ body.central-bloqueada .tela-acesso-central{
   font-variant-numeric:tabular-nums;
 }
 </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-azul">
 </head>
 
 <body class="central-bloqueada">
@@ -4253,7 +4253,7 @@ colspan="10"
             style="
               text-align:center;
               padding:28px;
-              color:#77716a;
+              color:#6b7280;
             "
           >
             Carregando funcionários...
@@ -4306,7 +4306,7 @@ colspan="10"
 <!-- 🔥 O.S ESTOFADOS -->
 <div class="table-box">
 
-  <div style="padding:14px 16px; background:#5a5a55; color:#ffffff; border-top-left-radius:inherit; border-top-right-radius:inherit; font-weight:600;">
+  <div style="padding:14px 16px; background:#123f86; color:#ffffff; border-top-left-radius:inherit; border-top-right-radius:inherit; font-weight:600;">
     O.S - Estofados
   </div>
 
@@ -4642,8 +4642,8 @@ Carregando...
           <h3>Volume mensal</h3>
         </div>
         <div class="pag-bonus-legenda-grafico">
-          <span><i style="background:#44443f;"></i>Pago</span>
-          <span><i style="background:#9a9a92;"></i>A pagar</span>
+          <span><i style="background:#123f86;"></i>Pago</span>
+          <span><i style="background:#959ca6;"></i>A pagar</span>
         </div>
       </div>
       <div class="pag-bonus-grafico" id="graficoPagMensal"></div>
@@ -4664,8 +4664,8 @@ Carregando...
           <h3>Maiores bônus do ano</h3>
         </div>
         <div class="pag-bonus-legenda-grafico">
-          <span><i style="background:#44443f;"></i>Pago</span>
-          <span><i style="background:#9a9a92;"></i>A pagar</span>
+          <span><i style="background:#123f86;"></i>Pago</span>
+          <span><i style="background:#959ca6;"></i>A pagar</span>
         </div>
       </div>
       <div class="pag-bonus-grafico" id="graficoPagRanking"></div>
@@ -6341,21 +6341,21 @@ function renderPagamentosBonus(){
    GRÁFICOS DO PAINEL DE PAGAMENTOS
 
    Cores validadas (dataviz validate_palette.js):
-   - pago / a pagar: rampa de grafite #44443f → #9a9a92
+   - pago / a pagar: rampa de grafite #123f86 → #959ca6
    - equipes: terracota, petróleo e oliva, em ordem fixa
      (a cor acompanha a equipe, nunca a posição)
 ========================================================= */
 
 const CORES_PAG_BONUS = {
-  pago: "#44443f",
-  aPagar: "#9a9a92"
+  pago: "#123f86",
+  aPagar: "#959ca6"
 };
 
 const EQUIPES_PAG_BONUS = [
   { chave: "ESTOFADOS", nome: "Estofados", cor: "#b0703f" },
   { chave: "ESTRUTURA", nome: "Estrutura", cor: "#00769a" },
   { chave: "SUPERVISOR", nome: "Supervisão", cor: "#8c8a3a" },
-  { chave: "OUTROS", nome: "Outros", cor: "#a39d94" }
+  { chave: "OUTROS", nome: "Outros", cor: "#9ca3af" }
 ];
 
 const SVG_NS_PAG_BONUS = "http://www.w3.org/2000/svg";
@@ -6819,7 +6819,7 @@ function graficoMensalPagamentosBonus(container, porMes, ano){
       grupo,
       nomeMes,
       [
-        { cor: "#251e19", valor: moedaPagamentosBonus(item.devido), rotulo: "a receber" },
+        { cor: "#1d2330", valor: moedaPagamentosBonus(item.devido), rotulo: "a receber" },
         { cor: CORES_PAG_BONUS.pago, valor: moedaPagamentosBonus(item.pago), rotulo: "pago" },
         { cor: CORES_PAG_BONUS.aPagar, valor: moedaPagamentosBonus(Math.max(0, item.devido - item.pago)), rotulo: "a pagar" }
       ],
@@ -7069,7 +7069,7 @@ function graficoRankingPagamentosBonus(container, porPessoa){
       grupo,
       pessoa.nome,
       [
-        { cor: "#251e19", valor: moedaPagamentosBonus(pessoa.devido), rotulo: "a receber no ano" },
+        { cor: "#1d2330", valor: moedaPagamentosBonus(pessoa.devido), rotulo: "a receber no ano" },
         { cor: CORES_PAG_BONUS.pago, valor: moedaPagamentosBonus(pessoa.pago), rotulo: "pago" },
         { cor: CORES_PAG_BONUS.aPagar, valor: moedaPagamentosBonus(Math.max(0, pessoa.devido - pessoa.pago)), rotulo: "a pagar" }
       ],
@@ -7573,13 +7573,13 @@ function carregar(){
             <div style="
               width:30px;
               height:30px;
-              border:3px solid #e7e1d7;
-              border-top:3px solid #5a5a55;
+              border:3px solid #e3e7ec;
+              border-top:3px solid #123f86;
               border-radius:50%;
               animation:spin 1s linear infinite;
             "></div>
 
-            <span style="color:#77716a;">
+            <span style="color:#6b7280;">
               Carregando avaliação individual...
             </span>
 
@@ -7606,13 +7606,13 @@ function carregar(){
           <div style="
             width:30px;
             height:30px;
-            border:3px solid #e7e1d7;
-            border-top:3px solid #5a5a55;
+            border:3px solid #e3e7ec;
+            border-top:3px solid #123f86;
             border-radius:50%;
             animation:spin 1s linear infinite;
           "></div>
 
-          <span style="color:#77716a;">Carregando dados...</span>
+          <span style="color:#6b7280;">Carregando dados...</span>
         </div>
       </td>
     </tr>
@@ -7706,13 +7706,13 @@ tbodyEventos.innerHTML = `
         <div style="
           width:30px;
           height:30px;
-          border:3px solid #e7e1d7;
-          border-top:3px solid #5a5a55;
+          border:3px solid #e3e7ec;
+          border-top:3px solid #123f86;
           border-radius:50%;
           animation:spin 1s linear infinite;
         "></div>
 
-        <span style="color:#77716a;">Carregando eventos...</span>
+        <span style="color:#6b7280;">Carregando eventos...</span>
 
       </div>
     </td>
@@ -7746,13 +7746,13 @@ tbodyEventos.innerHTML = `
           <div style="
             width:30px;
             height:30px;
-            border:3px solid #e7e1d7;
-            border-top:3px solid #5a5a55;
+            border:3px solid #e3e7ec;
+            border-top:3px solid #123f86;
             border-radius:50%;
             animation:spin 1s linear infinite;
           "></div>
 
-          <span style="color:#77716a;">
+          <span style="color:#6b7280;">
             Carregando O.S...
           </span>
 
@@ -7787,7 +7787,7 @@ function render(lista){
   style="
     text-align:center;
     padding:28px;
-    color:#77716a;
+    color:#6b7280;
   "
 >
           Nenhum indicador de setor encontrado
@@ -7872,7 +7872,7 @@ function render(lista){
 
         <div style="
           font-size:11px;
-          color:#77716a;
+          color:#6b7280;
         ">
           Meta: ${textoMeta}
         </div>
@@ -7978,7 +7978,7 @@ const gastoOk =
 
             <div style="
               font-size:11px;
-              color:#77716a;
+              color:#6b7280;
             ">
               Meta:
               ${
@@ -8228,13 +8228,13 @@ tbody.innerHTML = `
         <div style="
           width:35px;
           height:35px;
-          border:4px solid #e7e1d7;
-          border-top:4px solid #5a5a55;
+          border:4px solid #e3e7ec;
+          border-top:4px solid #123f86;
           border-radius:50%;
           animation:spin 1s linear infinite;
         "></div>
 
-        <span style="color:#77716a; font-size:14px;">
+        <span style="color:#6b7280; font-size:14px;">
           Carregando metas...
         </span>
 
@@ -8354,7 +8354,7 @@ function renderEventos(lista){
           style="
             text-align:center;
             padding:30px;
-            color:#77716a;
+            color:#6b7280;
           "
         >
           Nenhum evento encontrado
@@ -8621,7 +8621,7 @@ function renderOS(lista){
           style="
             text-align:center;
             padding:30px;
-            color:#77716a;
+            color:#6b7280;
           "
         >
           Nenhuma O.S. de Estofados encontrada
@@ -8636,7 +8636,7 @@ function renderOS(lista){
           style="
             text-align:center;
             padding:30px;
-            color:#77716a;
+            color:#6b7280;
           "
         >
           Nenhuma O.S. de Solda, Pintura ou Marcenaria encontrada
@@ -8755,7 +8755,7 @@ if(
         <td
           style="
             font-weight:600;
-            color:#44443f;
+            color:#2b3240;
           "
         >
           ${o.os || ""}
@@ -8784,7 +8784,7 @@ if(
 
         <td
           style="
-            color:#44443f;
+            color:#2b3240;
             font-weight:500;
           "
         >
@@ -8794,7 +8794,7 @@ if(
         <td
           style="
             max-width:250px;
-            color:#5c554e;
+            color:#4b5563;
           "
         >
           ${o.detalhes || ""}
@@ -8848,7 +8848,7 @@ if(
           style="
             text-align:center;
             padding:30px;
-            color:#77716a;
+            color:#6b7280;
           "
         >
           Nenhuma O.S. de Estofados encontrada
@@ -8906,7 +8906,7 @@ if(
           style="
             text-align:center;
             padding:30px;
-            color:#77716a;
+            color:#6b7280;
           "
         >
           Nenhuma O.S. de Solda, Pintura ou Marcenaria encontrada
@@ -8985,12 +8985,12 @@ atualizarCardBonusAlmoxarifado(
             <div style="
               width:30px;
               height:30px;
-              border:3px solid #e7e1d7;
-              border-top:3px solid #5a5a55;
+              border:3px solid #e3e7ec;
+              border-top:3px solid #123f86;
               border-radius:50%;
               animation:spin 1s linear infinite;
             "></div>
-            <span style="color:#77716a;">Carregando metas do almoxarifado...</span>
+            <span style="color:#6b7280;">Carregando metas do almoxarifado...</span>
           </div>
         </td>
       </tr>
@@ -9005,12 +9005,12 @@ atualizarCardBonusAlmoxarifado(
             <div style="
               width:30px;
               height:30px;
-              border:3px solid #e7e1d7;
-              border-top:3px solid #5a5a55;
+              border:3px solid #e3e7ec;
+              border-top:3px solid #123f86;
               border-radius:50%;
               animation:spin 1s linear infinite;
             "></div>
-            <span style="color:#77716a;">Carregando divergências...</span>
+            <span style="color:#6b7280;">Carregando divergências...</span>
           </div>
         </td>
       </tr>
@@ -9081,7 +9081,7 @@ function renderAlmoxarifado(res){
           style="
             text-align:center;
             padding:24px;
-            color:#77716a;
+            color:#6b7280;
           "
         >
           Nenhum registro encontrado
@@ -9183,7 +9183,7 @@ function renderAlmoxarifado(res){
         <div
           style="
             font-size:11px;
-            color:#77716a;
+            color:#6b7280;
           "
         >
           Limite: ${meta}
@@ -9222,7 +9222,7 @@ tbody.innerHTML = `
         <div style="color:${corMetaContagem}; font-weight:700;">
           ${Number(a.metaContagem || 0)}%
         </div>
-        <div style="font-size:11px;color:#77716a;">
+        <div style="font-size:11px;color:#6b7280;">
           Meta: 100%
         </div>
       </td>
@@ -9231,7 +9231,7 @@ tbody.innerHTML = `
         <div style="color:${corAssertividade}; font-weight:700;">
           ${Number(a.assertividade || 0)}%
         </div>
-        <div style="font-size:11px;color:#77716a;">
+        <div style="font-size:11px;color:#6b7280;">
           Meta: 85%
         </div>
       </td>
@@ -9240,7 +9240,7 @@ tbody.innerHTML = `
         <div style="color:var(--green); font-weight:700;">
           ${formatarMoedaCentral(a.comprasMes || 0)}
         </div>
-        <div style="font-size:11px;color:#77716a;">
+        <div style="font-size:11px;color:#6b7280;">
           ${a.mes || "-"}
         </div>
       </td>
@@ -9249,7 +9249,7 @@ tbody.innerHTML = `
         <div style="color:${corTeto}; font-weight:700;">
           ${Number(a.tetoGasto || 0)}%
         </div>
-        <div style="font-size:11px;color:#77716a;">
+        <div style="font-size:11px;color:#6b7280;">
           Meta: 100%
         </div>
       </td>
@@ -9831,7 +9831,7 @@ function renderDivergenciasContagem(lista){
           style="
             text-align:center;
             padding:24px;
-            color:#77716a;
+            color:#6b7280;
           "
         >
           Nenhuma divergência de contagem encontrada neste mês
@@ -9935,7 +9935,7 @@ function renderDivergenciasContagem(lista){
           <td
             style="
               font-weight:600;
-              color:#44443f;
+              color:#2b3240;
               white-space:nowrap;
             "
           >
@@ -10032,7 +10032,7 @@ function renderDivergenciasContagem(lista){
           <td
             style="
               max-width:280px;
-              color:#5c554e;
+              color:#4b5563;
             "
           >
 
@@ -10505,7 +10505,7 @@ function renderAvaliacaoIndividualRH(lista){
           style="
             text-align:center;
             padding:28px;
-            color:#77716a;
+            color:#6b7280;
           "
         >
           Nenhum funcionário encontrado
@@ -10551,7 +10551,7 @@ function renderAvaliacaoIndividualRH(lista){
 
         <div style="
           margin-top:3px;
-          color:#77716a;
+          color:#6b7280;
           font-size:11px;
         ">
           Limite: ${metaNumero}
@@ -12391,7 +12391,7 @@ function formatarDataHoraFechamentoCentral(
         style="
           border:none;
           background:transparent;
-          color:#77716a;
+          color:#6b7280;
           font-size:22px;
           cursor:pointer;
         "
@@ -12500,9 +12500,9 @@ function formatarDataHoraFechamentoCentral(
 
   </div>
 </div>
-<link rel="stylesheet" href="ciencia-danos.css?v=20261014-rh">
+<link rel="stylesheet" href="ciencia-danos.css?v=20261018-azul">
 <script src="ciencia-danos.js?v=20261014-rh"></script>
-<link rel="stylesheet" href="operacao.css?v=20261014-rh">
+<link rel="stylesheet" href="operacao.css?v=20261018-azul">
 <script src="operacao.js?v=20261014-distribuicao"></script>
 </body>
 </html>

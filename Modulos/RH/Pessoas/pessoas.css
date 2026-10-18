@@ -1,18 +1,18 @@
 /* Gestão de Pessoas (out/2026) — usa o visual do Financeiro (financeiro.css) + o que é só do RH. */
 .rh-pessoas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.rh-pessoa{display:flex;gap:12px;align-items:center;text-align:left;background:#fff;border:1px solid #e7e1d6;border-radius:14px;padding:12px 14px;cursor:pointer;font:inherit;color:inherit;width:100%}
+.rh-pessoa{display:flex;gap:12px;align-items:center;text-align:left;background:#fff;border:1px solid #e3e7ec;border-radius:14px;padding:12px 14px;cursor:pointer;font:inherit;color:inherit;width:100%}
 .rh-pessoa:hover,.rh-pessoa:focus-visible{border-color:#b9a98f;box-shadow:0 6px 18px rgba(44,42,38,.07)}
 .rh-pessoa.desligado{opacity:.6}
 .rh-pessoa-info{min-width:0;flex:1}
 .rh-pessoa-info strong{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rh-pessoa-info small{display:block;color:#77716a;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rh-pessoa-info small{display:block;color:#6b7280;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rh-pessoa-selos{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 
-.rh-foto{position:relative;flex:none;width:46px;height:46px;border-radius:50%;background:#efe9df;color:#6b5a43;display:grid;place-items:center;font:600 15px Inter,sans-serif;overflow:hidden}
+.rh-foto{position:relative;flex:none;width:46px;height:46px;border-radius:50%;background:#eceff3;color:#6b5a43;display:grid;place-items:center;font:600 15px Inter,sans-serif;overflow:hidden}
 .rh-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .rh-foto.grande{width:88px;height:88px;font-size:26px}
 
-.rh-selo{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;background:#f1efea;color:#5f5b54;white-space:nowrap}
+.rh-selo{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;background:#eef0f3;color:#5b6372;white-space:nowrap}
 .rh-selo.verm{background:#fbeceb;color:#b0362d}
 .rh-selo.amar{background:#fff4dd;color:#8a5a00}
 .rh-selo.verde{background:#e8f6ee;color:#23693f}
@@ -20,31 +20,31 @@
 .rh-selo.lilas{background:#f4effc;color:#5b3fae}
 
 .rh-grupo-titulo{margin:22px 0 10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#8a6c48;display:flex;align-items:center;gap:8px}
-.rh-grupo-titulo span{color:#77716a;letter-spacing:0;text-transform:none}
+.rh-grupo-titulo span{color:#6b7280;letter-spacing:0;text-transform:none}
 
 /* ficha */
-.rh-ficha-topo{display:flex;flex-wrap:wrap;gap:18px;align-items:center;background:#fff;border:1px solid #e7e1d6;border-radius:16px;padding:18px;margin-bottom:14px}
+.rh-ficha-topo{display:flex;flex-wrap:wrap;gap:18px;align-items:center;background:#fff;border:1px solid #e3e7ec;border-radius:16px;padding:18px;margin-bottom:14px}
 .rh-ficha-topo h3{margin:0;font:500 26px "Cormorant Garamond",Georgia,serif}
-.rh-ficha-topo p{margin:4px 0 0;color:#6b665e;font-size:14px}
+.rh-ficha-topo p{margin:4px 0 0;color:#5b6372;font-size:14px}
 .rh-ficha-topo .rh-ficha-acoes{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px}
 .rh-voltar{margin-bottom:12px}
-.rh-subabas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;border-bottom:1px solid #e7e1d6}
-.rh-subabas button{border:0;background:none;padding:10px 14px;font:600 14px Inter,sans-serif;color:#77716a;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
-.rh-subabas button.ativa{color:#2c2a26;border-bottom-color:#44443f}
+.rh-subabas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;border-bottom:1px solid #e3e7ec}
+.rh-subabas button{border:0;background:none;padding:10px 14px;font:600 14px Inter,sans-serif;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.rh-subabas button.ativa{color:#2c2a26;border-bottom-color:#123f86}
 .rh-dados{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 22px}
-.rh-dados div{padding:8px 0;border-bottom:1px solid #f1ede5}
-.rh-dados dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#77716a}
+.rh-dados div{padding:8px 0;border-bottom:1px solid #eef0f3}
+.rh-dados dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b7280}
 .rh-dados dd{margin:3px 0 0;font-size:14px;color:#2c2a26;word-break:break-word}
 .rh-dados-titulo{grid-column:1/-1;margin:14px 0 2px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#8a6c48;border:0!important}
 
 .rh-check{list-style:none;margin:0;padding:0}
-.rh-check li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1ede5;font-size:14px}
-.rh-check li.feito span{color:#9a958d;text-decoration:line-through}
+.rh-check li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eef0f3;font-size:14px}
+.rh-check li.feito span{color:#959ca6;text-decoration:line-through}
 .rh-check input{width:18px;height:18px;accent-color:#2f7a4b}
-.rh-barra{height:6px;border-radius:999px;background:#eee8dd;overflow:hidden;margin:8px 0 4px}
+.rh-barra{height:6px;border-radius:999px;background:#e9ecf0;overflow:hidden;margin:8px 0 4px}
 .rh-barra i{display:block;height:100%;background:#2f7a4b}
 
-.rh-marcar{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 14px;max-height:300px;overflow:auto;border:1px solid #eee8dd;border-radius:10px;padding:10px}
+.rh-marcar{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 14px;max-height:300px;overflow:auto;border:1px solid #e9ecf0;border-radius:10px;padding:10px}
 .rh-marcar label{flex-direction:row!important;align-items:center;gap:8px!important;font-weight:500!important;font-size:13px!important;color:#2c2a26!important}
 .rh-marcar input{width:auto!important;height:auto!important}
 .rh-links{display:flex;flex-wrap:wrap;gap:10px;font-size:12.5px}

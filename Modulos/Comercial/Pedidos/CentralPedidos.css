@@ -698,7 +698,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 /* Projetos montados pelo decorador no catálogo (out/2026) — selo no lugar do número do pedido. */
 .pedido-selo-catalogo{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid rgba(177,138,90,.5);border-radius:999px;background:#fbf6ee;color:#7a5a34;font-size:12px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
 .pedido-selo-catalogo::before{content:"";width:6px;height:6px;border-radius:50%;background:#b18a5a}
-.status-pill.catalogo_rascunho{background:#f3f1ec;color:#5a5a55}
+.status-pill.catalogo_rascunho{background:#f3f1ec;color:#4b5563}
 .status-pill.catalogo_pedido_enviado{background:#fbf4de;color:#7a5b12}
 .status-pill.catalogo_em_analise{background:#e8f0fb;color:#1e3a8a}
 .status-pill.catalogo_convertido{background:#dcfce7;color:#166534}

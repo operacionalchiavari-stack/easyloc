@@ -18,17 +18,17 @@
 ========================================================= */
 
 :root{
-  --primary:#5a5a55;
-  --primary-dark:#44443f;
+  --primary:#123f86;
+  --primary-dark:#123f86;
   --bg:#ffffff;
-  --fundo-suave:#f8f6f0;
+  --fundo-suave:#f7f9fb;
   --card:#ffffff;
-  --line:#e7e1d7;
-  --borda-card:#eee8df;
-  --linha-tabela:#f3efe8;
-  --text:#251e19;
-  --muted:#77716a;
-  --accent-soft:#ecece6;
+  --line:#e3e7ec;
+  --borda-card:#e3e7ec;
+  --linha-tabela:#edf0f3;
+  --text:#1d2330;
+  --muted:#6b7280;
+  --accent-soft:#e9ecef;
   --serif:"Cormorant Garamond", Georgia, serif;
   --sans:"Manrope", system-ui, sans-serif;
   --green:#16a34a;
@@ -36,7 +36,7 @@
   --yellow-soft:#fef3c7;
   --red:#dc2626;
   --red-soft:#fee2e2;
-  --sombra-card:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+  --sombra-card:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
 }
 
 *{ box-sizing:border-box; }
@@ -191,7 +191,7 @@ button, input, select, textarea{ font-family:inherit; }
 
 .campo input:focus{ border-color:var(--primary); background:#ffffff; }
 
-.campo input[readonly]{ color:var(--muted); background:#f1efea; cursor:default; }
+.campo input[readonly]{ color:var(--muted); background:#eef0f3; cursor:default; }
 
 .campo.erro input{ border-color:#fca5a5; background:#fef2f2; }
 .campo.erro .opcao{ border-color:#fca5a5; }
@@ -258,7 +258,7 @@ td{
   vertical-align:middle;
 }
 
-tbody tr:nth-child(even){ background:#fcfbf8; }
+tbody tr:nth-child(even){ background:#fafbfc; }
 
 .col-pedido{ font-weight:600; color:#2563eb; white-space:nowrap; }
 .col-data{ color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
@@ -320,7 +320,7 @@ th.col-num{ text-align:right; }
   align-items:flex-start;
   justify-content:center;
   padding:10vh 16px 24px;
-  background:rgba(37,30,25,.45);
+  background:rgba(15,23,42,.45);
   overflow-y:auto;
 }
 
@@ -330,7 +330,7 @@ th.col-num{ text-align:right; }
   width:min(420px, 100%);
   border-radius:18px;
   background:#ffffff;
-  box-shadow:0 24px 70px rgba(37,30,25,.25);
+  box-shadow:0 24px 70px rgba(15,23,42,.25);
   display:flex;
   flex-direction:column;
 }
@@ -400,7 +400,7 @@ th.col-num{ text-align:right; }
   color:#ffffff;
   font-size:16px;
   font-weight:700;
-  box-shadow:0 12px 40px rgba(37,30,25,.3);
+  box-shadow:0 12px 40px rgba(15,23,42,.3);
   transition:opacity .2s, transform .2s;
   max-width:calc(100% - 32px);
   text-align:center;
@@ -433,7 +433,7 @@ th.col-num{ text-align:right; }
   th{ font-size:9px; letter-spacing:.06em; }
   .col-local{ max-width:none !important; overflow:visible !important; text-overflow:clip !important; white-space:normal !important; }
   .col-data, .col-pedido, .col-num{ white-space:nowrap !important; }
-  td, .col-local, .col-data{ color:#251e19 !important; }
+  td, .col-local, .col-data{ color:#1d2330 !important; }
   tr{ break-inside:avoid; }
 
   /* Larguras: Data, Pedido, Caminhão, Origem, Destino, Cidade, KM, Valor, Obs. */
@@ -511,7 +511,7 @@ th.col-num{ text-align:right; }
   .modal{ padding:6vh 8px 12px; }
 }
 </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-azul">
 </head>
 
 <body>

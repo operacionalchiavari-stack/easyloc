@@ -1,12 +1,12 @@
 /* =========================================================
    FUNDO CLARO + CARDS EM DESTAQUE nas telas da Chiavari (out/2026)
    Mesmos valores do fim de styles/tema-chiavari.css (referência
-   Tecnoweld): fundo #f4f6f8 e cards brancos com sombra suave.
+   Tecnoweld): fundo #f3f5f6 e cards brancos com sombra suave.
    Linkado no fim do <head> das telas de computador da Chiavari
    (os apps de celular ficam como estão). Cards com cor própria
    não mudam de cor: aqui só entram fundo da tela e sombra.
 ========================================================= */
-html, html body{ background:#f4f6f8 !important; }
+html, html body{ background:#f3f5f6 !important; }
 html body :is(
   .card, .panel, .cartao, .card-tabela, .card-tabela-metas, .table-box, .tabelaBox, .tabela-card, .tabela-wrap,
   .card-comissao-departamento, .board-wrap, .bloco, .p-card, .contorno, .graficos-resumo-card,
@@ -16,3 +16,6 @@ html body :is(
 }
 /* tabelas soltas continuam brancas sobre o fundo cinza */
 html body table:not(.sem-fundo){ background-color:#ffffff; }
+/* Paleta azul-marinho (out/2026): campos brancos, seleção azul suave */
+html body :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea){ background-color:#ffffff; }
+html body :is(input[type="checkbox"], input[type="radio"]){ accent-color:#123f86; }

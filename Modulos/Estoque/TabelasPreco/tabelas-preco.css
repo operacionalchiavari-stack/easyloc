@@ -222,14 +222,14 @@
 .tp-barra .tp-voltar {
   padding: 0 20px !important;
   min-height: 42px;
-  border: 1px solid #ddd6cc !important;
+  border: 1px solid #d9dee5 !important;
   border-radius: 999px !important;
   background: #fff !important;
   color: #2b2a26 !important;
 }
 
 .tp-barra .tp-voltar:hover {
-  border-color: #44443f !important;
+  border-color: #123f86 !important;
 }
 
 /* ================= Reajuste automático anual ================= */
@@ -251,8 +251,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #f8f6f0;
-  color: #44443f;
+  background: #f7f9fb;
+  color: #2b3240;
 }
 
 .tp-auto-icone svg { width: 20px; height: 20px; }
@@ -282,14 +282,14 @@
   cursor: pointer;
 }
 
-.tp-switch input { margin-top: 2px; width: 16px; height: 16px; accent-color: #44443f; }
+.tp-switch input { margin-top: 2px; width: 16px; height: 16px; accent-color: #123f86; }
 .tp-switch small { display: block; color: #8a847a; font-size: 12.5px; }
 
 .tp-auto-previa {
   margin: 0 0 6px;
   padding: 10px 14px;
   border-radius: 10px;
-  background: #f8f6f0;
+  background: #f7f9fb;
   font-size: 13px;
   color: #4a4741;
 }

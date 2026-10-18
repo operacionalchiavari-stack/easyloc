@@ -17,63 +17,63 @@
 ========================================================= */
 
 :root{
-  --ch-primary:#5a5a55;
-  --ch-primary-dark:#44443f;
-  --ch-fundo-suave:#f8f6f0;
-  --ch-line:#e7e1d7;
-  --ch-borda-card:#eee8df;
-  --ch-linha-tabela:#f3efe8;
-  --ch-text:#251e19;
-  --ch-label:#3f3a35;
-  --ch-muted:#5f5952;
+  --ch-primary:#123f86;
+  --ch-primary-dark:#123f86;
+  --ch-fundo-suave:#f7f9fb;
+  --ch-line:#e3e7ec;
+  --ch-borda-card:#e3e7ec;
+  --ch-linha-tabela:#edf0f3;
+  --ch-text:#1d2330;
+  --ch-label:#3b4250;
+  --ch-muted:#5b6372;
   --ch-serif:"Cormorant Garamond", Georgia, serif;
   --ch-sans:"Manrope", system-ui, sans-serif;
-  --ch-sombra:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
+  --ch-sombra:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
 
   /* tokens do design system apontando para a paleta Chiavari */
-  --color-primary:#44443f;
+  --color-primary:#123f86;
   --color-bg:#ffffff;
-  --el-color-primary:#44443f;
-  --el-color-primary-strong:#2f2f2b;
-  --el-color-primary-dark:#2f2f2b;
-  --el-color-primary-soft:#f8f6f0;
-  --el-color-accent:#44443f;
-  --el-color-accent-strong:#2f2f2b;
-  --el-color-accent-active:#2f2f2b;
-  --el-color-accent-soft:#f8f6f0;
+  --el-color-primary:#123f86;
+  --el-color-primary-strong:#0d2f66;
+  --el-color-primary-dark:#0d2f66;
+  --el-color-primary-soft:#f7f9fb;
+  --el-color-accent:#123f86;
+  --el-color-accent-strong:#0d2f66;
+  --el-color-accent-active:#0d2f66;
+  --el-color-accent-soft:#f7f9fb;
   --el-color-bg:#ffffff;
   --el-color-surface:#ffffff;
-  --el-color-surface-soft:#f8f6f0;
-  --el-color-border:#e7e1d7;
-  --el-color-border-soft:#f3efe8;
-  --el-color-title:#251e19;
-  --el-color-text:#251e19;
-  --el-color-text-secondary:#3f3a35;
-  --el-color-muted:#5f5952;
-  --el-color-placeholder:#8a847c;
-  --el-button-secondary-text:#251e19;
-  --el-button-secondary-border:#e7e1d7;
-  --el-button-secondary-hover:#f8f6f0;
-  --el-button-secondary-border-hover:#5a5a55;
-  --el-button-icon-border:#e7e1d7;
-  --el-focus-color:#5a5a55;
+  --el-color-surface-soft:#f7f9fb;
+  --el-color-border:#e3e7ec;
+  --el-color-border-soft:#edf0f3;
+  --el-color-title:#1d2330;
+  --el-color-text:#1d2330;
+  --el-color-text-secondary:#3b4250;
+  --el-color-muted:#5b6372;
+  --el-color-placeholder:#8a93a1;
+  --el-button-secondary-text:#1d2330;
+  --el-button-secondary-border:#e3e7ec;
+  --el-button-secondary-hover:#f7f9fb;
+  --el-button-secondary-border-hover:#123f86;
+  --el-button-icon-border:#e3e7ec;
+  --el-focus-color:#123f86;
   --el-font-family:"Manrope", system-ui, sans-serif;
   --el-radius-sm:12px;
   --el-radius-md:12px;
   --el-radius-lg:18px;
   --el-radius-xl:18px;
-  --el-shadow-sm:0 1px 2px rgba(37,30,25,.04), 0 10px 30px rgba(37,30,25,.07);
-  --el-shadow-md:0 2px 4px rgba(37,30,25,.05), 0 16px 34px rgba(37,30,25,.10);
-  --el-shadow-lg:0 24px 70px rgba(37,30,25,.25);
-  --el-modal-backdrop:rgba(37,30,25,.45);
+  --el-shadow-sm:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
+  --el-shadow-md:0 2px 4px rgba(15,23,42,.05), 0 16px 34px rgba(15,23,42,.10);
+  --el-shadow-lg:0 24px 70px rgba(15,23,42,.25);
+  --el-modal-backdrop:rgba(15,23,42,.45);
   --el-table-header-bg:#ffffff;
-  --el-table-header-color:#3f3a35;
-  --el-table-row-hover:#f6f3ec;
-  --el-table-row-border:#f3efe8;
-  --azul:#251e19;
-  --laranja:#44443f;
+  --el-table-header-color:#3b4250;
+  --el-table-row-hover:#eef3fb;
+  --el-table-row-border:#edf0f3;
+  --azul:#1d2330;
+  --laranja:#123f86;
   --fundo:#ffffff;
-  --cinza:#e7e1d7;
+  --cinza:#e3e7ec;
 }
 
 /* ---------- Base ---------- */
@@ -142,7 +142,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card, .stat-c
   box-shadow:var(--ch-sombra) !important;
   transition:transform .15s, box-shadow .15s;
 }
-html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card, .stat-card):hover{ transform:translateY(-2px); box-shadow:0 2px 4px rgba(37,30,25,.05), 0 16px 34px rgba(37,30,25,.10) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card, .stat-card):hover{ transform:translateY(-2px); box-shadow:0 2px 4px rgba(15,23,42,.05), 0 16px 34px rgba(15,23,42,.10) !important; }
 /* Sem bolinha colorida de ícone: só rótulo + número, como no Almoxarifado */
 html:root :is(body:not(.portal-shell), #main-content) .el-stat-card > span{ display:none !important; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card small, .stat-card small, .stat-body small){
@@ -230,8 +230,8 @@ html:root :is(body:not(.portal-shell), #main-content) table tbody td{
   color:var(--ch-text);
   font-size:14px !important; font-weight:500;
 }
-html:root :is(body:not(.portal-shell), #main-content) table tbody tr:nth-child(even):not(:hover, .selected, .linha-selecionada){ background:#fcfbf8 !important; }
-html:root :is(body:not(.portal-shell), #main-content) table tbody tr:not(.selected, .linha-selecionada):hover{ background:#f6f3ec !important; }
+html:root :is(body:not(.portal-shell), #main-content) table tbody tr:nth-child(even):not(:hover, .selected, .linha-selecionada){ background:#fafbfc !important; }
+html:root :is(body:not(.portal-shell), #main-content) table tbody tr:not(.selected, .linha-selecionada):hover{ background:#eef3fb !important; }
 
 /* Rodapé de paginação das listas */
 html:root :is(body:not(.portal-shell), #main-content) .easyloc-list-pager :is(button, select){ border-color:var(--ch-line) !important; border-radius:999px !important; }
@@ -254,11 +254,11 @@ html:root :is(body:not(.portal-shell), #main-content) :is(input:not([type="check
 html:root :is(body:not(.portal-shell), #main-content) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea):focus{
   border-color:var(--ch-primary) !important;
   background-color:#ffffff !important;
-  box-shadow:0 0 0 3px rgba(90,90,85,.12) !important;
+  box-shadow:0 0 0 3px rgba(18,63,134,.12) !important;
   outline:none;
 }
-html:root :is(body:not(.portal-shell), #main-content) :is(input, textarea)::placeholder{ color:#8a847c; font-weight:500; }
-html:root :is(body:not(.portal-shell), #main-content) :is(input, select, textarea):is([readonly], :disabled){ background-color:#efede7 !important; color:var(--ch-muted) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(input, textarea)::placeholder{ color:#8a93a1; font-weight:500; }
+html:root :is(body:not(.portal-shell), #main-content) :is(input, select, textarea):is([readonly], :disabled){ background-color:#eef1f4 !important; color:var(--ch-muted) !important; }
 
 /* ---------- Botões ---------- */
 html:root :is(body:not(.portal-shell), #main-content) :is(.btn, .el-btn, .add-btn, .btn-primary, .btn-secondary, .btn-save, .btn-cancel, .btn-delete, .btn-salvar, .btn-cancelar, .btn-outline, .os-btn){
@@ -273,7 +273,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(button, a, [role="butt
   background:var(--ch-primary-dark) !important; border-color:var(--ch-primary-dark) !important; color:#ffffff !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(button, a, [role="button"]):is(.btn.primary, .btn.save, .btn.salvar, .btn-primary, .btn-save, .btn-salvar, .el-btn--primary, .os-btn-primary, .add-btn):not(.secondary, :disabled, [aria-disabled="true"]):hover{
-  background:#2f2f2b !important; transform:translateY(-1px); box-shadow:0 6px 16px rgba(37,30,25,.18) !important;
+  background:#0d2f66 !important; transform:translateY(-1px); box-shadow:0 6px 16px rgba(15,23,42,.18) !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(.btn-icon, .el-icon-btn, .icon-btn, .el-back-btn, .el-edit-btn){ border-color:var(--ch-line) !important; border-radius:999px !important; }
 
@@ -285,10 +285,10 @@ html:root :is(body:not(.portal-shell), #main-content) td .status{ border-radius:
 :is(body, #main-content) :is(.el-modal__box, .modal-content, .modal-box, .modal-card){ border-radius:18px !important; }
 
 /* Carregando */
-html:root :is(body:not(.portal-shell), #main-content) :is(.el-spinner, .spinner, .loading-spinner, .loader-circle){ border-color:#ecece6 !important; border-top-color:var(--ch-primary-dark) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-spinner, .spinner, .loading-spinner, .loader-circle){ border-color:#e9ecef !important; border-top-color:var(--ch-primary-dark) !important; }
 
 /* ---------- Cabeçalho com sobretítulo/descrição (Fluxo de Caixa etc.) ---------- */
-html:root :is(body:not(.portal-shell), #main-content) .page-eyebrow{ display:block; margin-bottom:8px !important; color:#b08d57 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
+html:root :is(body:not(.portal-shell), #main-content) .page-eyebrow{ display:block; margin-bottom:8px !important; color:#123f86 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.page-header, .page-top) > div:first-child p{ max-width:640px; margin:10px auto 0 !important; text-align:center; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.page-header, .page-top) > :is(.header-actions, .page-actions){ margin-left:auto !important; }
 
@@ -319,7 +319,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .sepa
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child p{ max-width:640px; margin:10px auto 0 !important; color:var(--ch-muted) !important; font-size:14px !important; text-align:center; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > :is(.el-page-actions, .header-actions, button:last-child){ margin-left:auto !important; }
-html:root :is(body:not(.portal-shell), #main-content) :is(.separacao-kicker, .eyebrow){ display:block; margin-bottom:8px !important; color:#b08d57 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.separacao-kicker, .eyebrow){ display:block; margin-bottom:8px !important; color:#123f86 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
 
 /* Cartões de resumo de Funcionários (.summary-card) e Créditos de IA */
 html:root :is(body:not(.portal-shell), #main-content) .summary-card{
@@ -357,7 +357,7 @@ html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .za
   letter-spacing:.16em !important; line-height:1.05 !important; text-transform:uppercase !important; color:var(--ch-text) !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child > span:first-child{
-  display:block; margin-bottom:8px !important; color:#b08d57 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important;
+  display:block; margin-bottom:8px !important; color:#123f86 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child p{
   max-width:640px; margin:10px auto 0 !important; color:var(--ch-muted) !important; font-size:14px !important; text-align:center;
@@ -437,18 +437,18 @@ html:root :is(body:not(.portal-shell), #main-content) :is(
 /* =========================================================
    FUNDO CLARO + CARDS EM DESTAQUE (out/2026, referência Tecnoweld)
    Pedido: "o fundo de todas as telas branco ou um cinza bem clarinho...
-   o fundo é clarinho e os cards têm destaque na tela". Fundo #f4f6f8
+   o fundo é clarinho e os cards têm destaque na tela". Fundo #f3f5f6
    (o da Tecnoweld) e cards brancos com a sombra suave de lá
    (--shadow-surface). Vale para todas as telas que carregam este tema;
    as telas da Chiavari usam styles/fundo-claro.css (mesmos valores).
 ========================================================= */
 :root{
-  --ch-fundo-tela:#f4f6f8;
+  --ch-fundo-tela:#f3f5f6;
   --ch-sombra:0 0 8px rgba(15,23,42,.15), 0 0 2px rgba(15,23,42,.12);
   --ch-borda-card:#e3e6ea;
-  --el-color-bg:#f4f6f8;
-  --color-bg:#f4f6f8;
-  --fundo:#f4f6f8;
+  --el-color-bg:#f3f5f6;
+  --color-bg:#f3f5f6;
+  --fundo:#f3f5f6;
 }
 html:has(> body:not(.portal-shell)){ background:var(--ch-fundo-tela) !important; }
 body:not(.portal-shell),
@@ -500,3 +500,39 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.separacao-order-card,
 html:root :is(body:not(.portal-shell), #main-content) .separacao-board-card{ background:transparent !important; border:0 !important; box-shadow:none !important; padding-left:0 !important; padding-right:0 !important; }
 /* Central de Pedidos não tinha respiro lateral (no branco não aparecia) */
 html:root body:not(.portal-shell) .central-pedidos-page{ padding-left:clamp(16px, 2.2vw, 28px) !important; padding-right:clamp(16px, 2.2vw, 28px) !important; }
+
+/* =========================================================
+   PALETA AZUL-MARINHO (out/2026)
+   Secundária #123F86, fundo #F3F5F6, cards/tabelas brancos, menu
+   lateral continua grafite #292A28 (portal-shell.css não muda).
+   Sem bege: campos brancos/cinza-claro; seleções em azul suave.
+   Cores de status (vermelho, laranja, verde) não mudam.
+========================================================= */
+:root{
+  --ch-azul:#123f86;
+  --ch-azul-escuro:#0d2f66;
+  --ch-azul-suave:#eaf0fa;
+  --ch-azul-borda:#c9d7ee;
+  --el-color-primary-soft:#eaf0fa;
+  --el-color-accent-soft:#eaf0fa;
+  --el-button-secondary-text:#123f86;
+  --el-button-secondary-border:#c9d7ee;
+  --el-button-secondary-hover:#eaf0fa;
+  --el-button-secondary-border-hover:#123f86;
+  --el-table-row-hover:#eef3fb;
+}
+/* campos: branco sobre o fundo cinza */
+html:root :is(body:not(.portal-shell), #main-content) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea){ background-color:#ffffff !important; border-color:#dde2e8 !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(input, select, textarea):is([readonly], :disabled){ background-color:#f3f5f6 !important; }
+/* botões secundários: brancos com detalhes em azul */
+html:root :is(body:not(.portal-shell), #main-content) :is(.btn, .el-btn, .btn-secondary, .btn-outline, .btn-cancel, .btn-cancelar, .el-btn--secondary):not(.primary, .save, .salvar, .btn-primary, .btn-save, .btn-salvar, .el-btn--primary, .add-btn, .danger, .btn-delete, .delete, .perigo){
+  background:#ffffff !important; border:1px solid var(--ch-azul-borda) !important; color:var(--ch-azul) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(.btn, .el-btn, .btn-secondary, .btn-outline, .btn-cancel, .btn-cancelar, .el-btn--secondary):not(.primary, .save, .salvar, .btn-primary, .btn-save, .btn-salvar, .el-btn--primary, .add-btn, .danger, .btn-delete, .delete, .perigo):hover{
+  background:var(--ch-azul-suave) !important; border-color:var(--ch-azul) !important;
+}
+/* abas e seleções: hover em azul suave */
+html:root :is(body:not(.portal-shell), #main-content) :is(.tabs, .el-tabs, .tab-list) > :is(button, a, .tab):not(.active, .ativo, .ativa, .is-active, [aria-selected="true"]):hover,
+html:root :is(body:not(.portal-shell), #main-content) :is(.tab-btn, [role="tab"]):not(.active, .ativo, .ativa, .is-active, [aria-selected="true"]):hover{ background:var(--ch-azul-suave) !important; border-color:var(--ch-azul) !important; color:var(--ch-azul) !important; }
+html:root :is(body:not(.portal-shell), #main-content) table tbody tr:is(.selected, .linha-selecionada){ background:var(--ch-azul-suave) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(input[type="checkbox"], input[type="radio"]){ accent-color:var(--ch-azul); }
