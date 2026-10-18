@@ -8843,6 +8843,28 @@ textarea{ font-family:inherit; }
   .andamento-etapa.is-alerta{background:#fbeceb;color:#b0362d;border-color:#efc2bf}
 </style>
 <link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-selos">
+<style id="cabecalho-cronograma">
+  /* Cabeçalho da tabela igual às outras tabelas do sistema (out/2026): branco, texto escuro,
+     só uma linha fina embaixo — sem sombra em cada célula nem divisórias verticais. */
+  html body .board thead th,
+  html body .board thead th:first-child,
+  html body .board thead th:not(:first-child){
+    box-shadow:none !important;
+    border-right:0 !important;
+    border-left:0 !important;
+    border-bottom:1px solid #e3e7ec !important;
+    background:#ffffff !important;
+    color:#1f2020 !important;
+    font-weight:700 !important;
+    letter-spacing:.08em !important;
+  }
+  /* Primeira coluna (Pedido): divisória fina no lugar da sombra */
+  html body .board tbody td:first-child,
+  html body .board tbody td.col-evento{
+    box-shadow:none !important;
+    border-right:1px solid #e3e7ec !important;
+  }
+</style>
 </head>
 <body>
 

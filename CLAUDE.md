@@ -9511,6 +9511,7 @@ confirmações de sucesso deixam de ser janela (avisos de conflito, perguntas ob
   responsável); o lote de pedidos e `abrirNovoPedidoProtegido` (criação de pedido, já sem botão). Editar pedido e "+ Adicionar
   etapa" continuam (cliente, itens e endereço continuam travados para pedido do sistema).
 - **Janela "Cadastros Operacionais" saiu inteira** (botão Cadastros do topo e do menu do celular): caminhões ficam em Logística > Caminhões; as listas de responsáveis e equipes do formulário da etapa continuam vindo das abas da planilha.
+- **Cabeçalho da tabela** igual às outras tabelas (`<style id="cabecalho-cronograma">` no fim do head): sem sombra por célula nem divisórias verticais, texto grafite e linha fina embaixo; a 1ª coluna troca a sombra por uma divisória fina.
 - **Sucesso sem janela**: `avisoRapido(msg)` (pílula grafite embaixo, some em 2,6 s) em pedido salvo, responsável/equipe/
   caminhão salvos, item salvo/atualizado/excluído, carregamento concluído e alerta enviado/resolvido.
 - Teste: `tests/cronograma-limpeza-browser.cjs`. `permissions.js`/`sidebarMenu.js` em `?v=20261018-free`.
