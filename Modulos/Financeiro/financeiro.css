@@ -1,0 +1,129 @@
+/* Financeiro (out/2026) — no tema Chiavari (global.css). */
+.fin-page{padding-bottom:48px}
+.fin-abas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 20px}
+.fin-abas button{border:1px solid #e1dbcf;background:#fff;color:#44443f;border-radius:999px;padding:9px 18px;font:600 14px Inter,sans-serif;cursor:pointer}
+.fin-abas button.ativa{background:#44443f;border-color:#44443f;color:#fff}
+.fin-conta-aba{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#b0362d;color:#fff;font-size:11px;margin-left:4px}
+.fin-conta-aba:empty{display:none}
+.fin-aviso{background:#fbf6ea;border:1px solid #ead9a8;border-radius:12px;padding:12px 16px;color:#5b4a2a;font-size:14px;margin:0 0 16px}
+.fin-vazio{padding:40px;text-align:center;color:#77716a;border:1px dashed #e1dbcf;border-radius:14px;background:#fff}
+
+.fin-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.fin-card{background:#fff;border:1px solid #e7e1d6;border-radius:14px;padding:16px 18px}
+.fin-card span{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#77716a}
+.fin-card strong{display:block;font:500 26px "Cormorant Garamond",Georgia,serif;color:#2c2a26;margin-top:6px}
+.fin-card small{color:#77716a;font-size:12px}
+.fin-card.is-vermelho strong{color:#b0362d}
+.fin-card.is-verde strong{color:#2f7a4b}
+
+.fin-grade{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:16px}
+.fin-bloco{background:#fff;border:1px solid #e7e1d6;border-radius:16px;padding:18px;margin-bottom:16px;min-width:0}
+.fin-bloco > h3{margin:0 0 12px;font-size:16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.fin-bloco > h3 small{font-weight:500;color:#77716a;font-size:13px}
+
+.fin-barra-ferr{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.fin-barra-ferr input,.fin-barra-ferr select{height:40px;border:1px solid #e1dbcf;border-radius:10px;padding:0 12px;background:#fff;font:14px Inter,sans-serif}
+.fin-barra-ferr input[type=search]{flex:1 1 220px;min-width:180px}
+.fin-barra-ferr .fin-esp{flex:1}
+
+.fin-btn{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 16px;border-radius:999px;border:1px solid #44443f;background:#44443f;color:#fff;font:600 13px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+.fin-btn.claro{background:#fff;color:#44443f;border-color:#d7d0c3}
+.fin-btn.peq{height:30px;padding:0 11px;font-size:12px}
+.fin-btn.verde{background:#2f7a4b;border-color:#2f7a4b}
+.fin-btn.verm{background:#fff;color:#b0362d;border-color:#efc2bf}
+.fin-btn:disabled{opacity:.45;cursor:not-allowed}
+
+.fin-tabela{width:100%;border-collapse:collapse;font-size:14px}
+.fin-tabela th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#77716a;padding:8px 10px;border-bottom:1px solid #e7e1d6;white-space:nowrap}
+.fin-tabela td{padding:10px;border-bottom:1px solid #f1ede5;vertical-align:middle}
+.fin-tabela td.num,.fin-tabela th.num{text-align:right;white-space:nowrap}
+.fin-tabela .acoes{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.fin-rolar{overflow-x:auto}
+
+/* Pedido dividido em locação / frete / montagem */
+.fin-pedido{background:#fff;border:1px solid #e7e1d6;border-radius:16px;margin-bottom:14px;overflow:hidden}
+.fin-pedido-topo{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;padding:14px 18px;background:#faf8f4;border-bottom:1px solid #eee8dd}
+.fin-pedido-topo strong{font-size:16px}
+.fin-pedido-topo small{color:#6b665e;font-size:13px}
+.fin-pedido-tot{text-align:right;font-size:13px;color:#6b665e}
+.fin-pedido-tot b{color:#2c2a26;font-size:15px}
+.fin-divisoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.fin-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid transparent;white-space:nowrap}
+.fin-chip.locacao{background:#eaf1ff;color:#1d4ea3;border-color:#cfdcf6}
+.fin-chip.frete{background:#fff4dd;color:#8a5a00;border-color:#f0dcae}
+.fin-chip.montagem{background:#e8f6ee;color:#23693f;border-color:#c7e6d3}
+.fin-chip.outro{background:#f1efea;color:#5f5b54}
+.fin-conta-cel{font-size:13px;line-height:1.35}
+.fin-conta-cel b{display:block;font-weight:600}
+.fin-conta-cel small{color:#77716a}
+.fin-conta-cel.sem{color:#b0362d;font-weight:600}
+.fin-alerta-dif{font-size:12px;color:#8a5a00;background:#fff4dd;border-radius:8px;padding:4px 8px}
+
+.fin-status{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#f1efea;color:#5f5b54;white-space:nowrap}
+.fin-status.aberto{background:#f1efea;color:#5f5b54}
+.fin-status.vencido{background:#fbeceb;color:#b0362d}
+.fin-status.parcial{background:#fff4dd;color:#8a5a00}
+.fin-status.recebido,.fin-status.pago{background:#e8f6ee;color:#23693f}
+.fin-status.cancelado{background:#f1efea;color:#9a958d;text-decoration:line-through}
+.fin-status.programado,.fin-status.aprovado{background:#eaf1ff;color:#1d4ea3}
+.fin-status.aguardando{background:#f4effc;color:#5b3fae}
+
+.fin-contas-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.fin-conta{background:#fff;border:1px solid #e7e1d6;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.fin-conta.inativa{opacity:.55}
+.fin-conta h4{margin:0;font-size:16px}
+.fin-conta .linha{font-size:13px;color:#5f5b54}
+.fin-conta .saldo{font:500 24px "Cormorant Garamond",Georgia,serif;margin-top:4px}
+.fin-conta .saldo.neg{color:#b0362d}
+.fin-padroes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:end}
+
+.fin-barras{display:flex;align-items:flex-end;gap:3px;height:120px;margin:6px 0 10px;padding:0 2px;border-bottom:1px solid #eee8dd}
+.fin-barras div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:1px;min-width:4px}
+.fin-barras i{display:block;border-radius:2px 2px 0 0}
+.fin-barras i.e{background:#7fbf96}
+.fin-barras i.s{background:#e3a29c}
+
+.fin-dre .grupo td{font-weight:700;background:#faf8f4}
+.fin-dre .total td{font-weight:700;border-top:2px solid #e1dbcf}
+
+/* Modal */
+.fin-modal{border:0;padding:0;border-radius:18px;width:min(720px,94vw);max-height:92vh;box-shadow:0 24px 60px rgba(31,29,26,.25)}
+.fin-modal::backdrop{background:rgba(31,29,26,.35)}
+.fin-modal-caixa{display:flex;flex-direction:column;max-height:92vh;margin:0}
+.fin-modal header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #eee8dd}
+.fin-modal header h3{margin:0;font-size:18px}
+.fin-x{border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:#77716a}
+.fin-modal-corpo{padding:18px 22px;overflow:auto}
+.fin-modal footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid #eee8dd}
+.fin-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fin-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5f5b54}
+.fin-form label.inteiro{grid-column:1 / -1}
+.fin-form input,.fin-form select,.fin-form textarea{height:40px;border:1px solid #e1dbcf;border-radius:10px;padding:0 12px;font:14px Inter,sans-serif;background:#fff;color:#2c2a26}
+.fin-form textarea{height:70px;padding:10px 12px;resize:vertical}
+.fin-form label.check{flex-direction:row;align-items:center;gap:8px;font-weight:500}
+.fin-form label.check input{height:auto}
+.fin-sub{grid-column:1 / -1;margin:6px 0 0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#8a6c48}
+.fin-info{grid-column:1 / -1;font-size:13px;color:#6b665e;background:#faf8f4;border-radius:10px;padding:10px 12px}
+.fin-erro{color:#b0362d;font-size:13px;margin-top:8px}
+
+@media(max-width:900px){
+  .fin-grade{grid-template-columns:1fr}
+  .fin-form{grid-template-columns:1fr}
+}
+
+/* O tema (tema-chiavari/design-system) estica campos e tira o respiro da página — estas vencem por peso de ID. */
+html:root:is(#acervo-fin, html) .fin-page{padding-left:clamp(16px,2.4vw,40px);padding-right:clamp(16px,2.4vw,40px);box-sizing:border-box}
+html:root:is(#acervo-fin, html) .fin-barra-ferr input,
+html:root:is(#acervo-fin, html) .fin-barra-ferr select{width:auto;flex:0 1 auto;margin:0;height:40px}
+html:root:is(#acervo-fin, html) .fin-barra-ferr input[type=search]{flex:1 1 260px;min-width:180px;max-width:420px}
+html:root:is(#acervo-fin, html) .fin-barra-ferr label{display:inline-flex;align-items:center;gap:6px;margin:0;font-size:13px}
+html:root:is(#acervo-fin, html) .fin-tabela select{width:auto;margin:0}
+html:root:is(#acervo-fin, html) .fin-form input,
+html:root:is(#acervo-fin, html) .fin-form select,
+html:root:is(#acervo-fin, html) .fin-form textarea{width:100%;margin:0;box-sizing:border-box}
+html:root:is(#acervo-fin, html) .fin-form label.check input{width:auto}
+html:root:is(#acervo-fin, html) .fin-padroes select{width:100%;margin:0}
+@media(max-width:700px){
+  html:root:is(#acervo-fin, html) .fin-barra-ferr input[type=search]{max-width:none;flex-basis:100%}
+  html:root:is(#acervo-fin, html) .fin-barra-ferr select{flex:1 1 140px}
+}

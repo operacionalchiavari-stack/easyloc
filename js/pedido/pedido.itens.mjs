@@ -237,6 +237,14 @@ set("resumoTotalGeral", totalFinalPedido);
 
 /* 🔥 SALVA GLOBAL */
 window.__TOTAL_PEDIDO = totalFinalPedido;
+// Os três valores do pedido, separados, para o financeiro dividir as contas a receber (out/2026).
+// Customizações e serviços adicionais entram na locação.
+window.__PEDIDO_VALORES = {
+  locacao: Math.max(locacaoFinal + customizacoes + servicos, 0),
+  frete: Math.max(freteFinal, 0),
+  montagem: Math.max(montagemFinal, 0),
+  total: totalFinalPedido
+};
 
 /* 🔥 DISPARA PAGAMENTO */
 window.atualizarPagamento?.();

@@ -9387,3 +9387,25 @@ voltar, o próprio sistema sinaliza"). Depois: "a mesma regra na Triagem".
 - Testes: `tests/expedicao-browser.cjs` (ida/volta, cores, às cegas, resultado) e `tests/separacao-cronograma-browser.cjs` (ok 6–7).
 - Triagem com ida e volta (pedido seguinte): colunas "Aguardando triagem / Em triagem / Concluído", cartão de separação
   com o selo "Ida" (`.card-tipo-ida`) ao lado do número, e o de retorno com o selo lilás "Retorno".
+
+## Financeiro novo (out/2026, copiado da Tecnoweld) — substitui o Fluxo de Caixa
+Pedido: "copiar o financeiro de lá pra cá" (RH vem depois). Menu Financeiro > **Financeiro**
+(`Modulos/Financeiro/financeiro.{html,css,js}`); o `fluxodecaixa.html` antigo saiu do menu (arquivo mantido).
+- **Banco** (`20261018000100_financeiro.sql`, aplicada e registrada): `fin_contas` (banco, titular/CNPJ, PIX, saldo
+  inicial), `fin_config` (conta de locação, frete, montagem e do PIX do gateway), `fin_categorias` (plano de contas,
+  semeado com chaves automáticas), `fin_centros_custo`, `fin_receber`, `fin_pagar` (aprovação opcional antes de pagar,
+  programação), `fin_baixas` (juros/multa/desconto/tarifa, estorno), `fin_movimentos` (saldo = saldo inicial +
+  movimentos), `fin_extrato` (OFX/CSV), `fin_auditoria`. Leitura: membro da empresa com `financeiro.fluxo.visualizar`;
+  títulos e baixas só pelas funções `fin_*` (conferem `financeiro.contas_receber/contas_pagar.editar`); contas,
+  categorias e centros gravam direto (`financeiro.fluxo.editar`).
+- **Pedido vira contas a receber sozinho** (gatilho `fin_pedido` → `fin_sincronizar_pedido`) quando aprovado/
+  finalizado/enviado: cada parcela de `observacoes.parcelas_financeiras` é dividida em **locação / frete / montagem**
+  na proporção de `observacoes.valores` (gravado pelo pedido ao salvar, `window.__PEDIDO_VALORES`; pedido antigo usa
+  `logistica_snapshot.resumoFrete/resumoMontagem`, locação = total − frete − montagem). Cada parte vai pra conta padrão
+  da divisão (CNPJ e PIX próprios) e pode ser trocada no Editar (`conta_manual`). Pedido que sai de aprovado cancela as
+  partes sem recebimento. PIX recebido pelo gateway vira baixa automática.
+- **Tela**: abas Visão geral, A receber (agrupado por pedido, chips da divisão, conta de cada parte, aviso quando as
+  parcelas não batem com o total do pedido), A pagar, Contas e PIX (contas padrão do pedido, transferência, ajuste),
+  Conciliação (importa OFX/CSV, sugere o título de mesmo valor), DRE, Inadimplência, Plano de contas.
+- Testado no banco real numa transação desfeita (divisão por conta, baixa parcial, aprovação, estorno, transferência,
+  conciliação, DRE) e na tela com banco simulado: `tests/financeiro-browser.cjs`.

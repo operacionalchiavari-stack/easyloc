@@ -3,7 +3,7 @@ console.log("✅ pedido.mjs carregado");
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
 import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261009-satelite";
-import { initItens } from "./pedido.itens.mjs?v=20261017-abrir-projeto";
+import { initItens } from "./pedido.itens.mjs?v=20261018-financeiro";
 import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261009-periodo";
@@ -1053,6 +1053,7 @@ async function setupPedidoWorkspace({ supabase }){
         pagamento_config: window.__pedidoColetarPagamentoConfig?.() || null,
         itens_operacionais: coletarObservacoesItensOperacionais(),
         logistica_snapshot: coletarLogisticaSnapshot(),
+        valores: window.__PEDIDO_VALORES || observacoesAtuais.valores || null,
         cancelamento: window.__PEDIDO_CANCELAMENTO || null,
         local_html: document.getElementById("localObservacoes")?.innerHTML || "",
         local_tags_html: document.getElementById("localTagsInline")?.innerHTML || "",

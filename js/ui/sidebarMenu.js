@@ -162,7 +162,7 @@
         icone: "wallet",
         rotulo: "Financeiro",
         itens: [
-          { rotulo: "Fluxo de Caixa", href: "Modulos/Financeiro/fluxodecaixa.html" },
+          { rotulo: "Financeiro", href: "Modulos/Financeiro/financeiro.html" },
           { rotulo: "Controle Financeiro do Almoxarifado", href: "Modulos/Chiavari/Almoxarifado/financeiro.html" },
         ],
       },
