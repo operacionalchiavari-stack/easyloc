@@ -102,7 +102,7 @@
 
 .perm-steps button:hover {
   border-color: #374151;
-  background: #f4f1ef;
+  background: #eef0f2;
 }
 
 .perm-steps button.active {
@@ -258,7 +258,7 @@
 .perm-close:hover {
   border-color: #2E1F1F;
   color: #2E1F1F;
-  background: #f4f1ef;
+  background: #eef0f2;
 }
 
 .perm-user-list {
@@ -288,7 +288,7 @@
 .perm-user-card:hover,
 .perm-user-card.active {
   border-color: #2E1F1F;
-  background: #f4f1ef;
+  background: #eef0f2;
 }
 
 .perm-user-card strong {
@@ -306,7 +306,7 @@
 .perm-guidance-card {
   margin-top: 18px;
   border: 1px dashed #ffb27a;
-  background: #f4f1ef;
+  background: #eef0f2;
   border-radius: 14px;
   padding: 14px;
 }
@@ -337,7 +337,7 @@
 
 .perm-profile-grid button:hover {
   border-color: #2E1F1F;
-  background: #f4f1ef;
+  background: #eef0f2;
 }
 
 .perm-profile-grid strong {
@@ -414,7 +414,7 @@
 }
 
 .perm-submodule.active {
-  background: #f4f1ef;
+  background: #eef0f2;
   box-shadow: inset 3px 0 0 #2E1F1F;
 }
 
@@ -428,7 +428,7 @@
 .perm-dirty-badge {
   border-radius: 999px;
   padding: 6px 10px;
-  background: #f4f1ef;
+  background: #eef0f2;
   color: #c2410c;
   font-size: 12px;
   font-weight: 700;

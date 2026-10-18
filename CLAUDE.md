@@ -9487,3 +9487,9 @@ mantidas. Só cor — nada de estrutura/posição mudou.
 - Selos dentro de cabeçalhos (ex.: "Premiação"/"Saldo livre" em Pagamentos de bônus, `.pag-bonus-tipo-mes`) voltaram ao
   texto branco: a regra que escurece o texto dos cabeçalhos ignora classes com tipo-mes/badge/selo/tag/pill/chip/status/
   etiqueta. Versão `?v=20261018-selos`.
+- **Fundo bege em lugar nenhum** (pedido seguinte: "ainda tem lugares com fundo bege... a home é um deles"): varredura de
+  `background`/variáveis de fundo (`--bg`, `--campo`, `--card`, `--fundo`…) em todos os CSS/HTML/JS fora do Catálogo e
+  dos apps de celular; bege neutro virou o cinza frio de mesma claridade. **Tons de alerta ficaram** (amarelo, laranja,
+  vermelho claros — regra: vermelho 254–255 ou vermelho bem acima do verde = alerta). Home (`portal-shell.css`): fundo
+  `#f3f5f6`, linhas `#e3e7ec`, slides sem mancha dourada no fundo (o brilho do ícone da lâmpada continua).
+  Versões `?v=20261018-cinza`.

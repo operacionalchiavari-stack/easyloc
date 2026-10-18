@@ -340,7 +340,7 @@
 }
 
 .compras-type-card:has(input:checked) {
-  background: #f4f1ef;
+  background: #eef0f2;
   border-color: rgba(255, 105, 0, .72);
   box-shadow: 0 0 0 3px rgba(255, 105, 0, .12);
 }

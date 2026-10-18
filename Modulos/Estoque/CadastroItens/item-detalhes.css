@@ -307,7 +307,7 @@
 
 .tipo-btn.active {
   border-color: #fed7aa;
-  background: #f4f1ef;
+  background: #eef0f2;
   color: #c2410c;
 }
 
@@ -1065,7 +1065,7 @@
 .patrimonios-topo{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .patrimonios-topo strong{display:block;font-size:16px;margin:2px 0 6px}
 .patrimonios-topo p{margin:0;color:#6b665e;font-size:13px;line-height:1.5;max-width:560px}
-.patrimonios-contagem{white-space:nowrap;font-weight:600;font-size:13px;color:#2b2b2b;background:#f1efea;border-radius:999px;padding:6px 12px}
+.patrimonios-contagem{white-space:nowrap;font-weight:600;font-size:13px;color:#2b2b2b;background:#ebedef;border-radius:999px;padding:6px 12px}
 .patrimonios-gerar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .patrimonios-gerar label{display:flex;align-items:center;gap:8px;font-size:14px}
 .patrimonios-gerar input{width:72px;border:1px solid #e1dbcf;border-radius:10px;background:#f7f9fb;padding:7px 10px;font:14px inherit}

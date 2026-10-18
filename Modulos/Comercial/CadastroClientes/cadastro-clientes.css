@@ -231,7 +231,7 @@ html:root :is(body:not(.portal-shell), #main-content) .container.el-page .header
 .edit-btn:hover {
   border-color: var(--laranja);
   color: var(--laranja);
-  background: #f4f1ef;
+  background: #eef0f2;
 }
 
 /* FORM */
@@ -830,7 +830,7 @@ tbody tr:hover {
 }
 
 .ajuda-video-item:hover {
-  background: #f4f1ef;
+  background: #eef0f2;
   border-left-color: var(--laranja);
 }
 
@@ -970,7 +970,7 @@ tbody tr:hover {
   margin-top: 14px;
   padding: 12px 16px;
 
-  background: #f4f1ef;
+  background: #eef0f2;
   border: 1px dashed var(--laranja);
   border-radius: 12px;
 

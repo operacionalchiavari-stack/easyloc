@@ -61,7 +61,7 @@
             </div>
           </div>
 
-          <div id="identidadeContrastAlert" style="display:none;margin-top:12px;padding:11px 12px;border-radius:12px;background:#f4f1ef;border:1px solid #d8d0cc;color:#2E1F1F;font-size:13px;"></div>
+          <div id="identidadeContrastAlert" style="display:none;margin-top:12px;padding:11px 12px;border-radius:12px;background:#eef0f2;border:1px solid #d8d0cc;color:#2E1F1F;font-size:13px;"></div>
 
           <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
             <button class="btn primary" type="button" id="identidadeSalvarBtn">Salvar alteracoes</button>

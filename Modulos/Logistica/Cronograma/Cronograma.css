@@ -257,7 +257,7 @@ table.board {
 .evento-tags span {
   border: 1px solid #fed7aa;
   border-radius: 999px;
-  background: #f4f1ef;
+  background: #eef0f2;
   color: #c2410c;
   font-size: 10px;
   font-weight: 700;
@@ -649,7 +649,7 @@ table.board {
   margin-top: 8px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: #f4f1ef;
+  background: #eef0f2;
   color: #c2410c;
   font-size: 12px;
   font-style: normal;

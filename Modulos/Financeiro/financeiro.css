@@ -5,7 +5,7 @@
 .fin-abas button.ativa{background:#123f86;border-color:#123f86;color:#fff}
 .fin-conta-aba{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#b0362d;color:#fff;font-size:11px;margin-left:4px}
 .fin-conta-aba:empty{display:none}
-.fin-aviso{background:#fbf6ea;border:1px solid #ead9a8;border-radius:12px;padding:12px 16px;color:#5b4a2a;font-size:14px;margin:0 0 16px}
+.fin-aviso{background:#f1f3f5;border:1px solid #ead9a8;border-radius:12px;padding:12px 16px;color:#5b4a2a;font-size:14px;margin:0 0 16px}
 .fin-vazio{padding:40px;text-align:center;color:#6b6b6b;border:1px dashed #dfe4ea;border-radius:14px;background:#fff}
 
 .fin-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}

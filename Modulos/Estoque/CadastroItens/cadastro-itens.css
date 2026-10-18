@@ -868,7 +868,7 @@ td {
 }
 
 #itensModalAjuda .ajuda-video-item:hover {
-  background: #f4f1ef;
+  background: #eef0f2;
   border-left-color: var(--laranja);
 }
 
@@ -991,7 +991,7 @@ td {
 #itensModalAjuda .pip-info-box {
   margin-top: 14px;
   padding: 12px 16px;
-  background: #f4f1ef;
+  background: #eef0f2;
   border: 1px dashed var(--laranja);
   border-radius: 12px;
   font-size: 13px;
