@@ -12045,7 +12045,6 @@ html += `
 
       </div>
 
-      ${renderInfoLogisticaPedido(pedido)}
 
     </div>
 
@@ -12381,8 +12380,7 @@ ${
         </div>
 
         ${
-          etapa.observacao ||
-          etapa.obs
+          obsEtapaCompleta(etapa, pedido)
 
             ? `
               <div
@@ -12395,8 +12393,7 @@ ${
                 </strong>
 
                 ${escapeHtml(
-                  etapa.observacao ||
-                  etapa.obs
+                  obsEtapaCompleta(etapa, pedido)
                 )}
 
               </div>
@@ -13040,6 +13037,21 @@ function montarTextoInfoLogistica(tipo, valor){
 }
 
 
+/* (out/2026) As informações do local saíram da coluna do pedido e entram na Obs da etapa
+   (carregamento, montagem, desmontagem...; triagem não), junto com a observação escrita. */
+function textoInfoLogisticaPedido(pedido){
+  const info = pedido && pedido.infoLogistica ? pedido.infoLogistica : {};
+  return ["baldeacao", "escada", "caminhaoPerto", "horarioLimite", "lona"]
+    .map(tipo => montarTextoInfoLogistica(tipo, info[tipo]))
+    .filter(Boolean)
+    .join(" · ");
+}
+function obsEtapaCompleta(etapa, pedido){
+  const escrita = String((etapa && (etapa.observacao || etapa.obs)) || "").trim();
+  const ehTriagem = String((etapa && etapa.etapa) || "").toLowerCase().includes("triagem");
+  const info = ehTriagem ? "" : textoInfoLogisticaPedido(pedido);
+  return [escrita, info].filter(Boolean).join(" · ");
+}
 function renderInfoLogisticaPedido(pedido){
 
   const info =
@@ -17407,7 +17419,6 @@ ${andamentoEtapaHtml(etapa, pedido)}
       `
     }
 
-${renderInfoLogisticaPedidoMobile(pedido)}
 ${
   montagemComRegistros
 
@@ -17480,8 +17491,7 @@ ${
 <!-- OBSERVAÇÃO -->
 
 ${
-  etapa.observacao ||
-  etapa.obs
+  obsEtapaCompleta(etapa, pedido)
     ? `
       <div class="agenda-card-obs">
 
@@ -17489,8 +17499,7 @@ ${
 
         ${
           escapeHtml(
-            etapa.observacao ||
-            etapa.obs
+            obsEtapaCompleta(etapa, pedido)
           )
         }
 
@@ -18460,7 +18469,7 @@ function appCartaoEtapa(item, indice){
           : "") +
       '</div>' +
 
-      (etapa.observacao ? '<div class="app-obs">' + escapeHtml(etapa.observacao) + '</div>' : "") +
+      (obsEtapaCompleta(etapa, pedido) ? '<div class="app-obs">' + escapeHtml(obsEtapaCompleta(etapa, pedido)) + '</div>' : "") +
       (avisos.length ? '<div class="app-avisos">' + avisos.join("") + '</div>' : "") +
 
       '<div class="app-cartao-rodape">' +
