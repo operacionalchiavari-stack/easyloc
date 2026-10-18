@@ -9471,3 +9471,4 @@ mantidas. Só cor — nada de estrutura/posição mudou.
 - Fim de `styles/tema-chiavari.css`: bloco "PALETA AZUL-MARINHO" (variáveis `--ch-azul*`, campos brancos, botão
   secundário branco/azul, hover de aba e linha selecionada em azul suave, `accent-color` azul).
 - Versões `?v=20261018-azul` (global.css, tema, fundo-claro e os CSS de módulo alterados).
+- **Cabeçalhos de tabela/painel continuam grafite `#5a5a55`** (pedido seguinte: "os botões eu gostei, mas esses top de tabela não, tire o azul das tabelas"): regras no fim de `fundo-claro.css` (`.panel-header`, `.cartao-cabecalho`, `.rh-cartao-cabecalho`, `.card-tabela-metas-header`, `.card-header`, `.board thead th`, título do `.table-box`) e de `tema-chiavari.css`. Versão `?v=20261018-faixa`.

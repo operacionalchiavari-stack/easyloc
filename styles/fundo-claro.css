@@ -19,3 +19,6 @@ html body table:not(.sem-fundo){ background-color:#ffffff; }
 /* Paleta azul-marinho (out/2026): campos brancos, seleção azul suave */
 html body :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea){ background-color:#ffffff; }
 html body :is(input[type="checkbox"], input[type="radio"]){ accent-color:#123f86; }
+/* Cabeçalhos de tabela/painel ficam grafite, não azul (pedido: "tire o azul das tabelas") */
+html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-header, .board thead th){ background:#5a5a55 !important; }
+html body .board thead th:first-child, html body .table-box > div:first-child:not(:has(table)){ background:#5a5a55 !important; }

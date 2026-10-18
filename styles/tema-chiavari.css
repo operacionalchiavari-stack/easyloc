@@ -536,3 +536,5 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.tabs, .el-tabs, .tab-
 html:root :is(body:not(.portal-shell), #main-content) :is(.tab-btn, [role="tab"]):not(.active, .ativo, .ativa, .is-active, [aria-selected="true"]):hover{ background:var(--ch-azul-suave) !important; border-color:var(--ch-azul) !important; color:var(--ch-azul) !important; }
 html:root :is(body:not(.portal-shell), #main-content) table tbody tr:is(.selected, .linha-selecionada){ background:var(--ch-azul-suave) !important; }
 html:root :is(body:not(.portal-shell), #main-content) :is(input[type="checkbox"], input[type="radio"]){ accent-color:var(--ch-azul); }
+/* Cabeçalhos de tabela/painel em grafite, não azul (pedido: "tire o azul das tabelas"); o azul fica nos botões */
+html:root :is(body:not(.portal-shell), #main-content) :is(.panel-header, .card-header, .el-card__header, .resumo-principal){ background:#5a5a55 !important; }
