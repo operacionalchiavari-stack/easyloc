@@ -8903,7 +8903,7 @@ textarea{ font-family:inherit; }
 
     <div class="acoes-cronograma">
 
-      <button type="button" class="acao" onclick="abrirCadastrosProtegido()" title="Caminhões, responsáveis e equipes">
+      <button type="button" class="acao" onclick="abrirCadastrosProtegido()" title="Responsáveis e equipes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12H3"/><path d="M16 6H3"/><path d="M16 18H3"/><path d="M18 9v6"/><path d="M21 12h-6"/></svg>
         Cadastros
       </button>
@@ -15562,7 +15562,6 @@ function abrirModalCadastros(){
 
   document.getElementById("modalCadastros").classList.add("show");
 
-  carregarCaminhoes();
   carregarResponsaveis();
   carregarEquipes();
 
@@ -15619,75 +15618,8 @@ function salvarEquipe(){
 })
     .salvarEquipe(nome);
 }
-function salvarCaminhao(){
 
-  const nome = document.getElementById("cadCaminhaoNome").value;
-  const tipo = document.getElementById("cadCaminhaoTipo").value;
-  const empresa = document.getElementById("cadCaminhaoEmpresa").value;
-  const vinculo = document.getElementById("cadCaminhaoVinculo").value;
 
-  if(!nome){
-    mostrarAlerta("Digite o nome do caminhão");
-    return;
-  }
-
-  if(!empresa){
-    mostrarAlerta("Digite a empresa");
-    return;
-  }
-
-  google.script.run
-.withSuccessHandler(() => {
-avisoRapido("Caminhão salvo.");
-  carregarCaminhoes(); // 👈 atualiza lista
-      document.getElementById("cadCaminhaoNome").value = "";
-      document.getElementById("cadCaminhaoEmpresa").value = "";
-    })
-    .salvarCaminhao(nome, tipo, empresa, vinculo);
-}
-function carregarCaminhoes(){
-
-  google.script.run
-    .withSuccessHandler(function(lista){
-
-      const div = document.getElementById("listaCaminhoes");
-
-      if(!lista.length){
-        div.innerHTML = "<p style='color:#6b6b6b;'>Nenhum caminhão cadastrado</p>";
-        return;
-      }
-
-      let html = "";
-
-      lista.forEach(c => {
-
-        html += `
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            padding:10px;
-            border-bottom:1px solid #e3e7ec;
-            font-size:13px;
-          ">
-
-            <div>
-              <strong>${c.nome}</strong> (${c.tipo})<br>
-              <span style="color:#6b6b6b;">
-                ${c.empresa} • ${c.vinculo}
-              </span>
-            </div>
-
-          </div>
-        `;
-
-      });
-
-      div.innerHTML = html;
-
-    })
-    .listarCaminhoes();
-}
 function carregarResponsaveis(){
 
   google.script.run
@@ -18864,66 +18796,12 @@ function appVerPedido(indice){
 
       <!-- TABS -->
       <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <button class="btn btn-primary tab-cadastro active" onclick="trocarAbaCadastro('caminhoes', this)">Caminhões</button>
-        <button class="btn btn-light tab-cadastro" onclick="trocarAbaCadastro('responsaveis', this)">Responsáveis</button>
+        <button class="btn btn-primary tab-cadastro active" onclick="trocarAbaCadastro('responsaveis', this)">Responsáveis</button>
         <button class="btn btn-light tab-cadastro" onclick="trocarAbaCadastro('equipes', this)">Equipes</button>
       </div>
 
-      <!-- CAMINHÕES -->
-<div id="aba-caminhoes" class="aba-cadastro">
-
-  <div class="form-grid" style="grid-template-columns:2fr 1fr 2fr 1.5fr auto;">
-    
-    <div class="field">
-      <label>Nome do caminhão</label>
-      <input id="cadCaminhaoNome" type="text" placeholder="Ex: Caminhão 01">
-    </div>
-
-    <div class="field">
-      <label>Tipo</label>
-      <select id="cadCaminhaoTipo">
-        <option value="P">P</option>
-                <option value="Pick-up">Pick-up</option>
-        <option value="M">M</option>
-        <option value="G">G</option>
-        <option value="XG">XG</option>
-                <option value="G2">G2</option>
-                                <option value="G2">G4</option>
- <option value="M2">M2</option>
-<option value="3/4">3/4</option>
-<option value="Médio">Médio</option>
-<option value="Grande">Grande</option>
-<option value="XL">XL</option>
-                                                                
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Empresa</label>
-      <input id="cadCaminhaoEmpresa" type="text" placeholder="Ex: Chiavari / Terceiro João">
-    </div>
-
-    <div class="field">
-      <label>Vínculo</label>
-      <select id="cadCaminhaoVinculo">
-        <option value="Proprio">Próprio</option>
-        <option value="Terceiro">Terceiro</option>
-        <option value="Agregado">Agregado</option>
-      </select>
-    </div>
-
-    <div class="field" style="justify-content:flex-end;">
-      <button class="btn btn-accent" onclick="salvarCaminhao()">Salvar</button>
-    </div>
-
-  </div>
-
-  <div id="listaCaminhoes"></div>
-
-</div>
-
       <!-- RESPONSÁVEIS -->
-      <div id="aba-responsaveis" class="aba-cadastro" style="display:none;">
+      <div id="aba-responsaveis" class="aba-cadastro">
 
         <div class="form-grid" style="grid-template-columns:2fr auto;">
           <div class="field">
