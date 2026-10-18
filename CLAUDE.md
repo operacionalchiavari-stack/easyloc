@@ -9472,3 +9472,7 @@ mantidas. Só cor — nada de estrutura/posição mudou.
   secundário branco/azul, hover de aba e linha selecionada em azul suave, `accent-color` azul).
 - Versões `?v=20261018-azul` (global.css, tema, fundo-claro e os CSS de módulo alterados).
 - **Cabeçalhos de tabela/painel SEM cor de fundo** (pedidos seguintes: "tire o azul das tabelas" e depois "retire os grafites tbm, devem ficar sem nada"): fundo branco, texto escuro e linha fina embaixo; botões dentro deles não mudam. Depois ("no sistema todo"): regra geral no fim de `fundo-claro.css` e `tema-chiavari.css` para QUALQUER `thead`/`th` e faixas de painel, com peso de 2 IDs (`:is(table, #ch-a#ch-b)`) para vencer regras de tela com ID; conferido no navegador em todas as telas do menu: regras no fim de `fundo-claro.css` (`.panel-header`, `.cartao-cabecalho`, `.rh-cartao-cabecalho`, `.card-tabela-metas-header`, `.card-header`, `.board thead th`, título do `.table-box`) e de `tema-chiavari.css`. Versão `?v=20261018-sem-faixa`.
+- **Pedido sem bege** (pedido seguinte: "dentro da central do pedido tem alguns lugares com fundo bege, o fundo deve ser o global"):
+  `pedido.css` — abertura "Qual história…", cartão do cliente, campos, cartões de observação, barra de etapas, vitrine e
+  número do pedido passaram de bege para o cinza `#f3f5f6`/branco; botão "Avançar" e "Um dia/Vários dias" em azul.
+  `CentralPedidos.css`: selo "Veio do catálogo" em azul suave. Versões `?v=20261018-sem-bege`.
