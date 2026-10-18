@@ -19,6 +19,9 @@ html body table:not(.sem-fundo){ background-color:#ffffff; }
 /* Paleta azul-marinho (out/2026): campos brancos, seleção azul suave */
 html body :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea){ background-color:#ffffff; }
 html body :is(input[type="checkbox"], input[type="radio"]){ accent-color:#123f86; }
-/* Cabeçalhos de tabela/painel ficam grafite, não azul (pedido: "tire o azul das tabelas") */
-html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-header, .board thead th){ background:#5a5a55 !important; }
-html body .board thead th:first-child, html body .table-box > div:first-child:not(:has(table)){ background:#5a5a55 !important; }
+/* Cabeçalhos de tabela/painel sem cor de fundo (pedido: "tire o azul... retire os grafites tbm, devem ficar sem nada"):
+   fundo branco, texto escuro e uma linha fina embaixo. */
+html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-header, .board thead th, .board thead th:first-child, .table-box > div:first-child:not(:has(table))){
+  background:#ffffff !important; color:#1d2330 !important; border-bottom:1px solid #e3e7ec !important;
+}
+html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-header, .board thead th, .table-box > div:first-child:not(:has(table))) :is(h1,h2,h3,h4,span,small,p,strong,div,label):not(button, button *, .btn, .btn *, [role=button], [role=button] *){ color:#1d2330 !important; }
