@@ -59,6 +59,11 @@ function CRON_entrarComLogin(contexto) {
   const usuario = Acervo.usuario();
   if (!usuario) { return null; }
   const tem = CRON_perfisDoUsuario_();
+  /* Equipe Free saiu do Cronograma e foi para o RH (out/2026): quem edita
+     Recursos Humanos também usa o painel (que confere o perfil "montagem"). */
+  if (CRON_normalizar_(contexto).indexOf("equipe free") >= 0 && Acervo.pode("rh.colaboradores.editar") && tem.indexOf("montagem") < 0) {
+    tem.push("montagem");
+  }
   const perfil = CRON_preferencia_(contexto).find(function (p) { return tem.indexOf(p) >= 0; });
   if (!perfil) { return null; }
   return {

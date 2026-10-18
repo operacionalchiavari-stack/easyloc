@@ -160,6 +160,7 @@
     [/Chiavari\/CentralMetas\/itens-danificados/i, 'estoque.almoxarifado.visualizar'],
     [/Chiavari\/CentralMetas/i, 'rh.colaboradores.visualizar'],
     [/Chiavari\/ControleRH/i, 'rh.colaboradores.visualizar'],
+    [/Cronograma\/equipe-free/i, 'rh.colaboradores.visualizar'], // Equipe Free saiu do Cronograma e fica no RH
     [/Chiavari\/(Fretes|Uber)/i, 'logistica.planejamento.visualizar'],
     [/Chiavari\/Ocorrencias/i, 'logistica.expedicao.visualizar'],
     [/Chiavari\/Costura/i, 'estoque.insumos.visualizar'],

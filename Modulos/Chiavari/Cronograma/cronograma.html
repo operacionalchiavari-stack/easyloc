@@ -8908,10 +8908,7 @@ textarea{ font-family:inherit; }
         Cadastros
       </button>
 
-      <button type="button" class="acao" onclick="freeAbrirPainel()" title="Vagas e cadastros dos freelancers">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Free
-      </button>
+      
 
       <button type="button" class="acao" onclick="abrirAgendaNova()" title="Nova agenda interna">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M12 14v4"/><path d="M10 16h4"/></svg>
@@ -9149,7 +9146,6 @@ textarea{ font-family:inherit; }
 
 <div class="modal-footer" style="flex-direction:column; align-items:stretch; gap:12px;">
 
-  <div id="listaLote" hidden></div>
 
   <div style="display:flex; justify-content:flex-end; gap:10px;">
     <button class="btn btn-light" onclick="fecharModalNovoPedido()">Cancelar</button>
@@ -12074,20 +12070,7 @@ const ehCarregamento =
    CONFIRMAÇÃO DO DECORADOR
 ===================================================== */
 
-const confirmacaoDecoradorOk =
-  etapa.confirmadoDecorador === true ||
-  [
-    "SIM",
-    "S",
-    "TRUE",
-    "1"
-  ].includes(
-    String(
-      etapa.confirmadoDecorador || ""
-    )
-      .trim()
-      .toUpperCase()
-  );
+const confirmacaoDecoradorOk = true; /* confirmação do decorador saiu (out/2026) */
 
 const etapaSemConfirmacao =
   (
@@ -12421,11 +12404,6 @@ ${
     : ""
 }
 
-${
-  etapaSemConfirmacao
-    ? `<div class="aviso-decorador">Decorador não confirmou</div>`
-    : ""
-}
 
 ${
   typeof renderFreeBadgeDesktop === "function"
@@ -12821,30 +12799,7 @@ onchange="
     placeholder="Detalhes da etapa"
   />
 
-  <div class="confirmacao-decorador-box">
 
-  <label class="confirmacao-decorador-label">
-
-    <input
-      type="checkbox"
-      class="confirmacao-decorador-checkbox etapa-confirmada-decorador"
-    >
-
-    <span class="confirmacao-decorador-conteudo">
-
-      <span class="confirmacao-decorador-titulo">
-        Data confirmada pelo decorador
-      </span>
-
-      <span class="confirmacao-decorador-descricao">
-        Marque esta opção quando o decorador já tiver confirmado esta data.
-      </span>
-
-    </span>
-
-  </label>
-
-</div>
 </div>
 
 <div class="espelhar-equipe-box">
@@ -13761,17 +13716,10 @@ function salvarPedido(){
 
   if(!validarPayload(payload)) return;
 
-  const erroFree = typeof freeAnexarAoPayload === "function" ? freeAnexarAoPayload(payload) : "";
-  if(erroFree){
-    mostrarAlerta(escapeHtml(erroFree), "Pedir free");
-    return;
-  }
-
   mostrarLoading("Salvando pedido...");
 
   if (typeof google === "undefined" || !google.script || !google.script.run) {
     console.log("Payload enviado:", payload);
-    mostrarAlerta("Preview no navegador comum: o pedido foi validado e montado corretamente. No Apps Script, conecte a função salvarPedidoCompleto(payload).");
     esconderLoading();
     fecharModalNovoPedido();
     return;
@@ -13782,8 +13730,7 @@ function salvarPedido(){
       esconderLoading();
       fecharModalNovoPedido();
       carregarCronograma();
-      freeEstado.aprovados = null;
-      mostrarAlerta("Pedido salvo com sucesso." + (typeof freeMensagemPedidoSalvo === "function" ? freeMensagemPedidoSalvo(res) : ""));
+      avisoRapido("Pedido salvo.");
     })
     .withFailureHandler(function(err){
       console.error(err);
@@ -13792,74 +13739,12 @@ function salvarPedido(){
     })
     .salvarPedidoCompleto(payload);
 }
-    let lotePedidos = [];
 
-function adicionarAoLote(){
 
-  const payload = coletarPayloadPedido();
 
-  if(!validarPayload(payload)) return;
 
-  const erroFree = typeof freeAnexarAoPayload === "function" ? freeAnexarAoPayload(payload) : "";
-  if(erroFree){
-    mostrarAlerta(escapeHtml(erroFree), "Pedir free");
-    return;
-  }
 
-  lotePedidos.push(payload);
 
-  renderListaLote();
-
-  limparFormularioPedido();
-
-  mostrarAlerta("Pedido adicionado ao lote.", "Lote");
-
-}
-
-function renderListaLote(){
-
-  const container = document.getElementById("listaLote");
-
-  if(!lotePedidos.length){
-    container.innerHTML = "<div style='font-size:12px; color:#6b6b6b;'>Nenhum pedido no lote</div>";
-    return;
-  }
-
-  let html = "";
-
-  lotePedidos.forEach((p, i) => {
-
-    html += `
-      <div style="
-        background:#fafbfc;
-        border:1px solid #e3e7ec;
-        border-radius:10px;
-        padding:8px 10px;
-        margin-bottom:6px;
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        font-size:12px;
-      ">
-        <div>
-          <strong>#${p.pedido}</strong> - ${p.cliente}
-        </div>
-        <button class="btn btn-light" style="padding:4px 8px; font-size:11px;" onclick="removerDoLote(${i})">
-          Remover
-        </button>
-      </div>
-    `;
-
-  });
-
-  container.innerHTML = html;
-
-}
-
-function removerDoLote(index){
-  lotePedidos.splice(index, 1);
-  renderListaLote();
-}
 function filtrarOpcoesMultiSelect(input){
 
   const field = input.closest(".field");
@@ -13915,47 +13800,7 @@ function limparFormularioPedido(){
 
 }
 
-function enviarLote(){
 
-  if(!lotePedidos.length){
-    mostrarAlerta("Nenhum pedido no lote.");
-    return;
-  }
-
-  confirmarAcao(
-    "Deseja enviar todos os pedidos do lote?",
-    (ok) => {
-
-      if(!ok) return;
-
-      mostrarLoading("Enviando lote...");
-
-      google.script.run
-        .withSuccessHandler(() => {
-
-          esconderLoading();
-
-          mostrarAlerta("Lote enviado com sucesso!", "Sucesso");
-
-          lotePedidos = [];
-          renderListaLote();
-
-          fecharModalNovoPedido();
-          carregarCronograma();
-
-        })
-        .withFailureHandler(() => {
-
-          esconderLoading();
-          mostrarAlerta("Erro ao enviar lote.");
-
-        })
-        .salvarPedidosEmLote(lotePedidos);
-
-    }
-  );
-
-}
 
     function escapeHtml(str){
       return String(str ?? "")
@@ -14389,134 +14234,8 @@ function perguntarConfirmacaoDecorador(
   etapa,
   senhaSupervisor = ""
 ){
-
-  if(
-    !etapa ||
-    !etapa.id
-  ){
-
-    mostrarAlerta(
-      "Não foi possível identificar esta etapa."
-    );
-
-    return;
-  }
-
-
-  const btnSim =
-    document.getElementById(
-      "alertaOk"
-    );
-
-  const btnNao =
-    document.getElementById(
-      "alertaCancelar"
-    );
-
-
-  const textoSimAnterior =
-    btnSim.innerText;
-
-  const textoNaoAnterior =
-    btnNao.innerText;
-
-
-  btnSim.innerText =
-    "Sim";
-
-  btnNao.innerText =
-    "Não";
-
-
-  confirmarAcao(
-
-    "O decorador confirmou que será esse dia?",
-
-    function(confirmado){
-
-      btnSim.innerText =
-        textoSimAnterior;
-
-      btnNao.innerText =
-        textoNaoAnterior;
-
-
-      mostrarLoading(
-        "Atualizando confirmação..."
-      );
-
-
-      google.script.run
-
-        .withSuccessHandler(
-          function(resultado){
-
-            esconderLoading();
-
-            carregarCronograma();
-
-
-            if(
-              resultado &&
-              resultado.confirmado === true
-            ){
-
-              mostrarAlerta(
-                "A data foi confirmada pelo decorador.",
-                "Data confirmada"
-              );
-
-            }else{
-
-              mostrarAlerta(
-                "A etapa permanecerá aguardando confirmação do decorador.",
-                "Aguardando confirmação"
-              );
-
-            }
-
-          }
-        )
-
-        .withFailureHandler(
-          function(erro){
-
-            console.error(
-              "Erro ao salvar confirmação:",
-              erro
-            );
-
-            esconderLoading();
-
-            mostrarAlerta(
-              "Não foi possível atualizar a confirmação da etapa."
-            );
-
-          }
-        )
-
-        .salvarConfirmacaoDecorador(
-          etapa.id,
-
-          confirmado === true,
-
-          /*
-           * Pode existir se acabou de
-           * digitar 1994.
-           */
-          senhaSupervisor || "",
-
-          /*
-           * Quando estiver dentro dos
-           * 10 minutos, usamos o token
-           * da sessão.
-           */
-          window.tokenAuditoria || ""
-        );
-
-    }
-  );
-
+  /* Sem confirmação do decorador (out/2026): o supervisor abre a operação, igual ao responsável */
+  if(etapa){ abrirOperacaoEtapa(etapa); }
 }
 /* =====================================================
    CONCLUSÃO DO CARREGAMENTO
@@ -14988,12 +14707,8 @@ function salvarConclusaoCarregamento(){
 
         fecharModalConclusaoCarregamento();
 
-        mostrarAlerta(
-          status === "COM_PENDENCIAS"
-
-            ? "Carregamento registrado com pendências."
-
-            : "Carregamento concluído com sucesso."
+        avisoRapido(
+      status === "COM_PENDENCIAS" ? "Carregamento registrado com pendências." : "Carregamento concluído."
         );
 
         /*
@@ -15301,61 +15016,8 @@ if(checkboxConfirmacao){
 }
 
 function controlarConfirmacaoDecorador(select){
-
-  const item =
-    select.closest(
-      ".etapa-item"
-    );
-
-  if(!item){
-    return;
-  }
-
-  const box =
-    item.querySelector(
-      ".confirmacao-decorador-box"
-    );
-
-  const checkbox =
-    item.querySelector(
-      ".etapa-confirmada-decorador"
-    );
-
-  if(!box){
-    return;
-  }
-
-  const tipo =
-    String(
-      select.value || ""
-    )
-      .trim()
-      .toLowerCase();
-
-  const permiteConfirmacao =
-    tipo === "montagem" ||
-    tipo === "desmontagem";
-
-  box.classList.toggle(
-    "show",
-    permiteConfirmacao
-  );
-
-  if(typeof freeControlarPedidoEtapa === "function"){
-    freeControlarPedidoEtapa(item, permiteConfirmacao);
-  }
-
-  /*
-   * Se mudar a etapa para Carregamento,
-   * Triagem etc., apaga a confirmação.
-   */
-  if(
-    !permiteConfirmacao &&
-    checkbox
-  ){
-    checkbox.checked = false;
-  }
-
+  /* Confirmação do decorador saiu do Cronograma (out/2026) */
+  return;
 }
 
 function controlarCampoCaminhao(select){
@@ -15827,22 +15489,7 @@ window.addEventListener("load", function(){
   }
 
 });
-async function abrirNovoPedidoProtegido(){
 
-const ok = await pedirSenha("Acesso");
-
-if(!ok || window.perfilAcesso !== "montagem"){
-  mostrarAlerta("Acesso permitido apenas para Supervisor de Montagem.");
-  return;
-}
-
-  if(!ok){
-    mostrarAlerta("Senha inválida.");
-    return;
-  }
-
-  abrirModalNovoPedido();
-}
 function aplicarPermissaoEtapa(item, tipo){
 
   const perfil = window.perfilAcesso;
@@ -15949,7 +15596,7 @@ function salvarResponsavel(){
 
   google.script.run
 .withSuccessHandler(() => {
-  mostrarAlerta("Responsável salvo!");
+  avisoRapido("Responsável salvo.");
   document.getElementById("cadResponsavelNome").value = "";
   carregarResponsaveis();
 })
@@ -15966,7 +15613,7 @@ function salvarEquipe(){
 
   google.script.run
 .withSuccessHandler(() => {
-  mostrarAlerta("Equipe salva!");
+  avisoRapido("Equipe salva.");
   document.getElementById("cadEquipeNome").value = "";
   carregarEquipes();
 })
@@ -15991,7 +15638,7 @@ function salvarCaminhao(){
 
   google.script.run
 .withSuccessHandler(() => {
-mostrarAlerta("Caminhão salvo!");
+avisoRapido("Caminhão salvo.");
   carregarCaminhoes(); // 👈 atualiza lista
       document.getElementById("cadCaminhaoNome").value = "";
       document.getElementById("cadCaminhaoEmpresa").value = "";
@@ -16947,7 +16594,7 @@ const selecionadosEquipe = [...modal.querySelectorAll('[data-type="equipe"] .mul
           window.modoEdicaoAgenda = false;
           window.envioEdicaoAgenda = null;
 
-          mostrarAlerta("Item atualizado com sucesso.");
+          avisoRapido("Item atualizado.");
         }else{
           mostrarAlerta("Não foi possível atualizar o item.");
         }
@@ -17002,7 +16649,7 @@ const selecionadosEquipe = [...modal.querySelectorAll('[data-type="equipe"] .mul
           window._salvandoAgenda = false;
           fecharModalAgenda();
           carregarCronograma();
-          mostrarAlerta("Item salvo com sucesso.");
+          avisoRapido("Item salvo.");
         })
         .withFailureHandler(function(err){
           window._salvandoAgenda = false;
@@ -17207,7 +16854,7 @@ function excluirAgenda(){
         window.modoEdicaoAgenda = false;
         window.envioEdicaoAgenda = null;
 
-        mostrarAlerta("Item excluído com sucesso.");
+        avisoRapido("Item excluído.");
 
       })
       .withFailureHandler(function(){
@@ -17826,20 +17473,7 @@ const ehMontagem =
 const ehDesmontagem =
   nomeEtapaMobile ===
   "desmontagem";
-  const confirmacaoDecoradorOkMobile =
-  etapa.confirmadoDecorador === true ||
-  [
-    "SIM",
-    "S",
-    "TRUE",
-    "1"
-  ].includes(
-    String(
-      etapa.confirmadoDecorador || ""
-    )
-      .trim()
-      .toUpperCase()
-  );
+  const confirmacaoDecoradorOkMobile = true; /* confirmação do decorador saiu (out/2026) */
 
 const etapaSemConfirmacaoMobile =
   (
@@ -17952,11 +17586,6 @@ ${andamentoEtapaHtml(etapa, pedido)}
     }
 
 ${renderInfoLogisticaPedidoMobile(pedido)}
-${
-  etapaSemConfirmacaoMobile
-    ? `<div class="aviso-decorador">Decorador não confirmou</div>`
-    : ""
-}
 ${
   montagemComRegistros
 
@@ -18437,7 +18066,7 @@ function enviarAlertaMotorista(){
     aplicarAlertaNoPedidoAtual(alertaLocal);
     esconderLoading();
     fecharModalMotoristaPedido();
-    mostrarAlerta("Alerta enviado. O card amarelo ficará piscando até a resolução.", "Sucesso");
+    avisoRapido("Alerta enviado. O card fica piscando até a resolução.");
     return;
   }
 
@@ -18456,7 +18085,7 @@ function enviarAlertaMotorista(){
       aplicarAlertaNoPedidoAtual(alerta);
       esconderLoading();
       fecharModalMotoristaPedido();
-      mostrarAlerta("Alerta enviado com sucesso.", "Sucesso");
+      avisoRapido("Alerta enviado.");
       carregarCronograma();
     })
     .withFailureHandler(function(erro){
@@ -18508,7 +18137,7 @@ function resolverAlertaMotorista(){
 
     esconderLoading();
     fecharModalMotoristaPedido();
-    mostrarAlerta("Alerta resolvido. O card agora ficará verde.", "Resolvido");
+    avisoRapido("Alerta resolvido.");
     return;
   }
 
@@ -18526,7 +18155,7 @@ function resolverAlertaMotorista(){
       aplicarAlertaNoPedidoAtual(alertaResolvido);
       esconderLoading();
       fecharModalMotoristaPedido();
-      mostrarAlerta("Alerta marcado como resolvido.", "Resolvido");
+      avisoRapido("Alerta resolvido.");
       carregarCronograma();
     })
     .withFailureHandler(function(erro){
@@ -18890,9 +18519,6 @@ function appCartaoEtapa(item, indice){
     avisos.push('<span class="app-aviso erro">Carregado com pendências</span>');
   }
 
-  if(ehExecucao && !appConfirmado(etapa.confirmadoDecorador)){
-    avisos.push('<span class="app-aviso">Decorador não confirmou</span>');
-  }
 
   if(item.chave === "montagem" && typeof contarRegistrosMontagem === "function"){
     const total = contarRegistrosMontagem(etapa.montagem || null);
@@ -19049,7 +18675,6 @@ function renderCronogramaApp(){
         '<div class="app-menu" id="appMenu" role="menu">' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(abrirAgendaNova)">' + APP_ICONES.agenda + 'Agenda</button>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(abrirCadastrosProtegido)">' + APP_ICONES.cadastros + 'Cadastros</button>' +
-          '<button type="button" role="menuitem" onclick="appMenuAcao(freeAbrirPainel)">' + APP_ICONES.cadastros + 'Equipe Free</button>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(abrirAppMontador)">' + APP_ICONES.externo + 'App do montador</button>' +
           '<hr>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(function(){ appMudarSemana(-7); })">' + APP_ICONES.esquerda + 'Semana anterior</button>' +
@@ -19336,241 +18961,8 @@ function appVerPedido(indice){
   </div>
 </div>
 
-<!-- =====================================================
-     EQUIPE FREE — vagas para freelancers
-     (servidor em Freelancers.js, app em app_free.html)
-===================================================== -->
-<style>
-  .free-badge{
-    display:flex; align-items:center; gap:6px; width:100%;
-    margin-top:8px; padding:6px 9px; border-radius:10px; border:1px solid transparent;
-    font:700 11.5px/1.2 var(--sans); cursor:pointer; text-align:left;
-    background:#edf0f3; color:#2b2b2b;
-  }
-  .free-badge svg{ width:13px; height:13px; flex:none; }
-  .free-badge .free-badge-num{ margin-left:auto; font-weight:800; white-space:nowrap; }
-  .free-badge.parcial{ background:#fdf4e3; color:#b45309; border-color:#f3dfb4; }
-  .free-badge.completa{ background:#ecf8ef; color:#166534; border-color:#c9ecd3; }
-  .free-badge.encerrada{ background:#edf0f3; color:#6b6b6b; }
-  .free-add{
-    display:none; margin-top:8px; width:100%; padding:5px 9px; border-radius:10px;
-    border:1px dashed #c8cfd8; background:transparent; color:#6b6b6b;
-    font:700 11.5px/1.2 var(--sans); cursor:pointer;
-  }
-  .task-card:hover .free-add{ display:block; }
-  .free-add:hover{ border-color:#123f86; color:#1f2020; }
-
-  #modalFreeVaga .modal, #modalFreePainel .modal{ width:min(760px, 100%); }
-  .free-corpo{ padding:20px 22px 24px; }
-  .free-sub{ display:flex; flex-wrap:wrap; gap:6px 14px; color:#6b6b6b; font-size:13.5px; margin-bottom:18px; }
-  .free-sub strong{ color:#1f2020; }
-  .free-form{ display:grid; grid-template-columns:100px 140px 150px 1fr; gap:14px; }
-  .free-modos{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-  .free-modos label{ display:flex; gap:8px; align-items:flex-start; padding:10px 12px; border:1px solid #e3e7ec; border-radius:12px; cursor:pointer; background:#fff; font-size:12px; color:#6b6b6b; text-transform:none; letter-spacing:0; font-weight:500; }
-  .free-modos label:has(input:checked){ border-color:#123f86; background:#f3f5f7; }
-  .free-modos input{ margin-top:2px; accent-color:#2b2a26; width:auto; }
-  .free-modos strong{ display:block; color:#1f2020; font-size:13px; }
-  .free-cfg-prazo-linha{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-  .free-cfg-prazo-linha select{ width:auto !important; }
-  .free-cfg-pessoas{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:6px; max-height:220px; overflow:auto; padding:2px; }
-  .free-escolha{ display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #e3e7ec; border-radius:10px; cursor:pointer; background:#fff; font-size:13px; text-transform:none; letter-spacing:0; font-weight:600; color:#1f2020; }
-  .free-escolha:has(input:checked){ border-color:#166534; background:#ecf8ef; }
-  .free-escolha input{ width:auto; accent-color:#166534; }
-  .free-escolha-nome{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .free-escolha small{ color:#9e9e9e; font-size:11px; white-space:nowrap; }
-  .free-nota{ display:inline-flex; align-items:center; padding:1px 7px; border-radius:999px; background:#fdf4e3; color:#b45309; font:800 11.5px/1.5 var(--sans); white-space:nowrap; }
-  .free-pedido-box{ grid-column:1 / -1; margin-top:4px; padding:12px 14px; border:1px dashed #c8cfd8; border-radius:14px; background:rgba(255,255,255,.65); }
-  .free-pedido-topo{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; color:#2b2b2b; }
-  .free-pedido-topo svg{ width:15px; height:15px; vertical-align:-2px; margin-right:6px; }
-  .free-pedido-check{ justify-content:flex-start; cursor:pointer; text-transform:none; letter-spacing:0; font-weight:500; }
-  .free-pedido-check input{ width:18px; height:18px; accent-color:#2b2a26; }
-  .free-pedido-cfg{ margin-top:12px; }
-  .free-historico{ margin-top:6px; font-size:12px; color:#6b6b6b; }
-  /* Os rótulos do formulário do cronograma são maiúsculos; aqui não */
-  .free-cfg .free-modos label,
-  .free-cfg .free-escolha{
-    text-transform:none !important;
-    letter-spacing:0 !important;
-    font-size:13px !important;
-  }
-  .free-cfg .free-modos label{ font-size:12px !important; }
-  .free-cfg .free-cfg-pessoas{ grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); }
-  .free-historico span{ display:inline-block; margin-right:10px; }
-  .free-form .free-largo{ grid-column:1 / -1; }
-  .free-acoes{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
-  .free-acoes .free-dir{ margin-left:auto; }
-  .free-erro{ display:none; margin-bottom:14px; padding:10px 12px; border-radius:12px; background:#fdeeee; color:#dc2626; font-size:13px; font-weight:600; }
-  .free-erro.ver{ display:block; }
-  .free-status{ display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px; font:800 11px/1.4 var(--sans); letter-spacing:.04em; text-transform:uppercase; background:#edf0f3; color:#2b2b2b; }
-  .free-status.ok{ background:#ecf8ef; color:#166534; }
-  .free-status.aviso{ background:#fdf4e3; color:#b45309; }
-  .free-status.erro{ background:#fdeeee; color:#dc2626; }
-  .free-secao{ margin:24px 0 10px; display:flex; align-items:baseline; gap:10px; font:800 12px/1 var(--sans); letter-spacing:.06em; text-transform:uppercase; color:#9e9e9e; }
-  .free-secao span{ color:#1f2020; font-size:13px; }
-  .free-lista{ display:flex; flex-direction:column; gap:8px; }
-  .free-pessoa{ display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid #e3e7ec; border-radius:14px; background:#fff; }
-  .free-foto{ width:44px; height:44px; border-radius:50%; overflow:hidden; flex:none; background:#edf0f3; display:grid; place-items:center; font-weight:800; color:#6b6b6b; }
-  .free-foto img{ width:100%; height:100%; object-fit:cover; cursor:zoom-in; }
-  .free-pessoa-info{ flex:1; min-width:0; font-size:13px; color:#6b6b6b; }
-  .free-pessoa-info strong{ display:block; color:#1f2020; font-size:14px; }
-  .free-pessoa-info a{ color:#166534; font-weight:700; text-decoration:none; }
-  .free-pessoa .btn{ padding:8px 12px; font-size:12.5px; }
-  .free-vazio{ padding:16px; border:1px dashed #e3e7ec; border-radius:14px; text-align:center; color:#9e9e9e; font-size:13px; }
-  .free-link{ display:flex; gap:8px; align-items:center; padding:12px 14px; border-radius:14px; background:#f3f5f7; margin-bottom:16px; font-size:13px; }
-  .free-link code{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#2b2b2b; }
-  .free-abas{ display:flex; gap:8px; margin-bottom:16px; }
-  .free-linha-vaga{ display:grid; grid-template-columns:92px 1fr auto; gap:12px; align-items:center; padding:12px 14px; border:1px solid #e3e7ec; border-radius:14px; background:#fff; cursor:pointer; }
-  .free-linha-vaga:hover{ border-color:#c8cfd8; }
-  .free-linha-vaga .free-dia{ font-weight:800; font-size:13px; }
-  .free-linha-vaga .free-dia small{ display:block; color:#6b6b6b; font-weight:600; }
-  .free-linha-vaga .free-meio{ font-size:13px; color:#6b6b6b; min-width:0; }
-  .free-linha-vaga .free-meio strong{ display:block; color:#1f2020; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .free-num{ font:800 15px/1 var(--sans); text-align:right; }
-  .free-num small{ display:block; font-size:11px; color:#9e9e9e; font-weight:700; margin-top:4px; }
-  .free-busca{ width:100%; border:1px solid #e3e7ec; border-radius:12px; padding:10px 12px; font-size:14px; margin-bottom:10px; }
-  .free-aviso{ background:#fdf4e3 !important; color:#b45309 !important; }
-  #modalFreeVaga{ z-index:20000002 !important; }
-  #modalSenha{ z-index:20000004 !important; }
-  .pac-container{ z-index:20000060 !important; }
-  .free-ponto-ok{ display:none; margin-top:6px; font-size:12px; font-weight:700; color:#166534; }
-  .free-ponto-ok.ver{ display:block; }
-  .free-qr-barra{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:18px; padding:14px 16px; border-radius:16px; background:#f3f5f7; }
-  .free-qr-barra > div{ flex:1 1 260px; font-size:13px; color:#6b6b6b; }
-  .free-qr-barra strong{ display:block; color:#1f2020; font-size:14px; }
-  .free-qr-caixa{ display:flex; flex-wrap:wrap; gap:20px; align-items:center; margin-top:12px; padding:18px; border:1px solid #e3e7ec; border-radius:16px; background:#fff; }
-  .free-qr-caixa #freeQrImagem{ width:220px; height:220px; flex:none; }
-  .free-qr-caixa > div:last-child{ flex:1 1 200px; font-size:13px; color:#6b6b6b; }
-  .free-qr-caixa p{ margin:6px 0 10px; }
-  .free-qr-codigo{ font:800 34px/1 var(--sans); letter-spacing:.25em; color:#1f2020; }
-  .free-pessoa-presenca{ align-items:flex-start; }
-  .free-pessoa-info strong .free-status{ margin-left:6px; vertical-align:1px; }
-  .free-presenca-linha{ margin-top:4px; color:#2b2b2b; }
-  .free-presenca-avisos{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-  .free-pessoa-botoes{ display:flex; flex-direction:column; gap:6px; }
-  .free-lancamento{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; padding:8px 10px; border-radius:12px; background:#f3f5f7; }
-  .free-lancamento input{ border:1px solid #e3e7ec; border-radius:10px; padding:7px 9px; font-size:14px; }
-  .free-lancamento .btn{ padding:7px 12px; font-size:12.5px; }
-  .free-badge .free-badge-extra{ font-weight:800; }
-  .free-badge .free-badge-extra.alerta{ color:#dc2626; }
-  @media (max-width:640px){
-    .free-form{ grid-template-columns:1fr 1fr; }
-    .free-modos{ grid-template-columns:1fr; }
-    .free-corpo{ padding:16px; }
-    .free-linha-vaga{ grid-template-columns:70px 1fr auto; }
-    .free-acoes .free-dir{ margin-left:0; }
-  }
-</style>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-<div class="overlay" id="modalFreeVaga">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>Vaga para free</h2>
-      <button class="modal-close" type="button" onclick="freeFecharVaga()">✕</button>
-    </div>
-    <div class="free-corpo" id="freeVagaCorpo"></div>
-  </div>
-</div>
-
-<div class="overlay" id="modalFreePainel">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>Equipe Free</h2>
-      <button class="modal-close" type="button" onclick="freeFecharPainel()">✕</button>
-    </div>
-    <div class="free-corpo" id="freePainelCorpo"></div>
-  </div>
-</div>
-
 <script>
-/* =========================================================
-   EQUIPE FREE — PAINEL DO SUPERVISOR
-========================================================= */
-const FREE_ICONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
-const FREE_CHAVE_PONTO = "freeUltimoPontoEncontro";
-
-window.freeContextos = window.freeContextos || {};
-
-const freeEstado = {
-  contexto: null,
-  vaga: null,
-  alterou: false,
-  aba: "vagas",
-  cadastros: null,
-  vagasSemana: null,
-  urlApp: ""
-};
-
-/* ---------- Badge nos cards do cronograma ---------- */
-
-function freeRegistrarContexto(etapa, pedido){
-  const id = String(etapa.id || "").trim();
-  if(!id){ return ""; }
-  window.freeContextos[id] = {
-    idEtapa: id,
-    etapa: etapa.etapa || "",
-    dataEtapa: etapa.dataEtapa || etapa.data || "",
-    horario: etapa.horario || etapa.hora || "",
-    responsavel: etapa.responsavel || "",
-    pedido: (pedido && pedido.pedido) || "",
-    cliente: (pedido && pedido.cliente) || "",
-    local: (pedido && pedido.local) || ""
-  };
-  return id;
-}
-
-function freeClasseBadge(v){
-  if(v.status === "ENCERRADA"){ return "encerrada"; }
-  return v.confirmados >= v.quantidade ? "completa" : "parcial";
-}
-
-function renderFreeBadgeDesktop(etapa, pedido, permiteAbrir){
-  const id = freeRegistrarContexto(etapa, pedido);
-  if(!id){ return ""; }
-
-  const v = etapa.freeVaga;
-  const chamada = "event.stopPropagation(); freeAbrirVagaEtapa('" + id.replace(/'/g, "\\'") + "')";
-
-  if(v){
-    const titulo = (v.nomes && v.nomes.length ? "Confirmados: " + v.nomes.join(", ") : "Ninguém confirmou ainda") +
-      (v.cancelados ? " · " + v.cancelados + (v.cancelados === 1 ? " cancelou" : " cancelaram") : "") +
-      (v.checkins ? " · " + v.checkins + " check-in, " + v.checkouts + " check-out" : "") +
-      (v.faltas ? " · " + v.faltas + (v.faltas === 1 ? " faltou" : " faltaram") : "") +
-      (v.mudancasPendentes ? " · " + v.mudancasPendentes + " não viram a mudança de horário" : "") +
-      (v.valor ? " · Diária " + freeMoeda(v.valor) : "") +
-      (v.modo === "PRIORIDADE" ? " · Escolhidos primeiro" : v.modo === "EXCLUSIVA" ? " · Só escolhidos" : "");
-    const extra =
-      (v.mudancasPendentes ? '<span class="free-badge-extra alerta" title="Não viram a mudança">!</span>' : "") +
-      (v.faltas ? '<span class="free-badge-extra alerta">' + v.faltas + ' falta' + (v.faltas > 1 ? "s" : "") + '</span>' : "") +
-      (v.checkins ? '<span class="free-badge-extra">✓' + v.checkins + '</span>' : "");
-    return (
-      '<button type="button" class="free-badge ' + freeClasseBadge(v) + '" title="' + escapeHtml(titulo) + '" onclick="' + chamada + '">' +
-        FREE_ICONE + (v.status === "ENCERRADA" ? "Free encerrado" : "Free") + extra +
-        '<span class="free-badge-num">' + v.confirmados + '/' + v.quantidade + '</span>' +
-      '</button>'
-    );
-  }
-
-  const futura = String(etapa.dataEtapa || etapa.data || "") >= formatDateISO(new Date());
-
-  return permiteAbrir && futura
-    ? '<button type="button" class="free-add" onclick="' + chamada + '">+ Pedir free</button>'
-    : "";
-}
-
-function renderFreeAvisoMobile(etapa){
-  const v = etapa && etapa.freeVaga;
-  if(!v){ return ""; }
-  const classe = freeClasseBadge(v) === "completa" ? "ok" : "";
-  let html = '<span class="app-aviso ' + classe + '">Free ' + v.confirmados + '/' + v.quantidade + (v.checkins ? ' · ✓' + v.checkins : "") + '</span>';
-  if(v.mudancasPendentes){ html += '<span class="app-aviso erro">' + v.mudancasPendentes + ' free não viu a mudança</span>'; }
-  if(v.faltas){ html += '<span class="app-aviso erro">' + v.faltas + ' free faltou</span>'; }
-  return html;
-}
-
-/* ---------- Acesso ---------- */
-
+/* App do montador (link do topo e do menu do celular) */
 /* Link do app do montador (canto superior e menu do celular) */
 let urlAppMontador = "";
 
@@ -19591,1143 +18983,6 @@ function abrirAppMontador(){
 }
 
 window.addEventListener("load", carregarLinkAppMontador);
-
-async function freeObterToken(forcar){
-  // Sessão aberta com a senha de outro perfil: pede a do supervisor
-  if(forcar || (edicaoCronogramaEstaLiberada() && window.perfilAcesso !== "montagem")){
-    encerrarLiberacaoEdicaoCronograma();
-  }
-
-  const ok = await pedirSenha("Equipe Free");
-
-  if(!ok){ return null; }
-
-  if(window.perfilAcesso !== "montagem"){
-    mostrarAlerta("Acesso permitido apenas para Supervisor de Montagem.", "Acesso negado");
-    return null;
-  }
-
-  return window.tokenAuditoria;
-}
-
-function freeRun(funcao, args){
-  return new Promise(function(resolve, reject){
-    google.script.run
-      .withSuccessHandler(resolve)
-      .withFailureHandler(function(erro){ reject(new Error((erro && erro.message) || String(erro))); })
-      [funcao].apply(null, args);
-  });
-}
-
-/* Chama o servidor com o token; se a sessão de 10 min venceu, pede a senha de novo */
-async function freeChamar(funcao){
-  const extras = Array.prototype.slice.call(arguments, 1);
-
-  let token = await freeObterToken(false);
-  if(!token){ throw new Error("CANCELADO"); }
-
-  try{
-    return await freeRun(funcao, [token].concat(extras));
-  }catch(erro){
-    if(!/SESSAO_EXPIRADA/.test(erro.message)){ throw erro; }
-    token = await freeObterToken(true);
-    if(!token){ throw new Error("CANCELADO"); }
-    return await freeRun(funcao, [token].concat(extras));
-  }
-}
-
-function freeMensagem(erro){
-  return String((erro && erro.message) || erro || "")
-    .replace(/^(Error|Exception):\s*/, "")
-    .replace(/^SESSAO_EXPIRADA:\s*/, "");
-}
-
-function freeTratarErro(erro, idCaixa){
-  if(erro && erro.message === "CANCELADO"){ return; }
-  const caixa = idCaixa && document.getElementById(idCaixa);
-  if(caixa){
-    caixa.textContent = freeMensagem(erro);
-    caixa.classList.add("ver");
-  }else{
-    mostrarAlerta(escapeHtml(freeMensagem(erro)), "Equipe Free");
-  }
-}
-
-/* ---------- Formatação ---------- */
-
-function freeDataCurta(iso){
-  const p = String(iso || "").split("-");
-  if(p.length !== 3){ return "-"; }
-  const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
-  return ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][d.getDay()] + " " + p[2] + "/" + p[1];
-}
-
-function freeHoraInput(texto){
-  const m = String(texto || "").match(/(\d{1,2})[:h](\d{2})/);
-  return m ? ("0" + m[1]).slice(-2) + ":" + m[2] : "";
-}
-
-function freeFotoHtml(pessoa){
-  if(pessoa.miniatura){
-    return '<div class="free-foto"><img src="' + escapeHtml(pessoa.miniatura) + '" alt="" onclick="freeVerFoto(this.src)"></div>';
-  }
-  return '<div class="free-foto">' + escapeHtml(String(pessoa.nome || "?").charAt(0).toUpperCase()) + '</div>';
-}
-
-function freeVerFoto(src){
-  mostrarAlerta('<img src="' + escapeHtml(src) + '" style="width:240px;height:240px;border-radius:50%;object-fit:cover;display:block;margin:0 auto;">', "Foto do cadastro");
-}
-
-function freeLinkWhats(telefone, nome){
-  const n = String(telefone || "").replace(/\D/g, "");
-  if(n.length < 10){ return escapeHtml(telefone || "-"); }
-  return '<a href="https://wa.me/55' + n + '" target="_blank" rel="noopener" title="Chamar ' + escapeHtml(nome || "") + ' no WhatsApp">' + escapeHtml(telefone) + '</a>';
-}
-
-function freeLerPonto(){
-  try{ return localStorage.getItem(FREE_CHAVE_PONTO) || ""; }catch(e){ return ""; }
-}
-
-function freeSalvarPonto(valor){
-  try{ localStorage.setItem(FREE_CHAVE_PONTO, valor); }catch(e){}
-}
-
-async function freeUrlApp(){
-  if(!freeEstado.urlApp){
-    freeEstado.urlApp = await freeRun("FREE_getUrlApp", []);
-  }
-  return freeEstado.urlApp;
-}
-
-/* =========================================================
-   FORMULÁRIO DA VAGA (usado na janela da vaga e no Novo pedido)
-   Campos por classe dentro de um container .free-cfg
-========================================================= */
-
-const FREE_PRAZOS = [
-  [30, "30 minutos"], [60, "1 hora"], [120, "2 horas"], [240, "4 horas"],
-  [360, "6 horas"], [720, "12 horas"], [1440, "24 horas"]
-];
-
-function freeMoeda(valor){
-  const n = Number(valor);
-  return isNaN(n) || valor === "" || valor == null
-    ? ""
-    : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function freeValorParaNumero(texto){
-  const limpo = String(texto || "").replace(/[^\d,.]/g, "");
-  if(!limpo){ return NaN; }
-  // "1.234,56" / "150,5" / "150"
-  return Number(limpo.indexOf(",") >= 0 ? limpo.replace(/\./g, "").replace(",", ".") : limpo);
-}
-
-function freeEstrelas(nota){
-  const n = Number(nota);
-  if(isNaN(n)){ return ""; }
-  return '<span class="free-nota" title="Nota do free">★ ' + n.toFixed(1).replace(".", ",") + '</span>';
-}
-
-/*
- * v: { quantidade, valor, horario, pontoEncontro, lider, observacao,
- *      modo, preferidos, liberarEm }   opcoes: { editando, compacto }
- */
-function freeConfigHtml(v, opcoes){
-  v = v || {};
-  opcoes = opcoes || {};
-  const modo = v.modo || "TODOS";
-
-  const prazo = FREE_PRAZOS.map(function(p){
-    return '<option value="' + p[0] + '"' + (!opcoes.editando && p[0] === 120 ? " selected" : "") + '>' + p[1] + '</option>';
-  }).join("");
-
-  return (
-    '<div class="free-form">' +
-      '<div class="field"><label>Quantos free</label><input class="free-cfg-qtd" type="number" min="1" max="50" value="' + escapeHtml(v.quantidade || 3) + '"></div>' +
-      '<div class="field"><label>Valor da diária</label><input class="free-cfg-valor" type="text" inputmode="decimal" placeholder="R$ 0,00" value="' + escapeHtml(v.valor !== "" && v.valor != null ? String(v.valor).replace(".", ",") : "") + '"></div>' +
-      '<div class="field"><label>Horário de encontro</label><input class="free-cfg-horario" type="time" value="' + escapeHtml(freeHoraInput(v.horario) || "") + '"></div>' +
-      '<div class="field"><label>Líder da equipe</label><input class="free-cfg-lider" type="text" value="' + escapeHtml(v.lider || "") + '" placeholder="' + (opcoes.compacto ? "Padrão: responsável da etapa" : "Quem vai liderar") + '"></div>' +
-      '<div class="field free-largo"><label>Ponto de encontro</label><input class="free-cfg-ponto" type="text" autocomplete="off" value="' + escapeHtml(v.pontoEncontro || "") + '" placeholder="Digite e escolha o endereço na lista do Google"><div class="free-ponto-ok">✓ Endereço do Google — o free vê o mapa e a rota no app</div></div>' +
-
-      '<div class="field free-largo"><label>Quem recebe a vaga</label>' +
-        '<div class="free-modos">' +
-          '<label><input type="radio" class="free-cfg-modo" value="TODOS"' + (modo === "TODOS" ? " checked" : "") + '><span><strong>Todos os free</strong>Aparece para todos os aprovados</span></label>' +
-          '<label><input type="radio" class="free-cfg-modo" value="PRIORIDADE"' + (modo === "PRIORIDADE" ? " checked" : "") + '><span><strong>Escolhidos primeiro</strong>Depois do prazo, abre para todos</span></label>' +
-          '<label><input type="radio" class="free-cfg-modo" value="EXCLUSIVA"' + (modo === "EXCLUSIVA" ? " checked" : "") + '><span><strong>Só os escolhidos</strong>Ninguém mais vê a vaga</span></label>' +
-        '</div>' +
-      '</div>' +
-
-      '<div class="field free-largo free-cfg-escolha">' +
-        '<div class="free-cfg-prazo-linha">' +
-          '<label>Só os escolhidos veem por</label>' +
-          '<select class="free-cfg-prazo">' +
-            (opcoes.editando && v.liberarEm ? '<option value="0" selected>Manter (abre para todos ' + escapeHtml(String(v.liberarEm).slice(0, 16)) + ')</option>' : "") +
-            prazo +
-          '</select>' +
-        '</div>' +
-        '<label>Escolha quem recebe primeiro <span class="free-cfg-contagem"></span></label>' +
-        '<input class="free-busca free-cfg-busca" type="search" placeholder="Buscar free pelo nome">' +
-        '<div class="free-cfg-pessoas"><div class="free-vazio">Carregando free aprovados…</div></div>' +
-      '</div>' +
-
-      '<div class="field free-largo"><label>Recado para os free (opcional)</label><textarea class="free-cfg-obs" rows="2" placeholder="Ex.: ir de roupa preta, levar documento">' + escapeHtml(v.observacao || "") + '</textarea></div>' +
-    '</div>'
-  );
-}
-
-async function freeCarregarAprovados(){
-  if(!freeEstado.aprovados){
-    freeEstado.aprovados = await freeChamar("FREE_admListarAprovados");
-  }
-  return freeEstado.aprovados;
-}
-
-function freeIniciarConfig(box, v){
-  if(!box || box.dataset.iniciado){ return; }
-  box.dataset.iniciado = "1";
-  v = v || {};
-
-  box._geo = v.pontoLat !== "" && v.pontoLat != null
-    ? { endereco: v.pontoEncontro, lat: v.pontoLat, lng: v.pontoLng }
-    : null;
-  box._preferidos = new Set(v.preferidos || []);
-
-  const ponto = box.querySelector(".free-cfg-ponto");
-  const avisoPonto = box.querySelector(".free-ponto-ok");
-
-  function atualizarPonto(){
-    avisoPonto.classList.toggle("ver", !!(box._geo && box._geo.endereco === ponto.value.trim()));
-  }
-
-  ponto.addEventListener("input", atualizarPonto);
-  ponto.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); } });
-  atualizarPonto();
-
-  if(window.google && google.maps && google.maps.places){
-    const auto = new google.maps.places.Autocomplete(ponto, {
-      componentRestrictions: { country: "br" },
-      fields: ["formatted_address", "geometry", "name"]
-    });
-    auto.addListener("place_changed", function(){
-      const lugar = auto.getPlace();
-      if(!lugar || !lugar.geometry){ return; }
-      let endereco = lugar.formatted_address || ponto.value;
-      if(lugar.name && endereco.indexOf(lugar.name) !== 0){ endereco = lugar.name + " — " + endereco; }
-      ponto.value = endereco;
-      box._geo = { endereco: endereco.trim(), lat: lugar.geometry.location.lat(), lng: lugar.geometry.location.lng() };
-      atualizarPonto();
-    });
-  }
-
-  // Valor sempre formatado ao sair do campo
-  const valor = box.querySelector(".free-cfg-valor");
-  valor.addEventListener("blur", function(){
-    const n = freeValorParaNumero(valor.value);
-    if(!isNaN(n) && n > 0){ valor.value = n.toFixed(2).replace(".", ","); }
-  });
-
-  // Rádios do modo: cada formulário tem o seu grupo
-  const grupo = "freeModo_" + Math.random().toString(36).slice(2);
-  box.querySelectorAll(".free-cfg-modo").forEach(function(r){
-    r.name = grupo;
-    r.addEventListener("change", function(){ freeAtualizarModo(box); });
-  });
-
-  box.querySelector(".free-cfg-busca").addEventListener("input", function(){
-    const t = this.value.toLowerCase().trim();
-    box.querySelectorAll(".free-escolha").forEach(function(el){
-      el.style.display = !t || el.dataset.nome.indexOf(t) >= 0 ? "" : "none";
-    });
-  });
-
-  freeAtualizarModo(box);
-}
-
-function freeModoAtual(box){
-  const r = box.querySelector(".free-cfg-modo:checked");
-  return r ? r.value : "TODOS";
-}
-
-function freeAtualizarModo(box){
-  const modo = freeModoAtual(box);
-  const escolha = box.querySelector(".free-cfg-escolha");
-  escolha.style.display = modo === "TODOS" ? "none" : "";
-  box.querySelector(".free-cfg-prazo-linha").style.display = modo === "PRIORIDADE" ? "" : "none";
-
-  if(modo !== "TODOS" && !box._pessoasDesenhadas){
-    box._pessoasDesenhadas = true;
-    freeCarregarAprovados()
-      .then(function(lista){ freeDesenharPessoas(box, lista); })
-      .catch(function(erro){
-        box._pessoasDesenhadas = false;
-        box.querySelector(".free-cfg-pessoas").innerHTML = '<div class="free-vazio">' + escapeHtml(freeMensagem(erro)) + '</div>';
-      });
-  }
-}
-
-function freeDesenharPessoas(box, lista){
-  const area = box.querySelector(".free-cfg-pessoas");
-  if(!lista.length){
-    area.innerHTML = '<div class="free-vazio">Nenhum free aprovado ainda.</div>';
-    return;
-  }
-  area.innerHTML = lista.map(function(p){
-    return '<label class="free-escolha" data-nome="' + escapeHtml(String(p.nome).toLowerCase()) + '">' +
-      '<input type="checkbox" value="' + escapeHtml(p.id) + '"' + (box._preferidos.has(p.id) ? " checked" : "") + '>' +
-      '<span class="free-escolha-nome">' + escapeHtml(p.nome) + '</span>' +
-      freeEstrelas(p.nota) +
-      '<small>' + p.trabalhos + ' trab.' + (p.faltas ? ' · ' + p.faltas + ' falta' + (p.faltas > 1 ? "s" : "") : "") + '</small>' +
-    '</label>';
-  }).join("");
-
-  area.querySelectorAll("input").forEach(function(c){
-    c.addEventListener("change", function(){
-      if(c.checked){ box._preferidos.add(c.value); } else { box._preferidos.delete(c.value); }
-      freeContarEscolhidos(box);
-    });
-  });
-  freeContarEscolhidos(box);
-}
-
-function freeContarEscolhidos(box){
-  const n = box._preferidos.size;
-  box.querySelector(".free-cfg-contagem").textContent = n ? "(" + n + " escolhido" + (n > 1 ? "s" : "") + ")" : "";
-}
-
-/* Lê o formulário. Retorna { dados, erro } */
-function freeLerConfig(box){
-  const val = function(sel){ return (box.querySelector(sel) || {}).value || ""; };
-  const modo = freeModoAtual(box);
-  const valor = freeValorParaNumero(val(".free-cfg-valor"));
-
-  const dados = {
-    quantidade: val(".free-cfg-qtd"),
-    valor: valor,
-    horario: val(".free-cfg-horario"),
-    pontoEncontro: val(".free-cfg-ponto").trim(),
-    lider: val(".free-cfg-lider").trim(),
-    observacao: val(".free-cfg-obs").trim(),
-    modo: modo,
-    preferidos: modo === "TODOS" ? [] : Array.from(box._preferidos || []),
-    prazoMin: modo === "PRIORIDADE" ? Number(val(".free-cfg-prazo")) || 0 : 0
-  };
-
-  if(box._geo && box._geo.endereco === dados.pontoEncontro){
-    dados.pontoLat = box._geo.lat;
-    dados.pontoLng = box._geo.lng;
-  }
-
-  let erro = "";
-  if(!(Number(dados.quantidade) >= 1)){ erro = "Informe quantos free você precisa."; }
-  else if(!(valor > 0)){ erro = "Informe o valor da diária."; }
-  else if(!dados.pontoEncontro){ erro = "Informe o ponto de encontro."; }
-  else if(modo !== "TODOS" && !dados.preferidos.length){ erro = "Escolha quem recebe a vaga primeiro."; }
-
-  return { dados: dados, erro: erro };
-}
-
-/* =========================================================
-   PEDIR FREE DENTRO DO NOVO PEDIDO / EDITAR PEDIDO
-========================================================= */
-
-function freeEtapaDoCronograma(idEtapa){
-  let achada = null;
-  (typeof cronogramaData !== "undefined" ? cronogramaData : []).forEach(function(p){
-    (p.etapas || []).forEach(function(e){
-      if(String(e.id) === String(idEtapa)){ achada = { etapa: e, pedido: p }; }
-    });
-  });
-  return achada;
-}
-
-// Chamado sempre que o tipo da etapa muda (e ao abrir um pedido para editar)
-function freeControlarPedidoEtapa(item, permite){
-  if(!item){ return; }
-  const grade = item.querySelector(".mini-grid");
-  let box = item.querySelector(".free-pedido-box");
-
-  if(!permite){
-    if(box){ box.remove(); }
-    return;
-  }
-
-  if(!box){
-    box = document.createElement("div");
-    box.className = "free-pedido-box";
-    grade.appendChild(box);
-  }
-
-  const idEtapa = item.dataset.id || "";
-  const achada = idEtapa ? freeEtapaDoCronograma(idEtapa) : null;
-  const vagaExistente = achada && achada.etapa.freeVaga;
-
-  if(box.dataset.estado === (vagaExistente ? "existente" : "nova")){ return; }
-  box.dataset.estado = vagaExistente ? "existente" : "nova";
-
-  if(vagaExistente){
-    const v = achada.etapa.freeVaga;
-    freeRegistrarContexto(achada.etapa, achada.pedido);
-    box.innerHTML =
-      '<div class="free-pedido-topo">' +
-        '<span>' + FREE_ICONE + '<strong>Free:</strong> ' + v.confirmados + ' de ' + v.quantidade + ' confirmados' +
-          (v.valor ? ' · ' + escapeHtml(freeMoeda(v.valor)) : "") + '</span>' +
-        '<button type="button" class="btn btn-light" onclick="freeAbrirVagaEtapa(\'' + escapeHtml(idEtapa) + '\')">Gerenciar vaga</button>' +
-      '</div>';
-    return;
-  }
-
-  box.innerHTML =
-    '<label class="free-pedido-topo free-pedido-check">' +
-      '<input type="checkbox" class="free-pedido-ativo">' +
-      '<span>' + FREE_ICONE + '<strong>Pedir free para esta etapa</strong> — a vaga abre no app quando o pedido for salvo</span>' +
-    '</label>' +
-    '<div class="free-cfg free-pedido-cfg" style="display:none;">' +
-      freeConfigHtml({ pontoEncontro: freeLerPonto() }, { compacto: true }) +
-    '</div>';
-
-  const cfg = box.querySelector(".free-pedido-cfg");
-  box.querySelector(".free-pedido-ativo").addEventListener("change", async function(){
-    const marcado = this;
-
-    // Pedir free exige a senha do Supervisor de Montagem
-    if(marcado.checked){
-      marcado.checked = false;
-      const token = await freeObterToken(false);
-      if(!token){ return; }
-      marcado.checked = true;
-    }
-
-    cfg.style.display = marcado.checked ? "" : "none";
-    if(marcado.checked){ freeIniciarConfig(cfg, { pontoEncontro: freeLerPonto() }); }
-  });
-}
-
-// Acrescenta a vaga pedida em cada etapa do payload (antes de enviar)
-function freeAnexarAoPayload(payload){
-  const itens = Array.from(document.querySelectorAll(".etapa-item"));
-  let erro = "";
-
-  (payload.etapas || []).forEach(function(e, i){
-    const item = itens[i];
-    const ativo = item && item.querySelector(".free-pedido-ativo");
-    if(!ativo || !ativo.checked){ return; }
-
-    const lido = freeLerConfig(item.querySelector(".free-pedido-cfg"));
-    if(lido.erro && !erro){ erro = (e.etapa || "Etapa") + ": " + lido.erro; }
-    e.freeVaga = lido.dados;
-  });
-
-  return erro;
-}
-
-function freeMensagemPedidoSalvo(res){
-  if(!res || !res.free){ return ""; }
-  const f = res.free;
-  let msg = "";
-  if(f.criadas){ msg += "<br>" + f.criadas + (f.criadas === 1 ? " vaga de free aberta no app." : " vagas de free abertas no app."); }
-  if(f.erros && f.erros.length){
-    msg += "<br><br><strong>Vagas de free não criadas:</strong><br>" + f.erros.map(escapeHtml).join("<br>");
-  }
-  return msg;
-}
-
-/* =========================================================
-   JANELA DA VAGA
-========================================================= */
-
-async function freeAbrirVagaEtapa(idEtapa){
-  const contexto = window.freeContextos[idEtapa];
-  if(!contexto){ return; }
-
-  const token = await freeObterToken(false);
-  if(!token){ return; }
-
-  freeEstado.contexto = contexto;
-  freeEstado.vaga = null;
-  freeEstado.alterou = false;
-
-  document.getElementById("freeVagaCorpo").innerHTML = '<div class="free-vazio">Carregando…</div>';
-  document.getElementById("modalFreeVaga").classList.add("show");
-
-  try{
-    freeEstado.vaga = await freeChamar("FREE_admBuscarVagaPorEtapa", idEtapa);
-    freeRenderVaga();
-  }catch(erro){
-    freeFecharVaga();
-    freeTratarErro(erro);
-  }
-}
-
-async function freeAbrirVagaId(idVaga){
-  freeEstado.alterou = false;
-  document.getElementById("freeVagaCorpo").innerHTML = '<div class="free-vazio">Carregando…</div>';
-  document.getElementById("modalFreeVaga").classList.add("show");
-
-  try{
-    const vaga = await freeChamar("FREE_admDetalheVaga", idVaga);
-    freeEstado.vaga = vaga;
-    freeEstado.contexto = window.freeContextos[vaga.idEtapa] || {
-      idEtapa: vaga.idEtapa, etapa: vaga.etapa, dataEtapa: vaga.dataISO,
-      horario: vaga.horario, responsavel: vaga.lider,
-      pedido: vaga.pedido, cliente: vaga.cliente, local: vaga.local
-    };
-    freeRenderVaga();
-  }catch(erro){
-    freeFecharVaga();
-    freeTratarErro(erro);
-  }
-}
-
-function freeFecharVaga(){
-  freeFecharQr();
-  document.getElementById("modalFreeVaga").classList.remove("show");
-
-  if(freeEstado.alterou){
-    freeEstado.alterou = false;
-    if(typeof carregarCronograma === "function"){ carregarCronograma(); }
-    if(document.getElementById("modalFreePainel").classList.contains("show")){
-      freeEstado.vagasSemana = null;
-      freeRenderPainel();
-    }
-  }
-}
-
-function freeRenderVaga(){
-  const c = freeEstado.contexto || {};
-  const v = freeEstado.vaga;
-  const existe = !!v;
-
-  const valoresVaga = existe ? v : {
-    quantidade: 3,
-    horario: freeHoraInput(c.horario),
-    pontoEncontro: freeLerPonto(),
-    lider: c.responsavel
-  };
-
-  const inscricoes = existe ? (v.inscricoes || []) : [];
-  const confirmados = inscricoes.filter(function(i){ return i.status === "CONFIRMADO"; });
-  const cancelados = inscricoes.filter(function(i){ return i.status !== "CONFIRMADO"; }).reverse();
-  const pendentesMudanca = confirmados.filter(function(i){ return i.presenca && i.presenca.mudanca; });
-
-  let statusHtml = "";
-  if(existe){
-    const classe = v.status === "ABERTA" ? (confirmados.length >= v.quantidade ? "ok" : "aviso") : (v.status === "CANCELADA" ? "erro" : "");
-    const texto = v.status === "ABERTA" ? (confirmados.length >= v.quantidade ? "Equipe completa" : "Aberta") : (v.status === "ENCERRADA" ? "Encerrada" : "Cancelada");
-    statusHtml = '<span class="free-status ' + classe + '">' + texto + '</span>';
-  }
-
-  // Avisos de mudança feita no cronograma depois de abrir a vaga
-  const avisos = [];
-  if(existe && v.dataOriginal && v.dataOriginal !== v.dataISO){
-    avisos.push("A etapa mudou de dia no cronograma (" + freeDataCurta(v.dataOriginal) + " → " + freeDataCurta(v.dataISO) + ").");
-  }
-  if(existe && v.horarioMudou){
-    avisos.push("A etapa mudou de horário (" + v.horarioEtapaBase + " → " + v.horarioEtapaAtual + "). O encontro foi ajustado de " + v.horarioOriginal + " para " + v.horario + ".");
-  }
-  if(avisos.length){
-    avisos.push(pendentesMudanca.length
-      ? (pendentesMudanca.length === 1 ? "1 free ainda não confirmou" : pendentesMudanca.length + " free ainda não confirmaram") + " que viu a mudança — avise pelo WhatsApp na lista abaixo."
-      : "Todos os confirmados já viram a mudança no app.");
-  }
-
-  let html =
-    '<div class="free-erro" id="freeVagaErro"></div>' +
-    '<div class="free-sub">' +
-      '<span><strong>' + escapeHtml(c.etapa || "Etapa") + '</strong> · ' + escapeHtml(freeDataCurta(existe ? v.dataISO : c.dataEtapa)) + (c.horario ? ' às ' + escapeHtml(c.horario) : "") + '</span>' +
-      '<span>Pedido #' + escapeHtml(c.pedido || "-") + ' · ' + escapeHtml(c.cliente || "-") + '</span>' +
-      statusHtml +
-    '</div>' +
-    (avisos.length ? '<div class="free-erro ver free-aviso">' + avisos.map(escapeHtml).join("<br>") + '</div>' : "") +
-
-    '<div class="free-cfg" id="freeVagaCfg">' + freeConfigHtml(valoresVaga, { editando: existe }) + '</div>' +
-
-    '<div class="free-acoes">' +
-      '<button class="btn btn-primary" type="button" id="freeBtnSalvar" onclick="freeSalvarVaga()">' + (existe ? "Salvar alterações" : "Abrir vaga no app") + '</button>' +
-      (existe
-        ? (v.status === "ABERTA"
-            ? '<button class="btn btn-light" type="button" onclick="freeStatusVaga(\'ENCERRADA\')" title="Para de aparecer no app, mas mantém quem confirmou">Encerrar vaga</button>'
-            : '<button class="btn btn-light" type="button" onclick="freeStatusVaga(\'ABERTA\')">Reabrir vaga</button>') +
-          (v.status !== "CANCELADA" ? '<button class="btn btn-light" type="button" style="color:#dc2626;" onclick="freeStatusVaga(\'CANCELADA\')">Cancelar vaga</button>' : "") +
-          (v.modo && v.modo !== "TODOS" ? '<button class="btn btn-light free-dir" type="button" onclick="freeAvisarEscolhidos()">Avisar escolhidos</button>' : "") +
-          '<button class="btn btn-light' + (v.modo && v.modo !== "TODOS" ? "" : " free-dir") + '" type="button" onclick="freeDivulgar()">Divulgar no WhatsApp</button>'
-        : "") +
-    '</div>';
-
-  if(existe && v.status !== "CANCELADA"){
-    html +=
-      '<div class="free-qr-barra">' +
-        '<div><strong>Presença por QR code</strong>No dia, o líder mostra o QR e cada free lê com a câmera para o check-in e, no fim, para o check-out. O código muda a cada minuto.</div>' +
-        '<button class="btn btn-primary" type="button" onclick="freeMostrarQr()">QR code de presença</button>' +
-        '<button class="btn btn-light" type="button" onclick="freeEnviarQrLider()">Enviar QR ao líder</button>' +
-      '</div>' +
-      '<div id="freeQrArea"></div>';
-  }
-
-  if(existe){
-    const comEntrada = confirmados.filter(function(i){ return i.checkinEm; }).length;
-    const comSaida = confirmados.filter(function(i){ return i.checkoutEm; }).length;
-
-    html += '<div class="free-secao">Confirmados <span>' + confirmados.length + ' de ' + v.quantidade + '</span>' +
-      (comEntrada ? '<span style="margin-left:auto;color:#166534;">' + comEntrada + ' check-in · ' + comSaida + ' check-out</span>' : "") + '</div>';
-
-    html += confirmados.length
-      ? '<div class="free-lista">' + confirmados.map(freeLinhaConfirmado).join("") + '</div>'
-      : '<div class="free-vazio">Ninguém confirmou ainda. A vaga já aparece no app dos free.</div>';
-
-    if(cancelados.length){
-      html += '<div class="free-secao">Cancelamentos <span>' + cancelados.length + '</span></div>';
-      html += '<div class="free-lista">' + cancelados.map(function(i){
-        const removido = i.status === "REMOVIDO";
-        return '<div class="free-pessoa" style="opacity:.8;">' + freeFotoHtml(i) +
-          '<div class="free-pessoa-info"><strong>' + escapeHtml(i.nome) + '</strong>' +
-            (removido ? "Retirado por " + escapeHtml(i.canceladoPor || "supervisor") : "Cancelou") + ' em ' + escapeHtml(i.canceladoEm || "") +
-            (i.motivo && !removido ? ' · “' + escapeHtml(i.motivo) + '”' : "") +
-            ' · ' + freeLinkWhats(i.telefone, i.nome) + '</div>' +
-          (i.cimaDaHora ? '<span class="free-status erro">Em cima da hora</span>' : "") +
-        '</div>';
-      }).join("") + '</div>';
-    }
-  }
-
-  document.getElementById("freeVagaCorpo").innerHTML = html;
-
-  freeIniciarConfig(document.getElementById("freeVagaCfg"), valoresVaga);
-
-  if(freeEstado.qrAberto){ freeMostrarQr(); }
-}
-
-/* Uma linha por free confirmado: contato + situação da presença */
-function freeLinhaConfirmado(i){
-  const p = i.presenca || {};
-  const v = freeEstado.vaga;
-  const detalhes = [];
-  let chip = "";
-
-  const fases = {
-    AGUARDANDO: ['', "Confirmado"],
-    CHECKIN: ['aviso', "Aguardando check-in"],
-    TRABALHANDO: ['ok', "Em serviço"],
-    CONCLUIDO: ['ok', "Concluído"],
-    SEM_CHECKOUT: ['aviso', "Sem check-out"],
-    FALTOU: ['erro', "Faltou"],
-    CANCELADA: ['erro', "Vaga cancelada"]
-  };
-  const f = fases[p.fase] || fases.AGUARDANDO;
-  chip = '<span class="free-status ' + f[0] + '">' + f[1] + '</span>';
-
-  if(p.checkinEm){
-    let entrada = "Entrada " + freeHora(p.checkinEm) + (p.checkinVia ? " (" + escapeHtml(p.checkinVia) + ")" : "");
-    if(p.checkinDistancia !== "" && p.checkinDistancia != null){ entrada += " · " + freeDistancia(p.checkinDistancia) + " do ponto"; }
-    else if(p.checkinSemGps && p.checkinVia !== "Manual"){ entrada += " · sem GPS"; }
-    detalhes.push(entrada);
-  }
-  if(p.checkoutEm){
-    detalhes.push("Saída " + freeHora(p.checkoutEm) + (p.horasTrabalhadas ? " · <b>" + escapeHtml(p.horasTrabalhadas) + "</b> trabalhadas" : ""));
-  }
-  if(p.presencaPor){
-    detalhes.push("Lançado por " + escapeHtml(p.presencaPor));
-  }
-
-  let avisos = "";
-  if(p.longeDoPonto){
-    avisos += '<span class="free-status erro" title="Check-in ou check-out a mais de 1 km do ponto de encontro">Longe do ponto</span>';
-  }
-  if(p.mudanca){
-    const msg = "Oi " + String(i.nome || "").split(" ")[0] + "! A " + (v.etapa || "montagem").toLowerCase() +
-      " mudou: agora é " + freeDataCurta(p.mudanca.dataAgora) + " às " + p.mudanca.horarioAgora +
-      " (antes " + freeDataCurta(p.mudanca.dataAntes) + " às " + p.mudanca.horarioAntes + "). Confirme no app que você viu, por favor.";
-    const n = String(i.telefone || "").replace(/\D/g, "");
-    avisos += '<a class="free-status aviso" style="text-decoration:none;" target="_blank" rel="noopener" href="https://wa.me/55' + n + '?text=' + encodeURIComponent(msg) + '" title="Avisar no WhatsApp">Não viu a mudança · avisar</a>';
-  }
-
-  // Lançamento manual quando o celular do free falhar
-  let botoes = "";
-  if(!p.checkinEm && (p.fase === "CHECKIN" || p.fase === "FALTOU")){
-    botoes += '<button class="btn btn-light" type="button" onclick="freeAbrirLancamento(\'' + escapeHtml(i.id) + '\', \'checkin\')">Lançar entrada</button>';
-  }
-  if(p.checkinEm && !p.checkoutEm){
-    botoes += '<button class="btn btn-light" type="button" onclick="freeAbrirLancamento(\'' + escapeHtml(i.id) + '\', \'checkout\')">Lançar saída</button>';
-  }
-  if(!p.checkinEm){
-    botoes += '<button class="btn btn-light" type="button" onclick="freeRemover(\'' + escapeHtml(i.id) + '\', \'' + escapeHtml(String(i.nome).replace(/'/g, "")) + '\')">Retirar</button>';
-  }
-
-  return '<div class="free-pessoa free-pessoa-presenca">' + freeFotoHtml(i) +
-    '<div class="free-pessoa-info"><strong>' + escapeHtml(i.nome) + ' ' + freeEstrelas(i.nota) + ' ' + chip + '</strong>' +
-      freeLinkWhats(i.telefone, i.nome) + ' · confirmou ' + escapeHtml(i.confirmadoEm || "") +
-      (detalhes.length ? '<div class="free-presenca-linha">' + detalhes.join(" · ") + '</div>' : "") +
-      (avisos ? '<div class="free-presenca-avisos">' + avisos + '</div>' : "") +
-      '<div id="freeLanc_' + escapeHtml(i.id) + '"></div>' +
-    '</div>' +
-    '<div class="free-pessoa-botoes">' + botoes + '</div>' +
-  '</div>';
-}
-
-function freeHora(texto){
-  const m = String(texto || "").match(/(\d{1,2}):(\d{2})/);
-  return m ? ("0" + m[1]).slice(-2) + ":" + m[2] : "-";
-}
-
-function freeDistancia(metros){
-  const n = Number(metros);
-  return n >= 1000 ? (n / 1000).toFixed(1).replace(".", ",") + " km" : Math.round(n) + " m";
-}
-
-function freeAbrirLancamento(idInscricao, tipo){
-  const area = document.getElementById("freeLanc_" + idInscricao);
-  if(!area){ return; }
-  const agora = new Date();
-  const sugestao = ("0" + agora.getHours()).slice(-2) + ":" + ("0" + agora.getMinutes()).slice(-2);
-  area.innerHTML =
-    '<div class="free-lancamento">' +
-      '<span>' + (tipo === "checkin" ? "Horário de entrada" : "Horário de saída") + '</span>' +
-      '<input type="time" id="freeLancHora_' + idInscricao + '" value="' + sugestao + '">' +
-      '<button class="btn btn-primary" type="button" onclick="freeLancar(\'' + idInscricao + '\', \'' + tipo + '\')">Lançar</button>' +
-      '<button class="btn btn-light" type="button" onclick="this.closest(\'.free-lancamento\').remove()">Cancelar</button>' +
-    '</div>';
-}
-
-async function freeLancar(idInscricao, tipo){
-  const hora = (document.getElementById("freeLancHora_" + idInscricao) || {}).value || "";
-  try{
-    freeEstado.vaga = await freeChamar("FREE_admLancarPresenca", idInscricao, tipo, hora);
-    freeEstado.alterou = true;
-    freeRenderVaga();
-  }catch(erro){
-    freeTratarErro(erro, "freeVagaErro");
-  }
-}
-
-/* ---------- QR code de presença ---------- */
-
-async function freeMostrarQr(){
-  const v = freeEstado.vaga;
-  const area = document.getElementById("freeQrArea");
-  if(!v || !area){ return; }
-
-  freeEstado.qrAberto = true;
-  clearTimeout(freeEstado.qrTimer);
-
-  try{
-    const d = await freeChamar("FREE_admQrVaga", v.idVaga);
-    freeEstado.qrLinkLider = d.linkLider;
-
-    const destino = document.getElementById("freeQrArea");
-    if(!destino || !freeEstado.qrAberto){ return; }
-
-    destino.innerHTML =
-      '<div class="free-qr-caixa">' +
-        '<div id="freeQrImagem"></div>' +
-        '<div>' +
-          '<div class="free-qr-codigo">' + escapeHtml(d.codigo) + '</div>' +
-          '<p>Os free leem o QR com a câmera do celular ou digitam o código. Ele troca sozinho a cada minuto.</p>' +
-          '<p><strong>' + d.equipe.filter(function(p){ return p.checkinEm; }).length + ' de ' + d.equipe.length + '</strong> já fizeram check-in.</p>' +
-          '<button class="btn btn-light" type="button" onclick="freeFecharQr()">Fechar QR</button>' +
-        '</div>' +
-      '</div>';
-
-    if(window.QRCode){
-      new QRCode(document.getElementById("freeQrImagem"), {
-        text: d.urlQr, width: 220, height: 220,
-        colorDark: "#1f2020", colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    }
-
-    // Busca o próximo código logo depois da troca
-    freeEstado.qrTimer = setTimeout(function(){
-      if(freeEstado.qrAberto && document.getElementById("modalFreeVaga").classList.contains("show")){
-        freeMostrarQr();
-      }
-    }, Math.max(3000, d.trocaEm + 800));
-
-  }catch(erro){
-    freeEstado.qrAberto = false;
-    freeTratarErro(erro, "freeVagaErro");
-  }
-}
-
-function freeFecharQr(){
-  freeEstado.qrAberto = false;
-  clearTimeout(freeEstado.qrTimer);
-  const area = document.getElementById("freeQrArea");
-  if(area){ area.innerHTML = ""; }
-}
-
-async function freeEnviarQrLider(){
-  const v = freeEstado.vaga;
-  if(!v){ return; }
-
-  try{
-    const d = await freeChamar("FREE_admQrVaga", v.idVaga);
-    const texto =
-      "*QR code de presença — " + (v.etapa || "Montagem") + " " + freeDataCurta(v.dataISO) + "*\n" +
-      "Abra este link no dia e mostre o QR para os free fazerem check-in na chegada e check-out no fim do serviço:\n" +
-      d.linkLider;
-    window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank");
-  }catch(erro){
-    freeTratarErro(erro, "freeVagaErro");
-  }
-}
-
-function freeLimparErroVaga(){
-  const caixa = document.getElementById("freeVagaErro");
-  if(caixa){ caixa.classList.remove("ver"); }
-}
-
-async function freeSalvarVaga(){
-  freeLimparErroVaga();
-  const botao = document.getElementById("freeBtnSalvar");
-  const c = freeEstado.contexto || {};
-  const lido = freeLerConfig(document.getElementById("freeVagaCfg"));
-
-  if(lido.erro){
-    freeTratarErro(new Error(lido.erro), "freeVagaErro");
-    return;
-  }
-
-  const dados = Object.assign(lido.dados, {
-    idVaga: freeEstado.vaga ? freeEstado.vaga.idVaga : "",
-    idEtapa: c.idEtapa
-  });
-
-  botao.disabled = true;
-  botao.textContent = "Salvando…";
-
-  try{
-    const novaVaga = !freeEstado.vaga;
-    freeEstado.vaga = await freeChamar("FREE_admSalvarVaga", dados);
-    freeEstado.alterou = true;
-    freeSalvarPonto(dados.pontoEncontro);
-    freeRenderVaga();
-    if(novaVaga){
-      const escolhidos = dados.modo !== "TODOS";
-      confirmarAcao(
-        escolhidos
-          ? "Vaga aberta para os escolhidos! Quer avisá-los no WhatsApp agora?"
-          : "Vaga aberta! Ela já aparece no app dos free. Quer divulgar no WhatsApp agora?",
-        function(sim){
-          if(sim){ escolhidos ? freeAvisarEscolhidos() : freeDivulgar(); }
-        }
-      );
-    }
-  }catch(erro){
-    botao.disabled = false;
-    botao.textContent = freeEstado.vaga ? "Salvar alterações" : "Abrir vaga no app";
-    freeTratarErro(erro, "freeVagaErro");
-  }
-}
-
-/* Mensagem individual para cada escolhido (convite) */
-async function freeAvisarEscolhidos(){
-  const v = freeEstado.vaga;
-  if(!v){ return; }
-
-  try{
-    const lista = await freeCarregarAprovados();
-    const url = await freeUrlApp().catch(function(){ return ""; });
-    const escolhidos = lista.filter(function(p){ return (v.preferidos || []).indexOf(p.id) >= 0; });
-
-    const linhas = escolhidos.map(function(p){
-      const texto =
-        "Oi " + String(p.nome).split(" ")[0] + "! Separei uma vaga para você antes de abrir para todos:\n" +
-        "*" + (v.etapa || "Montagem") + " — " + freeDataCurta(v.dataISO) + " às " + v.horario + "*\n" +
-        "💰 Diária: " + freeMoeda(v.valor) + "\n" +
-        "📍 " + v.pontoEncontro + "\n" +
-        (v.modo === "PRIORIDADE" && v.liberarEm ? "⏳ Fica reservada para você até " + String(v.liberarEm).slice(11, 16) + "\n" : "") +
-        "\nConfirme no app: " + url;
-      const n = String(p.telefone || "").replace(/\D/g, "");
-      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #edf0f3;">' +
-        '<span>' + escapeHtml(p.nome) + ' ' + freeEstrelas(p.nota) + '</span>' +
-        '<a class="btn btn-light" style="text-decoration:none;" target="_blank" rel="noopener" href="https://wa.me/55' + n + '?text=' + encodeURIComponent(texto) + '">WhatsApp</a>' +
-      '</div>';
-    });
-
-    mostrarAlerta(
-      linhas.length ? '<div style="text-align:left;">' + linhas.join("") + '</div>' : "Nenhum escolhido nesta vaga.",
-      "Avisar escolhidos"
-    );
-  }catch(erro){
-    freeTratarErro(erro, "freeVagaErro");
-  }
-}
-
-function freeStatusVaga(status){
-  const v = freeEstado.vaga;
-  if(!v){ return; }
-
-  const textos = {
-    ENCERRADA: "Encerrar a vaga? Ela some do app, mas quem confirmou continua na equipe.",
-    CANCELADA: "Cancelar a vaga? Os free que confirmaram vão ver que a vaga foi cancelada. Avise-os também.",
-    ABERTA: "Reabrir a vaga no app?"
-  };
-
-  confirmarAcao(textos[status], async function(sim){
-    if(!sim){ return; }
-    try{
-      freeEstado.vaga = await freeChamar("FREE_admAlterarStatusVaga", v.idVaga, status);
-      freeEstado.alterou = true;
-      if(status === "CANCELADA"){
-        freeFecharVaga();
-        return;
-      }
-      freeRenderVaga();
-    }catch(erro){
-      freeTratarErro(erro, "freeVagaErro");
-    }
-  });
-}
-
-function freeRemover(idInscricao, nome){
-  confirmarAcao("Retirar " + nome + " desta vaga? A pessoa verá no app que foi retirada.", async function(sim){
-    if(!sim){ return; }
-    try{
-      freeEstado.vaga = await freeChamar("FREE_admRemoverInscricao", idInscricao);
-      freeEstado.alterou = true;
-      freeRenderVaga();
-    }catch(erro){
-      freeTratarErro(erro, "freeVagaErro");
-    }
-  });
-}
-
-async function freeDivulgar(){
-  const v = freeEstado.vaga;
-  if(!v){ return; }
-
-  const restantes = Math.max(0, v.quantidade - (v.confirmados || 0));
-  const url = await freeUrlApp().catch(function(){ return ""; });
-
-  const texto =
-    "*Vaga para free — " + (v.etapa || "Montagem") + "*\n" +
-    "📅 " + freeDataCurta(v.dataISO) + " · ⏰ " + v.horario + "\n" +
-    "📍 Ponto de encontro: " + v.pontoEncontro + "\n" +
-    "👤 Líder: " + v.lider + "\n" +
-    (v.valor ? "💰 Diária: " + freeMoeda(v.valor) + "\n" : "") +
-    "👥 " + restantes + (restantes === 1 ? " vaga" : " vagas") + "\n" +
-    (v.observacao ? "📝 " + v.observacao + "\n" : "") +
-    "\nConfirme sua presença pelo app:\n" + url;
-
-  window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank");
-}
-
-/* =========================================================
-   PAINEL EQUIPE FREE (vagas da semana + cadastros)
-========================================================= */
-
-async function freeAbrirPainel(aba){
-  const token = await freeObterToken(false);
-  if(!token){ return; }
-
-  freeEstado.aba = aba || freeEstado.aba || "vagas";
-  freeEstado.vagasSemana = null;
-  freeEstado.cadastros = null;
-
-  document.getElementById("modalFreePainel").classList.add("show");
-  freeRenderPainel();
-}
-
-function freeFecharPainel(){
-  document.getElementById("modalFreePainel").classList.remove("show");
-}
-
-function freeTrocarAba(aba){
-  freeEstado.aba = aba;
-  freeRenderPainel();
-}
-
-function freeSemanaISO(){
-  const inicio = new Date(semanaInicioAtual);
-  const fim = new Date(semanaInicioAtual);
-  fim.setDate(fim.getDate() + 6);
-  return { inicio: formatDateISO(inicio), fim: formatDateISO(fim) };
-}
-
-async function freeRenderPainel(){
-  const corpo = document.getElementById("freePainelCorpo");
-  const pendentes = (freeEstado.cadastros || []).filter(function(c){ return c.status === "PENDENTE"; }).length;
-
-  const topo =
-    '<div class="free-link">' +
-      '<span>Link do app dos free:</span><code id="freeUrlTexto">carregando…</code>' +
-      '<button class="btn btn-light" type="button" onclick="freeCopiarLink()">Copiar</button>' +
-    '</div>' +
-    '<div class="free-abas">' +
-      '<button class="btn ' + (freeEstado.aba === "vagas" ? "btn-primary" : "btn-light") + '" type="button" onclick="freeTrocarAba(\'vagas\')">Vagas da semana</button>' +
-      '<button class="btn ' + (freeEstado.aba === "cadastros" ? "btn-primary" : "btn-light") + '" type="button" onclick="freeTrocarAba(\'cadastros\')">Cadastros' + (pendentes ? " (" + pendentes + " novos)" : "") + '</button>' +
-    '</div>' +
-    '<div class="free-erro" id="freePainelErro"></div>';
-
-  corpo.innerHTML = topo + '<div id="freePainelConteudo"><div class="free-vazio">Carregando…</div></div>';
-
-  freeUrlApp().then(function(url){
-    const el = document.getElementById("freeUrlTexto");
-    if(el){ el.textContent = url; }
-  }).catch(function(){});
-
-  try{
-    if(freeEstado.aba === "vagas"){
-      if(!freeEstado.vagasSemana){
-        const semana = freeSemanaISO();
-        freeEstado.vagasSemana = await freeChamar("FREE_admListarVagas", semana.inicio, semana.fim);
-      }
-      document.getElementById("freePainelConteudo").innerHTML = freeHtmlVagasSemana();
-    }else{
-      if(!freeEstado.cadastros){
-        freeEstado.cadastros = await freeChamar("FREE_admListarCadastros");
-        return freeRenderPainel();
-      }
-      document.getElementById("freePainelConteudo").innerHTML = freeHtmlCadastros();
-    }
-  }catch(erro){
-    const conteudo = document.getElementById("freePainelConteudo");
-    if(conteudo){ conteudo.innerHTML = ""; }
-    freeTratarErro(erro, "freePainelErro");
-  }
-}
-
-function freeHtmlVagasSemana(){
-  const vagas = (freeEstado.vagasSemana || []).filter(function(v){ return v.status !== "CANCELADA"; });
-  const comVaga = {};
-  vagas.forEach(function(v){ comVaga[v.idEtapa] = true; });
-
-  let html = '<div class="free-secao">Vagas abertas nesta semana <span>' + vagas.length + '</span></div>';
-
-  html += vagas.length
-    ? '<div class="free-lista">' + vagas.map(function(v){
-        const completa = v.confirmados >= v.quantidade;
-        return '<div class="free-linha-vaga" onclick="freeAbrirVagaId(\'' + escapeHtml(v.idVaga) + '\')">' +
-          '<div class="free-dia">' + escapeHtml(freeDataCurta(v.dataISO)) + '<small>' + escapeHtml(v.horario) + '</small></div>' +
-          '<div class="free-meio"><strong>' + escapeHtml(v.etapa) + ' · ' + escapeHtml(v.cliente || "-") + '</strong>' +
-            escapeHtml(v.pontoEncontro) + ' · Líder ' + escapeHtml(v.lider) +
-            (v.nomes.length ? '<br>' + escapeHtml(v.nomes.join(", ")) : "") + '</div>' +
-          '<div class="free-num" style="color:' + (v.status === "ENCERRADA" ? "#6b6b6b" : completa ? "#166534" : "#b45309") + ';">' + v.confirmados + '/' + v.quantidade +
-            '<small>' + (v.status === "ENCERRADA" ? "encerrada" : completa ? "completa" : "faltam " + (v.quantidade - v.confirmados)) + '</small>' +
-            (v.cimaDaHora ? '<small style="color:#dc2626;">' + v.cimaDaHora + ' cancel. em cima</small>' : "") +
-            (v.checkins ? '<small style="color:#166534;">✓ ' + v.checkins + ' check-in</small>' : "") +
-            (v.faltas ? '<small style="color:#dc2626;">' + v.faltas + ' falta' + (v.faltas > 1 ? "s" : "") + '</small>' : "") +
-            (v.mudancasPendentes ? '<small style="color:#b45309;">' + v.mudancasPendentes + ' não viu mudança</small>' : "") +
-          '</div>' +
-        '</div>';
-      }).join("") + '</div>'
-    : '<div class="free-vazio">Nenhuma vaga aberta nesta semana.</div>';
-
-  // Montagens e desmontagens da semana que ainda não pediram free
-  const semVaga = [];
-  (window.cronogramaData || (typeof cronogramaData !== "undefined" ? cronogramaData : [])).forEach(function(pedido){
-    (pedido.etapas || []).forEach(function(etapa){
-      const nome = String(etapa.etapa || "").toLowerCase();
-      if(nome.indexOf("montagem") < 0){ return; }
-      if(typeof getDayIndexTerSeg === "function" && getDayIndexTerSeg(etapa.dataEtapa) < 0){ return; }
-      if(String(etapa.dataEtapa || "") < formatDateISO(new Date())){ return; }
-      const id = freeRegistrarContexto(etapa, pedido);
-      if(id && !comVaga[id] && !etapa.freeVaga){
-        semVaga.push(window.freeContextos[id]);
-      }
-    });
-  });
-
-  semVaga.sort(function(a, b){ return (a.dataEtapa + a.horario).localeCompare(b.dataEtapa + b.horario); });
-
-  if(semVaga.length){
-    html += '<div class="free-secao">Sem pedido de free <span>' + semVaga.length + '</span></div>';
-    html += '<div class="free-lista">' + semVaga.map(function(c){
-      return '<div class="free-linha-vaga" onclick="freeAbrirVagaEtapa(\'' + escapeHtml(c.idEtapa) + '\')">' +
-        '<div class="free-dia">' + escapeHtml(freeDataCurta(c.dataEtapa)) + '<small>' + escapeHtml(c.horario || "-") + '</small></div>' +
-        '<div class="free-meio"><strong>' + escapeHtml(c.etapa) + ' · ' + escapeHtml(c.cliente || "-") + '</strong>Resp. ' + escapeHtml(c.responsavel || "-") + '</div>' +
-        '<div class="free-num"><span class="free-status">+ Pedir free</span></div>' +
-      '</div>';
-    }).join("") + '</div>';
-  }
-
-  return html;
-}
-
-function freeHtmlCadastros(){
-  const todos = freeEstado.cadastros || [];
-  const pendentes = todos.filter(function(c){ return c.status === "PENDENTE"; });
-  const aprovados = todos.filter(function(c){ return c.status === "APROVADO"; });
-  const bloqueados = todos.filter(function(c){ return c.status === "BLOQUEADO"; });
-
-  function linha(c){
-    let botoes = "";
-    if(c.status === "PENDENTE"){
-      botoes =
-        '<button class="btn btn-primary" type="button" onclick="freeStatusCadastro(\'' + escapeHtml(c.id) + '\', \'APROVADO\')">Aprovar</button>' +
-        '<button class="btn btn-light" type="button" onclick="freeStatusCadastro(\'' + escapeHtml(c.id) + '\', \'BLOQUEADO\')">Recusar</button>';
-    }else if(c.status === "APROVADO"){
-      botoes = '<button class="btn btn-light" type="button" onclick="freeStatusCadastro(\'' + escapeHtml(c.id) + '\', \'BLOQUEADO\')">Bloquear</button>';
-    }else{
-      botoes = '<button class="btn btn-light" type="button" onclick="freeStatusCadastro(\'' + escapeHtml(c.id) + '\', \'APROVADO\')">Desbloquear</button>';
-    }
-
-    const historico = c.status === "PENDENTE"
-      ? "cadastrou em " + escapeHtml(c.cadastradoEm)
-      : c.trabalhos + " trabalhos · " + c.confirmacoes + " confirmações · " + c.cancelamentos + " cancelamentos" +
-        (c.faltas ? ' · <span style="color:#dc2626;">' + c.faltas + (c.faltas === 1 ? " falta" : " faltas") + '</span>' : "") +
-        (c.cimaDaHora ? ' · <span style="color:#dc2626;">' + c.cimaDaHora + ' em cima da hora</span>' : "");
-
-    const historicoNota = (c.historico || []).slice(0, 4).map(function(h){
-      return '<span style="color:' + (h.delta < 0 ? "#dc2626" : "#166534") + ';">' + (h.delta > 0 ? "+" : "") + String(h.delta).replace(".", ",") + ' ' + escapeHtml(h.motivo) + ' (' + escapeHtml(h.titulo) + ')</span>';
-    }).join("");
-
-    return '<div class="free-pessoa" data-busca="' + escapeHtml((c.nome + " " + c.cpf + " " + c.telefone).toLowerCase()) + '">' + freeFotoHtml(c) +
-      '<div class="free-pessoa-info"><strong>' + escapeHtml(c.nome) + (c.status !== "PENDENTE" ? " " + freeEstrelas(c.nota) : "") + '</strong>' +
-        'CPF ' + escapeHtml(c.cpf) + ' · ' + freeLinkWhats(c.telefone, c.nome) + '<br>' + historico +
-        (historicoNota ? '<div class="free-historico">' + historicoNota + '</div>' : "") + '</div>' +
-      '<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">' + botoes + '</div>' +
-    '</div>';
-  }
-
-  let html = "";
-
-  html += '<div class="free-secao">Aguardando aprovação <span>' + pendentes.length + '</span></div>';
-  html += pendentes.length
-    ? '<div class="free-lista">' + pendentes.map(linha).join("") + '</div>'
-    : '<div class="free-vazio">Nenhum cadastro novo.</div>';
-
-  html += '<div class="free-secao">Aprovados <span>' + aprovados.length + '</span></div>';
-  if(aprovados.length > 6){
-    html += '<input class="free-busca" type="search" placeholder="Buscar por nome, CPF ou telefone" oninput="freeFiltrarCadastros(this.value)">';
-  }
-  html += aprovados.length
-    ? '<div class="free-lista" id="freeListaAprovados">' + aprovados.map(linha).join("") + '</div>'
-    : '<div class="free-vazio">Ninguém aprovado ainda.</div>';
-
-  if(bloqueados.length){
-    html += '<div class="free-secao">Bloqueados <span>' + bloqueados.length + '</span></div>';
-    html += '<div class="free-lista">' + bloqueados.map(linha).join("") + '</div>';
-  }
-
-  return html;
-}
-
-function freeFiltrarCadastros(termo){
-  const t = String(termo || "").toLowerCase().trim();
-  document.querySelectorAll("#freeListaAprovados .free-pessoa").forEach(function(el){
-    el.style.display = !t || el.dataset.busca.indexOf(t) >= 0 ? "" : "none";
-  });
-}
-
-async function freeStatusCadastro(idFree, status){
-  try{
-    freeEstado.cadastros = await freeChamar("FREE_admAlterarStatusCadastro", idFree, status);
-    freeRenderPainel();
-  }catch(erro){
-    freeTratarErro(erro, "freePainelErro");
-  }
-}
-
-async function freeCopiarLink(){
-  try{
-    const url = await freeUrlApp();
-    await navigator.clipboard.writeText(url);
-    mostrarAlerta("Link copiado. Mande para os free fazerem o cadastro.", "Equipe Free");
-  }catch(e){
-    mostrarAlerta(escapeHtml(freeEstado.urlApp || "Não foi possível copiar."), "Link do app");
-  }
-}
 </script>
 
 <!-- =====================================================
@@ -21761,5 +20016,23 @@ async function trocaMudar(idTroca, status){
   </div>
 
 </div>
+
+<style id="aviso-rapido">
+  .aviso-rapido{ position:fixed; left:50%; bottom:28px; z-index:10050; transform:translate(-50%,16px); opacity:0; pointer-events:none;
+    padding:11px 18px; border-radius:999px; background:#1f2020; color:#fff; font:600 13.5px/1.3 "Inter", system-ui, sans-serif;
+    box-shadow:0 10px 30px rgba(15,23,42,.25); transition:opacity .2s, transform .2s; max-width:min(560px, 92vw); text-align:center; }
+  .aviso-rapido.show{ opacity:1; transform:translate(-50%,0); }
+</style>
+<script>
+/* Confirmação de sucesso (out/2026): em vez da janela com OK, uma mensagem que some sozinha */
+function avisoRapido(msg){
+  let el = document.getElementById("avisoRapido");
+  if(!el){ el = document.createElement("div"); el.id = "avisoRapido"; el.className = "aviso-rapido"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  el.textContent = String(msg || "");
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove("show"); }, 2600);
+}
+</script>
 </body>
 </html>

@@ -9493,3 +9493,23 @@ mantidas. Só cor — nada de estrutura/posição mudou.
   vermelho claros — regra: vermelho 254–255 ou vermelho bem acima do verde = alerta). Home (`portal-shell.css`): fundo
   `#f3f5f6`, linhas `#e3e7ec`, slides sem mancha dourada no fundo (o brilho do ícone da lâmpada continua).
   Versões `?v=20261018-cinza`.
+
+## Limpeza do Cronograma (out/2026)
+Pedido: "no cronograma não pode ter criação de pedido (vem do Comercial), confirmação do decorador também não, cadastro de
+free também não — isso fica no RH; alguns avisos não precisam mais". Escolhas do usuário: tudo do Free vai pro RH; só as
+confirmações de sucesso deixam de ser janela (avisos de conflito, perguntas obrigatórias e janelas de senha ficam).
+- **Equipe Free virou tela do RH**: `Modulos/Chiavari/Cronograma/equipe-free.html` (menu Recursos Humanos > Equipe Free,
+  rota `rh.colaboradores.visualizar`). É o mesmo painel que abria no botão FREE (vagas da semana com navegação de semana +
+  cadastros/aprovação), copiado sem mudar regra, aberto direto na página. O acesso é pelo login: `CRON_entrarComLogin("Equipe
+  Free")` dá o perfil "montagem" também a quem tem `rh.colaboradores.editar` (AcessoAcervo.js), porque os `FREE_adm*` do
+  servidor conferem esse perfil. A tela foi gerada a partir do cronograma.html (cabeçalho e funções auxiliares iguais); mudar o
+  painel = editar `equipe-free.html`.
+- **Saíram do cronograma.html**: botão FREE do topo e "Equipe Free" do menu do celular, o bloco inteiro do Free (estilo,
+  janelas, script; o link do App do Montador continua num script próprio), os "+ Pedir free" dos cartões (as chamadas tinham
+  `typeof` e ficaram inertes); a confirmação do decorador (caixinha no formulário, avisos "Decorador não confirmou" no
+  computador/celular/app, e a pergunta "O decorador confirmou?" — o supervisor agora abre a operação direto, igual ao
+  responsável); o lote de pedidos e `abrirNovoPedidoProtegido` (criação de pedido, já sem botão). Editar pedido e "+ Adicionar
+  etapa" continuam (cliente, itens e endereço continuam travados para pedido do sistema).
+- **Sucesso sem janela**: `avisoRapido(msg)` (pílula grafite embaixo, some em 2,6 s) em pedido salvo, responsável/equipe/
+  caminhão salvos, item salvo/atualizado/excluído, carregamento concluído e alerta enviado/resolvido.
+- Teste: `tests/cronograma-limpeza-browser.cjs`. `permissions.js`/`sidebarMenu.js` em `?v=20261018-free`.

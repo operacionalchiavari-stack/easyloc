@@ -155,6 +155,7 @@
           { rotulo: "Gestão de Pessoas", href: "Modulos/RH/Pessoas/pessoas.html" },
           { rotulo: "Cadastro de Funcionários", href: "Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html" },
           { rotulo: "Controle RH", href: "Modulos/Chiavari/ControleRH/rh.html" },
+          { rotulo: "Equipe Free", href: "Modulos/Chiavari/Cronograma/equipe-free.html" },
           { rotulo: "RH da Equipe Free", href: "Modulos/Chiavari/Cronograma/rh.html" },
         ],
       },
