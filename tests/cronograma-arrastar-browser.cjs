@@ -41,6 +41,8 @@ for (let n = 0; n < 8; n++) {
   assert.ok(antes.sw > antes.cw + 500, "dias mais largos que a tela: rola para o lado");
   const th1 = await page.evaluate(() => document.querySelectorAll(".board thead th")[1].offsetWidth);
   assert.ok(th1 >= 255, "dia com ~260px (" + th1 + ")");
+  const th0 = await page.evaluate(() => [document.querySelectorAll(".board thead th")[0].offsetWidth, document.querySelector(".board tbody td.col-evento").offsetWidth]);
+  assert.ok(th0[0] >= 255 && th0[1] >= 255, "coluna do pedido com ~260px (" + th0 + ")");
   console.log("ok 1 - dias de " + th1 + "px, tabela " + antes.sw + "px numa caixa de " + antes.cw + "px");
 
   await page.evaluate(() => { window.__abertos = 0; const o = window.editarPedido; window.editarPedido = function(){ window.__abertos++; }; });

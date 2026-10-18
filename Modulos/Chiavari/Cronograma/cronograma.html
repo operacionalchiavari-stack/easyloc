@@ -8893,9 +8893,11 @@ textarea{ font-family:inherit; }
     }
     html body .board-wrap.arrastando{ cursor:grabbing; user-select:none; }
     html body .board-wrap.arrastando *{ cursor:grabbing !important; }
-    html body .board{ table-layout:fixed !important; width:calc(200px + 7 * 260px) !important; min-width:calc(200px + 7 * 260px) !important; }
+    html body .board{ table-layout:fixed !important; width:calc(260px + 7 * 260px) !important; min-width:calc(260px + 7 * 260px) !important; }
     html body .board thead th{ position:sticky !important; top:0 !important; z-index:6 !important; }
-    html body .board thead th:first-child{ width:200px !important; left:0 !important; z-index:8 !important; }
+    html body .board thead th:first-child{ left:0 !important; z-index:8 !important; }
+    html body .board thead th:first-child,
+    html body .board tbody .col-evento{ width:260px !important; min-width:260px !important; max-width:260px !important; }
     html body .board thead th:not(:first-child){ width:260px !important; }
     html body .board tbody td.col-evento{ position:sticky !important; left:0 !important; z-index:4 !important; background:#ffffff !important; }
     /* altura mínima menor (era 150px por linha): a linha cresce só o que os cartões pedem */
