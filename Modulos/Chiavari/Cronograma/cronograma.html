@@ -9298,8 +9298,9 @@ function parseDateAny(value){
       document.getElementById("loadingBox").classList.remove("show");
     }
 
-function carregarCronograma(){
-  mostrarLoading("Carregando cronograma...");
+function carregarCronograma(silencioso){
+  /* Recarga automática (quando algo mudou) não mostra "Carregando" na tela */
+  if(silencioso !== true){ mostrarLoading("Carregando cronograma..."); }
 
   const inicioSemanaStr = formatDateISO(semanaInicioAtual);
 
@@ -18011,8 +18012,14 @@ function fecharDetalheAlertaMotorista(){
 // ATUALIZAÇÃO AUTOMÁTICA SUTIL DO CRONOGRAMA
 // =====================================================
 
-const INTERVALO_ATUALIZACAO_CRONOGRAMA =
-  60 * 1000; // 1 minuto
+/* (out/2026) Não recarrega mais de tempos em tempos: a cada 20 s pergunta ao banco só uma
+   "assinatura" pequena (RPC cronograma_assinatura: versão das abas do cronograma + andamento da
+   separação/conferência). Só quando ela muda é que o cronograma recarrega, em silêncio. */
+const INTERVALO_CONFERIR_ALTERACAO = 20 * 1000;
+const SUPA_URL_CRONO = "https://awemuohtvwvrdzfxwrmd.supabase.co";
+const SUPA_CHAVE_CRONO = "sb_publishable_tlm-v5vvX9jgChODJmDCtw_JqMxLtpZ";
+let assinaturaCronograma = null;
+let alteracaoPendente = false;
 
 let atualizacaoAutomaticaEmAndamento = false;
 
@@ -18085,7 +18092,7 @@ function atualizarCronogramaAutomaticamente(){
 
   try{
 
-    carregarCronograma();
+    carregarCronograma(true);
 
   }catch(erro){
 
@@ -18106,10 +18113,67 @@ function atualizarCronogramaAutomaticamente(){
 
 }
 
-setInterval(
-  atualizarCronogramaAutomaticamente,
-  INTERVALO_ATUALIZACAO_CRONOGRAMA
-);
+function tokenCronograma(){
+  try{
+    const topo = window.top && window.top !== window ? window.top : null;
+    const cliente = (topo && topo.supabaseClient) || window.supabaseClient;
+    if(cliente && cliente.auth && cliente.auth.getSession){
+      return cliente.auth.getSession()
+        .then(r => (r && r.data && r.data.session && r.data.session.access_token) || tokenGuardadoCronograma())
+        .catch(tokenGuardadoCronograma);
+    }
+  }catch(e){ /* outra origem */ }
+  return Promise.resolve(tokenGuardadoCronograma());
+}
+function tokenGuardadoCronograma(){
+  try{
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k === "easyloc-auth" || /^sb-.*-auth-token$/.test(k)){
+        const s = JSON.parse(localStorage.getItem(k) || "null");
+        if(s && s.access_token){ return s.access_token; }
+      }
+    }
+  }catch(e){}
+  return "";
+}
+
+async function lerAssinaturaCronograma(){
+  const token = await tokenCronograma();
+  if(!token){ return null; }
+  const r = await fetch(SUPA_URL_CRONO + "/rest/v1/rpc/cronograma_assinatura", {
+    method: "POST",
+    headers: { "apikey": SUPA_CHAVE_CRONO, "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+    body: "{}"
+  });
+  if(!r.ok){ return null; }
+  const v = await r.json();
+  return typeof v === "string" ? v : null;
+}
+
+async function conferirAlteracaoCronograma(){
+  if(document.hidden){ return; }
+  let atual = null;
+  try{ atual = await lerAssinaturaCronograma(); }catch(e){ return; }
+  if(!atual){ return; }
+  if(assinaturaCronograma === null){ assinaturaCronograma = atual; return; }
+  if(atual !== assinaturaCronograma){ alteracaoPendente = true; }
+  if(alteracaoPendente && podeAtualizarCronograma()){
+    alteracaoPendente = false;
+    assinaturaCronograma = atual;
+    atualizarCronogramaAutomaticamente();
+  }
+}
+
+/* Depois de uma recarga feita pela própria tela (salvar, trocar de semana), a assinatura
+   é lida de novo, para a própria alteração não disparar uma segunda recarga. */
+function marcarCronogramaEmDia(){
+  lerAssinaturaCronograma().then(v => { if(v){ assinaturaCronograma = v; alteracaoPendente = false; } }).catch(() => {});
+}
+
+setInterval(conferirAlteracaoCronograma, INTERVALO_CONFERIR_ALTERACAO);
+document.addEventListener("visibilitychange", () => { if(!document.hidden){ conferirAlteracaoCronograma(); } });
+window.addEventListener("load", () => setTimeout(conferirAlteracaoCronograma, 3000));
 function registrarHorarioUltimaAtualizacao(){
 
   const elemento =
@@ -18131,6 +18195,8 @@ function registrarHorarioUltimaAtualizacao(){
 
   elemento.textContent =
     "Última atualização: " + horario;
+
+  if(typeof marcarCronogramaEmDia === "function"){ marcarCronogramaEmDia(); }
 
 }
 /* =====================================================
