@@ -533,7 +533,13 @@ class Execucao {
           return r.status >= 300 ? [] : JSON.parse(r.corpo.toString("utf8") || "[]");
         };
         const pedidos = ler("separacoes_pedidos?select=id,status,status_comercial,status_operacional,operacao&empresa_id=eq." + empresa + "&id=in.(" + em + ")");
-        const itens = ler("separacoes_itens?select=separacao_pedido_id,quantidade_solicitada,quantidade_separada&empresa_id=eq." + empresa + "&separacao_pedido_id=in.(" + em + ")");
+        const itens = ler("separacoes_itens?select=separacao_pedido_id,quantidade_solicitada,quantidade_separada,item_id,componentes,itens:item_id(tipo)&empresa_id=eq." + empresa + "&separacao_pedido_id=in.(" + em + ")");
+        // Kit conta pelas peças (componentes × quantidade), igual à separação (out/2026).
+        const kitIds = [...new Set(itens.filter(i => String(i.itens && i.itens.tipo || "").toLowerCase() === "kit").map(i => i.item_id))];
+        const pecasPorKit = {};
+        if (kitIds.length) ler("kit_itens?select=kit_id,quantidade&kit_id=in.(" + kitIds.map(encodeURIComponent).join(",") + ")").forEach(k => { pecasPorKit[k.kit_id] = (pecasPorKit[k.kit_id] || 0) + Number(k.quantidade || 0); });
+        const pecas = i => pecasPorKit[i.item_id] ? Number(i.quantidade_solicitada || 0) * pecasPorKit[i.item_id] : Number(i.quantidade_solicitada || 0);
+        const separadas = i => pecasPorKit[i.item_id] ? Object.values(i.componentes || {}).reduce((t, c) => t + Number(c && c.separado || 0), 0) : Number(i.quantidade_separada || 0);
         const mapa = {};
         pedidos.forEach(p => {
           const meus = itens.filter(i => i.separacao_pedido_id === p.id);
@@ -541,8 +547,8 @@ class Execucao {
           const resumo = o => (o && o.concluido_em ? { lidas: o.lidas, total: o.total, faltando: (o.faltando || []).length, em: o.concluido_em, por: o.por || "" } : null);
           mapa[p.id] = {
             status: p.status, comercial: p.status_comercial, operacional: p.status_operacional || "",
-            separado: meus.reduce((s, i) => s + Number(i.quantidade_separada || 0), 0),
-            total: meus.reduce((s, i) => s + Number(i.quantidade_solicitada || 0), 0),
+            separado: meus.reduce((s, i) => s + separadas(i), 0),
+            total: meus.reduce((s, i) => s + pecas(i), 0),
             carregamento: resumo(op.carregamento), retorno: resumo(op.retorno)
           };
         });

@@ -532,7 +532,7 @@
     const cadastro = item.itens || {};
     const nome = nomeItemSeparacao(item);
     const codigo = item.codigo_item || cadastro.codigo || "";
-    const localizacao = item.localizacao || cadastro.setor_estoque || "";
+    const localizacao = [item.localizacao || cadastro.setor_estoque || "", item.kit_nome ? "Parte do kit: " + item.kit_nome + " (" + formatQty(item.por_kit) + " por kit)" : ""].filter(Boolean).join(" · ");
     return { cadastro, nome, codigo, localizacao };
   }
 
@@ -697,7 +697,7 @@
           .order("created_at", { ascending: true });
 
         if (erroItens) throw erroItens;
-        state.itens = itens || [];
+        state.itens = await abrirKitsEmComponentes(itens || []);
       }
 
       if (state.pedidoAtualId && !state.pedidos.some((pedido) => String(pedido.id) === String(state.pedidoAtualId))) {
@@ -718,6 +718,47 @@
       window.finalizarCarregamentoModulo?.();
     }
   }
+
+  /* Kit nunca é separado como uma peça (out/2026): cada linha de Kit vira os componentes dele
+     (kit_itens × quantidade do pedido). As linhas de componente são "virtuais": o progresso de cada uma
+     fica no jsonb componentes da linha do Kit, e a linha do Kit guarda quantos kits estão completos. */
+  async function abrirKitsEmComponentes(linhas) {
+    const kits = linhas.filter((l) => String(l.itens?.tipo || "").toLowerCase() === "kit");
+    if (!kits.length) return linhas;
+    const kitIds = [...new Set(kits.map((l) => l.item_id))];
+    const { data: composicao, error } = await state.supabase.from("kit_itens")
+      .select("kit_id,item_id,quantidade,itens:itens!fk_kit_itens_item(id,codigo,produto,descricao_total,foto_url,setor_estoque,tipo)")
+      .eq("empresa_id", state.empresaId).in("kit_id", kitIds);
+    if (error) { console.warn("Componentes dos kits indisponíveis:", error); return linhas; }
+    const porKit = new Map();
+    (composicao || []).forEach((c) => { if (!porKit.has(c.kit_id)) porKit.set(c.kit_id, []); porKit.get(c.kit_id).push(c); });
+    const saida = [];
+    linhas.forEach((linha) => {
+      const comps = String(linha.itens?.tipo || "").toLowerCase() === "kit" ? porKit.get(linha.item_id) : null;
+      if (!comps || !comps.length) { saida.push(linha); return; }
+      const salvo = linha.componentes && typeof linha.componentes === "object" ? linha.componentes : {};
+      const kitNome = linha.item_nome || linha.itens?.descricao_total || linha.itens?.produto || "Kit";
+      comps.forEach((c) => {
+        const porUnidade = Number(c.quantidade) || 1;
+        const reg = salvo[c.item_id] || {};
+        saida.push({
+          id: linha.id + "|" + c.item_id, virtual: true, kitRow: linha, kit_nome: kitNome, por_kit: porUnidade,
+          empresa_id: linha.empresa_id, separacao_pedido_id: linha.separacao_pedido_id, item_id: c.item_id,
+          item_nome: c.itens?.descricao_total || c.itens?.produto || "Componente", codigo_item: c.itens?.codigo || "",
+          foto_url: c.itens?.foto_url || "", localizacao: c.itens?.setor_estoque || "", itens: c.itens || {},
+          quantidade_solicitada: porUnidade * Number(linha.quantidade_solicitada || 0),
+          quantidade_separada: Number(reg.separado || 0), patrimonios_lidos: Array.isArray(reg.patrimonios) ? reg.patrimonios : [],
+          tipo_controle: "quantidade", status: "pendente"
+        });
+      });
+    });
+    return saida;
+  }
+
+  // Linha real do pedido + componente: é assim que as etiquetas de envio apontam para a peça.
+  function linhaDoItem(item) { return item?.virtual ? item.kitRow.id : item?.id; }
+  function chaveItem(item) { return linhaDoItem(item) + "|" + item?.item_id; }
+  function chaveEtiqueta(e) { return e.separacao_item_id + "|" + e.item_id; }
 
   async function carregarRegrasLogistica() {
     try {
@@ -976,11 +1017,11 @@
     const novas = [];
     itens.forEach((item) => {
       const total = Math.max(0, Math.round(itemTotal(item)));
-      const ja = new Set(lista.filter((e) => String(e.separacao_item_id) === String(item.id)).map((e) => e.sequencia));
+      const ja = new Set(lista.filter((e) => chaveEtiqueta(e) === chaveItem(item)).map((e) => e.sequencia));
       for (let seq = 1; seq <= total; seq++) {
         if (ja.has(seq)) continue;
         proximo += 1;
-        novas.push({ empresa_id: state.empresaId, separacao_pedido_id: pedido.id, separacao_item_id: item.id, item_id: item.item_id,
+        novas.push({ empresa_id: state.empresaId, separacao_pedido_id: pedido.id, separacao_item_id: linhaDoItem(item), item_id: item.item_id,
           codigo: numero + "-" + String(proximo).padStart(3, "0"), sequencia: seq, total_item: total });
       }
     });
@@ -989,15 +1030,15 @@
       if (erroCriar) { console.error(erroCriar); avisar("Não foi possível criar as etiquetas.", "Etiquetas", "erro"); return; }
       lista.push(...(criadas && criadas.length ? criadas : novas));
     }
-    const ordemItem = new Map(itens.map((item, i) => [String(item.id), i]));
-    const validas = lista.filter((e) => ordemItem.has(String(e.separacao_item_id)))
-      .sort((a, b) => ordemItem.get(String(a.separacao_item_id)) - ordemItem.get(String(b.separacao_item_id)) || a.sequencia - b.sequencia);
+    const ordemItem = new Map(itens.map((item, i) => [chaveItem(item), i]));
+    const validas = lista.filter((e) => ordemItem.has(chaveEtiqueta(e)))
+      .sort((a, b) => ordemItem.get(chaveEtiqueta(a)) - ordemItem.get(chaveEtiqueta(b)) || a.sequencia - b.sequencia);
     const dataEntrega = formatDateOnly(pedido.data_entrega || pedido.data_evento);
     const marca = window.__CONTEXT?.empresa_nome || "";
     await window.EasyLocEtiquetas.imprimir({
       formato,
       etiquetas: validas.map((e) => {
-        const item = itens.find((i) => String(i.id) === String(e.separacao_item_id));
+        const item = itens.find((i) => chaveItem(i) === chaveEtiqueta(e));
         return {
           qr: "ACERVO:ENV:" + e.codigo, marca, destaque: "PEDIDO " + (pedido.numero_pedido || "-"),
           titulo: nomeItemSeparacao(item), codigo: e.codigo, contador: e.sequencia + " de " + e.total_item,
@@ -1107,8 +1148,10 @@
           status: "erro",
           observacao: "Item nao pertence ao pedido atual"
         });
-        setScannerStatus("Item fora do pedido", "error");
-        setUltimaLeitura({ tipo: "erro", codigo, itemNome: itemCadastro?.descricao_total || itemCadastro?.produto, observacao: "Item fora do pedido" });
+        const ehKit = String(itemCadastro?.tipo || "").toLowerCase() === "kit";
+        const aviso = ehKit ? "Kit: leia cada componente" : "Item fora do pedido";
+        setScannerStatus(aviso, "error");
+        setUltimaLeitura({ tipo: "erro", codigo, itemNome: aviso, observacao: aviso });
         return;
       }
 
@@ -1150,7 +1193,7 @@
   async function buscarItemPorCodigo(codigo) {
     const { data, error } = await state.supabase
       .from(TABLES.cadastroItens)
-      .select("id,codigo,produto,descricao_total,foto_url,setor_estoque")
+      .select("id,codigo,produto,descricao_total,foto_url,setor_estoque,tipo")
       .eq("empresa_id", state.empresaId)
       .or(["codigo", "referencia", "qr_code"].map((c) => c + ".eq." + codigo.replace(/[,()]/g, "")).join(","))
       .limit(1);
@@ -1231,7 +1274,7 @@
     };
     if (String(etiqueta.separacao_pedido_id) !== String(pedido.id)) return erro("Etiqueta de outro pedido");
     if (etiqueta.lida_separacao_em) return erro("Esta etiqueta já foi lida", "bloqueado");
-    const itemSeparacao = state.itens.find((item) => String(item.id) === String(etiqueta.separacao_item_id));
+    const itemSeparacao = state.itens.find((item) => chaveItem(item) === chaveEtiqueta(etiqueta));
     if (!itemSeparacao) return erro("Item da etiqueta não está mais no pedido");
     if (itemSeparado(itemSeparacao) >= itemTotal(itemSeparacao)) return erro("Quantidade já completa", "bloqueado");
     const novaQtd = itemSeparado(itemSeparacao) + 1;
@@ -1331,6 +1374,25 @@
   }
 
   async function atualizarItemSeparacao(itemSeparacao, payload) {
+    if (itemSeparacao.virtual) {
+      Object.assign(itemSeparacao, payload);
+      const kit = itemSeparacao.kitRow;
+      const irmaos = state.itens.filter((i) => i.virtual && i.kitRow === kit);
+      const componentes = {};
+      irmaos.forEach((i) => { componentes[i.item_id] = { separado: itemSeparado(i), patrimonios: i.patrimonios_lidos || [] }; });
+      const kitsCompletos = Math.min(...irmaos.map((i) => Math.floor(itemSeparado(i) / (i.por_kit || 1))));
+      const algum = irmaos.some((i) => itemSeparado(i) > 0);
+      const dadosKit = {
+        componentes, quantidade_separada: kitsCompletos,
+        status: irmaos.every((i) => itemSeparado(i) >= itemTotal(i)) ? "concluido" : algum ? "em_andamento" : "pendente",
+        atualizado_por: state.usuarioId, atualizado_em: new Date().toISOString()
+      };
+      const { error: erroKit } = await state.supabase.from(TABLES.itens).update(dadosKit)
+        .eq("id", kit.id).eq("empresa_id", state.empresaId);
+      if (erroKit) throw erroKit;
+      Object.assign(kit, dadosKit);
+      return;
+    }
     const { error } = await state.supabase
       .from(TABLES.itens)
       .update({
@@ -1388,7 +1450,7 @@
     const payload = {
       empresa_id: state.empresaId,
       separacao_pedido_id: state.pedidoAtualId,
-      separacao_item_id: separacaoItemId,
+      separacao_item_id: separacaoItemId ? String(separacaoItemId).split("|")[0] : null,
       item_id: itemId,
       codigo_lido: codigo,
       tipo_controle: tipoControle || item?.tipo_controle || "quantidade",

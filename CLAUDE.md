@@ -9327,3 +9327,12 @@ etiquetas e leituras por cascade).
   abre a tela dele (antes só passava para "em separação"). Pegadinha: `design-system.css` força as janelas com
   `!important` num seletor com peso de ID (`:is(#main-content, .el-page)`) e o tema força o topo com
   `.el-page > header:first-child`; por isso as regras novas usam `html:root:is(#acervo-separacao, html)` (peso de ID).
+- **Kit nunca entra na separação, só Item e Componente** (17/out): `abrirKitsEmComponentes()` troca cada linha de Kit
+  pelos componentes (`kit_itens` × quantidade; linhas "virtuais" `id = <linha>|<componente>`, com "Parte do kit: X").
+  O progresso de cada componente fica no jsonb novo `separacoes_itens.componentes` da linha do Kit, que guarda também
+  quantos kits estão completos (`quantidade_separada`). Etiquetas de componente apontam para a linha do Kit +
+  `item_id` (constraint agora `unique(separacao_item_id, item_id, sequencia)`, migration `20261017000700`); a
+  conferência agrupa por linha + item e mostra o nome do componente; o andamento do cronograma conta as peças dos
+  kits. Ler o código do próprio Kit avisa "Kit: leia cada componente". No pedido/orçamento/disponibilidade o Kit
+  continua uma linha (reserva o estoque do Kit, como antes). Título das telas de separação numa linha só.
+  Teste: `tests/separacao-kit-componentes-browser.cjs`.

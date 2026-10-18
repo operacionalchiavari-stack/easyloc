@@ -14,6 +14,7 @@ const mock = `(() => {
       { id: "e1b", empresa_id: "e1", separacao_pedido_id: "p1", separacao_item_id: "s1", item_id: "i1", codigo: "12-002", sequencia: 2, total_item: 2 },
       { id: "e2a", empresa_id: "e1", separacao_pedido_id: "p1", separacao_item_id: "s2", item_id: "i2", codigo: "12-003", sequencia: 1, total_item: 1 },
       { id: "x9", empresa_id: "e1", separacao_pedido_id: "outro", separacao_item_id: "zz", item_id: "i9", codigo: "99-001", sequencia: 1, total_item: 1 }],
+    itens: [{ id: "i1", empresa_id: "e1", produto: "Cadeira Tiffany" }, { id: "i2", empresa_id: "e1", produto: "Mesa Goa" }],
     itens_patrimonios: [{ empresa_id: "e1", item_id: "i1", codigo_patrimonio: "CAD-001" }],
     separacoes_leituras: []
   };
@@ -22,6 +23,7 @@ const mock = `(() => {
     const q = {
       select(){ return q; }, order(){ return q; }, limit(){ return q; },
       eq(c, v){ linhas = linhas.filter((l) => !(c in l) || String(l[c]) === String(v)); return q; },
+      in(c, vs){ linhas = linhas.filter((l) => !(c in l) || vs.map(String).includes(String(l[c]))); return q; },
       maybeSingle(){ unico = true; return q; }, single(){ unico = true; return q; },
       insert(p){ window.__gravados.push({ t, tipo: "insert", p }); return q; },
       update(p){ acao = "update"; dados = p; return q; },

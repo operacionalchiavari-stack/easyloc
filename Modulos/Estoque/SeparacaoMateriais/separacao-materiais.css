@@ -1182,3 +1182,28 @@ html:root:is(#acervo-separacao, html) .item-card.is-completo .item-name{color:#1
 html:root:is(#acervo-separacao, html) .item-card.is-completo .manual-qty-input{background:#fff!important;border-color:#1f8a4c!important;color:#1b6b3d!important;}
 html:root:is(#acervo-separacao, html) .item-card.is-completo .item-progress-track span{background:#1f8a4c!important;}
 html:root:is(#acervo-separacao, html) .item-card.is-completo .item-progress span{color:#1b6b3d!important;}
+/* Título do pedido numa linha só (out/2026): tipo da tela · Pedido · cliente/evento/local. */
+html:root:is(#acervo-separacao, html) .separacao-modal-header > div{display:flex!important;flex-wrap:wrap!important;align-items:center!important;column-gap:16px!important;row-gap:4px!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-header > div > *{margin:0!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-header > div > h2,
+html:root:is(#acervo-separacao, html) .separacao-modal-header > div > p,
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > h2,
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > p{padding-left:16px!important;border-left:1px solid #d9d3c7!important;line-height:1.2!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog{grid-template-columns:auto auto auto minmax(0,1fr)!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .modal-close-button{grid-row:1!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .pedido-label{grid-column:2!important;grid-row:1!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > h2{grid-column:3!important;grid-row:1!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > p{grid-column:4!important;grid-row:1!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .separacao-mode-options{grid-row:2!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .separacao-etiquetas-btn{grid-row:3!important;}
+@media(max-width:760px){
+  html:root:is(#acervo-separacao, html) .separacao-mode-dialog{grid-template-columns:auto minmax(0,1fr)!important;}
+  html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .pedido-label,
+  html:root:is(#acervo-separacao, html) .separacao-mode-dialog > h2,
+  html:root:is(#acervo-separacao, html) .separacao-mode-dialog > p{grid-column:2!important;grid-row:auto!important;padding-left:0!important;border-left:0!important;}
+  html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .modal-close-button{grid-row:1 / span 3!important;}
+  html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .separacao-mode-options{grid-row:auto!important;}
+  html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .separacao-etiquetas-btn{grid-row:auto!important;}
+  html:root:is(#acervo-separacao, html) .separacao-modal-header > div > p{padding-left:0!important;border-left:0!important;flex-basis:100%!important;}
+}
+@media(max-width:760px){html:root:is(#acervo-separacao, html) .separacao-modal-header > div > h2{padding-left:0!important;border-left:0!important;}}

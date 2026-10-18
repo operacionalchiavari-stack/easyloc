@@ -19,7 +19,7 @@
   const cfg = ETAPAS[etapa];
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  const s = { sb: null, empresa: null, usuario: null, nome: "", pedido: null, itens: [], etiquetas: [], patLidos: new Set(), ocupado: false };
+  const s = { sb: null, empresa: null, usuario: null, nome: "", pedido: null, itens: [], etiquetas: [], patLidos: new Set(), nomes: new Map(), ocupado: false };
 
   function avisar(msg, titulo = cfg.rotulo, tipo = "aviso") { window.alerta ? window.alerta(msg, titulo, tipo) : alert(msg); }
   function mostrarAviso(msg) { $("cfAviso").hidden = false; $("cfAviso").textContent = msg; }
@@ -32,9 +32,11 @@
     if (tipo !== "ok") navigator.vibrate?.([80, 60, 80]);
   }
 
-  function nomeItem(id) {
-    const i = s.itens.find((x) => String(x.id) === String(id));
-    return i?.item_nome || i?.itens?.descricao_total || i?.itens?.produto || "Item";
+  // Nome da peça da etiqueta: o do próprio item (num Kit, o componente), senão o da linha do pedido.
+  function nomeItem(etq) {
+    if (etq && s.nomes.has(String(etq.item_id))) return s.nomes.get(String(etq.item_id));
+    const i = s.itens.find((x) => String(x.id) === String(etq?.separacao_item_id));
+    return i?.item_nome || "Item";
   }
 
   function pintar() {
@@ -47,11 +49,11 @@
     $("cfRodape").classList.toggle("is-completo", total > 0 && lidas === total);
     const soFaltando = $("cfSoFaltando").checked;
     const grupos = new Map();
-    s.etiquetas.forEach((e) => { const k = String(e.separacao_item_id); if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(e); });
-    $("cfItens").innerHTML = [...grupos.entries()].map(([itemId, lista]) => {
+    s.etiquetas.forEach((e) => { const k = e.separacao_item_id + "|" + e.item_id; if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(e); });
+    $("cfItens").innerHTML = [...grupos.entries()].map(([, lista]) => {
       const ok = lista.filter((e) => e[cfg.campo]).length;
       if (soFaltando && ok === lista.length) return "";
-      return '<article class="cf-item' + (ok === lista.length ? " is-ok" : "") + '"><div class="cf-item-topo"><strong>' + esc(nomeItem(itemId)) +
+      return '<article class="cf-item' + (ok === lista.length ? " is-ok" : "") + '"><div class="cf-item-topo"><strong>' + esc(nomeItem(lista[0])) +
         '</strong><span>' + ok + " / " + lista.length + '</span></div><div class="cf-etiquetas">' +
         lista.map((e) => '<span class="cf-etq' + (e[cfg.campo] ? " is-ok" : "") + '" title="' + esc(e.codigo) + '">' + esc(e.codigo) + "</span>").join("") + "</div></article>";
     }).join("") || '<p class="cf-vazio">Nada faltando.</p>';
@@ -70,8 +72,8 @@
     const { error } = await s.sb.from("separacoes_etiquetas").update({ [cfg.campo]: agora }).eq("id", etq.id).eq("empresa_id", s.empresa);
     if (error) throw error;
     etq[cfg.campo] = agora;
-    await registrar({ codigo_lido: codigoLido, separacao_item_id: etq.separacao_item_id, item_id: etq.item_id, status_leitura: "sucesso", item_nome: nomeItem(etq.separacao_item_id), observacao: cfg.rotulo + ": etiqueta " + etq.codigo });
-    ultima("ok", nomeItem(etq.separacao_item_id), "Etiqueta " + etq.codigo + " · " + etq.sequencia + " de " + etq.total_item);
+    await registrar({ codigo_lido: codigoLido, separacao_item_id: etq.separacao_item_id, item_id: etq.item_id, status_leitura: "sucesso", item_nome: nomeItem(etq), observacao: cfg.rotulo + ": etiqueta " + etq.codigo });
+    ultima("ok", nomeItem(etq), "Etiqueta " + etq.codigo + " · " + etq.sequencia + " de " + etq.total_item);
     pintar();
   }
 
@@ -103,7 +105,7 @@
         await registrar({ codigo_lido: codigo, status_leitura: "erro", observacao: outra ? "Etiqueta de outro pedido" : "Etiqueta não encontrada" });
         return;
       }
-      if (etq[cfg.campo]) { ultima("erro", "Já conferida", etq.codigo + " · " + nomeItem(etq.separacao_item_id)); return; }
+      if (etq[cfg.campo]) { ultima("erro", "Já conferida", etq.codigo + " · " + nomeItem(etq)); return; }
       await marcar(etq, codigo);
     } catch (e) {
       console.error(e);
@@ -122,7 +124,7 @@
     const registro = {
       concluido_em: new Date().toISOString(), por: s.nome, usuario_id: s.usuario,
       lidas: s.etiquetas.length - faltando.length, total: s.etiquetas.length,
-      faltando: faltando.map((e) => ({ codigo: e.codigo, item: nomeItem(e.separacao_item_id) }))
+      faltando: faltando.map((e) => ({ codigo: e.codigo, item: nomeItem(e) }))
     };
     const operacao = { ...(s.pedido.operacao || {}), [etapa]: registro };
     const { error } = await s.sb.from("separacoes_pedidos").update({ status_operacional: cfg.status, operacao }).eq("id", s.pedido.id).eq("empresa_id", s.empresa);
@@ -153,6 +155,11 @@
     if (error) { console.error(error); mostrarAviso("Não foi possível carregar as etiquetas do pedido."); return; }
     if (!pedido) { mostrarAviso("Pedido não encontrado."); return; }
     s.pedido = pedido; s.itens = itens || []; s.etiquetas = etiquetas || [];
+    const idsItens = [...new Set(s.etiquetas.map((e) => e.item_id).filter(Boolean))];
+    if (idsItens.length) {
+      const { data: cad } = await s.sb.from("itens").select("id,produto,descricao_total").eq("empresa_id", s.empresa).in("id", idsItens);
+      (cad || []).forEach((c) => s.nomes.set(String(c.id), c.descricao_total || c.produto || "Item"));
+    }
     $("cfPedido").hidden = false;
     $("cfPedidoNumero").textContent = "Pedido " + (pedido.numero_pedido || "-");
     const data = pedido.data_entrega || pedido.data_evento;
