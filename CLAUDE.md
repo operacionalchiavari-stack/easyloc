@@ -9302,3 +9302,21 @@ pré-reserva. **Eles reservam estoque de verdade nessas datas** (disponibilidade
 (lat/lng vazias: o Google Maps não respondeu no script local). Para apagar: cancelar + sincronizar + deletar cada
 pedido com `observacoes->>teste_cronograma = 'true'` (script `limpar-testes.js` usado na sessão; o delete leva itens,
 etiquetas e leituras por cascade).
+
+### Revisão do cronograma e publicação só da operação (17/out/2026)
+- O aviso "triagem de pedido lançado direto no cronograma" ao testar era o servidor da Vercel ainda antigo (sem a
+  coluna R). Publicado o commit `8aa1cbe` só com o trabalho da operação: Vercel a partir de um `git worktree` limpo
+  (sem os arquivos em andamento de outras conversas) e Pages pelo workflow. Do `api/_gas/motor.js` foi só o que é da
+  operação; a troca de senhas por PBKDF2 (outra conversa, com `Freelancers.js`) ficou de fora, sem commit.
+- Cronograma: saíram "Novo pedido" (topo e menu do celular) e o lote; o formulário virou "Editar pedido" com
+  "Salvar alterações". Montagem no horário de entrega do pedido, desmontagem no de coleta, o resto no horário padrão
+  (coluna T "HORA SUGERIDA": horário mudado à mão não é sobrescrito). Cartão das etapas de pedido do sistema mostra o
+  andamento (`andamentoEtapaHtml`, dados de `Acervo.andamentoPedidos` em `getCronogramaSemana`): "A separar",
+  "Separando 10/52", "Separado 52/52", "Carregado com 1 pendência", "Conferido na volta". Os 3 quadros (computador,
+  agenda do celular, modo app) abrem triagem/carregamento. Coordenadas são buscadas também quando estão vazias.
+- Ainda não feito da revisão: caminhões/responsáveis/equipes do cronograma vindos dos cadastros do sistema (hoje são
+  abas da planilha), condições do local (baldeação/escada…) vindas do cadastro de Locais, foto do caminhão no fim da
+  conferência, limpeza das janelas de senha que sobraram.
+- Separação de Materiais (17/out): título corrigido (estava "Central de Pedidos"), botão Atualizar removido (a fila
+  atualiza sozinha a cada 30 s e ao voltar para a aba, nunca com uma janela de separação aberta) e cores fortes por
+  coluna (faixa lateral de 6px, fundo na cor, contador preenchido; variáveis `--lane-cor/--lane-fundo`, `html:root`).

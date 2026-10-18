@@ -1658,6 +1658,11 @@
     bindEvents();
     await carregarFila();
     await abrirPedidoDaUrl();
+    // Sem botão Atualizar (out/2026): a fila se atualiza sozinha a cada 30 s e ao voltar para a aba,
+    // nunca enquanto uma janela de separação está aberta (para não mexer na tela de quem está bipando).
+    state.autoTimer = setInterval(() => { if (document.visibilityState === "visible" && !modalSeparacaoAberto()) carregarFila(); }, 30000);
+    state.autoVisivel = () => { if (document.visibilityState === "visible" && !modalSeparacaoAberto()) carregarFila(); };
+    document.addEventListener("visibilitychange", state.autoVisivel);
   }
 
   /* Aberto pelo cronograma (out/2026): ?pedido=<id>&etapa=ida|volta abre direto o pedido. */
@@ -1690,6 +1695,8 @@
       document.removeEventListener("keydown", state.keyHandler);
     }
     clearTimeout(state.scanTimer);
+    clearInterval(state.autoTimer);
+    if (state.autoVisivel) document.removeEventListener("visibilitychange", state.autoVisivel);
     fecharTodosModais();
     delete window.__separacaoMateriaisLoaded;
   }

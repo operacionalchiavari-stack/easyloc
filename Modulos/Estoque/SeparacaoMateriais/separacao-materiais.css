@@ -1047,3 +1047,33 @@ body.separacao-modal-open {
 .scanner-visual[hidden]{display:none}
 .separacao-mode-dialog .separacao-etiquetas-btn{width:100%;justify-content:center;display:inline-flex;align-items:center;gap:8px;margin-top:14px}
 .separacao-modal-footer .separacao-etiquetas-btn{margin-right:auto;display:inline-flex;align-items:center;gap:6px}
+
+/* Cores mais visíveis (out/2026): faixa forte na lateral do cartão e título/contador da coluna na cor dela.
+   html:root para vencer o tema-chiavari.css e o design-system.css. */
+html:root .separacao-lane > header{border-top:4px solid var(--lane-cor);}
+html:root .separacao-lane > header strong{background:var(--lane-cor)!important;color:#fff!important;}
+html:root .separacao-lane > header span{color:var(--lane-cor);}
+html:root .separacao-lane-pendente{--lane-cor:#c27803;--lane-fundo:#fff4d6;}
+html:root .separacao-lane-andamento{--lane-cor:#1d5fd6;--lane-fundo:#e3edff;}
+html:root .separacao-lane-separado{--lane-cor:#1f8a4c;--lane-fundo:#dcf3e5;}
+html:root .separacao-lane-list{background:#f4f2ee;}
+html:root .separacao-order-card[data-coluna]{
+  background:var(--lane-fundo);
+  border:1px solid color-mix(in srgb, var(--lane-cor) 35%, transparent);
+  border-left:6px solid var(--lane-cor);
+}
+html:root .separacao-order-card[data-coluna]:hover,
+html:root .separacao-order-card[data-coluna]:focus-visible{
+  border-color:var(--lane-cor);
+  box-shadow:0 10px 24px color-mix(in srgb, var(--lane-cor) 22%, transparent);
+}
+html:root .separacao-order-number{background:#b91c1c;border-color:#b91c1c;color:#fff;}
+html:root .separacao-card-mainline strong{color:#1f1d1a;}
+html:root .separacao-card-mainline span,
+html:root .separacao-card-meta-line{color:#4a463f;}
+html:root .separacao-lock-note{color:#8a4b04;font-weight:600;}
+html:root .separacao-lane-andamento .separacao-lock-note{color:#1d4ea8;}
+html:root .mini-progress{background:rgba(0,0,0,.12);height:6px;}
+html:root .separacao-lane .mini-progress span{background:var(--lane-cor);}
+html:root .separacao-done-mark{color:#1f8a4c;}
+html:root .separacao-lane-separado .separacao-lock-note{color:#1b6b3d;}
