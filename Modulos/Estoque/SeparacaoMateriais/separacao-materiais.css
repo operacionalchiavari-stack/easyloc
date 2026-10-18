@@ -1058,7 +1058,7 @@ html:root:is(#acervo-separacao, html) .separacao-lane-list{background:#fff!impor
 html:root:is(#acervo-separacao, html) .separacao-order-card[data-coluna]{background:var(--lane-fundo);border:1px solid color-mix(in srgb, var(--lane-cor) 18%, transparent);}
 html:root:is(#acervo-separacao, html) .separacao-order-card[data-coluna]:hover,
 html:root:is(#acervo-separacao, html) .separacao-order-card[data-coluna]:focus-visible{border-color:var(--lane-cor);box-shadow:0 10px 24px color-mix(in srgb, var(--lane-cor) 20%, transparent);}
-html:root:is(#acervo-separacao, html) .separacao-order-number{background:#b91c1c;border-color:#b91c1c;color:#fff;}
+html:root:is(#acervo-separacao, html) .separacao-order-number{background:#fbe7e5;border-color:#f1c9c4;color:#a3271d;}
 html:root:is(#acervo-separacao, html) .separacao-card-mainline strong{color:#1f1d1a;}
 html:root:is(#acervo-separacao, html) .separacao-card-mainline span,
 html:root:is(#acervo-separacao, html) .separacao-card-meta-line{color:#4a463f;}
