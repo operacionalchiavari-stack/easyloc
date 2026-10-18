@@ -1111,3 +1111,49 @@ html:root:is(#acervo-separacao, html) .separacao-search input{background:#fff!im
 html:root:is(#acervo-separacao, html) .separacao-search{border:1px solid #e3ded4!important;border-radius:999px!important;}
 html:root:is(#acervo-separacao, html) .separacao-search input{border:0!important;outline:none!important;}
 html:root:is(#acervo-separacao, html) .separacao-search:focus-within{border-color:#44443f!important;}
+
+/* Fontes grandes nas telas de separação (out/2026): a equipe lê de pé, no galpão, às vezes pelo celular. */
+html:root:is(#acervo-separacao, html) .separacao-modal-header h2{font-size:30px!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-header p{font-size:17px!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal .pedido-label{font-size:13px!important;letter-spacing:.06em!important;}
+html:root:is(#acervo-separacao, html) .pedido-operacao-card strong{font-size:40px!important;}
+html:root:is(#acervo-separacao, html) .progress-big-track{height:12px!important;}
+html:root:is(#acervo-separacao, html) .progress-big-meta{font-size:16px!important;}
+html:root:is(#acervo-separacao, html) .item-card,
+html:root:is(#acervo-separacao, html) .qr-list .item-card{grid-template-columns:70px 72px minmax(0,1fr) auto!important;gap:16px!important;padding:16px 18px!important;}
+html:root:is(#acervo-separacao, html) .qr-list .item-card{grid-template-columns:70px 72px minmax(0,1fr) 150px!important;}
+html:root:is(#acervo-separacao, html) .item-requested{min-height:62px!important;border-radius:14px!important;}
+html:root:is(#acervo-separacao, html) .item-requested span{font-size:12px!important;}
+html:root:is(#acervo-separacao, html) .item-requested strong{font-size:28px!important;margin-top:4px!important;}
+html:root:is(#acervo-separacao, html) .item-photo{width:72px!important;height:72px!important;border-radius:14px!important;}
+html:root:is(#acervo-separacao, html) .item-name{font-size:18px!important;line-height:1.3!important;}
+html:root:is(#acervo-separacao, html) .item-code,
+html:root:is(#acervo-separacao, html) .item-location{font-size:14px!important;margin-top:4px!important;}
+html:root:is(#acervo-separacao, html) .item-progress span{font-size:20px!important;color:#1f1d1a!important;}
+html:root:is(#acervo-separacao, html) .item-progress-track{height:8px!important;}
+html:root:is(#acervo-separacao, html) .manual-stepper{grid-template-columns:52px 80px 52px!important;gap:8px!important;}
+html:root:is(#acervo-separacao, html) .manual-stepper button{width:52px!important;height:52px!important;font-size:26px!important;border-radius:14px!important;}
+html:root:is(#acervo-separacao, html) .manual-qty-input{width:80px!important;height:52px!important;font-size:22px!important;border-radius:14px!important;}
+html:root:is(#acervo-separacao, html) .scanner-status-row span,
+html:root:is(#acervo-separacao, html) .last-read-card span{font-size:13px!important;}
+html:root:is(#acervo-separacao, html) .scanner-status-row strong{font-size:20px!important;}
+html:root:is(#acervo-separacao, html) .scanner-input{height:56px!important;font-size:18px!important;}
+html:root:is(#acervo-separacao, html) .last-read-card strong{font-size:22px!important;}
+html:root:is(#acervo-separacao, html) .last-read-card dt,
+html:root:is(#acervo-separacao, html) .last-read-card dd{font-size:15px!important;}
+html:root:is(#acervo-separacao, html) .scanner-camera-btn{font-size:16px!important;min-height:52px!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-footer .btn{min-height:54px!important;font-size:16px!important;padding-left:24px!important;padding-right:24px!important;}
+html:root:is(#acervo-separacao, html) .separacao-readonly-banner{font-size:15px!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-option strong{font-size:22px!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-option span{font-size:15px!important;}
+html:root:is(#acervo-separacao, html) .separacao-etiquetas-btn{font-size:16px!important;min-height:52px!important;}
+@media(max-width:760px){
+  html:root:is(#acervo-separacao, html) .item-card,
+  html:root:is(#acervo-separacao, html) .qr-list .item-card{grid-template-columns:60px 60px minmax(0,1fr)!important;gap:12px!important;padding:14px!important;}
+  html:root:is(#acervo-separacao, html) .item-photo{display:grid!important;width:60px!important;height:60px!important;}
+  html:root:is(#acervo-separacao, html) .manual-stepper,
+  html:root:is(#acervo-separacao, html) .item-progress{grid-column:1 / -1!important;justify-self:end!important;}
+  html:root:is(#acervo-separacao, html) .item-progress{width:100%!important;}
+  html:root:is(#acervo-separacao, html) .item-name{font-size:17px!important;}
+  html:root:is(#acervo-separacao, html) .separacao-modal-header h2{font-size:26px!important;}
+}
