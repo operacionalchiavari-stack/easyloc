@@ -1173,3 +1173,12 @@ html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .separacao-etique
 html:root:is(#acervo-separacao, html) .separacao-mode-dialog > h2{font-size:30px!important;}
 html:root:is(#acervo-separacao, html) .separacao-mode-dialog > p{font-size:17px!important;}
 html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .pedido-label{font-size:13px!important;}
+/* Item completo fica verde (out/2026). */
+html:root:is(#acervo-separacao, html) .item-card.is-completo{background:#dcf3e5!important;}
+html:root:is(#acervo-separacao, html) .item-card.is-completo .item-requested{background:#1f8a4c!important;}
+html:root:is(#acervo-separacao, html) .item-card.is-completo .item-requested span,
+html:root:is(#acervo-separacao, html) .item-card.is-completo .item-requested strong{color:#fff!important;}
+html:root:is(#acervo-separacao, html) .item-card.is-completo .item-name{color:#1b6b3d!important;}
+html:root:is(#acervo-separacao, html) .item-card.is-completo .manual-qty-input{background:#fff!important;border-color:#1f8a4c!important;color:#1b6b3d!important;}
+html:root:is(#acervo-separacao, html) .item-card.is-completo .item-progress-track span{background:#1f8a4c!important;}
+html:root:is(#acervo-separacao, html) .item-card.is-completo .item-progress span{color:#1b6b3d!important;}

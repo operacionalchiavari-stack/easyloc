@@ -542,7 +542,7 @@
     const separado = itemSeparado(item);
 
     return `
-      <article class="item-card" data-separacao-item-id="${escapeHtml(item.id)}">
+      <article class="item-card${itemTotal(item) > 0 && itemSeparado(item) >= itemTotal(item) ? " is-completo" : ""}" data-separacao-item-id="${escapeHtml(item.id)}">
         <div class="item-requested" title="Quantidade solicitada">
           <span>Qtd</span>
           <strong>${escapeHtml(formatQty(total))}</strong>
@@ -576,7 +576,7 @@
     const percent = itemPercent(item);
 
     return `
-      <article class="item-card" data-separacao-item-id="${escapeHtml(item.id)}">
+      <article class="item-card${itemTotal(item) > 0 && itemSeparado(item) >= itemTotal(item) ? " is-completo" : ""}" data-separacao-item-id="${escapeHtml(item.id)}">
         <div class="item-requested" title="Quantidade solicitada">
           <span>Qtd</span>
           <strong>${escapeHtml(formatQty(itemTotal(item)))}</strong>

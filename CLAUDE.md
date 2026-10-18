@@ -9320,7 +9320,7 @@ etiquetas e leituras por cascade).
 - Separação de Materiais (17/out): título corrigido (estava "Central de Pedidos"), botão Atualizar removido (a fila
   atualiza sozinha a cada 30 s e ao voltar para a aba, nunca com uma janela de separação aberta) e cores fortes por
   coluna (faixa lateral de 6px, fundo na cor, contador preenchido; variáveis `--lane-cor/--lane-fundo`, `html:root`).
-- Separação (17/out, 2º ajuste; fundo das colunas e busca brancos; fontes grandes nas telas de separação: título 30px, item 18px, quantidades 28px, botões +/− 52px, foto 72px — também no celular, onde a foto voltou a aparecer; "← Voltar" na mesma linha do título do pedido nas 4 telas): cartões só com o fundo na cor da coluna (sem faixa lateral) e topo das colunas sem
+- Separação (17/out, 2º ajuste; fundo das colunas e busca brancos; fontes grandes nas telas de separação: título 30px, item 18px, quantidades 28px, botões +/− 52px, foto 72px — também no celular, onde a foto voltou a aparecer; "← Voltar" na mesma linha do título do pedido nas 4 telas; item completo fica com a linha verde, classe `is-completo` em `.item-card`): cartões só com o fundo na cor da coluna (sem faixa lateral) e topo das colunas sem
   cor. **A separação deixou de ser janela e virou tela**: com `body.separacao-modal-open` a fila (cabeçalho + quadro)
   some e a "janela" ocupa a página, com "← Voltar" no lugar do X e rodapé fixo embaixo; a escolha do modo virou 3
   cartões grandes lado a lado. Os ids/classes das janelas continuam (só CSS + o botão). Clicar num pedido da fila já
