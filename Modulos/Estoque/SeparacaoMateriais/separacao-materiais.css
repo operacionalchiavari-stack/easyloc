@@ -1250,3 +1250,6 @@ html:root:is(#acervo-separacao, html) .separacao-order-card:is(.card-retorno, .e
 html:root:is(#acervo-separacao, html) .card-tipo-retorno{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:#6d4fc2;color:#fff;margin-right:auto;}
 html:root:is(#acervo-separacao, html) .separacao-order-card:is(.card-retorno, .exp-card-retorno) .separacao-lock-note{color:#5b3fae;}
 html:root:is(#acervo-separacao, html) .card-retorno-lidos{margin-top:8px;font-weight:700;font-size:14px;color:#5b3fae;}
+/* Selo "Ida" nos cartões de separação (o retorno tem o selo lilás "Retorno") */
+html:root:is(#acervo-separacao, html) .separacao-order-card .separacao-card-top{gap:8px;}
+html:root:is(#acervo-separacao, html) .card-tipo-ida{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.7);color:#6b665e;border:1px solid rgba(0,0,0,.08);margin-right:auto;}

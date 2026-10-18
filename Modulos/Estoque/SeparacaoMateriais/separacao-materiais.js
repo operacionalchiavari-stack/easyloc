@@ -387,6 +387,7 @@
       <article class="separacao-order-card" data-pedido-id="${escapeHtml(pedido.id)}" data-card-action="${escapeHtml(cardAction)}" data-clickable="true" data-coluna="${escapeHtml(coluna)}" tabindex="0">
         <div class="separacao-card-top">
           <span class="separacao-order-number">Pedido ${escapeHtml(numeroLabel)}</span>
+          <span class="card-tipo-ida">Ida</span>
           ${coluna === "separado" ? `<span class="separacao-done-mark"><i data-lucide="check"></i></span>` : ""}
         </div>
         <div class="separacao-card-mainline">
@@ -443,10 +444,10 @@
     if (!container) return;
     if (!pedidos.length && !retornos.length) {
       const emptyText = coluna === "aguardando"
-        ? "Nenhum pedido aguardando separacao."
+        ? "Nada aguardando triagem."
         : coluna === "andamento"
-          ? "Nenhum pedido em separacao."
-          : "Nenhum pedido separado por enquanto.";
+          ? "Nenhuma triagem em andamento."
+          : "Nada concluído por enquanto.";
       container.innerHTML = `<div class="empty-state">${emptyText}</div>`;
       return;
     }

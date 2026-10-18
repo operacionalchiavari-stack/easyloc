@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
-  <link rel="stylesheet" href="separacao-materiais.css?v=20261018-retorno">
+  <link rel="stylesheet" href="separacao-materiais.css?v=20261018-ida-volta">
 </head>
 <body>
 <section class="separacao-page el-page" data-module-root>
@@ -37,7 +37,7 @@
         <header>
           <div>
             <span>Fila</span>
-            <h2>Aguardando separacao</h2>
+            <h2>Aguardando triagem</h2>
           </div>
           <strong id="separacaoLaneAguardandoCount">0</strong>
         </header>
@@ -47,8 +47,8 @@
       <section class="separacao-lane separacao-lane-andamento">
         <header>
           <div>
-            <span>Operacao</span>
-            <h2>Em separacao</h2>
+            <span>Operação</span>
+            <h2>Em triagem</h2>
           </div>
           <strong id="separacaoLaneEmSeparacaoCount">0</strong>
         </header>
@@ -58,8 +58,8 @@
       <section class="separacao-lane separacao-lane-separado">
         <header>
           <div>
-            <span>Concluidos</span>
-            <h2>Separados</h2>
+            <span>Concluídos</span>
+            <h2>Concluído</h2>
           </div>
           <strong id="separacaoLaneSeparadosCount">0</strong>
         </header>
@@ -280,7 +280,7 @@
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
 <script src="../../../js/core/permissions.js?v=20261017-parametros"></script>
 <script src="../../../js/core/etiquetas.js?v=20261017-etiquetas"></script>
-<script src="separacao-materiais.js?v=20261018-retorno"></script>
+<script src="separacao-materiais.js?v=20261018-ida-volta"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

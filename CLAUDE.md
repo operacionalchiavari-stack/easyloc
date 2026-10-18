@@ -9385,3 +9385,5 @@ voltar, o próprio sistema sinaliza"). Depois: "a mesma regra na Triagem".
 - Cronograma: a etapa Triagem (Conferência) mostra "Conferência de retorno · às cegas" até ser concluída.
 - `conferencia.css` ganhou `.cf-page [hidden]{display:none!important}` (o `display:block` de `.cf-pedido strong` vencia o `hidden`).
 - Testes: `tests/expedicao-browser.cjs` (ida/volta, cores, às cegas, resultado) e `tests/separacao-cronograma-browser.cjs` (ok 6–7).
+- Triagem com ida e volta (pedido seguinte): colunas "Aguardando triagem / Em triagem / Concluído", cartão de separação
+  com o selo "Ida" (`.card-tipo-ida`) ao lado do número, e o de retorno com o selo lilás "Retorno".
