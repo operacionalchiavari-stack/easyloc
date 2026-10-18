@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
-  <link rel="stylesheet" href="separacao-materiais.css?v=20261017-modo">
+  <link rel="stylesheet" href="separacao-materiais.css?v=20261018-centro">
 </head>
 <body>
 <section class="separacao-page el-page" data-module-root>
@@ -94,10 +94,16 @@
           <span>Marcar todos como separados.</span>
         </button>
       </div>
-      <button type="button" class="btn secondary separacao-etiquetas-btn" data-etiquetas-envio>
-        <i data-lucide="tag"></i>
-        Imprimir etiquetas de envio
-      </button>
+      <div class="separacao-modo-extras">
+        <button type="button" class="btn secondary separacao-etiquetas-btn" data-etiquetas-envio>
+          <i data-lucide="tag"></i>
+          Imprimir etiquetas de envio
+        </button>
+        <button type="button" class="btn secondary separacao-etiquetas-btn" data-relatorio-separacao>
+          <i data-lucide="printer"></i>
+          Imprimir relatório
+        </button>
+      </div>
     </section>
   </div>
 
@@ -274,7 +280,7 @@
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
 <script src="../../../js/core/permissions.js?v=20261017-parametros"></script>
 <script src="../../../js/core/etiquetas.js?v=20261017-etiquetas"></script>
-<script src="separacao-materiais.js?v=20261017-kit"></script>
+<script src="separacao-materiais.js?v=20261017-relatorio"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

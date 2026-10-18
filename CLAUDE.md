@@ -9340,3 +9340,11 @@ etiquetas e leituras por cascade).
   "1 clique" voltaram a ser **janela pequena** (620px, com X) por cima da fila; só a separação manual e a do QR são
   tela cheia (a fila some só com elas abertas: `body:has(#separacaoManualModal:not(.hidden), #separacaoQrModal:not(.hidden))`).
   Cores dos cartões mais claras (`--lane-fundo` #fff9ea / #f0f5ff / #eef9f2, contorno 18%).
+
+### Separação: relatório impresso e busca na linha do título (out/2026)
+- Na janela de escolha do modo, "Imprimir relatório" (`imprimirRelatorioSeparacao()`): A4 agrupado pelo local do estoque,
+  com foto, item (+ "Parte do kit", observação), código, quantidade do pedido, caixas em branco "Separado" (com o que o
+  sistema já marcou embaixo) e "Faltou", caixinha OK (já preenchida se o sistema marca completo), observações da
+  separação e assinaturas Separado por / Conferido por / Data e hora. Imprime por um iframe escondido.
+- Cabeçalho da fila: grid de 3 colunas — título "Separação de Materiais" centralizado, busca à direita na mesma linha
+  (até 380px); a linha fina do tema virou `border-bottom` do cabeçalho. ≤1000px empilha. CSS `?v=20261018-centro`.

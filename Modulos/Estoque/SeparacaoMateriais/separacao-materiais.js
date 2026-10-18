@@ -999,6 +999,85 @@
     return data || null;
   }
 
+  /* Relatório de separação (out/2026): a lista para a equipe levar ao galpão, em A4, agrupada pelo local do
+     estoque (para andar menos), com caixinha para marcar à mão, observações e assinaturas. */
+  function imprimirRelatorioSeparacao() {
+    const pedido = getPedidoAtual();
+    if (!pedido) { avisar("Selecione um pedido.", "Relatório", "aviso"); return; }
+    const itens = state.itens.filter((item) => String(item.separacao_pedido_id) === String(pedido.id));
+    if (!itens.length) { avisar("Este pedido não tem itens para separar.", "Relatório", "aviso"); return; }
+    const obs = pedido.observacoes && typeof pedido.observacoes === "object" ? pedido.observacoes : {};
+    const notasItens = Array.isArray(obs.itens_operacionais) ? obs.itens_operacionais : [];
+    const notaDoItem = (item) => {
+      const alvo = item.virtual ? item.kitRow.item_id : item.item_id;
+      const n = notasItens.find((x) => String(x.item_id) === String(alvo));
+      return String(n?.observacoes?.separacao || n?.texto || "").trim();
+    };
+    const grupos = new Map();
+    itens.forEach((item) => {
+      const local = item.localizacao || item.itens?.setor_estoque || "Sem local definido";
+      if (!grupos.has(local)) grupos.set(local, []);
+      grupos.get(local).push(item);
+    });
+    const ordenados = [...grupos.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+    const resumo = pedidoResumo(pedido.id);
+    const data = (v) => (v ? formatDateOnly(v) : "-");
+    const linhas = ordenados.map(([local, lista]) =>
+      '<tr class="grupo"><td colspan="7">' + escapeHtml(local) + " · " + lista.length + " item(ns)</td></tr>" +
+      lista.map((item) => {
+        const foto = item.foto_url || item.itens?.foto_url || "";
+        const nota = notaDoItem(item);
+        const separado = itemSeparado(item), total = itemTotal(item);
+        return '<tr' + (separado >= total && total ? ' class="ok"' : "") + '>' +
+          '<td class="foto">' + (foto ? '<img src="' + escapeHtml(foto) + '" alt="">' : "") + "</td>" +
+          '<td><strong>' + escapeHtml(nomeItemSeparacao(item)) + "</strong>" +
+            (item.kit_nome ? '<small>Parte do kit: ' + escapeHtml(item.kit_nome) + "</small>" : "") +
+            (nota ? '<small class="nota">Obs.: ' + escapeHtml(nota) + "</small>" : "") + "</td>" +
+          '<td class="cod">' + escapeHtml(item.codigo_item || item.itens?.codigo || "") + "</td>" +
+          '<td class="num">' + escapeHtml(formatQty(total)) + "</td>" +
+          '<td class="escrever"><span></span>' + (separado ? '<small>sistema: ' + escapeHtml(formatQty(separado)) + '</small>' : '') + '</td>' +
+          '<td class="escrever"><span></span></td>' +
+          '<td class="check"><span></span></td></tr>';
+      }).join("")).join("");
+    const empresa = window.__CONTEXT?.empresa_nome || "";
+    const html = '<!doctype html><html><head><meta charset="utf-8"><title>Separação · Pedido ' + escapeHtml(pedido.numero_pedido || "") + '</title><style>' +
+      '@page{size:A4;margin:12mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1f1d1a;font-size:11pt}' +
+      'header{display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid #1f1d1a;padding-bottom:8px;margin-bottom:10px}' +
+      'header .marca{font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:#6b665e}header h1{margin:2px 0 0;font-size:20pt}' +
+      'header .dir{text-align:right;font-size:10pt;line-height:1.5}' +
+      '.dados{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 16px;font-size:10pt;margin-bottom:10px}.dados b{display:block;font-size:8pt;text-transform:uppercase;color:#6b665e;letter-spacing:.06em}' +
+      '.obs{border:1px solid #c9c2b5;border-radius:6px;padding:6px 10px;margin-bottom:10px;font-size:10pt}' +
+      'table{width:100%;border-collapse:collapse}th{text-align:left;font-size:8.5pt;text-transform:uppercase;color:#6b665e;border-bottom:1px solid #1f1d1a;padding:5px 6px}' +
+      'td{border-bottom:1px solid #e1dbcf;padding:6px;vertical-align:middle}tr{break-inside:avoid}' +
+      'tr.grupo td{background:#f1efea;font-weight:700;font-size:10pt;border-bottom:1px solid #c9c2b5;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+      'td.foto{width:16mm}td.foto img{width:14mm;height:14mm;object-fit:cover;border-radius:3px}' +
+      'td small{display:block;font-size:8.5pt;color:#6b665e;margin-top:2px}td small.nota{color:#8a4b04}' +
+      'td.cod{font-family:"Courier New",monospace;font-size:9pt;width:30mm}td.num{text-align:center;font-size:13pt;font-weight:700;width:18mm}' +
+      'td.escrever{width:22mm;text-align:center}td.escrever span{display:inline-block;width:17mm;height:8mm;border:1.2px solid #1f1d1a;border-radius:1.5mm}td.escrever small{font-size:7pt}' +
+      'td.check{width:14mm;text-align:center}td.check span{display:inline-block;width:6mm;height:6mm;border:1.5px solid #1f1d1a;border-radius:1.5mm}' +
+      'tr.ok td.check span{background:#1f1d1a;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+      '.assin{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:22px;font-size:9pt;color:#6b665e}.assin div{border-top:1px solid #1f1d1a;padding-top:4px}' +
+      '</style></head><body>' +
+      '<header><div><div class="marca">' + escapeHtml(empresa) + '</div><h1>Separação · Pedido ' + escapeHtml(pedido.numero_pedido || "-") + '</h1></div>' +
+      '<div class="dir"><b>' + escapeHtml(formatQty(resumo.total)) + ' peça(s)</b><br>' + escapeHtml(formatQty(resumo.separado)) + ' já separada(s)<br>Impresso em ' + escapeHtml(new Date().toLocaleString("pt-BR")) + '</div></header>' +
+      '<div class="dados"><div><b>Cliente</b>' + escapeHtml(pedido.cliente_nome || "-") + '</div><div><b>Evento</b>' + escapeHtml(pedido.tipo_evento || "-") + '</div><div><b>Local</b>' + escapeHtml(pedidoLocal(pedido)) + '</div>' +
+      '<div><b>Entrega</b>' + escapeHtml(data(pedido.data_entrega)) + '</div><div><b>Evento</b>' + escapeHtml(data(pedido.data_evento)) + '</div><div><b>Coleta</b>' + escapeHtml(data(pedido.data_coleta)) + '</div></div>' +
+      (String(obs.observacoes_separacao || "").trim() ? '<div class="obs"><b>Observações da separação:</b> ' + escapeHtml(obs.observacoes_separacao) + '</div>' : "") +
+      '<table><thead><tr><th></th><th>Item</th><th>Código</th><th style="text-align:center">Pedido</th><th style="text-align:center">Separado</th><th style="text-align:center">Faltou</th><th style="text-align:center">OK</th></tr></thead><tbody>' + linhas + '</tbody></table>' +
+      '<div class="assin"><div>Separado por</div><div>Conferido por</div><div>Data e hora</div></div>' +
+      '</body></html>';
+    const quadro = document.createElement("iframe");
+    quadro.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    document.body.appendChild(quadro);
+    const doc = quadro.contentDocument;
+    doc.open(); doc.write(html); doc.close();
+    window.__ultimoRelatorioSeparacao = html; // para os testes
+    const imprimir = () => { try { quadro.contentWindow.focus(); quadro.contentWindow.print(); } catch (e) { console.error(e); } setTimeout(() => quadro.remove(), 60000); };
+    // espera as fotos carregarem (até 2,5 s) para saírem no papel
+    const imgs = [...doc.images];
+    Promise.race([Promise.all(imgs.map((i) => (i.complete ? null : new Promise((ok) => { i.onload = i.onerror = ok; })))), new Promise((ok) => setTimeout(ok, 2500))]).then(imprimir);
+  }
+
   /* Etiquetas de envio (out/2026): uma por móvel do pedido, criadas na hora (só as que faltam) e impressas. */
   async function imprimirEtiquetasEnvio() {
     const pedido = getPedidoAtual();
@@ -1568,6 +1647,7 @@
   function bindEvents() {
     els.btnAtualizarSeparacao?.addEventListener("click", carregarFila);
     els.btnCameraSeparacao?.addEventListener("click", () => iniciarCamera().catch(console.error));
+    document.querySelectorAll("[data-relatorio-separacao]").forEach((botao) => botao.addEventListener("click", () => { try { imprimirRelatorioSeparacao(); } catch (e) { console.error(e); avisar("Não foi possível imprimir o relatório.", "Relatório", "erro"); } }));
     document.querySelectorAll("[data-etiquetas-envio]").forEach((botao) => botao.addEventListener("click", () => imprimirEtiquetasEnvio().catch((e) => { console.error(e); avisar("Não foi possível imprimir as etiquetas.", "Etiquetas", "erro"); })));
     els.separacaoBuscaPedido?.addEventListener("input", renderFila);
     els.separacaoStatusFiltro?.addEventListener("change", renderFila);
