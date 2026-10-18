@@ -1157,3 +1157,19 @@ html:root:is(#acervo-separacao, html) .separacao-etiquetas-btn{font-size:16px!im
   html:root:is(#acervo-separacao, html) .item-name{font-size:17px!important;}
   html:root:is(#acervo-separacao, html) .separacao-modal-header h2{font-size:26px!important;}
 }
+/* "← Voltar" na mesma linha do título do pedido (out/2026). */
+html:root:is(#acervo-separacao, html) .separacao-modal-header{flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:22px!important;text-align:left!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-header > .modal-close-button{flex:none!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;column-gap:22px!important;align-items:center!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .modal-close-button{grid-column:1!important;grid-row:1 / span 3!important;align-self:center!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .pedido-label,
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > h2,
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > p{grid-column:2!important;margin-top:0!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .separacao-mode-options,
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .separacao-etiquetas-btn{grid-column:1 / -1!important;}
+@media(max-width:520px){
+  html:root:is(#acervo-separacao, html) .separacao-modal-header{gap:14px!important;}
+}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > h2{font-size:30px!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > p{font-size:17px!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .pedido-label{font-size:13px!important;}
