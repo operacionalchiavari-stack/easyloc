@@ -9336,3 +9336,7 @@ etiquetas e leituras por cascade).
   kits. Ler o código do próprio Kit avisa "Kit: leia cada componente". No pedido/orçamento/disponibilidade o Kit
   continua uma linha (reserva o estoque do Kit, como antes). Título das telas de separação numa linha só.
   Teste: `tests/separacao-kit-componentes-browser.cjs`.
+- Separação (17/out, 3º ajuste): a **escolha do modo** (Manual / QR / 1 clique / etiquetas) e a confirmação do
+  "1 clique" voltaram a ser **janela pequena** (620px, com X) por cima da fila; só a separação manual e a do QR são
+  tela cheia (a fila some só com elas abertas: `body:has(#separacaoManualModal:not(.hidden), #separacaoQrModal:not(.hidden))`).
+  Cores dos cartões mais claras (`--lane-fundo` #fff9ea / #f0f5ff / #eef9f2, contorno 18%).
