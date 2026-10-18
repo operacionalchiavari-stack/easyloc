@@ -9363,3 +9363,25 @@ legado que dependia da Roteirização apagada, saiu) e o menu passou de `legado`
   conferência mostra "← Voltar" na linha do título (fora do `.header-list`, senão o tema desmonta a faixa; posição
   calculada no JS) que volta pra Expedição. Aberta pelo cronograma, não tem o botão.
 - Teste: `tests/expedicao-browser.cjs`.
+
+### Expedição com ida e volta + conferência de retorno às cegas (out/2026)
+Pedido: Expedição de ida E volta, colunas "Aguardando conferência / Em conferência / Conferido", cartões de retorno
+com outra cor e o selo de retorno, e **a conferência de retorno às cegas** ("a pessoa não pode saber quantos precisam
+voltar, o próprio sistema sinaliza"). Depois: "a mesma regra na Triagem".
+- **Expedição** (`expedicao.js`): cada pedido pode ter 2 cartões — Ida (carregamento) e Retorno (aparece quando o
+  carregamento foi concluído). Selo "Ida"/"Retorno"; retorno em lilás (`#f4effc`, selo `#6d4fc2`). O cartão de ida
+  conferido some quando o retorno é conferido. Retorno nunca mostra total: "Conferência às cegas" e, em andamento, só
+  "N peças lidas"; conferido mostra o resultado (quem, quando, quantas não voltaram).
+- **Triagem (Separação de Materiais)**: o pedido com carregamento concluído ganha o mesmo cartão lilás "Retorno" nas
+  colunas dela (aguardando / em separação / separados), às cegas, que abre a conferência de retorno
+  (`de=separacao`, o "← Voltar" volta pra Triagem). `?etapa=volta` (link antigo do cronograma) agora abre a conferência.
+  CSS do cartão de retorno fica em `separacao-materiais.css` (`.card-retorno`/`.exp-card-retorno`), usado pelas duas telas.
+- **Conferência de retorno** (`conferencia.js`, `cega`/`s.revelado`): sem %, barra, total, "Só o que falta" nem lista do
+  que falta; aparece só "N peças lidas" e as etiquetas já lidas ("Peças lidas"); a última leitura não diz "x de y".
+  Concluir pergunta "Concluir com N peça(s) bipada(s)?" (sem dizer quantas faltam). Ao concluir, o sistema compara com
+  **o que saiu no carregamento** (etiquetas com `lida_carregamento_em`; se o carregamento não foi bipado, com todas) e
+  mostra "Não voltaram X de Y" + a lista, ou "Tudo voltou"; grava `operacao.retorno` com `as_cegas:true`. Reabrir depois
+  de concluída mostra o resultado e libera a visão normal.
+- Cronograma: a etapa Triagem (Conferência) mostra "Conferência de retorno · às cegas" até ser concluída.
+- `conferencia.css` ganhou `.cf-page [hidden]{display:none!important}` (o `display:block` de `.cf-pedido strong` vencia o `hidden`).
+- Testes: `tests/expedicao-browser.cjs` (ida/volta, cores, às cegas, resultado) e `tests/separacao-cronograma-browser.cjs` (ok 6–7).

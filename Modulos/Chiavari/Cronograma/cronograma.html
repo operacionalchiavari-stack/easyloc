@@ -12662,7 +12662,7 @@ function andamentoEtapaHtml(etapa, pedido){
   } else if(tipo === "carregamento"){
     const r = conf(a.carregamento, "Carregado", "A conferir no carregamento"); texto = r.texto; classe = r.classe;
   } else if(tipo.includes("triagem") && tipo.includes("confer")){
-    const r = conf(a.retorno, "Conferido na volta", "A conferir na volta"); texto = r.texto; classe = r.classe;
+    const r = conf(a.retorno, "Conferido na volta", "Conferência de retorno · às cegas"); texto = r.texto; classe = r.classe;
   } else {
     return "";
   }

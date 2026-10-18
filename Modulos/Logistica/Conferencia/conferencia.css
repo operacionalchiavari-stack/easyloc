@@ -50,3 +50,11 @@ html:root .cf-page{position:relative}
 html:root .cf-page > .cf-voltar{position:absolute!important;left:var(--cf-voltar-x,0px);top:var(--cf-voltar-y,40px);z-index:3;margin:0!important}
 html:root .cf-page > .cf-voltar[hidden]{display:none!important}
 @media(max-width:760px){html:root .cf-page > .cf-voltar{position:static!important;margin:12px 0 0!important}}
+
+/* Retorno às cegas e resultado */
+.cf-rodape.is-cega span{color:#5b3fae}
+.cf-aviso.is-divergente{background:#fbeceb;border-color:#efc2bf;color:#7a2a22}
+.cf-aviso.is-ok{background:#ecf6ef;border-color:#bfe0c9;color:#245c3a}
+.cf-faltaram{margin:8px 0 0;padding-left:18px}
+.cf-faltaram code{font-family:"Courier New",monospace;font-weight:700;margin-right:6px}
+html:root .cf-page [hidden]{display:none!important}

@@ -400,9 +400,48 @@
     `;
   }
 
-  function renderColuna(container, pedidos, coluna) {
+  /* Conferência de retorno (out/2026): depois do carregamento concluído, o pedido ganha um cartão lilás
+     "Retorno" na Triagem. É às cegas: o cartão nunca mostra quantas peças devem voltar, só quantas já foram
+     lidas; o resultado (o que não voltou) só aparece depois de concluída, na conferência. */
+  const idaConcluida = (p) => ["carregado", "retornado"].includes(p.status_operacional) || !!p.operacao?.carregamento?.concluido_em;
+  const voltaConcluida = (p) => p.status_operacional === "retornado" || !!p.operacao?.retorno?.concluido_em;
+
+  function colunaRetorno(pedido) {
+    if (voltaConcluida(pedido)) return "separado";
+    return (state.retornoLidos?.get(String(pedido.id)) || 0) > 0 ? "andamento" : "aguardando";
+  }
+
+  function retornoCard(pedido, coluna) {
+    const numero = pedido.numero_pedido || "-";
+    const numeroLabel = String(numero).startsWith("#") ? String(numero) : "#" + numero;
+    const lidos = state.retornoLidos?.get(String(pedido.id)) || 0;
+    const feito = pedido.operacao?.retorno;
+    let nota = "Conferência às cegas";
+    if (coluna === "separado" && feito) {
+      const falta = Array.isArray(feito.faltando) ? feito.faltando.length : 0;
+      nota = "Retorno conferido" + (feito.por ? " por " + feito.por : "") + (falta ? " · " + falta + " não voltou" : " · tudo voltou");
+    }
+    const lidosHtml = coluna === "andamento" ? '<div class="card-retorno-lidos">' + lidos + " peça" + (lidos === 1 ? "" : "s") + " lida" + (lidos === 1 ? "" : "s") + "</div>" : "";
+    return '<article class="separacao-order-card card-retorno" data-pedido-id="' + escapeHtml(pedido.id) + '" data-card-action="retorno" data-clickable="true" data-coluna="' + escapeHtml(coluna) + '" tabindex="0">' +
+      '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + escapeHtml(numeroLabel) + '</span><span class="card-tipo-retorno">Retorno</span>' +
+      (coluna === "separado" ? '<span class="separacao-done-mark"><i data-lucide="check"></i></span>' : "") + "</div>" +
+      '<div class="separacao-card-mainline"><strong>' + escapeHtml(pedido.cliente_nome || "Cliente nao informado") + "</strong><span>" +
+      escapeHtml(pedido.tipo_evento || "Evento") + " &middot; " + escapeHtml(pedidoLocal(pedido)) + "</span></div>" +
+      '<div class="separacao-card-meta-line">Coleta ' + escapeHtml(formatDateOnly(pedido.data_coleta || pedido.data_evento)) + "</div>" +
+      lidosHtml + '<div class="separacao-lock-note">' + escapeHtml(nota) + "</div></article>";
+  }
+
+  function abrirConferenciaRetorno(pedidoId) {
+    const query = "?pedido=" + encodeURIComponent(pedidoId) + "&etapa=retorno&de=separacao";
+    try {
+      if (window.top !== window && typeof window.top.shellNavigate === "function") { window.top.shellNavigate("Modulos/Logistica/Conferencia/conferencia.html" + query); return; }
+    } catch (_) { /* outra origem */ }
+    location.href = "../../Logistica/Conferencia/conferencia.html" + query;
+  }
+
+  function renderColuna(container, pedidos, coluna, retornos = []) {
     if (!container) return;
-    if (!pedidos.length) {
+    if (!pedidos.length && !retornos.length) {
       const emptyText = coluna === "aguardando"
         ? "Nenhum pedido aguardando separacao."
         : coluna === "andamento"
@@ -412,7 +451,7 @@
       return;
     }
 
-    container.innerHTML = pedidos.map((pedido) => pedidoCard(pedido, coluna)).join("");
+    container.innerHTML = retornos.map((pedido) => retornoCard(pedido, coluna)).join("") + pedidos.map((pedido) => pedidoCard(pedido, coluna)).join("");
   }
 
   function renderFila() {
@@ -438,10 +477,16 @@
       separados: state.pedidosFiltrados.filter((pedido) => STATUS_FINALIZADO.has(pedido.status))
     };
 
-    renderContadores(grupos);
-    renderColuna(els.separacaoColunaAguardando, grupos.aguardando, "aguardando");
-    renderColuna(els.separacaoColunaEmSeparacao, grupos.emSeparacao, "andamento");
-    renderColuna(els.separacaoColunaSeparados, grupos.separados, "separado");
+    const retornos = { aguardando: [], andamento: [], separado: [] };
+    state.pedidosFiltrados.filter(idaConcluida).forEach((p) => retornos[colunaRetorno(p)].push(p));
+    renderContadores({
+      aguardando: [...grupos.aguardando, ...retornos.aguardando],
+      emSeparacao: [...grupos.emSeparacao, ...retornos.andamento],
+      separados: [...grupos.separados, ...retornos.separado]
+    });
+    renderColuna(els.separacaoColunaAguardando, grupos.aguardando, "aguardando", retornos.aguardando);
+    renderColuna(els.separacaoColunaEmSeparacao, grupos.emSeparacao, "andamento", retornos.andamento);
+    renderColuna(els.separacaoColunaSeparados, grupos.separados, "separado", retornos.separado);
 
     if (window.lucide) lucide.createIcons();
   }
@@ -699,6 +744,7 @@
         if (erroItens) throw erroItens;
         state.itens = await abrirKitsEmComponentes(itens || []);
       }
+      await carregarRetornos();
 
       if (state.pedidoAtualId && !state.pedidos.some((pedido) => String(pedido.id) === String(state.pedidoAtualId))) {
         state.pedidoAtualId = null;
@@ -759,6 +805,19 @@
   function linhaDoItem(item) { return item?.virtual ? item.kitRow.id : item?.id; }
   function chaveItem(item) { return linhaDoItem(item) + "|" + item?.item_id; }
   function chaveEtiqueta(e) { return e.separacao_item_id + "|" + e.item_id; }
+
+  // Quantas peças já foram lidas na conferência de retorno de cada pedido carregado (nunca o total).
+  async function carregarRetornos() {
+    state.retornoLidos = new Map();
+    const ids = state.pedidos.filter(idaConcluida).map((p) => p.id);
+    if (!ids.length) return;
+    try {
+      const { data, error } = await state.supabase.from(TABLES.etiquetas).select("separacao_pedido_id,lida_retorno_em")
+        .eq("empresa_id", state.empresaId).in("separacao_pedido_id", ids);
+      if (error) throw error;
+      (data || []).filter((e) => e.lida_retorno_em).forEach((e) => { const k = String(e.separacao_pedido_id); state.retornoLidos.set(k, (state.retornoLidos.get(k) || 0) + 1); });
+    } catch (e) { console.warn("Leituras do retorno não carregadas:", e); }
+  }
 
   async function carregarRegrasLogistica() {
     try {
@@ -1671,6 +1730,7 @@
       if (action === "iniciar") iniciarPedidoSeparacao(card.dataset.pedidoId).catch(console.error);
       if (action === "modo") abrirModoSeparacao(card.dataset.pedidoId).catch(console.error);
       if (action === "resumo") abrirResumoSeparacao(card.dataset.pedidoId).catch(console.error);
+      if (action === "retorno") abrirConferenciaRetorno(card.dataset.pedidoId);
     });
 
     els.separacaoKanban?.addEventListener("keydown", (event) => {
@@ -1682,6 +1742,7 @@
       if (action === "iniciar") iniciarPedidoSeparacao(card.dataset.pedidoId).catch(console.error);
       if (action === "modo") abrirModoSeparacao(card.dataset.pedidoId).catch(console.error);
       if (action === "resumo") abrirResumoSeparacao(card.dataset.pedidoId).catch(console.error);
+      if (action === "retorno") abrirConferenciaRetorno(card.dataset.pedidoId);
     });
 
     els.separacaoModoModal?.addEventListener("click", (event) => {
@@ -1825,11 +1886,7 @@
         : numero + " não está na fila de separação.", "Separação", "aviso");
       return;
     }
-    if (params.get("etapa") === "volta") {
-      await abrirResumoSeparacao(pedido.id);
-      avisar("A conferência da volta (o que retornou, faltou ou voltou danificado) chega na próxima etapa. Por enquanto você vê o que saiu.", "Conferência da volta", "aviso");
-      return;
-    }
+    if (params.get("etapa") === "volta") { abrirConferenciaRetorno(pedido.id); return; }
     if (pedido.status === "pendente" && separacaoLiberada(pedido)) await iniciarPedidoSeparacao(pedido.id);
     if (pedidoOperavel(pedido)) await abrirModoSeparacao(pedido.id);
     else await abrirResumoSeparacao(pedido.id);

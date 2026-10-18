@@ -7,12 +7,14 @@ const hoje = new Date().toISOString().slice(0, 10);
 const mock = `(() => {
   window.__gravados = [];
   const banco = {
-    separacoes_pedidos: [{ id: "p1", empresa_id: "e1", numero_pedido: "12", cliente_nome: "Lis", tipo_evento: "Casamento", local_nome: "Villa", status: "pendente", status_comercial: "aprovado", data_evento: "${hoje}", data_hora: "${hoje}T12:00:00" }],
+    separacoes_pedidos: [{ id: "p1", empresa_id: "e1", numero_pedido: "12", cliente_nome: "Lis", tipo_evento: "Casamento", local_nome: "Villa", status: "pendente", status_comercial: "aprovado", data_evento: "${hoje}", data_hora: "${hoje}T12:00:00" },
+      { id: "p2", empresa_id: "e1", numero_pedido: "13", cliente_nome: "Ana", tipo_evento: "Feira", local_nome: "Expo", status: "separado", status_comercial: "aprovado", status_operacional: "carregado", data_evento: "${hoje}", data_coleta: "${hoje}", data_hora: "${hoje}T13:00:00", operacao: { carregamento: { concluido_em: "${hoje}T10:00:00Z", por: "Igor", faltando: [] } } }],
     separacoes_itens: [
       { id: "s1", empresa_id: "e1", separacao_pedido_id: "p1", item_id: "i1", item_nome: "Cadeira Tiffany", quantidade_solicitada: 2, quantidade_separada: 0, tipo_controle: "quantidade", itens: { id: "i1", codigo: "CAD1", produto: "Cadeira" } },
       { id: "s2", empresa_id: "e1", separacao_pedido_id: "p1", item_id: "i2", item_nome: "Mesa Goa", quantidade_solicitada: 1, quantidade_separada: 0, tipo_controle: "quantidade", itens: { id: "i2", codigo: "MES1", produto: "Mesa" } }],
     itens: [{ id: "i1", empresa_id: "e1", codigo: "CAD1", produto: "Cadeira" }, { id: "i2", empresa_id: "e1", codigo: "MES1", produto: "Mesa" }],
-    itens_patrimonios: [], separacoes_leituras: [], empresa_logistica_regras: []
+    itens_patrimonios: [], separacoes_leituras: [], empresa_logistica_regras: [],
+    separacoes_etiquetas: [{ id: "t1", empresa_id: "e1", separacao_pedido_id: "p2", codigo: "13-001", lida_carregamento_em: "x" }, { id: "t2", empresa_id: "e1", separacao_pedido_id: "p2", codigo: "13-002", lida_carregamento_em: "x" }]
   };
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
@@ -93,9 +95,24 @@ const mock = `(() => {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(BASE + "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html?pedido=p1&etapa=volta");
+  await page.evaluate(() => { window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Teste" }; }).catch(() => {});
+  await page.waitForURL(/Conferencia\/conferencia\.html\?pedido=p1&etapa=retorno&de=separacao/, { timeout: 15000 });
+  console.log("ok 6 - triagem da volta abre a conferência de retorno");
+  await page.setViewportSize({ width: 1280, height: 860 });
+  await page.goto(BASE + "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html");
   await page.evaluate(() => { window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Teste" }; });
-  await page.waitForSelector("#separacaoManualModal:not(.hidden)", { timeout: 15000 });
-  console.log("ok 6 - triagem da volta abre o resumo (somente leitura) por enquanto");
+  await page.waitForSelector("#separacaoColunaAguardando .card-retorno[data-pedido-id=p2]", { timeout: 15000 });
+  const card = await page.$eval("#separacaoColunaAguardando .card-retorno", (c) => ({ txt: c.textContent.replace(/\s+/g, " "), fundo: getComputedStyle(c).backgroundColor }));
+  assert.match(card.txt, /Retorno/); assert.match(card.txt, /às cegas/);
+  assert.ok(!/peças|volume|\d+ \/ \d+/.test(card.txt.replace(/\d{2}\/\d{2}\/\d{4}/g, "")), "retorno não mostra quantidade: " + card.txt);
+  assert.strictEqual(card.fundo, "rgb(244, 239, 252)");
+  await page.screenshot({ path: process.env.SHOT || "sep-retorno.png" });
+  await page.click("#separacaoColunaAguardando .card-retorno");
+  await page.waitForURL(/etapa=retorno&de=separacao/);
+  await page.waitForSelector("#cfVoltar:not([hidden])");
+  await page.click("#cfVoltar");
+  await page.waitForSelector("#separacaoColunaAguardando .card-retorno", { timeout: 15000 });
+  console.log("ok 7 - na Triagem o pedido carregado ganha o cartão lilás de retorno, às cegas, que abre a conferência e volta");
   assert.deepStrictEqual(erros, [], erros.join("\n"));
   console.log("todos os testes passaram");
   await browser.close();

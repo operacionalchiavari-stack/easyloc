@@ -9,8 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
   <!-- Mesmo visual da Separação de Materiais (colunas, cartões, cabeçalho com busca) -->
-  <link rel="stylesheet" href="../../Estoque/SeparacaoMateriais/separacao-materiais.css?v=20261018-pedido-suave">
-  <link rel="stylesheet" href="expedicao.css?v=20261018-expedicao">
+  <link rel="stylesheet" href="../../Estoque/SeparacaoMateriais/separacao-materiais.css?v=20261018-retorno">
+  <link rel="stylesheet" href="expedicao.css?v=20261018-ida-volta">
 </head>
 <body>
 <section class="separacao-page el-page exp-page" data-module-root>
@@ -18,7 +18,7 @@
     <div class="separacao-title-block">
       <span class="separacao-kicker">Logística</span>
       <h1>Expedição</h1>
-      <p>Carregamento dos pedidos separados.</p>
+      <p>Conferência de ida (carregamento) e de volta (retorno).</p>
     </div>
     <label class="separacao-search" for="expBusca">
       <input id="expBusca" type="search" placeholder="Buscar pedido, cliente, evento ou local">
@@ -28,15 +28,15 @@
   <section class="separacao-board-card">
     <div class="separacao-kanban">
       <section class="separacao-lane separacao-lane-pendente">
-        <header><div><span>Fila</span><h2>Aguardando carregamento</h2></div><strong id="expContAguardando">0</strong></header>
+        <header><div><span>Fila</span><h2>Aguardando conferência</h2></div><strong id="expContAguardando">0</strong></header>
         <div class="separacao-lane-list" id="expColAguardando"><div class="empty-state">Carregando…</div></div>
       </section>
       <section class="separacao-lane separacao-lane-andamento">
-        <header><div><span>Operação</span><h2>Em carregamento</h2></div><strong id="expContAndamento">0</strong></header>
+        <header><div><span>Operação</span><h2>Em conferência</h2></div><strong id="expContAndamento">0</strong></header>
         <div class="separacao-lane-list" id="expColAndamento"></div>
       </section>
       <section class="separacao-lane separacao-lane-separado">
-        <header><div><span>Concluídos</span><h2>Carregados</h2></div><strong id="expContCarregados">0</strong></header>
+        <header><div><span>Concluídos</span><h2>Conferido</h2></div><strong id="expContCarregados">0</strong></header>
         <div class="separacao-lane-list" id="expColCarregados"></div>
       </section>
     </div>
@@ -49,6 +49,6 @@
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
 <script src="../../../js/core/permissions.js?v=20261017-parametros"></script>
-<script src="expedicao.js?v=20261018-cores"></script>
+<script src="expedicao.js?v=20261018-ida-volta"></script>
 </body>
 </html>
