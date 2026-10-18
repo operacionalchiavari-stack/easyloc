@@ -546,7 +546,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(table, #ch-a#ch-b) tr 
 html:root :is(body:not(.portal-shell), #main-content) :is(.perm-row.header, .rh-table th, .cron-preview-section th, .item-detail-table th, #ch-a#ch-b){
   background:#ffffff !important; background-image:none !important; color:var(--ch-label) !important; border-color:var(--ch-borda-card) !important; text-shadow:none !important;
 }
-html:root :is(body:not(.portal-shell), #main-content) :is(table, #ch-a#ch-b) thead th :not(button, button *, .btn, .btn *, input, select){ color:inherit !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(table, #ch-a#ch-b) thead th :not(button, button *, .btn, .btn *, input, select, [class*="tipo-mes"], [class*="badge"], [class*="selo"], [class*="tag"], [class*="pill"], [class*="chip"], [class*="status"], [class*="etiqueta"]){ color:inherit !important; }
 
 /* =========================================================
    FONTE DO SISTEMA (out/2026) — pedido: "a fonte do sistema inteiro precisa ser fácil de entender,

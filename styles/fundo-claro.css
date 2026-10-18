@@ -36,9 +36,9 @@ html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabe
 }
 html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-comissao-header,
   .pag-bonus-card-cabecalho, .grafico-consumo-card-header, .mobile-dia-header, .agenda-mobile-header, .card-header, #ch-a#ch-b){ border-bottom:1px solid #e3e7ec !important; }
-html body :is(table, #ch-a#ch-b) thead th :not(button, button *, .btn, .btn *, input, select, [role=button], [role=button] *),
+html body :is(table, #ch-a#ch-b) thead th :not(button, button *, .btn, .btn *, input, select, [role=button], [role=button] *, [class*="tipo-mes"], [class*="badge"], [class*="selo"], [class*="tag"], [class*="pill"], [class*="chip"], [class*="status"], [class*="etiqueta"]),
 html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-comissao-header,
-  .pag-bonus-card-cabecalho, .grafico-consumo-card-header, .mobile-dia-header, .agenda-mobile-header, .card-header, #ch-a#ch-b) :not(button, button *, .btn, .btn *, input, select, [role=button], [role=button] *){ color:#1f2020 !important; }
+  .pag-bonus-card-cabecalho, .grafico-consumo-card-header, .mobile-dia-header, .agenda-mobile-header, .card-header, #ch-a#ch-b) :not(button, button *, .btn, .btn *, input, select, [role=button], [role=button] *, [class*="tipo-mes"], [class*="badge"], [class*="selo"], [class*="tag"], [class*="pill"], [class*="chip"], [class*="status"], [class*="etiqueta"]){ color:#1f2020 !important; }
 
 /* =========================================================
    FONTE DO SISTEMA (out/2026) — pedido: "a fonte do sistema inteiro precisa ser fácil de entender,

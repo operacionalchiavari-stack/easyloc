@@ -9484,3 +9484,6 @@ mantidas. Só cor — nada de estrutura/posição mudou.
   `#4f4f4f`, `#6b6b6b`…) e todo `color:` azul virou grafite; botão secundário com texto grafite e borda azul. O azul
   fica só no fundo dos botões, bordas e seleções. Conferido no navegador: nenhum texto azul nas telas do menu.
   Versões `?v=20261018-inter`.
+- Selos dentro de cabeçalhos (ex.: "Premiação"/"Saldo livre" em Pagamentos de bônus, `.pag-bonus-tipo-mes`) voltaram ao
+  texto branco: a regra que escurece o texto dos cabeçalhos ignora classes com tipo-mes/badge/selo/tag/pill/chip/status/
+  etiqueta. Versão `?v=20261018-selos`.
