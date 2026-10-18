@@ -9510,7 +9510,7 @@ confirmações de sucesso deixam de ser janela (avisos de conflito, perguntas ob
   computador/celular/app, e a pergunta "O decorador confirmou?" — o supervisor agora abre a operação direto, igual ao
   responsável); o lote de pedidos e `abrirNovoPedidoProtegido` (criação de pedido, já sem botão). Editar pedido e "+ Adicionar
   etapa" continuam (cliente, itens e endereço continuam travados para pedido do sistema).
-- **Cadastro de caminhões saiu** da janela "Cadastros Operacionais" (já existe em Logística > Caminhões); ficaram Responsáveis e Equipes.
+- **Janela "Cadastros Operacionais" saiu inteira** (botão Cadastros do topo e do menu do celular): caminhões ficam em Logística > Caminhões; as listas de responsáveis e equipes do formulário da etapa continuam vindo das abas da planilha.
 - **Sucesso sem janela**: `avisoRapido(msg)` (pílula grafite embaixo, some em 2,6 s) em pedido salvo, responsável/equipe/
   caminhão salvos, item salvo/atualizado/excluído, carregamento concluído e alerta enviado/resolvido.
 - Teste: `tests/cronograma-limpeza-browser.cjs`. `permissions.js`/`sidebarMenu.js` em `?v=20261018-free`.

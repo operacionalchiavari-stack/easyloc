@@ -48,7 +48,7 @@ function resposta(fn, args) {
   assert.strictEqual(await cron.locator("#modalFreePainel, #modalFreeVaga").count(), 0, "sem janelas do Free");
   assert.strictEqual(await cron.locator(".confirmacao-decorador-box").count(), 0, "sem caixa do decorador");
   assert.strictEqual(await cron.locator("#listaLote").count(), 0, "sem lote de pedidos");
-  assert.strictEqual(await cron.locator("#aba-caminhoes, #cadCaminhaoNome").count(), 0, "sem cadastro de caminhão (fica em Logística)");
+  assert.strictEqual(await cron.locator("#modalCadastros, [onclick*=\"abrirCadastrosProtegido\"]").count(), 0, "sem janela de cadastros");
   assert.ok(await cron.evaluate(() => !/decorador confirmou/i.test(document.documentElement.innerHTML)), "sem pergunta do decorador");
   assert.ok(await cron.evaluate(() => typeof abrirAppMontador === "function"), "link do app do montador continua");
   assert.ok(await cron.evaluate(() => typeof adicionarAoLote === "undefined" && typeof abrirNovoPedidoProtegido === "undefined"), "sem criação de pedido");

@@ -8903,10 +8903,7 @@ textarea{ font-family:inherit; }
 
     <div class="acoes-cronograma">
 
-      <button type="button" class="acao" onclick="abrirCadastrosProtegido()" title="Responsáveis e equipes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12H3"/><path d="M16 6H3"/><path d="M16 18H3"/><path d="M18 9v6"/><path d="M21 12h-6"/></svg>
-        Cadastros
-      </button>
+      
 
       
 
@@ -15558,141 +15555,17 @@ function aplicarPermissaoEtapa(item, tipo){
   }
 
 }
-function abrirModalCadastros(){
-
-  document.getElementById("modalCadastros").classList.add("show");
-
-  carregarResponsaveis();
-  carregarEquipes();
-
-}
-
-function fecharModalCadastros(){
-  document.getElementById("modalCadastros").classList.remove("show");
-}
-
-function trocarAbaCadastro(nome, el){
-
-  document.querySelectorAll(".aba-cadastro").forEach(a => a.style.display = "none");
-  document.querySelectorAll(".tab-cadastro").forEach(t => {
-    t.classList.remove("btn-primary");
-    t.classList.add("btn-light");
-  });
-
-  document.getElementById("aba-" + nome).style.display = "block";
-
-  el.classList.remove("btn-light");
-  el.classList.add("btn-primary");
-}
-function salvarResponsavel(){
-
-  const nome = document.getElementById("cadResponsavelNome").value;
-
-  if(!nome){
-    mostrarAlerta("Digite o nome");
-    return;
-  }
-
-  google.script.run
-.withSuccessHandler(() => {
-  avisoRapido("Responsável salvo.");
-  document.getElementById("cadResponsavelNome").value = "";
-  carregarResponsaveis();
-})
-    .salvarResponsavel(nome);
-}
-function salvarEquipe(){
-
-  const nome = document.getElementById("cadEquipeNome").value;
-
-  if(!nome){
-    mostrarAlerta("Digite o nome");
-    return;
-  }
-
-  google.script.run
-.withSuccessHandler(() => {
-  avisoRapido("Equipe salva.");
-  document.getElementById("cadEquipeNome").value = "";
-  carregarEquipes();
-})
-    .salvarEquipe(nome);
-}
 
 
-function carregarResponsaveis(){
 
-  google.script.run
-    .withSuccessHandler(function(lista){
 
-      const div = document.getElementById("listaResponsaveis");
 
-      if(!lista.length){
-        div.innerHTML = "<p style='color:#6b6b6b;'>Nenhum responsável cadastrado</p>";
-        return;
-      }
 
-      let html = "";
 
-      lista.forEach(r => {
 
-        html += `
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            padding:10px;
-            border-bottom:1px solid #e3e7ec;
-            font-size:13px;
-          ">
-            <strong>${r.nome}</strong>
-          </div>
-        `;
 
-      });
 
-      div.innerHTML = html;
 
-    })
-    .listarResponsaveis();
-}
-function carregarEquipes(){
-
-  google.script.run
-    .withSuccessHandler(function(lista){
-
-      const div = document.getElementById("listaEquipes");
-
-      if(!lista || !lista.length){
-        div.innerHTML = "<p style='color:#6b6b6b;'>Nenhuma equipe cadastrada</p>";
-        return;
-      }
-
-      let html = "";
-
-      lista.forEach(e => {
-
-        html += `
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            padding:10px;
-            border-bottom:1px solid #e3e7ec;
-            font-size:13px;
-          ">
-            <div>
-              <strong>${e.nome}</strong><br>
-              <span style="color:#6b6b6b;">${e.tipo || ""}</span>
-            </div>
-          </div>
-        `;
-
-      });
-
-      div.innerHTML = html;
-
-    })
-    .listarEquipes();
-}
 let CACHE = {
   caminhoes: [],
   responsaveis: [],
@@ -15927,24 +15800,7 @@ function confirmarAcao(msg, callback){
   };
 
 }
-async function abrirCadastrosProtegido(){
 
-  const ok = await pedirSenha("Cadastros");
-
-  if(!ok){
-    mostrarAlerta("Senha inválida.", "Acesso negado");
-    return;
-  }
-
-  // 🔒 valida perfil
-  if(window.perfilAcesso !== "montagem"){
-    mostrarAlerta("Acesso permitido apenas para Supervisor de Montagem.", "Acesso negado");
-    return;
-  }
-
-  abrirModalCadastros();
-
-}
 function etapaTemPendencia(e){
 
   const tipo = (e.etapa || "").toLowerCase();
@@ -18606,7 +18462,6 @@ function renderCronogramaApp(){
         '<button type="button" class="app-icone-btn app-btn-menu" onclick="appAlternarMenu(event)" aria-label="Mais opções">' + APP_ICONES.menu + '</button>' +
         '<div class="app-menu" id="appMenu" role="menu">' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(abrirAgendaNova)">' + APP_ICONES.agenda + 'Agenda</button>' +
-          '<button type="button" role="menuitem" onclick="appMenuAcao(abrirCadastrosProtegido)">' + APP_ICONES.cadastros + 'Cadastros</button>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(abrirAppMontador)">' + APP_ICONES.externo + 'App do montador</button>' +
           '<hr>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(function(){ appMudarSemana(-7); })">' + APP_ICONES.esquerda + 'Semana anterior</button>' +
@@ -18784,60 +18639,7 @@ function appVerPedido(indice){
 })();
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRTnhpv3S0kqV9G56x0npaxd6YABj8dnI&libraries=places"></script>
-<div class="overlay" id="modalCadastros">
-  <div class="modal">
 
-    <div class="modal-header">
-      <h2>Cadastros Operacionais</h2>
-      <button class="modal-close" onclick="fecharModalCadastros()">✕</button>
-    </div>
-
-    <div class="modal-body">
-
-      <!-- TABS -->
-      <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <button class="btn btn-primary tab-cadastro active" onclick="trocarAbaCadastro('responsaveis', this)">Responsáveis</button>
-        <button class="btn btn-light tab-cadastro" onclick="trocarAbaCadastro('equipes', this)">Equipes</button>
-      </div>
-
-      <!-- RESPONSÁVEIS -->
-      <div id="aba-responsaveis" class="aba-cadastro">
-
-        <div class="form-grid" style="grid-template-columns:2fr auto;">
-          <div class="field">
-            <label>Nome</label>
-            <input id="cadResponsavelNome" type="text" placeholder="Ex: João Silva">
-          </div>
-
-          <div class="field" style="justify-content:flex-end;">
-            <button class="btn btn-accent" onclick="salvarResponsavel()">Salvar</button>
-          </div>
-        </div>
-
-        <div id="listaResponsaveis"></div>
-      </div>
-
-      <!-- EQUIPES -->
-      <div id="aba-equipes" class="aba-cadastro" style="display:none;">
-
-        <div class="form-grid" style="grid-template-columns:2fr auto;">
-          <div class="field">
-            <label>Equipe</label>
-            <input id="cadEquipeNome" type="text" placeholder="Ex: Equipe Interna">
-          </div>
-
-          <div class="field" style="justify-content:flex-end;">
-            <button class="btn btn-accent" onclick="salvarEquipe()">Salvar</button>
-          </div>
-        </div>
-
-        <div id="listaEquipes"></div>
-      </div>
-
-    </div>
-
-  </div>
-</div>
 
 <script>
 /* App do montador (link do topo e do menu do celular) */
