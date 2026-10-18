@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
-  <link rel="stylesheet" href="separacao-materiais.css?v=20261017-cores">
+  <link rel="stylesheet" href="separacao-materiais.css?v=20261017-tela5">
 </head>
 <body>
 <section class="separacao-page el-page" data-module-root>
@@ -71,8 +71,8 @@
   <div class="separacao-modal separacao-mode-modal hidden" id="separacaoModoModal" aria-hidden="true">
     <div class="separacao-modal-backdrop" data-close-separacao-modal></div>
     <section class="separacao-mode-dialog" role="dialog" aria-modal="true" aria-labelledby="separacaoModoTitulo">
-      <button type="button" class="modal-close-button compact" id="btnFecharModoSeparacao" aria-label="Fechar">
-        <i data-lucide="x"></i>
+      <button type="button" class="modal-close-button compact" id="btnFecharModoSeparacao" aria-label="Voltar">
+        <i data-lucide="arrow-left"></i><span>Voltar</span>
       </button>
       <span class="pedido-label">Escolha o modo</span>
       <h2 id="separacaoModoTitulo">Pedido selecionado</h2>
@@ -110,8 +110,8 @@
           <h2 id="separacaoManualTitulo">Pedido selecionado</h2>
           <p id="separacaoManualMeta">Ajuste as quantidades separadas de cada item.</p>
         </div>
-        <button type="button" class="modal-close-button" id="btnFecharManualSeparacao" aria-label="Fechar">
-          <i data-lucide="x"></i>
+        <button type="button" class="modal-close-button" id="btnFecharManualSeparacao" aria-label="Voltar">
+        <i data-lucide="arrow-left"></i><span>Voltar</span>
         </button>
       </header>
 
@@ -152,8 +152,8 @@
           <h2 id="separacaoQrTitulo">Pedido selecionado</h2>
           <p id="separacaoQrMeta">Leia os codigos dos itens para confirmar a separacao.</p>
         </div>
-        <button type="button" class="modal-close-button" id="btnFecharQrSeparacao" aria-label="Fechar">
-          <i data-lucide="x"></i>
+        <button type="button" class="modal-close-button" id="btnFecharQrSeparacao" aria-label="Voltar">
+        <i data-lucide="arrow-left"></i><span>Voltar</span>
         </button>
       </header>
 
@@ -250,8 +250,8 @@
   <div class="separacao-modal hidden" id="separacaoUmCliqueModal" aria-hidden="true">
     <div class="separacao-modal-backdrop" data-close-separacao-modal></div>
     <section class="separacao-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="separacaoUmCliqueTitulo">
-      <button type="button" class="modal-close-button compact" id="btnFecharUmCliqueSeparacao" aria-label="Fechar">
-        <i data-lucide="x"></i>
+      <button type="button" class="modal-close-button compact" id="btnFecharUmCliqueSeparacao" aria-label="Voltar">
+        <i data-lucide="arrow-left"></i><span>Voltar</span>
       </button>
       <span class="pedido-label">1 clique</span>
       <h2 id="separacaoUmCliqueTitulo">Concluir separacao?</h2>
@@ -274,7 +274,7 @@
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
 <script src="../../../js/core/permissions.js?v=20261017-parametros"></script>
 <script src="../../../js/core/etiquetas.js?v=20261017-etiquetas"></script>
-<script src="separacao-materiais.js?v=20261017-cores"></script>
+<script src="separacao-materiais.js?v=20261017-tela"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

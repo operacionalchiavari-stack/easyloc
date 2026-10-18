@@ -1048,32 +1048,59 @@ body.separacao-modal-open {
 .separacao-mode-dialog .separacao-etiquetas-btn{width:100%;justify-content:center;display:inline-flex;align-items:center;gap:8px;margin-top:14px}
 .separacao-modal-footer .separacao-etiquetas-btn{margin-right:auto;display:inline-flex;align-items:center;gap:6px}
 
-/* Cores mais visíveis (out/2026): faixa forte na lateral do cartão e título/contador da coluna na cor dela.
-   html:root para vencer o tema-chiavari.css e o design-system.css. */
-html:root .separacao-lane > header{border-top:4px solid var(--lane-cor);}
-html:root .separacao-lane > header strong{background:var(--lane-cor)!important;color:#fff!important;}
-html:root .separacao-lane > header span{color:var(--lane-cor);}
-html:root .separacao-lane-pendente{--lane-cor:#c27803;--lane-fundo:#fff4d6;}
-html:root .separacao-lane-andamento{--lane-cor:#1d5fd6;--lane-fundo:#e3edff;}
-html:root .separacao-lane-separado{--lane-cor:#1f8a4c;--lane-fundo:#dcf3e5;}
-html:root .separacao-lane-list{background:#f4f2ee;}
-html:root .separacao-order-card[data-coluna]{
-  background:var(--lane-fundo);
-  border:1px solid color-mix(in srgb, var(--lane-cor) 35%, transparent);
-  border-left:6px solid var(--lane-cor);
+/* Cartões coloridos (out/2026): só o fundo na cor da coluna, sem faixa lateral; topo das colunas sem cor.
+   html:root:is(#acervo-separacao, html) para vencer o tema-chiavari.css e o design-system.css. */
+html:root:is(#acervo-separacao, html) .separacao-lane-pendente{--lane-cor:#c27803;--lane-fundo:#fff1cc;}
+html:root:is(#acervo-separacao, html) .separacao-lane-andamento{--lane-cor:#1d5fd6;--lane-fundo:#dde9ff;}
+html:root:is(#acervo-separacao, html) .separacao-lane-separado{--lane-cor:#1f8a4c;--lane-fundo:#d6f1e1;}
+html:root:is(#acervo-separacao, html) .separacao-lane-list{background:#f4f2ee;}
+html:root:is(#acervo-separacao, html) .separacao-order-card[data-coluna]{background:var(--lane-fundo);border:1px solid color-mix(in srgb, var(--lane-cor) 30%, transparent);}
+html:root:is(#acervo-separacao, html) .separacao-order-card[data-coluna]:hover,
+html:root:is(#acervo-separacao, html) .separacao-order-card[data-coluna]:focus-visible{border-color:var(--lane-cor);box-shadow:0 10px 24px color-mix(in srgb, var(--lane-cor) 20%, transparent);}
+html:root:is(#acervo-separacao, html) .separacao-order-number{background:#b91c1c;border-color:#b91c1c;color:#fff;}
+html:root:is(#acervo-separacao, html) .separacao-card-mainline strong{color:#1f1d1a;}
+html:root:is(#acervo-separacao, html) .separacao-card-mainline span,
+html:root:is(#acervo-separacao, html) .separacao-card-meta-line{color:#4a463f;}
+html:root:is(#acervo-separacao, html) .separacao-lock-note{color:#8a4b04;font-weight:600;}
+html:root:is(#acervo-separacao, html) .separacao-lane-andamento .separacao-lock-note{color:#1d4ea8;}
+html:root:is(#acervo-separacao, html) .separacao-lane-separado .separacao-lock-note{color:#1b6b3d;}
+html:root:is(#acervo-separacao, html) .mini-progress{background:rgba(0,0,0,.12);height:6px;}
+html:root:is(#acervo-separacao, html) .separacao-lane .mini-progress span{background:var(--lane-cor);}
+
+/* A separação é uma tela, não uma janela (out/2026): a fila some e o pedido ocupa a página;
+   "← Voltar" no lugar do X. Os ids/classes das antigas janelas continuam (o JS não mudou). */
+html:root:is(#acervo-separacao, html) body.separacao-modal-open .el-page > .separacao-header.separacao-header:first-child,
+html:root:is(#acervo-separacao, html) body.separacao-modal-open .separacao-board-card.separacao-board-card{display:none!important;}
+html:root:is(#acervo-separacao, html) body.separacao-modal-open{overflow:auto!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal{position:static!important;background:transparent!important;backdrop-filter:none!important;inset:auto!important;z-index:auto!important;display:block!important;padding:0!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal.hidden{display:none!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-backdrop{display:none!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-dialog,
+html:root:is(#acervo-separacao, html) .separacao-manual-dialog,
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog{width:100%!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;overflow:visible!important;display:block!important;padding:0!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-header{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:12px!important;background:transparent!important;border-bottom:1px solid #e7e1d6!important;padding:4px 0 18px!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-header > div{order:2!important;}
+html:root:is(#acervo-separacao, html) .modal-close-button,
+html:root:is(#acervo-separacao, html) .modal-close-button.compact{position:static!important;order:1!important;width:auto!important;height:38px!important;padding:0 16px!important;gap:8px!important;border-radius:999px!important;border:1px solid #d9d3c7!important;background:#fff!important;color:#44443f!important;font:600 14px Inter,system-ui,sans-serif!important;}
+html:root:is(#acervo-separacao, html) .modal-close-button svg{width:18px!important;height:18px!important;}
+html:root:is(#acervo-separacao, html) .modal-close-button:hover{border-color:#44443f!important;color:#1f1d1a!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-body{overflow:visible!important;padding:18px 0!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-footer{position:sticky!important;bottom:0!important;z-index:4!important;background:#fff!important;padding:14px 0!important;border-top:1px solid #e7e1d6!important;margin-top:6px!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog{max-width:980px!important;margin:0 auto!important;padding:4px 0 24px!important;}
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog > .pedido-label{margin-top:18px;}
+html:root:is(#acervo-separacao, html) .separacao-mode-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:22px;}
+html:root:is(#acervo-separacao, html) .separacao-mode-option{grid-template-columns:1fr;justify-items:center;text-align:center;gap:8px;padding:28px 18px;border-radius:18px;}
+html:root:is(#acervo-separacao, html) .separacao-mode-option svg{grid-row:auto;width:30px;height:30px;}
+html:root:is(#acervo-separacao, html) .separacao-mode-option strong{font-size:17px;}
+html:root:is(#acervo-separacao, html) .separacao-mode-option span{font-size:13px;}
+@media(max-width:760px){
+  html:root:is(#acervo-separacao, html) .separacao-mode-options{grid-template-columns:1fr;}
+  html:root:is(#acervo-separacao, html) .separacao-mode-option{padding:18px;}
 }
-html:root .separacao-order-card[data-coluna]:hover,
-html:root .separacao-order-card[data-coluna]:focus-visible{
-  border-color:var(--lane-cor);
-  box-shadow:0 10px 24px color-mix(in srgb, var(--lane-cor) 22%, transparent);
+html:root:is(#acervo-separacao, html) .separacao-modal-dialog,
+html:root:is(#acervo-separacao, html) .separacao-mode-dialog{padding-top:20px!important;}
+html:root:is(#acervo-separacao, html) .separacao-modal-footer{flex-wrap:wrap!important;gap:10px!important;}
+@media(max-width:760px){
+  html:root:is(#acervo-separacao, html) .separacao-modal-footer > .btn{flex:1 1 30%!important;min-width:0!important;padding-left:8px!important;padding-right:8px!important;}
+  html:root:is(#acervo-separacao, html) .separacao-modal-footer .separacao-etiquetas-btn{margin-right:0!important;}
 }
-html:root .separacao-order-number{background:#b91c1c;border-color:#b91c1c;color:#fff;}
-html:root .separacao-card-mainline strong{color:#1f1d1a;}
-html:root .separacao-card-mainline span,
-html:root .separacao-card-meta-line{color:#4a463f;}
-html:root .separacao-lock-note{color:#8a4b04;font-weight:600;}
-html:root .separacao-lane-andamento .separacao-lock-note{color:#1d4ea8;}
-html:root .mini-progress{background:rgba(0,0,0,.12);height:6px;}
-html:root .separacao-lane .mini-progress span{background:var(--lane-cor);}
-html:root .separacao-done-mark{color:#1f8a4c;}
-html:root .separacao-lane-separado .separacao-lock-note{color:#1b6b3d;}

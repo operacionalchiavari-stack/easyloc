@@ -309,6 +309,7 @@
     element.classList.remove("hidden");
     element.setAttribute("aria-hidden", "false");
     document.body.classList.add("separacao-modal-open");
+    window.scrollTo?.({ top: 0, behavior: "instant" });
     if (window.lucide) lucide.createIcons();
     if (focusScanner) setTimeout(() => focarLeitor(), 80);
   }
@@ -625,8 +626,8 @@
     const editavel = modoEditavel();
     const avisoBloqueio = editavel ? "" : `
       <div class="separacao-readonly-banner">
-        <strong>Somente visualizacao</strong>
-        <span>${escapeHtml(regra.motivo || "Pedido finalizado ou bloqueado para alteracoes.")}</span>
+        <strong>Somente visualização</strong>
+        <span>${escapeHtml(STATUS_FINALIZADO.has(pedido.status) ? "Separação já concluída." : (regra.motivo || "Pedido bloqueado para alterações."))}</span>
       </div>
     `;
 
@@ -807,6 +808,8 @@
     if (pedido.status === "pendente" || pedido.status === "pausado") {
       await atualizarPedidoStatus(pedido.id, "em_separacao", true);
     }
+    // Clicar no pedido da fila já abre a tela dele (out/2026).
+    if (!modalSeparacaoAberto()) await abrirModoSeparacao(pedido.id);
   }
 
   async function abrirModoSeparacao(pedidoId) {
