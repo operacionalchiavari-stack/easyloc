@@ -8870,6 +8870,18 @@ textarea{ font-family:inherit; }
   html body .board .col-evento .evento-meta,
   html body .board .col-evento .evento-meta span{ font-size:12.5px !important; line-height:1.45 !important; }
   html body .board .col-evento .evento-info-tag{ font-size:11px !important; line-height:1.3 !important; }
+  /* Semana, título e Agenda na mesma linha (computador) */
+  @media (min-width: 1200px){
+    html body .topbar{
+      display:grid !important;
+      grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) !important;
+      grid-template-areas:"semana titulo acoes" !important;
+      align-items:center !important;
+    }
+    html body .topbar > .semana-nav{ grid-area:semana !important; justify-self:start !important; order:0 !important; margin:0 !important; }
+    html body .topbar > .title-wrap{ grid-area:titulo !important; order:0 !important; }
+    html body .topbar > .toolbar-right{ grid-area:acoes !important; justify-self:end !important; order:0 !important; margin:0 !important; }
+  }
 </style>
 </head>
 <body>
