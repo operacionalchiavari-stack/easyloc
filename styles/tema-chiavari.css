@@ -433,3 +433,70 @@ html:root :is(body:not(.portal-shell), #main-content) :is(
   :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child,
   .el-page > :is(header, .zapi-header):first-child > div:first-child
 ) > :is(h1, h2){ margin:0 !important; padding:0 !important; }
+
+/* =========================================================
+   FUNDO CLARO + CARDS EM DESTAQUE (out/2026, referência Tecnoweld)
+   Pedido: "o fundo de todas as telas branco ou um cinza bem clarinho...
+   o fundo é clarinho e os cards têm destaque na tela". Fundo #f4f6f8
+   (o da Tecnoweld) e cards brancos com a sombra suave de lá
+   (--shadow-surface). Vale para todas as telas que carregam este tema;
+   as telas da Chiavari usam styles/fundo-claro.css (mesmos valores).
+========================================================= */
+:root{
+  --ch-fundo-tela:#f4f6f8;
+  --ch-sombra:0 0 8px rgba(15,23,42,.15), 0 0 2px rgba(15,23,42,.12);
+  --ch-borda-card:#e3e6ea;
+  --el-color-bg:#f4f6f8;
+  --color-bg:#f4f6f8;
+  --fundo:#f4f6f8;
+}
+html:has(> body:not(.portal-shell)){ background:var(--ch-fundo-tela) !important; }
+body:not(.portal-shell),
+body:not(.portal-shell) :is(#main-content, .el-page),
+body.portal-shell #main-content,
+html:root body.portal-shell #main-content .el-page{ background:var(--ch-fundo-tela) !important; }
+/* tabelas soltas na página continuam brancas */
+html:root :is(body:not(.portal-shell), #main-content) table tbody tr:not(:hover, .selected, .linha-selecionada){ background-color:#ffffff; }
+
+/* Cards: branco + sombra suave em volta */
+html:root :is(body:not(.portal-shell), #main-content) :is(
+  .el-stat-card, .stat-card, .summary-card, .card, .el-card, .card-resumo, .resumo-card, .info-card, .metric-card, .panel,
+  .el-table-card, .table-wrapper, .tabela-card, .table-container, .content-card, .filters, .filtros,
+  .section-card, .cf-pedido, .ideia-card, .import-card, .pr-card,
+  .fin-card, .fin-bloco, .fin-pedido, .fin-conta,
+  :is(#finConteudo, #rhConteudo, #rhFichaCorpo) > .fin-vazio,
+  .rh-pessoa, .rh-ficha-topo
+){
+  background-color:#ffffff !important;
+  border-color:var(--ch-borda-card) !important;
+  box-shadow:var(--ch-sombra) !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(#finConteudo, #rhConteudo, #rhFichaCorpo) > .fin-vazio{ border-style:solid !important; }
+/* barra de busca/filtros soltas: campo branco destaca no fundo cinza */
+html:root :is(body:not(.portal-shell), #main-content) :is(.fin-barra-ferr, .toolbar, .el-toolbar) :is(input, select){ background-color:#ffffff !important; }
+
+/* Bolinha vermelha piscando em cima da aba quando há pendência (igual à Tecnoweld).
+   Qualquer contador dentro de uma aba: .fin-conta-aba, .tab-badge, .aba-contador, [data-pendencias]. */
+html:root :is(body:not(.portal-shell), #main-content) :is(.fin-abas, .tabs, .el-tabs, .tab-list){ padding-top:12px !important; overflow:visible !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.fin-abas, .tabs, .el-tabs, .tab-list) > :is(button, a, .tab){ position:relative !important; overflow:visible !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.fin-abas, .tabs, .el-tabs, .tab-list) > :is(button, a, .tab) :is(.fin-conta-aba, .tab-badge, .aba-contador, [data-pendencias]):not(:empty){
+  position:absolute !important; top:-9px; right:-7px; margin:0 !important;
+  min-width:20px; height:20px; padding:0 6px !important; display:grid !important; place-items:center;
+  border-radius:999px !important; background:#e60012 !important; color:#ffffff !important;
+  font:800 11px/1 var(--ch-sans) !important; letter-spacing:0 !important;
+  border:2px solid #ffffff; box-shadow:0 0 0 0 rgba(230,0,18,.42);
+  animation:ch-pendencia-pulsa 1.15s ease-in-out infinite;
+}
+@keyframes ch-pendencia-pulsa{
+  0%,100%{ box-shadow:0 0 0 0 rgba(230,0,18,.42); transform:scale(1); }
+  50%{ box-shadow:0 0 0 7px rgba(230,0,18,0); transform:scale(1.08); }
+}
+@media (prefers-reduced-motion:reduce){
+  html:root :is(body:not(.portal-shell), #main-content) :is(.fin-abas, .tabs, .el-tabs, .tab-list) :is(.fin-conta-aba, .tab-badge, .aba-contador, [data-pendencias]){ animation:none !important; }
+}
+/* Cartões com cor própria (colunas da Separação/Expedição, retorno lilás): só ganham a sombra, a cor fica */
+html:root :is(body:not(.portal-shell), #main-content) :is(.separacao-order-card, .separacao-lane, .item-card){ box-shadow:var(--ch-sombra) !important; }
+/* Separação e Expedição: as 3 colunas são os cards, a moldura em volta some no fundo cinza */
+html:root :is(body:not(.portal-shell), #main-content) .separacao-board-card{ background:transparent !important; border:0 !important; box-shadow:none !important; padding-left:0 !important; padding-right:0 !important; }
+/* Central de Pedidos não tinha respiro lateral (no branco não aparecia) */
+html:root body:not(.portal-shell) .central-pedidos-page{ padding-left:clamp(16px, 2.2vw, 28px) !important; padding-right:clamp(16px, 2.2vw, 28px) !important; }

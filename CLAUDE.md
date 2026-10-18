@@ -9440,3 +9440,20 @@ continua fora do menu.
   igual, ou primeiro nome + último sobrenome).
 - Testado no banco real numa transação desfeita (ficha, CPF inválido, turma, desligar/reativar, Operador sem acesso) e na
   tela com banco simulado: `tests/rh-pessoas-browser.cjs`.
+
+## Fundo claro, cards em destaque e bolinha de pendência nas abas (out/2026)
+Pedido: "o fundo de todas as telas branco ou cinza bem clarinho, pega a Tecnoweld como exemplo... os cards têm destaque" e
+"o vermelho por cima das abas com o número piscando". Referência Tecnoweld: fundo `#f4f6f8`, card branco com
+`0 0 8px rgba(15,23,42,.15), 0 0 2px rgba(15,23,42,.12)`, bolinha `#e60012` pulsando (1,15 s).
+- **Telas do Acervo**: bloco no fim de `styles/tema-chiavari.css` (vale nas telas com `global.css` e no `#main-content`
+  do dashboard): fundo cinza; cards conhecidos (`.el-stat-card`, `.card`, `.el-table-card`, `.fin-card`, `.rh-pessoa`…)
+  brancos com a sombra; linhas de tabela brancas. Cartões coloridos da Separação/Expedição mantêm a cor, só ganham a sombra.
+  **Card de classe nova que deve destacar: incluir na lista `:is(...)` desse bloco.**
+- **Bolinha de pendência**: dentro de uma aba (`.fin-abas`, `.tabs`, `.el-tabs`, `.tab-list`), um elemento
+  `.tab-badge`, `.aba-contador`, `.fin-conta-aba` ou `[data-pendencias]` com texto vira a bolinha vermelha no canto,
+  pulsando (some quando vazio; parada com movimento reduzido). Para uma aba nova mostrar pendência:
+  `<button>Nome <span class="tab-badge">3</span></button>` (vazio = sem bolinha).
+- **Sistemas da Chiavari** (desktop): `styles/fundo-claro.css` linkado no fim do `<head>` de 13 telas (fundo cinza +
+  sombra nos cards; não muda a cor dos cards). Fora de propósito: Catálogo (branco, pedido antigo) e os apps de celular
+  (Montador, Free, Free QR, RH Free, Meu Bônus, Motorista, login do Uber).
+- `global.css?v=20261018-fundo` em todas as telas; `tema-chiavari.css?v=20261018-fundo`.
