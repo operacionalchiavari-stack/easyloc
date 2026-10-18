@@ -50,7 +50,7 @@ function resposta(fn, args) {
   assert.strictEqual(await cron.locator("#listaLote").count(), 0, "sem lote de pedidos");
   assert.strictEqual(await cron.locator("#modalCadastros, [onclick*=\"abrirCadastrosProtegido\"]").count(), 0, "sem janela de cadastros");
   assert.ok(await cron.evaluate(() => !/decorador confirmou/i.test(document.documentElement.innerHTML)), "sem pergunta do decorador");
-  assert.ok(await cron.evaluate(() => typeof abrirAppMontador === "function"), "link do app do montador continua");
+  assert.strictEqual(await cron.locator("#linkAppMontador").count(), 0, "sem acesso ao app do montador");
   assert.ok(await cron.evaluate(() => typeof adicionarAoLote === "undefined" && typeof abrirNovoPedidoProtegido === "undefined"), "sem criação de pedido");
   await cron.evaluate(() => avisoRapido("Equipe salva."));
   await cron.waitForSelector("#avisoRapido.show");

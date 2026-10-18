@@ -8864,6 +8864,12 @@ textarea{ font-family:inherit; }
     box-shadow:none !important;
     border-right:1px solid #e3e7ec !important;
   }
+  /* Coluna do pedido com tamanhos proporcionais: número, cliente, local/data e avisos */
+  html body .board .col-evento .pedido-tag{ font-size:11px !important; }
+  html body .board .col-evento .evento-cliente{ font-size:15px !important; font-weight:600 !important; line-height:1.3 !important; margin:8px 0 6px !important; }
+  html body .board .col-evento .evento-meta,
+  html body .board .col-evento .evento-meta span{ font-size:12.5px !important; line-height:1.45 !important; }
+  html body .board .col-evento .evento-info-tag{ font-size:11px !important; line-height:1.3 !important; }
 </style>
 </head>
 <body>
@@ -8906,14 +8912,7 @@ textarea{ font-family:inherit; }
       Última atualização: aguardando.
     </div>
 
-    <a
-      id="linkAppMontador"
-      class="link-app-montador"
-      href="#"
-      target="_blank"
-      rel="noopener"
-      title="Abrir o app do montador (para os responsáveis)"
-    >App do montador ↗</a>
+
 
   </div>
 
@@ -18484,7 +18483,6 @@ function renderCronogramaApp(){
         '<button type="button" class="app-icone-btn app-btn-menu" onclick="appAlternarMenu(event)" aria-label="Mais opções">' + APP_ICONES.menu + '</button>' +
         '<div class="app-menu" id="appMenu" role="menu">' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(abrirAgendaNova)">' + APP_ICONES.agenda + 'Agenda</button>' +
-          '<button type="button" role="menuitem" onclick="appMenuAcao(abrirAppMontador)">' + APP_ICONES.externo + 'App do montador</button>' +
           '<hr>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(function(){ appMudarSemana(-7); })">' + APP_ICONES.esquerda + 'Semana anterior</button>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(function(){ appMudarSemana(7); })">' + APP_ICONES.direita + 'Próxima semana</button>' +
@@ -18663,29 +18661,7 @@ function appVerPedido(indice){
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRTnhpv3S0kqV9G56x0npaxd6YABj8dnI&libraries=places"></script>
 
 
-<script>
-/* App do montador (link do topo e do menu do celular) */
-/* Link do app do montador (canto superior e menu do celular) */
-let urlAppMontador = "";
 
-function carregarLinkAppMontador(){
-  if(typeof google === "undefined" || !google.script || !google.script.run){ return; }
-  google.script.run
-    .withSuccessHandler(function(url){
-      urlAppMontador = url || "";
-      const link = document.getElementById("linkAppMontador");
-      if(link && urlAppMontador){ link.href = urlAppMontador; }
-    })
-    .withFailureHandler(function(){})
-    .MONT_getUrlApp();
-}
-
-function abrirAppMontador(){
-  if(urlAppMontador){ window.open(urlAppMontador, "_blank"); }
-}
-
-window.addEventListener("load", carregarLinkAppMontador);
-</script>
 
 <!-- =====================================================
      TROCA DE MATERIAL (pedida pelo app do montador)
