@@ -3,6 +3,7 @@
     pedidos: "separacoes_pedidos",
     itens: "separacoes_itens",
     leituras: "separacoes_leituras",
+    etiquetas: "separacoes_etiquetas",
     patrimonios: "itens_patrimonios",
     config: "configuracoes_separacao",
     cadastroItens: "itens"
@@ -89,7 +90,11 @@
       "btnCancelarUmCliqueSeparacao",
       "btnConfirmarUmCliqueSeparacao",
       "separacaoUmCliqueTitulo",
-      "separacaoUmCliqueMeta"
+      "separacaoUmCliqueMeta",
+      "btnCameraSeparacao",
+      "scannerCamera",
+      "scannerVideo",
+      "scannerVisual"
     ].forEach((id) => {
       els[id] = $(id);
     });
@@ -310,6 +315,7 @@
 
   function fecharModal(element) {
     if (!element) return;
+    if (element === els.separacaoQrModal) pararCamera();
     element.classList.add("hidden");
     element.setAttribute("aria-hidden", "true");
     if (!modalSeparacaoAberto()) {
@@ -319,6 +325,7 @@
   }
 
   function fecharTodosModais() {
+    pararCamera();
     [
       els.separacaoModoModal,
       els.separacaoManualModal,
@@ -459,7 +466,7 @@
       pedido.cliente_nome || "Cliente nao informado",
       pedido.tipo_evento || "Evento",
       pedidoLocal(pedido)
-    ].join(" Â· ");
+    ].join(" · ");
     atualizaTexto(els.separacaoModoTitulo, titulo);
     atualizaTexto(els.separacaoModoMeta, metaLimpo);
     atualizaTexto(els.separacaoManualTitulo, titulo);
@@ -846,7 +853,160 @@
     abrirModal(els.separacaoUmCliqueModal);
   }
 
+  /* ---------- Câmera (out/2026): QR pelo celular, sem leitor ----------
+     Usa o leitor nativo do navegador (BarcodeDetector) e, onde não existe (iPhone), a biblioteca jsQR. */
+  const camera = { stream: null, timer: null, detector: null, canvas: null, ultimo: "", ultimoEm: 0, ocupado: false };
+
+  function carregarJsQr() {
+    if (window.jsQR) return Promise.resolve();
+    return new Promise((ok, erro) => {
+      const tag = document.createElement("script");
+      tag.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js";
+      tag.onload = () => ok();
+      tag.onerror = () => erro(new Error("Leitor de QR indisponível."));
+      document.head.appendChild(tag);
+    });
+  }
+
+  async function lerQuadro() {
+    const video = els.scannerVideo;
+    if (!camera.stream || !video || video.readyState < 2) return "";
+    if (camera.detector) {
+      const achados = await camera.detector.detect(video).catch(() => []);
+      return achados[0]?.rawValue || "";
+    }
+    if (!window.jsQR) return "";
+    const w = video.videoWidth, h = video.videoHeight;
+    if (!w || !h) return "";
+    camera.canvas ||= document.createElement("canvas");
+    const escala = Math.min(1, 640 / w);
+    camera.canvas.width = Math.round(w * escala);
+    camera.canvas.height = Math.round(h * escala);
+    const ctx = camera.canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(video, 0, 0, camera.canvas.width, camera.canvas.height);
+    const img = ctx.getImageData(0, 0, camera.canvas.width, camera.canvas.height);
+    return window.jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" })?.data || "";
+  }
+
+  async function iniciarCamera() {
+    if (camera.stream) { pararCamera(); return; }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      avisar("Este aparelho não permite usar a câmera aqui. Use o leitor ou digite o código.", "Câmera", "aviso");
+      return;
+    }
+    try {
+      if ("BarcodeDetector" in window) {
+        const formatos = await window.BarcodeDetector.getSupportedFormats?.().catch(() => []) || [];
+        if (formatos.includes("qr_code")) camera.detector = new window.BarcodeDetector({ formats: ["qr_code", "code_128", "ean_13"].filter((f) => formatos.includes(f)) });
+      }
+      if (!camera.detector) await carregarJsQr();
+      camera.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+    } catch (erro) {
+      camera.stream = null;
+      avisar(erro?.name === "NotAllowedError" ? "Permita o uso da câmera para ler os QR codes." : "Não foi possível abrir a câmera.", "Câmera", "aviso");
+      return;
+    }
+    els.scannerVideo.srcObject = camera.stream;
+    els.scannerVideo.play?.().catch(() => {});
+    if (els.scannerCamera) els.scannerCamera.hidden = false;
+    if (els.scannerVisual) els.scannerVisual.hidden = true;
+    const rotulo = els.btnCameraSeparacao?.querySelector("span");
+    if (rotulo) rotulo.textContent = "Desligar câmera";
+    setScannerStatus("Aponte a câmera para o QR", "ok");
+    camera.timer = setInterval(async () => {
+      if (camera.ocupado) return;
+      camera.ocupado = true;
+      try {
+        const codigo = String(await lerQuadro() || "").trim();
+        const agora = Date.now();
+        // O mesmo código seguido só conta de novo depois de 2 s (a câmera vê o QR várias vezes por segundo).
+        if (codigo && (codigo !== camera.ultimo || agora - camera.ultimoEm > 2000)) {
+          camera.ultimo = codigo; camera.ultimoEm = agora;
+          navigator.vibrate?.(60);
+          await processarCodigo(codigo);
+        }
+      } finally { camera.ocupado = false; }
+    }, 250);
+  }
+
+  function pararCamera() {
+    clearInterval(camera.timer); camera.timer = null;
+    camera.stream?.getTracks().forEach((t) => t.stop());
+    camera.stream = null;
+    if (els.scannerVideo) els.scannerVideo.srcObject = null;
+    if (els.scannerCamera) els.scannerCamera.hidden = true;
+    if (els.scannerVisual) els.scannerVisual.hidden = false;
+    const rotulo = els.btnCameraSeparacao?.querySelector("span");
+    if (rotulo) rotulo.textContent = "Ler com a câmera";
+  }
+
+  // Etiquetas do sistema trazem o tipo no QR: ACERVO:PAT:<patrimônio fixo>, ACERVO:ENV:<etiqueta de envio>,
+  // ACERVO:ITEM:<código do item>. Sem prefixo (leitor/digitado), vale o código puro.
+  function lerEtiqueta(texto) {
+    const t = String(texto || "").trim();
+    const m = /^ACERVO:(PAT|ITEM|ENV):(.+)$/i.exec(t);
+    return m ? { tipo: m[1].toUpperCase(), codigo: m[2].trim() } : { tipo: "", codigo: t };
+  }
+
+  async function buscarEtiquetaEnvio(codigo) {
+    const { data, error } = await state.supabase.from(TABLES.etiquetas).select("*")
+      .eq("empresa_id", state.empresaId).eq("codigo", codigo).maybeSingle();
+    if (error && error.code !== "42P01") throw error;
+    return data || null;
+  }
+
+  /* Etiquetas de envio (out/2026): uma por móvel do pedido, criadas na hora (só as que faltam) e impressas. */
+  async function imprimirEtiquetasEnvio() {
+    const pedido = getPedidoAtual();
+    if (!pedido) { avisar("Selecione um pedido.", "Etiquetas", "aviso"); return; }
+    if (!window.EasyLocEtiquetas) { avisar("Gerador de etiquetas indisponível.", "Etiquetas", "erro"); return; }
+    const itens = state.itens.filter((item) => String(item.separacao_pedido_id) === String(pedido.id));
+    if (!itens.length) { avisar("Este pedido não tem itens para etiquetar.", "Etiquetas", "aviso"); return; }
+    const formato = await window.EasyLocEtiquetas.escolherFormato("100x150");
+    if (!formato) return;
+    const { data: existentes, error } = await state.supabase.from(TABLES.etiquetas).select("*")
+      .eq("empresa_id", state.empresaId).eq("separacao_pedido_id", pedido.id);
+    if (error) { console.error(error); avisar("Não foi possível ler as etiquetas do pedido.", "Etiquetas", "erro"); return; }
+    const lista = existentes || [];
+    const numero = String(pedido.numero_pedido || "PED").replace(/s+/g, "");
+    let proximo = lista.reduce((max, e) => Math.max(max, Number(String(e.codigo).split("-").pop()) || 0), 0);
+    const novas = [];
+    itens.forEach((item) => {
+      const total = Math.max(0, Math.round(itemTotal(item)));
+      const ja = new Set(lista.filter((e) => String(e.separacao_item_id) === String(item.id)).map((e) => e.sequencia));
+      for (let seq = 1; seq <= total; seq++) {
+        if (ja.has(seq)) continue;
+        proximo += 1;
+        novas.push({ empresa_id: state.empresaId, separacao_pedido_id: pedido.id, separacao_item_id: item.id, item_id: item.item_id,
+          codigo: numero + "-" + String(proximo).padStart(3, "0"), sequencia: seq, total_item: total });
+      }
+    });
+    if (novas.length) {
+      const { data: criadas, error: erroCriar } = await state.supabase.from(TABLES.etiquetas).insert(novas).select("*");
+      if (erroCriar) { console.error(erroCriar); avisar("Não foi possível criar as etiquetas.", "Etiquetas", "erro"); return; }
+      lista.push(...(criadas && criadas.length ? criadas : novas));
+    }
+    const ordemItem = new Map(itens.map((item, i) => [String(item.id), i]));
+    const validas = lista.filter((e) => ordemItem.has(String(e.separacao_item_id)))
+      .sort((a, b) => ordemItem.get(String(a.separacao_item_id)) - ordemItem.get(String(b.separacao_item_id)) || a.sequencia - b.sequencia);
+    const dataEntrega = formatDateOnly(pedido.data_entrega || pedido.data_evento);
+    const marca = window.__CONTEXT?.empresa_nome || "";
+    await window.EasyLocEtiquetas.imprimir({
+      formato,
+      etiquetas: validas.map((e) => {
+        const item = itens.find((i) => String(i.id) === String(e.separacao_item_id));
+        return {
+          qr: "ACERVO:ENV:" + e.codigo, marca, destaque: "PEDIDO " + (pedido.numero_pedido || "-"),
+          titulo: nomeItemSeparacao(item), codigo: e.codigo, contador: e.sequencia + " de " + e.total_item,
+          linhas: [pedido.cliente_nome || "", pedidoLocal(pedido), "Entrega: " + dataEntrega, pedido.tipo_evento || ""]
+        };
+      })
+    });
+    avisar(validas.length + " etiqueta(s) de envio" + (novas.length ? " (" + novas.length + " nova(s))" : "") + ". Leia a etiqueta de cada móvel para marcar como separado.", "Etiquetas", "sucesso");
+  }
+
   function focarLeitor() {
+    if (camera.stream) { setScannerStatus("Aponte a câmera para o QR", "ok"); return; }
     els.scannerInput?.focus();
     setScannerStatus("Aguardando leitura", "ok");
   }
@@ -873,7 +1033,8 @@
   }
 
   async function processarCodigo(codigoLido) {
-    const codigo = String(codigoLido || "").trim();
+    const lida = lerEtiqueta(codigoLido);
+    const codigo = lida.codigo;
     if (!codigo) return;
 
     const pedido = getPedidoAtual();
@@ -904,8 +1065,21 @@
     try {
       setScannerStatus("Processando leitura", "ok");
 
-      const patrimonio = await buscarPatrimonio(codigo);
-      const itemCadastro = patrimonio?.itens || await buscarItemPorCodigo(codigo);
+      // Etiqueta de envio: marca aquela unidade do pedido (uma leitura por etiqueta).
+      const etiqueta = lida.tipo === "ENV" || !lida.tipo ? await buscarEtiquetaEnvio(codigo) : null;
+      if (etiqueta) {
+        await processarEtiquetaEnvio({ codigo, etiqueta, pedido });
+        return;
+      }
+      if (lida.tipo === "ENV") {
+        await registrarLeitura({ codigo, status: "erro", observacao: "Etiqueta de envio não encontrada" });
+        setScannerStatus("Etiqueta não encontrada", "error");
+        setUltimaLeitura({ tipo: "erro", codigo, observacao: "Etiqueta não encontrada" });
+        return;
+      }
+
+      const patrimonio = lida.tipo === "ITEM" ? null : await buscarPatrimonio(codigo);
+      const itemCadastro = patrimonio?.itens || (lida.tipo === "PAT" ? null : await buscarItemPorCodigo(codigo));
       const itemId = patrimonio?.item_id || itemCadastro?.id;
 
       if (!itemId) {
@@ -949,7 +1123,8 @@
         return;
       }
 
-      if ((itemSeparacao.tipo_controle || "quantidade") === "patrimonio") {
+      // QR fixo (patrimônio): conta e guarda qual móvel foi lido, para o mesmo nunca contar duas vezes.
+      if (patrimonio || (itemSeparacao.tipo_controle || "quantidade") === "patrimonio") {
         await processarPatrimonio({ codigo, patrimonio, itemSeparacao });
       } else {
         await incrementarQuantidade({ codigo, itemSeparacao });
@@ -974,11 +1149,11 @@
       .from(TABLES.cadastroItens)
       .select("id,codigo,produto,descricao_total,foto_url,setor_estoque")
       .eq("empresa_id", state.empresaId)
-      .eq("codigo", codigo)
-      .maybeSingle();
+      .or(["codigo", "referencia", "qr_code"].map((c) => c + ".eq." + codigo.replace(/[,()]/g, "")).join(","))
+      .limit(1);
 
     if (error) throw error;
-    return data;
+    return (data || [])[0] || null;
   }
 
   async function buscarPatrimonio(codigo) {
@@ -1042,6 +1217,26 @@
       observacao: "Patrimonio separado com sucesso"
     });
 
+    leituraSucesso(itemSeparacao, codigo);
+  }
+
+  async function processarEtiquetaEnvio({ codigo, etiqueta, pedido }) {
+    const erro = async (obs, status = "erro") => {
+      await registrarLeitura({ codigo, itemId: etiqueta.item_id, separacaoItemId: etiqueta.separacao_item_id, status, observacao: obs });
+      setScannerStatus(obs, "error");
+      setUltimaLeitura({ tipo: "erro", codigo, observacao: obs });
+    };
+    if (String(etiqueta.separacao_pedido_id) !== String(pedido.id)) return erro("Etiqueta de outro pedido");
+    if (etiqueta.lida_separacao_em) return erro("Esta etiqueta já foi lida", "bloqueado");
+    const itemSeparacao = state.itens.find((item) => String(item.id) === String(etiqueta.separacao_item_id));
+    if (!itemSeparacao) return erro("Item da etiqueta não está mais no pedido");
+    if (itemSeparado(itemSeparacao) >= itemTotal(itemSeparacao)) return erro("Quantidade já completa", "bloqueado");
+    const novaQtd = itemSeparado(itemSeparacao) + 1;
+    await atualizarItemSeparacao(itemSeparacao, { quantidade_separada: novaQtd, status: novaQtd >= itemTotal(itemSeparacao) ? "concluido" : "em_andamento" });
+    const { error } = await state.supabase.from(TABLES.etiquetas).update({ lida_separacao_em: new Date().toISOString() })
+      .eq("id", etiqueta.id).eq("empresa_id", state.empresaId);
+    if (error) console.warn("Etiqueta lida, mas não marcada:", error);
+    await registrarLeitura({ codigo, itemId: itemSeparacao.item_id, separacaoItemId: itemSeparacao.id, tipoControle: "etiqueta", status: "sucesso", observacao: "Etiqueta de envio " + etiqueta.sequencia + " de " + etiqueta.total_item });
     leituraSucesso(itemSeparacao, codigo);
   }
 
@@ -1307,6 +1502,8 @@
 
   function bindEvents() {
     els.btnAtualizarSeparacao?.addEventListener("click", carregarFila);
+    els.btnCameraSeparacao?.addEventListener("click", () => iniciarCamera().catch(console.error));
+    document.querySelectorAll("[data-etiquetas-envio]").forEach((botao) => botao.addEventListener("click", () => imprimirEtiquetasEnvio().catch((e) => { console.error(e); avisar("Não foi possível imprimir as etiquetas.", "Etiquetas", "erro"); })));
     els.separacaoBuscaPedido?.addEventListener("input", renderFila);
     els.separacaoStatusFiltro?.addEventListener("change", renderFila);
 
@@ -1460,6 +1657,32 @@
 
     bindEvents();
     await carregarFila();
+    await abrirPedidoDaUrl();
+  }
+
+  /* Aberto pelo cronograma (out/2026): ?pedido=<id>&etapa=ida|volta abre direto o pedido. */
+  async function abrirPedidoDaUrl() {
+    const params = new URLSearchParams(location.search);
+    const pedidoId = params.get("pedido");
+    if (!pedidoId || !state.dbReady) return;
+    const pedido = state.pedidos.find((p) => String(p.id) === String(pedidoId));
+    if (!pedido) {
+      const { data } = await state.supabase.from(TABLES.pedidos).select("numero_pedido,status_comercial")
+        .eq("empresa_id", state.empresaId).eq("id", pedidoId).maybeSingle();
+      const numero = data?.numero_pedido ? "O pedido " + data.numero_pedido : "Este pedido";
+      avisar(data && !["pre_reserva", "aprovado"].includes(data.status_comercial)
+        ? numero + " ainda não reservou os itens (precisa estar em pré-reserva ou aprovado para ter a lista de separação)."
+        : numero + " não está na fila de separação.", "Separação", "aviso");
+      return;
+    }
+    if (params.get("etapa") === "volta") {
+      await abrirResumoSeparacao(pedido.id);
+      avisar("A conferência da volta (o que retornou, faltou ou voltou danificado) chega na próxima etapa. Por enquanto você vê o que saiu.", "Conferência da volta", "aviso");
+      return;
+    }
+    if (pedido.status === "pendente" && separacaoLiberada(pedido)) await iniciarPedidoSeparacao(pedido.id);
+    if (pedidoOperavel(pedido)) await abrirModoSeparacao(pedido.id);
+    else await abrirResumoSeparacao(pedido.id);
   }
 
   function destroy() {

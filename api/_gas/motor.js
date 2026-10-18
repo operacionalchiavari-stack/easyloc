@@ -496,6 +496,58 @@ class Execucao {
           fotoUrl: !f.foto_url ? '' : /^https?:\/\//.test(f.foto_url) ? f.foto_url : `${cfg.url}/storage/v1/object/public/avatares/${ex.usuario.empresaId}/${f.id}.jpg`
         }));
       },
+      /* Nomes dos funcionários ATIVOS de um setor no Cadastro de Funcionários (RH) da Chiavari. Só o nome sai
+         daqui (sem CPF/salário), porque o App do Montador usa isto antes de qualquer login (out/2026). */
+      nomesDoSetor: setor => {
+        const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+        const r = fetchSincrono(cfg.url + "/rest/v1/funcionarios_acesso?select=nome,setor&ativo=eq.true&empresa_id=eq.bb1260f0-99cd-4d17-ab9b-23c299b4c50b",
+          { method: "GET", headers: cabecalhos(cfg) });
+        if (r.status >= 300) throw new Error("Não foi possível ler o cadastro do RH.");
+        return JSON.parse(r.corpo.toString("utf8") || "[]").filter(f => norm(f.setor) === norm(setor)).map(f => String(f.nome || "").trim()).filter(Boolean);
+      },
+      /* Pedido do Comercial + parâmetros da logística, para o cronograma montar as etapas (out/2026).
+         Lido no servidor (chave de serviço), sempre da empresa de quem está logado. */
+      pedidoParaCronograma: id => {
+        if (!ex.usuario) throw new Error('Sessão necessária');
+        const empresa = encodeURIComponent(ex.usuario.empresaId), ler = caminho => {
+          const r = fetchSincrono(cfg.url + "/rest/v1/" + caminho, { method: "GET", headers: cabecalhos(cfg) });
+          if (r.status >= 300) throw new Error("Não foi possível ler o pedido: " + r.corpo.toString("utf8").slice(0, 200));
+          return JSON.parse(r.corpo.toString("utf8") || "[]");
+        };
+        const pedido = ler("separacoes_pedidos?select=id,numero_pedido,cliente_nome,local_nome,local_id,tipo_evento,data_evento,data_evento_fim,data_entrega,data_coleta,status_comercial,observacoes&empresa_id=eq." + empresa + "&id=eq." + encodeURIComponent(id))[0] || null;
+        const regras = ler("empresa_logistica_regras?select=*&empresa_id=eq." + empresa)[0] || {};
+        let endereco = "";
+        if (pedido && pedido.local_id) {
+          const l = ler("locais_empresas?select=nome_razao,endereco,numero_endereco&empresa_id=eq." + empresa + "&id=eq." + encodeURIComponent(pedido.local_id))[0];
+          if (l) endereco = [l.endereco, l.numero_endereco].filter(Boolean).join(", ");
+        }
+        return { pedido, regras, endereco };
+      },
+      /* Andamento da operação dos pedidos do sistema (separação, carregamento, volta), para o cartão do cronograma. */
+      andamentoPedidos: ids => {
+        const lista = (ids || []).filter(Boolean);
+        if (!ex.usuario || !lista.length) return {};
+        const empresa = encodeURIComponent(ex.usuario.empresaId), em = lista.map(encodeURIComponent).join(",");
+        const ler = caminho => {
+          const r = fetchSincrono(cfg.url + "/rest/v1/" + caminho, { method: "GET", headers: cabecalhos(cfg) });
+          return r.status >= 300 ? [] : JSON.parse(r.corpo.toString("utf8") || "[]");
+        };
+        const pedidos = ler("separacoes_pedidos?select=id,status,status_comercial,status_operacional,operacao&empresa_id=eq." + empresa + "&id=in.(" + em + ")");
+        const itens = ler("separacoes_itens?select=separacao_pedido_id,quantidade_solicitada,quantidade_separada&empresa_id=eq." + empresa + "&separacao_pedido_id=in.(" + em + ")");
+        const mapa = {};
+        pedidos.forEach(p => {
+          const meus = itens.filter(i => i.separacao_pedido_id === p.id);
+          const op = p.operacao || {};
+          const resumo = o => (o && o.concluido_em ? { lidas: o.lidas, total: o.total, faltando: (o.faltando || []).length, em: o.concluido_em, por: o.por || "" } : null);
+          mapa[p.id] = {
+            status: p.status, comercial: p.status_comercial, operacional: p.status_operacional || "",
+            separado: meus.reduce((s, i) => s + Number(i.quantidade_separada || 0), 0),
+            total: meus.reduce((s, i) => s + Number(i.quantidade_solicitada || 0), 0),
+            carregamento: resumo(op.carregamento), retorno: resumo(op.retorno)
+          };
+        });
+        return mapa;
+      },
       pinConferir: (id, pin) => {
         if (!ex.usuario) throw new Error('Sessão necessária');
         return rpcSincrono(cfg, 'rh_pin_conferir', { p_empresa: ex.usuario.empresaId, p_funcionario: id, p_pin: pin });

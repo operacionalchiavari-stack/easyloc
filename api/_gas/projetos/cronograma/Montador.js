@@ -76,13 +76,34 @@ function MONT_abaSessoes_() {
  ****************************************************/
 
 /* Nomes para a lista do login (aba Responsaveis, ativos) */
+// Só aparece (e só entra) quem é do setor Montagem no Cadastro de Funcionários do RH (out/2026). O nome mostrado
+// continua o da aba Responsaveis, porque é ele que está na aba Senhas e nas etapas do cronograma; o casamento com o
+// RH tolera letra repetida por engano ("Maicon Martiins") e sobrenome a menos ("Wesley" = "Wesley Santos").
+function MONT_chaveNome_(nome) {
+  return String(nome || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/\(.*?\)/g, " ").replace(/[^a-z ]/g, " ").replace(/(.)\1+/g, "$1").replace(/\s+/g, " ").trim();
+}
+
+function MONT_ehDaMontagem_(nome, nomesRH) {
+  const a = MONT_chaveNome_(nome).split(" ").filter(String);
+  if (!a.length) return false;
+  return nomesRH.some(function (rh) {
+    const b = MONT_chaveNome_(rh).split(" ").filter(String);
+    if (!b.length) return false;
+    const menor = a.length <= b.length ? a : b, maior = a.length <= b.length ? b : a;
+    return menor.every(function (parte, i) { return parte === maior[i]; });
+  });
+}
+
 function MONT_listarResponsaveis() {
+  const nomesRH = Acervo.nomesDoSetor("Montagem");
   return listarResponsaveis()
     .filter(function (r) {
       return MONT_normalizar_(r.status || "ativo") !== "inativo";
     })
     .map(function (r) { return String(r.nome || "").trim(); })
     .filter(String)
+    .filter(function (nome) { return MONT_ehDaMontagem_(nome, nomesRH); })
     .sort(function (a, b) { return a.localeCompare(b); });
 }
 
@@ -109,6 +130,10 @@ function MONT_login(nome, senha, comoSupervisor) {
 
     if (!String(nome || "").trim()) {
       throw new Error("Escolha o seu nome.");
+    }
+
+    if (!MONT_ehDaMontagem_(nome, Acervo.nomesDoSetor("Montagem"))) {
+      throw new Error("Seu nome não está no setor Montagem do cadastro do RH.");
     }
 
     if (validarSenhaResponsavel(nome, senhaLimpa)) {

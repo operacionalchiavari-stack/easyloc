@@ -219,6 +219,7 @@ function MURAL_dadosPublicos_(atualizar, colaboradoresRH) {
     hoje: hoje,
     avisos: avisos,
     aniversariantes: aniversariantes,
+    parabensTodos: aniversariantes.length ? MURAL_parabensTodos_() : [],
     novos: novos,
     reconhecimentos: reconhecimentos,
     numeros: MURAL_numerosMes_()

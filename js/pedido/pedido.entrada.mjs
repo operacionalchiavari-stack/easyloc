@@ -8,7 +8,7 @@ const PROXIMO={dados:'Avançar para o catálogo →',catalogo:'Ambientes e lista
 export function iniciarEntradaComercial(vitrine){
   const tela=document.querySelector('.pedido-screen');
   if(!tela)return;
-  const pedidoExistente=Boolean(window.__PEDIDO_ATUAL_ID || new URLSearchParams(location.search).has('pedido'));
+  const pedidoExistente=Boolean(window.__PEDIDO_ATUAL_ID || new URLSearchParams(location.search).has('pedido') || new URLSearchParams(location.search).has('projeto'));
   const info=tela.querySelector('.pedido-info-card');
   if(!info)return;
   const origem=info.parentNode,seguinte=info.nextSibling;

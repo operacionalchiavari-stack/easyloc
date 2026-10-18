@@ -8832,6 +8832,16 @@ textarea{ font-family:inherit; }
 }
 
   </style>
+<style id="pedido-sistema">
+  .aviso-pedido-sistema{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:10px 14px;border:1px solid #e6d8b8;border-radius:12px;background:#fbf6ea;color:#5b4a2a;font-size:13px}
+  .aviso-pedido-sistema[hidden]{display:none}
+  .aviso-pedido-sistema button{border:0;border-radius:999px;background:#44443f;color:#fff;padding:7px 14px;font:600 12px inherit;cursor:pointer;white-space:nowrap}
+  .campo-travado-sistema{background:#f1efea!important;color:#6b665e!important;cursor:not-allowed}
+  .andamento-etapa{display:inline-block;margin:6px 0 4px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.4;background:rgba(255,255,255,.65);color:#5b564e;border:1px solid rgba(0,0,0,.08)}
+  .andamento-etapa.is-ok{background:#e4f3e9;color:#2f7a4b;border-color:#bfe0c9}
+  .andamento-etapa.is-andamento{background:#fff3dc;color:#8a5a14;border-color:#f0d39b}
+  .andamento-etapa.is-alerta{background:#fbeceb;color:#b0362d;border-color:#efc2bf}
+</style>
 </head>
 <body>
 
@@ -8907,10 +8917,6 @@ textarea{ font-family:inherit; }
         Agenda
       </button>
 
-      <button type="button" class="acao acao-principal" onclick="abrirNovoPedidoProtegido()" title="Novo pedido">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-        Novo pedido
-      </button>
 
     </div>
 
@@ -8974,7 +8980,7 @@ textarea{ font-family:inherit; }
   <div class="overlay" id="modalNovoPedido">
     <div class="modal">
       <div class="modal-header">
-        <h2>Novo Pedido</h2>
+        <h2>Editar pedido</h2>
         <button class="modal-close" onclick="fecharModalNovoPedido()">✕</button>
       </div>
 
@@ -9142,13 +9148,11 @@ textarea{ font-family:inherit; }
 
 <div class="modal-footer" style="flex-direction:column; align-items:stretch; gap:12px;">
 
-  <!-- LISTA DO LOTE -->
-  <div id="listaLote" style="max-height:150px; overflow-y:auto;"></div>
+  <div id="listaLote" hidden></div>
 
   <div style="display:flex; justify-content:flex-end; gap:10px;">
     <button class="btn btn-light" onclick="fecharModalNovoPedido()">Cancelar</button>
-    <button class="btn btn-light" onclick="adicionarAoLote()">+ Adicionar ao lote</button>
-    <button class="btn btn-accent" onclick="enviarLote()">Enviar tudo</button>
+    <button class="btn btn-accent" onclick="salvarPedido()">Salvar alterações</button>
   </div>
 
 </div>
@@ -11979,7 +11983,7 @@ listaOrdenada.forEach(pedido => {
 html += `
   <td
     class="col-evento"
-    onclick="editarPedido('${pedido.pedido}')"
+    onclick="editarPedido('${pedido.chave || pedido.pedido}')"
     style="cursor:pointer;"
   >
 
@@ -12146,6 +12150,12 @@ if(
   `;
 
 }
+    else if(ehCarregamento && pedido.pedidoSistemaId){
+      // Pedido do sistema (out/2026): o carregamento é conferido bipando as etiquetas.
+      onclickEtapa = `
+        onclick="abrirConferenciaCronograma('${String(pedido.pedidoSistemaId).replace(/'/g,"")}', 'carregamento'); event.stopPropagation();"
+      `;
+    }
     else if(ehCarregamento){
 
       /*
@@ -12173,6 +12183,13 @@ const etapaCodificada =
           );
           event.stopPropagation();
         "
+      `;
+    }
+
+    // Triagem de um pedido do sistema (out/2026): abre a separação daquele pedido.
+    if(!onclickEtapa && etapaClasse === "separacao"){
+      onclickEtapa = `
+        onclick="abrirTriagemCronograma('${String(pedido.pedidoSistemaId || "").replace(/'/g,"")}', '${String(etapa.etapa || "").replace(/'/g,"")}'); event.stopPropagation();"
       `;
     }
 
@@ -12262,7 +12279,8 @@ class="
 ${
   ehMontagem ||
   ehDesmontagem ||
-  ehCarregamento
+  ehCarregamento ||
+  (etapaClasse === "separacao" && pedido.pedidoSistemaId)
 
     ? "cursor:pointer;"
     : ""
@@ -12290,6 +12308,8 @@ ${
           </div>
 
         </div>
+
+        ${andamentoEtapaHtml(etapa, pedido)}
 
         ${
           typeof renderTrocaCard === "function"
@@ -12598,7 +12618,94 @@ function abrirExecucaoMontagem(etapa){
       document.getElementById("modalNovoPedido").classList.remove("show");
     }
 
+/* Pedido que veio do Comercial (out/2026): número, cliente e local só mudam no pedido.
+   Aqui ficam travados, com um atalho para abrir o pedido. */
+function marcarPedidoDoSistema(id){
+  window.__pedidoSistemaEmEdicao = id || "";
+  ["pedidoNumero", "pedidoCliente", "pedidoLocal"].forEach(function(campo){
+    const el = document.getElementById(campo);
+    if(el){ el.readOnly = Boolean(id); el.classList.toggle("campo-travado-sistema", Boolean(id)); }
+  });
+  let aviso = document.getElementById("avisoPedidoSistema");
+  if(!aviso){
+    aviso = document.createElement("div");
+    aviso.id = "avisoPedidoSistema";
+    aviso.className = "aviso-pedido-sistema";
+    const grade = document.getElementById("pedidoNumero")?.closest(".form-grid");
+    if(grade) grade.parentNode.insertBefore(aviso, grade);
+  }
+  aviso.hidden = !id;
+  aviso.innerHTML = id
+    ? '<span>Pedido do Comercial: cliente, local e itens só mudam no pedido.</span><button type="button" onclick="abrirPedidoDoSistema()">Abrir pedido</button>'
+    : "";
+}
+
+/* Andamento da operação (out/2026): só para pedidos do sistema. Triagem de ida = separação,
+   Carregamento = conferência do carregamento, Triagem da volta = conferência do retorno. */
+function andamentoEtapaHtml(etapa, pedido){
+  const a = pedido && pedido.andamento;
+  if(!a) return "";
+  const tipo = String(etapa && etapa.etapa || "").toLowerCase();
+  let texto = "", classe = "";
+  const conf = function(c, feito, falta){
+    if(!c) return { texto: falta, classe: "" };
+    return c.faltando
+      ? { texto: feito + " com " + c.faltando + " pendência(s) · " + c.lidas + "/" + c.total, classe: "is-alerta" }
+      : { texto: feito + " · " + c.lidas + "/" + c.total, classe: "is-ok" };
+  };
+  if(tipo.includes("triagem") && tipo.includes("separ")){
+    if(a.comercial === "pre_reserva"){ texto = "Pré-reserva · aguardando aprovação"; }
+    else if(a.status === "separado"){ texto = "Separado · " + a.separado + "/" + a.total; classe = "is-ok"; }
+    else if(a.status === "separado_com_divergencia"){ texto = "Separado com falta · " + a.separado + "/" + a.total; classe = "is-alerta"; }
+    else if(a.separado > 0 || a.status === "em_separacao"){ texto = "Separando · " + a.separado + "/" + a.total; classe = "is-andamento"; }
+    else { texto = "A separar · " + a.total + " peça(s)"; }
+  } else if(tipo === "carregamento"){
+    const r = conf(a.carregamento, "Carregado", "A conferir no carregamento"); texto = r.texto; classe = r.classe;
+  } else if(tipo.includes("triagem") && tipo.includes("confer")){
+    const r = conf(a.retorno, "Conferido na volta", "A conferir na volta"); texto = r.texto; classe = r.classe;
+  } else {
+    return "";
+  }
+  return '<div class="andamento-etapa ' + classe + '">' + escapeHtml(texto) + '</div>';
+}
+
+/* Cronograma como ordem de serviço (out/2026): a triagem abre a separação do pedido,
+   com a lista de itens (marcação manual ou QR pela câmera). */
+function abrirTriagemCronograma(pedidoSistemaId, etapaNome){
+  if(!pedidoSistemaId){
+    mostrarAlerta("Esta triagem é de um pedido lançado direto no cronograma, sem lista de itens no sistema. A separação pela lista vale para os pedidos feitos no Comercial.");
+    return;
+  }
+  // Triagem da volta: conferência por bipagem do que retornou.
+  if(/confer/i.test(etapaNome || "")){ abrirConferenciaCronograma(pedidoSistemaId, "retorno"); return; }
+  const destino = "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html?pedido=" + encodeURIComponent(pedidoSistemaId) + "&etapa=ida";
+  try{
+    if(window.top !== window && typeof window.top.shellNavigate === "function"){ window.top.shellNavigate(destino); return; }
+  }catch(e){}
+  window.location.href = "../../Estoque/SeparacaoMateriais/separacao-materiais.html?pedido=" + encodeURIComponent(pedidoSistemaId) + "&etapa=ida";
+}
+
+/* Conferência por bipagem (out/2026): carregamento e volta, lendo as etiquetas de envio. */
+function abrirConferenciaCronograma(pedidoSistemaId, etapa){
+  const query = "?pedido=" + encodeURIComponent(pedidoSistemaId) + "&etapa=" + encodeURIComponent(etapa);
+  try{
+    if(window.top !== window && typeof window.top.shellNavigate === "function"){ window.top.shellNavigate("Modulos/Logistica/Conferencia/conferencia.html" + query); return; }
+  }catch(e){}
+  window.location.href = "../../Logistica/Conferencia/conferencia.html" + query;
+}
+
+function abrirPedidoDoSistema(){
+  const id = window.__pedidoSistemaEmEdicao;
+  if(!id) return;
+  const destino = "Modulos/Comercial/Pedidos/pedido.html?pedido=" + encodeURIComponent(id) + "&modo=editar";
+  try{
+    if(window.top !== window && typeof window.top.shellNavigate === "function"){ window.top.shellNavigate(destino); return; }
+  }catch(e){}
+  window.open("../../Comercial/Pedidos/pedido.html?pedido=" + encodeURIComponent(id) + "&modo=editar", "_blank");
+}
+
 function resetarFormularioPedido(){
+  marcarPedidoDoSistema("");
 
   document.getElementById("pedidoNumero").value = "";
   document.getElementById("pedidoCliente").value = "";
@@ -13381,6 +13488,7 @@ return {
   dataEvento,
   infoLogistica,
   etapas,
+  pedidoSistemaId: window.__pedidoSistemaEmEdicao || "",
 
   /*
    * O GS usará o token para identificar
@@ -14975,7 +15083,7 @@ window.addEventListener("load", function(){
     return;
   }
 
-  const pedido = cronogramaData.find(p => p.pedido == numeroPedido);
+  const pedido = cronogramaData.find(p => String(p.chave || p.pedido) === String(numeroPedido)) || cronogramaData.find(p => p.pedido == numeroPedido);
   if(!pedido) return;
 
   if(ehPerfilMotorista(acesso.perfil)){
@@ -14988,6 +15096,7 @@ window.addEventListener("load", function(){
   document.getElementById("pedidoNumero").value = pedido.pedido || "";
   document.getElementById("pedidoCliente").value = pedido.cliente || "";
   document.getElementById("pedidoLocal").value = pedido.local || "";
+  marcarPedidoDoSistema(pedido.pedidoSistemaId || "");
   preencherInfoLogisticaPedido(pedido.infoLogistica || {});
 
   if(pedido.dataEvento){
@@ -17785,9 +17894,12 @@ onclick="
           cursor:pointer;
         "
       `
-      : ""
+      : pedido.pedidoSistemaId && /triagem|carregamento/i.test(String(etapa.etapa || ""))
+        ? `onclick="${/carregamento/i.test(String(etapa.etapa || "")) ? "abrirConferenciaCronograma('" + pedido.pedidoSistemaId + "', 'carregamento')" : "abrirTriagemCronograma('" + pedido.pedidoSistemaId + "', '" + String(etapa.etapa || "").replace(/'/g, "") + "')"}" style="cursor:pointer;"`
+        : ""
   }
 >
+${andamentoEtapaHtml(etapa, pedido)}
 
   <!-- BARRA -->
 
@@ -17798,7 +17910,7 @@ onclick="
   <div
     class="agenda-card-numero"
     title="Abrir pedido"
-    onclick="event.stopPropagation(); editarPedido('${pedido.pedido}')"
+    onclick="event.stopPropagation(); editarPedido('${pedido.chave || pedido.pedido}')"
   >
 
     #${escapeHtml(
@@ -18816,6 +18928,7 @@ function appCartaoEtapa(item, indice){
         '<span class="app-horario' + (item.hora ? "" : " sem") + '">' + APP_ICONES.relogio + escapeHtml(item.hora || "Sem horário") + '</span>' +
       '</div>' +
 
+      andamentoEtapaHtml(etapa, pedido) +
       '<p class="app-cliente">' + escapeHtml(pedido.cliente || "Cliente não informado") + '</p>' +
 
       (pedido.local
@@ -18933,7 +19046,6 @@ function renderCronogramaApp(){
         '</div>' +
         '<button type="button" class="app-icone-btn app-btn-menu" onclick="appAlternarMenu(event)" aria-label="Mais opções">' + APP_ICONES.menu + '</button>' +
         '<div class="app-menu" id="appMenu" role="menu">' +
-          '<button type="button" role="menuitem" onclick="appMenuAcao(abrirNovoPedidoProtegido)">' + APP_ICONES.mais + 'Novo pedido</button>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(abrirAgendaNova)">' + APP_ICONES.agenda + 'Agenda</button>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(abrirCadastrosProtegido)">' + APP_ICONES.cadastros + 'Cadastros</button>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(freeAbrirPainel)">' + APP_ICONES.cadastros + 'Equipe Free</button>' +
@@ -19023,8 +19135,18 @@ function appAbrirItem(indice){
     return;
   }
 
+  if(item.chave === "carregamento" && item.pedido.pedidoSistemaId){
+    abrirConferenciaCronograma(String(item.pedido.pedidoSistemaId), "carregamento");
+    return;
+  }
+
   if(item.chave === "carregamento"){
     abrirConclusaoCarregamento(String(item.pedido.pedido || ""), etapa);
+    return;
+  }
+
+  if(item.chave === "separacao"){
+    abrirTriagemCronograma(String(item.pedido.pedidoSistemaId || ""), String(etapa.etapa || ""));
     return;
   }
 
@@ -19033,7 +19155,7 @@ function appAbrirItem(indice){
 
 function appVerPedido(indice){
   const item = appEstado.itens[indice];
-  if(item){ editarPedido(String(item.pedido.pedido || "")); }
+  if(item){ editarPedido(String(item.pedido.chave || item.pedido.pedido || "")); }
 }
 
 /* Deslizar para os lados troca o dia (e a semana, nas pontas) */

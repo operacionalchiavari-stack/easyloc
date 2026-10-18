@@ -1,5 +1,5 @@
 import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
-import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261009-modulo3d";
+import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261017-abrir-projeto";
 
 export function initItens({ supabase, els }){
 

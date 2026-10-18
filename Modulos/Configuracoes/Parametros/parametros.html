@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Parâmetros</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
+  <link rel="stylesheet" href="parametros.css?v=20261017-contraste">
+</head>
+<body>
+<div class="container el-page">
+  <div class="header-list">
+    <h2>Parâmetros</h2>
+  </div>
+
+  <form id="formParametros" class="pr-form" novalidate>
+    <section class="pr-card">
+      <h3>Pedidos no cronograma</h3>
+      <p class="pr-ajuda">Os pedidos do Comercial abastecem o cronograma. Escolha a partir de qual status as etapas do pedido aparecem lá. Fora desses status (ou se o pedido for cancelado), as etapas saem do cronograma.</p>
+      <div class="pr-opcoes" role="group" aria-label="Status que entram no cronograma">
+        <label class="pr-check"><input type="checkbox" name="status" value="orcamento"><span>Orçamento</span></label>
+        <label class="pr-check"><input type="checkbox" name="status" value="pre_reserva"><span>Pré-reserva</span></label>
+        <label class="pr-check"><input type="checkbox" name="status" value="aprovado"><span>Aprovado</span></label>
+      </div>
+    </section>
+
+    <section class="pr-card">
+      <h3>Datas das etapas</h3>
+      <p class="pr-ajuda">Como o pedido calcula a data de cada etapa. Depois, a logística pode mudar a data no próprio cronograma, e o pedido não sobrescreve.</p>
+      <div class="pr-grade">
+        <label class="pr-campo"><span>Triagem (separação)</span><div><input type="number" min="0" max="30" name="triagem_dias_antes_carregamento"><small>dia(s) antes do carregamento</small></div></label>
+        <label class="pr-campo"><span>Carregamento</span><div><input type="number" min="0" max="30" name="carregamento_dias_antes_entrega"><small>dia(s) antes da entrega</small></div></label>
+        <label class="pr-campo"><span>Montagem</span><div><input type="number" min="0" max="30" name="montagem_dias_apos_entrega"><small>dia(s) depois da entrega</small></div></label>
+        <label class="pr-campo"><span>Desmontagem</span><div><input type="number" min="0" max="30" name="desmontagem_dias_apos_coleta"><small>dia(s) depois da coleta</small></div></label>
+        <label class="pr-campo"><span>Triagem (conferência da volta)</span><div><input type="number" min="0" max="30" name="triagem_retorno_dias_apos_coleta"><small>dia(s) depois da coleta</small></div></label>
+        <label class="pr-campo"><span>Horário padrão das etapas</span><div><input type="time" name="hora_padrao"></div></label>
+      </div>
+    </section>
+
+    <section class="pr-card">
+      <h3>Triagem</h3>
+      <p class="pr-ajuda">Responsável e equipe que já vêm preenchidos nas triagens que o pedido cria no cronograma.</p>
+      <div class="pr-grade">
+        <label class="pr-campo"><span>Responsável padrão</span><div><input type="text" maxlength="80" name="triagem_responsavel" placeholder="Ex.: Matheus Martins"></div></label>
+        <label class="pr-campo"><span>Equipe padrão</span><div><input type="text" maxlength="80" name="triagem_equipe" placeholder="Ex.: Equipe Galpão"></div></label>
+        <label class="pr-campo"><span>Separação liberada</span><div><input type="number" min="0" max="60" name="separacao_dias_antes_evento"><small>dia(s) antes do evento (pedido aprovado)</small></div></label>
+      </div>
+    </section>
+
+    <div class="pr-acoes">
+      <span id="parametrosStatus" role="status"></span>
+      <button type="submit" class="btn primary" id="btnSalvarParametros">Salvar parâmetros</button>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/permissions.js?v=20261017-parametros"></script>
+<script src="parametros.js?v=20261017-separacao"></script>
+</body>
+</html>

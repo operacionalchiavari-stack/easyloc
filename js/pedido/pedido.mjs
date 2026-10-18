@@ -3,7 +3,7 @@ console.log("✅ pedido.mjs carregado");
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
 import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261009-satelite";
-import { initItens } from "./pedido.itens.mjs?v=20261015-microfone";
+import { initItens } from "./pedido.itens.mjs?v=20261017-abrir-projeto";
 import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261009-periodo";
@@ -512,16 +512,12 @@ async function setupPedidoWorkspace({ supabase }){
 
     if(error) throw error;
 
+    // Numeração própria do sistema, começando do 1 (out/2026): o maior número já usado + 1.
+    // O cronograma separa estes pedidos dos antigos de mesmo número pelo código interno.
     const usados = new Set((data || []).map((row) => String(row.numero_pedido || "").trim()));
-    let proximo = usados.size + 1;
-    let numero = String(proximo).padStart(3, "0");
-
-    while(usados.has(numero)){
-      proximo += 1;
-      numero = String(proximo).padStart(3, "0");
-    }
-
-    return numero;
+    let proximo = Math.max(0, ...[...usados].map((n) => /^\d+$/.test(n) ? Number(n) : 0)) + 1;
+    while(usados.has(String(proximo)) || usados.has(String(proximo).padStart(3, "0"))) proximo += 1;
+    return String(proximo);
   }
 
   if(!window.__PEDIDO_ATUAL_ID && !new URLSearchParams(location.search).has('pedido')){
@@ -950,96 +946,27 @@ async function setupPedidoWorkspace({ supabase }){
     return date.toISOString().slice(0, 10);
   }
 
-  async function carregarRegrasCronograma() {
-    const padrao = {
-      carregamento_dias_antes_entrega: 1,
-      triagem_dias_antes_carregamento: 2,
-      montagem_dias_apos_entrega: 0,
-      desmontagem_dias_apos_coleta: 0,
-      triagem_retorno_dias_apos_coleta: 1,
-      hora_padrao: "08:00"
-    };
 
-    const { data, error } = await supabase
-      .from("empresa_logistica_regras")
-      .select("*")
-      .eq("empresa_id", window.__CONTEXT.empresa_id)
-      .maybeSingle();
-
-    if (error) {
-      console.warn("Regras do cronograma indisponiveis; usando padrao.", error);
-      return padrao;
-    }
-
-    return { ...padrao, ...(data || {}) };
-  }
-
-  async function garantirCronogramaLogistico(pedidoId, pedido) {
-    if (!pedidoId || !pedido?.data_evento || pedido.status_comercial === "cancelado") {
-      return;
-    }
-
-    const { count, error: countError } = await supabase
-      .from("cronograma_logistico")
-      .select("id", { count: "exact", head: true })
-      .eq("empresa_id", window.__CONTEXT.empresa_id)
-      .eq("pedido_id", pedidoId);
-
-    if (countError) {
-      console.warn("Nao foi possivel verificar cronograma existente.", countError);
-      return;
-    }
-
-    if (count && count > 0) {
-      return;
-    }
-
-    const regras = await carregarRegrasCronograma();
-    const entrega = pedido.data_entrega || pedido.data_evento;
-    const coleta = pedido.data_coleta || pedido.data_evento;
-    const carregamento = addDaysISO(entrega, -Number(regras.carregamento_dias_antes_entrega || 0));
-    const triagem = addDaysISO(carregamento, -Number(regras.triagem_dias_antes_carregamento || 0));
-    const montagem = addDaysISO(entrega, Number(regras.montagem_dias_apos_entrega || 0));
-    const desmontagem = addDaysISO(coleta, Number(regras.desmontagem_dias_apos_coleta || 0));
-    const triagemRetorno = addDaysISO(coleta, Number(regras.triagem_retorno_dias_apos_coleta || 0));
-    const horario = String(regras.hora_padrao || "08:00").slice(0, 5);
-
-    const etapas = [
-      { etapa: "Triagem", data_etapa: triagem, observacao: "Separacao previa do pedido." },
-      { etapa: "Carregamento", data_etapa: carregamento, observacao: "Carregamento conforme regra da empresa." },
-      { etapa: "Montagem", data_etapa: montagem, observacao: "Montagem conforme data de entrega." },
-      { etapa: "Evento", data_etapa: pedido.data_evento, observacao: "Data do evento." },
-      { etapa: "Desmontagem", data_etapa: desmontagem, observacao: "Desmontagem conforme coleta." },
-      { etapa: "Triagem Retorno", data_etapa: triagemRetorno, observacao: "Conferencia de retorno." }
-    ].filter((item) => item.data_etapa);
-
-    if (!etapas.length) {
-      return;
-    }
-
-    const payload = etapas.map((item) => ({
-      ...item,
-      empresa_id: window.__CONTEXT.empresa_id,
-      pedido_id: pedidoId,
-      numero_pedido: pedido.numero_pedido,
-      cliente_nome: pedido.cliente_nome,
-      local_nome: pedido.local_nome,
-      tipo_evento: pedido.tipo_evento,
-      data_evento: pedido.data_evento,
-      horario,
-      origem: "pedido",
-      status: "programado",
-      regras_snapshot: regras,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }));
-
-    const { error } = await supabase
-      .from("cronograma_logistico")
-      .insert(payload);
-
-    if (error) {
-      console.warn("Pedido salvo, mas o cronograma logistico nao foi gerado.", error);
+  // O cronograma é abastecido pelo pedido (out/2026): o servidor cria/atualiza as etapas na planilha do
+  // Cronograma (api/_gas/projetos/cronograma/PedidosAcervo.js) conforme o status escolhido em Parâmetros.
+  async function sincronizarCronogramaDoPedido(pedidoId) {
+    if (!pedidoId) return null;
+    const local = /^(localhost|127.0.0.1)$/.test(location.hostname);
+    const base = (local && location.port === "3000") || /.vercel.app$/i.test(location.hostname) ? "/" : "https://easyloc-zeta.vercel.app/";
+    try {
+      const { data } = await supabase.auth.getSession();
+      const resposta = await fetch(base + "api/gs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + (data?.session?.access_token || "") },
+        body: JSON.stringify({ projeto: "cronograma", fn: "CRON_sincronizarPedidoAcervo", args: [pedidoId] })
+      });
+      const corpo = await resposta.json().catch(() => null);
+      if (!corpo?.ok) throw new Error(corpo?.erro || "Servidor indisponível.");
+      return corpo.resultado;
+    } catch (error) {
+      console.warn("Pedido salvo, mas o cronograma não foi atualizado.", error);
+      avisar("Pedido salvo, mas o cronograma não foi atualizado: " + (error.message || error), "Cronograma", "aviso");
+      return null;
     }
   }
 
@@ -1179,8 +1106,18 @@ async function setupPedidoWorkspace({ supabase }){
       return;
     }
 
+    const eraNovo = !window.__PEDIDO_ATUAL_ID;
     pedidoId = result.data?.id || pedidoId;
     window.__PEDIDO_ATUAL_ID = pedidoId;
+    // Projeto do catálogo virou pedido: marca o projeto e troca o endereço (recarregar abre o pedido, não o projeto).
+    const projetoCatalogoId = payloadPedido.observacoes?.projeto_catalogo_id;
+    if(projetoCatalogoId && eraNovo){
+      const { error: statusError } = await supabase.rpc("projeto_atualizar_status", {
+        p_empresa_id: window.__CONTEXT.empresa_id, p_id: projetoCatalogoId, p_status: "convertido"
+      });
+      if(statusError) console.error("Erro ao marcar o projeto do catálogo como convertido:", statusError);
+      history.replaceState(null, "", `pedido.html?pedido=${encodeURIComponent(pedidoId)}&modo=editar`);
+    }
     setupPedidoRealtime(pedidoId);
     window.__PEDIDO_DADOS_ATUAL = {
       ...(window.__PEDIDO_DADOS_ATUAL || {}),
@@ -1216,7 +1153,7 @@ async function setupPedidoWorkspace({ supabase }){
       }
     }
 
-    await garantirCronogramaLogistico(pedidoId, payloadPedido);
+    const cronograma = await sincronizarCronogramaDoPedido(pedidoId);
 
     if(["aprovado", "finalizado", "enviado"].includes(statusComercial)){
       const contratoSalvo = typeof window.__pedidoSalvarContratoFinal === "function"
@@ -1229,9 +1166,10 @@ async function setupPedidoWorkspace({ supabase }){
     }
 
     avisar(
-      deveReservar
+      (deveReservar
         ? "Pedido salvo e disponibilidade atualizada."
-        : "Orcamento salvo sem reservar estoque.",
+        : "Orcamento salvo sem reservar estoque.")
+        + (cronograma?.noCronograma ? " Cronograma atualizado." : cronograma?.removidas ? " Etapas retiradas do cronograma." : ""),
       "Salvar pedido",
       "sucesso"
     );
@@ -1353,6 +1291,96 @@ async function setupPedidoWorkspace({ supabase }){
   window.addEventListener("easyloc:pix-atualizado", window.__pedidoPixHandler);
   window.addEventListener("easyloc:pedido-financeiro-atualizado", window.__pedidoPixHandler);
   await carregarPedidoSalvoSeNecessario();
+  await carregarProjetoCatalogoSeNecessario();
+
+  // Projeto montado pelo decorador no catálogo (Central de Pedidos → "Veio do catálogo", out/2026): abre nesta
+  // mesma tela, já preenchida (cliente, evento, local, itens, ambientes e imagens). Nada é gravado até "Salvar":
+  // aí vira um pedido normal (orçamento, sem reservar estoque) e o projeto fica marcado como "Convertido em pedido".
+  async function carregarProjetoCatalogoSeNecessario(){
+    const projetoId = new URLSearchParams(location.search).get("projeto");
+    if(!projetoId || window.__PEDIDO_ATUAL_ID) return;
+    const empresaId = window.__CONTEXT.empresa_id;
+    const { data: projeto, error } = await supabase.from("projetos").select("*")
+      .eq("empresa_id", empresaId).eq("id", projetoId).maybeSingle();
+    if(error || !projeto){
+      console.error("Erro ao carregar projeto do catálogo:", error);
+      avisar("Nao foi possivel carregar o projeto do catalogo.", "Abrir pedido", "erro");
+      return;
+    }
+    const dados = projeto.dados && typeof projeto.dados === "object" ? projeto.dados : {};
+    const evento = dados.evento && typeof dados.evento === "object" ? dados.evento : {};
+    const ambientes = Array.isArray(dados.ambientes) ? dados.ambientes : [];
+
+    window.__PEDIDO_DADOS_ATUAL = { observacoes: { projeto_catalogo_id: projeto.id, origem_catalogo: true } };
+    window.__pedidoProjetoComercial = {
+      ...structuredClone(projeto),
+      data_evento_fim: evento.data_fim || null,
+      dados: { ...structuredClone(dados), ambientes, plantas: Array.isArray(dados.plantas) ? dados.plantas : [] }
+    };
+
+    if(projeto.cliente_id){
+      const { data: cliente } = await supabase.from("clientes_empresas").select("id,nome_razao,telefone,catalogo_logo_url")
+        .eq("empresa_id", empresaId).eq("id", projeto.cliente_id).maybeSingle();
+      if(cliente){
+        setInputValue("clienteInput", cliente.nome_razao || "");
+        setInputValue("clienteIdHidden", cliente.id);
+        setInputValue("telefoneInput", cliente.telefone || "");
+        document.getElementById("clienteInput")?.dispatchEvent(new CustomEvent("cliente-selecionado", { detail: cliente }));
+      }
+    }
+    if(evento.tipo) selecionarOpcaoPorTexto("tipoEventoSelect", evento.tipo);
+    setInputValue("dataEvento", dataParaISO(projeto.data_evento));
+    setInputValue("dataEventoFim", evento.data_fim ? dataParaISO(evento.data_fim) : "");
+    window.__definirModoEvento?.(evento.data_fim ? "periodo" : "dia");
+    setInputValue("dataEntrega", evento.data_entrega ? dataParaISO(evento.data_entrega) : "");
+    setInputValue("dataColeta", evento.data_coleta ? dataParaISO(evento.data_coleta) : "");
+    setInputValue("horaEntrega", evento.hora_entrega || "");
+    setInputValue("horaColeta", evento.hora_coleta || "");
+    setInputValue("observacoesEntrega", evento.obs_entrega || "");
+    setInputValue("observacoesColeta", evento.obs_coleta || "");
+    setInputValue("observacoesSeparacao", evento.obs_separacao || "");
+
+    let localCadastro = null;
+    if(evento.local_id){
+      const { data } = await supabase.from("locais_empresas")
+        .select("id,nome_razao,endereco,numero_endereco,ponto_referencia,latitude,longitude,distancia_galpao_km,distancia_galpao_texto,google_place_id,tags")
+        .eq("empresa_id", empresaId).eq("id", evento.local_id).maybeSingle();
+      localCadastro = data || null;
+    }
+    setInputValue("localInput", localCadastro?.nome_razao || projeto.local_evento || "");
+    setInputValue("localIdHidden", localCadastro?.id || "");
+    if(localCadastro) window.__pedidoRenderizarLocalEvento?.(localCadastro);
+
+    // Mesma peça em ambientes diferentes vira uma linha só (quantidades somadas), como faz o catálogo do pedido.
+    const quantidades = new Map();
+    ambientes.forEach((amb) => (amb.itens || []).forEach((linha) => {
+      const qtd = Number(linha.quantidade);
+      if(!linha.item_id || !Number.isFinite(qtd) || qtd <= 0) return;
+      quantidades.set(String(linha.item_id), (quantidades.get(String(linha.item_id)) || 0) + qtd);
+    }));
+    const ids = [...quantidades.keys()];
+    const cadastro = new Map();
+    for(let i = 0; i < ids.length; i += 150){
+      const { data } = await supabase.from("itens")
+        .select("id,codigo,produto,descricao_total,foto_url,valor_locacao,valor_reposicao,volume_cubico")
+        .eq("empresa_id", empresaId).in("id", ids.slice(i, i + 150));
+      (data || []).forEach((row) => cadastro.set(String(row.id), row));
+    }
+    window.__restaurarItensPedido?.(ids.filter((id) => cadastro.has(id)).map((id) => {
+      const it = cadastro.get(id);
+      return {
+        item_id: id, codigo_item: it.codigo || "", item_nome: it.descricao_total || it.produto || "Item",
+        foto_url: it.foto_url || "", quantidade_solicitada: quantidades.get(id),
+        valor_locacao: it.valor_locacao || 0, valor_reposicao: it.valor_reposicao || 0, volume_cubico: it.volume_cubico || 0
+      };
+    }));
+
+    document.getElementById("tipoEventoSelect")?.dispatchEvent(new Event("change"));
+    document.getElementById("localInput")?.dispatchEvent(new Event("change", { bubbles: true }));
+    window.atualizarResumoGlobal?.();
+    window.__ocultarAutocompleteClientePedido?.();
+    avisar("Projeto do catálogo carregado. Revise e salve para virar um pedido.", "Projeto do catálogo", "sucesso");
+  }
 }
 
 function setupTimelinePedido({ avisar }){

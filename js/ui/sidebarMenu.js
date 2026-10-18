@@ -57,6 +57,7 @@
         itens: [
           { rotulo: "Catálogo", href: "Modulos/Comercial/Catalogo/catalogo.html" },
           { rotulo: "Painel de Complexidade", href: "Modulos/Chiavari/Costura/costura.html" },
+          { rotulo: "Registro de Ocorrências", href: "Modulos/Chiavari/Ocorrencias/OcorrenciasOperacionais.html" },
         ],
       },
       {
@@ -64,9 +65,14 @@
         icone: "handshake",
         rotulo: "Comercial",
         itens: [
-          { rotulo: "Cadastro de Clientes", href: "Modulos/Comercial/CadastroClientes/cadastro-clientes.html" },
-          { rotulo: "Cadastro de Locais", href: "Modulos/Comercial/CadastroLocais/cadastro-locais.html" },
-          { rotulo: "Central de Pedidos", href: "Modulos/Comercial/Pedidos/CentralPedidos.html" },
+          {
+            rotulo: "Cadastros",
+            grupo: [
+              { rotulo: "Clientes", href: "Modulos/Comercial/CadastroClientes/cadastro-clientes.html" },
+              { rotulo: "Locais", href: "Modulos/Comercial/CadastroLocais/cadastro-locais.html" },
+            ],
+          },
+          { rotulo: "Pedidos e Orçamentos", href: "Modulos/Comercial/Pedidos/CentralPedidos.html" },
           {
             rotulo: "Contratos",
             legado: {
@@ -138,22 +144,6 @@
           },
           { rotulo: "Corridas Uber", href: "Modulos/Chiavari/Uber/index.html" },
           {
-            rotulo: "Planejamento",
-            legado: {
-              html: "Modulos/Logistica/PlanejamentoLogistico/planejamento-logistico.html",
-              js: "Modulos/Logistica/PlanejamentoLogistico/planejamento-logistico.js",
-              css: "Modulos/Logistica/PlanejamentoLogistico/planejamento-logistico.css",
-            },
-          },
-          {
-            rotulo: "Roteirização",
-            legado: {
-              html: "Modulos/Logistica/Roteirizacao/roteirizacao.html",
-              js: "Modulos/Logistica/Roteirizacao/roteirizacao.js",
-              css: "Modulos/Logistica/Roteirizacao/roteirizacao.css",
-            },
-          },
-          {
             rotulo: "Expedição",
             legado: {
               html: "Modulos/Logistica/Expedicao/expedicao.html",
@@ -161,8 +151,6 @@
               css: "Modulos/Logistica/Expedicao/expedicao.css",
             },
           },
-          { rotulo: "Registro de Ocorrências", href: "Modulos/Chiavari/Ocorrencias/OcorrenciasOperacionais.html" },
-          { rotulo: "Indicadores Operacionais", href: "Modulos/Chiavari/Ocorrencias/PainelQualidade.html" },
         ],
       },
       {
@@ -191,6 +179,7 @@
         rotulo: "Gestão",
         itens: [
           { rotulo: "Central de Metas", href: "Modulos/Chiavari/CentralMetas/central.html" },
+          { rotulo: "Parâmetros", href: "Modulos/Configuracoes/Parametros/parametros.html" },
           {
             // Fora do menu (out/2026, pedido do usuário): as permissões ficam num lugar só,
             // no Cadastro de Funcionários (Recursos Humanos), que já tem os bloqueios de acesso.

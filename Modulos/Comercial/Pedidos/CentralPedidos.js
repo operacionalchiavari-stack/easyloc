@@ -917,7 +917,12 @@
       .eq("empresa_id", state.empresaId).not("cliente_id", "is", null)
       .order("updated_at", { ascending: false }).limit(200);
     if(error) throw error;
-    const projetos = data || [];
+    // Projeto que já virou pedido (aberto e salvo na tela do pedido) aparece só como o pedido.
+    const { data: convertidos } = await state.supabase.from("separacoes_pedidos")
+      .select("projeto_catalogo_id:observacoes->>projeto_catalogo_id").eq("empresa_id", state.empresaId)
+      .not("observacoes->>projeto_catalogo_id", "is", null).limit(1000);
+    const jaViraram = new Set((convertidos || []).map((row) => String(row.projeto_catalogo_id || "")));
+    const projetos = (data || []).filter((p) => !jaViraram.has(String(p.id)));
     if(!projetos.length) return [];
     await carregarPresenca().catch(() => {});
     const linhas = (p) => (p.dados?.ambientes || []).flatMap((amb) => amb.itens || []);
@@ -1048,7 +1053,7 @@
     }
 
     els.centralPedidosTbody.innerHTML = state.filtrados.map((pedido) => `
-      <tr data-pedido-id="${escapeHtml(pedido.id)}" class="${pedido.origemCatalogo ? "is-catalogo" : ""}${presencaDe(pedido)?.ativo ? " is-montando" : ""}" title="${pedido.origemCatalogo ? "Projeto do catálogo: clique duas vezes para ver" : "Clique duas vezes para abrir o pedido"}">
+      <tr data-pedido-id="${escapeHtml(pedido.id)}" class="${pedido.origemCatalogo ? "is-catalogo" : ""}${presencaDe(pedido)?.ativo ? " is-montando" : ""}" title="${pedido.origemCatalogo ? "Projeto do catálogo: clique duas vezes para abrir como pedido" : "Clique duas vezes para abrir o pedido"}">
           <td>${pedido.origemCatalogo
             ? `<span class="pedido-selo-catalogo" title="Projeto montado pelo decorador no catálogo">Veio do catálogo</span>${presencaHtml(pedido)}`
             : `<span class="pedido-numero-card">${escapeHtml(pedido.numero)}</span>`}</td>
@@ -1253,7 +1258,7 @@
       const row = event.target.closest("[data-pedido-id]");
       const pedidoId = row?.dataset?.pedidoId || "";
       const doCatalogo = state.pedidos.find((item) => String(item.id) === String(pedidoId) && item.origemCatalogo);
-      if(doCatalogo){ abrirPreviewProjetoCatalogo(doCatalogo); return; }
+      if(doCatalogo){ window.location.href = `pedido.html?projeto=${encodeURIComponent(doCatalogo.projetoId)}&modo=editar`; return; }
       if(pedidoId) abrirPedido(pedidoId, "editar");
     });
 

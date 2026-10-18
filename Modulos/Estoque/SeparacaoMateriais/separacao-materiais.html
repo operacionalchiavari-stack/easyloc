@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
-  <link rel="stylesheet" href="separacao-materiais.css?v=20260913b">
+  <link rel="stylesheet" href="separacao-materiais.css?v=20261017-etiquetas">
 </head>
 <body>
 <section class="separacao-page el-page" data-module-root>
@@ -98,6 +98,10 @@
           <span>Marcar todos como separados.</span>
         </button>
       </div>
+      <button type="button" class="btn secondary separacao-etiquetas-btn" data-etiquetas-envio>
+        <i data-lucide="tag"></i>
+        Imprimir etiquetas de envio
+      </button>
     </section>
   </div>
 
@@ -186,10 +190,17 @@
               </div>
             </div>
 
-            <div class="scanner-visual">
+            <div class="scanner-visual" id="scannerVisual">
               <i data-lucide="scan-barcode"></i>
-              <span>Leia ou digite o codigo</span>
+              <span>Leia com a câmera, com o leitor ou digite o código</span>
             </div>
+            <div class="scanner-camera" id="scannerCamera" hidden>
+              <video id="scannerVideo" playsinline muted autoplay></video>
+              <span class="scanner-mira" aria-hidden="true"></span>
+            </div>
+            <button type="button" class="btn scanner-camera-btn" id="btnCameraSeparacao">
+              <i data-lucide="camera"></i> <span>Ler com a câmera</span>
+            </button>
 
             <label class="scanner-input-label" for="scannerInput">Entrada do leitor</label>
             <input class="scanner-input el-input" id="scannerInput" autocomplete="off" inputmode="none" placeholder="Passe o codigo de barras">
@@ -228,6 +239,10 @@
 
       <footer class="separacao-modal-footer">
         <button type="button" class="btn secondary" id="btnCancelarQrSeparacao">Cancelar</button>
+        <button type="button" class="btn secondary separacao-etiquetas-btn" data-etiquetas-envio>
+          <i data-lucide="tag"></i>
+          Etiquetas
+        </button>
         <button type="button" class="btn primary" id="btnFinalizarSeparacao">
           <i data-lucide="check-circle"></i>
           Finalizar
@@ -261,8 +276,9 @@
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="../../../js/core/permissions.js?v=20261009-acesso-estavel"></script>
-<script src="separacao-materiais.js?v=20261008-banco"></script>
+<script src="../../../js/core/permissions.js?v=20261017-parametros"></script>
+<script src="../../../js/core/etiquetas.js?v=20261017-etiquetas"></script>
+<script src="separacao-materiais.js?v=20261017-etiquetas"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

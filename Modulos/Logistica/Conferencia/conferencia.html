@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Conferência</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
+  <link rel="stylesheet" href="conferencia.css?v=20261017-inicio">
+</head>
+<body>
+<div class="container el-page cf-page">
+  <div class="header-list">
+    <h2 id="cfTitulo">Conferência</h2>
+  </div>
+
+  <section class="cf-pedido" id="cfPedido" hidden>
+    <div>
+      <span class="cf-rotulo" id="cfEtapaRotulo">Carregamento</span>
+      <strong id="cfPedidoNumero">Pedido</strong>
+      <small id="cfPedidoMeta"></small>
+    </div>
+    <div class="cf-progresso">
+      <strong id="cfPercent">0%</strong>
+      <div class="cf-barra"><span id="cfBarra"></span></div>
+      <small id="cfContagem">0 de 0 volumes</small>
+    </div>
+  </section>
+
+  <p class="cf-aviso" id="cfAviso" hidden></p>
+
+  <div class="cf-corpo" id="cfCorpo" hidden>
+    <section class="cf-leitor">
+      <div class="cf-camera" id="cfCamera" hidden>
+        <video id="cfVideo" playsinline muted autoplay></video>
+        <span class="cf-mira" aria-hidden="true"></span>
+      </div>
+      <button type="button" class="btn primary cf-btn-camera" id="cfBtnCamera">Ler com a câmera</button>
+      <label class="cf-rotulo" for="cfEntrada">Leitor ou código</label>
+      <input id="cfEntrada" class="el-input" autocomplete="off" placeholder="Bipe a etiqueta do móvel">
+      <div class="cf-ultima" id="cfUltima" aria-live="polite">
+        <span>Última leitura</span>
+        <strong id="cfUltimaTexto">Nenhuma ainda</strong>
+        <small id="cfUltimaDetalhe">A conferência é só por bipagem: leia a etiqueta de envio (ou o QR fixo) de cada móvel.</small>
+      </div>
+    </section>
+
+    <section class="cf-lista">
+      <div class="cf-lista-topo">
+        <h3>Volumes do pedido</h3>
+        <label class="cf-so-faltando"><input type="checkbox" id="cfSoFaltando"> Só o que falta</label>
+      </div>
+      <div id="cfItens"></div>
+    </section>
+  </div>
+
+  <footer class="cf-rodape" id="cfRodape" hidden>
+    <span id="cfRodapeTexto"></span>
+    <button type="button" class="btn primary" id="cfConcluir">Concluir conferência</button>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/permissions.js?v=20261017-conferencia"></script>
+<script src="../../../js/core/leitorQr.js?v=20261017-inicio"></script>
+<script src="conferencia.js?v=20261017-inicio"></script>
+</body>
+</html>

@@ -102,7 +102,7 @@ module.exports = async (req, res) => {
         return null;
       })
     ]);
-    await perfisMensagens(cfg,(mural.aniversariantes || []).flatMap(a=>a.mensagens || []));
+    await perfisMensagens(cfg,[...(mural.aniversariantes || []).flatMap(a=>a.mensagens || []),...(mural.parabensTodos || [])]);
     res.status(200).json({ ok: true, resultado: Object.assign({}, mural, { resumoDia, metasSetores }) });
   } catch (e) {
     console.error("[portal-mural]", e && e.stack || e);

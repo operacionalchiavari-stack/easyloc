@@ -188,6 +188,8 @@
     [/Permissoes/i, 'configuracoes.permissoes.visualizar'],
     [/WhatsApp/i, 'configuracoes.integracoes.whatsapp.visualizar'],
     [/GatewaysPagamento/i, 'configuracoes.integracoes.gateways_pagamento.visualizar'],
+    [/Parametros/i, 'configuracoes.empresa.visualizar'],
+    [/Conferencia/i, 'logistica.separacao.visualizar'],
     [/empresa/i, 'configuracoes.empresa.visualizar']
   ];
   function canNavigate(href) {

@@ -125,11 +125,8 @@ const mockSupabase = `
   assert.strictEqual(d.solicitante, "Lis Baêtas");
   assert.deepStrictEqual(d.ambientes, ["Lounge"]);
   await dialogo.locator("[data-pedido-fechar]").click();
-  await linha.locator("td").nth(3).dblclick();
-  await page.locator("dialog.cpj-order-preview[open]").waitFor({ timeout: 10000 });
-  await page.locator("dialog.cpj-order-preview[open] [data-pedido-fechar]").click();
   await page.waitForFunction(() => !document.querySelector("dialog.cpj-order-preview"));
-  console.log("ok 2 - Visualizar e duplo clique abrem a prévia do projeto");
+  console.log("ok 2 - Visualizar abre a prévia do projeto");
 
   await page.click("#btnFiltrosPedidos");
   await page.selectOption("#filtroStatusPedido", "catalogo_pedido_enviado");
@@ -137,6 +134,9 @@ const mockSupabase = `
   await page.screenshot({ path: process.env.PRINT || require("os").tmpdir() + "/central-presenca.png" });
   console.log("ok 3 - filtro de status do catálogo");
   assert.deepStrictEqual(erros, [], erros.join("\n"));
+  // Duplo clique abre o projeto na tela do pedido, igual a um pedido feito pelo sistema (out/2026).
+  await Promise.all([page.waitForURL(/pedido\.html\?projeto=/), page.locator("#centralPedidosTbody tr[data-pedido-id]").first().locator("td").nth(3).dblclick()]);
+  console.log("ok 4 - duplo clique abre o projeto na tela do pedido");
   await browser.close();
   console.log("todos os testes passaram");
 })().catch((e) => { console.error(e); process.exit(1); });

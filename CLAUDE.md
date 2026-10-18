@@ -7790,7 +7790,7 @@ PlanejadorEventos, Configuracoes/Integracoes/GatewaysPagamento,
 Configuracoes/Integracoes/WhatsApp, Configuracoes/Permissoes,
 Estoque/Compras, Estoque/Controledequalidade,
 Estoque/DisponibilidadeItens, IA/StudioIA, Logistica/Expedicao,
-Logistica/PlanejamentoLogistico, Logistica/Roteirizacao,
+
 RH/GestaoPessoas.
 
 Plano de migração detalhado (fases, receita de conversão por módulo,
@@ -9065,6 +9065,66 @@ usuário: ligação de verdade (OpenAI Realtime, ~1 s de resposta, dá pra inter
   catalogo-app.mjs (tela da categoria ou "Seleção da Helena" empilhada). Os cartões continuam gravados na conversa
   como registro. O resultado de `mostrar_itens` diz a ela se ficou circulado ou não.
 
+## Estoque nos cards + Helena só mostra opções e circula a escolha (16/10/2026)
+Pedido: "mostre a quantidade em estoque e a disponível" nos cards e "ela está viciada em oferecer sempre os mesmos
+móveis... prefiro que ela pare de indicar por iniciativa própria, mostra o que tem disponível e a pessoa escolhe, aí ela
+circula pra sabermos que escolheu certo".
+- **Cards** (grade do computador `gridCardMarkup` e app `cardProduto`): "Estoque N · Disponível em 25/10 M" (sem
+  projeto aberto: "Disponível hoje"; 0 livre: "Esgotado em …" em vermelho). Uma chamada por data pro acervo inteiro:
+  ação `disponibilidade` com `todos:true` da Edge Function `catalogo-assistente` devolve `mapa {id:[total,livre]}`
+  (mesma conta da Helena/tela Disponibilidade; peça sem estoque cadastrado fica sem a linha). `pintarEstoque()`/
+  `vigiarEstoque()` (MutationObserver + checagem a cada 3 s, que repinta quando o projeto/data muda); troca de cor no
+  card atualiza. Visitante não vê (não tem como chamar a função).
+- **Helena**: prompt sem indicação por conta própria (só se pedirem sugestão). Ferramentas novas: `mostrar_opcoes`
+  (TODAS as peças livres na data de um tipo/estilo; o catálogo abre só com elas, com o título dado, sem círculo; na
+  conversa fica o atalho "Sofás boho · 23 peças disponíveis · ver no catálogo", anexo `opcoes`) e `circular_escolha`.
+  `mostrar_itens` não circula mais. O círculo (anexo `escolha` / `circular` na ligação) vai: na peça que a pessoa
+  nomeou por inteiro na mensagem (feito pelo SERVIDOR, sem depender do modelo — ele esquecia), na escolhida via
+  `circular_escolha` e na que entrou no pedido. `mostrarPelaHelena(ids,{circular, ondeEstiver, exato, titulo})`: com
+  `ondeEstiver`, se a peça já está na grade da tela, circula ali sem trocar de tela.
+- **Defeito antigo corrigido**: `pecasCitadas` não reconhecia nomes com hífen ("Sofá Modular Duo - 2 Módulos
+  Horizontal") por sobrar espaço duplo na comparação.
+- Versões `?v=20261016-estoque-escolha`. Testado com sessão temporária da Lis (computador e iPhone): 23 sofás boho,
+  sem círculo; "gostei do Sofá Modular Duo - 2 Módulos Horizontal" → circulado na mesma tela.
+- **Interromper por voz, selos de estoque e "versão final" do pedido pela Helena (16/10)**:
+  - **Interromper**: o microfone fica fechado SÓ durante o cumprimento (`lig.atendeu`); depois fica sempre aberto, então
+    falar por cima corta a fala dela (`interrupt_response` do servidor). O eco é tratado pelo cancelamento de eco do
+    navegador + `ehEco()`. O botão Interromper continua. (Não deu pra testar a interrupção por voz com o microfone simulado.)
+  - **Selos nos cards** (computador e app): "Estoque N" (cinza) e "Disponível em 12/12 M" (verde; "Esgotado em…" vermelho),
+    maiores e em pílula (`.is-estoque/.is-livre/.is-esgotado`).
+  - **Versão final do pedido**: ferramenta `ver_pedido {abrir}` → ação `ver_pedido` → `catalogAssistenteProjeto.verPedido()`
+    abre/fecha a MESMA prévia do "Ver pedido e PDF" (`abrirVisualizacaoPedido(..., {flutuante:true})`). Flutuante = `show()`
+    em vez de `showModal()`, sem travar a tela (z-index 201: acima do cabeçalho 200, abaixo da conversa `.cas-panel` 203 e
+    da barra dela 205), Esc fecha. Fechar fecha todas as `dialog.cpj-order-preview.is-flutuante`. No app, o módulo e os CSS
+    da prévia são carregados na primeira vez. "abre/fecha" entrou no `pedeAcao` (ferramenta obrigatória): em teste ela
+    dizia "fechei" sem chamar a ferramenta. App também passou a ler `valor_reposicao`.
+  - Versões `?v=20261016-versao-final4`.
+- **Vitrine dentro do painel da Helena + destaque "Sua escolha" (16/10)** (pedido: o círculo "parece um rabisco" e "o pedido
+  deve ficar visível o tempo inteiro... aquele catálogo deve aparecer aqui, ocupando todo esse espaço"):
+  - As peças que ela mostra (`mostrar_opcoes`, `mostrar_itens`, escolha) não levam mais pro catálogo: abrem a vitrine
+    `[data-cas-vitrine]` DENTRO de `.cas-conversa` (`abrirVitrine`/`marcarEscolha`/`fecharVitrine` em catalogo-assistente.mjs).
+    Por escrito ocupa o lugar das mensagens e o campo de escrever continua; na ligação cobre a tela da ligação. O pedido à
+    direita fica visível o tempo todo. No topo, faixa grafite com a fala atual dela (mesma `miniTexto`), botões da ligação
+    e "Voltar à conversa/ligação". Cards: foto (abre o zoom), nome, medidas, cores (variações agrupadas por nome+medidas),
+    preço, selos de estoque/disponível (preenchidos pelo mesmo `vigiarEstoque` do catálogo) e "＋ Adicionar ao pedido".
+  - Destaque da escolha: moldura dourada fina + brilho que se expande uma vez + selo escuro "✓ Sua escolha"; destaca
+    dentro das opções já abertas (senão abre só a escolha). O círculo à mão saiu; `mostrarPelaHelena` em catalogo.mjs/
+    catalogo-app.mjs continua no código, mas a Helena não o chama mais. Prompt fala em "destacar", não "circular".
+  - Reforço no fim do prompt: proibido oferecer complementos que a pessoa não pediu ("quer complementar com…").
+  - Pegadinha de publicação: aspas dentro de uma string entre aspas no index.ts fazem o deploy falhar ("Failed to bundle");
+    conferir sempre a saída "Deployed Functions" — o `deno check` com `grep -c TS` não mostra erro de sintaxe.
+  - Versões `?v=20261016-vitrine` (css `vitrine3`).
+- **Ligação: microfone fechado enquanto ela fala + "furar a fila" pela voz (16/10)** (ela "escutava e respondia a si
+  mesma" com o microfone sempre aberto): `atualizarMicrofone` voltou a fechar o microfone que vai pro servidor enquanto
+  ela fala. `iniciarDetectorDeFala()` escuta uma CÓPIA do microfone (`track.clone()`, com `enabled = true` — a cópia
+  herda o "fechado" do original) num AnalyserNode, a cada 50 ms: nos primeiros 400 ms da fala dela aprende o nível do
+  eco, e som acima de max(0,03; 3× o eco) por 6 leituras seguidas (~0,3 s) chama `interromperHelena()` (corta e abre o
+  microfone). Só o microfone é analisado, nunca o áudio dela (isso dava chiado). Calibração em `DETECTOR`; pra ver os
+  números numa ligação de verdade: `window.__casDebug = []` no console e depois ler o array ([tempo, rms, eco, falando]).
+  Testado com microfone simulado: em silêncio ela fala tudo; falando por cima no meio da resposta, corta em ~0,8 s e o
+  servidor transcreve o resto. O começo da frase (~0,3–0,8 s) não chega ao servidor. Eco real de caixa de som não dá pra
+  simular. Limite de 6 ligações/hora vale também nos testes (apagar as marcas `ligacao` de teste).
+
 ## Auditoria de segurança (16/out/2026)
 
 O repositório `easyloc` é PÚBLICO e o GitHub Pages publicava a pasta inteira (código do servidor em `api/_gas`, CLAUDE.md).
@@ -9090,3 +9150,155 @@ O repositório `easyloc` é PÚBLICO e o GitHub Pages publicava a pasta inteira 
   (o que o mural do Portal usa); o resto só pelo `/api/gs` (migration `20261016000400_gs_leitura_so_resumo.sql`).
   Senha "1994" trocada nas linhas 9 (Superv Montagem) e 29 (Jonathan) da aba Senhas (subindo `gs_abas.versao`, senão o
   cache em memória do motor continua aceitando a antiga). Editar a planilha direto no banco = sempre subir a versão da aba.
+
+## Central de Pedidos: projeto do catálogo abre na tela do pedido (out/2026)
+Pedido: abrir os pedidos que vieram do catálogo "da mesma maneira" que os feitos pelo sistema. Duplo clique numa linha
+"Veio do catálogo" abre `pedido.html?projeto=<id>` ("Visualizar" continua abrindo a prévia). `carregarProjetoCatalogoSeNecessario()`
+(pedido.mjs) lê o projeto e preenche tudo: cliente (o decorador, de `clientes_empresas`), tipo, datas e horários de
+`dados.evento`, local (do cadastro se tiver `local_id`, senão o texto), observações, itens (mesma peça em ambientes
+diferentes vira uma linha com a soma) e `window.__pedidoProjetoComercial` = o projeto (ambientes e imagens no catálogo do
+pedido). Pula a tela "Qual história". **Nada é gravado até Salvar**: aí vira um pedido normal (orçamento, não reserva),
+com `observacoes.projeto_catalogo_id`; o projeto vai pra "convertido" (`projeto_atualizar_status`) e o endereço passa a
+`?pedido=`. A Central esconde projeto que já tem pedido ligado (aparece só o pedido). O pedido não volta a acompanhar
+mudanças que o decorador fizer depois no projeto. Teste: `tests/pedido-abrir-projeto-catalogo-browser.cjs`.
+
+## App do Montador: só funcionários do setor Montagem do RH (out/2026)
+A lista de nomes do login (`MONT_listarResponsaveis`) e o próprio `MONT_login` (como responsável) só aceitam quem
+está ATIVO com setor "Montagem" no Cadastro de Funcionários (`funcionarios_acesso`, empresa da Chiavari), via o
+serviço novo do motor `Acervo.nomesDoSetor(setor)` (só nomes, roda sem login). O nome mostrado continua o da aba
+Responsaveis (é ele que está na aba Senhas e nas etapas); o casamento ignora acento, texto entre parênteses, letra
+repetida e sobrenome a menos ("Maicon Martiins" = "Maicon Martins", "Wesley" = "Wesley Santos"). Quem é do RH mas não
+está na aba Responsaveis não aparece. O login do supervisor não mudou.
+
+## Planejamento Logístico apagado (out/2026)
+Pedido do usuário: "o planejamento logístico será feito todo dentro do cronograma". `Modulos/Logistica/PlanejamentoLogistico/`
+apagado e o item "Planejamento" saiu do menu Logística. O banco (`planejamentos_logisticos`, `planejamento_caminhoes`,
+`planejamento_equipe`) não foi tocado; a permissão `logistica.planejamento.visualizar` continua (cobre Roteirização,
+Equipe das Rotas, Caminhões, Fretes e Uber).
+Depois, pelo mesmo motivo, **Roteirização também apagada** (`Modulos/Logistica/Roteirizacao/` e o item do menu) — as
+funções vão ser refeitas dentro do Cronograma. Atenção: Equipe das Rotas e Expedição liam as rotas que a Roteirização
+guardava no navegador (`localStorage easyloc_roteirizacao_rotas`); sem ela, não chegam rotas novas nessas duas telas.
+
+## Início: aniversariantes do mês num slide só (out/2026)
+Pedido: "ao invés de ser uma tela por aniversariante, quero que fiquem todos em um só". `montarMural()`
+(js/ui/portalMural.js) desenha UM slide `.hero-aniversario.hero-aniversarios` (um ponto no carrossel): "Parabéns,
+aniversariantes!" (ou o nome, se for só um) e a fila de pessoas (`.aniver-pessoa`: foto/inicial, nome, "Hoje!" ou "Dia N"
+e o setor — "Sem setor" não aparece). Ao lado, "Carinho para <nome>" com os recados e o campo de mensagem da pessoa
+escolhida (começa na de hoje/mais próxima; clicar em outra troca, `iniciarParabens`). Um `parabensHtml` por pessoa, os
+outros `hidden`. Celular: fila rolando de lado, sem a frase, e a data do topo some nesse slide. CSS no fim de
+`styles/portal-shell.css`.
+**Depois (mesmo dia): o recado é para todos**, não por pessoa. Um painel só ("Carinho para todos", ou "Carinho da
+equipe" se for um aniversariante) com o formulário `data-destinatario="todos"`. Servidor: `MURAL_enviarParabens_`
+aceita o id `todos` (exige pelo menos um aniversariante ativo no mês; grava na aba Mural_Parabens com destinatário
+"todos") e devolve `MURAL_parabensTodos_()` = todos os recados do mês (inclusive os antigos por pessoa); o mural devolve
+`parabensTodos`. A fila de pessoas ficou só de exibição (quem faz aniversário hoje em dourado). Fogos reduzidos: um
+lançamento a cada 1,8–3,2 s (era 0,5–1,3 s) e 30–48 faíscas por explosão (era 46–76). **Precisa publicar a Vercel**:
+sem isso o envio "para todos" é recusado pelo servidor antigo.
+
+## Operação de ponta a ponta: o pedido abastece o cronograma (out/2026, etapa 1 de várias)
+Visão do usuário: o cronograma é a ordem de serviço e a ponte para as funções operacionais. Cada etapa (triagem de ida,
+carregamento, montagem, desmontagem, triagem de volta) abre a ferramenta daquela operação com a lista do pedido. **Quem
+abastece o cronograma são os pedidos do Comercial.** Decisões do usuário:
+- O status a partir do qual o pedido entra no cronograma é um **parâmetro** (tela Gestão > **Parâmetros**,
+  `Modulos/Configuracoes/Parametros/`, tabela `empresa_logistica_regras`: `status_cronograma`, dias de cada etapa,
+  hora padrão, `triagem_responsavel`/`triagem_equipe`; migration `20261017000300`). Padrão: pré-reserva e aprovado
+  (aprovado inclui finalizado/enviado).
+- Numeração dos pedidos do sistema própria, **do 1, sem prefixo** (`obterProximoNumeroPedido` = maior número + 1).
+  Os números colidem com os antigos da planilha (1 a ~1400), por isso o cronograma separa pelo id (abaixo).
+- No cronograma pode-se mudar tudo, **menos itens, cliente e endereço** (só no Comercial).
+- QR (próximas etapas): **duas opções** — QR fixo no móvel (patrimônio) e etiqueta de envio gerada a cada separação,
+  colada no móvel "como encomenda do Mercado Livre".
+
+Como funciona (etapa 1):
+- Ao salvar um pedido (`salvarPedidoOperacional` → `sincronizarCronogramaDoPedido`, js/pedido/pedido.mjs) a tela chama
+  `/api/gs` `CRON_sincronizarPedidoAcervo(pedidoId)` (`api/_gas/projetos/cronograma/PedidosAcervo.js`). O servidor lê o
+  pedido e os parâmetros pelo serviço do motor `Acervo.pedidoParaCronograma` e, na aba Cronograma da planilha, cria ou
+  atualiza Triagem (Separação), Carregamento, Montagem, Desmontagem e Triagem (Conferência). Fora dos status escolhidos
+  (orçamento, cancelado) as linhas do pedido são apagadas. Substituiu a gravação antiga em `cronograma_logistico`
+  (tabela que o cronograma do menu nunca lia; as 12 linhas dela ficaram lá).
+- Ligação pela **coluna R "PEDIDO SISTEMA"** (id do pedido). Coluna **S "DATA SUGERIDA"**: a data que o pedido calculou;
+  se a data da etapa no cronograma for diferente dela (mudada à mão), o pedido não mexe mais. Etapa criada à mão no
+  cronograma para um pedido do sistema recebe R e fica sem S (o pedido nunca mexe na data dela). Datas padrão: triagem 1 dia
+  antes do carregamento, o resto no dia da entrega/coleta.
+- `getCronogramaSemana` agrupa por `"sis:"+id` quando há R (campos novos `chave` e `pedidoSistemaId`); `editarPedido`
+  recebe a chave. No formulário, pedido do sistema tem número/cliente/local travados e o botão "Abrir pedido"
+  (`marcarPedidoDoSistema`); `salvarPedidoCompleto` também ignora cliente/local vindos da tela quando há
+  `pedidoSistemaId` (trava no servidor).
+- Testado no banco real com o pedido TESTE-IA-25: cria 5, repetir não duplica, cronograma agrupa certo, remoção volta a
+  planilha às 1.689 linhas. Não grava auditoria (Cronograma_Alteracoes) nem frete nessas etapas automáticas. Excluir no
+  cronograma uma etapa gerada pelo pedido: o próximo salvamento do pedido recria. O "Novo pedido" manual do cronograma
+  continua existindo (transição). Precisa publicar a Vercel.
+
+Próximas etapas combinadas: (2) clicar na Triagem do cronograma abre a separação daquele pedido (manual ou QR pela
+câmera); a tela Separação de Materiais já existe mas as tabelas `separacoes_leituras`, `itens_patrimonios` e
+`configuracoes_separacao` não existem no banco; itens de pedido em orçamento não vão para `separacoes_itens`;
+(3) etiquetas (patrimônio fixo e etiqueta de envio); (4) lista de carregamento por caminhão; (5) triagem de volta com
+falta/avaria → Manutenção e cobrança; (6) movimento de estoque e andamento automático do pedido; (7) rotas/caminhão no
+cronograma (Planejamento e Roteirização foram apagados para isso).
+
+### Etapa 2: triagem de ida pelo cronograma (out/2026)
+- Clicar numa Triagem no cronograma (quadro do computador e modo celular, `abrirTriagemCronograma` em
+  cronograma.html) abre `Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html?pedido=<id>&etapa=ida|volta`
+  pelo shell. Triagem de pedido lançado direto na planilha (sem coluna R) só mostra um aviso.
+- A separação abre direto o pedido (`abrirPedidoDaUrl`): coloca em "em separação" e mostra a escolha manual / QR /
+  1 clique. Bloqueios de antes continuam: só pedido **aprovado** separa (pré-reserva só vê) e só a partir de N dias
+  antes do evento — N agora está em Parâmetros ("Separação liberada", `separacao_dias_antes_evento`, padrão 2).
+  `etapa=volta` abre o resumo somente leitura (conferência da volta = etapa 5).
+- **Câmera**: botão "Ler com a câmera" na janela de QR. Usa `BarcodeDetector` do navegador (Android/Chrome) e, onde
+  não há (iPhone), carrega jsQR (`cdn.jsdelivr.net/npm/jsqr@1.4.0`). Mesmo código seguido só conta de novo após 2 s.
+  Câmera só existe em https (no Live Server http dá aviso). Etiquetas no formato `ACERVO:PAT:<código>`,
+  `ACERVO:ITEM:<código>` ou `ACERVO:ENV:<código>` viram só o código (`codigoDaEtiqueta`) — formato pensado para a
+  etapa 3. O leitor de teclado/USB continua.
+- Banco (migration `20261017000400`): criadas `separacoes_leituras` (histórico de leituras, que a tela já gravava e dava
+  erro) e `itens_patrimonios` (QR fixo por móvel; `funcionario_tabela_permitida` trata como `estoque.itens`).
+- Pegadinha: salvar o pedido de novo apaga e recria `separacoes_itens` (perderia o separado); por isso o pedido já fica
+  bloqueado para o Comercial enquanto está em separação (`__PEDIDO_BLOQUEADO_SEPARACAO`).
+- Teste: `tests/separacao-cronograma-browser.cjs` (link abre o pedido, câmera simulada lê `ACERVO:ITEM:CAD1`, não conta
+  em dobro, leitor de teclado, finalizar, volta em resumo). O caminho jsQR (iPhone) não foi testado.
+
+### Etapa 3: etiquetas — QR fixo no móvel e etiqueta de envio (out/2026)
+- **Gerador comum** `js/core/etiquetas.js` (`EasyLocEtiquetas.escolherFormato()` / `.imprimir()`): três tamanhos —
+  térmica 100×50 mm, envio 100×150 mm (padrão Mercado Livre) e A4 com 24 (70×37 mm); o último escolhido fica
+  lembrado no navegador. Imprime por um quadro escondido na própria página (funciona dentro do dashboard); o QR vem do
+  qrcodejs já usado em `qrCode.js`.
+- **QR fixo (patrimônio)**: aba "QR Code" da página do item (`itens.patrimonios.mjs`): gera N etiquetas novas
+  (sugestão = estoque − já geradas), código `<referência ou código>-001…`, grava em `itens_patrimonios`, imprime;
+  reimprimir uma, imprimir todas em uso, "Tirar de uso"/"Voltar a usar" (status `baixado`/`ativo`). QR =
+  `ACERVO:PAT:<código>`. Não testado no navegador (só a lógica de leitura).
+- **Etiqueta de envio**: na separação, "Imprimir etiquetas de envio" (janela do modo) e "Etiquetas" (janela do QR):
+  cria só as que faltam em `separacoes_etiquetas` (migration `20261017000500`; uma por unidade de cada item,
+  código `<nº do pedido>-001…`, `unique(separacao_item_id, sequencia)`) e imprime: PEDIDO nº, cliente, local, data de
+  entrega, tipo, nome do item, "3 de 24". QR = `ACERVO:ENV:<código>`. Pedido salvo de novo recria `separacoes_itens` e as
+  etiquetas dele somem junto (cascade) — reimprimir gera novas.
+- **Leitura** (`processarCodigo`): ENV → marca a unidade uma vez (`lida_separacao_em`), recusa etiqueta já lida e de
+  outro pedido; PAT → conta e guarda em `patrimonios_lidos` (o mesmo móvel nunca conta duas vezes, mesmo em item de
+  controle por quantidade); sem prefixo → tenta etiqueta, patrimônio e item (código, referência ou `qr_code`).
+  Colunas `lida_carregamento_em`/`lida_retorno_em` prontas para as etapas 4 e 5.
+- Testes: `tests/separacao-etiquetas-browser.cjs` e `tests/separacao-cronograma-browser.cjs`.
+
+### Etapa 4: conferência por bipagem — carregamento e volta (out/2026)
+Decisão do usuário: **a conferência é só por bipagem** (sem marcar à mão). Tela nova
+`Modulos/Logistica/Conferencia/conferencia.html?pedido=<id>&etapa=carregamento|retorno` (permissão
+`logistica.separacao.visualizar`), aberta pelo cronograma: Carregamento de pedido do sistema e a Triagem (Conferência)
+da volta (`abrirConferenciaCronograma`). Pedido antigo da planilha continua com a "conclusão de carregamento" de antes.
+- Lista os volumes = etiquetas de envio do pedido (`separacoes_etiquetas`); sem etiquetas, avisa para imprimir na
+  separação. Bipar `ACERVO:ENV:` marca `lida_carregamento_em` / `lida_retorno_em` (uma vez); repetida e de outro
+  pedido são recusadas (com vibração). `ACERVO:PAT:` (QR fixo) marca a próxima etiqueta daquele item, o mesmo móvel
+  uma vez por tela. `ACERVO:ITEM:` é recusado (não diz qual unidade). Cada leitura vai para `separacoes_leituras`
+  (`tipo_controle` = carregamento/retorno).
+- Concluir (com confirmação se faltar algo) grava em `separacoes_pedidos` (migration `20261017000600`):
+  `status_operacional` = `carregado`/`retornado` e `operacao.<etapa>` = { concluido_em, por, lidas, total, faltando }.
+  Reabrir mostra quando/quem conferiu e deixa completar.
+- Leitor compartilhado novo `js/core/leitorQr.js` (`EasyLocLeitor.criar/teclado/ler`); a Separação ainda tem a cópia
+  própria da câmera (mesma lógica).
+- A volta ainda não marca avaria nem gera cobrança/manutenção (etapa 5). Teste: `tests/conferencia-bipagem-browser.cjs`.
+
+### Pedidos fictícios de teste no cronograma (17/out/2026)
+A pedido do usuário ("preencha o cronograma com testes"), 5 pedidos reais no banco, `numero_pedido` TESTE-01..05,
+cliente "TESTE · <nome>", `observacoes.teste_cronograma = true`, 19 a 25/10/2026, itens e locais reais; cada um com as
+5 etapas na planilha do Cronograma (sincronizadas pelo mesmo `CRON_sincronizarPedidoAcervo`). TESTE-01 já vem
+separado, com as 52 etiquetas de envio (TESTE-01-001…052) para testar a conferência do carregamento. TESTE-03 é
+pré-reserva. **Eles reservam estoque de verdade nessas datas** (disponibilidade, catálogo, Helena). Sem coordenadas
+(lat/lng vazias: o Google Maps não respondeu no script local). Para apagar: cancelar + sincronizar + deletar cada
+pedido com `observacoes->>teste_cronograma = 'true'` (script `limpar-testes.js` usado na sessão; o delete leva itens,
+etiquetas e leituras por cascade).

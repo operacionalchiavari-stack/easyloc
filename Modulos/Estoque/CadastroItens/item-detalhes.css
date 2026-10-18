@@ -1059,3 +1059,21 @@
     grid-column: auto;
   }
 }
+
+/* Etiquetas fixas dos móveis (patrimônio, out/2026) */
+.patrimonios-card{margin-top:16px;display:flex;flex-direction:column;gap:16px}
+.patrimonios-topo{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.patrimonios-topo strong{display:block;font-size:16px;margin:2px 0 6px}
+.patrimonios-topo p{margin:0;color:#6b665e;font-size:13px;line-height:1.5;max-width:560px}
+.patrimonios-contagem{white-space:nowrap;font-weight:600;font-size:13px;color:#44443f;background:#f1efea;border-radius:999px;padding:6px 12px}
+.patrimonios-gerar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.patrimonios-gerar label{display:flex;align-items:center;gap:8px;font-size:14px}
+.patrimonios-gerar input{width:72px;border:1px solid #e1dbcf;border-radius:10px;background:#f8f6f0;padding:7px 10px;font:14px inherit}
+.patrimonios-lista{display:flex;flex-direction:column;max-height:320px;overflow:auto;border-top:1px solid #eee8de}
+.patrimonio-linha{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f1ede5;font-size:13px}
+.patrimonio-linha code{font-weight:700;font-size:13px}
+.patrimonio-linha span{color:#6b665e}
+.patrimonio-linha.is-fora code{color:#9b958c;text-decoration:line-through}
+.patrimonio-linha .btn{padding:5px 12px;font-size:12px}
+.patrimonios-vazio{margin:12px 0 0;color:#77716a;font-size:13px}
+@media(max-width:600px){.patrimonios-topo{flex-direction:column}.patrimonio-linha{grid-template-columns:1fr auto}.patrimonio-linha span{grid-column:2}}

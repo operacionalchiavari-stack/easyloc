@@ -1,0 +1,19 @@
+.pr-form{display:flex;flex-direction:column;gap:20px;max-width:980px;margin:0 auto;padding-bottom:40px}
+.pr-card{background:#fff;border:1px solid #e7e1d6;border-radius:16px;padding:22px 24px}
+.pr-card h3{margin:0 0 6px;font:500 22px "Cormorant Garamond",serif;letter-spacing:.04em;color:#2c2a26}
+.pr-ajuda{margin:0 0 16px;color:#6b665e;font-size:14px;line-height:1.55;max-width:760px}
+.pr-opcoes{display:flex;flex-wrap:wrap;gap:10px}
+.pr-check{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid #e7e1d6;border-radius:999px;background:#f8f6f0;cursor:pointer;font-size:14px}
+.pr-check:has(input:checked){border-color:#44443f;background:#44443f;color:#fff}
+.pr-check input{accent-color:#44443f}
+.pr-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px 22px}
+.pr-campo{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#44443f;font-weight:600}
+.pr-campo>div{display:flex;align-items:center;gap:10px}
+.pr-campo input{border:1px solid #e1dbcf;border-radius:10px;background:#f8f6f0;padding:9px 12px;font:14px Inter,sans-serif;color:#2c2a26}
+.pr-campo input[type=number]{width:84px}
+.pr-campo input[type=text]{flex:1;min-width:0}
+.pr-campo small{font-weight:400;color:#77716a;font-size:13px}
+.pr-acoes{display:flex;justify-content:flex-end;align-items:center;gap:16px}
+#parametrosStatus{color:#6b665e;font-size:13px}
+html:root .pr-check span{color:#2c2a26;font-weight:500;text-transform:none;letter-spacing:0;font-size:14px}
+html:root .pr-check:has(input:checked) span{color:#fff}

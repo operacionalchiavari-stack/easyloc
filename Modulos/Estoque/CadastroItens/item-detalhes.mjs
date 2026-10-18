@@ -2,6 +2,7 @@ import { getEmpresaAtualId } from "./itens.api.mjs?v=20261015-estoque";
 import "./itens.modal.mjs";
 import "./itens.foto.mjs?v=20261008-banco";
 import "./itens.3d.mjs?v=20261005-otimizar";
+import { initPatrimonios } from "./itens.patrimonios.mjs?v=20261017-etiquetas";
 
 const supabase = window.supabaseClient;
 const urlParams = new URLSearchParams(window.location.search);
@@ -408,6 +409,7 @@ function bindEvents(){
 export async function initItemDetalhes(){
   bindEvents();
   await carregarItem();
+  initPatrimonios();
   window.lucide?.createIcons?.();
 }
 

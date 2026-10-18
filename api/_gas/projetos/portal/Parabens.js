@@ -15,10 +15,18 @@ function MURAL_enviarParabens_(id,texto,autor,colaboradores){
   texto=String(texto || '').trim();
   if(!texto || texto.length>300)throw new Error('Escreva uma mensagem de até 300 caracteres.');
   if(!autor || !autor.id)throw new Error('Entre no sistema para enviar.');
-  const c=(colaboradores || []).find(x=>x.id===id && x.ativo);
   const mes=Utilities.formatDate(new Date(),'America/Sao_Paulo','MM');
-  if(!c || String(c.aniversario).slice(3,5)!==mes)throw new Error('Aniversariante indisponível.');
+  // "todos" (out/2026): um recado só, para todos os aniversariantes do mês.
+  const c=(colaboradores || []).find(x=>x.ativo && String(x.aniversario).slice(3,5)===mes && (id==='todos' || x.id===id));
+  if(!c)throw new Error('Aniversariante indisponível.');
   MURAL_parabensAba_().appendRow([Utilities.getUuid(),id,Utilities.formatDate(new Date(),'America/Sao_Paulo','yyyy-MM'),autor.id,autor.nome,texto,MURAL_agora_(),autor.foto || '']);
   CacheService.getScriptCache().remove(MURAL_CACHE_PUBLICO);
-  return MURAL_parabensLer_(id);
+  return id==='todos' ? MURAL_parabensTodos_() : MURAL_parabensLer_(id);
+}
+// Todos os recados de aniversário do mês (os "para todos" e os que já tinham sido deixados para uma pessoa).
+function MURAL_parabensTodos_(){
+  const aba=MURAL_parabensAba_();
+  const mes=Utilities.formatDate(new Date(),'America/Sao_Paulo','yyyy-MM');
+  if(aba.getLastRow()<2)return [];
+  return aba.getDataRange().getValues().slice(1).filter(r=>r[2]===mes).slice(-40).reverse().map(r=>({autorId:r[3],autor:r[4],texto:r[5],data:r[6],foto:r[7] || ''}));
 }

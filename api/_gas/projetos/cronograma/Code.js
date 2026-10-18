@@ -1792,8 +1792,16 @@ const lona        = linha[15] || "";
 const confirmadoDecorador =
   linha[16] || "";
 
-    const pedidoChave =
+    // Pedido do sistema (coluna R): separado pelo id, não pelo número (out/2026) — o pedido 5 novo
+    // não se mistura com o pedido 5 antigo da planilha.
+    const pedidoSistemaId =
+      String(linha[17] || "").trim();
+
+    const pedidoNumero =
       String(pedido || "").trim();
+
+    const pedidoChave =
+      pedidoNumero && pedidoSistemaId ? "sis:" + pedidoSistemaId : pedidoNumero;
 
     if (!pedidoChave) {
       return;
@@ -1809,15 +1817,21 @@ const confirmadoDecorador =
     if (!pedidos[pedidoChave]) {
 
       const infoMatriz =
-        mapaInfoMatriz[pedidoChave] || {};
+        mapaInfoMatriz[pedidoNumero] || {};
 
       const alertaMotorista =
-        mapaAlertasMotorista[pedidoChave] || null;
+        mapaAlertasMotorista[pedidoNumero] || null;
 
       pedidos[pedidoChave] = {
 
         pedido:
+          pedidoNumero,
+
+        chave:
           pedidoChave,
+
+        pedidoSistemaId:
+          pedidoSistemaId,
 
         cliente:
           cliente,
@@ -1995,9 +2009,15 @@ trocas:
     );
   });
 
-  Logger.log(
-    JSON.stringify(lista)
-  );
+  // Pedidos do sistema (out/2026): andamento da operação (separação, carregamento, volta) para o cartão.
+  try {
+    const andamento = Acervo.usuario()
+      ? Acervo.andamentoPedidos(lista.map(function(p){ return p.pedidoSistemaId; }).filter(String))
+      : {};
+    lista.forEach(function(p){ if(p.pedidoSistemaId && andamento[p.pedidoSistemaId]) p.andamento = andamento[p.pedidoSistemaId]; });
+  } catch (erroAndamento) {
+    console.error("Andamento dos pedidos indisponível:", erroAndamento);
+  }
 
   return JSON.parse(
     JSON.stringify(lista)
@@ -2584,7 +2604,7 @@ const dados =
     .getDataRange()
     .getValues();
 
-const {
+let {
   pedido,
   cliente,
   local,
@@ -2592,6 +2612,22 @@ const {
   etapas,
   infoLogistica = {}
 } = payload || {};
+
+// Pedido que veio do sistema (out/2026): cliente e local só mudam no Comercial.
+// Valem os da planilha (gravados pelo pedido), não os que vieram da tela.
+const pedidoSistemaId =
+  String((payload && payload.pedidoSistemaId) || "").trim();
+
+if(pedidoSistemaId){
+  const linhaDoPedido = dados.find(function(l){
+    return String(l[17] || "").trim() === pedidoSistemaId;
+  });
+  if(linhaDoPedido){
+    pedido = linhaDoPedido[1];
+    cliente = linhaDoPedido[3];
+    local = linhaDoPedido[4];
+  }
+}
 
 // ========================================
 // AUDITORIA DO SALVAMENTO
@@ -3097,6 +3133,12 @@ CRON_valorConfirmacao_(
 )
 
 ]);
+
+// Etapa nova num pedido do sistema: fica ligada a ele (coluna R). Sem data sugerida (S),
+// o pedido nunca mexe na data dela.
+if(pedidoSistemaId){
+  sheet.getRange(sheet.getLastRow(), 18, 1, 1).setValues([[pedidoSistemaId]]);
+}
 
 const etapaNome = (e.etapa || "").toLowerCase();
 
