@@ -9294,6 +9294,7 @@ da volta (`abrirConferenciaCronograma`). Pedido antigo da planilha continua com 
 - A volta ainda não marca avaria nem gera cobrança/manutenção (etapa 5). Teste: `tests/conferencia-bipagem-browser.cjs`.
 
 ### Pedidos fictícios de teste no cronograma (17/out/2026)
+**+20 pedidos de teste (18/out, pedido "encha o cronograma")**: números 2171 a 2285, clientes com nomes realistas (sem "TESTE ·"), eventos de 14 a 26/10, 80% aprovados e 20% pré-reserva, 2–4 itens reais cada (5–17% do estoque), todos com `observacoes.teste_cronograma = true` e sincronizados (5 etapas cada). Apagam junto com os outros pelo mesmo filtro.
 **Renumerados (18/out)**: TESTE-01..05 → 2104, 2117, 2123, 2136, 2149 e TESTE-IA-25 → 2158 (pedido, etiquetas `2104-001…` e coluna B da aba Cronograma); a linha antiga do App do Montador "TESTE-IGOR-1410" → 2165. `obterProximoNumeroPedido` ignora pedidos com `observacoes.teste_cronograma`/`teste_ia`, então a numeração real continua do 012.
 A pedido do usuário ("preencha o cronograma com testes"), 5 pedidos reais no banco, `numero_pedido` TESTE-01..05,
 cliente "TESTE · <nome>", `observacoes.teste_cronograma = true`, 19 a 25/10/2026, itens e locais reais; cada um com as
