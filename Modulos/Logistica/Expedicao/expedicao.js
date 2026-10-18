@@ -54,7 +54,7 @@
     const progresso = col === "andamento"
       ? '<div class="separacao-card-progress"><span>' + pct + '%</span><div class="mini-progress"><span style="width:' + pct + '%"></span></div><strong>' + v.lidas + " / " + v.total + "</strong></div>"
       : "";
-    return '<article class="separacao-order-card" data-pedido="' + esc(p.id) + '" tabindex="0" role="button">' +
+    return '<article class="separacao-order-card" data-coluna="' + col + '" data-pedido="' + esc(p.id) + '" tabindex="0" role="button">' +
       '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + esc(numero.startsWith("#") ? numero : "#" + numero) + "</span>" +
       (col === "carregados" ? '<span class="separacao-done-mark">✓</span>' : "") + "</div>" +
       '<div class="separacao-card-mainline"><strong>' + esc(p.cliente_nome || "Cliente não informado") + "</strong><span>" +
