@@ -245,6 +245,8 @@
     await loadEmployees();
     const solicitado=new URLSearchParams(location.search).get('funcionario');
     if(solicitado && employees.some(e=>e.id===solicitado)) await openForm(can('rh.funcionarios.editar')?'edit':'view',solicitado);
+    // "Nova admissão" da Gestão de Pessoas abre direto o cadastro novo
+    else if(new URLSearchParams(location.search).get('novo')==='1' && can('rh.funcionarios.criar')) await openForm('create');
   } catch (error) { $('newFuncionarioBtn').hidden = true; message(error.message || 'Não foi possível carregar o cadastro.', true); }
   icons();
 })();

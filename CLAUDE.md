@@ -9409,3 +9409,34 @@ Pedido: "copiar o financeiro de lá pra cá" (RH vem depois). Menu Financeiro > 
   Conciliação (importa OFX/CSV, sugere o título de mesmo valor), DRE, Inadimplência, Plano de contas.
 - Testado no banco real numa transação desfeita (divisão por conta, baixa parcial, aprovação, estorno, transferência,
   conciliação, DRE) e na tela com banco simulado: `tests/financeiro-browser.cjs`.
+- **Correção (18/out)**: as janelas (`finModal`) acumulavam os eventos de janelas anteriores (o `montar` ligava eventos na
+  mesma caixa `#finModalCorpo`) — agora cada janela troca a caixa por uma nova (`cloneNode`). Mesmo cuidado no RH.
+
+## Gestão de Pessoas (RH) — out/2026, copiado da Tecnoweld
+Pedido: "pode fazer o rh". Escolhas do usuário: **ficha do colaborador, férias e admissão/desligamento, exames,
+treinamentos e benefícios** (a folha de pagamento ficou para depois); **ocorrências continuam no Controle RH** e a ficha
+só lê de lá; desempenho continua na Central de Metas. Menu RH > **Gestão de Pessoas** (`Modulos/RH/Pessoas/`, usa o
+`financeiro.css` para abas/cartões/tabelas/janelas + `pessoas.css`). O `Modulos/RH/GestaoPessoas/` antigo (fragmento)
+continua fora do menu.
+- **A pessoa é a do Cadastro de Funcionários** (`funcionarios_acesso`), não há um segundo cadastro. "Nova admissão" abre
+  `cadastro-funcionarios.html?novo=1` (o cadastro ganhou esse atalho). Fotos: bucket público `avatares/<empresa>/<id>.jpg`.
+- **Banco** (`20261018000200_rh.sql`, aplicada e registrada): `rh_fichas` (1 por pessoa: contrato, matrícula, PIS, CTPS,
+  experiência, situação ativo/afastado/desligado, emergência, banco/PIX, uniforme, transporte, dependentes…),
+  `rh_documentos`, `rh_exames_cadastro` + `rh_exames`, `rh_treinamentos` + `rh_turmas`, `rh_beneficios` +
+  `rh_beneficio_adesoes`, `rh_ferias`, `rh_checklists`. RLS: ler `rh.colaboradores.visualizar`, gravar
+  `rh.colaboradores.editar` (`rh_pode`). Funções: `rh_pessoas` (lista com a ficha), `rh_ficha_salvar` (grava a ficha e
+  também cpf/cargo/telefone/admissão e rg/nascimento/endereço/whatsapp em `dados_rh` — os mesmos campos do cadastro),
+  `rh_status` (afastar; **desligar deixa `funcionarios_acesso.ativo=false`, o login para**, e cria o checklist de
+  desligamento; ninguém se desliga; reativar volta o acesso), `rh_turma_registrar` (cada participante ganha o
+  certificado em `rh_documentos` com a validade do treinamento). Arquivos: bucket privado `rh-documentos`, pasta
+  `<empresa>/rh/<pessoa>/` (regras restritivas só para quem é do RH; abre por link assinado de 5 min).
+  Semeado na Chiavari: exames ASO periódico/admissional/demissional e treinamentos Integração, NR-35, NR-11, NR-06.
+- **Regras na tela** (`pessoas.js`): pendências = documento vencido/vencendo (30 dias), exame obrigatório faltando ou
+  vencido (só CLT, aprendiz, estágio e temporário), treinamento obrigatório do setor faltando, férias vencidas, fim da
+  experiência em 15 dias. Férias só para CLT e aprendiz com admissão: período aquisitivo de 12 meses, tirar até 12 meses
+  depois, 30 dias (dias + abono), mínimo 5 dias, aviso de saída em sexta/fim de semana; coletiva mínimo 10 dias, pula
+  quem já tem férias nas datas. Benefício: começa após N meses de casa, por tipo de contrato, "todos" ou "só quem aderir".
+- **Ocorrências** na ficha: `getHistoricoRH` do projeto `controlerh` pelo `/api/gs`, filtradas pelo nome da pessoa (nome
+  igual, ou primeiro nome + último sobrenome).
+- Testado no banco real numa transação desfeita (ficha, CPF inválido, turma, desligar/reativar, Operador sem acesso) e na
+  tela com banco simulado: `tests/rh-pessoas-browser.cjs`.

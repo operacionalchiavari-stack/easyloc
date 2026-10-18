@@ -152,6 +152,7 @@
         rotulo: "Recursos Humanos",
         itens: [
           { rotulo: "Ideia Premiada", href: "Modulos/RH/IdeiaPremiada/ideia-premiada.html?aba=recebidas" },
+          { rotulo: "Gestão de Pessoas", href: "Modulos/RH/Pessoas/pessoas.html" },
           { rotulo: "Cadastro de Funcionários", href: "Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html" },
           { rotulo: "Controle RH", href: "Modulos/Chiavari/ControleRH/rh.html" },
           { rotulo: "RH da Equipe Free", href: "Modulos/Chiavari/Cronograma/rh.html" },

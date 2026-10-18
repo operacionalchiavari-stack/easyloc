@@ -115,6 +115,8 @@
   let aoConfirmar = null;
   function modal(titulo, corpo, botoes, montar) {
     $("finModalTitulo").textContent = titulo;
+    // caixa nova a cada janela: os eventos da janela anterior não podem disparar nesta
+    const velho = $("finModalCorpo"), novo = velho.cloneNode(false); velho.replaceWith(novo);
     $("finModalCorpo").innerHTML = corpo;
     $("finModalRodape").innerHTML = (botoes || []).map((b, i) => '<button type="button" class="fin-btn ' + (b.classe || "") + '" data-bt="' + i + '">' + esc(b.rotulo) + "</button>").join("");
     aoConfirmar = botoes || [];

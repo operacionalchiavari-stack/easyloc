@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Gestão de Pessoas</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261008-topo">
+  <link rel="stylesheet" href="../../Financeiro/financeiro.css?v=20261018-financeiro2">
+  <link rel="stylesheet" href="pessoas.css?v=20261018-rh">
+</head>
+<body>
+<div class="container el-page fin-page rh-page">
+  <div class="header-list">
+    <h2>Gestão de Pessoas</h2>
+  </div>
+
+  <nav class="fin-abas" id="rhAbas" aria-label="Áreas do RH">
+    <button type="button" data-aba="pessoas" class="ativa">Colaboradores</button>
+    <button type="button" data-aba="vencimentos">Exames e treinamentos <span class="fin-conta-aba" data-cont="vencimentos"></span></button>
+    <button type="button" data-aba="beneficios">Benefícios</button>
+    <button type="button" data-aba="ferias">Férias <span class="fin-conta-aba" data-cont="ferias"></span></button>
+    <button type="button" data-aba="movimentacoes">Admissão e desligamento <span class="fin-conta-aba" data-cont="movimentacoes"></span></button>
+  </nav>
+
+  <p class="fin-aviso" id="rhAviso" hidden></p>
+  <main id="rhConteudo"><div class="fin-vazio">Carregando…</div></main>
+</div>
+
+<dialog class="fin-modal" id="rhModal">
+  <form method="dialog" class="fin-modal-caixa">
+    <header><h3 id="rhModalTitulo"></h3><button type="button" class="fin-x" data-fechar aria-label="Fechar">×</button></header>
+    <div class="fin-modal-corpo" id="rhModalCorpo"></div>
+    <footer id="rhModalRodape"></footer>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/permissions.js?v=20261018-rh"></script>
+<script src="pessoas.js?v=20261018-rh3"></script>
+</body>
+</html>

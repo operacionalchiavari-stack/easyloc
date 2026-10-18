@@ -184,7 +184,7 @@
     [/Expedicao/i, 'logistica.expedicao.visualizar'],
     [/Planejamento|Roteirizacao|EquipeRotas|cadastro-caminhoes/i, 'logistica.planejamento.visualizar'],
     [/Financeiro|fluxodecaixa/i, 'financeiro.fluxo.visualizar'],
-    [/GestaoPessoas/i, 'rh.colaboradores.visualizar'],
+    [/GestaoPessoas|RH\/Pessoas/i, 'rh.colaboradores.visualizar'],
     [/Permissoes/i, 'configuracoes.permissoes.visualizar'],
     [/WhatsApp/i, 'configuracoes.integracoes.whatsapp.visualizar'],
     [/GatewaysPagamento/i, 'configuracoes.integracoes.gateways_pagamento.visualizar'],
