@@ -540,3 +540,10 @@ html:root :is(body:not(.portal-shell), #main-content) :is(input[type="checkbox"]
 html:root :is(body:not(.portal-shell), #main-content) :is(.panel-header, .card-header, .el-card__header){ background:#ffffff !important; color:var(--ch-text) !important; border-bottom:1px solid var(--ch-line) !important; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.panel-header, .card-header, .el-card__header) :is(h2, h3, h4, p, small, span, label):not(button, button *, .btn, .btn *, [role=button], [role=button] *){ color:var(--ch-text) !important; }
 html:root :is(body:not(.portal-shell), #main-content) .resumo-principal{ background:#5a5a55 !important; }
+/* Sistema todo: todo cabeçalho de tabela (inclusive gradientes das telas antigas) e linha de título de grade sem cor */
+html:root :is(body:not(.portal-shell), #main-content) :is(table, #ch-a#ch-b) :is(thead, thead tr, thead th, thead td),
+html:root :is(body:not(.portal-shell), #main-content) :is(table, #ch-a#ch-b) tr > th,
+html:root :is(body:not(.portal-shell), #main-content) :is(.perm-row.header, .rh-table th, .cron-preview-section th, .item-detail-table th, #ch-a#ch-b){
+  background:#ffffff !important; background-image:none !important; color:var(--ch-label) !important; border-color:var(--ch-borda-card) !important; text-shadow:none !important;
+}
+html:root :is(body:not(.portal-shell), #main-content) :is(table, #ch-a#ch-b) thead th :not(button, button *, .btn, .btn *, input, select){ color:inherit !important; }
