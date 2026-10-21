@@ -28,9 +28,10 @@
     return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   };
   const local = (p) => p.local_nome || p.local_evento || p.local || "-";
-  const vol = (p) => s.volumes.get(String(p.id)) || { total: 0, carregadas: 0, voltaram: 0 };
+  const vol = (p) => s.volumes.get(String(p.id)) || { total: 0, carregadas: 0, voltaram: 0, descarregadas: 0 };
 
   const idaConcluida = (p) => ["carregado", "retornado"].includes(p.status_operacional) || !!p.operacao?.carregamento?.concluido_em;
+  const descargaConcluida = (p) => !!p.operacao?.descarregamento?.concluido_em;
   const voltaConcluida = (p) => p.status_operacional === "retornado" || !!p.operacao?.retorno?.concluido_em;
 
   // Cartões do quadro: { p, tipo: "ida"|"retorno", col: "aguardando"|"andamento"|"conferidos" }
@@ -40,23 +41,27 @@
       const v = vol(p);
       if (!idaConcluida(p)) out.push({ p, tipo: "ida", col: v.carregadas > 0 ? "andamento" : "aguardando" });
       else if (!voltaConcluida(p)) out.push({ p, tipo: "ida", col: "conferidos" });
-      if (idaConcluida(p)) {
+      if (idaConcluida(p) && !p.encerrado_operacional_em) {
+        out.push({ p, tipo: "descarregamento", col: descargaConcluida(p) ? "conferidos" : (v.descarregadas > 0 ? "andamento" : "aguardando") });
+      }
+      if (descargaConcluida(p) && !p.encerrado_operacional_em) {
         out.push({ p, tipo: "retorno", col: voltaConcluida(p) ? "conferidos" : (v.voltaram > 0 ? "andamento" : "aguardando") });
       }
     });
-    const data = (c) => String((c.tipo === "retorno" ? c.p.data_coleta : c.p.data_entrega) || c.p.data_evento || "9999");
+    const data = (c) => String((c.tipo !== "ida" ? c.p.data_coleta : c.p.data_entrega) || c.p.data_evento || "9999");
     return out.sort((a, b) => data(a).localeCompare(data(b)));
   }
 
   function cartao({ p, tipo, col }) {
     const v = vol(p);
     const volta = tipo === "retorno";
+    const descarga = tipo === "descarregamento";
     const numero = String(p.numero_pedido || "-");
-    const feito = p.operacao?.[volta ? "retorno" : "carregamento"];
+    const feito = p.operacao?.[volta ? "retorno" : descarga ? "descarregamento" : "carregamento"];
     let nota = "";
     if (col === "conferidos" && feito) {
       const falta = Array.isArray(feito.faltando) ? feito.faltando.length : Number(feito.faltando) || 0;
-      nota = (volta ? "Retorno conferido " : "Carregado ") + dataHoraBr(feito.concluido_em) + (feito.por ? " por " + feito.por : "") +
+      nota = (volta ? "Retorno conferido " : descarga ? "Descarregado " : "Carregado ") + dataHoraBr(feito.concluido_em) + (feito.por ? " por " + feito.por : "") +
         (falta ? " · " + falta + (volta ? " não voltou" : " pendência(s)") : "");
     } else if (volta) {
       nota = "Conferência às cegas";
@@ -67,17 +72,19 @@
     }
     let progresso = "";
     if (col === "andamento" && !volta) {
-      const pct = v.total ? Math.round((v.carregadas / v.total) * 100) : 0;
-      progresso = '<div class="separacao-card-progress"><span>' + pct + '%</span><div class="mini-progress"><span style="width:' + pct + '%"></span></div><strong>' + v.carregadas + " / " + v.total + "</strong></div>";
+      const lidas = descarga ? v.descarregadas : v.carregadas;
+      const total = descarga ? v.carregadas : v.total;
+      const pct = total ? Math.round((lidas / total) * 100) : 0;
+      progresso = '<div class="separacao-card-progress"><span>' + pct + '%</span><div class="mini-progress"><span style="width:' + pct + '%"></span></div><strong>' + lidas + " / " + total + "</strong></div>";
     } else if (col === "andamento" && volta) {
       progresso = '<div class="exp-lidos">' + v.voltaram + " peça" + (v.voltaram === 1 ? "" : "s") + " lida" + (v.voltaram === 1 ? "" : "s") + "</div>";
     }
-    const meta = volta
+    const meta = (volta || descarga)
       ? "Coleta " + esc(dataBr(p.data_coleta || p.data_evento))
       : "Entrega " + esc(dataBr(p.data_entrega || p.data_evento)) + " · " + v.total + " volume" + (v.total === 1 ? "" : "s");
     return '<article class="separacao-order-card exp-card-' + tipo + '" data-coluna="' + col + '" data-tipo="' + tipo + '" data-pedido="' + esc(p.id) + '" tabindex="0" role="button">' +
       '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + esc(numero.startsWith("#") ? numero : "#" + numero) + "</span>" +
-      '<span class="exp-tipo">' + (volta ? "Retorno" : "Ida") + "</span>" +
+      '<span class="exp-tipo">' + (volta ? "Retorno" : descarga ? "Descarregamento" : "Ida") + "</span>" +
       (col === "conferidos" ? '<span class="separacao-done-mark">✓</span>' : "") + "</div>" +
       '<div class="separacao-card-mainline"><strong>' + esc(p.cliente_nome || "Cliente não informado") + "</strong><span>" +
       esc(p.tipo_evento || "Evento") + " · " + esc(local(p)) + "</span></div>" +
@@ -102,7 +109,7 @@
     for (let i = 0; i < ids.length; i += 100) {
       const lote = ids.slice(i, i + 100);
       for (let de = 0; ; de += 1000) {
-        const { data, error } = await s.sb.from("separacoes_etiquetas").select("separacao_pedido_id,lida_carregamento_em,lida_retorno_em")
+        const { data, error } = await s.sb.from("separacoes_etiquetas").select("separacao_pedido_id,lida_carregamento_em,lida_retorno_em,lida_descarregamento_em")
           .eq("empresa_id", s.empresa).in("separacao_pedido_id", lote).range(de, de + 999);
         if (error) throw error;
         linhas.push(...(data || []));
@@ -132,6 +139,7 @@
         v.total += 1;
         if (e.lida_carregamento_em) v.carregadas += 1;
         if (e.lida_retorno_em) v.voltaram += 1;
+        if (e.lida_descarregamento_em) v.descarregadas += 1;
         s.volumes.set(k, v);
       });
       pintar();
@@ -145,7 +153,7 @@
   }
 
   function abrir(id, tipo) {
-    const query = "?pedido=" + encodeURIComponent(id) + "&etapa=" + (tipo === "retorno" ? "retorno" : "carregamento") + "&de=expedicao";
+    const query = "?pedido=" + encodeURIComponent(id) + "&etapa=" + (tipo === "retorno" ? "retorno" : tipo === "descarregamento" ? "descarregamento" : "carregamento") + "&de=expedicao";
     try {
       if (window.top !== window && typeof window.top.shellNavigate === "function") {
         window.top.shellNavigate("Modulos/Logistica/Conferencia/conferencia.html" + query); return;

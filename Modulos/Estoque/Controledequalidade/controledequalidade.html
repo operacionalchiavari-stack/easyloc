@@ -31,8 +31,8 @@
   <div class="sub">Acompanhamento do mês</div>
 
   <div style="margin-top:10px">
-    <div style="width:100%;height:8px;background:#e6edf6;border-radius:999px;overflow:hidden">
-      <div id="metaBar" style="height:100%;width:0%;background:#2f6fe4"></div>
+    <div style="width:100%;height:8px;background:var(--el-color-surface-soft,#f6f7f9);border-radius:999px;overflow:hidden">
+      <div id="metaBar" style="height:100%;width:0%;background:var(--el-color-surface-soft,#f6f7f9)"></div>
     </div>
   </div>
 </div>
@@ -228,7 +228,7 @@
 
       <div class="section-body">
         <div class="toolbar">
-          <input class="input el-input" id="filtroBusca" placeholder="Buscar item, código ou responsável">
+          <input type="search" class="input el-input" id="filtroBusca" placeholder="Buscar item, código ou responsável" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
           <select class="select el-select" id="filtroStatus">
             <option value="">Todos os status</option>
             <option>Aprovado</option>

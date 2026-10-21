@@ -15,7 +15,7 @@
 
 body {
   margin: 0;
-  color: #0f172a;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* ================= PAGE ================= */
@@ -38,7 +38,7 @@ body {
   font-size: 22px;
   font-weight: 600;
   margin: 0;
-  color: var(--azul);
+  color: var(--el-color-text,#1f2020);
 }
 
 /* ================= FILTROS ================= */
@@ -75,7 +75,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 0;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -110,7 +110,7 @@ body {
 .btn-editar i {
   width: 18px;
   height: 18px;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
 }
 
 .btn-editar:hover {
@@ -118,7 +118,7 @@ body {
 }
 
 .btn-editar:hover i {
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
 }
 /* ================= STATUS ================= */
 
@@ -134,7 +134,7 @@ body {
   font-weight: 500;
   cursor: pointer;
   background: #f1f5f9;
-  color: #64748b;
+  color: var(--el-button-primary-bg, #7d603d);
   border: 1px solid transparent;
   transition: 0.2s ease;
 }
@@ -157,7 +157,7 @@ body {
   margin: 14px 0 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #334155;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* ================= GRID ================= */
@@ -180,7 +180,7 @@ body {
 .form-group label {
   font-size: 12px;
   font-weight: 500;
-  color: #475569;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* ================= TAMANHOS ================= */
@@ -203,7 +203,7 @@ body {
   font-size: 17px;
   font-weight: 600;
   margin-top: 2px;
-  color: #0f172a;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* ================= HEADER MODAL ================= */
@@ -223,7 +223,7 @@ body {
   margin: 0;
   font-size: 19px;
   font-weight: 600;
-  color: var(--azul);
+  color: var(--el-color-text,#1f2020);
 }
 
 .header-actions-caminhao {
@@ -252,7 +252,7 @@ body {
   font-weight: 500;
   cursor: pointer;
   background: #f1f5f9;
-  color: #64748b;
+  color: var(--el-button-primary-bg, #7d603d);
   border: 1px solid transparent;
   transition: 0.2s ease;
 }
@@ -275,7 +275,7 @@ body {
   margin: 16px 0 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #334155;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* ================= GRID ================= */
@@ -297,7 +297,7 @@ body {
 
 .form-group label {
   font-size: 13px;
-  color: #475569;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* ================= TAMANHOS ================= */
@@ -357,7 +357,7 @@ table {
 }
 
 thead {
-  background: linear-gradient(180deg, #0b1f33, #1f1515);
+  background: linear-gradient(180deg, var(--el-color-surface-soft,#f6f7f9), #1f1515);
   color: #fff;
 }
 
@@ -394,14 +394,14 @@ tbody tr:hover {
 
 .table-card.vuc {
   background: #ecfeff;
-  color: #155e75;
+  color: var(--el-color-text,#1f2020);
 }
 .table-card.toco {
-  background: #e0ecff;
-  color: #1e40af;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 .table-card.truck {
-  background: #ede9fe;
+  background: var(--el-color-surface-soft,#f6f7f9);
   color: #6d28d9;
 }
 .table-card.bitruck {
@@ -418,7 +418,7 @@ tbody tr:hover {
 }
 .table-card.c34 {
   background: #f1f5f9;
-  color: #334155;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* ================= STATUS ================= */
@@ -438,15 +438,15 @@ tbody tr:hover {
 }
 /* ================= CATEGORIA ================= */
 .table-card.categoria {
-  background: #e0ecff;
-  color: #1e40af;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 
 /* ================= CAPACIDADE ================= */
 .table-card.capacidade {
   background: #fef3c7;
   color: #92400e;
-  font-weight: 700;
+  font-weight: 600;
 }
 /* =====================================================
    BOTÃƒO EDITAR (LÃPIS) â€” MODAL CAMINHÃƒO
@@ -460,7 +460,7 @@ tbody tr:hover {
   background: #fff;
   color: var(--laranja);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -479,11 +479,11 @@ tbody tr:hover {
 }
 /* ================= VÃNCULO ================= */
 .table-card.vinculo.proprio {
-  background: #ede9fe; /* roxo suave */
+  background: var(--el-color-surface-soft,#f6f7f9); /* roxo suave */
   color: #6d28d9;
 }
 
 .table-card.vinculo.terceirizado {
   background: #f1f5f9; /* cinza elegante */
-  color: #334155;
+  color: var(--el-button-primary-bg,#7d603d);
 }

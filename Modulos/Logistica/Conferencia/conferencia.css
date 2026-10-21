@@ -2,7 +2,7 @@
 .cf-pedido{display:flex;justify-content:space-between;gap:20px;align-items:center;background:#fff;border:1px solid #e3e7ec;border-radius:16px;padding:18px 22px;margin:0 0 16px}
 .cf-pedido strong{display:block;font-size:22px;color:#2c2a26}
 .cf-pedido small{color:#5f5f5f;font-size:13px}
-.cf-rotulo{display:block;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8a6c48;margin-bottom:4px}
+.cf-rotulo{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8a6c48;margin-bottom:4px}
 .cf-progresso{min-width:220px;text-align:right}
 .cf-progresso strong{font-size:30px}
 .cf-barra{height:10px;border-radius:999px;background:#eef0f3;overflow:hidden;margin:6px 0}
@@ -29,7 +29,7 @@
 .cf-so-faltando{display:flex;gap:6px;align-items:center;font-size:13px;color:#5f5f5f}
 .cf-item{border-top:1px solid #eef0f3;padding:12px 0}
 .cf-item-topo{display:flex;justify-content:space-between;gap:10px;font-size:14px}
-.cf-item-topo span{font-weight:700;white-space:nowrap}
+.cf-item-topo span{font-weight:600;white-space:nowrap}
 .cf-item.is-ok .cf-item-topo span{color:#2f7a4b}
 .cf-etiquetas{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .cf-etq{font:600 12px "Courier New",monospace;padding:4px 8px;border-radius:8px;background:#eef0f3;color:#6b6b6b}
@@ -52,9 +52,15 @@ html:root .cf-page > .cf-voltar[hidden]{display:none!important}
 @media(max-width:760px){html:root .cf-page > .cf-voltar{position:static!important;margin:12px 0 0!important}}
 
 /* Retorno às cegas e resultado */
-.cf-rodape.is-cega span{color:#5b3fae}
+.cf-rodape.is-cega span{color:var(--el-color-text,#1f2020)}
 .cf-aviso.is-divergente{background:#fbeceb;border-color:#efc2bf;color:#7a2a22}
 .cf-aviso.is-ok{background:#ecf6ef;border-color:#bfe0c9;color:#245c3a}
 .cf-faltaram{margin:8px 0 0;padding-left:18px}
-.cf-faltaram code{font-family:"Courier New",monospace;font-weight:700;margin-right:6px}
+.cf-faltaram code{font-family:"Courier New",monospace;font-weight:600;margin-right:6px}
 html:root .cf-page [hidden]{display:none!important}
+#cfOcorrencias{margin-top:24px;padding-top:18px;border-top:1px solid #e5e7eb}
+#cfOcorrencias summary{cursor:pointer;font-weight:600}
+.cf-formulario-ocorrencia{display:grid;gap:12px;padding:14px 0}
+.cf-formulario-ocorrencia label{display:grid;gap:6px}
+.cf-formulario-ocorrencia :is(select,textarea){width:100%;min-height:42px;box-sizing:border-box;padding:10px;border:1px solid #d1d5db;border-radius:8px;background:white;font:inherit;color:black}
+.cf-formulario-ocorrencia textarea{min-height:80px;resize:vertical}

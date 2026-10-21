@@ -904,7 +904,7 @@
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 13,
-          fillColor: "#2563eb",
+          fillColor: '#656565',
           fillOpacity: 1,
           strokeWeight: 3,
           strokeColor: "#ffffff"
@@ -917,7 +917,7 @@
       googleMapState.line = new google.maps.Polyline({
         path,
         map: googleMapState.map,
-        strokeColor: "#2563eb",
+        strokeColor: '#656565',
         strokeOpacity: .86,
         strokeWeight: 4
       });

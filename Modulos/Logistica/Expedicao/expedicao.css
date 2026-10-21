@@ -1,9 +1,9 @@
 ﻿/* Expedição: o visual vem de separacao-materiais.css; aqui só o que é próprio. */
 html:root:is(#acervo-separacao, html) .exp-page .separacao-order-card{cursor:pointer;}
-html:root:is(#acervo-separacao, html) .exp-page .separacao-done-mark{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:999px;background:#d8efe0;color:#2f7a4b;font-weight:700;}
+html:root:is(#acervo-separacao, html) .exp-page .separacao-done-mark{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:999px;background:#d8efe0;color:#2f7a4b;font-weight:600;}
 html:root:is(#acervo-separacao, html) .exp-page .separacao-search input{border:0!important;box-shadow:none!important;background:transparent!important;outline:0}
 /* Ida x Retorno: a cor do retorno vem de separacao-materiais.css (.exp-card-retorno); aqui só o selo */
 html:root:is(#acervo-separacao, html) .exp-page .separacao-card-top{gap:8px;}
-html:root:is(#acervo-separacao, html) .exp-page .exp-tipo{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.7);color:#6b665e;border:1px solid rgba(0,0,0,.08);margin-right:auto;}
-html:root:is(#acervo-separacao, html) .exp-page .exp-card-retorno .exp-tipo{background:#6d4fc2;color:#fff;border-color:#6d4fc2;}
-html:root:is(#acervo-separacao, html) .exp-page .exp-lidos{margin-top:8px;font-weight:700;font-size:14px;color:#5b3fae;}
+html:root:is(#acervo-separacao, html) .exp-page .exp-tipo{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.7);color:#6b665e;border:1px solid rgba(0,0,0,.08);margin-right:auto;}
+html:root:is(#acervo-separacao, html) .exp-page .exp-card-retorno .exp-tipo{background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);border-color:var(--el-color-border,#e3e7ec);}
+html:root:is(#acervo-separacao, html) .exp-page .exp-lidos{margin-top:8px;font-weight:600;font-size:14px;color:var(--el-color-text,#1f2020);}

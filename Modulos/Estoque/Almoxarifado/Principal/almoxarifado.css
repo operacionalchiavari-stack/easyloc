@@ -1,12 +1,12 @@
 ﻿.almox-page {
-  --almox-navy: #08213a;
-  --almox-navy-2: #0f2f52;
-  --almox-orange: #374151;
-  --almox-border: #dfe7f1;
+  --almox-navy: var(--el-button-primary-bg,#7d603d);
+  --almox-navy-2: var(--el-button-primary-bg,#7d603d);
+  --almox-orange: var(--el-button-primary-bg,#7d603d);
+  --almox-border: var(--el-color-border,#e3e7ec);
   --almox-bg: #f7fafc;
   --almox-soft: #f3f6fa;
-  --almox-text: #0b2239;
-  --almox-muted: #667891;
+  --almox-text: var(--el-color-text,#1f2020);
+  --almox-muted: var(--el-color-muted,#6b6b6b);
   --almox-green: #11995d;
   --almox-red: #dd2b2b;
   --almox-yellow: #d98a10;
@@ -26,10 +26,10 @@
 
 .almox-eyebrow,
 .almox-section-label {
-  color: #62758f;
+  color: var(--el-color-text,#1f2020);
   display: block;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
 }
@@ -88,7 +88,7 @@
   color: var(--almox-navy);
   cursor: pointer;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   min-height: 34px;
   padding: 0 12px;
   white-space: nowrap;
@@ -210,7 +210,7 @@
 .almox-ring-circle {
   --p: 0;
   align-items: center;
-  background: conic-gradient(var(--almox-orange) calc(var(--p) * 1%), #e8eef5 0);
+  background: conic-gradient(var(--almox-orange) calc(var(--p) * 1%), var(--el-color-surface-soft,#f6f7f9) 0);
   border-radius: 999px;
   display: flex;
   height: 74px;
@@ -237,7 +237,7 @@
 .almox-ring span {
   color: var(--almox-muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -256,7 +256,7 @@
   color: var(--almox-muted);
   display: block;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .almox-insight strong,
@@ -330,10 +330,10 @@
 
 .almox-form label,
 .almox-modal-card label {
-  color: #435872;
+  color: var(--el-color-text,#1f2020);
   display: grid;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   gap: 6px;
 }
 
@@ -366,7 +366,7 @@
   border-radius: 12px;
   color: var(--almox-navy);
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 600;
   min-height: 44px;
   padding: 10px 12px;
 }
@@ -422,10 +422,10 @@
 }
 
 .almox-scan-field {
-  color: #435872;
+  color: var(--el-color-text,#1f2020);
   display: grid;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   gap: 6px;
 }
 
@@ -439,7 +439,7 @@
 }
 
 .almox-scanner {
-  background: #0b2239;
+  background: var(--el-color-surface-soft,#f6f7f9);
   border-radius: 14px;
   display: grid;
   gap: 10px;
@@ -491,7 +491,7 @@
   border-radius: 999px;
   display: inline-flex;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   min-height: 26px;
   padding: 4px 10px;
 }
@@ -509,8 +509,8 @@
 .almox-badge.retornavel,
 .almox-badge.separando,
 .almox-badge.pronto {
-  background: #eff6ff;
-  color: #1755aa;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 
 .almox-badge.epi,
@@ -543,7 +543,7 @@
   color: var(--almox-navy);
   cursor: pointer;
   display: inline-flex;
-  font-weight: 800;
+  font-weight: 600;
   height: 36px;
   justify-content: center;
   min-width: 36px;
@@ -612,7 +612,7 @@
   border: 1px solid var(--almox-border);
   border-radius: 999px;
   color: var(--almox-navy);
-  font-weight: 800;
+  font-weight: 600;
   padding: 10px 12px;
   text-align: center;
 }
@@ -625,7 +625,7 @@
 
 .almox-modal {
   align-items: center;
-  background: rgba(11, 31, 52, .45);
+  background: rgba(31,32,32,0.45);
   display: flex;
   inset: 0;
   justify-content: center;
@@ -641,7 +641,7 @@
 .almox-modal-card {
   background: #fff;
   border-radius: 20px;
-  box-shadow: 0 26px 70px rgba(8, 33, 58, .24);
+  box-shadow: 0 26px 70px rgba(31,32,32,0.24);
   display: grid;
   gap: 18px;
   max-height: 92vh;
@@ -690,7 +690,7 @@
 .almox-qr-render {
   align-items: center;
   background: #fff;
-  border: 1px dashed #c9d6e4;
+  border: 1px dashed var(--el-color-border,#e3e7ec);
   border-radius: 14px;
   display: flex;
   height: 112px;

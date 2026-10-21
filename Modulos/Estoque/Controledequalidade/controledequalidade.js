@@ -1,6 +1,7 @@
 (function () {
 
 const META_MENSAL = 150;
+const escaparQualidade = valor => String(valor ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
     const checklistBase = [
       "Estrutura firme",
@@ -184,7 +185,7 @@ const META_MENSAL = 150;
       if(status === "Aprovado") return `<span class="tag green">Aprovado</span>`;
       if(status === "Aprovado com observação") return `<span class="tag yellow">Observação</span>`;
       if(status === "Reprovado") return `<span class="tag red">Reprovado</span>`;
-      return `<span class="tag blue">${status || "-"}</span>`;
+      return `<span class="tag blue">${escaparQualidade(status || "-")}</span>`;
     }
 
     function getTagPrioridade(prioridade){
@@ -231,12 +232,12 @@ const META_MENSAL = 150;
         .map(x=>`
           <tr>
             <td>${formatarDataTabela(x.data)}</td>
-            <td>${x.codigo || "-"}</td>
-            <td>${x.nome || "-"}</td>
+            <td>${escaparQualidade(x.codigo || "-")}</td>
+            <td>${escaparQualidade(x.nome || "-")}</td>
             <td>${getTagStatus(x.status)}</td>
-            <td>${x.acao || "-"}</td>
+            <td>${escaparQualidade(x.acao || "-")}</td>
             <td>${getTagPrioridade(x.prioridade)}</td>
-            <td>${x.responsavel || "-"}</td>
+            <td>${escaparQualidade(x.responsavel || "-")}</td>
           </tr>
         `).join("");
     }
@@ -296,7 +297,7 @@ function atualizarCards(){
       renderTabela();
     }
 
-    function salvarEProximo(){
+    async function salvarEProximo(){
       const payload = coletarPayload();
       const erro = validarPayload(payload);
 
@@ -309,27 +310,36 @@ function atualizarCards(){
         return;
       }
 
-      // TODO: Implementar com Supabase depois
+      const botao = el("btnSalvarProximo");
+      if(botao.disabled) return;
+      botao.disabled = true;
+      try {
+        const { error } = await window.supabaseClient.from("qualidade_inspecoes").insert({
+          empresa_id: window.__CONTEXT?.empresa_id, item_id: itens[itemAtualIndex].id, dados: payload
+        });
+        if(error) throw error;
+      } catch(error){
+        mostrarToast("Falha ao salvar: " + error.message + ". Seus dados foram mantidos.");
+        return;
+      } finally { botao.disabled = false; }
       salvarInspecaoLocal(payload);
       mostrarToast("✔ Inspeção salva com sucesso");
       proximoItem();
     }
 
-    function carregarDados(){
+    async function carregarDados(){
       el("dataAnalise").value = hojeISO();
-
-      // TODO: Implementar com Supabase depois
-      // Para agora, carregar dados mock
-      itens = [
-        { categoria:"Aparadores", nome:"Aparador Clássico P", codigo:"APA001", valor:"2800" },
-        { categoria:"Aparadores", nome:"Aparador Clássico M", codigo:"APA002", valor:"5400" },
-        { categoria:"Aparadores", nome:"Aparador Romance", codigo:"APA003", valor:"2000" }
-      ];
-
-      inspecoes = [];
-      atualizarCards();
-      preencherItemAtual();
-      renderTabela();
+      await window.aguardarContexto?.();
+      const sb = window.supabaseClient, empresa = window.__CONTEXT?.empresa_id;
+      if(!sb || !empresa) throw new Error("Entre no sistema para carregar as inspeções");
+      const [cadastros, historico] = await Promise.all([
+        sb.from("itens").select("id,codigo,produto,descricao_total,categoria,valor_reposicao").eq("empresa_id",empresa).order("produto"),
+        sb.from("qualidade_inspecoes").select("dados").eq("empresa_id",empresa).order("criado_em",{ascending:false}).limit(1000)
+      ]);
+      if(cadastros.error || historico.error) throw cadastros.error || historico.error;
+      itens = (cadastros.data || []).map(i => ({ id:i.id,codigo:i.codigo,nome:i.descricao_total || i.produto,categoria:i.categoria,valor:i.valor_reposicao }));
+      inspecoes = (historico.data || []).map(i => i.dados);
+      atualizarCards(); preencherItemAtual(); renderTabela();
     }
 
     function initControledequalidade() {
@@ -349,7 +359,7 @@ function atualizarCards(){
     
       configurarStatusButtons();
       criarChecklist();
-      carregarDados();
+      carregarDados().catch(error => mostrarToast(error.message));
     
       // 🔥 CONTROLE DE ABAS
       const tabs = document.querySelectorAll(".tab");

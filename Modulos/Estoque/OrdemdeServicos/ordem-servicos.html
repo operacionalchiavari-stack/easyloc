@@ -18,7 +18,7 @@
   <div class="header">
 <h1 id="tituloPagina">
   Itens Danificados 
-  <span id="ultimaAtualizacao" style="font-size:12px; font-weight:500; color:#64748b; margin-left:8px;">
+  <span id="ultimaAtualizacao" style="font-size:12px; font-weight:500; color:var(--el-color-text,#1f2020); margin-left:8px;">
     • Atualizando...
   </span>
 </h1>
@@ -55,13 +55,13 @@
   </div>
 </div>
   <select class="el-select" id="filtroNome"></select>
-  <input class="el-input" id="filtroOS" placeholder="Número O.S" autocomplete="off">
+  <input type="search" class="el-input" id="filtroOS" placeholder="Número O.S" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
   <select class="el-select" id="filtroOnde">
     <option value="">Dano (todos)</option>
     <option value="Dano Interno">Dano Interno</option>
     <option value="Evento">Evento</option>
   </select>
-  <input class="el-input" id="filtroPedido" placeholder="Número do pedido" autocomplete="off">
+  <input type="search" class="el-input" id="filtroPedido" placeholder="Número do pedido" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
 </div>
 
 <!-- cards removidos -->
@@ -451,9 +451,9 @@
 <div class="modal el-modal" id="modalEncaminhar">
   <div class="modal-box el-modal__box" style="max-width:420px;">
 
-    <div style="padding:20px; border-bottom:1px solid #e2e8f0;">
+    <div style="padding:20px; border-bottom:1px solid var(--el-color-border,#e3e7ec);">
       <h3 style="font-size:18px; font-weight:700;">Encaminhar O.S</h3>
-      <span style="font-size:13px; color:#64748b;">Selecione o próximo setor</span>
+      <span style="font-size:13px; color:var(--el-color-text,#1f2020);">Selecione o próximo setor</span>
     </div>
 
     <div style="padding:20px;">
@@ -473,7 +473,7 @@
       justify-content:flex-end;
       gap:10px;
       padding:15px;
-      border-top:1px solid #e2e8f0;
+      border-top:1px solid var(--el-color-border,#e3e7ec);
     ">
       <button type="button" onclick="fecharEncaminhar()" class="os-btn btn secondary">
         Cancelar
@@ -490,9 +490,9 @@
 <div class="modal el-modal" id="modalSenha">
   <div class="modal-box el-modal__box" style="max-width:420px;">
 
-    <div style="padding:24px 26px; border-bottom:1px solid #e2e8f0;">
+    <div style="padding:24px 26px; border-bottom:1px solid var(--el-color-border,#e3e7ec);">
       <h2 style="font-size:18px; font-weight:700;">Confirmar baixa</h2>
-      <span style="font-size:13px; color:#64748b;">Digite sua senha para continuar</span>
+      <span style="font-size:13px; color:var(--el-color-text,#1f2020);">Digite sua senha para continuar</span>
     </div>
 
     <div style="padding:20px 26px;">
@@ -509,7 +509,7 @@
       justify-content:flex-end;
       gap:10px;
       padding:15px 20px;
-      border-top:1px solid #e2e8f0;
+      border-top:1px solid var(--el-color-border,#e3e7ec);
     ">
       <button type="button" onclick="fecharModalSenha()" class="os-btn btn secondary">
         Cancelar
@@ -531,9 +531,9 @@
   ">
 
     <!-- HEADER -->
-    <div style="padding:20px 24px; border-bottom:1px solid #e2e8f0;">
+    <div style="padding:20px 24px; border-bottom:1px solid var(--el-color-border,#e3e7ec);">
       <h2 style="font-size:18px; font-weight:700;">Checklist de Qualidade</h2>
-      <span style="font-size:13px; color:#64748b;">Confirme antes de finalizar</span>
+      <span style="font-size:13px; color:var(--el-color-text,#1f2020);">Confirme antes de finalizar</span>
     </div>
 
     <!-- CONTEÚDO (SCROLL CONTROLADO) -->
@@ -601,7 +601,7 @@
       justify-content:flex-end;
       gap:10px;
       padding:14px 20px;
-      border-top:1px solid #e2e8f0;
+      border-top:1px solid var(--el-color-border,#e3e7ec);
     ">
       <button type="button" onclick="fecharChecklist()" class="os-btn btn secondary">
         Cancelar
@@ -621,8 +621,9 @@
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="../../../js/core/permissions.js?v=20261018-free"></script>
+<script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="ordem-servicos.js?v=20260913b"></script>
 <script>lucide.createIcons();</script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>
 </html>

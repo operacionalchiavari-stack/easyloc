@@ -11,6 +11,7 @@
 (function () {
   "use strict";
   const ETAPAS = {
+    descarregamento: { campo: "lida_descarregamento_em", titulo: "Conferência do descarregamento", rotulo: "Descarregamento", status: "descarregado", verbo: "descarregado" },
     carregamento: { campo: "lida_carregamento_em", titulo: "Conferência do carregamento", rotulo: "Carregamento", status: "carregado", verbo: "carregado" },
     retorno: { campo: "lida_retorno_em", titulo: "Conferência da volta", rotulo: "Triagem da volta", status: "retornado", verbo: "voltou" }
   };
@@ -24,6 +25,36 @@
   // com o que saiu no carregamento só quando a conferência é concluída (s.revelado).
   const cega = etapa === "retorno";
   const escondido = () => cega && !s.revelado;
+  const chavePendencias = () => ["acervo-leituras-pendentes",s.empresa,s.usuario,s.pedido?.id,etapa].join(":");
+  const pendenciasRede = () => { try { return JSON.parse(localStorage.getItem(chavePendencias()) || "[]"); } catch { return []; } };
+  function mostrarPendenciasRede(){
+    const el = $("cfPendenciasRede"), fila = pendenciasRede();
+    if(!el) return;
+    el.hidden = !fila.length;
+    el.innerHTML = fila.length ? '<p>' + fila.length + ' leitura(s) aguardando envio. Elas ainda não contam como conferidas.</p><button type="button" class="btn" id="cfReenviarLeituras">Tentar enviar</button>' : '';
+    $("cfReenviarLeituras")?.addEventListener("click", reenviarPendencias);
+  }
+  function guardarLeitura(texto){
+    const fila = pendenciasRede();
+    if(!fila.includes(texto)) fila.push(texto);
+    try { localStorage.setItem(chavePendencias(),JSON.stringify(fila)); }
+    catch { throw new Error("Sem rede e sem espaço para guardar a leitura. Bipe novamente quando a conexão voltar."); }
+    mostrarPendenciasRede();
+  }
+  async function reenviarPendencias(){
+    if(s.ocupado || !s.pedido) return;
+    s.ocupado = true;
+    try {
+      for(const texto of pendenciasRede()){
+        const lido = window.EasyLocLeitor.ler(texto);
+        const { data, error } = await s.sb.rpc("operacao_ler_peca", { p_pedido:s.pedido.id,p_etapa:etapa,p_tipo:lido.tipo === "PAT" ? "PAT" : "ENV",p_codigo:lido.codigo });
+        if(error && !/já conferid|já foi conferid/i.test(error.message)) { ultima("erro","Envio pendente",error.message); break; }
+        if(data){ const e=s.etiquetas.find(e=>e.id===data.id); if(e) Object.assign(e,data); }
+        localStorage.setItem(chavePendencias(),JSON.stringify(pendenciasRede().filter(v=>v!==texto)));
+      }
+      pintar();mostrarPendenciasRede();
+    } finally { s.ocupado=false; }
+  }
 
   function avisar(msg, titulo = cfg.rotulo, tipo = "aviso") { window.alerta ? window.alerta(msg, titulo, tipo) : alert(msg); }
   function mostrarAviso(msg) { $("cfAviso").hidden = false; $("cfAviso").textContent = msg; }
@@ -63,7 +94,7 @@
     $("cfPercent").hidden = false; $("cfBarra").parentElement.hidden = false; $("cfSoFaltando").parentElement.hidden = false;
     document.querySelector(".cf-lista-topo h3").textContent = "Volumes do pedido";
     $("cfRodape").classList.remove("is-cega");
-    const conferir = cega ? s.base : s.etiquetas;
+    const conferir = etapa !== "carregamento" ? s.base : s.etiquetas;
     const total = conferir.length, lidas = conferir.filter((e) => e[cfg.campo]).length;
     const pct = total ? Math.round((lidas / total) * 100) : 0;
     $("cfPercent").textContent = pct + "%";
@@ -92,13 +123,22 @@
   }
 
   async function marcar(etq, codigoLido) {
-    const agora = new Date().toISOString();
-    const { error } = await s.sb.from("separacoes_etiquetas").update({ [cfg.campo]: agora }).eq("id", etq.id).eq("empresa_id", s.empresa);
-    if (error) throw error;
-    etq[cfg.campo] = agora;
-    await registrar({ codigo_lido: codigoLido, separacao_item_id: etq.separacao_item_id, item_id: etq.item_id, status_leitura: "sucesso", item_nome: nomeItem(etq), observacao: cfg.rotulo + ": etiqueta " + etq.codigo });
+    const lido = window.EasyLocLeitor.ler(codigoLido);
+    const { data, error } = await s.sb.rpc("operacao_ler_peca", { p_pedido: s.pedido.id, p_etapa: etapa, p_tipo: lido.tipo === "PAT" ? "PAT" : "ENV", p_codigo: lido.codigo });
+    if (error) {
+      if(!navigator.onLine || /fetch|network|failed to fetch/i.test(error.message)){
+        guardarLeitura(codigoLido);
+        ultima("erro","Leitura aguardando envio","A peça só será confirmada quando o servidor receber a leitura.");
+        return false;
+      }
+      throw error;
+    }
+    // O servidor pode escolher outra etiqueta do mesmo item quando dois aparelhos leem ao mesmo tempo.
+    const atual = s.etiquetas.find(e => e.id === data.id) || etq;
+    Object.assign(atual, data);
     ultima("ok", nomeItem(etq), "Etiqueta " + etq.codigo + (escondido() ? "" : " · " + etq.sequencia + " de " + etq.total_item));
     pintar();
+    return true;
   }
 
   async function aoLer(texto) {
@@ -108,17 +148,7 @@
       const { tipo, codigo } = window.EasyLocLeitor.ler(texto);
       if (tipo === "PAT") {
         if (s.patLidos.has(codigo)) { ultima("erro", "Este móvel já foi conferido", codigo); return; }
-        const { data: pat } = await s.sb.from("itens_patrimonios").select("item_id,codigo_patrimonio").eq("empresa_id", s.empresa).eq("codigo_patrimonio", codigo).maybeSingle();
-        if (!pat) { ultima("erro", "QR fixo não encontrado", codigo); await registrar({ codigo_lido: codigo, status_leitura: "erro", observacao: "Patrimônio não encontrado" }); return; }
-        const livre = s.etiquetas.find((e) => String(e.item_id) === String(pat.item_id) && !e[cfg.campo]);
-        if (!livre) {
-          const doPedido = s.etiquetas.some((e) => String(e.item_id) === String(pat.item_id));
-          ultima("erro", doPedido ? (escondido() ? "Leia a etiqueta de envio deste móvel" : "Este item já está completo") : "Este móvel não é deste pedido", codigo);
-          await registrar({ codigo_lido: codigo, item_id: pat.item_id, status_leitura: "erro", observacao: doPedido ? "Item já completo" : "Fora do pedido" });
-          return;
-        }
-        s.patLidos.add(codigo);
-        await marcar(livre, codigo);
+        if(await marcar({}, texto)) s.patLidos.add(codigo);
         return;
       }
       if (tipo === "ITEM") { ultima("erro", "Leia a etiqueta de envio ou o QR fixo do móvel", "O QR do item não identifica qual unidade é."); return; }
@@ -130,7 +160,7 @@
         return;
       }
       if (etq[cfg.campo]) { ultima("erro", "Já conferida", etq.codigo + " · " + nomeItem(etq)); return; }
-      await marcar(etq, codigo);
+      await marcar(etq, texto);
     } catch (e) {
       console.error(e);
       ultima("erro", "Erro ao registrar a leitura", e?.message || "");
@@ -138,7 +168,8 @@
   }
 
   async function concluir() {
-    const conferir = cega ? s.base : s.etiquetas;
+    if(pendenciasRede().length){ avisar("Envie as leituras pendentes antes de concluir."); return; }
+    const conferir = etapa !== "carregamento" ? s.base : s.etiquetas;
     const faltando = conferir.filter((e) => !e[cfg.campo]);
     if (escondido()) {
       const n = s.etiquetas.filter((e) => e[cfg.campo]).length;
@@ -153,19 +184,62 @@
         : confirm(faltando.length + " volume(s) não foram bipados. Concluir com pendência?");
       if (!ok) return;
     }
-    const registro = {
-      concluido_em: new Date().toISOString(), por: s.nome, usuario_id: s.usuario,
-      lidas: conferir.length - faltando.length, total: conferir.length, as_cegas: cega || undefined,
-      faltando: faltando.map((e) => ({ codigo: e.codigo, item: nomeItem(e) }))
-    };
+    const { data: registro, error } = await s.sb.rpc("operacao_concluir_conferencia", { p_pedido: s.pedido.id, p_etapa: etapa, p_aceitar_faltas: faltando.length > 0 });
+    if (error) { avisar(error.message, cfg.rotulo, "erro"); return; }
     const operacao = { ...(s.pedido.operacao || {}), [etapa]: registro };
-    const { error } = await s.sb.from("separacoes_pedidos").update({ status_operacional: cfg.status, operacao }).eq("id", s.pedido.id).eq("empresa_id", s.empresa);
-    if (error) { console.error(error); avisar("Não foi possível concluir: " + error.message, cfg.rotulo, "erro"); return; }
     s.pedido.operacao = operacao;
     leitor?.desligar();
-    if (cega) { s.revelado = true; pintar(); mostrarResultadoRetorno(registro); }
+    if (cega) { s.revelado = true; pintar(); mostrarResultadoRetorno(registro); await carregarOcorrencias(); }
     avisar(faltando.length ? "Conferência concluída com " + faltando.length + " pendência(s)." : "Conferência concluída: tudo " + cfg.verbo + ".", cfg.rotulo, faltando.length ? "aviso" : "sucesso");
     $("cfConcluir").textContent = "Concluída · conferir de novo";
+  }
+
+  async function carregarOcorrencias(){
+    const raiz = $("cfOcorrencias");
+    if(!raiz || etapa !== "retorno") return;
+    const { data, error } = await s.sb.from("operacao_ocorrencias").select("*").eq("pedido_id", s.pedido.id).order("criado_em");
+    if(error){ mostrarAviso("Não foi possível carregar as ocorrências. Tente novamente."); return; }
+    raiz.hidden = false;
+    raiz.innerHTML = '<h3>Ocorrências e encerramento</h3><details><summary>Registrar ocorrência</summary>' +
+      '<form id="cfFormularioOcorrencia" class="cf-formulario-ocorrencia"><label>Tipo<select name="tipo"><option value="avaria">Avaria</option><option value="limpeza">Limpeza</option><option value="manutencao">Manutenção</option><option value="outro">Outro</option></select></label>' +
+      '<label>Peça<select name="codigo"><option value="">Ocorrência geral</option>' + s.etiquetas.map(e => '<option value="' + esc(e.codigo) + '">' + esc(e.codigo + ' · ' + nomeItem(e)) + '</option>').join('') + '</select></label>' +
+      '<label>O que aconteceu e para onde encaminhar?<textarea name="descricao" required minlength="5"></textarea></label><button type="submit" class="btn" id="cfNovaOcorrencia">Salvar ocorrência</button></form></details>' +
+      (data || []).map(o => '<p>' + esc(o.tipo + ': ' + o.descricao) + (o.resolvida_em ? ' · Resolvida' : ' · Pendente <button type="button" class="btn" data-resolver="' + esc(o.id) + '">Resolver</button>') + '</p>').join('') +
+      '<button type="button" class="btn primary" id="cfEncerrar">Encerrar operação</button><p id="cfEncerramentoMensagem" role="status"></p>';
+    $("cfFormularioOcorrencia").onsubmit = async event => {
+      event.preventDefault();
+      const campos = new FormData(event.currentTarget);
+      const tipo = campos.get("tipo"), codigo = campos.get("codigo"), descricao = String(campos.get("descricao") || "").trim();
+      const etiqueta = codigo ? s.etiquetas.find(e => e.codigo === codigo) : null;
+      if(codigo && !etiqueta){ avisar("Etiqueta não pertence a este pedido"); return; }
+      if(!descricao?.trim()) return;
+      $("cfNovaOcorrencia").disabled = true;
+      const { error } = await s.sb.from("operacao_ocorrencias").insert({ empresa_id: s.empresa, pedido_id: s.pedido.id, item_id: etiqueta?.item_id || null, codigo: codigo || null, tipo, descricao: descricao.trim() });
+      if(error){ $("cfNovaOcorrencia").disabled = false; avisar(error.message); } else await carregarOcorrencias();
+    };
+    raiz.querySelectorAll("[data-resolver]").forEach(btn => btn.onclick = async () => {
+      const o = data.find(o => o.id === btn.dataset.resolver);
+      const destino = o.tipo === "falta" ? prompt("Digite devolvido para conferir uma peça recebida, ou perda para confirmar a baixa do estoque:", "devolvido") : "resolvido";
+      if(!destino) return;
+      if(!["devolvido","perda","resolvido"].includes(destino)){ avisar("Destino inválido"); return; }
+      if(destino === "devolvido"){ avisar("Bipe a etiqueta da peça e conclua novamente a triagem; a falta será resolvida automaticamente."); return; }
+      const motivo = prompt("Descreva o encaminhamento ou a solução:");
+      if(!motivo?.trim()) return;
+      if(destino === "perda" && !await window.confirmarGlobal("A perda será registrada e a peça será baixada do estoque. Confirmar?", "Confirmar perda", { confirmarTexto: "Confirmar perda", cancelarTexto: "Voltar" })) return;
+      const { error } = await s.sb.rpc("operacao_resolver_ocorrencia", { p_id: o.id, p_destino: destino, p_motivo: motivo.trim() });
+      if(error) avisar(error.message); else await carregarOcorrencias();
+    });
+    $("cfEncerrar").onclick = async () => {
+      const { error } = await s.sb.rpc("operacao_encerrar", { p_pedido: s.pedido.id });
+      $("cfEncerramentoMensagem").textContent = error ? error.message : "Operação encerrada. O fechamento financeiro permanece independente.";
+      if(!error){ s.pedido.status_operacional="encerrado"; bloquearOperacaoEncerrada(); }
+    };
+    bloquearOperacaoEncerrada();
+  }
+  function bloquearOperacaoEncerrada(){
+    if(s.pedido?.status_operacional !== "encerrado") return;
+    ["cfEncerrar","cfConcluir","cfBtnCamera","cfEntrada","cfNovaOcorrencia"].forEach(id=>{if($(id)) $(id).disabled=true;});
+    if($("cfEncerrar")) $("cfEncerrar").textContent="Operação encerrada";
   }
 
   // Depois de concluída, o sistema mostra o resultado: o que voltou e o que não voltou.
@@ -248,6 +322,9 @@
     $("cfSoFaltando").addEventListener("change", pintar);
     $("cfConcluir").addEventListener("click", () => concluir().catch(console.error));
     pintar();
+    if(etapa === "retorno" && feito?.concluido_em) await carregarOcorrencias();
+    mostrarPendenciasRede();
+    window.addEventListener("online",reenviarPendencias);
     $("cfEntrada").focus();
   }
 

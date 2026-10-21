@@ -1,15 +1,25 @@
 <div class="dispon-page el-page" data-module="disponibilidade-itens">
+  <section id="disponSimulacaoAviso" class="dispon-simulation-banner" hidden>
+    <div><strong>Simulação · semana movimentada</strong><p>Pedidos e estoque fictícios. Explore os dias e abra os kits para acompanhar os componentes compartilhados.</p></div>
+    <button type="button" class="dispon-back" id="btnSairSimulacao">Sair da simulação</button>
+  </section>
+  <div id="disponLista" class="dispon-list-view">
   <header class="dispon-hero">
     <div>
       <span class="dispon-eyebrow">Estoque</span>
       <h1>Disponibilidade de Itens</h1>
       <p>Compare estoque total, reservas por data, manutencao e quantidade disponivel para venda.</p>
     </div>
-    <button type="button" class="btn secondary" id="btnDisponAtualizar">Atualizar</button>
   </header>
+  <div class="dispon-simulation-actions"><button type="button" class="dispon-back" id="btnSimularSemana">Simular semana movimentada</button></div>
+  <section id="disponSimulacaoRoteiro" class="dispon-simulation-guide" hidden>
+    <h2>Três kits, as mesmas bases</h2>
+    <p>Estante, buffet e mesa usam as mesmas 8 bases. Na sexta e no sábado todas estão alugadas, mesmo com partes superiores de estante sobrando. Clique nos dias e depois abra um item.</p>
+    <div id="disponSimulacaoDias" class="dispon-simulation-days"></div>
+  </section>
 
   <section class="dispon-filters">
-    <label>Data do evento
+    <label>Data
       <input class="el-input" type="date" id="disponData">
     </label>
     <label>Buscar item
@@ -30,8 +40,8 @@
     </label>
   </section>
 
-  <section class="dispon-kpis" id="disponKpis"></section>
 
+  <p class="dispon-periodo-ajuda" id="disponErro" role="alert" hidden></p>
   <section class="dispon-card">
     <div class="dispon-table-wrap">
       <table>
@@ -40,44 +50,72 @@
             <th>Foto</th>
             <th>Item</th>
             <th>Categoria</th>
-            <th>Total</th>
-            <th>Reservado na data</th>
-            <th>Manutencao</th>
-            <th>Disponivel</th>
+            <th class="dispon-quantity-cell">Total</th>
+            <th class="dispon-quantity-cell">Reservado na data</th>
+            <th class="dispon-quantity-cell">Manutencao</th>
+            <th class="dispon-quantity-cell">Disponivel</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody id="disponTabela"></tbody>
       </table>
     </div>
-    <div class="dispon-pagination" id="disponPaginacao"></div>
+    <div id="disponMais" class="dispon-infinite-sentinel" role="status" hidden>Carregando mais itens...</div>
   </section>
 
-  <div class="dispon-modal hidden" id="disponReservasModal" aria-hidden="true">
-    <div class="dispon-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="disponReservasTitulo">
-      <div class="dispon-modal-head">
+  </div>
+  <section class="dispon-detail-view" id="disponDetalheTela" aria-labelledby="disponReservasTitulo" hidden>
+    <div class="dispon-detail-shell">
+      <button type="button" class="dispon-back" id="btnVoltarDispon"><span aria-hidden="true">←</span> Voltar para disponibilidade</button>
+      <div class="dispon-detail-head">
+        <div class="dispon-detail-identity">
+        <div class="dispon-detail-photo" id="disponDetalheFoto"></div>
         <div>
-          <span class="dispon-eyebrow">Reservas do item</span>
-          <h2 id="disponReservasTitulo">Locacoes na data</h2>
+          <span class="dispon-eyebrow">Disponibilidade de estoque</span>
+          <h2 id="disponReservasTitulo" tabindex="-1">Reservas no período</h2>
+          <p id="disponDetalheCodigo"></p>
         </div>
-        <button type="button" class="btn secondary" id="btnFecharReservasItem">Fechar</button>
+        </div>
       </div>
-      <div class="dispon-modal-body">
+      <div class="dispon-detail-body">
+        <div class="dispon-detail-grid">
+          <div id="disponComponentes"></div>
+          <aside class="dispon-daily-panel" aria-label="Saldos diários no período">
+            <h3>Saldos no período</h3>
+            <div class="dispon-daily-period">
+              <label>De <input class="el-input" type="date" id="disponDetalheInicio"></label>
+              <label>Até <input class="el-input" type="date" id="disponDetalheFim"></label>
+            </div>
+            <p id="disponDiasResumo" role="status"></p>
+            <button type="button" class="dispon-period-reset" id="disponVerPeriodo" hidden>Ver todo o período</button>
+            <div class="dispon-daily-scroll" id="disponDiasScroll">
+              <table aria-label="Disponibilidade por dia">
+                <thead><tr><th>Data</th><th>Saldo</th></tr></thead>
+                <tbody id="disponDias"></tbody>
+              </table>
+            </div>
+          </aside>
+        </div>
+        <div class="dispon-reservas-wrap">
+        <h3 id="disponReservasPeriodo">Pedidos que utilizam as peças</h3>
         <table>
           <thead>
             <tr>
               <th>Pedido</th>
               <th>Cliente</th>
+              <th>Item reservado</th>
+              <th>Peça utilizada</th>
               <th>Evento</th>
               <th>Local</th>
               <th>Data</th>
-              <th>Qtd</th>
+              <th>Qtd de peças</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody id="disponReservasTbody"></tbody>
         </table>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 </div>

@@ -252,7 +252,8 @@
     }
 
     const statusComercial = normalizarStatusComercial(pedido.status_comercial);
-    if (statusComercial !== "aprovado") {
+    if (pedido.reducao_liberada_em) return { liberado: false, motivo: "Retirada liberada ao comercial. Separação pausada até salvar a revisão ou cancelar a liberação." };
+    if (!["aprovado", "enviado", "finalizado"].includes(statusComercial)) {
       return {
         liberado: false,
         motivo: "Pedido em pre reserva. A equipe pode visualizar, mas a separacao fica bloqueada ate a aprovacao comercial."
@@ -260,7 +261,7 @@
     }
 
     const diasLiberacao = Number(state.regrasLogistica?.separacao_dias_antes_evento ?? 2);
-    const diferencaDias = diasAteEvento(pedido);
+    const diferencaDias = diasAteEvento({ ...pedido, data_evento: pedido.data_entrega || pedido.data_evento });
     if (diferencaDias !== null && diferencaDias > diasLiberacao) {
       return {
         liberado: false,
@@ -397,6 +398,7 @@
         <div class="separacao-card-meta-line">${escapeHtml(data)} &middot; ${escapeHtml(setor)} &middot; ${escapeHtml(qtdLabel)}</div>
         ${coluna === "andamento" ? progresso : ""}
         ${regra.liberado ? "" : `<div class="separacao-lock-note">${escapeHtml(regra.motivo)}</div>`}
+        ${coluna === "andamento" && STATUS_EM_ANDAMENTO.has(pedido.status) && !pedido.status_operacional ? `<button type="button" class="btn" data-separacao-action="liberar-retirada" data-pedido-id="${escapeHtml(pedido.id)}">${pedido.reducao_liberada_em ? "Cancelar liberação de retirada" : "Liberar retirada ao comercial"}</button>` : ""}
       </article>
     `;
   }
@@ -479,7 +481,7 @@
     };
 
     const retornos = { aguardando: [], andamento: [], separado: [] };
-    state.pedidosFiltrados.filter(idaConcluida).forEach((p) => retornos[colunaRetorno(p)].push(p));
+    state.pedidosFiltrados.filter(p => !!p.operacao?.descarregamento?.concluido_em && !p.encerrado_operacional_em).forEach((p) => retornos[colunaRetorno(p)].push(p));
     renderContadores({
       aguardando: [...grupos.aguardando, ...retornos.aguardando],
       emSeparacao: [...grupos.emSeparacao, ...retornos.andamento],
@@ -724,7 +726,7 @@
         .select("*")
         .eq("empresa_id", state.empresaId)
         .in("status", ["pendente", "em_separacao", "pausado", "separado", "separado_com_divergencia"])
-        .in("status_comercial", ["pre_reserva", "aprovado"])
+        .in("status_comercial", ["pre_reserva", "aprovado", "enviado", "finalizado"])
         .order("data_hora", { ascending: true });
 
       if (erroPedidos) throw erroPedidos;
@@ -1109,10 +1111,10 @@
       '.obs{border:1px solid #c9c2b5;border-radius:6px;padding:6px 10px;margin-bottom:10px;font-size:10pt}' +
       'table{width:100%;border-collapse:collapse}th{text-align:left;font-size:8.5pt;text-transform:uppercase;color:#6b665e;border-bottom:1px solid #1f1d1a;padding:5px 6px}' +
       'td{border-bottom:1px solid #e1dbcf;padding:6px;vertical-align:middle}tr{break-inside:avoid}' +
-      'tr.grupo td{background:#ebedef;font-weight:700;font-size:10pt;border-bottom:1px solid #c9c2b5;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+      'tr.grupo td{background:#ebedef;font-weight:600;font-size:10pt;border-bottom:1px solid #c9c2b5;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
       'td.foto{width:16mm}td.foto img{width:14mm;height:14mm;object-fit:cover;border-radius:3px}' +
       'td small{display:block;font-size:8.5pt;color:#6b665e;margin-top:2px}td small.nota{color:#8a4b04}' +
-      'td.cod{font-family:"Courier New",monospace;font-size:9pt;width:30mm}td.num{text-align:center;font-size:13pt;font-weight:700;width:18mm}' +
+      'td.cod{font-family:"Courier New",monospace;font-size:9pt;width:30mm}td.num{text-align:center;font-size:13pt;font-weight:600;width:18mm}' +
       'td.escrever{width:22mm;text-align:center}td.escrever span{display:inline-block;width:17mm;height:8mm;border:1.2px solid #1f1d1a;border-radius:1.5mm}td.escrever small{font-size:7pt}' +
       'td.check{width:14mm;text-align:center}td.check span{display:inline-block;width:6mm;height:6mm;border:1.5px solid #1f1d1a;border-radius:1.5mm}' +
       'tr.ok td.check span{background:#1f1d1a;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
@@ -1151,7 +1153,7 @@
       .eq("empresa_id", state.empresaId).eq("separacao_pedido_id", pedido.id);
     if (error) { console.error(error); avisar("Não foi possível ler as etiquetas do pedido.", "Etiquetas", "erro"); return; }
     const lista = existentes || [];
-    const numero = String(pedido.numero_pedido || "PED").replace(/s+/g, "");
+    const numero = String(pedido.numero_pedido || "PED").replace(/\s+/g, "");
     let proximo = lista.reduce((max, e) => Math.max(max, Number(String(e.codigo).split("-").pop()) || 0), 0);
     const novas = [];
     itens.forEach((item) => {
@@ -1161,7 +1163,8 @@
         if (ja.has(seq)) continue;
         proximo += 1;
         novas.push({ empresa_id: state.empresaId, separacao_pedido_id: pedido.id, separacao_item_id: linhaDoItem(item), item_id: item.item_id,
-          codigo: numero + "-" + String(proximo).padStart(3, "0"), sequencia: seq, total_item: total });
+          codigo: numero + "-" + String(proximo).padStart(3, "0"), sequencia: seq, total_item: total,
+          patrimonio_codigo: item.patrimonios_lidos?.[seq-1] || null });
       }
     });
     if (novas.length) {
@@ -1317,7 +1320,7 @@
     } catch (err) {
       console.error("Erro ao processar leitura:", err);
       setScannerStatus("Erro na leitura", "error");
-      setUltimaLeitura({ tipo: "erro", codigo, observacao: "Erro inesperado na leitura" });
+      setUltimaLeitura({ tipo: "erro", codigo, observacao: err.message || "Erro inesperado na leitura" });
       await registrarLeitura({
         codigo,
         status: "erro",
@@ -1417,10 +1420,7 @@
     if (!itemSeparacao) return erro("Item da etiqueta não está mais no pedido");
     if (itemSeparado(itemSeparacao) >= itemTotal(itemSeparacao)) return erro("Quantidade já completa", "bloqueado");
     const novaQtd = itemSeparado(itemSeparacao) + 1;
-    await atualizarItemSeparacao(itemSeparacao, { quantidade_separada: novaQtd, status: novaQtd >= itemTotal(itemSeparacao) ? "concluido" : "em_andamento" });
-    const { error } = await state.supabase.from(TABLES.etiquetas).update({ lida_separacao_em: new Date().toISOString() })
-      .eq("id", etiqueta.id).eq("empresa_id", state.empresaId);
-    if (error) console.warn("Etiqueta lida, mas não marcada:", error);
+    await atualizarItemSeparacao(itemSeparacao, { quantidade_separada: novaQtd, status: novaQtd >= itemTotal(itemSeparacao) ? "concluido" : "em_andamento" }, etiqueta.id);
     await registrarLeitura({ codigo, itemId: itemSeparacao.item_id, separacaoItemId: itemSeparacao.id, tipoControle: "etiqueta", status: "sucesso", observacao: "Etiqueta de envio " + etiqueta.sequencia + " de " + etiqueta.total_item });
     leituraSucesso(itemSeparacao, codigo);
   }
@@ -1479,6 +1479,7 @@
     });
 
     leituraSucesso(itemSeparacao, "manual");
+    if(delta < 0) await carregarFila();
   }
 
   async function definirQuantidadeManual(itemSeparacao, quantidade) {
@@ -1510,10 +1511,12 @@
     });
 
     leituraSucesso(itemSeparacao, "manual");
+    if(novaQtd < atual) await carregarFila();
   }
 
-  async function atualizarItemSeparacao(itemSeparacao, payload) {
+  async function atualizarItemSeparacao(itemSeparacao, payload, etiquetaId = null) {
     if (itemSeparacao.virtual) {
+      const anterior = { ...itemSeparacao };
       Object.assign(itemSeparacao, payload);
       const kit = itemSeparacao.kitRow;
       const irmaos = state.itens.filter((i) => i.virtual && i.kitRow === kit);
@@ -1526,22 +1529,15 @@
         status: irmaos.every((i) => itemSeparado(i) >= itemTotal(i)) ? "concluido" : algum ? "em_andamento" : "pendente",
         atualizado_por: state.usuarioId, atualizado_em: new Date().toISOString()
       };
-      const { error: erroKit } = await state.supabase.from(TABLES.itens).update(dadosKit)
-        .eq("id", kit.id).eq("empresa_id", state.empresaId);
-      if (erroKit) throw erroKit;
+      const { error: erroKit } = await state.supabase.rpc("operacao_atualizar_separacao", { p_item:kit.id,p_dados:dadosKit,p_quantidade_anterior:kit.quantidade_separada || 0,p_componentes_anteriores:kit.componentes || {},p_etiqueta:etiquetaId });
+      if (erroKit) { Object.assign(itemSeparacao, anterior); throw erroKit; }
       Object.assign(kit, dadosKit);
       return;
     }
-    const { error } = await state.supabase
-      .from(TABLES.itens)
-      .update({
-        ...payload,
-        atualizado_por: state.usuarioId,
-        atualizado_em: new Date().toISOString()
-      })
-      .eq("id", itemSeparacao.id)
-      .eq("empresa_id", state.empresaId);
-
+    const { error } = await state.supabase.rpc("operacao_atualizar_separacao", {
+      p_item:itemSeparacao.id,p_dados:payload,p_quantidade_anterior:itemSeparacao.quantidade_separada || 0,
+      p_componentes_anteriores:itemSeparacao.componentes || {},p_etiqueta:etiquetaId
+    });
     if (error) throw error;
     Object.assign(itemSeparacao, payload);
   }
@@ -1645,11 +1641,15 @@
       motivo = `Finalizado com ${formatQty(resumo.faltante)} itens faltantes.`;
     }
 
-    await atualizarPedidoStatus(pedido.id, status, true, {
+    try { await atualizarPedidoStatus(pedido.id, status, true, {
       finalizado_por: state.usuarioId,
       finalizado_em: new Date().toISOString(),
       motivo_divergencia: motivo || null
-    });
+    }); } catch(error){
+      avisar(error.message, "Revise a separação", "aviso");
+      await carregarFila();
+      return false;
+    }
 
     avisar(
       status === "separado" ? "Separacao finalizada com sucesso." : "Separacao finalizada com divergencia.",
@@ -1719,6 +1719,19 @@
         event.stopPropagation();
         const pedidoId = actionButton.dataset.pedidoId;
         const action = actionButton.dataset.separacaoAction;
+        if (action === "liberar-retirada") {
+          const pedido = state.pedidos.find(p => String(p.id) === String(pedidoId));
+          if(!pedido || !STATUS_EM_ANDAMENTO.has(pedido.status) || pedido.status_operacional) return;
+          const liberar = !pedido?.reducao_liberada_em;
+          (async () => {
+            if(liberar && !await window.confirmarGlobal("A separação ficará pausada enquanto o comercial revisa as retiradas. Peças já separadas precisam ser desmarcadas antes de reduzir a quantidade.", "Liberar retirada", { confirmarTexto: "Liberar", cancelarTexto: "Voltar" })) return;
+            actionButton.disabled = true;
+            const { error } = await state.supabase.rpc("pedido_liberar_reducao", { p_pedido: pedidoId, p_liberar: liberar });
+            if(error) throw error;
+            await carregarFila();
+          })().catch(error => { actionButton.disabled = false; avisar(error.message, "Retirada", "erro"); });
+          return;
+        }
         if (action === "iniciar") iniciarPedidoSeparacao(pedidoId).catch(console.error);
         if (action === "modo") abrirModoSeparacao(pedidoId).catch(console.error);
         if (action === "resumo") abrirResumoSeparacao(pedidoId).catch(console.error);
@@ -1867,7 +1880,21 @@
     await abrirPedidoDaUrl();
     // Sem botão Atualizar (out/2026): a fila se atualiza sozinha a cada 30 s e ao voltar para a aba,
     // nunca enquanto uma janela de separação está aberta (para não mexer na tela de quem está bipando).
-    state.autoTimer = setInterval(() => { if (document.visibilityState === "visible" && !modalSeparacaoAberto()) carregarFila(); }, 30000);
+    state.autoTimer = setInterval(async () => {
+      if(document.visibilityState !== "visible" || state.verificandoRevisao) return;
+      if(!modalSeparacaoAberto()){ carregarFila(); return; }
+      if(document.activeElement?.matches("[data-manual-qty]")) return;
+      const pedido = getPedidoAtual();
+      if(!pedido) return;
+      state.verificandoRevisao = true;
+      try {
+        const {data,error} = await state.supabase.from(TABLES.pedidos).select("revisao").eq("id",pedido.id).eq("empresa_id",state.empresaId).maybeSingle();
+        if(!error && data && Number(data.revisao || 0)!==Number(pedido.revisao || 0)){
+          await carregarFila();
+          setScannerStatus("Lista atualizada pelo comercial. Confira os novos itens.","ok");
+        }
+      } finally { state.verificandoRevisao = false; }
+    }, 10000);
     state.autoVisivel = () => { if (document.visibilityState === "visible" && !modalSeparacaoAberto()) carregarFila(); };
     document.addEventListener("visibilitychange", state.autoVisivel);
   }

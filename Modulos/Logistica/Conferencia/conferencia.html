@@ -8,7 +8,7 @@
   <script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="conferencia.css?v=20261018-cinza">
+  <link rel="stylesheet" href="conferencia.css?v=20261018-operacao-integrada">
 </head>
 <body>
 <div class="container el-page cf-page">
@@ -46,6 +46,7 @@
         <strong id="cfUltimaTexto">Nenhuma ainda</strong>
         <small id="cfUltimaDetalhe">A conferência é só por bipagem: leia a etiqueta de envio (ou o QR fixo) de cada móvel.</small>
       </div>
+      <div id="cfPendenciasRede" role="status" hidden></div>
     </section>
 
     <section class="cf-lista">
@@ -54,6 +55,7 @@
         <label class="cf-so-faltando"><input type="checkbox" id="cfSoFaltando"> Só o que falta</label>
       </div>
       <div id="cfItens"></div>
+      <section id="cfOcorrencias" hidden></section>
     </section>
   </div>
 
@@ -68,8 +70,9 @@
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="../../../js/core/permissions.js?v=20261018-free"></script>
+<script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/leitorQr.js?v=20261017-inicio"></script>
-<script src="conferencia.js?v=20261018-cega"></script>
+<script src="conferencia.js?v=20261018-operacao-integrada"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>
 </html>

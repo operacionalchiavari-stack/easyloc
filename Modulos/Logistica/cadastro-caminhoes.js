@@ -451,7 +451,9 @@ async function salvarCaminhao() {
   /* ================= CAMPOS ================= */
 
   const modelo = document.getElementById("modeloInput").value.trim();
-  const placa = document.getElementById("placaInput").value.trim().toUpperCase();
+  const codigo = document.getElementById("codigoInput").value.trim().toUpperCase();
+  // Placa pode ficar em branco (frete terceirizado sem placa fixa): fica "SEM PLACA - <código>"
+  const placa = document.getElementById("placaInput").value.trim().toUpperCase() || (codigo ? "SEM PLACA - " + codigo : "");
   const tipo = document.getElementById("tipoInput").value;
   const status = document.getElementById("statusInput").value;
 
@@ -472,12 +474,12 @@ async function salvarCaminhao() {
 
   /* ================= VALIDAÇÕES ================= */
 
-  if (!modelo || !placa || !tipo) {
-    mostrarAlerta("Preencha os campos obrigatórios.");
+  if (!modelo || !codigo || !tipo) {
+    mostrarAlerta("Preencha os campos obrigatórios (modelo, código e tipo).");
     return;
   }
 
-  if (!validarPlaca(placa)) {
+  if (!placa.startsWith("SEM PLACA") && !validarPlaca(placa)) {
     mostrarAlerta("Placa inválida.");
     document.getElementById("placaInput").focus();
     return;
@@ -498,12 +500,13 @@ async function salvarCaminhao() {
 
   /* ================= INSERT ================= */
 
-  const { error } = await supabase
-    .from("caminhoes")
-    .insert([{
+  // Editar altera o mesmo caminhão (antes criava outro, duplicado)
+  const editando = window.modoCaminhao === "editar" && window.caminhaoSelecionado && window.caminhaoSelecionado.id;
+  const registro = {
       empresa_id: empresaId,
       modelo,
       placa,
+      codigo,
       tipo,
       categoria,
       empresa_nome: empresaNome || null,
@@ -517,7 +520,10 @@ async function salvarCaminhao() {
       altura_total: alturaTotal,
       capacidade_m3: capacidade,
       status
-    }]);
+    };
+  const { error } = editando
+    ? await supabase.from("caminhoes").update(registro).eq("id", window.caminhaoSelecionado.id).eq("empresa_id", empresaId)
+    : await supabase.from("caminhoes").insert([registro]);
 
   if (error) {
     console.error(error);
@@ -578,7 +584,8 @@ function abrirModalDetalheCaminhao(cam){
 function preencherFormularioCaminhao(cam) {
 
   document.getElementById("modeloInput").value = cam.modelo || "";
-  document.getElementById("placaInput").value = cam.placa || "";
+  document.getElementById("placaInput").value = String(cam.placa || "").startsWith("SEM PLACA") ? "" : (cam.placa || "");
+  document.getElementById("codigoInput").value = cam.codigo || "";
   document.getElementById("tipoInput").value = cam.tipo || "proprio";
   document.getElementById("categoriaInput").value = cam.categoria || "vuc";
   document.getElementById("empresaInput").value = cam.empresa_nome || "";
