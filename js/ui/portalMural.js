@@ -91,12 +91,24 @@
     "Triagem (Conferência)": "clipboard-check",
     "Carregamento": "truck",
     "Montagem": "hammer",
-    "Desmontagem": "package-open"
+    "Desmontagem": "package-open",
+    "Descarregamento": "package-check"
   };
   function resumoDiaHtml(r){
     if(!r){ return ""; }
-    const etapas = r.etapas || [];
     const agenda = r.agenda || [];
+    // Triagem sempre em duas colunas: ida (Separação) e volta (Conferência), mesmo vazias.
+    const etapas = (r.etapas || []).slice();
+    if(etapas.length || agenda.length){
+      ["Triagem (Conferência)", "Triagem (Separação)"].forEach(function(nome){
+        if(!etapas.some(function(g){ return g.etapa === nome; })){ etapas.unshift({ etapa: nome, total: 0, itens: [] }); }
+      });
+      etapas.sort(function(a, b){
+        const ia = RESUMO_ORDEM.indexOf(a.etapa), ib = RESUMO_ORDEM.indexOf(b.etapa);
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+      });
+    }
+    const TITULO_ETAPA = { "Triagem (Separação)": "Triagem · Ida", "Triagem (Conferência)": "Triagem · Volta" };
     const linha = function(it){
       const lista = function(v){ return String(v || "").split("|").map(function(x){ return x.trim(); }).filter(Boolean).join(", "); };
       const detalhes = [it.local, it.responsavel && ("Resp.: " + it.responsavel), it.equipe && ("Equipe: " + lista(it.equipe)), it.caminhao && ("Caminhão: " + lista(it.caminhao))].filter(Boolean).join(" · ");
@@ -113,10 +125,10 @@
       corpo = '<div class="rd-vazio revelar">Nada no cronograma para hoje.</div>';
     } else {
       corpo =
-        '<div class="rd-grade">' + etapas.map(function(g, i){
-          const corEtapa = g.etapa.startsWith("Triagem") ? "triagem" : ({ Carregamento: "carregamento", Montagem: "montagem", Desmontagem: "desmontagem" }[g.etapa] || "agenda");
-          return '<article class="rd-cartao rd-' + corEtapa + ' revelar" style="--atraso:' + (i % 3) * 0.1 + 's"><header><i data-lucide="' + (ICONE_ETAPA[g.etapa] || "calendar") + '"></i><h3>' + esc(g.etapa) + '</h3><b>' + g.total + '</b></header><ul>' +
-            g.itens.map(linha).join("") + '</ul></article>';
+        '<div class="rd-grade" style="--rd-colunas:' + Math.max(1, etapas.length) + '">' + etapas.map(function(g, i){
+          const corEtapa = g.etapa.startsWith("Triagem") ? "triagem" : ({ Carregamento: "carregamento", Montagem: "montagem", Desmontagem: "desmontagem", Descarregamento: "descarregamento" }[g.etapa] || "agenda");
+          return '<article class="rd-cartao rd-' + corEtapa + ' revelar" style="--atraso:' + (i % 3) * 0.1 + 's"><header><i data-lucide="' + (ICONE_ETAPA[g.etapa] || "calendar") + '"></i><h3>' + esc(TITULO_ETAPA[g.etapa] || g.etapa) + '</h3><b>' + g.total + '</b></header><ul>' +
+            (g.itens.length ? g.itens.map(linha).join("") : '<li class="rd-nada">Nada hoje.</li>') + '</ul></article>';
         }).join("") + (agenda.length ? '<article class="rd-cartao rd-agenda revelar"><header><i data-lucide="calendar-clock"></i><h3>Agenda interna</h3><b>' + agenda.length + '</b></header><ul>' +
           agenda.map(function(a){
             return '<li><span class="rd-hora">' + esc(a.horario || "—") + '</span><div><strong>' + esc([a.tipo, a.setor].filter(Boolean).join(" · ") || "Compromisso") + '</strong>' +
@@ -252,7 +264,7 @@
         (aniversariantesHero.length ? '<div class="hero-conteudo hero-slide hero-aniversario hero-aniversarios" role="group" aria-roledescription="slide" aria-label="Aniversariantes de ' + MESES[new Date().getMonth()] + '" aria-hidden="true" inert><div class="hero-aniversario-texto"><div class="hero-data">Aniversariantes de ' + MESES[new Date().getMonth()] + '</div><h1>Parabéns,<br>' + (aniversariantesHero.length === 1 ? esc(aniversariantesHero[0].nome) : 'aniversariantes') + '!</h1><p>Que o novo ano venha cheio de conquistas. É uma alegria ter vocês na nossa equipe.</p><div class="aniver-lista">' + aniversariantesHero.map(a => '<div class="aniver-pessoa' + (a.hoje ? ' is-hoje' : '') + '"><span class="aniver-pessoa-foto">' + fotoOuInicial(a.foto,a.nome) + '</span><b>' + esc(a.nome) + '</b><small>' + (a.hoje ? 'Hoje!' : 'Dia ' + esc(a.dia)) + (a.setor && !/^sem setor$/i.test(a.setor) ? ' · ' + esc(a.setor) : '') + '</small></div>').join('') + '</div></div>' + parabensHtml({ id: 'todos', titulo: aniversariantesHero.length === 1 ? 'Carinho da equipe' : 'Carinho para todos', mensagens: m.parabensTodos || aniversariantesHero.flatMap(a => a.mensagens || []) }) + '</div>' : '') +
         paginasAvisos.map((pagina,i) => '<div class="hero-conteudo hero-slide hero-aviso" role="group" aria-roledescription="slide" aria-label="Quadro de avisos, página ' + (i+1) + '" aria-hidden="true" inert><div class="hero-data">Quadro de avisos</div><div class="hero-avisos-lista">' + Array.from({length:6}, (_, pos) => pagina[pos]).map(a => a ? '<article class="hero-aviso-item aviso-cor-' + (['neutro','areia','verde','azul','lavanda'].includes(a.cor) ? a.cor : 'neutro') + '"><div class="hero-aviso-etiqueta">' + (a.prioridade === 'IMPORTANTE' ? 'Importante' : 'Comunicado') + (a.fixado ? ' &middot; Fixado' : '') + '<time>' + esc(String(a.publicadoEm || '').slice(0,10)) + '</time></div><h2>' + esc(a.titulo) + '</h2><div class="hero-aviso-texto" tabindex="0">' + esc(a.texto || '') + '</div><select class="aviso-cor-seletor" aria-label="Cor do comunicado" data-id="' + esc(a.id) + '" onchange="alterarCorAviso(this)">' + [['neutro','Neutro'],['areia','Areia'],['verde','Verde'],['azul','Azul'],['lavanda','Lavanda']].map(c=>'<option value="' + c[0] + '"' + (c[0]===(a.cor || 'neutro') ? ' selected' : '') + '>' + c[1] + '</option>').join('') + '</select></article>' : '<button type="button" class="hero-aviso-item hero-aviso-vazio" onclick="abrirAvisoPortal()"><i data-lucide="plus" aria-hidden="true"></i><h2>Próximo comunicado</h2><span>Clique para publicar um aviso.</span></button>').join('') + '</div></div>').join('') +
         (m.numeros ? '<div class="hero-conteudo hero-slide hero-numeros" role="group" aria-roledescription="slide" aria-label="Nossos últimos números" aria-hidden="true" inert><div class="hero-numeros-texto"><div class="hero-data">' + esc(mesCurto(m.numeros.mes)) + ' &middot; Em equipe, vamos mais longe</div><h1>Nossos últimos números.</h1><p>Cada entrega é uma conquista de todos nós.</p><div class="hero-numeros-indicadores">' + [['eventos','Eventos'],['montagens','Montagens'],['desmontagens','Desmontagens']].map(n=>'<div><b data-contar="' + Math.max(0,Number(m.numeros[n[0]]) || 0) + '">0</b><span>' + n[1] + '</span></div>').join('') + '</div></div></div>' : '') +
-        (m.numeros ? '<div class="hero-foguete-cena" aria-hidden="true"><div class="hero-foguete"><div class="hero-foguete-fumaca"><i></i><i></i><i></i><i></i></div><svg viewBox="0 0 100 150"><defs><linearGradient id="rocketMetal"><stop stop-color="#25333d"/><stop offset=".18" stop-color="#75848c"/><stop offset=".36" stop-color="#d9dfe0"/><stop offset=".45" stop-color="#f0f2ee"/><stop offset=".57" stop-color="#b4bfc2"/><stop offset=".8" stop-color="#586972"/><stop offset="1" stop-color="#1e2c36"/></linearGradient><linearGradient id="rocketExhaust" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".18" stop-color="#e1f8ff"/><stop offset=".45" stop-color="#69bde7" stop-opacity=".7"/><stop offset="1" stop-color="#347aae" stop-opacity="0"/></linearGradient><linearGradient id="rocketFin"><stop stop-color="#97a5ac"/><stop offset="1" stop-color="#263740"/></linearGradient></defs><path d="M36 89L23 112L24 119L37 109ZM64 89L77 112L76 119L63 109Z" fill="url(#rocketFin)"/><path d="M38 105L37 44Q38 24 50 3Q62 24 63 44L62 105Z" fill="url(#rocketMetal)"/><path d="M38 35Q41 17 50 3Q59 17 62 35" fill="#c0c9cd" opacity=".25"/><path d="M38 39H62M37 74H63M38 99H62" stroke="#25343e" stroke-width=".55" opacity=".65"/><path d="M42 42V96" stroke="#f2f6f5" stroke-width=".45" opacity=".55"/><path d="M57 45V97" stroke="#202e38" stroke-width=".5" opacity=".45"/><rect x="47" y="46" width="6" height="10" rx="1" fill="#233947"/><path d="M48 47V53" stroke="#a4c1cb" stroke-width=".6"/><path d="M40 105H60L58 112H42Z" fill="#283943"/><path d="M43 112H57L55 118H45Z" fill="#0e202b"/><path d="M45 117H55L53 150H47Z" fill="url(#rocketExhaust)"/><path d="M48 117H52L51 143H49Z" fill="#e4faff" opacity=".9"/><path d="M47 77H53M47 80H53" stroke="#293b45" stroke-width=".5"/></svg></div></div>' : '') +
+        (m.numeros ? '<div class="hero-subida" aria-hidden="true"><svg viewBox="0 0 420 300" preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="subidaBarra" x1="0" y1="1" x2="0" y2="0"><stop stop-color="#b08d57" stop-opacity=".05"/><stop offset="1" stop-color="#b08d57" stop-opacity=".32"/></linearGradient><linearGradient id="subidaLinha" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#c9a24f" stop-opacity=".35"/><stop offset="1" stop-color="#9b793f"/></linearGradient><radialGradient id="subidaLuz"><stop stop-color="#e9cf9f" stop-opacity=".9"/><stop offset="1" stop-color="#e9cf9f" stop-opacity="0"/></radialGradient></defs><g class="subida-grade"><line x1="20" y1="260" x2="400" y2="260"/><line x1="20" y1="200" x2="400" y2="200"/><line x1="20" y1="140" x2="400" y2="140"/><line x1="20" y1="80" x2="400" y2="80"/></g><rect class="subida-barra" style="--i:0" x="38" y="220" width="28" height="40" rx="3"/><rect class="subida-barra" style="--i:1" x="98" y="190" width="28" height="70" rx="3"/><rect class="subida-barra" style="--i:2" x="158" y="164" width="28" height="96" rx="3"/><rect class="subida-barra" style="--i:3" x="218" y="122" width="28" height="138" rx="3"/><rect class="subida-barra" style="--i:4" x="278" y="84" width="28" height="176" rx="3"/><rect class="subida-barra" style="--i:5" x="338" y="38" width="28" height="222" rx="3"/><path class="subida-area" d="M30 238 C 110 225, 150 200, 200 160 S 300 70, 372 34 L372 260 L30 260 Z"/><path class="subida-linha" pathLength="1" d="M30 238 C 110 225, 150 200, 200 160 S 300 70, 372 34"/><path class="subida-seta" d="M356 30 L374 33 L366 49"/><circle class="subida-luz" cx="372" cy="34" r="30"/><circle class="subida-anel" cx="372" cy="34" r="6"/><circle class="subida-ponto" cx="372" cy="34" r="4.5"/></svg><span class="subida-traco" style="--i:0"></span><span class="subida-traco" style="--i:1"></span><span class="subida-traco" style="--i:2"></span></div>' : '') +
         '<div class="hero-controles"><button class="hero-anterior" type="button" aria-label="Destaque anterior">‹</button><div class="hero-pontos">' + fotosHero.map((_, i) => '<button class="hero-ponto" type="button" aria-label="Ir para destaque ' + (i + 1) + '" aria-pressed="' + (i === 0) + '"></button>').join('') + '</div><button class="hero-proximo" type="button" aria-label="Próximo destaque">›</button><button class="hero-pausa" type="button">Pausar</button></div>' +
         '<div class="rolar" aria-hidden="true"></div>' +
       '</header>';
@@ -312,7 +324,7 @@
     const ctx = canvas.getContext("2d");
     const hero = canvas.closest(".hero");
     let emTela = false, frame = null;
-    const CORES = ["#f3dfb6", "#e9cf9f", "#ffffff", "#f6b26b", "#e88d8d", "#a9c7f0", "#c9b2f2"];
+    const CORES = ["#b08d57", "#c9a24f", "#d9677a", '#656565', "#3f9a63", '#656565', "#e08a3c"];
 
     function ajustar(){
       const r = canvas.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1);
@@ -336,7 +348,7 @@
       const forca = 2.2 + Math.random() * 1.8;
       for(let i = 0; i < n; i++){
         const ang = (Math.PI * 2 * i) / n, v = forca * (.55 + Math.random() * .45);
-        fogos.particulas.push({ x: f.x, y: f.y, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v, vida: 1, cor: Math.random() < .25 ? "#ffffff" : f.cor, brilho: Math.random() < .3 });
+        fogos.particulas.push({ x: f.x, y: f.y, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v, vida: 1, cor: f.cor, brilho: Math.random() < .3 });
       }
     }
 
@@ -346,7 +358,7 @@
       ctx.globalCompositeOperation = "destination-out";
       ctx.fillStyle = "rgba(0,0,0,.18)";
       ctx.fillRect(0, 0, r.width, r.height);
-      ctx.globalCompositeOperation = "lighter";
+      ctx.globalCompositeOperation = "source-over";
 
       if(t > fogos.proximo){ lancar(); fogos.proximo = t + 1800 + Math.random() * 1400; }
 
@@ -547,44 +559,21 @@
     return j && j.ok ? j.resultado : null;
   }
 
-  /* Resumo do dia lido direto do Supabase (out/2026): as abas Cronograma e Agenda da planilha do
-     Cronograma (gs_linhas) têm leitura liberada para quem está logado na empresa (migration
-     20261008000500_gs_leitura_equipe). Mesma regra de PORTAL_resumoDia_ (servidor), sem precisar da Vercel. */
-  const RESUMO_PLANILHA = "14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ";
-  const RESUMO_ORDEM = ["Triagem (Separação)", "Triagem (Conferência)", "Carregamento", "Montagem", "Desmontagem"];
-  const FUSO = "America/Sao_Paulo";
-  function diaSP(d){ return new Intl.DateTimeFormat("en-CA", { timeZone: FUSO, year: "numeric", month: "2-digit", day: "2-digit" }).format(d); }
-  function dataDe(v){ return v && typeof v === "object" && v.$d ? new Date(v.$d) : null; }
-  function horaDe(v){
-    const d = dataDe(v);
-    if(d){ return new Intl.DateTimeFormat("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d); }
-    return String(v == null ? "" : v).replace(/^'/, "").trim();
-  }
-  function txt(v){ return String(v == null ? "" : v).trim(); }
-  async function linhasDoDia(aba, coluna, hoje){
-    const sb = window.supabaseClient;
-    // Janela larga em UTC e depois o filtro exato pelo dia em São Paulo.
-    const ini = new Date(hoje + "T00:00:00Z"); ini.setUTCDate(ini.getUTCDate() - 1);
-    const fim = new Date(hoje + "T00:00:00Z"); fim.setUTCDate(fim.getUTCDate() + 2);
-    const campo = "valores->" + coluna + "->>$d";
-    const { data, error } = await sb.from("gs_linhas").select("linha,valores")
-      .eq("planilha_id", RESUMO_PLANILHA).eq("aba", aba)
-      .gte(campo, ini.toISOString()).lt(campo, fim.toISOString()).order("linha");
-    if(error){ throw error; }
-    return (data || []).map(function(r){ return r.valores || []; })
-      .filter(function(l){ const d = dataDe(l[coluna]); return d && diaSP(d) === hoje; });
-  }
+  /* Resumo do dia lido direto do Supabase (out/2026): das tabelas da operação (operacao_etapas,
+     pessoas, caminhões e operacao_agenda) pela função operacao_resumo_dia — toda a equipe vê,
+     só leitura. Antes vinha da planilha do Cronograma. */
+  const RESUMO_ORDEM = ["Triagem (Separação)", "Carregamento", "Montagem", "Desmontagem", "Descarregamento", "Triagem (Conferência)"];
   async function buscarResumoDia(){
-    if(!window.supabaseClient){ return null; }
-    const hoje = diaSP(new Date());
-    const [crono, agendaLinhas] = await Promise.all([linhasDoDia("Cronograma", 6, hoje), linhasDoDia("Agenda", 2, hoje)]);
+    const sb = window.supabaseClient;
+    if(!sb){ return null; }
+    const { data, error } = await sb.rpc("operacao_resumo_dia");
+    if(error){ throw error; }
+    if(!data){ return null; }
     const grupos = {};
-    crono.forEach(function(l){
-      if(!l[0] || !l[5]){ return; }
-      const etapa = txt(l[5]);
-      (grupos[etapa] = grupos[etapa] || []).push({
-        pedido: txt(l[1]), cliente: txt(l[3]), local: txt(l[4]), horario: horaDe(l[7]),
-        caminhao: txt(l[8]), responsavel: txt(l[9]), equipe: txt(l[10])
+    (data.etapas || []).forEach(function(e){
+      (grupos[e.etapa] = grupos[e.etapa] || []).push({
+        pedido: e.pedido || "", cliente: e.cliente || "", local: e.local || "", horario: e.horario || "",
+        caminhao: e.caminhao || "", responsavel: e.responsavel || "", equipe: e.equipe || ""
       });
     });
     const porHora = function(a, b){ return (a.horario || "99").localeCompare(b.horario || "99"); };
@@ -592,10 +581,8 @@
       const ia = RESUMO_ORDEM.indexOf(a), ib = RESUMO_ORDEM.indexOf(b);
       return ((ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)) || a.localeCompare(b);
     }).map(function(etapa){ const itens = grupos[etapa].sort(porHora); return { etapa: etapa, total: itens.length, itens: itens }; });
-    const agenda = agendaLinhas.map(function(a){
-      return { horario: horaDe(a[9]), tipo: txt(a[4]), setor: txt(a[3]), descricao: txt(a[5]), responsavel: txt(a[1]) };
-    }).sort(porHora);
-    return { data: hoje, totalEtapas: etapas.reduce(function(s, g){ return s + g.total; }, 0), etapas: etapas, agenda: agenda };
+    const agenda = (data.agenda || []).slice().sort(porHora);
+    return { data: data.data, totalEtapas: etapas.reduce(function(s, g){ return s + g.total; }, 0), etapas: etapas, agenda: agenda };
   }
 
   function mostrar(){

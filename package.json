@@ -10,7 +10,8 @@
     "check": "node --check server/index.js && node --check Scripts/gerar-embedding.mjs",
     "test": "npm run check",
     "prepare:pdf": "node Scripts/copiar-pdfjs.cjs",
-    "test:catalogo": "node --test tests/studio-layout.test.mjs tests/studio-ai-engine.test.cjs && node tests/studio-browser.cjs && node tests/catalogo-browser.cjs"
+    "test:catalogo": "node --test tests/studio-layout.test.mjs tests/studio-ai-engine.test.cjs && node tests/studio-browser.cjs && node tests/catalogo-browser.cjs",
+    "test:operacao": "node tests/operacao-integrada-db.cjs && node --test tests/operacao-cronograma.test.cjs tests/montador-apontamento.test.cjs tests/montagem-chegada.test.cjs && node tests/pedido-abrir-projeto-catalogo-browser.cjs && node tests/separacao-cronograma-browser.cjs && node tests/separacao-kit-componentes-browser.cjs && node tests/separacao-etiquetas-browser.cjs && node tests/conferencia-bipagem-browser.cjs && node tests/expedicao-browser.cjs && node tests/operacao-estoque-browser.cjs"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +28,7 @@
     "three": "^0.166.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "playwright": "^1.63.0",
     "supabase": "^2.107.0"
   }

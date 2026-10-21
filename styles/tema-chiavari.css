@@ -17,8 +17,8 @@
 ========================================================= */
 
 :root{
-  --ch-primary:#123f86;
-  --ch-primary-dark:#123f86;
+  --ch-primary:var(--el-button-primary-bg, #7d603d);
+  --ch-primary-dark:var(--el-button-primary-bg, #7d603d);
   --ch-fundo-suave:#f7f9fb;
   --ch-line:#e3e7ec;
   --ch-borda-card:#e3e7ec;
@@ -28,19 +28,19 @@
   --ch-muted:#5f5f5f;
   --ch-serif:"Cormorant Garamond", Georgia, serif;
   --ch-sans:"Inter", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
-  --ch-sombra:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
+  --ch-sombra:0 1px 2px rgba(31,32,32,0.04), 0 10px 30px rgba(31,32,32,0.07);
 
   /* tokens do design system apontando para a paleta Chiavari */
-  --color-primary:#123f86;
+  --color-primary:var(--el-button-primary-bg, #7d603d);
   --color-bg:#ffffff;
-  --el-color-primary:#123f86;
-  --el-color-primary-strong:#0d2f66;
-  --el-color-primary-dark:#0d2f66;
-  --el-color-primary-soft:#f7f9fb;
-  --el-color-accent:#123f86;
-  --el-color-accent-strong:#0d2f66;
-  --el-color-accent-active:#0d2f66;
-  --el-color-accent-soft:#f7f9fb;
+  --el-color-primary:var(--el-button-primary-bg, #7d603d);
+  --el-color-primary-strong:var(--el-button-primary-hover, #654d31);
+  --el-color-primary-dark:var(--el-button-primary-hover, #654d31);
+  --el-color-primary-soft:var(--el-button-primary-soft, #f4efe8);
+  --el-color-accent:var(--el-button-primary-bg, #7d603d);
+  --el-color-accent-strong:var(--el-button-primary-hover, #654d31);
+  --el-color-accent-active:var(--el-button-primary-hover, #654d31);
+  --el-color-accent-soft:var(--el-button-primary-soft, #f4efe8);
   --el-color-bg:#ffffff;
   --el-color-surface:#ffffff;
   --el-color-surface-soft:#f7f9fb;
@@ -54,24 +54,24 @@
   --el-button-secondary-text:#1f2020;
   --el-button-secondary-border:#e3e7ec;
   --el-button-secondary-hover:#f7f9fb;
-  --el-button-secondary-border-hover:#123f86;
+  --el-button-secondary-border-hover:var(--el-color-border,#e3e7ec);
   --el-button-icon-border:#e3e7ec;
-  --el-focus-color:#123f86;
+  --el-focus-color:#5f5f5f;
   --el-font-family:"Inter", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
   --el-radius-sm:12px;
   --el-radius-md:12px;
   --el-radius-lg:18px;
   --el-radius-xl:18px;
-  --el-shadow-sm:0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
-  --el-shadow-md:0 2px 4px rgba(15,23,42,.05), 0 16px 34px rgba(15,23,42,.10);
-  --el-shadow-lg:0 24px 70px rgba(15,23,42,.25);
-  --el-modal-backdrop:rgba(15,23,42,.45);
+  --el-shadow-sm:0 1px 2px rgba(31,32,32,0.04), 0 10px 30px rgba(31,32,32,0.07);
+  --el-shadow-md:0 2px 4px rgba(31,32,32,0.05), 0 16px 34px rgba(31,32,32,0.1);
+  --el-shadow-lg:0 24px 70px rgba(31,32,32,0.25);
+  --el-modal-backdrop:rgba(31,32,32,0.45);
   --el-table-header-bg:#ffffff;
   --el-table-header-color:#3d3d3d;
-  --el-table-row-hover:#eef3fb;
+  --el-table-row-hover:#f7f9fa;
   --el-table-row-border:#edf0f3;
   --azul:#1f2020;
-  --laranja:#123f86;
+  --laranja:var(--el-button-primary-bg, #7d603d);
   --fundo:#ffffff;
   --cinza:#e3e7ec;
 }
@@ -142,13 +142,13 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card, .stat-c
   box-shadow:var(--ch-sombra) !important;
   transition:transform .15s, box-shadow .15s;
 }
-html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card, .stat-card):hover{ transform:translateY(-2px); box-shadow:0 2px 4px rgba(15,23,42,.05), 0 16px 34px rgba(15,23,42,.10) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card, .stat-card):hover{ transform:translateY(-2px); box-shadow:0 2px 4px rgba(31,32,32,0.05), 0 16px 34px rgba(31,32,32,0.1) !important; }
 /* Sem bolinha colorida de ícone: só rótulo + número, como no Almoxarifado */
 html:root :is(body:not(.portal-shell), #main-content) .el-stat-card > span{ display:none !important; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card small, .stat-card small, .stat-body small){
   display:block; margin-bottom:6px;
   color:var(--ch-label) !important;
-  font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase;
+  font-size:12px !important; font-weight:600 !important; letter-spacing:.1em; text-transform:uppercase;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(.el-stat-card strong, .stat-card strong, .stat-body strong){
   font-family:var(--ch-serif) !important;
@@ -170,7 +170,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.tab-btn, [role="tab"]
   background:#ffffff !important;
   color:var(--ch-text) !important;
   font-family:var(--ch-sans) !important;
-  font-size:13px !important; font-weight:800 !important; letter-spacing:.08em; text-transform:uppercase;
+  font-size:13px !important; font-weight:600 !important; letter-spacing:.08em; text-transform:uppercase;
   box-shadow:none !important;
   transition:background-color .15s, border-color .15s, color .15s;
 }
@@ -178,7 +178,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.tabs, .el-tabs, .tab-
 html:root :is(body:not(.portal-shell), #main-content) :is(.tab-btn, [role="tab"]):hover{ border-color:var(--ch-primary) !important; background:var(--ch-fundo-suave) !important; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.tabs, .el-tabs, .tab-list) > :is(button, a, .tab):is(.active, .ativo, .ativa, .is-active, [aria-selected="true"]),
 html:root :is(body:not(.portal-shell), #main-content) :is(.tab-btn, [role="tab"]):is(.active, .ativo, .ativa, .is-active, [aria-selected="true"]){
-  background:var(--ch-primary-dark) !important; border-color:var(--ch-primary-dark) !important; color:#ffffff !important;
+  background:var(--ch-primary-dark) !important; border-color:var(--ch-primary-dark) !important; color:var(--el-color-on-accent,#fff) !important;
 }
 
 /* ---------- Painéis, cartões e listas ---------- */
@@ -197,8 +197,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.el-table-card, .table
 html:root :is(body:not(.portal-shell), #main-content) :is(.panel-header, .card-header, .el-card__header){
   padding:14px 22px !important;
   border-bottom:0 !important;
-  background:var(--ch-primary) !important;
-  color:#ffffff !important;
+  background:var(--el-color-surface-soft,#f6f7f9) !important;color:var(--el-color-text,#1f2020) !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(.panel-header, .card-header, .el-card__header) :is(h2, h3, h4){
   margin:0;
@@ -222,7 +221,7 @@ html:root :is(body:not(.portal-shell), #main-content) table thead :is(th, td){
   color:var(--ch-label) !important;
   border-bottom:1px solid var(--ch-borda-card) !important;
   font-family:var(--ch-sans) !important;
-  font-size:11px !important; font-weight:700 !important; letter-spacing:.08em !important; text-transform:uppercase !important;
+  font-size:11px !important; font-weight:600 !important; letter-spacing:.08em !important; text-transform:uppercase !important;
   white-space:nowrap;
 }
 html:root :is(body:not(.portal-shell), #main-content) table tbody td{
@@ -231,7 +230,7 @@ html:root :is(body:not(.portal-shell), #main-content) table tbody td{
   font-size:14px !important; font-weight:500;
 }
 html:root :is(body:not(.portal-shell), #main-content) table tbody tr:nth-child(even):not(:hover, .selected, .linha-selecionada){ background:#fafbfc !important; }
-html:root :is(body:not(.portal-shell), #main-content) table tbody tr:not(.selected, .linha-selecionada):hover{ background:#eef3fb !important; }
+html:root :is(body:not(.portal-shell), #main-content) table tbody tr:not(.selected, .linha-selecionada):hover{ background:var(--el-color-surface-soft,#f6f7f9) !important; }
 
 /* Rodapé de paginação das listas */
 html:root :is(body:not(.portal-shell), #main-content) .easyloc-list-pager :is(button, select){ border-color:var(--ch-line) !important; border-radius:999px !important; }
@@ -240,7 +239,7 @@ html:root :is(body:not(.portal-shell), #main-content) .easyloc-list-pager button
 /* ---------- Formulários ---------- */
 html:root :is(body:not(.portal-shell), #main-content) :is(label, .el-label, .field-label, .form-label):not(.service-option, .switch, .toggle, .checkbox, .radio, :has(> input[type="checkbox"]), :has(> input[type="radio"])){
   color:var(--ch-label) !important;
-  font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase;
+  font-size:12px !important; font-weight:600 !important; letter-spacing:.1em; text-transform:uppercase;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea){
   border:1px solid var(--ch-line) !important;
@@ -252,9 +251,9 @@ html:root :is(body:not(.portal-shell), #main-content) :is(input:not([type="check
   font-weight:500;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea):focus{
-  border-color:var(--ch-primary) !important;
+  border-color:var(--el-color-border,#e3e7ec) !important;
   background-color:#ffffff !important;
-  box-shadow:0 0 0 3px rgba(18,63,134,.12) !important;
+  box-shadow:0 0 0 3px rgba(31,32,32,0.12) !important;
   outline:none;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(input, textarea)::placeholder{ color:#8c8c8c; font-weight:500; }
@@ -266,14 +265,14 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.btn, .el-btn, .add-bt
   padding:0 20px !important;
   border-radius:999px !important;
   font-family:var(--ch-sans) !important;
-  font-size:12.5px !important; font-weight:800 !important; letter-spacing:.08em; text-transform:uppercase;
+  font-size:12.5px !important; font-weight:600 !important; letter-spacing:.08em; text-transform:uppercase;
   transition:background-color .15s, border-color .15s, transform .15s, box-shadow .15s;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(button, a, [role="button"]):is(.btn.primary, .btn.save, .btn.salvar, .btn-primary, .btn-save, .btn-salvar, .el-btn--primary, .os-btn-primary, .add-btn):not(.secondary, :disabled, [aria-disabled="true"]){
   background:var(--ch-primary-dark) !important; border-color:var(--ch-primary-dark) !important; color:#ffffff !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(button, a, [role="button"]):is(.btn.primary, .btn.save, .btn.salvar, .btn-primary, .btn-save, .btn-salvar, .el-btn--primary, .os-btn-primary, .add-btn):not(.secondary, :disabled, [aria-disabled="true"]):hover{
-  background:#0d2f66 !important; transform:translateY(-1px); box-shadow:0 6px 16px rgba(15,23,42,.18) !important;
+  background:var(--el-button-primary-hover, #654d31) !important; transform:translateY(-1px); box-shadow:0 6px 16px rgba(var(--el-button-primary-rgb,125,96,61),0.18) !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(.btn-icon, .el-icon-btn, .icon-btn, .el-back-btn, .el-edit-btn){ border-color:var(--ch-line) !important; border-radius:999px !important; }
 
@@ -285,17 +284,17 @@ html:root :is(body:not(.portal-shell), #main-content) td .status{ border-radius:
 :is(body, #main-content) :is(.el-modal__box, .modal-content, .modal-box, .modal-card){ border-radius:18px !important; }
 
 /* Carregando */
-html:root :is(body:not(.portal-shell), #main-content) :is(.el-spinner, .spinner, .loading-spinner, .loader-circle){ border-color:#e9ecef !important; border-top-color:var(--ch-primary-dark) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.el-spinner, .spinner, .loading-spinner, .loader-circle){ border-color:#e9ecef !important; border-top-color:var(--el-color-border,#e3e7ec) !important; }
 
 /* ---------- Cabeçalho com sobretítulo/descrição (Fluxo de Caixa etc.) ---------- */
-html:root :is(body:not(.portal-shell), #main-content) .page-eyebrow{ display:block; margin-bottom:8px !important; color:#1f2020 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
+html:root :is(body:not(.portal-shell), #main-content) .page-eyebrow{ display:block; margin-bottom:8px !important; color:#1f2020 !important; font-size:12px !important; font-weight:600 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.page-header, .page-top) > div:first-child p{ max-width:640px; margin:10px auto 0 !important; text-align:center; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.page-header, .page-top) > :is(.header-actions, .page-actions){ margin-left:auto !important; }
 
 /* ---------- Resumos com número grande (Fluxo de Caixa e parecidos) ---------- */
 html:root :is(body:not(.portal-shell), #main-content) :is(.resumo-executivo, .resumo-metricas){ border-color:var(--ch-borda-card) !important; border-radius:18px !important; }
-html:root :is(body:not(.portal-shell), #main-content) .resumo-principal{ background:var(--ch-primary) !important; color:#ffffff !important; }
-html:root :is(body:not(.portal-shell), #main-content) :is(.resumo-principal, .metrica) > span{ display:block; margin-bottom:8px; font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; }
+html:root :is(body:not(.portal-shell), #main-content) .resumo-principal{ background:var(--el-color-surface-soft,#f6f7f9) !important;color:var(--el-color-text,#1f2020) !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.resumo-principal, .metrica) > span{ display:block; margin-bottom:8px; font-size:12px !important; font-weight:700 !important; letter-spacing:.1em; text-transform:uppercase; }
 html:root :is(body:not(.portal-shell), #main-content) .metrica > span{ color:var(--ch-label) !important; }
 html:root :is(body:not(.portal-shell), #main-content) .resumo-principal > span{ color:rgba(255,255,255,.82) !important; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.resumo-principal, .metrica) > strong{ font-family:var(--ch-serif) !important; font-size:34px !important; font-weight:600 !important; line-height:1.05; font-variant-numeric:lining-nums tabular-nums; font-feature-settings:"lnum" 1, "tnum" 1; }
@@ -319,7 +318,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .sepa
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child p{ max-width:640px; margin:10px auto 0 !important; color:var(--ch-muted) !important; font-size:14px !important; text-align:center; }
 html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > :is(.el-page-actions, .header-actions, button:last-child){ margin-left:auto !important; }
-html:root :is(body:not(.portal-shell), #main-content) :is(.separacao-kicker, .eyebrow){ display:block; margin-bottom:8px !important; color:#1f2020 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
+html:root :is(body:not(.portal-shell), #main-content) :is(.separacao-kicker, .eyebrow){ display:block; margin-bottom:8px !important; color:#1f2020 !important; font-size:12px !important; font-weight:600 !important; letter-spacing:.32em !important; text-transform:uppercase !important; }
 
 /* Cartões de resumo de Funcionários (.summary-card) e Créditos de IA */
 html:root :is(body:not(.portal-shell), #main-content) .summary-card{
@@ -327,7 +326,7 @@ html:root :is(body:not(.portal-shell), #main-content) .summary-card{
   background:#ffffff !important; box-shadow:var(--ch-sombra) !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) .summary-card .summary-icon{ display:none !important; }
-html:root :is(body:not(.portal-shell), #main-content) .summary-card span{ display:block; margin-bottom:6px; color:var(--ch-label) !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.1em; text-transform:uppercase; }
+html:root :is(body:not(.portal-shell), #main-content) .summary-card span{ display:block; margin-bottom:6px; color:var(--ch-label) !important; font-size:12px !important; font-weight:600 !important; letter-spacing:.1em; text-transform:uppercase; }
 html:root :is(body:not(.portal-shell), #main-content) .summary-card strong{ font-family:var(--ch-serif) !important; font-size:34px !important; font-weight:600 !important; line-height:1.05; color:var(--ch-text) !important; font-variant-numeric:lining-nums tabular-nums; }
 html:root :is(body:not(.portal-shell), #main-content) .summary-card small{ color:var(--ch-muted) !important; font-size:13px !important; font-weight:600; }
 
@@ -357,7 +356,7 @@ html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .za
   letter-spacing:.16em !important; line-height:1.05 !important; text-transform:uppercase !important; color:var(--ch-text) !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child > span:first-child{
-  display:block; margin-bottom:8px !important; color:#1f2020 !important; font-size:12px !important; font-weight:800 !important; letter-spacing:.32em !important; text-transform:uppercase !important;
+  display:block; margin-bottom:8px !important; color:#1f2020 !important; font-size:12px !important; font-weight:600 !important; letter-spacing:.32em !important; text-transform:uppercase !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child p{
   max-width:640px; margin:10px auto 0 !important; color:var(--ch-muted) !important; font-size:14px !important; text-align:center;
@@ -368,7 +367,7 @@ html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .za
 html:root body.portal-shell #main-content .el-page{ background:#ffffff !important; }
 
 /* Rótulos de cartões de resumo dos módulos antigos (Compras, Expedição...) */
-html:root #main-content :is(.compras-summary, .compras-cards, .exp-summary, .dispon-summary) :is(span, small, label):first-child{ text-transform:uppercase; letter-spacing:.1em; font-size:12px !important; font-weight:800 !important; color:var(--ch-label) !important; }
+html:root #main-content :is(.compras-summary, .compras-cards, .exp-summary, .dispon-summary) :is(span, small, label):first-child{ text-transform:uppercase; letter-spacing:.1em; font-size:12px !important; font-weight:600 !important; color:var(--ch-label) !important; }
 
 /* ---------- Topo igual ao do Almoxarifado em todas as telas ----------
    Pedido do usuário: "todos os topos precisam ficar no mesmo tamanho de
@@ -444,7 +443,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(
 ========================================================= */
 :root{
   --ch-fundo-tela:#f3f5f6;
-  --ch-sombra:0 0 8px rgba(15,23,42,.15), 0 0 2px rgba(15,23,42,.12);
+  --ch-sombra:0 0 8px rgba(31,32,32,0.15), 0 0 2px rgba(31,32,32,0.12);
   --ch-borda-card:#e3e6ea;
   --el-color-bg:#f3f5f6;
   --color-bg:#f3f5f6;
@@ -483,7 +482,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.fin-abas, .tabs, .el-
   position:absolute !important; top:-9px; right:-7px; margin:0 !important;
   min-width:20px; height:20px; padding:0 6px !important; display:grid !important; place-items:center;
   border-radius:999px !important; background:#e60012 !important; color:#ffffff !important;
-  font:800 11px/1 var(--ch-sans) !important; letter-spacing:0 !important;
+  font:600 11px/1 var(--ch-sans) !important; letter-spacing:0 !important;
   border:2px solid #ffffff; box-shadow:0 0 0 0 rgba(230,0,18,.42);
   animation:ch-pendencia-pulsa 1.15s ease-in-out infinite;
 }
@@ -503,23 +502,23 @@ html:root body:not(.portal-shell) .central-pedidos-page{ padding-left:clamp(16px
 
 /* =========================================================
    PALETA AZUL-MARINHO (out/2026)
-   Secundária #123F86, fundo #F3F5F6, cards/tabelas brancos, menu
+   Secundária var(--el-button-primary-bg, #7d603d), fundo #F3F5F6, cards/tabelas brancos, menu
    lateral continua grafite #292A28 (portal-shell.css não muda).
    Sem bege: campos brancos/cinza-claro; seleções em azul suave.
    Cores de status (vermelho, laranja, verde) não mudam.
 ========================================================= */
 :root{
-  --ch-azul:#123f86;
-  --ch-azul-escuro:#0d2f66;
-  --ch-azul-suave:#eaf0fa;
-  --ch-azul-borda:#c9d7ee;
-  --el-color-primary-soft:#eaf0fa;
-  --el-color-accent-soft:#eaf0fa;
+  --ch-azul:var(--el-button-primary-bg, #7d603d);
+  --ch-azul-escuro:var(--el-button-primary-hover, #654d31);
+  --ch-azul-suave:var(--el-button-primary-soft, #f4efe8);
+  --ch-azul-borda:#d8cbb9;
+  --el-color-primary-soft:var(--el-button-primary-soft, #f4efe8);
+  --el-color-accent-soft:var(--el-button-primary-soft, #f4efe8);
   --el-button-secondary-text:#1f2020;
-  --el-button-secondary-border:#c9d7ee;
-  --el-button-secondary-hover:#eaf0fa;
-  --el-button-secondary-border-hover:#123f86;
-  --el-table-row-hover:#eef3fb;
+  --el-button-secondary-border:var(--el-color-border,#e3e7ec);
+  --el-button-secondary-hover:var(--el-button-primary-soft,#f4efe8);
+  --el-button-secondary-border-hover:var(--el-color-border,#e3e7ec);
+  --el-table-row-hover:var(--el-button-primary-soft,#f4efe8);
 }
 /* campos: branco sobre o fundo cinza */
 html:root :is(body:not(.portal-shell), #main-content) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea){ background-color:#ffffff !important; border-color:#dde2e8 !important; }

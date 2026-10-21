@@ -181,6 +181,7 @@
     [/Almoxarifado|OrdemdeServicos|Controledequalidade/i, 'estoque.almoxarifado.visualizar'],
     [/Compras/i, 'estoque.compras.visualizar'],
     [/SeparacaoMateriais/i, 'logistica.separacao.visualizar'],
+    [/PainelLogistico/i, 'logistica.planejamento.visualizar'],
     [/Cronograma/i, 'logistica.cronograma.visualizar'],
     [/Expedicao/i, 'logistica.expedicao.visualizar'],
     [/Planejamento|Roteirizacao|EquipeRotas|cadastro-caminhoes/i, 'logistica.planejamento.visualizar'],

@@ -52,7 +52,7 @@
   margin: 0;
   color: var(--el-color-title);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .el-modal__description,
@@ -84,10 +84,9 @@
   justify-content: center;
   margin: 0 auto var(--el-space-3);
   border-radius: 50%;
-  background: var(--el-color-accent);
-  color: #ffffff;
+  background: var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .modal-alert-global[data-variant="success"] .alert-icon {

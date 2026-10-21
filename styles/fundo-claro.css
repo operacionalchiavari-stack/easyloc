@@ -13,13 +13,13 @@ html body :is(
   .card-comissao-departamento, .board-wrap, .bloco, .p-card, .contorno, .graficos-resumo-card,
   .resumo-card, .metric-card, .stat-card, .kpi, .kpi-card, .indicador, .card-resumo, .box, .secao, .painel
 ){
-  box-shadow:0 0 8px rgba(15,23,42,.15), 0 0 2px rgba(15,23,42,.12) !important;
+  box-shadow:0 0 8px rgba(31,32,32,0.15), 0 0 2px rgba(31,32,32,0.12) !important;
 }
 /* tabelas soltas continuam brancas sobre o fundo cinza */
 html body table:not(.sem-fundo){ background-color:#ffffff; }
 /* Paleta azul-marinho (out/2026): campos brancos, seleção azul suave */
 html body :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea){ background-color:#ffffff; }
-html body :is(input[type="checkbox"], input[type="radio"]){ accent-color:#123f86; }
+html body :is(input[type="checkbox"], input[type="radio"]){ accent-color:var(--el-button-primary-bg,#7d603d); }
 /* Cabeçalhos de tabela/painel sem cor de fundo (pedido: "tire o azul... retire os grafites tbm, devem ficar sem nada"):
    fundo branco, texto escuro e uma linha fina embaixo. */
 html body :is(.panel-header, .cartao-cabecalho, .rh-cartao-cabecalho, .card-tabela-metas-header, .card-header, .board thead th, .board thead th:first-child, .table-box > div:first-child:not(:has(table))){

@@ -71,7 +71,7 @@ button:disabled,
 .el-title,
 .el-page-title {
   color: var(--el-color-title);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 :is(#main-content, .el-page) p,
@@ -95,7 +95,7 @@ button:disabled,
 
 .el-text-title {
   color: var(--el-color-title) !important;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .el-strong,
@@ -107,6 +107,6 @@ button:disabled,
 
 body { font-size: 14px; line-height: 1.45; }
 small, .el-caption { font-size: 12px; }
-:is(#main-content, .el-page) h1, .el-page-title { font-size: clamp(21px, 2vw, 27px); font-weight: 750; }
+:is(#main-content, .el-page) h1, .el-page-title { font-size: clamp(21px, 2vw, 27px); font-weight: 600; }
 :is(#main-content, .el-page) h2 { font-size: 22px; }
 :is(#main-content, .el-page) h3 { font-size: 18px; }

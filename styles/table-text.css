@@ -1,0 +1,15 @@
+/* Texto comum de tabelas sempre preto. As cores funcionais têm significado próprio. */
+html:root:root :is(table,[role="table"],[role="grid"],#el-table-text-a#el-table-text-b#el-table-text-c#el-table-text-d)
+:is(th,td,[role="columnheader"],[role="cell"],[role="gridcell"]),
+html:root:root :is(table,[role="table"],[role="grid"],#el-table-text-a#el-table-text-b#el-table-text-c#el-table-text-d)
+:is(th,td,[role="columnheader"],[role="cell"],[role="gridcell"])
+:is(a,span,strong,b,small,p,div,em,label,h2,h3,h4){
+  --el-table-text:#111111;
+}
+html:root:root :is(table,[role="table"],[role="grid"],#el-table-text-a#el-table-text-b#el-table-text-c#el-table-text-d)
+:is(th,td,[role="columnheader"],[role="cell"],[role="gridcell"],a,span,strong,b,small,p,div,em,label,h2,h3,h4):not(:where(button,button *,[role="button"],[role="button"] *,input,select,textarea,
+.btn,.btn *,.el-btn,.el-btn *,[class*="badge"],[class*="badge"] *,[class*="status"],[class*="status"] *,
+.tag,.tag *,.sim,.nao,.pendente,.positivo,.negativo,.valor-positivo,.valor-negativo,.positive,.negative,.text-success,.text-danger,.text-warning,
+[data-money-sign="positive"],[data-money-sign="positive"] *,[data-money-sign="negative"],[data-money-sign="negative"] *,[data-variant="success"],[data-variant="danger"],[data-variant="warning"])){
+  color:var(--el-table-text,#111111)!important;
+}

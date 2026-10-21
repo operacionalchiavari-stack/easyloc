@@ -221,7 +221,7 @@ app.post('/api/search', async (req, res) => {
 });
 
 // As mesmas APIs de produção rodam localmente, com a mesma autenticação.
-['gs', 'gs-planilha', 'portal-mural'].forEach((nome) => {
+['gs', 'gs-planilha', 'portal-mural', 'compras-proposta'].forEach((nome) => {
   app.all('/api/' + nome, async (req, res, next) => {
     try {
       const arquivo = require.resolve('../api/' + nome);

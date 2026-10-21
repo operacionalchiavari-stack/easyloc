@@ -34,7 +34,10 @@
   <link rel="stylesheet" href="styles/global-help.css?v=20260913b">
   <link rel="stylesheet" href="styles/lia-widget.css?v=20260913b">
   <link rel="stylesheet" href="styles/tema-chiavari.css?v=20261018-selos">
-  <link rel="stylesheet" href="styles/portal-shell.css?v=20261018-cinza">
+  <link rel="stylesheet" href="styles/portal-shell.css?v=20261019-numeros-subida">
+<script src="js/core/loading.js?v=20261020" data-global-loading defer></script>
+<script src="js/core/filterInputs.js?v=20261020-autofill2" data-filter-inputs defer></script>
+<link rel="stylesheet" href="styles/table-text.css?v=20261020" data-table-text>
 </head>
 
 <body class="portal-shell portal-em-inicio">
@@ -76,19 +79,15 @@
   </script>
 
   <nav class="menu-lista" id="appMenu"></nav>
-  <script src="js/ui/sidebarMenu.js?v=20261018-free"></script>
+  <script src="js/ui/sidebarMenu.js?v=20261019-painel-logistico"></script>
 
   <div class="menu-rodape">
     <div class="usuario" role="button" tabindex="0" aria-label="Opções da conta" onclick="toggleUserMenu(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleUserMenu(event);}">
       <div class="avatar" id="userAvatar">--</div>
-      <div class="usuario-dados"><b id="usuarioNome">Carregando...</b><small id="empresaNome">Carregando...</small></div>
+      <div class="usuario-dados" data-loading-ignore><b id="usuarioNome">Usuário</b><small id="empresaNome"></small></div>
     </div>
 
     <div class="user-dropdown-modern" id="userDropdown">
-      <div class="dropdown-item" onclick="abrirEmpresa()">
-        <i data-lucide="building-2"></i>
-        <span>Editar empresa</span>
-      </div>
       <div class="dropdown-item" onclick="abrirPerfil()">
         <i data-lucide="user-round"></i>
         <span>Editar perfil</span>
@@ -111,7 +110,7 @@
 
   <!-- LOADER GLOBAL DO DASHBOARD -->
   <div id="global-loader" class="content-loader hidden">
-    <span class="loader-text" role="status" aria-live="polite">Carregando</span>
+    <span class="el-loading-indicator" role="status" aria-label="Carregando"><span class="el-loading-ring" aria-hidden="true"></span></span>
   </div>
 
   <!-- CONTEÃšDO DINÃ‚MICO (mÃ³dulos antigos - fragmento via innerHTML) -->
@@ -217,7 +216,7 @@
 <script src="js/core/preload.js?v=20261014-colunas"></script>
 <script src="js/core/listPager.js?v=20260913b"></script>
 <script src="js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="js/core/permissions.js?v=20261018-free"></script>
+<script src="js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="js/core/google.config.js"></script>
 <script src="js/core/google.js"></script>
 
@@ -237,7 +236,7 @@
 <!-- SIDEBAR / MENU -->
 <script src="js/ui/portalNav.js?v=20261008-loading"></script>
 <script src="js/ui/menuMonograma.js?v=20261009-monograma"></script>
-<script src="js/ui/portalMural.js?v=20261017-recado-todos"></script>
+<script src="js/ui/portalMural.js?v=20261019-resumo-operacao"></script>
 
 <!-- SISTEMA DE MODAIS -->
 <script src="js/ui/modais.js"></script>
@@ -251,17 +250,6 @@
 
 <!-- EMPRESA -->
 <!-- EMPRESA (NOVO MODULAR) -->
-<script src="js/empresa/empresa.utils.js"></script>
-<script src="js/empresa/empresa.api.js"></script>
-<script src="js/empresa/empresa.sections.dados.js"></script>
-<script src="js/empresa/empresa.sections.tributacao.js"></script>
-<script src="js/empresa/empresa.sections.comercial.js"></script>
-<script src="js/empresa/empresa.logistica.frete.js"></script>
-<script src="js/empresa/empresa.logistica.montagem.js"></script>
-<script src="js/empresa/empresa.sections.logistica.js"></script>
-<script src="js/empresa/empresa.sections.financeiro.js"></script>
-<script src="js/empresa/empresa.sections.identidade.js?v=20261018-cinza"></script>
-<script src="js/empresa/empresa.modal.js"></script>
 <script src="js/core/zapiMessaging.js?v=20260625-zapi-stable1"></script>
 <script src="js/core/paymentPix.js?v=20260626-pix-layout"></script>
 <script src="js/core/globalHelp.js"></script>

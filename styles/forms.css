@@ -7,8 +7,8 @@
 .el-label,
 .el-field label {
   color: var(--el-color-muted);
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--el-font-sm,12px);
+  font-weight: 600;
 }
 
 .el-input,
@@ -48,7 +48,7 @@
 :is(#main-content, .el-page) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
 :is(#main-content, .el-page) select:focus,
 :is(#main-content, .el-page) textarea:focus {
-  border-color: var(--el-color-accent);
+  border-color: var(--el-color-border,#e3e7ec);
   box-shadow: var(--el-focus-ring);
   outline: none;
 }

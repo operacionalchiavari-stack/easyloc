@@ -43,7 +43,7 @@
 :is(#main-content, .el-page) .titulo-pagina,
 :is(#main-content, .el-page) .modal-title {
   color: var(--el-color-title) !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 :is(#main-content, .el-page) p,
@@ -332,7 +332,7 @@
 :is(#main-content, .el-page) .el-input:focus,
 :is(#main-content, .el-page) .el-select:focus,
 :is(#main-content, .el-page) .el-textarea:focus {
-  border-color: var(--el-color-accent);
+  border-color: var(--el-color-border,#e3e7ec);
   box-shadow: var(--el-focus-ring);
 }
 
@@ -385,7 +385,7 @@ body table thead td,
   border: 0;
   text-align: left;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -792,7 +792,7 @@ body table tbody td.cell-selected,
 /* Refinamento visual especifico do modulo WhatsApp. */
 :is(#main-content, .el-page) .zapi-page .zapi-card {
   border-radius: 12px;
-  box-shadow: 0 18px 42px rgba(15, 42, 68, .055);
+  box-shadow: 0 18px 42px rgba(31,32,32,0.055);
 }
 
 :is(#main-content, .el-page) .zapi-page .zapi-metric-card,
@@ -805,7 +805,7 @@ body table tbody td.cell-selected,
   background: #16a34a !important;
   border-color: #16a34a !important;
   color: #ffffff !important;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 :is(#main-content, .el-page) .zapi-page .zapi-send-btn:hover {
@@ -815,11 +815,11 @@ body table tbody td.cell-selected,
 
 :is(#main-content, .el-page) .zapi-page .zapi-table th {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 :is(#main-content, .el-page) .zapi-page .zapi-badge {
-  font-weight: 700;
+  font-weight: 600;
 }
 /* Mantém a navegação do dashboard isolada dos estilos dos módulos SPA. */
 @media (min-width: 1201px) {

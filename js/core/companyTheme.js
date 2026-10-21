@@ -5,8 +5,8 @@
     logo_url: "",
     logo_zoom: 1,
     cor_sidebar: "#290610",
-    cor_destaque: "#374151",
-    cor_fundo: "#F5F6F8"
+    cor_destaque: "#7d603d",
+    cor_fundo: "#f3f5f6"
   });
 
   function isHex(value) {
@@ -54,8 +54,8 @@
     return {
       logo_url: theme?.logo_url || "",
       logo_zoom: Number.isFinite(logoZoom) ? Math.min(2.2, Math.max(0.5, logoZoom)) : 1,
-      cor_sidebar: DEFAULT_THEME.cor_sidebar,
-      cor_destaque: DEFAULT_THEME.cor_destaque,
+      cor_sidebar: isHex(theme?.cor_sidebar) ? theme.cor_sidebar.trim() : DEFAULT_THEME.cor_sidebar,
+      cor_destaque: isHex(theme?.cor_destaque) ? theme.cor_destaque.trim() : DEFAULT_THEME.cor_destaque,
       cor_fundo: DEFAULT_THEME.cor_fundo
     };
   }
@@ -79,21 +79,29 @@
     const theme = normalizeTheme(rawTheme);
     const root = document.documentElement;
     const sidebarStrong = shade(theme.cor_sidebar, -0.09);
-    const accentStrong = "#283241";
+    const accentStrong = shade(theme.cor_destaque, -0.09);
+    const accentSoft = 'rgba(' + hexToRgbString(theme.cor_destaque) + ', 0.08)';
+    const onAccent = contrast(theme.cor_destaque, '#FFFFFF') >= 4.5 ? '#FFFFFF' : '#142033';
+    root.style.setProperty('--el-button-primary-bg', theme.cor_destaque);
+    root.style.setProperty('--el-button-primary-rgb', hexToRgbString(theme.cor_destaque));
+    root.style.setProperty('--el-button-primary-hover', accentStrong);
+    root.style.setProperty('--el-button-primary-active', shade(theme.cor_destaque, -0.16));
+    root.style.setProperty('--el-button-primary-soft', accentSoft);
 
     root.style.setProperty("--color-sidebar", theme.cor_sidebar);
     root.style.setProperty("--color-primary", theme.cor_destaque);
     root.style.setProperty("--color-bg", theme.cor_fundo);
     root.style.setProperty("--empresa-cor-principal-rgb", hexToRgbString(theme.cor_sidebar));
 
-    root.style.setProperty("--el-color-primary", "#1F2937");
-    root.style.setProperty("--el-color-primary-strong", "#111827");
-    root.style.setProperty("--el-color-primary-dark", "#111827");
-    root.style.setProperty("--el-color-primary-soft", "#F3F4F6");
+    root.style.setProperty("--el-color-primary", theme.cor_destaque);
+    root.style.setProperty("--el-color-primary-strong", accentStrong);
+    root.style.setProperty("--el-color-primary-dark", accentStrong);
+    root.style.setProperty("--el-color-primary-soft", accentSoft);
     root.style.setProperty("--el-color-accent", theme.cor_destaque);
-    root.style.setProperty("--el-color-on-accent", "#FFFFFF");
-    root.style.setProperty("--el-color-accent-soft", "#F3F4F6");
+    root.style.setProperty("--el-color-on-accent", onAccent);
+    root.style.setProperty("--el-color-accent-soft", accentSoft);
     root.style.setProperty("--el-color-accent-strong", accentStrong);
+    root.style.setProperty("--el-color-accent-active", shade(theme.cor_destaque, -0.16));
     root.style.setProperty("--el-color-bg", theme.cor_fundo);
     root.style.setProperty("--el-color-title", "#142033");
     root.style.setProperty("--el-color-text", "#142033");
@@ -103,7 +111,7 @@
     root.style.setProperty("--el-table-header-bg", "#f3f5f7");
     root.style.setProperty("--el-table-header-color", "#526176");
     root.style.setProperty("--el-table-row-hover", "#f7f9fa");
-    root.style.setProperty("--azul", "#142033");
+    root.style.setProperty("--azul", theme.cor_destaque);
     root.style.setProperty("--azul-2", sidebarStrong);
     root.style.setProperty("--laranja", theme.cor_destaque);
     root.style.setProperty("--fundo", theme.cor_fundo);
@@ -130,6 +138,9 @@
     document.body?.classList.add("company-theme-loaded");
     document.body?.classList.toggle("company-logo-active", Boolean(theme.logo_url));
     window.__COMPANY_THEME = theme;
+    if (typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('easyloc:themechange', { detail: { ...theme } }));
+    }
 
     const empresaId = window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id");
     if (empresaId) {
@@ -156,7 +167,7 @@
     try {
       const { data, error } = await window.supabaseClient
         .from("configuracoes_empresa")
-        .select("logo_url, logo_zoom")
+        .select("logo_url, logo_zoom, cor_sidebar, cor_destaque, cor_fundo")
         .eq("empresa_id", empresaId)
         .maybeSingle();
       if (error) {
@@ -190,6 +201,11 @@
   }
 
   window.EasyLocTheme = {
+    color(role = 'accent') {
+      const token = role === 'soft' ? '--el-button-primary-soft' : '--el-button-primary-bg';
+      return getComputedStyle(document.documentElement).getPropertyValue(token).trim()
+        || (role === 'soft' ? '#f4efe8' : DEFAULT_THEME.cor_destaque);
+    },
     DEFAULT_THEME,
     isHex,
     hexToRgbString,

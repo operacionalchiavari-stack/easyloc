@@ -1,4 +1,4 @@
-@import url("./tokens.css?v=20260913b");
+@import url("./tokens.css?v=20261019-botoes-marrom");
 @import url("./base.css?v=20260913b");
 @import url("./buttons.css?v=20260913b");
 @import url("./forms.css?v=20260913b");
@@ -11,4 +11,4 @@
 @import url("./design-system.css?v=20260913d");
 
 /* Identidade visual Chiavari (padrão do Almoxarifado) — sempre por último. */
-@import url("./tema-chiavari.css?v=20261018-selos");
+@import url("./tema-chiavari.css?v=20261019-botoes-marrom");

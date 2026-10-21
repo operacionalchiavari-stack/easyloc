@@ -111,11 +111,7 @@
           { rotulo: "Manutenção", href: "Modulos/Chiavari/CentralMetas/itens-danificados.html" },
           {
             rotulo: "Compras",
-            legado: {
-              html: "Modulos/Estoque/Compras/compras.html",
-              js: "Modulos/Estoque/Compras/compras.js",
-              css: "Modulos/Estoque/Compras/compras.css",
-            },
+              href: "Modulos/Estoque/Compras/compras.html",
           },
         ],
       },
@@ -132,6 +128,7 @@
         icone: "truck",
         rotulo: "Logística",
         itens: [
+          { rotulo: "Painel Logístico", href: "Modulos/Logistica/PainelLogistico/painel-logistico.html" },
           {
             // subcategoria: abre para a direita, igual Estoque > Cadastros
             rotulo: "Fretes",

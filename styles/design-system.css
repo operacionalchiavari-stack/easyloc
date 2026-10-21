@@ -4,12 +4,12 @@
    valores exatos do projeto de referencia. */
 body { font-size:var(--el-font-md); line-height:1.45; }
 small, .helper-text, .field-hint { color:var(--el-color-muted); }
-:is(#main-content, .el-page) :is(h1,.page-title,.el-page-title,.titulo-pagina) { margin-block:0 4px; font-size:clamp(21px,2vw,27px)!important; line-height:1.15; font-weight:750!important; letter-spacing:-.02em; }
-:is(#main-content, .el-page) h2 { font-size:var(--el-font-xl); font-weight:750; letter-spacing:-.01em; }
-:is(#main-content, .el-page) :is(label,.el-label,.field-label,.form-label):not(.service-option) { font-size:var(--el-font-sm)!important; font-weight:650!important; color:var(--el-color-text-secondary)!important; }
+:is(#main-content, .el-page) :is(h1,.page-title,.el-page-title,.titulo-pagina) { margin-block:0 4px; font-size:clamp(21px,2vw,27px)!important; line-height:1.15; font-weight:600!important; letter-spacing:-.02em; }
+:is(#main-content, .el-page) h2 { font-size:var(--el-font-xl); font-weight:600; letter-spacing:-.01em; }
+:is(#main-content, .el-page) :is(label,.el-label,.field-label,.form-label):not(.service-option) { font-size:var(--el-font-sm)!important; font-weight:600!important; color:var(--el-color-text-secondary)!important; }
 
 /* Botoes: metrica identica ao Tecnoweld; cor de destaque continua grafite. */
-:is(#main-content, .el-page) :is(.btn,.el-btn,.add-btn,.btn-primary,.btn-secondary,.btn-save,.btn-cancel,.btn-delete,.btn-salvar,.btn-cancelar,.os-btn) { min-height:var(--el-control-h-md); padding:0 14px; border-radius:var(--el-radius-sm); font-size:var(--el-font-sm); font-weight:700; box-shadow:none; }
+:is(#main-content, .el-page) :is(.btn,.el-btn,.add-btn,.btn-primary,.btn-secondary,.btn-save,.btn-cancel,.btn-delete,.btn-salvar,.btn-cancelar,.os-btn) { min-height:var(--el-control-h-md); padding:0 14px; border-radius:var(--el-radius-sm); font-size:var(--el-font-sm); font-weight:600; box-shadow:none; }
 :is(.btn-icon,.el-icon-btn) svg { width:16px; height:16px; }
 
 /* Cartoes e superficies compartilham borda discreta, raio unico e sombra minima. */
@@ -18,7 +18,7 @@ small, .helper-text, .field-hint { color:var(--el-color-muted); }
 
 /* Tabelas: cabecalho compacto e linhas enxutas (11px de respiro vertical). */
 body :is(#main-content, .el-page) table { color:var(--el-color-text); font-size:var(--el-font-sm); }
-body :is(#main-content, .el-page) table thead :is(th,td) { padding-block:11px!important; border-bottom:1px solid var(--el-color-border)!important; background:var(--el-table-header-bg)!important; color:var(--el-table-header-color)!important; font-size:var(--el-font-xs)!important; font-weight:750!important; letter-spacing:.025em; text-transform:none!important; }
+body :is(#main-content, .el-page) table thead :is(th,td) { padding-block:11px!important; border-bottom:1px solid var(--el-color-border)!important; background:var(--el-table-header-bg)!important; color:var(--el-table-header-color)!important; font-size:var(--el-font-xs)!important; font-weight:600!important; letter-spacing:.025em; text-transform:none!important; }
 body :is(#main-content, .el-page) table tbody td { padding-block:11px!important; line-height:1.35; border-color:var(--el-color-border-soft)!important; }
 body :is(#main-content, .el-page) table tbody tr:not(.selected,.linha-selecionada):hover { background:var(--el-table-row-hover)!important; }
 body :is(#main-content, .el-page) table tbody tr:not(:hover,.selected,.linha-selecionada) { background:var(--el-color-surface); }
@@ -37,35 +37,35 @@ body :is(#main-content, .el-page) :is(.modal,.el-modal,.modal-overlay,.modal-aju
 :is(.el-modal__footer,.modal-footer,.modal-actions,.modal-acoes,.os-modal-footer) { display:flex; justify-content:flex-end; padding:16px 24px; gap:12px; border-color:var(--el-color-border-soft); }
 :is(.el-modal__title,.modal-title) { font-size:15px!important; }
 
-.el-spinner, .spinner, .loading-spinner { display:inline-block; width:34px; height:34px; flex-shrink:0; border:3px solid var(--el-color-border); border-top-color:var(--color-primary); border-radius:50%; animation:elSpin .75s linear infinite; }
+.el-spinner, .spinner, .loading-spinner { display:inline-block; width:34px; height:34px; flex-shrink:0; border:3px solid var(--el-color-border); border-top-color:var(--el-color-border,#e3e7ec); border-radius:50%; animation:elSpin .75s linear infinite; }
 .el-spinner--inline, button .el-spinner, button .spinner { width:15px; height:15px; border-width:2px; }
 @keyframes elSpin { to { transform:rotate(360deg); } }
 
 /* Badges/status: paleta semantica exata do Tecnoweld. */
-:is(.el-badge,.badge,.status-badge) { min-height:30px; display:inline-flex; align-items:center; width:fit-content; padding:6px 10px; border:1px solid transparent; border-radius:var(--el-radius-xs); font-size:11px; font-weight:700; line-height:1.1; white-space:nowrap; }
+:is(.el-badge,.badge,.status-badge) { min-height:30px; display:inline-flex; align-items:center; width:fit-content; padding:6px 10px; border:1px solid transparent; border-radius:var(--el-radius-xs); font-size:11px; font-weight:600; line-height:1.1; white-space:nowrap; }
 :is(.el-badge,.badge,.status-badge):is(.success,.sucesso,[data-variant="success"]), body :is(#main-content, .el-page) td .status.ativo { border-color:#bfe5d8; background:#e9f7f2; color:#087255; }
 :is(.el-badge,.badge,.status-badge):is(.warning,.aviso,[data-variant="warning"]), body :is(#main-content, .el-page) td .status.morno { border-color:#f0d6a8; background:#fff6e7; color:#945508; }
 :is(.el-badge,.badge,.status-badge):is(.error,.danger,.erro,[data-variant="error"]), body :is(#main-content, .el-page) td .status.inativo { border-color:#efc2c7; background:#fcecee; color:#a61d2b; }
-:is(.el-badge,.badge,.status-badge):is(.info,[data-variant="info"]) { border-color:#c8d8e8; background:#edf3f8; color:#315f8c; }
-body :is(#main-content, .el-page) td .status { display:inline-flex; align-items:center; min-height:30px; padding:6px 10px; border-radius:var(--el-radius-xs); font-size:11px; font-weight:700; border:1px solid #d9dee5; background:#f1f3f5; color:#5f6875; }
+:is(.el-badge,.badge,.status-badge):is(.info,[data-variant="info"]) { border-color:var(--el-color-border,#e3e7ec); background:#edf3f8; color:var(--el-color-text,#1f2020); }
+body :is(#main-content, .el-page) td .status { display:inline-flex; align-items:center; min-height:30px; padding:6px 10px; border-radius:var(--el-radius-xs); font-size:11px; font-weight:600; border:1px solid var(--el-color-border,#e3e7ec); background:#f1f3f5; color:var(--el-color-text,#1f2020); }
 
 /* Avisos (toast nao bloqueante + confirmacao bloqueante), identicos ao Tecnoweld;
    o botao de confirmar usa a cor de destaque do projeto (grafite), nao o vermelho. */
 .el-alert-stack { position:fixed; inset:16px 12px auto; z-index:1000001; display:grid; justify-items:center; gap:10px; pointer-events:none; }
-.el-alert { --alert-color:var(--el-color-warning); position:relative; display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; width:min(440px,100%); padding:14px 14px 14px 16px; overflow:hidden; border:1px solid var(--el-color-border); border-radius:var(--el-radius-sm); box-shadow:0 18px 42px rgba(15,23,42,.16); background:var(--el-color-surface); color:var(--el-color-text); pointer-events:auto; }
+.el-alert { --alert-color:var(--el-color-warning); position:relative; display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; width:min(440px,100%); padding:14px 14px 14px 16px; overflow:hidden; border:1px solid var(--el-color-border); border-radius:var(--el-radius-sm); box-shadow:0 18px 42px rgba(31,32,32,0.16); background:var(--el-color-surface); color:var(--el-color-text); pointer-events:auto; }
 .el-alert[data-variant="success"] { --alert-color:#059669; }
 .el-alert[data-variant="warning"] { --alert-color:#d97706; }
 .el-alert[data-variant="error"] { --alert-color:var(--el-color-danger); }
-.el-alert[data-variant="info"] { --alert-color:#005bff; }
+.el-alert[data-variant="info"] { --alert-color:var(--el-button-primary-bg,#7d603d); }
 .el-alert__icon { display:grid; place-items:center; width:30px; height:30px; border-radius:999px; background:color-mix(in srgb,var(--alert-color) 12%,white); color:var(--alert-color); }
 .el-alert__icon svg { width:16px; height:16px; stroke-width:2.4; }
-.el-alert h4 { margin:0 0 3px; font-size:15px; line-height:1.15; font-weight:800; color:var(--el-color-title); }
+.el-alert h4 { margin:0 0 3px; font-size:15px; line-height:1.15; font-weight:600; color:var(--el-color-title); }
 .el-alert p { margin:0; font-size:13px; font-weight:600; line-height:1.35; color:var(--el-color-muted); overflow-wrap:anywhere; white-space:pre-line; }
-.el-alert button { min-height:34px; padding:0 14px; font-size:13px; font-weight:800; border-radius:var(--el-radius-xs); }
+.el-alert button { min-height:34px; padding:0 14px; font-size:13px; font-weight:600; border-radius:var(--el-radius-xs); }
 .el-alert__progress { position:absolute; inset:auto 0 0; height:3px; background:var(--alert-color); opacity:.28; transform-origin:left; animation:elAlertTimer var(--alert-duration,4000ms) linear forwards; }
 @keyframes elAlertTimer { to { transform:scaleX(0); } }
-.el-alert-confirm { position:fixed; inset:0; z-index:1000002; display:grid; place-items:center; padding:22px; background:rgba(15,23,42,.16); }
-.el-alert-confirm .el-alert { width:min(470px,100%); grid-template-columns:30px minmax(0,1fr); align-items:start; box-shadow:0 18px 42px rgba(15,23,42,.16); }
+.el-alert-confirm { position:fixed; inset:0; z-index:1000002; display:grid; place-items:center; padding:22px; background:rgba(31,32,32,0.16); }
+.el-alert-confirm .el-alert { width:min(470px,100%); grid-template-columns:30px minmax(0,1fr); align-items:start; box-shadow:0 18px 42px rgba(31,32,32,0.16); }
 .el-alert__actions { grid-column:1/-1; display:flex; justify-content:flex-end; gap:8px; margin-top:4px; }
 
 @media(max-width:759px) {
@@ -74,7 +74,7 @@ body :is(#main-content, .el-page) td .status { display:inline-flex; align-items:
 }
 @media(prefers-reduced-motion:reduce) { #sidebar.app-navigation, #sidebar .menu-item > span { transition:none!important; } }
 
-body .loader-circle { width:34px; height:34px; border:3px solid var(--el-color-border); border-top-color:var(--color-primary); border-radius:50%; background:none; animation:elSpin .75s linear infinite; }
+body .loader-circle { width:34px; height:34px; border:3px solid var(--el-color-border); border-top-color:var(--el-color-border,#e3e7ec); border-radius:50%; background:none; animation:elSpin .75s linear infinite; }
 body .loader-circle::after { content:none; }
 
 body, body .main, body :is(#main-content, .el-page) { background:var(--el-color-bg)!important; }
@@ -89,8 +89,8 @@ body :is(#main-content, .el-page) :is(.el-table-wrap,.el-table-scroll,.table-wra
  border:0!important; border-radius:0!important; box-shadow:none!important; background:transparent!important; overflow-x:auto;
 }
 body :is(#main-content, .el-page) :is(.table-wrapper,.table-container) { overflow-x:auto; }
-body :is(#main-content, .el-page) :is(table,.el-table-card table) tbody td:first-child { font-weight:700; }
-body :is(#main-content, .el-page) :is(table,.el-table-card table) tbody td :is(strong,b,.primary-text) { font-weight:750; }
+body :is(#main-content, .el-page) :is(table,.el-table-card table) tbody td:first-child { font-weight:600; }
+body :is(#main-content, .el-page) :is(table,.el-table-card table) tbody td :is(strong,b,.primary-text) { font-weight:600; }
 body :is(#main-content, .el-page) :is(table,.el-table-card table) :is(th,td):last-child:has(.status,.status-badge,.badge) { width:1%; white-space:nowrap; }
 
 /* Barra de busca/filtro: cartao discreto e baixo, sem altura reservada.
@@ -131,7 +131,7 @@ body :is(#main-content, .el-page) :is(.table-wrapper,.table-wrap) + .easyloc-lis
 
 /* Topo de pagina compacto (titulo + acoes), identico ao Tecnoweld. */
 :is(#main-content, .el-page) :is(.header-list,.page-header,.page-top) { display:flex!important; align-items:center!important; justify-content:space-between!important; flex-wrap:wrap; row-gap:10px; column-gap:16px; margin-bottom:12px!important; min-height:0!important; padding:0!important; }
-:is(#main-content, .el-page) :is(.header-list h2,.page-header h1,.page-top h1,.page-title h1) { margin:0!important; font-size:clamp(20px,1.65vw,26px)!important; font-weight:750!important; letter-spacing:-.025em!important; line-height:1.08!important; color:var(--el-color-title)!important; }
+:is(#main-content, .el-page) :is(.header-list h2,.page-header h1,.page-top h1,.page-title h1) { margin:0!important; font-size:clamp(20px,1.65vw,26px)!important; font-weight:600!important; letter-spacing:-.025em!important; line-height:1.08!important; color:var(--el-color-title)!important; }
 :is(#main-content, .el-page) :is(.header-actions,.page-actions) { margin:0!important; }
 
 /* Indicadores (cartoes de resumo no topo da pagina). */
@@ -188,19 +188,19 @@ body :is(#main-content, .el-page) :is(.table-wrapper,.table-wrap) + .easyloc-lis
         </div>
 ===================================================== */
 .el-stat-row { display:flex!important; align-items:center!important; gap:10px!important; flex:1 1 auto!important; flex-wrap:wrap!important; min-width:0!important; }
-.el-stat-card { flex:1 1 0!important; min-width:150px!important; min-height:54px!important; display:flex!important; align-items:center!important; gap:14px!important; padding:8px 11px!important; border:1px solid var(--el-color-border, #d9dee6)!important; border-radius:var(--el-radius-md, 10px)!important; background:var(--el-color-surface, #fff)!important; box-shadow:var(--el-shadow-sm)!important; }
+.el-stat-card { flex:1 1 0!important; min-width:150px!important; min-height:54px!important; display:flex!important; align-items:center!important; gap:14px!important; padding:8px 11px!important; border:1px solid var(--el-color-border, var(--el-color-border,#e3e7ec))!important; border-radius:var(--el-radius-md, 10px)!important; background:var(--el-color-surface, #fff)!important; box-shadow:var(--el-shadow-sm)!important; }
 .el-stat-card > span { width:42px; height:42px; flex-shrink:0; display:grid; place-items:center; border-radius:999px; }
 .el-stat-card svg { width:19px; height:19px; }
-.el-stat-card.blue > span { background:#e7f0ff; color:#005bff; }
+.el-stat-card.blue > span { background:var(--el-color-surface-soft,#f6f7f9); color:var(--el-color-text,#1f2020); }
 .el-stat-card.green > span { background:#dff8ed; color:#009b72; }
 .el-stat-card.orange > span { background:#fff1cc; color:#e27a00; }
 .el-stat-card.red > span { background:#fee2e2; color:#e30613; }
 .el-stat-card.purple > span { background:#f1e7ff; color:#7c3aed; }
-.el-stat-card.gray > span { background:#eef1f5; color:#52667f; }
+.el-stat-card.gray > span { background:#eef1f5; color:var(--el-color-text,#1f2020); }
 .el-stat-card > div { min-width:0; }
 .el-stat-card small,
-.el-stat-card em { display:block; color:#52667f; font-size:10px; font-style:normal; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.el-stat-card strong { display:block; margin:1px 0; color:var(--el-color-title, #142033); font-size:18px; line-height:1; font-weight:900; }
+.el-stat-card em { display:block; color:var(--el-color-text,#1f2020); font-size:10px; font-style:normal; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.el-stat-card strong { display:block; margin:1px 0; color:var(--el-color-title, var(--el-color-text,#1f2020)); font-size:18px; line-height:1; font-weight:600; }
 @media(max-width:1100px) {
   .el-stat-row { order:3!important; flex-basis:100%!important; }
 }

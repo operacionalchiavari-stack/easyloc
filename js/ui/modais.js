@@ -11,5 +11,7 @@ window.abrirPerfil = function () {
 };
 
 window.abrirEmpresa = function () {
-  criarModalEmpresa();
+  const destino='Modulos/Configuracoes/Parametros/parametros.html';
+  if(typeof window.shellNavigate==='function')window.shellNavigate(destino);
+  else window.location.href=destino;
 };

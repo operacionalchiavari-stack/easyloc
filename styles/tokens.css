@@ -1,20 +1,26 @@
 :root {
+  /* Cor global dos botoes: referencia enviada pelo usuario. */
+  --el-button-primary-bg: #7d603d;
+  --el-button-primary-rgb: 125, 96, 61;
+  --el-button-primary-hover: #654d31;
+  --el-button-primary-active: #554129;
+  --el-button-primary-soft: #f4efe8;
   /* Exceções mantidas de propósito: cor do menu (vinho) e cor de destaque dos
-     botões (grafite). Todo o restante replica o design system do Tecnoweld. */
+     botões (marrom). Todo o restante replica o design system do Tecnoweld. */
   --color-sidebar: #290610;
-  --color-primary: #374151;
+  --color-primary: var(--el-button-primary-bg);
   --color-bg: #f4f6f8;
   --empresa-cor-principal-rgb: 13, 41, 35;
-  --el-color-primary: #1F2937;
-  --el-color-primary-strong: #111827;
-  --el-color-primary-dark: #111827;
-  --el-color-primary-soft: #F3F4F6;
+  --el-color-primary: var(--el-button-primary-bg);
+  --el-color-primary-strong: var(--el-button-primary-hover);
+  --el-color-primary-dark: var(--el-button-primary-hover);
+  --el-color-primary-soft: var(--el-button-primary-soft);
   --el-color-accent: var(--color-primary);
   --el-menu-text: #FFFFFF;
   --el-menu-selected: #45212A;
   --el-menu-hover: #38151D;
   --el-submenu-hover: #F1F5F3;
-  --el-color-accent-active: #1F2937;
+  --el-color-accent-active: var(--el-button-primary-active);
   --el-button-secondary-bg: #FFFFFF;
   --el-button-secondary-text: #0f2742;
   --el-button-secondary-border: #d9dee6;
@@ -23,10 +29,10 @@
   --el-button-icon-border: #d9dee6;
   --el-button-disabled-bg: #E5E7EB;
   --el-button-disabled-text: #6B7280;
-  --el-focus-color: #315f8c;
+  --el-focus-color: #5f5f5f;
   --el-color-on-accent: #FFFFFF;
-  --el-color-accent-strong: #283241;
-  --el-color-accent-soft: #F3F4F6;
+  --el-color-accent-strong: var(--el-button-primary-hover);
+  --el-color-accent-soft: var(--el-button-primary-soft);
   --el-color-bg: var(--color-bg);
   --el-color-surface: #ffffff;
   --el-color-surface-soft: #f6f7f9;
@@ -48,6 +54,10 @@
   --el-font-md: 14px;
   --el-font-lg: 16px;
   --el-font-xl: 22px;
+  --el-font-weight-regular: 400;
+  --el-font-weight-medium: 500;
+  --el-font-weight-semibold: 600;
+  --el-font-weight-bold: 700;
   --el-control-h-sm: 32px;
   --el-control-h-md: 38px;
   --el-control-h-lg: 44px;

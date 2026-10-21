@@ -1,0 +1,11 @@
+/* Somente compatibilidade visual: mantém os layouts e fluxos das telas antigas. */
+html[data-theme-legacy] body{background:#f3f5f6!important;font-family:var(--el-font-family,Inter,system-ui,sans-serif)!important}
+html[data-theme-legacy] body{font-size:var(--el-font-md,14px);line-height:1.45}
+html[data-theme-legacy] :is(.filtros,.filtros-painel,.filters) :is(input,select){font-size:var(--el-font-md,14px)!important;font-weight:400!important}
+html[data-theme-legacy] :is(.field,.campo) > label{font-size:var(--el-font-sm,12px)!important;font-weight:600!important}
+html[data-theme-legacy] table thead :is(th,td){font-size:var(--el-font-sm,12px)!important;font-weight:600!important}
+html[data-theme-legacy] table tbody td{font-size:var(--el-font-md,14px)!important}
+html[data-theme-legacy] :is(input[type="checkbox"],input[type="radio"]){accent-color:var(--el-button-primary-bg,#7d603d)}
+html[data-theme-legacy] :is(table thead,table thead tr,table thead th,table thead td,.panel-header,.card-header,.section-header,.modal-header){background:#fff!important;background-image:none!important;color:var(--el-color-text,#1f2020)!important;border-color:var(--el-color-border,#e3e7ec)!important}
+html[data-theme-legacy] #listaPedidos::before{background:#fff;color:var(--el-color-text,#1f2020);border-bottom:1px solid var(--el-color-border,#e3e7ec)}
+html[data-theme-legacy] :is(.btn-setor.ativo,.btn-montagem.ativo,.tab-btn.active,.tab-btn.ativo,.tab.active){background:var(--el-button-primary-bg,#7d603d)!important;border-color:var(--el-button-primary-bg,#7d603d)!important;color:var(--el-color-on-accent,#fff)!important}

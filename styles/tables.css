@@ -90,7 +90,7 @@ table thead td,
   border-bottom: 1px solid var(--el-color-border);
   text-align: left;
   font-size: var(--el-font-xs);
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: 0.025em;
   text-transform: none;
   white-space: nowrap;
@@ -111,7 +111,7 @@ table thead td,
 :is(#main-content, .el-page) .el-table-card table thead td {
   padding: 11px 14px !important;
   font-size: var(--el-font-xs) !important;
-  font-weight: 750 !important;
+  font-weight: 600 !important;
 }
 
 :is(#main-content, .el-page) .el-table-card table tbody td {
