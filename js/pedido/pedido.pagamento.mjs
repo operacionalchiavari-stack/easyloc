@@ -325,9 +325,6 @@ export function initPagamento(){
           <button type="button" class="pg-action-btn danger" data-pg-action="remove" title="Remover parcela" aria-label="Remover parcela">
             <i data-lucide="trash-2"></i>
           </button>
-          <button type="button" class="pg-action-btn muted" data-pg-action="more" title="Mais opções" aria-label="Mais opções">
-            <i data-lucide="grip-vertical"></i>
-          </button>
         </div>
       </td>
     `;
@@ -453,7 +450,7 @@ export function initPagamento(){
   const planoDaDivisao = (comp, valor, entradaTotal, valorFinal) => {
     const qtdParcelas = Math.max(0, Number(parcelasEl?.value || 0));
     const metodo = metodoEl?.value || "PIX";
-    const vencEntrada = dataEntradaEl?.value || "";
+    const vencEntrada = dataEntradaEl?.value || new Date().toLocaleDateString("sv-SE");
     const diaFixo = diaFixoEl?.value || "";
     const entrada = valorFinal > 0 ? Math.min(centavos(entradaTotal * valor / valorFinal), valor) : 0;
     const lista = [];
@@ -495,7 +492,7 @@ export function initPagamento(){
     const ultima = rows.at(-1);
     const programado = rows.reduce((s, row) => s + valorDaLinha(row), 0);
     const falta = Math.max(0, centavos((valoresPorComponente()[comp] || 0) - programado));
-    const venc = ultima?.querySelector(".pg-vencimento")?.value ? addMonths(ultima.querySelector(".pg-vencimento").value, 1, "") : (dataEntradaEl?.value || "");
+    const venc = ultima?.querySelector(".pg-vencimento")?.value ? addMonths(ultima.querySelector(".pg-vencimento").value, 1, "") : (dataEntradaEl?.value || new Date().toLocaleDateString("sv-SE"));
     const nova = criarLinha({ tipo: `Parcela ${rows.length + 1}`, vencimento: venc, valor: falta, metodo: ultima?.querySelector(".pg-metodo")?.value || metodoEl?.value || "PIX", componente: comp });
     const proximoGrupo = [...tbody.querySelectorAll("tr.pg-grupo")].find((g) => grupo.compareDocumentPosition(g) & Node.DOCUMENT_POSITION_FOLLOWING);
     tbody.insertBefore(nova, proximoGrupo || null);

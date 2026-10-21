@@ -3,11 +3,11 @@ console.log("✅ pedido.mjs carregado");
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
 import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261020-mapa-inicial";
-import { initItens } from "./pedido.itens.mjs?v=20261018-financeiro";
+import { initItens } from "./pedido.itens.mjs?v=20261021-subtotal";
 import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261021-divisao";
-import { initPagamento } from "./pedido.pagamento.mjs?v=20261021-divisao";
+import { initPagamento } from "./pedido.pagamento.mjs?v=20261021-visual";
 import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs";
 
 /* =====================================================

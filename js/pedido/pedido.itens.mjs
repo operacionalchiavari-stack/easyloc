@@ -210,6 +210,7 @@ function atualizarResumo() {
   set("resumoLocacaoDesconto", -descontoLocacao);
 
   set("resumoCustomizacoes", customizacoes);
+  set("resumoSubtotal", locacaoFinal + customizacoes);
 
   set("resumoFreteBruto", freteFinal);
   set("resumoFreteDesconto", -freteDesconto);

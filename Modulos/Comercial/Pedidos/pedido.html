@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="pedido.css?v=20261021-financeiro-divisao2">
+  <link rel="stylesheet" href="pedido.css?v=20261021-financeiro-visual13">
 </head>
 <body>
 <div class="pedido-screen orcamento-page el-page em-entrada" data-module-root>
@@ -269,7 +269,7 @@
                   <th>Vencimento</th>
                   <th>Valor</th>
                   <th>Status</th>
-                  <th>Forma de pagamento</th>
+                  <th>Forma</th>
                   <th>Cobrança</th>
                   <th>Ações</th>
                 </tr>
@@ -305,7 +305,7 @@
           <div class="resumo-linha"><span>Valor de locacao</span><strong id="resumoLocacaoBruto">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Desconto</span><strong id="resumoLocacaoDesconto">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Customizacoes</span><strong id="resumoCustomizacoes">R$ 0,00</strong></div>
-          <div class="resumo-linha subtotal"><span>Subtotal</span><strong>R$ 0,00</strong></div>
+          <div class="resumo-linha subtotal"><span>Subtotal</span><strong id="resumoSubtotal">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Frete</span><strong id="resumoFreteBruto">R$ 0,00</strong></div>
           <div class="resumo-linha sr-only"><span>Desconto frete</span><strong id="resumoFreteDesconto">- R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Montagem</span><strong id="resumoMontagemBruto">R$ 0,00</strong></div>
@@ -550,7 +550,7 @@
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/paymentPix.js?v=20261021-divisao"></script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20261021-financeiro-divisao"></script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261021-financeiro-visual"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>

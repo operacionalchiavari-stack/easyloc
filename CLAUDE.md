@@ -9613,3 +9613,11 @@ podem ficar unificados, precisam ficar separados igual em contas a receber".
   O PIX recebido pelo gateway dá baixa na conta da própria parcela. Testado numa transação desfeita e no fluxo completo
   (frete em 2 parcelas → 2 contas a receber de frete). A janela do PIX mostra "Frete · Parcela 1".
 - `tests/pedido-abrir-projeto-catalogo-browser.cjs` já falhava antes desta mudança (espera um elemento que não aparece).
+- **Acabamento visual da tela (21/out, pedido: "precisa ser mais bonito, não está alinhado")**: bloco "FINANCEIRO DO PEDIDO -
+  acabamento" no fim de `pedido.css` vence as camadas antigas (mexer lá). Tabela com colunas fixas, valor à direita (contorno só
+  ao passar o mouse/editar), campos de 38px, status em pílula colorida, título da divisão com "✓ Distribuído"/"Falta
+  distribuir"; abaixo de 1200px cada parcela vira um cartão (o antigo layout de celular tinha rótulos com acento corrompido).
+  **Pegadinha:** `styles/design-system.css` força `padding-block:11px!important` em toda célula de tabela com peso de ID —
+  para vencer, usar `html:is(#algum-id,html) ...`. Também: botão "arrastar" sem função removido, 1º vencimento padrão = hoje,
+  Subtotal do resumo (sempre R$ 0,00) corrigido (`#resumoSubtotal`), coluna "Forma" e a barra de etapas não sobrepõe mais os
+  botões da direita (até 1279px mostra só a etapa anterior mais próxima).
