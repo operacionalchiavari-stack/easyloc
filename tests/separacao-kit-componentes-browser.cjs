@@ -36,10 +36,11 @@ const mock = `(() => {
     };
     return q;
   }
+  const rpcOperacao = ${require("./operacao-rpc-fixture.cjs").toString()};
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
-    rpc: (n) => ({ then: (ok) => Promise.resolve(n === "funcionario_contexto" ? { data: { ativo: true, administrador_legado: true }, error: null } : { data: [], error: null }).then(ok) })
+    rpc: (n, args) => rpcOperacao(banco, n, args)
   };
   window.supabase = { createClient: () => cliente };
   window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Teste", empresa_nome: "Chiavari" };
@@ -68,6 +69,9 @@ const QR = "/* qrcodejs falso */ window.QRCode = function(el, o){ const c = docu
   await page.evaluate(() => { window.EasyLocEtiquetas.escolherFormato = async () => "100x150"; });
 
   await page.click('[data-separacao-modo="qr"]');
+  const fonteItem=await page.locator('#separacaoQrItens .item-name').first().evaluate(el=>({size:getComputedStyle(el).fontSize,weight:getComputedStyle(el).fontWeight}));
+  assert.deepStrictEqual(fonteItem,{size:'15px',weight:'600'},'descrição de item usa fonte compacta e semibold');
+  await page.screenshot({path:path.join(raiz,'outputs','triagem-tipografia.png')});
   const linhas = await page.$$eval("#separacaoQrItens .item-card .item-name", (e) => e.map((x) => x.textContent.trim()));
   assert.deepStrictEqual(linhas, ["Corpo do sofá", "Almofada", "Mesa Goa"], "kit aberto nos componentes, sem a linha do kit");
   assert.ok((await page.textContent("#separacaoQrQtd")).startsWith("0 / 9"), "2 corpos + 6 almofadas + 1 mesa");

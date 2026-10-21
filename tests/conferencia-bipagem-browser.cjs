@@ -34,10 +34,11 @@ const mock = `(() => {
     };
     return q;
   }
+  const rpcOperacao = ${require("./operacao-rpc-fixture.cjs").toString()};
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
-    rpc: (n) => ({ then: (ok) => Promise.resolve(n === "funcionario_contexto" ? { data: { ativo: true, administrador_legado: true }, error: null } : { data: [], error: null }).then(ok) })
+    rpc: (n, args) => rpcOperacao(banco, n, args)
   };
   window.supabase = { createClient: () => cliente };
   window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Igor" };
@@ -113,6 +114,18 @@ const mock = `(() => {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "sem rolagem lateral no celular");
   await page.screenshot({ path: path.join(require("os").tmpdir(), "conferencia-celular.png") });
   console.log("ok 6 - volta marca lida_retorno_em; celular sem rolagem lateral");
+  await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=carregamento");
+  await page.waitForSelector("#cfCorpo:not([hidden])");
+  await page.evaluate(()=>{window.__falhaRede=true;});
+  await bipar("ACERVO:ENV:12-001");
+  assert.strictEqual(await page.textContent("#cfContagem"), "0 de 3 volumes");
+  assert.ok(await page.isVisible("#cfPendenciasRede"));
+  await page.reload();
+  await page.waitForSelector("#cfReenviarLeituras");
+  await page.click("#cfReenviarLeituras");
+  await page.waitForFunction(()=>document.getElementById("cfContagem").textContent==="1 de 3 volumes");
+  assert.ok(await page.isHidden("#cfPendenciasRede"));
+  console.log("ok 7 - falha de rede preserva a leitura após recarregar e só confirma depois de enviar");
   assert.deepStrictEqual(erros, [], erros.join("\n"));
   console.log("todos os testes passaram");
   await browser.close();

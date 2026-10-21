@@ -29,10 +29,10 @@ const mockSupabase = `
       { id: "i2", empresa_id: "e1", produto: "Bistrol", produto_base: "Bar", descricao_total: "Bar Bistrol", foto_url: "https://fixture/bar.png", referencia: "BAR002", categoria: "Bares", valor_locacao: 200, valor_reposicao: 3000 },
       { id: "i3", empresa_id: "e1", produto: "Goa", produto_base: "Mesa", descricao_total: "Mesa Goa", foto_url: "", referencia: "MES003", categoria: "Mesas", valor_locacao: null, valor_reposicao: null } ],
     projetos: [
-      { id: "pr1", empresa_id: "e1", cliente_id: "c1", noivos: "Ana e Bruno", data_evento: "2026-12-05", local_evento: "Fazenda Vila Rica", status: "pedido_enviado",
+      { id: "pr1", numero_catalogo: 1, empresa_id: "e1", cliente_id: "c1", noivos: "Ana e Bruno", data_evento: "2026-12-05", local_evento: "Fazenda Vila Rica", status: "pedido_enviado",
         created_at: "2026-10-10T10:00:00Z", updated_at: "2026-10-14T10:00:00Z",
         dados: { ambientes: [{ id: "a1", nome: "Lounge", itens: [{ item_id: "i1", quantidade: 2 }, { item_id: "i2", quantidade: 1 }], renders: [] }] } },
-      { id: "pr3", empresa_id: "e1", cliente_id: "c1", noivos: "Carla e Davi", data_evento: "2026-12-20", local_evento: "Casa Rosa", status: "rascunho",
+      { id: "pr3", numero_catalogo: 2, empresa_id: "e1", cliente_id: "c1", noivos: "Carla e Davi", data_evento: "2026-12-20", local_evento: "Casa Rosa", status: "rascunho",
         created_at: "2026-10-11T10:00:00Z", updated_at: "2026-10-12T10:00:00Z", dados: { ambientes: [] } },
       { id: "pr2", empresa_id: "e1", cliente_id: null, noivos: "Projeto da equipe", data_evento: "2026-12-06", local_evento: "X", status: "rascunho", dados: { ambientes: [] } } ],
     projetos_presenca: [
@@ -91,11 +91,13 @@ const mockSupabase = `
   const linha = page.locator('[data-pedido-id="projeto:pr1"]');
   await linha.waitFor({ timeout: 15000 });
   const r = await linha.evaluate((tr) => ({
-    selo: tr.querySelector(".pedido-selo-catalogo")?.textContent, cliente: tr.cells[1].innerText.trim(), evento: tr.cells[3].innerText.trim(),
+    numero: tr.querySelector(".pedido-numero-catalogo")?.textContent, origem: tr.querySelector(".pedido-numero-catalogo")?.title, cliente: tr.cells[1].innerText.trim(), evento: tr.cells[3].innerText.trim(),
     status: tr.querySelector(".status-pill")?.textContent, valor: tr.querySelector(".central-finance-value")?.textContent,
     acoes: [...tr.querySelectorAll("[data-action]")].map((b) => b.dataset.action).filter((a) => !a.startsWith("abrir-")),
   }));
-  assert.strictEqual(r.selo, "Veio do catálogo");
+  assert.strictEqual(r.numero, "001");
+  assert.strictEqual(r.origem, "Veio do catálogo");
+  assert.strictEqual(await page.locator('[data-pedido-id="projeto:pr3"] .pedido-numero-card').textContent(), "002");
   assert.strictEqual(r.cliente, "Lis Baêtas", "decorador como cliente");
   assert.strictEqual(r.evento, "Ana e Bruno");
   assert.strictEqual(r.status, "Pedido enviado");

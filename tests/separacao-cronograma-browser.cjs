@@ -16,6 +16,7 @@ const mock = `(() => {
     itens_patrimonios: [], separacoes_leituras: [], empresa_logistica_regras: [],
     separacoes_etiquetas: [{ id: "t1", empresa_id: "e1", separacao_pedido_id: "p2", codigo: "13-001", lida_carregamento_em: "x" }, { id: "t2", empresa_id: "e1", separacao_pedido_id: "p2", codigo: "13-002", lida_carregamento_em: "x" }]
   };
+  banco.separacoes_pedidos.find(p=>p.id==="p2").operacao.descarregamento={concluido_em:"2026-10-18T11:00:00Z"};
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
     const q = {
@@ -33,10 +34,11 @@ const mock = `(() => {
     };
     return q;
   }
+  const rpcOperacao = ${require("./operacao-rpc-fixture.cjs").toString()};
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
-    rpc: (n) => ({ then: (ok) => Promise.resolve(n === "funcionario_contexto" ? { data: { ativo: true, administrador_legado: true }, error: null } : { data: [], error: null }).then(ok) })
+    rpc: (n, args) => rpcOperacao(banco, n, args)
   };
   window.supabase = { createClient: () => cliente };
   // Câmera e leitor nativo simulados: o leitor "vê" o código que o teste colocar em window.__qr.
@@ -106,7 +108,7 @@ const mock = `(() => {
   assert.match(card.txt, /Retorno/); assert.match(card.txt, /às cegas/);
   assert.ok(!/peças|volume|\d+ \/ \d+/.test(card.txt.replace(/\d{2}\/\d{2}\/\d{4}/g, "")), "retorno não mostra quantidade: " + card.txt);
   assert.strictEqual(card.fundo, "rgb(244, 239, 252)");
-  await page.screenshot({ path: process.env.SHOT || "sep-retorno.png" });
+  await page.screenshot({ path: process.env.SHOT || path.join(require("os").tmpdir(),"acervo-triagem-operacao.png") });
   await page.click("#separacaoColunaAguardando .card-retorno");
   await page.waitForURL(/etapa=retorno&de=separacao/);
   await page.waitForSelector("#cfVoltar:not([hidden])");

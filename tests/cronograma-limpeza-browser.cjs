@@ -24,6 +24,7 @@ function resposta(fn, args) {
     page.on("dialog", (d) => d.dismiss());
     await page.route("**/*", (r) => {
       const u = r.request().url();
+      if (u.includes("operacao-sem-motor.js")) { return r.fulfill({ contentType: "application/javascript", body: require("fs").readFileSync(require("path").join(__dirname, "stub-sem-motor.js")) }); }
       if (u.includes("/api/gs")) {
         const { fn, args } = JSON.parse(r.request().postData() || "{}");
         chamadas.push(fn);
@@ -52,6 +53,8 @@ function resposta(fn, args) {
   assert.ok(await cron.evaluate(() => !/decorador confirmou/i.test(document.documentElement.innerHTML)), "sem pergunta do decorador");
   assert.strictEqual(await cron.locator("#linkAppMontador").count(), 0, "sem acesso ao app do montador");
   assert.ok(await cron.evaluate(() => typeof adicionarAoLote === "undefined" && typeof abrirNovoPedidoProtegido === "undefined"), "sem criação de pedido");
+  assert.strictEqual(await cron.locator('#modalNovoPedido, #etapasList, [onclick*="editarPedido"], [onclick*="appVerPedido"]').count(),0,'sem editor antigo ou caminhos para abri-lo');
+  assert.ok(await cron.evaluate(()=>typeof editarPedido==='undefined' && typeof salvarPedido==='undefined' && typeof adicionarEtapa==='undefined'),'editor e salvamento antigos removidos');
   await cron.evaluate(() => avisoRapido("Equipe salva."));
   await cron.waitForSelector("#avisoRapido.show");
   assert.strictEqual(await cron.locator("#modalAlerta.show, #modalAlerta[style*='flex']").count(), 0, "sucesso não abre janela");

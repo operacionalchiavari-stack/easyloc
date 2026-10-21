@@ -21,6 +21,7 @@ for (let n = 0; n < 8; n++) {
   page.on("pageerror", (e) => { if (!/lucide|google is not defined|maps|places/i.test(e.message)) erros.push(e.message); });
   await page.route("**/*", (r) => {
     const u = r.request().url();
+    if (u.includes("operacao-sem-motor.js")) { return r.fulfill({ contentType: "application/javascript", body: require("fs").readFileSync(require("path").join(__dirname, "stub-sem-motor.js")) }); }
     if (u.includes("/api/gs")) {
       const { fn } = JSON.parse(r.request().postData() || "{}");
       const res = fn === "getCronogramaSemana" ? pedidos : fn === "CRON_entrarComLogin" ? { valido: true, perfil: "montagem", usuario: "T", token: "tk" } : null;
@@ -42,7 +43,7 @@ for (let n = 0; n < 8; n++) {
   const th1 = await page.evaluate(() => document.querySelectorAll(".board thead th")[1].offsetWidth);
   assert.ok(th1 >= 255, "dia com ~260px (" + th1 + ")");
   const th0 = await page.evaluate(() => [document.querySelectorAll(".board thead th")[0].offsetWidth, document.querySelector(".board tbody td.col-evento").offsetWidth]);
-  assert.ok(th0[0] >= 255 && th0[1] >= 255, "coluna do pedido com ~260px (" + th0 + ")");
+  assert.ok(th0[0] >= 205 && th0[0] <= 215 && th0[1] >= 205 && th0[1] <= 215, "coluna do pedido com ~210px (" + th0 + ")");
   console.log("ok 1 - dias de " + th1 + "px, tabela " + antes.sw + "px numa caixa de " + antes.cw + "px");
 
   await page.evaluate(() => { window.__abertos = 0; const o = window.editarPedido; window.editarPedido = function(){ window.__abertos++; }; });
@@ -57,14 +58,14 @@ for (let n = 0; n < 8; n++) {
   assert.ok(Math.abs(fixo) <= 2, "coluna do pedido fica parada (" + fixo + ")");
   console.log("ok 2 - arrastar com o mouse rola " + depois + "px e a coluna do pedido fica parada");
 
-  // soltar o arrasto em cima do pedido não abre; clique simples abre
+  // O editor antigo foi removido: nem arrastar nem clicar abre a janela.
   await page.mouse.move(card.x + 60, card.y + 40); await page.mouse.down();
   for (let i = 1; i <= 5; i++) await page.mouse.move(card.x + 60 + i * 20, card.y + 40);
   await page.mouse.up();
   assert.strictEqual(await page.evaluate(() => window.__abertos), 0, "arrastar não abre o pedido");
   await page.mouse.click(card.x + 60, card.y + 40);
-  assert.strictEqual(await page.evaluate(() => window.__abertos), 1, "clique simples abre o pedido");
-  console.log("ok 3 - clique sem arrastar abre o pedido; arrastar não");
+  assert.strictEqual(await page.evaluate(() => window.__abertos), 0, "clique simples não abre o editor removido");
+  console.log("ok 3 - arrastar e clicar não abrem o editor removido");
 
   const rows = await page.evaluate(() => [...document.querySelectorAll(".board tbody tr")].map(r => r.offsetHeight));
   assert.ok(rows[0] <= 70, "linha da agenda vazia baixa (" + rows[0] + ")");

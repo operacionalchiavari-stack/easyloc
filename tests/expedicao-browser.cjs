@@ -30,6 +30,8 @@ const mock = `(() => {
     itens_patrimonios: [{ empresa_id: "e1", item_id: "i1", codigo_patrimonio: "CAD-001" }],
     separacoes_leituras: []
   };
+  banco.separacoes_pedidos.filter(p => ["p3","p6","p7"].includes(p.id)).forEach(p => { p.operacao.descarregamento = {concluido_em:"2099-10-25T15:30:00Z",por:"Igor",faltando:[],total:2,lidas:2}; });
+  banco.separacoes_pedidos.push({id:"p8",empresa_id:"e1",numero_pedido:"19",cliente_nome:"Descarga pendente",data_entrega:"2099-10-24",status:"separado",status_comercial:"aprovado",operacao:{carregamento:{concluido_em:"2099-10-24T10:00:00Z"}}});
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
     const q = {
@@ -46,10 +48,11 @@ const mock = `(() => {
     };
     return q;
   }
+  const rpcOperacao = ${require("./operacao-rpc-fixture.cjs").toString()};
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
-    rpc: (n) => ({ then: (ok) => Promise.resolve(n === "funcionario_contexto" ? { data: { ativo: true, administrador_legado: true }, error: null } : { data: [], error: null }).then(ok) })
+    rpc: (n, args) => rpcOperacao(banco, n, args)
   };
   window.supabase = { createClient: () => cliente };
   window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Igor" };
@@ -78,10 +81,10 @@ const mock = `(() => {
   await page.waitForSelector("#expColAguardando [data-pedido]", { timeout: 15000 });
   const ids = (sel) => page.$$eval(sel + " [data-pedido]", (n) => n.map((x) => x.dataset.pedido + ":" + x.dataset.tipo));
   // Aguardando: ida p1 e p4 + retorno de p3 (carregado). Em conferência: ida p2 + retorno p6. Conferido: ida p3/p6 e retorno p7 (ida de p7 some).
-  assert.deepStrictEqual((await ids("#expColAguardando")).sort(), ["p1:ida", "p3:retorno", "p4:ida"]);
+  assert.deepStrictEqual((await ids("#expColAguardando")).sort(), ["p1:ida", "p3:retorno", "p4:ida", "p8:descarregamento"]);
   assert.deepStrictEqual((await ids("#expColAndamento")).sort(), ["p2:ida", "p6:retorno"]);
-  assert.deepStrictEqual((await ids("#expColCarregados")).sort(), ["p3:ida", "p6:ida", "p7:retorno"]);
-  assert.strictEqual(await page.textContent("#expContAguardando"), "3");
+  assert.deepStrictEqual((await ids("#expColCarregados")).sort(), ["p3:descarregamento", "p3:ida", "p6:descarregamento", "p6:ida", "p7:descarregamento", "p7:retorno", "p8:ida"]);
+  assert.strictEqual(await page.textContent("#expContAguardando"), "4");
   assert.match(await page.textContent("#expColAndamento"), /1 \/ 2/);
   assert.match(await page.textContent("#expColAguardando"), /Ainda em separação/);
   assert.match(await page.textContent("#expColCarregados"), /por Igor · 1 pendência/);
@@ -98,20 +101,20 @@ const mock = `(() => {
   const retAnd = await page.$eval("#expColAndamento [data-tipo=retorno]", (c) => c.textContent);
   assert.match(retAnd, /1 peça lida/); assert.ok(!/\//.test(retAnd.replace(/\d{2}\/\d{2}\/\d{4}/g, "")), retAnd);
   console.log("ok 1b - retorno lilás, com selo, e às cegas (só quantas foram lidas)");
-  await page.fill("#expBusca", "ana");
+  await page.click("#expBusca"); await page.fill("#expBusca", "ana");
   assert.deepStrictEqual(await ids("#expColAguardando"), []);
   assert.deepStrictEqual(await ids("#expColAndamento"), ["p2:ida"]);
-  await page.fill("#expBusca", "");
+  await page.click("#expBusca"); await page.fill("#expBusca", "");
   console.log("ok 2 - busca filtra");
-  await page.screenshot({ path: process.env.SHOT || "expedicao.png" });
+  await page.screenshot({ path: process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png") });
   await page.click("[data-pedido=p2][data-tipo=ida]");
   await page.waitForURL(/conferencia\.html\?pedido=p2&etapa=carregamento&de=expedicao/);
   await page.waitForSelector("#cfVoltar:not([hidden])"); await page.waitForTimeout(600);
   const box = await page.evaluate(() => { const v = document.getElementById("cfVoltar").getBoundingClientRect(), r = document.createRange(); r.selectNodeContents(document.getElementById("cfTitulo")); const t = r.getBoundingClientRect(); return { dv: Math.abs((v.top + v.bottom) / 2 - (t.top + t.bottom) / 2), sobre: v.right > t.left }; });
-  await page.screenshot({ path: (process.env.SHOT || "expedicao.png").replace(".png", "-conf.png") });
+  await page.screenshot({ path: (process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png")).replace(".png", "-conf.png") });
   assert.ok(box.dv < 12 && !box.sobre, JSON.stringify(box));
   console.log("ok 3 - clicar abre a conferência do carregamento, com Voltar na linha do título");
-  await page.screenshot({ path: (process.env.SHOT || "expedicao.png").replace(".png", "-conf.png") });
+  await page.screenshot({ path: (process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png")).replace(".png", "-conf.png") });
   await page.click("#cfVoltar");
   await page.waitForSelector("#expColAguardando [data-pedido]");
   console.log("ok 4 - Voltar retorna para a Expedição");
@@ -127,7 +130,7 @@ const mock = `(() => {
   assert.strictEqual(await page.textContent("#cfContagem"), "1 peça lida");
   assert.ok(!/ de /.test(await page.textContent("#cfUltimaDetalhe")), await page.textContent("#cfUltimaDetalhe"));
   assert.match(await page.textContent("#cfItens"), /14-001/);
-  await page.screenshot({ path: (process.env.SHOT || "expedicao.png").replace(".png", "-cega.png") });
+  await page.screenshot({ path: (process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png")).replace(".png", "-cega.png") });
   await page.click("#cfConcluir");
   await page.getByRole("button", { name: "Concluir", exact: true }).click();
   await page.waitForFunction(() => window.__gravados.some((g) => g.t === "separacoes_pedidos" && g.p.status_operacional === "retornado"), null, { timeout: 3000 });
@@ -137,7 +140,7 @@ const mock = `(() => {
   const op = await page.evaluate(() => window.__gravados.filter((g) => g.t === "separacoes_pedidos").pop().p);
   assert.strictEqual(op.status_operacional, "retornado"); assert.strictEqual(op.operacao.retorno.total, 2); assert.strictEqual(op.operacao.retorno.faltando.length, 1);
   assert.ok(await page.isVisible("#cfPercent"), "depois de concluir o sistema mostra o resultado");
-  await page.screenshot({ path: (process.env.SHOT || "expedicao.png").replace(".png", "-resultado.png") });
+  await page.screenshot({ path: (process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png")).replace(".png", "-resultado.png") });
   console.log("ok 4b - retorno às cegas: sem total nem pendentes; ao concluir o sistema mostra o que não voltou");
   await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=carregamento");
   await page.waitForSelector("#cfCorpo:not([hidden])");

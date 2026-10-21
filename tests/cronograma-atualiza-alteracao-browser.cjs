@@ -17,6 +17,7 @@ const raiz = path.resolve(__dirname, ".."), BASE = "http://acervo.teste/";
   });
   await page.route("**/*", (r) => {
     const u = r.request().url();
+    if (u.includes("operacao-sem-motor.js")) { return r.fulfill({ contentType: "application/javascript", body: require("fs").readFileSync(require("path").join(__dirname, "stub-sem-motor.js")) }); }
     if (u.includes("/rest/v1/rpc/cronograma_assinatura")) {
       perguntas++;
       assert.strictEqual(r.request().headers()["authorization"], "Bearer tk");

@@ -34,10 +34,11 @@ const mock = `(() => {
     };
     return q;
   }
+  const rpcOperacao = ${require("./operacao-rpc-fixture.cjs").toString()};
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
-    rpc: (n) => ({ then: (ok) => Promise.resolve(n === "funcionario_contexto" ? { data: { ativo: true, administrador_legado: true }, error: null } : { data: [], error: null }).then(ok) })
+    rpc: (n, args) => rpcOperacao(banco, n, args)
   };
   window.supabase = { createClient: () => cliente };
   window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Teste", empresa_nome: "Chiavari" };
