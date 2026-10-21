@@ -274,7 +274,7 @@ export function imprimirPedido() {
             box-shadow: none;
           }
           .doc-badge span:first-child { color: #6B7280; font-size: 9px; font-weight: 600; text-transform: uppercase; }
-          .doc-badge strong { display: block; margin: 3px 0 8px; color: var(--print-primary); font-size: 25px; line-height: 1; font-weight: 650; letter-spacing: -0.02em; }
+          .doc-badge strong { display: block; margin: 3px 0 8px; color: var(--print-primary); font-size: 25px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; }
           .doc-status {
             display: inline-flex;
             padding: 5px 9px;
@@ -428,7 +428,7 @@ export function imprimirPedido() {
             font-weight: 600;
             text-align: center;
           }
-          .print-item strong { display: block; color: #111827; font-size: 13.5px; line-height: 1.25; font-weight: 650; }
+          .print-item strong { display: block; color: #111827; font-size: 13.5px; line-height: 1.25; font-weight: 600; }
           .print-item small { display: block; margin-top: 5px; color: #64748B; font-size: 11px; font-weight: 400; }
           td strong { color: var(--print-primary); font-weight: 600; }
           .print-space-row td {

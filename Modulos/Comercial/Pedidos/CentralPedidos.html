@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="CentralPedidos.css?v=20261018-inter">
+  <link rel="stylesheet" href="CentralPedidos.css?v=20261018-numeros-catalogo">
   <!-- Visualização do pedido = prévia do catálogo (cabeçalho, itens por ambiente, PDF). -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261009-ver-pedido">
@@ -23,7 +23,7 @@
       <p>Consulta e gestao dos pedidos, eventos e contratos comerciais.</p>
     </div>
     <div class="el-page-actions central-actions-left">
-      <!-- Tabelas de Preço fica aqui dentro (pedido do usuário), não no menu. data-module-href: some se a pessoa não tiver permissão (js/core/permissions.js?v=20261018-free). -->
+      <!-- Tabelas de Preço fica aqui dentro (pedido do usuário), não no menu. data-module-href: some se a pessoa não tiver permissão (js/core/permissions.js?v=20261019-painel-logistico). -->
       <button type="button" class="btn btn-secondary" id="btnTabelasPreco" data-module-href="../../Estoque/TabelasPreco/tabelas-preco.html">Tabelas de Preço</button>
       <button type="button" class="btn btn-secondary" id="btnFiltrosPedidos" aria-expanded="false" aria-controls="centralFiltrosPedidos">
         <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
@@ -32,26 +32,26 @@
     </div>
     <div class="el-page-actions central-actions-right">
       <button type="button" class="btn btn-primary" id="btnNovoPedidoCentral">Novo Pedido</button>
-      <input type="search" class="el-input" id="pesquisaGeralPedidos" aria-label="Pesquisar pedidos" placeholder="Pesquisar pedido, cliente...">
+      <input type="search" class="el-input" id="pesquisaGeralPedidos" aria-label="Pesquisar pedidos" placeholder="Pesquisar pedido, cliente..." autocomplete="off" data-lpignore="true" data-1p-ignore="true">
     </div>
   </header>
 
   <section class="central-filters el-card" id="centralFiltrosPedidos" aria-label="Filtros de pedidos" hidden>
     <div class="el-field">
       <label>Cliente</label>
-      <input class="el-input" id="filtroClientePedido" placeholder="Buscar cliente">
+      <input type="search" class="el-input" id="filtroClientePedido" placeholder="Buscar cliente" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
     </div>
     <div class="el-field">
       <label>Pedido</label>
-      <input class="el-input" id="filtroNumeroPedido" placeholder="Numero">
+      <input type="search" class="el-input" id="filtroNumeroPedido" placeholder="Numero" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
     </div>
     <div class="el-field">
       <label>Local</label>
-      <input class="el-input" id="filtroLocalPedido" placeholder="Local do evento">
+      <input type="search" class="el-input" id="filtroLocalPedido" placeholder="Local do evento" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
     </div>
     <div class="el-field">
       <label>Comercial</label>
-      <input class="el-input" id="filtroComercialPedido" placeholder="Responsavel">
+      <input type="search" class="el-input" id="filtroComercialPedido" placeholder="Responsavel" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
     </div>
     <div class="el-field">
       <label>Status</label>
@@ -155,10 +155,11 @@
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="../../../js/core/permissions.js?v=20261018-free"></script>
+<script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/paymentPix.js"></script>
 <script src="../../../js/core/zapiMessaging.js"></script>
-<script src="CentralPedidos.js?v=20261017-abrir-projeto"></script>
+<script src="CentralPedidos.js?v=20261018-numeros-catalogo"></script>
 <script>lucide.createIcons();</script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>
 </html>

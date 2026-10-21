@@ -4,14 +4,24 @@ import { atualizarMontagemSugerida } from "./pedido.montagem.mjs";
 export function initFrete(ctx){
 
   const supabase = ctx.supabase;
+  let revisao = 0;
+  document.getElementById("freteKmManual")?.addEventListener("change", event => {
+    const km = Number(event.target.value);
+    if(!Number.isFinite(km) || km < 0) return;
+    window.kmPedido = km;
+    const label = document.getElementById("freteDistanciaKm");
+    if(label) label.innerText = km + " km";
+    window.calcularFreteInteligente?.();
+  });
 
   window.calcularFreteInteligente = async function(){
 
+    const atual = ++revisao;
     const volumeTotal = Number(window.volumeTotalPedido || 0);
     const distanciaKm = Number(window.kmPedido || 0);
     const empresaId = window.__CONTEXT?.empresa_id;
 
-    if(!empresaId || volumeTotal <= 0 || distanciaKm <= 0){
+    if(!empresaId || volumeTotal <= 0){
       await renderizarFreteCard(null);
       await atualizarMontagemSugerida(empresaId, []);
       return;
@@ -23,6 +33,7 @@ export function initFrete(ctx){
       .eq("empresa_id", empresaId)
       .eq("ativo", true);
 
+    if(atual !== revisao) return;
     if(error || !categorias?.length){
       await renderizarFreteCard(null);
       await atualizarMontagemSugerida(empresaId, []);
@@ -33,7 +44,12 @@ export function initFrete(ctx){
       nome: c.nome,
       cap: Number(c.volume_maximo || 0),
       valorKm: Number(c.valor_km || 0)
-    })).filter(c => c.cap > 0);
+    })).filter(c => c.cap > 0 && Number.isFinite(c.cap) && c.valorKm >= 0);
+    if(!cats.length){
+      await renderizarFreteCard(null);
+      await atualizarMontagemSugerida(empresaId, []);
+      return;
+    }
 
     let melhor = null;
 
@@ -49,10 +65,10 @@ export function initFrete(ctx){
 
     const maxPossivel = Math.min(maxTeorico, LIMITE_MAX_CAMINHOES);
 
-    function rec(usados, somaCap, somaValorKm, contagens){
+    function rec(usados, somaCap, somaValorKm, contagens, inicio = 0){
 
       if(somaCap >= volumeTotal){
-        const custoTotal = somaValorKm * distanciaKm;
+        const custoTotal = somaValorKm * (distanciaKm > 0 ? distanciaKm : 1);
         const excesso = somaCap - volumeTotal;
 
         if(!melhor){
@@ -70,15 +86,17 @@ export function initFrete(ctx){
       }
 
       if(usados >= maxPossivel) return;
+      if(melhor && somaValorKm * (distanciaKm > 0 ? distanciaKm : 1) > melhor.custoTotal) return;
 
-      for(let c of cats){
+      for(let i = inicio; i < cats.length; i++){
+        const c = cats[i];
         contagens[c.nome] = (contagens[c.nome] || 0) + 1;
 
         rec(
           usados + 1,
           somaCap + c.cap,
           somaValorKm + c.valorKm,
-          contagens
+          contagens, i
         );
 
         contagens[c.nome]--;
@@ -107,14 +125,17 @@ export function initFrete(ctx){
     // APLICA ABSORÇÃO FINANCEIRA
     // ==============================
 
-    const valorBrutoFrete = melhor.custoTotal;
+    const valorBrutoFrete = distanciaKm > 0 ? melhor.custoTotal : 0;
 
     const percentFrete = Number(window.__ABS_FRETE_PERCENT || 0);
     const valorAbsorcaoFrete = valorBrutoFrete * (percentFrete / 100);
     const valorFinalFrete = valorBrutoFrete - valorAbsorcaoFrete;
 
     const resumo = { 
-      caminhoes: lista, 
+      caminhoes: lista,
+      distanciaPendente: distanciaKm <= 0,
+      volumeTotal,
+      capacidadeTotal: volumeTotal + melhor.excesso, 
       totalFrete: valorFinalFrete,
       freteBruto: valorBrutoFrete,
       freteAbsorcao: valorAbsorcaoFrete,

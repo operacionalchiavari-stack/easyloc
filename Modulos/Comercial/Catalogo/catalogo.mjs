@@ -1,9 +1,9 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
 import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261015-assistente";
-import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-helena-catalogo2";
+import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-furar-fila";
 import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261006-pastas-livres";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261016-conversa-pedido";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261016-vitrine";
 
 const supabase = window.supabaseClient;
 const modoPedido = new URLSearchParams(location.search).get('comercial') === 'pedido' && window.parent !== window;
@@ -843,7 +843,7 @@ function variantSwatchesBlock(item){
 // como capa da SUA categoria (mesmo campo itens.capa_categoria do
 // Cadastro de Itens), desmarcando quem era capa antes.
 function capaToggleMarkup(item){
-  if(!state.acessoInterno) return "";
+  if(!state.acessoInterno || modoPedido) return "";
   const categoryLabel = getCategories().find((category) => category.cat === item.cat)?.label || item.catLabel;
   const isCapa = Boolean(item.capaCategoria);
   return `<button type="button" class="catalog-capa-toggle ${isCapa ? "is-active" : ""}" data-capa-toggle>
@@ -864,7 +864,7 @@ function eventPanelMarkup(item, index){
     ? `<img class="product-event-image" src="${escapeAttr(otimizarFoto(event.img, IMG_WIDTH.hero, IMG_QUALITY_HERO))}" alt="${escapeAttr(event.label)}" data-event-index="0" data-original-src="${escapeAttr(event.img)}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`
     : `<img class="event-fallback" src="${escapeAttr(FOTO_PLACEHOLDER)}" alt="Sem foto">`;
   const controls = eventControlsMarkup(item);
-  if(!state.acessoInterno) return img + controls;
+  if(!state.acessoInterno || modoPedido) return img + controls;
   const slots = ["galeria_01", "galeria_02", "galeria_03"];
   const picker = `<div class="catalog-event-slot-picker">${slots.map((slot) => {
     const filled = item.events.some((foto) => foto.slot === slot);
@@ -995,15 +995,15 @@ function productTemplate(item, index){
           ${rentalPriceMarkup(item, true)}
           ${projetoAddMarkup(item.id, "page")}
         </div>
-        <div class="product-main-media product-reveal${state.acessoInterno ? " catalog-editable" : ""}" data-active-slot="principal">
+        <div class="product-main-media product-reveal${state.acessoInterno && !modoPedido ? " catalog-editable" : ""}" data-active-slot="principal">
           <img class="product-main-image" src="${escapeAttr(otimizarFoto(item.photo, IMG_WIDTH.hero, IMG_QUALITY_HERO))}" alt="${escapeAttr(item.name)}" data-original-src="${escapeAttr(item.photo)}" data-original-alt="${escapeAttr(item.name)}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
           ${mainCarouselMarkup(item)}
-          ${state.acessoInterno ? `<span class="catalog-inline-edit-badge" data-inline-edit="principal" role="button" tabindex="0" aria-label="Ajustar foto principal">✎</span>` : ""}
+          ${state.acessoInterno && !modoPedido ? `<span class="catalog-inline-edit-badge" data-inline-edit="principal" role="button" tabindex="0" aria-label="Ajustar foto principal">✎</span>` : ""}
         </div>
       </div>
       ${relatedItemsMarkup(item)}
     </div>
-    <aside class="product-event-panel${state.acessoInterno ? " catalog-editable" : ""}">
+    <aside class="product-event-panel${state.acessoInterno && !modoPedido ? " catalog-editable" : ""}">
       ${eventPanelMarkup(item, index)}
     </aside>
   </section>`;
@@ -1813,6 +1813,54 @@ function gridSwatchesMarkup(item){
   }).join("")}</span>`;
 }
 
+
+// Estoque e disponível nos cards (pedido do usuário). Disponível = unidades livres na data do evento do projeto aberto
+// (sem projeto, hoje) — mesma conta da Helena e da tela Disponibilidade de Itens. Uma consulta por data pro acervo todo.
+const estoqueCache = new Map();
+const hojeSP = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+function dataDoEstoque(){
+  const d = String(window.catalogAssistenteProjeto?.retrato?.()?.data_evento || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : hojeSP();
+}
+function estoqueDaData(data){
+  if(!estoqueCache.has(data)){
+    const sessao = state.catalogSession || {};
+    estoqueCache.set(data, supabase.functions.invoke("catalogo-assistente", {
+      body: { action: "disponibilidade", todos: true, data, empresa_id: sessao.empresa_id, catalog_token: sessao.token || undefined },
+    }).then(({ data: r, error }) => { if(error || !r?.mapa) throw error || new Error("sem mapa"); return r.mapa; })
+      .catch(() => { setTimeout(() => estoqueCache.delete(data), 15000); return null; }));
+  }
+  return estoqueCache.get(data);
+}
+function estoqueHtml(d, data){
+  if(!d) return "";
+  const [total, livre] = d;
+  const quando = data === hojeSP() ? "hoje" : "em " + data.slice(8, 10) + "/" + data.slice(5, 7);
+  return `<span class="is-estoque">Estoque <b>${total}</b></span><span class="${livre ? "is-livre" : "is-esgotado"}">${livre ? `Disponível ${quando} <b>${livre}</b>` : `Esgotado ${quando}`}</span>`;
+}
+let estoquePintando = null;
+async function pintarEstoque(raiz = document){
+  if(ehVisitante()) return;
+  const data = dataDoEstoque();
+  const alvos = [...raiz.querySelectorAll("[data-stock-item]")].filter((el) => el.dataset.stockData !== data + ":" + el.dataset.stockItem);
+  if(!alvos.length) return;
+  const mapa = await estoqueDaData(data);
+  if(!mapa) return;
+  for(const el of alvos){
+    el.dataset.stockData = data + ":" + el.dataset.stockItem;
+    const html = estoqueHtml(mapa[el.dataset.stockItem], data);
+    el.hidden = !html;
+    if(el.innerHTML !== html) el.innerHTML = html;
+  }
+}
+function vigiarEstoque(){
+  const agendar = () => { if(estoquePintando) return; estoquePintando = requestAnimationFrame(() => { estoquePintando = null; pintarEstoque(); }); };
+  new MutationObserver((lista) => { if(lista.some((m) => [...m.addedNodes].some((n) => n.nodeType === 1 && (n.matches?.("[data-stock-item]") || n.querySelector?.("[data-stock-item]"))))) agendar(); })
+    .observe(document.body, { childList: true, subtree: true });
+  setInterval(agendar, 3000);
+  agendar();
+}
+
 function selectGridVariant(card, variante){
   card.dataset.gridItem = String(variante.id);
   const img = card.querySelector(".catalog-grid-card-photo > img");
@@ -1823,6 +1871,8 @@ function selectGridVariant(card, variante){
   if(dims && variante.dims) dims.textContent = `Dimensões: ${variante.dims}`;
   const price = card.querySelector(".catalog-rental-price");
   if(price) price.outerHTML = rentalPriceMarkup(variante);
+  const stock = card.querySelector("[data-stock-item]");
+  if(stock){ stock.dataset.stockItem = String(variante.id); pintarEstoque(card); }
   card.querySelectorAll("[data-grid-variant]").forEach((swatch) => {
     const ativa = swatch.dataset.gridVariant === String(variante.id);
     swatch.classList.toggle("active", ativa);
@@ -1845,6 +1895,7 @@ function gridCardMarkup(item, { reordenavel = false } = {}){
           <span class="catalog-grid-card-name">${escapeHtml(item.name)}</span>
           ${item.dims ? `<span class="catalog-grid-card-dims">Dimensões: ${escapeHtml(item.dims)}</span>` : ""}
           ${rentalPriceMarkup(item)}
+          ${ehVisitante() ? "" : `<span class="catalog-grid-card-stock" data-stock-item="${escapeAttr(item.id)}" hidden></span>`}
           ${gridSwatchesMarkup(item)}
         </span>
       </button>`;
@@ -2129,29 +2180,35 @@ function principalDaGrade(id){
   const item = state.items.find((i) => String(i.id) === alvo || i.variantGroup?.some((v) => String(v.id) === alvo));
   return item ? String(item.id) : null;
 }
-function mostrarPelaHelena(ids, { circular = true } = {}){
+// circular: põe o círculo (só na peça que a pessoa escolheu). ondeEstiver: se a peça já está na grade da tela, circula
+// ali mesmo, sem trocar de tela. exato: mostra exatamente essas peças (as opções), com o título dado.
+function mostrarPelaHelena(ids, { circular = false, ondeEstiver = false, exato = false, titulo = "" } = {}){
   const principais = [...new Set((ids || []).map(principalDaGrade).filter(Boolean))];
   if(!principais.length) return false;
   const itens = principais.map((id) => state.items.find((i) => String(i.id) === id));
-  const cats = new Set(itens.map((i) => i.cat));
-  if(cats.size === 1) applyView(itens[0].cat);
-  else{
-    if(state.overlay) setActiveOverlay(null);
-    state.itemReturn = null;
-    state.viewMode = "grid"; updateViewToggleButton();
-    renderProducts(itens, "Seleção da Helena", null);
-    window.scrollTo({ top: 0, behavior: "instant" });
+  const naTela = () => [...document.querySelectorAll("#catalogGrid [data-grid-item]")].filter((c) => principais.includes(principalDaGrade(c.dataset.gridItem)));
+  const jaEsta = ondeEstiver && !state.overlay && !state.itemReturn && !$("catalogGrid")?.hidden && naTela().length === principais.length;
+  if(!jaEsta){
+    const cats = new Set(itens.map((i) => i.cat));
+    if(!exato && cats.size === 1) applyView(itens[0].cat);
+    else{
+      if(state.overlay) setActiveOverlay(null);
+      state.itemReturn = null;
+      state.viewMode = "grid"; updateViewToggleButton();
+      renderProducts(itens, titulo || "Seleção da Helena", null);
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
   }
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    const cards = [...document.querySelectorAll("#catalogGrid [data-grid-item]")].filter((c) => principais.includes(principalDaGrade(c.dataset.gridItem)));
+    const cards = naTela();
     if(!cards.length) return;
     cards[0].scrollIntoView({ behavior: "smooth", block: "center" });
     if(!circular) return;
+    document.querySelectorAll("#catalogGrid .helena-alvo").forEach((c) => { c.classList.remove("helena-alvo"); c.querySelector(".helena-circulo")?.remove(); });
     cards.forEach((card, n) => {
       card.classList.add("helena-alvo");
-      card.querySelector(".helena-circulo")?.remove();
       card.insertAdjacentHTML("beforeend", SVG_CIRCULO);
-      card.querySelector(".helena-circulo").style.animationDelay = `${500 + n * 350}ms`;
+      card.querySelector(".helena-circulo").style.animationDelay = `${400 + n * 350}ms`;
     });
   }));
   return true;
@@ -2989,6 +3046,7 @@ function extensaoItemFoto(mime){
 }
 
 async function trocarFotoPrincipal(item, file){
+  if(modoPedido) throw new Error('Edite o acervo pela area do catalogo.');
   const empresaId = state.catalogSession.empresa_id;
   const mime = normalizarMimeItemFoto(file.type);
   const ext = extensaoItemFoto(mime);
@@ -3009,6 +3067,7 @@ async function trocarFotoPrincipal(item, file){
 }
 
 async function trocarFotoSlot(item, slot, file){
+  if(modoPedido) throw new Error('Edite o acervo pela area do catalogo.');
   const config = ITEM_PHOTO_SLOTS_CONFIG[slot];
   const empresaId = state.catalogSession.empresa_id;
   const mime = normalizarMimeItemFoto(file.type);
@@ -3034,6 +3093,7 @@ async function trocarFotoSlot(item, slot, file){
 }
 
 async function removerFotoSlot(item, slot){
+  if(modoPedido) throw new Error('Edite o acervo pela area do catalogo.');
   const config = ITEM_PHOTO_SLOTS_CONFIG[slot];
   const lista = config.tipo === "detalhe" ? item.details : item.events;
   const existente = lista.find((foto) => foto.slot === slot);
@@ -3049,6 +3109,7 @@ async function removerFotoSlot(item, slot){
 // manual, em item-detalhes.html, não faz essa exclusão sozinho; ver
 // "Não impede" na seção de capa por categoria no CLAUDE.md).
 async function alternarCapaCategoria(item){
+  if(modoPedido) throw new Error('Edite o acervo pela area do catalogo.');
   const empresaId = state.catalogSession.empresa_id;
   const novoValor = !item.capaCategoria;
   if(novoValor){
@@ -3262,7 +3323,7 @@ async function loadCropSourceOrEmptyPicker(existenteUrl, placeholder){
 }
 
 async function startInlineEdit(section, item, slot){
-  if(!state.acessoInterno) return;
+  if(!state.acessoInterno || modoPedido) return;
   if(cropSession) cancelInlineEdit();
   const frame = cropFrameForSlot(section, slot);
   if(!frame) return;
@@ -3308,7 +3369,7 @@ async function startInlineEdit(section, item, slot){
 // `object-fit:cover` — ajustar aqui mostra exatamente o que vai
 // aparecer publicado, mesmo raciocínio "sem popup" de sempre).
 async function startInlineEditForGateway(chave){
-  if(!state.acessoInterno) return;
+  if(!state.acessoInterno || modoPedido) return;
   if(cropSession) cancelInlineEdit();
   const frame = document.querySelector(".catalog-gateway");
   if(!frame) return;
@@ -3961,7 +4022,10 @@ async function init(){
         await window.parent.pedidoSincronizarProjetoCatalogo(project);
       };
       window.abrirProjetoComercialPedido = async () => {
-        await window.sincronizarPedidoCatalogo();openProjetosOverlay({view:'work'});
+        await window.sincronizarPedidoCatalogo();openProjetosOverlay({view:'work',workTab:'geral'});
+      };
+      window.abrirPlantasComercialPedido = async () => {
+        await window.sincronizarPedidoCatalogo();openProjetosOverlay({view:'work',workTab:'plantas'});
       };
       // "← Voltar" da barra do pedido: volta uma tela dentro do catálogo (item → categoria → categorias).
       // Devolve false quando já está nas categorias (ou na lista do projeto), aí o pedido volta uma etapa.
@@ -3992,15 +4056,16 @@ async function init(){
     bindPhotoZoom();
     bindNavHistory();
     startEventRotation();
-    if(!ehVisitante()) initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id, token: state.catalogSession.token });
+    if(!ehVisitante()) initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id, token: state.catalogSession.token, pedidoComercial: modoPedido });
     // Assistente comercial (out/2026): decorador e equipe; visitante não (não tem projeto nem pedido).
+    if(!ehVisitante()) vigiarEstoque();
     if(!ehVisitante()) initCatalogAssistente({
       supabase, getSession: () => state.catalogSession, modoPedido, cenaEditor, notify, temProjetos: true,
       findItem: findItemById, abrirItem: abrirItemPelaAssistente, mostrarNoCatalogo: mostrarPelaHelena,
     });
     initCatalogBiblioteca({
       supabase, empresaId, token: state.catalogSession.token,
-      acessoInterno: state.acessoInterno, visitante: ehVisitante(), categories: getCategories(),
+      acessoInterno: state.acessoInterno, pedidoComercial: modoPedido, visitante: ehVisitante(), categories: getCategories(),
     });
   }catch(error){
     console.error("Erro ao carregar catálogo:", error);

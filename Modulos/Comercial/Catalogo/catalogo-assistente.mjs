@@ -57,6 +57,7 @@ function montar(){
     <div class="cas-corpo">
       <div class="cas-conversa">
         <div class="cas-ligacao" data-cas-ligacao hidden></div>
+        <div class="cas-vitrine" data-cas-vitrine hidden></div>
         <div class="cas-msgs" data-cas-msgs aria-live="polite"><div class="cas-coluna" data-cas-coluna></div></div>
         <form class="cas-form" data-cas-form>
           <div class="cas-anexos-pend" data-cas-pend hidden></div>
@@ -124,13 +125,102 @@ function montar(){
 // ---------------------------------------------------------------------------------------------------------------
 // Mostrar no catálogo (pedido do usuário): em vez de só cartões na conversa, a Helena leva a pessoa até as peças no
 // próprio catálogo — a conversa vira uma barra pequena no canto (com a legenda dela e, na ligação, os botões da
-// ligação), o catálogo abre a categoria (ou a "Seleção da Helena") e as peças que ela indicou ganham um círculo.
-// Até 3 peças = indicação (circula); mais que isso = opções pra escolher (só mostra). Os cartões continuam na conversa
-// por escrito, como registro.
-function irAoCatalogo(ids){
-  if(!ctx.mostrarNoCatalogo || !ids?.length) return;
-  mostrarMini(true);
-  ctx.mostrarNoCatalogo(ids, { circular: ids.length <= 3 });
+// ligação) e o catálogo abre nas peças. Ela não indica por conta própria (pedido do usuário): "opções" = tudo o que está
+// disponível de um tipo, sem destaque; o círculo vai só na peça que a PESSOA escolheu (ou que entrou no pedido), pra
+// conferir que é a certa.
+function irAoCatalogo(ids, opcoes = {}){
+  if(!ids?.length) return;
+  abrirVitrine(ids, { titulo: opcoes.titulo || "" });
+}
+function circularEscolha(ids){
+  if(!ids?.length) return;
+  marcarEscolha(ids);
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Vitrine (pedido do usuário: "o pedido deve ficar visível o tempo inteiro... aquele catálogo deve aparecer aqui,
+// ocupando todo esse espaço"): em vez de levar a pessoa pro catálogo, as peças aparecem DENTRO do painel da Helena,
+// cobrindo a área da conversa/ligação; o pedido continua à direita. Por cima, uma faixa com a fala atual dela e os
+// botões da ligação. A peça escolhida ganha uma moldura dourada e o selo "Sua escolha" (no lugar do círculo à mão).
+const dinheiroVit = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const chaveVit = (i) => `${i?.name || ""}|${i?.dims || ""}`;
+function vitrine(){ return $("catalogAssistente")?.querySelector("[data-cas-vitrine]"); }
+function abrirVitrine(ids, { titulo = "" } = {}){
+  const el = vitrine();
+  if(!el) return;
+  if(!S.aberto) alternar(true, { semFoco: true });
+  const grupos = new Map();
+  for(const id of ids){
+    const item = ctx.findItem?.(id);
+    if(!item) continue;
+    const k = chaveVit(item);
+    const g = grupos.get(k);
+    if(g){ if(item.cor && !g.cores.includes(item.cor)) g.cores.push(item.cor); continue; }
+    grupos.set(k, { item, cores: item.cor ? [item.cor] : [] });
+  }
+  if(!grupos.size) return;
+  const lista = [...grupos.values()];
+  const nome = titulo || (lista.length === 1 ? "Peça" : "Seleção da " + S.nome);
+  el.innerHTML = `
+    <header class="cas-vit-topo">
+      <span class="cas-avatar" aria-hidden="true">${esc(S.nome[0])}</span>
+      <div class="cas-vit-fala"><small>${esc(S.nome)}</small><p data-vit-fala></p></div>
+      <div class="cas-vit-acoes" data-vit-acoes></div>
+      <button type="button" class="cas-vit-voltar" data-vit-fechar>${lig ? "Voltar à ligação" : "Voltar à conversa"}</button>
+    </header>
+    <div class="cas-vit-titulo"><h3>${esc(nome)}</h3><span>${lista.length} ${lista.length === 1 ? "peça" : "peças"}</span></div>
+    <div class="cas-vit-grade">${lista.map(({ item, cores }, n) => `
+      <article class="cas-vit-card" data-vit-chave="${esc(chaveVit(item))}" style="--i:${Math.min(n, 12)}">
+        <span class="cas-vit-selo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></svg>Sua escolha</span>
+        <button type="button" class="cas-vit-foto" data-vit-zoom="${esc(item.photo || "")}" aria-label="Ver a foto de ${esc(item.name)}"><img src="${esc(miniatura(item.photo, 480))}" alt="" loading="lazy"></button>
+        <div class="cas-vit-info">
+          <strong>${esc(item.name)}</strong>
+          ${item.dims ? `<small>${esc(item.dims)}</small>` : ""}
+          ${cores.length > 1 ? `<small class="cas-vit-cores">${cores.length} cores · ${esc(cores.slice(0, 3).join(", "))}${cores.length > 3 ? "…" : ""}</small>` : item.cor ? `<small class="cas-vit-cores">${esc(item.cor)}</small>` : ""}
+          ${Number.isFinite(item.rentalPrice) ? `<b class="cas-vit-preco">${dinheiroVit.format(item.rentalPrice)}</b>` : ""}
+          <span class="cas-vit-stock" data-stock-item="${esc(item.id)}" hidden></span>
+        </div>
+        ${ctx.temProjetos ? `<button type="button" class="cas-vit-add" data-projeto-add="${esc(item.id)}">＋ Adicionar ao pedido</button>` : ""}
+      </article>`).join("")}</div>`;
+  el.hidden = false;
+  el.scrollTop = 0;
+  pintarVitrineAcoes();
+  const ultima = lig ? (lig.falas.filter((f) => f.papel === "assistant").at(-1)?.texto || "") : ([...S.mensagens].reverse().find((m) => m.papel === "assistant" && m.conteudo)?.conteudo || "");
+  miniTexto(ultima, !lig);
+}
+function marcarEscolha(ids){
+  const el = vitrine();
+  const chaves = ids.map((id) => chaveVit(ctx.findItem?.(id))).filter((k) => k !== "|");
+  const achar = () => el && !el.hidden ? chaves.filter((k) => el.querySelector(`[data-vit-chave="${CSS.escape(k)}"]`)) : [];
+  let presentes = achar();
+  if(!presentes.length){ abrirVitrine(ids, { titulo: "Sua escolha" }); presentes = achar(); if(!presentes.length) return; }
+  el.querySelectorAll(".cas-vit-card.is-escolhida").forEach((c) => c.classList.remove("is-escolhida"));
+  presentes.forEach((k, n) => {
+    const card = el.querySelector(`[data-vit-chave="${CSS.escape(k)}"]`);
+    card.classList.remove("is-escolhida"); void card.offsetWidth; card.classList.add("is-escolhida");
+    if(!n) card.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+}
+function fecharVitrine(){ const el = vitrine(); if(el){ el.hidden = true; el.innerHTML = ""; } }
+function pintarVitrineAcoes(){
+  const el = vitrine();
+  const box = el && !el.hidden ? el.querySelector("[data-vit-acoes]") : null;
+  if(!box) return;
+  el.classList.toggle("em-ligacao", Boolean(lig));
+  el.classList.toggle("falando", Boolean(lig?.elaFalando));
+  box.innerHTML = lig ? `
+    ${lig.elaFalando ? `<button type="button" class="cas-mini-btn" data-mini-interromper aria-label="Interromper"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>` : ""}
+    <button type="button" class="cas-mini-btn${lig.mudo ? " ativo" : ""}" data-mini-mudo aria-label="${lig.mudo ? "Desligar o mudo" : "Mudo"}" aria-pressed="${lig.mudo ? "true" : "false"}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <button type="button" class="cas-mini-btn is-desligar" data-mini-desligar aria-label="Desligar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15.5c5-4.7 13-4.7 18 0l-2.4 2.6-3.4-1.3v-2.6a10 10 0 0 0-6.4 0v2.6l-3.4 1.3z"/></svg></button>` : "";
+  const voltar = el.querySelector("[data-vit-fechar]");
+  if(voltar) voltar.textContent = lig ? "Voltar à ligação" : "Voltar à conversa";
+}
+// Resultado de uma resposta (escrita ou da ligação): opções → itens citados → círculo na escolha.
+function mostrarResultado({ opcoes, itens, circular }){
+  let espera = 0;
+  if(opcoes?.ids?.length){ irAoCatalogo(opcoes.ids, { titulo: opcoes.titulo, exato: true }); espera = 700; }
+  else if(itens?.length && !circular?.length){ irAoCatalogo(itens); espera = 700; }
+  if(circular?.length) setTimeout(() => circularEscolha(circular), espera);
 }
 function mini(){
   let el = $("catalogAssistenteMini");
@@ -166,14 +256,17 @@ function mostrarMini(ver){
 }
 // Por escrito mostra o começo da mensagem (onde está a indicação); na ligação, a fala mais recente.
 function miniTexto(t, doComeco = false){
+  const vit = vitrine()?.querySelector("[data-vit-fala]");
   const el = $("catalogAssistenteMini")?.querySelector("[data-mini-texto]");
-  if(!el) return;
+  if(!el && !vit) return;
   const frases = String(t || "").replace(/[*_#>]/g, "").match(/[^.!?]+[.!?]*\s*/g) || [];
   let fim = (doComeco ? frases.slice(0, 2) : frases.slice(-2)).join("").trim();
   if(fim.length > 180) fim = doComeco ? fim.slice(0, 180).replace(/\s\S*$/, "") + "…" : "…" + fim.slice(-180).replace(/^\S*\s/, "");
-  el.textContent = fim;
+  if(el) el.textContent = fim;
+  if(vit) vit.textContent = fim;
 }
 function pintarMini(){
+  pintarVitrineAcoes();
   const el = $("catalogAssistenteMini");
   if(!el || el.hidden) return;
   el.classList.toggle("em-ligacao", Boolean(lig));
@@ -346,6 +439,7 @@ function mensagemHtml(m){
       return `<figure class="cas-arquivo"><button type="button" class="cas-foto-ver" data-cas-zoom="${esc(a.url)}" aria-label="Ver o arquivo"><img src="${esc(a.url?.startsWith("blob:") ? a.url : miniatura(a.url, 520))}" alt="${esc(a.nome || "Arquivo")}" loading="lazy"></button>${a.enviando ? `<small>enviando…</small>` : apagar}</figure>`;
     }
     if(a.tipo === "itens") return `<div class="cas-itens">${a.itens.map(itemHtml).join("")}</div>`;
+    if(a.tipo === "opcoes") return `<button type="button" class="cas-opcoes" data-cas-opcoes="${esc((a.ids || []).join(","))}" data-titulo="${esc(a.titulo || "Opções")}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span><b>${esc(a.titulo || "Opções")}</b><small>${a.total || (a.ids || []).length} peças disponíveis · ver no catálogo</small></span></button>`;
     if(a.tipo === "locais") return `<div class="cas-locais">${(a.locais || []).map(localHtml).join("")}</div>`;
     if(a.tipo === "imagem") return `<figure class="cas-foto"><button type="button" class="cas-foto-ver" data-cas-zoom="${esc(a.url)}" aria-label="Ver a composição em tela cheia"><img src="${esc(miniatura(a.url, 720))}" alt="Composição: ${esc((a.itens || []).join(", "))}" loading="lazy"></button>
       <figcaption>${a.itens?.length ? `<small>${esc(a.itens.join(" · "))}</small>` : ""}<span><button type="button" class="cas-link" data-cas-salvar-img="${esc(a.url)}" data-cena="${esc(a.cena_url || "")}">Adicionar ao projeto</button><a class="cas-link" href="${esc(a.url)}" download target="_blank" rel="noopener">Baixar</a>${m.id ? `<button type="button" class="cas-link cas-link-apagar" data-cas-apagar-img="${esc(m.id)}">Apagar</button>` : ""}</span></figcaption></figure>`;
@@ -388,6 +482,12 @@ async function aoClicar(event){
     }else enviar(texto);
     return;
   }
+  if(event.target.closest("[data-vit-fechar]")){ fecharVitrine(); return; }
+  const zoomVit = event.target.closest("[data-vit-zoom]");
+  if(zoomVit){ if(zoomVit.dataset.vitZoom) window.catalogOpenPhotoZoom?.(zoomVit.dataset.vitZoom, zoomVit.getAttribute("aria-label") || "", zoomVit.querySelector("img")?.currentSrc); return; }
+  if(event.target.closest("[data-mini-interromper]")){ interromperHelena(); return; }
+  if(event.target.closest("[data-mini-mudo]")){ $("catalogAssistente")?.querySelector("[data-lig-mudo]")?.click(); pintarVitrineAcoes(); return; }
+  if(event.target.closest("[data-mini-desligar]")){ encerrarLigacao(); return; }
   const sugestao = event.target.closest("[data-cas-sugestao]");
   if(sugestao){ enviar(sugestao.textContent.trim()); return; }
   if(event.target.closest("[data-cas-pedido-fechar]")){ alternarPedido(false); return; }
@@ -395,6 +495,8 @@ async function aoClicar(event){
   if(event.target.closest("[data-cas-recarregar]")){ carregarHistorico(); return; }
   const abrir = event.target.closest("[data-cas-abrir]");
   if(abrir){ alternar(false); ctx.abrirItem?.(abrir.dataset.casAbrir); return; }
+  const opc = event.target.closest("[data-cas-opcoes]");
+  if(opc){ irAoCatalogo(opc.dataset.casOpcoes.split(",").filter(Boolean), { titulo: opc.dataset.titulo, exato: true }); return; }
   const zoom = event.target.closest("[data-cas-zoom]");
   if(zoom){ window.catalogOpenPhotoZoom?.(zoom.dataset.casZoom, "Composição", zoom.querySelector("img")?.currentSrc); return; }
   const apagar = event.target.closest("[data-cas-apagar-img]");
@@ -462,9 +564,10 @@ async function enviar(valor, { porAudio = false, arquivos = [] } = {}){
     S.enviando = false; pintar(); statusTopo();
     await aplicarAcoes(data?.acoes || []);
     pintarLado();
-    const mostrados = (data?.mensagem?.anexos || []).find((x) => x.tipo === "itens")?.itens?.map((i) => i.id) || [];
-    if(mostrados.length) irAoCatalogo(mostrados);
-    else if(!$("catalogAssistenteMini")?.hidden) miniTexto(data?.mensagem?.conteudo || "", true);
+    const anexos = data?.mensagem?.anexos || [];
+    const res = { opcoes: anexos.find((x) => x.tipo === "opcoes"), itens: anexos.find((x) => x.tipo === "itens")?.itens?.map((i) => i.id) || [], circular: anexos.find((x) => x.tipo === "escolha")?.ids || [] };
+    if(res.opcoes || res.itens.length || res.circular.length) mostrarResultado(res);
+    if(!$("catalogAssistenteMini")?.hidden) miniTexto(data?.mensagem?.conteudo || "", true);
   }catch(error){
     S.enviando = false; statusTopo();
     local.anexos = (local.anexos || []).map((x) => ({ ...x, enviando: false }));
@@ -530,6 +633,11 @@ async function aplicarAcoes(acoes){
           status: "done", duration: 4200, actionLabel: "Desfazer", onAction: r.desfazer });
       }
       else if(acao.tipo === "enviar_pedido") projeto?.enviarPedido();
+      else if(acao.tipo === "ver_pedido"){
+        // Versão final do pedido: a conversa encolhe pra barra pequena e a prévia abre por cima do catálogo.
+        if(acao.abrir){ mostrarMini(true); if(!(await projeto?.verPedido?.(true))) ctx.notify({ title: "Nenhum pedido aberto", message: "Escolha ou crie um pedido primeiro.", status: "error" }); }
+        else await projeto?.verPedido?.(false);
+      }
       else if(acao.tipo === "renderizar") enfileirarRender(acao);
       else if(acao.tipo === "apagar_imagem"){ S.mensagens = S.mensagens.filter((m) => m.id !== acao.mensagem_id); pintar(); }
     }catch(error){
@@ -791,6 +899,7 @@ async function iniciarLigacao(){
     if(lig !== atual){ stream.getTracks().forEach((t) => t.stop()); return; }
     lig.stream = stream;
     lig.elaFalando = true; atualizarMicrofone(); // começa fechado: o primeiro som é o cumprimento dela
+    iniciarDetectorDeFala(stream);
     const data = await chamar("ligacao_iniciar", { projeto: window.catalogAssistenteProjeto?.retrato() || null, modo: ctx.modoPedido ? "pedido" : "catalogo" });
     if(lig !== atual) return;
     const pc = new RTCPeerConnection();
@@ -821,7 +930,7 @@ async function iniciarLigacao(){
       };
       esperar();
       // Garantia: se o cumprimento não chegar, o microfone abre mesmo assim.
-      lig.timerMic = setTimeout(() => { if(lig === atual && !lig.falouAlgo){ lig.elaFalando = false; atualizarMicrofone(); } }, 12000);
+      lig.timerMic = setTimeout(() => { if(lig === atual && !lig.falouAlgo){ lig.atendeu = true; lig.elaFalando = false; atualizarMicrofone(); } }, 12000);
     });
     dc.addEventListener("message", (event) => { try{ aoEventoLigacao(JSON.parse(event.data)); }catch(error){ console.warn("ligação:", error); } });
     pc.addEventListener("connectionstatechange", () => {
@@ -840,9 +949,11 @@ async function iniciarLigacao(){
   }
 }
 
-// Eco: a voz dela sai pela caixa de som e volta pelo microfone. Não dá pra separar esse eco da voz da pessoa enquanto
-// ela fala, então o microfone fecha durante a fala dela (e já começa fechado, até ela terminar o cumprimento) e abre de
-// novo logo que ela termina. Pra cortar a fala dela, o botão "Interromper".
+// Eco: a voz dela sai pela caixa de som e volta pelo microfone, e o servidor achava que era a pessoa falando (ela
+// "respondia a si mesma"). Por isso o microfone que vai pro servidor fica FECHADO enquanto ela fala. Pra dar pra
+// interromper falando (pedido do usuário), o navegador escuta uma CÓPIA do microfone (só o microfone, nunca o áudio dela,
+// que dava chiado) e compara com o nível do eco dela: som bem mais alto que o eco por ~0,3 s = a pessoa falando de
+// verdade → corta a fala dela e abre o microfone. Botão "Interromper" continua como reserva.
 function atualizarMicrofone(){
   if(!lig?.stream) return;
   const aberto = !lig.mudo && !lig.elaFalando;
@@ -856,7 +967,7 @@ function elaFalando(sim){
   clearTimeout(lig.timerMic);
   if(sim){ lig.elaFalando = true; atualizarMicrofone(); return; }
   // Uma folga curta: o fim do áudio ainda está saindo da caixa quando o aviso chega.
-  lig.timerMic = setTimeout(() => { if(lig){ lig.elaFalando = false; atualizarMicrofone(); } }, 450);
+  lig.timerMic = setTimeout(() => { if(lig){ if(lig.falouAlgo) lig.atendeu = true; lig.elaFalando = false; atualizarMicrofone(); } }, 450);
 }
 function rampaDeVolume(){
   const audio = $("catalogAssistente")?.querySelector("[data-lig-audio]");
@@ -868,6 +979,56 @@ function rampaDeVolume(){
     requestAnimationFrame(passo);
   }catch{}
 }
+// ---------------------------------------------------------------------------------------------------------------
+// Detector de "furar a fila": mede o volume (RMS) de uma cópia do microfone a cada 50 ms. Enquanto ela fala, aprende o
+// nível do eco (média móvel lenta dos primeiros instantes e dos trechos baixos) e dispara quando o som passa de
+// ~3x esse nível (e de um piso fixo) por 6 leituras seguidas. Ajustes pra calibrar com a voz de verdade: DETECTOR.
+const DETECTOR = { intervalo: 50, aprender: 400, fator: 3, piso: 0.03, seguidas: 6 };
+function iniciarDetectorDeFala(stream){
+  try{
+    const faixa = stream.getAudioTracks()[0]?.clone();
+    if(!faixa) return;
+    faixa.enabled = true; // a cópia herda o "fechado" do original (o microfone começa fechado no cumprimento)
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new Ctx();
+    audioCtx.resume?.().catch(() => {});
+    const fonte = audioCtx.createMediaStreamSource(new MediaStream([faixa]));
+    const analisador = audioCtx.createAnalyser();
+    analisador.fftSize = 1024;
+    fonte.connect(analisador);
+    const buf = new Float32Array(analisador.fftSize);
+    const det = { faixa, audioCtx, eco: 0, inicioFala: 0, acima: 0 };
+    det.timer = setInterval(() => {
+      if(!lig || lig.detector !== det) return;
+      if(audioCtx.state === "suspended") audioCtx.resume?.().catch(() => {});
+      analisador.getFloatTimeDomainData(buf);
+      let soma = 0; for(let i = 0; i < buf.length; i++) soma += buf[i] * buf[i];
+      const rms = Math.sqrt(soma / buf.length);
+      if(window.__casDebug) window.__casDebug.push([Math.round(performance.now()), +rms.toFixed(4), +det.eco.toFixed(4), lig.elaFalando ? 1 : 0]); // depuração: definir window.__casDebug = [] no console pra calibrar
+      if(!lig.elaFalando || lig.mudo){ det.inicioFala = 0; det.acima = 0; return; }
+      const agora = performance.now();
+      if(!det.inicioFala){ det.inicioFala = agora; det.eco = rms; return; }
+      const limite = Math.max(DETECTOR.piso, det.eco * DETECTOR.fator);
+      if(agora - det.inicioFala < DETECTOR.aprender){ det.eco = Math.max(det.eco * 0.7 + rms * 0.3, rms * 0.6); return; }
+      if(rms > limite){
+        if(++det.acima >= DETECTOR.seguidas){ det.acima = 0; det.inicioFala = 0; interromperHelena(); }
+      }else{
+        det.acima = 0;
+        det.eco = det.eco * 0.95 + rms * 0.05; // o eco acompanha a voz dela, que sobe e desce
+      }
+    }, DETECTOR.intervalo);
+    lig.detector = det;
+  }catch(error){ console.warn("detector de fala:", error); }
+}
+function pararDetectorDeFala(alvo){
+  const det = alvo?.detector;
+  if(!det) return;
+  clearInterval(det.timer);
+  try{ det.faixa.stop(); }catch{}
+  try{ det.audioCtx.close(); }catch{}
+  alvo.detector = null;
+}
+
 function interromperHelena(){
   if(!lig) return;
   enviarEvento({ type: "response.cancel" });
@@ -957,7 +1118,7 @@ async function executarFerramentas(chamadas){
       await aplicarAcoes(data?.acoes || []);
       pintarLado();
       ligItens(data?.itens);
-      if(data?.itens?.length) irAoCatalogo(data.itens.map((i) => i.id));
+      mostrarResultado({ opcoes: data?.opcoes, itens: (data?.itens || []).map((i) => i.id), circular: data?.circular || [] });
       ligItens((data?.locais || []).map((l) => ({ ...l, id: "local:" + l.ref, tipo: "local" })));
     }catch(error){ saida = JSON.stringify({ erro: error.message || "Falha na ferramenta" }); }
     if(lig !== atual) return;
@@ -989,6 +1150,7 @@ async function encerrarLigacao(motivo = ""){
   clearInterval(atual.relogio);
   try{ atual.dc?.close(); }catch{}
   try{ atual.pc?.getSenders().forEach((s) => s.track?.stop()); atual.pc?.close(); }catch{}
+  pararDetectorDeFala(atual);
   atual.stream?.getTracks().forEach((t) => t.stop());
   const painel = $("catalogAssistente");
   const audio = painel.querySelector("[data-lig-audio]"); if(audio) audio.srcObject = null;

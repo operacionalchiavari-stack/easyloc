@@ -1,3 +1,4 @@
+import { colorirValor } from "./pedido.valores-ui.mjs";
 ﻿export function renderMontagemSugerida(payload){
 
   const qtdEl        = document.getElementById("montagemQtd");
@@ -15,11 +16,17 @@
   // CASO SEM DADOS
   // ==============================
   if(!payload || payload.qtd == null){
+    window.__RESUMO_MONTAGEM = 0;
+    window.__MONTAGEM_BRUTA = 0;
+    window.__MONTAGEM_DESCONTO = 0;
+    window.__MONTAGEM_FINAL = 0;
     qtdEl.innerText        = "â€”";
     custoEl.innerText      = "â€”";
-    infoEl.innerText       = "â€”";
+    infoEl.innerText       = payload?.info || "Montagem aguardando cálculo.";
     descontoEl.innerText   = "- R$ 0,00";
-    descontoEl.style.color = "#16a34a";
+    colorirValor(descontoEl,0);
+    colorirValor(custoEl,0);
+    colorirValor(valorFinalEl,0);
     valorFinalEl.innerText = "R$ 0,00";
     if(typeof window.__ATUALIZAR_FRETE_CARD === "function"){
       window.__ATUALIZAR_FRETE_CARD();
@@ -55,7 +62,8 @@
     currency: "BRL"
   })} (${percent}%)`;
 
-  descontoEl.style.color = "#16a34a";
+  colorirValor(descontoEl,-absorcao);
+  colorirValor(custoEl,bruto);
   descontoEl.style.fontWeight = "600";
 
 valorFinalEl.innerText = final.toLocaleString("pt-BR",{
@@ -65,7 +73,7 @@ valorFinalEl.innerText = final.toLocaleString("pt-BR",{
 
 valorFinalEl.style.fontSize = "15px";
 valorFinalEl.style.fontWeight = "700";
-valorFinalEl.style.color = "#2E1F1F";
+colorirValor(valorFinalEl,final);
 
 if(typeof window.__ATUALIZAR_FRETE_CARD === "function"){
   window.__ATUALIZAR_FRETE_CARD();

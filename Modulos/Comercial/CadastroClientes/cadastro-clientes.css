@@ -332,8 +332,8 @@ textarea {
   flex: 1;
   margin: 0;
   font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 600;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* TAGS CLIENTE */
@@ -368,7 +368,7 @@ textarea {
 
 .tag-title {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 6px;
   display: block;
 }
@@ -390,8 +390,8 @@ textarea {
 
 /* CORES */
 .azul .tag {
-  background: #e0ecff;
-  color: #1e3a8a;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 .verde .tag {
   background: #dcfce7;
@@ -484,7 +484,7 @@ tbody td {
 .modal-content label {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   margin-bottom: 4px;
 }
 
@@ -499,7 +499,7 @@ tbody td {
   background: #ffffff;
   font-size: 14px;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   transition: all 0.2s ease;
   outline: none;
 }
@@ -507,7 +507,7 @@ tbody td {
 /* PLACEHOLDER */
 .modal-content input::placeholder,
 .modal-content textarea::placeholder {
-  color: #9ca3af;
+  color: var(--el-color-text,#1f2020);
   font-weight: 400;
 }
 
@@ -526,7 +526,7 @@ tbody td {
 .modal-content textarea[readonly] {
   background: #f8fafc;
   border-color: #e5e7eb;
-  color: #6b7280;
+  color: var(--el-color-text,#1f2020);
   cursor: not-allowed;
 }
 
@@ -590,8 +590,8 @@ tbody td {
 
 /* CORES POR TIPO */
 .tag-estilo {
-  background: #e8f0ff;
-  color: #1d4ed8;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 
 .tag-canal {
@@ -644,7 +644,7 @@ tbody tr {
 td {
   padding: 16px 18px;
   font-size: 14px;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   vertical-align: middle;
   border: none;
 }
@@ -656,7 +656,7 @@ td:first-child {
 
 /* HOVER */
 tbody tr:hover {
-  background-color: #eef4ff;
+  background-color: var(--el-color-surface-soft,#f6f7f9);
   cursor: pointer;
 }
 
@@ -683,7 +683,7 @@ tbody tr {
 td {
   padding: 16px 18px;
   font-size: 14px;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   vertical-align: middle;
   border: none;
 }
@@ -691,12 +691,12 @@ td {
 /* NOME DO CLIENTE (SEM NEGRITO) */
 td:first-child {
   font-weight: 500;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* HOVER */
 tbody tr:hover {
-  background-color: #eef4ff;
+  background-color: var(--el-color-surface-soft,#f6f7f9);
   cursor: pointer;
 }
 
@@ -758,7 +758,7 @@ tbody tr:hover {
    HEADER
 ========================= */
 .modal-ajuda-header {
-  background: linear-gradient(90deg, var(--azul), #1f1515);
+  background: linear-gradient(90deg, var(--el-color-surface-soft,#f6f7f9), #1f1515);
   color: #fff;
   padding: 16px 22px;
   display: flex;
@@ -781,7 +781,7 @@ tbody tr:hover {
 .modal-ajuda-header h3 {
   margin: 0;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* botÃ£o fechar */
@@ -824,7 +824,7 @@ tbody tr:hover {
   margin-bottom: 10px;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   border-left: 4px solid transparent;
   transition: all 0.2s ease;
 }
@@ -838,8 +838,8 @@ tbody tr:hover {
 .ajuda-video-item.active {
   background: #fff4e6;
   border-left-color: var(--laranja);
-  font-weight: 700;
-  color: var(--azul);
+  font-weight: 600;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* =========================
@@ -1006,13 +1006,12 @@ tbody tr:hover {
   display:grid;
   place-items:center;
   border-radius:999px;
-  background:#1F2937;
-  color:#fff;
+  background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);
   box-shadow:0 1px 3px rgba(0,0,0,.25);
   pointer-events:none;
 }
 .cliente-foto-edit svg{width:16px;height:16px}
-#catalogoSenhaStatus{display:block;margin-top:6px;color:#6b7280;font-size:12px}
+#catalogoSenhaStatus{display:block;margin-top:6px;color:var(--el-color-text,#1f2020);font-size:12px}
 #catalogoSenhaStatus.is-configured{color:#15803d;font-weight:600}
 
 @media(max-width:760px){

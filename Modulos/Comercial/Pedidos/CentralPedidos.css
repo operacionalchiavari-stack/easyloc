@@ -127,21 +127,21 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 .central-list-header span {
   color: var(--el-color-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
 .central-list-header strong {
   display: block;
   margin-top: 4px;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 18px;
 }
 
 #centralStatusCarregamento {
   color: var(--el-color-muted);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .central-table-wrap {
@@ -160,7 +160,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   background: var(--el-table-header-bg);
   color: var(--el-table-header-color);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-align: left;
   text-transform: uppercase;
 }
@@ -207,7 +207,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   background: rgba(220, 38, 38, 0.10);
   color: #b91c1c;
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 600;
   letter-spacing: .02em;
 }
 
@@ -217,10 +217,10 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   min-height: 28px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: var(--el-color-primary-soft);
-  color: var(--el-color-primary);
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .status-pill.aprovado,
@@ -242,8 +242,8 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 }
 
 .status-pill.orcamento {
-  background: rgba(37, 99, 235, 0.12);
-  color: #1d4ed8;
+  background: rgba(31,32,32,0.12);
+  color: var(--el-color-text,#1f2020);
 }
 
 .central-actions {
@@ -262,7 +262,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   border: 1px solid var(--el-color-border);
   border-radius: 9px;
   background: var(--el-color-surface);
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   cursor: pointer;
   padding: 0;
   transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
@@ -275,7 +275,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 
 .central-icon-action:hover {
   transform: translateY(-1px);
-  border-color: rgba(15, 42, 68, .22);
+  border-color: rgba(var(--el-color-border,#e3e7ec),0.22);
   background: #f8fafc;
 }
 
@@ -303,7 +303,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 
 .central-contact-cell {
   color: var(--el-color-muted);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .central-value-cell {
@@ -386,7 +386,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(15, 23, 42, 0.46);
+  background: rgba(31,32,32,0.46);
   backdrop-filter: blur(4px);
 }
 
@@ -401,7 +401,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(15, 23, 42, 0.46);
+  background: rgba(31,32,32,0.46);
   backdrop-filter: blur(4px);
 }
 
@@ -418,7 +418,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   border: 1px solid var(--el-color-border);
   border-radius: 18px;
   background: #ffffff;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+  box-shadow: 0 24px 70px rgba(31,32,32,0.24);
 }
 
 .central-cadastro-head {
@@ -567,7 +567,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   border-radius: 18px;
   background: #ffffff;
   border: 1px solid var(--el-color-border);
-  box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+  box-shadow: 0 24px 70px rgba(31,32,32,0.24);
 }
 
 .central-whatsapp-head {
@@ -583,14 +583,14 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   display: block;
   color: #16a34a;
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
 .central-whatsapp-head strong {
   display: block;
   margin-top: 3px;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 20px;
 }
 
@@ -606,7 +606,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   gap: 7px;
   color: var(--el-color-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -682,7 +682,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   background: #dcfce7;
   color: #166534;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 @media (max-width: 1200px) {
@@ -695,12 +695,11 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   }
 }
 
-/* Projetos montados pelo decorador no catálogo (out/2026) — selo no lugar do número do pedido. */
-.pedido-selo-catalogo{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #c9d7ee;border-radius:999px;background:#eaf0fa;color:#1f2020;font-size:12px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
-.pedido-selo-catalogo::before{content:"";width:6px;height:6px;border-radius:50%;background:#b18a5a}
+/* A origem muda a cor do card, mantendo o n?mero em destaque. */
+.pedido-numero-card.pedido-numero-catalogo{border-color:#e5c35b;background:#fff3c4;color:#805b00}
 .status-pill.catalogo_rascunho{background:#eef1f4;color:#4f4f4f}
 .status-pill.catalogo_pedido_enviado{background:#fbf4de;color:#7a5b12}
-.status-pill.catalogo_em_analise{background:#e8f0fb;color:#1e3a8a}
+.status-pill.catalogo_em_analise{background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020)}
 .status-pill.catalogo_convertido{background:#dcfce7;color:#166534}
 
 /* Decorador com o projeto aberto no catálogo agora (projetos_presenca). */

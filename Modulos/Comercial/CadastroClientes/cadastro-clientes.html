@@ -37,7 +37,7 @@
   </div>
 
 <div class="header-actions">
-    <!-- Créditos de IA fica aqui dentro (pedido do usuário), não no menu. Some sem permissão (data-module-href, js/core/permissions.js?v=20261018-free). -->
+    <!-- Créditos de IA fica aqui dentro (pedido do usuário), não no menu. Some sem permissão (data-module-href, js/core/permissions.js?v=20261019-painel-logistico). -->
     <button class="btn secondary" type="button" id="btnCreditosIA" data-module-href="../CreditosIA/creditos-ia.html" onclick="abrirCreditosIA()">Créditos de IA</button>
     <button class="add-btn btn primary" type="button" onclick="clientes_openAdd()">+ Adicionar Cliente</button>
   </div>
@@ -45,12 +45,11 @@
 
 
 <div class="filters">
-  <input
+  <input type="search"
     class="el-input"
     id="searchInput"
     placeholder="Pesquisar cliente..."
-    oninput="aplicarFiltros()"
-  >
+    oninput="aplicarFiltros()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
 
   <select class="el-select" id="statusFilter" onchange="aplicarFiltros()">
     <option value="">Todos os status</option>
@@ -308,7 +307,7 @@
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/listPager.js"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="../../../js/core/permissions.js?v=20261018-free"></script>
+<script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="cadastro-clientes.js?v=20260913d"></script>
@@ -320,5 +319,6 @@
   }
 </script>
 <script>lucide.createIcons();</script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>
 </html>

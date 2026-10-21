@@ -1,6 +1,23 @@
 .contratos-page {
+  /* Exceção intencional: o editor de modelos mantém sua identidade azul. */
+  --el-button-primary-bg: #1d4ed8;
+  --el-button-primary-rgb: 29, 78, 216;
+  --el-button-primary-hover: #1e40af;
+  --el-button-primary-active: #1e3a8a;
+  --el-button-primary-soft: #eff6ff;
+  --el-color-accent: #1d4ed8;
+  --el-color-accent-strong: #1e40af;
+  --el-color-accent-active: #1e3a8a;
+  --el-color-accent-soft: #eff6ff;
+  --el-color-primary: #1d4ed8;
+  --el-color-primary-strong: #1e40af;
+  --el-color-primary-dark: #1e40af;
+  --el-color-primary-soft: #eff6ff;
+  --el-color-on-accent: #fff;
+  --el-focus-color: #1d4ed8;
+  accent-color: #1d4ed8;
   padding: 24px;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
 }
 
 .contratos-header {
@@ -13,14 +30,14 @@
 
 .contratos-header h1 {
   margin: 0 0 5px;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .contratos-header p {
   margin: 0;
-  color: #6b7280;
+  color: var(--el-button-primary-bg,#7d603d);
   font-size: 15px;
 }
 
@@ -70,7 +87,7 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   background: #ffffff;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+  box-shadow: 0 12px 30px rgba(var(--el-button-primary-rgb,125,96,61),0.06);
 }
 
 .contratos-list-panel,
@@ -88,9 +105,9 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 12px;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -103,7 +120,7 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   background: #ffffff;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   cursor: pointer;
 }
 
@@ -127,7 +144,7 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   background: #f9fafb;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   cursor: pointer;
   text-align: left;
   transition: border-color .16s ease, background .16s ease, transform .16s ease;
@@ -136,12 +153,12 @@ html:root #main-content #contratosPage #contratoNovoModelo {
 .contrato-list-item:hover,
 .contrato-list-item.active {
   transform: translateY(-1px);
-  border-color: var(--el-color-accent, #0ea5e9);
+  border-color: var(--el-color-accent, var(--el-button-primary-bg,#7d603d));
   background: #ffffff;
 }
 
 .contrato-list-item strong {
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   font-size: 14px;
   font-weight: 600;
 }
@@ -158,8 +175,8 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   min-height: 22px;
   padding: 4px 8px;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #3730a3;
+  background: var(--el-button-primary-soft,#f4efe8);
+  color: var(--el-button-primary-bg,#7d603d);
   font-size: 11px;
   font-weight: 600;
 }
@@ -171,15 +188,15 @@ html:root #main-content #contratosPage #contratoNovoModelo {
 
 .contrato-badge.inactive {
   background: #f3f4f6;
-  color: #6b7280;
+  color: var(--el-button-primary-bg,#7d603d);
 }
 
 .contratos-empty {
   padding: 16px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--el-button-primary-soft,#f4efe8);
   border-radius: 12px;
   background: #f8fafc;
-  color: #6b7280;
+  color: var(--el-button-primary-bg,#7d603d);
   font-size: 14px;
 }
 
@@ -199,7 +216,7 @@ html:root #main-content #contratosPage #contratoNovoModelo {
 
 .contratos-editor-top label span,
 .contratos-editor-area > span {
-  color: #4b5563;
+  color: var(--el-button-primary-bg,#7d603d);
   font-size: 13px;
   font-weight: 600;
 }
@@ -226,7 +243,7 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   position: relative;
   width: 100%;
   min-height: 520px;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--el-button-primary-soft,#f4efe8);
   border-radius: 14px;
   background: #fbfdff;
   overflow: hidden;
@@ -241,10 +258,10 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   align-items: center;
   gap: 4px;
   padding: 5px;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--el-button-primary-soft,#f4efe8);
   border-radius: 10px;
   background: rgba(255, 255, 255, .96);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, .14);
+  box-shadow: 0 12px 28px rgba(var(--el-button-primary-rgb,125,96,61),0.14);
 }
 
 .contratos-inline-toolbar[hidden] {
@@ -260,15 +277,15 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .contratos-inline-toolbar button:hover {
   background: #f3f4f6;
-  color: #111827;
+  color: var(--el-color-text,#1f2020);
 }
 
 .contratos-inline-toolbar svg {
@@ -291,7 +308,7 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   width: 14px;
   height: 14px;
   display: block;
-  border: 1px solid rgba(15, 23, 42, .12);
+  border: 1px solid rgba(var(--el-button-primary-rgb,125,96,61),0.12);
   border-radius: 999px;
   background: var(--contrato-color);
 }
@@ -306,25 +323,25 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   font: 14px/1.6 "Inter", "Segoe UI", sans-serif;
   letter-spacing: 0;
   overflow-wrap: anywhere;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   outline: none;
   overflow: auto;
 }
 
 .contratos-rich-editor:empty::before {
   content: "Digite o conteudo do contrato...";
-  color: #9ca3af;
+  color: var(--el-button-primary-bg,#7d603d);
 }
 
 .tag-contrato,
 .contrato-tag-highlight,
 .contratos-rich-editor .tag-contrato {
-  color: #1d4ed8;
-  font-weight: 700;
+  color: var(--el-button-primary-bg,#7d603d);
+  font-weight: 600;
 }
 
 .contratos-rich-editor strong {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .contratos-rich-editor em {
@@ -332,8 +349,8 @@ html:root #main-content #contratosPage #contratoNovoModelo {
 }
 
 .contratos-editor-highlight-wrap:focus-within {
-  border-color: var(--el-color-accent, #0ea5e9);
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, .14);
+  border-color: var(--el-color-accent, var(--el-button-primary-bg,#7d603d));
+  box-shadow: 0 0 0 3px rgba(var(--el-button-primary-rgb,125,96,61),0.14);
 }
 
 .contratos-actions {
@@ -358,7 +375,7 @@ html:root #main-content #contratosPage #contratoNovoModelo {
 
 .contratos-tags-panel p {
   margin: -4px 0 14px;
-  color: #6b7280;
+  color: var(--el-button-primary-bg,#7d603d);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -377,9 +394,9 @@ html:root #main-content #contratosPage #contratoNovoModelo {
 }
 
 .contrato-tag-group strong {
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .contrato-tag-list {
@@ -394,10 +411,10 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   align-items: center;
   gap: 6px;
   padding: 6px 9px;
-  border: 1px solid #dbeafe;
+  border: 1px solid var(--el-button-primary-soft,#f4efe8);
   border-radius: 999px;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--el-button-primary-soft,#f4efe8);
+  color: var(--el-button-primary-bg, #7d603d);
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
@@ -406,7 +423,7 @@ html:root #main-content #contratosPage #contratoNovoModelo {
 
 .contrato-tag-btn:hover {
   transform: translateY(-1px);
-  background: #dbeafe;
+  background: var(--el-button-primary-soft,#f4efe8);
 }
 
 .contrato-tag-count {
@@ -416,16 +433,16 @@ html:root #main-content #contratosPage #contratoNovoModelo {
   place-items: center;
   padding: 0 5px;
   border-radius: 999px;
-  background: #bfdbfe;
-  color: #1d4ed8;
+  background: var(--el-button-primary-soft,#f4efe8);
+  color: var(--el-button-primary-bg,#7d603d);
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1;
 }
 
 .contrato-tag-count.is-zero {
   background: #e5e7eb;
-  color: #6b7280;
+  color: var(--el-button-primary-bg,#7d603d);
 }
 
 @media (max-width: 1280px) {

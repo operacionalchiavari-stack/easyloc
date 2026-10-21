@@ -1,28 +1,58 @@
-// Entrada comercial do pedido: "Qual história vamos criar hoje?" → dados do evento → catálogo → ambientes e lista.
+// Entrada comercial do pedido: dados do evento e ferramentas do pedido.
 // A barra de cima (out/2026, pedido do usuário) segue o cabeçalho do catálogo: as etapas já vistas ficam à esquerda,
 // a atual no centro em destaque e as próximas à direita; trocar de etapa anima o nome (técnica FLIP, sem biblioteca).
 // "Módulo 3D" (out/2026): o 3D Livre dentro do pedido; o que for adicionado ao projeto lá entra no pedido da cliente.
-const ETAPAS=[{id:'dados',nome:'Dados do pedido'},{id:'catalogo',nome:'Catálogo'},{id:'modulo3d',nome:'Módulo 3D'},{id:'lista',nome:'Ambientes e lista'}];
-const PROXIMO={dados:'Avançar para o catálogo →',catalogo:'Ambientes e lista →',modulo3d:'Ambientes e lista →',lista:'Salvar pedido'};
+const ETAPAS=[{id:'dados',nome:'Dados do pedido'},{id:'catalogo',nome:'Catálogo'},{id:'modulo3d',nome:'3D'},{id:'plantas',nome:'Plantas'},{id:'lista',nome:'Ambientes e lista'},{id:'financeiro',nome:'Financeiro e pagamentos'}];
 
 export function iniciarEntradaComercial(vitrine){
   const tela=document.querySelector('.pedido-screen');
   if(!tela)return;
-  const pedidoExistente=Boolean(window.__PEDIDO_ATUAL_ID || new URLSearchParams(location.search).has('pedido') || new URLSearchParams(location.search).has('projeto'));
   const info=tela.querySelector('.pedido-info-card');
   if(!info)return;
   const origem=info.parentNode,seguinte=info.nextSibling;
   const entrada=document.createElement('section');
   entrada.className='pedido-entrada';
-  entrada.innerHTML='<div class="pedido-entrada-shell"><div class="entrada-intro"><span>COMERCIAL · NOVO PEDIDO</span><h1>Qual história vamos<br><em>criar hoje?</em></h1><div class="entrada-regua"></div><button type="button" class="entrada-novo">+ Novo projeto</button><p>Comece pelos dados do evento. Depois, escolha as peças no acervo.</p></div><div class="entrada-formulario" hidden><div class="entrada-campos"></div></div></div>';
+  entrada.innerHTML='<div class="pedido-entrada-shell"><div class="entrada-formulario"><div class="entrada-campos"></div></div></div>';
   tela.prepend(entrada);tela.classList.add('em-entrada');
 
   /* ---------- barra de etapas no topo ---------- */
   const trilha=document.createElement('div');trilha.className='comercial-trilha';trilha.setAttribute('role','navigation');trilha.setAttribute('aria-label','Etapas do pedido');
-  trilha.innerHTML='<button type="button" class="ct-voltar">← Voltar</button><div class="ct-linha"><div class="ct-antes"></div><h2 class="ct-atual" aria-live="polite"></h2><div class="ct-depois"></div></div><div class="ct-acoes"><span class="ct-numero"></span><button type="button" class="ct-avancar"></button></div><p class="ct-erro" role="alert"></p>';
+  trilha.innerHTML='<button type="button" class="ct-voltar">← Voltar</button><div class="ct-linha"><div class="ct-antes"></div><h2 class="ct-atual" aria-live="polite"></h2><div class="ct-depois"></div></div><div class="ct-direita"><div class="ct-ferramentas" role="group" aria-label="Ferramentas de criação"><button type="button" data-etapa="catalogo">Catálogo</button><button type="button" data-etapa="modulo3d">3D</button><button type="button" data-etapa="plantas">Plantas</button></div><div class="ct-acoes"><span class="ct-numero" aria-live="polite" aria-atomic="true"></span><button type="button" class="ct-avancar"></button></div></div><p class="ct-erro" role="alert"></p>';
   tela.prepend(trilha);
+  const voltarStatus=document.createElement('div');voltarStatus.className='ct-voltar-status';
+  const voltar=trilha.querySelector('.ct-voltar');voltar.before(voltarStatus);voltarStatus.append(voltar);
+  const statusPedido=document.getElementById('pedidoStatus');
+  if(statusPedido){
+    statusPedido.hidden=true;
+    const seletor=document.createElement('select');seletor.id='pedidoStatusComercial';seletor.className='ct-status-select';seletor.setAttribute('aria-label','Alterar status do pedido');
+    for(const [value,label] of [['orcamento','Orçamento'],['pre_reserva','Pré-reserva'],['aprovado','Reservado'],['cancelado','Cancelado']]){
+      seletor.add(new Option(label,value));
+    }
+    const sincronizar=()=>{
+      const status=window.__PEDIDO_STATUS_ATUAL || document.querySelector('.timeline-step.active')?.dataset.status || 'orcamento';
+      seletor.value=status;seletor.dataset.status=status;
+    };
+    new MutationObserver(sincronizar).observe(statusPedido,{childList:true,characterData:true,subtree:true});
+    seletor.addEventListener('change',()=>{
+      const alvo=seletor.value;sincronizar();
+      document.querySelector('.timeline-step[data-status="'+alvo+'"]')?.click();
+    });
+    voltarStatus.append(seletor);sincronizar();
+  }
+
+  const financeiro=document.createElement('section');financeiro.className='pedido-etapa-financeiro';financeiro.hidden=true;
+  financeiro.setAttribute('aria-label','Financeiro e programa??o de pagamentos');
+  const programacao=tela.querySelector('.pagamento-card');
+  const resumo=tela.querySelector('.pedido-financeiro');
+  // Os campos de cálculo permanecem no pedido, fora da aba financeira.
+  const calculosLogistica=document.createElement('div');calculosLogistica.hidden=true;
+  calculosLogistica.id='pedidoCalculosLogistica';
+  resumo?.querySelectorAll('.logistica-card').forEach(card=>calculosLogistica.append(card));
+  tela.append(calculosLogistica);
+  if(programacao)financeiro.append(programacao);
+  if(resumo)financeiro.append(resumo);
+  tela.append(financeiro);
   let etapaAtual='dados';
-  const emIntro=()=>!entrada.hidden && !entrada.querySelector('.entrada-intro').hidden;
   const reduzido=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const erroTrilha=texto=>{trilha.querySelector('.ct-erro').textContent=texto || '';};
   function medir(){
@@ -32,12 +62,14 @@ export function iniciarEntradaComercial(vitrine){
   }
   function pintarTrilha(animar){
     const antes=animar && !reduzido()?medir():null;
-    const i=ETAPAS.findIndex(e=>e.id===etapaAtual);
-    trilha.querySelector('.ct-antes').innerHTML=ETAPAS.slice(0,i).map(e=>'<button type="button" class="ct-passo" data-etapa="'+e.id+'">'+e.nome+'</button>').join('');
-    trilha.querySelector('.ct-depois').innerHTML=ETAPAS.slice(i+1).map(e=>etapaAtual==='dados'?'<span class="ct-passo ct-futuro" data-etapa="'+e.id+'">'+e.nome+'</span>':'<button type="button" class="ct-passo ct-futuro" data-etapa="'+e.id+'">'+e.nome+'</button>').join('');
-    const atual=trilha.querySelector('.ct-atual');atual.textContent=ETAPAS[i].nome;atual.dataset.etapa=ETAPAS[i].id;
-    trilha.querySelector('.ct-avancar').textContent=PROXIMO[etapaAtual];
-    trilha.classList.toggle('em-intro',emIntro());
+    const passos=ETAPAS.filter(e=>e.id==='dados' || e.id==='lista' || e.id==='financeiro');
+    const i=passos.findIndex(e=>e.id===etapaAtual);
+    const ferramenta=i<0;
+    trilha.querySelectorAll('.ct-ferramentas button').forEach(b=>{b.classList.toggle('is-active',b.dataset.etapa===etapaAtual);b.setAttribute('aria-pressed',String(b.dataset.etapa===etapaAtual));});
+    trilha.querySelector('.ct-antes').innerHTML=(ferramenta ? passos : passos.slice(0,i)).map(e=>'<button type="button" class="ct-passo" data-etapa="'+e.id+'">'+e.nome+'</button>').join('');
+    trilha.querySelector('.ct-depois').innerHTML=(ferramenta ? [] : passos.slice(i+1)).map(e=>'<button type="button" class="ct-passo ct-futuro" data-etapa="'+e.id+'">'+e.nome+'</button>').join('');
+    const atual=trilha.querySelector('.ct-atual');atual.textContent=ETAPAS.find(e=>e.id===etapaAtual).nome;atual.dataset.etapa=etapaAtual;
+    trilha.querySelector('.ct-avancar').textContent='Salvar';
     if(!antes)return;
     trilha.querySelectorAll('.ct-linha [data-etapa]').forEach(el=>{
       const de=antes.get(el.dataset.etapa),para=el.getBoundingClientRect();
@@ -46,15 +78,17 @@ export function iniciarEntradaComercial(vitrine){
       el.animate([{transform:`translate(${dx}px,${dy}px) scale(${de.width/para.width})`},{transform:'none'}],{duration:640,easing:'cubic-bezier(.22,1,.36,1)'});
     });
   }
-  const atualizarNumero=()=>{const valor=document.getElementById('orcamentoNumero')?.textContent.trim();trilha.querySelector('.ct-numero').textContent=valor?`Pedido ${valor}`:'';};
+  const atualizarNumero=()=>{
+    const valor=document.getElementById('orcamentoNumero')?.textContent.trim();
+    const numero=trilha.querySelector('.ct-numero');
+    const label=document.createElement('span');label.textContent='Pedido';
+    const destaque=document.createElement('strong');destaque.textContent=valor || 'Novo';
+    numero.replaceChildren(label,destaque);
+  };
   atualizarNumero();
   const numeroOriginal=document.getElementById('orcamentoNumero');
   if(numeroOriginal)new MutationObserver(atualizarNumero).observe(numeroOriginal,{childList:true,subtree:true,characterData:true});
 
-  if(pedidoExistente){
-    entrada.querySelector('.entrada-intro').hidden=true;
-    entrada.querySelector('.entrada-formulario').hidden=false;
-  }
 
   /* ---------- formulário de dados (mesmos campos da tela antiga) ---------- */
   entrada.querySelector('.entrada-campos').appendChild(info);
@@ -106,6 +140,37 @@ export function iniciarEntradaComercial(vitrine){
   }
 
   const clienteCampo=document.getElementById('clienteInput');
+  const atualizarPendenciasDados=()=>{
+    const moeda=texto=>Number(String(texto||'').replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'))||0;
+    const parcelas=[...document.querySelectorAll('#cronogramaParcelas tr')].filter(row=>row.querySelector('.pg-valor'));
+    const total=moeda(document.getElementById('pgValorFinal')?.textContent || document.getElementById('resumoTotalGeral')?.textContent);
+    const programado=parcelas.reduce((s,row)=>s+moeda(row.querySelector('.pg-valor')?.textContent),0);
+    const financeiroPendente=Math.abs(total-programado)>.01 || (total>0 && !parcelas.length) || parcelas.some(row=>{
+      const metodo=row.querySelector('.pg-metodo')?.value || row.querySelector('.pg-metodo-text')?.textContent || '';
+      return !row.querySelector('.pg-vencimento')?.value || moeda(row.querySelector('.pg-valor')?.textContent)<=0 || !metodo.trim() || /combinar/i.test(metodo);
+    });
+    trilha.classList.toggle('financeiro-incompleto',financeiroPendente);
+    const abaFinanceiro=trilha.querySelector('.ct-linha [data-etapa="financeiro"]');
+    if(abaFinanceiro){
+      if(financeiroPendente)abaFinanceiro.setAttribute('title','Confira os valores, vencimentos e formas de pagamento da programação.');
+      else abaFinanceiro.removeAttribute('title');
+    }
+    const campos=['clienteInput','telefoneInput','tipoEventoSelect','dataEntrega','horaEntrega','dataEvento','dataColeta','horaColeta','localInput'];
+    if(fimItem && !fimItem.hidden)campos.push('dataEventoFim');
+    const faltantes=campos.filter(id=>!document.getElementById(id)?.value?.trim());
+    trilha.classList.toggle('dados-incompletos',faltantes.length>0);
+    const aba=trilha.querySelector('.ct-linha [data-etapa="dados"]');
+    if(aba){
+      if(faltantes.length)aba.setAttribute('title','Há campos não preenchidos nos dados do pedido.');
+      else aba.removeAttribute('title');
+    }
+  };
+  tela.addEventListener('input',atualizarPendenciasDados);
+  tela.addEventListener('change',atualizarPendenciasDados);
+  // Seleções de cliente/local e carregamento do pedido também preenchem valores por código.
+  const intervaloPendencias=setInterval(atualizarPendenciasDados,500);
+  window.addEventListener('pagehide',()=>clearInterval(intervaloPendencias),{once:true});
+  atualizarPendenciasDados();
   clienteCampo.addEventListener('cliente-selecionado',e=>{
     const c=e.detail,retrato=identidade.querySelector('.entrada-retrato');retrato.replaceChildren();
     // Decoradora solicitante: o catálogo (iframe) mostra a foto dela na lista do pedido.
@@ -123,12 +188,6 @@ export function iniciarEntradaComercial(vitrine){
     identidade.querySelector('h3').textContent='Quem assina este evento?';
     identidade.querySelector('p').textContent='Selecione o cliente para trazer sua identidade ao projeto.';
   });
-  entrada.querySelector('.entrada-novo').onclick=()=>{
-    entrada.querySelector('.entrada-intro').hidden=true;
-    entrada.querySelector('.entrada-formulario').hidden=false;
-    pintarTrilha(false);
-    document.getElementById('clienteInput')?.focus();
-  };
 
   /* ---------- troca de etapa ---------- */
   const frame=()=>vitrine.querySelector('iframe');
@@ -148,14 +207,16 @@ export function iniciarEntradaComercial(vitrine){
     return '';
   }
   function mostrarCatalogo(){
+    financeiro.hidden=true;tela.classList.remove('em-financeiro');
     origem.insertBefore(info,seguinte);
     entrada.hidden=true;tela.classList.remove('em-entrada');tela.classList.add('em-catalogo-comercial');
     const f=frame();if(f && !f.getAttribute('src'))f.src=f.dataset.src;
     window.scrollTo({top:0,behavior:'instant'});
   }
   function mostrarDados(){
+    financeiro.hidden=true;tela.classList.remove('em-financeiro');
     entrada.querySelector('.entrada-campos').appendChild(info);entrada.hidden=false;
-    entrada.querySelector('.entrada-intro').hidden=true;entrada.querySelector('.entrada-formulario').hidden=false;
+    entrada.querySelector('.entrada-formulario').hidden=false;
     tela.classList.remove('em-catalogo-comercial');tela.classList.add('em-entrada');window.scrollTo({top:0,behavior:'instant'});
   }
   let ocupado=false;
@@ -163,50 +224,61 @@ export function iniciarEntradaComercial(vitrine){
     if(ocupado || destino===etapaAtual)return;
     ocupado=true;erroTrilha('');trilha.classList.add('is-ocupado');
     try{
-      if(destino==='dados'){
+      if(destino==='financeiro'){
+        const cw=frame()?.contentWindow;
+        if(cw?.sincronizarPedidoCatalogo)await cw.sincronizarPedidoCatalogo();
+        entrada.hidden=true;financeiro.hidden=false;
+        tela.classList.remove('em-entrada','em-catalogo-comercial');tela.classList.add('em-financeiro');
+        window.scrollTo({top:0,behavior:'instant'});
+      }else if(destino==='dados'){
         const cw=frame()?.contentWindow;
         if(cw?.sincronizarPedidoCatalogo)await cw.sincronizarPedidoCatalogo();
         mostrarDados();
       }else{
-        if(etapaAtual==='dados'){const erro=validarDados();if(erro)throw Error(erro);mostrarCatalogo();}
+        // Prepara a tela solicitada antes de exibir o documento incorporado.
+        const f=frame();if(f && !f.getAttribute('src'))f.src=f.dataset.src;
+        if(destino==='plantas')await (await esperarCatalogo('abrirPlantasComercialPedido')).abrirPlantasComercialPedido();
         if(destino==='modulo3d')await (await esperarCatalogo('abrirModulo3dComercialPedido')).abrirModulo3dComercialPedido();
-        if(destino==='catalogo' && etapaAtual!=='dados')await (await esperarCatalogo('abrirCatalogoComercialPedido')).abrirCatalogoComercialPedido();
+        if(destino==='catalogo')await (await esperarCatalogo('abrirCatalogoComercialPedido')).abrirCatalogoComercialPedido();
         if(destino==='lista')await (await esperarCatalogo('abrirProjetoComercialPedido')).abrirProjetoComercialPedido();
+        mostrarCatalogo();
       }
       etapaAtual=destino;pintarTrilha(true);
     }catch(error){erroTrilha(error.message);}
     finally{ocupado=false;trilha.classList.remove('is-ocupado');}
   }
+  trilha.querySelector('.ct-ferramentas').addEventListener('click',e=>{const b=e.target.closest('button[data-etapa]');if(b)irPara(b.dataset.etapa);});
   trilha.querySelector('.ct-depois').addEventListener('click',e=>{const b=e.target.closest('button[data-etapa]');if(b)irPara(b.dataset.etapa);});
   trilha.querySelector('.ct-antes').addEventListener('click',e=>{const b=e.target.closest('[data-etapa]');if(b)irPara(b.dataset.etapa);});
   trilha.querySelector('.ct-avancar').addEventListener('click',async()=>{
-    if(etapaAtual==='dados')return irPara('catalogo');
-    if(etapaAtual==='catalogo' || etapaAtual==='modulo3d')return irPara('lista');
     if(ocupado)return;
     ocupado=true;erroTrilha('');const botao=trilha.querySelector('.ct-avancar');botao.disabled=true;
-    try{const cw=await esperarCatalogo('sincronizarPedidoCatalogo');await cw.sincronizarPedidoCatalogo();await window.__salvarPedidoOperacional?.();}
+    try{
+      const erro=validarDados();
+      if(erro){if(etapaAtual!=='dados'){mostrarDados();etapaAtual='dados';pintarTrilha(true);}throw Error(erro);}
+      const f=frame();
+      if(f?.getAttribute('src')){
+        const cw=await esperarCatalogo('sincronizarPedidoCatalogo');
+        await cw.sincronizarPedidoCatalogo();
+      }
+      await window.__salvarPedidoOperacional?.();
+    }
     catch(error){erroTrilha(error.message);}
     finally{ocupado=false;botao.disabled=false;}
   });
   // O catálogo (iframe) usa estes dois: "editar dados" volta para a 1ª etapa, e quando a própria tela do
   // catálogo troca entre o acervo e a lista do projeto, a barra acompanha.
   window.__pedidoIrPara=irPara;
-  // "← Voltar" volta sempre UMA tela (pedido do usuário: clicar sem querer não pode jogar tudo pra Central):
-  // lista → catálogo; no catálogo, item → categoria → categorias e só então os dados; nos dados de um pedido novo,
-  // a abertura ("Qual história..."); só da abertura (ou dos dados de um pedido já salvo) vai pra Central de pedidos.
+  // Voltar navega pelas etapas; nos dados retorna para a Central de pedidos.
   trilha.querySelector('.ct-voltar').onclick=async()=>{
     if(ocupado)return;
-    if(etapaAtual==='lista' || etapaAtual==='modulo3d')return irPara('catalogo');
+    if(etapaAtual==='financeiro')return irPara('lista');
+    if(etapaAtual==='lista')return irPara('dados');
+    if(etapaAtual==='modulo3d' || etapaAtual==='plantas')return irPara('lista');
     if(etapaAtual==='catalogo'){
       const cw=frame()?.contentWindow;
       if(cw?.voltarCatalogoComercial?.())return;
       return irPara('dados');
-    }
-    if(!emIntro() && !pedidoExistente){
-      entrada.querySelector('.entrada-formulario').hidden=true;
-      entrada.querySelector('.entrada-intro').hidden=false;
-      erroTrilha('');pintarTrilha(false);window.scrollTo({top:0,behavior:'instant'});
-      return;
     }
     document.getElementById('btnVoltarCentralPedidos')?.click();
   };

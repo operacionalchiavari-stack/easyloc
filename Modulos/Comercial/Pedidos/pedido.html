@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="pedido.css?v=20261018-inter">
+  <link rel="stylesheet" href="pedido.css?v=20261020-financeiro-pendente">
 </head>
 <body>
 <div class="pedido-screen orcamento-page el-page em-entrada" data-module-root>
@@ -315,12 +315,7 @@
         </section>
 
         <section class="finance-card logistica-card" id="cardLogisticaPedido">
-          <h2>Logistica</h2>
-          <div class="logistica-grid sr-only">
-            <div><span>Qtd ajudantes</span><strong id="montagemQtd">-</strong></div>
-            <div><span>Valor ajudantes</span><strong id="montagemCusto">-</strong></div>
-            <div><span>Desconto ajudantes</span><strong id="montagemDesconto">- R$ 0,00</strong></div>
-          </div>
+          <h2>Frete</h2>
           <strong class="sr-only" id="freteQtdCaminhoes">0</strong>
           <strong class="sr-only" id="freteValor">R$ 0,00</strong>
           <strong class="sr-only" id="logisticaDescontoCaminhao">R$ 0,00</strong>
@@ -328,10 +323,21 @@
           <div class="logistica-extra">
             <div><span>Volume</span><strong id="freteVolumeTotal">0 m3</strong></div>
             <div><span>Distancia</span><strong id="freteDistanciaKm">0 km</strong></div>
-            <div><span>Montagem + frete</span><strong id="logisticaTotalOperacao">R$ 0,00</strong></div>
+
           </div>
-          <div class="montagem-info sr-only" id="montagemInfo">-</div>
-          <strong class="sr-only" id="montagemValorFinal">R$ 0,00</strong>
+          <label class="montagem-info" for="freteKmManual">Distância para cálculo (km) <input id="freteKmManual" type="number" min="0" step="0.1" placeholder="Informar distância"></label>
+        </section>
+        <section class="finance-card logistica-card montagem-card" id="cardMontagemPedido">
+          <h2>Montagem</h2>
+          <div class="frete-detalhe-container">
+            <div class="logistica-detail-row"><span>Qtd. ajudantes</span><strong id="montagemQtd">-</strong></div>
+            <div class="logistica-detail-row"><span>Valor bruto</span><strong id="montagemCusto">R$ 0,00</strong></div>
+            <div class="logistica-detail-row is-discount"><span>Desconto</span><strong id="montagemDesconto">- R$ 0,00</strong></div>
+            <div class="logistica-detail-row is-total"><span>Total montagem</span><strong id="montagemValorFinal">R$ 0,00</strong></div>
+          </div>
+          <div class="montagem-info" id="montagemInfo">-</div>
+          <strong class="sr-only" id="logisticaTotalOperacao">R$ 0,00</strong>
+
         </section>
       </aside>
     </div>
@@ -540,11 +546,12 @@
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="../../../js/core/permissions.js?v=20261018-free"></script>
+<script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/paymentPix.js"></script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20261018-numero-teste"></script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261020-mapa-inicial"></script>
 <script>lucide.createIcons();</script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>
 </html>

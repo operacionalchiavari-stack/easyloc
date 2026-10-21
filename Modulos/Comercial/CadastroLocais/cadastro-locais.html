@@ -18,6 +18,16 @@
   <div class="header-list">
     <h2>Locais Cadastrados</h2>
 
+
+
+    <div class="header-actions">
+      <button class="add-btn btn primary" type="button" onclick="Locais_openAdd()">
+        + Adicionar Local
+      </button>
+    </div>
+  </div>
+
+
     <div class="el-stat-row" id="locaisStats">
       <article class="el-stat-card blue">
         <span aria-hidden="true"><i data-lucide="building-2"></i></span>
@@ -37,22 +47,14 @@
       </article>
     </div>
 
-    <div class="header-actions">
-      <button class="add-btn btn primary" type="button" onclick="Locais_openAdd()">
-        + Adicionar Local
-      </button>
-    </div>
-  </div>
-
   <!-- ================= FILTROS (igual ao padrao de Clientes) ================= -->
   <div class="filters locais-filters">
 
-    <input
+    <input type="search"
       class="el-input"
       id="locaisSearchInput"
       placeholder="Pesquisar local..."
-      oninput="Locais_aplicarFiltros()"
-    >
+      oninput="Locais_aplicarFiltros()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
 
     <select class="el-select" id="locaisStatusFilter" onchange="Locais_aplicarFiltros()">
       <option value="">Todos os status</option>
@@ -349,10 +351,11 @@
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/listPager.js"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="../../../js/core/permissions.js?v=20261018-free"></script>
+<script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="cadastro-locais.js?v=20260913b"></script>
 <script>lucide.createIcons();</script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>
 </html>

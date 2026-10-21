@@ -1,3 +1,5 @@
+import { imagemOriginalProjeto, configurarImagensRender } from "./projeto-imagens.mjs";
+import { montarResumoComercial } from "./pedido-resumo-comercial.mjs";
 // Projetos do catálogo (pedido explícito do usuário): o decorador monta, DE DENTRO do catálogo, um projeto pro
 // casal — dividido em ambientes com o nome que ele quiser (Cerimônia, Bar, Lounge...), com os móveis escolhidos
 // (e quantidades) e as renderizações 3D/IA de cada ambiente — e pode enviar o pedido à Chiavari. Também é onde vive
@@ -25,7 +27,8 @@
 // (ambientes → itens/renders/notas) vive num jsonb só, salvo por projeto_salvar com autosave (debounce). Nada aqui
 // mostra ou envia preço: o catálogo nunca teve valores.
 
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao } from './projeto-apresentacao.mjs?v=20261016-conversa-pedido';
+import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao } from './projeto-apresentacao.mjs?v=20261016-vitrine';
 
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
@@ -37,6 +40,8 @@ const escapeAttr = (value) => escapeHtml(value).replace(/`/g, "&#96;");
 // obrigatório: só `width` faz o Storage manter a altura original (foto cortada/esticada).
 function otimizarFoto(url, width, quality = 74){
   if(!url || typeof url !== "string" || !width) return url;
+  url = imagemOriginalProjeto(url);
+  if(url.includes('/storage/v1/object/public/projetos/')) return url;
   const marcador = "/storage/v1/object/public/";
   const indice = url.indexOf(marcador);
   if(indice === -1) return url;
@@ -51,6 +56,27 @@ const STATUS_LABEL = { rascunho: "Rascunho", pedido_enviado: "Pedido enviado", e
 const FOTO_VAZIA = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cmVjdCB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgZmlsbD0iI2YxZjJmNCIvPjwvc3ZnPg==";
 
 let ctx = null;
+// Bucket "projetos": o decorador (sem login) passa pela função catalogo-arquivos — ver catalogo-arquivos.mjs.
+function pastaArquivosProjeto(project = S.current){
+  const empresa = ctx.getSession().empresa_id;
+  if(!ctx.pedidoComercial) return empresa + '/' + project.id;
+  project.dados.arquivos_comercial_id ||= crypto.randomUUID();
+  return empresa + '/comercial/' + project.dados.arquivos_comercial_id;
+}
+function arquivosProjeto(){
+  const bucket=arquivosDoBucket(ctx.supabase, "projetos", () => ctx.getSession());
+  if(!ctx.pedidoComercial) return bucket;
+  return {
+    upload: (...args) => bucket.upload(...args),
+    getPublicUrl: (...args) => bucket.getPublicUrl(...args),
+    list: (...args) => bucket.list(...args),
+    remove: paths => {
+      const prefix=pastaArquivosProjeto() + '/';
+      const proprios=paths.filter(path=>String(path).startsWith(prefix));
+      return proprios.length ? bucket.remove(proprios) : Promise.resolve({data:[],error:null});
+    }
+  };
+}
 const S = {
   enabled: false,
   list: [], listLoaded: false, listError: "",
@@ -683,6 +709,7 @@ function mudarQuantidade(ambienteId, itemId, delta, { definir = null } = {}){
 // Renderizações: leva o resultado de IA (3D Livre / tecido) pro ambiente do projeto.
 async function paraJpeg(src, ladoMax = 2400, qualidade = 0.88){
   const resposta = await fetch(src);
+  if(!resposta.ok) throw new Error("Nao foi possivel carregar a imagem para salvar.");
   const blob = await resposta.blob();
   const bitmap = await createImageBitmap(blob);
   const escala = Math.min(1, ladoMax / Math.max(bitmap.width, bitmap.height));
@@ -743,19 +770,19 @@ function levarMoveisParaAmbiente(amb, lista){
 // por conta de quem chama, que pode estar subindo só uma imagem ou um lote de várias de uma vez).
 async function subirImagemRender(project, src){
   const blob = await paraJpeg(src);
-  const path = `${ctx.getSession().empresa_id}/${project.id}/renders/${crypto.randomUUID()}.jpg`;
-  const { error } = await ctx.supabase.storage.from("projetos").upload(path, blob, { contentType: "image/jpeg", upsert: false });
+  const path = `${pastaArquivosProjeto(project)}/renders/${crypto.randomUUID()}.jpg`;
+  const { error } = await arquivosProjeto().upload(path, blob, { contentType: "image/jpeg", upsert: false });
   if(error) throw error;
-  return { url: ctx.supabase.storage.from("projetos").getPublicUrl(path).data.publicUrl, path };
+  return { url: arquivosProjeto().getPublicUrl(path).data.publicUrl, path };
 }
 // A cena 3D da imagem vira um .json em <empresa>/<projeto>/cenas/ (mesma política de upload das imagens). Fica fora de
 // projetos.dados de propósito: pode ter fotos de parede embutidas (alguns MB) e o autosave manda "dados" inteiro a cada edição.
 async function subirCena(project, cena){
-  const path = `${ctx.getSession().empresa_id}/${project.id}/cenas/${crypto.randomUUID()}.json`;
+  const path = `${pastaArquivosProjeto(project)}/cenas/${crypto.randomUUID()}.json`;
   const blob = new Blob([JSON.stringify(cena.snapshot)], { type: "application/json" });
-  const { error } = await ctx.supabase.storage.from("projetos").upload(path, blob, { contentType: "application/json", upsert: false });
+  const { error } = await arquivosProjeto().upload(path, blob, { contentType: "application/json", upsert: false });
   if(error) throw error;
-  return { url: ctx.supabase.storage.from("projetos").getPublicUrl(path).data.publicUrl, path, tipo: cena.tipo === "ia" ? "ia" : "print" };
+  return { url: arquivosProjeto().getPublicUrl(path).data.publicUrl, path, tipo: cena.tipo === "ia" ? "ia" : "print" };
 }
 async function uploadRenderPara(amb, project, src, origem, cena = null){
   const imagem = await subirImagemRender(project, src);
@@ -907,6 +934,39 @@ async function abrirEditorCena(amb, render){
   }
 }
 
+// Recupera prints cujos arquivos antigos foram removidos, usando a cena preservada.
+let recuperandoFoto3D=false;
+async function recuperarFoto3D(renderId){
+  if(recuperandoFoto3D)throw Error('Aguarde a recuperacao da outra imagem.');
+  const project=S.current;
+  const render=ambientesDe(project).flatMap(a=>a.renders || []).find(r=>r.id===renderId);
+  const editor=ctx.cenaEditor;
+  if(!render?.cena?.url || !editor?.pronto?.())throw Error('A cena 3D desta imagem nao esta disponivel.');
+  recuperandoFoto3D=true;
+  const palco=document.createElement('div');
+  palco.style.cssText='position:fixed;left:-12000px;top:0;width:1200px;height:800px;pointer-events:none';
+  palco.setAttribute('aria-hidden','true');document.body.appendChild(palco);
+  let abriu=false;
+  try{
+    const resposta=await fetch(render.cena.url);
+    if(!resposta.ok)throw Error('A cena 3D salva nao foi encontrada.');
+    abriu=true;
+    const resultado=await editor.abrir(palco,await resposta.json());
+    if(resultado.faltando)throw Error('Alguns modelos 3D estao indisponiveis. A imagem original foi preservada.');
+    const captura=editor.capturar();
+    await editor.fechar();abriu=false;
+    const imagem=await subirImagemRender(project,captura.foto);
+    if(S.current!==project)throw Error('O pedido aberto mudou durante a recuperacao. Volte ao pedido e tente novamente.');
+    Object.assign(render,{url:imagem.url,path:imagem.path,atualizado_em:new Date().toISOString()});
+    marcarSujo();await salvarAgora();
+    if(S.save==='error' || S.save==='dirty')throw Error(S.saveError || 'Nao foi possivel salvar a imagem recuperada.');
+    pintarPainel();
+  }finally{
+    if(abriu)await editor.fechar().catch(()=>{});
+    palco.remove();recuperandoFoto3D=false;
+  }
+}
+
 // Substitui a imagem do ambiente depois da edição: sobe o print novo + a cena nova no lugar dos antigos (mesma posição
 // na lista). Se a imagem era de IA, dispara uma renderização de IA nova e troca de novo quando ela chega.
 async function substituirImagemDaCena(project, ambId, renderId, captura, corpoIA){
@@ -922,11 +982,11 @@ async function substituirImagemDaCena(project, ambId, renderId, captura, corpoIA
   try{
     const [imagem, cena] = await Promise.all([subirImagemRender(project, captura.foto), subirCena(project, { tipo: corpoIA ? "ia" : "print", snapshot: captura.snapshot })]);
     const { alvo, render } = localizar();
-    if(!render){ ctx.supabase.storage.from("projetos").remove([imagem.path, cena.path]).catch(() => {}); return; }
+    if(!render){ arquivosProjeto().remove([imagem.path, cena.path]).catch(() => {}); return; }
     const antigos = [render.path, render.cena?.path].filter(Boolean);
     Object.assign(render, { url: imagem.url, path: imagem.path, cena, atualizado_em: new Date().toISOString() });
     await persistir(alvo);
-    if(antigos.length) ctx.supabase.storage.from("projetos").remove(antigos).catch(() => {});
+    if(antigos.length) arquivosProjeto().remove(antigos).catch(() => {});
     if(!corpoIA) ctx.notify({ title: "Pedido e imagem atualizados", message: "A imagem do ambiente já mostra os móveis novos.", status: "done", image: imagem.url });
   }catch(error){
     ctx.notify({ title: "O pedido foi atualizado, mas a imagem não", message: mensagemDe(error), status: "error" });
@@ -939,11 +999,11 @@ async function substituirImagemDaCena(project, ambId, renderId, captura, corpoIA
     const imagem = await subirImagemRender(project, src);
     const { alvo, render } = localizar();
     aguarde?.close?.();
-    if(!render){ ctx.supabase.storage.from("projetos").remove([imagem.path]).catch(() => {}); return; }
+    if(!render){ arquivosProjeto().remove([imagem.path]).catch(() => {}); return; }
     const printProvisorio = render.path;
     Object.assign(render, { url: imagem.url, path: imagem.path, atualizado_em: new Date().toISOString() });
     await persistir(alvo);
-    if(printProvisorio) ctx.supabase.storage.from("projetos").remove([printProvisorio]).catch(() => {});
+    if(printProvisorio) arquivosProjeto().remove([printProvisorio]).catch(() => {});
     ctx.notify({ title: "Renderização atualizada", message: "A imagem de IA do ambiente já mostra os móveis novos.", status: "done", image: imagem.url });
   }catch(error){
     aguarde?.close?.();
@@ -1017,11 +1077,11 @@ async function renderizarProjetoComIA(project, { aoProgresso = () => {}, aoAtual
         const src = await editor.executarIA(p.corpo);
         const imagem = await subirImagemRender(project, src);
         const { dono, render } = localizar(p.alvo);
-        if(!render){ ctx.supabase.storage.from("projetos").remove([imagem.path]).catch(() => {}); throw new Error("A imagem foi removida do projeto enquanto renderizava."); }
+        if(!render){ arquivosProjeto().remove([imagem.path]).catch(() => {}); throw new Error("A imagem foi removida do projeto enquanto renderizava."); }
         const antigo = render.path;
         Object.assign(render, { url: imagem.url, path: imagem.path, origem: "Renderização IA", atualizado_em: new Date().toISOString(), cena: { ...render.cena, tipo: "ia" } });
         await persistir(dono);
-        if(antigo) ctx.supabase.storage.from("projetos").remove([antigo]).catch(() => {});
+        if(antigo) arquivosProjeto().remove([antigo]).catch(() => {});
         prontas++; aoAtualizar(dono);
       }catch(error){ falhas.push({ alvo: p.alvo, error }); }
       progresso();
@@ -1055,15 +1115,15 @@ async function definirFotoCasal(file){
     const local = URL.createObjectURL(file);
     let blob;
     try{ blob = await paraJpeg(local, 1600, 0.88); }finally{ URL.revokeObjectURL(local); }
-    const path = `${ctx.getSession().empresa_id}/${project.id}/casal/${crypto.randomUUID()}.jpg`;
-    const { error } = await ctx.supabase.storage.from("projetos").upload(path, blob, { contentType: "image/jpeg", upsert: false });
+    const path = `${pastaArquivosProjeto(project)}/casal/${crypto.randomUUID()}.jpg`;
+    const { error } = await arquivosProjeto().upload(path, blob, { contentType: "image/jpeg", upsert: false });
     if(error) throw error;
-    const { data } = ctx.supabase.storage.from("projetos").getPublicUrl(path);
+    const { data } = arquivosProjeto().getPublicUrl(path);
     const antigo = project.dados.foto_casal?.path;
     project.dados.foto_casal = { url: data.publicUrl, path };
     marcarSujo(); pintarCabecalho();
     await salvarAgora();
-    if(antigo) ctx.supabase.storage.from("projetos").remove([antigo]).catch(() => {});
+    if(antigo) arquivosProjeto().remove([antigo]).catch(() => {});
     return true;
   }catch(error){
     ctx.notify({ title: "Não foi possível enviar a foto", message: mensagemDe(error), status: "error" });
@@ -1077,7 +1137,7 @@ function removerFotoCasal(){
   if(!project || !project.dados.foto_casal) return;
   delete project.dados.foto_casal;
   marcarSujo(); pintarCabecalho();
-  if(antigo) ctx.supabase.storage.from("projetos").remove([antigo]).catch(() => {});
+  if(antigo) arquivosProjeto().remove([antigo]).catch(() => {});
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1235,8 +1295,8 @@ async function fluxoExcluirProjeto(id, noivos){
       const empresaId = ctx.getSession().empresa_id;
       for(const nome of ["renders", "casal", "cenas"]){
         const pasta = `${empresaId}/${id}/${nome}`;
-        const { data } = await ctx.supabase.storage.from("projetos").list(pasta, { limit: 500 });
-        if(data?.length) await ctx.supabase.storage.from("projetos").remove(data.map((arquivo) => `${pasta}/${arquivo.name}`));
+        const { data } = await arquivosProjeto().list(pasta, { limit: 500 });
+        if(data?.length) await arquivosProjeto().remove(data.map((arquivo) => `${pasta}/${arquivo.name}`));
       }
     }catch{}
     await rpc("projeto_excluir", { p_id: id });
@@ -1277,14 +1337,16 @@ function pintarTela(){
   if(!root || !S.open) return;
   if(S.view !== "work" || S.workTab !== "plantas") limparPlantaListeners(); // saindo do espaço de trabalho/da aba Plantas — não deixa o listener de resize vazando
   if(S.view === "work" && S.current){
-    root.innerHTML = `<div class="cpj-wrap cpj-work">
+    root.innerHTML = `<div class="cpj-wrap cpj-work${ctx.pedidoComercial ? " cpj-work-comercial" : ""}">
       <header class="cpj-work-head" data-cpj-head></header>
       <div class="cpj-work-body">
         <nav class="cpj-amb-nav" data-cpj-nav aria-label="Ambientes"></nav>
         <section class="cpj-amb-panel" data-cpj-panel></section>
+        ${ctx.pedidoComercial ? '<aside class="cpj-resumo-comercial" aria-label="Frete e montagem" data-resumo-comercial></aside>' : ""}
       </div>
     </div>`;
     pintarCabecalho(); pintarNavegacao(); pintarPainel();
+    if(ctx.pedidoComercial) montarResumoComercial(root.querySelector("[data-resumo-comercial]"));
   }else{
     S.view = "list";
     root.innerHTML = `<div class="cpj-wrap cpj-listing" data-cpj-lista></div>`;
@@ -1382,7 +1444,7 @@ function pintarNavegacao(){
     // equipe de montagem, além de continuar servindo pra apresentação. "Plantas" não é mais um ambiente (não tem
     // móveis/renders/notas próprios — cada legenda dela APONTA pra um ambiente já existente), então é uma aba FIXA à
     // parte, sempre por último, nunca uma das abas dinâmicas de ambiente.
-    + `<button type="button" class="cpj-amb-tab cpj-amb-tab-plantas${S.workTab === "plantas" ? " is-active" : ""}" data-cpj-worktab="plantas">${ICONE.planta}<span>Plantas</span><b>${plantasDe().length || ""}</b></button>`;
+    + (ctx.pedidoComercial ? "" : `<button type="button" class="cpj-amb-tab cpj-amb-tab-plantas${S.workTab === "plantas" ? " is-active" : ""}" data-cpj-worktab="plantas">${ICONE.planta}<span>Plantas</span><b>${plantasDe().length || ""}</b></button>`);
 }
 
 // Exibe somente as renderiza??es salvas com imagem, com a primeira em destaque.
@@ -1393,7 +1455,7 @@ function rendersMapaHtml(amb){
   const ambCapa = ambientes.find((a) => a.renders.some((r) => r.url)) || ambientes[0];
   const naCapa = ambCapa?.id === amb.id;
   const nota = (n) => [n === 1 ? "Destaque · tamanho grande" : "", n === 1 && naCapa ? "Também é a foto da capa" : ""].filter(Boolean).join(" · ");
-  const figuras = reais.map((r, i) => `<figure class="cpj-render" data-cpj-render="${escapeAttr(r.id)}"><span class="cpj-slot-num">${i + 1}</span><img src="${escapeAttr(otimizarFoto(r.url, i === 0 ? 960 : 640))}" alt="${r.cena?.url ? `Trocar móveis de ${escapeAttr(amb.nome)} no 3D` : `Renderização de ${escapeAttr(amb.nome)}`}" loading="lazy" decoding="async" data-cpj="render-ver" tabindex="0" role="button">${r.cena?.url ? '<span class="cpj-render-3d" aria-hidden="true">Trocar móveis no 3D</span>' : ""}<figcaption>${escapeHtml(r.origem || "Renderização")}${nota(i + 1) ? ` · ${escapeHtml(nota(i + 1))}` : ""}</figcaption><button type="button" class="cpj-icon-btn" data-cpj="render-remover" aria-label="Remover renderização" title="Remover">×</button></figure>`).join("");
+  const figuras = reais.map((r, i) => `<figure class="cpj-render" data-cpj-render="${escapeAttr(r.id)}"><span class="cpj-slot-num">${i + 1}</span><img src="${escapeAttr(otimizarFoto(r.url, i === 0 ? 960 : 640))}" data-cpj-imagem-cena="${escapeAttr(r.cena?.url || "")}" data-cpj-imagem-original="${escapeAttr(imagemOriginalProjeto(r.url))}" alt="${r.cena?.url ? `Trocar móveis de ${escapeAttr(amb.nome)} no 3D` : `Renderização de ${escapeAttr(amb.nome)}`}" loading="lazy" decoding="async" data-cpj="render-ver" tabindex="0" role="button">${r.cena?.url ? '<span class="cpj-render-3d" aria-hidden="true">Trocar móveis no 3D</span>' : ""}<figcaption>${escapeHtml(r.origem || "Renderização")}${nota(i + 1) ? ` · ${escapeHtml(nota(i + 1))}` : ""}</figcaption><button type="button" class="cpj-icon-btn" data-cpj="render-remover" aria-label="Remover renderização" title="Remover">×</button></figure>`).join("");
   return `<div class="cpj-renders cpj-renders-map" data-modo="destaque">${figuras}</div>`;
 }
 
@@ -1422,6 +1484,7 @@ function solicitanteHtml(){
 function pintarPainel(){
   const host = document.querySelector("[data-cpj-panel]");
   if(!host || !S.current) return;
+  host.closest(".cpj-work-comercial")?.classList.toggle("is-plantas", S.workTab === "plantas");
   if(S.workTab !== "plantas") limparPlantaListeners(); // saindo da aba Plantas (ou nem chegando a entrar) — desliga o listener de resize se algum ficou de uma visita anterior
   if(S.workTab === "geral"){
     // Título da aba Geral (pedido do usuário: "um título bem bonito escrito Lista Completa").
@@ -1430,7 +1493,9 @@ function pintarPainel(){
     const titulo = `<header class="cpj-geral-title"><span class="cpj-geral-title-orn" aria-hidden="true"></span><h2>Lista <em>Completa</em></h2><span class="cpj-geral-title-orn" aria-hidden="true"></span></header>`;
     host.innerHTML = (solicitante ? `<div class="cpj-geral-topo">${solicitante}${titulo}<span aria-hidden="true"></span></div>` : titulo)
       + geralHtml(dadosApresentacao(S.current,ctx.findItem))
+
       + `<footer class="pa-geral-footer">${ctx.pedidoComercial ? '<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="ver-pedido-comercial">Ver pedido e PDF</button>' : ''}<button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${ctx.pedidoComercial ? "Salvar pedido" : S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`;
+
     vincularOrdemLista(host);
     return;
   }
@@ -1447,7 +1512,7 @@ function pintarPainel(){
   host.innerHTML = `
     <!-- Renderizações 3D primeiro, móveis embaixo (pedido do usuário). -->
     <section class="cpj-block">
-      <div class="cpj-block-head cpj-block-head-center"><h4>Renderizações</h4><span class="cpj-block-actions"><button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="ir-estudio">3D Livre</button></span></div>
+      <div class="cpj-block-head cpj-block-head-center"><h4>Renderizações</h4>${ctx.pedidoComercial ? "" : '<span class="cpj-block-actions"><button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="ir-estudio">3D Livre</button></span>'}</div>
       <div data-cpj-renders>${rendersMapaHtml(amb)}</div>
     </section>
     <section class="cpj-block">
@@ -2264,10 +2329,10 @@ async function enviarPlanta(file){
   try{
     const blob = await prepararImagemPlanta(file);
     const empresaId = ctx.getSession().empresa_id;
-    const path = `${empresaId}/${S.current.id}/plantas/${crypto.randomUUID()}.png`;
-    const { error } = await ctx.supabase.storage.from("projetos").upload(path, blob, { contentType: "image/png", upsert: false });
+    const path = `${pastaArquivosProjeto()}/plantas/${crypto.randomUUID()}.png`;
+    const { error } = await arquivosProjeto().upload(path, blob, { contentType: "image/png", upsert: false });
     if(error) throw error;
-    const { data } = ctx.supabase.storage.from("projetos").getPublicUrl(path);
+    const { data } = arquivosProjeto().getPublicUrl(path);
     const planta = normalizarPlanta({ nome: `Planta ${plantasDe().length + 1}`, url: data.publicUrl, path });
     S.current.dados.plantas.push(planta);
     S.activePlanta = planta.id;
@@ -2284,13 +2349,13 @@ async function trocarImagemPlanta(planta, file){
     const blob = await prepararImagemPlanta(file);
     const empresaId = ctx.getSession().empresa_id;
     const pathAntigo = planta.path;
-    const path = `${empresaId}/${S.current.id}/plantas/${crypto.randomUUID()}.png`;
-    const { error } = await ctx.supabase.storage.from("projetos").upload(path, blob, { contentType: "image/png", upsert: false });
+    const path = `${pastaArquivosProjeto()}/plantas/${crypto.randomUUID()}.png`;
+    const { error } = await arquivosProjeto().upload(path, blob, { contentType: "image/png", upsert: false });
     if(error) throw error;
-    const { data } = ctx.supabase.storage.from("projetos").getPublicUrl(path);
+    const { data } = arquivosProjeto().getPublicUrl(path);
     planta.url = data.publicUrl; planta.path = path;
     marcarSujo(); pintarPainel();
-    if(pathAntigo) ctx.supabase.storage.from("projetos").remove([pathAntigo]).catch(() => {});
+    if(pathAntigo) arquivosProjeto().remove([pathAntigo]).catch(() => {});
   }catch(error){
     ctx.notify({ title: "Não foi possível trocar a imagem", message: mensagemDe(error), status: "error" });
   }
@@ -2302,7 +2367,7 @@ async function excluirPlanta(planta){
   S.current.dados.plantas = plantasDe().filter((p) => p.id !== planta.id);
   if(S.activePlanta === planta.id) S.activePlanta = null;
   marcarSujo(); pintarNavegacao(); pintarPainel();
-  if(planta.path) ctx.supabase.storage.from("projetos").remove([planta.path]).catch(() => {});
+  if(planta.path) arquivosProjeto().remove([planta.path]).catch(() => {});
 }
 
 // PDF/imagem = impressão do navegador (mesmo padrão já usado no resto do catálogo, sem gerador de PDF próprio) —
@@ -2548,7 +2613,7 @@ async function aoClicarOverlay(event){
       amb.renders = amb.renders.filter((r) => r.id !== id);
       marcarSujo(); pintarNavegacao(); pintarPainel(); pintarDock();
       const arquivos = [render.path, render.cena?.path].filter(Boolean);
-      if(arquivos.length) ctx.supabase.storage.from("projetos").remove(arquivos).catch(() => {});
+      if(arquivos.length) arquivosProjeto().remove(arquivos).catch(() => {});
     }else if(tipo === "plantas-voltar"){ S.activePlanta = null; pintarPainel(); }
     else if(tipo === "planta-abrir"){ S.activePlanta = acao.dataset.planta; pintarPainel(); }
     else if(tipo === "planta-trocar-imagem") document.querySelector("[data-cpj-planta-trocar-input]")?.click();
@@ -2734,7 +2799,8 @@ export async function escolherProjetoNaEntrada(){
     await carregar();
 }
 
-export async function openCatalogProjetos({ view = "list" } = {}){
+export async function openCatalogProjetos({ view = "list", workTab = null } = {}){
+  if(ctx.pedidoComercial && ["geral", "plantas"].includes(workTab)){S.workTab=workTab;S.activePlanta=null;}
   S.open = true;
   S.dockPop = false;
   S.view = (view === "work" || ctx.pedidoComercial) && S.current ? "work" : "list";
@@ -2769,6 +2835,7 @@ export function initCatalogProjetos(contexto){
   ctx = contexto;
   S.enabled = true;
   const overlay = $("catalogProjetos");
+  if(overlay) configurarImagensRender(overlay, { recuperar: recuperarFoto3D });
   overlay?.addEventListener("click", aoClicarOverlay);
   overlay?.addEventListener("keydown", (event) => {
     if((event.key === "Enter" || event.key === " ") && event.target.matches?.("[data-cpj-open]")){ event.preventDefault(); aoClicarOverlay({ target: event.target, stopPropagation(){}, preventDefault(){} }); }
@@ -2880,6 +2947,17 @@ const assistenteProjeto = {
     S.list = []; S.listLoaded = false;
   },
   enviarPedido(){ return S.current ? fluxoEnviarPedido() : null; },
+  // A Helena abre e fecha a VERSÃO FINAL do pedido (a mesma prévia do "Ver pedido e PDF": fotos, renderizações e valores).
+  verPedido(abrir){
+    if(!abrir){ S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
+    const project = S.current;
+    if(!project) return false;
+    document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());
+    const d = ctx.pedidoComercial ? ctx.decoradoraPedido?.() : null;
+    S.previaHelena = abrirVisualizacaoPedido({ titulo: project.noivos || "Pedido", model: dadosApresentacao(project, ctx.findItem),
+      decorador: d?.nome ? { nome: d.nome, logo_url: d.foto || "" } : ctx.getDecorator?.(), empresa: ctx.getCompany?.(), flutuante: true });
+    return true;
+  },
   async atualizarEvento({ data_evento, local_evento, evento, noivos }){
     const p = S.current;
     if(!p) throw new Error("Abra um projeto primeiro.");

@@ -23,10 +23,34 @@ export function initAutocompleteLocaisEKm({
   if(!localInput || !localLista) return;
 
   let ultimoLocalCalculado = "";
+  let localEventoDefinido = false;
+
+  // Referência visual inicial; não seleciona um local nem calcula frete.
+  (async () => {
+    let endereco = GALPAO_ORIGEM_PADRAO;
+    try {
+      const empresaId = window.__CONTEXT?.empresa_id;
+      if(empresaId && supabase){
+        const { data: empresa, error } = await supabase.from("empresas")
+          .select("endereco_google,logradouro,numero,bairro,cidade,uf,cep").eq("id", empresaId).single();
+        if(error) throw error;
+        endereco = empresa?.endereco_google?.trim() || [empresa?.logradouro, empresa?.numero,
+          empresa?.bairro, empresa?.cidade, empresa?.uf, empresa?.cep].filter(Boolean).join(", ") || endereco;
+      }
+    } catch(error) {
+      console.warn("Não foi possível carregar a referência da empresa no mapa", error?.message);
+    }
+    if(localEventoDefinido || localIdHidden?.value) return;
+    await renderizarMiniMapaPedido({ supabase, local: {
+      nome_razao: "Endereço da empresa", endereco, referenciaEmpresa: true
+    }});
+  })();
 
   window.__pedidoRenderizarLocalEvento = (local) => {
+    localEventoDefinido = Boolean(local);
     renderizarObservacoesLocal({ local, obsDiv });
     renderizarMiniMapaPedido({ supabase, local });
+    if(local) calcularKmAutomatico({ supabase, local });
   };
 
   const selecionarLocal = async (local) => {
@@ -49,7 +73,7 @@ export function initAutocompleteLocaisEKm({
     if(chaveLocal === ultimoLocalCalculado) return;
     ultimoLocalCalculado = chaveLocal;
 
-    await calcularKmAutomatico({ supabase, local });
+    // A renderização do local já dispara o cálculo de distância.
   };
 
   const buscarLocais = async (termo, exato = false, limite = 10) => {
@@ -262,7 +286,7 @@ function sincronizarPosicaoMapas(position){
 }
 
 async function atualizarPosicaoLocal({ supabase, local, position }){
-  if(!local || !position) return;
+  if(!local || !position || local.referenciaEmpresa) return;
   local.latitude = Number(position.lat);
   local.longitude = Number(position.lng);
   sincronizarPosicaoMapas(position);
@@ -323,7 +347,7 @@ function abrirMapaAmpliado({ supabase, local, center }){
       });
 
       pedidoMiniMapState.largeMap.addListener("click", async (event) => {
-        if(!event?.latLng || !pedidoMiniMapState.currentLocal) return;
+        if(!event?.latLng || !pedidoMiniMapState.currentLocal || pedidoMiniMapState.currentLocal.referenciaEmpresa) return;
         const nextPosition = { lat: event.latLng.lat(), lng: event.latLng.lng() };
         await atualizarPosicaoLocal({
           supabase: pedidoMiniMapState.supabase,
@@ -337,7 +361,7 @@ function abrirMapaAmpliado({ supabase, local, center }){
       pedidoMiniMapState.largeMarker = new google.maps.Marker({
         map: pedidoMiniMapState.largeMap,
         position,
-        draggable: true,
+        draggable: !local.referenciaEmpresa,
         title: local.nome_razao || "Local do evento"
       });
 
@@ -352,6 +376,7 @@ function abrirMapaAmpliado({ supabase, local, center }){
         });
       });
     }else{
+      pedidoMiniMapState.largeMarker.setDraggable(!local.referenciaEmpresa);
       pedidoMiniMapState.largeMarker.setMap(pedidoMiniMapState.largeMap);
       pedidoMiniMapState.largeMarker.setTitle(local.nome_razao || "Local do evento");
       pedidoMiniMapState.largeMarker.setPosition(position);
@@ -375,19 +400,35 @@ function aplicarMiniMapaFallback(label = "Mapa indisponível"){
 }
 
 async function renderizarMiniMapaPedido({ supabase, local }){
+  const renderId = pedidoMiniMapState.renderId = (pedidoMiniMapState.renderId || 0) + 1;
   const mapEl = document.getElementById("pedidoMiniMapa");
   const locateBtn = document.getElementById("pedidoMiniMapaCentralizar");
   const expandBtn = document.getElementById("pedidoMiniMapaAbrir");
   if(!mapEl || !local) return;
 
+  // Maps incorporado já exibe o endereço, mesmo sem a chave da API JavaScript.
+  const enderecoMapa = enderecoCompletoLocal(local);
+  if(enderecoMapa && !pedidoMiniMapState.map){
+    const iframe = document.createElement("iframe");
+    iframe.title = local.referenciaEmpresa ? "Mapa do endereço da empresa" : "Mapa do local do evento";
+    iframe.src = "https://www.google.com/maps?q=" + encodeURIComponent(enderecoMapa) + "&output=embed";
+    iframe.style.cssText = "width:100%;height:100%;border:0;display:block";
+    iframe.allowFullscreen = true;
+    mapEl.replaceChildren(iframe);
+    if(locateBtn) locateBtn.onclick = () => { iframe.src = iframe.src; };
+    if(expandBtn) expandBtn.onclick = () => iframe.requestFullscreen?.();
+  }
+
   try{
     if(!window.google?.maps?.Map){
       if(typeof window.carregarGooglePlaces === "function"){
-        await window.carregarGooglePlaces();
+        try { await window.carregarGooglePlaces(); }
+        catch(error) { if(enderecoMapa) return; throw error; }
       }
     }
 
     if(!window.google?.maps?.Map){
+      if(enderecoMapa) return;
       aplicarMiniMapaFallback("Google Maps não carregado");
       return;
     }
@@ -403,6 +444,8 @@ async function renderizarMiniMapaPedido({ supabase, local }){
       }
     }
 
+    if(renderId !== pedidoMiniMapState.renderId) return;
+    if(!center && enderecoMapa) return;
     center = center || MINI_MAP_CENTER_PADRAO;
     pedidoMiniMapState.currentLocal = local;
     pedidoMiniMapState.supabase = supabase;
@@ -429,7 +472,7 @@ async function renderizarMiniMapaPedido({ supabase, local }){
       pedidoMiniMapState.marker = new google.maps.Marker({
         map: pedidoMiniMapState.map,
         position: center,
-        draggable: true,
+        draggable: !local.referenciaEmpresa,
         title: local.nome_razao || "Local do evento"
       });
 
@@ -535,6 +578,8 @@ function aplicarKmCalculado(km, texto = ""){
   if(elKm) elKm.innerText = texto || formatKmTexto(numero) || `${numero} km`;
 
   window.kmPedido = numero;
+  const manual = document.getElementById("freteKmManual");
+  if(manual) manual.value = numero;
   window.calcularFreteInteligente?.();
 }
 

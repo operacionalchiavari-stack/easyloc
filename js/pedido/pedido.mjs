@@ -2,7 +2,7 @@ console.log("✅ pedido.mjs carregado");
 
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
-import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261009-satelite";
+import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261020-mapa-inicial";
 import { initItens } from "./pedido.itens.mjs?v=20261018-financeiro";
 import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
@@ -389,7 +389,7 @@ async function setupPedidoWorkspace({ supabase }){
     alert(mensagem);
   };
 
-  const statusBloqueiaComercial = (status) => ["em_separacao", "pausado"].includes(String(status || ""));
+  const statusBloqueiaComercial = (status) => ["separado", "separado_com_divergencia"].includes(String(status || ""));
 
   const aplicarBloqueioComercialSeparacao = (pedido) => {
     const bloqueado = statusBloqueiaComercial(pedido?.status);
@@ -398,8 +398,17 @@ async function setupPedidoWorkspace({ supabase }){
     if (btnSalvar) {
       btnSalvar.dataset.separacaoBloqueada = bloqueado ? "1" : "0";
       btnSalvar.title = bloqueado
-        ? "Pedido em separacao. A equipe operacional precisa liberar antes de editar."
+        ? "Separação finalizada: alterações de material estão bloqueadas."
         : "";
+      let aviso = document.getElementById("pedidoRegraOperacional");
+      if(!aviso){
+        aviso = document.createElement("p"); aviso.id="pedidoRegraOperacional"; aviso.setAttribute("role","status");
+        btnSalvar.parentElement?.appendChild(aviso);
+      }
+      aviso.textContent = bloqueado ? "Separação finalizada. Materiais bloqueados." :
+        ["em_separacao","pausado"].includes(pedido?.status) ?
+          (pedido.reducao_liberada_em ? "Triagem liberou retiradas. Salvar a revisão retoma a separação." : "Separação em andamento: apenas acréscimos. Retirar ou reduzir exige liberação na triagem.") : "";
+      aviso.hidden = !aviso.textContent;
     }
   };
 
@@ -451,6 +460,9 @@ async function setupPedidoWorkspace({ supabase }){
           codigo_item: row.dataset.codigoItem || "",
           foto_url: row.querySelector(".foto-item img")?.getAttribute("src") || "",
           quantidade_solicitada: quantidade,
+          valor_locacao: Number(row.dataset.valorUnitario || 0),
+          valor_reposicao: Number(row.dataset.valorReposicao || 0),
+          volume_cubico: Number(row.dataset.volume || 0),
           quantidade_separada: 0,
           tipo_controle: "quantidade",
           status: "pendente"
@@ -649,9 +661,9 @@ async function setupPedidoWorkspace({ supabase }){
 
   const aplicarStatusVisual = (status = "orcamento") => {
     const labels = {
-      orcamento: "Orcamento",
-      pre_reserva: "Pre reserva",
-      aprovado: "Aprovado",
+      orcamento: "Or\u00e7amento",
+      pre_reserva: "Pr\u00e9-reserva",
+      aprovado: "Reservado",
       cancelado: "Cancelado"
     };
     document.querySelectorAll(".timeline-step").forEach((step) => {
@@ -895,15 +907,16 @@ async function setupPedidoWorkspace({ supabase }){
       const observacoesItens = Array.isArray(observacoesPedido.itens_operacionais)
         ? observacoesPedido.itens_operacionais
         : [];
-      const itensTela = (itens || []).map((item, index) => ({
+      const itensOrigem = itens?.length ? itens : (observacoesPedido.itens_comerciais || []);
+      const itensTela = itensOrigem.map((item, index) => ({
         item_id: item.item_id,
         codigo_item: item.codigo_item || item.itens?.codigo || "",
         item_nome: item.item_nome || item.itens?.descricao_total || item.itens?.produto || "Item",
         foto_url: item.foto_url || item.itens?.foto_url || "",
         quantidade_solicitada: item.quantidade_solicitada || 1,
-        valor_locacao: item.itens?.valor_locacao || 0,
-        valor_reposicao: item.itens?.valor_reposicao || 0,
-        volume_cubico: item.itens?.volume_cubico || 0,
+        valor_locacao: item.valor_locacao ?? item.itens?.valor_locacao ?? 0,
+        valor_reposicao: item.valor_reposicao ?? item.itens?.valor_reposicao ?? 0,
+        volume_cubico: item.volume_cubico ?? item.itens?.volume_cubico ?? 0,
         observacao_operacional: encontrarObservacaoItem(observacoesItens, item, index)
       }));
       window.__restaurarItensPedido?.(itensTela);
@@ -950,27 +963,11 @@ async function setupPedidoWorkspace({ supabase }){
   }
 
 
-  // O cronograma é abastecido pelo pedido (out/2026): o servidor cria/atualiza as etapas na planilha do
-  // Cronograma (api/_gas/projetos/cronograma/PedidosAcervo.js) conforme o status escolhido em Parâmetros.
+  // O cronograma é abastecido pelo pedido (out/2026): o próprio banco cria/atualiza as etapas ao salvar
+  // (gatilho operacao_pedido_sincronizar → operacao_sincronizar_pedido, conforme o status escolhido em
+  // Parâmetros, e já preenche a escala automática). Não depende mais do servidor da Vercel.
   async function sincronizarCronogramaDoPedido(pedidoId) {
-    if (!pedidoId) return null;
-    const local = /^(localhost|127.0.0.1)$/.test(location.hostname);
-    const base = (local && location.port === "3000") || /.vercel.app$/i.test(location.hostname) ? "/" : "https://easyloc-zeta.vercel.app/";
-    try {
-      const { data } = await supabase.auth.getSession();
-      const resposta = await fetch(base + "api/gs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer " + (data?.session?.access_token || "") },
-        body: JSON.stringify({ projeto: "cronograma", fn: "CRON_sincronizarPedidoAcervo", args: [pedidoId] })
-      });
-      const corpo = await resposta.json().catch(() => null);
-      if (!corpo?.ok) throw new Error(corpo?.erro || "Servidor indisponível.");
-      return corpo.resultado;
-    } catch (error) {
-      console.warn("Pedido salvo, mas o cronograma não foi atualizado.", error);
-      avisar("Pedido salvo, mas o cronograma não foi atualizado: " + (error.message || error), "Cronograma", "aviso");
-      return null;
-    }
+    return pedidoId ? { sucesso: true } : null;
   }
 
   async function salvarPedidoOperacional(){
@@ -981,7 +978,7 @@ async function setupPedidoWorkspace({ supabase }){
 
     if (window.__PEDIDO_BLOQUEADO_SEPARACAO) {
       avisar(
-        "Este pedido esta em separacao. O comercial so pode alterar depois que a equipe de separacao liberar o pedido.",
+        "A separação deste pedido já foi finalizada. Não é permitido alterar os materiais.",
         "Pedido bloqueado",
         "aviso"
       );
@@ -1015,7 +1012,7 @@ async function setupPedidoWorkspace({ supabase }){
     const horaEntrega = document.getElementById("horaEntrega")?.value || "";
     const horaColeta = document.getElementById("horaColeta")?.value || "";
     const valorTotal = moedaParaNumero(document.getElementById("resumoTotalGeral")?.textContent);
-    const deveReservar = ["pre_reserva", "aprovado"].includes(statusComercial);
+    const deveReservar = ["pre_reserva", "aprovado", "enviado", "finalizado"].includes(statusComercial);
     const itensReserva = deveReservar ? coletarItensParaReserva() : [];
 
     if(deveReservar && !itensReserva.length){
@@ -1043,7 +1040,6 @@ async function setupPedidoWorkspace({ supabase }){
       data_coleta: dataColeta,
       data_hora: dataEvento ? `${dataEvento}T12:00:00` : null,
       valor_total: valorTotal,
-      status: statusComercial === "cancelado" ? "pausado" : "pendente",
       status_comercial: statusComercial,
       observacoes: {
         ...observacoesAtuais,
@@ -1055,6 +1051,7 @@ async function setupPedidoWorkspace({ supabase }){
         parcelas_financeiras: coletarParcelasFinanceiras(),
         pagamento_config: window.__pedidoColetarPagamentoConfig?.() || null,
         itens_operacionais: coletarObservacoesItensOperacionais(),
+        itens_comerciais: coletarItensParaReserva(),
         logistica_snapshot: coletarLogisticaSnapshot(),
         valores: window.__PEDIDO_VALORES || observacoesAtuais.valores || null,
         cancelamento: window.__PEDIDO_CANCELAMENTO || null,
@@ -1074,39 +1071,24 @@ async function setupPedidoWorkspace({ supabase }){
     let pedidoId = window.__PEDIDO_ATUAL_ID || null;
     let result;
 
-    if(pedidoId){
-      result = await supabase
-        .from("separacoes_pedidos")
-        .update(payloadPedido)
-        .eq("id", pedidoId)
-        .select("id")
-        .single();
-    }else{
+    if(!pedidoId){
       numeroPedido = await obterProximoNumeroPedido();
       payloadPedido.numero_pedido = numeroPedido;
       setTextValue("orcamentoNumero", numeroPedido);
-
-      result = await supabase
-        .from("separacoes_pedidos")
-        .insert({ ...payloadPedido, criado_em: new Date().toISOString() })
-        .select("id")
-        .single();
-
-      if(result.error?.code === "23505"){
-        numeroPedido = await obterProximoNumeroPedido();
-        payloadPedido.numero_pedido = numeroPedido;
-        setTextValue("orcamentoNumero", numeroPedido);
-        result = await supabase
-          .from("separacoes_pedidos")
-          .insert({ ...payloadPedido, criado_em: new Date().toISOString() })
-          .select("id")
-          .single();
-      }
     }
-
+    const gravar = () => supabase.rpc("pedido_salvar_integrado", {
+      p_id: pedidoId, p_pedido: payloadPedido, p_itens: itensReserva,
+      p_revisao: pedidoId ? (window.__PEDIDO_DADOS_ATUAL?.revisao ?? 0) : null
+    });
+    result = await gravar();
+    if(!pedidoId && result.error?.code === "23505"){
+      payloadPedido.numero_pedido = await obterProximoNumeroPedido();
+      setTextValue("orcamentoNumero", payloadPedido.numero_pedido);
+      result = await gravar();
+    }
     if(result.error){
       console.error("Erro ao salvar pedido:", result.error);
-      avisar("Nao foi possivel salvar o pedido. Verifique as tabelas de pedidos no Supabase.", "Salvar pedido", "erro");
+      avisar(result.error.message || "Nao foi possivel salvar o pedido.", "Salvar pedido", "erro");
       return;
     }
 
@@ -1129,34 +1111,9 @@ async function setupPedidoWorkspace({ supabase }){
       ...payloadPedido
     };
 
-    const deveSincronizarItens = statusComercial !== "cancelado";
-
-    if(deveSincronizarItens){
-      await supabase
-        .from("separacoes_itens")
-        .delete()
-        .eq("empresa_id", window.__CONTEXT.empresa_id)
-        .eq("separacao_pedido_id", pedidoId);
-    }
-
-    if(deveSincronizarItens && itensReserva.length){
-      const itensPayload = itensReserva.map((item) => ({
-        ...item,
-        empresa_id: window.__CONTEXT.empresa_id,
-        separacao_pedido_id: pedidoId
-      }));
-
-      const { error: itensError } = await supabase
-        .from("separacoes_itens")
-        .insert(itensPayload);
-
-      if(itensError){
-        console.error("Erro ao salvar itens do pedido:", itensError);
-        avisar("Pedido salvo, mas os itens nao foram reservados.", "Reserva", "aviso");
-        return;
-      }
-    }
-
+    window.__PEDIDO_DADOS_ATUAL.revisao = result.data?.revisao ?? 0;
+    window.__PEDIDO_DADOS_ATUAL.reducao_liberada_em = null;
+    aplicarBloqueioComercialSeparacao(window.__PEDIDO_DADOS_ATUAL);
     const cronograma = await sincronizarCronogramaDoPedido(pedidoId);
 
     if(["aprovado", "finalizado", "enviado"].includes(statusComercial)){
@@ -1395,9 +1352,9 @@ function setupTimelinePedido({ avisar }){
   let motivoSelecionado = "";
   const fecharCancelamento = () => modalCancelamento?.classList.add("hidden");
   const statusLabels = {
-    orcamento: "Orcamento",
-    pre_reserva: "Pre reserva",
-    aprovado: "Aprovado",
+    orcamento: "Or\u00e7amento",
+    pre_reserva: "Pr\u00e9-reserva",
+    aprovado: "Reservado",
     cancelado: "Cancelado"
   };
   const statusEditaveis = new Set(["orcamento", "pre_reserva", "aprovado"]);
@@ -1795,6 +1752,7 @@ function setupOndeEsta({ supabase }){
   };
 
   const isReservaAtiva = (pedido = {}) => {
+    if(pedido.encerrado_operacional_em) return false;
     const comercial = String(pedido.status_comercial || "").toLowerCase();
     const operacional = String(pedido.status || "").toLowerCase();
     return !["orcamento", "cancelado"].includes(comercial) && operacional !== "cancelado";
@@ -1846,7 +1804,7 @@ function setupOndeEsta({ supabase }){
     }
 
     try{
-      const [{ data: itemEstoque, error: estoqueError }, { data, error }] = await Promise.all([
+      const [{ data: itemEstoque, error: estoqueError }, { data, error }, bloqueios] = await Promise.all([
         supabase
           .from("itens")
           .select("id,codigo,produto,descricao_total,foto_url,estoque_total,estoque_manutencao,estoque_indisponivel,categoria")
@@ -1855,13 +1813,15 @@ function setupOndeEsta({ supabase }){
           .maybeSingle(),
         supabase
           .from("separacoes_itens")
-          .select("quantidade_solicitada, separacoes_pedidos(numero_pedido, cliente_nome, tipo_evento, data_evento, data_hora, data_entrega, data_coleta, local_nome, status,status_comercial)")
+          .select("quantidade_solicitada, separacoes_pedidos(numero_pedido, cliente_nome, tipo_evento, data_evento, data_hora, data_entrega, data_coleta, local_nome, status,status_comercial,encerrado_operacional_em)")
           .eq("empresa_id", empresaId())
           .eq("item_id", itemId)
-          .limit(80)
+          .limit(1000),
+        supabase.rpc("operacao_indisponiveis", { p_empresa: empresaId(), p_data: selectedDate() })
       ]);
 
       if(error) throw error;
+      if(bloqueios.error) throw bloqueios.error;
       if(estoqueError) console.warn("Estoque do item indisponivel:", estoqueError);
 
       setItemVisual(itemEstoque || { id: itemId }, fallbackName);
@@ -1872,7 +1832,8 @@ function setupOndeEsta({ supabase }){
 
       const totalReservado = reservasDaData.reduce((acc, item) => acc + Number(item.quantidade_solicitada || 0), 0);
       const totalEstoque = Number(itemEstoque?.estoque_total || 0);
-      const totalManutencao = Number(itemEstoque?.estoque_manutencao || itemEstoque?.estoque_indisponivel || 0);
+      const totalManutencao = Number(itemEstoque?.estoque_manutencao || itemEstoque?.estoque_indisponivel || 0)
+        + Number((bloqueios.data || []).find(r => r.item_id === itemId)?.quantidade || 0);
       const totalDisponivel = Math.max(0, totalEstoque - totalReservado - totalManutencao);
 
       if(reservada) reservada.textContent = String(totalReservado);

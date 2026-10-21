@@ -105,12 +105,12 @@ state.clienteId = null;
 state.saving = false;
 
 function renderClientSelector(clientes){
-  if(!ctx.acessoInterno) return;
+  if(ctx.pedidoComercial || !ctx.acessoInterno) return;
   let host = $("catalogBibliotecaCliente");
   if(!host){
     host = document.createElement("label");
     host.id = "catalogBibliotecaCliente";
-    host.style.cssText = "display:flex;gap:12px;align-items:center;padding:16px 24px;";
+    host.className = "catalog-biblioteca-client-filter";
     $("catalogBibliotecaFolders")?.before(host);
     host.addEventListener("change", (event) => {
       state.clienteId = event.target.value || null;
@@ -118,7 +118,8 @@ function renderClientSelector(clientes){
       if(state.activeFolder) renderDetail();
     });
   }
-  host.innerHTML = `Fotos de <select aria-label="Cliente da biblioteca"><option value="">Todos os clientes (compartilhadas)</option>${clientes.map(c => `<option value="${escapeAttr(c.id)}">${escapeHtml(c.nome)}</option>`).join("")}</select>`;
+  host.innerHTML = `<span class="catalog-biblioteca-filter-label">Fotos de</span><span class="catalog-biblioteca-filter-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/></svg><select aria-label="Cliente da biblioteca"><option value="">Todos os clientes (compartilhadas)</option>${clientes.map(c => `<option value="${escapeAttr(c.id)}">${escapeHtml(c.nome)}</option>`).join("")}</select><svg class="catalog-biblioteca-filter-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></span>`;
+  host.querySelector("select").value = state.clienteId || "";
 }
 
 const folderById = (id) => state.folders.find((f) => String(f.id) === String(id)) || null;
@@ -148,7 +149,7 @@ function renderFolders(){
         </span>
       </button>`;
   }).join("");
-  const novo = ctx.acessoInterno ? `<button type="button" class="catalog-grid-card catalog-home-card catalog-biblioteca-new" data-library-new-folder>
+  const novo = ctx.acessoInterno && !ctx.pedidoComercial ? `<button type="button" class="catalog-grid-card catalog-home-card catalog-biblioteca-new" data-library-new-folder>
         <span class="catalog-grid-card-photo catalog-biblioteca-folder">${NEW_FOLDER_SVG}</span>
         <span class="catalog-grid-card-body"><span class="catalog-grid-card-name">Nova pasta</span></span>
       </button>` : "";
@@ -160,10 +161,10 @@ function renderFolders(){
 function renderDetail(){
   const folder = folderById(state.activeFolder);
   const photos = photosForFolder(state.activeFolder);
-  $("catalogBibliotecaUpload")?.classList.toggle("hidden", !ctx.acessoInterno);
+  $("catalogBibliotecaUpload")?.classList.toggle("hidden", ctx.pedidoComercial || !ctx.acessoInterno);
   const title = $("catalogBibliotecaFolderTitle");
   if(title) title.textContent = folder?.nome || "";
-  $("catalogBibliotecaFolderActions")?.classList.toggle("hidden", !ctx.acessoInterno);
+  $("catalogBibliotecaFolderActions")?.classList.toggle("hidden", ctx.pedidoComercial || !ctx.acessoInterno);
   const status = $("catalogBibliotecaUploadStatus");
   if(status) status.textContent = state.uploading ? "Enviando fotos…" : "";
   const host = $("catalogBibliotecaPhotos");
@@ -171,7 +172,7 @@ function renderDetail(){
   host.innerHTML = photos.length
     ? photos.map((photo) => `<figure class="catalog-biblioteca-photo" data-photo-id="${escapeAttr(photo.id)}">
         <img src="${escapeAttr(otimizarFoto(photo.url, 700))}" alt="${escapeAttr(photo.titulo || folder?.nome || "")}" loading="lazy" decoding="async" data-open-photo role="button" tabindex="0" aria-label="Ver foto em tela cheia">
-${ctx.visitante ? "" : `<button type="button" class="catalog-biblioteca-move" data-move-photo aria-label="Arrastar para reorganizar; use as setas do teclado">↔</button>
+${ctx.visitante || ctx.pedidoComercial ? "" : `<button type="button" class="catalog-biblioteca-move" data-move-photo aria-label="Arrastar para reorganizar; use as setas do teclado">↔</button>
         <button type="button" class="catalog-biblioteca-photo-remove" data-remove-photo="${escapeAttr(photo.id)}" aria-label="Remover foto">×</button>`}
       </figure>`).join("")
     : `<p class="catalog-biblioteca-empty">Nenhuma foto nesta pasta ainda.</p>`;
@@ -225,7 +226,7 @@ function nomeJaExiste(nome, ignorarId){
 }
 
 async function criarPasta(){
-  if(!ctx.acessoInterno || state.saving) return;
+  if(ctx.pedidoComercial || !ctx.acessoInterno || state.saving) return;
   const nome = await pedirNomePasta({ titulo: "Nova pasta", acao: "Criar pasta" });
   if(!nome) return;
   if(nomeJaExiste(nome)){ window.catalogNotify?.({ title: "Essa pasta já existe", message: `Já existe uma pasta chamada "${nome}".`, status: "error" }); return; }
@@ -246,7 +247,7 @@ async function criarPasta(){
 
 async function renomearPasta(){
   const folder = folderById(state.activeFolder);
-  if(!ctx.acessoInterno || !folder || state.saving) return;
+  if(ctx.pedidoComercial || !ctx.acessoInterno || !folder || state.saving) return;
   const nome = await pedirNomePasta({ titulo: "Renomear pasta", valor: folder.nome, acao: "Salvar" });
   if(!nome || nome === folder.nome) return;
   if(nomeJaExiste(nome, folder.id)){ window.catalogNotify?.({ title: "Essa pasta já existe", message: `Já existe uma pasta chamada "${nome}".`, status: "error" }); return; }
@@ -265,7 +266,7 @@ async function renomearPasta(){
 
 async function excluirPasta(){
   const folder = folderById(state.activeFolder);
-  if(!ctx.acessoInterno || !folder || state.saving) return;
+  if(ctx.pedidoComercial || !ctx.acessoInterno || !folder || state.saving) return;
   // Conta TODAS as fotos da pasta (de qualquer cliente), não só as do cliente escolhido na tela.
   const fotos = state.photos.filter((p) => String(p.pasta_id) === String(folder.id));
   const aviso = fotos.length
@@ -318,7 +319,7 @@ function extensaoImagem(mime){
 
 async function enviarFotos(files){
   const folder = folderById(state.activeFolder);
-  if(!ctx.acessoInterno || !folder || !files.length) return;
+  if(ctx.pedidoComercial || !ctx.acessoInterno || !folder || !files.length) return;
   const clienteId = state.clienteId;
   state.uploading = true;
   const selector = $("catalogBibliotecaCliente")?.querySelector("select");
@@ -348,6 +349,7 @@ async function enviarFotos(files){
 }
 
 async function removerFoto(id){
+  if(ctx.pedidoComercial) return;
   if(state.saving) return;
   const photo = state.photos.find((p) => String(p.id) === String(id));
   if(!photo) return;
@@ -372,6 +374,7 @@ async function removerFoto(id){
 }
 
 async function moverFoto(id, targetId){
+  if(ctx.pedidoComercial) return;
   if(state.saving || state.uploading || id === targetId) return;
   const photos = photosForFolder(state.activeFolder);
   const from = photos.findIndex(p => String(p.id) === id);
@@ -483,8 +486,8 @@ function bindInteractions(){
 }
 
 // visitante=true: entrou sem login ("Explorar o catálogo") — só vê as fotos da empresa, sem remover nem reorganizar.
-export function initCatalogBiblioteca({ supabase, empresaId, token, acessoInterno, visitante = false, categories }){
-  ctx = { supabase, empresaId, token, acessoInterno, visitante, categories };
+export function initCatalogBiblioteca({ supabase, empresaId, token, acessoInterno, pedidoComercial = false, visitante = false, categories }){
+  ctx = { supabase, empresaId, token, acessoInterno, pedidoComercial, visitante, categories };
   bindInteractions();
 }
 

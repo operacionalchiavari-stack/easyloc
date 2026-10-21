@@ -19,7 +19,7 @@ body.assistente-aberta .catalog-notifications{z-index:210;bottom:110px}
 html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 
 /* Tela cheia */
-.cas-panel{position:fixed;z-index:200;inset:0;display:flex;flex-direction:column;background:#f4f1ec;font-family:"Manrope",sans-serif;color:#2f2b27;animation:cas-in .34s cubic-bezier(.22,1,.36,1) both}
+.cas-panel{position:fixed;z-index:203;inset:0;display:flex;flex-direction:column;background:#f4f1ec;font-family:"Manrope",sans-serif;color:#2f2b27;animation:cas-in .34s cubic-bezier(.22,1,.36,1) both}
 .cas-panel[hidden]{display:none}
 @keyframes cas-in{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 .cas-head{display:flex;flex:none;align-items:center;gap:14px;height:76px;padding:0 clamp(14px,2.2vw,40px);background:#5a5a55;color:#fff}
@@ -320,3 +320,61 @@ body.cas-mini-aberta .catalog-notifications{bottom:120px}
 .helena-circulo path{fill:none;stroke:#b18a5a;stroke-width:3.2;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:1;animation:helena-desenha 1.1s cubic-bezier(.65,0,.35,1) forwards;animation-delay:inherit}
 @keyframes helena-desenha{to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){.helena-circulo path{animation:none;stroke-dashoffset:0}}
+
+/* Opções que ela mostrou no catálogo (sem destaque): um atalho na conversa pra voltar a elas. */
+.cas-opcoes{display:flex;align-items:center;gap:12px;margin-top:8px;padding:10px 14px;border:1px solid #e5ddd0;border-radius:12px;background:#fff;color:#2f2b27;font:inherit;text-align:left;cursor:pointer;max-width:340px}
+.cas-opcoes:hover,.cas-opcoes:focus-visible{border-color:#b18a5a}
+.cas-opcoes svg{width:22px;height:22px;flex:none;fill:none;stroke:#b18a5a;stroke-width:1.6}
+.cas-opcoes span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cas-opcoes b{font:600 .88rem "Manrope",sans-serif}
+.cas-opcoes small{font:500 .78rem "Manrope",sans-serif;color:#77716a}
+
+/* ---------------- Vitrine dentro do painel da Helena (o pedido continua ao lado) ---------------- */
+.cas-conversa{position:relative}
+/* Por escrito: ocupa o lugar das mensagens e deixa o campo de escrever livre. Na ligação: cobre a tela da ligação inteira. */
+.cas-conversa:has(>.cas-vitrine:not([hidden]))>.cas-msgs{display:none}
+.cas-ligacao:not([hidden])~.cas-vitrine{position:absolute;inset:0}
+.cas-vitrine{position:relative;flex:1 1 auto;min-height:0;z-index:8;display:flex;flex-direction:column;overflow:auto;background:#fbfaf7;animation:cas-vit-entra .42s cubic-bezier(.22,1,.36,1) both}
+.cas-vitrine[hidden]{display:none}
+@keyframes cas-vit-entra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.cas-vit-topo{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:12px;padding:12px 18px;background:#4a4a45;color:#fff;box-shadow:0 8px 24px rgba(30,26,22,.16)}
+.cas-vit-topo .cas-avatar{flex:none}
+.cas-vitrine.falando .cas-vit-topo .cas-avatar{box-shadow:0 0 0 4px rgba(201,173,132,.35)}
+.cas-vit-fala{flex:1;min-width:0}
+.cas-vit-fala small{display:block;color:#d9c3a1;font:600 .72rem "Manrope",sans-serif;letter-spacing:.14em;text-transform:uppercase}
+.cas-vit-fala p{margin:2px 0 0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font:italic 500 1.08rem/1.3 "Cormorant Garamond",serif;color:#fff}
+.cas-vit-acoes{display:flex;gap:6px}
+.cas-vit-acoes:empty{display:none}
+.cas-vit-voltar{flex:none;padding:8px 14px;border:1px solid rgba(255,255,255,.4);border-radius:999px;background:transparent;color:#fff;font:600 .8rem "Manrope",sans-serif;cursor:pointer}
+.cas-vit-voltar:hover,.cas-vit-voltar:focus-visible{background:rgba(255,255,255,.12)}
+.cas-vit-titulo{display:flex;align-items:baseline;justify-content:center;gap:12px;padding:26px 24px 6px}
+.cas-vit-titulo h3{margin:0;font:500 clamp(1.4rem,2.2vw,1.9rem) "Cormorant Garamond",serif;letter-spacing:.14em;text-transform:uppercase;color:#2f2b27}
+.cas-vit-titulo span{color:#8a7f72;font:500 .82rem "Manrope",sans-serif}
+.cas-vit-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px;padding:18px clamp(16px,2.4vw,32px) 32px}
+.cas-vit-card{position:relative;display:flex;flex-direction:column;gap:10px;padding:14px 14px 16px;border:1px solid #ece6dc;border-radius:16px;background:#fff;box-shadow:0 6px 18px rgba(40,32,24,.05);animation:cas-vit-card .5s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--i,0) * 45ms);transition:border-color .35s,box-shadow .45s,transform .45s cubic-bezier(.22,1,.36,1)}
+@keyframes cas-vit-card{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.cas-vit-foto{display:block;padding:0;border:0;background:#fff;cursor:zoom-in;aspect-ratio:1/1;overflow:hidden;border-radius:10px}
+.cas-vit-foto img{width:100%;height:100%;object-fit:contain;transition:transform 1.2s cubic-bezier(.22,1,.36,1)}
+.cas-vit-card:hover .cas-vit-foto img{transform:scale(1.06)}
+.cas-vit-info{display:flex;flex-direction:column;gap:4px;text-align:center}
+.cas-vit-info strong{font:500 1.12rem/1.2 "Cormorant Garamond",serif;letter-spacing:.06em;text-transform:uppercase;color:#2f2b27}
+.cas-vit-info small{color:#77716a;font:500 .8rem "Manrope",sans-serif}
+.cas-vit-preco{color:#806342;font:600 .92rem "Manrope",sans-serif}
+.cas-vit-stock{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-top:4px;font:600 .8rem "Manrope",sans-serif;font-variant-numeric:tabular-nums}
+.cas-vit-stock[hidden]{display:none}
+.cas-vit-stock>span{display:inline-flex;align-items:baseline;gap:4px;padding:3px 10px;border-radius:999px}
+.cas-vit-stock b{font-weight:800}
+.cas-vit-stock .is-estoque{background:#efebe4;color:#4a453f}
+.cas-vit-stock .is-livre{background:#e3f1e7;color:#22673f}
+.cas-vit-stock .is-esgotado{background:#fbe6e2;color:#a73a2f}
+.cas-vit-add{margin-top:auto;padding:9px 12px;border:1px solid #d9cfc0;border-radius:999px;background:#fff;color:#2f2b27;font:600 .82rem "Manrope",sans-serif;cursor:pointer;transition:border-color .2s,background .2s}
+.cas-vit-add:hover,.cas-vit-add:focus-visible{border-color:#b18a5a;background:#faf6ef}
+/* A escolha: moldura dourada fina, brilho suave e o selo "Sua escolha" (no lugar do círculo à mão). */
+.cas-vit-selo{position:absolute;z-index:2;top:-12px;left:50%;display:inline-flex;align-items:center;gap:6px;padding:5px 13px 5px 10px;border-radius:999px;background:#2f2b27;color:#f3e6d0;font:700 .7rem "Manrope",sans-serif;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;box-shadow:0 8px 20px rgba(30,24,18,.25);opacity:0;transform:translate(-50%,6px) scale(.92);pointer-events:none;transition:opacity .45s,transform .55s cubic-bezier(.22,1,.36,1)}
+.cas-vit-selo svg{width:13px;height:13px;fill:none;stroke:#d4b483;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.cas-vit-card.is-escolhida{border-color:#c9a873;box-shadow:0 0 0 1px #c9a873,0 0 0 7px rgba(201,168,115,.16),0 22px 48px rgba(60,44,26,.18);transform:translateY(-4px);animation:cas-vit-brilho 1.6s cubic-bezier(.22,1,.36,1) 1}
+.cas-vit-card.is-escolhida .cas-vit-selo{opacity:1;transform:translate(-50%,0) scale(1);transition-delay:.15s}
+@keyframes cas-vit-brilho{0%{box-shadow:0 0 0 1px #c9a873,0 0 0 0 rgba(201,168,115,.45),0 22px 48px rgba(60,44,26,.18)}60%{box-shadow:0 0 0 1px #c9a873,0 0 0 16px rgba(201,168,115,0),0 22px 48px rgba(60,44,26,.18)}100%{box-shadow:0 0 0 1px #c9a873,0 0 0 7px rgba(201,168,115,.16),0 22px 48px rgba(60,44,26,.18)}}
+@media(max-width:600px){.cas-vit-stock{font-size:.7rem;gap:4px}.cas-vit-stock>span{white-space:nowrap;padding:3px 8px}.cas-vit-stock b{font-size:.78rem}.cas-vit-add{padding:8px 6px;font-size:.74rem}.cas-vit-card{padding:12px 10px 14px}.cas-vit-selo{font-size:.62rem;padding:4px 10px 4px 8px}}
+@media(max-width:600px){.cas-vit-grade{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:14px 12px 24px}.cas-vit-topo{padding:10px 12px;gap:8px}.cas-vit-fala p{font-size:.98rem}.cas-vit-voltar{padding:7px 10px;font-size:.74rem}.cas-vit-info strong{font-size:.98rem}}
+@media(prefers-reduced-motion:reduce){.cas-vitrine,.cas-vit-card{animation:none}.cas-vit-card.is-escolhida{animation:none;transform:none}}

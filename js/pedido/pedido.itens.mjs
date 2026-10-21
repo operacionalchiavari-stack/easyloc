@@ -1,3 +1,4 @@
+import { colorirValor } from "./pedido.valores-ui.mjs";
 import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
 import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261017-abrir-projeto";
 
@@ -202,7 +203,7 @@ function atualizarResumo() {
 
   const set = (id, value) => {
     const el = document.getElementById(id);
-    if (el) el.innerText = formatCurrency(value);
+    if (el){el.innerText = formatCurrency(value);colorirValor(el,value);}
   };
 
   set("resumoLocacaoBruto", locacaoBruta);
@@ -286,9 +287,7 @@ function calcularVolumeTotalPedido(){
      RECALCULA FRETE
   ===================================================== */
 
-  if (window.kmPedido != null) {
-    window.calcularFreteInteligente?.();
-  }
+  window.calcularFreteInteligente?.();
 
   /* =====================================================
      RECALCULA SERVIÇOS

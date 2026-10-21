@@ -913,7 +913,7 @@
 
   async function carregarProjetosCatalogo(){
     const { data, error } = await state.supabase.from("projetos")
-      .select("id,cliente_id,noivos,data_evento,local_evento,status,dados,created_at,updated_at,pedido_enviado_em")
+      .select("id,cliente_id,noivos,data_evento,local_evento,status,dados,created_at,updated_at,pedido_enviado_em,numero_catalogo")
       .eq("empresa_id", state.empresaId).not("cliente_id", "is", null)
       .order("updated_at", { ascending: false }).limit(200);
     if(error) throw error;
@@ -938,7 +938,7 @@
     (cadastros || []).forEach((c) => clientes.set(String(c.id), c.nome_razao));
     return projetos.map((p) => ({
       id: `projeto:${p.id}`, projetoId: p.id, origemCatalogo: true,
-      numero: "Catálogo", cliente_id: p.cliente_id, local_id: null,
+      numero: p.numero_catalogo ? String(p.numero_catalogo).padStart(3, "0") : "—", cliente_id: p.cliente_id, local_id: null,
       cliente: clientes.get(String(p.cliente_id)) || "Decorador",
       contato: "", evento: p.noivos || "Projeto", local: p.local_evento || "Local nao informado",
       data: p.data_evento || p.created_at,
@@ -1054,9 +1054,7 @@
 
     els.centralPedidosTbody.innerHTML = state.filtrados.map((pedido) => `
       <tr data-pedido-id="${escapeHtml(pedido.id)}" class="${pedido.origemCatalogo ? "is-catalogo" : ""}${presencaDe(pedido)?.ativo ? " is-montando" : ""}" title="${pedido.origemCatalogo ? "Projeto do catálogo: clique duas vezes para abrir como pedido" : "Clique duas vezes para abrir o pedido"}">
-          <td>${pedido.origemCatalogo
-            ? `<span class="pedido-selo-catalogo" title="Projeto montado pelo decorador no catálogo">Veio do catálogo</span>${presencaHtml(pedido)}`
-            : `<span class="pedido-numero-card">${escapeHtml(pedido.numero)}</span>`}</td>
+        <td><span class="pedido-numero-card${pedido.origemCatalogo ? " pedido-numero-catalogo" : ""}" title="${pedido.origemCatalogo ? "Veio do catálogo" : "Pedido comercial"}" aria-label="${pedido.origemCatalogo ? "Pedido do catálogo" : "Pedido comercial"} ${escapeHtml(pedido.numero)}">${escapeHtml(pedido.numero)}</span>${presencaHtml(pedido)}</td>
         <td>
           <button type="button" class="central-record-link" data-action="abrir-cliente" title="Abrir cadastro do cliente">
             ${escapeHtml(pedido.cliente)}

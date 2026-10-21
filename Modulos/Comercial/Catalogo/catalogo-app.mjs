@@ -5,10 +5,13 @@
 // visitante), mesmas RPCs de itens/projetos, mesma Helena (catalogo-assistente.mjs) e o mesmo motor 3D pra ela montar as
 // fotos das composições (as peças de tela do 3D Livre são buscadas do próprio catalogo.html e montadas escondidas).
 // Navegação de app: abas embaixo, telas empilhadas com o "voltar" do celular (history), folhas que sobem de baixo.
+import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-helena-catalogo2";
+import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-furar-fila";
 
 const supabase = window.supabaseClient;
+// Bucket "projetos": o decorador (sem login) passa pela função catalogo-arquivos — ver catalogo-arquivos.mjs.
+const arquivosProjeto = () => arquivosDoBucket(supabase, "projetos", () => S.sessao);
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const normalizar = (v) => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
@@ -68,6 +71,7 @@ function mapRow(row){
     cat: slugify(row.categoria), catLabel: row.categoria || "Sem categoria", catOrdem: row.categoria_ordem ?? null,
     subcat: row.subcategoria ? slugify(row.subcategoria) : "", subcatLabel: row.subcategoria || "",
     material: row.material || "", cor: row.cor || "", estilo: row.estilo || "", desc: row.descricao_complementar || "",
+    replacementPrice: row.valor_reposicao != null && row.valor_reposicao !== "" && Number.isFinite(Number(row.valor_reposicao)) ? Number(row.valor_reposicao) : null,
     rentalPrice: row.valor_locacao != null && row.valor_locacao !== "" && Number.isFinite(Number(row.valor_locacao)) ? Number(row.valor_locacao) : null,
     dims: dims.every((d) => d === null) ? "" : dims.map((d) => d ?? "–").join(" × ") + " cm",
     medidas: dims.every((d) => d === null) ? "" : `(L) ${dims[0] ?? "–"} × (A) ${dims[1] ?? "–"} × (P) ${dims[2] ?? "–"} cm`,
@@ -286,11 +290,59 @@ function destaques(){
   for(let r = 0; saida.length < 10 && r < 3; r++) for(const l of porCat){ const i = l[Math.floor(Math.random() * l.length)]; if(i && !saida.includes(i) && saida.length < 10) saida.push(i); }
   return saida;
 }
+
+// Estoque e disponível nos cards (pedido do usuário). Disponível = unidades livres na data do evento do projeto aberto
+// (sem projeto, hoje) — mesma conta da Helena e da tela Disponibilidade de Itens. Uma consulta por data pro acervo todo.
+const estoqueCache = new Map();
+const hojeSP = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+function dataDoEstoque(){
+  const d = String(S.projeto?.data_evento || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : hojeSP();
+}
+function estoqueDaData(data){
+  if(!estoqueCache.has(data)){
+    const sessao = S.sessao || {};
+    estoqueCache.set(data, supabase.functions.invoke("catalogo-assistente", {
+      body: { action: "disponibilidade", todos: true, data, empresa_id: sessao.empresa_id, catalog_token: sessao.token || undefined },
+    }).then(({ data: r, error }) => { if(error || !r?.mapa) throw error || new Error("sem mapa"); return r.mapa; })
+      .catch(() => { setTimeout(() => estoqueCache.delete(data), 15000); return null; }));
+  }
+  return estoqueCache.get(data);
+}
+function estoqueHtml(d, data){
+  if(!d) return "";
+  const [total, livre] = d;
+  const quando = data === hojeSP() ? "hoje" : "em " + data.slice(8, 10) + "/" + data.slice(5, 7);
+  return `<span class="is-estoque">Estoque <b>${total}</b></span><span class="${livre ? "is-livre" : "is-esgotado"}">${livre ? `Disponível ${quando} <b>${livre}</b>` : `Esgotado ${quando}`}</span>`;
+}
+let estoquePintando = null;
+async function pintarEstoque(raiz = document){
+  if(visitante()) return;
+  const data = dataDoEstoque();
+  const alvos = [...raiz.querySelectorAll("[data-stock-item]")].filter((el) => el.dataset.stockData !== data + ":" + el.dataset.stockItem);
+  if(!alvos.length) return;
+  const mapa = await estoqueDaData(data);
+  if(!mapa) return;
+  for(const el of alvos){
+    el.dataset.stockData = data + ":" + el.dataset.stockItem;
+    const html = estoqueHtml(mapa[el.dataset.stockItem], data);
+    el.hidden = !html;
+    if(el.innerHTML !== html) el.innerHTML = html;
+  }
+}
+function vigiarEstoque(){
+  const agendar = () => { if(estoquePintando) return; estoquePintando = requestAnimationFrame(() => { estoquePintando = null; pintarEstoque(); }); };
+  new MutationObserver((lista) => { if(lista.some((m) => [...m.addedNodes].some((n) => n.nodeType === 1 && (n.matches?.("[data-stock-item]") || n.querySelector?.("[data-stock-item]"))))) agendar(); })
+    .observe(document.body, { childList: true, subtree: true });
+  setInterval(agendar, 3000);
+  agendar();
+}
+
 function cardProduto(i){
   const qtd = qtdNoAmbiente(i.id);
   const cores = i.variantGroup?.length > 1 ? `<span class="cores">${i.variantGroup.slice(0, 5).map((v) => `<i style="background-image:url('${esc(otimizar(v.photo, 40))}')"></i>`).join("")}</span>` : "";
   return `<button type="button" class="produto" data-item="${esc(i.id)}"><span class="produto-foto"><img src="${esc(otimizar(i.photo, 360))}" alt="" loading="lazy">${qtd ? `<span class="produto-qtd">${qtd}</span>` : ""}</span>
-    <strong>${esc(i.name)}</strong>${i.dims ? `<small>${esc(i.dims)}</small>` : ""}${!visitante() ? `<b>${i.rentalPrice === null ? "Sob consulta" : dinheiro.format(i.rentalPrice)}</b>` : ""}${cores}</button>`;
+    <strong>${esc(i.name)}</strong>${i.dims ? `<small>${esc(i.dims)}</small>` : ""}${!visitante() ? `<b>${i.rentalPrice === null ? "Sob consulta" : dinheiro.format(i.rentalPrice)}</b>` : ""}${!visitante() ? `<span class="produto-estoque" data-stock-item="${esc(i.id)}" hidden></span>` : ""}${cores}</button>`;
 }
 function aoClicarComum(e){
   const aba = e.target.closest("[data-ir-aba]"); if(aba){ irParaAba(aba.dataset.irAba); return; }
@@ -359,22 +411,30 @@ function abrirItem(id){ const i = acharItem(id); if(i) empurrar(telaItem(i)); }
 // Rola até a primeira e circula as indicadas (mesmo desenho do computador).
 const SVG_CIRCULO = `<svg class="helena-circulo" viewBox="0 0 200 160" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M58 22 C112 4 184 22 190 74 C196 128 120 156 66 146 C14 136 2 86 22 52 C36 28 74 14 118 16"/></svg>`;
 function principalApp(id){ const i = S.itens.find((x) => String(x.id) === String(id) || x.variantGroup?.some((v) => String(v.id) === String(id))); return i || null; }
-function mostrarPelaHelena(ids, { circular = true } = {}){
+function mostrarPelaHelena(ids, { circular = false, ondeEstiver = false, exato = false, titulo = "" } = {}){
   const itens = [...new Map((ids || []).map(principalApp).filter(Boolean).map((i) => [String(i.id), i])).values()];
   if(!itens.length) return;
-  if(S.aba !== "catalogo") irParaAba("catalogo");
-  const cats = new Set(itens.map((i) => i.cat));
-  const tela = cats.size === 1 ? telaCategoria(itens[0].cat)
-    : (() => { const el = novaTela(`${topo("Seleção da Helena", { extra: chipProjeto() })}<div class="tela-rolagem"><div class="grade-produtos">${itens.map(cardProduto).join("")}</div></div>`, ""); el.addEventListener("click", aoClicarComum); return el; })();
-  empurrar(tela);
+  const ids2 = itens.map((i) => String(i.id));
+  const cardsEm = (raiz) => [...raiz.querySelectorAll("[data-item]")].filter((c) => ids2.includes(String(principalApp(c.dataset.item)?.id)));
+  const atual = S.pilha.at(-1)?.el;
+  let tela = ondeEstiver && S.aba === "catalogo" && atual && cardsEm(atual).length === ids2.length ? atual : null;
+  if(!tela){
+    if(S.aba !== "catalogo") irParaAba("catalogo");
+    const cats = new Set(itens.map((i) => i.cat));
+    tela = !exato && cats.size === 1 ? telaCategoria(itens[0].cat)
+      : (() => { const el = novaTela(`${topo(titulo || "Seleção da Helena", { extra: chipProjeto() })}<div class="tela-rolagem"><div class="grade-produtos">${itens.map(cardProduto).join("")}</div></div>`, ""); el.addEventListener("click", aoClicarComum); return el; })();
+    empurrar(tela);
+  }
   setTimeout(() => {
-    const ids2 = itens.map((i) => String(i.id));
-    const cards = [...tela.querySelectorAll("[data-item]")].filter((c) => ids2.includes(String(principalApp(c.dataset.item)?.id)));
+    const cards = cardsEm(tela);
     if(!cards.length) return;
     cards[0].scrollIntoView({ behavior: "smooth", block: "center" });
-    if(circular) cards.forEach((card, n) => { card.classList.add("helena-alvo"); card.insertAdjacentHTML("beforeend", SVG_CIRCULO); card.querySelector(".helena-circulo").style.animationDelay = `${600 + n * 350}ms`; });
-  }, 380);
+    if(!circular) return;
+    tela.querySelectorAll(".helena-alvo").forEach((c) => { c.classList.remove("helena-alvo"); c.querySelector(".helena-circulo")?.remove(); });
+    cards.forEach((card, n) => { card.classList.add("helena-alvo"); card.insertAdjacentHTML("beforeend", SVG_CIRCULO); card.querySelector(".helena-circulo").style.animationDelay = `${500 + n * 350}ms`; });
+  }, tela === atual ? 60 : 380);
 }
+
 
 function telaItem(itemInicial){
   let item = itemInicial;
@@ -717,6 +777,20 @@ window.catalogAssistenteProjeto = {
   },
   async usarProjeto(id){ await usarProjeto(id); atualizarTelaAtual(); },
   enviarPedido(){ setTimeout(() => { irParaAba("projeto"); enviarPedido().then(atualizarTelaAtual); }, 320); },
+  // Versão final do pedido (a mesma prévia do computador), aberta e fechada pela Helena.
+  async verPedido(abrir){
+    if(!abrir){ S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
+    if(!S.projeto) return false;
+    for(const href of ["catalogo-projetos.css?v=20261016-vitrine", "projeto-apresentacao.css?v=20261016-vitrine"]){
+      if(!document.querySelector(`link[data-previa="${href}"]`)){ const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
+    }
+    const m = await import("./projeto-apresentacao.mjs?v=20261016-vitrine");
+    await new Promise((r) => setTimeout(r, 360));
+    document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());
+    S.previaHelena = m.abrirVisualizacaoPedido({ titulo: S.projeto.noivos || "Pedido", model: m.dadosApresentacao(S.projeto, acharItem),
+      decorador: S.decorador, empresa: S.empresa, flutuante: true });
+    return true;
+  },
   async atualizarEvento({ data_evento, local_evento, evento, noivos }){
     const p = S.projeto;
     if(!p) throw new Error("Abra um projeto primeiro.");
@@ -744,16 +818,16 @@ window.catalogAddCompositionToProject = async (src) => {
   try{
     const blob = await (await fetch(src)).blob();
     const caminho = `${S.sessao.empresa_id}/${p.id}/renders/${crypto.randomUUID()}.jpg`;
-    const { error } = await supabase.storage.from("projetos").upload(caminho, blob, { contentType: blob.type || "image/jpeg", upsert: false });
+    const { error } = await arquivosProjeto().upload(caminho, blob, { contentType: blob.type || "image/jpeg", upsert: false });
     if(error) throw error;
     const comp = S.composicoes.find((c) => c.src === src);
     let cena = null;
     if(comp?.cena){
       const cc = `${S.sessao.empresa_id}/${p.id}/cenas/${crypto.randomUUID()}.json`;
-      const { error: e2 } = await supabase.storage.from("projetos").upload(cc, new Blob([JSON.stringify(comp.cena.snapshot)], { type: "application/json" }), { contentType: "application/json" });
-      if(!e2) cena = { url: supabase.storage.from("projetos").getPublicUrl(cc).data.publicUrl, path: cc, tipo: "ia" };
+      const { error: e2 } = await arquivosProjeto().upload(cc, new Blob([JSON.stringify(comp.cena.snapshot)], { type: "application/json" }), { contentType: "application/json" });
+      if(!e2) cena = { url: arquivosProjeto().getPublicUrl(cc).data.publicUrl, path: cc, tipo: "ia" };
     }
-    amb.renders.push({ id: novoId("r"), url: supabase.storage.from("projetos").getPublicUrl(caminho).data.publicUrl, path: caminho, origem: "Assistente comercial", criado_em: new Date().toISOString(), ...(cena ? { cena } : {}) });
+    amb.renders.push({ id: novoId("r"), url: arquivosProjeto().getPublicUrl(caminho).data.publicUrl, path: caminho, origem: "Assistente comercial", criado_em: new Date().toISOString(), ...(cena ? { cena } : {}) });
     (comp?.itens || []).forEach(({ id, quantidade }) => {
       const linha = amb.itens.find((i) => String(i.item_id) === id);
       if(!linha) amb.itens.push({ item_id: id, quantidade });
@@ -885,6 +959,7 @@ async function iniciar(){
     if(!visitante()){
       const ativo = lerAtivo();
       if(ativo?.id) await usarProjeto(ativo.id, ativo.amb).catch(() => { try{ localStorage.removeItem(chaveAtivo()); }catch{} });
+      vigiarEstoque();
       initCatalogAssistente(Object.assign(ctxHelena, {
         supabase, getSession: () => S.sessao, modoPedido: false, notify, temProjetos: true,
         // Fechar a Helena dispara um "voltar" (history); espera ele passar antes de empilhar a tela do item.

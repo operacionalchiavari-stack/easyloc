@@ -1,4 +1,5 @@
 import { renderPdfPage } from './catalogo-pdf.mjs';
+import { arquivosDoBucket } from './catalogo-arquivos.mjs';
 // matchingItems importado sob outro nome: o arquivo já tem uma função local `matchingItems(pattern)` (usada
 // pelo diálogo antigo de "Montagem automática"/PRESETS, assinatura totalmente diferente — um regex solto, não
 // um papel de formato) — nomes iguais, propósitos diferentes, mantidos os dois sem tocar no que já existia.
@@ -26,6 +27,8 @@ function detectPerformanceProfile(){
   };
 }
 
+// Bucket "lounge-formatos": o decorador (sem login) passa pela função catalogo-arquivos — ver catalogo-arquivos.mjs.
+const arquivosLounge = () => arquivosDoBucket(studio.supabase, "lounge-formatos", () => ({ token: studio.token, empresa_id: studio.empresaId }));
 const studio = {
   initialized: false, items: [], supabase: null, empresaId: null, three: null,
   scene: null, camera: null, renderer: null, orbit: null, transform: null,
@@ -267,10 +270,11 @@ function canvasParaJpegBlob(canvas, qualidade = .86){
 // Nunca lança: quem chama trata qualquer falha como "sem foto ainda", nunca como erro visível pra pessoa (ver
 // anexarFotoDoFormato/backfillFormatCapa, os dois únicos chamadores).
 async function salvarCapaDoFormato(formatoId, nome, papeis, blob, categoria){
+  if(studio.pedidoComercial) return;
   const path = `${studio.empresaId}/${formatoId}/capa.jpg`;
-  const { error: uploadError } = await studio.supabase.storage.from("lounge-formatos").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+  const { error: uploadError } = await arquivosLounge().upload(path, blob, { upsert: true, contentType: "image/jpeg" });
   if(uploadError) throw uploadError;
-  const { data: urlData } = studio.supabase.storage.from("lounge-formatos").getPublicUrl(path);
+  const { data: urlData } = arquivosLounge().getPublicUrl(path);
   // p_categoria repassada aqui também (não só na 1ª chamada) — o `coalesce` da RPC já protege contra apagar a
   // categoria existente se vier null, mas mandar o valor de verdade evita depender só do coalesce.
   const { error: rpcError } = await studio.supabase.rpc("lounge_formato_salvar", {
@@ -314,6 +318,7 @@ async function anexarFotoDoFormato(formatoId, nome, pecas, categoria){
 // tratamento de erro silencioso de anexarFotoDoFormato — nunca atrapalha quem só queria VER a prévia. Se o
 // formato for favorito, a prateleira (que nunca renderiza ao vivo por conta própria) ganha a foto de graça.
 async function backfillFormatCapa(format, dataUrl){
+  if(studio.pedidoComercial) return;
   if(!format.custom || !format.recordId || format.capaUrl) return;
   try{
     const image = new Image();
@@ -369,7 +374,7 @@ function formatCardMarkup(format){
 // e abre "Escolher os móveis" (ver initStudioLibraryTabs). Sem estrela pro "Lounge compacto" embutido (sem
 // `recordId`, não tem onde persistir um favorito).
 function formatBrowseCardMarkup(format){
-  const star = format.recordId
+  const star = !studio.pedidoComercial && format.recordId
     ? `<button type="button" class="studio-format-favorite ${format.favorito ? "is-active" : ""}" data-format-favorite="${escapeHtml(format.key)}" aria-pressed="${format.favorito ? "true" : "false"}" aria-label="${format.favorito ? "Remover dos favoritos" : "Marcar como favorito"}" title="${format.favorito ? "Remover dos favoritos" : "Marcar como favorito"}">${format.favorito ? "★" : "☆"}</button>`
     : "";
   return `<div class="studio-format-browse-card">${formatCardMarkup(format)}${star}</div>`;
@@ -441,6 +446,7 @@ function renderFormatsBrowseModal(){
 // Favoritar/desfavoritar direto do modal (sem editar o formato) — otimista: já atualiza a estrela e a
 // prateleira lateral na hora, desfaz se a RPC falhar.
 async function toggleFormatFavorite(key){
+  if(studio.pedidoComercial) return;
   const format = availableFormats.find((candidate) => candidate.key === key);
   if(!format || !format.recordId) return;
   const next = !format.favorito;
@@ -1538,6 +1544,7 @@ function effectiveFormatCategory(){
 }
 
 function openSaveFormat(){
+  if(studio.pedidoComercial) return;
   const members = groupMembers(studio.selected);
   if(members.length < 2 || studio.grouping) return;
   const { THREE } = studio.three;
@@ -1586,6 +1593,7 @@ function openSaveFormat(){
 }
 
 async function saveSelectedFormat(event){
+  if(studio.pedidoComercial){event.preventDefault();return;}
   event.preventDefault();
   if(savingFormat || !formatDraft) return;
   const name = $("studioFormatName").value.trim();
@@ -1623,7 +1631,7 @@ async function saveSelectedFormat(event){
 
 function selectObject(object){
   studio.selected = object || null;
-  $("studioSaveFormatButton")?.classList.toggle("hidden", !object || studio.grouping || groupMembers(object).length < 2);
+  $("studioSaveFormatButton")?.classList.toggle("hidden", studio.pedidoComercial || !object || studio.grouping || groupMembers(object).length < 2);
   if(object){
     studio.transform.detach();
     $("studioSelectedLabel").textContent = object.userData.item?.name || "Móvel selecionado";
@@ -3298,7 +3306,8 @@ async function handleToolbarAction(event){
   }
 }
 
-export function initCatalogStudio3D({ items, supabase, empresaId, ownerId, token }){
+export function initCatalogStudio3D({ items, supabase, empresaId, ownerId, token, pedidoComercial = false }){
+  studio.pedidoComercial = pedidoComercial;
   if(studio.initialized) return;
   studio.initialized = true; studio.items = items; studio.supabase = supabase; studio.empresaId = empresaId;
   studio.ownerId = ownerId;

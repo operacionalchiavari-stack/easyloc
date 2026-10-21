@@ -151,9 +151,10 @@ export async function imprimirPedido(model, { decorador = null, empresa = null, 
 // de catalogo-projetos.css carregado na página.
 // extra: HTML de botões a mais no rodapé; onMount({ dialog, atualizar }) — atualizar(model) redesenha a prévia (e o PDF
 // passa a usar o model novo), usado pelo "Renderizar projeto com IA" da Lista Completa.
-export function abrirVisualizacaoPedido({ titulo = 'Pedido', model, decorador = null, empresa = null, observacao = '', extra = '', onMount = null }){
+// flutuante: aberta pela Helena — sem travar a tela (a conversa e a barra dela continuam usáveis por cima pra pedir "fecha o pedido").
+export function abrirVisualizacaoPedido({ titulo = 'Pedido', model, decorador = null, empresa = null, observacao = '', extra = '', onMount = null, flutuante = false }){
   const dialog = document.createElement('dialog');
-  dialog.className = 'cpj-modal is-wide cpj-order-preview';
+  dialog.className = 'cpj-modal is-wide cpj-order-preview' + (flutuante ? ' is-flutuante' : '');
   dialog.innerHTML = `<form class="cpj-modal-form" method="dialog" novalidate>
     <header><h3>${esc(titulo)}</h3></header>
     <div class="cpj-modal-body">${pedidoPreviewHtml(model, { decorador, empresa })}</div>
@@ -173,7 +174,12 @@ export function abrirVisualizacaoPedido({ titulo = 'Pedido', model, decorador = 
     finally{ botao.disabled = false; botao.textContent = 'Baixar PDF'; }
   });
   onMount?.({ dialog, atualizar(novo){ model = novo; const corpo = dialog.querySelector('.cpj-modal-body'); if(corpo) corpo.innerHTML = pedidoPreviewHtml(model, { decorador, empresa }); } });
-  dialog.showModal();
+  if(flutuante){
+    const esc = (event) => { if(event.key === 'Escape' && dialog.open) dialog.close(); };
+    document.addEventListener('keydown', esc);
+    dialog.addEventListener('close', () => document.removeEventListener('keydown', esc));
+    dialog.show();
+  }else dialog.showModal();
   return dialog;
 }
 async function imprimirDocumento(html){
