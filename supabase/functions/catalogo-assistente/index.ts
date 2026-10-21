@@ -130,7 +130,7 @@ function pecasCitadas(mensagem: string, acervo: Item[]) {
   const texto = " " + normalizar(mensagem).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ") + " ";
   const achadas = new Map<string, Item>();
   for (const i of acervo) {
-    const nome = normalizar(i.nome).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+(p|m|g|gg)$/, "").trim();
+    const nome = normalizar(i.nome).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim().replace(/\s+(p|m|g|gg)$/, "");
     const [tipo, ...resto] = nome.split(" ");
     const modelo = resto.join(" ");
     const casa = texto.includes(` ${nome} `) || (modelo.length >= 4 && texto.includes(` ${modelo} `) && texto.includes(` ${tipo}`));
@@ -175,6 +175,19 @@ function buscarItens(acervo: Item[], a: any, disp?: Map<string, { total: number;
       ...resumoItem(g[0]), ...(disp ? { livres_na_data: livres(g[0]) } : {}),
       ...(g.length > 1 ? { variacoes: g.slice(0, 8).map((v) => ({ id: v.ref, nome: v.nome, cor: v.cor || undefined, ...(disp ? { livres_na_data: livres(v) } : {}) })), total_variacoes: g.length } : {}),
     })) };
+}
+
+// Todas as peças de um tipo/estilo livres na data (pedido do usuário: ela mostra o que tem e a pessoa escolhe).
+function opcoesDisponiveis(acervo: Item[], a: any, disp?: Map<string, { total: number; livre: number }> | null): string[] {
+  const termos = normalizar(a?.texto).split(/\s+/).filter((t) => t.length > 1);
+  const cat = normalizar(a?.categoria), sub = normalizar(a?.subcategoria);
+  const mat = normalizar(a?.material), cor = normalizar(a?.cor), est = normalizar(a?.estilo);
+  return acervo.filter((i) =>
+    (!cat || normalizar(i.categoria).includes(cat)) && (!sub || normalizar(i.subcategoria).includes(sub)) &&
+    (!mat || normalizar(i.material).includes(mat)) && (!cor || normalizar(i.cor).includes(cor)) &&
+    (!est || normalizar(i.estilo).includes(est)) && termos.every((t) => i.busca.includes(t)) &&
+    (!disp || (() => { const d = disp.get(i.id); return !d || !d.total || d.livre > 0; })()))
+    .slice(0, 80).map((i) => i.id);
 }
 
 function listarCategorias(acervo: Item[]) {
@@ -223,76 +236,36 @@ function sugerirCombinacoes(acervo: Item[], a: any, perfil: any) {
   };
 }
 
-// Mapa item → { total, livre } numa data (mesma regra de verificarDisponibilidade, pra todos os itens de uma vez — usado
-// no filtro "disponível em" da busca e na trava de adicionar_ao_pedido). total 0 = estoque não cadastrado.
+// Mapa item → { total, livre } numa data. A conta é a do banco (operacao_disponibilidade, out/2026): a mesma regra que
+// trava a reserva do pedido e a tela Disponibilidade de Itens — kit vale pelos componentes, peça em avaria/manutenção ou
+// que ainda não voltou não está livre, evento de vários dias reserva o período inteiro. total 0 = estoque não cadastrado.
 async function mapaDisponibilidade(ctx: Ctx, data: string) {
-  // A API devolve no máximo 1000 linhas por consulta: itens em páginas; reservas só dos pedidos perto da data (±60 dias,
-  // e a cobertura exata é conferida abaixo), depois as linhas desses pedidos em lotes.
-  const itens: any[] = [];
-  for (let de = 0; ; de += 1000) {
-    const { data: pagina } = await ctx.service.from("itens").select("id,estoque_total,estoque_manutencao").eq("empresa_id", ctx.empresaId).order("id").range(de, de + 999);
-    itens.push(...(pagina || []));
-    if (!pagina || pagina.length < 1000) break;
-  }
-  const dia = new Date(data + "T12:00:00Z");
-  const janela = (d: number) => new Date(dia.getTime() + d * 86400000).toISOString().slice(0, 10);
-  const { data: pedidos } = await ctx.service.from("separacoes_pedidos").select("id,data_evento,data_entrega,data_coleta,data_hora,status,status_comercial")
-    .eq("empresa_id", ctx.empresaId).gte("data_evento", janela(-60)).lte("data_evento", janela(60)).range(0, 999);
-  const ativos = (pedidos || []).filter((p: any) => {
-    const st = normalizar(p.status), com = normalizar(p.status_comercial);
-    if (st === "cancelado" || com === "cancelado" || com === "orcamento") return false;
-    const ini = String(p.data_entrega || p.data_evento || p.data_hora || "").slice(0, 10);
-    const fim = String(p.data_coleta || p.data_evento || p.data_hora || "").slice(0, 10);
-    return ini && fim ? data >= ini && data <= fim : String(p.data_evento || "").slice(0, 10) === data;
-  }).map((p: any) => p.id);
-  const reservado = new Map<string, number>();
-  for (let k = 0; k < ativos.length; k += 50) {
-    for (let de = 0; ; de += 1000) {
-      const { data: linhas } = await ctx.service.from("separacoes_itens").select("item_id,quantidade_solicitada").in("separacao_pedido_id", ativos.slice(k, k + 50)).order("id").range(de, de + 999);
-      for (const r of linhas || []) reservado.set(String(r.item_id), (reservado.get(String(r.item_id)) || 0) + (Number(r.quantidade_solicitada) || 0));
-      if (!linhas || linhas.length < 1000) break;
-    }
-  }
   const mapa = new Map<string, { total: number; livre: number }>();
-  for (const i of itens || []) {
-    const total = Number(i.estoque_total) || 0;
-    mapa.set(String(i.id), { total, livre: Math.max(0, total - (Number(i.estoque_manutencao) || 0) - (reservado.get(String(i.id)) || 0)) });
+  for (let de = 0; ; de += 1000) {
+    const { data: pagina, error } = await ctx.service.rpc("operacao_disponibilidade", { p_empresa: ctx.empresaId, p_data: data }).order("item_id").range(de, de + 999);
+    if (error) throw new Error("Não foi possível consultar a disponibilidade: " + error.message);
+    for (const r of pagina || []) mapa.set(String(r.item_id), { total: Number(r.total) || 0, livre: Number(r.livre) || 0 });
+    if (!pagina || pagina.length < 1000) break;
   }
   return mapa;
 }
 
-// Disponibilidade: mesma conta da tela Disponibilidade de Itens (estoque − manutenção − reservado em pedidos que não são
-// orçamento/cancelados, no período do pedido). Sem estoque cadastrado, não afirma nada: "a equipe confirma".
+// Disponibilidade de alguns itens numa data, pela mesma conta do banco (mapaDisponibilidade). Sem estoque cadastrado,
+// não afirma nada: "a equipe confirma".
 async function verificarDisponibilidade(ctx: Ctx, acervo: Item[], a: any, dataPadrao: string | null) {
   const ids = (Array.isArray(a?.item_ids) ? a.item_ids : []).map((x: unknown) => acharItem(acervo, x)?.id).filter(Boolean).slice(0, 20) as string[];
   if (!ids.length) return { erro: "Informe ao menos um item válido." };
-  const data = /^\d{4}-\d{2}-\d{2}$/.test(String(a?.data || "")) ? String(a.data) : dataPadrao;
-  const [{ data: itens }, { data: patrimonios }, { data: reservas }] = await Promise.all([
-    ctx.service.from("itens").select("id,estoque_total,estoque_manutencao,estoque_indisponivel").eq("empresa_id", ctx.empresaId).in("id", ids),
-    ctx.service.from("itens_patrimonios").select("item_id,status").eq("empresa_id", ctx.empresaId).in("item_id", ids),
-    data ? ctx.service.from("separacoes_itens").select("item_id,quantidade_solicitada,separacoes_pedidos(data_evento,data_entrega,data_coleta,data_hora,status,status_comercial)").eq("empresa_id", ctx.empresaId).in("item_id", ids) : Promise.resolve({ data: [] }),
-  ]);
+  const data = DATA_RE.test(String(a?.data || "")) ? String(a.data) : dataPadrao;
+  const mapa = await mapaDisponibilidade(ctx, data || new Date().toISOString().slice(0, 10));
   const quantidade = Number(a?.quantidade) || 1;
   return {
     data: data || "sem data definida",
     itens: ids.map((id: string) => {
-      const row: any = (itens || []).find((r: any) => String(r.id) === id) || {};
-      const pats = (patrimonios || []).filter((p: any) => String(p.item_id) === id);
-      const total = Number(row.estoque_total) || pats.filter((p: any) => p.status !== "inativo").length;
+      const d = mapa.get(id) || { total: 0, livre: 0 };
       const nome = acervo.find((i) => i.id === id)?.nome;
       const ref = acervo.find((i) => i.id === id)?.ref;
-      if (!total) return { id: ref, nome, situacao: "estoque não cadastrado no sistema — a equipe comercial confirma a disponibilidade" };
-      const manut = Number(row.estoque_manutencao) || pats.filter((p: any) => p.status === "manutencao").length;
-      const reservado = !data ? 0 : (reservas || []).filter((r: any) => {
-        if (String(r.item_id) !== id) return false;
-        const p = r.separacoes_pedidos || {};
-        const st = normalizar(p.status), com = normalizar(p.status_comercial);
-        if (st === "cancelado" || com === "cancelado" || com === "orcamento") return false;
-        const ini = String(p.data_entrega || p.data_evento || p.data_hora || "").slice(0, 10);
-        const fim = String(p.data_coleta || p.data_evento || p.data_hora || "").slice(0, 10);
-        return ini && fim ? data >= ini && data <= fim : String(p.data_evento || "").slice(0, 10) === data;
-      }).reduce((s: number, r: any) => s + (Number(r.quantidade_solicitada) || 0), 0);
-      const livre = Math.max(0, total - manut - reservado);
+      if (!d.total) return { id: ref, nome, situacao: "estoque não cadastrado no sistema — a equipe comercial confirma a disponibilidade" };
+      const livre = data ? d.livre : d.total;
       return { id: ref, nome, disponivel: livre, atende_quantidade_pedida: livre >= quantidade, situacao: livre >= quantidade ? "disponível" : livre ? "disponível em quantidade menor" : "sem unidades livres nessa data" };
     }),
   };
@@ -434,8 +407,10 @@ O objetivo final é a pessoa sair com o projeto montado e o pedido enviado à Ch
 5. Montar cada ambiente (lounge, bar, cerimônia...) — muitas clientes conhecem a linha inteira da Chiavari, então NÃO saia sugerindo:
    a) Primeiro pergunte se ela já sabe quais peças quer naquele ambiente.
    b) Se ela sabe: ela diz as peças e você coloca (confirmando quantidade). Sem palpite.
-   c) Se não sabe: pergunte o estilo que ela procura e mostre na tela algumas OPÇÕES desse estilo para aquele ambiente (mostrar_itens, de 4 a 8 peças, de tipos que fazem sentido ali), sem dizer qual é a melhor. Ela olha e escolhe.
-   d) Só recomende peças ou combinações específicas ("eu iria de...", "combina com...") quando ela PEDIR sugestão ("o que você sugere?", "monta pra mim").
+   c) Se não sabe: pergunte que tipo de peça e o estilo, e mostre TUDO o que está disponível desse tipo/estilo com mostrar_opcoes (o catálogo dela abre só com essas peças). Não escolha, não destaque e não cite peças por conta própria: diga só quantas opções há e deixe ela olhar e escolher.
+   d) Quando ela escolher uma peça, destaque-a na tela com circular_escolha e confira em poucas palavras ("é essa que destaquei?"). Ao colocar no pedido ela também é destacada automaticamente.
+   e) Só recomende peças ou combinações específicas ("eu iria de...", "combina com...") quando ela PEDIR sugestão ("o que você sugere?", "monta pra mim").
+   NÃO ofereça peças, combinações, complementos nem "que tal também..." por iniciativa própria em nenhum momento.
 6. Montar junto: confirme quantidades e ambientes antes de colocar no pedido; mostre fotos quando ajudarem a decidir.
 7. Fechar sem pressão: revise o pedido com ela e combine o próximo passo (enviar à equipe).
 Quando ela PEDIR uma sugestão ou pedir para você montar ("monta pra mim", "o que você sugere pro lounge?"), proponha já na mesma resposta: peças concretas do acervo (buscadas e mostradas em cartões), quantidades e o porquê — nunca responda "vou sugerir" no lugar da proposta.
@@ -446,7 +421,7 @@ REGRAS DE VERDADE (MUITO IMPORTANTES)
 - Cada item tem um código curto (ex.: m12). Nas ferramentas use exatamente esse código; nunca mostre o código para a pessoa.
 - Valores: mostre o valor de locação da ferramenta; "sob consulta" quando não houver. Frete, montagem e serviços extras quem confirma é a equipe comercial no pedido oficial.
 - Nunca diga que colocou, incluiu, tirou ou trocou algo sem ter chamado a ferramenta (adicionar_ao_pedido/remover_do_pedido) e recebido ok.
-- Disponibilidade: use verificar_disponibilidade. Quando uma peça pedida não tiver unidades livres na data do evento, diga com clareza e gentileza: "infelizmente o <peça> não está disponível para <data>", e na mesma resposta ofereça 2 ou 3 alternativas do mesmo tipo/estilo que ESTÃO livres nessa data (buscar_itens com disponivel_em). Se houver só parte da quantidade, diga quantas restam. Nunca coloque no pedido uma peça indisponível na data.
+- Disponibilidade: use verificar_disponibilidade. Quando uma peça pedida não tiver unidades livres na data do evento, diga com clareza e gentileza: "infelizmente o <peça> não está disponível para <data>", e na mesma resposta mostre as opções do mesmo tipo que ESTÃO livres nessa data com mostrar_opcoes (sem escolher por ela). Se houver só parte da quantidade, diga quantas restam. Nunca coloque no pedido uma peça indisponível na data.
 - Disponibilidade: use verificar_disponibilidade. Quando o estoque não estiver cadastrado, diga que a equipe confirma a disponibilidade no pedido oficial (não diga que está disponível nem indisponível).
 - Para acrescentar ou tirar itens do projeto use as ferramentas; confirme com naturalidade depois ("Coloquei 2 poltronas Olivia no Lounge").
 - Cada pedido tem a sua conversa. Se não houver pedido aberto e a pessoa quiser tratar de um que já existe, use listar_projetos e abrir_projeto (pergunte qual, se não estiver claro). Se ela falar de outro pedido enquanto um está aberto, confirme e troque com abrir_projeto.
@@ -463,8 +438,9 @@ PEDIDO NOVO (criar_projeto) — o que você precisa saber antes de criar, pergun
 - Muitas vezes a decoradora ainda não sabe a data exata de entrega ou de coleta. Mesmo assim ela precisa dizer uma data provável: explique com leveza que pode ser uma previsão e que, se mudar, é só avisar a equipe da Chiavari depois. Nunca crie com data inventada por você nem com "a definir".
 - Antes de criar, repita em uma frase o resumo (tipo, entrega, evento, coleta, local) e peça a confirmação. Só chame criar_projeto com confirmado_pela_pessoa = true depois do "sim".
 - Para mudar depois alguma dessas informações (data, local, tipo, observação), use atualizar_evento.
+- Quando a pessoa pedir pra ver/abrir o pedido (a versão final, com fotos e valores), use ver_pedido com abrir=true; pra fechar, abrir=false. Funciona de qualquer lugar do catálogo. Nunca diga que abriu ou fechou o pedido sem ter chamado ver_pedido nesta resposta.
 Sem pedido aberto você ainda pode sugerir peças, mostrar cartões e montar imagens normalmente.${modo === "pedido" ? "\n- Você está dentro de um PEDIDO da equipe: o projeto é o próprio pedido. Não crie projeto nem envie pedido; só monte as peças." : ""}
-- Mostre com mostrar_itens as peças que você citar ou as opções para ela escolher: elas aparecem NO PRÓPRIO CATÁLOGO, na tela da pessoa (o catálogo abre na categoria e as peças que você indicar ganham um círculo). Fale disso com naturalidade ("tá aí na sua tela", "circulei pra você"), nunca em "cartão" nem "quer ver a foto?". Até 3 peças = indicação (circuladas); mais que isso = opções pra ela escolher.
+- O que você mostra aparece NO PRÓPRIO CATÁLOGO, na tela da pessoa. mostrar_opcoes = todas as peças disponíveis de um tipo/estilo, pra ela escolher (sem destaque). mostrar_itens = só as peças que ELA citou ou pediu pra ver (sem destaque). circular_escolha = destaca a peça que ELA escolheu, pra confirmar. Fale disso com naturalidade ("tá na sua tela", "destaquei a que você escolheu"), nunca em "cartão" nem "quer ver a foto?".
 - Para sugerir peças use o acervo INTEIRO (buscar_itens / sugerir_combinacoes sem filtro de 3D). Ter ou não modelo 3D só importa para montar a imagem da composição — nunca limite as sugestões a isso nem fale de "acervo 3D" para a pessoa.
 
 IMAGENS DE COMPOSIÇÃO
@@ -489,7 +465,7 @@ ACERVO
 - Categorias e subcategorias que existem (use estes nomes nos filtros; para um TIPO de peça — sofá, poltrona, puff, mesa de centro — filtre pela subcategoria): ${subcats()}.
 - Estilos cadastrados nas peças: ${contar("estilo")}.
 - Quando pedirem um estilo (boho, clássico, rústico...), filtre buscar_itens pelo campo estilo e por categorias reais (ex.: lounge = Estofados + Mesas Auxiliares + Aparadores). Só chame uma peça de "boho" (ou outro estilo) se o estilo dela for esse; se faltar peça de algum tipo naquele estilo, diga e ofereça a mais próxima, deixando claro o estilo dela.
-- Sempre que citar peças, mostre-as com mostrar_itens.
+- Quando ela citar peças pelo nome, mostre-as com mostrar_itens.
 
 APRENDER COM A PESSOA
 - Sempre que ela revelar gosto ou hábito (tons claros/escuros, estilos, materiais, cores, o que evita, tipo de evento, como gosta de ser atendida), chame atualizar_perfil com o que aprendeu. Faça isso discretamente, sem comentar.
@@ -518,7 +494,12 @@ const FERRAMENTAS = (modo: string) => [
   { name: "listar_categorias", description: "Categorias, subcategorias, materiais e estilos existentes no acervo.", parameters: { type: "object", properties: {} } },
   { name: "sugerir_combinacoes", description: "Peças de outras categorias que combinam com um item (estilo, família, material, cor e o gosto da pessoa).", parameters: { type: "object", properties: { item_id: { type: "string" }, somente_com_3d: { type: "boolean" } }, required: ["item_id"] } },
   { name: "verificar_disponibilidade", description: "Disponibilidade de itens numa data (padrão: data do projeto aberto).", parameters: { type: "object", properties: { item_ids: { type: "array", items: { type: "string" } }, data: { type: "string", description: "AAAA-MM-DD" }, quantidade: { type: "integer" } }, required: ["item_ids"] } },
-  { name: "mostrar_itens", description: "Leva a pessoa até as peças no próprio catálogo (abre a categoria; até 3 peças ganham um círculo de indicação).", parameters: { type: "object", properties: { item_ids: { type: "array", items: { type: "string" } } }, required: ["item_ids"] } },
+  { name: "mostrar_itens", description: "Leva a pessoa até peças específicas que ELA citou ou pediu pra ver, no próprio catálogo (sem destaque).", parameters: { type: "object", properties: { item_ids: { type: "array", items: { type: "string" } } }, required: ["item_ids"] } },
+  { name: "mostrar_opcoes", description: "Abre o catálogo da pessoa só com TODAS as peças disponíveis (na data do evento) de um tipo/estilo, pra ela escolher. Use em vez de escolher peças por ela.", parameters: { type: "object", properties: {
+    titulo: { type: "string", description: "Como chamar essa seleção na tela (ex.: Sofás boho, Mesas de centro)." },
+    categoria: { type: "string" }, subcategoria: { type: "string", description: "Tipo de peça (sofá, poltrona, puff...)." }, estilo: { type: "string" }, material: { type: "string" }, cor: { type: "string" }, texto: { type: "string" } }, required: ["titulo"] } },
+  { name: "ver_pedido", description: "Abre (abrir=true) ou fecha (abrir=false) na tela da pessoa a VERSÃO FINAL do pedido aberto: a prévia com fotos, renderizações, quantidades e valores, de qualquer lugar do catálogo.", parameters: { type: "object", properties: { abrir: { type: "boolean" } }, required: ["abrir"] } },
+  { name: "circular_escolha", description: "Destaca (moldura dourada e selo Sua escolha) na tela da pessoa a(s) peça(s) que ELA escolheu, pra ela conferir que é a certa.", parameters: { type: "object", properties: { item_ids: { type: "array", items: { type: "string" } } }, required: ["item_ids"] } },
   { name: "adicionar_ao_pedido", description: "Coloca (ou define a quantidade de) um item num ambiente do projeto aberto. Cria o ambiente se não existir.", parameters: { type: "object", properties: {
     item_id: { type: "string" }, quantidade: { type: "integer", description: "Quantidade final desejada desse item no ambiente." }, ambiente: { type: "string", description: "Nome do ambiente (ex.: Lounge, Cerimônia, Bar). Vazio = ambiente ativo." } }, required: ["item_id", "quantidade"] } },
   { name: "remover_do_pedido", description: "Tira um item de um ambiente do projeto aberto.", parameters: { type: "object", properties: { item_id: { type: "string" }, ambiente: { type: "string" } }, required: ["item_id"] } },
@@ -807,7 +788,25 @@ function criarExecutor(ctx: Ctx, E: any) {
       case "mostrar_itens": {
         const ids = (Array.isArray(a?.item_ids) ? a.item_ids : []).map((x: unknown) => itemValido(x)?.id).filter(Boolean).slice(0, 8) as string[];
         ids.forEach((id: string) => E.mostrados.add(id));
-        return { mostrados: ids.length, na_tela: E.mostrados.size <= 3 ? "o catálogo foi até elas e elas estão circuladas (indicação)" : "o catálogo mostra essas opções, SEM círculo (são opções pra ela escolher)" };
+        return { mostrados: ids.length, na_tela: "o catálogo foi até elas (sem destaque)" };
+      }
+      case "mostrar_opcoes": {
+        const data = E.dataDoEvento;
+        if (data && !E.mapas.has(data)) E.mapas.set(data, await mapaDisponibilidade(ctx, data));
+        const ids = opcoesDisponiveis(E.acervo, a, data ? E.mapas.get(data) : null);
+        if (!ids.length) return { opcoes: 0, aviso: "Nada disponível com esse filtro. Diga isso e pergunte se ela quer ver outro tipo ou estilo." };
+        E.opcoes = { titulo: String(a?.titulo || "Opções").slice(0, 60), ids };
+        const nomes = new Set(ids.map((id) => itemValido(id)!.nome.replace(/\s+(P|M|G|GG)$/i, "")));
+        E.opcoes.total = nomes.size;
+        // Com o código de cada peça: quando ela escolher, circular_escolha usa exatamente esse id.
+        return { opcoes: nomes.size, ...(data ? { disponiveis_em: data } : {}), na_tela: "o catálogo dela está mostrando todas essas opções, sem destaque — deixe ela escolher",
+          pecas: ids.map((id) => { const i = itemValido(id)!; return { id: i.ref, nome: i.nome, ...(i.cor ? { cor: i.cor } : {}) }; }) };
+      }
+      case "circular_escolha": {
+        const ids = (Array.isArray(a?.item_ids) ? a.item_ids : []).map((x: unknown) => itemValido(x)?.id).filter(Boolean).slice(0, 4) as string[];
+        if (!ids.length) return { erro: "Informe a peça escolhida." };
+        ids.forEach((id: string) => E.circular.add(id));
+        return { destacadas: ids.map((id) => itemValido(id)!.nome) };
       }
       case "adicionar_ao_pedido": case "remover_do_pedido": {
         const item = itemValido(a?.item_id);
@@ -832,6 +831,7 @@ function criarExecutor(ctx: Ctx, E: any) {
           }
         }
         E.acoes.push({ tipo: "quantidade", item_id: item.id, quantidade, ambiente: amb?.nome || ambNome });
+        if (quantidade) E.circular?.add(item.id);
         // Mantém o retrato do projeto em dia para as próximas ferramentas desta mesma resposta.
         let alvo = amb;
         if (!alvo) { alvo = { id: `novo:${ambNome}`, nome: ambNome, itens: [] }; E.projeto.ambientes.push(alvo); }
@@ -927,6 +927,12 @@ function criarExecutor(ctx: Ctx, E: any) {
         E.acoes.push({ tipo: "usar_projeto", projeto_id: id });
         return { ok: true, pedido: `${p.noivos} — ${descreverEvento(E.projeto)}`, itens: (E.projeto?.ambientes || []).map((x: any) => `${x.nome}: ${x.itens.length} peça(s)`) };
       }
+      case "ver_pedido": {
+        const abrir = a?.abrir !== false;
+        if (abrir && !E.projeto) return { erro: "Não há pedido aberto. Pergunte qual pedido (listar_projetos/abrir_projeto) ou crie um." };
+        E.acoes.push({ tipo: "ver_pedido", abrir });
+        return { ok: true, na_tela: abrir ? "a versão final do pedido está aberta na tela dela" : "a versão final do pedido foi fechada" };
+      }
       case "enviar_pedido": {
         if (!E.projeto) return { erro: "Não há projeto aberto." };
         const total = E.projeto.ambientes.reduce((s: number, x: any) => s + x.itens.length, 0);
@@ -985,7 +991,8 @@ ANTES DE RESPONDER, CONFIRA (vale mais que qualquer exemplo acima):
 - No máximo UMA pergunta por mensagem.
 - Não pergunte de novo nem "confirme" o que a pessoa já respondeu nesta conversa; use e siga.
 - Horário/período de entrega e coleta: é opcional. Se a pessoa não disser junto com a data, não pergunte.
-- Sem abrir com "Perfeito", "Ótimo", "Claro" ou o nome da pessoa; sem repetir o que ela acabou de dizer.`;
+- Sem abrir com "Perfeito", "Ótimo", "Claro" ou o nome da pessoa; sem repetir o que ela acabou de dizer.
+- Não ofereça peças, complementos nem combinações que ela não pediu ("quer complementar com poltronas?", "que tal uma mesa?" são proibidos). Depois de colocar uma peça, pergunte só o que falta sobre ela (quantidade, ambiente) ou o que ela quer fazer agora.`;
 
 async function conversar(ctx: Ctx, body: any) {
   const arquivos = arquivosValidos(ctx, body?.arquivos);
@@ -1046,14 +1053,25 @@ async function conversar(ctx: Ctx, body: any) {
   }
   const itemValido = (id: unknown) => acharItem(acervo, id);
 
-  const E: any = { acervo, modo, perfil, perfilMudou: false, projeto, formatos, acoes, mostrados, mapas, dataDoEvento };
+  const E: any = { acervo, modo, perfil, perfilMudou: false, projeto, formatos, acoes, mostrados, mapas, dataDoEvento, circular: new Set<string>(), opcoes: null };
+  // A peça que a pessoa nomeou por inteiro ("quero o Sofá Modular Duo - 2 Módulos Horizontal") é circulada na tela dela
+  // pra conferir que é essa (pedido do usuário) — sem depender do modelo lembrar de circular_escolha. Só o nome completo;
+  // se um nome achado estiver dentro de outro também achado, vale o mais longo.
+  {
+    const limpo = (v: string) => normalizar(v).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+    const texto = " " + limpo(mensagem) + " ";
+    const inteiras = citadas.filter((i) => texto.includes(" " + limpo(i.nome).replace(/\s+(p|m|g|gg)$/, "") + " "));
+    const nomes = inteiras.map((i) => limpo(i.nome));
+    inteiras.filter((_, n) => !nomes.some((o, k) => k !== n && o.length > nomes[n].length && o.includes(nomes[n]))).slice(0, 3).forEach((i) => E.circular.add(i.id));
+    if (E.circular.size) messages.splice(messages.length - 1, 0, { role: "system", content: "O sistema já destacou na tela dela (moldura dourada, selo Sua escolha): " + [...E.circular].map((id) => acharItem(acervo, id)!.nome).join(", ") + ". Não precisa chamar circular_escolha pra essas." });
+  }
   const executar = criarExecutor(ctx, E);
 
   const gostos = extrairGostos(mensagem, E.perfil);
   let resposta = "";
   // Pedido de ação ("coloca", "inclui", "tira", "quero o sofá X no lounge"...): na 1ª rodada a ferramenta é obrigatória —
   // em teste ela respondeu "vou incluir" sem chamar nada (não incluiu nem conferiu a data).
-  const pedeAcao = /\b(coloc|inclu|adicion|acrescent|bota|bote|poe|põe|ponha|tira|tire|remov|troca|troque|quero (o|a|os|as|um|uma|\d))/i.test(normalizar(mensagem));
+  const pedeAcao = /\b(coloc|inclu|adicion|acrescent|bota|bote|poe|põe|ponha|tira|tire|remov|troca|troque|abr(e|a|ir)|fech(a|e|ar)|quero (o|a|os|as|um|uma|\d))/i.test(normalizar(mensagem));
   for (let rodada = 0; rodada < 7; rodada++) {
     const msg = await chamarOpenAI(messages, tools, rodada === 0 && pedeAcao ? "required" : "auto");
     if (!msg) break;
@@ -1071,7 +1089,7 @@ async function conversar(ctx: Ctx, body: any) {
   if (!resposta) resposta = "Desculpa, me perdi aqui por um instante. Pode repetir pra mim?";
   // Cartões com foto sem depender do modelo lembrar de mostrar_itens: toda peça encontrada nesta mensagem cujo nome
   // aparece na resposta vira cartão (até 8).
-  if (mostrados.size < 8) {
+  if (mostrados.size < 8 && !E.opcoes) {
     const textoResposta = normalizar(resposta);
     const candidatos = [...encontrados].map((id) => itemValido(id)!).filter((i) => !mostrados.has(i.id))
       .filter((i) => textoResposta.includes(normalizar(i.nome)));
@@ -1085,6 +1103,8 @@ async function conversar(ctx: Ctx, body: any) {
   const itens = [...mostrados].map((id) => { const i = itemValido(id)!; const d = dispCartoes?.get(i.id); return { id: i.id, nome: i.nome, foto: i.foto, medidas: i.medidas, categoria: i.categoria, ...(d && d.total ? { livres: d.livre, data: dataDoEvento } : {}) }; });
   const anexos = [
     ...(itens.length ? [{ tipo: "itens", itens }] : []),
+    ...(E.opcoes ? [{ tipo: "opcoes", titulo: E.opcoes.titulo, ids: E.opcoes.ids, total: E.opcoes.total }] : []),
+    ...(E.circular.size ? [{ tipo: "escolha", ids: [...E.circular] }] : []),
     ...(E.locais?.length ? [{ tipo: "locais", locais: E.locais }] : []),
     ...acoes.filter((x) => x.tipo === "renderizar").map((x) => ({ tipo: "renderizando", formato: x.formato_nome, itens: x.itens })),
   ];
@@ -1272,7 +1292,7 @@ AGORA É UMA LIGAÇÃO DE VOZ (isto vale acima das regras de formato de texto)
 - Não narre o que acontece por dentro ("não encontrei esse nome", "vou buscar parecidos", tentativas): fale só o resultado, como quem já sabe.
 - Números, valores e datas por extenso, do jeito que se fala ("trezentos e cinquenta reais a diária", "vinte e cinco de outubro"). Medidas só se perguntarem, arredondadas.
 - Descreva peças como uma vendedora descreveria, sem recitar ficha técnica. NÃO comente se uma peça tem ou não modelo 3D/imagem de composição (mesmo que a ferramenta diga tem_modelo_3d false) — só se a pessoa pedir uma foto da composição.
-- Quando citar peças, chame mostrar_itens: o catálogo da pessoa vai até elas enquanto vocês conversam e circula as que você indicar (pode mencionar isso de vez em quando, não sempre).
+- Não ofereça nem indique peças por conta própria. Quando ela quiser ver opções, chame mostrar_opcoes (o catálogo dela abre com tudo o que está disponível daquele tipo) e diga só quantas são; quando ela citar uma peça, mostrar_itens; quando ela escolher, circular_escolha (destaca) e confirme se é aquela. Só sugira se ela pedir.
 - Se a pessoa interromper, pare e escute. Se não entendeu algum nome, confirme de forma leve. Se o que você ouviu parecer só ruído, eco ou um pedaço da sua própria fala, não responda como se fosse uma pergunta: espere a pessoa falar.
 - Confirme com naturalidade o que colocou ou tirou do pedido (quantidade, peça e ambiente), cada vez com palavras diferentes.
 - Para encerrar, despeça-se com carinho e diga que o que conversaram já está no pedido e na conversa por escrito.
@@ -1349,14 +1369,14 @@ async function ferramentaDaLigacao(ctx: Ctx, body: any) {
   if (typeof args === "string") { try { args = JSON.parse(args || "{}"); } catch { args = {}; } }
   const { acervo, modo, projeto, dataDoEvento } = await estadoDaConversa(ctx, body);
   const mapas = new Map<string, Map<string, { total: number; livre: number }>>();
-  const E: any = { acervo, modo, perfil: await carregarPerfil(ctx), perfilMudou: false, projeto, formatos: null, acoes: [], mostrados: new Set<string>(), mapas, dataDoEvento };
+  const E: any = { acervo, modo, perfil: await carregarPerfil(ctx), perfilMudou: false, projeto, formatos: null, acoes: [], mostrados: new Set<string>(), mapas, dataDoEvento, circular: new Set<string>(), opcoes: null };
   let resultado: unknown;
   try { resultado = await criarExecutor(ctx, E)(nome, args || {}); }
   catch (e) { resultado = { erro: (e as Error).message || "Falha na ferramenta" }; }
   if (E.perfilMudou) await gravarPerfil(ctx, E.perfil);
   const disp = dataDoEvento ? mapas.get(dataDoEvento) || null : null;
   const itens = [...E.mostrados].map((id: string) => { const i = acharItem(acervo, id)!; const d = disp?.get(i.id); return { id: i.id, nome: i.nome, foto: i.foto, medidas: i.medidas, categoria: i.categoria, ...(d && d.total ? { livres: d.livre, data: dataDoEvento } : {}) }; });
-  return json({ resultado: JSON.stringify(resultado).slice(0, 14000), acoes: E.acoes, itens, locais: E.locais || [] });
+  return json({ resultado: JSON.stringify(resultado).slice(0, 14000), acoes: E.acoes, itens, locais: E.locais || [], opcoes: E.opcoes, circular: [...E.circular] });
 }
 
 // No fim da ligação a transcrição vira parte da conversa por escrito (fica no histórico e alimenta o perfil).
@@ -1414,9 +1434,10 @@ serve(async (req) => {
     if (acao === "disponibilidade") {
       const data = String(body?.data || "");
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return json({ erro: "Data inválida" }, 400);
-      const ids = (Array.isArray(body?.item_ids) ? body.item_ids : []).map(String).slice(0, 40);
       const mapa = await mapaDisponibilidade(ctx, data);
-      return json({ data, itens: Object.fromEntries(ids.map((id) => [id, mapa.get(id) || null])) });
+      if (body?.todos) return json({ data, mapa: Object.fromEntries([...mapa].filter(([, d]) => d.total > 0).map(([id, d]) => [id, [d.total, d.livre]])) });
+      const ids = (Array.isArray(body?.item_ids) ? body.item_ids : []).map(String).slice(0, 40);
+      return json({ data, itens: Object.fromEntries(ids.map((id: string) => [id, mapa.get(id) || null])) });
     }
     if (acao === "salvar_imagem") return await salvarImagem(ctx, body);
     if (acao === "arquivo_upload") return await urlDeUpload(ctx, body);
