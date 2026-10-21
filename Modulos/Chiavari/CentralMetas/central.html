@@ -1,6 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html data-theme-legacy>
 <head>
+<link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
+<script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
   <script src="../gas-cliente.js?v=20261016-seguranca" data-projeto="central"></script>
 <meta charset="UTF-8">
 <title>Central de Metas</title>
@@ -12,16 +16,16 @@
 <style>
 :root{
   /* Identidade do catálogo (meu-sistema/Modulos/Comercial/Catalogo) */
-  --primary:#123f86;
-  --primary-dark:#123f86;
+  --primary:var(--el-button-primary-bg,#7d603d);
+  --primary-dark:var(--el-button-primary-hover,#654d31);
   --bg:#f7f9fb;
   --card:#ffffff;
   --border:#e3e7ec;
-  --line:#d9dee5;
+  --line:var(--el-color-surface-soft,#f6f7f9);
   --text:#1f2020;
   --muted:#6b6b6b;
-  --accent:#123f86;
-  --accent-dark:#123f86;
+  --accent:var(--el-button-primary-bg,#7d603d);
+  --accent-dark:var(--el-button-primary-hover,#654d31);
   --accent-soft:#e9ecef;
   --serif:"Cormorant Garamond", Georgia, serif;
   --sans:"Manrope", system-ui, sans-serif;
@@ -61,7 +65,7 @@ h1{
   color:var(--primary);
   padding:8px 12px;
   border-radius:10px;
-  font-weight:700;
+  font-weight:600;
   cursor:pointer;
 }
 
@@ -88,12 +92,12 @@ h1{
 
 .card-almox{
   background:linear-gradient(180deg, #f4f6f8, #e9ecef);
-  border:1px solid #ced4da;
+  border:1px solid var(--el-color-border,#e3e7ec);
   border-radius:16px;
   padding:18px;
   box-shadow:
-    0 10px 30px rgba(18,63,134, 0.14),
-    0 0 0 1px rgba(18,63,134, 0.10);
+    0 10px 30px rgba(31,32,32,0.14),
+    0 0 0 1px rgba(31,32,32,0.1);
 }
 
 .card-almox .label{
@@ -104,7 +108,7 @@ h1{
 
 .card-almox .value{
   font-size:32px;
-  font-weight:800;
+  font-weight:600;
   color:#1f2020;
 }
 
@@ -160,8 +164,7 @@ table{
 }
 
 th{
-  background:var(--primary);
-  color:white;
+  background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);
   font-size:15px;
   padding:12px;
 }
@@ -176,8 +179,8 @@ tbody tr:nth-child(even){
   background:#fafbfc;
 }
 
-.ok{color:var(--green); font-weight:700;}
-.bad{color:var(--red); font-weight:700;}
+.ok{color:var(--green); font-weight:600;}
+.bad{color:var(--red); font-weight:600;}
 
 @keyframes spin{
   from{transform:rotate(0deg);}
@@ -286,8 +289,7 @@ td{
 
 /* ⚫ SOLDA */
 .Solda {
-  background:#111827;
-  color:#ffffff;
+  background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);
 }
 
 /* 🔴 MARCENARIA */
@@ -310,8 +312,8 @@ td{
 
 /* 🔵 LIMPEZA */
 .LimpezadeEstofados {
-  background:#dbeafe;
-  color:#1e3a8a;
+  background:var(--el-color-surface-soft,#f6f7f9);
+  color:var(--el-color-text,#1f2020);
 }
 
 /* 🍷 FORRAÇÃO */
@@ -335,14 +337,14 @@ td{
 
 /* 🟣 RICHARLES */
 .Richarles {
-  background:#ede9fe;
+  background:var(--el-color-surface-soft,#f6f7f9);
   color:#4c1d95;
 }
 
 /* ⚫ PEÇA FALTANDO */
 .PecaFaltando {
   background:#e3e7ec;
-  color:#374151;
+  color:var(--el-color-text,#1f2020);
 }
 
 /* 🔥 CABEÇALHO FIXO */
@@ -398,7 +400,7 @@ td{
 .linha-total td{
   background:#ffffff !important;
   color:#1f2020;
-  font-weight:700;
+  font-weight:600;
   border-top:2px solid #d3d8de !important;
 }
 .linha-total td{
@@ -432,7 +434,7 @@ td{
     margin:0 0 18px 0 !important;
     padding:0 !important;
 
-    border:1px solid #d9dee7 !important;
+    border:1px solid var(--el-color-border,#e3e7ec) !important;
     border-radius:0 !important;
 
     overflow:visible !important;
@@ -469,14 +471,13 @@ td{
   }
 
   th{
-    background:#123f86 !important;
-    color:#fff !important;
+    background:var(--el-color-surface-soft,#f6f7f9) !important;color:var(--el-color-text,#1f2020) !important;
 
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
 
     font-size:10px !important;
-    font-weight:700 !important;
+    font-weight:600 !important;
 
     padding:7px 5px !important;
 
@@ -670,7 +671,7 @@ td{
     print-color-adjust:exact !important;
 
     font-size:10px !important;
-    font-weight:700 !important;
+    font-weight:600 !important;
 
     padding:8px 6px !important;
 
@@ -723,7 +724,7 @@ td{
 .resumo-comissoes-titulo h2{
   margin:0;
   font-size:22px;
-  color:var(--primary-dark);
+  color:var(--el-color-text,#1f2020);
 }
 
 .resumo-comissoes-titulo p{
@@ -743,15 +744,15 @@ td{
   border:1px solid var(--border);
   border-radius:18px;
   overflow:hidden;
-  box-shadow:0 10px 30px rgba(15,23,42, 0.07);
+  box-shadow:0 10px 30px rgba(31,32,32,0.07);
 }
 
 .card-comissao-header{
   padding:20px 22px;
   background:linear-gradient(
     135deg,
-    #123f86,
-    #123f86
+    var(--el-color-surface-soft,#f6f7f9),
+    var(--el-color-surface-soft,#f6f7f9)
   );
   color:#ffffff;
 }
@@ -759,7 +760,7 @@ td{
 .card-comissao-header h3{
   margin:0;
   font-size:20px;
-  font-weight:700;
+  font-weight:600;
 }
 
 .card-comissao-header p{
@@ -797,7 +798,7 @@ td{
 .card-comissao-valor .valor{
   display:block;
   font-size:20px;
-  font-weight:700;
+  font-weight:600;
   color:#1f2020;
 }
 
@@ -807,7 +808,7 @@ td{
     #f8f8f5,
     #e9ecef
   );
-  border:1px solid #ced4da;
+  border:1px solid var(--el-color-border,#e3e7ec);
   border-radius:14px;
   padding:16px;
   margin-bottom:18px;
@@ -824,7 +825,7 @@ td{
 
 .card-comissao-total .valor{
   font-size:26px;
-  font-weight:800;
+  font-weight:600;
   color:#1f2020;
   white-space:nowrap;
 }
@@ -847,7 +848,7 @@ td{
   border-radius:999px;
   padding:4px 9px;
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
 }
 
 .card-comissao-lista{
@@ -879,7 +880,7 @@ td{
   border-bottom:1px solid #e3e7ec;
   color:#4f4f4f;
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
 }
 
 .card-comissao-tabela-cabecalho
@@ -921,7 +922,7 @@ td{
 .card-comissao-coluna-funcionario-nome{
   overflow-wrap:anywhere;
   font-size:15px;
-  font-weight:700;
+  font-weight:600;
   color:#1f2020;
 }
 
@@ -942,7 +943,7 @@ td{
   text-align:right;
   color:#15803d;
   font-size:16px;
-  font-weight:800;
+  font-weight:600;
   white-space:nowrap;
 }
 
@@ -971,7 +972,7 @@ td{
   padding:4px 8px;
   border-radius:999px;
   font-size:12px;
-  font-weight:700;
+  font-weight:600;
   line-height:1.25;
   text-align:center;
 }
@@ -1019,7 +1020,7 @@ td{
 
 .card-comissao-funcionario-nome{
   font-size:15px;
-  font-weight:700;
+  font-weight:600;
   color:#1f2020;
 }
 
@@ -1039,7 +1040,7 @@ td{
   border:1px solid #fecaca;
   color:#b91c1c;
   font-size:12px;
-  font-weight:700;
+  font-weight:600;
   line-height:1.2;
 }
 
@@ -1069,7 +1070,7 @@ td{
 
 .card-comissao-funcionario-valor{
   font-size:16px;
-  font-weight:800;
+  font-weight:600;
   color:#4f4f4f;
   white-space:nowrap;
 }
@@ -1150,7 +1151,7 @@ td{
 
 .card-supervisor-titulo{
   font-size:20px;
-  font-weight:700;
+  font-weight:600;
   color:#1f2020;
 }
 
@@ -1186,7 +1187,7 @@ td{
   align-items:center;
   justify-content:center;
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
 }
 
 .card-supervisor-indicador{
@@ -1207,7 +1208,7 @@ td{
 .card-supervisor-indicador .valor{
   font-size:26px;
   line-height:1;
-  font-weight:800;
+  font-weight:600;
   color:#1f2020;
   white-space:nowrap;
 }
@@ -1306,7 +1307,7 @@ td{
   border-radius:14px;
   overflow:hidden;
   margin-top:18px;
-  box-shadow:0 8px 24px rgba(15,23,42, 0.05);
+  box-shadow:0 8px 24px rgba(31,32,32,0.05);
 }
 
 .card-tabela-metas:first-child{
@@ -1321,8 +1322,8 @@ td{
   padding:13px 16px;
   background:linear-gradient(
     135deg,
-    #123f86,
-    #123f86
+    var(--el-color-surface-soft,#f6f7f9),
+    var(--el-color-surface-soft,#f6f7f9)
   );
   color:#ffffff;
 }
@@ -1335,7 +1336,7 @@ td{
   margin:0;
   padding:0;
   font-size:16px;
-  font-weight:700;
+  font-weight:600;
   color:#ffffff;
 }
 
@@ -1380,7 +1381,7 @@ td{
 
 .status-atencao-rh{
   color:#d97706;
-  font-weight:700;
+  font-weight:600;
 }
 
 .status-aguardando-rh{
@@ -1406,7 +1407,7 @@ td{
   }
 
   .card-tabela-metas-header{
-    background:#123f86 !important;
+    background:var(--el-color-surface-soft,#f6f7f9) !important;
 
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
@@ -1430,7 +1431,7 @@ td{
   align-items:center;
   gap:4px;
   padding:5px 8px;
-  border:1px solid #dbe4ee;
+  border:1px solid var(--el-color-border,#e3e7ec);
   border-radius:999px;
   background:#fafbfc;
   color:#6b6b6b;
@@ -1440,11 +1441,11 @@ td{
 
 .card-supervisor-limite strong{
   color:#1f2020;
-  font-weight:700;
+  font-weight:600;
 }
 
 .card-supervisor-status-teto{
-  font-weight:700;
+  font-weight:600;
 }
 
 .card-supervisor-status-teto.ok{
@@ -1487,7 +1488,7 @@ td{
   background:#fafbfc;
   color:#4f4f4f;
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
   white-space:nowrap;
 }
 
@@ -1514,9 +1515,9 @@ td{
   border:none;
   border-radius:8px;
   padding:0 14px;
-  background:#123f86;
+  background:var(--el-button-primary-bg, #7d603d);
   color:#ffffff;
-  font-weight:700;
+  font-weight:600;
   cursor:pointer;
 }
 
@@ -1551,7 +1552,7 @@ td{
   padding:22px;
   border-radius:16px;
   background:#ffffff;
-  box-shadow:0 24px 70px rgba(15,23,42, 0.25);
+  box-shadow:0 24px 70px rgba(31,32,32,0.25);
 }
 
 .modal-fechamento-central h2{
@@ -1587,7 +1588,7 @@ td{
   margin-bottom:6px;
   color:#3d3530;
   font-size:14px;
-  font-weight:700;
+  font-weight:600;
 }
 
 .modal-fechamento-campo input{
@@ -1619,7 +1620,7 @@ td{
   padding:0 14px;
   border-radius:8px;
   cursor:pointer;
-  font-weight:700;
+  font-weight:600;
 }
 
 .btn-cancelar-fechamento{
@@ -1630,7 +1631,7 @@ td{
 
 .btn-confirmar-fechamento{
   border:none;
-  background:#123f86;
+  background:var(--el-button-primary-bg, #7d603d);
   color:#ffffff;
 }
 
@@ -1661,7 +1662,7 @@ td{
   background:#ffffff;
   box-shadow:
     0 7px 20px
-    rgba(15,23,42, 0.05);
+    rgba(31,32,32,0.05);
 }
 
 .resumo-perdas-almox-card.destaque{
@@ -1684,7 +1685,7 @@ td{
   display:block;
   color:#1f2020;
   font-size:28px;
-  font-weight:800;
+  font-weight:600;
   line-height:1.1;
   font-variant-numeric:tabular-nums;
 }
@@ -1705,7 +1706,7 @@ td{
 
 .resumo-perdas-almox-small.alerta{
   color:#b91c1c;
-  font-weight:700;
+  font-weight:600;
 }
 
 .tabela-divergencias-almox{
@@ -1719,14 +1720,14 @@ td{
 
 .valor-perda-almox{
   color:#dc2626;
-  font-weight:800;
+  font-weight:600;
   white-space:nowrap;
 }
 
 .custo-nao-encontrado-almox{
   color:#b91c1c;
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
 }
 
 @media(max-width:900px){
@@ -1750,7 +1751,7 @@ td{
   border-radius:16px;
   box-shadow:
     0 10px 28px
-    rgba(15,23,42, 0.06);
+    rgba(31,32,32,0.06);
 }
 
 .bonus-almoxarifado-card::before{
@@ -1760,7 +1761,7 @@ td{
   left:0;
   right:0;
   height:4px;
-  background:#123f86;
+  background:var(--el-color-surface-soft,#f6f7f9);
 }
 
 .bonus-almoxarifado-card.elegivel::before{
@@ -1791,7 +1792,7 @@ td{
   margin:0;
   color:#1f2020;
   font-size:20px;
-  font-weight:700;
+  font-weight:600;
 }
 
 .bonus-almoxarifado-subtitulo{
@@ -1812,7 +1813,7 @@ td{
   background:#e3e7ec;
   color:#4f4f4f;
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
   white-space:nowrap;
 }
 
@@ -1866,7 +1867,7 @@ td{
   display:block;
   color:#1f2020;
   font-size:19px;
-  font-weight:700;
+  font-weight:600;
   line-height:1.2;
   font-variant-numeric:
     tabular-nums;
@@ -1911,7 +1912,7 @@ td{
   display:block;
   color:#4f4f4f;
   font-size:20px;
-  font-weight:800;
+  font-weight:600;
 }
 
 .bonus-almoxarifado-valor-box{
@@ -1922,7 +1923,7 @@ td{
   display:block;
   color:#15803d;
   font-size:32px;
-  font-weight:800;
+  font-weight:600;
   line-height:1.1;
   font-variant-numeric:
     tabular-nums;
@@ -1999,7 +2000,7 @@ td{
    TEMA CATÁLOGO — tipografia e acabamento da Central
    Mesma identidade do catálogo (meu-sistema):
    Cormorant Garamond nos títulos, Manrope no texto,
-   grafite #123f86 como cor predominante, fundo #f7f9fb.
+   grafite var(--el-button-primary-bg,#7d603d) como cor predominante, fundo #f7f9fb.
 ========================================================= */
 
 body{
@@ -2035,7 +2036,7 @@ h1{
   padding:20px 24px;
   border-color:var(--line);
   border-radius:18px;
-  box-shadow:0 1px 3px rgba(15,23,42, 0.05);
+  box-shadow:0 1px 3px rgba(31,32,32,0.05);
 }
 
 .toolbar input[type="month"]{
@@ -2073,7 +2074,7 @@ h1{
   border:1px solid var(--line);
   border-radius:999px;
   background:#f7f9fb;
-  box-shadow:0 1px 3px rgba(15,23,42, 0.05);
+  box-shadow:0 1px 3px rgba(31,32,32,0.05);
 }
 
 .aba-central-btn{
@@ -2113,7 +2114,7 @@ h1{
   background:var(--primary);
   color:#ffffff;
   font-size:14px;
-  font-weight:700;
+  font-weight:600;
   letter-spacing:.06em;
   text-transform:uppercase;
   cursor:pointer;
@@ -2159,7 +2160,7 @@ th{
 
 .card-tabela-metas-header,
 .card-comissao-header{
-  background:var(--primary);
+  background:var(--el-color-surface-soft,#f6f7f9);
 }
 
 .card-tabela-metas-titulo{
@@ -2215,9 +2216,9 @@ th{
 
 .pag-bonus-sobretitulo{
   margin:0 0 6px;
-  color:var(--accent-dark);
+  color:var(--el-color-text,#1f2020);
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
   letter-spacing:.18em;
   text-transform:uppercase;
 }
@@ -2271,10 +2272,9 @@ th{
   padding:0 12px;
   border:0;
   border-radius:999px;
-  background:var(--accent-dark);
-  color:#ffffff;
+  background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);
   font-size:15px;
-  font-weight:700;
+  font-weight:600;
   letter-spacing:.06em;
   cursor:pointer;
 }
@@ -2294,7 +2294,7 @@ th{
 }
 
 .pag-bonus-busca:focus-within{
-  border-color:var(--accent);
+  border-color:var(--el-color-border,#e3e7ec);
 }
 
 .pag-bonus-busca svg{
@@ -2336,7 +2336,7 @@ th{
   border:1px solid var(--line);
   border-radius:18px;
   background:#ffffff;
-  box-shadow:0 1px 3px rgba(15,23,42, 0.05);
+  box-shadow:0 1px 3px rgba(31,32,32,0.05);
 }
 
 .pag-bonus-kpi-rotulo{
@@ -2357,8 +2357,8 @@ th{
 }
 
 .pag-bonus-kpi-destaque{
-  background:var(--primary);
-  border-color:var(--primary);
+  background:var(--el-color-surface-soft,#f6f7f9);
+  border-color:var(--el-color-border,#e3e7ec);
 }
 
 .pag-bonus-kpi-destaque .pag-bonus-kpi-rotulo{
@@ -2392,7 +2392,7 @@ th{
   display:block;
   height:100%;
   border-radius:999px;
-  background:var(--accent-dark);
+  background:var(--el-color-surface-soft,#f6f7f9);
 }
 
 /* ---------- Cartões e gráficos ---------- */
@@ -2415,7 +2415,7 @@ th{
   border:1px solid var(--line);
   border-radius:18px;
   background:#ffffff;
-  box-shadow:0 1px 3px rgba(15,23,42, 0.05);
+  box-shadow:0 1px 3px rgba(31,32,32,0.05);
 }
 
 .pag-bonus-card-largo{
@@ -2487,7 +2487,7 @@ th{
   fill:var(--text);
   font-family:var(--sans);
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
 }
 
 .pag-bonus-grafico .rotulo-nome{
@@ -2567,7 +2567,7 @@ th{
 
 .pag-bonus-equipe .valor{
   color:var(--text);
-  font-weight:700;
+  font-weight:600;
   font-variant-numeric:tabular-nums;
   text-align:right;
 }
@@ -2597,7 +2597,7 @@ th{
   margin-bottom:6px;
   color:var(--muted);
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
   letter-spacing:.1em;
   text-transform:uppercase;
 }
@@ -2649,7 +2649,7 @@ th{
   border:1px solid transparent;
   border-radius:999px;
   font-size:14px;
-  font-weight:700;
+  font-weight:600;
   letter-spacing:.06em;
   text-transform:uppercase;
   cursor:pointer;
@@ -2664,7 +2664,7 @@ th{
 
 .btn-pag-bonus-liberar:hover,
 .btn-pag-bonus-salvar:hover{
-  background:#0d2f66;
+  background:var(--el-button-primary-hover, #654d31);
 }
 
 .btn-pag-bonus-descartar{
@@ -2731,7 +2731,7 @@ th{
   background:#fafbfc;
   color:var(--text);
   font-size:13px;
-  font-weight:700;
+  font-weight:600;
   letter-spacing:.1em;
   text-transform:uppercase;
   text-align:center !important;
@@ -2751,7 +2751,7 @@ th{
   top:37px;
   color:var(--muted);
   font-size:12px;
-  font-weight:700;
+  font-weight:600;
 }
 
 .tabela-pag-bonus tbody tr:nth-child(even){
@@ -2775,12 +2775,12 @@ th{
   background:#fafbfc;
   font-family:var(--sans) !important;
   font-size:13px !important;
-  font-weight:700 !important;
+  font-weight:600 !important;
   vertical-align:bottom;
 }
 
 .pag-bonus-nome{
-  font-weight:700;
+  font-weight:600;
   color:var(--text);
 }
 
@@ -2817,8 +2817,8 @@ th{
 
 .tabela-pag-bonus input.pag-bonus-input:focus{
   outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(18,63,134, 0.2);
+  border-color:var(--el-color-border,#e3e7ec);
+  box-shadow:0 0 0 3px rgba(31,32,32,0.2);
 }
 
 .tabela-pag-bonus input.pag-bonus-input:disabled{
@@ -2828,7 +2828,7 @@ th{
 }
 
 .tabela-pag-bonus input.pag-bonus-input.alterado{
-  border-color:var(--accent-dark);
+  border-color:var(--el-color-border,#e3e7ec);
   background:#eff1f4;
 }
 
@@ -2846,21 +2846,21 @@ th{
 
 .tabela-pag-bonus td.status-divergente input{
   color:#b91c1c;
-  font-weight:700;
+  font-weight:600;
 }
 
 .tabela-pag-bonus td.diferenca-positiva{
   color:#a16207;
-  font-weight:700;
+  font-weight:600;
 }
 
 .tabela-pag-bonus td.diferenca-negativa{
   color:#b91c1c;
-  font-weight:700;
+  font-weight:600;
 }
 
 .tabela-pag-bonus td.coluna-total{
-  font-weight:700;
+  font-weight:600;
   background:#fafbfc;
 }
 
@@ -2869,7 +2869,7 @@ th{
   bottom:0;
   background:#f0f2f5;
   color:var(--text);
-  font-weight:700;
+  font-weight:600;
   border-top:1px solid var(--line);
 }
 
@@ -3020,8 +3020,8 @@ th{
   --bg:#ffffff;
   --borda-card:#e3e7ec;
   --sombra-card:
-    0 1px 2px rgba(15,23,42, 0.04),
-    0 10px 30px rgba(15,23,42, 0.07);
+    0 1px 2px rgba(31,32,32,0.04),
+    0 10px 30px rgba(31,32,32,0.07);
 }
 
 html,
@@ -3111,7 +3111,7 @@ tbody tr:nth-child(even){
 }
 
 .pag-bonus-kpi-destaque .pag-bonus-kpi-valor{
-  color:var(--accent-dark);
+  color:var(--el-color-text,#1f2020);
 }
 
 .pag-bonus-kpi-rotulo{
@@ -3134,8 +3134,7 @@ tbody tr:nth-child(even){
 /* Títulos das tabelas: barra no grafite do catálogo */
 .table-box > div:first-child,
 .card-tabela-metas-header{
-  background:#123f86 !important;
-  color:#ffffff !important;
+  background:var(--el-color-surface-soft,#f6f7f9) !important;color:var(--el-color-text,#1f2020) !important;
   border-bottom:none !important;
 }
 
@@ -3235,7 +3234,7 @@ tbody tr:nth-child(even){
 .cabecalho-central .aba-central-btn.active,
 .cabecalho-central .aba-central-btn.active:hover{
   color:var(--text);
-  border-bottom-color:#123f86;
+  border-bottom-color:var(--el-button-primary-hover, #654d31);
 }
 
 /* Linha do título (out/2026): mês à esquerda, título no centro, botões à direita */
@@ -3361,8 +3360,8 @@ body.central-bloqueada .tela-acesso-central{
 
 .tela-acesso-campo:focus{
   outline:none;
-  border-color:#123f86;
-  box-shadow:0 0 0 3px rgba(18,63,134, 0.15);
+  border-color:var(--el-color-border,#e3e7ec);
+  box-shadow:0 0 0 3px rgba(31,32,32,0.15);
 }
 
 .tela-acesso-erro{
@@ -3377,16 +3376,15 @@ body.central-bloqueada .tela-acesso-central{
   height:46px;
   border:0;
   border-radius:999px;
-  background:#123f86;
-  color:#ffffff;
-  font:700 14px var(--sans);
+  background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);
+  font:600 14px var(--sans);
   letter-spacing:.16em;
   text-transform:uppercase;
   cursor:pointer;
 }
 
 .tela-acesso-botao:hover{
-  background:#123f86;
+  background:var(--el-color-surface-soft,#f6f7f9);
 }
 
 .tela-acesso-botao:disabled{
@@ -3439,11 +3437,11 @@ body.central-bloqueada .tela-acesso-central{
   margin-left:auto;
   height:38px;
   padding:0 18px;
-  border:1px solid #123f86;
+  border:1px solid var(--el-button-primary-bg, #7d603d);
   border-radius:999px;
-  background:#123f86;
+  background:var(--el-button-primary-bg, #7d603d);
   color:#ffffff;
-  font:700 13px var(--sans);
+  font:600 13px var(--sans);
   letter-spacing:.08em;
   text-transform:uppercase;
   cursor:pointer;
@@ -3529,7 +3527,7 @@ body.central-bloqueada .tela-acesso-central{
 
 .prem-pessoa-valores span{
   font-size:11px;
-  font-weight:700;
+  font-weight:600;
   letter-spacing:.08em;
   text-transform:uppercase;
   color:var(--muted);
@@ -3596,7 +3594,7 @@ body.central-bloqueada .tela-acesso-central{
 
 .prem-item-valor{
   margin-top:4px;
-  font-weight:700;
+  font-weight:600;
   font-variant-numeric:tabular-nums;
 }
 
@@ -3604,7 +3602,7 @@ body.central-bloqueada .tela-acesso-central{
   display:inline-block;
   margin-top:4px;
   font-size:13px;
-  color:#3f5a70;
+  color:var(--el-color-text,#1f2020);
 }
 
 .prem-item-acoes{
@@ -3685,10 +3683,10 @@ body.central-bloqueada .tela-acesso-central{
   bottom:6px;
   padding:1px 7px;
   border-radius:999px;
-  background:rgba(15,23,42, 0.62);
+  background:rgba(31,32,32,0.62);
   color:#ffffff;
   font-size:10.5px;
-  font-weight:700;
+  font-weight:600;
   letter-spacing:.06em;
   text-transform:uppercase;
 }
@@ -3716,7 +3714,7 @@ body.central-bloqueada .tela-acesso-central{
   background:#fbeeee;
   color:var(--red);
   font-size:12px;
-  font-weight:700;
+  font-weight:600;
 }
 
 .prem-fotos-campos{
@@ -3778,8 +3776,7 @@ body.central-bloqueada .tela-acesso-central{
 }
 
 .pag-bonus-aba.ativa{
-  background:#123f86;
-  color:#ffffff;
+  background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);
 }
 
 .pag-bonus-aba-oculta{
@@ -3790,7 +3787,7 @@ body.central-bloqueada .tela-acesso-central{
 .pag-bonus-card-tabela .pag-bonus-card-cabecalho{
   align-items:center;
   padding:14px 16px !important;
-  background:#123f86;
+  background:var(--el-color-surface-soft,#f6f7f9);
   border-bottom:none !important;
 }
 
@@ -3835,7 +3832,7 @@ body.central-bloqueada .tela-acesso-central{
 }
 
 .tabela-pag-bonus thead tr:first-child th.mes-saldo-livre{
-  box-shadow:inset 0 3px 0 #3f5a70;
+  box-shadow:inset 0 3px 0 var(--el-color-surface-soft,#f6f7f9);
 }
 
 .pag-bonus-tipo-mes{
@@ -3843,7 +3840,7 @@ body.central-bloqueada .tela-acesso-central{
   margin-left:8px;
   padding:1px 8px;
   border-radius:999px;
-  font:700 10.5px/16px var(--sans);
+  font:600 10.5px/16px var(--sans);
   letter-spacing:.08em;
   text-transform:uppercase;
   vertical-align:2px;
@@ -3855,11 +3852,11 @@ body.central-bloqueada .tela-acesso-central{
 }
 
 .mes-saldo-livre .pag-bonus-tipo-mes{
-  background:#3f5a70;
+  background:var(--el-color-surface-soft,#f6f7f9);
 }
 
 .pag-bonus-legenda .leg-premiacao{ background:#4f6340; border-color:#4f6340; }
-.pag-bonus-legenda .leg-saldo-livre{ background:#3f5a70; border-color:#3f5a70; }
+.pag-bonus-legenda .leg-saldo-livre{ background:var(--el-color-surface-soft,#f6f7f9); border-color:var(--el-color-border,#e3e7ec); }
 
 /* Pagamentos de bônus: uma tabela por departamento */
 .pag-bonus-bloco + .pag-bonus-bloco{
@@ -3912,7 +3909,7 @@ body.central-bloqueada .tela-acesso-central{
 
 .equipe-link code{
   font-size:12px;
-  background:var(--accent-soft);
+  background:var(--el-color-surface-soft,#f6f7f9);
   padding:8px 10px;
   border-radius:10px;
   max-width:420px;
@@ -3924,17 +3921,17 @@ body.central-bloqueada .tela-acesso-central{
 .equipe-btn{
   height:36px;
   padding:0 14px;
-  border:1px solid #123f86;
+  border:1px solid var(--el-button-primary-bg, #7d603d);
   border-radius:999px;
   background:#ffffff;
   color:#2b2b2b;
-  font:700 12px var(--sans);
+  font:600 12px var(--sans);
   letter-spacing:.06em;
   text-transform:uppercase;
   cursor:pointer;
 }
 
-.equipe-btn.cheio{ background:#123f86; color:#ffffff; }
+.equipe-btn.cheio{ background:var(--el-button-primary-bg, #7d603d); color:#ffffff; }
 
 .equipe-btn:disabled{ opacity:.55; cursor:wait; }
 
@@ -3968,7 +3965,7 @@ body.central-bloqueada .tela-acesso-central{
   flex:0 0 64px;
   border-radius:50%;
   overflow:hidden;
-  background:var(--accent-soft);
+  background:var(--el-color-surface-soft,#f6f7f9);
   display:grid;
   place-items:center;
   font:600 24px var(--serif);
@@ -3986,7 +3983,7 @@ body.central-bloqueada .tela-acesso-central{
   inset:auto 0 0 0;
   background:rgba(0,0,0,.55);
   color:#fff;
-  font:700 10px var(--sans);
+  font:600 10px var(--sans);
   padding:3px 0;
   opacity:0;
   transition:opacity .15s;
@@ -3999,7 +3996,7 @@ body.central-bloqueada .tela-acesso-central{
 .equipe-info{ min-width:0; flex:1; }
 
 .equipe-nome{
-  font-weight:800;
+  font-weight:600;
   font-size:14px;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -4018,7 +4015,7 @@ body.central-bloqueada .tela-acesso-central{
 
 .equipe-selo{
   font-size:11px;
-  font-weight:700;
+  font-weight:600;
   border-radius:999px;
   padding:3px 9px;
   background:#fef3c7;
@@ -4031,7 +4028,7 @@ body.central-bloqueada .tela-acesso-central{
   border:0;
   background:none;
   color:#2b2b2b;
-  font:700 12px var(--sans);
+  font:600 12px var(--sans);
   text-decoration:underline;
   cursor:pointer;
   padding:0;
@@ -4042,13 +4039,13 @@ body.central-bloqueada .tela-acesso-central{
   margin:18px 0 6px;
   padding:18px;
   border-radius:14px;
-  background:var(--accent-soft);
+  background:var(--el-color-surface-soft,#f6f7f9);
 }
 
 .equipe-pin-mostrar span{
   display:block;
   font-size:12px;
-  font-weight:700;
+  font-weight:600;
   letter-spacing:.06em;
   text-transform:uppercase;
   color:var(--muted);
@@ -4063,6 +4060,7 @@ body.central-bloqueada .tela-acesso-central{
 }
 </style>
 <link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-selos">
+<link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 </head>
 
 <body class="central-bloqueada">
@@ -4605,8 +4603,7 @@ Carregando...
           type="search"
           id="pagBonusBusca"
           placeholder="Buscar funcionário"
-          oninput="renderPagamentosBonus()"
-        >
+          oninput="renderPagamentosBonus()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
       </label>
 
       <div class="pag-bonus-abas" role="tablist">
@@ -4642,7 +4639,7 @@ Carregando...
           <h3>Volume mensal</h3>
         </div>
         <div class="pag-bonus-legenda-grafico">
-          <span><i style="background:#123f86;"></i>Pago</span>
+          <span><i style="background:var(--el-color-surface-soft,#f6f7f9);"></i>Pago</span>
           <span><i style="background:#999999;"></i>A pagar</span>
         </div>
       </div>
@@ -4664,7 +4661,7 @@ Carregando...
           <h3>Maiores bônus do ano</h3>
         </div>
         <div class="pag-bonus-legenda-grafico">
-          <span><i style="background:#123f86;"></i>Pago</span>
+          <span><i style="background:var(--el-color-surface-soft,#f6f7f9);"></i>Pago</span>
           <span><i style="background:#999999;"></i>A pagar</span>
         </div>
       </div>
@@ -6347,13 +6344,13 @@ function renderPagamentosBonus(){
 ========================================================= */
 
 const CORES_PAG_BONUS = {
-  pago: "#123f86",
+  pago: '#656565',
   aPagar: "#999999"
 };
 
 const EQUIPES_PAG_BONUS = [
   { chave: "ESTOFADOS", nome: "Estofados", cor: "#b0703f" },
-  { chave: "ESTRUTURA", nome: "Estrutura", cor: "#00769a" },
+  { chave: "ESTRUTURA", nome: "Estrutura", cor:'#656565' },
   { chave: "SUPERVISOR", nome: "Supervisão", cor: "#8c8a3a" },
   { chave: "OUTROS", nome: "Outros", cor: "#9e9e9e" }
 ];
@@ -7574,7 +7571,7 @@ function carregar(){
               width:30px;
               height:30px;
               border:3px solid #e3e7ec;
-              border-top:3px solid #123f86;
+              border-top:3px solid var(--el-color-border,#e3e7ec);
               border-radius:50%;
               animation:spin 1s linear infinite;
             "></div>
@@ -7607,7 +7604,7 @@ function carregar(){
             width:30px;
             height:30px;
             border:3px solid #e3e7ec;
-            border-top:3px solid #123f86;
+            border-top:3px solid var(--el-color-border,#e3e7ec);
             border-radius:50%;
             animation:spin 1s linear infinite;
           "></div>
@@ -7707,7 +7704,7 @@ tbodyEventos.innerHTML = `
           width:30px;
           height:30px;
           border:3px solid #e3e7ec;
-          border-top:3px solid #123f86;
+          border-top:3px solid var(--el-color-border,#e3e7ec);
           border-radius:50%;
           animation:spin 1s linear infinite;
         "></div>
@@ -7747,7 +7744,7 @@ tbodyEventos.innerHTML = `
             width:30px;
             height:30px;
             border:3px solid #e3e7ec;
-            border-top:3px solid #123f86;
+            border-top:3px solid var(--el-color-border,#e3e7ec);
             border-radius:50%;
             animation:spin 1s linear infinite;
           "></div>
@@ -8229,7 +8226,7 @@ tbody.innerHTML = `
           width:35px;
           height:35px;
           border:4px solid #e3e7ec;
-          border-top:4px solid #123f86;
+          border-top:4px solid var(--el-color-border,#e3e7ec);
           border-radius:50%;
           animation:spin 1s linear infinite;
         "></div>
@@ -8986,7 +8983,7 @@ atualizarCardBonusAlmoxarifado(
               width:30px;
               height:30px;
               border:3px solid #e3e7ec;
-              border-top:3px solid #123f86;
+              border-top:3px solid var(--el-color-border,#e3e7ec);
               border-radius:50%;
               animation:spin 1s linear infinite;
             "></div>
@@ -9006,7 +9003,7 @@ atualizarCardBonusAlmoxarifado(
               width:30px;
               height:30px;
               border:3px solid #e3e7ec;
-              border-top:3px solid #123f86;
+              border-top:3px solid var(--el-color-border,#e3e7ec);
               border-radius:50%;
               animation:spin 1s linear infinite;
             "></div>

@@ -11,10 +11,11 @@
 
 const RESUMO_ORDEM_ETAPAS = [
   "Triagem (Separação)",
-  "Triagem (Conferência)",
   "Carregamento",
   "Montagem",
-  "Desmontagem"
+  "Desmontagem",
+  "Descarregamento",
+  "Triagem (Conferência)"
 ];
 
 function RESUMO_horaTexto_(v, tz) {

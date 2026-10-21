@@ -1,6 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html data-theme-legacy>
 <head>
+<link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
+<script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
   <script src="../gas-cliente.js?v=20261016-seguranca" data-projeto="almoxarifado"></script>
 <meta charset="UTF-8">
 
@@ -68,7 +72,7 @@ body{
 .fechar{
   cursor:pointer;
   font-size:18px;
-  color:#64748b;
+  color:var(--el-color-text,#1f2020);
 }
 
 .fechar:hover{
@@ -89,8 +93,7 @@ table{
 }
 
 thead{
-  background:#123A6F;
-  color:#fff;
+  background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);
 }
 
 th, td{
@@ -132,7 +135,7 @@ tbody td:nth-child(even){
   width:100%;
   padding:4px 14px 4px 4px;
   text-align:center;
-  border:1px solid #e2e8f0;
+  border:1px solid var(--el-color-border,#e3e7ec);
   border-radius:6px;
   background:#f8fafc;
   font-size:12px;
@@ -144,7 +147,7 @@ tbody td:nth-child(even){
   top:50%;
   transform:translateY(-50%);
   font-size:10px;
-  color:#64748b;
+  color:var(--el-color-text,#1f2020);
   pointer-events:none;
 }
 
@@ -152,7 +155,7 @@ tbody td:nth-child(even){
 .btn{
   margin-top:15px;
   padding:10px 16px;
-  background:#123A6F;
+  background:var(--el-button-primary-bg, #7d603d);
   color:#fff;
   border:none;
   border-radius:8px;
@@ -174,12 +177,13 @@ tbody td:nth-child(even){
 html:root body{ margin:0; }
 html:root .header-acoes{ display:flex !important; flex-wrap:wrap; justify-content:flex-end; gap:12px; padding:0 24px !important; }
 html:root .header-acoes::before{ content:"Controle Financeiro"; flex:1 1 100%; margin:0 -24px 8px; padding:34px 24px 22px; border-bottom:1px solid #e3e7ec; text-align:center; font-family:var(--ch-serif); font-size:clamp(26px, 2.8vw, 38px); font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:#1f2020; }
-html:root .btn{ background:#123f86 !important; color:#fff !important; border:1px solid #123f86 !important; }
-html:root .modal-header{ background:#123f86 !important; color:#fff !important; border-radius:18px 18px 0 0; }
+html:root .btn{ background:var(--el-button-primary-bg, #7d603d) !important; color:#fff !important; border:1px solid var(--el-button-primary-bg, #7d603d) !important; }
+html:root .modal-header{ background:var(--el-color-surface-soft,#f6f7f9) !important;color:var(--el-color-text,#1f2020) !important; border-radius:18px 18px 0 0; }
 html:root .modal-header h2{ font-family:var(--ch-serif) !important; font-size:22px !important; font-weight:500 !important; letter-spacing:.12em !important; text-transform:uppercase !important; color:#fff !important; }
 html:root .modal-header .fechar{ color:#fff; cursor:pointer; }
 </style>
 <link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-selos">
+<link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 </head>
 
 <body>

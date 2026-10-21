@@ -49,7 +49,24 @@
     return "";
   }
 
+  /* Sistemas que já saíram do motor (operacao-sem-motor.js): a função de
+     mesmo nome roda aqui no navegador, direto no Supabase. Com
+     data-sem-motor no <script>, nada mais vai para o /api/gs. */
+  var SEM_MOTOR = !!(script && script.hasAttribute("data-sem-motor"));
+  function chamarLocal(nome, args, ok, falha, usuario) {
+    var f = window.ACERVO_LOCAL && window.ACERVO_LOCAL[nome];
+    Promise.resolve().then(function () {
+      if (typeof f !== "function") { throw new Error("Função ainda não disponível sem o servidor antigo: " + nome); }
+      return f.apply(null, args);
+    }).then(function (res) { if (ok) { ok(res, usuario); } }, function (e) {
+      var erro = e instanceof Error ? e : new Error(String((e && e.message) || e));
+      if (/Failed to fetch|NetworkError|Load failed/i.test(erro.message)) { erro = new Error("Sem conexão com o servidor. Verifique a internet e tente de novo."); }
+      if (falha) { falha(erro, usuario); } else { console.error(nome + ":", erro.message); }
+    });
+  }
+
   function chamar(nome, args, ok, falha, usuario) {
+    if (SEM_MOTOR || (window.ACERVO_LOCAL && typeof window.ACERVO_LOCAL[nome] === "function")) { return chamarLocal(nome, args, ok, falha, usuario); }
     tokenDoLogin().then(function (token) {
       var cabecalhos = { "Content-Type": "application/json" };
       if (token) { cabecalhos.Authorization = "Bearer " + token; }

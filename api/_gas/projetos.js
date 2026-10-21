@@ -51,7 +51,9 @@ module.exports = {
     // Funções chamadas pelos apps de campo (sem conta no Acervo): liberadas sem login.
     // Todo o resto exige o login do Acervo de alguém da empresa (ver api/gs.js).
     publicas: ["conferirSenhaSupervisorApp", "enviarCorridaApp", "getCorridasDisponiveis", "getMinhasCorridas"],
-    loginsApp: ["conferirSenhaSupervisorApp"]
+    // enviarCorridaApp também confere a senha do supervisor (dados.supervisor=true):
+    // sem limite aqui, a senha podia ser testada à vontade por esse caminho.
+    loginsApp: ["conferirSenhaSupervisorApp", "enviarCorridaApp"]
   },
   ocorrencias: {
     chave: "ocorrencias",

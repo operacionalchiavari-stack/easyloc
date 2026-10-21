@@ -1,0 +1,83 @@
+/* Painel Logístico (out/2026) */
+.pl-page{ padding:0 clamp(16px,2.4vw,36px) 48px; }
+.pl-barra{ display:flex; flex-wrap:wrap; align-items:center; gap:14px 20px; margin:18px 0 10px; }
+.pl-semana{ display:flex; align-items:center; gap:8px; }
+.pl-semana strong{ font-size:16px; min-width:130px; text-align:center; color:#1f2020; }
+.pl-icone{ width:34px; height:34px; border-radius:50%; border:1px solid #d6dbe1; background:#fff; font-size:20px; line-height:1; cursor:pointer; color:#1f2020; }
+.pl-icone:hover{ background:#f1f3f5; }
+.pl-link{ border:0; background:none; color:var(--el-color-text,#1f2020); font-weight:600; cursor:pointer; padding:4px 6px; }
+.pl-resumo{ display:flex; gap:8px; flex-wrap:wrap; }
+.pl-chip{ padding:5px 12px; border-radius:999px; background:#edf0f3; color:#3b3f45; font-size:12.5px; font-weight:600; }
+.pl-chip.is-ok{ background:#e7f6ec; color:#1f7a3f; }
+.pl-chip.is-erro{ background:#fde8e8; color:#b42318; }
+.pl-chip.is-alerta{ background:#fff4db; color:#8a5a00; }
+.pl-acoes{ margin-left:auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.pl-filtro{ display:flex; align-items:center; gap:6px; font-size:13px; color:#3b3f45; cursor:pointer; }
+.pl-ajuda{ margin:0 0 18px; font-size:13px; line-height:1.55; color:#5f6368; max-width:1100px; }
+.pl-erro{ margin:0 0 14px; padding:12px 14px; border-radius:10px; background:#fde8e8; color:#b42318; font-size:14px; }
+
+.pl-dias{ display:flex; flex-direction:column; gap:22px; }
+.pl-dia{ background:#fff; border:1px solid #e3e7ec; border-radius:14px; box-shadow:0 0 8px rgba(31,32,32,0.08); overflow:hidden; }
+.pl-dia.is-hoje{ border-color:var(--el-color-border,#e3e7ec); }
+.pl-dia-topo{ display:flex; align-items:baseline; flex-wrap:wrap; gap:6px 18px; padding:14px 18px; border-bottom:1px solid #e3e7ec; }
+.pl-dia-topo h2{ margin:0; font-size:18px; font-weight:600; color:#1f2020; font-family:Inter, sans-serif; }
+.pl-dia-topo h2 span{ font-weight:500; color:#6b6b6b; }
+.pl-dia.is-hoje .pl-dia-topo h2::after{ content:"Hoje"; margin-left:8px; padding:2px 8px; border-radius:999px; background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020); font-size:11px; vertical-align:middle; }
+.pl-livres{ margin:0; font-size:12.5px; color:#6b6b6b; }
+.pl-livres b{ color:#3b3f45; font-weight:600; }
+.pl-vazio{ padding:16px 18px; color:#8a8a8a; font-size:13.5px; }
+
+.pl-etapa{ display:grid; grid-template-columns:minmax(220px,1.1fr) minmax(320px,2fr) minmax(200px,1fr); gap:18px; padding:14px 18px; border-top:1px solid #eef0f2; border-left:4px solid #3f9a63; }
+.pl-etapa:first-of-type{ border-top:0; }
+.pl-etapa.is-alerta{ border-left-color:#e0a21b; }
+.pl-etapa.is-erro{ border-left-color:#d64545; background:#fffafa; }
+.pl-etapa.is-passada{ opacity:.6; }
+.pl-etapa.is-salvando{ opacity:.55; pointer-events:none; }
+.pl-etapa-info{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+.pl-etapa-linha1{ display:flex; align-items:center; gap:8px; }
+.pl-hora{ font-weight:600; font-size:15px; color:#1f2020; font-variant-numeric:tabular-nums; }
+.pl-tipo{ padding:2px 9px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; background:#edf0f3; color:#3b3f45; }
+.pl-tipo-carregamento,.pl-tipo-descarregamento{ background:var(--el-color-surface-soft,#f6f7f9); color:var(--el-color-text,#1f2020); }
+.pl-tipo-montagem{ background:var(--el-color-surface-soft,#f6f7f9); color:var(--el-color-text,#1f2020); }
+.pl-tipo-desmontagem{ background:#ffedd5; color:#b45309; }
+.pl-cliente{ font-size:14px; color:#1f2020; }
+.pl-local{ font-size:12.5px; color:#6b6b6b; overflow-wrap:anywhere; }
+.pl-volume{ font-size:12.5px; color:#3b3f45; }
+
+.pl-etapa-escala{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+.pl-campo{ display:flex; flex-direction:column; gap:5px; }
+.pl-rotulo{ font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#6b6b6b; }
+.pl-rotulo b{ margin-left:4px; color:#1f2020; }
+.pl-valores{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.pl-pessoa{ display:inline-flex; align-items:center; gap:6px; padding:4px 6px 4px 10px; border-radius:999px; background:#f1f3f5; border:1px solid #e3e7ec; font-size:13px; color:#1f2020; }
+.pl-pessoa small{ font-size:10.5px; font-weight:600; color:#6b6b6b; text-transform:uppercase; letter-spacing:.03em; }
+.pl-pessoa.is-fora{ background:#fff4db; border-color:#f3d48a; }
+.pl-pessoa button{ width:20px; height:20px; border-radius:50%; border:0; background:transparent; color:#6b6b6b; cursor:pointer; font-size:15px; line-height:1; }
+.pl-pessoa button:hover{ background:#e3e7ec; color:#b42318; }
+.pl-cam{ background:var(--el-color-surface-soft,#f6f7f9); border-color:var(--el-color-border,#e3e7ec); }
+.pl-falta{ color:#b42318; font-style:normal; font-size:12.5px; font-weight:600; }
+.pl-add{ height:30px; border:1px dashed var(--el-color-border,#e3e7ec); border-radius:999px; background:#fff; padding:0 10px; font-size:12.5px; color:var(--el-color-text,#1f2020); cursor:pointer; max-width:220px; }
+.pl-dica{ font-size:12px; color:#6b6b6b; }
+
+.pl-etapa-status{ display:flex; flex-direction:column; gap:6px; }
+.pl-msg{ margin:0; padding:6px 10px; border-radius:8px; font-size:12.5px; line-height:1.4; background:#f1f3f5; color:#3b3f45; }
+.pl-msg.is-ok{ background:#e7f6ec; color:#1f7a3f; font-weight:600; }
+.pl-msg.is-alerta{ background:#fff4db; color:#8a5a00; }
+.pl-msg.is-erro{ background:#fde8e8; color:#b42318; font-weight:600; }
+
+.pl-dialogo{ border:0; border-radius:16px; padding:24px; max-width:520px; box-shadow:0 24px 60px rgba(31,32,32,0.25); }
+.pl-dialogo::backdrop{ background:rgba(31,32,32,0.45); }
+.pl-dialogo h2{ margin:0 0 8px; font-size:20px; }
+.pl-dialogo ul{ margin:10px 0 18px; padding-left:18px; color:#b42318; font-size:14px; line-height:1.5; }
+.pl-dialogo-acoes{ display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+.pl-perigo{ background:#b42318 !important; border-color:#b42318 !important; }
+
+.pl-toast{ position:fixed; left:50%; bottom:24px; transform:translate(-50%,20px); padding:10px 18px; border-radius:999px; background:#1f2020; color:#fff; font-size:14px; opacity:0; transition:opacity .25s, transform .25s; pointer-events:none; z-index:50; }
+.pl-toast.is-on{ opacity:1; transform:translate(-50%,0); }
+
+@media (max-width:1100px){
+  .pl-etapa{ grid-template-columns:1fr; gap:10px; }
+  .pl-acoes{ margin-left:0; }
+}
+/* o tema do sistema força o tamanho dos campos: aqui o "+ pessoa/caminhão" é uma pílula pequena */
+html:root .pl-page select.pl-add{ height:30px !important; min-height:0 !important; width:auto !important; max-width:220px !important; padding:0 26px 0 12px !important; border:1px dashed var(--el-color-border,#e3e7ec) !important; border-radius:999px !important; background-color:#fff !important; font-size:12.5px !important; color:var(--el-color-text,#1f2020) !important; box-shadow:none !important; }

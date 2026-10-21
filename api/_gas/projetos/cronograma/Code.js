@@ -1631,6 +1631,13 @@ function FECH_salvarOuAtualizarSemana_(
  ****************************************************/
 function getCronogramaSemana(inicioSemanaStr) {
 
+if(Acervo.sincronizacoesCronograma){
+  Acervo.sincronizacoesCronograma().forEach(function(p){
+    try { CRON_sincronizarPedidoAcervo_(p.pedido_id); }
+    catch(error){ console.error('Pedido com sincronização pendente:',p.pedido_id,error.message); }
+  });
+}
+
 const sheet = SpreadsheetApp
   .openById(
     "14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ"
@@ -1652,6 +1659,8 @@ CRON_garantirColunaConfirmacao_(
   sheet
 );
 
+
+CRON_garantirDescarregamentos_(sheet);
 
 const dados = sheet
   .getDataRange()
@@ -1936,6 +1945,12 @@ montagem:
   mapaResumoMontagem[
     idEtapaNormalizado
   ] || null,
+
+progressoDesmontagem: String(etapa || "").toLowerCase() === "desmontagem" ? {
+  equipe: verificarEquipeTerceirizadaJaEnviada(idEtapaNormalizado).enviado === true,
+  lista: verificarListaConferidaDesmontagem(idEtapaNormalizado).enviado === true,
+  concluida: verificarDesmontagemConcluida(idEtapaNormalizado).concluida === true
+} : null,
 
 freeVaga:
   mapaVagasFree[
@@ -3369,6 +3384,8 @@ const resultadoFree =
     etapasFinal
   );
 
+CRON_ordenarDescarregamentos_(sheet);
+
 // 🔥 FECHA A FUNÇÃO
 return resultadoFree
   ? { ok: true, free: resultadoFree }
@@ -3670,139 +3687,31 @@ function validarSenhaPerfil(senhaDigitada) {
 
   return null;
 }
-function salvarResponsavel(nome){
-
-  const sh = SpreadsheetApp
-    .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
-    .getSheetByName("Responsaveis");
-
-  const id = "RESP" + new Date().getTime();
-
-  sh.appendRow([
-    id,
-    nome,
-    "Ativo"
-  ]);
-
-  return true;
+function salvarResponsavel(){
+  throw new Error("Cadastre em Logística > Caminhões ou no Cadastro de Funcionários.");
 }
-
-function salvarEquipe(nome){
-
-  const sh = SpreadsheetApp
-    .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
-    .getSheetByName("Equipes");
-
-  const id = "EQP" + new Date().getTime();
-
-  sh.appendRow([
-    id,
-    nome,
-    "Interna",
-    "Ativo"
-  ]);
-
-  return true;
+function salvarEquipe(){
+  throw new Error("Cadastre em Logística > Caminhões ou no Cadastro de Funcionários.");
 }
-
-function salvarCaminhao(nome, tipo, empresa, vinculo){
-
-const sh = SpreadsheetApp
-  .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
-  .getSheetByName("Caminhoes");
-
-  const id = "CAM" + new Date().getTime();
-
-  sh.appendRow([
-    id,
-    nome,
-    tipo,
-    empresa,
-    vinculo,
-    "Ativo"
-  ]);
-
-  return true;
+function salvarCaminhao(){
+  throw new Error("Cadastre em Logística > Caminhões ou no Cadastro de Funcionários.");
 }
 function listarCaminhoes(){
-
-  const sh = SpreadsheetApp
-    .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
-    .getSheetByName("Caminhoes");
-
-  if (!sh) return [];
-
-  const dados = sh.getDataRange().getValues();
-
-  const lista = [];
-
-  for(let i = 1; i < dados.length; i++){
-
-    if(!dados[i][1]) continue;
-
-    lista.push({
-      id: dados[i][0],
-      nome: dados[i][1],
-      tipo: dados[i][2],
-      empresa: dados[i][3],
-      vinculo: dados[i][4],
-      status: dados[i][5]
-    });
-
-  }
-
-  return lista;
+  return Acervo.escalaBase().caminhoes.map(function(c){
+    return { id: c.id, nome: c.modelo, tipo: c.codigo, empresa: c.empresa, vinculo: c.vinculo, status: "Ativo", capacidade: c.capacidade };
+  });
 }
 function listarResponsaveis(){
-
-  const sh = SpreadsheetApp
-    .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
-    .getSheetByName("Responsaveis");
-
-  if (!sh) return [];
-
-  const dados = sh.getDataRange().getValues();
-  const lista = [];
-
-  for(let i = 1; i < dados.length; i++){
-
-    if(!dados[i][1]) continue;
-
-    lista.push({
-      id: dados[i][0],
-      nome: dados[i][1],
-      status: dados[i][2]
-    });
-
-  }
-
-  return lista;
+  return Acervo.escalaBase().pessoas
+    .filter(function(p){ return p.lider; })
+    .map(function(p){ return { id: p.id, nome: p.nome, status: "Ativo" }; });
 }
 function listarEquipes(){
-
-  const sh = SpreadsheetApp
-    .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
-    .getSheetByName("Equipes");
-
-  if (!sh) return [];
-
-  const dados = sh.getDataRange().getValues();
-  const lista = [];
-
-  for(let i = 1; i < dados.length; i++){
-
-    if(!dados[i][1]) continue;
-
-    lista.push({
-      id: dados[i][0],
-      nome: dados[i][1],
-      tipo: dados[i][2],
-      status: dados[i][3]
-    });
-
-  }
-
-  return lista;
+  const fixos = Acervo.escalaBase().pessoas.map(function(p){ return { id: p.id, nome: p.nome, tipo: "Fixo", status: "Ativo" }; });
+  const free = ESC_free_().aprovados
+    .filter(function(n){ return !fixos.some(function(f){ return ESC_mesmaPessoa_(f.nome, n); }); })
+    .map(function(n){ return { id: "FREE-" + n, nome: n, tipo: "Free", status: "Ativo" }; });
+  return fixos.concat(free);
 }
 function salvarPedidosEmLote(lista){
 
@@ -4055,30 +3964,10 @@ function excluirAgendaPorEnvio(envio){
   return false;
 }
 function getCaminhoes(){
-
-  const sh = SpreadsheetApp.getActive().getSheetByName("Caminhoes");
-  const dados = sh.getDataRange().getValues();
-
-  let lista = [];
-
-  for(let i = 1; i < dados.length; i++){
-
-    lista.push({
-tipo: String(dados[i][2] || "").trim(),     // G, M, XL
-empresa: String(dados[i][3] || "").trim()   // Simas Frete
-    });
-
-  }
-
-  return lista;
+  return listarCaminhoes().map(function(c){ return { tipo: c.tipo, empresa: c.empresa }; });
 }
-
 function getEquipes(){
-  const sh = SpreadsheetApp.getActive().getSheetByName("Equipes");
-  return sh.getDataRange().getValues().slice(1).map(r => ({
-    nome: r[1],
-    tipo: r[2]
-  }));
+  return listarEquipes().map(function(e){ return { nome: e.nome, tipo: e.tipo }; });
 }
 function enviarParaFrete(dados){
 
@@ -4086,9 +3975,9 @@ function enviarParaFrete(dados){
     .openById("1uVhL4YbFbheyWDfVpDSwzPRg1P4AmgkMhAUhogrSVQs")
     .getSheetByName("Fretes Ch");
 
-  const sheetCaminhoes = SpreadsheetApp
-    .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
-    .getSheetByName("Caminhoes");
+  const sheetCaminhoes = { getDataRange: function(){ return { getValues: function(){
+    return [["ID","Nome","Tipo","Empresa","Vinculo","Status"]].concat(listarCaminhoes().map(function(c){ return [c.id, c.nome, c.tipo, c.empresa, c.vinculo, c.status]; }));
+  } }; } }; // cadastro oficial do Acervo (a aba Caminhoes saiu)
 
   const listaFrete = sheetFrete.getDataRange().getValues();
   const listaCaminhoes = sheetCaminhoes.getDataRange().getValues();
@@ -4246,9 +4135,9 @@ function reprocessarFretes(){
   sheetFrete.getRange(2,1,sheetFrete.getLastRow(),11).clearContent();
 
   // 🔍 buscar caminhões
-  const sheetCaminhoes = SpreadsheetApp
-    .openById("14HXOljlAeE_8oTd56QB5bsDrDHbuNrdI772HP0I1QAQ")
-    .getSheetByName("Caminhoes");
+  const sheetCaminhoes = { getDataRange: function(){ return { getValues: function(){
+    return [["ID","Nome","Tipo","Empresa","Vinculo","Status"]].concat(listarCaminhoes().map(function(c){ return [c.id, c.nome, c.tipo, c.empresa, c.vinculo, c.status]; }));
+  } }; } }; // cadastro oficial do Acervo (a aba Caminhoes saiu)
 
   const listaCaminhoes = sheetCaminhoes.getDataRange().getValues();
 
@@ -4335,11 +4224,12 @@ function validarSenhaResponsavel(responsavel, senha){
     .trim()
     .toLowerCase();
 
+  // Nome exato primeiro; senão o mesmo nome escrito diferente (RH x aba Senhas, out/2026)
   const linha = dados.find(r =>
     String(r[0] || "")
       .trim()
       .toLowerCase() === nome
-  );
+  ) || dados.find(r => ESC_mesmaPessoa_(r[0], responsavel));
 
   if(!linha) return false;
 

@@ -24,6 +24,7 @@ function MONT_apontamentoAtual(token){return MONT_apontamentoDaSessao_(MONT_aute
 function MONT_exigirApontamento_(token,idEtapa,idApontamento){
   const atual=MONT_apontamentoAtual(token);
   if(!atual || atual.idEtapa!==String(idEtapa) || (idApontamento && atual.id!==String(idApontamento)))throw new Error('Inicie este evento no cronograma antes de enviar. O apontamento pode ter sido encerrado em outro aparelho.');
+  if(typeof Acervo !== 'undefined' && Acervo.validarEtapaCampo) Acervo.validarEtapaCampo(idEtapa);
   return atual;
 }
 function MONT_iniciarApontamento(token,idEtapa){
@@ -31,6 +32,7 @@ function MONT_iniciarApontamento(token,idEtapa){
   const etapa=getEtapaOperacao(idEtapa);
   if(!etapa || !MONT_podeVer_(sessao,etapa))throw new Error('Você não tem acesso a esta etapa.');
   if(!MONT_ehOperacao_(etapa.etapa))throw new Error('O apontamento está disponível para montagem e desmontagem.');
+  if(typeof Acervo !== 'undefined' && Acervo.validarEtapaCampo) Acervo.validarEtapaCampo(idEtapa);
   return FREE_comLock_(function(){
     const atual=MONT_apontamentoDaSessao_(sessao);
     if(atual){

@@ -109,10 +109,6 @@ function MON_buscarMapaResumoMontagem_() {
       total++;
     }
 
-    if (registro.observacoesGerais) {
-      total++;
-    }
-
     if (registro.listaAssinada) {
       total++;
     }
@@ -121,10 +117,10 @@ function MON_buscarMapaResumoMontagem_() {
       total;
 
     registro.totalEsperado =
-      5;
+      4;
 
     registro.completo =
-      total === 5;
+      total === 4;
   });
 
   return mapa;
@@ -715,7 +711,7 @@ function MON_garantirRegistro_(
         0,
 
       totalEsperado:
-        5,
+        4,
 
       completo:
         false

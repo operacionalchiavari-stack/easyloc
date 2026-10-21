@@ -96,15 +96,8 @@ function MONT_ehDaMontagem_(nome, nomesRH) {
 }
 
 function MONT_listarResponsaveis() {
-  const nomesRH = Acervo.nomesDoSetor("Montagem");
-  return listarResponsaveis()
-    .filter(function (r) {
-      return MONT_normalizar_(r.status || "ativo") !== "inativo";
-    })
-    .map(function (r) { return String(r.nome || "").trim(); })
-    .filter(String)
-    .filter(function (nome) { return MONT_ehDaMontagem_(nome, nomesRH); })
-    .sort(function (a, b) { return a.localeCompare(b); });
+  // Nomes do setor Montagem do Cadastro de Funcionários (a aba Responsaveis da planilha saiu, out/2026)
+  return Acervo.nomesDoSetor("Montagem").slice().sort(function (a, b) { return a.localeCompare(b); });
 }
 
 function MONT_login(nome, senha, comoSupervisor) {

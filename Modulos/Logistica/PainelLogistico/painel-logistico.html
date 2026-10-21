@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="../../Chiavari/gas-cliente.js?v=20261019-sem-motor" data-projeto="cronograma" data-sem-motor></script>
+  <script src="../../Chiavari/operacao-sem-motor.js?v=20261019-sem-motor"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Painel Logístico</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/themePrepaint.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
+  <link rel="stylesheet" href="painel-logistico.css?v=20261019-painel2">
+</head>
+<body>
+<section class="el-page pl-page" data-module-root>
+  <header class="page-header pl-topo">
+    <h1>Painel Logístico</h1>
+  </header>
+
+  <div class="pl-barra">
+    <div class="pl-semana">
+      <button type="button" class="pl-icone" id="plAnterior" aria-label="Semana anterior">‹</button>
+      <strong id="plPeriodo">Carregando…</strong>
+      <button type="button" class="pl-icone" id="plProxima" aria-label="Próxima semana">›</button>
+      <button type="button" class="pl-link" id="plHoje">Hoje</button>
+    </div>
+    <div class="pl-resumo" id="plResumo"></div>
+    <div class="pl-acoes">
+      <label class="pl-filtro"><input type="checkbox" id="plSoProblemas"> Só com problema</label>
+      <button type="button" class="btn-secondary" id="plAtualizar">Atualizar</button>
+      <button type="button" class="btn-primary" id="plPreencher">Preencher vazios automaticamente</button>
+    </div>
+  </div>
+
+  <p class="pl-ajuda">A escala é montada sozinha quando o pedido entra no cronograma: equipe pelo volume do pedido, responsável entre os líderes e o menor caminhão que comporta. Confira e ajuste aqui. O que você escolhe nunca é trocado pelo automático. Regras em <b>Gestão &gt; Parâmetros</b>.</p>
+
+  <div id="plErro" class="pl-erro" hidden></div>
+  <div id="plDias" class="pl-dias"><div class="pl-vazio">Carregando a semana…</div></div>
+</section>
+
+<dialog id="plConflito" class="pl-dialogo">
+  <h2>Conflito na escala</h2>
+  <p>Esta escolha coloca alguém (ou um caminhão) em dois lugares ao mesmo tempo:</p>
+  <ul id="plConflitoLista"></ul>
+  <div class="pl-dialogo-acoes">
+    <button type="button" class="btn-secondary" id="plConflitoVoltar">Voltar e mudar</button>
+    <button type="button" class="btn-primary pl-perigo" id="plConflitoSalvar">Salvar mesmo assim</button>
+  </div>
+</dialog>
+
+<script src="painel-logistico.js?v=20261019-painel"></script>
+</body>
+</html>

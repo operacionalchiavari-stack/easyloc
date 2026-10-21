@@ -89,14 +89,10 @@ module.exports = async (req, res) => {
       await perfisMensagens(cfg,resultado);
       return res.status(200).json({ok:true,resultado});
     }
-    // Resumo do dia (etapas do Cronograma de hoje + agenda interna) — out/2026.
-    // Se o Cronograma falhar, o mural continua aparecendo (resumo vem null).
-    const [mural, resumoDia, metasSetores] = await Promise.all([
+    // O Resumo do dia saiu daqui (out/2026): a Início lê direto do banco (rpc operacao_resumo_dia).
+    const resumoDia = null;
+    const [mural, metasSetores] = await Promise.all([
       executar(cfg, PROJETOS.portal, "MURAL_dadosPublicos_", [true,colaboradores], { interno: true,usuario:membro }),
-      executar(cfg, PROJETOS.cronograma, "PORTAL_resumoDia_", [], { interno: true }).catch((e) => {
-        console.error("[portal-mural] resumo do dia", e && e.message || e);
-        return null;
-      }),
       executar(cfg, PROJETOS.central, "PORTAL_metasSetores_", [], { interno: true }).catch((e) => {
         console.error("[portal-mural] metas por setor", e && e.message || e);
         return null;

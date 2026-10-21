@@ -19,6 +19,96 @@ const CRON_COL_PEDIDO_SISTEMA = 18; // R
 const CRON_COL_DATA_SUGERIDA = 19;  // S
 const CRON_COL_HORA_SUGERIDA = 20;  // T: horário que o pedido calculou (mesma ideia da data)
 
+// Completa pedidos existentes sem duplicar nas leituras seguintes.
+function CRON_garantirDescarregamentos_(sheet){
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const linhas = sheet.getDataRange().getValues().slice(1);
+    const chave = function(l){ return String(l[17] || l[1] || ""); };
+    const existentes = new Set(linhas.filter(function(l){
+      return String(l[5] || "").toLowerCase() === "descarregamento";
+    }).map(chave));
+    const bases = new Map();
+    const prioridade = function(l){
+      const tipo = String(l[5] || "").toLowerCase();
+      return tipo.includes("triagem") && tipo.includes("confer") ? 3 : tipo === "desmontagem" ? 2 : 1;
+    };
+    linhas.forEach(function(l){
+      const key = chave(l);
+      if(!key || !l[6] || existentes.has(key)) return;
+      if(!bases.has(key) || prioridade(l) > prioridade(bases.get(key))) bases.set(key, l);
+    });
+    bases.forEach(function(l, key){
+      const tipo = String(l[5] || "").toLowerCase();
+      const nova = l.slice(0, 20);
+      while(nova.length < 20) nova.push("");
+      nova[0] = Utilities.getUuid();
+      nova[5] = "Descarregamento";
+      nova[8] = "";
+      nova[11] = "Gerado automaticamente: conferência do descarregamento";
+      nova[12] = "";
+      nova[15] = "";
+      nova[16] = "";
+      sheet.appendRow(nova);
+      existentes.add(key);
+    });
+    CRON_ordenarDescarregamentos_(sheet);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Descarregamento só pode ocorrer depois da última desmontagem do pedido.
+function CRON_ordenarDescarregamentos_(sheet){
+  const regras = typeof Acervo !== "undefined" && Acervo.regrasCronograma ? Acervo.regrasCronograma() : {};
+  const intervalo = Math.max(1, Number(regras.descarregamento_minutos_apos_desmontagem ?? 60));
+  const linhas = sheet.getDataRange().getValues();
+  const chave = l => String(l[17] || l[1] || "");
+  const instante = function(l){
+    const texto = CRON_dataTexto_(l[6]);
+    const br = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(texto);
+    const iso = br ? br[3] + "-" + br[2] + "-" + br[1] : texto.slice(0, 10);
+    const hora = CRON_horaTexto_(l[7]) || "23:59";
+    return new Date(iso + "T" + hora + ":00");
+  };
+  const desmontagens = new Map();
+  linhas.slice(1).forEach(function(l){
+    if(String(l[5] || "").toLowerCase() !== "desmontagem") return;
+    const data = instante(l), anterior = desmontagens.get(chave(l));
+    if(!isNaN(data.getTime()) && (!anterior || data > anterior)) desmontagens.set(chave(l), data);
+  });
+  linhas.forEach(function(l, i){
+    if(i === 0 || String(l[5] || "").toLowerCase() !== "descarregamento") return;
+    const desmontagem = desmontagens.get(chave(l));
+    if(!desmontagem) return;
+    const atual = instante(l);
+    const depois = new Date(desmontagem.getTime() + intervalo * 60000);
+    if(!isNaN(atual.getTime()) && atual >= depois) return;
+    sheet.getRange(i + 1, 7, 1, 2).setValues([[
+      Utilities.formatDate(depois, Session.getScriptTimeZone(), "dd/MM/yyyy"),
+      Utilities.formatDate(depois, Session.getScriptTimeZone(), "HH:mm")
+    ]]);
+  });
+  const descargas = new Map();
+  sheet.getDataRange().getValues().slice(1).forEach(l => {
+    if(String(l[5] || "").toLowerCase() !== "descarregamento") return;
+    const data = instante(l), anterior = descargas.get(chave(l));
+    if(!isNaN(data.getTime()) && (!anterior || data > anterior)) descargas.set(chave(l),data);
+  });
+  sheet.getDataRange().getValues().forEach((l,i) => {
+    const tipo=String(l[5] || "").toLowerCase();
+    if(!i || !tipo.includes("triagem") || !tipo.includes("confer")) return;
+    const descarga=descargas.get(chave(l));
+    if(!descarga || instante(l)>descarga) return;
+    const depois=new Date(descarga.getTime()+60000);
+    sheet.getRange(i+1,7,1,2).setValues([[
+      Utilities.formatDate(depois,Session.getScriptTimeZone(),"dd/MM/yyyy"),
+      Utilities.formatDate(depois,Session.getScriptTimeZone(),"HH:mm")
+    ]]);
+  });
+}
+
 function CRON_garantirColunasPedidoSistema_(sheet){
   if(sheet.getMaxColumns() < CRON_COL_HORA_SUGERIDA){
     sheet.insertColumnsAfter(sheet.getMaxColumns(), CRON_COL_HORA_SUGERIDA - sheet.getMaxColumns());
@@ -74,6 +164,7 @@ function CRON_etapasDoPedido_(pedido, regras){
     { etapa: "Carregamento", data: CRON_somarDias_(carregamentoISO, 0), horario: padrao },
     { etapa: "Montagem", data: CRON_somarDias_(entrega, CRON_numeroRegra_(regras.montagem_dias_apos_entrega, 0)), horario: horaEntrega },
     { etapa: "Desmontagem", data: CRON_somarDias_(coleta, CRON_numeroRegra_(regras.desmontagem_dias_apos_coleta, 0)), horario: horaColeta },
+    { etapa: "Descarregamento", data: CRON_somarDias_(coleta, CRON_numeroRegra_(regras.triagem_retorno_dias_apos_coleta, 0)), horario: padrao },
     { etapa: "Triagem (Conferência)", data: CRON_somarDias_(coleta, CRON_numeroRegra_(regras.triagem_retorno_dias_apos_coleta, 0)), triagem: true, horario: padrao }
   ].filter(function(e){ return e.data; });
 }
@@ -83,6 +174,10 @@ function CRON_sincronizarPedidoAcervo(pedidoId){
   if(!Acervo.pode("comercial.pedidos.editar") && !Acervo.pode("comercial.pedidos.criar")){
     throw new Error("Sem permissão para atualizar pedidos.");
   }
+  return CRON_sincronizarPedidoAcervo_(pedidoId);
+}
+
+function CRON_sincronizarPedidoAcervo_(pedidoId){
   const lido = Acervo.pedidoParaCronograma(String(pedidoId || ""));
   const pedido = lido.pedido, regras = lido.regras || {};
   if(!pedido) throw new Error("Pedido não encontrado.");
@@ -103,6 +198,7 @@ function CRON_sincronizarPedidoAcervo(pedidoId){
 
   if(!entra){
     ligadas.slice().reverse().forEach(function(l){ sheet.deleteRow(l.linha); });
+    if(Acervo.sincronizacaoCronogramaConcluida) Acervo.sincronizacaoCronogramaConcluida(pedido.id,pedido.revisao);
     return { noCronograma: false, removidas: ligadas.length, status: pedido.status_comercial };
   }
 
@@ -165,5 +261,9 @@ function CRON_sincronizarPedidoAcervo(pedidoId){
     sheet.getRange(l.linha, 2, 1, 4).setValues([[numero, dataEvento, cliente, local]]);
   });
 
+  CRON_ordenarDescarregamentos_(sheet);
+  // Painel Logístico (out/2026): escala automática do que ficou vazio (equipe, responsável, caminhão)
+  try { ESC_preencherPedido_(pedido.id); } catch(e) { Logger.log("Escala automática: " + e.message); }
+  if(Acervo.sincronizacaoCronogramaConcluida) Acervo.sincronizacaoCronogramaConcluida(pedido.id,pedido.revisao);
   return { noCronograma: true, criadas: criadas, atualizadas: atualizadas, numero: numero };
 }

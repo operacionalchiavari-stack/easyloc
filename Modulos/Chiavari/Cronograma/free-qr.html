@@ -1,7 +1,12 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html data-theme-legacy lang="pt-BR">
 <head>
-  <script src="../gas-cliente.js?v=20261016-seguranca" data-projeto="cronograma"></script>
+<link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
+<script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+  <script src="../gas-cliente.js?v=20261019-sem-motor" data-projeto="cronograma" data-sem-motor></script>
+  <script src="../operacao-sem-motor.js?v=20261019-sem-motor"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -32,7 +37,7 @@
       -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:none;
     }
     .topo{ text-align:center; margin:6px 0 14px; }
-    .topo small{ display:block; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--suave); }
+    .topo small{ display:block; font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--suave); }
     .topo h1{ font-family:var(--serif); font-weight:600; font-size:30px; line-height:1.1; margin-top:4px; }
     .topo p{ color:var(--muted); font-size:14px; margin-top:4px; }
 
@@ -42,26 +47,27 @@
     }
     #qr{ display:flex; justify-content:center; }
     #qr img, #qr canvas{ width:min(78vw, 300px) !important; height:auto !important; image-rendering:pixelated; }
-    .codigo{ font-size:38px; font-weight:800; letter-spacing:.3em; margin:16px 0 4px; padding-left:.3em; }
+    .codigo{ font-size:38px; font-weight:600; letter-spacing:.3em; margin:16px 0 4px; padding-left:.3em; }
     .codigo-legenda{ color:var(--muted); font-size:13px; }
     .tempo{ height:6px; border-radius:3px; background:var(--soft); overflow:hidden; margin-top:14px; }
     .tempo i{ display:block; height:100%; background:var(--escuro); border-radius:3px; transition:width 1s linear; }
 
-    .secao{ margin:22px 4px 10px; display:flex; justify-content:space-between; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--suave); }
+    .secao{ margin:22px 4px 10px; display:flex; justify-content:space-between; font-size:12px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--suave); }
     .secao span{ color:var(--text); }
     .equipe{ display:flex; flex-direction:column; gap:8px; }
     .pessoa{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; background:var(--card); border:1px solid var(--line); border-radius:14px; }
     .pessoa strong{ font-size:14.5px; }
-    .chip{ padding:4px 10px; border-radius:999px; font-size:11.5px; font-weight:800; white-space:nowrap; background:var(--soft); color:var(--muted); }
+    .chip{ padding:4px 10px; border-radius:999px; font-size:11.5px; font-weight:600; white-space:nowrap; background:var(--soft); color:var(--muted); }
     .chip.ok{ background:var(--ok-soft); color:var(--ok-forte); }
     .chip.aviso{ background:var(--aviso-soft); color:var(--aviso); }
     .chip.erro{ background:var(--erro-soft); color:var(--erro); }
     .vazio{ padding:14px; text-align:center; color:var(--suave); border:1px dashed var(--line); border-radius:14px; font-size:13.5px; }
 
-    .erro-caixa{ margin-top:30vh; text-align:center; color:var(--erro); font-weight:700; padding:0 10px; }
+    .erro-caixa{ margin-top:30vh; text-align:center; color:var(--erro); font-weight:600; padding:0 10px; }
     .carregando{ margin-top:30vh; text-align:center; color:var(--muted); }
     .dica{ text-align:center; color:var(--suave); font-size:12.5px; margin-top:18px; }
   </style>
+<link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 </head>
 <body>
   <div id="raiz"><div class="carregando">Carregando QR code…</div></div>

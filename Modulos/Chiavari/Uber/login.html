@@ -1,6 +1,10 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html data-theme-legacy lang="pt-BR">
 <head>
+<link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
+<script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
   <script src="../gas-cliente.js?v=20261016-seguranca" data-projeto="uber"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +15,7 @@
         --preto: #000000;
         --preto-claro: #222222;
         --cinza-fundo: #e5e7eb;
-        --texto: #111827;
+        --texto: var(--el-color-text,#1f2020);
         --branco: #ffffff;
     }
 
@@ -38,7 +42,7 @@
     h1 {
         margin: 0;
         font-size: 28px;
-        font-weight: 800;
+        font-weight: 600;
         color: var(--preto);
     }
 
@@ -113,10 +117,11 @@ body{ background:#fbfaf7 !important; }
 h1{ font-family:var(--serif) !important; font-size:28px !important; white-space:nowrap; font-weight:500 !important; letter-spacing:.12em; text-transform:uppercase; color:var(--text) !important; }
 .sub{ color:var(--muted) !important; font-weight:600; }
 input{ min-height:48px; padding:0 16px !important; border:1px solid var(--line) !important; border-radius:12px !important; background:var(--fundo-suave) !important; font-size:15px !important; font-weight:500; }
-input:focus{ border-color:var(--primary) !important; background:#ffffff !important; box-shadow:0 0 0 3px rgba(90,90,85,.12); }
-button{ min-height:48px; border-radius:999px !important; background:var(--primary-dark) !important; font-size:13px !important; font-weight:800 !important; letter-spacing:.12em; text-transform:uppercase; }
+input:focus{ border-color:var(--el-color-border,#e3e7ec) !important; background:#ffffff !important; box-shadow:0 0 0 3px rgba(90,90,85,.12); }
+button{ min-height:48px; border-radius:999px !important; background:var(--primary-dark) !important; font-size:13px !important; font-weight:600 !important; letter-spacing:.12em; text-transform:uppercase; }
 button:hover{ background:#2f2f2b !important; }
 </style>
+<link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 </head>
 
 <body>

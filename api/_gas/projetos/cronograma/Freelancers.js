@@ -303,7 +303,27 @@ function FREE_formatarCpf_(cpf) {
     : n;
 }
 
+/*
+ * Senha do free (out/2026): PBKDF2 do motor (Utilities.hashSenha), lento de propósito.
+ * O hash antigo (SHA-256 simples, 64 caracteres hex) ainda é aceito no login e trocado
+ * pelo novo na mesma hora — ver FREE_appLogin. Ninguém precisa redefinir a senha.
+ */
 function FREE_hashSenha_(senha, salt) {
+  return Utilities.hashSenha(senha, salt);
+}
+
+function FREE_senhaConfere_(senha, cadastro) {
+  if (FREE_hashEhNovo_(cadastro.hash)) {
+    return Utilities.conferirSenha(senha, cadastro.salt, cadastro.hash);
+  }
+  return FREE_hashSenhaLegado_(senha, cadastro.salt) === String(cadastro.hash || "");
+}
+
+function FREE_hashEhNovo_(hash) {
+  return /^pbkdf2-/.test(String(hash || ""));
+}
+
+function FREE_hashSenhaLegado_(senha, salt) {
 
   const bytes = Utilities.computeDigest(
     Utilities.DigestAlgorithm.SHA_256,
@@ -1085,8 +1105,13 @@ function FREE_appLogin(cpf, senha) {
 
       const c = FREE_cadastroParaObjeto_(cad.linhas[i], i);
 
-      if (FREE_hashSenha_(String(senha || ""), c.salt) !== c.hash) {
+      if (!FREE_senhaConfere_(String(senha || ""), c)) {
         break;
+      }
+
+      // Hash antigo (SHA-256 simples): com a senha certa em mãos, troca pelo PBKDF2 (coluna G).
+      if (!FREE_hashEhNovo_(c.hash)) {
+        cad.aba.getRange(c.linha, 7).setValue(FREE_hashSenha_(String(senha || ""), c.salt));
       }
 
       if (c.status === FREE_CAD_BLOQUEADO) {

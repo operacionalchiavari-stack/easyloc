@@ -18,6 +18,21 @@ const { formatarData } = require("./datas");
 const { Aba, Planilha } = require("./planilha");
 const { linhasFuncionarios, fonteFuncionarios } = require('./rh-cadastro');
 
+// Senhas dos apps de campo (Utilities.hashSenha / conferirSenha). PBKDF2-SHA256 com 600 mil iterações (recomendação
+// OWASP): lento de propósito, para que um vazamento da planilha não permita testar senhas aos bilhões, como acontecia
+// com um SHA-256 só. Guardado como "pbkdf2-sha256$<iterações>$<hex>" — as iterações vão junto para poder subir no futuro.
+const PBKDF2_ITERACOES = 600000;
+function hashSenhaPbkdf2(senha, salt) {
+  const h = crypto.pbkdf2Sync(String(senha), String(salt), PBKDF2_ITERACOES, 32, "sha256");
+  return "pbkdf2-sha256$" + PBKDF2_ITERACOES + "$" + h.toString("hex");
+}
+function conferirSenhaPbkdf2(senha, salt, guardado) {
+  const m = /^pbkdf2-sha256\$(\d{4,7})\$([0-9a-f]{64})$/.exec(String(guardado || ""));
+  if (!m) return false;
+  const h = crypto.pbkdf2Sync(String(senha), String(salt), Number(m[1]), 32, "sha256");
+  return crypto.timingSafeEqual(h, Buffer.from(m[2], "hex"));
+}
+
 const FUSO = "America/Sao_Paulo";
 const BUCKET = "gs-arquivos";
 
@@ -89,6 +104,7 @@ class Execucao {
     this.excluidas = new Set();
     this.novasPlanilhas = [];
     this.uploads = [];
+    this.cronogramaConcluidos = [];
     this.usouLock = false;
     this.propsAlteradas = new Map();
     this.cacheLocal = new Map();
@@ -292,6 +308,9 @@ class Execucao {
       computeDigest: (alg, valor) => paraBytesGS(crypto.createHash(alg).update(deBytesGS(valor)).digest()),
       computeHmacSignature: (alg, valor, chave) => paraBytesGS(crypto.createHmac(alg, deBytesGS(chave)).update(deBytesGS(valor)).digest()),
       computeHmacSha256Signature: (valor, chave) => paraBytesGS(crypto.createHmac("sha256", deBytesGS(chave)).update(deBytesGS(valor)).digest()),
+      // Não existem no Apps Script (extensão do motor, out/2026): senha guardada com PBKDF2 em vez de um SHA-256 só.
+      hashSenha: (senha, salt) => hashSenhaPbkdf2(senha, salt),
+      conferirSenha: (senha, salt, guardado) => conferirSenhaPbkdf2(senha, salt, guardado),
       base64Encode: v => deBytesGS(v).toString("base64"),
       base64EncodeWebSafe: v => deBytesGS(v).toString("base64").replace(/\+/g, "-").replace(/\//g, "_"),
       base64Decode: s => paraBytesGS(Buffer.from(String(s), "base64")),
@@ -514,7 +533,7 @@ class Execucao {
           if (r.status >= 300) throw new Error("Não foi possível ler o pedido: " + r.corpo.toString("utf8").slice(0, 200));
           return JSON.parse(r.corpo.toString("utf8") || "[]");
         };
-        const pedido = ler("separacoes_pedidos?select=id,numero_pedido,cliente_nome,local_nome,local_id,tipo_evento,data_evento,data_evento_fim,data_entrega,data_coleta,status_comercial,observacoes&empresa_id=eq." + empresa + "&id=eq." + encodeURIComponent(id))[0] || null;
+        const pedido = ler("separacoes_pedidos?select=id,numero_pedido,cliente_nome,local_nome,local_id,tipo_evento,data_evento,data_evento_fim,data_entrega,data_coleta,status_comercial,observacoes,revisao&empresa_id=eq." + empresa + "&id=eq." + encodeURIComponent(id))[0] || null;
         const regras = ler("empresa_logistica_regras?select=*&empresa_id=eq." + empresa)[0] || {};
         let endereco = "";
         if (pedido && pedido.local_id) {
@@ -524,6 +543,59 @@ class Execucao {
         return { pedido, regras, endereco };
       },
       /* Andamento da operação dos pedidos do sistema (separação, carregamento, volta), para o cartão do cronograma. */
+      sincronizacoesCronograma: () => {
+        if(!ex.usuario) return [];
+        const r=fetchSincrono(cfg.url+'/rest/v1/pedido_cronograma_pendencias?select=pedido_id,revisao&empresa_id=eq.'+encodeURIComponent(ex.usuario.empresaId)+'&order=criado_em&limit=10',{method:'GET',headers:cabecalhos(cfg)});
+        if(r.status>=300) throw new Error('Não foi possível carregar as sincronizações pendentes');
+        return JSON.parse(r.corpo.toString('utf8')||'[]');
+      },
+      sincronizacaoCronogramaConcluida: (id,revisao) => ex.cronogramaConcluidos.push({id,revisao}),
+      validarEtapaCampo: id => rpcSincrono(cfg,'operacao_validar_campo',{p_id_etapa:String(id)}),
+      regrasCronograma: () => {
+        if(!ex.usuario) return {};
+        const r = fetchSincrono(cfg.url + '/rest/v1/empresa_logistica_regras?select=*&empresa_id=eq.' + encodeURIComponent(ex.usuario.empresaId), {method:'GET',headers:cabecalhos(cfg)});
+        if(r.status >= 300) throw new Error('Não foi possível carregar os parâmetros da logística');
+        return JSON.parse(r.corpo.toString('utf8') || '[]')[0] || {};
+      },
+      /* Painel Logístico (out/2026): pessoas da operação (Cadastro de Funcionários: equipe_operacional + líder),
+         frota (Logística > Caminhões) e parâmetros da escala. Só nome/equipe/líder das pessoas — nada de dado pessoal. */
+      escalaBase: () => {
+        if (!ex.usuario) throw new Error('Sessão necessária');
+        const empresa = encodeURIComponent(ex.usuario.empresaId), ler = caminho => {
+          const r = fetchSincrono(cfg.url + "/rest/v1/" + caminho, { method: "GET", headers: cabecalhos(cfg) });
+          if (r.status >= 300) throw new Error("Não foi possível ler os cadastros: " + r.corpo.toString("utf8").slice(0, 200));
+          return JSON.parse(r.corpo.toString("utf8") || "[]");
+        };
+        const pessoas = ler("funcionarios_acesso?select=id,nome,equipe_operacional,lider_operacao&ativo=eq.true&equipe_operacional=not.is.null&empresa_id=eq." + empresa + "&order=nome")
+          .map(f => ({ id: f.id, nome: String(f.nome || "").trim(), equipe: f.equipe_operacional, lider: !!f.lider_operacao }))
+          .filter(f => f.nome);
+        const caminhoes = ler("caminhoes?select=id,modelo,codigo,placa,capacidade_m3,empresa_nome,tipo&status=eq.ativo&empresa_id=eq." + empresa + "&order=capacidade_m3")
+          .map(c => ({ id: c.id, modelo: String(c.modelo || "").trim(), codigo: String(c.codigo || "").trim(), placa: c.placa || "",
+            capacidade: Number(c.capacidade_m3) || 0, empresa: c.empresa_nome || "", vinculo: c.tipo === "proprio" ? "Próprio" : "Terceiro" }));
+        const regras = ler("empresa_logistica_regras?select=escala&empresa_id=eq." + empresa)[0] || {};
+        return { pessoas, caminhoes, escala: regras.escala || null };
+      },
+      /* Volume (m³) e peças de cada pedido do sistema, pela lista de itens × volume_cubico do cadastro. */
+      volumePedidos: ids => {
+        const lista = [...new Set((ids || []).filter(Boolean))];
+        if (!ex.usuario || !lista.length) return {};
+        const empresa = encodeURIComponent(ex.usuario.empresaId), mapa = {};
+        for (let i = 0; i < lista.length; i += 80) {
+          const em = lista.slice(i, i + 80).map(encodeURIComponent).join(",");
+          for (let offset = 0; ; offset += 1000) {
+            const r = fetchSincrono(cfg.url + "/rest/v1/separacoes_itens?select=separacao_pedido_id,quantidade_solicitada,itens:item_id(volume_cubico)&empresa_id=eq." + empresa + "&separacao_pedido_id=in.(" + em + ")&order=id&limit=1000&offset=" + offset, { method: "GET", headers: cabecalhos(cfg) });
+            const lote = r.status >= 300 ? [] : JSON.parse(r.corpo.toString("utf8") || "[]");
+            lote.forEach(l => {
+              const m = mapa[l.separacao_pedido_id] || (mapa[l.separacao_pedido_id] = { m3: 0, pecas: 0 });
+              const q = Number(l.quantidade_solicitada) || 0;
+              m.pecas += q; m.m3 += q * (Number(l.itens && l.itens.volume_cubico) || 0);
+            });
+            if (lote.length < 1000) break;
+          }
+        }
+        Object.values(mapa).forEach(m => { m.m3 = Math.round(m.m3 * 100) / 100; });
+        return mapa;
+      },
       andamentoPedidos: ids => {
         const lista = (ids || []).filter(Boolean);
         if (!ex.usuario || !lista.length) return {};
@@ -533,23 +605,41 @@ class Execucao {
           return r.status >= 300 ? [] : JSON.parse(r.corpo.toString("utf8") || "[]");
         };
         const pedidos = ler("separacoes_pedidos?select=id,status,status_comercial,status_operacional,operacao&empresa_id=eq." + empresa + "&id=in.(" + em + ")");
-        const itens = ler("separacoes_itens?select=separacao_pedido_id,quantidade_solicitada,quantidade_separada,item_id,componentes,itens:item_id(tipo)&empresa_id=eq." + empresa + "&separacao_pedido_id=in.(" + em + ")");
+        const lerTudo = caminho => {
+          const linhas=[];
+          for(let offset=0;;offset+=1000){
+            const lote=ler(caminho+'&limit=1000&offset='+offset);
+            linhas.push(...lote);
+            if(lote.length<1000) return linhas;
+          }
+        };
+        const itens = lerTudo("separacoes_itens?select=separacao_pedido_id,quantidade_solicitada,quantidade_separada,item_id,componentes,itens:item_id(tipo)&empresa_id=eq." + empresa + "&separacao_pedido_id=in.(" + em + ")&order=id");
         // Kit conta pelas peças (componentes × quantidade), igual à separação (out/2026).
         const kitIds = [...new Set(itens.filter(i => String(i.itens && i.itens.tipo || "").toLowerCase() === "kit").map(i => i.item_id))];
         const pecasPorKit = {};
         if (kitIds.length) ler("kit_itens?select=kit_id,quantidade&kit_id=in.(" + kitIds.map(encodeURIComponent).join(",") + ")").forEach(k => { pecasPorKit[k.kit_id] = (pecasPorKit[k.kit_id] || 0) + Number(k.quantidade || 0); });
         const pecas = i => pecasPorKit[i.item_id] ? Number(i.quantidade_solicitada || 0) * pecasPorKit[i.item_id] : Number(i.quantidade_solicitada || 0);
         const separadas = i => pecasPorKit[i.item_id] ? Object.values(i.componentes || {}).reduce((t, c) => t + Number(c && c.separado || 0), 0) : Number(i.quantidade_separada || 0);
+        const etiquetas = lerTudo("separacoes_etiquetas?select=separacao_pedido_id,lida_carregamento_em,lida_descarregamento_em,lida_retorno_em&empresa_id=eq." + empresa + "&separacao_pedido_id=in.(" + em + ")&order=id");
         const mapa = {};
         pedidos.forEach(p => {
           const meus = itens.filter(i => i.separacao_pedido_id === p.id);
           const op = p.operacao || {};
           const resumo = o => (o && o.concluido_em ? { lidas: o.lidas, total: o.total, faltando: (o.faltando || []).length, em: o.concluido_em, por: o.por || "" } : null);
+          const volumes = etiquetas.filter(e => e.separacao_pedido_id === p.id);
+          const carregados = volumes.filter(e => e.lida_carregamento_em);
+          const baseDescarga = carregados.length ? carregados : volumes;
+          const conferencia = (registro,base,campo) => base.length ? {
+            ...(resumo(registro) || {}), lidas:base.filter(e=>e[campo]).length,total:base.length,
+            faltando:registro?.concluido_em ? base.filter(e=>!e[campo]).length : 0
+          } : resumo(registro);
           mapa[p.id] = {
             status: p.status, comercial: p.status_comercial, operacional: p.status_operacional || "",
             separado: meus.reduce((s, i) => s + separadas(i), 0),
             total: meus.reduce((s, i) => s + pecas(i), 0),
-            carregamento: resumo(op.carregamento), retorno: resumo(op.retorno)
+            carregamento: conferencia(op.carregamento,volumes,'lida_carregamento_em'),
+            descarregamento: conferencia(op.descarregamento,baseDescarga,'lida_descarregamento_em'),
+            retorno: conferencia(op.retorno,baseDescarga,'lida_retorno_em')
           };
         });
         return mapa;
@@ -633,6 +723,12 @@ async function executar(cfg, projeto, nome, args, opcoes) {
       throw e;
     }
     if (erro) { throw erro; }
+    for(const item of ex.cronogramaConcluidos){
+      try {
+        const r=await fetch(cfg.url+'/rest/v1/pedido_cronograma_pendencias?pedido_id=eq.'+encodeURIComponent(item.id)+'&revisao=eq.'+encodeURIComponent(item.revisao),{method:'DELETE',headers:cabecalhos(cfg)});
+        if(!r.ok) console.warn('Sincronização gravada; confirmação será repetida na próxima carga');
+      } catch { console.warn('Confirmação da sincronização pendente de rede'); }
+    }
     return trocarUrlsDeArquivo(cfg, resultado === undefined ? null : JSON.parse(JSON.stringify(resultado)));
   }
 }
