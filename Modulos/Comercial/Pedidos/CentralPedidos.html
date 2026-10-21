@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="CentralPedidos.css?v=20261018-numeros-catalogo">
+  <link rel="stylesheet" href="CentralPedidos.css?v=20261021-atalho-catalogo3">
   <!-- Visualização do pedido = prévia do catálogo (cabeçalho, itens por ambiente, PDF). -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261009-ver-pedido">
@@ -24,6 +24,7 @@
     </div>
     <div class="el-page-actions central-actions-left">
       <!-- Tabelas de Preço fica aqui dentro (pedido do usuário), não no menu. data-module-href: some se a pessoa não tiver permissão (js/core/permissions.js?v=20261019-painel-logistico). -->
+      <button type="button" class="btn btn-secondary" id="btnCatalogoCentral" title="Abrir o catálogo (Alt+C) · pesquisar no catálogo (Alt+P)" aria-keyshortcuts="Alt+C">Catálogo <kbd class="central-kbd">Alt+C</kbd></button>
       <button type="button" class="btn btn-secondary" id="btnTabelasPreco" data-module-href="../../Estoque/TabelasPreco/tabelas-preco.html">Tabelas de Preço</button>
       <button type="button" class="btn btn-secondary" id="btnFiltrosPedidos" aria-expanded="false" aria-controls="centralFiltrosPedidos">
         <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
@@ -158,7 +159,7 @@
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/paymentPix.js?v=20261021-divisao"></script>
 <script src="../../../js/core/zapiMessaging.js"></script>
-<script src="CentralPedidos.js?v=20261018-numeros-catalogo"></script>
+<script src="CentralPedidos.js?v=20261021-atalho-catalogo"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>

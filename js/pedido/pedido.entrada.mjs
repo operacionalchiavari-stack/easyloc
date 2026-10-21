@@ -282,6 +282,23 @@ export function iniciarEntradaComercial(vitrine){
     }
     document.getElementById('btnVoltarCentralPedidos')?.click();
   };
+  // Atalhos de teclado (out/2026): Alt+C vai para o Catálogo; Alt+P vai para o Catálogo e põe o cursor na pesquisa.
+  // Também chegam aqui quando o cursor está dentro do catálogo (o iframe repassa por window.__pedidoAtalho).
+  const btnCatalogo=trilha.querySelector('.ct-ferramentas [data-etapa="catalogo"]');
+  if(btnCatalogo){btnCatalogo.title='Catálogo (Alt+C)';btnCatalogo.setAttribute('aria-keyshortcuts','Alt+C');btnCatalogo.insertAdjacentHTML('beforeend','<kbd class="ct-kbd">Alt+C</kbd>');}
+  window.__pedidoAtalho=async acao=>{
+    if(etapaAtual==='catalogo'){if(acao==='catalogo')await frame()?.contentWindow?.abrirCatalogoComercialPedido?.();}
+    else await irPara('catalogo');
+    if(acao!=='pesquisar')return;
+    const cw=await esperarCatalogo('focarPesquisaCatalogo').catch(()=>null);
+    for(let i=0;cw && i<30;i++){frame()?.focus();if(cw.focarPesquisaCatalogo())return;await new Promise(r=>setTimeout(r,100));}
+  };
+  document.addEventListener('keydown',e=>{
+    if(!e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||e.repeat)return;
+    const acao=e.code==='KeyC'?'catalogo':e.code==='KeyP'?'pesquisar':'';
+    if(!acao||document.querySelector('dialog[open]'))return;
+    e.preventDefault();window.__pedidoAtalho(acao);
+  });
   window.__pedidoSincronizarEtapa=etapa=>{
     if(ocupado || etapaAtual==='dados' || etapa===etapaAtual || !ETAPAS.some(e=>e.id===etapa))return;
     etapaAtual=etapa;pintarTrilha(true);

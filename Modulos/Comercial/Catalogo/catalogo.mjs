@@ -1208,6 +1208,36 @@ function renderTimeline(){
   animateTimeline(first);
 }
 
+// Atalhos de teclado do Comercial (out/2026): Alt+C vai para o Catálogo (categorias) e Alt+P põe o cursor na
+// pesquisa. Alt + letra funciona mesmo digitando num campo e não briga com o navegador. Dentro do pedido (iframe)
+// quem decide a etapa é a tela do pedido, então o atalho é repassado para ela.
+function focarPesquisaCatalogo(){
+  if(state.overlay || state.activeView === GATEWAY_VIEW) applyView(HOME_VIEW);
+  const input = $("catalogSearch");
+  if(!input || !input.offsetParent) return false;
+  input.focus();
+  input.select();
+  return true;
+}
+window.focarPesquisaCatalogo = focarPesquisaCatalogo;
+function atalhoComercial(event){
+  if(!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return "";
+  return event.code === "KeyC" ? "catalogo" : event.code === "KeyP" ? "pesquisar" : "";
+}
+function bindAtalhosTeclado(){
+  const busca = $("catalogSearch");
+  if(busca){ busca.placeholder = "Pesquisar (Alt+P)"; busca.setAttribute("aria-keyshortcuts", "Alt+P"); }
+  document.addEventListener("keydown", (event) => {
+    const acao = atalhoComercial(event);
+    if(!acao || document.querySelector("dialog[open]")) return;
+    event.preventDefault();
+    if(modoPedido && window.parent.__pedidoAtalho){ window.parent.__pedidoAtalho(acao); return; }
+    if(acao === "catalogo") applyView(HOME_VIEW);
+    else focarPesquisaCatalogo();
+  });
+  if(new URLSearchParams(location.search).get("pesquisar") === "1") setTimeout(focarPesquisaCatalogo, 300);
+}
+
 function bindNavHistory(){
   window.appBeforeLeave=beforeLeaveProjetos;
   window.appGoBack=async()=>{
@@ -4055,6 +4085,7 @@ async function init(){
     bindCustomization();
     bindPhotoZoom();
     bindNavHistory();
+    bindAtalhosTeclado();
     startEventRotation();
     if(!ehVisitante()) initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id, token: state.catalogSession.token, pedidoComercial: modoPedido });
     // Assistente comercial (out/2026): decorador e equipe; visitante não (não tem projeto nem pedido).

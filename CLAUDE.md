@@ -9621,3 +9621,17 @@ podem ficar unificados, precisam ficar separados igual em contas a receber".
   para vencer, usar `html:is(#algum-id,html) ...`. Também: botão "arrastar" sem função removido, 1º vencimento padrão = hoje,
   Subtotal do resumo (sempre R$ 0,00) corrigido (`#resumoSubtotal`), coluna "Forma" e a barra de etapas não sobrepõe mais os
   botões da direita (até 1279px mostra só a etapa anterior mais próxima).
+
+## Atalhos de teclado do Comercial (21/out/2026)
+Pedido: "um atalho pro catálogo e um atalho no teclado pra pesquisar, fácil de acesso". **Alt+C** vai para o Catálogo
+(categorias) e **Alt+P** vai para o Catálogo com o cursor na pesquisa. Alt + letra (e não tecla solta) porque funciona mesmo com
+o cursor dentro de um campo e não briga com o navegador; usa `event.code` (KeyC/KeyP), independente do layout do teclado.
+- **Pedido** (`pedido.entrada.mjs`, `window.__pedidoAtalho`): de qualquer etapa leva ao catálogo; o botão "Catálogo" da barra
+  mostra "Alt+C" (≥1360px). Dentro do catálogo (iframe) o `catalogo.mjs` repassa o atalho para a tela do pedido.
+- **Catálogo** (`catalogo.mjs`, `bindAtalhosTeclado`/`window.focarPesquisaCatalogo`): placeholder "Pesquisar (Alt+P)";
+  `?pesquisar=1` no endereço abre já com o cursor na pesquisa.
+- **Central de Pedidos**: botão "Catálogo" (com "Alt+C") no grupo da esquerda + os dois atalhos (Alt+P abre
+  `catalogo.html?pesquisar=1`). O cabeçalho passa a quebrar em duas linhas até 1660px (antes 1350px), senão o título central
+  cobria os botões. Atalhos não disparam com uma janela (`dialog[open]`) aberta.
+- Teste `tests/atalhos-comercial-live.cjs` (`RUN_ATALHOS_LIVE=1`). **Pegadinha de teste:** servir as páginas num endereço
+  `http://algo.teste` quebra o catálogo (`crypto.randomUUID` só existe em contexto seguro); usar `http://localhost:PORTA`.

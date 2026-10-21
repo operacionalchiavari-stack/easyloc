@@ -68,7 +68,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   display: none !important;
 }
 
-@media (max-width: 1350px) {
+@media (max-width: 1660px) { /* com o botão Catálogo (out/2026) o grupo da esquerda só cabe ao lado do título a partir de ~1660px */
   html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
@@ -710,3 +710,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 @keyframes pedido-presenca-pulso{from{transform:scale(1);opacity:.6}to{transform:scale(2.8);opacity:0}}
 #centralPedidosTbody tr.is-montando td{background:#f3faf5}
 @media(prefers-reduced-motion:reduce){.pedido-presenca i::after{animation:none}}
+
+/* atalho de teclado escrito no botão Catálogo (out/2026) */
+.central-kbd{display:inline-block;margin-left:6px;padding:1px 5px;border:1px solid #d9dde3;border-bottom-width:2px;border-radius:5px;background:#f7f8fa;color:#6b6b6b;font:600 10px/1.3 Inter,system-ui,sans-serif;vertical-align:1px}
+@media (max-width:760px){.central-kbd{display:none}}
