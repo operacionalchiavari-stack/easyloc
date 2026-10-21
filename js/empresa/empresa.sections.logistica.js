@@ -6,6 +6,7 @@
     desmontagem_dias_apos_coleta: 0,
     triagem_retorno_dias_apos_coleta: 1,
     separacao_dias_antes_evento: 2,
+    descarregamento_minutos_apos_desmontagem: 60,
     hora_padrao: "08:00"
   };
 
@@ -64,7 +65,8 @@
           ${inputRegra("Montagem", "logRegMontagem", "dias apos entrega")}
           ${inputRegra("Desmontagem", "logRegDesmontagem", "dias apos coleta")}
           ${inputRegra("Triagem retorno", "logRegTriagemRetorno", "dias apos coleta")}
-          ${inputRegra("Liberar separacao", "logRegLiberarSeparacao", "dias antes do evento")}
+          ${inputRegra("Liberar separacao", "logRegLiberarSeparacao", "dias antes da entrega")}
+          ${inputRegra("Descarregamento", "logRegDescarregamento", "minutos após a desmontagem; nunca antes")}
           <label style="display:grid;gap:7px;font-size:12px;color:#64748b;font-weight:600;">
             Hora padrao
             <input id="logRegHoraPadrao" type="time" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;color:#0f172a;font-size:14px;">
@@ -86,10 +88,11 @@
       desmontagem_dias_apos_coleta: "logRegDesmontagem",
       triagem_retorno_dias_apos_coleta: "logRegTriagemRetorno",
       separacao_dias_antes_evento: "logRegLiberarSeparacao",
+      descarregamento_minutos_apos_desmontagem: "logRegDescarregamento",
       hora_padrao: "logRegHoraPadrao"
     };
 
-    const setStatus = (text, color = "#64748b") => {
+    const setStatus = (text, color = (window.EasyLocTheme?.color?.('accent') || '#7d603d')) => {
       if (!status) return;
       status.textContent = text;
       status.style.color = color;
@@ -152,7 +155,7 @@
 
   async function bind(container, state, api) {
     const regrasWrapper = container.querySelector("#logistica-regras-section");
-    const cleanupRegras = await bindRegras(regrasWrapper, state, api);
+    const cleanupRegras = state.parametros ? null : await bindRegras(regrasWrapper, state, api);
 
     const freteWrapper = container.querySelector("#frete-section");
     window.empresa.logistica.frete.render(freteWrapper, state);

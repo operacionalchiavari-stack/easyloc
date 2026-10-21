@@ -3,8 +3,8 @@
     logo_url: "",
     logo_zoom: 1,
     cor_sidebar: "#290610",
-    cor_destaque: "#374151",
-    cor_fundo: "#F5F6F8"
+    cor_destaque: "#7d603d",
+    cor_fundo: "#f3f5f6"
   };
   const LOGO_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
   const LOGO_EXTS = ["png", "jpg", "jpeg", "webp", "svg"];
@@ -14,7 +14,7 @@
       <div style="display:grid;grid-template-columns:320px 1fr;gap:22px;">
         <section style="border:1px solid #e5e7eb;border-radius:18px;padding:18px;background:#fff;">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:6px;">Logo da empresa</div>
-          <div id="identidadeLogoPreview" style="height:150px;border:1px dashed #cbd5e1;border-radius:16px;background:var(--color-sidebar);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;color:#e2e8f0;">
+          <div id="identidadeLogoPreview" style="height:150px;border:1px dashed #cbd5e1;border-radius:16px;background:var(--el-color-surface-soft,#f6f7f9);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;color:#e2e8f0;">
             Nenhuma logo
           </div>
           <input id="identidadeLogoInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" style="display:none;">
@@ -37,16 +37,16 @@
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px;">
-            ${colorField("Menu", DEFAULT.cor_sidebar)}
-            ${colorField("Botões", DEFAULT.cor_destaque)}
+            ${colorField("Menu", DEFAULT.cor_sidebar, "identidadeCorMenu")}
+            ${colorField("Botões", DEFAULT.cor_destaque, "identidadeCorBotoes")}
             ${colorField("Fundo", DEFAULT.cor_fundo)}
           </div>
 
           <div style="border:1px solid #e5e7eb;border-radius:18px;overflow:hidden;background:#fff;">
-            <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;">As cores são iguais para todas as empresas</div>
+            <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;">Personalize as cores da sua empresa. O fundo cinza permanece fixo.</div>
             <div id="identidadePreview" style="display:grid;grid-template-columns:1fr;grid-template-rows:60px 1fr;min-height:170px;background:#ffffff;">
-              <div data-preview-sidebar style="background:var(--color-sidebar);padding:14px;color:#fff;display:flex;align-items:center;gap:16px;">
-                <div data-preview-logo style="width:54px;height:38px;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;margin-bottom:0;overflow:hidden;">E</div>
+              <div data-preview-sidebar style="background:var(--el-color-surface-soft,#f6f7f9);padding:14px;color:#fff;display:flex;align-items:center;gap:16px;">
+                <div data-preview-logo style="width:54px;height:38px;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-bottom:0;overflow:hidden;">E</div>
                 <div style="height:8px;background:rgba(255,255,255,.65);border-radius:99px;margin-bottom:10px;"></div>
                 <div style="height:8px;background:rgba(255,255,255,.35);border-radius:99px;margin-bottom:10px;"></div>
                 <div style="height:8px;background:rgba(255,255,255,.35);border-radius:99px;"></div>
@@ -71,12 +71,13 @@
     `;
   }
 
-  function colorField(label, color) {
-    return '<div style="display:grid;gap:8px;font-size:13px;"><span>'+label+'</span><span style="display:block;height:36px;border:1px solid var(--el-color-border);border-radius:9px;background:'+color+';"></span></div>';
+  function colorField(label, color, id) {
+    if(!id)return '<div style="display:grid;gap:8px;font-size:13px;"><span>'+label+' (cinza fixo)</span><span style="display:block;height:36px;border:1px solid var(--el-color-border);border-radius:9px;background:'+color+';"></span></div>';
+    return '<label style="display:grid;gap:8px;font-size:13px;"><span>'+label+'</span><input type="color" id="'+id+'" aria-label="Cor de '+label+'" value="'+color+'" style="width:100%;height:40px;padding:3px;border:1px solid var(--el-color-border);border-radius:9px;cursor:pointer;"></label>';
   }
 
   async function bind(container, state, api) {
-    const current = { ...DEFAULT, logo_url: state.empresa?.logo_url || "", ...(state.identidadeVisual || {}), cor_sidebar: DEFAULT.cor_sidebar, cor_destaque: DEFAULT.cor_destaque, cor_fundo: DEFAULT.cor_fundo };
+    const current = window.EasyLocTheme.validateTheme({ ...DEFAULT, logo_url: state.empresa?.logo_url || "", ...(state.identidadeVisual || {}) }).theme;
     let logoFile = null;
     let logoPreviewUrl = current.logo_url || "";
     let logoZoom = Number(current.logo_zoom || 1) || 1;
@@ -89,6 +90,8 @@
       logoZoomIn: container.querySelector("#identidadeLogoZoomIn"),
       logoZoomLabel: container.querySelector("#identidadeLogoZoomLabel"),
 
+      menuColor: container.querySelector("#identidadeCorMenu"),
+      buttonColor: container.querySelector("#identidadeCorBotoes"),
       preview: container.querySelector("#identidadePreview"),
       alert: container.querySelector("#identidadeContrastAlert"),
       status: container.querySelector("#identidadeStatus"),
@@ -96,7 +99,7 @@
 
     };
 
-    function setStatus(text, color = "#64748b") {
+    function setStatus(text, color = (window.EasyLocTheme?.color?.('accent') || '#7d603d')) {
       els.status.textContent = text;
       els.status.style.color = color;
     }
@@ -107,6 +110,8 @@
     }
 
     function fill(theme) {
+      els.menuColor.value = theme.cor_sidebar;
+      els.buttonColor.value = theme.cor_destaque;
 
       logoPreviewUrl = theme.logo_url || "";
       logoZoom = Number(theme.logo_zoom || logoZoom || 1) || 1;
@@ -128,8 +133,8 @@
       return {
         logo_url: logoPreviewUrl,
         logo_zoom: logoZoom,
-        cor_sidebar: DEFAULT.cor_sidebar,
-        cor_destaque: DEFAULT.cor_destaque,
+        cor_sidebar: els.menuColor.value,
+        cor_destaque: els.buttonColor.value,
         cor_fundo: DEFAULT.cor_fundo
       };
     }
@@ -139,7 +144,11 @@
       const theme = validation.theme;
       els.preview.querySelector("[data-preview-sidebar]").style.background = theme.cor_sidebar;
       els.preview.querySelector("[data-preview-bg]").style.background = theme.cor_fundo;
-      els.preview.querySelector("[data-preview-button]").style.background = theme.cor_destaque;
+      const previewButton = els.preview.querySelector("[data-preview-button]");
+      previewButton.style.setProperty('background', theme.cor_destaque, 'important');
+      previewButton.style.setProperty('border-color', theme.cor_destaque, 'important');
+      previewButton.style.setProperty('color', window.EasyLocTheme.contrast(theme.cor_destaque, '#FFFFFF') >= 4.5 ? '#FFFFFF' : '#142033', 'important');
+      els.logoPreview.style.background = theme.cor_sidebar;
       els.preview.querySelector("[data-preview-button]").style.borderColor = theme.cor_destaque;
       els.preview.style.background = theme.cor_fundo;
       const previewLogo = els.preview.querySelector("[data-preview-logo]");
@@ -187,6 +196,9 @@
           empresa_id: state.empresaId,
           logo_url: logoUrl,
           logo_zoom: logoZoom,
+          cor_sidebar: validation.theme.cor_sidebar,
+          cor_destaque: validation.theme.cor_destaque,
+          cor_fundo: DEFAULT.cor_fundo,
 
           updated_at: new Date().toISOString()
         };
@@ -204,6 +216,7 @@
           console.warn("[EasyLoc Theme] cache antigo ignorado:", cacheError);
         }
         window.EasyLocTheme.applyTheme(payload);
+        if(window.parent!==window)window.parent.EasyLocTheme?.applyTheme(payload);
         setStatus("Salvo", "#16a34a");
         if (showMessage && typeof window.alerta === "function") window.alerta("Identidade visual salva.", "Empresa", "sucesso");
         return true;
@@ -221,6 +234,8 @@
     }
 
     fill(current);
+    els.menuColor.addEventListener("input", updatePreview);
+    els.buttonColor.addEventListener("input", updatePreview);
 
     els.logoBtn.addEventListener("click", () => els.logoInput.click());
     els.logoInput.addEventListener("change", () => {

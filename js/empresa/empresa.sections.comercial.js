@@ -263,7 +263,7 @@ ${s.ativo ? "ATIVO":"INATIVO"}
         tr.querySelector(".svc-fixo").oninput = ()=>aplicarBloqueio(tr);
 
         // ðŸ”’ BLOQUEIA EDIÃ‡ÃƒO SE O SERVIÃ‡O JÃ EXISTE NO BANCO
-        if(s.id){
+        if(s.id && !s._novo){
 
           tr.querySelector(".svc-nome").disabled = true;
           tr.querySelector(".svc-grupo").disabled = true;
@@ -340,6 +340,7 @@ async function salvar(){
   console.log("ðŸ”¥ SALVAR SERVIÃ‡OS COMERCIAIS EXECUTOU");
 
   const novos = [];
+  const novosRefs = [];
   const existentes = [];
 
   servicos.forEach(s => {
@@ -361,7 +362,11 @@ async function salvar(){
       obj.id = s.id;
       existentes.push(obj);
     }else{
+      s.id ||= crypto.randomUUID();
+      s._novo = true;
+      obj.id = s.id;
       novos.push(obj);
+      novosRefs.push(s);
     }
 
   });
@@ -399,6 +404,7 @@ async function salvar(){
 
     console.error(error);
     showErro("Erro ao salvar serviÃ§os");
+    throw error;
 
   }
 

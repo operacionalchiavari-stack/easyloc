@@ -320,7 +320,7 @@
       }
     }
 
-    setupGoogle();
+    setupGoogle().catch(error => console.warn("Endereco automatico indisponivel:", error.message));
 
     return () => {
       if (state.autocomplete) {

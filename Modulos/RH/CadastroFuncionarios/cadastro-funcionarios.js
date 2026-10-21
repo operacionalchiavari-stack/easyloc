@@ -151,6 +151,7 @@
     const fields = { funcNome: 'nome', funcSetor: 'setor', funcCargo: 'cargo', funcLogin: 'login', funcEmail: 'email', funcTelefone: 'telefone', funcFotoValue: 'foto_url', funcCpf: 'cpf',funcSalario:'salario_bruto',funcAdmissao:'data_admissao',funcEquipe:'equipe_operacional' };
     Object.entries(fields).forEach(([field, key]) => { $(field).value = employee?.[key] || ''; });
     Object.entries({funcRg:'rg',funcNascimento:'data_nascimento',funcWhatsapp:'whatsapp',funcEndereco:'endereco',funcObservacoes:'observacoes'}).forEach(([id,key])=>{$(id).value=employee?.dados_rh?.[key] || '';});
+    $('funcLider').checked = !!employee?.lider_operacao;
     $('funcNivel').value = employee?.nivel_acesso || 'Visualizador';
     $('funcStatus').value = employee?.ativo === false ? 'Inativo' : 'Ativo';
     $('funcAcesso').value = employee ? String(employee.acesso_sistema !== false) : 'false';
@@ -165,7 +166,7 @@
     $('funcLogin').disabled = mode === 'view' || proprio;
     $('funcAcesso').disabled = mode === 'view' || proprio || (employee?.acesso_sistema !== false && Boolean(employee));
     if (!proprio && employee && employee.acesso_sistema !== false && !can('configuracoes.permissoes.editar')) ['funcLogin','funcSenha','funcEmail'].forEach(id=>{$(id).disabled=true;});
-    if (proprio) ['funcSetor','funcCargo','funcCpf','funcSalario','funcAdmissao','funcEquipe','funcRg','funcNascimento','funcWhatsapp','funcEndereco','funcObservacoes'].forEach(id => {$(id).disabled=true;});
+    if (proprio) ['funcSetor','funcCargo','funcCpf','funcSalario','funcAdmissao','funcEquipe','funcLider','funcRg','funcNascimento','funcWhatsapp','funcEndereco','funcObservacoes'].forEach(id => {$(id).disabled=true;});
     const avisoProprio = $('funcionarioProprioAviso');
     if (avisoProprio) avisoProprio.hidden = !proprio;
     $('saveFuncionarioBtn').hidden = mode === 'view';
@@ -227,6 +228,10 @@
       const result = await api({ action: 'save', id: $('funcionarioId').value || null, photo: photo || null,
         employee: { nome: $('funcNome').value, setor: $('funcSetor').value, cargo: $('funcCargo').value, login: $('funcLogin').value, senha: $('funcSenha').value, pin: $('funcWarehousePin').value, nivel_acesso: $('funcNivel').value, ativo: $('funcStatus').value === 'Ativo', email: $('funcEmail').value, telefone: $('funcTelefone').value, foto_url: $('funcFotoValue').value,cpf:$('funcCpf').value,salario_bruto:$('funcSalario').value,data_admissao:$('funcAdmissao').value,equipe_operacional:$('funcEquipe').value,acesso_sistema:$('funcAcesso').value==='true',dados_rh:{rg:$('funcRg').value,data_nascimento:$('funcNascimento').value,whatsapp:$('funcWhatsapp').value,endereco:$('funcEndereco').value,observacoes:$('funcObservacoes').value} },
         permissions: $('funcAcesso').value==='true' && !proprio && can('configuracoes.permissoes.editar') ? [...document.querySelectorAll('[data-permission-item]:checked')].map(x => x.value) : null });
+      // Líder (Painel Logístico): gravado à parte, só por quem edita funcionários
+      const idSalvo = result.id || $('funcionarioId').value;
+      const liderAntes = !!employees.find(x => x.id === idSalvo)?.lider_operacao;
+      if (idSalvo && !proprio && liderAntes !== $('funcLider').checked) await rpc('rh_definir_lider', { p_empresa_id: context.empresa_id, p_funcionario: idSalvo, p_lider: $('funcLider').checked });
       busy = false; closeForm();
       message(result.warning || 'Funcionário salvo com sucesso.', Boolean(result.warning));
       await loadEmployees();

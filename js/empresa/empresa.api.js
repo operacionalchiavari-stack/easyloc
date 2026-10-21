@@ -1,6 +1,6 @@
 (function () {
 
-  // wrapper around Supabase calls for empresa modal
+  // Acesso aos dados e configurações da empresa em Parâmetros.
   const api = {
 
     /* =====================================================

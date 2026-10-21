@@ -26,16 +26,16 @@ body {
   margin-bottom: 0;
   color: var(--el-color-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .page-header h1 {
   margin: 0;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 28px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.1;
 }
 
@@ -56,7 +56,7 @@ body {
 .btn {
   min-height: 44px;
   border-radius: var(--el-radius-md);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .btn-outline {
@@ -85,7 +85,7 @@ body {
 .resumo-principal {
   padding: 16px 20px;
   color: #ffffff;
-  background: linear-gradient(135deg, var(--el-color-primary), #123766);
+  background: linear-gradient(135deg, var(--el-color-surface-soft,#f6f7f9), var(--el-color-surface-soft,#f6f7f9));
 }
 
 .resumo-principal span,
@@ -98,7 +98,7 @@ body {
 .resumo-principal span {
   color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -106,7 +106,7 @@ body {
   display: block;
   margin-top: 6px;
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1;
 }
 
@@ -130,15 +130,15 @@ body {
 .metrica span {
   color: var(--el-color-muted);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .metrica strong {
   display: block;
   margin-top: 6px;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 21px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .metrica small {
@@ -176,7 +176,7 @@ body {
   margin-bottom: 7px;
   color: var(--el-color-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .campo input,
@@ -187,7 +187,7 @@ body {
   border-radius: var(--el-radius-md);
   padding: 0 13px;
   background: var(--el-color-surface);
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 15px;
   font-weight: 600;
 }
@@ -195,7 +195,7 @@ body {
 .campo input:focus,
 .campo select:focus {
   outline: none;
-  border-color: var(--el-color-accent);
+  border-color: var(--el-color-border,#e3e7ec);
   box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.12);
 }
 
@@ -205,7 +205,7 @@ body {
   border-radius: var(--el-radius-md);
   background: var(--el-color-primary);
   color: #ffffff;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -233,7 +233,7 @@ body {
   padding: 0 18px;
   color: var(--el-color-muted);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -264,7 +264,7 @@ th {
   color: var(--el-table-header-color);
   text-align: left;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
@@ -272,13 +272,13 @@ th {
 td {
   padding: 15px 18px;
   border-bottom: 1px solid var(--el-table-row-border);
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 14px;
   vertical-align: middle;
 }
 
 tbody tr:hover {
-  background: rgba(15, 23, 42, 0.025);
+  background: rgba(31,32,32,0.025);
 }
 
 .linha-apoio {
@@ -291,12 +291,12 @@ tbody tr:hover {
 
 .valor-entrada {
   color: var(--el-color-success);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .valor-saida {
   color: var(--el-color-danger);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .badge {
@@ -306,20 +306,20 @@ tbody tr:hover {
   padding: 0 10px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .badge.eventos,
 .badge.locacoes {
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(31,32,32,0.1);
   color: var(--el-color-info);
 }
 
 .badge.fornecedores,
 .badge.logistica {
-  background: var(--el-color-accent-soft);
-  color: var(--el-color-accent-strong);
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 
 .badge.despesas-fixas,
@@ -349,7 +349,7 @@ tbody tr:hover {
 }
 
 .status.parcial {
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(31,32,32,0.12);
   color: var(--el-color-info);
 }
 
@@ -361,12 +361,12 @@ tbody tr:hover {
 
 .tipo-entrada {
   color: var(--el-color-success);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .tipo-saida {
   color: var(--el-color-danger);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .acoes,
@@ -387,7 +387,7 @@ tbody tr:hover {
   color: var(--el-color-primary);
   padding: 0 11px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -453,13 +453,13 @@ tbody tr:hover {
 }
 
 .paginacao .ativo {
-  border-color: var(--el-color-accent);
-  color: var(--el-color-accent);
+  border-color: var(--el-color-border,#e3e7ec);
+  color: var(--el-color-text,#1f2020);
 }
 
 .total-footer strong {
   margin-left: 8px;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 18px;
 }
 
@@ -475,9 +475,9 @@ tbody tr:hover {
 
 .contas-titulo h2 {
   margin: 0;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .contas-titulo p {
@@ -517,15 +517,15 @@ tbody tr:hover {
   margin-bottom: 4px;
   color: var(--el-color-muted);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
 .metrica-conta strong {
   display: block;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -556,9 +556,9 @@ tbody tr:hover {
 
 .calendario-header h2 {
   margin: 0;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .btn-mes {
@@ -569,7 +569,7 @@ tbody tr:hover {
   background: var(--el-color-surface);
   color: var(--el-color-primary);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -583,7 +583,7 @@ tbody tr:hover {
 .legenda-item {
   color: var(--el-color-muted);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .calendario-grid {
@@ -629,7 +629,7 @@ tbody tr:hover {
 
 .numero-dia,
 .valor-dia {
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .card-dia {
@@ -642,7 +642,7 @@ tbody tr:hover {
 
 .card-dia h3 {
   margin: 0 0 16px;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 20px;
 }
 
@@ -663,7 +663,7 @@ tbody tr:hover {
   margin-bottom: 8px;
   color: var(--el-color-muted);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .box-dia strong {
@@ -679,7 +679,7 @@ tbody tr:hover {
 }
 
 .box-dia.saldo {
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(31,32,32,0.12);
 }
 
 .item-dia {
@@ -743,7 +743,7 @@ tbody tr:hover {
 .modal-content h2,
 .modal-dia-content h2 {
   margin: 0 0 4px;
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
 }
 
 .modal-content input,
@@ -765,9 +765,9 @@ tbody tr:hover {
   border: 1px solid var(--el-color-border);
   border-radius: var(--el-radius-md);
   background: var(--el-color-surface);
-  color: var(--el-color-primary);
+  color: var(--el-color-text,#1f2020);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 

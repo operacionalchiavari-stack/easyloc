@@ -1,6 +1,6 @@
 ﻿.perm-page {
   padding: 32px;
-  color: #06213a;
+  color: var(--el-color-text,#1f2020);
 }
 
 .perm-header,
@@ -28,7 +28,7 @@
 .perm-section-title h3,
 .perm-panel h2 {
   margin: 0;
-  color: #06213a;
+  color: var(--el-color-text,#1f2020);
   letter-spacing: 0;
 }
 
@@ -42,15 +42,15 @@
 .perm-note,
 .perm-guidance p {
   margin: 8px 0 0;
-  color: #60728c;
+  color: var(--el-color-text,#1f2020);
   font-size: 15px;
 }
 
 .perm-eyebrow {
   display: block;
-  color: #60728c;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
 }
@@ -69,9 +69,9 @@
 .perm-table-card,
 .perm-modal-box {
   background: #fff;
-  border: 1px solid #dbe3ec;
+  border: 1px solid var(--el-color-border,#e3e7ec);
   border-radius: 16px;
-  box-shadow: 0 16px 34px rgba(15, 42, 68, .06);
+  box-shadow: 0 16px 34px rgba(31,32,32,0.06);
 }
 
 .perm-wizard-card {
@@ -86,7 +86,7 @@
 }
 
 .perm-steps button {
-  border: 1px solid #dbe3ec;
+  border: 1px solid var(--el-button-primary-soft,#f4efe8);
   background: #fff;
   border-radius: 16px;
   padding: 13px;
@@ -96,19 +96,19 @@
   align-items: center;
   text-align: left;
   cursor: pointer;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   transition: .18s ease;
 }
 
 .perm-steps button:hover {
-  border-color: #374151;
+  border-color: var(--el-button-primary-bg,#7d603d);
   background: #eef0f2;
 }
 
 .perm-steps button.active {
-  background: #374151;
+  background: var(--el-button-primary-bg,#7d603d);
   color: #fff;
-  border-color: #374151;
+  border-color: var(--el-button-primary-bg,#7d603d);
 }
 
 .perm-steps button.done {
@@ -123,13 +123,13 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: #eef4fb;
-  color: #374151;
-  font-weight: 800;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
+  font-weight: 600;
 }
 
 .perm-steps button.active span {
-  background: #374151;
+  background: var(--el-button-primary-bg,#7d603d);
   color: #fff;
 }
 
@@ -148,7 +148,7 @@
   gap: 18px;
   padding: 16px;
   margin-bottom: 16px;
-  border: 1px solid #dbe3ec;
+  border: 1px solid var(--el-color-border,#e3e7ec);
   border-radius: 16px;
   background: #f8fafc;
 }
@@ -162,11 +162,11 @@
 .perm-user-photo {
   flex: 0 0 auto;
   border-radius: 16px;
-  background: #eef4fb;
+  background: var(--el-color-surface-soft,#f6f7f9);
   color: #2E1F1F;
   display: grid;
   place-items: center;
-  font-weight: 800;
+  font-weight: 600;
   overflow: hidden;
 }
 
@@ -189,7 +189,7 @@
 
 .perm-summary-item {
   min-width: 92px;
-  border: 1px solid #dbe3ec;
+  border: 1px solid var(--el-color-border,#e3e7ec);
   border-radius: 12px;
   padding: 9px 12px;
   background: #fff;
@@ -198,8 +198,8 @@
 .perm-summary-item span {
   display: block;
   font-size: 11px;
-  color: #60728c;
-  font-weight: 700;
+  color: var(--el-color-text,#1f2020);
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -244,7 +244,7 @@
 .perm-close {
   width: 40px;
   height: 40px;
-  border: 1px solid #dbe3ec;
+  border: 1px solid var(--el-button-primary-soft,#f4efe8);
   border-radius: 12px;
   background: #fff;
   color: #2E1F1F;
@@ -272,7 +272,7 @@
 }
 
 .perm-user-card {
-  border: 1px solid #dbe3ec;
+  border: 1px solid var(--el-color-border,#e3e7ec);
   border-radius: 14px;
   padding: 12px;
   cursor: pointer;
@@ -299,7 +299,7 @@
 
 .perm-user-card span {
   display: block;
-  color: #60728c;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
 }
 
@@ -313,7 +313,7 @@
 
 .perm-guidance-card span {
   display: block;
-  color: #60728c;
+  color: var(--el-color-text,#1f2020);
   margin-top: 4px;
 }
 
@@ -325,7 +325,7 @@
 
 .perm-profile-grid button {
   min-height: 112px;
-  border: 1px solid #dbe3ec;
+  border: 1px solid var(--el-button-primary-soft,#f4efe8);
   border-radius: 16px;
   background: #fff;
   padding: 16px;
@@ -347,7 +347,7 @@
 }
 
 .perm-profile-grid span {
-  color: #60728c;
+  color: var(--el-color-text,#1f2020);
   line-height: 1.35;
 }
 
@@ -362,9 +362,9 @@
 .perm-field {
   display: grid;
   gap: 6px;
-  color: #60728c;
+  color: var(--el-color-text,#1f2020);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   margin: 14px 0;
 }
 
@@ -399,7 +399,7 @@
   background: #f8fafc;
   font-size: 13px;
   text-transform: uppercase;
-  color: #60728c;
+  color: var(--el-color-text,#1f2020);
 }
 
 .perm-submodule {
@@ -420,7 +420,7 @@
 
 .perm-submodule span {
   display: block;
-  color: #60728c;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
   margin-top: 4px;
 }
@@ -431,7 +431,7 @@
   background: #eef0f2;
   color: #c2410c;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .hidden {
@@ -455,13 +455,13 @@
   border-radius: 10px;
   padding: 11px 14px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .perm-levels button.active {
-  background: #374151;
+  background: var(--el-button-primary-bg,#7d603d);
   color: #fff;
 }
 
@@ -486,7 +486,7 @@
   background: #2E1F1F;
   color: #fff;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .02em;
 }
@@ -508,7 +508,7 @@
   width: 44px;
   height: 24px;
   border-radius: 999px;
-  background: #dbe3ec;
+  background: var(--el-color-surface-soft,#f6f7f9);
   position: relative;
   transition: .18s;
   cursor: pointer;
@@ -527,7 +527,7 @@
 }
 
 .perm-toggle input:checked + span {
-  background: #374151;
+  background: var(--el-color-surface-soft,#f6f7f9);
 }
 
 .perm-toggle input:checked + span::after {
@@ -564,7 +564,7 @@
 
 .perm-sensitive-card,
 .perm-log-item {
-  border: 1px solid #dbe3ec;
+  border: 1px solid var(--el-color-border,#e3e7ec);
   border-radius: 14px;
   padding: 12px;
   background: #fff;
@@ -599,7 +599,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(15, 23, 42, .42);
+  background: rgba(31,32,32,0.42);
   z-index: 9999;
 }
 
@@ -626,9 +626,9 @@
 .perm-form-grid label {
   display: grid;
   gap: 6px;
-  color: #60728c;
+  color: var(--el-color-text,#1f2020);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .perm-modal-actions {

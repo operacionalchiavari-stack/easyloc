@@ -8,7 +8,7 @@
   <script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="parametros.css?v=20261018-inter">
+  <link rel="stylesheet" href="parametros.css?v=20261019-escala">
 </head>
 <body>
 <div class="container el-page">
@@ -16,6 +16,9 @@
     <h2>Parâmetros</h2>
   </div>
 
+<nav class="pr-abas" role="tablist" aria-label="Parâmetros da empresa"><button type="button" role="tab" id="pr-tab-dados" aria-controls="pr-painel-dados" aria-selected="true" data-parametro-aba="dados">Empresa</button><button type="button" role="tab" id="pr-tab-tributacao" aria-controls="pr-painel-tributacao" aria-selected="false" data-parametro-aba="tributacao">Tributação</button><button type="button" role="tab" id="pr-tab-logistica" aria-controls="pr-painel-logistica" aria-selected="false" data-parametro-aba="logistica">Logística</button><button type="button" role="tab" id="pr-tab-financeiro" aria-controls="pr-painel-financeiro" aria-selected="false" data-parametro-aba="financeiro">Financeiro</button><button type="button" role="tab" id="pr-tab-comercial" aria-controls="pr-painel-comercial" aria-selected="false" data-parametro-aba="comercial">Comercial</button><button type="button" role="tab" id="pr-tab-identidade" aria-controls="pr-painel-identidade" aria-selected="false" data-parametro-aba="identidade">Identidade visual</button><button type="button" role="tab" id="pr-tab-operacao" aria-controls="pr-painel-operacao" aria-selected="false" data-parametro-aba="operacao">Operação</button></nav>
+<div id="parametrosEmpresa" class="pr-empresa"><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-dados" aria-labelledby="pr-tab-dados"  data-empresa-secao="dados"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-tributacao" aria-labelledby="pr-tab-tributacao" hidden data-empresa-secao="tributacao"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-logistica" aria-labelledby="pr-tab-logistica" hidden data-empresa-secao="logistica"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-financeiro" aria-labelledby="pr-tab-financeiro" hidden data-empresa-secao="financeiro"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-comercial" aria-labelledby="pr-tab-comercial" hidden data-empresa-secao="comercial"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-identidade" aria-labelledby="pr-tab-identidade" hidden data-empresa-secao="identidade"></section><div class="pr-acoes"><span id="empresaParametrosStatus" role="status">Carregando...</span><button type="button" class="btn primary" id="salvarEmpresaParametros" disabled>Salvar</button></div></div>
+<section id="pr-painel-operacao" role="tabpanel" aria-labelledby="pr-tab-operacao" hidden>
   <form id="formParametros" class="pr-form" novalidate>
     <section class="pr-card">
       <h3>Pedidos no cronograma</h3>
@@ -36,13 +39,14 @@
         <label class="pr-campo"><span>Montagem</span><div><input type="number" min="0" max="30" name="montagem_dias_apos_entrega"><small>dia(s) depois da entrega</small></div></label>
         <label class="pr-campo"><span>Desmontagem</span><div><input type="number" min="0" max="30" name="desmontagem_dias_apos_coleta"><small>dia(s) depois da coleta</small></div></label>
         <label class="pr-campo"><span>Triagem (conferência da volta)</span><div><input type="number" min="0" max="30" name="triagem_retorno_dias_apos_coleta"><small>dia(s) depois da coleta</small></div></label>
+        <label class="pr-campo"><span>Descarregamento</span><div><input type="number" min="0" max="1440" name="descarregamento_minutos_apos_desmontagem"><small>minuto(s) depois da desmontagem</small></div></label>
         <label class="pr-campo"><span>Horário padrão das etapas</span><div><input type="time" name="hora_padrao"></div></label>
       </div>
     </section>
 
     <section class="pr-card">
       <h3>Triagem</h3>
-      <p class="pr-ajuda">Responsável e equipe que já vêm preenchidos nas triagens que o pedido cria no cronograma.</p>
+      <p class="pr-ajuda">Responsável e equipe fixos das triagens que o pedido cria no cronograma. Deixe em branco para a escala automática (abaixo) escolher.</p>
       <div class="pr-grade">
         <label class="pr-campo"><span>Responsável padrão</span><div><input type="text" maxlength="80" name="triagem_responsavel" placeholder="Ex.: Matheus Martins"></div></label>
         <label class="pr-campo"><span>Equipe padrão</span><div><input type="text" maxlength="80" name="triagem_equipe" placeholder="Ex.: Equipe Galpão"></div></label>
@@ -50,11 +54,29 @@
       </div>
     </section>
 
+    <section class="pr-card">
+      <h3>Escala automática (Painel Logístico)</h3>
+      <p class="pr-ajuda">Quando o pedido entra no cronograma, o sistema monta sozinho o responsável (entre os líderes), a equipe e o caminhão de cada etapa, sem colocar a mesma pessoa ou caminhão em horários que se cruzam. As pessoas vêm do Cadastro de Funcionários (campo <b>Equipe operacional</b>) e os caminhões de Logística &gt; Caminhões (pela capacidade em m³). Só é preenchido o que estiver vazio.</p>
+      <div class="pr-grade">
+        <label class="pr-campo"><span>Deslocamento até o evento</span><div><input type="number" min="0" max="12" step="0.5" name="esc_deslocamento_h"><small>hora(s) de ida e de volta (montagem e desmontagem)</small></div></label>
+        <label class="pr-campo"><span>Volume quando o pedido não tem itens</span><div><input type="number" min="0" max="500" step="1" name="esc_volume_padrao_m3"><small>m³ (pedidos lançados direto no cronograma)</small></div></label>
+        <label class="pr-check pr-check-linha"><input type="checkbox" name="esc_usar_free"><span>Completar com free aprovados quando faltar gente</span></label>
+      </div>
+      <div class="pr-tabela-wrap">
+        <table class="pr-tabela" aria-label="Regras por tipo de etapa">
+          <thead><tr><th>Etapa</th><th>Equipe operacional</th><th>m³ por pessoa</th><th>Mínimo</th><th>Máximo</th><th>Duração (h)</th><th>Usa caminhão</th></tr></thead>
+          <tbody id="escalaEtapas"></tbody>
+        </table>
+      </div>
+      <p class="pr-ajuda pr-ajuda-baixo">Tamanho da equipe = volume do pedido ÷ m³ por pessoa, entre o mínimo e o máximo (o responsável conta). A duração define até quando a pessoa e o caminhão ficam ocupados.</p>
+    </section>
+
     <div class="pr-acoes">
       <span id="parametrosStatus" role="status"></span>
       <button type="submit" class="btn primary" id="btnSalvarParametros">Salvar parâmetros</button>
     </div>
   </form>
+</section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -62,7 +84,21 @@
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="../../../js/core/permissions.js?v=20261018-free"></script>
-<script src="parametros.js?v=20261017-separacao"></script>
+<script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
+<script src="../../../js/core/google.config.js"></script>
+<script src="../../../js/core/google.js"></script>
+<script src="../../../js/empresa/empresa.utils.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.api.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.sections.dados.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.sections.tributacao.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.sections.comercial.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.logistica.frete.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.logistica.montagem.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.sections.logistica.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.sections.financeiro.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.sections.identidade.js?v=20261019-parametros"></script>
+<script src="parametros-empresa.js?v=20261019"></script>
+<script src="parametros.js?v=20261019-empresa"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>
 </html>

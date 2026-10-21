@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Funcionários | Chiavari</title>
-<script src="../../../js/core/themePrepaint.js"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul"><link rel="stylesheet" href="cadastro-funcionarios.css?v=20261008-botao-linha">
+<script src="../../../js/core/themePrepaint.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul"><link rel="stylesheet" href="cadastro-funcionarios.css?v=20261019-lider">
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script></head>
 <body><main class="main cadastros-page"><p id="funcMessage" role="status" hidden></p>    <section id="funcionariosView" class="cadastro-view">
       <header class="section-head">
@@ -49,7 +51,8 @@
           <label>Observações<input id="funcObservacoes" class="tw-field" maxlength="2000"></label>
           <label>Salário bruto (R$)<input id="funcSalario" class="tw-field" type="number" min="0" step="0.01"></label>
           <label>Data de admissão<input id="funcAdmissao" class="tw-field" type="date"></label>
-          <label>Equipe responsável por danos<select id="funcEquipe" class="tw-field"><option value="">Não participa das equipes operacionais</option><option value="triagem">Triagem</option><option value="carregamento">Carregamento</option><option value="montagem">Montagem</option><option value="producao">Produção</option></select></label>
+          <label>Equipe operacional<select id="funcEquipe" class="tw-field" title="Também define em quais etapas do cronograma a pessoa entra na escala automática do Painel Logístico e quem responde por danos"><option value="">Não participa das equipes operacionais</option><option value="triagem">Triagem</option><option value="carregamento">Carregamento</option><option value="montagem">Montagem</option><option value="producao">Produção</option></select></label>
+          <label class="func-lider"><input type="checkbox" id="funcLider"> Pode ser responsável de etapa (líder)</label>
           <label>Acesso ao sistema<select id="funcAcesso" class="tw-field"><option value="false">Somente funcionário e PIN</option><option value="true">Funcionário com login no sistema</option></select></label>
           <label>Login *<input id="funcLogin" class="tw-field" required autocomplete="off"></label>
           <label id="funcSenhaLabel">Senha *<input minlength="8" id="funcSenha" class="tw-field" type="password" autocomplete="new-password"></label>
@@ -93,4 +96,4 @@
     </section>
 
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script><script src="../../../js/core/permissions.js?v=20261018-free"></script><script src="cadastro-funcionarios.js?v=20261018-rh-novo"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script><script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script><script src="cadastro-funcionarios.js?v=20261019-lider"></script></body></html>

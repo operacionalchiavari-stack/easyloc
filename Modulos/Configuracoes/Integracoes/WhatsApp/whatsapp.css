@@ -1,6 +1,6 @@
 ﻿.zapi-page {
   width: 100%;
-  color: var(--el-color-text, #0f172a);
+  color: var(--el-color-text, var(--el-color-text,#1f2020));
 }
 
 .zapi-page svg {
@@ -19,7 +19,7 @@
 
 .zapi-header h1 {
   margin: 0;
-  color: var(--el-color-primary, #2E1F1F);
+  color: var(--el-color-text,#1f2020);
   font-size: 30px;
   line-height: 1.08;
   letter-spacing: 0;
@@ -27,7 +27,7 @@
 
 .zapi-header p {
   margin: 8px 0 0;
-  color: var(--el-color-muted, #64748b);
+  color: var(--el-color-text,#1f2020);
   font-size: 14px;
 }
 
@@ -52,10 +52,10 @@
 
 .zapi-card {
   position: relative;
-  border: 1px solid rgba(226, 232, 240, .92);
+  border: 1px solid rgba(var(--el-color-border,#e3e7ec),0.92);
   border-radius: 12px;
   background: var(--el-color-surface, #fff);
-  box-shadow: 0 18px 42px rgba(15, 42, 68, .055);
+  box-shadow: 0 18px 42px rgba(31,32,32,0.055);
   padding: 22px;
   overflow: hidden;
 }
@@ -75,16 +75,16 @@
 .zapi-card-head span,
 .zapi-history-filters label,
 .zapi-test-grid label {
-  color: var(--el-color-muted, #64748b);
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
 .zapi-card-head strong {
-  color: var(--el-color-primary, #2E1F1F);
+  color: var(--el-color-text,#1f2020);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .zapi-status-line {
@@ -93,7 +93,7 @@
   gap: 15px;
   min-height: 84px;
   padding: 18px;
-  border: 1px solid rgba(226, 232, 240, .92);
+  border: 1px solid rgba(var(--el-color-border,#e3e7ec),0.92);
   border-radius: 10px;
   background: linear-gradient(180deg, #fbfdff 0%, #f8fafc 100%);
 }
@@ -120,16 +120,16 @@
 
 .zapi-status-line strong {
   display: block;
-  color: var(--el-color-primary, #2E1F1F);
+  color: var(--el-color-text,#1f2020);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .zapi-status-line small,
 .zapi-help,
 #zapiQrUpdated {
   display: block;
-  color: var(--el-color-muted, #64748b);
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
 }
 
@@ -143,7 +143,7 @@
 .zapi-metric-card {
   min-height: 108px;
   padding: 15px;
-  border: 1px solid rgba(226, 232, 240, .92);
+  border: 1px solid rgba(var(--el-color-border,#e3e7ec),0.92);
   border-radius: 10px;
   background: #fff;
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
@@ -151,8 +151,8 @@
 
 .zapi-metric-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(148, 163, 184, .45);
-  box-shadow: 0 16px 34px rgba(15, 42, 68, .08);
+  border-color: rgba(var(--el-color-border,#e3e7ec),0.45);
+  box-shadow: 0 16px 34px rgba(31,32,32,0.08);
 }
 
 .zapi-metric-icon {
@@ -176,13 +176,13 @@
 }
 
 .zapi-metric-icon.neutral {
-  color: var(--el-color-primary, #2E1F1F);
+  color: var(--el-color-text,#1f2020);
   background: #eef2f7;
 }
 
 .zapi-metric-card small {
   display: block;
-  color: var(--el-color-muted, #64748b);
+  color: var(--el-color-text,#1f2020);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -191,7 +191,7 @@
 .zapi-metric-card strong {
   display: block;
   margin-top: 7px;
-  color: var(--el-color-primary, #2E1F1F);
+  color: var(--el-color-text,#1f2020);
   font-size: 20px;
   font-weight: 700;
 }
@@ -222,13 +222,13 @@
   border-radius: 12px;
   background: #fff;
   padding: 12px;
-  box-shadow: 0 18px 36px rgba(15, 42, 68, .13);
+  box-shadow: 0 18px 36px rgba(31,32,32,0.13);
   animation: zapiFadeUp .22s ease both;
 }
 
 .zapi-qr-empty {
   max-width: 250px;
-  color: var(--el-color-muted, #64748b);
+  color: var(--el-color-text,#1f2020);
   font-size: 14px;
   line-height: 1.45;
   text-align: center;
@@ -274,9 +274,9 @@
   place-items: center;
   margin: 8px auto 18px;
   border-radius: 32px;
-  color: var(--el-color-primary, #2E1F1F);
+  color: var(--el-color-text,#1f2020);
   background: #ffffff;
-  box-shadow: 0 18px 40px rgba(15, 42, 68, .12);
+  box-shadow: 0 18px 40px rgba(31,32,32,0.12);
 }
 
 .zapi-phone-orbit svg {
@@ -315,15 +315,15 @@
 
 .zapi-connected-panel h2 {
   margin: 0 0 9px;
-  color: var(--el-color-primary, #2E1F1F);
+  color: var(--el-color-text,#1f2020);
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .zapi-connected-panel p {
   max-width: 420px;
   margin: 0 auto;
-  color: var(--el-color-muted, #64748b);
+  color: var(--el-color-text,#1f2020);
   font-size: 14px;
   line-height: 1.55;
 }
@@ -338,7 +338,7 @@
   color: #166534;
   background: rgba(220, 252, 231, .9);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .zapi-test-card {
@@ -408,7 +408,7 @@
 
 .zapi-table-wrap {
   overflow: auto;
-  border: 1px solid rgba(226, 232, 240, .92);
+  border: 1px solid rgba(var(--el-color-border,#e3e7ec),0.92);
   border-radius: 12px;
 }
 
@@ -424,7 +424,7 @@
   background: var(--el-table-header-bg, #2E1F1F);
   color: var(--el-table-header-color, #fff);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
   text-transform: uppercase;
   white-space: nowrap;
@@ -433,7 +433,7 @@
 .zapi-table td {
   padding: 15px 16px;
   border-bottom: 1px solid var(--el-table-row-border, #e5e7eb);
-  color: var(--el-color-text, #0f172a);
+  color: var(--el-color-text, var(--el-color-text,#1f2020));
   font-size: 13px;
   vertical-align: middle;
 }
@@ -453,7 +453,7 @@
 
 .zapi-message-cell {
   max-width: 470px;
-  color: #334155;
+  color: var(--el-color-text,#1f2020);
   line-height: 1.45;
 }
 
@@ -463,20 +463,20 @@
   gap: 6px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #3730a3;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .zapi-badge.tipo-texto {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 
 .zapi-badge.tipo-imagem {
-  background: #f5f3ff;
+  background: var(--el-color-surface-soft,#f6f7f9);
   color: #6d28d9;
 }
 
@@ -488,7 +488,7 @@
 
 .zapi-badge.tipo-audio {
   background: #ecfeff;
-  color: #0e7490;
+  color: var(--el-color-text,#1f2020);
 }
 
 .zapi-badge.enviado,
@@ -514,7 +514,7 @@
   justify-content: space-between;
   gap: 14px;
   margin-top: 16px;
-  color: var(--el-color-muted, #64748b);
+  color: var(--el-color-text,#1f2020);
   font-size: 13px;
 }
 
@@ -533,14 +533,14 @@
   color: var(--el-color-primary, #2E1F1F);
   background: #fff;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: background .16s ease, border-color .16s ease, transform .16s ease;
 }
 
 .zapi-page-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(15, 42, 68, .22);
+  border-color: rgba(var(--el-button-primary-rgb,125,96,61),0.22);
   background: #f8fafc;
 }
 

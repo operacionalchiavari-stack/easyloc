@@ -4,8 +4,8 @@
 .pr-ajuda{margin:0 0 16px;color:#5f5f5f;font-size:14px;line-height:1.55;max-width:760px}
 .pr-opcoes{display:flex;flex-wrap:wrap;gap:10px}
 .pr-check{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid #e3e7ec;border-radius:999px;background:#f7f9fb;cursor:pointer;font-size:14px}
-.pr-check:has(input:checked){border-color:#123f86;background:#123f86;color:#fff}
-.pr-check input{accent-color:#123f86}
+.pr-check:has(input:checked){border-color:var(--el-color-border,#e3e7ec);background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020)}
+.pr-check input{accent-color:var(--el-button-primary-bg, #7d603d)}
 .pr-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px 22px}
 .pr-campo{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#2b2b2b;font-weight:600}
 .pr-campo>div{display:flex;align-items:center;gap:10px}
@@ -17,3 +17,23 @@
 #parametrosStatus{color:#5f5f5f;font-size:13px}
 html:root .pr-check span{color:#2c2a26;font-weight:500;text-transform:none;letter-spacing:0;font-size:14px}
 html:root .pr-check:has(input:checked) span{color:#fff}
+
+/* Escala automática (Painel Logístico, out/2026) */
+.pr-check-linha{align-self:end;justify-self:start}
+.pr-tabela-wrap{overflow-x:auto;margin-top:18px}
+.pr-tabela{width:100%;border-collapse:collapse;font-size:14px}
+.pr-tabela th,.pr-tabela td{padding:9px 10px;border-bottom:1px solid #e3e7ec;text-align:left;white-space:nowrap}
+.pr-tabela thead th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#4f4f4f}
+.pr-tabela tbody th{font-weight:600;color:#1f2020}
+.pr-tabela input[type=number]{width:72px;border:1px solid #dfe4ea;border-radius:8px;background:#f7f9fb;padding:7px 9px;font:14px Inter,sans-serif}
+.pr-tabela select{border:1px solid #dfe4ea;border-radius:8px;background:#f7f9fb;padding:7px 9px;font:14px Inter,sans-serif}
+.pr-tabela input[type=checkbox]{width:18px;height:18px;accent-color:var(--el-button-primary-bg, #7d603d)}
+.pr-ajuda-baixo{margin:12px 0 0}
+.pr-abas{display:flex;flex-wrap:wrap;gap:8px;max-width:1200px;margin:0 auto 24px}
+.pr-abas button{padding:10px 16px;border:1px solid #dedbd2;border-radius:10px;background:#fff;color:#62543e;font:600 13px Inter,sans-serif;cursor:pointer}
+.pr-abas button[aria-selected="true"]{background:var(--el-button-primary-bg,#7d603d);border-color:var(--el-button-primary-bg,#7d603d);color:#fff}
+.pr-empresa{max-width:1200px;margin:0 auto;padding-bottom:32px}
+.pr-empresa-painel{overflow-x:auto;margin-bottom:18px}
+.pr-empresa-painel input,.pr-empresa-painel select{box-sizing:border-box;max-width:100%}
+.container [hidden]{display:none!important}
+@media(max-width:760px){[data-empresa-secao="dados"]>div{grid-template-columns:1fr!important;gap:20px!important}.pr-card{padding:18px}}
