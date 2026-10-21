@@ -308,17 +308,18 @@
 
   function formatStatusLabel(status){
     const labels = {
-      pre_reserva: "Pre reserva",
-      orcamento: "Orcamento",
-      aprovado: "Aprovado",
+      pre_reserva: "Pré-reserva",
+      orcamento: "Orçamento",
+      aprovado: "Reservado",
+      enviado: "Reservado",
       pendente: "Pendente",
-      em_separacao: "Em separacao",
+      em_separacao: "Em separação",
       separado: "Separado",
       finalizado: "Finalizado",
-      cancelado: "cancelado",
+      cancelado: "Cancelado",
       catalogo_rascunho: "Em montagem",
       catalogo_pedido_enviado: "Pedido enviado",
-      catalogo_em_analise: "Em analise",
+      catalogo_em_analise: "Em análise",
       catalogo_convertido: "Convertido"
     };
 
@@ -426,46 +427,119 @@
     `;
   }
 
+  /* Janela de cadastro do cliente / local (out/2026, pedido do usuário: "mais bonito, foto do cliente, mapa do local").
+     Cliente: foto (a do catálogo) ou iniciais, contatos com atalho e o histórico com a empresa. Local: mapa, distância do
+     galpão, rotas e as condições do local em destaque. Só aparecem os campos preenchidos. */
+  const ROTULOS_TAGS = { tipo: "Tipo", canal: "Canal", horario: "Horário", orcamento: "Orçamento", estilo: "Estilo", observacoes: "Condições", origem: "Origem" };
+  function lerTags(tags){
+    let t = tags;
+    if(typeof t === "string"){ try{ t = JSON.parse(t); }catch{ t = {}; } }
+    if(!t || typeof t !== "object") return [];
+    return Object.entries(t).map(([chave, valor]) => [chave, (Array.isArray(valor) ? valor : [valor]).map((v) => String(v ?? "").trim()).filter(Boolean)]).filter(([, v]) => v.length);
+  }
+  function iniciais(nome){
+    return String(nome || "?").split(/\s+/).filter((p) => p && !/^(de|da|do|dos|das|e)$/i.test(p)).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
+  }
+  function infoCadastro(rotulo, valor, icone){
+    const texto = String(valor ?? "").trim();
+    if(!texto || texto === "-") return "";
+    return `<div class="cad-info"><i data-lucide="${icone}" aria-hidden="true"></i><div><span>${escapeHtml(rotulo)}</span><strong>${escapeHtml(texto)}</strong></div></div>`;
+  }
+  function tagsBonitasHtml(tags, isCliente){
+    const grupos = lerTags(tags);
+    if(!grupos.length) return "";
+    return `<section class="cad-bloco"><h4>${isCliente ? "Perfil" : "Sobre o local"}</h4>${grupos.map(([chave, valores]) => `
+      <div class="cad-tags-linha${chave === "observacoes" && !isCliente ? " is-condicoes" : ""}"><span>${escapeHtml(ROTULOS_TAGS[chave] || (chave.charAt(0).toUpperCase() + chave.slice(1).replaceAll("_", " ")))}</span><div>${valores.map((v) => `<em>${escapeHtml(v)}</em>`).join("")}</div></div>`).join("")}</section>`;
+  }
+
   function renderCadastroRelacionado(tipo, registro, pedido){
     const isCliente = tipo === "cliente";
     const tituloFallback = isCliente ? pedido?.cliente : pedido?.local;
     const nome = registro?.nome_razao || registro?.nome || tituloFallback || "-";
-    const tagsHtml = tagsCadastroHtml(registro?.tags);
-    const status = registro?.status || registro?.status_cliente || (isCliente ? "Cliente" : "Local");
+    const status = registro?.status || registro?.status_cliente || "";
+    const endereco = formatEnderecoCadastro(registro);
+    const telefone = onlyDigits(registro?.telefone || registro?.celular || pedido?.contato || "");
+    const email = String(registro?.email || "").trim();
 
-    if(els.centralCadastroRelacionadoSubtitulo){
-      els.centralCadastroRelacionadoSubtitulo.textContent = isCliente ? "Cadastro de cliente" : "Cadastro de local";
-    }
-    if(els.centralCadastroRelacionadoTitulo){
-      els.centralCadastroRelacionadoTitulo.textContent = nome;
-    }
+    if(els.centralCadastroRelacionadoSubtitulo) els.centralCadastroRelacionadoSubtitulo.textContent = isCliente ? "Cliente" : "Local do evento";
+    if(els.centralCadastroRelacionadoTitulo) els.centralCadastroRelacionadoTitulo.textContent = nome;
+    if(!els.centralCadastroRelacionadoBody){ return; }
 
-    if(els.centralCadastroRelacionadoBody){
-      els.centralCadastroRelacionadoBody.innerHTML = `
-        <section class="central-cadastro-summary">
-          <div>
-            <span>${isCliente ? "Cliente" : "Local"}</span>
-            <strong>${escapeHtml(nome)}</strong>
-            <p>${escapeHtml(formatEnderecoCadastro(registro))}</p>
+    const statusHtml = status ? `<span class="cad-status ${/ativ/i.test(status) ? "ativo" : /inativ|frio/i.test(status) ? "inativo" : ""}">${escapeHtml(status)}</span>` : "";
+    const acoes = [
+      telefone ? `<a class="cad-acao whatsapp" href="https://wa.me/${telefone.length <= 11 ? "55" + telefone : telefone}" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>WhatsApp</a>` : "",
+      telefone ? `<a class="cad-acao" href="tel:+${telefone.length <= 11 ? "55" + telefone : telefone}"><i data-lucide="phone"></i>Ligar</a>` : "",
+      email ? `<a class="cad-acao" href="mailto:${escapeHtml(email)}"><i data-lucide="mail"></i>E-mail</a>` : ""
+    ].join("");
+
+    let corpo;
+    if(isCliente){
+      const foto = /^https?:\/\//i.test(registro?.catalogo_logo_url || "") ? registro.catalogo_logo_url : "";
+      const pedidos = state.pedidos.filter((p) => !p.origemCatalogo && ((registro?.id && p.cliente_id === registro.id) || p.cliente === nome))
+        .sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
+      const ativos = pedidos.filter((p) => p.status !== "cancelado");
+      const total = ativos.reduce((soma, p) => soma + (Number(p.valor) || 0), 0);
+      corpo = `
+        <section class="cad-hero">
+          <div class="cad-avatar">${foto ? `<img src="${escapeHtml(foto)}" alt="" onerror="this.remove()">` : ""}<span>${escapeHtml(iniciais(nome))}</span></div>
+          <div class="cad-hero-texto">
+            <div class="cad-hero-nome"><h3>${escapeHtml(nome)}</h3>${statusHtml}</div>
+            ${endereco !== "-" ? `<p><i data-lucide="map-pin"></i>${escapeHtml(endereco)}</p>` : ""}
+            ${acoes ? `<div class="cad-acoes">${acoes}</div>` : ""}
           </div>
-          <em>${escapeHtml(formatCadastroValue(status))}</em>
         </section>
-
-        <section class="central-cadastro-grid">
-          ${campoCadastro("CPF / CNPJ", registro?.cpf_cnpj)}
-          ${campoCadastro("Telefone", formatPhone(registro?.telefone || registro?.celular || pedido?.contato))}
-          ${campoCadastro("Email", registro?.email)}
-          ${campoCadastro("Ultima locacao", dataBR(registro?.ultima_locacao))}
-          ${campoCadastro("Endereco", formatEnderecoCadastro(registro), "wide")}
-          ${campoCadastro("Ponto de referencia", registro?.ponto_referencia, "wide")}
-          ${isCliente ? campoCadastro("Origem / canal", registro?.canal || registro?.origem) : campoCadastro("Responsavel", registro?.responsavel)}
-          ${campoCadastro("Observacoes", registro?.observacoes || registro?.observacao, "wide")}
+        <section class="cad-numeros">
+          <div><span>Pedidos</span><strong>${ativos.length}</strong></div>
+          <div><span>Valor em pedidos</span><strong>${escapeHtml(formatCurrency(total))}</strong></div>
+          <div><span>Última locação</span><strong>${escapeHtml(dataBR(registro?.ultima_locacao) || "-")}</strong></div>
         </section>
-
-        ${tagsHtml ? `<section class="central-cadastro-tags">${tagsHtml}</section>` : ""}
-      `;
+        <section class="cad-bloco cad-grade">
+          ${infoCadastro("Telefone", formatPhone(telefone), "phone")}
+          ${infoCadastro("E-mail", email, "mail")}
+          ${infoCadastro("CPF / CNPJ", registro?.cpf_cnpj, "id-card")}
+          ${infoCadastro("Ponto de referência", registro?.ponto_referencia, "flag")}
+          ${infoCadastro("Observações", registro?.observacoes || registro?.observacao, "sticky-note")}
+        </section>
+        ${tagsBonitasHtml(registro?.tags, true)}
+        ${pedidos.length ? `<section class="cad-bloco"><h4>Últimos pedidos</h4><ul class="cad-pedidos">${pedidos.slice(0, 4).map((p) => `
+          <li data-cad-pedido="${escapeHtml(p.id)}"><span class="pedido-numero-card">${escapeHtml(p.numero)}</span><div><strong>${escapeHtml(formatDate(p.data))}</strong><small>${escapeHtml(p.local)}</small></div><span class="status-pill ${escapeHtml(p.status)}">${escapeHtml(formatStatusLabel(p.status))}</span><b>${escapeHtml(formatCurrency(p.valor))}</b></li>`).join("")}</ul></section>` : ""}`;
+    }else{
+      const lat = Number(registro?.latitude), lng = Number(registro?.longitude);
+      const temCoord = Number.isFinite(lat) && Number.isFinite(lng) && (lat || lng);
+      const alvo = temCoord ? `${lat},${lng}` : (endereco !== "-" ? endereco : nome);
+      const mapa = alvo ? `https://maps.google.com/maps?q=${encodeURIComponent(alvo)}&t=k&z=17&output=embed` : "";
+      const distancia = registro?.distancia_galpao_texto || (Number(registro?.distancia_galpao_km) ? `${String(registro.distancia_galpao_km).replace(".", ",")} km` : "");
+      const pedidos = state.pedidos.filter((p) => !p.origemCatalogo && p.status !== "cancelado" && ((registro?.id && p.local_id === registro.id) || p.local === nome));
+      corpo = `
+        <section class="cad-local">
+          <div class="cad-mapa">${mapa ? `<iframe src="${mapa}" title="Mapa de ${escapeHtml(nome)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>` : `<div class="cad-mapa-vazio"><i data-lucide="map"></i>Sem endereço para mostrar no mapa</div>`}</div>
+          <div class="cad-local-texto">
+            <div class="cad-hero-nome"><h3>${escapeHtml(nome)}</h3>${statusHtml}</div>
+            ${endereco !== "-" ? `<p><i data-lucide="map-pin"></i>${escapeHtml(endereco)}</p>` : ""}
+            <div class="cad-numeros cad-numeros-local">
+              ${distancia ? `<div><span>Distância do galpão</span><strong>${escapeHtml(distancia)}</strong></div>` : ""}
+              <div><span>Eventos neste local</span><strong>${pedidos.length}</strong></div>
+            </div>
+            <div class="cad-acoes">
+              ${alvo ? `<a class="cad-acao" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(alvo)}" target="_blank" rel="noopener"><i data-lucide="map"></i>Google Maps</a>` : ""}
+              ${temCoord ? `<a class="cad-acao" href="https://waze.com/ul?ll=${lat},${lng}&navigate=yes" target="_blank" rel="noopener"><i data-lucide="navigation"></i>Waze</a>` : ""}
+              ${acoes}
+            </div>
+          </div>
+        </section>
+        ${tagsBonitasHtml(registro?.tags, false)}
+        <section class="cad-bloco cad-grade">
+          ${infoCadastro("Ponto de referência", registro?.ponto_referencia, "flag")}
+          ${infoCadastro("Responsável", registro?.responsavel, "user")}
+          ${infoCadastro("Telefone", formatPhone(telefone), "phone")}
+          ${infoCadastro("E-mail", email, "mail")}
+          ${infoCadastro("CPF / CNPJ", registro?.cpf_cnpj, "id-card")}
+          ${infoCadastro("Última locação", dataBR(registro?.ultima_locacao), "calendar")}
+          ${infoCadastro("Observações", registro?.observacoes || registro?.observacao, "sticky-note")}
+        </section>`;
     }
-
+    els.centralCadastroRelacionadoBody.innerHTML = corpo;
+    els.centralCadastroRelacionadoModal?.classList.toggle("is-local", !isCliente);
     els.centralCadastroRelacionadoModal?.classList.remove("hidden");
     window.lucide?.createIcons?.();
   }
@@ -546,6 +620,8 @@
       local: row.local_nome || row.local || row.endereco || "Local nao informado",
       data: row.data_evento || row.data_hora || row.data || row.created_at,
       status: row.status_comercial || row.status || "orcamento",
+      pre_reserva_ate: row.pre_reserva_ate || null,
+      encerrado: Boolean(row.encerrado_operacional_em),
       valor: moneyNumber(row.valor_total || row.total || row.valor || 0),
       valor_recebido: row.valor_recebido,
       total_recebido: row.total_recebido,
@@ -993,6 +1069,83 @@
     }
   }
 
+  /* Pré-reserva com validade (out/2026): até quando o item fica pré-reservado e se está vencendo. */
+  function prazoPreReserva(pedido){
+    if(pedido.status !== "pre_reserva") return null;
+    if(!pedido.pre_reserva_ate) return { cls: "sem-data", texto: "Sem data de validade", ordem: -1 };
+    const hoje = new Date(new Date().toLocaleDateString("sv-SE") + "T00:00:00");
+    const ate = new Date(String(pedido.pre_reserva_ate).slice(0, 10) + "T00:00:00");
+    const dias = Math.round((ate - hoje) / 86400000);
+    const data = ate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    if(dias < 0) return { cls: "vencida", texto: `Vencida há ${-dias} dia${dias === -1 ? "" : "s"} (${data})`, ordem: -2 };
+    if(dias === 0) return { cls: "vencendo", texto: "Vence hoje", ordem: 0 };
+    if(dias <= 3) return { cls: "vencendo", texto: `Vence em ${dias} dia${dias === 1 ? "" : "s"} (${data})`, ordem: dias };
+    return { cls: "ok", texto: `Válida até ${data}`, ordem: dias };
+  }
+  function prazoHtml(pedido){
+    const prazo = prazoPreReserva(pedido);
+    return prazo ? `<span class="pre-reserva-prazo ${prazo.cls}">${escapeHtml(prazo.texto)}</span>` : "";
+  }
+
+  /* Quadro (out/2026, pedido do usuário: "bater o olho e saber o que está em pré-reserva, o que é orçamento"):
+     uma coluna por situação, com a mesma busca e os mesmos filtros da lista. */
+  const COLUNAS_QUADRO = [
+    { id: "catalogo", titulo: "Do catálogo", entra: (p) => p.origemCatalogo },
+    { id: "orcamento", titulo: "Orçamento", entra: (p) => ["orcamento", "pendente"].includes(p.status) },
+    { id: "pre_reserva", titulo: "Pré-reserva", entra: (p) => p.status === "pre_reserva" },
+    { id: "reservado", titulo: "Reservado", entra: (p) => ["aprovado", "enviado"].includes(p.status) && !p.encerrado },
+    { id: "finalizado", titulo: "Finalizado", entra: (p) => p.status === "finalizado" || (["aprovado", "enviado"].includes(p.status) && p.encerrado) },
+    { id: "cancelado", titulo: "Cancelado", entra: (p) => p.status === "cancelado" }
+  ];
+  function colunaDoPedido(pedido){
+    return COLUNAS_QUADRO.find((c) => c.entra(pedido))?.id || "orcamento";
+  }
+  function cartaoQuadroHtml(pedido){
+    const prazo = prazoPreReserva(pedido);
+    return `<article class="quadro-card${prazo ? " prazo-" + prazo.cls : ""}${pedido.origemCatalogo ? " is-catalogo" : ""}" data-pedido-id="${escapeHtml(pedido.id)}" tabindex="0" title="Abrir pedido">
+      <div class="quadro-card-topo"><span class="pedido-numero-card${pedido.origemCatalogo ? " pedido-numero-catalogo" : ""}">${escapeHtml(pedido.numero)}</span>${presencaHtml(pedido)}<span class="quadro-card-valor">${escapeHtml(formatCurrency(pedido.valor))}</span></div>
+      <strong class="quadro-card-cliente">${escapeHtml(pedido.cliente)}</strong>
+      <span class="quadro-card-linha">${escapeHtml(formatDate(pedido.data))} · ${escapeHtml(pedido.local)}</span>
+      ${prazoHtml(pedido)}
+      <div class="quadro-card-acoes"><button type="button" class="central-icon-action" data-action="visualizar" title="Visualizar pedido" aria-label="Visualizar pedido"><i data-lucide="eye"></i></button>${pedido.origemCatalogo ? "" : `<button type="button" class="central-icon-action whatsapp" data-action="whatsapp" title="Enviar WhatsApp" aria-label="Enviar WhatsApp"><i data-lucide="message-circle"></i></button>`}</div>
+    </article>`;
+  }
+  function renderQuadro(){
+    const quadro = $("centralQuadro");
+    if(!quadro) return;
+    quadro.innerHTML = COLUNAS_QUADRO.map((coluna) => {
+      let lista = state.filtrados.filter((p) => colunaDoPedido(p) === coluna.id);
+      if(coluna.id === "pre_reserva") lista = lista.sort((a, b) => prazoPreReserva(a).ordem - prazoPreReserva(b).ordem);
+      if(coluna.id === "catalogo" && !lista.length) return "";
+      const total = lista.reduce((soma, p) => soma + (Number(p.valor) || 0), 0);
+      return `<section class="quadro-coluna coluna-${coluna.id}" aria-label="${escapeHtml(coluna.titulo)}">
+        <header class="quadro-coluna-topo"><div><h3>${escapeHtml(coluna.titulo)}</h3><span>${escapeHtml(formatCurrency(total))}</span></div><b>${lista.length}</b></header>
+        <div class="quadro-coluna-lista">${lista.map(cartaoQuadroHtml).join("") || `<p class="quadro-vazio">Nada aqui</p>`}</div>
+      </section>`;
+    }).join("");
+    window.lucide?.createIcons?.();
+  }
+  function renderAvisoPreReserva(){
+    const aviso = $("centralAvisoPreReserva");
+    if(!aviso) return;
+    const pre = state.pedidos.filter((p) => p.status === "pre_reserva").map(prazoPreReserva);
+    const vencidas = pre.filter((x) => x.cls === "vencida").length;
+    const vencendo = pre.filter((x) => x.cls === "vencendo").length;
+    const semData = pre.filter((x) => x.cls === "sem-data").length;
+    const partes = [vencidas && `${vencidas} vencida${vencidas > 1 ? "s" : ""}`, vencendo && `${vencendo} vencendo em até 3 dias`, semData && `${semData} sem data`].filter(Boolean);
+    aviso.hidden = !partes.length;
+    aviso.innerHTML = partes.length ? `<i data-lucide="alarm-clock"></i><span><b>Pré-reservas:</b> ${escapeHtml(partes.join(" · "))}</span><button type="button" data-ver-pre-reservas>Ver no quadro</button>` : "";
+    window.lucide?.createIcons?.();
+  }
+  function aplicarVisao(visao){
+    state.visao = visao === "quadro" ? "quadro" : "lista";
+    try{ localStorage.setItem("central_pedidos_visao", state.visao); }catch{}
+    document.querySelectorAll("[data-visao]").forEach((b) => { const ativo = b.dataset.visao === state.visao; b.classList.toggle("is-active", ativo); b.setAttribute("aria-pressed", String(ativo)); });
+    $("centralListaTabela")?.toggleAttribute("hidden", state.visao !== "lista");
+    $("centralQuadro")?.toggleAttribute("hidden", state.visao !== "quadro");
+    render();
+  }
+
   function aplicarFiltros(){
     const normalizarBusca = (valor) => String(valor ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const termos = normalizarBusca(els.pesquisaGeralPedidos?.value).trim().split(/\s+/).filter(Boolean);
@@ -1036,13 +1189,15 @@
     if(els.centralStatusCarregamento){
       els.centralStatusCarregamento.textContent = `${state.filtrados.length} pedido(s)`;
     }
+    renderAvisoPreReserva();
+    if(state.visao === "quadro"){ renderQuadro(); return; }
 
     if(!els.centralPedidosTbody) return;
 
     if(!state.filtrados.length){
       els.centralPedidosTbody.innerHTML = `
         <tr>
-          <td colspan="9">
+          <td colspan="8">
             <div class="central-empty">
               Nenhum pedido encontrado. Use "Novo Pedido" para montar um evento.
             </div>
@@ -1061,14 +1216,13 @@
           </button>
         </td>
         <td class="central-contact-cell">${escapeHtml(formatPhone(pedido.contato))}</td>
-        <td>${escapeHtml(pedido.evento)}</td>
         <td>
           <button type="button" class="central-record-link" data-action="abrir-local" title="Abrir cadastro do local">
             ${escapeHtml(pedido.local)}
           </button>
         </td>
         <td>${escapeHtml(formatDate(pedido.data))}</td>
-        <td><span class="status-pill ${escapeHtml(pedido.status)}">${escapeHtml(formatStatusLabel(pedido.status))}</span></td>
+        <td><span class="status-pill ${escapeHtml(pedido.status)}">${escapeHtml(formatStatusLabel(pedido.status))}</span>${prazoHtml(pedido)}</td>
         <td class="central-value-cell">${renderValorFinanceiro(pedido)}</td>
         <td>
           <div class="central-actions">
@@ -1207,7 +1361,12 @@
     els.btnFecharCadastroRelacionado?.addEventListener("click", () => {
       els.centralCadastroRelacionadoModal?.classList.add("hidden");
     });
+    document.addEventListener("keydown", (event) => {
+      if(event.key === "Escape" && !els.centralCadastroRelacionadoModal?.classList.contains("hidden")) els.centralCadastroRelacionadoModal.classList.add("hidden");
+    });
     els.centralCadastroRelacionadoModal?.addEventListener("click", (event) => {
+      const linhaPedido = event.target.closest("[data-cad-pedido]");
+      if(linhaPedido){ abrirPedido(linhaPedido.dataset.cadPedido, "editar"); return; }
       if(event.target === els.centralCadastroRelacionadoModal){
         els.centralCadastroRelacionadoModal.classList.add("hidden");
       }
@@ -1266,6 +1425,31 @@
       }
     });
 
+    document.querySelectorAll("[data-visao]").forEach((b) => b.addEventListener("click", () => aplicarVisao(b.dataset.visao)));
+    $("centralAvisoPreReserva")?.addEventListener("click", (event) => {
+      if(!event.target.closest("[data-ver-pre-reservas]")) return;
+      aplicarVisao("quadro");
+      $("centralQuadro")?.querySelector(".coluna-pre_reserva")?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    });
+    const abrirDoCartao = (cartao) => {
+      const pedidoId = cartao?.dataset?.pedidoId || "";
+      const doCatalogo = state.pedidos.find((item) => String(item.id) === String(pedidoId) && item.origemCatalogo);
+      if(doCatalogo){ window.location.href = `pedido.html?projeto=${encodeURIComponent(doCatalogo.projetoId)}&modo=editar`; return; }
+      if(pedidoId) abrirPedido(pedidoId, "editar");
+    };
+    $("centralQuadro")?.addEventListener("click", (event) => {
+      const cartao = event.target.closest(".quadro-card");
+      if(!cartao) return;
+      const botao = event.target.closest("[data-action]");
+      const pedido = state.pedidos.find((item) => String(item.id) === String(cartao.dataset.pedidoId));
+      if(botao?.dataset.action === "visualizar"){ if(pedido?.origemCatalogo) abrirPreviewProjetoCatalogo(pedido); else abrirPreviewPedido(cartao.dataset.pedidoId); return; }
+      if(botao?.dataset.action === "whatsapp"){ abrirModalWhatsapp(pedido); return; }
+      abrirDoCartao(cartao);
+    });
+    $("centralQuadro")?.addEventListener("keydown", (event) => {
+      if(event.key === "Enter" && event.target.classList?.contains("quadro-card")) abrirDoCartao(event.target);
+    });
+
     els.centralPedidosTbody?.addEventListener("dblclick", (event) => {
       if(event.target.closest("[data-action]")) return;
       const row = event.target.closest("[data-pedido-id]");
@@ -1291,6 +1475,9 @@
     await window.aguardarContexto?.(); // espera a empresa ser identificada (ver CLAUDE.md, "aguardarContexto")
     state.empresaId = window.__CONTEXT?.empresa_id;
     bindEvents();
+    let visao = "lista";
+    try{ visao = localStorage.getItem("central_pedidos_visao") || "lista"; }catch{}
+    aplicarVisao(visao);
     await carregarPedidos();
     setupRealtime();
     iniciarPresenca();

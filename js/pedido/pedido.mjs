@@ -3,7 +3,7 @@ console.log("✅ pedido.mjs carregado");
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
 import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261020-mapa-inicial";
-import { initItens } from "./pedido.itens.mjs?v=20261021-f2-f4";
+import { initItens } from "./pedido.itens.mjs?v=20261021-pre-reserva";
 import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261021-divisao";
@@ -884,6 +884,7 @@ async function setupPedidoWorkspace({ supabase }){
       }
     }
     aplicarStatusVisual(pedido.status_comercial || "orcamento");
+    if(document.getElementById("preReservaAte")) document.getElementById("preReservaAte").value = pedido.pre_reserva_ate || "";
     if(window.__pedidoAplicarPagamentoConfig){
       window.__pedidoAplicarPagamentoConfig(
         observacoesPedido.pagamento_config || {},
@@ -995,6 +996,20 @@ async function setupPedidoWorkspace({ supabase }){
       }
     }
 
+    // Pré-reserva precisa de validade (out/2026); o banco também confere.
+    const campoPreReserva = document.getElementById("preReservaAte");
+    const preReservaAte = statusComercial === "pre_reserva" ? (campoPreReserva?.value || "") : "";
+    if(statusComercial === "pre_reserva"){
+      const hoje = new Date().toLocaleDateString("sv-SE");
+      const anterior = window.__PEDIDO_DADOS_ATUAL?.pre_reserva_ate || "";
+      if(!preReservaAte || (preReservaAte < hoje && preReservaAte !== anterior)){
+        avisar(!preReservaAte ? "Informe até quando vale a pré-reserva (campo \"até\" ao lado do status)." : "A validade da pré-reserva não pode ser uma data que já passou.", "Pré-reserva", "aviso");
+        campoPreReserva?.focus();
+        try{ campoPreReserva?.showPicker?.(); }catch{}
+        return;
+      }
+    }
+
     let numeroPedido = document.getElementById("orcamentoNumero")?.textContent?.trim() || "";
     const clienteNome = document.getElementById("clienteInput")?.value?.trim() || "Cliente nao informado";
     const clienteId = document.getElementById("clienteIdHidden")?.value || null;
@@ -1042,6 +1057,7 @@ async function setupPedidoWorkspace({ supabase }){
       data_hora: dataEvento ? `${dataEvento}T12:00:00` : null,
       valor_total: valorTotal,
       status_comercial: statusComercial,
+      pre_reserva_ate: preReservaAte || null,
       observacoes: {
         ...observacoesAtuais,
         projeto_comercial: window.__pedidoProjetoComercial || observacoesAtuais.projeto_comercial || null,
@@ -1089,7 +1105,8 @@ async function setupPedidoWorkspace({ supabase }){
     }
     if(result.error){
       console.error("Erro ao salvar pedido:", result.error);
-      avisar(result.error.message || "Nao foi possivel salvar o pedido.", "Salvar pedido", "erro");
+      const mensagemErro = /pre_reserva_com_data/.test(result.error.message || "") ? "Informe até quando vale a pré-reserva." : result.error.message;
+      avisar(mensagemErro || "Nao foi possivel salvar o pedido.", "Salvar pedido", "erro");
       return;
     }
 

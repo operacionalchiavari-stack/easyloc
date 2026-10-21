@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="CentralPedidos.css?v=20261021-atalho-catalogo3">
+  <link rel="stylesheet" href="CentralPedidos.css?v=20261021-cadastro">
   <!-- Visualização do pedido = prévia do catálogo (cabeçalho, itens por ambiente, PDF). -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261009-ver-pedido">
@@ -58,11 +58,12 @@
       <label>Status</label>
       <select class="el-select" id="filtroStatusPedido">
         <option value="">Todos</option>
-        <option value="orcamento">Orcamento</option>
-        <option value="pre_reserva">Pre reserva</option>
-        <option value="aprovado">Aprovado</option>
+        <option value="orcamento">Orçamento</option>
+        <option value="pre_reserva">Pré-reserva</option>
+        <option value="aprovado">Reservado</option>
+        <option value="cancelado">Cancelado</option>
         <option value="pendente">Pendente</option>
-        <option value="em_separacao">Em separacao</option>
+        <option value="em_separacao">Em separação</option>
         <option value="separado">Separado</option>
         <option value="finalizado">Finalizado</option>
         <option value="catalogo_rascunho">Catálogo: em montagem</option>
@@ -79,7 +80,18 @@
     </div>
   </section>
 
-  <section class="central-list el-card">
+  <!-- Lista ou quadro por situação (out/2026) + aviso das pré-reservas vencendo/vencidas/sem data -->
+  <div class="central-barra">
+    <div class="central-aviso-pre-reserva" id="centralAvisoPreReserva" role="status" hidden></div>
+    <div class="central-visao" role="group" aria-label="Forma de ver os pedidos">
+      <button type="button" data-visao="lista" aria-pressed="true"><i data-lucide="list" aria-hidden="true"></i>Lista</button>
+      <button type="button" data-visao="quadro" aria-pressed="false"><i data-lucide="columns-3" aria-hidden="true"></i>Quadro</button>
+    </div>
+  </div>
+
+  <div class="central-quadro" id="centralQuadro" hidden></div>
+
+  <section class="central-list el-card" id="centralListaTabela">
     <div class="central-table-wrap">
       <table class="central-table">
         <thead>
@@ -87,7 +99,6 @@
             <th>Numero</th>
             <th>Cliente</th>
             <th>Contato</th>
-            <th>Evento</th>
             <th>Local</th>
             <th>Data</th>
             <th>Status</th>
@@ -159,7 +170,7 @@
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/paymentPix.js?v=20261021-divisao"></script>
 <script src="../../../js/core/zapiMessaging.js"></script>
-<script src="CentralPedidos.js?v=20261021-f2-f4"></script>
+<script src="CentralPedidos.js?v=20261021-cadastro2"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>

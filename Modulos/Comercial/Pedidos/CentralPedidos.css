@@ -68,7 +68,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   display: none !important;
 }
 
-@media (max-width: 1660px) { /* com o botão Catálogo (out/2026) o grupo da esquerda só cabe ao lado do título a partir de ~1660px */
+@media (max-width: 1099px) { /* tudo na linha do título a partir de 1100px (pedido do usuário, out/2026); abaixo disso, duas linhas */
   html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
@@ -714,3 +714,133 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 /* atalho de teclado escrito no botão Catálogo (out/2026) */
 .central-kbd{display:inline-block;margin-left:6px;padding:1px 5px;border:1px solid #d9dde3;border-bottom-width:2px;border-radius:5px;background:#f7f8fa;color:#6b6b6b;font:600 10px/1.3 Inter,system-ui,sans-serif;vertical-align:1px}
 @media (max-width:760px){.central-kbd{display:none}}
+
+/* =====================================================
+   Pré-reserva com validade + Lista/Quadro (out/2026)
+===================================================== */
+.status-pill.cancelado{background:#f1f2f4;color:#6b6b6b}
+.pre-reserva-prazo{display:flex;align-items:center;gap:5px;width:max-content;margin-top:6px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.3}
+.pre-reserva-prazo::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pre-reserva-prazo.ok{background:#ecfdf3;color:#15803d}
+.pre-reserva-prazo.vencendo{background:#fff7ed;color:#b45309}
+.pre-reserva-prazo.vencida{background:#fef2f2;color:#b91c1c}
+.pre-reserva-prazo.sem-data{background:#f1f2f4;color:#4f4f4f}
+
+.central-barra{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.central-aviso-pre-reserva{display:flex;align-items:center;gap:10px;margin-right:auto;padding:9px 12px 9px 14px;border:1px solid #f3d5a3;border-radius:12px;background:#fff8eb;color:#7c4a03;font-size:13px}
+.central-aviso-pre-reserva[hidden]{display:none}
+.central-aviso-pre-reserva svg{width:17px;height:17px;flex:none}
+.central-aviso-pre-reserva button{padding:5px 11px;border:1px solid #e9c37c;border-radius:999px;background:#fff;color:#7c4a03;font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
+.central-aviso-pre-reserva button:hover{background:#fff1d6}
+.central-visao{display:inline-flex;padding:3px;border:1px solid #e3e7ec;border-radius:12px;background:#fff}
+.central-visao button{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:0;border-radius:9px;background:transparent;color:#4f4f4f;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}
+.central-visao button svg{width:16px;height:16px}
+.central-visao button.is-active{background:#123f86;color:#fff}
+#centralListaTabela[hidden],.central-quadro[hidden]{display:none!important}
+
+.central-quadro{width:100%;min-width:0;max-width:100%;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,1fr);gap:14px;overflow-x:auto;padding-bottom:10px;align-items:start}
+.quadro-coluna{display:flex;flex-direction:column;min-width:0;border:1px solid #e6e9ee;border-radius:14px;background:#f8f9fb;box-shadow:0 0 8px rgba(15,23,42,.08)}
+.quadro-coluna-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px 11px;border-bottom:1px solid #e6e9ee;border-radius:14px 14px 0 0;background:#fff}
+.quadro-coluna-topo h3{margin:0;font:700 14px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#1f2020}
+.quadro-coluna-topo span{display:block;margin-top:2px;font-size:12px;color:#6b6b6b;font-variant-numeric:tabular-nums}
+.quadro-coluna-topo b{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:#f1f2f4;color:#1f2020;font-size:13px}
+.coluna-cancelado .quadro-card{opacity:.75}
+.quadro-coluna-lista{display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 290px);min-height:80px;padding:12px;overflow-y:auto}
+.quadro-vazio{margin:18px 0;text-align:center;color:#9aa3ad;font-size:12.5px}
+.quadro-card{position:relative;display:flex;flex-direction:column;gap:5px;padding:12px 12px 10px;border:1px solid #e6e9ee;border-radius:12px;background:#fff;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+.quadro-card:hover{border-color:#c9d3e0;box-shadow:0 6px 16px rgba(15,23,42,.08)}
+.quadro-card:focus-visible{outline:2px solid #123f86;outline-offset:2px}
+.quadro-card.prazo-vencida{border-left:4px solid #dc2626}
+.quadro-card.prazo-vencendo{border-left:4px solid #f59e0b}
+.quadro-card.prazo-sem-data{border-left:4px solid #9aa3ad}
+.quadro-card-topo{display:flex;align-items:center;gap:8px}
+.quadro-card-topo .pedido-numero-card{min-width:0;min-height:0;padding:3px 9px;font-size:12px}
+.quadro-card-valor{margin-left:auto;font-weight:700;font-size:13px;color:#1f2020;font-variant-numeric:tabular-nums}
+.quadro-card-cliente{font-size:14px;font-weight:600;color:#1f2020;line-height:1.3}
+.quadro-card-linha{font-size:12px;color:#6b6b6b;line-height:1.35}
+.quadro-card .pre-reserva-prazo{margin-top:2px}
+.quadro-card-acoes{display:flex;justify-content:flex-end;gap:6px;margin-top:2px}
+.quadro-card-acoes .central-icon-action{width:30px;height:30px}
+@media (max-width:760px){.central-quadro{grid-auto-columns:82%}.central-aviso-pre-reserva{width:100%}}
+
+/* Cabeçalho numa linha só (out/2026): botões compactos, título no espaço entre os dois grupos. */
+@media (min-width:1100px){
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header{grid-template-columns:auto minmax(0,1fr) auto;column-gap:14px!important}
+  /* a linha fina do tema (::after de 100vw) se mede pelo cabeçalho inteiro, não pelo título, que não fica no meio exato */
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header{position:relative}
+  html:root body:not(.portal-shell) #centralPedidosPage > .central-header > div:first-child{min-width:0;position:static!important}
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header .el-page-title{font-size:clamp(19px,1.9vw,30px)!important;letter-spacing:clamp(.06em,.45vw,.16em)!important;white-space:nowrap}
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > .el-page-actions{gap:8px!important;margin:0!important}
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > .el-page-actions .btn{min-height:38px!important;padding:0 14px!important;font-size:12px!important;letter-spacing:.04em!important}
+  #centralPedidosPage #pesquisaGeralPedidos{width:clamp(170px,14vw,240px);height:38px}
+}
+@media (min-width:1100px) and (max-width:1399px){
+  html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .central-header > .el-page-actions .btn{padding:0 11px!important}
+  #btnFiltrosPedidos svg{width:15px;height:15px}
+  .central-kbd{display:none}
+}
+
+/* =====================================================
+   Janela de cadastro do cliente / local (out/2026)
+===================================================== */
+.central-cadastro-dialog{width:min(820px,94vw);border-radius:20px;border-color:#e6e9ee}
+.central-cadastro-head{align-items:center;padding:12px 16px 12px 22px;border-bottom:0}
+.central-cadastro-head span{font-size:11px;letter-spacing:.08em;color:#8a8a8a}
+.central-cadastro-head strong{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+html:root #btnFecharCadastroRelacionado{width:36px;height:36px;border:1px solid #e3e7ec!important;border-radius:50%;background:#fff!important;color:#4f4f4f!important;box-shadow:none}
+html:root #btnFecharCadastroRelacionado:hover{background:#f4f6f8!important}
+.central-cadastro-body{padding:4px 22px 22px;display:flex;flex-direction:column;gap:16px}
+.cad-hero{display:flex;align-items:center;gap:20px}
+.cad-avatar{position:relative;flex:none;width:96px;height:96px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#e8eef8,#f4f6f8);border:1px solid #e3e7ec;display:grid;place-items:center;box-shadow:0 6px 18px rgba(15,23,42,.08)}
+.cad-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.cad-avatar span{font:600 30px "Cormorant Garamond",Georgia,serif;color:#123f86;letter-spacing:.04em}
+.cad-hero-texto{min-width:0;display:flex;flex-direction:column;gap:8px}
+.cad-hero-nome{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cad-hero-nome h3{margin:0;font:600 26px/1.15 "Cormorant Garamond",Georgia,serif!important;letter-spacing:.01em!important;text-transform:none!important;color:#1f2020}
+.cad-status{padding:3px 10px;border-radius:999px;background:#f1f2f4;color:#4f4f4f;font:600 11.5px Inter,system-ui,sans-serif}
+.cad-status.ativo{background:#ecfdf3;color:#15803d}
+.cad-status.inativo{background:#fff7ed;color:#b45309}
+.cad-hero-texto p,.cad-local-texto p{display:flex;align-items:flex-start;gap:6px;margin:0;color:#4f4f4f;font-size:13.5px;line-height:1.4}
+.cad-hero-texto p svg,.cad-local-texto p svg{flex:none;width:15px;height:15px;margin-top:2px;color:#8a8a8a}
+.cad-acoes{display:flex;flex-wrap:wrap;gap:8px}
+.cad-acao{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border:1px solid #e3e7ec;border-radius:999px;background:#fff;color:#1f2020;font:600 12.5px Inter,system-ui,sans-serif;text-decoration:none}
+.cad-acao svg{width:15px;height:15px}
+.cad-acao:hover{border-color:#123f86;color:#123f86}
+.cad-acao.whatsapp{border-color:#bfe8cf;background:#f0fbf4;color:#15803d}
+.cad-numeros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cad-numeros>div{padding:12px 14px;border:1px solid #eef1f4;border-radius:14px;background:#f8f9fb}
+.cad-numeros span{display:block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8a8a8a}
+.cad-numeros strong{display:block;margin-top:4px;font-size:18px;font-weight:700;color:#1f2020;font-variant-numeric:tabular-nums}
+.cad-bloco{display:flex;flex-direction:column;gap:10px}
+.cad-bloco h4{margin:0;font:600 11px Inter,system-ui,sans-serif!important;letter-spacing:.08em!important;text-transform:uppercase!important;color:#8a8a8a}
+.cad-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cad-grade:empty{display:none}
+.cad-info{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid #eef1f4;border-radius:12px}
+.cad-info svg{flex:none;width:16px;height:16px;margin-top:2px;color:#123f86}
+.cad-info span{display:block;font-size:11px;font-weight:600;color:#8a8a8a}
+.cad-info strong{display:block;margin-top:2px;font-size:13.5px;font-weight:500;color:#1f2020;word-break:break-word}
+.cad-tags-linha{display:flex;align-items:baseline;gap:12px}
+.cad-tags-linha>span{flex:none;width:92px;font-size:12px;font-weight:600;color:#6b6b6b}
+.cad-tags-linha>div{display:flex;flex-wrap:wrap;gap:6px}
+.cad-tags-linha em{padding:4px 10px;border-radius:999px;background:#f4f6f8;color:#1f2020;font-size:12.5px;font-style:normal;font-weight:500}
+.cad-tags-linha.is-condicoes em{background:#fff7ed;color:#9a4a03;border:1px solid #f7d9b0}
+.cad-pedidos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.cad-pedidos li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:9px 12px;border:1px solid #eef1f4;border-radius:12px;cursor:pointer}
+.cad-pedidos li:hover{border-color:#c9d3e0;background:#fafbfc}
+.cad-pedidos .pedido-numero-card{min-width:0;min-height:0;padding:3px 9px;font-size:12px}
+.cad-pedidos strong{display:block;font-size:13px;font-weight:600}
+.cad-pedidos small{display:block;font-size:12px;color:#6b6b6b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cad-pedidos b{font-size:13px;font-variant-numeric:tabular-nums}
+.cad-local{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:stretch}
+.cad-mapa{min-height:260px;border-radius:16px;overflow:hidden;border:1px solid #e3e7ec;background:#eef1f4}
+.cad-mapa iframe{display:block;width:100%;height:100%;min-height:260px;border:0}
+.cad-mapa-vazio{height:100%;min-height:260px;display:grid;place-items:center;align-content:center;gap:8px;color:#8a8a8a;font-size:13px}
+.cad-local-texto{min-width:0;display:flex;flex-direction:column;gap:10px;justify-content:center}
+.cad-numeros-local{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:720px){
+  .cad-hero{flex-direction:column;align-items:flex-start;gap:14px}
+  .cad-numeros,.cad-grade,.cad-local{grid-template-columns:1fr}
+  .cad-numeros-local{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cad-pedidos li{grid-template-columns:auto minmax(0,1fr) auto}
+  .cad-pedidos li .status-pill{display:none}
+}

@@ -28,16 +28,23 @@ export function iniciarEntradaComercial(vitrine){
     for(const [value,label] of [['orcamento','Orçamento'],['pre_reserva','Pré-reserva'],['aprovado','Reservado'],['cancelado','Cancelado']]){
       seletor.add(new Option(label,value));
     }
+    // Pré-reserva tem validade (out/2026): ao escolher "Pré-reserva" aparece "até [data]" ao lado, obrigatório para salvar.
+    const validade=document.createElement('label');validade.className='ct-pre-reserva';validade.hidden=true;
+    validade.innerHTML='<span>até</span><input type="date" id="preReservaAte" aria-label="Pré-reserva válida até">';
     const sincronizar=()=>{
       const status=window.__PEDIDO_STATUS_ATUAL || document.querySelector('.timeline-step.active')?.dataset.status || 'orcamento';
       seletor.value=status;seletor.dataset.status=status;
+      validade.hidden=status!=='pre_reserva';
     };
     new MutationObserver(sincronizar).observe(statusPedido,{childList:true,characterData:true,subtree:true});
     seletor.addEventListener('change',()=>{
       const alvo=seletor.value;sincronizar();
       document.querySelector('.timeline-step[data-status="'+alvo+'"]')?.click();
+      sincronizar();
+      // a troca de status termina um instante depois (confere o contrato); só então mostra e foca a data
+      if(alvo==='pre_reserva')(async()=>{for(let i=0;i<20 && validade.hidden;i++){await new Promise(r=>setTimeout(r,50));sincronizar();}const campo=validade.querySelector('input');if(!validade.hidden && !campo.value){campo.focus();try{campo.showPicker?.();}catch{}}})();
     });
-    voltarStatus.append(seletor);sincronizar();
+    voltarStatus.append(seletor,validade);sincronizar();
   }
 
   const financeiro=document.createElement('section');financeiro.className='pedido-etapa-financeiro';financeiro.hidden=true;

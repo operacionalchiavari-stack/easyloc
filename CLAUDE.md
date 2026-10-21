@@ -9638,3 +9638,25 @@ ela — nunca tira o cursor de outro campo (nem da tela do pedido), nem com jane
   com uma janela (`dialog[open]`) aberta.
 - Teste `tests/atalhos-comercial-live.cjs` (`RUN_ATALHOS_LIVE=1`). **Pegadinha de teste:** servir as páginas num endereço
   `http://algo.teste` quebra o catálogo (`crypto.randomUUID` só existe em contexto seguro); usar `http://localhost:PORTA`.
+
+## Central de Pedidos: pré-reserva com validade, quadro por situação e cadastro com foto/mapa (21/out/2026)
+- **Coluna Evento removida** da lista (pedido do usuário).
+- **Pré-reserva sempre com data** ("pré-reserva sem data, nunca"): coluna `separacoes_pedidos.pre_reserva_ate date`
+  (migration `20261021000200_pre_reserva_validade.sql`: `pedido_salvar_integrado` recusa pré-reserva sem data e data já
+  passada quando mudou) e constraint `pre_reserva_com_data` (`20261021000300`; as 5 pré-reservas de teste que estavam sem
+  data ganharam a véspera da entrega). Ambas aplicadas e registradas. No pedido, ao lado do seletor de status aparece
+  "ATÉ" (`#preReservaAte`, `pedido.entrada.mjs`), que abre o calendário sozinho ao escolher Pré-reserva; o salvar também
+  confere (`pedido.mjs`). **Pré-reserva vencida continua reservando estoque** — só fica avisada (não há liberação automática).
+- **Central**: abaixo do status, a validade ("Válida até 25/10", "Vence em 2 dias", "Vencida há 3 dias"); aviso no topo com
+  vencidas/vencendo (≤3 dias)/sem data e "Ver no quadro". Botões **Lista | Quadro** (lembrado em
+  `localStorage central_pedidos_visao`): o quadro tem colunas Do catálogo / Orçamento / Pré-reserva (ordenada pelo
+  vencimento) / Reservado / Finalizado / Cancelado, com a mesma busca e filtros, sem faixa colorida no topo das colunas.
+  "Aprovado" aparece como "Reservado". Clicar no cartão abre o pedido.
+- **Cabeçalho numa linha** (≥1100px): título, Catálogo, Tabelas de Preço, Filtros, Novo pedido e pesquisa juntos; abaixo
+  disso empilha. O header precisa de `position:relative` e o título `position:static`, senão a linha `::after` de 100vw do
+  tema sai deslocada e cria rolagem lateral.
+- **Janela de cadastro do cliente/local** (`renderCadastroRelacionado`, classes `cad-*`): cliente com foto
+  (`catalogo_logo_url`) ou iniciais, WhatsApp/Ligar/E-mail, nº de pedidos, valor, última locação, perfil e últimos pedidos
+  clicáveis; local com mapa satélite (iframe `maps.google.com/maps?...&output=embed`, sem chave), distância do galpão,
+  eventos no local, Google Maps/Waze e as condições em destaque. Esc fecha.
+- Barra de etapas do pedido: com o campo "ATÉ" a barra fica compacta até 1599px e as etapas seguintes encurtam com "…".
