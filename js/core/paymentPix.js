@@ -109,7 +109,9 @@
     const selectedIndex = parcelaIndex(raw.parcelaIndex ?? raw.parcela_index);
     const finalIndex = selectedIndex !== null ? selectedIndex : index;
     const numero = raw.numero || raw.parcelaNumero || raw.parcela_numero || String(finalIndex + 1);
-    const label = raw.label || raw.tipo || raw.parcelaLabel || raw.parcela_label || raw.parcela || `Parcela ${numero}`;
+    const divisao = { locacao: "Locação", frete: "Frete", montagem: "Montagem" }[raw.componente];
+    const base = raw.label || raw.tipo || raw.parcelaLabel || raw.parcela_label || raw.parcela || `Parcela ${numero}`;
+    const label = divisao && !String(base).startsWith(divisao) ? `${divisao} · ${base}` : base;
     const valor = moneyNumber(raw.valor ?? raw.amount ?? raw.total ?? raw.saldo ?? ctx.valor);
     const baixado = valorRecebidoParcela(raw);
     const status = raw.pix_status || raw.status || (baixado >= valor && valor > 0 ? "Recebido" : "Pendente");

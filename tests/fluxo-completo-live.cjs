@@ -93,6 +93,19 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
       linha(item).querySelector(".qtd").dispatchEvent(new Event("input", { bubbles: true }));
       linha(kit).querySelector(".qtd").dispatchEvent(new Event("input", { bubbles: true }));
     }, [ITEM, KIT]);
+    // financeiro do pedido separado por divisão: um bloco para locação, frete e montagem; o frete vira 2 parcelas
+    await ped.click(".comercial-trilha [data-etapa=financeiro]");
+    await ped.waitForSelector(".pedido-etapa-financeiro:not([hidden])", { timeout: 15000 });
+    await ped.waitForFunction(() => document.querySelectorAll("#cronogramaParcelas tr.pg-grupo").length >= 2, null, { timeout: 30000 });
+    const grupos = await ped.$$eval("#cronogramaParcelas tr.pg-grupo", gs => gs.map(g => g.dataset.componente));
+    assert.ok(grupos.includes("locacao") && grupos.includes("frete"), "blocos do financeiro: " + grupos);
+    const valorFrete = await ped.evaluate(() => window.__PEDIDO_VALORES.frete);
+    const metade = Math.round(valorFrete * 50) / 100;
+    await ped.evaluate(v => { const c = document.querySelector("#cronogramaParcelas tr.pg-linha[data-componente=frete] .pg-valor"); c.textContent = v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); c.dispatchEvent(new Event("input", { bubbles: true })); }, metade);
+    await ped.click("#cronogramaParcelas [data-pg-add=frete]");
+    assert.equal(await ped.locator("#cronogramaParcelas tr.pg-linha[data-componente=frete]").count(), 2, "frete com 2 parcelas");
+    assert.equal((await ped.textContent("#cronogramaParcelas tr.pg-grupo[data-componente=frete] [data-pg-grupo-falta]")).trim(), "Distribuído");
+    await foto(ped, "01b-pedido-financeiro");
     await ped.selectOption("#pedidoStatusComercial", "aprovado");
     await ped.waitForFunction(() => (window.__PEDIDO_STATUS_ATUAL || "") === "aprovado", null, { timeout: 10000 }).catch(() => {});
     await foto(ped, "01-pedido-dados");
@@ -278,6 +291,12 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     /* ---------- 9. financeiro: o pedido reservado virou contas a receber; recebimento pela tela ---------- */
     const titulos = check(await admin.from("fin_receber").select("*").eq("pedido_id", pedidoId).neq("status", "cancelado"));
     assert.ok(titulos.length >= 1, "pedido aprovado gera contas a receber");
+    const salvas = p1.observacoes.parcelas_financeiras;
+    assert.ok(salvas.every(x => ["locacao", "frete", "montagem"].includes(x.componente)), "cada parcela do pedido guarda a divisão");
+    const fretes = titulos.filter(t => t.componente === "frete").sort((x, y) => x.parcela - y.parcela);
+    assert.equal(fretes.length, 2, "o frete virou 2 contas a receber, como no pedido");
+    assert.deepEqual(fretes.map(t => t.parcela + "/" + t.parcelas), ["1/2", "2/2"]);
+    for (const x of salvas) { assert.ok(titulos.some(t => t.componente === x.componente && Math.abs(Number(t.valor) - x.valor) < 0.01), "conta a receber igual à parcela " + x.componente + " " + x.valor); }
     const somaTit = titulos.reduce((s, t) => s + Number(t.valor), 0);
     assert.ok(Math.abs(somaTit - Number(p1.valor_total)) < 0.05, "contas a receber somam o valor do pedido: " + somaTit + " x " + p1.valor_total);
     contaId = check(await admin.from("fin_contas").insert({ empresa_id: EMPRESA, nome: "Conta Fluxo " + suffix, tipo: "corrente" }).select("id").single()).id;
@@ -305,9 +324,7 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     assert.ok(g2, "pedido continua no cronograma");
     passo("10 - Central de Pedidos lista o pedido e o cronograma mostra o andamento");
 
-    assert.deepEqual(erros, [], "sem erros de JavaScript nem chamadas ao motor antigo:
-" + erros.join("
-"));
+    assert.deepEqual(erros, [], "sem erros de JavaScript nem chamadas ao motor antigo: " + erros.join(" | "));
     console.log("PASS LIVE: fluxo completo do pedido ao encerramento" + (process.env.FLUXO_SITE ? " no site publicado" : ""));
   } finally {
     if (browser) { await browser.close(); }

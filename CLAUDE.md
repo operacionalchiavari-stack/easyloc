@@ -9596,3 +9596,20 @@ conferência de volta, percorre o sistema inteiro".
   chave por domínio (o Cadastro de Locais não acha endereço digitado à mão); **desligar o cadastro público** no painel do Supabase
   (Authentication > Providers > Email > "Allow new users to sign up" — ainda `disable_signup:false`; nada no sistema usa signUp);
   capacidade dos caminhões, líderes e PINs; apagar os pedidos de teste do cronograma quando não precisar mais (reservam estoque).
+
+## Financeiro do pedido separado por Locação / Frete / Montagem (21/out/2026)
+Pedido: "dentro de financeiro do pedido em comercial tem que ficar dividido por montagem e frete também, os pagamentos não
+podem ficar unificados, precisam ficar separados igual em contas a receber".
+- **Tela** (`js/pedido/pedido.pagamento.mjs`, etapa "Financeiro e pagamentos"): a tabela `#cronogramaParcelas` tem um bloco por
+  divisão — linha de título `tr.pg-grupo[data-componente]` (chip com as cores das contas a receber, valor da divisão, "Falta
+  distribuir/Passou/Distribuído" e "+ Parcela") e as parcelas `tr.pg-linha[data-componente]`. Valores de cada divisão vêm de
+  `window.__PEDIDO_VALORES`; desconto comercial, BV e crédito abatem primeiro da locação, depois do frete e da montagem. O plano
+  automático (entrada + N parcelas) é aplicado a cada divisão sobre o próprio valor. **Código que lê as parcelas deve usar
+  `#cronogramaParcelas tr.pg-linha`** (as linhas de título não são parcela). Cada parcela salva leva `componente`.
+- **Pedido salvo antes** (parcelas sem `componente`): ao abrir, cada parcela é dividida nas três divisões na mesma proporção
+  que o Financeiro já usava, mantendo a numeração (as contas a receber existentes continuam as mesmas).
+- **Banco** (migration `20261021000100`): `fin_sincronizar_pedido` cria uma conta a receber por parcela de cada divisão
+  (parcela = posição dentro da divisão, parcelas = quantas a divisão tem), sem rateio; sem `componente` continua rateando.
+  O PIX recebido pelo gateway dá baixa na conta da própria parcela. Testado numa transação desfeita e no fluxo completo
+  (frete em 2 parcelas → 2 contas a receber de frete). A janela do PIX mostra "Frete · Parcela 1".
+- `tests/pedido-abrir-projeto-catalogo-browser.cjs` já falhava antes desta mudança (espera um elemento que não aparece).

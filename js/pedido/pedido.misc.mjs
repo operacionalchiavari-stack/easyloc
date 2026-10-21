@@ -140,11 +140,12 @@ export function imprimirPedido() {
     })
     .filter(Boolean);
 
-  const parcelas = Array.from(document.querySelectorAll("#cronogramaParcelas tr"))
+  const divisao = { locacao: "Locação", frete: "Frete", montagem: "Montagem" };
+  const parcelas = Array.from(document.querySelectorAll("#cronogramaParcelas tr.pg-linha"))
     .map((tr) => {
       return {
         numero: tr.querySelector(".pg-numero")?.textContent?.trim() || "-",
-        tipo: tr.querySelector(".pg-parcela-label")?.textContent?.trim() || "-",
+        tipo: (divisao[tr.dataset.componente] ? divisao[tr.dataset.componente] + " · " : "") + (tr.querySelector(".pg-parcela-label")?.textContent?.trim() || "-"),
         vencimento: dateBR(tr.querySelector(".pg-vencimento")?.value || ""),
         valor: tr.querySelector(".pg-valor")?.innerText?.trim() || "-",
         metodo: tr.querySelector(".pg-metodo")?.value || tr.querySelector(".pg-metodo-text")?.textContent?.trim() || "-",

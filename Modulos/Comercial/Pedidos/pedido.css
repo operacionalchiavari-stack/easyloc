@@ -6791,3 +6791,23 @@ html:root .pedido-screen .pedido-etapa-financeiro .pedido-financeiro .finance-ca
 .pedido-screen .comercial-trilha.financeiro-incompleto .ct-linha [data-etapa="financeiro"]{position:relative;overflow:visible}
 .pedido-screen .comercial-trilha.financeiro-incompleto .ct-linha [data-etapa="financeiro"]::after{content:"";position:absolute;top:-5px;right:-13px;width:9px;height:9px;border-radius:50%;background:#dc2626;box-shadow:0 0 0 3px #fee2e2;animation:pedido-dados-pendente 1.4s ease-in-out infinite;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.pedido-screen .comercial-trilha.financeiro-incompleto .ct-linha [data-etapa="financeiro"]::after{animation:none}}
+
+/* Financeiro do pedido separado por divisão (out/2026): cada divisão abre com uma linha de título, com as mesmas cores
+   das divisões nas contas a receber do Financeiro. */
+.pedido-screen .pagamento-minimal-card .cronograma-table tbody tr.pg-grupo{background:#fff}
+.pedido-screen .pagamento-minimal-card .cronograma-table tbody tr.pg-grupo:hover{box-shadow:none}
+.pedido-screen .pagamento-minimal-card .cronograma-table tbody tr.pg-grupo td{padding:16px 16px 8px;border-bottom:1px solid var(--el-color-border,#e3e7ec)}
+.pedido-screen .pagamento-minimal-card .cronograma-table tbody tr.pg-grupo:not(:first-child) td{padding-top:22px}
+.pedido-screen .pg-grupo-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.pedido-screen .pg-grupo-chip{display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid transparent}
+.pedido-screen .pg-grupo-chip.locacao{background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);border-color:var(--el-color-border,#e3e7ec)}
+.pedido-screen .pg-grupo-chip.frete{background:#fff4dd;color:#8a5a00;border-color:#f0dcae}
+.pedido-screen .pg-grupo-chip.montagem{background:#e8f6ee;color:#23693f;border-color:#c7e6d3}
+.pedido-screen .pg-grupo-total{font-size:13px;color:#4f4f4f}
+.pedido-screen .pg-grupo-total strong{color:var(--el-color-text,#1f2020);font-weight:600}
+.pedido-screen .pg-grupo-falta{font-size:12px;font-weight:500}
+html:root .pedido-screen .pg-grupo-falta.ok{color:#15803d!important}
+html:root .pedido-screen .pg-grupo-falta.pendente{color:#b45309!important}
+.pedido-screen .pg-grupo-add{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--el-color-border,#e3e7ec);background:#fff;color:var(--el-color-text,#1f2020);font:500 12px Inter,system-ui,sans-serif;cursor:pointer}
+.pedido-screen .pg-grupo-add:hover{border-color:#123f86;color:#123f86}
+.pedido-screen .pg-grupo-add svg{width:14px;height:14px}

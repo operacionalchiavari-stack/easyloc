@@ -6,8 +6,8 @@ import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261020-map
 import { initItens } from "./pedido.itens.mjs?v=20261018-financeiro";
 import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
-import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261009-periodo";
-import { initPagamento } from "./pedido.pagamento.mjs";
+import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261021-divisao";
+import { initPagamento } from "./pedido.pagamento.mjs?v=20261021-divisao";
 import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs";
 
 /* =====================================================
@@ -542,7 +542,7 @@ async function setupPedidoWorkspace({ supabase }){
   }
 
   const coletarParcelasFinanceiras = () => {
-    return Array.from(document.querySelectorAll("#cronogramaParcelas tr"))
+    return Array.from(document.querySelectorAll("#cronogramaParcelas tr.pg-linha"))
       .map((row, index) => {
         const tipo = row.querySelector(".pg-parcela-label")?.textContent?.trim() || `Parcela ${index + 1}`;
         const numero = row.querySelector(".pg-numero")?.textContent?.trim() || String(index + 1);
@@ -565,7 +565,8 @@ async function setupPedidoWorkspace({ supabase }){
           valor,
           recebido,
           metodo,
-          status
+          status,
+          componente: row.dataset.componente || "locacao"
         };
       })
       .filter(Boolean);

@@ -195,23 +195,104 @@ export function initPagamento(){
     row.dataset.metodo = metodo;
   };
 
-  const atualizarTodasLinhas = () => {
-    tbody.querySelectorAll("tr").forEach(atualizarLinhaVisual);
+  /* Programação separada por divisão (out/2026): Locação, Frete e Montagem têm parcelas próprias, como nas contas a
+     receber do Financeiro (cada parcela vira uma conta daquela divisão). Na tabela, cada divisão abre com uma linha de
+     título (tr.pg-grupo) e as parcelas são tr.pg-linha com data-componente. */
+  const COMPONENTES = [["locacao", "Locação"], ["frete", "Frete"], ["montagem", "Montagem"]];
+  const rotuloComponente = (comp) => (COMPONENTES.find(([k]) => k === comp) || COMPONENTES[0])[1];
+  const centavos = (v) => Math.round((Number(v) || 0) * 100) / 100;
+  const linhasParcela = (comp) => Array.from(tbody.querySelectorAll(comp ? `tr.pg-linha[data-componente="${comp}"]` : "tr.pg-linha"));
+
+  // Valor de cada divisão; descontos, BV e créditos abatem primeiro da locação, depois do frete e da montagem.
+  const valoresPorComponente = () => {
+    const { totalPedido, totalDescontos, totalCreditos, valorFinal } = calcularTotais();
+    const v = window.__PEDIDO_VALORES;
+    if(!v) return { locacao: valorFinal, frete: 0, montagem: 0 };
+    const brutos = { locacao: Number(v.locacao) || 0, frete: Number(v.frete) || 0, montagem: Number(v.montagem) || 0 };
+    const soma = brutos.locacao + brutos.frete + brutos.montagem;
+    if(Math.abs(soma - totalPedido) > 0.01) brutos.locacao = Math.max(0, totalPedido - brutos.frete - brutos.montagem);
+    let abater = totalDescontos + totalCreditos;
+    const r = {};
+    COMPONENTES.forEach(([k]) => { const parte = Math.min(Math.max(brutos[k], 0), abater); r[k] = centavos(Math.max(brutos[k], 0) - parte); abater -= parte; });
+    return r;
   };
 
-  const atualizarSequencia = () => {
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    rows.forEach((row, index) => {
-      const numero = String(index + 1);
-      const numeroEl = row.querySelector(".pg-numero");
-      const posEl = row.querySelector(".pg-parcela-pos");
-      if(numeroEl) numeroEl.textContent = numero;
-      if(posEl) posEl.textContent = `${numero} de ${rows.length}`;
+  const criarGrupo = (comp) => {
+    const tr = document.createElement("tr");
+    tr.className = "pg-grupo";
+    tr.dataset.componente = comp;
+    tr.innerHTML = `
+      <td colspan="7">
+        <div class="pg-grupo-head">
+          <span class="pg-grupo-chip ${comp}">${rotuloComponente(comp)}</span>
+          <span class="pg-grupo-total">Valor <strong data-pg-grupo-valor>R$ 0,00</strong></span>
+          <span class="pg-grupo-falta" data-pg-grupo-falta></span>
+          <button type="button" class="pg-grupo-add" data-pg-add="${comp}"><i data-lucide="plus"></i> Parcela</button>
+        </div>
+      </td>`;
+    return tr;
+  };
+
+  // Desenha a tabela: título da divisão + parcelas dela, na ordem Locação, Frete, Montagem.
+  // Divisão sem valor e sem parcelas não aparece.
+  const montarTabela = (parcelas) => {
+    const valores = valoresPorComponente();
+    tbody.innerHTML = "";
+    COMPONENTES.forEach(([comp]) => {
+      const doGrupo = parcelas.filter((p) => (p.componente || "locacao") === comp);
+      if(!doGrupo.length && !(valores[comp] > 0)) return;
+      tbody.appendChild(criarGrupo(comp));
+      doGrupo.forEach((p) => tbody.appendChild(criarLinha({ ...p, componente: comp })));
     });
   };
 
-  const criarLinha = ({ numero, tipo, vencimento, valor, metodo, status = "Programado", recebido = "" }) => {
+  const garantirGrupos = () => {
+    const valores = valoresPorComponente();
+    COMPONENTES.forEach(([comp], i) => {
+      if(tbody.querySelector(`tr.pg-grupo[data-componente="${comp}"]`) || !(valores[comp] > 0)) return;
+      const depois = COMPONENTES.slice(i + 1).map(([c]) => tbody.querySelector(`tr.pg-grupo[data-componente="${c}"]`)).find(Boolean);
+      tbody.insertBefore(criarGrupo(comp), depois || null);
+    });
+  };
+
+  const atualizarTodasLinhas = () => {
+    linhasParcela().forEach(atualizarLinhaVisual);
+  };
+
+  const atualizarSequencia = () => {
+    linhasParcela().forEach((row, index) => {
+      const numeroEl = row.querySelector(".pg-numero");
+      if(numeroEl) numeroEl.textContent = String(index + 1);
+    });
+    COMPONENTES.forEach(([comp]) => {
+      const rows = linhasParcela(comp);
+      rows.forEach((row, index) => {
+        const posEl = row.querySelector(".pg-parcela-pos");
+        if(posEl) posEl.textContent = `${index + 1} de ${rows.length}`;
+      });
+    });
+  };
+
+  const atualizarGrupos = () => {
+    const valores = valoresPorComponente();
+    tbody.querySelectorAll("tr.pg-grupo").forEach((grupo) => {
+      const comp = grupo.dataset.componente;
+      const programado = linhasParcela(comp).reduce((s, row) => s + valorDaLinha(row), 0);
+      const dif = centavos((valores[comp] || 0) - programado);
+      const valorEl = grupo.querySelector("[data-pg-grupo-valor]");
+      const faltaEl = grupo.querySelector("[data-pg-grupo-falta]");
+      if(valorEl) valorEl.textContent = formatCurrency(valores[comp] || 0);
+      if(faltaEl){
+        faltaEl.textContent = Math.abs(dif) < 0.01 ? "Distribuído" : dif > 0 ? `Falta distribuir ${formatCurrency(dif)}` : `Passou ${formatCurrency(-dif)}`;
+        faltaEl.className = "pg-grupo-falta " + (Math.abs(dif) < 0.01 ? "ok" : "pendente");
+      }
+    });
+  };
+
+  const criarLinha = ({ numero, tipo, vencimento, valor, metodo, status = "Programado", recebido = "", componente = "locacao" }) => {
     const tr = document.createElement("tr");
+    tr.className = "pg-linha";
+    tr.dataset.componente = componente;
     tr.dataset.recebido = recebido !== undefined && recebido !== null ? String(recebido) : "";
     const metodoInicial = normalizarMetodo(metodo);
     tr.innerHTML = `
@@ -256,7 +337,7 @@ export function initPagamento(){
 
   const abrirCobrancaParcela = (button) => {
     const tr = button?.closest("tr");
-    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const rows = linhasParcela();
     const index = rows.indexOf(tr);
     const pedidoId = window.__PEDIDO_ATUAL_ID || null;
     const metodo = normalizarMetodo(tr?.querySelector(".pg-metodo")?.value || "PIX");
@@ -293,7 +374,7 @@ export function initPagamento(){
     const clienteId = document.getElementById("clienteIdHidden")?.value || null;
     const contato = document.getElementById("telefoneInput")?.value?.trim() || "";
     const parcelaNumero = tr?.querySelector(".pg-numero")?.textContent?.trim() || String(index + 1);
-    const parcelaLabel = tr?.querySelector(".pg-parcela-label")?.textContent?.trim() || `Parcela ${index + 1}`;
+    const parcelaLabel = rotuloComponente(tr?.dataset.componente) + " · " + (tr?.querySelector(".pg-parcela-label")?.textContent?.trim() || `Parcela ${index + 1}`);
     const vencimento = tr.querySelector(".pg-vencimento")?.value || "";
     const valor = moneyValue(tr.querySelector(".pg-valor"));
     const parcelas = rows.map((row, rowIndex) => {
@@ -304,7 +385,8 @@ export function initPagamento(){
         valor: moneyValue(row.querySelector(".pg-valor")),
         recebido: recebidoDaLinha(row),
         metodo: normalizarMetodo(row.querySelector(".pg-metodo")?.value || ""),
-        status: row.querySelector(".pg-status")?.value || "Pendente"
+        status: row.querySelector(".pg-status")?.value || "Pendente",
+        componente: row.dataset.componente || "locacao"
       };
     }).filter((parcela) => parcela.valor > 0);
 
@@ -344,13 +426,7 @@ export function initPagamento(){
     };
   };
 
-  const somarProgramado = () => {
-    let total = 0;
-    tbody.querySelectorAll(".pg-valor").forEach((el) => {
-      total += moneyValue(el);
-    });
-    return total;
-  };
+  const somarProgramado = () => linhasParcela().reduce((total, row) => total + valorDaLinha(row), 0);
 
   const atualizarResumo = () => {
     atualizarTodasLinhas();
@@ -370,70 +446,70 @@ export function initPagamento(){
     if(resumoFaltaDistribuirEl) resumoFaltaDistribuirEl.innerText = formatCurrency(faltaDistribuir);
     if(resumoBVEl) resumoBVEl.innerText = formatCurrency(bvDisponivel);
     if(resumoCreditoEl) resumoCreditoEl.innerText = formatCurrency(creditoDisponivel);
+    atualizarGrupos();
+  };
+
+  // Mesmo plano (entrada + N parcelas) para cada divisão, cada uma sobre o próprio valor.
+  const planoDaDivisao = (comp, valor, entradaTotal, valorFinal) => {
+    const qtdParcelas = Math.max(0, Number(parcelasEl?.value || 0));
+    const metodo = metodoEl?.value || "PIX";
+    const vencEntrada = dataEntradaEl?.value || "";
+    const diaFixo = diaFixoEl?.value || "";
+    const entrada = valorFinal > 0 ? Math.min(centavos(entradaTotal * valor / valorFinal), valor) : 0;
+    const lista = [];
+    let restante = valor;
+    if(entrada > 0){
+      lista.push({ tipo: "Entrada", vencimento: vencEntrada, valor: entrada, metodo, componente: comp });
+      restante = centavos(restante - entrada);
+    }
+    const qtd = qtdParcelas > 0 ? qtdParcelas : (restante > 0 ? 1 : 0);
+    if(qtd > 0 && restante > 0){
+      const base = centavos(restante / qtd);
+      for(let index = 0; index < qtd; index += 1){
+        const v = index === qtd - 1 ? centavos(restante - base * (qtd - 1)) : base;
+        lista.push({ tipo: `Parcela ${index + 1}`, vencimento: addMonths(vencEntrada, index, diaFixo), valor: v, metodo, componente: comp });
+      }
+    }
+    return lista;
   };
 
   const gerarParcelas = () => {
     cronogramaManual = false;
     const { valorFinal } = calcularTotais();
-    const entrada = Math.min(moneyValue(entradaEl), valorFinal);
-    const qtdParcelas = Math.max(0, Number(parcelasEl?.value || 0));
-    const metodo = metodoEl?.value || "PIX";
-    const vencEntrada = dataEntradaEl?.value || "";
-    const primeiroVencimento = vencEntrada;
-    const diaFixo = diaFixoEl?.value || "";
-
-    tbody.innerHTML = "";
-
-    let numero = 1;
-    let restante = valorFinal;
-
-    if(entrada > 0){
-      tbody.appendChild(criarLinha({
-        numero,
-        tipo: "Entrada",
-        vencimento: vencEntrada,
-        valor: entrada,
-        metodo
-      }));
-      numero += 1;
-      restante -= entrada;
-    }
-
-    if(qtdParcelas > 0 && restante > 0){
-      let somaParcelas = 0;
-      const valorBase = restante / qtdParcelas;
-
-      for(let index = 0; index < qtdParcelas; index += 1){
-        let valor = valorBase;
-
-        if(index === qtdParcelas - 1){
-          valor = restante - somaParcelas;
-        } else {
-          valor = Math.round(valor * 100) / 100;
-          somaParcelas += valor;
-        }
-
-        tbody.appendChild(criarLinha({
-          numero,
-          tipo: `Parcela ${index + 1}`,
-          vencimento: addMonths(primeiroVencimento, index, diaFixo),
-          valor,
-          metodo
-        }));
-
-        numero += 1;
-      }
-    }
-
+    const valores = valoresPorComponente();
+    const entradaTotal = Math.min(moneyValue(entradaEl), valorFinal);
+    const parcelas = COMPONENTES.flatMap(([comp]) => valores[comp] > 0 ? planoDaDivisao(comp, valores[comp], entradaTotal, valorFinal) : []);
+    montarTabela(parcelas);
     atualizarSequencia();
     atualizarResumo();
     refreshIcons();
   };
 
+  // "+ Parcela" numa divisão: entra com o que falta distribuir dela, um mês depois da última.
+  const adicionarParcela = (comp) => {
+    cronogramaManual = true;
+    garantirGrupos();
+    const grupo = tbody.querySelector(`tr.pg-grupo[data-componente="${comp}"]`);
+    if(!grupo) return;
+    const rows = linhasParcela(comp);
+    const ultima = rows.at(-1);
+    const programado = rows.reduce((s, row) => s + valorDaLinha(row), 0);
+    const falta = Math.max(0, centavos((valoresPorComponente()[comp] || 0) - programado));
+    const venc = ultima?.querySelector(".pg-vencimento")?.value ? addMonths(ultima.querySelector(".pg-vencimento").value, 1, "") : (dataEntradaEl?.value || "");
+    const nova = criarLinha({ tipo: `Parcela ${rows.length + 1}`, vencimento: venc, valor: falta, metodo: ultima?.querySelector(".pg-metodo")?.value || metodoEl?.value || "PIX", componente: comp });
+    const proximoGrupo = [...tbody.querySelectorAll("tr.pg-grupo")].find((g) => grupo.compareDocumentPosition(g) & Node.DOCUMENT_POSITION_FOLLOWING);
+    tbody.insertBefore(nova, proximoGrupo || null);
+    atualizarSequencia();
+    atualizarResumo();
+    refreshIcons();
+    nova.querySelector(".pg-vencimento")?.focus();
+  };
+
   const limparProgramacao = () => {
     cronogramaManual = true;
-    tbody.innerHTML = "";
+    montarTabela([]);
     atualizarResumo();
+    refreshIcons();
   };
 
   const coletarConfig = () => ({
@@ -452,6 +528,32 @@ export function initPagamento(){
     if(el && value !== undefined && value !== null) el.value = value;
   };
 
+  // Pedido salvo antes da divisão: cada parcela vira uma por divisão, na mesma proporção que o Financeiro já usava
+  // (locação/frete/montagem do pedido salvo), mantendo a numeração — as contas a receber já existentes continuam as mesmas.
+  const dividirParcelasAntigas = (lidas) => {
+    const obs = window.__PEDIDO_DADOS_ATUAL?.observacoes || {};
+    const moeda = (t) => Number(String(t || "").replace(/[^d,.-]/g, "").replace(/./g, "").replace(",", ".")) || 0;
+    let frete = 0, montagem = 0, total = Number(window.__PEDIDO_DADOS_ATUAL?.valor_total) || 0;
+    if(obs.valores && typeof obs.valores === "object"){
+      frete = Number(obs.valores.frete) || 0; montagem = Number(obs.valores.montagem) || 0;
+      total = Number(obs.valores.total) || total || (Number(obs.valores.locacao) || 0) + frete + montagem;
+    }else if(obs.logistica_snapshot){
+      frete = moeda(obs.logistica_snapshot.resumoFrete); montagem = moeda(obs.logistica_snapshot.resumoMontagem);
+    }
+    if(!(total > 0) || frete + montagem <= 0) return lidas.map((p) => ({ ...p, componente: "locacao" }));
+    frete = Math.min(frete, total); montagem = Math.min(montagem, total - frete);
+    const locacao = total - frete - montagem;
+    const saida = [];
+    for(const p of lidas){
+      const pl = centavos(p.valor * locacao / total), pf = centavos(p.valor * frete / total), pm = centavos(p.valor - pl - pf);
+      const rec = Number(p.recebido) || 0;
+      [["locacao", pl], ["frete", pf], ["montagem", pm]].forEach(([comp, v]) => {
+        if(v > 0) saida.push({ ...p, componente: comp, valor: v, recebido: rec > 0 && p.valor > 0 ? centavos(rec * v / p.valor) : p.recebido });
+      });
+    }
+    return saida;
+  };
+
   const aplicarConfig = (config = {}, parcelas = []) => {
     setIfExists(metodoEl, config.metodo);
     setIfExists(entradaEl, config.entrada);
@@ -465,22 +567,17 @@ export function initPagamento(){
 
     if(Array.isArray(parcelas) && parcelas.length){
       cronogramaManual = true;
-      tbody.innerHTML = "";
-      parcelas.forEach((parcela, index) => {
-        const valor = typeof parcela.valor === "number"
-          ? parcela.valor
-          : moneyValue({ value: parcela.valor });
-        const tr = criarLinha({
-          numero: parcela.numero || index + 1,
-          tipo: parcela.tipo || (index === 0 ? "Entrada" : `Parcela ${index}`),
-          vencimento: parcela.vencimento || "",
-          valor,
-          metodo: parcela.metodo || metodoEl?.value || "PIX",
-          status: parcela.status || "Programado",
-          recebido: parcela.recebido ?? parcela.valor_recebido ?? ""
-        });
-        tbody.appendChild(tr);
-      });
+      const lidas = parcelas.map((parcela, index) => ({
+        numero: parcela.numero || index + 1,
+        tipo: parcela.tipo || (index === 0 ? "Entrada" : `Parcela ${index}`),
+        vencimento: parcela.vencimento || "",
+        valor: typeof parcela.valor === "number" ? parcela.valor : moneyValue({ value: parcela.valor }),
+        metodo: parcela.metodo || metodoEl?.value || "PIX",
+        status: parcela.status || "Programado",
+        recebido: parcela.recebido ?? parcela.valor_recebido ?? "",
+        componente: parcela.componente
+      }));
+      montarTabela(lidas.some((p) => COMPONENTES.some(([k]) => k === p.componente)) ? lidas : dividirParcelasAntigas(lidas));
       atualizarSequencia();
       atualizarResumo();
       refreshIcons();
@@ -492,7 +589,8 @@ export function initPagamento(){
   };
 
   const atualizarPagamentoPorTotal = () => {
-    if(cronogramaManual && tbody.querySelector("tr")){
+    if(cronogramaManual && tbody.querySelector("tr.pg-linha")){
+      garantirGrupos();
       atualizarResumo();
       refreshIcons();
       return;
@@ -517,7 +615,7 @@ export function initPagamento(){
   });
 
   tbody.addEventListener("input", (event) => {
-    const row = event.target.closest("tr");
+    const row = event.target.closest("tr.pg-linha");
     if(row) {
       cronogramaManual = true;
       if(event.target.closest(".pg-valor")) row.dataset.recebido = "";
@@ -526,7 +624,7 @@ export function initPagamento(){
     atualizarResumo();
   });
   tbody.addEventListener("change", (event) => {
-    const row = event.target.closest("tr");
+    const row = event.target.closest("tr.pg-linha");
     if(row) {
       cronogramaManual = true;
       atualizarLinhaVisual(row);
@@ -536,7 +634,13 @@ export function initPagamento(){
   tbody.addEventListener("click", (event) => {
     const cobrancaButton = event.target.closest("[data-cobranca-parcela]");
     const actionButton = event.target.closest("[data-pg-action]");
-    const row = event.target.closest("tr");
+    const addButton = event.target.closest("[data-pg-add]");
+    const row = event.target.closest("tr.pg-linha");
+
+    if(addButton) {
+      adicionarParcela(addButton.dataset.pgAdd);
+      return;
+    }
 
     if(cobrancaButton) {
       abrirCobrancaParcela(cobrancaButton);
