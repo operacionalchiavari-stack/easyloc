@@ -10,7 +10,8 @@ const { createClient } = require("@supabase/supabase-js");
 const { chromium } = require("playwright");
 const { randomUUID } = require("node:crypto");
 const fs = require("fs"), path = require("path"), assert = require("node:assert/strict");
-const raiz = path.resolve(__dirname, ".."), BASE = "http://acervo.teste/";
+// FLUXO_SITE=https://operacionalchiavari-stack.github.io/easyloc/ roda contra o site publicado em vez dos arquivos locais
+const raiz = path.resolve(__dirname, ".."), BASE = process.env.FLUXO_SITE || "http://acervo.teste/";
 const EMPRESA = "bb1260f0-99cd-4d17-ab9b-23c299b4c50b";
 const ITEM = "935f7e88-04b8-4d1a-9c0b-693e17e44a0b";   // Katrina (Item)
 const KIT = "8d158e93-8828-4f6d-8b48-dd6533e2ec28";    // Tiffany (Kit)
@@ -49,7 +50,7 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
       const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: [] });
       await ctx.route("**/*", rota => {
         const u = new URL(rota.request().url());
-        if (u.origin + "/" !== BASE) { return rota.continue(); }
+        if (process.env.FLUXO_SITE || u.origin + "/" !== BASE) { return rota.continue(); }
         if (u.pathname.startsWith("/api/")) { erros.push("Chamou o motor antigo: " + u.pathname); return rota.fulfill({ status: 500, body: "{}" }); }
         const arq = path.join(raiz, decodeURIComponent(u.pathname));
         if (!fs.existsSync(arq) || fs.statSync(arq).isDirectory()) { return rota.fulfill({ status: 404, body: "" }); }
@@ -304,7 +305,10 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     assert.ok(g2, "pedido continua no cronograma");
     passo("10 - Central de Pedidos lista o pedido e o cronograma mostra o andamento");
 
-    console.log("PARCIAL: " + JSON.stringify({ erros }, null, 1));
+    assert.deepEqual(erros, [], "sem erros de JavaScript nem chamadas ao motor antigo:
+" + erros.join("
+"));
+    console.log("PASS LIVE: fluxo completo do pedido ao encerramento" + (process.env.FLUXO_SITE ? " no site publicado" : ""));
   } finally {
     if (browser) { await browser.close(); }
     if (process.env.FLUXO_MANTER === "1") { console.log("FLUXO_MANTER=1: dados mantidos. pedido", pedidoId, "owner", owner?.email); return; }

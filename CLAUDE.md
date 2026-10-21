@@ -9558,3 +9558,41 @@ Pedido do usuário (19/out): "quero tirar esse motor que fica no Vercel e quero 
 - [ ] Depois de publicado: apagar as abas da planilha do Cronograma (`gs_abas`/`gs_linhas`, planilha `14HX…`). **Ainda não** porque Central de Metas (`central/OperacaoCentral.js`, `operacaoCronogramaPorPedido_`) e os números do Mural (`portal/Mural.js`) no motor leem essa planilha — eles mudam quando esses sistemas saírem do motor. O projeto `cronograma` de `api/_gas/projetos.js` fica até lá pelo mesmo motivo.
 - [ ] Próximos sistemas: Fretes, Uber, Controle RH, Portal, Costura; por último Central de Metas e Almoxarifado.
 **Pendências do usuário**: marcar os líderes no Cadastro de Funcionários; dar PIN aos montadores; preencher a capacidade (m³) dos caminhões; os free precisam se cadastrar de novo no app (cadastros antigos não vieram).
+
+## Teste de ponta a ponta e acertos para colocar no ar (20/out/2026)
+Pedido: "verifica tudo que está faltando e faça... teste do fluxo: gera um pedido, joga pra reservado, separação, carregamento,
+conferência de volta, percorre o sistema inteiro".
+- **`tests/fluxo-completo-live.cjs`** (`RUN_FLUXO_LIVE=1`; `FLUXO_SITE=https://operacionalchiavari-stack.github.io/easyloc/` roda
+  contra o site publicado; `FLUXO_MANTER=1` não apaga). Banco real, telas reais, tudo temporário apagado no fim (usuário, cliente,
+  local, montador, conta do financeiro, pedido e o que nasce dele; o estoque que a perda baixou volta). Passos: (1) pedido criado
+  na tela do pedido e Reservado; (2) 6 etapas no cronograma, reserva na disponibilidade, escala; (3) separação: etiquetas de envio
+  (kit vira componentes), leitura pelo QR, repetida recusada; (4) carregamento por bipagem + Expedição; (5) App do Montador com PIN:
+  chegada, sacolas, posicionamento, lista assinada, desmontagem com lista conferida (com as travas de ordem); (6) descarregamento;
+  (7) volta às cegas com uma peça faltando → ocorrência de falta; (8) avaria registrada, falta confirmada como perda (baixa do
+  estoque), encerramento; (9) contas a receber geradas pelo pedido e recebimento pela tela do Financeiro; (10) Central de Pedidos e
+  cronograma. **Passou nos arquivos locais e no site publicado.** `tests/catalogo-arquivos-live.cjs` (`RUN_ARQUIVOS_LIVE=1`):
+  decoradora sobe/lista/apaga imagem do próprio projeto pela função; escrita anônima direta, projeto alheio e token ruim recusados.
+- **Defeitos achados e corrigidos**:
+  - Disponibilidade do catálogo/Helena tinha conta própria (não abria kit nos componentes, ignorava avaria/peça que não voltou,
+    evento de vários dias e pedido encerrado). Agora é a função do banco `operacao_disponibilidade(empresa, data)` (migration
+    `20261020000200`), a mesma regra de `operacao_validar_reserva`; `mapaDisponibilidade`/`verificarDisponibilidade` da Edge
+    Function `catalogo-assistente` usam ela (paginada: a API devolve no máximo 1000 linhas). Exemplo real: no dia 25 o pedido 2158
+    reserva 782 cadeiras Tiffany pelos kits, e o catálogo ainda oferecia kits.
+  - Kit salvo de novo duplicava os componentes (`kits.modal.mjs` agora substitui a lista). No banco havia 17 kits com 115 linhas
+    repetidas (peças contadas em dobro): migration `20261020000300` deixou uma por componente (cópia em
+    `kit_itens_duplicados_20261020`) e criou `unique(kit_id,item_id)`; a importação soma a mesma peça citada duas vezes.
+  - Código da etiqueta de envio tirava toda letra "s" do número do pedido (`/s+/` no lugar de `/\s+/`, separacao-materiais.js).
+  - **As migrations `20261017000100` (avatares) e `20261017000200` (storage sem escrita anônima) estavam registradas como
+    aplicadas, mas nunca tinham rodado**: qualquer visitante ainda enviava/apagava arquivos nos buckets `projetos` e
+    `lounge-formatos` e listava fotos de todas as empresas. E a função `catalogo-arquivos` nem estava publicada. Publicada a função,
+    publicado o site e aplicadas as duas migrations; conferido que as imagens continuam abrindo (link público e /render/image).
+    **Lição: `migration repair --status applied` só registra; conferir no banco (pg_policies etc.) que a mudança existe.**
+  - Teste antigo `expedicao-browser.cjs`: os campos de busca nascem somente leitura e liberam no foco (`js/core/filterInputs.js`,
+    contra o preenchimento automático do navegador) — o teste precisa clicar antes de digitar.
+- **Publicado em 20/10**: commits por assunto (o trabalho de várias sessões que estava sem commit), push, GitHub Pages e Vercel.
+  O banco já tinha as migrations da operação integrada e o site no ar ainda era o de 18/10; agora estão alinhados.
+- **Pendências que dependem do usuário**: cadastrar as contas bancárias em Financeiro > Contas e PIX e escolher as contas padrão
+  (hoje não há nenhuma: não dá para registrar recebimento); habilitar a **Geocoding API** na chave do Google Maps e restringir a
+  chave por domínio (o Cadastro de Locais não acha endereço digitado à mão); **desligar o cadastro público** no painel do Supabase
+  (Authentication > Providers > Email > "Allow new users to sign up" — ainda `disable_signup:false`; nada no sistema usa signUp);
+  capacidade dos caminhões, líderes e PINs; apagar os pedidos de teste do cronograma quando não precisar mais (reservam estoque).
