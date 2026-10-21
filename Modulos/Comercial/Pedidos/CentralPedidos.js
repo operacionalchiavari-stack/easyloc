@@ -1177,7 +1177,7 @@
       if (!panel.hidden) els.filtroClientePedido?.focus();
     });
     els.btnNovoPedidoCentral?.addEventListener("click", () => abrirPedido());
-    // Atalho pro catálogo (out/2026): botão e teclado — Alt+C abre o catálogo, Alt+P abre já na pesquisa.
+    // Atalho pro catálogo (out/2026): botão e teclado — F2 abre o catálogo, F4 abre já na pesquisa (Alt+C/Alt+P também).
     const abrirCatalogo = (pesquisar) => {
       const href = "Modulos/Comercial/Catalogo/catalogo.html" + (pesquisar ? "?pesquisar=1" : "");
       try { if (window.parent !== window && window.parent.shellNavigate) { window.parent.shellNavigate(href); return; } } catch (e) {}
@@ -1185,11 +1185,12 @@
     };
     document.getElementById("btnCatalogoCentral")?.addEventListener("click", () => abrirCatalogo(false));
     document.addEventListener("keydown", (event) => {
-      if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return;
-      if (event.code !== "KeyC" && event.code !== "KeyP") return;
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return;
+      const acao = !event.altKey ? (event.key === "F2" ? "catalogo" : event.key === "F4" ? "pesquisar" : "") : (event.code === "KeyC" ? "catalogo" : event.code === "KeyP" ? "pesquisar" : "");
+      if (!acao) return;
       if (document.querySelector("dialog[open], .modal.open, .modal:not(.hidden)[aria-hidden=false]")) return;
       event.preventDefault();
-      abrirCatalogo(event.code === "KeyP");
+      abrirCatalogo(acao === "pesquisar");
     });
     els.btnTabelasPreco?.addEventListener("click", () => {
       // Dentro do dashboard abre pelo shell (registra no histórico e confere permissão);

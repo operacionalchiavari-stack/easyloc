@@ -3,7 +3,7 @@ console.log("✅ pedido.mjs carregado");
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
 import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261020-mapa-inicial";
-import { initItens } from "./pedido.itens.mjs?v=20261021-atalhos";
+import { initItens } from "./pedido.itens.mjs?v=20261021-f2-f4";
 import { initFrete } from "./pedido.frete.mjs";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261021-divisao";
@@ -1146,9 +1146,8 @@ async function setupPedidoWorkspace({ supabase }){
 
   function setupAtalhosPedido(){
     const atalhos = {
-      F2: { id: "addItemBtn", label: "Adicionar item" },
+      // F2 e F4 ficaram para o Catálogo e a pesquisa (pedido.entrada.mjs, out/2026)
       F3: { id: "addComponenteBtn", label: "Adicionar componente" },
-      F4: { id: "addEspacoBtn", label: "Adicionar espaco" },
       F8: { id: "addPersonalizacaoBtn", label: "Adicionar personalizacao" },
       F9: { id: "addServicoBtn", label: "Adicionar servico" }
     };

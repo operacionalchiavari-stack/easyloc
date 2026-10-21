@@ -1208,9 +1208,11 @@ function renderTimeline(){
   animateTimeline(first);
 }
 
-// Atalhos de teclado do Comercial (out/2026): Alt+C vai para o Catálogo (categorias) e Alt+P põe o cursor na
-// pesquisa. Alt + letra funciona mesmo digitando num campo e não briga com o navegador. Dentro do pedido (iframe)
-// quem decide a etapa é a tela do pedido, então o atalho é repassado para ela.
+// Atalhos de teclado do Comercial (out/2026): F2 vai para o Catálogo (categorias) e F4 vai direto para a pesquisa
+// (uma tecla só, pedido do usuário; funcionam mesmo digitando num campo). Alt+C/Alt+P continuam valendo.
+// Dentro do pedido (iframe) quem decide a etapa é a tela do pedido, então o atalho é repassado para ela.
+// No catálogo o cursor fica sempre na pesquisa (pedido do usuário: "pra não se perder"): volta para ela depois de
+// cada navegação e, digitando fora de um campo, as letras vão para ela. Não em tela de toque (abriria o teclado).
 function focarPesquisaCatalogo(){
   if(state.overlay || state.activeView === GATEWAY_VIEW) applyView(HOME_VIEW);
   const input = $("catalogSearch");
@@ -1221,12 +1223,35 @@ function focarPesquisaCatalogo(){
 }
 window.focarPesquisaCatalogo = focarPesquisaCatalogo;
 function atalhoComercial(event){
-  if(!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return "";
+  if(event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return "";
+  if(!event.altKey) return event.key === "F2" ? "catalogo" : event.key === "F4" ? "pesquisar" : "";
   return event.code === "KeyC" ? "catalogo" : event.code === "KeyP" ? "pesquisar" : "";
+}
+const campoDigitavel = (el) => Boolean(el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));
+function podeFocarPesquisa(){
+  if(matchMedia("(hover: none), (pointer: coarse)").matches || document.querySelector("dialog[open]")) return false;
+  const assistente = document.getElementById("catalogAssistente");
+  if(assistente && !assistente.hidden) return false;
+  const ativo = document.activeElement;
+  if(campoDigitavel(ativo) && ativo.id !== "catalogSearch") return false;
+  // dentro do pedido: não tira o cursor de um campo da tela do pedido
+  try { const fora = window.parent !== window && window.parent.document.activeElement; if(fora && fora.tagName !== "IFRAME" && campoDigitavel(fora)) return false; } catch {}
+  const input = $("catalogSearch");
+  return Boolean(input && input.offsetParent);
+}
+function manterCursorNaPesquisa(){
+  requestAnimationFrame(() => { if(podeFocarPesquisa()) $("catalogSearch").focus({ preventScroll: true }); });
 }
 function bindAtalhosTeclado(){
   const busca = $("catalogSearch");
-  if(busca){ busca.placeholder = "Pesquisar (Alt+P)"; busca.setAttribute("aria-keyshortcuts", "Alt+P"); }
+  if(busca){ busca.placeholder = "Pesquisar (F4)"; busca.setAttribute("aria-keyshortcuts", "F4"); }
+  // digitando fora de um campo, a letra vai para a pesquisa
+  document.addEventListener("keydown", (event) => {
+    if(event.key.length !== 1 || event.key === " " || event.ctrlKey || event.metaKey || event.altKey) return;
+    if(campoDigitavel(document.activeElement) || !podeFocarPesquisa()) return;
+    $("catalogSearch").focus({ preventScroll: true });
+  });
+  manterCursorNaPesquisa();
   document.addEventListener("keydown", (event) => {
     const acao = atalhoComercial(event);
     if(!acao || document.querySelector("dialog[open]")) return;
@@ -1286,6 +1311,7 @@ function syncNavigation(){
   setProjetoDockVisible(!state.overlay && state.activeView !== GATEWAY_VIEW);
   // Na Home (Portal) não tem busca nem "← Voltar" (pedido explícito do usuário) — ver .catalog-no-portal no CSS.
   document.body.classList.toggle("catalog-no-portal", !state.overlay && state.activeView === GATEWAY_VIEW);
+  manterCursorNaPesquisa();
 }
 
 // Foto de capa de uma categoria, pra Home (pedido explícito do usuário):

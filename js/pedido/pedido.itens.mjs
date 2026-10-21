@@ -1,6 +1,6 @@
 import { colorirValor } from "./pedido.valores-ui.mjs";
 import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
-import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261021-atalhos";
+import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261021-f2-f4";
 
 export function initItens({ supabase, els }){
 

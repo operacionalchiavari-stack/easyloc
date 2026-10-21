@@ -1,5 +1,5 @@
 // Atalhos de teclado do Comercial (out/2026), opt-in, contra o Supabase de verdade:
-// Alt+C vai para o Catálogo, Alt+P vai para o Catálogo com o cursor na pesquisa — na tela do pedido (inclusive com o
+// F2 vai para o Catálogo, F4 vai para o Catálogo com o cursor na pesquisa; no catálogo o cursor fica sempre na pesquisa — na tela do pedido (inclusive com o
 // cursor dentro de um campo e dentro do catálogo) e na Central de Pedidos (botão "Catálogo" também).
 // Usuário temporário, apagado no fim. Uso: RUN_ATALHOS_LIVE=1 node tests/atalhos-comercial-live.cjs
 require("dotenv").config({ quiet: true });
@@ -42,51 +42,60 @@ const tipos = { ".html": "text/html", ".js": "application/javascript", ".mjs": "
     /* ----- tela do pedido ----- */
     const ped = await abrir("Modulos/Comercial/Pedidos/pedido.html");
     await ped.waitForFunction(() => typeof window.__pedidoAtalho === "function" && window.__CONTEXT?.empresa_id, null, { timeout: 30000 });
-    assert.equal(await ped.textContent('.ct-ferramentas [data-etapa="catalogo"] .ct-kbd'), "Alt+C", "o botão Catálogo mostra o atalho");
+    assert.equal(await ped.textContent('.ct-ferramentas [data-etapa="catalogo"] .ct-kbd'), "F2", "o botão Catálogo mostra o atalho");
     await ped.click("#clienteInput");
-    await ped.keyboard.press("Alt+KeyP");                // com o cursor dentro de um campo
+    await ped.keyboard.press("F4");                // com o cursor dentro de um campo
     const frame = () => ped.frameLocator("iframe.pedido-catalogo-real");
     await ped.waitForFunction(() => document.querySelector(".ct-atual")?.dataset.etapa === "catalogo", null, { timeout: 30000 });
     const iframe = ped.frames().find(f => /catalogo\.html/.test(f.url()));
     await iframe.waitForFunction(() => document.activeElement?.id === "catalogSearch", null, { timeout: 30000 });
-    assert.equal(await iframe.getAttribute("#catalogSearch", "placeholder"), "Pesquisar (Alt+P)");
+    assert.equal(await iframe.getAttribute("#catalogSearch", "placeholder"), "Pesquisar (F4)");
     await ped.keyboard.type("sofa");
     await iframe.waitForFunction(() => /Resultados da busca/i.test(document.body.innerText) || document.querySelectorAll("[data-grid-item]").length > 0, null, { timeout: 20000 });
-    console.log("ok 1 - pedido: Alt+P (mesmo dentro do campo Cliente) abre o catálogo com o cursor na pesquisa e já dá para digitar");
+    console.log("ok 1 - pedido: F4 (mesmo dentro do campo Cliente) abre o catálogo com o cursor na pesquisa e já dá para digitar");
 
-    await ped.keyboard.press("Alt+KeyC");                // dentro do catálogo
+    await ped.keyboard.press("F2");                // dentro do catálogo
     await iframe.waitForFunction(() => document.querySelectorAll(".catalog-home-card").length > 0 && document.getElementById("catalogSearch").value === "", null, { timeout: 20000 });
-    console.log("ok 2 - dentro do catálogo, Alt+C volta para as categorias");
+    console.log("ok 2 - dentro do catálogo, F2 volta para as categorias");
+    // o cursor fica sempre na pesquisa: depois de abrir uma categoria e ao digitar fora de um campo
+    await iframe.click(".catalog-home-card");
+    await iframe.waitForFunction(() => !document.querySelector(".catalog-home-card") && document.activeElement?.id === "catalogSearch", null, { timeout: 20000 });
+    await iframe.evaluate(() => document.activeElement.blur());
+    await ped.keyboard.type("mesa");
+    await iframe.waitForFunction(() => document.getElementById("catalogSearch").value === "mesa", null, { timeout: 10000 });
+    await ped.keyboard.press("F2");
+    await iframe.waitForFunction(() => document.querySelectorAll(".catalog-home-card").length > 0 && document.activeElement?.id === "catalogSearch", null, { timeout: 20000 });
+    console.log("ok 2b - no catálogo o cursor volta para a pesquisa depois de navegar, e digitar fora de um campo escreve na pesquisa");
 
     await ped.click('.comercial-trilha [data-etapa="financeiro"]');
     await ped.waitForFunction(() => document.querySelector(".ct-atual")?.dataset.etapa === "financeiro");
-    await ped.keyboard.press("Alt+KeyC");
+    await ped.keyboard.press("F2");
     await ped.waitForFunction(() => document.querySelector(".ct-atual")?.dataset.etapa === "catalogo", null, { timeout: 20000 });
     await ped.click('.comercial-trilha [data-etapa="financeiro"]');
     await ped.waitForFunction(() => document.querySelector(".ct-atual")?.dataset.etapa === "financeiro");
-    await ped.keyboard.press("Alt+KeyP");
+    await ped.keyboard.press("F4");
     await iframe.waitForFunction(() => document.activeElement?.id === "catalogSearch", null, { timeout: 20000 });
-    console.log("ok 3 - de outra etapa (financeiro), Alt+C e Alt+P levam ao catálogo");
+    console.log("ok 3 - de outra etapa (financeiro), F2 e F4 levam ao catálogo");
 
     /* ----- Central de Pedidos ----- */
     const cen = await abrir("Modulos/Comercial/Pedidos/CentralPedidos.html");
     await cen.waitForSelector("#btnCatalogoCentral", { timeout: 30000 });
     await cen.waitForTimeout(1500);
-    await cen.keyboard.press("Alt+KeyP");
+    await cen.keyboard.press("F4");
     await cen.waitForURL(/Catalogo\/catalogo\.html\?pesquisar=1/, { timeout: 20000, waitUntil: "commit" });
     await cen.waitForFunction(() => document.activeElement?.id === "catalogSearch", null, { timeout: 30000 });
     await cen.goBack();
     await cen.waitForSelector("#btnCatalogoCentral", { timeout: 30000 });
     await cen.waitForTimeout(1000);
     await cen.click(".el-page-title");
-    await cen.keyboard.press("Alt+KeyC");
+    await cen.keyboard.press("F2");
     await cen.waitForURL(/Catalogo\/catalogo\.html$/, { timeout: 20000, waitUntil: "commit" });
     const cen2 = await abrir("Modulos/Comercial/Pedidos/CentralPedidos.html");
     await cen2.waitForSelector("#btnCatalogoCentral", { timeout: 30000 });
     await cen2.waitForTimeout(1500);
     await cen2.click("#btnCatalogoCentral");
     await cen2.waitForURL(/Catalogo\/catalogo\.html$/, { timeout: 20000, waitUntil: "commit" });
-    console.log("ok 4 - Central de Pedidos: botão Catálogo, Alt+C e Alt+P (abre já na pesquisa)");
+    console.log("ok 4 - Central de Pedidos: botão Catálogo, F2 e F4 (abre já na pesquisa)");
 
     assert.deepEqual(erros, [], "sem erros de JavaScript: " + erros.join(" | "));
     console.log("PASS LIVE: atalhos do Comercial");
