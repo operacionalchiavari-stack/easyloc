@@ -2,12 +2,12 @@
   --ai3d-accent: var(--el-color-accent, var(--color-primary, #2E1F1F));
   --ai3d-accent-rgb: var(--empresa-cor-principal-rgb, 46, 31, 31);
   --ai3d-border: #e5e7eb;
-  --ai3d-muted: #6b7280;
-  --ai3d-title: #1f2937;
+  --ai3d-muted: var(--el-color-muted,#6b6b6b);
+  --ai3d-title: var(--el-button-primary-bg,#7d603d);
   width: 100%;
   min-height: 100%;
   padding: 24px;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
 }
 
@@ -35,7 +35,7 @@
   margin-bottom: 4px;
   color: var(--ai3d-muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -45,7 +45,7 @@
   color: var(--ai3d-title);
   font-size: clamp(24px, 2vw, 34px);
   line-height: 1.12;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .ai3d-topbar p {
@@ -75,9 +75,9 @@
   border: 1px solid var(--ai3d-border);
   border-radius: 14px;
   background: #ffffff;
-  color: #64748b;
+  color: var(--el-button-primary-bg, #7d603d);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   transition: transform .16s ease, background .16s ease, border-color .16s ease, color .16s ease;
@@ -162,7 +162,7 @@
   border: 1px solid var(--ai3d-border);
   border-radius: 18px;
   background: rgba(255, 255, 255, .96);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, .06);
+  box-shadow: 0 16px 40px rgba(31,32,32,0.06);
 }
 
 .ai3d-card {
@@ -182,7 +182,7 @@
   margin: 0;
   color: var(--ai3d-title);
   font-size: 16px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .ai3d-card p,
@@ -202,13 +202,13 @@
   background: #dcfce7;
   color: #15803d;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .ai3d-chip.muted {
   background: #f1f5f9;
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
 }
 
 .ai3d-chip.processing {
@@ -223,7 +223,7 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--el-color-border,#e3e7ec);
   border-radius: 16px;
   background: #f8fafc;
   cursor: pointer;
@@ -263,9 +263,9 @@
   display: grid;
   place-items: center;
   gap: 8px;
-  color: #94a3b8;
+  color: var(--el-color-text,#1f2020);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -301,9 +301,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
   font-size: 12.5px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .ai3d-status-card li.done,
@@ -341,19 +341,19 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 7px;
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .ai3d-viewer-options button {
   min-height: 30px;
   padding: 5px 10px;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--el-button-primary-soft,#f4efe8);
   border-radius: 9px;
   background: #ffffff;
-  color: #374151;
-  font-weight: 750;
+  color: var(--el-color-text,#1f2020);
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -374,7 +374,7 @@
   position: relative;
   min-height: min(62vh, 620px);
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--el-color-border,#e3e7ec);
   border-radius: 18px;
   background:
     linear-gradient(180deg, rgba(248, 250, 252, .86), rgba(255, 255, 255, .94)),
@@ -402,18 +402,18 @@
   gap: 9px;
   padding: 24px;
   text-align: center;
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
   background: rgba(248, 250, 252, .74);
 }
 
 .ai3d-viewer-empty svg {
   width: 48px;
   height: 48px;
-  color: #94a3b8;
+  color: var(--el-color-text,#1f2020);
 }
 
 .ai3d-viewer-empty strong {
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   font-size: 18px;
 }
 
@@ -428,13 +428,13 @@
   z-index: 4;
   transform: translateX(-50%);
   padding: 8px 13px;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--el-color-border,#e3e7ec);
   border-radius: 999px;
   background: rgba(255, 255, 255, .94);
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
-  font-weight: 800;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, .10);
+  font-weight: 600;
+  box-shadow: 0 14px 34px rgba(31,32,32,0.1);
 }
 
 .ai3d-measure-label {
@@ -445,9 +445,9 @@
   border-radius: 999px;
   color: #ffffff;
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 600;
   text-align: center;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, .16);
+  box-shadow: 0 10px 24px rgba(31,32,32,0.16);
 }
 
 .ai3d-measure-width {
@@ -459,7 +459,7 @@
 .ai3d-measure-height {
   left: 20px;
   top: 48%;
-  background: #2563eb;
+  background: var(--el-color-surface-soft,#f6f7f9);
 }
 
 .ai3d-measure-depth {
@@ -481,12 +481,12 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--el-button-primary-soft,#f4efe8);
   border-radius: 12px;
   background: #ffffff;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 600;
   cursor: pointer;
   transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
 }
@@ -519,7 +519,7 @@
   background: var(--ai3d-accent);
   color: #ffffff;
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .ai3d-progress {
@@ -531,13 +531,13 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .ai3d-progress-top strong {
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
 }
 
 .ai3d-progress-bar {
@@ -567,9 +567,9 @@
 .ai3d-measure-grid label {
   display: grid;
   gap: 5px;
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
   font-size: 11.5px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .ai3d-measure-grid input {
@@ -577,10 +577,10 @@
   min-width: 0;
   min-height: 38px;
   padding: 8px 10px;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--el-color-border,#e3e7ec);
   border-radius: 10px;
   background: #ffffff;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   font: inherit;
 }
 
@@ -605,15 +605,15 @@
 }
 
 .ai3d-current-measures dt {
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .ai3d-current-measures dd {
   margin: 0;
-  color: #1f2937;
-  font-weight: 850;
+  color: var(--el-color-text,#1f2020);
+  font-weight: 600;
 }
 
 @media (max-width: 1320px) {

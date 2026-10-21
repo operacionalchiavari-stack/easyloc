@@ -53,11 +53,10 @@
 
   <!-- ================= FILTROS ================= -->
   <div class="filters">
-    <input class="el-input"
+    <input type="search" class="el-input"
       id="itensSearchInput"
       placeholder="Pesquisar item..."
-      oninput="itens_aplicarFiltros()"
-    >
+      oninput="itens_aplicarFiltros()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
 
     <select class="el-select" id="itensTipoFilter" onchange="itens_aplicarFiltros()">
       <option value="">Todos os tipos</option>
@@ -880,9 +879,10 @@ alt="Ambientada 03"
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/listPager.js"></script>
 <script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="../../../js/core/permissions.js?v=20261018-free"></script>
+<script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/qrCode.js"></script>
-<script type="module" src="cadastro-itens.mjs?v=20261008-banco"></script>
+<script type="module" src="cadastro-itens.mjs?v=20261020-kit-sem-duplicar"></script>
 <script>lucide.createIcons();</script>
+<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
 </body>
 </html>

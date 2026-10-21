@@ -554,34 +554,34 @@ if(fotosAdicionaisOk === false){
   alerta("O kit foi salvo, mas as fotos de detalhe/ambientada não puderam ser gravadas. Tente enviá-las novamente.", "Erro");
 }
 
-  const rows = document.querySelectorAll(".kit-item-row");
-
-for(const row of rows){
-
-  const itemId = row.dataset.itemId;
-
-  const qtd = parseFloat(
-    row.querySelector(".kit-item-qtd")?.value || 1
-  );
-
-if(!itemId || qtd <= 0){
-  continue;
-}
-
-  const { error:compError } = await supabase
-  .from("kit_itens")
-  .insert({
-    empresa_id: empresaId,
-    kit_id: kitId,
-    item_id: itemId,
-    quantidade: qtd
-  });
-
-  if(compError){
-    console.error("Erro salvando componente:", compError);
+  // A lista da tela substitui a gravada (antes, salvar de novo um kit editado duplicava os componentes).
+  // O mesmo componente em duas linhas soma as quantidades.
+  const novos = new Map();
+  for(const row of document.querySelectorAll(".kit-item-row")){
+    const itemId = row.dataset.itemId;
+    const qtd = parseFloat(row.querySelector(".kit-item-qtd")?.value || 1);
+    if(!itemId || !(qtd > 0)) continue;
+    novos.set(itemId, (novos.get(itemId) || 0) + qtd);
   }
-
-}
+  const { data: antigos } = await supabase.from("kit_itens").select("item_id,quantidade")
+    .eq("empresa_id", empresaId).eq("kit_id", kitId);
+  const { error: erroLimpar } = await supabase.from("kit_itens").delete().eq("empresa_id", empresaId).eq("kit_id", kitId);
+  if(erroLimpar){
+    console.error("Erro atualizando componentes:", erroLimpar);
+    alerta("O kit foi salvo, mas os componentes não puderam ser atualizados. Tente novamente.", "Erro");
+    return;
+  }
+  if(novos.size){
+    const { error: compError } = await supabase.from("kit_itens").insert(
+      [...novos].map(([item_id, quantidade]) => ({ empresa_id: empresaId, kit_id: kitId, item_id, quantidade }))
+    );
+    if(compError){
+      console.error("Erro salvando componentes:", compError);
+      if(antigos?.length) await supabase.from("kit_itens").insert(antigos.map((a) => ({ empresa_id: empresaId, kit_id: kitId, ...a })));
+      alerta("O kit foi salvo, mas os componentes não puderam ser gravados. A lista anterior foi mantida.", "Erro");
+      return;
+    }
+  }
 
 
   document.getElementById("kitItensBody").innerHTML="";

@@ -13,7 +13,7 @@ import "./itens.foto.mjs?v=20261008-banco";
 import "./itens.3d.mjs?v=20261005-otimizar";
 import "./itens.filtros.mjs";
 import "./itens.print.mjs";
-import "./kits.modal.mjs?v=20261008-banco";
+import "./kits.modal.mjs?v=20261020-kit-sem-duplicar";
 
 function abrirPaginaDetalhesItem(itemId = null, modo = "editar"){
   window.__ITEM_DETALHE_ID = itemId || null;

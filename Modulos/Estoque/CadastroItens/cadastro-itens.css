@@ -139,8 +139,8 @@
 }
 
 .tipo-badge.item {
-  background: #e0ecff;
-  color: #1e3a8a;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 
 .tipo-badge.componente {
@@ -204,7 +204,7 @@
 .item-topo-info h3 {
   margin: 0;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 600;
   color: #2E1F1F;
 }
 
@@ -366,7 +366,7 @@
 
 .itens-tag-title {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 6px;
   display: block;
 }
@@ -387,8 +387,8 @@
 }
 
 .itens-azul .itens-tag {
-  background: #e0ecff;
-  color: #1e3a8a;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 
 .itens-verde .itens-tag {
@@ -463,7 +463,7 @@
 .qr-auto-card span,
 .qr-section-label,
 .qr-meta span {
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
   font-weight: 600;
 }
@@ -491,7 +491,7 @@
   min-width: 112px;
   height: 112px;
   padding: 8px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--el-color-border,#e3e7ec);
   border-radius: 12px;
   background: #ffffff;
   display: flex;
@@ -513,7 +513,7 @@
 
 .qr-meta code {
   display: block;
-  color: #0f172a;
+  color: var(--el-color-text,#1f2020);
   font-size: 13px;
   word-break: break-all;
   background: #ffffff;
@@ -537,7 +537,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   background: #ffffff;
-  box-shadow: 0 18px 42px rgba(15, 23, 42, .16);
+  box-shadow: 0 18px 42px rgba(31,32,32,0.16);
   z-index: 20;
 }
 
@@ -594,7 +594,7 @@
 .modal-content label {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   margin-bottom: 4px;
 }
 
@@ -612,14 +612,14 @@
   background: #ffffff;
   font-size: 14px;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   transition: all 0.2s ease;
   outline: none;
 }
 
 .modal-content input::placeholder,
 .modal-content textarea::placeholder {
-  color: #9ca3af;
+  color: var(--el-color-text,#1f2020);
   font-weight: 400;
 }
 
@@ -636,7 +636,7 @@
 .modal-content textarea[readonly] {
   background: #f8fafc;
   border-color: #e5e7eb;
-  color: #6b7280;
+  color: var(--el-color-text,#1f2020);
   cursor: not-allowed;
 }
 
@@ -698,7 +698,7 @@ tbody tr {
 td {
   padding: 16px 18px;
   font-size: 14px;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
   vertical-align: middle;
   border: none;
 }
@@ -724,8 +724,8 @@ td {
 /* CORES POR TIPO */
 
 .itens-tag-item {
-  background: #e8f0ff;
-  color: #1d4ed8;
+  background: var(--el-color-surface-soft,#f6f7f9);
+  color: var(--el-color-text,#1f2020);
 }
 
 .itens-tag-componente {
@@ -744,11 +744,11 @@ td {
 
 #itensTable td:first-child {
   font-weight: 500;
-  color: #1f2937;
+  color: var(--el-color-text,#1f2020);
 }
 
 #itensTable tr:hover {
-  background-color: #eef4ff;
+  background-color: var(--el-color-surface-soft,#f6f7f9);
   cursor: pointer;
 }
 
@@ -770,7 +770,7 @@ td {
 #itensModalAjuda {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.42);
+  background: rgba(31,32,32,0.42);
   backdrop-filter: blur(3px);
   display: none;
   align-items: center;
@@ -795,7 +795,7 @@ td {
 ========================= */
 
 #itensModalAjuda .modal-ajuda-header {
-  background: linear-gradient(90deg, var(--azul), #1f1515);
+  background: linear-gradient(90deg, var(--el-color-surface-soft,#f6f7f9), #1f1515);
   color: #fff;
   padding: 16px 22px;
   display: flex;
@@ -817,7 +817,7 @@ td {
 #itensModalAjuda .modal-ajuda-header h3 {
   margin: 0;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 #itensModalAjuda .modal-ajuda-header button {
@@ -862,7 +862,7 @@ td {
   margin-bottom: 10px;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   border-left: 4px solid transparent;
   transition: all 0.2s ease;
 }
@@ -875,8 +875,8 @@ td {
 #itensModalAjuda .ajuda-video-item.active {
   background: #fff4e6;
   border-left-color: var(--laranja);
-  font-weight: 700;
-  color: var(--azul);
+  font-weight: 600;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* =========================
@@ -1069,7 +1069,7 @@ td {
 }
 
 .item-layout-advanced input::placeholder {
-  color: #9ca3af;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* =====================================================
@@ -1087,7 +1087,7 @@ td {
 }
 
 .btn-foto:hover {
-  background: #374151;
+  background: var(--el-button-primary-bg,#7d603d);
   color: #ffffff;
 }
 
@@ -1131,9 +1131,9 @@ td {
   border-radius: 999px;
   border: 1.5px solid #e5e7eb;
   background: #ffffff;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
   transition: all 0.22s ease;
@@ -1145,8 +1145,8 @@ td {
 }
 
 .tipo-btn.active {
-  background: #374151;
-  border-color: #374151;
+  background: var(--el-button-primary-bg,#7d603d);
+  border-color: var(--el-button-primary-bg,#7d603d);
   color: #ffffff;
   box-shadow: none;
 }
@@ -1181,7 +1181,7 @@ td {
 .item-layout-advanced label {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
 }
 
 .item-layout-advanced input,
@@ -1195,7 +1195,7 @@ td {
 }
 
 .item-layout-advanced input::placeholder {
-  color: #9ca3af;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* =====================================================
@@ -1255,11 +1255,11 @@ td {
   border: 1.5px solid var(--cinza);
   background: #ffffff;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.22s ease;
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
 }
 
 .item-status-toggle-row .status-btn:hover {
@@ -1363,10 +1363,10 @@ td {
   height: 44px;
   padding: 0 18px;
 
-  background: #eaf2fb !important;
+  background: var(--el-button-primary-soft,#f4efe8) !important;
   color: var(--azul) !important;
 
-  border: 1px solid #cfe0f5 !important;
+  border: 1px solid var(--el-button-primary-bg, #7d603d) !important;
   border-radius: 12px;
 
   font-size: 14px;
@@ -1384,18 +1384,18 @@ td {
 }
 
 .modal-actions .btn-context:hover {
-  background: #ddeafb !important;
-  border-color: #b7d2f2 !important;
+  background: var(--el-button-primary-soft,#f4efe8) !important;
+  border-color: var(--el-button-primary-hover, #654d31) !important;
 }
 
 .modal-actions .btn-context.active {
-  background: #dbeafe !important;
-  border-color: #93c5fd !important;
-  color: #1d4ed8 !important;
+  background: var(--el-button-primary-soft,#f4efe8) !important;
+  border-color: var(--el-button-primary-bg, #7d603d) !important;
+  color: var(--el-button-primary-bg, #7d603d) !important;
 }
 
 .modal-actions .btn-context:active {
-  background: #d1e3f8 !important;
+  background: var(--el-button-primary-hover, #654d31) !important;
 }
 
 /* =====================================================
@@ -1432,7 +1432,7 @@ td {
 
 #itensVolumeCubico[readonly] {
   background-color: #f5f7fa;
-  color: #6b7280;
+  color: var(--el-color-text,#1f2020);
   cursor: not-allowed;
 }
 
@@ -1558,15 +1558,15 @@ td {
 .kit-modal-header h2 {
   margin: 0;
   font-size: 18px;
-  font-weight: 700;
-  color: var(--azul);
+  font-weight: 600;
+  color: var(--el-color-text,#1f2020);
   flex: 0 0 auto;
 }
 
 .kit-descricao-total {
   flex: 1;
   max-width: 480px;
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
 }
 
 /* Salvar sempre no canto superior direito do cabecalho (nao mais rodape) —
@@ -1588,8 +1588,8 @@ td {
 .kit-detail-view .form-section h3 {
   margin: 0 0 10px;
   font-size: 14px;
-  color: var(--azul);
-  font-weight: 700;
+  color: var(--el-color-text,#1f2020);
+  font-weight: 600;
 }
 
 /* ================================
@@ -1614,7 +1614,7 @@ td {
   border-bottom: 2px solid transparent;
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--el-button-primary-bg,#7d603d);
   cursor: pointer;
 }
 
@@ -1737,7 +1737,7 @@ td {
 .kit-photo-slot-title {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
 }
 
 .kit-3d-canvas-host {
@@ -1771,7 +1771,7 @@ td {
   padding: 10px;
   text-align: center;
   background: rgba(248, 250, 252, .82);
-  color: #94a3b8;
+  color: var(--el-color-text,#1f2020);
 }
 
 .kit-3d-empty svg {
@@ -1794,8 +1794,8 @@ td {
   padding: 4px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, .92);
-  border: 1px solid #dbe3ee;
-  color: #374151;
+  border: 1px solid var(--el-color-border,#e3e7ec);
+  color: var(--el-color-text,#1f2020);
   font-size: 10.5px;
   font-weight: 600;
 }
@@ -1811,7 +1811,7 @@ td {
   gap: 6px;
   width: 140px;
   min-width: 0;
-  color: #6b7280;
+  color: var(--el-color-text,#1f2020);
   font-size: 10.5px;
 }
 
@@ -1829,9 +1829,9 @@ td {
   padding: 2px 8px;
   border-radius: 999px;
   background: #f1f5f9;
-  color: #64748b;
+  color: var(--el-color-text,#1f2020);
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .kit-3d-status.ativo {
@@ -1851,10 +1851,10 @@ td {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--el-button-primary-soft,#f4efe8);
   border-radius: 7px;
   background: #ffffff;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
   cursor: pointer;
 }
 
@@ -2009,7 +2009,7 @@ td {
 .kit-componentes-header h4 {
   font-size: 15px;
   font-weight: 600;
-  color: #1e2b3a;
+  color: var(--el-color-text,#1f2020);
   margin: 0;
 }
 
@@ -2018,7 +2018,7 @@ td {
 ================================= */
 
 .kit-componentes-header .btn-add {
-  background: #374151;
+  background: var(--el-button-primary-bg,#7d603d);
   color: #fff;
 
   border: none;
@@ -2048,14 +2048,14 @@ td {
 }
 
 .kit-componentes-table thead {
-  background: #eef4fa;
+  background: var(--el-color-surface-soft,#f6f7f9);
 }
 
 .kit-componentes-table th {
   text-align: left;
   padding: 10px 12px;
   font-weight: 600;
-  color: #2a3b4d;
+  color: var(--el-color-text,#1f2020);
   font-size: 12px;
   letter-spacing: 0.3px;
 }
@@ -2097,8 +2097,8 @@ td {
 }
 
 #kitsModal .kit-componentes-table thead th {
-  background: #eef4fa !important;
-  color: #2a3b4d !important;
+  background: var(--el-color-surface-soft,#f6f7f9) !important;
+  color: var(--el-color-text,#1f2020) !important;
 }
 /* ========================================
    FOTO DO ITEM DENTRO DO KIT
@@ -2135,7 +2135,7 @@ td {
 
   color: #b91c1c;
 
-  font-weight: 700;
+  font-weight: 600;
 
   cursor: pointer;
 
@@ -2248,13 +2248,13 @@ td {
 .kit-total-row td:first-child {
   text-align: right;
   font-weight: 600;
-  color: #374151;
+  color: var(--el-color-text,#1f2020);
 }
 
 .kit-total-valor {
   text-align: right;
-  font-weight: 700;
-  color: #111827;
+  font-weight: 600;
+  color: var(--el-color-text,#1f2020);
   white-space: nowrap;
 }
 .kit-table th,

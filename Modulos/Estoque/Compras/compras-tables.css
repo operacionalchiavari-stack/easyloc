@@ -1,0 +1,112 @@
+.compras-main .pv-panel .tw-table-scroll {
+  border:1px solid #dfe6ef; border-radius:12px; background:#fff;
+  box-shadow:0 3px 14px #152b4610; overflow:auto;
+}
+.compras-main .pv-panel .pv-table { table-layout:auto; min-width:1080px; }
+.compras-main .pv-panel .pv-table th,
+.compras-main .pv-panel .pv-table td { width:auto; }
+.compras-main .pv-panel .pv-table th {
+  padding:15px 18px; background:#f7f9fc; color:#65748b;
+  font-size:var(--tw-font-xs, 12px); font-weight:600; letter-spacing:.045em;
+  border-bottom:1px solid #dfe6ef; white-space:nowrap;
+}
+.compras-main .pv-panel .pv-table td {
+  padding:19px 18px; border-top:1px solid #edf1f6;
+  color:#24364e; font-size:var(--tw-font-md, 14px); line-height:1.5; vertical-align:middle;
+}
+.compras-main .pv-panel .pv-table td strong { color:#14243b; font-weight:600; }
+.compras-main .pv-panel .pv-table td small {
+  margin-top:5px; color:#8290a3; font-size:var(--tw-font-xs, 12px); font-weight:400; line-height:1.5;
+}
+.compras-main .pv-panel .pv-table tr:hover td { background:#f7faff; }
+.compras-main .pv-panel .pv-table td:first-child { white-space:nowrap; }
+.compras-main .pv-panel .pv-orders-table td:nth-child(2) { min-width:180px; max-width:270px; white-space:normal; }
+.compras-main .pv-panel .pv-orders-table td:nth-child(4) { font-weight:600; font-variant-numeric:tabular-nums; color:#14243b; text-align:right; }
+.compras-main .pv-panel .pv-orders-table th:nth-child(4) { text-align:right; }
+.compras-main .pv-panel .pv-orders-table td:last-child { min-width:140px; max-width:230px; }
+.compras-main .pv-panel .pv-table .pv-number { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.compras-main .pv-panel .pv-table .pv-text-danger { color:#c34652; }
+.pv-muted { color:#8290a3; }
+.pv-table-progress { min-width:100px; max-width:170px; display:grid; gap:7px; font-size:var(--tw-font-xs, 12px); font-variant-numeric:tabular-nums; }
+.pv-table-progress progress { appearance:none; border:0; width:100%; height:4px; border-radius:5px; overflow:hidden; background:#e9eef5; }
+.pv-table-progress progress::-webkit-progress-bar { background:#e9eef5; }
+.pv-table-progress progress::-webkit-progress-value { background:#4478db; border-radius:5px; }
+.pv-table-progress progress::-moz-progress-bar { background:#4478db; border-radius:5px; }
+.compras-main .pv-panel .pv-status-pill { font-size:var(--tw-font-xs, 12px); font-weight:500; padding:5px 9px; }
+.compras-main .pv-panel .pv-row-actions { white-space:nowrap; }
+.compras-main .pv-panel .pv-row-actions .btn { font-size:var(--tw-font-sm, 13px); }
+.compras-main .pv-panel #needsOpTable td:nth-child(2),
+.compras-main .pv-panel #needsAvulsaTable td:nth-child(2) { min-width:220px; max-width:330px; }
+.compras-main .pv-panel #needsOpTable td:nth-child(3),
+.compras-main .pv-panel #needsAvulsaTable td:nth-child(3) { min-width:140px; max-width:240px; }
+
+.pv-composition-link { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; color:#2563eb; margin:2px 4px 2px 0; border:1px solid #dfe6ef; border-radius:7px; background:#fff; }
+.pv-composition-link:hover { background:#eef4ff; border-color:#a8c3f7; }
+.pv-composition-link:focus-visible { outline:2px solid #2563eb; outline-offset:2px; }
+.compras-main .pv-panel .pv-needs-table td { padding-top:10px; padding-bottom:10px; line-height:1.35; }
+.compras-main .pv-panel .pv-needs-table td small { margin-top:3px; line-height:1.35; }
+
+.compras-page { --tw-radius-xs:4px; --tw-radius-sm:4px; --tw-radius-md:6px; --tw-radius-lg:6px; --tw-field-radius:4px; }
+.compras-page .pv-origin-tag { display:inline-flex; align-items:center; padding:5px 9px; border-radius:4px; font-size:var(--tw-font-sm,13px); font-weight:500; line-height:1.35; white-space:nowrap; }
+.compras-page .pv-origin-tag.is-op { background:#eaf1ff; color:#19499d; }
+.compras-page .pv-origin-tag.is-internal { background:#edf1f6; color:#475569; }
+.compras-page .pv-origin-tag.is-tool { background:#e6f6fa; color:#0e7490; }
+.compras-page .pv-pcp-tag,
+.compras-page .pv-status-pill,
+.compras-page .pv-alloc-chip,
+.compras-page .pv-alloc-more,
+.compras-page .pv-lot-chip,
+.compras-page .pv-cert-chip,
+.compras-page .pv-ai-badge,
+.compras-page .pv-supplier-chip { border-radius:4px; }
+.compras-page .compras-main .pv-panel > .tw-table-scroll,
+.compras-page .pv-composition-link,
+.compras-page .pv-dialog,
+.compras-page dialog.dialog-card { border-radius:6px; }
+.compras-page .pv-pcp-tag { padding:5px 9px; margin-top:0; font-size:var(--tw-font-xs,12px); font-weight:500; text-transform:none; letter-spacing:normal; }
+
+.compras-page .pv-origin-tag.is-internal { background:#ede9fe; color:#6541a5; }
+.compras-page .pv-financial-pending,
+.compras-page .pv-link-pending { background:var(--tw-surface-soft); color:var(--tw-muted); }
+.compras-page .pv-link-material { display:block; margin-top:6px; font-size:13px; padding:5px 9px; }
+
+.compras-page .pv-link-material-icon { display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; margin-left:8px; width:28px; height:28px; padding:0; border:1px solid #c8d6ee; border-radius:4px; color:#2563eb; background:#f3f7ff; cursor:pointer; }
+.compras-page .pv-link-material-icon:disabled { opacity:.4; cursor:default; }
+
+.compras-page .pv-link-dialog { width:min(560px,calc(100% - 32px)); padding:0; }
+.compras-page .pv-link-dialog .dialog-card { margin:0; padding:0; }
+.compras-page .pv-link-dialog header { padding:22px 26px; }
+.compras-page .pv-link-dialog header h2 { font-size:19px; font-weight:600; }
+.compras-page .pv-link-dialog .pv-link-dialog-body { padding:22px 26px 26px; }
+.compras-page .pv-link-request { display:flex; justify-content:space-between; gap:24px; padding:14px 16px; margin-bottom:22px; background:#f6f8fb; border:1px solid #e7edf4; border-radius:4px; }
+.compras-page .pv-link-request > div { display:grid; gap:6px; min-width:0; }
+.compras-page .pv-link-request span { color:#738198; font-size:12px; }
+.compras-page .pv-link-request strong { font-size:14px; font-weight:500; overflow-wrap:anywhere; }
+.compras-page .pv-link-request > div:last-child { flex-shrink:0; text-align:right; }
+.compras-page .pv-link-dialog label { display:block; margin-bottom:8px; font-size:13px; color:#52637b; font-weight:500; }
+.compras-page .pv-link-dialog select { box-sizing:border-box; width:100%; min-width:0; height:44px; padding:0 12px; border:1px solid #d8e1ed; border-radius:4px; background:#fff; color:#24364e; font-size:14px; font-weight:400; box-shadow:none; outline:none; }
+.compras-page .pv-link-dialog select:focus { border-color:#759ee9; box-shadow:0 0 0 3px #2563eb12; }
+.compras-page .pv-link-dialog [data-error]:empty { display:none; }
+.compras-page .pv-link-dialog [data-error] { margin:12px 0 0; color:#c34652; font-size:13px; }
+.compras-page .pv-link-dialog footer { padding:16px 26px; gap:10px; }
+.compras-page .pv-link-dialog footer .btn { min-height:40px; font-size:13px; }
+
+.compras-page .compras-main .pv-needs-table .pv-request-qty { width:72px; min-width:60px; padding-left:12px; padding-right:12px; text-align:center; font-variant-numeric:tabular-nums; }
+.compras-page .compras-main .pv-needs-table tr.is-selected td { background:#eaf2ff; }
+.compras-page .compras-main .pv-needs-table tr.is-selected td:first-child { box-shadow:inset 3px 0 #2563eb; }
+.compras-page .compras-main .pv-needs-table tr.pv-row-clickable:focus-visible { outline:2px solid #2563eb; outline-offset:-2px; }
+
+.compras-page .compras-main .pv-panel .pv-needs-table td:nth-child(2) > strong,
+.compras-page .compras-main .pv-panel .pv-needs-table td:nth-child(5) > strong { font-weight:400; }
+
+.compras-page .compras-main .pv-panel .pv-needs-table td.pv-request-qty > strong { font-weight:400; }
+
+.compras-page .pv-link-material-icon { margin-left:0; margin-right:8px; }
+
+/* Botoes no fim da linha (2026-10-01): a celula continua celula de tabela (antes era flex e os botoes saiam da coluna,
+   por cima do "Prazo desejado"); os botoes ficam lado a lado, alinhados a direita e no meio da altura da linha. */
+.compras-main .pv-panel td.pv-row-actions { display: table-cell; width: 1%; text-align: right; vertical-align: middle; white-space: nowrap; }
+.compras-main .pv-panel td.pv-row-actions > * { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin-left: 6px; }
+.compras-main .pv-panel td.pv-row-actions > *:first-child { margin-left: 0; }
+.compras-main .pv-panel td.pv-row-actions .btn { height: 32px; min-height: 32px; padding: 0 12px; }
+.compras-main .pv-panel td.pv-row-actions .icon-btn { width: 32px !important; min-width: 32px !important; height: 32px !important; }

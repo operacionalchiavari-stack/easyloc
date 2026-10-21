@@ -1,237 +1,280 @@
-<div class="compras-page el-page" data-module="compras-estoque">
-  <header class="compras-hero">
-    <div>
-      <span class="compras-eyebrow">Estoque</span>
-      <h1>Compras</h1>
-      <p>Acompanhe compras, previsões de chegada, pagamentos e recebimentos do almoxarifado.</p>
-    </div>
-    <div class="compras-actions">
-      <button type="button" class="btn secondary" id="btnComprasAtualizar">Atualizar</button>
-      <button type="button" class="btn primary" id="btnComprasNova">Nova compra</button>
-    </div>
-  </header>
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Compras</title><script src="../../../js/core/themePrepaint.js"></script><link rel="stylesheet" href="../../../styles/global.css"><link rel="stylesheet" href="compras.css"><link rel="stylesheet" href="compras-tables.css"><link rel="stylesheet" href="compras-acervo.css?v=20261020-divergencias6"><script src="https://unpkg.com/lucide@latest"></script></head><body class="compras-page el-page">
+<main class="compras-main" style="padding-top:32px!important">
+<header class="page-header compras-header"><div class="pv-tabs-tools">
+          <label class="pv-search-box"><i data-lucide="search"></i><input id="comprasSearch" type="search" placeholder="Buscar material, pedido, fornecedor ou número..."></label>
 
-  <section class="compras-kpis" id="comprasKpis"></section>
+        </div><h1>Compras</h1><div class="compras-header-actions"><button id="newManualNeedBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i> Necessidade avulsa</button>
+        </div></header><div class="pv-tabs-row">
+      <nav class="pv-tabs" aria-label="Seções de Compras">
+        <button class="pv-tab active" data-pv-tab="needs-op">Necessidades operacionais <b id="needsOpBadge" hidden>0</b></button>
+        <button class="pv-tab" data-pv-tab="needs-avulsa">Necessidades avulsas <b id="needsAvulsaBadge" hidden>0</b></button>
+        <button class="pv-tab" data-pv-tab="needs-servicos">Serviços <b id="needsServicosBadge" hidden>0</b></button>
+        <button class="pv-tab" data-pv-tab="quotations">Cotações <b id="quotationsBadge" hidden>0</b></button>
+        <button class="pv-tab" data-pv-tab="orders">Pedidos <b id="ordersBadge" hidden>0</b></button>
+        <button class="pv-tab" data-pv-tab="rnc">Divergências no recebimento <b id="purchaseRncBadge" hidden>0</b></button>
+      </nav>
+          <select id="ordersStatusFilter" class="tw-field hidden" aria-label="Situação dos pedidos">
+            <option value="abertos">Pedidos em aberto</option>
+            <option value="recebidos">Recebidos</option>
+            <option value="cancelados">Cancelados</option>
+            <option value="todos">Todos</option>
+          </select>
 
-  <section class="compras-card">
-    <div class="compras-card-header">
+    </div>
+
+    <section class="pv-panel hidden" data-pv-panel="rnc"><div id="purchaseRncList" aria-live="polite"></div></section>
+
+    <div class="compras-filters-card hidden" id="quoteSelectionBar">
+      <button id="quoteSelectedBtn" class="btn btn-primary" type="button"><i data-lucide="file-text"></i> Cotar selecionadas (<span id="selectedCount">0</span>)</button>
+    </div>
+
+    <!-- ===================== NECESSIDADES DE OP ===================== -->
+    <section class="pv-panel" data-pv-panel="needs-op">
+      <div class="tw-table-scroll">
+        <table class="pv-table pv-needs-table" id="needsOpTable">
+          <thead><tr>
+            <th class="pv-request-qty" title="Quantidade solicitada">Qtd.<br>solicitada</th>
+            <th>Material</th><th>Pedido / OS</th><th>Destino</th><th>Necessário em</th><th>Status</th><th>Orçamentos da composição</th>
+          </tr></thead>
+          <tbody id="needsOpBody"></tbody>
+        </table>
+      </div>
+      <p id="needsOpEmpty" class="pv-empty hidden">Nenhuma necessidade de OP em aberto.</p>
+    </section>
+
+    <!-- ===================== NECESSIDADES AVULSAS ===================== -->
+    <section class="pv-panel hidden" data-pv-panel="needs-avulsa">
+      <div class="tw-table-scroll">
+        <table class="pv-table pv-needs-table" id="needsAvulsaTable">
+          <thead><tr>
+            <th class="pv-request-qty" title="Quantidade solicitada">Qtd.<br>solicitada</th>
+            <th>Material / solicitação</th><th>Origem</th><th>Solicitante</th><th>Necessário em</th><th>Status</th><th>Link / orçamento</th>
+          </tr></thead>
+          <tbody id="needsAvulsaBody"></tbody>
+        </table>
+      </div>
+      <p id="needsAvulsaEmpty" class="pv-empty hidden">Nenhuma necessidade avulsa em aberto.</p>
+    </section>
+
+    <!-- ===================== SERVICOS (manutencao terceirizada) ===================== -->
+    <section class="pv-panel hidden" data-pv-panel="needs-servicos">
+      <div class="tw-table-scroll">
+        <table class="pv-table pv-needs-table" id="needsServicosTable">
+          <thead><tr>
+            <th class="pv-request-qty" title="Quantidade solicitada">Qtd.<br>solicitada</th>
+            <th>Serviço</th><th>Origem</th><th>Solicitante</th><th>Necessário em</th><th>Status</th><th>Orçamentos da composição</th>
+          </tr></thead>
+          <tbody id="needsServicosBody"></tbody>
+        </table>
+      </div>
+      <p id="needsServicosEmpty" class="pv-empty hidden">Nenhum serviço de manutenção aguardando contratação.</p>
+    </section>
+
+    <!-- ===================== COTAÇÕES ===================== -->
+    <section class="pv-panel hidden" data-pv-panel="quotations">
+      <div class="tw-table-scroll">
+        <table class="pv-table">
+          <thead><tr><th>Solicitação</th><th>Itens</th><th>Fornecedores</th><th>Respostas</th><th>Status</th><th>Prazo desejado</th><th></th></tr></thead>
+          <tbody id="quotationsBody"></tbody>
+        </table>
+      </div>
+      <p id="quotationsEmpty" class="pv-empty hidden">Nenhuma solicitação de cotação criada ainda.</p>
+    </section>
+
+    <!-- ===================== PEDIDOS ===================== -->
+    <section class="pv-panel hidden" data-pv-panel="orders">
+      <div class="tw-table-scroll">
+        <table class="pv-table pv-orders-table">
+          <thead><tr><th>Pedido</th><th>Fornecedor</th><th>Itens</th><th>Valor</th><th>Prazo de entrega</th><th>Status</th><th>Certificados</th><th>Pedidos / OS</th></tr></thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+      </div>
+      <p id="ordersEmpty" class="pv-empty hidden">Nenhum pedido de compra emitido ainda.</p>
+    </section>
+  </main>
+
+  <!-- ===================== MODAL: Necessidade avulsa (nao ligada a OP) ===================== -->
+  <dialog id="manualNeedDialog" class="pv-dialog">
+    <form method="dialog" class="dialog-card">
+      <header><div><span class="eyebrow">SEM VÍNCULO COM OP</span><h2>Necessidade avulsa</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
       <div>
-        <span class="compras-section-label">Acompanhamento</span>
-        <h2>Compras lançadas</h2>
+        <div class="form-grid">
+          <label>Origem<select id="manualNeedOrigem"><option value="solicitacao">Solicitação interna</option><option value="operacional">Operação</option><option value="manutencao">Serviço / manutenção</option></select></label><label>Pedido / OS (opcional)<input id="manualNeedPedido" type="text"></label><label class="span-2">Material / descrição<input id="manualNeedDescricao" type="text" required></label>
+          <label>Quantidade<input id="manualNeedQuantidade" type="number" min="0.01" step="0.01" required></label>
+          <label>Unidade<input id="manualNeedUnidade" type="text" value="un" required></label>
+          <label>Necessário até<input id="manualNeedData" type="date"></label>
+          <label class="span-2">Link do produto (opcional)<input id="manualNeedLink" type="url" placeholder="https://..."></label>
+          <label class="span-2">Observação<textarea id="manualNeedObservacao" rows="2"></textarea></label>
+        </div>
       </div>
-      <div class="compras-filters">
-        <input class="el-input" id="comprasBusca" placeholder="Buscar fornecedor, NF ou motivo">
-        <select class="el-select" id="comprasStatusFiltro">
-          <option value="">Todos os status</option>
-          <option value="aguardando_recebimento">Aguardando recebimento</option>
-          <option value="recebido">Recebido</option>
-          <option value="atrasado">Atrasado</option>
-          <option value="cancelado">Cancelado</option>
-        </select>
-      </div>
-    </div>
-    <div class="compras-table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Compra</th>
-            <th>Tipo</th>
-            <th>Fornecedor</th>
-            <th>NF / Documento</th>
-            <th>Previsão</th>
-            <th>Pagamento</th>
-            <th>Motivo</th>
-            <th>Itens</th>
-            <th>Total</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="comprasTabela"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <div class="compras-modal hidden" id="comprasModal" role="dialog" aria-modal="true">
-    <form class="compras-modal-card" id="comprasForm">
-      <div class="compras-modal-header">
-        <div>
-          <span class="compras-section-label">Lançamento de compra</span>
-          <h2>Nova compra</h2>
-          <p>Compra para conferencia no almoxarifado.</p>
-        </div>
-        <button type="button" class="compras-icon-btn" data-compras-close>X</button>
-      </div>
-
-      <section class="compras-purchase-type" aria-label="Tipo de compra">
-        <div>
-          <span class="compras-section-label">Tipo de compra</span>
-          <h3>Destino da compra</h3>
-        </div>
-        <div class="compras-type-options">
-          <label class="compras-type-card">
-            <input type="radio" name="tipo_compra" value="insumos" checked>
-            <span>
-              <strong>Insumos</strong>
-            </span>
-          </label>
-          <label class="compras-type-card">
-            <input type="radio" name="tipo_compra" value="itens_locacao">
-            <span>
-              <strong>Itens de locacao</strong>
-            </span>
-          </label>
-        </div>
-      </section>
-
-      <section class="compras-quick-scan">
-        <div>
-          <span class="compras-section-label">Leitura rápida</span>
-          <h3>QR, codigo de barras ou NF-e</h3>
-        </div>
-        <div class="compras-scan-actions">
-          <input class="el-input" id="comprasScanInput" placeholder="Bipe, cole ou digite o código">
-          <button type="button" class="btn primary" id="btnComprasUsarCodigo">Usar código</button>
-          <button type="button" class="btn secondary" id="btnComprasCamera">Câmera</button>
-        </div>
-        <div class="compras-scanner hidden" id="comprasScannerBox">
-          <video id="comprasScannerVideo" playsinline muted></video>
-          <button type="button" class="btn secondary sm" id="btnComprasPararCamera">Parar câmera</button>
-        </div>
-        <div class="compras-scan-feedback" id="comprasScanFeedback"></div>
-      </section>
-
-      <section class="compras-modal-section">
-        <div class="compras-section-title">
-          <span>1</span>
-          <h3>Dados da compra</h3>
-        </div>
-        <div class="compras-form-grid">
-          <label>Fornecedor
-            <input class="el-input" name="fornecedor" required placeholder="Fornecedor">
-          </label>
-          <label>Número da nota
-            <input class="el-input" name="numero_nf" placeholder="NF-e, pedido ou orçamento">
-          </label>
-          <label>Chave NF-e
-            <input class="el-input" name="chave_nfe" placeholder="44 dígitos, se houver">
-          </label>
-          <label>Previsão de chegada
-            <input class="el-input" name="data_prevista" type="date">
-          </label>
-          <label>Responsável pela compra
-            <input class="el-input" name="responsavel" placeholder="Quem comprou">
-          </label>
-          <label>Centro de custo
-            <select class="el-select" name="centro_custo">
-              <option value="Almoxarifado">Almoxarifado</option>
-              <option value="Marcenaria">Marcenaria</option>
-              <option value="Solda">Solda</option>
-              <option value="Acabamento">Acabamento</option>
-              <option value="Tapeçaria">Tapeçaria</option>
-              <option value="Expedição">Expedição</option>
-              <option value="Manutenção">Manutenção</option>
-              <option value="Administrativo">Administrativo</option>
-            </select>
-          </label>
-          <label>Prioridade
-            <select class="el-select" name="prioridade">
-              <option value="normal">Normal</option>
-              <option value="alta">Alta</option>
-              <option value="urgente">Urgente</option>
-            </select>
-          </label>
-          <label>Status inicial
-            <select class="el-select" name="status">
-              <option value="aguardando_recebimento">Aguardando recebimento</option>
-              <option value="pendente">Pendente</option>
-            </select>
-          </label>
-          <label class="span-2">Descrição
-            <textarea class="el-textarea" name="descricao" rows="2" placeholder="Resumo da compra"></textarea>
-          </label>
-          <label class="span-2">Motivo da compra
-            <textarea class="el-textarea" name="motivo_compra" rows="2" placeholder="Reposição, item crítico, compra para pedido específico, manutenção..."></textarea>
-          </label>
-        </div>
-      </section>
-
-      <section class="compras-modal-section">
-        <div class="compras-section-title">
-          <span>2</span>
-          <h3>Pagamento e condições</h3>
-        </div>
-        <div class="compras-form-grid payment-grid">
-          <label>Forma de pagamento
-            <select class="el-select" name="forma_pagamento">
-              <option value="A combinar">A combinar</option>
-              <option value="PIX">PIX</option>
-              <option value="Cartão">Cartão</option>
-              <option value="Transferência">Transferência</option>
-              <option value="Boleto">Boleto</option>
-              <option value="Dinheiro">Dinheiro</option>
-            </select>
-          </label>
-          <label>Condição
-            <select class="el-select" name="condicao_pagamento">
-              <option value="À vista">À vista</option>
-              <option value="Parcelado">Parcelado</option>
-              <option value="Faturado">Faturado</option>
-              <option value="Na entrega">Na entrega</option>
-            </select>
-          </label>
-          <label>Quantidade de parcelas
-            <input class="el-input" name="parcelas" type="number" min="1" step="1" value="1">
-          </label>
-          <label>Primeiro vencimento
-            <input class="el-input" name="primeiro_vencimento" type="date">
-          </label>
-          <label>Frete
-            <input class="el-input" name="valor_frete" type="number" min="0" step="0.01" value="0">
-          </label>
-          <label>Desconto
-            <input class="el-input" name="valor_desconto" type="number" min="0" step="0.01" value="0">
-          </label>
-          <label class="span-2">Observação financeira
-            <textarea class="el-textarea" name="observacao_financeira" rows="2" placeholder="Dados de pagamento, combinado com fornecedor ou observações do boleto"></textarea>
-          </label>
-        </div>
-      </section>
-
-      <section class="compras-modal-section">
-        <div class="compras-items-header">
-          <div class="compras-section-title">
-            <span>3</span>
-            <h3>Itens comprados</h3>
-          </div>
-          <button type="button" class="btn secondary sm" id="btnComprasAddItem">Adicionar item</button>
-        </div>
-
-        <div class="compras-table-wrap compact">
-          <table>
-            <thead>
-              <tr>
-                <th>Material</th>
-                <th>Qtd</th>
-                <th>Valor unit.</th>
-                <th>Total</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="comprasItensRows"></tbody>
-          </table>
-        </div>
-
-        <div class="compras-total-line">
-          <span>Total da compra</span>
-          <strong id="comprasTotal">R$ 0,00</strong>
-        </div>
-      </section>
-
-      <div class="compras-modal-actions">
-        <button type="button" class="btn secondary" id="btnComprasLimpar">Limpar</button>
-        <button type="button" class="btn secondary" data-compras-close>Cancelar</button>
-        <button type="submit" class="btn primary">Enviar para recebimento</button>
-      </div>
+      <footer><button value="cancel" formnovalidate class="btn btn-secondary">Cancelar</button><button id="manualNeedSubmit" value="default" class="btn btn-primary" type="button">Registrar necessidade</button></footer>
     </form>
-  </div>
-</div>
+  </dialog>
+
+  <!-- ===================== MODAL: Cotar / consolidar ===================== -->
+  <dialog id="quoteBuilderDialog" class="pv-dialog pv-dialog-lg">
+    <form method="dialog" class="dialog-card">
+      <header><div><span class="eyebrow">NOVA COTAÇÃO</span><h2>Solicitação de cotação</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
+      <div class="pv-builder-body">
+        <div id="quoteBuilderItems"></div>
+        <div class="pv-builder-side">
+          <label>Prazo desejado<input id="quoteDesiredDate" type="date"></label>
+          <label>Observações<textarea id="quoteObservations" rows="3" placeholder="Instruções gerais para os fornecedores"></textarea></label>
+          <div class="pv-supplier-picker">
+            <span class="pv-builder-label">Fornecedores convidados</span>
+            <div class="pv-supplier-search">
+              <input id="quoteSupplierSearch" type="text" placeholder="Buscar fornecedor...">
+              <div id="quoteSupplierOptions" class="pv-supplier-options hidden"></div>
+            </div>
+            <div id="quoteSupplierChips" class="pv-supplier-chips"></div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <span class="pv-footer-hint">As propostas recebidas serão utilizadas para gerar o Pedido de Compra.</span>
+        <button value="cancel" formnovalidate class="btn btn-secondary">Cancelar</button>
+        <button id="quoteBuilderSubmit" value="default" class="btn btn-primary" type="button"><i data-lucide="send"></i> Criar solicitação de cotação</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- ===================== MODAL: Consolidação sugerida (por item) ===================== -->
+  <dialog id="consolidationDialog" class="pv-dialog">
+    <form method="dialog" class="dialog-card">
+      <header><div><span class="eyebrow">CONSOLIDAÇÃO</span><h2 id="consolidationTitle">Outras OPs usam este material</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
+      <div id="consolidationBody"></div>
+      <footer>
+        <button id="consolidationOnlyBtn" value="default" class="btn btn-secondary" type="button">Cotar somente a necessidade atual</button>
+        <button id="consolidationMergeBtn" value="default" class="btn btn-primary" type="button">Consolidar selecionadas</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- ===================== MODAL: Propostas recebidas (lançamento + comparativo, unificado) ===================== -->
+  <dialog id="proposalsDialog" class="pv-dialog pv-dialog-xl">
+    <form method="dialog" class="dialog-card">
+      <header>
+        <div><span class="eyebrow">PROPOSTAS RECEBIDAS</span><h2 id="proposalsTitle">Solicitação de cotação</h2></div>
+        <div id="proposalsMetaBar" class="pv-proposals-meta"></div>
+        <button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button>
+      </header>
+      <div class="pv-proposals-scroll">
+        <nav class="pv-mode-tabs" id="proposalsModeTabs">
+          <button type="button" class="pv-mode-tab active" data-mode="launch">Lançamento de propostas</button>
+          <button type="button" class="pv-mode-tab" data-mode="compare">Comparativo</button>
+        </nav>
+
+        <div id="proposalsLaunchMode">
+          <span class="pv-builder-label">Fornecedores convidados</span>
+          <div id="proposalsSupplierTabs" class="pv-supplier-tabs"></div>
+
+          <div class="pv-proposal-ai-bar">
+            <button type="button" id="importAiBtn" class="btn btn-secondary pv-btn-sm"><i data-lucide="sparkles"></i> Importar proposta com IA</button>
+            <input type="file" id="proposalFileInput" accept=".pdf,.png,.jpg,.jpeg,.webp" class="hidden">
+            <a id="proposalOriginalLink" href="#" target="_blank" rel="noopener" class="pv-proposal-original-link hidden"><i data-lucide="paperclip"></i> Proposta original do fornecedor</a>
+          </div>
+          <div id="proposalsAiStatus" class="pv-ai-status hidden"></div>
+          <div id="proposalsUnmatchedList" class="pv-ai-unmatched-list"></div>
+
+          <div id="proposalsGeneralFields" class="pv-proposal-general-row">
+            <label>Condição de pagamento<input id="proposalCondicao" type="text" placeholder="Ex: 30/60 dias"></label>
+            <label>Frete<div class="note-money-input"><span>R$</span><input id="proposalFrete" type="number" min="0" step="0.01" value="0"></div></label>
+            <label>Validade da proposta<input id="proposalValidade" type="date"></label>
+            <label>Entrega prevista<input id="proposalEntrega" type="date"></label>
+          </div>
+
+          <h3 class="pv-order-section-title">Itens cotados</h3>
+          <div id="proposalsItemsList" class="pv-proposal-items-list"></div>
+
+          <label class="pv-proposal-observacoes">Observações<textarea id="proposalObservacao" rows="4" placeholder="Informações adicionais recebidas do fornecedor"></textarea></label>
+        </div>
+
+        <div id="proposalsCompareMode" class="hidden">
+          <div id="proposalsCompareBody"></div>
+        </div>
+      </div>
+      <footer>
+        <div class="pv-proposal-footer-status">
+          <span class="pv-proposal-footer-total pv-proposal-footer-secondary">Itens <strong id="proposalsFooterItemsTotal">R$ 0,00</strong></span>
+          <span class="pv-proposal-footer-total pv-proposal-footer-secondary">Frete <strong id="proposalsFooterFrete">R$ 0,00</strong></span>
+          <span class="pv-proposal-footer-total">Total da proposta <strong id="proposalsFooterTotal">R$ 0,00</strong></span>
+          <span id="proposalsFooterPcp" class="pv-status-pill"></span>
+        </div>
+        <button value="cancel" formnovalidate class="btn btn-secondary">Cancelar</button>
+        <button type="button" id="proposalsPdfBtn" class="btn btn-secondary"><i data-lucide="file-down"></i> Baixar PDF</button>
+        <button type="button" id="proposalsGenerateBtn" class="btn btn-primary hidden"><i data-lucide="check"></i> Gerar Pedido(s) de Compra</button>
+        <button type="button" id="proposalsSaveBtn" class="btn btn-primary"><i data-lucide="save"></i> Salvar proposta</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- ===================== MODAL: Relacionar item não identificado pela IA ===================== -->
+  <dialog id="aiMatchDialog" class="pv-dialog">
+    <form method="dialog" class="dialog-card">
+      <header><div><span class="eyebrow">REVISAR CORRESPONDÊNCIA</span><h2>Relacionar item</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
+      <div>
+        <p class="pv-hint" id="aiMatchOriginalText"></p>
+        <div class="form-grid">
+          <label class="span-2">Item da solicitação de cotação<select id="aiMatchSelect"><option value="">Não relacionar</option></select></label>
+        </div>
+      </div>
+      <footer><button value="cancel" formnovalidate class="btn btn-secondary">Cancelar</button><button id="aiMatchConfirm" value="default" class="btn btn-primary" type="button">Relacionar</button></footer>
+    </form>
+  </dialog>
+
+  <!-- ===================== MODAL: Detalhe do Pedido de Compra ===================== -->
+  <dialog id="orderDetailDialog" class="pv-dialog pv-dialog-lg">
+    <form method="dialog" class="dialog-card">
+      <header><div><span class="eyebrow">PEDIDO DE COMPRA</span><h2 id="orderDetailTitle">PC-000000</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
+      <div id="orderDetailBody"></div>
+      <footer>
+        <div class="pv-order-footer-status">
+          <span class="pv-order-footer-total">Total do pedido <strong id="orderDetailFooterTotal">R$ 0,00</strong></span>
+          <span id="orderDetailFooterStatus" class="pv-status-pill"></span>
+        </div>
+        <button id="orderDirectDeliveryBtn" class="btn btn-primary hidden" type="button" title="O material foi entregue direto no fornecedor da terceirização"><i data-lucide="truck"></i> Confirmar entrega no terceirizado</button>
+        <button id="orderCancelBtn" class="btn btn-secondary" type="button">Cancelar pedido</button>
+        <button value="cancel" formnovalidate class="btn btn-secondary">Fechar</button>
+        <button id="orderDetailSaveBtn" class="btn btn-primary" type="button" disabled><i data-lucide="save"></i> Salvar alterações</button>
+        <button id="orderDetailPdfBtn" class="btn btn-secondary" type="button"><i data-lucide="file-down"></i> Baixar PDF do pedido</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- ===================== MODAL: Anexar XML / certificado (faturamento) ===================== -->
+  <dialog id="invoiceDialog" class="pv-dialog">
+    <form method="dialog" class="dialog-card">
+      <header><div><span class="eyebrow">FATURAMENTO</span><h2>Anexar XML da NF-e</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
+      <div>
+        <p class="pv-hint">O XML pode chegar antes da mercadoria. Ele fica vinculado a este pedido e o Almoxarifado vai encontrá-lo pronto na hora do recebimento.</p>
+        <div class="form-grid">
+          <label class="span-2">Arquivo XML da NF-e<input id="invoiceXmlFile" type="file" accept=".xml" required></label>
+        </div>
+      </div>
+      <footer><button value="cancel" formnovalidate class="btn btn-secondary">Cancelar</button><button id="invoiceSubmit" value="default" class="btn btn-primary" type="button">Importar XML</button></footer>
+    </form>
+  </dialog>
+
+  <!-- ===================== MODAL: Certificado por lote ===================== -->
+  <dialog id="certDialog" class="pv-dialog cert-dialog">
+    <form method="dialog" class="dialog-card">
+      <header><div><span class="eyebrow">CERTIFICADO</span><h2>Anexar certificado</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
+      <div class="cert-up">
+        <p class="cert-up-for" id="certFor" hidden></p>
+        <label class="cert-drop" id="certDrop">
+          <input id="certFile" type="file" accept=".pdf,.jpg,.jpeg,.png">
+          <span class="cert-drop-ico"><i data-lucide="file-up"></i></span>
+          <b>Arraste o certificado aqui</b>
+          <small>ou clique para escolher · PDF, JPG ou PNG</small>
+        </label>
+        <div class="cert-preview" id="certPreview" hidden>
+          <header><span class="cert-file-ico"><i data-lucide="file-check-2"></i></span><div><b id="certName"></b><small id="certSize"></small></div><button type="button" class="btn btn-secondary" id="certChange"><i data-lucide="refresh-cw"></i> Trocar arquivo</button></header>
+          <div class="cert-frame" id="certFrame"></div>
+        </div>
+      </div>
+      <footer><button value="cancel" formnovalidate class="btn btn-secondary">Cancelar</button><button id="certSubmit" value="default" class="btn btn-primary" type="button" disabled><i data-lucide="paperclip"></i> Anexar certificado</button></footer>
+    </form>
+  </dialog>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js"></script><script src="../../../js/core/permissions.js"></script><script src="../../../js/core/companyTheme.js"></script><script src="../../../js/core/moduleTheme.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script><script src="compras-api.js"></script><script src="purchase-document.js"></script><script src="nfe-xml-parser.js"></script><script src="report-print.js"></script><script src="compras.js"></script><script src="compras-rnc.js"></script></body></html>

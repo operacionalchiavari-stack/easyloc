@@ -567,7 +567,10 @@ async function confirmarImportacao() {
       const componentesNaoResolvidos = [];
       for (const comp of linha.valores.componentesKit) {
         const componenteId = referenciaParaId.get(comp.referencia);
-        if (componenteId) componentesResolvidos.push({ item_id: componenteId, quantidade: comp.quantidade });
+        // a mesma peça citada duas vezes no kit soma (o banco guarda uma linha por componente)
+        const ja = componenteId && componentesResolvidos.find((c2) => c2.item_id === componenteId);
+        if (ja) ja.quantidade += comp.quantidade;
+        else if (componenteId) componentesResolvidos.push({ item_id: componenteId, quantidade: comp.quantidade });
         else componentesNaoResolvidos.push(comp.referencia);
       }
 
