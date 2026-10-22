@@ -9660,3 +9660,53 @@ ela — nunca tira o cursor de outro campo (nem da tela do pedido), nem com jane
   clicáveis; local com mapa satélite (iframe `maps.google.com/maps?...&output=embed`, sem chave), distância do galpão,
   eventos no local, Google Maps/Waze e as condições em destaque. Esc fecha.
 - Barra de etapas do pedido: com o campo "ATÉ" a barra fica compacta até 1599px e as etapas seguintes encurtam com "…".
+
+## Cofre: dados sensíveis cifrados no banco (23/out/2026, etapas 1 a 3 de 4)
+Pedido: "dados de clientes, financeiros, de conta… criptografado, algo que talvez nem eu tenha acesso". Escolha do usuário:
+mascarado na tela, ver o dado inteiro só com permissão e com registro, e **a chave fora do banco**.
+- **Como funciona**: `supabase/functions/_shared/cofre.ts` (AES-256-GCM, Web Crypto). Chave `ACERVO_COFRE_CHAVE` (32 bytes
+  base64) **só nos segredos das Edge Functions**: quem tem só o banco (cópia, backup, SQL, chave de serviço no PostgREST) vê
+  `cofre:v1:<iv>:<cifra>` e não abre. O contexto (`zapi:<empresa>:<campo>`) entra como dado autenticado: valor copiado de
+  outra empresa/campo não abre. Valor sem prefixo (anterior ao cofre) passa como está. Quem controla a conta inteira do
+  Supabase (pode ler os segredos das funções) ainda consegue: por isso a conta do Supabase precisa de 2FA.
+- **Cópia da chave**: `C:\Users\jonat\acervo-cofre-chave.txt` (fora do OneDrive). **Sem a chave os dados não voltam.** O
+  usuário deve guardá-la num gerenciador de senhas e apagar o arquivo. Trocar a chave = decifrar tudo com a velha e cifrar
+  com a nova (não há rotação automática).
+- **Etapa 1 (feita)**: `zapi_credenciais` (instance_token, client_token, webhook_secret) — `fecharCredenciaisZapi`/
+  `abrirCredenciaisZapi` em zapi-integration, zapi-webhook (que também passou a recusar segredo vazio) e seguranca-2fa
+  (publicadas). A linha da Chiavari foi cifrada e conferida pelo webhook publicado (segredo certo 200, errado 401).
+  Migration `20261023000200_cofre_zapi.sql` (aplicada e registrada): CHECK `zapi_credenciais_cofre` recusa texto puro.
+  Teste: `node --test tests/cofre.test.mjs`.
+- **Etapa 2 — RH (feita e no ar, 23/out)**: CPF, RG e salário (`funcionarios_acesso`) e PIS, CTPS, agência,
+  conta e PIX (`rh_fichas`). Migration `20261023000300_cofre_rh.sql` (aplicada e registrada, só acrescenta): colunas
+  `cpf_hash` (índice cego HMAC, login do Meu Bônus), `salario_cifrado`, `cofre_mascaras` (o que a tela mostra, porque o banco
+  não abre o valor); permissão `rh.dados_sensiveis.ver`; `funcionarios_listar`/`rh_pessoas` devolvem a máscara +
+  `protegidos` + `pode_revelar`; `rh_funcionario_salvar`/`rh_ficha_salvar` aceitam o valor cifrado e só mexem no campo que
+  veio; `rh_equipe_cadastro` acha pelo índice. Servidor: `protegerRh`/`abrirRh`/`indice`/`mascara` em `_shared/cofre.ts`;
+  `funcionarios-admin` cifra antes de gravar (publicada); Edge Function nova `rh-protegido`
+  (publicada): `salvar_ficha` (a Gestão de Pessoas não grava mais direto) e `revelar` (só com a permissão; registra em
+  `seguranca_eventos`, tipo `dado_revelado`). Vercel: `api/_gas/cofre.js` abre CPF/salário para a Central de Metas e o
+  login do Meu Bônus (precisa de ACERVO_COFRE_CHAVE nas variáveis da Vercel). Telas: `js/core/campoProtegido.js`
+  (`EasyLocCofre`: campo protegido nasce vazio com a máscara de dica, botão "Ver", não manda o que ninguém mexeu) no
+  Cadastro de Funcionários e na Gestão de Pessoas ("Mostrar dados protegidos" na ficha).
+  **Virada feita em 23/out** (commit db5fae4; Vercel com ACERVO_COFRE_CHAVE em Production): 25 CPFs, 24 salários e 1 RG
+  cifrados; trava `20261023000400` aplicada e registrada; prova ao vivo: o Meu Bônus publicado achou a pessoa pelo índice.
+  Ordem usada (repetir igual se um dia trocar a chave): (1) chave na Vercel + publicar a Vercel; (2) publicar o
+  site; (3) publicar `funcionarios-admin`; (4) converter os dados (script `cifrar-rh.cjs`, simulação: 25 CPFs, 24 salários,
+  1 RG, 1 CPF duplicado em `dados_rh`); (5) aplicar `20261023000400_cofre_rh_trava.sql`.
+  Testes: `tests/cofre.test.mjs`, `RUN_COFRE_LIVE=1 node tests/cofre-rh-live.cjs` (banco e servidor reais),
+  `tests/rh-pessoas-browser.cjs`, `tests/funcionarios-browser.cjs`. Telas antigas fora do menu (`RH/GestaoPessoas`,
+  Equipe das Rotas lendo `rh_funcionarios_lista`) vão ver o CPF cifrado — não mostram CPF.
+- **De passagem**: `js/core/permissions.js` tinha uma linha nova (Produção, outra sessão) usando `path` inexistente, que
+  quebrava toda conferência de permissão de quem não é admin; corrigida para `location.pathname` e sem chamar a si mesma.
+- **Etapa 3 — contas do Financeiro (feita, 23/out)**: agência, conta, CNPJ/CPF do titular e chave PIX de `fin_contas`
+  (contexto `fin:<empresa>:<campo>`). Migration `20261023000500_cofre_financeiro.sql` (aplicada e registrada): coluna
+  `cofre_mascaras`, permissão `financeiro.dados_bancarios.ver` e a trava `fin_contas_cofre` (já ligada: não havia nenhuma
+  conta cadastrada, nada para converter). Edge Function nova `financeiro-protegido` (publicada): `salvar_conta` (cifra,
+  grava como o próprio usuário — a regra `fin_gravar` continua valendo — e só mexe no campo protegido que veio; vazio apaga)
+  e `revelar` (só com a permissão; registra em `seguranca_eventos`). Tela (`Modulos/Financeiro/financeiro.js`): cartões,
+  "Conta (CNPJ · PIX)" das contas a receber e listas de contas mostram só a máscara (`vis()`); "Editar conta" usa o
+  `EasyLocCofre` e salva pela função. Nenhuma função do banco lê esses campos. Testes:
+  `RUN_COFRE_LIVE=1 node tests/cofre-financeiro-live.cjs` e `tests/financeiro-browser.cjs` (ok 5b).
+- **Próxima etapa**: (4) CPF/CNPJ de clientes e free (com o contrato e o login do Free passando por funções protegidas) e
+  as cópias antigas na planilha do Cronograma (aba Free_Cadastros, 13 linhas).

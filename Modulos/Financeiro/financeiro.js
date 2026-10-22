@@ -101,12 +101,15 @@
     document.querySelector('[data-cont="receber"]').textContent = nR || "";
     document.querySelector('[data-cont="pagar"]').textContent = nP || "";
   }
+  // Agência, conta, CNPJ/CPF e chave PIX ficam cifrados no banco (cofre): a tela só mostra a máscara.
+  const CAMPOS_COFRE = ["agencia", "conta", "titular_documento", "pix_chave"];
+  const vis = (c, k) => { const v = c && c[k]; if (!v) return ""; if (String(v).startsWith("cofre:")) return (c.cofre_mascaras || {})[k] || "••••"; return String(v); };
   function contaHtml(id) {
     const c = conta(id);
     if (!c) return '<div class="fin-conta-cel sem">Sem conta</div>';
-    return '<div class="fin-conta-cel"><b>' + esc(c.nome) + "</b><small>" + esc([c.titular_documento, c.pix_chave ? "PIX " + c.pix_chave : ""].filter(Boolean).join(" · ")) + "</small></div>";
+    return '<div class="fin-conta-cel"><b>' + esc(c.nome) + "</b><small>" + esc([vis(c, "titular_documento"), c.pix_chave ? "PIX " + vis(c, "pix_chave") : ""].filter(Boolean).join(" · ")) + "</small></div>";
   }
-  const opcoesContas = (sel, vazio = "Sem conta") => '<option value="">' + vazio + "</option>" + S.contas.filter((c) => c.ativo || c.id === sel).map((c) => '<option value="' + c.id + '"' + (c.id === sel ? " selected" : "") + ">" + esc(c.nome + (c.titular_documento ? " · " + c.titular_documento : "")) + "</option>").join("");
+  const opcoesContas = (sel, vazio = "Sem conta") => '<option value="">' + vazio + "</option>" + S.contas.filter((c) => c.ativo || c.id === sel).map((c) => '<option value="' + c.id + '"' + (c.id === sel ? " selected" : "") + ">" + esc(c.nome + (c.titular_documento ? " · " + vis(c, "titular_documento") : "")) + "</option>").join("");
   const opcoesCats = (tipo, sel) => '<option value="">Sem categoria</option>' + S.cats.filter((c) => c.tipo === tipo && (c.ativo || c.id === sel)).map((c) => '<option value="' + c.id + '"' + (c.id === sel ? " selected" : "") + ">" + esc((c.codigo ? c.codigo + " " : "") + c.nome) + "</option>").join("");
   const opcoesCcs = (sel) => '<option value="">Sem centro de custo</option>' + S.ccs.filter((c) => c.ativo || c.id === sel).map((c) => '<option value="' + c.id + '"' + (c.id === sel ? " selected" : "") + ">" + esc(c.nome) + "</option>").join("");
   const opcoesFormas = (sel) => '<option value="">-</option>' + FORMAS.map((f) => "<option" + (f === sel ? " selected" : "") + ">" + f + "</option>").join("");
@@ -424,9 +427,9 @@
       (S.contas.length ? '<div class="fin-contas-grade">' + S.contas.map((c) => {
         const s = S.saldos[c.id] || 0;
         return '<article class="fin-conta' + (c.ativo ? "" : " inativa") + '"><h4>' + esc(c.nome) + "</h4>" +
-          '<div class="linha">' + esc(TIPOS_CONTA[c.tipo] || c.tipo) + (c.banco ? " · " + esc(c.banco) : "") + (c.agencia || c.conta ? " · ag " + esc(c.agencia || "-") + " cc " + esc(c.conta || "-") : "") + "</div>" +
-          '<div class="linha"><b>Titular:</b> ' + esc(c.titular_nome || "-") + (c.titular_documento ? " · " + esc(c.titular_documento) : "") + "</div>" +
-          '<div class="linha"><b>PIX:</b> ' + esc(c.pix_chave ? c.pix_chave + (c.pix_tipo ? " (" + c.pix_tipo + ")" : "") : "-") + "</div>" +
+          '<div class="linha">' + esc(TIPOS_CONTA[c.tipo] || c.tipo) + (c.banco ? " · " + esc(c.banco) : "") + (c.agencia || c.conta ? " · ag " + esc(vis(c, "agencia") || "-") + " cc " + esc(vis(c, "conta") || "-") : "") + "</div>" +
+          '<div class="linha"><b>Titular:</b> ' + esc(c.titular_nome || "-") + (c.titular_documento ? " · " + esc(vis(c, "titular_documento")) : "") + "</div>" +
+          '<div class="linha"><b>PIX:</b> ' + esc(c.pix_chave ? vis(c, "pix_chave") + (c.pix_tipo ? " (" + c.pix_tipo + ")" : "") : "-") + "</div>" +
           '<div class="saldo' + (s < 0 ? " neg" : "") + '">' + brl(s) + "</div>" +
           '<div><button class="fin-btn peq claro" data-c-editar="' + c.id + '">Editar</button></div></article>';
       }).join("") + "</div>" : '<div class="fin-vazio">Nenhuma conta ainda. Cadastre as contas de cada CNPJ (locação, frete, montagem) com o PIX de cada uma.</div>');
@@ -445,13 +448,13 @@
       '<label class="inteiro">Nome da conta<input name="nome" value="' + esc(c.nome || "") + '" placeholder="Ex.: Chiavari Locações · Itaú"></label>' +
       '<label>Tipo<select name="tipo">' + Object.entries(TIPOS_CONTA).map(([v, r]) => '<option value="' + v + '"' + (c.tipo === v ? " selected" : "") + ">" + r + "</option>").join("") + "</select></label>" +
       '<label>Banco<input name="banco" value="' + esc(c.banco || "") + '"></label>' +
-      '<label>Agência<input name="agencia" value="' + esc(c.agencia || "") + '"></label>' +
-      '<label>Conta<input name="conta" value="' + esc(c.conta || "") + '"></label>' +
+      '<label>Agência<input name="agencia"></label>' +
+      '<label>Conta<input name="conta"></label>' +
       '<p class="fin-sub">Titular e PIX</p>' +
       '<label>Titular (razão social)<input name="titular_nome" value="' + esc(c.titular_nome || "") + '"></label>' +
-      '<label>CNPJ / CPF<input name="titular_documento" value="' + esc(c.titular_documento || "") + '"></label>' +
+      '<label>CNPJ / CPF<input name="titular_documento"></label>' +
       '<label>Tipo da chave PIX<select name="pix_tipo"><option value="">-</option>' + ["cnpj", "cpf", "email", "telefone", "aleatoria"].map((v) => '<option value="' + v + '"' + (c.pix_tipo === v ? " selected" : "") + ">" + { cnpj: "CNPJ", cpf: "CPF", email: "E-mail", telefone: "Telefone", aleatoria: "Aleatória" }[v] + "</option>").join("") + "</select></label>" +
-      '<label>Chave PIX<input name="pix_chave" value="' + esc(c.pix_chave || "") + '"></label>' +
+      '<label>Chave PIX<input name="pix_chave"></label>' +
       '<p class="fin-sub">Saldo</p>' +
       '<label>Saldo inicial<input name="saldo_inicial" inputmode="decimal" value="' + String(c.saldo_inicial ?? 0).replace(".", ",") + '"></label>' +
       '<label>Data do saldo inicial<input type="date" name="saldo_inicial_data" value="' + (c.saldo_inicial_data || hoje()) + '"></label>' +
@@ -461,13 +464,32 @@
       [{ rotulo: "Cancelar", classe: "claro", acao: fecharModal }, { rotulo: "Salvar", acao: async () => {
         const d = campos($("finModalCorpo"));
         if (!d.nome.trim()) return erroModal("Informe o nome da conta.");
-        const linha = { empresa_id: S.emp, nome: d.nome.trim(), tipo: d.tipo, banco: d.banco || null, agencia: d.agencia || null, conta: d.conta || null, titular_nome: d.titular_nome || null, titular_documento: d.titular_documento || null,
-          pix_tipo: d.pix_tipo || null, pix_chave: d.pix_chave || null, saldo_inicial: num(d.saldo_inicial), saldo_inicial_data: d.saldo_inicial_data || hoje(), saldo_minimo: num(d.saldo_minimo), ativo: !!d.ativo, observacoes: d.observacoes || null };
+        const linha = { nome: d.nome.trim(), tipo: d.tipo, banco: d.banco || null, titular_nome: d.titular_nome || null,
+          pix_tipo: d.pix_tipo || null, saldo_inicial: num(d.saldo_inicial), saldo_inicial_data: d.saldo_inicial_data || hoje(), saldo_minimo: num(d.saldo_minimo), ativo: !!d.ativo, observacoes: d.observacoes || null };
+        // campo protegido só vai se a pessoa digitou (em branco = fica como está)
+        const corpo = $("finModalCorpo");
+        CAMPOS_COFRE.forEach((k) => { const inp = corpo.querySelector('[name="' + k + '"]'); if (window.EasyLocCofre ? EasyLocCofre.mudou(inp) : true) linha[k] = d[k] || null; });
         await executar(async () => {
-          const r = id ? await S.sb.from("fin_contas").update(linha).eq("id", id).eq("empresa_id", S.emp) : await S.sb.from("fin_contas").insert(linha);
-          if (r.error) throw r.error;
+          const { data, error } = await S.sb.functions.invoke("financeiro-protegido", { body: { action: "salvar_conta", empresa_id: S.emp, conta_id: id || null, conta: linha } });
+          let msg = data && data.error;
+          if (error && !msg) { try { msg = (await error.context.json()).error; } catch (_) { msg = error.message; } }
+          if (msg) throw new Error(msg);
         }, "Conta salva.");
-      } }]);
+      } }], (corpo) => {
+        const podeVer = !!window.EasyLocPermissions?.hasPermission?.("financeiro.dados_bancarios.ver");
+        CAMPOS_COFRE.forEach((k) => {
+          const inp = corpo.querySelector('[name="' + k + '"]');
+          if (!window.EasyLocCofre) { inp.value = c[k] && !String(c[k]).startsWith("cofre:") ? c[k] : ""; return; }
+          EasyLocCofre.preparar(inp, { protegido: !!c[k], mascara: vis(c, k), podeRevelar: podeVer && !!id, revelar: async () => (await revelarConta(id, [k]))[k] });
+        });
+      });
+  }
+  async function revelarConta(id, camposPedidos) {
+    const { data, error } = await S.sb.functions.invoke("financeiro-protegido", { body: { action: "revelar", empresa_id: S.emp, conta_id: id, campos: camposPedidos } });
+    let msg = data && data.error;
+    if (error && !msg) { try { msg = (await error.context.json()).error; } catch (_) { msg = error.message; } }
+    if (msg) throw new Error(msg);
+    return (data && data.valores) || {};
   }
   function transferir() {
     modal("Transferir entre contas", '<div class="fin-form"><label>De<select name="de">' + opcoesContas(null, "Escolha") + '</select></label><label>Para<select name="para">' + opcoesContas(null, "Escolha") + '</select></label><label>Data<input type="date" name="data" value="' + hoje() + '"></label><label>Valor<input name="valor" inputmode="decimal"></label><label class="inteiro">Descrição<input name="descricao"></label></div>',

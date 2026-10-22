@@ -91,7 +91,7 @@ export function mascara(campo: string, valor: unknown): string {
   const d = soDigitos(t);
   if (campo === "cpf") return `•••.•••.•••-${d.slice(-2)}`;
   if (campo === "salario") return "R$ ••••••";
-  if (campo === "pix" && t.includes("@")) return `${t[0]}•••@${t.split("@")[1]}`;
+  if ((campo === "pix" || campo === "pix_chave") && t.includes("@")) return `${t[0]}•••@${t.split("@")[1]}`;
   const fim = (d || t).slice(-2);
   return `••••${fim}`;
 }
@@ -141,3 +141,20 @@ export async function protegerRh(dados: Record<string, any>, empresaId: string, 
 export async function abrirRh(empresaId: string, campo: string, valor: unknown) {
   return decifrar(String(valor ?? ""), contextoRh(empresaId, campo === "salario_cifrado" ? "salario" : campo));
 }
+
+// Genérico (contas do Financeiro e próximos): cifra só os campos listados que vieram; vazio apaga.
+// contexto(campo) dá o dado autenticado de cada um (ex.: "fin:<empresa>:pix_chave").
+export async function protegerCampos(dados: Record<string, any>, campos: readonly string[], contexto: (campo: string) => string, veio: (campo: string) => boolean) {
+  const saida: Record<string, any> = { ...dados };
+  const mascaras: Record<string, string> = {};
+  for (const campo of campos) {
+    if (!veio(campo)) { delete saida[campo]; continue; }
+    const valor = String(saida[campo] ?? "").trim();
+    if (estaCifrado(valor)) throw new Error("Valor protegido inválido.");
+    saida[campo] = valor ? await cifrar(valor, contexto(campo)) : null;
+    mascaras[campo] = mascara(campo, valor);
+  }
+  return { dados: saida, mascaras };
+}
+export const CAMPOS_FIN_CONTA = ["agencia", "conta", "titular_documento", "pix_chave"] as const;
+export const contextoFin = (empresaId: string, campo: string) => `fin:${empresaId}:${campo}`;

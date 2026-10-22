@@ -9,7 +9,8 @@ const mock = `(() => {
   const H = "${hoje}";
   const banco = {
     fin_contas: [{ id: "c1", empresa_id: "e1", nome: "Locações Itaú", tipo: "corrente", titular_nome: "Chiavari Locações", titular_documento: "11.111.111/0001-11", pix_tipo: "cnpj", pix_chave: "11111111000111", ativo: true, saldo_inicial: 0, saldo_minimo: 0 },
-      { id: "c2", empresa_id: "e1", nome: "Fretes BB", tipo: "corrente", titular_documento: "22.222.222/0001-22", pix_chave: "fretes@x.com", ativo: true, saldo_inicial: 0, saldo_minimo: 0 }],
+      { id: "c2", empresa_id: "e1", nome: "Fretes BB", tipo: "corrente", agencia: "cofre:v1:aa:bb", conta: "cofre:v1:cc:dd", titular_documento: "cofre:v1:ee:ff", pix_chave: "cofre:v1:gg:hh", ativo: true, saldo_inicial: 0, saldo_minimo: 0,
+        cofre_mascaras: { agencia: "••••34", conta: "••••90", titular_documento: "••••22", pix_chave: "f•••@x.com" } }],
     fin_config: [{ empresa_id: "e1", conta_locacao: "c1", conta_frete: "c2", conta_montagem: null, conta_gateway: null }],
     fin_categorias: [{ id: "k1", empresa_id: "e1", codigo: "1", nome: "Receitas", tipo: "entrada", ativo: true, ordem: 1 }, { id: "k2", empresa_id: "e1", codigo: "1.1", nome: "Locação de mobiliário", tipo: "entrada", pai_id: "k1", chave: "locacao", ativo: true, ordem: 2 },
       { id: "k3", empresa_id: "e1", codigo: "2", nome: "Despesas", tipo: "saida", ativo: true, ordem: 3 }],
@@ -54,6 +55,7 @@ const mock = `(() => {
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
+    functions: { invoke: async (n, o) => { window.__rpc.push({ n: "fn:" + n, a: o.body }); return { data: o.body.action === "revelar" ? { valores: { agencia: "1234" } } : { ok: true, id: o.body.conta_id || "n1" }, error: null }; } },
     rpc: (n, a) => ({ then: (ok, erro) => { window.__rpc.push({ n, a }); return Promise.resolve({ data: respostas[n] ? respostas[n](a) : null, error: null }).then(ok, erro); } })
   };
   window.supabase = { createClient: () => cliente };
@@ -86,7 +88,7 @@ const mock = `(() => {
   const ped = await page.textContent(".fin-pedido");
   assert.match(ped, /Pedido 12 · Lis/);
   assert.match(ped, /Locação R\$\s*3\.000,00/); assert.match(ped, /Frete R\$\s*400,00/); assert.match(ped, /Montagem R\$\s*600,00/);
-  assert.match(ped, /11\.111\.111\/0001-11/); assert.match(ped, /PIX fretes@x\.com/); assert.match(ped, /Sem conta/);
+  assert.match(ped, /11\.111\.111\/0001-11/); assert.match(ped, /PIX f•••@x\.com/); assert.ok(!ped.includes("cofre:")); assert.match(ped, /Sem conta/);
   assert.ok(!/As parcelas somam/.test(ped), "sem diferença quando a soma bate");
   console.log("ok 2 - a receber agrupado por pedido, cada divisão com sua conta (CNPJ e PIX)");
 
@@ -110,6 +112,26 @@ const mock = `(() => {
   await page.waitForFunction(() => window.__rpc.some((r) => r.n === "fin_salvar_config" && r.a.p_dados.conta_montagem === "c2"));
   await page.click(".fin-modal .fin-x, #alertaOk, .alerta-btn", { timeout: 2000 }).catch(() => {});
   console.log("ok 5 - contas padrão do pedido (locação, frete, montagem) salvas");
+
+  // Conta com dados no cofre: a tela mostra só a máscara; editar não reenvia o campo protegido que não foi mexido
+  const cartoes = await page.textContent(".fin-contas-grade");
+  assert.ok(!cartoes.includes("cofre:"), "não mostra o texto cifrado");
+  assert.ok(cartoes.includes("••••34") && cartoes.includes("f•••@x.com"), cartoes);
+  await page.click('[data-c-editar="c2"]');
+  await page.waitForSelector('#finModalCorpo [name="agencia"]');
+  assert.equal(await page.inputValue('#finModalCorpo [name="agencia"]'), "");
+  assert.match(await page.getAttribute('#finModalCorpo [name="pix_chave"]', "placeholder"), /f•••@x.com.*protegido/);
+  await page.click('#finModalCorpo .cofre-ver');
+  await page.waitForFunction(() => document.querySelector('#finModalCorpo [name="agencia"]').value === "1234");
+  await page.fill('#finModalCorpo [name="conta"]', "777-1");
+  await page.click('#finModalRodape [data-bt="1"]');
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "fn:financeiro-protegido" && r.a.action === "salvar_conta"));
+  const env = await page.evaluate(() => window.__rpc.find((r) => r.n === "fn:financeiro-protegido" && r.a.action === "salvar_conta").a);
+  assert.equal(env.conta_id, "c2"); assert.equal(env.conta.conta, "777-1"); assert.equal(env.conta.nome, "Fretes BB");
+  assert.ok(!("pix_chave" in env.conta) && !("titular_documento" in env.conta) && !("agencia" in env.conta), JSON.stringify(env.conta));
+  assert.ok(!("empresa_id" in env.conta));
+  await page.click(".fin-modal .fin-x, #alertaOk, .alerta-btn", { timeout: 2000 }).catch(() => {});
+  console.log("ok 5b - dados bancários no cofre: só a máscara na tela, \"Ver\" abre, salvar manda só o que mudou");
 
   await page.click('[data-aba="pagar"]');
   await page.waitForSelector('[data-p-aprovar="g9"]');

@@ -485,3 +485,9 @@ enabled = true
 # Exige o login da equipe; grava a ficha do RH cifrada e mostra dado completo só com rh.dados_sensiveis.ver.
 verify_jwt = true
 entrypoint = "./functions/rh-protegido/index.ts"
+
+[functions.financeiro-protegido]
+enabled = true
+# Exige o login da equipe; grava agência, conta, CNPJ/CPF e chave PIX das contas cifrados e mostra o dado completo só com financeiro.dados_bancarios.ver.
+verify_jwt = true
+entrypoint = "./functions/financeiro-protegido/index.ts"
