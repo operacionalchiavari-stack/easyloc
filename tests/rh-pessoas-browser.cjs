@@ -15,7 +15,7 @@ const mock = `(() => {
     rh_beneficio_adesoes: [], rh_ferias: [], rh_checklists: []
   };
   const pessoas = [
-    { id: "p1", nome: "Ana Souza", setor: "Montagem", cargo: "Montadora", ativo: true, cpf: "12345678901", data_admissao: "${anos(3)}", dados_rh: { rg: "11" }, ficha: { tipo_contrato: "clt", status: "ativo" } },
+    { id: "p1", nome: "Ana Souza", setor: "Montagem", cargo: "Montadora", ativo: true, cpf: "•••.•••.•••-01", protegidos: ["cpf"], pode_revelar: true, data_admissao: "${anos(3)}", dados_rh: { rg: "11" }, ficha: { tipo_contrato: "clt", status: "ativo" } },
     { id: "p2", nome: "Bruno Lima", setor: "Montagem", cargo: "Ajudante", ativo: true, data_admissao: "${anos(1)}", dados_rh: {}, ficha: null },
     { id: "p3", nome: "Carla Dias", setor: "Comercial", cargo: "Vendedora", ativo: true, data_admissao: "${hoje}", dados_rh: {}, ficha: null },
     { id: "eu", nome: "Jonatan Falck", setor: "Administrativo", ativo: true, eu: true, dados_rh: {}, ficha: null }
@@ -44,7 +44,14 @@ const mock = `(() => {
       if (a.p_status === "desligado") banco.rh_checklists.push({ id: "ck-d", empresa_id: "e1", funcionario_id: p.id, tipo: "desligamento", itens: [{ texto: "Exame demissional", feito: false }, { texto: "Devolução de EPI", feito: false }] }); return null; },
     rh_turma_registrar: (a) => { a.p_funcionarios.forEach((f) => banco.rh_documentos.push({ id: "c" + f, empresa_id: "e1", funcionario_id: f, nome: "NR-35 Trabalho em altura", categoria: "nr", emissao: a.p_data, validade: "2099-01-01", treinamento_id: a.p_treinamento, turma_id: "tu1" })); banco.rh_turmas.push({ id: "tu1", empresa_id: "e1", treinamento_id: a.p_treinamento, data: a.p_data }); return "tu1"; }
   };
+  // Edge Function rh-protegido (cofre): salvar_ficha cai no mesmo rh_ficha_salvar; revelar devolve o valor inteiro
+  const funcoes = { "rh-protegido": (b) => {
+    window.__rpc.push({ n: "rh-protegido:" + b.action, a: b });
+    if (b.action === "salvar_ficha") { respostas.rh_ficha_salvar({ p_funcionario: b.funcionario_id, p_dados: b.dados }); return { ok: true }; }
+    if (b.action === "revelar") return { valores: Object.fromEntries(b.campos.map((c) => [c, c === "cpf" ? "12345678901" : "x"])) };
+  } };
   const cliente = {
+    functions: { invoke: async (n, o) => ({ data: funcoes[n] ? funcoes[n](o.body) : null, error: null }) },
     auth: { getSession: async () => ({ data: { session: { access_token: "tok", user: { id: "eu" } } } }), getUser: async () => ({ data: { user: { id: "eu" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
     rpc: (n, a) => ({ then: (ok, erro) => { window.__rpc.push({ n, a }); return Promise.resolve({ data: respostas[n] ? respostas[n](a) : null, error: null }).then(ok, erro); } }),
@@ -84,11 +91,21 @@ const mock = `(() => {
   await page.waitForSelector(".rh-ficha-topo");
   assert.match(await page.textContent(".rh-ficha-topo"), /anos de casa/);
   assert.match(await page.textContent("#rhFichaCorpo"), /CNH vencido|Sem ASO periódico/);
+  // Cofre: o CPF aparece só mascarado; "Mostrar dados protegidos" busca o valor (fica registrado)
+  assert.match(await page.textContent("#rhFichaCorpo"), /•••.•••.•••-01/);
+  await page.click('[data-acao="revelar-dados"]');
+  await page.waitForFunction(() => document.querySelector('#rhFichaCorpo [data-cofre="cpf"]').textContent.includes("12345678901"));
+  assert.ok(await page.evaluate(() => window.__rpc.some((r) => r.n === "rh-protegido:revelar" && r.a.campos.includes("cpf"))));
   await page.click('[data-acao="editar-ficha"]');
-  await page.fill('[name="pix"]', "ana@pix"); await page.fill('[name="cpf"]', "123.456.789-09"); await page.selectOption('[name="tamanho_camisa"]', "M");
+  assert.strictEqual(await page.inputValue('[name="cpf"]'), "", "CPF protegido não vem preenchido");
+  assert.match(await page.getAttribute('[name="cpf"]', "placeholder"), /•••-01.*protegido/);
+  assert.strictEqual(await page.locator('#rhModalCorpo .cofre-ver').count(), 1, "botão Ver no CPF");
+  await page.fill('[name="pix"]', "ana@pix"); await page.selectOption('[name="tamanho_camisa"]', "M");
   await modalOk("Salvar");
-  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "rh_ficha_salvar" && r.a.p_dados.pix === "ana@pix" && r.a.p_dados.tamanho_camisa === "M"));
-  console.log("ok 2 - ficha abre e a edição salva pelo rh_ficha_salvar");
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "rh-protegido:salvar_ficha" && r.a.dados.pix === "ana@pix" && r.a.dados.tamanho_camisa === "M"));
+  assert.ok(await page.evaluate(() => !window.__rpc.find((r) => r.n === "rh-protegido:salvar_ficha").a.dados.hasOwnProperty("cpf")), "CPF que ninguém mexeu não é enviado");
+  assert.ok(await page.evaluate(() => !window.__rpc.some((r) => r.n === "rh_ficha_salvar")), "a ficha não grava mais direto no banco");
+  console.log("ok 2 - ficha com dado protegido: máscara, Ver com registro, e salvar pelo servidor sem mandar o que não mudou");
 
   await page.click('[data-subaba="documentos"]');
   await page.click('[data-acao="novo-doc"]');

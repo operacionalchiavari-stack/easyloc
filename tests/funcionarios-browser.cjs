@@ -33,13 +33,13 @@ const catalog = [
   await page.route('**/js/core/supabase.js',r=>r.fulfill({contentType:'text/javascript',body:''}));
   await page.addInitScript(({catalog}) => {
    window.__CONTEXT={empresa_id:'company',usuario_id:'owner'};
-   window.fixtureEmployees=[{id:'employee',nome:'Ana Silva',setor:'Comercial',cargo:'Consultora',login:'ana',email:'ana@example.com',nivel_acesso:'Visualizador',ativo:true,foto_url:'',telefone:''}];
+   window.fixtureEmployees=[{id:'employee',nome:'Ana Silva',setor:'Comercial',cargo:'Consultora',login:'ana',email:'ana@example.com',nivel_acesso:'Visualizador',ativo:true,foto_url:'',telefone:'',cpf:'•••.•••.•••-09',salario_mascara:'R$ ••••••',protegidos:['cpf','salario'],pode_revelar:true}];
    window.fixturePermission=[];window.fixtureAccess=true;window.fixtureAdmin=true;window.saved=[];
    window.supabaseClient={
     storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})},
     rpc:async(name)=>({data:name==='funcionario_contexto'?{ativo:window.fixtureAccess,administrador_legado:window.fixtureAdmin}:name==='funcionarios_listar'?window.fixtureEmployees:catalog.map(p=>({...p,permitido:window.fixturePermission.includes(p.chave)}))}),
     from:()=>({select:()=>({order:async()=>({data:catalog})})}),
-    functions:{invoke:async(name,{body})=>{window.saved.push(body);return {data:{id:'new'}};}}
+    functions:{invoke:async(name,{body})=>{window.saved.push({...body,funcao:name});return name==='rh-protegido'?{data:{valores:{cpf:'12345678909'}}}:{data:{id:'new'}};}}
    };
    window.alerta=(text)=>{window.lastAlert=text};
   },{catalog});
@@ -74,10 +74,21 @@ const catalog = [
   await page.locator('[data-action="edit"]').click();
   assert.equal(await page.locator('#funcSenha').inputValue(),'');
   assert.equal(await page.locator('#funcSenha').getAttribute('required'),null);
+  // Cofre: CPF e salário protegidos chegam vazios, com a máscara de dica, e não vão no salvar se ninguém mexer
+  assert.equal(await page.locator('#funcCpf').inputValue(),'');
+  assert.match(await page.locator('#funcCpf').getAttribute('placeholder'),/•••-09.*protegido/);
+  assert.match(await page.locator('#funcSalario').getAttribute('placeholder'),/••••••.*protegido/);
   await page.locator('#funcStatus').selectOption('Inativo');
   await page.locator('#saveFuncionarioBtn').click();
   await page.waitForFunction(()=>window.saved.filter(x=>x.action==='save').length===2);
-  assert.equal(await page.evaluate(()=>window.saved.filter(x=>x.action==='save')[1].employee.ativo),false);
+  const editado=await page.evaluate(()=>window.saved.filter(x=>x.action==='save')[1].employee);
+  assert.equal(editado.ativo,false);
+  assert.ok(!('cpf' in editado) && !('salario_bruto' in editado),'campo protegido sem mexer não é enviado');
+  await page.locator('[data-action="edit"]').click();
+  await page.locator('#funcCpf + .cofre-ver').click();
+  await page.waitForFunction(()=>document.getElementById('funcCpf').value==='12345678909');
+  assert.ok(await page.evaluate(()=>window.saved.some(x=>x.funcao==='rh-protegido'&&x.action==='revelar'&&x.campos[0]==='cpf'&&x.funcionario_id==='employee')));
+  await page.keyboard.press('Escape');
   await page.locator('[data-action="view"]').click();
   assert.equal(await page.locator('#funcNome').isDisabled(),true);
   assert.equal(await page.locator('#saveFuncionarioBtn').isVisible(),false);

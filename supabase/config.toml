@@ -474,3 +474,14 @@ enabled = true
 # Valida JWT no handler; o login de funcionário usa o Auth antes de existir uma sessão.
 verify_jwt = false
 entrypoint = "./functions/funcionarios-admin/index.ts"
+
+[functions.seguranca-2fa]
+enabled = true
+# Exige o JWT do usuario (logo depois da senha); o handler confere a sessao e o vinculo com a empresa.
+verify_jwt = true
+
+[functions.rh-protegido]
+enabled = true
+# Exige o login da equipe; grava a ficha do RH cifrada e mostra dado completo só com rh.dados_sensiveis.ver.
+verify_jwt = true
+entrypoint = "./functions/rh-protegido/index.ts"

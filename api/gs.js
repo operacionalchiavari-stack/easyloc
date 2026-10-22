@@ -106,6 +106,14 @@ async function usuarioDaSessao(cfg, token) {
     ]);
     const vinc = Array.isArray(vinculos) && vinculos[0];
     if (!vinc) { return null; }
+    // Verificação em duas etapas (out/2026): com a exigência ligada, a sessão precisa ter confirmado o código do
+    // WhatsApp. Pergunta ao banco COMO o usuário (token dele); sem resposta, não libera.
+    const st = await fetch(cfg.url + "/rest/v1/rpc/seguranca_2fa_status", {
+      method: "POST",
+      headers: { apikey: cfg.chave, Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: "{}"
+    }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+    if (!st || (st.obrigatorio && !st.verificado)) { return null; }
     const func = Array.isArray(funcionarios) && funcionarios[0];
     if (func && (func.ativo === false || func.acesso_sistema === false || func.empresa_id !== vinc.empresa_id)) { return null; }
     const admin = !func && ["admin", "owner", "administrador"].indexOf(String(vinc.role || "").toLowerCase()) >= 0;

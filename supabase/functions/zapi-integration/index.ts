@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
+import { abrirCredenciaisZapi, fecharCredenciaisZapi } from "../_shared/cofre.ts";
 
 type SupabaseService = ReturnType<typeof createClient<any>>;
 
@@ -82,6 +84,7 @@ async function validarAcessoEmpresa(req: Request, empresaId: string) {
   if (userError || !user) {
     return { error: "Sessao invalida", status: 401 } as const;
   }
+  if (await segundaEtapaPendente(authHeader)) return { error: MENSAGEM_2FA, status: 403 } as const;
 
   const serviceClient = createClient<any>(supabaseUrl, serviceKey);
   const { data: vinculo, error: vinculoError } = await serviceClient
@@ -150,7 +153,7 @@ async function getCredentials(serviceClient: SupabaseService, empresaId: string)
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return abrirCredenciaisZapi(data);
 }
 
 function envCredentials(empresaId: string) {
@@ -527,7 +530,7 @@ serve(async (req) => {
       const refreshed = await ensureIntegration(serviceClient, body.empresa_id);
       const { data: credentials, error } = await serviceClient
         .from("zapi_credenciais")
-        .upsert({
+        .upsert(await fecharCredenciaisZapi({
           empresa_id: body.empresa_id,
           integracao_id: refreshed.id,
           instance_id: instance.instance_id,
@@ -535,13 +538,13 @@ serve(async (req) => {
           client_token: instance.client_token,
           webhook_secret: secret,
           updated_at: new Date().toISOString(),
-        }, { onConflict: "empresa_id" })
+        }, body.empresa_id), { onConflict: "empresa_id" })
         .select("*")
         .single();
 
       if (error) throw error;
 
-      const webhook = await configureWebhooks(serviceClient, credentials);
+      const webhook = await configureWebhooks(serviceClient, await abrirCredenciaisZapi(credentials));
       return jsonResponse({ ok: true, instance: { id: maskInstance(instance.instance_id), due: instance.raw?.due || null }, webhook });
     }
 
@@ -555,9 +558,9 @@ serve(async (req) => {
         return jsonResponse({ erro: "Informe Instance ID e Token da instancia" }, 400);
       }
 
-      const { data: upserted, error } = await serviceClient
+      const { data: gravado, error } = await serviceClient
         .from("zapi_credenciais")
-        .upsert({
+        .upsert(await fecharCredenciaisZapi({
           empresa_id: body.empresa_id,
           integracao_id: integration.id,
           instance_id: instanceId,
@@ -565,11 +568,12 @@ serve(async (req) => {
           client_token: clientToken,
           webhook_secret: fallback?.webhook_secret || crypto.randomUUID().replaceAll("-", ""),
           updated_at: new Date().toISOString(),
-        }, { onConflict: "empresa_id" })
+        }, body.empresa_id), { onConflict: "empresa_id" })
         .select("*")
         .single();
 
       if (error) throw error;
+      const upserted = await abrirCredenciaisZapi(gravado);
 
       await serviceClient.from("zapi_integracoes").upsert({
         empresa_id: body.empresa_id,

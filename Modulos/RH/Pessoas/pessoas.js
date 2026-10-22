@@ -270,7 +270,26 @@
       '<div id="rhFichaCorpo"></div>';
     ({ dados: fichaDados, documentos: fichaDocumentos, exames: fichaExames, treinamentos: fichaTreinamentos, beneficios: fichaBeneficios, ferias: fichaFerias, ocorrencias: fichaOcorrencias })[S.fichaAba](p, f);
   }
-  function dl(itens) { return itens.map(([r, v]) => (r === "#" ? '<div class="rh-dados-titulo">' + esc(v) + "</div>" : "<div><dt>" + esc(r) + "</dt><dd>" + (v === "" || v == null ? "-" : esc(v)) + "</dd></div>")).join(""); }
+  function dl(itens) { return itens.map(([r, v, k]) => (r === "#" ? '<div class="rh-dados-titulo">' + esc(v) + "</div>" : "<div><dt>" + esc(r) + "</dt><dd" + (k ? ' data-cofre="' + k + '"' : "") + ">" + (v === "" || v == null ? "-" : esc(v)) + "</dd></div>")).join(""); }
+  // Cofre (out/2026): dados cifrados chegam como máscara; o valor inteiro vem da Edge Function rh-protegido (com registro).
+  async function salvarFichaProtegida(p, dados) {
+    const { data, error } = await S.sb.functions.invoke("rh-protegido", { body: { action: "salvar_ficha", empresa_id: S.emp, funcionario_id: p.id, dados } });
+    let msg = data && data.error;
+    if (error && !msg) { try { msg = (await error.context.json()).error; } catch (_) { msg = error.message; } }
+    if (msg) throw new Error(msg);
+  }
+  function botaoDadosProtegidos(p) {
+    if (!(p.protegidos || []).length || !p.pode_revelar) return "";
+    return '<div class="fin-barra-ferr"><span class="fin-esp"></span><button class="fin-btn claro" data-acao="revelar-dados">Mostrar dados protegidos</button></div>';
+  }
+  async function revelarDadosProtegidos(p, botao) {
+    botao.disabled = true;
+    try {
+      const v = await window.EasyLocCofre.revelarRh(S.sb, S.emp, p.id, p.protegidos);
+      document.querySelectorAll("#rhFichaCorpo [data-cofre]").forEach((dd) => { const k = dd.dataset.cofre; if (k in v) dd.textContent = v[k] || "-"; });
+      botao.textContent = "Dados visíveis (consulta registrada)";
+    } catch (e) { botao.disabled = false; avisar(e.message, "Gestão de Pessoas", "erro"); }
+  }
   function fichaDados(p, f) {
     const d = p.dados_rh || {}, pend = pendencias(p);
     const idade = d.data_nascimento ? Math.floor(dias(d.data_nascimento, hoje()) / 365.25) : null;
@@ -278,12 +297,12 @@
       (pend.length ? '<section class="fin-bloco"><h3>Pendências</h3><div class="rh-pessoa-selos">' + pend.map((x) => '<span class="rh-selo ' + x.nivel + '">' + esc(x.texto) + "</span>").join("") + "</div></section>" : "") +
       (f.status === "desligado" || f.desligamento_data ? '<section class="fin-bloco"><h3>Desligamento</h3><dl class="rh-dados">' + dl([["Data", dataBr(f.desligamento_data)], ["Tipo", f.desligamento_tipo], ["Motivo", f.desligamento_motivo]]) + "</dl></section>" : "") +
       (f.status === "afastado" ? '<section class="fin-bloco"><h3>Afastamento</h3><dl class="rh-dados">' + dl([["Desde", dataBr(f.afastamento_inicio)], ["Previsão de volta", dataBr(f.afastamento_fim)], ["Motivo", f.afastamento_motivo]]) + "</dl></section>" : "") +
-      '<section class="fin-bloco"><dl class="rh-dados">' + dl([
-        ["#", "Pessoais"], ["CPF", p.cpf ? String(p.cpf).replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : ""], ["RG", d.rg], ["Nascimento", d.data_nascimento ? dataBr(d.data_nascimento) + (idade != null ? " (" + idade + " anos)" : "") : ""],
+      botaoDadosProtegidos(p) + '<section class="fin-bloco"><dl class="rh-dados">' + dl([
+        ["#", "Pessoais"], ["CPF", p.cpf ? String(p.cpf).replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "", "cpf"], ["RG", d.rg, "rg"], ["Nascimento", d.data_nascimento ? dataBr(d.data_nascimento) + (idade != null ? " (" + idade + " anos)" : "") : ""],
         ["Estado civil", f.estado_civil], ["Escolaridade", f.escolaridade], ["Dependentes", f.dependentes ?? 0], ["Telefone", p.telefone], ["WhatsApp", d.whatsapp], ["E-mail", p.email], ["Endereço", d.endereco],
-        ["#", "Contrato"], ["Matrícula", f.matricula], ["Tipo de contrato", CONTRATOS[contrato(p)]], ["Admissão", dataBr(p.data_admissao)], ["Fim da experiência", f.experiencia_fim ? dataBr(f.experiencia_fim) : ""], ["Jornada", f.jornada], ["PIS", f.pis], ["CTPS", f.ctps],
+        ["#", "Contrato"], ["Matrícula", f.matricula], ["Tipo de contrato", CONTRATOS[contrato(p)]], ["Admissão", dataBr(p.data_admissao)], ["Fim da experiência", f.experiencia_fim ? dataBr(f.experiencia_fim) : ""], ["Jornada", f.jornada], ["PIS", f.pis, "pis"], ["CTPS", f.ctps, "ctps"],
         ["#", "Contato de emergência"], ["Nome", f.contato_emergencia], ["Telefone", f.contato_emergencia_telefone],
-        ["#", "Pagamento"], ["Banco", f.banco], ["Agência", f.agencia], ["Conta", f.conta], ["PIX", f.pix],
+        ["#", "Pagamento"], ["Banco", f.banco], ["Agência", f.agencia, "agencia"], ["Conta", f.conta, "conta"], ["PIX", f.pix, "pix"],
         ["#", "Uniforme"], ["Camisa", f.tamanho_camisa], ["Calça", f.tamanho_calca], ["Calçado", f.tamanho_calcado],
         ["#", "Transporte"], ["Tipo", f.transporte_tipo], ["Passagens por dia", f.transporte_passagens_dia], ["Tarifa", f.transporte_tarifa != null ? brl(f.transporte_tarifa) : ""],
         ["#", "Observações"], ["", f.observacoes]
@@ -405,8 +424,15 @@
       [{ rotulo: "Cancelar", classe: "claro", acao: fechar }, { rotulo: "Salvar", acao: async () => {
         const v = campos($("rhModalCorpo"));
         v.transporte_passagens_dia = num(v.transporte_passagens_dia) ?? ""; v.transporte_tarifa = num(v.transporte_tarifa) ?? "";
-        await executar(() => rpc("rh_ficha_salvar", { p_empresa: S.emp, p_funcionario: p.id, p_dados: v }), "Dados salvos.");
+        ["cpf", "rg", "pis", "ctps", "agencia", "conta", "pix"].forEach((k) => { if (!window.EasyLocCofre.mudou($("rhModalCorpo").querySelector('[name="' + k + '"]'))) delete v[k]; });
+        await executar(() => salvarFichaProtegida(p, v), "Dados salvos.");
       } }]);
+    const prot = p.protegidos || [];
+    ["cpf", "rg", "pis", "ctps", "agencia", "conta", "pix"].forEach((k) => {
+      const el = $("rhModalCorpo").querySelector('[name="' + k + '"]');
+      window.EasyLocCofre.preparar(el, { protegido: prot.includes(k), mascara: el && el.value, podeRevelar: p.pode_revelar,
+        revelar: async () => (await window.EasyLocCofre.revelarRh(S.sb, S.emp, p.id, [k]))[k] });
+    });
   }
   function statusModal(p, tipo) {
     if (tipo === "reativar") {
@@ -762,6 +788,7 @@
       switch (d.acao) {
         case "voltar-lista": S.ficha = null; return pintar();
         case "editar-ficha": return editarFicha(p);
+        case "revelar-dados": return revelarDadosProtegidos(p, b);
         case "afastar": return statusModal(p, "afastar");
         case "desligar": return statusModal(p, "desligar");
         case "reativar": return statusModal(p, "reativar");

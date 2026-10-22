@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { abrirCredenciaisZapi } from "../_shared/cofre.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,14 +59,15 @@ serve(async (req) => {
     if (!instanceId) return jsonResponse({ erro: "instanceId ausente" }, 400);
 
     const supabase = serviceClient();
-    const { data: credentials, error: credError } = await supabase
+    const { data: credBrutas, error: credError } = await supabase
       .from("zapi_credenciais")
       .select("empresa_id,instance_id,webhook_secret")
       .eq("instance_id", instanceId)
       .maybeSingle();
 
-    if (credError || !credentials) return jsonResponse({ erro: "Instancia nao encontrada" }, 404);
-    if (secret !== credentials.webhook_secret) return jsonResponse({ erro: "Webhook nao autorizado" }, 401);
+    if (credError || !credBrutas) return jsonResponse({ erro: "Instancia nao encontrada" }, 404);
+    const credentials = await abrirCredenciaisZapi(credBrutas);
+    if (!secret || secret !== credentials.webhook_secret) return jsonResponse({ erro: "Webhook nao autorizado" }, 401);
 
     const eventType = getEventType(payload);
     await supabase.from("zapi_eventos").insert({

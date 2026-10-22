@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.93.3';
 import { validateEmployee } from './validation.mjs';
+import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
+import { protegerRh } from "../_shared/cofre.ts";
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const url = Deno.env.get('SUPABASE_URL')!;
@@ -39,6 +41,7 @@ Deno.serve(async (req) => {
     if (!token) return response({ error: 'Sessão necessária' }, 401);
     const { data: { user }, error: authError } = await admin.auth.getUser(token);
     if (authError || !user) return response({ error: 'Sessão inválida' }, 401);
+    if (await segundaEtapaPendente('Bearer ' + token)) return response({ error: MENSAGEM_2FA }, 403);
     const empresa = String(body.empresa_id || '');
     if (!/^[0-9a-f-]{36}$/i.test(empresa)) return response({ error: 'Empresa inválida' }, 400);
     const can = async (key: string) => checked(await admin.rpc('funcionario_pode', { p_empresa: empresa, p_usuario: user.id, p_chave: key })) === true;
@@ -51,6 +54,12 @@ Deno.serve(async (req) => {
     }
     if (body.action !== 'save') return response({ error: 'Ação inválida' }, 400);
     const employee = validateEmployee(body.employee, Boolean(body.id));
+    // Cofre (out/2026): CPF, RG e salário vão cifrados. Campo que a tela não mandou = não mudou.
+    const entrada = body.employee || {};
+    const veio = (campo: string) => campo === 'rg'
+      ? Boolean(entrada.dados_rh && Object.prototype.hasOwnProperty.call(entrada.dados_rh, 'rg'))
+      : Object.prototype.hasOwnProperty.call(entrada, campo);
+    const proteger = (dados: Record<string, any>) => protegerRh(dados, empresa, veio);
     // O próprio cadastro (out/2026): qualquer pessoa da empresa pode mudar os SEUS dados pessoais
     // (nome, setor, cargo, telefone, foto, senha de login e senha operacional) por um caminho
     // restrito — funcionario_salvar_proprio, que nunca toca nível de acesso, status nem permissões.
@@ -64,7 +73,8 @@ Deno.serve(async (req) => {
     if (!employee.acesso_sistema) {
       if (cadastroAnterior?.acesso_sistema) return response({ error: 'Para suspender o acesso desta conta, marque o funcionário como inativo.' }, 400);
       if (body.photo && (typeof body.photo !== 'string' || body.photo.length > 1_500_000 || !/^data:image\/jpeg;base64,/.test(body.photo))) return response({ error: 'Foto inválida' }, 400);
-      const { senha, pin, ...fields } = employee;
+      const { senha, pin, ...semSenha } = employee;
+      const fields = await proteger(semSenha);
       const id = checked(await admin.rpc('rh_funcionario_salvar', { p_empresa: empresa, p_ator: user.id, p_id: body.id || null, p_dados: fields, p_pin: pin || null }));
       if (body.photo) {
         const bytes = Uint8Array.from(atob(body.photo.split(',')[1]), c => c.charCodeAt(0));
@@ -119,7 +129,8 @@ Deno.serve(async (req) => {
         // Mesma foto no menu (perfil "Minha conta" lê avatares/<empresa>/<usuário>.jpg) — uma foto só por pessoa.
         await admin.storage.from('avatares').upload(`${empresa}/${id}.jpg`, bytes, { contentType: 'image/jpeg', upsert: true });
       }
-      const { senha, pin, ...fields } = employee;
+      const { senha, pin, ...semSenha } = employee;
+      const fields = await proteger(semSenha);
       if (proprio) {
         const r = checked(await admin.rpc('funcionario_salvar_proprio', { p_empresa: empresa, p_ator: user.id, p_dados: { ...fields, foto_url: photo }, p_pin: pin || null }));
         if (r && r.aviso) avisoProprio = r.aviso;

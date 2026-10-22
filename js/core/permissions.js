@@ -118,6 +118,8 @@
     if (!chave) return true;
     if (!cache.loaded || !cache.active) return false;
     if (cache.legacyAdmin) return true;
+    // Telas da Produção: quem vê as ordens ou o almoxarifado passa (lê o cache direto: chamar hasPermission aqui não terminaria)
+    if (/\/Modulos\/Producao\//i.test(location.pathname)) return cache.permissions.get('producao.ordens.visualizar') === true || cache.permissions.get('estoque.almoxarifado.visualizar') === true;
     return cache.permissions.get(chave) === true;
   }
 
@@ -171,10 +173,12 @@
     [/CadastroLocais/i, 'comercial.locais.visualizar'],
     [/CreditosIA/i, 'comercial.creditos.visualizar'],
     [/Catalogo/i, 'comercial.catalogo.visualizar'],
+    [/Comercial\/Historico/i, 'comercial.pedidos.visualizar'], // Histórico do comercial (out/2026)
     [/Pedidos/i, 'comercial.pedidos.visualizar'],
     [/Contratos/i, 'comercial.contratos.visualizar'],
     [/ImportarItens/i, 'estoque.importacao.executar'],
     [/CadastroItens|DisponibilidadeItens/i, 'estoque.itens.visualizar'],
+    [/Producao/i, 'producao.ordens.visualizar'],
     [/Personalizacoes/i, 'estoque.insumos.visualizar'],
     [/CadastroFornecedores/i, 'estoque.fornecedores.visualizar'],
     [/TabelasPreco/i, 'estoque.tabelas_preco.visualizar'],

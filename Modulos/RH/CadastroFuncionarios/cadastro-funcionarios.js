@@ -151,6 +151,11 @@
     const fields = { funcNome: 'nome', funcSetor: 'setor', funcCargo: 'cargo', funcLogin: 'login', funcEmail: 'email', funcTelefone: 'telefone', funcFotoValue: 'foto_url', funcCpf: 'cpf',funcSalario:'salario_bruto',funcAdmissao:'data_admissao',funcEquipe:'equipe_operacional' };
     Object.entries(fields).forEach(([field, key]) => { $(field).value = employee?.[key] || ''; });
     Object.entries({funcRg:'rg',funcNascimento:'data_nascimento',funcWhatsapp:'whatsapp',funcEndereco:'endereco',funcObservacoes:'observacoes'}).forEach(([id,key])=>{$(id).value=employee?.dados_rh?.[key] || '';});
+    // Cofre: CPF, RG e salário cifrados chegam só como máscara; "Ver" mostra o valor (com registro).
+    const protegidos = employee?.protegidos || [];
+    const revelar = campo => async () => (await window.EasyLocCofre.revelarRh(client, context.empresa_id, id, [campo]))[campo];
+    [['funcCpf','cpf',employee?.cpf],['funcRg','rg',employee?.dados_rh?.rg],['funcSalario','salario',employee?.salario_mascara]].forEach(([campoId, campo, mascara]) =>
+      window.EasyLocCofre.preparar($(campoId), { protegido: protegidos.includes(campo), mascara, podeRevelar: employee?.pode_revelar && mode !== 'create', revelar: revelar(campo) }));
     $('funcLider').checked = !!employee?.lider_operacao;
     $('funcNivel').value = employee?.nivel_acesso || 'Visualizador';
     $('funcStatus').value = employee?.ativo === false ? 'Inativo' : 'Ativo';
@@ -226,7 +231,7 @@
     busy = true; $('saveFuncionarioBtn').disabled = true; $('closeFuncionarioForm').disabled = true; $('cancelFuncionarioBtn').disabled = true;
     try {
       const result = await api({ action: 'save', id: $('funcionarioId').value || null, photo: photo || null,
-        employee: { nome: $('funcNome').value, setor: $('funcSetor').value, cargo: $('funcCargo').value, login: $('funcLogin').value, senha: $('funcSenha').value, pin: $('funcWarehousePin').value, nivel_acesso: $('funcNivel').value, ativo: $('funcStatus').value === 'Ativo', email: $('funcEmail').value, telefone: $('funcTelefone').value, foto_url: $('funcFotoValue').value,cpf:$('funcCpf').value,salario_bruto:$('funcSalario').value,data_admissao:$('funcAdmissao').value,equipe_operacional:$('funcEquipe').value,acesso_sistema:$('funcAcesso').value==='true',dados_rh:{rg:$('funcRg').value,data_nascimento:$('funcNascimento').value,whatsapp:$('funcWhatsapp').value,endereco:$('funcEndereco').value,observacoes:$('funcObservacoes').value} },
+        employee: { nome: $('funcNome').value, setor: $('funcSetor').value, cargo: $('funcCargo').value, login: $('funcLogin').value, senha: $('funcSenha').value, pin: $('funcWarehousePin').value, nivel_acesso: $('funcNivel').value, ativo: $('funcStatus').value === 'Ativo', email: $('funcEmail').value, telefone: $('funcTelefone').value, foto_url: $('funcFotoValue').value,...(window.EasyLocCofre.mudou($('funcCpf')) ? {cpf:$('funcCpf').value} : {}),...(window.EasyLocCofre.mudou($('funcSalario')) ? {salario_bruto:$('funcSalario').value} : {}),data_admissao:$('funcAdmissao').value,equipe_operacional:$('funcEquipe').value,acesso_sistema:$('funcAcesso').value==='true',dados_rh:{...(window.EasyLocCofre.mudou($('funcRg')) ? {rg:$('funcRg').value} : {}),data_nascimento:$('funcNascimento').value,whatsapp:$('funcWhatsapp').value,endereco:$('funcEndereco').value,observacoes:$('funcObservacoes').value} },
         permissions: $('funcAcesso').value==='true' && !proprio && can('configuracoes.permissoes.editar') ? [...document.querySelectorAll('[data-permission-item]:checked')].map(x => x.value) : null });
       // Líder (Painel Logístico): gravado à parte, só por quem edita funcionários
       const idSalvo = result.id || $('funcionarioId').value;

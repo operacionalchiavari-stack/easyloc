@@ -17,6 +17,7 @@ const { fetchSincrono } = require("./sincrono");
 const { formatarData } = require("./datas");
 const { Aba, Planilha } = require("./planilha");
 const { linhasFuncionarios, fonteFuncionarios } = require('./rh-cadastro');
+const cofre = require('./cofre');
 
 // Senhas dos apps de campo (Utilities.hashSenha / conferirSenha). PBKDF2-SHA256 com 600 mil iterações (recomendação
 // OWASP): lento de propósito, para que um vazamento da planilha não permita testar senhas aos bilhões, como acontecia
@@ -155,7 +156,7 @@ class Execucao {
     if (fonteFuncionarios(planilha._id, nome)) {
       const fontes = rpcSincrono(this.cfg, 'rh_fonte_empresa', { p_planilha: planilha._id, p_aba: nome });
       const empresa = this.usuario ? this.usuario.empresaId : fontes;
-      const pessoas = empresa ? rpcSincrono(this.cfg, 'rh_funcionarios_operacionais', { p_empresa: empresa }) : [];
+      const pessoas = empresa ? cofre.abrirFuncionarios(rpcSincrono(this.cfg, 'rh_funcionarios_operacionais', { p_empresa: empresa }), empresa) : [];
       const linhas = linhasFuncionarios(planilha._id, pessoas);
       const aba = new Aba(this, planilha, { nome, linhas, colunas: linhas[0].length, formatos: ['@','@','@'], sheet_id: info.sheetId, ordem: info.ordem, versao: info.versao });
       aba._cadastroRH = true;
@@ -511,7 +512,7 @@ class Execucao {
       pode: chave => !!(ex.usuario && (ex.usuario.admin || (ex.usuario.permissoes || []).indexOf(chave) >= 0)),
       funcionarios: () => {
         if (!ex.usuario) throw new Error('Sessão necessária');
-        return rpcSincrono(cfg, 'rh_funcionarios_operacionais', { p_empresa: ex.usuario.empresaId }).map(f => ({...f,
+        return cofre.abrirFuncionarios(rpcSincrono(cfg, 'rh_funcionarios_operacionais', { p_empresa: ex.usuario.empresaId }), ex.usuario.empresaId).map(f => ({...f,
           fotoUrl: !f.foto_url ? '' : /^https?:\/\//.test(f.foto_url) ? f.foto_url : `${cfg.url}/storage/v1/object/public/avatares/${ex.usuario.empresaId}/${f.id}.jpg`
         }));
       },
@@ -649,7 +650,10 @@ class Execucao {
         return rpcSincrono(cfg, 'rh_pin_conferir', { p_empresa: ex.usuario.empresaId, p_funcionario: id, p_pin: pin });
       },
       equipeCadastro: cpf => {
-        const f = rpcSincrono(cfg, 'rh_equipe_cadastro', { p_cpf: cpf });
+        // Cofre (out/2026): o CPF fica cifrado no banco; procura pelo índice cego (HMAC). Sem a chave, pelo número.
+        let f = cofre.temChave() ? rpcSincrono(cfg, 'rh_equipe_cadastro', { p_cpf: cofre.indice(String(cpf), 'cpf') }) : null;
+        if (!f) { f = rpcSincrono(cfg, 'rh_equipe_cadastro', { p_cpf: cpf }); }
+        if (f && f.cpf) { f = { ...f, cpf: cofre.decifrar(f.cpf, `rh:${f.empresa_id}:cpf`) }; }
         return f ? {...f,fotoUrl: !f.foto_url ? '' : /^https?:\/\//.test(f.foto_url) ? f.foto_url : `${cfg.url}/storage/v1/object/public/avatares/${f.empresa_id}/${f.id}.jpg`} : null;
       },
       equipePinConferir: (empresa, id, pin) => rpcSincrono(cfg, 'rh_pin_conferir', { p_empresa: empresa, p_funcionario: id, p_pin: pin }),

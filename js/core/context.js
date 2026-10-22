@@ -92,6 +92,13 @@ window.aguardarContexto = function (timeoutMs = 10000) {
     erroAcessoFuncionario = res.error || null;
     if (!erroAcessoFuncionario) break;
   }
+  // Sessão sem a verificação em duas etapas (exigência ligada depois do login, ou verificação vencida): volta ao login
+  if (acessoFuncionario?.dois_fatores_pendente) {
+    try { await window.supabaseClient.auth.signOut(); } catch (e) {}
+    sessionStorage.removeItem("login_ok");
+    window.location.href = (location.pathname.includes("/Modulos/") ? location.pathname.slice(0, location.pathname.indexOf("/Modulos/")) + "/" : "") + "login.html";
+    return;
+  }
   if (!user || erroAcessoFuncionario || !acessoFuncionario?.ativo) {
     [...document.body.children].filter(el => !['SCRIPT', 'STYLE'].includes(el.tagName)).forEach(el => { el.hidden = true; });
     const aviso = document.createElement("p");
