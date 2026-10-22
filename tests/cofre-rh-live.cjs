@@ -18,7 +18,7 @@ async function main() {
   const anonKey = 'sb_publishable_tlm-v5vvX9jgChODJmDCtw_JqMxLtpZ';
   const ok = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
   const sufixo = crypto.randomUUID().slice(0, 8), senha = `Test-${crypto.randomUUID()}!`;
-  let empresa, chefe, outro; const pessoa = crypto.randomUUID();
+  let empresa, chefe, outro; const pessoa = crypto.randomUUID(); const criados = [];
   const novoUsuario = async (nome, role) => {
     const u = ok(await admin.auth.admin.createUser({ email: `teste-cofre-${nome}-${sufixo}@example.invalid`, password: senha, email_confirm: true })).user;
     ok(await admin.from('usuarios').insert({ id: u.id, empresa_id: empresa, nome }));
@@ -87,12 +87,35 @@ async function main() {
     const ops = cofreVercel.abrirFuncionarios(ok(await admin.rpc('rh_funcionarios_operacionais', { p_empresa: empresa })), empresa);
     assert.equal(ops.find((x) => x.id === pessoa).cpf, '12345678909');
     console.log('ok 6 - o servidor da Vercel abre o CPF e acha a pessoa pelo índice');
+
+    // 7. Cadastro de Funcionários (funcionarios-admin publicada): CPF, RG e salário gravam cifrados, com a trava ligada
+    const salvarCad = async (employee, id) => {
+      const r = await chefe.cli.functions.invoke('funcionarios-admin', { body: { action: 'save', empresa_id: empresa, id: id || null, employee } });
+      if (r.error) { let e = {}; try { e = await r.error.context.json(); } catch {} throw new Error(e.error || r.error.message); }
+      return r.data;
+    };
+    const base = { nome: 'Cadastro Teste Cofre', setor: 'Montagem', acesso_sistema: false, nivel_acesso: 'Visualizador', ativo: true };
+    const novo = await salvarCad({ ...base, pin: '4321', cpf: '987.654.321-00', salario_bruto: 2500.75, dados_rh: { rg: '7654321', endereco: 'Rua A' } });
+    criados.push(novo.id);
+    const c1 = ok(await admin.from('funcionarios_acesso').select('cpf,salario_bruto,salario_cifrado,dados_rh,cofre_mascaras').eq('id', novo.id).single());
+    assert.match(c1.cpf, /^cofre:v1:/); assert.match(c1.salario_cifrado, /^cofre:v1:/); assert.equal(Number(c1.salario_bruto), 0);
+    assert.match(c1.dados_rh.rg, /^cofre:v1:/); assert.equal(c1.dados_rh.endereco, 'Rua A');
+    let op = cofreVercel.abrirFuncionarios(ok(await admin.rpc('rh_funcionarios_operacionais', { p_empresa: empresa })), empresa).find((x) => x.id === novo.id);
+    assert.equal(op.cpf, '98765432100'); assert.equal(op.salario_bruto, 2500.75);
+    await salvarCad({ ...base, cargo: 'Montador' }, novo.id);
+    const c2 = ok(await admin.from('funcionarios_acesso').select('cpf,salario_cifrado,dados_rh,cargo').eq('id', novo.id).single());
+    assert.equal(c2.cargo, 'Montador'); assert.equal(c2.cpf, c1.cpf); assert.equal(c2.salario_cifrado, c1.salario_cifrado); assert.equal(c2.dados_rh.rg, c1.dados_rh.rg);
+    const aberto = await admin.from('funcionarios_acesso').update({ cpf: '11122233344' }).eq('id', novo.id);
+    assert.match(aberto.error?.message || '', /check constraint/, 'a trava recusa CPF aberto');
+    console.log('ok 7 - o Cadastro grava CPF, RG e salário cifrados; editar sem mexer mantém; a trava recusa texto aberto');
     console.log('OK - cofre do RH');
   } finally {
     if (empresa) {
       await admin.from('seguranca_eventos').delete().eq('empresa_id', empresa);
       await admin.from('rh_fichas').delete().eq('empresa_id', empresa);
       await admin.from('funcionarios_acesso').delete().eq('id', pessoa);
+      for (const id of criados) { await admin.from('usuarios').delete().eq('id', id); await admin.from('funcionarios_acesso').delete().eq('id', id); }
+      await admin.from('funcionarios_acesso').delete().eq('empresa_id', empresa);
     }
     for (const u of [chefe, outro]) if (u) { await admin.from('usuarios_empresas').delete().eq('user_id', u.id); await admin.from('usuarios').delete().eq('id', u.id); await admin.auth.admin.deleteUser(u.id); }
     if (empresa) await admin.from('empresas').delete().eq('id', empresa);
