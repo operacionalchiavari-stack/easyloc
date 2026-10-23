@@ -9661,7 +9661,7 @@ ela — nunca tira o cursor de outro campo (nem da tela do pedido), nem com jane
   eventos no local, Google Maps/Waze e as condições em destaque. Esc fecha.
 - Barra de etapas do pedido: com o campo "ATÉ" a barra fica compacta até 1599px e as etapas seguintes encurtam com "…".
 
-## Cofre: dados sensíveis cifrados no banco (23/out/2026, etapas 1 a 3 de 4)
+## Cofre: dados sensíveis cifrados no banco (23/out/2026, etapas 1 a 4)
 Pedido: "dados de clientes, financeiros, de conta… criptografado, algo que talvez nem eu tenha acesso". Escolha do usuário:
 mascarado na tela, ver o dado inteiro só com permissão e com registro, e **a chave fora do banco**.
 - **Como funciona**: `supabase/functions/_shared/cofre.ts` (AES-256-GCM, Web Crypto). Chave `ACERVO_COFRE_CHAVE` (32 bytes
@@ -9708,5 +9708,26 @@ mascarado na tela, ver o dado inteiro só com permissão e com registro, e **a c
   "Conta (CNPJ · PIX)" das contas a receber e listas de contas mostram só a máscara (`vis()`); "Editar conta" usa o
   `EasyLocCofre` e salva pela função. Nenhuma função do banco lê esses campos. Testes:
   `RUN_COFRE_LIVE=1 node tests/cofre-financeiro-live.cjs` e `tests/financeiro-browser.cjs` (ok 5b).
-- **Próxima etapa**: (4) CPF/CNPJ de clientes e free (com o contrato e o login do Free passando por funções protegidas) e
-  as cópias antigas na planilha do Cronograma (aba Free_Cadastros, 13 linhas).
+- **Etapa 4 — clientes, locais e Free (feita, 23/out, commit 7dfe8e0)**:
+  - **Clientes e locais**: CPF/CNPJ (`cpf_cnpj`, contexto `cliente|local:<empresa>:cpf_cnpj`) + `cpf_cnpj_hash` (índice
+    "doc", para busca pelo documento inteiro e para recusar CPF repetido) + `cofre_mascaras` (migration
+    `20261023000600`). Edge Function `cadastro-protegido` (publicada): `proteger` (cifra antes de gravar; a tela grava o
+    resto direto, como sempre), `indice` (busca), `revelar` (botão "Ver", só com `comercial.clientes.dados_sensiveis`,
+    registrado) e `documento_contrato` (o contrato do pedido recebe o documento completo com permissão de pedidos/
+    contratos, registrado como `documento_contrato`). Telas: Cadastro de Clientes e de Locais (campo protegido com "Ver",
+    lista e impressão com máscara, busca pelo índice), Central de Pedidos (cartões com máscara), `pedido.contratos.mjs`.
+  - **Free**: CPF e chave PIX de `free_cadastros` (`free:<empresa>:cpf|pix`, índice "cpf", migration `20261023000700`).
+    O app não tem login do Acervo: cadastro, login e troca de PIX vão pela Edge Function `free-protegido`
+    (`verify_jwt=false`; chama `free_app_*_cofre`, que só o servidor executa); o próprio Free vê só a máscara
+    (`free_app_dados`); o pagamento dos Free (`RH_exportarCiclo`) abre CPF/PIX por `revelar_rh` (login da equipe + 2FA +
+    `rh.dados_sensiveis.ver`, registrado). As funções antigas `free_app_cadastrar/login/pix` não são mais executáveis.
+  - **Convertido**: 24 clientes, 24 locais (script `cifrar-docs.cjs`, como o do RH) e as 12 linhas da aba Free_Cadastros da
+    planilha antiga (CPF e PIX, contexto `gs:Free_Cadastros:cpf|pix`; nada lê essa aba).
+  - **Trava** `20261023000800` (aplicada e registrada): CPF/CNPJ de clientes e locais e CPF/PIX dos Free só vazios ou
+    `cofre:v1:`. **Teste que insere cliente/local direto no banco precisa deixar o documento vazio ou passar por
+    `proteger`.**
+  - Testes: `RUN_COFRE_LIVE=1 node tests/cofre-cadastros-live.cjs`, `tests/cofre-cadastros-telas-live.cjs`,
+    `tests/cofre-free-live.cjs`; `fluxo-completo-live` e `operacao-sem-motor-live` passam com a trava.
+  - **Ainda em texto (não cobertos, decisão pendente)**: o texto já salvo dos contratos (`contratos_pedidos.conteudo_final`,
+    1 contrato com CPF); na planilha antiga do motor, "Fechamentos Funcionarios" (96 linhas com CPF e salário, usada pela
+    Central de Metas) e "CORRIDAS UBER"/"(ANTIGO)CORRIDAS UBER" (PIX dos motoristas, ainda usada pelo Uber).
