@@ -90,6 +90,8 @@ export function mascara(campo: string, valor: unknown): string {
   if (!t) return "";
   const d = soDigitos(t);
   if (campo === "cpf") return `•••.•••.•••-${d.slice(-2)}`;
+  if (campo === "cpf_cnpj" && d.length === 11) return `•••.•••.•••-${d.slice(-2)}`;
+  if (campo === "cpf_cnpj" && d.length === 14) return `••.•••.•••/••••-${d.slice(-2)}`;
   if (campo === "salario") return "R$ ••••••";
   if ((campo === "pix" || campo === "pix_chave") && t.includes("@")) return `${t[0]}•••@${t.split("@")[1]}`;
   const fim = (d || t).slice(-2);
@@ -158,3 +160,16 @@ export async function protegerCampos(dados: Record<string, any>, campos: readonl
 }
 export const CAMPOS_FIN_CONTA = ["agencia", "conta", "titular_documento", "pix_chave"] as const;
 export const contextoFin = (empresaId: string, campo: string) => `fin:${empresaId}:${campo}`;
+
+// CPF/CNPJ de clientes e locais. Contexto "cliente:<empresa>:cpf_cnpj" / "local:<empresa>:cpf_cnpj";
+// índice cego "doc" (procura e checagem de duplicado sem guardar o número aberto).
+export const contextoDoc = (tabela: "cliente" | "local", empresaId: string) => `${tabela}:${empresaId}:cpf_cnpj`;
+export function documentoLimpo(valor: unknown) {
+  const d = soDigitos(valor);
+  if (estaCifrado(String(valor ?? ""))) throw new Error("Valor protegido inválido.");
+  if (d && d.length !== 11 && d.length !== 14) throw new Error("CPF deve ter 11 dígitos e CNPJ 14.");
+  return d;
+}
+
+// Free (app de campo): CPF e chave PIX. Contexto "free:<empresa>:<campo>"; índice do CPF = indice(cpf, "cpf").
+export const contextoFree = (empresaId: string, campo: "cpf" | "pix") => `free:${empresaId}:${campo}`;

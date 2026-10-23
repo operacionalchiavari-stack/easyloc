@@ -122,15 +122,16 @@ root.dataset.initialized = "true";
       return false;
     }
 
-    if (!cpfCnpj.value.trim()) {
+    const docGuardado = cpfCnpj.dataset.cofreProtegido === "1" && cpfCnpj.dataset.cofreAlterado !== "1";
+    if (!docGuardado && !cpfCnpj.value.trim()) {
       mostrarAlerta("CPF / CNPJ é obrigatório");
       cpfCnpj.focus();
       return false;
     }
 
     if (
-      tipoPessoa.value === "PF" ||
-      tipoPessoa.value === "Pessoa Física"
+      !docGuardado && (tipoPessoa.value === "PF" ||
+      tipoPessoa.value === "Pessoa Física")
     ) {
       if (!validarCPF(cpfCnpj.value)) {
         mostrarAlerta("CPF inválido. Verifique os números.");
@@ -320,6 +321,7 @@ function clientes_openAdd() {
     tag.style.opacity = "1";
   });
 
+  window.EasyLocCofre.preparar(cpfCnpj, { protegido: false });
   document.querySelector(".btn-save").style.display = "inline-block";
   document.getElementById("catalogoAtivo").value = "false";
   atualizarEstadoSenhaCatalogo(false);
@@ -425,11 +427,19 @@ function coletarTagsSelecionadas() {
 ===================================================== */
 async function verificarDuplicidadeCliente({
   cpf,
+  cpfHash,
   nome,
   empresaId,
   clienteId
 }) {
-  const cpfLimpo = soNumeros(cpf);
+  const cpfLimpo = cpfHash ? "" : soNumeros(cpf);
+  if (cpfHash) {
+    let query = supabase.from("clientes_empresas").select("id").eq("empresa_id", empresaId).eq("cpf_cnpj_hash", cpfHash);
+    if (clienteId) query = query.neq("id", clienteId);
+    const { data, error } = await query;
+    if (error) return "Erro ao verificar CPF.";
+    if (data?.length) return "Já existe um cliente com este CPF cadastrado nesta empresa.";
+  }
   const nomeLimpo = nome.trim();
 
   if (cpfLimpo) {
@@ -505,9 +515,15 @@ async function clientes_salvar() {
   try {
     const empresaId = await getEmpresaAtualId();
 
+    // CPF/CNPJ vai cifrado (cofre): só quando a pessoa digitou algo no campo.
+    let doc = null;
+    if (window.EasyLocCofre.mudou(cpfCnpj)) {
+      doc = await window.EasyLocCofre.chamar(supabase, "cadastro-protegido", { action: "proteger", tabela: "cliente", empresa_id: empresaId, documento: soNumeros(cpfCnpj.value) });
+    }
+
     // VERIFICA CPF OU NOME JÁ CADASTRADOS
     const existe = await verificarDuplicidadeCliente({
-      cpf: soNumeros(cpfCnpj.value),
+      cpfHash: doc?.cpf_cnpj_hash || null,
       nome: nome.value,
       empresaId,
       clienteId: clienteAtualId // ESSENCIAL
@@ -520,7 +536,6 @@ async function clientes_salvar() {
 
     const payload = {
       nome_razao: nome.value,
-      cpf_cnpj: soNumeros(cpfCnpj.value),
       telefone: telefone.value,
       email: email.value,
       endereco: endereco.value,
@@ -536,6 +551,12 @@ async function clientes_salvar() {
       // TAGS (JSON)
       tags: coletarTagsSelecionadas()
     };
+    if (doc) {
+      const atual = (clientesCache || []).find((x) => x.id === clienteAtualId);
+      payload.cpf_cnpj = doc.cpf_cnpj;
+      payload.cpf_cnpj_hash = doc.cpf_cnpj_hash;
+      payload.cofre_mascaras = { ...(atual?.cofre_mascaras || {}), cpf_cnpj: doc.mascara || "" };
+    }
 
     let query = supabase.from("clientes_empresas");
     let result;
@@ -602,7 +623,13 @@ async function abrirDetalhesCliente(cliente) {
       ?"Pessoa Jurídica"
       : "Pessoa Física";
 
-  cpfCnpj.value = cliente.cpf_cnpj || "";
+  cpfCnpj.value = "";
+  window.EasyLocCofre.preparar(cpfCnpj, {
+    protegido: !!cliente.cpf_cnpj,
+    mascara: window.EasyLocCofre.visivel(cliente, "cpf_cnpj"),
+    podeRevelar: async () => { await window.EasyLocPermissions?.load?.(); return !!window.EasyLocPermissions?.hasPermission?.("comercial.clientes.dados_sensiveis"); },
+    revelar: async () => (await window.EasyLocCofre.chamar(supabase, "cadastro-protegido", { action: "revelar", tabela: "cliente", empresa_id: cliente.empresa_id, id: cliente.id })).documento
+  });
   nome.value = cliente.nome_razao || "";
   telefone.value = cliente.telefone || "";
   email.value = cliente.email || "";
@@ -868,7 +895,7 @@ paginaClientes.forEach(c => {
 
   tr.innerHTML = `
     <td>${esc(c.nome_razao)}</td>
-    <td>${esc(c.cpf_cnpj)}</td>
+    <td>${esc(window.EasyLocCofre.visivel(c, "cpf_cnpj"))}</td>
     <td>${esc(c.telefone)}</td>
     <td>${esc(c.email)}</td>
 
@@ -899,6 +926,7 @@ window.EasyLocListPager?.render(
 );
 }
 
+let buscaDocHash = { doc: "", hash: null };
 function aplicarFiltros() {
   const texto =
     document.getElementById("searchInput")?.value.toLowerCase() || "";
@@ -916,11 +944,18 @@ function aplicarFiltros() {
 
   let filtrados = [...base];
 
-  // BUSCA
+  // BUSCA (CPF/CNPJ inteiro é procurado pelo índice do cofre)
+  const buscaDoc = texto.replace(/\D/g, "");
+  if ((buscaDoc.length === 11 || buscaDoc.length === 14) && buscaDocHash.doc !== buscaDoc) {
+    buscaDocHash = { doc: buscaDoc, hash: null };
+    getEmpresaAtualId().then((empresaId) => window.EasyLocCofre.chamar(supabase, "cadastro-protegido", { action: "indice", tabela: "cliente", empresa_id: empresaId, documento: buscaDoc }))
+      .then((r) => { if (buscaDocHash.doc === buscaDoc) { buscaDocHash.hash = r.hash; aplicarFiltros(); } }).catch(() => {});
+  }
   if (texto) {
     filtrados = filtrados.filter(c =>
       c.nome_razao?.toLowerCase().includes(texto) ||
-      c.cpf_cnpj?.includes(texto) ||
+      (!String(c.cpf_cnpj || "").startsWith("cofre:") && c.cpf_cnpj?.includes(texto)) ||
+      (buscaDocHash.hash && buscaDocHash.doc === buscaDoc && c.cpf_cnpj_hash === buscaDocHash.hash) ||
       c.email?.toLowerCase().includes(texto)
     );
   }
@@ -1214,7 +1249,7 @@ function clientes_card_impressao(c) {
   return `
     <tr>
 <td>${esc(c.nome_razao)}</td>
-<td>${esc(c.cpf_cnpj)}</td>
+<td>${esc(window.EasyLocCofre.visivel(c, "cpf_cnpj"))}</td>
 <td>${esc(c.telefone)}</td>
 <td>${esc(c.email)}</td>
       <td>${c.endereco || ""} ${c.numero_endereco || ""}</td>

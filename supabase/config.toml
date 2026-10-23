@@ -491,3 +491,16 @@ enabled = true
 # Exige o login da equipe; grava agência, conta, CNPJ/CPF e chave PIX das contas cifrados e mostra o dado completo só com financeiro.dados_bancarios.ver.
 verify_jwt = true
 entrypoint = "./functions/financeiro-protegido/index.ts"
+
+[functions.cadastro-protegido]
+enabled = true
+# Exige o login da equipe; cifra o CPF/CNPJ de clientes e locais e mostra o documento completo só com permissão (registrado).
+verify_jwt = true
+entrypoint = "./functions/cadastro-protegido/index.ts"
+
+[functions.free-protegido]
+enabled = true
+# Pública de propósito: o app do Free não tem login do Acervo. Cifra CPF e PIX no cadastro, faz o login pelo índice do CPF,
+# troca o PIX pelo token do app; revelar_rh confere sozinha o login da equipe, a 2FA e rh.dados_sensiveis.ver.
+verify_jwt = false
+entrypoint = "./functions/free-protegido/index.ts"

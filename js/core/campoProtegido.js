@@ -26,7 +26,7 @@
     const o = opcoes || {};
     const caixa = envolver(input);
     caixa.querySelectorAll(".cofre-ver").forEach((b) => b.remove());
-    input.dataset.cofreAlterado = "";
+    if (!o.manterValor) input.dataset.cofreAlterado = "";
     if (!input.dataset.cofreDica) input.dataset.cofreDica = input.placeholder || "";
     input.oninput = () => { input.dataset.cofreAlterado = "1"; };
     if (!o.protegido) {
@@ -35,10 +35,20 @@
       return;
     }
     input.dataset.cofreProtegido = "1";
-    input.value = "";
+    if (!o.manterValor) input.value = "";
     input.placeholder = (o.mascara || "••••") + "  · protegido";
     input.title = "Dado protegido. Para trocar, digite o novo valor; em branco, fica como está.";
     if (!o.podeRevelar || typeof o.revelar !== "function") return;
+    // podeRevelar pode ser uma função (ex.: espera as permissões carregarem); o botão entra quando ela disser sim,
+    // desde que o campo não tenha sido preparado de novo para outro cadastro nesse meio tempo.
+    if (typeof o.podeRevelar === "function") {
+      const vez = String(Number(input.dataset.cofreVez || 0) + 1);
+      input.dataset.cofreVez = vez;
+      Promise.resolve(o.podeRevelar()).then((sim) => {
+        if (sim && input.dataset.cofreVez === vez) preparar(input, { ...o, podeRevelar: true, manterValor: true });
+      }).catch(() => {});
+      return;
+    }
     const botao = document.createElement("button");
     botao.type = "button";
     botao.className = "cofre-ver";
@@ -74,5 +84,24 @@
     return (data && data.valores) || {};
   }
 
-  window.EasyLocCofre = { preparar, mudou, revelarRh };
+  // Chama uma Edge Function do cofre e devolve a resposta (ou lança o erro que ela mandou).
+  async function chamar(client, funcao, body) {
+    const { data, error } = await client.functions.invoke(funcao, { body });
+    let msg = data && data.error;
+    if (error && !msg) {
+      try { msg = (await error.context.json()).error; } catch (_) { msg = error.message; }
+    }
+    if (msg) throw new Error(msg);
+    return data || {};
+  }
+
+  // Valor que pode aparecer na tela: a máscara (se o dado estiver no cofre) ou o próprio valor (anterior ao cofre).
+  const visivel = (linha, campo) => {
+    const v = linha && linha[campo];
+    if (!v) return "";
+    if (String(v).startsWith("cofre:")) return (linha.cofre_mascaras || {})[campo] || "••••";
+    return String(v);
+  };
+
+  window.EasyLocCofre = { preparar, mudou, revelarRh, chamar, visivel };
 })();

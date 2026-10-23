@@ -136,14 +136,15 @@ function validarLocalCompleto() {
     return false;
   }
 
-  if (!cpfCnpj.value.trim()) {
+  const docGuardado = cpfCnpj.dataset.cofreProtegido === "1" && cpfCnpj.dataset.cofreAlterado !== "1";
+  if (!docGuardado && !cpfCnpj.value.trim()) {
     mostrarAlerta("CPF / CNPJ Ã© obrigatÃ³rio");
     cpfCnpj.focus();
     return false;
   }
 
   if (
-    locaisTipoPessoa.value === "Pessoa FÃ­sica" &&
+    !docGuardado && locaisTipoPessoa.value === "Pessoa FÃ­sica" &&
     !validarCPF(cpfCnpj.value)
   ) {
     mostrarAlerta("CPF invÃ¡lido. Verifique os nÃºmeros.");
@@ -573,6 +574,7 @@ function Locais_openAdd() {
   document
     .querySelectorAll("#locais-modal select")
     .forEach(e => (e.disabled = false));
+  window.EasyLocCofre.preparar(document.getElementById("locaisCpfCnpj"), { protegido: false });
 
 document.querySelectorAll(".tag").forEach(tag => {
   tag.classList.remove("selected");
@@ -683,8 +685,15 @@ function coletarTagsSelecionadas() {
 /* =====================================================
    DUPLICIDADE â€“ LOCAIS
 ===================================================== */
-async function verificarDuplicidadeLocal({ cpf, nome, empresaId, localId }) {
-  const cpfLimpo = soNumeros(cpf);
+async function verificarDuplicidadeLocal({ cpf, cpfHash, nome, empresaId, localId }) {
+  const cpfLimpo = cpfHash ? "" : soNumeros(cpf);
+  if (cpfHash) {
+    let query = window.supabaseClient.from("locais_empresas").select("id").eq("empresa_id", empresaId).eq("cpf_cnpj_hash", cpfHash);
+    if (localId) query = query.neq("id", localId);
+    const { data, error } = await query;
+    if (error) return "Erro ao verificar CPF.";
+    if (data && data.length > 0) return "Já existe um local com este CPF/CNPJ cadastrado nesta empresa.";
+  }
   const nomeLimpo = nome.trim();
 
   // ðŸ”’ VERIFICA CPF DUPLICADO (MESMA EMPRESA)
@@ -749,8 +758,14 @@ async function Locais_salvar() {
     const empresaId = await getEmpresaIdCache();
 
     // ðŸ”’ VERIFICA CPF OU NOME JÃ CADASTRADOS
+    // CPF/CNPJ vai cifrado (cofre): só quando a pessoa digitou algo no campo.
+    const campoDoc = document.getElementById("locaisCpfCnpj");
+    let doc = null;
+    if (window.EasyLocCofre.mudou(campoDoc)) {
+      doc = await window.EasyLocCofre.chamar(window.supabaseClient, "cadastro-protegido", { action: "proteger", tabela: "local", empresa_id: empresaId, documento: soNumeros(campoDoc.value) });
+    }
 const existe = await verificarDuplicidadeLocal({
-  cpf: soNumeros(document.getElementById("locaisCpfCnpj").value),
+  cpfHash: doc?.cpf_cnpj_hash || null,
   nome: document.getElementById("locaisNome").value,
   empresaId,
   localId: localAtualId
@@ -764,7 +779,6 @@ const existe = await verificarDuplicidadeLocal({
 
 const payload = {
   nome_razao: document.getElementById("locaisNome").value,
-  cpf_cnpj: soNumeros(document.getElementById("locaisCpfCnpj").value),
   telefone: document.getElementById("locaisTelefone").value,
   email: document.getElementById("locaisEmail").value,
   endereco: document.getElementById("locais-endereco").value,
@@ -787,6 +801,12 @@ const payload = {
   empresa_id: empresaId,
   tags: coletarTagsSelecionadas()
 };
+if (doc) {
+  const atual = (locaisCache || []).find((x) => x.id === localAtualId);
+  payload.cpf_cnpj = doc.cpf_cnpj;
+  payload.cpf_cnpj_hash = doc.cpf_cnpj_hash;
+  payload.cofre_mascaras = { ...(atual?.cofre_mascaras || {}), cpf_cnpj: doc.mascara || "" };
+}
 
 
     let query = supabase.from("locais_empresas");
@@ -856,7 +876,15 @@ function abrirDetalhesLocal(local) {
       local.tipo_pessoa === "PJ" ? "Pessoa JurÃ­dica" : "Pessoa FÃ­sica";
   }
 
-  if (campos.cpfCnpj) campos.cpfCnpj.value = local.cpf_cnpj || "";
+  if (campos.cpfCnpj) {
+    campos.cpfCnpj.value = "";
+    window.EasyLocCofre.preparar(campos.cpfCnpj, {
+      protegido: !!local.cpf_cnpj,
+      mascara: window.EasyLocCofre.visivel(local, "cpf_cnpj"),
+      podeRevelar: async () => { await window.EasyLocPermissions?.load?.(); return !!window.EasyLocPermissions?.hasPermission?.("comercial.clientes.dados_sensiveis"); },
+      revelar: async () => (await window.EasyLocCofre.chamar(window.supabaseClient, "cadastro-protegido", { action: "revelar", tabela: "local", empresa_id: await getEmpresaIdCache(), id: local.id })).documento
+    });
+  }
   if (campos.nome) campos.nome.value = local.nome_razao || "";
   if (campos.telefone) campos.telefone.value = local.telefone || "";
   if (campos.email) campos.email.value = local.email || "";
@@ -940,6 +968,8 @@ async function Locais_carregar() {
   id,
   nome_razao,
   cpf_cnpj,
+  cpf_cnpj_hash,
+  cofre_mascaras,
   telefone,
   email,
   endereco,
@@ -1109,7 +1139,7 @@ function renderizarTabelaLocais(locais) {
 
     tr.innerHTML = `
       <td>${esc(l.nome_razao || "-")}</td>
-      <td>${esc(l.cpf_cnpj || "-")}</td>
+      <td>${esc(window.EasyLocCofre.visivel(l, "cpf_cnpj") || "-")}</td>
       <td>${esc(l.telefone || "-")}</td>
       <td>${esc(l.email || "-")}</td>
 
@@ -1136,6 +1166,7 @@ function renderizarTabelaLocais(locais) {
   );
 }
 
+let locaisBuscaDoc = { doc: "", hash: null };
 function Locais_aplicarFiltros() {
   const texto =
     document.getElementById("locaisSearchInput")?.value.toLowerCase() || "";
@@ -1152,9 +1183,16 @@ function Locais_aplicarFiltros() {
 
   // ðŸ” BUSCA
   if (texto) {
+    const buscaDoc = texto.replace(/\D/g, "");
+    if ((buscaDoc.length === 11 || buscaDoc.length === 14) && locaisBuscaDoc.doc !== buscaDoc) {
+      locaisBuscaDoc = { doc: buscaDoc, hash: null };
+      getEmpresaIdCache().then((empresaId) => window.EasyLocCofre.chamar(window.supabaseClient, "cadastro-protegido", { action: "indice", tabela: "local", empresa_id: empresaId, documento: buscaDoc }))
+        .then((r) => { if (locaisBuscaDoc.doc === buscaDoc) { locaisBuscaDoc.hash = r.hash; Locais_aplicarFiltros(); } }).catch(() => {});
+    }
     filtrados = filtrados.filter(l =>
       l.nome_razao?.toLowerCase().includes(texto) ||
-      l.cpf_cnpj?.includes(texto) ||
+      (!String(l.cpf_cnpj || "").startsWith("cofre:") && l.cpf_cnpj?.includes(texto)) ||
+      (locaisBuscaDoc.hash && locaisBuscaDoc.doc === buscaDoc && l.cpf_cnpj_hash === locaisBuscaDoc.hash) ||
       l.email?.toLowerCase().includes(texto)
     );
   }
@@ -1563,7 +1601,7 @@ function Locais_linha_impressao(l) {
   return `
     <tr>
       <td>${l.nome_razao || "-"}</td>
-      <td>${l.cpf_cnpj || "-"}</td>
+      <td>${esc(window.EasyLocCofre.visivel(l, "cpf_cnpj") || "-")}</td>
       <td>${l.telefone || "-"}</td>
       <td>${l.email || "-"}</td>
       <td>${l.endereco || ""} ${l.numero_endereco || ""}</td>
@@ -1681,7 +1719,7 @@ function Locais_card_impressao(l) {
   return `
     <tr>
       <td>${l.nome_razao || "-"}</td>
-      <td>${l.cpf_cnpj || "-"}</td>
+      <td>${esc(window.EasyLocCofre.visivel(l, "cpf_cnpj") || "-")}</td>
       <td>${l.telefone || "-"}</td>
       <td>${l.email || "-"}</td>
       <td>${l.endereco || ""} ${l.numero_endereco || ""}</td>

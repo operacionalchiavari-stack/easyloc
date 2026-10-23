@@ -116,7 +116,8 @@ function cpfValido() {
     const appF = await abrir(campo, "Modulos/Chiavari/Cronograma/free.html");
     const cadF = await L(appF, "FREE_appCadastrar", { nome: "Teste Free " + suffix, cpf, telefone: "11999990000", senha: "Senha123", pix: "teste@pix", foto: FOTO });
     assert.ok(cadF.token);
-    freeId = check(await admin.from("free_cadastros").select("id,status,foto_url").eq("cpf", cpf).single());
+    freeId = check(await admin.from("free_cadastros").select("id,status,foto_url,cpf").eq("nome", "Teste Free " + suffix).single());
+    assert.ok(String(freeId.cpf).startsWith("cofre:v1:"), "CPF do Free gravado cifrado");
     assert.ok(/operacao-fotos/.test(freeId.foto_url || ""), "foto do cadastro foi pro Storage");
     const login = await L(appF, "FREE_appLogin", cpf, "Senha123");
     const dadosF = await L(appF, "FREE_appCarregar", login.token);

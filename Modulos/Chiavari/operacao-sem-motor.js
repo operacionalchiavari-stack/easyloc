@@ -50,6 +50,18 @@
     return r.data;
   }
   async function rpc(nome, args) { var c = await sb(); return q(c.rpc(nome, args || {})); }
+  // CPF e PIX dos Free ficam no cofre: cadastro, login e troca de PIX passam pela Edge Function free-protegido.
+  async function funcaoFree(body) {
+    var c = await sb(), r = await c.functions.invoke("free-protegido", { body: body }), msg = r.data && r.data.error;
+    if (r.error && !msg) { try { msg = (await r.error.context.json()).error; } catch (e) { msg = r.error.message; } }
+    if (msg) { throw new Error(msg); }
+    return r.data || {};
+  }
+  // o que as telas podem mostrar de um dado do cofre: a máscara (ou o valor antigo, anterior ao cofre)
+  function visivelCofre(valor, mascaras, campo) {
+    if (!valor) { return ""; }
+    return String(valor).indexOf("cofre:") === 0 ? ((mascaras || {})[campo] || "••••") : String(valor);
+  }
   async function tudo(montar) { // lê além do limite de 1000 linhas
     var lista = [];
     for (var de = 0; ; de += 1000) {
@@ -232,9 +244,10 @@
     var vagas = await tudo(function () { var x = c.from("free_vagas_v").select("*").eq("empresa_id", emp); return filtroVagas ? filtroVagas(x) : x; });
     var todasIns = await tudo(function () { return c.from("free_inscricoes").select("*").eq("empresa_id", emp).order("confirmado_em"); });
     var unis = await tudo(function () { return c.from("free_rh_uniforme").select("*").eq("empresa_id", emp); });
-    var cads = await tudo(function () { return c.from("free_cadastros").select("id,nome,cpf,telefone,foto_url,status,chave_pix,created_at,ultimo_acesso").eq("empresa_id", emp); });
+    var cads = await tudo(function () { return c.from("free_cadastros").select("id,nome,cpf,telefone,foto_url,status,chave_pix,cofre_mascaras,created_at,ultimo_acesso").eq("empresa_id", emp); });
     var mU = {}; unis.forEach(function (u) { mU[u.inscricao_id] = u; });
-    var mC = {}; cads.forEach(function (x) { mC[x.id] = x; });
+    // as telas internas recebem CPF e PIX só com a máscara (o valor completo, só no pagamento, com permissão)
+    var mC = {}; cads.forEach(function (x) { mC[x.id] = Object.assign({}, x, { cpf: visivelCofre(x.cpf, x.cofre_mascaras, "cpf"), chave_pix: visivelCofre(x.chave_pix, x.cofre_mascaras, "pix") }); });
     var todasVagas = filtroVagas ? await tudo(function () { return c.from("free_vagas_v").select("*").eq("empresa_id", emp); }) : vagas;
     var V = vagas.map(vagaLegado), TV = todasVagas.map(vagaLegado);
     var I = todasIns.map(function (i) { return insLegado(i, { cpf: (mC[i.free_id] || {}).cpf || "", uniforme: mU[i.id] ? mU[i.id].avaliacao : "" }); });
@@ -806,6 +819,11 @@
   };
   L.RH_exportarCiclo = async function (t, ini) {
     await exigirRh(); var ciclo = await rhCiclo(ini);
+    // CPF e PIX completos para pagar: só com a permissão de ver dados sensíveis do RH (fica registrado); sem ela, sai a máscara
+    var ids = []; ciclo.eventos.forEach(function (ev) { ev.pessoas.forEach(function (p) { if (ids.indexOf(p.idFree) < 0) { ids.push(p.idFree); } }); });
+    var abertos = {};
+    if (ids.length) { try { abertos = (await funcaoFree({ action: "revelar_rh", empresa_id: await empresa(), ids: ids, motivo: "exportar pagamento dos free" })).valores || {}; } catch (e) { abertos = {}; } }
+    ciclo.eventos.forEach(function (ev) { ev.pessoas.forEach(function (p) { var a = abertos[p.idFree]; if (a) { p.cpf = a.cpf; p.pix = a.pix; } }); });
     var linhas = [["Data", "Evento", "Etapa", "Free", "CPF", "Chave PIX", "Check-in", "Check-out", "Horas", "Hora extra", "Diária", "Hora extra (R$)", "Ajuste", "Motivo do ajuste", "Total", "Situação", "Observações", "Pago em", "Forma"]];
     ciclo.eventos.forEach(function (ev) { ev.pessoas.forEach(function (p) { var k = p.calc, g = p.pagamento || {}; linhas.push([br(ev.dataISO), ev.cliente + " (#" + ev.pedido + ")", ev.etapa, p.nome, p.cpf, p.pix, p.checkinEm, p.checkoutEm, k.horas, k.extraTexto, k.diaria, g.pagarExtra ? k.extraValor : 0, g.ajuste || 0, g.motivoAjuste || "", k.total, k.situacao, k.motivos.join("; "), g.pagoEm || "", g.forma || ""]); }); });
     var csv = "﻿" + linhas.map(function (l) { return l.map(function (x) { return '"' + String(x == null ? "" : x).replace(/"/g, '""') + '"'; }).join(";"); }).join("\r\n");
@@ -928,14 +946,14 @@
   L.FREE_appCadastrar = async function (dados) {
     dados = dados || {};
     if (!dados.foto) { throw new Error("Tire uma foto do rosto para o cadastro."); }
-    var r = await rpc("free_app_cadastrar", { p_dados: { nome: dados.nome, cpf: dados.cpf, telefone: dados.telefone, senha: dados.senha, pix: dados.pix } });
+    var r = await funcaoFree({ action: "cadastrar", dados: { nome: dados.nome, cpf: dados.cpf, telefone: dados.telefone, senha: dados.senha, pix: dados.pix } });
     try { localStorage.setItem("freePasta", r.pasta); } catch (e) {}
     var url = await subirFoto(dados.foto, r.pasta);
     await rpc("free_app_foto", { p_token: r.token, p_url: url });
     return { token: r.token };
   };
   L.FREE_appLogin = async function (cpf, senha) {
-    var r = await rpc("free_app_login", { p_cpf: cpf, p_senha: senha });
+    var r = await funcaoFree({ action: "login", cpf: cpf, senha: senha });
     try { localStorage.setItem("freePasta", r.pasta); } catch (e) {}
     return { token: r.token };
   };
@@ -982,7 +1000,7 @@
   L.FREE_appConfirmar = async function (t, idVaga) { await rpc("free_app_confirmar", { p_token: t, p_vaga: idVaga }); return L.FREE_appCarregar(t); };
   L.FREE_appCancelar = async function (t, idVaga, motivo) { await rpc("free_app_cancelar", { p_token: t, p_vaga: idVaga, p_motivo: motivo || "" }); return L.FREE_appCarregar(t); };
   L.FREE_appCiente = async function (t, idVaga) { await rpc("free_app_ciente", { p_token: t, p_vaga: idVaga }); return L.FREE_appCarregar(t); };
-  L.FREE_appSalvarPix = async function (t, pix) { await rpc("free_app_pix", { p_token: t, p_pix: pix }); return L.FREE_appCarregar(t); };
+  L.FREE_appSalvarPix = async function (t, pix) { await funcaoFree({ action: "pix", token: t, pix: pix }); return L.FREE_appCarregar(t); };
   L.FREE_appPresenca = async function (t, idVaga, codigo, gps) {
     gps = Object.assign({}, gps || {});
     if (gps.foto) { gps.foto = await subirFoto(gps.foto, pastaFree()); }

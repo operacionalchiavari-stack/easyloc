@@ -97,6 +97,20 @@ async function carregarCliente(){
   return state.cliente;
 }
 
+// CPF/CNPJ do cliente fica cifrado no banco (cofre): o contrato pede o documento completo ao servidor,
+// que confere a permissão e registra o uso. Uma vez por cliente enquanto a tela estiver aberta.
+const documentosContrato = new Map();
+async function documentoCliente(cliente){
+  const valor = String(cliente?.cpf_cnpj || "");
+  if(!valor.startsWith("cofre:")) return valor;
+  if(documentosContrato.has(cliente.id)) return documentosContrato.get(cliente.id);
+  const { data, error } = await state.supabase.functions.invoke("cadastro-protegido", {
+    body: { action: "documento_contrato", empresa_id: state.empresaId, id: cliente.id, pedido_id: new URLSearchParams(location.search).get("pedido") || null } });
+  const documento = !error && data && !data.error ? String(data.documento || "") : "";
+  documentosContrato.set(cliente.id, documento);
+  return documento;
+}
+
 async function carregarLocal(){
   const localId = $("localIdHidden")?.value || "";
   if(!localId || state.local?.id === localId) return state.local || {};
@@ -175,7 +189,7 @@ async function coletarDadosContrato(){
     },
     cliente: {
       nome: $("clienteInput")?.value?.trim() || "",
-      documento: cliente.cpf_cnpj || "",
+      documento: await documentoCliente(cliente),
       telefone: $("telefoneInput")?.value?.trim() || cliente.telefone || "",
       email: cliente.email || "",
     },

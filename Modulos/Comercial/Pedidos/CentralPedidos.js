@@ -440,7 +440,10 @@
   function iniciais(nome){
     return String(nome || "?").split(/\s+/).filter((p) => p && !/^(de|da|do|dos|das|e)$/i.test(p)).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
   }
-  function infoCadastro(rotulo, valor, icone){
+  // CPF/CNPJ no cofre: mostra só a máscara.
+function docVisivel(r){ const v = String(r?.cpf_cnpj || ""); return v.startsWith("cofre:") ? ((r.cofre_mascaras || {}).cpf_cnpj || "••••") : v; }
+
+function infoCadastro(rotulo, valor, icone){
     const texto = String(valor ?? "").trim();
     if(!texto || texto === "-") return "";
     return `<div class="cad-info"><i data-lucide="${icone}" aria-hidden="true"></i><div><span>${escapeHtml(rotulo)}</span><strong>${escapeHtml(texto)}</strong></div></div>`;
@@ -496,7 +499,7 @@
         <section class="cad-bloco cad-grade">
           ${infoCadastro("Telefone", formatPhone(telefone), "phone")}
           ${infoCadastro("E-mail", email, "mail")}
-          ${infoCadastro("CPF / CNPJ", registro?.cpf_cnpj, "id-card")}
+          ${infoCadastro("CPF / CNPJ", docVisivel(registro), "id-card")}
           ${infoCadastro("Ponto de referência", registro?.ponto_referencia, "flag")}
           ${infoCadastro("Observações", registro?.observacoes || registro?.observacao, "sticky-note")}
         </section>
@@ -533,7 +536,7 @@
           ${infoCadastro("Responsável", registro?.responsavel, "user")}
           ${infoCadastro("Telefone", formatPhone(telefone), "phone")}
           ${infoCadastro("E-mail", email, "mail")}
-          ${infoCadastro("CPF / CNPJ", registro?.cpf_cnpj, "id-card")}
+          ${infoCadastro("CPF / CNPJ", docVisivel(registro), "id-card")}
           ${infoCadastro("Última locação", dataBR(registro?.ultima_locacao), "calendar")}
           ${infoCadastro("Observações", registro?.observacoes || registro?.observacao, "sticky-note")}
         </section>`;

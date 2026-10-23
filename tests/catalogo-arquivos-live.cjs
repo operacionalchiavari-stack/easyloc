@@ -23,7 +23,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     owner = check(await admin.auth.admin.createUser({ email: "arquivos-" + sfx + "@example.invalid", password: senha, email_confirm: true })).user;
     check(await admin.from("usuarios_empresas").insert({ user_id: owner.id, empresa_id: EMPRESA, role: "admin" }));
     check(await equipe.auth.signInWithPassword({ email: owner.email, password: senha }));
-    cliente = check(await admin.from("clientes_empresas").insert({ empresa_id: EMPRESA, tipo_pessoa: "PF", nome_razao: "Decoradora Arquivos " + sfx, cpf_cnpj: "00000000000", telefone: "11999990000", email: emailDec, endereco: "Rua Teste, 1", status: "Ativo" }).select("id").single()).id;
+    cliente = check(await admin.from("clientes_empresas").insert({ empresa_id: EMPRESA, tipo_pessoa: "PF", nome_razao: "Decoradora Arquivos " + sfx, telefone: "11999990000", email: emailDec, endereco: "Rua Teste, 1", status: "Ativo" }).select("id").single()).id;
     check(await equipe.rpc("configurar_acesso_catalogo", { p_cliente_id: cliente, p_email: emailDec, p_senha: "SenhaDec123", p_ativo: true }));
     const login = check(await anon.rpc("catalogo_login", { p_email: emailDec, p_senha: "SenhaDec123" }));
     assert.ok(login?.token, "decoradora entra no catálogo");
