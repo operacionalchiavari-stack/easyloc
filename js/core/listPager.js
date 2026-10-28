@@ -1,142 +1,89 @@
 (function () {
   "use strict";
 
-  const DEFAULT_PER_PAGE = 10;
+  /* Out/2026: as listas carregam em blocos ao rolar (igual a de Itens Cadastrados), no lugar das páginas
+     numeradas. Mesma interface de antes: o módulo chama slice() para saber quais linhas desenhar e render()
+     depois de desenhar. Uma lista nova (filtro, busca, recarga) volta para o primeiro bloco; chegar perto do
+     fim da tabela desenha o próximo bloco. */
+  const BLOCO = 20;
   const state = new Map();
 
   function ensureStyle() {
     if (document.getElementById("easyloc-list-pager-style")) return;
-
     const style = document.createElement("style");
     style.id = "easyloc-list-pager-style";
     style.textContent = `
-      .easyloc-list-pager {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 14px 16px;
-        border-top: 1px solid var(--borda, #e5e7eb);
-        background: #fff;
-        color: var(--texto-suave, #64748b);
-        font-size: 14px;
-      }
-      .easyloc-list-pager-actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .easyloc-list-pager button {
-        min-width: 36px;
-        height: 36px;
-        border: 1px solid var(--borda, #e5e7eb);
-        border-radius: 10px;
-        background: #fff;
-        color: var(--azul, #2E1F1F);
-        font: inherit;
-        font-weight: 700;
-        cursor: pointer;
-      }
-      .easyloc-list-pager button.active {
-        border-color: var(--color-primary, var(--laranja, #2E1F1F));
-        color: var(--color-primary, var(--laranja, #2E1F1F));
-      }
-      .easyloc-list-pager button:disabled {
-        opacity: .45;
-        cursor: not-allowed;
-      }
+      .easyloc-list-pager{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 16px;border-top:1px solid var(--borda,#e5e7eb);background:#fff;color:var(--texto-suave,#64748b);font-size:13px}
+      .easyloc-list-pager[data-fim="1"]{color:#8a8f96}
+      .easyloc-list-pager .easyloc-list-pager-gira{width:14px;height:14px;border:2px solid #d6dbe1;border-top-color:#7d603d;border-radius:50%;animation:easylocPagerGira .8s linear infinite}
+      @keyframes easylocPagerGira{to{transform:rotate(360deg)}}
+      @media (prefers-reduced-motion:reduce){.easyloc-list-pager .easyloc-list-pager-gira{animation:none}}
     `;
     document.head.appendChild(style);
   }
 
   function getState(key) {
-    if (!state.has(key)) state.set(key, { page: 1, perPage: DEFAULT_PER_PAGE });
+    if (!state.has(key)) state.set(key, { mostrando: BLOCO });
     return state.get(key);
   }
 
-  function slice(key, rows, renderFn, perPage = DEFAULT_PER_PAGE) {
+  function slice(key, rows, renderFn) {
     const data = Array.isArray(rows) ? rows : [];
     const current = getState(key);
-    perPage = current.selectedPerPage || perPage;
-    current.perPage = perPage;
+    // Lista nova (filtro, busca) volta ao primeiro bloco. Se quem pediu foi o "carregar mais", mantém —
+    // há módulo (Caminhões) que busca a lista de novo no banco a cada desenho.
+    if (data !== current.lastRows && !current.continuar) current.mostrando = BLOCO;
+    current.continuar = false;
     current.lastRows = data;
     current.renderFn = renderFn;
-
-    const totalPages = Math.max(1, Math.ceil(data.length / perPage));
-    if (current.page > totalPages) current.page = totalPages;
-
-    const start = (current.page - 1) * perPage;
-    return data.slice(start, start + perPage);
+    return data.slice(0, current.mostrando);
   }
 
-  function render(key, anchor, rows, renderFn, perPage = DEFAULT_PER_PAGE) {
+  function render(key, anchor, rows, renderFn) {
     ensureStyle();
-
     const data = Array.isArray(rows) ? rows : [];
     const current = getState(key);
-    perPage = current.selectedPerPage || perPage;
-    current.page = Math.min(current.page, Math.max(1, Math.ceil(data.length / perPage)));
-    const totalPages = Math.max(1, Math.ceil(data.length / perPage));
-    const start = data.length ? ((current.page - 1) * perPage) + 1 : 0;
-    const end = Math.min(current.page * perPage, data.length);
-
     const table = anchor?.closest?.("table");
     const host = table?.closest?.(".table-wrapper") || table?.parentElement || anchor?.parentElement;
     if (!host) return;
 
-    let pager = host.nextElementSibling?.classList?.contains("easyloc-list-pager")
-      ? host.nextElementSibling
-      : null;
-
+    let pager = host.nextElementSibling?.classList?.contains("easyloc-list-pager") ? host.nextElementSibling : null;
     if (!pager) {
       pager = document.createElement("div");
       pager.className = "easyloc-list-pager";
       host.insertAdjacentElement("afterend", pager);
     }
+    const mostrados = Math.min(current.mostrando, data.length);
+    const temMais = mostrados < data.length;
+    pager.dataset.fim = temMais ? "" : "1";
+    pager.setAttribute("role", "status");
+    pager.innerHTML = temMais
+      ? '<span class="easyloc-list-pager-gira" aria-hidden="true"></span><span>Carregando mais... (' + mostrados + " de " + data.length + ")</span>"
+      : "<span>" + (data.length ? data.length + " cadastro(s)" : "Nenhum cadastro") + "</span>";
 
-
-    const pageButtons = [];
-    const first = Math.max(1, current.page - 2);
-    const last = Math.min(totalPages, first + 4);
-
-    for (let page = first; page <= last; page += 1) {
-      pageButtons.push(`
-        <button type="button" class="${page === current.page ? "active" : ""}" data-page="${page}">
-          ${page}
-        </button>
-      `);
+    current.observer?.disconnect();
+    current.observer = null;
+    if (!temMais) return;
+    const carregarMais = () => {
+      if (current.lastRows !== data || current.mostrando >= data.length) return;
+      current.mostrando += BLOCO;
+      current.continuar = true;
+      (current.renderFn || renderFn)(data);
+    };
+    if ("IntersectionObserver" in window) {
+      current.observer = new IntersectionObserver((entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) carregarMais();
+      }, { rootMargin: "300px 0px" });
+      current.observer.observe(pager);
+    } else {
+      pager.addEventListener("click", carregarMais, { once: true });
     }
-
-    pager.innerHTML = `
-      <span>Mostrando ${start} a ${end} de ${data.length} cadastro(s)</span>
-      <div class="easyloc-list-pager-actions">
-        <button type="button" aria-label="Página anterior" data-page="${current.page - 1}" ${current.page <= 1 ? "disabled" : ""}>‹</button>
-        ${pageButtons.join("")}
-        <button type="button" aria-label="Próxima página" data-page="${current.page + 1}" ${current.page >= totalPages ? "disabled" : ""}>›</button>
-        <select aria-label="Registros por página" data-page-size>
-          ${[...new Set([10,20,50,100,perPage])].sort((a,b)=>a-b).map(size=>`<option value="${size}" ${size===perPage ? "selected" : ""}>${size} por página</option>`).join("")}
-        </select>
-      </div>
-    `;
-
-    pager.querySelector("[data-page-size]").addEventListener("change", event => {
-      current.selectedPerPage = Number(event.target.value);
-      current.page = 1;
-      renderFn(data);
-    });
-
-    pager.querySelectorAll("button[data-page]").forEach(button => {
-      button.addEventListener("click", () => {
-        const next = Number(button.dataset.page || current.page);
-        if (!Number.isFinite(next) || next < 1 || next > totalPages) return;
-        current.page = next;
-        renderFn(data);
-      });
-    });
   }
 
   function reset(key) {
-    getState(key).page = 1;
+    const current = getState(key);
+    current.mostrando = BLOCO;
+    current.lastRows = null;
   }
 
   window.EasyLocListPager = { slice, render, reset };

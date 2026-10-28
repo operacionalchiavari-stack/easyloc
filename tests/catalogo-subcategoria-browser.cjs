@@ -6,7 +6,7 @@ const svg=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="300" heigh
 await page.route('https://fixture/**',r=>r.fulfill({contentType:'image/svg+xml',body:svg}));
 await page.addInitScript(()=>{
  sessionStorage.setItem('catalogo_token','test');
- window.supabaseClient={rpc:async name=>({data:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:[
+ window.supabaseClient={rpc:async name=>({data:name==='personalizacao_lista'?[]:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:[
   // Estofados: 3 subcategorias distintas + 1 item sem subcategoria (deve continuar aparecendo em "Todos", nunca
   // some, mas não ganha opção própria) — e Material/Personalizáveis pra testar o filtro combinado (pedido
   // explícito do usuário, com print da barra antiga só com subcategoria: "essas subcategorias precisam estar
@@ -26,7 +26,7 @@ await page.addInitScript(()=>{
  ]}})};});
 await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
 await page.locator('[data-gateway-tile="catalogo"]').waitFor();
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('.catalog-home-grid').waitFor();
 
 // ===== Categoria com 3+ subcategorias: Subcategoria vira um campo (rotulado "Todos") na MESMA barra de
@@ -72,10 +72,10 @@ assert.equal(await page.locator('.catalog-grid-card-name').first().textContent()
 assert.equal(await page.locator('[data-cat-filter-toggle="personalizable"]').getAttribute('aria-pressed'),'true');
 
 // Alternar pra imersivo e voltar pra grade preserva o filtro combinado inteiro.
-await page.locator('.catalog-view-switch-btn[data-view-mode="immersive"]').click();
+await page.locator('[data-grid-item]').first().click();
 await page.locator('.catalog-product-section').first().waitFor();
 assert.equal(await page.locator('.catalog-product-section').count(),1,'Modo imersivo também respeita o filtro combinado (só o Sofá Alex)');
-await page.locator('.catalog-view-switch-btn[data-view-mode="grid"]').click();
+await page.locator('#catalogGlobalBack').click();
 await page.locator('[data-grid-item]').first().waitFor();
 assert.equal(await subcatTrigger.locator('span').textContent(),'Sofás','Filtro de subcategoria continua ativo depois de ir e voltar da imersiva');
 assert.equal(await page.locator('[data-grid-item]').count(),1);
@@ -84,7 +84,7 @@ assert.equal(await page.locator('[data-grid-item]').count(),1);
 // valia só pra subcategoria antes.
 await page.locator('.catalog-brand').click();
 await page.locator('.catalog-gateway').waitFor();
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('.catalog-home-grid').waitFor();
 await page.locator('[data-home-category="estofados"]').click();
 await page.locator('[data-grid-item]').first().waitFor();
@@ -96,7 +96,7 @@ assert.equal(await page.locator('[data-grid-item]').count(),5);
 // ===== Categoria com só 1 subcategoria distinta e o mesmo material nos dois itens: sem filtro nenhum =====
 await page.locator('.catalog-brand').click();
 await page.locator('.catalog-gateway').waitFor();
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('.catalog-home-grid').waitFor();
 await page.locator('[data-home-category="mesas"]').click();
 await page.locator('[data-grid-item]').first().waitFor();
@@ -105,7 +105,7 @@ assert.equal(await page.locator('.catalog-subcat-filter').count(),0,'Sem subcate
 // ===== Categoria sem nenhuma subcategoria cadastrada, mas com 2 materiais: a barra aparece só com Material =====
 await page.locator('.catalog-brand').click();
 await page.locator('.catalog-gateway').waitFor();
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('.catalog-home-grid').waitFor();
 await page.locator('[data-home-category="aparadores"]').click();
 await page.locator('[data-grid-item]').first().waitFor();

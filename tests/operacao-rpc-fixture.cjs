@@ -2,8 +2,58 @@
 module.exports = function operacaoRpcFixture(banco, nome, args = {}) {
   const ok = data => Promise.resolve({data,error:null});
   const erro = message => Promise.resolve({data:null,error:{message}});
+  if(nome === 'separacao_modos_disponiveis') return ok(window.__modosSeparacao || banco.modosSeparacao || {manual:true,qr:true,'um-clique':true});
   if(nome === 'funcionario_contexto') return ok({ativo:true,administrador_legado:true});
+  if(nome === 'pedido_fluxo_fila'){
+    const setor=args.p_setor;
+    return ok((banco.separacoes_pedidos||[]).filter(p=>{
+      if(p.status==='cancelado'||p.reducao_liberada_em||['orcamento','pre_reserva'].includes(p.status_comercial))return false;
+      if(setor==='triagem')return p.operacao?.coleta?.concluido_em ? !p.operacao?.retorno?.concluido_em : !['separado','separado_com_divergencia'].includes(p.status);
+      if(setor==='expedicao')return p.operacao?.coleta?.concluido_em ? !p.operacao?.descarregamento?.concluido_em : ['separado','separado_com_divergencia'].includes(p.status)&&!p.operacao?.carregamento?.concluido_em;
+      if(setor==='entrega')return !!p.operacao?.carregamento?.concluido_em&&!p.operacao?.entrega?.concluido_em;
+      if(setor==='coleta')return !!p.operacao?.entrega?.concluido_em&&!p.operacao?.coleta?.concluido_em;
+      return false;
+    }).map(p=>({...p,fluxo_etapa:setor==='expedicao'?(p.operacao?.coleta?.concluido_em?'retorno_simultaneo':'expedicao'):setor,somente_consulta:false})).slice(args.p_de||0,(args.p_de||0)+(args.p_limite||500)));
+  }
   const p=(banco.separacoes_pedidos || []).find(p=>p.id===args.p_pedido);
+  if(nome==='operacao_iniciar_conferencia'){
+    if(!p)return erro('Pedido não encontrado');
+    p.operacao||={};p.operacao[args.p_etapa]||={};if(!p.operacao[args.p_etapa].concluido_em)p.operacao[args.p_etapa].iniciado_em||=new Date().toISOString();return ok({...p});
+  }
+  if(nome==='operacao_transferir_pedido'){
+    if(!p)return erro('Pedido não encontrado');
+    if(args.p_acao==='reabrir_triagem'||args.p_acao==='devolver_triagem'){p.status='em_separacao';delete p.operacao?.carregamento;}
+    if(args.p_acao==='devolver_comercial'){p.status='pendente';p.reducao_liberada_em=new Date().toISOString();}
+    return ok({...p});
+  }
+  const frota=banco.caminhoes||[{id:'c1',codigo:'G',placa:'ABC1D23',modelo:'Baú grande'},{id:'c2',codigo:'M2',placa:'XYZ9K87',modelo:'Baú médio'}];
+  if(nome==='operacao_caminhoes_programados'){
+    const prog=banco.caminhoesProgramados||{};
+    return ok((args.p_pedidos||[]).flatMap(id=>(prog[id]||[]).map(cid=>({pedido_id:id,caminhao_id:cid,...frota.find(c=>c.id===cid)}))));
+  }
+  if(nome==='operacao_frota') return ok(frota);
+  if(nome==='operacao_registrar_caminhoes'){
+    if(!p)return erro('Pedido não encontrado');
+    const lista=frota.filter(c=>(args.p_caminhoes||[]).includes(c.id)).map(c=>({id:c.id,codigo:c.codigo,placa:c.placa,modelo:c.modelo}));
+    if(!lista.length)return erro('Selecione o caminhão em que o pedido foi carregado.');
+    p.operacao||={};p.operacao.carregamento_caminhoes=lista;window.__gravados?.push({t:'caminhoes',tipo:'rpc',p:lista});return ok(lista);
+  }
+  if(nome==='operacao_concluir_com_pendencia'){
+    const pend=args.p_pendencia||{};
+    if(!pend.motivo_id)return erro('Escolha o motivo da pendência (cadastrado em Parâmetros).');
+    if(!pend.data||!pend.hora)return erro('Informe a data e o horário do carregamento das pendências.');
+    return operacaoRpcFixture(banco,'operacao_concluir_conferencia',args).then(r=>{
+      if(r.error)return r;
+      const pendencia={...pend,caminhoes:[{codigo:'G',placa:'ABC1D23'}]};
+      p.operacao.carregamento={...p.operacao.carregamento,pendencia};window.__pendencia=pend;
+      return {data:{...r.data,pendencia},error:null};
+    });
+  }
+  if(nome==='separacao_definir_modo'){
+    if(!p)return erro('Pedido não encontrado');
+    if(p.modo_separacao && p.modo_separacao!==args.p_modo)return erro('Este pedido já foi iniciado no modo '+p.modo_separacao+'. Ele precisa ser finalizado nesse modo.');
+    p.modo_separacao=args.p_modo;return ok(p.modo_separacao);
+  }
   if(nome==='operacao_atualizar_separacao'){
     const i=(banco.separacoes_itens || []).find(i=>i.id===args.p_item);
     if(!i)return erro('Item não encontrado');
@@ -27,11 +77,12 @@ module.exports = function operacaoRpcFixture(banco, nome, args = {}) {
     return ok({...e});
   }
   if(nome==='operacao_concluir_conferencia'){
+    if(args.p_etapa==='carregamento'&&!(p?.operacao?.carregamento_caminhoes||[]).length)return erro('Selecione o caminhão em que o pedido foi carregado.');
     const campo={carregamento:'lida_carregamento_em',descarregamento:'lida_descarregamento_em',retorno:'lida_retorno_em'}[args.p_etapa];
     let etqs=(banco.separacoes_etiquetas||[]).filter(e=>e.separacao_pedido_id===args.p_pedido);
     if(args.p_etapa!=='carregamento' && etqs.some(e=>e.lida_carregamento_em)) etqs=etqs.filter(e=>e.lida_carregamento_em);
     const faltando=etqs.filter(e=>!e[campo]).map(e=>({codigo:e.codigo,item:(banco.separacoes_itens||[]).find(i=>i.id===e.separacao_item_id)?.item_nome||'Item'}));
-    const registro={concluido_em:new Date().toISOString(),por:'Igor',total:etqs.length,lidas:etqs.length-faltando.length,faltando};
+    const registro={concluido_em:new Date().toISOString(),por:'Igor',total:etqs.length,lidas:etqs.length-faltando.length,faltando,...(args.p_etapa==='carregamento'?{caminhoes:p.operacao.carregamento_caminhoes}:{})};
     p.operacao={...(p.operacao||{}),[args.p_etapa]:registro};p.status_operacional={carregamento:'carregado',descarregamento:'descarregado',retorno:'retornado'}[args.p_etapa];
     window.__gravados.push({t:'separacoes_pedidos',tipo:'update',p:{status_operacional:p.status_operacional,operacao:p.operacao}});
     return ok(registro);

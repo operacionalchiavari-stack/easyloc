@@ -25,7 +25,7 @@ const {chromium}=require('playwright');const express=require('express');const as
  });
  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
  await page.locator('[data-gateway-tile="catalogo"]').waitFor();
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('[data-home-category="estofados"]').click();
  await page.locator('[data-grid-item]').first().click();
  await page.locator('.catalog-product-section').first().waitFor();
@@ -91,7 +91,7 @@ const {chromium}=require('playwright');const express=require('express');const as
  });
  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
  await page.locator('[data-gateway-tile="catalogo"]').waitFor();
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('[data-home-category="mesas"]').click();
  await page.locator('[data-grid-item]').first().click();
  await page.locator('.catalog-product-section').first().waitFor();

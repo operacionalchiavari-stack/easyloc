@@ -20,6 +20,9 @@ function installMock(opts){
   // opts.muitos: N itens a mais (com material), pra testar rolagem de listas longas.
   // opts.extras: itens a mais, do jeito que vierem (ex.: modelos 3D reais pra testar a captura do estúdio).
   if(Array.isArray(opts.extras)) ITENS.push(...opts.extras);
+  // opts.cartela: Sofá Um e Sofá Dois personalizáveis; só o Sofá Um tem personalização com cartela (tinta). Mesa Um tem
+  // cartela mas NÃO é personalizável (o botão não aparece).
+  if(opts.cartela){ ITENS[0].personalizable=true; ITENS[1].personalizable=true; }
   if(opts.muitos) for(let n=0;n<opts.muitos;n++) ITENS.push({id:'m'+n,tipo:'Item',produto:'Peça '+n,categoria:n%2?'Cadeiras':'Estofados',material:n%3?'Madeira':'Tecido',foto_url:'https://fixture/storage/v1/object/public/itens/m'+n+'.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]});
   const resumo=(p)=>({id:p.id,noivos:p.noivos,data_evento:p.data_evento,local_evento:p.local_evento,status:p.status,pedido_enviado_em:p.pedido_enviado_em,atualizado_em:p.atualizado_em,foto_casal_url:(p.dados.foto_casal&&p.dados.foto_casal.url)||null,
     ambientes:p.dados.ambientes.length,itens:p.dados.ambientes.reduce((s,a)=>s+a.itens.reduce((t,i)=>t+(i.quantidade||1),0),0),renders:p.dados.ambientes.reduce((s,a)=>s+a.renders.length,0),dono:p.cliente_id==='client'?'Kelly Decor':'Equipe'});
@@ -32,10 +35,16 @@ function installMock(opts){
     funcionario_contexto:()=>ok({ativo:true,administrador_legado:true}),
     catalogo_carregar:()=>ok({empresa:{nome:'Chiavari',...(opts.empresaLogo?{logo_url:opts.empresaLogo}:{})},decorador:{nome:'Kelly Decor',...(opts.decoradorCores||{})},itens:ITENS}),
     catalogo_carregar_interno:()=>ok({empresa:{nome:'Chiavari'},decorador:null,itens:ITENS}),
+    pedido_catalogo_carregar:()=>ok({empresa:{nome:'Chiavari'},decorador:null,itens:ITENS}), // catálogo dentro do pedido comercial
+    pedido_catalogo_estoque:()=>ok({}),
     catalogo_capas_carregar:()=>ok({portal:'https://fixture/capa.png'}),
     catalogo_capas_carregar_interno:()=>ok({portal:'https://fixture/capa.png'}),
     biblioteca_carregar:()=>ok({fotos:[]}),
     projeto_listar:()=>ok(visiveis().map(resumo)),
+    personalizacao_lista:()=>ok(opts.cartela?[{id:"pers1",vinculo_id:"1",tipo:"Pintura",preco_base:50,tipos_cartela:["Tinta"]},{id:"pers3",vinculo_id:"3",tipo:"Pintura",preco_base:20,tipos_cartela:["Tinta"]}]:[]),
+    personalizacao_cartelas:()=>ok({tipo:"Pintura",preco_base:50,variaveis:[{tipo:"Tinta",quantidade:0.5,unidade:"L",cartelas:[{id:"c1",nome:"Cartela Suvinil",fornecedor:"Suvinil",opcoes:[{id:"o1",codigo:"SV-101",nome:"Verde Musgo",cor:"#4a6b3a",acrescimo:20},{id:"o2",codigo:"SV-202",nome:"Azul Petróleo",cor:"#22447a",acrescimo:30}]}]}]}),
+    personalizacao_precos:(p)=>ok((p.p_linhas||[]).map(()=>null)),
+    catalogo_creditos_saldo:()=>ok({saldo:100,custos:{tecido:3,render:5,planta:2,layout:4}}),
     projeto_obter:(p)=>{const r=achar(p.p_id);return ok({...resumo(r),dados:r.dados,slug:r.slug,pin_definido:Boolean(r.pin),pedido_observacao:r.pedido_observacao,pedido_snapshot:r.pedido_snapshot});},
     projeto_criar:(p)=>{
       if(!p.p_data_evento) return fail('Informe a data do evento');
@@ -62,8 +71,19 @@ function installMock(opts){
       let out;try{out=handlers[name]?handlers[name](params||{}):ok(null);}catch(e){out=fail(e.message);}
       persist();return out;
     },
+    functions:{invoke:async(name,o)=>{
+      if(name==='catalogo-arquivos'){
+        const a=o.body;
+        if(a.acao==='upload')return {data:{path:a.path,token:'assinatura-de-teste'},error:null};
+        if(a.acao==='remover'){db.removed.push(...a.paths);persist();return {data:{removidos:a.paths},error:null};}
+        if(a.acao==='listar')return {data:{arquivos:[]},error:null};
+      }
+      if(opts.cartela){db.invokes=(db.invokes||[]).concat([{name,body:o&&o.body}]);persist();return{data:{providerStatus:"ok",images:[{base64:"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="}]},error:null};}
+      return {data:null,error:{message:'Funcao nao simulada: '+name}};
+    }},
     storage:{from(bucket){return{
       upload:async(p,blob,o)=>{db.uploads.push({bucket,path:p,type:o&&o.contentType,size:blob.size});persist();return{data:{path:p},error:null};},
+      uploadToSignedUrl:async(p,token,blob,o)=>{if(token!=='assinatura-de-teste')return {error:{message:'Assinatura invalida'}};db.uploads.push({bucket,path:p,type:o&&o.contentType,size:blob.size});persist();return{data:{path:p},error:null};},
       getPublicUrl:(p)=>({data:{publicUrl:'https://fixture/storage/v1/object/public/'+bucket+'/'+p}}),
       remove:async(paths)=>{db.removed.push(...paths);persist();return{data:[],error:null};},
       list:async()=>({data:[],error:null}),

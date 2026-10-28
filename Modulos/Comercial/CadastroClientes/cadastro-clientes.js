@@ -95,6 +95,7 @@ root.dataset.initialized = "true";
     document.querySelectorAll(".tag-group").forEach(group => {
       const groupName = group.dataset.group;
       if (!groupName) return;
+      if (group.dataset.obrigatoria === "false") return;
 
       const selecionadas = group.querySelectorAll(".tag.selected");
 
@@ -274,6 +275,12 @@ function atualizarEstadoSenhaCatalogo(configurada = false){
     status.textContent = configurada ? "Senha configurada. Preencha somente para substituí-la." : (ativo ? "Defina uma senha com pelo menos 8 caracteres." : "O acesso ao catálogo está desativado.");
     status.classList.toggle("is-configured", configurada);
   }
+  // Acesso desativado: e-mail e senhas ficam cinza e bloqueados (o valor continua guardado).
+  [document.getElementById("catalogoEmail"), senha, confirmacao].forEach(campo => {
+    if(!campo) return;
+    campo.disabled = !ativo;
+    campo.closest(".form-group")?.classList.toggle("is-bloqueado", !ativo);
+  });
   if(senha) senha.required = ativo && !configurada;
   if(confirmacao) confirmacao.required = ativo && !configurada;
 }
@@ -324,6 +331,9 @@ function clientes_openAdd() {
   window.EasyLocCofre.preparar(cpfCnpj, { protegido: false });
   document.querySelector(".btn-save").style.display = "inline-block";
   document.getElementById("catalogoAtivo").value = "false";
+  document.getElementById("clienteBvRecebe").value = "false";
+  document.getElementById("clienteBvPercentual").value = "0";
+  const bvVig = document.getElementById('clienteBvVigencia'); if (bvVig) bvVig.textContent = 'A vigência será registrada automaticamente ao salvar.';
   atualizarEstadoSenhaCatalogo(false);
 
   setTimeout(() => {
@@ -491,6 +501,13 @@ async function verificarDuplicidadeCliente({
 ===================================================== */
 
 async function clientes_salvar() {
+  const bvRecebe = document.getElementById('clienteBvRecebe').value === 'true';
+  const bvCampo = document.getElementById('clienteBvPercentual');
+  const bvPercentual = bvRecebe ? bvCampo.valueAsNumber : 0;
+  if (bvRecebe && (!Number.isFinite(bvPercentual) || bvPercentual <= 0 || bvPercentual > 100 || !bvCampo.checkValidity())) {
+    mostrarAlerta('Informe o percentual de BV entre 0,01% e 100%.');
+    bvCampo.focus(); bvCampo.reportValidity(); return;
+  }
   if (!validarClienteCompleto()) return;
   if (!validarTagsObrigatorias()) return;
 
@@ -535,6 +552,8 @@ async function clientes_salvar() {
     }
 
     const payload = {
+      bv_recebe: bvRecebe,
+      bv_percentual: bvPercentual,
       nome_razao: nome.value,
       telefone: telefone.value,
       email: email.value,
@@ -601,6 +620,11 @@ async function clientes_salvar() {
 }
 
 async function abrirDetalhesCliente(cliente) {
+  document.getElementById('clienteBvRecebe').value = String(Boolean(cliente.bv_recebe));
+  document.getElementById('clienteBvPercentual').value = cliente.bv_percentual || 0;
+  const bvVig = document.getElementById('clienteBvVigencia'); if (bvVig) bvVig.textContent = cliente.bv_vigente_desde
+    ? 'Regra atual registrada em ' + new Date(cliente.bv_vigente_desde).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + '.'
+    : 'BV ainda não habilitado. A vigência começará quando a ativação for salva.';
   clienteAtualId = cliente.id;
 
   // abre tela de detalhes
@@ -672,7 +696,7 @@ async function abrirDetalhesCliente(cliente) {
           group.querySelectorAll(".tag")
         ).find(t => t.textContent.trim() === v);
 
-        if (tagEl) tagEl.classList.add("selected");
+        (tagEl || window.EasyLocEtiquetas?.criarOpcao(group, v))?.classList.add("selected");
       });
     });
   }
@@ -875,6 +899,13 @@ function renderizarTagsComoCards(tags, grupo, classe) {
   `;
 }
 
+// Foto do cliente na linha da lista (a mesma do cadastro/catálogo); sem foto, as iniciais.
+function clienteAvatarHtml(c) {
+  const iniciais = String(c.nome_razao || "?").trim().split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
+  const foto = c.catalogo_logo_url ? '<img src="' + esc(c.catalogo_logo_url) + '" alt="" loading="lazy" onerror="this.remove()">' : "";
+  return '<span class="cliente-linha-foto" aria-hidden="true"><span>' + esc(iniciais) + "</span>" + foto + "</span>";
+}
+
 function renderizarTabelaClientes(clientes) {
   const tbody = document.getElementById("clientTable");
   if (!tbody) return;
@@ -894,7 +925,7 @@ paginaClientes.forEach(c => {
   tr.style.cursor = "pointer";
 
   tr.innerHTML = `
-    <td>${esc(c.nome_razao)}</td>
+    <td><span class="cliente-linha-nome">${clienteAvatarHtml(c)}<span>${esc(c.nome_razao)}</span></span></td>
     <td>${esc(window.EasyLocCofre.visivel(c, "cpf_cnpj"))}</td>
     <td>${esc(c.telefone)}</td>
     <td>${esc(c.email)}</td>
@@ -986,17 +1017,14 @@ function aplicarFiltros() {
   // ESTILO
   if (estilo) {
     filtrados = filtrados.filter(c => {
-      if (!c.tags || !Array.isArray(c.tags.estilo)) return false;
-      return c.tags.estilo.includes(estilo);
+      return [].concat(c.tags?.estilo ?? []).includes(estilo);
     });
   }
 
   // ORÇAMENTO
   if (orcamento) {
     filtrados = filtrados.filter(c =>
-      Array.isArray(c.tags?.orcamento)
-        ?c.tags.orcamento.includes(orcamento)
-        : false
+      [].concat(c.tags?.orcamento ?? []).includes(orcamento)
     );
   }
 
@@ -1034,6 +1062,8 @@ window.aplicarFiltros = aplicarFiltros;
 
 // inicialização
 carregarClientes();
+// Etiquetas (Estilo, Canal...) vêm de Parâmetros > Comercial; sem cadastro ficam as do HTML.
+window.EasyLocEtiquetas?.aplicar("cliente", { filtros: { styleFilter: "estilo", budgetFilter: "orcamento" } });
 
 /* =====================================================
    DESTROY DO MÓDULO CLIENTES (SPA SAFE)

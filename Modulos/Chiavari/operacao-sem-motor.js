@@ -303,12 +303,16 @@
   async function andamentoPedidos(ids) {
     ids = Array.from(new Set(ids.filter(Boolean))); if (!ids.length) { return {}; }
     var c = await sb();
-    var peds = await emLote(ids, function (b) { return c.from("separacoes_pedidos").select("id,status,status_comercial,status_operacional,operacao").in("id", b); });
-    var itens = await emLote(ids, function (b) { return c.from("separacoes_itens").select("separacao_pedido_id,quantidade_solicitada,quantidade_separada,item_id,componentes,itens:item_id(tipo)").in("separacao_pedido_id", b).order("id"); });
+    var bases=await Promise.all([
+      emLote(ids,function(b){return c.from('separacoes_pedidos').select('id,status,status_comercial,status_operacional,operacao').in('id',b);}),
+      emLote(ids,function(b){return c.from('separacoes_itens').select('separacao_pedido_id,quantidade_solicitada,quantidade_separada,item_id,componentes,itens:item_id(tipo)').in('separacao_pedido_id',b).order('id');}),
+      emLote(ids,function(b){return c.from('separacoes_etiquetas').select('separacao_pedido_id,lida_carregamento_em,lida_descarregamento_em,lida_retorno_em').in('separacao_pedido_id',b).order('id');})
+    ]);
+    var peds=bases[0],itens=bases[1],etq=bases[2];
     var kitIds = Array.from(new Set(itens.filter(function (i) { return String((i.itens && i.itens.tipo) || "").toLowerCase() === "kit"; }).map(function (i) { return i.item_id; })));
     var porKit = {};
     if (kitIds.length) { (await emLote(kitIds, function (b) { return c.from("kit_itens").select("kit_id,quantidade").in("kit_id", b); })).forEach(function (k) { porKit[k.kit_id] = (porKit[k.kit_id] || 0) + Number(k.quantidade || 0); }); }
-    var etq = await emLote(ids, function (b) { return c.from("separacoes_etiquetas").select("separacao_pedido_id,lida_carregamento_em,lida_descarregamento_em,lida_retorno_em").in("separacao_pedido_id", b).order("id"); });
+
     var pecas = function (i) { return porKit[i.item_id] ? Number(i.quantidade_solicitada || 0) * porKit[i.item_id] : Number(i.quantidade_solicitada || 0); };
     var sep = function (i) { return porKit[i.item_id] ? Object.values(i.componentes || {}).reduce(function (t, x) { return t + Number((x && x.separado) || 0); }, 0) : Number(i.quantidade_separada || 0); };
     var mapa = {};
@@ -325,6 +329,11 @@
     return mapa;
   }
 
+  L.getParametrosCronograma = async function () {
+    var c=await sb(),emp=await empresa();
+    var linhas=await q(c.from('empresa_cronograma_visual').select('pedido_apos_dia').eq('empresa_id',emp));
+    return {pedido_apos_dia:linhas && linhas[0]?linhas[0].pedido_apos_dia:1};
+  };
   L.getCronogramaSemana = async function (inicio) {
     var c = await sb(), emp = await empresa();
     inicio = isoDeQualquer(inicio) || hojeISO();
@@ -332,18 +341,28 @@
     var daSemana = await tudo(function () { return c.from("operacao_etapas").select("id,pedido_id").eq("empresa_id", emp).gte("data", inicio).lte("data", fim); });
     var pedIds = Array.from(new Set(daSemana.map(function (e) { return e.pedido_id; }).filter(Boolean)));
     var soltas = daSemana.filter(function (e) { return !e.pedido_id; }).map(function (e) { return e.id; });
-    var etapas = (await emLote(pedIds, function (b) { return c.from("operacao_etapas").select(SEL_ETAPA).in("pedido_id", b); }))
-      .concat(await emLote(soltas, function (b) { return c.from("operacao_etapas").select(SEL_ETAPA).in("id", b); }));
-    var etIds = etapas.map(function (e) { return e.id; });
-    var peds = await emLote(pedIds, function (b) { return c.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,local_nome,local_id,data_evento").in("id", b); });
-    var locais = await emLote(peds.map(function (p) { return p.local_id; }), function (b) { return c.from("locais_empresas").select("id,endereco,numero_endereco,latitude,longitude").in("id", b); });
-    var infos = await emLote(pedIds, function (b) { return c.from("operacao_pedidos_info").select("*").in("pedido_id", b); });
-    var alertas = await emLote(pedIds, function (b) { return c.from("operacao_alertas_motorista").select("*").in("pedido_id", b).order("criado_em", { ascending: false }); });
-    var regs = await emLote(etIds, function (b) { return c.from("operacao_registros").select("etapa_id,tipo,dados").in("etapa_id", b); });
-    var trocas = await emLote(etIds, function (b) { return c.from("operacao_trocas").select("*").in("etapa_id", b).neq("status", "CANCELADO").order("solicitado_em"); });
-    var vagas = await emLote(etIds, function (b) { return c.from("free_vagas_v").select("*").in("etapa_id", b).neq("status", "CANCELADA"); });
-    var insc = await emLote(vagas.map(function (v) { return v.id; }), function (b) { return c.from("free_inscricoes").select("*").in("vaga_id", b); });
-    var andamento = await andamentoPedidos(pedIds).catch(function (e) { console.error("Andamento indisponível:", e); return {}; });
+    if(!daSemana.length)return [];
+    var baseSemana=await Promise.all([
+      emLote(pedIds,function(b){return c.from('operacao_etapas').select(SEL_ETAPA).in('pedido_id',b);}),
+      emLote(soltas,function(b){return c.from('operacao_etapas').select(SEL_ETAPA).in('id',b);}),
+      emLote(pedIds,function(b){return c.from('separacoes_pedidos').select('id,numero_pedido,cliente_nome,local_nome,local_id,data_evento,status_comercial,status').in('id',b);})
+    ]);
+    var etapas=baseSemana[0].concat(baseSemana[1]),etIds=etapas.map(function(e){return e.id;}),peds=baseSemana[2];
+    peds=peds.filter(function(p){return ['aprovado','enviado','finalizado'].includes(p.status_comercial)&&p.status!=='cancelado';});
+    var permitidos=new Set(peds.map(function(p){return p.id;}));
+    etapas=etapas.filter(function(e){return !e.pedido_id||permitidos.has(e.pedido_id);});
+    etIds=etapas.map(function(e){return e.id;});
+    var complementos=await Promise.all([
+      emLote(peds.map(function(p){return p.local_id;}),function(b){return c.from('locais_empresas').select('id,endereco,numero_endereco,latitude,longitude').in('id',b);}),
+      emLote(pedIds,function(b){return c.from('operacao_pedidos_info').select('*').in('pedido_id',b);}),
+      emLote(pedIds,function(b){return c.from('operacao_alertas_motorista').select('*').in('pedido_id',b).order('criado_em',{ascending:false});}),
+      emLote(etIds,function(b){return c.from('operacao_registros').select('etapa_id,tipo,dados').in('etapa_id',b);}),
+      emLote(etIds,function(b){return c.from('operacao_trocas').select('*').in('etapa_id',b).neq('status','CANCELADO').order('solicitado_em');}),
+      emLote(etIds,function(b){return c.from('free_vagas_v').select('*').in('etapa_id',b).neq('status','CANCELADA');}),
+      andamentoPedidos(pedIds).catch(function(e){console.error('Andamento indisponivel:',e);return {};})
+    ]);
+    var locais=complementos[0],infos=complementos[1],alertas=complementos[2],regs=complementos[3],trocas=complementos[4],vagas=complementos[5],andamento=complementos[6];
+    var insc=await emLote(vagas.map(function(v){return v.id;}),function(b){return c.from('free_inscricoes').select('*').in('vaga_id',b);});
 
     var mP = {}; peds.forEach(function (p) { mP[p.id] = p; });
     var mL = {}; locais.forEach(function (l) { mL[l.id] = l; });
@@ -423,14 +442,23 @@
   L.salvarConclusaoCarregamento = function () { throw new Error("O carregamento é conferido bipando as etiquetas (Expedição)."); };
 
   /* ---------------- listas oficiais (Cadastro de Funcionários, free e Logística > Caminhões) ---------------- */
-  async function pessoas() { return (await rpc("operacao_pessoas")) || []; }
+  async function pessoas() {
+    var lista=(await rpc("operacao_pessoas")) || [], c=await sb();
+    var paths=Array.from(new Set(lista.filter(function(p){return !p.free && p.foto_url && !/^https?:\/\//i.test(p.foto_url);}).map(function(p){return p.foto_url;})));
+    var urls=new Map();
+    for(var lote of blocos(paths,100)){
+      var assinadas=await q(c.storage.from("funcionarios-fotos").createSignedUrls(lote,3600));
+      (assinadas || []).forEach(function(f){if(f.error || !f.signedUrl)throw new Error("Não foi possível carregar a foto do funcionário.");urls.set(f.path,f.signedUrl);});
+    }
+    return lista.map(function(p){return Object.assign({},p,{foto_url:urls.get(p.foto_url)||p.foto_url||""});});
+  }
   async function caminhoesLista() {
     var c = await sb(), emp = await empresa();
-    return q(c.from("caminhoes").select("id,modelo,codigo,placa,capacidade_m3,empresa_nome,tipo,status").eq("empresa_id", emp).eq("status", "ativo").order("codigo"));
+    return q(c.from("caminhoes").select("id,modelo,codigo,placa,capacidade_m3,empresa_nome,tipo,status,foto_url").eq("empresa_id", emp).eq("status", "ativo").order("codigo"));
   }
-  L.listarCaminhoes = async function () { return (await caminhoesLista()).filter(function (k) { return k.codigo; }).map(function (k) { return { id: k.id, nome: k.modelo, tipo: k.codigo, empresa: k.empresa_nome || "", vinculo: k.tipo === "proprio" ? "Próprio" : "Terceiro", status: "Ativo", capacidade: Number(k.capacidade_m3) || 0 }; }); };
-  L.listarResponsaveis = async function () { return (await pessoas()).filter(function (p) { return p.lider; }).map(function (p) { return { id: p.id, nome: p.nome, status: "Ativo" }; }); };
-  L.listarEquipes = async function () { return (await pessoas()).map(function (p) { return { id: p.id, nome: p.nome, tipo: p.free ? "Free" : "Fixo", status: "Ativo" }; }); };
+  L.listarCaminhoes = async function () { return (await caminhoesLista()).filter(function (k) { return k.codigo; }).map(function (k) { return { id: k.id, nome: k.modelo, foto_url: k.foto_url || "", tipo: k.codigo, empresa: k.empresa_nome || "", vinculo: k.tipo === "proprio" ? "Próprio" : "Terceiro", status: "Ativo", capacidade: Number(k.capacidade_m3) || 0 }; }); };
+  L.listarResponsaveis = async function () { return (await pessoas()).filter(function (p) { return p.lider; }).map(function (p) { return { id: p.id, nome: p.nome, foto_url: p.foto_url || "", status: "Ativo" }; }); };
+  L.listarEquipes = async function () { return (await pessoas()).map(function (p) { return { id: p.id, nome: p.nome, foto_url: p.foto_url || "", tipo: p.free ? "Free" : "Fixo", status: "Ativo" }; }); };
   L.getCaminhoes = async function () { return (await L.listarCaminhoes()).map(function (k) { return { tipo: k.tipo, empresa: k.empresa }; }); };
   L.getEquipes = async function () { return (await L.listarEquipes()).map(function (e) { return { nome: e.nome, tipo: e.tipo }; }); };
 
@@ -539,22 +567,43 @@
     var fim = somarDias(inicio, dias - 1), preenchidas = 0;
     if (preencher) { preenchidas = await rpc("operacao_escala_preencher_periodo", { p_empresa_id: emp, p_inicio: inicio, p_fim: fim }); }
     var regras = await rpc("operacao_regras_escala", { p_empresa: emp });
-    var etapas = await tudo(function () { return c.from("operacao_etapas").select(SEL_ETAPA + ",pedido:separacoes_pedidos(numero_pedido,cliente_nome,local_nome)").eq("empresa_id", emp).gte("data", inicio).lte("data", fim).order("data").order("hora"); });
+    var controleEscala=await q(c.from('empresa_escala_controle').select('automatica').eq('empresa_id',emp));
+    regras.automatica=!(controleEscala && controleEscala[0] && controleEscala[0].automatica===false);
+    var fila = [];
+    for(var de=0;;de+=500){
+      var lote=await rpc('pedido_fluxo_fila',{p_empresa:emp,p_setor:'montagem_equipe',p_de:de,p_limite:500});
+      fila=fila.concat(lote||[]);if(!lote||lote.length<500)break;
+    }
+    var planejamento=Object.fromEntries(fila.map(function(p){return [p.id,p];}));
+    var etapas = await tudo(function () { return c.from("operacao_etapas").select(SEL_ETAPA + ",pedido:separacoes_pedidos(numero_pedido,cliente_nome,local_nome,status_comercial,status)").eq("empresa_id", emp).gte("data", inicio).lte("data", fim).order("data").order("hora"); });
+    var ocupacoes=etapas.filter(function(e){return !e.pedido_id||(e.pedido&&['aprovado','enviado','finalizado'].includes(e.pedido.status_comercial)&&e.pedido.status!=='cancelado');});
+    etapas=etapas.filter(function(e){return !e.pedido_id||!!planejamento[e.pedido_id];});
+    etapas.forEach(function(e){if(planejamento[e.pedido_id])e.pedido=planejamento[e.pedido_id];});
+    // Consulta nao cria etapas reais nem aloca recursos. Funciona mesmo antes da sincronizacao do cronograma.
+    fila.filter(function(p){return p.somente_consulta;}).forEach(function(p){
+      [['montagem','Montagem',p.data_entrega||p.data_evento],['desmontagem','Desmontagem',p.data_coleta||p.data_evento_fim||p.data_evento]].forEach(function(info){
+        var data=String(info[2]||'').slice(0,10);
+        if(data<inicio||data>fim||!data||etapas.some(function(e){return e.pedido_id===p.id&&e.tipo===info[0];}))return;
+        etapas.push({id:'consulta:'+p.id+':'+info[0],pedido_id:p.id,pedido:p,tipo:info[0],nome:info[1],data:data,hora:null});
+      });
+    });
     var conflitos = await rpc("operacao_conflitos", { p_empresa: emp, p_inicio: inicio, p_fim: fim });
-    var vagas = await emLote(etapas.map(function (e) { return e.id; }), function (b) { return c.from("free_vagas").select("id,etapa_id").in("etapa_id", b).neq("status", "CANCELADA"); });
+    var vagas = await emLote(etapas.filter(function(e){return !planejamento[e.pedido_id]?.somente_consulta;}).map(function (e) { return e.id; }), function (b) { return c.from("free_vagas").select("id,etapa_id").in("etapa_id", b).neq("status", "CANCELADA"); });
     var insc = await emLote(vagas.map(function (v) { return v.id; }), function (b) { return c.from("free_inscricoes").select("vaga_id,nome,status").in("vaga_id", b).eq("status", "CONFIRMADO"); });
     var vols = {}; for (var pid of Array.from(new Set(etapas.map(function (e) { return e.pedido_id; }).filter(Boolean)))) { vols[pid] = await rpc("operacao_volume_pedido", { p_pedido: pid }); }
     var cams = await caminhoesLista(), pess = await pessoas();
     var hoje = hojeISO(), mConf = {}; (conflitos || []).forEach(function (x) { (mConf[x.etapa_id] = mConf[x.etapa_id] || []).push(x.mensagem); });
     var vagaDe = {}; vagas.forEach(function (v) { vagaDe[v.etapa_id] = v.id; });
     return { inicio: inicio, fim: fim, hoje: hoje, preenchidas: preenchidas || 0, regras: regras,
-      pessoas: pess.map(function (p) { return { nome: p.nome, equipe: p.equipe, lider: p.lider, free: p.free }; }),
-      caminhoes: cams.map(function (k) { return { id: k.id, modelo: k.modelo, codigo: k.codigo || "", placa: k.placa, capacidade: Number(k.capacidade_m3) || 0, empresa: k.empresa_nome || "", vinculo: k.tipo === "proprio" ? "Próprio" : "Terceiro" }; }),
+      ocupacoes:ocupacoes.map(function(e){return {data:e.data,responsavel:responsavelDe(e),equipe:equipeDe(e),caminhoes:caminhoesDe(e)};}),
+      pessoas: pess.map(function (p) { return { nome: p.nome, foto_url: p.foto_url || (!p.free && p.id ? c.storage.from("avatares").getPublicUrl(emp + "/" + p.id + ".jpg").data.publicUrl : ""), equipe: p.equipe, lider: p.lider, free: p.free }; }),
+      caminhoes: cams.map(function (k) { return { id: k.id, foto_url: k.foto_url || "", modelo: k.modelo, codigo: k.codigo || "", placa: k.placa, capacidade: Number(k.capacidade_m3) || 0, empresa: k.empresa_nome || "", vinculo: k.tipo === "proprio" ? "Próprio" : "Terceiro" }; }),
       etapas: etapas.map(function (e) {
+        var consulta=!!planejamento[e.pedido_id]?.somente_consulta;
         var conf = regras.etapas && regras.etapas[tipoRegra(e.tipo)], v = vols[e.pedido_id] || {}, m3 = Number(v.m3) || 0, estimado = !(m3 > 0);
         if (estimado) { m3 = Number(regras.volume_padrao_m3) || 0; }
         var sug = conf ? Math.min(Number(conf.maximo) || 99, Math.max(Number(conf.minimo) || 1, Math.ceil(m3 / Math.max(0.5, Number(conf.m3_por_pessoa) || 1)))) : 0;
-        var resp = responsavelDe(e), eq = equipeDe(e), cs = caminhoesDe(e), av = [];
+        var resp = consulta?'':responsavelDe(e), eq = consulta?[]:equipeDe(e), cs = consulta?[]:caminhoesDe(e), av = [];
         if (conf) {
           var tem = (resp ? 1 : 0) + eq.length;
           if (tem < sug) { av.push("Equipe pequena: " + tem + " de " + sug + " pessoas sugeridas"); }
@@ -570,7 +619,7 @@
           etapa: e.nome, tipo: tipoRegra(e.tipo), data: e.data, hora: hhmm(e.hora), responsavel: resp, equipe: eq, caminhoes: cs, pedidoSistemaId: e.pedido_id || "",
           m3: m3, pecas: Number(v.pecas) || 0, volumeEstimado: estimado, sugerido: sug,
           freeConfirmados: insc.filter(function (i) { return i.vaga_id === vagaDe[e.id]; }).map(function (i) { return i.nome; }),
-          conflitos: Array.from(new Set(mConf[e.id] || [])), avisos: av, passada: e.data < hoje };
+          conflitos: consulta?[]:Array.from(new Set(mConf[e.id] || [])), avisos: av, passada: e.data < hoje, somente_consulta:consulta };
       }) };
   };
   L.ESC_salvarEtapa = async function (id, dados, forcar) {

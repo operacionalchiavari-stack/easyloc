@@ -65,8 +65,17 @@
     const botao = flyout.querySelector(":scope > button");
     if (!painel || !botao) return;
     if (celular()) { painel.style.left = painel.style.top = ""; return; }
-    // Categoria: ao lado do menu. Subgrupo: ao lado do painel da categoria.
+    // Menu no topo (styles/menu-topo.css): a categoria abre o painel para baixo, alinhado ao botão.
     const painelPai = flyout.parentElement?.closest(".flyout-painel");
+    if (!painelPai) {
+      const b = botao.getBoundingClientRect();
+      const largura = painel.offsetWidth || 260;
+      painel.style.left = Math.round(Math.max(12, Math.min(b.left, window.innerWidth - largura - 12))) + "px";
+      painel.style.top = Math.round(menu.getBoundingClientRect().bottom + 8) + "px";
+      painel.querySelectorAll(":scope > .flyout.aberto").forEach(posicionarFlyout);
+      return;
+    }
+    // Subgrupo: ao lado do painel da categoria.
     const borda = (painelPai || menu).getBoundingClientRect().right;
     const b = botao.getBoundingClientRect();
     const altura = painel.offsetHeight || 0;
@@ -117,6 +126,29 @@
     if (!e.target.closest(".usuario, .user-dropdown-modern")) document.getElementById("userDropdown")?.classList.remove("ver");
     if (menu.classList.contains("aberto") && !menu.contains(e.target) && !e.target.closest(".abrir-menu")) menu.classList.remove("aberto");
   });
+
+  /* ---------- menu no topo: nomes mais juntos quando não cabem ---------- */
+  function ajustarCompacto() {
+    const lista = document.getElementById("appMenu");
+    if (!lista) return;
+    lista.querySelectorAll(".menu-item").forEach((b) => {
+      const r = b.querySelector(".rotulo");
+      if (r && !b.title) b.title = r.textContent.trim();
+    });
+    const niveis = ["apertado-1", "apertado-2", "apertado-3"];
+    menu.classList.remove(...niveis);
+    if (celular()) return;
+    for (const n of niveis) {
+      if (lista.scrollWidth <= lista.clientWidth + 1) break;
+      menu.classList.remove(...niveis); menu.classList.add(n);
+    }
+  }
+  window.portalAjustarMenuTopo = ajustarCompacto;
+  window.addEventListener("resize", ajustarCompacto);
+  const listaMenu = document.getElementById("appMenu");
+  if (listaMenu) new MutationObserver(() => requestAnimationFrame(ajustarCompacto)).observe(listaMenu, { childList: true });
+  document.fonts?.ready?.then(ajustarCompacto);
+  requestAnimationFrame(ajustarCompacto);
 
   /* ---------- item ativo ---------- */
   function limparAtivos() {

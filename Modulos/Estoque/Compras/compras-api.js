@@ -39,17 +39,10 @@
   }
   async function detail(id){
     const data=await run('consultar',{id});
-    for(const item of data.items || [])for(const lot of item.lotes || [])if(lot.certificado_path)lot.certificado_url=await signed(lot.certificado_path);
     const company=await profile();
     data.billing_company={id:empresa(),rotulo:company.nome_fantasia,razao_social:company.razao_social,cnpj:company.cnpj,logo_url:company.logo_url};
     data.items=(data.items || []).map(item=>({...item,necessidades:item.need_allocations || item.allocations || []}));
     return data;
-  }
-  async function findItem(itemId,batch=false){
-    for(const order of await list('pedido')){
-      if((order.items || []).some(item=>batch?(item.lotes || []).some(l=>l.id===itemId):item.id===itemId))return order;
-    }
-    throw Error('Item do pedido não encontrado.');
   }
   function relacionarXml(order,xmlItems){
     return new Promise(resolve=>{
@@ -74,7 +67,7 @@
     listWarehouseMaterials:async()=>{const {data,error}=await query('insumos');if(error)throw error;return (data || []).map(i=>({...i,status:i.status || 'ativo'}));},
     listPurchaseNeeds:()=>list('necessidade'),
     listQuotationRequests:()=>list('cotacao'),
-    listPurchaseOrdersV2:async()=>(await list('pedido')).map(o=>({...o,certificado_pct:null,op_numeros:[],pendencia_documental:!(o.nfe_receipts || []).length})),
+    listPurchaseOrdersV2:async()=>(await list('pedido')).map(o=>({...o,op_numeros:[],pendencia_documental:!(o.nfe_receipts || []).length})),
     listPurchaseCompositionQuotes:async()=>[],
     listNeedsInOpenQuotation:async()=>{
       const map=new Map();
@@ -99,14 +92,14 @@
     saveQuotationSupplierResponse:(id,supplier_id,header,items)=>run('salvar_proposta',{id,supplier_id,header,items}),
     createPurchaseOrdersFromQuotation:(id,selections)=>run('gerar_pedidos',{id,selections}),
     getPurchaseOrderV2Detail:detail,
+    // valores e pagamento do pedido -> Contas a Pagar (out/2026)
+    setPurchaseOrderPayment:async(id,forma,parcelas,total)=>{await ready;const {data,error}=await client().rpc('compras_pedido_pagamento',{p_empresa:empresa(),p_pedido:id,p_forma:forma,p_parcelas:parcelas,p_total:total});if(error)throw Error(error.message || 'Não foi possível enviar ao Contas a Pagar.');return data;},
     cancelPurchaseOrderV2:(id,motivo)=>run('cancelar_pedido',{id,motivo}),
     cancelQuotationRequest:(id,motivo)=>run('cancelar_cotacao',{id,motivo}),
     listBillingCompaniesBasic:async()=>{const p=await profile();return {empresas:[{id:empresa(),rotulo:p.nome_fantasia,cnpj:p.cnpj,razao_social:p.razao_social}]};},
     setPurchaseRequestsBillingCompany:async(ids,billing_company_id)=>{for(const id of ids)await run('faturamento',{id,billing_company_id});},
     setPurchaseOrderBillingCompany:(id,billing_company_id)=>run('faturamento',{id,billing_company_id}),
     uploadPurchaseDocument:upload,
-    savePurchaseLot:async payload=>{const order=await findItem(payload.order_item_id);return run('lote',{...payload,id:order.id});},
-    attachBatchCertificate:async(batch_id,file)=>{const order=await findItem(batch_id,true);const doc=await upload(file);return run('certificado',{id:order.id,batch_id,...doc});},
     createNfeReceiptDraftForPurchaseOrder:async(id,nota,xmlItems)=>{
       const order=await detail(id);
       let rows=xmlItems.map(i=>({...i,compras_item_id:order.items.find(o=>(o.codigo && o.codigo===i.codigo_fornecedor)||String(o.nome).trim().toLowerCase()===String(i.descricao_xml).trim().toLowerCase())?.id}));

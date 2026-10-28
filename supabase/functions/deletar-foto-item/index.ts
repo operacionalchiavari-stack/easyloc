@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "*",
@@ -27,6 +28,7 @@ async function validarAcessoEmpresa(req: Request, empresaId: string) {
     if (userError || !user) {
         return { error: "Sessão inválida", status: 401 };
     }
+    if (await segundaEtapaPendente(authHeader)) return { error: MENSAGEM_2FA, status: 403 };
 
     const serviceClient = createClient(supabaseUrl, serviceKey);
     const { data: vinculo, error: vinculoError } = await serviceClient

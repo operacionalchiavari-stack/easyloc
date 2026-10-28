@@ -61,7 +61,7 @@ const semTrilha=async(page,onde)=>{
 {
   const page=await abrir(1440,900);
   await semTrilha(page,'Portal');
-  await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('#catalogGrid .catalog-home-grid').waitFor();
+  await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);await page.locator('#catalogGrid .catalog-home-grid').waitFor();
   await semTrilha(page,'Categorias');
   await page.locator('[data-home-category="bares"]').click();await page.locator('[data-grid-item]').first().waitFor();
   await semTrilha(page,'Categoria em grade');

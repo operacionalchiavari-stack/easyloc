@@ -1,0 +1,40 @@
+﻿const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=require('@electric-sql/pglite');
+test('escala automatica respeita restricoes, bloqueio manual e chave de ativacao',async()=>{
+ const db=new PGlite(),emp='10000000-0000-0000-0000-000000000001',ana='20000000-0000-0000-0000-000000000001',bruno='20000000-0000-0000-0000-000000000002',carlos='20000000-0000-0000-0000-000000000003',free='20000000-0000-0000-0000-000000000004',etapa='30000000-0000-0000-0000-000000000001',outra='30000000-0000-0000-0000-000000000002';
+ try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;
+ create function auth.uid() returns uuid language sql as $$select '${ana}'::uuid$$;
+ create function eh_membro_empresa(uuid) returns boolean language sql as $$select $1='${emp}'::uuid$$;
+ create function funcionario_pode(uuid,uuid,text) returns boolean language sql as $$select coalesce(current_setting('test.negar',true),'')<>'sim'$$;
+ create table empresas(id uuid primary key);insert into empresas values('${emp}');
+ create table funcionarios_acesso(id uuid primary key,empresa_id uuid,nome text,ativo boolean default true,lider_operacao boolean default false,equipe_operacional text default 'montagem');
+ insert into funcionarios_acesso(id,empresa_id,nome,lider_operacao) values('${ana}','${emp}','Ana',true),('${bruno}','${emp}','Bruno',false),('${carlos}','${emp}','Carlos',false);
+ create table free_cadastros(id uuid primary key,empresa_id uuid,nome text,status text);insert into free_cadastros values('${free}','${emp}','Free','aprovado');
+ create table operacao_etapas(id uuid primary key,empresa_id uuid,pedido_id uuid,tipo text,data date,hora time,atualizado_por uuid);
+ insert into operacao_etapas values('${etapa}','${emp}',null,'montagem',current_date,'08:00',null),('${outra}','${emp}',null,'montagem',current_date+1,'08:00',null);
+ create table operacao_etapa_pessoas(empresa_id uuid,etapa_id uuid,funcionario_id uuid,free_id uuid,nome text,papel text,ordem int);
+ create table caminhoes(id uuid,empresa_id uuid,status text,codigo text,capacidade_m3 numeric);
+ create table operacao_etapa_caminhoes(etapa_id uuid,caminhao_id uuid,empresa_id uuid);
+ create function operacao_regras_escala(uuid) returns jsonb language sql as $$select '{"usar_free":true,"volume_padrao_m3":10,"etapas":{"montagem":{"equipe":"montagem","caminhao":false}}}'::jsonb$$;
+ create function operacao_janela(date,time,text,jsonb) returns tsrange language sql as $$select tsrange($1+$2,$1+$2+interval '1 hour')$$;
+ create function operacao_tipo_regra(text) returns text language sql as $$select $1$$;
+ create function operacao_volume_pedido(uuid) returns jsonb language sql as $$select '{"m3":10}'::jsonb$$;
+ create function operacao_sugerido(text,numeric,jsonb) returns int language sql as $$select 2$$;
+ create function operacao_conflitos(uuid,date,date) returns table(etapa_id uuid,mensagem text) language sql as $$select null::uuid,null::text where false$$;`);
+ const base=fs.readFileSync('supabase/migrations/20261019000200_operacao_supabase.sql','utf8');let gerar=base.slice(base.indexOf('create or replace function public.operacao_escala_preencher('),base.indexOf('-- Conflitos (mesma pessoa'));gerar=gerar.replace('function public.operacao_escala_preencher(','function public.operacao_escala_preencher_sem_fluxo(');await db.exec(gerar);
+ const manual=fs.readFileSync('supabase/migrations/20261019000700_operacao_escala_salvar.sql','utf8');await db.exec(manual.slice(manual.indexOf('create or replace function public.operacao_achar_pessoa')));
+ await db.exec(fs.readFileSync('supabase/migrations/20261027000900_escala_controle_restricoes.sql','utf8').replace(/^\uFEFF/,''));
+ const regra=(a,b)=>db.query('select escala_restricao_salvar($1,$2,$3)',[emp,a,b]);
+ await regra('func:'+ana,'func:'+bruno);await regra('func:'+bruno,'func:'+ana);assert.equal((await db.query('select count(*) n from escala_restricoes_pessoas')).rows[0].n,1);
+ await assert.rejects(regra('func:'+ana,'func:'+ana),/duas pessoas/);
+ await db.query('select operacao_escala_preencher_sem_fluxo($1,$2)',[emp,[etapa]]);
+ assert.deepEqual((await db.query('select nome from operacao_etapa_pessoas order by nome')).rows.map(r=>r.nome),['Ana','Carlos']);
+ await assert.rejects(db.query("select operacao_escala_salvar($1,'Ana',array['Bruno'],'{}',true)",[etapa]),/nao podem trabalhar juntas/);
+ assert.deepEqual((await db.query('select nome from operacao_etapa_pessoas order by nome')).rows.map(r=>r.nome),['Ana','Carlos']);
+ await db.query('select escala_controle_salvar($1,false)',[emp]);assert.equal((await db.query('select operacao_escala_preencher_sem_fluxo($1,$2) n',[emp,[outra]])).rows[0].n,0);
+ assert.equal((await db.query('select count(*) n from operacao_etapa_pessoas where etapa_id=$1',[outra])).rows[0].n,0);
+ await db.query("select operacao_escala_salvar($1,'Ana',array['Carlos'],'{}',false)",[outra]);assert.equal((await db.query('select count(*) n from operacao_etapa_pessoas where etapa_id=$1',[outra])).rows[0].n,2);
+ await regra('func:'+ana,'free:'+free);await assert.rejects(db.query("insert into operacao_etapa_pessoas(empresa_id,etapa_id,free_id,nome,papel) values($1,$2,$3,'Free','equipe')",[emp,outra,free]),/nao podem trabalhar juntas/);
+ await db.exec("set test.negar='sim'");await assert.rejects(db.query('select escala_controle_salvar($1,true)',[emp]),/Sem permissao/);
+ }finally{await db.close();}
+});

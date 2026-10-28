@@ -606,10 +606,10 @@
       qr: ["QR Code do produto", "Leia o QR do material para preencher a movimentação."],
       barras: ["Código de barras", "Leia ou digite o código de barras para encontrar o material."],
       foto_nf: ["Foto da nota", "Envie uma imagem da nota para registrar o documento e conferir manualmente."],
-      pdf_nf: ["PDF da nota", "Envie o PDF da nota. XML ou TXT preenchem o lote automaticamente."],
+      pdf_nf: ["PDF da nota", "Envie o PDF da nota. XML ou TXT preenchem os materiais automaticamente."],
       qr_nfe: ["QR Code NF-e", "Cole a chave ou o conteúdo do QR da NF-e para vincular ao recebimento."],
       chave_nfe: ["Chave NF-e", "Digite a chave de 44 dígitos para registrar a nota no recebimento."],
-      lote: ["Entrada em lote", "Preencha as linhas ao lado ou envie XML/TXT da nota para montar o lote."]
+      lote: ["Entrada de materiais", "Preencha as linhas ao lado ou envie XML/TXT da nota para preencher os materiais."]
     };
     const [title, help] = labels[mode] || ["Leitura inteligente", "Escolha uma forma de entrada para o almoxarifado."];
     $("#almoxImportTitle").textContent = title;
@@ -733,7 +733,7 @@
     }
 
     await fillBatchFromNota(nota, savedNota?.id);
-    notify("Nota lida e entrada em lote preparada para conferência.");
+    notify("Nota lida e entrada de materiais preparada para conferência.");
   }
 
   async function registerNota(nota) {
@@ -819,7 +819,7 @@
     setImportPreview(`
       <strong>${rows.length} item(ns) preparado(s)</strong>
       <p>${nota.fornecedor || "Fornecedor não identificado"} ${nota.numero_nf ? `- NF ${nota.numero_nf}` : ""}</p>
-      <small>Confira produtos, quantidades e valores antes de clicar em "Lançar lote no estoque".</small>
+      <small>Confira produtos, quantidades e valores antes de clicar em "Lançar entrada no estoque".</small>
     `);
   }
 
@@ -835,7 +835,7 @@
     }).filter(row => row.material && row.quantidade > 0);
 
     if (!rows.length) {
-      notify("Adicione ao menos um material válido no lote.");
+      notify("Adicione ao menos um material válido na entrada.");
       return;
     }
 
@@ -854,7 +854,7 @@
         solicitante: headerData.solicitante || "",
         responsavel: headerData.responsavel || "",
         pedido_evento: headerData.pedido_evento || "",
-        observacao: headerData.observacao || "Entrada em lote",
+        observacao: headerData.observacao || "Entrada de materiais",
         data_movimentacao: new Date().toISOString()
       }, { silent: true });
     }
@@ -863,7 +863,7 @@
     const tbody = $("#almoxBatchRows");
     tbody.dataset.ready = "";
     renderBatchRows();
-    notify("Lote lançado no estoque com sucesso.");
+    notify("Entrada registrada no estoque com sucesso.");
   }
 
   async function receivePurchase(purchaseId) {

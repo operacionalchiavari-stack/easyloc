@@ -5,14 +5,14 @@
 
 import { carregarItens } from "./itens.api.mjs?v=20260920-paginacao";
 import "./itens.modal.mjs";
-import "./itens.tabela.mjs";
+import "./itens.tabela.mjs?v=20261023-lista-dispon";
 import "./itens.foto.mjs?v=20261008-banco";
 // itens.3d.mjs antes só era carregado em item-detalhes.html (Item/Componente).
 // Kit precisa do mesmo upload direto de GLB (ver kits.modal.mjs) — o módulo é
 // genérico por atributo/id de DOM, não amarrado a nenhuma tela específica.
 import "./itens.3d.mjs?v=20261005-otimizar";
 import "./itens.filtros.mjs";
-import "./itens.print.mjs";
+import "./itens.print.mjs?v=20261026-acentos";
 import "./kits.modal.mjs?v=20261020-kit-sem-duplicar";
 
 function abrirPaginaDetalhesItem(itemId = null, modo = "editar"){
@@ -108,3 +108,17 @@ window.__activeModuleDestroy = function(){
 ===================================================== */
 
 requestAnimationFrame(() => requestAnimationFrame(window.initCadastroItens));
+
+/* =====================================================
+   RESUMO (Total / Itens / Componentes / Kits) num ícone:
+   clicar abre/fecha; Esc ou clique fora fecha.
+===================================================== */
+(function ligarResumoItens(){
+  const btn = document.getElementById("itensResumoBtn");
+  const pop = document.getElementById("itensResumoPop");
+  if(!btn || !pop) return;
+  const abrir = (sim) => { pop.hidden = !sim; btn.setAttribute("aria-expanded", String(sim)); };
+  btn.addEventListener("click", (ev) => { ev.stopPropagation(); abrir(pop.hidden); });
+  document.addEventListener("click", (ev) => { if(!pop.hidden && !ev.target.closest(".itens-resumo")) abrir(false); });
+  document.addEventListener("keydown", (ev) => { if(ev.key === "Escape" && !pop.hidden){ abrir(false); btn.focus(); } });
+})();

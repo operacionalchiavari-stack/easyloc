@@ -88,6 +88,7 @@
   function statusP(t) {
     if (t.status === "cancelado") return ["cancelado", "Cancelado"];
     if (t.status === "pago") return ["pago", "Pago"];
+    if (t.manutencao_confirmada === false) return ["aguardando", "Aguardando serviço"];
     if (t.requer_aprovacao && t.aprovacao === "pendente") return ["aguardando", "Aguardando aprovação"];
     if (t.aprovacao === "reprovada") return ["vencido", "Reprovado"];
     if (vencido(t)) return ["vencido", "Vencido"];
@@ -142,8 +143,9 @@
   }
   function mostrarAviso(msg) { $("finAviso").hidden = !msg; $("finAviso").textContent = msg || ""; }
   function pintar() {
+    $('finConteudo').classList.toggle('fin-bv-extrato', S.aba === 'bv');
     document.querySelectorAll("#finAbas [data-aba]").forEach((b) => b.classList.toggle("ativa", b.dataset.aba === S.aba));
-    const f = { geral: pintarGeral, receber: pintarReceber, pagar: pintarPagar, contas: pintarContas, conciliacao: pintarConciliacao, dre: pintarDre, inadimplencia: pintarInadimplencia, plano: pintarPlano }[S.aba];
+    const f = { geral: pintarGeral, receber: pintarReceber, pagar: pintarPagar, bv: () => window.FinanceiroBV.render({ S, rpc, brl, esc, dataBr, card, recarregar, registrarCredito }), creditos: () => window.FinanceiroGestao.creditos({ S, rpc, brl, esc, dataBr, recarregar }), resultados: () => window.FinanceiroGestao.resultados({ S, rpc, brl, esc, dataBr, recarregar }), posicao: () => window.FinanceiroPosicaoFinal.render({ S, rpc, brl, esc, dataBr, recarregar }), contas: pintarContas, conciliacao: pintarConciliacao, dre: pintarDre, inadimplencia: pintarInadimplencia, plano: pintarPlano }[S.aba];
     Promise.resolve(f()).catch((e) => { console.error(e); $("finConteudo").innerHTML = '<div class="fin-vazio">Erro: ' + esc(e.message || e) + "</div>"; });
   }
 
@@ -259,11 +261,12 @@
       (lista.length ? '<section class="fin-bloco"><div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Fornecedor</th><th>Descrição</th><th>Categoria</th><th>Vencimento</th><th>Conta</th><th class="num">Valor</th><th class="num">Em aberto</th><th>Status</th><th></th></tr></thead><tbody>' +
         lista.map((t) => {
           const [cls, rot] = statusP(t), c = cat(t.categoria_id);
+          const bloqueadoServico = t.manutencao_confirmada === false;
           const aberto = !["pago", "cancelado"].includes(t.status), aguard = t.requer_aprovacao && t.aprovacao === "pendente";
-          return "<tr><td>" + esc(t.fornecedor_nome || "-") + "</td><td>" + esc(t.descricao) + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + "</td><td>" + esc(c?.nome || "-") +
+          return "<tr><td>" + esc(t.fornecedor_nome || "-") + "</td><td>" + esc(t.descricao) + (bloqueadoServico ? '<small class="text-danger" style="display:block;margin-top:5px">Pagar somente após confirmação do serviço em Compras → Serviços.</small>' : t.manutencao_confirmada === true ? '<small style="display:block;margin-top:5px">Serviço confirmado em Compras.</small>' : '') + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + "</td><td>" + esc(c?.nome || "-") +
             "</td><td>" + dataBr(t.vencimento) + "</td><td>" + contaHtml(t.conta_id) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.aberto) + '</td><td><span class="fin-status ' + cls + '">' + esc(rot) + "</span></td>" +
             '<td><div class="acoes">' + (aguard ? '<button class="fin-btn peq" data-p-aprovar="' + t.id + '">Aprovar</button><button class="fin-btn peq verm" data-p-reprovar="' + t.id + '">Reprovar</button>' : "") +
-            (aberto && !aguard && t.aprovacao !== "reprovada" ? '<button class="fin-btn peq claro" data-p-programar="' + t.id + '">Programar</button><button class="fin-btn peq verde" data-p-baixar="' + t.id + '">Pagar</button>' : "") +
+            (aberto && !aguard && !bloqueadoServico && t.aprovacao !== "reprovada" ? '<button class="fin-btn peq claro" data-p-programar="' + t.id + '">Programar</button><button class="fin-btn peq verde" data-p-baixar="' + t.id + '">Pagar</button>' : "") +
             '<button class="fin-btn peq claro" data-p-editar="' + t.id + '">Editar</button><button class="fin-btn peq claro" data-p-ver="' + t.id + '">Detalhes</button></div></td></tr>';
         }).join("") + "</tbody></table></div></section>" : '<div class="fin-vazio">Nenhuma conta a pagar com esses filtros.</div>');
     const at = () => { S.filtroP = { busca: $("fpBusca").value, status: $("fpStatus").value }; pintarPagar(); };
@@ -350,10 +353,22 @@
       } }]);
   }
 
+  function registrarCredito(cliente, clientes) {
+    modal('Registrar crédito do decorador', '<div class="fin-form"><p class="fin-info inteiro">Registre um crédito já reconhecido, como um valor pago a maior. Ele ficará disponível na conta corrente até a devolução. Este lançamento não registra uma nova entrada de dinheiro no caixa.</p>' +
+      '<label class="inteiro">Decorador<select name="cliente">' + '<option value="">Escolha o decorador</option>' + clientes.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===cliente?' selected':'')+'>'+esc(c.nome_razao)+'</option>').join('') + '</select></label>' +
+      '<label>Origem<select name="tipo"><option value="pagamento_maior">Pagamento a maior</option><option value="adiantamento">Adiantamento</option><option value="ajuste">Ajuste</option><option value="outro">Outro crédito</option></select></label>' +
+      '<label>Valor<input name="valor" inputmode="decimal" placeholder="0,00"></label><label>Data<input name="data" type="date" value="'+hoje()+'"></label><label class="inteiro">Observação obrigatória<textarea name="obs" required rows="3" placeholder="Explique a origem do crédito e identifique o pedido ou recebimento"></textarea></label></div>',
+      [{rotulo:'Cancelar',classe:'claro',acao:fecharModal},{rotulo:'Registrar crédito',acao:async()=>{
+        const d=campos($('finModalCorpo'));
+        if(!d.cliente || num(d.valor)<=0 || !d.data || !d.obs.trim()){erroModal('Informe o decorador, valor, data e a observação do crédito.');return;}
+        await executar(()=>rpc('fin_cliente_registrar_credito',{p_empresa:S.emp,p_cliente:d.cliente,p_tipo:d.tipo,p_valor:num(d.valor),p_data:d.data,p_obs:d.obs.trim()}),'Crédito registrado na conta corrente.');
+      }}]);
+  }
   function baixar(tipo, id) {
     const t = (tipo === "receber" ? S.receber : S.pagar).find((x) => x.id === id);
     if (!t) return;
     const rec = tipo === "receber";
+    if (!rec && t.manutencao_confirmada === false) return avisar("Confirme o serviço em Compras → Serviços antes de pagar.");
     modal(rec ? "Registrar recebimento" : "Registrar pagamento",
       '<div class="fin-form"><p class="fin-info">' + esc(rec ? (t.pedido_numero ? "Pedido " + t.pedido_numero + " · " : "") + DIV[t.componente] + " · " + (t.cliente_nome || "") : (t.fornecedor_nome || "") + " · " + t.descricao) + " — em aberto <b>" + brl(t.aberto) + "</b></p>" +
       '<label>Data<input type="date" name="data" value="' + hoje() + '"></label>' +
@@ -393,7 +408,7 @@
       '<h4 style="margin:18px 0 8px">Baixas</h4>' + ((baixas || []).length ? '<table class="fin-tabela"><thead><tr><th>Data</th><th>Conta</th><th class="num">Valor</th><th class="num">Líquido</th><th>Origem</th><th></th></tr></thead><tbody>' +
         baixas.map((b) => "<tr" + (b.estornado_em ? ' style="opacity:.5;text-decoration:line-through"' : "") + "><td>" + dataBr(b.data) + "</td><td>" + esc(conta(b.conta_id)?.nome || "-") + '</td><td class="num">' + brl(b.valor) + '</td><td class="num">' + brl(b.liquido) + "</td><td>" + esc({ manual: "Manual", gateway: "PIX do gateway", conciliacao: "Extrato" }[b.origem] || b.origem) + (b.estornado_em ? " · estornada" : "") + "</td><td>" +
           (b.estornado_em ? "" : '<button type="button" class="fin-btn peq verm" data-estornar="' + b.id + '">Estornar</button>') + "</td></tr>").join("") + "</tbody></table>" : '<p class="fin-vazio">Nenhuma baixa.</p>'),
-      [t.status !== "cancelado" && Number(rec ? t.recebido : t.pago) === 0 ? { rotulo: "Cancelar título", classe: "verm", acao: () => cancelar(tipo, id) } : null, { rotulo: "Fechar", classe: "claro", acao: fecharModal }].filter(Boolean),
+      [t.origem !== 'bv' && t.status !== "cancelado" && Number(rec ? t.recebido : t.pago) === 0 ? { rotulo: "Cancelar título", classe: "verm", acao: () => cancelar(tipo, id) } : null, { rotulo: "Fechar", classe: "claro", acao: fecharModal }].filter(Boolean),
       (corpo) => corpo.addEventListener("click", async (e) => {
         const b = e.target.closest("[data-estornar]"); if (!b) return;
         const motivo = prompt("Motivo do estorno:"); if (!motivo) return;
@@ -452,7 +467,7 @@
       '<label>Conta<input name="conta"></label>' +
       '<p class="fin-sub">Titular e PIX</p>' +
       '<label>Titular (razão social)<input name="titular_nome" value="' + esc(c.titular_nome || "") + '"></label>' +
-      '<label>CNPJ / CPF<input name="titular_documento"></label>' +
+      '<label>CNPJ / CPF<input name="titular_documento" data-mascara="cpfcnpj"></label>' +
       '<label>Tipo da chave PIX<select name="pix_tipo"><option value="">-</option>' + ["cnpj", "cpf", "email", "telefone", "aleatoria"].map((v) => '<option value="' + v + '"' + (c.pix_tipo === v ? " selected" : "") + ">" + { cnpj: "CNPJ", cpf: "CPF", email: "E-mail", telefone: "Telefone", aleatoria: "Aleatória" }[v] + "</option>").join("") + "</select></label>" +
       '<label>Chave PIX<input name="pix_chave"></label>' +
       '<p class="fin-sub">Saldo</p>' +

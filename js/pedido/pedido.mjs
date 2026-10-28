@@ -1,14 +1,15 @@
+import { iniciarLogisticaManual, restaurarLogisticaManual, validarObservacoesLogisticaManual } from './pedido.logistica-manual.mjs';
 console.log("✅ pedido.mjs carregado");
 
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
-import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261020-mapa-inicial";
-import { initItens } from "./pedido.itens.mjs?v=20261021-pre-reserva";
-import { initFrete } from "./pedido.frete.mjs";
+import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261026-local-endereco";
+import { initItens } from "./pedido.itens.mjs?v=20261027-salvar-completo";
+import { initFrete } from "./pedido.frete.mjs?v=20261027-abas-rapidas";
 import { initServicos } from "./pedido.servicos.mjs";
-import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261021-divisao";
-import { initPagamento } from "./pedido.pagamento.mjs?v=20261021-visual";
-import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs";
+import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261026-acentos";
+import { initPagamento } from "./pedido.pagamento.mjs?v=20261026-financeiro-pedido";
+import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261027-abas-rapidas";
 
 /* =====================================================
    ESTADO VINDO DA URL (documento proprio / navegacao real)
@@ -105,6 +106,7 @@ export async function initPedido(){
   }
 
   await carregarFinanceiro();
+  await iniciarLogisticaManual();
 
   const els = getEls();
 
@@ -389,25 +391,24 @@ async function setupPedidoWorkspace({ supabase }){
     alert(mensagem);
   };
 
-  const statusBloqueiaComercial = (status) => ["separado", "separado_com_divergencia"].includes(String(status || ""));
+  const statusBloqueiaComercial = pedido => Boolean(pedido && ((pedido.status && pedido.status!=='pendente'&&!pedido.reducao_liberada_em)||pedido.status_operacional||pedido.operacao?.carregamento?.iniciado_em));
 
   const aplicarBloqueioComercialSeparacao = (pedido) => {
-    const bloqueado = statusBloqueiaComercial(pedido?.status);
+    const bloqueado = statusBloqueiaComercial(pedido);
     window.__PEDIDO_BLOQUEADO_SEPARACAO = bloqueado;
     const btnSalvar = document.getElementById("btnSalvarPedido");
     if (btnSalvar) {
       btnSalvar.dataset.separacaoBloqueada = bloqueado ? "1" : "0";
       btnSalvar.title = bloqueado
-        ? "Separação finalizada: alterações de material estão bloqueadas."
+        ? "Pedido com o operacional. Solicite a liberação pela Triagem."
         : "";
       let aviso = document.getElementById("pedidoRegraOperacional");
       if(!aviso){
         aviso = document.createElement("p"); aviso.id="pedidoRegraOperacional"; aviso.setAttribute("role","status");
         btnSalvar.parentElement?.appendChild(aviso);
       }
-      aviso.textContent = bloqueado ? "Separação finalizada. Materiais bloqueados." :
-        ["em_separacao","pausado"].includes(pedido?.status) ?
-          (pedido.reducao_liberada_em ? "Triagem liberou retiradas. Salvar a revisão retoma a separação." : "Separação em andamento: apenas acréscimos. Retirar ou reduzir exige liberação na triagem.") : "";
+      aviso.textContent = bloqueado ? "Pedido com o operacional. Para alterar, solicite a liberação pela Triagem." :
+        pedido?.reducao_liberada_em ? "Pedido devolvido ao Comercial. Ao salvar a revisão, ele volta para Aguardando triagem." : "";
       aviso.hidden = !aviso.textContent;
     }
   };
@@ -573,6 +574,21 @@ async function setupPedidoWorkspace({ supabase }){
   };
 
   const textById = (id) => document.getElementById(id)?.textContent?.trim() || "";
+
+  // Resumo do pedido e programação de pagamento para a prévia/PDF do pedido (pedido do usuário, out/2026): os mesmos
+  // valores do cartão "Resumo do pedido" e as parcelas da etapa Financeiro e pagamentos.
+  window.__pedidoFinanceiroResumo = () => {
+    const valor = (id) => moedaParaNumero(textById(id));
+    const resumo = [
+      ["Valor de locação", valor("resumoLocacaoBruto")],
+      ["Desconto", -Math.abs(valor("resumoLocacaoDesconto"))],
+      ["Customizações", valor("resumoCustomizacoes")],
+      ["Serviços adicionais", valor("resumoServicos")],
+      ["Frete", valor("resumoFreteBruto")],
+      ["Montagem", valor("resumoMontagemBruto")]
+    ].map(([rotulo, v]) => ({ rotulo, valor: v }));
+    return { resumo, total: Number(window.__TOTAL_PEDIDO) || valor("resumoTotalGeral"), parcelas: coletarParcelasFinanceiras() };
+  };
 
   const coletarLogisticaSnapshot = () => ({
     km: Number(window.kmPedido || 0),
@@ -894,6 +910,7 @@ async function setupPedidoWorkspace({ supabase }){
       renderizarParcelasSalvas(parcelasFinanceiras);
     }
     aplicarLogisticaSnapshot(observacoesPedido.logistica_snapshot || null);
+    restaurarLogisticaManual(observacoesPedido.logistica_manual);
 
     const { data: itens, error: itensError } = await supabase
       .from("separacoes_itens")
@@ -973,6 +990,11 @@ async function setupPedidoWorkspace({ supabase }){
   }
 
   async function salvarPedidoOperacional(){
+    const erroObservacaoManual = validarObservacoesLogisticaManual();
+    if (erroObservacaoManual) {
+      avisar(erroObservacaoManual, 'Ajuste manual', 'aviso');
+      return;
+    }
     if(!supabase || !window.__CONTEXT?.empresa_id){
       avisar("Sessao ou empresa nao encontrada para salvar o pedido.", "Salvar pedido", "erro");
       return;
@@ -980,7 +1002,7 @@ async function setupPedidoWorkspace({ supabase }){
 
     if (window.__PEDIDO_BLOQUEADO_SEPARACAO) {
       avisar(
-        "A separação deste pedido já foi finalizada. Não é permitido alterar os materiais.",
+        "O operacional assumiu este pedido. Solicite a liberação pela Triagem antes de alterar.",
         "Pedido bloqueado",
         "aviso"
       );
@@ -1008,6 +1030,22 @@ async function setupPedidoWorkspace({ supabase }){
         try{ campoPreReserva?.showPicker?.(); }catch{}
         return;
       }
+    }
+
+    // Dados obrigatórios (cliente, local, datas de entrega/evento/coleta em ordem) — ver validarDados em pedido.entrada.mjs.
+    // Ao salvar, todos os dados são obrigatórios (menos as observações) e a programação de pagamento não pode ter pendência.
+    const erroDados = window.__pedidoValidarDados?.({ completo: true });
+    if(erroDados){
+      if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("dados");
+      window.__pedidoValidarDados?.({ completo: true }); // marca o campo de novo, já na tela dos dados
+      avisar(erroDados, "Dados do pedido", "aviso");
+      return;
+    }
+    const erroFinanceiro = window.__pedidoPendenciaFinanceiro?.();
+    if(erroFinanceiro){
+      if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("financeiro");
+      avisar(erroFinanceiro, "Financeiro e pagamentos", "aviso");
+      return;
     }
 
     let numeroPedido = document.getElementById("orcamentoNumero")?.textContent?.trim() || "";
@@ -1070,6 +1108,7 @@ async function setupPedidoWorkspace({ supabase }){
         itens_operacionais: coletarObservacoesItensOperacionais(),
         itens_comerciais: coletarItensParaReserva(),
         logistica_snapshot: coletarLogisticaSnapshot(),
+        logistica_manual: window.__PEDIDO_LOGISTICA_MANUAL || {},
         valores: window.__PEDIDO_VALORES || observacoesAtuais.valores || null,
         cancelamento: window.__PEDIDO_CANCELAMENTO || null,
         local_html: document.getElementById("localObservacoes")?.innerHTML || "",
@@ -1133,6 +1172,7 @@ async function setupPedidoWorkspace({ supabase }){
     window.__PEDIDO_DADOS_ATUAL.reducao_liberada_em = null;
     aplicarBloqueioComercialSeparacao(window.__PEDIDO_DADOS_ATUAL);
     const cronograma = await sincronizarCronogramaDoPedido(pedidoId);
+    await window.__pedidoContratoInitPromise;
 
     if(["aprovado", "finalizado", "enviado"].includes(statusComercial)){
       const contratoSalvo = typeof window.__pedidoSalvarContratoFinal === "function"
@@ -1142,6 +1182,9 @@ async function setupPedidoWorkspace({ supabase }){
         avisar("Pedido salvo, mas o contrato final nao foi gravado. Revise o modelo padrao e tente salvar novamente.", "Contrato", "aviso");
         return;
       }
+    }else if(await window.__pedidoSalvarContratoRascunho?.(pedidoId) === false){
+      avisar("Pedido salvo, mas o contrato não foi gravado. Revise o texto e tente salvar novamente.", "Contrato", "aviso");
+      return;
     }
 
     avisar(
@@ -1163,8 +1206,8 @@ async function setupPedidoWorkspace({ supabase }){
 
   function setupAtalhosPedido(){
     const atalhos = {
-      // F2 e F4 ficaram para o Catálogo e a pesquisa (pedido.entrada.mjs, out/2026)
-      F3: { id: "addComponenteBtn", label: "Adicionar componente" },
+      // F2 e F4 ficaram para o Catálogo e a pesquisa (pedido.entrada.mjs, out/2026).
+      // F3 saiu (23/out/2026, pedido do usuário): adicionar componente só pelo botão "+ Componente".
       F8: { id: "addPersonalizacaoBtn", label: "Adicionar personalizacao" },
       F9: { id: "addServicoBtn", label: "Adicionar servico" }
     };
@@ -1270,6 +1313,10 @@ async function setupPedidoWorkspace({ supabase }){
   window.addEventListener("easyloc:pedido-financeiro-atualizado", window.__pedidoPixHandler);
   await carregarPedidoSalvoSeNecessario();
   await carregarProjetoCatalogoSeNecessario();
+  // Catálogo carregado escondido depois que o pedido terminou de abrir (out/2026): o 1º clique em Catálogo/Lista não
+  // espera mais o catálogo inteiro carregar (~5 s). Só agora, porque o catálogo lê o projeto do pedido ao iniciar.
+  const preCarregarCatalogo = () => { const f = document.querySelector("iframe.pedido-catalogo-real"); if(f && !f.getAttribute("src") && f.dataset.src) f.src = f.dataset.src; };
+  if(window.requestIdleCallback) requestIdleCallback(preCarregarCatalogo, { timeout: 2500 }); else setTimeout(preCarregarCatalogo, 1200);
 
   // Projeto montado pelo decorador no catálogo (Central de Pedidos → "Veio do catálogo", out/2026): abre nesta
   // mesma tela, já preenchida (cliente, evento, local, itens, ambientes e imagens). Nada é gravado até "Salvar":

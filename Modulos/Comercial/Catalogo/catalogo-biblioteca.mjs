@@ -123,6 +123,21 @@ function renderClientSelector(clientes){
 }
 
 const folderById = (id) => state.folders.find((f) => String(f.id) === String(id)) || null;
+// Pastas dentro de pastas (out/2026): pai_id = pasta de cima (null = raiz).
+const filhasDe = (id) => state.folders.filter((f) => String(f.pai_id || "") === String(id || ""));
+function descendentes(id){
+  const lista = [];
+  const visitar = (pai) => filhasDe(pai).forEach((f) => { lista.push(f); visitar(f.id); });
+  visitar(id);
+  return lista;
+}
+// Caminho da raiz até a pasta (pra trilha "Biblioteca › Casamentos › Ao ar livre").
+function caminhoAte(id){
+  const caminho = [];
+  let atual = folderById(id), guarda = 0;
+  while(atual && guarda++ < 50){ caminho.unshift(atual); atual = folderById(atual.pai_id); }
+  return caminho;
+}
 
 function photosForFolder(id){
   return state.photos.filter((photo) => String(photo.pasta_id) === String(id)
@@ -134,25 +149,35 @@ const NEW_FOLDER_SVG = `<svg class="catalog-biblioteca-folder-icon" viewBox="0 0
     <path class="catalog-biblioteca-folder-plus" d="M50 32v24M38 44h24"/>
   </svg>`;
 
+function folderCardHtml(folder){
+  const photos = photosForFolder(folder.id);
+  const subpastas = filhasDe(folder.id).length;
+  // Capa: a 1ª foto da pasta; sem foto nela, a 1ª de uma pasta de dentro.
+  const capa = photos[0]?.url || descendentes(folder.id).map((f) => photosForFolder(f.id)[0]?.url).find(Boolean);
+  const meta = [`${photos.length} foto${photos.length === 1 ? "" : "s"}`, subpastas ? `${subpastas} pasta${subpastas === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
+  return `<button type="button" class="catalog-grid-card catalog-home-card" data-library-folder="${escapeAttr(folder.id)}">
+        <span class="catalog-grid-card-photo catalog-biblioteca-folder${capa ? "" : " is-empty"}">${folderIconSvg(capa, folder.id)}</span>
+        <span class="catalog-grid-card-body">
+          <span class="catalog-grid-card-name">${escapeHtml(folder.nome)}</span>
+          <span class="catalog-grid-card-meta">${meta}</span>
+        </span>
+      </button>`;
+}
+
+const podeEditar = () => ctx.acessoInterno && !ctx.pedidoComercial;
+const novaPastaHtml = () => podeEditar() ? `<button type="button" class="catalog-grid-card catalog-home-card catalog-biblioteca-new" data-library-new-folder>
+        <span class="catalog-grid-card-photo catalog-biblioteca-folder">${NEW_FOLDER_SVG}</span>
+        <span class="catalog-grid-card-body"><span class="catalog-grid-card-name">Nova pasta</span></span>
+      </button>` : "";
+
 function renderFolders(){
   const host = $("catalogBibliotecaFolders");
   if(!host) return;
   // Sem título "Biblioteca" aqui dentro — duplicava o rótulo do cabeçalho (#catalogPageLabel).
-  const folders = state.folders;
-  const cards = folders.map((folder) => {
-    const photos = photosForFolder(folder.id);
-    return `<button type="button" class="catalog-grid-card catalog-home-card" data-library-folder="${escapeAttr(folder.id)}">
-        <span class="catalog-grid-card-photo catalog-biblioteca-folder${photos.length ? "" : " is-empty"}">${folderIconSvg(photos[0]?.url, folder.id)}</span>
-        <span class="catalog-grid-card-body">
-          <span class="catalog-grid-card-name">${escapeHtml(folder.nome)}</span>
-          <span class="catalog-grid-card-meta">${photos.length} foto${photos.length === 1 ? "" : "s"}</span>
-        </span>
-      </button>`;
-  }).join("");
-  const novo = ctx.acessoInterno && !ctx.pedidoComercial ? `<button type="button" class="catalog-grid-card catalog-home-card catalog-biblioteca-new" data-library-new-folder>
-        <span class="catalog-grid-card-photo catalog-biblioteca-folder">${NEW_FOLDER_SVG}</span>
-        <span class="catalog-grid-card-body"><span class="catalog-grid-card-name">Nova pasta</span></span>
-      </button>` : "";
+  // Na raiz, só as pastas de primeiro nível; as de dentro aparecem ao abrir a pasta.
+  const folders = filhasDe(null);
+  const cards = folders.map(folderCardHtml).join("");
+  const novo = novaPastaHtml();
   host.innerHTML = folders.length || novo
     ? `<div class="catalog-grid-wrap"><div class="catalog-grid catalog-home-grid">${cards}${novo}</div></div>`
     : `<div class="catalog-grid-wrap"><p class="catalog-biblioteca-empty">Nenhuma foto na biblioteca ainda.</p></div>`;
@@ -164,6 +189,20 @@ function renderDetail(){
   $("catalogBibliotecaUpload")?.classList.toggle("hidden", ctx.pedidoComercial || !ctx.acessoInterno);
   const title = $("catalogBibliotecaFolderTitle");
   if(title) title.textContent = folder?.nome || "";
+  const trilha = $("catalogBibliotecaTrilha");
+  if(trilha){
+    const caminho = caminhoAte(state.activeFolder);
+    trilha.hidden = caminho.length < 2;
+    trilha.innerHTML = `<button type="button" data-library-trilha="">Biblioteca</button>` + caminho.slice(0, -1).map((f) =>
+      `<span aria-hidden="true">›</span><button type="button" data-library-trilha="${escapeAttr(f.id)}">${escapeHtml(f.nome)}</button>`).join("");
+  }
+  const subHost = $("catalogBibliotecaSubpastas");
+  const subpastas = filhasDe(state.activeFolder);
+  if(subHost){
+    const cards = subpastas.map(folderCardHtml).join("") + novaPastaHtml();
+    subHost.innerHTML = cards ? `<div class="catalog-grid catalog-home-grid">${cards}</div>` : "";
+    subHost.hidden = !cards;
+  }
   $("catalogBibliotecaFolderActions")?.classList.toggle("hidden", ctx.pedidoComercial || !ctx.acessoInterno);
   const status = $("catalogBibliotecaUploadStatus");
   if(status) status.textContent = state.uploading ? "Enviando fotos…" : "";
@@ -175,7 +214,7 @@ function renderDetail(){
 ${ctx.visitante || ctx.pedidoComercial ? "" : `<button type="button" class="catalog-biblioteca-move" data-move-photo aria-label="Arrastar para reorganizar; use as setas do teclado">↔</button>
         <button type="button" class="catalog-biblioteca-photo-remove" data-remove-photo="${escapeAttr(photo.id)}" aria-label="Remover foto">×</button>`}
       </figure>`).join("")
-    : `<p class="catalog-biblioteca-empty">Nenhuma foto nesta pasta ainda.</p>`;
+    : (subpastas.length ? "" : `<p class="catalog-biblioteca-empty">Nenhuma foto nesta pasta ainda.</p>`);
 }
 
 function showFolders(){
@@ -220,24 +259,27 @@ function pedirNomePasta({ titulo, valor = "", acao }){
   });
 }
 
-function nomeJaExiste(nome, ignorarId){
+// O nome só não pode repetir dentro da MESMA pasta (paiId).
+function nomeJaExiste(nome, ignorarId, paiId){
   const chave = nome.toLowerCase();
-  return state.folders.some((f) => String(f.id) !== String(ignorarId) && f.nome.trim().toLowerCase() === chave);
+  return filhasDe(paiId).some((f) => String(f.id) !== String(ignorarId) && f.nome.trim().toLowerCase() === chave);
 }
 
-async function criarPasta(){
+// paiId: pasta onde a nova vai ficar (null = raiz da Biblioteca).
+async function criarPasta(paiId = null){
   if(ctx.pedidoComercial || !ctx.acessoInterno || state.saving) return;
-  const nome = await pedirNomePasta({ titulo: "Nova pasta", acao: "Criar pasta" });
+  const pai = paiId ? folderById(paiId) : null;
+  const nome = await pedirNomePasta({ titulo: pai ? `Nova pasta em "${pai.nome}"` : "Nova pasta", acao: "Criar pasta" });
   if(!nome) return;
-  if(nomeJaExiste(nome)){ window.catalogNotify?.({ title: "Essa pasta já existe", message: `Já existe uma pasta chamada "${nome}".`, status: "error" }); return; }
+  if(nomeJaExiste(nome, null, paiId)){ window.catalogNotify?.({ title: "Essa pasta já existe", message: `Já existe uma pasta chamada "${nome}".`, status: "error" }); return; }
   state.saving = true;
   try{
-    const ordem = state.folders.reduce((max, f) => Math.max(max, Number(f.ordem) || 0), 0) + 1;
+    const ordem = filhasDe(paiId).reduce((max, f) => Math.max(max, Number(f.ordem) || 0), 0) + 1;
     const { data, error } = await ctx.supabase.from("biblioteca_pastas")
-      .insert({ empresa_id: ctx.empresaId, nome, ordem }).select("id,nome,ordem").single();
+      .insert({ empresa_id: ctx.empresaId, nome, ordem, pai_id: paiId }).select("id,nome,ordem,pai_id").single();
     if(error) throw error;
     state.folders.push(data);
-    renderFolders();
+    if(paiId) renderDetail(); else renderFolders();
     window.catalogNotify?.({ title: "Pasta criada", message: nome, status: "done" });
   }catch(error){
     console.error("Erro ao criar pasta da biblioteca:", error);
@@ -250,7 +292,7 @@ async function renomearPasta(){
   if(ctx.pedidoComercial || !ctx.acessoInterno || !folder || state.saving) return;
   const nome = await pedirNomePasta({ titulo: "Renomear pasta", valor: folder.nome, acao: "Salvar" });
   if(!nome || nome === folder.nome) return;
-  if(nomeJaExiste(nome, folder.id)){ window.catalogNotify?.({ title: "Essa pasta já existe", message: `Já existe uma pasta chamada "${nome}".`, status: "error" }); return; }
+  if(nomeJaExiste(nome, folder.id, folder.pai_id || null)){ window.catalogNotify?.({ title: "Essa pasta já existe", message: `Já existe uma pasta chamada "${nome}".`, status: "error" }); return; }
   state.saving = true;
   try{
     const { error } = await ctx.supabase.from("biblioteca_pastas").update({ nome }).eq("id", folder.id);
@@ -267,10 +309,13 @@ async function renomearPasta(){
 async function excluirPasta(){
   const folder = folderById(state.activeFolder);
   if(ctx.pedidoComercial || !ctx.acessoInterno || !folder || state.saving) return;
-  // Conta TODAS as fotos da pasta (de qualquer cliente), não só as do cliente escolhido na tela.
-  const fotos = state.photos.filter((p) => String(p.pasta_id) === String(folder.id));
-  const aviso = fotos.length
-    ? `Excluir a pasta "${folder.nome}" e as ${fotos.length} foto${fotos.length === 1 ? "" : "s"} dentro dela (de todos os clientes)? Isso não pode ser desfeito.`
+  // Conta TODAS as fotos da pasta e das pastas de dentro (de qualquer cliente), não só as do cliente escolhido na tela.
+  const internas = descendentes(folder.id);
+  const ids = new Set([folder.id, ...internas.map((f) => f.id)].map(String));
+  const fotos = state.photos.filter((p) => ids.has(String(p.pasta_id)));
+  const partes = [internas.length && `${internas.length} pasta${internas.length === 1 ? "" : "s"} de dentro`, fotos.length && `${fotos.length} foto${fotos.length === 1 ? "" : "s"} (de todos os clientes)`].filter(Boolean);
+  const aviso = partes.length
+    ? `Excluir a pasta "${folder.nome}" com ${partes.join(" e ")}? Isso não pode ser desfeito.`
     : `Excluir a pasta "${folder.nome}"?`;
   if(!window.confirm(aviso)) return;
   state.saving = true;
@@ -279,9 +324,9 @@ async function excluirPasta(){
     if(error) throw error;
     const paths = fotos.map((p) => p.path).filter(Boolean);
     if(paths.length) await ctx.supabase.storage.from("biblioteca").remove(paths);
-    state.folders = state.folders.filter((f) => f !== folder);
-    state.photos = state.photos.filter((p) => String(p.pasta_id) !== String(folder.id));
-    showFolders();
+    state.folders = state.folders.filter((f) => !ids.has(String(f.id)));
+    state.photos = state.photos.filter((p) => !ids.has(String(p.pasta_id)));
+    if(folder.pai_id && folderById(folder.pai_id)) showDetail(folder.pai_id); else showFolders();
   }catch(error){
     console.error("Erro ao excluir pasta da biblioteca:", error);
     window.catalogNotify?.({ title: "Não foi possível excluir a pasta", message: "Tente novamente.", status: "error" });
@@ -439,6 +484,16 @@ function bindInteractions(){
     const folder = event.target.closest("[data-library-folder]");
     if(folder) showDetail(folder.dataset.libraryFolder);
   });
+  $("catalogBibliotecaSubpastas")?.addEventListener("click", (event) => {
+    if(event.target.closest("[data-library-new-folder]")){ criarPasta(state.activeFolder); return; }
+    const folder = event.target.closest("[data-library-folder]");
+    if(folder) showDetail(folder.dataset.libraryFolder);
+  });
+  $("catalogBibliotecaTrilha")?.addEventListener("click", (event) => {
+    const passo = event.target.closest("[data-library-trilha]");
+    if(!passo) return;
+    if(passo.dataset.libraryTrilha) showDetail(passo.dataset.libraryTrilha); else showFolders();
+  });
   $("catalogBibliotecaRename")?.addEventListener("click", renomearPasta);
   $("catalogBibliotecaDelete")?.addEventListener("click", excluirPasta);
   // Clicar numa foto abre o visualizador em tela cheia do catálogo (o mesmo do
@@ -494,6 +549,14 @@ export function initCatalogBiblioteca({ supabase, empresaId, token, acessoIntern
 // Chamado só na primeira vez que a aba Biblioteca é aberta (ver
 // openBibliotecaOverlay em catalogo.mjs) — evita gastar uma chamada de
 // rede logo no carregamento do catálogo pra quem nunca abre a Biblioteca.
+// "Voltar" dentro de uma pasta sobe uma pasta (ou volta pra lista de pastas); fora de pasta devolve false.
+export function backCatalogBiblioteca(){
+  if(!state.activeFolder) return false;
+  const pai = folderById(state.activeFolder)?.pai_id;
+  if(pai && folderById(pai)) showDetail(pai); else showFolders();
+  return true;
+}
+
 export async function openCatalogBiblioteca(){
   await carregarFotos();
   showFolders();

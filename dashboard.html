@@ -11,15 +11,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="js/core/productionConsole.js"></script>
 
-  <!-- Ãcones -->
+  <!-- Ícones -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
-  <script src="js/core/themePrepaint.js"></script>
+  <script src="js/core/limpezaDados.js?v=20261026"></script><script src="js/core/themePrepaint.js"></script>
 
-  <link rel="stylesheet" href="styles/shell.css?v=20261018-cinza">
+  <link rel="stylesheet" href="styles/shell.css?v=20261026-acentos">
 
   <link rel="stylesheet" href="styles/tokens.css?v=20260913b">
   <link rel="stylesheet" href="styles/base.css?v=20260913b">
@@ -30,11 +30,11 @@
   <link rel="stylesheet" href="styles/tables.css?v=20260913b">
   <link rel="stylesheet" href="styles/cards.css?v=20260913b">
   <link rel="stylesheet" href="styles/paymentPix.css?v=20261018-cinza">
-  <link rel="stylesheet" href="styles/design-system.css?v=20260913d">
+  <link rel="stylesheet" href="styles/design-system.css?v=20261023-sem-lia">
   <link rel="stylesheet" href="styles/global-help.css?v=20260913b">
-  <link rel="stylesheet" href="styles/lia-widget.css?v=20260913b">
   <link rel="stylesheet" href="styles/tema-chiavari.css?v=20261018-selos">
   <link rel="stylesheet" href="styles/portal-shell.css?v=20261019-numeros-subida">
+  <link rel="stylesheet" href="styles/menu-topo.css?v=20261023-menu-topo2">
 <script src="js/core/loading.js?v=20261020" data-global-loading defer></script>
 <script src="js/core/filterInputs.js?v=20261020-autofill2" data-filter-inputs defer></script>
 <link rel="stylesheet" href="styles/table-text.css?v=20261020" data-table-text>
@@ -79,7 +79,7 @@
   </script>
 
   <nav class="menu-lista" id="appMenu"></nav>
-  <script src="js/ui/sidebarMenu.js?v=20261019-painel-logistico"></script>
+  <script src="js/ui/sidebarMenu.js?v=20261024-acervo-painel"></script>
 
   <div class="menu-rodape">
     <div class="usuario" role="button" tabindex="0" aria-label="Opções da conta" onclick="toggleUserMenu(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleUserMenu(event);}">
@@ -113,35 +113,13 @@
     <span class="el-loading-indicator" role="status" aria-label="Carregando"><span class="el-loading-ring" aria-hidden="true"></span></span>
   </div>
 
-  <!-- CONTEÃšDO DINÃ‚MICO (mÃ³dulos antigos - fragmento via innerHTML) -->
+  <!-- CONTEÚDO DINÂMICO (módulos antigos - fragmento via innerHTML) -->
   <div id="main-content"></div>
 
-  <!-- CONTEÃšDO DINÃ‚MICO (mÃ³dulos novos - documento prÃ³prio, carregado no iframe) -->
-  <iframe id="appModuleFrame" name="appModuleFrame" class="app-module-frame hidden" allow="microphone; fullscreen; clipboard-write" title="ConteÃºdo do sistema" src="about:blank"></iframe>
+  <!-- CONTEÚDO DINÂMICO (módulos novos - documento próprio, carregado no iframe) -->
+  <iframe id="appModuleFrame" name="appModuleFrame" class="app-module-frame hidden" allow="microphone; fullscreen; clipboard-write" title="Conteúdo do sistema" src="about:blank"></iframe>
 
 </main>
-
-<section class="lia-global-widget" id="liaGlobalWidget" aria-label="Lia Assistente">
-  <button class="lia-global-button" type="button" id="liaGlobalButton" aria-label="Abrir Lia">
-    <i data-lucide="sparkles"></i>
-  </button>
-
-  <div class="lia-global-panel hidden" id="liaGlobalPanel" aria-hidden="true">
-    <header class="lia-global-header">
-      <div>
-        <strong>Lia</strong>
-        <span>Assistente Acervo</span>
-      </div>
-    </header>
-    <iframe
-      id="liaGlobalFrame"
-      title="Lia Assistente"
-      src="about:blank"
-      loading="lazy"
-      allow="microphone; clipboard-write">
-    </iframe>
-  </div>
-</section>
 
 <div class="global-help-modal hidden" id="globalHelpModal" aria-hidden="true">
   <div class="global-help-box">
@@ -204,7 +182,7 @@
 <script src="js/core/supabase.js"></script>
 
 <!-- =====================================================
-   CORE DO SISTEMA (ORDEM CRÃTICA)
+   CORE DO SISTEMA (ORDEM CRÍTICA)
 ===================================================== -->
 
 <!-- ALERTA GLOBAL -->
@@ -214,18 +192,18 @@
 <!-- CONTEXTO GLOBAL -->
 <script src="js/core/companyTheme.js?v=20260913m"></script>
 <script src="js/core/preload.js?v=20261014-colunas"></script>
-<script src="js/core/listPager.js?v=20260913b"></script>
-<script src="js/core/context.js?v=20261009-acesso-estavel2"></script>
-<script src="js/core/permissions.js?v=20261019-painel-logistico"></script>
+<script src="js/core/listPager.js?v=20261026-rolagem"></script>
+<script src="js/core/context.js?v=20261026-limpeza"></script>
+<script src="js/core/permissions.js?v=20261024-cronograma"></script>
 <script src="js/core/google.config.js"></script>
 <script src="js/core/google.js"></script>
 
-<!-- AUTENTICAÃ‡ÃƒO -->
+<!-- AUTENTICAÇÃO -->
 <script src="js/core/auth.js"></script>
 
-<!-- LOADER DE MÃ“DULOS (carregarNaMain) -->
+<!-- LOADER DE MÓDULOS (carregarNaMain) -->
 <script src="js/core/moduleLoader.js?v=20261008-loading"></script>
-<script src="js/core/appShell.js?v=20261008-loading"></script>
+<script src="js/core/appShell.js?v=20261024-auditoria"></script>
 
 <script src="js/core/systemStatus.js"></script>
 
@@ -234,7 +212,7 @@
 ===================================================== -->
 
 <!-- SIDEBAR / MENU -->
-<script src="js/ui/portalNav.js?v=20261008-loading"></script>
+<script src="js/ui/portalNav.js?v=20261023-menu-topo"></script>
 <script src="js/ui/menuMonograma.js?v=20261009-monograma"></script>
 <script src="js/ui/portalMural.js?v=20261019-resumo-operacao"></script>
 
@@ -245,15 +223,14 @@
    FUNCIONALIDADES
 ===================================================== -->
 
-<!-- USUÃRIO -->
-<script src="js/usuario/usuario.js?v=20261008-avatar"></script>
+<!-- USUÁRIO -->
+<script src="js/usuario/usuario.js?v=20261026-acentos"></script>
 
 <!-- EMPRESA -->
 <!-- EMPRESA (NOVO MODULAR) -->
-<script src="js/core/zapiMessaging.js?v=20260625-zapi-stable1"></script>
+<script src="js/core/zapiMessaging.js?v=20261026-acentos"></script>
 <script src="js/core/paymentPix.js?v=20261021-divisao"></script>
 <script src="js/core/globalHelp.js"></script>
-<script src="js/core/liaWidget.js"></script>
 
 <!-- ROOT GLOBAL DE MODAIS -->
 <div id="modal-root"></div>

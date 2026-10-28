@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Acervo - Separação de Materiais</title>
+  <title>Acervo - Triagem de Materiais</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="separacao-materiais.css?v=20261018-inter">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="separacao-materiais.css?v=20261027-foto-maior">
+<script src="../../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
 </head>
 <body>
 <section class="separacao-page el-page" data-module-root>
   <header class="separacao-header">
     <div class="separacao-title-block">
       <span class="separacao-kicker">Estoque</span>
-      <h1>Separação de Materiais</h1>
+      <h1>Triagem de Materiais</h1>
       <p>Acompanhe a separação dos pedidos por status.</p>
     </div>
 
@@ -77,6 +78,7 @@
       <span class="pedido-label">Escolha o modo</span>
       <h2 id="separacaoModoTitulo">Pedido selecionado</h2>
       <p id="separacaoModoMeta">Como deseja separar este pedido?</p>
+      <p data-sem-modos hidden>Nenhum modo de separação liberado para você. Solicite a liberação em Parâmetros.</p>
       <div class="separacao-mode-options">
         <button type="button" class="separacao-mode-option" data-separacao-modo="manual">
           <i data-lucide="list-checks"></i>
@@ -119,10 +121,7 @@
         <button type="button" class="modal-close-button" id="btnFecharManualSeparacao" aria-label="Voltar">
         <i data-lucide="arrow-left"></i><span>Voltar</span>
         </button>
-      </header>
-
-      <div class="separacao-modal-body separacao-manual-body">
-        <section class="pedido-operacao-card">
+        <section class="pedido-operacao-card separacao-progresso-topo">
           <div>
             <span class="pedido-label">Progresso</span>
             <strong id="separacaoManualPercent">0%</strong>
@@ -135,6 +134,9 @@
             <span id="separacaoManualFaltante">0 faltantes</span>
           </div>
         </section>
+      </header>
+
+      <div class="separacao-modal-body separacao-manual-body">
 
         <section class="itens-separacao-list" id="separacaoManualItens"></section>
       </div>
@@ -161,11 +163,7 @@
         <button type="button" class="modal-close-button" id="btnFecharQrSeparacao" aria-label="Voltar">
         <i data-lucide="arrow-left"></i><span>Voltar</span>
         </button>
-      </header>
-
-      <div class="separacao-modal-body separacao-qr-body">
-        <main class="separacao-workspace">
-          <section class="pedido-operacao-card">
+        <section class="pedido-operacao-card separacao-progresso-topo">
             <div>
               <span class="pedido-label">Progresso</span>
               <strong id="separacaoQrPercent">0%</strong>
@@ -178,6 +176,10 @@
               <span id="separacaoQrFaltante">0 faltantes</span>
             </div>
           </section>
+      </header>
+
+      <div class="separacao-modal-body separacao-qr-body">
+        <main class="separacao-workspace">
 
           <section class="itens-separacao-list qr-list" id="separacaoQrItens"></section>
         </main>
@@ -277,11 +279,11 @@
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/etiquetas.js?v=20261017-etiquetas"></script>
-<script src="separacao-materiais.js?v=20261020-fluxo"></script>
+<script src="separacao-materiais.js?v=20261027-triagem-completa"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

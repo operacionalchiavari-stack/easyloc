@@ -385,38 +385,8 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
-[functions.lia-chat]
-enabled = true
-verify_jwt = true
-import_map = "./functions/lia-chat/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/lia-chat/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/lia-chat/*.html" ]
 
-[functions.gerar-embedding]
-enabled = true
-verify_jwt = true
-import_map = "./functions/gerar-embedding/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/gerar-embedding/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/gerar-embeddings/*.html" ]
 
-[functions.rag-buscar-conhecimento]
-enabled = true
-verify_jwt = true
-import_map = "./functions/rag-buscar-conhecimento/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/rag-buscar-conhecimento/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/rag-buscar-conhecimento/*.html" ]
 
 [functions.calcular-distancia]
 enabled = true

@@ -623,6 +623,7 @@ function infoCadastro(rotulo, valor, icone){
       local: row.local_nome || row.local || row.endereco || "Local nao informado",
       data: row.data_evento || row.data_hora || row.data || row.created_at,
       status: row.status_comercial || row.status || "orcamento",
+      fluxo: row.fluxo || null,
       pre_reserva_ate: row.pre_reserva_ate || null,
       encerrado: Boolean(row.encerrado_operacional_em),
       valor: moneyNumber(row.valor_total || row.total || row.valor || 0),
@@ -886,7 +887,7 @@ function infoCadastro(rotulo, valor, icone){
   async function abrirPreviewPedido(pedidoId){
     if(!pedidoId || !state.supabase || !state.empresaId) return;
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261016-conversa-pedido");
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261027-pedido-lateral");
       const { data: pedido, error } = await state.supabase.from("separacoes_pedidos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedidoId).single();
       if(error || !pedido) throw error || new Error("Pedido não encontrado.");
@@ -935,14 +936,25 @@ function infoCadastro(rotulo, valor, icone){
       const logoCliente = String(cliente?.catalogo_logo_url || "");
       const foto = /^https?:/i.test(logoCliente) ? logoCliente : "";
 
-      const { dadosApresentacao, abrirVisualizacaoPedido } = apresentacaoModulo;
+      const { dadosApresentacao, abrirVisualizacaoPedido, financeiroPedidoSalvo } = apresentacaoModulo;
       const model = dadosApresentacao({
         noivos: pedido.cliente_nome || projeto?.noivos || "Pedido",
         data_evento: pedido.data_evento || projeto?.data_evento || "",
         data_evento_fim: pedido.data_evento_fim || "",
         local_evento: pedido.local_nome || projeto?.local_evento || "",
-        dados: { ambientes }
+        dados: { ambientes, servicos: projeto?.dados?.servicos || [] }
       }, findItem);
+      model.financeiro = financeiroPedidoSalvo(pedido);
+      model.semAviso = true; // no Comercial não aparece o card "Esta é uma prévia do pedido"
+      model.numero = pedido.numero_pedido || "";
+      model.statusPedido = { chave: pedido.status_comercial || "orcamento", ate: pedido.pre_reserva_ate || "" };
+      if(pedido.local_id){
+        const { data: local } = await state.supabase.from("locais_empresas").select("endereco,numero_endereco").eq("empresa_id", state.empresaId).eq("id", pedido.local_id).maybeSingle();
+        const rua = String(local?.endereco || "").trim(), num = String(local?.numero_endereco || "").trim();
+        model.localEndereco = num && !rua.includes(num) ? rua + ", " + num : rua;
+      }
+      const obsPed = pedido.observacoes || {};
+      model.evento = { ...(model.evento || {}), data_entrega: pedido.data_entrega || "", hora_entrega: obsPed.horario_entrega || "", data_coleta: pedido.data_coleta || "", hora_coleta: obsPed.horario_coleta || "" }; // resumo e programação de pagamento no fim do pedido
       abrirVisualizacaoPedido({
         titulo: `Pedido #${pedido.numero_pedido || "-"}`, model, empresa,
         decorador: pedido.cliente_nome ? { nome: pedido.cliente_nome, logo_url: foto } : null
@@ -986,6 +998,9 @@ function infoCadastro(rotulo, valor, icone){
     state.presencaTimer = setInterval(async () => {
       if(document.visibilityState !== "visible") return;
       await carregarPresenca().catch(() => {});
+      const atualizados=await enriquecerFluxoPedidos(state.pedidos.filter(p=>!p.origemCatalogo));
+      const fluxos=new Map(atualizados.map(p=>[p.id,p.fluxo]));
+      state.pedidos=state.pedidos.map(p=>fluxos.has(p.id)?{...p,fluxo:fluxos.get(p.id)}:p);
       aplicarFiltros();
     }, 30000);
   }
@@ -1029,7 +1044,7 @@ function infoCadastro(rotulo, valor, icone){
 
   async function abrirPreviewProjetoCatalogo(pedido){
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261016-conversa-pedido");
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261027-pedido-lateral");
       const { data: projeto, error } = await state.supabase.from("projetos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedido.projetoId).single();
       if(error || !projeto) throw error || new Error("Projeto não encontrado.");
@@ -1063,7 +1078,7 @@ function infoCadastro(rotulo, valor, icone){
       const { dadosApresentacao, abrirVisualizacaoPedido } = apresentacaoModulo;
       abrirVisualizacaoPedido({
         titulo: `Projeto do catálogo · ${projeto.noivos || ""}`,
-        model: dadosApresentacao(projeto, findItem), empresa,
+        model: { ...dadosApresentacao(projeto, findItem), semAviso: true }, empresa,
         decorador: { nome: cliente?.nome_razao || pedido.cliente, logo_url: /^https?:/i.test(logo) ? logo : "" }
       });
     }catch(error){
@@ -1090,63 +1105,35 @@ function infoCadastro(rotulo, valor, icone){
     return prazo ? `<span class="pre-reserva-prazo ${prazo.cls}">${escapeHtml(prazo.texto)}</span>` : "";
   }
 
-  /* Quadro (out/2026, pedido do usuário: "bater o olho e saber o que está em pré-reserva, o que é orçamento"):
-     uma coluna por situação, com a mesma busca e os mesmos filtros da lista. */
-  const COLUNAS_QUADRO = [
-    { id: "catalogo", titulo: "Do catálogo", entra: (p) => p.origemCatalogo },
-    { id: "orcamento", titulo: "Orçamento", entra: (p) => ["orcamento", "pendente"].includes(p.status) },
-    { id: "pre_reserva", titulo: "Pré-reserva", entra: (p) => p.status === "pre_reserva" },
-    { id: "reservado", titulo: "Reservado", entra: (p) => ["aprovado", "enviado"].includes(p.status) && !p.encerrado },
-    { id: "finalizado", titulo: "Finalizado", entra: (p) => p.status === "finalizado" || (["aprovado", "enviado"].includes(p.status) && p.encerrado) },
-    { id: "cancelado", titulo: "Cancelado", entra: (p) => p.status === "cancelado" }
+  /* Botões de situação (out/2026): Todos, Pré-reserva, Orçamento e Reservado, Pré-reserva e Orçamento com a contagem numa bolinha
+     vermelha piscando (Todos e Reservado sem bolinha). Clicar filtra a lista pela situação (mesmo filtro de "Situação" dos Filtros); clicar de novo mostra todos. */
+  const SITUACOES = [
+    { status: "", titulo: "Todos", icone: "list" },
+    { status: "pre_reserva", titulo: "Pré-reserva", icone: "alarm-clock", alerta: true },
+    { status: "orcamento", titulo: "Orçamento", icone: "file-text", alerta: true },
+    { status: "aprovado", titulo: "Reservado", icone: "calendar-check" }
   ];
-  function colunaDoPedido(pedido){
-    return COLUNAS_QUADRO.find((c) => c.entra(pedido))?.id || "orcamento";
-  }
-  function cartaoQuadroHtml(pedido){
-    const prazo = prazoPreReserva(pedido);
-    return `<article class="quadro-card${prazo ? " prazo-" + prazo.cls : ""}${pedido.origemCatalogo ? " is-catalogo" : ""}" data-pedido-id="${escapeHtml(pedido.id)}" tabindex="0" title="Abrir pedido">
-      <div class="quadro-card-topo"><span class="pedido-numero-card${pedido.origemCatalogo ? " pedido-numero-catalogo" : ""}">${escapeHtml(pedido.numero)}</span>${presencaHtml(pedido)}<span class="quadro-card-valor">${escapeHtml(formatCurrency(pedido.valor))}</span></div>
-      <strong class="quadro-card-cliente">${escapeHtml(pedido.cliente)}</strong>
-      <span class="quadro-card-linha">${escapeHtml(formatDate(pedido.data))} · ${escapeHtml(pedido.local)}</span>
-      ${prazoHtml(pedido)}
-      <div class="quadro-card-acoes"><button type="button" class="central-icon-action" data-action="visualizar" title="Visualizar pedido" aria-label="Visualizar pedido"><i data-lucide="eye"></i></button>${pedido.origemCatalogo ? "" : `<button type="button" class="central-icon-action whatsapp" data-action="whatsapp" title="Enviar WhatsApp" aria-label="Enviar WhatsApp"><i data-lucide="message-circle"></i></button>`}</div>
-    </article>`;
-  }
-  function renderQuadro(){
-    const quadro = $("centralQuadro");
-    if(!quadro) return;
-    quadro.innerHTML = COLUNAS_QUADRO.map((coluna) => {
-      let lista = state.filtrados.filter((p) => colunaDoPedido(p) === coluna.id);
-      if(coluna.id === "pre_reserva") lista = lista.sort((a, b) => prazoPreReserva(a).ordem - prazoPreReserva(b).ordem);
-      if(coluna.id === "catalogo" && !lista.length) return "";
-      const total = lista.reduce((soma, p) => soma + (Number(p.valor) || 0), 0);
-      return `<section class="quadro-coluna coluna-${coluna.id}" aria-label="${escapeHtml(coluna.titulo)}">
-        <header class="quadro-coluna-topo"><div><h3>${escapeHtml(coluna.titulo)}</h3><span>${escapeHtml(formatCurrency(total))}</span></div><b>${lista.length}</b></header>
-        <div class="quadro-coluna-lista">${lista.map(cartaoQuadroHtml).join("") || `<p class="quadro-vazio">Nada aqui</p>`}</div>
-      </section>`;
+  function renderAvisoPreReserva(){
+    const caixa = $("centralSituacoes");
+    if(!caixa) return;
+    const atual = els.filtroStatusPedido?.value || "";
+    caixa.innerHTML = SITUACOES.map((sit) => {
+      const lista = sit.status ? state.pedidos.filter((p) => p.status === sit.status) : state.pedidos;
+      let detalhe = "";
+      if(sit.status === "pre_reserva"){
+        const pre = lista.map(prazoPreReserva);
+        const vencidas = pre.filter((x) => x.cls === "vencida").length;
+        const vencendo = pre.filter((x) => x.cls === "vencendo").length;
+        const semData = pre.filter((x) => x.cls === "sem-data").length;
+        detalhe = [vencidas && `${vencidas} vencida${vencidas > 1 ? "s" : ""}`, vencendo && `${vencendo} vencendo`, semData && `${semData} sem data`].filter(Boolean).join(" · ");
+      }
+      const ativo = atual === sit.status;
+      return `<button type="button" class="central-situacao situacao-${sit.status}${ativo ? " is-active" : ""}" data-situacao="${sit.status}" aria-pressed="${ativo}" title="${!sit.status ? "Mostrar todos os pedidos" : ativo ? "Mostrar todos" : "Mostrar só " + escapeHtml(sit.titulo)}">
+        <i data-lucide="${sit.icone}" aria-hidden="true"></i><span class="central-situacao-texto"><b>${escapeHtml(sit.titulo)}</b>${detalhe ? `<small>${escapeHtml(detalhe)}</small>` : ""}</span>
+        ${sit.alerta && lista.length ? `<span class="central-situacao-conta" aria-label="${lista.length} pedido(s)">${lista.length}</span>` : ""}
+      </button>`;
     }).join("");
     window.lucide?.createIcons?.();
-  }
-  function renderAvisoPreReserva(){
-    const aviso = $("centralAvisoPreReserva");
-    if(!aviso) return;
-    const pre = state.pedidos.filter((p) => p.status === "pre_reserva").map(prazoPreReserva);
-    const vencidas = pre.filter((x) => x.cls === "vencida").length;
-    const vencendo = pre.filter((x) => x.cls === "vencendo").length;
-    const semData = pre.filter((x) => x.cls === "sem-data").length;
-    const partes = [vencidas && `${vencidas} vencida${vencidas > 1 ? "s" : ""}`, vencendo && `${vencendo} vencendo em até 3 dias`, semData && `${semData} sem data`].filter(Boolean);
-    aviso.hidden = !partes.length;
-    aviso.innerHTML = partes.length ? `<i data-lucide="alarm-clock"></i><span><b>Pré-reservas:</b> ${escapeHtml(partes.join(" · "))}</span><button type="button" data-ver-pre-reservas>Ver no quadro</button>` : "";
-    window.lucide?.createIcons?.();
-  }
-  function aplicarVisao(visao){
-    state.visao = visao === "quadro" ? "quadro" : "lista";
-    try{ localStorage.setItem("central_pedidos_visao", state.visao); }catch{}
-    document.querySelectorAll("[data-visao]").forEach((b) => { const ativo = b.dataset.visao === state.visao; b.classList.toggle("is-active", ativo); b.setAttribute("aria-pressed", String(ativo)); });
-    $("centralListaTabela")?.toggleAttribute("hidden", state.visao !== "lista");
-    $("centralQuadro")?.toggleAttribute("hidden", state.visao !== "quadro");
-    render();
   }
 
   function aplicarFiltros(){
@@ -1182,10 +1169,35 @@ function infoCadastro(rotulo, valor, icone){
         && (!inicial || dataISO >= inicial)
         && (!final || dataISO <= final);
     });
+    // Pré-reservas sempre no topo (a que vence primeiro em cima); depois quem está montando agora; o resto na ordem de sempre.
     const ativo = (p) => (presencaDe(p)?.ativo ? 1 : 0);
-    state.filtrados.sort((a, b) => ativo(b) - ativo(a));
+    const pre = (p) => (p.status === "pre_reserva" ? 1 : 0);
+    state.filtrados.sort((a, b) => (pre(b) - pre(a))
+      || (pre(a) ? prazoPreReserva(a).ordem - prazoPreReserva(b).ordem : 0)
+      || (ativo(b) - ativo(a)));
 
     render();
+  }
+
+  function renderFluxoPedido(pedido){
+    const etapas=['Comercial','Triagem','Carregamento','Entrega','Coleta','Posição final','Finalizado'];
+    const etapa=pedido.origemCatalogo?'comercial':pedido.fluxo?.etapa;
+    const indice=pedido.fluxo?.finalizado?6:({comercial:0,pre_reserva:0,triagem:1,expedicao:2,entrega:3,coleta:4,retorno_simultaneo:4,descarregamento:4,triagem_retorno:4,posicao_final:5})[etapa];
+    const cancelado=pedido.status==='cancelado'||etapa==='cancelado';
+    const descricao=cancelado?'Cancelado':indice==null?'Fluxo indisponível':({retorno_simultaneo:'Retorno: Expedição e Triagem simultâneas',descarregamento:'Retorno: descarregamento',triagem_retorno:'Retorno: Triagem'})[etapa]||(indice===0?formatStatusLabel(pedido.status):etapas[indice]);
+    const corComercial=cancelado?'vermelho':indice===0?(pedido.status==='pre_reserva'?'amarelo':['aprovado','enviado','finalizado'].includes(pedido.status)?'verde':'azul'):'';
+    const nota=pedido.fluxo?.operacao_concluida&&pedido.fluxo?.financeiro_pendente?'<small class="central-fluxo-descricao">Operação concluída · financeiro pendente</small>':(!cancelado&&indice==null)||['retorno_simultaneo','descarregamento','triagem_retorno'].includes(etapa)?'<small class="central-fluxo-descricao">'+escapeHtml(descricao)+'</small>':'';
+    return '<div class="central-fluxo'+(cancelado?' is-cancelado':'')+(corComercial?' comercial-'+corComercial:'')+'" title="'+escapeHtml(descricao)+'" aria-label="'+escapeHtml('Etapa atual: '+descricao)+'"><ol>'+etapas.map((nome,i)=>'<li class="'+(!cancelado&&indice!=null?(i<indice?'is-concluida':i===indice?'is-atual':''):'')+'"'+(!cancelado&&i===indice?' aria-current="step"':'')+'><span class="central-fluxo-ponto" aria-hidden="true">'+(!cancelado&&indice!=null&&i<indice?'✓':i+1)+'</span><span>'+nome+'</span></li>').join('')+'</ol>'+nota+'</div>';
+  }
+
+  async function enriquecerFluxoPedidos(pedidos){
+    if(!pedidos.length)return pedidos;
+    try{
+      const {data,error}=await state.supabase.rpc('comercial_fluxo_pedidos',{p_empresa:state.empresaId,p_pedidos:pedidos.map(p=>p.id)});
+      if(error)throw error;
+      const fluxos=new Map((Array.isArray(data)?data:[]).map(f=>[f.id,f]));
+      return pedidos.map(p=>({...p,fluxo:fluxos.get(p.id)||null}));
+    }catch(e){console.warn('Não foi possível consultar o fluxo dos pedidos:',e.message);return pedidos;}
   }
 
   function render(){
@@ -1193,14 +1205,13 @@ function infoCadastro(rotulo, valor, icone){
       els.centralStatusCarregamento.textContent = `${state.filtrados.length} pedido(s)`;
     }
     renderAvisoPreReserva();
-    if(state.visao === "quadro"){ renderQuadro(); return; }
 
     if(!els.centralPedidosTbody) return;
 
     if(!state.filtrados.length){
       els.centralPedidosTbody.innerHTML = `
         <tr>
-          <td colspan="8">
+          <td colspan="7">
             <div class="central-empty">
               Nenhum pedido encontrado. Use "Novo Pedido" para montar um evento.
             </div>
@@ -1218,23 +1229,16 @@ function infoCadastro(rotulo, valor, icone){
             ${escapeHtml(pedido.cliente)}
           </button>
         </td>
-        <td class="central-contact-cell">${escapeHtml(formatPhone(pedido.contato))}</td>
         <td>
           <button type="button" class="central-record-link" data-action="abrir-local" title="Abrir cadastro do local">
             ${escapeHtml(pedido.local)}
           </button>
         </td>
         <td>${escapeHtml(formatDate(pedido.data))}</td>
-        <td><span class="status-pill ${escapeHtml(pedido.status)}">${escapeHtml(formatStatusLabel(pedido.status))}</span>${prazoHtml(pedido)}</td>
+        <td class="central-fluxo-cell">${renderFluxoPedido(pedido)}${prazoHtml(pedido)}</td>
         <td class="central-value-cell">${renderValorFinanceiro(pedido)}</td>
         <td>
           <div class="central-actions">
-            <button type="button" class="central-icon-action" data-action="visualizar" title="Visualizar pedido" aria-label="Visualizar pedido">
-              <i data-lucide="eye"></i>
-            </button>
-            ${pedido.origemCatalogo ? "" : `<button type="button" class="central-icon-action" data-action="contrato" title="Abrir contrato" aria-label="Abrir contrato">
-              <i data-lucide="file-text"></i>
-            </button>`}
             <button type="button" class="central-icon-action whatsapp" data-action="whatsapp" title="Enviar WhatsApp" aria-label="Enviar WhatsApp">
               <i data-lucide="message-circle"></i>
             </button>
@@ -1293,7 +1297,8 @@ function infoCadastro(rotulo, valor, icone){
         console.warn("[CentralPedidos] projetos do catalogo indisponiveis:", error);
         return [];
       });
-      state.pedidos = await enriquecerContatosClientes([...(data || []).map(normalizarPedido), ...doCatalogo]);
+      const comFluxo=await enriquecerFluxoPedidos(data||[]);
+      state.pedidos = await enriquecerContatosClientes([...comFluxo.map(normalizarPedido), ...doCatalogo]);
       state.pedidos.sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
       sincronizarInatividadeCadastros(data || []).catch((error) => {
         console.warn("[CentralPedidos] sincronizacao de inatividade falhou:", error);
@@ -1325,6 +1330,7 @@ function infoCadastro(rotulo, valor, icone){
   }
 
   function bindEvents(){
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')carregarPedidos();});
     els.pesquisaGeralPedidos?.addEventListener("input", aplicarFiltros);
     els.btnFiltrosPedidos?.addEventListener("click", () => {
       const panel = els.centralFiltrosPedidos;
@@ -1428,29 +1434,12 @@ function infoCadastro(rotulo, valor, icone){
       }
     });
 
-    document.querySelectorAll("[data-visao]").forEach((b) => b.addEventListener("click", () => aplicarVisao(b.dataset.visao)));
-    $("centralAvisoPreReserva")?.addEventListener("click", (event) => {
-      if(!event.target.closest("[data-ver-pre-reservas]")) return;
-      aplicarVisao("quadro");
-      $("centralQuadro")?.querySelector(".coluna-pre_reserva")?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-    });
-    const abrirDoCartao = (cartao) => {
-      const pedidoId = cartao?.dataset?.pedidoId || "";
-      const doCatalogo = state.pedidos.find((item) => String(item.id) === String(pedidoId) && item.origemCatalogo);
-      if(doCatalogo){ window.location.href = `pedido.html?projeto=${encodeURIComponent(doCatalogo.projetoId)}&modo=editar`; return; }
-      if(pedidoId) abrirPedido(pedidoId, "editar");
-    };
-    $("centralQuadro")?.addEventListener("click", (event) => {
-      const cartao = event.target.closest(".quadro-card");
-      if(!cartao) return;
-      const botao = event.target.closest("[data-action]");
-      const pedido = state.pedidos.find((item) => String(item.id) === String(cartao.dataset.pedidoId));
-      if(botao?.dataset.action === "visualizar"){ if(pedido?.origemCatalogo) abrirPreviewProjetoCatalogo(pedido); else abrirPreviewPedido(cartao.dataset.pedidoId); return; }
-      if(botao?.dataset.action === "whatsapp"){ abrirModalWhatsapp(pedido); return; }
-      abrirDoCartao(cartao);
-    });
-    $("centralQuadro")?.addEventListener("keydown", (event) => {
-      if(event.key === "Enter" && event.target.classList?.contains("quadro-card")) abrirDoCartao(event.target);
+    $("centralSituacoes")?.addEventListener("click", (event) => {
+      const botao = event.target.closest("[data-situacao]");
+      if(!botao || !els.filtroStatusPedido) return;
+      const status = botao.dataset.situacao;
+      els.filtroStatusPedido.value = status && els.filtroStatusPedido.value === status ? "" : status;
+      aplicarFiltros();
     });
 
     els.centralPedidosTbody?.addEventListener("dblclick", (event) => {
@@ -1478,9 +1467,7 @@ function infoCadastro(rotulo, valor, icone){
     await window.aguardarContexto?.(); // espera a empresa ser identificada (ver CLAUDE.md, "aguardarContexto")
     state.empresaId = window.__CONTEXT?.empresa_id;
     bindEvents();
-    let visao = "lista";
-    try{ visao = localStorage.getItem("central_pedidos_visao") || "lista"; }catch{}
-    aplicarVisao(visao);
+    try{ localStorage.removeItem("central_pedidos_visao"); }catch{}
     await carregarPedidos();
     setupRealtime();
     iniciarPresenca();

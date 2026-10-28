@@ -106,8 +106,8 @@
 .catalog-biblioteca-folder-peek-frame{stroke:#fff;stroke-width:3;filter:drop-shadow(0 4px 6px rgba(37,30,25,.32))}
 
 .catalog-biblioteca-folder-tab,.catalog-biblioteca-folder-back{fill:var(--accent);transition:fill .25s}
-.catalog-biblioteca-folder-front{fill:var(--el-color-text,#1f2020);transition:fill .25s}
-.catalog-home-card:hover .catalog-biblioteca-folder-front,.catalog-home-card:focus-visible .catalog-biblioteca-folder-front{fill:var(--el-color-text,#1f2020)}
+.catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--accent) 55%,#fff);transition:fill .25s}
+.catalog-home-card:hover .catalog-biblioteca-folder-front,.catalog-home-card:focus-visible .catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--accent) 70%,#fff)}
 .catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-tab,.catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-back{fill:var(--muted)}
 .catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--muted) 40%,#fff)}
 .catalog-home-card:hover .catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-front,.catalog-home-card:focus-visible .catalog-biblioteca-folder.is-empty .catalog-biblioteca-folder-front{fill:color-mix(in srgb,var(--muted) 55%,#fff)}
@@ -214,3 +214,11 @@
 .catalog-biblioteca-pasta-acoes{display:flex;justify-content:flex-end;gap:10px}
 .catalog-biblioteca-pasta-acoes button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 18px;font:600 .8rem "Manrope",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);cursor:pointer}
 .catalog-biblioteca-pasta-acoes .is-primary{background:#5a5a55;border-color:#5a5a55;color:#fff}
+
+/* Pastas dentro de pastas (out/2026): trilha no topo da pasta e as pastas de dentro antes das fotos */
+.catalog-biblioteca-trilha{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px;font:600 .8rem "Manrope",sans-serif;letter-spacing:.04em;color:var(--muted)}
+.catalog-biblioteca-trilha[hidden]{display:none}
+.catalog-biblioteca-trilha button{padding:2px 4px;border:0;background:none;color:var(--muted);font:inherit;letter-spacing:inherit;text-transform:uppercase;cursor:pointer}
+.catalog-biblioteca-trilha button:hover,.catalog-biblioteca-trilha button:focus-visible{color:var(--ink);text-decoration:underline;outline:0}
+.catalog-biblioteca-subpastas{margin:0 0 40px}
+.catalog-biblioteca-subpastas[hidden]{display:none}

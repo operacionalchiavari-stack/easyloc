@@ -70,7 +70,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
 
  // Bloco Catálogo -> Home de categorias. Título "Categorias" foi
  // removido do corpo (duplicava o rótulo do cabeçalho, #catalogPageLabel).
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('.catalog-home-grid').waitFor();
  assert.equal(await page.locator('#catalogPageLabel').textContent(),'Categorias');
 

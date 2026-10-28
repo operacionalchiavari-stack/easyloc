@@ -31,7 +31,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  });
  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('[data-home-category="sofas"]').click();
  await page.locator('[data-grid-item]').first().click();
  await page.locator('.catalog-product-section').first().waitFor();
@@ -192,7 +192,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  });
  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('[data-home-category="sofas"]').click();
  await page.locator('[data-grid-item]').first().click();
  await page.locator('#produto-1').waitFor();

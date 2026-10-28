@@ -3,6 +3,7 @@
    arquivo: estoque-personalizacoes.mjs
 ===================================================== */
 
+import { criarEditorEtapas } from '../../Modulos/Producao/producao-cadastro.mjs';
 let personalizacoes = [];
 
 function avisar(mensagem, titulo = "Atenção", tipo = "aviso"){
@@ -44,6 +45,7 @@ async function initEstoquePersonalizacoes(){
     }
 
     const els = getEls(root);
+    const editorProducao = criarEditorEtapas(els.inpTempo);
 
     function mostrarDetalhesPersonalizacao() {
       els.listView?.classList.add("hidden");
@@ -117,6 +119,8 @@ const missing = getMissingEls(els, [
 let itens = [];
 let componentes = [];
 let insumos = [];
+// Tipos de cartela cadastrados (Tecido, Tinta...): uma linha de material pode ser "escolhida pelo cliente" da cartela.
+let cartelaTipos = [];
 
 // Cada modulo hoje e um documento proprio (iframe), entao o script pode
 // comecar a rodar antes de js/core/context.js terminar de resolver
@@ -128,6 +132,16 @@ await window.aguardarContexto();
 await carregarItensEComponentes();
 await carregarInsumos();
 atualizarListaInsumos();
+await carregarCartelaTipos();
+
+async function carregarCartelaTipos(){
+  const { data, error } = await window.supabaseClient
+    .from("cartelas").select("tipo, unidade").eq("empresa_id", window.__CONTEXT.empresa_id).eq("ativa", true);
+  if(error){ console.error("erro ao carregar cartelas:", error); return; }
+  const mapa = new Map();
+  (data || []).forEach(c => { const t = String(c.tipo || "").trim(); if(t && !mapa.has(t.toLowerCase())) mapa.set(t.toLowerCase(), { tipo: t, unidade: c.unidade || "" }); });
+  cartelaTipos = [...mapa.values()].sort((a, b) => a.tipo.localeCompare(b.tipo, "pt-BR"));
+}
 
 async function carregarItensEComponentes(){
 
@@ -173,23 +187,24 @@ async function carregarItensEComponentes(){
 
 async function carregarInsumos(){
 
+  // Out/2026: os materiais vêm do Almoxarifado (aba Produtos da planilha), não mais da tabela "insumos".
+  // O id guardado é o ID do produto no Almoxarifado (ex.: PROD_1776858505021).
   const { data, error } = await window.supabaseClient
-    .from("insumos")
-    .select("id, nome")
-    .eq("empresa_id", window.__CONTEXT.empresa_id)
-    .order("nome");
+    .rpc("almox_produtos", { p_empresa_id: window.__CONTEXT.empresa_id });
 
   if(error){
-    console.error("❌ erro ao carregar insumos:", error);
+    console.error("❌ erro ao carregar materiais do Almoxarifado:", error);
     return;
   }
 
-  insumos = (data || []).map(i => ({
-    id: i.id,
-    nome: i.nome,
-    unidade: "",
-    custo_unitario: 0
-  }));
+  insumos = (data || [])
+    .filter(i => String(i.status || "").toLowerCase() !== "inativo")
+    .map(i => ({
+      id: i.id,
+      nome: `${String(i.produto || "").trim()}${i.codigo ? ` (${i.codigo})` : ""}`,
+      unidade: i.unidade || "",
+      custo_unitario: Number(i.valor_custo) || 0
+    }));
 
 }
 function atualizarListaInsumos(){
@@ -299,6 +314,11 @@ if (els.btnCloseModal) {
       els.btnAddInsumo.addEventListener("click", ()=>{
         adicionarLinhaInsumo();
         recalcularResumo();
+      });
+      root.querySelector("#btnAddCartela")?.addEventListener("click", async ()=>{
+        await carregarCartelaTipos();
+        if(!cartelaTipos.length){ avisar("Cadastre primeiro uma cartela de tecidos ou tintas na aba Cartelas."); return; }
+        adicionarLinhaCartela(cartelaTipos[0].tipo);
       });
 
       // ✅ NOVO: delegação para eventos dentro do container (remove, change, input)
@@ -505,6 +525,7 @@ async function openModalCreate(){
 
       els.modalTitle.textContent = "Adicionar Personalização";
       resetModalFields();
+      editorProducao.set([]);
 
       modalState.alvo = "ITEM";
       const radioItem = root.querySelector('input[name="alvo"][value="ITEM"]');
@@ -546,16 +567,16 @@ async function openModalEdit(id){
       // carrega insumos usados
       els.insumosContainer.innerHTML = "";
       const usados = Array.isArray(p.insumos_usados) ? p.insumos_usados : [];
-      if(usados.length === 0){
-        adicionarLinhaInsumo();
-      }else{
-        usados.forEach(u=>{
-          adicionarLinhaInsumo(u.insumo_id, u.qtd);
-        });
-      }
+      const variaveis = Array.isArray(p.cartelas_usadas) ? p.cartelas_usadas : [];
+      usados.forEach(u=>{
+        adicionarLinhaInsumo(u.insumo_id, u.qtd);
+      });
+      variaveis.forEach(c => adicionarLinhaCartela(c.tipo, c.qtd, c.unidade));
+      if(!usados.length && !variaveis.length) adicionarLinhaInsumo();
 
       // carrega mão de obra / margem / complexidade se existirem
       if(p.tempo != null) els.inpTempo.value = String(p.tempo);
+      editorProducao.set(p.producao_etapas || []);
       if(p.custo_hora != null) els.inpCustoHora.value = String(p.custo_hora);
       if(p.complexidade != null) els.inpComplexidade.value = String(p.complexidade);
       if(p.margem != null) els.inpMargem.value = String(p.margem);
@@ -631,7 +652,7 @@ const selectHtml = `
     type="text"
     data-role="insumo-input"
     list="listaInsumos"
-    placeholder="Digite para buscar insumo..."
+    placeholder="Buscar material do Almoxarifado..."
     autocomplete="off"
   />
 `;
@@ -664,7 +685,36 @@ if(insumoIdPreselect){
       atualizarLinhaInsumo(row);
     }
 
+    // Linha cujo material o cliente escolhe na cartela (tecido, tinta...): só o tipo e a quantidade por unidade do item.
+    // O custo entra no pedido conforme a opção escolhida, por isso não soma no preço sugerido.
+    function adicionarLinhaCartela(tipoPreselect = "", qtdPreselect = "", unidadePreselect = ""){
+      const row = document.createElement("div");
+      row.className = "insumo-row is-cartela";
+      const tipos = [...cartelaTipos];
+      if(tipoPreselect && !tipos.some(t => t.tipo.toLowerCase() === tipoPreselect.toLowerCase())) tipos.push({ tipo: tipoPreselect, unidade: unidadePreselect });
+      row.innerHTML = `
+        <label class="insumo-cartela-sel"><span>Escolhido pelo cliente na cartela de</span>
+          <select data-role="cartela-tipo">
+            ${tipos.length ? "" : '<option value="">Cadastre uma cartela na aba Cartelas</option>'}
+            ${tipos.map(t => `<option value="${escapeHtml(t.tipo)}" data-unidade="${escapeHtml(t.unidade)}"${t.tipo.toLowerCase() === String(tipoPreselect).toLowerCase() ? " selected" : ""}>${escapeHtml(t.tipo)}</option>`).join("")}
+          </select></label>
+        <input type="number" data-role="insumo-qtd" step="0.01" min="0" placeholder="Qtd" />
+        <div class="insumo-total" data-role="insumo-total" title="O valor entra no pedido conforme a opção escolhida">Conforme a opção</div>
+        <button type="button" class="insumo-remove" data-action="remove-insumo" title="Remover">✕</button>`;
+      els.insumosContainer.appendChild(row);
+      if(qtdPreselect !== "" && qtdPreselect != null) row.querySelector("input[data-role='insumo-qtd']").value = String(qtdPreselect);
+    }
+
+    function coletarCartelasDoModal(){
+      return Array.from(els.insumosContainer.querySelectorAll(".insumo-row.is-cartela")).map(row => {
+        const sel = row.querySelector("select[data-role='cartela-tipo']");
+        const opt = sel?.selectedOptions?.[0];
+        return { tipo: (sel?.value || "").trim(), qtd: toNum(row.querySelector("input[data-role='insumo-qtd']")?.value), unidade: opt?.dataset.unidade || null };
+      }).filter(c => c.tipo && c.qtd > 0);
+    }
+
     function atualizarLinhaInsumo(row){
+      if(row.classList.contains("is-cartela")) return;
 const sel = row.querySelector("input[data-role='insumo-input']");
       const qtdEl = row.querySelector("input[data-role='insumo-qtd']");
       const out = row.querySelector("[data-role='insumo-total']");
@@ -684,7 +734,7 @@ const ins = insumos.find(i => i.nome === nome);
 
 function coletarInsumosDoModal(){
 
-  const rows = Array.from(els.insumosContainer.querySelectorAll(".insumo-row"));
+  const rows = Array.from(els.insumosContainer.querySelectorAll(".insumo-row:not(.is-cartela)"));
   const usados = [];
 
   rows.forEach(row=>{
@@ -754,7 +804,7 @@ function getComplexidadeLabel(valor){
 
 function calcCustoMateriaisFromUI(){
 
-  const rows = Array.from(els.insumosContainer.querySelectorAll(".insumo-row"));
+  const rows = Array.from(els.insumosContainer.querySelectorAll(".insumo-row:not(.is-cartela)"));
   let total = 0;
 
   rows.forEach(row=>{
@@ -825,6 +875,7 @@ async function salvarPersonalizacao(){
   const status = statusBtn ? statusBtn.dataset.status : "ATIVO";
 
   const insumosUsados = coletarInsumosDoModal();
+  const cartelasUsadas = coletarCartelasDoModal();
 
   if(!tipo){
     avisar("Selecione o tipo de personalização.");
@@ -836,8 +887,8 @@ async function salvarPersonalizacao(){
     return;
   }
 
-  if(insumosUsados.length === 0){
-    avisar("Adicione pelo menos 1 insumo.");
+  if(insumosUsados.length === 0 && cartelasUsadas.length === 0){
+    avisar("Adicione pelo menos 1 material.");
     return;
   }
 
@@ -853,7 +904,10 @@ async function salvarPersonalizacao(){
   const custoTotal = parseCurrency(els.outCustoTotal.textContent);
   const precoFinal = parseCurrency(els.outPrecoSugerido.textContent);
 
+  let etapasProducao;
+  try { etapasProducao = editorProducao.get(); } catch(erro) { avisar(erro.message); return; }
   const payload = {
+    producao_etapas: etapasProducao,
     empresa_id: window.__CONTEXT.empresa_id,
     tipo,
     alvo,
@@ -935,12 +989,24 @@ if(modalState.mode === "edit"){
    INSERT INSUMOS
 ===================================== */
 
-const rows = insumosUsados.map(i => ({
+const rows = insumosUsados.map(i => {
+  const material = insumos.find(m => m.id === i.insumo_id);
+  return {
+    empresa_id: window.__CONTEXT.empresa_id,
+    personalizacao_id: personalizacaoId,
+    almox_produto_id: i.insumo_id,
+    material_nome: material?.nome || null,
+    unidade: material?.unidade || null,
+    quantidade: i.qtd
+  };
+}).concat(cartelasUsadas.map(c => ({
   empresa_id: window.__CONTEXT.empresa_id,
   personalizacao_id: personalizacaoId,
-  insumo_id: i.insumo_id,
-  quantidade: i.qtd
-}));
+  cartela_tipo: c.tipo,
+  material_nome: `${c.tipo} (escolhido pelo cliente)`,
+  unidade: c.unidade,
+  quantidade: c.qtd
+})));
 
 const { error: insErr } = await window.supabaseClient
   .from("personalizacoes_insumos")
@@ -1006,7 +1072,9 @@ async function carregarPersonalizacoesBanco(){
     .select(`
       *,
       personalizacoes_insumos (
-        insumo_id,
+        almox_produto_id,
+        cartela_tipo,
+        unidade,
         quantidade
       )
     `)
@@ -1020,9 +1088,14 @@ async function carregarPersonalizacoesBanco(){
 
   personalizacoes = (data || []).map(p => ({
     ...p,
-    insumos_usados: (p.personalizacoes_insumos || []).map(i => ({
-      insumo_id: i.insumo_id,
+    insumos_usados: (p.personalizacoes_insumos || []).filter(i => i.almox_produto_id).map(i => ({
+      insumo_id: i.almox_produto_id,
       qtd: i.quantidade
+    })),
+    cartelas_usadas: (p.personalizacoes_insumos || []).filter(i => i.cartela_tipo).map(i => ({
+      tipo: i.cartela_tipo,
+      qtd: i.quantidade,
+      unidade: i.unidade
     }))
   }));
 

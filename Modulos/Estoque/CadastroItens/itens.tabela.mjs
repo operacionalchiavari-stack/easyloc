@@ -18,9 +18,8 @@ window.inserirItemNaTabela = function (item) {
   tr.style.cursor = "pointer";
   tr.dataset.id = item.id;
 
-  const foto = item.foto_url
-    ? `<img src="${item.foto_url}" class="itens-foto" />`
-    : `<img src="${FOTO_SEM_FOTO_PLACEHOLDER}" class="itens-foto placeholder" alt="Sem foto" />`;
+  // Mesmo formato da Disponibilidade de Itens: caixa de 100x80; sem foto, a caixa fica vazia.
+  const foto = `<div class="itens-foto-caixa">${item.foto_url ? `<img src="${item.foto_url}" class="itens-foto" alt="" loading="lazy" />` : ""}</div>`;
 
   const tipoClasse = item.tipo === "Kit" ? "kit" : item.tipo === "Componente" ? "componente" : "item";
   const tipoBadge = item.tipo ? `<span class="tipo-badge ${tipoClasse}">${item.tipo}</span>` : "-";
@@ -138,28 +137,54 @@ tr.onclick = () => {
    RENDER DA TABELA
 ===================================================== */
 
-window.renderTabelaItens = function (itens) {
+// Carregamento igual à Disponibilidade de Itens: 20 linhas de cada vez e mais 20 ao rolar até o fim
+// ("Carregando mais itens..."), no lugar das páginas numeradas.
+const ITENS_POR_LOTE = 20;
+let itensLista = [];
+let itensMostrados = 0;
+let itensObservador = null;
 
+function itensSentinela() {
+  let el = document.getElementById("itensMais");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "itensMais";
+    el.className = "itens-mais";
+    el.setAttribute("role", "status");
+    el.textContent = "Carregando mais itens...";
+    el.addEventListener("click", () => mostrarMaisItens());
+    document.querySelector(".itens-table-card")?.appendChild(el);
+  }
+  return el;
+}
+
+function mostrarMaisItens() {
   const tbody = document.getElementById("itensTableBody");
   if (!tbody) return;
-
-  tbody.innerHTML = "";
-
-  const paginaItens = window.EasyLocListPager?.slice(
-    "cadastro-itens",
-    itens,
-    window.renderTabelaItens
-  ) || itens;
-
-  paginaItens.forEach(item => {
-    window.inserirItemNaTabela(item);
+  const fim = Math.min(itensLista.length, itensMostrados + ITENS_POR_LOTE);
+  for (let k = itensMostrados; k < fim; k++) window.inserirItemNaTabela(itensLista[k]);
+  itensMostrados = fim;
+  const sentinela = itensSentinela();
+  sentinela.hidden = itensMostrados >= itensLista.length;
+  // O observador só avisa quando a visibilidade muda: se o fim da lista continua à vista, carrega mais.
+  if (!sentinela.hidden) requestAnimationFrame(() => {
+    if (!sentinela.hidden && sentinela.isConnected && sentinela.getBoundingClientRect().top < innerHeight + 300) mostrarMaisItens();
   });
+}
 
-  window.EasyLocListPager?.render(
-    "cadastro-itens",
-    tbody,
-    itens,
-    window.renderTabelaItens
-  );
-
+window.renderTabelaItens = function (itens) {
+  const tbody = document.getElementById("itensTableBody");
+  if (!tbody) return;
+  itensLista = Array.isArray(itens) ? itens : [];
+  itensMostrados = 0;
+  tbody.innerHTML = itensLista.length ? "" : '<tr class="itens-vazio"><td colspan="9">Nenhum item encontrado.</td></tr>';
+  document.querySelector(".itens-table-card .easyloc-list-pager")?.remove();
+  mostrarMaisItens();
+  const sentinela = itensSentinela();
+  if (!itensObservador && "IntersectionObserver" in window) {
+    itensObservador = new IntersectionObserver((entradas) => {
+      if (entradas.some(e => e.isIntersecting) && !sentinela.hidden) mostrarMaisItens();
+    }, { rootMargin: "300px 0px" });
+    itensObservador.observe(sentinela);
+  }
 };

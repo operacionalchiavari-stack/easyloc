@@ -20,7 +20,7 @@ async function abrir(opcoes,busca=''){
     if(n==='catalogo_capas_carregar')return {data:{}};return {data:null};}};},{itens:ITENS});
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html'+busca);
   await page.locator('.catalog-gateway').waitFor();
-  await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('#catalogGrid .catalog-home-grid').waitFor();
+  await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);await page.locator('#catalogGrid .catalog-home-grid').waitFor();
   await page.locator('[data-home-category="sofas"]').click();await page.locator('[data-grid-item="1"]').click();
   await page.locator('#produto-1 .product-main-nav').first().waitFor();
   return page;

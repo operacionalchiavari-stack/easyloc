@@ -42,7 +42,7 @@ const tipos = { ".html": "text/html", ".js": "application/javascript", ".mjs": "
     /* ----- tela do pedido ----- */
     const ped = await abrir("Modulos/Comercial/Pedidos/pedido.html");
     await ped.waitForFunction(() => typeof window.__pedidoAtalho === "function" && window.__CONTEXT?.empresa_id, null, { timeout: 30000 });
-    assert.equal(await ped.textContent('.ct-ferramentas [data-etapa="catalogo"] .ct-kbd'), "F2", "o botão Catálogo mostra o atalho");
+    assert.equal(await ped.locator('.ct-linha [data-etapa="catalogo"]').count() > 0, true, "Catálogo é uma etapa da barra");
     await ped.click("#clienteInput");
     await ped.keyboard.press("F4");                // com o cursor dentro de um campo
     const frame = () => ped.frameLocator("iframe.pedido-catalogo-real");

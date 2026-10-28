@@ -15,6 +15,7 @@
 //   limpar           → apaga a conversa fora de pedido (a de um pedido fica como registro; o perfil fica)
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "*",
@@ -69,6 +70,7 @@ async function autenticar(req: Request, body: any): Promise<Ctx | { erro: string
   const usuario = createClient(url, anon, { global: { headers: { Authorization: auth } } });
   const { data: { user } } = await usuario.auth.getUser();
   if (!user) return { erro: "Sessão inválida", status: 401 };
+  if (await segundaEtapaPendente(auth)) return { erro: MENSAGEM_2FA, status: 403 };
   const { data: vinculo } = await service.from("usuarios_empresas").select("empresa_id").eq("user_id", user.id).eq("empresa_id", empresaId).maybeSingle();
   if (!vinculo) return { erro: "Usuário sem acesso a esta empresa", status: 403 };
   const { data: perfilUsuario } = await service.from("usuarios").select("nome").eq("id", user.id).maybeSingle();
@@ -115,29 +117,90 @@ function mapearItem(row: any): Item {
   return item;
 }
 
+// O que o catálogo pode mostrar pra quem está falando (Parâmetros > Catálogo): preço, estoque e disponível.
+type Exibir = { preco: boolean; estoque: boolean; disponivel: boolean };
+async function exibir(ctx: Ctx): Promise<Exibir> {
+  const c = ctx as any;
+  if (!c._exibir) {
+    const { data } = await ctx.service.rpc("catalogo_exibir", { p_empresa: ctx.empresaId, p_publico: ctx.clienteId ? "decorador" : "equipe", p_cliente: ctx.clienteId });
+    c._exibir = { preco: data?.preco !== false, estoque: data?.estoque !== false, disponivel: data?.disponivel !== false };
+  }
+  return c._exibir;
+}
+
 async function carregarAcervo(ctx: Ctx): Promise<Item[]> {
-  const { data, error } = await ctx.service.rpc("catalogo_acervo", { p_empresa_id: ctx.empresaId });
+  const [{ data, error }, ex] = await Promise.all([ctx.service.rpc("catalogo_acervo", { p_empresa_id: ctx.empresaId }), exibir(ctx)]);
   if (error) throw new Error("Não foi possível ler o catálogo: " + error.message);
-  return (Array.isArray(data) ? data : []).map((row: any, n: number) => ({ ...mapearItem(row), ref: `m${n + 1}` }));
+  return (Array.isArray(data) ? data : []).map((row: any, n: number) => {
+    const item = { ...mapearItem(row), ref: `m${n + 1}` };
+    if (!ex.preco) item.valor = null; // preço escondido: "sob consulta"
+    return item;
+  });
 }
 
 // Acha um item pelo apelido ("m12") ou pelo UUID.
 const acharItem = (acervo: Item[], x: unknown) => { const k = String(x ?? "").trim(); return acervo.find((i) => i.ref === k || i.id === k); };
 
+// Confere que o id que o modelo mandou é mesmo da peça que a pessoa pediu (out/2026: a Helena colocou Estante Lotus e
+// Base Estante Cacau quando pediram "2 da Mate e 2 da Noir" — ela não tinha mais os ids da lista mostrada na mensagem
+// anterior e chutou). Cada palavra do nome dito (3+ letras, sem "de/da/estante..." genéricas) tem que estar no cadastro
+// da peça. Se não estiver, procura pelo nome no acervo (primeiro entre as peças mostradas há pouco): uma só = usa ela;
+// várias = devolve as opções pra ela confirmar; nenhuma = erro.
+const PALAVRAS_SOLTAS = new Set(["de", "da", "do", "das", "dos", "com", "sem", "para", "pra", "unidade", "unidades", "peca", "pecas", "cor", "a", "o", "e"]);
+function conferirPeca(acervo: Item[], item: Item | undefined, nomeDito: unknown, recentes: Set<string> = new Set()): { item: Item } | { erro: string; opcoes?: unknown[] } {
+  const palavras = normalizar(nomeDito).replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter((p) => p.length >= 3 && !PALAVRAS_SOLTAS.has(p) && !/^\d+$/.test(p));
+  if (!palavras.length) return item ? { item } : { erro: "Item não existe no acervo. Use buscar_itens para achar o id certo." };
+  // Palavra inteira (com plural: "estantes" casa "estante"); "mate" não pode casar "material".
+  const singular = (w: string) => w.replace(/(oes|aes|ais|eis|s)$/, "");
+  const bate = (i: Item) => { const ws = i.busca.replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).map(singular); return palavras.every((p) => ws.includes(singular(p))); };
+  if (item && bate(item)) return { item };
+  let candidatos = acervo.filter(bate);
+  const vistos = candidatos.filter((i) => recentes.has(i.id));
+  if (vistos.length) candidatos = vistos;
+  // Mesma peça em tamanhos/cores diferentes conta separado: só decide sozinho se sobrar uma.
+  if (candidatos.length === 1) return { item: candidatos[0] };
+  if (!candidatos.length) return { erro: `O id ${item ? `${item.ref} é de "${item.nome}", não` : "não existe e não achei"} "${String(nomeDito)}". Nada foi alterado. Procure a peça com buscar_itens e use o id que vier.` };
+  return { erro: `O id ${item ? `${item.ref} é de "${item.nome}", não de` : "não confere com"} "${String(nomeDito)}". Há ${candidatos.length} peças com esse nome; nada foi alterado. Escolha pelo id abaixo (se for a mesma peça em cores/tamanhos diferentes e a pessoa não disse qual, pergunte).`,
+    opcoes: candidatos.slice(0, 12).map((i) => ({ id: i.ref, nome: i.nome, ...(i.cor ? { cor: i.cor } : {}), ...(i.medidas ? { medidas: i.medidas } : {}) })) };
+}
+
 // Peças que a pessoa citou pelo nome: nome completo ("sofá becca") ou modelo + tipo ("poltrona ... águines campo").
 // Uma por nome (variantes de cor contam uma vez); até 12.
-function pecasCitadas(mensagem: string, acervo: Item[]) {
+// Com `recentes` (peças mostradas há pouco na conversa), basta o modelo: "2 da Mate e 2 da Noir" acha a Estante Mate e a
+// Estante Noir que estavam na tela.
+function pecasCitadas(mensagem: string, acervo: Item[], recentes: Set<string> = new Set()) {
   const texto = " " + normalizar(mensagem).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ") + " ";
   const achadas = new Map<string, Item>();
   for (const i of acervo) {
     const nome = normalizar(i.nome).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim().replace(/\s+(p|m|g|gg)$/, "");
     const [tipo, ...resto] = nome.split(" ");
     const modelo = resto.join(" ");
-    const casa = texto.includes(` ${nome} `) || (modelo.length >= 4 && texto.includes(` ${modelo} `) && texto.includes(` ${tipo}`));
+    const casa = texto.includes(` ${nome} `) || (modelo.length >= 4 && texto.includes(` ${modelo} `) && (texto.includes(` ${tipo}`) || recentes.has(i.id)));
     if (casa && !achadas.has(nome)) achadas.set(nome, i);
     if (achadas.size >= 12) break;
   }
   return [...achadas.values()];
+}
+
+// Ids das peças que apareceram (cartões, lista de opções, destaque) nas últimas 6 mensagens da conversa.
+function pecasRecentes(passadas: any[]) {
+  const ids = new Set<string>();
+  for (const m of passadas.slice(-6)) for (const a of (m.anexos || [])) {
+    if (a?.tipo === "itens") (a.itens || []).forEach((i: any) => i?.id && ids.add(String(i.id)));
+    else if (a?.tipo === "opcoes" || a?.tipo === "escolha") (a.ids || []).forEach((id: unknown) => id && ids.add(String(id)));
+  }
+  return ids;
+}
+// No histórico que vai pro modelo, cada mensagem leva as peças que mostrou, com o id (mN). Sem isso, na mensagem
+// seguinte o modelo já não tinha os ids da lista e chutava um (out/2026: errou a Estante Mate/Noir).
+function pecasDaMensagem(m: any, acervo: Item[]) {
+  const ids: string[] = [];
+  for (const a of (m.anexos || [])) {
+    if (a?.tipo === "itens") (a.itens || []).forEach((i: any) => i?.id && ids.push(String(i.id)));
+    else if (a?.tipo === "opcoes" || a?.tipo === "escolha") (a.ids || []).forEach((id: unknown) => id && ids.push(String(id)));
+  }
+  const pecas = [...new Set(ids)].map((id) => acervo.find((i) => i.id === id)).filter(Boolean).slice(0, 40) as Item[];
+  return pecas.length ? `\n[peças mostradas nesta mensagem: ${pecas.map((i) => `${i.ref} ${i.nome}${i.cor ? ` (${i.cor})` : ""}`).join("; ")}]` : "";
 }
 
 const resumoItem = (i: Item) => ({
@@ -369,6 +432,18 @@ function topo(obj: Record<string, number> | undefined, n = 5) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+// Parâmetros > Catálogo: o que ela não pode contar pra essa pessoa.
+function regrasDeExibicao(ctx: Ctx) {
+  const ex = (ctx as any)._exibir as Exibir | undefined;
+  if (!ex) return "";
+  const regras = [
+    !ex.preco && "Nunca informe preços nem valores de locação ou reposição: diga que a equipe comercial passa os valores no pedido.",
+    !ex.estoque && "Nunca diga quantas unidades a empresa tem em estoque.",
+    !ex.disponivel && "Nunca diga quantas unidades estão livres ou disponíveis numa data: diga apenas se a peça está disponível, se dá para a quantidade pedida ou se está indisponível.",
+  ].filter(Boolean);
+  return regras.length ? "REGRAS DA EMPRESA SOBRE O QUE MOSTRAR (obrigatórias)\n- " + regras.join("\n- ") + "\n\n" : "";
+}
+
 function promptDoSistema({ ctx, perfil, projeto, modo, empresa, formatos, acervo, dispEvento }: any) {
   const subcats = () => { const m = new Map<string, Set<string>>(); (acervo || []).forEach((i: Item) => { if (!m.has(i.categoria)) m.set(i.categoria, new Set()); if (i.subcategoria) m.get(i.categoria)!.add(i.subcategoria); }); return [...m.entries()].map(([c, ss]) => `${c}${ss.size ? ` [${[...ss].join(", ")}]` : ""}`).join("; "); };
   const contar = (campo: "categoria" | "estilo") => { const m = new Map<string, number>(); (acervo || []).forEach((i: Item) => i[campo] && m.set(i[campo], (m.get(i[campo]) || 0) + 1)); return [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} (${v})`).join(", "); };
@@ -386,7 +461,7 @@ function promptDoSistema({ ctx, perfil, projeto, modo, empresa, formatos, acervo
 Ambiente ativo: ${projeto.ambientes?.find((a: any) => a.id === projeto.ambiente_ativo)?.nome || "nenhum"}.
 Itens já no pedido: ${JSON.stringify((projeto.ambientes || []).map((a: any) => ({ ambiente: a.nome, itens: (a.itens || []).map((i: any) => `${i.quantidade}× ${i.nome || "item"}${i.ref ? ` [${i.ref}]` : ""}`) })))}` : "Nenhum projeto aberto ainda.";
   return `Você é ${NOME_ASSISTENTE}, consultora comercial da ${empresa || "Chiavari"} — locação de mobiliário para eventos (casamentos, festas, corporativos). Você atende pelo chat do catálogo online.
-Hoje é ${hoje}. Você está falando com ${ctx.nome || "um(a) decorador(a)"}${ctx.clienteId ? " (cliente decorador(a))" : " (alguém da equipe interna testando o atendimento)"}.
+${regrasDeExibicao(ctx)}Hoje é ${hoje}. Você está falando com ${ctx.nome || "um(a) decorador(a)"}${ctx.clienteId ? " (cliente decorador(a))" : " (alguém da equipe interna testando o atendimento)"}.
 
 QUEM VOCÊ É
 - Uma pessoa de verdade do comercial: calorosa, segura, com bom gosto e olho de decoradora. Fala português do Brasil natural, como no WhatsApp profissional — frases curtas, sem listas enormes, sem jargão, sem "Como posso ajudar?" repetido, sem soar robô.
@@ -418,7 +493,9 @@ Exceções: se a pessoa já chega com um pedido objetivo ("preciso de 20 cadeira
 
 REGRAS DE VERDADE (MUITO IMPORTANTES)
 - Só fale de itens que existem no acervo: use as ferramentas para buscar. Nunca invente peça, medida, cor, preço ou disponibilidade.
-- Cada item tem um código curto (ex.: m12). Nas ferramentas use exatamente esse código; nunca mostre o código para a pessoa.
+- Cada item tem um código curto (ex.: m12). Nas ferramentas use exatamente esse código; nunca mostre o código para a pessoa. Os códigos vêm dos resultados das ferramentas e das listas "[peças mostradas nesta mensagem: ...]" da conversa. Se não tiver o código da peça que ela citou, chame buscar_itens antes — nunca chute um código.
+- Em adicionar_ao_pedido/remover_do_pedido mande também nome_da_peca (como a pessoa disse). Se a ferramenta devolver erro de peça que não confere, NÃO diga que colocou: use as opções devolvidas ou pergunte qual é.
+- Só coloque no pedido peças que a pessoa pediu pelo nome ou escolheu. Pedido para "adicionar um espaço/ambiente" (ex.: mesa de família) = criar_ambiente, vazio; depois pergunte o que ela quer colocar ali. Nunca escolha peça por conta própria para preencher um ambiente.
 - Valores: mostre o valor de locação da ferramenta; "sob consulta" quando não houver. Frete, montagem e serviços extras quem confirma é a equipe comercial no pedido oficial.
 - Nunca diga que colocou, incluiu, tirou ou trocou algo sem ter chamado a ferramenta (adicionar_ao_pedido/remover_do_pedido) e recebido ok.
 - Disponibilidade: use verificar_disponibilidade. Quando uma peça pedida não tiver unidades livres na data do evento, diga com clareza e gentileza: "infelizmente o <peça> não está disponível para <data>", e na mesma resposta mostre as opções do mesmo tipo que ESTÃO livres nessa data com mostrar_opcoes (sem escolher por ela). Se houver só parte da quantidade, diga quantas restam. Nunca coloque no pedido uma peça indisponível na data.
@@ -500,9 +577,12 @@ const FERRAMENTAS = (modo: string) => [
     categoria: { type: "string" }, subcategoria: { type: "string", description: "Tipo de peça (sofá, poltrona, puff...)." }, estilo: { type: "string" }, material: { type: "string" }, cor: { type: "string" }, texto: { type: "string" } }, required: ["titulo"] } },
   { name: "ver_pedido", description: "Abre (abrir=true) ou fecha (abrir=false) na tela da pessoa a VERSÃO FINAL do pedido aberto: a prévia com fotos, renderizações, quantidades e valores, de qualquer lugar do catálogo.", parameters: { type: "object", properties: { abrir: { type: "boolean" } }, required: ["abrir"] } },
   { name: "circular_escolha", description: "Destaca (moldura dourada e selo Sua escolha) na tela da pessoa a(s) peça(s) que ELA escolheu, pra ela conferir que é a certa.", parameters: { type: "object", properties: { item_ids: { type: "array", items: { type: "string" } } }, required: ["item_ids"] } },
-  { name: "adicionar_ao_pedido", description: "Coloca (ou define a quantidade de) um item num ambiente do projeto aberto. Cria o ambiente se não existir.", parameters: { type: "object", properties: {
-    item_id: { type: "string" }, quantidade: { type: "integer", description: "Quantidade final desejada desse item no ambiente." }, ambiente: { type: "string", description: "Nome do ambiente (ex.: Lounge, Cerimônia, Bar). Vazio = ambiente ativo." } }, required: ["item_id", "quantidade"] } },
-  { name: "remover_do_pedido", description: "Tira um item de um ambiente do projeto aberto.", parameters: { type: "object", properties: { item_id: { type: "string" }, ambiente: { type: "string" } }, required: ["item_id"] } },
+  { name: "adicionar_ao_pedido", description: "Coloca (ou define a quantidade de) uma peça que a PESSOA nomeou ou escolheu num ambiente do projeto aberto. Nunca use para peça que ela não pediu. Cria o ambiente se não existir.", parameters: { type: "object", properties: {
+    item_id: { type: "string", description: "O id (mN) da peça, copiado de um resultado de ferramenta ou da lista de peças da conversa. Nunca invente." },
+    nome_da_peca: { type: "string", description: "O nome da peça como a pessoa disse (ex.: Estante Mate, cadeira tiffany). O sistema confere que o id é dessa peça." },
+    quantidade: { type: "integer", description: "Quantidade final desejada desse item no ambiente." }, ambiente: { type: "string", description: "Nome do ambiente (ex.: Lounge, Cerimônia, Bar). Vazio = ambiente ativo." } }, required: ["item_id", "nome_da_peca", "quantidade"] } },
+  { name: "remover_do_pedido", description: "Tira um item de um ambiente do projeto aberto.", parameters: { type: "object", properties: { item_id: { type: "string" }, nome_da_peca: { type: "string", description: "O nome da peça como a pessoa disse." }, ambiente: { type: "string" } }, required: ["item_id", "nome_da_peca"] } },
+  { name: "criar_ambiente", description: "Cria um ambiente (espaço) VAZIO no pedido aberto: mesa de família, lounge, bar... Use quando a pessoa pedir para criar/adicionar um espaço. Não coloca nenhuma peça.", parameters: { type: "object", properties: { nome: { type: "string" } }, required: ["nome"] } },
   ...(modo === "pedido" ? [] : [
     { name: "criar_projeto", description: "Cria um pedido novo (projeto). Precisa de tipo de evento, data de entrega, data do evento (ou período), data de coleta e local, todos ditos pela pessoa.", parameters: { type: "object", properties: {
       tipo_evento: { type: "string", description: "Casamento, aniversário, 15 anos, corporativo..." },
@@ -795,7 +875,7 @@ function criarExecutor(ctx: Ctx, E: any) {
         if (data && !E.mapas.has(data)) E.mapas.set(data, await mapaDisponibilidade(ctx, data));
         const ids = opcoesDisponiveis(E.acervo, a, data ? E.mapas.get(data) : null);
         if (!ids.length) return { opcoes: 0, aviso: "Nada disponível com esse filtro. Diga isso e pergunte se ela quer ver outro tipo ou estilo." };
-        E.opcoes = { titulo: String(a?.titulo || "Opções").slice(0, 60), ids };
+        E.opcoes = { titulo: String(a?.titulo || "Opções").slice(0, 60), ids }; ids.forEach((id: string) => E.recentes?.add(id));
         const nomes = new Set(ids.map((id) => itemValido(id)!.nome.replace(/\s+(P|M|G|GG)$/i, "")));
         E.opcoes.total = nomes.size;
         // Com o código de cada peça: quando ela escolher, circular_escolha usa exatamente esse id.
@@ -808,9 +888,20 @@ function criarExecutor(ctx: Ctx, E: any) {
         ids.forEach((id: string) => E.circular.add(id));
         return { destacadas: ids.map((id) => itemValido(id)!.nome) };
       }
+      case "criar_ambiente": {
+        if (!E.projeto) return { erro: E.modo === "pedido" ? "O pedido ainda não está pronto." : "Não há projeto aberto." };
+        const nomeAmb = String(a?.nome || "").trim().replace(/\s+/g, " ").slice(0, 60);
+        if (!nomeAmb) return { erro: "Diga o nome do ambiente." };
+        const ja = E.projeto.ambientes.find((x: any) => normalizar(x.nome) === normalizar(nomeAmb));
+        if (ja) return { ok: true, ambiente: ja.nome, ja_existia: true, pecas: ja.itens.length };
+        E.projeto.ambientes.push({ id: `novo:${nomeAmb}`, nome: nomeAmb, itens: [] });
+        E.acoes.push({ tipo: "criar_ambiente", nome: nomeAmb });
+        return { ok: true, ambiente: nomeAmb, vazio: true, aviso: "Ambiente criado VAZIO. Não coloque nenhuma peça nele sem a pessoa pedir; pergunte o que ela quer colocar." };
+      }
       case "adicionar_ao_pedido": case "remover_do_pedido": {
-        const item = itemValido(a?.item_id);
-        if (!item) return { erro: "Item não existe no acervo." };
+        const conferida = conferirPeca(E.acervo, itemValido(a?.item_id), a?.nome_da_peca, E.recentes);
+        if ("erro" in conferida) return conferida;
+        const item = conferida.item;
         if (!E.projeto) return { erro: E.modo === "pedido" ? "O pedido ainda não está pronto." : "Não há projeto aberto. Peça noivos/cliente, data e local e use criar_projeto." };
         const ambNome = String(a?.ambiente || "").trim().slice(0, 60);
         const amb = ambNome ? E.projeto.ambientes.find((x: any) => normalizar(x.nome) === normalizar(ambNome)) : E.projeto.ambientes.find((x: any) => x.id === E.projeto!.ambiente_ativo) || E.projeto.ambientes[0];
@@ -992,7 +1083,8 @@ ANTES DE RESPONDER, CONFIRA (vale mais que qualquer exemplo acima):
 - Não pergunte de novo nem "confirme" o que a pessoa já respondeu nesta conversa; use e siga.
 - Horário/período de entrega e coleta: é opcional. Se a pessoa não disser junto com a data, não pergunte.
 - Sem abrir com "Perfeito", "Ótimo", "Claro" ou o nome da pessoa; sem repetir o que ela acabou de dizer.
-- Não ofereça peças, complementos nem combinações que ela não pediu ("quer complementar com poltronas?", "que tal uma mesa?" são proibidos). Depois de colocar uma peça, pergunte só o que falta sobre ela (quantidade, ambiente) ou o que ela quer fazer agora.`;
+- Não ofereça peças, complementos nem combinações que ela não pediu ("quer complementar com poltronas?", "que tal uma mesa?" são proibidos). Depois de colocar uma peça, pergunte só o que falta sobre ela (quantidade, ambiente) ou o que ela quer fazer agora.
+- Pediram para criar/adicionar um espaço (ambiente)? Use criar_ambiente e ele fica VAZIO. Nunca coloque uma peça que a pessoa não nomeou.`;
 
 async function conversar(ctx: Ctx, body: any) {
   const arquivos = arquivosValidos(ctx, body?.arquivos);
@@ -1024,7 +1116,7 @@ async function conversar(ctx: Ctx, body: any) {
   if (dataDoEvento) mapas.set(dataDoEvento, await mapaDisponibilidade(ctx, dataDoEvento));
   const messages: any[] = [
     { role: "system", content: promptDoSistema({ ctx, perfil, projeto, modo, empresa: empresa?.nome, formatos, acervo, dispEvento: dataDoEvento ? mapas.get(dataDoEvento) : null }) + OBJETIVIDADE },
-    ...passadas.map((m: any) => ({ role: m.papel, content: textoComArquivos(m) + locaisDaMensagem(m) + ((m.anexos || []).some((a: any) => a.tipo === "imagem") ? `\n[foto da composição enviada na conversa — ref ${refFoto(m.id)}: ${((m.anexos || []).find((a: any) => a.tipo === "imagem")?.itens || []).join(", ")}]` : "") })),
+    ...passadas.map((m: any) => ({ role: m.papel, content: textoComArquivos(m) + locaisDaMensagem(m) + pecasDaMensagem(m, acervo) + ((m.anexos || []).some((a: any) => a.tipo === "imagem") ? `\n[foto da composição enviada na conversa — ref ${refFoto(m.id)}: ${((m.anexos || []).find((a: any) => a.tipo === "imagem")?.itens || []).join(", ")}]` : "") })),
     { role: "user", content: porAudio ? `[mensagem de voz transcrita — pode ter pequenos erros de transcrição em nomes; interprete pelo contexto e pelo acervo]\n${mensagem}` : mensagem },
   ];
   // Arquivos (planta em PDF/foto): o modelo enxerga os da mensagem atual e os de até 2 mensagens anteriores com arquivo.
@@ -1046,14 +1138,17 @@ async function conversar(ctx: Ctx, body: any) {
   const encontrados = new Set<string>(); // itens que as ferramentas devolveram nesta mensagem (pros cartões automáticos)
   // Peças citadas pela pessoa, já procuradas no acervo pelo servidor (não depende do modelo buscar): evita "não temos" de
   // uma peça que existe e dá a ela o estilo e se tem 3D. Casa o nome inteiro ("sofá becca") ou o modelo + tipo da peça.
-  const citadas = pecasCitadas(mensagem, acervo);
+  // Peças mostradas nas últimas mensagens (cartões, opções, destaque): quando a pessoa diz só "a Mate" ou "a Noir",
+  // é delas que ela fala.
+  const recentes = pecasRecentes(passadas);
+  const citadas = pecasCitadas(mensagem, acervo, recentes);
   if (citadas.length) {
     messages.splice(messages.length - 1, 0, { role: "system", content: "Peças que a pessoa citou nesta mensagem e que EXISTEM no acervo (confirmado pelo sistema): " + JSON.stringify(citadas.map(resumoItem)) + ". Trate-as como existentes. tem_modelo_3d false = existe e pode entrar no pedido, só não dá pra montar a foto dela." });
     citadas.forEach((i) => encontrados.add(i.id));
   }
   const itemValido = (id: unknown) => acharItem(acervo, id);
 
-  const E: any = { acervo, modo, perfil, perfilMudou: false, projeto, formatos, acoes, mostrados, mapas, dataDoEvento, circular: new Set<string>(), opcoes: null };
+  const E: any = { acervo, modo, perfil, perfilMudou: false, projeto, formatos, acoes, mostrados, mapas, dataDoEvento, circular: new Set<string>(), opcoes: null, recentes: new Set([...recentes, ...citadas.map((i) => i.id)]) };
   // A peça que a pessoa nomeou por inteiro ("quero o Sofá Modular Duo - 2 Módulos Horizontal") é circulada na tela dela
   // pra conferir que é essa (pedido do usuário) — sem depender do modelo lembrar de circular_escolha. Só o nome completo;
   // se um nome achado estiver dentro de outro também achado, vale o mais longo.
@@ -1081,7 +1176,7 @@ async function conversar(ctx: Ctx, body: any) {
       let resultado: unknown;
       try { resultado = await executar(chamada.function.name, JSON.parse(chamada.function.arguments || "{}")); }
       catch (e) { resultado = { erro: (e as Error).message || "Falha na ferramenta" }; }
-      JSON.stringify(resultado).replace(/"id":"(m\d+)"/g, (_, ref) => { const it = itemValido(ref); if (it) encontrados.add(it.id); return ""; });
+      JSON.stringify(resultado).replace(/"id":"(m\d+)"/g, (_, ref) => { const it = itemValido(ref); if (it) { encontrados.add(it.id); E.recentes.add(it.id); } return ""; });
       rastro.push({ ferramenta: chamada.function.name, args: chamada.function.arguments, resultado: JSON.stringify(resultado).slice(0, 400) });
       messages.push({ role: "tool", tool_call_id: chamada.id, content: JSON.stringify(resultado).slice(0, 14000) });
     }
@@ -1100,7 +1195,7 @@ async function conversar(ctx: Ctx, body: any) {
   if (aprendido) { E.perfil = mesclarPerfil(E.perfil, aprendido); E.perfilMudou = true; }
   if (E.perfilMudou) await gravarPerfil(ctx, E.perfil);
   const dispCartoes = dataDoEvento ? mapas.get(dataDoEvento) : null;
-  const itens = [...mostrados].map((id) => { const i = itemValido(id)!; const d = dispCartoes?.get(i.id); return { id: i.id, nome: i.nome, foto: i.foto, medidas: i.medidas, categoria: i.categoria, ...(d && d.total ? { livres: d.livre, data: dataDoEvento } : {}) }; });
+  const itens = [...mostrados].map((id) => { const i = itemValido(id)!; const d = dispCartoes?.get(i.id); return { id: i.id, nome: i.nome, foto: i.foto, medidas: i.medidas, categoria: i.categoria, ...(d && d.total && (ctx as any)._exibir?.disponivel !== false ? { livres: d.livre, data: dataDoEvento } : {}) }; });
   const anexos = [
     ...(itens.length ? [{ tipo: "itens", itens }] : []),
     ...(E.opcoes ? [{ tipo: "opcoes", titulo: E.opcoes.titulo, ids: E.opcoes.ids, total: E.opcoes.total }] : []),
@@ -1434,10 +1529,12 @@ serve(async (req) => {
     if (acao === "disponibilidade") {
       const data = String(body?.data || "");
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return json({ erro: "Data inválida" }, 400);
-      const mapa = await mapaDisponibilidade(ctx, data);
-      if (body?.todos) return json({ data, mapa: Object.fromEntries([...mapa].filter(([, d]) => d.total > 0).map(([id, d]) => [id, [d.total, d.livre]])) });
+      const [mapa, ex] = await Promise.all([mapaDisponibilidade(ctx, data), exibir(ctx)]);
+      // Parâmetros > Catálogo: estoque e disponível só saem pra quem pode ver.
+      if (!ex.estoque && !ex.disponivel) return json({ data, mapa: {}, itens: {} });
+      if (body?.todos) return json({ data, mapa: Object.fromEntries([...mapa].filter(([, d]) => d.total > 0).map(([id, d]) => [id, [ex.estoque ? d.total : null, ex.disponivel ? d.livre : null]])) });
       const ids = (Array.isArray(body?.item_ids) ? body.item_ids : []).map(String).slice(0, 40);
-      return json({ data, itens: Object.fromEntries(ids.map((id: string) => [id, mapa.get(id) || null])) });
+      return json({ data, itens: Object.fromEntries(ids.map((id: string) => { const d = mapa.get(id); return [id, d ? { total: ex.estoque ? d.total : null, livre: ex.disponivel ? d.livre : null } : null]; })) });
     }
     if (acao === "salvar_imagem") return await salvarImagem(ctx, body);
     if (acao === "arquivo_upload") return await urlDeUpload(ctx, body);

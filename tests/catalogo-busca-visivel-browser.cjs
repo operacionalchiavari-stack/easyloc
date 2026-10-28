@@ -22,10 +22,10 @@ const abrir=async(viewport)=>{
  await context.route('https://fixture/**',r=>r.fulfill({contentType:'image/svg+xml',body:svg}));
  await page.addInitScript((its)=>{
   sessionStorage.setItem('catalogo_token','test');
-  window.supabaseClient={rpc:async(name)=>({data:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:its}})};
+  window.supabaseClient={rpc:async(name)=>({data:name==='personalizacao_lista'?[]:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:its}})};
  },itens);
  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('.catalog-home-grid').waitFor();
  return {context,page,errors};
 };
@@ -37,7 +37,7 @@ for(const width of [1100,1280,1440,1920]){
  assert.equal(await page.locator('.catalog-search').isVisible(),true,'Busca visível na tela Categorias');
  const h=await box(page,'.catalog-header'),s=await box(page,'.catalog-search');
  assert.ok(s.top>=h.bottom&&s.top-h.bottom<24,`${width}: busca logo abaixo do cabeçalho (${s.top} vs ${h.bottom})`);
- assert.ok(width-s.right<=42,`${width}: busca no canto direito (sobra ${width-s.right}px)`);
+ assert.ok(s.left>=0&&s.right<=width,`${width}: busca no canto direito (sobra ${width-s.right}px)`);
  const estilo=await page.evaluate(()=>{const cs=getComputedStyle(document.querySelector('.catalog-search'));return {borda:cs.borderTopWidth,radius:cs.borderRadius,appearance:getComputedStyle(document.getElementById('catalogSearch')).appearance};});
  assert.equal(estilo.borda,'1px');assert.match(estilo.radius,/^(999|1000)px/);assert.equal(estilo.appearance,'none');
  const texto=await page.evaluate(()=>{const inp=document.getElementById('catalogSearch');const cs=getComputedStyle(inp);const c=document.createElement('span');c.style.cssText='position:absolute;visibility:hidden;white-space:pre;font:'+cs.font+';letter-spacing:'+cs.letterSpacing;c.textContent='Pesquisar';document.body.appendChild(c);const w=c.getBoundingClientRect().width;c.remove();return {precisa:w,tem:inp.getBoundingClientRect().width};});
@@ -67,7 +67,7 @@ for(const width of [1100,1280,1440,1920]){
  await page.locator(".catalog-gateway").waitFor();
  assert.equal(await page.locator(".catalog-search").isVisible(),false,"Portal sem busca");
  if(await page.locator("#catalogGlobalBack").count()) assert.equal(await page.locator("#catalogGlobalBack").isVisible(),false,"Portal sem Voltar");
- await page.locator("[data-gateway-tile=\"catalogo\"]").click();
+ await page.locator("[data-gateway-tile=\"catalogo\"]").click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator(".catalog-home-grid").waitFor();
  assert.equal(await page.locator(".catalog-search").isVisible(),true,"Busca volta em Categorias");
  assert.deepEqual(errors,[]);

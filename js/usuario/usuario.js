@@ -1,5 +1,5 @@
 ﻿/**
- * USUARIO MODULE â€” User Profile & Preferences
+ * USUARIO MODULE — User Profile & Preferences
  * 
  * Exports:
  * - window.atualizarAvatarSidebar()
@@ -7,7 +7,7 @@
  * - criarModalPerfil()
  */
 
-function avisarUsuario(mensagem, titulo = "AtenÃ§Ã£o", tipo = "aviso") {
+function avisarUsuario(mensagem, titulo = "Atenção", tipo = "aviso") {
   if (typeof window.alerta === "function") {
     window.alerta(mensagem, titulo, tipo);
     return;
@@ -129,7 +129,7 @@ async function salvarPerfilShadow(shadow){
   // Atualiza senha
   if(senha){
     if(senha !== senha2){
-      avisarUsuario("As senhas nÃ£o coincidem.");
+      avisarUsuario("As senhas não coincidem.");
       return;
     }
 
@@ -176,7 +176,7 @@ async function preencherDadosPerfilModal(modal){
     "Criado em: " + (usuario?.created_at ? new Date(usuario.created_at).toLocaleString("pt-BR") : "-");
 
   modal.querySelector("#lastLoginInfo").innerText =
-    "Ãšltimo login: " +
+    "Último login: " +
     (usuario?.ultimo_login
       ? new Date(usuario.ultimo_login).toLocaleString("pt-BR")
       : "-");
@@ -237,7 +237,7 @@ function criarModalPerfil(){
         Meu Perfil
       </h3>
       <button id="closeModal" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">
-        âœ•
+        ✕
       </button>
     </div>
 
@@ -263,7 +263,7 @@ function criarModalPerfil(){
           <div><strong>Setor:</strong> <span id="setorInfo"></span></div>
           <div><strong>Cargo:</strong> <span id="cargoInfo"></span></div>
           <div><strong>Perfil:</strong> <span id="perfilInfo"></span></div>
-          <div><strong>NÃ­vel:</strong> <span id="nivelInfo"></span></div>
+          <div><strong>Nível:</strong> <span id="nivelInfo"></span></div>
           <hr style="margin:10px 0;border:none;border-top:1px solid #e5e7eb;">
           <div id="createdInfo"></div>
           <div id="lastLoginInfo"></div>
@@ -399,7 +399,7 @@ function criarModalPerfil(){
 }
 
 /* =====================================================
-   MODO AUSÃŠNCIA (LOCK SCREEN COM FOTO REAL)
+   MODO AUSÊNCIA (LOCK SCREEN COM FOTO REAL)
 ===================================================== */
 
 async function ativarAusencia(){
@@ -455,7 +455,7 @@ async function ativarAusencia(){
       ${avatarHTML}
     </div>
 
-    <h3 style="margin:0 0 6px 0;">SessÃ£o em ausÃªncia</h3>
+    <h3 style="margin:0 0 6px 0;">Sessão em ausência</h3>
     <p style="font-size:13px;color:#64748b;margin-bottom:20px;">
       Digite sua senha para retornar
     </p>
@@ -519,7 +519,13 @@ async function ativarAusencia(){
 
     const { data: { user } } = await window.supabaseClient.auth.getUser();
 
-    const { error, data } = await window.supabaseClient.auth.signInWithPassword({
+    // Confere a senha numa sessão à parte, descartada em seguida (out/2026): a sessão aberta continua a mesma,
+    // já confirmada pela verificação em duas etapas. Antes, o login de novo criava outra sessão e trocava a atual.
+    const principal = window.supabaseClient;
+    const conferir = window.supabase.createClient(principal.supabaseUrl, principal.supabaseKey, {
+      auth: { persistSession: false, autoRefreshToken: false, storageKey: "easyloc-desbloqueio" }
+    });
+    const { error } = await conferir.auth.signInWithPassword({
       email: user.email,
       password: senha
     });
@@ -531,18 +537,14 @@ async function ativarAusencia(){
       inputSenha.value = "";
       return;
     }
-
-    // ðŸ”¥ restaura sessÃ£o corretamente
-    if(data?.session){
-      await window.supabaseClient.auth.setSession(data.session);
-    }
+    try { await conferir.auth.signOut({ scope: "local" }); } catch (e) {}
 
     document.getElementById("absence-lock")?.remove();
   };
 }
 
 /* ========================================
-   INICIALIZAÃ‡Ã•ES DO DASHBOARD
+   INICIALIZAÇÕES DO DASHBOARD
 ======================================== */
 window.addEventListener("load", () => {
 

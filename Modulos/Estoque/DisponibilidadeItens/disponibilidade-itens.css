@@ -499,19 +499,6 @@
 }
 
 .dispon-list-view { display: grid; gap: 14px; }
-.dispon-simulation-actions { display: flex; justify-content: flex-end; }
-.dispon-simulation-banner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border: 1px solid #e4c567; background: #fffbeb; border-radius: 14px; padding: 16px 20px; color: #322b18; }
-.dispon-simulation-banner p { font-size: 13px; margin: 6px 0 0; }
-.dispon-simulation-banner .dispon-back { margin: 0; }
-.dispon-simulation-guide { padding: 20px; border: 1px solid #dfe3e8; border-radius: 14px; background: #fff; }
-.dispon-simulation-guide h2 { margin: 0 0 8px; }
-.dispon-simulation-guide p { font-size: 14px; line-height: 1.6; margin: 0 0 16px; }
-.dispon-simulation-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
-.dispon-simulation-days button { cursor: pointer; background: #f8fafc; border: 1px solid #dfe3e8; border-radius: 10px; padding: 12px 8px; font: inherit; text-align: center; color: var(--el-color-text,#1f2020); }
-.dispon-simulation-days button[aria-pressed="true"] { background: #eaf7ef; border-color: #73a586; box-shadow: inset 0 0 0 1px #73a586; }
-.dispon-simulation-days span { display: block; font-size: 12px; margin-top: 5px; }
-#disponSimulacaoAviso[hidden], #disponSimulacaoRoteiro[hidden], #btnSimularSemana[hidden] { display: none !important; }
-@media (max-width: 760px) { .dispon-simulation-days { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 #disponLista[hidden], #disponDetalheTela[hidden] { display: none !important; }
 .dispon-detail-view { min-width: 0; }
 .dispon-detail-shell {

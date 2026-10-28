@@ -2,11 +2,11 @@
 <html data-theme-legacy lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
-  <script src="../gas-cliente.js?v=20261019-sem-motor" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261023-cofre-free"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
+  <script src="../operacao-sem-motor.js?v=20261027-paralelo"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <meta charset="UTF-8" />
 <meta
@@ -8670,7 +8670,7 @@ textarea{ font-family:inherit; }
   .agenda-descarregamento .agenda-grupo-titulo{color:#4c1d95}
   .agenda-descarregamento .agenda-card-barra{background:#7c3aed}
 </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-selos">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261024-abas-globais">
 <style>
   /* Textos e ?cones das etapas; observa??es ficam em vermelho. */
   html body :is(.task-card,.app-cartao,.agenda-card,.mobile-card),
@@ -8806,6 +8806,8 @@ html:root body .topbar .semana-nav .semana-seta:focus-visible{outline:2px solid 
 html:root body .topbar .semana-nav .week-badge{padding:0 10px!important;font-size:13px!important;font-weight:500!important;letter-spacing:0!important;color:#111!important}
 @media(max-width:600px){html:root body .topbar .semana-nav .week-badge{font-size:12px!important;padding:0 4px!important}}
 </style>
+<link rel="stylesheet" href="cronograma-detalhes.css?v=20261027-contagem-lateral">
+<script src="cronograma-sequencia.js?v=20261027-contagem-circular"></script>
 </head>
 <body>
 
@@ -8874,7 +8876,8 @@ html:root body .topbar .semana-nav .week-badge{padding:0 10px!important;font-siz
 
 <div class="board-wrap">
 
-  <table class="board">
+  <table id="cronogramaGrade" class="board">
+    <colgroup><col span="8" style="width:260px"></colgroup>
 
     <thead>
       <tr>
@@ -9067,11 +9070,14 @@ atualizarIndicadoresCronograma();
   }
 
   google.script.run
-.withSuccessHandler(function(res){
+.withSuccessHandler(async function(res){
 
   console.log("CRONOGRAMA:", res); // 🔥 AQUI
 
-cronogramaData = Array.isArray(res) ? res : [];
+if(inicioSemanaStr!==formatDateISO(semanaInicioAtual))return;
+const dadosRecebidos=await window.CronoSequencia.receber(Array.isArray(res) ? res : [],inicioSemanaStr);
+if(inicioSemanaStr!==formatDateISO(semanaInicioAtual))return;
+cronogramaData = dadosRecebidos;
 
 
 /* =========================================
@@ -9835,7 +9841,7 @@ function criarAuditoriaMontagem(registro){
 function miniaturaFotoMontagem(valor, largura){
   const url = obterUrlFotoMontagem(valor);
   const m = url.match(/\/d\/([\w-]{10,})/) || url.match(/[?&]id=([\w-]{10,})/);
-  return m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w" + (largura || 600) : "";
+  return window.supabaseArquivoUrl(url);
 }
 
 function fotoResumoMontagem(valor, legenda, grande){
@@ -11683,16 +11689,18 @@ if(tipo === "alteracoes"){
       });
       totais.forEach(function(t, i){
         const el = document.getElementById("thc" + i);
-        if(el){ el.textContent = t ? t + (t === 1 ? " atividade" : " atividades") : ""; }
+        if(el){ el.textContent = t ? String(t) : ""; el.setAttribute("aria-label", t + " opera\u00e7\u00f5es no dia"); }
       });
     }
 
     function renderCronograma(){
       const tbody = document.getElementById("cronogramaBody");
+      const quantidadeDias=window.CronoSequencia.dias();
 
       if(!cronogramaData.length){
         tbody.innerHTML = (typeof renderLinhaAgendaInterna === "function" ? renderLinhaAgendaInterna() : "") +
           `<tr><td colspan="8" class="empty-state">Nenhum pedido encontrado para esta semana.</td></tr>`;
+        window.CronoSequencia.estrutura();
         return;
       }
 
@@ -11708,7 +11716,7 @@ html += `<td class="col-evento" style="text-align:center; vertical-align:middle;
   <strong>Cronograma Interno</strong>
 </td>`;
 
-  for(let i=0; i<7; i++){
+  for(let i=0; i<quantidadeDias; i++){
 
     html += `<td class="day-cell"><div class="cards">`;
 
@@ -11776,10 +11784,10 @@ html += typeof renderLinhaAgendaInterna === "function" ? renderLinhaAgendaIntern
 listaOrdenada.forEach(pedido => {
         const etapasFiltradas = filtrarEtapas(pedido.etapas || []);
 
-        const dias = [[],[],[],[],[],[],[]];
+        const dias = Array.from({length:quantidadeDias},()=>[]);
 
         etapasFiltradas.forEach(etapa => {
-          const idx = getDayIndexTerSeg(etapa.dataEtapa || etapa.data);
+          const idx = window.CronoSequencia.indice(etapa.dataEtapa || etapa.data);
           if(idx >= 0){
             dias[idx].push(etapa);
           }
@@ -11809,11 +11817,6 @@ html += `
         ${escapeHtml(pedido.cliente || "-")}
       </div>
 
-      <button type="button" class="linha-expandir" aria-expanded="${cronoLinhaAberta(pedido) ? "true" : "false"}"
-        title="Mostrar todas as informações das etapas" aria-label="Mostrar todas as informações das etapas deste pedido"
-        onclick="alternarLinhaCronograma(this, event, '${String(pedido.chave || pedido.pedido || "").replace(/'/g, "")}')">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-      </button>
 
       ${renderAlertaMotoristaDesktop(pedido)}
 
@@ -11823,7 +11826,7 @@ html += `
             ? ""
             : `<span class="evento-meta-linha"><span>${escapeHtml(pedido.local || "-")}</span></span>`
         }
-        <span class="evento-meta-linha"><span>${formatDateBR(pedido.dataEvento)}</span></span>
+
       </div>
 
     </div>
@@ -11831,7 +11834,7 @@ html += `
   </td>
 `;
 
-        for(let i=0; i<7; i++){
+        for(let i=0; i<quantidadeDias; i++){
           html += `<td class="day-cell"><div class="cards">`;
 
 // 🔥 EVENTO VISUAL (SEM SALVAR)
@@ -12082,6 +12085,8 @@ ${
 }
         "
 
+        data-crono-detalhes="${escapeHtml(JSON.stringify({pedido:pedido.pedido,cliente:pedido.cliente,local:pedido.local,data:etapa.dataEtapa || etapa.data || pedido.dataEvento || pedido.data,etapa:etapa.etapa,hora:etapa.horario || etapa.hora,responsavel:etapa.responsavel,equipe:etapa.equipe,caminhao:etapa.caminhao,observacao:obsEtapaCompleta(etapa,pedido)}))}"
+        tabindex="0" role="button" aria-expanded="false"
         ${onclickEtapa}
       >
 
@@ -12122,6 +12127,7 @@ ${tooltipMontagem}
 
 tbody.innerHTML = html || `<tr><td colspan="8" class="empty-state">Nenhum pedido encontrado para esta semana.</td></tr>`;
 atualizarContagemDiasCronograma(listaOrdenada);
+window.CronoSequencia.estrutura();
 
 // 🔥 ANALISAR CRONOGRAMA AUTOMATICAMENTE
 const analise = analisarCronograma();
@@ -15130,7 +15136,7 @@ document.addEventListener("click", function(e){
   const overlay = document.getElementById("zoomOverlay");
 
   // 👉 BLOQUEIA ZOOM PARA AGENDA
-  if(card && !card.classList.contains("agenda-card")){
+  if(card && !card.classList.contains("agenda-card") && !card.hasAttribute("data-crono-detalhes")){
 
     document.querySelectorAll(".task-card.zoomed").forEach(c => {
       c.classList.remove("zoomed");
@@ -17288,7 +17294,7 @@ window.trocaContextos = window.trocaContextos || {};
 const trocaEstado = { idEtapa: "", alterou: false };
 
 function trocaFoto(id, largura){
-  return id ? "https://drive.google.com/thumbnail?id=" + encodeURIComponent(id) + "&sz=w" + (largura || 400) : "";
+  return window.supabaseArquivoUrl(id);
 }
 
 function trocaRegistrar(etapa, pedido){
@@ -17413,7 +17419,7 @@ function renderLinhaAgendaInterna(){
   let total = 0;
   let celulas = "";
 
-  for(let i = 0; i < 7; i++){
+  for(let i = 0; i < window.CronoSequencia.dias(); i++){
     const dia = formatDateISO(new Date(semanaInicioAtual.getFullYear(), semanaInicioAtual.getMonth(), semanaInicioAtual.getDate() + i));
     const itens = agendaDoDia(dia);
     total += itens.length;
@@ -17461,7 +17467,7 @@ function abrirFotoCronograma(url, legenda){
   img.style.opacity = "0";
   img.onload = function(){ carregando.style.display = "none"; img.style.opacity = "1"; };
   img.onerror = function(){ carregando.textContent = "Não foi possível carregar a foto."; };
-  img.src = m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w2000" : url;
+  img.src = window.supabaseArquivoUrl(url);
   caixa.querySelector(".visualizador-legenda").textContent = legenda || "";
   caixa.classList.add("ver");
 }
@@ -18245,5 +18251,6 @@ function avisoRapido(msg){
   el._t = setTimeout(function(){ el.classList.remove("show"); }, 2600);
 }
 </script>
+<script src="cronograma-detalhes.js?v=20261027-clique"></script>
 </body>
 </html>

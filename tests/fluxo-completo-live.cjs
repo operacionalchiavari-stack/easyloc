@@ -187,6 +187,15 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
       await cf.click("#cfConcluir");
       const confirma = cf.locator(".el-alert-confirm .el-alert__actions button").last();
       if (await confirma.isVisible({ timeout: 2500 }).catch(() => false)) { await confirma.click(); }
+      const confirmaNova = cf.locator("dialog.cf-confirmacao[open] [type=submit]");
+      if (await confirmaNova.isVisible({ timeout: 2500 }).catch(() => false)) { await confirmaNova.click(); }
+      // Out/2026: o carregamento só conclui escolhendo o caminhão (a frota da empresa precisa ter pelo menos um).
+      const escolha = cf.locator("dialog.cf-escolha-caminhao[open]");
+      if (await escolha.isVisible({ timeout: 4000 }).catch(() => false)) {
+        const marcado = await escolha.locator("input:checked").count();
+        if (!marcado) { assert.ok(await escolha.locator("input").count(), "a frota precisa ter um caminhão para concluir o carregamento"); await escolha.locator("input").first().check(); }
+        await escolha.locator("[data-ok]").click();
+      }
       let reg;
       for (let i = 0; i < 30; i++) { await cf.waitForTimeout(500); reg = check(await admin.from("separacoes_pedidos").select("operacao,status_operacional").eq("id", pedidoId).single()); if (reg.operacao?.[etapa]?.concluido_em) { break; } }
       assert.ok(reg.operacao?.[etapa]?.concluido_em, etapa + " concluído");

@@ -1,4 +1,4 @@
-﻿console.log("ðŸ”¥ pedido.misc.mjs REAL carregado");
+﻿console.log("🔥 pedido.misc.mjs REAL carregado");
 export async function carregarLogoEmpresa() {
 
   let tentativas = 0;
@@ -15,7 +15,7 @@ export async function carregarLogoEmpresa() {
   const empresaId = window.__CONTEXT?.empresa_id;
 
   if (!supabase || !empresaId) {
-    console.warn("Contexto nÃ£o pronto para carregar logo");
+    console.warn("Contexto não pronto para carregar logo");
     return;
   }
 
@@ -31,7 +31,7 @@ export async function carregarLogoEmpresa() {
   }
 
   if (!data?.logo_url) {
-    console.warn("Empresa nÃ£o possui logo cadastrada");
+    console.warn("Empresa não possui logo cadastrada");
     return;
   }
 
@@ -647,7 +647,7 @@ function imprimirPedidoAntigo() {
   janela.document.write(`
     <html>
       <head>
-        <title>OrÃ§amento</title>
+        <title>Orçamento</title>
         <style>
           @page { size: A4; margin: 20mm; }
           body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #fff; }
@@ -699,7 +699,7 @@ export function abrirModalAvisoFrete(mensagem) {
 
   modal.innerHTML = `
     <div style="font-size:18px;font-weight:700;color:#2E1F1F;margin-bottom:12px;">
-      AtenÃ§Ã£o
+      Atenção
     </div>
 
     <div style="font-size:14px;color:#475569;line-height:1.6;margin-bottom:20px;">
@@ -737,7 +737,7 @@ export async function carregarFinanceiroEmpresaPedido() {
   const empresaId = window.__CONTEXT?.empresa_id;
 
   if (!supabase || !empresaId) {
-    console.warn("Contexto nÃ£o pronto para carregar financeiro");
+    console.warn("Contexto não pronto para carregar financeiro");
     window.__FINANCEIRO = { absorcao_frete_percent: 0, absorcao_montagem_percent: 0 };
     return window.__FINANCEIRO;
   }

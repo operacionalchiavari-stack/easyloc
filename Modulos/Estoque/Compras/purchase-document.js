@@ -117,7 +117,7 @@
         { text: "Solicitamos o retorno com: valor unitário, valor total, prazo de entrega, condição de pagamento, frete e validade da proposta.", color: "#4c5f73", fontSize: 8.5, margin: [0, 16, 0, 0] },
         warningBox(
           "AVISO IMPORTANTE",
-          "Para o fornecimento de matérias-primas será obrigatório, no faturamento, o envio do arquivo XML da NF-e e dos certificados de qualidade correspondentes aos lotes das matérias-primas fornecidas.",
+          "No faturamento, envie o arquivo XML da NF-e correspondente aos materiais fornecidos.",
         ),
       ].filter(Boolean),
       styles: styles(),
@@ -159,7 +159,7 @@
         model.observacoes ? { text: model.observacoes, color: "#4c5f73", fontSize: 8.5 } : null,
         warningBox(
           "AVISO IMPORTANTE — DOCUMENTAÇÃO OBRIGATÓRIA",
-          "No faturamento deste Pedido de Compra é obrigatório o envio do arquivo XML da NF-e e dos certificados de qualidade de todas as matérias-primas fornecidas. Os certificados devem corresponder aos respectivos lotes entregues. O recebimento/liberação do material poderá permanecer pendente até a apresentação completa da documentação obrigatória.",
+          "No faturamento deste Pedido de Compra, envie o arquivo XML da NF-e correspondente aos materiais fornecidos para a conferência no recebimento.",
         ),
       ].filter(Boolean),
       styles: styles(),

@@ -180,7 +180,7 @@
   z-index: 200;
 }
 
-/* confirmaÃ§Ã£o */
+/* confirmação */
 
 .confirm-box {
   width: 420px;
@@ -226,7 +226,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-/* wrapper do formulÃ¡rio */
+/* wrapper do formulário */
 
 .item-form-wrapper {
   width: 100%;
@@ -588,7 +588,7 @@
 }
 
 /* =========================
-   LABELS â€“ PADRÃƒO EASYLOC
+   LABELS – PADRÃO EASYLOC
 ========================= */
 
 .modal-content label {
@@ -599,7 +599,7 @@
 }
 
 /* =========================
-   BASE â€“ INPUTS / SELECTS
+   BASE – INPUTS / SELECTS
 ========================= */
 
 .modal-content input,
@@ -656,7 +656,7 @@
 }
 
 /* =========================
-   TABELA â€“ CONTAINER
+   TABELA – CONTAINER
 ========================= */
 
 .table-wrapper {
@@ -693,7 +693,7 @@ tbody tr {
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
 }
 
-/* CÃ‰LULAS */
+/* CÉLULAS */
 
 td {
   padding: 16px 18px;
@@ -704,7 +704,7 @@ td {
 }
 
 /* =========================
-   TAGS NA TABELA â€“ ITENS
+   TAGS NA TABELA – ITENS
 ========================= */
 
 .itens-table-tags {
@@ -739,7 +739,7 @@ td {
 }
 
 /* =========================
-   TABELA â€“ ITENS
+   TABELA – ITENS
 ========================= */
 
 #itensTable td:first-child {
@@ -753,7 +753,7 @@ td {
 }
 
 /* =========================
-   BOTÃƒO AJUDA â€“ ITENS
+   BOTÃO AJUDA – ITENS
 ========================= */
 
 .btn-ajuda-img {
@@ -764,7 +764,7 @@ td {
 }
 
 /* =========================
-   MODAL AJUDA â€“ ITENS
+   MODAL AJUDA – ITENS
 ========================= */
 
 #itensModalAjuda {
@@ -880,7 +880,7 @@ td {
 }
 
 /* =========================
-   PLAYER â€“ AJUDA ITENS
+   PLAYER – AJUDA ITENS
 ========================= */
 
 #itensModalAjuda .ajuda-player {
@@ -896,7 +896,7 @@ td {
 }
 
 /* =========================
-   HEADER â€“ AJUDA ITENS
+   HEADER – AJUDA ITENS
 ========================= */
 
 #itensModalAjuda .modal-ajuda-header {
@@ -912,7 +912,7 @@ td {
 }
 
 /* =========================
-   MINI-PLAYER â€“ INFO
+   MINI-PLAYER – INFO
 ========================= */
 
 #itensModalAjuda .btn-pip-info {
@@ -1001,7 +1001,7 @@ td {
 }
 
 /* =========================
-   COLUNA FOTO â€“ TABELA
+   COLUNA FOTO – TABELA
 ========================= */
 
 .col-foto {
@@ -1073,7 +1073,7 @@ td {
 }
 
 /* =====================================================
-   GRID PRINCIPAL DO MODAL â€“ DEFINITIVO
+   GRID PRINCIPAL DO MODAL – DEFINITIVO
 ===================================================== */
 
 .item-layout-advanced {
@@ -1175,7 +1175,7 @@ td {
 }
 
 /* =====================================================
-   PADRÃƒO DE CAMPOS
+   PADRÃO DE CAMPOS
 ===================================================== */
 
 .item-layout-advanced label {
@@ -1199,7 +1199,7 @@ td {
 }
 
 /* =====================================================
-   HEADER COM DESCRIÃ‡ÃƒO TOTAL
+   HEADER COM DESCRIÇÃO TOTAL
 ===================================================== */
 
 .header-line-inline {
@@ -1220,7 +1220,7 @@ td {
 }
 
 /* =====================================================
-   TOGGLE STATUS â€“ ATIVO / INATIVO (ITENS)
+   TOGGLE STATUS – ATIVO / INATIVO (ITENS)
 ===================================================== */
 
 .item-tipo-status-row {
@@ -1299,7 +1299,7 @@ td {
 }
 
 /* =====================================================
-   AÃ‡Ã•ES DO MODAL â€“ ESQUERDA / DIREITA
+   AÇÕES DO MODAL – ESQUERDA / DIREITA
 ===================================================== */
 
 .modal-actions-split {
@@ -1319,7 +1319,7 @@ td {
 }
 
 /* =====================================================
-   OVERRIDE â€“ AÃ‡Ã•ES DO MODAL
+   OVERRIDE – AÇÕES DO MODAL
 ===================================================== */
 
 .modal-actions.modal-actions-split {
@@ -1335,7 +1335,7 @@ td {
 }
 
 /* =====================================================
-   BOTÃ•ES CONTEXTUAIS â€“ PADRÃƒO EASYLOC
+   BOTÕES CONTEXTUAIS – PADRÃO EASYLOC
 ===================================================== */
 
 .modal-actions .btn-context:hover {
@@ -1356,7 +1356,7 @@ td {
   box-shadow: none !important;
 }
 /* =====================================================
-   BOTÃ•ES CONTEXTUAIS â€“ AZUL CLARO (DISCRETO)
+   BOTÕES CONTEXTUAIS – AZUL CLARO (DISCRETO)
 ===================================================== */
 
 .modal-actions .btn-context {
@@ -1399,7 +1399,7 @@ td {
 }
 
 /* =====================================================
-   SUAVIZAR CORES â€“ ITEM / COMPONENTE / ATIVO / INATIVO
+   SUAVIZAR CORES – ITEM / COMPONENTE / ATIVO / INATIVO
 ===================================================== */
 
 .tipo-btn.active {
@@ -1437,7 +1437,7 @@ td {
 }
 
 /* =====================================================
-   FOTO PADRONIZADA â€“ LAYOUT LIMPO
+   FOTO PADRONIZADA – LAYOUT LIMPO
 ===================================================== */
 
 .item-foto-box {
@@ -1501,7 +1501,7 @@ td {
   background: var(--laranja);
   color: #ffffff;
 }
-/* BOTÃƒO INSERIR FOTO â€“ PADRÃƒO */
+/* BOTÃO INSERIR FOTO – PADRÃO */
 .btn-foto {
   background: #ffffff;
   border: 1.5px solid var(--laranja);
@@ -1517,7 +1517,7 @@ td {
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
 }
 
-/* botÃ£o do modal de KIT (mesmo estilo, sÃ³ sem posiÃ§Ã£o absoluta) */
+/* botão do modal de KIT (mesmo estilo, só sem posição absoluta) */
 #kitsModal .btn-foto {
   position: static;
   padding: 6px 14px;
@@ -2014,7 +2014,7 @@ td {
 }
 
 /* =================================
-   BOTÃƒO ADICIONAR COMPONENTE
+   BOTÃO ADICIONAR COMPONENTE
 ================================= */
 
 .kit-componentes-header .btn-add {
@@ -2120,7 +2120,7 @@ td {
   display: block;
 }
 /* =================================
-   BOTÃƒO REMOVER COMPONENTE
+   BOTÃO REMOVER COMPONENTE
 ================================= */
 
 .kit-item-row .remove {
@@ -2233,7 +2233,7 @@ td {
   background: #f1f5f9;
 }
 /* =================================
-   TOTAIS DO KIT â€“ ALINHAMENTO ERP
+   TOTAIS DO KIT – ALINHAMENTO ERP
 ================================= */
 
 .kit-componentes-table tfoot td {
@@ -2274,3 +2274,27 @@ td {
   text-align: center;
   width: 60px;
 }
+/* "+ Adicionar Item" e "Montar Kit" na mesma linha do título "Itens Cadastrados", à direita (out/2026).
+   O título continua centralizado na faixa do tema; os botões flutuam no canto direito dessa faixa. */
+html:root:is(#cadastro-itens, html) body .el-page > .header-list.header-list{position:relative!important;}
+html:root:is(#cadastro-itens, html) body .el-page > .header-list > .header-actions.header-actions{position:absolute!important;top:30px!important;right:0!important;margin:0!important;display:flex!important;gap:10px!important;width:auto!important;flex:none!important;z-index:2;}
+@media(max-width:1260px){html:root:is(#cadastro-itens, html) body .el-page > .header-list > .header-actions.header-actions{position:static!important;}}
+/* Tabela no mesmo formato da Disponibilidade de Itens (out/2026): foto 100x80, linhas de 13px/12px, 20 por vez. */
+html:root:is(#cadastro-itens, html) #itensTable td{padding:13px 12px!important;font-size:14px!important;line-height:1.4!important;border-bottom:1px solid #eef2f6;vertical-align:middle}
+html:root:is(#cadastro-itens, html) #itensTable th:first-child{width:124px!important}
+#itensTable tr:hover td{background:#f8fafc}
+.itens-foto-caixa{width:100px;height:80px;border-radius:12px;border:1px solid var(--el-color-border,#e3e7ec);background:#f4f7fb;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.itens-foto-caixa:not(:has(img)){background:transparent;border-color:transparent}
+.itens-foto-caixa .itens-foto{width:100%;height:100%;object-fit:cover;border-radius:0;display:block}
+.itens-mais:not([hidden]){padding:16px;text-align:center;color:#111;cursor:pointer}
+.itens-vazio td{text-align:center;color:#6b6b6b;padding:28px!important}
+/* Resumo do cadastro num ícone pequeno ao lado dos botões (out/2026) */
+.itens-resumo{position:relative;display:flex;align-items:center}
+.itens-resumo-btn{width:40px;height:40px;border-radius:999px;border:1px solid var(--el-color-border,#e3e7ec);background:#fff;color:#1f2020;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.itens-resumo-btn:hover,.itens-resumo-btn[aria-expanded="true"]{border-color:#123f86;color:#123f86}
+.itens-resumo-btn svg{width:18px;height:18px}
+.itens-resumo-pop{position:absolute;top:calc(100% + 10px);right:0;z-index:30;width:min(620px,92vw);padding:12px;background:#fff;border:1px solid var(--el-color-border,#e3e7ec);border-radius:16px;box-shadow:0 18px 40px rgba(15,23,42,.16)}
+.itens-resumo-pop[hidden]{display:none!important}
+html:root:is(#cadastro-itens, html) .itens-resumo-pop .el-stat-row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:0!important;width:auto!important;flex:none!important}
+html:root:is(#cadastro-itens, html) .itens-resumo-pop .el-stat-card{box-shadow:none!important;border:1px solid var(--el-color-border,#e3e7ec)!important;min-height:0!important}
+@media(max-width:1260px){.itens-resumo-pop{left:0;right:auto}}

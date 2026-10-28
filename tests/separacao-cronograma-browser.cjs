@@ -17,6 +17,7 @@ const mock = `(() => {
     separacoes_etiquetas: [{ id: "t1", empresa_id: "e1", separacao_pedido_id: "p2", codigo: "13-001", lida_carregamento_em: "x" }, { id: "t2", empresa_id: "e1", separacao_pedido_id: "p2", codigo: "13-002", lida_carregamento_em: "x" }]
   };
   banco.separacoes_pedidos.find(p=>p.id==="p2").operacao.descarregamento={concluido_em:"2026-10-18T11:00:00Z"};
+  banco.separacoes_pedidos.push({...banco.separacoes_pedidos[0],id:'standby',status:'separado',operacao:{}},{...banco.separacoes_pedidos[0],id:'assumido',status:'separado',operacao:{carregamento:{iniciado_em:'2026-10-23T12:00:00Z'}}},{...banco.separacoes_pedidos[0],id:'revisao',reducao_liberada_em:'2026-10-23T12:00:00Z'});
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
     const q = {
@@ -103,18 +104,21 @@ const mock = `(() => {
   await page.setViewportSize({ width: 1280, height: 860 });
   await page.goto(BASE + "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html");
   await page.evaluate(() => { window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Teste" }; });
-  await page.waitForSelector("#separacaoColunaAguardando .card-retorno[data-pedido-id=p2]", { timeout: 15000 });
-  const card = await page.$eval("#separacaoColunaAguardando .card-retorno", (c) => ({ txt: c.textContent.replace(/\s+/g, " "), fundo: getComputedStyle(c).backgroundColor }));
-  assert.match(card.txt, /Retorno/); assert.match(card.txt, /às cegas/);
-  assert.ok(!/peças|volume|\d+ \/ \d+/.test(card.txt.replace(/\d{2}\/\d{2}\/\d{4}/g, "")), "retorno não mostra quantidade: " + card.txt);
-  assert.strictEqual(card.fundo, "rgb(244, 239, 252)");
-  await page.screenshot({ path: process.env.SHOT || path.join(require("os").tmpdir(),"acervo-triagem-operacao.png") });
-  await page.click("#separacaoColunaAguardando .card-retorno");
-  await page.waitForURL(/etapa=retorno&de=separacao/);
-  await page.waitForSelector("#cfVoltar:not([hidden])");
-  await page.click("#cfVoltar");
-  await page.waitForSelector("#separacaoColunaAguardando .card-retorno", { timeout: 15000 });
-  console.log("ok 7 - na Triagem o pedido carregado ganha o cartão lilás de retorno, às cegas, que abre a conferência e volta");
+  await page.locator('#separacaoColunaAguardando [data-pedido-id=p1]').waitFor();
+  assert.equal(await page.locator('[data-pedido-id=standby]').count(),0,'pedido separado segue para Expedicao');
+  assert.equal(await page.locator('[data-pedido-id=assumido]').count(),0);assert.equal(await page.locator('[data-pedido-id=revisao]').count(),0);
+  await page.evaluate(()=>window.__modosSeparacao={manual:false,qr:true,'um-clique':false});
+  await page.locator('#separacaoKanban .separacao-order-card[data-pedido-id=p1]').click();
+  await page.locator('#separacaoModoModal:not(.hidden)').waitFor();
+  assert.equal(await page.locator('[data-separacao-modo=manual]').isVisible(),false);
+  assert.equal(await page.locator('[data-separacao-modo=qr]').isVisible(),true);
+  assert.equal(await page.locator('[data-separacao-modo="um-clique"]').isVisible(),false);
+  await page.locator('#btnFecharModoSeparacao').click();
+  await page.evaluate(()=>window.__modosSeparacao={manual:false,qr:false,'um-clique':false});
+  await page.locator('#separacaoKanban .separacao-order-card[data-pedido-id=p1]').click();
+  await page.locator('#separacaoModoModal:not(.hidden)').waitFor();
+  assert.equal(await page.locator('[data-sem-modos]').isVisible(),true);
+  console.log('OK: modos nao autorizados ocultos e aviso quando nenhum modo esta liberado.');
   assert.deepStrictEqual(erros, [], erros.join("\n"));
   console.log("todos os testes passaram");
   await browser.close();

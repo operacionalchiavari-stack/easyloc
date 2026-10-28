@@ -378,3 +378,26 @@ body.cas-mini-aberta .catalog-notifications{bottom:120px}
 @media(max-width:600px){.cas-vit-stock{font-size:.7rem;gap:4px}.cas-vit-stock>span{white-space:nowrap;padding:3px 8px}.cas-vit-stock b{font-size:.78rem}.cas-vit-add{padding:8px 6px;font-size:.74rem}.cas-vit-card{padding:12px 10px 14px}.cas-vit-selo{font-size:.62rem;padding:4px 10px 4px 8px}}
 @media(max-width:600px){.cas-vit-grade{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:14px 12px 24px}.cas-vit-topo{padding:10px 12px;gap:8px}.cas-vit-fala p{font-size:.98rem}.cas-vit-voltar{padding:7px 10px;font-size:.74rem}.cas-vit-info strong{font-size:.98rem}}
 @media(prefers-reduced-motion:reduce){.cas-vitrine,.cas-vit-card{animation:none}.cas-vit-card.is-escolhida{animation:none;transform:none}}
+
+/* "Disponível em 20/10 | 34": traço separando a data da quantidade */
+.cas-vit-stock .is-livre b{margin-left:3px;padding-left:9px;border-left:1.5px solid rgba(34,103,63,.38)}
+
+/* Dentro do pedido comercial (23/out/2026, pedido do usuário: "ficou muito espremida"): sem a faixa grafite do topo
+   (foto, nome e status da Helena saem). Ligar e Minimizar viram dois botões pequenos, de ícone, no canto de cima à
+   direita: em cima da coluna do pedido em tela larga e da conversa nas menores. Só neste modo; no catálogo nada muda. */
+html.catalogo-comercial-pedido .cas-head{position:absolute;top:12px;right:14px;z-index:8;height:auto;padding:0;gap:6px;background:transparent;color:#5a5a55}
+html.catalogo-comercial-pedido .cas-head>.cas-voltar,
+html.catalogo-comercial-pedido .cas-head>.cas-avatar,
+html.catalogo-comercial-pedido .cas-head>.cas-head-copy,
+html.catalogo-comercial-pedido .cas-head>[data-cas-limpar]{display:none!important}
+html.catalogo-comercial-pedido .cas-head .cas-head-btn:not([hidden]):not([data-cas-limpar]){display:inline-flex!important}
+html.catalogo-comercial-pedido .cas-head .cas-head-btn{width:34px;height:34px;padding:0;border:1px solid #ddd6cc;border-radius:50%;background:#fff;color:#5a5a55;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+html.catalogo-comercial-pedido .cas-head .cas-head-btn:hover{border-color:#5a5a55}
+html.catalogo-comercial-pedido .cas-head .cas-head-btn span{display:none}
+html.catalogo-comercial-pedido .cas-head .cas-head-btn svg{width:16px;height:16px}
+html.catalogo-comercial-pedido .cas-head .cas-ligar.em-ligacao{border-color:#3f9a63;background:#e6f4ea;color:#2f7a4c}
+html.catalogo-comercial-pedido .cas-head .cas-pedido-btn{height:34px;border-color:#ddd6cc;background:#fff;color:#5a5a55}
+html.catalogo-comercial-pedido .cas-head .cas-pedido-btn b{background:#5a5a55;color:#fff}
+/* Conversa ainda vazia: a saudação fica no meio da área (antes encostava no campo de escrever). Com mensagens, continua
+   em cima delas, como antes (23/out/2026). */
+.cas-boasvindas:only-child{margin:auto 0;padding-top:0}

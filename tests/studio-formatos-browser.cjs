@@ -51,6 +51,7 @@ function fakeGlbTriangle(){
 const STORAGE_MOCK_SNIPPET = `
   window.uploads = window.uploads || [];
   const __storage = { from: (bucket) => ({
+    uploadToSignedUrl: async (path, token, blob, options) => { window.uploads.push({ bucket, path, type: options && options.contentType, size: blob.size }); return { data: { path }, error: null }; },
     upload: async (path, blob, options) => { window.uploads.push({ bucket, path, type: options && options.contentType, size: blob.size }); return { data: { path }, error: null }; },
     getPublicUrl: (path) => ({ data: { publicUrl: 'https://fixture/storage/v1/object/public/' + bucket + '/' + path } }),
   }) };
@@ -76,9 +77,9 @@ const STORAGE_MOCK_SNIPPET = `
         window.items=[1,2,3].map(id=>({id:String(id),name:'Mesa '+id,cat:'mesas',subcat:'centro',catLabel:'Mesas',subcatLabel:'Centro',glb:'/siteglb.glb',photo:'',dimensions:{width:1,height:1,depth:1}}));
         window.saved=[];window.calls=[];window.failSave=true;
         ${STORAGE_MOCK_SNIPPET}
-        const supabase={storage:__storage,rpc:async(name,args)=>{window.calls.push({name,args});if(name==='lounge_formato_salvar'){if(window.failSave)return {error:{message:'Falha de teste'}};const existente=window.saved.find(f=>f.id===args.p_id);if(existente){Object.assign(existente,{nome:args.p_nome,papeis:args.p_papeis,capa_url:args.p_capa_url||existente.capa_url,capa_path:args.p_capa_path||existente.capa_path,categoria:args.p_categoria||existente.categoria});return {data:existente};}const novo={id:'saved',nome:args.p_nome,papeis:args.p_papeis,cliente_id:'owner',capa_url:args.p_capa_url||null,categoria:args.p_categoria||null,favorito:false};window.saved.push(novo);return {data:novo};}if(name==='lounge_formato_favoritar'){const alvo=window.saved.find(f=>f.id===args.p_id);if(alvo)alvo.favorito=args.p_favorito;return {data:alvo};}return {data:window.saved};}};
+        const supabase={storage:__storage,functions:{invoke:async(n,o)=>({data:{path:o.body.path,token:'assinatura-teste'},error:null})},rpc:async(name,args)=>{window.calls.push({name,args});if(name==='lounge_formato_salvar'){if(window.failSave)return {error:{message:'Falha de teste'}};const existente=window.saved.find(f=>f.id===args.p_id);if(existente){Object.assign(existente,{nome:args.p_nome,papeis:args.p_papeis,capa_url:args.p_capa_url||existente.capa_url,capa_path:args.p_capa_path||existente.capa_path,categoria:args.p_categoria||existente.categoria});return {data:existente};}const novo={id:'saved',nome:args.p_nome,papeis:args.p_papeis,cliente_id:'owner',capa_url:args.p_capa_url||null,categoria:args.p_categoria||null,favorito:false};window.saved.push(novo);return {data:novo};}if(name==='lounge_formato_favoritar'){const alvo=window.saved.find(f=>f.id===args.p_id);if(alvo)alvo.favorito=args.p_favorito;return {data:alvo};}return {data:window.saved};}};
         initCatalogStudio3D({items:window.items,supabase,empresaId:'company',ownerId:'owner',token:'external-token'});
-        document.getElementById('catalogLogin').remove();document.getElementById('catalogStudio').classList.remove('hidden');
+        document.getElementById('catalogLogin').remove();document.querySelector('.catalog-search')?.classList.add('hidden');document.querySelector('.catalog-search')?.classList.add('hidden');document.getElementById('catalogStudio').classList.remove('hidden');
       </script>`;
       return route.fulfill({ contentType: 'text/html', body: html });
     });
@@ -184,6 +185,7 @@ const STORAGE_MOCK_SNIPPET = `
     // Fecha o modal — o formato favoritado agora aparece na prateleira, sempre visível ao lado de "Itens"
     // (pedido explícito: "na barra lateral que já existe hoje onde ficam os formatos, ali eu quero que fique
     // somente os formatos favoritos").
+    
     await page.locator('#studioFormatsBrowseClose').click();
     assert.equal(await page.locator('#studioFormatsBrowseDialog[open]').count(), 0);
     assert.equal(await page.locator('#studioFavorites').evaluate(el => el.classList.contains('hidden')), false);
@@ -386,7 +388,7 @@ const STORAGE_MOCK_SNIPPET = `
           const supabase = { rpc: async () => ({ data: null }) };
           initCatalogStudio3D({ items: window.items, supabase, empresaId: 'company', ownerId: 'owner', token: 'external-token' });
           document.getElementById('catalogLogin').remove();
-          document.getElementById('catalogStudio').classList.remove('hidden');
+          document.querySelector('.catalog-search')?.classList.add('hidden');document.getElementById('catalogStudio').classList.remove('hidden');
         </script>`;
         return route.fulfill({ contentType: 'text/html', body: html });
       });
@@ -460,7 +462,7 @@ const STORAGE_MOCK_SNIPPET = `
           }));
           window.calls = [];
           ${STORAGE_MOCK_SNIPPET}
-          const supabase = { storage: __storage, rpc: async (name, args) => {
+          const supabase = { storage:__storage,functions:{invoke:async(n,o)=>({data:{path:o.body.path,token:'assinatura-teste'},error:null})},rpc: async (name, args) => {
             window.calls.push({name, args});
             if(name === 'lounge_formatos_listar') return { data: window.saved.map(r => ({id:r.id,nome:r.nome,papeis:r.papeis,cliente_id:r.cliente_id,equipe:true,capa_url:r.capa_url||null,atualizado_em:r.criado_em})), error: null };
             if(name === 'lounge_formato_salvar'){ const alvo = window.saved.find(f => f.id === args.p_id); if(alvo && args.p_capa_url) alvo.capa_url = args.p_capa_url; return { data: alvo || null, error: null }; }
@@ -468,7 +470,7 @@ const STORAGE_MOCK_SNIPPET = `
           } };
           initCatalogStudio3D({ items: window.items, supabase, empresaId: 'company', ownerId: 'owner', token: 'external-token' });
           document.getElementById('catalogLogin').remove();
-          document.getElementById('catalogStudio').classList.remove('hidden');
+          document.querySelector('.catalog-search')?.classList.add('hidden');document.getElementById('catalogStudio').classList.remove('hidden');
         </script>`;
         return route.fulfill({ contentType: 'text/html', body: html });
       });

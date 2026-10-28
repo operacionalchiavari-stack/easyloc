@@ -57,7 +57,7 @@ await page.locator('.catalog-notification',{hasText:'Projetos é exclusivo'}).wa
 assert.equal(await page.locator('#catalogProjetos:not(.hidden)').count(),0,'Projetos não abre');
 assert.equal(await page.locator('[data-gateway-edit],[data-gateway-adjust],[data-gateway-client]').count(),0,'Sem edição da capa');
 // Catálogo vai direto pras categorias (sem escolher projeto)
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('[data-home-category="sofas"]').waitFor();
 await page.locator('[data-home-category="sofas"]').click();
 await page.locator('[data-grid-item]').first().waitFor();

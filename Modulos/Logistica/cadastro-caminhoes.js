@@ -4,6 +4,35 @@ console.log("🚛 cadastro-caminhoes.js carregado");
    INIT (SPA SAFE ✅ sem travar na 2ª vez)
 ===================================================== */
 
+function definirFotoCaminhao(url) {
+  if(window.caminhaoFotoBlob) URL.revokeObjectURL(window.caminhaoFotoBlob);
+  window.caminhaoFotoBlob = null;
+  document.getElementById('caminhaoFotoArquivo').value = '';
+  document.getElementById('caminhaoFotoUrl').value = url || '';
+  const img = document.getElementById('caminhaoFotoPreview');
+  img.hidden = !url;
+  document.getElementById('caminhaoSemFoto').hidden = !!url;
+  if(url) img.src=url; else img.removeAttribute('src');
+}
+function selecionarFotoCaminhao(input) {
+  const file=input.files[0]; if(!file)return;
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5242880){input.value='';mostrarAlerta('Escolha uma foto JPG, PNG ou WebP de até 5 MB.');return;}
+  if(window.caminhaoFotoBlob)URL.revokeObjectURL(window.caminhaoFotoBlob);
+  window.caminhaoFotoBlob=URL.createObjectURL(file);
+  const img=document.getElementById('caminhaoFotoPreview');img.src=window.caminhaoFotoBlob;img.hidden=false;
+  document.getElementById('caminhaoSemFoto').hidden=true;
+}
+async function enviarFotoCaminhao(empresaId){
+  const file=document.getElementById('caminhaoFotoArquivo').files[0];
+  if(!file)return document.getElementById('caminhaoFotoUrl').value||null;
+  const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[file.type];
+  if(!ext||file.size>5242880)throw new Error('Foto inválida. Use JPG, PNG ou WebP de até 5 MB.');
+  const bucket=window.supabaseClient.storage.from('caminhoes-fotos'),path=empresaId+'/'+crypto.randomUUID()+'.'+ext;
+  const {error}=await bucket.upload(path,file,{contentType:file.type,upsert:false});
+  if(error)throw new Error('Não foi possível enviar a foto. Tente novamente.');
+  const url=bucket.getPublicUrl(path).data.publicUrl;
+  definirFotoCaminhao(url);return url;
+}
 function mostrarDetalhesCaminhao() {
   document.querySelector(".cadastro-caminhoes-page")?.classList.add("hidden");
   document.getElementById("modalCaminhao").classList.remove("hidden");
@@ -325,7 +354,7 @@ async function carregarCaminhoes() {
     return;
   }
 
-  Caminhoes_renderizarStats(empresaId);
+
 
   const tbody = document.getElementById("tabelaCaminhoes");
   if (!tbody) {
@@ -344,7 +373,7 @@ async function carregarCaminhoes() {
   );
 
   if (!filtrados.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;">Nenhum caminhão encontrado</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;">Nenhum caminhão encontrado</td></tr>`;
     // se você estiver usando o loader “até renderizar”, pode liberar aqui também
     window.finalizarCarregamentoModulo?.();
     return;
@@ -391,6 +420,21 @@ async function carregarCaminhoes() {
       </td>
     `;
 
+    const fotoCelula=document.createElement('td');
+    fotoCelula.className='caminhao-foto-coluna';
+    const foto=document.createElement('span');
+    foto.className='caminhao-lista-foto';
+    foto.textContent='Sem foto';
+    if (/^https?:\/\//i.test(cam.foto_url || '')) {
+      const img=document.createElement('img');
+      img.alt='Foto de '+(cam.modelo || 'caminhão');
+      img.loading='lazy';
+      img.addEventListener('error',()=>img.remove(),{once:true});
+      img.src=cam.foto_url;
+      foto.appendChild(img);
+    }
+    fotoCelula.appendChild(foto);
+    tr.prepend(fotoCelula);
     tbody.appendChild(tr); // ✅ só uma vez
   });
 
@@ -405,34 +449,6 @@ async function carregarCaminhoes() {
   window.finalizarCarregamentoModulo?.();
 }
 
-async function Caminhoes_renderizarStats(empresaId) {
-  const supabase = window.supabaseClient;
-  const set = (id, valor) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = valor;
-  };
-
-  const { data, error } = await supabase
-    .from("caminhoes")
-    .select("tipo,status")
-    .eq("empresa_id", empresaId);
-
-  if (error) {
-    console.error("❌ Erro ao carregar estatísticas de caminhões:", error);
-    return;
-  }
-
-  const lista = data || [];
-  const total = lista.length;
-  const ativos = lista.filter(c => c.status === "ativo").length;
-  const proprios = lista.filter(c => c.tipo === "proprio").length;
-  const terceirizados = lista.filter(c => c.tipo === "terceirizado").length;
-
-  set("caminhoesStatTotal", total);
-  set("caminhoesStatAtivos", ativos);
-  set("caminhoesStatProprios", proprios);
-  set("caminhoesStatTerceirizados", terceirizados);
-}
 /* =====================================================
    SALVAR
 ===================================================== */
@@ -521,6 +537,7 @@ async function salvarCaminhao() {
       capacidade_m3: capacidade,
       status
     };
+  try { registro.foto_url = await enviarFotoCaminhao(empresaId); } catch(e) { mostrarAlerta(e.message); return; }
   const { error } = editando
     ? await supabase.from("caminhoes").update(registro).eq("id", window.caminhaoSelecionado.id).eq("empresa_id", empresaId)
     : await supabase.from("caminhoes").insert([registro]);
@@ -582,6 +599,7 @@ function abrirModalDetalheCaminhao(cam){
   mostrarDetalhesCaminhao();
 }
 function preencherFormularioCaminhao(cam) {
+  definirFotoCaminhao(cam.foto_url || "");
 
   document.getElementById("modeloInput").value = cam.modelo || "";
   document.getElementById("placaInput").value = String(cam.placa || "").startsWith("SEM PLACA") ? "" : (cam.placa || "");
@@ -608,6 +626,7 @@ function bloquearFormularioCaminhao(bloquear) {
 
   const campos = document.querySelectorAll("#modalCaminhao input, #modalCaminhao select");
 
+  document.getElementById("caminhaoRemoverFoto").disabled = bloquear;
   campos.forEach(campo => {
     campo.disabled = bloquear;
   });
@@ -617,6 +636,7 @@ function bloquearFormularioCaminhao(bloquear) {
 }
 function abrirModalCaminhao(){
 
+  definirFotoCaminhao("");
   modoCaminhao = "novo";
   caminhaoSelecionado = null;
 

@@ -110,7 +110,7 @@ async function newCatalogPage(){
   await page.locator('.catalog-gateway').waitFor();
   assert.equal(await page.evaluate(()=>document.body.classList.contains('catalog-modo-sistema')), false, 'Login direto pelo catálogo não deve esconder marca/cabeçalho (sem dashboard por cima)');
   assert.equal(await page.evaluate(()=>sessionStorage.getItem('catalogo_acesso_interno_direto')), '1');
-  await page.locator('[data-gateway-tile="catalogo"]').click();
+  await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
   await page.locator('[data-home-category="sofas"]').click();
   await page.locator('[data-grid-item]').first().click();
   await page.locator('#produto-1 [data-inline-edit="principal"]').waitFor();
@@ -166,7 +166,7 @@ async function newCatalogPage(){
   await page.locator('#catalogLoginPassword').fill('senha-decorador');
   await page.locator('#catalogLoginForm button[type=submit]').click();
   await page.locator('.catalog-gateway').waitFor();
-  await page.locator('[data-gateway-tile="catalogo"]').click();
+  await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
   await page.locator('[data-home-category="sofas"]').click();
   await page.locator('[data-grid-item]').first().click();
   await page.locator('.catalog-product-section').first().waitFor();

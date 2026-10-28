@@ -298,3 +298,6 @@ body.assistente-aberta .app-toasts{bottom:calc(var(--base) + 96px)}
 .cas-form{padding-bottom:calc(var(--base) + 12px)}
 
 @media(prefers-reduced-motion:reduce){.tela.entra,.tela.sai,.tela.troca,.folha,.toast{animation:none}}
+
+/* "Disponível em 20/10 | 34": traço separando a data da quantidade */
+.produto-estoque .is-livre b{margin-left:3px;padding-left:9px;border-left:1.5px solid rgba(34,103,63,.38)}

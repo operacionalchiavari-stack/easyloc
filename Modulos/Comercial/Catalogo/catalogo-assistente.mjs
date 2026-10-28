@@ -632,6 +632,11 @@ async function aplicarAcoes(acoes){
           message: acao.quantidade ? `${acao.quantidade}× ${nome} → ${r.ambiente}` : `${nome} saiu de ${r.ambiente}`,
           status: "done", duration: 4200, actionLabel: "Desfazer", onAction: r.desfazer });
       }
+      else if(acao.tipo === "criar_ambiente"){
+        // Ambiente vazio pedido pela pessoa ("adicione um espaço, mesa de família"): a Helena não põe peça nenhuma nele.
+        const r = await projeto?.criarAmbiente?.(acao.nome);
+        if(r) ctx.notify({ title: r.novo ? "Ambiente criado" : "Ambiente já existia", message: r.ambiente, status: "done", duration: 3500 });
+      }
       else if(acao.tipo === "enviar_pedido") projeto?.enviarPedido();
       else if(acao.tipo === "ver_pedido"){
         // Versão final do pedido: a conversa encolhe pra barra pequena e a prévia abre por cima do catálogo.

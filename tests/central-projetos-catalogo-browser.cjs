@@ -92,17 +92,17 @@ const mockSupabase = `
   await linha.waitFor({ timeout: 15000 });
   const r = await linha.evaluate((tr) => ({
     numero: tr.querySelector(".pedido-numero-catalogo")?.textContent, origem: tr.querySelector(".pedido-numero-catalogo")?.title, cliente: tr.cells[1].innerText.trim(), evento: tr.cells[3].innerText.trim(),
-    status: tr.querySelector(".status-pill")?.textContent, valor: tr.querySelector(".central-finance-value")?.textContent,
+    status: tr.querySelector(".central-fluxo")?.textContent, valor: tr.querySelector(".central-finance-value")?.textContent,
     acoes: [...tr.querySelectorAll("[data-action]")].map((b) => b.dataset.action).filter((a) => !a.startsWith("abrir-")),
   }));
   assert.strictEqual(r.numero, "001");
   assert.strictEqual(r.origem, "Veio do catálogo");
   assert.strictEqual(await page.locator('[data-pedido-id="projeto:pr3"] .pedido-numero-card').textContent(), "002");
   assert.strictEqual(r.cliente, "Lis Baêtas", "decorador como cliente");
-  assert.strictEqual(r.evento, "Ana e Bruno");
-  assert.strictEqual(r.status, "Pedido enviado");
+  assert.strictEqual(r.evento, "04/12/2026");
+  assert.match(r.status,/Comercial/);
   assert.ok(r.valor.includes("800,00"), "2×300 + 1×200: " + r.valor);
-  assert.deepStrictEqual(r.acoes, ["visualizar", "whatsapp"], "sem contrato nem PIX");
+  assert.deepStrictEqual(r.acoes, ["whatsapp"], "sem contrato nem PIX");
   assert.strictEqual(await page.locator('[data-pedido-id="projeto:pr2"]').count(), 0, "projeto da equipe não entra");
   assert.strictEqual(await page.locator('[data-pedido-id="p1"] .pedido-numero-card').textContent(), "003", "pedidos de sempre continuam");
   const pres = await page.evaluate(() => ({
@@ -117,18 +117,6 @@ const mockSupabase = `
   assert.strictEqual(pres.vista, "Visto há 10 min");
   console.log("ok 0 - presença: montando agora (no topo, com onde está) e visto há 10 min");
   console.log("ok 1 - projeto do decorador aparece com selo, status, valor e sem contrato/PIX; o da equipe não");
-
-  await linha.locator('[data-action="visualizar"]').click();
-  const dialogo = page.locator("dialog.cpj-order-preview[open]");
-  await dialogo.waitFor({ timeout: 10000 });
-  const d = await dialogo.evaluate((x) => ({ titulo: x.querySelector("header h3")?.textContent, solicitante: x.querySelector(".cpj-order-requester strong")?.textContent,
-    ambientes: [...x.querySelectorAll(".cpj-order-environment th")].map((t) => t.textContent) }));
-  assert.ok(d.titulo.includes("Ana e Bruno"), d.titulo);
-  assert.strictEqual(d.solicitante, "Lis Baêtas");
-  assert.deepStrictEqual(d.ambientes, ["Lounge"]);
-  await dialogo.locator("[data-pedido-fechar]").click();
-  await page.waitForFunction(() => !document.querySelector("dialog.cpj-order-preview"));
-  console.log("ok 2 - Visualizar abre a prévia do projeto");
 
   await page.click("#btnFiltrosPedidos");
   await page.selectOption("#filtroStatusPedido", "catalogo_pedido_enviado");

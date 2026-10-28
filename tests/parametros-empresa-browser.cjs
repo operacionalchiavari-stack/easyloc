@@ -33,7 +33,7 @@ const fs=require('node:fs');
     await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Configuracoes/Parametros/parametros.html');
     await page.waitForFunction(()=>!document.getElementById('salvarEmpresaParametros').disabled);
     assert.equal(await page.locator('#empresaNomeInput').inputValue(),'Empresa teste');
-    assert.equal(await page.locator('[data-parametro-aba]').count(),7);
+    assert.equal(await page.locator('[data-parametro-aba]').count(),11);
     await page.locator('#empresaNomeInput').fill('Empresa atualizada');
     await page.locator('#salvarEmpresaParametros').click();
     await page.waitForFunction(()=>document.getElementById('empresaParametrosStatus').textContent==='Parâmetros salvos.');

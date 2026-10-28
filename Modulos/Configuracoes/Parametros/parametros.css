@@ -37,3 +37,142 @@ html:root .pr-check:has(input:checked) span{color:#fff}
 .pr-empresa-painel input,.pr-empresa-painel select{box-sizing:border-box;max-width:100%}
 .container [hidden]{display:none!important}
 @media(max-width:760px){[data-empresa-secao="dados"]>div{grid-template-columns:1fr!important;gap:20px!important}.pr-card{padding:18px}}
+
+/* Parâmetros > Catálogo (out/2026) */
+#pr-painel-catalogo .pr-form{max-width:980px}
+.pr-cat-intro{margin:0 auto}
+#catalogoRecursos{display:flex;flex-direction:column;gap:20px}
+.pr-cat-linha{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:12px}
+.pr-cat-rotulo{min-width:110px;font-size:13px;font-weight:600;color:#2b2b2b}
+.pr-cat-decoradores{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px 16px;margin-top:14px;padding:14px 16px;border:1px solid #e3e7ec;border-radius:12px;background:#f7f9fb}
+.pr-cat-dec{display:flex;align-items:center;gap:8px;font-size:14px;color:#1f2020;cursor:pointer}
+.pr-cat-dec input{width:17px;height:17px;accent-color:var(--el-button-primary-bg,#7d603d)}
+.pr-cat-dec small{color:#6b6b6b}
+/* Opção marcada: texto escuro sobre azul-claro (o texto branco antigo sumia no fundo claro) */
+html:root .pr-check:has(input:checked){background:#eaf0fa;border-color:#123f86}
+html:root .pr-check:has(input:checked) span{color:#1f2020}
+
+/* Permissões comerciais: um card independente para cada tipo de ajuste. */
+html:root #logisticaManualParametros{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:start;
+  gap:24px;
+  margin-top:32px;
+  padding:28px;
+  box-shadow:none;
+}
+html:root #logisticaManualParametros>h3{grid-column:1/-1;margin:0}
+html:root #logisticaManualParametros>p{
+  grid-column:1/-1;
+  margin:-12px 0 4px;
+  color:#64748b;
+  font-size:14px;
+  line-height:1.6;
+  max-width:720px;
+}
+html:root #logisticaManualParametros fieldset{
+  min-width:0;
+  margin:0;
+  padding:22px;
+  border:1px solid #e2e8f0;
+  border-radius:14px;
+  background:#f8fafc;
+}
+html:root #logisticaManualParametros legend{
+  padding:0 8px;
+  font:600 16px Inter,sans-serif;
+  color:#334155;
+  letter-spacing:0;
+}
+html:root #logisticaManualParametros fieldset>label{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.08em;
+  color:#64748b;
+}
+html:root #logisticaManualParametros select{
+  width:100%;
+  min-height:46px;
+  padding:10px 12px;
+  border:1px solid #dbe2ea;
+  border-radius:10px;
+  background-color:#fff;
+  color:#1f2937;
+  font:400 14px Inter,sans-serif;
+  letter-spacing:0;
+  text-transform:none;
+}
+html:root #logisticaManualParametros [data-usuarios]{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:22px;
+  padding-top:20px;
+  border-top:1px solid #e2e8f0;
+}
+html:root #logisticaManualParametros .pr-check{
+  gap:10px;
+  padding:10px 14px;
+  border-radius:10px;
+  background:#fff;
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:0;
+  text-transform:none;
+}
+@media(max-width:760px){
+  html:root #logisticaManualParametros{grid-template-columns:1fr;gap:22px;padding:20px;margin-top:24px}
+  html:root #logisticaManualParametros fieldset{padding:18px}
+}
+
+/* Segurança (out/2026): verificação em duas etapas */
+.ps{display:grid;gap:16px}.ps-cabeca{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.ps-selo{flex:0 0 auto;padding:6px 14px;border-radius:999px;background:#fde8e8;color:#b42318;font-weight:600;font-size:13px}.ps-selo.is-on{background:#e4f5ea;color:#1f7a44}
+.ps-alerta{background:#fff8e6;border-left:4px solid #e0a82e;border-radius:8px;padding:10px 12px;font-size:14px;color:#5f4300;margin:12px 0 0}
+.ps-acoes{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.ps-falta{color:#b42318;font-weight:600}
+.ps-lista{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px;font:600 15px ui-monospace,Menlo,Consolas,monospace;text-align:center}.ps-lista span{background:#f3f5f6;border-radius:8px;padding:8px 0}
+@media(max-width:700px){.ps-cabeca{flex-direction:column}.ps-lista{grid-template-columns:1fr 1fr}}
+
+.pr-motivos-logistica{margin-top:24px;padding-top:20px;border-top:1px solid #e2e8f0}.pr-motivos-logistica>p{font-size:12px;color:#64748b}.pr-motivo-novo,.pr-motivos-lista form{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:12px 0}.pr-motivos-logistica label{display:grid;gap:5px;font-size:12px}.pr-motivos-logistica input:not([type=checkbox]),.pr-motivos-logistica select{padding:9px;border:1px solid #dce4ed;border-radius:8px;min-height:40px}.pr-motivos-lista form{align-items:center;padding:10px 0;border-bottom:1px solid #edf0f5}.pr-motivos-lista form>input{flex:1;min-width:180px}.pr-motivos-lista form>span{min-width:65px}.pr-motivos-lista form label{display:flex;align-items:center}.pr-motivos-status{font-size:12px}
+.pr-fluxo-pedidos{margin-top:0;padding-top:0;border-top:0;padding-bottom:24px;border-bottom:1px solid #e2e8f0;margin-bottom:24px}.pr-fluxo-pedidos form{display:grid;gap:12px}.pr-fluxo-pedidos form>p{margin:0;color:#718096;font-size:12px;line-height:1.6}.pr-fluxo-pedidos select{width:100%;box-sizing:border-box}.pr-fluxo-pedidos button{justify-self:start;border:0;border-radius:10px;padding:11px 20px;background:var(--el-button-primary-bg,#603e3e);color:#fff;font:600 13px Inter,sans-serif;cursor:pointer}.pr-fluxo-pedidos button:disabled{opacity:.6}
+
+/* Aproveita a largura disponivel em todas as abas de parametros. */
+html:root #parametrosPagina{box-sizing:border-box;width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding-left:clamp(16px,2vw,32px)!important;padding-right:clamp(16px,2vw,32px)!important}
+html:root #parametrosPagina :is(.pr-abas,.pr-empresa,.pr-form,[role=tabpanel]){box-sizing:border-box;width:100%;max-width:none!important;margin-left:0!important;margin-right:0!important;min-width:0}
+html:root #parametrosPagina .pr-card{box-sizing:border-box;width:100%;min-width:0}
+html:root #parametrosPagina .pr-grade{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+@media(max-width:760px){html:root #parametrosPagina{padding-left:14px!important;padding-right:14px!important}}
+
+/* Etiquetas dos cadastros de clientes e locais (aba Comercial). */
+.pe-grupos{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+.pe-grupo{border:1px solid #e3e7ec;border-radius:14px;padding:14px 16px;margin:0;background:#fbfcfd}
+.pe-grupo-topo{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
+.pe-grupo-topo .pe-titulo{flex:1 1 200px;min-width:160px;border:1px solid #dfe4ea;border-radius:10px;background:#fff;padding:8px 12px;font:600 14px Inter,sans-serif;color:#1f2020}
+.pe-grupo-topo select{border:1px solid #dfe4ea;border-radius:10px;background:#fff;padding:8px 10px;font:14px Inter,sans-serif}
+.pe-obrig{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#2b2b2b}
+.pe-obrig input{width:16px;height:16px;accent-color:var(--el-button-primary-bg,#7d603d)}
+.pe-mover{display:inline-flex;gap:4px}
+.pe-btn{border:1px solid #dfe4ea;border-radius:8px;background:#fff;padding:6px 10px;font:600 13px Inter,sans-serif;color:#2b2b2b;cursor:pointer}
+.pe-btn:hover{background:#f3f5f6}
+.pe-perigo{color:#b42318;border-color:#f3c7c2}
+.pe-opcoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.pe-opcao{display:inline-flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;border-radius:999px;font-size:13px;font-weight:500;border:1px solid transparent}
+.pe-opcao button{border:0;background:transparent;cursor:pointer;font-size:15px;line-height:1;padding:0 2px;color:inherit;opacity:.7}
+.pe-opcao button:hover{opacity:1}
+.pe-opcoes.azul .pe-opcao{background:#e0ecff;color:#1e3a8a}
+.pe-opcoes.verde .pe-opcao{background:#dcfce7;color:#166534}
+.pe-opcoes.amarelo .pe-opcao{background:#fef9c3;color:#854d0e}
+.pe-opcoes.laranja .pe-opcao{background:#ffedd5;color:#9a3412}
+.pe-opcoes.vermelho .pe-opcao{background:#fee2e2;color:#991b1b}
+.pe-nova{flex:0 1 220px;border:1px dashed #cfd6de;border-radius:999px;background:#fff;padding:6px 12px;font:13px Inter,sans-serif}
+/* A regra geral de formulário deixa todo campo com a largura toda; aqui o topo do grupo fica numa linha. */
+html:root:is(#pe-a,#pe-b,html) body .pe-grupo-topo>.pe-titulo{flex:1 1 220px!important;width:auto!important;min-width:160px!important}
+html:root:is(#pe-a,#pe-b,html) body .pe-grupo-topo>select{flex:0 0 auto!important;width:auto!important;min-width:0!important}
+html:root:is(#pe-a,#pe-b,html) body .pe-opcoes>.pe-nova{flex:0 1 220px!important;width:220px!important;min-width:0!important}
+@media(max-width:700px){html:root:is(#pe-a,#pe-b,html) body .pe-grupo-topo>select{flex:1 1 45%!important}}
+#pr-painel-rh{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}#pr-painel-rh[hidden]{display:none}#pr-painel-rh .pr-card{min-width:0;margin:0}#pr-painel-rh .pr-rh-form{display:flex;align-items:end;gap:12px;margin:20px 0}#pr-painel-rh .pr-rh-form label{flex:1;min-width:0;display:grid;gap:8px}#pr-painel-rh td:last-child{white-space:nowrap}#pr-painel-rh td .btn{padding:8px 12px;font-size:13px}@media(max-width:1100px){#pr-painel-rh{grid-template-columns:minmax(0,1fr)}}
+.pr-separacao-modos [data-modos]{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:20px 0}.pr-separacao-modos fieldset{border:1px solid #dfe5ec;border-radius:12px;padding:18px;min-width:0}.pr-separacao-modos legend{font-size:17px;font-weight:600}.pr-separacao-modos fieldset>label{display:grid;gap:8px;margin-bottom:16px}.pr-separacao-modos label.pr-modo-toggle{display:flex;align-items:center;gap:10px;font-size:14px;text-transform:none;letter-spacing:0}.pr-separacao-modos .pr-modo-toggle input{width:18px;height:18px;flex:none}.pr-separacao-modos [data-pessoas]{display:grid;gap:12px}.pr-separacao-modos [hidden]{display:none!important}@media(max-width:1000px){.pr-separacao-modos [data-modos]{grid-template-columns:minmax(0,1fr)}}

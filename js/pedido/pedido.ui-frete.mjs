@@ -1,7 +1,12 @@
 import { corDoValor, colorirValor } from "./pedido.valores-ui.mjs";
+import { aplicarLogisticaManual } from './pedido.logistica-manual.mjs';
 export async function renderizarFreteCard(resumo){
+  const automatico = resumo;
+  const finalManual = aplicarLogisticaManual('frete', resumo?.totalFrete || 0, () => renderizarFreteCard(automatico));
+  if(window.__PEDIDO_LOGISTICA_MANUAL?.frete) resumo = { ...(resumo || {}), totalFrete: finalManual, freteBruto: finalManual, freteAbsorcao: 0, fretePercent: 0 };
+
   window.__ATUALIZAR_FRETE_CARD = () => {
-    if(window.__FRETE_CARD_RESUMO) return renderizarFreteCard(window.__FRETE_CARD_RESUMO);
+    if(window.__FRETE_CARD_RESUMO) return renderizarFreteCard(automatico);
     window.atualizarResumoGlobal?.();
   };
 
@@ -116,7 +121,7 @@ export async function renderizarFreteCard(resumo){
     });
   }
   colorirValor(valorEl,final);
-  window.__FRETE_CARD_RESUMO = resumo;
+  window.__FRETE_CARD_RESUMO = automatico;
 
   const resumoFrete = document.getElementById("resumoFrete");
   if(resumoFrete) resumoFrete.innerText = valorEl.innerText;

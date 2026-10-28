@@ -21,7 +21,7 @@ await page.addInitScript(()=>{
  }};
 });
 await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('[data-home-category="estofados"]').click();
 await page.locator('.catalog-grid-card').first().waitFor();
 
@@ -72,7 +72,7 @@ await page.waitForFunction(()=>/\/3\.png/.test(document.querySelector('.product-
 
 // Card de uma cor só continua abrindo como sempre
 await page.locator('.catalog-brand').click();
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('[data-home-category="estofados"]').click();
 await page.locator('.catalog-grid-card',{hasText:'Sofá Alex'}).locator('.catalog-grid-card-name').click();
 await page.locator('.catalog-product-section').first().waitFor();
@@ -80,7 +80,7 @@ await page.locator('.catalog-product-section').first().waitFor();
 // Celular: os círculos ficam dentro do card e a página não ganha rolagem lateral
 await page.setViewportSize({width:390,height:844});
 await page.locator('.catalog-brand').click();
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('[data-home-category="estofados"]').click();
 await page.locator('.catalog-grid-card').first().waitFor();
 assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Grade com cores sem overflow horizontal no celular');

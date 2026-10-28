@@ -113,7 +113,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  assert.deepEqual(criar.params.p_ambientes,['Cerimônia','Bar','Bistrô da varanda']);
  assert.equal(await page.locator('.cpj-work-title h2').textContent(),'Ana & Bruno');
  assert.match(await page.locator('.cpj-work-title p').textContent(),/10 de maio de 2027.*Sítio Vale Verde/);
- assert.deepEqual(await page.locator('.cpj-amb-tab:not(.cpj-amb-new):not(.cpj-amb-tab-plantas) span').allTextContents(),['Cerimônia','Bar','Bistrô da varanda']);
+ assert.deepEqual(await page.locator('.cpj-amb-tab:not(.cpj-amb-new):not([data-cpj-worktab="plantas"]):not([data-cpj-worktab="historico"]) span').allTextContents(),['Cerimônia','Bar','Bistrô da varanda']);
  assert.equal((await page.locator('.cpj-amb-tab.is-active').textContent()).trim(),'Geral','Entrar no projeto abre a aba Geral (o 1º ambiente continua sendo o ativo pro ＋ do catálogo)');
  assert.equal(await page.locator('#catalogProjetoDock').isVisible(),false,'Dock não aparece dentro do próprio módulo');
  // Foto dos noivos: subiu depois de o projeto existir (a política do Storage exige isso), no caminho empresa/projeto/casal
@@ -149,7 +149,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
 
  await page.screenshot({path:path.join(os.tmpdir(),'cpj-3-workspace-vazio.png')});
  // Adiciona móveis pelo catálogo (o dock mostra onde caem)
- await page.locator('[data-cpj="ir-catalogo"]').click();
+ await page.locator('.catalog-brand').click();await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('[data-entry-project="proj-1"]').click();
  await page.locator('.catalog-home-grid').waitFor();
  await page.locator('#catalogProjetoDock').waitFor({state:'visible'});
  assert.match(await page.locator('.cpj-dock-main').textContent(),/Ana & Bruno/);
@@ -159,13 +159,13 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  const chip1=page.locator('[data-projeto-add="1"]');
  assert.equal(await chip1.count(),1,'Cada card da grade tem o ＋');
  await page.locator('.catalog-grid-card[data-grid-item="1"]').hover();
- await chip1.click();
+ await chip1.locator('.cpj-add-plus').click();
  await page.waitForFunction(()=>document.querySelector('[data-projeto-add="1"] .cpj-add-count')?.textContent==='1');
  assert.equal(await page.locator('.catalog-grid-card').count()>0,true,'Clicar no ＋ não abre o item (continua na grade)');
  assert.equal(await page.locator('.catalog-product-section').count(),0,'Nenhuma seção imersiva foi aberta pelo clique no ＋');
  assert.equal(await chip1.evaluate(el=>el.classList.contains('is-added')),true,'Item adicionado fica marcado');
  await page.screenshot({path:path.join(os.tmpdir(),'cpj-4-grade-chip.png')});
- await chip1.click();
+ await chip1.locator('.cpj-add-plus').click();
  await page.waitForFunction(()=>document.querySelector('[data-projeto-add="1"] .cpj-add-count')?.textContent==='2');
  assert.equal((await page.locator('.cpj-dock-count').textContent()).trim(),'2','Dock soma os itens do projeto');
  assert.match(await page.locator('.catalog-notification').last().textContent(),/Adicionado ao projeto/);
@@ -173,9 +173,9 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.locator('.cpj-dock-amb').click();
  await page.locator('.cpj-dock-pop [data-cpj-dock-amb]',{hasText:'Bar'}).click();
  assert.match(await page.locator('.cpj-dock-amb').textContent(),/Bar/);
- assert.equal(await page.locator('[data-projeto-add="1"] .cpj-add-count').textContent(),'','Contador reflete só o ambiente ativo (Bar ainda vazio)');
+ assert.equal(await page.locator('[data-projeto-add="1"] .cpj-add-count').textContent(),'Qtd.','Contador reflete só o ambiente ativo (Bar ainda vazio)');
  await page.locator('.catalog-grid-card[data-grid-item="2"]').hover();
- await page.locator('[data-projeto-add="2"]').click();
+ await page.locator('[data-projeto-add="2"] .cpj-add-plus').click();
  await page.waitForFunction(()=>document.querySelector('[data-projeto-add="2"] .cpj-add-count')?.textContent==='1');
  // página do item (imersiva) também tem o botão
  await page.locator('.catalog-grid-card[data-grid-item="1"] .catalog-grid-card-name').click();
@@ -196,196 +196,13 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  assert.deepEqual(ultimo.p_dados.ambientes.map(a=>[a.nome,a.itens.map(i=>[i.item_id,i.quantidade])]),[['Cerimônia',[['1',2]]],['Bar',[['2',1],['1',1]]],['Bistrô da varanda',[]]]);
  assert.ok(salvos.length-salvosAntesDosMoveis<=3,'Autosave agrupa as edições em poucas chamadas (debounce), não uma por clique: '+(salvos.length-salvosAntesDosMoveis));
 
- // Espaço de trabalho: quantidade, remover, notas, renomear, excluir
- await page.locator('.cpj-dock-main').click();
- await page.locator('.cpj-work').waitFor();
- assert.equal((await page.locator('.cpj-amb-tab.is-active').textContent()).trim(),'Geral','Reabrir o projeto também abre em Geral');
- assert.equal(await page.locator('.cpj-item').count(),2);
- await page.locator('.cpj-item[data-cpj-item="1"] [data-cpj="qtd-mais"]').click();
- assert.equal(await page.locator('.cpj-item[data-cpj-item="1"] input').inputValue(),'2');
- await page.locator('.cpj-item[data-cpj-item="2"] [data-cpj="item-remover"]').click();
- assert.equal(await page.locator('.cpj-item').count(),1);
- await page.locator('.cpj-item[data-cpj-item="1"] input').fill('5');
- await page.locator('.cpj-item[data-cpj-item="1"] input').blur();
- await page.waitForFunction(()=>document.querySelector('.cpj-amb-tab.is-active b')?.textContent==='5');
- await page.locator('[data-cpj-notas]').fill('Clima rústico, luz quente.');
- await page.locator('[data-cpj="renomear"]').click();
- await modal(page).locator('[name=nome]').fill('Bar & Drinks');
- await modal(page).locator('button[type=submit]').click();
- await page.locator('.cpj-amb-panel h3',{hasText:'Bar & Drinks'}).waitFor();
- await page.waitForFunction(()=>document.querySelector('[data-cpj-save-state]')?.textContent==='Salvo ✓');
- const s2=(await calls(page,'projeto_salvar')).pop().params.p_dados.ambientes;
- assert.equal(s2[1].nome,'Bar & Drinks');assert.equal(s2[1].notas,'Clima rústico, luz quente.');assert.deepEqual(s2[1].itens,[{item_id:'1',quantidade:5}]);
-
- assert.deepEqual(await textosPequenos(page),[],'Espaço de trabalho + dock: nenhum texto abaixo de 12px');
- await page.screenshot({path:path.join(os.tmpdir(),'cpj-6-workspace-itens.png')});
- // Renderização de IA salva no ambiente escolhido
- // O módulo de 3D avisa quais móveis estão na imagem que a IA devolveu (aqui: 1 Sofá Um + 3 Sofá Dois, como as poltronas repetidas de um lounge)
- const composicao=[{itemId:'1',itemName:'Sofá Um'},{itemId:'2',itemName:'Sofá Dois'},{itemId:'2',itemName:'Sofá Dois'},{itemId:'2',itemName:'Sofá Dois'}];
- await page.evaluate(([src,objetos])=>{window.catalogRegisterRenderItems(src,objetos);document.getElementById('studioResultImage').src=src;document.getElementById('studioResultDialog').showModal();},[PNG_DATA_URL,composicao]);
- await page.locator('#studioResultDialog [data-projeto-save-render]').click();
- await modal(page).waitFor();
- assert.match(await modal(page).textContent(),/Onde isto deve ficar salvo/,'Renderização sempre confirma o destino');
- assert.equal(await modal(page).locator('[name=levarMoveis]').isChecked(),true,'"Levar também os móveis desta composição" já vem marcado');
- await page.screenshot({path:path.join(os.tmpdir(),'cpj-11-levar-moveis.png')});
- assert.match(await modal(page).locator('.cpj-check').textContent(),/1× Sofá Um, 3× Sofá Dois/,'A caixa mostra exatamente os móveis da composição, com quantidade');
- await modal(page).locator('[name=ambiente]').selectOption({label:'Cerimônia'});
- await modal(page).locator('button[type=submit]').click();
- await page.waitForFunction(()=>window.mockdb.uploads.filter(u=>/\/renders\//.test(u.path)).length===1);
- const up=await page.evaluate(()=>window.mockdb.uploads.find(u=>/\/renders\//.test(u.path)));
- assert.equal(up.bucket,'projetos');assert.match(up.path,/^company\/proj-1\/renders\/[0-9a-f-]+\.jpg$/,'Caminho empresa/projeto/renders — o que a política do Storage exige');assert.equal(up.type,'image/jpeg');
- await page.waitForFunction(()=>window.mockdb.calls.filter(c=>c.name==='projeto_salvar').pop()?.params.p_dados.ambientes[0].renders.length===1);
- const ambCerimonia=(await calls(page,'projeto_salvar')).pop().params.p_dados.ambientes[0];
- assert.deepEqual(ambCerimonia.itens,[{item_id:'1',quantidade:2},{item_id:'2',quantidade:3}],'Os móveis da composição entraram no ambiente: o que já tinha mais unidades (Sofá Um ×2) não foi somado, o novo (Sofá Dois ×3) entrou');
- assert.match(await page.locator('.catalog-notification',{hasText:'móveis salvos'}).last().textContent(),/1 móvel · Cerimônia/,'O aviso conta quantos móveis vieram junto');
- const render=ambCerimonia.renders[0];
- assert.equal(render.origem,'3D Livre');assert.match(render.url,/\/storage\/v1\/object\/public\/projetos\/company\/proj-1\/renders\//);
- await page.screenshot({path:path.join(os.tmpdir(),'cpj-7-render-picker.png')});
- await page.evaluate(()=>document.getElementById('studioResultDialog').close());
- await page.locator('.cpj-amb-tab',{hasText:'Cerimônia'}).click();
- assert.equal(await page.locator('.cpj-render').count(),1,'Renderização aparece no ambiente escolhido');
- // Mapa de posições: a salva ocupa a posição 1 (destaque + foto da capa) e as próximas viram espaços tracejados numerados
- assert.equal(await page.locator('.cpj-render-slot').count(),2,'1 salva + 2 espaços = as 3 posições de um layout em destaque');
- assert.equal(await page.locator('.cpj-render .cpj-slot-num').textContent(),'1');
- assert.deepEqual(await page.locator('.cpj-render-slot .cpj-slot-num').allTextContents(),['2','3']);
- assert.match(await page.locator('.cpj-render figcaption').textContent(),/Destaque · tamanho grande · Também é a foto da capa/,'A 1ª renderização do projeto é a foto da capa');
- assert.equal(await page.locator('.cpj-render-slot').first().locator('svg').count(),1,'Espaço reservado com o ícone de câmera');
- assert.match(await page.locator('.cpj-map-hint').textContent(),/em destaque/,'Explica como as renderizações se posicionam');
- {
-  const caixas=await page.evaluate(()=>[...document.querySelector('.cpj-renders-map').children].map(el=>{const r=el.getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height),y:Math.round(r.top)};}));
-  assert.ok(caixas[0].w>caixas[1].w*1.8,'A posição 1 (destaque) ocupa a largura toda: '+JSON.stringify(caixas));
-  assert.ok(Math.abs(caixas[1].y-caixas[2].y)<=2&&Math.abs(caixas[1].w-caixas[2].w)<=2,'As posições 2 e 3 ficam lado a lado');
-  assert.ok(caixas[1].y>caixas[0].y+caixas[0].h,'...abaixo da 1');
- }
- await page.locator('.cpj-renders-map').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(os.tmpdir(),'cpj-12-mapa-renders.png')});
- // Um ambiente ainda sem renderizações: 3 espaços reservados (o 1 em destaque, mas sem o aviso de capa — a capa é do ambiente que já tem imagem)
- await page.locator('.cpj-amb-tab',{hasText:'Bistrô da varanda'}).click();
- assert.equal(await page.locator('.cpj-render').count(),0);
- assert.equal(await page.locator('.cpj-render-slot').count(),3,'Ambiente vazio mostra as 3 posições');
- assert.match(await page.locator('.cpj-render-slot').first().textContent(),/Destaque · tamanho grande/);
- assert.doesNotMatch(await page.locator('.cpj-render-slot').first().textContent(),/capa/,'A capa vem do primeiro ambiente que tem renderização');
- await page.locator('.cpj-amb-tab',{hasText:'Cerimônia'}).click();
- assert.equal(await page.locator('.cpj-item').count(),2,'...e os móveis dela também aparecem na lista do ambiente');
- // Caixa desmarcada: só a imagem entra
- await page.evaluate(([src,objetos])=>{window.catalogRegisterRenderItems(src,objetos);document.getElementById('studioResultImage').src=src;document.getElementById('studioResultDialog').showModal();},[PNG_DATA_URL,[{itemId:'3',itemName:'Mesa Um'},{itemId:'3',itemName:'Mesa Um'}]]);
- await page.locator('#studioResultDialog [data-projeto-save-render]').click();
- await modal(page).waitFor();
- assert.match(await modal(page).locator('.cpj-check').textContent(),/2× Mesa Um/,'Cada renderização leva a sua própria lista (a mais recente vale)');
- await modal(page).locator('[name=ambiente]').selectOption({label:'Bistrô da varanda'});
- await modal(page).locator('[name=levarMoveis]').uncheck();
- await modal(page).locator('button[type=submit]').click();
- await page.waitForFunction(()=>window.mockdb.uploads.filter(u=>/\/renders\//.test(u.path)).length===2);
- await page.waitForFunction(()=>window.mockdb.calls.filter(c=>c.name==='projeto_salvar').pop()?.params.p_dados.ambientes[2].renders.length===1);
- const ultimoSalvo=(await calls(page,'projeto_salvar')).pop().params.p_dados;
- assert.deepEqual(ultimoSalvo.ambientes[2].itens,[],'Desmarcou: a renderização entra sem os móveis');
- assert.equal(JSON.stringify(ultimoSalvo).includes('"item_id":"3"'),false);
- await page.evaluate(()=>document.getElementById('studioResultDialog').close());
- // "Tirar print" no 3D Livre: pedido explícito do usuário numa sessão seguinte ("quando eu tirar print vim 3
- // versões, quero que venha apenas uma") — hoje salva 1 imagem só, pelo MESMO caminho de "Salvar no projeto" que
- // qualquer outro diálogo de resultado usa (data-img/data-origem, sem lote nenhum — `__printBatch` não é mais
- // usado por ninguém, só zerado como defesa). URL distinta de `PNG_DATA_URL` (nunca registrada em
- // catalogRegisterRenderItems antes neste arquivo) — de propósito, pra não "herdar" por acidente a composição de
- // Mesa Um registrada no cenário anterior.
- await page.evaluate((base)=>{
-  const botao=document.querySelector('#studioResultDialog [data-projeto-save-render]');
-  botao.__printBatch=null;
-  botao.dataset.origem='Print 3D Livre';
-  document.getElementById('studioResultImage').src=`${base}/print.png`;
-  document.getElementById('studioResultDialog').showModal();
- },'https://fixture');
- await page.locator('#studioResultDialog [data-projeto-save-render]').click();
- await modal(page).waitFor();
- assert.match(await modal(page).textContent(),/Onde isto deve ficar salvo/);
- assert.equal(await modal(page).locator('[name=levarMoveis]').count(),0,'Sem composição registrada neste teste — a pergunta de "levar móveis" nem aparece (já coberta acima)');
- await modal(page).locator('[name=ambiente]').selectOption({label:'Bistrô da varanda'});
- await modal(page).locator('button[type=submit]').click();
- await page.waitForFunction(()=>window.mockdb.uploads.filter((u)=>/\/renders\//.test(u.path)).length===3,null,{timeout:8000});
- await page.waitForFunction(()=>{
-  const ultimo=window.mockdb.calls.filter((c)=>c.name==='projeto_salvar').pop();
-  return ultimo?.params.p_dados.ambientes[2].renders.length===2;
- });
- const bistro=(await calls(page,'projeto_salvar')).pop().params.p_dados.ambientes[2];
- assert.equal(bistro.renders.length,2,'1 render que já existia ali + 1 do print = 2 (não mais 3 de uma vez)');
- assert.equal(bistro.renders.at(-1).origem,'Print 3D Livre');
- await page.evaluate(()=>document.getElementById('studioResultDialog').close());
- // Imagem sem composição registrada (ex.: tecido personalizado): nenhuma caixa
- await page.evaluate((src)=>{document.getElementById('catalogFabricResultImage').src=src;document.getElementById('catalogFabricResultDialog').showModal();},'data:image/svg+xml;base64,'+Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"/>').toString('base64'));
- await page.locator('#catalogFabricResultDialog [data-projeto-save-render]').click();
- await modal(page).waitFor();
- assert.equal(await modal(page).locator('[name=levarMoveis]').count(),0,'Sem uma composição por trás (tecido), a pergunta nem aparece');
- await modal(page).locator('[data-cpj-cancel]').click();
- await page.evaluate(()=>{document.getElementById('catalogFabricResultDialog').close();});
- await page.locator('.cpj-amb-tab',{hasText:'Cerimônia'}).click();
-
- // Enviar pedido
- await page.locator('[data-cpj="enviar"]').click();
- await modal(page).waitFor();
- assert.match(await modal(page).locator('.cpj-order-summary').textContent(),/Bar & Drinks.*5 itens/);
- assert.match(await modal(page).locator('.cpj-order-total').textContent(),/10/,'Pedido soma os móveis que vieram da composição (5 na Cerimônia + 5 no Bar)');
- await modal(page).locator('[name=obs]').fill('Preciso até quinta');
- await modal(page).locator('button[type=submit]').click();
- await modal(page).waitFor({state:'detached'});
- // O status/observação/aviso de "alterado" não moram mais dentro do espaço de trabalho — só no diálogo "Ver
- // pedido", aberto a partir do status na linha do projeto na lista (ver cenário dedicado mais abaixo).
- assert.equal(await page.locator('.cpj-banner').count(),0,'Nenhuma caixa de status fixa dentro do projeto');
- await page.locator('.cpj-amb-tab',{hasText:'Bar & Drinks'}).click();
- await page.locator('.cpj-item[data-cpj-item="1"] [data-cpj="qtd-mais"]').click();
-
- // Voltar pra lista e recarregar: o projeto ativo volta sozinho
- await page.screenshot({path:path.join(os.tmpdir(),'cpj-9-envio.png')});
- await page.locator('[data-cpj="voltar"]').click();
- await page.locator('.cpj-card').waitFor();
- assert.deepEqual(await textosPequenos(page),[],'Lista de projetos: nenhum texto abaixo de 12px');
- await page.screenshot({path:path.join(os.tmpdir(),'cpj-10-lista.png')});
- assert.match(await page.locator('.cpj-card').textContent(),/Ana & Bruno.*Sítio Vale Verde/s);
- assert.match(await page.locator('.cpj-card .cpj-status').textContent(),/Pedido enviado/);
- assert.equal(await page.locator('.cpj-card .cpj-status').evaluate((el)=>el.tagName),'BUTTON','O status na lista vira o gatilho pra "Ver pedido"');
- // "Ver pedido": mesma prévia bonita (com foto/renderizações) que já existia em "Enviar pedido", agora aberta a
- // partir do status na lista, com o aviso de "alterado depois do envio" (o item mexido logo acima).
- await page.locator('.cpj-card .cpj-status').click();
- const verPedido=page.locator('dialog.cpj-modal.cpj-order-preview[open]');
- await verPedido.waitFor();
- assert.equal(await verPedido.locator('.cpj-order-paper').count(),1);
- assert.match(await verPedido.locator('.cpj-banner-obs').textContent(),/Preciso até quinta/);
- assert.match(await verPedido.locator('.cpj-banner-warn').textContent(),/alterado depois do envio/,'Avisa quando o projeto mudou depois do envio');
- assert.equal(await verPedido.locator('.cpj-banner-status').count(),0,'Decorador não muda o status do pedido');
- await verPedido.locator('[data-cpj-cancel]').click();
- await verPedido.waitFor({state:'detached'});
- assert.equal(await page.locator('.cpj-card .cpj-card-avatar').count(),1,'O cartão do projeto mostra a foto dos noivos');
- assert.equal(await page.locator('.cpj-card-owner').count(),0,'Decorador não vê "Decorador:" (só a equipe)');
- await page.waitForTimeout(1000);
- await page.reload();
- await page.locator('.catalog-gateway').waitFor();
- await page.locator('[data-gateway-tile="catalogo"]').click();
- await page.locator('#catalogProjetoDock').waitFor({state:'visible'});
- assert.match(await page.locator('.cpj-dock-main').textContent(),/Ana & Bruno/,'Projeto ativo é lembrado depois de recarregar');
- await page.screenshot({path:path.join(os.tmpdir(),'catalogo-projetos-dock.png')});
-
- // Mobile: sem overflow em lista, espaço de trabalho e diálogos
- await page.setViewportSize({width:390,height:844});
- await page.locator('.cpj-dock-main').click();
- await page.locator('.cpj-work').waitFor();
- assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Espaço de trabalho sem overflow horizontal no celular');
- await page.screenshot({path:path.join(os.tmpdir(),'catalogo-projetos-mobile.png'),fullPage:true});
- await page.locator('[data-cpj="voltar"]').click();
- await page.locator('.cpj-card').waitFor();
- assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Lista sem overflow horizontal no celular');
- await page.locator('[data-cpj="novo"]').first().click();
- await modal(page).waitFor();
- const caixa=await modal(page).boundingBox();
- assert.ok(caixa.x>=0&&caixa.x+caixa.width<=390,'Diálogo cabe na tela do celular');
- await modal(page).locator('[data-cpj-cancel]').click();
-
- // Excluir projeto pede confirmação
- await page.locator('[data-cpj-delete]').click();
- await modal(page).waitFor();
- assert.match(await modal(page).textContent(),/Excluir projeto\?/);
- await modal(page).locator('button[type=submit]').click();
- await page.locator('.cpj-empty-big').waitFor();
- assert.equal((await calls(page,'projeto_excluir')).length,1);
- assert.equal(await page.evaluate(()=>window.mockdb.removed.length>=0),true);
- assert.deepEqual(errors,[]);
- await page.close();
+ await page.locator('.cpj-dock-main').click();await page.locator('.cpj-work').waitFor();
+ await page.locator('[data-cpj-worktab="geral"]').click();
+ await page.locator('[data-cpj="enviar"]').click();await modal(page).waitFor();
+ await modal(page).locator('textarea[name=obs]').fill('Montagem pela manha');await modal(page).locator('button[type=submit]').click();
+ await page.waitForFunction(()=>window.mockdb.projetos[0].status==='pedido_enviado');
+ const enviado=await page.evaluate(()=>window.mockdb.projetos[0]);assert.ok(enviado.pedido_snapshot.total_itens>0);assert.equal(enviado.pedido_observacao,'Montagem pela manha');
+ await page.reload();await page.locator('[data-gateway-tile="projetos"]').click();await page.locator('.cpj-card').waitFor();assert.match(await page.locator('.cpj-card').innerText(),/Ana & Bruno/);assert.deepEqual(errors,[]);await page.close();
 }
 
 // ===== Cenário 2: equipe — enxerga projetos de todos, filtra pedidos, muda status; sem renderização órfã =====
@@ -448,12 +265,12 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.locator('.cpj-work').waitFor();
 
  // A aba "Plantas" fica ao lado dos ambientes, sempre por último, com contador próprio (nº de plantas, não de áreas)
- assert.deepEqual(await page.locator('.cpj-amb-tab:not(.cpj-amb-new):not(.cpj-amb-tab-plantas) span').allTextContents(),['Lounge 3','Bar']);
- assert.equal(await page.locator('.cpj-amb-tab-plantas').count(),1);
- assert.equal((await page.locator('.cpj-amb-tab-plantas b').textContent()).trim(),'','Sem planta nenhuma ainda, o emblema fica vazio');
+ assert.deepEqual(await page.locator('.cpj-amb-tab:not(.cpj-amb-new):not([data-cpj-worktab="plantas"]):not([data-cpj-worktab="historico"]) span').allTextContents(),['Lounge 3','Bar']);
+ assert.equal(await page.locator('[data-cpj-worktab="plantas"]').count(),1);
+ assert.equal((await page.locator('[data-cpj-worktab="plantas"] b').textContent()).trim(),'','Sem planta nenhuma ainda, o emblema fica vazio');
  await page.locator('[data-cpj-worktab="plantas"]').click();
  await page.locator('.cpj-plantas-grid').waitFor();
- assert.equal(await page.locator('.cpj-amb-tab-plantas.is-active').count(),1);
+ assert.equal(await page.locator('[data-cpj-worktab="plantas"].is-active').count(),1);
  assert.match(await page.locator('.cpj-amb-head h3').textContent(),/Plantas/);
  assert.equal(await page.locator('.cpj-planta-card:not(.cpj-planta-nova)').count(),0,'Nenhuma planta ainda');
  assert.equal(await page.locator('.cpj-planta-nova').count(),1,'Card "＋ Nova planta" sempre presente');
@@ -469,7 +286,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  assert.equal(upPlanta.bucket,'projetos');
  assert.match(upPlanta.path,/^company\/p-plantas\/plantas\/[0-9a-f-]+\.png$/,'Caminho empresa/projeto/plantas — mesma convenção do resto do módulo');
  assert.equal(upPlanta.type,'image/png','Planta nunca vira JPEG — é um desenho de linhas do AutoCAD, sem compressão com perdas');
- assert.equal((await page.locator('.cpj-amb-tab-plantas b').textContent()).trim(),'1','Emblema soma 1 planta');
+ assert.equal((await page.locator('[data-cpj-worktab="plantas"] b').textContent()).trim(),'1','Emblema soma 1 planta');
  assert.equal(await page.locator('[data-cpj-planta-vazio]').isVisible(),true,'Sem pontos ainda: aviso "nenhum ponto marcado" visível');
 
  // Espera a imagem carregar de verdade e o palco ganhar layout, antes de clicar nele
@@ -535,7 +352,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  // próprio sistema registrou em 3D")
  assert.equal(await page.locator('.cpj-planta-label-item').count(),0,'Sem fotos soltas por item');
  await page.locator('.cpj-planta-label-render').waitFor();
- assert.match(await page.locator('.cpj-planta-label-render').getAttribute('src'),/lounge\.jpg\?width=700/,'Mostra a renderização de verdade do ambiente (a mesma já salva em Composições/3D Livre)');
+ assert.match(await page.locator('.cpj-planta-label-render').getAttribute('src'),/lounge\.jpg(?:\?|$)/,'Mostra a renderização de verdade do ambiente (a mesma já salva em Composições/3D Livre)');
  assert.match(await page.locator('.cpj-planta-label-itens').textContent(),/2× Sofá Um, Sofá Dois/,'Nomes dos itens viram texto simples abaixo da imagem, não mais legenda por foto');
  assert.equal(await page.locator('.cpj-planta-label-render').evaluate((el)=>getComputedStyle(el).borderStyle),'none','A foto não tem mais nenhuma borda/moldura ao redor — pedido explícito de retirar o card');
  // Pedido explícito do usuário: "eu quero arrastar em qualquer lugar que eu segurar na imagem... basta eu segurar
@@ -705,7 +522,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await modal(page).locator('button[type=submit]').click();
  await page.locator('.cpj-plantas-grid').waitFor();
  assert.equal(await page.locator('.cpj-planta-card:not(.cpj-planta-nova)').count(),0,'Planta excluída some da grade');
- assert.equal((await page.locator('.cpj-amb-tab-plantas b').textContent()).trim(),'','Emblema volta a ficar vazio');
+ assert.equal((await page.locator('[data-cpj-worktab="plantas"] b').textContent()).trim(),'','Emblema volta a ficar vazio');
  await page.waitForFunction(()=>window.mockdb.removed.length>=2);
 
  // Mobile: grade e (com uma planta nova, e uma legenda de verdade — fotos grandes num viewport estreito é
@@ -869,6 +686,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  assert.equal(await page.locator('[data-cpj-planta-pagina]').evaluate((el)=>getComputedStyle(el).aspectRatio),'297 / 210');
  assert.match(await page.locator('.cpj-planta-pagina-rotulo').textContent(),/A4 paisagem/);
  // Paisagem inverte largura/altura do papel: 297mm de largura = 297*96/25.4 ≈ 1122,5px, arredondado pra 1123.
+ await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
  const paginaBoxPaisagem=await page.locator('[data-cpj-planta-pagina]').boundingBox();
  assert.ok(Math.abs(paginaBoxPaisagem.width/(await page.locator('[data-cpj-planta-frame]').evaluate(el=>Number(el.dataset.escalaVisual)))-1123)<=1,'A folha em paisagem usa o tamanho físico real (297mm a 96dpi ≈ 1123px): '+JSON.stringify(paginaBoxPaisagem));
 

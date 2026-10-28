@@ -370,8 +370,8 @@ class Execucao {
     const urlPublica = caminho => cfg.url + "/storage/v1/object/public/" + BUCKET + "/" + caminho;
     const arquivo = (id, nome, tipo, tamanho) => ({
       getId: () => id, getName: () => nome, setName: function (n) { nome = n; return this; }, getMimeType: () => tipo, getSize: () => tamanho || 0,
-      getUrl: () => (String(id).startsWith("sb:") ? urlPublica(id.slice(3)) : "https://drive.google.com/file/d/" + id + "/view"),
-      getDownloadUrl: () => (String(id).startsWith("sb:") ? urlPublica(id.slice(3)) : "https://drive.google.com/uc?export=download&id=" + id),
+      getUrl: () => (String(id).startsWith("sb:") ? urlPublica(id.slice(3)) : ""),
+      getDownloadUrl: () => (String(id).startsWith("sb:") ? urlPublica(id.slice(3)) : ""),
       setSharing: function () { return this; }, setDescription: function () { return this; }, addViewer: function () { return this; },
       getBlob: () => { throw new Error("Leitura de arquivos antigos do Drive não está disponível."); },
       setTrashed: function () { return this; }, getDateCreated: () => new Date()

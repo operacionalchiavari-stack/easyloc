@@ -155,11 +155,11 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
   return [...(root||document.querySelector('[data-cpj-planta-frame]')).querySelectorAll('.cpj-planta-stage,.cpj-planta-label,.cpj-planta-img')].map(e=>{const r=e.getBoundingClientRect();return [(r.x-p.x)/p.width,(r.y-p.y)/p.height,r.width/p.width,r.height/p.height];});
  });
  const screen=await measure();
- const toolbarRows=await page.locator('.cpj-planta-toolbar').evaluate(el=>{
-  const elements=[el.querySelector('[data-cpj-planta-nome]'),...el.querySelector('.cpj-work-actions').children].filter(e=>!e.hidden);
-  return elements.map(e=>{const r=e.getBoundingClientRect();return r.y+r.height/2;});
- });
- assert.ok(Math.max(...toolbarRows)-Math.min(...toolbarRows)<2,'Title and all controls share one row');
+ const lado=await page.evaluate(()=>{const t=document.querySelector('.cpj-planta-toolbar').getBoundingClientRect(),v=document.querySelector('[data-cpj-planta-viewport]').getBoundingClientRect();return {t,v,w:innerWidth,botoes:document.querySelectorAll('.cpj-planta-toolbar button').length};});
+ assert.ok(lado.t.right<=lado.v.left+1,'Controles numa coluna à esquerda da planta');
+ assert.ok(lado.v.width>lado.w*0.7,'Planta ocupa a maior parte da largura');
+ assert.ok(lado.t.height>=lado.v.height-4,'Coluna dos controles tem a altura da planta');
+ assert.equal(await page.locator('.cpj-planta-editor [data-cpj="apresentacao"]').count(),0,'Sem o botão de apresentação no editor');
  for(const mode of ['letras','setas','ambos']){
   await page.locator('[data-cpj-planta-marcacao]').selectOption(mode);await settle();
   const checkMode=async(root)=>{

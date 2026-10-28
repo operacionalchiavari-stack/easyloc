@@ -1,5 +1,5 @@
 ﻿/* =====================================================
-   VARIÃVEIS GLOBAIS
+   VARIÁVEIS GLOBAIS
 ===================================================== */
 :root{
   --azul:#2E1F1F;
@@ -69,10 +69,10 @@ html,body{
    usado por Locais, Clientes, Fornecedores e Caminhoes. */
 
 /* =====================================================
-   BOTÃ•ES
+   BOTÕES
 ===================================================== */
 /* =====================================================
-   BOTÃƒO AJUDA
+   BOTÃO AJUDA
 ===================================================== */
 .btn-ajuda{
   width:40px;
@@ -197,7 +197,7 @@ tbody td{
   color:#166534;
 }
 
-/* ---- ORÃ‡AMENTO ---- */
+/* ---- ORÇAMENTO ---- */
 .table-tag.tag-orcamento{
   background:#ffedd5;
   color:#9a3412;
@@ -648,7 +648,7 @@ tbody td{
 }
 
 /* =====================================================
-   AÃ‡Ã•ES DO MODAL
+   AÇÕES DO MODAL
 ===================================================== */
 .modal-actions{
   margin-top:24px;
@@ -1155,7 +1155,7 @@ tbody td{
 }
 
 /* =====================================================
-   LISTA DE VÃDEOS
+   LISTA DE VÍDEOS
 ===================================================== */
 .ajuda-videos{
   background:var(--el-color-surface-soft,#f6f7f9);
@@ -1186,7 +1186,7 @@ tbody td{
 }
 
 /* =====================================================
-   PLAYER DE VÃDEO
+   PLAYER DE VÍDEO
 ===================================================== */
 .ajuda-player{
   padding:18px;
@@ -1202,7 +1202,7 @@ tbody td{
 }
 
 /* =====================================================
-   MODAL CONFIRMAÃ‡ÃƒO
+   MODAL CONFIRMAÇÃO
 ===================================================== */
 .confirm-box{
   max-width:420px;
@@ -1267,3 +1267,12 @@ tbody td{
     border-bottom:1px solid var(--cinza);
   }
 }
+
+/* "+ Adicionar Local" na mesma linha do título "Locais Cadastrados", no canto direito (out/2026). O título continua
+   centralizado na faixa do tema; o botão flutua no canto direito dela. Mesma solução de Itens Cadastrados. */
+html:root:is(#cadastro-locais, html) body .el-page > .header-list.header-list{position:relative!important;}
+html:root:is(#cadastro-locais, html) body .el-page > .header-list > .header-actions.header-actions{position:absolute!important;top:30px!important;right:0!important;margin:0!important;display:flex!important;width:auto!important;flex:none!important;z-index:2;}
+@media(max-width:1100px){html:root:is(#cadastro-locais, html) body .el-page > .header-list > .header-actions.header-actions{position:static!important;}}
+
+/* opção marcada num cadastro que não existe mais em Parâmetros > Comercial */
+.tag.fora-da-lista{border-style:dashed!important}

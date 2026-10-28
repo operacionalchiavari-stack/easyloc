@@ -1,3 +1,4 @@
+import { iniciarSaldoClientePedido } from './pedido.saldo-cliente.mjs';
 /* =====================================================
    PAGAMENTO - EASYLOC
 ===================================================== */
@@ -17,8 +18,6 @@ export function initPagamento(){
 
   const tbody = document.getElementById("cronogramaParcelas");
   const resumoFaltaDistribuirEl = document.getElementById("pgResumoFaltaDistribuir");
-  const resumoBVEl = document.getElementById("pgResumoBV");
-  const resumoCreditoEl = document.getElementById("pgResumoCredito");
   const btnAdicionarAbatimento = document.getElementById("btnAdicionarAbatimento");
   const abatimentoPopover = document.getElementById("pagamentoAbatimentoPopover");
   const abatimentoBVEl = document.getElementById("pagamentoAbatimentoBV");
@@ -39,6 +38,8 @@ export function initPagamento(){
     console.warn("Tabela de pagamento nao encontrada");
     return;
   }
+
+  const saldoContaCliente = iniciarSaldoClientePedido();
 
   const moneyValue = (el) => {
     if(!el) return 0;
@@ -218,40 +219,46 @@ export function initPagamento(){
   };
 
   const criarGrupo = (comp) => {
-    const tr = document.createElement("tr");
+    const tr = document.createElement("header");
     tr.className = "pg-grupo";
     tr.dataset.componente = comp;
     tr.innerHTML = `
-      <td colspan="7">
         <div class="pg-grupo-head">
           <span class="pg-grupo-chip ${comp}">${rotuloComponente(comp)}</span>
           <span class="pg-grupo-total">Valor <strong data-pg-grupo-valor>R$ 0,00</strong></span>
           <span class="pg-grupo-falta" data-pg-grupo-falta></span>
           <button type="button" class="pg-grupo-add" data-pg-add="${comp}"><i data-lucide="plus"></i> Parcela</button>
         </div>
-      </td>`;
+      `;
     return tr;
   };
 
-  // Desenha a tabela: título da divisão + parcelas dela, na ordem Locação, Frete, Montagem.
-  // Divisão sem valor e sem parcelas não aparece.
+  const criarCard = comp => {
+    const card=document.createElement('section');
+    card.className='pg-componente-card';card.dataset.componente=comp;
+    card.setAttribute('aria-label','Parcelas de '+rotuloComponente(comp));
+    card.append(criarGrupo(comp));
+    const tabela=document.createElement('div');tabela.className='pg-card-tabela';
+    tabela.innerHTML='<table class="cronograma-table"><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Forma</th><th>Cobrança</th><th>Ações</th></tr></thead><tbody data-pg-linhas="'+comp+'"></tbody></table>';
+    card.append(tabela);
+    const vazio=document.createElement('p');vazio.className='pg-card-vazio';vazio.textContent='Nenhuma parcela programada.';card.append(vazio);
+    return card;
+  };
+  const ORDEM_CARDS=['locacao','montagem','frete'];
   const montarTabela = (parcelas) => {
-    const valores = valoresPorComponente();
     tbody.innerHTML = "";
-    COMPONENTES.forEach(([comp]) => {
+    ORDEM_CARDS.forEach(comp => {
       const doGrupo = parcelas.filter((p) => (p.componente || "locacao") === comp);
-      if(!doGrupo.length && !(valores[comp] > 0)) return;
-      tbody.appendChild(criarGrupo(comp));
-      doGrupo.forEach((p) => tbody.appendChild(criarLinha({ ...p, componente: comp })));
+      const card=criarCard(comp);tbody.appendChild(card);
+      doGrupo.forEach((p) => card.querySelector('[data-pg-linhas]').appendChild(criarLinha({ ...p, componente: comp })));
     });
   };
 
   const garantirGrupos = () => {
-    const valores = valoresPorComponente();
-    COMPONENTES.forEach(([comp], i) => {
-      if(tbody.querySelector(`tr.pg-grupo[data-componente="${comp}"]`) || !(valores[comp] > 0)) return;
-      const depois = COMPONENTES.slice(i + 1).map(([c]) => tbody.querySelector(`tr.pg-grupo[data-componente="${c}"]`)).find(Boolean);
-      tbody.insertBefore(criarGrupo(comp), depois || null);
+    ORDEM_CARDS.forEach((comp,i) => {
+      if(tbody.querySelector(`.pg-componente-card[data-componente="${comp}"]`))return;
+      const depois=ORDEM_CARDS.slice(i+1).map(c=>tbody.querySelector(`.pg-componente-card[data-componente="${c}"]`)).find(Boolean);
+      tbody.insertBefore(criarCard(comp),depois || null);
     });
   };
 
@@ -275,12 +282,13 @@ export function initPagamento(){
 
   const atualizarGrupos = () => {
     const valores = valoresPorComponente();
-    tbody.querySelectorAll("tr.pg-grupo").forEach((grupo) => {
+    tbody.querySelectorAll(".pg-grupo").forEach((grupo) => {
       const comp = grupo.dataset.componente;
       const programado = linhasParcela(comp).reduce((s, row) => s + valorDaLinha(row), 0);
       const dif = centavos((valores[comp] || 0) - programado);
       const valorEl = grupo.querySelector("[data-pg-grupo-valor]");
       const faltaEl = grupo.querySelector("[data-pg-grupo-falta]");
+      grupo.closest('.pg-componente-card').querySelector('.pg-card-vazio').hidden=linhasParcela(comp).length>0;
       if(valorEl) valorEl.textContent = formatCurrency(valores[comp] || 0);
       if(faltaEl){
         faltaEl.textContent = Math.abs(dif) < 0.01 ? "Distribuído" : dif > 0 ? `Falta distribuir ${formatCurrency(dif)}` : `Passou ${formatCurrency(-dif)}`;
@@ -431,8 +439,6 @@ export function initPagamento(){
     const totalProgramado = somarProgramado();
     const diferenca = totais.valorFinal - totalProgramado;
     const faltaDistribuir = Math.max(0, diferenca);
-    const bvDisponivel = moneyValue(bvTotalEl);
-    const creditoDisponivel = moneyValue(creditoClienteEl);
 
     if(totalContratoEl) totalContratoEl.innerText = formatCurrency(totais.totalPedido);
     if(totalDescontosEl) totalDescontosEl.innerText = formatCurrency(totais.totalDescontos);
@@ -441,8 +447,8 @@ export function initPagamento(){
     if(totalProgramadoEl) totalProgramadoEl.innerText = formatCurrency(totalProgramado);
     if(diferencaEl) diferencaEl.innerText = formatCurrency(diferenca);
     if(resumoFaltaDistribuirEl) resumoFaltaDistribuirEl.innerText = formatCurrency(faltaDistribuir);
-    if(resumoBVEl) resumoBVEl.innerText = formatCurrency(bvDisponivel);
-    if(resumoCreditoEl) resumoCreditoEl.innerText = formatCurrency(creditoDisponivel);
+    saldoContaCliente.atualizar();
+
     atualizarGrupos();
   };
 
@@ -486,7 +492,7 @@ export function initPagamento(){
   const adicionarParcela = (comp) => {
     cronogramaManual = true;
     garantirGrupos();
-    const grupo = tbody.querySelector(`tr.pg-grupo[data-componente="${comp}"]`);
+    const grupo = tbody.querySelector(`.pg-grupo[data-componente="${comp}"]`);
     if(!grupo) return;
     const rows = linhasParcela(comp);
     const ultima = rows.at(-1);
@@ -494,8 +500,7 @@ export function initPagamento(){
     const falta = Math.max(0, centavos((valoresPorComponente()[comp] || 0) - programado));
     const venc = ultima?.querySelector(".pg-vencimento")?.value ? addMonths(ultima.querySelector(".pg-vencimento").value, 1, "") : (dataEntradaEl?.value || new Date().toLocaleDateString("sv-SE"));
     const nova = criarLinha({ tipo: `Parcela ${rows.length + 1}`, vencimento: venc, valor: falta, metodo: ultima?.querySelector(".pg-metodo")?.value || metodoEl?.value || "PIX", componente: comp });
-    const proximoGrupo = [...tbody.querySelectorAll("tr.pg-grupo")].find((g) => grupo.compareDocumentPosition(g) & Node.DOCUMENT_POSITION_FOLLOWING);
-    tbody.insertBefore(nova, proximoGrupo || null);
+    grupo.closest('.pg-componente-card').querySelector('[data-pg-linhas]').appendChild(nova);
     atualizarSequencia();
     atualizarResumo();
     refreshIcons();
@@ -529,7 +534,7 @@ export function initPagamento(){
   // (locação/frete/montagem do pedido salvo), mantendo a numeração — as contas a receber já existentes continuam as mesmas.
   const dividirParcelasAntigas = (lidas) => {
     const obs = window.__PEDIDO_DADOS_ATUAL?.observacoes || {};
-    const moeda = (t) => Number(String(t || "").replace(/[^d,.-]/g, "").replace(/./g, "").replace(",", ".")) || 0;
+    const moeda = (t) => Number(String(t || "").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".")) || 0;
     let frete = 0, montagem = 0, total = Number(window.__PEDIDO_DADOS_ATUAL?.valor_total) || 0;
     if(obs.valores && typeof obs.valores === "object"){
       frete = Number(obs.valores.frete) || 0; montagem = Number(obs.valores.montagem) || 0;

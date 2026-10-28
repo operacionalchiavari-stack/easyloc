@@ -215,14 +215,7 @@ dialog::backdrop{background:#0b1a2c66;backdrop-filter:blur(1px)}
 .pv-alloc-chip{display:inline-flex;flex:0 0 auto;padding:3px 8px;border-radius:10px;background:var(--tw-surface-soft);color:#475569;font-size:10.5px;font-weight:600;line-height:1.35;white-space:nowrap}
 .pv-alloc-more{flex:0 0 auto;padding:3px 8px;border:1px solid var(--tw-line);border-radius:20px;background:none;color:#1d4ed8;font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap}
 
-.pv-lot-input{height:32px;width:100%;max-width:130px;padding:0 9px;border:1px solid var(--tw-line);border-radius:var(--tw-field-radius);font-size:12px}
-.pv-lot-chips{display:flex;flex-wrap:wrap;gap:5px}
-.pv-lot-chip{display:inline-flex;max-width:100%;padding:3px 8px;border-radius:10px;background:var(--tw-surface-soft);color:#334155;font-size:10.5px;font-weight:600;overflow-wrap:break-word}
 
-.pv-cert-cell{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
-.pv-cert-chip{display:inline-flex;align-items:flex-start;max-width:100%;gap:4px;padding:4px 9px;border:1px solid var(--tw-line);border-radius:10px;background:var(--tw-surface);color:#475569;font-size:10.5px;font-weight:600;line-height:1.35;cursor:pointer;text-decoration:none;overflow-wrap:break-word}
-.pv-cert-chip svg{width:12px;height:12px;flex:0 0 12px}
-.pv-cert-chip.is-ok{border-color:transparent;background:#e9f8f3;color:#037857;cursor:default}
 
 .pv-order-footer-status{display:flex;align-items:center;gap:14px;margin-right:auto;font-size:12.5px;color:var(--tw-muted);font-weight:600}
 .pv-order-footer-total strong{margin-left:6px;color:var(--tw-text);font-size:15px;font-variant-numeric:tabular-nums}
@@ -358,38 +351,21 @@ dialog::backdrop{background:#0b1a2c66;backdrop-filter:blur(1px)}
 .pv-quoting-tag svg { width: 13px; height: 13px; }
 @keyframes pvQuotingPulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 
-/* (2026-10-10) pedido com matéria-prima sem certificado: coluna Certificados pisca suave em vermelho */
-.pv-cert-missing { display: inline-block; padding: 4px 8px; margin: -4px -8px; border-radius: 8px; animation: pvCertPulse 1.8s ease-in-out infinite; }
-@keyframes pvCertPulse { 0%, 100% { background: transparent; } 50% { background: color-mix(in srgb, var(--tw-danger) 14%, transparent); } }
-
-/* (2026-10-10) Anexar certificado: arrastar e soltar + prévia */
-.compras-page .pv-dialog.cert-dialog,.pv-dialog.cert-dialog{width:min(760px,calc(100% - 30px))}
-.cert-dialog .dialog-card{width:100%;box-sizing:border-box}
-.cert-up{display:grid;gap:12px;padding:4px 0}
-.cert-up-for{margin:0;font-size:13px;color:var(--tw-muted)}
-.cert-up-for b{color:var(--tw-text)}
-.cert-drop{display:grid;justify-items:center;gap:6px;padding:34px 20px;border:2px dashed var(--tw-line);border-radius:14px;background:var(--tw-surface-soft,#f8fafc);text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
-.cert-drop:hover,.cert-drop.is-over{border-color:var(--tw-brand-primary,#1A73FF);background:#fff7f7}
-.cert-drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-.cert-drop[hidden],.cert-preview[hidden],.cert-up-for[hidden]{display:none}
-.cert-drop-ico{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:#fff;border:1px solid var(--tw-line);color:var(--tw-brand-primary,#1A73FF)}
-.cert-drop-ico svg{width:24px;height:24px}
-.cert-drop b{font-size:15px;color:var(--tw-text)}
-.cert-drop small{font-size:12px;color:var(--tw-muted)}
-.cert-preview{display:grid;gap:10px}
-.cert-preview header{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--tw-line);border-radius:12px;background:#fff}
-.cert-preview header div{display:grid;gap:2px;min-width:0;flex:1}
-.cert-preview header b{font-size:13px;color:var(--tw-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cert-preview header small{font-size:11px;color:var(--tw-muted)}
-.cert-preview header .btn{display:inline-flex;align-items:center;gap:6px;min-height:34px;font-size:12px}
-.cert-preview header .btn svg{width:14px;height:14px}
-.cert-file-ico{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:#e7f8f2;color:#08795e;flex:0 0 auto}
-.cert-file-ico svg{width:18px;height:18px}
-.cert-frame{height:min(440px,52vh);border:1px solid var(--tw-line);border-radius:12px;overflow:hidden;background:#f1f5f9;display:grid;place-items:center}
-.cert-frame iframe{width:100%;height:100%;border:0;background:#fff}
-.cert-frame img{max-width:100%;max-height:100%;object-fit:contain}
-#certSubmit{display:inline-flex;align-items:center;gap:6px}
-#certSubmit svg{width:15px;height:15px}
-.cert-frame{overflow:auto;place-items:start center;padding:12px;box-sizing:border-box}
-.cert-frame canvas{display:block;box-shadow:0 2px 10px rgba(15,23,42,.15);background:#fff;border-radius:4px}
-.cert-frame-msg{margin:8px 0 0;font-size:12px;color:var(--tw-muted);text-align:center;width:100%}
+/* Valores e pagamento do pedido -> Contas a Pagar (out/2026) */
+.pv-payment{margin:0 0 14px;padding:12px 14px;border:1px solid #e3e7ec;border-radius:var(--tw-radius-sm);background:#fbfcfd}
+.pv-payment-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.pv-payment-head h3{margin:0;font-size:14px}
+.pv-payment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.pv-payment-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600}
+.pv-payment-grid input,.pv-payment-grid select,.pv-payment-rows input{min-height:34px;border:1px solid #d9dee5;border-radius:8px;padding:0 9px;font:inherit;font-weight:400;background:#fff;box-sizing:border-box;width:100%}
+.pv-payment-split{display:flex;gap:6px}.pv-payment-split input{max-width:70px}
+.pv-payment-rows{width:100%;max-width:520px;border-collapse:collapse;font-size:12.5px}
+.pv-payment-rows td{padding:4px 6px 4px 0}
+.pv-payment-sum{margin:8px 0 0;font-size:12.5px;color:#4f4f4f}.pv-payment-sum.is-error{color:#b91c1c;font-weight:600}
+.pv-payment-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+.pv-payment-confirmed .pv-payment-redo{margin-left:auto}
+.pv-payment-list{margin:0 0 10px;padding-left:18px;font-size:12.5px;color:#4f4f4f}
+@media (max-width:700px){.pv-payment-grid{grid-template-columns:1fr}}
+/* Número branco na bolinha vermelha das abas (23/out/2026): base.css manda todo <b> de .el-page herdar a cor do texto,
+   com peso de ID (:is(#main-content,.el-page) b), e vencia a regra acima. */
+html:root:is(#compras-badge,html) .compras-main .pv-tab b{color:#fff}

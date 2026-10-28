@@ -2,11 +2,11 @@
 <html data-theme-legacy lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
-  <script src="../gas-cliente.js?v=20261019-sem-motor" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261023-cofre-free"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
+  <script src="../operacao-sem-motor.js?v=20261027-planejamento"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -212,6 +212,7 @@
     }
   </style>
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
+<link rel="stylesheet" href="../../../styles/abas-global.css?v=20261024">
 </head>
 <body>
 
@@ -276,7 +277,7 @@
   function dataBR(iso){ const p = String(iso || "").split("-"); return p.length === 3 ? p[2] + "/" + p[1] : "-"; }
   function diaSemana(iso){ const p = String(iso || "").split("-"); if(p.length !== 3){ return ""; } return ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][new Date(+p[0], +p[1] - 1, +p[2]).getDay()]; }
   function idDrive(url){ const m = String(url || "").match(/\/d\/([\w-]{10,})/) || String(url || "").match(/[?&]id=([\w-]{10,})/); return m ? m[1] : ""; }
-  function miniDrive(url, w){ const id = idDrive(url); return id ? "https://drive.google.com/thumbnail?id=" + id + "&sz=w" + (w || 500) : ""; }
+  function miniDrive(url, w){ const id = idDrive(url); return window.supabaseArquivoUrl(url); }
 
   function chamar(fn){
     const args = Array.prototype.slice.call(arguments, 1);

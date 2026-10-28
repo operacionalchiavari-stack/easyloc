@@ -74,7 +74,7 @@ const PORTAL_LINKS = {
   forracaoCostura: '/Modulos/Chiavari/Costura/',
   TetodeGastos: '/Modulos/Chiavari/Almoxarifado/?p=financeiro',
   Feedback: '/Modulos/Chiavari/Feedback/',
-  dados: 'https://drive.google.com/drive/folders/1sC1IncUXkUIuXv0l10vaxscWKzs5FtLi',
+  dados: '',
   CentraldeMetas: '/Modulos/Chiavari/CentralMetas/',
   Almoxarifado: '/Modulos/Chiavari/Almoxarifado/',
   cronograma: '/Modulos/Chiavari/Cronograma/',

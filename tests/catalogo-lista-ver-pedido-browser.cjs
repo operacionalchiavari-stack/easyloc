@@ -41,9 +41,11 @@ const RENDERS = [
   window.pedidoProjetoCatalogo = () => structuredClone(projeto);
   window.pedidoMetadadosCatalogo = () => ({ noivos: projeto.noivos, data_evento: projeto.data_evento, data_evento_fim: projeto.data_evento_fim, local_evento: projeto.local_evento });
   window.pedidoSincronizarProjetoCatalogo = async (p) => { window.__sincronizados.push(structuredClone(p)); };
-  window.__pedidoIrPara = () => {}; window.__pedidoSincronizarEtapa = () => {}; window.__salvarPedidoOperacional = async () => {};
+  window.__pedidoFinanceiroResumo = () => ({ resumo: [{ rotulo: 'Valor de locação', valor: 700 }, { rotulo: 'Desconto', valor: 0 }, { rotulo: 'Frete', valor: 180 }, { rotulo: 'Montagem', valor: 120 }], total: 1000, parcelas: [{ componente: 'locacao', numero: '1', tipo: 'Parcela 1', vencimento: '2026-11-01', valor: 350, metodo: 'PIX' }, { componente: 'locacao', numero: '2', tipo: 'Parcela 2', vencimento: '2026-12-01', valor: 350, metodo: 'Boleto' }, { componente: 'frete', numero: '1', tipo: 'Parcela 1', vencimento: '2026-11-10', valor: 180, metodo: 'PIX' }] });
+  window.__pedidoLocalAtual = { nome: 'Vale dos Desejos', endereco: 'Estrada União e Indústria, 15500 - Itaipava, Petrópolis - RJ' };
+  window.__pedidoIrPara = (d) => { if (d === 'pedido') document.getElementById('cat').contentWindow.abrirPedidoComercialPedido(); }; window.__pedidoSincronizarEtapa = () => {}; window.__salvarPedidoOperacional = async () => {};
 </script>
-<iframe id="cat" src="/Modulos/Comercial/Catalogo/catalogo.html?comercial=pedido" style="width:100vw;height:100vh;border:0"></iframe></body></html>`);
+<span id="orcamentoNumero" hidden>2178</span><select id="pedidoStatusComercial" hidden><option value="pre_reserva" selected>Pré-reserva</option></select><input id="preReservaAte" type="hidden" value="2026-11-05"><input id="localInput" type="hidden" value="Vale dos Desejos"><input id="dataEntrega" type="hidden" value="2026-11-10"><input id="horaEntrega" type="hidden" value="08:00"><input id="dataColeta" type="hidden" value="2026-11-14"><iframe id="cat" src="/Modulos/Comercial/Catalogo/catalogo.html?comercial=pedido" style="width:100vw;height:100vh;border:0"></iframe></body></html>`);
   });
   app.use(express.static(process.cwd()));
   const server = app.listen(0, '127.0.0.1'); await new Promise((r) => server.on('listening', r));
@@ -69,31 +71,40 @@ const RENDERS = [
     await page.waitForFunction(() => typeof document.getElementById('cat').contentWindow.abrirProjetoComercialPedido === 'function', null, { timeout: 20000 });
     await frame().evaluate(() => window.abrirProjetoComercialPedido());
     const cat = page.frameLocator('#cat');
-    await cat.locator('.pa-geral-footer').waitFor({ timeout: 15000 });
+    await cat.locator('.cpj-geral-title').waitFor({ timeout: 15000 });
     return { context, page, cat, frame, errors };
   }
 
   // 1) Sem imagens: Ver pedido e PDF, sem botão de renderizar.
   {
     const { context, cat, frame, errors } = await abrir('');
-    const botoes = await cat.locator('.pa-geral-footer button').allTextContents();
-    assert.deepEqual(botoes.map((t) => t.trim()), ['Ver pedido e PDF', 'Salvar pedido'], 'botões da Lista Completa');
-    console.log('ok 1 - Lista Completa: "Ver pedido e PDF" ao lado de "Salvar pedido"');
-    await cat.locator('[data-cpj="ver-pedido-comercial"]').click();
-    const d = cat.locator('dialog.cpj-order-preview[open]'); await d.waitFor({ timeout: 10000 });
+    assert.equal(await cat.locator('.pa-geral-footer, [data-cpj="ver-pedido-comercial"], [data-cpj="enviar"]').count(), 0, 'Lista Completa sem Ver pedido e PDF e sem Salvar pedido');
+    console.log('ok 1 - Lista Completa sem os botões Ver pedido e PDF e Salvar pedido');
+    await frame().evaluate(() => window.abrirPedidoComercialPedido());
+    const d = cat.locator('.cpj-aba-pedido'); await d.waitFor({ timeout: 10000 });
     const r = await d.evaluate((el) => ({ sol: el.querySelector('.cpj-order-requester strong')?.textContent,
       foto: el.querySelector('.cpj-order-requester img')?.getAttribute('src'), info: el.querySelector('.cpj-order-event-info')?.innerText,
-      amb: [...el.querySelectorAll('.cpj-order-environment th')].map((t) => t.textContent), botoes: [...el.querySelectorAll('footer button')].map((b) => b.textContent) }));
+      amb: [...el.querySelectorAll('.cpj-order-environment th')].map((t) => t.textContent), botoes: [...el.querySelectorAll('.cpj-aba-pedido-acoes button')].map((b) => b.textContent) }));
     assert.equal(r.sol, 'Lis Baêtas'); assert.equal(r.foto, 'https://fixture/lis.png');
     assert.ok(r.info.includes('11/11/2026 a 13/11/2026') && r.info.includes('Vale dos Desejos'), r.info);
-    assert.deepEqual(r.amb, ['Lounge']); assert.deepEqual(r.botoes, ['Baixar PDF', 'Fechar'], 'sem imagens: sem botão de renderizar');
-    console.log('ok 2 - abre a prévia do pedido (solicitante com foto, período, ambiente) com Baixar PDF e Fechar');
+    assert.ok(/Entrega\s*10\/11\/2026 às 08:00/i.test(r.info) && /Coleta\s*14\/11\/2026/i.test(r.info), 'entrega e coleta no topo: ' + r.info);
+    assert.ok(!r.info.includes('Lis Baêtas') && !/Clientes/i.test(r.info), 'nome do cliente não se repete no topo');
+    assert.match(await d.locator('.cpj-order-local').innerText(), /Estrada União e Indústria, 15500/, 'endereço completo do local');
+    const linha = await d.evaluate((el) => { const l = el.querySelector('.cpj-order-local').getBoundingClientRect(), cards = [...el.querySelectorAll('.cpj-order-datas > div')].map((x) => x.getBoundingClientRect()); return cards.length === 3 && cards.every((c) => c.left >= l.right - 1 && Math.abs(c.top - cards[0].top) < 2); });
+    assert.equal(linha, true, 'datas em cards na mesma linha do local');
+    assert.equal(await d.locator('.cpj-order-notice').count(), 0, 'no pedido do Comercial não há o card de prévia');
+    assert.equal((await d.locator('.cpj-order-kind').textContent()).trim(), 'PEDIDO Nº 2178', 'número no lugar de Prévia do pedido');
+    assert.equal((await d.locator('.cpj-order-brand .cpj-order-status').textContent()).trim(), 'Pré-reserva até 05/11/2026', 'status ao lado da logo');
+    assert.deepEqual(r.amb, ['Lounge']); assert.deepEqual(r.botoes, ['Imprimir', 'Gerar PDF'], 'sem imagens: sem botão de renderizar');
+    const fin = await d.evaluate((el) => ({ resumo: el.querySelector('.cpj-order-financeiro-resumo')?.innerText || '', pag: el.querySelector('.cpj-order-financeiro-parcelas')?.innerText || '' }));
+    assert.match(fin.resumo, /Valor de locação[\s\S]*700,00[\s\S]*Frete[\s\S]*Montagem[\s\S]*Total do pedido[\s\S]*1\.000,00/, 'resumo do pedido no fim: ' + fin.resumo);
+    assert.ok(!/Desconto/.test(fin.resumo), 'linha zerada não aparece');
+    assert.match(fin.pag, /Locação · R\$\s?700,00[\s\S]*Parcela 1 de 2[\s\S]*01\/11\/2026[\s\S]*PIX[\s\S]*Parcela 2 de 2[\s\S]*Boleto[\s\S]*Frete · R\$\s?180,00/, 'programação de pagamento: ' + fin.pag);
+    if (process.env.FOTO2) await d.locator('.cpj-order-event').screenshot({ path: process.env.FOTO2 });
+    console.log('ok 2 - abre a prévia do pedido (solicitante com foto, período, ambiente) na aba Pedido, com Imprimir e Gerar PDF');
     await d.locator('[data-pedido-pdf]').click();
     await frame().waitForFunction(() => [...document.querySelectorAll('iframe')].some((f) => f.title === 'Impressão do documento' && f.contentDocument?.querySelector('.cpj-order-paper')), null, { timeout: 10000 });
-    console.log('ok 3 - Baixar PDF monta o documento de impressão');
-    await d.locator('[data-pedido-fechar]').click();
-    await frame().waitForFunction(() => !document.querySelector('dialog.cpj-order-preview'));
-    console.log('ok 4 - Fechar volta pra lista');
+    console.log('ok 3 - Gerar PDF monta o documento de impressão');
     assert.deepEqual(errors, [], errors.join('\n'));
     await context.close();
   }
@@ -101,16 +112,16 @@ const RENDERS = [
   // 2) Com prints do 3D: "Renderizar projeto com IA" renderiza os 2 prints com cena, nada mais.
   {
     const { context, page, cat, frame, errors } = await abrir('?renders=1');
-    await cat.locator('[data-cpj="ver-pedido-comercial"]').click();
-    const d = cat.locator('dialog.cpj-order-preview[open]'); await d.waitFor({ timeout: 10000 });
+    await frame().evaluate(() => window.abrirPedidoComercialPedido());
+    const d = cat.locator('.cpj-aba-pedido'); await d.waitFor({ timeout: 10000 });
     const botao = d.locator('[data-pedido-renderizar]');
-    assert.equal((await botao.textContent()).trim(), 'Renderizar projeto com IA (2 imagens)', 'conta só os prints com cena');
+    assert.equal((await botao.textContent()).trim(), 'Renderizar com IA (2 imagens)', 'conta só os prints com cena');
     assert.equal(await d.locator('.cpj-order-renders img').count(), 4);
     await botao.click();
     await frame().waitForFunction(() => window.__ia.length === 2 && !document.querySelector('[data-pedido-renderizar]'), null, { timeout: 30000 });
     const r = await frame().evaluate(() => ({
       politicas: window.__ia.map((c) => c.name + ':' + c.body?.scene?.referencePolicy),
-      imgs: [...document.querySelectorAll('dialog.cpj-order-preview .cpj-order-renders img')].map((i) => i.getAttribute('src')),
+      imgs: [...document.querySelectorAll('.cpj-aba-pedido .cpj-order-renders img')].map((i) => i.getAttribute('src')),
       canvasNoPalco: [...document.querySelectorAll('[aria-hidden="true"]')].some((e) => e.querySelector('canvas') && e.style.left === '-12000px'),
     }));
     assert.deepEqual(r.politicas, ['studio-ai-engine:furniture_studio_catalog', 'studio-ai-engine:furniture_studio_catalog'], 'mesma renderização do 3D Livre');
@@ -125,8 +136,29 @@ const RENDERS = [
     assert.deepEqual(rs.slice(0, 2).map((x) => x.cena.url), ['https://fixture/cenas/c1.json', 'https://fixture/cenas/c2.json'], 'a cena continua guardada (editor de cena)');
     console.log('ok 5 - Renderizar projeto: 2 prints viram renderização de IA (estúdio), IA e print sem cena intactos, gravado no pedido');
     const removidos = await frame().evaluate(() => JSON.parse(sessionStorage.getItem('mockdb') || '{}').removed || []);
-    assert.ok(removidos.flat().some((p) => String(p).includes('print1.jpg')) && removidos.flat().some((p) => String(p).includes('print2.jpg')), 'prints antigos apagados do Storage: ' + JSON.stringify(removidos));
+    assert.deepEqual(removidos, [], 'arquivos originais do projeto preservados ao editar o pedido comercial');
     console.log('ok 6 - os arquivos dos prints antigos saem do Storage');
+    // Layout horizontal: foto de cada ambiente ao lado dos itens, sem o bloco de renderizações no fim; PDF em A4 deitado.
+    assert.equal(await d.locator('[data-pedido-layout="final"]').getAttribute('aria-checked'), 'true', 'começa em Fotos no final');
+    await d.locator('[data-pedido-layout="horizontal"]').click();
+    await d.locator('.cpj-order-paper.is-horizontal').waitFor();
+    assert.equal(await d.locator('.cpj-order-amb-fotos img').count(), 4, 'as 4 imagens ao lado dos itens');
+    assert.equal(await d.locator('.cpj-order-renders').count(), 0, 'sem o bloco de renderizações no fim');
+    const lado = await d.evaluate((el) => { const t = el.querySelector('.cpj-order-amb-corpo .cpj-order-table').getBoundingClientRect(), f = el.querySelector('.cpj-order-amb-fotos').getBoundingClientRect(); return f.left > t.right - 2 && Math.abs(f.top - t.top) < 40; });
+    assert.equal(lado, true, 'foto à direita da tabela');
+    assert.equal(await d.locator('.cpj-order-paper.is-horizontal .cpj-order-financeiro-parcelas').count(), 1, 'programação de pagamento também no horizontal');
+    if (process.env.FOTO) await d.screenshot({ path: process.env.FOTO });
+    // Todas as renderizações com o mesmo tamanho (padrão estético): horizontal e "fotos no final".
+    const tamanhos = (sel) => d.evaluate((el, sel) => [...el.querySelectorAll(sel)].map((i) => { const r = i.getBoundingClientRect(); return Math.round(r.width) + 'x' + Math.round(r.height); }), sel);
+    const horiz = await tamanhos('.cpj-order-amb-fotos img');
+    assert.equal(new Set(horiz).size, 1, 'horizontal: todas do mesmo tamanho ' + horiz);
+    await d.locator('[data-pedido-pdf]').click();
+    await frame().waitForFunction(() => [...document.querySelectorAll('iframe')].some((f) => f.title === 'Impressão do documento' && f.contentDocument?.querySelector('.cpj-order-paper.is-horizontal') && /A4 landscape/.test(f.contentDocument.querySelector('style')?.textContent || '')), null, { timeout: 10000 });
+    await d.locator('[data-pedido-layout="final"]').click();
+    await d.locator('.cpj-order-paper:not(.is-horizontal) .cpj-order-renders').waitFor();
+    const fim = await tamanhos('.cpj-order-render-group img');
+    assert.equal(fim.length, 4); assert.equal(new Set(fim).size, 1, 'fotos no final: todas do mesmo tamanho ' + fim);
+    console.log('ok 7 - layout horizontal: fotos ao lado, PDF deitado; volta para Fotos no final');
     assert.deepEqual(errors, [], errors.join('\n'));
     await context.close();
   }

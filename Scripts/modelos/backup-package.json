@@ -1,0 +1,16 @@
+{
+  "name": "easyloc-backups",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "backup": "node Scripts/backup-operacional.cjs",
+    "monitor": "node Scripts/monitor-operacional.cjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.93.3",
+    "@electric-sql/pglite": "0.5.11",
+    "@electric-sql/pglite-pgvector": "0.0.12",
+    "dotenv": "16.6.1",
+    "pg": "8.23.1"
+  }
+}

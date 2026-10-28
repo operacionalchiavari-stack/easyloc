@@ -24,8 +24,6 @@
   let detalheAtual = null;
   let detalheVersao = 0;
   let retornoLista = null;
-  let simulacao = null;
-  let filtrosAntesSimulacao = null;
   const bloqueiosPorData = new Map();
   async function carregarBloqueios(data, atualizar = false){
     if(!atualizar && bloqueiosPorData.has(data)) return;
@@ -35,132 +33,9 @@
     if (generation === state.generation) bloqueiosPorData.set(data, new Map((rows || []).map(r => [r.item_id,Number(r.quantidade)])));
   }
 
-  const sb = () => simulacao?.client || window.supabaseClient || window.supabase;
+  const sb = () => window.supabaseClient || window.supabase;
   const empresaId = () => window.__CONTEXT?.empresa_id || window.empresa_id || null;
   const $ = (selector, root = document) => root.querySelector(selector);
-
-  function criarSemanaSimulada(referencia) {
-    const segunda = new Date(`${referencia}T00:00:00Z`);
-    segunda.setUTCDate(segunda.getUTCDate() + ((8 - segunda.getUTCDay()) % 7));
-    const datas = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(segunda);
-      date.setUTCDate(date.getUTCDate() + i);
-      return date.toISOString().slice(0, 10);
-    });
-    const empresa = empresaId();
-    const item = (id, produto, tipo, total, manutencao = 0) => ({
-      id: `sim-${id}`, codigo: `SIM-${id}`, produto, tipo, estoque_total: total,
-      estoque_manutencao: manutencao, empresa_id: empresa, categoria: "Semana simulada"
-    });
-    const itens = [
-      item("01-estante", "Estante modular", "Kit", 0),
-      item("02-buffet", "Buffet com duas bases", "Kit", 0),
-      item("03-mesa", "Mesa de apoio", "Kit", 0),
-      item("04-base", "Base compartilhada", "Componente", 8),
-      item("05-topo", "Parte superior da estante", "Componente", 6),
-      item("06-prateleira", "Prateleira da estante", "Componente", 10),
-      item("07-buffet", "Tampo do buffet", "Componente", 8),
-      item("08-mesa", "Tampo da mesa", "Componente", 6, 1)
-    ];
-    const partes = [
-      ["01-estante", "04-base", 1], ["01-estante", "05-topo", 1], ["01-estante", "06-prateleira", 2],
-      ["02-buffet", "04-base", 2], ["02-buffet", "07-buffet", 1],
-      ["03-mesa", "04-base", 1], ["03-mesa", "08-mesa", 1]
-    ].map(([kit, componente, quantidade]) => ({ kit_id: `sim-${kit}`, item_id: `sim-${componente}`, quantidade, empresa_id: empresa }));
-    const reserva = (numero, produto, qtd, de, ate, cliente, evento, status = "aprovado") => ({
-      id: `sim-linha-${numero}`, empresa_id: empresa, item_id: `sim-${produto}`, quantidade_solicitada: qtd,
-      separacoes_pedidos: {
-        id: `sim-pedido-${numero}`, numero_pedido: `SIM-${numero}`, cliente_nome: cliente,
-        tipo_evento: evento, local_nome: "Espaço de demonstração", status_comercial: status,
-        data_entrega: datas[de], data_coleta: datas[ate], data_evento: datas[de]
-      }
-    });
-    const reservas = [
-      reserva("101", "01-estante", 3, 0, 1, "Mostra de decoração", "Exposição"),
-      reserva("102", "03-mesa", 2, 0, 2, "Lançamento Aurora", "Corporativo"),
-      reserva("103", "02-buffet", 1, 1, 3, "Jantar Oliveira", "Jantar"),
-      reserva("104", "04-base", 1, 2, 3, "Cenografia Lima", "Locação avulsa"),
-      reserva("105", "01-estante", 2, 3, 5, "Feira de design", "Feira"),
-      reserva("106", "02-buffet", 2, 4, 5, "Casamento Jardim", "Casamento"),
-      reserva("107", "03-mesa", 2, 4, 6, "Recepção Horizonte", "Recepção"),
-      reserva("108", "01-estante", 2, 6, 6, "Brunch de domingo", "Social"),
-      reserva("109", "02-buffet", 20, 4, 5, "Orçamento de exemplo", "Não ocupa estoque", "orcamento"),
-      reserva("110", "01-estante", 20, 4, 5, "Pedido cancelado", "Não ocupa estoque", "cancelado")
-    ];
-    const tabelas = { itens, kit_itens: partes, separacoes_itens: reservas, itens_patrimonios: [] };
-    // Fonte de demonstração apenas para leitura. Nenhum método de gravação é exposto.
-    const client = {
-      from(tabela) {
-        if (!Object.hasOwn(tabelas, tabela)) throw new Error("Tabela não disponível na simulação.");
-        const filtros = [], ordens = [];
-        let faixa = null;
-        const query = {
-          select() { return query; },
-          eq(coluna, valor) { filtros.push(row => row[coluna] === valor); return query; },
-          in(coluna, valores) { filtros.push(row => valores.includes(row[coluna])); return query; },
-          order(coluna) { ordens.push(coluna); return query; },
-          range(inicio, fim) { faixa = [inicio, fim]; return query; },
-          then(resolve, reject) {
-            let rows = tabelas[tabela].filter(row => filtros.every(filtro => filtro(row)));
-            if (ordens.length) rows.sort((a, b) => {
-              for (const coluna of ordens) {
-                const comparacao = String(a[coluna] || "").localeCompare(String(b[coluna] || ""));
-                if (comparacao) return comparacao;
-              }
-              return 0;
-            });
-            if (faixa) rows = rows.slice(faixa[0], faixa[1] + 1);
-            return Promise.resolve({ data: rows, error: null }).then(resolve, reject);
-          }
-        };
-        return query;
-      },
-      async rpc(nome) {
-        if (nome !== "operacao_indisponiveis") throw new Error("Operação não disponível na simulação.");
-        return { data: [], error: null };
-      }
-    };
-    return { client, datas, periodo: { inicio: datas[0], fim: datas[6] } };
-  }
-
-  async function iniciarSimulacao() {
-    if (simulacao) return;
-    clearTimeout(filterTimer);
-    filtrosAntesSimulacao = Object.fromEntries(["disponData", "disponBusca", "disponCategoria", "disponStatus"].map(id => [id, $("#" + id).value]));
-    simulacao = criarSemanaSimulada(selectedDate());
-    $("#disponData").value = simulacao.datas[4];
-    $("#disponBusca").value = "";
-    $("#disponCategoria").innerHTML = '<option value="">Todas</option>';
-    $("#disponStatus").value = "";
-    $("#disponSimulacaoAviso").hidden = false;
-    $("#disponSimulacaoRoteiro").hidden = false;
-    $("#btnSimularSemana").hidden = true;
-    await resetRowsAndRender();
-  }
-
-  async function sairSimulacao() {
-    if (!simulacao) return;
-    if (detalheAtual) voltarParaLista();
-    clearTimeout(filterTimer);
-    simulacao = null;
-    $("#disponSimulacaoAviso").hidden = true;
-    $("#disponSimulacaoRoteiro").hidden = true;
-    $("#btnSimularSemana").hidden = false;
-    $("#disponCategoria").innerHTML = '<option value="">Todas</option>';
-    const anteriores = filtrosAntesSimulacao;
-    for (const id of ["disponData", "disponBusca", "disponStatus"]) $("#" + id).value = anteriores[id];
-    // Mantém a categoria durante o primeiro cálculo, antes de recarregar as opções reais.
-    if (anteriores.disponCategoria) $("#disponCategoria").add(new Option(anteriores.disponCategoria, anteriores.disponCategoria, true, true));
-    filtrosAntesSimulacao = null;
-    await resetRowsAndRender();
-  }
-
-  function renderizarRoteiroSimulacao() {
-    if (!simulacao) return;
-    const nomes = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-    $("#disponSimulacaoDias").innerHTML = simulacao.datas.map((data, index) =>
-      `<button type="button" data-sim-dia="${data}" aria-pressed="${data === selectedDate()}">${nomes[index]}<span>${formatDate(data)}</span></button>`).join("");
-  }
 
   function normalize(value) {
     return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -229,7 +104,6 @@
     $("#disponMais").hidden = true;
     $("#disponErro").hidden = true;
     $("#disponErro").textContent = "";
-    renderizarRoteiroSimulacao();
     await carregarComposicoes(generation);
     await carregarBloqueios(periodo.inicio, true);
     if (generation !== state.generation) return;
@@ -240,11 +114,14 @@
   async function loadMore(generation = state.generation) {
     if (state.loading || !state.hasMore || generation !== state.generation) return;
     state.loading = true;
+    let falhou = false;
     try {
       do {
         let query = sb().from("itens").select("*").order("id");
         if (empresaId()) query = query.eq("empresa_id", empresaId());
-        const { data, error } = await query.range(state.offset, state.offset + state.perPage - 1);
+        // Com busca/categoria/status ativos, busca lotes maiores (menos idas ao banco até achar os itens filtrados).
+        const lote = filtroAtivo() ? 200 : state.perPage;
+        const { data, error } = await query.range(state.offset, state.offset + lote - 1);
         if (error) throw error;
         if (generation !== state.generation) return;
         const items = data || [];
@@ -252,19 +129,26 @@
         if (generation !== state.generation) return;
         state.itens.push(...items);
         state.offset += items.length;
-        state.hasMore = items.length === state.perPage;
+        state.hasMore = items.length === lote;
         buildRows();
       } while (state.hasMore && filteredRows().length < state.visibleCount);
       fillCategories();
-      render(true);
+      render(false);
     } catch (error) {
+      falhou = true;
       if (generation === state.generation) {
         window.alerta?.(error.message, "Disponibilidade", "erro");
         const sentinel = $("#disponMais");
         if (sentinel) { sentinel.hidden = false; sentinel.textContent = "Falha ao carregar. Clique para tentar novamente."; }
       }
     } finally {
-      if (generation === state.generation) state.loading = false;
+      if (generation === state.generation) {
+        state.loading = false;
+        // O filtro pode mudar enquanto o lote ainda está sendo carregado.
+        if (!falhou && state.hasMore && filtroAtivo() && filteredRows().length < state.visibleCount) {
+          queueMicrotask(() => loadMore(generation));
+        }
+      }
     }
   }
 
@@ -554,6 +438,22 @@
     select.value = selected;
   }
 
+  function filtroAtivo() {
+    return Boolean(normalize($("#disponBusca")?.value) || $("#disponCategoria")?.value || $("#disponStatus")?.value);
+  }
+
+  // Busca, categoria e status filtram o que já foi carregado (sem recarregar do banco); só a data recarrega.
+  function aplicarFiltros() {
+    state.visibleCount = state.perPage;
+    render(false);
+    if (filteredRows().length < state.visibleCount && state.hasMore) loadMore();
+  }
+
+  function scheduleFiltro() {
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(aplicarFiltros, 200);
+  }
+
   function filteredRows() {
     const term = normalize($("#disponBusca")?.value);
     const category = $("#disponCategoria")?.value || "";
@@ -681,7 +581,7 @@
 
   }
 
-  async function abrirDetalheItem(itemId, periodo = simulacao?.periodo || selectedPeriod()) {
+  async function abrirDetalheItem(itemId, periodo = selectedPeriod()) {
     const item = catalogo.get(itemId);
     if (!item) return;
     if (!detalheAtual) {
@@ -764,15 +664,6 @@
   }
 
   function bindEvents() {
-    $("#btnSimularSemana")?.addEventListener("click", iniciarSimulacao);
-    $("#btnSairSimulacao")?.addEventListener("click", sairSimulacao);
-    $("#disponSimulacaoDias")?.addEventListener("click", event => {
-      const button = event.target.closest("[data-sim-dia]");
-      if (!button || !simulacao) return;
-      $("#disponData").value = button.dataset.simDia;
-      clearTimeout(filterTimer);
-      resetRowsAndRender();
-    });
     $("#disponMais")?.addEventListener("click", () => loadMore());
     ["disponDetalheInicio", "disponDetalheFim"].forEach(id => {
       $("#" + id)?.addEventListener("change", () => {
@@ -801,9 +692,10 @@
       $("#disponVerPeriodo").hidden = true;
       $("#disponReservasPeriodo").textContent = "Pedidos que utilizam as peças no período";
     });
-    ["disponData", "disponBusca", "disponCategoria", "disponStatus"].forEach((id) => {
-      document.getElementById(id)?.addEventListener("input", scheduleReset);
-      document.getElementById(id)?.addEventListener("change", scheduleReset);
+    $("#disponData")?.addEventListener("change", scheduleReset);
+    ["disponBusca", "disponCategoria", "disponStatus"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("input", scheduleFiltro);
+      document.getElementById(id)?.addEventListener("change", scheduleFiltro);
     });
 
     $("#disponTabela")?.addEventListener("click", (event) => {
@@ -870,8 +762,6 @@
     detalheVersao++;
     detalheAtual = null;
     retornoLista = null;
-    simulacao = null;
-    filtrosAntesSimulacao = null;
     clearTimeout(filterTimer);
     scrollEvents?.abort();
     scrollEvents = null;

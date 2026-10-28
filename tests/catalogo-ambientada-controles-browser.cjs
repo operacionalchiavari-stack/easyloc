@@ -47,7 +47,7 @@ async function abrir(interno,vw=1440,vh=900){
   },{itens:ITENS,interno});
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
   await page.locator('.catalog-gateway').waitFor();
-  await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('#catalogGrid .catalog-home-grid').waitFor();
+  await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);await page.locator('#catalogGrid .catalog-home-grid').waitFor();
   await page.locator('[data-home-category="sofas"]').click();await page.locator('[data-grid-item="1"]').click();
   await page.locator('#produto-1').waitFor();
   await page.waitForFunction(()=>window.__ticks.length>0);
@@ -109,7 +109,7 @@ const tick=(page)=>page.evaluate(()=>window.__ticks.at(-1)());
   await tick(page);await page.waitForTimeout(1300);
   assert.equal(await indice(page,1),'1','...e continua pausada');
   // O estado vale pros OUTROS itens da página (o botão do Sofá Dois já nasce pausado).
-  assert.equal(await page.locator('#produto-2 .catalog-event-pause').getAttribute('aria-pressed'),'true','Pausar vale pra todos os itens');
+  assert.equal(await page.locator('.catalog-product-section').count(),1,'Somente o item selecionado fica na pagina');
   // Retomar.
   await pausar.click();
   assert.equal(await pausar.getAttribute('aria-pressed'),'false');

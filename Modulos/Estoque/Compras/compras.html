@@ -1,23 +1,23 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Compras</title><script src="../../../js/core/themePrepaint.js"></script><link rel="stylesheet" href="../../../styles/global.css"><link rel="stylesheet" href="compras.css"><link rel="stylesheet" href="compras-tables.css"><link rel="stylesheet" href="compras-acervo.css?v=20261020-divergencias6"><script src="https://unpkg.com/lucide@latest"></script></head><body class="compras-page el-page">
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Compras</title><script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais"><link rel="stylesheet" href="compras.css?v=20261023-sem-lotes-certificados"><link rel="stylesheet" href="compras-tables.css?v=20261023-sem-rolagem"><link rel="stylesheet" href="compras-acervo.css?v=20261023-abas-maiores"><script src="https://unpkg.com/lucide@latest"></script><link rel="stylesheet" href="compras-registro.css?v=20261023-pagamento-chegada"><link rel="stylesheet" href="compras-predial.css?v=20261023-contratacao"></head><body class="compras-page el-page">
 <main class="compras-main" style="padding-top:32px!important">
 <header class="page-header compras-header"><div class="pv-tabs-tools">
           <label class="pv-search-box"><i data-lucide="search"></i><input id="comprasSearch" type="search" placeholder="Buscar material, pedido, fornecedor ou número..."></label>
 
-        </div><h1>Compras</h1><div class="compras-header-actions"><button id="newManualNeedBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i> Necessidade avulsa</button>
+        </div><h1>Compras</h1><div class="compras-header-actions"><button id="registrarCompraBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i> Registrar compra</button>
         </div></header><div class="pv-tabs-row">
       <nav class="pv-tabs" aria-label="Seções de Compras">
         <button class="pv-tab active" data-pv-tab="needs-op">Necessidades operacionais <b id="needsOpBadge" hidden>0</b></button>
-        <button class="pv-tab" data-pv-tab="needs-avulsa">Necessidades avulsas <b id="needsAvulsaBadge" hidden>0</b></button>
+        <button class="pv-tab" data-pv-tab="needs-avulsa">Solicitações de compra <b id="needsAvulsaBadge" hidden>0</b></button>
         <button class="pv-tab" data-pv-tab="needs-servicos">Serviços <b id="needsServicosBadge" hidden>0</b></button>
         <button class="pv-tab" data-pv-tab="quotations">Cotações <b id="quotationsBadge" hidden>0</b></button>
         <button class="pv-tab" data-pv-tab="orders">Pedidos <b id="ordersBadge" hidden>0</b></button>
         <button class="pv-tab" data-pv-tab="rnc">Divergências no recebimento <b id="purchaseRncBadge" hidden>0</b></button>
       </nav>
           <select id="ordersStatusFilter" class="tw-field hidden" aria-label="Situação dos pedidos">
+            <option value="todos" selected>Todos os pedidos</option>
             <option value="abertos">Pedidos em aberto</option>
             <option value="recebidos">Recebidos</option>
             <option value="cancelados">Cancelados</option>
-            <option value="todos">Todos</option>
           </select>
 
     </div>
@@ -53,21 +53,14 @@
           <tbody id="needsAvulsaBody"></tbody>
         </table>
       </div>
-      <p id="needsAvulsaEmpty" class="pv-empty hidden">Nenhuma necessidade avulsa em aberto.</p>
+      <p id="needsAvulsaEmpty" class="pv-empty hidden">Nenhuma solicitação de compra em aberto.</p>
     </section>
 
     <!-- ===================== SERVICOS (manutencao terceirizada) ===================== -->
     <section class="pv-panel hidden" data-pv-panel="needs-servicos">
-      <div class="tw-table-scroll">
-        <table class="pv-table pv-needs-table" id="needsServicosTable">
-          <thead><tr>
-            <th class="pv-request-qty" title="Quantidade solicitada">Qtd.<br>solicitada</th>
-            <th>Serviço</th><th>Origem</th><th>Solicitante</th><th>Necessário em</th><th>Status</th><th>Orçamentos da composição</th>
-          </tr></thead>
-          <tbody id="needsServicosBody"></tbody>
-        </table>
-      </div>
-      <p id="needsServicosEmpty" class="pv-empty hidden">Nenhum serviço de manutenção aguardando contratação.</p>
+      <h2 style="font-size:18px;margin:0 0 12px">Solicitações de manutenção da empresa</h2>
+      <div class="tw-table-scroll"><table class="pv-table"><thead><tr><th>Número / serviço</th><th>Local</th><th>Solicitante</th><th>Prioridade</th><th>Necessário até</th><th>Situação</th><th>Responsável</th><th></th></tr></thead><tbody id="predialComprasBody"></tbody><tbody id="needsServicosBody"></tbody></table></div>
+      <p id="predialComprasRetorno" class="pv-empty" role="status">Carregando solicitações…</p>
     </section>
 
     <!-- ===================== COTAÇÕES ===================== -->
@@ -85,31 +78,14 @@
     <section class="pv-panel hidden" data-pv-panel="orders">
       <div class="tw-table-scroll">
         <table class="pv-table pv-orders-table">
-          <thead><tr><th>Pedido</th><th>Fornecedor</th><th>Itens</th><th>Valor</th><th>Prazo de entrega</th><th>Status</th><th>Certificados</th><th>Pedidos / OS</th></tr></thead>
+          <colgroup><col style="width:11%"><col style="width:13%"><col style="width:23%"><col style="width:8%"><col style="width:10%"><col style="width:10%"><col style="width:15%"><col style="width:10%"></colgroup>
+          <thead><tr><th>Pedido</th><th>Fornecedor</th><th>Itens</th><th>Quantidade</th><th>Valor</th><th>Prazo de entrega</th><th>Status</th><th>Pedidos / OS</th></tr></thead>
           <tbody id="ordersBody"></tbody>
         </table>
       </div>
       <p id="ordersEmpty" class="pv-empty hidden">Nenhum pedido de compra emitido ainda.</p>
     </section>
   </main>
-
-  <!-- ===================== MODAL: Necessidade avulsa (nao ligada a OP) ===================== -->
-  <dialog id="manualNeedDialog" class="pv-dialog">
-    <form method="dialog" class="dialog-card">
-      <header><div><span class="eyebrow">SEM VÍNCULO COM OP</span><h2>Necessidade avulsa</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
-      <div>
-        <div class="form-grid">
-          <label>Origem<select id="manualNeedOrigem"><option value="solicitacao">Solicitação interna</option><option value="operacional">Operação</option><option value="manutencao">Serviço / manutenção</option></select></label><label>Pedido / OS (opcional)<input id="manualNeedPedido" type="text"></label><label class="span-2">Material / descrição<input id="manualNeedDescricao" type="text" required></label>
-          <label>Quantidade<input id="manualNeedQuantidade" type="number" min="0.01" step="0.01" required></label>
-          <label>Unidade<input id="manualNeedUnidade" type="text" value="un" required></label>
-          <label>Necessário até<input id="manualNeedData" type="date"></label>
-          <label class="span-2">Link do produto (opcional)<input id="manualNeedLink" type="url" placeholder="https://..."></label>
-          <label class="span-2">Observação<textarea id="manualNeedObservacao" rows="2"></textarea></label>
-        </div>
-      </div>
-      <footer><button value="cancel" formnovalidate class="btn btn-secondary">Cancelar</button><button id="manualNeedSubmit" value="default" class="btn btn-primary" type="button">Registrar necessidade</button></footer>
-    </form>
-  </dialog>
 
   <!-- ===================== MODAL: Cotar / consolidar ===================== -->
   <dialog id="quoteBuilderDialog" class="pv-dialog pv-dialog-lg">
@@ -235,13 +211,12 @@
         <button id="orderDirectDeliveryBtn" class="btn btn-primary hidden" type="button" title="O material foi entregue direto no fornecedor da terceirização"><i data-lucide="truck"></i> Confirmar entrega no terceirizado</button>
         <button id="orderCancelBtn" class="btn btn-secondary" type="button">Cancelar pedido</button>
         <button value="cancel" formnovalidate class="btn btn-secondary">Fechar</button>
-        <button id="orderDetailSaveBtn" class="btn btn-primary" type="button" disabled><i data-lucide="save"></i> Salvar alterações</button>
         <button id="orderDetailPdfBtn" class="btn btn-secondary" type="button"><i data-lucide="file-down"></i> Baixar PDF do pedido</button>
       </footer>
     </form>
   </dialog>
 
-  <!-- ===================== MODAL: Anexar XML / certificado (faturamento) ===================== -->
+  <!-- ===================== MODAL: Anexar XML (faturamento) ===================== -->
   <dialog id="invoiceDialog" class="pv-dialog">
     <form method="dialog" class="dialog-card">
       <header><div><span class="eyebrow">FATURAMENTO</span><h2>Anexar XML da NF-e</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
@@ -255,26 +230,6 @@
     </form>
   </dialog>
 
-  <!-- ===================== MODAL: Certificado por lote ===================== -->
-  <dialog id="certDialog" class="pv-dialog cert-dialog">
-    <form method="dialog" class="dialog-card">
-      <header><div><span class="eyebrow">CERTIFICADO</span><h2>Anexar certificado</h2></div><button value="cancel" formnovalidate class="icon-btn"><i data-lucide="x"></i></button></header>
-      <div class="cert-up">
-        <p class="cert-up-for" id="certFor" hidden></p>
-        <label class="cert-drop" id="certDrop">
-          <input id="certFile" type="file" accept=".pdf,.jpg,.jpeg,.png">
-          <span class="cert-drop-ico"><i data-lucide="file-up"></i></span>
-          <b>Arraste o certificado aqui</b>
-          <small>ou clique para escolher · PDF, JPG ou PNG</small>
-        </label>
-        <div class="cert-preview" id="certPreview" hidden>
-          <header><span class="cert-file-ico"><i data-lucide="file-check-2"></i></span><div><b id="certName"></b><small id="certSize"></small></div><button type="button" class="btn btn-secondary" id="certChange"><i data-lucide="refresh-cw"></i> Trocar arquivo</button></header>
-          <div class="cert-frame" id="certFrame"></div>
-        </div>
-      </div>
-      <footer><button value="cancel" formnovalidate class="btn btn-secondary">Cancelar</button><button id="certSubmit" value="default" class="btn btn-primary" type="button" disabled><i data-lucide="paperclip"></i> Anexar certificado</button></footer>
-    </form>
-  </dialog>
-
+  <script type="module" src="compras-predial.mjs?v=20261023-contratacao"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js"></script><script src="../../../js/core/permissions.js"></script><script src="../../../js/core/companyTheme.js"></script><script src="../../../js/core/moduleTheme.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script><script src="compras-api.js"></script><script src="purchase-document.js"></script><script src="nfe-xml-parser.js"></script><script src="report-print.js"></script><script src="compras.js"></script><script src="compras-rnc.js"></script></body></html>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="../../../js/core/permissions.js"></script><script src="../../../js/core/companyTheme.js"></script><script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script><script src="compras-api.js?v=20261023-sem-lotes-certificados"></script><script src="purchase-document.js?v=20261023-sem-lotes-certificados"></script><script src="nfe-xml-parser.js?v=20261023-sem-lotes"></script><script src="report-print.js"></script><script src="compras.js?v=20261023-servicos-unificados"></script><script src="compras-rnc.js?v=20261023-sem-lote"></script><script type="module" src="compras-registro.mjs?v=20261023-pagamento-chegada"></script></body></html>

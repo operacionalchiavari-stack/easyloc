@@ -73,9 +73,9 @@ async function abrir(tipo,{staff=false}={}){
   // Guarda o conteúdo das cenas enviadas pro Storage e simula a IA.
   await page.addInitScript(()=>{
     const orig=window.supabaseClient.storage.from;window.__cenas=[];
-    window.supabaseClient.storage.from=(b)=>{const x=orig(b);const up=x.upload;x.upload=async(p,blob,o)=>{if(o&&o.contentType==='application/json') window.__cenas.push({path:p,cena:JSON.parse(await blob.text())});return up(p,blob,o);};return x;};
-    window.__ia=[];
-    window.supabaseClient.functions={invoke:async(name,opt)=>{window.__ia.push({name,body:opt.body});await new Promise(r=>setTimeout(r,300));return {data:{providerStatus:'ok',images:[{base64:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='}]},error:null};}};
+    window.supabaseClient.storage.from=(b)=>{const x=orig(b);const up=x.upload;const ass=x.uploadToSignedUrl;x.uploadToSignedUrl=async(p,t,blob,o)=>{if(o&&o.contentType==='application/json') window.__cenas.push({path:p,cena:JSON.parse(await blob.text())});return ass(p,t,blob,o);};x.upload=async(p,blob,o)=>{if(o&&o.contentType==='application/json') window.__cenas.push({path:p,cena:JSON.parse(await blob.text())});return up(p,blob,o);};return x;};
+    window.__ia=[];const arquivosInvoke=window.supabaseClient.functions.invoke;
+    window.supabaseClient.functions={invoke:async(name,opt)=>{if(name==='catalogo-arquivos')return arquivosInvoke(name,opt);window.__ia.push({name,body:opt.body});await new Promise(r=>setTimeout(r,300));return {data:{providerStatus:'ok',images:[{base64:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='}]},error:null};}};
   });
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
   await page.locator('[data-gateway-tile="projetos"]').click();
@@ -116,6 +116,7 @@ async function abrir(tipo,{staff=false}={}){
   await clicarNoMovel(page,'1');
   await page.locator('.cpj-cena-sel-item strong',{hasText:'Sofá Um'}).waitFor();
   assert.equal(await page.locator('.cpj-cena-item.is-atual').textContent().then(t=>t.includes('Sofá Um')),true);
+  await page.locator('[data-cena-busca]').click();
   await page.locator('[data-cena-busca]').fill('dois');
   assert.equal(await page.locator('.cpj-cena-item').count(),1,'Busca filtra o catálogo');
   await page.locator('.cpj-cena-item',{hasText:'Sofá Dois'}).click();

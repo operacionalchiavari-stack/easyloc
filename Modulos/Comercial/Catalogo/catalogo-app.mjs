@@ -7,7 +7,7 @@
 // Navegação de app: abas embaixo, telas empilhadas com o "voltar" do celular (history), folhas que sobem de baixo.
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-furar-fila";
+import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261023-helena-pecas";
 
 const supabase = window.supabaseClient;
 // Bucket "projetos": o decorador (sem login) passa pela função catalogo-arquivos — ver catalogo-arquivos.mjs.
@@ -302,22 +302,22 @@ function dataDoEstoque(){
 function estoqueDaData(data){
   if(!estoqueCache.has(data)){
     const sessao = S.sessao || {};
-    estoqueCache.set(data, supabase.functions.invoke("catalogo-assistente", {
-      body: { action: "disponibilidade", todos: true, data, empresa_id: sessao.empresa_id, catalog_token: sessao.token || undefined },
-    }).then(({ data: r, error }) => { if(error || !r?.mapa) throw error || new Error("sem mapa"); return r.mapa; })
+    // Parâmetros > Catálogo decide o que volta (estoque e/ou disponível, ou nada) — inclusive para o visitante.
+    estoqueCache.set(data, supabase.rpc("catalogo_estoque", { p_data: data, p_token: sessao.token || null, p_empresa_id: sessao.empresa_id || null })
+      .then(({ data: r, error }) => { if(error || !r) throw error || new Error("sem mapa"); return r; })
       .catch(() => { setTimeout(() => estoqueCache.delete(data), 15000); return null; }));
   }
   return estoqueCache.get(data);
 }
 function estoqueHtml(d, data){
   if(!d) return "";
-  const [total, livre] = d;
+  const [total, livre] = d; // null = escondido pelos Parâmetros do catálogo
   const quando = data === hojeSP() ? "hoje" : "em " + data.slice(8, 10) + "/" + data.slice(5, 7);
-  return `<span class="is-estoque">Estoque <b>${total}</b></span><span class="${livre ? "is-livre" : "is-esgotado"}">${livre ? `Disponível ${quando} <b>${livre}</b>` : `Esgotado ${quando}`}</span>`;
+  return (total != null ? `<span class="is-estoque">Estoque <b>${total}</b></span>` : "") +
+    (livre != null ? `<span class="${livre ? "is-livre" : "is-esgotado"}">${livre ? `Disponível ${quando} <b>${livre}</b>` : `Esgotado ${quando}`}</span>` : "");
 }
 let estoquePintando = null;
 async function pintarEstoque(raiz = document){
-  if(visitante()) return;
   const data = dataDoEstoque();
   const alvos = [...raiz.querySelectorAll("[data-stock-item]")].filter((el) => el.dataset.stockData !== data + ":" + el.dataset.stockItem);
   if(!alvos.length) return;
@@ -342,7 +342,7 @@ function cardProduto(i){
   const qtd = qtdNoAmbiente(i.id);
   const cores = i.variantGroup?.length > 1 ? `<span class="cores">${i.variantGroup.slice(0, 5).map((v) => `<i style="background-image:url('${esc(otimizar(v.photo, 40))}')"></i>`).join("")}</span>` : "";
   return `<button type="button" class="produto" data-item="${esc(i.id)}"><span class="produto-foto"><img src="${esc(otimizar(i.photo, 360))}" alt="" loading="lazy">${qtd ? `<span class="produto-qtd">${qtd}</span>` : ""}</span>
-    <strong>${esc(i.name)}</strong>${i.dims ? `<small>${esc(i.dims)}</small>` : ""}${!visitante() ? `<b>${i.rentalPrice === null ? "Sob consulta" : dinheiro.format(i.rentalPrice)}</b>` : ""}${!visitante() ? `<span class="produto-estoque" data-stock-item="${esc(i.id)}" hidden></span>` : ""}${cores}</button>`;
+    <strong>${esc(i.name)}</strong>${i.dims ? `<small>${esc(i.dims)}</small>` : ""}${!visitante() || i.rentalPrice !== null ? `<b>${i.rentalPrice === null ? "Sob consulta" : dinheiro.format(i.rentalPrice)}</b>` : ""}<span class="produto-estoque" data-stock-item="${esc(i.id)}" hidden></span>${cores}</button>`;
 }
 function aoClicarComum(e){
   const aba = e.target.closest("[data-ir-aba]"); if(aba){ irParaAba(aba.dataset.irAba); return; }
@@ -393,15 +393,13 @@ function telaCategoria(cat){
 }
 
 // Disponibilidade da peça na data do evento do projeto aberto (mesma regra da Helena e da tela Disponibilidade de Itens).
-const dispCache = new Map();
 async function disponibilidade(itemId){
-  const data = S.projeto?.data_evento;
-  if(!data || visitante()) return null;
-  const chave = `${data}:${itemId}`;
-  if(!dispCache.has(chave)) dispCache.set(chave, supabase.functions.invoke("catalogo-assistente", {
-    body: { action: "disponibilidade", empresa_id: S.sessao.empresa_id, catalog_token: S.sessao.token || undefined, data, item_ids: [itemId] },
-  }).then(({ data: r }) => r?.itens?.[itemId] || null).catch(() => null));
-  return dispCache.get(chave);
+  const data = String(S.projeto?.data_evento || "").slice(0, 10);
+  if(!data) return null;
+  // Mesmo mapa dos selos (catalogo_estoque), já filtrado pelos Parâmetros do catálogo: [estoque|null, livre|null].
+  const mapa = await estoqueDaData(data);
+  const d = mapa?.[itemId];
+  return d ? { total: d[0], livre: d[1] } : null;
 }
 const dataCurta = (d) => new Date(String(d).slice(0, 10) + "T00:00:00").toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
 
@@ -467,7 +465,7 @@ function telaItem(itemInicial){
       const linha = el.querySelector("[data-disp]"), botao = el.querySelector("[data-adicionar]");
       if(!linha || atual !== item) return;
       livres = null;
-      if(!d || !d.total){ linha.textContent = S.projeto?.data_evento ? "A equipe confirma a disponibilidade no pedido" : ""; linha.className = "item-disp"; return; }
+      if(!d || d.livre == null){ linha.textContent = S.projeto?.data_evento ? "A equipe confirma a disponibilidade no pedido" : ""; linha.className = "item-disp"; return; }
       livres = d.livre;
       if(d.livre <= 0){
         linha.textContent = `Esgotado em ${dataCurta(S.projeto.data_evento)}`; linha.className = "item-disp esgotado";
@@ -776,15 +774,26 @@ window.catalogAssistenteProjeto = {
     return { ambiente: r.ambiente, antes: r.antes, desfazer: () => { definirQuantidade(item_id, r.antes, { nomeAmbiente: r.ambiente, silencioso: true }); atualizarTelaAtual(); } };
   },
   async usarProjeto(id){ await usarProjeto(id); atualizarTelaAtual(); },
+  // Ambiente vazio criado pela Helena, sem peça nenhuma.
+  async criarAmbiente(nome){
+    if(!S.projeto) throw new Error("Abra ou crie um projeto primeiro.");
+    const n = String(nome || "").trim().slice(0, 60);
+    if(!n) return null;
+    let amb = ambientes().find((a) => normalizar(a.nome) === normalizar(n));
+    const novo = !amb;
+    if(!amb){ amb = { id: novoId("a"), nome: n, itens: [], renders: [], notas: "" }; S.projeto.dados.ambientes.push(amb); marcarSujo(); }
+    S.ambAtivo = amb.id; gravarAtivo(); atualizarTelaAtual();
+    return { ambiente: amb.nome, novo };
+  },
   enviarPedido(){ setTimeout(() => { irParaAba("projeto"); enviarPedido().then(atualizarTelaAtual); }, 320); },
   // Versão final do pedido (a mesma prévia do computador), aberta e fechada pela Helena.
   async verPedido(abrir){
     if(!abrir){ S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
     if(!S.projeto) return false;
-    for(const href of ["catalogo-projetos.css?v=20261016-vitrine", "projeto-apresentacao.css?v=20261016-vitrine"]){
+    for(const href of ["catalogo-projetos.css?v=20261027-pedido-lateral", "projeto-apresentacao.css?v=20261016-vitrine"]){
       if(!document.querySelector(`link[data-previa="${href}"]`)){ const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
     }
-    const m = await import("./projeto-apresentacao.mjs?v=20261016-vitrine");
+    const m = await import("./projeto-apresentacao.mjs?v=20261027-pedido-lateral");
     await new Promise((r) => setTimeout(r, 360));
     document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());
     S.previaHelena = m.abrirVisualizacaoPedido({ titulo: S.projeto.noivos || "Pedido", model: m.dadosApresentacao(S.projeto, acharItem),
@@ -915,6 +924,9 @@ function telaLogin(){
       if(error && /failed to fetch|network/i.test(String(error.message))){ erro.textContent = "Sem conexão. Verifique a internet."; btn.disabled = false; return; }
       const { data: auth, error: authErro } = await supabase.auth.signInWithPassword({ email, password: senha });
       if(!authErro && auth?.user){
+        let liberado = true;
+        try { liberado = await window.EasyLoc2FA?.garantir({ supabase }) ?? true; } catch (e) { console.warn("[app] 2FA indisponível", e); }
+        if(!liberado){ await supabase.auth.signOut(); erro.textContent = "Entrada cancelada."; btn.disabled = false; return; }
         const s = await resolverEquipe();
         if(s){ sessionStorage.setItem("catalogo_acesso_interno_direto", "1"); el.remove(); resolve(s); return; }
         await supabase.auth.signOut();
@@ -956,10 +968,10 @@ async function iniciar(){
     S.itens = agruparVariantes(linhas.filter((r) => ["item", "kit"].includes(String(r?.tipo || "").toLowerCase())).map(mapRow));
     if(S.empresa?.logo_url){ const l = $("appAberturaLogo"); if(l){ l.src = S.empresa.logo_url; l.hidden = false; } }
     await carregarCapas();
+    vigiarEstoque(); // estoque/disponível conforme Parâmetros > Catálogo (o visitante também, se liberado)
     if(!visitante()){
       const ativo = lerAtivo();
       if(ativo?.id) await usarProjeto(ativo.id, ativo.amb).catch(() => { try{ localStorage.removeItem(chaveAtivo()); }catch{} });
-      vigiarEstoque();
       initCatalogAssistente(Object.assign(ctxHelena, {
         supabase, getSession: () => S.sessao, modoPedido: false, notify, temProjetos: true,
         // Fechar a Helena dispara um "voltar" (history); espera ele passar antes de empilhar a tela do item.

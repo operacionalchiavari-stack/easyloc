@@ -406,15 +406,15 @@
     const sel = (n, r, lista, v) => '<label>' + r + '<select name="' + n + '"><option value="">-</option>' + lista.map((o) => "<option" + (o === v ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select></label>";
     modal("Editar dados · " + p.nome,
       '<div class="fin-form">' +
-      '<p class="fin-sub">Pessoais</p>' + t("cpf", "CPF", p.cpf, 'inputmode="numeric" maxlength="14"') + t("rg", "RG", d.rg) + dtc("data_nascimento", "Nascimento", d.data_nascimento) +
+      '<p class="fin-sub">Pessoais</p>' + t("cpf", "CPF", p.cpf, 'data-mascara="cpf"') + t("rg", "RG", d.rg) + dtc("data_nascimento", "Nascimento", d.data_nascimento) +
       sel("estado_civil", "Estado civil", ["Solteiro(a)", "Casado(a)", "União estável", "Divorciado(a)", "Viúvo(a)"], f.estado_civil) +
       sel("escolaridade", "Escolaridade", ["Fundamental incompleto", "Fundamental", "Médio incompleto", "Médio", "Técnico", "Superior incompleto", "Superior", "Pós-graduação"], f.escolaridade) +
       '<label>Dependentes<input type="number" name="dependentes" min="0" max="20" value="' + esc(f.dependentes ?? 0) + '"></label>' +
-      t("telefone", "Telefone", p.telefone) + t("whatsapp", "WhatsApp", d.whatsapp) + t("endereco", "Endereço", d.endereco, "inteiro") +
+      t("telefone", "Telefone", p.telefone, 'data-mascara="telefone"') + t("whatsapp", "WhatsApp", d.whatsapp, 'data-mascara="telefone"') + t("endereco", "Endereço", d.endereco, "inteiro") +
       '<p class="fin-sub">Contrato</p>' + t("cargo", "Cargo / função", p.cargo) + t("matricula", "Matrícula", f.matricula) +
       '<label>Tipo de contrato<select name="tipo_contrato">' + opc(CONTRATOS, contrato(p)) + "</select></label>" +
-      dtc("data_admissao", "Admissão", p.data_admissao) + dtc("experiencia_fim", "Fim da experiência", f.experiencia_fim) + t("jornada", "Jornada", f.jornada, 'placeholder="Ex.: 08:00 às 17:00, seg a sex"') + t("pis", "PIS", f.pis) + t("ctps", "CTPS", f.ctps) +
-      '<p class="fin-sub">Contato de emergência</p>' + t("contato_emergencia", "Nome", f.contato_emergencia) + t("contato_emergencia_telefone", "Telefone", f.contato_emergencia_telefone) +
+      dtc("data_admissao", "Admissão", p.data_admissao) + dtc("experiencia_fim", "Fim da experiência", f.experiencia_fim) + t("jornada", "Jornada", f.jornada, 'placeholder="Ex.: 08:00 às 17:00, seg a sex"') + t("pis", "PIS", f.pis, 'data-mascara="pis"') + t("ctps", "CTPS", f.ctps) +
+      '<p class="fin-sub">Contato de emergência</p>' + t("contato_emergencia", "Nome", f.contato_emergencia) + t("contato_emergencia_telefone", "Telefone", f.contato_emergencia_telefone, 'data-mascara="telefone"') +
       '<p class="fin-sub">Pagamento</p>' + t("banco", "Banco", f.banco) + t("agencia", "Agência", f.agencia) + t("conta", "Conta", f.conta) + t("pix", "Chave PIX", f.pix) +
       '<p class="fin-sub">Uniforme</p>' + sel("tamanho_camisa", "Camisa", ["PP", "P", "M", "G", "GG", "XG", "XGG"], f.tamanho_camisa) + t("tamanho_calca", "Calça", f.tamanho_calca) + t("tamanho_calcado", "Calçado", f.tamanho_calcado) +
       '<p class="fin-sub">Transporte</p>' + sel("transporte_tipo", "Tipo", ["Não usa", "Ônibus", "Riocard", "Bilhete único", "Vale mobilidade", "Carro próprio", "Moto", "Outro"], f.transporte_tipo) +

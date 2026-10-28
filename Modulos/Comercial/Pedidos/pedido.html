@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Pedido</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="pedido.css?v=20261021-pre-reserva3">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="pedido.css?v=20261027-frete-branco">
 </head>
 <body>
 <div class="pedido-screen orcamento-page el-page em-entrada" data-module-root>
@@ -58,7 +58,7 @@
 
           <div class="meta-item">
             <span>Contato</span>
-            <input class="meta-input el-input" type="tel" id="telefoneInput" placeholder="Telefone / WhatsApp" autocomplete="off">
+            <input class="meta-input el-input" type="tel" id="telefoneInput" data-mascara="telefone" placeholder="Telefone / WhatsApp" autocomplete="off">
           </div>
 
           <div class="meta-item">
@@ -262,20 +262,7 @@
           </div>
 
           <div class="pagamento-table-wrap">
-            <table class="cronograma-table">
-              <thead>
-                <tr>
-                  <th>Parcela</th>
-                  <th>Vencimento</th>
-                  <th>Valor</th>
-                  <th>Status</th>
-                  <th>Forma</th>
-                  <th>Cobrança</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="cronogramaParcelas"></tbody>
-            </table>
+            <div id="cronogramaParcelas" class="pg-componentes"></div>
           </div>
         </section>
 
@@ -545,13 +532,13 @@
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/paymentPix.js?v=20261021-divisao"></script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20261021-pre-reserva"></script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261027-salvar-completo"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

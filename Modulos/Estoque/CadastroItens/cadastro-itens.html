@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Cadastro de Itens</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="cadastro-itens.css?v=20261018-cinza">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="cadastro-itens.css?v=20261026-acentos">
 </head>
 <body>
 <div class="container el-page">
@@ -18,6 +18,11 @@
   <div class="header-list">
     <h2>Itens Cadastrados</h2>
 
+<div class="header-actions">
+  <!-- Resumo (Total / Itens / Componentes / Kits) num ícone pequeno: abre ao clicar (pedido do usuário). -->
+  <div class="itens-resumo">
+    <button type="button" class="itens-resumo-btn" id="itensResumoBtn" aria-expanded="false" aria-controls="itensResumoPop" title="Resumo do cadastro"><i data-lucide="bar-chart-3"></i></button>
+    <div class="itens-resumo-pop" id="itensResumoPop" hidden>
     <div class="el-stat-row" id="itensStats">
       <article class="el-stat-card gray">
         <span aria-hidden="true"><i data-lucide="boxes"></i></span>
@@ -36,8 +41,8 @@
         <div><small>Kits</small><strong id="itensStatKits">0</strong><em>Montados</em></div>
       </article>
     </div>
-
-<div class="header-actions">
+    </div>
+  </div>
 
 
   <button type="button" class="add-btn btn primary" onclick="itens_abrirNovoItem()">+ Adicionar Item</button>
@@ -877,12 +882,12 @@ alt="Ambientada 03"
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../../js/core/listPager.js"></script>
-<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/listPager.js?v=20261026-rolagem"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/qrCode.js"></script>
-<script type="module" src="cadastro-itens.mjs?v=20261020-kit-sem-duplicar"></script>
+<script type="module" src="cadastro-itens.mjs?v=20261026-acentos"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

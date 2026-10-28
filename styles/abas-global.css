@@ -1,0 +1,84 @@
+/* Abas globais: mesmo padrão do Painel Logístico.
+   Classes antigas continuam funcionando; novos módulos podem usar .el-tabs e [role=tab]. */
+:root{
+  --el-tab-color:#485363;
+  --el-tab-active-color:#166534;
+  --el-tab-active-line:#4b9370;
+  --el-tab-gap:20px;
+}
+
+/* A especificidade mantém o padrão acima dos temas e dos estilos locais legados. */
+html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal,html) :is(
+  [role=tablist],.tabs,.el-tabs,.tab-list,.abas,.abas-central,.fin-abas,.pr-abas,
+  .almox-tabs,.pv-tabs,.pv-mode-tabs,.pv-supplier-tabs,.rh-tabs,.rh-inner-tabs,
+  .ideia-tabs,.pers-abas,.app-abas,.free-abas,.pag-bonus-abas,.item-detail-tabs,
+  .kit-tabs,.comunicacoes-tabs,.item-observacao-tabs,.studio-library-tabs
+):not([hidden],.hidden,.oculto,.oculta,[aria-hidden=true],.pl-abas-dias,.mobile-tabs-dias){
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:wrap;
+  gap:var(--el-tab-gap)!important;
+  padding:0!important;
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal,html) :is(
+  [role=tab],.tab-btn,.aba-central-btn,.pag-bonus-aba,.item-tab,.kit-tab,.rh-tab,
+  .pers-aba,.pv-tab,.pv-mode-tab,.pv-supplier-tab,.cpj-amb-tab,.catalog-biblioteca-folder-tab,
+  :is([role=tablist],.tabs,.el-tabs,.tab-list,.abas,.abas-central,.fin-abas,.pr-abas,
+    .almox-tabs,.pv-tabs,.pv-mode-tabs,.pv-supplier-tabs,.rh-tabs,.rh-inner-tabs,
+    .ideia-tabs,.pers-abas,.app-abas,.free-abas,.pag-bonus-abas,.item-detail-tabs,
+    .kit-tabs,.comunicacoes-tabs,.item-observacao-tabs,.studio-library-tabs)>:is(button,a,.tab,.aba)
+):not([hidden],.hidden,.oculto,.oculta,[aria-hidden=true]){
+  position:relative;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center;
+  gap:8px;
+  min-height:43px!important;
+  padding:12px 3px!important;
+  border:0!important;
+  border-bottom:3px solid transparent!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--el-tab-color)!important;
+  font:500 13px/1.4 Inter,system-ui,sans-serif!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase;
+  text-decoration:none!important;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:color .15s,border-bottom-color .15s;
+}
+
+/* Estado ativo sem depender do nome usado pelo controlador de cada módulo. */
+html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal,html) :is(
+  [role=tab],.tab-btn,.aba-central-btn,.pag-bonus-aba,.item-tab,.kit-tab,.rh-tab,
+  .pers-aba,.pv-tab,.pv-mode-tab,.pv-supplier-tab,.cpj-amb-tab,.catalog-biblioteca-folder-tab,
+  :is([role=tablist],.tabs,.el-tabs,.tab-list,.abas,.abas-central,.fin-abas,.pr-abas,
+    .almox-tabs,.pv-tabs,.pv-mode-tabs,.pv-supplier-tabs,.rh-tabs,.rh-inner-tabs,
+    .ideia-tabs,.pers-abas,.app-abas,.free-abas,.pag-bonus-abas,.item-detail-tabs,
+    .kit-tabs,.comunicacoes-tabs,.item-observacao-tabs,.studio-library-tabs)>:is(button,a,.tab,.aba)
+):not([hidden],.hidden,.oculto,.oculta,[aria-hidden=true]):is(
+  .active,.ativo,.ativa,.is-active,.selected,.selecionado,.selecionada,
+  [aria-selected=true],[aria-pressed=true],[aria-current=page],[aria-current=true],[data-active=true]
+){
+  color:var(--el-tab-active-color)!important;
+  border-bottom-color:var(--el-tab-active-line)!important;
+  font-weight:700!important;
+}
+
+html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal,html) :is(
+  [role=tab],.tab-btn,.pv-tab,.pers-aba,.item-tab,.kit-tab,
+  :is(.tabs,.el-tabs,.tab-list,.abas,.fin-abas,.almox-tabs,.pr-abas,.ideia-tabs)>:is(button,a,.tab,.aba)
+):focus-visible{
+  outline:2px solid var(--el-tab-active-line)!important;
+  outline-offset:3px;
+}
+@media(max-width:700px){
+  :root{--el-tab-gap:12px}
+  html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal,html) :is([role=tab],.tab-btn,.pv-tab,.pers-aba){font-size:12px!important}
+}

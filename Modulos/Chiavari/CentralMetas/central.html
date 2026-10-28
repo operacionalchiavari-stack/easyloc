@@ -2,10 +2,10 @@
 <html data-theme-legacy>
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
-  <script src="../gas-cliente.js?v=20261016-seguranca" data-projeto="central"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="central"></script>
 <meta charset="UTF-8">
 <title>Central de Metas</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -4059,7 +4059,7 @@ body.central-bloqueada .tela-acesso-central{
   font-variant-numeric:tabular-nums;
 }
 </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-selos">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261024-abas-globais">
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 </head>
 
@@ -4828,7 +4828,7 @@ function renderEquipeApp(){
             const indice = registro.indice;
 
             const foto = pessoa.fotoUrl ? '<img src="' + escaparHTMLCentral(pessoa.fotoUrl) + '" alt="">' : pessoa.fotoId
-              ? '<img src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(pessoa.fotoId) + '&sz=w200" alt="" ' +
+              ? '<img src="' + window.supabaseArquivoUrl(pessoa.fotoId) + '" alt="" ' +
                 'onerror="this.parentNode.textContent=\'' + escaparHTMLCentral(iniciaisEquipe(pessoa.nome)) + '\'">'
               : escaparHTMLCentral(iniciaisEquipe(pessoa.nome));
 
@@ -5082,11 +5082,11 @@ function fotoDrivePremiacao(fotoId, rotulo){
     );
   }
 
-  const id = encodeURIComponent(fotoId);
+  const id = window.supabaseArquivoUrl(fotoId);
 
   return (
-    '<a class="prem-item-foto" href="https://drive.google.com/file/d/' + id + '/view" target="_blank" rel="noopener" title="Abrir foto">' +
-      '<img src="https://drive.google.com/thumbnail?id=' + id + '&sz=w400" alt="" loading="lazy" ' +
+    '<a class="prem-item-foto" href="' + id + '" target="_blank" rel="noopener" title="Abrir foto">' +
+      '<img src="' + id + '" alt="" loading="lazy" ' +
       'onerror="this.parentNode.classList.add(\'sem-imagem\'); this.parentNode.textContent=\'Abrir foto\';">' +
       (rotulo ? '<span class="prem-foto-rotulo">' + rotulo + "</span>" : "") +
     "</a>"

@@ -11,7 +11,7 @@ await page.addInitScript(()=>{
  const original=Element.prototype.scrollIntoView;
  Element.prototype.scrollIntoView=function(opts){ window.__scrollCalls.push({id:this.id, opts}); return original.call(this, opts); };
  sessionStorage.setItem('catalogo_token','test');
- window.supabaseClient={rpc:async name=>({data:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:[
+ window.supabaseClient={rpc:async name=>({data:name==='personalizacao_lista'?[]:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:[
   // Estofados/Sofás: 3 itens — abrir o 1º deve mostrar os outros 2 como relacionados.
   {id:'1',tipo:'Item',produto:'Sofá Alex',categoria:'Estofados',subcategoria:'Sofás',largura:2.2,altura:.7,profundidade:1,foto_url:'https://fixture/1.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
   {id:'2',tipo:'Item',produto:'Sofá Becca',categoria:'Estofados',subcategoria:'Sofás',foto_url:'https://fixture/2.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
@@ -27,7 +27,7 @@ await page.addInitScript(()=>{
 });
 await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
 await page.locator('[data-gateway-tile="catalogo"]').waitFor();
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('.catalog-home-grid').waitFor();
 await page.locator('[data-home-category="estofados"]').click();
 await page.locator('[data-grid-item]').first().waitFor();
@@ -76,7 +76,8 @@ assert.equal(nameOpacityAfter,'1','Hover no item específico revela o nome');
 // da foto" — o nome fica ABAIXO da foto (bounding box não sobrepõe), não
 // mais num degradê por cima da imagem.
 const namePos=await page.locator('#produto-1 .catalog-related-item').first().locator('.catalog-related-name').boundingBox();
-assert.ok(namePos.y>=photoSize.y+photoSize.height-1,'Nome fica abaixo da foto, nunca sobreposto a ela');
+const photoAfterHover=await page.locator('#produto-1 .catalog-related-photo').first().boundingBox();
+assert.ok(namePos.y>=photoAfterHover.y+photoAfterHover.height-1,'Nome fica abaixo da foto, nunca sobreposto a ela');
 
 // Tirar o mouse (sem ter clicado em nada ainda — nenhum botão focado)
 // retoma o movimento de verdade.
@@ -94,15 +95,17 @@ assert.equal(animAfterLeaving,'running','Tirar o mouse retoma o movimento');
 await page.locator('#produto-1 .catalog-related-items').hover();
 await page.waitForTimeout(100);
 await page.locator('#produto-1 .catalog-related-item[data-related-item="2"]').first().click();
-await page.waitForFunction(()=>window.__scrollCalls.some(c=>c.id==='produto-2'));
+await page.locator('#produto-2').waitFor();
+assert.equal(await page.locator('.catalog-product-section').count(),1,'Relacionado abre a pagina de um item');
+const abrirOutro=async id=>{await page.locator('#catalogGlobalBack').click();await page.locator('[data-grid-item="'+id+'"]').click();await page.locator('#produto-'+id).waitFor();};
 
 // ===== Sem relacionados (subcategoria com só 1 item) =====
-await page.locator('#produto-4').scrollIntoViewIfNeeded();
+await abrirOutro('4');
 await page.waitForTimeout(200);
 assert.equal(await page.locator('#produto-4 .catalog-related-items').count(),0,'Poltrona Solo é a única da subcategoria — sem faixa de relacionados');
 
 // ===== Sem subcategoria cadastrada =====
-await page.locator('#produto-5').scrollIntoViewIfNeeded();
+await abrirOutro('5');
 await page.waitForTimeout(200);
 assert.equal(await page.locator('#produto-5 .catalog-related-items').count(),0,'Item sem subcategoria não tem como ter relacionados');
 
@@ -111,6 +114,7 @@ assert.equal(await page.locator('#produto-5 .catalog-related-items').count(),0,'
 // acima (relatedIds só tem 2 e 3), reforçando aqui por clareza.
 assert.equal(relatedIds.includes('6'), false, 'Mesma subcategoria em OUTRA categoria não conta como relacionado');
 
+await abrirOutro('1');
 for(const width of [390,768]){
   await page.setViewportSize({width,height:844});await page.waitForTimeout(150);
   await page.locator('#produto-1').scrollIntoViewIfNeeded();

@@ -21,7 +21,7 @@ const express=require('express');const fs=require('fs');const assert=require('no
     }};
    },{items,internal});
    await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
-   await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('[data-home-category]').first().click();
+   await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);await page.locator('[data-home-category]').first().click();
    const card=page.locator('[data-grid-item="price-a"]');
    assert.match(await card.locator('.catalog-rental-price').textContent(),/1\.250,50/);
    assert.match(await page.locator('[data-grid-item="no-price"] .catalog-rental-price').textContent(),/Sob consulta/);

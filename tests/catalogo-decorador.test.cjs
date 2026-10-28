@@ -5,7 +5,7 @@ const vm=require('node:vm');
 const catalog=fs.readFileSync('Modulos/Comercial/Catalogo/catalogo.mjs','utf8');
 const photos=fs.readFileSync('Modulos/Estoque/CadastroItens/itens.foto.mjs','utf8');
 test('galeria do decorador tem prioridade, com fallback Chiavari e isolamento',()=>{
- const ctx={state:{catalogSession:{cliente_id:'kelly'}},slugify:x=>x,formatDims:()=>'',FOTO_PLACEHOLDER:'placeholder'};
+ const ctx={state:{catalogSession:{cliente_id:'kelly'}},slugify:x=>x,formatDims:()=>'',formatDimsSiglas:()=>'',FOTO_PLACEHOLDER:'placeholder'};
  vm.createContext(ctx);vm.runInContext(catalog.slice(catalog.indexOf('function mapRow('),catalog.indexOf('// Agrupamento de variantes')),ctx);
  const row={itens_fotos:[{tipo:'galeria',url:'padrao',cliente_id:null},{tipo:'galeria',url:'kelly',cliente_id:'kelly'},{tipo:'galeria',url:'outro',cliente_id:'outro'}]};
  assert.equal(ctx.mapRow(row).events[0].img,'kelly');assert.equal(ctx.mapRow(row).events.length,1);

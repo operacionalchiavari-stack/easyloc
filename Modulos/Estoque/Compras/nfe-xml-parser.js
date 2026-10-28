@@ -36,8 +36,6 @@
         quantidade_xml: num(prod, "qCom"),
         valor_unitario: num(prod, "vUnCom"),
         valor_total: num(prod, "vProd"),
-        lote: text(prod, "nLote"),
-        validade: text(prod, "dVal") || null,
       };
     });
 
@@ -58,6 +56,10 @@
       valor_desconto: num(total, "vDesc"),
       valor_impostos: num(total, "vTotTrib"),
       valor_total: num(total, "vNF"),
+      // parcelas da nota (cobr/dup): usadas como sugestão de vencimentos no recebimento do Almoxarifado
+      duplicatas: [...doc.querySelectorAll("cobr dup")].map((dup) => ({
+        numero: text(dup, "nDup"), vencimento: text(dup, "dVenc") || null, valor: num(dup, "vDup"),
+      })).filter((d) => d.vencimento && d.valor > 0),
       items,
     };
   }

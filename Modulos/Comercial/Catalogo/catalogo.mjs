@@ -1,9 +1,10 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
+import { iniciarDetalhesEstoque } from "./pedido-estoque-tooltip.mjs?v=20261022-fixar";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
-import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261015-assistente";
-import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261016-furar-fila";
-import { initCatalogBiblioteca, openCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261006-pastas-livres";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos } from "./catalogo-projetos.mjs?v=20261016-vitrine";
+import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261026-supabase";
+import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261023-helena-pecas";
+import { initCatalogBiblioteca, openCatalogBiblioteca, backCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261021-subpastas";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem } from "./catalogo-projetos.mjs?v=20261027-pedido-lateral";
 
 const supabase = window.supabaseClient;
 const modoPedido = new URLSearchParams(location.search).get('comercial') === 'pedido' && window.parent !== window;
@@ -392,7 +393,35 @@ function findItemById(id){
     const variante = item.variantGroup?.find((candidate) => String(candidate.id) === String(id));
     if(variante) return variante;
   }
-  return null;
+  return itensExtras.get(String(id)) || null;
+}
+
+// Itens que não aparecem no catálogo mas entram no pedido comercial (out/2026): COMPONENTES. Ficam guardados aqui pra
+// lista/prévia/PDF mostrarem nome, foto, medidas e valores como os dos móveis.
+const itensExtras = new Map();
+const COLUNAS_EXTRAS = "id,tipo,produto,produto_base,descricao_total,foto_url,largura,altura,profundidade,valor_locacao,valor_reposicao,referencia,codigo,categoria,subcategoria,material,cor,ativo";
+function registrarItensExtras(rows){
+  (rows || []).forEach((row) => {
+    try { itensExtras.set(String(row.id), mapRow({ ...row, itens_fotos: [], itens_modelos_3d: [] })); }
+    catch(error){ console.warn("Componente não pôde ser lido:", error); }
+  });
+}
+async function buscarComponentes(texto = ""){
+  const empresa = state.catalogSession?.empresa_id;
+  let q = supabase.from("itens").select(COLUNAS_EXTRAS).eq("empresa_id", empresa).eq("tipo", "Componente").eq("ativo", true).order("produto").limit(40);
+  const t = String(texto || "").replace(/[,%()]/g, " ").trim();
+  if(t) q = q.or(["descricao_total","produto","codigo","referencia"].map((c) => c + ".ilike.%" + t + "%").join(","));
+  const { data, error } = await q;
+  if(error) throw error;
+  registrarItensExtras(data);
+  return (data || []).map((row) => itensExtras.get(String(row.id))).filter(Boolean);
+}
+// Garante que os componentes já salvos no pedido sejam conhecidos antes de desenhar a lista.
+async function garantirItensExtras(ids){
+  const faltam = [...new Set((ids || []).map(String))].filter((id) => !findItemById(id));
+  if(!faltam.length) return;
+  const { data } = await supabase.from("itens").select(COLUNAS_EXTRAS).eq("empresa_id", state.catalogSession?.empresa_id).in("id", faltam);
+  registrarItensExtras(data);
 }
 
 // Visitante (pedido do usuário): entrou pela tela de login em "Explorar o catálogo", sem e-mail/senha. Vê o catálogo padrão
@@ -415,13 +444,15 @@ async function carregarItens(){
   }
   const externo = Boolean(state.catalogSession?.token);
   const { data, error } = await catalogRpc(
-    externo ? "catalogo_carregar" : "catalogo_carregar_interno",
+    externo ? "catalogo_carregar" : modoPedido ? "pedido_catalogo_carregar" : "catalogo_carregar_interno",
     externo ? { p_token: state.catalogSession.token } : { p_empresa_id: state.catalogSession?.empresa_id || await getEmpresaAtualId() }
   );
   if(error) throw error;
   if(!Array.isArray(data?.itens)) throw new Error("O servidor não retornou os itens do catálogo. Recarregue para tentar novamente.");
   state.company = data.empresa || null;
   state.decorator = externo ? data.decorador || null : null;
+  // Botão de ocultar valores: só pro decorador e só se ele pode ver preço (Parâmetros > Catálogo).
+  state.valoresToggle = externo && data.exibir?.preco !== false;
   return agruparVariantes(data.itens.filter(catalogItemAllowed).map(mapRow));
 }
 
@@ -577,6 +608,8 @@ function itemsForView(view){
 // (que já são, por natureza, uma grade, sem uma "visualização imersiva"
 // equivalente).
 function updateViewToggleVisibility(){
+  const categorias = $("catalogPedidoCategorias");
+  if(categorias) categorias.hidden = !modoPedido || Boolean(state.overlay) || state.activeView === HOME_VIEW || state.activeView === GATEWAY_VIEW;
   $("catalogViewSwitcher")?.classList.toggle("hidden", state.activeView === HOME_VIEW || state.activeView === FILTER_VIEW || state.activeView === GATEWAY_VIEW || state.overlay);
 }
 
@@ -963,6 +996,35 @@ function relatedItemsMarkup(item){
 }
 
 const rentalMoney = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+// Decorador: botão (olho) que esconde/mostra os valores na tela — reunião com o cliente final, onde às vezes não quer
+// mostrar preço. Só visual: classe catalogo-sem-valores no <html> (CSS no fim de catalogo.css; o PDF do pedido também
+// respeita). Lembrado por decorador neste navegador.
+function iniciarToggleValores(){
+  const botao = $("catalogValoresToggle");
+  if(!botao) return;
+  if(!state.valoresToggle){ botao.hidden = true; document.documentElement.classList.remove("catalogo-sem-valores"); return; }
+  const chave = "catalogo_ocultar_valores:" + (state.catalogSession?.cliente_id || "");
+  let ocultos = false;
+  try { ocultos = localStorage.getItem(chave) === "1"; } catch {}
+  const aplicar = () => {
+    document.documentElement.classList.toggle("catalogo-sem-valores", ocultos);
+    botao.setAttribute("aria-pressed", String(ocultos));
+    botao.classList.toggle("is-ocultos", ocultos);
+    const rotulo = ocultos ? "Mostrar valores" : "Ocultar valores";
+    botao.title = rotulo; botao.setAttribute("aria-label", rotulo);
+  };
+  botao.hidden = false;
+  aplicar();
+  if(botao.dataset.ligado) return;
+  botao.dataset.ligado = "1";
+  botao.addEventListener("click", () => {
+    ocultos = !ocultos;
+    try { localStorage.setItem(chave, ocultos ? "1" : "0"); } catch {}
+    aplicar();
+    notify({ title: ocultos ? "Valores ocultos" : "Valores visíveis", message: ocultos ? "Os preços não aparecem na tela nem no PDF do pedido." : "Os preços voltaram a aparecer.", status: "done" });
+  });
+}
+
 function rentalPriceMarkup(item, detail = false){
   const value = item.rentalPrice === null ? "Sob consulta" : rentalMoney.format(item.rentalPrice);
   return `<span class="catalog-rental-price${detail ? " catalog-rental-price--detail" : ""}" aria-label="Locação: ${escapeAttr(value)}">${detail ? '<span class="catalog-rental-price-label">Locação</span>' : ""}<span class="catalog-rental-price-value">${escapeHtml(value)}</span></span>`;
@@ -970,10 +1032,25 @@ function rentalPriceMarkup(item, detail = false){
 
 // "Experimente outro tecido" (personalização com IA): botão pequeno escrito, ao lado do nome do item (pedido do usuário),
 // no lugar do antigo cartão "SOB MEDIDA". Se não couber ao lado do nome, desce pra linha de baixo.
+// Item personalizável COM personalização cadastrada (cartela de tecidos/tintas, Estoque > Personalizações): o botão vira
+// "Personalizar" e abre a cartela com os códigos (pedido do usuário, out/2026). Só vale para item marcado como
+// personalizável (pedido do usuário); sem cartela, continua o envio da foto do tecido.
+// Personalização sem nenhum material "escolhido pelo cliente" (só materiais fixos) não tem o que escolher: fica o botão antigo.
+const temCartela = (item) => Boolean(item?.personalizable) && !ehVisitante()
+  && personalizacoesDoItem(item.id).some((p) => (p.tiposCartela || []).length > 0);
+function bespokeTexto(item){ return temCartela(item) ? "Personalizar" : "Experimente outro tecido"; }
 function bespokeIconMarkup(item){
-  return `<button type="button" class="product-bespoke-icon${item.personalizable ? "" : " hidden"}" data-customize-item="${escapeAttr(item.id)}" aria-label="Experimente outro tecido — personalize com inteligência artificial">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.7 4.8L18.5 9.5l-4.8 1.7L12 16l-1.7-4.8L5.5 9.5l4.8-1.7z"/></svg><span>Experimente outro tecido</span>
+  const ativo = Boolean(item.personalizable);
+  return `<button type="button" class="product-bespoke-icon${ativo ? "" : " hidden"}" data-customize-item="${escapeAttr(item.id)}" aria-label="${temCartela(item) ? "Personalizar — escolha o tecido ou a tinta pelo código" : "Experimente outro tecido — personalize com inteligência artificial"}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.7 4.8L18.5 9.5l-4.8 1.7L12 16l-1.7-4.8L5.5 9.5l4.8-1.7z"/></svg><span>${bespokeTexto(item)}</span>
   </button>`;
+}
+function atualizarBotaoPersonalizar(botao, item){
+  if(!botao || !item) return;
+  botao.dataset.customizeItem = String(item.id);
+  botao.classList.toggle("hidden", !item.personalizable);
+  const span = botao.querySelector("span"); if(span) span.textContent = bespokeTexto(item);
+  botao.setAttribute("aria-label", temCartela(item) ? "Personalizar — escolha o tecido ou a tinta pelo código" : "Experimente outro tecido — personalize com inteligência artificial");
 }
 
 function productTemplate(item, index){
@@ -1268,6 +1345,7 @@ function bindNavHistory(){
   window.appGoBack=async()=>{
     if(await backCatalogProjetos()) return true;
     if(!state.overlay && closeSingleItem()) return true;
+    if(state.overlay === "biblioteca" && backCatalogBiblioteca()) return true; // dentro de pasta: sobe uma pasta
     if(state.navBack.length){ jumpToHistoryEntry(state.navBack.at(-1).id); return true; }
     if(state.overlay || state.activeView!==GATEWAY_VIEW){ applyView(GATEWAY_VIEW); return true; }
     return false;
@@ -1282,6 +1360,9 @@ function bindNavHistory(){
     const chrome=document.querySelector('.catalog-top-chrome');
     (chrome||document.body).append(back);
     document.body.classList.add('catalog-tem-voltar');
+    // A busca fica logo à direita dele (CSS .catalog-top-tools): guarda a largura real do botão.
+    const medirVoltar=()=>{ if(back.offsetWidth) document.documentElement.style.setProperty('--catalog-voltar-w', back.offsetWidth+'px'); };
+    requestAnimationFrame(medirVoltar); document.fonts?.ready?.then(medirVoltar);
   }
   const onClick = (event) => {
     const item = event.target.closest("[data-timeline-entry]");
@@ -1881,22 +1962,25 @@ function dataDoEstoque(){
 function estoqueDaData(data){
   if(!estoqueCache.has(data)){
     const sessao = state.catalogSession || {};
-    estoqueCache.set(data, supabase.functions.invoke("catalogo-assistente", {
-      body: { action: "disponibilidade", todos: true, data, empresa_id: sessao.empresa_id, catalog_token: sessao.token || undefined },
-    }).then(({ data: r, error }) => { if(error || !r?.mapa) throw error || new Error("sem mapa"); return r.mapa; })
+    // Parâmetros > Catálogo decide o que volta (estoque e/ou disponível, ou nada) — inclusive para o visitante.
+    const rpc = modoPedido ? "pedido_catalogo_estoque" : "catalogo_estoque";
+    const args = { p_data: data, p_empresa_id: sessao.empresa_id || null };
+    if(!modoPedido) args.p_token = sessao.token || null;
+    estoqueCache.set(data, supabase.rpc(rpc, args)
+      .then(({ data: r, error }) => { if(error || !r) throw error || new Error("sem mapa"); return r; })
       .catch(() => { setTimeout(() => estoqueCache.delete(data), 15000); return null; }));
   }
   return estoqueCache.get(data);
 }
 function estoqueHtml(d, data){
   if(!d) return "";
-  const [total, livre] = d;
+  const [total, livre] = d; // null = escondido pelos Parâmetros do catálogo
   const quando = data === hojeSP() ? "hoje" : "em " + data.slice(8, 10) + "/" + data.slice(5, 7);
-  return `<span class="is-estoque">Estoque <b>${total}</b></span><span class="${livre ? "is-livre" : "is-esgotado"}">${livre ? `Disponível ${quando} <b>${livre}</b>` : `Esgotado ${quando}`}</span>`;
+  return (total != null ? `<span class="is-estoque">Estoque <b>${total}</b></span>` : "") +
+    (livre != null ? `<span class="${livre ? "is-livre" : "is-esgotado"}">${livre ? `Disponível ${quando} <b>${livre}</b>` : `Esgotado ${quando}`}</span>` : "");
 }
 let estoquePintando = null;
 async function pintarEstoque(raiz = document){
-  if(ehVisitante()) return;
   const data = dataDoEstoque();
   const alvos = [...raiz.querySelectorAll("[data-stock-item]")].filter((el) => el.dataset.stockData !== data + ":" + el.dataset.stockItem);
   if(!alvos.length) return;
@@ -1907,9 +1991,12 @@ async function pintarEstoque(raiz = document){
     const html = estoqueHtml(mapa[el.dataset.stockItem], data);
     el.hidden = !html;
     if(el.innerHTML !== html) el.innerHTML = html;
+    el.removeAttribute('tabindex');
+    if(modoPedido) el.querySelectorAll('.is-estoque,.is-esgotado,.is-livre').forEach(selo => { selo.tabIndex = 0; });
   }
 }
 function vigiarEstoque(){
+  if(modoPedido) iniciarDetalhesEstoque({supabase, empresa: () => state.catalogSession?.empresa_id, data: dataDoEstoque});
   const agendar = () => { if(estoquePintando) return; estoquePintando = requestAnimationFrame(() => { estoquePintando = null; pintarEstoque(); }); };
   new MutationObserver((lista) => { if(lista.some((m) => [...m.addedNodes].some((n) => n.nodeType === 1 && (n.matches?.("[data-stock-item]") || n.querySelector?.("[data-stock-item]"))))) agendar(); })
     .observe(document.body, { childList: true, subtree: true });
@@ -1939,6 +2026,8 @@ function selectGridVariant(card, variante){
   if(chip) chip.dataset.projetoAdd = String(variante.id);
   const pedidoChip=card.querySelector('[data-pedido-item]');
   if(pedidoChip)pedidoChip.dataset.pedidoItem=String(variante.id);
+  const personalizar=card.querySelector('[data-customize-item]');
+  if(personalizar){personalizar.dataset.customizeItem=String(variante.id);personalizar.hidden=!variante.personalizable;}
   atualizarBotoesProjeto(card);
 }
 
@@ -1946,12 +2035,12 @@ function gridCardMarkup(item, { reordenavel = false } = {}){
   return `
       <button type="button" class="catalog-grid-card${reordenavel ? " is-reorderable" : ""}" data-grid-item="${escapeAttr(item.id)}"${reordenavel ? ` draggable="true" title="Arraste para mudar a posição"` : ""}>
         ${reordenavel ? `<span class="catalog-grid-drag" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>` : ""}
-        <span class="catalog-grid-card-photo"><img src="${escapeAttr(otimizarFoto(item.photo, IMG_WIDTH.card))}" alt="${escapeAttr(item.name)}" loading="lazy" decoding="async">${projetoAddMarkup(item.id)}</span>
+        <span class="catalog-grid-card-photo"><img src="${escapeAttr(otimizarFoto(item.photo, IMG_WIDTH.card))}" alt="${escapeAttr(item.name)}" loading="lazy" decoding="async">${modoPedido && (item.personalizable || item.variantGroup?.some(v=>v.personalizable)) ? `<span class="catalog-card-personalizar" role="button" tabindex="0" data-customize-item="${escapeAttr(item.id)}" aria-label="Personalizar ${escapeAttr(item.name)}" ${item.personalizable?'':'hidden'}>✦ Personalizar</span>` : ''}${projetoAddMarkup(item.id)}</span>
         <span class="catalog-grid-card-body">
           <span class="catalog-grid-card-name">${escapeHtml(item.name)}</span>
           ${item.dims ? `<span class="catalog-grid-card-dims">Dimensões: ${escapeHtml(item.dims)}</span>` : ""}
           ${rentalPriceMarkup(item)}
-          ${ehVisitante() ? "" : `<span class="catalog-grid-card-stock" data-stock-item="${escapeAttr(item.id)}" hidden></span>`}
+          <span class="catalog-grid-card-stock" data-stock-item="${escapeAttr(item.id)}" hidden></span>
           ${gridSwatchesMarkup(item)}
         </span>
       </button>`;
@@ -2323,6 +2412,7 @@ function scrollToIndex(index){
 }
 
 function bindInteractions(){
+  $("catalogPedidoCategorias")?.addEventListener("click", () => applyView(HOME_VIEW));
   bindReordenarCards();
   $("catalogViewSwitcher")?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-view-mode]");
@@ -2542,7 +2632,8 @@ function bindInteractions(){
     const customizeButton = event.target.closest("[data-customize-item]");
     if(customizeButton){
       const item = findItemById(customizeButton.dataset.customizeItem);
-      if(item) openCustomizeDialog(item);
+      if(item && temCartela(item)) abrirPersonalizarItem(item.id, { aoIA: (escolha) => gerarComCartela(item, escolha), infoIA: textoCustoIA });
+      else if(item) openCustomizeDialog(item);
       return;
     }
     const variantSwatch = event.target.closest("[data-variant-id]");
@@ -2719,11 +2810,14 @@ function openCustomizeDialog(item){
   window.CatalogCredits.prepareFabric();
 }
 
-async function generateFabricVariation(){
-  const item = state.customizeItem;
-  if(state.fabricGenerating || !item || !state.fabricDataUrl || !state.fabricFile) return;
+// cartela: { referencia (data URL da amostra), descricao, ehTinta } — vem da escolha na cartela (gerarComCartela);
+// sem ela, usa a foto de tecido enviada no diálogo, como sempre.
+async function generateFabricVariation(cartela = null){
+  const item = cartela ? cartela.item : state.customizeItem;
+  if(state.fabricGenerating || !item) return;
+  if(!cartela && (!state.fabricDataUrl || !state.fabricFile)) return;
   state.fabricGenerating = true;
-  const fabricReference = state.fabricDataUrl;
+  const fabricReference = cartela ? cartela.referencia : state.fabricDataUrl;
   const button = $("catalogCustomizeGenerate");
   button.disabled = true;
   button.textContent = "Criando sua versão…";
@@ -2735,20 +2829,20 @@ async function generateFabricVariation(){
   // a notificação no canto da tela (abaixo) é quem avisa do andamento e
   // do resultado. Reabrir "SOB MEDIDA" enquanto ainda gera continua
   // funcionando (openCustomizeDialog() já tem esse caminho).
-  $("catalogCustomizeDialog").close();
-  const workingToast = notify({ title: "Personalização em andamento", message: `${item.name} está recebendo o novo tecido. Você pode continuar navegando.`, status: "working", duration: 0 });
+  if($("catalogCustomizeDialog").open) $("catalogCustomizeDialog").close();
+  const workingToast = notify({ title: "Personalização em andamento", message: cartela ? `${item.name} com ${cartela.descricao}. Você pode continuar navegando.` : `${item.name} está recebendo o novo tecido. Você pode continuar navegando.`, status: "working", duration: 0 });
   try{
     const empresaId = state.catalogSession.empresa_id;
     const { data, error } = await window.CatalogCredits.invoke("studio-ai-engine", {
       body: {
         empresa_id: empresaId,
         catalog_token: state.catalogSession.token,
-        prompt: `Edite exclusivamente o revestimento têxtil do móvel da primeira imagem, aplicando com alta fidelidade o tecido fornecido na segunda imagem. Preserve absolutamente o mesmo ${item.name}: geometria, desenho, estrutura, junco, madeira, metal, pés, costuras, almofadas, volumes, perspectiva, enquadramento, iluminação, sombras e resolução. O fundo deve ser liso, uniforme e totalmente opaco no branco puro exato do catálogo #FFFFFF, sem cenário, textura, gradiente, preto ou transparência. O contorno do móvel deve permanecer limpo, natural e sem halos. Não redesenhe o móvel, não altere cores de partes não estofadas e não modifique o ambiente. A textura deve acompanhar dobras, costuras e direção real do tecido.`,
+        prompt: cartela ? cartela.prompt : `Edite exclusivamente o revestimento têxtil do móvel da primeira imagem, aplicando com alta fidelidade o tecido fornecido na segunda imagem. Preserve absolutamente o mesmo ${item.name}: geometria, desenho, estrutura, junco, madeira, metal, pés, costuras, almofadas, volumes, perspectiva, enquadramento, iluminação, sombras e resolução. O fundo deve ser liso, uniforme e totalmente opaco no branco puro exato do catálogo #FFFFFF, sem cenário, textura, gradiente, preto ou transparência. O contorno do móvel deve permanecer limpo, natural e sem halos. Não redesenhe o móvel, não altere cores de partes não estofadas e não modifique o ambiente. A textura deve acompanhar dobras, costuras e direção real do tecido.`,
         scene: {
           referencePolicy: "fabric_customization",
           fabricReference,
           preview: item.photo,
-          objects: [{ itemId: item.id, itemName: "Amostra de tecido", itemImage: fabricReference }],
+          objects: [{ itemId: item.id, itemName: cartela ? cartela.descricao : "Amostra de tecido", itemImage: fabricReference }],
           options: { formato: { largura: 1536, altura: 1024 }, convidados: "Sem convidados", ambientacao: [] },
         },
         provider: "openai", versions: 1,
@@ -2806,6 +2900,51 @@ async function generateFabricVariation(){
   }
 }
 
+// "Ver como fica com IA" a partir da cartela: a amostra escolhida (foto ou, sem foto, a cor) vira a referência da IA.
+async function amostraDataUrl(escolha){
+  if(escolha?.foto_url){
+    try{
+      const blob = await (await fetch(escolha.foto_url, { mode: "cors" })).blob();
+      return await fileToDataUrl(blob);
+    }catch(error){ console.warn("Amostra da cartela:", error); }
+  }
+  if(escolha?.cor){
+    const canvas = document.createElement("canvas"); canvas.width = canvas.height = 512;
+    const c = canvas.getContext("2d"); c.fillStyle = escolha.cor; c.fillRect(0, 0, 512, 512);
+    return canvas.toDataURL("image/png");
+  }
+  return "";
+}
+const ehTinta = (tipo) => /tint|pint|laca|esmalt|verniz|^cor\b/i.test(String(tipo || ""));
+const descreverEscolha = (tipo, o) => `${String(tipo || "").toLowerCase()} ${o.codigo} ${o.nome}${o.fornecedor ? ` (${o.fornecedor})` : ""}${o.cor ? `, cor ${o.cor}` : ""}`;
+async function gerarComCartela(item, escolha){
+  const entradas = Object.entries(escolha?.escolhas || {}).filter(([, o]) => o?.opcao_id);
+  if(!entradas.length) return;
+  let referencia = "", principal = entradas[0];
+  for(const entrada of entradas){
+    referencia = await amostraDataUrl(entrada[1]);
+    if(referencia){ principal = entrada; break; }
+  }
+  if(!referencia){ notify({ title: "Sem amostra para a IA", message: "A opção escolhida não tem foto nem cor cadastrada. Cadastre em Estoque > Personalizações > Cartelas.", status: "error" }); return; }
+  const descricao = entradas.map(([t, o]) => descreverEscolha(t, o)).join(" e ");
+  const outras = entradas.filter((e) => e !== principal).map(([t, o]) => descreverEscolha(t, o));
+  const regraFundo = "O fundo deve ser liso, uniforme e totalmente opaco no branco puro exato do catálogo #FFFFFF, sem cenário, textura, gradiente, preto ou transparência. O contorno do móvel deve permanecer limpo, natural e sem halos.";
+  const preserva = `Preserve absolutamente o mesmo ${item.name}: geometria, desenho, estrutura, pés, costuras, volumes, perspectiva, enquadramento, iluminação, sombras e resolução. Não redesenhe o móvel e não modifique o ambiente.`;
+  const [tipo, o] = principal;
+  const acao = ehTinta(tipo)
+    ? `Edite exclusivamente a pintura das partes pintadas do móvel da primeira imagem, aplicando com alta fidelidade a cor e o acabamento da amostra da segunda imagem (${descreverEscolha(tipo, o)}). Partes estofadas, tecidos, vidros e metais não pintados continuam como estão.`
+    : `Edite exclusivamente o revestimento têxtil do móvel da primeira imagem, aplicando com alta fidelidade o tecido da amostra da segunda imagem (${descreverEscolha(tipo, o)}). A textura deve acompanhar dobras, costuras e a direção real do tecido. Não altere as cores de partes não estofadas.`;
+  const extra = outras.length ? ` Aplique também: ${outras.join("; ")}.` : "";
+  if(state.catalogSession?.token) await window.CatalogCredits.prepareFabric();
+  generateFabricVariation({ item, referencia, descricao, prompt: `${acao}${extra} ${preserva} ${regraFundo}` });
+}
+async function textoCustoIA(){
+  if(!state.catalogSession?.token) return "";
+  const carteira = await window.CatalogCredits.refresh();
+  const custo = carteira?.custos?.tecido;
+  return Number.isInteger(custo) ? `Usa ${custo} créditos · saldo ${carteira.saldo}` : "";
+}
+
 // Pedido explícito do usuário: clicar em "Ver resultado" na notificação
 // não deve reabrir o diálogo inteiro de "Experimente seu tecido" (com
 // upload/dropzone/botão de aplicar, que não fazem sentido pra só OLHAR o
@@ -2822,6 +2961,21 @@ function openFabricResultPreview(item, src){
 }
 
 function bindCustomization(){
+  // Os controles dos cards e da lista não devem abrir o item nem alterar a quantidade.
+  const personalizarAtalho=event=>{
+    const botao=event.target.closest('[data-customize-item]');
+    if(!botao || !botao.closest('.catalog-grid-card,.pa-itens'))return;
+    if(event.type==='keydown' && !['Enter',' '].includes(event.key))return;
+    event.preventDefault();event.stopPropagation();
+    const item=findItemById(botao.dataset.customizeItem);
+    if(item && temCartela(item))abrirPersonalizarItem(item.id,{aoIA:escolha=>gerarComCartela(item,escolha),infoIA:textoCustoIA});
+    else if(item)openCustomizeDialog(item);
+  };
+  document.addEventListener('click',personalizarAtalho,true);
+  document.addEventListener('keydown',personalizarAtalho,true);
+  document.addEventListener("catalog-personalizacoes", () => {
+    document.querySelectorAll(".product-bespoke-icon[data-customize-item]").forEach((b) => atualizarBotaoPersonalizar(b, findItemById(b.dataset.customizeItem)));
+  });
   $("catalogCustomizeClose")?.addEventListener("click", () => $("catalogCustomizeDialog").close());
   $("catalogFabricResultClose")?.addEventListener("click", () => $("catalogFabricResultDialog").close());
   $("catalogFabricInput")?.addEventListener("change", async (event) => {
@@ -2844,7 +2998,7 @@ function bindCustomization(){
     $("catalogCustomizeStatus").textContent = "Tecido pronto para aplicação.";
     window.CatalogCredits.syncFabric();
   });
-  $("catalogCustomizeGenerate")?.addEventListener("click", generateFabricVariation);
+  $("catalogCustomizeGenerate")?.addEventListener("click", () => generateFabricVariation());
 }
 
 // Visualizador de zoom da foto (pedido explícito do usuário, depois de
@@ -3677,8 +3831,7 @@ function applyVariant(section, variant, options = {}){
   }
 
   if(bespokeCard){
-    bespokeCard.classList.toggle("hidden", !variant.personalizable);
-    bespokeCard.dataset.customizeItem = String(variant.id);
+    atualizarBotaoPersonalizar(bespokeCard, variant);
   }
 
   const eventPanel = section.querySelector(".product-event-panel");
@@ -3957,6 +4110,10 @@ async function requireCatalogLogin(){
     // deixam nenhuma sessão pendurada.
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password: senha });
     if(!authError && authData?.user){
+      // Verificação em duas etapas (out/2026): o código do WhatsApp vem antes de liberar a equipe
+      let liberado = true;
+      try { liberado = await window.EasyLoc2FA?.garantir({ supabase }) ?? true; } catch (e) { console.warn("[catálogo] 2FA indisponível", e); }
+      if(!liberado){ await supabase.auth.signOut(); button.disabled = false; status.textContent = "Entrada cancelada."; return; }
       const empresaIdInterno = await resolveAcessoInterno();
       if(empresaIdInterno){
         state.catalogSession = { token: null, cliente_id: null, empresa_id: empresaIdInterno, interno: true };
@@ -4050,6 +4207,7 @@ async function init(){
     }
     const empresaId = state.catalogSession.empresa_id;
     state.items = await carregarItens();
+    iniciarToggleValores();
     window.CatalogCredits?.refresh().catch(() => {});
     await carregarCapasGateway();
     if(!ehVisitante()) initCatalogProjetos({
@@ -4062,6 +4220,8 @@ async function init(){
       getSession: () => state.catalogSession,
       isStaff: () => state.acessoInterno,
       findItem: findItemById,
+      buscarComponentes,
+      garantirItens: garantirItensExtras,
       getDecorator: () => state.decorator,
       getCompany: () => state.company,
       notify,
@@ -4072,13 +4232,27 @@ async function init(){
       ondeEsta: () => state.overlay === "studio" ? "No 3D Livre" : state.overlay === "projetos" ? "No projeto" : state.overlay === "biblioteca" ? "Na Biblioteca" : "No catálogo",
     });
     if(modoPedido){
-      definirProjetoComercialPedido(window.parent.pedidoProjetoCatalogo());
+      // Janelas (dialog modal) do catálogo dentro do pedido ficavam presas na área abaixo da barra de etapas, com o topo
+      // coberto por ela (out/2026). Enquanto uma janela modal está aberta, a tela do pedido estica esta área para a tela toda.
+      let modalAntes = false;
+      const avisarModal = () => {
+        const aberto = [...document.querySelectorAll("dialog[open]")].some((d) => d.matches(":modal"));
+        if(aberto !== modalAntes){ modalAntes = aberto; window.parent.__pedidoCatalogoModal?.(aberto); }
+      };
+      new MutationObserver(avisarModal).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["open"] });
+      const projetoDoPedido = window.parent.pedidoProjetoCatalogo();
+      await garantirItensExtras((projetoDoPedido?.dados?.ambientes || []).flatMap((a) => (a.itens || []).map((i) => i.item_id))).catch(() => {});
+      definirProjetoComercialPedido(projetoDoPedido);
       window.sincronizarPedidoCatalogo = async () => {
         const project = await sincronizarProjetoComercialPedido(window.parent.pedidoMetadadosCatalogo());
         await window.parent.pedidoSincronizarProjetoCatalogo(project);
       };
       window.abrirProjetoComercialPedido = async () => {
         await window.sincronizarPedidoCatalogo();openProjetosOverlay({view:'work',workTab:'geral'});
+      };
+      // Aba 'Pedido' (depois de Contrato): prévia do pedido, impressão e PDF.
+      window.abrirPedidoComercialPedido = async () => {
+        await window.sincronizarPedidoCatalogo();openProjetosOverlay({view:'work',workTab:'pedido'});
       };
       window.abrirPlantasComercialPedido = async () => {
         await window.sincronizarPedidoCatalogo();openProjetosOverlay({view:'work',workTab:'plantas'});
@@ -4115,7 +4289,7 @@ async function init(){
     startEventRotation();
     if(!ehVisitante()) initCatalogStudio3D({ items: state.items, supabase, empresaId, ownerId: state.catalogSession.cliente_id, token: state.catalogSession.token, pedidoComercial: modoPedido });
     // Assistente comercial (out/2026): decorador e equipe; visitante não (não tem projeto nem pedido).
-    if(!ehVisitante()) vigiarEstoque();
+    vigiarEstoque(); // estoque/disponível conforme Parâmetros > Catálogo (o visitante também, se liberado)
     if(!ehVisitante()) initCatalogAssistente({
       supabase, getSession: () => state.catalogSession, modoPedido, cenaEditor, notify, temProjetos: true,
       findItem: findItemById, abrirItem: abrirItemPelaAssistente, mostrarNoCatalogo: mostrarPelaHelena,

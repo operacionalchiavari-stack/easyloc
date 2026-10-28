@@ -16,7 +16,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  verificar:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm test
   deploy:
+    needs: verificar
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -31,7 +43,7 @@ jobs:
       # (out/2026) O site só precisa das telas: código do servidor, banco, testes e anotações não vão ao ar
       - name: Remove server-only files
         run: |
-          rm -rf api server supabase tests Scripts docs outputs .github
+          rm -rf api server supabase tests Scripts docs outputs .tmp .backups .github
           rm -f ./*.md ./tmp-* package.json package-lock.json deno.lock vercel.json .vercelignore .env.example
 
       - name: Upload artifact

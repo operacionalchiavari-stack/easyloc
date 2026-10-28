@@ -44,17 +44,14 @@
     // Qualidade e Gestão de Pessoas — os arquivos continuam no repositório.
     categorias: [
       {
-        // Primeiro item do menu (logo abaixo do Início), a pedido do usuário.
-        id: "cronograma",
-        icone: "calendar",
-        rotulo: "Cronograma",
-        href: "Modulos/Chiavari/Cronograma/cronograma.html",
-      },
-      {
         id: "geral",
         icone: "layout-grid",
         rotulo: "Geral",
         itens: [
+          { rotulo: "Solicitação de compra", href: "Modulos/Geral/SolicitacoesCompra/solicitacoes.html" },
+          { rotulo: "Solicitação de manutenção", href: "Modulos/Geral/SolicitacoesManutencao/solicitacoes.html" },
+          // Cronograma era uma categoria própria; com o menu no topo foi para dentro de Geral (pedido do usuário).
+          { rotulo: "Cronograma", href: "Modulos/Chiavari/Cronograma/cronograma.html" },
           { rotulo: "Catálogo", href: "Modulos/Comercial/Catalogo/catalogo.html" },
           { rotulo: "Painel de Complexidade", href: "Modulos/Chiavari/Costura/costura.html" },
           { rotulo: "Registro de Ocorrências", href: "Modulos/Chiavari/Ocorrencias/OcorrenciasOperacionais.html" },
@@ -73,6 +70,7 @@
             ],
           },
           { rotulo: "Pedidos e Orçamentos", href: "Modulos/Comercial/Pedidos/CentralPedidos.html" },
+          { rotulo: "Histórico", href: "Modulos/Comercial/Historico/historico.html" },
           {
             rotulo: "Contratos",
             legado: {
@@ -86,7 +84,7 @@
             rotulo: "Disponibilidade de Itens",
             legado: {
               html: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html",
-              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js",
+              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js?v=20261024-auditoria",
               css: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css",
             },
           },
@@ -107,8 +105,9 @@
               { rotulo: "Cadastro de Fornecedores", href: "Modulos/Estoque/CadastroFornecedores/fornecedores.html" },
             ],
           },
+          { rotulo: "Gestão do acervo", href: "Modulos/Estoque/Acervo/acervo.html" },
           { rotulo: "Almoxarifado", href: "Modulos/Chiavari/Almoxarifado/almoxarifado.html" },
-          { rotulo: "Manutenção", href: "Modulos/Chiavari/CentralMetas/itens-danificados.html" },
+          { rotulo: "Ordens de serviço", href: "Modulos/Chiavari/CentralMetas/itens-danificados.html" },
           {
             rotulo: "Compras",
               href: "Modulos/Estoque/Compras/compras.html",
@@ -116,12 +115,10 @@
         ],
       },
       {
-        id: "triagem",
-        icone: "package-check",
-        rotulo: "Triagem",
-        itens: [
-          { rotulo: "Separação de Materiais", href: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html" },
-        ],
+        id: "producao",
+        icone: "paintbrush",
+        rotulo: "Produção",
+        href: "Modulos/Producao/ordens.html",
       },
       {
         id: "logistica",
@@ -129,6 +126,8 @@
         rotulo: "Logística",
         itens: [
           { rotulo: "Painel Logístico", href: "Modulos/Logistica/PainelLogistico/painel-logistico.html" },
+          // Triagem era categoria própria; com o menu no topo foi para dentro de Logística (pedido do usuário).
+          { rotulo: "Triagem", href: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html" },
           {
             // subcategoria: abre para a direita, igual Estoque > Cadastros
             rotulo: "Fretes",
@@ -162,7 +161,6 @@
         rotulo: "Financeiro",
         itens: [
           { rotulo: "Financeiro", href: "Modulos/Financeiro/financeiro.html" },
-          { rotulo: "Controle Financeiro do Almoxarifado", href: "Modulos/Chiavari/Almoxarifado/financeiro.html" },
         ],
       },
       {
@@ -172,6 +170,8 @@
         itens: [
           { rotulo: "Central de Metas", href: "Modulos/Chiavari/CentralMetas/central.html" },
           { rotulo: "Parâmetros", href: "Modulos/Configuracoes/Parametros/parametros.html" },
+          // Era categoria própria; com o menu no topo foi para dentro de Gestão (pedido do usuário).
+          { rotulo: "Importar Itens", href: "Modulos/Importacao/ImportarItens/importar-itens.html" },
           {
             // Fora do menu (out/2026, pedido do usuário): as permissões ficam num lugar só,
             // no Cadastro de Funcionários (Recursos Humanos), que já tem os bloqueios de acesso.
@@ -217,13 +217,6 @@
           { rotulo: "App do Motorista", href: "Modulos/Chiavari/Uber/motorista.html" },
           { rotulo: "Meu Bônus", href: "Modulos/Chiavari/CentralMetas/equipe.html" },
         ],
-      },
-      {
-        // Fora dos módulos, a pedido do usuário: link direto, sem submenu.
-        id: "importacao",
-        icone: "upload-cloud",
-        rotulo: "Importar Itens",
-        href: "Modulos/Importacao/ImportarItens/importar-itens.html",
       },
     ],
   };

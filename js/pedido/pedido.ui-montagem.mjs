@@ -1,5 +1,10 @@
+import { aplicarLogisticaManual } from './pedido.logistica-manual.mjs';
 import { colorirValor } from "./pedido.valores-ui.mjs";
 ﻿export function renderMontagemSugerida(payload){
+  const automatico = payload;
+  const finalManual = aplicarLogisticaManual('montagem', payload?.custoFinal ?? (Number(payload?.custoBruto || 0) - Number(payload?.valorAbsorcao || 0)), () => renderMontagemSugerida(automatico));
+  if(window.__PEDIDO_LOGISTICA_MANUAL?.montagem) payload = { ...(payload || {}), qtd: payload?.qtd ?? 0, custoBruto: finalManual, custoFinal: finalManual, valorAbsorcao: 0, percent: 0 };
+
 
   const qtdEl        = document.getElementById("montagemQtd");
   const custoEl      = document.getElementById("montagemCusto");
@@ -8,7 +13,7 @@ import { colorirValor } from "./pedido.valores-ui.mjs";
   const valorFinalEl = document.getElementById("montagemValorFinal");
 
   if(!qtdEl || !custoEl || !infoEl || !descontoEl || !valorFinalEl){
-    console.warn("âš ï¸ Estrutura fixa do card Montagem nÃ£o encontrada.");
+    console.warn("⚠️ Estrutura fixa do card Montagem não encontrada.");
     return;
   }
 
@@ -20,8 +25,8 @@ import { colorirValor } from "./pedido.valores-ui.mjs";
     window.__MONTAGEM_BRUTA = 0;
     window.__MONTAGEM_DESCONTO = 0;
     window.__MONTAGEM_FINAL = 0;
-    qtdEl.innerText        = "â€”";
-    custoEl.innerText      = "â€”";
+    qtdEl.innerText        = "—";
+    custoEl.innerText      = "—";
     infoEl.innerText       = payload?.info || "Montagem aguardando cálculo.";
     descontoEl.innerText   = "- R$ 0,00";
     colorirValor(descontoEl,0);
@@ -46,17 +51,21 @@ import { colorirValor } from "./pedido.valores-ui.mjs";
   // PREENCHER CAMPOS
   // ==============================
 
+  window.__MONTAGEM_BRUTA = bruto;
+  window.__MONTAGEM_DESCONTO = absorcao;
+  window.__MONTAGEM_FINAL = final;
+  window.__RESUMO_MONTAGEM = final;
   qtdEl.innerText = String(qtd);
 
-  // ðŸ”¹ Valor Bruto
+  // 🔹 Valor Bruto
   custoEl.innerText = bruto.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
   });
 
-  infoEl.innerText = payload?.info || "â€”";
+  infoEl.innerText = payload?.info || "—";
 
-  // ðŸ”¹ AbsorÃ§Ã£o Empresa (VERDE PADRONIZADO)
+  // 🔹 Absorção Empresa (VERDE PADRONIZADO)
   descontoEl.innerText = `- ${absorcao.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"

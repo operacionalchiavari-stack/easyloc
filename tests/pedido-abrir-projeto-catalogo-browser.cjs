@@ -48,7 +48,7 @@ const mockSupabase = `
       getUser: async () => ({ data: { user: { id: "u1", email: "a@b" } } }), signOut: async () => {},
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
-    rpc: (nome, args) => { window.__rpcs.push({ nome, args }); if(nome === "catalogo_carregar_interno") return Promise.resolve({data:{itens:banco.itens,empresa:banco.empresas[0]},error:null}); if(nome === "pedido_salvar_integrado") return Promise.resolve({data:{id:"novo-separacoes_pedidos",revisao:0},error:null}); return { then: (ok, erro) => Promise.resolve(nome === "funcionario_contexto"
+    rpc: (nome, args) => { window.__rpcs.push({ nome, args }); if(nome === "catalogo_carregar_interno" || nome === "pedido_catalogo_carregar") return Promise.resolve({data:{itens:banco.itens,empresa:banco.empresas[0]},error:null}); if(nome === "pedido_salvar_integrado") return Promise.resolve({data:{id:"novo-separacoes_pedidos",revisao:0},error:null}); return { then: (ok, erro) => Promise.resolve(nome === "funcionario_contexto"
       ? { data: { ativo: true, administrador_legado: true }, error: null } : { data: [], error: null }).then(ok, erro) }; },
     channel: () => canal, removeChannel(){},
     functions: { invoke: async () => ({ data: null, error: null }) },
@@ -125,7 +125,18 @@ const mockSupabase = `
   assert.deepStrictEqual(tela.projeto, ["Lounge", "Bar"], "ambientes vão para o catálogo do pedido");
 
   // A trilha comercial separa as duas etapas das ferramentas de criação.
-  assert.deepStrictEqual(await page.locator('.ct-ferramentas button').allTextContents(), ['Catálogo','3D','Plantas']);
+  assert.deepStrictEqual((await page.locator('.ct-ferramentas button').allTextContents()).map(t=>t.replace('F2','').trim()), ['Catálogo','3D','Plantas']);
+  // Dados obrigatórios (out/2026): sem a data de entrega, não abre a lista/catálogo e marca o campo.
+  const entregaOriginal = await page.inputValue("#dataEntrega");
+  await page.fill("#dataEntrega", "");
+  await page.locator('.ct-depois button[data-etapa="lista"]').click();
+  await page.waitForFunction(() => /data de entrega/i.test(document.querySelector(".ct-erro")?.textContent || ""));
+  assert.ok(await page.locator("#dataEntrega").evaluate(el => el.classList.contains("is-invalido")), "campo de entrega marcado");
+  assert.ok(!(await page.locator(".pedido-screen").evaluate(el => el.classList.contains("em-catalogo-comercial"))), "não abriu o catálogo/lista");
+  assert.strictEqual(await page.locator(".ct-avancar").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(18, 63, 134)", "Salvar azul");
+  await page.fill("#dataEntrega", entregaOriginal);
+  console.log("ok - sem data de entrega não abre a lista; campo marcado; Salvar azul");
+
   assert.ok(!(await page.locator('.ct-linha').innerText()).includes('Catálogo'));
   assert.strictEqual(await page.locator('.ct-avancar').innerText(), 'Salvar');
   assert.strictEqual(await page.locator('.ct-depois button[data-etapa="lista"]').count(), 1, 'lista acessivel pelo menu');
@@ -141,7 +152,8 @@ const mockSupabase = `
   });
   await page.locator('.ct-depois button[data-etapa="lista"]').click();
   const cf=page.frameLocator('iframe.pedido-catalogo-real');
-  await cf.locator('.cpj-work-comercial [data-resumo-comercial] .resumo-card').waitFor({timeout:20000});
+  await cf.locator('.cpj-work-comercial [data-cpj-panel] .pa-geral').waitFor({timeout:20000});
+  assert.strictEqual(await cf.locator('[data-resumo-comercial]').count(),0,'frete e montagem saíram da lista');
   assert.strictEqual(await cf.locator('[data-cpj-worktab="plantas"]').count(),0);
   assert.ok(await page.evaluate(()=>window.__abriuListaSemCatalogo.length>0 && window.__abriuListaSemCatalogo.every(Boolean)), 'lista preparada antes de exibir o iframe');
   const isolamento=await cf.locator('body').evaluate(async()=>{
@@ -159,11 +171,8 @@ const mockSupabase = `
   await cf.locator('[data-cpj="foto-remover"]').evaluate(el=>el.click());
   assert.deepStrictEqual(await cf.locator("body").evaluate(()=>window.__removidos),[], "remover foto do pedido preserva o arquivo original do catalogo");
   assert.deepStrictEqual(isolamento.escritasAcervo,[]);
-  assert.ok(await cf.locator('.cpj-work-comercial').evaluate(el=>{
-    const p=el.querySelector('[data-cpj-panel]').getBoundingClientRect(),r=el.querySelector('[data-resumo-comercial]').getBoundingClientRect();
-    return r.left>=p.right;
-  }), 'pedido a esquerda do resumo');
-  await cf.locator('[data-cpj-amb="a1"]').click();
+  // Out/2026: Frete e Montagem ficam no Financeiro e pagamentos, não mais ao lado da lista.
+  assert.ok(await page.evaluate(()=>!!document.querySelector('.pedido-etapa-financeiro .pedido-financeiro #cardLogisticaPedido') && !!document.querySelector('.pedido-etapa-financeiro .pedido-financeiro #cardMontagemPedido')), 'frete e montagem no financeiro');
   await cf.locator('[data-cpj-render="r1"] img').evaluate(img=>new Promise((resolve,reject)=>{
     if(img.complete && img.naturalWidth>0)return resolve();
     const timer=setTimeout(()=>reject(Error('Imagem nao recuperou')),5000);
@@ -193,20 +202,6 @@ const mockSupabase = `
   await page.locator('.ct-antes [data-etapa="lista"]').click();
   await cf.locator('.cpj-work-comercial:not(.is-plantas)').waitFor();
   await page.locator('.ct-antes [data-etapa="dados"]').click();
-  // O resumo na lista incorporada acompanha os valores da tela principal.
-  const mirror = await page.evaluate(async () => {
-    const f=document.createElement('iframe');document.body.appendChild(f);
-    const doc=f.contentDocument;doc.body.innerHTML='<section id="resumo"></section>';
-    const mod=await f.contentWindow.eval('import('+JSON.stringify(new URL('../Catalogo/pedido-resumo-comercial.mjs',location.href).href)+')');
-    mod.montarResumoComercial(doc.getElementById('resumo'));
-    document.getElementById('resumoFreteBruto').textContent='R$ 180,00';
-    document.getElementById('resumoMontagemBruto').textContent='R$ 300,00';
-    await new Promise(r=>setTimeout(r,100));
-    const txt=doc.getElementById('resumo').textContent;
-    const result={frete:txt.includes('R$ 180,00'),montagem:txt.includes('R$ 300,00'),input:!!doc.querySelector('#lista-distancia-km'),cards:[...doc.querySelectorAll('.finance-card h2')].map(el=>el.textContent)};
-    f.remove();return result;
-  });
-  assert.deepStrictEqual(mirror,{frete:true,montagem:true,input:true,cards:['Resumo do pedido','Frete','Montagem']});
   await page.locator('.ct-avancar').click();
   await page.waitForFunction(() => window.__rpcs.some((r) => r.nome === "projeto_atualizar_status"), null, { timeout: 10000 });
   const salvo = await page.evaluate(() => ({

@@ -278,7 +278,7 @@ const {chromium}=require('playwright');const express=require('express');const as
     if(table==='usuarios_empresas') return builder(()=>({data:{empresa_id:'company'},error:null}));
     if(table==='biblioteca_pastas'){
      return {
-      insert(row){window.testPastas.push({op:'insert',row});return {select:()=>({single:async()=>({data:{id:'pasta-nova',nome:row.nome,ordem:row.ordem},error:null})})};},
+      insert(row){window.testPastas.push({op:'insert',row});return {select:()=>({single:async()=>({data:{id:row.pai_id?'sub-nova':'pasta-nova',nome:row.nome,ordem:row.ordem,pai_id:row.pai_id||null},error:null})})};},
       update(row){return {eq:async(_c,id)=>{window.testPastas.push({op:'update',id,row});return {error:null};}};},
       delete(){return {eq:async(_c,id)=>{window.testPastas.push({op:'delete',id});return {error:null};}};},
      };
@@ -323,7 +323,7 @@ const {chromium}=require('playwright');const express=require('express');const as
  await page.locator('.catalog-biblioteca-pasta-dialog input').fill('  Casamentos   ao ar livre ');
  await page.locator('.catalog-biblioteca-pasta-dialog button[type=submit]').click();
  await page.locator('[data-library-folder="pasta-nova"]').waitFor();
- assert.deepEqual(await page.evaluate(()=>window.testPastas[0]),{op:'insert',row:{empresa_id:'company',nome:'Casamentos ao ar livre',ordem:2}},'Pasta criada com o nome digitado (espaços limpos)');
+ assert.deepEqual(await page.evaluate(()=>window.testPastas[0]),{op:'insert',row:{empresa_id:'company',nome:'Casamentos ao ar livre',ordem:2,pai_id:null}},'Pasta criada com o nome digitado (espaços limpos)');
  assert.equal((await page.locator('[data-library-folder="pasta-nova"] .catalog-grid-card-name').textContent()).trim(),'Casamentos ao ar livre');
  await page.locator('[data-library-new-folder]').click();
  await page.locator('.catalog-biblioteca-pasta-dialog input').fill('sofás');
@@ -346,6 +346,19 @@ const {chromium}=require('playwright');const express=require('express');const as
  assert.equal(await page.locator('#catalogBibliotecaFolderTitle').textContent(),'Sofás','Nome da pasta aberta no topo');
  assert.equal(await page.locator('#catalogBibliotecaUpload').isVisible(),true,'Equipe interna vê o botão de adicionar fotos');
  assert.equal(await page.locator('.catalog-biblioteca-empty').textContent(),'Nenhuma foto nesta pasta ainda.');
+ // Pasta dentro de pasta (out/2026): "Nova pasta" também dentro de uma pasta, com trilha e Voltar subindo uma pasta.
+ await page.locator('#catalogBibliotecaSubpastas [data-library-new-folder]').click();
+ await page.locator('.catalog-biblioteca-pasta-dialog input').fill('Sofás retos');
+ await page.locator('.catalog-biblioteca-pasta-dialog button[type=submit]').click();
+ await page.locator('#catalogBibliotecaSubpastas [data-library-folder="sub-nova"]').waitFor();
+ assert.deepEqual(await page.evaluate(()=>window.testPastas.at(-1)),{op:'insert',row:{empresa_id:'company',nome:'Sofás retos',ordem:1,pai_id:'sofas'}},'Pasta criada dentro de Sofás');
+ await page.locator('#catalogBibliotecaSubpastas [data-library-folder="sub-nova"]').click();
+ await page.waitForFunction(()=>document.getElementById('catalogBibliotecaFolderTitle').textContent==='Sofás retos');
+ assert.deepEqual((await page.locator('#catalogBibliotecaTrilha button').allTextContents()).map(t=>t.trim()),['Biblioteca','Sofás'],'Trilha mostra o caminho');
+ await page.evaluate(()=>window.appGoBack());
+ await page.waitForFunction(()=>document.getElementById('catalogBibliotecaFolderTitle').textContent==='Sofás');
+ assert.equal(await page.locator('#catalogBibliotecaSubpastas [data-library-folder="sub-nova"] .catalog-grid-card-name').textContent(),'Sofás retos');
+ assert.equal(await page.locator('[data-library-folder="sub-nova"]').count(),1,'Na raiz só as pastas de primeiro nível');
  await page.locator('#catalogBibliotecaUploadInput').setInputFiles({name:'foto.png',mimeType:'image/png',buffer:Buffer.from('89504e470d0a1a0a','hex')});
  await page.waitForFunction(()=>document.querySelectorAll('.catalog-biblioteca-photo').length===1);
  assert.equal(await page.evaluate(()=>window.testUploaded.length),1,'Upload chamado no bucket biblioteca');

@@ -38,7 +38,7 @@ const catalog = [
    window.supabaseClient={
     storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})},
     rpc:async(name)=>({data:name==='funcionario_contexto'?{ativo:window.fixtureAccess,administrador_legado:window.fixtureAdmin}:name==='funcionarios_listar'?window.fixtureEmployees:catalog.map(p=>({...p,permitido:window.fixturePermission.includes(p.chave)}))}),
-    from:()=>({select:()=>({order:async()=>({data:catalog})})}),
+    from:(table)=>{const query={select:()=>query,eq:()=>query,order:async()=>({data:table==='rh_cadastro_opcoes'?[{tipo:'setor',nome:'Comercial',ativo:true},{tipo:'cargo',nome:'Consultora',ativo:true}]:catalog})};return query;},
     functions:{invoke:async(name,{body})=>{window.saved.push({...body,funcao:name});return name==='rh-protegido'?{data:{valores:{cpf:'12345678909'}}}:{data:{id:'new'}};}}
    };
    window.alerta=(text)=>{window.lastAlert=text};
@@ -48,6 +48,8 @@ const catalog = [
   assert.equal(await page.locator('.table-group-row').textContent(),'Comercial1');
   await page.screenshot({path:path.join(os.tmpdir(),'chiavari-funcionarios-lista.png')});
   await page.locator('#newFuncionarioBtn').click();
+  assert.deepEqual(await page.locator('#funcSetor option').allTextContents(),['Selecione','Comercial']);
+  assert.deepEqual(await page.locator('#funcCargo option').allTextContents(),['Selecione','Consultora']);
   assert.equal(await page.locator('#funcAcesso').inputValue(),'false');
   assert.equal(await page.locator('#funcLogin').isVisible(),false);
   await page.locator('#funcAcesso').selectOption('true');
@@ -71,6 +73,8 @@ const catalog = [
   await page.waitForFunction(()=>window.saved.some(x=>x.action==='save'));
   const saved=await page.evaluate(()=>window.saved.find(x=>x.action==='save'));
   assert.equal(saved.employee.pin,'0123');assert.ok(saved.photo.startsWith('data:image/jpeg'));assert.equal(saved.permissions.length,2);
+  await page.locator('.el-alert-confirm .primary').click();
+  assert.equal(await page.locator('#funcMessage').isVisible(),false);
   await page.locator('[data-action="edit"]').click();
   assert.equal(await page.locator('#funcSenha').inputValue(),'');
   assert.equal(await page.locator('#funcSenha').getAttribute('required'),null);
@@ -84,6 +88,8 @@ const catalog = [
   const editado=await page.evaluate(()=>window.saved.filter(x=>x.action==='save')[1].employee);
   assert.equal(editado.ativo,false);
   assert.ok(!('cpf' in editado) && !('salario_bruto' in editado),'campo protegido sem mexer não é enviado');
+  await page.locator('.el-alert-confirm .primary').click();
+  assert.equal(await page.locator('#funcMessage').isVisible(),false);
   await page.locator('[data-action="edit"]').click();
   await page.locator('#funcCpf + .cofre-ver').click();
   await page.waitForFunction(()=>document.getElementById('funcCpf').value==='12345678909');

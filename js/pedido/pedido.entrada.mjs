@@ -2,7 +2,7 @@
 // A barra de cima (out/2026, pedido do usuário) segue o cabeçalho do catálogo: as etapas já vistas ficam à esquerda,
 // a atual no centro em destaque e as próximas à direita; trocar de etapa anima o nome (técnica FLIP, sem biblioteca).
 // "Módulo 3D" (out/2026): o 3D Livre dentro do pedido; o que for adicionado ao projeto lá entra no pedido da cliente.
-const ETAPAS=[{id:'dados',nome:'Dados do pedido'},{id:'catalogo',nome:'Catálogo'},{id:'modulo3d',nome:'3D'},{id:'plantas',nome:'Plantas'},{id:'lista',nome:'Ambientes e lista'},{id:'financeiro',nome:'Financeiro e pagamentos'}];
+const ETAPAS=[{id:'dados',nome:'Dados do pedido'},{id:'catalogo',nome:'Catálogo'},{id:'modulo3d',nome:'3D'},{id:'plantas',nome:'Plantas'},{id:'lista',nome:'Ambientes e lista'},{id:'financeiro',nome:'Financeiro e pagamentos'},{id:'contrato',nome:'Contrato'},{id:'pedido',nome:'Pedido'}];
 
 export function iniciarEntradaComercial(vitrine){
   const tela=document.querySelector('.pedido-screen');
@@ -17,7 +17,7 @@ export function iniciarEntradaComercial(vitrine){
 
   /* ---------- barra de etapas no topo ---------- */
   const trilha=document.createElement('div');trilha.className='comercial-trilha';trilha.setAttribute('role','navigation');trilha.setAttribute('aria-label','Etapas do pedido');
-  trilha.innerHTML='<button type="button" class="ct-voltar">← Voltar</button><div class="ct-linha"><div class="ct-antes"></div><h2 class="ct-atual" aria-live="polite"></h2><div class="ct-depois"></div></div><div class="ct-direita"><div class="ct-ferramentas" role="group" aria-label="Ferramentas de criação"><button type="button" data-etapa="catalogo">Catálogo</button><button type="button" data-etapa="modulo3d">3D</button><button type="button" data-etapa="plantas">Plantas</button></div><div class="ct-acoes"><span class="ct-numero" aria-live="polite" aria-atomic="true"></span><button type="button" class="ct-avancar"></button></div></div><p class="ct-erro" role="alert"></p>';
+  trilha.innerHTML='<button type="button" class="ct-voltar">← Voltar</button><div class="ct-linha"><div class="ct-antes"></div><h2 class="ct-atual" aria-live="polite"></h2><div class="ct-depois"></div></div><div class="ct-direita"><div class="ct-ferramentas" role="group" aria-label="Ferramentas de criação"><button type="button" data-etapa="modulo3d">3D</button></div><div class="ct-acoes"><span class="ct-numero" aria-live="polite" aria-atomic="true"></span><button type="button" class="ct-avancar"></button></div></div><p class="ct-erro" role="alert"></p>';
   tela.prepend(trilha);
   const voltarStatus=document.createElement('div');voltarStatus.className='ct-voltar-status';
   const voltar=trilha.querySelector('.ct-voltar');voltar.before(voltarStatus);voltarStatus.append(voltar);
@@ -29,11 +29,12 @@ export function iniciarEntradaComercial(vitrine){
       seletor.add(new Option(label,value));
     }
     // Pré-reserva tem validade (out/2026): ao escolher "Pré-reserva" aparece "até [data]" ao lado, obrigatório para salvar.
+    const statusCard=document.createElement('div');statusCard.className='ct-status-card';
     const validade=document.createElement('label');validade.className='ct-pre-reserva';validade.hidden=true;
-    validade.innerHTML='<span>até</span><input type="date" id="preReservaAte" aria-label="Pré-reserva válida até">';
+    validade.innerHTML='<input type="date" id="preReservaAte" aria-label="Pré-reserva válida até">';
     const sincronizar=()=>{
       const status=window.__PEDIDO_STATUS_ATUAL || document.querySelector('.timeline-step.active')?.dataset.status || 'orcamento';
-      seletor.value=status;seletor.dataset.status=status;
+      seletor.value=status;seletor.dataset.status=status;statusCard.dataset.status=status;
       validade.hidden=status!=='pre_reserva';
     };
     new MutationObserver(sincronizar).observe(statusPedido,{childList:true,characterData:true,subtree:true});
@@ -44,21 +45,23 @@ export function iniciarEntradaComercial(vitrine){
       // a troca de status termina um instante depois (confere o contrato); só então mostra e foca a data
       if(alvo==='pre_reserva')(async()=>{for(let i=0;i<20 && validade.hidden;i++){await new Promise(r=>setTimeout(r,50));sincronizar();}const campo=validade.querySelector('input');if(!validade.hidden && !campo.value){campo.focus();try{campo.showPicker?.();}catch{}}})();
     });
-    voltarStatus.append(seletor,validade);sincronizar();
+    statusCard.append(seletor,validade);voltarStatus.append(statusCard);sincronizar();
   }
 
   const financeiro=document.createElement('section');financeiro.className='pedido-etapa-financeiro';financeiro.hidden=true;
-  financeiro.setAttribute('aria-label','Financeiro e programa??o de pagamentos');
+  financeiro.setAttribute('aria-label','Financeiro e programação de pagamentos');
   const programacao=tela.querySelector('.pagamento-card');
   const resumo=tela.querySelector('.pedido-financeiro');
-  // Os campos de cálculo permanecem no pedido, fora da aba financeira.
-  const calculosLogistica=document.createElement('div');calculosLogistica.hidden=true;
-  calculosLogistica.id='pedidoCalculosLogistica';
-  resumo?.querySelectorAll('.logistica-card').forEach(card=>calculosLogistica.append(card));
-  tela.append(calculosLogistica);
+  // Frete e Montagem (out/2026, pedido do usuário): ficam no Financeiro e pagamentos, na coluna da direita, logo abaixo do
+  // "Resumo do pedido" (os próprios cartões do pedido, com caminhões, volume, distância, ajuste manual e montagem).
   if(programacao)financeiro.append(programacao);
   if(resumo)financeiro.append(resumo);
   tela.append(financeiro);
+  const contrato=document.createElement('section');contrato.className='pedido-etapa-contrato';contrato.hidden=true;
+  contrato.setAttribute('aria-label','Contrato do pedido');
+  const contratoCard=tela.querySelector('#pedidoContratoCard');
+  if(contratoCard)contrato.append(contratoCard);
+  tela.append(contrato);
   let etapaAtual='dados';
   const reduzido=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const erroTrilha=texto=>{trilha.querySelector('.ct-erro').textContent=texto || '';};
@@ -69,7 +72,8 @@ export function iniciarEntradaComercial(vitrine){
   }
   function pintarTrilha(animar){
     const antes=animar && !reduzido()?medir():null;
-    const passos=ETAPAS.filter(e=>e.id==='dados' || e.id==='lista' || e.id==='financeiro');
+    // Etapas da barra (out/2026): Catálogo logo depois de Dados do pedido e Plantas depois de Ambientes e lista; o 3D continua como ferramenta.
+    const passos=['dados','catalogo','lista','plantas','financeiro','contrato','pedido'].map(id=>ETAPAS.find(e=>e.id===id));
     const i=passos.findIndex(e=>e.id===etapaAtual);
     const ferramenta=i<0;
     trilha.querySelectorAll('.ct-ferramentas button').forEach(b=>{b.classList.toggle('is-active',b.dataset.etapa===etapaAtual);b.setAttribute('aria-pressed',String(b.dataset.etapa===etapaAtual));});
@@ -147,15 +151,25 @@ export function iniciarEntradaComercial(vitrine){
   }
 
   const clienteCampo=document.getElementById('clienteInput');
-  const atualizarPendenciasDados=()=>{
-    const moeda=texto=>Number(String(texto||'').replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'))||0;
+  // Pendência na programação de pagamento (out/2026: o pedido não salva com ela). Devolve o motivo, ou '' sem pendência.
+  const moeda=texto=>Number(String(texto||'').replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'))||0;
+  const reais=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  function pendenciaFinanceiro(){
     const parcelas=[...document.querySelectorAll('#cronogramaParcelas tr')].filter(row=>row.querySelector('.pg-valor'));
     const total=moeda(document.getElementById('pgValorFinal')?.textContent || document.getElementById('resumoTotalGeral')?.textContent);
     const programado=parcelas.reduce((s,row)=>s+moeda(row.querySelector('.pg-valor')?.textContent),0);
-    const financeiroPendente=Math.abs(total-programado)>.01 || (total>0 && !parcelas.length) || parcelas.some(row=>{
+    if(total>0 && !parcelas.length)return 'Distribua o pagamento do pedido em Financeiro e pagamentos antes de salvar.';
+    if(total-programado>.01)return `Falta distribuir ${reais(total-programado)} na programação de pagamento.`;
+    if(programado-total>.01)return `A programação de pagamento passou ${reais(programado-total)} do total do pedido.`;
+    const ruim=parcelas.some(row=>{
       const metodo=row.querySelector('.pg-metodo')?.value || row.querySelector('.pg-metodo-text')?.textContent || '';
       return !row.querySelector('.pg-vencimento')?.value || moeda(row.querySelector('.pg-valor')?.textContent)<=0 || !metodo.trim() || /combinar/i.test(metodo);
     });
+    return ruim ? 'Há parcela sem vencimento, valor ou forma de pagamento definida em Financeiro e pagamentos.' : '';
+  }
+  window.__pedidoPendenciaFinanceiro=pendenciaFinanceiro;
+  const atualizarPendenciasDados=()=>{
+    const financeiroPendente=Boolean(pendenciaFinanceiro());
     trilha.classList.toggle('financeiro-incompleto',financeiroPendente);
     const abaFinanceiro=trilha.querySelector('.ct-linha [data-etapa="financeiro"]');
     if(abaFinanceiro){
@@ -202,18 +216,71 @@ export function iniciarEntradaComercial(vitrine){
     for(let i=0;i<150;i++){const cw=frame()?.contentWindow;if(cw && typeof cw[fn]==='function')return cw;await new Promise(r=>setTimeout(r,100));}
     throw Error('Aguarde o catálogo terminar de carregar.');
   }
-  function validarDados(){
-    const cliente=document.getElementById('clienteInput'),data=document.getElementById('dataEvento');
-    if(!cliente?.value.trim()){cliente?.focus();return 'Informe o cliente deste projeto.';}
-    if(!data?.value){data?.focus();return 'Informe a data do evento para consultar o acervo.';}
-    if(fimItem && !fimItem.hidden){
-      const fim=document.getElementById('dataEventoFim');
-      if(!fim.value){fim.focus();return 'Informe até quando vai o evento.';}
-      if(fim.value<=data.value){fim.focus();return 'O último dia do evento precisa ser depois do primeiro.';}
+  // Dados obrigatórios do pedido (out/2026): cliente, local e as datas de entrega, evento e coleta, em ordem. Sem eles
+  // não dá pra consultar a disponibilidade, então também travam o catálogo, a lista, o 3D e as plantas. O banco
+  // (pedido_salvar_integrado) confere de novo ao salvar.
+  const estilosInvalidos=new WeakMap();
+  function marcarInvalido(el,mensagem){
+    if(!el)return;
+    const host=el.closest('.meta-item,.location-field') || el.parentElement;
+    const id='erro-'+el.id;
+    let aviso=document.getElementById(id);
+    if(!aviso){aviso=document.createElement('small');aviso.id=id;aviso.className='pedido-campo-erro';host.append(aviso);}
+    aviso.textContent=mensagem;
+    el.classList.add('is-invalido');el.setAttribute('aria-invalid','true');
+    if(!estilosInvalidos.has(el)){
+      estilosInvalidos.set(el,['border-color','background-color','box-shadow'].map(p=>[p,el.style.getPropertyValue(p),el.style.getPropertyPriority(p)]));
     }
+    el.style.setProperty('border-color','#dc2626','important');
+    el.style.setProperty('background-color','#fef2f2','important');
+    el.style.setProperty('box-shadow','0 0 0 3px rgba(220,38,38,.15)','important');
+    const descricoes=(el.getAttribute('aria-describedby') || '').split(' ').filter(Boolean);
+    if(!descricoes.includes(id))descricoes.push(id);
+    el.setAttribute('aria-describedby',descricoes.join(' '));
+    const limpar=()=>{
+      el.classList.remove('is-invalido');el.removeAttribute('aria-invalid');
+      for(const [propriedade,valor,prioridade] of estilosInvalidos.get(el) || []){
+        if(valor)el.style.setProperty(propriedade,valor,prioridade);else el.style.removeProperty(propriedade);
+      }
+      estilosInvalidos.delete(el);
+      document.getElementById(id)?.remove();
+      const restantes=(el.getAttribute('aria-describedby') || '').split(' ').filter(v=>v && v!==id);
+      if(restantes.length)el.setAttribute('aria-describedby',restantes.join(' '));else el.removeAttribute('aria-describedby');
+    };
+    el.addEventListener('input',limpar,{once:true});el.addEventListener('change',limpar,{once:true});
+  }
+  // completo:true (ao salvar): todos os dados do pedido são obrigatórios, menos as observações (out/2026).
+  function validarDados({completo=false}={}){
+    const campo=id=>document.getElementById(id);
+    const cliente=campo('clienteInput'),local=campo('localInput'),data=campo('dataEvento'),entrega=campo('dataEntrega'),coleta=campo('dataColeta');
+    const focar=el=>{el?.focus({preventScroll:true});el?.scrollIntoView({block:'center',behavior:'smooth'});};
+    const falta=(el,msg)=>{marcarInvalido(el,msg);focar(el);return msg;};
+    const obrigatorios=[[cliente,'Informe o cliente do pedido.'],[data,'Informe a data do evento.'],[entrega,'Informe a data de entrega.'],[coleta,'Informe a data de coleta.'],[local,'Informe o local do evento.']];
+    if(fimItem && !fimItem.hidden)obrigatorios.push([campo('dataEventoFim'),'Informe até quando vai o evento.']);
+    if(completo)obrigatorios.splice(1,0,[campo('telefoneInput'),'Informe o telefone / WhatsApp.'],[campo('tipoEventoSelect'),'Escolha o tipo de evento.'],[campo('horaEntrega'),'Informe o horário de entrega.'],[campo('horaColeta'),'Informe o horário de coleta.']);
+    const vazios=obrigatorios.filter(([el])=>!el?.value.trim());
+    if(vazios.length){
+      vazios.forEach(([el,msg])=>marcarInvalido(el,msg));focar(vazios[0][0]);
+      return vazios[0][1];
+    }
+    if(!cliente?.value.trim())return falta(cliente,'Informe o cliente do pedido.');
+    if(!data?.value)return falta(data,'Informe a data do evento — sem ela o sistema não consegue ver a disponibilidade.');
+    if(fimItem && !fimItem.hidden){
+      const fim=campo('dataEventoFim');
+      if(!fim.value)return falta(fim,'Informe até quando vai o evento.');
+      if(fim.value<=data.value)return falta(fim,'O último dia do evento precisa ser depois do primeiro.');
+    }
+    if(!entrega?.value)return falta(entrega,'Informe a data de entrega.');
+    if(entrega.value>data.value)return falta(entrega,'A entrega precisa ser no dia do evento ou antes.');
+    if(!coleta?.value)return falta(coleta,'Informe a data de coleta.');
+    const ultimoDia=(fimItem && !fimItem.hidden && campo('dataEventoFim')?.value) || data.value;
+    if(coleta.value<ultimoDia)return falta(coleta,'A coleta precisa ser no último dia do evento ou depois.');
+    if(!local?.value.trim())return falta(local,'Informe o local do evento.');
     return '';
   }
+  window.__pedidoValidarDados=validarDados;
   function mostrarCatalogo(){
+    contrato.hidden=true;tela.classList.remove('em-contrato');
     financeiro.hidden=true;tela.classList.remove('em-financeiro');
     origem.insertBefore(info,seguinte);
     entrada.hidden=true;tela.classList.remove('em-entrada');tela.classList.add('em-catalogo-comercial');
@@ -221,22 +288,41 @@ export function iniciarEntradaComercial(vitrine){
     window.scrollTo({top:0,behavior:'instant'});
   }
   function mostrarDados(){
+    contrato.hidden=true;tela.classList.remove('em-contrato');
     financeiro.hidden=true;tela.classList.remove('em-financeiro');
     entrada.querySelector('.entrada-campos').appendChild(info);entrada.hidden=false;
     entrada.querySelector('.entrada-formulario').hidden=false;
     tela.classList.remove('em-catalogo-comercial');tela.classList.add('em-entrada');window.scrollTo({top:0,behavior:'instant'});
+  }
+  function mostrarFinanceiro(){
+    contrato.hidden=true;tela.classList.remove('em-contrato');
+    entrada.hidden=true;financeiro.hidden=false;
+    tela.classList.remove('em-entrada','em-catalogo-comercial');tela.classList.add('em-financeiro');
+    window.__pedidoAtualizarSaldoCliente?.();
+    window.scrollTo({top:0,behavior:'instant'});
   }
   let ocupado=false;
   async function irPara(destino){
     if(ocupado || destino===etapaAtual)return;
     ocupado=true;erroTrilha('');trilha.classList.add('is-ocupado');
     try{
-      if(destino==='financeiro'){
+      // Catálogo, lista, 3D, plantas e financeiro só depois dos dados do pedido (a disponibilidade depende deles).
+      if(destino!=='dados'){
+        const erro=validarDados();
+        if(erro){if(etapaAtual!=='dados'){mostrarDados();etapaAtual='dados';pintarTrilha(true);}const el=document.activeElement;throw Object.assign(Error(erro),{campo:el});}
+      }
+      if(destino==='contrato'){
         const cw=frame()?.contentWindow;
         if(cw?.sincronizarPedidoCatalogo)await cw.sincronizarPedidoCatalogo();
-        entrada.hidden=true;financeiro.hidden=false;
-        tela.classList.remove('em-entrada','em-catalogo-comercial');tela.classList.add('em-financeiro');
+        await window.__pedidoContratoInitPromise;
+        await window.__pedidoContratoAtualizar?.();
+        entrada.hidden=true;financeiro.hidden=true;contrato.hidden=false;
+        tela.classList.remove('em-entrada','em-catalogo-comercial','em-financeiro');tela.classList.add('em-contrato');
         window.scrollTo({top:0,behavior:'instant'});
+      }else if(destino==='financeiro'){
+        const cw=frame()?.contentWindow;
+        if(cw?.sincronizarPedidoCatalogo)await cw.sincronizarPedidoCatalogo();
+        mostrarFinanceiro();
       }else if(destino==='dados'){
         const cw=frame()?.contentWindow;
         if(cw?.sincronizarPedidoCatalogo)await cw.sincronizarPedidoCatalogo();
@@ -244,6 +330,7 @@ export function iniciarEntradaComercial(vitrine){
       }else{
         // Prepara a tela solicitada antes de exibir o documento incorporado.
         const f=frame();if(f && !f.getAttribute('src'))f.src=f.dataset.src;
+        if(destino==='pedido')await (await esperarCatalogo('abrirPedidoComercialPedido')).abrirPedidoComercialPedido();
         if(destino==='plantas')await (await esperarCatalogo('abrirPlantasComercialPedido')).abrirPlantasComercialPedido();
         if(destino==='modulo3d')await (await esperarCatalogo('abrirModulo3dComercialPedido')).abrirModulo3dComercialPedido();
         if(destino==='catalogo')await (await esperarCatalogo('abrirCatalogoComercialPedido')).abrirCatalogoComercialPedido();
@@ -261,13 +348,15 @@ export function iniciarEntradaComercial(vitrine){
     if(ocupado)return;
     ocupado=true;erroTrilha('');const botao=trilha.querySelector('.ct-avancar');botao.disabled=true;
     try{
-      const erro=validarDados();
+      const erro=validarDados({completo:true});
       if(erro){if(etapaAtual!=='dados'){mostrarDados();etapaAtual='dados';pintarTrilha(true);}throw Error(erro);}
       const f=frame();
       if(f?.getAttribute('src')){
         const cw=await esperarCatalogo('sincronizarPedidoCatalogo');
         await cw.sincronizarPedidoCatalogo();
       }
+      const erroFin=pendenciaFinanceiro();
+      if(erroFin){if(etapaAtual!=='financeiro'){mostrarFinanceiro();etapaAtual='financeiro';pintarTrilha(true);}throw Error(erroFin);}
       await window.__salvarPedidoOperacional?.();
     }
     catch(error){erroTrilha(error.message);}
@@ -276,12 +365,16 @@ export function iniciarEntradaComercial(vitrine){
   // O catálogo (iframe) usa estes dois: "editar dados" volta para a 1ª etapa, e quando a própria tela do
   // catálogo troca entre o acervo e a lista do projeto, a barra acompanha.
   window.__pedidoIrPara=irPara;
+  // Janela modal aberta dentro do catálogo do pedido: a área do catálogo ocupa a tela toda (por cima da barra de etapas).
+  window.__pedidoCatalogoModal=aberto=>tela.classList.toggle('catalogo-modal-aberto',Boolean(aberto));
   // Voltar navega pelas etapas; nos dados retorna para a Central de pedidos.
   trilha.querySelector('.ct-voltar').onclick=async()=>{
     if(ocupado)return;
-    if(etapaAtual==='financeiro')return irPara('lista');
-    if(etapaAtual==='lista')return irPara('dados');
-    if(etapaAtual==='modulo3d' || etapaAtual==='plantas')return irPara('lista');
+    if(etapaAtual==='pedido')return irPara('contrato');
+    if(etapaAtual==='contrato')return irPara('financeiro');
+    if(etapaAtual==='financeiro')return irPara('plantas');
+    if(etapaAtual==='plantas' || etapaAtual==='modulo3d')return irPara('lista');
+    if(etapaAtual==='lista')return irPara('catalogo');
     if(etapaAtual==='catalogo'){
       const cw=frame()?.contentWindow;
       if(cw?.voltarCatalogoComercial?.())return;

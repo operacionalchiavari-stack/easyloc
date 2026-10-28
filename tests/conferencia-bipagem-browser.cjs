@@ -14,9 +14,10 @@ const mock = `(() => {
       { id: "e1b", empresa_id: "e1", separacao_pedido_id: "p1", separacao_item_id: "s1", item_id: "i1", codigo: "12-002", sequencia: 2, total_item: 2 },
       { id: "e2a", empresa_id: "e1", separacao_pedido_id: "p1", separacao_item_id: "s2", item_id: "i2", codigo: "12-003", sequencia: 1, total_item: 1 },
       { id: "x9", empresa_id: "e1", separacao_pedido_id: "outro", separacao_item_id: "zz", item_id: "i9", codigo: "99-001", sequencia: 1, total_item: 1 }],
-    itens: [{ id: "i1", empresa_id: "e1", produto: "Cadeira Tiffany" }, { id: "i2", empresa_id: "e1", produto: "Mesa Goa" }],
+    itens: [{ id: "i1", empresa_id: "e1", produto: "Cadeira Tiffany", foto_url: "https://foto.teste/cadeira.png", volume_cubico: 0.2 }, { id: "i2", empresa_id: "e1", produto: "Mesa Goa" }],
     itens_patrimonios: [{ empresa_id: "e1", item_id: "i1", codigo_patrimonio: "CAD-001" }],
-    separacoes_leituras: []
+    separacoes_leituras: [],
+    logistica_motivos: [{ id: "m1", empresa_id: "e1", etapa: "carregamento", nome: "Falta de espaço no caminhão", ativo: true }]
   };
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
@@ -96,6 +97,10 @@ const mock = `(() => {
 
   await page.evaluate(() => { window.confirmarGlobal = async () => true; });
   await page.click("#cfConcluir");
+  await page.locator("dialog.cf-escolha-caminhao[open]").waitFor();assert.strictEqual(await page.locator("dialog.cf-confirmacao[open]").count(),0,"caminhão é confirmado antes das pendências");assert.match(await page.locator("dialog.cf-escolha-caminhao h3").innerText(),/Confirme o caminhão carregado/);await page.check("dialog.cf-escolha-caminhao input[value=c1]");await page.click("dialog.cf-escolha-caminhao [data-ok]");await page.locator("dialog.cf-pendencias[open]").waitFor();await page.click("dialog.cf-pendencias [type=submit]");assert.match(await page.locator("dialog.cf-pendencias [data-erro]").innerText(),/motivo/i,"exige motivo");assert.ok(await page.locator("dialog.cf-pendencias .cf-pend-itens img").count()>0,"foto do item");await page.selectOption("dialog.cf-pendencias select[name=motivo]","m1");await page.click("dialog.cf-pendencias [type=submit]");assert.match(await page.locator("dialog.cf-pendencias [data-erro]").innerText(),/data/i,"exige data");await page.fill("dialog.cf-pendencias input[name=data]",new Date(Date.now()+86400000).toISOString().slice(0,10));await page.fill("dialog.cf-pendencias input[name=hora]","14:30");await page.click("dialog.cf-pendencias [type=submit]");
+  const pend = await page.evaluate(() => window.__pendencia);
+  assert.strictEqual(pend.motivo_id, "m1"); assert.strictEqual(pend.hora, "14:30");
+  console.log("ok 4b - caminhão confirmado primeiro; pendências com foto, motivo e data/hora obrigatórios");
   await page.waitForFunction(() => window.__gravados.some((g) => g.t === "separacoes_pedidos"));
   const fim = await page.evaluate(() => window.__gravados.find((g) => g.t === "separacoes_pedidos").p);
   assert.strictEqual(fim.status_operacional, "carregado");

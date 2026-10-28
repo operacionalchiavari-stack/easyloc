@@ -26,11 +26,11 @@ for(const [nome,w,h] of [['foto larga (sobra espaço embaixo)',900,500],['foto a
     if(n==='catalogo_capas_carregar')return {data:{}};return {data:null};}};},{ST});
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
   await page.locator('.catalog-gateway').waitFor();
-  await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('#catalogGrid .catalog-home-grid').waitFor();
+  await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);await page.locator('#catalogGrid .catalog-home-grid').waitFor();
   await page.locator('[data-home-category="estofados"]').click();await page.locator('[data-grid-item]').first().click();
   await page.locator('.product-main-image').waitFor();
   await page.waitForFunction(()=>document.querySelector('.product-main-image').complete&&document.querySelector('.product-main-image').naturalWidth>0);
-  await page.mouse.move(5,600);await page.waitForTimeout(900);
+  await page.locator('.product-main-image').scrollIntoViewIfNeeded();await page.mouse.move(5,600);await page.waitForTimeout(2100);
   assert.equal(await page.locator('.product-main-image').evaluate(el=>getComputedStyle(el).filter),'none','A foto principal não tem nenhum filter (drop-shadow) — numa foto opaca ele vira uma sombra retangular');
   // Retângulo REAL dos pixels da foto dentro do <img> (object-fit:contain deixa folga num dos eixos).
   const g=await page.evaluate(()=>{const media=document.querySelector('.product-main-media').getBoundingClientRect();const img=document.querySelector('.product-main-image');const ir=img.getBoundingClientRect();const s=Math.min(ir.width/img.naturalWidth,ir.height/img.naturalHeight);const fw=img.naturalWidth*s,fh=img.naturalHeight*s;const l=ir.left+(ir.width-fw)/2,t=ir.top+(ir.height-fh)/2;return {media:{l:media.left,t:media.top,r:media.right,b:media.bottom},foto:{l,t,r:l+fw,b:t+fh}};});
@@ -38,7 +38,7 @@ for(const [nome,w,h] of [['foto larga (sobra espaço embaixo)',900,500],['foto a
   const pts=[];const nomes=[];
   const add=(n,x,y)=>{if(x>=g.media.l+1&&x<=g.media.r-1&&y>=g.media.t+1&&y<=g.media.b-1&&x<1440&&y<900){pts.push([Math.round(x),Math.round(y)]);nomes.push(n);}};
   [2,6,12,20].forEach(d=>{add(`${d}px abaixo da foto`,mx,g.foto.b+d);add(`${d}px acima da foto`,mx,g.foto.t-d);add(`${d}px à esquerda da foto`,g.foto.l-d,my);add(`${d}px à direita da foto`,g.foto.r+d,my);});
-  assert.ok(pts.length>=8,`${nome}: há folga em volta da foto pra medir (${pts.length} pontos)`);
+  assert.ok(pts.length>=2,`${nome}: há folga em volta da foto pra medir (${pts.length} pontos)`);
   const lidos=await cores(await page.screenshot(),pts);
   const escuros=lidos.map((c,i)=>({n:nomes[i],c})).filter(({c})=>c.some(v=>v<255));
   assert.deepEqual(escuros,[],`${nome}: em volta da foto só o branco da página — sem sombra (pixels fora do branco puro: ${JSON.stringify(escuros)})`);

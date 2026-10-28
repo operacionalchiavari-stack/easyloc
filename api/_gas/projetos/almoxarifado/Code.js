@@ -19,7 +19,7 @@ function initSistema() {
 
   criarAbaSeNaoExistir_(ss, NOME_ABA_PRODUTOS, [
     "ID","Codigo","Produto","Categoria","Setor","Unidade","EstoqueAtual","EstoqueMinimo",
-    "ValorCusto","ValorReposicao","Status","Observacoes","CriadoEm","AtualizadoEm"
+    "ValorCusto","ValorReposicao","Status","Observacoes","CriadoEm","AtualizadoEm","EstoqueIdeal"
   ]);
 
 criarAbaSeNaoExistir_(ss, NOME_ABA_MOV, [
@@ -142,7 +142,8 @@ dados.codigo || gerarCodigoInsumo(),
     dados.status || "Ativo",
     dados.observacoes || "",
     agora,
-    agora
+    agora,
+    normalizarNumero_(dados.estoqueIdeal) // out/2026: estoque ideal (compra automática)
   ]);
 
   return { ok:true, mensagem:"Produto cadastrado." };

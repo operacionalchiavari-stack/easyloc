@@ -1,8 +1,6 @@
 (function(){
   "use strict";
 
-  const ROUTES_KEY = "easyloc_roteirizacao_rotas";
-  const TEAMS_KEY = "easyloc_equipes_rotas";
 
   const DEFAULT_ROLES = [
     { id: "motorista", name: "Motorista", removable: false },
@@ -196,11 +194,10 @@
     return data || [];
   }
 
-  function loadRoutes(){
-    const parsed = parseJson(localStorage.getItem(ROUTES_KEY), []);
-    state.routes = Array.isArray(parsed)
-      ? parsed.filter((route) => route && route.id).map(normalizeRoute)
-      : [];
+  async function loadRoutes(){
+    const {data,error}=await state.supabase.from('logistica_rotas').select('id,dados').eq('empresa_id',state.empresaId);
+    if(error) throw error;
+    state.routes=(data||[]).map(row=>({...row.dados,id:row.id})).map(normalizeRoute);
   }
 
   function normalizeRoute(route, index){
@@ -242,12 +239,13 @@
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
   }
 
-  function loadTeams(){
-    const parsed = parseJson(localStorage.getItem(TEAMS_KEY), {});
-    state.teams = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  async function loadTeams(){
+    const {data,error}=await state.supabase.from('logistica_equipes_rotas').select('rota_id,dados').eq('empresa_id',state.empresaId);
+    if(error) throw error;
+    state.teams=Object.fromEntries((data||[]).map(row=>[row.rota_id,row.dados]));
   }
 
-  function saveTeams(){
+  async function saveTeams(){
     const normalized = {};
     Object.entries(state.teams).forEach(([routeId, team]) => {
       const roles = Array.isArray(team?.roles) ? team.roles : [];
@@ -263,7 +261,10 @@
       }
     });
     state.teams = normalized;
-    localStorage.setItem(TEAMS_KEY, JSON.stringify(state.teams));
+    const rota=selectedRoute();
+    if(!rota) throw Error('Selecione uma rota.');
+    const {error}=await state.supabase.from('logistica_equipes_rotas').upsert({empresa_id:state.empresaId,rota_id:rota.id,dados:state.teams[rota.id]||getTeam(rota.id),atualizado_em:new Date().toISOString()},{onConflict:'empresa_id,rota_id'});
+    if(error) throw error;
   }
 
   function defaultTeam(routeId){
@@ -1035,18 +1036,18 @@
     render();
   }
 
-  function saveCurrentTeam(){
+  async function saveCurrentTeam(){
     const route = selectedRoute();
     if(!route){
       notify("Selecione uma rota para salvar.", "Equipe das Rotas", "erro");
       return;
     }
-    saveTeams();
+    try { await saveTeams(); } catch(error) { notify(error.message,"Equipe das Rotas","erro"); return; }
     render();
     notify("Equipe salva com sucesso.", "Equipe das Rotas", "sucesso");
   }
 
-  function sendToExpedition(){
+  async function sendToExpedition(){
     const route = selectedRoute();
     if(!route) return;
     const team = getTeam(route.id);
@@ -1056,7 +1057,7 @@
       return;
     }
     team.expeditionSentAt = new Date().toISOString();
-    saveTeams();
+    try { await saveTeams(); } catch(error) { team.expeditionSentAt=null; notify(error.message,"Equipe das Rotas","erro"); return; }
     render();
     notify("Rota enviada para Expedicao.", "Equipe das Rotas", "sucesso");
   }
@@ -1311,8 +1312,12 @@
   window.EasyLocTeamDragDrop = window.EasyLocTeamDragDrop || TeamDragDrop;
 
   async function reloadAll(){
-    loadRoutes();
-    loadTeams();
+    await window.aguardarContexto?.();
+    state.supabase=window.supabaseClient;
+    state.empresaId=window.__CONTEXT?.empresa_id;
+    if(!state.supabase||!state.empresaId) throw Error('Sessao necessaria.');
+    await loadRoutes();
+    await loadTeams();
     await loadEmployees();
     await loadRouteDetails();
     if(!state.selectedRouteId || !state.routes.some((route) => route.id === state.selectedRouteId)){

@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Personalizações</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="estoque-personalizacoes.css?v=20260913c">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="estoque-personalizacoes.css?v=20261026-acentos">
+  <link rel="stylesheet" href="estoque-cartelas.css?v=20261022-cartelas">
+<link rel="stylesheet" href="../../Producao/producao.css?v=20261022-ordens">
 </head>
 <body>
 <!-- =====================================================
@@ -29,6 +31,13 @@
       <button type="button" class="btn primary" id="btnAddPersonalizacao">+ Adicionar Personalização</button>
     </div>
   </div>
+
+  <div class="pers-abas" role="tablist">
+    <button type="button" class="pers-aba is-ativa" data-pers-aba="personalizacoes" role="tab" aria-selected="true">Personalizações</button>
+    <button type="button" class="pers-aba" data-pers-aba="cartelas" role="tab" aria-selected="false">Cartelas de tecidos e tintas</button>
+  </div>
+
+  <div class="pers-aba-painel" data-pers-painel="personalizacoes">
 
   <!-- FILTERS -->
   <div class="filters-row">
@@ -75,7 +84,14 @@
       </tbody>
     </table>
   </div>
+  </div>
+
+  <!-- CARTELAS: catálogos de tecidos e tintas dos fornecedores (js/Estoque/estoque-cartelas.mjs) -->
+  <div class="pers-aba-painel hidden" data-pers-painel="cartelas" id="cartelasPainel"></div>
 </div>
+
+<!-- detalhe de uma cartela (tela, não modal) -->
+<div class="cartela-detail-view hidden" id="cartelaDetalhe"></div>
 
 <!-- ================= DETALHES DA PERSONALIZACAO (tela, nao modal) ================= -->
 <div class="personalizacao-detail-view hidden" id="modalOverlay">
@@ -182,12 +198,18 @@
 <!-- BLOCO: MATERIAIS UTILIZADOS -->
 <div class="card-section">
   <div class="card-title">Materiais utilizados</div>
+  <p class="mini-muted" style="margin:0 0 10px;">Materiais do Almoxarifado, na quantidade gasta para personalizar <strong>uma unidade</strong> do item. O pedido que levar esta personalização reserva esses materiais. Tecido ou tinta que o cliente escolhe: use <strong>Material escolhido pelo cliente</strong> — o cliente escolhe a opção na cartela, o preço muda conforme a opção e só ela é reservada.</p>
 
   <div id="insumosContainer"></div>
 
-<button type="button" class="btn primary" id="btnAddInsumo" style="margin-top:12px;">
-    + Adicionar insumo
+<div class="insumo-acoes">
+  <button type="button" class="btn primary" id="btnAddInsumo">
+    + Adicionar material
   </button>
+  <button type="button" class="btn secondary" id="btnAddCartela">
+    + Material escolhido pelo cliente (cartela)
+  </button>
+</div>
 
 </div>
 
@@ -290,10 +312,11 @@
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script type="module" src="../../../js/Estoque/estoque-personalizacoes.mjs?v=20261006-kits"></script>
+<script type="module" src="../../../js/Estoque/estoque-personalizacoes.mjs?v=20261022-producao"></script>
+<script type="module" src="../../../js/Estoque/estoque-cartelas.mjs?v=20261022-cartelas"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

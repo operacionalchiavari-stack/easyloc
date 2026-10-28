@@ -47,6 +47,11 @@ export function initAutocompleteLocaisEKm({
   })();
 
   window.__pedidoRenderizarLocalEvento = (local) => {
+    // Endereço completo do local, para o topo da prévia/PDF do pedido (out/2026).
+    window.__pedidoLocalAtual = local ? {
+      nome: local.nome_razao || "",
+      endereco: [String(local.endereco || "").trim(), local.numero_endereco && !String(local.endereco || "").includes(String(local.numero_endereco)) ? String(local.numero_endereco) : ""].filter(Boolean).join(", ")
+    } : null;
     localEventoDefinido = Boolean(local);
     renderizarObservacoesLocal({ local, obsDiv });
     renderizarMiniMapaPedido({ supabase, local });

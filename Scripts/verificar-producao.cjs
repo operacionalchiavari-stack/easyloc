@@ -1,0 +1,11 @@
+const fs=require('node:fs'),vm=require('node:vm'),{execFileSync}=require('node:child_process');
+const arquivos=['Modulos/Estoque/Acervo/acervo.js','Modulos/Estoque/Acervo/acervo-painel.js','Modulos/Estoque/Acervo/acervo-ordens.js','Modulos/Estoque/Acervo/acervo-inventario-qualidade.js','Modulos/Chiavari/CentralMetas/os-operacao.js','Modulos/Chiavari/CentralMetas/os-historico.js','Scripts/backup-operacional.cjs','Scripts/monitor-operacional.cjs','server/index.js'];
+for(const arquivo of arquivos)new vm.Script(fs.readFileSync(arquivo,'utf8'),{filename:arquivo});
+const html=fs.readFileSync('Modulos/Chiavari/CentralMetas/itens-danificados.html','utf8');
+for(const m of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))if(m[1].trim())new vm.Script(m[1]);
+if(/return window\.carregarExemplosManutencao\(\)/.test(html))throw Error('O cronograma não pode carregar exemplos por padrão');
+if(/dados\.exemplos=\s*\(/.test(fs.readFileSync(arquivos[0],'utf8')))throw Error('O acervo não pode gerar ocorrências simuladas por padrão');
+const tracked=execFileSync('git',['ls-files'],{encoding:'utf8'}).split(/\r?\n/);
+if(tracked.some(f=>/(^|\/)\.env($|\.)/.test(f)&&!f.endsWith('.example')||/^\.backups\//.test(f)))throw Error('Arquivo sigiloso rastreado no repositório');
+for(const f of ['.vercelignore','.github/workflows/deploy-pages.yml'])if(!fs.readFileSync(f,'utf8').includes('.backups'))throw Error('O deploy precisa excluir backups');
+console.log('Preparação: sintaxe, ausência de exemplos automáticos e exclusão dos backups verificadas.');

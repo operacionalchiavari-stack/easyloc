@@ -1,6 +1,6 @@
 import { colorirValor } from "./pedido.valores-ui.mjs";
 import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
-import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261021-pre-reserva";
+import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261027-salvar-completo";
 
 export function initItens({ supabase, els }){
 
@@ -178,6 +178,14 @@ function atualizarResumo() {
 
   });
 
+  // Serviços adicionais do pedido comercial (lista do catálogo, dados.servicos — out/2026).
+  const projetoComercial = (window.__pedidoProjetoComercial || window.__PEDIDO_DADOS_ATUAL?.observacoes?.projeto_comercial)?.dados;
+  for(const sv of (projetoComercial?.servicos || [])) servicos += (Number(sv.quantidade) || 0) * (Number(sv.valor) || 0);
+  // Personalização escolhida nos itens (cartelas de tecido/tinta, out/2026): valor por unidade × quantidade da linha.
+  for(const amb of (projetoComercial?.ambientes || [])) for(const linha of (amb.itens || [])){
+    if(linha.personalizacao_id && Number(linha.personalizacao_valor) > 0) customizacoes += (Number(linha.quantidade) || 0) * Number(linha.personalizacao_valor);
+  }
+
   const descontoLocacao = 0;
   const locacaoFinal = locacaoBruta - descontoLocacao;
 
@@ -243,6 +251,7 @@ window.__TOTAL_PEDIDO = totalFinalPedido;
 // Customizações e serviços adicionais entram na locação.
 window.__PEDIDO_VALORES = {
   locacao: Math.max(locacaoFinal + customizacoes + servicos, 0),
+  locacao_bv: Math.max(locacaoFinal, 0),
   frete: Math.max(freteFinal, 0),
   montagem: Math.max(montagemFinal, 0),
   total: totalFinalPedido
@@ -298,12 +307,13 @@ function calcularVolumeTotalPedido(){
 
 }
 
-  function recalcularLinha(tr){
+  // Total da linha (quantidade × valor − desconto), sem recalcular o resto do pedido.
+  function calcularTotalLinha(tr){
     const qtdEl = tr.querySelector(".qtd");
     const descontoEl = tr.querySelector(".input-desconto");
     const totalEl = tr.querySelector(".valor-total");
 
-    if(!qtdEl || !totalEl) return;
+    if(!qtdEl || !totalEl) return false;
 
     const quantidade = parseFloat(qtdEl.innerText) || 0;
     const valorUnit = parseFloat(tr.dataset.valorUnitario) || 0;
@@ -314,7 +324,10 @@ function calcularVolumeTotalPedido(){
     const totalFinal = subtotal - valorDesconto;
 
     totalEl.innerText = formatCurrency(totalFinal > 0 ? totalFinal : 0);
-
+    return true;
+  }
+  function recalcularLinha(tr){
+    if(!calcularTotalLinha(tr)) return;
     atualizarResumo();
     calcularVolumeTotalPedido();
   }
@@ -711,8 +724,9 @@ function calcularVolumeTotalPedido(){
 
   window.pedidoAdicionarDoCatalogo = async function(id){
     const empresa=window.__CONTEXT?.empresa_id;if(!empresa)throw Error('Empresa não identificada.');
-    const {data:it,error}=await supabase.from('itens').select('id,codigo,produto,descricao_total,valor_locacao,valor_reposicao,volume_cubico,foto_url').eq('id',id).eq('empresa_id',empresa).eq('ativo',true).eq('locar_somente_kit',false).single();
-    if(error || !it)throw Error('Este item não está disponível para adicionar avulso.');
+    // Componentes (out/2026) entram avulsos no pedido comercial mesmo marcados "locar somente no kit".
+    const {data:it,error}=await supabase.from('itens').select('id,codigo,produto,descricao_total,valor_locacao,valor_reposicao,volume_cubico,foto_url,tipo,locar_somente_kit').eq('id',id).eq('empresa_id',empresa).eq('ativo',true).single();
+    if(error || !it || (it.locar_somente_kit && it.tipo!=='Componente'))throw Error('Este item não está disponível para adicionar avulso.');
     const existente=Array.from(tbody.querySelectorAll('tr.item-row')).find(tr=>tr.dataset.itemId===id);
     if(existente){const qtd=existente.querySelector('.qtd');qtd.innerText=String((Number(qtd.innerText)||0)+1);recalcularLinha(existente);return;}
     addItemBtn.click();const tr=tbody.querySelector('tr.item-row:last-child');aplicarItemNaLinha(tr,it);recalcularLinha(tr);
@@ -730,10 +744,18 @@ function calcularVolumeTotalPedido(){
     const itens=Array.from(tbody.querySelectorAll('tr.item-row')).filter(tr=>tr.dataset.itemId).map(tr=>({item_id:tr.dataset.itemId,quantidade:Number(tr.querySelector('.qtd')?.innerText)||1}));
     return {id:window.__PEDIDO_ATUAL_ID || crypto.randomUUID(),...window.pedidoMetadadosCatalogo(),status:'rascunho',dados:{ambientes:[{id:crypto.randomUUID(),nome:'Evento',itens,renders:[],notas:''}],plantas:[]}};
   };
-  let sincronizacao=Promise.resolve();
+  let sincronizacao=Promise.resolve(), assinaturaAplicada='';
+  // Troca de aba (out/2026): antes cada item regravava a linha e recalculava resumo, parcelas e frete (com ida ao banco)
+  // UMA VEZ POR ITEM, mesmo sem nada mudar. Agora: nada mudou → não mexe na tela; mudou → só as linhas diferentes, e os
+  // totais/frete uma vez só no fim.
   window.pedidoSincronizarProjetoCatalogo = project => {
     const snapshot=structuredClone(project);
     sincronizacao=sincronizacao.catch(()=>{}).then(async()=>{
+      const d=snapshot?.dados||{};
+      const assinatura=JSON.stringify([(d.ambientes||[]).map(a=>(a.itens||[]).map(i=>[i.item_id,i.quantidade,i.personalizacao_id||'',i.personalizacao_valor||0])),d.servicos||[]]);
+      const linhasAtuais=Array.from(tbody.querySelectorAll('tr.item-row')).filter(tr=>tr.dataset.itemId).length;
+      if(assinatura===assinaturaAplicada && linhasAtuais){window.__pedidoProjetoComercial=snapshot;return;}
+      let mudou=false;
       const quantidades=new Map();
       for(const amb of snapshot.dados.ambientes)for(const item of amb.itens){
         const qtd=Number(item.quantidade);if(!Number.isFinite(qtd)||qtd<=0)continue;
@@ -741,14 +763,30 @@ function calcularVolumeTotalPedido(){
       }
       for(const [id,qtd] of quantidades){
         let tr=Array.from(tbody.querySelectorAll('tr.item-row')).find(row=>row.dataset.itemId===id);
-        if(!tr){await window.pedidoAdicionarDoCatalogo(id);tr=Array.from(tbody.querySelectorAll('tr.item-row')).find(row=>row.dataset.itemId===id);}
+        if(!tr){await window.pedidoAdicionarDoCatalogo(id);tr=Array.from(tbody.querySelectorAll('tr.item-row')).find(row=>row.dataset.itemId===id);mudou=true;}
         if(!tr)throw Error('Não foi possível sincronizar um item do pedido.');
-        tr.querySelector('.qtd').innerText=String(qtd);recalcularLinha(tr);
+        const qtdEl=tr.querySelector('.qtd');
+        if(qtdEl.innerText.trim()!==String(qtd)){qtdEl.innerText=String(qtd);calcularTotalLinha(tr);mudou=true;}
       }
-      for(const tr of tbody.querySelectorAll('tr.item-row'))if(tr.dataset.itemId&&!quantidades.has(tr.dataset.itemId))tr.remove();
-      window.__pedidoProjetoComercial=snapshot;atualizarResumo();
+      for(const tr of tbody.querySelectorAll('tr.item-row'))if(tr.dataset.itemId&&!quantidades.has(tr.dataset.itemId)){tr.remove();mudou=true;}
+      window.__pedidoProjetoComercial=snapshot;
+      atualizarResumo();
+      if(mudou)calcularVolumeTotalPedido();
+      assinaturaAplicada=assinatura;
     });
     return sincronizacao;
+  };
+  // Grava o projeto do pedido (renderizações, cenas, ambientes) direto no pedido já salvo, sem esperar "Salvar pedido"
+  // (out/2026): a renderização com IA que termina depois de salvar, ou com a pessoa já fora da tela, não se perde mais.
+  window.__pedidoGravarProjetoComercial = async () => {
+    await sincronizacao.catch(()=>{});
+    const pedidoId=window.__PEDIDO_ATUAL_ID, projeto=window.__pedidoProjetoComercial;
+    const empresaId=window.__CONTEXT?.empresa_id || sessionStorage.getItem('empresa_id');
+    if(!pedidoId || !projeto || !empresaId || !window.supabaseClient) return false;
+    const { data, error } = await window.supabaseClient.rpc('pedido_salvar_projeto_comercial',{ p_empresa_id: empresaId, p_pedido_id: pedidoId, p_projeto: projeto });
+    if(error) throw error;
+    if(window.__PEDIDO_DADOS_ATUAL){ window.__PEDIDO_DADOS_ATUAL.observacoes = { ...(window.__PEDIDO_DADOS_ATUAL.observacoes || {}), projeto_comercial: projeto }; }
+    return Boolean(data);
   };
   vitrine.querySelector('.vitrine-cabecalho').innerHTML='<button type="button" class="comercial-ver-selecao">Ver seleção do pedido</button>';
   vitrine.querySelector('.comercial-ver-selecao').onclick=()=>document.querySelector('.pedido-items-panel').scrollIntoView({behavior:'smooth'});

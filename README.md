@@ -17,11 +17,6 @@ Sistema ERP/CRM para gerenciar locações com integração de IA.
 ### 🚚 **Logística**
 - Cadastro e gerenciamento de caminhões
 
-### 🧠 **IA (LIA)**
-- Assistente inteligente com RAG (Retrieval Augmented Generation)
-- Busca semântica em base de conhecimento
-- Chat com contexto da empresa
-
 ---
 
 ## 🔧 Configuração Inicial
@@ -89,14 +84,7 @@ meu-sistema/
 ├── supabase/
 │   ├── config.toml                      # Config Supabase local
 │   └── functions/
-│       ├── rag-buscar-conhecimento/     # Busca no RAG (IA)
-│       ├── lia-chat/                    # Chat inteligente
-│       ├── gerar-embedding/             # Gera embeddings
 │       └── calcular-distancia/          # Calcula distância
-├── inteligencia-artificial/
-│   └── assistente-ia.js                 # Lógica do assistente
-├── Scripts/
-│   └── gerar-embedding.mjs              # Script para gerar embeddings
 └── utils/
     └── validacoes.js                    # Funções de validação reutilizáveis
 ```

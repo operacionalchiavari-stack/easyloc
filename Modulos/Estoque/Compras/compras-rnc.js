@@ -59,7 +59,7 @@
   ];
   const DECISION_LABEL = Object.fromEntries(DECISIONS.map(([v,l])=>[v,l]));
   const DECISION_ICON = { aceitar:'circle-check', abater:'badge-percent', devolver_repor:'rotate-ccw', devolver_cancelar:'circle-x' };
-  const REASON_LABEL = { quantidade_menor:'Faltou material', quantidade_maior:'Veio material a mais', material_avariado:'Material avariado', embalagem_danificada:'Embalagem danificada', produto_diferente:'Produto diferente do pedido', produto_nao_solicitado:'Produto não solicitado', lote_divergente:'Lote diferente', validade_divergente:'Validade diferente', outro:'Outro motivo' };
+  const REASON_LABEL = { quantidade_menor:'Faltou material', quantidade_maior:'Veio material a mais', material_avariado:'Material avariado', embalagem_danificada:'Embalagem danificada', produto_diferente:'Produto diferente do pedido', produto_nao_solicitado:'Produto não solicitado', validade_divergente:'Validade diferente', outro:'Outro motivo' };
   const RECEIPT_DECISION_LABEL = { aceitar_quantidade:'Dar entrada no que chegou', receber_parcialmente:'Dar entrada no que chegou bom', deixar_pendente:'Segurar a entrada por enquanto', devolver_fornecedor:'Devolver ao fornecedor', recusar_item:'Devolver ao fornecedor' };
   const money = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   function ensureDecideStyle() {

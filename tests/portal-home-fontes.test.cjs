@@ -6,7 +6,7 @@ test('Home usa funcionários do RH, reconhecimentos da Central e não lê a gale
  const ctx={CacheService:{getScriptCache:()=>({get:()=>null,put(){}})},Utilities:{formatDate:()=> '2026-08-15'}};
  vm.createContext(ctx);vm.runInContext(fs.readFileSync('api/_gas/projetos/portal/Mural.js','utf8'),ctx);
  const leituras=[];ctx.MURAL_ler_=tipo=>{leituras.push(tipo);if(tipo!=='avisos')throw Error('Fonte antiga: '+tipo);return [];};
- ctx.MURAL_hojeISO_=()=> '2026-10-14';ctx.MURAL_parabensLer_=()=>[];ctx.MURAL_numerosMes_=()=>null;
+ ctx.MURAL_hojeISO_=()=> '2026-10-14';ctx.MURAL_parabensLer_=()=>[];ctx.MURAL_parabensTodos_=()=>[];ctx.MURAL_numerosMes_=()=>null;
  ctx.MURAL_premiacoesCentral_=()=>[{nome:'Ana',titulo:'Meta atingida',data:'2026-10-01'}];
  const r=ctx.MURAL_dadosPublicos_(true,[{id:'rh-ana',nome:'Ana',ativo:true,aniversario:'14/10',admissao:'2026-10-01'},{id:'inativo',nome:'Inativo',ativo:false,aniversario:'14/10'}]);
  assert.deepEqual(leituras,['avisos']);assert.equal(r.aniversariantes.length,1);assert.equal(r.aniversariantes[0].id,'rh-ana');

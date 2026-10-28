@@ -1,10 +1,21 @@
 import { renderizarFreteCard } from "./pedido.ui-frete.mjs";
-import { atualizarMontagemSugerida } from "./pedido.montagem.mjs";
+import { atualizarMontagemSugerida } from "./pedido.montagem.mjs?v=20261026-acentos";
 
 export function initFrete(ctx){
 
   const supabase = ctx.supabase;
   let revisao = 0;
+  // Categorias de caminhão quase nunca mudam: guardadas por 5 minutos (antes cada recálculo do frete ia ao banco,
+  // várias vezes por troca de aba). Chamadas ao mesmo tempo esperam a mesma busca.
+  let cacheCategorias = null;
+  const buscarCategorias = (empresaId) => {
+    if(cacheCategorias && cacheCategorias.empresa === empresaId && Date.now() - cacheCategorias.em < 300000) return cacheCategorias.promessa;
+    const promessa = supabase.from("categorias_caminhao").select("id, nome, volume_maximo, valor_km, ativo")
+      .eq("empresa_id", empresaId).eq("ativo", true)
+      .then(r => { if(r.error) cacheCategorias = null; return r; });
+    cacheCategorias = { empresa: empresaId, em: Date.now(), promessa };
+    return promessa;
+  };
   document.getElementById("freteKmManual")?.addEventListener("change", event => {
     const km = Number(event.target.value);
     if(!Number.isFinite(km) || km < 0) return;
@@ -27,11 +38,7 @@ export function initFrete(ctx){
       return;
     }
 
-    const { data: categorias, error } = await supabase
-      .from("categorias_caminhao")
-      .select("id, nome, volume_maximo, valor_km, ativo")
-      .eq("empresa_id", empresaId)
-      .eq("ativo", true);
+    const { data: categorias, error } = await buscarCategorias(empresaId);
 
     if(atual !== revisao) return;
     if(error || !categorias?.length){

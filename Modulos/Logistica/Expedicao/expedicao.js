@@ -16,7 +16,7 @@
   const SEPARADO = new Set(["separado", "separado_com_divergencia"]);
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  const s = { sb: null, empresa: null, pedidos: [], volumes: new Map(), carregando: false };
+  const s = { sb: null, empresa: null, pedidos: [], volumes: new Map(), ocorrencias: new Map(), carregando: false };
 
   const dataBr = (v) => {
     if (!v) return "-";
@@ -33,20 +33,22 @@
   const idaConcluida = (p) => ["carregado", "retornado"].includes(p.status_operacional) || !!p.operacao?.carregamento?.concluido_em;
   const descargaConcluida = (p) => !!p.operacao?.descarregamento?.concluido_em;
   const voltaConcluida = (p) => p.status_operacional === "retornado" || !!p.operacao?.retorno?.concluido_em;
+  function faltas(p,tipo){
+    const etapa=tipo==='ida'?'carregamento':tipo;
+    const registro=p.operacao?.[etapa];
+    if(!registro?.concluido_em || p.encerrado_operacional_em)return [];
+    const itens=Array.isArray(registro.faltando)?registro.faltando:Array.from({length:Math.min(Number(registro.faltando)||0,1000)},()=>({}));
+    return itens.filter(item=>etapa!=='retorno'||!s.ocorrencias.get(String(p.id))?.get(item.codigo)?.resolvida_em);
+  }
+  const colunaFinal=(p,tipo)=>faltas(p,tipo).length?'pendencias':'conferidos';
 
   // Cartões do quadro: { p, tipo: "ida"|"retorno", col: "aguardando"|"andamento"|"conferidos" }
   function cartoes(lista) {
     const out = [];
-    lista.forEach((p) => {
-      const v = vol(p);
-      if (!idaConcluida(p)) out.push({ p, tipo: "ida", col: v.carregadas > 0 ? "andamento" : "aguardando" });
-      else if (!voltaConcluida(p)) out.push({ p, tipo: "ida", col: "conferidos" });
-      if (idaConcluida(p) && !p.encerrado_operacional_em) {
-        out.push({ p, tipo: "descarregamento", col: descargaConcluida(p) ? "conferidos" : (v.descarregadas > 0 ? "andamento" : "aguardando") });
-      }
-      if (descargaConcluida(p) && !p.encerrado_operacional_em) {
-        out.push({ p, tipo: "retorno", col: voltaConcluida(p) ? "conferidos" : (v.voltaram > 0 ? "andamento" : "aguardando") });
-      }
+    lista.filter(p=>!p.somente_consulta && ['expedicao','descarregamento','retorno_simultaneo'].includes(p.fluxo_etapa)).forEach((p) => {
+      const tipo=p.fluxo_etapa==='expedicao'?'ida':'descarregamento';
+      const registro=p.operacao?.[tipo==='ida'?'carregamento':'descarregamento'];
+      out.push({p,tipo,col:registro?.iniciado_em?'andamento':'aguardando'});
     });
     const data = (c) => String((c.tipo !== "ida" ? c.p.data_coleta : c.p.data_entrega) || c.p.data_evento || "9999");
     return out.sort((a, b) => data(a).localeCompare(data(b)));
@@ -58,17 +60,17 @@
     const descarga = tipo === "descarregamento";
     const numero = String(p.numero_pedido || "-");
     const feito = p.operacao?.[volta ? "retorno" : descarga ? "descarregamento" : "carregamento"];
-    let nota = "";
-    if (col === "conferidos" && feito) {
-      const falta = Array.isArray(feito.faltando) ? feito.faltando.length : Number(feito.faltando) || 0;
+    let nota = p.fluxo_etapa==='retorno_simultaneo' ? 'Retorno simultâneo com a Triagem' : '';
+    if ((col === "conferidos" || col === "pendencias") && feito) {
+      const falta = faltas(p,tipo).length;
       nota = (volta ? "Retorno conferido " : descarga ? "Descarregado " : "Carregado ") + dataHoraBr(feito.concluido_em) + (feito.por ? " por " + feito.por : "") +
         (falta ? " · " + falta + (volta ? " não voltou" : " pendência(s)") : "");
     } else if (volta) {
       nota = "Conferência às cegas";
     } else if (!SEPARADO.has(p.status)) {
       nota = "Ainda em separação";
-    } else if (!v.total) {
-      nota = "Sem etiquetas de envio: imprima na separação";
+    } else if (!v.total && !nota) {
+      nota = "Conferência por quantidade";
     }
     let progresso = "";
     if (col === "andamento" && !volta) {
@@ -79,6 +81,12 @@
     } else if (col === "andamento" && volta) {
       progresso = '<div class="exp-lidos">' + v.voltaram + " peça" + (v.voltaram === 1 ? "" : "s") + " lida" + (v.voltaram === 1 ? "" : "s") + "</div>";
     }
+    const carregados = p.operacao?.carregamento?.caminhoes || p.operacao?.carregamento_caminhoes || [];
+    const usaCarregados = volta || descarga || col === "conferidos" || col === "pendencias";
+    const lista = usaCarregados ? carregados : (s.caminhoes?.get(String(p.id)) || []);
+    const caminhoes = usaCarregados && !carregados.length ? "" :
+      '<div class="exp-caminhoes' + (lista.length ? "" : " is-vazio") + '"><span>' + (usaCarregados ? "Carregado em" : "Caminhões programados") + "</span>" +
+      (lista.length ? lista.map((c) => '<b title="' + esc([c.placa, c.modelo].filter(Boolean).join(" · ")) + '">' + esc(c.codigo || c.placa || "Caminhão") + (c.codigo && c.placa && !/^SEM PLACA/i.test(c.placa) ? "<small>" + esc(c.placa) + "</small>" : "") + "</b>").join("") : "<em>Nenhum caminhão programado no Painel Logístico</em>") + "</div>";
     const meta = (volta || descarga)
       ? "Coleta " + esc(dataBr(p.data_coleta || p.data_evento))
       : "Entrega " + esc(dataBr(p.data_entrega || p.data_evento)) + " · " + v.total + " volume" + (v.total === 1 ? "" : "s");
@@ -89,16 +97,18 @@
       '<div class="separacao-card-mainline"><strong>' + esc(p.cliente_nome || "Cliente não informado") + "</strong><span>" +
       esc(p.tipo_evento || "Evento") + " · " + esc(local(p)) + "</span></div>" +
       '<div class="separacao-card-meta-line">' + meta + "</div>" +
-      progresso + (nota ? '<div class="separacao-lock-note">' + esc(nota) + "</div>" : "") + "</article>";
+      caminhoes +
+      progresso + (nota ? '<div class="separacao-lock-note">' + esc(nota) + "</div>" : "") +
+      (col==='pendencias'?'<div class="exp-pendencia-resumo"><b>'+faltas(p,tipo).length+' item(ns) com pendência</b>'+faltas(p,tipo).filter(f=>f.item).slice(0,3).map(f=>'<small>'+esc(f.item)+(f.faltam?' · '+esc(f.faltam)+' faltante(s)':'')+'</small>').join('')+'</div>':'') + "</article>";
   }
 
   function pintar() {
     const termo = ($("expBusca").value || "").trim().toLowerCase();
     const lista = s.pedidos.filter((p) => !termo || [p.numero_pedido, p.cliente_nome, p.tipo_evento, local(p)].join(" ").toLowerCase().includes(termo));
-    const grupos = { aguardando: [], andamento: [], conferidos: [] };
+    const grupos = { aguardando: [], andamento: [], conferidos: [], pendencias: [] };
     cartoes(lista).forEach((c) => grupos[c.col].push(c));
-    const vazio = { aguardando: "Nada aguardando conferência.", andamento: "Nenhuma conferência em andamento.", conferidos: "Nada conferido por enquanto." };
-    [["aguardando", "expColAguardando", "expContAguardando"], ["andamento", "expColAndamento", "expContAndamento"], ["conferidos", "expColCarregados", "expContCarregados"]].forEach(([g, col, cont]) => {
+    const vazio = { aguardando: "Nada aguardando conferência.", andamento: "Nenhuma conferência em andamento.", conferidos: "Nada conferido por enquanto.", pendencias: "Nenhuma pendência de conferência." };
+    [["aguardando", "expColAguardando", "expContAguardando"], ["andamento", "expColAndamento", "expContAndamento"], ["conferidos", "expColCarregados", "expContCarregados"], ["pendencias", "expColPendencias", "expContPendencias"]].forEach(([g, col, cont]) => {
       $(cont).textContent = grupos[g].length;
       $(col).innerHTML = grupos[g].length ? grupos[g].map(cartao).join("") : '<div class="empty-state">' + vazio[g] + "</div>";
     });
@@ -123,19 +133,24 @@
     if (s.carregando || !s.sb || !s.empresa) return;
     s.carregando = true;
     try {
-      const desde = new Date(Date.now() - 15 * 864e5).toISOString().slice(0, 10);
-      const { data, error } = await s.sb.from("separacoes_pedidos")
-        .select("*")
-        .eq("empresa_id", s.empresa).in("status_comercial", STATUS_COMERCIAL)
-        .or("data_entrega.gte." + desde + ",data_coleta.gte." + desde + ",and(data_entrega.is.null,data_evento.gte." + desde + ")")
-        .order("data_entrega", { ascending: true, nullsFirst: false });
-      if (error) throw error;
-      s.pedidos = (data || []).filter((p) => p.status !== "cancelado");
+      s.pedidos = await window.PedidoFluxo.fila(s.sb,s.empresa,'expedicao');
+      s.ocorrencias=new Map();
+      for(let i=0;i<s.pedidos.length;i+=100){
+        const {data:ocorrencias,error:erroOcorrencias}=await s.sb.from('operacao_ocorrencias').select('pedido_id,codigo,resolvida_em').eq('empresa_id',s.empresa).eq('tipo','falta').in('pedido_id',s.pedidos.slice(i,i+100).map(p=>p.id));
+        if(erroOcorrencias)throw erroOcorrencias;
+        for(const o of ocorrencias||[]){const mapa=s.ocorrencias.get(String(o.pedido_id))||new Map();mapa.set(o.codigo,o);s.ocorrencias.set(String(o.pedido_id),mapa);}
+      }
+      s.caminhoes=new Map();
+      for(let i=0;i<s.pedidos.length;i+=100){
+        const {data:cams,error:erroCam}=await s.sb.rpc('operacao_caminhoes_programados',{p_pedidos:s.pedidos.slice(i,i+100).map(p=>p.id)});
+        if(erroCam){console.warn('caminhões programados',erroCam);break;}
+        for(const c of cams||[]){const k=String(c.pedido_id);const l=s.caminhoes.get(k)||[];l.push(c);s.caminhoes.set(k,l);}
+      }
       const etq = await etiquetasDe(s.pedidos.map((p) => p.id));
       s.volumes = new Map();
       etq.forEach((e) => {
         const k = String(e.separacao_pedido_id);
-        const v = s.volumes.get(k) || { total: 0, carregadas: 0, voltaram: 0 };
+        const v = s.volumes.get(k) || { total: 0, carregadas: 0, voltaram: 0, descarregadas: 0 };
         v.total += 1;
         if (e.lida_carregamento_em) v.carregadas += 1;
         if (e.lida_retorno_em) v.voltaram += 1;

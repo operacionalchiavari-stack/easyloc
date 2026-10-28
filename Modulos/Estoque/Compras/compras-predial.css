@@ -1,0 +1,10 @@
+html:root:is(#compras-predial,html) dialog.predial-atendimento{width:min(1000px,calc(100vw - 40px))!important;max-width:1000px!important}
+.predial-atendimento fieldset{border:0;padding:0;margin:20px 0 0;min-width:0}
+html:root:is(#compras-predial,html) .predial-atendimento .predial-grade{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:20px!important}
+.predial-atendimento .predial-inteira{grid-column:1/-1}
+.predial-atendimento .predial-descricao{white-space:pre-wrap;color:#5c6775}
+.predial-atendimento .predial-pagamento{padding:18px;border:1px solid #dfe4eb;background:#f8fafc;border-radius:12px}
+.predial-atendimento .predial-aviso{background:#fff6e5;border:1px solid #e9d8ad;color:#77561e;padding:12px 14px;border-radius:9px;font-size:13px;line-height:1.5}
+.predial-atendimento .predial-parcela{display:grid;grid-template-columns:90px 1fr 1fr;align-items:center;gap:14px;margin-top:16px}
+.predial-atendimento [hidden]{display:none!important}
+@media(max-width:650px){html:root:is(#compras-predial,html) .predial-atendimento .predial-grade{grid-template-columns:1fr!important}.predial-atendimento .predial-parcela{grid-template-columns:1fr}.predial-atendimento footer{flex-wrap:wrap}}

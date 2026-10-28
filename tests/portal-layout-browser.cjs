@@ -1,0 +1,7 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{const page=await browser.newPage();
+ const html=fs.readFileSync('dashboard.html','utf8'),css=[...html.matchAll(/<link\b[^>]*href="([^"?]+\.css)(?:\?[^"]*)?"[^>]*>/g)].map(m=>m[1]).filter(p=>!/^https?:/.test(p));
+ await page.route('**/*',r=>r.abort());await page.setContent(html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,''));
+ for(const p of css)await page.addStyleTag({content:fs.readFileSync(path.resolve(p),'utf8').replace(/@import[^;]+;/g,'')});
+ for(const width of [1440,1024,390]){await page.setViewportSize({width,height:900});const r=await page.locator('#sidebar').boundingBox();if(width>860)assert.ok(r&&r.width>0);if(width>860)assert.equal(await page.locator('#sidebarLogo').isVisible(),true);if(width>860){assert.ok(Math.abs(r.x)<2);assert.ok(Math.abs(r.width-width)<2);assert.ok(r.height<=90);assert.equal(await page.locator('#sidebarMonograma').isVisible(),false);}assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
+ console.log('PASS: menu atual, logo inteira e layout sem rolagem lateral em desktop e celular.');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

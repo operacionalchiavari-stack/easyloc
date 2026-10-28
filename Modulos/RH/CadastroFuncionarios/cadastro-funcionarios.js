@@ -4,7 +4,7 @@
   const client = window.supabaseClient;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const levels = ['Administrador', 'Recursos Humanos', 'Gestor', 'Financeiro', 'Líder de setor', 'Operador', 'Qualidade', 'Almoxarifado', 'Visualizador'];
-  const sectors = ['Administrativo', 'Comercial', 'Financeiro', 'Logística', 'Estoque', 'Almoxarifado', 'Triagem', 'Carregamento', 'Montagem', 'Produção', 'Manutenção', 'Marcenaria', 'Solda', 'Acabamento e Pintura', 'Costura', 'Forração', 'Limpeza de Estofados', 'Setor 01', 'Setor 02', 'Setor 03'];
+  let opcoesRh = [];
   let proprio = false, context, employees = [], catalog = [], mode = 'create', photo = '', preview = '', busy = false, returnFocus;
   const photoUrls = new Map();
   const can = key => window.EasyLocPermissions.hasPermission(key, false);
@@ -144,8 +144,13 @@
       if (employee && employee.acesso_sistema !== false) selected = (await rpc('get_permissoes_usuario_resolvidas', { p_empresa_id: context.empresa_id, p_usuario_id: id })).filter(p => p.permitido).map(p => p.chave);
     } catch (error) { message(error.message, true); return; }
     $('funcionarioForm').reset(); photo = ''; preview = '';
-    const options = [...new Set([...sectors, ...employees.map(e => e.setor).filter(Boolean)])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    $('funcSetor').innerHTML = '<option value="">Selecione</option>' + options.map(s => `<option>${esc(s)}</option>`).join('');
+    const opcoesResult=await client.from('rh_cadastro_opcoes').select('*').eq('empresa_id',context.empresa_id).eq('ativo',true).order('nome');
+    if(opcoesResult.error){message(opcoesResult.error.message,true);return;}
+    opcoesRh=opcoesResult.data || [];
+    for(const [campo,tipo,valor] of [['funcSetor','setor',employee?.setor],['funcCargo','cargo',employee?.cargo]]){
+      const nomes=[...new Set([...opcoesRh.filter(o=>o.tipo===tipo).map(o=>o.nome),...(valor?[valor]:[])])].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+      $(campo).innerHTML='<option value="">Selecione</option>'+nomes.map(nome=>'<option>'+esc(nome)+'</option>').join('');
+    }
     $('funcNivel').innerHTML = levels.map(s => `<option>${esc(s)}</option>`).join('');
     $('funcionarioId').value = id || '';
     const fields = { funcNome: 'nome', funcSetor: 'setor', funcCargo: 'cargo', funcLogin: 'login', funcEmail: 'email', funcTelefone: 'telefone', funcFotoValue: 'foto_url', funcCpf: 'cpf',funcSalario:'salario_bruto',funcAdmissao:'data_admissao',funcEquipe:'equipe_operacional' };
@@ -238,7 +243,8 @@
       const liderAntes = !!employees.find(x => x.id === idSalvo)?.lider_operacao;
       if (idSalvo && !proprio && liderAntes !== $('funcLider').checked) await rpc('rh_definir_lider', { p_empresa_id: context.empresa_id, p_funcionario: idSalvo, p_lider: $('funcLider').checked });
       busy = false; closeForm();
-      message(result.warning || 'Funcionário salvo com sucesso.', Boolean(result.warning));
+      message('');
+      window.alertaModal(result.warning || 'Funcionário salvo com sucesso.', result.warning ? 'Atenção' : 'Sucesso', result.warning ? 'aviso' : 'sucesso');
       await loadEmployees();
     } catch (error) {
       if (!$('funcionarioFormCard').classList.contains('hidden')) { if (window.alerta) window.alerta(error.message); else alert(error.message); }

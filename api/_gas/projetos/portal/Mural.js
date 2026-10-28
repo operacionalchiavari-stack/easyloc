@@ -46,7 +46,7 @@ function MURAL_ler_(tipo) {
 }
 
 function MURAL_foto_(id, largura) {
-  return id ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + (largura || 800) : '';
+  return id ? DriveApp.getFileById(id).getUrl() : '';
 }
 
 function MURAL_hojeISO_() {

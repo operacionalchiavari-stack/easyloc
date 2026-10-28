@@ -82,10 +82,9 @@ async function tela(page,nome,acao){
 {
   const page=await abrir(false);
   await tela(page,'Portal',async()=>{});
-  await tela(page,'Categorias',async()=>{await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('#catalogGrid .catalog-home-grid').waitFor();});
+  await tela(page,'Categorias',async()=>{await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);await page.locator('#catalogGrid .catalog-home-grid').waitFor();});
   await tela(page,'Categoria em grade',async()=>{await page.locator('[data-home-category="bares"]').click();await page.locator('[data-grid-item]').first().waitFor();});
-  await tela(page,'Categoria em mosaico',async()=>{await page.locator('[data-view-mode="mosaic"]').click();await page.locator('.catalog-mosaic-tile').first().hover();});
-  await tela(page,'Item imersivo',async()=>{await page.locator('[data-view-mode="grid"]').click();await page.locator('[data-grid-item] .catalog-grid-card-name').first().click();await page.locator('.catalog-product-section').first().waitFor();});
+  await tela(page,'Item imersivo',async()=>{await page.locator('[data-grid-item] .catalog-grid-card-name').first().click();await page.locator('.catalog-product-section').first().waitFor();});
   await tela(page,'Experimente seu tecido',async()=>{await page.locator('[data-customize-item]').first().click();await page.locator('#catalogCustomizeDialog[open]').waitFor();});
   await page.evaluate(()=>document.getElementById('catalogCustomizeDialog').close());
   await tela(page,'Biblioteca',async()=>{await page.locator('.catalog-brand').click();await page.locator('[data-gateway-tile="biblioteca"]').click();await page.locator('#catalogBiblioteca:not(.hidden)').waitFor();});
@@ -96,7 +95,7 @@ async function tela(page,nome,acao){
 // ----- equipe interna (controles de edição, botão de capa etc.) -----
 {
   const page=await abrir(true);
-  await tela(page,'Equipe · Categorias',async()=>{await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('#catalogGrid .catalog-home-grid').waitFor();});
+  await tela(page,'Equipe · Categorias',async()=>{await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);await page.locator('#catalogGrid .catalog-home-grid').waitFor();});
   await tela(page,'Equipe · Item imersivo',async()=>{await page.locator('[data-home-category="bares"]').click();await page.locator('[data-grid-item] .catalog-grid-card-name').first().click();await page.locator('.catalog-product-section').first().waitFor();});
   assert.ok(await page.locator('.catalog-capa-toggle').count()>0,'equipe vê o botão de capa (mesmo cenário do print do cliente)');
   assert.deepEqual(page._errors,[],'nenhum erro de página (equipe)');
@@ -116,7 +115,7 @@ async function tela(page,nome,acao){
 // ----- celular: texto grande não pode gerar rolagem horizontal -----
 {
   const page=await abrir(false,390,800);
-  await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('#catalogGrid .catalog-home-grid').waitFor();
+  await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);await page.locator('#catalogGrid .catalog-home-grid').waitFor();
   await page.locator('[data-home-category="bares"]').click();await page.locator('[data-grid-item] .catalog-grid-card-name').first().click();await page.locator('.catalog-product-section').first().waitFor();
   await page.waitForTimeout(600);
   const sobra=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);

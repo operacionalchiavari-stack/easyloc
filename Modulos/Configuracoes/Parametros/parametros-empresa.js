@@ -4,6 +4,8 @@
   const status = document.getElementById('empresaParametrosStatus');
   const salvar = document.getElementById('salvarEmpresaParametros');
   const abas = [...document.querySelectorAll('[data-parametro-aba]')];
+  // Abas com formulário e botão Salvar próprios (fora do bloco dos dados da empresa).
+  const PROPRIAS = ['operacao', 'catalogo', 'almoxarifado', 'producao', 'seguranca', 'rh'];
   let atual = 'dados', pronto = false, ocupado = false;
   const state = { parametros: true, sections: {}, refs: {} };
   const api = window.empresa.api;
@@ -19,11 +21,22 @@
     return resultado.data;
   };
   async function carregarSecao(nome) {
-    if (nome === 'operacao' || state.sections[nome]) return;
+    if(nome==='rh') await window.carregarParametrosRh(document.getElementById('pr-painel-rh'),state.empresaId);
+    if (PROPRIAS.includes(nome) || state.sections[nome]) return;
     const secao = window.empresa.sections[nome];
     const host = root.querySelector('[data-empresa-secao="' + nome + '"]');
     await secao.render(host, state);
     const cleanup = await secao.bind(host, state, api);
+    if (nome === 'logistica') {
+      await window.carregarFluxoPedidos(host, state.empresaId);
+      await window.carregarParametrosCronogramaVisual(host,state.empresaId);
+      await window.carregarModosSeparacao(host, state.empresaId);
+      const escalaHost=document.createElement('div');host.appendChild(escalaHost);
+      await window.carregarParametrosEscala(escalaHost,state.empresaId);
+      await window.carregarMotivosLogistica(host, state.empresaId);
+      await window.carregarQualidadeAcervo(host, state.empresaId);
+    }
+    if (nome === 'comercial') { await window.carregarParametrosLogisticaManual(host, state.empresaId); await window.carregarEtiquetasCadastro?.(host, state.empresaId); }
     state.sections[nome] = { cleanup };
   }
   async function selecionar(nome) {
@@ -37,8 +50,8 @@
         aba.setAttribute('aria-selected', String(ativa));
         document.getElementById(aba.getAttribute('aria-controls')).hidden = !ativa;
       });
-      root.hidden = nome === 'operacao';
-      root.querySelector('.pr-acoes').hidden = nome === 'operacao';
+      root.hidden = PROPRIAS.includes(nome);
+      root.querySelector('.pr-acoes').hidden = PROPRIAS.includes(nome);
       status.textContent = '';
     } catch (erro) { status.textContent = 'Não foi possível abrir a aba: ' + erro.message; }
     finally { ocupado = false; salvar.disabled = false; }
@@ -77,7 +90,9 @@
         if (window.parent.__FINANCEIRO_CACHE) delete window.parent.__FINANCEIRO_CACHE[state.empresaId];
         if (window.parent.__MONTAGEM_CONFIG_CACHE) delete window.parent.__MONTAGEM_CONFIG_CACHE[state.empresaId];
       } else if (atual === 'comercial') {
+        await window.salvarParametrosLogisticaManual(state.empresaId);
         await window.__salvarServicosComercial();
+        await window.salvarEtiquetasCadastro?.(state.empresaId);
       } else if (atual === 'identidade') {
         if (!await window.__salvarIdentidadeVisual()) throw Error('Revise a identidade visual antes de salvar.');
       }

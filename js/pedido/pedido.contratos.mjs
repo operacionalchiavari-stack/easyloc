@@ -221,6 +221,8 @@ async function coletarDadosContrato(){
 }
 
 async function carregarModeloPadrao(){
+  // O modelo padrão é o mesmo enquanto a tela está aberta: guardado por 5 minutos (antes ia ao banco a cada troca de aba).
+  if(state.modeloPadraoEm && Date.now() - state.modeloPadraoEm < 300000) return state.modeloPadrao;
   const { data, error } = await state.supabase
     .from("contratos_modelos")
     .select("*")
@@ -238,6 +240,7 @@ async function carregarModeloPadrao(){
   }
 
   state.modeloPadrao = data || null;
+  state.modeloPadraoEm = Date.now();
   return state.modeloPadrao;
 }
 
@@ -269,6 +272,7 @@ async function carregarContratoPedido(){
 }
 
 async function recalcularContrato({ forceModelo = false } = {}){
+  if(state.editing && !forceModelo)return;
   if(!state.modeloPadrao) await carregarModeloPadrao();
   if(!state.modeloPadrao && !state.conteudoEditado && !state.conteudoCongelado){
     setValid(false);
@@ -302,6 +306,14 @@ async function recalcularContrato({ forceModelo = false } = {}){
 
 async function salvarContratoPedido(pedidoId, { final = false } = {}){
   if(!pedidoId || !state.supabase || !state.empresaId) return false;
+  if(state.editing){
+    state.conteudoFinal=els.pedidoContratoEditor?.value || '';
+    state.conteudoEditado=true;state.conteudoCongelado=false;state.editing=false;
+    if(els.pedidoContratoEditor)els.pedidoContratoEditor.hidden=true;
+    if(els.btnEditarContratoPedido)els.btnEditarContratoPedido.textContent='Editar texto deste pedido';
+    setValid(Boolean(state.conteudoFinal.trim()));
+    if(els.pedidoContratoPreview)els.pedidoContratoPreview.innerHTML=textoParaHtml(state.conteudoFinal);
+  }
   if(!state.conteudoFinal?.trim()) await recalcularContrato();
   if(!state.conteudoFinal?.trim()) return false;
   const conteudoFinal = final
@@ -408,9 +420,7 @@ function imprimirContrato(){
   win.print();
 }
 
-function gerarPdfPlaceholder(){
-  notify("A estrutura para PDF está pronta. A geração dedicada será conectada ao serviço de PDF do sistema.", "Contrato", "info");
-}
+function gerarPdfContrato(){ imprimirContrato(); }
 
 async function validarStatusContrato(status){
   const statusAlvo = String(status || "").toLowerCase();
@@ -435,11 +445,11 @@ function bindEvents(){
   els.btnRestaurarContratoPadrao?.addEventListener("click", restaurarPadrao);
   els.btnVisualizarContratoPedido?.addEventListener("click", abrirModal);
   els.btnImprimirContratoPedido?.addEventListener("click", imprimirContrato);
-  els.btnGerarPdfContratoPedido?.addEventListener("click", gerarPdfPlaceholder);
+  els.btnGerarPdfContratoPedido?.addEventListener("click", gerarPdfContrato);
   els.btnFecharContratoModal?.addEventListener("click", fecharModal);
   els.btnFecharContratoModalFooter?.addEventListener("click", fecharModal);
   els.btnImprimirContratoModal?.addEventListener("click", imprimirContrato);
-  els.btnGerarPdfContratoModal?.addEventListener("click", gerarPdfPlaceholder);
+  els.btnGerarPdfContratoModal?.addEventListener("click", gerarPdfContrato);
   els.pedidoContratoModal?.addEventListener("click", (event) => {
     if(event.target === els.pedidoContratoModal) fecharModal();
   });
@@ -463,6 +473,7 @@ function bindEvents(){
 }
 
 export async function initContratoPedido({ supabase, avisar } = {}){
+  Object.assign(state,{modeloPadrao:null,modeloPadraoEm:0,contratoPedido:null,conteudoFinal:'',conteudoEditado:false,conteudoCongelado:false,carregado:false,valido:false,editing:false,empresa:null,cliente:null,local:null});
   state.supabase = supabase || window.supabaseClient;
   state.empresaId = window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id");
   state.avisar = avisar;
@@ -475,6 +486,11 @@ export async function initContratoPedido({ supabase, avisar } = {}){
   window.__pedidoPodeAlterarStatus = validarStatusContrato;
   window.__pedidoContratoPodeSalvarStatus = validarStatusContrato;
   window.__pedidoContratoAtualizar = () => recalcularContrato();
+  window.__pedidoSalvarContratoRascunho = async pedidoId => {
+    if(!state.conteudoFinal?.trim() && !state.editing)return null;
+    await recalcularContrato();
+    return salvarContratoPedido(pedidoId);
+  };
   window.__pedidoContratoRecarregar = async () => {
     await carregarContratoPedido();
     await recalcularContrato();
@@ -493,6 +509,7 @@ export function destroyContratoPedido(){
   delete window.__pedidoPodeAlterarStatus;
   delete window.__pedidoContratoPodeSalvarStatus;
   delete window.__pedidoContratoAtualizar;
+  delete window.__pedidoSalvarContratoRascunho;
   delete window.__pedidoContratoRecarregar;
   delete window.__pedidoSalvarContratoFinal;
 }

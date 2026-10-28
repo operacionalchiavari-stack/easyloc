@@ -8429,6 +8429,10 @@ milhão de triângulos e texturas 2048–4096 px em JPEG.
   leve; a foto do produto sobe e aparece; o texto entra em cascata (`.product-copy>*`, 80ms entre itens); "Combine
   também com" por último. Vale pra clique na grade, nos resultados filtrados e nas sugestões. A classe sai depois, pra
   trocar de cor/foto não repetir. Movimento reduzido: sem animação.
+- **Busca ao lado do "Voltar", no canto esquerdo** (out/2026, supera o item abaixo): `.catalog-top-tools` ancorado à
+  esquerda (≥768px), recuado pela largura real do Voltar (`--catalog-voltar-w`, medida em `bindNavHistory`); sem o Voltar
+  (aberto pelo dashboard) encosta na margem. Selo "Disponível em 20/10 | 34": traço fino antes do número (catálogo, app e
+  vitrine da Helena).
 - **Busca saiu do cabeçalho de novo e foi pro lado do card do projeto** (pedido: "coloque esse campo de pesquisa do lado
   de Projeto, Ana e Bruno"): `.catalog-search` voltou pra `.catalog-top-tools` (logo abaixo do cabeçalho, à direita),
   alinhada no meio do dock e à esquerda dele. Como o dock tem largura variável, `medirDock()` (catalogo-projetos.mjs,
@@ -9295,6 +9299,17 @@ da volta (`abrirConferenciaCronograma`). Pedido antigo da planilha continua com 
 - Leitor compartilhado novo `js/core/leitorQr.js` (`EasyLocLeitor.criar/teclado/ler`); a Separação ainda tem a cópia
   própria da câmera (mesma lógica).
 - A volta ainda não marca avaria nem gera cobrança/manutenção (etapa 5). Teste: `tests/conferencia-bipagem-browser.cjs`.
+- **Pedido separado sem etiquetas de envio ("1 clique") não tem conferência por bipe** (regra do usuário): a conferência
+  vira **por quantidade**. Lista as peças (Kit aberto nos componentes, RPC `operacao_conferencia_pecas`, security
+  invoker) com foto, quantidade esperada e um campo para digitar quanto foi carregado/descarregado/voltou, e "Confirmar";
+  a instrução fica numa pílula na linha do "Pedido N" e o botão "Imprimir lista" (A4 com caixas em branco e assinaturas)
+  na linha do título, à direita. Sem botão de preencher tudo (pedido do usuário). Coluna **Observação** por item (`p_observacoes`,
+  migration `20261021000600`; vai em `itens[].obs`, no resultado e na lista impressa). Foto 72px, número 24px e campo 52px
+  iguais aos da Triagem; títulos das colunas pequenos (11px). `operacao_concluir_conferencia`
+  ganhou `p_quantidades` ({"<linha>|<item>": n}; migrations `20261021000400` e `...0500`): o esperado é calculado no banco
+  (carregamento = pedido; descarregamento/volta = o que o carregamento conferiu), recusa campo vazio, pede aceite se faltar
+  e grava `operacao.<etapa>.itens` + `sem_etiquetas:true`. A volta continua às cegas (sem o esperado na tela) e as faltas
+  viram ocorrência com a quantidade. Nenhuma etiqueta é criada. Teste: `tests/conferencia-sem-etiquetas-browser.cjs`.
 
 ### Pedidos fictícios de teste no cronograma (17/out/2026)
 **+20 pedidos de teste (18/out, pedido "encha o cronograma")**: números 2171 a 2285, clientes com nomes realistas (sem "TESTE ·"), eventos de 14 a 26/10, 80% aprovados e 20% pré-reserva, 2–4 itens reais cada (5–17% do estoque), todos com `observacoes.teste_cronograma = true` e sincronizados (5 etapas cada). Apagam junto com os outros pelo mesmo filtro.
@@ -9648,10 +9663,12 @@ ela — nunca tira o cursor de outro campo (nem da tela do pedido), nem com jane
   "ATÉ" (`#preReservaAte`, `pedido.entrada.mjs`), que abre o calendário sozinho ao escolher Pré-reserva; o salvar também
   confere (`pedido.mjs`). **Pré-reserva vencida continua reservando estoque** — só fica avisada (não há liberação automática).
 - **Central**: abaixo do status, a validade ("Válida até 25/10", "Vence em 2 dias", "Vencida há 3 dias"); aviso no topo com
-  vencidas/vencendo (≤3 dias)/sem data e "Ver no quadro". Botões **Lista | Quadro** (lembrado em
-  `localStorage central_pedidos_visao`): o quadro tem colunas Do catálogo / Orçamento / Pré-reserva (ordenada pelo
-  vencimento) / Reservado / Finalizado / Cancelado, com a mesma busca e filtros, sem faixa colorida no topo das colunas.
-  "Aprovado" aparece como "Reservado". Clicar no cartão abre o pedido.
+  vencidas/vencendo (≤3 dias)/sem data. **As pré-reservas ficam sempre no topo da lista** (a que vence primeiro em cima;
+  depois "Montando agora" e o resto por data). O modo Quadro (colunas por situação) existiu e foi **removido** a pedido.
+  O aviso de pré-reservas virou **botões Todos / Pré-reserva / Orçamento / Reservado** (Todos = sem filtro, ativo de início) (`#centralSituacoes`, `SITUACOES` em
+  CentralPedidos.js): contagem numa bolinha vermelha piscando no canto só em Pré-reserva e Orçamento (com 1+; Todos e Reservado sem bolinha), e a Pré-reserva
+  mostra "N vencidas · N vencendo" embaixo do nome. Clicar põe o mesmo filtro de Situação dos Filtros; clicar de novo
+  mostra todos. Teste: `tests/central-situacoes-browser.cjs`.
 - **Cabeçalho numa linha** (≥1100px): título, Catálogo, Tabelas de Preço, Filtros, Novo pedido e pesquisa juntos; abaixo
   disso empilha. O header precisa de `position:relative` e o título `position:static`, senão a linha `::after` de 100vw do
   tema sai deslocada e cria rolagem lateral.
@@ -9660,6 +9677,261 @@ ela — nunca tira o cursor de outro campo (nem da tela do pedido), nem com jane
   clicáveis; local com mapa satélite (iframe `maps.google.com/maps?...&output=embed`, sem chave), distância do galpão,
   eventos no local, Google Maps/Waze e as condições em destaque. Esc fecha.
 - Barra de etapas do pedido: com o campo "ATÉ" a barra fica compacta até 1599px e as etapas seguintes encurtam com "…".
+
+## Parâmetros > Catálogo: preço, estoque e disponível, e para quem (out/2026)
+Pedido do usuário: em Parâmetros, escolher se o catálogo mostra **preço**, **quantidade em estoque** e **quantidade
+disponível**, e para quem. Aba nova **Catálogo** (`Modulos/Configuracoes/Parametros/parametros-catalogo.js`; em
+`parametros-empresa.js` as abas com formulário próprio estão em `PROPRIAS = ['operacao','catalogo']`). Para cada item:
+Equipe interna (sim/não), Visitantes sem login (sim/não) e Decoradores (Todos / Só os escolhidos, com a lista dos
+decoradores com acesso / Nenhum).
+- **Banco** (migrations `20261021000700_catalogo_parametros.sql` e `...0800`, aplicadas e registradas): tabela
+  `catalogo_parametros(empresa_id, config jsonb)` — `config.{preco|estoque|disponivel} = {equipe, decoradores,
+  decoradores_ids, visitantes}`; grava quem tem `configuracoes.empresa.editar`. Sem configuração = comportamento de
+  antes (equipe e decoradores veem tudo, visitante nada). `catalogo_parametro_permite()` / `catalogo_exibir()` decidem.
+  **O preço nem sai do banco** para quem não pode ver: `catalogo_carregar` (decorador), `catalogo_carregar_interno` e
+  `catalogo_publico_carregar` passam pelos itens por `catalogo_aplicar_regras()` e devolvem `exibir`.
+  Estoque/disponível dos selos vêm da RPC nova **`catalogo_estoque(p_data, p_token, p_empresa_id)`** (anon e
+  authenticated; decide o público pelo token, pelo login da equipe ou visitante) → `{item: [estoque|null, livre|null]}`.
+  A conta da disponibilidade foi para `operacao_disponibilidade_calc` (sem checagem, ninguém de fora executa);
+  `operacao_disponibilidade` continua igual (confere o vínculo e chama a conta). `catalogo_decoradores_lista()` dá os nomes
+  para a tela.
+- **Catálogo** (computador e app): selos pela `catalogo_estoque` (também para o visitante, se liberado); `null` esconde
+  a parte (`estoqueHtml`). Sem preço aparece "Sob consulta" (já era o comportamento para preço nulo).
+- **Helena** (`catalogo-assistente/index.ts`): `exibir(ctx)`; sem preço, `valor` vira null ("sob consulta"); o prompt
+  recebe "REGRAS DA EMPRESA SOBRE O QUE MOSTRAR" (`regrasDeExibicao`); a ação `disponibilidade` e os cartões filtram os
+  números. Ela continua recusando peça esgotada na data mesmo sem mostrar o número. **Só vale depois de publicar a função.**
+- Teste: `tests/parametros-catalogo-browser.cjs`. Na mesma rodada: opção marcada em Parâmetros (`.pr-check`) passou a
+  azul-claro com texto escuro (o texto branco sumia no fundo claro, também na aba Operação).
+- **Botão do olho (decorador)**: no cabeçalho do catálogo, à esquerda dos créditos, `#catalogValoresToggle`
+  (`iniciarToggleValores()` em catalogo.mjs) esconde/mostra os valores na tela — pedido do usuário, para reuniões com
+  o cliente final. Só aparece com token de decorador e `exibir.preco` liberado. Só visual: `html.catalogo-sem-valores`
+  some com `.catalog-rental-price`, `.cas-vit-preco`, `.pa-valor`, `.cpj-order-valor/-col-valor` (fim de catalogo.css);
+  o PDF do pedido (`imprimirPedido`) também sai sem valores. Lembrado por decorador (`localStorage
+  catalogo_ocultar_valores:<cliente>`). Ainda não existe no app do celular. Teste: `tests/catalogo-ocultar-valores-browser.cjs`.
+
+## Biblioteca: pastas dentro de pastas (out/2026)
+Pedido do usuário: criar uma pasta dentro de outra. `biblioteca_pastas.pai_id` (null = raiz; migration
+`20261021000900_biblioteca_subpastas.sql`, aplicada e registrada): nome único só dentro da mesma pasta, gatilho impede
+pasta de outra empresa ou em ciclo, excluir apaga as de dentro (cascade, com as fotos). `biblioteca_pastas_acervo` devolve
+`pai_id`. Tela (`catalogo-biblioteca.mjs`): a raiz mostra só as pastas de primeiro nível; dentro de uma pasta aparecem as
+pastas de dentro (`#catalogBibliotecaSubpastas`, com "Nova pasta" para a equipe) antes das fotos, e a trilha
+"Biblioteca › …" (`#catalogBibliotecaTrilha`) no topo. Card mostra "N fotos · N pastas" e a capa vem de uma pasta de
+dentro se a própria não tiver foto. O **Voltar** do catálogo, dentro de uma pasta, sobe uma pasta
+(`backCatalogBiblioteca()` chamado em `appGoBack`). Teste: `tests/catalogo-biblioteca-browser.cjs`.
+
+## Projetos: histórico de todas as alterações (out/2026)
+Pedido do usuário: "cada projeto de fato tenha um histórico de todas as alterações, todas mesmo". Feito no **banco**
+(migration `20261021001000_projetos_historico.sql`, aplicada e registrada): gatilho `projeto_hist_gatilho` em
+`projetos` (insert/update) compara a versão anterior com a nova e grava em `projetos_historico` (quem, quando, o quê):
+criar projeto; nome/data/local e cada campo de `dados.evento`; foto dos noivos; ambiente criado/excluído/renomeado;
+item adicionado/tirado/quantidade (por ambiente); ordem dos itens; imagens adicionadas/removidas/atualizadas (editor de
+cena); observações do ambiente; plantas; link ativado/desativado e senha nova; layout; envio/reenvio do pedido e status.
+Vale para qualquer origem (computador, app, Helena, equipe). **Quem**: login da equipe (nome do Cadastro de
+Funcionários) ou, sem login, o decorador dono do projeto. O salvamento automático grava várias vezes: mudanças seguidas
+do mesmo item/campo pela mesma pessoa em até 10 min viram UMA linha ("2 → 7"; se voltar ao valor inicial a linha some).
+O gatilho nunca impede salvar (erro vira só aviso). Leitura pela RPC `projeto_historico(p_token,p_empresa_id,p_id)` (mesma
+regra de `projeto_obter`); a tabela não é lida direto. Tela: aba **Histórico** no menu lateral do projeto (abaixo de
+Plantas; não existe no pedido comercial), por dia, com hora, autor (decorador/equipe) e filtros Tudo/Itens/Ambientes/
+Imagens/Evento e pedido. Começa vazio: alterações anteriores a 21/10/2026 não foram registradas. Teste:
+`tests/catalogo-projeto-historico-browser.cjs`.
+
+## Lista Completa (aba Geral do projeto): quantidade editável e arrastar o ambiente inteiro (out/2026)
+Pedido do usuário: ajustar a quantidade direto na Lista Completa (antes era só leitura) e arrastar o ambiente com tudo
+junto. `geralHtml(model, { quantidade: true, moverAmbientes: true })` (projeto-apresentacao.mjs; o PDF/prévia não passam
+essas opções e continuam só leitura). Quantidade: campo `[data-cpj-qtd-input]` na linha (sem o "×" de remover); o
+`change` usa o ambiente da própria linha (`data-pa-amb`), não o ambiente ativo. Ambiente: alça `⠿` (`[data-pa-drag-amb]`)
+à esquerda do título; arrastar move o `<tbody data-pa-grupo>` inteiro (`bindOrdenacaoAmbientes`, linha azul mostra se
+cai antes/depois) e `moverAmbiente()` reordena `dados.ambientes` (o menu lateral acompanha); ↑/↓ na alça também move.
+Ordem dos itens dentro do ambiente continua pela alça de cada linha, como antes. Teste:
+`tests/catalogo-lista-completa-editar-browser.cjs`.
+
+## Comercial > Histórico: todas as movimentações dos pedidos (out/2026)
+Pedido do usuário: "todas as movimentações que tiverem em pedido precisam ficar registradas, segregados por pedido, por
+tipo, por quem... um módulo bem completo". Tela `Modulos/Comercial/Historico/historico.{html,css,js}` (menu Comercial >
+Histórico; rota `comercial.pedidos.visualizar`). Registro feito pelo **banco** (migrations `20261021001100_comercial_
+historico.sql` e `...1200`, aplicadas e registradas), tabela `comercial_historico` (sem FK para o pedido: excluir o pedido
+não apaga o histórico), gatilhos em:
+- `separacoes_pedidos`: criado/excluído; situação e validade da pré-reserva; número, cliente, contato, tipo, local, datas
+  (evento, último dia, entrega, coleta), horários e observações de entrega/coleta/separação/descrição; valor total, valores
+  de locação/frete/montagem, condições de pagamento (parcelas), cancelamento; status da separação e da operação, conferências
+  concluídas (carregamento/descarregamento/volta, por etiqueta ou por quantidade), encerramento, liberação de redução.
+- `separacoes_itens`: quantidade pedida por item (adicionou/tirou/mudou; mesma peça em várias linhas soma).
+- `fin_baixas` (contas a receber de pedido): recebimentos e estornos. `contratos_pedidos`: gerou/editou contrato.
+- `separacoes_etiquetas` (por comando): "Gerou N etiqueta(s) de envio". `operacao_ocorrencias`: registrada/resolvida.
+Quem: nome do Cadastro de Funcionários, senão `usuarios.nome`, senão e-mail; sem login = "Sistema" (gateway PIX, rotinas).
+Mesma junção de 10 minutos dos projetos. Gatilhos nunca impedem salvar (erro vira aviso). Leitura pela RPC
+`comercial_historico(p_empresa_id, p_pedido, p_projeto, p_tipo, p_autor, p_de, p_ate, p_busca, p_limite)` (equipe com a
+permissão; junta com `projetos_historico`, tipo "catalogo", ligando ao pedido convertido). Tela: 4 resumos (hoje, 7 dias,
+pedidos movimentados, pessoas), filtros (busca, tipo, quem, período — padrão últimos 30 dias), lista de pedidos com contagem
+à esquerda (escolher um mostra o histórico completo dele com "Abrir pedido"; `?pedido=<id>` abre direto), linha do tempo
+por dia com cor por tipo, e Exportar (CSV). Começa vazio: o que mudou antes de 21/10/2026 não foi registrado. Teste:
+`tests/comercial-historico-browser.cjs`.
+- **Sem registros falsos** (migration `20261021001300`, aplicada): texto vazio e sem valor são a mesma coisa
+  (`comercial_hist_mudou`, usado também no histórico dos projetos); `cancelamento: null` não conta; a validade da
+  pré-reserva limpa junto com a mudança de situação não vira linha própria; parcelas só contam se mudar componente, valor,
+  vencimento ou forma (`comercial_hist_parcelas`). Os falsos já gravados foram apagados. Reproduzido: pré-reserva →
+  reservado com a tela regravando vazios = só "Mudou a situação".
+
+## Pedido: dados obrigatórios, botão Salvar azul e janelas de cliente/local largas (out/2026)
+- **Dados obrigatórios**: o pedido não salva sem cliente, local, data do evento, data de entrega e data de coleta, com as
+  datas em ordem (entrega ≤ evento; coleta ≥ último dia do evento). Na tela, `validarDados()` (pedido.entrada.mjs,
+  exposto como `window.__pedidoValidarDados`) marca o campo de vermelho (`.is-invalido`) e mostra o motivo; vale no Salvar
+  (`salvarPedidoOperacional`) e **para abrir Catálogo, Lista, 3D, Plantas e Financeiro** (`irPara`), já que sem os dados
+  não há como ver a disponibilidade. O banco confere de novo em `pedido_salvar_integrado` (migration
+  `20261021001400_pedido_dados_obrigatorios.sql`, aplicada e registrada) — inclusive para orçamento. Pedido antigo sem
+  esses dados só salva depois de completar.
+- **Salvar** (`.ct-avancar`, topo do pedido): azul `#123f86` com texto branco.
+- **Central de Pedidos**: janelas de cadastro do cliente e do local com até 1180px e duas colunas em tela ≥1100px (cliente:
+  dados à esquerda, últimos pedidos à direita; local: mapa e nome em cima, dados em três colunas) — sem barra de rolagem.
+  Teste: `tests/central-cadastro-largo-browser.cjs`. A trava e a cor do Salvar entraram em
+  `tests/pedido-abrir-projeto-catalogo-browser.cjs` (que ainda falha mais adiante por um motivo antigo, o resumo de frete e
+  montagem da lista com o banco simulado).
+
+## Pedido comercial: serviços adicionais e componentes (22/out/2026)
+Pedido: "na criação do pedido no comercial preciso adicionar serviço, personalização e componentes" → "pode colocar serviços e componentes, personalização ainda não".
+- **Componentes** (peças `tipo='Componente'`, que não aparecem no catálogo): botão "＋ Componente" no cabeçalho de Móveis de cada ambiente (só no pedido comercial) → janela com busca (`ctx.buscarComponentes`, ilike em descrição/produto/código/referência, até 40) e quantidade; entra em `amb.itens` como qualquer móvel (`mudarQuantidade`). Os itens buscados ficam em `itensExtras` (catalogo.mjs) e `findItemById` cai neles; ao reabrir o pedido, `garantirItensExtras(ids)` busca os que não estão no catálogo. `pedidoAdicionarDoCatalogo` aceita componente mesmo com `locar_somente_kit`.
+- **Serviços** (`servicos_adicionais`): bloco "Serviços adicionais" na Lista Completa, com "＋ Serviço" (valor sugerido = valor_fixo + valor_mao_obra), quantidade e valor editáveis e remover. Gravados em `projeto_comercial.dados.servicos` [{id, servico_id, nome, quantidade, valor}]; o pedido soma no total e em `__PEDIDO_VALORES.locacao` (`atualizarResumo`). A prévia/PDF do pedido (`servicosPedidoHtml`) e a Central mostram os serviços com total.
+- Personalização: ainda não (pedido do usuário).
+- Teste: `tests/catalogo-pedido-servicos-componentes-browser.cjs`. `tests/catalogo-lista-ver-pedido-browser.cjs` falha em "prints antigos apagados do Storage" também no commit anterior (problema antigo, não investigado).
+
+## Almoxarifado: Estoque atual com Reservado/Pré-reserva + histórico em aba própria; personalização com materiais do Almoxarifado (22/out/2026)
+Pedido: "retirar as últimas movimentações do dashboard, criar uma aba de histórico de movimentações, o estoque atual vira uma aba inteira, com quantidade no estoque, reservado e pré-reserva… quando colocar um item personalizado no comercial, o almoxarifado sabe que aquele material está pré-reservado pra um evento". Decisões do usuário: a personalização usa os materiais do Almoxarifado (as 7 personalizações de teste, feitas com os 20 materiais de exemplo da tabela `insumos`, foram apagadas); no pedido, só item que tem personalização cadastrada pode escolher uma.
+- **Banco** (migration `20261022001100_personalizacao_almoxarifado.sql`, aplicada e registrada): `personalizacoes_insumos` ganhou `almox_produto_id` (ID do produto na aba Produtos da planilha 1IIW…, ex. `PROD_…`), `material_nome`, `unidade`; `insumo_id` virou opcional. `almox_produtos(p_empresa_id)` lê a aba Produtos (colunas achadas pelo cabeçalho; só a empresa dona da planilha e quem é dela). `almox_reservas_personalizacao(p_empresa_id)` → por produto: `reservado` (pedidos aprovado/finalizado/enviado), `pre_reserva` (pedidos em pré-reserva) e `pedidos` (número, cliente, data, quantidade). Conta = quantidade do item na linha × quantidade do material na personalização (material por **unidade** do item). Só pedido cujo evento ainda não passou e não encerrado; orçamento e cancelado não contam. A personalização vem da linha do projeto do pedido: `observacoes.projeto_comercial.dados.ambientes[].itens[].personalizacao_id`.
+- **Cadastro de personalização** (`js/Estoque/estoque-personalizacoes.mjs`): a lista de materiais vem de `almox_produtos` (custo = ValorCusto da planilha); grava `almox_produto_id`.
+- **Pedido** (catálogo `?comercial=pedido`): `carregarPersonalizacoes()` (catalogo-projetos.mjs) registra as personalizações ativas em `definirPersonalizacoes()` (projeto-apresentacao.mjs); na Lista Completa, a linha de um item com personalização ganha "Personalização: [Nenhuma / …]" (`[data-cpj-personalizacao]`), que grava `personalizacao_id` nas linhas daquele item no ambiente. A prévia/PDF mostra "Personalização: …". O preço da personalização **não** entra no total do pedido (não pedido).
+- **Almoxarifado** (`Modulos/Chiavari/Almoxarifado/almoxarifado.html`): aba "Dashboard" virou "Estoque atual" (tabela na largura toda) com colunas Em estoque, Reservado, Pré-reserva (pílulas azul/amarela; clicar abre os pedidos) antes de Mínimo; Status: "Vai faltar" (reservado > estoque), "Falta se fechar" (reservado + pré > estoque), "Abaixo do mínimo", "OK" (antes era sempre OK). As reservas vêm do Supabase direto pela página (`carregarReservasMaterial`, empresa de `sessionStorage.empresa_id`), não do motor. "Últimas movimentações" saiu; aba nova "Histórico de movimentações" com busca, tipo e período, que ao abrir lê `listarMovimentacoes(5000)` do motor.
+- Testes: `tests/almoxarifado-estoque-reservas-browser.cjs`, `tests/catalogo-pedido-servicos-componentes-browser.cjs` (escolha da personalização).
+- **Topo do Almoxarifado mais baixo** (pedido seguinte, "subir a tela"): os cards ficam na mesma linha do título (`.topbar.almox-topo`, título à esquerda, 5 cards à direita; ≤1250px empilha). O card "Itens cadastrados" virou a pílula "466 itens cadastrados" ao lado do título "Estoque atual" (`#cardTotalItens`), e "Itens em uso" virou a bolinha vermelha piscando na aba Retiradas (`#badgeRetiradas`, some com zero). `#areaCirculos` vazio não ocupa espaço.
+- **Abas do Almoxarifado** (pedido seguinte): "Enviar comunicado" saiu (o comunicado é escrito no Quadro de avisos; o diálogo `#comunicadoPortal` ficou no HTML, sem botão); "Histórico de movimentações" virou "Histórico"; a aba "Cadastro de insumos" saiu e virou o botão "+ Cadastrar insumo" ao lado da busca do Estoque atual (abre `#tab-cadastro`, que ganhou "← Voltar ao estoque"; a aba Estoque atual continua marcada). O card "Abaixo do mínimo" virou a bolinha vermelha piscando da aba Estoque atual (`#badgeAbaixoMinimo`; clicar na bolinha abre a lista de itens abaixo do mínimo). No topo ficam 4 cards: Meta mensal, Assertividade, Compras do mês, Teto de gastos.
+- **Mais limpeza** (pedido seguinte): aba "Usuários" saiu (os usuários vêm do Cadastro de Funcionários do RH, com PIN de 4 dígitos; a seção `#tab-usuarios` ficou no HTML, sem aba). Título "ALMOXARIFADO" no meio dos 4 cards, 2 de cada lado (≥1251px: grid de 5 colunas, `.cards{display:contents}`; abaixo disso empilha). As regras usam `html body .topbar.almox-topo` porque a regra de linha única vem depois no mesmo `<style>`.
+- **Personalização de exemplo criada no banco** (pedido do usuário, para testar): "Forração" da Poltrona Orka Estofada Tecido Off White (id `d6727873-3706-4b07-ad4c-a89d4833e083`), por unidade: 2,5 M Tecido P/ Sofá Linho Sintético Marsala, 1 UN Espuma 1056-0 5cm, 0,5 Cola Spray 500ml, 0,1 CX Grampo 80/08; 2 h × R$ 40, margem 30% → R$ 482,17. Conferido numa transação desfeita: um pedido com 4 poltronas personalizadas reserva 10 M de tecido, 4 espumas, 2 colas e 0,4 caixa de grampo — como Pré-reserva com o pedido em pré-reserva, como Reservado quando aprovado, e some como orçamento.
+
+## Almoxarifado: estoque ideal e solicitação de compra automática (out/2026)
+Pedido: com o estoque no mínimo, o sistema pede sozinho o que falta para o ideal (mínimo 2, ideal 10 → pede 8), se ligado em Parâmetros. Escolhas do usuário: as solicitações ficam numa aba do Almoxarifado; dispara ao chegar no mínimo (≤ mínimo), uma solicitação aberta por material.
+- **Banco** (migration `20261022001200_almox_compra_automatica.sql`, aplicada e registrada): coluna `EstoqueIdeal` (índice 14) na aba Produtos da planilha do Almoxarifado; tabela `almox_solicitacoes_compra` (aberta/comprada/cancelada, `liberada`); gatilho `almox_compra_automatica` em `gs_linhas` chama `almox_avaliar_produto` a cada mudança da linha (erro nunca impede gravar). Regra: acima do mínimo → a aberta vira "comprada (automático, estoque reposto)" e a concluída é liberada; ≤ mínimo, ligado, ativo e ideal > estoque → cria (ou atualiza a quantidade da aberta). Solicitação concluída à mão (Comprada/Cancelar) segura novas até o estoque passar do mínimo. Parâmetro em `almoxarifado_configuracoes` (chave `compra_automatica`); RPCs `almox_compra_config`, `almox_compra_config_salvar` (ligar avalia todos os materiais), `almox_produto_limites` (mínimo/ideal; grava na planilha e sobe a versão da aba), `almox_solicitacao_concluir`.
+- **Parâmetros > Almoxarifado** (`parametros-almoxarifado.js`): liga/desliga. Começa desligado.
+- **Almoxarifado**: coluna Ideal no Estoque atual (Mínimo e Ideal clicáveis, abrem a janela de limites; ideal < mínimo é recusado); campo "Estoque ideal" no cadastro do insumo (o motor `salvarProduto` grava o 15º valor — só depois de publicar a Vercel; até lá a tela grava logo depois por `almox_produto_limites`); aba "Solicitações de compra" com bolinha das abertas, filtro e Comprada/Cancelar; aviso quando o parâmetro está desligado.
+- Nenhum material tem estoque ideal ainda: sem ideal, não há pedido. Testes: `tests/almoxarifado-estoque-reservas-browser.cjs` (ok 4–5) e `tests/parametros-almoxarifado-browser.cjs`.
+- **Editar o material direto na tabela do Estoque atual** (pedido: "clicar na matéria-prima e alterar custo, mínimo, ideal… se for o caso nem preciso de modal"): Categoria, Setor, Mínimo, Ideal e a coluna nova **Custo** viram campo ao clicar (ou Enter/F2 com o foco); Enter ou sair grava, Esc cancela, Tab grava e abre o próximo campo da linha; Categoria/Setor sugerem os valores que já existem. Código, produto, unidade e estoque não mudam (estoque só por Entrada/Saída). Grava pela RPC `almox_produto_editar(p_empresa, p_produto_id, p_dados)` (migration `20261022001300`, aplicada e registrada): só aceita categoria, setor, minimo, ideal, custo, reposicao, status (Ativo/Inativo) e observacoes — o resto é ignorado; números aceitam vírgula; recusa negativo e ideal < mínimo; exige `estoque.almoxarifado.movimentar`; sobe a versão da aba. A compra automática reavalia sozinha (gatilho). Testado no banco numa transação desfeita. `celulaEditavel()`/`editarCelulaAlmox()` em almoxarifado.html; teste: `tests/almoxarifado-estoque-reservas-browser.cjs` (ok 4).
+- **Solicitação automática também vai para Estoque > Compras** (pedido: "tem que cair na aba de solicitação e também lá no estoque na parte de compras"). Regra confirmada de novo pelo usuário: só abre com o estoque **no mínimo** (estoque acima do mínimo não abre, mesmo abaixo do ideal). Migration `20261022001400_almox_compra_para_compras.sql` (aplicada e registrada): gatilho `almox_sync_compras` em `almox_solicitacoes_compra` cria, para cada solicitação aberta, uma necessidade em `compras_registros` (`origem='estoque_minimo'`, status `pendente`, `material_id` = ID do produto na planilha, `almox_solicitacao_id`; coluna nova `almox_solicitacoes_compra.compras_necessidade_id`); enquanto a necessidade estiver pendente e sem compra, a quantidade acompanha, e se a solicitação fechar no Almoxarifado ela vira `atendida`/`cancelada` (Compras esconde essas, `compras.js` `bought`). Gatilho `compras_sync_almox`: necessidade virou `comprada` (pedido de compra emitido em Compras) → a solicitação do Almoxarifado vira "Comprada" ("Compras (pedido de compra emitido)"). O recebimento em Compras NÃO soma o estoque da planilha do Almoxarifado: a entrada continua na aba Entrada/Saída. Testado numa transação desfeita. As migrations deste dia que colidiam em número com as do pedido (outra sessão) foram renumeradas: `…001100` personalização, `…001200` compra automática, `…001300` editar material.
+
+## Almoxarifado: solicitação só acompanha Compras + Recebimento de mercadorias (22/out/2026)
+Pedido: na Solicitação de compra o Almoxarifado **não marca comprado**; só cancela, com motivo obrigatório; o resto é a
+situação que vem de Compras. E um **Recebimento de mercadorias** como o da Tecnoweld, com uma diferença: valor final e
+condição de pagamento (→ Contas a Pagar) são de **Compras**; o Almoxarifado só lança isso na última etapa se um parâmetro
+permitir. Escolhas do usuário: receber com e sem XML; o avariado vira "Divergência no recebimento" (não "RNC"); cancelar
+só antes da cotação.
+- **Banco** (migrations `20261022001500_almox_recebimento.sql` e `…001600_compras_divergencia_almox.sql`, aplicadas e
+  registradas; testadas antes numa transação desfeita: estoque 2→7 ao concluir, 8 quando Compras aceitou a divergência):
+  - `almox_estoque_mover()` (interna): muda EstoqueAtual na aba Produtos (e ValorCusto na entrada) e escreve uma linha em
+    Movimentacoes (OrigemRegistro COMPRA/BLOQUEIO, Valor = total da linha, Fornecedor, Numero da Nota), subindo as versões.
+  - Solicitações: `almox_solicitacoes_lista` devolve `fase` (aguardando/andamento/concluida/cancelada), `rotulo`
+    ("Aguardando Compras", "Em cotação · SC-…", "Pedido emitido · PC-…", "Recebido parcial · PC-…", "Recebido · PC-…",
+    "Atendida (estoque reposto)", "Cancelada") e `pode_cancelar`; `almox_solicitacao_cancelar(p_empresa,p_id,p_motivo)`
+    (motivo ≥3 letras; recusa se Compras já cotou/comprou). `almox_solicitacao_concluir` foi apagada.
+  - Recebimento: tabelas `almox_recebimentos` (R-00001…, `origem` xml|manual, `etapa` 1–5, chave da NF única por
+    empresa), `almox_recebimento_itens` (vínculo com o material, fator de conversão, item do pedido, recebido, avariado,
+    descrição e até 6 fotos em dataURL) e `almox_fornecedor_produtos` (memória: CNPJ + código do fornecedor → material,
+    vincula sozinho na próxima nota). RLS só leitura; tudo grava pelas funções `almox_receb_pedidos/listar/obter/criar/
+    salvar/excluir/concluir`. Concluir: entra no estoque (recebido − avariado) × fator; atualiza `quantidade_recebida`,
+    `percentual_recebido` e status do pedido em Compras; cada avariado vira `compras_registros` tipo `rnc` (aparece em
+    Compras > Divergências no recebimento com as fotos) — o avariado fica fora do estoque até Compras decidir.
+  - `compras_operar` (001600): para material do Almoxarifado (`material_id` PROD_…) a divergência e as decisões
+    aceitar/abater mexem na planilha (bloqueio = saída; liberar = entrada), não mais na tabela antiga `insumos`; pedido
+    com recebimento concluído no Almoxarifado não pode ser cancelado.
+  - Pagamento: `compras_pedido_pagamento(p_empresa,p_pedido,p_forma,p_parcelas,p_total)` (permissão de Compras) e,
+    no recebimento, `p_financeiro` do `almox_receb_concluir` (só com o parâmetro `recebimento_edita_financeiro` ou
+    permissão de Compras). Os dois usam `compras_pagamento_aplicar`: soma das parcelas = total (±0,05), cancela os títulos
+    anteriores do pedido (recusa se algum já foi pago) e cria `fin_pagar` (origem `compra`, documento "PC-… · NF …",
+    categoria almoxarifado); grava `forma_pagamento`/`parcelas` no pedido.
+  - Parâmetro: `almox_compra_config` devolve `edita_financeiro`; `almox_compra_config_salvar(…, p_edita_financeiro)`.
+- **Tela do Almoxarifado**: aba Solicitações de compra com "Situação em Compras", filtro Em andamento/Todas/Concluídas/
+  Canceladas, badge = aguardando + em andamento, botão Cancelar só quando `pode_cancelar` (janela com motivo). Aba nova
+  **Recebimento** (`almox-recebimento.js/.css`, ligados no fim de `almoxarifado.html`; `?aba=recebimento` abre direto —
+  é o link "Recebimento no Almoxarifado" de Compras): "Pedidos a receber" (badge, Receber com XML / Sem XML / Continuar),
+  "Receber nota (XML)" que acha o pedido pelo CNPJ, lista de Recebimentos, e o fluxo de 5 etapas (Identificar nota →
+  Vincular produtos → Conferir → Divergências → Revisar e concluir), salvando a cada etapa. Sem XML começa na etapa 3.
+  Na última etapa: com o parâmetro, valor unitário, forma e parcelas (sugeridas pelas duplicatas do XML) editáveis;
+  sem ele, "Ficam com Compras"; se Compras já lançou, mostra o que foi lançado. Concluído fica só de leitura.
+  `nfe-xml-parser.js` (Compras) passou a ler as duplicatas (`cobr/dup`). Placeholder do campo de material não começa com
+  "Buscar" de propósito: `js/core/filterInputs.js` transforma esses campos em filtro somente leitura até o foco.
+- **Compras**: bloco "Valores e pagamento" no detalhe do pedido (forma, total, dividir em N parcelas a cada 30 dias,
+  vencimentos/valores editáveis, "Enviar ao Contas a Pagar"; com pagamento já lançado mostra as parcelas e "Refazer").
+- **Parâmetros > Almoxarifado**: "Almoxarifado pode lançar valores e pagamento no recebimento" (desligado por padrão).
+- Testes: `tests/almoxarifado-recebimento-browser.cjs` (novo), `almoxarifado-estoque-reservas-browser.cjs` (ok 5),
+  `parametros-almoxarifado-browser.cjs`, `compras-tecnoweld-browser.cjs` (bloco de pagamento).
+
+## Ordem de produção mais visual (22/out/2026)
+Pedido: ao abrir uma ordem (Produção > Ordens de produção, `Modulos/Producao/pedido.html`), "foto da referência grande,
+algo mais visual, com imagens". Cada item virou uma ficha (`itemHtml` em `producao.mjs`, classes `op-*` no fim de
+`producao.css`): à esquerda galeria grande (4:3) com miniaturas — ordem: referência escolhida na cartela (selo azul), foto
+do item, detalhes/ambientadas do cadastro, 3D do ambiente no projeto do pedido (selo preto); clicar abre em tela cheia
+(`.op-lightbox`, setas ← → e Esc). À direita: ambiente, nome do item (serifa), quantidade grande, tipo, cartão da
+referência com amostra de 104px (foto, cor ou código), prazos, "Instruções de produção" (amarelo) e "Observação do
+Comercial" (azul). Etapas embaixo em cartões com faixa de cor por estado e número da fase; ações/materiais iguais a antes.
+Resumo do pedido com blocos de datas e anel de progresso; cartão da fila mostra até 4 miniaturas dos itens.
+Dados: migration `20261022002200_producao_quadro_fotos.sql` (aplicada e registrada) — `producao_quadro` passa a devolver
+`item_nome`, `fotos` (itens_fotos do catálogo padrão) e `renders` (imagens do ambiente em
+`observacoes.projeto_comercial.dados.ambientes`, casado por `origem.ambiente_id`). Teste: `tests/producao-browser.cjs`.
+**Topo compacto (pedido seguinte: "a parte de cima ocupa muito espaço… ordem de produção centralizado, voltar na mesma linha")**:
+em `pedido.html` o cabeçalho é `.producao-topo-detalhe` — "← Voltar" à esquerda, título centralizado, setor + Atualizar à
+direita (grid `1fr auto 1fr`); o resumo do pedido virou uma faixa baixa (nº + cliente, datas separadas por filetes, anel de
+58px; ~95px de altura). O nome do item perde as medidas "(L)…(A)…(P)…", que vão numa linha pequena embaixo. **Pegadinha**:
+o tema força `display:flex !important` no primeiro `<header>` de `.el-page` com peso (1,4,1); a regra daqui usa
+`html:is(#producao-op,html) body main.producao-page.el-page>header…` para vencer.
+**Modelo da Tecnoweld: simplicidade e controle (pedido seguinte: "estude as ordens de produção da Tecnoweld… simplicidade e controle ao mesmo tempo")**:
+estudado o tablet da produção da Tecnoweld (`operacao-tablet.js`: fila numerada, uma tela por vez, um botão grande por
+passo, motivo claro quando trava) e a tela da OP (`pcp-op`: cabeçalho de uma linha, Roteiro, Histórico). Na ordem
+(`pedido.html`): com 2+ itens, fila numerada à esquerda (`.opq`, uma linha por item com miniatura, quantidade, código da
+referência e selo da etapa atual — Pronta/Em execução/Pausada/Conferência/Aguardando material/motivo do bloqueio;
+`?item=<id>` lembra o escolhido); o item escolhido fica ao lado. No lugar dos cartões de todas as etapas, um cartão só da
+**etapa atual** (`.opc`, primeira não concluída do setor escolhido): prazos, materiais em checklist (recebido/necessário,
+"Devolver sobra"), o estado e **um botão principal** (Separar materiais → Receber material (ler QR) → Iniciar → Concluir
+etapa → Conferir e liberar; Retomar se pausada), com Pausar e as ações raras (etiqueta do pacote, urgência, autorizar prazo)
+como links pequenos. Quando não dá para agir, aparece o motivo em vermelho e nenhum botão: pré-reserva, etapa anterior não
+concluída, material de outra etapa faltando, material sem vínculo com o Almoxarifado, sem tempo cadastrado, prazo vencido
+sem autorização, sem permissão. Embaixo, só consulta: **Roteiro** (todas as etapas, as de outros setores apagadas) e
+**Histórico** (`producao_historico` lido direto, nomes de `funcionarios_acesso`). As regras moram em
+`Modulos/Producao/producao-op.mjs` (`situacao()`, espelho das travas de `producao_acao` no banco — mudou a regra no banco,
+mudar aqui). Nenhuma RPC mudou. Testes: `tests/producao-browser.cjs` e `tests/producao-vistas.test.mjs` (regras).
+Versões `?v=20261022-op-tecnoweld`.
+
+## Verificação em duas etapas por WhatsApp (23/out/2026)
+Pedido: "verificação em duas etapas igual tem o WhatsApp… mais segurança". Escolhas do usuário: código pelo **WhatsApp**,
+**obrigatória para todos com login** no Acervo (decoradores do catálogo e apps de campo — Montador, Free — não mudam).
+- **Como funciona**: depois da senha, `js/core/doisFatores.js` (`EasyLoc2FA.garantir()`) chama a Edge Function
+  **`seguranca-2fa`** (actions `status`, `enviar`, `verificar`, `recuperar`, `novos_codigos`), que manda 6 números pelo
+  **Z-API da própria empresa** (sem Twilio) para o WhatsApp do **Cadastro de Funcionários** (`funcionarios_acesso.telefone`,
+  senão `usuarios.telefone`). A pessoa nunca escolhe o número nessa tela (quem roubou a senha cadastraria o próprio
+  celular). Código guardado só como hash SHA-256 com o segredo `SEGURANCA_2FA_PEPPER` (secret da função); vale 5 min,
+  5 tentativas, 1 envio/min, 5/hora. No 1º acerto aparecem **8 códigos de recuperação** (uma vez só; "Perdi o celular").
+- **Quem barra é o banco** (migration `20261023000100_seguranca_2fa.sql`, aplicada e registrada): a sessão
+  (`session_id` do token) só vale depois de gravada em `seguranca_2fa_sessoes` (30 dias). `seguranca_2fa_ok()` entra em
+  `eh_membro_empresa`, `funcionario_pode` (só quando `p_usuario = auth.uid()`) e `funcionario_contexto` (devolve
+  `dois_fatores_pendente`), e há uma **política restritiva `seguranca_2fa` em todas as 169 tabelas com RLS + storage.objects**.
+  **Tabela nova com RLS não ganha a política sozinha** — rodar de novo o bloco `do $$` da migration ou criar a política.
+  Testado no banco real: sem código 0 itens, com código 1173, outro login com a mesma senha continua bloqueado.
+- **Servidor**: Edge Functions que aceitam login da equipe e usam a chave de serviço conferem
+  `segundaEtapaPendente()` (`supabase/functions/_shared/dois-fatores.ts`, falha fechada): calcular-distancia,
+  deletar-foto-item, funcionarios-admin, lia-chat, planejador-eventos-ai, rag-buscar-conhecimento, studio-ai-engine,
+  zapi-integration, payment-gateways (todas publicadas) e **catalogo-assistente (alterada, NÃO publicada — tem trabalho
+  pendente de Parâmetros > Catálogo)**. `api/gs.js` (`usuarioDaSessao`, também usado por `portal-mural.js`) confere
+  `seguranca_2fa_status` com o token do usuário — só vale depois de publicar a Vercel. Chave de serviço + token do
+  usuário no PostgREST = age como o usuário (testado).
+- **Telas**: `login.html` (código antes de ler qualquer dado; se a função cair, segue e o banco barra); `context.js`
+  (sessão sem o código volta ao login; versão `?v=20261023-2fa` nas 32 telas); login direto da equipe no catálogo e no
+  app do catálogo; tela de bloqueio por inatividade do dashboard (`js/usuario/usuario.js`) agora confere a senha numa
+  **sessão à parte, descartada** — antes criava sessão nova, que perderia a verificação. Supervisor do App do Montador já
+  usa a sessão do Acervo do aparelho (sem mudança).
+- **Parâmetros > Segurança** (`parametros-seguranca.js`, RPCs `seguranca_2fa_painel` e `seguranca_2fa_config_salvar`):
+  ligada/desligada, quem tem WhatsApp cadastrado, registro de segurança (`seguranca_eventos`), "Testar agora", "Gerar meus
+  códigos de recuperação". **Só liga** se quem liga confirmou um código nesta sessão (prova que o WhatsApp entrega) e
+  todos com login têm WhatsApp cadastrado. **Nasce desligada.**
+- **Pendente do usuário**: o Z-API da Chiavari responde "your client-token is not configured" (15 de 19 envios falharam
+  desde junho): salvar o **token de segurança da conta Z-API** em Integrações > WhatsApp; depois "Testar agora" e ligar.
+  Hoje Jonatan e Carol têm o mesmo número (24 99284-2746) — corrigir no cadastro.
+- Testes: `tests/seguranca-2fa-live.cjs` (`RUN_2FA_LIVE=1`, empresa e usuário temporários), `tests/login-2fa-browser.cjs`,
+  `tests/parametros-seguranca-browser.cjs`, `tests/gs-dois-fatores.test.cjs`.
 
 ## Cofre: dados sensíveis cifrados no banco (23/out/2026, etapas 1 a 4)
 Pedido: "dados de clientes, financeiros, de conta… criptografado, algo que talvez nem eu tenha acesso". Escolha do usuário:
@@ -9731,3 +10003,364 @@ mascarado na tela, ver o dado inteiro só com permissão e com registro, e **a c
   - **Ainda em texto (não cobertos, decisão pendente)**: o texto já salvo dos contratos (`contratos_pedidos.conteudo_final`,
     1 contrato com CPF); na planilha antiga do motor, "Fechamentos Funcionarios" (96 linhas com CPF e salário, usada pela
     Central de Metas) e "CORRIDAS UBER"/"(ANTIGO)CORRIDAS UBER" (PIX dos motoristas, ainda usada pelo Uber).
+
+## Menu do sistema no topo, igual ao catálogo (23/out/2026)
+Pedido: "passe o menu do sistema pra parte de cima, igual é o catálogo hoje", depois "retire os ícones, deixe só as palavras", "a fonte ficou muito grossa, mais discreta". **Supera** o trilho lateral escuro (`portal-shell.css`) no computador.
+- `styles/menu-topo.css` (carregado depois de `portal-shell.css` no `dashboard.html`), só ≥861px: `#sidebar` vira faixa fixa de 72px (`--topo`, `--rail:0`) na cor do cabeçalho do catálogo `#5a5a55`; logo inteira à esquerda (o recorte "Ch" do trilho fechado não aparece mais; `tests/menu-monograma-browser.cjs` ficou desatualizado); categorias no meio só com o nome (Manrope 500, caixa alta, sem ícone) e seta para baixo; usuário + Sair à direita (menu do usuário abre para baixo). Painéis no mesmo cinza.
+- `js/ui/portalNav.js`: `posicionarFlyout` abre o painel da categoria embaixo do botão (subgrupo continua ao lado do painel); `ajustarCompacto()` põe `.apertado-1/2/3` no menu quando os nomes não cabem (menos espaço entre letras, letra menor, sem seta) — nunca volta aos ícones.
+- `.main`/`#portalInicio` começam em 72px. Celular (≤860px) continua com o botão ☰ e a gaveta de antes.
+- Menu reorganizado (`js/ui/sidebarMenu.js`): Cronograma foi para dentro de **Geral** (primeiro item), Importar Itens para **Gestão**, Triagem (Separação de Materiais) para **Logística** (rótulo "Triagem"). Categorias: Geral, Comercial, Estoque, Produção, Logística, Recursos Humanos, Financeiro, Gestão, Apps.
+
+### Ordem de produção: pedido no lugar de "Progresso da produção" (23/out/2026)
+Pedidos do usuário com print: o cabeçalho solto do pedido (`.op-cabecalho-pedido`, com "Finalizar serviços até…") saiu; no
+card de progresso, no lugar da frase "Progresso da produção", fica uma linha discreta (texto escuro, sem fundo — a 1ª versão
+em faixa azul foi recusada, "chamando muita atenção"): **Pedido N (número em vermelho) · CLIENTE … · LOCAL … · PRAZO dd/mm** (`.op-progresso-pedido`, rótulos em caixa alta pequena;
+o prazo é o mais cedo dos itens, com data e hora completas no `title`) e o % à direita. A coluna da foto (Referência e
+informações) não mostra mais o nome e as medidas do item (já estão na lista) e ficou mais larga: 470px (400px até 1150px).
+Teste `tests/producao-browser.cjs`. Versões `?v=20261023-progresso-rotulos`.
+**Quantidade feita por Enter e linha colorida (pedido seguinte):** o botão "Salvar quantidade" saiu; o campo "Quantidade
+feita" salva ao apertar Enter (`salvarQuantidade()` em producao.mjs, chama `producao_quantidade_salvar`). A linha do item
+fica amarela (`.is-qtd-parcial`, `#fdf6dd`) com quantidade salva maior que 0 e menor que a solicitada, e verde
+(`.is-qtd-completa`, `#e6f4ea`) quando chega na solicitada — olhando a etapa atual do setor (`etapaQuantidade()`); quando
+uma etapa termina e a próxima começa em 0, a linha volta ao normal. O campo continua travado quando a etapa não pode ser
+trabalhada (motivo na linha pequena embaixo do nome). Versões `?v=20261023-qtd-enter`.
+
+## Separação de Materiais e Expedição: topo compacto (23/out/2026)
+Pedido: "muito espaço de Separação de Materiais pro início das colunas, deixe mais compacto… de Expedição também". As duas
+telas (mesmo CSS, `separacao-materiais.css`, fim do arquivo) fogem do "topo idêntico" do tema: bloco do título com
+`padding:16px 0 10px` (era 34/22), cabeçalho sem espaço embaixo e 10px até as colunas — as colunas começam a 78px do topo
+(antes 144px). Precisou de seletor com `body … header.… > div.…:first-child` para vencer a regra do `tema-chiavari.css`.
+Versão `separacao-materiais.css?v=20261023-topo-compacto2` (Separação, Expedição e as duas telas da Produção).
+- **Cores por linha (23/out)**: na conferência por quantidade, ao digitar, a linha fica amarela (`.is-falta`, `#fdf6dd`)
+  com menos que o pedido/esperado e verde (`.is-ok`, `#e6f4ea`) com a quantidade certa (ou mais) — o mesmo da Produção.
+  Na volta às cegas nada pinta (`cega`). CSS no fim de `conferencia.css` (`?v=20261023-qtd-cores`).
+
+## Cadastro de Itens: botões na linha do título (23/out/2026)
+"+ Adicionar Item" e "Montar Kit" ficam no canto direito da faixa do título "Itens Cadastrados" (`.header-actions` com
+`position:absolute`, fim de `cadastro-itens.css`); o título continua centralizado e os cartões de resumo ocupam a largura
+toda. Até 1180px de largura os botões descem para baixo do título (senão cobririam o texto). `?v=20261023-botoes-titulo`.
+
+## Disponibilidade de Itens sem simulação + filtros conferidos; Itens Cadastrados no mesmo formato (23/out/2026)
+- **Disponibilidade** (`Modulos/Estoque/DisponibilidadeItens/`, módulo antigo carregado por `carregarNaMain`): o botão
+  "Simular semana movimentada" saiu por completo (HTML, CSS e o banco de mentira `criarSemanaSimulada` do JS). Filtros
+  testados em `tests/disponibilidade-filtros-browser.cjs` (data, busca sem acento/por código, categoria que só aparece no
+  fim da lista, status, combinações, digitar rápido sem repetir linha) — funcionavam; o que mudou: busca/categoria/status
+  não recarregam mais tudo do banco a cada letra (filtram o que já veio e buscam o resto em lotes de 200); só a data
+  recarrega.
+- **Itens Cadastrados** (`itens.tabela.mjs`, fim de `cadastro-itens.css`): foto numa caixa de 100×80 (sem foto = caixa
+  vazia), linhas com 13px/12px de espaço e fonte 14px, e 20 itens de cada vez com "Carregando mais itens..." ao rolar
+  (`IntersectionObserver`), no lugar das páginas numeradas do `listPager`. Os cartões Total/Itens/Componentes/Kits viraram
+  um ícone pequeno (`#itensResumoBtn`) ao lado de "+ Adicionar Item" que abre um painel com os 4 números (Esc/clique fora
+  fecha). Botões na linha do título até 1260px; abaixo disso descem. `?v=20261023-resumo-icone` (import de
+  `itens.tabela.mjs` também versionado em `cadastro-itens.mjs`).
+
+## Login do sistema igual ao do catálogo (23/out/2026)
+Pedido: "o login do sistema seja igual do catálogo, mesma coisa". `login.html` usa a mesma estrutura e o mesmo CSS do
+`#catalogLogin` (bloco "Login do catálogo" de `catalogo.css` copiado para o `<style>` da página, sem a escolha
+visitante/exclusivo):
+- faixa grafite com a logo em branco;
+- a frase "Transite por vários estilos e encontre *o seu*";
+- formulário sem cartão ("Acesse o sistema", E-mail ou login, Senha, Entrar →);
+- a vitrine viva de peças do acervo (`catalogo-login-vitrine.mjs`, RPC pública `catalogo_vitrine_login`; `?empresa=<id>` repassado).
+
+A lógica de acesso não mudou: os ids `email`/`senha`/`loginBtn`/`msg`, a 2FA e o redirecionamento continuam. Aqui `.catalog-login` não é
+`position:fixed` (é a própria página). Mudou o visual do login do catálogo? Copiar para cá também.
+
+Na mesma rodada: "+ Adicionar Local" na linha do título "Locais Cadastrados", no canto direito (mesma regra de Itens
+Cadastrados, fim de `cadastro-locais.css`, `?v=20261023-botao-linha`; abaixo de 1100px volta para baixo do título).
+
+## Pedido: Lista Completa mais larga e Financeiro sem o container grande (23/out/2026)
+- **Lista Completa** (aba Geral do pedido comercial, dentro do catálogo): saiu o limite de 1600px de `.cpj-work-comercial`
+  (`catalogo-projetos.css`). A lista ocupa a largura toda, com 16–28px de margem nas laterais, e a coluna de Frete/Montagem
+  passou para 300–360px. `catalogo-projetos.css?v=20261023-lista-larga`.
+- **Financeiro e pagamentos**: a caixa branca grande ("Financeiro do pedido") saiu. Título e resumo (Falta distribuir/BV/
+  Crédito) ficam soltos no fundo, e Locação, Montagem e Frete são blocos separados (`.pg-componente-card`). Regra no fim de
+  `pedido.css`, `?v=20261023-financeiro-blocos`.
+- `tests/decorador-bv-browser.cjs` ainda tira o print desta etapa, mas no fim falha com
+  "Cannot read properties of undefined (reading 'preparar')": `EasyLocCofre` não carrega no Cadastro de Clientes dentro do
+  teste. Não tem ligação com esta mudança.
+
+## Helena dentro do pedido comercial: sem a faixa do topo (23/out/2026)
+Pedido: "dentro do comercial a Helena ficou muito espremida, esse topo dela pode remover, Ligar e Minimizar ocupando menos
+espaço, só dentro do comercial". Fim de `catalogo-assistente.css` (`?v=20261023-comercial-topo`), só com
+`html.catalogo-comercial-pedido`: a faixa grafite (`.cas-head`) some, e com ela a seta, a foto, o nome e o status.
+Ligar e Minimizar viram dois botões redondos de 34px, só com o ícone (o nome aparece ao passar o mouse), no canto
+superior direito (`position:absolute`, ao lado de "Pedido que estamos alterando"). Abaixo de 1100px também aparece ali o
+botão do pedido. No catálogo e no app nada mudou.
+- Saudação da conversa vazia do pedido ("Oi, Jonatan! Conversa do pedido…") centralizada na altura da área
+  (`.cas-boasvindas:only-child{margin:auto 0}`). No catálogo a saudação vem com as sugestões embaixo, então não é filha
+  única e fica onde estava. `?v=20261023-saudacao-centro` (catalogo.html e catalogo-app.html).
+
+## Helena: peça errada no pedido e mesa "inventada" num ambiente novo (23/out/2026)
+Relato do usuário (pedido 2178):
+- pediu "2 da Mate e 2 da Noir" e ela pôs Estante Lotus e Base Estante Cacau;
+- pediu "adicione um espaço, mesa de família" e ela criou o ambiente já com uma Mesa Nice Retangular.
+
+Causas:
+- O histórico que vai pro modelo levava só o texto das mensagens. Os ids (mN) da lista de 26 estantes mostrada na mensagem
+  anterior se perdiam, e ele chutava um.
+- `pecasCitadas` exigia o tipo ("estante") junto do modelo ("mate").
+- Não existia ferramenta pra criar ambiente vazio: `adicionar_ao_pedido` era o único jeito de criar um.
+
+Correções no servidor (`supabase/functions/catalogo-assistente/index.ts`):
+- `pecasDaMensagem`: cada mensagem do histórico leva "[peças mostradas nesta mensagem: m12 Estante Mate (Preto); …]",
+  vindo dos anexos itens/opcoes/escolha.
+- `pecasRecentes` + `pecasCitadas(…, recentes)`: para peça mostrada nas últimas 6 mensagens basta o modelo ("a Mate").
+- `adicionar_ao_pedido`/`remover_do_pedido` exigem `nome_da_peca`, e `conferirPeca` confere o id contra o nome (palavra
+  inteira, plural aceito; "mate" não casa "material"):
+  - id errado com um único candidato pelo nome (de preferência entre as peças mostradas há pouco) → usa o certo;
+  - vários candidatos (mesma peça em cores diferentes) → erro com as opções, nada muda;
+  - nenhum candidato → erro.
+- Ferramenta nova `criar_ambiente {nome}` cria o ambiente VAZIO (ação `criar_ambiente` → `catalogAssistenteProjeto.criarAmbiente`
+  em catalogo-projetos.mjs e catalogo-app.mjs).
+- Regras no prompt e no lembrete final: nunca chutar código, nunca pôr peça não pedida, "adicionar espaço" = `criar_ambiente`.
+
+Telas: `?v=20261023-helena-pecas` (catalogo.mjs, imports de catalogo-assistente/catalogo-projetos, catalogo-app).
+A Edge Function precisa ser publicada para valer (`npx supabase functions deploy catalogo-assistente`).
+
+## Compras: bolinha branca e "Solicitação de compra" (23/out/2026)
+- Número da bolinha vermelha das abas de Compras em branco: `base.css` manda todo `<b>` de `.el-page` herdar a cor do
+  texto com peso de ID (`:is(#main-content,.el-page) b`) e vencia `.compras-main .pv-tab b`. Regra nova no fim de
+  `compras.css` com `html:root:is(#compras-badge,html)`. **Bolinha/selo feito com `<b>` dentro de `.el-page`: lembrar dessa
+  regra.**
+- "Necessidade avulsa" → "Solicitação de compra" no botão do topo, na aba ("Solicitações de compra"), no texto de lista
+  vazia, no título da janela e no aviso de salvo. O selo "SEM VÍNCULO COM OP" da janela saiu. Os nomes internos
+  (`needs-avulsa`, `origem`) continuam iguais.
+- `compras.css?v=20261023-badge-branco`, `compras.js?v=20261023-solicitacao`.
+
+## Máscaras de CPF, CNPJ, telefone, CEP e PIS (25/out/2026)
+`js/core/mascaras.js` (carregado em toda tela pelo `moduleTheme.js`): `<input data-mascara="cpf|cnpj|cpfcnpj|telefone|cep|pis">`;
+em `cpfcnpj`, `data-mascara-pj="#select"` escolhe CPF/CNPJ pelo tipo de pessoa (sem ele, pela quantidade de números). O campo
+mostra pontuado, mas **`input.value` no JS devolve só os números** (o que é gravado, validado e cifrado não muda) e valor
+colocado pelo JS já aparece pontuado; vale também para campos criados depois (janelas do JS). Apagar logo depois de um
+sinal apaga o número antes dele; o cursor não pula ao editar no meio. Ligado em: Clientes, Locais, Fornecedores, Caminhões,
+Cadastro de Funcionários, Gestão de Pessoas (CPF, PIS, telefones), Financeiro (CNPJ/CPF do titular), telefone do pedido e
+WhatsApp da Central. **Campo novo de CPF/CNPJ/telefone: só pôr o `data-mascara`.** Cuidado: `new FormData(form)` lê o
+valor da tela (pontuado), não o `.value` — nas telas ligadas a leitura é por `.value`. Teste: `tests/mascaras-browser.cjs`.
+
+## Etiquetas dos cadastros de Clientes e Locais em Parâmetros > Comercial (26/out/2026)
+Os grupos de etiquetas (Clientes: Estilo, Canal, Horário, Orçamento, Comportamento; Locais: Tipo, Canal, Horário,
+Orçamento, Observações) saíram do HTML fixo: tabela `cadastro_etiquetas(empresa_id, cadastro 'cliente'|'local',
+grupos jsonb)` (migration `20261026000100`, aplicada e registrada, já semeada com as opções antigas; ler = membro,
+gravar = `configuracoes.empresa.editar`). `grupos = [{chave, titulo, cor, unica, obrigatoria, opcoes[]}]`; a **chave** é
+o nome gravado em `tags` do cadastro e nasce do título no 1º salvamento (não muda depois). Edição em Parâmetros >
+Comercial (`parametros-etiquetas.js`: incluir/tirar opção, novo grupo, cor, uma/várias, obrigatório, ordem). As telas
+chamam `EasyLocEtiquetas.aplicar(...)` (`js/core/etiquetasCadastro.js`), que redesenha os grupos e os filtros da lista
+(Clientes: estilo/orcamento; Locais: tipo/orcamento); sem cadastro ficam os do HTML. Opção já marcada num cadastro que
+saiu da lista aparece com contorno tracejado (`.fora-da-lista`), para não sumir. Grupo não obrigatório não trava o salvar.
+Em Locais, as condições do pedido (baldeação, escada, elevador, caminhão perto) são lidas por palavra-chave das
+Observações (`pedido.locais-km.mjs`) — renomear essas opções sem a palavra desliga a condição.
+Na mesma rodada: Clientes sem os cartões de resumo e com foto (ou iniciais) na linha; o filtro de orçamento passou a
+funcionar (era valor único e o filtro esperava lista). `js/core/listPager.js` virou **carregamento em blocos de 20 ao
+rolar** (mesma interface `slice/render/reset`) — vale para Clientes, Locais, Fornecedores, Caminhões e Personalizações.
+Teste: `tests/cadastro-etiquetas-browser.cjs`.
+
+## Pedido comercial: Ambientes e lista sem abas (26/out/2026)
+Na etapa "Ambientes e lista" do pedido (catálogo `?comercial=pedido`) a barra não tem mais as abas Geral/ambientes:
+só **Catálogo F2 · ＋ Ambiente · ＋ Componente · ＋ Serviço** (`pintarNavegacao`, ramo `ctx.pedidoComercial`), e a tela é
+sempre a Lista Completa (`pintarPainel` força `workTab="geral"`). Na Lista (`geralHtml` com `vazios`, `acoesAmbiente`,
+`depoisTitulo`, só no pedido comercial): ambiente sem itens aparece com aviso; renomear/excluir no título de cada ambiente;
+as renderizações do ambiente DEPOIS dos itens, centralizadas e sem cortar a foto (`object-fit:contain`) (mesmo `rendersMapaHtml`, ver/remover/editar cena). O ambiente alvo das
+ações vem de `closest("[data-cpj-target-amb]")`. "＋ Componente" pergunta o ambiente quando há mais de um. O catálogo do
+decorador (projetos) não mudou. Dados do pedido: o campo Cliente tinha 280px fixos e passava por cima do Contato; agora
+acompanha a coluna (`pedido.css`, fim). Teste: `tests/catalogo-pedido-servicos-componentes-browser.cjs` (ok 1b).
+Ajustes seguintes (mesmo dia): **Frete e Montagem saíram da lista** e ficam no topo de **Financeiro e pagamentos** — os
+próprios cartões (`#pedidoCalculosLogistica`, montado em `pedido.entrada.mjs`, faixa de 2 colunas que ocupa a grade toda);
+o espelho que existia na lista (`pedido-resumo-comercial.mjs`) foi apagado. A lista ocupa a largura toda (sem o limite de
+1440px) e cada ambiente mostra a **foto (renderizações) numa coluna à direita dos itens** (`geralHtml` opção `fotoLado`:
+célula com `rowspan` que começa na linha de títulos — ali o `aria-hidden` fica em cada título, não na linha, senão os
+botões da foto somem para leitor de tela). Decorador solicitante, "Lista Completa" e os botões numa linha só
+(`.cpj-geral-topo-comercial`, botões em `botoesPedidoComercial()`; o `[data-cpj-nav]` fica escondido). O aviso genérico
+"Imagem indisponível" da lista não pega mais renderizações (`.cpj-render`), que têm nova tentativa e "Tentar novamente".
+**Jogos da composição** (mesmo dia): o número no canto de cada renderização virou um campo "N jogos" (quando a imagem tem
+cena 3D ou lista de móveis). Mudar de 1 para 3 soma 2× cada móvel da foto no ambiente; baixar devolve; o resto da lista não
+muda (`aplicarJogos` em `catalogo-projetos.mjs`). Móveis de 1 jogo em `render.moveis` (gravado ao salvar a imagem; para
+imagens antigas é lido da cena guardada, `objects[].itemId`) e `render.jogos`. Trocar móvel no editor de cena vale para
+todos os jogos (−N/+N) e apaga `render.moveis` (refeito da cena nova). Vale no pedido e nos projetos do decorador.
+Teste: `tests/catalogo-pedido-servicos-componentes-browser.cjs` (ok 1c).
+Correção (mesmo dia): no pedido 1 a cena 3D da foto do "Evento" não existia mais no Storage (o editor de cena apagou a cena
+antiga e depois outra cópia do pedido gravou por cima apontando para ela) — os jogos davam "Não foi possível ler os móveis".
+Agora: (1) sem cena, `aplicarJogos` pergunta se usa os móveis do ambiente como 1 jogo; (2) no pedido comercial a troca de
+imagem pelo editor de cena NÃO apaga mais os arquivos antigos (`substituirImagemDaCena`), porque a tela do pedido e o
+catálogo dentro dela têm cópias do projeto. Causa da cópia antiga gravando por cima não investigada a fundo. Teste: ok 1d.
+
+## Layout do pedido: "Fotos no final" ou "Horizontal · fotos ao lado" (26/out/2026)
+`pedidoPreviewHtml`/`imprimirPedido` (`projeto-apresentacao.mjs`) aceitam `layout` ("final" = em pé, renderizações juntas
+no fim, o de sempre; "horizontal" = A4 deitado, um bloco por ambiente com a tabela à esquerda e a(s) renderização(ões) à
+direita, com "N jogos" na legenda). Sem `layout`, vale a última escolha (`localStorage.pedido_layout_pdf`, `layoutPedido()`).
+O seletor aparece nas janelas de pedido: "Ver pedido e PDF" (pedido comercial e Central de Pedidos, `abrirVisualizacaoPedido`)
+e "Enviar/Ver pedido" do decorador (`seletorLayoutNoModal` em `catalogo-projetos.mjs`). No horizontal a janela fica mais
+larga e o PDF usa `@page A4 landscape` (cada ambiente tenta caber numa página; foto até 150mm). Teste:
+`tests/catalogo-lista-ver-pedido-browser.cjs` (ok 7).
+**Resumo do pedido e programação de pagamento no fim do pedido** (nos dois layouts, prévia e PDF): `model.financeiro`
+(`{resumo, total, parcelas}`) — no pedido comercial vem ao vivo da tela do pedido (`window.__pedidoFinanceiroResumo`, em
+`pedido.mjs`: as linhas do cartão Resumo e as parcelas da etapa Financeiro); na Central, do pedido salvo
+(`financeiroPedidoSalvo(pedido)`: `observacoes.valores` + `parcelas_financeiras`). Linha zerada não aparece; parcelas por
+divisão (Locação/Frete/Montagem). Projeto do decorador não tem esses dados e não mostra nada. De passagem: a leitura de
+"R$ x" de pedidos antigos em `pedido.pagamento.mjs` (`dividirParcelasAntigas`) sempre dava 0 por barras perdidas na regex.
+**Renderizações sempre do mesmo tamanho** (26/out/2026, pedido do usuário: "uma renderização não pode ficar maior que
+outra"): acabou o "destaque" maior na primeira foto. Em todo lugar a foto fica num quadro 4:3, inteira e centralizada
+(`object-fit:contain`, fundo branco): Lista Completa (`rendersMapaHtml`, `data-modo="grade"`), pedido "Fotos no final"
+(2 por linha, também no PDF) e pedido horizontal (uma embaixo da outra, mesma largura). Regras no fim de
+`catalogo-projetos.css`. Teste: `tests/catalogo-lista-ver-pedido-browser.cjs` (ok 7 mede os tamanhos).
+**Topo do pedido refeito** (26/out/2026): sem o nome do cliente (já está no cabeçalho como decorador solicitante; num
+projeto do decorador, o nome dos noivos aparece pequeno, só quando é diferente do decorador). Fica o **Local do evento** em
+destaque e, embaixo, **Data do evento · Entrega · Coleta** (com horário). No pedido comercial as datas/local vêm dos campos
+da tela do pedido (`dataEntrega`, `horaEntrega`, `dataColeta`, `horaColeta`, `localInput`); na Central, das colunas
+`data_entrega`/`data_coleta` e `observacoes.horario_*`. "Tipo de evento" saiu do topo. O card amarelo continua.
+O card amarelo "Esta é uma prévia do pedido" não aparece no Comercial (pedido e Central de Pedidos: `model.semAviso`);
+continua nas janelas do decorador no catálogo (Enviar/Ver pedido e a prévia aberta pela Helena).
+**Cabeçalho do pedido com número e status** (26/out/2026): no Comercial, "Prévia do pedido" virou **"PEDIDO Nº X"**
+("NOVO PEDIDO" sem número) e ao lado da logo entra um selo com o status (Orçamento · Pré-reserva até dd/mm/aaaa ·
+Reservado · Cancelado, bolinha colorida). `model.numero` e `model.statusPedido = {chave, ate}` — no pedido vêm da tela
+(`#orcamentoNumero`, `#pedidoStatusComercial`, `#preReservaAte`), na Central do pedido salvo. Sem esses campos (decorador)
+continua "PRÉVIA DO PEDIDO", sem selo.
+Cabeçalho do pedido aumentado (logo 70px, selo de status 14px, foto do decorador 72px e nome 21px, número 15px). Em larguras menores (janela estreita, PDF em pé) o selo de status desce para baixo da logo; o nome do decorador nunca quebra linha.
+Topo do pedido (ajuste): o local mostra também o **endereço completo** (`model.localEndereco` — no pedido vem de
+`window.__pedidoLocalAtual`, gravado em `__pedidoRenderizarLocalEvento` (`pedido.locais-km.mjs`); na Central, de
+`locais_empresas` pelo `local_id`) e as datas viraram **cards na mesma linha do local** (abaixo de 1000px empilham).
+
+## Pedido comercial: renderizações gravadas na hora + janelas em tela cheia (26/out/2026)
+- **Renderização com IA gravada no pedido assim que fica pronta** (e a troca de móveis no editor de cena, e salvar uma
+  imagem no projeto): antes o resultado só ia para o banco no "Salvar pedido" — se a IA terminasse depois, ou a pessoa
+  saísse, voltava o print e era preciso renderizar de novo. Agora `gravarNoPedidoComercial()` (catalogo-projetos.mjs) chama
+  `window.parent.__pedidoGravarProjetoComercial` (pedido.itens.mjs), que usa a RPC nova
+  `pedido_salvar_projeto_comercial(p_empresa_id, p_pedido_id, p_projeto)` (migration `20261026000200`, aplicada e
+  registrada; security invoker, só troca `observacoes.projeto_comercial`). Pedido ainda não salvo: fica na tela até salvar.
+  No pedido comercial a renderização não apaga mais o print antigo do Storage (mesma regra do editor de cena).
+- **Janelas do catálogo dentro do pedido em tela cheia**: ficavam presas na área abaixo da barra de etapas, com o topo
+  coberto. O catálogo avisa (`MutationObserver` em `dialog[open]` + `:modal`, catalogo.mjs) e a tela do pedido
+  (`__pedidoCatalogoModal`, pedido.entrada.mjs) põe `.catalogo-modal-aberto`, que deixa o iframe `position:fixed; inset:0`
+  por cima de tudo enquanto a janela está aberta.
+**Correções seguintes (26/out/2026):** Frete e Montagem voltaram para a coluna da direita do Financeiro e pagamentos,
+abaixo do "Resumo do pedido" (os cartões ficam no `.pedido-financeiro`, como era; caminhões/volume/distância/ajuste manual
+continuam). **Catálogo virou etapa da barra** do pedido, logo depois de Dados do pedido (Dados › Catálogo › Ambientes e
+lista › Financeiro › Contrato); saíram o botão "Catálogo" das ferramentas (ficam 3D e Plantas) e o da Lista Completa
+(F2 continua). Voltar da Lista vai para o Catálogo.
+**Plantas virou etapa do pedido, depois de Ambientes e lista** (26/out/2026): barra Dados › Catálogo › Ambientes e lista ›
+Plantas › Financeiro › Contrato (`passos` com ordem explícita em `pedido.entrada.mjs`; o botão "Plantas" das ferramentas
+saiu, fica só o 3D). Voltar: Financeiro → Plantas → Lista. Antes, no pedido comercial, `pintarPainel` forçava a aba Geral e
+a tela de Plantas nunca abria. Na planta do pedido, clicar num ponto abre **"Qual é o formato desse ponto?"**
+(`escolherFormatoPlanta` em catalogo-projetos.mjs): as fotos renderizadas de cada ambiente ("Formato 1, 2…", com jogos) e,
+para ambiente sem foto, um cartão "Sem foto renderizada". A escolha grava `legenda.ambienteId` + `legenda.renderId` e a
+legenda mostra ESSA foto (sem `renderId`, ou se ela foi apagada, a mais recente do ambiente, como antes). Clicar na legenda
+troca o formato (o atual vem marcado). Fora do pedido (projetos do decorador) continua escolhendo só o ambiente. Sem o
+botão "Apresentação dos ambientes" no pedido. Teste: `tests/catalogo-pedido-plantas-browser.cjs`. Versões
+`catalogo-projetos.{css,mjs}?v=20261026-plantas-formato`, `pedido.entrada.mjs?v=20261026-plantas-etapa`.
+**Editor da planta com os controles numa coluna à esquerda** (26/out/2026, pedido: "botões nas laterais pra planta
+ocupar mais espaço, menos botões, mais prático"): `plantaEditorHtml` — `<aside class="cpj-planta-toolbar">` de 216px
+(← Plantas, nome, dica "clique na planta…", Folha: tamanho do papel + marcações + nomes nas legendas; Tamanho: Planta /
+Imagem (com %) / Fotos em −/+ e "Mover a planta" (era "Ajustar planta (arrastar)"); embaixo 3 ícones Trocar imagem,
+Baixar, Excluir) e a planta no resto (grid; abaixo de 860px a coluna vira uma faixa rolando de lado em cima). Saiu o
+botão "Apresentação dos ambientes" do editor (continua na grade de plantas do decorador). Os `data-cpj` dos botões não
+mudaram. CSS no fim de `catalogo-projetos.css`; versões `?v=20261026-planta-lateral`. Teste
+`tests/catalogo-planta-enquadramento-browser.cjs` agora confere a coluna à esquerda e a planta com >70% da largura.
+**Aba "Pedido" do pedido comercial, depois de Contrato** (26/out/2026): barra Dados › Catálogo › Ambientes e lista ›
+Plantas › Financeiro › Contrato › **Pedido** (Voltar: Pedido → Contrato). É só a prévia do pedido (`pintarAbaPedido` em
+catalogo-projetos.mjs, `workTab="pedido"`, aberta por `window.abrirPedidoComercialPedido`) com o seletor de layout,
+**Imprimir** e **Gerar PDF** (os dois abrem a impressão do navegador; PDF = "Salvar como PDF") e, se houver prints com cena,
+"Renderizar com IA". O "Ver pedido e PDF" da Lista Completa agora leva para essa aba (não abre mais janela).
+**A planta entra no pedido** antes do Resumo do pedido e da Programação de pagamento (nos dois layouts, prévia e PDF), uma
+página por planta: `plantaFolhaPedido()` monta o editor da planta fora da tela (`.cpj-planta-offscreen`), espera as
+imagens, posiciona as legendas e faz a cópia estática com `clonarPlantaFolha()` (a mesma do "Baixar planta"); vai em
+`model.plantas = [{nome, w, h, html}]` e `plantasPedidoHtml()` (projeto-apresentacao.mjs) põe numa folha com `zoom` para
+caber na página (em pé 182×250 mm, deitado 269×170 mm). Cache por planta+renderizações (`plantasDoPedido`). Legenda que
+passa da borda da folha sai cortada, igual ao "Baixar planta". Correção de passagem: a cópia herdava `inset-inline-start`/
+`margin-inline` do estilo calculado, que venciam o left/top aplicados e deslocavam a planta — agora são removidas.
+A Central de Pedidos continua abrindo a prévia em janela, **sem a planta** (lá não existe o editor da planta).
+Teste: `tests/catalogo-pedido-plantas-browser.cjs` (ok 4); `catalogo-lista-ver-pedido` e `…servicos-componentes`
+ajustados para a aba. Versões `?v=20261026-aba-pedido`.
+**Lista Completa do pedido comercial sem rodapé** (26/out/2026, pedido do usuário): saíram "Ver pedido e PDF" e "Salvar
+pedido" do fim de Ambientes e lista — o Salvar fica no topo do pedido e a prévia/PDF na aba Pedido. Os projetos do
+decorador continuam com "Enviar/Reenviar pedido" no fim da lista.
+**Pedido mais compacto** (26/out/2026, pedido: "muito espaçado"): bloco no fim de `catalogo-projetos.css` com
+`html:is(#cpj-pedido-compacto,html)` (vence o padding com !important do design-system) — faixa escura do topo com 16px em
+cima/embaixo (logo 54px, foto do decorador 52px), linhas dos itens com 4px em cima/embaixo e foto 56×44, títulos dos
+ambientes menores, e no horizontal a coluna das fotos mais estreita (2,6fr × 0,9fr). O PDF passou a pedir o CSS com
+`?v=` (antes podia usar uma cópia antiga em cache).
+**Lista Completa: nome do ambiente centralizado sobre os itens** (26/out/2026): com a coluna de foto à direita, a linha do
+título agora ocupa só as colunas dos itens (uma célula vazia `.pa-foto-ambiente-topo` fica em cima da foto), então "Buffet"
+fica no meio da tabela, não no meio de tabela + foto; e um pouco maior no pedido comercial (`clamp(26px,2.4vw,33px)`).
+**Faixa do topo encostada na página impressa (27/out/2026)**: no PDF/impressão a faixa escura do cabeçalho começava ~1 cm abaixo do topo da 1ª página (o Edge às vezes ignora `@page:first{margin-top:0}`). Agora `imprimirPedido` usa margem de cima 0 em TODAS as páginas (`@page{margin:0 0 12mm}` em pé, `0 0 10mm` deitado) e o respiro das páginas seguintes vem do conteúdo: em pé, o `<thead>` da tabela (que se repete em cada página) vira um espaço de 10mm; deitado, cada ambiente ganha 6mm em cima. Medido no PDF: texto da faixa a 19pt do topo na 1ª página, 40pt nas seguintes. Se ainda sobrar espaço, é a opção "Margens" do diálogo de impressão do navegador. Versões `?v=20261027-pdf-topo`.
+**Pedido horizontal mais compacto (27/out/2026)**: a foto do ambiente começa na linha do nome do ambiente (o `<h3>` foi para dentro da coluna dos itens, `.cpj-order-amb-lista`, ao lado de `.cpj-order-amb-fotos`) e o espaço entre ambientes diminuiu (6px na tela, 3mm em cima de cada ambiente no PDF). Medido no PDF deitado: 2 ambientes com 3 itens e foto cabem na 1ª folha. Versões `?v=20261027-amb-compacto`.
+**Planta no PDF do pedido: inteira e na página toda (27/out/2026)**: o pedido recortava a planta pela FOLHA do editor (linha tracejada), e no pedido 1 a planta tinha sido aumentada além dela (contorno vermelho, "Planta" 2,35×), então a impressão cortava o que passava. Agora `clonarPlantaFolha(planta, {inteira:true})` (só o pedido; o "Baixar planta" continua pela folha) recorta pelo quadro inteiro da planta, com as legendas, e cada planta vai para uma página só dela (`@page plantaDeitada`/`plantaEmPe`, A4 deitado ou em pé conforme a planta, margem 6mm), crescendo até ocupar a página (`--zp`; na tela `--zt`, que cabe no papel). Resumo e parcelas começam na página seguinte. **Limite**: a imagem da planta dentro do quadro sempre fica 15% maior que o necessário para cobrir (`MIN_PLANTA_OVERSCAN`, folga para arrastar), então a borda do desenho original pode ficar de fora: diminuir "Imagem" no editor mostra o desenho inteiro.
+**Aba Pedido com os botões numa coluna à esquerda** (27/out/2026, ≥901px): "Fotos no final"/"Horizontal", Imprimir e Gerar PDF empilhados num cartão de 200px, preso no topo ao rolar; o papel ao lado. Versões `?v=20261027-pedido-lateral`.
+**Troca de abas do pedido mais rápida (27/out/2026)**: medido no pedido 1 com o banco real. Antes: Catálogo ~0,5 s (o 1º clique ~6 s), Lista 0,7–1 s, Contrato ~1,4 s, Pedido ~1,8 s, e cada troca buscava os caminhões 4×. Causas e correções:
+- `pedidoSincronizarProjetoCatalogo` (`pedido.itens.mjs`, roda em toda troca) regravava cada linha e chamava `recalcularLinha` POR ITEM (resumo, parcelas, volume e frete com ida ao banco, N vezes). Agora compara uma assinatura (itens, quantidades, personalização, serviços): nada mudou → não mexe; mudou → só as linhas diferentes (`calcularTotalLinha`) e resumo/volume/frete uma vez no fim.
+- `calcularFreteInteligente` guarda as categorias de caminhão por 5 min (`buscarCategorias`, `pedido.frete.mjs`); o modelo padrão de contrato também (`carregarModeloPadrao`, `pedido.contratos.mjs`, inclusive quando não há modelo).
+- O catálogo (iframe) passa a carregar escondido quando o pedido termina de abrir (`preCarregarCatalogo` em `pedido.mjs`, no tempo livre do navegador) — tem que ser depois de abrir o pedido, porque o catálogo lê o projeto do pedido ao iniciar.
+Depois: Catálogo ~0,2–0,5 s (inclusive o 1º), Lista ~0,3 s, Plantas ~0,1 s, Financeiro ~0,2 s, Contrato ~0,3 s, Pedido ~0,2 s (1 s só na 1ª vez, montando a planta). Ao abrir o pedido o frete ainda é recalculado uma vez por item (não mexido). Versões `pedido.mjs?v=20261027-abas-rapidas2`.
+**Frete e Montagem "sem detalhe" no Financeiro (27/out/2026)**: não era a troca de lugar (os cards são os mesmos de antes; a Lista só tinha uma cópia deles). O banco foi zerado (outra sessão, `limpezaDados.js` "20261026-zerado"): `categorias_caminhao`, `categorias_montagem`, `caminhoes`, `empresa_financeiro` e `pedido_logistica_parametros` estão vazias. Sem categorias o frete mostra só "Cadastre categorias de caminhão…" e a montagem fica em "—"; sem `pedido_logistica_parametros` ninguém vê "Ajustar manualmente" (liga em Parâmetros > Logística, "Quem pode ajustar"). Só foi ajustado o recuo de "Cálculo automático" e da linha da montagem dentro do card.
+
+## Frete e Montagem: dados de cálculo restaurados + cartões claros (27/out/2026)
+Os cartões de Frete e Montagem do pedido não mostravam caminhões, ajudantes nem "Ajustar manualmente" porque as tabelas de
+cálculo estavam vazias depois da limpeza de dados (não era a mudança de lugar). Restaurado do backup de 24/10, com os ids
+originais, SÓ: `categorias_caminhao` (P/M/G/XL), `categorias_montagem` (13), `empresa_financeiro` (absorção 30%/30%),
+`empresas_configuracoes` (mín./máx. de frete e montagem, diária do montador 400) e `pedido_logistica_parametros` (ajuste
+manual liberado para todos). Os cartões no Financeiro e pagamentos ganharam o mesmo fundo claro do "Resumo do pedido"
+(fim de `pedido.css`, `?v=20261027-frete-branco`).
+
+## Pedido só salva completo: todos os dados e o financeiro distribuído (27/out/2026)
+Pedido do usuário: não salvar com pendência na distribuição de pagamentos e, nos dados do pedido, "as únicas coisas que
+não são obrigatórias são as observações". Ao salvar (botão Salvar da barra e `salvarPedidoOperacional`):
+`validarDados({completo:true})` (pedido.entrada.mjs) exige também telefone, tipo de evento, horário de entrega e de coleta
+(além de cliente, local e datas, que já eram); para abrir Catálogo/Lista/etc. continua só o básico. Depois,
+`pendenciaFinanceiro()` (`window.__pedidoPendenciaFinanceiro`, a mesma regra da bolinha vermelha da aba Financeiro): sem
+parcelas, "Falta distribuir R$ X", "passou R$ X" ou parcela sem vencimento/valor/forma (ou "a combinar") → leva para
+Financeiro e pagamentos com o motivo e não salva. Vale para orçamento também. Só na tela: o banco
+(`pedido_salvar_integrado`) não confere esses campos novos nem o financeiro. Versões `?v=20261027-salvar-completo`.
+
+## Triagem: modo travado por pedido, uma barra de rolagem e progresso na linha do título (27/out/2026)
+- **Modo travado** (pedido: "um pedido iniciado de uma forma deve ser finalizado daquele jeito"). O que o Codex tinha feito
+  (`20261027000800_separacao_modos_permissoes.sql`) era só quem pode usar cada modo (Parâmetros); a trava não existia.
+  Migration `20261027001100_separacao_modo_travado.sql` (aplicada e registrada): coluna `separacoes_pedidos.modo_separacao`
+  (manual/qr/um-clique); RPC `separacao_definir_modo(p_pedido,p_modo)` grava na escolha e recusa outro modo depois;
+  `operacao_atualizar_separacao` também confere (e grava, se ainda vazio). Pedidos com leituras antigas ganharam o modo
+  pelas leituras (melhor esforço). Na tela (`separacao-materiais.js`): `escolherModoSeparacao` grava; `abrirModoSeparacao`
+  com modo já gravado abre direto nele (sem a janela de escolha); se a pessoa não tem aquele modo liberado, só avisa.
+  "Reabrir triagem" não limpa o modo. Teste: `tests/separacao-modo-travado-browser.cjs` (fixture ganhou a RPC).
+- **Duas barras de rolagem**: com a tela de separação aberta o `body` rolava por dentro e a página por fora
+  (`body.separacao-modal-open{overflow:auto}`); virou `overflow:visible;height:auto` — rola só a página.
+- **Progresso** (`.separacao-progresso-topo`): o cartão saiu do corpo e foi para o cabeçalho, à direita de Voltar /
+  "Separação manual" / Pedido / cliente (manual e QR); ≤1000px desce para a linha de baixo.
+- **Barra que não marcava**: o preenchimento (`.progress-big-track span`, `.mini-progress span`, `.item-progress-track span`)
+  tinha ficado da mesma cor do fundo na troca bege → cinza; agora azul `#123f86` (vale também na Expedição e na Produção,
+  que usam esse CSS). Versões `separacao-materiais.css?v=20261027-progresso-topo`, `.js?v=20261027-modo-travado`.
+- **Cabeçalho do pedido na separação** (mesmo dia): no lugar de "Cliente · Tipo de evento · Local" ficou a foto do
+  decorador (`clientes_empresas.catalogo_logo_url`, por `cliente_id` ou pelo nome; sem foto, a inicial), o nome e o local
+  (`pintarClienteCabecalho`/`fotoCliente` em separacao-materiais.js, manual e QR). "Pedido N" virou um cartão branco.
+
+## Triagem só termina completa; Expedição manual sem bipe; topo da conferência numa linha (27/out/2026)
+- **Sem "finalizar com divergência"**: `finalizarSeparacao` (separacao-materiais.js) só avisa "Ainda faltam N itens" e não
+  finaliza. No banco, gatilho `separacao_exigir_completa` (migration `20261027001200`, aplicada e registrada) recusa
+  `status='separado_com_divergencia'` e `'separado'` com item abaixo do pedido (testado numa transação desfeita).
+- **Separado no modo manual ou 1 clique → conferência por quantidade** na Expedição (carregamento, descarregamento e volta),
+  mesmo com etiquetas impressas: `conferencia.js` (lê `modo_separacao`) e `operacao_concluir_conferencia`
+  (`if total>0 and modo='qr'`); `operacao_ler_peca` recusa bipe nesses pedidos. Modo vazio/QR continua por etiqueta.
+- **"Liberar para a Triagem"**: só pergunta "Tem certeza?" (`confirmarGlobal`); o motivo vai fixo ("Liberado pela Expedição
+  para a Triagem", o servidor exige um). Botão ao lado de "Imprimir lista".
+- **Topo da conferência** (`.cf-topo`, um `<div>` — `<header>` viraria faixa de título do tema): Voltar · etapa · cartão
+  "Pedido N" · foto do decorador, nome, local e data · progresso · Liberar · Imprimir, numa linha. Saíram o título
+  "Conferência do carregamento" (fica só para leitor de tela, `.cf-sr`), o cartão grande do pedido e o texto
+  "Pedido separado sem etiquetas…". "Confirmar carregamento" (`.cf-qtd-rodape`) fica preso embaixo da tela (sticky).
+  Testes: `tests/conferencia-separacao-manual-browser.cjs` (novo), `conferencia-sem-etiquetas-browser.cjs` ajustado.
+
+## Expedição: caminhões programados em destaque e escolha do caminhão no fim do carregamento (27/out/2026)
+Pedido: "na tela de expedição precisa aparecer de forma destacada quais caminhões estão programados pra aquela entrega, e
+no final do carregamento ele deve selecionar qual carro ele carregou". Migration `20261027001300_expedicao_caminhoes.sql`
+(aplicada e registrada):
+- `operacao_caminhoes_programados(p_pedidos uuid[])`: caminhões da escala (Painel Logístico) das etapas Carregamento e
+  Montagem de cada pedido. `operacao_frota(p_empresa)`: frota ativa.
+- `operacao_registrar_caminhoes(p_pedido, p_caminhoes uuid[])` grava `operacao.carregamento_caminhoes` [{id,codigo,placa,
+  modelo}] (recusa vazio e carregamento já concluído). `operacao_concluir_conferencia` recusa concluir o carregamento sem
+  isso ("Selecione o caminhão…") e leva a lista em `operacao.carregamento.caminhoes`.
+- **Quadro da Expedição** (`expedicao.js`): cartão de Ida em andamento/aguardando tem a faixa azul "Caminhões programados"
+  (código grande + placa; faixa azul clara `#eaf0fa` com borda `#123f86`, a pedido "menos forte"); sem escala, faixa amarela "Nenhum caminhão programado no Painel Logístico"; nos conferidos e na
+  volta/descarregamento mostra "Carregado em". Versões `expedicao.{css,js}?v=20261027-caminhoes(2)`. O texto das pílulas
+  precisa de `html:root:is(#acervo-separacao,html)` (o `<b>` herda a cor pela regra global de `.el-page b`).
+- **Conferência do carregamento**: faixa azul `#cfCaminhoes` logo abaixo do topo; ao concluir (bipe ou quantidade), depois da
+  confirmação, abre "Em qual caminhão o pedido foi carregado?" com a frota, os programados primeiro e já marcados; pelo menos
+  um é obrigatório.
+- Testes: `conferencia-separacao-manual-browser.cjs` (ok 3–4), `expedicao-browser.cjs`, e os de bipagem/sem etiquetas
+  marcam o caminhão; `fluxo-completo-live.cjs` escolhe o primeiro da frota (precisa de ao menos 1 caminhão cadastrado).
+  Fixture `operacao-rpc-fixture.cjs` simula as 3 RPCs (`banco.caminhoesProgramados`, `banco.caminhoes`).

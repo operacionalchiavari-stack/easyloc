@@ -1,0 +1,41 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');const {createEntradaDB}=require('./compras-entrada-fixture.cjs');
+test('solicitação do galpão, permissão separada, destinos de entrada e idempotência',async()=>{
+ const db=await createEntradaDB(),empresa='10000000-0000-0000-0000-000000000001';
+ const rpc=async(nome,args)=>((await db.query(`select ${nome}(${args.map((_,i)=>'$'+(i+1)).join(',')}) r`,args)).rows[0].r);
+ try{
+ await db.exec("select set_config('test.compras','nao',false)");
+ const n=await rpc('compras_galpao',[empresa,'criar',{origem:'manutencao',descricao_item:'Parafuso',quantidade:2,unidade:'un'}]);
+ assert.equal(n.origem,'solicitacao');assert.equal(n.local_origem,'galpao');assert.equal((await rpc('compras_galpao',[empresa,'listar',{}])).length,1);
+ await assert.rejects(rpc('compras_catalogo_entrada',[empresa,'almoxarifado']),/permissão/);
+ await db.exec("select set_config('test.compras','sim',false)");
+ assert.equal((await rpc('compras_catalogo_entrada',[empresa,'locacao'])).length,1,'exclui kits e outra empresa');
+ const compra={situacao:'recebido',forma_pagamento:'pix',parcelas:[{vencimento:'2026-10-23',valor:20}],destino:'almoxarifado',produto_id:'PROD_TESTE',fornecedor_id:'30000000-0000-0000-0000-000000000001',quantidade:2,valor_unitario:10,data_compra:'2026-10-23',token:'60000000-0000-0000-0000-000000000001'};
+ const r=await rpc('compras_registrar_entrada',[empresa,compra]);assert.equal(r.status,'recebido');assert.equal(r.valor_total,20);
+ await assert.rejects(rpc('compras_operar',[empresa,'lote',{id:r.id}]),/não reconhecida/);
+ await assert.rejects(rpc('compras_operar',[empresa,'certificado',{id:r.id}]),/não reconhecida/);
+ await db.query("update compras_registros set dados=jsonb_set(dados,'{items,0,requer_certificado}','true') where id=$1",[r.id]);
+ const semExigencia=(await db.query('select dados from compras_registros where id=$1',[r.id])).rows[0].dados;assert.equal(semExigencia.items[0].requer_certificado,false);assert.equal(semExigencia.items[0].quantidade,2);
+ assert.equal((await rpc('compras_registrar_entrada',[empresa,compra])).id,r.id);
+ assert.equal(Number((await db.query('select estoque from produtos_almox')).rows[0].estoque),12);
+ const c={...compra,destino:'locacao',produto_id:'50000000-0000-0000-0000-000000000001',token:'60000000-0000-0000-0000-000000000002'};
+ await rpc('compras_registrar_entrada',[empresa,c]);assert.equal(Number((await db.query('select estoque_total from itens where id=$1',[c.produto_id])).rows[0].estoque_total),5);
+ await assert.rejects(rpc('compras_registrar_entrada',[empresa,{...c,token:'60000000-0000-0000-0000-000000000003',quantidade:0.5,parcelas:[{vencimento:'2026-10-23',valor:5}]}]),/inteira/);
+ await assert.rejects(rpc('compras_registrar_entrada',[empresa,{...c,token:'60000000-0000-0000-0000-000000000004',produto_id:'50000000-0000-0000-0000-000000000002'}]),/não encontrado/);
+ await assert.rejects(rpc('compras_registrar_entrada',[empresa,{...c,token:'60000000-0000-0000-0000-000000000005',quantidade:-2}]),/positivos/);
+ await assert.rejects(rpc('compras_galpao',['10000000-0000-0000-0000-000000000002','listar',{}]),/acesso/);
+ const futura={...compra,situacao:'aguardando',previsao_entrega:'2026-10-30',token:'60000000-0000-0000-0000-000000000006',forma_pagamento:'boleto',parcelas:[{vencimento:'2026-11-10',valor:10},{vencimento:'2026-12-10',valor:10}]};
+ const pendente=await rpc('compras_registrar_entrada',[empresa,futura]);assert.equal(pendente.status,'aguardando_recebimento');assert.equal(pendente.prazo_acordado,'2026-10-30');
+ const aChegar=await rpc('almox_receb_pedidos',[empresa]);assert.ok(aChegar.some(p=>p.id===pendente.id&&p.prazo==='2026-10-30'),'compra aparece na previsão do almoxarifado');
+ assert.equal(Number((await db.query('select estoque from produtos_almox')).rows[0].estoque),12,'previsão não entra no estoque');
+ const pagar=(await db.query('select forma,valor,vencimento from fin_pagar where origem_id=$1 order by vencimento',[pendente.id])).rows;assert.equal(pagar.length,2);assert.equal(pagar[0].forma,'boleto');assert.equal(Number(pagar[0].valor),10);
+ await rpc('compras_registrar_entrada',[empresa,futura]);assert.equal((await db.query('select * from fin_pagar where origem_id=$1',[pendente.id])).rows.length,2,'reenvio não duplica títulos');
+ const aluguel={...c,situacao:'aguardando',previsao_entrega:'2026-10-31',token:'60000000-0000-0000-0000-000000000007'};
+ const pedido=await rpc('compras_registrar_entrada',[empresa,aluguel]);assert.equal(Number((await db.query('select estoque_total from itens where id=$1',[c.produto_id])).rows[0].estoque_total),5);
+ await rpc('compras_receber_locacao',[empresa,pedido.id]);await rpc('compras_receber_locacao',[empresa,pedido.id]);assert.equal(Number((await db.query('select estoque_total from itens where id=$1',[c.produto_id])).rows[0].estoque_total),7,'recebimento só entra uma vez');
+ await assert.rejects(rpc('compras_registrar_entrada',[empresa,{...futura,token:'60000000-0000-0000-0000-000000000008',parcelas:[{vencimento:'2026-11-10',valor:19}]}]),/soma/);
+ await assert.rejects(rpc('compras_registrar_entrada',[empresa,{...futura,token:'60000000-0000-0000-0000-000000000009',forma_pagamento:'invalida'}]),/pagamento/);
+ assert.equal(Number((await db.query('select estoque from produtos_almox')).rows[0].estoque),12,'erro financeiro desfaz todo o registro');
+ assert.equal((await db.query("select * from compras_registros where dados->>'registro_token'='60000000-0000-0000-0000-000000000009'")).rows.length,0);
+ await rpc('compras_operar',[empresa,'cancelar_pedido',{id:pendente.id,motivo:'Cancelamento de teste'}]);assert.ok((await db.query('select status from fin_pagar where origem_id=$1',[pendente.id])).rows.every(p=>p.status==='cancelado'));
+ }finally{await db.close();}
+});

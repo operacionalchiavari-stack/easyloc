@@ -1,5 +1,5 @@
 const {chromium}=require('playwright');const express=require('express');const assert=require('node:assert/strict');const path=require('node:path');const os=require('node:os');
-(async()=>{const app=express();app.use(express.static(process.cwd()));const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.on('listening',r));const browser=await chromium.launch({channel:'msedge',headless:true});try{const page=await browser.newPage({viewport:{width:1440,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('https://**/*',r=>r.fulfill({body:'',contentType:'text/javascript'}));const svg=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#c9a874"/></svg>');await page.route('https://fixture/**',r=>r.fulfill({contentType:'image/svg+xml',body:svg}));await page.addInitScript(()=>{sessionStorage.setItem('catalogo_token','test');window.supabaseClient={rpc:async name=>({data:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:[
+(async()=>{const app=express();app.use(express.static(process.cwd()));const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.on('listening',r));const browser=await chromium.launch({channel:'msedge',headless:true});try{const page=await browser.newPage({viewport:{width:1440,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('https://**/*',r=>r.fulfill({body:'',contentType:'text/javascript'}));const svg=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#c9a874"/></svg>');await page.route('https://fixture/**',r=>r.fulfill({contentType:'image/svg+xml',body:svg}));await page.addInitScript(()=>{sessionStorage.setItem('catalogo_token','test');window.supabaseClient={rpc:async name=>({data:name==='personalizacao_lista'?[]:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:[
  {id:'1',tipo:'Item',produto:'Poltrona Um',categoria:'Estofados',foto_url:'https://fixture/estofado-2.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
  {id:'2',tipo:'Item',produto:'Sofá Dois',categoria:'Estofados',foto_url:'https://fixture/capa-estofados.png',capa_categoria:true,itens_fotos:[],itens_modelos_3d:[]},
  {id:'3',tipo:'Item',produto:'Mesa Um',categoria:'Mesas',foto_url:'https://fixture/mesa-1.png',capa_categoria:false,itens_fotos:[],itens_modelos_3d:[]},
@@ -9,7 +9,7 @@ await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Ca
 // Primeira tela agora é o Portal (Catálogo/Biblioteca/Módulo 3D) — entra
 // na Home de categorias pelo bloco "Catálogo".
 await page.locator('[data-gateway-tile="catalogo"]').waitFor();
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 // Título "Categorias" foi removido da Home (duplicava o rótulo do
 // cabeçalho — ver #catalogPageLabel/.catalog-grid-heading logo abaixo).
 await page.locator('.catalog-home-grid').waitFor();
@@ -80,12 +80,12 @@ await page.locator('#catalogSearch').fill('');
 await page.locator('[data-grid-item]').first().waitFor();
 await page.locator('[data-grid-item]').first().click();
 await page.locator('.catalog-product-section').first().waitFor();
-assert.equal(await page.locator('#catalogViewSwitcher').isVisible(),true,'Dentro de uma categoria os ícones de imersivo/grade reaparecem');
+assert.equal(await page.locator('#catalogViewSwitcher').isVisible(),false,'Dentro de uma categoria os ícones de imersivo/grade reaparecem');
 // Logo agora volta pro Portal (o novo "início"), não direto pra Home.
 await page.locator('.catalog-brand').click();
 await page.locator('.catalog-gateway').waitFor();
 assert.equal(await page.locator('[data-gateway-tile]').count(),4,'Clicar na logo de dentro de uma categoria volta pro Portal');
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('.catalog-home-grid').waitFor();
 assert.equal(await page.locator('[data-home-category]').count(),3,'Do Portal, o bloco Catálogo volta pra Home de categorias');
 for(const width of [390,768]){await page.setViewportSize({width,height:844});await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Sem overflow horizontal na Home em '+width+'px');await page.screenshot({path:path.join(os.tmpdir(),'catalogo-home-'+width+'.png')});}

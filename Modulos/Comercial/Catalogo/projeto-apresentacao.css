@@ -33,3 +33,54 @@
 .pa-geral .pa-itens .pa-colhead td.pa-quantidade{text-align:center}
 .pa-geral .pa-itens .pa-ambiente-titulo{border-bottom:0}
 @media(max-width:600px){.pa-geral .pa-itens .pa-colhead td{padding:4px 4px 6px}}
+
+/* Lista Completa (aba Geral): arrastar o ambiente inteiro pela alça do título (out/2026) */
+.pa-geral .pa-ambiente-movel{position:relative}
+.pa-ambiente-alca{position:absolute;left:4px;top:50%;transform:translateY(-35%);width:30px;height:38px;padding:0;border:0;border-radius:6px;background:none;color:#8a8b82;font-size:22px;line-height:1;cursor:grab;touch-action:none}
+.pa-ambiente-alca:hover{background:#f2f2ee;color:#4f4f4f}
+.pa-ambiente-alca:focus-visible{outline:2px solid #777;outline-offset:1px}
+.pa-grupo-arrastando{opacity:.45}
+.pa-grupo-destino-antes>tr:first-child>td{box-shadow:inset 0 3px #123f86}
+.pa-grupo-destino-depois>tr:last-child>td{box-shadow:inset 0 -3px #123f86}
+.pa-geral .pa-quantidade .pa-qtd-input{max-width:56px;margin:0 auto;display:block}
+
+.cpj-work-comercial .pa-geral .pa-quantidade{width:94px;white-space:nowrap}
+.pa-geral .pa-quantidade:has(.pa-remover) .pa-qtd-input{display:inline-block;width:42px;margin:0 5px 0 0;vertical-align:middle}
+.pa-geral .pa-quantidade .pa-remover{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;float:none;margin:0;width:22px;height:24px;min-height:0;padding:0;border:0;border-radius:4px;background:transparent;color:#dc2626!important;font-size:20px;line-height:22px;cursor:pointer}
+.pa-geral .pa-quantidade .pa-remover:hover{background:#fee2e2}
+.pa-geral .pa-quantidade .pa-remover:focus-visible{outline:2px solid #dc2626;outline-offset:2px}
+
+.pa-geral .pa-descricao .pa-item-observacao{display:block;box-sizing:border-box;width:100%;min-height:30px;margin:6px 0 3px;padding:5px 8px;border:1px solid #e2e5e9;border-radius:5px;background:#fafbfc;font:12px/1.4 Manrope,system-ui,sans-serif;color:#4b5563;resize:vertical;overflow:hidden}
+.pa-geral .pa-item-observacao::placeholder{color:#9299a3}
+.pa-geral .pa-item-observacao:focus{outline:1px solid #3d706a;border-color:#3d706a;background:#fff}
+.pa-item-observacao-texto{margin:5px 0 0;font-size:12px;line-height:1.4;color:#626975;white-space:pre-wrap;overflow-wrap:anywhere}
+/* Serviços adicionais na prévia/PDF do pedido (out/2026) */
+.cpj-order-servicos{margin:26px 0 0}
+.cpj-order-servicos h3{margin:0 0 8px;font-size:16px}
+.cpj-order-servicos-tabela{width:100%}
+.cpj-order-servicos-tabela tfoot td{font-weight:600;border-top:1px solid #dcded4;padding-top:8px}
+
+/* Pedido comercial: linha de componente em amarelo (pedido do usuário). */
+.pa-itens tr.pa-linha-componente>td{background:#fff4cc!important}
+.pa-itens tr.pa-linha-componente>td:first-child{box-shadow:inset 4px 0 0 #e0b100}
+
+/* Pedido comercial: linha de componente em amarelo (pedido do usuário). */
+.pa-itens tr.pa-linha-componente>td{background:#fff4cc!important}
+.pa-itens tr.pa-linha-componente>td:first-child{box-shadow:inset 4px 0 0 #e0b100}
+
+/* Pedido comercial: escolha da personalização na linha do item (out/2026). */
+.pa-personalizacao{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:#5b4a2f}
+.pa-personalizacao span{font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:11px}
+.pa-personalizacao select{height:30px;max-width:260px;padding:0 8px;border:1px solid #d9cdb8;border-radius:8px;background:#fffaf0;font:inherit;font-size:13px;color:#1f2020}
+.pa-personalizacao-txt{display:block;margin-top:3px;color:#8a5a00;font-weight:600}
+
+/* Personalização com cartela (out/2026): botão "Personalizar" e a escolha feita na linha do item */
+.pa-pers-btn{display:inline-flex;align-items:center;gap:6px;margin-top:6px;height:28px;padding:0 12px;border:1px solid #123f86;border-radius:999px;background:#fff;color:#123f86;font:600 12px Inter,sans-serif;cursor:pointer}
+.pa-pers-btn:hover{background:#eaf0fa}
+.pa-pers-chip{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;padding:4px 6px 4px 10px;border-radius:10px;background:#eaf0fa;font-size:12.5px;color:#1f2020;max-width:100%}
+.pa-pers-txt{min-width:0}
+.pa-pers-trocar{border:0;background:#fff;color:#123f86;font:600 12px Inter,sans-serif;border-radius:999px;padding:3px 10px;cursor:pointer}
+.pa-pers-tirar{border:0;background:none;color:#6b6b6b;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}
+.pa-valor-pers{display:block;font-size:11px;color:#6b6b6b;font-weight:500;white-space:normal}
+.catalogo-comercial-pedido .pa-pers-chip{background:#f0e9fa;color:#4f3175}
+.catalogo-comercial-pedido .pa-pers-trocar{color:#6a3c96}

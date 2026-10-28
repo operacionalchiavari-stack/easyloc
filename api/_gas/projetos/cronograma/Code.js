@@ -4591,9 +4591,7 @@ function salvarChecklist(dados){
 
 fotoUrl =
 
-  "https://drive.google.com/uc?export=view&id=" +
-
-  upload.id;
+  DriveApp.getFileById(upload.id).getUrl();
 
     }catch(e){
 
@@ -4952,9 +4950,7 @@ ss.getSheetByName(
 
       fotoUrl =
 
-        "https://drive.google.com/uc?export=view&id=" +
-
-        upload.id;
+        DriveApp.getFileById(upload.id).getUrl();
 
     }catch(e){
 
@@ -9131,8 +9127,7 @@ function salvarListaConferidaDesmontagem(
           upload.id
 
             ? (
-                "https://drive.google.com/uc?export=view&id=" +
-                upload.id
+                DriveApp.getFileById(upload.id).getUrl()
               )
 
             : ""

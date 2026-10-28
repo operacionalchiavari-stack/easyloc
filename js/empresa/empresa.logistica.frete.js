@@ -28,7 +28,7 @@ container.innerHTML = `
             color:#2E1F1F;
             min-width:220px;
           ">
-            Categorias de CaminhÃ£o
+            Categorias de Caminhão
           </div>
 
           <div style="
@@ -39,7 +39,7 @@ container.innerHTML = `
 
             <div>
               <label style="font-size:12px;color:#64748b;">
-                Frete mÃ­n (R$)
+                Frete mín (R$)
               </label>
               <input id="freteMinimoInput"
                 type="text"
@@ -54,7 +54,7 @@ container.innerHTML = `
 
             <div>
               <label style="font-size:12px;color:#64748b;">
-                Frete mÃ¡x (R$)
+                Frete máx (R$)
               </label>
               <input id="freteMaximoInput"
                 type="text"
@@ -102,8 +102,8 @@ container.innerHTML = `
             color:#64748b;
           ">
             <div>Nome</div>
-            <div>Volume mÃ­n (mÂ³)</div>
-            <div>Volume mÃ¡x (mÂ³)</div>
+            <div>Volume mín (m³)</div>
+            <div>Volume máx (m³)</div>
             <div>Valor/KM (R$)</div>
             <div>Qtd Carregadores</div>
             <div>Ordem</div>

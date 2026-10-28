@@ -7,3 +7,28 @@ html:root:is(#acervo-separacao, html) .exp-page .separacao-card-top{gap:8px;}
 html:root:is(#acervo-separacao, html) .exp-page .exp-tipo{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.7);color:#6b665e;border:1px solid rgba(0,0,0,.08);margin-right:auto;}
 html:root:is(#acervo-separacao, html) .exp-page .exp-card-retorno .exp-tipo{background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);border-color:var(--el-color-border,#e3e7ec);}
 html:root:is(#acervo-separacao, html) .exp-page .exp-lidos{margin-top:8px;font-weight:600;font-size:14px;color:var(--el-color-text,#1f2020);}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-kanban{grid-template-columns:repeat(4,minmax(0,1fr))}
+html:root:is(#acervo-separacao,html) .exp-page .exp-lane-pendencias>header strong{background:#fde8e7;color:#a72d28}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-card[data-coluna="pendencias"]{background:#fff4f2;border-color:#ebc8c3}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-lane>header{min-height:108px;box-sizing:border-box}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-card{min-width:0;box-sizing:border-box}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-mainline{grid-template-columns:minmax(0,.9fr) minmax(0,1fr)}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-top{flex-wrap:wrap}
+.exp-pendencia-resumo{margin-top:10px;padding-top:9px;border-top:1px solid #ebd5d0;color:#a0352c;font-size:12px;line-height:1.5}
+.exp-pendencia-resumo small{display:block;margin-top:4px;color:#6c5350}
+@media(max-width:1150px){html:root:is(#acervo-separacao,html) .exp-page .separacao-kanban{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){html:root:is(#acervo-separacao,html) .exp-page .separacao-kanban{grid-template-columns:1fr}}
+/* Out/2026: caminhões programados (Painel Logístico) em destaque no cartão. */
+.exp-caminhoes{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;padding:8px 10px;border-radius:10px;background:#123f86;color:#fff}
+.exp-caminhoes>span{flex-basis:100%;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.exp-caminhoes b{display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px;border-radius:999px;background:#fff;color:#123f86;font-size:14px;font-weight:700}
+.exp-caminhoes b small{font-size:11px;font-weight:500;color:#4f4f4f}
+.exp-caminhoes.is-vazio{background:#fdf6dd;color:#7a5b10}
+.exp-caminhoes em{font-style:normal;font-size:12px}
+html:root:is(#acervo-separacao,html) .exp-caminhoes b{color:#123f86;font-weight:700}
+html:root:is(#acervo-separacao,html) .exp-caminhoes b small{color:#4f4f4f}
+html:root:is(#acervo-separacao,html) .exp-caminhoes>span{color:inherit}
+/* Faixa dos caminhões mais clara (pedido: azul menos forte, borda mais escura). */
+html:root:is(#acervo-separacao,html) .exp-caminhoes{background:#eaf0fa;color:#123f86;border:1px solid #123f86}
+html:root:is(#acervo-separacao,html) .exp-caminhoes b{border:1px solid #c7d4ea}
+html:root:is(#acervo-separacao,html) .exp-caminhoes.is-vazio{background:#fdf6dd;color:#7a5b10;border-color:#c9a24f}

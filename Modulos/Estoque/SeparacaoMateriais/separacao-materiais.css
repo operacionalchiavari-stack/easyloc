@@ -1092,7 +1092,7 @@ html:root:is(#acervo-separacao, html) .separacao-lane .mini-progress span{backgr
    "← Voltar" no lugar do X. Os ids/classes das antigas janelas continuam (o JS não mudou). */
 html:root:is(#acervo-separacao, html) body:has(#separacaoManualModal:not(.hidden), #separacaoQrModal:not(.hidden)) .el-page > .separacao-header.separacao-header:first-child,
 html:root:is(#acervo-separacao, html) body:has(#separacaoManualModal:not(.hidden), #separacaoQrModal:not(.hidden)) .separacao-board-card.separacao-board-card{display:none!important;}
-html:root:is(#acervo-separacao, html) body.separacao-modal-open{overflow:auto!important;}
+html:root:is(#acervo-separacao, html) body.separacao-modal-open{overflow:visible!important;height:auto!important;}
 html:root:is(#acervo-separacao, html) .separacao-modal{position:static!important;background:transparent!important;backdrop-filter:none!important;inset:auto!important;z-index:auto!important;display:block!important;padding:0!important;}
 html:root:is(#acervo-separacao, html) .separacao-modal.hidden{display:none!important;}
 html:root:is(#acervo-separacao, html) .separacao-modal-backdrop{display:none!important;}
@@ -1273,3 +1273,49 @@ html:root:is(#acervo-separacao, html) .card-retorno-lidos{margin-top:8px;font-we
 /* Selo "Ida" nos cartões de separação (o retorno tem o selo lilás "Retorno") */
 html:root:is(#acervo-separacao, html) .separacao-order-card .separacao-card-top{gap:8px;}
 html:root:is(#acervo-separacao, html) .card-tipo-ida{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.7);color:#5f5f5f;border:1px solid rgba(0,0,0,.08);margin-right:auto;}
+/* Topo mais compacto (Separação e Expedição, out/2026): título mais perto do topo e das colunas.
+   Peso maior que a regra "topo idêntico" do tema-chiavari.css, que dá padding 34px/22px ao bloco do título. */
+html:root:is(#acervo-separacao, html) body .el-page > header.separacao-header.separacao-header:first-child{padding-bottom:0!important;margin-bottom:10px!important;}
+html:root:is(#acervo-separacao, html) body .el-page > header.separacao-header > div.separacao-title-block.separacao-title-block:first-child{padding:16px 0 10px!important;margin:0!important;}
+.separacao-mode-option[hidden]{display:none!important}.separacao-mode-options{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+html:root:is(#acervo-separacao,html) #separacaoModoModal .separacao-mode-options{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))!important}
+/* Quantidade abaixo da solicitada: linha amarela nos modos manual e QR. */
+html:root:is(#acervo-separacao,html) .item-card.is-incompleto{background:#fff4d6!important}
+html:root:is(#acervo-separacao,html) .item-card.is-incompleto .item-requested{background:#f4d37a!important}
+html:root:is(#acervo-separacao,html) .item-card.is-incompleto .item-requested span,
+html:root:is(#acervo-separacao,html) .item-card.is-incompleto .item-requested strong,
+html:root:is(#acervo-separacao,html) .item-card.is-incompleto .item-name{color:#805b16!important}
+html:root:is(#acervo-separacao,html) .item-card.is-incompleto .manual-qty-input{background:#fff!important;border-color:#d4a642!important;color:#805b16!important}
+html:root:is(#acervo-separacao,html) .item-card.is-incompleto .item-progress-track span{background:#d4a642!important}
+
+/* Progresso na mesma linha de "Separação manual" / Voltar (27/out/2026) e barra preenchida de verdade:
+   a cor do preenchimento tinha virado a mesma do fundo na troca bege → cinza, e a barra parecia vazia. */
+.mini-progress span,.progress-big-track span,.item-progress-track span{background:#123f86;}
+html:root:is(#acervo-separacao, html) .separacao-modal-header > .separacao-progresso-topo{
+  order:3!important;margin:0 0 0 auto!important;flex:0 1 auto!important;min-width:0!important;
+  display:grid!important;grid-template-columns:auto minmax(140px,220px) auto;align-items:center!important;column-gap:14px!important;
+  padding:8px 16px!important;border:1px solid #e3e7ec!important;border-radius:14px!important;background:#fff!important;box-shadow:none!important;
+}
+html:root:is(#acervo-separacao, html) .separacao-progresso-topo > div:first-child{display:flex!important;align-items:baseline!important;gap:8px!important;}
+html:root:is(#acervo-separacao, html) .separacao-progresso-topo .pedido-label{font-size:11px!important;}
+html:root:is(#acervo-separacao, html) .separacao-progresso-topo strong{font-size:22px!important;line-height:1!important;}
+html:root:is(#acervo-separacao, html) .separacao-progresso-topo .progress-big-track{height:10px!important;margin:0!important;}
+html:root:is(#acervo-separacao, html) .separacao-progresso-topo .progress-big-meta{display:flex!important;flex-direction:column!important;gap:0!important;font-size:12px!important;line-height:1.35!important;white-space:nowrap!important;}
+@media(max-width:1000px){
+  html:root:is(#acervo-separacao, html) .separacao-modal-header > .separacao-progresso-topo{margin-left:0!important;flex-basis:100%!important;grid-template-columns:auto 1fr auto;}
+}
+
+/* Cabeçalho da separação (27/out/2026): número do pedido num cartão; foto do decorador, nome e local. */
+html:root:is(#acervo-separacao, html) .separacao-modal-header > div > h2{
+  padding:6px 14px!important;border:1px solid #e3e7ec!important;border-left:1px solid #e3e7ec!important;border-radius:12px!important;
+  background:#fff!important;box-shadow:0 1px 3px rgba(15,23,42,.08)!important;line-height:1.15!important;
+}
+html:root:is(#acervo-separacao, html) .separacao-modal-header > div > p.separacao-cliente{
+  display:flex!important;align-items:center!important;gap:10px!important;padding-left:0!important;border-left:0!important;
+}
+.separacao-cliente-foto{width:54px;height:54px;flex:none;border-radius:50%;overflow:hidden;display:grid;place-items:center;
+  background:#e8edf5;color:#123f86;font-weight:700;font-size:20px;border:2px solid #fff;box-shadow:0 1px 4px rgba(15,23,42,.18);}
+.separacao-cliente-foto img{width:100%;height:100%;object-fit:cover;display:block;}
+.separacao-cliente-nome{font-size:15px;font-weight:600;color:#1f2020;white-space:nowrap;}
+.separacao-cliente-local{font-size:14px;color:#6b6b6b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.separacao-cliente-local::before{content:"·";margin-right:10px;color:#a3a3a3;}

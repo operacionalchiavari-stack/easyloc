@@ -2,10 +2,10 @@
 <html data-theme-legacy lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
-  <script src="../gas-cliente.js?v=20261016-seguranca" data-projeto="almoxarifado"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="almoxarifado"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1731,8 +1731,105 @@ body.painel-aberto{ overflow:hidden; }
 
 @media(max-width:1100px){ #paKpis{ grid-template-columns:1fr; } }
   </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-selos">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261024-abas-globais">
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
+<link rel="stylesheet" href="almox-recebimento.css?v=20261022-recebimento">
+<style id="almox-estoque-reservas">
+/* Cards na mesma linha do título (out/2026): título à esquerda, indicadores à direita. */
+/* Título no meio: 2 cards de cada lado (pedido do usuário). */
+@media (min-width:1251px){
+  html body .topbar.almox-topo{ display:grid !important; grid-template-columns:repeat(2, minmax(0,1fr)) auto repeat(2, minmax(0,1fr)); gap:12px 14px; align-items:stretch !important; }
+  html body .topbar.almox-topo .cards{ display:contents !important; }
+  html body .topbar.almox-topo > div:first-child{ grid-column:3; grid-row:1; text-align:center; padding:0 16px; align-self:center; }
+  html body .topbar.almox-topo .cards > .card:nth-child(1){ grid-column:1; grid-row:1; }
+  html body .topbar.almox-topo .cards > .card:nth-child(2){ grid-column:2; grid-row:1; }
+  html body .topbar.almox-topo .cards > .card:nth-child(3){ grid-column:4; grid-row:1; }
+  html body .topbar.almox-topo .cards > .card:nth-child(4){ grid-column:5; grid-row:1; }
+}
+.topbar.almox-topo{ display:flex !important; align-items:center; gap:28px; text-align:left; padding:16px 24px !important; }
+.topbar.almox-topo > div:first-child{ flex:none; }
+.topbar.almox-topo .cards{ flex:1; min-width:0; margin:0 !important; gap:12px !important; }
+.topbar.almox-topo .card{ padding:12px 14px !important; }
+.topbar.almox-topo .card .value, .topbar.almox-topo #cardMeta{ font-size:24px !important; }
+.topbar.almox-topo .card .small{ font-size:11.5px !important; }
+@media (max-width:1250px){
+  .topbar.almox-topo{ flex-direction:column; align-items:stretch; text-align:center; }
+}
+.almox-btn-cadastrar{ margin-left:10px; white-space:nowrap; }
+#tab-dashboard .panel-header{ gap:10px; }
+#tab-dashboard .panel-header .filtro-box{ margin-left:auto; }
+.tab-btn .tab-badge[role=button]{ cursor:pointer; }
+#tbodyProdutos td.almox-editavel{ cursor:text; position:relative; transition:background .2s; }
+#tbodyProdutos td.almox-editavel:hover{ background:#f3f6fb; box-shadow:inset 0 0 0 1px #c9d3e0; }
+#tbodyProdutos td.almox-editavel:focus-visible{ outline:2px solid #123f86; outline-offset:-2px; }
+#tbodyProdutos td.almox-editavel.is-editando{ padding:4px 6px !important; background:#fff; }
+#tbodyProdutos td.almox-editavel.is-salvo{ background:#e9f7ee; }
+#tbodyProdutos td.almox-editavel.is-salvando{ opacity:.6; }
+#tbodyProdutos .almox-cel-vazia{ color:#9ca3af !important; font-size:12px; font-weight:400; }
+.almox-cel-input{ width:100%; min-width:70px; height:32px; border:1px solid #123f86; border-radius:8px; padding:0 8px; font:inherit; background:#fff; box-sizing:border-box; }
+.almox-cel-input.is-erro{ border-color:#b91c1c; background:#fff5f5; }
+.col-custo{ white-space:nowrap; }
+.almox-limite{ min-width:44px; padding:3px 10px; border:1px dashed transparent; border-radius:8px; background:transparent; font:inherit; color:inherit; cursor:pointer; }
+.almox-limite:hover, .almox-limite:focus-visible{ border-color:#c9d3e0; background:#f6f8fb; }
+.almox-limite.is-vazio{ color:#9ca3af; font-size:12px; }
+.almox-limites-dialog{ width:min(460px, calc(100vw - 32px)); }
+.almox-limites-campos{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:6px 0 10px; }
+.almox-limites-campos label{ display:flex; flex-direction:column; gap:6px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:#4f4f4f; }
+.almox-limites-campos input{ height:40px; border:1px solid #d9dee5; border-radius:10px; padding:0 10px; font:inherit; font-size:15px; text-transform:none; letter-spacing:0; }
+.almox-limites-dica{ margin:0 0 10px; font-size:13px; color:#6b6b6b; }
+.almox-limites-erro{ margin:0 0 10px; font-size:13px; color:#b91c1c; }
+.almox-limites-acoes{ display:flex; justify-content:flex-end; gap:10px; }
+.compras-aviso{ margin:0 0 12px; padding:10px 14px; border-radius:10px; background:#fff7e0; border:1px solid #f2dfa5; color:#7a5a00; font-size:13px; }
+.compras-origem{ display:block; font-size:11.5px; color:#6b6b6b; margin-top:2px; }
+.compras-acoes{ white-space:nowrap; text-align:right; }
+.compras-acoes .btn{ margin-left:6px; }
+.almox-cancelar-dialog{ width:min(520px, calc(100vw - 32px)); }
+.almox-cancelar-rotulo{ display:block; font-size:13px; font-weight:600; color:#1f2020; margin:4px 0 6px; }
+.almox-cancelar-rotulo span{ font-weight:400; color:#6b6b6b; }
+.almox-cancelar-form textarea{ width:100%; box-sizing:border-box; border:1px solid #d9dee5; border-radius:10px; padding:10px 12px; font:inherit; resize:vertical; }
+.almox-cancelar-form textarea:focus{ outline:2px solid #123f86; outline-offset:0; border-color:#123f86; }
+.almox-cancelar-erro{ margin:8px 0 0; color:#b91c1c; font-size:13px; }
+.almox-cancelar-acoes{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
+.btn.btn-danger{ background:#b91c1c !important; border-color:#b91c1c !important; color:#fff !important; }
+.btn-sm{ padding:6px 12px !important; font-size:12px !important; }
+.badge-cinza{ background:#eef0f3; color:#6b6b6b; }
+#areaCirculos:empty{ display:none !important; }
+.almox-contagem{ display:inline-block; margin-left:12px; padding:4px 12px; border-radius:999px; background:#eef2f7; color:#4f4f4f; font:600 12px/1.4 Inter, system-ui, sans-serif; letter-spacing:0; text-transform:none; vertical-align:middle; }
+/* Bolinha vermelha piscando (mesmo padrão das outras telas). */
+.tabs .tab-btn{ position:relative; overflow:visible; }
+.tabs{ overflow:visible; }
+.tab-btn .tab-badge:empty{ display:none; }
+.tab-btn .tab-badge{ position:absolute; top:-9px; right:-7px; min-width:20px; height:20px; padding:0 6px; display:grid; place-items:center; border-radius:999px; background:#e60012; color:#fff; font:600 11px/1 Inter, system-ui, sans-serif; letter-spacing:0; border:2px solid #fff; animation:almox-pisca 1.15s ease-in-out infinite; }
+@keyframes almox-pisca{ 0%,100%{ box-shadow:0 0 0 0 rgba(230,0,18,.42); transform:scale(1); } 50%{ box-shadow:0 0 0 7px rgba(230,0,18,0); transform:scale(1.08); } }
+@media (prefers-reduced-motion:reduce){ .tab-btn .tab-badge{ animation:none; } }
+/* Out/2026: Estoque atual ocupa a aba inteira; colunas Em estoque / Reservado / Pré-reserva; histórico em aba própria. */
+#tab-dashboard .grid-2{ grid-template-columns:1fr !important; }
+#tab-dashboard table, #tab-compras table{ width:100% !important; min-width:0 !important; }
+#tab-dashboard .col-status{ width:150px; }
+#tab-dashboard td .badge{ white-space:nowrap; }
+.col-qtd{ width:96px; text-align:center !important; white-space:nowrap; }
+td.almox-qtd{ font-weight:700; color:#1f2020; }
+td.almox-qtd.is-zero{ color:#b91c1c; }
+td.almox-zero{ color:#9ca3af; }
+.almox-reserva-link{ min-width:44px; padding:4px 10px; border:0; border-radius:999px; font:inherit; font-weight:700; cursor:pointer; }
+.almox-reserva-link.is-res{ background:#e3edfb; color:#123f86; }
+.almox-reserva-link.is-pre{ background:#fff1cc; color:#8a5a00; }
+.almox-reserva-link:hover{ filter:brightness(.95); text-decoration:underline; }
+.badge-falta{ background:#fee2e2; color:#b91c1c; }
+.badge-atencao{ background:#fff1cc; color:#8a5a00; }
+.badge-reservado{ background:#e3edfb; color:#123f86; }
+.almox-reservas-dialog{ width:min(760px, calc(100vw - 32px)); border:0; border-radius:14px; padding:22px; box-shadow:0 18px 50px rgba(15,23,42,.25); }
+.almox-reservas-dialog::backdrop{ background:rgba(15,23,42,.35); }
+.almox-reservas-topo{ display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin-bottom:14px; }
+.almox-reservas-topo small{ text-transform:uppercase; letter-spacing:.08em; font-size:11px; color:#6b6b6b; }
+.almox-reservas-topo h3{ margin:4px 0 6px; font-size:20px; }
+.almox-reservas-topo p{ margin:0; color:#4f4f4f; font-size:13px; }
+.hist-filtros{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-end; }
+.hist-filtros select, .hist-data input{ height:38px; border:1px solid #d9dee5; border-radius:10px; padding:0 10px; background:#fff; font:inherit; }
+.hist-data{ display:flex; align-items:center; gap:6px; font-size:13px; color:#4f4f4f; }
+.hist-resumo{ font-size:13px; color:#6b6b6b; margin:0 0 10px; }
+td.hist-vazio{ text-align:center; color:#6b6b6b; padding:24px !important; }
+</style>
 </head>
 <body>
 
@@ -1740,31 +1837,11 @@ body.painel-aberto{ overflow:hidden; }
   <div class="spinner"></div>
 </div>
 
-<div class="topbar">
+<div class="topbar almox-topo">
   <div>
     <h1>Almoxarifado</h1>
   </div>
-
-
-</div>
-
-<div class="container">
-
-<div class="cards">
-  <div class="card">
-    <div class="label">Itens cadastrados</div>
-    <div class="value" id="cardTotalItens">0</div>
-  </div>
-
-  <div class="card" id="boxAbaixoMinimo" onclick="abrirModalAbaixoMinimo()" style="cursor:pointer;">
-    <div class="label">Abaixo do mínimo</div>
-    <div class="value meta-alerta" id="cardAbaixoMinimo">0</div>
-  </div>
-
-  <div class="card" id="boxEmprestimos">
-    <div class="label">Itens em uso</div>
-    <div class="value" id="cardEmprestimos">0</div>
-  </div>
+  <div class="cards">
 
 <div class="card card-destaque-amarelo">
   <div class="label">Meta mensal de contagem</div>
@@ -1790,6 +1867,11 @@ body.painel-aberto{ overflow:hidden; }
 </div>
 </div>
 
+
+</div>
+
+<div class="container">
+
 <!-- 🔥 CÍRCULOS DE METAS -->
 <div id="areaCirculos" style="
   display:flex;
@@ -1799,13 +1881,14 @@ body.painel-aberto{ overflow:hidden; }
 "></div>
 
 <div class="tabs">
-<button class="tab-btn" onclick="document.getElementById('comunicadoPortal').showModal()">Enviar comunicado</button>
-    <button class="tab-btn active" data-tab="dashboard" onclick="abrirTab('dashboard')">Dashboard</button>
-    <button class="tab-btn" data-tab="cadastro" onclick="abrirTab('cadastro')">Cadastro de insumos</button>
+    <button class="tab-btn active" data-tab="dashboard" onclick="abrirTab('dashboard')">Estoque atual <span class="tab-badge" id="badgeAbaixoMinimo" role="button" tabindex="0" title="Itens abaixo do mínimo — clique para ver" onclick="event.stopPropagation(); abrirModalAbaixoMinimo()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();abrirModalAbaixoMinimo();}"></span></button>
+    <button type="button" class="tab-btn" onclick="location.href='../../Producao/ordens.html?setor=almoxarifado'">Materiais da produção</button>
+    <button class="tab-btn" data-tab="historico" onclick="abrirTab('historico')">Histórico</button>
     <button class="tab-btn" data-tab="movimentacao" onclick="abrirTab('movimentacao')">Entrada / Saída</button>
-    <button class="tab-btn" data-tab="emprestimos" onclick="abrirTab('emprestimos')">Retiradas</button>
+    <button class="tab-btn" data-tab="emprestimos" onclick="abrirTab('emprestimos')">Retiradas <span class="tab-badge" id="badgeRetiradas" title="Itens em uso"></span></button>
+    <button class="tab-btn" data-tab="compras" onclick="abrirTab('compras')">Solicitações de compra <span class="tab-badge" id="badgeCompras" title="Solicitações em andamento"></span></button>
+    <button class="tab-btn" data-tab="recebimento" onclick="abrirTab('recebimento')">Recebimento <span class="tab-badge" id="badgeRecebimento" title="Pedidos a receber"></span></button>
 <button class="tab-btn" data-tab="contagem" onclick="abrirTab('contagem')">Contagem mensal</button>
-    <button class="tab-btn" data-tab="usuarios" onclick="abrirTab('usuarios')">Usuários</button>
     <button
   class="tab-btn"
   data-tab="graficos"
@@ -1819,7 +1902,7 @@ body.painel-aberto{ overflow:hidden; }
   <div class="grid-2">
 <div class="panel">
       <div class="panel-header">
-        <h2>Estoque atual</h2>
+        <h2>Estoque atual <span class="almox-contagem" id="cardTotalItens">0 itens</span></h2>
 
         <div class="filtro-box">
           <span class="filtro-icon">🔍</span>
@@ -1829,6 +1912,7 @@ body.painel-aberto{ overflow:hidden; }
             placeholder="Buscar produto..." 
 oninput="renderTabelaProdutos()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
         </div>
+        <button type="button" class="btn almox-btn-cadastrar" onclick="abrirTab('cadastro')">+ Cadastrar insumo</button>
 
       </div>
       <div class="panel-body">
@@ -1841,7 +1925,12 @@ oninput="renderTabelaProdutos()" autocomplete="off" data-lpignore="true" data-1p
 <th class="col-categoria">Categoria</th>
 <th class="col-setor">Setor</th>
 <th class="col-unidade">Unid.</th>
+<th class="col-qtd" title="Quantidade que tem hoje no almoxarifado">Em estoque</th>
+<th class="col-qtd" title="Material de itens personalizados em pedidos reservados">Reservado</th>
+<th class="col-qtd" title="Material de itens personalizados em pedidos em pré-reserva">Pré-reserva</th>
 <th class="col-minimo">Mínimo</th>
+<th class="col-minimo" title="Quantidade que deve ter depois de comprar">Ideal</th>
+<th class="col-custo" title="Valor de custo da unidade">Custo</th>
 <th class="col-status">Status</th>
                 </tr>
               </thead>
@@ -1850,26 +1939,117 @@ oninput="renderTabelaProdutos()" autocomplete="off" data-lpignore="true" data-1p
           </div>
         </div>
       </div>
+    </div>
+  </section>
 
+  <!-- Histórico de movimentações (out/2026): saiu do Estoque atual e virou aba própria, com filtros. -->
+  <!-- Solicitações de compra (out/2026): nascem sozinhas quando o material chega no estoque mínimo, se a compra
+       automática estiver ligada em Gestão > Parâmetros > Almoxarifado. Quantidade = estoque ideal − estoque. -->
+  <section class="section" id="tab-compras">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Solicitações de compra</h2>
+        <div class="hist-filtros">
+          <select id="comprasFiltro" onchange="renderSolicitacoesCompra()" aria-label="Situação">
+            <option value="andamento">Em andamento</option>
+            <option value="">Todas</option>
+            <option value="concluida">Concluídas</option>
+            <option value="cancelada">Canceladas</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="compras-aviso" id="comprasAviso" hidden></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nº</th><th>Data</th><th>Código</th><th>Material</th><th class="col-qtd">Estoque</th><th class="col-qtd">Mínimo</th><th class="col-qtd">Ideal</th><th class="col-qtd">Comprar</th><th>Situação em Compras</th><th></th></tr></thead>
+            <tbody id="tbodyCompras"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recebimento de mercadorias (out/2026): pedidos de compra emitidos por Compras chegam aqui; receber com ou sem XML
+       em 5 etapas (almox-recebimento.js). Valores e pagamento ficam com Compras, salvo parâmetro em Gestão > Parâmetros. -->
+  <section class="section" id="tab-recebimento">
+    <div class="receb-aviso" id="recebAviso" hidden></div>
+    <div id="recebListaView">
       <div class="panel">
         <div class="panel-header">
-          <h2>Últimas movimentações</h2>
+          <h2>Pedidos a receber</h2>
+          <div class="receb-cabecalho-acoes"><button type="button" class="btn btn-sm" data-receb-nova-xml>Receber nota (XML)</button></div>
         </div>
         <div class="panel-body">
           <div class="table-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Tipo</th>
-                  <th>Produto</th>
-                  <th>Qtd</th>
-                  <th>Responsável</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyMovRecentes"></tbody>
+              <thead><tr><th>Pedido</th><th>Fornecedor</th><th>Prazo</th><th>Itens a receber</th><th class="col-qtd">Valor</th><th></th></tr></thead>
+              <tbody id="tbodyRecebPedidos"><tr><td colspan="6" class="hist-vazio">Carregando…</td></tr></tbody>
             </table>
           </div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-header">
+          <h2>Recebimentos</h2>
+          <div class="hist-filtros">
+            <select id="recebFiltro" onchange="AlmoxRecebimento.filtrar()" aria-label="Situação">
+              <option value="">Todos</option>
+              <option value="rascunho">Em andamento</option>
+              <option value="concluido">Concluídos</option>
+            </select>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Nº</th><th>Data</th><th>Nota</th><th>Pedido</th><th>Fornecedor</th><th class="col-qtd">Itens</th><th>Situação</th><th>Por</th></tr></thead>
+              <tbody id="tbodyRecebLista"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="recebFluxoView" class="receb-fluxo" hidden></div>
+  </section>
+
+  <section class="section" id="tab-historico">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Histórico de movimentações</h2>
+        <div class="hist-filtros">
+          <div class="filtro-box">
+            <span class="filtro-icon">🔍</span>
+            <input type="search" id="histBusca" placeholder="Buscar produto, código ou pessoa..." oninput="renderHistoricoMovimentacoes()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
+          </div>
+          <select id="histTipo" onchange="renderHistoricoMovimentacoes()" aria-label="Tipo de movimentação">
+            <option value="">Entradas e saídas</option>
+            <option value="entrada">Só entradas</option>
+            <option value="saida">Só saídas</option>
+          </select>
+          <label class="hist-data">De <input type="date" id="histDe" onchange="renderHistoricoMovimentacoes()"></label>
+          <label class="hist-data">Até <input type="date" id="histAte" onchange="renderHistoricoMovimentacoes()"></label>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="hist-resumo" id="histResumo"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Código</th>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Estoque</th>
+                <th>Responsável</th>
+                <th>Solicitante / destino</th>
+                <th>Observações</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyMovRecentes"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1879,6 +2059,7 @@ oninput="renderTabelaProdutos()" autocomplete="off" data-lpignore="true" data-1p
     <div class="panel">
       <div class="panel-header">
         <h2>Cadastro de insumos</h2>
+        <button type="button" class="btn btn-outline" onclick="abrirTab('dashboard')">← Voltar ao estoque</button>
       </div>
       <div class="panel-body">
         <div class="form-grid-3">
@@ -1962,6 +2143,11 @@ oninput="renderTabelaProdutos()" autocomplete="off" data-lpignore="true" data-1p
           <div class="field">
             <label>Estoque mínimo</label>
             <input type="number" id="prodEstoqueMinimo" placeholder="0" step="0.01">
+          </div>
+
+          <div class="field">
+            <label>Estoque ideal</label>
+            <input type="number" id="prodEstoqueIdeal" placeholder="0" step="0.01" min="0" title="Quanto deve ter depois de comprar. Com a compra automática ligada, ao chegar no mínimo o sistema pede ideal − estoque.">
           </div>
 
           <div class="field">
@@ -2453,13 +2639,18 @@ function abrirTab(tab){
     return;
   }
 
+  if(tab === "historico") carregarHistoricoCompleto();
+  if(tab === "compras") carregarSolicitacoesCompra();
+  if(tab === "recebimento" && window.AlmoxRecebimento) AlmoxRecebimento.abrirAba();
+  const abaMarcada = tab === "cadastro" ? "dashboard" : tab;
+
   document
     .querySelectorAll(".tab-btn")
     .forEach(function(btn){
 
       btn.classList.toggle(
         "active",
-        btn.dataset.tab === tab
+        btn.dataset.tab === abaMarcada
       );
 
     });
@@ -2590,7 +2781,7 @@ function carregarDashboard(){
       const cardAssertividade = document.getElementById("cardAssertividade");
       const cardTetoGastos = document.getElementById("cardTetoGastos");
 
-      if(cardTotalItens) cardTotalItens.innerText = res.totalItens || 0;
+      if(cardTotalItens){ const n = Number(res.totalItens || 0); cardTotalItens.innerText = n.toLocaleString("pt-BR") + (n === 1 ? " item cadastrado" : " itens cadastrados"); }
 if(cardEstoqueTotal) {
   cardEstoqueTotal.innerText = formatarMoedaBR(res.totalComprasMes || 0);
 }
@@ -2603,7 +2794,13 @@ if(comprasMesLabel){
   );
 }
       if(cardAbaixoMinimo) cardAbaixoMinimo.innerText = res.abaixoMinimo || 0;
+      // Abaixo do mínimo virou a bolinha vermelha da aba Estoque atual (clicar nela abre a lista).
+      const badgeMin = document.getElementById("badgeAbaixoMinimo");
+      if(badgeMin){ const n = Number(res.abaixoMinimo || 0); badgeMin.textContent = n > 0 ? String(n) : ""; badgeMin.title = (n === 1 ? "1 item abaixo do mínimo" : n + " itens abaixo do mínimo") + " — clique para ver"; }
       if(cardEmprestimos) cardEmprestimos.innerText = res.emprestimosAbertos || 0;
+      // Itens em uso viraram a bolinha vermelha da aba Retiradas (some quando é zero).
+      const badgeRetiradas = document.getElementById("badgeRetiradas");
+      if(badgeRetiradas){ const n = Number(res.emprestimosAbertos || 0); badgeRetiradas.textContent = n > 0 ? String(n) : ""; badgeRetiradas.title = n === 1 ? "1 item em uso" : n + " itens em uso"; }
 
       if(cardMeta) {
         cardMeta.innerText = (res.percentualMeta || 0) + "%";
@@ -2643,7 +2840,14 @@ if(comprasMesLabel){
       }
 
       renderTabelaProdutos(res.produtos || []);
-      renderMovimentacoesRecentes(res.movimentacoes || []);
+      carregarReservasMaterial();
+      carregarSolicitacoesCompra();
+      aplicarIdealPendente();
+      // Recarregou (ex.: depois de uma entrada/saída): o histórico completo é lido de novo ao abrir a aba.
+      historicoMovimentacoes = res.movimentacoes || [];
+      historicoCompletoCarregado = false;
+      renderHistoricoMovimentacoes();
+      if(document.getElementById("tab-historico")?.classList.contains("active")) carregarHistoricoCompleto();
       renderMovimentacoes(res.movimentacoes || []);
       renderEmprestimos(res.emprestimos || []);
       renderContagens(res.contagens || []);
@@ -2781,14 +2985,395 @@ function renderTabelaProdutos(lista){
       tr.innerHTML = `
         <td>${p.Codigo || "-"}</td>
         <td>${p.Produto || "-"}</td>
-        <td>${p.Categoria || "-"}</td>
-        <td>${p.Setor || "-"}</td>
+        ${celulaEditavel(p, "categoria")}
+        ${celulaEditavel(p, "setor")}
 <td>${p.Unidade || "-"}</td>
-<td>${formatarNumero(p.EstoqueMinimo || 0)}</td>
-        <td><span class="badge badge-ok">OK</span></td>
+${colunasReservaHtml(p)}
+${colunasLimitesHtml(p)}
+        <td>${statusEstoqueHtml(p)}</td>
       `;
       tbody.appendChild(tr);
     });
+}
+
+// ===== Reservas de material por item personalizado (out/2026) =====
+// Pedido do Comercial com item personalizado reserva os materiais cadastrados na personalização
+// (Estoque > Personalizações). Vem do banco do Acervo: almox_reservas_personalizacao.
+window.__ALMOX_RESERVAS = {};
+function numeroAlmox(v){
+  if(typeof v === "number") return v;
+  const s = String(v ?? "").trim();
+  if(!s) return 0;
+  const n = Number(s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s);
+  return Number.isFinite(n) ? n : 0;
+}
+function reservaDo(p){ return window.__ALMOX_RESERVAS[String(p.ID || "")] || null; }
+function colunasReservaHtml(p){
+  const r = reservaDo(p);
+  const atual = numeroAlmox(p.EstoqueAtual);
+  const cel = (v, tipo) => v > 0
+    ? `<td class="col-qtd"><button type="button" class="almox-reserva-link is-${tipo}" onclick="abrirReservasProduto('${String(p.ID || "").replace(/'/g, "")}')" title="Ver os pedidos">${formatarNumero(v)}</button></td>`
+    : `<td class="col-qtd almox-zero">0</td>`;
+  return `<td class="col-qtd almox-qtd${atual <= 0 ? " is-zero" : ""}">${formatarNumero(atual)}</td>${cel(r ? numeroAlmox(r.reservado) : 0, "res")}${cel(r ? numeroAlmox(r.pre_reserva) : 0, "pre")}`;
+}
+function statusEstoqueHtml(p){
+  const r = reservaDo(p);
+  const atual = numeroAlmox(p.EstoqueAtual);
+  const reservado = r ? numeroAlmox(r.reservado) : 0;
+  const pre = r ? numeroAlmox(r.pre_reserva) : 0;
+  if(reservado > atual) return `<span class="badge badge-falta" title="Faltam ${formatarNumero(reservado - atual)} para os pedidos reservados">Vai faltar</span>`;
+  if(reservado + pre > atual) return `<span class="badge badge-atencao" title="Faltam ${formatarNumero(reservado + pre - atual)} se as pré-reservas fecharem">Falta se fechar</span>`;
+  if(atual < numeroAlmox(p.EstoqueMinimo)) return `<span class="badge badge-atencao">Abaixo do mínimo</span>`;
+  return `<span class="badge badge-ok">OK</span>`;
+}
+let almoxBancoPromessa = null;
+function almoxBanco(){
+  const carregar = (src) => new Promise((ok, erro) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = erro; document.head.appendChild(s); });
+  almoxBancoPromessa ||= (async () => {
+    try { if(window.top !== window && window.top.supabaseClient) window.supabaseClient = window.top.supabaseClient; } catch(e) {}
+    if(!window.supabaseClient){
+      if(!window.supabase) await carregar("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js");
+      await carregar("../../../js/core/supabase.js");
+    }
+    return window.supabaseClient;
+  })();
+  return almoxBancoPromessa;
+}
+async function carregarReservasMaterial(){
+  try{
+    const c = await almoxBanco();
+    let empresa = null;
+    try { empresa = sessionStorage.getItem("empresa_id") || window.top?.__CONTEXT?.empresa_id || null; } catch(e) {}
+    if(!c || !empresa) return;
+    const { data, error } = await c.rpc("almox_reservas_personalizacao", { p_empresa_id: empresa });
+    if(error) throw error;
+    const mapa = {};
+    (data || []).forEach(r => { mapa[String(r.produto_id)] = r; });
+    window.__ALMOX_RESERVAS = mapa;
+    renderTabelaProdutos();
+  }catch(e){
+    console.warn("Reservas de material não carregaram:", e);
+  }
+}
+function abrirReservasProduto(id){
+  const p = (produtosDashboard || []).find(x => String(x.ID) === String(id));
+  const r = window.__ALMOX_RESERVAS[String(id)];
+  if(!p || !r) return;
+  const data = (d) => d ? String(d).slice(0, 10).split("-").reverse().join("/") : "-";
+  const linhas = (r.pedidos || []).map(x => `<tr><td>${x.numero || "-"}</td><td>${x.cliente || "-"}</td><td>${data(x.data_evento)}</td><td><span class="badge ${x.tipo === "pre" ? "badge-atencao" : "badge-reservado"}">${x.tipo === "pre" ? "Pré-reserva" : "Reservado"}</span></td><td>${formatarNumero(numeroAlmox(x.quantidade))} ${p.Unidade || ""}</td></tr>`).join("");
+  let dlg = document.getElementById("almoxReservasDialog");
+  if(!dlg){ dlg = document.createElement("dialog"); dlg.id = "almoxReservasDialog"; dlg.className = "almox-reservas-dialog"; document.body.appendChild(dlg); }
+  dlg.innerHTML = `<div class="almox-reservas-topo"><div><small>Material reservado por pedidos</small><h3>${p.Produto || "-"}</h3><p>Em estoque: <strong>${formatarNumero(numeroAlmox(p.EstoqueAtual))} ${p.Unidade || ""}</strong> · Reservado: <strong>${formatarNumero(numeroAlmox(r.reservado))}</strong> · Pré-reserva: <strong>${formatarNumero(numeroAlmox(r.pre_reserva))}</strong></p></div><button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">Fechar</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Evento</th><th>Situação</th><th>Material</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
+  dlg.showModal();
+}
+
+// ===== Estoque mínimo / ideal e solicitações de compra (out/2026) =====
+// Edição direto na tabela (out/2026): clicar em Categoria, Setor, Mínimo, Ideal ou Custo vira um campo;
+// Enter ou sair do campo grava (almox_produto_editar), Esc cancela, Tab vai para o próximo campo da linha.
+// Código, produto, unidade e estoque não mudam aqui (estoque só por Entrada/Saída).
+const CAMPOS_EDITAVEIS = {
+  categoria: { coluna: "Categoria", texto: true },
+  setor: { coluna: "Setor", texto: true },
+  minimo: { coluna: "EstoqueMinimo" },
+  ideal: { coluna: "EstoqueIdeal" },
+  custo: { coluna: "ValorCusto", moeda: true }
+};
+function celulaEditavel(p, campo){
+  const def = CAMPOS_EDITAVEIS[campo];
+  const valor = p[def.coluna];
+  let mostra;
+  if(def.texto) mostra = String(valor ?? "").trim() ? escAlmox(valor) : '<span class="almox-cel-vazia">definir</span>';
+  else if(def.moeda) mostra = numeroAlmox(valor) > 0 ? formatarMoedaBR(numeroAlmox(valor)) : '<span class="almox-cel-vazia">definir</span>';
+  else if(campo === "ideal") mostra = numeroAlmox(valor) > 0 ? formatarNumero(numeroAlmox(valor)) : '<span class="almox-cel-vazia">definir</span>';
+  else mostra = formatarNumero(numeroAlmox(valor));
+  const classe = def.texto ? "" : " col-minimo";
+  return `<td class="almox-editavel${classe}" tabindex="0" data-campo="${campo}" data-id="${escAlmox(p.ID)}" title="Clique para alterar">${mostra}</td>`;
+}
+function colunasLimitesHtml(p){
+  return celulaEditavel(p, "minimo") + celulaEditavel(p, "ideal") + celulaEditavel(p, "custo");
+}
+function editarCelulaAlmox(td){
+  if(!td || td.querySelector("input")) return;
+  const campo = td.dataset.campo, def = CAMPOS_EDITAVEIS[campo];
+  const p = (produtosDashboard || []).find(x => String(x.ID) === td.dataset.id);
+  if(!p) return;
+  const original = p[def.coluna];
+  let inicial = def.texto ? String(original ?? "") : (numeroAlmox(original) ? String(numeroAlmox(original)).replace(".", ",") : "");
+  const listaId = "almoxLista_" + campo;
+  if(def.texto && !document.getElementById(listaId)){
+    const dl = document.createElement("datalist"); dl.id = listaId; document.body.appendChild(dl);
+  }
+  if(def.texto){
+    const valores = [...new Set((produtosDashboard || []).map(x => String(x[def.coluna] ?? "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    document.getElementById(listaId).innerHTML = valores.map(v => `<option value="${escAlmox(v)}">`).join("");
+  }
+  td.classList.add("is-editando");
+  td.innerHTML = `<input type="text" class="almox-cel-input" ${def.texto ? `list="${listaId}"` : 'inputmode="decimal"'} aria-label="${def.coluna}">`;
+  const input = td.querySelector("input");
+  input.value = inicial;
+  input.focus(); input.select();
+  let encerrado = false;
+  const fechar = () => { encerrado = true; renderTabelaProdutos(); };
+  const gravar = async (proximo) => {
+    if(encerrado) return;
+    const texto = input.value.trim();
+    if(texto === inicial.trim()){ encerrado = true; renderTabelaProdutos(); if(proximo) focarProximaCelula(td.dataset.id, campo); return; }
+    let valor = texto;
+    if(!def.texto){
+      valor = numeroAlmox(texto || "0");
+      if(!Number.isFinite(valor) || valor < 0 || /[^0-9.,\s]/.test(texto)){ input.classList.add("is-erro"); input.title = "Use só números (ex.: 12,50)."; return; }
+      const min = campo === "minimo" ? valor : numeroAlmox(p.EstoqueMinimo);
+      const ideal = campo === "ideal" ? valor : numeroAlmox(p.EstoqueIdeal);
+      if(ideal > 0 && ideal < min){ input.classList.add("is-erro"); alert("O estoque ideal não pode ser menor que o mínimo (" + formatarNumero(min) + ")."); input.focus(); return; }
+    }
+    encerrado = true;
+    input.disabled = true; td.classList.add("is-salvando");
+    try{
+      const c = await almoxBanco();
+      const empresa = empresaAlmox();
+      if(!c || !empresa) throw new Error("Sem conexão com o banco.");
+      const { error } = await c.rpc("almox_produto_editar", { p_empresa: empresa, p_produto_id: String(p.ID), p_dados: { [campo]: valor } });
+      if(error) throw new Error(error.message);
+      p[def.coluna] = valor;
+      renderTabelaProdutos();
+      const nova = document.querySelector(`#tbodyProdutos td[data-id="${CSS.escape(String(p.ID))}"][data-campo="${campo}"]`);
+      if(nova){ nova.classList.add("is-salvo"); setTimeout(() => nova.classList.remove("is-salvo"), 1400); }
+      if(campo === "minimo" || campo === "ideal") carregarSolicitacoesCompra();
+      if(proximo) focarProximaCelula(p.ID, campo);
+    }catch(e){
+      alert(e.message || "Não foi possível salvar.");
+      renderTabelaProdutos();
+    }
+  };
+  input.addEventListener("keydown", ev => {
+    if(ev.key === "Enter"){ ev.preventDefault(); gravar(false); }
+    else if(ev.key === "Escape"){ ev.preventDefault(); fechar(); }
+    else if(ev.key === "Tab"){ ev.preventDefault(); gravar(true); }
+  });
+  input.addEventListener("blur", () => { if(!encerrado) gravar(false); });
+}
+function focarProximaCelula(id, campo){
+  const ordem = Object.keys(CAMPOS_EDITAVEIS);
+  const prox = ordem[ordem.indexOf(campo) + 1];
+  if(!prox) return;
+  const td = document.querySelector(`#tbodyProdutos td[data-id="${CSS.escape(String(id))}"][data-campo="${prox}"]`);
+  if(td) editarCelulaAlmox(td);
+}
+document.addEventListener("click", ev => {
+  const td = ev.target.closest && ev.target.closest("#tbodyProdutos td.almox-editavel");
+  if(td) editarCelulaAlmox(td);
+});
+document.addEventListener("keydown", ev => {
+  const td = ev.target.closest && ev.target.closest("#tbodyProdutos td.almox-editavel");
+  if(td && !td.querySelector("input") && (ev.key === "Enter" || ev.key === "F2")){ ev.preventDefault(); editarCelulaAlmox(td); }
+});
+function escAlmox(v){ return String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function abrirLimites(id){
+  const p = (produtosDashboard || []).find(x => String(x.ID) === String(id));
+  if(!p) return;
+  let dlg = document.getElementById("almoxLimitesDialog");
+  if(!dlg){ dlg = document.createElement("dialog"); dlg.id = "almoxLimitesDialog"; dlg.className = "almox-reservas-dialog almox-limites-dialog"; document.body.appendChild(dlg); }
+  dlg.innerHTML = `<form method="dialog" class="almox-limites-form">
+    <div class="almox-reservas-topo"><div><small>Estoque mínimo e ideal</small><h3>${escAlmox(p.Produto)}</h3><p>Em estoque agora: <strong>${formatarNumero(numeroAlmox(p.EstoqueAtual))} ${escAlmox(p.Unidade || "")}</strong></p></div></div>
+    <div class="almox-limites-campos">
+      <label>Estoque mínimo<input type="number" name="minimo" min="0" step="0.01" value="${numeroAlmox(p.EstoqueMinimo)}" required></label>
+      <label>Estoque ideal<input type="number" name="ideal" min="0" step="0.01" value="${numeroAlmox(p.EstoqueIdeal) || ""}" placeholder="0"></label>
+    </div>
+    <p class="almox-limites-dica">Quando o estoque chegar no mínimo, a compra automática pede o que falta para chegar no ideal.</p>
+    <p class="almox-limites-erro" data-erro hidden></p>
+    <div class="almox-limites-acoes"><button type="button" class="btn btn-outline" data-fechar>Cancelar</button><button type="submit" class="btn">Salvar</button></div>
+  </form>`;
+  dlg.querySelector("[data-fechar]").onclick = () => dlg.close();
+  dlg.querySelector("form").onsubmit = async (ev) => {
+    ev.preventDefault();
+    const form = ev.target, erro = form.querySelector("[data-erro]");
+    const minimo = numeroAlmox(form.minimo.value), ideal = numeroAlmox(form.ideal.value);
+    if(ideal > 0 && ideal < minimo){ erro.textContent = "O estoque ideal não pode ser menor que o mínimo."; erro.hidden = false; return; }
+    form.querySelector('[type="submit"]').disabled = true;
+    try{
+      await salvarLimites(p.ID, minimo, ideal);
+      p.EstoqueMinimo = minimo; p.EstoqueIdeal = ideal;
+      renderTabelaProdutos();
+      carregarSolicitacoesCompra();
+      dlg.close();
+    }catch(e){
+      erro.textContent = e.message || "Não foi possível salvar."; erro.hidden = false;
+      form.querySelector('[type="submit"]').disabled = false;
+    }
+  };
+  dlg.showModal();
+}
+function empresaAlmox(){
+  try { return sessionStorage.getItem("empresa_id") || window.top?.__CONTEXT?.empresa_id || null; } catch(e) { return null; }
+}
+async function salvarLimites(produtoId, minimo, ideal){
+  const c = await almoxBanco();
+  const empresa = empresaAlmox();
+  if(!c || !empresa) throw new Error("Sem conexão com o banco.");
+  const { error } = await c.rpc("almox_produto_limites", { p_empresa: empresa, p_produto_id: String(produtoId), p_minimo: minimo, p_ideal: ideal });
+  if(error) throw new Error(error.message);
+}
+async function aplicarIdealPendente(){
+  const pend = window.__idealPendente;
+  if(!pend) return;
+  const candidatos = (produtosDashboard || []).filter(p => String(p.Produto || "").trim() === pend.produto);
+  const novo = candidatos[candidatos.length - 1];
+  if(!novo) return;
+  window.__idealPendente = null;
+  if(numeroAlmox(novo.EstoqueIdeal) === pend.ideal) return;
+  try{ await salvarLimites(novo.ID, pend.minimo, pend.ideal); novo.EstoqueIdeal = pend.ideal; renderTabelaProdutos(); carregarSolicitacoesCompra(); }
+  catch(e){ console.warn("Estoque ideal do novo material não foi gravado:", e); }
+}
+// Solicitações de compra (out/2026): o Almoxarifado só acompanha. Quem cota, compra e recebe é Compras; a
+// situação vem de lá (almox_solicitacoes_lista: Aguardando Compras, Em cotação, Pedido emitido, Recebido...).
+// A única ação daqui é cancelar, com motivo obrigatório, e só enquanto Compras ainda não começou a cotar.
+let solicitacoesCompra = [];
+let compraAutomaticaLigada = null;
+async function carregarSolicitacoesCompra(){
+  try{
+    const c = await almoxBanco();
+    const empresa = empresaAlmox();
+    if(!c || !empresa) return;
+    const [lista, cfg] = await Promise.all([
+      c.rpc("almox_solicitacoes_lista", { p_empresa: empresa }),
+      c.rpc("almox_compra_config", { p_empresa: empresa })
+    ]);
+    if(lista.error) throw lista.error;
+    solicitacoesCompra = Array.isArray(lista.data) ? lista.data : [];
+    compraAutomaticaLigada = cfg.error ? null : Boolean(cfg.data?.automatica);
+    window.__almoxEditaFinanceiro = cfg.error ? false : Boolean(cfg.data?.edita_financeiro);
+    renderSolicitacoesCompra();
+  }catch(e){ console.warn("Solicitações de compra não carregaram:", e); }
+}
+const FASE_SOLICITACAO = {
+  aguardando: "badge-atencao",
+  andamento: "badge-reservado",
+  concluida: "badge-ok",
+  cancelada: "badge-cinza"
+};
+function renderSolicitacoesCompra(){
+  const emAndamento = solicitacoesCompra.filter(x => x.fase === "aguardando" || x.fase === "andamento");
+  const badge = document.getElementById("badgeCompras");
+  if(badge){ badge.textContent = emAndamento.length ? String(emAndamento.length) : ""; badge.title = emAndamento.length === 1 ? "1 solicitação em andamento" : emAndamento.length + " solicitações em andamento"; }
+  const aviso = document.getElementById("comprasAviso");
+  if(aviso){
+    aviso.hidden = compraAutomaticaLigada !== false;
+    aviso.innerHTML = "A compra automática está <strong>desligada</strong>. Para ligar: Gestão › Parâmetros › Almoxarifado.";
+  }
+  const tbody = document.getElementById("tbodyCompras");
+  if(!tbody) return;
+  const filtroEl = document.getElementById("comprasFiltro");
+  const filtro = filtroEl ? filtroEl.value : "andamento";
+  const lista = solicitacoesCompra.filter(x => !filtro || (filtro === "andamento" ? (x.fase === "aguardando" || x.fase === "andamento") : x.fase === filtro));
+  const detalhe = x => {
+    if(x.fase === "cancelada") return x.observacao ? "Motivo: " + escAlmox(x.observacao) + (x.concluida_por_nome ? " · " + escAlmox(x.concluida_por_nome) : "") : escAlmox(x.concluida_por_nome || "");
+    if(x.fase === "aguardando") return "Compras ainda não cotou";
+    return "";
+  };
+  tbody.innerHTML = lista.length ? lista.map(x => `<tr data-solicitacao="${escAlmox(x.id)}">
+      <td>${x.numero}</td>
+      <td>${new Date(x.criado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</td>
+      <td>${escAlmox(x.codigo || "-")}</td>
+      <td>${escAlmox(x.produto || "-")}<small class="compras-origem">${x.origem === "automatica" ? "Automática" : escAlmox(x.origem || "")}</small></td>
+      <td class="col-qtd">${formatarNumero(Number(x.estoque_no_pedido || 0))}</td>
+      <td class="col-qtd">${formatarNumero(Number(x.estoque_minimo || 0))}</td>
+      <td class="col-qtd">${formatarNumero(Number(x.estoque_ideal || 0))}</td>
+      <td class="col-qtd almox-qtd">${formatarNumero(Number(x.quantidade || 0))} ${escAlmox(x.unidade || "")}</td>
+      <td><span class="badge ${FASE_SOLICITACAO[x.fase] || "badge-cinza"}">${escAlmox(x.rotulo || "-")}</span>${detalhe(x) ? `<small class="compras-origem">${detalhe(x)}</small>` : ""}</td>
+      <td class="compras-acoes">${x.pode_cancelar ? `<button type="button" class="btn btn-outline btn-sm" onclick="abrirCancelarSolicitacao('${escAlmox(x.id)}')">Cancelar</button>` : ""}</td>
+    </tr>`).join("") : `<tr><td colspan="10" class="hist-vazio">${filtro === "andamento" ? "Nenhuma solicitação em andamento." : "Nenhuma solicitação."}</td></tr>`;
+}
+function abrirCancelarSolicitacao(id){
+  const x = solicitacoesCompra.find(s => String(s.id) === String(id));
+  if(!x) return;
+  let dlg = document.getElementById("almoxCancelarDialog");
+  if(!dlg){ dlg = document.createElement("dialog"); dlg.id = "almoxCancelarDialog"; dlg.className = "almox-reservas-dialog almox-cancelar-dialog"; document.body.appendChild(dlg); }
+  dlg.innerHTML = `<form class="almox-cancelar-form">
+      <div class="almox-reservas-topo"><div><small>Cancelar solicitação nº ${x.numero}</small><h3>${escAlmox(x.produto || "-")}</h3>
+      <p>${formatarNumero(Number(x.quantidade || 0))} ${escAlmox(x.unidade || "")} · a solicitação sai da fila de Compras.</p></div></div>
+      <label class="almox-cancelar-rotulo" for="almoxCancelarMotivo">Motivo do cancelamento <span>(obrigatório)</span></label>
+      <textarea id="almoxCancelarMotivo" rows="3" maxlength="500" placeholder="Ex.: material substituído, compra feita por outro setor..."></textarea>
+      <p class="almox-cancelar-erro" id="almoxCancelarErro" hidden></p>
+      <div class="almox-cancelar-acoes"><button type="button" class="btn btn-outline" onclick="this.closest('dialog').close()">Voltar</button>
+      <button type="submit" class="btn btn-danger" id="almoxCancelarOk">Cancelar solicitação</button></div>
+    </form>`;
+  const form = dlg.querySelector("form"), campo = dlg.querySelector("textarea"), erro = dlg.querySelector("#almoxCancelarErro"), ok = dlg.querySelector("#almoxCancelarOk");
+  form.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const motivo = campo.value.trim();
+    if(motivo.length < 3){ erro.textContent = "Escreva o motivo do cancelamento."; erro.hidden = false; campo.focus(); return; }
+    ok.disabled = true; erro.hidden = true;
+    try{
+      const c = await almoxBanco();
+      const { error } = await c.rpc("almox_solicitacao_cancelar", { p_empresa: empresaAlmox(), p_id: x.id, p_motivo: motivo });
+      if(error) throw error;
+      dlg.close();
+      await carregarSolicitacoesCompra();
+    }catch(e){ erro.textContent = e.message || "Não foi possível cancelar."; erro.hidden = false; ok.disabled = false; carregarSolicitacoesCompra(); }
+  });
+  dlg.showModal();
+  campo.focus();
+}
+
+// ===== Histórico de movimentações (aba própria) =====
+let historicoMovimentacoes = [];
+let historicoCompletoCarregado = false;
+function dataMovimentacao(v){
+  if(!v) return null;
+  const s = String(v);
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if(br) return new Date(+br[3], +br[2] - 1, +br[1], +(br[4] || 0), +(br[5] || 0), +(br[6] || 0));
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+function carregarHistoricoCompleto(){
+  if(historicoCompletoCarregado) return;
+  historicoCompletoCarregado = true;
+  const resumo = document.getElementById("histResumo");
+  if(resumo) resumo.textContent = "Carregando o histórico completo…";
+  google.script.run
+    .withSuccessHandler(lista => { historicoMovimentacoes = Array.isArray(lista) ? lista : historicoMovimentacoes; renderHistoricoMovimentacoes(); })
+    .withFailureHandler(err => { historicoCompletoCarregado = false; console.error(err); renderHistoricoMovimentacoes(); })
+    .listarMovimentacoes(5000);
+}
+function renderHistoricoMovimentacoes(){
+  const tbody = document.getElementById("tbodyMovRecentes");
+  if(!tbody) return;
+  const busca = (document.getElementById("histBusca")?.value || "").toLowerCase().trim();
+  const tipo = document.getElementById("histTipo")?.value || "";
+  const de = document.getElementById("histDe")?.value;
+  const ate = document.getElementById("histAte")?.value;
+  const inicio = de ? new Date(de + "T00:00:00") : null;
+  const fim = ate ? new Date(ate + "T23:59:59") : null;
+  const lista = historicoMovimentacoes.filter(m => {
+    if(tipo && String(m.Tipo || "").toLowerCase() !== tipo) return false;
+    if(inicio || fim){
+      const d = dataMovimentacao(m.DataHora);
+      if(!d || (inicio && d < inicio) || (fim && d > fim)) return false;
+    }
+    if(!busca) return true;
+    return [m.Codigo, m.Produto, m.Responsavel, m.Solicitante, m.Destino, m.Finalidade, m.Observacoes]
+      .some(v => String(v || "").toLowerCase().includes(busca));
+  });
+  const entradas = lista.filter(m => String(m.Tipo).toLowerCase() === "entrada").length;
+  const resumo = document.getElementById("histResumo");
+  if(resumo) resumo.textContent = `${lista.length} movimentação(ões) · ${entradas} entrada(s) · ${lista.length - entradas} saída(s)`;
+  const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const estoque = m => (m.EstoqueAnterior !== "" && m.EstoqueAnterior != null) || (m.EstoqueAtual !== "" && m.EstoqueAtual != null)
+    ? `${formatarNumero(numeroAlmox(m.EstoqueAnterior))} → ${formatarNumero(numeroAlmox(m.EstoqueAtual))}` : "-";
+  const quando = m => { const d = dataMovimentacao(m.DataHora); return d ? d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : esc(m.DataHora || "-"); };
+  tbody.innerHTML = lista.length ? lista.slice(0, 1500).map(m => `<tr>
+      <td>${quando(m)}</td>
+      <td><span class="badge-tipo ${String(m.Tipo).toLowerCase() === "entrada" ? "tipo-entrada" : "tipo-saida"}">${capitalize(m.Tipo)}</span></td>
+      <td>${esc(m.Codigo || "-")}</td>
+      <td>${esc(m.Produto || "-")}</td>
+      <td>${formatarNumero(numeroAlmox(m.Quantidade))} ${esc(m.Unidade || "")}</td>
+      <td>${estoque(m)}</td>
+      <td>${esc(m.Responsavel || "-")}</td>
+      <td>${esc([m.Solicitante, m.Destino || m.Finalidade].filter(Boolean).join(" · ") || "-")}</td>
+      <td>${esc(m.Observacoes || "")}</td>
+    </tr>`).join("") : `<tr><td colspan="9" class="hist-vazio">Nenhuma movimentação com esses filtros.</td></tr>`;
 }
 
   function formatarNumero(valor){
@@ -2804,6 +3389,7 @@ function salvarProdutoFront(){
     unidade: document.getElementById("cadUnidade")?.value || "",
     estoqueAtual: document.getElementById("prodEstoqueAtual")?.value || 0,
     estoqueMinimo: document.getElementById("prodEstoqueMinimo")?.value || 0,
+    estoqueIdeal: document.getElementById("prodEstoqueIdeal")?.value || 0,
     valorCusto: document.getElementById("prodValorCusto")?.value || 0,
     valorReposicao: document.getElementById("prodValorReposicao")?.value || 0,
     status: document.getElementById("prodStatus")?.value || "Ativo",
@@ -2814,6 +3400,13 @@ function salvarProdutoFront(){
     alertar("Preencha pelo menos o produto.");
     return;
   }
+
+  if(numeroAlmox(dados.estoqueIdeal) > 0 && numeroAlmox(dados.estoqueIdeal) < numeroAlmox(dados.estoqueMinimo)){
+    alertar("O estoque ideal não pode ser menor que o estoque mínimo.");
+    return;
+  }
+  // Se o servidor ainda não gravar o ideal junto, a tela grava logo depois de recarregar (aplicarIdealPendente).
+  window.__idealPendente = numeroAlmox(dados.estoqueIdeal) > 0 ? { produto: dados.produto.trim(), minimo: numeroAlmox(dados.estoqueMinimo), ideal: numeroAlmox(dados.estoqueIdeal) } : null;
 
   showLoadingModal("Salvando produto...");
 
@@ -2860,6 +3453,7 @@ function salvarProdutoFront(){
     document.getElementById("prodUnidade").value = "";
     document.getElementById("prodEstoqueAtual").value = "";
     document.getElementById("prodEstoqueMinimo").value = "";
+    const idealCampo = document.getElementById("prodEstoqueIdeal"); if(idealCampo) idealCampo.value = "";
     document.getElementById("prodValorCusto").value = "";
     document.getElementById("prodValorReposicao").value = "";
     document.getElementById("prodStatus").value = "Ativo";
@@ -3087,32 +3681,6 @@ function carregarCodigoAutomatico(){
   google.script.run.withSuccessHandler(codigo => {
     document.getElementById("prodCodigo").value = codigo;
   }).gerarCodigoInsumo();
-}
-function renderMovimentacoesRecentes(lista){
-
-  const tbody = document.getElementById("tbodyMovRecentes");
-  if(!tbody) return;
-
-  tbody.innerHTML = "";
-
-  (lista || []).forEach(m => {
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${formatarDataHora(m.DataHora)}</td>
-<td>
-  <span class="badge-tipo ${m.Tipo === "entrada" ? "tipo-entrada" : "tipo-saida"}">
-    ${capitalize(m.Tipo)}
-  </span>
-</td>
-      <td>${m.Produto || "-"}</td>
-      <td>${formatarNumero(m.Quantidade || 0)}</td>
-      <td>${m.Responsavel || "-"}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
 }
 function renderMovimentacoes(lista){
 
@@ -5602,6 +6170,18 @@ document.getElementById('formComunicadoPortal').addEventListener('submit',functi
  botao.disabled=true;retorno.textContent='Publicando...';
  google.script.run.withSuccessHandler(function(){botao.disabled=false;form.reset();retorno.textContent='Comunicado publicado no portal.';}).withFailureHandler(function(err){botao.disabled=false;retorno.textContent=err.message || 'Não foi possível publicar.';}).enviarComunicadoPortal({titulo:form.elements.titulo.value,texto:form.elements.texto.value,validoAte:form.elements.validoAte.value,importante:form.elements.importante.checked});
 });
+</script>
+<script src="../../Estoque/Compras/nfe-xml-parser.js?v=20261022-recebimento"></script>
+<script src="almox-recebimento.js?v=20261023-chegada-locacao"></script>
+<script>
+// badge de pedidos a receber e ?aba=recebimento (link "Recebimento no Almoxarifado" de Compras)
+(function(){
+  const aba = new URLSearchParams(location.search).get("aba");
+  window.addEventListener("load", function(){
+    if(aba && document.getElementById("tab-" + aba) && typeof abrirTab === "function") abrirTab(aba);
+    else if(window.AlmoxRecebimento) AlmoxRecebimento.carregar();
+  });
+})();
 </script>
 </body>
 </html>

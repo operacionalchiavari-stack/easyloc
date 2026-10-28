@@ -28,7 +28,7 @@
     cursor:pointer;
   "
 >
-  + Adicionar serviÃ§o
+  + Adicionar serviço
 </button>
 
 </div>
@@ -69,7 +69,7 @@ KM (R$)
 </th>
 
 <th style="text-align:right;padding:12px 14px;font-size:13px;color:#475569;">
-mÂ³ (R$)
+m³ (R$)
 </th>
 
 <th style="text-align:center;padding:12px 14px;font-size:13px;color:#475569;">
@@ -175,7 +175,7 @@ function renderRows(){
         tbody.innerHTML = `
           <tr>
             <td colspan="7" style="padding:18px 14px;color:#64748b;font-size:13px;">
-              Nenhum serviÃ§o cadastrado.
+              Nenhum serviço cadastrado.
             </td>
           </tr>
         `;
@@ -198,8 +198,8 @@ style="width:100%;padding:10px;border-radius:10px;border:1px solid #e5e7eb;">
 <select class="svc-grupo"
 style="width:220px;padding:10px;border-radius:10px;border:1px solid #e5e7eb;">
 
-<option value="LogÃ­stica/OperaÃ§Ãµes" ${s.grupo==="LogÃ­stica/OperaÃ§Ãµes"?"selected":""}>
-LogÃ­stica/OperaÃ§Ãµes
+<option value="Logística/Operações" ${s.grupo==="Logística/Operações"?"selected":""}>
+Logística/Operações
 </option>
 
 <option value="Comercial" ${s.grupo==="Comercial"?"selected":""}>
@@ -262,7 +262,7 @@ ${s.ativo ? "ATIVO":"INATIVO"}
 
         tr.querySelector(".svc-fixo").oninput = ()=>aplicarBloqueio(tr);
 
-        // ðŸ”’ BLOQUEIA EDIÃ‡ÃƒO SE O SERVIÃ‡O JÃ EXISTE NO BANCO
+        // 🔒 BLOQUEIA EDIÇÃO SE O SERVIÇO JÁ EXISTE NO BANCO
         if(s.id && !s._novo){
 
           tr.querySelector(".svc-nome").disabled = true;
@@ -308,7 +308,7 @@ tr.querySelector(".svc-toggle").onclick = ()=>{
 
       if(error){
         console.error(error);
-        showErro("Erro ao carregar serviÃ§os");
+        showErro("Erro ao carregar serviços");
         return;
       }
 
@@ -323,7 +323,7 @@ tr.querySelector(".svc-toggle").onclick = ()=>{
 
         id:null,
         nome:"",
-        grupo:"LogÃ­stica/OperaÃ§Ãµes",
+        grupo:"Logística/Operações",
         valor_fixo:0,
         valor_mao_obra:0,
         valor_km:0,
@@ -337,7 +337,7 @@ tr.querySelector(".svc-toggle").onclick = ()=>{
     }
 async function salvar(){
 
-  console.log("ðŸ”¥ SALVAR SERVIÃ‡OS COMERCIAIS EXECUTOU");
+  console.log("🔥 SALVAR SERVIÇOS COMERCIAIS EXECUTOU");
 
   const novos = [];
   const novosRefs = [];
@@ -373,7 +373,7 @@ async function salvar(){
 
   try{
 
-    // INSERT (serviÃ§os novos)
+    // INSERT (serviços novos)
     if(novos.length){
 
       const { error } = await sb
@@ -384,7 +384,7 @@ async function salvar(){
 
     }
 
-    // UPDATE (serviÃ§os existentes)
+    // UPDATE (serviços existentes)
     for(const s of existentes){
 
       const { id, ...dados } = s;
@@ -403,7 +403,7 @@ async function salvar(){
   }catch(error){
 
     console.error(error);
-    showErro("Erro ao salvar serviÃ§os");
+    showErro("Erro ao salvar serviços");
     throw error;
 
   }
@@ -411,7 +411,7 @@ async function salvar(){
 }
 btnAdd.onclick = adicionarLinha;
 
-// expÃµe a funÃ§Ã£o salvar para o modal principal
+// expõe a função salvar para o modal principal
 window.__salvarServicosComercial = salvar;
 
 await carregar();

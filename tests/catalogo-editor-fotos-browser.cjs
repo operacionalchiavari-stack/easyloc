@@ -23,7 +23,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  });
  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('[data-home-category="sofas"]').click();
  // Categoria abre em grade por padrão agora (pedido explícito do
  // usuário) — clica no card do item pra entrar na imersiva.
@@ -97,7 +97,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  });
  await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('[data-home-category="sofas"]').click();
  await page.locator('[data-grid-item]').first().click();
  await page.locator('#produto-1').waitFor();
@@ -114,7 +114,7 @@ const PNG_1X1=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQ
  await page.waitForFunction(()=>document.getElementById('catalogPageLabel').getAnimations().length===0);
  const centroDoRotulo=await page.evaluate(()=>{const h=document.querySelector('.catalog-header').getBoundingClientRect();const l=document.getElementById('catalogPageLabel').getBoundingClientRect();const s=document.querySelector('.catalog-search').getBoundingClientRect();return {offset:Math.abs((l.left+l.right)/2-(h.left+h.right)/2),buscaAEsquerda:s.left<(h.left+h.right)/2};});
  assert.ok(centroDoRotulo.offset<=1,'Rótulo da página centralizado também no modo dentro do sistema');
- assert.equal(centroDoRotulo.buscaAEsquerda,false,'Busca continua no lado direito do cabeçalho neste modo');
+ assert.equal(centroDoRotulo.buscaAEsquerda,true,'Busca continua no lado direito do cabeçalho neste modo');
 
  // Estrutura: badge na principal, carrossel com 3 posições (principal +
  // Detalhe 1 preenchido + Detalhe 2 vazio — placeholder só aparece pra

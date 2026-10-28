@@ -5,37 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Cadastro de Caminhões</title>
   <link rel="icon" type="image/png" href="../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../js/core/themePrepaint.js"></script>
+  <script src="../../js/core/limpezaDados.js?v=20261026"></script><script src="../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="cadastro-caminhoes.css?v=20261018-cinza">
+  <link rel="stylesheet" href="../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="cadastro-caminhoes.css?v=20261027-cabecalho-v2">
 </head>
 <body>
 <div class="container cadastro-caminhoes-page el-page">
 
   <!-- HEADER -->
-  <header class="page-header">
+  <header id="caminhoesCabecalho" class="page-header">
     <h1>Caminhões Cadastrados</h1>
-
-    <div class="el-stat-row" id="caminhoesStats">
-      <article class="el-stat-card blue">
-        <span aria-hidden="true"><i data-lucide="truck"></i></span>
-        <div><small>Total de caminhões</small><strong id="caminhoesStatTotal">0</strong><em>Cadastrados</em></div>
-      </article>
-      <article class="el-stat-card green">
-        <span aria-hidden="true"><i data-lucide="circle-check"></i></span>
-        <div><small>Ativos</small><strong id="caminhoesStatAtivos">0</strong><em>Em operação</em></div>
-      </article>
-      <article class="el-stat-card gray">
-        <span aria-hidden="true"><i data-lucide="warehouse"></i></span>
-        <div><small>Próprios</small><strong id="caminhoesStatProprios">0</strong><em>Frota própria</em></div>
-      </article>
-      <article class="el-stat-card orange">
-        <span aria-hidden="true"><i data-lucide="handshake"></i></span>
-        <div><small>Terceirizados</small><strong id="caminhoesStatTerceirizados">0</strong><em>Frota parceira</em></div>
-      </article>
-    </div>
 
     <div class="header-actions">
       <button class="btn primary" type="button" onclick="abrirModalCaminhao()">
@@ -66,6 +47,7 @@
   <table>
     <thead>
       <tr>
+        <th class="caminhao-foto-coluna">FOTO</th>
         <th>MODELO</th>
         <th>PLACA</th>
         <th>VÍNCULO</th>
@@ -73,7 +55,6 @@
         <th>CATEGORIA</th>
         <th>CAPACIDADE (m³)</th>
         <th>STATUS</th>
-        <th></th>
       </tr>
     </thead>
 
@@ -114,7 +95,6 @@
 
 <button type="button"
         class="btn-edit"
-        type="button"
         id="btnEditarCaminhao"
         onclick="prepararEdicaoCaminhao()">
   ✎
@@ -129,43 +109,17 @@
 </div>
 
 <input type="hidden" id="statusInput" value="ativo">
-
-    <!-- ================= DADOS GERAIS ================= -->
-<h3 style="margin-top:30px;">Empresa</h3>
-
-<div class="form-grid">
-
-  <div class="form-group el-field" style="grid-column:span 4;">
-    <label>CNPJ</label>
-    <input class="el-input" type="text" id="cnpjInput">
-  </div>
-
-  <div class="form-group el-field" style="grid-column:span 5;">
-    <label>Empresa Proprietária</label>
-    <input class="el-input" type="text" id="empresaInput">
-  </div>
-
-  <div class="form-group el-field" style="grid-column:span 3;">
-    <label>Telefone</label>
-    <input class="el-input" type="text" id="telefoneInput">
-  </div>
-
-</div>
-<div class="form-grid">
-
-    <!-- VÍNCULO -->
-  <div class="form-group el-field" style="grid-column:span 3;">
-    <label>Vínculo *</label>
-    <select class="el-select" id="tipoInput">
+<div class="caminhao-cadastro-layout">
+  <aside class="caminhao-foto-campo" aria-label="Foto do caminhão">
+    <span class="caminhao-foto-titulo">Foto do caminhão</span>
+    <label class="caminhao-foto-preview" for="caminhaoFotoArquivo" title="Selecionar foto do caminhão"><img id="caminhaoFotoPreview" alt="Foto do caminhão" hidden><span id="caminhaoSemFoto"><i data-lucide="truck"></i>Adicionar foto</span><span class="caminhao-foto-camera" aria-hidden="true"><i data-lucide="camera"></i></span></label>
+    <div class="caminhao-foto-acoes"><input id="caminhaoFotoArquivo" type="file" accept="image/jpeg,image/png,image/webp" onchange="selecionarFotoCaminhao(this)"><small>JPG, PNG ou WebP, até 5 MB.</small><button type="button" id="caminhaoRemoverFoto" onclick="definirFotoCaminhao('')">Remover foto</button><input id="caminhaoFotoUrl" type="hidden"></div>
+  </aside>
+  <div class="caminhao-cadastro-dados">
+<section class="caminhao-secao" aria-labelledby="caminhaoDadosTitulo"><h3 id="caminhaoDadosTitulo">Dados do veículo</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 6"><label for="modeloInput">Modelo *</label><input class="el-input" type="text" id="modeloInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="placaInput">Placa</label><input class="el-input" type="text" id="placaInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="codigoInput">Código no cronograma *</label><input class="el-input" type="text" id="codigoInput" maxlength="12" placeholder="Ex.: G, M2, XL" title="Como o caminhão aparece no cronograma e no Painel Logístico"></div><div class="form-group el-field" style="grid-column:span 6"><label for="tipoInput">Vínculo *</label><select class="el-select" id="tipoInput">
       <option value="proprio">Próprio</option>
       <option value="terceirizado">Terceirizado</option>
-    </select>
-  </div>
-
-  <!-- CATEGORIA DO CAMINHÃO -->
-  <div class="form-group el-field" style="grid-column:span 3;">
-    <label>Categoria do veículo *</label>
-    <select class="el-select" id="categoriaInput">
+    </select></div><div class="form-group el-field" style="grid-column:span 6"><label for="categoriaInput">Categoria do veículo *</label><select class="el-select" id="categoriaInput">
       <option value="vuc">VUC</option>
       <option value="34">3/4</option>
       <option value="toco">Toco</option>
@@ -173,87 +127,24 @@
       <option value="bitruck">Bitruck</option>
       <option value="carreta">Carreta</option>
       <option value="van">Van</option>
-    </select>
-  </div>
-  <div class="form-group el-field" style="grid-column:span 3;">
-    <label>Modelo *</label>
-    <input class="el-input" type="text" id="modeloInput">
-  </div>
-
-  <div class="form-group el-field" style="grid-column:span 3;">
-    <label>Placa</label>
-    <input class="el-input" type="text" id="placaInput">
-  </div>
-
-  <div class="form-group el-field" style="grid-column:span 3;">
-    <label>Código no cronograma *</label>
-    <input class="el-input" type="text" id="codigoInput" maxlength="12" placeholder="Ex.: G, M2, XL" title="Como o caminhão aparece no cronograma e no Painel Logístico">
-  </div>
-
-</div>
-    <!-- ================= DIMENSÕES EXTERNAS ================= -->
-    <div class="form-grid">
-
-      <div class="form-group el-field" style="grid-column:span 4;">
-        <label>Comprimento total (m)</label>
-        <input class="el-input" type="number" step="0.01" id="comprimentoTotalInput">
-      </div>
-
-      <div class="form-group el-field" style="grid-column:span 4;">
-        <label>Largura total (m)</label>
-        <input class="el-input" type="number" step="0.01" id="larguraTotalInput">
-      </div>
-
-      <div class="form-group el-field" style="grid-column:span 4;">
-        <label>Altura total (m)</label>
-        <input class="el-input" type="number" step="0.01" id="alturaTotalInput">
-      </div>
-
-    </div>
-
-
-    <!-- ================= DIMENSÕES INTERNAS ================= -->
-
-    <div class="form-grid">
-
-      <div class="form-group el-field" style="grid-column:span 3;">
-        <label>Comprimento interno (m)</label>
-        <input class="el-input" type="number" step="0.01" id="comprimentoInput">
-      </div>
-
-      <div class="form-group el-field" style="grid-column:span 3;">
-        <label>Largura interna (m)</label>
-        <input class="el-input" type="number" step="0.01" id="larguraInput">
-      </div>
-
-      <div class="form-group el-field" style="grid-column:span 3;">
-        <label>Altura interna (m)</label>
-        <input class="el-input" type="number" step="0.01" id="alturaInput">
-      </div>
-
-      <div class="form-group el-field" style="grid-column:span 3;">
-        <label>Capacidade calculada</label>
-        <div id="capacidadePreview" style="font-weight:600;">
-          0.00 m³
-        </div>
-      </div>
-
-    </div>
-
-
+    </select></div></div></section>
+<section class="caminhao-secao" aria-labelledby="caminhaoEmpresaTitulo"><h3 id="caminhaoEmpresaTitulo">Empresa proprietária</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 3"><label for="cnpjInput">CNPJ</label><input class="el-input" type="text" id="cnpjInput" data-mascara="cnpj"></div><div class="form-group el-field" style="grid-column:span 6"><label for="empresaInput">Empresa proprietária</label><input class="el-input" type="text" id="empresaInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="telefoneInput">Telefone</label><input class="el-input" type="text" id="telefoneInput" data-mascara="telefone"></div></div></section>
+<section class="caminhao-secao" aria-labelledby="caminhaoMedidasTitulo"><h3 id="caminhaoMedidasTitulo">Dimensões externas</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 4"><label for="comprimentoTotalInput">Comprimento total (m)</label><input class="el-input" type="number" step="0.01" id="comprimentoTotalInput"></div><div class="form-group el-field" style="grid-column:span 4"><label for="larguraTotalInput">Largura total (m)</label><input class="el-input" type="number" step="0.01" id="larguraTotalInput"></div><div class="form-group el-field" style="grid-column:span 4"><label for="alturaTotalInput">Altura total (m)</label><input class="el-input" type="number" step="0.01" id="alturaTotalInput"></div></div></section>
+<section class="caminhao-secao" aria-labelledby="caminhaoCargaTitulo"><h3 id="caminhaoCargaTitulo">Espaço de carga</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 3"><label for="comprimentoInput">Comprimento interno (m)</label><input class="el-input" type="number" step="0.01" id="comprimentoInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="larguraInput">Largura interna (m)</label><input class="el-input" type="number" step="0.01" id="larguraInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="alturaInput">Altura interna (m)</label><input class="el-input" type="number" step="0.01" id="alturaInput"></div><div class="caminhao-capacidade form-group" style="grid-column:span 3"><span>Capacidade calculada</span><output id="capacidadePreview" aria-live="polite">0.00 m³</output></div></div></section>
   </div>
 </div>
-
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../../js/core/supabase.js"></script>
 <script src="../../js/core/alerta.js"></script>
 <script src="../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../js/core/listPager.js"></script>
-<script src="../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../js/core/listPager.js?v=20261026-rolagem"></script>
+<script src="../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script src="cadastro-caminhoes.js?v=20261019-codigo"></script>
+<script src="cadastro-caminhoes.js?v=20261027-lista"></script>
 <script>lucide.createIcons();</script>
-<script src="../../js/core/moduleTheme.js?v=20261019-globais"></script>
+<script src="../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

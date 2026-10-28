@@ -1,5 +1,6 @@
 import { imagemOriginalProjeto, configurarImagensRender } from "./projeto-imagens.mjs";
-import { montarResumoComercial } from "./pedido-resumo-comercial.mjs";
+// Frete e montagem saíram da lista do pedido e foram para a etapa Financeiro e pagamentos (out/2026).
+import { sinalizarDisponibilidade } from "./pedido-disponibilidade-comercial.mjs";
 // Projetos do catálogo (pedido explícito do usuário): o decorador monta, DE DENTRO do catálogo, um projeto pro
 // casal — dividido em ambientes com o nome que ele quiser (Cerimônia, Bar, Lounge...), com os móveis escolhidos
 // (e quantidades) e as renderizações 3D/IA de cada ambiente — e pode enviar o pedido à Chiavari. Também é onde vive
@@ -28,7 +29,7 @@ import { montarResumoComercial } from "./pedido-resumo-comercial.mjs";
 // mostra ou envia preço: o catálogo nunca teve valores.
 
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao } from './projeto-apresentacao.mjs?v=20261016-vitrine';
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas } from './projeto-apresentacao.mjs?v=20261027-pedido-lateral';
 
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
@@ -191,7 +192,7 @@ function normalizarPlanta(p){
     tamanhoPlanta: normarFator(p.tamanhoPlanta, .3, 2.5, 1),
     tamanhoPrints: normarFator(p.tamanhoPrints, .3, 2.5, 1),
     legendas: Array.isArray(p.legendas) ? p.legendas.map((l) => ({
-      id: l.id || novoId("lg"), ambienteId: l.ambienteId || null,
+      id: l.id || novoId("lg"), ambienteId: l.ambienteId || null, renderId: l.renderId || null,
       ponto: { x: faixa01(l.ponto?.x, .5), y: faixa01(l.ponto?.y, .5) },
       pos: normalizarPosManual(l.pos),
     })) : [],
@@ -792,6 +793,66 @@ async function uploadRenderPara(amb, project, src, origem, cena = null){
   amb.renders.push({ id: novoId("r"), url: imagem.url, path: imagem.path, origem: origem || "Renderização", criado_em: new Date().toISOString(), ...(cenaSalva ? { cena: cenaSalva } : {}) });
 }
 
+// Jogos da composição (pedido do usuário, out/2026): o número no canto da renderização é quantos conjuntos daquela
+// composição vão no pedido. Mudar de 1 para 3 soma 2× cada móvel da foto no ambiente (e baixar devolve), sem mexer no
+// resto da lista. Os móveis de 1 jogo ficam em render.moveis; imagem salva antes disto (ou trocada no editor de cena)
+// tem a lista refeita a partir da cena 3D guardada com ela.
+// Devolve null quando não dá para saber os móveis da foto (cena 3D ausente no Storage ou imagem sem cena).
+async function moveisDoRender(render){
+  if(Array.isArray(render.moveis) && render.moveis.length) return render.moveis;
+  if(!render.cena?.url) return null;
+  let cena;
+  try{
+    const resposta = await fetch(render.cena.url, { cache: "no-store" });
+    if(!resposta.ok) return null;
+    cena = await resposta.json();
+  }catch{ return null; }
+  const contagem = new Map();
+  (cena?.objects || []).forEach((o) => {
+    if(o?.itemId === undefined || o?.itemId === null || o.itemId === "") return;
+    const id = String(o.itemId);
+    contagem.set(id, (contagem.get(id) || 0) + 1);
+  });
+  if(!contagem.size) return null;
+  render.moveis = [...contagem].map(([id, quantidade]) => ({ id, quantidade }));
+  return render.moveis;
+}
+// Sem a cena da foto: oferece usar os móveis que estão hoje no ambiente como a composição (divididos pelos jogos atuais).
+async function moveisDoAmbienteComoJogo(amb, render, jogosAtuais){
+  const base = amb.itens.map((i) => ({ id: String(i.item_id), quantidade: Math.max(1, Math.round((Number(i.quantidade) || 1) / jogosAtuais)) }));
+  if(!base.length) return null;
+  const lista = base.map((m) => `<li>${m.quantidade}× ${escapeHtml(ctx.findItem(m.id)?.name || "Item")}</li>`).join("");
+  const ok = await abrirModal({ titulo: "Não encontrei a composição desta foto", sub: "A cena 3D desta imagem não está mais guardada, então não dá para saber quais móveis aparecem nela.",
+    corpo: `<p>Usar os móveis deste ambiente como <b>1 jogo</b> da composição?</p><ul class="cpj-jogos-lista">${lista}</ul>`, confirmar: "Usar estes móveis", cancelar: "Cancelar" });
+  if(!ok) return null;
+  render.moveis = base;
+  return base;
+}
+async function aplicarJogos(amb, render, campo){
+  if(campo.dataset.ocupado) return; // a mesma mudança pode chegar duas vezes (Enter e sair do campo)
+  const antes = Math.max(1, Number(render.jogos) || 1);
+  const novo = Math.max(1, Math.min(99, Math.round(Number(campo.value)) || 1));
+  campo.value = novo;
+  if(novo === antes) return;
+  campo.dataset.ocupado = "1"; campo.disabled = true;
+  try{
+    const moveis = (await moveisDoRender(render)) || (await moveisDoAmbienteComoJogo(amb, render, antes));
+    if(!moveis){ campo.value = antes; return; }
+    const diferenca = novo - antes;
+    moveis.forEach(({ id, quantidade }) => {
+      const linha = amb.itens.find((i) => String(i.item_id) === String(id));
+      const atual = linha ? Number(linha.quantidade) || 0 : 0;
+      mudarQuantidade(amb.id, id, 0, { definir: Math.max(0, Math.min(999, atual + quantidade * diferenca)) });
+    });
+    render.jogos = novo;
+    marcarSujo(); pintarPainel(); pintarDock();
+    ctx.notify({ title: `${novo} ${novo === 1 ? "jogo" : "jogos"} desta composição`, message: `${amb.nome}: as quantidades dos móveis da foto foram ajustadas.`, status: "done" });
+  }catch(error){
+    campo.value = antes;
+    ctx.notify({ title: "Não foi possível mudar a quantidade de jogos", message: mensagemDe(error), status: "error" });
+  }finally{ delete campo.dataset.ocupado; if(campo.isConnected) campo.disabled = false; }
+}
+
 async function salvarRender({ src, origem, botao, titulo = "Salvar renderização", confirmar = "Salvar aqui", sub = "", comImagem = false }){
   if(!src) return;
   const rotulo = botao?.textContent;
@@ -802,12 +863,14 @@ async function salvarRender({ src, origem, botao, titulo = "Salvar renderizaçã
     if(!(await garantirDestino({ titulo, confirmar, sempre: true, moveis, sub, imagem: comImagem ? src : "" }))) return;
     const project = S.current, amb = ambienteAtivo();
     await uploadRenderPara(amb, project, src, origem, composicao?.cena || null);
+    if(composicao?.itens.length) Object.assign(amb.renders[amb.renders.length - 1], { jogos: 1, moveis: composicao.itens.map(({ id, quantidade }) => ({ id: String(id), quantidade })) });
     // Os móveis da composição entram no MESMO ambiente. Quantidade = a da composição, sem somar com o que já estava lá
     // (salvar 2 ângulos da mesma composição não pode dobrar os móveis; e 24 cadeiras já no ambiente não viram 2).
     const trazidos = moveis && moveis.incluir ? levarMoveisParaAmbiente(amb, moveis.lista) : 0;
     marcarSujo(); pintarDock(); atualizarBotoes();
     if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); }
     await salvarAgora();
+    await gravarNoPedidoComercial();
     if(botao) botao.textContent = "Salvo no projeto ✓";
     ctx.notify({ title: comImagem ? (trazidos ? "Composição e móveis no projeto" : "Composição no projeto") : trazidos ? "Renderização e móveis salvos no projeto" : "Renderização salva no projeto", image: comImagem ? src : undefined, message: `${trazidos ? `${trazidos} ${trazidos === 1 ? "móvel" : "móveis"} · ` : ""}${amb.nome} · ${project.noivos}`, status: "done", actionLabel: "Ver projeto", onAction: () => ctx.openProjetos({ view: "work" }) });
     setTimeout(() => { if(botao){ botao.textContent = rotulo; botao.disabled = false; } }, 2400);
@@ -906,8 +969,10 @@ async function abrirEditorCena(amb, render){
       const troca = await editor.trocar(botao.dataset.cenaItem);
       if(troca.antigo !== troca.novo){
         // "só retire aquilo que sair do 3D": 1 unidade sai, 1 entra.
-        mudarQuantidade(amb.id, troca.antigo, -1);
-        mudarQuantidade(amb.id, troca.novo, 1);
+        // cada troca vale para todos os jogos da composição (número no canto da foto)
+        const jogos = Math.max(1, Number(render.jogos) || 1);
+        mudarQuantidade(amb.id, troca.antigo, -jogos);
+        mudarQuantidade(amb.id, troca.novo, jogos);
         trocas.push(troca); pintarTrocas();
       }
     }catch(error){
@@ -976,7 +1041,7 @@ async function substituirImagemDaCena(project, ambId, renderId, captura, corpoIA
     return { alvo, amb, render: amb?.renders.find((r) => r.id === renderId) };
   };
   const persistir = async (alvo) => {
-    if(alvo === S.current){ marcarSujo(); if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); } await salvarAgora(); }
+    if(alvo === S.current){ marcarSujo(); if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); } await salvarAgora(); await gravarNoPedidoComercial(); }
     else await rpc("projeto_salvar", { p_id: alvo.id, p_noivos: alvo.noivos, p_data_evento: alvo.data_evento, p_local_evento: alvo.local_evento, p_dados: alvo.dados });
   };
   try{
@@ -985,8 +1050,12 @@ async function substituirImagemDaCena(project, ambId, renderId, captura, corpoIA
     if(!render){ arquivosProjeto().remove([imagem.path, cena.path]).catch(() => {}); return; }
     const antigos = [render.path, render.cena?.path].filter(Boolean);
     Object.assign(render, { url: imagem.url, path: imagem.path, cena, atualizado_em: new Date().toISOString() });
+    delete render.moveis; // os móveis de 1 jogo mudaram com a troca: são refeitos a partir da cena nova quando preciso
     await persistir(alvo);
-    if(antigos.length) arquivosProjeto().remove(antigos).catch(() => {});
+    // Pedido comercial: a tela do pedido e o catálogo dentro dela guardam cópias do projeto; uma cópia antiga ainda pode
+    // apontar para estes arquivos e gravar por cima (já aconteceu: a cena 3D da foto sumiu e os jogos/editor pararam).
+    // Por isso, ali os arquivos antigos ficam no Storage.
+    if(antigos.length && !ctx.pedidoComercial) arquivosProjeto().remove(antigos).catch(() => {});
     if(!corpoIA) ctx.notify({ title: "Pedido e imagem atualizados", message: "A imagem do ambiente já mostra os móveis novos.", status: "done", image: imagem.url });
   }catch(error){
     ctx.notify({ title: "O pedido foi atualizado, mas a imagem não", message: mensagemDe(error), status: "error" });
@@ -1027,6 +1096,13 @@ function printsParaRenderizar(project){
   return { alvos, semCena };
 }
 let renderizandoProjeto = false;
+// Pedido comercial: depois de uma renderização com IA ou de trocar móveis no 3D, grava o projeto direto no pedido salvo
+// (sem esperar "Salvar pedido"). Pedido ainda não salvo: fica só na tela até salvar, como antes.
+async function gravarNoPedidoComercial(){
+  if(!ctx.pedidoComercial) return;
+  try{ await window.parent.__pedidoGravarProjetoComercial?.(); }
+  catch(error){ console.warn("Renderização não gravada no pedido:", error); ctx.notify({ title: "A imagem ficou só nesta tela", message: "Clique em Salvar pedido para guardá-la. " + mensagemDe(error), status: "error" }); }
+}
 async function renderizarProjetoComIA(project, { aoProgresso = () => {}, aoAtualizar = () => {} } = {}){
   const editor = ctx.cenaEditor;
   if(renderizandoProjeto) return 0;
@@ -1047,7 +1123,7 @@ async function renderizarProjetoComIA(project, { aoProgresso = () => {}, aoAtual
   };
   let gravando = Promise.resolve();
   const persistir = (dono) => (gravando = gravando.catch(() => {}).then(async () => {
-    if(dono === S.current){ marcarSujo(); if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); } await salvarAgora(); }
+    if(dono === S.current){ marcarSujo(); if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); } await salvarAgora(); await gravarNoPedidoComercial(); }
     else await rpc("projeto_salvar", { p_id: dono.id, p_noivos: dono.noivos, p_data_evento: dono.data_evento, p_local_evento: dono.local_evento, p_dados: dono.dados });
   }));
   // 1) Um por vez no 3D (só existe um motor): carrega a cena do print e monta o pedido da IA.
@@ -1081,7 +1157,7 @@ async function renderizarProjetoComIA(project, { aoProgresso = () => {}, aoAtual
         const antigo = render.path;
         Object.assign(render, { url: imagem.url, path: imagem.path, origem: "Renderização IA", atualizado_em: new Date().toISOString(), cena: { ...render.cena, tipo: "ia" } });
         await persistir(dono);
-        if(antigo) arquivosProjeto().remove([antigo]).catch(() => {});
+        if(antigo && !ctx.pedidoComercial) arquivosProjeto().remove([antigo]).catch(() => {}); // pedido comercial: o arquivo antigo fica (outra cópia do pedido pode apontar para ele)
         prontas++; aoAtualizar(dono);
       }catch(error){ falhas.push({ alvo: p.alvo, error }); }
       progresso();
@@ -1142,6 +1218,14 @@ function removerFotoCasal(){
 
 // ---------------------------------------------------------------------------------------------------------------
 // Enviar pedido
+// "Fotos no final" / "Horizontal" nas janelas de pedido do catálogo: o seletor entra antes do papel e o troca ao mudar.
+function seletorLayoutNoModal(dialog, gerar){
+  const papel = dialog.querySelector(".cpj-order-paper");
+  if(!papel) return;
+  papel.insertAdjacentHTML("beforebegin", layoutSeletorHtml(layoutPedido()));
+  ligarSeletorLayout(dialog, () => { const atual = dialog.querySelector(".cpj-order-paper"); if(atual) atual.outerHTML = gerar(); });
+}
+
 async function fluxoEnviarPedido(){
   const project = S.current;
   if(!project) return;
@@ -1153,7 +1237,7 @@ async function fluxoEnviarPedido(){
     largo: true,
     extra: total ? '<button type="button" class="cpj-btn cpj-btn-ghost cpj-btn-link" data-cpj-pedido-pdf>Baixar PDF</button>' : '',
     onMount({dialog,form,erro}){
-      if(total) dialog.classList.add("cpj-order-preview");
+      if(total){ dialog.classList.add("cpj-order-preview"); seletorLayoutNoModal(dialog, () => pedidoPreviewHtml(dadosApresentacao(project, ctx.findItem), { decorador: ctx.getDecorator?.(), empresa: ctx.getCompany?.() })); }
       dialog.querySelector('[data-cpj-pedido-pdf]')?.addEventListener('click',async (event)=>{
         const botao = event.currentTarget;
         botao.disabled = true; botao.textContent = 'Preparando PDF…'; erro('');
@@ -1236,6 +1320,7 @@ async function fluxoVerPedido(id){
     corpo: `<div data-cpj-pedido-status>${pedidoStatusHtml(project, staff)}</div>${pedidoPreviewHtml(dadosApresentacao(project, ctx.findItem), { decorador: ctx.getDecorator?.(), empresa: ctx.getCompany?.() })}`,
     onMount({ dialog, erro }){
       dialog.classList.add("cpj-order-preview");
+      seletorLayoutNoModal(dialog, () => pedidoPreviewHtml(dadosApresentacao(project, ctx.findItem), { decorador: ctx.getDecorator?.(), empresa: ctx.getCompany?.() }));
       dialog.querySelector('[data-cpj-pedido-pdf]')?.addEventListener('click', async (event) => {
         const botao = event.currentTarget;
         botao.disabled = true; botao.textContent = 'Preparando PDF…'; erro('');
@@ -1325,12 +1410,53 @@ async function abrirProjeto(id){
 // ---------------------------------------------------------------------------------------------------------------
 // Telas do overlay
 const ICONE = {
+  historico: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 7v5l3 2"/></svg>`,
   pin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>`,
   camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h3l1.5-2.5h7L17 8.5h3v10H4z"/><circle cx="12" cy="13" r="3.4"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg>`,
   layers: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>`,
   planta: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 14h7v6.5M14 3.5v6.5h6.5"/></svg>`,
 };
+
+// ---------------------------------------------------------------------------------------------------------------
+// Histórico do projeto (out/2026): cada salvamento é comparado com o anterior no banco (gatilho projeto_hist_gatilho)
+// e cada mudança vira uma linha — itens, quantidades, ambientes, imagens, observações, dados do evento, plantas, link,
+// pedido e status — com quem fez e quando. Mudanças seguidas do mesmo item pela mesma pessoa viram uma linha só.
+const HIST_FILTROS = [["", "Tudo"], ["item", "Itens"], ["ambiente", "Ambientes"], ["imagem", "Imagens"], ["evento", "Evento e pedido"]];
+const histGrupo = (tipo) => ({ item: "item", ordem: "item", ambiente: "ambiente", ambiente_nome: "ambiente", notas: "ambiente", imagem: "imagem", planta: "imagem", foto: "imagem" }[tipo] || "evento");
+async function pintarHistorico(host){
+  const projeto = S.current;
+  host.innerHTML = `<div class="cpj-amb-head"><div><h3>Histórico</h3><p>Todas as alterações feitas neste projeto, com quem fez e quando.</p></div></div><p class="cpj-hist-carregando">Carregando…</p>`;
+  try{ await salvarAgora(); }catch{}
+  let linhas;
+  try{ linhas = await rpc("projeto_historico", { p_id: projeto.id }); }
+  catch(error){
+    if(S.current !== projeto || S.workTab !== "historico") return;
+    host.querySelector(".cpj-hist-carregando").textContent = "Não foi possível carregar o histórico: " + mensagemDe(error);
+    return;
+  }
+  if(S.current !== projeto || S.workTab !== "historico") return;
+  S.historico = Array.isArray(linhas) ? linhas : [];
+  S.historicoFiltro = S.historicoFiltro || "";
+  desenharHistorico(host);
+}
+function desenharHistorico(host){
+  const todas = S.historico || [];
+  const lista = S.historicoFiltro ? todas.filter((h) => histGrupo(h.tipo) === S.historicoFiltro) : todas;
+  const fuso = { timeZone: "America/Sao_Paulo" };
+  const dia = (d) => new Date(d).toLocaleDateString("en-CA", fuso);
+  const hoje = dia(Date.now()), ontem = dia(Date.now() - 86400000);
+  const nomeDia = (d) => d === hoje ? "Hoje" : d === ontem ? "Ontem" : new Date(d + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const grupos = new Map();
+  lista.forEach((h) => { const d = dia(h.quando); if(!grupos.has(d)) grupos.set(d, []); grupos.get(d).push(h); });
+  const quem = (h) => `<span class="cpj-hist-autor is-${escapeHtml(h.autor_tipo)}">${escapeHtml(h.autor || "Sistema")}${h.autor_tipo === "decorador" ? " · decorador" : h.autor_tipo === "equipe" ? " · equipe" : ""}</span>`;
+  host.innerHTML = `<div class="cpj-amb-head"><div><h3>Histórico</h3><p>Todas as alterações feitas neste projeto, com quem fez e quando.</p></div></div>
+    <div class="cpj-hist-filtros" role="group" aria-label="Filtrar o histórico">${HIST_FILTROS.map(([v, t]) => `<button type="button" class="cpj-hist-filtro${S.historicoFiltro === v ? " is-active" : ""}" data-cpj-hist-filtro="${v}" aria-pressed="${S.historicoFiltro === v}">${t}</button>`).join("")}</div>
+    ${lista.length ? [...grupos].map(([d, hs]) => `<section class="cpj-hist-dia"><h4>${escapeHtml(nomeDia(d))}</h4><ol>${hs.map((h) =>
+      `<li class="cpj-hist-linha is-${escapeHtml(histGrupo(h.tipo))}"><time datetime="${escapeHtml(h.quando)}">${new Date(h.quando).toLocaleTimeString("pt-BR", { ...fuso, hour: "2-digit", minute: "2-digit" })}</time><span class="cpj-hist-ponto" aria-hidden="true"></span><div><p>${escapeHtml(h.descricao)}</p>${quem(h)}</div></li>`).join("")}</ol></section>`).join("")
+      : `<p class="cpj-hist-vazio">${todas.length ? "Nada com esse filtro." : "Nenhuma alteração registrada ainda. A partir de agora, tudo o que mudar neste projeto aparece aqui."}</p>`}`;
+  host.querySelectorAll("[data-cpj-hist-filtro]").forEach((b) => b.addEventListener("click", () => { S.historicoFiltro = b.dataset.cpjHistFiltro; desenharHistorico(host); }));
+}
 
 function pintarTela(){
   const root = $("catalogProjetos");
@@ -1342,11 +1468,9 @@ function pintarTela(){
       <div class="cpj-work-body">
         <nav class="cpj-amb-nav" data-cpj-nav aria-label="Ambientes"></nav>
         <section class="cpj-amb-panel" data-cpj-panel></section>
-        ${ctx.pedidoComercial ? '<aside class="cpj-resumo-comercial" aria-label="Frete e montagem" data-resumo-comercial></aside>' : ""}
       </div>
     </div>`;
     pintarCabecalho(); pintarNavegacao(); pintarPainel();
-    if(ctx.pedidoComercial) montarResumoComercial(root.querySelector("[data-resumo-comercial]"));
   }else{
     S.view = "list";
     root.innerHTML = `<div class="cpj-wrap cpj-listing" data-cpj-lista></div>`;
@@ -1428,9 +1552,23 @@ function pintarCabecalho(){
 // por pedidoStatusHtml, dentro do diálogo "Ver pedido" — ver função mais acima, perto de fluxoEnviarPedido).
 const assinatura = (ambientes) => JSON.stringify((ambientes || []).map((amb) => [amb.nome ?? amb.ambiente, (amb.itens || []).map((i) => [String(i.item_id), Number(i.quantidade) || 1])]));
 
+// Pedido comercial (out/2026, pedido do usuário): sem as abas Geral/ambientes — tudo fica na Lista Completa (itens,
+// renderizações, renomear/excluir ambiente). Os botões ficam na linha do título, ao lado do decorador solicitante.
+function botoesPedidoComercial(){
+  // O Catálogo virou uma etapa da barra do pedido (logo depois de Dados do pedido) — sem botão aqui (out/2026). F2 continua.
+  return `<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="novo-ambiente">＋ Ambiente</button>`
+    + (ambientesDe().length ? `<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="add-componente">＋ Componente</button><button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="add-servico">＋ Serviço</button>` : "");
+}
+
 function pintarNavegacao(){
   const host = document.querySelector("[data-cpj-nav]");
   if(!host || !S.current) return;
+  if(ctx.pedidoComercial){
+    host.innerHTML = ""; host.hidden = true;
+    const botoes = document.querySelector(".cpj-geral-botoes");
+    if(botoes) botoes.innerHTML = botoesPedidoComercial();
+    return;
+  }
   host.innerHTML = `<button type="button" class="cpj-amb-tab${S.workTab === "geral" ? " is-active" : ""}" data-cpj-worktab="geral">Geral</button>` + ambientesDe().map((amb) => {
     const qtd = amb.itens.reduce((s, i) => s + (Number(i.quantidade) || 1), 0);
     const ativo = S.workTab === "ambiente" && amb.id === S.activeAmb;
@@ -1440,11 +1578,16 @@ function pintarNavegacao(){
     </div>` : ""}</div>`;
   }).join("")
     + `<button type="button" class="cpj-amb-tab cpj-amb-new" data-cpj="novo-ambiente">＋ Ambiente</button>`
+    // Pedido comercial: "＋ Componente" no fim da linha dos ambientes, à direita (pedido do usuário) — entra no
+    // ambiente aberto (ou no último usado, se estiver na Geral).
+    + (ctx.pedidoComercial && ambientesDe().length ? `<button type="button" class="cpj-btn cpj-btn-ghost cpj-nav-componente cpj-nav-catalogo" data-cpj="ir-catalogo-pedido" title="Voltar ao catálogo (F2)" aria-keyshortcuts="F2">Catálogo <kbd class="cpj-kbd">F2</kbd></button><button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="add-componente">＋ Componente</button><button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="add-servico">＋ Serviço</button>` : "")
     // Pedido explícito do usuário: o projeto virou uma ferramenta de legendar a planta baixa (feita no AutoCAD) pra
     // equipe de montagem, além de continuar servindo pra apresentação. "Plantas" não é mais um ambiente (não tem
     // móveis/renders/notas próprios — cada legenda dela APONTA pra um ambiente já existente), então é uma aba FIXA à
     // parte, sempre por último, nunca uma das abas dinâmicas de ambiente.
-    + (ctx.pedidoComercial ? "" : `<button type="button" class="cpj-amb-tab cpj-amb-tab-plantas${S.workTab === "plantas" ? " is-active" : ""}" data-cpj-worktab="plantas">${ICONE.planta}<span>Plantas</span><b>${plantasDe().length || ""}</b></button>`);
+    + (ctx.pedidoComercial ? "" : `<button type="button" class="cpj-amb-tab cpj-amb-tab-plantas${S.workTab === "plantas" ? " is-active" : ""}" data-cpj-worktab="plantas">${ICONE.planta}<span>Plantas</span><b>${plantasDe().length || ""}</b></button>`)
+    // Histórico de todas as alterações do projeto (pedido do usuário, out/2026) — gravado no banco a cada salvamento.
+    + (ctx.pedidoComercial ? "" : `<button type="button" class="cpj-amb-tab cpj-amb-tab-plantas${S.workTab === "historico" ? " is-active" : ""}" data-cpj-worktab="historico">${ICONE.historico}<span>Histórico</span></button>`);
 }
 
 // Exibe somente as renderiza??es salvas com imagem, com a primeira em destaque.
@@ -1454,12 +1597,36 @@ function rendersMapaHtml(amb){
   const ambientes = ambientesDe();
   const ambCapa = ambientes.find((a) => a.renders.some((r) => r.url)) || ambientes[0];
   const naCapa = ambCapa?.id === amb.id;
-  const nota = (n) => [n === 1 ? "Destaque · tamanho grande" : "", n === 1 && naCapa ? "Também é a foto da capa" : ""].filter(Boolean).join(" · ");
-  const figuras = reais.map((r, i) => `<figure class="cpj-render" data-cpj-render="${escapeAttr(r.id)}"><span class="cpj-slot-num">${i + 1}</span><img src="${escapeAttr(otimizarFoto(r.url, i === 0 ? 960 : 640))}" data-cpj-imagem-cena="${escapeAttr(r.cena?.url || "")}" data-cpj-imagem-original="${escapeAttr(imagemOriginalProjeto(r.url))}" alt="${r.cena?.url ? `Trocar móveis de ${escapeAttr(amb.nome)} no 3D` : `Renderização de ${escapeAttr(amb.nome)}`}" loading="lazy" decoding="async" data-cpj="render-ver" tabindex="0" role="button">${r.cena?.url ? '<span class="cpj-render-3d" aria-hidden="true">Trocar móveis no 3D</span>' : ""}<figcaption>${escapeHtml(r.origem || "Renderização")}${nota(i + 1) ? ` · ${escapeHtml(nota(i + 1))}` : ""}</figcaption><button type="button" class="cpj-icon-btn" data-cpj="render-remover" aria-label="Remover renderização" title="Remover">×</button></figure>`).join("");
-  return `<div class="cpj-renders cpj-renders-map" data-modo="destaque">${figuras}</div>`;
+  // Todas as renderizações com o mesmo tamanho (pedido do usuário, out/2026): sem "destaque" maior na primeira.
+  const nota = (n) => n === 1 && naCapa && !ctx.pedidoComercial ? "Também é a foto da capa" : "";
+  const figuras = reais.map((r, i) => `<figure class="cpj-render" data-cpj-render="${escapeAttr(r.id)}">${(r.cena?.url || r.moveis?.length) ? `<label class="cpj-jogos cpj-badge" title="Quantos jogos desta composição vão no pedido"><input type="number" min="1" max="99" value="${Math.max(1, Number(r.jogos) || 1)}" data-cpj-jogos aria-label="Quantidade de jogos da composição ${i + 1} de ${escapeAttr(amb.nome)}"><span>${Math.max(1, Number(r.jogos) || 1) === 1 ? "jogo" : "jogos"}</span></label>` : `<span class="cpj-slot-num cpj-badge">${i + 1}</span>`}<img src="${escapeAttr(otimizarFoto(r.url, i === 0 ? 960 : 640))}" data-cpj-imagem-cena="${escapeAttr(r.cena?.url || "")}" data-cpj-imagem-original="${escapeAttr(imagemOriginalProjeto(r.url))}" alt="${r.cena?.url ? `Trocar móveis de ${escapeAttr(amb.nome)} no 3D` : `Renderização de ${escapeAttr(amb.nome)}`}" loading="lazy" decoding="async" data-cpj="render-ver" tabindex="0" role="button">${r.cena?.url ? '<span class="cpj-render-3d cpj-badge" aria-hidden="true">Trocar móveis no 3D</span>' : ""}<figcaption>${escapeHtml(r.origem || "Renderização")}${nota(i + 1) ? ` · ${escapeHtml(nota(i + 1))}` : ""}</figcaption><button type="button" class="cpj-icon-btn" data-cpj="render-remover" aria-label="Remover renderização" title="Remover">×</button></figure>`).join("");
+  return `<div class="cpj-renders cpj-renders-map" data-modo="grade">${figuras}</div>`;
+}
+
+// Lista Completa do pedido comercial: renomear/excluir no título de cada ambiente e as renderizações logo abaixo dele.
+function acoesAmbienteLista(amb){
+  return `<span class="pa-ambiente-acoes" data-cpj-target-amb="${escapeAttr(amb.id)}">`
+    + `<button type="button" class="cpj-amb-icon" data-cpj="renomear" aria-label="Renomear ${escapeAttr(amb.nome)}" title="Renomear ambiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5L8 21H3v-5L16 3Z M13 6l5 5"/></svg></button>`
+    + `<button type="button" class="cpj-amb-icon cpj-btn-danger-text" data-cpj="excluir-ambiente" aria-label="Excluir ${escapeAttr(amb.nome)}" title="Excluir ambiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7"/></svg></button></span>`;
+}
+function rendersDaLista(ambModel){
+  const amb = ambientesDe().find((a) => a.id === ambModel.id);
+  const html = amb ? rendersMapaHtml(amb) : "";
+  return html ? `<div class="pa-ambiente-renders" data-cpj-target-amb="${escapeAttr(amb.id)}">${html}</div>` : "";
 }
 
 function vincularOrdemLista(host){
+    host.querySelectorAll('[data-cpj-item-observacao]').forEach(campo => {
+      campo.style.height = 'auto'; campo.style.height = `${campo.scrollHeight}px`;
+    });
+    bindOrdenacaoAmbientes(host.querySelector('.pa-geral'), async (origem, destino, depois) => {
+      if(!moverAmbiente(ambientesDe(), origem, destino, depois)) return;
+      marcarSujo(); pintarNavegacao(); pintarPainel();
+      host.querySelector(`[data-pa-grupo="${CSS.escape(origem)}"] [data-pa-drag-amb]`)?.focus({ preventScroll: true });
+      const anuncio = host.querySelector('[data-pa-anuncio]'); if(anuncio) anuncio.textContent = 'Ambiente movido. Salvando…';
+      await salvarAgora();
+      if(anuncio?.isConnected) anuncio.textContent = S.save === 'error' ? 'Não foi possível salvar. Use Tentar salvar.' : 'Ordem dos ambientes salva.';
+    });
     bindOrdenacao(host.querySelector('.pa-geral'), async (ambienteId,origem,destino)=>{
       const amb=ambientesDe().find(a=>a.id===ambienteId);
       if(!amb || !reordenarItens(amb,origem,destino)) return;
@@ -1473,6 +1640,96 @@ function vincularOrdemLista(host){
 }
 
 // No pedido comercial, a decoradora solicitante (cliente escolhida na tela do pedido) aparece acima da lista (out/2026).
+// ---------------------------------------------------------------------------------------------------------------
+// Pedido comercial (out/2026): componentes por ambiente e serviços adicionais do pedido.
+// Componente: peça que não aparece no catálogo (só compõe kits), mas pode ser locada avulsa num pedido — reserva estoque
+// e passa pela separação como qualquer item (entra em amb.itens). Serviço: fica em dados.servicos (nome, quantidade, valor);
+// a tela do pedido soma no total e no financeiro (locação) e a prévia/PDF mostram numa seção própria.
+const servicosDe = () => (Array.isArray(S.current?.dados?.servicos) ? S.current.dados.servicos : (S.current.dados.servicos = []));
+const dinheiroBR = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+function servicosHtml(){
+  const lista = servicosDe();
+  const total = lista.reduce((s, x) => s + (Number(x.quantidade) || 0) * (Number(x.valor) || 0), 0);
+  return `<section class="cpj-servicos" aria-label="Serviços adicionais">
+    <div class="cpj-block-head cpj-block-head-center"><h4>Serviços adicionais</h4></div>
+    ${lista.length ? `<table class="cpj-servicos-tabela"><thead><tr><th>Serviço</th><th>Qtd.</th><th>Valor un.</th><th>Total</th><th><span class="pa-sr">Remover</span></th></tr></thead><tbody>${lista.map((s) => `<tr class="cpj-linha-servico" data-servico-id="${escapeAttr(s.id)}">
+      <td><strong>${escapeHtml(s.nome)}</strong></td>
+      <td><input type="number" min="1" max="999" step="1" value="${escapeAttr(s.quantidade)}" data-servico-campo="quantidade" aria-label="Quantidade de ${escapeAttr(s.nome)}"></td>
+      <td><input type="number" min="0" step="0.01" value="${escapeAttr(Number(s.valor || 0).toFixed(2))}" data-servico-campo="valor" aria-label="Valor de ${escapeAttr(s.nome)}"></td>
+      <td><b>${dinheiroBR.format((Number(s.quantidade) || 0) * (Number(s.valor) || 0))}</b></td>
+      <td><button type="button" class="cpj-icon-btn" data-cpj="servico-remover" aria-label="Remover ${escapeAttr(s.nome)}" title="Remover">×</button></td>
+    </tr>`).join("")}</tbody><tfoot><tr><td colspan="3">Total dos serviços</td><td><b>${dinheiroBR.format(total)}</b></td><td></td></tr></tfoot></table>`
+      : '<p class="cpj-empty">Nenhum serviço adicionado. Use ＋ Serviço para incluir montagem especial, limpeza, hora extra…</p>'}
+  </section>`;
+}
+async function fluxoAdicionarServico(){
+  const { data, error } = await ctx.supabase.from("servicos_adicionais").select("id,nome,valor_fixo,valor_mao_obra").eq("empresa_id", ctx.getSession()?.empresa_id).eq("ativo", true).order("nome");
+  if(error){ ctx.notify({ title: "Não foi possível carregar os serviços", message: mensagemDe(error), status: "error" }); return; }
+  if(!data?.length){ ctx.notify({ title: "Nenhum serviço cadastrado", message: "Cadastre os serviços adicionais antes de usar no pedido.", status: "error" }); return; }
+  const valorPadrao = (s) => Math.round(((Number(s.valor_fixo) || 0) + (Number(s.valor_mao_obra) || 0)) * 100) / 100;
+  const escolhido = await abrirModal({
+    titulo: "Adicionar serviço", sub: "O valor pode ser ajustado depois, na própria linha.", confirmar: "Adicionar",
+    corpo: `<div class="cpj-escolha-lista">${data.map((s, i) => `<label class="cpj-escolha"><input type="radio" name="servico" value="${escapeAttr(s.id)}"${i ? "" : " checked"}><span>${escapeHtml(s.nome)}</span><b>${dinheiroBR.format(valorPadrao(s))}</b></label>`).join("")}</div>
+      <label class="cpj-campo-curto"><span>Quantidade</span><input type="number" name="quantidade" min="1" max="999" value="1"></label>`,
+    onSubmit: ({ form }) => {
+      const id = form.querySelector("input[name=servico]:checked")?.value;
+      const s = data.find((x) => x.id === id);
+      if(!s) throw new Error("Escolha um serviço.");
+      return { servico: s, quantidade: Math.max(1, Math.min(999, parseInt(form.querySelector("input[name=quantidade]").value, 10) || 1)) };
+    },
+  });
+  if(!escolhido) return;
+  servicosDe().push({ id: crypto.randomUUID(), servico_id: escolhido.servico.id, nome: escolhido.servico.nome, quantidade: escolhido.quantidade, valor: valorPadrao(escolhido.servico) });
+  marcarSujo(); pintarPainel();
+  ctx.notify({ title: "Serviço adicionado", message: escolhido.servico.nome, status: "done" });
+}
+async function fluxoAdicionarComponente(amb){
+  if(typeof ctx.buscarComponentes !== "function") return;
+  let lista = [];
+  const desenhar = (host) => {
+    host.innerHTML = lista.length ? lista.map((c) => `<button type="button" class="cpj-comp" data-comp-id="${escapeAttr(c.id)}">
+        <img src="${escapeAttr(c.photo || "")}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml([c.dims, c.referencia ? "Cód. " + c.referencia : ""].filter(Boolean).join(" · "))}</small></span>
+        <b>${Number.isFinite(c.rentalPrice) ? dinheiroBR.format(c.rentalPrice) : "Sob consulta"}</b></button>`).join("")
+      : '<p class="cpj-empty">Nenhum componente encontrado.</p>';
+  };
+  const escolhido = await abrirModal({
+    titulo: "Adicionar componente", sub: ambientesDe().length > 1 ? "Peças avulsas que não aparecem no catálogo. Reservam estoque como os móveis." : `Peças avulsas que não aparecem no catálogo. Entram em "${amb.nome}" e reservam estoque como os móveis.`,
+    confirmar: "Adicionar", largo: true,
+    // Sem as abas de ambiente no pedido comercial, a janela pergunta em qual ambiente entra (começa no último usado).
+    corpo: `<label class="cpj-busca-comp"><input type="search" name="busca" placeholder="Nome, código ou referência" autocomplete="off"></label>
+      <div class="cpj-comp-lista" data-comp-lista><p class="cpj-empty">Carregando…</p></div>
+      <div class="cpj-comp-destino">${ambientesDe().length > 1 ? `<label class="cpj-campo-curto"><span>Ambiente</span><select name="ambiente">${ambientesDe().map((a) => `<option value="${escapeAttr(a.id)}"${a.id === amb.id ? " selected" : ""}>${escapeHtml(a.nome)}</option>`).join("")}</select></label>` : ""}
+      <label class="cpj-campo-curto"><span>Quantidade</span><input type="number" name="quantidade" min="1" max="999" value="1"></label></div>`,
+    onMount: ({ dialog }) => {
+      const host = dialog.querySelector("[data-comp-lista]"), busca = dialog.querySelector("input[name=busca]");
+      let timer = null, pedido = 0;
+      const carregar = async () => {
+        const n = ++pedido;
+        try { const r = await ctx.buscarComponentes(busca.value); if(n !== pedido) return; lista = r; desenhar(host); }
+        catch(error){ host.innerHTML = '<p class="cpj-empty">Não foi possível buscar: ' + escapeHtml(mensagemDe(error)) + '</p>'; }
+      };
+      busca.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(carregar, 300); });
+      host.addEventListener("click", (event) => {
+        const b = event.target.closest("[data-comp-id]"); if(!b) return;
+        host.querySelectorAll(".is-escolhido").forEach((x) => x.classList.remove("is-escolhido"));
+        b.classList.add("is-escolhido"); host.dataset.escolhido = b.dataset.compId;
+      });
+      carregar(); setTimeout(() => busca.focus(), 50);
+    },
+    onSubmit: ({ dialog, form }) => {
+      const id = dialog.querySelector("[data-comp-lista]").dataset.escolhido;
+      if(!id) throw new Error("Escolha um componente da lista.");
+      return { id, ambiente: form.querySelector("select[name=ambiente]")?.value || amb.id, quantidade: Math.max(1, Math.min(999, parseInt(form.querySelector("input[name=quantidade]").value, 10) || 1)) };
+    },
+  });
+  if(!escolhido) return;
+  amb = ambientesDe().find((a) => a.id === escolhido.ambiente) || amb;
+  const linha = amb.itens.find((i) => String(i.item_id) === String(escolhido.id));
+  mudarQuantidade(amb.id, escolhido.id, 0, { definir: (Number(linha?.quantidade) || 0) + escolhido.quantidade });
+  ctx.notify({ title: "Componente adicionado", message: `${escolhido.quantidade}× ${ctx.findItem(escolhido.id)?.name || "Componente"} em ${amb.nome}`, status: "done" });
+}
+
 function solicitanteHtml(){
   if(!ctx.pedidoComercial) return "";
   const d = ctx.decoradoraPedido?.();
@@ -1481,28 +1738,232 @@ function solicitanteHtml(){
   const foto = d.foto ? `<img src="${escapeAttr(d.foto)}" alt="" data-inicial="${escapeAttr(inicial)}" onerror="this.parentNode.textContent=this.dataset.inicial">` : escapeHtml(inicial);
   return `<div class="cpj-solicitante"><div class="cpj-solicitante-foto">${foto}</div><div class="cpj-solicitante-txt"><small>Decorador solicitante</small><strong>${escapeHtml(d.nome)}</strong></div></div>`;
 }
+// Personalizações cadastradas (Estoque > Personalizações), no projeto do decorador e no pedido comercial: a Lista Completa
+// mostra "Personalizar" nos itens que têm alguma. A escolhida vai na linha do projeto (personalizacao_id, _nome, _escolhas
+// com a opção da cartela e _valor por unidade) — é ela que reserva os materiais do Almoxarifado (almox_reservas_personalizacao,
+// só a opção escolhida). Preço: o servidor calcula (personalizacao_cartelas/_precos); no pedido comercial sempre vem.
+let personalizacoesCarregando = null;
+let personalizacoesRevalidadas = null;
+async function rpcPers(nome, extra = {}){
+  const { data, error } = await ctx.supabase.rpc(nome, { ...rpcParams(extra), p_pedido: Boolean(ctx.pedidoComercial) });
+  if(error) throw error;
+  return data;
+}
+function carregarPersonalizacoes(){
+  if(personalizacoesCarregando) return personalizacoesCarregando;
+  personalizacoesCarregando = (async () => {
+    let lista;
+    try{ lista = await rpcPers("personalizacao_lista"); }
+    catch(error){ console.error("Personalizações:", error); personalizacoesCarregando = null; return; }
+    definirPersonalizacoes((lista || []).map((p) => ({ id: p.id, vinculo_id: p.vinculo_id, nome: p.tipo || "Personalização",
+      preco_base: p.preco_base, tipos_cartela: p.tipos_cartela })));
+    await revalidarPrecosPersonalizacao();
+    pintarPainel();
+    document.dispatchEvent(new CustomEvent("catalog-personalizacoes"));
+  })();
+  return personalizacoesCarregando;
+}
+// No pedido comercial o valor da personalização entra no total: confere com o servidor ao abrir (o preço da cartela pode ter mudado).
+async function revalidarPrecosPersonalizacao(){
+  if(!ctx.pedidoComercial || !S.current || personalizacoesRevalidadas === S.current.id) return;
+  personalizacoesRevalidadas = S.current.id;
+  const linhas = ambientesDe().flatMap((a) => a.itens).filter((l) => l.personalizacao_id);
+  if(!linhas.length) return;
+  try{
+    const valores = await rpcPers("personalizacao_precos", { p_linhas: linhas.map((l) => ({ personalizacao_id: l.personalizacao_id,
+      escolhas: Object.fromEntries(Object.entries(l.personalizacao_escolhas || {}).map(([t, o]) => [t, { opcao_id: o?.opcao_id }])) })) });
+    let mudou = false;
+    linhas.forEach((l, i) => { const v = valores?.[i]; if(v !== null && v !== undefined && Number(v) !== Number(l.personalizacao_valor)){ l.personalizacao_valor = Number(v); mudou = true; } });
+    if(mudou) marcarSujo();
+  }catch(error){ console.error("Preço das personalizações:", error); }
+}
+function linhasDoItemNoAmbiente(row){
+  const ambiente = ambientesDe().find((a) => a.id === row?.dataset.paAmb);
+  return (ambiente?.itens || []).filter((l) => String(l.item_id) === row?.dataset.paItem);
+}
+function tirarPersonalizacao(row){
+  for(const l of linhasDoItemNoAmbiente(row)){ delete l.personalizacao_id; delete l.personalizacao_nome; delete l.personalizacao_escolhas; delete l.personalizacao_valor; }
+  marcarSujo(); pintarPainel();
+}
+async function abrirPersonalizar(row){
+  const linhas = linhasDoItemNoAmbiente(row);
+  if(!linhas.length || !opcoesPersonalizacaoDoItem(row?.dataset.paItem).length) return;
+  const escolha = await escolherPersonalizacao(row.dataset.paItem, linhas.find((l) => l.personalizacao_id) || {});
+  if(!escolha) return;
+  aplicarPersonalizacaoNasLinhas(linhas, escolha);
+  marcarSujo(); pintarPainel();
+}
+function aplicarPersonalizacaoNasLinhas(linhas, escolha){
+  for(const l of linhas){
+    l.personalizacao_id = escolha.persId; l.personalizacao_nome = escolha.nome; l.personalizacao_escolhas = escolha.escolhas;
+    if(escolha.valor === null) delete l.personalizacao_valor; else l.personalizacao_valor = escolha.valor;
+  }
+}
+// Janela das cartelas (tecidos, tintas…): devolve { acao, persId, nome, escolhas, valor } ou null.
+// acao = "aplicar" (botão principal) ou "ia" (botão "Ver como fica com IA", só quando há opcoes.aoIA).
+async function escolherPersonalizacao(itemId, atual = {}, { confirmar = "Aplicar personalização", aoIA = null, infoIA = null } = {}){
+  const opcoes = opcoesPersonalizacaoDoItem(itemId);
+  if(!opcoes.length) return null;
+  const item = ctx.findItem(itemId);
+  const estado = { persId: atual.personalizacao_id && opcoes.some((o) => o.id === String(atual.personalizacao_id)) ? String(atual.personalizacao_id) : opcoes[0].id,
+    dados: null, escolhas: {}, busca: {} };
+  for(const [tipo, o] of Object.entries(atual.personalizacao_escolhas || {})) if(o?.opcao_id) estado.escolhas[tipo] = o;
+  const cache = new Map();
+  const conferir = () => {
+    const d = estado.dados;
+    if(!d) throw new Error("Aguarde carregar as opções.");
+    const faltando = (d.variaveis || []).filter((v) => !estado.escolhas[v.tipo]?.opcao_id).map((v) => v.tipo.toLowerCase());
+    if(faltando.length) throw new Error(`Escolha o ${faltando.join(" e o ")}.`);
+    return {
+      persId: estado.persId,
+      nome: opcoes.find((o) => o.id === estado.persId)?.nome || d.tipo || "Personalização",
+      escolhas: Object.fromEntries((d.variaveis || []).map((v) => [v.tipo, estado.escolhas[v.tipo]])),
+    };
+  };
+  return abrirModal({
+    titulo: "Personalizar", sub: semMedidasNome(item?.fullName || item?.name || "Item"), largo: true, confirmar,
+    extra: aoIA ? `<span class="cpj-pers-ia-info" data-pers-ia-info></span><button type="button" class="cpj-btn cpj-btn-ghost cpj-pers-ia" data-pers-ia>✦ Ver como fica com IA</button>` : "",
+    corpo: `<div class="cpj-pers" data-pers-corpo><p class="cpj-pers-carregando">Carregando…</p></div>`,
+    onMount: (api) => {
+      if(aoIA){
+        api.dialog.querySelector("[data-pers-ia]").addEventListener("click", () => {
+          try{ api.fechar({ acao: "ia", ...conferir(), valor: api.valorAtual() }); }
+          catch(error){ api.erro(mensagemDe(error)); }
+        });
+        Promise.resolve(infoIA?.()).then((txt) => { const el = api.dialog.querySelector("[data-pers-ia-info]"); if(el && txt) el.textContent = txt; }).catch(() => {});
+      }
+      const corpo = api.dialog.querySelector("[data-pers-corpo]");
+      api.dialog.classList.add("cpj-pers-dialog");
+      const valorAtual = () => {
+        const d = estado.dados;
+        if(!d || d.preco_base === null || d.preco_base === undefined) return null;
+        let total = Number(d.preco_base) || 0;
+        for(const v of d.variaveis || []){
+          const id = estado.escolhas[v.tipo]?.opcao_id;
+          const op = (v.cartelas || []).flatMap((c) => c.opcoes || []).find((o) => o.id === id);
+          if(!op) return null;
+          total += Number(op.acrescimo) || 0;
+        }
+        return Math.round(total * 100) / 100;
+      };
+      api.valorAtual = valorAtual;
+      const pintar = () => {
+        const d = estado.dados;
+        const escolhaPers = opcoes.length > 1 ? `<div class="cpj-pers-tipos" role="radiogroup" aria-label="Tipo de personalização">${opcoes.map((o) => `<button type="button" role="radio" aria-checked="${o.id === estado.persId}" class="${o.id === estado.persId ? "is-ativa" : ""}" data-pers-tipo="${escapeAttr(o.id)}">${escapeHtml(o.nome)}</button>`).join("")}</div>` : "";
+        if(!d){ corpo.innerHTML = escolhaPers + '<p class="cpj-pers-carregando">Carregando…</p>'; return; }
+        const variaveis = (d.variaveis || []).map((v) => {
+          const busca = String(estado.busca[v.tipo] || "").trim().toLowerCase();
+          const qtd = Number(v.quantidade).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+          const cartelas = (v.cartelas || []).map((c) => {
+            const ops = (c.opcoes || []).filter((o) => !busca || `${o.codigo} ${o.nome}`.toLowerCase().includes(busca));
+            if(!ops.length && busca) return "";
+            return `<div class="cpj-pers-cartela"><div class="cpj-pers-cartela-topo"><strong>${escapeHtml(c.nome)}</strong>${c.fornecedor ? `<span>${escapeHtml(c.fornecedor)}</span>` : ""}${c.link ? `<a href="${escapeAttr(c.link)}" target="_blank" rel="noopener">Catálogo do fornecedor ↗</a>` : ""}</div>
+              <div class="cpj-pers-opcoes">${ops.length ? ops.map((o) => {
+                const sel = estado.escolhas[v.tipo]?.opcao_id === o.id;
+                const amostra = o.foto_url ? `style="background-image:url('${escapeAttr(o.foto_url)}')"` : o.cor ? `style="background:${escapeAttr(o.cor)}"` : "";
+                return `<button type="button" class="cpj-pers-opcao${sel ? " is-sel" : ""}" aria-pressed="${sel}" data-pers-opcao="${escapeAttr(o.id)}" data-pers-var="${escapeAttr(v.tipo)}" data-pers-cartela="${escapeAttr(c.id)}"><span class="cpj-pers-amostra" ${amostra}></span><span class="cpj-pers-cod">${escapeHtml(o.codigo)}</span><span class="cpj-pers-nome">${escapeHtml(o.nome)}</span>${o.acrescimo !== null && o.acrescimo !== undefined ? `<span class="cpj-pers-preco">+ ${dinheiroBR.format(o.acrescimo)}</span>` : ""}</button>`;
+              }).join("") : '<p class="cpj-pers-vazio">Nenhuma opção cadastrada nesta cartela.</p>'}</div></div>`;
+          }).join("");
+          const lista = (v.cartelas || []).length ? (cartelas || '<p class="cpj-pers-vazio">Nada encontrado.</p>') : `<p class="cpj-pers-vazio">Nenhuma cartela de ${escapeHtml(v.tipo.toLowerCase())} cadastrada. Cadastre em Estoque &gt; Personalizações &gt; Cartelas.</p>`;
+          return `<section class="cpj-pers-var"><div class="cpj-pers-var-topo"><h4>${escapeHtml(v.tipo)}</h4><span>${qtd} ${escapeHtml(v.unidade || "")} por unidade do item</span><input type="search" class="cpj-input cpj-pers-busca" data-pers-busca="${escapeAttr(v.tipo)}" value="${escapeAttr(estado.busca[v.tipo] || "")}" placeholder="Código ou nome" autocomplete="off"></div>${lista}</section>`;
+        }).join("");
+        const v = valorAtual();
+        const total = d.preco_base === null || d.preco_base === undefined ? "" : `<p class="cpj-pers-total">Personalização por unidade: <b>${v === null ? "escolha as opções" : dinheiroBR.format(v)}</b></p>`;
+        corpo.innerHTML = escolhaPers + (variaveis || '<p class="cpj-pers-vazio">Esta personalização não tem opção para escolher.</p>') + total;
+      };
+      const carregar = async () => {
+        estado.dados = cache.get(estado.persId) || null;
+        pintar();
+        if(estado.dados) return;
+        try{
+          estado.dados = await rpcPers("personalizacao_cartelas", { p_personalizacao: estado.persId });
+          cache.set(estado.persId, estado.dados);
+          // escolha antiga de um tipo que a personalização não tem mais sai
+          const validos = new Set((estado.dados.variaveis || []).map((v) => v.tipo));
+          for(const t of Object.keys(estado.escolhas)) if(!validos.has(t)) delete estado.escolhas[t];
+          pintar();
+        }catch(error){ corpo.innerHTML = `<p class="cpj-pers-vazio">${escapeHtml(mensagemDe(error))}</p>`; }
+      };
+      corpo.addEventListener("click", (e) => {
+        const tipo = e.target.closest("[data-pers-tipo]");
+        if(tipo){ if(tipo.dataset.persTipo !== estado.persId){ estado.persId = tipo.dataset.persTipo; estado.escolhas = {}; carregar(); } return; }
+        const op = e.target.closest("[data-pers-opcao]");
+        if(!op) return;
+        const v = (estado.dados?.variaveis || []).find((x) => x.tipo === op.dataset.persVar);
+        const c = (v?.cartelas || []).find((x) => x.id === op.dataset.persCartela);
+        const o = (c?.opcoes || []).find((x) => x.id === op.dataset.persOpcao);
+        if(!o) return;
+        estado.escolhas[v.tipo] = { opcao_id: o.id, codigo: o.codigo, nome: o.nome, cartela: c.nome, fornecedor: c.fornecedor || null, cor: o.cor || null, foto_url: o.foto_url || null };
+        api.erro("");
+        pintar();
+      });
+      corpo.addEventListener("input", (e) => {
+        const b = e.target.closest("[data-pers-busca]");
+        if(!b) return;
+        estado.busca[b.dataset.persBusca] = b.value;
+        const pos = b.selectionStart;
+        pintar();
+        const novo = corpo.querySelector(`[data-pers-busca="${CSS.escape(b.dataset.persBusca)}"]`);
+        novo?.focus(); try{ novo?.setSelectionRange(pos, pos); }catch{}
+      });
+      carregar();
+    },
+    onSubmit: async (api) => ({ acao: "aplicar", ...conferir(), valor: api.valorAtual() }),
+  });
+}
+
+// Página do item (pedido do usuário, out/2026): "Personalizar" abre a cartela (tecidos/tintas com código) no lugar
+// do envio de foto do tecido; dali a pessoa põe no projeto já personalizado ou vê como fica com IA.
+const ultimaEscolhaPorItem = new Map();
+export const personalizacoesDoItem = (itemId) => opcoesPersonalizacaoDoItem(itemId);
+export async function abrirPersonalizarItem(itemId, { aoIA = null, infoIA = null } = {}){
+  const amb = S.current ? ambienteAtivo() : null;
+  const linhasAtuais = amb ? amb.itens.filter((l) => String(l.item_id) === String(itemId)) : [];
+  const atual = linhasAtuais.find((l) => l.personalizacao_id) || ultimaEscolhaPorItem.get(String(itemId)) || {};
+  const escolha = await escolherPersonalizacao(itemId, atual, { confirmar: "Adicionar ao projeto", aoIA, infoIA });
+  if(!escolha) return;
+  ultimaEscolhaPorItem.set(String(itemId), { personalizacao_id: escolha.persId, personalizacao_escolhas: escolha.escolhas });
+  if(escolha.acao === "ia"){ aoIA?.(escolha); return; }
+  if(!(await garantirDestino({ titulo: "Adicionar ao projeto", confirmar: "Adicionar" }))) return;
+  const destino = ambienteAtivo();
+  if(!destino) return;
+  if(!destino.itens.some((l) => String(l.item_id) === String(itemId))) mudarQuantidade(destino.id, itemId, 1, { silencioso: true });
+  aplicarPersonalizacaoNasLinhas(destino.itens.filter((l) => String(l.item_id) === String(itemId)), escolha);
+  marcarSujo(); pintarPainel(); atualizarBotoes();
+  ctx.notify({ title: "Adicionado ao projeto", message: `${itemNome(itemId)} · ${textoEscolhas(escolha.escolhas)} → ${destino.nome}`, status: "done", duration: 4200 });
+}
+const semMedidasNome = (nome) => String(nome || "").replace(/\s*\((?:L|A|P)\)\s*[\d.,]+\s*m\b/gi, "").replace(/\s{2,}/g, " ").trim();
 function pintarPainel(){
   const host = document.querySelector("[data-cpj-panel]");
   if(!host || !S.current) return;
+  carregarPersonalizacoes();
   host.closest(".cpj-work-comercial")?.classList.toggle("is-plantas", S.workTab === "plantas");
+  if(ctx.pedidoComercial && !["apresentacao", "plantas", "pedido"].includes(S.workTab)) S.workTab = "geral"; // pedido comercial: sem abas, sempre a Lista Completa
   if(S.workTab !== "plantas") limparPlantaListeners(); // saindo da aba Plantas (ou nem chegando a entrar) — desliga o listener de resize se algum ficou de uma visita anterior
   if(S.workTab === "geral"){
     // Título da aba Geral (pedido do usuário: "um título bem bonito escrito Lista Completa").
     // Pedido comercial: decorador solicitante à esquerda, na MESMA linha do título (pedido do usuário, out/2026).
     const solicitante = solicitanteHtml();
     const titulo = `<header class="cpj-geral-title"><span class="cpj-geral-title-orn" aria-hidden="true"></span><h2>Lista <em>Completa</em></h2><span class="cpj-geral-title-orn" aria-hidden="true"></span></header>`;
-    host.innerHTML = (solicitante ? `<div class="cpj-geral-topo">${solicitante}${titulo}<span aria-hidden="true"></span></div>` : titulo)
-      + geralHtml(dadosApresentacao(S.current,ctx.findItem))
+    // Pedido comercial: decorador solicitante, título e os botões (Catálogo, Ambiente, Componente, Serviço) na mesma linha.
+    host.innerHTML = (ctx.pedidoComercial ? `<div class="cpj-geral-topo cpj-geral-topo-comercial">${solicitante || "<span></span>"}${titulo}<div class="cpj-geral-botoes" role="toolbar" aria-label="Ações do pedido">${botoesPedidoComercial()}</div></div>` : solicitante ? `<div class="cpj-geral-topo">${solicitante}${titulo}<span aria-hidden="true"></span></div>` : titulo)
+      // Quantidade editável e ambientes que se arrastam inteiros (pedido do usuário, out/2026).
+      + geralHtml(dadosApresentacao(S.current,ctx.findItem), { editar: Boolean(ctx.pedidoComercial), quantidade: true, moverAmbientes: true, ...(ctx.pedidoComercial ? { vazios: true, acoesAmbiente: acoesAmbienteLista, fotoLado: rendersDaLista } : {}) })
 
-      + `<footer class="pa-geral-footer">${ctx.pedidoComercial ? '<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="ver-pedido-comercial">Ver pedido e PDF</button>' : ''}<button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${ctx.pedidoComercial ? "Salvar pedido" : S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`;
+      + (ctx.pedidoComercial ? servicosHtml() : "")
+      // Pedido comercial: sem rodapé (o Salvar fica no topo do pedido e a prévia/PDF na aba Pedido) — out/2026.
+      + (ctx.pedidoComercial ? '' : `<footer class="pa-geral-footer"><button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`);
 
     vincularOrdemLista(host);
+    sinalizarDisponibilidade(host, S.current, ctx);
     return;
   }
   if(S.workTab === "apresentacao"){
     host.innerHTML=apresentacaoHtml(dadosApresentacao(S.current,ctx.findItem),S.presentationAmb); return;
   }
   if(S.workTab === "plantas"){ pintarPlantas(host); return; }
+  if(S.workTab === "pedido"){ pintarAbaPedido(host); return; }
+  if(S.workTab === "historico"){ pintarHistorico(host); return; }
   const amb = ambienteAtivo();
   if(!amb){
     host.innerHTML = `<div class="cpj-empty cpj-empty-big">${ICONE.layers}<strong>Crie o primeiro ambiente</strong><span>Cerimônia, mesa de convidados, bar, lounge… escolha o nome que quiser e adicione os móveis dentro dele.</span><button type="button" class="cpj-btn cpj-btn-primary" data-cpj="novo-ambiente">＋ Criar ambiente</button></div>`;
@@ -1524,6 +1985,7 @@ function pintarPainel(){
       <textarea class="cpj-notes" data-cpj-notas rows="3" maxlength="1000" placeholder="Aparece na apresentação, abaixo do ambiente. Ex.: clima, cores, detalhes de montagem…">${escapeHtml(amb.notas)}</textarea>
     </section>`;
   if(amb.itens.length) vincularOrdemLista(host);
+  sinalizarDisponibilidade(host, S.current, ctx);
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1662,7 +2124,7 @@ function pontoMaisProximoRetangulo(box, alvo){
 
 function plantasGridHtml(){
   const plantas = plantasDe();
-  return `<div class="cpj-amb-head"><div><h3>Plantas</h3><p>Suba a planta baixa (exportada do AutoCAD) e clique nos pontos — o sistema gera sozinho a legenda com fotos dos móveis, pra equipe de montagem saber o que vai em cada lugar.</p></div></div>
+  return `<div class="cpj-amb-head"><div><h3>Plantas</h3><p>${ctx.pedidoComercial ? "Suba a planta baixa e clique em cada ponto para escolher o formato (foto renderizada) daquele lugar — a legenda sai com as fotos, pra equipe de montagem saber o que vai em cada lugar." : "Suba a planta baixa (exportada do AutoCAD) e clique nos pontos — o sistema gera sozinho a legenda com fotos dos móveis, pra equipe de montagem saber o que vai em cada lugar."}</p></div></div>
     <div class="cpj-plantas-grid">
       ${plantas.map((p) => `<button type="button" class="cpj-planta-card" data-cpj="planta-abrir" data-planta="${escapeAttr(p.id)}">
         <img src="${escapeAttr(otimizarFoto(p.url, 420))}" alt="" loading="lazy">
@@ -1687,40 +2149,38 @@ function plantasGridHtml(){
 function plantaEditorHtml(planta){
   const { w: papelW, h: papelH } = papelDimensoes(planta.papel);
   const opcoesPapel = PAPEIS_PLANTA.map((chave) => `<option value="${chave}"${chave === planta.papel ? " selected" : ""}>${papelRotulo(chave)}</option>`).join("");
+  // Controles numa coluna estreita à esquerda e a planta ocupando o resto da tela (pedido do usuário, out/2026: "coloque os
+  // botões nas laterais pra planta ocupar um espaço maior... algo com menos botões, mais prático e simples").
+  const passo = (rotulo, menos, mais, meio = "<span></span>") => `<div class="cpj-planta-passo"><span>${rotulo}</span><button type="button" class="cpj-icon-btn" data-cpj="${menos}" aria-label="Diminuir: ${rotulo}" title="Diminuir">−</button>${meio}<button type="button" class="cpj-icon-btn" data-cpj="${mais}" aria-label="Aumentar: ${rotulo}" title="Aumentar">+</button></div>`;
+  const icone = (acao, titulo, svg, extra = "") => `<button type="button" class="cpj-planta-icone${extra}" data-cpj="${acao}" title="${titulo}" aria-label="${titulo}">${svg}</button>`;
   return `<div class="cpj-planta-editor">
-    <div class="cpj-planta-toolbar">
+    <aside class="cpj-planta-toolbar" aria-label="Controles da planta">
       <button type="button" class="cpj-back" data-cpj="plantas-voltar" aria-label="Voltar para as plantas">← Plantas</button>
-      <button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="apresentacao">Apresentação dos ambientes</button>
       <input type="text" class="cpj-planta-nome-input" data-cpj-planta-nome maxlength="60" value="${escapeAttr(planta.nome)}" aria-label="Nome da planta">
-      <div class="cpj-work-actions">
-        <label class="cpj-planta-toggle"><input type="checkbox" data-cpj-planta-nomes${planta.mostrarNomes ? " checked" : ""}><span>Nomes nas legendas</span></label>
+      <p class="cpj-planta-dica">Clique na planta para marcar um ponto e escolher o formato daquele lugar.</p>
+      <div class="cpj-planta-secao">
+        <span class="cpj-planta-secao-titulo">Folha</span>
         <select class="cpj-planta-papel-select" data-cpj-planta-papel aria-label="Tamanho da folha de impressão">${opcoesPapel}</select>
         <select class="cpj-planta-papel-select" data-cpj-planta-marcacao aria-label="Exibir marcações">
           ${[["ambos", "Setas e letras"], ["letras", "Só letras"], ["setas", "Só setas"]].map(([valor, texto]) => `<option value="${valor}"${(planta.marcacao || "ambos") === valor ? " selected" : ""}>${texto}</option>`).join("")}
         </select>
-        <div class="cpj-planta-ajuste-group" role="group" aria-label="Tamanho da planta">
-          <span class="cpj-planta-ajuste-rotulo">Área da planta</span>
-          <button type="button" class="cpj-icon-btn cpj-planta-ajuste-zoom" data-cpj="planta-tamanho-menos" aria-label="Diminuir a planta" title="Diminuir a planta">−</button>
-          <button type="button" class="cpj-icon-btn cpj-planta-ajuste-zoom" data-cpj="planta-tamanho-mais" aria-label="Aumentar a planta" title="Aumentar a planta">+</button>
-        </div>
-        <div class="cpj-planta-ajuste-group" role="group" aria-label="Zoom da imagem dentro da planta">
-          <span class="cpj-planta-ajuste-rotulo">Zoom da imagem</span>
-          <button type="button" class="cpj-icon-btn cpj-planta-ajuste-zoom" data-cpj="planta-zoom-menos" aria-label="Diminuir zoom da imagem" title="Diminuir zoom da imagem">−</button>
-          <output class="cpj-planta-ajuste-rotulo" data-cpj-planta-zoom>${Math.round((planta.ajuste?.zoom ?? 1) * 100)}%</output>
-          <button type="button" class="cpj-icon-btn cpj-planta-ajuste-zoom" data-cpj="planta-zoom-mais" aria-label="Aumentar zoom da imagem" title="Aumentar zoom da imagem">+</button>
-        </div>
-        <div class="cpj-planta-ajuste-group" role="group" aria-label="Tamanho dos prints">
-          <span class="cpj-planta-ajuste-rotulo">Prints</span>
-          <button type="button" class="cpj-icon-btn cpj-planta-ajuste-zoom" data-cpj="planta-prints-menos" aria-label="Diminuir os prints" title="Diminuir os prints">−</button>
-          <button type="button" class="cpj-icon-btn cpj-planta-ajuste-zoom" data-cpj="planta-prints-mais" aria-label="Aumentar os prints" title="Aumentar os prints">+</button>
-        </div>
-        <button type="button" class="cpj-btn cpj-btn-ghost${ajustandoPlanta ? " is-active" : ""}" data-cpj="planta-ajuste-toggle" data-cpj-planta-ajuste-btn>${ajustandoPlanta ? "Concluir ajuste" : "Ajustar planta (arrastar)"}</button>
-        <button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="planta-trocar-imagem">Trocar imagem</button>
-        <button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="planta-baixar">Baixar planta</button>
-        <button type="button" class="cpj-btn cpj-btn-ghost cpj-btn-danger-text" data-cpj="planta-excluir">Excluir planta</button>
+        <label class="cpj-planta-toggle"><input type="checkbox" data-cpj-planta-nomes${planta.mostrarNomes ? " checked" : ""}><span>Nomes nas legendas</span></label>
+      </div>
+      <div class="cpj-planta-secao">
+        <span class="cpj-planta-secao-titulo">Tamanho</span>
+        ${passo("Planta", "planta-tamanho-menos", "planta-tamanho-mais")}
+        ${passo("Imagem", "planta-zoom-menos", "planta-zoom-mais", `<output data-cpj-planta-zoom>${Math.round((planta.ajuste?.zoom ?? 1) * 100)}%</output>`)}
+        ${passo("Fotos", "planta-prints-menos", "planta-prints-mais")}
+        <button type="button" class="cpj-btn cpj-btn-ghost cpj-planta-ajuste-btn${ajustandoPlanta ? " is-active" : ""}" data-cpj="planta-ajuste-toggle" data-cpj-planta-ajuste-btn>${ajustandoPlanta ? "Concluir ajuste" : "Mover a planta"}</button>
+      </div>
+      <div class="cpj-planta-icones">
+        ${icone("planta-trocar-imagem", "Trocar imagem", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="m4 16 5-5 4 4 3-3 4 4"/><circle cx="15.5" cy="9" r="1.4"/></svg>')}
+        ${icone("planta-baixar", "Baixar planta", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 19h14"/></svg>')}
+        ${icone("planta-excluir", "Excluir planta", ICONE.trash, " is-perigo")}
         <input type="file" accept="image/png,image/jpeg,image/webp" data-cpj-planta-trocar-input hidden>
       </div>
-    </div>
+      <p class="cpj-empty" data-cpj-planta-vazio${planta.legendas.length ? " hidden" : ""}>Nenhum ponto marcado ainda.</p>
+    </aside>
     <div class="cpj-planta-viewport" data-cpj-planta-viewport aria-label="Folha inteira">
     <div class="cpj-planta-frame" data-cpj-planta-frame>
       <div class="cpj-planta-pagina" data-cpj-planta-pagina style="aspect-ratio:${papelW}/${papelH}"><span class="cpj-planta-pagina-rotulo">Folha (${papelRotulo(planta.papel)})</span></div>
@@ -1732,7 +2192,6 @@ function plantaEditorHtml(planta){
       <div class="cpj-planta-labels" data-cpj-planta-labels></div>
     </div>
     </div>
-    <p class="cpj-empty" data-cpj-planta-vazio${planta.legendas.length ? " hidden" : ""}>Nenhum ponto marcado ainda nesta planta.</p>
   </div>`;
 }
 
@@ -1783,6 +2242,43 @@ function escolherAmbientePlanta(atualId){
   });
 }
 
+// Pedido comercial (out/2026): "eu clico e seleciono qual é o formato daquela localidade" — o ponto da planta
+// recebe uma das FOTOS RENDERIZADAS do pedido (cada ambiente pode ter várias composições), não só o ambiente.
+// Ambiente sem nenhuma foto ainda aparece como cartão simples (a legenda avisa que falta a renderização).
+// Devolve { ambienteId, renderId } ou null (cancelou). Fora do pedido continua escolhendo só o ambiente.
+async function escolherFormatoPlanta(legenda){
+  if(!ctx.pedidoComercial){
+    const ambienteId = await escolherAmbientePlanta(legenda?.ambienteId || null);
+    return ambienteId ? { ambienteId, renderId: null } : null;
+  }
+  const ambientes = ambientesDe();
+  if(!ambientes.length){
+    await abrirModal({ titulo: "Nenhum ambiente neste pedido ainda", sub: "Crie os ambientes e as composições em “Ambientes e lista” antes de legendar a planta.", confirmar: null, cancelar: "Entendi" });
+    return null;
+  }
+  const atualAmb = legenda?.ambienteId || null, atualRender = legenda?.renderId || null;
+  const blocos = ambientes.map((amb) => {
+    const fotos = (amb.renders || []).filter((r) => r.url);
+    const ativoAmb = amb.id === atualAmb;
+    const cards = fotos.length
+      ? fotos.map((r, i) => {
+        const ativo = ativoAmb && (atualRender ? r.id === atualRender : r === renderAtualDoAmbiente(amb));
+        const jogos = Number(r.jogos) > 1 ? ` · ${Number(r.jogos)} jogos` : "";
+        return `<button type="button" class="cpj-planta-formato${ativo ? " is-active" : ""}" data-amb="${escapeAttr(amb.id)}" data-render="${escapeAttr(r.id)}" aria-label="${escapeAttr(`${amb.nome} · formato ${i + 1}`)}"><img src="${escapeAttr(otimizarFoto(r.url, 520))}" alt="" loading="lazy"><small>Formato ${i + 1}${jogos}</small></button>`;
+      }).join("")
+      : `<button type="button" class="cpj-planta-formato is-sem-foto${ativoAmb ? " is-active" : ""}" data-amb="${escapeAttr(amb.id)}" data-render=""><span>Sem foto renderizada</span><small>Gere a composição no 3D</small></button>`;
+    return `<section class="cpj-planta-formatos-amb"><h4>${escapeHtml(amb.nome)}</h4><div class="cpj-planta-formatos-grid">${cards}</div></section>`;
+  }).join("");
+  return abrirModal({
+    titulo: "Qual é o formato desse ponto?", sub: "Escolha a foto renderizada que vai nesse lugar da planta — ela entra na legenda.",
+    confirmar: null, largo: true,
+    corpo: `<div class="cpj-planta-formatos">${blocos}</div>`,
+    onMount({ dialog, fechar }){
+      dialog.querySelectorAll("[data-amb]").forEach((btn) => btn.addEventListener("click", () => fechar({ ambienteId: btn.dataset.amb, renderId: btn.dataset.render || null })));
+    },
+  });
+}
+
 // Fotos GRANDES, sem nenhum card envolvendo o grupo (pedido explícito do usuário, olhando uma planta real já
 // impressa: "as fotos precisam ser maiores e precisam ficar fora de qualquer card pra ganhar espaço") — só um
 // cabeçalho simples (número + nome do ambiente + remover) com uma linha fina embaixo, e as fotos soltas depois,
@@ -1805,7 +2301,8 @@ function escolherAmbientePlanta(atualId){
 // (render/itens), nunca mais impresso na tela.
 function legendaLabelHtml(entrada, planta){
   const amb = ambientesDe().find((a) => a.id === entrada.legenda.ambienteId);
-  const render = renderAtualDoAmbiente(amb);
+  // Foto escolhida para esse ponto (pedido comercial, out/2026); sem escolha ou se ela foi apagada, a mais recente do ambiente.
+  const render = (entrada.legenda.renderId && (amb?.renders || []).find((r) => r.id === entrada.legenda.renderId && r.url)) || renderAtualDoAmbiente(amb);
   const itensTexto = (amb?.itens || []).map((linha) => {
     const item = ctx.findItem(linha.item_id);
     const qtd = Number(linha.quantidade) || 1;
@@ -2158,10 +2655,10 @@ function bindPlantaEditor(planta){
     const ponto = { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
     pontoPendente = ponto;
     recalcularPlanta(planta); // mostra o ponto marcado enquanto o diálogo de escolher ambiente está aberto (o backdrop é translúcido, dá pra ver por trás) — só limpa "pontoPendente" depois de decidir
-    const ambienteId = await escolherAmbientePlanta(null);
+    const escolha = await escolherFormatoPlanta(null);
     pontoPendente = null;
-    if(ambienteId){
-      planta.legendas.push({ id: novoId("lg"), ambienteId, ponto });
+    if(escolha?.ambienteId){
+      planta.legendas.push({ id: novoId("lg"), ambienteId: escolha.ambienteId, renderId: escolha.renderId, ponto });
       marcarSujo();
     }
     recalcularPlanta(planta);
@@ -2300,7 +2797,7 @@ function pintarPlantas(host){
   const planta = plantaAtiva();
   if(!planta){
     limparPlantaListeners(); // saindo do editor de verdade (voltou pra grade) — reseta tudo, inclusive o modo "Ajustar planta"
-    host.innerHTML = `<div class="pa-ferramentas"><button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="apresentacao">Apresentação dos ambientes →</button></div>` + plantasGridHtml();
+    host.innerHTML = (ctx.pedidoComercial ? "" : `<div class="pa-ferramentas"><button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="apresentacao">Apresentação dos ambientes →</button></div>`) + plantasGridHtml();
     return;
   }
   host.innerHTML = plantaEditorHtml(planta);
@@ -2385,12 +2882,33 @@ function limparImpressaoPlanta(){
 // sem recalcular posições dentro do painel ou encolher conteúdos que ultrapassem a borda.
 function prepararImpressaoPlanta(planta){
   if(document.getElementById("cpjPlantaImpressao")) return;
+  const r = clonarPlantaFolha(planta);
+  if(!r) return;
+  const { copia, w, h } = r;
+  const impressao = document.createElement("div");
+  impressao.id = "cpjPlantaImpressao";
+  impressao.style.width = `${w}mm`;
+  impressao.style.height = `${h}mm`;
+  impressao.appendChild(copia);
+  const paginaStyle = document.createElement("style");
+  paginaStyle.id = "cpjPlantaPagina";
+  paginaStyle.textContent = estilosImpressaoPlanta(planta);
+  document.head.appendChild(paginaStyle);
+  document.body.appendChild(impressao);
+  document.body.classList.add("cpj-imprimindo-planta");
+}
+// Cópia estática da planta (planta + legendas + linhas) com os estilos copiados, posicionada em relação à folha e
+// escalada para o tamanho dela em mm. Usada no "Baixar planta" e dentro do pedido.
+// inteira: true (pedido) recorta pela planta toda (o quadro com as legendas), mesmo quando ela foi aumentada além da
+// folha no editor — assim nada sai cortado e o pedido escala a planta para ocupar a página.
+function clonarPlantaFolha(planta, { inteira = false } = {}){
   const frame = document.querySelector("[data-cpj-planta-frame]");
   const pagina = frame?.querySelector("[data-cpj-planta-pagina]");
   if(!frame || !pagina) return;
   const transformTela = frame.style.transform;
   frame.style.transform = "none";
-  const folha = pagina.getBoundingClientRect(), quadro = frame.getBoundingClientRect();
+  const palcoEl = frame.querySelector(".cpj-planta-stage");
+  const folha = (inteira && palcoEl ? palcoEl : pagina).getBoundingClientRect(), quadro = frame.getBoundingClientRect();
   if(!folha.width || !folha.height){ frame.style.transform = transformTela; return; }
   const { w, h } = papelDimensoes(planta.papel);
   const copia = frame.cloneNode(true);
@@ -2403,6 +2921,10 @@ function prepararImpressaoPlanta(planta){
       if(atributo.name === "id" || atributo.name.startsWith("data-")) clone.removeAttribute(atributo.name);
     }
   });
+  // As propriedades lógicas (inset-inline-start, margin-inline…) copiadas do estilo calculado vencem o left/top/margin
+  // aplicados abaixo e deixavam a cópia deslocada da folha: tiradas antes.
+  const semLogicas = (el) => ["inset", "inset-inline", "inset-block", "inset-inline-start", "inset-inline-end", "inset-block-start", "inset-block-end", "margin-inline", "margin-block", "margin-inline-start", "margin-inline-end", "margin-block-start", "margin-block-end"].forEach((n) => el.style.removeProperty(n));
+  semLogicas(copia); semLogicas(copia.querySelector(".cpj-planta-stage"));
   const palco = frame.querySelector(".cpj-planta-stage").getBoundingClientRect();
   Object.assign(copia.querySelector(".cpj-planta-stage").style, {
     position: "absolute", margin: "0", left: `${palco.left - quadro.left}px`, top: `${palco.top - quadro.top}px`,
@@ -2418,18 +2940,8 @@ function prepararImpressaoPlanta(planta){
     transformOrigin: `${folha.left - quadro.left}px ${folha.top - quadro.top}px`,
     transform: `scale(${w * PX_POR_MM / folha.width})`,
   });
-  const impressao = document.createElement("div");
-  impressao.id = "cpjPlantaImpressao";
-  impressao.style.width = `${w}mm`;
-  impressao.style.height = `${h}mm`;
-  impressao.appendChild(copia);
   frame.style.transform = transformTela;
-  const paginaStyle = document.createElement("style");
-  paginaStyle.id = "cpjPlantaPagina";
-  paginaStyle.textContent = estilosImpressaoPlanta(planta);
-  document.head.appendChild(paginaStyle);
-  document.body.appendChild(impressao);
-  document.body.classList.add("cpj-imprimindo-planta");
+  return { copia, w, h };
 }
 
 async function baixarPlanta(planta){
@@ -2442,6 +2954,101 @@ async function baixarPlanta(planta){
   requestAnimationFrame(() => requestAnimationFrame(() => {
     try { window.print(); } finally { limparImpressaoPlanta(); }
   }));
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Aba "Pedido" do pedido comercial (out/2026): só a prévia do pedido, impressão e PDF. A planta (quando houver) entra no
+// layout antes do resumo e das parcelas.
+// Modelo do pedido com os dados ao vivo da tela do pedido (datas, local, número, status, resumo e parcelas).
+function modeloPedidoComercial(dono){
+  const campoPai = (id) => window.parent.document.getElementById(id)?.value || "";
+  const m = dadosApresentacao(dono, ctx.findItem);
+  return { ...m, local: campoPai("localInput") || m.local,
+    evento: { ...(m.evento || {}), data_entrega: campoPai("dataEntrega") || m.evento?.data_entrega, hora_entrega: campoPai("horaEntrega") || m.evento?.hora_entrega, data_coleta: campoPai("dataColeta") || m.evento?.data_coleta, hora_coleta: campoPai("horaColeta") || m.evento?.hora_coleta },
+    financeiro: window.parent.__pedidoFinanceiroResumo?.() || null, semAviso: true,
+    numero: window.parent.document.getElementById("orcamentoNumero")?.textContent.trim() || "",
+    statusPedido: { chave: campoPai("pedidoStatusComercial") || "orcamento", ate: campoPai("preReservaAte") },
+    localEndereco: window.parent.__pedidoLocalAtual?.nome === campoPai("localInput") ? window.parent.__pedidoLocalAtual.endereco : "" };
+}
+// Desenha a planta (com as legendas e as fotos) numa cópia estática, do tamanho da folha, para entrar no pedido e no PDF.
+// Monta o editor fora da tela, espera as imagens, posiciona as legendas e copia com os estilos (mesma técnica do "Baixar planta").
+async function plantaFolhaPedido(planta){
+  if(!planta?.url) return null;
+  const host = document.createElement("div");
+  host.className = "cpj-planta-offscreen";
+  host.setAttribute("aria-hidden", "true");
+  host.innerHTML = plantaEditorHtml(planta);
+  document.body.appendChild(host);
+  const espera = (img) => !img || img.complete ? Promise.resolve() : new Promise((ok) => { img.addEventListener("load", ok, { once: true }); img.addEventListener("error", ok, { once: true }); setTimeout(ok, 10000); });
+  try{
+    await espera(host.querySelector("[data-cpj-planta-img]"));
+    recalcularPlanta(planta);
+    await Promise.all([...host.querySelectorAll(".cpj-planta-frame img")].map(espera));
+    recalcularPlanta(planta);
+    const copia = clonarPlantaFolha(planta, { inteira: true });
+    return copia ? { nome: planta.nome, w: copia.w, h: copia.h, html: copia.copia.outerHTML } : null;
+  }catch(error){ console.warn("Planta no pedido:", error); return null; }
+  finally{ host.remove(); }
+}
+const cachePlantasPedido = new Map();
+function plantasDoPedido(project){
+  const plantas = (project?.dados?.plantas || []).filter((p) => p.url);
+  const renders = ambientesDe(project).map((a) => [a.id, (a.renders || []).map((r) => r.id + r.url)]);
+  const chave = JSON.stringify([plantas, renders]);
+  if(!cachePlantasPedido.has(chave)){
+    cachePlantasPedido.clear();
+    cachePlantasPedido.set(chave, (async () => { const lista = []; for(const p of plantas){ const f = await plantaFolhaPedido(normalizarPlanta(p)); if(f) lista.push(f); } return lista; })());
+  }
+  return cachePlantasPedido.get(chave);
+}
+function pintarAbaPedido(host){
+  const project = S.current;
+  const d = ctx.decoradoraPedido?.();
+  const decorador = d?.nome ? { nome: d.nome, logo_url: d.foto || "" } : null;
+  const empresa = ctx.getCompany?.();
+  const temPlanta = (project.dados?.plantas || []).some((p) => p.url);
+  let model = { ...modeloPedidoComercial(project), plantas: [] };
+  const qtd = printsParaRenderizar(project).alvos.length;
+  const rotulo = (n) => `Renderizar com IA (${n} ${n === 1 ? "imagem" : "imagens"})`;
+  host.innerHTML = `<section class="cpj-aba-pedido">
+    <header class="cpj-aba-pedido-topo">
+      ${layoutSeletorHtml(layoutPedido())}
+      <p class="cpj-aba-pedido-status" data-cpj-pedido-status>${temPlanta ? "Preparando a planta…" : ""}</p>
+      <div class="cpj-aba-pedido-acoes">
+        ${qtd ? `<button type="button" class="cpj-btn cpj-btn-ghost" data-pedido-renderizar>${rotulo(qtd)}</button>` : ""}
+        <button type="button" class="cpj-btn cpj-btn-ghost" data-pedido-imprimir>Imprimir</button>
+        <button type="button" class="cpj-btn cpj-btn-primary" data-pedido-pdf>Gerar PDF</button>
+      </div>
+    </header>
+    <p class="cpj-modal-error" role="alert" hidden></p>
+    <div class="cpj-aba-pedido-papel" data-cpj-pedido-papel>${pedidoPreviewHtml(model, { decorador, empresa })}</div>
+  </section>`;
+  const redesenhar = () => { const papel = host.querySelector("[data-cpj-pedido-papel]"); if(papel) papel.innerHTML = pedidoPreviewHtml(model, { decorador, empresa }); };
+  ligarSeletorLayout(host, redesenhar);
+  const erro = host.querySelector(".cpj-modal-error");
+  const plantasProntas = temPlanta ? plantasDoPedido(project).then((lista) => {
+    model = { ...model, plantas: lista };
+    if(!host.isConnected || S.workTab !== "pedido") return;
+    redesenhar();
+    const st = host.querySelector("[data-cpj-pedido-status]"); if(st) st.textContent = "";
+  }) : Promise.resolve();
+  const imprimir = async (botao, texto) => {
+    botao.disabled = true; botao.textContent = "Preparando…"; erro.hidden = true;
+    try{ await plantasProntas; await imprimirPedido(model, { decorador, empresa }); }
+    catch(e){ erro.textContent = e?.message || "Não foi possível gerar o pedido."; erro.hidden = false; }
+    finally{ botao.disabled = false; botao.textContent = texto; }
+  };
+  host.querySelector("[data-pedido-imprimir]").addEventListener("click", (e) => imprimir(e.currentTarget, "Imprimir"));
+  host.querySelector("[data-pedido-pdf]").addEventListener("click", (e) => imprimir(e.currentTarget, "Gerar PDF"));
+  const botao = host.querySelector("[data-pedido-renderizar]");
+  botao?.addEventListener("click", async () => {
+    botao.disabled = true; botao.textContent = "Preparando as cenas…";
+    await renderizarProjetoComIA(project, {
+      aoProgresso: (feitas, total) => { if(botao.isConnected) botao.textContent = `Renderizando ${feitas} de ${total}…`; },
+      aoAtualizar: (dono) => { if(host.isConnected){ model = { ...modeloPedidoComercial(dono), plantas: model.plantas }; redesenhar(); } },
+    });
+    if(host.isConnected && S.workTab === "pedido") pintarPainel(); // as fotos novas também entram nas legendas da planta
+  });
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -2526,6 +3133,10 @@ async function aoClicarOverlay(event){
   const abrir = event.target.closest("[data-cpj-open]");
   const excluir = event.target.closest("[data-cpj-delete]");
   if(excluir){ event.stopPropagation(); fluxoExcluirProjeto(excluir.dataset.cpjDelete, excluir.dataset.noivos); return; }
+  const personalizar = event.target.closest("[data-cpj-personalizar]");
+  if(personalizar){ event.stopPropagation(); abrirPersonalizar(personalizar.closest("[data-pa-item]")); return; }
+  const tirarPers = event.target.closest("[data-cpj-personalizar-tirar]");
+  if(tirarPers){ event.stopPropagation(); tirarPersonalizacao(tirarPers.closest("[data-pa-item]")); return; }
   const verPedido = event.target.closest("[data-cpj-ver-pedido]");
   if(verPedido){ event.stopPropagation(); fluxoVerPedido(verPedido.dataset.cpjVerPedido); return; }
   const filtro = event.target.closest("[data-cpj-filter]");
@@ -2537,8 +3148,9 @@ async function aoClicarOverlay(event){
   const acao = event.target.closest("[data-cpj]");
   if(acao){
     const tipo = acao.dataset.cpj;
-    const amb = acao.dataset.cpjTargetAmb ? ambientesDe().find(a => a.id === acao.dataset.cpjTargetAmb) : ambienteAtivo();
     const linha = acao.closest("[data-cpj-item]");
+    const ambId = acao.closest("[data-cpj-target-amb]")?.dataset.cpjTargetAmb || linha?.dataset.paAmb;
+    const amb = ambId ? ambientesDe().find(a => a.id === ambId) : ambienteAtivo();
     const itemId = linha?.dataset.cpjItem;
     if(tipo === "apresentacao"){
       await salvarAgora(); S.workTab="apresentacao"; S.presentationAmb=null; pintarNavegacao(); pintarPainel();
@@ -2556,28 +3168,17 @@ async function aoClicarOverlay(event){
     else if(tipo === "voltar"){ await salvarAgora(); S.view = "list"; pintarTela(); carregarLista().then(() => { if(S.open && S.view === "list") pintarLista(); }); }
     else if(tipo === "editar-info"){if(ctx.pedidoComercial)ctx.editarPedidoComercial();else fluxoEditarInfo();}
     else if(tipo === "foto-remover"){ event.preventDefault?.(); removerFotoCasal(); }
+    else if(tipo === "ir-catalogo-pedido"){ (window.parent.__pedidoAtalho || window.parent.__pedidoIrPara)?.("catalogo"); }
+    else if(tipo === "add-componente"){ if(amb) fluxoAdicionarComponente(amb); }
+    else if(tipo === "add-servico"){ fluxoAdicionarServico(); }
+    else if(tipo === "servico-remover"){
+      const id = acao.closest("[data-servico-id]")?.dataset.servicoId;
+      S.current.dados.servicos = servicosDe().filter((s) => s.id !== id);
+      marcarSujo(); pintarPainel();
+    }
     else if(tipo === "ver-pedido-comercial"){
-      // Pedido comercial: abrir o pedido no mesmo formato da prévia do catálogo, com Baixar PDF (pedido do usuário, out/2026).
-      const d = ctx.decoradoraPedido?.();
-      const project = S.current;
-      const qtd = printsParaRenderizar(project).alvos.length;
-      const rotulo = (n) => `Renderizar projeto com IA (${n} ${n === 1 ? "imagem" : "imagens"})`;
-      abrirVisualizacaoPedido({ titulo: project.noivos || "Pedido", model: dadosApresentacao(project, ctx.findItem),
-        decorador: d?.nome ? { nome: d.nome, logo_url: d.foto || "" } : null, empresa: ctx.getCompany?.(),
-        extra: qtd ? `<button type="button" class="cpj-btn cpj-btn-primary" data-pedido-renderizar>${rotulo(qtd)}</button>` : "",
-        onMount({ dialog, atualizar }){
-          const botao = dialog.querySelector("[data-pedido-renderizar]");
-          botao?.addEventListener("click", async () => {
-            botao.disabled = true; botao.textContent = "Preparando as cenas…";
-            await renderizarProjetoComIA(project, {
-              aoProgresso: (feitas, total) => { if(botao.isConnected) botao.textContent = `Renderizando ${feitas} de ${total}…`; },
-              aoAtualizar: (dono) => { if(dialog.isConnected) atualizar(dadosApresentacao(dono, ctx.findItem)); },
-            });
-            const resta = printsParaRenderizar(S.current?.id === project.id ? S.current : project).alvos.length;
-            if(!botao.isConnected) return;
-            if(resta){ botao.disabled = false; botao.textContent = rotulo(resta); } else botao.remove();
-          });
-        } });
+      // A prévia do pedido virou a aba "Pedido" (depois de Contrato) — out/2026.
+      await salvarAgora(); window.parent.__pedidoIrPara?.("pedido");
     }
     else if(tipo === "enviar"){
       if(ctx.pedidoComercial){if(await beforeLeaveProjetos())await ctx.finalizarPedidoComercial();}
@@ -2600,7 +3201,12 @@ async function aoClicarOverlay(event){
     else if(tipo === "ir-estudio") ctx.goStudio();
     else if(tipo === "qtd-mais" && amb) mudarQuantidade(amb.id, itemId, 1);
     else if(tipo === "qtd-menos" && amb) mudarQuantidade(amb.id, itemId, -1);
-    else if(tipo === "item-remover" && amb) mudarQuantidade(amb.id, itemId, 0, { definir: 0 });
+    else if(tipo === "item-remover" && amb){
+      const nome = ctx.findItem(itemId)?.name || linha?.querySelector('.pa-descricao strong')?.textContent || 'este item';
+      const projeto = S.current;
+      const ok = await abrirModal({ titulo: 'Excluir item da lista?', sub: `Deseja excluir ${nome} do ambiente ${amb.nome}?`, confirmar: 'Excluir item', cancelar: 'Cancelar', perigo: true });
+      if(ok && S.current === projeto) mudarQuantidade(amb.id, itemId, 0, { definir: 0 });
+    }
     else if(tipo === "render-ver"){
       const render = amb?.renders.find((r) => r.id === acao.closest("[data-cpj-render]")?.dataset.cpjRender);
       if(render?.cena?.url) abrirEditorCena(amb, render);
@@ -2636,8 +3242,8 @@ async function aoClicarOverlay(event){
       const planta = plantaAtiva();
       const legenda = planta?.legendas.find((l) => l.id === acao.dataset.legenda);
       if(planta && legenda){
-        const novoAmbienteId = await escolherAmbientePlanta(legenda.ambienteId);
-        if(novoAmbienteId){ legenda.ambienteId = novoAmbienteId; marcarSujo(); recalcularPlanta(planta); }
+        const escolha = await escolherFormatoPlanta(legenda);
+        if(escolha?.ambienteId){ legenda.ambienteId = escolha.ambienteId; legenda.renderId = escolha.renderId; marcarSujo(); recalcularPlanta(planta); }
       }
     }
     return;
@@ -2646,6 +3252,28 @@ async function aoClicarOverlay(event){
 }
 
 function aoAlterarOverlay(event){
+  // Quantidade de jogos da composição da foto (número no canto da renderização).
+  const campoJogos = event.target.closest("[data-cpj-jogos]");
+  if(campoJogos){
+    const ambId = campoJogos.closest("[data-cpj-target-amb]")?.dataset.cpjTargetAmb;
+    const amb = ambId ? ambientesDe().find((a) => a.id === ambId) : ambienteAtivo();
+    const render = amb?.renders.find((r) => r.id === campoJogos.closest("[data-cpj-render]")?.dataset.cpjRender);
+    if(render) aplicarJogos(amb, render, campoJogos);
+    return;
+  }
+  // Serviço adicional: quantidade e valor editáveis na própria linha.
+  const campoServico = event.target.closest("[data-servico-campo]");
+  if(campoServico){
+    const servico = servicosDe().find((s) => s.id === campoServico.closest("[data-servico-id]")?.dataset.servicoId);
+    if(servico){
+      const campo = campoServico.dataset.servicoCampo;
+      const n = Number(String(campoServico.value).replace(",", "."));
+      if(campo === "quantidade") servico.quantidade = Math.max(1, Math.min(999, Math.round(n) || 1));
+      if(campo === "valor") servico.valor = Math.max(0, Math.round((Number.isFinite(n) ? n : 0) * 100) / 100);
+      marcarSujo(); pintarPainel();
+    }
+    return;
+  }
   const foto = event.target.closest("[data-cpj-foto-input]");
   if(foto){
     const arquivo = foto.files?.[0];
@@ -2691,14 +3319,29 @@ function aoAlterarOverlay(event){
   }
   const amb = ambienteAtivo();
   const entrada = event.target.closest("[data-cpj-qtd-input]");
-  if(entrada && amb){
+  // Na aba Geral cada linha diz o seu ambiente (data-pa-amb); dentro de um ambiente, é o ativo.
+  const ambId = entrada?.closest("[data-pa-amb]")?.dataset.paAmb || amb?.id;
+  if(entrada && ambId){
     const itemId = entrada.closest("[data-cpj-item]")?.dataset.cpjItem;
     const valor = Math.max(1, Math.min(999, parseInt(entrada.value, 10) || 1));
-    mudarQuantidade(amb.id, itemId, 0, { definir: valor });
+    mudarQuantidade(ambId, itemId, 0, { definir: valor });
     entrada.value = String(valor);
   }
 }
 function aoDigitarOverlay(event){
+  const observacao = event.target.closest('[data-cpj-item-observacao]');
+  if(observacao){
+    const row = observacao.closest('[data-pa-item]');
+    const ambiente = ambientesDe().find(a => a.id === row?.dataset.paAmb);
+    const item = ambiente?.itens.find(i => String(i.item_id) === row?.dataset.paItem);
+    if(item){
+      item.observacao = observacao.value.slice(0,1000);
+      observacao.style.height = 'auto';
+      observacao.style.height = `${observacao.scrollHeight}px`;
+      marcarSujo();
+    }
+    return;
+  }
   const notas = event.target.closest("[data-cpj-notas]");
   const amb = ambienteAtivo();
   if(notas && amb){ amb.notas = notas.value.slice(0, 1000); marcarSujo(); return; }
@@ -2800,7 +3443,7 @@ export async function escolherProjetoNaEntrada(){
 }
 
 export async function openCatalogProjetos({ view = "list", workTab = null } = {}){
-  if(ctx.pedidoComercial && ["geral", "plantas"].includes(workTab)){S.workTab=workTab;S.activePlanta=null;}
+  if(ctx.pedidoComercial && ["geral", "plantas", "pedido"].includes(workTab)){S.workTab=workTab;S.activePlanta=null;}
   S.open = true;
   S.dockPop = false;
   S.view = (view === "work" || ctx.pedidoComercial) && S.current ? "work" : "list";
@@ -2834,6 +3477,7 @@ export async function backCatalogProjetos(){
 export function initCatalogProjetos(contexto){
   ctx = contexto;
   S.enabled = true;
+  carregarPersonalizacoes(); // o botão "Personalizar" da página do item precisa saber quais itens têm cartela
   const overlay = $("catalogProjetos");
   if(overlay) configurarImagensRender(overlay, { recuperar: recuperarFoto3D });
   overlay?.addEventListener("click", aoClicarOverlay);
@@ -2843,7 +3487,9 @@ export function initCatalogProjetos(contexto){
   overlay?.addEventListener("change", aoAlterarOverlay);
   overlay?.addEventListener("input", aoDigitarOverlay);
   overlay?.addEventListener('error',event=>{
-    if(event.target.tagName!=='IMG' || !event.target.closest('.pa-geral,.pa-apresentacao')) return;
+    // Renderizações (.cpj-render) têm tratamento próprio (nova tentativa e "Tentar novamente", configurarImagensRender) —
+    // desde que entraram na Lista Completa do pedido, este aviso genérico não pode trocá-las antes.
+    if(event.target.tagName!=='IMG' || !event.target.closest('.pa-geral,.pa-apresentacao') || event.target.closest('.cpj-render')) return;
     const vazio=document.createElement('span'); vazio.className='pa-vazio'; vazio.textContent='Imagem indisponível';
     event.target.replaceWith(vazio);
   },true);
@@ -2947,6 +3593,18 @@ const assistenteProjeto = {
     S.list = []; S.listLoaded = false;
   },
   enviarPedido(){ return S.current ? fluxoEnviarPedido() : null; },
+  // Ambiente vazio criado pela Helena (out/2026: ela punha uma mesa "da cabeça dela" pra conseguir criar o espaço).
+  async criarAmbiente(nome){
+    if(!S.current) throw new Error("Abra ou crie um projeto primeiro.");
+    const n = String(nome || "").trim().slice(0, 60);
+    if(!n) return null;
+    let amb = ambientesDe().find((a) => a.nome.trim().toLowerCase() === n.toLowerCase());
+    const novo = !amb;
+    if(!amb) amb = await criarAmbiente(n);
+    else if(S.activeAmb !== amb.id){ S.activeAmb = amb.id; gravarAtivo(); pintarDock(); atualizarBotoes(); }
+    if(S.view === "work" && $("catalogProjetos")?.querySelector("[data-cpj-nav]")){ pintarNavegacao(); pintarPainel(); }
+    return { ambiente: amb.nome, novo };
+  },
   // A Helena abre e fecha a VERSÃO FINAL do pedido (a mesma prévia do "Ver pedido e PDF": fotos, renderizações e valores).
   verPedido(abrir){
     if(!abrir){ S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }

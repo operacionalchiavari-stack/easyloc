@@ -11,6 +11,8 @@ Scripts
 *.log
 # Artefatos de trabalho (prints, PDFs de teste, backups de dados) — nunca publicar
 outputs
+.backups
+.tmp
 
 # (out/2026) anotacoes e docs internas nao vao ao ar
 docs

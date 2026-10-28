@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Expedição</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
   <!-- Mesmo visual da Separação de Materiais (colunas, cartões, cabeçalho com busca) -->
-  <link rel="stylesheet" href="../../Estoque/SeparacaoMateriais/separacao-materiais.css?v=20261018-inter">
-  <link rel="stylesheet" href="expedicao.css?v=20261018-ida-volta">
+  <link rel="stylesheet" href="../../Estoque/SeparacaoMateriais/separacao-materiais.css?v=20261027-foto-maior">
+  <link rel="stylesheet" href="expedicao.css?v=20261027-caminhoes-claro">
+<script src="../../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
 </head>
 <body>
 <section class="separacao-page el-page exp-page" data-module-root>
@@ -39,6 +40,10 @@
         <header><div><span>Concluídos</span><h2>Conferido</h2></div><strong id="expContCarregados">0</strong></header>
         <div class="separacao-lane-list" id="expColCarregados"></div>
       </section>
+      <section class="separacao-lane exp-lane-pendencias">
+        <header><div><span>Atenção</span><h2>Pendências</h2></div><strong id="expContPendencias">0</strong></header>
+        <div class="separacao-lane-list" id="expColPendencias"></div>
+      </section>
     </div>
   </section>
 </section>
@@ -47,9 +52,9 @@
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script src="expedicao.js?v=20261018-operacao-integrada"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+<script src="expedicao.js?v=20261027-caminhoes"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

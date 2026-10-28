@@ -1828,7 +1828,7 @@ function moveSelectedFromPointer(event){
 }
 
 function finishDirectDrag(event){
-  if(studio.wallDrag){ studio.wallDrag = null; disposeWallDrawPreview(); studio.orbit.enabled = shouldEnableOrbit(); saveProject(); return; }
+  if(studio.wallDrag){ studio.wallDrag = null; disposeWallDrawPreview(); studio.orbit.enabled = shouldEnableOrbit();  return; }
   if(studio.cropActive && studio.cropDrag){ finishCropSelection(event); return; }
   if(!studio.directDrag) return;
   studio.directDrag = null;
@@ -3519,25 +3519,8 @@ export function initCatalogStudio3D({ items, supabase, empresaId, ownerId, token
   refreshToolbarSummaries();
 }
 
-// Projetos locais persistem em IndexedDB, inclusive as imagens incorporadas.
-let projectId = crypto.randomUUID(), projectBusy = false, projectSignature = '';
-const projectDB = new Promise((resolve, reject) => {
-  const request = indexedDB.open('acervo-studio-projects', 1);
-  request.onupgradeneeded = () => request.result.createObjectStore('projects', { keyPath: 'id' });
-  request.onsuccess = () => resolve(request.result);
-  request.onerror = () => reject(request.error);
-});
-projectDB.catch(() => {});
-async function projectStore(mode, operation){
-  const db = await projectDB;
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('projects', mode), request = operation(tx.objectStore('projects'));
-    tx.oncomplete = () => resolve(request.result);
-    tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error);
-  });
-}
-function projectStatus(message){ $('studioProjectStatus').textContent = message; }
+// Cenas e imagens salvas pertencem aos projetos no Supabase.
+let projectBusy = false;
 const savedImageData = new WeakMap();
 // jpeg=true: a cena guardada junto das imagens do projeto (snapshotCena) usa JPEG até 1600px — PNG de foto de parede
 // deixaria o arquivo da cena com vários MB.
@@ -3563,30 +3546,6 @@ function snapshotCena(jpeg = true){
     objects:studio.objects.map(o=>({itemId:o.userData.item.id, position:o.position.toArray(), rotation:o.rotation.toArray(), scale:o.scale.toArray(), group:o.userData.catalogGroupId})),
     camera:studio.camera ? {position:studio.camera.position.toArray(), target:studio.orbit.target.toArray(), topView:isTopViewActive()} : null };
 }
-function snapshotProject(){
-  return { version:1, id:projectId, owner:studio.projectOwner, name:$('studioProjectName').value.trim() || 'Meu projeto', updatedAt:Date.now(),
-    roomWidth:studio.roomWidth, roomDepth:studio.roomDepth, wallHeight:studio.wallHeight, floorFinish:studio.floorFinish,
-    floorPlanSource:studio.floorPlanSource, gridVisible:studio.gridVisible,
-    walls:Object.fromEntries(Object.entries(studio.walls).map(([k,w])=>[k,wallData(w)])), customWalls:studio.customWalls.map(wallData),
-    objects:studio.objects.map(o=>({itemId:o.userData.item.id, position:o.position.toArray(), rotation:o.rotation.toArray(), scale:o.scale.toArray(), group:o.userData.catalogGroupId})),
-    camera:studio.camera ? {position:studio.camera.position.toArray(), target:studio.orbit.target.toArray(), topView:isTopViewActive()} : null,
-    rules:readDesignRules() };
-}
-async function saveProject(force = false){
-  if(projectBusy) return;
-  if(!studio.scene){ if(force) await ensureScene(); else return; }
-  try{
-    const data = snapshotProject(), signature = JSON.stringify({...data,updatedAt:0});
-    if(!force && signature === projectSignature) return;
-    await projectStore('readwrite', store=>store.put(data)); projectSignature = signature;
-    projectStatus('Salvo neste navegador às ' + new Date().toLocaleTimeString('pt-BR'));
-    await refreshProjects();
-  }catch(error){ projectStatus('Não foi possível salvar. Exporte um backup: ' + error.message); }
-}
-async function refreshProjects(){
-  const rows = (await projectStore('readonly',store=>store.getAll())).filter(p=>p.owner===studio.projectOwner).sort((a,b)=>b.updatedAt-a.updatedAt);
-  $('studioProjectList').innerHTML = '<option value="">Abrir projeto salvo…</option>' + rows.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} — ${new Date(p.updatedAt).toLocaleString('pt-BR')}</option>`).join('');
-}
 async function restoreWallImage(w, data){
   if(!data.image) return;
   const image = new Image(); image.src = data.image; await image.decode();
@@ -3599,17 +3558,6 @@ function cenaValida(data){
   if(data?.version!==1 || !Array.isArray(data.objects) || data.objects.length>1000 || !Number.isFinite(data.roomWidth) || data.roomWidth<1 || data.roomWidth>500 || !Number.isFinite(data.roomDepth) || data.roomDepth<1 || data.roomDepth>500) throw new Error('Arquivo de projeto inválido');
   const validVector=v=>Array.isArray(v)&&v.length>=3&&v.slice(0,3).every(n=>Number.isFinite(n)&&Math.abs(n)<10000);
   if(data.objects.some(o=>!validVector(o.position)||!validVector(o.rotation)||!validVector(o.scale)) || (data.customWalls||[]).some(w=>!validVector(w.start)||!validVector(w.end))) throw new Error('Coordenadas inválidas');
-}
-async function openProject(data){
-  cenaValida(data);
-  await saveProject(true); projectBusy=true;
-  try{
-    projectId=data.id || crypto.randomUUID(); $('studioProjectName').value=data.name;
-    const missing=await carregarCena(data,{validar:false});
-    for(const [k,v] of Object.entries(data.rules || {})){const input=$('design-'+k);if(input) input.value=v;}
-    projectStatus(missing ? `Projeto aberto; ${missing} modelos indisponíveis. O original salvo foi preservado; exporte uma cópia.` : 'Projeto aberto. Pode continuar de onde parou.');
-    if(missing) projectId=crypto.randomUUID();
-  }catch(error){ projectId=crypto.randomUUID(); throw error; }finally{projectBusy=false;projectSignature='';}
 }
 // Monta a cena a partir de um retrato (snapshotProject/snapshotCena): limpa móveis e paredes atuais e recria tudo.
 // Devolve quantos móveis não puderam ser recriados (item sem modelo 3D ou fora do catálogo).
@@ -3693,7 +3641,7 @@ async function buildDesignedSpace(){
   if(chosen.length*rules.quantity>300){status.textContent='Monte até 300 itens por vez.';return;}
   button.disabled=true;let added=0,failed=0;let strategy='Distribuição automática por medidas';
   try{
-    await ensureScene();await saveProject(true);projectBusy=true;
+    await ensureScene();projectBusy=true;
     let requests=chosen.map(i=>({itemId:String(i.id),quantity:rules.quantity,zone:'any'}));
     if(rules.brief.trim()){
       status.textContent='A IA está interpretando suas orientações…';
@@ -3731,7 +3679,7 @@ async function buildDesignedSpace(){
     selectObject(null);updateCount();showTopView();
     status.textContent=`${strategy}. ${added} itens adicionados.${failed?` ${failed} não couberam ou estavam indisponíveis.`:''} Distâncias verificadas nas bordas dos modelos. Use modelos de cadeiras para considerar sua ocupação.`;
   }catch(e){status.textContent=e.message;}
-  finally{projectBusy=false;button.disabled=false;await saveProject(true);}
+  finally{projectBusy=false;button.disabled=false;}
 }
 
 // ---------------------------------------------------------------------------------------------------------------

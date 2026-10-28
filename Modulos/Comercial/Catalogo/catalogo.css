@@ -27,6 +27,11 @@
    quanto sobre foto cheia (imersivo). */
 .catalog-top-tools{position:absolute;top:100%;right:0;z-index:6;display:flex;align-items:center;gap:8px;padding:9px clamp(20px,2.2vw,40px);pointer-events:none}
 .catalog-top-tools>*{pointer-events:auto}
+.catalog-pedido-categorias{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 15px;border:1px solid #ded6cb;border-radius:22px;background:#fff;color:#705a40;font:500 13px Manrope,system-ui,sans-serif;white-space:nowrap;cursor:pointer}
+.catalog-pedido-categorias[hidden]{display:none!important}
+.catalog-pedido-categorias:hover{background:#f6f3ed}
+.catalog-pedido-categorias:focus-visible{outline:2px solid #3d706a;outline-offset:3px}
+@media(max-width:600px){.catalogo-comercial-pedido .catalog-top-tools{flex-wrap:wrap;max-width:calc(100% - 36px)}.catalog-pedido-categorias{min-height:36px;padding:0 12px}}
 .catalog-view-switcher{display:flex;gap:8px}
 .catalog-view-switch-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--muted);cursor:pointer;transition:border-color .2s,color .2s,background-color .2s}
 .catalog-view-switch-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -233,6 +238,7 @@ body.catalog-modo-sistema .catalog-header-category.active::after{background:var(
    calcular posição de cada um separadamente. */
 .catalog-gateway-controls{position:absolute;z-index:3;right:20px;bottom:20px;display:flex;align-items:center;gap:8px}
 .catalog-gateway-controls{max-width:calc(100% - 40px);flex-wrap:wrap;justify-content:flex-end}
+body.tem-assistente .catalog-gateway-controls{bottom:96px}
 .catalog-gateway-client{max-width:100%;min-width:0;padding:9px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#333;font:inherit}
 body.catalog-no-portal .catalog-search,body.catalog-no-portal .catalog-global-back{display:none}
 /* "Voltar" (só quando o catálogo abre fora do dashboard): logo abaixo da logo, fora do menu (pedido do usuário). Flutua
@@ -244,9 +250,9 @@ body.catalog-no-portal .catalog-search,body.catalog-no-portal .catalog-global-ba
 @media(max-width:767px){.catalog-global-back{display:none}}
 /* Respiro pro "Voltar" (pedido: "não pode ficar nada atrás dele, precisa ter um respiro mínimo"): o botão termina 47px abaixo
    do cabeçalho (9px de margem + 38px), então o conteúdo do topo esquerdo de cada tela começa em 60px. Barras de filtro
-   centralizadas não encostam nele, por isso a grade que já abre com uma delas mantém o topo compacto de antes. */
+   também precisam desse espaço para não disputar a mesma linha com a busca. */
 @media(min-width:768px){
- body.catalog-tem-voltar .catalog-grid-wrap:not(:has(>.catalog-home-filters-wrap:first-child,>.catalog-subcat-filter:first-child)){padding-top:60px}
+ body.catalog-tem-voltar .catalog-grid-wrap{padding-top:60px}
  body.catalog-tem-voltar .catalog-detail-panel{padding-top:62px}
 }
 .catalog-gateway-adjust{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:rgba(20,16,12,.4);color:#fff;font-size:.938rem;cursor:pointer;backdrop-filter:blur(6px);transition:background .2s,border-color .2s}
@@ -893,7 +899,7 @@ body.catalog-modo-sistema .catalog-page-label{color:var(--ink)}
 .catalog-rental-price{display:flex;align-items:baseline;justify-content:center;gap:8px;margin-top:3px;color:#806342;font-family:"Manrope",sans-serif;font-size:.875rem;font-weight:500;letter-spacing:.01em;line-height:1.5;font-variant-numeric:tabular-nums;text-transform:none}
 .catalog-rental-price-value{white-space:nowrap}
 .catalog-rental-price--detail{justify-content:flex-start;flex-wrap:wrap;gap:12px;margin:24px 0 0}
-.catalog-rental-price-label{color:var(--muted);font-size:.66rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase}
+.catalog-rental-price-label{color:var(--muted);font-size:.75rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase}
 .catalog-rental-price--detail .catalog-rental-price-value{font-size:1.375rem;font-weight:400;letter-spacing:-.025em}
 @media(max-width:600px){.catalog-rental-price{font-size:.8125rem}.catalog-rental-price--detail{margin-top:20px}.catalog-rental-price--detail .catalog-rental-price-value{font-size:1.25rem}}
 /* Busca no cabeçalho, ao lado dos créditos (pedido explícito do usuário — antes ficava abaixo do menu, no canto
@@ -990,3 +996,59 @@ html.catalogo-comercial-pedido body .catalog-header{display:none!important}
 /* No pedido comercial, os controles seguem a identidade do sistema. */
 .catalogo-comercial-pedido .cpj-amb-tab.is-active{border-color:var(--el-button-primary-bg,#7d603d);background:var(--el-button-primary-soft,#f4efe8)}
 .catalogo-comercial-pedido .cpj-amb-tab[data-cpj-worktab="geral"].is-active{background:var(--el-button-primary-bg,#7d603d);border-color:var(--el-button-primary-bg,#7d603d);color:var(--el-color-on-accent,#fff)}
+
+/* Busca do catálogo ao lado do "Voltar", no canto ESQUERDO (pedido do usuário, out/2026): mesma altura do botão
+   (margin-top 9px / 38px). Sem o "Voltar" (aberto pelo dashboard), encosta na margem esquerda. */
+@media(min-width:768px){
+ .catalog-top-tools{left:0;right:auto;padding:9px 0 0 clamp(20px,2.2vw,40px)}
+ body.catalog-tem-voltar .catalog-top-tools{padding-left:calc(clamp(20px,2.2vw,40px) + var(--catalog-voltar-w,108px) + 10px)}
+}
+
+/* "Disponível em 20/10 | 34": traço fino separando a data da quantidade (pedido do usuário, out/2026) */
+.catalog-grid-card-stock .is-livre b{margin-left:3px;padding-left:9px;border-left:1.5px solid rgba(34,103,63,.38)}
+
+/* Decorador: botão de mostrar/ocultar valores (olho) no cabeçalho, e o que some com html.catalogo-sem-valores */
+.catalog-valores-toggle{flex:none;display:inline-grid;place-items:center;width:40px;height:40px;padding:0;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;transition:background-color .2s,border-color .2s}
+.catalog-valores-toggle[hidden]{display:none}
+.catalog-valores-toggle svg{width:19px;height:19px}
+.catalog-valores-toggle .risco{opacity:0;transition:opacity .2s}
+.catalog-valores-toggle.is-ocultos .risco{opacity:1}
+.catalog-valores-toggle.is-ocultos{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.6)}
+.catalog-valores-toggle:hover,.catalog-valores-toggle:focus-visible{background:rgba(255,255,255,.22);outline:0}
+body.catalog-modo-sistema .catalog-valores-toggle{border-color:var(--line);background:#fff;color:var(--ink)}
+html.catalogo-sem-valores :is(.catalog-rental-price,.cas-vit-preco,.pa-valor,.cpj-order-valor,.cpj-order-col-valor){display:none!important}
+
+.pedido-estoque-tooltip{position:fixed;z-index:10000;width:min(800px,calc(100vw - 24px));height:auto;max-height:none;overflow:visible;box-sizing:border-box;padding:10px 14px;border:1px solid #e5d7d4;border-radius:14px;background:#fff;box-shadow:0 12px 35px #0002;font:12px/1.35 Manrope,system-ui,sans-serif;color:#333}
+.pedido-estoque-tooltip[hidden]{display:none!important}
+.pedido-estoque-tooltip p{margin:4px 0}
+.pedido-estoque-tooltip .pedido-estoque-titulo{font-weight:700;color:#b91c1c!important;margin:0 0 6px}
+.pedido-estoque-componente-linha{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,53%);align-items:center;gap:12px;margin-top:6px;border-top:1px solid #eee;padding:7px 0}
+.pedido-estoque-tooltip .pedido-estoque-componente{font-weight:700;margin:0;overflow-wrap:anywhere}
+.pedido-estoque-numeros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0;padding:5px 0;background:#f7f8f9;border-radius:9px;text-align:center}
+@media(max-width:480px){.pedido-estoque-componente-linha{grid-template-columns:minmax(0,1fr) minmax(180px,60%);gap:8px}.pedido-estoque-numeros dt{font-size:10px}.pedido-estoque-numeros>div{padding:0 3px}}
+.pedido-estoque-numeros>div{padding:0 8px}
+.pedido-estoque-numeros>div+div{border-left:1px solid #e1e4e8}
+.pedido-estoque-numeros dt{font-size:11px;color:#626975;line-height:1.2}
+.pedido-estoque-numeros dd{margin:2px 0 0;font-size:17px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.pedido-estoque-tabela-wrap{overflow-x:auto;margin-top:6px;border:1px solid #e5e7eb;border-radius:9px}
+.pedido-estoque-tabela{width:100%;min-width:690px;border-collapse:collapse;font-size:12px;text-align:left}
+.pedido-estoque-tabela th{padding:6px 8px!important;background:#f5f6f7;white-space:nowrap;font-weight:600;color:#626975}
+.pedido-estoque-tabela td{padding:6px 8px!important;line-height:1.3!important;vertical-align:top;border-top:1px solid #eceef0;overflow-wrap:anywhere;font-weight:400}
+.pedido-estoque-tabela td:first-child{font-weight:600;min-width:110px}
+.pedido-estoque-tabela td:nth-child(2),.pedido-estoque-tabela td:nth-child(5){white-space:nowrap}
+.pedido-estoque-tabela td:last-child{min-width:100px}
+.pedido-estoque-tabela small{display:block;margin-top:1px;font-size:11px;font-weight:400;color:#757b83}
+
+.pedido-estoque-identidade{display:flex;align-items:center;gap:10px;min-width:0}
+.pedido-estoque-foto{display:flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;border-radius:6px;background:#f4f5f6;color:#8a9098;font-size:9px;text-align:center;overflow:hidden}
+.pedido-estoque-foto img{width:100%;height:100%;object-fit:contain}
+.pedido-estoque-insuficiente{background:#fff0f0;border-radius:5px}
+@media(max-width:480px){.pedido-estoque-componente-linha{grid-template-columns:minmax(0,1fr) minmax(220px,64%)}.pedido-estoque-identidade{gap:5px}.pedido-estoque-foto{flex-basis:30px;width:30px;height:30px}.pedido-estoque-numeros{gap:2px}.pedido-estoque-numeros>div{padding:0 2px}.pedido-estoque-numeros dt{font-size:9px}}
+
+.pedido-estoque-fixar{position:fixed;z-index:10001;display:grid;place-items:center;width:26px;height:26px;min-height:0;padding:4px;border:1px solid #d8dce0;border-radius:50%;background:#fff;color:#687078;box-shadow:0 2px 8px #0002;cursor:pointer}
+.pedido-estoque-fixar[hidden]{display:none!important}
+.pedido-estoque-fixar svg{width:16px;height:16px;pointer-events:none}
+.pedido-estoque-fixar[aria-pressed="true"]{background:#3d706a;color:#fff;border-color:#3d706a}
+.pedido-estoque-fixar:focus-visible{outline:2px solid #3d706a;outline-offset:2px}
+.pedido-estoque-tooltip.is-fixado{max-height:calc(100vh - 16px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.pedido-estoque-tooltip.is-fixado::-webkit-scrollbar{display:none}

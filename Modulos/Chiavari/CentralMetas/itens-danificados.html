@@ -2,16 +2,18 @@
 <html data-theme-legacy lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 <link rel="stylesheet" href="ciencia-danos.css?v=20261018-inter">
 <script src="ciencia-danos.js?v=20261014-rh"></script>
-  <script src="../gas-cliente.js?v=20261016-seguranca" data-projeto="central"></script>
+  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="central"></script>
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Itens Danificados</title>
+<script src="os-visualizacao.js?v=20261024-historico-tabela"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="os-historico.js?v=20261024-1"></script><script src="os-operacao.js?v=20261024-1"></script><script src="os-exemplos.js?v=20261024-solicitante-foto"></script>
+<title>Ordens de serviço</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -505,8 +507,9 @@ tbody tr.selecionada:hover{
 }
 
 .fluxo-passo.atual{
-  background:var(--cor, var(--el-color-surface-soft,#f6f7f9));
-  color:var(--cor-texto, #ffffff);
+  background:var(--cor-suave, #f3f4f5);
+  color:var(--cor-texto, #49545e);
+  border:1px solid var(--cor, #87929b);
 }
 
 /* Setores anteriores do fluxo: cinza, como apagados */
@@ -1246,8 +1249,32 @@ body.modo-painel .cabecalho-barra{ display:none; }
   .modal-rodape{ flex-wrap:wrap; padding:12px 16px; }
   .modal-rodape .erro-modal{ flex:1 0 100%; }
 }
+
+.col-foto{width:100px;min-width:100px;text-align:center}.os-item-foto{display:block;width:84px;height:84px;object-fit:contain;background:#fff;border:1px solid #e1e7ed;border-radius:8px;margin:auto}.os-foto-vazia{font-size:11px;color:#81909a}
+
+.os-hora-envio,.os-pedido-origem{display:block;font-size:11px;color:var(--muted);margin-top:5px;white-space:nowrap}
+
+.col-item{white-space:normal;overflow-wrap:break-word;line-height:1.5}
+
+.os-item-medidas{display:block;margin-top:4px;font-size:11px;font-weight:400;color:var(--muted);line-height:1.5}
+
+.col-solicitante{min-width:185px}.os-solicitante{display:flex;align-items:center;gap:10px}.os-solicitante-foto{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border:1px solid #dce4ec;border-radius:50%;background:#eef2f5;color:#637687;font-size:12px;overflow:hidden}.os-solicitante-foto img{width:100%;height:100%;object-fit:cover}.os-solicitante strong{display:block;font-size:12px;font-weight:500}.os-solicitante small{display:block;font-size:10px;color:var(--muted);margin-top:5px;white-space:nowrap}
+
+.col-solicitante{width:220px;min-width:220px;padding-left:14px}.os-solicitante{gap:12px}.os-solicitante strong{font-size:15px;font-weight:600;line-height:1.4}.os-solicitante small{font-size:13px;line-height:1.5;margin-top:5px}.os-solicitante-foto{width:48px;height:48px;flex-basis:48px;font-size:14px}.os-item-medidas{font-size:13px}.os-pedido-origem{font-size:13px}.fluxo-passo{font-size:13px}.col-item{font-size:15px}
+
+.os-origem-linha{display:inline-flex;align-items:center;gap:6px}.os-ciencia-icone{display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;width:18px;height:18px;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;min-height:0!important;color:#86939e;vertical-align:middle}.os-ciencia-icone.confirmado{color:#568273}.os-ciencia-icone.pendente{color:#a48c52}.os-ciencia-icone.contestado{color:#ad756b}.os-ciencia-icone:focus-visible{outline:2px solid #1683ff;outline-offset:3px}
+
+.os-abertas{table-layout:fixed;width:100%}.os-abertas th.col-solicitante{width:200px;min-width:0}.os-abertas th.col-foto{width:96px;min-width:0}.os-abertas .os-th-item{width:18%}.os-abertas .os-th-fluxo{width:16%}.os-abertas .os-th-numero{width:56px}.os-abertas .os-th-qtd{width:42px}.os-abertas .os-th-origem{width:112px}.os-abertas .os-th-prazo{width:104px}.os-abertas .col-item{min-width:0}.os-abertas .fluxo{gap:4px}.os-abertas .fluxo-passo{white-space:normal;padding:4px 7px}.os-abertas .col-detalhes{max-width:none;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;line-height:1.6}@media(max-width:1200px){.os-abertas .os-th-item{width:20%}.os-abertas .os-th-fluxo{width:18%}}
+
+.os-abertas .os-th-prazo{width:104px;white-space:nowrap}.os-abertas td:last-child{white-space:nowrap}.os-abertas .fluxo-passo{font-weight:400!important}.os-abertas .col-os{color:#1672c7!important}.os-abertas th:has(+.os-th-prazo){width:auto}
+
+.cabecalho{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:20px;padding-bottom:18px;border-bottom:1px solid var(--line)}.cabecalho-titulo{grid-column:2;margin:0!important}.cabecalho-barra{grid-column:3;justify-self:end;flex-wrap:nowrap;gap:10px;border:0;padding:0;margin:0}.cabecalho-barra .filtros,.cabecalho-barra .acoes{flex:0 0 auto;gap:10px}.cabecalho-barra .filtros{width:auto}.cabecalho-barra .multi{min-width:0}.cabecalho-barra .multi-botao{min-width:170px}@media(max-width:1250px){.cabecalho{grid-template-columns:minmax(0,1fr) auto}.cabecalho-titulo{grid-column:1;text-align:left;font-size:30px}.cabecalho-barra{grid-column:2}}@media(max-width:760px){.cabecalho{grid-template-columns:minmax(0,1fr)}.cabecalho-titulo{grid-column:1;text-align:center}.cabecalho-barra{grid-column:1;justify-self:center;flex-direction:row;align-items:center}}
+
+.cabecalho>#filtros{grid-column:1;grid-row:1;justify-self:start;margin:0;width:auto;min-width:0}.cabecalho>.cabecalho-titulo{grid-column:2;grid-row:1}.cabecalho>.cabecalho-barra{grid-column:3;grid-row:1}.multi-lista{width:290px;max-width:calc(100vw - 48px);padding:10px;border-radius:12px;border-color:#dce4ec;box-shadow:0 8px 24px #233b5112}.multi-lista label{padding:11px 10px;gap:12px;font-size:14px;font-weight:400;line-height:1.4;border-radius:7px}.multi-lista label:hover{background:#f1f5f9}.multi-lista label:has(input:checked){background:#f4f7fa}.multi-lista input[type=checkbox]{appearance:auto!important;-webkit-appearance:checkbox!important;accent-color:#3975a9;width:18px;height:18px;flex-basis:18px;cursor:pointer;background-image:none!important;opacity:1!important}.multi-acoes{display:flex;justify-content:space-between;gap:12px;padding:12px 4px 2px;margin-top:8px;border-top:1px solid #e6ebf0}.multi-acoes button{font-size:12px;font-weight:500;text-decoration:none;color:#376c99;padding:6px 8px;border-radius:6px}.multi-acoes button:hover{background:#edf3f8}.multi-botao:focus-visible,.multi-lista input:focus-visible{outline:2px solid #568fc2;outline-offset:3px}@media(max-width:1250px){.cabecalho{grid-template-columns:auto minmax(0,1fr) auto}.cabecalho>.cabecalho-titulo{text-align:center;font-size:28px}}@media(max-width:900px){.cabecalho{grid-template-columns:minmax(0,1fr) auto}.cabecalho>.cabecalho-titulo{grid-column:1/-1;grid-row:1}.cabecalho>#filtros{grid-column:1;grid-row:2}.cabecalho>.cabecalho-barra{grid-column:2;grid-row:2}}
+
+.os-abertas .os-th-origem{width:160px}.os-abertas .os-col-origem{padding-right:22px;white-space:normal}.os-origem-linha{max-width:100%;gap:8px;white-space:normal;line-height:1.5}.os-ciencia-icone{flex-shrink:0}.os-abertas .col-detalhes{padding-left:18px}
 </style>
-<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261018-selos">
+<link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261024-abas-globais">
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 </head>
 
@@ -1265,24 +1292,23 @@ body.modo-painel .cabecalho-barra{ display:none; }
 
 <header class="cabecalho">
 
-  <h1 class="cabecalho-titulo">Itens Danificados</h1>
-
-  <div class="cabecalho-barra">
-
     <div class="filtros" id="filtros">
-      <input id="filtroBusca" class="filtro-busca" type="search" placeholder="Buscar O.S, pedido ou item" oninput="aplicarFiltros()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
 
       <div class="multi" id="multiFluxo">
-        <button type="button" class="campo-filtro multi-botao" onclick="alternarMulti(event)">
+        <button type="button" class="campo-filtro multi-botao" aria-expanded="false" aria-controls="listaMultiFluxo" onclick="alternarMulti(event)">
           <span id="textoMultiFluxo">Responsável (todos)</span>
         </button>
         <div class="multi-lista" id="listaMultiFluxo"></div>
       </div>
     </div>
 
+
+  <h1 class="cabecalho-titulo">Ordens de serviço</h1>
+
+  <div class="cabecalho-barra">
+
     <div class="acoes" id="acoesTopo">
       <button type="button" class="btn" onclick="abrirNovaOS()">+ Nova O.S</button>
-      <button type="button" class="btn btn-contorno" onclick="abrirOSConcluidas()">O.S Concluídas</button>
       <button type="button" class="btn btn-contorno" onclick="abrirAddItem()">+ Item</button>
       <button type="button" class="btn btn-contorno" onclick="iniciarPainel()">Painel</button>
     </div>
@@ -1308,26 +1334,23 @@ body.modo-painel .cabecalho-barra{ display:none; }
       <span class="cartao-subtitulo" id="subtituloTabela">Clique numa linha para selecionar</span>
     </div>
     <div class="tabela-rolagem">
-      <table>
+      <table class="os-abertas">
         <thead>
           <tr>
             <th class="col-check"><input type="checkbox" id="marcarTodas" onclick="marcarTodasVisiveis(this.checked)" title="Selecionar todas as visíveis"></th>
-            <th class="m-oculta t1-oculta">Data</th>
-            <th class="m-oculta t1-oculta">Setor</th>
-            <th class="m-oculta t2-oculta">Nome</th>
-            <th class="m-oculta">O.S</th>
-            <th>Item</th>
-            <th class="m-oculta">Qtd</th>
-            <th>Fluxo</th>
-            <th class="m-oculta">Onde aconteceu</th>
-            <th class="m-oculta t2-oculta">Pedido</th>
+            <th class="col-solicitante">Envio</th>
+            <th class="col-foto">Foto</th>
+            <th class="os-th-item">Item</th>
+            <th class="m-oculta os-th-numero">O.S</th>
+            <th class="m-oculta os-th-qtd">Qtd</th>
+            <th class="os-th-fluxo">Fluxo</th>
+            <th class="m-oculta os-th-origem" style="width:160px">Origem</th>
             <th class="m-oculta t1-oculta">Detalhes</th>
-            <th>Urgência</th>
-            <th>Ciência do dano</th>
+            <th class="os-th-prazo" style="width:104px">Urgência</th>
           </tr>
         </thead>
         <tbody id="tabela">
-          <tr><td colspan="13"><div class="mensagem">Carregando O.S...</div></td></tr>
+          <tr><td colspan="10"><div class="mensagem">Carregando O.S...</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1563,14 +1586,7 @@ body.modo-painel .cabecalho-barra{ display:none; }
 ========================================================= -->
 <div class="modal" id="modalConcluidas">
   <div class="modal-caixa larga">
-    <div class="modal-topo">
-      <div>
-        <h2>O.S concluídas</h2>
-        <p id="contadorConcluidas">Carregando...</p>
-      </div>
-      <button type="button" class="modal-fechar" onclick="fecharModal('modalConcluidas')" aria-label="Fechar">×</button>
-    </div>
-    <div class="modal-corpo">
+    <span id="contadorConcluidas" hidden></span><div class="modal-corpo">
       <div class="filtros-concluidas">
         <select id="setorConcluidas" onchange="carregarConcluidas(1)">
           <option value="">Setor responsável (todos)</option>
@@ -1579,19 +1595,8 @@ body.modo-painel .cabecalho-barra{ display:none; }
       </div>
       <div class="cartao">
         <div class="tabela-rolagem">
-          <table>
-            <thead>
-              <tr>
-                <th>Entrada</th>
-                <th>Setor</th>
-                <th>Nome</th>
-                <th>O.S</th>
-                <th>Item</th>
-                <th>Qtd</th>
-                <th>Fluxo</th>
-                <th>Conclusão</th>
-              </tr>
-            </thead>
+          <table class="os-abertas os-concluidas-tabela">
+            <thead><tr><th class="col-solicitante">Envio</th><th class="col-foto">Foto</th><th class="os-th-item">Item</th><th class="os-th-numero">O.S</th><th class="os-th-qtd">Qtd</th><th class="os-th-fluxo">Fluxo</th><th class="os-th-origem" style="width:160px">Origem</th><th>Detalhes</th><th class="os-th-prazo" style="width:104px">Conclusão</th></tr></thead>
             <tbody id="tabelaConcluidas"></tbody>
           </table>
         </div>
@@ -1702,23 +1707,23 @@ const SETORES = [
   "Marcenaria"
 ];
 
-/* Um tom para cada setor (forte = títulos/etiqueta atual, suave = fundo) */
+/* Fundos claros e bordas discretas para identificar cada setor. */
 const CORES_SETOR = {
-  "limpeza de estofados": { forte:'#656565', suave:'#eef0f3' }, // azul
-  "costura":              { forte:"#facc15", suave:"#fef9c3", texto:"#3b2f00" }, // amarelo (texto escuro)
-  "forracao":             { forte:"#4f6a3a", suave:"#e8eedf" }, // verde
-  "acabamento e pintura": { forte:"#d9620f", suave:"#fdebdc" }, // laranja
-  "solda":                { forte:"#2b2a26", suave:"#e7eaee" }, // preto
-  "marcenaria":           { forte:"#b42318", suave:"#fbe4e1" }  // vermelho
+  "limpeza de estofados": { forte:"#628bad", suave:"#e5eff8", texto:"#405e79" },
+  "costura":              { forte:"#917b9f", suave:"#eee6f3", texto:"#6c5879" },
+  "forracao":             { forte:"#779271", suave:"#e7efe3", texto:"#586d54" },
+  "acabamento e pintura": { forte:"#ad903e", suave:"#faf0cf", texto:"#7d6831" },
+  "solda":                { forte:"#788b99", suave:"#e6edf2", texto:"#53616c" },
+  "marcenaria":           { forte:"#b5746e", suave:"#f7e2df", texto:"#875650" }
 };
 
 function corSetor(nome){
-  return CORES_SETOR[normalizar(nome)] || { forte:'#656565', suave:"#e9ecef" };
+  return CORES_SETOR[normalizar(nome)] || { forte:"#929ca5", suave:"#f3f5f6", texto:"#58636d" };
 }
 
 function varsSetor(nome){
   const cor = corSetor(nome);
-  return (cor.texto ? "--cor-texto-claro:#8a6d00;" : "") + "--cor:" + cor.forte + ";--cor-suave:" + cor.suave + ";--cor-texto:" + (cor.texto || "#ffffff");
+  return "--cor:" + cor.forte + ";--cor-suave:" + cor.suave + ";--cor-texto:" + cor.texto;
 }
 
 const estado = {
@@ -1767,6 +1772,10 @@ function normalizar(texto){
 
 /* google.script.run com promessa */
 function servidor(nome){
+  if(nome==="itensDanificadosIndicadores")return window.OSOperacao.indicadores();
+  if(!window.OSGestaoAcervo&&nome==="itensDanificadosAbertas")return window.OSOperacao.abertas();
+  if(!window.OSGestaoAcervo&&nome==="buscarOSConcluidas")return window.OSOperacao.concluidas(arguments[1]);
+  if(!window.OSGestaoAcervo && /^(salvar|darBaixa|encaminhar|atualizarData|adicionar|remover|cadastrar)/i.test(nome))return Promise.reject(new Error("Gerencie as ordens pela Gestão do acervo."));
   const argumentos = Array.prototype.slice.call(arguments, 1);
   return new Promise(function(resolver, rejeitar){
     google.script.run
@@ -1836,6 +1845,7 @@ function responsavel(os){
 ========================================================= */
 
 function carregar(forcar){
+  if(new URLSearchParams(location.search).get('concluidas')==='1')return Promise.resolve();
 
   if(estado.carregando){ return Promise.resolve(); }
 
@@ -1853,6 +1863,7 @@ function carregar(forcar){
 
       estado.assinatura = assinatura;
       estado.lista = res.lista;
+      window.acervoSelecionarOrdem?.(res.lista);
 
       /* Tira da seleção O.S que não estão mais em aberto */
       const ids = new Set(res.lista.map(function(os){ return os.id; }));
@@ -1867,7 +1878,7 @@ function carregar(forcar){
       el("textoAtualizacao").textContent = "Sem conexão — tentando de novo";
       if(!estado.lista.length){
         el("tabela").innerHTML =
-          '<tr><td colspan="12"><div class="mensagem erro">Não foi possível carregar as O.S. ' + escapar(erro.message) + "</div></td></tr>";
+          '<tr><td colspan="10"><div class="mensagem erro">Não foi possível carregar as O.S. ' + escapar(erro.message) + "</div></td></tr>";
       }
     })
     .then(function(){ estado.carregando = false; });
@@ -1927,7 +1938,7 @@ function montarFiltros(){
       const marcado = !estado.fluxosMarcados || estado.fluxosMarcados.indexOf(f) >= 0;
       return '<label><input type="checkbox" value="' + escapar(f) + '"' + (marcado ? " checked" : "") + ' onchange="lerFluxosMarcados()"><span class="ponto-setor" style="background:' + corSetor(f).forte + '"></span>' + escapar(f) + "</label>";
     }).join("") +
-    '<div class="multi-acoes"><button type="button" onclick="marcarFluxos(true)">Todos</button><button type="button" onclick="marcarFluxos(false)">Nenhum</button></div>';
+    '<div class="multi-acoes"><button type="button" onclick="marcarFluxos(true)">Selecionar todos</button><button type="button" onclick="marcarFluxos(false)">Limpar</button></div>';
 
   atualizarTextoFluxo(disponiveis.length);
 
@@ -1935,7 +1946,8 @@ function montarFiltros(){
 
 function alternarMulti(evento){
   evento.stopPropagation();
-  el("multiFluxo").classList.toggle("aberto");
+  const aberto=el("multiFluxo").classList.toggle("aberto");
+  el("multiFluxo").querySelector('button').setAttribute('aria-expanded',String(aberto));
 }
 
 document.addEventListener("click", function(evento){
@@ -1972,7 +1984,7 @@ function aplicarFiltros(){
 
 function filtradas(){
 
-  const fBusca = normalizar(el("filtroBusca").value);
+  const fBusca = normalizar(estado.buscaOS||'');
   const fluxos = estado.fluxosMarcados;
 
   return estado.lista.filter(function(os){
@@ -1995,6 +2007,7 @@ function dataBR(dataISO){
 
 /* Mostra 05/10/2026; o calendário (input invisível) abre ao tocar */
 function htmlDataUrgencia(os){
+  if(!window.OSGestaoAcervo)return "<span>"+escapar(os.dataU?dataBR(os.dataU):"Sem prazo")+"</span>";
   return (
     '<label class="data-urgencia ' + classeUrgencia(os.dataU) + (os.dataU ? "" : " vazia") + '">' +
       "<span>" + (os.dataU ? dataBR(os.dataU) : "Definir") + "</span>" +
@@ -2003,9 +2016,33 @@ function htmlDataUrgencia(os){
   );
 }
 
+function htmlCienciaOrigem(os){
+  const c=os.ciencia||{},status=c.status||'legado';
+  const estados={confirmado:['Ci\u00eancia confirmada','M5 9l3 3 5-6'],pendente:['Pendente de ci\u00eancia','M9 5v4l3 2'],contestado:['Atribui\u00e7\u00e3o contestada','M9 5v5m0 3h.01'],legado:['Registro anterior','M9 8v5m0-8h.01']};
+  const info=estados[status]||estados.pendente;
+  const texto=info[0]+(c.nome?' ? '+c.nome:'')+(c.justificativa?' ? '+c.justificativa:'');
+  const acao=window.OSGestaoAcervo&&(status==='pendente'||status==='contestado'&&c.podeRevisar);
+  const tag=acao?'button':'span';
+  const atributos=acao?(status==='contestado'?' data-ciencia-revisar="'+escapar(os.id)+'"':' data-ciencia-id="'+escapar(os.id)+'" data-ciencia-equipe="'+escapar(c.equipe)+'" data-ciencia-assinatura="'+escapar(c.assinatura)+'"'):'';
+  return '<'+tag+(acao?' type="button"':' tabindex="0"')+' class="os-ciencia-icone '+escapar(status)+'" title="'+escapar(texto)+'" aria-label="'+escapar(texto)+'"'+atributos+'><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="9" r="7.2"/><path d="'+info[1]+'"/></svg></'+tag+'>';
+}
+
 function etiquetaOnde(onde){
   if(!onde){ return ""; }
   return escapar(onde);
+}
+
+function htmlSolicitante(os){
+  const nome=String(os.nome||'N\u00e3o informado');
+  const iniciais=nome.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('');
+  const foto=/^https?:/.test(os.solicitante_foto||'')?'<img src="'+escapar(os.solicitante_foto)+'" alt="'+escapar(nome)+'" loading="lazy">':escapar(iniciais);
+  return '<div class="os-solicitante"><span class="os-solicitante-foto">'+foto+'</span><div><strong>'+escapar(nome)+'</strong><small>'+escapar(String(os.data||'').slice(0,10))+(os.horaEnvio?' \u00b7 '+escapar(os.horaEnvio):'')+'</small></div></div>';
+}
+
+function htmlNomeItem(item){
+  const texto=String(item||'');
+  const inicio=texto.search(/\((?:L|A|P)\)\s*\d/i);
+  return inicio<0?escapar(texto):escapar(texto.slice(0,inicio).trim())+'<small class="os-item-medidas">'+escapar(texto.slice(inicio).trim())+'</small>';
 }
 
 function htmlFluxo(fluxo){
@@ -2048,23 +2085,20 @@ function render(){
       linhas.push(
         '<tr data-id="' + escapar(os.id) + '"' + (selecionada ? ' class="selecionada"' : "") + ">" +
           '<td class="col-check"><input type="checkbox" tabindex="-1"' + (selecionada ? " checked" : "") + (os.id ? "" : " disabled") + "></td>" +
-          '<td class="col-data m-oculta t1-oculta">' + escapar(String(os.data).slice(0, 10)) + "</td>" +
-          '<td class="col-curta m-oculta t1-oculta">' + escapar(os.setor) + "</td>" +
-          '<td class="col-curta m-oculta t2-oculta">' + escapar(os.nome) + "</td>" +
-          '<td class="col-os m-oculta">' + escapar(os.os) + "</td>" +
-          '<td class="col-item">' + escapar(os.item) +
+          '<td class="col-solicitante">' + htmlSolicitante(os) + '</td>' +
+          '<td class="col-foto">' + (/^https?:/.test(os.foto_url||'')?'<img class="os-item-foto" src="'+escapar(os.foto_url)+'" alt="'+escapar(os.item)+'" loading="lazy">':'<span class="os-foto-vazia">Sem foto</span>') + '</td>' +
+          '<td class="col-item">' + htmlNomeItem(os.item) +
             /* No celular: O.S, quantidade e onde aconteceu embaixo do item */
             /* Tablet em pé: quem enviou e pedido embaixo do item */
             '<span class="item-extra-tablet">' + escapar(os.nome) + (os.pedido ? " · Pedido " + escapar(os.pedido) : "") + "</span>" +
             '<span class="item-extra">O.S ' + escapar(os.os || "—") + " · " + escapar(os.qtd || 1) + " un." + (os.onde ? " · " + escapar(os.onde) : "") + "</span>" +
           "</td>" +
+          '<td class="col-os m-oculta" style="color:#1672c7!important">' + escapar(os.os) + "</td>" +
           '<td class="col-qtd m-oculta">' + escapar(os.qtd) + "</td>" +
           "<td>" + htmlFluxo(os.fluxo) + "</td>" +
-          '<td class="m-oculta">' + etiquetaOnde(os.onde) + "</td>" +
-          '<td class="m-oculta t2-oculta">' + (os.pedido ? escapar(os.pedido) : '<span style="color:var(--muted)">—</span>') + "</td>" +
+          '<td class="m-oculta os-col-origem">' + '<span class="os-origem-linha">'+etiquetaOnde(os.onde)+htmlCienciaOrigem(os)+'</span>' + (os.pedido?'<small class="os-pedido-origem">Pedido #'+escapar(os.pedido)+'</small>':'') + '</td>' +
           '<td class="col-detalhes m-oculta t1-oculta" title="' + escapar(os.detalhes) + '">' + escapar(os.detalhes) + "</td>" +
           "<td>" + htmlDataUrgencia(os) + "</td>" +
-          '<td class="op-dano-ciencia">' + window.danoCienciaHtml(os.id,os.ciencia) + '</td>' +
         "</tr>"
       );
 
@@ -2075,7 +2109,7 @@ function render(){
   /* Um único innerHTML: rápido mesmo com muitas O.S */
   tbody.innerHTML = linhas.length
     ? linhas.join("")
-    : '<tr><td colspan="12"><div class="mensagem">' +
+    : '<tr><td colspan="10"><div class="mensagem">' +
         (estado.lista.length ? "Nenhuma O.S com esses filtros." : "Nenhuma O.S em aberto.") +
       "</div></td></tr>";
 
@@ -2085,6 +2119,7 @@ function render(){
 }
 
 function atualizarResumo(lista){
+  if(!window.OSGestaoAcervo){el("subtituloTabela").textContent=lista.length+" O.S em andamento";return;}
 
   el("subtituloTabela").textContent =
     lista.length === estado.lista.length
@@ -2095,6 +2130,7 @@ function atualizarResumo(lista){
 
 /* Um único ouvinte para todos os cliques da tabela */
 el("tabela").addEventListener("click", function(evento){
+  if(!window.OSGestaoAcervo)return;
 
   if(evento.target.closest(".data-urgencia")){
 
@@ -2663,7 +2699,7 @@ function carregarConcluidas(pagina){
 
   const consulta = ++estado.consultaConcluidas;
 
-  el("tabelaConcluidas").innerHTML = '<tr><td colspan="8"><div class="mensagem">Carregando...</div></td></tr>';
+  el("tabelaConcluidas").innerHTML = '<tr><td colspan="9"><div class="mensagem">Carregando...</div></td></tr>';
   el("contadorConcluidas").textContent = "Buscando...";
 
   servidor("buscarOSConcluidas", {
@@ -2672,11 +2708,13 @@ function carregarConcluidas(pagina){
     busca: el("buscaConcluidas").value.trim(),
     setor: el("setorConcluidas").value
   })
-    .then(function(res){
+    .then(async function(res){
 
       if(consulta !== estado.consultaConcluidas){ return; }
       if(!res || !res.sucesso){ throw new Error((res && res.mensagem) || "Erro ao buscar."); }
 
+      res.dados=await window.enriquecerOSConcluidas(res.dados||[]);
+      if(consulta!==estado.consultaConcluidas)return;
       estado.paginaConcluidas = res.pagina || 1;
       estado.totalPaginasConcluidas = res.totalPaginas || 1;
 
@@ -2693,25 +2731,15 @@ function carregarConcluidas(pagina){
 
       el("tabelaConcluidas").innerHTML = (res.dados || []).length
         ? res.dados.map(function(os){
-            const fluxo = [os.coluna7, os.coluna8, os.coluna9, os.coluna10].map(function(v){ return String(v || "").trim(); }).filter(Boolean);
-            return "<tr>" +
-              '<td class="col-data">' + escapar(String(os.data).slice(0, 10)) + "</td>" +
-              "<td>" + escapar(os.setor) + "</td>" +
-              "<td>" + escapar(os.nome) + "</td>" +
-              '<td class="col-os">' + escapar(os.os) + "</td>" +
-              '<td class="col-item">' + escapar(os.item) + "</td>" +
-              '<td class="col-qtd">' + escapar(os.qtd) + "</td>" +
-              "<td>" + htmlFluxo(fluxo) + "</td>" +
-              '<td class="col-data">' + escapar(String(os.dataConclusao).slice(0, 10)) + "</td>" +
-            "</tr>";
+            return '<tr><td class="col-solicitante">'+htmlSolicitante(os)+'</td><td class="col-foto">'+(/^https?:/.test(os.foto_url||'')?'<img class="os-item-foto" src="'+escapar(os.foto_url)+'" alt="'+escapar(os.item)+'" loading="lazy">':'<span class="os-foto-vazia">Sem foto</span>')+'</td><td class="col-item">'+htmlNomeItem(os.item)+'</td><td class="col-os" style="color:#1672c7!important">'+escapar(os.os)+'</td><td class="col-qtd">'+escapar(os.qtd)+'</td><td>'+htmlFluxo(os.fluxo)+'</td><td class="os-col-origem"><span class="os-origem-linha">'+etiquetaOnde(os.onde)+htmlCienciaOrigem(os)+'</span>'+(os.pedido?'<small class="os-pedido-origem">Pedido #'+escapar(os.pedido)+'</small>':'')+'</td><td class="col-detalhes">'+escapar(os.detalhes)+'</td><td class="col-data">'+escapar(String(os.dataConclusao||'').slice(0,10))+'</td></tr>';
           }).join("")
-        : '<tr><td colspan="8"><div class="mensagem">Nenhuma O.S concluída encontrada.</div></td></tr>';
+        : '<tr><td colspan="9"><div class="mensagem">Nenhuma O.S concluída encontrada.</div></td></tr>';
 
     })
     .catch(function(erro){
       if(consulta !== estado.consultaConcluidas){ return; }
       el("contadorConcluidas").textContent = "Erro ao buscar.";
-      el("tabelaConcluidas").innerHTML = '<tr><td colspan="8"><div class="mensagem erro">' + escapar(erro.message) + "</div></td></tr>";
+      el("tabelaConcluidas").innerHTML = '<tr><td colspan="9"><div class="mensagem erro">' + escapar(erro.message) + "</div></td></tr>";
     });
 
 }
@@ -2952,6 +2980,7 @@ function carregarIndicadores(){
 
   servidor("itensDanificadosIndicadores")
     .then(function(res){
+      if(res.nativo){window.OSOperacao.renderIndicadores(res.ordens);return;}
       renderSetores(res.metas);
       renderTeto(res.teto);
       renderRH(res.rh);
@@ -3118,6 +3147,7 @@ carregar(true);
 
 /* Adianta o catálogo e os funcionários para o formulário abrir na hora */
 setTimeout(function(){
+  if(!window.OSGestaoAcervo)return;
   carregarCatalogo().catch(function(){});
   carregarFuncionarios().catch(function(){});
 }, 1500);

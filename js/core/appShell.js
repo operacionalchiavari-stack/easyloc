@@ -61,11 +61,11 @@
   }
 
   function showLoader() {
-    window.moduleLoadingIndicator.show();
+    window.moduleLoadingIndicator?.show();
   }
 
   function hideLoader() {
-    window.moduleLoadingIndicator.hide();
+    window.moduleLoadingIndicator?.hide();
   }
 
   function activateFrame() {

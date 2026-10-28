@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Funcionários | Chiavari</title>
-<script src="../../../js/core/themePrepaint.js"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul"><link rel="stylesheet" href="cadastro-funcionarios.css?v=20261019-lider">
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais"><link rel="stylesheet" href="cadastro-funcionarios.css?v=20261019-lider">
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script></head>
 <body><main class="main cadastros-page"><p id="funcMessage" role="status" hidden></p>    <section id="funcionariosView" class="cadastro-view">
       <header class="section-head">
@@ -42,11 +42,11 @@
           </div>
           <label>Nome do funcionário *<input id="funcNome" class="tw-field" required></label>
           <label>Setor *<select id="funcSetor" class="tw-field" required></select></label>
-          <label>Cargo/Função<input id="funcCargo" class="tw-field"></label>
-          <label>CPF<input id="funcCpf" class="tw-field" inputmode="numeric" maxlength="14" placeholder="CPF para o App da Equipe"></label>
+          <label>Cargo/Função<select id="funcCargo" class="tw-field"><option value="">Selecione</option></select></label>
+          <label>CPF<input id="funcCpf" data-mascara="cpf" class="tw-field" inputmode="numeric" maxlength="14" placeholder="CPF para o App da Equipe"></label>
           <label>RG<input id="funcRg" class="tw-field" maxlength="40"></label>
           <label>Data de nascimento<input id="funcNascimento" class="tw-field" type="date"></label>
-          <label>WhatsApp<input id="funcWhatsapp" class="tw-field" maxlength="40"></label>
+          <label>WhatsApp<input id="funcWhatsapp" class="tw-field" data-mascara="telefone"></label>
           <label>Endereço<input id="funcEndereco" class="tw-field" maxlength="300"></label>
           <label>Observações<input id="funcObservacoes" class="tw-field" maxlength="2000"></label>
           <label>Salário bruto (R$)<input id="funcSalario" class="tw-field" type="number" min="0" step="0.01"></label>
@@ -60,7 +60,7 @@
           <label>Nível de acesso *<select id="funcNivel" class="tw-field" required></select></label>
           <label>Status *<select id="funcStatus" class="tw-field" required><option>Ativo</option><option>Inativo</option></select></label>
           <label>E-mail<input required id="funcEmail" class="tw-field" type="email"></label>
-          <label>Telefone<input id="funcTelefone" class="tw-field"></label>
+          <label>Telefone<input id="funcTelefone" data-mascara="telefone" class="tw-field"></label>
           <fieldset class="permissions-box">
             <legend>Permissões por módulo</legend>
             <div id="permissionsGrid" class="permissions-grid"></div>
@@ -96,5 +96,5 @@
     </section>
 
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js?v=20261023-2fa"></script><script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script><script src="../../../js/core/campoProtegido.js?v=20261023-cofre"></script>
-  <script src="cadastro-funcionarios.js?v=20261023-cofre"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js?v=20261027-modal"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script><script src="../../../js/core/campoProtegido.js?v=20261023-cofre"></script>
+  <script src="cadastro-funcionarios.js?v=20261027-parametros-rh"></script></body></html>

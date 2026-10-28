@@ -68,6 +68,13 @@ const QR = "/* qrcodejs falso */ window.QRCode = function(el, o){ const c = docu
   await page.waitForSelector("#separacaoModoModal:not(.hidden)", { timeout: 15000 });
   await page.evaluate(() => { window.EasyLocEtiquetas.escolherFormato = async () => "100x150"; });
 
+  await page.click('#separacaoModoModal [data-relatorio-separacao]');
+  await page.waitForFunction(() => window.__ultimoRelatorioSeparacao);
+  const rel = await page.evaluate(() => window.__ultimoRelatorioSeparacao);
+  assert.ok(rel.includes('Separação · Pedido 12') && rel.includes('Corpo do sofá') && rel.includes('Parte do kit: Sofá Becca (kit)') && rel.includes('Faltou') && rel.includes('Separado por'), 'relatório com componentes, campos para marcar e assinaturas');
+  require('fs').writeFileSync(require('os').tmpdir() + '/relatorio-separacao.html', rel);
+  console.log('ok 6 - relatório de separação com componentes, campos para marcar e assinaturas');
+
   await page.click('[data-separacao-modo="qr"]');
   const fonteItem=await page.locator('#separacaoQrItens .item-name').first().evaluate(el=>({size:getComputedStyle(el).fontSize,weight:getComputedStyle(el).fontWeight}));
   assert.deepStrictEqual(fonteItem,{size:'15px',weight:'600'},'descrição de item usa fonte compacta e semibold');
@@ -98,15 +105,6 @@ const QR = "/* qrcodejs falso */ window.QRCode = function(el, o){ const c = docu
   await ler("ACERVO:ENV:" + etq.codigo);
   assert.ok((await page.textContent("#separacaoQrQtd")).startsWith("5 / 9"));
   console.log("ok 5 - etiqueta de componente marca a peça certa");
-  await page.click('#btnFecharQrSeparacao');
-  await page.click('.separacao-order-card[data-pedido-id=p1]');
-  await page.waitForSelector('#separacaoModoModal:not(.hidden)');
-  await page.click('#separacaoModoModal [data-relatorio-separacao]');
-  await page.waitForFunction(() => window.__ultimoRelatorioSeparacao);
-  const rel = await page.evaluate(() => window.__ultimoRelatorioSeparacao);
-  assert.ok(rel.includes('Separação · Pedido 12') && rel.includes('Corpo do sofá') && rel.includes('Parte do kit: Sofá Becca (kit)') && rel.includes('Faltou') && rel.includes('Separado por'), 'relatório com componentes, campos para marcar e assinaturas');
-  require('fs').writeFileSync(require('os').tmpdir() + '/relatorio-separacao.html', rel);
-  console.log('ok 6 - relatório de separação com componentes, campos para marcar e assinaturas');
   assert.deepStrictEqual(erros, [], erros.join("\n"));
   console.log("todos os testes passaram");
   await browser.close();

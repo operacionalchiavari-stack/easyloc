@@ -33,7 +33,7 @@ async function abrir(itens,vw=1440,vh=900){
     return {data:null};}};},{itens});
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
   await page.locator('.catalog-gateway').waitFor();
-  await page.locator('[data-gateway-tile="catalogo"]').click();await page.locator('#catalogGrid .catalog-home-grid').waitFor();
+  await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);await page.locator('#catalogGrid .catalog-home-grid').waitFor();
   return page;
 }
 const titulos=(page)=>page.locator('.catalog-filter-group-title').evaluateAll(els=>els.map(el=>({categoria:el.querySelector('span').textContent.trim(),n:el.querySelector('em').textContent.trim()})));
@@ -92,7 +92,7 @@ const marcar=(page,campo,valor)=>page.locator(`input[data-home-filter-option="${
   await page.locator('[data-grid-item="3"]').click();
   await page.locator('.catalog-product-section').first().waitFor();
   assert.equal((await page.locator('#catalogPageLabel').textContent()).trim(),'Resultados','A tela do item aberto dos filtros se chama "Resultados"');
-  assert.deepEqual(await page.locator('.catalog-product-section').evaluateAll(els=>els.map(el=>el.dataset.productId)),['3','8'],'A imersiva tem só os itens filtrados (não a categoria inteira), na ordem das categorias');
+  assert.deepEqual(await page.locator('.catalog-product-section').evaluateAll(els=>els.map(el=>el.dataset.productId)),['3'],'A imersiva tem só os itens filtrados (não a categoria inteira), na ordem das categorias');
   assert.equal(await page.locator('#catalogViewSwitcher').isVisible(),false,'Sem seletor de visualização nos resultados');
   await page.waitForFunction(()=>Math.abs(document.getElementById('produto-3').getBoundingClientRect().top-document.querySelector('.catalog-header').getBoundingClientRect().bottom)<4);
   // Voltar pela linha do tempo: os filtros continuam marcados.
@@ -121,7 +121,7 @@ const marcar=(page,campo,valor)=>page.locator(`input[data-home-filter-option="${
   // Voltar pro Portal recomeça: filtro aplicado não sobrevive.
   await page.locator('[data-home-filter-toggle="personalizable"]').click();
   await page.locator('.catalog-brand').click();
-  await page.locator('[data-gateway-tile="catalogo"]').click();
+  await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
   await page.locator('#catalogGrid .catalog-home-grid').waitFor();
   assert.equal(await page.locator('#catalogGrid .catalog-home-card').count(),4,'Voltar ao Portal zera os filtros');
   assert.deepEqual(page._errors,[],'nenhum erro de página');

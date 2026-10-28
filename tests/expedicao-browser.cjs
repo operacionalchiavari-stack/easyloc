@@ -14,6 +14,7 @@ const mock = `(() => {
       { id: "p6", empresa_id: "e1", numero_pedido: "17", cliente_nome: "Caio", tipo_evento: "Feira", local_nome: "Expo", data_entrega: "2099-10-20", data_coleta: "2099-10-22", status: "separado", status_comercial: "aprovado", status_operacional: "carregado", operacao: { carregamento: { concluido_em: "2099-10-20T10:00:00Z", por: "Igor", faltando: [] } } },
       { id: "p7", empresa_id: "e1", numero_pedido: "18", cliente_nome: "Duda", tipo_evento: "Festa", local_nome: "Clube", data_entrega: "2099-10-18", data_coleta: "2099-10-19", status: "separado", status_comercial: "aprovado", status_operacional: "retornado", operacao: { carregamento: { concluido_em: "2099-10-18T10:00:00Z", faltando: [] }, retorno: { concluido_em: "2099-10-19T20:00:00Z", por: "Igor", faltando: [{ codigo: "18-002", item: "Mesa" }], lidas: 1, total: 2 } } },
       { id: "p5", empresa_id: "e1", numero_pedido: "16", cliente_nome: "Orc", local_nome: "x", data_entrega: "2099-10-27", status: "pendente", status_comercial: "orcamento", operacao: {} }],
+    caminhoesProgramados: { p1: ["c1", "c2"] },
     separacoes_itens: [{ id: "s1", empresa_id: "e1", separacao_pedido_id: "p1", item_id: "i1", item_nome: "Cadeira Tiffany" }, { id: "s2", empresa_id: "e1", separacao_pedido_id: "p1", item_id: "i2", item_nome: "Mesa Goa" }],
     separacoes_etiquetas: [
       { id: "e1a", empresa_id: "e1", separacao_pedido_id: "p1", separacao_item_id: "s1", item_id: "i1", codigo: "12-001", sequencia: 1, total_item: 2 },
@@ -32,6 +33,10 @@ const mock = `(() => {
   };
   banco.separacoes_pedidos.filter(p => ["p3","p6","p7"].includes(p.id)).forEach(p => { p.operacao.descarregamento = {concluido_em:"2099-10-25T15:30:00Z",por:"Igor",faltando:[],total:2,lidas:2}; });
   banco.separacoes_pedidos.push({id:"p8",empresa_id:"e1",numero_pedido:"19",cliente_nome:"Descarga pendente",data_entrega:"2099-10-24",status:"separado",status_comercial:"aprovado",operacao:{carregamento:{concluido_em:"2099-10-24T10:00:00Z"}}});
+  banco.operacao_ocorrencias=localStorage.getItem('resolver-retorno')?[{pedido_id:'p7',codigo:'18-002',tipo:'falta',empresa_id:'e1',resolvida_em:'2099-10-26T10:00:00Z'}]:[];
+  banco.separacoes_pedidos.push({id:'p-revisao',empresa_id:'e1',numero_pedido:'20',status:'separado',status_comercial:'aprovado',reducao_liberada_em:'2099-10-24T12:00:00Z',data_entrega:'2099-10-26',operacao:{}});
+  banco.separacoes_pedidos.find(p=>p.id==='p2').operacao={carregamento:{iniciado_em:'2099-10-25T08:00:00Z'}};
+  banco.separacoes_pedidos.push({id:'p9',empresa_id:'e1',numero_pedido:'21',cliente_nome:'Retorno confirmado no evento',status:'separado',status_comercial:'aprovado',data_coleta:'2099-10-27',operacao:{coleta:{concluido_em:'2099-10-27T08:00:00Z'},carregamento:{concluido_em:'2099-10-25T08:00:00Z'}}});
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
     const q = {
@@ -80,72 +85,20 @@ const mock = `(() => {
   await page.goto(BASE + "Modulos/Logistica/Expedicao/expedicao.html");
   await page.waitForSelector("#expColAguardando [data-pedido]", { timeout: 15000 });
   const ids = (sel) => page.$$eval(sel + " [data-pedido]", (n) => n.map((x) => x.dataset.pedido + ":" + x.dataset.tipo));
-  // Aguardando: ida p1 e p4 + retorno de p3 (carregado). Em conferência: ida p2 + retorno p6. Conferido: ida p3/p6 e retorno p7 (ida de p7 some).
-  assert.deepStrictEqual((await ids("#expColAguardando")).sort(), ["p1:ida", "p3:retorno", "p4:ida", "p8:descarregamento"]);
-  assert.deepStrictEqual((await ids("#expColAndamento")).sort(), ["p2:ida", "p6:retorno"]);
-  assert.deepStrictEqual((await ids("#expColCarregados")).sort(), ["p3:descarregamento", "p3:ida", "p6:descarregamento", "p6:ida", "p7:descarregamento", "p7:retorno", "p8:ida"]);
-  assert.strictEqual(await page.textContent("#expContAguardando"), "4");
-  assert.match(await page.textContent("#expColAndamento"), /1 \/ 2/);
-  assert.match(await page.textContent("#expColAguardando"), /Ainda em separação/);
-  assert.match(await page.textContent("#expColCarregados"), /por Igor · 1 pendência/);
-  assert.match(await page.textContent("#expColCarregados"), /Retorno conferido .* por Igor · 1 não voltou/);
-  const titulos = await page.$$eval(".separacao-lane h2", (n) => n.map((x) => x.textContent));
-  assert.deepStrictEqual(titulos, ["Aguardando conferência", "Em conferência", "Conferido"]);
-  console.log("ok 1 - ida e volta nas 3 colunas (aguardando / em conferência / conferido); orçamento fora");
-  // Retorno: cor própria, selo, às cegas (sem total nem volumes)
-  const ret = await page.$eval("#expColAguardando [data-tipo=retorno]", (c) => ({ txt: c.textContent, fundo: getComputedStyle(c).backgroundColor }));
-  const ida = await page.$eval("#expColAguardando [data-tipo=ida]", (c) => getComputedStyle(c).backgroundColor);
-  assert.ok(ret.fundo !== ida, "retorno com cor própria: " + ret.fundo);
-  assert.match(ret.txt, /Retorno/); assert.match(ret.txt, /às cegas/);
-  assert.ok(!/volume|\d+ \/ \d+|peças/.test(ret.txt), "retorno não mostra quantidade: " + ret.txt);
-  const retAnd = await page.$eval("#expColAndamento [data-tipo=retorno]", (c) => c.textContent);
-  assert.match(retAnd, /1 peça lida/); assert.ok(!/\//.test(retAnd.replace(/\d{2}\/\d{2}\/\d{4}/g, "")), retAnd);
-  console.log("ok 1b - retorno lilás, com selo, e às cegas (só quantas foram lidas)");
-  await page.click("#expBusca"); await page.fill("#expBusca", "ana");
-  assert.deepStrictEqual(await ids("#expColAguardando"), []);
-  assert.deepStrictEqual(await ids("#expColAndamento"), ["p2:ida"]);
-  await page.click("#expBusca"); await page.fill("#expBusca", "");
-  console.log("ok 2 - busca filtra");
-  await page.screenshot({ path: process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png") });
-  await page.click("[data-pedido=p2][data-tipo=ida]");
+  assert.deepStrictEqual((await ids('#expColAguardando')).sort(),['p1:ida','p9:descarregamento']);
+  assert.deepStrictEqual(await ids('#expColAndamento'),['p2:ida']);
+  assert.equal((await ids('#expColCarregados')).length,0,'conferidos avancam de etapa');
+  assert.equal(await page.locator('[data-pedido=p3],[data-pedido=p4],[data-pedido=p8],[data-pedido=p-revisao]').count(),0,'outras etapas nao duplicam o pedido na Expedicao');
+  await page.click('#expBusca');await page.fill('#expBusca','ana');assert.deepStrictEqual(await ids('#expColAguardando'),[]);assert.deepStrictEqual(await ids('#expColAndamento'),['p2:ida']);
+  await page.fill('#expBusca','');await page.waitForTimeout(300);
+  const cam = await page.evaluate(() => ({ p1: document.querySelector('[data-pedido=p1][data-tipo=ida] .exp-caminhoes')?.innerText || '', p2: document.querySelector('[data-pedido=p2][data-tipo=ida] .exp-caminhoes')?.className || '' }));
+  assert.ok(/programados/i.test(cam.p1) && /G/.test(cam.p1) && /M2/.test(cam.p1), 'cartão mostra os caminhões programados: ' + cam.p1);
+  assert.ok(/is-vazio/.test(cam.p2), 'pedido sem caminhão programado avisa');
+  console.log('ok - caminhões programados em destaque no cartão da ida');if(process.env.FOTO)await page.screenshot({path:process.env.FOTO});
+  await page.fill('#expBusca','');await page.click('[data-pedido=p2][data-tipo=ida]');
   await page.waitForURL(/conferencia\.html\?pedido=p2&etapa=carregamento&de=expedicao/);
-  await page.waitForSelector("#cfVoltar:not([hidden])"); await page.waitForTimeout(600);
-  const box = await page.evaluate(() => { const v = document.getElementById("cfVoltar").getBoundingClientRect(), r = document.createRange(); r.selectNodeContents(document.getElementById("cfTitulo")); const t = r.getBoundingClientRect(); return { dv: Math.abs((v.top + v.bottom) / 2 - (t.top + t.bottom) / 2), sobre: v.right > t.left }; });
-  await page.screenshot({ path: (process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png")).replace(".png", "-conf.png") });
-  assert.ok(box.dv < 12 && !box.sobre, JSON.stringify(box));
-  console.log("ok 3 - clicar abre a conferência do carregamento, com Voltar na linha do título");
-  await page.screenshot({ path: (process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png")).replace(".png", "-conf.png") });
-  await page.click("#cfVoltar");
-  await page.waitForSelector("#expColAguardando [data-pedido]");
-  console.log("ok 4 - Voltar retorna para a Expedição");
-  // Conferência de retorno às cegas
-  await page.click("#expColAguardando [data-pedido=p3][data-tipo=retorno]");
-  await page.waitForURL(/etapa=retorno&de=expedicao/);
-  await page.waitForSelector("#cfCorpo:not([hidden])");
-  assert.ok(await page.isHidden("#cfPercent")); assert.ok(await page.isHidden(".cf-barra"));
-  assert.strictEqual(await page.textContent("#cfContagem"), "0 peças lidas");
-  assert.ok(!/14-00/.test(await page.textContent("#cfItens")), "não lista o que deve voltar");
-  assert.ok(!/faltando/.test(await page.textContent("#cfRodapeTexto")));
-  await page.fill("#cfEntrada", "ACERVO:ENV:14-001"); await page.press("#cfEntrada", "Enter"); await page.waitForTimeout(250);
-  assert.strictEqual(await page.textContent("#cfContagem"), "1 peça lida");
-  assert.ok(!/ de /.test(await page.textContent("#cfUltimaDetalhe")), await page.textContent("#cfUltimaDetalhe"));
-  assert.match(await page.textContent("#cfItens"), /14-001/);
-  await page.screenshot({ path: (process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png")).replace(".png", "-cega.png") });
-  await page.click("#cfConcluir");
-  await page.getByRole("button", { name: "Concluir", exact: true }).click();
-  await page.waitForFunction(() => window.__gravados.some((g) => g.t === "separacoes_pedidos" && g.p.status_operacional === "retornado"), null, { timeout: 3000 });
-  await page.waitForTimeout(200);
-  const res = await page.textContent("#cfAviso");
-  assert.match(res, /Não voltaram 1 de 2 peças/); assert.match(res, /14-002/); assert.ok(!/14-003/.test(res), "só compara com o que saiu: " + res);
-  const op = await page.evaluate(() => window.__gravados.filter((g) => g.t === "separacoes_pedidos").pop().p);
-  assert.strictEqual(op.status_operacional, "retornado"); assert.strictEqual(op.operacao.retorno.total, 2); assert.strictEqual(op.operacao.retorno.faltando.length, 1);
-  assert.ok(await page.isVisible("#cfPercent"), "depois de concluir o sistema mostra o resultado");
-  await page.screenshot({ path: (process.env.SHOT || path.join(require("os").tmpdir(),"acervo-expedicao-operacao.png")).replace(".png", "-resultado.png") });
-  console.log("ok 4b - retorno às cegas: sem total nem pendentes; ao concluir o sistema mostra o que não voltou");
-  await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=carregamento");
-  await page.waitForSelector("#cfCorpo:not([hidden])");
-  assert.ok(await page.isHidden("#cfVoltar"));
-  console.log("ok 5 - aberto pelo cronograma não mostra o Voltar");
+  await page.waitForSelector('#cfCorpo:not([hidden])');
+  assert.equal(await page.locator('#cfTitulo').textContent(),'Conferencia do carregamento'.normalize('NFC').replace('Conferencia','Confer\u00eancia'));
   assert.deepStrictEqual(erros, []);
   await browser.close();
   console.log("todos os testes passaram");

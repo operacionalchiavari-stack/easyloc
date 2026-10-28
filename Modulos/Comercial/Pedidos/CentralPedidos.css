@@ -151,7 +151,8 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 
 .central-table {
   width: 100%;
-  min-width: 1080px;
+  min-width: 1180px;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
@@ -171,6 +172,26 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   color: var(--el-color-text);
   font-size: 14px;
 }
+
+.central-col-numero{width:76px}.central-col-data{width:104px}.central-col-fluxo{width:548px}.central-col-valor{width:124px}.central-col-acoes{width:80px}
+.central-table td:nth-child(2) .central-record-link,.central-table td:nth-child(3) .central-record-link{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.central-table th:nth-child(4),.central-table td:nth-child(4){padding-left:8px;padding-right:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.central-fluxo-cell{min-width:0}
+.central-fluxo ol{display:flex;list-style:none;padding:0;margin:0;gap:0}
+.central-fluxo li{position:relative;flex:1;text-align:center;color:#8995a4;font-size:9px;line-height:1.3;min-width:0}
+.central-fluxo li:before{content:"";position:absolute;top:10px;height:2px;left:-50%;width:100%;background:#e1e6ec}
+.central-fluxo li:first-child:before{display:none}
+.central-fluxo-ponto{position:relative;z-index:1;display:grid;place-items:center;width:22px;height:22px;margin:0 auto 6px;border-radius:50%;background:#edf0f4;color:#82909f;font:600 10px Inter,sans-serif;box-shadow:0 0 0 3px #fff}
+.central-fluxo li.is-concluida{color:#398769}.central-fluxo li.is-concluida:before,.central-fluxo li.is-atual:before{background:#83bca3}.central-fluxo li.is-concluida .central-fluxo-ponto{background:#378c68;color:#fff}
+.central-fluxo li.is-atual{color:#226b50;font-weight:700}.central-fluxo li.is-atual .central-fluxo-ponto{background:#378c68;color:#fff;box-shadow:0 0 0 3px #e8f4ed}
+.central-fluxo-descricao{display:block;margin-top:9px;color:#607587;font-size:11px}.central-fluxo.is-cancelado .central-fluxo-descricao{color:#b04b45}
+.central-fluxo.comercial-azul{--fluxo-comercial-cor:#3478c9;--fluxo-comercial-halo:#e6effa}
+.central-fluxo.comercial-amarelo{--fluxo-comercial-cor:#bd8808;--fluxo-comercial-halo:#fff3cc}
+.central-fluxo.comercial-verde{--fluxo-comercial-cor:#378c68;--fluxo-comercial-halo:#e8f4ed}
+.central-fluxo.comercial-vermelho{--fluxo-comercial-cor:#c64b48;--fluxo-comercial-halo:#fbe8e7}
+.central-fluxo[class*="comercial-"] li:first-child .central-fluxo-ponto{background:var(--fluxo-comercial-cor);box-shadow:0 0 0 3px var(--fluxo-comercial-halo)}
+html:root #centralPedidosPage #centralPedidosTbody .central-fluxo :is(.is-atual,.is-concluida)>.central-fluxo-ponto,
+html:root #centralPedidosPage #centralPedidosTbody .central-fluxo[class*="comercial-"] li:first-child>.central-fluxo-ponto{color:#fff!important;-webkit-text-fill-color:#fff}
 
 .central-table tr:hover td {
   background: var(--el-table-row-hover);
@@ -210,6 +231,9 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   font-weight: 600;
   letter-spacing: .02em;
 }
+
+.central-table th:first-child,.central-table td:first-child{width:1%;padding-left:8px;padding-right:8px;white-space:nowrap}
+.central-table td:first-child .pedido-numero-card{display:inline-block;box-sizing:border-box;width:calc(5ch + 14px);min-width:0;height:28px;min-height:28px;line-height:26px;padding:0 6px;border-radius:8px;font-variant-numeric:tabular-nums;letter-spacing:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
 
 .status-pill {
   display: inline-flex;
@@ -251,6 +275,10 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   flex-wrap: nowrap;
   gap: 6px;
 }
+
+.central-table th:last-child,.central-table td:last-child{width:1%;white-space:nowrap;padding-left:8px;padding-right:8px;text-align:center}
+.central-table .central-actions{gap:4px}
+.central-table .central-actions .central-icon-action{width:30px;min-width:30px;height:30px;min-height:30px;padding:0;box-sizing:border-box;flex:0 0 30px}
 
 .central-icon-action {
   width: 34px;
@@ -307,11 +335,14 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 }
 
 .central-value-cell {
-  min-width: 132px;
+  min-width: 0;
 }
 
+.central-table th:nth-child(6),.central-table td.central-value-cell{width:1%;padding-left:8px;padding-right:8px;white-space:nowrap}
+
 .central-finance-indicator {
-  width: min(128px, 100%);
+  width: max-content;
+  min-width: 88px;
   display: grid;
   gap: 4px;
   align-content: center;
@@ -328,7 +359,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 }
 
 .central-finance-track {
-  width: 90%;
+  width: 100%;
   height: 4px;
   display: block;
   overflow: hidden;
@@ -705,6 +736,8 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 /* Decorador com o projeto aberto no catálogo agora (projetos_presenca). */
 .pedido-presenca{display:flex;align-items:center;gap:6px;margin-top:6px;color:#8a8279;font-size:11px;font-weight:600;white-space:nowrap}
 .pedido-presenca.is-ativa{color:#2f7a4c}
+.central-table td:first-child .pedido-presenca{max-width:64px;white-space:normal;font-size:10px;line-height:1.3}
+.central-table td:first-child .pedido-presenca i{flex-shrink:0}
 .pedido-presenca i{position:relative;width:8px;height:8px;border-radius:50%;background:#3f9a63}
 .pedido-presenca i::after{content:"";position:absolute;inset:0;border-radius:50%;background:#3f9a63;animation:pedido-presenca-pulso 1.8s ease-out infinite}
 @keyframes pedido-presenca-pulso{from{transform:scale(1);opacity:.6}to{transform:scale(2.8);opacity:0}}
@@ -716,7 +749,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 @media (max-width:760px){.central-kbd{display:none}}
 
 /* =====================================================
-   Pré-reserva com validade + Lista/Quadro (out/2026)
+   Pré-reserva com validade (out/2026)
 ===================================================== */
 .status-pill.cancelado{background:#f1f2f4;color:#6b6b6b}
 .pre-reserva-prazo{display:flex;align-items:center;gap:5px;width:max-content;margin-top:6px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.3}
@@ -727,41 +760,22 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 .pre-reserva-prazo.sem-data{background:#f1f2f4;color:#4f4f4f}
 
 .central-barra{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin:0 0 14px}
-.central-aviso-pre-reserva{display:flex;align-items:center;gap:10px;margin-right:auto;padding:9px 12px 9px 14px;border:1px solid #f3d5a3;border-radius:12px;background:#fff8eb;color:#7c4a03;font-size:13px}
-.central-aviso-pre-reserva[hidden]{display:none}
-.central-aviso-pre-reserva svg{width:17px;height:17px;flex:none}
-.central-aviso-pre-reserva button{padding:5px 11px;border:1px solid #e9c37c;border-radius:999px;background:#fff;color:#7c4a03;font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
-.central-aviso-pre-reserva button:hover{background:#fff1d6}
-.central-visao{display:inline-flex;padding:3px;border:1px solid #e3e7ec;border-radius:12px;background:#fff}
-.central-visao button{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:0;border-radius:9px;background:transparent;color:#4f4f4f;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}
-.central-visao button svg{width:16px;height:16px}
-.central-visao button.is-active{background:#123f86;color:#fff}
-#centralListaTabela[hidden],.central-quadro[hidden]{display:none!important}
 
-.central-quadro{width:100%;min-width:0;max-width:100%;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,1fr);gap:14px;overflow-x:auto;padding-bottom:10px;align-items:start}
-.quadro-coluna{display:flex;flex-direction:column;min-width:0;border:1px solid #e6e9ee;border-radius:14px;background:#f8f9fb;box-shadow:0 0 8px rgba(15,23,42,.08)}
-.quadro-coluna-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px 11px;border-bottom:1px solid #e6e9ee;border-radius:14px 14px 0 0;background:#fff}
-.quadro-coluna-topo h3{margin:0;font:700 14px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#1f2020}
-.quadro-coluna-topo span{display:block;margin-top:2px;font-size:12px;color:#6b6b6b;font-variant-numeric:tabular-nums}
-.quadro-coluna-topo b{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:#f1f2f4;color:#1f2020;font-size:13px}
-.coluna-cancelado .quadro-card{opacity:.75}
-.quadro-coluna-lista{display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 290px);min-height:80px;padding:12px;overflow-y:auto}
-.quadro-vazio{margin:18px 0;text-align:center;color:#9aa3ad;font-size:12.5px}
-.quadro-card{position:relative;display:flex;flex-direction:column;gap:5px;padding:12px 12px 10px;border:1px solid #e6e9ee;border-radius:12px;background:#fff;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
-.quadro-card:hover{border-color:#c9d3e0;box-shadow:0 6px 16px rgba(15,23,42,.08)}
-.quadro-card:focus-visible{outline:2px solid #123f86;outline-offset:2px}
-.quadro-card.prazo-vencida{border-left:4px solid #dc2626}
-.quadro-card.prazo-vencendo{border-left:4px solid #f59e0b}
-.quadro-card.prazo-sem-data{border-left:4px solid #9aa3ad}
-.quadro-card-topo{display:flex;align-items:center;gap:8px}
-.quadro-card-topo .pedido-numero-card{min-width:0;min-height:0;padding:3px 9px;font-size:12px}
-.quadro-card-valor{margin-left:auto;font-weight:700;font-size:13px;color:#1f2020;font-variant-numeric:tabular-nums}
-.quadro-card-cliente{font-size:14px;font-weight:600;color:#1f2020;line-height:1.3}
-.quadro-card-linha{font-size:12px;color:#6b6b6b;line-height:1.35}
-.quadro-card .pre-reserva-prazo{margin-top:2px}
-.quadro-card-acoes{display:flex;justify-content:flex-end;gap:6px;margin-top:2px}
-.quadro-card-acoes .central-icon-action{width:30px;height:30px}
-@media (max-width:760px){.central-quadro{grid-auto-columns:82%}.central-aviso-pre-reserva{width:100%}}
+.central-barra{justify-content:flex-start;padding-top:10px}
+.central-situacoes{display:flex;flex-wrap:wrap;gap:14px}
+.central-situacao{position:relative;display:inline-flex;align-items:center;gap:10px;min-height:46px;padding:8px 18px 8px 14px;border:1px solid #e3e7ec;border-radius:12px;background:#fff;color:#1f2020;font:500 13px Inter,system-ui,sans-serif;cursor:pointer;box-shadow:0 0 8px rgba(15,23,42,.08);transition:border-color .15s ease,background .15s ease}
+.central-situacao:hover{border-color:#123f86;background:#eaf0fa}
+.central-situacao:focus-visible{outline:2px solid #123f86;outline-offset:2px}
+.central-situacao svg{width:18px;height:18px;flex:none;color:#4f4f4f}
+.central-situacao-texto{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;text-align:left}
+.central-situacao-texto b{font-weight:600;font-size:14px}
+.central-situacao-texto small{margin-top:2px;font-size:12px;color:#9a3412}
+.central-situacao.is-active{border-color:#123f86;background:#123f86;color:#fff}
+.central-situacao.is-active svg,.central-situacao.is-active small{color:#fff}
+.central-situacao-conta{position:absolute;top:-9px;right:-8px;min-width:22px;height:22px;padding:0 6px;display:grid;place-items:center;border:2px solid #fff;border-radius:999px;background:#e60012;color:#fff;font:600 11px/1 Inter,system-ui,sans-serif;animation:central-situacao-pulsa 1.15s ease-in-out infinite}
+@keyframes central-situacao-pulsa{0%,100%{box-shadow:0 0 0 0 rgba(230,0,18,.42);transform:scale(1)}50%{box-shadow:0 0 0 7px rgba(230,0,18,0);transform:scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.central-situacao-conta{animation:none}}
+@media (max-width:760px){.central-situacoes{width:100%}.central-situacao{flex:1 1 140px}}
 
 /* Cabeçalho numa linha só (out/2026): botões compactos, título no espaço entre os dois grupos. */
 @media (min-width:1100px){
@@ -843,4 +857,20 @@ html:root #btnFecharCadastroRelacionado:hover{background:#f4f6f8!important}
   .cad-numeros-local{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cad-pedidos li{grid-template-columns:auto minmax(0,1fr) auto}
   .cad-pedidos li .status-pill{display:none}
+}
+
+/* Janelas de cliente e local mais largas, sem barra de rolagem (pedido do usuário, out/2026): em tela larga o conteúdo
+   vira duas colunas — cliente: foto, números e dados à esquerda, últimos pedidos à direita; local: mapa e nome em cima,
+   dados em três colunas embaixo. */
+@media (min-width:1100px){
+  .central-cadastro-dialog{width:min(1180px,96vw)!important;max-height:94vh}
+  .central-cadastro-body{display:grid!important;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:28px;row-gap:16px;align-content:start}
+  .central-cadastro-body>*{grid-column:1;min-width:0}
+  .central-cadastro-body>.cad-bloco:has(.cad-pedidos){grid-column:2;grid-row:1 / span 5}
+  .central-cadastro-body:not(:has(.cad-pedidos))>*,
+  .central-cadastro-body:has(.cad-local)>*{grid-column:1 / -1}
+  .central-cadastro-body:not(:has(.cad-pedidos)) .cad-grade,
+  .central-cadastro-body:has(.cad-local) .cad-grade{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .central-cadastro-body:has(.cad-local) .cad-local{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+  .central-cadastro-body .cad-mapa,.central-cadastro-body .cad-mapa iframe{min-height:300px}
 }

@@ -19,6 +19,12 @@
   var SERVIDOR = (local && location.port === "3000") || /\.vercel\.app$/i.test(location.hostname) ? "" : "https://easyloc-zeta.vercel.app";
   var API = (script && script.getAttribute("data-api")) || (SERVIDOR + "/api/gs");
   var STORAGE = "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/gs-arquivos/";
+  window.supabaseArquivoUrl = function(valor){
+    var v=String(valor||'');
+    if(v.indexOf('sb:')===0)return STORAGE+v.slice(3).split('/').map(encodeURIComponent).join('/');
+    if(/^https:\/\/awemuohtvwvrdzfxwrmd\.supabase\.co\/storage\//.test(v))return v;
+    return '';
+  };
 
   /* Login do Acervo: o servidor só libera as telas internas para quem está
      logado no sistema (os apps de campo não precisam). O token é o da sessão

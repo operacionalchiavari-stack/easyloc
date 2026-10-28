@@ -10,7 +10,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
    const page=await browser.newPage({viewport:{width,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.route('https://**/*',r=>r.fulfill({body:''}));await page.route('**/gas-cliente.js*',r=>r.fulfill({body:''}));
    await page.addInitScript(()=>{
-    localStorage.setItem('montadorToken','fixture');window.saved=[];window.savedAvarias=[];window.denyGps=false;window.gpsEncerrado=0;
+    localStorage.setItem('easyloc:limpeza-dados','20261026-zerado');localStorage.setItem('montadorToken','fixture');window.saved=[];window.savedAvarias=[];window.denyGps=false;window.gpsEncerrado=0;
     Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(ok,no){window.denyGps?no({code:1}):ok({coords:{latitude:-23,longitude:-46,accuracy:12}});},watchPosition(){return 7;},clearWatch(id){if(id===7)window.gpsEncerrado++;}}});
     const etapa={id:'etapa',pedido:'1234',cliente:'Evento de teste',local:'Local do evento',etapa:'montagem',operacao:'montagem',dataISO:new Date().toLocaleDateString('en-CA'),horario:'08:00',responsavel:'Ana Silva',equipe:['Ana Silva'],lat:-23,lng:-46,registros:0,free:{quantidade:2,horario:'08:00',pontoEncontro:'Local do evento',pessoas:[{nome:'Carlos Free',miniatura:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1XQAAAAASUVORK5CYII=',telefone:'',fase:'CHECKIN',nota:5},{nome:'Free sem foto',telefone:'',nota:5}]},trocas:[],sacolasMontagem:[],info:{},outrasEtapas:[]};
     function result(fn,args){

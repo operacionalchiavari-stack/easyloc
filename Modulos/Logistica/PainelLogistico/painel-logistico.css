@@ -81,3 +81,187 @@
 }
 /* o tema do sistema força o tamanho dos campos: aqui o "+ pessoa/caminhão" é uma pílula pequena */
 html:root .pl-page select.pl-add{ height:30px !important; min-height:0 !important; width:auto !important; max-width:220px !important; padding:0 26px 0 12px !important; border:1px dashed var(--el-color-border,#e3e7ec) !important; border-radius:999px !important; background-color:#fff !important; font-size:12.5px !important; color:var(--el-color-text,#1f2020) !important; box-shadow:none !important; }
+.pl-abas-dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin:22px 0}
+.pl-abas-dias [role=tab]{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px;background:#fff;border:1px solid #dfe4ea;border-radius:12px;cursor:pointer;color:#647080;font-family:Inter,system-ui,sans-serif}
+.pl-abas-dias [role=tab] strong{font-size:21px;color:#253044}
+.pl-abas-dias [role=tab] small{font-size:11px}
+.pl-abas-dias [aria-selected=true]{background:var(--el-button-primary-bg,#634542);border-color:var(--el-button-primary-bg,#634542);color:#fff;box-shadow:0 4px 12px #18253512}
+.pl-abas-dias [aria-selected=true] strong{color:#fff}
+.pl-planejamento{display:grid;grid-template-columns:minmax(240px,.9fr) minmax(420px,1.7fr) minmax(240px,.85fr);gap:20px;align-items:start}
+.pl-painel{background:#fff;border:1px solid #e1e5eb;border-radius:15px;box-shadow:0 3px 12px #1b2c4009;overflow:hidden;min-width:0}
+.pl-painel-cab{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:18px;border-bottom:1px solid #e9ecf1}
+.pl-painel-cab h2{font:600 16px/1.4 Inter,system-ui,sans-serif;margin:0;color:#263144}
+.pl-painel-cab small{display:block;color:#7c8694;margin-bottom:5px;font-size:11px}
+.pl-painel-cab>b{font-size:12px;padding:6px 9px;background:#f1f4f8;color:#667184;border-radius:8px;white-space:nowrap}
+.pl-servicos-lista{padding:10px;display:flex;flex-direction:column;gap:10px}
+.pl-servico{display:flex;flex-direction:column;gap:8px;width:100%;min-width:0;padding:14px;border:1px solid #e5e8ed;border-radius:11px;background:#fff;color:#263144;text-align:left;cursor:pointer;font-family:Inter,system-ui,sans-serif}
+.pl-servico.is-selecionado{border-color:var(--el-button-primary-bg,#634542);background:#faf8f5;box-shadow:none}
+.pl-servico>strong{font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.pl-servico>small{font-size:11px;color:#7a8491;line-height:1.5}
+.pl-servico .pl-etapa-linha1{flex-wrap:wrap}
+.pl-servico .pl-msg{font-size:11px}
+.pl-situacao-ok{font-size:11px;color:#52745b}
+.pl-servicos-lista details summary{padding:14px 4px;color:#7c8592;font-size:12px;cursor:pointer}
+.pl-servicos-lista details .pl-servico{margin-bottom:10px}
+.pl-planejamento-edicao,.pl-planejamento-recursos{display:flex;flex-direction:column;gap:18px;min-width:0}
+.pl-selecao-resumo{display:flex;flex-direction:column;gap:6px;padding:0 3px;color:#263144}
+.pl-selecao-resumo strong{font-size:16px;line-height:1.5}.pl-selecao-resumo span{font-size:12px;color:#7c8592;line-height:1.5}
+html:root .pl-page .pl-planejamento .pl-etapa{display:block;padding:0;border-left-width:1px;background:#fff;min-width:0}
+.pl-planejamento-edicao .pl-etapa-info{display:none}
+.pl-planejamento .pl-etapa-escala{padding:20px;gap:22px}
+.pl-planejamento .pl-etapa-status{padding:0 20px 20px}
+.pl-planejamento .pl-etapa .pl-painel-cab{margin:0}
+.pl-recursos-lista{padding:0 16px 12px;max-height:390px;overflow:auto}
+.pl-recurso-nota{margin:12px 16px;font-size:11px;color:#85909d;line-height:1.5}
+.pl-recurso{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eef0f4}
+.pl-recurso:last-child{border-bottom:0}
+.pl-recurso>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pl-recurso strong{font-size:13px;color:#344053;overflow-wrap:anywhere}.pl-recurso small{font-size:11px;color:#85909d}
+.pl-recurso button{flex:none;width:30px;height:30px;border:1px solid #dfe4eb;background:#fff;border-radius:8px;color:#5d6c7d;font-size:19px;cursor:pointer}
+.pl-recurso button:disabled{opacity:.4;cursor:default}
+@media(max-width:1200px){.pl-planejamento{grid-template-columns:minmax(240px,1fr) minmax(340px,1.4fr)}.pl-planejamento-recursos{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.pl-planejamento{grid-template-columns:1fr}.pl-planejamento-recursos{display:flex;grid-column:auto}.pl-abas-dias{display:flex;overflow-x:auto;padding-bottom:7px}.pl-abas-dias [role=tab]{flex:1 0 80px}.pl-painel-cab h2{font-size:15px}}
+.pl-planejamento .pl-selecao-resumo .pl-etapa-status{padding:6px 0 0}
+.pl-topo{position:relative;display:flex;align-items:center;justify-content:center;gap:20px;min-height:96px}
+.pl-topo #plPreencher{position:absolute;right:0}
+.pl-abas-dias{display:flex;gap:26px;margin:8px 0 24px;border-bottom:1px solid #dfe4ea;overflow-x:auto;padding:0}
+html:root:is(#plTemaAbas,html) .pl-page .pl-abas-dias [role=tab]{position:relative;display:flex;flex-direction:row;flex:0 0 auto;align-items:center;gap:8px;padding:16px 4px;margin:0;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#647080;font-size:15px;white-space:nowrap}
+html:root:is(#plTemaAbas,html) .pl-page .pl-abas-dias [role=tab] strong{font-size:15px;color:inherit}
+html:root:is(#plTemaAbas,html) .pl-page .pl-abas-dias [aria-selected=true]{border-bottom-color:var(--el-button-primary-bg,#634542)!important;color:var(--el-color-text,#1f2020);font-weight:600}
+.pl-pendencia-dia{display:inline-block;width:8px;height:8px;flex:none;border-radius:50%;background:#ef3340;animation:none}
+@keyframes pl-pendencia-pulso{0%,100%{box-shadow:0 0 0 0 #ef334040;opacity:1}65%{box-shadow:0 0 0 5px #ef334000;opacity:.65}}
+@media(prefers-reduced-motion:reduce){.pl-pendencia-dia{animation:none}}
+@media(max-width:1000px){.pl-topo{justify-content:space-between}.pl-topo #plPreencher{position:static}}
+@media(max-width:600px){.pl-topo{flex-wrap:wrap;justify-content:center;padding:18px 0}.pl-abas-dias{gap:18px}}
+.pl-vagas{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:12px}
+.pl-vaga{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px 12px;border:1px dashed #d8dee5;border-radius:12px;background:#fafbfc;text-align:center;min-width:0}
+.pl-vaga.is-preenchida{border:1px solid #dce4e1;background:#f4f8f6}
+.pl-vaga strong{font:500 12px/1.4 Inter,sans-serif;overflow-wrap:anywhere;color:#374151}
+.pl-vaga small{font-size:10px;color:#86909c;line-height:1.4}
+.pl-avatar{position:relative;width:58px;height:58px;border-radius:50%;background:#edf0f3;overflow:hidden;color:#c5ccd4;padding:7px;box-sizing:border-box}
+.pl-avatar svg{width:100%;height:100%}.pl-vaga.is-preenchida .pl-avatar{color:#7e9c8e;background:#e5ede8}
+.pl-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#edf0f3}
+.pl-caminhao-icone{width:64px;height:58px;display:flex;align-items:center;color:#c5ccd4}.pl-caminhao-icone svg{width:100%}
+.pl-vaga.is-preenchida .pl-caminhao-icone{color:#7e9c8e}
+html:root .pl-page .pl-vaga-remover{position:absolute;top:4px;right:4px;width:22px;min-height:22px;height:22px;padding:0;border:0;border-radius:50%;background:transparent;color:#b45353;font-size:17px;cursor:pointer}
+
+/* Abas legiveis em todos os estados do tema global. */
+html:root:is(#plTemaAbas,html) .pl-page .pl-abas-dias [role=tab],
+html:root:is(#plTemaAbas,html) .pl-page .pl-abas-dias [role=tab] span:not(.pl-pendencia-dia),
+html:root:is(#plTemaAbas,html) .pl-page .pl-abas-dias [role=tab] strong{color:#263144!important;text-shadow:none!important}
+html:root:is(#plTemaAbas,html) .pl-page .pl-abas-dias [role=tab]{padding:18px 18px 14px 4px;outline-offset:-3px}
+html:root:is(#plTemaAbas,html) .pl-page .pl-abas-dias .pl-pendencia-dia{position:absolute;top:5px;right:8px;width:8px;height:8px;background:#ef3340!important}
+
+.pl-caminhao-icone{position:relative;overflow:hidden;border-radius:8px}
+.pl-caminhao-icone img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#f4f8f6}
+.pl-recurso>div:not(.pl-recurso-foto){flex:1}
+.pl-recurso .pl-recurso-foto{position:relative;flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;background:#edf0f3;color:#bdc6cf;display:grid;place-items:center}
+.pl-recurso-foto svg{width:30px;height:30px}
+.pl-recurso-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#edf0f3}
+.pl-recursos-abas{display:flex;gap:10px;padding:8px 12px 0;border-bottom:1px solid #e1e5eb}
+html:root:is(#plAbasRecursos,html) .pl-page .pl-recursos-abas [role=tab]{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 0;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#485363!important;font-size:12px;line-height:1.4;cursor:pointer;white-space:normal}
+html:root:is(#plAbasRecursos,html) .pl-page .pl-recursos-abas [aria-selected=true]{border-bottom-color:var(--el-button-primary-bg,#634542)!important;font-weight:700}
+html:root:is(#plAbasRecursos,html) .pl-page .pl-recursos-abas small.pl-disponiveis{font-size:13px;font-weight:700;color:#15803d!important;background:#dcfce7;padding:3px 9px;border-radius:10px;animation:pl-disponiveis-pulso 1.6s ease-in-out infinite}
+.pl-planejamento-recursos .pl-recursos-painel{width:100%;grid-column:1/-1}
+
+/* Mesmas cores das etapas no Cronograma. */
+html:root:is(#plCoresCronograma,html) .pl-page .pl-servico[data-tipo=montagem]{--pl-servico-borda:#93c5fd;--pl-servico-brilho:#60a5fa30;background:#eff6ff!important}
+html:root:is(#plCoresCronograma,html) .pl-page .pl-servico[data-tipo=desmontagem]{--pl-servico-borda:#fdba74;--pl-servico-brilho:#fb923c30;background:#fff7ed!important}
+html:root:is(#plCoresCronograma,html) .pl-page .pl-servico{box-shadow:0 0 8px var(--pl-servico-brilho,transparent)!important;border:1px solid var(--pl-servico-borda,#dfe4ea)!important;border-left:1px solid var(--pl-servico-borda,#dfe4ea)!important}
+html:root:is(#plCoresCronograma,html) .pl-page .pl-servico.is-selecionado{border-color:var(--pl-servico-borda,#94a3b8)!important;box-shadow:0 0 0 1px var(--pl-servico-borda,#94a3b8),0 0 10px var(--pl-servico-brilho,transparent)!important}
+
+@keyframes pl-disponiveis-pulso{0%,100%{opacity:1;box-shadow:0 0 0 0 #22c55e40}50%{opacity:.5;box-shadow:0 0 0 4px #22c55e00}}
+@media(prefers-reduced-motion:reduce){html:root:is(#plAbasRecursos,html) .pl-page .pl-recursos-abas small.pl-disponiveis{animation:none}}
+
+html:root .pl-page .pl-servico .pl-pedido-numero{display:inline-block;margin-left:auto;padding:5px 9px;border:1px solid #a8bfd9;border-radius:7px;background:#fff;color:#24476c!important;font:700 14px/1.3 Inter,system-ui,sans-serif!important;white-space:nowrap;letter-spacing:.01em}
+html:root .pl-page .pl-servico[data-tipo=desmontagem] .pl-pedido-numero{border-color:#edc18b;color:#8d4c19!important}
+
+/* Duas areas no mesmo painel, com o titulo centralizado. */
+html:root #plTopoUnificado#plTopoUnificado{position:relative;display:grid!important;grid-template-columns:minmax(300px,1fr) auto minmax(300px,1fr);align-items:center!important;gap:20px!important;min-height:96px;padding:0!important}
+html:root #plTopoUnificado#plTopoUnificado>h1{grid-column:2;grid-row:1;flex:auto!important;width:auto!important;min-width:0;margin:0!important;padding:34px 0 22px!important;text-align:center!important;border:0!important}
+html:root #plTopoUnificado#plTopoUnificado>h1::after{display:none!important}
+#plModuloAbas{grid-column:1;grid-row:1;display:flex;gap:18px;align-items:center;margin-top:12px}
+html:root #plModuloAbas#plModuloAbas button{background:transparent!important;border:0!important;border-bottom:3px solid transparent!important;border-radius:0!important;box-shadow:none!important;padding:12px 3px!important;font:500 13px/1.4 Inter,system-ui,sans-serif!important;white-space:nowrap;color:#485363!important;cursor:pointer}
+html:root #plModuloAbas#plModuloAbas button[aria-selected=true]{color:#166534!important;border-bottom-color:#4b9370!important;font-weight:700!important}
+html:root #plTopoUnificado#plTopoUnificado #plPreencher{position:static;grid-column:3;grid-row:1;justify-self:end}
+html:root #plTopoUnificado#plTopoUnificado::after{content:"";position:absolute;bottom:0;left:50%;width:100vw;height:1px;transform:translateX(-50%);background:var(--ch-line,#dce4ed)}
+html:root #plModuloEntregas{max-width:none;margin:0;padding:18px 0 0!important}
+html:root .pl-page [hidden]{display:none!important}
+@media(max-width:1450px){html:root #plTopoUnificado#plTopoUnificado{grid-template-columns:1fr auto}html:root #plTopoUnificado#plTopoUnificado>h1{grid-column:1/-1;grid-row:1;padding-bottom:12px!important}#plModuloAbas{grid-column:1;grid-row:2;margin-top:0}html:root #plTopoUnificado#plTopoUnificado #plPreencher{grid-column:2;grid-row:2}}
+@media(max-width:600px){html:root #plTopoUnificado#plTopoUnificado{grid-template-columns:1fr;gap:4px!important}#plModuloAbas{gap:12px}html:root #plTopoUnificado#plTopoUnificado #plPreencher{grid-column:1;grid-row:3;justify-self:start;margin-bottom:12px}html:root #plModuloAbas#plModuloAbas button{font-size:12px!important}}
+
+@media(max-width:600px){html:root #plTopoUnificado#plTopoUnificado{grid-template-columns:minmax(0,1fr)}html:root #plTopoUnificado#plTopoUnificado>h1{max-width:100%;font-size:24px!important;letter-spacing:.08em!important;white-space:normal!important}html:root #plModuloAbas{min-width:0;max-width:100%;gap:12px}html:root #plModuloAbas#plModuloAbas button{flex:0 1 auto!important;min-width:0!important;width:auto!important;padding:10px 0!important}}
+
+/* Mesma grade e largura de cards nas duas abas. */
+.pl-page{--pl-colunas-compartilhadas:minmax(240px,.9fr) minmax(420px,1.7fr) minmax(240px,.85fr)}
+.pl-planejamento,#plModuloEntregas .ec-layout{grid-template-columns:var(--pl-colunas-compartilhadas);gap:20px}
+#plModuloEntregas .ec-detalhe{grid-column:2/-1;min-width:0}
+#plModuloEntregas .ec-pedidos{min-width:0}
+#plModuloEntregas #ecPedidos{padding:10px 11px}
+@media(max-width:1200px){.pl-page{--pl-colunas-compartilhadas:minmax(240px,1fr) minmax(340px,1.4fr)}}
+@media(max-width:760px){.pl-page{--pl-colunas-compartilhadas:minmax(0,1fr)}#plModuloEntregas .ec-detalhe{grid-column:1/-1}}
+
+html:root #plModuloAbas#plModuloAbas button{position:relative;overflow:visible}
+html:root #plModuloAbas#plModuloAbas .pl-alerta-aba{position:absolute;top:2px;right:-5px;display:block;width:8px;height:8px;border-radius:50%;background:#ef3340!important;animation:none;pointer-events:none}
+@keyframes pl-alerta-aba-piscar{0%,100%{opacity:1;box-shadow:0 0 0 0 #ef334040}50%{opacity:.3;box-shadow:0 0 0 4px #ef334000}}
+@media(prefers-reduced-motion:reduce){html:root #plModuloAbas#plModuloAbas .pl-alerta-aba{animation:none}}
+
+html:root #plModuloAbas#plModuloAbas .pl-alerta-aba{top:-5px;right:-9px;display:flex;align-items:center;justify-content:center;min-width:18px;width:auto;height:18px;padding:0 4px;box-sizing:border-box;border-radius:999px;color:#fff!important;font:700 10px/1 Inter,system-ui,sans-serif!important;letter-spacing:0;white-space:nowrap}
+
+html:root #plAbasDias#plAbasDias .pl-pendencia-dia{display:flex;align-items:center;justify-content:center;position:absolute;top:-8px;right:2px;min-width:18px;width:auto;height:18px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:#ef3340!important;color:#fff!important;font:700 10px/1 Inter,system-ui,sans-serif!important;letter-spacing:0;animation:none!important;box-shadow:none!important;opacity:1}
+
+#plModuloCronograma{width:100%;min-width:0;margin-top:16px}#plCronogramaFrame{display:block;width:100%;height:calc(100vh - 150px);min-height:620px;border:0;background:transparent}
+@media(min-width:1451px){html:root #plTopoUnificado#plTopoUnificado{grid-template-columns:minmax(390px,1fr) auto minmax(390px,1fr)}}
+@media(max-width:760px){#plCronogramaFrame{min-height:500px}}
+.pl-consulta{display:inline-block;padding:4px 8px;border:1px solid #ead9aa;border-radius:6px;background:#fffbeb;color:#785c16;font-size:.8125rem;line-height:1.4}
+.pl-painel-cab:has(.pl-consulta){flex-wrap:wrap;gap:8px}
+
+html:root #plModuloAbas#plModuloAbas .pl-alerta-aba[hidden]{display:none!important}
+
+/* Reserva espaco para o indicador dentro da faixa que permite rolar os dias. */
+html:root #plAbasDias#plAbasDias{padding-top:12px;scroll-padding-top:12px}
+html:root #plModuloParametros{padding-top:24px}
+@media(max-width:1800px){html:root #plTopoUnificado#plTopoUnificado{grid-template-columns:minmax(0,1fr) auto}html:root #plTopoUnificado#plTopoUnificado>h1{grid-column:1/-1;grid-row:1;padding-bottom:12px!important}#plModuloAbas{grid-column:1;grid-row:2;margin-top:0}html:root #plTopoUnificado#plTopoUnificado #plPreencher{grid-column:2;grid-row:2}}
+@media(max-width:650px){html:root #plTopoUnificado#plTopoUnificado{grid-template-columns:minmax(0,1fr)}html:root #plModuloAbas#plModuloAbas{flex-wrap:wrap!important;gap:8px 16px;padding-top:10px}html:root #plTopoUnificado#plTopoUnificado #plPreencher{grid-column:1;grid-row:3;justify-self:start}}
+html:root #plTopoUnificado#plTopoUnificado #plAcoesDireita{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:18px;justify-self:end}
+html:root #plTabParametros#plTabParametros{background:transparent!important;border:0!important;border-bottom:3px solid transparent!important;border-radius:0!important;box-shadow:none!important;padding:12px 3px!important;font:500 13px/1.4 Inter,system-ui,sans-serif!important;white-space:nowrap;color:#485363!important;cursor:pointer}
+html:root #plTabParametros#plTabParametros[aria-selected=true]{color:#166534!important;border-bottom-color:#4b9370!important;font-weight:700!important}
+@media(max-width:1800px){html:root #plTopoUnificado#plTopoUnificado #plAcoesDireita{grid-column:2;grid-row:2}}
+@media(max-width:900px){html:root #plTopoUnificado#plTopoUnificado{grid-template-columns:minmax(0,1fr)}html:root #plTopoUnificado#plTopoUnificado #plAcoesDireita{grid-column:1;grid-row:3;flex-wrap:wrap;gap:12px;margin-bottom:12px}html:root #plModuloAbas#plModuloAbas{flex-wrap:wrap!important}}
+html:root #plTopoUnificado#plTopoUnificado #plPreencher.pl-preencher-icone{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;min-width:32px;height:32px;min-height:32px;padding:6px!important;margin:0!important;border:1px solid transparent!important;border-radius:8px!important;background:transparent!important;color:#697586!important;box-shadow:none!important;cursor:pointer}
+html:root #plTopoUnificado#plTopoUnificado #plPreencher.pl-preencher-icone:hover:not(:disabled){background:#e9edf2!important;border-color:#dce3eb!important;color:#263144!important}
+html:root #plTopoUnificado#plTopoUnificado #plPreencher.pl-preencher-icone:focus-visible{outline:2px solid #7598bf;outline-offset:3px}
+html:root #plTopoUnificado#plTopoUnificado #plPreencher.pl-preencher-icone:disabled{opacity:.4;cursor:default}
+html:root #plTopoUnificado#plTopoUnificado #plPreencher[hidden]{display:none!important}
+/* Em telas de computador, titulo e abas compartilham a mesma linha. */
+@media(min-width:1200px){
+html:root #plTopoUnificado#plTopoUnificado{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;gap:16px!important}
+html:root #plTopoUnificado#plTopoUnificado>h1{grid-column:2!important;grid-row:1!important;padding:34px 0 22px!important;font-size:clamp(26px,2.2vw,38px)!important;letter-spacing:.12em!important}
+html:root #plTopoUnificado#plTopoUnificado #plModuloAbas{grid-column:1!important;grid-row:1!important;flex-wrap:nowrap!important;gap:clamp(8px,1vw,18px)!important;margin-top:12px}
+html:root #plTopoUnificado#plTopoUnificado #plAcoesDireita{grid-column:3!important;grid-row:1!important;margin-top:12px;margin-bottom:0}
+html:root #plTopoUnificado#plTopoUnificado #plModuloAbas button{font-size:clamp(11px,.85vw,13px)!important}
+}
+/* Equipe e caminhoes: cards compactos, nomes legiveis e fotos circulares. */
+html:root .pl-page .pl-planejamento-edicao .pl-vagas{display:flex;flex-wrap:wrap;align-items:stretch;justify-content:flex-start;gap:12px}
+html:root .pl-page .pl-planejamento-edicao .pl-vaga{flex:0 1 200px;width:200px;max-width:100%;min-width:0;padding:16px 14px 14px;gap:9px;box-sizing:border-box}
+html:root .pl-page .pl-planejamento-edicao .pl-vaga strong{font:600 17px/1.4 Inter,system-ui,sans-serif;color:#263144;max-width:100%}
+html:root .pl-page .pl-planejamento-edicao .pl-vaga small{font:400 14px/1.45 Inter,system-ui,sans-serif;max-width:100%;overflow-wrap:anywhere}
+html:root .pl-page .pl-planejamento-edicao :is(.pl-avatar,.pl-caminhao-icone){flex:none;width:64px;height:64px;border-radius:50%;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:#edf0f3}
+html:root .pl-page .pl-planejamento-edicao .pl-caminhao-icone svg{width:48px;height:38px}
+html:root .pl-page .pl-planejamento-edicao .pl-caminhao-icone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+html:root .pl-page .pl-planejamento .pl-etapa-escala{padding:18px 20px;gap:16px}
+html:root .pl-page .pl-planejamento-edicao .pl-dica{margin:0;font-size:14px;line-height:1.5}
+@media(max-width:600px){html:root .pl-page .pl-planejamento-edicao .pl-vaga{flex-basis:calc(50% - 6px);width:calc(50% - 6px);padding:14px 10px}html:root .pl-page .pl-planejamento-edicao .pl-vaga strong{font-size:16px}}
+/* Um unico card para equipe e frota, com titulos menores. */
+html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-painel-cab h2,
+html:root .pl-page .pl-planejamento-edicao .pl-distribuicao>.pl-painel-cab h2{font-size:18px!important;font-weight:600;line-height:1.35}
+html:root .pl-page .pl-planejamento-edicao .pl-distribuicao{border-top:1px solid #e1e5eb;margin-top:2px}
+html:root .pl-page .pl-planejamento-edicao .pl-distribuicao>.pl-painel-cab{padding-top:16px;padding-bottom:14px}
+html:root .pl-page .pl-planejamento-edicao .pl-vaga.is-preenchida{background:#e0f0e6;border:1px solid #afcdbb}
+html:root #plAbasDias#plAbasDias .pl-pendencia-dia.is-completo{background:#26915c!important}
+html:root .pl-page .pl-equipe-completa{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid #a7cfb8;border-radius:7px;background:#def1e5;color:#17633b;font-size:13px;font-weight:600;line-height:1.4}
+html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-painel-cab{flex-wrap:wrap;gap:10px}
+html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-painel-cab h2{margin-right:auto}
+/* O cronograma acompanha a altura do conteudo e usa a rolagem da pagina. */
+html:root #plCronogramaFrame{height:1px;min-height:0;overflow:hidden}
+html:root #plModuloCronograma{overflow:visible}

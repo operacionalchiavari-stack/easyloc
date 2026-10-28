@@ -1,5 +1,5 @@
 ﻿/* =====================================================
-   IMPRESSÃƒO DE ITENS
+   IMPRESSÃO DE ITENS
 ===================================================== */
 
 window.itens_imprimir = function(){
@@ -11,7 +11,7 @@ window.itens_imprimir = function(){
 
   if(!lista.length){
     if (typeof window.alerta === "function") {
-      window.alerta("Nenhum item para imprimir.", "AtenÃ§Ã£o", "aviso");
+      window.alerta("Nenhum item para imprimir.", "Atenção", "aviso");
     } else {
       alert("Nenhum item para imprimir.");
     }

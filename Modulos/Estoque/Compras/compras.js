@@ -12,8 +12,8 @@
     supplierQuality: new Map(),
     quoteBuilderNeeds: [], quoteSelectedSupplierIds: new Set(), purchaseLeadDays: 5, consolidationBase: null, consolidationCandidates: [], consolidationSelected: new Set(),
     currentWorkspace: null, activeSupplierId: null, proposalsMode: "launch", pendingAiDocument: null, lastAiResult: null, pendingAiMatchIndex: null,
-    currentOrderDetail: null, orderDetailDirty: false,
-    pendingCertBatch: null, pendingInvoiceOrder: null,
+    currentOrderDetail: null,
+    pendingInvoiceOrder: null,
   };
 
   const URGENCY_LABEL = { atrasado: "Atrasada", critico: "Crítica", atencao: "Atenção", normal: "No prazo", sem_data: "Sem data" };
@@ -22,6 +22,7 @@
 
   async function init() {
     bind();
+    window.addEventListener("compra-registrada",async()=>{await reloadAll();$("comprasSearch").value="";$("ordersStatusFilter").value="todos";selectTab("orders");renderOrders();});
     try {
       if (window.AcervoComprasAuth?.ready) await window.AcervoComprasAuth.ready;
       const [suppliers, pcpParams] = await Promise.all([window.AcervoComprasAPI.listSuppliers(true), window.AcervoComprasAPI.getPcpParameters()]);
@@ -129,23 +130,8 @@
       }
     });
     $("invoiceSubmit").onclick = submitInvoiceXml;
-    $("certSubmit").onclick = submitCertificate;
     $("orderDetailPdfBtn").onclick = downloadOrderPdf;
     $("orderDirectDeliveryBtn").onclick = confirmDirectDelivery;
-    $("orderDetailSaveBtn").onclick = saveOrderDetailChanges;
-    $("orderDetailBody").addEventListener("input", (e) => { if (e.target.matches("[data-lot-input]")) markOrderDetailDirty(); });
-    $("orderDetailDialog").querySelectorAll('button[value="cancel"]').forEach((btn) => btn.addEventListener("click", (e) => {
-      if (state.orderDetailDirty) { e.preventDefault(); guardCloseOrderDetail(); }
-    }));
-    $("orderDetailDialog").addEventListener("cancel", (e) => {
-      if (state.orderDetailDirty) { e.preventDefault(); guardCloseOrderDetail(); }
-    });
-    $("newManualNeedBtn").onclick = () => {
-      ["manualNeedPedido", "manualNeedDescricao", "manualNeedQuantidade", "manualNeedData", "manualNeedObservacao", "manualNeedLink"].forEach((id) => ($(id).value = ""));
-      $("manualNeedUnidade").value = "un";
-      $("manualNeedDialog").showModal();
-    };
-    $("manualNeedSubmit").onclick = submitManualNeed;
     $("comprasSearch").addEventListener("input", () => { renderNeeds(); renderQuotations(); renderOrders(); });
     $("ordersStatusFilter").addEventListener("change", renderOrders);
     $("orderCancelBtn").onclick = cancelCurrentOrder;
@@ -154,35 +140,6 @@
     document.addEventListener("click", (e) => { if (!e.target.closest(".pv-supplier-search")) $("quoteSupplierOptions").classList.add("hidden"); });
     let resizeTimer;
     window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitAllocChips, 120); });
-  }
-
-  async function submitManualNeed() {
-    const descricao = $("manualNeedDescricao").value.trim();
-    const quantidade = Number($("manualNeedQuantidade").value);
-    if (!descricao) return notify("Descreva o material.", "error");
-    if (!quantidade || quantidade <= 0) return notify("Informe a quantidade.", "error");
-    if (quantidade > 10000) {
-      const ok = window.AcervoComprasAlert?.confirm
-        ? await window.AcervoComprasAlert.confirm({ title: "Quantidade fora do normal", message: `Confirma a solicitação de ${quantidade.toLocaleString("pt-BR")} unidade(s) de "${descricao}"?`, confirmText: "Confirmar quantidade", cancelText: "Corrigir" })
-        : window.confirm(`Confirma a solicitação de ${quantidade} unidade(s)?`);
-      if (!ok) return;
-    }
-    const productLink = $("manualNeedLink").value.trim();
-    if (productLink) {
-      try { if (!['https:', 'http:'].includes(new URL(productLink).protocol)) throw new Error(); }
-      catch { return notify('Informe um link válido começando com https:// ou http://.', 'error'); }
-    }
-    try {
-      await window.AcervoComprasAPI.createPurchaseRequest({
-        origem: $("manualNeedOrigem").value, order_number: $("manualNeedPedido").value.trim(), descricao_item: descricao, quantidade, unidade: $("manualNeedUnidade").value.trim() || "un",
-        data_necessidade: $("manualNeedData").value || null, observacao: $("manualNeedObservacao").value.trim() || null,
-        prioridade: "media",
-        produto_url: productLink || null,
-      });
-      $("manualNeedDialog").close();
-      await reloadAll();
-      notify("Necessidade registrada. Vincule o item para enviar à aprovação financeira.");
-    } catch (e) { notify(e.message || "Não foi possível registrar a necessidade.", "error"); }
   }
 
   function selectTab(tab) {
@@ -200,7 +157,8 @@
     const { op, avulsa, servicos } = splitNeeds();
     $("needsOpBadge").textContent = op.length;
     $("needsAvulsaBadge").textContent = avulsa.length;
-    $("needsServicosBadge").textContent = servicos.length;
+    $("needsServicosBadge").dataset.operacionais = state.needs.filter(n=>n.origem === "manutencao" && !["comprada","aguardando_recebimento","recebida_parcial","atendida","cancelada"].includes(n.status)).length;
+    window.dispatchEvent(new Event("compras-servicos-contagem"));
     ["needsOpBadge", "needsAvulsaBadge", "needsServicosBadge", "quotationsBadge", "ordersBadge"].forEach((id) => {
       $(id).hidden = Number($(id).textContent) === 0;
     });
@@ -247,7 +205,7 @@
     const avulsa = [];
     const servicos = [];
     // (2026-10-10) já comprada (pedido de compra emitido) sai das necessidades: segue em Pedidos/Recebimento — evita comprar duas vezes
-    const bought = new Set(["comprada", "aguardando_recebimento", "recebida_parcial"]);
+    const bought = new Set(["comprada", "aguardando_recebimento", "recebida_parcial", "atendida", "cancelada"]); // atendida/cancelada: fechada pelo Almoxarifado (estoque reposto ou cancelada lá)
     filteredNeeds().forEach((n) => {
       if (bought.has(n.status)) return;
       if (n.origem === "manutencao") servicos.push(n);
@@ -343,7 +301,7 @@
       : "";
     const isMinimum = n.origem === "estoque_minimo";
     const isService = n.origem === "manutencao";
-    const originTag = isService ? '<span class="pv-origin-tag is-tool">Manutenção</span>' : fromProgrammer ? '<span class="pv-origin-tag is-tool">Programador CNC</span>' : isTool ? '<span class="pv-origin-tag is-tool">Ferramental</span>' : isMinimum ? '<span class="pv-origin-tag is-tool">Estoque mínimo</span>' : '<span class="pv-origin-tag is-internal">Solicitação interna</span>';
+    const originTag = isService ? '<span class="pv-origin-tag is-tool">Manutenção</span>' : fromProgrammer ? '<span class="pv-origin-tag is-tool">Programador CNC</span>' : isTool ? '<span class="pv-origin-tag is-tool">Ferramental</span>' : isMinimum ? '<span class="pv-origin-tag is-tool">Estoque mínimo</span>' : `<span class="pv-origin-tag is-internal">${n.local_origem === 'galpao' ? 'Galpão' : 'Solicitação interna'}</span>`;
     return `<tr ${needRowAttrs(n, pendingApproval, selected)}>
         ${needQtyCell(n)}
         <td>${linkIcon}<strong>${esc(n.material_nome)}</strong>${toolSubtitle}${companyChip(n)}</td>
@@ -357,8 +315,9 @@
 
   function renderNeeds() {
     const { op, avulsa, servicos } = splitNeeds();
-    $("needsServicosEmpty").classList.toggle("hidden", servicos.length > 0);
-    $("needsServicosBody").innerHTML = servicos.map(avulsaNeedRowHtml).join("");
+
+    $("needsServicosBody").innerHTML = servicos.map(n=>{const template=document.createElement("template");template.innerHTML=avulsaNeedRowHtml(n);const row=template.content.firstElementChild,cells=[...row.children];cells[1].append(document.createElement("small"));cells[1].lastElementChild.textContent=cells[0].textContent;row.replaceChildren(cells[1],cells[2],cells[3],document.createElement("td"),cells[4],cells[5],document.createElement("td"),cells[6]);return row.outerHTML;}).join("");
+    window.dispatchEvent(new Event("compras-servicos-contagem"));
     $("needsOpEmpty").classList.toggle("hidden", op.length > 0);
     $("needsOpBody").innerHTML = op.map(opNeedRowHtml).join("");
     $("needsAvulsaEmpty").classList.toggle("hidden", avulsa.length > 0);
@@ -552,7 +511,7 @@
           </details>
           <input type="number" class="pv-quote-item-qty" min="0.01" step="0.01" data-group-qty="${idx}" value="${g.quantidade_cotada}">
           <input type="text" class="pv-quote-item-unit" value="${esc(g.unidade)}" disabled>
-          ${g.material_id || g.tool ? "" : `<p class="pv-quote-item-warning"><i data-lucide="alert-triangle"></i> Sem material cadastrado no Almoxarifado — não será possível gerar o pedido até cadastrá-lo (necessário para lote/certificado).</p>`}
+          ${g.material_id || g.tool ? "" : `<p class="pv-quote-item-warning"><i data-lucide="alert-triangle"></i> Sem material cadastrado no Almoxarifado — não será possível gerar o pedido até cadastrá-lo.</p>`}
         </div>`).join("")}
       </div>`;
     $("quoteBuilderItems").querySelectorAll("[data-group-qty]").forEach((input) => input.addEventListener("input", () => {
@@ -1018,13 +977,6 @@
   }
 
   // ===================== Pedidos =====================
-  function pctPillHtml(pct) {
-    if (pct === null || pct === undefined) return `<span class="pv-cell-na">Não exigido</span>`;
-    // (2026-10-10) matéria-prima sem certificado: pisca para chamar atenção até completar
-    if (Number(pct) < 100) return `<span class="pv-cert-missing" title="Há matéria-prima neste pedido sem certificado">${progressHtml(Number(pct), 100, `${Number(pct)}% completo`)}</span>`;
-    return progressHtml(Number(pct), 100, `${Number(pct)}% completo`);
-  }
-
   function opNumbersChipsHtml(numeros) {
     if (!numeros.length) return `<span class="pv-cell-na">—</span>`;
     const chips = numeros.map((n) => `<span class="pv-alloc-chip">${esc(n)}</span>`).join("");
@@ -1032,12 +984,12 @@
   }
 
   function filteredOrders() {
-    const mode = $("ordersStatusFilter")?.value || "abertos";
+    const mode = $("ordersStatusFilter")?.value || "todos";
     return state.orders.filter((o) => {
       if (mode === "abertos" && ["recebido", "cancelado"].includes(o.status)) return false;
       if (mode === "recebidos" && o.status !== "recebido") return false;
       if (mode === "cancelados" && o.status !== "cancelado") return false;
-      return matchesSearch(`PC-${String(o.numero).padStart(6, "0")}`, o.numero, o.fornecedor_nome, ...(o.op_numeros || []));
+      return matchesSearch(`PC-${String(o.numero).padStart(6, "0")}`, o.numero, o.fornecedor_nome, ...(o.op_numeros || []), ...(o.items || []).flatMap(i => [i.nome, i.codigo, i.material_nome]));
     });
   }
 
@@ -1049,11 +1001,11 @@
       <tr class="pv-row-clickable" data-order-id="${esc(o.id)}">
         <td><strong>PC-${esc(String(o.numero).padStart(6, "0"))}</strong><small>Emitido em ${fmtDate(o.created_at)}</small></td>
         <td><strong>${esc(o.fornecedor_nome)}</strong></td>
-        <td>${o.itens_count}</td>
+        <td>${(o.items || []).map(i => `<div>${esc(i.nome || i.material_nome || "Item")}</div>`).join('') || '—'}</td>
+        <td class="pv-order-quantity">${(o.items || []).map(i => `<div>${Number(i.quantidade || 0).toLocaleString('pt-BR')} ${esc(i.unidade || 'un')}</div>`).join('') || '—'}</td>
         <td>${money(o.valor_total)}</td>
         <td>${deadlineHtml(o.prazo_acordado, ['recebido', 'cancelado'].includes(o.status))}</td>
         <td><span class="pv-status-pill is-${esc(o.status)}">${esc(orderStatusLabel(o.status))}</span>${o.pendencia_documental ? '<small class="pv-text-danger">Documentação pendente</small>' : ''}</td>
-        <td>${pctPillHtml(o.certificado_pct)}</td>
         <td>${opNumbersChipsHtml(o.op_numeros || [])}</td>
       </tr>`).join("");
     $("ordersBody").querySelectorAll("tr.pv-row-clickable").forEach((tr) => tr.addEventListener("click", () => openOrderDetail(tr.dataset.orderId)));
@@ -1094,10 +1046,10 @@
   }
 
   async function openOrderDetail(id) {
+    state.paymentDraft = null;
     try {
       const data = await window.AcervoComprasAPI.getPurchaseOrderV2Detail(id);
       state.currentOrderDetail = data;
-      state.orderDetailDirty = false;
       renderOrderDetail();
       $("orderDetailTitle").textContent = `PC-${String(data.numero).padStart(6, "0")}`;
       const received = (data.items || []).some((it) => Number(it.quantidade_recebida || 0) > 0);
@@ -1114,9 +1066,7 @@
 
   function orderDocStatus(o) {
     const xmlOk = (o.nfe_receipts || []).length > 0;
-    // (2026-10-02) Compras nao informa mais lote: a documentacao do item e so o certificado (quando exigido)
-    const loteOk = (o.items || []).filter((it) => it.requer_certificado).every((it) => (it.lotes || []).some((b) => b.certificado_url));
-    return { xmlOk, loteOk };
+    return { xmlOk };
   }
 
   function allocationChipsHtml(necessidades, unidade, expanded = false) {
@@ -1154,27 +1104,9 @@
     });
   }
 
-  function lotCellHtml(it) {
-    if (!it.requer_lote) return `<span class="pv-cell-na">—</span>`;
-    const lotes = it.lotes || [];
-    if (!lotes.length) return `<input type="text" class="pv-lot-input" placeholder="Informar lote" data-lot-input data-item-id="${esc(it.id)}">`;
-    return `<div class="pv-lot-chips">${lotes.map((b) => `<span class="pv-lot-chip">${esc(b.lote)}</span>`).join("")}</div>`;
-  }
-
-  function certCellHtml(it) {
-    if (!it.requer_certificado) return `<span class="pv-cell-na">—</span>`;
-    const lotes = it.lotes || [];
-    if (!lotes.length) return `<button type="button" class="pv-cert-chip" data-attach-cert-new="${esc(it.id)}"><i data-lucide="plus"></i> Adicionar certificado</button>`;
-    return `<div class="pv-cert-cell">${lotes.map((b) => b.certificado_url
-      ? `<a class="pv-cert-chip is-ok" href="${esc(b.certificado_url)}" target="_blank" rel="noopener"><i data-lucide="check"></i> Certificado anexado</a>`
-      : `<button type="button" class="pv-cert-chip" data-attach-cert="${esc(b.id)}" data-cert-name="${esc(it.nome || "")}"><i data-lucide="plus"></i> Adicionar certificado</button>`).join("")}</div>`;
-  }
-
   function renderOrderDetail() {
     const o = state.currentOrderDetail;
-    const pendingLotValues = {};
-    document.querySelectorAll("#orderDetailBody [data-lot-input]").forEach((input) => { if (input.value.trim()) pendingLotValues[input.dataset.itemId] = input.value; });
-    const { xmlOk, loteOk } = orderDocStatus(o);
+    const { xmlOk } = orderDocStatus(o);
     $("orderDetailBody").innerHTML = `
       <div class="pv-order-meta">
         <span><small>Fornecedor</small><strong>${esc(o.fornecedor?.nome || "—")}</strong></span>
@@ -1184,16 +1116,15 @@
         <span><small>Prazo acordado</small><strong>${fmtDate(o.prazo_acordado)}</strong></span>
         <span><small>Faturar para</small><strong><button type="button" class="pv-company-chip" data-order-company title="Trocar a empresa (CNPJ) deste pedido"><i data-lucide="building-2"></i>${esc(o.billing_company ? [o.billing_company.rotulo, o.billing_company.cnpj].filter(Boolean).join(" · ") : "Empresa principal")}</button></strong></span>
         <span><small>XML</small><span class="pv-status-pill ${xmlOk ? "is-ok" : "is-pending"}">${xmlOk ? "Anexado" : "Pendente"}</span></span>
-        <span><small>Certificado</small><span class="pv-status-pill ${loteOk ? "is-ok" : "is-pending"}">${loteOk ? "Completo" : "Pendente"}</span></span>
       </div>
       ${o.billing_company_conflito ? `<p class="pv-company-warning"><i data-lucide="triangle-alert"></i> Este pedido junta itens de pedidos de empresas diferentes. Confira e escolha em "Faturar para" o CNPJ do pedido (ou separe em pedidos).</p>` : ""}
       <div class="pv-order-actions">
-        ${(o.items || []).some(i=>Number(i.quantidade_recebida)>0) ? `<button class="btn btn-secondary pv-btn-sm" type="button" id="registerRncBtn">Registrar divergência</button>` : ""}<a class="btn btn-secondary pv-btn-sm" href="../Almoxarifado/Principal/almoxarifado.html">Recebimento no Almoxarifado</a><button class="btn btn-secondary pv-btn-sm" type="button" id="attachInvoiceBtn"><i data-lucide="file-plus"></i> Anexar XML da NF-e</button>
+        ${(o.items || []).some(i=>Number(i.quantidade_recebida)>0) ? `<button class="btn btn-secondary pv-btn-sm" type="button" id="registerRncBtn">Registrar divergência</button>` : ""}<a class="btn btn-secondary pv-btn-sm" href="../../Chiavari/Almoxarifado/almoxarifado.html?aba=recebimento">Recebimento no Almoxarifado</a><button class="btn btn-secondary pv-btn-sm" type="button" id="attachInvoiceBtn"><i data-lucide="file-plus"></i> Anexar XML da NF-e</button>
       </div>
-      ${o.parcelas ? `<p class="pv-payment-confirmed"><i data-lucide="check-circle-2"></i> Pagamento confirmado — ${esc(paymentMethodLabel(o.forma_pagamento))}, ${o.parcelas.length} parcela(s) enviada(s) ao Contas a Pagar.</p>` : ""}
+      ${paymentBlockHtml(o)}
       <div class="pv-order-table-wrap">
         <table class="pv-table pv-order-table">
-          <thead><tr><th>Material</th><th>Comprado</th><th>Recebido</th><th>Saldo</th><th>Alocado para</th><th>Certificado</th></tr></thead>
+          <thead><tr><th>Material</th><th>Comprado</th><th>Recebido</th><th>Saldo</th><th>Alocado para</th></tr></thead>
           <tbody>
             ${(o.items || []).map((it) => `
             <tr data-item-id="${esc(it.id)}">
@@ -1202,162 +1133,105 @@
               <td>${Number(it.quantidade_recebida || 0).toLocaleString("pt-BR")} ${esc(it.unidade)}</td>
               <td>${orderSaldo(it).toLocaleString("pt-BR")} ${esc(it.unidade)}</td>
               <td>${allocationChipsHtml(it.necessidades || [], it.unidade, true)}</td>
-              <td>${certCellHtml(it)}</td>
             </tr>`).join("")}
           </tbody>
         </table>
       </div>
       ${(o.historico || []).length ? `<details class="pv-order-history"${(o.historico || []).some((h) => h.acao === "alterado_recebimento") ? " open" : ""}><summary>Histórico do pedido (${o.historico.length})</summary><ul>${o.historico.map((h) => `<li><time>${new Date(h.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</time><strong>${esc(h.acao === "alterado_recebimento" ? "Alterado no recebimento" : String(h.acao || "").replaceAll("_", " "))}</strong><span>${esc(h.observacao || "")}${h.usuario_nome ? ` · ${esc(h.usuario_nome)}` : ""}</span></li>`).join("")}</ul></details>` : ""}
     `;
-    Object.entries(pendingLotValues).forEach(([itemId, value]) => {
-      const input = document.querySelector(`#orderDetailBody [data-lot-input][data-item-id="${CSS.escape(itemId)}"]`);
-      if (input) input.value = value;
-    });
     $("attachInvoiceBtn").addEventListener("click", () => { state.pendingInvoiceOrder = o.id; $("invoiceDialog").showModal(); });
+    bindPaymentBlock(o);
     $("registerRncBtn")?.addEventListener("click",async()=>{await window.AcervoComprasAPI.openOrderRnc(o);await openOrderDetail(o.id);await reloadAll();});
-    $("orderDetailBody").querySelectorAll("[data-attach-cert]").forEach((btn) => btn.addEventListener("click", () => { state.pendingCertBatch = btn.dataset.attachCert; openCertDialog(btn.dataset.certName); }));
-    // certificado sem lote: cria o registro do certificado do item (identificado pelo pedido) e ja abre o envio do arquivo
-    $("orderDetailBody").querySelectorAll("[data-attach-cert-new]").forEach((btn) => btn.addEventListener("click", async () => {
-      const it = (o.items || []).find((i) => i.id === btn.dataset.attachCertNew);
-      if (!it || btn.disabled) return;
-      btn.disabled = true;
-      try {
-        const res = await window.AcervoComprasAPI.savePurchaseLot({ order_item_id: it.id, lote: `PC ${o.numero || o.codigo || ""}`.trim(), quantidade: Number(it.quantidade || 0), validade: null });
-        if (!res?.id) throw new Error("Não foi possível preparar o certificado.");
-        state.pendingCertBatch = res.id;
-        openCertDialog(it.nome);
-      } catch (e) { notify(e.message || "Não foi possível preparar o certificado.", "error"); }
-      finally { btn.disabled = false; }
-    }));
     bindAllocChipsToggle($("orderDetailBody"));
     fitAllocChips();
     updateOrderFooterSummary();
     lucide.createIcons();
   }
 
+  // Valores e pagamento do pedido (out/2026): Compras diz quanto deu e como paga; vira títulos no Contas a Pagar
+  // (compras_pedido_pagamento). Refazer só enquanto nada foi pago no Financeiro.
+  function paymentAddDays(iso, days) { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
+  function paymentDefaultDraft(o) {
+    const total = Math.round(Number(o.valor_total || 0) * 100) / 100;
+    const first = paymentAddDays(new Date().toISOString().slice(0, 10), 30);
+    return { forma: o.forma_pagamento || "boleto", total, parcelas: [{ vencimento: first, valor: total }] };
+  }
+  function paymentBlockHtml(o) {
+    if (o.status === "cancelado") return "";
+    const d = state.paymentDraft;
+    if (o.parcelas && !d) {
+      return `<p class="pv-payment-confirmed"><i data-lucide="check-circle-2"></i> Pagamento confirmado — ${esc(paymentMethodLabel(o.forma_pagamento))}, ${o.parcelas.length} parcela(s) enviada(s) ao Contas a Pagar${o.pagamento_por_nome ? ` por ${esc(o.pagamento_por_nome)}` : ""}.<button type="button" class="btn btn-secondary pv-btn-sm pv-payment-redo" data-payment-redo>Refazer</button></p>
+        <ul class="pv-payment-list">${o.parcelas.map((p, k) => `<li>${k + 1}ª · ${fmtDate(p.due_date)} · ${money(p.amount)}</li>`).join("")}</ul>`;
+    }
+    const draft = d || paymentDefaultDraft(o);
+    const sum = draft.parcelas.reduce((s, p) => s + Number(p.valor || 0), 0);
+    const wrong = Math.abs(sum - Number(draft.total || 0)) > 0.05;
+    return `<div class="pv-payment" data-payment>
+      <div class="pv-payment-head"><h3>Valores e pagamento</h3><span class="pv-hint">Gera os títulos no Contas a Pagar (Financeiro).</span></div>
+      <div class="pv-payment-grid">
+        <label>Forma de pagamento<select data-payment-field="forma">${["boleto", "pix", "transferencia", "cartao", "dinheiro"].map((f) => `<option value="${f}"${f === draft.forma ? " selected" : ""}>${paymentMethodLabel(f)}</option>`).join("")}</select></label>
+        <label>Total a pagar<input type="text" inputmode="decimal" data-payment-field="total" value="${esc(String(draft.total).replace(".", ","))}"></label>
+        <label>Parcelas<span class="pv-payment-split"><input type="number" min="1" max="24" data-payment-field="n" value="${draft.parcelas.length}"><button type="button" class="btn btn-secondary pv-btn-sm" data-payment-split>Dividir</button></span></label>
+      </div>
+      <table class="pv-payment-rows"><tbody>${draft.parcelas.map((p, k) => `<tr data-payment-row="${k}"><td>${k + 1}ª</td><td><input type="date" data-payment-part="vencimento" value="${esc(p.vencimento)}"></td><td><input type="text" inputmode="decimal" data-payment-part="valor" value="${esc(String(p.valor).replace(".", ","))}"></td></tr>`).join("")}</tbody></table>
+      <p class="pv-payment-sum${wrong ? " is-error" : ""}" data-payment-sum>Soma das parcelas: ${money(sum)}${wrong ? " — diferente do total" : ""}</p>
+      <div class="pv-payment-actions">${o.parcelas ? `<button type="button" class="btn btn-secondary pv-btn-sm" data-payment-cancel>Cancelar</button>` : ""}<button type="button" class="btn btn-primary pv-btn-sm" data-payment-send>Enviar ao Contas a Pagar</button></div>
+    </div>`;
+  }
+  function paymentNumber(v) { let t = String(v || "").trim(); if (t.includes(",")) t = t.replace(/\./g, "").replace(",", "."); const n = Number(t); return Number.isFinite(n) ? n : 0; }
+  function bindPaymentBlock(o) {
+    const box = $("orderDetailBody");
+    const rerender = () => { renderOrderDetail(); };
+    box.querySelector("[data-payment-redo]")?.addEventListener("click", () => { state.paymentDraft = paymentDefaultDraft(o); state.paymentDraft.parcelas = (o.parcelas || []).map((p) => ({ vencimento: p.due_date, valor: Number(p.amount) })); if (!state.paymentDraft.parcelas.length) state.paymentDraft = paymentDefaultDraft(o); else state.paymentDraft.total = Math.round(state.paymentDraft.parcelas.reduce((s, p) => s + p.valor, 0) * 100) / 100; rerender(); });
+    const panel = box.querySelector("[data-payment]");
+    if (!panel) return;
+    if (!state.paymentDraft) state.paymentDraft = paymentDefaultDraft(o);
+    const d = state.paymentDraft;
+    const refreshSum = () => {
+      const sum = d.parcelas.reduce((s, p) => s + Number(p.valor || 0), 0), wrong = Math.abs(sum - Number(d.total || 0)) > 0.05;
+      const el = panel.querySelector("[data-payment-sum]");
+      el.textContent = `Soma das parcelas: ${money(sum)}${wrong ? " — diferente do total" : ""}`;
+      el.classList.toggle("is-error", wrong);
+    };
+    panel.querySelector('[data-payment-field="forma"]').addEventListener("change", (e) => { d.forma = e.target.value; });
+    panel.querySelector('[data-payment-field="total"]').addEventListener("input", (e) => { d.total = paymentNumber(e.target.value); refreshSum(); });
+    panel.querySelectorAll("[data-payment-row]").forEach((tr) => {
+      const p = d.parcelas[Number(tr.dataset.paymentRow)];
+      tr.querySelector('[data-payment-part="vencimento"]').addEventListener("input", (e) => { p.vencimento = e.target.value; });
+      tr.querySelector('[data-payment-part="valor"]').addEventListener("input", (e) => { p.valor = paymentNumber(e.target.value); refreshSum(); });
+    });
+    panel.querySelector("[data-payment-split]").addEventListener("click", () => {
+      const n = Math.min(24, Math.max(1, parseInt(panel.querySelector('[data-payment-field="n"]').value, 10) || 1));
+      const total = Number(d.total || 0), base = Math.floor((total / n) * 100) / 100;
+      const start = d.parcelas[0]?.vencimento || paymentAddDays(new Date().toISOString().slice(0, 10), 30);
+      d.parcelas = Array.from({ length: n }, (_, k) => ({ vencimento: paymentAddDays(start, 30 * k), valor: k === n - 1 ? Math.round((total - base * (n - 1)) * 100) / 100 : base }));
+      rerender();
+    });
+    panel.querySelector("[data-payment-cancel]")?.addEventListener("click", () => { state.paymentDraft = null; rerender(); });
+    panel.querySelector("[data-payment-send]").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      if (!(Number(d.total) > 0)) { notify("Informe o total a pagar.", "error"); return; }
+      if (d.parcelas.some((p) => !p.vencimento || !(Number(p.valor) > 0))) { notify("Cada parcela precisa de vencimento e valor.", "error"); return; }
+      if (Math.abs(d.parcelas.reduce((s, p) => s + Number(p.valor || 0), 0) - Number(d.total)) > 0.05) { notify("A soma das parcelas está diferente do total.", "error"); return; }
+      btn.disabled = true;
+      try {
+        await window.AcervoComprasAPI.setPurchaseOrderPayment(o.id, d.forma, d.parcelas.map((p) => ({ vencimento: p.vencimento, valor: Number(p.valor) })), Number(d.total));
+        notify(`${d.parcelas.length} parcela(s) enviada(s) ao Contas a Pagar.`);
+        state.paymentDraft = null;
+        await openOrderDetail(o.id);
+        await reloadAll();
+      } catch (err) { notify(err.message || "Não foi possível enviar ao Contas a Pagar.", "error"); btn.disabled = false; }
+    });
+  }
+
   function updateOrderFooterSummary() {
     const o = state.currentOrderDetail;
-    const { xmlOk, loteOk } = orderDocStatus(o);
+    const { xmlOk } = orderDocStatus(o);
     $("orderDetailFooterTotal").textContent = money(o.valor_total);
-    const complete = xmlOk && loteOk;
+    const complete = xmlOk;
     const pill = $("orderDetailFooterStatus");
     pill.textContent = complete ? "Documentação completa" : "Aguardando documentação";
     pill.className = `pv-status-pill ${complete ? "is-ok" : "is-pending"}`;
-  }
-
-  function markOrderDetailDirty() {
-    state.orderDetailDirty = true;
-    $("orderDetailSaveBtn").disabled = false;
-  }
-
-  async function saveOrderDetailChanges() {
-    const pending = [...document.querySelectorAll("#orderDetailBody [data-lot-input]")].filter((input) => input.value.trim());
-    if (!pending.length) return;
-    try {
-      for (const input of pending) {
-        const it = (state.currentOrderDetail.items || []).find((i) => i.id === input.dataset.itemId);
-        const lotQty = it ? (orderSaldo(it) || Number(it.quantidade || 0)) : 0;
-        await window.AcervoComprasAPI.savePurchaseLot({ order_item_id: input.dataset.itemId, lote: input.value.trim(), quantidade: lotQty, validade: null });
-      }
-      state.orderDetailDirty = false;
-      $("orderDetailSaveBtn").disabled = true;
-      await openOrderDetail(state.currentOrderDetail.id);
-      await reloadAll();
-      notify("Alterações salvas.");
-    } catch (e) { notify(e.message || "Não foi possível salvar as alterações.", "error"); }
-  }
-
-  async function guardCloseOrderDetail() {
-    if (!state.orderDetailDirty) { $("orderDetailDialog").close(); return; }
-    const proceed = await window.AcervoComprasAlert.confirm({
-      title: "Alterações não salvas", message: "Existem alterações não salvas. Deseja sair mesmo assim?",
-      confirmText: "Sair sem salvar", cancelText: "Continuar editando",
-    });
-    if (proceed) { state.orderDetailDirty = false; $("orderDetailDialog").close(); }
-  }
-
-  // (2026-10-10) janela do certificado: arrastar e soltar + previa do PDF/imagem antes de anexar
-  let certFileChosen = null, certPreviewUrl = null;
-  function setCertFile(file) {
-    if (certPreviewUrl) { URL.revokeObjectURL(certPreviewUrl); certPreviewUrl = null; }
-    certFileChosen = file || null;
-    $("certPreview").hidden = !file;
-    $("certDrop").hidden = !!file;
-    $("certSubmit").disabled = !file;
-    if (!file) { $("certFrame").innerHTML = ""; return; }
-    const isPdf = /pdf$/i.test(file.type) || /\.pdf$/i.test(file.name);
-    const isImg = /^image\//i.test(file.type);
-    if (!isPdf && !isImg) { notify("Use um arquivo PDF, JPG ou PNG.", "error"); setCertFile(null); return; }
-    certPreviewUrl = URL.createObjectURL(file);
-    $("certName").textContent = file.name;
-    $("certSize").textContent = `${isPdf ? "PDF" : "Imagem"} · ${file.size >= 1048576 ? (file.size / 1048576).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " MB" : Math.max(1, Math.round(file.size / 1024)) + " KB"}`;
-    $("certFrame").innerHTML = isPdf ? '<p class="cert-frame-msg">Carregando prévia…</p>' : `<img src="${certPreviewUrl}" alt="Prévia do certificado">`;
-    if (isPdf) renderCertPdf(file);
-  }
-  // prévia do PDF desenhada com o pdf.js (funciona em qualquer navegador/tablet); se falhar, cai no visualizador do navegador
-  function loadPdfJs() {
-    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
-    return new Promise((resolve, reject) => {
-      const tag = document.createElement("script");
-      tag.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-      tag.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; resolve(window.pdfjsLib); };
-      tag.onerror = reject;
-      document.head.append(tag);
-    });
-  }
-  async function renderCertPdf(file) {
-    const frame = $("certFrame");
-    try {
-      const lib = await loadPdfJs();
-      const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-      if (certFileChosen !== file) return;
-      const page = await doc.getPage(1);
-      const width = Math.max(320, frame.clientWidth - 24);
-      const base = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: (width / base.width) * (window.devicePixelRatio || 1) });
-      const canvas = document.createElement("canvas");
-      canvas.width = viewport.width; canvas.height = viewport.height;
-      canvas.style.width = `${width}px`;
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
-      if (certFileChosen !== file) return;
-      frame.innerHTML = "";
-      frame.append(canvas);
-      if (doc.numPages > 1) frame.insertAdjacentHTML("beforeend", `<p class="cert-frame-msg">Página 1 de ${doc.numPages}</p>`);
-    } catch (_) {
-      if (certFileChosen === file) frame.innerHTML = `<iframe src="${certPreviewUrl}#toolbar=0&navpanes=0&view=FitH" title="Prévia do certificado"></iframe>`;
-    }
-  }
-  function openCertDialog(materialName) {
-    $("certFile").value = "";
-    setCertFile(null);
-    $("certFor").hidden = !materialName;
-    $("certFor").innerHTML = materialName ? `Certificado de <b>${esc(materialName)}</b>` : "";
-    if (!openCertDialog.ready) {
-      openCertDialog.ready = true;
-      const drop = $("certDrop");
-      $("certFile").addEventListener("change", () => setCertFile($("certFile").files?.[0]));
-      $("certChange").addEventListener("click", () => $("certFile").click());
-      ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("is-over"); }));
-      ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("is-over"); }));
-      drop.addEventListener("drop", (e) => setCertFile(e.dataTransfer?.files?.[0]));
-      $("certDialog").addEventListener("close", () => setCertFile(null));
-    }
-    $("certDialog").showModal();
-    window.lucide?.createIcons?.();
-  }
-
-  async function submitCertificate() {
-    const file = certFileChosen || $("certFile").files?.[0];
-    if (!file) return notify("Selecione um arquivo.", "error");
-    const btn = $("certSubmit");
-    btn.disabled = true;
-    try {
-      await window.AcervoComprasAPI.attachBatchCertificate(state.pendingCertBatch, file);
-      $("certDialog").close();
-      await openOrderDetail(state.currentOrderDetail.id);
-      await reloadAll();
-      notify("Certificado anexado.");
-    } catch (e) { btn.disabled = false; notify(e.message || "Não foi possível anexar o certificado.", "error"); }
   }
 
   async function submitInvoiceXml() {
@@ -1415,7 +1289,6 @@
     if (!motivo) return;
     try {
       await window.AcervoComprasAPI.cancelPurchaseOrderV2(o.id, motivo);
-      state.orderDetailDirty = false;
       $("orderDetailDialog").close();
       await reloadAll();
       notify("Pedido cancelado.");

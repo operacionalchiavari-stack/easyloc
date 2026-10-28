@@ -27,7 +27,7 @@
   display: none;
 }
 
-/* Deixa sÃ³ a bolinha visÃ­vel e centralizada */
+/* Deixa só a bolinha visível e centralizada */
 .sidebar:not(:hover):not(.expanded):not(.flyout-locked) .status-dot{
   width: 12px;
   height: 12px;
@@ -121,7 +121,7 @@
   color:var(--el-color-text,#1f2020);
 }
 
-/* animaÃ§Ã£o suave */
+/* animação suave */
 @keyframes statusFade{
   from{
     opacity:0;
@@ -899,7 +899,7 @@
       width: auto;
     }
 
-    /* FIX de expansÃ£o por clique (mantÃ©m layout) */
+    /* FIX de expansão por clique (mantém layout) */
     .sidebar.expanded { width: 244px; }
 .sidebar.expanded ~ .main { 
   margin-left: 72px;
@@ -930,11 +930,11 @@
       display: block !important;
     }
 /* ===============================
-   USUÃRIO NA SIDEBAR
+   USUÁRIO NA SIDEBAR
 ================================ */
 
 /* ===============================
-   CONTA DO USUÃRIO (SIDEBAR)
+   CONTA DO USUÁRIO (SIDEBAR)
 ================================ */
 
 .sidebar-user{
@@ -1038,7 +1038,7 @@
 
 
 /* ===============================
-   SIDEBAR RECOLHIDA (APENAS CÃRCULO)
+   SIDEBAR RECOLHIDA (APENAS CÍRCULO)
 ================================ */
 
 .sidebar:not(:hover):not(.expanded):not(.flyout-locked) .user-info{
@@ -1061,7 +1061,7 @@
   display:none;
 }
 
-/* aumenta levemente o avatar para dar presenÃ§a */
+/* aumenta levemente o avatar para dar presença */
 .sidebar:not(:hover):not(.expanded):not(.flyout-locked) .user-avatar{
   width:42px;
   height:42px;
@@ -1074,7 +1074,7 @@
   font-size:14px;
 }
 /* ===============================
-   DROPDOWN USUÃRIO PROFISSIONAL
+   DROPDOWN USUÁRIO PROFISSIONAL
 ================================ */
 
 .sidebar-user .user-dropdown-modern{
@@ -1157,7 +1157,7 @@
   color: var(--ch-text, #2E1F1F);
 }
 
-/* cÃ­rculo */
+/* círculo */
 .loader-circle {
   position: relative;
   width: 38px;

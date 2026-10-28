@@ -17,6 +17,11 @@
   const STEPS = ["usuario", "perfil", "acessos", "revisao"];
 
   const LOCAL_CATALOG = [
+    ["geral.solicitacoes.visualizar", "Geral", "Solicitação de compra", "visualizar", "Consultar solicitações do galpão", false],
+    ["geral.solicitacoes.criar", "Geral", "Solicitação de compra", "criar", "Enviar solicitações para Compras", false],
+    ["geral.manutencao.visualizar", "Geral", "Manutenção da estrutura", "visualizar", "Acompanhar solicitações de manutenção", false],
+    ["geral.manutencao.criar", "Geral", "Manutenção da estrutura", "criar", "Solicitar manutenção da estrutura da empresa", false],
+    ["geral.manutencao.editar", "Geral", "Manutenção da estrutura", "editar", "Gerenciar chamados, responsáveis e prazos", false],
     ["comercial.clientes.visualizar", "Comercial", "Cadastro de Clientes", "visualizar", "Visualizar clientes", false],
     ["comercial.clientes.criar", "Comercial", "Cadastro de Clientes", "criar", "Cadastrar clientes", false],
     ["comercial.clientes.editar", "Comercial", "Cadastro de Clientes", "editar", "Editar clientes", false],
@@ -74,7 +79,6 @@
     ["rh.colaboradores.editar", "RH", "Colaboradores", "editar", "Editar colaboradores", true],
     ["rh.ocorrencias.visualizar", "RH", "Ocorrencias", "visualizar", "Visualizar ocorrencias", true],
     ["rh.ocorrencias.criar", "RH", "Ocorrencias", "criar", "Registrar ocorrencias", true],
-    ["ia.lia.usar", "Inteligencia Artificial", "Lia", "visualizar", "Usar assistente Lia", false],
     ["ia.studio.visualizar", "Inteligencia Artificial", "Studio IA", "visualizar", "Visualizar Studio IA", false],
     ["ia.studio.gerar", "Inteligencia Artificial", "Studio IA", "criar", "Gerar imagens com IA", true],
     ["configuracoes.empresa.visualizar", "Configuracoes", "Empresa", "visualizar", "Visualizar configuracoes da empresa", true],
@@ -544,7 +548,7 @@
     const all = preset === "admin";
     state.catalog.forEach((item) => {
       const moduleKey = item.modulo.toLowerCase();
-      const allowed = all || moduleKey.includes(preset) || (preset === "comercial" && moduleKey.includes("inteligencia") && item.chave === "ia.lia.usar");
+      const allowed = all || moduleKey.includes(preset);
       state.permissions.set(item.chave, allowed);
     });
     state.dirty = true;

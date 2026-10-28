@@ -21,8 +21,9 @@
 .compras-main .pv-panel .pv-table tr:hover td { background:#f7faff; }
 .compras-main .pv-panel .pv-table td:first-child { white-space:nowrap; }
 .compras-main .pv-panel .pv-orders-table td:nth-child(2) { min-width:180px; max-width:270px; white-space:normal; }
-.compras-main .pv-panel .pv-orders-table td:nth-child(4) { font-weight:600; font-variant-numeric:tabular-nums; color:#14243b; text-align:right; }
-.compras-main .pv-panel .pv-orders-table th:nth-child(4) { text-align:right; }
+.compras-main .pv-panel .pv-orders-table td:nth-child(5) { font-weight:600; font-variant-numeric:tabular-nums; color:#14243b; text-align:right; }
+.compras-main .pv-panel .pv-orders-table th:nth-child(5) { text-align:right; }
+.compras-main .pv-panel .pv-orders-table .pv-order-quantity{white-space:nowrap;font-variant-numeric:tabular-nums}
 .compras-main .pv-panel .pv-orders-table td:last-child { min-width:140px; max-width:230px; }
 .compras-main .pv-panel .pv-table .pv-number { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .compras-main .pv-panel .pv-table .pv-text-danger { color:#c34652; }
@@ -55,8 +56,6 @@
 .compras-page .pv-status-pill,
 .compras-page .pv-alloc-chip,
 .compras-page .pv-alloc-more,
-.compras-page .pv-lot-chip,
-.compras-page .pv-cert-chip,
 .compras-page .pv-ai-badge,
 .compras-page .pv-supplier-chip { border-radius:4px; }
 .compras-page .compras-main .pv-panel > .tw-table-scroll,
@@ -110,3 +109,6 @@
 .compras-main .pv-panel td.pv-row-actions > *:first-child { margin-left: 0; }
 .compras-main .pv-panel td.pv-row-actions .btn { height: 32px; min-height: 32px; padding: 0 12px; }
 .compras-main .pv-panel td.pv-row-actions .icon-btn { width: 32px !important; min-width: 32px !important; height: 32px !important; }
+.compras-main .pv-panel .pv-table.pv-orders-table{width:100%;min-width:0;table-layout:fixed}
+.compras-main .pv-panel .pv-table.pv-orders-table :is(th,td){min-width:0;max-width:none;padding-left:10px;padding-right:10px;white-space:normal;overflow-wrap:anywhere}
+.compras-main .pv-panel .pv-table.pv-orders-table .pv-status-pill{max-width:100%;box-sizing:border-box;white-space:normal}

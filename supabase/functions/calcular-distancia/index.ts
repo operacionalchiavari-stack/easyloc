@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
 // Só para quem está logado no Acervo: a chave pública do site também passa no
 // verify_jwt, e cada chamada gasta a cota paga do Google Maps.
@@ -10,6 +11,7 @@ async function usuarioLogado(req: Request){
   const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
   const cliente = createClient(url, anon, { global: { headers: { Authorization: "Bearer " + token } } });
   const { data } = await cliente.auth.getUser(token);
+  if (data?.user && await segundaEtapaPendente("Bearer " + token)) return null;
   return data?.user || null;
 }
 

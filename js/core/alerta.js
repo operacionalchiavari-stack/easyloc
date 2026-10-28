@@ -41,6 +41,7 @@
   window.alert = message => window.alerta(message);
   // A native synchronous confirm cannot safely be replaced by a Promise.
   // Callers explicitly await this API; concurrent requests are serialized.
+  window.alertaModal = (message, title = 'Aviso', variant = 'info') => window.confirmarGlobal(message, title, {tipo: variant, confirmarTexto: 'OK', somenteOk: true});
   window.confirmarGlobal = function (message, title = "Confirmação", options = {}) {
     const result = queue.then(() => new Promise(resolve => {
       const previous = document.activeElement;
@@ -55,12 +56,13 @@
       const actions = document.createElement("div"); actions.className = "el-alert__actions";
       const cancel = button(options.cancelarTexto || "Não", "secondary", () => close(false));
       const accept = button(options.confirmarTexto || "Sim", "primary", () => close(true));
-      actions.append(cancel, accept); el.appendChild(actions); overlay.appendChild(el); document.body.appendChild(overlay);
+      if (!options.somenteOk) actions.appendChild(cancel);
+      actions.appendChild(accept); el.appendChild(actions); overlay.appendChild(el); document.body.appendChild(overlay);
       overlay.addEventListener("keydown", event => {
         if(event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(false); }
-        if(event.key === "Tab") { event.preventDefault(); (document.activeElement === cancel ? accept : cancel).focus(); }
+        if(event.key === "Tab") { event.preventDefault(); (options.somenteOk || document.activeElement === cancel ? accept : cancel).focus(); }
       });
-      cancel.focus();
+      (options.somenteOk ? accept : cancel).focus();
     }));
     queue = result.catch(() => false); return result;
   };

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { segundaEtapaPendente, MENSAGEM_2FA } from "./dois-fatores.ts";
 
 export type SupabaseService = ReturnType<typeof createClient<any>>;
 
@@ -212,6 +213,7 @@ export async function validarAcessoEmpresa(req: Request, empresaId: string) {
   if (userError || !user) {
     return { error: "Sessao invalida", status: 401 } as const;
   }
+  if (await segundaEtapaPendente(authHeader)) return { error: MENSAGEM_2FA, status: 403 } as const;
 
   const serviceClient = createClient<any>(supabaseUrl, serviceKey);
   const { data: vinculo, error: vinculoError } = await serviceClient

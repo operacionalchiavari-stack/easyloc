@@ -1,0 +1,68 @@
+name: Backup e monitoramento
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * *'
+    - cron: '43 * * * *'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: backup-operacional
+  cancel-in-progress: false
+jobs:
+  backup:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '17 6 * * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Exigir repositório privado
+        run: test '${{ github.event.repository.private }}' = 'true'
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Exportar, cifrar e restaurar em banco isolado
+        run: node Scripts/backup-operacional.cjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ACERVO_BACKUP_KEY: ${{ secrets.ACERVO_BACKUP_KEY }}
+          ACERVO_BACKUP_PG_HOST: ${{ secrets.ACERVO_BACKUP_PG_HOST }}
+          ACERVO_BACKUP_PG_PORT: ${{ secrets.ACERVO_BACKUP_PG_PORT }}
+          ACERVO_BACKUP_PG_USER: ${{ secrets.ACERVO_BACKUP_PG_USER }}
+          ACERVO_BACKUP_PG_PASSWORD: ${{ secrets.ACERVO_BACKUP_PG_PASSWORD }}
+      - name: Guardar somente cópias cifradas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acervo-${{ github.run_id }}
+          path: |
+            .backups/**/*.enc
+            .backups/ultimo-relatorio.json
+          if-no-files-found: error
+          retention-days: 30
+          include-hidden-files: true
+  monitor:
+    needs: backup
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Exigir repositório privado
+        run: test '${{ github.event.repository.private }}' = 'true'
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node Scripts/monitor-operacional.cjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ACERVO_APP_URL: ${{ vars.ACERVO_APP_URL }}
+          ACERVO_BACKUP_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ github.token }}

@@ -1,5 +1,5 @@
 ﻿/* =====================================================
-   ESTOQUE â†’ PERSONALIZAÃ‡Ã•ES (VISUAL PADRÃƒO EASYLOC)
+   ESTOQUE → PERSONALIZAÇÕES (VISUAL PADRÃO EASYLOC)
    arquivo: estoque-personalizacoes.css
 ===================================================== */
 
@@ -47,7 +47,7 @@
 
 .page-title h1 {
   margin: 0;
-  font-size: 26px; /* diminuÃ­do */
+  font-size: 26px; /* diminuído */
   letter-spacing: -0.01em;
   font-weight: 600;
 }
@@ -80,13 +80,13 @@
   width: 100%;
 }
 
-/* Faz os selects crescerem e ocuparem melhor o espaÃ§o */
+/* Faz os selects crescerem e ocuparem melhor o espaço */
 .filters-row select {
   flex: 1;
   min-width: 220px;
 }
 
-/* Aumenta um pouco a busca tambÃ©m */
+/* Aumenta um pouco a busca também */
 .search-wrap {
   flex: 1.4;
   min-width: 420px;
@@ -99,7 +99,7 @@
 }
 
 .search-wrap input {
-  width: 100%; /* faz o input ocupar todo o espaÃ§o */
+  width: 100%; /* faz o input ocupar todo o espaço */
 }
 
 .filters-row input,
@@ -248,7 +248,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  border-bottom: 1px solid var(--border); /* linha elegante de separaÃ§Ã£o */
+  border-bottom: 1px solid var(--border); /* linha elegante de separação */
 }
 
 .modal-header h3 {
@@ -361,7 +361,7 @@ textarea:focus {
   border-color: var(--orange);
   box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.15);
 }
-/* Campo de buscar item especÃ­fico */
+/* Campo de buscar item específico */
 #buscarItemInput {
   background: linear-gradient(180deg, #ffffff, #fdfdfd);
   border-radius: 16px;
@@ -638,7 +638,7 @@ input[placeholder="Digite para buscar item..."]:focus {
   display: none !important;
 }
 /* ================================
-   Lista dinÃ¢mica de insumos
+   Lista dinâmica de insumos
 ================================ */
 
 .insumo-row {
@@ -683,7 +683,7 @@ input[placeholder="Digite para buscar item..."]:focus {
   margin-top: 12px;
 }
 /* =====================================
-   BotÃ£o Adicionar Insumo (suave)
+   Botão Adicionar Insumo (suave)
 ===================================== */
 
 #btnAddInsumo {
@@ -704,7 +704,7 @@ input[placeholder="Digite para buscar item..."]:focus {
   transform: translateY(-1px);
 }
 /* =========================================
-   IDENTIFICAÃ‡ÃƒO HEADER COM RADIO NO TOPO
+   IDENTIFICAÇÃO HEADER COM RADIO NO TOPO
 ========================================= */
 
 .identificacao-card {
@@ -793,7 +793,7 @@ input[placeholder="Digite para buscar item..."]:focus {
   padding: 28px 28px 30px 28px;
 }
 /* =========================================
-   BADGE TIPO PERSONALIZAÃ‡ÃƒO
+   BADGE TIPO PERSONALIZAÇÃO
 ========================================= */
 
 .badge.tipo {

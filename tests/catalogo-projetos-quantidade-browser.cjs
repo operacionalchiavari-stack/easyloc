@@ -16,7 +16,7 @@ await page.addInitScript((db)=>{ if(!sessionStorage.getItem('mockdb')) sessionSt
 await page.addInitScript(()=>{ try{ localStorage.clear(); }catch{} });
 await page.addInitScript(installMock,{token:true});
 await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/Catalogo/catalogo.html');
-await page.locator('[data-gateway-tile="catalogo"]').click();
+await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
 await page.locator('[data-home-category="sofas"]').click();
 await page.locator('[data-grid-item="1"]').waitFor();
 const card=page.locator('[data-grid-item="1"]');

@@ -43,14 +43,14 @@
 
 /* status */
 
-/* ORÃ‡AMENTO */
+/* ORÇAMENTO */
 
 .pedido-status.orcamento {
   background: var(--el-color-surface-soft,#f6f7f9);
   color: var(--el-color-text,#1f2020);
 }
 
-/* PRÃ‰ RESERVA */
+/* PRÉ RESERVA */
 
 .pedido-status.pre-reserva {
   background: #15803d;
@@ -63,7 +63,7 @@
   background: var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020);
 }
 
-/* PRODUÃ‡ÃƒO */
+/* PRODUÇÃO */
 
 .pedido-status.producao {
   background: #1f1515;
@@ -93,12 +93,12 @@
 .orcamento-page .logo {
   display: flex;
   align-items: center;
-  height: 80px; /* â†‘ aumenta Ã¡rea da logo */
+  height: 80px; /* ↑ aumenta área da logo */
 }
 
 .orcamento-page .logo img {
-  max-height: 80px; /* â†‘ aumenta tamanho real */
-  max-width: 260px; /* â†‘ permite mais largura */
+  max-height: 80px; /* ↑ aumenta tamanho real */
+  max-width: 260px; /* ↑ permite mais largura */
   object-fit: contain;
 }
 
@@ -133,7 +133,7 @@
   gap: 40px;
   font-size: 13px;
 
-  margin-top: 18px; /* ðŸ”¥ cria o respiro da linha */
+  margin-top: 18px; /* 🔥 cria o respiro da linha */
 
   border-bottom: 1px solid var(--borda);
   padding-bottom: 14px;
@@ -188,8 +188,8 @@
 
 .orcamento-page .data-card {
   width: 180px;
-  min-height: auto; /* remove altura mÃ­nima */
-  padding: 14px 14px; /* diminui espaÃ§amento interno */
+  min-height: auto; /* remove altura mínima */
+  padding: 14px 14px; /* diminui espaçamento interno */
   border: 1px solid var(--el-button-primary-soft,#f4efe8);
   border-top: 4px solid var(--laranja);
   border-radius: 16px;
@@ -197,7 +197,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px; /* reduz espaÃ§amento interno */
+  gap: 10px; /* reduz espaçamento interno */
   box-shadow: 0 6px 18px rgba(var(--el-button-primary-rgb,125,96,61),0.05);
 }
 
@@ -209,7 +209,7 @@
 
 .orcamento-page .data-card input {
   width: 85%;
-  height: 36px; /* â†“ menor */
+  height: 36px; /* ↓ menor */
   border-radius: 12px;
   border: 1px solid var(--el-color-border,#e3e7ec);
   text-align: center;
@@ -234,7 +234,7 @@
   border-spacing: 0 1px;
   margin-top: 26px;
   font-size: 13px;
-  table-layout: fixed; /* ðŸ”¥ trava layout */
+  table-layout: fixed; /* 🔥 trava layout */
 }
 
 .orcamento-page .tabela thead {
@@ -269,13 +269,13 @@
 }
 
 .orcamento-page .tabela td {
-  background: #ffffff; /* ðŸ”¥ fundo branco */
+  background: #ffffff; /* 🔥 fundo branco */
   padding: 6px 8px;
   vertical-align: middle;
 }
 
 /* =====================================================
-   CABEÃ‡ALHO DA TABELA
+   CABEÇALHO DA TABELA
 ===================================================== */
 
 .orcamento-page .tabela thead tr {
@@ -308,10 +308,10 @@
   border-top-right-radius: 10px;
 }
 /* =====================================================
-   LARGURAS FIXAS â€“ VERSÃƒO MAIS COMPACTA
+   LARGURAS FIXAS – VERSÃO MAIS COMPACTA
 ===================================================== */
 
-/* 1 - aÃ§Ãµes */
+/* 1 - ações */
 .orcamento-page .tabela th:nth-child(1),
 .orcamento-page .tabela td:nth-child(1) {
   width: 36px;
@@ -335,7 +335,7 @@
   width: auto;
 }
 
-/* 5 - unitÃ¡rio */
+/* 5 - unitário */
 .orcamento-page .tabela th:nth-child(5),
 .orcamento-page .tabela td:nth-child(5) {
   width: 95px;
@@ -353,7 +353,7 @@
   width: 120px;
 }
 
-/* 8 - reposiÃ§Ã£o */
+/* 8 - reposição */
 .orcamento-page .tabela th:nth-child(8),
 .orcamento-page .tabela td:nth-child(8) {
   width: 115px;
@@ -381,7 +381,7 @@
 }
 
 /* =====================================================
-   QUANTIDADE â€“ CAIXA CENTRALIZADA REAL
+   QUANTIDADE – CAIXA CENTRALIZADA REAL
 ===================================================== */
 
 .orcamento-page .qtd {
@@ -418,14 +418,14 @@
   border: 1px solid var(--laranja);
   box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.15);
 }
-/* ================= AÃ‡Ã•ES DA LINHA (DRAG + REMOVER) ================= */
+/* ================= AÇÕES DA LINHA (DRAG + REMOVER) ================= */
 
 .orcamento-page .tabela th:nth-child(1),
 .orcamento-page .tabela td:nth-child(1) {
   width: 50px;
 }
 
-/* container dos dois botÃµes */
+/* container dos dois botões */
 .acoes-linha {
   display: flex;
   align-items: center;
@@ -433,7 +433,7 @@
   gap: 4px;
 }
 
-/* botÃ£o drag */
+/* botão drag */
 .drag-handle {
   font-size: 12px;
   color: var(--el-color-text,#1f2020);
@@ -451,7 +451,7 @@
   cursor: grabbing;
 }
 
-/* botÃ£o remover */
+/* botão remover */
 .btn-remover-item,
 .btn-remover-espaco {
   background: transparent;
@@ -473,20 +473,20 @@
 }
 
 /* =====================================================
-   NOME DO ITEM â€“ SUPORTE A 2 LINHAS
+   NOME DO ITEM – SUPORTE A 2 LINHAS
 ===================================================== */
 
 .orcamento-page .nome-item {
-  display: block; /* ðŸ‘ˆ remove flex */
+  display: block; /* 👈 remove flex */
   line-height: 1.3;
   white-space: normal;
 }
 
 .orcamento-page .nome-item[contenteditable="true"] {
   width: 100%;
-  min-height: 44px; /* ðŸ‘ˆ agora Ã© mÃ­nimo, nÃ£o fixo */
+  min-height: 44px; /* 👈 agora é mínimo, não fixo */
 
-  display: block; /* ðŸ‘ˆ remove flex */
+  display: block; /* 👈 remove flex */
 
   padding: 8px 16px;
 
@@ -537,7 +537,7 @@
 }
 
 /* =====================================================
-   BOTÃ•ES
+   BOTÕES
 ===================================================== */
 
 .acoes-itens {
@@ -632,17 +632,17 @@
   font-size: 13px;
   color: var(--el-color-text,#1f2020);
 }
-/* Centraliza verticalmente TODAS as cÃ©lulas da tabela */
+/* Centraliza verticalmente TODAS as células da tabela */
 .orcamento-page .tabela td {
   vertical-align: middle;
 }
-/* ================= MODAL CONFIRMAÃ‡ÃƒO ================= */
+/* ================= MODAL CONFIRMAÇÃO ================= */
 
 .modal-confirmacao {
   position: fixed;
   inset: 0;
   background: rgba(31,32,32,0.42);
-  display: none; /* ðŸ‘ˆ default escondido */
+  display: none; /* 👈 default escondido */
   align-items: center;
   justify-content: center;
   z-index: 9999;
@@ -651,7 +651,7 @@
 .modal-confirmacao.ativo {
   display: flex;
 }
-/* ================= CONTEÃšDO DO MODAL ================= */
+/* ================= CONTEÚDO DO MODAL ================= */
 
 .modal-box {
   width: 420px;
@@ -700,7 +700,7 @@
   font-weight: 600;
 }
 
-/* animaÃ§Ã£o suave */
+/* animação suave */
 @keyframes fadeScale {
   from {
     opacity: 0;
@@ -722,12 +722,12 @@
   background: var(--el-button-primary-soft,#f4efe8);
   color: var(--el-color-text,#1f2020);
 }
-/* ================= ESPAÃ‡O / AMBIENTE ================= */
+/* ================= ESPAÇO / AMBIENTE ================= */
 
 .nome-espaco {
   width: 100%;
-  height: 44px; /* ðŸ”¥ mesma altura do input */
-  display: flex; /* ðŸ”¥ centraliza corretamente */
+  height: 44px; /* 🔥 mesma altura do input */
+  display: flex; /* 🔥 centraliza corretamente */
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -766,7 +766,7 @@
   transform: rotate(1deg);
 }
 .orcamento-page .local {
-  margin-top: 18px; /* controla a distÃ¢ncia da linha */
+  margin-top: 18px; /* controla a distância da linha */
 }
 #localSelect {
   max-width: 340px; /* aumenta largura */
@@ -875,7 +875,7 @@
   border: 1px solid var(--laranja);
 }
 /* =====================================================
-   CAMPO DE ESPAÃ‡O â€“ CORREÃ‡ÃƒO REAL
+   CAMPO DE ESPAÇO – CORREÇÃO REAL
 ===================================================== */
 
 /* Remove padding lateral do TD */
@@ -892,9 +892,9 @@
   width: 100%;
 }
 
-/* ðŸ”¥ ForÃ§a nÃ£o ocupar 100% */
+/* 🔥 Força não ocupar 100% */
 .orcamento-page .linha-espaco .nome-espaco-input {
-  width: auto !important; /* ðŸ”¥ impede largura total */
+  width: auto !important; /* 🔥 impede largura total */
   display: inline-flex; /* melhor que inline-block */
   justify-content: center;
   align-items: center;
@@ -929,7 +929,7 @@
   box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.15);
 }
 /* =====================================================
-   AUTOCOMPLETE ITENS (ORÃ‡AMENTO)
+   AUTOCOMPLETE ITENS (ORÇAMENTO)
 ===================================================== */
 
 .orcamento-page .item-autocomplete-wrapper {
@@ -976,7 +976,7 @@
   color: var(--el-color-text,#1f2020);
 }
 
-/* CÃ³digo */
+/* Código */
 .orcamento-page .item-autocomplete-item > div:last-child {
   font-size: 12px;
   color: var(--el-color-text,#1f2020);
@@ -1329,7 +1329,7 @@
   line-height: 1.4;
 }
 /* ===============================
-   PADRONIZAÃ‡ÃƒO CARD MONTAGEM
+   PADRONIZAÇÃO CARD MONTAGEM
 ================================ */
 
 .linha-desconto span,
@@ -1383,7 +1383,7 @@
   padding: 28px;
   border-radius: 18px;
 
-  background: #f6f9fc; /* ðŸ”¹ azul quase imperceptÃ­vel */
+  background: #f6f9fc; /* 🔹 azul quase imperceptível */
 
   border: 1px solid var(--el-button-primary-soft,#f4efe8);
 
@@ -1465,7 +1465,7 @@
   background: #676868bb;
 }
 /* ================================
-   MODAL PERSONALIZAÃ‡ÃƒO EASYLOC
+   MODAL PERSONALIZAÇÃO EASYLOC
 ================================ */
 
 .modal-personalizacao {
@@ -1488,7 +1488,7 @@
   border-color: var(--el-color-border,#e3e7ec);
 }
 
-/* campo select da personalizaÃ§Ã£o */
+/* campo select da personalização */
 
 .select-personalizacao {
   appearance: none;
@@ -1523,14 +1523,14 @@
   background: var(--el-color-surface-soft,#f6f7f9);
 }
 
-/* opÃ§Ãµes */
+/* opções */
 
 .select-personalizacao option {
   background: #ffffff;
   color: var(--el-color-text,#1f2020);
 }
 
-/* linha de personalizaÃ§Ã£o na tabela */
+/* linha de personalização na tabela */
 
 .orcamento-page .tabela tbody tr.item-personalizacao .nome-item,
 .orcamento-page .tabela tbody tr.item-personalizacao .select-personalizacao {
@@ -1577,10 +1577,10 @@
   margin-top: 2px;
 }
 /* ================================
-   SERVIÃ‡OS - EASYLOC
+   SERVIÇOS - EASYLOC
 ================================ */
 
-/* campo select do serviÃ§o */
+/* campo select do serviço */
 
 .select-servico {
   appearance: none;
@@ -1615,14 +1615,14 @@
   background: #eef1f4;
 }
 
-/* opÃ§Ãµes */
+/* opções */
 
 .select-servico option {
   background: #ffffff;
   color: var(--el-color-text,#1f2020);
 }
 
-/* linha do serviÃ§o dentro da tabela */
+/* linha do serviço dentro da tabela */
 
 .orcamento-page .tabela tbody tr.item-servico .select-servico {
   background: rgba(31,32,32,0.094);
@@ -1641,7 +1641,7 @@
   width: 100%;
 }
 /* =====================================================
-   PRÃ‰ RESERVA DO PEDIDO
+   PRÉ RESERVA DO PEDIDO
 ===================================================== */
 
 .area-reserva-topo {
@@ -1667,7 +1667,7 @@
 }
 
 /* =====================================================
-   BOTÃƒO PRÃ‰ RESERVA
+   BOTÃO PRÉ RESERVA
 ===================================================== */
 
 .btn-pre-reserva {
@@ -1694,7 +1694,7 @@
 }
 
 /* =====================================================
-   BOTÃƒO CANCELAR PRÃ‰ RESERVA
+   BOTÃO CANCELAR PRÉ RESERVA
 ===================================================== */
 
 .btn-cancelar-pre-reserva {
@@ -1719,7 +1719,7 @@
 }
 
 /* =====================================================
-   CAIXA DATA PRÃ‰ RESERVA
+   CAIXA DATA PRÉ RESERVA
 ===================================================== */
 
 .pre-reserva-box {
@@ -1757,7 +1757,7 @@
 }
 
 /* =====================================================
-   ALERTA QUANDO VIRAR PRÃ‰ RESERVA
+   ALERTA QUANDO VIRAR PRÉ RESERVA
 ===================================================== */
 
 .alerta-reserva-topo.pre-reserva-ativa {
@@ -1799,7 +1799,7 @@
   color: #166534;
 }
 
-/* CartÃ£o */
+/* Cartão */
 .pg-metodo.cartao {
   background: var(--el-color-surface-soft,#f6f7f9);
   color: #5b21b6;
@@ -1811,7 +1811,7 @@
   color: #9a3412;
 }
 
-/* TransferÃªncia */
+/* Transferência */
 .pg-metodo.transferencia {
   background: var(--el-color-surface-soft,#f6f7f9);
   color: var(--el-color-text,#1f2020);
@@ -1880,7 +1880,7 @@ tr:first-child {
   border-bottom: 1px solid #eef2f7;
 }
 
-/* tÃ­tulo */
+/* título */
 .orcamento-header span {
   font-size: 14px;
   font-weight: 600;
@@ -1895,7 +1895,7 @@ tr:first-child {
   cursor: pointer;
 }
 
-/* animaÃ§Ã£o */
+/* animação */
 .orcamento {
   transition: all 0.25s ease;
 }
@@ -5317,8 +5317,8 @@ tr:first-child {
   .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(3)::before { content: "Valor"; }
   .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(4)::before { content: "Status"; }
   .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(5)::before { content: "Forma"; }
-  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(6)::before { content: "CobranÃ§a"; }
-  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(7)::before { content: "AÃ§Ãµes"; }
+  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(6)::before { content: "Cobrança"; }
+  .pedido-screen .pagamento-minimal-card .cronograma-table td:nth-child(7)::before { content: "Ações"; }
 }
 
 /* =====================================================
@@ -6926,7 +6926,7 @@ html:root .pedido-screen .pagamento-minimal-card .pg-grupo-add{margin-left:auto;
 
 html:root .pedido-screen .comercial-trilha .ct-status-select{min-width:132px;flex:none}
 /* barra de etapas em telas até 1359px: textos e espaços menores para Voltar, etapas, ferramentas, número e Salvar caberem */
-@media (min-width:761px) and (max-width:1599px){ /* até 1599px: com o campo "até" da pré-reserva não sobra espaço para as etapas em tamanho grande */
+@media (min-width:761px) and (max-width:1799px){ /* até 1799px: com o campo "até" da pré-reserva não sobra espaço para as etapas em tamanho grande */
   html:root .pedido-screen .comercial-trilha{gap:10px;padding:10px 14px}
   html:root .pedido-screen .comercial-trilha .ct-voltar-status{gap:10px}
   html:root .pedido-screen .comercial-trilha .ct-status-select{min-width:118px}
@@ -6965,3 +6965,71 @@ html:root .pedido-screen .comercial-trilha .ct-linha{justify-content:safe center
 html:root .pedido-screen .comercial-trilha .ct-depois{flex:0 1 auto;min-width:0;overflow:hidden}
 html:root .pedido-screen .comercial-trilha .ct-depois .ct-passo{min-width:0;overflow:hidden;text-overflow:ellipsis}
 html:root .pedido-screen .comercial-trilha .ct-atual{flex:none}
+
+/* Out/2026: botão Salvar do topo com cor (pedido do usuário: "hoje está sem cor nenhuma") */
+html:root .pedido-screen .comercial-trilha .ct-avancar{background:#123f86!important;color:#fff!important;font-weight:600;box-shadow:0 2px 8px rgba(18,63,134,.25)}
+html:root .pedido-screen .comercial-trilha .ct-avancar:hover{background:#0d2f66!important}
+html:root .pedido-screen .comercial-trilha .ct-avancar:focus-visible{outline:2px solid #123f86;outline-offset:2px}
+
+/* Campo obrigatório que faltou (cliente, local, datas): borda e fundo vermelhos até a pessoa preencher */
+html:root .pedido-screen .is-invalido{border-color:#dc2626!important;background:#fef2f2!important;box-shadow:0 0 0 3px rgba(220,38,38,.15)!important}
+
+/* Status e validade compartilham um ?nico card compacto. */
+html:root .pedido-screen .comercial-trilha .ct-status-card{display:inline-flex;align-items:center;flex:none;max-width:100%}
+html:root .pedido-screen .comercial-trilha .ct-status-card[data-status="pre_reserva"]{padding:0 6px 0 0;border:1px solid #fde68a;border-radius:10px;background:#fef3c7}
+html:root .pedido-screen .comercial-trilha .ct-status-card[data-status="pre_reserva"] #pedidoStatusComercial{width:132px;min-width:132px;max-width:132px;min-height:40px!important;height:40px!important;padding:6px 20px 6px 10px!important;border:0!important;background-color:transparent!important;border-radius:9px 0 0 9px}
+html:root .pedido-screen .comercial-trilha .ct-status-card .ct-pre-reserva{gap:4px;padding:0 0 0 7px;border:0;border-left:1px solid #e6c56f;border-radius:0;background:transparent;font-size:11px}
+html:root .pedido-screen .comercial-trilha .ct-status-card .ct-pre-reserva input{box-sizing:border-box;width:120px;min-width:120px;height:30px;padding:0 3px;font-size:12px}
+
+/* Folga vertical para os indicadores de pend?ncia dentro da trilha. */
+html:root .pedido-screen .comercial-trilha .ct-linha{padding-block:9px}
+
+.logistica-manual{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0 14px}.logistica-manual small{color:#64748b}.logistica-manual button{font-size:12px;padding:6px 10px}.logistica-manual label{display:flex;align-items:center;gap:8px;font-size:12px}.logistica-manual input{width:120px;padding:7px;border:1px solid #cbd5e1;border-radius:8px}
+
+.logistica-manual .logistica-manual-observacao{display:flex;flex-direction:column;align-items:stretch;gap:8px;width:100%;margin-top:8px}.logistica-manual-observacao textarea{box-sizing:border-box;width:100%;min-height:84px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1f2937;font:13px Inter,sans-serif;resize:vertical}
+
+html:root .pedido-screen .pedido-campo-erro{display:block!important;color:#b91c1c!important;font-size:12px;line-height:1.4;font-weight:600;letter-spacing:0;text-transform:none;white-space:normal;margin-top:6px}html:root .pedido-screen .entrada-data-card:has(.is-invalido){border-color:#dc2626!important;background:#fff7f7!important;box-shadow:0 0 0 2px rgba(220,38,38,.12)}html:root .pedido-screen .meta-item:has(.is-invalido)>span,html:root .pedido-screen .location-field:has(.is-invalido)>span{color:#b91c1c!important}
+
+/* Financeiro do pedido: cards independentes para cada divis?o. */
+html:root .pedido-screen .pagamento-minimal-card .pagamento-table-wrap{border:0;border-radius:0;background:transparent;overflow:visible}
+html:root .pedido-screen .pg-componentes{display:grid;gap:22px}
+html:root .pedido-screen .pg-componente-card{min-width:0;border:1px solid #dfe5ec;border-radius:16px;background:#fff;box-shadow:0 3px 10px rgba(15,23,42,.035);overflow:hidden}
+html:root .pedido-screen .pg-componente-card>.pg-grupo{padding:18px 20px;background:#f8f9fb;border-bottom:1px solid #e6e9ee}
+html:root .pedido-screen .pg-componente-card .pg-grupo-chip{padding:0;border:0;border-radius:0;background:transparent;color:#26313d;font-size:18px;font-weight:600;letter-spacing:0}
+html:root .pedido-screen .pg-componente-card .pg-grupo-total{margin-left:8px}
+html:root .pedido-screen .pg-card-tabela{overflow-x:auto}
+html:root .pedido-screen .pg-card-vazio{padding:18px 20px;margin:0;color:#64748b;font-size:13px}
+@media(min-width:761px){html:root .pedido-screen .pg-card-tabela .cronograma-table{min-width:750px}}
+@media(max-width:760px){html:root .pedido-screen .pg-componente-card>.pg-grupo{padding:16px}html:root .pedido-screen .pg-card-tabela{padding:10px;overflow:visible}html:root .pedido-screen .pg-componente-card .pg-grupo-total{margin-left:0}}
+
+/* Financeiro do pedido sem o container grande (23/out/2026, pedido do usuário): o título e o resumo ficam soltos no fundo
+   da página e Locação, Montagem e Frete são blocos separados, cada um com o seu cartão. */
+html:root .pedido-screen .finance-card.pagamento-minimal-card{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;overflow:visible!important}
+html:root .pedido-screen .pagamento-minimal-card>.pagamento-card-head{padding:0 2px 18px!important;border:0!important;background:transparent!important}
+html:root .pedido-screen .pagamento-minimal-card .pagamento-table-wrap{margin:0!important;padding:0!important}
+.pedido-screen.em-contrato>.pedido-shell,.pedido-screen.em-contrato>.pedido-catalogo-real{display:none!important}
+.pedido-screen .pedido-etapa-contrato[hidden]{display:none!important}
+.pedido-screen .pedido-etapa-contrato{padding:28px;max-width:1400px;margin:0 auto}
+.pedido-screen .pedido-etapa-contrato .pedido-contrato-card{margin-top:0}
+.pedido-screen .pedido-etapa-contrato .pedido-contrato-preview{max-height:none;overflow:visible;padding:24px;background:#fff}
+@media(max-width:700px){.pedido-screen .pedido-etapa-contrato{padding:16px}}
+
+/* Dados do pedido: Cliente ocupava 280px fixos e passava por cima do Contato quando a coluna era mais estreita.
+   Agora o campo (e a caixa da busca de cliente) acompanha a coluna, como Contato e Evento. */
+html:is(#pedido-meta-cliente,html) body .pedido-screen .pedido-meta-strip .meta-item>.autocomplete-wrapper,
+html:is(#pedido-meta-cliente,html) body .pedido-screen .pedido-meta-strip .meta-item>.autocomplete-wrapper>.meta-input{width:100%!important;max-width:none!important;min-width:0!important}
+
+/* Frete e Montagem no Financeiro e pagamentos, abaixo do Resumo do pedido (coluna da direita). */
+.pedido-screen .pedido-etapa-financeiro .pedido-financeiro .logistica-card label.montagem-info{display:flex;flex-direction:column;gap:6px;margin:4px 16px 16px}
+.pedido-screen .pedido-etapa-financeiro .pedido-financeiro .logistica-card label.montagem-info input{width:100%;box-sizing:border-box}
+
+/* Janela modal aberta no catálogo do pedido: o catálogo cobre a tela inteira, por cima da barra de etapas, para a janela
+   não ficar espremida nem com o topo escondido (out/2026). */
+html:is(#pedido-modal-catalogo,html) body .pedido-screen.catalogo-modal-aberto .pedido-catalogo-real{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:0!important;z-index:5000!important}
+/* "Cálculo automático / Ajustar manualmente" e a linha de informação da montagem com o mesmo recuo do resto do card. */
+.pedido-screen .pedido-etapa-financeiro .pedido-financeiro .logistica-card .logistica-manual{margin:6px 16px 12px}
+.pedido-screen .pedido-etapa-financeiro .pedido-financeiro .logistica-card .montagem-info:not(label){margin:4px 16px 16px}
+
+/* Frete e Montagem no Financeiro e pagamentos com o mesmo fundo claro do "Resumo do pedido" (out/2026). */
+html:root .pedido-screen .pedido-etapa-financeiro .pedido-financeiro .finance-card.logistica-card{background:#faf9f6!important;border-color:#dedbd2!important;box-shadow:none!important}
+html:root .pedido-screen .pedido-etapa-financeiro .pedido-financeiro .finance-card.logistica-card .logistica-extra div{background:transparent!important}

@@ -36,6 +36,7 @@ window.aguardarContexto = function (timeoutMs = 10000) {
 };
 
 (async () => {
+  await window.__limpezaDadosPronta;
   
   // 🔐 PROTEÇÃO 1 — veio do login?
   const veioDoLogin = sessionStorage.getItem("login_ok");
@@ -47,8 +48,9 @@ window.aguardarContexto = function (timeoutMs = 10000) {
   }
 
   // 🔐 PROTEÇÃO 2 — sessão Supabase válida?
-  const { data: { session } } =
-    await window.supabaseClient.auth.getSession();
+  const session = !navigator.onLine && window.OperacaoOffline && /\/Logistica\/PainelLogistico\//i.test(location.pathname)
+    ? await window.OperacaoOffline.sessao(window.supabaseClient)
+    : (await window.supabaseClient.auth.getSession()).data.session;
 
   if (!session) {
     window.location.href = "login.html";
@@ -72,6 +74,18 @@ window.aguardarContexto = function (timeoutMs = 10000) {
   if (!empresaId) {
     window.location.href = "login.html";
     return;
+  }
+
+  // A conferência offline usa somente o acesso previamente validado e os dados deste usuário.
+  // Toda transmissão volta a validar vínculo, permissões e etapa no servidor.
+  if (!navigator.onLine && /\/Logistica\/PainelLogistico\//i.test(location.pathname) && window.OperacaoOffline) {
+    try {
+      const acesso = await window.OperacaoOffline.acessoLocal(window.supabaseClient, empresaId);
+      window.__ACESSO_OPERACAO_OFFLINE = acesso;
+      window.__CONTEXT = acesso.contexto;
+      window.dispatchEvent(new CustomEvent('easyloc:context-ready', { detail: window.__CONTEXT }));
+      return;
+    } catch (_) { /* Sem preparação prévia, segue a validação normal. */ }
   }
 
   // 🔥 PEGA ID REAL DO USUÁRIO LOGADO

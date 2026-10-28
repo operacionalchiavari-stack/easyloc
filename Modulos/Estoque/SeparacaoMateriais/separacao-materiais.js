@@ -26,6 +26,7 @@
     },
     pedidoAtualId: null,
     activeMode: null,
+    modosDisponiveis: {},
     scanBuffer: "",
     scanTimer: null,
     keyHandler: null,
@@ -252,6 +253,7 @@
     }
 
     const statusComercial = normalizarStatusComercial(pedido.status_comercial);
+    if(pedido.operacao?.carregamento?.iniciado_em || pedido.operacao?.carregamento?.concluido_em || pedido.status_operacional)return {liberado:false,motivo:'A Expedição assumiu o pedido. Solicite a liberação para a Triagem.'};
     if (pedido.reducao_liberada_em) return { liberado: false, motivo: "Retirada liberada ao comercial. Separação pausada até salvar a revisão ou cancelar a liberação." };
     if (!["aprovado", "enviado", "finalizado"].includes(statusComercial)) {
       return {
@@ -346,6 +348,49 @@
     if (el) el.textContent = text;
   }
 
+  // Foto do decorador (cadastro do cliente), guardada por cliente para não buscar de novo.
+  const fotosClientes = new Map();
+  async function fotoCliente(pedido) {
+    const chave = pedido.cliente_id || "nome:" + (pedido.cliente_nome || "");
+    if (!fotosClientes.has(chave)) {
+      fotosClientes.set(chave, (async () => {
+        let q = state.supabase.from("clientes_empresas").select("catalogo_logo_url").eq("empresa_id", state.empresaId);
+        q = pedido.cliente_id ? q.eq("id", pedido.cliente_id) : q.eq("nome_razao", pedido.cliente_nome || "");
+        const { data } = await q.limit(1);
+        const url = data?.[0]?.catalogo_logo_url || "";
+        return /^https?:\/\//i.test(url) ? url : "";
+      })().catch(() => ""));
+    }
+    return fotosClientes.get(chave);
+  }
+  function pintarClienteCabecalho(el, pedido) {
+    if (!el) return;
+    const nome = pedido.cliente_nome || "Cliente não informado";
+    const local = pedidoLocal(pedido);
+    const avatar = document.createElement("span");
+    avatar.className = "separacao-cliente-foto";
+    avatar.textContent = nome.trim().charAt(0).toUpperCase() || "?";
+    const textoNome = document.createElement("strong");
+    textoNome.className = "separacao-cliente-nome";
+    textoNome.textContent = nome;
+    const partes = [avatar, textoNome];
+    if (local && local !== "-") {
+      const textoLocal = document.createElement("span");
+      textoLocal.className = "separacao-cliente-local";
+      textoLocal.textContent = local;
+      partes.push(textoLocal);
+    }
+    el.classList.add("separacao-cliente");
+    el.replaceChildren(...partes);
+    fotoCliente(pedido).then((url) => {
+      if (!url || !avatar.isConnected) return;
+      const img = document.createElement("img");
+      img.src = url; img.alt = "";
+      img.onerror = () => { img.remove(); avatar.textContent = nome.trim().charAt(0).toUpperCase() || "?"; };
+      avatar.textContent = ""; avatar.appendChild(img);
+    });
+  }
+
   function renderContadores(grupos) {
     const aguardando = grupos.aguardando.length;
     const emSeparacao = grupos.emSeparacao.length;
@@ -398,7 +443,8 @@
         <div class="separacao-card-meta-line">${escapeHtml(data)} &middot; ${escapeHtml(setor)} &middot; ${escapeHtml(qtdLabel)}</div>
         ${coluna === "andamento" ? progresso : ""}
         ${regra.liberado ? "" : `<div class="separacao-lock-note">${escapeHtml(regra.motivo)}</div>`}
-        ${coluna === "andamento" && STATUS_EM_ANDAMENTO.has(pedido.status) && !pedido.status_operacional ? `<button type="button" class="btn" data-separacao-action="liberar-retirada" data-pedido-id="${escapeHtml(pedido.id)}">${pedido.reducao_liberada_em ? "Cancelar liberação de retirada" : "Liberar retirada ao comercial"}</button>` : ""}
+        ${coluna === "andamento" && STATUS_EM_ANDAMENTO.has(pedido.status) && !pedido.status_operacional ? `<button type="button" class="btn" data-separacao-action="liberar-retirada" data-pedido-id="${escapeHtml(pedido.id)}">Liberar para o Comercial</button>` : ""}
+        ${coluna==='separado'?`<button type="button" class="btn" data-separacao-action="reabrir-triagem" data-pedido-id="${escapeHtml(pedido.id)}">Reabrir triagem</button>`:''}
       </article>
     `;
   }
@@ -419,7 +465,7 @@
     const numeroLabel = String(numero).startsWith("#") ? String(numero) : "#" + numero;
     const lidos = state.retornoLidos?.get(String(pedido.id)) || 0;
     const feito = pedido.operacao?.retorno;
-    let nota = "Conferência às cegas";
+    let nota = pedido.fluxo_etapa==='retorno_simultaneo' ? "Conferência às cegas · simultânea com a Expedição" : "Conferência às cegas";
     if (coluna === "separado" && feito) {
       const falta = Array.isArray(feito.faltando) ? feito.faltando.length : 0;
       nota = "Retorno conferido" + (feito.por ? " por " + feito.por : "") + (falta ? " · " + falta + " não voltou" : " · tudo voltou");
@@ -474,14 +520,15 @@
       return (!termo || texto.includes(termo)) && (!status || pedido.status === status);
     });
 
+    const naTriagem=state.pedidosFiltrados.filter(p=>p.fluxo_etapa==='triagem'||p.somente_consulta);
     const grupos = {
-      aguardando: state.pedidosFiltrados.filter((pedido) => pedido.status === "pendente"),
-      emSeparacao: state.pedidosFiltrados.filter((pedido) => STATUS_EM_ANDAMENTO.has(pedido.status)),
-      separados: state.pedidosFiltrados.filter((pedido) => STATUS_FINALIZADO.has(pedido.status))
+      aguardando: naTriagem.filter((pedido) => pedido.status === "pendente"),
+      emSeparacao: naTriagem.filter((pedido) => STATUS_EM_ANDAMENTO.has(pedido.status)),
+      separados: naTriagem.filter((pedido) => STATUS_FINALIZADO.has(pedido.status))
     };
 
-    const retornos = { aguardando: [], andamento: [], separado: [] };
-    state.pedidosFiltrados.filter(p => !!p.operacao?.descarregamento?.concluido_em && !p.encerrado_operacional_em).forEach((p) => retornos[colunaRetorno(p)].push(p));
+    const volta=state.pedidosFiltrados.filter(p=>['triagem_retorno','retorno_simultaneo'].includes(p.fluxo_etapa));
+    const retornos = { aguardando: volta.filter(p=>!p.operacao?.retorno?.iniciado_em), andamento: volta.filter(p=>p.operacao?.retorno?.iniciado_em), separado: [] };
     renderContadores({
       aguardando: [...grupos.aguardando, ...retornos.aguardando],
       emSeparacao: [...grupos.emSeparacao, ...retornos.andamento],
@@ -519,9 +566,9 @@
     atualizaTexto(els.separacaoModoTitulo, titulo);
     atualizaTexto(els.separacaoModoMeta, metaLimpo);
     atualizaTexto(els.separacaoManualTitulo, titulo);
-    atualizaTexto(els.separacaoManualMeta, metaLimpo);
     atualizaTexto(els.separacaoQrTitulo, titulo);
-    atualizaTexto(els.separacaoQrMeta, metaLimpo);
+    // Cabeçalho da separação (out/2026): foto do decorador, nome e local.
+    [els.separacaoManualMeta, els.separacaoQrMeta].forEach((el) => pintarClienteCabecalho(el, pedido));
     atualizaTexto(els.separacaoUmCliqueTitulo, `Concluir ${titulo}?`);
     atualizaTexto(els.separacaoUmCliqueMeta, `Marcar todos os itens do pedido ${pedido.numero_pedido || "-"} como separados.`);
 
@@ -590,7 +637,7 @@
     const separado = itemSeparado(item);
 
     return `
-      <article class="item-card${itemTotal(item) > 0 && itemSeparado(item) >= itemTotal(item) ? " is-completo" : ""}" data-separacao-item-id="${escapeHtml(item.id)}">
+      <article class="item-card${itemTotal(item) > 0 && itemSeparado(item) >= itemTotal(item) ? " is-completo" : itemSeparado(item) < itemTotal(item) ? " is-incompleto" : ""}" data-separacao-item-id="${escapeHtml(item.id)}">
         <div class="item-requested" title="Quantidade solicitada">
           <span>Qtd</span>
           <strong>${escapeHtml(formatQty(total))}</strong>
@@ -624,7 +671,7 @@
     const percent = itemPercent(item);
 
     return `
-      <article class="item-card${itemTotal(item) > 0 && itemSeparado(item) >= itemTotal(item) ? " is-completo" : ""}" data-separacao-item-id="${escapeHtml(item.id)}">
+      <article class="item-card${itemTotal(item) > 0 && itemSeparado(item) >= itemTotal(item) ? " is-completo" : itemSeparado(item) < itemTotal(item) ? " is-incompleto" : ""}" data-separacao-item-id="${escapeHtml(item.id)}">
         <div class="item-requested" title="Quantidade solicitada">
           <span>Qtd</span>
           <strong>${escapeHtml(formatQty(itemTotal(item)))}</strong>
@@ -721,17 +768,7 @@
       state.dbReady = true;
       await carregarRegrasLogistica();
 
-      const { data: pedidos, error: erroPedidos } = await state.supabase
-        .from(TABLES.pedidos)
-        .select("*")
-        .eq("empresa_id", state.empresaId)
-        .in("status", ["pendente", "em_separacao", "pausado", "separado", "separado_com_divergencia"])
-        .in("status_comercial", ["pre_reserva", "aprovado", "enviado", "finalizado"])
-        .order("data_hora", { ascending: true });
-
-      if (erroPedidos) throw erroPedidos;
-
-      state.pedidos = pedidos || [];
+      state.pedidos = await window.PedidoFluxo.fila(state.supabase,state.empresaId,'triagem');
 
       const pedidoIds = state.pedidos.map((pedido) => pedido.id);
       if (!pedidoIds.length) {
@@ -926,6 +963,17 @@
       return;
     }
 
+    const {data:modos,error:erroModos}=await state.supabase.rpc('separacao_modos_disponiveis',{p_empresa:state.empresaId});
+    if(erroModos){avisar(erroModos.message,'Separação','erro');return;}
+    state.modosDisponiveis=modos || {};
+    // Modo travado por pedido (out/2026): o pedido iniciado num modo continua nele, sem perguntar de novo.
+    if(pedido.modo_separacao){
+      if(!state.modosDisponiveis[pedido.modo_separacao]){avisar(`Este pedido foi iniciado no modo ${nomeModo(pedido.modo_separacao)}, que não está liberado para você.`,'Separação','aviso');return;}
+      abrirNoModo(pedido.modo_separacao);
+      return;
+    }
+    document.querySelectorAll('[data-separacao-modo]').forEach(b=>{b.hidden=!state.modosDisponiveis[b.dataset.separacaoModo];});
+    els.separacaoModoModal.querySelector('[data-sem-modos]').hidden=Object.values(state.modosDisponiveis).some(Boolean);
     state.activeMode = "modo";
     renderPedidoAtual();
     abrirModal(els.separacaoModoModal);
@@ -938,7 +986,24 @@
     abrirModal(els.separacaoManualModal);
   }
 
+  const nomeModo=m=>({manual:'Manual',qr:'QR Code','um-clique':'1 clique'}[m]||m);
+  function abrirNoModo(modo){
+    if(modo==='manual')abrirManualSeparacao();
+    if(modo==='qr')abrirQrSeparacao();
+    if(modo==='um-clique')abrirUmCliqueSeparacao();
+  }
+  // Grava o modo escolhido no pedido; depois disso ele não muda mais.
+  async function escolherModoSeparacao(modo){
+    const pedido=getPedidoAtual();
+    if(!pedido || !state.modosDisponiveis[modo])return;
+    const {data,error}=await state.supabase.rpc('separacao_definir_modo',{p_pedido:pedido.id,p_modo:modo});
+    if(error){avisar(error.message,'Separação','aviso');return;}
+    pedido.modo_separacao=data || modo;
+    abrirNoModo(pedido.modo_separacao);
+  }
+
   function abrirManualSeparacao() {
+    if(!state.modosDisponiveis["manual"])return;
     fecharModal(els.separacaoModoModal);
     state.activeMode = "manual";
     renderPedidoAtual();
@@ -946,6 +1011,7 @@
   }
 
   function abrirQrSeparacao() {
+    if(!state.modosDisponiveis["qr"])return;
     fecharModal(els.separacaoModoModal);
     state.activeMode = "qr";
     renderPedidoAtual();
@@ -953,6 +1019,7 @@
   }
 
   function abrirUmCliqueSeparacao() {
+    if(!state.modosDisponiveis["um-clique"])return;
     fecharModal(els.separacaoModoModal);
     state.activeMode = "um-clique";
     renderPedidoAtual();
@@ -1515,6 +1582,9 @@
   }
 
   async function atualizarItemSeparacao(itemSeparacao, payload, etiquetaId = null) {
+    const modo=state.activeMode;
+    if(!state.modosDisponiveis[modo])throw new Error('Este modo de separação não está liberado para você.');
+    payload={...payload,modo_separacao:modo};
     if (itemSeparacao.virtual) {
       const anterior = { ...itemSeparacao };
       Object.assign(itemSeparacao, payload);
@@ -1525,7 +1595,7 @@
       const kitsCompletos = Math.min(...irmaos.map((i) => Math.floor(itemSeparado(i) / (i.por_kit || 1))));
       const algum = irmaos.some((i) => itemSeparado(i) > 0);
       const dadosKit = {
-        componentes, quantidade_separada: kitsCompletos,
+        componentes, modo_separacao:modo, quantidade_separada: kitsCompletos,
         status: irmaos.every((i) => itemSeparado(i) >= itemTotal(i)) ? "concluido" : algum ? "em_andamento" : "pendente",
         atualizado_por: state.usuarioId, atualizado_em: new Date().toISOString()
       };
@@ -1627,18 +1697,10 @@
     let status = "separado";
     let motivo = "";
 
+    // A triagem só termina com a separação inteira (out/2026): não existe mais finalizar com divergência.
     if (resumo.faltante > 0) {
-      const confirmar = typeof window.confirmarGlobal === "function"
-        ? await window.confirmarGlobal(
-          `Ainda existem ${formatQty(resumo.faltante)} itens faltantes. Finalizar com divergencia?`,
-          "Finalizar com pendencia",
-          { confirmarTexto: "Finalizar", cancelarTexto: "Voltar", tipo: "warning" }
-        )
-        : false;
-
-      if (!confirmar) return false;
-      status = "separado_com_divergencia";
-      motivo = `Finalizado com ${formatQty(resumo.faltante)} itens faltantes.`;
+      avisar(`Ainda faltam ${formatQty(resumo.faltante)} itens. Separe todos os itens para finalizar a triagem.`, "Separação incompleta", "aviso");
+      return false;
     }
 
     try { await atualizarPedidoStatus(pedido.id, status, true, {
@@ -1719,12 +1781,15 @@
         event.stopPropagation();
         const pedidoId = actionButton.dataset.pedidoId;
         const action = actionButton.dataset.separacaoAction;
+        if(action==='reabrir-triagem'){
+          (async()=>{actionButton.disabled=true;const {error}=await state.supabase.rpc('operacao_transferir_pedido',{p_pedido:pedidoId,p_acao:'reabrir_triagem',p_motivo:'Correção antes do início da Expedição'});if(error)throw error;await carregarFila();await iniciarPedidoSeparacao(pedidoId);})().catch(e=>{actionButton.disabled=false;avisar(e.message,'Triagem','aviso');});return;
+        }
         if (action === "liberar-retirada") {
           const pedido = state.pedidos.find(p => String(p.id) === String(pedidoId));
           if(!pedido || !STATUS_EM_ANDAMENTO.has(pedido.status) || pedido.status_operacional) return;
           const liberar = !pedido?.reducao_liberada_em;
           (async () => {
-            if(liberar && !await window.confirmarGlobal("A separação ficará pausada enquanto o comercial revisa as retiradas. Peças já separadas precisam ser desmarcadas antes de reduzir a quantidade.", "Liberar retirada", { confirmarTexto: "Liberar", cancelarTexto: "Voltar" })) return;
+            if(liberar && !await window.confirmarGlobal("O pedido voltará ao Comercial e sairá da fila da Triagem até a revisão ser salva. Peças separadas precisam ser desmarcadas antes de reduzir a quantidade.", "Liberar para o Comercial", { confirmarTexto: "Liberar", cancelarTexto: "Voltar" })) return;
             actionButton.disabled = true;
             const { error } = await state.supabase.rpc("pedido_liberar_reducao", { p_pedido: pedidoId, p_liberar: liberar });
             if(error) throw error;
@@ -1767,9 +1832,7 @@
       const option = event.target.closest("[data-separacao-modo]");
       if (!option) return;
       const modo = option.dataset.separacaoModo;
-      if (modo === "manual") abrirManualSeparacao();
-      if (modo === "qr") abrirQrSeparacao();
-      if (modo === "um-clique") abrirUmCliqueSeparacao();
+      escolherModoSeparacao(modo).catch((e) => avisar(e.message, "Separação", "erro"));
     });
 
     els.separacaoManualModal?.addEventListener("click", (event) => {

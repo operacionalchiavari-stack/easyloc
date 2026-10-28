@@ -20,7 +20,7 @@ const nomes=(page)=>page.locator('.catalog-grid-card .catalog-grid-card-name').a
  await page.route('https://fixture/**',r=>r.fulfill({contentType:'image/png',body:PNG_1X1}));
  await page.addInitScript(installMock,{staff:true});
  await page.goto(base);
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('[data-home-category="sofas"]').click();
  await page.locator('.catalog-grid-card').first().waitFor();
  assert.deepEqual(await nomes(page),['Sofá Um','Sofá Dois']);
@@ -78,10 +78,10 @@ const nomes=(page)=>page.locator('.catalog-grid-card .catalog-grid-card-name').a
  await page.addInitScript((its)=>{
   sessionStorage.setItem('catalogo_token','test');
   window.calls=[];
-  window.supabaseClient={rpc:async(name,params)=>{window.calls.push(name);return {data:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:its}};}};
+  window.supabaseClient={rpc:async(name,params)=>{window.calls.push(name);return {data:name==='personalizacao_lista'?[]:name==='catalogo_validar_sessao'?{valido:true,empresa_id:'company',cliente_id:'client'}:name==='catalogo_capas_carregar'?{}:{empresa:{nome:'Chiavari'},decorador:{nome:'Kelly'},itens:its}};}};
  },itens);
  await page.goto(base);
- await page.locator('[data-gateway-tile="catalogo"]').click();
+ await page.locator('[data-gateway-tile="catalogo"]').click();await require('./helpers/catalogo-entrada.cjs')(page);
  await page.locator('.catalog-home-grid').waitFor();
  assert.deepEqual(await page.locator('.catalog-home-card .catalog-grid-card-name').allTextContents(),['Bares','Estantes','Aparadores'],'Decorador vê as categorias na ordem da equipe (sem ordem no fim)');
  assert.equal(await page.locator('.catalog-home-card[draggable="true"]').count(),0,'Decorador não arrasta categorias');
@@ -94,7 +94,7 @@ const nomes=(page)=>page.locator('.catalog-grid-card .catalog-grid-card-name').a
  await page.waitForTimeout(300);
  assert.equal(await page.evaluate(()=>window.calls.includes('catalogo_reordenar')),false,'Nada é gravado pelo decorador');
  // Imersiva segue a mesma ordem.
- await page.locator('[data-view-mode="immersive"]').click();
+ await page.locator('[data-grid-item]').first().click();
  await page.locator('.catalog-product-section').first().waitFor();
  assert.equal(await page.locator('.catalog-product-section .product-title').first().textContent(),'Estante Lord');
  assert.deepEqual(errors,[]);

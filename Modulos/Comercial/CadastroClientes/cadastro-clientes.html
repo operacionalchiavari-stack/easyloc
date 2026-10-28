@@ -5,36 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Cadastro de Clientes</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="cadastro-clientes.css?v=20261018-cinza">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="cadastro-clientes.css?v=20261026-acentos">
 </head>
 <body>
 <div class="container el-page">
 
 <div class="header-list">
   <h2>Clientes Cadastrados</h2>
-
-  <div class="el-stat-row" id="clientesStats">
-    <article class="el-stat-card blue">
-      <span aria-hidden="true"><i data-lucide="users-round"></i></span>
-      <div><small>Total de clientes</small><strong id="clientesStatTotal">0</strong><em>Cadastrados</em></div>
-    </article>
-    <article class="el-stat-card green">
-      <span aria-hidden="true"><i data-lucide="circle-check"></i></span>
-      <div><small>Ativos</small><strong id="clientesStatAtivos">0</strong><em id="clientesStatAtivosPercent">0% do total</em></div>
-    </article>
-    <article class="el-stat-card orange">
-      <span aria-hidden="true"><i data-lucide="triangle-alert"></i></span>
-      <div><small>Mornos</small><strong id="clientesStatMornos">0</strong><em>Atenção recomendada</em></div>
-    </article>
-    <article class="el-stat-card red">
-      <span aria-hidden="true"><i data-lucide="circle-x"></i></span>
-      <div><small>Inativos</small><strong id="clientesStatInativos">0</strong><em>Sem locação recente</em></div>
-    </article>
-  </div>
 
 <div class="header-actions">
     <!-- Créditos de IA fica aqui dentro (pedido do usuário), não no menu. Some sem permissão (data-module-href, js/core/permissions.js?v=20261019-painel-logistico). -->
@@ -127,7 +108,7 @@
 
     <div class="form-grid three-cols">
 
-      <div class="form-group el-field cliente-foto-field" style="grid-column:span 2;grid-row:span 2;">
+      <div class="form-group el-field cliente-foto-field" style="grid-column:span 2;grid-row:span 3;">
         <label>Foto</label>
         <label class="cliente-foto-avatar" title="Selecionar foto">
           <img id="catalogoLogoPreview" alt="Foto do cliente" class="is-empty">
@@ -151,7 +132,7 @@
 
       <div class="form-group el-field" style="grid-column:span 3;">
         <label>CPF / CNPJ *</label>
-        <input class="el-input" id="cpfCnpj" readonly>
+        <input class="el-input" id="cpfCnpj" data-mascara="cpfcnpj" data-mascara-pj="#tipoPessoa" readonly>
       </div>
 
       <div class="form-group el-field" style="grid-column:span 2;">
@@ -161,7 +142,7 @@
 
       <div class="form-group el-field" style="grid-column:span 2;">
         <label>Telefone *</label>
-        <input class="el-input" id="telefone" readonly>
+        <input class="el-input" id="telefone" data-mascara="telefone" readonly>
       </div>
 
       <div class="form-group el-field" style="grid-column:span 4;">
@@ -191,15 +172,20 @@
         <label>E-mail de acesso ao catálogo</label>
         <input class="el-input" id="catalogoEmail" type="email" autocomplete="off" readonly>
       </div>
-      <div class="form-group el-field" style="grid-column:span 3;">
+      <div class="form-group el-field" style="grid-column:span 2;">
         <label>Nova senha do catálogo</label>
         <input class="el-input" id="catalogoSenha" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" readonly>
         <small id="catalogoSenhaStatus">Nenhuma senha configurada.</small>
       </div>
-      <div class="form-group el-field" style="grid-column:span 3;">
+      <div class="form-group el-field" style="grid-column:span 2;">
         <label>Confirmar nova senha</label>
         <input class="el-input" id="catalogoSenhaConfirmacao" type="password" minlength="8" autocomplete="new-password" placeholder="Digite a mesma senha" readonly>
       </div>
+      <section class="cliente-bv" aria-labelledby="clienteBvTitulo">
+        <div><h4 id="clienteBvTitulo">Comissão do decorador · BV</h4></div>
+        <div class="form-group el-field"><label for="clienteBvRecebe">Recebe BV?</label><select id="clienteBvRecebe" class="el-select" disabled><option value="false">Não recebe</option><option value="true">Sim, recebe BV</option></select></div>
+        <div class="form-group el-field"><label for="clienteBvPercentual">BV sobre a locação (%)</label><input id="clienteBvPercentual" class="el-input" type="number" min="0" max="100" step="0.01" value="0" readonly><small>Exemplo: 10% de R$ 10.000,00 = R$ 1.000,00 de BV.</small></div>
+      </section>
       <!-- ENDEREÇO COM GOOGLE PLACES -->
 <div class="form-group el-field" style="grid-column:span 6;">
   <label>Endereço completo *</label>
@@ -305,13 +291,14 @@
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../../js/core/listPager.js"></script>
-<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/listPager.js?v=20261026-rolagem"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/campoProtegido.js?v=20261023-cofre-doc"></script>
-<script src="cadastro-clientes.js?v=20261023-cofre-doc"></script>
+<script src="../../../js/core/etiquetasCadastro.js?v=20261026"></script>
+<script src="cadastro-clientes.js?v=20261026-etiquetas"></script>
 <script>
   // Dentro do dashboard abre pelo shell (histórico + permissão); aberta sozinha, navega direto.
   function abrirCreditosIA() {
@@ -320,6 +307,6 @@
   }
 </script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

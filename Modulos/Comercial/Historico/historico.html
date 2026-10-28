@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Histórico do Comercial</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="historico.css?v=20261021-historico2">
+</head>
+<body>
+<div class="container el-page hc-page">
+  <div class="header-list">
+    <h2>Histórico</h2>
+  </div>
+
+  <!-- Resumo dos últimos dias -->
+  <section class="hc-kpis" aria-label="Resumo">
+    <div class="hc-kpi"><small>Hoje</small><strong id="hcKpiHoje">—</strong><span>alterações</span></div>
+    <div class="hc-kpi"><small>Últimos 7 dias</small><strong id="hcKpiSemana">—</strong><span>alterações</span></div>
+    <div class="hc-kpi"><small>Pedidos movimentados</small><strong id="hcKpiPedidos">—</strong><span>nos últimos 7 dias</span></div>
+    <div class="hc-kpi"><small>Pessoas</small><strong id="hcKpiPessoas">—</strong><span>fizeram alterações em 7 dias</span></div>
+  </section>
+
+  <!-- Filtros -->
+  <section class="hc-filtros" aria-label="Filtros">
+    <label class="hc-busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="hcBusca" placeholder="Pedido, cliente, item ou o que mudou" autocomplete="off"></label>
+    <label class="hc-campo"><span>Tipo</span><select id="hcTipo">
+      <option value="">Todos os tipos</option>
+      <option value="pedido">Pedido criado / excluído</option>
+      <option value="status">Situação</option>
+      <option value="itens">Itens</option>
+      <option value="evento">Cliente, evento e datas</option>
+      <option value="valores">Valores e pagamento</option>
+      <option value="financeiro">Recebimentos</option>
+      <option value="operacao">Operação (separação, etiquetas, conferência)</option>
+      <option value="contrato">Contrato</option>
+      <option value="catalogo">Projetos do catálogo</option>
+    </select></label>
+    <label class="hc-campo"><span>Quem</span><select id="hcAutor"><option value="">Todas as pessoas</option></select></label>
+    <label class="hc-campo"><span>De</span><input type="date" id="hcDe"></label>
+    <label class="hc-campo"><span>Até</span><input type="date" id="hcAte"></label>
+    <div class="hc-filtros-acoes">
+      <button type="button" class="btn secondary" id="hcLimpar">Limpar</button>
+      <button type="button" class="btn secondary" id="hcExportar">Exportar</button>
+    </div>
+  </section>
+
+  <div class="hc-corpo">
+    <!-- Pedidos: escolher um mostra só o histórico dele -->
+    <aside class="hc-pedidos" aria-label="Pedidos">
+      <h3>Pedidos</h3>
+      <input type="search" id="hcBuscaPedido" placeholder="Filtrar pedidos" autocomplete="off">
+      <ol id="hcListaPedidos"></ol>
+    </aside>
+
+    <section class="hc-linha-do-tempo" aria-live="polite">
+      <div class="hc-pedido-topo" id="hcPedidoTopo" hidden></div>
+      <p class="hc-status" id="hcStatus">Carregando…</p>
+      <div id="hcLista"></div>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261021-historico"></script>
+<script src="historico.js?v=20261021-historico"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+</body>
+</html>

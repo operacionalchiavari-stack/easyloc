@@ -4,7 +4,7 @@
 const container = document.querySelector(".locais-container");
 
 /* =====================================================
-   SPA GUARD (EVITA DUPLA INICIALIZAÃ‡ÃƒO)
+   SPA GUARD (EVITA DUPLA INICIALIZAÇÃO)
 ===================================================== */
 if (
   window.__locaisModuleLoaded &&
@@ -15,7 +15,7 @@ if (
 
 if (!container) return;
 
-// âœ… sÃ³ executa se realmente entrou no mÃ³dulo
+// ✅ só executa se realmente entrou no módulo
 resetEnderecoAutocomplete();
 
 container.dataset.initialized = "true";
@@ -42,10 +42,10 @@ window.__locaisModuleLoaded = true;
   }
 
   /* =====================================================
-     VALIDAÃ‡Ã•ES â€“ LOCAIS
+     VALIDAÇÕES – LOCAIS
   ===================================================== */
 
-  // remove tudo que nÃ£o Ã© nÃºmero
+  // remove tudo que não é número
   function soNumeros(v) {
     return (v || "").replace(/\D/g, "");
   }
@@ -107,20 +107,21 @@ window.__locaisModuleLoaded = true;
     document.querySelectorAll(".tag-group").forEach(group => {
       const groupName = group.dataset.group;
       if (!groupName) return;
+      if (group.dataset.obrigatoria === "false") return;
 
       const selecionadas = group.querySelectorAll(".tag.selected");
       if (selecionadas.length === 0) valido = false;
     });
 
     if (!valido) {
-      mostrarAlerta("Selecione pelo menos uma opÃ§Ã£o em cada grupo de tags.");
+      mostrarAlerta("Selecione pelo menos uma opção em cada grupo de tags.");
       return false;
     }
 
     return true;
   }
 
-  /* ---------- VALIDAÃ‡ÃƒO COMPLETA DO LOCAL ---------- */
+  /* ---------- VALIDAÇÃO COMPLETA DO LOCAL ---------- */
 function validarLocalCompleto() {
   const nome = document.getElementById("locaisNome");
   const cpfCnpj = document.getElementById("locaisCpfCnpj");
@@ -131,74 +132,74 @@ function validarLocalCompleto() {
   const status = document.getElementById("locaisStatus");
 
   if (!nome.value.trim()) {
-    mostrarAlerta("Nome / RazÃ£o Social Ã© obrigatÃ³rio");
+    mostrarAlerta("Nome / Razão Social é obrigatório");
     nome.focus();
     return false;
   }
 
   const docGuardado = cpfCnpj.dataset.cofreProtegido === "1" && cpfCnpj.dataset.cofreAlterado !== "1";
   if (!docGuardado && !cpfCnpj.value.trim()) {
-    mostrarAlerta("CPF / CNPJ Ã© obrigatÃ³rio");
+    mostrarAlerta("CPF / CNPJ é obrigatório");
     cpfCnpj.focus();
     return false;
   }
 
   if (
-    !docGuardado && locaisTipoPessoa.value === "Pessoa FÃ­sica" &&
+    !docGuardado && locaisTipoPessoa.value === "Pessoa Física" &&
     !validarCPF(cpfCnpj.value)
   ) {
-    mostrarAlerta("CPF invÃ¡lido. Verifique os nÃºmeros.");
+    mostrarAlerta("CPF inválido. Verifique os números.");
     cpfCnpj.focus();
     return false;
   }
 
   if (!validarEmail(email.value)) {
-    mostrarAlerta("Email invÃ¡lido. Verifique e tente novamente.");
+    mostrarAlerta("Email inválido. Verifique e tente novamente.");
     email.focus();
     return false;
   }
 
   if (!validarTelefoneBR(telefone.value)) {
-    mostrarAlerta("Telefone invÃ¡lido. Use DDD + nÃºmero.");
+    mostrarAlerta("Telefone inválido. Use DDD + número.");
     telefone.focus();
     return false;
   }
 
 if (!window.enderecoSelecionadoGoogle) {
-  mostrarAlerta("Selecione um endereÃ§o vÃ¡lido da lista do Google.");
+  mostrarAlerta("Selecione um endereço válido da lista do Google.");
   return false;
 }
 
   if (localGeoState.lat === null || localGeoState.lng === null) {
-    mostrarAlerta("Selecione um endereÃ§o do Google ou marque o ponto correto no mapa.");
+    mostrarAlerta("Selecione um endereço do Google ou marque o ponto correto no mapa.");
     return false;
   }
 
   if (localGeoState.calculating) {
-    mostrarAlerta("Aguarde o cÃ¡lculo da distÃ¢ncia do galpÃ£o terminar.");
+    mostrarAlerta("Aguarde o cálculo da distância do galpão terminar.");
     return false;
   }
 
   if (localGeoState.distanciaKm === null) {
-    mostrarAlerta("A distÃ¢ncia do galpÃ£o ainda nÃ£o foi calculada. Selecione o endereÃ§o novamente ou marque o ponto no mapa.");
+    mostrarAlerta("A distância do galpão ainda não foi calculada. Selecione o endereço novamente ou marque o ponto no mapa.");
     return false;
   }
 
 
   if (!numeroEndereco.value.trim()) {
-    mostrarAlerta("NÃºmero do endereÃ§o Ã© obrigatÃ³rio.");
+    mostrarAlerta("Número do endereço é obrigatório.");
     numeroEndereco.focus();
     return false;
   }
 
   if (!pontoReferencia.value.trim()) {
-    mostrarAlerta("Ponto de referÃªncia Ã© obrigatÃ³rio.");
+    mostrarAlerta("Ponto de referência é obrigatório.");
     pontoReferencia.focus();
     return false;
   }
 
   if (!status.value) {
-    mostrarAlerta("Status do local Ã© obrigatÃ³rio.");
+    mostrarAlerta("Status do local é obrigatório.");
     status.focus();
     return false;
   }
@@ -210,7 +211,7 @@ if (!window.enderecoSelecionadoGoogle) {
      SUPABASE
   ===================================================== */
   if (!window.supabaseClient) {
-    console.error("SupabaseClient nÃ£o encontrado");
+    console.error("SupabaseClient não encontrado");
     return;
   }
 
@@ -230,7 +231,7 @@ async function getEmpresaIdCache() {
     await supabase.auth.getSession();
 
   if (error || !sessionData?.session?.user) {
-    throw new Error("UsuÃ¡rio nÃ£o autenticado");
+    throw new Error("Usuário não autenticado");
   }
 
   const userId = sessionData.session.user.id;
@@ -242,7 +243,7 @@ async function getEmpresaIdCache() {
     .single();
 
   if (empresaError || !data?.empresa_id) {
-    throw new Error("Empresa nÃ£o encontrada");
+    throw new Error("Empresa não encontrada");
   }
 
   window.__empresa_id_cache = data.empresa_id;
@@ -509,7 +510,7 @@ async function centralizarMapaNoEndereco() {
   if (localGeoState.lat === null || localGeoState.lng === null) {
     const endereco = document.getElementById("locais-endereco")?.value?.trim();
     if (!endereco) {
-      mostrarAlerta("Selecione um endereÃ§o no Google para centralizar o mapa.");
+      mostrarAlerta("Selecione um endereço no Google para centralizar o mapa.");
       return;
     }
 
@@ -525,7 +526,7 @@ async function centralizarMapaNoEndereco() {
       return;
     } catch (error) {
       console.warn("Nao foi possivel centralizar no endereco:", error);
-      mostrarAlerta("NÃ£o consegui localizar esse endereÃ§o no mapa. Selecione uma opÃ§Ã£o da lista do Google.");
+      mostrarAlerta("Não consegui localizar esse endereço no mapa. Selecione uma opção da lista do Google.");
       return;
     }
   }
@@ -535,7 +536,7 @@ async function centralizarMapaNoEndereco() {
 
 async function selecionarPontoNoMapa(latLng) {
   if (!latLng) {
-    mostrarAlerta("NÃ£o foi possÃ­vel identificar o ponto no mapa.");
+    mostrarAlerta("Não foi possível identificar o ponto no mapa.");
     return;
   }
 
@@ -594,7 +595,7 @@ function Locais_enableEdit() {
   resetEnderecoAutocomplete(); // limpa autocomplete antigo
   setReadOnly(false);
 
-  // ðŸ”’ endereÃ§o que veio do banco Ã© vÃ¡lido atÃ© o usuÃ¡rio alterar
+  // 🔒 endereço que veio do banco é válido até o usuário alterar
   window.enderecoSelecionadoGoogle = true;
 
   setTimeout(() => {
@@ -630,18 +631,18 @@ document.querySelectorAll(".tag").forEach(tag => {
 }
 
 /* =====================================================
-   VALIDAÃ‡ÃƒO
+   VALIDAÇÃO
 ===================================================== */
 function mostrarAlerta(msg) {
-  // ðŸ”’ tira o foco de qualquer campo (derruba o autocomplete)
+  // 🔒 tira o foco de qualquer campo (derruba o autocomplete)
   try { document.activeElement?.blur(); } catch (e) {}
 
-  // ðŸ”’ esconde a lista do Google Places
+  // 🔒 esconde a lista do Google Places
   const pac = document.querySelector(".pac-container");
   if (pac) pac.style.display = "none";
 
   if (typeof window.alerta === "function") {
-    window.alerta(msg, "AtenÃ§Ã£o", "aviso");
+    window.alerta(msg, "Atenção", "aviso");
     return;
   }
 
@@ -652,8 +653,8 @@ function fecharValidationModal() {
   const modal = document.getElementById("locaisValidationModal");
   if (modal) modal.style.display = "none";
 
-  // âœ… NÃƒO reabre automaticamente o pac-container
-  // Ele volta sozinho quando o usuÃ¡rio focar/digitar no endereÃ§o.
+  // ✅ NÃO reabre automaticamente o pac-container
+  // Ele volta sozinho quando o usuário focar/digitar no endereço.
 }
 
 window.fecharValidationModal = fecharValidationModal;
@@ -683,7 +684,7 @@ function coletarTagsSelecionadas() {
 }
 
 /* =====================================================
-   DUPLICIDADE â€“ LOCAIS
+   DUPLICIDADE – LOCAIS
 ===================================================== */
 async function verificarDuplicidadeLocal({ cpf, cpfHash, nome, empresaId, localId }) {
   const cpfLimpo = cpfHash ? "" : soNumeros(cpf);
@@ -696,7 +697,7 @@ async function verificarDuplicidadeLocal({ cpf, cpfHash, nome, empresaId, localI
   }
   const nomeLimpo = nome.trim();
 
-  // ðŸ”’ VERIFICA CPF DUPLICADO (MESMA EMPRESA)
+  // 🔒 VERIFICA CPF DUPLICADO (MESMA EMPRESA)
   if (cpfLimpo) {
     let query = window.supabaseClient
       .from("locais_empresas")
@@ -716,11 +717,11 @@ async function verificarDuplicidadeLocal({ cpf, cpfHash, nome, empresaId, localI
     }
 
     if (data && data.length > 0) {
-      return "JÃ¡ existe um local com este CPF/CNPJ cadastrado nesta empresa.";
+      return "Já existe um local com este CPF/CNPJ cadastrado nesta empresa.";
     }
   }
 
-  // ðŸ”’ VERIFICA NOME DUPLICADO (MESMA EMPRESA)
+  // 🔒 VERIFICA NOME DUPLICADO (MESMA EMPRESA)
   if (nomeLimpo) {
     let query = window.supabaseClient
       .from("locais_empresas")
@@ -740,7 +741,7 @@ async function verificarDuplicidadeLocal({ cpf, cpfHash, nome, empresaId, localI
     }
 
     if (data && data.length > 0) {
-      return "JÃ¡ existe um local com este nome cadastrado nesta empresa.";
+      return "Já existe um local com este nome cadastrado nesta empresa.";
     }
   }
 
@@ -757,7 +758,7 @@ async function Locais_salvar() {
   try {
     const empresaId = await getEmpresaIdCache();
 
-    // ðŸ”’ VERIFICA CPF OU NOME JÃ CADASTRADOS
+    // 🔒 VERIFICA CPF OU NOME JÁ CADASTRADOS
     // CPF/CNPJ vai cifrado (cofre): só quando a pessoa digitou algo no campo.
     const campoDoc = document.getElementById("locaisCpfCnpj");
     let doc = null;
@@ -789,7 +790,7 @@ const payload = {
     document.getElementById("locaisUltimaLocacao").value
   ),
   tipo_pessoa:
-    locaisTipoPessoa.value === "Pessoa JurÃ­dica" ? "PJ" : "PF",
+    locaisTipoPessoa.value === "Pessoa Jurídica" ? "PJ" : "PF",
   inscricao_estadual:
     document.getElementById("locaisInscricaoEstadual")?.value || null,
   latitude: localGeoState.lat,
@@ -860,7 +861,7 @@ function abrirDetalhesLocal(local) {
   });
 
   /* =============================
-     ENDEREÃ‡O
+     ENDEREÇO
   ============================= */
   criarInputEndereco(local.endereco || "");
   setTimeout(() => {
@@ -873,7 +874,7 @@ function abrirDetalhesLocal(local) {
   ============================= */
   if (campos.tipoPessoa) {
     campos.tipoPessoa.value =
-      local.tipo_pessoa === "PJ" ? "Pessoa JurÃ­dica" : "Pessoa FÃ­sica";
+      local.tipo_pessoa === "PJ" ? "Pessoa Jurídica" : "Pessoa Física";
   }
 
   if (campos.cpfCnpj) {
@@ -897,7 +898,7 @@ function abrirDetalhesLocal(local) {
   if (campos.status) campos.status.value = local.status || "Ativo";
 
   /* =============================
-     TAGS (RESET + APLICAÃ‡ÃƒO)
+     TAGS (RESET + APLICAÇÃO)
   ============================= */
   document.querySelectorAll(".tag").forEach(tag =>
     tag.classList.remove("selected")
@@ -915,13 +916,13 @@ function abrirDetalhesLocal(local) {
         const tagEl = [...group.querySelectorAll(".tag")]
           .find(t => t.textContent.trim() === v);
 
-        if (tagEl) tagEl.classList.add("selected");
+        (tagEl || window.EasyLocEtiquetas?.criarOpcao(group, v))?.classList.add("selected");
       });
     });
   }
 
   /* =============================
-     VOLTA PARA VISUALIZAÃ‡ÃƒO
+     VOLTA PARA VISUALIZAÇÃO
   ============================= */
   setTimeout(() => {
     setReadOnly(true);
@@ -936,7 +937,7 @@ async function Locais_excluir() {
 
   const confirmou = await window.confirmarGlobal?.(
     "Deseja realmente excluir este local?",
-    "Confirmar exclusÃ£o",
+    "Confirmar exclusão",
     { confirmarTexto: "Excluir", tipo: "error" }
   );
 
@@ -992,7 +993,7 @@ async function Locais_carregar() {
 
     if (!error) {
       locaisCache = (data || []).map(l => {
-        // ðŸ”’ garante que tags seja objeto e nÃ£o string
+        // 🔒 garante que tags seja objeto e não string
         if (typeof l.tags === "string") {
           try {
             l.tags = JSON.parse(l.tags);
@@ -1068,7 +1069,7 @@ function calcularInatividade(ultimaLocacao) {
 function extrairTag(tags, nomeGrupo) {
   if (!tags) return "-";
 
-  // procura ignorando maiÃºscula/minÃºscula
+  // procura ignorando maiúscula/minúscula
   const chave = Object.keys(tags).find(
     k => k.toLowerCase() === nomeGrupo.toLowerCase()
   );
@@ -1181,7 +1182,7 @@ function Locais_aplicarFiltros() {
 
   let filtrados = [...locaisCache];
 
-  // ðŸ” BUSCA
+  // 🔍 BUSCA
   if (texto) {
     const buscaDoc = texto.replace(/\D/g, "");
     if ((buscaDoc.length === 11 || buscaDoc.length === 14) && locaisBuscaDoc.doc !== buscaDoc) {
@@ -1197,14 +1198,14 @@ function Locais_aplicarFiltros() {
     );
   }
 
-  // ðŸŸ¢ STATUS
+  // 🟢 STATUS
   if (status) {
     filtrados = filtrados.filter(l => {
       return calcularStatusAutomatico(l) === status;
     });
   }
 
-  // â±ï¸ INATIVIDADE
+  // ⏱️ INATIVIDADE
   if (inatividade) {
     filtrados = filtrados.filter(l => {
       if (!l.ultima_locacao) return false;
@@ -1220,7 +1221,7 @@ function Locais_aplicarFiltros() {
     });
   }
 
-// ðŸ·ï¸ TIPO (LOCAIS)
+// 🏷️ TIPO (LOCAIS)
 if (estilo) {
   filtrados = filtrados.filter(l => {
     if (!l.tags) return false;
@@ -1232,7 +1233,7 @@ if (estilo) {
 }
 
 
-// ðŸ’° ORÃ‡AMENTO
+// 💰 ORÇAMENTO
 if (orcamento) {
   filtrados = filtrados.filter(l => {
     if (!l.tags) return false;
@@ -1284,16 +1285,18 @@ window.__locaisAplicarPontoLocal = aplicarPontoLocal;
 window.__locaisResetLocalGeoState = resetLocalGeoState;
 window.__locaisMostrarAlerta = mostrarAlerta;
 
-// inicializaÃ§Ã£o
-// inicializaÃ§Ã£o
+// inicialização
+// inicialização
 Locais_carregar();
+// Etiquetas (Tipo, Canal, Observações...) vêm de Parâmetros > Comercial; sem cadastro ficam as do HTML.
+window.EasyLocEtiquetas?.aplicar("local", { filtros: { locaisStyleFilter: "tipo", locaisBudgetFilter: "orcamento" } });
 
 /* =====================================================
-   DESTROY DO MÃ“DULO LOCAIS (SPA SAFE)
+   DESTROY DO MÓDULO LOCAIS (SPA SAFE)
 ===================================================== */
 window.__activeModuleDestroy = function(){
 
-  console.log("ðŸ§¹ destroy Cadastro Locais");
+  console.log("🧹 destroy Cadastro Locais");
 
   // limpa Google Places
   resetEnderecoAutocomplete();
@@ -1314,10 +1317,10 @@ requestAnimationFrame(() => requestAnimationFrame(initCadastroLocais));
 window.__locaisModuleLoaded = true;
 
 /* =====================================================
-   GOOGLE PLACES â€“ AUTOCOMPLETE + VALIDAÃ‡ÃƒO
+   GOOGLE PLACES – AUTOCOMPLETE + VALIDAÇÃO
 ===================================================== */
 
-// ðŸ”’ estado global (SPA safe)
+// 🔒 estado global (SPA safe)
 window.enderecoAutocomplete = window.enderecoAutocomplete || null;
 window.enderecoSelecionadoGoogle = window.enderecoSelecionadoGoogle || false;
 
@@ -1339,7 +1342,7 @@ function resetEnderecoAutocomplete() {
 
 async function geocodificarEnderecoLocal(endereco) {
   const address = String(endereco || "").trim();
-  if (!address) throw new Error("EndereÃ§o vazio.");
+  if (!address) throw new Error("Endereço vazio.");
 
   if (!window.google?.maps) {
     await window.carregarGooglePlaces?.();
@@ -1382,11 +1385,11 @@ function initEnderecoAutocomplete() {
   const input = document.getElementById("locais-endereco");
   if (!input) return;
 
-  // âœ… limpa SEMPRE
+  // ✅ limpa SEMPRE
   resetEnderecoAutocomplete();
 
   if (!window.google?.maps?.places) {
-    console.error("Google Places nÃ£o carregado");
+    console.error("Google Places não carregado");
     window.carregarGooglePlaces?.()
       .then(() => initEnderecoAutocomplete())
       .catch((error) => {
@@ -1441,7 +1444,7 @@ function initEnderecoAutocomplete() {
         console.warn("Nao foi possivel localizar o endereco selecionado:", error);
         window.enderecoSelecionadoGoogle = false;
         window.__locaisResetLocalGeoState?.();
-        window.__locaisMostrarAlerta?.("NÃ£o consegui localizar esse endereÃ§o no mapa. Selecione uma opÃ§Ã£o da lista do Google.");
+        window.__locaisMostrarAlerta?.("Não consegui localizar esse endereço no mapa. Selecione uma opção da lista do Google.");
       }
     }
   );
@@ -1455,11 +1458,11 @@ function initEnderecoAutocomplete() {
     window.enderecoSelecionadoGoogle = true;
   }
 
-  console.log("âœ… Google Places OK");
+  console.log("✅ Google Places OK");
 }
 
 /* =====================================================
-   STATUS AUTOMÃTICO
+   STATUS AUTOMÁTICO
 ===================================================== */
 function calcularStatusAutomatico(local) {
   if (!local.ultima_locacao) return "Ativo";
@@ -1500,7 +1503,7 @@ function Locais_renderizarStats(locais) {
 }
 
 /* =====================================================
-   IMPRESSÃƒO
+   IMPRESSÃO
 ===================================================== */
 function Locais_imprimir() {
   const locais = window.locaisFiltrados || locaisCache || [];
@@ -1515,7 +1518,7 @@ function Locais_imprimir() {
   win.document.write(`
     <html>
       <head>
-        <title>Locais â€¢ Acervo</title>
+        <title>Locais • Acervo</title>
         <style>
           ${Locais_css_impressao()}
         </style>
@@ -1529,7 +1532,7 @@ function Locais_imprimir() {
               <th>CPF / CNPJ</th>
               <th>Telefone</th>
               <th>Email</th>
-              <th>EndereÃ§o</th>
+              <th>Endereço</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -1629,7 +1632,7 @@ window.Locais_imprimir = function () {
   doc.write(`
     <html>
       <head>
-        <title>Locais â€¢ Acervo</title>
+        <title>Locais • Acervo</title>
         <style>
           ${Locais_css_impressao()}
         </style>
@@ -1645,7 +1648,7 @@ ${Locais_filtros_impressao()}
       <th>CPF / CNPJ</th>
       <th>Telefone</th>
       <th>Email</th>
-      <th>EndereÃ§o</th>
+      <th>Endereço</th>
       <th>Status</th>
     </tr>
   </thead>
@@ -1659,7 +1662,7 @@ ${Locais_filtros_impressao()}
   `);
   doc.close();
 
-  // aguarda renderizaÃ§Ã£o antes de imprimir
+  // aguarda renderização antes de imprimir
   setTimeout(() => {
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
@@ -1680,7 +1683,7 @@ function Locais_cabecalho_impressao() {
       </div>
 
       <div class="meta">
-        <div><strong>RelatÃ³rio de Locais</strong></div>
+        <div><strong>Relatório de Locais</strong></div>
         <div>Impresso em: ${dataHora}</div>
       </div>
     </div>
@@ -1699,7 +1702,7 @@ function Locais_filtros_impressao() {
   if (searchInput?.value) filtros.push(`Busca: "${searchInput.value}"`);
   if (statusFilter?.value) filtros.push(`Status: ${statusFilter.value}`);
   if (styleFilter?.value) filtros.push(`Estilo: ${styleFilter.value}`);
-  if (budgetFilter?.value) filtros.push(`OrÃ§amento: ${budgetFilter.value}`);
+  if (budgetFilter?.value) filtros.push(`Orçamento: ${budgetFilter.value}`);
   if (inactiveFilter?.value)
     filtros.push(`Inatividade: ${inactiveFilter.value} dias`);
 
@@ -1710,7 +1713,7 @@ function Locais_filtros_impressao() {
   return `
     <div class="filters">
       <strong>Filtros aplicados:</strong><br>
-      ${filtros.join(" â€¢ ")}
+      ${filtros.join(" • ")}
     </div>
   `;
 }
@@ -1757,7 +1760,7 @@ function trocarVideo(url, el) {
 }
 
 /* =====================
-   ENDEREÃ‡O (INPUT DINÃ‚MICO)
+   ENDEREÇO (INPUT DINÂMICO)
 ===================== */
 
 function criarInputEndereco(valor = "") {
@@ -1771,7 +1774,7 @@ input.id = "locais-endereco";
   input.className = "el-input";
   input.type = "text";
   input.placeholder =
-    "Pesquise rua, salÃ£o, chÃ¡cara, buffet, ponto conhecido...";
+    "Pesquise rua, salão, chácara, buffet, ponto conhecido...";
   input.value = valor || "";
   input.autocomplete = "off";
 
@@ -1784,12 +1787,12 @@ input.id = "locais-endereco";
 
 function abrirMiniPlayer() {
   mostrarAlerta(
-    "No vÃ­deo do YouTube, clique no Ã­cone Picture-in-Picture (quadrado pequeno) para assistir enquanto usa o sistema."
+    "No vídeo do YouTube, clique no ícone Picture-in-Picture (quadrado pequeno) para assistir enquanto usa o sistema."
   );
 }
 
 function fecharMiniPlayer() {
-  // nÃ£o utilizado (YouTube controla o PiP)
+  // não utilizado (YouTube controla o PiP)
 }
 function Locais_fecharValidationModal() {
   const modal = document.getElementById("locaisValidationModal");

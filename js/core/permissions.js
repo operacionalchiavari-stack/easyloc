@@ -39,6 +39,8 @@
      passageira, inclusive na revalidação de 30 s, zerava as permissões; a tela era escondida, o menu redesenhado
      vazio, e nada voltava sem recarregar a página. */
   async function buscar(supabase) {
+    const offline=window.__ACESSO_OPERACAO_OFFLINE;
+    if(!navigator.onLine&&offline?.ativo&&offline.contexto.empresa_id===cache.empresaId&&offline.contexto.usuario_id===cache.usuarioId&&/\/Logistica\/PainelLogistico\//i.test(location.pathname))return {ativo:true,admin:offline.admin,permissoes:new Map(offline.permissoes)};
     // Garante um token válido antes da consulta (getSession renova o token vencido).
     try { await supabase.auth?.getSession?.(); } catch (_) {}
     const access = await supabase.rpc("funcionario_contexto", { p_empresa_id: cache.empresaId });
@@ -177,17 +179,19 @@
     [/Pedidos/i, 'comercial.pedidos.visualizar'],
     [/Contratos/i, 'comercial.contratos.visualizar'],
     [/ImportarItens/i, 'estoque.importacao.executar'],
-    [/CadastroItens|DisponibilidadeItens/i, 'estoque.itens.visualizar'],
+    [/CadastroItens|DisponibilidadeItens|Estoque\/Acervo/i, 'estoque.itens.visualizar'],
     [/Producao/i, 'producao.ordens.visualizar'],
     [/Personalizacoes/i, 'estoque.insumos.visualizar'],
     [/CadastroFornecedores/i, 'estoque.fornecedores.visualizar'],
     [/TabelasPreco/i, 'estoque.tabelas_preco.visualizar'],
     [/Almoxarifado|OrdemdeServicos|Controledequalidade/i, 'estoque.almoxarifado.visualizar'],
+    [/Geral\/SolicitacoesManutencao/i, 'geral.manutencao.visualizar'],
+    [/Geral\/SolicitacoesCompra/i, 'geral.solicitacoes.visualizar'],
     [/Compras/i, 'estoque.compras.visualizar'],
     [/SeparacaoMateriais/i, 'logistica.separacao.visualizar'],
     [/PainelLogistico/i, 'logistica.planejamento.visualizar'],
     [/Cronograma/i, 'logistica.cronograma.visualizar'],
-    [/Expedicao/i, 'logistica.expedicao.visualizar'],
+    [/Expedicao|EntregasColetas/i, 'logistica.expedicao.visualizar'],
     [/Planejamento|Roteirizacao|EquipeRotas|cadastro-caminhoes/i, 'logistica.planejamento.visualizar'],
     [/Financeiro|fluxodecaixa/i, 'financeiro.fluxo.visualizar'],
     [/GestaoPessoas|RH\/Pessoas/i, 'rh.colaboradores.visualizar'],
@@ -207,6 +211,7 @@
     if (/\/Modulos\/RH\/IdeiaPremiada\/ideia-premiada\.html$/i.test(path)) return true;
     if (cache.legacyAdmin) return true;
     const match = routes.find(([pattern]) => pattern.test(path));
+    if (/\/Modulos\/Logistica\/(PainelLogistico|EntregasColetas)\//i.test(path)) return hasPermission('logistica.planejamento.visualizar') || hasPermission('logistica.expedicao.visualizar') || hasPermission('logistica.cronograma.visualizar');
     return match ? hasPermission(match[1]) : /\/(dashboard|usuario)\.html$/i.test(path);
   }
   let escondidosPeloBloqueio = [];

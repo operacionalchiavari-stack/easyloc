@@ -5,32 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Conferência</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../../styles/global.css?v=20261018-azul">
-  <link rel="stylesheet" href="conferencia.css?v=20261018-operacao-integrada">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="conferencia.css?v=20261027-pendencias">
 </head>
 <body>
 <div class="container el-page cf-page">
-  <button type="button" class="btn secondary cf-voltar" id="cfVoltar" hidden>← Voltar</button>
-  <div class="header-list">
-    <h2 id="cfTitulo">Conferência</h2>
-  </div>
-
-  <section class="cf-pedido" id="cfPedido" hidden>
-    <div>
-      <span class="cf-rotulo" id="cfEtapaRotulo">Carregamento</span>
-      <strong id="cfPedidoNumero">Pedido</strong>
-      <small id="cfPedidoMeta"></small>
-    </div>
+  <!-- Topo numa linha só (out/2026), igual ao da Triagem: Voltar · etapa · Pedido N · decorador e local · progresso. -->
+  <div class="cf-topo" id="cfPedido">
+    <h1 id="cfTitulo" class="cf-sr">Conferência</h1>
+    <button type="button" class="btn secondary cf-voltar" id="cfVoltar" hidden>← Voltar</button>
+    <span class="cf-rotulo" id="cfEtapaRotulo">Carregamento</span>
+    <strong class="cf-pedido-card" id="cfPedidoNumero">Pedido</strong>
+    <div class="cf-cliente" id="cfPedidoMeta"></div>
+    <span class="cf-pedido-nota" id="cfPedidoNota" hidden></span>
     <div class="cf-progresso">
       <strong id="cfPercent">0%</strong>
       <div class="cf-barra"><span id="cfBarra"></span></div>
       <small id="cfContagem">0 de 0 volumes</small>
     </div>
-  </section>
+    <button type="button" class="btn secondary cf-imprimir" id="cfImprimir" hidden>Imprimir lista</button>
+  </div>
+
+  <!-- Caminhões programados para a entrega (destaque) / em que foi carregado -->
+  <div class="cf-caminhoes" id="cfCaminhoes" hidden></div>
 
   <p class="cf-aviso" id="cfAviso" hidden></p>
+
+  <!-- Pedido sem etiquetas de envio (1 clique): conferência por quantidade -->
+  <section class="cf-qtd" id="cfQtd" hidden></section>
 
   <div class="cf-corpo" id="cfCorpo" hidden>
     <section class="cf-leitor">
@@ -69,10 +73,10 @@
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
-<script src="../../../js/core/context.js?v=20261009-acesso-estavel2"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/leitorQr.js?v=20261017-inicio"></script>
-<script src="conferencia.js?v=20261018-operacao-integrada"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261019-globais"></script>
+<script src="conferencia.js?v=20261027-pendencias"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>
