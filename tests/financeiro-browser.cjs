@@ -18,7 +18,7 @@ const mock = `(() => {
     fin_centros_custo: [{ id: "cc1", empresa_id: "e1", nome: "Operação", ativo: true }],
     fin_receber: [
       { id: "r1", empresa_id: "e1", origem: "pedido", grupo: "g1", pedido_id: "p1", pedido_numero: "12", componente: "locacao", cliente_nome: "Lis", descricao: "Pedido 12 · Locação", vencimento: H, valor: 3000, recebido: 0, aberto: 3000, parcela: 1, parcelas: 1, conta_id: "c1", status: "aberto" },
-      { id: "r2", empresa_id: "e1", origem: "pedido", grupo: "g1", pedido_id: "p1", pedido_numero: "12", componente: "frete", cliente_nome: "Lis", descricao: "Pedido 12 · Frete", vencimento: H, valor: 400, recebido: 0, aberto: 400, parcela: 1, parcelas: 1, conta_id: "c2", status: "aberto" },
+      { id: "r2", empresa_id: "e1", origem: "pedido", grupo: "g1", pedido_id: "p1", pedido_numero: "12", componente: "frete", cliente_nome: "Lis", descricao: "Pedido 12 · Frete", vencimento: new Date(Date.now() + 5 * 864e5).toLocaleDateString("sv-SE"), valor: 400, recebido: 0, aberto: 400, parcela: 1, parcelas: 1, conta_id: "c2", status: "aberto" },
       { id: "r3", empresa_id: "e1", origem: "pedido", grupo: "g1", pedido_id: "p1", pedido_numero: "12", componente: "montagem", cliente_nome: "Lis", descricao: "Pedido 12 · Montagem", vencimento: H, valor: 600, recebido: 0, aberto: 600, parcela: 1, parcelas: 1, conta_id: null, status: "aberto" },
       { id: "r9", empresa_id: "e1", origem: "manual", grupo: "g9", pedido_id: null, pedido_numero: null, componente: "outro", cliente_nome: "Ana Recebida", descricao: "Sinal recebido", vencimento: H, valor: 250, recebido: 250, aberto: 0, parcela: 1, parcelas: 1, conta_id: null, status: "recebido" }],
     fin_pagar: [{ id: "g9", empresa_id: "e1", fornecedor_nome: "Transp X", descricao: "Frete terceirizado", vencimento: H, valor: 500, pago: 0, aberto: 500, parcela: 1, parcelas: 1, status: "pendente", requer_aprovacao: true, aprovacao: "pendente" }],
@@ -137,7 +137,7 @@ const mock = `(() => {
   await modo.click();
   await page.waitForSelector(".fin-receber-data");
   assert.strictEqual(await page.locator(".fin-pedido:not(.fin-receber-data)").count(), 0, "não agrupa mais por pedido");
-  const linhasData = await page.$$eval(".fin-receber-data tbody tr", (l) => l.map((tr) => tr.children[0].textContent));
+  const linhasData = await page.$$eval(".fin-receber-data tbody tr", (l) => l.map((tr) => tr.children[0].querySelector("b").textContent));
   assert.strictEqual(linhasData.length, 3, "uma linha por parcela");
   assert.deepStrictEqual(linhasData, linhasData.slice().sort((x, y) => x.split("/").reverse().join("").localeCompare(y.split("/").reverse().join(""))), "em ordem de vencimento");
   assert.match(await page.textContent(".fin-receber-data tbody tr"), /Pedido 12 · Lis/);
@@ -160,6 +160,37 @@ const mock = `(() => {
   await page.waitForFunction(() => document.getElementById("frRecebidas")?.getAttribute("aria-pressed") === "false");
   assert.strictEqual(await page.inputValue("#frStatus"), "abertos");
   console.log("ok 3c - botão Recebidas mostra só as contas recebidas e volta");
+  // aviso de vencimento: limites de 3 e 7 dias, passado e título sem saldo
+  const fonte = fs.readFileSync(path.join(raiz, "Modulos/Financeiro/financeiro.js"), "utf8").replace(/\r\n/g, "\n");
+  const ini = fonte.indexOf("  function diasParaVencer(t) {"), corpo = fonte.slice(ini, fonte.indexOf("  function statusR(t) {"));
+  const alertaVenc = new Function(corpo + "; return alertaVenc;")();
+  const emDias = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toLocaleDateString("sv-SE"); };
+  const aviso = (n, extra = {}) => { const h = alertaVenc({ status: "aberto", aberto: 100, vencimento: emDias(n), ...extra }); return h ? [/vermelho/.test(h) ? "vermelho" : "amarelo", h.replace(/<[^>]+>/g, "")] : null; };
+  assert.deepStrictEqual([aviso(-2), aviso(-1), aviso(0), aviso(1), aviso(3), aviso(4), aviso(7), aviso(8)], [["vermelho", "Venceu há 2 dias"], ["vermelho", "Venceu ontem"], ["vermelho", "Vence hoje"], ["vermelho", "Vence amanhã"], ["vermelho", "Vence em 3 dias"], ["amarelo", "Vence em 4 dias"], ["amarelo", "Vence em 7 dias"], null]);
+  assert.equal(aviso(0, { status: "recebido" }), null); assert.equal(aviso(0, { status: "cancelado" }), null); assert.equal(aviso(0, { aberto: 0 }), null);
+  await page.selectOption("#frStatus", "abertos").catch(() => {});
+  await page.waitForSelector(".fin-venc-alerta.vermelho");
+  assert.match(await page.textContent(".fin-venc-alerta.vermelho"), /Vence hoje/);
+  assert.notEqual(await page.$eval(".fin-venc-alerta i", (e) => getComputedStyle(e).animationName), "none", "a bolinha pisca");
+  await page.locator(".fin-pedido").first().screenshot({ path: path.join(process.env.SP || raiz, "fin-venc.png") }).catch(() => {});
+  console.log("ok 3d - aviso de vencimento: vermelho até 3 dias, amarelo até 7");
+  const prazos = () => page.$$eval("[data-prazo]", (l) => l.map((b) => [b.dataset.prazo, b.querySelector(".fin-prazo-n")?.textContent || ""]));
+  assert.deepStrictEqual(await prazos(), [["vencidos", ""], ["hoje", "2"], ["semana", "1"]], "bolinha com a quantidade, sem bolinha quando é zero");
+  const linhasAbertas = () => page.locator(".fin-pedido tbody tr").count();
+  assert.equal(await linhasAbertas(), 3);
+  await page.click('[data-prazo="hoje"]'); await page.waitForSelector('[data-prazo="hoje"].ativa');
+  assert.equal(await linhasAbertas(), 2, "só as que vencem hoje");
+  await page.click('[data-prazo="semana"]'); await page.waitForSelector('[data-prazo="semana"].ativa');
+  assert.equal(await linhasAbertas(), 1, "só as dos próximos 7 dias");
+  await page.click("#frBusca"); await page.fill("#frBusca", "Lis"); await page.press("#frBusca", "Enter"); await page.waitForSelector('[data-prazo="semana"].ativa');
+  assert.equal(await linhasAbertas(), 1, "a aba continua valendo com a busca");
+  await page.click("#frBusca"); await page.fill("#frBusca", ""); await page.press("#frBusca", "Enter"); await page.waitForSelector('[data-prazo="semana"].ativa');
+  if (process.env.SP) await page.screenshot({ path: process.env.SP + "/fin-prazo.png" });
+  await page.click('[data-prazo="semana"]'); await page.waitForSelector('[data-prazo="semana"]:not(.ativa)');
+  assert.equal(await linhasAbertas(), 3, "clicar de novo volta a mostrar tudo");
+  await page.click('[data-prazo="hoje"]'); await page.waitForSelector('[data-prazo="hoje"].ativa'); await page.click("#frRecebidas"); await page.waitForSelector('[data-prazo="hoje"]:not(.ativa)');
+  await page.click("#frRecebidas"); await page.waitForFunction(() => document.getElementById("frRecebidas")?.getAttribute("aria-pressed") === "false");
+  console.log("ok 3e - abas Vencidos, Vence hoje e Próximos 7 dias com a quantidade");
 
   assert.strictEqual(await page.locator("[data-r-baixar]").count(), 0, "A receber não tem mais o botão Receber");
   await page.click('[data-aba="bancos"]');

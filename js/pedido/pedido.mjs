@@ -9,7 +9,7 @@ import { initFrete } from "./pedido.frete.mjs?v=20261027-abas-rapidas";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261026-acentos";
 import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261029-extra";
-import { initPagamento } from "./pedido.pagamento.mjs?v=20261026-financeiro-pedido";
+import { initPagamento } from "./pedido.pagamento.mjs?v=20261030-parcelas-pagas";
 import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261027-abas-rapidas";
 
 /* =====================================================

@@ -78,6 +78,22 @@
   const conta = (id) => S.contas.find((c) => c.id === id);
   const cat = (id) => S.cats.find((c) => c.id === id);
   const vencido = (t) => ["aberto", "parcial", "pendente", "aprovado", "programado"].includes(t.status) && (t.programado_para || t.vencimento) < hoje();
+  // Aviso de vencimento em A receber (out/2026): bolinha piscando ao lado da data. Até 3 dias (e vencido) em vermelho,
+  // até 7 dias em amarelo. Usa a data local: hoje() é em UTC e viraria o dia às 21h no Brasil.
+  function diasParaVencer(t) {
+    if (["recebido", "cancelado"].includes(t.status) || !(Number(t.aberto) > 0.005) || !t.vencimento) return null;
+    const dia = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
+    return Math.round((dia(String(t.vencimento).slice(0, 10)) - dia(new Date().toLocaleDateString("sv-SE"))) / 86400000);
+  }
+  // Abas rápidas de A receber: cada conta em aberto cai em uma só
+  const PRAZOS = [["vencidos", "Vencidos", (d) => d < 0], ["hoje", "Vence hoje", (d) => d === 0], ["semana", "Próximos 7 dias", (d) => d >= 1 && d <= 7]];
+  const noPrazo = (t, chave) => { const d = diasParaVencer(t); return d !== null && PRAZOS.find(([k]) => k === chave)[2](d); };
+  function alertaVenc(t) {
+    const dias = diasParaVencer(t);
+    if (dias === null || dias > 7) return "";
+    const txt = dias < -1 ? "Venceu há " + -dias + " dias" : dias === -1 ? "Venceu ontem" : dias === 0 ? "Vence hoje" : dias === 1 ? "Vence amanhã" : "Vence em " + dias + " dias";
+    return '<span class="fin-venc-alerta ' + (dias <= 3 ? "vermelho" : "amarelo") + '"><i aria-hidden="true"></i>' + txt + "</span>";
+  }
   function statusR(t) {
     if (t.status === "cancelado") return ["cancelado", "Cancelado"];
     if (t.status === "recebido") return ["recebido", "Recebido"];
@@ -271,6 +287,7 @@
   function filtrarR() {
     const f = S.filtroR, b = f.busca.trim().toLowerCase();
     return S.receber.filter((t) => {
+      if (f.prazo && !noPrazo(t, f.prazo)) return false;
       if (f.status === "abertos" && !["aberto", "parcial"].includes(t.status)) return false;
       if (f.status === "vencidos" && !vencido(t)) return false;
       if (f.status === "recebidos" && t.status !== "recebido") return false;
@@ -303,7 +320,7 @@
       linhas.map((t) => {
         const [cls, rot] = statusR(t), ped = t.pedido_id ? S.pedidos[t.pedido_id] : null;
         const quem = ped ? "Pedido " + esc(ped.numero_pedido || t.pedido_numero) + " · " + esc(ped.cliente_nome || t.cliente_nome || "") : esc(t.descricao || "Lançamento") + (t.cliente_nome ? " · " + esc(t.cliente_nome) : "");
-        return "<tr><td><b>" + dataBr(t.vencimento) + "</b></td><td>" + quem + "</td><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
+        return "<tr><td><b>" + dataBr(t.vencimento) + "</b>" + alertaVenc(t) + "</td><td>" + quem + "</td><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
           '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + '</td><td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + acoesR(t) + "</tr>";
       }).join("") + "</tbody></table></div></section>";
   }
@@ -329,7 +346,7 @@
         ts.map((t) => {
           const [cls, rot] = statusR(t);
           return "<tr><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
-            "</td><td>" + dataBr(t.vencimento) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + '</td><td><span class="fin-status ' + cls + '">' + rot + "</span></td>" +
+            "</td><td>" + dataBr(t.vencimento) + alertaVenc(t) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + '</td><td><span class="fin-status ' + cls + '">' + rot + "</span></td>" +
             acoesR(t) + "</tr>";
         }).join("") + "</tbody></table></div></article>";
     }).join("");
@@ -338,16 +355,19 @@
       '<select id="frStatus">' + [["abertos", "Em aberto"], ["vencidos", "Vencidos"], ["recebidos", "Recebidos"], ["cancelados", "Cancelados"], ["todos", "Todos"]].map(([v, r]) => '<option value="' + v + '"' + (f.status === v ? " selected" : "") + ">" + r + "</option>").join("") + "</select>" +
       '<select id="frDiv"><option value="">Todas as divisões</option>' + Object.entries(DIV).map(([v, r]) => '<option value="' + v + '"' + (f.div === v ? " selected" : "") + ">" + r + "</option>").join("") + "</select>" +
       '<select id="frConta"><option value="">Todas as contas</option><option value="sem"' + (f.conta === "sem" ? " selected" : "") + ">Sem conta</option>" + S.contas.map((c) => '<option value="' + c.id + '"' + (f.conta === c.id ? " selected" : "") + ">" + esc(c.nome) + "</option>").join("") + "</select>" +
+      '<div class="fin-prazos" role="group" aria-label="Filtrar por vencimento">' + PRAZOS.map(([k, r]) => { const n = S.receber.filter((t) => noPrazo(t, k)).length; return '<button type="button" class="fin-prazo' + (f.prazo === k ? " ativa" : "") + '" data-prazo="' + k + '" aria-pressed="' + (f.prazo === k) + '">' + r + (n ? '<span class="fin-prazo-n">' + n + "</span>" : "") + "</button>"; }).join("") + "</div>" +
       '<span class="fin-esp"></span><button type="button" class="fin-modo-btn" id="frModo" aria-pressed="' + porData + '" title="' + (porData ? "Agrupar por pedido" : "Ver por data, cada parcela numa linha") + '" aria-label="' + (porData ? "Agrupar por pedido" : "Ver por data, cada parcela numa linha") + '">' + (porData ? ICONE_GRUPO : ICONE_LISTA) + '</button>' +
       // "Recebidas": atalho para ver só o que já foi recebido (é o filtro de status "Recebidos"); clicar de novo volta.
       '<button type="button" class="fin-recebidas-btn" id="frRecebidas" aria-pressed="' + (f.status === "recebidos") + '">Recebidas</button>' +
       '<button class="fin-btn" id="frNovo">+ Novo recebimento</button></div>' +
       (html || '<div class="fin-vazio">Nenhuma conta a receber com esses filtros. Pedido aprovado aparece aqui sozinho, dividido em locação, frete e montagem.</div>');
-    const at = () => { S.filtroR = { busca: $("frBusca").value, status: $("frStatus").value, div: $("frDiv").value, conta: $("frConta").value }; pintarReceber(); };
+    const at = () => { const status = $("frStatus").value; S.filtroR = { busca: $("frBusca").value, status, div: $("frDiv").value, conta: $("frConta").value, prazo: status === "abertos" ? S.filtroR.prazo : "" }; pintarReceber(); };
+    // clicar de novo na aba escolhida volta a mostrar tudo em aberto
+    $("finConteudo").querySelectorAll("[data-prazo]").forEach((b) => b.addEventListener("click", () => { S.filtroR = { ...S.filtroR, status: "abertos", prazo: S.filtroR.prazo === b.dataset.prazo ? "" : b.dataset.prazo }; pintarReceber(); }));
     $("frBusca").addEventListener("change", at); $("frBusca").addEventListener("keydown", (e) => { if (e.key === "Enter") at(); });
     ["frStatus", "frDiv", "frConta"].forEach((id) => $(id).addEventListener("change", at));
     $("frNovo").addEventListener("click", () => novoTitulo("receber"));
-    $("frRecebidas").addEventListener("click", () => { S.filtroR = { ...S.filtroR, status: S.filtroR.status === "recebidos" ? "abertos" : "recebidos" }; pintarReceber(); });
+    $("frRecebidas").addEventListener("click", () => { S.filtroR = { ...S.filtroR, prazo: "", status: S.filtroR.status === "recebidos" ? "abertos" : "recebidos" }; pintarReceber(); });
     $("frModo").addEventListener("click", () => { S.recModo = porData ? "pedido" : "data"; try { localStorage.setItem("fin_receber_modo", S.recModo); } catch (_) {} pintarReceber(); });
   }
 

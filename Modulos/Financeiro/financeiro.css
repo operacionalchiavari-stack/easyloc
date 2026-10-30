@@ -375,3 +375,24 @@ html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-contas>sp
 html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-contas button{height:34px;padding:0 14px;border:1px solid #d6dce5;border-radius:999px;background:#fff;color:#3f3f3f;font:inherit;font-size:13px;font-weight:500;cursor:pointer}
 html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-contas button.ativa{border-color:#123f86;background:#eef3fb;color:#123f86;font-weight:600}
 html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-dica{margin:0 0 14px;color:#6b6b6b;font-size:13px}
+
+/* A receber: aviso de vencimento com bolinha piscando (até 3 dias vermelho, até 7 amarelo) */
+.fin-venc-alerta{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:12px;font-weight:600;white-space:nowrap}
+.fin-venc-alerta i{flex:none;width:9px;height:9px;border-radius:50%;animation:finVencPisca 1.15s ease-in-out infinite}
+.fin-venc-alerta.vermelho{color:#b42318}
+.fin-venc-alerta.vermelho i{background:#e60012;box-shadow:0 0 0 0 rgba(230,0,18,.55)}
+.fin-venc-alerta.amarelo{color:#8a6100}
+.fin-venc-alerta.amarelo i{background:#f0b400;box-shadow:0 0 0 0 rgba(240,180,0,.6)}
+@keyframes finVencPisca{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+@media(prefers-reduced-motion:reduce){.fin-venc-alerta i{animation:none}}
+
+/* A receber: abas rápidas por vencimento, com a bolinha de quantidade (mesmo desenho da Central de Pedidos) */
+.fin-prazos{display:flex;flex-wrap:wrap;gap:12px;margin:0 6px 0 4px}
+.fin-barra-ferr:has(.fin-prazos) #frBusca{flex:1 1 220px;width:auto;min-width:200px;max-width:320px}
+.fin-prazo{position:relative;min-height:42px;padding:0 18px;border:1px solid #e3e7ec;border-radius:12px;background:#fff;color:#1f2020;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.fin-prazo:hover{border-color:#123f86;background:#eaf0fa}
+.fin-prazo:focus-visible{outline:2px solid #123f86;outline-offset:2px}
+.fin-prazo.ativa{border-color:#123f86;background:#123f86;color:#fff}
+.fin-prazo-n{position:absolute;top:-9px;right:-9px;display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#e60012;color:#fff;font-size:12px;font-weight:700;animation:finPrazoPisca 1.15s ease-in-out infinite}
+@keyframes finPrazoPisca{50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.fin-prazo-n{animation:none}}

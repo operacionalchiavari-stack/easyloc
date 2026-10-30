@@ -7079,3 +7079,11 @@ html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card .evento-modo{
 /* Link de pagamento do pedido (out/2026): ao lado do título "Financeiro do pedido" */
 html:root:is(#pedido-link,html) .pedido-screen .pedido-link-pagamento{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border:1px solid #123f86;border-radius:999px;background:#fff;color:#123f86;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;align-self:center}
 html:root:is(#pedido-link,html) .pedido-screen .pedido-link-pagamento:hover{background:#123f86;color:#fff}
+
+/* Parcela paga: situação vinda do Financeiro, linha travada */
+html:root .pedido-screen .pagamento-minimal-card .pg-status-badge.partial{background:#fdf6dd;color:#7a5a00}
+html:root:is(#pedido-pagas,html) .pedido-screen tr.pg-linha.pg-travada td{background:#d6f0df}
+html:root:is(#pedido-pagas,html) .pedido-screen tr.pg-linha.pg-travada.is-partial td{background:#fdfaf0}
+html:root:is(#pedido-pagas,html) .pedido-screen tr.pg-linha.pg-travada :is(input,select){background:transparent;border-color:transparent;color:#4f4f4f;cursor:not-allowed;opacity:1}
+html:root:is(#pedido-pagas,html) .pedido-screen tr.pg-linha.pg-travada .pg-valor{cursor:not-allowed;color:#4f4f4f}
+html:root:is(#pedido-pagas,html) .pedido-screen tr.pg-linha [hidden]{display:none}

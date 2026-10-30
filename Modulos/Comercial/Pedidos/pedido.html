@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="pedido.css?v=20261030-link-pagamento">
+  <link rel="stylesheet" href="pedido.css?v=20261030-verde-pago">
 </head>
 <body>
 <div class="pedido-screen orcamento-page el-page em-entrada" data-module-root>
@@ -551,7 +551,7 @@
   window.__pedidoLinkPlantas = (plantas) => { const id = window.__PEDIDO_ATUAL_ID; if (id) window.supabaseClient.rpc("pagamento_link_plantas_salvar", { p_empresa: window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id"), p_pedido: id, p_plantas: plantas || [] }).then(({ error }) => { if (error) console.warn("Planta no link:", error.message); }); };
   window.__pedidoLinkPagamento = () => window.EasyLocLinkPagamento.paraDocumento({ empresaId: window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id"), pedidoId: window.__PEDIDO_ATUAL_ID });
 </script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20261030-so-itens-travados"></script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261030-parcelas-pagas"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

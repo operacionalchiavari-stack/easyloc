@@ -132,6 +132,8 @@ export function initPagamento(){
   const isCancelado = (status = "") => ["cancelado", "cancelada"].includes(normalizarStatus(status));
 
   const statusMeta = (row) => {
+    // parcela com recebimento no Financeiro: quem manda é a conta a receber
+    if(row?.dataset.travada) return Number(row.dataset.finAberto) <= 0.005 ? { key: "paid", label: "Pago" } : { key: "partial", label: "Pago em parte" };
     const status = row?.querySelector(".pg-status")?.value || row?.dataset.status || "Programado";
     const vencimento = row?.querySelector(".pg-vencimento")?.value || "";
     const valor = valorDaLinha(row);
@@ -166,7 +168,7 @@ export function initPagamento(){
     if(!row) return;
 
     const meta = statusMeta(row);
-    row.classList.remove("is-paid", "is-open", "is-overdue", "is-programmed", "is-canceled");
+    row.classList.remove("is-paid", "is-partial", "is-open", "is-overdue", "is-programmed", "is-canceled");
     row.classList.add(`is-${meta.key}`);
 
     const valor = valorDaLinha(row);
@@ -340,6 +342,64 @@ export function initPagamento(){
     return tr;
   };
 
+  /* Parcela paga (out/2026): a situação vem das contas a receber (recebimento pela conciliação, caixa ou link do pedido).
+     Com qualquer recebimento a parcela fica travada: o Financeiro não muda mais o valor nem o vencimento dela, e a posição
+     dentro da divisão é o que liga a linha à conta a receber. O banco confere de novo ao salvar. */
+  let titulosFin = [];
+  const dadosDaLinha = (row) => ({
+    tipo: row.querySelector(".pg-parcela-label")?.textContent?.trim() || "Parcela",
+    vencimento: row.querySelector(".pg-vencimento")?.value || "", valor: valorDaLinha(row),
+    metodo: row.querySelector(".pg-metodo")?.value || "PIX", status: row.querySelector(".pg-status")?.value || "Programado",
+    recebido: row.dataset.recebido ?? "", componente: row.dataset.componente || "locacao"
+  });
+  const divisaoTravada = (comp) => linhasParcela(comp).some((row) => row.dataset.travada);
+  const marcarPagas = () => {
+    COMPONENTES.forEach(([comp]) => {
+      const titulos = titulosFin.filter((t) => t.componente === comp);
+      const pagos = titulos.filter((t) => Number(t.recebido) > 0);
+      if(!pagos.length) return;
+      const ultima = Math.max(...pagos.map((t) => t.parcela));
+      garantirGrupos();
+      const destino = tbody.querySelector(`.pg-componente-card[data-componente="${comp}"] [data-pg-linhas]`);
+      for(let n = linhasParcela(comp).length + 1; n <= ultima; n += 1){
+        const t = titulos.find((x) => x.parcela === n);
+        if(t) destino?.appendChild(criarLinha({ tipo: `Parcela ${n}`, vencimento: t.vencimento, valor: Number(t.valor), metodo: t.forma || "PIX", componente: comp }));
+      }
+      const rows = linhasParcela(comp);
+      rows.forEach((row, i) => {
+        const t = pagos.find((x) => x.parcela === i + 1);
+        // tirar uma parcela antes de uma paga mudaria a posição da paga
+        const remover = row.querySelector('[data-pg-action="remove"]');
+        if(remover) remover.hidden = i + 1 < ultima || Boolean(t);
+        if(!t) return;
+        row.dataset.travada = "1";
+        row.dataset.finAberto = String(t.aberto);
+        row.classList.add("pg-travada");
+        row.title = "Parcela com recebimento no Financeiro: não pode ser alterada.";
+        const venc = row.querySelector(".pg-vencimento"), valor = row.querySelector(".pg-valor"), metodo = row.querySelector(".pg-metodo");
+        if(venc){ venc.value = t.vencimento; venc.disabled = true; }
+        if(valor){ valor.textContent = formatCurrency(Number(t.valor)); valor.contentEditable = "false"; }
+        if(metodo) metodo.disabled = true;
+        row.querySelector("[data-cobranca-parcela]")?.setAttribute("hidden", "");
+        row.querySelector('[data-pg-action="edit"]')?.setAttribute("hidden", "");
+        atualizarLinhaVisual(row);
+      });
+    });
+  };
+  const carregarTitulos = async () => {
+    const pedido = window.__PEDIDO_ATUAL_ID;
+    if(!pedido || !window.supabaseClient) return;
+    const { data, error } = await window.supabaseClient.from("fin_receber").select("componente,parcela,valor,recebido,aberto,vencimento,forma,status")
+      .eq("pedido_id", pedido).eq("origem", "pedido").neq("status", "cancelado");
+    if(error){ console.warn("Parcelas pagas:", error.message); return; }
+    titulosFin = data || [];
+    marcarPagas();
+    atualizarSequencia();
+    atualizarResumo();
+    refreshIcons();
+  };
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) carregarTitulos(); });
+
   const abrirCobrancaParcela = (button) => {
     const tr = button?.closest("tr");
     const rows = linhasParcela();
@@ -481,8 +541,11 @@ export function initPagamento(){
     const { valorFinal } = calcularTotais();
     const valores = valoresPorComponente();
     const entradaTotal = Math.min(moneyValue(entradaEl), valorFinal);
-    const parcelas = COMPONENTES.flatMap(([comp]) => valores[comp] > 0 ? planoDaDivisao(comp, valores[comp], entradaTotal, valorFinal) : []);
+    // divisão com parcela paga fica como está: o plano automático não pode refazer o que já foi recebido
+    const parcelas = COMPONENTES.flatMap(([comp]) => divisaoTravada(comp) ? linhasParcela(comp).map(dadosDaLinha)
+      : valores[comp] > 0 ? planoDaDivisao(comp, valores[comp], entradaTotal, valorFinal) : []);
     montarTabela(parcelas);
+    marcarPagas();
     atualizarSequencia();
     atualizarResumo();
     refreshIcons();
@@ -509,7 +572,9 @@ export function initPagamento(){
 
   const limparProgramacao = () => {
     cronogramaManual = true;
-    montarTabela([]);
+    montarTabela(COMPONENTES.flatMap(([comp]) => divisaoTravada(comp) ? linhasParcela(comp).map(dadosDaLinha) : []));
+    marcarPagas();
+    atualizarSequencia();
     atualizarResumo();
     refreshIcons();
   };
@@ -557,6 +622,7 @@ export function initPagamento(){
   };
 
   const aplicarConfig = (config = {}, parcelas = []) => {
+    carregarTitulos();
     setIfExists(metodoEl, config.metodo);
     setIfExists(entradaEl, config.entrada);
     setIfExists(parcelasEl, config.parcelas);
@@ -580,6 +646,7 @@ export function initPagamento(){
         componente: parcela.componente
       }));
       montarTabela(lidas.some((p) => COMPONENTES.some(([k]) => k === p.componente)) ? lidas : dividirParcelasAntigas(lidas));
+      marcarPagas();
       atualizarSequencia();
       atualizarResumo();
       refreshIcons();
@@ -618,6 +685,7 @@ export function initPagamento(){
 
   tbody.addEventListener("input", (event) => {
     const row = event.target.closest("tr.pg-linha");
+    if(row?.dataset.travada) return;
     if(row) {
       cronogramaManual = true;
       if(event.target.closest(".pg-valor")) row.dataset.recebido = "";
@@ -649,7 +717,7 @@ export function initPagamento(){
       return;
     }
 
-    if(!actionButton || !row) return;
+    if(!actionButton || !row || row.dataset.travada) return;
 
     const action = actionButton.dataset.pgAction;
     if(action === "edit"){
