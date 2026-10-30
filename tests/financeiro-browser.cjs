@@ -172,7 +172,7 @@ const mock = `(() => {
   await page.waitForSelector(".fin-venc-alerta.vermelho");
   assert.match(await page.textContent(".fin-venc-alerta.vermelho"), /Vence hoje/);
   assert.notEqual(await page.$eval(".fin-venc-alerta i", (e) => getComputedStyle(e).animationName), "none", "a bolinha pisca");
-  await page.locator(".fin-pedido").first().screenshot({ path: path.join(process.env.SP || raiz, "fin-venc.png") }).catch(() => {});
+  if (process.env.SP) await page.locator(".fin-pedido").first().screenshot({ path: process.env.SP + "/fin-venc.png" }).catch(() => {});
   console.log("ok 3d - aviso de vencimento: vermelho até 3 dias, amarelo até 7");
   const prazos = () => page.$$eval("[data-prazo]", (l) => l.map((b) => [b.dataset.prazo, b.querySelector(".fin-prazo-n")?.textContent || ""]));
   assert.deepStrictEqual(await prazos(), [["vencidos", ""], ["hoje", "2"], ["semana", "1"]], "bolinha com a quantidade, sem bolinha quando é zero");
