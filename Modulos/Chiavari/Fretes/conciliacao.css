@@ -1,0 +1,43 @@
+/* Conciliação de Fretes (out/2026, no banco) */
+.cf-page{padding:0 clamp(16px,2.4vw,36px) 48px}
+.cf-barra{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:10px 0 14px}
+.cf-barra label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#4f4f4f}
+.cf-barra select,.cf-barra input{min-height:40px;padding:0 10px;border:1px solid #dfe4ea;border-radius:10px;background:#fff;font:14px Inter,sans-serif}
+.cf-busca input{width:260px}
+.cf-esp{flex:1}
+.cf-aviso{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#fdf6dd;border:1px solid #ead9a8;color:#5b4a14;font-size:14px}
+.cf-vazio{padding:34px;border-radius:14px;background:#fff;text-align:center;color:#6b6b6b;box-shadow:0 0 8px rgba(15,23,42,.12),0 0 2px rgba(15,23,42,.1)}
+.cf-bloco{margin-bottom:18px;padding:16px 18px;border-radius:14px;background:#fff;box-shadow:0 0 8px rgba(15,23,42,.15),0 0 2px rgba(15,23,42,.12)}
+.cf-bloco h2{margin:0;font:600 22px "Cormorant Garamond",serif}
+.cf-grupo>header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.cf-grupo>header small{color:#6b6b6b}
+.cf-tot{display:flex;gap:18px;font-size:13px;color:#4f4f4f}
+.cf-rolar{overflow-x:auto}
+.cf-tabela{width:100%;border-collapse:collapse;font-size:14px}
+html:root:is(#cf-t#cf-t#cf-t#cf-t#cf-t,html) .cf-tabela th{padding:8px 10px;border-bottom:1px solid #e3e7ec;background:#fff;color:#6b6b6b;font:600 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:.04em;text-align:left;white-space:nowrap}
+html:root:is(#cf-t#cf-t#cf-t#cf-t#cf-t,html) .cf-tabela td{padding:9px 10px;border-bottom:1px solid #eef1f4;vertical-align:middle}
+.cf-tabela td small{display:block;color:#6b6b6b;font-size:12px}
+.cf-tabela .num{text-align:right;white-space:nowrap}
+.cf-tabela tr.is-sel td{background:#eaf0fa}
+.cf-tabela tr.is-desfeito td{opacity:.55}
+.cf-chk{width:34px}
+.cf-chk input{width:18px;height:18px;accent-color:#123f86}
+.cf-tipo{display:inline-block;margin:0 4px 2px 0;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.cf-tipo.entrega{background:#e6f4ea;color:#1f7a44}
+.cf-tipo.coleta{background:#f4effc;color:#6d4fc2}
+.cf-tipo.extra{background:#fdf6dd;color:#8a6200}
+.cf-tipo.fora{background:#fde8e8;color:#b42318}
+.cf-ok{color:#1f7a44;font-weight:600}
+.cf-mais{color:#b42318;font-weight:600}
+.cf-menos{color:#1f7a44;font-weight:600}
+.cf-pend{color:#8a6200;font-size:12px}
+.cf-final{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.cf-final input{width:120px;min-height:36px;padding:0 8px;border:1px solid #cfd6df;border-radius:8px;text-align:right;font:600 14px Inter,sans-serif}
+.cf-atalhos{display:flex;gap:6px}
+.cf-atalhos button{padding:0;border:0;background:none;color:#123f86;font:500 12px Inter,sans-serif;cursor:pointer}
+.cf-obs{width:100%;min-width:150px;min-height:36px;padding:0 8px;border:1px solid #dfe4ea;border-radius:8px;font:13px Inter,sans-serif}
+.cf-rodape{display:flex;align-items:flex-end;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid #e3e7ec}
+.cf-rodape>span{margin-right:auto;align-self:center;font-size:14px}
+.cf-rodape label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#4f4f4f}
+.cf-rodape input{min-height:40px;padding:0 10px;border:1px solid #dfe4ea;border-radius:10px;font:14px Inter,sans-serif}
+.cf-obs-fech{width:260px}

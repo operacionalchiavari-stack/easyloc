@@ -8,12 +8,13 @@ module.exports = function operacaoRpcFixture(banco, nome, args = {}) {
     const setor=args.p_setor;
     return ok((banco.separacoes_pedidos||[]).filter(p=>{
       if(p.status==='cancelado'||p.reducao_liberada_em||['orcamento','pre_reserva'].includes(p.status_comercial))return false;
-      if(setor==='triagem')return p.operacao?.coleta?.concluido_em ? !p.operacao?.retorno?.concluido_em : !['separado','separado_com_divergencia'].includes(p.status);
+      // Separado continua na Triagem (Concluídos) até a Expedição começar o carregamento.
+      if(setor==='triagem')return p.operacao?.coleta?.concluido_em ? !p.operacao?.retorno?.concluido_em : (!['separado','separado_com_divergencia'].includes(p.status) || (!p.operacao?.carregamento?.iniciado_em && !p.operacao?.carregamento?.concluido_em && !(banco.separacoes_etiquetas||[]).some(e=>e.separacao_pedido_id===p.id&&e.lida_carregamento_em)));
       if(setor==='expedicao')return p.operacao?.coleta?.concluido_em ? !p.operacao?.descarregamento?.concluido_em : ['separado','separado_com_divergencia'].includes(p.status)&&!p.operacao?.carregamento?.concluido_em;
       if(setor==='entrega')return !!p.operacao?.carregamento?.concluido_em&&!p.operacao?.entrega?.concluido_em;
       if(setor==='coleta')return !!p.operacao?.entrega?.concluido_em&&!p.operacao?.coleta?.concluido_em;
       return false;
-    }).map(p=>({...p,fluxo_etapa:setor==='expedicao'?(p.operacao?.coleta?.concluido_em?'retorno_simultaneo':'expedicao'):setor,somente_consulta:false})).slice(args.p_de||0,(args.p_de||0)+(args.p_limite||500)));
+    }).map(p=>({...p,fluxo_etapa:setor==='expedicao'||(setor==='triagem'&&!p.operacao?.coleta?.concluido_em&&['separado','separado_com_divergencia'].includes(p.status))?(p.operacao?.coleta?.concluido_em?'retorno_simultaneo':'expedicao'):setor,somente_consulta:false})).slice(args.p_de||0,(args.p_de||0)+(args.p_limite||500)));
   }
   const p=(banco.separacoes_pedidos || []).find(p=>p.id===args.p_pedido);
   if(nome==='operacao_iniciar_conferencia'){
@@ -59,7 +60,7 @@ module.exports = function operacaoRpcFixture(banco, nome, args = {}) {
     if(!i)return erro('Item não encontrado');
     Object.assign(i,args.p_dados);
     if(args.p_etiqueta){const e=banco.separacoes_etiquetas.find(e=>e.id===args.p_etiqueta);if(e)e.lida_separacao_em=new Date().toISOString();}
-    window.__gravados.push({t:'separacoes_itens',tipo:'update',p:args.p_dados});
+    window.__gravados?.push({t:'separacoes_itens',tipo:'update',p:args.p_dados});
     return ok(null);
   }
   if(nome==='operacao_ler_peca'){
@@ -73,7 +74,7 @@ module.exports = function operacaoRpcFixture(banco, nome, args = {}) {
     if(!e)return erro('Etiqueta não pertence a este pedido');
     if(e[campo])return erro('Já conferida');
     e[campo]=new Date().toISOString();if(args.p_tipo==='PAT')anteriores.add(chave);
-    window.__gravados.push({t:'separacoes_etiquetas',tipo:'update',p:{[campo]:e[campo]}});
+    window.__gravados?.push({t:'separacoes_etiquetas',tipo:'update',p:{[campo]:e[campo]}});
     return ok({...e});
   }
   if(nome==='operacao_concluir_conferencia'){
@@ -84,9 +85,13 @@ module.exports = function operacaoRpcFixture(banco, nome, args = {}) {
     const faltando=etqs.filter(e=>!e[campo]).map(e=>({codigo:e.codigo,item:(banco.separacoes_itens||[]).find(i=>i.id===e.separacao_item_id)?.item_nome||'Item'}));
     const registro={concluido_em:new Date().toISOString(),por:'Igor',total:etqs.length,lidas:etqs.length-faltando.length,faltando,...(args.p_etapa==='carregamento'?{caminhoes:p.operacao.carregamento_caminhoes}:{})};
     p.operacao={...(p.operacao||{}),[args.p_etapa]:registro};p.status_operacional={carregamento:'carregado',descarregamento:'descarregado',retorno:'retornado'}[args.p_etapa];
-    window.__gravados.push({t:'separacoes_pedidos',tipo:'update',p:{status_operacional:p.status_operacional,operacao:p.operacao}});
+    window.__gravados?.push({t:'separacoes_pedidos',tipo:'update',p:{status_operacional:p.status_operacional,operacao:p.operacao}});
     return ok(registro);
   }
+  if(nome==='separacao_meus_setores')return ok(banco.meusSetores||null);
+  if(nome==='pedidos_pagamento_bloqueados')return ok((banco.bloqueadosFinanceiro||[]).filter(id=>(args.p_pedidos||[]).includes(id)));
+  if(nome==='pedidos_sem_caminhao_bloqueados')return ok((banco.semCaminhao||[]).filter(id=>(args.p_pedidos||[]).includes(id)));
+  if(nome==='carregamento_parametros_salvar')return ok(null);
   if(nome==='pedido_liberar_reducao'){
     p.reducao_liberada_em=args.p_liberar?new Date().toISOString():null;return ok(null);
   }

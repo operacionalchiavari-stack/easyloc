@@ -1,10 +1,10 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { iniciarDetalhesEstoque } from "./pedido-estoque-tooltip.mjs?v=20261022-fixar";
+import { iniciarDetalhesEstoque } from "./pedido-estoque-tooltip.mjs?v=20261029-mesma-conta";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
-import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261026-supabase";
-import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261023-helena-pecas";
+import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261029-disponivel";
+import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261028-disponibilidade";
 import { initCatalogBiblioteca, openCatalogBiblioteca, backCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261021-subpastas";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem } from "./catalogo-projetos.mjs?v=20261027-pedido-lateral";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem } from "./catalogo-projetos.mjs?v=20261030-so-itens-travados";
 
 const supabase = window.supabaseClient;
 const modoPedido = new URLSearchParams(location.search).get('comercial') === 'pedido' && window.parent !== window;
@@ -1959,36 +1959,67 @@ function dataDoEstoque(){
   const d = String(window.catalogAssistenteProjeto?.retrato?.()?.data_evento || "").slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : hojeSP();
 }
-function estoqueDaData(data){
-  if(!estoqueCache.has(data)){
-    const sessao = state.catalogSession || {};
-    // Parâmetros > Catálogo decide o que volta (estoque e/ou disponível, ou nada) — inclusive para o visitante.
-    const rpc = modoPedido ? "pedido_catalogo_estoque" : "catalogo_estoque";
-    const args = { p_data: data, p_empresa_id: sessao.empresa_id || null };
-    if(!modoPedido) args.p_token = sessao.token || null;
-    estoqueCache.set(data, supabase.rpc(rpc, args)
-      .then(({ data: r, error }) => { if(error || !r) throw error || new Error("sem mapa"); return r; })
-      .catch(() => { setTimeout(() => estoqueCache.delete(data), 15000); return null; }));
-  }
-  return estoqueCache.get(data);
+// Dentro do pedido comercial: período inteiro (entrega → coleta, como o salvar confere) e o próprio pedido fora da
+// conta — antes as peças dele apareciam como reservadas por outro ("Esgotado" sem estar).
+function periodoPedidoAberto(){
+  if(!modoPedido) return null;
+  let doc;
+  try{ doc = window.parent.document; }catch{ return null; }
+  const campo = (id) => String(doc.getElementById(id)?.value || "").slice(0, 10);
+  const ok = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const ini = [campo("dataEntrega"), campo("dataEvento")].find(ok);
+  if(!ini) return null;
+  const fim = [campo("dataColeta"), campo("dataEventoFim"), campo("dataEvento")].find((v) => ok(v) && v >= ini) || ini;
+  return { ini, fim, pedido: window.parent.__PEDIDO_ATUAL_ID || null };
 }
-function estoqueHtml(d, data){
+function consultaEstoque(){
+  const periodo = periodoPedidoAberto();
+  if(periodo) return { chave: `${periodo.ini}~${periodo.fim}~${periodo.pedido || ""}`, data: periodo.ini, periodo };
+  const data = dataDoEstoque();
+  return { chave: data, data, periodo: null };
+}
+// Cada consulta vale 1 minuto: as reservas de outros pedidos mudam com a tela aberta.
+let estoqueConsultas = 0;
+function estoqueDaData(consulta){
+  const guardado = estoqueCache.get(consulta.chave);
+  if(guardado && guardado.ate > Date.now()) return guardado;
+  const sessao = state.catalogSession || {};
+  // Parâmetros > Catálogo decide o que volta (estoque e/ou disponível, ou nada) — inclusive para o visitante.
+  const rpc = modoPedido ? "pedido_catalogo_estoque" : "catalogo_estoque";
+  const args = { p_data: consulta.data, p_empresa_id: sessao.empresa_id || null };
+  if(!modoPedido) args.p_token = sessao.token || null;
+  if(consulta.periodo) Object.assign(args, { p_pedido: consulta.periodo.pedido, p_inicio: consulta.periodo.ini, p_fim: consulta.periodo.fim });
+  const entrada = { id: ++estoqueConsultas, ate: Date.now() + 60000 };
+  entrada.promessa = supabase.rpc(rpc, args)
+    .then(({ data: r, error }) => { if(error || !r) throw error || new Error("sem mapa"); return r; })
+    .catch(() => { entrada.ate = Date.now() + 15000; return null; });
+  estoqueCache.set(consulta.chave, entrada);
+  return entrada;
+}
+function estoqueHtml(d, consulta){
   if(!d) return "";
-  const [total, livre] = d; // null = escondido pelos Parâmetros do catálogo
-  const quando = data === hojeSP() ? "hoje" : "em " + data.slice(8, 10) + "/" + data.slice(5, 7);
+  const [total, livre, bloqueado] = d; // null = escondido pelos Parâmetros do catálogo; bloqueado = divergência aguardando a contagem geral
+  const data = consulta.data, periodo = consulta.periodo;
+  const quando = periodo && periodo.fim !== periodo.ini ? "no período"
+    : data === hojeSP() ? "hoje" : "em " + data.slice(8, 10) + "/" + data.slice(5, 7);
   return (total != null ? `<span class="is-estoque">Estoque <b>${total}</b></span>` : "") +
-    (livre != null ? `<span class="${livre ? "is-livre" : "is-esgotado"}">${livre ? `Disponível ${quando} <b>${livre}</b>` : `Esgotado ${quando}`}</span>` : "");
+    (bloqueado ? `<span class="is-esgotado is-bloqueado-contagem" title="Teve divergência de contagem num evento e aguarda a contagem geral em Estoque > Gestão do acervo. Enquanto isso não entra em novas reservas (Parâmetros > Divergências de contagem).">Bloqueado · aguardando contagem</span>`
+    : livre != null ? `<span class="${livre ? "is-livre" : "is-esgotado"}">${livre ? `Disponível ${quando} <b>${livre}</b>` : `Esgotado ${quando}`}</span>` : "");
 }
 let estoquePintando = null;
+// mapa {item: [estoque, livre]} da data/período atual — o projeto usa para não deixar passar do disponível
+window.catalogMapaEstoque = () => estoqueDaData(consultaEstoque()).promessa;
 async function pintarEstoque(raiz = document){
-  const data = dataDoEstoque();
-  const alvos = [...raiz.querySelectorAll("[data-stock-item]")].filter((el) => el.dataset.stockData !== data + ":" + el.dataset.stockItem);
+  const consulta = consultaEstoque();
+  const entrada = estoqueDaData(consulta);
+  const marca = `${consulta.chave}#${entrada.id}:`;
+  const alvos = [...raiz.querySelectorAll("[data-stock-item]")].filter((el) => el.dataset.stockData !== marca + el.dataset.stockItem);
   if(!alvos.length) return;
-  const mapa = await estoqueDaData(data);
+  const mapa = await entrada.promessa;
   if(!mapa) return;
   for(const el of alvos){
-    el.dataset.stockData = data + ":" + el.dataset.stockItem;
-    const html = estoqueHtml(mapa[el.dataset.stockItem], data);
+    el.dataset.stockData = marca + el.dataset.stockItem;
+    const html = estoqueHtml(mapa[el.dataset.stockItem], consulta);
     el.hidden = !html;
     if(el.innerHTML !== html) el.innerHTML = html;
     el.removeAttribute('tabindex');
@@ -1996,7 +2027,7 @@ async function pintarEstoque(raiz = document){
   }
 }
 function vigiarEstoque(){
-  if(modoPedido) iniciarDetalhesEstoque({supabase, empresa: () => state.catalogSession?.empresa_id, data: dataDoEstoque});
+  if(modoPedido) iniciarDetalhesEstoque({supabase, empresa: () => state.catalogSession?.empresa_id, data: dataDoEstoque, pedido: () => periodoPedidoAberto()?.pedido || null, periodo: () => periodoPedidoAberto()});
   const agendar = () => { if(estoquePintando) return; estoquePintando = requestAnimationFrame(() => { estoquePintando = null; pintarEstoque(); }); };
   new MutationObserver((lista) => { if(lista.some((m) => [...m.addedNodes].some((n) => n.nodeType === 1 && (n.matches?.("[data-stock-item]") || n.querySelector?.("[data-stock-item]"))))) agendar(); })
     .observe(document.body, { childList: true, subtree: true });
@@ -4300,6 +4331,7 @@ async function init(){
     });
   }catch(error){
     console.error("Erro ao carregar catálogo:", error);
+    window.__catalogoFalhou = true; // a tela do pedido não fica esperando um catálogo que não carregou
     const interno = acessoInternoDoSistema();
     renderGate("Não foi possível carregar o catálogo", "Recarregue para tentar novamente. Se o problema continuar, entre em contato com a Chiavari.", interno ? "../../../dashboard.html" : location.pathname, interno ? "Voltar ao painel" : "Tentar novamente");
   }

@@ -3,7 +3,9 @@
  const versao='20261026-zerado',chave='easyloc:limpeza-dados';
  window.__limpezaDadosPronta=(async()=>{
   if(localStorage.getItem(chave)===versao)return;
-  for(const k of Object.keys(localStorage))if(!/^sb-.*-auth-token(?:\.|$)/.test(k))localStorage.removeItem(k);
+  // o login do sistema fica em 'easyloc-auth' (js/core/supabase.js); os apps de campo guardam a sessão própria
+  const manter=k=>/^sb-.*-auth-token(?:\.|$)/.test(k)||k==='easyloc-auth'||k==='uber_motorista_token'||k==='frete_freteiro_token'||k==='montadorToken';
+  for(const k of Object.keys(localStorage))if(!manter(k))localStorage.removeItem(k);
   for(const nome of ['acervo-studio-projects','acervo-operacao-v1'])await new Promise(resolve=>{
    const request=indexedDB.open(nome);
    request.onerror=()=>resolve();

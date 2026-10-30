@@ -7,7 +7,7 @@
 // Navegação de app: abas embaixo, telas empilhadas com o "voltar" do celular (history), folhas que sobem de baixo.
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261023-helena-pecas";
+import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261028-disponibilidade";
 
 const supabase = window.supabaseClient;
 // Bucket "projetos": o decorador (sem login) passa pela função catalogo-arquivos — ver catalogo-arquivos.mjs.
@@ -790,10 +790,10 @@ window.catalogAssistenteProjeto = {
   async verPedido(abrir){
     if(!abrir){ S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
     if(!S.projeto) return false;
-    for(const href of ["catalogo-projetos.css?v=20261027-pedido-lateral", "projeto-apresentacao.css?v=20261016-vitrine"]){
+    for(const href of ["catalogo-projetos.css?v=20261030-link-pagamento2", "projeto-apresentacao.css?v=20261030-link-pagamento"]){
       if(!document.querySelector(`link[data-previa="${href}"]`)){ const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
     }
-    const m = await import("./projeto-apresentacao.mjs?v=20261027-pedido-lateral");
+    const m = await import("./projeto-apresentacao.mjs?v=20261030-link-documento");
     await new Promise((r) => setTimeout(r, 360));
     document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());
     S.previaHelena = m.abrirVisualizacaoPedido({ titulo: S.projeto.noivos || "Pedido", model: m.dadosApresentacao(S.projeto, acharItem),
@@ -864,7 +864,7 @@ async function prepararMotor3D(){
     const host = $("appStudioHost");
     const pecas = [doc.getElementById("catalogStudio"), ...doc.querySelectorAll("dialog[id^='studio']")].filter(Boolean);
     pecas.forEach((p) => host.appendChild(document.importNode(p, true)));
-    const m = await import("./catalogo-studio3d.mjs?v=20261015-assistente");
+    const m = await import("./catalogo-studio3d.mjs?v=20261029-disponivel");
     m.initCatalogStudio3D({ items: S.itens, supabase, empresaId: S.sessao.empresa_id, ownerId: S.sessao.cliente_id, token: S.sessao.token });
     ctxHelena.cenaEditor = m.cenaEditor;
   }catch(error){ console.warn("Motor 3D indisponível no app:", error); }

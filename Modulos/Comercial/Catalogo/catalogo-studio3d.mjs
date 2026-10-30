@@ -3,7 +3,7 @@ import { arquivosDoBucket } from './catalogo-arquivos.mjs';
 // matchingItems importado sob outro nome: o arquivo já tem uma função local `matchingItems(pattern)` (usada
 // pelo diálogo antigo de "Montagem automática"/PRESETS, assinatura totalmente diferente — um regex solto, não
 // um papel de formato) — nomes iguais, propósitos diferentes, mantidos os dois sem tocar no que já existia.
-import { studioFormats, studioFormatPlacements, matchingItems as formatoRoleItems } from './catalogo-formatos.mjs?v=20260924-categoria-favorito';
+import { studioFormats, studioFormatPlacements, matchingItems as formatoRoleItems } from './catalogo-formatos.mjs?v=20261029-sem-embutido';
 const THREE_URL = "three";
 const GLTF_URL = "three/addons/loaders/GLTFLoader.js";
 const ORBIT_URL = "three/addons/controls/OrbitControls.js";
@@ -45,7 +45,7 @@ const studio = {
   wallDrawPoints: [], wallDrawPreview: null, wallSequence: 0,
   gridVisible: true,
   zoomFocus: null,
-  directDrag: null, rotateRaf: null,
+  directDrag: null,
   grouping: false, groupSelection: new Set(), groupHelpers: [],
   performance: detectPerformanceProfile(), lastFrameAt: 0,
   modelCache: new Map(), modelLoads: new Map(), modelProgress: new Map(),
@@ -270,7 +270,6 @@ function canvasParaJpegBlob(canvas, qualidade = .86){
 // Nunca lança: quem chama trata qualquer falha como "sem foto ainda", nunca como erro visível pra pessoa (ver
 // anexarFotoDoFormato/backfillFormatCapa, os dois únicos chamadores).
 async function salvarCapaDoFormato(formatoId, nome, papeis, blob, categoria){
-  if(studio.pedidoComercial) return;
   const path = `${studio.empresaId}/${formatoId}/capa.jpg`;
   const { error: uploadError } = await arquivosLounge().upload(path, blob, { upsert: true, contentType: "image/jpeg" });
   if(uploadError) throw uploadError;
@@ -318,7 +317,6 @@ async function anexarFotoDoFormato(formatoId, nome, pecas, categoria){
 // tratamento de erro silencioso de anexarFotoDoFormato — nunca atrapalha quem só queria VER a prévia. Se o
 // formato for favorito, a prateleira (que nunca renderiza ao vivo por conta própria) ganha a foto de graça.
 async function backfillFormatCapa(format, dataUrl){
-  if(studio.pedidoComercial) return;
   if(!format.custom || !format.recordId || format.capaUrl) return;
   try{
     const image = new Image();
@@ -374,7 +372,7 @@ function formatCardMarkup(format){
 // e abre "Escolher os móveis" (ver initStudioLibraryTabs). Sem estrela pro "Lounge compacto" embutido (sem
 // `recordId`, não tem onde persistir um favorito).
 function formatBrowseCardMarkup(format){
-  const star = !studio.pedidoComercial && format.recordId
+  const star = format.recordId
     ? `<button type="button" class="studio-format-favorite ${format.favorito ? "is-active" : ""}" data-format-favorite="${escapeHtml(format.key)}" aria-pressed="${format.favorito ? "true" : "false"}" aria-label="${format.favorito ? "Remover dos favoritos" : "Marcar como favorito"}" title="${format.favorito ? "Remover dos favoritos" : "Marcar como favorito"}">${format.favorito ? "★" : "☆"}</button>`
     : "";
   return `<div class="studio-format-browse-card">${formatCardMarkup(format)}${star}</div>`;
@@ -446,7 +444,6 @@ function renderFormatsBrowseModal(){
 // Favoritar/desfavoritar direto do modal (sem editar o formato) — otimista: já atualiza a estrela e a
 // prateleira lateral na hora, desfaz se a RPC falhar.
 async function toggleFormatFavorite(key){
-  if(studio.pedidoComercial) return;
   const format = availableFormats.find((candidate) => candidate.key === key);
   if(!format || !format.recordId) return;
   const next = !format.favorito;
@@ -684,7 +681,7 @@ function libraryItemsMarkup(query = ""){
     return `
     <button type="button" class="studio-library-item ${loading ? "is-loading" : ""} ${hidden ? "hidden" : ""}" data-studio-add="${escapeHtml(item.id)}" data-search="${escapeHtml(search)}" title="${loading ? "Carregando" : "Adicionar"} ${escapeHtml(item.name)}" ${loading ? 'disabled aria-busy="true"' : ""}>
       <img src="${escapeHtml(otimizarFoto(item.photo, 120))}" alt="" loading="lazy">
-      <span>${escapeHtml(item.name)}</span><b aria-hidden="true">${loading ? "" : "+"}</b>
+      <span class="studio-library-item-text"><span>${escapeHtml(item.name)}</span><small class="studio-item-stock" data-stock-item="${escapeHtml(item.id)}" hidden></small></span><b aria-hidden="true">${loading ? "" : "+"}</b>
     </button>`;
   }).join("") + `<div class="studio-library-empty ${available.some((item) => !normalized || normalizeSearch(`${item.name} ${item.catLabel || ""}`).includes(normalized)) ? "hidden" : ""}">Nenhum modelo 3D disponível.</div>`
     : `<div class="studio-library-empty">Nenhum modelo 3D disponível.</div>`;
@@ -1544,7 +1541,6 @@ function effectiveFormatCategory(){
 }
 
 function openSaveFormat(){
-  if(studio.pedidoComercial) return;
   const members = groupMembers(studio.selected);
   if(members.length < 2 || studio.grouping) return;
   const { THREE } = studio.three;
@@ -1593,7 +1589,6 @@ function openSaveFormat(){
 }
 
 async function saveSelectedFormat(event){
-  if(studio.pedidoComercial){event.preventDefault();return;}
   event.preventDefault();
   if(savingFormat || !formatDraft) return;
   const name = $("studioFormatName").value.trim();
@@ -1631,7 +1626,7 @@ async function saveSelectedFormat(event){
 
 function selectObject(object){
   studio.selected = object || null;
-  $("studioSaveFormatButton")?.classList.toggle("hidden", studio.pedidoComercial || !object || studio.grouping || groupMembers(object).length < 2);
+  $("studioSaveFormatButton")?.classList.toggle("hidden", !object || studio.grouping || groupMembers(object).length < 2);
   if(object){
     studio.transform.detach();
     $("studioSelectedLabel").textContent = object.userData.item?.name || "Móvel selecionado";
@@ -1642,6 +1637,7 @@ function selectObject(object){
     const members = groupMembers(object);
     if(members.length > 1) $("studioSelectedLabel").textContent = `Bloco com ${members.length} móveis`;
     $("studioUngroupButton")?.classList.toggle("hidden", members.length < 2);
+    atualizarAnguloGiro();
   }else{
     studio.transform.detach();
     if($("studioSelectedDimensions")) $("studioSelectedDimensions").textContent = "";
@@ -1836,34 +1832,50 @@ function finishDirectDrag(event){
   if(studio.orbit) studio.orbit.enabled = shouldEnableOrbit();
 }
 
-function startContinuousRotation(){
-  if(!studio.selected || studio.rotateRaf) return;
-  const rotate = () => {
-    if(!studio.selected){ studio.rotateRaf = null; return; }
-    const members = groupMembers(studio.selected);
-    if(members.length === 1){
-      studio.selected.rotation.y += .025;
-      rememberValidTransform(studio.selected);
-    }else{
-      const centerX = members.reduce((sum, member) => sum + member.position.x, 0) / members.length;
-      const centerZ = members.reduce((sum, member) => sum + member.position.z, 0) / members.length;
-      const cosine = Math.cos(.025), sine = Math.sin(.025);
-      members.forEach((member) => {
-        const x = member.position.x - centerX, z = member.position.z - centerZ;
-        member.position.x = centerX + x * cosine - z * sine;
-        member.position.z = centerZ + x * sine + z * cosine;
-        member.rotation.y += .025;
-      });
-      members.forEach(rememberValidTransform);
-    }
-    studio.rotateRaf = requestAnimationFrame(rotate);
-  };
-  studio.rotateRaf = requestAnimationFrame(rotate);
+// Giro do móvel (out/2026, pedido: "algo mais preciso, mais rápido, mais simples"): ↺/↻ giram 15° por clique (segurar
+// repete), o campo mostra/aceita o ângulo exato em graus, e Q/E no teclado (Shift = 90°). O giro sempre cai num múltiplo
+// do passo, para alinhar fácil. Num bloco, todos os móveis giram juntos em volta do centro do bloco, como uma peça só.
+const PASSO_GIRO = 15;
+function anguloSelecionado(){
+  const object = studio.selected;
+  if(!object) return 0;
+  const graus = Math.round(-object.rotation.y * 180 / Math.PI);
+  return ((graus % 360) + 360) % 360;
 }
-
-function stopContinuousRotation(){
-  if(studio.rotateRaf) cancelAnimationFrame(studio.rotateRaf);
-  studio.rotateRaf = null;
+function atualizarAnguloGiro(){
+  const campo = $("studioRotateAngle");
+  if(campo && document.activeElement !== campo) campo.value = studio.selected ? anguloSelecionado() : "";
+}
+function girarSelecionado(radianos){
+  if(!studio.selected || !radianos) return;
+  const members = groupMembers(studio.selected);
+  if(members.length > 1){
+    const centerX = members.reduce((sum, member) => sum + member.position.x, 0) / members.length;
+    const centerZ = members.reduce((sum, member) => sum + member.position.z, 0) / members.length;
+    const cosine = Math.cos(radianos), sine = Math.sin(radianos);
+    members.forEach((member) => {
+      const x = member.position.x - centerX, z = member.position.z - centerZ;
+      member.position.x = centerX + x * cosine + z * sine;
+      member.position.z = centerZ - x * sine + z * cosine;
+      member.rotation.y += radianos;
+    });
+  }else studio.selected.rotation.y += radianos;
+  members.forEach((member) => { keepObjectAboveFloor(member); rememberValidTransform(member); });
+  validateRoomFit();
+  studio.transform?.updateMatrixWorld();
+  atualizarAnguloGiro();
+}
+function definirAnguloSelecionado(graus){
+  if(!studio.selected || !Number.isFinite(graus)) return;
+  const alvo = ((Math.round(graus) % 360) + 360) % 360;
+  let diferenca = alvo - anguloSelecionado();
+  if(diferenca > 180) diferenca -= 360;
+  if(diferenca < -180) diferenca += 360;
+  girarSelecionado(-diferenca * Math.PI / 180);
+}
+function passoGiro(sentido, passo = PASSO_GIRO){
+  const atual = anguloSelecionado();
+  definirAnguloSelecionado(sentido > 0 ? Math.floor(atual / passo) * passo + passo : Math.ceil(atual / passo) * passo - passo);
 }
 
 function floorPointFromPointer(event){
@@ -3452,11 +3464,38 @@ export function initCatalogStudio3D({ items, supabase, empresaId, ownerId, token
     const button = event.target.closest("[data-studio-action]");
     if(button) applyEasyAction(button.dataset.studioAction);
   });
-  const rotateButton = document.querySelector("[data-studio-rotate-hold]");
-  rotateButton?.addEventListener("pointerdown", (event) => { event.preventDefault(); rotateButton.setPointerCapture?.(event.pointerId); startContinuousRotation(); });
-  rotateButton?.addEventListener("pointerup", stopContinuousRotation);
-  rotateButton?.addEventListener("pointercancel", stopContinuousRotation);
-  rotateButton?.addEventListener("pointerleave", stopContinuousRotation);
+  // ↺/↻: um passo no clique; segurando, repete. Teclado (Enter/Espaço) chega como click sem ponteiro.
+  let repetirGiro = null;
+  const pararGiro = () => { clearTimeout(repetirGiro?.espera); clearInterval(repetirGiro?.intervalo); repetirGiro = null; };
+  document.querySelectorAll("[data-studio-girar]").forEach((botao) => {
+    const sentido = Number(botao.dataset.studioGirar);
+    botao.addEventListener("pointerdown", (event) => {
+      if(event.button !== 0) return;
+      event.preventDefault(); botao.setPointerCapture?.(event.pointerId); pararGiro();
+      const passo = event.shiftKey ? 90 : PASSO_GIRO;
+      passoGiro(sentido, passo);
+      repetirGiro = { espera: setTimeout(() => { repetirGiro.intervalo = setInterval(() => passoGiro(sentido, passo), 160); }, 420) };
+    });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach((tipo) => botao.addEventListener(tipo, pararGiro));
+    botao.addEventListener("click", (event) => { if(event.detail === 0) passoGiro(sentido, event.shiftKey ? 90 : PASSO_GIRO); });
+  });
+  const campoAngulo = $("studioRotateAngle");
+  campoAngulo?.addEventListener("change", () => { definirAnguloSelecionado(Number(campoAngulo.value)); campoAngulo.value = anguloSelecionado(); });
+  campoAngulo?.addEventListener("keydown", (event) => {
+    if(event.key === "Enter"){ event.preventDefault(); definirAnguloSelecionado(Number(campoAngulo.value)); campoAngulo.value = anguloSelecionado(); campoAngulo.select(); }
+    if(event.key === "ArrowUp" || event.key === "ArrowDown"){ event.preventDefault(); passoGiro(event.key === "ArrowUp" ? 1 : -1, event.shiftKey ? 90 : 1); campoAngulo.value = anguloSelecionado(); }
+  });
+  campoAngulo?.addEventListener("focus", () => campoAngulo.select());
+  campoAngulo?.addEventListener("blur", atualizarAnguloGiro);
+  // Q / E giram o móvel selecionado (Shift = 90°), fora de campos de texto e só com o 3D Livre aberto.
+  document.addEventListener("keydown", (event) => {
+    const tecla = event.key.toLowerCase();
+    if((tecla !== "q" && tecla !== "e") || event.ctrlKey || event.metaKey || event.altKey) return;
+    if(!studio.selected || $("catalogStudio")?.classList.contains("hidden") || document.querySelector("dialog[open]")) return;
+    if(event.target.closest?.("input, textarea, select, [contenteditable=true]")) return;
+    event.preventDefault();
+    passoGiro(tecla === "e" ? 1 : -1, event.shiftKey ? 90 : PASSO_GIRO);
+  });
   $("studioGroupButton")?.addEventListener("click", toggleGrouping);
   $("studioGroupingFinish")?.addEventListener("click", toggleGrouping);
   $("studioGroupingCancel")?.addEventListener("click", cancelGrouping);

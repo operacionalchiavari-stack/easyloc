@@ -1,0 +1,16 @@
+/* Freteiros (out/2026): usa o visual da Conciliação de Fretes (conciliacao.css) */
+.fr-abas{display:flex;gap:6px;flex-wrap:wrap}
+.fr-conta{margin-left:6px;padding:1px 8px;border-radius:999px;background:#fdf6dd;color:#8a6200;font-size:12px;font-weight:600}
+.fr-conta:empty{display:none}
+.fr-st{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.fr-st-pend{background:#fdf6dd;color:#8a6200}
+.fr-st-ok{background:#e6f4ea;color:#1f7a44}
+.fr-st-nao{background:#fde8e8;color:#b42318}
+.fr-acoes{white-space:nowrap;text-align:right}
+.fr-acoes .btn{margin-left:6px}
+.fr-tabela a{color:#123f86}
+.fr-dialog{border:0;border-radius:14px;padding:20px 22px;width:min(440px,92vw);box-shadow:0 20px 60px rgba(15,23,42,.25)}
+.fr-dialog h3{margin:0 0 12px;font:600 20px "Cormorant Garamond",serif}
+.fr-dialog label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#4f4f4f}
+.fr-dialog textarea{padding:8px 10px;border:1px solid #dfe4ea;border-radius:10px;font:14px Inter,sans-serif;resize:vertical}
+.fr-dialog-acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}

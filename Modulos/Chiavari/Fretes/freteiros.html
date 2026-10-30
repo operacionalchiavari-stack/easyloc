@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Freteiros</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="conciliacao.css?v=20261029-banco">
+  <link rel="stylesheet" href="freteiros.css?v=20261029-freteiros">
+</head>
+<body>
+<!-- Freteiros (out/2026): cadastros feitos no App do Freteiro (aprovar, recusar, bloquear) e os fretes anunciados
+     sozinhos pela escala (entrega ou coleta sem caminhão próprio livre). Quem aceita no app vira o caminhão programado
+     das etapas; o pagamento segue pela Conciliação de Fretes. -->
+<main class="el-page cf-page fr-page" data-module-root>
+  <header class="header-list">
+    <h1>Freteiros</h1>
+  </header>
+
+  <div class="cf-barra">
+    <nav class="el-tabs fr-abas" role="tablist" aria-label="Freteiros">
+      <button type="button" role="tab" aria-selected="true" data-aba="cadastros">Cadastros <span class="tab-badge" id="frPendentes"></span></button>
+      <button type="button" role="tab" aria-selected="false" data-aba="fretes">Fretes anunciados <span class="fr-conta" id="frAbertos"></span></button>
+    </nav>
+    <span class="cf-esp"></span>
+    <a class="btn" href="freteiro.html" target="_blank" rel="noopener">Abrir o App do Freteiro</a>
+    <button type="button" class="btn" id="frAtualizar">Atualizar</button>
+  </div>
+
+  <div id="frConteudo"><div class="cf-vazio">Carregando…</div></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
+<script src="freteiros.js?v=20261029-freteiros"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+/* Link de pagamento do pedido (página pública do cliente) */
+:root{--pg-fundo:#f3f5f6;--pg-card:#fff;--pg-texto:#1f2020;--pg-suave:#6b6b6b;--pg-linha:#e3e7ec;--pg-azul:#123f86;--pg-verde:#1f7a44;--pg-verm:#b42318;--pg-faixa:#5a5a55}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100vh;display:flex;flex-direction:column;background:var(--pg-fundo);color:var(--pg-texto);font-family:Inter,system-ui,sans-serif;font-size:15px}
+[hidden]{display:none!important}
+.pg-topo{display:flex;align-items:center;justify-content:center;height:72px;padding:0 16px;background:var(--pg-faixa)}
+.pg-topo img{max-height:46px;max-width:220px;object-fit:contain;filter:brightness(0) invert(1)}
+.pg-topo span{color:#fff;font-family:"Cormorant Garamond",serif;font-size:24px;letter-spacing:.14em;text-transform:uppercase}
+.pg-main{flex:1;width:100%;max-width:720px;margin:0 auto;padding:28px 16px 40px}
+.pg-carregando{color:var(--pg-suave);text-align:center;margin:40px 0}
+.pg-entrar{background:var(--pg-card);border-radius:16px;box-shadow:0 0 8px rgba(15,23,42,.12),0 0 2px rgba(15,23,42,.1);padding:32px 24px;text-align:center}
+.pg-entrar h1{margin:0 0 8px;font-family:"Cormorant Garamond",serif;font-weight:600;font-size:30px}
+.pg-entrar p{margin:0 0 20px;color:var(--pg-suave)}
+.pg-entrar form{display:flex;flex-direction:column;align-items:center;gap:14px}
+.pg-entrar input{width:220px;height:58px;border:1px solid #cfd6df;border-radius:12px;text-align:center;font-size:30px;letter-spacing:.35em;font-weight:600;color:var(--pg-azul);font-variant-numeric:tabular-nums}
+.pg-entrar input:focus{outline:0;border-color:var(--pg-azul);box-shadow:0 0 0 3px rgba(18,63,134,.14)}
+.pg-erro{color:var(--pg-verm);font-weight:500}
+.pg-btn,.pg-entrar button{height:44px;padding:0 18px;border:0;border-radius:10px;background:var(--pg-azul);color:#fff;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+.pg-btn:hover,.pg-entrar button:hover{background:#0d2f66}
+.pg-chip{padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid}
+.pg-chip.aberto{background:#eef3fb;border-color:#d3deef;color:var(--pg-azul)}
+.pg-chip.venc{background:#fdecea;border-color:#f3c3bd;color:var(--pg-verm)}
+.pg-chip.parc{background:#fdf6dd;border-color:#ecd99a;color:#7a5a00}
+.pg-chip.ok{background:#e6f4ea;border-color:#b7dfc3;color:var(--pg-verde)}
+.pg-pago{color:var(--pg-verde);font-weight:600}
+.pg-equipe{color:var(--pg-suave);font-size:13px;max-width:130px;text-align:right}
+.pg-vazio{text-align:center;color:var(--pg-suave)}
+.pg-rodape{padding:16px;text-align:center;color:var(--pg-suave);font-size:12px}
+.pg-pix{width:min(440px,calc(100vw - 24px));padding:0;border:0;border-radius:18px;box-shadow:0 24px 60px rgba(15,23,42,.3);color:var(--pg-texto)}
+.pg-pix::backdrop{background:rgba(15,23,42,.5)}
+.pg-pix-topo{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--pg-linha)}
+.pg-pix-topo h2{margin:0;font-size:18px}
+.pg-x{width:34px;height:34px;border:1px solid #d6dce5;border-radius:999px;background:#fff;font-size:18px;cursor:pointer}
+.pg-pix-corpo{padding:20px;text-align:center}
+.pg-pix-sub{margin:0;color:var(--pg-suave);font-size:13px}
+.pg-pix-valor{margin:4px 0 12px;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.pg-pix-qr{width:240px;height:240px;max-width:100%;border:1px solid var(--pg-linha);border-radius:12px;padding:8px;background:#fff}
+.pg-pix-dica{margin:12px 0 10px;color:#4f4f4f;font-size:13px;line-height:1.5}
+.pg-copia{display:flex;gap:8px}
+.pg-copia input{flex:1;min-width:0;height:44px;padding:0 12px;border:1px solid #cfd6df;border-radius:10px;font-size:12px;background:#f7f9fb}
+.pg-pix-espera{margin:14px 0 0;color:var(--pg-suave);font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.pg-ponto{width:8px;height:8px;border-radius:50%;background:var(--pg-azul);animation:pgPulso 1.2s ease-in-out infinite}
+@keyframes pgPulso{50%{opacity:.25}}
+.pg-pix-ok span{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;background:#e6f4ea;color:var(--pg-verde);font-size:32px;font-weight:700}
+.pg-pix-ok h3{margin:12px 0 4px;font-size:20px}
+.pg-pix-ok p{margin:0 0 18px;color:var(--pg-suave)}
+@media(prefers-reduced-motion:reduce){.pg-ponto{animation:none}}
+
+/* ---- Pedido digital: o documento é o mesmo do PDF (catalogo-projetos.css); aqui só a folha na tela e o pagamento ---- */
+html{scroll-behavior:smooth}
+.pg-main{max-width:none;padding:0}
+.pg-entrar{max-width:460px;margin:40px auto;width:calc(100% - 32px)}
+body.com-pedido .pg-topo{display:none}
+body.com-pedido .pg-main{padding:24px 16px 96px}
+#pgLista .cpj-order-paper{width:min(100%,900px);margin:0 auto;box-shadow:0 0 8px rgba(15,23,42,.15),0 0 2px rgba(15,23,42,.12)}
+#pgLista .cpj-order-render-group img{cursor:zoom-in}
+.pa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.pg-slot{scroll-margin-top:16px;min-width:0}
+.pg-tabela td{vertical-align:middle}
+.pg-tabela .pg-chip{display:inline-block;margin-left:8px}
+.pg-tabela .pg-acao{text-align:right;white-space:nowrap}
+.pg-tabela .pg-btn{height:34px;padding:0 12px;font-size:13px}
+.pg-tabela .pg-equipe{max-width:none}
+.pd-barra{position:fixed;left:50%;bottom:16px;z-index:20;display:flex;align-items:center;gap:18px;width:min(520px,calc(100vw - 24px));padding:10px 12px 10px 20px;transform:translateX(-50%);background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(15,23,42,.22);justify-content:space-between;transition:opacity .3s,transform .3s}
+.pd-barra.oculta{opacity:0;pointer-events:none;transform:translate(-50%,12px)}
+.pd-barra small{display:block;color:var(--pg-suave);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.pd-barra b{font-size:18px;font-variant-numeric:tabular-nums}
+.pd-barra .pg-btn{display:inline-flex;align-items:center;text-decoration:none}
+.pd-foto{width:min(1200px,calc(100vw - 24px));max-height:calc(100vh - 24px);padding:0;border:0;border-radius:14px;background:#fff;overflow:hidden}
+.pd-foto::backdrop{background:rgba(15,15,14,.8)}
+.pd-foto img{display:block;width:100%;max-height:calc(100vh - 24px);object-fit:contain}
+.pd-foto .pg-x{position:absolute;top:10px;right:10px}
+@media(max-width:700px){
+  body.com-pedido .pg-main{padding:0 0 96px}
+  .pg-tabela thead{display:none}
+  .pg-tabela,.pg-tabela tbody{display:block}
+  .pg-tabela tr{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--pg-linha)}
+  .pg-tabela td{padding:0;border:0}
+  .pg-tabela td:nth-child(2){grid-row:2;color:var(--pg-suave);font-size:13px}
+  .pg-tabela td:nth-child(3){grid-column:2;grid-row:1;font-weight:600}
+  .pg-tabela .pg-acao{grid-column:1/-1;text-align:left;margin-top:6px}
+  .pg-tabela .pg-btn{width:100%;height:42px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.pg-quitado{color:var(--pg-verde)}
+.pg-tabela tr.is-ok td{color:var(--pg-suave)}
+.pg-total-linha{margin:12px 0 0;text-align:right}
+.pg-total-linha b{margin-left:6px;font-size:17px}
+/* Celular: o mesmo documento, com as colunas reorganizadas para nada ficar cortado (item em cima; reposição, valor e total embaixo) */
+@media(max-width:700px){
+  html:is(#pg-cel,html) #pgLista .cpj-order-paper{overflow:visible;width:100%}
+  html:is(#pg-cel,html) #pgLista .cpj-order-event{display:block}
+  html:is(#pg-cel,html) #pgLista .cpj-order-datas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+  html:is(#pg-cel,html) #pgLista .cpj-order-datas>div{min-width:0}
+  html:is(#pg-cel,html) #pgLista .cpj-order-datas>div:first-child{grid-column:1/-1}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table{display:block;min-width:0;width:100%}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table colgroup,html:is(#pg-cel,html) #pgLista .cpj-order-table thead,html:is(#pg-cel,html) #pgLista .cpj-order-colhead{display:none}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table tbody{display:block}
+  html:is(#pg-cel,html) #pgLista .cpj-order-environment{display:block}
+  html:is(#pg-cel,html) #pgLista .cpj-order-environment th{display:block;width:100%}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) tbody tr:not(.cpj-order-environment):not(.cpj-order-colhead){display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px 6px;align-items:center;padding:10px 0;border-bottom:1px solid #e8e4dc}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) td{display:block;padding:0;border:0;min-width:0;white-space:normal;text-align:left}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) td:nth-child(1){grid-column:span 1;font-weight:700;text-align:center}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) td:nth-child(2){grid-column:span 3}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) td:nth-child(3){grid-column:span 8}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) td:nth-child(n+4){grid-column:span 4;font-size:13px}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) td:nth-child(n+4)::before{display:block;margin-bottom:1px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b6b6b}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) td:nth-child(4)::before{content:"Reposição"}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) td:nth-child(5)::before{content:"Valor un."}
+  html:is(#pg-cel,html) #pgLista .cpj-order-table:not(.cpj-order-servicos-tabela) td:nth-child(6)::before{content:"Total"}
+  html:is(#pg-cel,html) #pgLista .cpj-order-servicos-tabela tr{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;padding:8px 0;border-bottom:1px solid #e8e4dc}
+  html:is(#pg-cel,html) #pgLista .cpj-order-servicos-tabela td{display:block;padding:0;border:0;width:auto;min-width:0}
+  html:is(#pg-cel,html) #pgLista .cpj-order-servicos-tabela td:nth-child(2){flex:1 1 60%}
+  html:is(#pg-cel,html) #pgLista .cpj-order-render-group>div{display:grid;grid-template-columns:1fr;gap:10px}
+  html:is(#pg-cel,html) #pgLista .cpj-order-render-group figure{width:100%;margin:0}
+}
+@media(max-width:700px){html:is(#pg-cel,html) #pgLista .cpj-order-event-info{display:block;min-width:0}html:is(#pg-cel,html) #pgLista .cpj-order-datas dd{white-space:normal}html:is(#pg-cel,html) #pgLista .cpj-order-datas{width:100%}}
+/* Resumo numa faixa só, em cima; Pagamento embaixo, na largura toda da folha */
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro{display:block}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo{margin:0 0 28px}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:0;margin:0;border:1px solid #e3e0d8;border-radius:12px;overflow:hidden}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div{display:block;padding:12px 16px;border:0;border-left:1px solid #e3e0d8;margin:0}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div:first-child{border-left:0}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dt{font-size:12px;color:#6b6b6b}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dd{margin:4px 0 0;font-size:16px;font-weight:600;text-align:left}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo .is-total{background:#f7f5f0}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo .is-total dd{font-size:19px;font-weight:700}
+html:is(#pg-fin,html) #pgLista .pg-tabela{width:100%;table-layout:auto}
+html:is(#pg-fin,html) #pgLista .pg-tabela td:first-child{white-space:nowrap}
+html:is(#pg-fin,html) #pgLista .pg-tabela .pg-chip{white-space:nowrap}
+html:is(#pg-fin,html) #pgLista .pg-tabela td,html:is(#pg-fin,html) #pgLista .pg-tabela th{padding:11px 10px}
+html:is(#pg-fin,html) #pgLista .pg-tabela .pg-acao{width:1%}
+@media(max-width:700px){
+  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl{grid-auto-flow:row;grid-template-columns:repeat(2,minmax(0,1fr))}
+  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div{border-left:0;border-top:1px solid #e3e0d8}
+  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div:nth-child(even){border-left:1px solid #e3e0d8}
+  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div:nth-child(-n+2){border-top:0}
+  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo .is-total{grid-column:1/-1;border-left:0!important;border-top:1px solid #e3e0d8!important}
+  html:is(#pg-fin,html) #pgLista .pg-tabela td,html:is(#pg-fin,html) #pgLista .pg-tabela th{padding:0}
+  html:is(#pg-fin,html) #pgLista .pg-tabela .pg-acao{width:auto}
+}
+
+/* Simulação do QR para a equipe (?simular=1) */
+.pg-sim{padding:9px 16px;background:#fdf6dd;border-bottom:1px solid #ecd99a;color:#5c4300;font-size:13px;font-weight:600;text-align:center}
+.pg-sim-btn{width:100%;margin-top:14px;background:#1f7a44}
+.pg-sim-btn:hover{background:#17603a}

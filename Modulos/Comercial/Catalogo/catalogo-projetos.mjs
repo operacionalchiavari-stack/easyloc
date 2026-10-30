@@ -29,7 +29,7 @@ import { sinalizarDisponibilidade } from "./pedido-disponibilidade-comercial.mjs
 // mostra ou envia preço: o catálogo nunca teve valores.
 
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas } from './projeto-apresentacao.mjs?v=20261027-pedido-lateral';
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas } from './projeto-apresentacao.mjs?v=20261030-link-documento';
 
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
@@ -540,6 +540,10 @@ async function garantirAmbiente(){
   return true;
 }
 
+// Atalhos para criar (ou escolher) o ambiente com um clique (pedido do usuário: "opções rápidas pra criar o local").
+const AMBIENTES_RAPIDOS = ["Mesa de bolo", "Mesa da família", "Mesa de convidados", "Cerimônia", "Lounge", "Bar", "Bistrôs", "Recepção"];
+const normalizarNome = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
 function escolherDestino({ titulo = "Escolha o projeto", confirmar = "Confirmar", moveis = null, imagem = "", sub = "" }){
   const projetos = S.list.slice();
   if(S.current && !projetos.some((p) => p.id === S.current.id)) projetos.unshift({ id: S.current.id, noivos: S.current.noivos, data_evento: S.current.data_evento });
@@ -547,10 +551,11 @@ function escolherDestino({ titulo = "Escolha o projeto", confirmar = "Confirmar"
   return abrirModal({
     titulo, sub: sub || "Onde isto deve ficar salvo?", confirmar, largo: Boolean(imagem),
     extra: ctx.pedidoComercial ? "" : `<button type="button" class="cpj-btn cpj-btn-link" data-cpj-novo>＋ Novo projeto</button>`,
-    corpo: `${imagem ? `<figure class="cpj-dest-preview"><img src="${escapeAttr(imagem)}" alt="Composição do 3D"></figure>` : ""}<div class="cpj-dest-campos"><label class="cpj-field"><span>Projeto</span><select name="projeto">${projetos.map((p) => `<option value="${escapeAttr(p.id)}"${p.id === inicial ? " selected" : ""}>${escapeHtml(p.noivos)} · ${escapeHtml(dataLonga(p.data_evento))}</option>`).join("")}</select></label>
+    // com a foto: duas colunas (foto e móveis à esquerda, projeto/ambiente à direita) para não precisar rolar
+    corpo: `${imagem ? `<div class="cpj-dest-2col"><div class="cpj-dest-col-foto"><figure class="cpj-dest-preview"><img src="${escapeAttr(imagem)}" alt="Composição do 3D"></figure>${moveis ? moveisDestinoHtml(moveis.lista) : ""}</div><div class="cpj-dest-col-campos">` : ""}<div class="cpj-dest-campos"><label class="cpj-field"><span>Projeto</span><select name="projeto">${projetos.map((p) => `<option value="${escapeAttr(p.id)}"${p.id === inicial ? " selected" : ""}>${escapeHtml(p.noivos)} · ${escapeHtml(dataLonga(p.data_evento))}</option>`).join("")}</select></label>
       <label class="cpj-field"><span>Ambiente</span><select name="ambiente" disabled><option>Carregando…</option></select></label>
       <label class="cpj-field hidden" data-novo-amb><span>Nome do novo ambiente</span><input name="novoAmbiente" maxlength="60" placeholder="Ex.: Bar" autocomplete="off"></label>
-      </div>${moveis ? (imagem ? moveisDestinoHtml(moveis.lista) : `<label class="cpj-check"><input type="checkbox" name="levarMoveis" checked><span><strong>Levar também os móveis desta composição</strong><small>${escapeHtml(resumoMoveis(moveis.lista))}</small></span></label>`) : ""}`,
+      </div><div class="cpj-amb-rapidos" role="group" aria-label="Ambientes rápidos"><span>Ambiente rápido</span>${AMBIENTES_RAPIDOS.map((n) => `<button type="button" class="cpj-amb-rapido" data-amb-rapido="${escapeAttr(n)}" aria-pressed="false">${escapeHtml(n)}</button>`).join("")}</div>${imagem ? "</div></div>" : ""}${moveis && !imagem ? (`<label class="cpj-check"><input type="checkbox" name="levarMoveis" checked><span><strong>Levar também os móveis desta composição</strong><small>${escapeHtml(resumoMoveis(moveis.lista))}</small></span></label>`) : ""}`,
     onMount({ dialog, form, fechar }){
       dialog.querySelector("[data-cpj-novo]")?.addEventListener("click", () => fechar("novo"));
       const selProjeto = form.elements.projeto, selAmb = form.elements.ambiente, novo = dialog.querySelector("[data-novo-amb]");
@@ -570,7 +575,22 @@ function escolherDestino({ titulo = "Escolha o projeto", confirmar = "Confirmar"
         selAmb.disabled = false;
         selAmb.dispatchEvent(new Event("change"));
       };
-      selAmb.addEventListener("change", () => novo.classList.toggle("hidden", selAmb.value !== "__novo__"));
+      const nomeNovo = form.elements.novoAmbiente;
+      // Marca o atalho que corresponde ao que está escolhido (ambiente existente ou o nome digitado para um novo).
+      const marcarRapido = () => {
+        const atual = selAmb.value === "__novo__" ? nomeNovo.value : (selAmb.selectedOptions[0]?.textContent || "");
+        dialog.querySelectorAll("[data-amb-rapido]").forEach((b) => b.setAttribute("aria-pressed", String(normalizarNome(b.dataset.ambRapido) === normalizarNome(atual))));
+      };
+      selAmb.addEventListener("change", () => { novo.classList.toggle("hidden", selAmb.value !== "__novo__"); marcarRapido(); });
+      nomeNovo.addEventListener("input", marcarRapido);
+      dialog.querySelector(".cpj-amb-rapidos").addEventListener("click", (ev) => {
+        const b = ev.target.closest("[data-amb-rapido]"); if(!b || selAmb.disabled) return;
+        const nome = b.dataset.ambRapido;
+        // Já existe um ambiente com esse nome: usa ele; senão prepara a criação (o ambiente nasce ao confirmar).
+        const existe = [...selAmb.options].find((o) => o.value !== "__novo__" && normalizarNome(o.textContent) === normalizarNome(nome));
+        if(existe) selAmb.value = existe.value; else { selAmb.value = "__novo__"; nomeNovo.value = nome; }
+        selAmb.dispatchEvent(new Event("change"));
+      });
       selProjeto.addEventListener("change", carregar);
       carregar();
       form.__alvo = () => ativo;
@@ -599,11 +619,56 @@ function escolherDestino({ titulo = "Escolha o projeto", confirmar = "Confirmar"
 // Itens: adicionar/alterar quantidade
 function itemNome(itemId){ return ctx.findItem(itemId)?.name || "Item"; }
 
+// Pedido do usuário: "eu quero que isso nem chegue a entrar no pedido" — antes de AUMENTAR a quantidade, confere se
+// há peças livres para a data/período. Dentro do pedido comercial usa a mesma conta do salvar (kit aberto nos
+// componentes, todos os ambientes, o próprio pedido fora); no projeto do decorador, o "Disponível" do catálogo.
+// Devolve a frase do bloqueio, ou null (liberado ou sem como conferir: o salvar confere de novo).
+async function faltaDisponivel(ambienteId, itemId, nova){
+  const ambs = ambientesDe();
+  const amb = ambs.find((a) => a.id === ambienteId);
+  const atual = Number(amb?.itens.find((i) => String(i.item_id) === String(itemId))?.quantidade) || 0;
+  if(!amb || nova <= atual) return null;
+  const projetadas = ambs.flatMap((a) => {
+    const linhas = (a.itens || []).filter((i) => !(a.id === ambienteId && String(i.item_id) === String(itemId))).map((i) => ({ item_id: String(i.item_id), quantidade_solicitada: Number(i.quantidade) || 1 }));
+    if(a.id === ambienteId) linhas.push({ item_id: String(itemId), quantidade_solicitada: nova });
+    return linhas;
+  });
+  const numero = (v) => Number(v).toLocaleString("pt-BR");
+  try{
+    const bloqueio = (await window.catalogMapaEstoque?.())?.[String(itemId)]?.[2];
+    if(bloqueio) return `${itemNome(itemId)}: bloqueado até a contagem geral em Estoque > Gestão do acervo (teve divergência de contagem num evento).`;
+    if(ctx.pedidoComercial){
+      const pai = window.parent, campo = (id) => pai.document.getElementById(id)?.value;
+      const inicio = campo("dataEntrega") || campo("dataEvento"), fim = campo("dataColeta") || campo("dataEventoFim") || campo("dataEvento");
+      if(!inicio || !fim || fim < inicio) return null;
+      const { data, error } = await ctx.supabase.rpc("pedido_disponibilidade_comercial", { p_empresa: ctx.getSession().empresa_id, p_pedido: pai.__PEDIDO_ATUAL_ID || null, p_itens: projetadas, p_inicio: inicio, p_fim: fim });
+      if(error) return null;
+      const falta = (data || []).find((a) => (a.origens || []).map(String).includes(String(itemId)));
+      if(!falta) return null;
+      return `${falta.descricao}: disponível ${numero(falta.disponivel)} no período, você pediu ${numero(falta.necessario)}.`;
+    }
+    const mapa = await window.catalogMapaEstoque?.();
+    const livre = mapa?.[String(itemId)]?.[1];
+    if(livre == null) return null;
+    const total = projetadas.filter((l) => l.item_id === String(itemId)).reduce((s, l) => s + l.quantidade_solicitada, 0);
+    return total > livre ? `${itemNome(itemId)}: ${livre ? `só ${numero(livre)} disponível(is)` : "esgotado"} na data do evento, você pediu ${numero(total)}.` : null;
+  }catch{ return null; }
+}
+function avisarSemEstoque(texto){ ctx.notify({ title: "Sem disponibilidade", message: texto, status: "error", duration: 6000 }); }
+// mudarQuantidade com a conferência acima: devolve false (e avisa) quando não há peças
+async function mudarSeDisponivel(ambienteId, itemId, nova){
+  const falta = await faltaDisponivel(ambienteId, itemId, nova);
+  if(falta){ avisarSemEstoque(falta); return false; }
+  mudarQuantidade(ambienteId, itemId, 0, { definir: nova });
+  return true;
+}
+
 async function adicionarItem(itemId){
   if(!(await garantirDestino({ titulo: "Adicionar ao projeto", confirmar: "Adicionar" }))) return;
   const amb = ambienteAtivo();
   if(!amb) return;
-  mudarQuantidade(amb.id, itemId, 1, { silencioso: true });
+  const atualAdd = Number(amb.itens.find((i) => String(i.item_id) === String(itemId))?.quantidade) || 0;
+  if(!(await mudarSeDisponivel(amb.id, itemId, atualAdd + 1))) return;
   ctx.notify({
     title: "Adicionado ao projeto", message: `${itemNome(itemId)} → ${amb.nome} · ${S.current.noivos}`, status: "done", duration: 3200,
     actionLabel: "Desfazer", onAction: () => mudarQuantidade(amb.id, itemId, -1),
@@ -654,6 +719,7 @@ async function abrirQtdPop(ancora, itemId){
       <input type="number" inputmode="numeric" min="0" max="999" step="1" value="${atual || 1}" aria-label="Quantidade">
       <button type="button" data-qty-step="1" aria-label="Aumentar">＋</button>
     </div>
+    <p class="cpj-qty-pop-falta" role="alert" hidden></p>
     <button type="button" class="cpj-qty-pop-ok" data-qty-ok>${atual ? "Salvar" : "Adicionar"}</button>
     <small class="cpj-qty-pop-hint">Enter salva · 0 tira do ambiente</small>`;
   document.body.append(el);
@@ -664,10 +730,16 @@ async function abrirQtdPop(ancora, itemId){
   el.style.left = left + "px"; el.style.top = top + "px";
   const ler = () => Math.max(0, Math.min(999, Math.round(Number(String(input.value).replace(",", ".")) || 0)));
   const desfazer = () => mudarQuantidade(amb.id, itemId, 0, { definir: atual });
-  const salvar = () => {
+  const salvar = async () => {
     const nova = ler();
+    if(nova === atual){ fecharQtdPop(); return; }
+    const ok = el.querySelector("[data-qty-ok]"), aviso = el.querySelector(".cpj-qty-pop-falta");
+    ok.disabled = true;
+    const falta = await faltaDisponivel(amb.id, itemId, nova);
+    if(!el.isConnected) return;
+    ok.disabled = false;
+    if(falta){ aviso.textContent = falta; aviso.hidden = false; input.focus(); input.select(); return; }
     fecharQtdPop();
-    if(nova === atual) return;
     mudarQuantidade(amb.id, itemId, 0, { definir: nova });
     ctx.notify(nova
       ? { title: "Quantidade no projeto", message: `${nova}× ${itemNome(itemId)} → ${amb.nome}`, status: "done", duration: 3200, actionLabel: "Desfazer", onAction: desfazer }
@@ -676,7 +748,7 @@ async function abrirQtdPop(ancora, itemId){
   el.addEventListener("click", (event) => {
     event.stopPropagation();
     const passo = event.target.closest("[data-qty-step]");
-    if(passo){ input.value = String(Math.max(0, Math.min(999, ler() + Number(passo.dataset.qtyStep)))); input.focus(); input.select(); return; }
+    if(passo){ input.value = String(Math.max(0, Math.min(999, ler() + Number(passo.dataset.qtyStep)))); el.querySelector(".cpj-qty-pop-falta").hidden = true; input.focus(); input.select(); return; }
     if(event.target.closest("[data-qty-ok]")) salvar();
   });
   el.addEventListener("keydown", (event) => {
@@ -692,7 +764,14 @@ async function abrirQtdPop(ancora, itemId){
 }
 
 // delta positivo/negativo; zerar remove a linha. Atualiza a tela aberta sem re-renderizar tudo.
+// Pedido com o operacional: os itens ficam travados até a Triagem liberar; o resto do pedido continua livre.
+function itensTravados(){
+  if(!ctx.pedidoComercial || !window.parent.__PEDIDO_BLOQUEADO_SEPARACAO) return false;
+  ctx.notify({ title: "Itens travados", message: "Este pedido está com o operacional. Para alterar itens, solicite a liberação pela Triagem.", status: "error" });
+  return true;
+}
 function mudarQuantidade(ambienteId, itemId, delta, { definir = null } = {}){
+  if(itensTravados()) return;
   const amb = ambientesDe().find((a) => a.id === ambienteId);
   if(!amb) return;
   const linha = amb.itens.find((i) => String(i.item_id) === String(itemId));
@@ -756,6 +835,7 @@ const resumoMoveis = (lista) => lista.map((m) => `${m.quantidade}× ${ctx.findIt
 // Devolve quantos móveis entraram/subiram de quantidade no ambiente.
 function levarMoveisParaAmbiente(amb, lista){
   let alterados = 0;
+  if(itensTravados()) return alterados;
   lista.forEach(({ id, quantidade }) => {
     const linha = amb.itens.find((i) => String(i.item_id) === String(id));
     const atual = linha ? Number(linha.quantidade) || 1 : 0;
@@ -831,6 +911,7 @@ async function moveisDoAmbienteComoJogo(amb, render, jogosAtuais){
 async function aplicarJogos(amb, render, campo){
   if(campo.dataset.ocupado) return; // a mesma mudança pode chegar duas vezes (Enter e sair do campo)
   const antes = Math.max(1, Number(render.jogos) || 1);
+  if(itensTravados()){ campo.value = antes; return; }
   const novo = Math.max(1, Math.min(99, Math.round(Number(campo.value)) || 1));
   campo.value = novo;
   if(novo === antes) return;
@@ -889,6 +970,7 @@ async function salvarRender({ src, origem, botao, titulo = "Salvar renderizaçã
 // renderização de IA nova da cena editada, que toma o lugar do print quando fica pronta. A cena usa o motor do 3D Livre
 // (ctx.cenaEditor, catalogo-studio3d.mjs).
 async function abrirEditorCena(amb, render){
+  if(itensTravados()) return;
   const editor = ctx.cenaEditor;
   if(!editor?.pronto?.()){ ctx.notify({ title: "3D indisponível", message: "Abra o catálogo de novo e tente outra vez.", status: "error" }); return; }
   const project = S.current;
@@ -1647,13 +1729,34 @@ function vincularOrdemLista(host){
 // a tela do pedido soma no total e no financeiro (locação) e a prévia/PDF mostram numa seção própria.
 const servicosDe = () => (Array.isArray(S.current?.dados?.servicos) ? S.current.dados.servicos : (S.current.dados.servicos = []));
 const dinheiroBR = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+// Serviço operacional (montagem extra, desmontagem extra…): o cadastro do serviço diz em qual etapa do cronograma ele
+// entra (servicos_adicionais.etapa_operacao). No pedido ele precisa de data e horário — vira uma etapa no cronograma.
+const ETAPA_NOME = { montagem: "Montagem", desmontagem: "Desmontagem", carregamento: "Carregamento", descarregamento: "Descarregamento", triagem_ida: "Triagem (ida)", triagem_volta: "Triagem (volta)", outra: "Etapa" };
+let etapasServicos = null, etapasServicosCarregando = false;
+async function carregarEtapasServicos(){
+  if(etapasServicos || etapasServicosCarregando || !ctx?.supabase) return;
+  etapasServicosCarregando = true;
+  try{
+    const { data } = await ctx.supabase.from("servicos_adicionais").select("id,etapa_operacao").eq("empresa_id", ctx.getSession()?.empresa_id);
+    etapasServicos = new Map((data || []).map((s) => [String(s.id), s.etapa_operacao || null]));
+    let mudou = false;
+    servicosDe().forEach((s) => { const e = etapasServicos.get(String(s.servico_id)) ?? null; if((s.etapa || null) !== e){ if(e) s.etapa = e; else delete s.etapa; mudou = true; } });
+    if(mudou){ marcarSujo(); pintarPainel(); }
+  }catch{} finally { etapasServicosCarregando = false; }
+}
+const servicoOperacional = (s) => Boolean(s.etapa);
 function servicosHtml(){
+  carregarEtapasServicos();
   const lista = servicosDe();
   const total = lista.reduce((s, x) => s + (Number(x.quantidade) || 0) * (Number(x.valor) || 0), 0);
   return `<section class="cpj-servicos" aria-label="Serviços adicionais">
     <div class="cpj-block-head cpj-block-head-center"><h4>Serviços adicionais</h4></div>
     ${lista.length ? `<table class="cpj-servicos-tabela"><thead><tr><th>Serviço</th><th>Qtd.</th><th>Valor un.</th><th>Total</th><th><span class="pa-sr">Remover</span></th></tr></thead><tbody>${lista.map((s) => `<tr class="cpj-linha-servico" data-servico-id="${escapeAttr(s.id)}">
-      <td><strong>${escapeHtml(s.nome)}</strong></td>
+      <td><strong>${escapeHtml(s.nome)}</strong>${servicoOperacional(s) ? `<div class="cpj-servico-agenda${s.data && s.hora ? "" : " is-faltando"}" title="Entra no cronograma como ${escapeAttr(ETAPA_NOME[s.etapa] || "etapa")}">
+        <span>No cronograma · ${escapeHtml(ETAPA_NOME[s.etapa] || "etapa")}</span>
+        <label>Data<input type="date" value="${escapeAttr(s.data || "")}" data-servico-campo="data" required></label>
+        <label>Horário<input type="time" value="${escapeAttr(s.hora || "")}" data-servico-campo="hora" required></label>
+        ${s.data && s.hora ? "" : '<small>Informe a data e o horário: sem eles o pedido não salva.</small>'}</div>` : ""}</td>
       <td><input type="number" min="1" max="999" step="1" value="${escapeAttr(s.quantidade)}" data-servico-campo="quantidade" aria-label="Quantidade de ${escapeAttr(s.nome)}"></td>
       <td><input type="number" min="0" step="0.01" value="${escapeAttr(Number(s.valor || 0).toFixed(2))}" data-servico-campo="valor" aria-label="Valor de ${escapeAttr(s.nome)}"></td>
       <td><b>${dinheiroBR.format((Number(s.quantidade) || 0) * (Number(s.valor) || 0))}</b></td>
@@ -1663,23 +1766,34 @@ function servicosHtml(){
   </section>`;
 }
 async function fluxoAdicionarServico(){
-  const { data, error } = await ctx.supabase.from("servicos_adicionais").select("id,nome,valor_fixo,valor_mao_obra").eq("empresa_id", ctx.getSession()?.empresa_id).eq("ativo", true).order("nome");
+  const { data, error } = await ctx.supabase.from("servicos_adicionais").select("id,nome,valor_fixo,valor_mao_obra,etapa_operacao").eq("empresa_id", ctx.getSession()?.empresa_id).eq("ativo", true).order("nome");
   if(error){ ctx.notify({ title: "Não foi possível carregar os serviços", message: mensagemDe(error), status: "error" }); return; }
   if(!data?.length){ ctx.notify({ title: "Nenhum serviço cadastrado", message: "Cadastre os serviços adicionais antes de usar no pedido.", status: "error" }); return; }
   const valorPadrao = (s) => Math.round(((Number(s.valor_fixo) || 0) + (Number(s.valor_mao_obra) || 0)) * 100) / 100;
   const escolhido = await abrirModal({
     titulo: "Adicionar serviço", sub: "O valor pode ser ajustado depois, na própria linha.", confirmar: "Adicionar",
-    corpo: `<div class="cpj-escolha-lista">${data.map((s, i) => `<label class="cpj-escolha"><input type="radio" name="servico" value="${escapeAttr(s.id)}"${i ? "" : " checked"}><span>${escapeHtml(s.nome)}</span><b>${dinheiroBR.format(valorPadrao(s))}</b></label>`).join("")}</div>
-      <label class="cpj-campo-curto"><span>Quantidade</span><input type="number" name="quantidade" min="1" max="999" value="1"></label>`,
+    corpo: `<div class="cpj-escolha-lista">${data.map((s, i) => `<label class="cpj-escolha"><input type="radio" name="servico" value="${escapeAttr(s.id)}" data-etapa="${escapeAttr(s.etapa_operacao || "")}"${i ? "" : " checked"}><span>${escapeHtml(s.nome)}${s.etapa_operacao ? `<small class="cpj-escolha-etapa">Entra no cronograma · ${escapeHtml(ETAPA_NOME[s.etapa_operacao] || "etapa")}</small>` : ""}</span><b>${dinheiroBR.format(valorPadrao(s))}</b></label>`).join("")}</div>
+      <label class="cpj-campo-curto"><span>Quantidade</span><input type="number" name="quantidade" min="1" max="999" value="1"></label>
+      <div class="cpj-servico-quando" data-servico-quando hidden><p>Este serviço entra no cronograma: informe quando ele acontece.</p>
+        <label class="cpj-campo-curto"><span>Data</span><input type="date" name="data"></label><label class="cpj-campo-curto"><span>Horário</span><input type="time" name="hora"></label></div>`,
+    onMount: ({ form }) => {
+      const quando = form.querySelector("[data-servico-quando]");
+      const sync = () => { quando.hidden = !form.querySelector("input[name=servico]:checked")?.dataset.etapa; };
+      form.addEventListener("change", sync); sync();
+    },
     onSubmit: ({ form }) => {
       const id = form.querySelector("input[name=servico]:checked")?.value;
       const s = data.find((x) => x.id === id);
       if(!s) throw new Error("Escolha um serviço.");
-      return { servico: s, quantidade: Math.max(1, Math.min(999, parseInt(form.querySelector("input[name=quantidade]").value, 10) || 1)) };
+      const dataSv = form.querySelector("input[name=data]").value, horaSv = form.querySelector("input[name=hora]").value;
+      if(s.etapa_operacao && (!dataSv || !horaSv)) throw new Error("Informe a data e o horário: este serviço entra no cronograma.");
+      return { servico: s, quantidade: Math.max(1, Math.min(999, parseInt(form.querySelector("input[name=quantidade]").value, 10) || 1)), data: dataSv, hora: horaSv };
     },
   });
   if(!escolhido) return;
-  servicosDe().push({ id: crypto.randomUUID(), servico_id: escolhido.servico.id, nome: escolhido.servico.nome, quantidade: escolhido.quantidade, valor: valorPadrao(escolhido.servico) });
+  const linhaServico = { id: crypto.randomUUID(), servico_id: escolhido.servico.id, nome: escolhido.servico.nome, quantidade: escolhido.quantidade, valor: valorPadrao(escolhido.servico) };
+  if(escolhido.servico.etapa_operacao) Object.assign(linhaServico, { etapa: escolhido.servico.etapa_operacao, data: escolhido.data, hora: escolhido.hora });
+  servicosDe().push(linhaServico);
   marcarSujo(); pintarPainel();
   ctx.notify({ title: "Serviço adicionado", message: escolhido.servico.nome, status: "done" });
 }
@@ -1726,7 +1840,7 @@ async function fluxoAdicionarComponente(amb){
   if(!escolhido) return;
   amb = ambientesDe().find((a) => a.id === escolhido.ambiente) || amb;
   const linha = amb.itens.find((i) => String(i.item_id) === String(escolhido.id));
-  mudarQuantidade(amb.id, escolhido.id, 0, { definir: (Number(linha?.quantidade) || 0) + escolhido.quantidade });
+  if(!(await mudarSeDisponivel(amb.id, escolhido.id, (Number(linha?.quantidade) || 0) + escolhido.quantidade))) return;
   ctx.notify({ title: "Componente adicionado", message: `${escolhido.quantidade}× ${ctx.findItem(escolhido.id)?.name || "Componente"} em ${amb.nome}`, status: "done" });
 }
 
@@ -3028,13 +3142,20 @@ function pintarAbaPedido(host){
   const erro = host.querySelector(".cpj-modal-error");
   const plantasProntas = temPlanta ? plantasDoPedido(project).then((lista) => {
     model = { ...model, plantas: lista };
+    window.parent.__pedidoLinkPlantas?.(lista); // o link do pedido mostra a mesma planta
     if(!host.isConnected || S.workTab !== "pedido") return;
     redesenhar();
     const st = host.querySelector("[data-cpj-pedido-status]"); if(st) st.textContent = "";
   }) : Promise.resolve();
+  // QR do link de pagamento no fim do pedido (só existe com contas a receber: pedido reservado e salvo)
+  const linkPronto = Promise.resolve(window.parent.__pedidoLinkPagamento?.()).catch(() => null).then((link) => {
+    if(!link) return;
+    model = { ...model, pagamentoLink: link };
+    if(host.isConnected && S.workTab === "pedido") redesenhar();
+  });
   const imprimir = async (botao, texto) => {
     botao.disabled = true; botao.textContent = "Preparando…"; erro.hidden = true;
-    try{ await plantasProntas; await imprimirPedido(model, { decorador, empresa }); }
+    try{ await Promise.all([plantasProntas, linkPronto]); await imprimirPedido(model, { decorador, empresa }); }
     catch(e){ erro.textContent = e?.message || "Não foi possível gerar o pedido."; erro.hidden = false; }
     finally{ botao.disabled = false; botao.textContent = texto; }
   };
@@ -3045,7 +3166,7 @@ function pintarAbaPedido(host){
     botao.disabled = true; botao.textContent = "Preparando as cenas…";
     await renderizarProjetoComIA(project, {
       aoProgresso: (feitas, total) => { if(botao.isConnected) botao.textContent = `Renderizando ${feitas} de ${total}…`; },
-      aoAtualizar: (dono) => { if(host.isConnected){ model = { ...modeloPedidoComercial(dono), plantas: model.plantas }; redesenhar(); } },
+      aoAtualizar: (dono) => { if(host.isConnected){ model = { ...modeloPedidoComercial(dono), plantas: model.plantas, pagamentoLink: model.pagamentoLink }; redesenhar(); } },
     });
     if(host.isConnected && S.workTab === "pedido") pintarPainel(); // as fotos novas também entram nas legendas da planta
   });
@@ -3133,6 +3254,7 @@ async function aoClicarOverlay(event){
   const abrir = event.target.closest("[data-cpj-open]");
   const excluir = event.target.closest("[data-cpj-delete]");
   if(excluir){ event.stopPropagation(); fluxoExcluirProjeto(excluir.dataset.cpjDelete, excluir.dataset.noivos); return; }
+  if(event.target.closest("[data-cpj-personalizar],[data-cpj-personalizar-tirar]") && itensTravados()) return;
   const personalizar = event.target.closest("[data-cpj-personalizar]");
   if(personalizar){ event.stopPropagation(); abrirPersonalizar(personalizar.closest("[data-pa-item]")); return; }
   const tirarPers = event.target.closest("[data-cpj-personalizar-tirar]");
@@ -3191,6 +3313,7 @@ async function aoClicarOverlay(event){
       const nome = await fluxoAmbiente({ titulo: "Renomear ambiente", nomeAtual: amb.nome, confirmar: "Salvar" });
       if(nome){ amb.nome = nome.slice(0, 60); marcarSujo(); pintarNavegacao(); pintarPainel(); pintarDock(); }
     }else if(tipo === "excluir-ambiente" && amb){
+      if(amb.itens?.length && itensTravados()) return;
       const ok = await abrirModal({ titulo: `Excluir “${amb.nome}”?`, sub: "Os móveis e as renderizações deste ambiente saem do projeto.", confirmar: "Excluir ambiente", perigo: true });
       if(ok){
         S.current.dados.ambientes = ambientesDe().filter((a) => a.id !== amb.id);
@@ -3199,7 +3322,7 @@ async function aoClicarOverlay(event){
       }
     }else if(tipo === "ir-catalogo") ctx.goCatalog();
     else if(tipo === "ir-estudio") ctx.goStudio();
-    else if(tipo === "qtd-mais" && amb) mudarQuantidade(amb.id, itemId, 1);
+    else if(tipo === "qtd-mais" && amb) mudarSeDisponivel(amb.id, itemId, (Number(amb.itens.find((i) => String(i.item_id) === String(itemId))?.quantidade) || 0) + 1);
     else if(tipo === "qtd-menos" && amb) mudarQuantidade(amb.id, itemId, -1);
     else if(tipo === "item-remover" && amb){
       const nome = ctx.findItem(itemId)?.name || linha?.querySelector('.pa-descricao strong')?.textContent || 'este item';
@@ -3270,6 +3393,7 @@ function aoAlterarOverlay(event){
       const n = Number(String(campoServico.value).replace(",", "."));
       if(campo === "quantidade") servico.quantidade = Math.max(1, Math.min(999, Math.round(n) || 1));
       if(campo === "valor") servico.valor = Math.max(0, Math.round((Number.isFinite(n) ? n : 0) * 100) / 100);
+      if(campo === "data" || campo === "hora") servico[campo] = campoServico.value;
       marcarSujo(); pintarPainel();
     }
     return;
@@ -3324,8 +3448,9 @@ function aoAlterarOverlay(event){
   if(entrada && ambId){
     const itemId = entrada.closest("[data-cpj-item]")?.dataset.cpjItem;
     const valor = Math.max(1, Math.min(999, parseInt(entrada.value, 10) || 1));
-    mudarQuantidade(ambId, itemId, 0, { definir: valor });
+    const antes = Number(ambientesDe().find((a) => a.id === ambId)?.itens.find((i) => String(i.item_id) === String(itemId))?.quantidade) || 1;
     entrada.value = String(valor);
+    mudarSeDisponivel(ambId, itemId, valor).then((ok) => { if(!ok && entrada.isConnected) entrada.value = String(antes); });
   }
 }
 function aoDigitarOverlay(event){

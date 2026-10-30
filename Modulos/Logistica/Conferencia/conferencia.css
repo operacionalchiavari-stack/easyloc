@@ -188,3 +188,115 @@ html:root:is(#conferencia-confirmacao,html) dialog.cf-confirmacao.cf-pendencias{
 .cf-pend-erro{margin:12px 0 0;color:#b42318;font-size:13px;font-weight:600}
 .cf-pend-erro[hidden]{display:none}
 @media(max-width:640px){.cf-pend-campos{grid-template-columns:1fr}}
+
+/* Resultado da conferência por quantidade: faltou em vermelho, veio a mais em amarelo (out/2026). */
+.cf-qtd-linha.is-div-falta{background:#fbeceb}
+.cf-qtd-linha.is-div-falta .cf-qtd-valor{color:#b0362d}
+.cf-qtd-linha.is-div-sobra{background:#fdf6dd}
+.cf-qtd-linha.is-div-sobra .cf-qtd-valor{color:#8a6100}
+.cf-aviso.is-sobra{background:#fdf6dd;border-color:#ecd99a;color:#6b4f00}
+
+/* Segunda contagem e divergências da volta (out/2026). */
+.cf-qtd-linha.is-travada{opacity:.45}
+.cf-qtd-linha.is-recontar{background:#eaf0fa;box-shadow:inset 3px 0 0 #123f86}
+.cf-qtd-primeira{display:block;font-size:12px;font-weight:500;color:#6b6b6b}
+.cf-divergencias{margin:18px 0;padding:18px 20px;background:#fff;border:1px solid #e3e7ec;border-radius:14px;box-shadow:0 0 8px rgba(15,23,42,.12)}
+.cf-divergencias h3{margin:0 0 6px;font:600 17px Inter,sans-serif}
+.cf-div-ajuda{margin:0 0 12px;color:#6b6b6b;font-size:13px}
+.cf-div-linha{display:grid;grid-template-columns:110px minmax(0,1fr) 50px auto;gap:12px;align-items:center;padding:12px 14px;margin:8px 0;border-radius:10px}
+.cf-div-linha.is-falta{background:#fbeceb}
+.cf-div-linha.is-sobra{background:#fdf6dd}
+.cf-div-tipo{font:700 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em}
+.cf-div-linha.is-falta .cf-div-tipo,.cf-div-linha.is-falta b{color:#b0362d}
+.cf-div-linha.is-sobra .cf-div-tipo,.cf-div-linha.is-sobra b{color:#8a6100}
+.cf-div-linha b{font-size:20px;text-align:center}
+.cf-div-acoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cf-div-qtd{width:70px}
+.cf-div-motivo{width:230px}
+.cf-div-perda{color:#b0362d}
+.cf-div-resolvida{margin:6px 0;color:#4f4f4f;font-size:13px}
+@media(max-width:900px){.cf-div-linha{grid-template-columns:1fr auto}.cf-div-acoes{grid-column:1/-1}.cf-div-motivo{flex:1;width:auto}}
+
+/* Coluna "Resolver" no resultado da volta (out/2026). */
+.cf-qtd-tabela.com-resolver .cf-qtd-linha{grid-template-columns:72px minmax(0,1fr) 80px 90px minmax(140px,220px) minmax(300px,380px)}
+.cf-div-celula{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cf-div-celula .cf-div-motivo{width:100%}
+.cf-div-botoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cf-div-botoes .cf-div-qtd{width:70px}
+.cf-div-ok{font-size:13px;color:#2f7a4b;font-weight:600}
+.cf-div-sem-motivo{font-size:12px;color:#8a6100}
+.cf-div-linha{grid-template-columns:110px minmax(0,1fr) 50px minmax(280px,380px)}
+@media(max-width:1100px){.cf-qtd-tabela.com-resolver .cf-qtd-linha{grid-template-columns:60px minmax(0,1fr) 64px 90px}.cf-qtd-tabela.com-resolver .cf-div-celula{grid-column:2 / -1}.cf-qtd-tabela.com-resolver .cf-qtd-cabeca span:nth-child(6){display:none}}
+html:root:is(#cf-resolver,html) .cf-div-botoes .cf-div-qtd{width:72px!important;min-width:0!important;flex:0 0 72px}
+.cf-qtd-tabela.com-resolver .cf-qtd-linha{grid-template-columns:72px minmax(0,1fr) 80px 120px minmax(120px,200px) minmax(300px,380px)}
+@media(max-width:1100px){.cf-qtd-tabela.com-resolver .cf-qtd-linha{grid-template-columns:60px minmax(0,1fr) 64px 90px}}
+
+/* 2ª conferência + Motivo, sem botões (out/2026). */
+.cf-qtd-tabela.com-resolver .cf-qtd-linha{grid-template-columns:72px minmax(0,1fr) 80px 110px minmax(120px,200px) 130px minmax(180px,260px)}
+.cf-div-celula .cf-div-segunda{width:100%;text-align:center;font-size:20px;font-weight:600}
+.cf-div-linha{grid-template-columns:110px minmax(0,1fr) 50px 130px minmax(180px,260px)}
+@media(max-width:1100px){.cf-qtd-tabela.com-resolver .cf-qtd-linha{grid-template-columns:60px minmax(0,1fr) 64px 90px}.cf-qtd-tabela.com-resolver .cf-qtd-cabeca span:nth-child(n+6){display:none}}
+/* Divergência resolvida: discreta, numa linha só (o texto completo fica no title). */
+html:root .cf-qtd-tabela .cf-div-celula.cf-div-ok{display:block;font-size:13px;font-weight:600;line-height:1.3;color:#2f7a4b}
+html:root .cf-qtd-tabela .cf-div-celula.cf-div-mot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+html:root .cf-qtd-tabela .cf-div-celula.cf-div-num{font-size:16px;text-align:center}
+/* Quem fez a 2ª conferência, embaixo do motivo. */
+html:root .cf-qtd-tabela .cf-div-mot-nome{display:block;overflow:hidden;text-overflow:ellipsis}
+html:root .cf-qtd-tabela .cf-div-quem{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:12px;font-weight:500;color:#4f4f4f;overflow:hidden;text-overflow:ellipsis}
+.cf-div-avatar{position:relative;flex:none;width:22px;height:22px;border-radius:50%;overflow:hidden;background:#dfe5ee;color:#123f86;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.cf-div-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+/* Resultado da 2ª conferência, embaixo da quantidade (out/2026). */
+.cf-div-sit{display:block;margin-top:4px;font-size:11.5px;font-weight:600;line-height:1.2;text-align:center;min-height:14px}
+.cf-div-sit.is-bateu{color:#2f7a4b}.cf-div-sit.is-falta,.cf-div-sit.is-erro{color:#b3261e}.cf-div-sit.is-sobra{color:#8a6100}
+html:root .cf-qtd-tabela .cf-div-num .cf-div-sit{font-size:11.5px}
+.cf-div-motivo:disabled{color:#8a8a8a;background:#f3f5f6}
+
+/* Motivo: botão + lista própria, e rodapé "Salvar 2ª conferência" (out/2026). */
+.cf-mot-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:0 14px;border:1px solid #d6dce5;border-radius:12px;background:#fff;color:#1f2020;font:500 14px/1.2 Inter,system-ui,sans-serif;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.cf-mot-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-mot-btn::after{content:"";flex:none;width:8px;height:8px;border-right:1.8px solid #6b6b6b;border-bottom:1.8px solid #6b6b6b;transform:translateY(-2px) rotate(45deg)}
+.cf-mot-btn:hover:not(:disabled),.cf-mot-btn[aria-expanded="true"]{border-color:#123f86;box-shadow:0 0 0 3px #eaf0fa}
+.cf-mot-btn:disabled{background:#f3f5f6;color:#8a8a8a;cursor:default}
+.cf-mot-btn.is-escolhido{border-color:#123f86;color:#123f86;font-weight:600}
+.cf-mot-pop{position:fixed;z-index:60;display:grid;gap:2px;padding:6px;background:#fff;border:1px solid #e3e7ec;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.16)}
+.cf-mot-pop button{display:block;width:100%;padding:10px 12px;border:0;border-radius:9px;background:none;color:#1f2020;font:500 14px/1.3 Inter,system-ui,sans-serif;text-align:left;cursor:pointer}
+.cf-mot-pop button:hover,.cf-mot-pop button:focus-visible{background:#eaf0fa;color:#123f86;outline:none}
+.cf-mot-pop button[aria-selected="true"]{background:#123f86;color:#fff}
+.cf-div-rodape[hidden]{display:none!important}
+/* Quantidade a mais que o esperado: amarelo como a falta (só a quantidade exata fica verde) */
+.cf-qtd-linha.is-a-mais{background:#fdf6dd}
+.cf-qtd-linha.is-a-mais .cf-qtd-input{border-color:#d9b44a;color:#1f2020;background:#fff}
+/* Kit de que o componente faz parte, embaixo do nome (out/2026) */
+.cf-qtd-linha strong .cf-qtd-kit{display:block;margin-top:4px;font-weight:500;font-size:12.5px;color:#6b6b6b;line-height:1.35}
+
+/* Janela da segunda contagem (out/2026): itens com foto, 1ª contagem e passos */
+html:root:is(#conferencia-confirmacao,html) dialog.cf-confirmacao.cf-segunda{width:min(680px,calc(100vw - 32px));max-width:680px}
+.cf-segunda header{align-items:flex-start}
+.cf-seg-badge{display:grid;place-items:center;flex:none;width:52px;height:52px;border-radius:16px;background:#eaf0fa;color:#123f86;font:700 24px Inter,sans-serif;box-shadow:inset 0 0 0 2px #c9d8f0}
+.cf-seg-sub{margin:6px 0 0;color:#4f5b6b;font:500 14px/1.5 Inter,system-ui,sans-serif}
+.cf-seg-lista{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;max-height:min(46vh,420px);overflow:auto}
+.cf-seg-lista li{display:grid;grid-template-columns:64px minmax(0,1fr) auto;align-items:center;gap:14px;padding:10px 12px;border:1px solid #e3e7ec;border-left:4px solid #123f86;border-radius:12px;background:#fff}
+.cf-seg-foto{width:64px;height:64px;border-radius:10px;overflow:hidden;background:#f3f5f6;display:grid;place-items:center}
+.cf-seg-foto img{width:100%;height:100%;object-fit:contain}
+.cf-seg-foto .cf-qtd-sem-foto{width:100%;height:100%}
+.cf-seg-nome{font:600 15px/1.35 Inter,system-ui,sans-serif;color:#1f2020;min-width:0}
+.cf-seg-nome small{display:block;margin-top:3px;font-weight:500;font-size:12px;color:#6b6b6b}
+.cf-seg-qtd{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.cf-seg-qtd small{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#77808f}
+.cf-seg-qtd b{font:700 22px/1 Inter,sans-serif;color:#1f2020}
+.cf-seg-dif{margin-top:4px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.cf-seg-dif.is-falta{background:#fde8e8;color:#b42318}
+.cf-seg-dif.is-mais{background:#fdf6dd;color:#8a6200}
+.cf-seg-passos{display:flex;gap:10px;margin:16px 0 0;padding:0;list-style:none;counter-reset:passo}
+.cf-seg-passos li{flex:1;display:flex;gap:8px;align-items:flex-start;padding:10px;border-radius:10px;background:#f7f9fb;color:#4f5b6b;font-size:13px;line-height:1.4;counter-increment:passo}
+.cf-seg-passos li::before{content:counter(passo);flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#123f86;color:#fff;font-weight:700;font-size:12px}
+@media (max-width:560px){.cf-seg-passos{flex-direction:column}.cf-seg-lista li{grid-template-columns:52px 1fr}.cf-seg-foto{width:52px;height:52px}.cf-seg-qtd{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:flex-end;gap:8px}}
+
+/* Divergência enviada para a Gestão do acervo (out/2026): a conferência só avisa, não resolve */
+.cf-div-enviada{display:flex;gap:14px;align-items:flex-start;margin:14px 0;padding:14px 18px;border:1px solid #f1c2bd;border-radius:14px;background:#fff7f6}
+.cf-div-enviada.is-ok{border-color:#b9dfc4;background:#f1faf3}
+.cf-div-enviada-icone{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:10px;background:#fde8e8;color:#b42318;font:700 18px Inter,sans-serif}
+.cf-div-enviada.is-ok .cf-div-enviada-icone{background:#e6f4ea;color:#1f7a44}
+.cf-div-enviada b{display:block;color:#1f2020;font-size:15px}
+.cf-div-enviada span{display:block;margin-top:3px;color:#4f5b6b;font-size:14px;line-height:1.45}

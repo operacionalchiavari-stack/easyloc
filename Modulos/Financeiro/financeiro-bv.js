@@ -38,7 +38,7 @@
       '<div class="fin-conta-identidade"><span class="fin-bv-conta-legenda">Conta corrente do decorador</span>' +
       '<div class="fin-conta-busca"><label class="fin-bv-rotulo-sr" for="contaDecoradorBusca">Pesquisar decorador</label><input id="contaDecoradorBusca" data-bv-cliente type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="contaDecoradorOpcoes" autocomplete="off" placeholder="Digite o nome do decorador" value="' + esc(selecionado?.nome_razao || 'Todos os decoradores') + '"><div id="contaDecoradorOpcoes" role="listbox" aria-label="Decoradores" hidden></div></div><p>' +
       (selecionado ? 'BV, pagamentos a maior e outros créditos' : 'Visão consolidada das contas dos decoradores') + '</p></div></div>' +
-      '<div class="fin-bv-conta-saldo"><span>Saldo a favor do decorador</span><strong data-bv-saldo-total>' + brl(saldoTotal) + '</strong><small>BV em aberto: ' + brl(somar(dados.pedidos,'saldo')) + ' · Outros créditos: ' + brl(saldoCredito) + '<br>Saldo total, independente dos filtros de período e situação</small></div>' +
+      '<div class="fin-bv-conta-saldo" title="Saldo total, independente dos filtros de período e situação"><span>Saldo a favor do decorador</span><strong data-bv-saldo-total>' + brl(saldoTotal) + '</strong><small>BV em aberto: ' + brl(somar(dados.pedidos,'saldo')) + ' · Outros créditos: ' + brl(saldoCredito) + '</small></div>' +
       '<div class="fin-bv-filtros fin-conta-filtros">' +
       '<label>De<input type="date" data-bv-inicio value="' + esc(inicio) + '"></label><label>Até<input type="date" data-bv-fim value="' + esc(fim) + '"></label>' +
       '<label>Situação<select data-bv-situacao>' + [['','Todas'],['aberto','Com saldo a pagar'],['pago','Quitados'],['cancelado','Cancelados'],['sem_registro','Sem BV registrado']].map(([v,t]) => '<option value="' + v + '"' + (situacao === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>' +
@@ -87,6 +87,17 @@
     root.querySelector('[data-bv-fim]').onchange = alterarData;
     root.querySelector('[data-bv-atualizar]').onclick = () => ctx.recarregar();
     root.querySelector('[data-cliente-credito]')?.addEventListener('click',()=>ctx.registrarCredito(cliente,dados.clientes));
+    // Layout compacto (out/2026): De/Até/Situação na mesma linha da busca do decorador, e Atualizar / Registrar crédito /
+    // ajuda na linha das partes da aba ("Conta dos decoradores · Gestão de créditos"). Os eventos já estão ligados acima,
+    // então mover os elementos não perde nada.
+    const caixaBusca=root.querySelector('.fin-conta-busca'), filtros=root.querySelector('.fin-conta-filtros');
+    if(caixaBusca && filtros){ const linha=document.createElement('div'); linha.className='fin-conta-linha'; caixaBusca.before(linha); linha.append(caixaBusca, filtros); }
+    const subAbas=document.getElementById('finSubAbas');
+    if(subAbas && !subAbas.hidden){
+      let acoes=subAbas.querySelector('.fin-subabas-acoes');
+      if(!acoes){ acoes=document.createElement('div'); acoes.className='fin-subabas-acoes'; subAbas.append(acoes); }
+      acoes.replaceChildren(...['[data-bv-atualizar]','[data-cliente-credito]','.fin-bv-ajuda'].map(sel=>root.querySelector(sel)).filter(Boolean));
+    }
     root.querySelector('[data-extrato-exportar]').onclick = () => csv([['Data','Descricao','Decorador','Observacao','Credito','Debito','Saldo'],['','Saldo anterior','','',0,0,saldoAnterior],...movimentos.map(l=>[l.data,l.descricao,l.cliente,l.obs,l.credito,l.debito,l.saldo])],'conta-decorador-extrato.csv');
     } catch (erro) {
       if (vez === sequencia && S.aba === 'bv') {

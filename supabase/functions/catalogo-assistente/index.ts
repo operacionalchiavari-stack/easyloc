@@ -40,6 +40,8 @@ type Ctx = {
   service: SupabaseClient;
   // RPCs que dependem de quem chama (projeto_ctx): com token (decorador) ou com o JWT da equipe.
   rpc: (nome: string, params: Record<string, unknown>) => Promise<any>;
+  // Pedido comercial aberto (equipe): fica fora da conta de disponibilidade, senão as peças dele contam como de outro.
+  pedidoId?: string | null;
 };
 
 async function autenticar(req: Request, body: any): Promise<Ctx | { erro: string; status: number }> {
@@ -305,7 +307,7 @@ function sugerirCombinacoes(acervo: Item[], a: any, perfil: any) {
 async function mapaDisponibilidade(ctx: Ctx, data: string) {
   const mapa = new Map<string, { total: number; livre: number }>();
   for (let de = 0; ; de += 1000) {
-    const { data: pagina, error } = await ctx.service.rpc("operacao_disponibilidade", { p_empresa: ctx.empresaId, p_data: data }).order("item_id").range(de, de + 999);
+    const { data: pagina, error } = await ctx.service.rpc("operacao_disponibilidade", { p_empresa: ctx.empresaId, p_data: data, p_pedido: ctx.pedidoId || null }).order("item_id").range(de, de + 999);
     if (error) throw new Error("Não foi possível consultar a disponibilidade: " + error.message);
     for (const r of pagina || []) mapa.set(String(r.item_id), { total: Number(r.total) || 0, livre: Number(r.livre) || 0 });
     if (!pagina || pagina.length < 1000) break;
@@ -1500,6 +1502,7 @@ serve(async (req) => {
     const body = await req.json();
     const ctx = await autenticar(req, body);
     if ("erro" in ctx) return json({ erro: ctx.erro }, ctx.status);
+    if (body?.modo === "pedido" && ctx.usuarioId && /^[0-9a-f-]{36}$/i.test(String(body?.pedido_id || ""))) ctx.pedidoId = String(body.pedido_id);
     const acao = String(body?.action || "conversar");
     if (acao === "historico") {
       const [mensagens, perfil] = await Promise.all([historico(ctx, 60, body?.projeto_id ? String(body.projeto_id) : null), carregarPerfil(ctx)]);

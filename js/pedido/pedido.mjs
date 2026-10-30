@@ -4,10 +4,11 @@ console.log("✅ pedido.mjs carregado");
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
 import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261026-local-endereco";
-import { initItens } from "./pedido.itens.mjs?v=20261027-salvar-completo";
+import { initItens } from "./pedido.itens.mjs?v=20261029-cards-finos";
 import { initFrete } from "./pedido.frete.mjs?v=20261027-abas-rapidas";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261026-acentos";
+import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261029-extra";
 import { initPagamento } from "./pedido.pagamento.mjs?v=20261026-financeiro-pedido";
 import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261027-abas-rapidas";
 
@@ -394,20 +395,23 @@ async function setupPedidoWorkspace({ supabase }){
   const statusBloqueiaComercial = pedido => Boolean(pedido && ((pedido.status && pedido.status!=='pendente'&&!pedido.reducao_liberada_em)||pedido.status_operacional||pedido.operacao?.carregamento?.iniciado_em));
 
   const aplicarBloqueioComercialSeparacao = (pedido) => {
+    // Com o operacional só os itens ficam travados (e a situação comercial, que mexe na reserva): datas, horários, plantas,
+    // financeiro e contrato continuam livres (pedido_salvar_sem_itens).
     const bloqueado = statusBloqueiaComercial(pedido);
     window.__PEDIDO_BLOQUEADO_SEPARACAO = bloqueado;
+    ["pedidoStatusComercial", "preReservaAte"].forEach((id) => { const c = document.getElementById(id); if (c) c.disabled = bloqueado; });
     const btnSalvar = document.getElementById("btnSalvarPedido");
     if (btnSalvar) {
       btnSalvar.dataset.separacaoBloqueada = bloqueado ? "1" : "0";
       btnSalvar.title = bloqueado
-        ? "Pedido com o operacional. Solicite a liberação pela Triagem."
+        ? "Pedido com o operacional: os itens estão travados, o resto pode ser alterado."
         : "";
       let aviso = document.getElementById("pedidoRegraOperacional");
       if(!aviso){
         aviso = document.createElement("p"); aviso.id="pedidoRegraOperacional"; aviso.setAttribute("role","status");
         btnSalvar.parentElement?.appendChild(aviso);
       }
-      aviso.textContent = bloqueado ? "Pedido com o operacional. Para alterar, solicite a liberação pela Triagem." :
+      aviso.textContent = bloqueado ? "Pedido com o operacional: os itens estão travados. Para alterar itens, solicite a liberação pela Triagem." :
         pedido?.reducao_liberada_em ? "Pedido devolvido ao Comercial. Ao salvar a revisão, ele volta para Aguardando triagem." : "";
       aviso.hidden = !aviso.textContent;
     }
@@ -536,7 +540,7 @@ async function setupPedidoWorkspace({ supabase }){
     return String(proximo);
   }
 
-  if(!window.__PEDIDO_ATUAL_ID && !new URLSearchParams(location.search).has('pedido')){
+  if(!window.__PEDIDO_ATUAL_ID && !new URLSearchParams(location.search).has('pedido') && !new URLSearchParams(location.search).has('extra_de')){
     obterProximoNumeroPedido().then(numero=>{
       if(!window.__PEDIDO_ATUAL_ID)setTextValue('orcamentoNumero',numero);
     }).catch(()=>setTextValue('orcamentoNumero','Novo'));
@@ -805,16 +809,18 @@ async function setupPedidoWorkspace({ supabase }){
       .subscribe();
   }
 
-  async function carregarPedidoSalvoSeNecessario(){
+  // rascunho = pedido guardado pelo salvamento automático (mesmo formato da linha do banco): aplica na tela sem ler o banco
+  async function carregarPedidoSalvoSeNecessario(rascunho = null){
     const pedidoId = window.__PEDIDO_ATUAL_ID;
-    if(!pedidoId || !supabase || !window.__CONTEXT?.empresa_id) return;
+    if(!rascunho && (!pedidoId || !supabase || !window.__CONTEXT?.empresa_id)) return;
 
-    const { data: pedido, error } = await supabase
+    let pedido = rascunho, error = null;
+    if(!rascunho) ({ data: pedido, error } = await supabase
       .from("separacoes_pedidos")
       .select("*")
       .eq("empresa_id", window.__CONTEXT.empresa_id)
       .eq("id", pedidoId)
-      .single();
+      .single());
 
     if(error || !pedido){
       console.error("Erro ao carregar pedido salvo:", error);
@@ -827,11 +833,11 @@ async function setupPedidoWorkspace({ supabase }){
       : {};
     const parcelasFinanceiras = extrairParcelasFinanceiras(observacoesPedido, pedido);
 
-    window.__PEDIDO_DADOS_ATUAL = {
-      ...pedido,
-      observacoes: observacoesPedido
-    };
-    setupPedidoRealtime(pedidoId);
+    const anterior = window.__PEDIDO_DADOS_ATUAL || {};
+    window.__PEDIDO_DADOS_ATUAL = rascunho
+      ? { ...anterior, ...pedido, id: anterior.id, revisao: anterior.revisao, atualizado_em: anterior.atualizado_em, observacoes: observacoesPedido }
+      : { ...pedido, observacoes: observacoesPedido };
+    if(pedidoId) setupPedidoRealtime(pedidoId);
     aplicarBloqueioComercialSeparacao(pedido);
 
     setTextValue("orcamentoNumero", pedido.numero_pedido || "");
@@ -912,7 +918,7 @@ async function setupPedidoWorkspace({ supabase }){
     aplicarLogisticaSnapshot(observacoesPedido.logistica_snapshot || null);
     restaurarLogisticaManual(observacoesPedido.logistica_manual);
 
-    const { data: itens, error: itensError } = await supabase
+    const { data: itens, error: itensError } = rascunho ? { data: [], error: null } : await supabase
       .from("separacoes_itens")
       .select("*, itens:item_id(id,codigo,produto,descricao_total,foto_url,valor_locacao,valor_reposicao,volume_cubico)")
       .eq("empresa_id", window.__CONTEXT.empresa_id)
@@ -989,6 +995,127 @@ async function setupPedidoWorkspace({ supabase }){
     return pedidoId ? { sucesso: true } : null;
   }
 
+  function montarPayloadPedido({ numeroPedido, clienteNome, clienteId, localId, localNome, dataEvento, dataEventoFim, dataEntrega, dataColeta, valorTotal, statusComercial, preReservaAte, observacoesAtuais, horaEntrega, horaColeta }){
+    return {
+      empresa_id: window.__CONTEXT.empresa_id,
+      numero_pedido: numeroPedido,
+      cliente_id: clienteId || null,
+      cliente_nome: clienteNome,
+      contato_cliente: document.getElementById("telefoneInput")?.value?.trim() || "",
+      tipo_evento: document.getElementById("tipoEventoSelect")?.selectedOptions?.[0]?.textContent?.trim() || "",
+      local_id: localId || null,
+      local_nome: localNome,
+      data_evento: dataEvento,
+      data_evento_fim: dataEventoFim,
+      data_entrega: dataEntrega,
+      data_coleta: dataColeta,
+      data_hora: dataEvento ? `${dataEvento}T12:00:00` : null,
+      valor_total: valorTotal,
+      status_comercial: statusComercial,
+      pre_reserva_ate: preReservaAte || null,
+      // pedido extra: o banco numera ("1/2") e copia cliente, local, evento e coleta do principal
+      pedido_origem_id: window.__pedidoExtra?.principalId || null,
+      observacoes: {
+        ...observacoesAtuais,
+        projeto_comercial: window.__pedidoProjetoComercial || observacoesAtuais.projeto_comercial || null,
+        observacoes_entrega: document.getElementById('observacoesEntrega')?.value.trim() || '',
+        observacoes_coleta: document.getElementById('observacoesColeta')?.value.trim() || '',
+        observacoes_separacao: document.getElementById('observacoesSeparacao')?.value.trim() || '',
+        financeiro: document.getElementById("pagamentoObservacaoFinanceira")?.value || "",
+        parcelas_financeiras: coletarParcelasFinanceiras(),
+        pagamento_config: window.__pedidoColetarPagamentoConfig?.() || null,
+        itens_operacionais: coletarObservacoesItensOperacionais(),
+        itens_comerciais: coletarItensParaReserva(),
+        logistica_snapshot: coletarLogisticaSnapshot(),
+        logistica_manual: window.__PEDIDO_LOGISTICA_MANUAL || {},
+        valores: window.__PEDIDO_VALORES || observacoesAtuais.valores || null,
+        cancelamento: window.__PEDIDO_CANCELAMENTO || null,
+        local_html: document.getElementById("localObservacoes")?.innerHTML || "",
+        local_tags_html: document.getElementById("localTagsInline")?.innerHTML || "",
+        horario_entrega: horaEntrega,
+        horario_coleta: horaColeta,
+        horarios_pedido: {
+          entrega: horaEntrega,
+          coleta: horaColeta
+        },
+        origem: "pedido"
+      },
+      atualizado_em: new Date().toISOString()
+    };
+  }
+
+  /* Salvamento automático (out/2026, pedido do usuário: "o pedido precisa ter salvamento automático, pra pessoa nunca
+     perder o que ela fez"). O Salvar exige o pedido completo (dados, financeiro distribuído), então a cada alteração a
+     tela guarda um RASCUNHO no navegador (no mesmo formato de um pedido salvo) e, ao abrir de novo o mesmo pedido (ou
+     um pedido novo), oferece recuperar. O rascunho some ao salvar ou ao recusar a recuperação. */
+  const RASCUNHO_PREFIXO = "pedido_rascunho:";
+  const chaveRascunho = (id = window.__PEDIDO_ATUAL_ID) => `${RASCUNHO_PREFIXO}${window.__CONTEXT?.empresa_id || "?"}:${id || (window.__pedidoExtra ? "extra-" + window.__pedidoExtra.principalId : "novo")}`;
+  function montarRascunho(){
+    const statusComercial = statusComercialAtual();
+    const eventoEmPeriodo = document.querySelector(".evento-fim-item") && !document.querySelector(".evento-fim-item").hidden;
+    const v = (id) => document.getElementById(id)?.value || "";
+    const observacoesAtuais = window.__PEDIDO_DADOS_ATUAL?.observacoes && typeof window.__PEDIDO_DADOS_ATUAL.observacoes === "object" ? { ...window.__PEDIDO_DADOS_ATUAL.observacoes } : {};
+    const pedido = montarPayloadPedido({
+      numeroPedido: document.getElementById("orcamentoNumero")?.textContent?.trim() || "",
+      clienteNome: v("clienteInput").trim(), clienteId: v("clienteIdHidden") || null, localId: v("localIdHidden") || null, localNome: v("localInput").trim(),
+      dataEvento: v("dataEvento") || null, dataEventoFim: eventoEmPeriodo ? (v("dataEventoFim") || null) : null,
+      dataEntrega: v("dataEntrega") || null, dataColeta: v("dataColeta") || null,
+      valorTotal: moedaParaNumero(document.getElementById("resumoTotalGeral")?.textContent), statusComercial,
+      preReservaAte: statusComercial === "pre_reserva" ? v("preReservaAte") : "", observacoesAtuais,
+      horaEntrega: v("horaEntrega"), horaColeta: v("horaColeta")
+    });
+    delete pedido.atualizado_em;
+    return pedido;
+  }
+  // só guarda depois de uma alteração de verdade (digitar/escolher, ou o catálogo mexer no projeto): o recálculo do frete
+  // e das parcelas ao abrir não pode virar "alterações não salvas".
+  let rascunhoBase = "", rascunhoLigado = false, rascunhoTimer = null, houveEdicao = false;
+  window.__pedidoHouveEdicao = () => { houveEdicao = true; agendarRascunho(); };
+  function assinaturaRascunho(){ try{ return JSON.stringify(montarRascunho()); }catch{ return ""; } }
+  function marcarPedidoComoSalvo(){
+    rascunhoBase = assinaturaRascunho(); houveEdicao = false;
+    try{ localStorage.removeItem(chaveRascunho()); localStorage.removeItem(chaveRascunho(null)); }catch{}
+  }
+  function gravarRascunho(){
+    if(!rascunhoLigado || !houveEdicao) return;
+    if(["visualizar", "imprimir"].includes(window.__PEDIDO_MODO_ABERTURA)) return;
+    const atual = assinaturaRascunho();
+    if(!atual) return;
+    try{
+      if(atual === rascunhoBase){ localStorage.removeItem(chaveRascunho()); return; }
+      localStorage.setItem(chaveRascunho(), JSON.stringify({ salvo_em: new Date().toISOString(), pedido: JSON.parse(atual) }));
+    }catch{}
+  }
+  window.__pedidoGravarRascunho = gravarRascunho;
+  function agendarRascunho(event){ if(event?.isTrusted) houveEdicao = true; clearTimeout(rascunhoTimer); rascunhoTimer = setTimeout(gravarRascunho, 1200); }
+  async function iniciarRascunho(){
+    let guardado = null;
+    try{ guardado = JSON.parse(localStorage.getItem(chaveRascunho()) || "null"); }catch{}
+    const salvoNoBanco = window.__PEDIDO_DADOS_ATUAL?.atualizado_em || window.__PEDIDO_DADOS_ATUAL?.updated_at || "";
+    rascunhoBase = assinaturaRascunho();
+    if(guardado?.pedido && (!salvoNoBanco || String(guardado.salvo_em) > String(salvoNoBanco)) && JSON.stringify(guardado.pedido) !== rascunhoBase){
+      const quando = new Date(guardado.salvo_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+      const texto = `Encontramos alterações deste pedido que não foram salvas (${quando}). Quer recuperar o que você estava fazendo?`;
+      const sim = window.confirmarGlobal ? await window.confirmarGlobal(texto, "Recuperar alterações") : window.confirm(texto);
+      if(sim){
+        if(guardado.pedido.observacoes?.projeto_comercial) window.__pedidoProjetoComercial = guardado.pedido.observacoes.projeto_comercial;
+        await carregarPedidoSalvoSeNecessario(guardado.pedido);
+        if(!window.__PEDIDO_ATUAL_ID) await window.__pedidoIrPara?.("dados");
+        houveEdicao = true;
+        avisar("Alterações recuperadas. Lembre de salvar o pedido.", "Pedido", "sucesso");
+      }else{
+        try{ localStorage.removeItem(chaveRascunho()); }catch{}
+      }
+    }
+    rascunhoLigado = true;
+    const tela = document.querySelector(".pedido-screen") || document.body;
+    tela.addEventListener("input", agendarRascunho, true);
+    tela.addEventListener("change", agendarRascunho, true);
+    setInterval(gravarRascunho, 5000); // pega o que muda por código (itens do catálogo, parcelas, frete)
+    window.addEventListener("pagehide", gravarRascunho);
+    document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") gravarRascunho(); });
+  }
+
   async function salvarPedidoOperacional(){
     const erroObservacaoManual = validarObservacoesLogisticaManual();
     if (erroObservacaoManual) {
@@ -997,15 +1124,6 @@ async function setupPedidoWorkspace({ supabase }){
     }
     if(!supabase || !window.__CONTEXT?.empresa_id){
       avisar("Sessao ou empresa nao encontrada para salvar o pedido.", "Salvar pedido", "erro");
-      return;
-    }
-
-    if (window.__PEDIDO_BLOQUEADO_SEPARACAO) {
-      avisar(
-        "O operacional assumiu este pedido. Solicite a liberação pela Triagem antes de alterar.",
-        "Pedido bloqueado",
-        "aviso"
-      );
       return;
     }
 
@@ -1039,6 +1157,12 @@ async function setupPedidoWorkspace({ supabase }){
       if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("dados");
       window.__pedidoValidarDados?.({ completo: true }); // marca o campo de novo, já na tela dos dados
       avisar(erroDados, "Dados do pedido", "aviso");
+      return;
+    }
+    const servicoSemData = (window.__pedidoProjetoComercial?.dados?.servicos || []).find((s) => s.etapa && (!s.data || !s.hora));
+    if(servicoSemData){
+      if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("lista");
+      avisar(`Informe a data e o horário do serviço "${servicoSemData.nome}": ele entra no cronograma.`, "Serviços adicionais", "aviso");
       return;
     }
     const erroFinanceiro = window.__pedidoPendenciaFinanceiro?.();
@@ -1079,50 +1203,7 @@ async function setupPedidoWorkspace({ supabase }){
       ? { ...window.__PEDIDO_DADOS_ATUAL.observacoes }
       : {};
 
-    const payloadPedido = {
-      empresa_id: window.__CONTEXT.empresa_id,
-      numero_pedido: numeroPedido,
-      cliente_id: clienteId || null,
-      cliente_nome: clienteNome,
-      contato_cliente: document.getElementById("telefoneInput")?.value?.trim() || "",
-      tipo_evento: document.getElementById("tipoEventoSelect")?.selectedOptions?.[0]?.textContent?.trim() || "",
-      local_id: localId || null,
-      local_nome: localNome,
-      data_evento: dataEvento,
-      data_evento_fim: dataEventoFim,
-      data_entrega: dataEntrega,
-      data_coleta: dataColeta,
-      data_hora: dataEvento ? `${dataEvento}T12:00:00` : null,
-      valor_total: valorTotal,
-      status_comercial: statusComercial,
-      pre_reserva_ate: preReservaAte || null,
-      observacoes: {
-        ...observacoesAtuais,
-        projeto_comercial: window.__pedidoProjetoComercial || observacoesAtuais.projeto_comercial || null,
-        observacoes_entrega: document.getElementById('observacoesEntrega')?.value.trim() || '',
-        observacoes_coleta: document.getElementById('observacoesColeta')?.value.trim() || '',
-        observacoes_separacao: document.getElementById('observacoesSeparacao')?.value.trim() || '',
-        financeiro: document.getElementById("pagamentoObservacaoFinanceira")?.value || "",
-        parcelas_financeiras: coletarParcelasFinanceiras(),
-        pagamento_config: window.__pedidoColetarPagamentoConfig?.() || null,
-        itens_operacionais: coletarObservacoesItensOperacionais(),
-        itens_comerciais: coletarItensParaReserva(),
-        logistica_snapshot: coletarLogisticaSnapshot(),
-        logistica_manual: window.__PEDIDO_LOGISTICA_MANUAL || {},
-        valores: window.__PEDIDO_VALORES || observacoesAtuais.valores || null,
-        cancelamento: window.__PEDIDO_CANCELAMENTO || null,
-        local_html: document.getElementById("localObservacoes")?.innerHTML || "",
-        local_tags_html: document.getElementById("localTagsInline")?.innerHTML || "",
-        horario_entrega: horaEntrega,
-        horario_coleta: horaColeta,
-        horarios_pedido: {
-          entrega: horaEntrega,
-          coleta: horaColeta
-        },
-        origem: "pedido"
-      },
-      atualizado_em: new Date().toISOString()
-    };
+    const payloadPedido = montarPayloadPedido({ numeroPedido, clienteNome, clienteId, localId, localNome, dataEvento, dataEventoFim, dataEntrega, dataColeta, valorTotal, statusComercial, preReservaAte, observacoesAtuais, horaEntrega, horaColeta });
 
     let pedidoId = window.__PEDIDO_ATUAL_ID || null;
     let result;
@@ -1161,6 +1242,13 @@ async function setupPedidoWorkspace({ supabase }){
       if(statusError) console.error("Erro ao marcar o projeto do catálogo como convertido:", statusError);
       history.replaceState(null, "", `pedido.html?pedido=${encodeURIComponent(pedidoId)}&modo=editar`);
     }
+    // pedido extra novo: o número ("1/2") vem do banco
+    if(eraNovo && window.__pedidoExtra){
+      const { data: salvo } = await supabase.from("separacoes_pedidos").select("numero_pedido").eq("id", pedidoId).maybeSingle();
+      if(salvo?.numero_pedido){ payloadPedido.numero_pedido = salvo.numero_pedido; setTextValue("orcamentoNumero", salvo.numero_pedido); }
+      payloadPedido.pedido_origem_id = window.__pedidoExtra.principalId;
+      history.replaceState(null, "", `pedido.html?pedido=${encodeURIComponent(pedidoId)}&modo=editar`);
+    }
     setupPedidoRealtime(pedidoId);
     window.__PEDIDO_DADOS_ATUAL = {
       ...(window.__PEDIDO_DADOS_ATUAL || {}),
@@ -1187,6 +1275,7 @@ async function setupPedidoWorkspace({ supabase }){
       return;
     }
 
+    marcarPedidoComoSalvo();
     avisar(
       (deveReservar
         ? "Pedido salvo e disponibilidade atualizada."
@@ -1313,10 +1402,29 @@ async function setupPedidoWorkspace({ supabase }){
   window.addEventListener("easyloc:pedido-financeiro-atualizado", window.__pedidoPixHandler);
   await carregarPedidoSalvoSeNecessario();
   await carregarProjetoCatalogoSeNecessario();
+  await carregarPedidoExtraSeNecessario();
+  if(window.__PEDIDO_DADOS_ATUAL?.pedido_origem_id && !window.__pedidoExtra) window.__pedidoExtra = { principalId: window.__PEDIDO_DADOS_ATUAL.pedido_origem_id, principalNumero: String(window.__PEDIDO_DADOS_ATUAL.numero_pedido || "").split("/")[0] };
+  prepararPedidoExtra({ supabase }).catch((e) => console.warn("[Pedido] extra:", e));
+  setTimeout(() => iniciarRascunho().catch((e) => console.warn("[Pedido] rascunho:", e)), 1500); // depois de a tela terminar de preencher (frete, parcelas)
   // Catálogo carregado escondido depois que o pedido terminou de abrir (out/2026): o 1º clique em Catálogo/Lista não
   // espera mais o catálogo inteiro carregar (~5 s). Só agora, porque o catálogo lê o projeto do pedido ao iniciar.
   const preCarregarCatalogo = () => { const f = document.querySelector("iframe.pedido-catalogo-real"); if(f && !f.getAttribute("src") && f.dataset.src) f.src = f.dataset.src; };
   if(window.requestIdleCallback) requestIdleCallback(preCarregarCatalogo, { timeout: 2500 }); else setTimeout(preCarregarCatalogo, 1200);
+
+  // "+ Pedido extra" (out/2026): pedido.html?extra_de=<principal> abre um pedido novo com os dados do principal
+  async function carregarPedidoExtraSeNecessario(){
+    const principalId = new URLSearchParams(location.search).get("extra_de");
+    if(!principalId || window.__PEDIDO_ATUAL_ID) return;
+    try{
+      const { principal, pedido } = await dadosNovoExtra(supabase, window.__CONTEXT.empresa_id, principalId);
+      window.__pedidoExtra = { principalId: principal.id, principalNumero: principal.numero_pedido };
+      await carregarPedidoSalvoSeNecessario(pedido);
+      setTextValue("orcamentoNumero", `${principal.numero_pedido}/…`);
+    }catch(e){
+      console.error("Erro ao abrir pedido extra:", e);
+      avisar(e.message || "Nao foi possivel abrir o pedido extra.", "Pedido extra", "erro");
+    }
+  }
 
   // Projeto montado pelo decorador no catálogo (Central de Pedidos → "Veio do catálogo", out/2026): abre nesta
   // mesma tela, já preenchida (cliente, evento, local, itens, ambientes e imagens). Nada é gravado até "Salvar":

@@ -11,7 +11,8 @@ html:root body main.el-page .header-list.ac-cabecalho>h2:first-child{flex:1 1 au
 
 .ac-duas-colunas>#acSetores{grid-column:1 / -1;margin:0!important;padding:0!important;border-bottom:1px solid #dce4ec;gap:8px!important}.ac-duas-colunas>.ac-coluna-itens{grid-column:1}.ac-duas-colunas>.ac-proximo-evento{grid-column:2}@media(max-width:760px){.ac-duas-colunas>.ac-proximo-evento{grid-column:1}}
 
-html:root body main.el-page #acSetores{padding-top:14px!important;row-gap:18px!important}html:root body main.el-page #acSetores>button{position:relative!important;overflow:visible!important}html:root body main.el-page #acSetores>button>span{position:absolute!important;top:-10px!important;right:2px!important;margin:0!important;display:grid!important;place-items:center;min-width:19px;height:19px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:#dc454f!important;color:#fff!important;font:600 10px/1 Inter,sans-serif!important;opacity:1!important;pointer-events:none}
+/* sub abas dos setores (Marcenaria, Solda, Acabamento e Pintura…): sem bolinha vermelha, a contagem fica discreta ao lado do nome (pedido do usuário, out/2026) */
+html:root body main.el-page #acSetores>button>span{position:static!important;display:inline!important;margin-left:5px!important;padding:0!important;min-width:0;height:auto;border-radius:0;background:none!important;color:inherit!important;font:inherit!important;font-size:10px!important;opacity:.6!important}
 
 html:root body main.el-page #acSetores[hidden]{display:none!important}
 

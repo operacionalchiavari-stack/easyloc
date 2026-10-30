@@ -12,6 +12,9 @@
   let dados = null;
   let salvando = false;
   let diaSelecionado=null,etapaSelecionada=null,abaRecursos='cam';
+  // Dias carregados (cresce quando a faixa de dias chega ao fim); o servidor devolve no máximo 14 por chamada.
+  const BLOCO=14;
+  let totalDias=window.PainelLogisticoDias?.quantos||BLOCO,carregandoMais=false;
 
   function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   function segundaOuHoje(d) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); return iso(x); }
@@ -32,12 +35,38 @@
     $("plPreencher").disabled = true;
     try {
       if(preencher){const resultado=await chamar('ESC_painel',diaSelecionado||inicio,1,true);aviso(resultado.preenchidas?resultado.preenchidas+(resultado.preenchidas===1?' etapa preenchida':' etapas preenchidas'):'Nada vazio para preencher neste dia');}
-      dados = await chamar("ESC_painel", inicio, 7, false);
+      dados = await buscarFaixa(inicio, totalDias);
       desenhar();
     } catch (e) {
       mostrarErro(e.message || "Não foi possível carregar o painel.");
       if (!dados) $("plDias").innerHTML = "";
     } finally { $("plPreencher").disabled = dados?.regras.automatica===false || !dados?.etapas.some(e=>e.data===diaSelecionado&&!e.passada&&!e.somente_consulta); }
+  }
+
+  async function buscarFaixa(de, n) {
+    const partes = await Promise.all(Array.from({length: Math.ceil(n / BLOCO)}, (_, k) => chamar("ESC_painel", somar(de, k * BLOCO), Math.min(BLOCO, n - k * BLOCO), false)));
+    return partes.reduce((a, b) => juntar(a, b), null);
+  }
+  function juntar(a, b) {
+    if (!a) return b;
+    const ids = new Set(a.etapas.map(e => e.id));
+    return {...b, inicio: a.inicio, preenchidas: a.preenchidas, etapas: a.etapas.concat(b.etapas.filter(e => !ids.has(e.id))), ocupacoes: (a.ocupacoes || []).concat(b.ocupacoes || [])};
+  }
+  async function carregarMais() {
+    if (carregandoMais || !dados) return;
+    carregandoMais = true;
+    window.PainelLogisticoDias?.carregando(true);
+    try {
+      const mais = await buscarFaixa(somar(dados.inicio, totalDias), BLOCO);
+      dados = juntar(dados, mais);
+      totalDias += BLOCO;
+      carregandoMais = false;
+      window.PainelLogisticoDias?.carregando(false);
+      desenhar();
+    } catch (e) {
+      mostrarErro(e.message || "Não foi possível carregar mais dias.");
+      setTimeout(() => { carregandoMais = false; window.PainelLogisticoDias?.carregando(false); }, 4000);
+    }
   }
 
   function aviso(msg) {
@@ -59,7 +88,7 @@
   }
   function escalaCompleta(e) {
     if(!equipeCompleta(e)||(e.avisos||[]).length)return false;
-    if(!dados.regras.etapas[e.tipo]?.caminhao)return true;
+    if(e.servico||!dados.regras.etapas[e.tipo]?.caminhao)return true;
     const capacidade=e.caminhoes.reduce((total,codigo)=>total+(Number(caminhaoInfo(codigo)?.capacidade)||0),0);
     return e.caminhoes.length>0 && capacidade>0 && capacidade>=(Number(e.m3)||0);
   }
@@ -69,9 +98,9 @@
     indicador.textContent=String(planejamento.length);
     indicador.hidden=planejamento.length===0;
     $('plTabEquipe').title=planejamento.length+' opera??es de montagem de equipe';
-    window.PainelLogisticoDias.atualizar(dados.inicio,dados.hoje,planejamento);
+    window.PainelLogisticoDias.atualizar(dados.inicio,dados.hoje,planejamento,totalDias);
     diaSelecionado=window.PainelLogisticoDias.data;
-    const dias=Array.from({length:7},(_,i)=>somar(dados.inicio,i));
+    const dias=Array.from({length:totalDias},(_,i)=>somar(dados.inicio,i));
     if(!dias.includes(diaSelecionado))diaSelecionado=dias.includes(dados.hoje)?dados.hoje:dias[0];
     const doDia=dados.etapas.filter(e=>e.data===diaSelecionado).sort((a,b)=>(a.hora||'99').localeCompare(b.hora||'99'));
     $('plPreencher').dataset.automaticadesativada=String(dados.regras.automatica===false);
@@ -92,7 +121,7 @@
     etapas=dados.ocupacoes?dados.ocupacoes.filter(e=>e.data===diaSelecionado):etapas;
     const pessoasUsadas=new Set(etapas.flatMap(e=>[e.responsavel,...e.equipe]).filter(Boolean).map(chave)),camsUsados=new Set(etapas.flatMap(e=>e.caminhoes).map(chave));
     const pessoas=dados.pessoas.filter(p=>!pessoasUsadas.has(chave(p.nome))),cams=dados.caminhoes.filter(c=>c.codigo&&!camsUsados.has(chave(c.codigo)));
-    const editavel=atual&&!atual.passada&&!atual.somente_consulta&&!salvando,usaCam=atual&&dados.regras.etapas[atual.tipo]?.caminhao;
+    const editavel=atual&&!atual.passada&&!atual.somente_consulta&&!salvando,usaCam=atual&&!atual.servico&&dados.regras.etapas[atual.tipo]?.caminhao;
     const grupos=[['cam','Caminhões',cams],['interna','Equipe interna',pessoas.filter(p=>!p.free)],['free','Equipe Free',pessoas.filter(p=>p.free)]];
     const [tipo,nome,lista]=grupos.find(g=>g[0]===abaRecursos);
     const linhas=lista.map(p=>tipo==='cam'?`<div class="pl-recurso">${fotoRecurso(p,'cam')}<div><strong>${esc(p.codigo)}</strong><small>${esc(p.modelo)}${p.capacidade?' · '+p.capacidade+' m³':''}</small>${p.placa?`<small>${esc(p.placa)}</small>`:''}</div><button type="button" data-recurso="cam" data-valor="${esc(p.codigo)}" aria-label="Alocar caminhão ${esc(p.codigo)}" ${editavel&&usaCam?'':'disabled'}>+</button></div>`:`<div class="pl-recurso">${fotoRecurso(p,'pessoa')}<div><strong>${esc(p.nome)}</strong><small>${p.free?'Free':esc(EQUIPE[p.equipe]||'Equipe')}${p.lider?' · Líder':''}</small></div><button type="button" data-recurso="equipe" data-valor="${esc(p.nome)}" aria-label="Adicionar ${esc(p.nome)} à equipe" ${editavel?'':'disabled'}>+</button></div>`).join('');
@@ -119,7 +148,7 @@
     return {vagas,insuficiente:restante>0};
   }
   function cartao(e) {
-    const editavel=!e.passada&&!e.somente_consulta,usaCaminhao=!!dados.regras.etapas[e.tipo]?.caminhao,equipeTipo=dados.regras.etapas[e.tipo]?.equipe;
+    const editavel=!e.passada&&!e.somente_consulta,usaCaminhao=!e.servico&&!!dados.regras.etapas[e.tipo]?.caminhao,equipeTipo=dados.regras.etapas[e.tipo]?.equipe;
     const total=(e.responsavel?1:0)+e.equipe.length;
     const remover=(nome,papel)=>editavel?`<button type="button" class="pl-vaga-remover" aria-label="Tirar ${esc(nome)}" data-acao="tirar" data-papel="${papel}" data-nome="${esc(nome)}">×</button>`:'';
     const vagaPessoa=(nome,papel)=>{
@@ -227,6 +256,6 @@
 
 
   window.addEventListener('escala-parametros-alterados',()=>carregar(false));
-  window.PainelLogisticoEquipe = { iniciar: () => carregar(false), definirDia: dia => { diaSelecionado=dia;etapaSelecionada=null;if(dados)desenhar(); } };
+  window.PainelLogisticoEquipe = { iniciar: () => carregar(false), carregarMais, definirDia: dia => { diaSelecionado=dia;etapaSelecionada=null;if(dados)desenhar(); } };
   if (!document.getElementById("plModuloAbas")) carregar(false);
 })();

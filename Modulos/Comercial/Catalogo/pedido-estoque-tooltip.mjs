@@ -1,4 +1,5 @@
-export function iniciarDetalhesEstoque({ supabase, empresa, data }) {
+// periodo(): { ini, fim } do pedido aberto — o quadro usa o MESMO período e a mesma conta do selo (operacao_livre_calc)
+export function iniciarDetalhesEstoque({ supabase, empresa, data, pedido = () => null, periodo = () => null }) {
   const caixa = document.createElement('aside');
   caixa.id = 'pedidoEstoqueTooltip'; caixa.className = 'pedido-estoque-tooltip';
   caixa.setAttribute('role', 'tooltip'); caixa.hidden = true; document.body.append(caixa);
@@ -54,22 +55,23 @@ export function iniciarDetalhesEstoque({ supabase, empresa, data }) {
   }
   async function abrir(card) {
     const selo = card.closest('[data-stock-item]');
-    const id = selo?.dataset.stockItem, dataAtual = data(), empresaAtual = empresa();
+    const id = selo?.dataset.stockItem, dataAtual = data(), empresaAtual = empresa(), pedidoAtual = pedido(), per = periodo();
     if (!id || !empresaAtual) return;
     alvo = card; const atual = ++versao;
     caixa.replaceChildren(); linha('Consultando reservas…'); caixa.hidden = false;
     card.setAttribute('aria-describedby', caixa.id); posicionar();
     try {
-      const chave = `${empresaAtual}:${id}:${dataAtual}`;
+      const chave = `${empresaAtual}:${id}:${dataAtual}:${pedidoAtual || ""}:${per?.ini || ""}:${per?.fim || ""}`;
       if (!cache.has(chave) || cache.get(chave).ate < Date.now()) {
-        const promessa = supabase.rpc('pedido_estoque_detalhes', { p_empresa_id: empresaAtual, p_item_id: id, p_data: dataAtual })
+        const promessa = supabase.rpc('pedido_estoque_detalhes', { p_empresa_id: empresaAtual, p_item_id: id, p_data: dataAtual, p_pedido: pedidoAtual, p_inicio: per?.ini || null, p_fim: per?.fim || null })
           .then(({data, error}) => { if(error) throw error; return data; });
         cache.set(chave, { promessa, ate: Date.now() + 60000 });
         promessa.catch(() => cache.delete(chave));
       }
       const resultado = await cache.get(chave).promessa;
       if (atual !== versao || alvo !== card) return;
-      caixa.replaceChildren(); linha(`Estoque e reservas em ${dia(dataAtual)}`, 'pedido-estoque-titulo');
+      const ini = resultado?.inicio || dataAtual, fim = resultado?.fim || ini;
+      caixa.replaceChildren(); linha(fim !== ini ? `Estoque e reservas de ${dia(ini)} a ${dia(fim)}` : `Estoque e reservas em ${dia(ini)}`, 'pedido-estoque-titulo');
       const componentes = resultado?.componentes || [];
       if (!componentes.length) linha('Nenhum detalhe de estoque encontrado. Atualize o catálogo para conferir.');
       for (const c of componentes) {
@@ -95,10 +97,14 @@ export function iniciarDetalhesEstoque({ supabase, empresa, data }) {
         identidade.append(foto, nome); cabecalho.append(identidade);
         const resumo = document.createElement('dl');
         resumo.className = 'pedido-estoque-numeros';
-        for (const [titulo, valor] of [['Necessário', c.necessario], ['Estoque', c.estoque], ['Manutenção', c.manutencao], ['Livre', c.livre]]) {
+        // soma de todos os pedidos que reservam o item nesta data (a lista está logo abaixo)
+        const somaSit = (pre) => (c.pedidos || []).filter(p => (p.situacao === 'pre_reserva') === pre).reduce((s, p) => s + Number(p.quantidade || 0), 0);
+        const reservas = `${n(somaSit(false))} / ${n(somaSit(true))}`;
+        for (const [titulo, valor] of [['Necessário', c.necessario], ['Estoque', c.estoque], ['Manutenção', c.manutencao], ['Reservado / Pré-reserva', reservas], ['Livre', c.livre]]) {
           const coluna = document.createElement('div');
           const rotulo = document.createElement('dt'); rotulo.textContent = titulo;
-          const numero = document.createElement('dd'); numero.textContent = n(valor);
+          const numero = document.createElement('dd'); numero.textContent = typeof valor === 'string' ? valor : n(valor);
+          if (titulo.startsWith('Reservado')) { coluna.classList.add('pedido-estoque-reservas'); coluna.title = 'Reservado (pedidos reservados, enviados e finalizados) / Pré-reserva, somando todos os pedidos da lista abaixo'; }
           if ((titulo === 'Estoque' || titulo === 'Livre') && Number(valor) < Number(c.necessario)) {
             coluna.classList.add('pedido-estoque-insuficiente');
             rotulo.style.setProperty('color', '#b91c1c', 'important');
@@ -108,7 +114,8 @@ export function iniciarDetalhesEstoque({ supabase, empresa, data }) {
         }
         cabecalho.append(resumo); caixa.append(cabecalho);
         if (Number(c.estoque) < Number(c.necessario)) linha('Estoque cadastrado insuficiente para montar uma unidade.');
-        if (!c.pedidos?.length && !Number(c.bloqueado)) linha('Sem reservas para esta data.');
+        if (c.bloqueio_contagem) linha('Bloqueado: teve divergência de contagem num evento e aguarda a contagem geral em Estoque > Gestão do acervo. Até lá não entra em novas reservas (Parâmetros > Divergências de contagem).', 'pedido-estoque-aviso-bloqueio');
+        if (!c.pedidos?.length && !Number(c.bloqueado)) linha(fim !== ini ? 'Sem reservas no período.' : 'Sem reservas para esta data.');
         if (c.pedidos?.length) {
           const rolagem = document.createElement('div');
           rolagem.className = 'pedido-estoque-tabela-wrap';

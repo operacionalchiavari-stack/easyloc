@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261027-planejamento"></script>
+  <script src="../operacao-sem-motor.js?v=20261029-frete"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -313,6 +313,15 @@
   <link rel="stylesheet" href="montador-app.css?v=20261014-pedido">
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 <link rel="stylesheet" href="../../../styles/abas-global.css?v=20261024">
+<style id="contagem-desmontagem">
+.contagem-itens{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.contagem-linha{display:grid;grid-template-columns:52px minmax(0,1fr) 84px;align-items:center;gap:10px;padding:8px;border:1px solid var(--line,#e3e7ec);border-radius:12px;background:#fff}
+.contagem-foto{width:52px;height:52px;border-radius:10px;overflow:hidden;background:#f3f5f6}
+.contagem-foto img{width:100%;height:100%;object-fit:cover}
+.contagem-nome{font-weight:700;font-size:14px;line-height:1.3}
+.contagem-nome small{display:block;font-weight:500;color:var(--muted,#6b6b6b);font-size:12px;margin-top:2px}
+.contagem-qtd{text-align:center;font-size:18px;font-weight:700}
+</style>
 </head>
 <body>
 
@@ -932,7 +941,101 @@
         (internos ? '<div class="subtitulo">Equipe interna</div><div class="pessoas">' + internos + '</div>' : "") +
         free +
       '</section>';
+    pintarUberMontador(e);
+    pintarFreteMontador(e);
   }
+
+  /* Frete da etapa (out/2026): freteiro autônomo que aceitou o frete no App do Freteiro + QR de check-in/check-out. */
+  function pintarFreteMontador(e){
+    let area = document.getElementById("etapaFrete");
+    if(!area){ area = document.createElement("div"); area.id = "etapaFrete"; (document.getElementById("etapaUber") || document.getElementById("etapaEquipe")).after(area); }
+    area.innerHTML = "";
+    chamar("MONT_freteQr", estado.token, e.id).then(function(d){
+      const fretes = (d && d.fretes) || [];
+      if(!fretes.length){ area.innerHTML = ""; return; }
+      area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Frete</h2><small>check-in pelo QR</small></div>' +
+        fretes.map(function(v){
+          const fr = v.freteiro || {}, n = String(fr.telefone || "").replace(/\D/g, "");
+          const sit = v.checkout_em ? "Concluído" : v.checkin_em ? "Chegou" : "A caminho";
+          return '<div class="subtitulo">' + (v.direcao === "coleta" ? "Coleta" : "Entrega") + ' · ' + esc(v.ponto_encontro) + ' → ' + esc(v.destino) + (v.hora ? ' · ' + esc(v.hora) : '') + '</div>' +
+            '<div class="pessoas"><div class="pessoa"><div class="pessoa-ini">' + esc(String(fr.nome || "?").charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(fr.nome || "-") +
+            '<small>' + esc(fr.veiculo || "") + '</small>' + (n.length >= 10 ? '<small><a href="https://wa.me/55' + n + '" target="_blank" rel="noopener">' + esc(fr.telefone) + '</a></small>' : '') + '</div><span class="chip">' + sit + '</span></div></div>' +
+            '<div class="acoes-linha"><button class="btn btn-pequeno" type="button" onclick="abrirQrFrete(\'' + esc(e.id) + '\',\'' + esc(v.id) + '\')">' + I.qr + 'QR para o freteiro</button></div>';
+        }).join("") + '</section>';
+    }).catch(function(){ area.innerHTML = ""; });
+  }
+  function abrirQrFrete(etapa, anuncio){
+    abrirFolha('<div class="carregando" style="min-height:200px"><div><div class="spinner"></div>Gerando QR…</div></div>');
+    buscarQrFrete(etapa, anuncio);
+  }
+  function buscarQrFrete(etapa, anuncio){
+    chamar("MONT_freteQr", estado.token, etapa).then(function(d){
+      if(!document.getElementById("folha").classList.contains("ver")){ return; }
+      const v = ((d && d.fretes) || []).filter(function(x){ return x.id === anuncio; })[0];
+      if(!v){ document.getElementById("folhaConteudo").innerHTML = '<h3>QR do frete</h3><p>Este frete não está mais com um freteiro.</p><div class="acoes"><button class="btn" type="button" onclick="fecharFolha()">Fechar</button></div>'; return; }
+      const url = new URL("../Fretes/freteiro.html?c=" + encodeURIComponent(v.id + "." + v.codigo), location.href).href;
+      document.getElementById("folhaConteudo").innerHTML =
+        '<h3>QR do frete</h3>' +
+        '<p>O freteiro lê com a câmera do celular quando chega (check-in) e de novo quando é liberado (check-out). O código muda a cada minuto.</p>' +
+        '<div id="qrCaixa"></div><div class="qr-codigo">' + esc(v.codigo) + '</div>' +
+        '<div class="qr-legenda">' + (v.checkout_em ? "Check-out feito" : v.checkin_em ? "Check-in feito" : "Aguardando o check-in") + '</div>' +
+        '<div class="acoes"><button class="btn btn-texto" type="button" onclick="fecharFolha()">Fechar</button></div>';
+      if(window.QRCode){ new QRCode(document.getElementById("qrCaixa"), { text: url, width: 560, height: 560, colorDark: "#251e19", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M }); }
+      estado.qrTimer = setTimeout(function(){ buscarQrFrete(etapa, anuncio); }, Math.max(3000, d.trocaEm + 800));
+    }).catch(function(err){
+      document.getElementById("folhaConteudo").innerHTML = '<h3>QR do frete</h3><p>' + esc(mensagemErro(err)) + '</p><div class="acoes"><button class="btn" type="button" onclick="fecharFolha()">Fechar</button></div>';
+    });
+  }
+  window.abrirQrFrete = abrirQrFrete;
+
+  /* Uber da etapa (out/2026): motoristas que aceitaram no App do Motorista + QR de check-in/check-out.
+     O motorista lê o QR na chegada ao ponto de encontro e de novo quando a equipe é liberada. */
+  function pintarUberMontador(e){
+    let area = document.getElementById("etapaUber");
+    if(!area){ area = document.createElement("div"); area.id = "etapaUber"; document.getElementById("etapaEquipe").after(area); }
+    area.innerHTML = "";
+    chamar("MONT_uberQr", estado.token, e.id).then(function(d){
+      const vagas = (d && d.vagas) || [];
+      if(!vagas.length){ area.innerHTML = ""; return; }
+      area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2><small>check-in pelo QR</small></div>' +
+        vagas.map(function(v){
+          const corr = v.corridas || [];
+          return '<div class="subtitulo">' + esc(v.quantidade) + ' carro(s) · ' + (v.ida_volta ? 'ida e volta' : 'só ida') + ' · ' + esc(v.ponto_encontro) + ' → ' + esc(v.destino) + (v.hora ? ' · ' + esc(v.hora) : '') + '</div>' +
+            (corr.length ? '<div class="pessoas">' + corr.map(function(c){
+              const n = String(c.telefone || "").replace(/\D/g, "");
+              const sit = c.checkout_em ? "Concluída" : c.checkin_em ? "Chegou" : "A caminho";
+              return '<div class="pessoa"><div class="pessoa-ini">' + esc(String(c.motorista || "?").charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(c.motorista) +
+                '<small>' + esc(c.carro || "") + '</small>' + (n.length >= 10 ? '<small><a href="https://wa.me/55' + n + '" target="_blank" rel="noopener">' + esc(c.telefone) + '</a></small>' : '') + '</div><span class="chip">' + sit + '</span></div>';
+            }).join("") + '</div>' : '<div class="vazio" style="padding:12px">Nenhum motorista aceitou ainda.</div>') +
+            '<div class="acoes-linha"><button class="btn btn-pequeno" type="button" onclick="abrirQrUber(\'' + esc(e.id) + '\',\'' + esc(v.id) + '\')">' + I.qr + 'QR para o motorista</button></div>';
+        }).join("") + '</section>';
+    }).catch(function(){ area.innerHTML = ""; });
+  }
+
+  function abrirQrUber(etapa, vaga){
+    abrirFolha('<div class="carregando" style="min-height:200px"><div><div class="spinner"></div>Gerando QR…</div></div>');
+    buscarQrUber(etapa, vaga);
+  }
+  function buscarQrUber(etapa, vaga){
+    chamar("MONT_uberQr", estado.token, etapa).then(function(d){
+      if(!document.getElementById("folha").classList.contains("ver")){ return; }
+      const v = ((d && d.vagas) || []).filter(function(x){ return x.id === vaga; })[0];
+      if(!v){ document.getElementById("folhaConteudo").innerHTML = '<h3>QR do Uber</h3><p>Este pedido de Uber foi cancelado.</p><div class="acoes"><button class="btn" type="button" onclick="fecharFolha()">Fechar</button></div>'; return; }
+      const url = new URL("../Uber/motorista.html?c=" + encodeURIComponent(v.id + "." + v.codigo), location.href).href;
+      const chegaram = (v.corridas || []).filter(function(c){ return c.checkin_em; }).length;
+      document.getElementById("folhaConteudo").innerHTML =
+        '<h3>QR do Uber</h3>' +
+        '<p>O motorista lê com a câmera do celular quando chega ao ponto de encontro (check-in) e de novo quando a equipe é liberada (check-out). O código muda a cada minuto.</p>' +
+        '<div id="qrCaixa"></div><div class="qr-codigo">' + esc(v.codigo) + '</div>' +
+        '<div class="qr-legenda">' + chegaram + ' de ' + (v.corridas || []).length + ' motorista(s) já fizeram check-in</div>' +
+        '<div class="acoes"><button class="btn btn-texto" type="button" onclick="fecharFolha()">Fechar</button></div>';
+      if(window.QRCode){ new QRCode(document.getElementById("qrCaixa"), { text: url, width: 560, height: 560, colorDark: "#251e19", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M }); }
+      estado.qrTimer = setTimeout(function(){ buscarQrUber(etapa, vaga); }, Math.max(3000, d.trocaEm + 800));
+    }).catch(function(err){
+      document.getElementById("folhaConteudo").innerHTML = '<h3>QR do Uber</h3><p>' + esc(mensagemErro(err)) + '</p><div class="acoes"><button class="btn" type="button" onclick="fecharFolha()">Fechar</button></div>';
+    });
+  }
+  window.abrirQrUber = abrirQrUber;
 
   // Link do Drive (…/d/ID/… ou ?id=ID) -> ID do arquivo
   function idDoDrive(url){
@@ -1143,7 +1246,7 @@
           '<div class="rotulo">Foto da lista</div>' + fotoTile("regFotoLista", "Tirar foto da lista", "fotoLista(event)") +
           '<button class="btn" type="button" onclick="enviarListaAssinada(this)">' + I.enviar + 'Enviar lista assinada</button>', "✓ Lista assinada enviada");
     }else{
-      reg.obrigatorios = ["equipe", "conferida", "conclusao"];
+      reg.obrigatorios = ["equipe", "conferida", "contagem", "conclusao"];
       passos =
         passoHtml("equipe", 1, "Foto da equipe", "Quem está presente no início da desmontagem", equipe, "✓ Foto da equipe enviada") +
         passoHtml("conferida", 2, "Lista conferida", "Uma foto para cada página, depois da conferência",
@@ -1151,7 +1254,10 @@
           '<button class="btn btn-claro" type="button" onclick="document.getElementById(\'regPaginaInput\').click()">' + I.camera + 'Adicionar página</button>' +
           '<input type="file" id="regPaginaInput" accept="image/*" capture="environment" hidden onchange="adicionarPagina(event)">' +
           '<button class="btn" type="button" onclick="enviarListaConferida(this)">' + I.enviar + 'Enviar todas as páginas</button>', "✓ Lista conferida enviada") +
-        passoHtml("conclusao", 3, "Concluir desmontagem", "Libera depois dos dois registros acima",
+        passoHtml("contagem", 3, "Contagem dos itens", "Lance quanto voltou de cada item, conforme a lista conferida",
+          '<div id="regContagemItens" class="contagem-itens"><div class="vazio" style="padding:12px">Carregando os itens…</div></div>' +
+          '<button class="btn" type="button" id="regBtnContagem" onclick="enviarContagemItens(this)">' + I.enviar + 'Enviar contagem</button>', "✓ Contagem enviada") +
+        passoHtml("conclusao", 4, "Concluir desmontagem", "Libera depois dos registros acima",
           '<div class="conclusao-status" id="regConclusaoStatus">Conclua os dois registros acima.</div>' +
           '<button class="btn btn-ok" id="regBtnConcluir" type="button" onclick="concluirDesmontagemApp(this)" disabled>' + I.check + 'Concluir desmontagem</button>', "🎉 Desmontagem concluída");
     }
@@ -1184,6 +1290,7 @@
       chamar("verificarListaAssinadaJaEnviada", id).then(function(r){ if(mesmo() && r && r.enviado){ marcarFeito("lista"); } }).catch(console.error);
     }else{
       chamar("verificarListaConferidaDesmontagem", id).then(function(r){ if(mesmo() && r && r.enviado){ conferidaFeita(r); } }).catch(console.error);
+      carregarContagemItens(id, mesmo);
       chamar("verificarDesmontagemConcluida", id).then(function(r){ if(mesmo() && r && r.concluida){ marcarFeito("conclusao"); } }).catch(console.error);
     }
   }
@@ -1419,7 +1526,45 @@
     marcarFeito("conferida", "✓ " + (fotos.length === 1 ? "1 página enviada" : fotos.length + " páginas enviadas") + linksHtml(fotos, function(i){ return "Página " + (i + 1); }));
   }
 
-  /* ---------- 3. Concluir (desmontagem) ---------- */
+  /* ---------- 3. Contagem dos itens (desmontagem, out/2026) ----------
+     O responsável conta pela lista em papel durante a desmontagem e lança aqui quanto voltou de cada item. O app mostra
+     quanto saiu (contagem do carregamento). Essa contagem entra no histórico da divergência na Gestão do acervo. */
+  function carregarContagemItens(id, mesmo){
+    chamar("MONT_contagemItens", estado.token, id).then(function(r){
+      if(mesmo && !mesmo()){ return; }
+      reg.contagem = r || { itens: [] };
+      const q = (r && r.quantidades) || {};
+      const box = document.getElementById("regContagemItens");
+      if(!box){ return; }
+      box.innerHTML = (r.itens || []).length ? (r.itens || []).map(function(it){
+        const foto = /^https?:/.test(it.foto || "") ? '<img src="' + esc(it.foto) + '" alt="" loading="lazy">' : '';
+        return '<label class="contagem-linha"><span class="contagem-foto">' + foto + '</span><span class="contagem-nome">' + esc(it.nome) +
+          (it.kit_nome ? '<small>Parte do kit: ' + esc(String(it.kit_nome).replace(/\s+/g, " ")) + '</small>' : '') + '<small>Saiu: <b>' + esc(it.esperado) + '</b></small></span>' +
+          '<input class="input contagem-qtd" type="number" min="0" step="1" inputmode="numeric" data-chave="' + esc(it.chave) + '" value="' + (it.chave in q ? esc(q[it.chave]) : '') + '" placeholder="Qtd." aria-label="Quantidade que voltou de ' + esc(it.nome) + '"></label>';
+      }).join("") : '<div class="vazio" style="padding:12px">Este pedido não tem itens.</div>';
+      if(r.enviado){ marcarFeito("contagem", "✓ Contagem enviada" + (r.autor ? " por " + esc(r.autor) : "")); }
+    }).catch(function(e){ const box = document.getElementById("regContagemItens"); if(box){ box.innerHTML = '<div class="vazio" style="padding:12px">' + esc(mensagemErro(e, "Não foi possível carregar os itens.")) + '</div>'; } });
+  }
+
+  function enviarContagemItens(btn){
+    if(btn.disabled){ return; }
+    const campos = Array.prototype.slice.call(document.querySelectorAll("#regContagemItens .contagem-qtd"));
+    const vazio = campos.filter(function(c){ return c.value === "" || Number(c.value) < 0 || !Number.isInteger(Number(c.value)); })[0];
+    if(vazio){ vazio.focus(); toast("Informe a quantidade de todos os itens (0 se não voltou).", true); return; }
+    const quantidades = {};
+    campos.forEach(function(c){ quantidades[c.dataset.chave] = Number(c.value); });
+    const diferentes = (reg.contagem && reg.contagem.itens || []).filter(function(it){ return Number(quantidades[it.chave]) !== Number(it.esperado); }).length;
+    perguntar("Enviar a contagem?", diferentes ? diferentes + " item(ns) com quantidade diferente do que saiu. Confirma a contagem pela lista?" : "Todos os itens batem com o que saiu.", "Enviar").then(function(sim){
+      if(!sim){ return; }
+      ocupar(btn, "Enviando…");
+      chamar("MONT_contagemSalvar", estado.token, reg.id, quantidades)
+        .then(function(){ liberar(btn); marcarFeito("contagem", "✓ Contagem enviada"); toast("Contagem enviada"); atualizarConclusao(); })
+        .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao enviar a contagem."), true); });
+    });
+  }
+  window.enviarContagemItens = enviarContagemItens;
+
+  /* ---------- 4. Concluir (desmontagem) ---------- */
   function atualizarConclusao(){
     const status = document.getElementById("regConclusaoStatus");
     const btn = document.getElementById("regBtnConcluir");
@@ -1427,6 +1572,7 @@
     const faltando = [];
     if(!reg.feitos.equipe){ faltando.push("foto da equipe"); }
     if(!reg.feitos.conferida){ faltando.push("lista conferida"); }
+    if(!reg.feitos.contagem){ faltando.push("contagem dos itens"); }
     status.textContent = faltando.length ? "Pendente: " + faltando.join(" e ") + "." : "Tudo certo. A desmontagem pode ser concluída.";
     status.classList.toggle("ok", !faltando.length);
     btn.disabled = faltando.length > 0;

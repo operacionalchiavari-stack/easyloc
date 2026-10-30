@@ -52,7 +52,7 @@ const mock = () => {
       };
       return q;
     },
-    async rpc() { return { data: [], error: null }; }
+    async rpc(nome, args) { window.__rpcs = (window.__rpcs || []).concat([{ nome, args }]); return { data: nome === "operacao_livre_periodo" ? (window.__livreDb || []) : [], error: null }; }
   };
 };
 
@@ -126,6 +126,17 @@ const mock = () => {
   assert.equal(l.length, 20, "limpar volta a 20");
   assert.equal(new Set(l.map(x => x.nome)).size, l.length, "sem linhas repetidas depois de digitar rápido");
   console.log("ok 8 - limpar filtros e digitar rápido sem repetir linhas");
+
+  // O "Disponível" vem da conta única do banco (operacao_livre_periodo → operacao_livre_calc), não da conta da tela
+  await page.evaluate(() => { window.__livreDb = [{ item_id: "a002", livre: 3, bloqueio_contagem: false }, { item_id: "a003", livre: 0, bloqueio_contagem: true }]; });
+  await page.fill("#disponData", "2099-11-11"); await page.dispatchEvent("#disponData", "change"); await esperarFim();
+  const consulta = await page.evaluate(() => (window.__rpcs || []).filter(r => r.nome === "operacao_livre_periodo").at(-1)?.args);
+  assert.deepEqual([consulta.p_inicio, consulta.p_fim], ["2099-11-11", "2099-11-11"]);
+  const disp = await page.$$eval(".dispon-row", rs => Object.fromEntries(rs.map(r => [r.querySelector(".dispon-item-name").textContent.trim(), r.querySelector(".dispon-badge").className.replace("dispon-badge", "").trim()])));
+  assert.equal(disp["Cadeira 3"], "indisponivel", "item bloqueado por contagem fica indisponível");
+  const c2 = await page.$$eval(".dispon-row", rs => rs.find(r => r.querySelector(".dispon-item-name").textContent.trim() === "Cadeira 2")?.textContent || "");
+  assert.match(c2, /\b3\b/, "Cadeira 2 com o disponível do banco (3): " + c2);
+  console.log("ok 9 - disponível vem da mesma conta do catálogo e do pedido");
 
   assert.deepEqual(erros, []);
   await browser.close(); console.log("todos os testes passaram");

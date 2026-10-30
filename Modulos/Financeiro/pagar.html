@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Seu pedido</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../Comercial/Catalogo/catalogo-projetos.css?v=20261030-link-documento">
+  <link rel="stylesheet" href="../Comercial/Catalogo/projeto-apresentacao.css?v=20261030-link-documento">
+  <link rel="stylesheet" href="pagar.css?v=20261030-simular">
+</head>
+<body>
+  <header class="pg-topo"><img id="pgLogo" alt="" hidden><span id="pgMarca"></span></header>
+
+  <main class="pg-main">
+    <section id="pgEntrar" class="pg-entrar" hidden>
+      <h1>Seu pedido</h1>
+      <p>Digite o código de 6 números que você recebeu junto com o link para ver o pedido e os pagamentos.</p>
+      <form id="pgForm" autocomplete="off">
+        <input id="pgCodigo" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••••" aria-label="Código de acesso" autofocus>
+        <button type="submit">Ver meu pedido</button>
+      </form>
+      <p class="pg-erro" id="pgErro" role="alert" hidden></p>
+    </section>
+
+    <section id="pgLista" class="pg-lista" hidden></section>
+    <p class="pg-carregando" id="pgCarregando">Carregando…</p>
+  </main>
+
+  <dialog id="pgPix" class="pg-pix" aria-labelledby="pgPixTitulo">
+    <div class="pg-pix-topo"><h2 id="pgPixTitulo">Pagar com PIX</h2><button type="button" class="pg-x" data-fechar aria-label="Fechar">×</button></div>
+    <div class="pg-pix-corpo" id="pgPixCorpo"></div>
+  </dialog>
+
+  <dialog id="pgFoto" class="pd-foto" aria-label="Foto ampliada"><button type="button" class="pg-x" data-fechar-foto aria-label="Fechar">×</button><img id="pgFotoImg" alt=""></dialog>
+
+  <footer class="pg-rodape">Pagamento seguro por PIX · o valor já vem preenchido no seu banco.</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+  <script src="../../js/core/supabase.js"></script>
+  <script src="pagar.js?v=20261030-simular"></script>
+</body>
+</html>

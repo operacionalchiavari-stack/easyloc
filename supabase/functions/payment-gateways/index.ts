@@ -37,6 +37,7 @@ type RequestBody = {
   payment?: Record<string, unknown>;
   payment_id?: string;
   external_id?: string;
+  conta_id?: string | null;
 };
 
 const ACTIVE_PIX_STATUSES = ["pending", "in_process", "authorized", "pendente", "aguardando_pagamento"];
@@ -244,6 +245,13 @@ serve(async (req) => {
 
     const { serviceClient, user } = acesso;
 
+    // conexão de uma conta do Financeiro (Locação, Frete, Montagem…); vazio = conexão geral
+    const contaId = String(body.conta_id || "").trim() || null;
+    if (contaId) {
+      const { data: contaOk } = await serviceClient.from("fin_contas").select("id").eq("id", contaId).eq("empresa_id", empresaId).maybeSingle();
+      if (!contaOk) return jsonResponse({ erro: "Conta não encontrada." }, 400);
+    }
+
     // (out/2026) trocar/testar credenciais exige a permissão da tela de Integrações (antes bastava ser da empresa)
     const permissaoDaAcao: Record<string, string> = {
       save: "configuracoes.integracoes.gateways_pagamento.editar",
@@ -261,7 +269,7 @@ serve(async (req) => {
     if (body.action === "list") {
       return jsonResponse({
         ok: true,
-        gateways: await listGateways(serviceClient, empresaId),
+        gateways: await listGateways(serviceClient, empresaId, contaId),
       });
     }
 
@@ -274,7 +282,7 @@ serve(async (req) => {
 
     if (body.action === "save") {
       const ambiente = body.ambiente === "producao" ? "producao" : "sandbox";
-      const existingConnection = await getConnection(serviceClient, empresaId, gateway);
+      const existingConnection = await getConnection(serviceClient, empresaId, gateway, contaId);
       const currentCredentials = existingConnection?.id
         ? await getDecryptedCredentials(serviceClient, existingConnection.id)
         : null;
@@ -288,6 +296,7 @@ serve(async (req) => {
         : "desconectado";
 
       const connection = await upsertConnection(serviceClient, empresaId, definition, {
+        conta_id: contaId,
         ambiente,
         status,
         credential_preview: credentialPreview(definition, mergedCredentials),
@@ -296,15 +305,16 @@ serve(async (req) => {
       });
 
       await saveEncryptedCredentials(serviceClient, empresaId, connection.id, mergedCredentials);
+      if (contaId) await serviceClient.rpc("pagamento_gateway_conta_recebe", { p_connection: connection.id });
 
       return jsonResponse({
         ok: true,
         gateway: sanitizeConnection(connection, definition),
-        gateways: await listGateways(serviceClient, empresaId),
+        gateways: await listGateways(serviceClient, empresaId, contaId),
       });
     }
 
-    const connection = await getConnection(serviceClient, empresaId, gateway);
+    const connection = await getConnection(serviceClient, empresaId, gateway, contaId);
     if (!connection?.id) {
       return jsonResponse({ erro: "Gateway ainda nao foi configurado." }, 400);
     }
@@ -335,7 +345,7 @@ serve(async (req) => {
       return jsonResponse({
         ok: true,
         gateway: sanitizeConnection(updated, definition),
-        gateways: await listGateways(serviceClient, empresaId),
+        gateways: await listGateways(serviceClient, empresaId, contaId),
       });
     }
 
@@ -375,7 +385,7 @@ serve(async (req) => {
         ok: result.ok,
         test: result,
         gateway: sanitizeConnection(updated, definition),
-        gateways: await listGateways(serviceClient, empresaId),
+        gateways: await listGateways(serviceClient, empresaId, contaId),
       }, result.ok ? 200 : 400);
     }
 

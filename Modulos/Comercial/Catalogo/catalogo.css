@@ -1022,9 +1022,9 @@ html.catalogo-sem-valores :is(.catalog-rental-price,.cas-vit-preco,.pa-valor,.cp
 .pedido-estoque-tooltip[hidden]{display:none!important}
 .pedido-estoque-tooltip p{margin:4px 0}
 .pedido-estoque-tooltip .pedido-estoque-titulo{font-weight:700;color:#b91c1c!important;margin:0 0 6px}
-.pedido-estoque-componente-linha{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,53%);align-items:center;gap:12px;margin-top:6px;border-top:1px solid #eee;padding:7px 0}
+.pedido-estoque-componente-linha{display:grid;grid-template-columns:minmax(0,1fr) minmax(430px,60%);align-items:center;gap:12px;margin-top:6px;border-top:1px solid #eee;padding:7px 0}
 .pedido-estoque-tooltip .pedido-estoque-componente{font-weight:700;margin:0;overflow-wrap:anywhere}
-.pedido-estoque-numeros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0;padding:5px 0;background:#f7f8f9;border-radius:9px;text-align:center}
+.pedido-estoque-numeros{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0;padding:5px 0;background:#f7f8f9;border-radius:9px;text-align:center}
 @media(max-width:480px){.pedido-estoque-componente-linha{grid-template-columns:minmax(0,1fr) minmax(180px,60%);gap:8px}.pedido-estoque-numeros dt{font-size:10px}.pedido-estoque-numeros>div{padding:0 3px}}
 .pedido-estoque-numeros>div{padding:0 8px}
 .pedido-estoque-numeros>div+div{border-left:1px solid #e1e4e8}
@@ -1052,3 +1052,5 @@ html.catalogo-sem-valores :is(.catalog-rental-price,.cas-vit-preco,.pa-valor,.cp
 .pedido-estoque-fixar:focus-visible{outline:2px solid #3d706a;outline-offset:2px}
 .pedido-estoque-tooltip.is-fixado{max-height:calc(100vh - 16px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
 .pedido-estoque-tooltip.is-fixado::-webkit-scrollbar{display:none}
+.pedido-estoque-numeros>.pedido-estoque-reservas dd{color:#123f86;white-space:nowrap}
+.pedido-estoque-tooltip .pedido-estoque-aviso-bloqueio{margin:6px 0;padding:7px 10px;border-radius:8px;background:#fdecec;color:#b42318!important;font-weight:600}

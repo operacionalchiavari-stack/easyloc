@@ -17,7 +17,7 @@ const mockSupabase = `
     empresas: [{id:"e1",nome_fantasia:"Teste"}],
     projetos: [{ id: "pj1", empresa_id: "e1", cliente_id: "c1", noivos: "Ana e Bruno", data_evento: "2026-11-20",
       local_evento: "Villa Teste", status: "pedido_enviado",
-      dados: { foto_casal:{url:"https://fixture/casal.jpg",path:"e1/pj1/casal/original.jpg"}, evento: { tipo: "Casamento", data_entrega: "2026-11-19", hora_entrega: "09:00", data_coleta: "2026-11-21",
+      dados: { foto_casal:{url:"https://fixture/casal.jpg",path:"e1/pj1/casal/original.jpg"}, evento: { tipo: "Casamento", data_entrega: "2026-11-19", hora_entrega: "09:00", data_coleta: "2026-11-21", hora_coleta: "10:00",
         obs_entrega: "Portão lateral" },
         ambientes: [
           { id: "a1", nome: "Lounge", itens: [{ item_id: "i1", quantidade: 2 }], renders: [{id:"r1",url:"https://fixture/storage/v1/object/public/projetos/e1/pj1/renders/teste.jpg",origem:"3D Livre"},{id:"r2",url:"https://fixture/storage/v1/render/image/public/projetos/e1/pj1/renders/indisponivel.jpg?width=960&quality=74",origem:"3D Livre",cena:{url:"data:application/json,%7B%22version%22%3A1%7D",tipo:"print"}}], notas: "" },
@@ -152,12 +152,20 @@ const mockSupabase = `
   assert.match(await cf.locator('[data-stock-item="i1"]').innerText(),/Esgotado/);
   await cf.locator('[data-stock-item="i1"] .is-esgotado').hover();
   await cf.locator('#pedidoEstoqueTooltip .pedido-estoque-reserva').waitFor();
-  assert.equal(await cf.locator('.pedido-estoque-numeros dt').count(),4);
+  assert.equal(await cf.locator('.pedido-estoque-numeros dt').count(),5);assert.match(await cf.locator('.pedido-estoque-reservas').first().innerText(),/Reservado . Pr.-reserva[^0-9]+[0-9]+ . [0-9]+/);
   assert.equal(await cf.locator('.pedido-estoque-foto img').count(),1);
   assert.equal(await cf.locator('.pedido-estoque-insuficiente dd').first().evaluate(el=>getComputedStyle(el).color),'rgb(185, 28, 28)');
   const detalhe=await cf.locator('#pedidoEstoqueTooltip').innerText();
   assert.match(detalhe,/SARGENTO/);assert.match(detalhe,/123/);assert.match(detalhe,/Salao Teste/);assert.equal(await cf.locator('.pedido-estoque-tabela th').count(),6);assert.match(detalhe,/Decoradora Teste/);
   assert.match(detalhe,/19\/11\/2026/);
+  // O card e o quadro tiram o próprio pedido da conta e o card olha o período inteiro (entrega → coleta).
+  // (aqui o pedido ainda não foi salvo: sem id, nada a descontar)
+  const pedidoAberto=await page.evaluate(()=>window.__PEDIDO_ATUAL_ID||null);
+  const consultaCard=await cf.locator('body').evaluate(()=>window.__rpcs.find(r=>r.nome==='pedido_catalogo_estoque'));
+  assert.equal(consultaCard.args.p_pedido,pedidoAberto);assert.equal(consultaCard.args.p_inicio,'2026-11-19');assert.equal(consultaCard.args.p_fim,'2026-11-21');
+  const consultaQuadro=await cf.locator('body').evaluate(()=>window.__rpcs.find(r=>r.nome==='pedido_estoque_detalhes'));
+  assert.equal(consultaQuadro.args.p_pedido,pedidoAberto);
+  assert.match(await cf.locator('[data-stock-item="i1"]').innerText(),/no período/);
   const pin=cf.locator('.pedido-estoque-fixar');
   await pin.click();
   assert.equal(await pin.getAttribute('aria-pressed'),'true');

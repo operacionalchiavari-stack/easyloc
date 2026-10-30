@@ -50,8 +50,29 @@
       const registro=p.operacao?.[tipo==='ida'?'carregamento':'descarregamento'];
       out.push({p,tipo,col:registro?.iniciado_em?'andamento':'aguardando'});
     });
+    // Conferido (out/2026): carregado até a entrega ser confirmada; descarregado até a triagem da volta começar
+    lista.filter(p=>!p.somente_consulta && (p.fluxo_etapa==='entrega' || ['triagem_retorno','posicao_final'].includes(p.fluxo_etapa))).forEach((p) => {
+      const tipo=p.fluxo_etapa==='entrega'?'ida':'descarregamento';
+      out.push({p,tipo,col:colunaFinal(p,tipo)});
+    });
     const data = (c) => String((c.tipo !== "ida" ? c.p.data_coleta : c.p.data_entrega) || c.p.data_evento || "9999");
     return out.sort((a, b) => data(a).localeCompare(data(b)));
+  }
+
+  // Divergências abertas da volta (out/2026): o pedido não some do quadro enquanto houver falta ou peça a mais sem resolver.
+  async function divergenciasAbertas(sb, empresa, etapa) {
+    let data, error;
+    try { ({ data, error } = await sb.from("operacao_ocorrencias").select("pedido_id,tipo,quantidade,etapa")
+      .eq("empresa_id", empresa).is("resolvida_em", null).in("tipo", ["falta", "sobra"]).eq("etapa", etapa)); } catch (e) { error = e; }
+    if (error) { console.warn("Divergências não carregadas:", error); return { mapa: new Map(), pedidos: [] }; }
+    const mapa = new Map();
+    (data || []).forEach((o) => { const k = String(o.pedido_id); const r = mapa.get(k) || { falta: 0, sobra: 0 }; r[o.tipo] += 1; mapa.set(k, r); });
+    if (!mapa.size) return { mapa, pedidos: [] };
+    const { data: pedidos } = await sb.from("separacoes_pedidos").select("*").eq("empresa_id", empresa).in("id", [...mapa.keys()]);
+    return { mapa, pedidos: pedidos || [] };
+  }
+  function resumoDivergencia(r) {
+    return [r.falta ? r.falta + " item(ns) faltando" : "", r.sobra ? r.sobra + " item(ns) a mais" : ""].filter(Boolean).join(" · ");
   }
 
   function cartao({ p, tipo, col }) {
@@ -65,7 +86,7 @@
       const falta = faltas(p,tipo).length;
       nota = (volta ? "Retorno conferido " : descarga ? "Descarregado " : "Carregado ") + dataHoraBr(feito.concluido_em) + (feito.por ? " por " + feito.por : "") +
         (falta ? " · " + falta + (volta ? " não voltou" : " pendência(s)") : "");
-    } else if (volta) {
+    } else if (volta || (descarga && s.descargaCega)) {
       nota = "Conferência às cegas";
     } else if (!SEPARADO.has(p.status)) {
       nota = "Ainda em separação";
@@ -73,13 +94,15 @@
       nota = "Conferência por quantidade";
     }
     let progresso = "";
-    if (col === "andamento" && !volta) {
+    const cegaAqui = volta || (descarga && s.descargaCega);
+    if (col === "andamento" && !cegaAqui) {
       const lidas = descarga ? v.descarregadas : v.carregadas;
       const total = descarga ? v.carregadas : v.total;
       const pct = total ? Math.round((lidas / total) * 100) : 0;
       progresso = '<div class="separacao-card-progress"><span>' + pct + '%</span><div class="mini-progress"><span style="width:' + pct + '%"></span></div><strong>' + lidas + " / " + total + "</strong></div>";
-    } else if (col === "andamento" && volta) {
-      progresso = '<div class="exp-lidos">' + v.voltaram + " peça" + (v.voltaram === 1 ? "" : "s") + " lida" + (v.voltaram === 1 ? "" : "s") + "</div>";
+    } else if (col === "andamento" && cegaAqui) {
+      const n = volta ? v.voltaram : v.descarregadas;
+      progresso = '<div class="exp-lidos">' + n + " peça" + (n === 1 ? "" : "s") + " lida" + (n === 1 ? "" : "s") + "</div>";
     }
     const carregados = p.operacao?.carregamento?.caminhoes || p.operacao?.carregamento_caminhoes || [];
     const usaCarregados = volta || descarga || col === "conferidos" || col === "pendencias";
@@ -90,16 +113,24 @@
     const meta = (volta || descarga)
       ? "Coleta " + esc(dataBr(p.data_coleta || p.data_evento))
       : "Entrega " + esc(dataBr(p.data_entrega || p.data_evento)) + " · " + v.total + " volume" + (v.total === 1 ? "" : "s");
-    return '<article class="separacao-order-card exp-card-' + tipo + '" data-coluna="' + col + '" data-tipo="' + tipo + '" data-pedido="' + esc(p.id) + '" tabindex="0" role="button">' +
+    // Pagamento mínimo (Parâmetros > Financeiro) travando o carregamento: aviso pequeno e o cartão não abre.
+    const ida = !volta && !descarga && col !== "conferidos" && col !== "pendencias";
+    const travaFin = ida && s.bloqueados?.has(String(p.id));
+    // Sem caminhão programado no Painel Logístico (Parâmetros > Logística e operação): não carrega.
+    const travaCam = ida && !travaFin && s.semCaminhao?.has(String(p.id));
+    const bloqueado = travaFin || travaCam;
+    const motivoTrava = travaFin ? "Aguardando aprovação do Financeiro. Avise o supervisor." : "Nenhum caminhão programado. Programe o caminhão no Painel Logístico antes de iniciar o carregamento.";
+    return '<article class="separacao-order-card exp-card-' + tipo + (bloqueado ? " is-bloqueado-fin" : "") + '" data-coluna="' + col + '" data-tipo="' + tipo + '" data-pedido="' + esc(p.id) + '"' + (bloqueado ? ' data-bloqueado="1" aria-disabled="true" title="' + esc(motivoTrava) + '"' : ' tabindex="0" role="button"') + '>' +
       '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + esc(numero.startsWith("#") ? numero : "#" + numero) + "</span>" +
       '<span class="exp-tipo">' + (volta ? "Retorno" : descarga ? "Descarregamento" : "Ida") + "</span>" +
+      (bloqueado ? '<span class="exp-aviso-fin">' + (travaFin ? "Aguardando Financeiro" : "Sem caminhão programado") + '</span>' : "") +
       (col === "conferidos" ? '<span class="separacao-done-mark">✓</span>' : "") + "</div>" +
       '<div class="separacao-card-mainline"><strong>' + esc(p.cliente_nome || "Cliente não informado") + "</strong><span>" +
       esc(p.tipo_evento || "Evento") + " · " + esc(local(p)) + "</span></div>" +
       '<div class="separacao-card-meta-line">' + meta + "</div>" +
       caminhoes +
       progresso + (nota ? '<div class="separacao-lock-note">' + esc(nota) + "</div>" : "") +
-      (col==='pendencias'?'<div class="exp-pendencia-resumo"><b>'+faltas(p,tipo).length+' item(ns) com pendência</b>'+faltas(p,tipo).filter(f=>f.item).slice(0,3).map(f=>'<small>'+esc(f.item)+(f.faltam?' · '+esc(f.faltam)+' faltante(s)':'')+'</small>').join('')+'</div>':'') + "</article>";
+      (col==='pendencias'&&s.divergencias?.mapa.get(String(p.id))&&tipo==='descarregamento'?'<div class="exp-pendencia-resumo"><b>'+esc(resumoDivergencia(s.divergencias.mapa.get(String(p.id))))+'</b><small>Abra para resolver</small></div>':'')+(col==='pendencias'&&!(s.divergencias?.mapa.get(String(p.id))&&tipo==='descarregamento')?'<div class="exp-pendencia-resumo"><b>'+faltas(p,tipo).length+' item(ns) com pendência</b>'+faltas(p,tipo).filter(f=>f.item).slice(0,3).map(f=>'<small>'+esc(f.item)+(f.faltam?' · '+esc(f.faltam)+' faltante(s)':'')+'</small>').join('')+'</div>':'') + "</article>";
   }
 
   function pintar() {
@@ -107,6 +138,9 @@
     const lista = s.pedidos.filter((p) => !termo || [p.numero_pedido, p.cliente_nome, p.tipo_evento, local(p)].join(" ").toLowerCase().includes(termo));
     const grupos = { aguardando: [], andamento: [], conferidos: [], pendencias: [] };
     cartoes(lista).forEach((c) => grupos[c.col].push(c));
+    const naFila = new Set(lista.map((p) => String(p.id)));
+    (s.divergencias?.pedidos || []).filter((p) => !naFila.has(String(p.id)) && (!termo || [p.numero_pedido, p.cliente_nome, p.tipo_evento, local(p)].join(" ").toLowerCase().includes(termo)))
+      .forEach((p) => grupos.pendencias.push({ p, tipo: "descarregamento", col: "pendencias", divergencia: true }));
     const vazio = { aguardando: "Nada aguardando conferência.", andamento: "Nenhuma conferência em andamento.", conferidos: "Nada conferido por enquanto.", pendencias: "Nenhuma pendência de conferência." };
     [["aguardando", "expColAguardando", "expContAguardando"], ["andamento", "expColAndamento", "expContAndamento"], ["conferidos", "expColCarregados", "expContCarregados"], ["pendencias", "expColPendencias", "expContPendencias"]].forEach(([g, col, cont]) => {
       $(cont).textContent = grupos[g].length;
@@ -134,6 +168,11 @@
     s.carregando = true;
     try {
       s.pedidos = await window.PedidoFluxo.fila(s.sb,s.empresa,'expedicao');
+      // Descarregamento às cegas (Parâmetros > Operação): o cartão não mostra quanto devia chegar.
+      const {data:regra}=await s.sb.from('empresa_logistica_regras').select('descarregamento_conferencia').eq('empresa_id',s.empresa).maybeSingle();
+      s.descargaCega=regra?.descarregamento_conferencia==='cegas';
+      // Divergência do descarregamento é resolvida na Gestão do acervo (out/2026): a Expedição não lista mais.
+      s.divergencias={mapa:new Map(),pedidos:[]};
       s.ocorrencias=new Map();
       for(let i=0;i<s.pedidos.length;i+=100){
         const {data:ocorrencias,error:erroOcorrencias}=await s.sb.from('operacao_ocorrencias').select('pedido_id,codigo,resolvida_em').eq('empresa_id',s.empresa).eq('tipo','falta').in('pedido_id',s.pedidos.slice(i,i+100).map(p=>p.id));
@@ -145,6 +184,18 @@
         const {data:cams,error:erroCam}=await s.sb.rpc('operacao_caminhoes_programados',{p_pedidos:s.pedidos.slice(i,i+100).map(p=>p.id)});
         if(erroCam){console.warn('caminhões programados',erroCam);break;}
         for(const c of cams||[]){const k=String(c.pedido_id);const l=s.caminhoes.get(k)||[];l.push(c);s.caminhoes.set(k,l);}
+      }
+      s.bloqueados = new Set();
+      for(let i=0;i<s.pedidos.length;i+=100){
+        const {data:bloq,error:erroBloq}=await s.sb.rpc('pedidos_pagamento_bloqueados',{p_pedidos:s.pedidos.slice(i,i+100).map(p=>p.id),p_etapa:'carregamento'});
+        if(erroBloq){console.warn('pagamento mínimo',erroBloq);break;}
+        (bloq||[]).forEach((id)=>s.bloqueados.add(String(id)));
+      }
+      s.semCaminhao = new Set();
+      for(let i=0;i<s.pedidos.length;i+=100){
+        const {data:sem,error:erroSem}=await s.sb.rpc('pedidos_sem_caminhao_bloqueados',{p_pedidos:s.pedidos.slice(i,i+100).map(p=>p.id)});
+        if(erroSem){console.warn('caminhão programado',erroSem);break;}
+        (sem||[]).forEach((id)=>s.semCaminhao.add(String(id)));
       }
       const etq = await etiquetasDe(s.pedidos.map((p) => p.id));
       s.volumes = new Map();
@@ -184,11 +235,11 @@
     $("expBusca").addEventListener("input", pintar);
     const quadro = document.querySelector(".separacao-kanban");
     quadro.addEventListener("click", (ev) => {
-      const card = ev.target.closest("[data-pedido]"); if (card) abrir(card.dataset.pedido, card.dataset.tipo);
+      const card = ev.target.closest("[data-pedido]"); if (card && !card.dataset.bloqueado) abrir(card.dataset.pedido, card.dataset.tipo);
     });
     quadro.addEventListener("keydown", (ev) => {
       const card = ev.target.closest("[data-pedido]");
-      if (card && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); abrir(card.dataset.pedido, card.dataset.tipo); }
+      if (card && !card.dataset.bloqueado && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); abrir(card.dataset.pedido, card.dataset.tipo); }
     });
     await carregar();
     setInterval(() => { if (!document.hidden) carregar(); }, 30000);

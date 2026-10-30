@@ -1,6 +1,6 @@
 import { colorirValor } from "./pedido.valores-ui.mjs";
 import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
-import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261027-salvar-completo";
+import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261029-cards-finos";
 
 export function initItens({ supabase, els }){
 
@@ -750,6 +750,7 @@ function calcularVolumeTotalPedido(){
   // totais/frete uma vez só no fim.
   window.pedidoSincronizarProjetoCatalogo = project => {
     const snapshot=structuredClone(project);
+    try{ const temItens=(snapshot?.dados?.ambientes||[]).some(a=>(a.itens||[]).length); if((window.__pedidoProjetoComercial||temItens) && JSON.stringify(window.__pedidoProjetoComercial?.dados||null)!==JSON.stringify(snapshot?.dados||null)) window.__pedidoHouveEdicao?.(); }catch{}
     sincronizacao=sincronizacao.catch(()=>{}).then(async()=>{
       const d=snapshot?.dados||{};
       const assinatura=JSON.stringify([(d.ambientes||[]).map(a=>(a.itens||[]).map(i=>[i.item_id,i.quantidade,i.personalizacao_id||'',i.personalizacao_valor||0])),d.servicos||[]]);

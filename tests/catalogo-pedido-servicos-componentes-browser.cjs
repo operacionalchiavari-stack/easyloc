@@ -32,7 +32,7 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     await context.addInitScript(installMock, { staff: true, cartela: true });
     // Tabelas que o mock geral não tem: serviços adicionais e componentes.
     await context.addInitScript(() => {
-      const SERVICOS = [{ id: 's1', nome: 'Limpeza', valor_fixo: 150, valor_mao_obra: 0 }, { id: 's2', nome: 'Montagem especial', valor_fixo: 300, valor_mao_obra: 100 }];
+      const SERVICOS = [{ id: 's1', nome: 'Limpeza', valor_fixo: 150, valor_mao_obra: 0 }, { id: 's2', nome: 'Montagem especial', valor_fixo: 300, valor_mao_obra: 100, etapa_operacao: 'montagem' }];
       const COMP = [{ id: 'c1', tipo: 'Componente', produto: 'Tampo Redondo', descricao_total: 'Tampo Redondo Madeira (L) 0.90 m (A) 0.03 m (P) 0.90 m', foto_url: 'https://fixture/tampo.png', largura: 0.9, altura: 0.03, profundidade: 0.9, valor_locacao: 45, valor_reposicao: 600, referencia: 'TAM01', categoria: 'Componentes', ativo: true }];
       const builder = (dados) => new Proxy({}, { get(_t, prop) { if (prop === 'then') return (ok) => ok({ data: dados, error: null }); return () => builder(dados); } });
       const orig = window.supabaseClient.from.bind(window.supabaseClient);
@@ -52,12 +52,20 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     const dlg = cat.locator('dialog.cpj-modal');
     await dlg.locator('.cpj-escolha').nth(1).click();
     await dlg.locator('input[name=quantidade]').fill('2');
+    // "Montagem especial" entra no cronograma: pede data e horário antes de entrar no pedido
+    assert.equal(await dlg.locator('[data-servico-quando]').isVisible(), true, 'pede data e horário');
+    await dlg.locator('button[type=submit]').click();
+    assert.equal(await dlg.isVisible(), true, 'sem data e horário não entra');
+    await dlg.locator('input[name=data]').fill('2026-11-10'); await dlg.locator('input[name=hora]').fill('14:30');
     await dlg.locator('button[type=submit]').click();
     await cat.locator('[data-servico-id]').waitFor();
     assert.match(await cat.locator('.cpj-servicos').innerText(), /Montagem especial[\s\S]*R\$\s?800,00/);
     await page.waitForFunction(() => (window.__sincronizados.at(-1)?.dados?.servicos || []).length === 1, null, { timeout: 8000 });
     let s = (await ultimo()).dados.servicos[0];
-    assert.deepEqual({ nome: s.nome, q: s.quantidade, v: s.valor }, { nome: 'Montagem especial', q: 2, v: 400 });
+    assert.deepEqual({ nome: s.nome, q: s.quantidade, v: s.valor, etapa: s.etapa, data: s.data, hora: s.hora }, { nome: 'Montagem especial', q: 2, v: 400, etapa: 'montagem', data: '2026-11-10', hora: '14:30' });
+    assert.match(await cat.locator('.cpj-servico-agenda').innerText(), /No cronograma · Montagem/);
+    await cat.locator('[data-servico-campo="hora"]').fill('16:00'); await cat.locator('[data-servico-campo="hora"]').dispatchEvent('change');
+    await page.waitForFunction(() => window.__sincronizados.at(-1)?.dados?.servicos?.[0]?.hora === '16:00', null, { timeout: 8000 });
     await cat.locator('[data-servico-campo="valor"]').fill('350');
     await cat.locator('[data-servico-campo="valor"]').press('Enter');
     await page.waitForFunction(() => window.__sincronizados.at(-1)?.dados?.servicos?.[0]?.valor === 350, null, { timeout: 8000 });

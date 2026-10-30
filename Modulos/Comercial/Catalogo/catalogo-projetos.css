@@ -1127,3 +1127,49 @@ html:is(#cpj-pedido-compacto,html) .cpj-order-paper.is-horizontal .cpj-order-amb
   .cpj-aba-pedido-acoes .cpj-btn{width:100%;justify-content:center}
   .cpj-aba-pedido-papel{grid-column:2;grid-row:1 / span 2}
 }
+
+/* Ambiente rápido na janela "Adicionar ao projeto" (out/2026): um clique cria ou escolhe o ambiente. */
+.cpj-amb-rapidos{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 4px}
+.cpj-amb-rapidos>span{font:600 12px Manrope,Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#77716a;margin-right:4px}
+.cpj-amb-rapido{padding:7px 14px;border:1px solid #ddd6cc;border-radius:999px;background:#fff;color:#2c2a26;font:500 13px Manrope,Inter,sans-serif;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.cpj-amb-rapido:hover,.cpj-amb-rapido:focus-visible{border-color:#5a5a55;outline:none}
+.cpj-amb-rapido[aria-pressed="true"]{background:#5a5a55;border-color:#5a5a55;color:#fff}
+.cpj-qty-pop-falta{margin:8px 0 0;padding:7px 9px;border-radius:8px;background:#fdecec;color:#b42318;font-size:.78rem;line-height:1.35}.cpj-qty-pop-falta[hidden]{display:none}
+/* "Adicionar ao projeto" com a foto da composição: duas colunas, sem barra de rolagem (out/2026) */
+dialog.cpj-modal.is-wide:has(.cpj-dest-2col){width:min(1080px,calc(100vw - 28px))}
+.cpj-dest-2col{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:26px;align-items:start}
+.cpj-dest-2col .cpj-dest-preview{margin:0}
+.cpj-dest-2col .cpj-dest-preview img{max-height:min(300px,38vh)}
+.cpj-dest-2col .cpj-dest-moveis{margin-top:14px}
+.cpj-dest-2col .cpj-dest-moveis ul{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));max-height:min(150px,20vh)}
+.cpj-dest-col-campos .cpj-dest-campos{grid-template-columns:1fr!important}
+.cpj-dest-col-campos .cpj-amb-rapidos{margin-top:14px}
+@media(max-width:820px){.cpj-dest-2col{grid-template-columns:1fr}}
+/* Serviço operacional no pedido: data e horário (entra no cronograma) */
+.cpj-servico-agenda{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 10px;margin-top:6px;padding:7px 9px;border:1px solid #c9d8f0;border-radius:9px;background:#f4f8fe}
+.cpj-servico-agenda>span{flex-basis:100%;font-size:11px;font-weight:600;color:#123f86}
+.cpj-servico-agenda label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:#4f5b6b}
+.cpj-servico-agenda input{height:30px;padding:0 7px;border:1px solid #dfe4ea;border-radius:7px;font:inherit;font-size:12.5px}
+.cpj-servico-agenda.is-faltando{border-color:#f0b4ae;background:#fdf1f0}
+.cpj-servico-agenda.is-faltando input:invalid{border-color:#d9534f}
+.cpj-servico-agenda small{flex-basis:100%;color:#b42318;font-size:11px}
+.cpj-escolha-etapa{display:block;font-size:11px;color:#123f86;font-weight:600}
+.cpj-servico-quando{margin-top:10px;padding:10px 12px;border:1px solid #c9d8f0;border-radius:10px;background:#f4f8fe}
+.cpj-servico-quando[hidden]{display:none}
+.cpj-servico-quando p{margin:0 0 6px;font-size:12.5px;color:#123f86}
+.cpj-servico-quando .cpj-campo-curto{display:inline-flex;margin-right:10px}
+.cpj-order-servico-quando{display:block;font-size:11px;color:#6b6b6b}
+
+/* Pague pelo celular: QR do link de pagamento do pedido (out/2026) */
+.cpj-order-pagar{display:flex;align-items:center;gap:22px;margin:22px 0 0;padding:18px 22px;border:1px solid #d3deef;border-radius:14px;background:linear-gradient(135deg,#f5f8fd 0%,#fff 70%);break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.cpj-order-pagar-qr{flex:none;padding:8px;border:1px solid #e3e7ec;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+.cpj-order-pagar-qr img{display:block;width:132px;height:132px}
+.cpj-order-pagar-txt{min-width:0}
+.cpj-order-pagar-sobre{display:inline-block;margin-bottom:4px;padding:2px 10px;border-radius:999px;background:#123f86;color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.cpj-order-pagar-txt h2{margin:2px 0 6px;font-family:"Cormorant Garamond",Georgia,serif;font-size:24px;font-weight:600;color:#1f2020}
+.cpj-order-pagar-txt p{margin:0;color:#4f4f4f;font-size:13px;line-height:1.5}
+.cpj-order-pagar-link{margin-top:8px!important;font-size:12px!important;color:#6b6b6b!important}
+.cpj-order-pagar-link span{color:#123f86;word-break:break-all}
+.cpj-order-pagar-link b{color:#123f86;letter-spacing:.18em}
+@media(max-width:560px){.cpj-order-pagar{flex-direction:column;text-align:center}}
+.cpj-order-financeiro .cpj-order-pagar{grid-column:1/-1}

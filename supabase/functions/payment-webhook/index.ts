@@ -276,7 +276,11 @@ serve(async (req) => {
 
       if (paymentError) throw paymentError;
 
-      if (providerPayment.status === "approved" && !currentPayment?.paid_at) {
+      if (providerPayment.status === "approved" && updatedPayment.receber_id) {
+        // link de pagamento do pedido: baixa direto na conta a receber (idempotente)
+        const { error: baixaError } = await serviceClient.rpc("pagamento_link_baixar", { p_payment: updatedPayment.id });
+        if (baixaError) throw baixaError;
+      } else if (providerPayment.status === "approved" && !currentPayment?.paid_at) {
         await aplicarBaixaNoPedido(serviceClient, { ...updatedPayment, paid_at: null }, providerPayment);
       }
 

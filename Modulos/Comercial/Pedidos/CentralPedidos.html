@@ -9,11 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="CentralPedidos.css?v=20261024-distribuicao-colunas">
+  <link rel="stylesheet" href="CentralPedidos.css?v=20261029-extra">
   <!-- Visualização do pedido = prévia do catálogo (cabeçalho, itens por ambiente, PDF). -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261027-pedido-lateral">
-  <link rel="stylesheet" href="../Catalogo/projeto-apresentacao.css?v=20261022-cartelas">
+  <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261030-link-pagamento2">
+  <link rel="stylesheet" href="../Catalogo/projeto-apresentacao.css?v=20261030-link-pagamento">
 </head>
 <body>
 <div class="central-pedidos-page el-page" id="centralPedidosPage" data-module-root>
@@ -94,6 +94,8 @@
           <col class="central-col-cliente">
           <col class="central-col-local">
           <col class="central-col-data">
+          <col class="central-col-data">
+          <col class="central-col-data">
           <col class="central-col-fluxo">
           <col class="central-col-valor">
           <col class="central-col-acoes">
@@ -103,7 +105,9 @@
             <th>Numero</th>
             <th>Cliente</th>
             <th>Local</th>
-            <th>Data</th>
+            <th>Evento</th>
+            <th>Entrega</th>
+            <th>Coleta</th>
             <th>Fluxo</th>
             <th>Valor</th>
             <th>Acoes</th>
@@ -172,8 +176,9 @@
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/paymentPix.js?v=20261021-divisao"></script>
+<script src="../../../js/core/linkPagamento.js?v=20261030-pedido-digital"></script>
 <script src="../../../js/core/zapiMessaging.js?v=20261026-acentos"></script>
-<script src="CentralPedidos.js?v=20261026-local-endereco"></script>
+<script src="CentralPedidos.js?v=20261030-link-documento"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

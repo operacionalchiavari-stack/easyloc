@@ -66,7 +66,7 @@ async function abrir(tipo,{staff=false}={}){
   await page.route('https://fixture/**',r=>r.fulfill({contentType:'image/png',body:PNG_1X1}));
   await page.route('https://fixture/modelos/**',r=>r.fulfill({contentType:'model/gltf-binary',body:fakeGlbTriangle()}));
   await page.route('https://fixture/cenas/**',r=>r.fulfill({contentType:'application/json',body:JSON.stringify(CENA)}));
-  await page.route('**/catalogo-studio3d.mjs*',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('Modulos/Comercial/Catalogo/catalogo-studio3d.mjs','utf8')+'\nwindow.studioTest={studio,addItem,ensureScene,adicionarComposicaoAoProjeto,renderWithAI};'}));
+  await page.route('**/catalogo-studio3d.mjs*',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('Modulos/Comercial/Catalogo/catalogo-studio3d.mjs','utf8')+'\nwindow.studioTest={studio,addItem,ensureScene,adicionarComposicaoAoProjeto,renderWithAI,selectObject};'}));
   await page.addInitScript((db)=>{ if(!sessionStorage.getItem('mockdb')) sessionStorage.setItem('mockdb',JSON.stringify(db)); },seed(tipo));
   await page.addInitScript(()=>{ try{ localStorage.clear(); }catch{} });
   await page.addInitScript(installMock,{token:!staff,staff,modelos:true});
@@ -241,6 +241,24 @@ async function abrir(tipo,{staff=false}={}){
 {
   const {page,errors}=await abrir('print',{staff:true});
   await page.evaluate(async()=>{const st=window.studioTest.studio;await window.studioTest.ensureScene();await window.studioTest.addItem(st.items.find(i=>String(i.id)==='2'));});
+  // Giro do móvel: ↺/↻ de 15° em 15°, ângulo digitado e Q/E no teclado (Shift = 90°).
+  const estudioEscondido=await page.evaluate(()=>{const el=document.getElementById('catalogStudio');const h=el.classList.contains('hidden');el.classList.remove('hidden');const st=window.studioTest.studio;window.studioTest.selectObject(st.objects[0]);return h;});
+  const ang=()=>page.evaluate(()=>({campo:document.getElementById('studioRotateAngle').value,y:window.studioTest.studio.objects[0].rotation.y}));
+  assert.equal((await ang()).campo,'0');
+  await page.locator('[data-studio-girar="1"]').click();await page.locator('[data-studio-girar="1"]').click();
+  assert.equal((await ang()).campo,'30');
+  await page.locator('[data-studio-girar="-1"]').click();
+  assert.equal((await ang()).campo,'15');
+  await page.locator('#studioRotateAngle').fill('90');await page.locator('#studioRotateAngle').press('Enter');
+  const g90=await ang();assert.equal(g90.campo,'90');assert.ok(Math.abs(g90.y+Math.PI/2)<1e-6,'90° = um quarto de volta no sentido horário');
+  await page.locator('#studioRotateAngle').blur();
+  if(await page.locator('#catalogStudio').evaluate(el=>!el.classList.contains('hidden'))){
+    await page.keyboard.press('e');assert.equal((await ang()).campo,'105');
+    await page.keyboard.press('Shift+Q');assert.equal((await ang()).campo,'90');
+  }
+  await page.locator('#studioRotateAngle').fill('0');await page.locator('#studioRotateAngle').press('Enter');
+  if(estudioEscondido)await page.evaluate(()=>document.getElementById('catalogStudio').classList.add('hidden'));
+  console.log('ok - giro do móvel: botões de 15°, ângulo digitado e teclado');
   // "Adicionar ao projeto" (substituiu o "Tirar print"): vai direto pra janela de projeto/ambiente, com a foto e os móveis.
   assert.equal(await page.locator('#studioPrintButton').count(),0,'Sem o botão Tirar print');
   assert.equal(await page.locator('#studioAddProjectButton').count(),1);
@@ -249,6 +267,20 @@ async function abrir(tipo,{staff=false}={}){
   assert.equal(await page.locator('#studioResultDialog[open]').count(),0,'Sem a tela intermediária de resultado');
   assert.equal(await page.locator('dialog.cpj-modal[open] .cpj-dest-moveis li').count(),1,'Lista os móveis da composição');
   assert.equal(await page.locator('dialog.cpj-modal[open] input[name="levarMoveis"]').isChecked(),true);
+  // Ambiente rápido: um clique prepara um ambiente novo com o nome; num nome que já existe, escolhe o existente.
+  const dlg=page.locator('dialog.cpj-modal[open]');
+  assert.deepEqual(await dlg.locator('[data-amb-rapido]').allTextContents(),['Mesa de bolo','Mesa da família','Mesa de convidados','Cerimônia','Lounge','Bar','Bistrôs','Recepção']);
+  const ambOriginal=await dlg.locator('select[name=ambiente]').inputValue();
+  const nomeOriginal=await dlg.locator('select[name=ambiente] option:checked').textContent();
+  await dlg.locator('[data-amb-rapido="Mesa de bolo"]').click();
+  assert.equal(await dlg.locator('select[name=ambiente]').inputValue(),'__novo__');
+  assert.equal(await dlg.locator('input[name=novoAmbiente]').inputValue(),'Mesa de bolo');
+  assert.equal(await dlg.locator('[data-amb-rapido="Mesa de bolo"]').getAttribute('aria-pressed'),'true');
+  await dlg.locator('select[name=ambiente]').selectOption(ambOriginal);
+  const semAcento=t=>String(t).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+  const rapidos=await dlg.locator('[data-amb-rapido]').allTextContents();
+  assert.equal(await dlg.locator('[data-amb-rapido][aria-pressed=true]').count(),rapidos.some(n=>semAcento(n)===semAcento(nomeOriginal))?1:0,'de volta ao ambiente existente, só marca o atalho de mesmo nome');
+  console.log('ok - ambiente rápido na janela Adicionar ao projeto');
   await page.locator('dialog.cpj-modal[open] button[type="submit"]').click();
   await page.waitForFunction(()=>JSON.parse(sessionStorage.getItem('mockdb')).projetos[0].dados.ambientes[0].renders.length===3);
   // Renderizar com IA → Ver resultado → Salvar no projeto

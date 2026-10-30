@@ -20,17 +20,22 @@
   const cfg = ETAPAS[etapa];
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  const s = { sb: null, empresa: null, usuario: null, nome: "", pedido: null, itens: [], etiquetas: [], patLidos: new Set(), nomes: new Map(), ocupado: false, base: [], revelado: false };
+  const s = { sb: null, empresa: null, usuario: null, nome: "", pedido: null, itens: [], etiquetas: [], patLidos: new Set(), nomes: new Map(), ocupado: false, base: [], revelado: false, recontou: false };
+  // Volta (descarregamento na Expedição e triagem de volta): divergência pede uma segunda contagem antes de concluir,
+  // e o que continuar diferente fica aberto (falta/sobra) até alguém resolver.
+  const etapaVolta = etapa === "retorno" || etapa === "descarregamento";
   // Retorno às cegas: quem confere não vê quantos volumes deviam voltar nem o que falta; o sistema compara
-  // com o que saiu no carregamento só quando a conferência é concluída (s.revelado).
-  const cega = etapa === "retorno";
+  // com o que saiu no carregamento só quando a conferência é concluída (s.revelado). O descarregamento também é às
+  // cegas quando Parâmetros > Operação manda (empresa_logistica_regras.descarregamento_conferencia = 'cegas').
+  let cega = etapa === "retorno";
+  const voltaOuChegou = () => etapa === "retorno" ? "voltou" : "foi descarregada";
   const escondido = () => cega && !s.revelado;
   function confirmarConclusao(faltas=[],oculto=false){
     if(document.querySelector('dialog.cf-confirmacao[open]'))return Promise.resolve(false);
     return new Promise(resolve=>{
       const d=document.createElement('dialog');d.className='cf-confirmacao';
       const pendente=!oculto&&faltas.length>0;
-      d.innerHTML='<form><header><span class="cf-confirmacao-icone" aria-hidden="true">'+(pendente?'!':'✓')+'</span><div><small>'+esc(cfg.rotulo)+' · Pedido '+esc(s.pedido.numero_pedido||'')+'</small><h2>'+(oculto?'Concluir conferência de retorno?':pendente?'Concluir com pendências?':'Concluir conferência?')+'</h2></div></header><div class="cf-confirmacao-corpo"><p>'+(oculto?'O sistema vai comparar as quantidades conferidas com o que saiu no carregamento. Caso falte alguma peça, ela aparecerá na coluna Pendências da Expedição.':pendente?'Alguns itens estão com a quantidade menor que a esperada. Você pode voltar para revisar ou concluir e acompanhar as diferenças na coluna Pendências da Expedição.':'Todos os itens informados estão conferidos. Deseja concluir esta etapa?')+'</p>'+
+      d.innerHTML='<form><header><span class="cf-confirmacao-icone" aria-hidden="true">'+(pendente?'!':'✓')+'</span><div><small>'+esc(cfg.rotulo)+' · Pedido '+esc(s.pedido.numero_pedido||'')+'</small><h2>'+(oculto?(etapa==='retorno'?'Concluir conferência de retorno?':'Concluir conferência do descarregamento?'):pendente?'Concluir com pendências?':'Concluir conferência?')+'</h2></div></header><div class="cf-confirmacao-corpo"><p>'+(oculto?'O sistema vai comparar as quantidades conferidas com o que saiu no carregamento. Caso falte alguma peça, ela aparecerá na coluna Pendências da Expedição.':pendente?'Alguns itens estão com a quantidade menor que a esperada. Você pode voltar para revisar ou concluir e acompanhar as diferenças na coluna Pendências da Expedição.':'Todos os itens informados estão conferidos. Deseja concluir esta etapa?')+'</p>'+
         (pendente?'<div class="cf-confirmacao-resumo"><b>'+faltas.length+' item(ns) com pendência</b><ul>'+faltas.map(f=>'<li><span>'+esc(f.nome||'Item')+'</span>'+(f.faltam!=null?'<strong>'+esc(f.faltam)+' faltante(s)</strong>':'')+'</li>').join('')+'</ul></div>':'')+'</div><footer><button type="button" class="btn btn-secondary" data-voltar>Revisar conferência</button><button type="submit" class="btn btn-primary">'+(pendente?'Concluir com pendências':'Concluir conferência')+'</button></footer></form>';
       let aceito=false;d.querySelector('[data-voltar]').onclick=()=>d.close();d.querySelector('form').onsubmit=e=>{e.preventDefault();aceito=true;d.close();};d.addEventListener('close',()=>{d.remove();resolve(aceito);},{once:true});document.body.append(d);d.showModal();d.querySelector('[data-voltar]').focus();
     });
@@ -137,7 +142,7 @@
     lidas.forEach((e) => { const k = e.separacao_item_id + "|" + e.item_id; if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(e); });
     $("cfItens").innerHTML = [...grupos.values()].map((lista) => '<article class="cf-item"><div class="cf-item-topo"><strong>' + esc(nomeItem(lista[0])) +
       '</strong><span>' + lista.length + '</span></div><div class="cf-etiquetas">' + lista.map((e) => '<span class="cf-etq is-ok">' + esc(e.codigo) + "</span>").join("") + "</div></article>").join("")
-      || '<p class="cf-vazio">Bipe cada peça que voltou. O sistema compara com o que saiu quando você concluir.</p>';
+      || '<p class="cf-vazio">Bipe cada peça que ' + voltaOuChegou() + '. O sistema compara com o que saiu quando você concluir.</p>';
   }
 
   function pintar() {
@@ -222,6 +227,22 @@
     if(pendenciasRede().length){ avisar("Envie as leituras pendentes antes de concluir."); return; }
     const conferir = etapa !== "carregamento" ? s.base : s.etiquetas;
     const faltando = conferir.filter((e) => !e[cfg.campo]);
+    if (etapaVolta && faltando.length && !s.recontou) {
+      s.recontou = true;
+      // por bipe: um item por peça que não bateu, com quantas saíram e quantas já foram lidas
+      const grupos = new Map();
+      conferir.forEach((e) => {
+        const k = String(e.item_id || nomeItem(e)); const g = grupos.get(k) || { p: { item_id: e.item_id, nome: nomeItem(e), esperado: 0 }, v: 0, falta: 0 };
+        g.p.esperado += 1; if (e[cfg.campo]) g.v += 1; else g.falta += 1; grupos.set(k, g);
+      });
+      const ids = [...grupos.values()].map((g) => g.p.item_id).filter(Boolean);
+      const fotos = new Map();
+      if (ids.length) { const { data: cad } = await s.sb.from("itens").select("id,foto_url").eq("empresa_id", s.empresa).in("id", ids); (cad || []).forEach((c) => fotos.set(String(c.id), c.foto_url || "")); }
+      const fotoBipe = (p) => /^(https?:|data:)/i.test(fotos.get(String(p.item_id)) || "") ? '<img src="' + esc(fotos.get(String(p.item_id))) + '" alt="" loading="lazy">' : '<span class="cf-qtd-sem-foto"></span>';
+      await pedirSegundaContagem([...grupos.values()].filter((g) => g.falta > 0), fotoBipe, cega, (p) => esc(p.nome), true);
+      $("cfEntrada")?.focus();
+      return;
+    }
     if (!(await escolherCaminhoes())) return;
     let pendencia = null;
     if (escondido()) {
@@ -245,6 +266,7 @@
     $("cfLiberarTriagem")?.remove();
     leitor?.desligar();
     if (cega) { s.revelado = true; pintar(); mostrarResultadoRetorno(registro); await carregarOcorrencias(); }
+    if (etapaVolta) await carregarDivergencias();
     avisar(faltando.length ? "Conferência concluída com " + faltando.length + " pendência(s)." + avisoPendencia(registro) : "Conferência concluída: tudo " + cfg.verbo + ".", cfg.rotulo, faltando.length ? "aviso" : "sucesso");
     $("cfConcluir").textContent = "Concluída · conferir de novo";
   }
@@ -259,7 +281,7 @@
       '<form id="cfFormularioOcorrencia" class="cf-formulario-ocorrencia"><label>Tipo<select name="tipo"><option value="avaria">Avaria</option><option value="limpeza">Limpeza</option><option value="manutencao">Manutenção</option><option value="outro">Outro</option></select></label>' +
       '<label>Peça<select name="codigo"><option value="">Ocorrência geral</option>' + s.etiquetas.map(e => '<option value="' + esc(e.codigo) + '">' + esc(e.codigo + ' · ' + nomeItem(e)) + '</option>').join('') + '</select></label>' +
       '<label>O que aconteceu e para onde encaminhar?<textarea name="descricao" required minlength="5"></textarea></label><button type="submit" class="btn" id="cfNovaOcorrencia">Salvar ocorrência</button></form></details>' +
-      (data || []).map(o => '<p>' + esc(o.tipo + ': ' + o.descricao) + (o.resolvida_em ? ' · Resolvida' : ' · Pendente <button type="button" class="btn" data-resolver="' + esc(o.id) + '">Resolver</button>') + '</p>').join('') +
+      (data || []).filter(o => !["falta", "sobra"].includes(o.tipo)).map(o => '<p>' + esc(o.tipo + ': ' + o.descricao) + (o.resolvida_em ? ' · Resolvida' : ' · Pendente <button type="button" class="btn" data-resolver="' + esc(o.id) + '">Resolver</button>') + '</p>').join('') +
       '<button type="button" class="btn primary" id="cfEncerrar">Encerrar operação</button><p id="cfEncerramentoMensagem" role="status"></p>';
     $("cfFormularioOcorrencia").onsubmit = async event => {
       event.preventDefault();
@@ -302,7 +324,7 @@
     const falta = Array.isArray(feito.faltando) ? feito.faltando : [];
     const el = $("cfAviso"); el.hidden = false;
     el.classList.toggle("is-divergente", falta.length > 0); el.classList.toggle("is-ok", !falta.length);
-    el.innerHTML = "<strong>" + (falta.length ? "Não voltaram " + falta.length + " de " + feito.total + " peças." : "Tudo voltou: " + feito.total + " de " + feito.total + " peças.") + "</strong>" +
+    el.innerHTML = "<strong>" + (falta.length ? (etapa === "retorno" ? "Não voltaram " : "Não foram descarregadas ") + falta.length + " de " + feito.total + " peças." : (etapa === "retorno" ? "Tudo voltou: " : "Tudo descarregado: ") + feito.total + " de " + feito.total + " peças.") + "</strong>" +
       " Conferido em " + esc(new Date(feito.concluido_em).toLocaleString("pt-BR")) + (feito.por ? " por " + esc(feito.por) : "") + "." +
       (falta.length ? '<ul class="cf-faltaram">' + falta.map((f) => "<li><code>" + esc(f.codigo) + "</code> " + esc(f.item) + "</li>").join("") + "</ul>" : "");
   }
@@ -410,12 +432,31 @@
     const pedidoId = params.get("pedido");
     if (!s.empresa || !pedidoId) { mostrarAviso("Abra a conferência pelo cronograma, na etapa do pedido."); return; }
     const [{ data: pedido }, { data: itens }, { data: etiquetas, error }] = await Promise.all([
-      s.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,local_nome,data_entrega,data_evento,status,status_operacional,operacao,modo_separacao,cliente_id").eq("empresa_id", s.empresa).eq("id", pedidoId).maybeSingle(),
+      s.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,local_nome,data_entrega,data_evento,status,status_operacional,operacao,modo_separacao,cliente_id,pedido_origem_id").eq("empresa_id", s.empresa).eq("id", pedidoId).maybeSingle(),
       s.sb.from("separacoes_itens").select("id,item_id,item_nome").eq("empresa_id", s.empresa).eq("separacao_pedido_id", pedidoId),
       s.sb.from("separacoes_etiquetas").select("*").eq("empresa_id", s.empresa).eq("separacao_pedido_id", pedidoId).order("codigo")
     ]);
     if (error) { console.error(error); mostrarAviso("Não foi possível carregar as etiquetas do pedido."); return; }
     if (!pedido) { mostrarAviso("Pedido não encontrado."); return; }
+    // Pedido extra (out/2026): da coleta em diante a volta é conferida junto com o pedido principal.
+    if (etapa !== "carregamento" && pedido.pedido_origem_id) {
+      mostrarAviso("A volta do pedido extra " + (pedido.numero_pedido || "") + " é conferida junto com o pedido " + String(pedido.numero_pedido || "").split("/")[0] + ". Abra o pedido principal.");
+      return;
+    }
+    s.extras = [];
+    if (etapa !== "carregamento") {
+      const { data: extras } = await s.sb.from("separacoes_pedidos").select("id,numero_pedido,operacao,status,status_comercial,pedido_origem_id").eq("empresa_id", s.empresa).eq("pedido_origem_id", pedidoId);
+      s.extras = (extras || []).filter((x) => String(x.pedido_origem_id) === String(pedidoId) && x.id !== pedidoId && x.status !== "cancelado" && x.status_comercial !== "cancelado");
+      if (s.extras.length) {
+        const { data: etqExtras } = await s.sb.from("separacoes_etiquetas").select("separacao_item_id,item_id,lida_carregamento_em").eq("empresa_id", s.empresa).in("separacao_pedido_id", s.extras.map((x) => x.id));
+        s.etiquetasExtras = etqExtras || [];
+      }
+    }
+    s.grupo = s.extras.length > 0;
+    if (etapa === "descarregamento") {
+      const { data: regra } = await s.sb.from("empresa_logistica_regras").select("descarregamento_conferencia").eq("empresa_id", s.empresa).maybeSingle();
+      cega = regra?.descarregamento_conferencia === "cegas";
+    }
     const {data:assumido,error:erroInicio}=await s.sb.rpc('operacao_iniciar_conferencia',{p_pedido:pedidoId,p_etapa:etapa});
     if(erroInicio){mostrarAviso(erroInicio.message);return;}
     s.pedido = assumido?.id?assumido:pedido; s.itens = itens || []; s.etiquetas = etiquetas || [];
@@ -432,14 +473,16 @@
       (cad || []).forEach((c) => s.nomes.set(String(c.id), c.descricao_total || c.produto || "Item"));
     }
     $("cfPedido").hidden = false;
-    $("cfPedidoNumero").textContent = "Pedido " + (pedido.numero_pedido || "-");
+    $("cfPedidoNumero").textContent = "Pedido " + (pedido.numero_pedido || "-") + (s.grupo ? " + " + s.extras.map((x) => x.numero_pedido).join(", ") : "");
     const data = pedido.data_entrega || pedido.data_evento;
     pintarCliente(pedido, data ? new Date(data + "T12:00:00").toLocaleDateString("pt-BR") : "");
     mostrarCaminhoes().catch((e) => console.error(e));
     // Sem etiquetas de envio, ou separado no modo manual / 1 clique (out/2026): não há bipe, a conferência é por quantidade.
-    if (!s.etiquetas.length || ["manual", "um-clique"].includes(s.pedido.modo_separacao || pedido.modo_separacao)) {
+    // Pedido com extras: a volta soma tudo e é sempre por quantidade (cada linha diz de qual pedido veio).
+    if (s.grupo || !s.etiquetas.length || ["manual", "um-clique"].includes(s.pedido.modo_separacao || pedido.modo_separacao)) {
       await mostrarSemEtiquetas();
       if (etapa === "retorno" && s.pedido.operacao?.retorno?.concluido_em) await carregarOcorrencias();
+      if (etapaVolta && s.pedido.operacao?.[etapa]?.concluido_em) await carregarDivergencias();
       return;
     }
     const feito = pedido.operacao?.[etapa];
@@ -449,7 +492,7 @@
     } else if (feito?.concluido_em) {
       mostrarAviso("Já conferido em " + new Date(feito.concluido_em).toLocaleString("pt-BR") + (feito.por ? " por " + feito.por : "") + " (" + feito.lidas + " de " + feito.total + "). Pode bipar de novo para completar.");
     }
-    if (escondido()) $("cfUltimaDetalhe").textContent = "Conferência às cegas: bipe cada peça que voltou. Ao concluir, o sistema mostra o que faltou.";
+    if (escondido()) $("cfUltimaDetalhe").textContent = "Conferência às cegas: bipe cada peça que " + voltaOuChegou() + ". Ao concluir, o sistema mostra o que faltou.";
     $("cfCorpo").hidden = false; $("cfRodape").hidden = false;
     leitor = window.EasyLocLeitor.criar({
       video: $("cfVideo"), aoLer,
@@ -461,6 +504,7 @@
     $("cfConcluir").addEventListener("click", () => concluir().catch(console.error));
     pintar();
     if(etapa === "retorno" && feito?.concluido_em) await carregarOcorrencias();
+    if(etapaVolta && feito?.concluido_em) await carregarDivergencias();
     mostrarPendenciasRede();
     window.addEventListener("online",reenviarPendencias);
     $("cfEntrada").focus();
@@ -481,7 +525,7 @@
     const data = s.pedido.data_entrega || s.pedido.data_evento;
     const linhas = lista.map((p, i) => {
       const r = feitos?.get(p.chave);
-      return "<tr><td class='n'>" + (i + 1) + "</td><td class='f'>" + foto(p) + "</td><td>" + esc(p.nome) + "</td>" +
+      return "<tr><td class='n'>" + (i + 1) + "</td><td class='f'>" + foto(p) + "</td><td>" + esc(p.nome) + (p.kit_nome ? "<br><small>Parte do kit: " + esc(String(p.kit_nome).replace(/s+/g, " ").trim()) + (Number(p.por_kit) ? " (" + esc(p.por_kit) + " por kit)" : "") + "</small>" : "") + "</td>" +
         (mostrarEsperado ? "<td class='q'>" + esc(r ? r.esperado : p.esperado) + "</td>" : "") +
         "<td class='q'>" + (r ? esc(r.conferido) : "<span class='caixa'></span>") + "</td><td class='ok'><span class='caixa pq'></span></td><td class='obs-c'>" + esc(r?.obs || "") + "</td></tr>";
     }).join("");
@@ -509,11 +553,21 @@
      Esperado: carregamento = pedido; descarregamento e volta = o que o carregamento conferiu. A volta é às cegas. */
   async function mostrarSemEtiquetas() {
     const verbo = { carregamento: "Carregado", descarregamento: "Descarregado", retorno: "Voltou" }[etapa];
-    const { data: pecas, error } = await s.sb.rpc("operacao_conferencia_pecas", { p_pedido: s.pedido.id });
+    const { data: pecas, error } = await s.sb.rpc("operacao_conferencia_pecas", { p_pedido: s.pedido.id, p_grupo: !!s.grupo });
     if (error) { console.error(error); mostrarAviso("Não foi possível carregar os itens do pedido."); return; }
     if (!(pecas || []).length) { mostrarAviso("Este pedido não tem itens para conferir."); return; }
     const base = etapa !== "carregamento" ? s.pedido.operacao?.carregamento?.itens : null;
+    // com extras: base = carregamento de todos; sem lista do carregamento, as etiquetas lidas; senão o pedido (igual ao banco)
+    const baseGrupo = s.grupo ? [s.pedido, ...s.extras].flatMap((g) => Array.isArray(g.operacao?.carregamento?.itens) ? g.operacao.carregamento.itens : []) : null;
+    const etqGrupo = s.grupo ? [...(s.etiquetas || []), ...(s.etiquetasExtras || [])] : [];
+    const esperadoGrupo = (p) => {
+      const anterior = baseGrupo.find((x) => x.chave === p.chave);
+      if (anterior) return anterior.conferido;
+      const etq = etqGrupo.filter((t) => String(t.separacao_item_id) + "|" + String(t.item_id) === p.chave);
+      return etq.length ? etq.filter((t) => t.lida_carregamento_em).length : p.esperado;
+    };
     const lista = pecas.map((p) => {
+      if (s.grupo) return { ...p, esperado: Number(esperadoGrupo(p)) || 0 };
       const anterior = Array.isArray(base) ? base.find((x) => x.chave === p.chave) : null;
       return { ...p, esperado: Number(anterior ? anterior.conferido : base ? 0 : p.esperado) || 0 };
     }).sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
@@ -524,6 +578,8 @@
       (cad || []).forEach((c) => fotos.set(String(c.id), c.foto_url || ""));
     }
     const caixa = $("cfQtd");
+    // Componente de Kit: embaixo do nome, o Kit de que ele faz parte (igual à Triagem).
+    const nomeComKit = (p) => esc(p.nome) + (s.grupo && p.pedido_numero ? '<small class="cf-qtd-kit cf-qtd-pedido">Pedido ' + esc(p.pedido_numero) + "</small>" : "") + (p.kit_nome ? '<small class="cf-qtd-kit">Parte do kit: ' + esc(String(p.kit_nome).replace(/\s+/g, " ").trim()) + (Number(p.por_kit) ? " (" + esc(p.por_kit) + " por kit)" : "") + "</small>" : "");
     const foto = (p) => fotos.get(String(p.item_id)) ? '<img src="' + esc(fotos.get(String(p.item_id))) + '" alt="" loading="lazy">' : '<span class="cf-qtd-sem-foto"></span>';
     const atualizarProgresso = (total, conferido) => {
       const pct = total ? Math.min(100, Math.round((conferido / total) * 100)) : 0;
@@ -536,22 +592,30 @@
     if (feito?.concluido_em) {
       const itens = Array.isArray(feito.itens) ? feito.itens : [];
       const porChave = new Map(itens.map((x) => [x.chave, x]));
-      const faltas = (feito.faltando || []).length;
+      const contagem1 = feito.primeira_contagem || {};
+      let dv = null;
+      if (etapaVolta) { try { dv = await buscarDivergencias(); } catch (e) { console.error(e); } }
+      s.divAtuais = dv?.todas || []; s.divMotivos = dv?.motivos || s.divMotivos;
+      const divPorChave = new Map((dv?.todas || []).map((o) => [chaveDiv(o), o]));
+      // A divergência não se resolve mais aqui (out/2026): vai para Estoque > Gestão do acervo (contagem geral do item).
+      const comResolver = false;
+      s.divNaTabela = new Set();
+      const primeira = (r) => (r.chave in contagem1 && Number(contagem1[r.chave]) !== Number(r.conferido)) ? contagem1[r.chave] : "";
+      // Divergência dos dois lados (out/2026): faltou (vermelho) e veio a mais (amarelo).
+      // Sem a faixa "conferido em… · Divergência: …" (pedido do usuário): as cores e as colunas da tabela já dizem isso.
       $("cfPedidoNota").hidden = true;
-      $("cfAviso").hidden = false;
-      $("cfAviso").className = "cf-aviso " + (faltas ? "is-divergente" : "is-ok");
-      $("cfAviso").textContent = cfg.rotulo + " conferido em " + new Date(feito.concluido_em).toLocaleString("pt-BR") + (feito.por ? " por " + feito.por : "") +
-        (faltas ? " · " + faltas + " item(ns) com quantidade menor." : " · tudo certo.");
+      $("cfAviso").hidden = true;
       atualizarProgresso(Number(feito.total) || 0, Number(feito.lidas) || 0);
       caixa.hidden = false;
-      caixa.innerHTML = '<div class="cf-qtd-tabela">' +
-        '<div class="cf-qtd-linha cf-qtd-cabeca"><span></span><span>Item</span><span>' + (etapa === "carregamento" ? "Pedido" : "Esperado") + '</span><span>' + verbo + '</span><span>Observação</span></div>' +
+      caixa.innerHTML = '<div class="cf-qtd-tabela' + (comResolver ? " com-resolver" : "") + '">' +
+        '<div class="cf-qtd-linha cf-qtd-cabeca"><span></span><span>Item</span><span>' + (etapa === "carregamento" ? "Pedido" : "Esperado") + '</span><span>' + verbo + '</span><span>Observação</span>' + (comResolver ? "<span>2ª conferência</span><span>Motivo</span>" : "") + "</div>" +
         lista.map((p) => {
           const r = porChave.get(p.chave) || {};
-          const falta = Number(r.conferido) < Number(r.esperado);
-          return '<div class="cf-qtd-linha' + (falta ? " is-falta" : "") + '">' + foto(p) + '<strong>' + esc(p.nome) + '</strong><span>' + esc(r.esperado ?? p.esperado) +
-            '</span><span class="cf-qtd-valor">' + esc(r.conferido ?? "-") + (falta ? ' <small>faltam ' + esc(Number(r.esperado) - Number(r.conferido)) + "</small>" : "") + '</span><em class="cf-qtd-obs-texto">' + esc(r.obs || "—") + "</em></div>";
-        }).join("") + "</div>";
+          const falta = Number(r.conferido) < Number(r.esperado), sobra = Number(r.conferido) > Number(r.esperado);
+          return '<div class="cf-qtd-linha' + (falta ? " is-div-falta" : sobra ? " is-div-sobra" : "") + '">' + foto(p) + '<strong>' + nomeComKit(p) + '</strong><span>' + esc(r.esperado ?? p.esperado) +
+            '</span><span class="cf-qtd-valor">' + esc(r.conferido ?? "-") + (primeira(r) ? '<small class="cf-qtd-primeira">1ª contagem: ' + esc(primeira(r)) + "</small>" : "") + (falta ? ' <small>faltam ' + esc(Number(r.esperado) - Number(r.conferido)) + "</small>" : sobra ? ' <small>' + esc(Number(r.conferido) - Number(r.esperado)) + " a mais</small>" : "") + '</span><em class="cf-qtd-obs-texto">' + esc(r.obs || "—") + "</em>" + (comResolver ? (() => { const o = divPorChave.get(p.chave); if (o) s.divNaTabela.add(String(o.id)); return celulaResolver(o, dv.motivos); })() : "") + "</div>";
+        }).join("") + "</div>" + (comResolver ? RODAPE_SEGUNDA : "");
+      atualizarRodapeSegunda();
       mostrarBotaoImprimir(() => imprimirLista(lista, foto, porChave));
       return;
     }
@@ -559,13 +623,13 @@
     $("cfAviso").hidden = true;
     $("cfPedidoNota").hidden = true;
     $("cfPedidoNota").textContent = cega
-      ? "Pedido separado sem etiquetas de envio: conte as peças de cada item que voltaram e digite a quantidade. Ao concluir, o sistema compara com o que saiu."
+      ? "Pedido separado sem etiquetas de envio: conte as peças de cada item que " + (etapa === "retorno" ? "voltaram" : "foram descarregadas") + " e digite a quantidade. Ao concluir, o sistema compara com o que saiu."
       : "Pedido separado sem etiquetas de envio (1 clique): sem bipagem. Digite a quantidade de cada item que foi " + verbo.toLowerCase() + ".";
     atualizarProgresso(cega ? 0 : totalEsperado, 0);
     if (cega) { $("cfPercent").hidden = true; $("cfBarra").parentElement.hidden = true; $("cfContagem").textContent = "Conferência às cegas"; }
     caixa.hidden = false;
     caixa.innerHTML = '<div class="cf-qtd-tabela"><div class="cf-qtd-linha cf-qtd-cabeca"><span></span><span>Item</span><span>' + (cega ? "" : etapa === "carregamento" ? "Pedido" : "Esperado") + '</span><span>' + verbo + '</span><span>Observação</span></div>' +
-      lista.map((p, i) => '<div class="cf-qtd-linha">' + foto(p) + '<strong>' + esc(p.nome) + '</strong><span>' + (cega ? "" : esc(p.esperado)) + '</span>' +
+      lista.map((p, i) => '<div class="cf-qtd-linha">' + foto(p) + '<strong>' + nomeComKit(p) + '</strong><span>' + (cega ? "" : esc(p.esperado)) + '</span>' +
         '<input type="number" class="el-input cf-qtd-input" min="0" step="1" inputmode="numeric" data-chave="' + esc(p.chave) + '" data-i="' + i + '" aria-label="' + esc(verbo + ": " + p.nome) + '">' +
         '<input type="text" class="el-input cf-qtd-obs" maxlength="500" placeholder="Opcional" data-chave="' + esc(p.chave) + '" aria-label="' + esc("Observação: " + p.nome) + '"></div>').join("") +
       '</div><footer class="cf-qtd-rodape"><span id="cfQtdResumo"></span><button type="button" class="btn primary" id="cfQtdConfirmar">Confirmar ' + esc(cfg.rotulo.toLowerCase()) + "</button></footer>";
@@ -577,7 +641,9 @@
         const p = lista[Number(inp.dataset.i)], v = inp.value === "" ? null : Number(inp.value);
         if (v != null) { preenchidos += 1; conferido += Math.min(v, p.esperado); }
         inp.closest(".cf-qtd-linha").classList.toggle("is-falta", !cega && v != null && v < p.esperado);
-        inp.closest(".cf-qtd-linha").classList.toggle("is-ok", !cega && v != null && v >= p.esperado);
+        // Verde só com a quantidade exata; a mais também é conferência errada (amarelo, out/2026).
+        inp.closest(".cf-qtd-linha").classList.toggle("is-a-mais", !cega && v != null && v > p.esperado);
+        inp.closest(".cf-qtd-linha").classList.toggle("is-ok", !cega && v != null && v === p.esperado);
       });
       if (!cega) atualizarProgresso(totalEsperado, conferido);
       $("cfQtdResumo").textContent = preenchidos + " de " + inputs.length + " itens preenchidos";
@@ -593,6 +659,24 @@
       if (vazio) { avisar("Informe a quantidade de todos os itens (número inteiro, 0 se não foi " + verbo.toLowerCase() + ").", cfg.rotulo); vazio.focus(); return; }
       const quantidades = {};
       inputs.forEach((inp) => { quantidades[inp.dataset.chave] = Number(inp.value); });
+      if (etapaVolta && !s.primeira) {
+        const diferentes = inputs.filter((inp) => Number(inp.value) !== lista[Number(inp.dataset.i)].esperado);
+        if (diferentes.length) {
+          s.primeira = { ...quantidades };
+          const recontar = diferentes.map((inp) => ({ p: lista[Number(inp.dataset.i)], v: Number(inp.value) }));
+          inputs.forEach((inp) => {
+            const linha = inp.closest(".cf-qtd-linha"), recontar = diferentes.includes(inp);
+            linha.classList.toggle("is-recontar", recontar);
+            linha.classList.toggle("is-travada", !recontar);
+            if (recontar) { inp.value = ""; inp.placeholder = "Recontar"; } else inp.readOnly = true;
+          });
+          botao.textContent = "Confirmar segunda contagem";
+          somar();
+          await pedirSegundaContagem(recontar, foto, cega, nomeComKit);
+          diferentes[0].focus();
+          return;
+        }
+      }
       const observacoes = {};
       caixa.querySelectorAll(".cf-qtd-obs").forEach((inp) => { if (inp.value.trim()) observacoes[inp.dataset.chave] = inp.value.trim(); });
       const faltas = cega ? [] : inputs.filter((inp) => Number(inp.value) < lista[Number(inp.dataset.i)].esperado);
@@ -611,7 +695,7 @@
       }
       botao.disabled = true;
       // A volta é às cegas: aceita a diferença (as faltas viram ocorrência no servidor).
-      const args = { p_pedido: s.pedido.id, p_etapa: etapa, p_aceitar_faltas: cega || faltas.length > 0, p_quantidades: quantidades, p_observacoes: observacoes };
+      const args = { p_pedido: s.pedido.id, p_etapa: etapa, p_aceitar_faltas: cega || faltas.length > 0, p_quantidades: quantidades, p_observacoes: observacoes, ...(s.primeira ? { p_primeira: s.primeira } : {}) };
       const { data: registro, error: erro } = pendencia
         ? await s.sb.rpc("operacao_concluir_com_pendencia", { ...args, p_pendencia: pendencia })
         : await s.sb.rpc("operacao_concluir_conferencia", args);
@@ -621,12 +705,185 @@
       $("cfPercent").hidden = false; $("cfBarra").parentElement.hidden = false;
       await mostrarSemEtiquetas();
       if (cega) await carregarOcorrencias();
+      if (etapaVolta) await carregarDivergencias();
       const n = (registro.faltando || []).length;
-      avisar(n ? "Conferência concluída com " + n + " item(ns) faltando." + avisoPendencia(registro) : "Conferência concluída: tudo " + cfg.verbo + ".", cfg.rotulo, n ? "aviso" : "sucesso");
+      const mais = (registro.itens || []).filter((x) => Number(x.conferido) > Number(x.esperado)).length;
+      const div = [n ? n + " item(ns) faltando" : "", mais ? mais + " item(ns) a mais" : ""].filter(Boolean).join(" e ");
+      avisar(div ? "Conferência concluída com divergência: " + div + "." + avisoPendencia(registro) : "Conferência concluída: tudo " + cfg.verbo + ".", cfg.rotulo, div ? "aviso" : "sucesso");
     });
     somar();
     inputs[0]?.focus();
   }
+
+  // Segunda contagem (out/2026): lista os itens que não bateram, com foto, nome (e o kit) e o que foi contado na 1ª vez.
+  // Às cegas não mostra quanto saiu; sem ser às cegas, mostra quanto saiu e se faltou ou veio a mais.
+  function pedirSegundaContagem(itens, foto, cega, nomeComKit, bipe) {
+    return new Promise((resolve) => {
+      const d = document.createElement("dialog"); d.className = "cf-confirmacao cf-segunda";
+      const n = itens.length;
+      const linhas = itens.map(({ p, v }) => {
+        const dif = v - Number(p.esperado || 0);
+        const lado = cega ? "" : '<span class="cf-seg-dif ' + (dif < 0 ? "is-falta" : "is-mais") + '">Saiu ' + esc(p.esperado) + " · " + (dif < 0 ? "faltam " + esc(-dif) : esc(dif) + " a mais") + "</span>";
+        return '<li><span class="cf-seg-foto">' + foto(p) + '</span><span class="cf-seg-nome">' + nomeComKit(p) + '</span><span class="cf-seg-qtd"><small>' + (bipe ? 'Lidas' : '1ª contagem') + '</small><b>' + esc(v) + "</b>" + lado + "</span></li>";
+      }).join("");
+      d.innerHTML = '<form><header><span class="cf-seg-badge" aria-hidden="true">' + n + '</span><div><small>' + esc(cfg.rotulo) + " · Pedido " + esc(s.pedido.numero_pedido || "") +
+        '</small><h2>Segunda contagem</h2><p class="cf-seg-sub">' + (n === 1 ? "1 item não bateu" : n + " itens não bateram") + " com o que saiu. Conte de novo só estes:</p></div></header>" +
+        '<div class="cf-confirmacao-corpo"><ul class="cf-seg-lista">' + linhas + "</ul>" +
+        (bipe ? '<ol class="cf-seg-passos"><li><span>Procure de novo as peças destes itens</span></li><li><span>Bipe a etiqueta de cada peça que encontrar</span></li><li><span>Clique em <b>Concluir</b> de novo</span></li></ol></div>' : '<ol class="cf-seg-passos"><li><span>Conte de novo cada item da lista</span></li><li><span>Digite a nova quantidade na linha destacada em azul</span></li><li><span>Clique em <b>Confirmar segunda contagem</b></span></li></ol></div>') +
+        '<footer><button type="submit" class="btn btn-primary">Começar a segunda contagem</button></footer></form>';
+      d.querySelector("form").onsubmit = (e) => { e.preventDefault(); d.close(); };
+      d.addEventListener("close", () => { d.remove(); resolve(); }, { once: true });
+      document.body.append(d); d.showModal();
+    });
+  }
+
+  /* Divergências da volta (out/2026): o que faltou (vermelho) e o que veio a mais (amarelo) ficam abertos até alguém
+     resolver, na coluna "Resolver" do resultado, com um motivo cadastrado em Parâmetros > Operação (Divergência: faltou /
+     veio a mais). Falta: "Apareceu" (quantas) ou "Perda" (baixa no estoque). A mais: "Conferido". */
+  const chaveDiv = (o) => String(o.codigo || "").replace(/^descarregamento:/, "");
+  const textoDiv = (o) => String(o.descricao || "").replace(/^(Peça não devolvida|Peça não descarregada|Veio a mais): /, "");
+  async function buscarDivergencias() {
+    const [{ data, error }, { data: motivos }] = await Promise.all([
+      s.sb.from("operacao_ocorrencias").select("*").eq("pedido_id", s.pedido.id).in("tipo", ["falta", "sobra"]).order("criado_em"),
+      s.sb.from("logistica_motivos").select("id,nome,etapa,situacao").eq("empresa_id", s.empresa).in("etapa", ["divergencia_falta", "divergencia_sobra"]).eq("ativo", true).order("nome")
+    ]);
+    if (error) throw error;
+    const todas = (data || []).filter((o) => (o.etapa || "retorno") === etapa);
+    return { todas, motivos: { falta: (motivos || []).filter((m) => m.etapa === "divergencia_falta"), sobra: (motivos || []).filter((m) => m.etapa === "divergencia_sobra") } };
+  }
+  // Duas células: "2ª conferência" (quantidade contada de novo) e "Motivo". Preenchidas as duas, fecha sozinho.
+  // Foto (avatar público da conta, o mesmo do menu) e nome de quem fez a 2ª conferência; sem foto, as iniciais.
+  function quemResolveu(o) {
+    const nome = String(o.resolvido_por_nome || "").trim(); if (!nome) return "";
+    const iniciais = nome.split(/s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
+    let url = ""; try { if (o.resolvido_por) url = s.sb.storage.from("avatares").getPublicUrl(s.empresa + "/" + o.resolvido_por + ".jpg").data?.publicUrl || ""; } catch (_) {}
+    return '<span class="cf-div-quem" title="2ª conferência por ' + esc(nome) + '"><span class="cf-div-avatar">' + esc(iniciais) +
+      (url ? '<img src="' + esc(url) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + "</span>" + esc(nome) + "</span>";
+  }
+  // Esperado da divergência e o que a 2ª conferência significa: bateu, continua (quanto) ou contagem impossível.
+  const esperadoDiv = (o) => Number(o.esperado ?? (Number(o.conferido || 0) + (o.tipo === "sobra" ? -1 : 1) * Number(o.quantidade)));
+  function avaliarSegunda(o, q) {
+    const e = esperadoDiv(o);
+    if (q === e) return { sit: "bateu", texto: "Bateu com o esperado", cls: "is-bateu" };
+    if (o.tipo === "falta" && q > e) return { sit: null, texto: "Passou do esperado (" + e + "): conte de novo", cls: "is-erro" };
+    if (o.tipo === "sobra" && q < e) return { sit: null, texto: "Abaixo do esperado (" + e + "): conte de novo", cls: "is-erro" };
+    return o.tipo === "falta" ? { sit: "continua", texto: "Ainda faltam " + (e - q), cls: "is-falta" } : { sit: "continua", texto: "Ainda " + (q - e) + " a mais", cls: "is-sobra" };
+  }
+  function celulaResolver(o, motivos) {
+    if (!o) return '<span class="cf-div-celula is-vazia"></span><span class="cf-div-celula is-vazia"></span>';
+    if (o.resolvida_em) {
+      const nome = [...(motivos.falta || []), ...(motivos.sobra || [])].find((m) => String(m.id) === String(o.motivo_id))?.nome || "Resolvida";
+      const r = o.segunda_contagem != null ? avaliarSegunda(o, Number(o.segunda_contagem)) : null;
+      return '<span class="cf-div-celula cf-div-ok cf-div-num">' + esc(o.segunda_contagem ?? "—") + (r ? '<small class="cf-div-sit ' + r.cls + '">' + esc(r.sit === "bateu" ? "bateu" : r.texto.replace(/^Ainda /, "")) + "</small>" : "") +
+        '</span><span class="cf-div-celula cf-div-ok cf-div-mot" title="' + esc(o.resolucao || "") + '"><span class="cf-div-mot-nome">✓ ' + esc(nome) + "</span>" + quemResolveu(o) + "</span>";
+    }
+    const lista = motivos[o.tipo] || [];
+    if (!lista.length) return '<span class="cf-div-celula is-vazia"></span><span class="cf-div-celula cf-div-sem-motivo">Cadastre os motivos de divergência em Gestão &gt; Parâmetros &gt; Operação.</span>';
+    return '<span class="cf-div-celula" data-div="' + esc(o.id) + '"><input type="number" class="el-input cf-div-segunda" min="0" step="1" inputmode="numeric" aria-label="2ª conferência" placeholder="Qtd."><small class="cf-div-sit" aria-live="polite"></small></span>' +
+      '<span class="cf-div-celula cf-mot" data-div="' + esc(o.id) + '"><input type="hidden" class="cf-div-motivo" value=""><button type="button" class="cf-mot-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Motivo" disabled><span>Conte primeiro</span></button></span>';
+  }
+  // Só os motivos que combinam com o resultado da 2ª conferência (Parâmetros: "quando bate" / "quando a diferença continua").
+  function prepararMotivos(id, linha) {
+    const o = (s.divAtuais || []).find((x) => String(x.id) === id); if (!o) return null;
+    const qtdEl = linha.querySelector('[data-div="' + id + '"] .cf-div-segunda'), caixa = linha.querySelector('[data-div="' + id + '"].cf-mot');
+    const motEl = caixa.querySelector(".cf-div-motivo"), btn = caixa.querySelector(".cf-mot-btn");
+    const sitEl = qtdEl.parentElement.querySelector(".cf-div-sit");
+    const valor = qtdEl.value.trim(), q = Number(valor);
+    const r = valor === "" || !Number.isInteger(q) || q < 0 ? null : avaliarSegunda(o, q);
+    sitEl.textContent = r ? r.texto : ""; sitEl.className = "cf-div-sit" + (r ? " " + r.cls : "");
+    const lista = r?.sit ? ((s.divMotivos || {})[o.tipo] || []).filter((m) => !m.situacao || m.situacao === r.sit) : [];
+    if (!lista.some((m) => String(m.id) === motEl.value)) motEl.value = "";
+    const escolhido = lista.find((m) => String(m.id) === motEl.value);
+    caixa._lista = lista;
+    btn.disabled = !lista.length;
+    btn.classList.toggle("is-escolhido", !!escolhido);
+    btn.firstElementChild.textContent = escolhido ? escolhido.nome : !r ? "Conte primeiro" : !r.sit ? "Conte de novo" : lista.length ? "Escolha o motivo" : "Nenhum motivo cadastrado";
+    return { o, q, r, qtdEl, motEl };
+  }
+  // Lista de motivos que abre sob o botão (fixa na tela, por cima da tabela).
+  function fecharListaMotivos() { document.querySelector(".cf-mot-pop")?.remove(); document.querySelectorAll('.cf-mot-btn[aria-expanded="true"]').forEach((b) => b.setAttribute("aria-expanded", "false")); }
+  function abrirListaMotivos(caixa) {
+    fecharListaMotivos();
+    const btn = caixa.querySelector(".cf-mot-btn"), atual = caixa.querySelector(".cf-div-motivo").value, rect = btn.getBoundingClientRect();
+    const pop = document.createElement("div"); pop.className = "cf-mot-pop"; pop.setAttribute("role", "listbox");
+    pop.innerHTML = (caixa._lista || []).map((m) => '<button type="button" role="option" data-mot="' + esc(m.id) + '" aria-selected="' + (String(m.id) === atual) + '">' + esc(m.nome) + "</button>").join("");
+    pop.style.left = rect.left + "px"; pop.style.width = Math.max(rect.width, 220) + "px";
+    document.body.append(pop);
+    const alto = pop.offsetHeight, embaixo = rect.bottom + 6 + alto <= window.innerHeight;
+    pop.style.top = (embaixo ? rect.bottom + 6 : rect.top - 6 - alto) + "px";
+    pop._caixa = caixa; btn.setAttribute("aria-expanded", "true");
+    (pop.querySelector('[aria-selected="true"]') || pop.querySelector("button"))?.focus();
+  }
+  // Rodapé com o botão que grava todas as 2ª conferências preenchidas da tela.
+  const RODAPE_SEGUNDA = '<footer class="cf-qtd-rodape cf-div-rodape"><span class="cf-div-resumo"></span><button type="button" class="btn primary cf-div-salvar" disabled>Salvar 2ª conferência</button></footer>';
+  function prontasParaSalvar() {
+    return [...document.querySelectorAll(".cf-mot[data-div]")].map((caixa) => {
+      const id = caixa.dataset.div, linha = caixa.closest(".cf-qtd-linha, .cf-div-linha");
+      const p = prepararMotivos(id, linha); return p && p.r?.sit && p.motEl.value ? { id, ...p } : null;
+    }).filter(Boolean);
+  }
+  function atualizarRodapeSegunda() {
+    const abertas = document.querySelectorAll(".cf-mot[data-div]").length, prontas = prontasParaSalvar().length;
+    document.querySelectorAll(".cf-div-rodape").forEach((r) => {
+      r.hidden = !abertas;
+      r.querySelector(".cf-div-resumo").textContent = prontas ? prontas + " de " + abertas + " divergência(s) pronta(s) para salvar" : "Preencha a 2ª conferência e o motivo de cada divergência";
+      r.querySelector(".cf-div-salvar").disabled = !prontas;
+    });
+  }
+
+  // Fora da tabela por quantidade (bipe, ou divergência sem linha correspondente): mesmo controle, num bloco próprio.
+  async function carregarDivergencias() {
+    let raiz = $("cfDivergencias");
+    if (!raiz) { raiz = document.createElement("section"); raiz.id = "cfDivergencias"; raiz.className = "cf-divergencias"; ($("cfQtd") || $("cfAviso")).after(raiz); }
+    let dv;
+    try { dv = await buscarDivergencias(); } catch (_) { raiz.hidden = false; raiz.innerHTML = '<p class="cf-vazio">Não foi possível carregar as divergências.</p>'; return; }
+    s.divMotivos = dv.motivos;
+    s.divAtuais = [...new Map([...(s.divAtuais || []), ...dv.todas].map((o) => [String(o.id), o])).values()];
+    const todas = dv.todas || [], abertas = todas.filter((o) => !o.resolvida_em), faltas = abertas.filter((o) => o.tipo === "falta").length, sobras = abertas.length - faltas;
+    if (!todas.length) { raiz.hidden = true; raiz.innerHTML = ""; return; }
+    raiz.hidden = false;
+    raiz.innerHTML = abertas.length
+      ? '<div class="cf-div-enviada"><span class="cf-div-enviada-icone" aria-hidden="true">!</span><div><b>A contagem não bateu: ' + [faltas ? faltas + " item(ns) faltando" : "", sobras ? sobras + " item(ns) a mais" : ""].filter(Boolean).join(" e ") +
+        '.</b><span>A divergência foi enviada para Estoque &gt; Gestão do acervo, que faz a contagem geral do item e resolve. Nada mais a fazer aqui.</span></div></div>'
+      : '<div class="cf-div-enviada is-ok"><span class="cf-div-enviada-icone" aria-hidden="true">✓</span><div><b>Divergências resolvidas pela Gestão do acervo.</b><span>' + todas.map((o) => esc(textoDiv(o)) + (o.resolucao ? " — " + esc(o.resolucao) : "")).join(" · ") + "</span></div></div>";
+  }
+  document.addEventListener("input", (ev) => {
+    const campo = ev.target.closest(".cf-div-segunda"); if (!campo) return;
+    fecharListaMotivos();
+    prepararMotivos(campo.closest("[data-div]").dataset.div, campo.closest(".cf-qtd-linha, .cf-div-linha"));
+    atualizarRodapeSegunda();
+  });
+  document.addEventListener("click", async (ev) => {
+    const abrir = ev.target.closest(".cf-mot-btn");
+    if (abrir) { const aberta = abrir.getAttribute("aria-expanded") === "true"; fecharListaMotivos(); if (!aberta && !abrir.disabled) abrirListaMotivos(abrir.closest(".cf-mot")); return; }
+    const opcao = ev.target.closest(".cf-mot-pop [data-mot]");
+    if (opcao) { const caixa = opcao.closest(".cf-mot-pop")._caixa; caixa.querySelector(".cf-div-motivo").value = opcao.dataset.mot; fecharListaMotivos();
+      prepararMotivos(caixa.dataset.div, caixa.closest(".cf-qtd-linha, .cf-div-linha")); atualizarRodapeSegunda(); caixa.querySelector(".cf-mot-btn").focus(); return; }
+    if (!ev.target.closest(".cf-mot-pop")) fecharListaMotivos();
+    const salvar = ev.target.closest(".cf-div-salvar"); if (!salvar || salvar.disabled) return;
+    const prontas = prontasParaSalvar(); if (!prontas.length) return;
+    const perdas = prontas.filter((p) => p.o.tipo === "falta" && p.r.sit === "continua").reduce((t, p) => t + (esperadoDiv(p.o) - p.q), 0);
+    if (perdas && !(await window.confirmarGlobal("A 2ª conferência confirmou " + perdas + " peça(s) faltando. Elas ficam como perda. Salvar?", "Confirmar perda", { confirmarTexto: "Salvar", cancelarTexto: "Voltar" }))) return;
+    salvar.disabled = true; salvar.textContent = "Salvando…";
+    const erros = [];
+    for (const p of prontas) {
+      const { error: erro } = await s.sb.rpc("operacao_fechar_divergencia", { p_id: p.id, p_contagem: p.q, p_motivo_id: p.motEl.value });
+      if (erro) erros.push(erro.message);
+    }
+    if (!$("cfQtd").hidden) await mostrarSemEtiquetas();
+    await carregarDivergencias();
+    if (erros.length) avisar(erros.join(" · "), "Divergência", "erro");
+  });
+  document.addEventListener("keydown", (ev) => {
+    const pop = document.querySelector(".cf-mot-pop"); if (!pop) return;
+    if (ev.key === "Escape") { const btn = pop._caixa.querySelector(".cf-mot-btn"); fecharListaMotivos(); btn.focus(); ev.preventDefault(); return; }
+    if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+      const ops = [...pop.querySelectorAll("button")], k = ops.indexOf(document.activeElement);
+      ops[(k + (ev.key === "ArrowDown" ? 1 : -1) + ops.length) % ops.length]?.focus(); ev.preventDefault();
+    }
+  });
+  window.addEventListener("scroll", (ev) => { if (!ev.target.closest?.(".cf-mot-pop")) fecharListaMotivos(); }, true);
+  window.addEventListener("resize", fecharListaMotivos);
 
   window.addEventListener("pagehide", () => leitor?.desligar());
   iniciar().catch((e) => { console.error(e); mostrarAviso("Não foi possível abrir a conferência."); });

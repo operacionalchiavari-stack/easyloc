@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="pedido.css?v=20261027-frete-branco">
+  <link rel="stylesheet" href="pedido.css?v=20261030-link-pagamento">
 </head>
 <body>
 <div class="pedido-screen orcamento-page el-page em-entrada" data-module-root>
@@ -196,6 +196,10 @@
               <h2>Financeiro do pedido</h2>
               <p>Parcelas, baixas e cobranças Pix</p>
             </div>
+            <button type="button" class="pedido-link-pagamento" id="btnLinkPagamento" title="Pedido digital: o cliente vê o pedido e paga pelo mesmo link">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>
+              Link do pedido
+            </button>
             <div class="pagamento-head-tools">
               <div class="pagamento-top-summary" aria-label="Resumo financeiro">
                 <div class="pagamento-mini-card">
@@ -537,7 +541,17 @@
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/paymentPix.js?v=20261021-divisao"></script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20261027-salvar-completo"></script>
+<script src="../../../js/core/linkPagamento.js?v=20261030-pedido-digital"></script>
+<script>
+  // Link de pagamento do pedido (out/2026): o cliente vê as parcelas e gera o PIX de cada uma, na conta certa
+  document.getElementById("btnLinkPagamento")?.addEventListener("click", () => window.EasyLocLinkPagamento.abrir({
+    empresaId: window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id"), pedidoId: window.__PEDIDO_ATUAL_ID,
+    numero: document.getElementById("orcamentoNumero")?.textContent.trim() || "", cliente: document.getElementById("clienteInput")?.value || "",
+    telefone: document.getElementById("telefoneInput")?.value || "" }));
+  window.__pedidoLinkPlantas = (plantas) => { const id = window.__PEDIDO_ATUAL_ID; if (id) window.supabaseClient.rpc("pagamento_link_plantas_salvar", { p_empresa: window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id"), p_pedido: id, p_plantas: plantas || [] }).then(({ error }) => { if (error) console.warn("Planta no link:", error.message); }); };
+  window.__pedidoLinkPagamento = () => window.EasyLocLinkPagamento.paraDocumento({ empresaId: window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id"), pedidoId: window.__PEDIDO_ATUAL_ID });
+</script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261030-so-itens-travados"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

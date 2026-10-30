@@ -1,0 +1,296 @@
+/* Clara, a assistente financeira da Conciliação (financeiro-clara.js). */
+.cl-av{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;flex:none;
+  background:linear-gradient(135deg,#123f86,#3a6fc4);color:#fff;font:600 16px "Cormorant Garamond",Georgia,serif;box-shadow:0 4px 12px rgba(18,63,134,.25)}
+.cl-av.grande{width:64px;height:64px;font-size:30px}
+.cl-av.mini{width:20px;height:20px;font-size:11px;box-shadow:none}
+.cl-topo{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.cl-topo .fin-esp{flex:1}
+.cl-conta{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#4f4f4f}
+.cl-conta select{height:40px;border:1px solid #dfe4ea;border-radius:10px;padding:0 12px;background:#fff;font:14px Inter,sans-serif;min-width:240px}
+
+.cl-hero{display:grid;grid-template-columns:auto 1fr minmax(260px,340px);gap:20px;align-items:center;background:#fff;border:1px solid #e3e7ec;border-radius:18px;padding:20px 22px;margin-bottom:14px;
+  box-shadow:0 0 8px rgba(15,23,42,.08)}
+.cl-hero h3{margin:0 0 4px;font:600 22px "Cormorant Garamond",Georgia,serif;letter-spacing:.02em}
+.cl-hero h3 small{font:500 12px Inter,sans-serif;color:#6b6b6b;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}
+.cl-hero p{margin:0;color:#4f4f4f;font-size:14px;line-height:1.5;max-width:720px}
+.cl-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:104px;padding:14px;border:2px dashed #b9c8e2;border-radius:14px;background:#f5f8fd;cursor:pointer;text-align:center;transition:.2s}
+.cl-drop b{font-size:15px;color:#123f86}
+.cl-drop span{font-size:12px;color:#6b6b6b}
+.cl-drop:hover,.cl-drop.is-sobre{border-color:#123f86;background:#eaf0fa}
+.cl-drop.is-ocupado{opacity:.5;pointer-events:none}
+.cl-etapa{margin-top:10px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#123f86}
+.cl-etapa[hidden]{display:none}
+.cl-giro{width:16px;height:16px;border-radius:50%;border:2px solid #c9d6ee;border-top-color:#123f86;animation:cl-giro .8s linear infinite;flex:none}
+@keyframes cl-giro{to{transform:rotate(360deg)}}
+.cl-carregando{display:flex;align-items:center;gap:12px;padding:30px 10px;color:#4f4f4f}
+
+.cl-saldo{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;background:#fff;border:1px solid #e3e7ec;border-radius:14px;padding:12px 18px;margin-bottom:14px}
+.cl-saldo small{display:block;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em}
+.cl-saldo b{font-size:17px}
+.cl-saldo-res{margin-left:auto;font-weight:600;font-size:14px;display:flex;align-items:center;gap:10px}
+.cl-saldo.ok{border-color:#b6dfc8;background:#f2faf5}.cl-saldo.ok .cl-saldo-res{color:#1f7a44}
+.cl-saldo.dif{border-color:#f0e4c5;background:#fffaf0}.cl-saldo.dif .cl-saldo-res{color:#8a5a00}
+.cl-aviso{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:#eaf0fa;color:#1f2020;font-size:13px;margin-bottom:14px}
+
+.cl-filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.cl-filtros .fin-esp{flex:1}
+.cl-filtros [data-cl-filtro]{height:32px;padding:0 12px;border-radius:999px;border:1px solid #dfe4ea;background:#fff;font:600 12px Inter,sans-serif;color:#4f4f4f;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cl-filtros [data-cl-filtro] b{min-width:20px;height:20px;border-radius:999px;background:#eef0f3;display:inline-grid;place-items:center;font-size:11px;padding:0 5px}
+.cl-filtros .f-alta b{background:#d9f1e3;color:#1f7a44}.cl-filtros .f-conferir b{background:#fff1cf;color:#8a5a00}.cl-filtros .f-sem b{background:#fbe2e0;color:#b0362d}
+.cl-filtros [data-cl-filtro].ativa{border-color:#123f86;background:#eaf0fa;color:#123f86}
+
+.cl-tabela td{vertical-align:top}
+.cl-tabela td small,.cl-amostra td small,.cl-dre td small{display:block;color:#6b6b6b;font-size:12px;margin-top:2px}
+.cl-ck{width:34px;text-align:center}
+.cl-tabela tr.cl-n-alta td:first-child{box-shadow:inset 4px 0 0 #2f9a5d}
+.cl-tabela tr.cl-n-media td:first-child,.cl-tabela tr.cl-n-baixa td:first-child{box-shadow:inset 4px 0 0 #e0a92e}
+.cl-tabela tr.cl-n-sem td:first-child{box-shadow:inset 4px 0 0 #d4675d}
+.cl-sug{min-width:300px;max-width:520px}
+.cl-tipo{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;background:#eef0f3;color:#4f4f4f}
+.cl-tipo.t-baixar{background:#eaf0fa;color:#123f86}.cl-tipo.t-transferencia{background:#f4effc;color:#5a3ea8}.cl-tipo.t-lancar{background:#fff4dd;color:#8a5a00}
+.cl-conf{font-size:11px;font-weight:600;color:#6b6b6b}
+.cl-conf.c-alta{color:#1f7a44}.cl-conf.c-media{color:#8a5a00}.cl-conf.c-baixa{color:#b0362d}
+.cl-res{margin-top:4px;font-size:13px;color:#1f2020;line-height:1.35}
+.cl-res.sem{color:#b0362d}
+.cl-extra{font-size:12px;color:#4f4f4f;margin-top:2px}
+.cl-motivo{display:block;font-size:12px;color:#6b6b6b;font-style:italic;margin-top:3px;line-height:1.35}
+
+.cl-barra{position:sticky;bottom:12px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:14px;margin:-4px 0 16px;padding:12px 18px;border-radius:14px;background:#1f2b3d;color:#fff;font-size:14px;box-shadow:0 12px 30px rgba(15,23,42,.25)}
+.cl-barra[hidden]{display:none}
+.cl-feitas summary{cursor:pointer;font-weight:600;font-size:15px}
+.cl-feitas summary small{font-weight:500;color:#6b6b6b}
+.cl-feitas table{margin-top:12px}
+
+.cl-leitura{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
+.cl-leitura p{margin:0 0 4px}
+.cl-leitura small{color:#6b6b6b}
+.fin-modal.cl-modal-largo{width:min(1080px,96vw)}
+.cl-alt-linha{padding:10px 12px;border-radius:10px;background:#f6f7f9;font-size:14px;margin-bottom:10px}
+.cl-alt-linha .pos{color:#1f7a44}.cl-alt-linha .neg{color:#b0362d}
+.cl-alt-motivo{display:flex;gap:8px;align-items:center;font-size:13px;color:#4f4f4f;margin:0 0 12px}
+.cl-alt-tipos{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.cl-alt-tipos button{height:36px;padding:0 14px;border-radius:999px;border:1px solid #dfe4ea;background:#fff;font:600 13px Inter,sans-serif;cursor:pointer;color:#4f4f4f}
+.cl-alt-tipos button.ativa{background:#123f86;border-color:#123f86;color:#fff}
+.cl-alt-tit{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto;margin-top:10px}
+.cl-alt-t{display:grid;grid-template-columns:auto 1fr auto 110px;gap:10px;align-items:center;padding:8px 10px;border:1px solid #e3e7ec;border-radius:10px;cursor:pointer;font-size:13px}
+.cl-alt-t small{display:block;color:#6b6b6b;font-size:12px}
+.cl-alt-t:has(input:checked){border-color:#123f86;background:#f5f8fd}
+.cl-alt-v{height:32px;border:1px solid #dfe4ea;border-radius:8px;padding:0 8px;font:13px Inter,sans-serif;width:100%;box-sizing:border-box;text-align:right}
+.cl-dica{font-size:13px;color:#6b6b6b;margin:6px 0 10px}
+
+.cl-dre select{height:34px;border:1px solid #dfe4ea;border-radius:8px;font:13px Inter,sans-serif;max-width:230px;background:#fff}
+.cl-dre-modo{display:inline-flex;border:1px solid #dfe4ea;border-radius:999px;overflow:hidden;background:#fff}
+.cl-dre-modo button{height:38px;padding:0 14px;border:0;background:none;font:600 13px Inter,sans-serif;color:#4f4f4f;cursor:pointer}
+.cl-dre-modo button.ativa{background:#123f86;color:#fff}
+.cl-dre-centros{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(460px,100%),1fr));gap:16px}
+.cl-dre-centros .fin-bloco{margin:0}
+.cl-sem-centro{border-style:dashed}
+
+/* Conversa com a Clara: coluna fixa à direita da conciliação (pedido: "em uma coluna ao invés de um botão") */
+.cl-layout{display:grid;grid-template-columns:minmax(0,1fr) clamp(320px,26vw,420px);gap:18px;align-items:start}
+.cl-main{min-width:0}
+.cl-chat{position:sticky;top:12px;height:calc(100vh - 150px);min-height:420px;display:flex;flex-direction:column;background:#fff;border:1px solid #e3e7ec;border-radius:18px;box-shadow:0 0 8px rgba(15,23,42,.08);overflow:hidden}
+.cl-chat header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #e9ecf0}
+.cl-chat header div{flex:1}
+.cl-chat header small{display:block;font-size:11px;color:#6b6b6b}
+.cl-chat-msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:#f7f9fb}
+.cl-msg{max-width:92%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.45;background:#fff;border:1px solid #e3e7ec;align-self:flex-start}
+.cl-msg.user{align-self:flex-end;background:#123f86;color:#fff;border-color:#123f86}
+.cl-msg.pensando{display:flex;gap:4px}
+.cl-msg.pensando span{width:6px;height:6px;border-radius:50%;background:#9aa5b5;animation:cl-ponto 1s infinite}
+.cl-msg.pensando span:nth-child(2){animation-delay:.15s}.cl-msg.pensando span:nth-child(3){animation-delay:.3s}
+@keyframes cl-ponto{50%{opacity:.25}}
+.cl-sugs{display:flex;flex-wrap:wrap;gap:6px}
+.cl-sugs button{border:1px solid #c9d6ee;background:#fff;color:#123f86;border-radius:999px;padding:6px 10px;font:600 12px Inter,sans-serif;cursor:pointer}
+.cl-chat form{display:flex;gap:8px;padding:10px;border-top:1px solid #e9ecf0}
+.cl-chat form input{flex:1;height:38px;border:1px solid #dfe4ea;border-radius:10px;padding:0 12px;font:14px Inter,sans-serif}
+
+@media (max-width:1200px){
+  .cl-layout{grid-template-columns:1fr}
+  .cl-chat{position:static;height:520px}
+}
+@media (max-width:1100px){
+  .cl-hero{grid-template-columns:auto 1fr}
+  .cl-drop{grid-column:1 / -1}
+}
+@media (max-width:640px){
+  .cl-hero{grid-template-columns:1fr}
+  .cl-av.grande{width:48px;height:48px;font-size:22px}
+  .cl-alt-t{grid-template-columns:auto 1fr}
+  .cl-alt-t .num,.cl-alt-t .cl-alt-v{grid-column:2}
+  .cl-barra{flex-direction:column;align-items:stretch}
+}
+@media (prefers-reduced-motion:reduce){ .cl-giro,.cl-msg.pensando span{animation:none} }
+.cl-saldo-res small{display:block;text-transform:none;letter-spacing:0;font-weight:500;color:#6b6b6b;font-size:12px;margin-top:2px}
+
+/* ---------------- Aba Bancos: lista de contas | conciliar ou extrato | conversa com a Clara ---------------- */
+.bk-layout{display:grid;grid-template-columns:240px minmax(0,1fr) clamp(300px,24vw,380px);gap:18px;align-items:start}
+.bk-contas{position:sticky;top:12px;display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid #e3e7ec;border-radius:18px;padding:10px;box-shadow:0 0 8px rgba(15,23,42,.08)}
+.bk-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;padding:10px 12px;border:1px solid transparent;border-radius:12px;background:none;cursor:pointer;font:14px Inter,sans-serif;color:#1f2020}
+.bk-item:hover{background:#f5f8fd}
+.bk-item.ativa{background:#eaf0fa;border-color:#c9d6ee}
+.bk-item-nome{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;font-weight:600}
+.bk-item small{font-size:12px;color:#6b6b6b}
+.bk-item-saldo{font-size:16px;margin-top:2px}
+.bk-pend{min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#e60012;color:#fff;font-size:11px;font-weight:700;display:inline-grid;place-items:center}
+.bk-sep{height:1px;background:#e9ecf0;margin:4px 6px}
+.bk-config .bk-item-nome{font-weight:600;color:#4f4f4f}
+.bk-main{min-width:0}
+.bk-cab{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:14px}
+.bk-cab h2{margin:0;font:600 26px "Cormorant Garamond",Georgia,serif}
+.bk-cab h2 small{font:500 13px Inter,sans-serif;color:#6b6b6b;margin-left:6px}
+.bk-cab .fin-esp{flex:1}
+.bk-modos{display:inline-flex;border:1px solid #dfe4ea;border-radius:999px;overflow:hidden;background:#fff}
+.bk-modos button{height:38px;padding:0 16px;border:0;background:none;font:600 13px Inter,sans-serif;color:#4f4f4f;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.bk-modos button.ativa{background:#123f86;color:#fff}
+.bk-modos button b{min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#e60012;color:#fff;font-size:11px;display:inline-grid;place-items:center}
+.bk-resumo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.bk-resumo div{background:#fff;border:1px solid #e3e7ec;border-radius:14px;padding:12px 16px;box-shadow:0 0 8px rgba(15,23,42,.06)}
+.bk-resumo small{display:block;font-size:11px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em}
+.bk-resumo b{font-size:19px}
+.bk-extrato .fin-tabela td small{display:inline;color:#6b6b6b;font-size:12px}
+.bk-extrato .fin-tabela td small.bk-feito{display:block;margin-top:2px;color:#6b6b6b}
+.bk-dia td{background:#f6f8fb;font-weight:600;font-size:13px;color:#4f4f4f;text-transform:capitalize}
+.bk-dia td.num{text-transform:none;font-weight:500}
+.bk-dia td.num b{margin-left:6px;color:#1f2020}
+.bk-abertas{display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid #e3e7ec;border-radius:14px;padding:12px 16px;margin-bottom:14px}
+.bk-aberta{display:grid;grid-template-columns:1fr 180px;gap:14px;align-items:center}
+.bk-aberta small{display:block;font-size:12px;color:#6b6b6b}
+.bk-barra{height:8px;border-radius:999px;background:#eef0f3;overflow:hidden}
+.bk-barra span{display:block;height:100%;background:#2f9a5d;border-radius:999px}
+.bk-abertas-dica{font-size:12px;color:#6b6b6b}
+@media (max-width:1300px){
+  .bk-layout{grid-template-columns:220px minmax(0,1fr)}
+  .bk-layout .cl-chat{grid-column:1 / -1;position:static;height:480px}
+}
+@media (max-width:860px){
+  .bk-layout{grid-template-columns:1fr}
+  .bk-contas{position:static;flex-direction:row;overflow-x:auto}
+  .bk-item{min-width:180px}
+  .bk-sep{display:none}
+  .bk-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+html:root:is(#bk-a,#bk-b,#bk-c,html) .bk-extrato .fin-tabela th.num,html:root:is(#bk-a,#bk-b,#bk-c,html) .bk-extrato .fin-tabela td.num{text-align:right}
+.bk-modos .tab-badge{position:static;margin-left:4px}
+.cl-envio{margin-bottom:14px}
+.cl-envio .cl-drop{min-height:64px;flex-direction:row;gap:10px;background:#fff}
+.cl-envio .cl-etapa{margin-top:8px}
+
+/* Bancos sem a coluna de conversa (a Clara virou aba própria) */
+.bk-layout{grid-template-columns:240px minmax(0,1fr)}
+@media (max-width:1300px){ .bk-layout{grid-template-columns:220px minmax(0,1fr)} }
+@media (max-width:860px){ .bk-layout{grid-template-columns:1fr} }
+
+/* ---------------- Aba "Clara": mesmo desenho da conversa da Helena (catalogo-assistente.css) ---------------- */
+.ch-tela{display:flex;height:calc(100vh - 140px);min-height:540px;border:1px solid #e8e1d6;border-radius:20px;overflow:hidden;background:#f4f1ec;color:#2f2b27;box-shadow:0 0 8px rgba(31,24,19,.08)}
+.ch-conversa{display:flex;flex:1;flex-direction:column;min-width:0}
+.ch-msgs{flex:1;overflow-y:auto;background:radial-gradient(circle at 20% 0%,rgba(196,163,122,.10),transparent 42%),#f4f1ec}
+.ch-coluna{display:flex;flex-direction:column;gap:14px;width:min(720px,100%);min-height:100%;margin:0 auto;padding:28px clamp(14px,3vw,32px) 18px;box-sizing:border-box}
+.ch-avatar{display:grid;flex:none;width:40px;height:40px;place-items:center;border-radius:50%;background:linear-gradient(145deg,#c4a37a,#8f6d47);color:#fff;font:500 1.25rem "Cormorant Garamond",serif}
+.ch-avatar.is-xl{width:88px;height:88px;font-size:2.8rem;box-shadow:0 14px 34px rgba(143,109,71,.28)}
+.ch-boasvindas{display:flex;flex-direction:column;align-items:center;gap:12px;margin:auto 0 8px;padding-top:4vh;text-align:center}
+.ch-boasvindas p{max-width:520px;margin:0;color:#6c655d;font-size:1rem;line-height:1.6}
+.ch-sugestoes{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-bottom:auto}
+.ch-sugestoes button{padding:10px 16px;border:1px solid rgba(177,138,90,.45);border-radius:999px;background:#fff;color:#6f5537;font:600 .85rem Inter,sans-serif;cursor:pointer}
+.ch-sugestoes button:hover,.ch-sugestoes button:focus-visible{background:#b18a5a;color:#fff;border-color:#b18a5a;outline:none}
+.ch-msg{display:flex;flex-direction:column;gap:8px;max-width:min(82%,600px)}
+.ch-msg.is-bot{align-self:flex-start}
+.ch-msg.is-eu{align-self:flex-end;align-items:flex-end}
+.ch-bubble{padding:12px 16px;border-radius:18px 18px 18px 6px;background:#fff;box-shadow:0 1px 2px rgba(31,24,19,.06);font-size:1rem;line-height:1.55;overflow-wrap:anywhere;color:#2f2b27}
+.is-eu .ch-bubble{border-radius:18px 18px 6px 18px;background:#5a5a55;color:#fff}
+.ch-bubble p{margin:0 0 6px}.ch-bubble p:last-child{margin-bottom:0}
+.ch-bubble ul,.ch-bubble ol{margin:4px 0 8px;padding-left:20px}
+.ch-bubble li{margin:3px 0}
+.ch-bubble strong{font-weight:700}
+.ch-digitando{display:flex;gap:5px;padding:15px 18px}
+.ch-digitando i{width:8px;height:8px;border-radius:50%;background:#a49a8d;animation:ch-pulo 1.1s infinite ease-in-out}
+.ch-digitando i:nth-child(2){animation-delay:.15s}.ch-digitando i:nth-child(3){animation-delay:.3s}
+@keyframes ch-pulo{0%,60%,100%{transform:translateY(0);opacity:.6}30%{transform:translateY(-5px);opacity:1}}
+.ch-form{flex:none;padding:12px clamp(14px,3vw,32px) 14px;border-top:1px solid #e8e1d6;background:#fbfaf7}
+.ch-form-in{display:flex;align-items:flex-end;gap:10px;width:min(720px,100%);margin:0 auto}
+.ch-form-dica{display:block;width:min(720px,100%);margin:6px auto 0;padding-left:18px;color:#a39a8f;font-size:.75rem;box-sizing:border-box}
+.ch-send{display:grid;flex:none;width:48px;height:48px;place-items:center;border:0;border-radius:50%;background:#5a5a55;color:#fff;cursor:pointer}
+.ch-send:hover,.ch-send:focus-visible{background:#b18a5a;outline:none}
+.ch-send:disabled{opacity:.5;cursor:wait}
+.ch-send svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+/* o tema do sistema força altura, borda, fonte e cor de campos e títulos: estas vencem */
+html:root:is(#ch-a,#ch-b,#ch-c,#ch-d,#ch-e,#ch-f,html) .ch-form textarea{flex:1;height:48px;min-height:48px!important;max-height:160px;margin:0;width:auto;padding:13px 18px!important;border:1px solid #e3dccf!important;border-radius:24px!important;background:#fff!important;color:#2f2b27;font-size:1rem;line-height:1.45;resize:none;box-shadow:none!important;box-sizing:border-box}
+html:root:is(#ch-a,#ch-b,#ch-c,#ch-d,#ch-e,#ch-f,html) .ch-form textarea:focus{outline:none;border-color:#b18a5a!important}
+html:root:is(#ch-a,#ch-b,#ch-c,#ch-d,#ch-e,#ch-f,html) .ch-boasvindas h2{margin:6px 0 0;font:500 clamp(1.9rem,3vw,2.5rem)/1.15 "Cormorant Garamond",serif!important;color:#2f2b27!important;letter-spacing:0;text-transform:none}
+html:root:is(#ch-a,#ch-b,#ch-c,#ch-d,#ch-e,#ch-f,html) .ch-lado h3{margin:0;font:500 2.1rem/1.1 "Cormorant Garamond",serif!important;color:#2f2b27!important;text-transform:none;letter-spacing:0}
+/* painel à direita: panorama do financeiro */
+.ch-lado{display:flex;flex:none;flex-direction:column;width:clamp(360px,34vw,560px);overflow:hidden;padding:32px clamp(24px,2.6vw,40px);border-left:1px solid #e8e1d6;background:#fff;box-sizing:border-box}
+.ch-carregando{margin:auto;color:#77716a;font-size:.95rem}
+.ch-lado-kicker{margin:0 0 6px;color:#b18a5a;font:700 .75rem Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase}
+.ch-lado-sub{margin:8px 0 22px;color:#77716a;font-size:.85rem;line-height:1.4}
+.ch-lado-blocos{display:flex;flex:1;flex-direction:column;gap:20px;min-height:0;overflow-y:auto;margin-right:-10px;padding-right:10px}
+.ch-lado-blocos h4{display:flex;justify-content:space-between;margin:0 0 8px;padding-bottom:8px;border-bottom:1px solid #eee8de;font:600 .8rem Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#2f2b27}
+.ch-lado-blocos h4 b{color:#b18a5a;letter-spacing:0}
+.ch-lado-blocos ul{display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}
+.ch-lado-item{display:flex;align-items:center;gap:12px;width:100%;padding:8px 10px;margin:0 -10px;width:calc(100% + 20px);border:0;border-radius:12px;background:none;text-align:left;cursor:pointer;font:inherit;color:#2f2b27}
+.ch-lado-item:hover,.ch-lado-item:focus-visible{background:#f8f4ee;outline:none}
+.ch-lado-item > span:not(.fin-logo-conta){display:flex;flex:1;flex-direction:column;min-width:0}
+.ch-lado-item b{font-weight:600;font-size:.95rem}
+.ch-lado-item small{color:#8a8279;font-size:.75rem}
+.ch-lado-item em{font-style:normal;font-weight:700;color:#6f5537;font-size:.95rem;white-space:nowrap}
+.ch-lado-item.alerta b{color:#b0362d}
+.ch-lado-nada{color:#a39a8f;font-size:.8rem}
+.ch-lado-total{margin:20px 0 14px;padding-top:16px;border-top:1px solid #eee8de;color:#2f2b27;font:500 1.35rem "Cormorant Garamond",serif}
+.ch-lado-nova{flex:none;height:52px;border:0;border-radius:999px;background:#5a5a55;color:#fff;font:600 .85rem Inter,sans-serif;letter-spacing:.03em;cursor:pointer}
+.ch-lado-nova:hover,.ch-lado-nova:focus-visible{background:#b18a5a;outline:none}
+@media (max-width:1100px){ .ch-lado{display:none} }
+@media (max-width:640px){ .ch-msg{max-width:92%} .ch-form-dica{display:none} }
+@media (prefers-reduced-motion:reduce){ .ch-digitando i{animation:none} }
+
+/* Foto da conta (logo do banco) */
+.fin-logo-conta{width:40px;height:40px;flex:none;border-radius:12px;background:#eef2f8;border:1px solid #e3e7ec;display:inline-grid;place-items:center;overflow:hidden;font:700 13px Inter,sans-serif;color:#123f86;letter-spacing:.02em}
+.fin-logo-conta img{width:100%;height:100%;object-fit:contain;padding:4px;box-sizing:border-box;background:#fff}
+.fin-logo-conta.mini{width:26px;height:26px;border-radius:8px;font-size:10px;margin-left:-8px;box-shadow:0 0 0 2px #fff}
+.fin-logo-conta.mini:first-child{margin-left:0}
+.fin-logo-conta.cab{width:36px;height:36px;vertical-align:middle;margin-right:10px}
+.bk-item{flex-direction:row;align-items:center;gap:12px}
+.bk-item-txt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.bk-logos{display:flex;flex:none;width:40px;flex-wrap:wrap;justify-content:center}
+.bk-cab h2{display:flex;align-items:center}
+.fin-conta-tit{display:flex;align-items:center;gap:10px}
+.fin-logo-campo{display:flex;align-items:center;gap:14px;padding:12px;border:1px dashed #dfe4ea;border-radius:14px}
+.fin-logo-campo b{display:block;font-size:13px;color:#1f2020}
+.fin-logo-campo small{display:block;font-size:12px;color:#6b6b6b;font-weight:500;margin:2px 0 8px}
+.fin-logo-prev{width:64px;height:64px;flex:none;border-radius:16px;background:#eef2f8;border:1px solid #e3e7ec;display:grid;place-items:center;overflow:hidden;font:700 20px Inter,sans-serif;color:#123f86}
+.fin-logo-prev img{width:100%;height:100%;object-fit:contain;padding:6px;box-sizing:border-box;background:#fff}
+.fin-logo-acoes{display:flex;gap:8px}
+.fin-logo-acoes [hidden]{display:none}
+.bk-logos{flex-wrap:nowrap;width:auto;min-width:40px;justify-content:flex-start}
+.bk-logos .fin-logo-conta.mini{width:24px;height:24px;margin-left:-10px}
+.bk-logos .fin-logo-conta.mini:first-child{margin-left:0}
+.bk-engrenagem{font-size:18px;color:#4f4f4f;background:#f3f5f8}
+/* Linha do dia no extrato: cinza um pouco mais escuro, para separar os dias de relance */
+html:root:is(#bk-d1,#bk-d2,#bk-d3,#bk-d4,html) .bk-extrato .fin-tabela tr.bk-dia td{background:#e7ebf1;border-top:1px solid #d6dce5;border-bottom:1px solid #d6dce5}
+/* Foto da conta ocupa o quadro inteiro (pedido: "encaixar no espaço todo, maior e mais visível") */
+html:root:is(#fl-a,#fl-b,#fl-c,html) .fin-logo-prev img,html:root:is(#fl-a,#fl-b,#fl-c,html) .fin-logo-conta img{object-fit:cover;padding:0;width:100%;height:100%}
+html:root:is(#ch-a,#ch-b,#ch-c,#ch-d,#ch-e,#ch-f,html) .ch-avatar{font-family:"Cormorant Garamond",serif!important;font-weight:500}
+html:root:is(#ch-a,#ch-b,#ch-c,#ch-d,#ch-e,#ch-f,html) .ch-lado-total{font-family:"Cormorant Garamond",serif!important;font-weight:500}
+html body .ch-tela :is(.ch-avatar,#ch-x#ch-y#ch-z){color:#fff!important}
+/* Extrato: colunas Conciliação e DRE */
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .bk-extrato .fin-tabela td.bk-conc{max-width:340px;color:#4f4f4f;font-size:13px;line-height:1.4}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .bk-extrato .fin-tabela td.bk-dre{min-width:170px;font-size:13px;line-height:1.35}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .bk-extrato .fin-tabela td.bk-dre div+div{margin-top:6px}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .bk-extrato .fin-tabela td.bk-dre b{display:block;font-weight:600;color:#1f2020}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .bk-extrato .fin-tabela td.bk-dre span{display:block;color:#4f4f4f}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .bk-extrato .fin-tabela td.bk-dre small{display:block;color:#6b6b6b;font-size:12px}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .bk-extrato .fin-tabela .bk-sem{color:#9a9a9a}
+/* Conciliar: mesmas colunas do extrato (Descrição · Conciliação · Conta · Entrada · Saída · DRE) */
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela tr.bk-dia td{background:#e7ebf1;border-top:1px solid #d6dce5;border-bottom:1px solid #d6dce5;box-shadow:none}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela td.bk-conc{max-width:380px;color:#4f4f4f;font-size:13px;line-height:1.4}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela td.bk-dre{min-width:170px;font-size:13px;line-height:1.35}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela td.bk-dre div+div{margin-top:6px}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela td.bk-dre b{display:block;font-weight:600;color:#1f2020}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela td.bk-dre span{display:block;color:#4f4f4f}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela td.bk-dre small{display:block;color:#6b6b6b;font-size:12px;margin:0}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela .bk-sem{color:#9a9a9a}
+html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela th.num,html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela td.num{text-align:right;white-space:nowrap}
+/* Caixa físico: entrada e saída manuais */
+.bk-cab.bk-cab-caixa{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bk-cab-caixa .bk-caixa-txt{font-size:14px;color:#4f4f4f}
+.cl-caixa-campos{margin-bottom:6px}

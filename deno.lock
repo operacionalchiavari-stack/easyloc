@@ -22,6 +22,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@electric-sql/pglite-pgvector@^0.0.12",
         "npm:@electric-sql/pglite@~0.5.10",
         "npm:@google/model-viewer@^3.5.0",
         "npm:@supabase/supabase-js@^2.93.3",
@@ -30,6 +31,7 @@
         "npm:express@^4.18.0",
         "npm:openai@^6.17.0",
         "npm:pdfjs-dist@^5.4.149",
+        "npm:pg@^8.23.1",
         "npm:playwright@^1.63.0",
         "npm:supabase@^2.107.0",
         "npm:three@~0.166.1"

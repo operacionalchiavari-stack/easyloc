@@ -2,3 +2,184 @@
 .ac-demo-barra{align-items:center}.ac-demo-barra #acExemplos{flex:0 0 auto;padding:10px 16px;border:1px solid #467f68;border-radius:9px;background:#fff;color:#32654f;font:600 13px Inter,sans-serif;cursor:pointer}.ac-demo-barra #acExemplos:disabled{opacity:.5}.ac-demo-barra #acExemploAviso{font-size:13px;color:#806015;background:#fff5d9;border:1px solid #ead49b;border-radius:9px;padding:10px 14px}.ac-demo-barra #acExemploAviso[hidden]{display:none}
 .ac-painel-filtros{display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap}.ac-painel-filtros input{flex:1;min-width:200px}.ac-painel-filtros input,.ac-painel-filtros select,.ac-painel-filtros button,.ac-vinculo select,.ac-vinculo button,#acAbrirOS{font:inherit;border:1px solid #dce4ec;border-radius:9px;padding:10px 13px;background:#fff;color:#29445b}.ac-painel-filtros a{font-size:12px;color:#497d69}.ac-resumo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}.ac-indicador{border:1px solid #dce4ec;border-left:3px solid var(--ac-cor);background:#fff;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px}.ac-indicador span{font-size:12px;color:#60758a}.ac-indicador strong{font-size:25px;color:var(--ac-cor)}.azul{--ac-cor:#467fb1}.laranja{--ac-cor:#ba8541}.verde{--ac-cor:#45856a}.vermelho{--ac-cor:#c15b59}.ac-quadro{display:grid;grid-template-columns:repeat(4,minmax(260px,1fr));gap:16px;align-items:start;overflow-x:auto;padding-bottom:14px}.ac-coluna{background:#eef1f4;border:1px solid #dfe6ed;border-radius:14px;overflow:hidden}.ac-coluna>header{padding:16px;display:flex;align-items:center;justify-content:space-between;border-top:3px solid var(--ac-cor);background:#fff}.ac-coluna>header h3{font:600 14px Inter,sans-serif;margin:0}.ac-coluna>header>span{background:#edf2f5;border-radius:7px;padding:3px 8px;font-size:12px;color:#4f657a}.ac-coluna-lista{padding:10px;display:grid;gap:10px;max-height:calc(100vh - 340px);min-height:350px;overflow-y:auto;align-content:start}.ac-operacao{display:block;width:100%;min-width:0;text-align:left;border:1px solid #dce4ec;border-radius:12px;padding:13px;background:#fff;color:#233b51;font:12px Inter,sans-serif;line-height:1.5}.ac-operacao:is(button){cursor:pointer;transition:border-color .15s,box-shadow .15s}.ac-operacao:is(button):hover{border-color:#85b19e;box-shadow:0 2px 10px #467f681a}.ac-operacao.avaria{border-left:3px solid #d39b4e}.ac-operacao.falta,.ac-operacao.risco{border-left:3px solid #cf6b65}.ac-card-top{display:flex;gap:10px;align-items:center;margin-bottom:12px}.ac-card-top img,.ac-sem-foto{width:58px;height:58px;flex:0 0 58px;object-fit:contain;background:#f7f9fa;border:1px solid #edf0f3;border-radius:9px}.ac-sem-foto{display:grid;place-items:center;font-size:26px;color:#99a9b5}.ac-card-top b{font-size:13px;display:block}.ac-card-top span:not(.ac-sem-foto){display:block;color:#6a7f91;margin-top:4px}.ac-card-selos{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.ac-card-selos span{font-size:10px;padding:3px 7px;border-radius:5px;background:#eef3f8;color:#4d6b88}.ac-card-selos .ac-tipo{background:#fff1d9;color:#946926}.ac-card-rodape{display:flex;justify-content:space-between;gap:6px;font-size:11px;margin:10px 0;color:#6a7f91}.ac-card-rodape b{color:#355c7c}.ac-card-link{display:block;font-size:11px;color:#467f68;margin-top:10px}.ac-alerta{border-radius:6px;padding:7px 9px;background:#f4f6f8;font-size:11px;color:#6c7884}.ac-alerta.vermelho{background:#fff0ef;color:#ae514d}.ac-alerta.verde{background:#edf7f1;color:#42785c}.ac-coluna-vazia{font-size:12px;color:#7b8b99;padding:24px 12px;text-align:center}.ac-evento>strong{display:block;font-size:13px}.ac-evento>small{font-size:11px;color:#7b8b99}.ac-evento-item{display:flex;gap:9px;padding-top:12px;margin-top:12px;border-top:1px solid #edf1f4}.ac-evento-item img{width:40px;height:40px;object-fit:contain}.ac-evento-item .ac-sem-foto{width:40px;height:40px;flex-basis:40px}.ac-evento-item b,.ac-evento-item span,.ac-evento-item em{display:block;font-size:11px}.ac-evento-item em{color:#b34f47;font-style:normal;font-weight:600;margin-top:4px}.ac-saldo-ok{color:#45856a}.ac-dialogo{border:1px solid #dce4ec;border-radius:16px;padding:22px;width:min(850px,92vw);max-height:88vh;overflow:auto;color:#233b51;background:#f7f9fb}.ac-dialogo::backdrop{background:#182b3b66}.ac-dialogo-topo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.ac-dialogo-topo h2{font:600 18px Inter,sans-serif;letter-spacing:0;margin:0}.ac-dialogo-topo button{border:0;border-radius:8px;background:#e9eef2;color:#496173;font-size:24px;cursor:pointer;padding:2px 12px}.ac-os-dialogo{width:min(1300px,95vw);height:88vh}.ac-os-dialogo iframe{width:100%;height:calc(100% - 55px);border:0;border-radius:9px;background:#fff}.ac-vinculo{padding:18px;border:1px solid #dce4ec;border-radius:12px;background:#fff}.ac-vinculo h3{font-size:14px}.ac-vinculo form{display:flex;align-items:end;gap:10px;flex-wrap:wrap}.ac-vinculo label{display:grid;gap:8px;flex:1;font-size:12px}.ac-vinculo button{cursor:pointer}.ac-vinculo button:disabled{opacity:.45}main.el-page:has(.ac-quadro){padding-inline:20px}@media(max-width:800px){.ac-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}.ac-quadro{grid-template-columns:repeat(4,280px)}.ac-coluna-lista{max-height:65vh}.ac-painel-filtros input{flex-basis:100%}.ac-dialogo{padding:14px}.ac-painel-filtros{gap:8px}}
 main.el-page .ac-painel-filtros input{width:auto!important;flex:1 1 240px}main.el-page .ac-painel-filtros select{width:auto!important;flex:0 1 200px}main.el-page .ac-painel-filtros button{width:auto!important;flex:0 0 auto}.ac-coluna-lista{max-height:calc(100vh - 430px)}@media(max-width:800px){main.el-page .ac-painel-filtros input{flex-basis:100%}.ac-coluna-lista{max-height:65vh}}
+
+/* Divergências de contagem (out/2026) */
+.dv-intro{margin:4px 0 14px;color:#4f5b6b;font-size:14px}
+.dv-item header{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.dv-item header h3{margin:0;font-size:17px}
+.dv-item header small{color:#6b6b6b}
+.dv-foto{flex:none;width:64px;height:64px;border-radius:12px;overflow:hidden;background:#f3f5f6}
+.dv-foto img{width:100%;height:100%;object-fit:contain}
+.dv-status{margin-left:auto;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.dv-status.pend{background:#fde8e8;color:#b42318}
+.dv-status.contada{background:#fdf6dd;color:#8a6200}
+.dv-contar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;padding:14px;border:1px dashed #c9d8f0;border-radius:12px;background:#f7f9fd}
+.dv-contar label{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:14px;flex:1;min-width:260px}
+.dv-contar label small{font-weight:400;color:#6b6b6b}
+.dv-contar input{max-width:160px;min-height:44px;padding:0 12px;border:1px solid #cfd6df;border-radius:10px;font:700 18px Inter,sans-serif}
+.dv-conta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:#f7f9fb}
+.dv-conta>div{display:flex;flex-direction:column}
+.dv-conta small{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#77808f}
+.dv-conta b{font-size:18px}
+.dv-conta>span{color:#9aa3af;font-size:18px}
+.dv-contado{margin-left:auto;padding:6px 14px;border-radius:10px;background:#eaf0fa}
+.dv-contado em{font-style:normal;font-size:12px;color:#6b6b6b}
+.dv-sugestao{margin:10px 0 0;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.5}
+.dv-sugestao.is-ok{background:#e6f4ea;color:#14532d}
+.dv-sugestao.is-perda{background:#fde8e8;color:#7f1d1d}
+.dv-rolar{overflow-x:auto;margin-top:12px}
+.dv-tabela{width:100%;border-collapse:collapse;font-size:14px}
+html:root:is(#dv-t#dv-t#dv-t#dv-t#dv-t,html) .dv-tabela th{padding:8px 10px;border-bottom:1px solid #e3e7ec;background:#fff;color:#6b6b6b;font:600 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:.04em;text-align:left}
+html:root:is(#dv-t#dv-t#dv-t#dv-t#dv-t,html) .dv-tabela td{padding:10px;border-bottom:1px solid #eef1f4;vertical-align:top}
+.dv-tabela td small{display:block;color:#6b6b6b;font-size:12px}
+.dv-tipo{display:inline-block;margin-top:6px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.dv-tipo.falta{background:#fde8e8;color:#b42318}
+.dv-tipo.sobra{background:#fdf6dd;color:#8a6200}
+.dv-hist{display:grid;grid-template-columns:repeat(5,minmax(86px,1fr));gap:6px}
+.dv-h{padding:6px 8px;border-radius:8px;background:#f7f9fb}
+.dv-h small{display:block;font-size:11px;color:#77808f;line-height:1.2;margin-bottom:2px}
+.dv-h b{font-size:16px}
+.dv-h.is-dif{background:#fff7e6}
+.dv-h-1{color:#9aa3af;text-decoration:line-through}
+.dv-resolver{min-width:220px}
+.dv-resolver label{display:flex;flex-direction:column;gap:4px;margin-bottom:6px;font-size:12px;font-weight:600}
+.dv-resolver input,.dv-resolver select{min-height:36px;padding:0 8px;border:1px solid #dfe4ea;border-radius:8px;font:14px Inter,sans-serif}
+.dv-espera{color:#8a6200!important}
+.dv-sem{color:#6b6b6b}
+.dv-resolvidas summary{cursor:pointer;font-weight:600}
+.dv-resolvidas li{margin:6px 0;font-size:14px}
+
+/* Divergências em tabela (out/2026, pedido do usuário: "não quero em formato de card, quero formato de tabela, mais fino").
+   Uma linha por divergência; item e contagem geral ficam nas linhas do mesmo item (rowspan). Abaixo de 1100px cada
+   linha vira duas colunas (cada célula em cima da outra, com o título pequeno). */
+.dv-card-tabela{padding:0!important;overflow:hidden}
+.dv-card-tabela .dv-rolar{margin:0}
+html:root:is(#dv-t#dv-t#dv-t#dv-t#dv-t,html) .dv-tabela{font-size:13px}
+html:root:is(#dv-t#dv-t#dv-t#dv-t#dv-t,html) .dv-tabela th{padding:9px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+html:root:is(#dv-t#dv-t#dv-t#dv-t#dv-t,html) .dv-tabela td{padding:8px 10px;vertical-align:top;border-bottom:1px solid #eef1f4}
+html:root:is(#dv-t#dv-t#dv-t#dv-t#dv-t,html) .dv-tabela tr.dv-primeira>td{border-top:2px solid #dfe4ea}
+html:root:is(#dv-t#dv-t#dv-t#dv-t#dv-t,html) .dv-tabela td.dv-c-item,html:root:is(#dv-t#dv-t#dv-t#dv-t#dv-t,html) .dv-tabela td.dv-c-contagem{background:#fbfcfd}
+.dv-c-item{width:22%;min-width:200px}
+.dv-item-id{display:flex;gap:10px;align-items:flex-start}
+.dv-item-id b{display:block;font-size:13px;line-height:1.3}
+.dv-tabela .dv-foto{width:40px;height:40px;border-radius:8px;flex:none}
+.dv-tabela .dv-status{display:inline-block;margin:5px 0 0;padding:2px 8px;font-size:11px}
+.dv-c-pedido{width:16%;min-width:150px}
+.dv-c-pedido b{display:block}
+.dv-tabela .dv-tipo{margin-top:4px;padding:1px 8px;font-size:11px}
+.dv-c-hist{min-width:300px}
+.dv-tabela .dv-hist{display:flex;gap:4px;flex-wrap:wrap}
+.dv-tabela .dv-h{display:flex;flex-direction:column;align-items:center;min-width:52px;padding:3px 6px;border-radius:6px;background:#f5f7f9;line-height:1.15}
+.dv-tabela .dv-h small{font-size:9.5px;margin:0;white-space:nowrap}
+.dv-tabela .dv-h b{font-size:14px}
+.dv-tabela .dv-h s{color:#9aa3af;margin-right:2px}
+.dv-tabela .dv-h-por{margin-top:3px;font-size:11px}
+.dv-c-contagem{width:22%;min-width:230px}
+.dv-tabela .dv-contar{display:flex;align-items:flex-end;gap:8px;padding:0;border:0;background:none;flex-wrap:nowrap}
+.dv-tabela .dv-contar label{min-width:0;flex:1;font-size:12px;gap:4px}
+.dv-tabela .dv-contar input{max-width:none;width:100%;min-height:34px;font-size:15px}
+.dv-tabela .dv-contar .btn{min-height:34px;padding:0 12px;white-space:nowrap}
+.dv-tabela .dv-conta{display:flex;flex-wrap:wrap;gap:2px 8px;padding:0;background:none;font-size:12px;color:#4f5b6b}
+.dv-tabela .dv-conta>span{color:inherit;font-size:12px}
+.dv-tabela .dv-conta b{font-size:13px}
+.dv-tabela .dv-deveria b{color:#123f86}
+.dv-tabela .dv-contado{margin:0;padding:1px 7px;border-radius:6px}
+.dv-tabela .dv-contado em{display:none}
+.dv-tabela .dv-sugestao{margin:6px 0 0;padding:5px 8px;font-size:12px;line-height:1.4;border-radius:7px}
+.dv-tabela .dv-resolver{min-width:260px}
+.dv-resolver-linha{display:flex;gap:6px;align-items:flex-end}
+.dv-tabela .dv-resolver label{margin:0;font-size:11px}
+.dv-tabela .dv-resolver label:first-child input{width:64px}
+.dv-tabela .dv-resolver label:nth-child(2){flex:1;min-width:0}
+.dv-tabela .dv-resolver select{width:100%}
+.dv-tabela .dv-resolver input,.dv-tabela .dv-resolver select,.dv-tabela .dv-resolver .btn{min-height:32px}
+.dv-tabela .dv-resolver .btn{padding:0 10px}
+.dv-tabela .dv-espera{color:#8a6200!important;font-size:12px}
+@media(max-width:1100px){
+ .dv-tabela thead{display:none}
+ .dv-tabela,.dv-tabela tbody,.dv-tabela tr{display:block}
+ .dv-tabela tr{display:grid;grid-template-columns:1fr 1fr;border-top:2px solid #dfe4ea}
+ html:root:is(#dv-t#dv-t#dv-t#dv-t#dv-t,html) .dv-tabela td{display:block;width:auto;min-width:0;border-bottom:0}
+}
+.dv-tabela .dv-hist{flex-wrap:nowrap}
+.dv-tabela .dv-h{min-width:0;flex:1 1 0}
+.dv-tabela .dv-h-v{white-space:nowrap}
+.dv-tabela .dv-h small{font-size:9px}
+.dv-c-item{width:17%;min-width:180px}
+.dv-c-pedido{width:14%}
+.dv-c-hist{min-width:330px}
+.dv-c-contagem{width:19%;min-width:210px}
+.dv-tabela .dv-resolver{min-width:340px}
+.dv-tabela .dv-resolver label:nth-child(2){min-width:150px}
+/* sem a coluna Resolução: motivo(s) e Confirmar ficam na célula da contagem geral; o resultado sugerido aparece no pedido */
+.dv-tabela .dv-resultado{display:block;margin-top:4px;font-size:11.5px;font-weight:600;color:#14532d}
+.dv-tabela .dv-resultado.is-perda{color:#b42318}
+.dv-tabela .dv-confirmar{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.dv-tabela .dv-confirmar label{display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:#4f5b6b}
+.dv-tabela .dv-confirmar select{min-height:32px;padding:0 8px;border:1px solid #dfe4ea;border-radius:8px;font:inherit;font-size:13px;font-weight:400}
+.dv-tabela .dv-confirmar .btn{min-height:32px;align-self:flex-start}
+.dv-c-contagem{width:26%;min-width:260px}
+.dv-tabela .dv-confirmar label{align-items:stretch;text-align:left}.dv-tabela .dv-confirmar label>span{text-align:left}
+
+/* ===== Divergências v3 (29/out): Item | Pedido | Histórico (ícone que abre as contagens) | Contagem geral | Confirmar.
+   O prefixo de 6 IDs vence o tema (rótulos em caixa alta, botões grandes) e o design-system. ===== */
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela{table-layout:fixed;width:100%;font-size:13px}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela th{padding:10px 12px}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela td{padding:12px;vertical-align:top}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela th:nth-child(1){width:23%}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela th:nth-child(2){width:24%}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela th:nth-child(3){width:96px}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela th:nth-child(4){width:25%}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela th:nth-child(5){width:auto}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-c-item,html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-c-pedido,html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-c-contagem,html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-c-confirmar{width:auto;min-width:0}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela td.dv-c-contagem,html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela td.dv-c-confirmar{background:#fbfcfd;border-left:1px solid #eef1f4}
+/* item */
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-foto{width:44px;height:44px;border-radius:8px;background:#f3f5f6;border:1px solid #eef1f4}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-item-nome{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;font-weight:600;line-height:1.35}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-item-id small{display:block;margin-top:2px;font-size:11.5px;color:#6b6b6b}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-status{display:inline-block;margin-top:6px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0;text-transform:none}
+/* pedido */
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-ped-topo{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-c-pedido b{font-size:13.5px}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-c-pedido small{display:block;margin-top:3px;font-size:12px;color:#6b6b6b;line-height:1.35}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-tipo{margin:0;padding:1px 8px;font-size:11px}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-resultado{margin-top:5px;font-size:12px}
+/* histórico: ícone + "saiu → voltou"; o quadro abre ao clicar */
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-c-hist{position:relative;text-align:center}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-pop summary{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid #dfe4ea;border-radius:999px;background:#fff;color:#123f86;font-size:12px;font-weight:600;cursor:pointer;list-style:none;white-space:nowrap}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-pop summary::-webkit-details-marker{display:none}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-pop summary:hover,html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-pop[open] summary{background:#eaf0fa;border-color:#123f86}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box{position:absolute;z-index:20;top:44px;left:0;width:440px;padding:12px;border:1px solid #dfe4ea;border-radius:12px;background:#fff;box-shadow:0 12px 30px rgba(15,23,42,.16);text-align:left}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box>strong{display:block;margin-bottom:8px;font-size:12px}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box .dv-hist{display:flex;gap:6px;flex-wrap:nowrap}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box .dv-h{flex:1 1 0;min-width:0;padding:6px 4px;border-radius:8px;background:#f5f7f9;display:flex;flex-direction:column;align-items:center}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box .dv-h.is-dif{background:#fff7e6}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box .dv-h small{font-size:10px;color:#77808f;white-space:nowrap;text-transform:none;letter-spacing:0}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box .dv-h b{font-size:16px}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box .dv-h-por{display:block;margin-top:6px;font-size:11.5px;color:#6b6b6b}
+/* contagem geral */
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-conta{display:block;padding:0;background:none}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num{display:flex;gap:18px}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num>span{display:flex;flex-direction:column}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num small{font-size:10.5px;color:#77808f;text-transform:uppercase;letter-spacing:.04em}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num b{font-size:20px;line-height:1.2}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num .dv-deveria{color:#1f2020}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num .dv-contado{margin:0;padding:0;background:none}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num .dv-contado.is-perda{color:#b42318}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num .dv-contado.is-sobra{color:#8a6200}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num .dv-contado.is-ok{color:#1f7a44}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-conta{display:block;margin-top:2px;font-size:11.5px;color:#6b6b6b}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-sugestao{margin:8px 0 0;padding:6px 9px;font-size:12px;line-height:1.4;border-radius:8px}
+/* contar e confirmar: campos e botões no tamanho da tabela */
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-contar{display:flex;align-items:flex-end;gap:8px;padding:0;border:0;background:none}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela :is(.dv-contar,.dv-confirmar) label{display:flex;flex-direction:column;gap:4px;margin:0;min-width:0;flex:1}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela :is(.dv-contar,.dv-confirmar) label>span{font-size:11.5px;font-weight:600;color:#4f5b6b;text-transform:none;letter-spacing:0;text-align:left}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela :is(.dv-contar,.dv-confirmar) :is(input,select){width:100%;max-width:none;min-height:34px;height:34px;padding:0 9px;border:1px solid #dfe4ea;border-radius:8px;background:#fff;font:400 13px/1 Inter,sans-serif}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela :is(.dv-contar,.dv-confirmar) .btn{min-height:34px;height:34px;padding:0 14px;border-radius:8px;font:600 12.5px/1 Inter,sans-serif;letter-spacing:0;text-transform:none;white-space:nowrap}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-confirmar{display:flex;flex-direction:column;gap:8px;margin:0}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-confirmar .btn{align-self:flex-start}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela .dv-espera{font-size:12px;color:#8a6200}
+@media(max-width:1100px){html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela{table-layout:auto}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela th{width:auto!important}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box{left:auto;right:0;width:min(440px,90vw)}}
+@media(max-width:1100px){html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela{display:table;min-width:980px}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela thead{display:table-header-group}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela tbody{display:table-row-group}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela tr{display:table-row}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela td{display:table-cell}}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num{display:flex!important;flex-direction:row!important;gap:22px!important;align-items:flex-end}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-num>span{display:flex!important;flex-direction:column!important}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-conta-conta{text-transform:none!important;letter-spacing:0!important;font-size:11.5px!important}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela form.dv-confirmar{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela form.dv-confirmar label{display:flex!important;flex-direction:column!important;align-items:stretch!important;width:100%}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-tabela form.dv-confirmar .btn{align-self:flex-start!important}
+html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box{width:520px}html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-hist-box .dv-h{padding:7px 6px}

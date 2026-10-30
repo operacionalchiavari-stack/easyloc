@@ -6609,7 +6609,7 @@ body.pedido-map-modal-open {
 .pedido-screen .entrada-data-card .meta-item{min-width:0;display:flex;flex-direction:column;gap:5px}
 .pedido-screen .entrada-data-card .meta-item>span{font-size:11px;color:#8e8678}
 .pedido-screen .entrada-data-card .meta-input{width:100%;min-width:0;height:40px;padding:8px;font-size:13px;box-sizing:border-box}
-.pedido-screen .entrada-data-card:nth-child(2){grid-template-columns:minmax(0,1fr)}
+/* (regra antiga do 2º card removida: com a ordem Evento → Entrega → Coleta ela pegava a Entrega) */
 @media(max-width:1250px){.pedido-screen.em-entrada .entrada-identidade{grid-template-columns:auto minmax(140px,1fr) minmax(480px,2fr);gap:16px}.pedido-screen .entrada-data-card{grid-template-columns:1fr;padding:10px}.pedido-screen .entrada-data-card h4{grid-column:auto}}
 @media(max-width:900px){.pedido-screen.em-entrada .entrada-identidade{grid-template-columns:auto 1fr}.pedido-screen .entrada-agenda{grid-column:1/-1}}
 @media(max-width:520px){.pedido-screen .entrada-agenda{grid-template-columns:1fr}.pedido-screen .entrada-data-card{grid-template-columns:1fr 100px}.pedido-screen .entrada-data-card h4{grid-column:1/-1}}
@@ -7033,3 +7033,49 @@ html:is(#pedido-modal-catalogo,html) body .pedido-screen.catalogo-modal-aberto .
 /* Frete e Montagem no Financeiro e pagamentos com o mesmo fundo claro do "Resumo do pedido" (out/2026). */
 html:root .pedido-screen .pedido-etapa-financeiro .pedido-financeiro .finance-card.logistica-card{background:#faf9f6!important;border-color:#dedbd2!important;box-shadow:none!important}
 html:root .pedido-screen .pedido-etapa-financeiro .pedido-financeiro .finance-card.logistica-card .logistica-extra div{background:transparent!important}
+.pedido-screen .entrada-data-card.aguardando-evento{opacity:.55}
+/* Evento, Entrega e Coleta no mesmo formato (out/2026): mesma altura, título na mesma linha (o Evento leva o
+   "Um dia / Vários dias" à direita do título) e a mesma linha de campos — data + horário (Entrega/Coleta) ou
+   data + "Até" (Evento em vários dias); com um dia só, a data do evento ocupa a linha inteira. */
+html:root .pedido-screen .entrada-agenda{align-items:stretch}
+html:root .pedido-screen .entrada-data-card{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:30px auto;align-content:start;gap:6px 8px;padding:12px}
+html:root .pedido-screen .entrada-data-card .meta-input{padding:8px 6px}
+html:root .pedido-screen .entrada-data-card>h4,html:root .pedido-screen .entrada-data-head{grid-column:1/-1;min-height:30px;display:flex;align-items:center;justify-content:center;margin:0!important}
+html:root .pedido-screen .entrada-data-head{justify-content:space-between}
+html:root .pedido-screen .entrada-data-card.entrada-card-evento:not(.is-periodo) .meta-item:not([hidden]){grid-column:1/-1}
+html:root .pedido-screen .entrada-data-card .meta-item>span{text-align:center;min-height:14px}
+@media(max-width:1250px){html:root .pedido-screen .entrada-data-card{grid-template-columns:1fr}html:root .pedido-screen .entrada-data-head{flex-wrap:wrap;justify-content:center}html:root .pedido-screen .entrada-data-card{grid-template-rows:auto}}
+
+/* Pedido extra (out/2026): faixa no topo dos dados do pedido */
+html:is(#pedido-extra,html) .pedido-extra-faixa{display:flex;align-items:center;gap:14px;margin:0 0 14px;padding:12px 16px;border:1px solid #c9d6ec;border-left:4px solid #123f86;border-radius:10px;background:#eef3fb;color:#1f2020;font-size:13.5px;line-height:1.45}
+html:is(#pedido-extra,html) .pedido-extra-faixa p{margin:0;flex:1}
+html:is(#pedido-extra,html) .pedido-extra-faixa small{display:block;color:#6b6b6b;margin-top:2px}
+html:is(#pedido-extra,html) .pedido-extra-faixa a{color:#123f86;font-weight:600}
+html:is(#pedido-extra,html) .pedido-extra-selo{flex:none;padding:4px 10px;border-radius:999px;background:#123f86;color:#fff;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+html:is(#pedido-extra,html) .pedido-extra-selo.is-principal{background:#fff;color:#123f86;border:1px solid #123f86}
+html:is(#pedido-extra,html) .pedido-extra-chip{display:inline-block;margin:0 4px;padding:1px 9px;border-radius:999px;background:#fff;border:1px solid #c9d6ec;text-decoration:none}
+html:is(#pedido-extra,html) .pedido-extra-criar{flex:none;padding:9px 16px;border:0;border-radius:8px;background:#123f86;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+html:is(#pedido-extra,html) .pedido-extra-criar:hover{background:#0d2f66}
+html:is(#pedido-extra,html) .pedido-eh-extra :is(#clienteInput,#tipoEventoSelect,#localInput,#dataEvento,#dataEventoFim,#dataColeta,#horaColeta,#observacoesColeta):disabled{background:#f3f5f6;color:#4f4f4f;cursor:not-allowed}
+html:is(#pedido-extra,html) .pedido-eh-extra .entrada-retrato{pointer-events:none}
+@media(max-width:760px){html:is(#pedido-extra,html) .pedido-extra-faixa{flex-wrap:wrap}}
+
+/* Cards Evento / Entrega / Coleta mais finos e todos iguais (29/out/2026):
+   título numa linha baixa e os campos lado a lado numa linha só, em qualquer largura acima de 520px. */
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-agenda{align-items:stretch;gap:10px}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)!important;grid-template-rows:24px auto;align-content:start;gap:4px 8px;padding:8px 12px!important;min-height:0}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card>h4,
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card .entrada-data-head{grid-column:1/-1;min-height:24px;height:24px;margin:0!important;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;line-height:1}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card .entrada-data-head h4{margin:0!important;font-size:13px;line-height:1}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card .evento-modo button{padding:2px 8px;font-size:11px;line-height:1.4}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card .meta-item{grid-column:auto;margin:0;gap:2px}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-card-evento:not(.is-periodo) .meta-item:not([hidden]){grid-column:1/-1}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-card-evento.is-periodo{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card .meta-item>span{min-height:0;font-size:11px;line-height:1.2;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card .meta-input{height:32px!important;min-height:32px!important;padding:4px 6px!important;font-size:13px}
+@media(max-width:520px){html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card{grid-template-columns:1fr 100px!important}}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card .entrada-data-head{flex-wrap:nowrap}
+html:root:is(#pedido-datas,html) .pedido-screen .entrada-data-card .evento-modo{flex:none;white-space:nowrap}
+/* Link de pagamento do pedido (out/2026): ao lado do título "Financeiro do pedido" */
+html:root:is(#pedido-link,html) .pedido-screen .pedido-link-pagamento{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border:1px solid #123f86;border-radius:999px;background:#fff;color:#123f86;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;align-self:center}
+html:root:is(#pedido-link,html) .pedido-screen .pedido-link-pagamento:hover{background:#123f86;color:#fff}

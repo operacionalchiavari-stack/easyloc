@@ -306,6 +306,29 @@ function limparFormulario() {
     .forEach(t => t.classList.remove("selected"));
 
   document.getElementById("fStatus").value = "ativo";
+  const ativo = document.getElementById("fPortalAtivo"); if (ativo) ativo.checked = true;
+  pintarLinkPortal("");
+}
+
+/* Acesso da transportadora ao Cadastro de Fretes (out/2026): login e senha gravados pela função do banco
+   (a senha nunca volta para a tela; deixar em branco mantém a atual). */
+function pintarLinkPortal(login) {
+  const el = document.getElementById("fPortalLink");
+  if (!el) return;
+  const url = new URL("../../Chiavari/Fretes/fretes.html", location.href).href;
+  el.hidden = !login;
+  el.innerHTML = login ? 'Link da transportadora: <a href="' + url + '" target="_blank" rel="noopener">' + url + '</a> · login <b>' + login + '</b>' : "";
+}
+async function salvarPortalFornecedor(id, anterior) {
+  const login = (document.getElementById("fPortalLogin")?.value || "").trim();
+  const senha = document.getElementById("fPortalSenha")?.value || "";
+  const ativo = !!document.getElementById("fPortalAtivo")?.checked;
+  if (!login && !anterior?.portal_login) return true;
+  const mudou = login !== (anterior?.portal_login || "") || senha || ativo !== !!anterior?.portal_ativo;
+  if (!mudou) return true;
+  const { error } = await sb.rpc("fornecedor_portal_salvar", { p_empresa: empresaId, p_fornecedor: id, p_login: login, p_senha: senha, p_ativo: ativo });
+  if (error) { mostrarAlerta("Fornecedor salvo, mas o acesso da transportadora não: " + (error.message || error), "Acesso ao Cadastro de Fretes"); return false; }
+  return true;
 }
 
 /* =====================================================
@@ -431,7 +454,7 @@ if (existente && existente.id !== fornecedorSelecionado?.id) {
     informacoes_adicionais: tags
   };
 
-  let error;
+  let error, salvoId = fornecedorSelecionado?.id || null;
 
   if (fornecedorSelecionado?.id) {
     ({ error } = await sb
@@ -440,9 +463,11 @@ if (existente && existente.id !== fornecedorSelecionado?.id) {
       .eq("id", fornecedorSelecionado.id)
       .eq("empresa_id", empresaId));
   } else {
-    ({ error } = await sb
+    let novo;
+    ({ data: novo, error } = await sb
       .from("fornecedores")
-      .insert(payload));
+      .insert(payload).select("id").single());
+    salvoId = novo?.id || null;
   }
 
   if (error) {
@@ -450,6 +475,8 @@ if (existente && existente.id !== fornecedorSelecionado?.id) {
     mostrarAlerta("Erro ao salvar fornecedor", "Erro");
     return;
   }
+
+  if (salvoId && !(await salvarPortalFornecedor(salvoId, fornecedorSelecionado))) { await carregarFornecedores(); return; }
 
   fecharModalFornecedor();
   fornecedorSelecionado = null;
@@ -604,6 +631,13 @@ function preencherFormularioFornecedor(f) {
   document.getElementById("endCep").value = f.cep || "";
   document.getElementById("endLatitude").value = f.latitude ?? "";
   document.getElementById("endLongitude").value = f.longitude ?? "";
+  if (document.getElementById("fPortalLogin")) {
+    document.getElementById("fPortalLogin").value = f.portal_login || "";
+    document.getElementById("fPortalSenha").value = "";
+    document.getElementById("fPortalSenha").placeholder = f.portal_login ? "deixe em branco para manter" : "mín. 6 caracteres";
+    document.getElementById("fPortalAtivo").checked = f.portal_login ? !!f.portal_ativo : true;
+    pintarLinkPortal(f.portal_login || "");
+  }
 
   // limpa tags
   document.querySelectorAll(".tag.selected")

@@ -56,6 +56,10 @@ Nome
 Grupo
 </th>
 
+<th style="text-align:left;padding:12px 14px;font-size:13px;color:#475569;" title="No pedido, pede data e horário e vira uma etapa do cronograma">
+No cronograma
+</th>
+
 <th style="text-align:right;padding:12px 14px;font-size:13px;color:#475569;">
 Fixo (R$)
 </th>
@@ -158,6 +162,7 @@ function atualizarObjeto(tr, s){
 
   s.nome = tr.querySelector(".svc-nome").value.trim();
   s.grupo = tr.querySelector(".svc-grupo").value;
+  s.etapa_operacao = tr.querySelector(".svc-etapa").value || null;
 
   s.valor_fixo = parseValor(tr.querySelector(".svc-fixo").value);
   s.valor_mao_obra = parseValor(tr.querySelector(".svc-mao").value);
@@ -174,7 +179,7 @@ function renderRows(){
       if(!servicos.length){
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" style="padding:18px 14px;color:#64748b;font-size:13px;">
+            <td colspan="8" style="padding:18px 14px;color:#64748b;font-size:13px;">
               Nenhum serviço cadastrado.
             </td>
           </tr>
@@ -214,6 +219,13 @@ Estoque
 Administrativo
 </option>
 
+</select>
+</td>
+
+<td style="padding:10px 14px;">
+<select class="svc-etapa" title="Serviço que entra no cronograma: no pedido, pede data e horário e vira uma etapa com equipe"
+style="width:170px;padding:10px;border-radius:10px;border:1px solid #e5e7eb;">
+${[["", "Não entra"], ["montagem", "Montagem"], ["desmontagem", "Desmontagem"], ["carregamento", "Carregamento"], ["descarregamento", "Descarregamento"], ["triagem_ida", "Triagem (ida)"], ["triagem_volta", "Triagem (volta)"], ["outra", "Outra etapa"]].map(([v, t]) => `<option value="${v}" ${(s.etapa_operacao || "") === v ? "selected" : ""}>${t}</option>`).join("")}
 </select>
 </td>
 
@@ -302,7 +314,7 @@ tr.querySelector(".svc-toggle").onclick = ()=>{
 
       const { data, error } = await sb
       .from("servicos_adicionais")
-      .select("id,nome,grupo,valor_fixo,valor_mao_obra,valor_km,valor_volume,ativo")
+      .select("id,nome,grupo,valor_fixo,valor_mao_obra,valor_km,valor_volume,ativo,etapa_operacao")
       .eq("empresa_id",empresaId)
       .order("nome");
 
@@ -324,6 +336,7 @@ tr.querySelector(".svc-toggle").onclick = ()=>{
         id:null,
         nome:"",
         grupo:"Logística/Operações",
+        etapa_operacao:null,
         valor_fixo:0,
         valor_mao_obra:0,
         valor_km:0,
@@ -351,6 +364,7 @@ async function salvar(){
       empresa_id: empresaId,
       nome: s.nome.trim(),
       grupo: s.grupo,
+      etapa_operacao: s.etapa_operacao || null,
       valor_fixo: s.valor_fixo || 0,
       valor_mao_obra: s.valor_mao_obra || 0,
       valor_km: s.valor_km || 0,

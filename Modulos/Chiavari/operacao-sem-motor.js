@@ -266,7 +266,7 @@
   /* =====================================================================
      CRONOGRAMA
      ===================================================================== */
-  var SEL_ETAPA = "id,pedido_id,nome,tipo,data,hora,observacao,origem,pessoas:operacao_etapa_pessoas(nome,papel,ordem,funcionario_id,free_id),cams:operacao_etapa_caminhoes(caminhao_id,caminhoes(codigo))";
+  var SEL_ETAPA = "id,pedido_id,nome,tipo,data,hora,observacao,origem,servico_ref,pessoas:operacao_etapa_pessoas(nome,papel,ordem,funcionario_id,free_id),cams:operacao_etapa_caminhoes(caminhao_id,caminhoes(codigo))";
   function responsavelDe(e) { var r = (e.pessoas || []).filter(function (p) { return p.papel === "responsavel"; })[0]; return r ? r.nome : ""; }
   function equipeDe(e) { return (e.pessoas || []).filter(function (p) { return p.papel === "equipe"; }).sort(function (a, b) { return a.ordem - b.ordem; }).map(function (p) { return p.nome; }); }
   function caminhoesDe(e) { return (e.cams || []).map(function (c) { return c.caminhoes && c.caminhoes.codigo; }).filter(Boolean); }
@@ -484,8 +484,10 @@
       var hora = hhmm(e.horario) || null, id = uuid(e.id) && mAntes[e.id] ? e.id : null, et;
       if (id) {
         var a = mAntes[id];
-        reg(a, "Data", br(a.data), br(data)); reg(a, "Horário", hhmm(a.hora), hora || ""); reg(a, "Observação", a.observacao, e.observacao || "");
-        et = (await q(c.from("operacao_etapas").update({ nome: nome, tipo: tipoDoNome(nome), data: data, hora: hora, observacao: e.observacao || "" }).eq("id", id).select("id,nome").single()));
+        // data e horário vêm do pedido (Comercial): aqui não mudam (pedido do usuário, out/2026)
+        if (a.origem === "pedido" && (data !== a.data || (hora || "") !== (hhmm(a.hora) || ""))) { throw new Error("A data e o horário de " + a.nome + " vêm do pedido. Para mudar, altere o pedido no Comercial."); }
+        reg(a, "Observação", a.observacao, e.observacao || "");
+        et = (await q(c.from("operacao_etapas").update(a.origem === "pedido" ? { observacao: e.observacao || "" } : { nome: nome, tipo: tipoDoNome(nome), data: data, hora: hora, observacao: e.observacao || "" }).eq("id", id).select("id,nome").single()));
       } else {
         et = (await q(c.from("operacao_etapas").insert({ empresa_id: emp, pedido_id: pedidoId, nome: nome, tipo: tipoDoNome(nome), data: data, hora: hora, observacao: e.observacao || "", origem: "manual" }).select("id,nome").single()));
         reg(et, "Nova etapa", "", nome + " " + br(data));
@@ -499,7 +501,9 @@
         await rpc("operacao_escala_salvar", { p_etapa: et.id, p_responsavel: e.responsavel || "", p_equipe: eq, p_caminhoes: cams, p_forcar: true });
       }
     }
-    for (var x of antes) { if (!manter[x.id]) { reg(x, "Etapa removida", x.nome + " " + br(x.data), ""); await q(c.from("operacao_etapas").delete().eq("id", x.id)); } }
+    for (var x of antes) { if (!manter[x.id]) {
+      if (x.origem === "pedido") { throw new Error(x.nome + " vem do pedido e não pode ser removida aqui. Altere o pedido no Comercial."); }
+      reg(x, "Etapa removida", x.nome + " " + br(x.data), ""); await q(c.from("operacao_etapas").delete().eq("id", x.id)); } }
     if (alteracoes.length) { await q(c.from("operacao_alteracoes").insert(alteracoes)); }
     if (novasSemEscala.length) { await rpc("operacao_escala_preencher_etapas", { p_etapas: novasSemEscala }).catch(function () {}); }
     return { sucesso: true };
@@ -591,6 +595,8 @@
     var vagas = await emLote(etapas.filter(function(e){return !planejamento[e.pedido_id]?.somente_consulta;}).map(function (e) { return e.id; }), function (b) { return c.from("free_vagas").select("id,etapa_id").in("etapa_id", b).neq("status", "CANCELADA"); });
     var insc = await emLote(vagas.map(function (v) { return v.id; }), function (b) { return c.from("free_inscricoes").select("vaga_id,nome,status").in("vaga_id", b).eq("status", "CONFIRMADO"); });
     var vols = {}; for (var pid of Array.from(new Set(etapas.map(function (e) { return e.pedido_id; }).filter(Boolean)))) { vols[pid] = await rpc("operacao_volume_pedido", { p_pedido: pid }); }
+    // pedido extra (out/2026): da coleta em diante o volume é o do principal + extras
+    var volsGrupo = {}; for (var pidv of Array.from(new Set(etapas.filter(function (e) { return ["desmontagem", "descarregamento", "triagem_volta"].indexOf(e.tipo) >= 0; }).map(function (e) { return e.pedido_id; }).filter(Boolean)))) { volsGrupo[pidv] = await rpc("operacao_volume_pedido", { p_pedido: pidv, p_grupo: true }); }
     var cams = await caminhoesLista(), pess = await pessoas();
     var hoje = hojeISO(), mConf = {}; (conflitos || []).forEach(function (x) { (mConf[x.etapa_id] = mConf[x.etapa_id] || []).push(x.mensagem); });
     var vagaDe = {}; vagas.forEach(function (v) { vagaDe[v.etapa_id] = v.id; });
@@ -600,7 +606,7 @@
       caminhoes: cams.map(function (k) { return { id: k.id, foto_url: k.foto_url || "", modelo: k.modelo, codigo: k.codigo || "", placa: k.placa, capacidade: Number(k.capacidade_m3) || 0, empresa: k.empresa_nome || "", vinculo: k.tipo === "proprio" ? "Próprio" : "Terceiro" }; }),
       etapas: etapas.map(function (e) {
         var consulta=!!planejamento[e.pedido_id]?.somente_consulta;
-        var conf = regras.etapas && regras.etapas[tipoRegra(e.tipo)], v = vols[e.pedido_id] || {}, m3 = Number(v.m3) || 0, estimado = !(m3 > 0);
+        var conf = regras.etapas && regras.etapas[tipoRegra(e.tipo)], semCaminhao = !!e.servico_ref, v = (volsGrupo[e.pedido_id] && ["desmontagem", "descarregamento", "triagem_volta"].indexOf(e.tipo) >= 0 ? volsGrupo[e.pedido_id] : vols[e.pedido_id]) || {}, m3 = Number(v.m3) || 0, estimado = !(m3 > 0);
         if (estimado) { m3 = Number(regras.volume_padrao_m3) || 0; }
         var sug = conf ? Math.min(Number(conf.maximo) || 99, Math.max(Number(conf.minimo) || 1, Math.ceil(m3 / Math.max(0.5, Number(conf.m3_por_pessoa) || 1)))) : 0;
         var resp = consulta?'':responsavelDe(e), eq = consulta?[]:equipeDe(e), cs = consulta?[]:caminhoesDe(e), av = [];
@@ -608,15 +614,15 @@
           var tem = (resp ? 1 : 0) + eq.length;
           if (tem < sug) { av.push("Equipe pequena: " + tem + " de " + sug + " pessoas sugeridas"); }
           if (!resp) { av.push("Sem responsável (nenhum líder livre)"); }
-          if (conf.caminhao && !cs.length) { av.push("Sem caminhão"); }
-          if (conf.caminhao && cs.length) {
+          if (conf.caminhao && !semCaminhao && !cs.length) { av.push("Sem caminhão"); }
+          if (conf.caminhao && !semCaminhao && cs.length) {
             var cap = cs.reduce(function (t, cod) { var k = cams.filter(function (x) { return norm(x.codigo) === norm(cod); })[0]; return t + (k ? Number(k.capacidade_m3) || 0 : 0); }, 0);
             if (cap > 0 && m3 > cap) { av.push("Caminhão pequeno: " + cap + " m³ para " + m3 + " m³"); }
             if (!cap) { av.push("Capacidade do caminhão não cadastrada"); }
           }
         }
         return { id: e.id, pedido: e.pedido ? String(e.pedido.numero_pedido || "") : "", cliente: e.pedido ? e.pedido.cliente_nome || "" : "", local: e.pedido ? e.pedido.local_nome || "" : "",
-          etapa: e.nome, tipo: tipoRegra(e.tipo), data: e.data, hora: hhmm(e.hora), responsavel: resp, equipe: eq, caminhoes: cs, pedidoSistemaId: e.pedido_id || "",
+          etapa: e.nome, tipo: tipoRegra(e.tipo), servico: semCaminhao, data: e.data, hora: hhmm(e.hora), responsavel: resp, equipe: eq, caminhoes: cs, pedidoSistemaId: e.pedido_id || "",
           m3: m3, pecas: Number(v.pecas) || 0, volumeEstimado: estimado, sugerido: sug,
           freeConfirmados: insc.filter(function (i) { return i.vaga_id === vagaDe[e.id]; }).map(function (i) { return i.nome; }),
           conflitos: consulta?[]:Array.from(new Set(mConf[e.id] || [])), avisos: av, passada: e.data < hoje, somente_consulta:consulta };
@@ -945,6 +951,17 @@
     return resp;
   };
   L.MONT_qrVaga = async function (token, idEtapa) { return qrComLinks(await rpc("mont_qr_vaga", { p_token: token, p_etapa: idEtapa })); };
+  // Uber da etapa (out/2026): motoristas que aceitaram e o código do QR de check-in/check-out
+  L.MONT_uberQr = async function (token, idEtapa) { return rpc("mont_uber_qr", { p_token: token, p_etapa: idEtapa }); };
+  L.MONT_freteQr = async function (token, idEtapa) { return rpc("mont_frete_qr", { p_token: token, p_etapa: idEtapa }); };
+  // Contagem por item na desmontagem (out/2026): vai para o histórico da divergência na Gestão do acervo
+  L.MONT_contagemItens = async function (token, idEtapa) {
+    var r = await rpc("mont_contagem_itens", { p_token: token, p_etapa: idEtapa });
+    // pedido com extras: a desmontagem conta tudo junto; o nome diz de qual pedido é o item
+    (r && r.itens || []).forEach(function (it) { if (it.pedido_numero) it.nome = (it.nome || "Item") + " · Pedido " + it.pedido_numero; });
+    return r;
+  };
+  L.MONT_contagemSalvar = async function (token, idEtapa, quantidades) { return rpc("mont_contagem_salvar", { p_token: token, p_etapa: idEtapa, p_quantidades: quantidades }); };
   L.MONT_iniciarApontamento = function (token, idEtapa) { return rpc("mont_apontamento_iniciar", { p_token: token, p_etapa: idEtapa }); };
   L.MONT_finalizarApontamento = function (token, id) { return rpc("mont_apontamento_finalizar", { p_token: token, p_id: id }); };
   L.MONT_apontamentoAtual = async function (token) { return (await L.MONT_appCarregar(token, "")).apontamento; };

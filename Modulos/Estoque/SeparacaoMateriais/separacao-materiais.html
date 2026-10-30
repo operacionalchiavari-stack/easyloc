@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="separacao-materiais.css?v=20261027-foto-maior">
+  <link rel="stylesheet" href="separacao-materiais.css?v=20261029-div-acervo">
 <script src="../../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
 </head>
 <body>
@@ -65,6 +65,17 @@
           <strong id="separacaoLaneSeparadosCount">0</strong>
         </header>
         <div class="separacao-lane-list" id="separacaoColunaSeparados"></div>
+      </section>
+
+      <section class="separacao-lane separacao-lane-divergencias" hidden>
+        <header>
+          <div>
+            <span>Atenção</span>
+            <h2>Divergências</h2>
+          </div>
+          <strong id="separacaoLaneDivergenciasCount">0</strong>
+        </header>
+        <div class="separacao-lane-list" id="separacaoColunaDivergencias"></div>
       </section>
     </div>
   </section>
@@ -282,7 +293,7 @@
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/etiquetas.js?v=20261017-etiquetas"></script>
-<script src="separacao-materiais.js?v=20261027-triagem-completa"></script>
+<script src="separacao-materiais.js?v=20261029-div-acervo"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

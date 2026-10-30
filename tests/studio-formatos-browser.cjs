@@ -164,15 +164,13 @@ const STORAGE_MOCK_SNIPPET = `
     // "Itens" continua sempre visível por trás do modal — não é mais escondida ao ver Formatos (só existe um
     // painel de verdade agora, ver comentário no HTML).
     assert.equal(await page.locator('#studioItemsPanel').isVisible(), true);
-    assert.equal(await page.locator('[data-studio-format="lounge-compacto"]').count(), 1, 'Formato embutido continua sempre disponível');
+    assert.equal(await page.locator('[data-studio-format="lounge-compacto"]').count(), 0, 'O embutido "Lounge compacto" saiu da lista (pedido do usuário)');
     // Agrupado pela categoria escolhida ao salvar ("Lounge") — cada grupo tem um título.
     assert.match(await page.locator('.studio-formats-browse-group:has([data-studio-format="custom:saved"]) h3').textContent(), /Lounge/);
     // "Lounge compacto" (embutido) tem categoria "Lounge" fixa no código — cai no MESMO grupo.
-    assert.match(await page.locator('.studio-formats-browse-group:has([data-studio-format="lounge-compacto"]) h3').textContent(), /Lounge/);
 
     // Favoritar direto do modal, sem editar o formato (pedido explícito: "dentro desse modal nós poderemos
     // selecionar quais são nossos formatos favoritos"). Sem estrela pro embutido (sem recordId).
-    assert.equal(await page.locator('.studio-format-browse-card:has([data-studio-format="lounge-compacto"]) [data-format-favorite]').count(), 0, 'Formato embutido não tem onde persistir um favorito');
     const favoriteButton = page.locator('.studio-format-browse-card:has([data-studio-format="custom:saved"]) [data-format-favorite]');
     assert.equal(await favoriteButton.getAttribute('aria-pressed'), 'false');
     assert.equal(await favoriteButton.textContent(), '☆');
@@ -319,7 +317,7 @@ const STORAGE_MOCK_SNIPPET = `
     // "custom:saved") continua visível atrás do modal, então um seletor sem escopo contaria 1 elemento a mais.
     const browseFormats = () => page.locator('#studioFormatsBrowseList [data-studio-format]');
     // saved(1) + extra-0/1/2(3) + bar-1(1) + sem-categoria(1) + lounge-compacto(1) = 7
-    await page.waitForFunction(() => document.querySelectorAll('#studioFormatsBrowseList [data-studio-format]').length === 7);
+    await page.waitForFunction(() => document.querySelectorAll('#studioFormatsBrowseList [data-studio-format]').length === 6);
     // Sem paginação — o modal (maior, com scroll próprio) mostra tudo de uma vez, dividido por categoria.
     assert.equal(await page.locator('.studio-formats-pages,#studioFormatsPage,#studioFormatsNext,#studioFormatsPrevious').count(), 0);
     const groupTitles = await page.locator('.studio-formats-browse-group h3').allTextContents();
@@ -328,7 +326,7 @@ const STORAGE_MOCK_SNIPPET = `
     assert.equal(await page.locator('.studio-formats-browse-group:has([data-studio-format="custom:sem-categoria"]) h3').textContent(), 'Outros 1');
     assert.equal(await page.locator('.studio-formats-browse-group:has([data-studio-format="custom:bar-1"]) h3').textContent(), 'Bar 1');
     // Grupo "Lounge" tem 5: saved + extra-0/1/2 + lounge-compacto (embutido).
-    assert.equal(await page.locator('.studio-formats-browse-group:has([data-studio-format="custom:extra-0"]) [data-studio-format]').count(), 5);
+    assert.equal(await page.locator('.studio-formats-browse-group:has([data-studio-format="custom:extra-0"]) [data-studio-format]').count(), 4);
     // Pesquisa por NOME do formato.
     await page.locator('#studioFormatsBrowseSearch').fill('extra 2');
     assert.equal(await browseFormats().count(), 1);
@@ -341,7 +339,7 @@ const STORAGE_MOCK_SNIPPET = `
     assert.equal(await browseFormats().count(), 0);
     assert.match(await page.locator('#studioFormatsBrowseStatus').textContent(), /Nenhum formato encontrado/);
     await page.locator('#studioFormatsBrowseSearch').fill('');
-    assert.equal(await browseFormats().count(), 7);
+    assert.equal(await browseFormats().count(), 6);
     await page.locator('#studioFormatsBrowseClose').click();
     // toRuntimeFormat() (catalogo-formatos.mjs) precisa continuar convertendo formatos "legados" (salvos antes da
     // versão 2, com posição normalizada 0-1 num diagrama 2D em vez de metros direto) — checado aqui direto na
@@ -486,11 +484,11 @@ const STORAGE_MOCK_SNIPPET = `
       // bata com os papéis fixos sofá/poltrona do preset embutido) — as
       // checagens abaixo miram só nos formatos CUSTOM (`custom:`), que são
       // os que de fato usam renderFormatPreview() com itens reais daqui.
-      await page3.waitForFunction(() => document.querySelectorAll('[data-studio-format]').length === 6);
+      await page3.waitForFunction(() => document.querySelectorAll('[data-studio-format]').length === 5);
       // Nenhum card tem foto ainda — os 6 passam pelo indicador de carregamento (aria-busy fica "false" quando
       // termina, nunca é removido — por isso checar a PRESENÇA do atributo, não o valor "true" específico, que
       // seria uma corrida: o 1º card pode já ter terminado de renderizar antes desta linha rodar).
-      assert.equal(await page3.locator('.studio-format-preview[aria-busy]').count(), 6);
+      assert.equal(await page3.locator('.studio-format-preview[aria-busy]').count(), 5);
       // A lista é rolável e o IntersectionObserver só dispara a prévia de um
       // cartão quando ele entra na tela (rootMargin:120px) — sem rolar, os
       // últimos cartões nunca chegam a pedir a prévia (fica "carregando"

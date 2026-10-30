@@ -151,7 +151,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
 
 .central-table {
   width: 100%;
-  min-width: 1180px;
+  min-width: 1460px;
   table-layout: fixed;
   border-collapse: collapse;
 }
@@ -173,9 +173,9 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   font-size: 14px;
 }
 
-.central-col-numero{width:76px}.central-col-data{width:104px}.central-col-fluxo{width:548px}.central-col-valor{width:124px}.central-col-acoes{width:80px}
+.central-col-numero{width:76px}.central-col-data{width:98px}.central-col-fluxo{width:660px}.central-col-valor{width:124px}.central-col-acoes{width:80px}
 .central-table td:nth-child(2) .central-record-link,.central-table td:nth-child(3) .central-record-link{max-width:100%;white-space:normal;overflow-wrap:anywhere}
-.central-table th:nth-child(4),.central-table td:nth-child(4){padding-left:8px;padding-right:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.central-table th:is(:nth-child(4),:nth-child(5),:nth-child(6)),.central-table td:is(:nth-child(4),:nth-child(5),:nth-child(6)){padding-left:8px;padding-right:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .central-fluxo-cell{min-width:0}
 .central-fluxo ol{display:flex;list-style:none;padding:0;margin:0;gap:0}
 .central-fluxo li{position:relative;flex:1;text-align:center;color:#8995a4;font-size:9px;line-height:1.3;min-width:0}
@@ -338,7 +338,7 @@ html:root #centralPedidosPage #centralPedidosTbody .central-fluxo[class*="comerc
   min-width: 0;
 }
 
-.central-table th:nth-child(6),.central-table td.central-value-cell{width:1%;padding-left:8px;padding-right:8px;white-space:nowrap}
+.central-table th:nth-child(8),.central-table td.central-value-cell{width:1%;padding-left:8px;padding-right:8px;white-space:nowrap}
 
 .central-finance-indicator {
   width: max-content;
@@ -874,3 +874,8 @@ html:root #btnFecharCadastroRelacionado:hover{background:#f4f6f8!important}
   .central-cadastro-body:has(.cad-local) .cad-local{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
   .central-cadastro-body .cad-mapa,.central-cadastro-body .cad-mapa iframe{min-height:300px}
 }
+.central-fluxo li>span:last-child{display:block;padding:0 1px;overflow-wrap:anywhere;hyphens:auto}
+/* Pedido extra (out/2026): linha logo abaixo do principal */
+.central-table tr.is-extra td:first-child{padding-left:22px;position:relative}
+.central-table tr.is-extra td:first-child::before{content:"";position:absolute;left:9px;top:-2px;bottom:50%;width:8px;border-left:1.5px solid #9fb3d6;border-bottom:1.5px solid #9fb3d6;border-bottom-left-radius:6px}
+.pedido-extra-tag{display:block;margin-top:4px;font-size:11px;font-weight:600;color:#123f86;white-space:nowrap}

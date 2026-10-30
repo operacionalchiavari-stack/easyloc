@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
   <link rel="stylesheet" href="../../../styles/escala-parametros.css?v=20261027">
-  <link rel="stylesheet" href="parametros.css?v=20261027-modos">
+  <link rel="stylesheet" href="parametros.css?v=20261029-posvenda">
 <script src="parametros-fluxo-pedidos.js?v=20261024-prazo-acervo-fluxo"></script>
 </head>
 <body>
@@ -18,7 +18,12 @@
     <h2>Parâmetros</h2>
   </div>
 
-<nav class="pr-abas" role="tablist" aria-label="Parâmetros da empresa"><button type="button" role="tab" id="pr-tab-dados" aria-controls="pr-painel-dados" aria-selected="true" data-parametro-aba="dados">Empresa</button><button type="button" role="tab" id="pr-tab-tributacao" aria-controls="pr-painel-tributacao" aria-selected="false" data-parametro-aba="tributacao">Tributação</button><button type="button" role="tab" id="pr-tab-logistica" aria-controls="pr-painel-logistica" aria-selected="false" data-parametro-aba="logistica">Logística</button><button type="button" role="tab" id="pr-tab-financeiro" aria-controls="pr-painel-financeiro" aria-selected="false" data-parametro-aba="financeiro">Financeiro</button><button type="button" role="tab" id="pr-tab-comercial" aria-controls="pr-painel-comercial" aria-selected="false" data-parametro-aba="comercial">Comercial</button><button type="button" role="tab" id="pr-tab-identidade" aria-controls="pr-painel-identidade" aria-selected="false" data-parametro-aba="identidade">Identidade visual</button><button type="button" role="tab" id="pr-tab-catalogo" aria-controls="pr-painel-catalogo" aria-selected="false" data-parametro-aba="catalogo">Catálogo</button><button type="button" role="tab" id="pr-tab-operacao" aria-controls="pr-painel-operacao" aria-selected="false" data-parametro-aba="operacao">Operação</button><button type="button" role="tab" id="pr-tab-almoxarifado" aria-controls="pr-painel-almoxarifado" aria-selected="false" data-parametro-aba="almoxarifado">Almoxarifado</button><button type="button" role="tab" id="pr-tab-producao" aria-controls="pr-painel-producao" aria-selected="false" data-parametro-aba="producao">Produção</button><button type="button" role="tab" id="pr-tab-seguranca" aria-controls="pr-painel-seguranca" aria-selected="false" data-parametro-aba="seguranca">Segurança</button><button type="button" role="tab" id="pr-tab-rh" aria-controls="pr-painel-rh" aria-selected="false" data-parametro-aba="rh">Recursos humanos</button></nav>
+<nav class="pr-abas" role="tablist" aria-label="Parâmetros da empresa">
+  <div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo" aria-hidden="true">Empresa</span><div class="pr-abas-botoes" role="presentation"><button type="button" role="tab" id="pr-tab-dados" aria-controls="pr-painel-dados" aria-selected="true" data-parametro-aba="dados">Dados da empresa</button><button type="button" role="tab" id="pr-tab-tributacao" aria-controls="pr-painel-tributacao" aria-selected="false" data-parametro-aba="tributacao">Impostos</button><button type="button" role="tab" id="pr-tab-identidade" aria-controls="pr-painel-identidade" aria-selected="false" data-parametro-aba="identidade">Identidade visual</button></div></div>
+  <div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo" aria-hidden="true">Vendas</span><div class="pr-abas-botoes" role="presentation"><button type="button" role="tab" id="pr-tab-comercial" aria-controls="pr-painel-comercial" aria-selected="false" data-parametro-aba="comercial">Comercial</button><button type="button" role="tab" id="pr-tab-catalogo" aria-controls="pr-painel-catalogo" aria-selected="false" data-parametro-aba="catalogo">Catálogo</button><button type="button" role="tab" id="pr-tab-financeiro" aria-controls="pr-painel-financeiro" aria-selected="false" data-parametro-aba="financeiro">Financeiro</button></div></div>
+  <div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo" aria-hidden="true">Operação</span><div class="pr-abas-botoes" role="presentation"><button type="button" role="tab" id="pr-tab-logistica" aria-controls="pr-painel-logistica" aria-selected="false" data-parametro-aba="logistica">Logística e operação</button><button type="button" role="tab" id="pr-tab-almoxarifado" aria-controls="pr-painel-almoxarifado" aria-selected="false" data-parametro-aba="almoxarifado">Almoxarifado</button><button type="button" role="tab" id="pr-tab-producao" aria-controls="pr-painel-producao" aria-selected="false" data-parametro-aba="producao">Produção</button></div></div>
+  <div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo" aria-hidden="true">Equipe e acesso</span><div class="pr-abas-botoes" role="presentation"><button type="button" role="tab" id="pr-tab-rh" aria-controls="pr-painel-rh" aria-selected="false" data-parametro-aba="rh">Recursos humanos</button><button type="button" role="tab" id="pr-tab-seguranca" aria-controls="pr-painel-seguranca" aria-selected="false" data-parametro-aba="seguranca">Segurança</button></div></div>
+</nav>
 <div id="parametrosEmpresa" class="pr-empresa"><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-dados" aria-labelledby="pr-tab-dados"  data-empresa-secao="dados"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-tributacao" aria-labelledby="pr-tab-tributacao" hidden data-empresa-secao="tributacao"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-logistica" aria-labelledby="pr-tab-logistica" hidden data-empresa-secao="logistica"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-financeiro" aria-labelledby="pr-tab-financeiro" hidden data-empresa-secao="financeiro"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-comercial" aria-labelledby="pr-tab-comercial" hidden data-empresa-secao="comercial"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-identidade" aria-labelledby="pr-tab-identidade" hidden data-empresa-secao="identidade"></section><div class="pr-acoes"><span id="empresaParametrosStatus" role="status">Carregando...</span><button type="button" class="btn primary" id="salvarEmpresaParametros" disabled>Salvar</button></div></div>
 <section id="pr-painel-rh" role="tabpanel" aria-labelledby="pr-tab-rh" hidden></section>
 <section id="pr-painel-seguranca" class="ps" role="tabpanel" aria-labelledby="pr-tab-seguranca" hidden><p>Carregando segurança...</p></section>
@@ -84,6 +89,7 @@
         <label class="pr-campo"><span>Responsável padrão</span><div><input type="text" maxlength="80" name="triagem_responsavel" placeholder="Ex.: Matheus Martins"></div></label>
         <label class="pr-campo"><span>Equipe padrão</span><div><input type="text" maxlength="80" name="triagem_equipe" placeholder="Ex.: Equipe Galpão"></div></label>
         <label class="pr-campo"><span>Separação liberada</span><div><input type="number" min="0" max="60" name="separacao_dias_antes_evento"><small>dia(s) antes do evento (pedido aprovado)</small></div></label>
+        <label class="pr-campo"><span>Conferência do descarregamento</span><div><select name="descarregamento_conferencia"><option value="quantidade">Com quantidade (mostra o esperado)</option><option value="cegas">Às cegas (não mostra quanto devia chegar)</option></select><small>na Expedição; às cegas o sistema compara com o carregamento ao concluir</small></div></label>
       </div>
     </section>
 
@@ -124,19 +130,24 @@
 <script src="../../../js/empresa/empresa.api.js?v=20261019-parametros"></script>
 <script src="../../../js/empresa/empresa.sections.dados.js?v=20261021-utf8"></script>
 <script src="../../../js/empresa/empresa.sections.tributacao.js?v=20261019-parametros"></script>
-<script src="../../../js/empresa/empresa.sections.comercial.js?v=20261021-utf8"></script>
+<script src="../../../js/empresa/empresa.sections.comercial.js?v=20261029-cronograma"></script>
 <script src="../../../js/empresa/empresa.logistica.frete.js?v=20261021-textos"></script>
 <script src="../../../js/empresa/empresa.logistica.montagem.js?v=20261021-textos"></script>
 <script src="../../../js/empresa/empresa.sections.logistica.js?v=20261019-parametros"></script>
-<script src="../../../js/empresa/empresa.sections.financeiro.js?v=20261021-utf8"></script>
+<script src="../../../js/empresa/empresa.sections.financeiro.js?v=20261028-pagamento-trava"></script>
 <script src="../../../js/empresa/empresa.sections.identidade.js?v=20261019-parametros"></script>
 <script src="../../../js/empresa/empresa.logistica-manual.js?v=20261021-comercial"></script>
 <script src="../../../js/logistica/escala-parametros.js?v=20261027-gestao"></script>
 <script src="parametros-cronograma-visual.js?v=20261027"></script>
 <script src="parametros-modos-separacao.js?v=20261027"></script>
-<script src="parametros-motivos-logistica.js?v=20261027-pendencias"></script>
-<script src="parametros-qualidade-acervo.js?v=20261024-1"></script><script src="parametros-etiquetas.js?v=20261026"></script><script src="parametros-rh.js?v=20261027"></script><script src="parametros-empresa.js?v=20261027-periodos"></script>
-<script src="parametros.js?v=20261019-empresa"></script>
+<script src="parametros-setores-separacao.js?v=20261029-setores"></script>
+<script src="parametros-motivos-logistica.js?v=20261028-organizado"></script>
+<script src="parametros-qualidade-acervo.js?v=20261024-1"></script><script src="parametros-etiquetas.js?v=20261026"></script><script src="parametros-rh.js?v=20261027"></script><script src="parametros-empresa.js?v=20261029-carreg"></script>
+<script src="parametros.js?v=20261028-organizado"></script>
+<script src="parametros-uber.js?v=20261029-uber"></script>
+<script src="parametros-posvenda.js?v=20261029-posvenda"></script>
+<script src="parametros-divergencias.js?v=20261029-carreg"></script>
+<script src="parametros-organizar.js?v=20261029-carreg"></script>
 <script src="parametros-catalogo.js?v=20261021-catalogo2"></script>
 <script src="../../../js/core/doisFatores.js?v=20261023-2fa"></script>
 <script src="parametros-backup.js?v=20261024-nuvem"></script>

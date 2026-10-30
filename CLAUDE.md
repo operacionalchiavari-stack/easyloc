@@ -10364,3 +10364,792 @@ no final do carregamento ele deve selecionar qual carro ele carregou". Migration
 - Testes: `conferencia-separacao-manual-browser.cjs` (ok 3–4), `expedicao-browser.cjs`, e os de bipagem/sem etiquetas
   marcam o caminhão; `fluxo-completo-live.cjs` escolhe o primeiro da frota (precisa de ao menos 1 caminhão cadastrado).
   Fixture `operacao-rpc-fixture.cjs` simula as 3 RPCs (`banco.caminhoesProgramados`, `banco.caminhoes`).
+
+## Disponibilidade: regra única, sem contar a mesma peça duas vezes (28/out/2026)
+Relato: item aparecia indisponível sem estar. Investigado no banco real (pedido 1): os ambientes e a renderização com
+"N jogos" estavam certos (N multiplica os móveis da foto de propósito, é o jeito de lançar vários de uma vez). Os erros:
+1. O catálogo dentro do pedido (`pedido_catalogo_estoque`) e o quadro de reservas contavam o **próprio pedido** como
+   reservado por outro (Cerimony, estoque 2, usada 2× no pedido 1 → "Esgotado" dentro dele).
+2. A Helena dentro do pedido contava em dobro (o livre já tirava o pedido salvo e ela somava os outros ambientes).
+3. Peça do Acervo ("aguardando retorno", triagem…) e avaria de um pedido bloqueavam **em qualquer data** e, dentro do
+   período do pedido, somavam com a reserva dele; trânsito + Acervo + avaria das mesmas peças também somavam entre si.
+4. Card do catálogo olhava 1 dia e ignorava o Acervo; salvar olhava o período e incluía — números diferentes.
+Migration `20261028000100_disponibilidade_regra_unica.sql` (**escrita e testada numa transação desfeita, AINDA NÃO
+aplicada** — o usuário pediu para não publicar): `operacao_bloqueios_detalhe/calc` (bloqueio de um pedido só depois do
+fim do período dele; por pedido e peça vale o MAIOR entre trânsito, Acervo e ocorrência) e `operacao_livre_calc(empresa,
+início, fim, pedido)` (pior dia do período, pedido informado fora da conta, kit = componente mais limitado). Passam por
+ela: `operacao_disponibilidade_calc`, `operacao_indisponiveis`, `operacao_disponibilidade` (+ `p_pedido`),
+`operacao_validar_reserva`, `pedido_disponibilidade_comercial`, `pedido_catalogo_estoque` (+ `p_pedido/p_inicio/p_fim`) e
+`pedido_estoque_detalhes` (+ `p_pedido`). Telas: catalogo.mjs manda o pedido aberto e o período entrega→coleta ("Disponível
+no período"; consulta vale 1 min), o quadro manda `p_pedido`, a Helena manda `pedido_id` (Edge Function `catalogo-assistente`
+usa em `operacao_disponibilidade`). **Publicar junto**: migration + site + Edge Function (o site novo chama parâmetros que
+o banco antigo não tem). Testes: `tests/disponibilidade-regra-unica.test.cjs` (PGlite) e `tests/pedido-precos-browser.cjs`.
+
+## Painel Logístico: dias sem limite (28/out/2026)
+A faixa de dias (abas Hoje, Qui 29/10…) não para mais em 7 dias: começa com 14 e, quando a faixa rola até perto do fim
+(roda do mouse, arrastar com o mouse como no cronograma, barra ou toque), carrega mais 14 (`conferirFim` em
+`painel-dias.js` → `PainelLogisticoEquipe.carregarMais` em `painel-logistico.js`). O servidor (`ESC_painel`) devolve no
+máximo 14 dias por chamada, então `buscarFaixa` pede em blocos e `juntar` emenda etapas e ocupações; recarregar depois de
+salvar/preencher busca todos os dias já abertos. `?dia=` distante já abre com dias suficientes. Teste
+`tests/painel-logistico-browser.cjs` (rolar até o fim pede o bloco 2026-11-03 e mostra 10/11); o teste já falhava depois
+disso, em "2 cartões .pl-etapa" (a tela mostra um só desde a mudança de 27/10).
+
+## Conferência do descarregamento: com quantidade ou às cegas (28/out/2026)
+Gestão > Parâmetros > Operação, bloco Triagem, campo "Conferência do descarregamento": **Com quantidade** (padrão, como
+era: mostra o esperado, barra e o que falta) ou **Às cegas** (igual à volta: não mostra quanto devia chegar; ao concluir o
+sistema compara com o carregamento e mostra "Não foram descarregadas N de X"). Coluna
+`empresa_logistica_regras.descarregamento_conferencia` ('quantidade'|'cegas', migration `20261028000200`, aplicada e
+registrada). `conferencia.js` lê a regra só na etapa descarregamento (`cega` virou `let`); `expedicao.js` esconde a
+contagem do cartão de descarregamento quando às cegas. Teste: `tests/conferencia-descarregamento-cega-browser.cjs`.
+**Divergência dos dois lados** (mesmo dia): no resultado da conferência por quantidade (carregamento, descarregamento e
+volta), item que faltou fica com a linha vermelha ("faltam N") e item que veio a mais com a linha amarela ("N a mais"); o
+aviso do topo diz "Divergência: X item(ns) faltando e Y item(ns) a mais" (vermelho se há falta, amarelo se só sobra).
+Calculado na tela a partir de `operacao.<etapa>.itens` (esperado × conferido); o banco não mudou e a sobra não vira
+ocorrência. Classes `.is-div-falta`/`.is-div-sobra` no fim de `conferencia.css`.
+
+## Divergências da volta não somem mais: segunda contagem + coluna Divergências (28/out/2026)
+Problema: na triagem de volta (e no descarregamento), concluir com falta/sobra tirava o pedido do quadro (a fila só tem
+"Aguardando"/"Em triagem") e a sobra não era registrada. Agora:
+- **Segunda contagem obrigatória** (`conferencia.js`, só retorno e descarregamento): por quantidade, se algum item não
+  bate com o que saiu, a tela trava os que bateram, limpa os diferentes ("Recontar") e pede para contar de novo antes de
+  concluir (às cegas não diz se é falta ou sobra); a 1ª contagem vai em `p_primeira` e fica em
+  `operacao.<etapa>.primeira_contagem` (aparece como "1ª contagem: N" no resultado). Por bipe: com falta, a 1ª tentativa
+  de concluir pede uma segunda busca; a 2ª conclui.
+- **Banco** (migration `20261028000300`, aplicada e registrada): `operacao_ocorrencias` ganhou `etapa`, `esperado`,
+  `conferido` e o tipo `sobra`; `operacao_concluir_conferencia` (novo parâmetro `p_primeira`) grava `sobrando` e, em
+  retorno/descarregamento, troca as divergências abertas da etapa pelas novas (falta e sobra; no descarregamento o
+  código leva o prefixo `descarregamento:`). Re-concluir depois de finalizado continua barrado por `operacao_validar_etapa`.
+  RPC `operacao_resolver_divergencia(p_id, p_acao, p_quantidade, p_motivo)`: falta → `apareceu` (parcial ou total) ou
+  `perda` (passa por `operacao_resolver_ocorrencia`, baixa estoque, exige permissão de itens); sobra → `conferido`;
+  explicação ≥5 letras; permissão = editar separação. Testado no banco numa transação desfeita.
+- **Quadros**: Triagem ganhou a 4ª coluna **Divergências** (pedidos com falta/sobra aberta da etapa `retorno`; vermelho
+  com falta, amarelo só sobra); Expedição põe em **Pendências** os pedidos com divergência aberta do descarregamento (eles
+  já saíram da fila). Clicar abre a conferência, que mostra o bloco "Divergências a resolver" (Apareceu/Perda/Conferido).
+  As 8 faltas antigas da volta (abertas) passam a aparecer na coluna.
+- Testes: `conferencia-descarregamento-cega-browser.cjs` (ok 3–4) e `separacao-cronograma-browser.cjs` (ok 6b).
+**Coluna "Resolver" + motivo cadastrado** (mesmo dia, pedido seguinte): as divergências saíram do bloco no fim e viraram a
+6ª coluna do resultado por quantidade ("Resolver", na linha do item): motivo (lista) + Apareceu/quantidade/Perda para
+falta, Conferido para sobra; resolvida mostra "✓ motivo". O bloco `#cfDivergencias` só aparece para o que não tem linha
+na tabela (conferência por bipe). Motivos em Gestão > Parâmetros > Operação, "Motivos de carregamento, entrega, coleta e
+divergências": tipos novos `divergencia_falta` e `divergencia_sobra` em `logistica_motivos` (migration `20261028000400`,
+aplicada e registrada, já com 5 + 3 motivos padrão). `operacao_resolver_divergencia(p_id, p_acao, p_motivo_id,
+p_quantidade)` exige um motivo ativo do tipo certo e grava `operacao_ocorrencias.motivo_id`; sem texto livre.
+**Toda divergência vira pendência, inclusive a que veio a mais** (mesmo dia): conferências concluídas antes de `...0300`
+só tinham a falta (e sem esperado/conferido) e nenhuma sobra, então os itens amarelos ficavam sem "Resolver". Migration
+`20261028000500_divergencias_sobras_antigas.sql` (aplicada e registrada) lê `operacao.retorno/descarregamento.itens` de
+toda conferência concluída e cria a falta/sobra aberta que faltava (código = chave da linha; no descarregamento com o
+prefixo `descarregamento:`), completando esperado/conferido das antigas; nada resolvido é reaberto. Pedidos 1 e 2: 17
+itens divergentes, 17 pendências (8 faltas, 9 sobras). Conferência nova já grava as duas desde a `...0300`. O carregamento
+não gera pendência (só pinta as cores).
+**Sem botões: "2ª conferência" + "Motivo"** (mesmo dia, pedido do usuário): a coluna Resolver virou duas colunas — a
+quantidade contada de novo e o motivo (lista de Parâmetros). Preenchidas as duas, fecha sozinho pela RPC
+`operacao_fechar_divergencia(p_id, p_contagem, p_motivo_id)` (migration `20261028000600`, aplicada e registrada; grava
+`operacao_ocorrencias.segunda_contagem`): falta com 2ª conferência ≥ esperado fecha como "apareceu"; menor, o que
+continua faltando vira perda (pede confirmação na tela) e baixa do estoque — ou, se a peça já está no Retorno do acervo,
+só fecha (a baixa é lá, para não baixar duas vezes); sobra fecha com a contagem e o motivo. Resolvida mostra só o número e
+"✓ <motivo>" em letra pequena numa linha (o texto completo fica no `title`). `operacao_resolver_divergencia` ficou no banco
+sem uso.
+**Quem fez a 2ª conferência** (mesmo dia): embaixo de "✓ <motivo>" aparece a foto (22px) e o nome de quem resolveu.
+Migration `20261028000700` (aplicada e registrada): `operacao_ocorrencias.resolvido_por`/`resolvido_por_nome`, gravados por
+`operacao_fechar_divergencia` (nome do Cadastro de Funcionários, senão `usuarios.nome`, senão o e-mail) e preenchidos nas
+já resolvidas pelo e-mail do texto. A foto é a mesma do menu ("Minha conta": bucket `avatares`, `<empresa>/<usuário>.jpg`);
+sem foto aparecem as iniciais. A linha não cresce (conferido no teste).
+**2ª conferência comparada com o esperado e motivo que combina** (mesmo dia, pedido do usuário: "o sistema precisa
+entender a quantidade… o motivo tem que condizer"): ao digitar a 2ª conferência a tela diz na hora "Bateu com o esperado",
+"Ainda faltam N", "Ainda N a mais" ou, se for impossível (falta que passa do esperado, "a mais" que fica abaixo), "conte de
+novo" e trava o motivo. A lista de motivos só traz os que combinam: `logistica_motivos.situacao` = `bateu` (Erro de
+contagem, Peça encontrada no galpão) ou `continua` (Peça extraviada, ficou no local, quebrada, de outro pedido, do cliente),
+escolhido em Parâmetros > Operação ("Quando usar"). O servidor confere tudo de novo (`operacao_fechar_divergencia`,
+migration `20261028000800`, aplicada e registrada; grava `operacao_ocorrencias.resultado`). Falta confirmada vira perda (com
+confirmação na tela); falta ou "a mais" que bateu fecha como erro da 1ª contagem; "a mais" confirmado fica justificado.
+Resolvida mostra o número e, embaixo, "bateu" / "1 a mais" / "faltam N". A migration reabriu as já resolvidas com motivo
+que não combinava (pedido 1: Andar Estante Lotus, 1 de 1 com "Peça de outro pedido").
+**Lista de motivos própria + "Salvar 2ª conferência" no fim da página** (mesmo dia): o `<select>` do navegador virou um
+botão com uma lista que abre embaixo (`.cf-mot-btn`/`.cf-mot-pop`, fixa na tela, setas/Esc no teclado; o valor fica num
+`input[type=hidden].cf-div-motivo`). Escolher o motivo não grava mais sozinho: o rodapé preso embaixo (`.cf-div-rodape`,
+mesmo estilo do "Confirmar") mostra "N de M divergência(s) pronta(s) para salvar" e o botão **Salvar 2ª conferência** grava
+todas as prontas de uma vez (uma confirmação só, se houver perda). O botão usa a cor primária da empresa (`btn primary`).
+
+## Parâmetros reorganizados: abas por área, um card por assunto e índice da aba (28/out/2026)
+Pedido: "refaça os parâmetros... melhor organizados... títulos melhores... logística e operação uma aba só... cada título um card".
+- **Abas em 4 áreas** (`parametros.html`, `.pr-abas-grupo` com rótulo pequeno): Empresa (Dados da empresa, Impostos,
+  Identidade visual) · Vendas (Comercial, Catálogo, Financeiro) · Operação (**Logística e operação**, Almoxarifado,
+  Produção) · Equipe e acesso (Recursos humanos, Segurança). **A aba Operação não existe mais**: o painel
+  `#pr-painel-operacao` (com o `<form id="formParametros">`) fica escondido e os 4 cards dele são movidos para a aba
+  Logística e operação, com os campos ligados ao formulário pelo atributo `form="formParametros"`. Por isso
+  `parametros.js` lê os status por `form.elements` (não `form.querySelectorAll`) e mostra "Salvo" no card do botão
+  clicado (`e.submitter`, `[data-op-status]`). Selecionar 'operacao' por código cai em 'logistica'. Quando a CLAUDE.md
+  antiga fala em "Parâmetros > Operação" ou "> Logística", é esta aba.
+- **`parametros-organizar.js`** (novo; só reorganiza, as regras e salvamentos continuam nos módulos de sempre):
+  `prOrganizarLogistica(host)` (chamado no fim do carregamento da aba em `parametros-empresa.js`) monta 5 grupos com um
+  card cada: **Pedidos e cronograma** (Quais pedidos entram no cronograma · Datas e horário das etapas · Visualização do
+  cronograma · Pré-reservas e retorno após a coleta), **Triagem e conferência** (Triagem: responsável, equipe e
+  conferência · Modos de separação · Inventário e controle de qualidade), **Equipes e caminhões (escala)** (Escala
+  automática · Regras da escala por etapa · Pessoas que não podem trabalhar juntas), **Frete e montagem** (Frete ·
+  Montagem) e **Motivos** (Motivos das pendências · Motivos das divergências). Card de outro módulo que ele não reconhece
+  vai para um grupo "Outros" (nunca some). Cada card tem o próprio Salvar; Frete e Montagem chamam por trás o Salvar geral
+  dos dados da empresa (`#salvarEmpresaParametros`, escondido nesta aba). Também dá título a Dados da empresa, Impostos,
+  Identidade visual e Financeiro ("Desconto automático de frete e montagem", antes "Logística") e, em Comercial, separa
+  "Serviços adicionais" num card e renomeia o de ajustes para "Quem pode ajustar frete e montagem no pedido".
+- **Índice da aba** (`#prSumario`, logo abaixo das abas, preso no topo ao rolar): um atalho por card da aba aberta
+  (agrupado quando a aba tem grupos); clicar rola até o card e o destaca. Some quando a aba tem menos de 2 cards.
+  Atualiza sozinho (MutationObserver) quando uma aba termina de carregar. **Card novo: basta ser `.pr-card` com um título
+  (h2/h3) como primeiro filho** que entra no índice; na aba Logística e operação, incluir também no mapa de grupos de
+  `prOrganizarLogistica`.
+- Motivos divididos em dois cards (`parametros-motivos-logistica.js`, `section[data-motivos]`): pendências
+  (carregamento, entrega, coleta) e divergências (faltou / veio a mais, com "Quando usar").
+- Teste `tests/parametros-empresa-browser.cjs` atualizado (11 abas, grupos da aba Logística e operação, índice, Salvar
+  de cada card; o banco simulado ganhou `in/is/range…`, `functions`, `auth`). Versões `?v=20261028-organizado`.
+
+## Pagamento mínimo para liberar o pedido: trava na Triagem OU no Carregamento (Parâmetros > Financeiro, 28/out/2026)
+Pedido: "não pode efetuar entrega sem que o pedido tenha sido quitado... uma porcentagem, 100% ou 80%" e, logo depois,
+"a pessoa escolhe se trava em triagem ou em carregamento, entrega nem pensar". Card "Pagamento mínimo para liberar o
+pedido" na aba Financeiro (`[data-fin-card=pagamento]` em `empresa.sections.financeiro.js`, salvo pelo Salvar geral):
+liga/desliga, **Onde travar** (Triagem / Carregamento, padrão Carregamento) e % mínimo (1–100, padrão 100).
+- Banco: `empresa_financeiro.pagamento_exige`, `pagamento_percent`, `pagamento_trava_etapa`. A 1ª versão (migration
+  `20261028000900`) travava a ENTREGA; a `20261028001000_pagamento_trava_triagem_carregamento.sql` (aplicada e registrada)
+  renomeou as colunas, tirou a trava da entrega (Entregas e Coletas voltou ao que era) e apagou `pedido_pagamento_entrega*`.
+- `pedido_pagamento_situacao(p_pedido, p_etapa)` → {liberada, mensagem, percentual_pago, falta…}: pago = soma de (valor −
+  aberto) dos títulos do pedido em `fin_receber` (cancelados fora); devido = soma dos títulos ou `valor_total` se não houver
+  título; valor 0 nunca trava. Mensagem (desde a migration `20261029000300`, pedido do usuário: sem % nem valores): "Aguardando aprovação do Financeiro. Avise o supervisor." — a porcentagem e o valor que falta continuam nos campos do JSON, mas nenhuma tela os mostra.
+- Trava no servidor por **funções-embrulho**: `separacao_definir_modo` e `operacao_atualizar_separacao` (Triagem) e
+  `operacao_iniciar_conferencia`, `operacao_ler_peca`, `operacao_concluir_conferencia` (só com etapa carregamento) chamam
+  `pedido_pagamento_conferir` e depois a original, renomeada para `*_sem_pagamento` (sem acesso para o navegador).
+  **Mudar uma dessas funções: editar a `*_sem_pagamento`** (a de nome normal é só o embrulho).
+- Telas: a Triagem avisa antes de abrir o pedido (`abrirModoSeparacao`); a conferência do carregamento já mostrava o erro de
+  `operacao_iniciar_conferencia` no lugar da lista. Testado no banco numa transação desfeita.
+
+## Avisos da barra do pedido no alerta global (28/out/2026)
+Pedido: o aviso "Informe o local do evento." aparecia preso embaixo do Salvar; deve ir para o alerta global.
+`erroTrilha()` em `js/pedido/pedido.entrada.mjs` agora chama `window.alerta(texto,'Pedido','aviso')` (dado faltando,
+financeiro pendente, erro ao salvar ou ao trocar de etapa); a faixa `.ct-erro` só é usada se `alerta.js` não carregar.
+O aviso antigo também ficava na tela depois de o campo ser preenchido; o alerta some sozinho. Versões
+`?v=20261028-alerta-global` (pedido.html → pedido.mjs → pedido.itens.mjs → pedido.entrada.mjs).
+
+## Ambiente rápido na janela "Adicionar ao projeto" (28/out/2026)
+Pedido: "opções rápidas pra criar o local, por exemplo Mesa de bolo, Mesa da família, Mesa de convidados, Cerimônia".
+Em `escolherDestino()` (`catalogo-projetos.mjs`, a janela de projeto/ambiente usada pelo 3D Livre, renderizações e
+"＋" sem destino; também no pedido comercial) aparece a linha "Ambiente rápido" com `AMBIENTES_RAPIDOS` (Mesa de bolo,
+Mesa da família, Mesa de convidados, Cerimônia, Lounge, Bar, Bistrôs, Recepção). Clicar: se o projeto já tem um ambiente
+com esse nome (sem diferenciar acento/maiúscula) ele é escolhido; senão o select vai para "Criar novo ambiente" com o nome
+preenchido, e o ambiente nasce ao confirmar (mesmo caminho de antes). O atalho correspondente fica marcado. Teste em
+`tests/catalogo-editor-cena-browser.cjs` (cenário 6). Versões `?v=20261028-amb-rapido`.
+
+## Formatos do 3D também dentro do pedido comercial (28/out/2026)
+Pedido: "dentro do 3D dentro do comercial eu preciso criar formatos e não estou conseguindo". `catalogo-studio3d.mjs`
+tinha `studio.pedidoComercial` desligando de propósito o "Salvar formato" (botão escondido, `openSaveFormat`/
+`saveSelectedFormat` saindo cedo), a foto de capa (`salvarCapaDoFormato`/`backfillFormatCapa`) e a estrela de favorito.
+As travas saíram: no pedido o 3D cria, salva e favorita formatos como no catálogo (a equipe está logada, sem token de
+decorador, então `lounge_formato_salvar`/`lounge_formatos_listar` resolvem como equipe; formato salvo no pedido aparece
+também no 3D Livre do catálogo). `studio.pedidoComercial` continua existindo, sem uso nas regras de formato.
+`tests/studio-formatos-browser.cjs` passa. Versões `?v=20261028-formatos-pedido`.
+
+## 3D Livre: giro do móvel mais preciso (28/out/2026)
+Pedido: "dificuldade de rodar o item, preciso de algo mais preciso, mais rápido, mais simples". O "Segure para girar"
+(giro contínuo, sem ângulo) virou o controle `.studio-giro` na barra do móvel selecionado: **↺ [ângulo°] ↻**. Cada
+clique gira 15° e segurar repete a cada 160ms. O campo mostra o ângulo atual (0–359°, sentido horário visto de cima) e
+aceita o valor exato com Enter (↑/↓ no campo = 1°, Shift = 90°). No teclado, **Q/E** giram 15° e Shift+Q/E giram 90°
+(só com o 3D Livre aberto, sem janela aberta e fora de campos de texto). O giro sempre cai num múltiplo do passo. Funções
+`girarSelecionado/definirAnguloSelecionado/passoGiro` em `catalogo-studio3d.mjs` (`startContinuousRotation` foi apagada).
+**Bloco gira como uma peça só**: o giro contínuo antigo girava as posições dos móveis do bloco no sentido contrário ao
+giro de cada móvel (o bloco "desmontava" ao girar). Corrigido para o giro do Three.js: x' = x·cos + z·sin,
+z' = −x·sin + z·cos. Teste no cenário 6 de `tests/catalogo-editor-cena-browser.cjs`. Versões `?v=20261028-giro`.
+
+## Separação manual: Enter vai para a linha de baixo (29/out/2026)
+Pedido: "colocar a quantidade, apertar Enter e já ir pra linha de baixo". No campo de quantidade da separação manual
+(`[data-manual-qty]`, `separacao-materiais.js`), **Enter** salva (o `change` dispara no blur) e põe o cursor, com o
+número selecionado, na próxima linha editável; **Shift+Enter** volta para a de cima; na última linha o Enter só salva.
+A lista é redesenhada depois de cada salvamento, então o redesenho guarda o campo em edição (id, valor digitado) e
+devolve o foco pelo id (`state.focoManual`, válido por 4s) — quem já está digitando na linha seguinte não perde o
+número. Teste: `tests/separacao-modo-travado-browser.cjs` (ok 2b). Versão `separacao-materiais.js?v=20261029-enter-proxima`.
+
+## Separação por setor (29/out/2026)
+Pedido: "dentro de separação precisa ter os setores... cada setor verá os itens do seu setor; no cadastro do item a gente
+coloca qual é o setor; qual usuário visualiza o quê precisa estar em Parâmetros". O setor é o campo **Setor de estoque**
+do Cadastro de Itens (`itens.setor_estoque`; no Kit vale o setor de cada componente; vazio = "Sem setor"). Hoje 1147 dos
+1173 itens estão sem setor.
+- **Parâmetros > Logística e operação > Triagem e conferência > "Setores da separação"**
+  (`parametros-setores-separacao.js`): liga/desliga "Separar por setor" e uma tabela pessoa × setor (pessoas = as de
+  `separacao_modos_funcionarios`; "Todos os setores" marcado = vê tudo, é o padrão). Nasce desligado.
+- Banco (migration `20261029000100_separacao_setores.sql`, aplicada e registrada): tabela `separacao_setores`
+  (empresa_id, ativo, usuarios jsonb `{usuario_id: [setores]}`; ausente = todos); `separacao_meus_setores(p_empresa)`
+  (null = todos), `separacao_setores_lista` (os 6 do cadastro + outros já gravados + "Sem setor"),
+  `separacao_setores_salvar` (exige `configuracoes.empresa.editar`). O embrulho `operacao_atualizar_separacao` (o mesmo
+  da trava de pagamento) recusa separar linha de setor não liberado: "Este item é do setor X, que não está liberado
+  para você separar."
+- Triagem (`separacao-materiais.js`): `state.meusSetores`, `itemVisivel`, `itensDoPedido(id, soMeus)`. A fila esconde o
+  pedido sem itens da pessoa; a lista, o progresso, o "1 clique" e o relatório impresso usam só os itens dela; uma faixa
+  azul mostra "Seus setores: …" e quantos itens são de outros setores. Ao salvar com a parte da pessoa pronta e outros
+  setores faltando: aviso "Sua parte deste pedido está separada…" e fecha, sem finalizar; a triagem termina quando o
+  último setor separar. Conferência, Expedição e etiquetas não mudaram.
+- Testes: `tests/separacao-setores-browser.cjs` (novo); `tests/operacao-rpc-fixture.cjs` responde
+  `separacao_meus_setores` com `banco.meusSetores`. Versões `?v=20261029-setores`.
+
+## Triagem: separado fica em Concluídos até a Expedição começar a carregar (29/out/2026)
+Pedido: "quando finalizo a separação ela deveria ficar em Concluídos e sumir apenas quando a Expedição começasse o
+carregamento". Antes, ao finalizar, a etapa do pedido virava `expedicao` e ele sumia da Triagem na hora.
+`pedido_fluxo_fila(…,'triagem')` (migration `20261029000200_triagem_concluidos_ate_carregar.sql`, aplicada e registrada)
+passa a incluir pedidos com etapa `expedicao` enquanto `operacao.carregamento.iniciado_em` estiver vazio e nenhuma
+etiqueta tiver `lida_carregamento_em` (o carregamento começa quando a Expedição abre a conferência do pedido ou lê a
+primeira peça). Na tela, `renderFila` aceita `fluxo_etapa==='expedicao'` e o pedido cai na coluna Concluídos (status
+separado); abrir mostra o resumo, sem editar. A Expedição continua vendo o pedido como antes (as duas filas mostram).
+Testes: `tests/separacao-cronograma-browser.cjs` (ok 5b e o caso "standby"/"assumido"); `tests/operacao-rpc-fixture.cjs`
+segue a regra nova. Versão `separacao-materiais.js?v=20261029-concluidos`.
+
+## Cartão travado pelo pagamento mínimo: "Aguardando Financeiro" e não abre (29/out/2026)
+Pedido (print da Expedição): "a pessoa nem consiga clicar, deve aparecer na mesma linha de Ida um aviso pequeno".
+RPC `pedidos_pagamento_bloqueados(p_pedidos uuid[], p_etapa)` (migration `20261029000400`, aplicada e registrada) diz
+quais pedidos da lista estão travados (usa `pedido_pagamento_situacao`). Expedição (`expedicao.js`, etapa
+carregamento, só cartões de Ida ainda não conferidos) e Triagem (`separacao-materiais.js`, etapa triagem, cartões de ida
+fora de Concluídos): o cartão ganha a pílula `.exp-aviso-fin` "Aguardando Financeiro" ao lado de "Ida" (texto completo
+no `title`), fica apagado (`.is-bloqueado-fin`, cursor proibido) e clique/Enter não abrem. Estilo em
+`separacao-materiais.css` (a Expedição carrega o mesmo arquivo). Teste em `tests/expedicao-browser.cjs`;
+`tests/operacao-rpc-fixture.cjs` responde a RPC com `banco.bloqueadosFinanceiro`. Versões `?v=20261029-fin-bloqueado`.
+
+## Conferência por quantidade: a mais fica amarelo, não verde (29/out/2026)
+Pedido: "coloquei uma quantidade maior do que deveria ir, então deve ficar amarelo; não pode ficar verde porque mesmo
+que tenha ido a mais a conferência está errada". Em `conferencia.js` (`somar()` da conferência por quantidade):
+`is-ok` (verde) só com a quantidade **exata**; menor = `is-falta`, maior = `is-a-mais` (os dois amarelos `#fdf6dd`,
+CSS no fim de `conferencia.css`). Vale no carregamento, descarregamento e volta (na volta/descarregamento às cegas
+nada pinta, como antes). Teste em `tests/conferencia-sem-etiquetas-browser.cjs`. Dois testes de conferência já
+falhavam antes desta mudança e continuam falhando no mesmo ponto: `conferencia-sem-etiquetas` em "Pé … 1 faltante" e
+`conferencia-separacao-manual` no ok 4. Versões `conferencia.{css,js}?v=20261029-a-mais-amarelo`.
+
+## Conferência por quantidade: Kit embaixo do componente (29/out/2026)
+Pedido: "embaixo do item também quero que apareça o kit que ele representa, igual tem em Triagem".
+`operacao_conferencia_pecas` (migration `20261029000500_conferencia_pecas_kit.sql`, aplicada e registrada; drop/create
+porque mudou o retorno — mesmas permissões) devolve também `kit_nome` e `por_kit` (vazios em item comum). As duas funções
+que a usam (`logistica_confirmacao_base_antes_fluxo`, `operacao_concluir_conferencia_sem_pagamento`) foram testadas
+depois da mudança. Em `conferencia.js` (`nomeComKit`), o nome ganha `<small class="cf-qtd-kit">Parte do kit: … (N por
+kit)</small>` na conferência aberta, no resultado e na lista impressa (espaços/quebras do nome do kit são juntados).
+Teste em `tests/conferencia-sem-etiquetas-browser.cjs`. Versões `conferencia.{css,js}?v=20261029-kit`.
+
+## Financeiro: calendário de fluxo de caixa em destaque na Visão geral (29/out/2026)
+Pedido: "em Visão geral entre em destaque aquele calendário de fluxo de caixa igual na Tecnoweld". Copiado de
+`Tecnoweld/financeiro.js` (`renderCalendar`/`showCashDayDetails`) para `Modulos/Financeiro/financeiro.js`
+(`pintarGeral` → `pintarCalendario`, `detalheDia`). Logo abaixo dos cartões: "Calendário financeiro" do mês (Dom–Sáb),
+setas ‹ › e "Hoje"; cada dia mostra **E** (entradas), **S** (saídas) e **Saldo** previsto (valores curtos: "4 mil",
+"1,3 mi"), de `fin_fluxo(p_empresa, 1º dia, último dia, null)` (previsto + realizado). Cor do dia pelo saldo previsto:
+verde positivo, amarelo no saldo mínimo das contas ativas (`fin_contas.saldo_minimo` somado) ou abaixo, vermelho
+negativo, neutro sem dado. Passar o mouse/focar/clicar abre o detalhe (fixo, `#finCalDetalhe`) com as entradas e saídas
+do dia (`fin_receber`/`fin_pagar` pelo `programado_para` ou `vencimento`, até 5 de cada). O antigo bloco "Próximos 30
+dias" (barras + tabela) saiu; "Saldos por conta" e "A receber por divisão" ficaram embaixo, lado a lado. CSS
+`.fin-cal-*` no fim de `financeiro.css`. Teste em `tests/financeiro-browser.cjs` (ok 1b; o simulado de `fin_fluxo`
+devolve um dia por linha). Versões `financeiro.{css,js}?v=20261029-calendario`.
+
+## Financeiro: abas na mesma linha do título (29/out/2026)
+Pedido: "quero que as abas fiquem na mesma linha de Financeiro". O `<nav id="finAbas">` foi para dentro do
+`.header-list.fin-topo` (`financeiro.html`) e o fim de `financeiro.css` (peso `html:root:is(#fin-topo#fin-topo#fin-topo,html)`,
+para vencer o tema que centraliza o título numa faixa só dele) põe o título "Financeiro" à esquerda (24–32px) e as
+abas à direita (espaço entre abas 13px), com a linha fina de ponta a ponta no cabeçalho. Medido: ≥1900px tudo numa
+linha; 1400–1899px as abas quebram em 2 linhas ao lado do título; abaixo de 1400px volta ao antigo (título centralizado,
+abas embaixo). Versão `financeiro.css?v=20261029-abas-topo2`.
+**Abas reduzidas para 10, numa linha só (29/out, pedido seguinte)**: "Conta dos decoradores" + "Gestão de créditos"
+viraram a aba **Decoradores**; "Plano de contas" foi para dentro da aba **DRE**; "Resultados por evento" virou
+"Resultados". Cada aba que junta duas telas mostra as partes como botões pequenos logo abaixo das abas
+(`#finSubAbas`, `GRUPOS_ABA` em `financeiro.js`); `S.aba` continua sendo o nome da tela de dentro (bv, creditos, dre,
+plano), então `financeiro-bv.js` e `?aba=creditos|plano` seguem funcionando. Medido: título + 10 abas numa linha de
+1440px para cima (abas ocupam ~985px); empilhado só abaixo de 1280px. Versões `?v=20261029-abas-juntas(2)`.
+**A receber: cabeçalho do pedido numa linha (29/out)**: "Pedido N · cliente", "tipo · evento dd/mm", os chips das
+divisões, o aviso "As parcelas somam…" (corta com "…" se não couber; texto inteiro no `title`) e "Total … Em aberto …" à
+direita, tudo numa linha (`.fin-pedido-linha`); abaixo de 1100px volta a quebrar.
+**Título no centro e abas dos dois lados (29/out, pedido seguinte)**: `#finAbas` virou `<nav class="fin-abas-duplas">` com
+duas `.fin-abas` (esquerda: Visão geral, A receber, A pagar, Decoradores, Resultados; direita: Posição final, Contas e
+PIX, Conciliação, DRE, Inadimplência). O cabeçalho é uma grade `1fr auto 1fr` (o nav fica `display:contents`), então
+"FINANCEIRO" fica no centro exato da tela (medido a 1440 e 1900px) com as abas encostadas nele dos dois lados. Abaixo de
+1280px: título em cima, os dois grupos embaixo, um de cada lado. JS não mudou (`#finAbas [data-aba]` continua achando as
+abas). Versão `financeiro.css?v=20261029-titulo-centro`.
+**Visão geral em duas colunas (29/out, pedido seguinte)**: os 5 cartões de totais (Saldo nas contas, A receber/A pagar
+em aberto, Recebimentos/Pagamentos vencidos) saíram; `.fin-geral-2col` = calendário à esquerda e, à direita (30%, mín.
+320px), "Saldos por conta" e "A receber por divisão" empilhados. Abaixo de 1100px vira uma coluna. Versões
+`financeiro.{css,js}?v=20261029-geral-2col`.
+**A receber "por data" (29/out)**: botão de ícone `#frModo` ao lado de "+ Novo recebimento" alterna entre agrupado por
+pedido (padrão; ícone de lista) e **por data** (ícone de blocos marcado): uma tabela só, `.fin-receber-data`, com cada
+parcela numa linha em ordem de vencimento (Vencimento, Pedido · cliente, Parcela, Divisão, Conta, Valor, Recebido,
+Status e os mesmos botões Receber/Editar/Detalhes, `acoesR`), total e em aberto no topo. Os filtros valem nas duas
+visões; a escolha fica em `localStorage.fin_receber_modo`. Teste ok 3b em `tests/financeiro-browser.cjs`. Versões
+`financeiro.{css,js}?v=20261029-receber-data`.
+**A receber: botão "Recebidas" (29/out)**: ao lado do ícone `#frModo` (antes de "+ Novo recebimento"), `#frRecebidas`
+liga/desliga o filtro de status "Recebidos" (marcado em verde quando ligado; clicar de novo volta para "Em aberto").
+Funciona nas duas visões (por pedido e por data). Teste ok 3c. Versões `financeiro.{css,js}?v=20261029-recebidas`.
+**Decoradores compacto (29/out)**: o quadro da conta corrente ficou menor (avatar 52px, nome 17px, saldo 24px,
+padding 14/20px; ~105px de altura, antes ~250) e a frase "Saldo total, independente dos filtros…" virou `title` do saldo.
+Depois de ligar os eventos, `financeiro-bv.js` move os filtros De/Até/Situação para a linha da busca do decorador
+(`.fin-conta-linha`) e os botões Atualizar / Registrar crédito / ⓘ para a linha das partes da aba (`#finSubAbas >
+.fin-subabas-acoes`, à direita); trocar de parte/aba some com eles porque `pintarSubAbas` refaz o nav. Versões
+`financeiro-bv.js?v=20261029-bv-linha`, `financeiro.css?v=20261029-bv-branco`. O quadro passou a ser branco com a sombra dos outros cartões (antes cinza `#f3f4f6`).
+**"Gestão de créditos" removida (29/out)**: pedido "não é necessária, será feito tudo pela primeira aba". A aba
+Decoradores tem uma tela só (`GRUPOS_ABA.bv` com um item; com 1 item o `#finSubAbas` aparece sem os botões de parte, só
+com Atualizar / Registrar crédito / ⓘ à direita). `FinanceiroGestao.creditos` (financeiro-gestao.js) continua no
+arquivo, sem uso; o mesmo arquivo segue servindo "Resultados". Versão `financeiro.js?v=20261029-sem-creditos`.
+**Valores em verde/vermelho em todo o Financeiro (29/out)**: `colorirValores()`/`vigiarValores()` (financeiro.js, MutationObserver em `#finConteudo`) marcam todo elemento cujo texto é só um valor "R$ x" com `.fin-valor-pos` (verde `#1f7a44`, maior que zero) ou `.fin-valor-neg` (vermelho `#b42318`); zero fica como está; botões, selects, chips e status ficam de fora. O CSS usa `html:root:root:is(#fin-cor×6,html)` porque a regra global de texto das tabelas tem 4 IDs. Teste em `tests/financeiro-browser.cjs`. **Resultados**: as duas notas explicativas (`.pf-nota` "O resultado considera o pedido…" e "Valores de locação do pedido antes…") foram apagadas de `financeiro-gestao.js` (`?v=20261029-sem-notas`).
+**Aba Inadimplência removida (29/out, pedido do usuário)**: botão saiu do `financeiro.html` e `pintarInadimplencia` saiu do `financeiro.js` (`?v=20261029-sem-inadimplencia`); agora são 9 abas (direita: Posição final, Contas e PIX, Conciliação, DRE). A RPC `fin_inadimplencia` continua no banco, sem uso.
+
+## Fretes e Uber no banco, ligados ao Contas a Pagar (29/out/2026)
+Pedido: frete e Uber viram custo operacional do evento no Contas a Pagar, sempre com a conferência da logística antes. Fretes e Uber saíram da planilha (motor da Vercel) e começaram vazios (escolha do usuário). Migrations `20261029000600_fretes_banco.sql` e `20261029000700_uber_banco.sql` (aplicadas e registradas).
+- **Transportadora = Fornecedor com login**: Cadastro de Fornecedores > "Acesso ao Cadastro de Fretes" (login, senha, liberado) → `fornecedor_portal_salvar` (`estoque.fornecedores.editar`). A senha mora em `fornecedores_portal_senha` (sem leitura nenhuma: o cadastro lê `fornecedores` com `select *`). Logística > Caminhões ganhou "Fornecedor (transportadora)" (`caminhoes.fornecedor_id`); caminhão sem fornecedor = frota própria, não gera frete.
+- **Viagens** (`frete_viagens`, geradas por `frete_sincronizar` a cada abertura das telas): cada caminhão escalado no Painel Logístico vira ENTREGA (carregamento/montagem) e COLETA (desmontagem/descarregamento) por pedido. Valor do sistema = valor/km da categoria de frete do caminhão × km do pedido (`observacoes.logistica_snapshot.km`) ÷ 2, sem a absorção dada ao cliente. A categoria de frete (P/M/G/XL) sai da **capacidade m³** do caminhão na mesma régua de volume de `categorias_caminhao` (o campo `caminhoes.categoria` é o tipo de veículo, VUC etc.). Abertas acompanham a escala; tirada da escala some (ou fica "Fora da escala" se a transportadora já informou o valor).
+- **Cadastro de Fretes** (`Modulos/Chiavari/Fretes/fretes.html` + `fretes-portal.js/.css`, página pública, sem o tema): a transportadora entra (`transp_login`, 5 erros = 15 min bloqueado; devolve `{erro}` em vez de exceção para a contagem ficar gravada), vê "A informar / Informadas / Fechadas" das viagens dela **sem o valor do sistema**, informa o valor (Enter) e pode lançar "viagem que não está na lista" (`extra`). Sessão em `app_sessoes` tipo `transportadora` (30 dias).
+- **Conciliação de Fretes** (`conciliacao.html/.js/.css`, reescrita): um bloco por transportadora com Sistema × Transportadora × Diferença, valor final (Enter; atalhos "= sistema" / "= transportadora") e observação; seleciona (só com valor final) e "Fechar e enviar ao Contas a Pagar" com vencimento → `frete_fechar`: UMA `fin_pagar` (origem `frete`, categoria Fretes, documento FR-0001) + um `fin_custos_evento` por pedido (categoria `frete`, `fechamento_id`), então Resultados mostra o frete de cada pedido separado. "Desfazer" (sem pagamento) cancela a conta; o gatilho `logistica_fechamento_pagar_cancelado` reabre viagens/corridas e cancela os custos (vale também cancelando a conta direto no Financeiro). `fin_custos_evento.pagar_id` deixou de ser único (só para custo manual, sem `fechamento_id`); categoria `uber` acrescentada. Tabela de fechamentos: `logistica_fechamentos` (frete e uber).
+- **Uber**:
+  - **Parâmetros > Logística e operação > "Frete, montagem e Uber" > Valores do Uber por km** (`parametros-uber.js`, `uber_faixas_salvar`, em `empresa_logistica_regras.uber.faixas` [{de, ate (null = acima), valor}]). O valor vale por trecho; ida e volta = 2.
+  - **Painel Logístico**: bloco "Uber" em cada etapa (`painel-uber.js`, arquivo próprio que se encaixa depois do painel desenhado). "+ Pedir Uber" pede carros, ida/ida e volta, horário, ponto de encontro, destino (o local da etapa) e km ("Calcular pelo mapa" = Edge Function `calcular-distancia`, ou digitado), e mostra o valor da faixa. Cada vaga mostra os motoristas que aceitaram (nome, WhatsApp, carro, situação) e as vagas livres.
+  - **App do Motorista** (`Uber/motorista.html/.js/.css`, reescrito, público): cadastro próprio, sem aprovação (pedido: "como um aplicativo Uber"). O motorista informa nome, celular, senha, PIX e carro e entra com celular e senha (`uber_cadastrar`/`uber_login`, sessão tipo `motorista`, 90 dias). Telas:
+    - Corridas disponíveis, onde o primeiro que aceitar leva (`uber_aceitar` com trava);
+    - Minhas: check-in/check-out ou desistir antes do check-in; histórico com "aguardando pagamento"/"Paga";
+    - Perfil.
+  - **Check-in e check-out por QR**: no App do Montador, o responsável da etapa (`mont_pode_ver`) vê o bloco "Uber" e o botão "QR para o motorista" (`mont_uber_qr`, código de 6 números que muda a cada minuto, `uber_codigo_qr`). O QR abre `motorista.html?c=<vaga>.<código>` e registra sozinho; também dá para ler pela câmera dentro do app ou digitar o código. O check-in libera 3h antes do horário; o check-out, 10 min depois do check-in.
+  - **Controle de Uber** (`Uber/corridas.html/.js`, reescrito; menu "Controle de Uber"): corrida em andamento só aparece; depois do check-out a logística confere o valor (`uber_conferir`) e fecha várias do mesmo motorista → `uber_fechar` (fin_pagar origem `uber`, categoria "Corridas de aplicativo", PIX na observação, UB-0001; custo por pedido categoria `uber`).
+- `uber_motoristas` não tem leitura direta (a senha está na linha); a equipe vê pelas funções. `uber_motorista_status` (bloquear) existe no banco **sem tela ainda**. **PIX do motorista fica em texto** no banco (o cofre exige publicar uma Edge Function).
+- Testes: `tests/fretes-uber-live.cjs` (`RUN_FRETES_LIVE=1`, banco real, apaga tudo no fim: login da transportadora, viagens sem valor do sistema, informar valor; cadastro do motorista, aceitar, check-in pelo link do QR, check-out pelo código) e `tests/fretes-uber-telas-browser.cjs` (banco simulado: Conciliação, Controle de Uber, bloco Uber do Painel). Fluxo completo no banco testado numa transação desfeita (fechamento, custos, cancelar reabre; Uber: faixa, 2º motorista recusado, código errado, check-in/out, fechamento). `tests/parametros-empresa-browser.cjs` com o grupo renomeado.
+
+## Item personalizado na Triagem: parte em produção (29/out/2026)
+O item com personalização já ia sozinho para Produção > Ordens (`producao_itens`, `producao_sincronizar`). Faltava a Triagem. Decisões do usuário:
+- aparece no **setor do próprio item**;
+- a **linha é dividida** (10 poltronas com 4 personalizadas = 6 para separar + 4 "Em produção", sem quantidade);
+- quando a produção termina, **o separador confirma** o recebimento;
+- a **triagem só finaliza com a produção confirmada**.
+
+- **Banco** (`20261029000800_separacao_producao.sql`, aplicada e registrada):
+  - `separacao_producao_calc(pedido)` mostra as unidades em produção de cada item da linha (vindas de `producao_itens.origem` item_id/quantidade, sem os cancelados e removidos), quantas estão prontas (todas as etapas concluídas) e quantas foram confirmadas.
+  - A confirmação fica em `separacao_producao_confirmacoes` (pedido + item, não some quando o pedido é salvo de novo e as linhas da separação são refeitas).
+  - RPCs `separacao_producao(p_pedidos[])` e `separacao_producao_confirmar(pedido, item)`. O confirmar recusa antes de a produção terminar e respeita o setor da pessoa.
+  - O embrulho `operacao_atualizar_separacao` (pagamento + setor, igual ao anterior) ganhou a trava: a parte normal fica em no máximo (pedido − em produção).
+  - `separacao_exigir_completa` passou a contar separada + confirmada da produção, por item. Se faltar só a produção, a mensagem diz isso.
+- **Tela** (`separacao-materiais.js`):
+  - `itemTotal(item)` passou a ser só a parte normal (`quantidade_solicitada − item.prod.unidades`). Por isso manual, QR, etiqueta, Kit e 1 clique continuam sem mudança.
+  - A parte em produção entra no resumo do pedido (`pedidoResumo`) e só conta como separada depois de confirmada.
+  - O cartão lilás `.item-card-producao` (`renderProducaoItem`) mostra "Em produção" → "Pronto na produção" + "Confirmar recebimento" → "✓ Recebido da produção".
+  - Kit personalizado: cada componente mostra a parte do kit (unidades × por kit), e a confirmação é do kit.
+  - Finalizar com só a produção faltando avisa "Aguardando a Produção" e não finaliza.
+- Teste: `tests/separacao-producao-browser.cjs`. Os testes antigos de separação passam. Testado no banco numa transação desfeita.
+
+## Pós-venda do Comercial (29/out/2026)
+O "Feedback Pós-Evento" da planilha foi refeito no banco, começando vazio. No menu virou **Comercial > Pós-venda** (mesmo endereço `Modulos/Chiavari/Feedback/feedback.html`, agora com `posvenda.js/.css`).
+- **Origem**: pedido com `fin_posicoes_finais.status='confirmado'` vira uma ligação para o **cliente do pedido** (`posvenda_gerar`, roda a cada abertura de `posvenda_lista`). O cliente é identificado pelo `cliente_id` ou, se não houver, pelo nome.
+- **Regras** (Parâmetros > Comercial > "Pós-venda: regras das ligações", `posvenda_config.config`; padrões em `posvenda_padrao()`):
+  - **intervalo mínimo** entre contatos com o mesmo cliente (15 dias);
+  - **cliente novo** = até N pedidos com Posição final (1): liga logo, sem intervalo;
+  - **dias depois da Posição final** (1) e **prazo** (5 dias; depois fica "Atrasada");
+  - **não atendeu**: tenta de novo em N dias (2), até M tentativas (3); depois fica "sem contato";
+  - **uma ligação cobre todos os eventos** do cliente desde o último contato (padrão; o usuário quer poder mudar, mas o certo é uma única ligação). Desligado, vira uma ligação por evento, uma depois da outra, respeitando o intervalo.
+- **Formulário** (Parâmetros > Comercial > "Pós-venda: formulário da ligação", `parametros-posvenda.js`): perguntas de múltipla escolha, cada uma com uma ou várias respostas, obrigatória ou não, opções editáveis e a marcação **ruim**, mais o campo livre opcional de observação. O formulário inicial tem 7 perguntas: atendimento, entrega e montagem, móveis, coleta, o que mais gostou, indicaria, quer retorno.
+- **Tela**:
+  - abas Para ligar (com bolinha) / Próximas ("liga a partir de…", por causa do intervalo) / Precisam de atenção (com alguma opção ruim) / Concluídas;
+  - cada cartão tem foto, telefone e WhatsApp, os selos Cliente novo / Atrasada / tentativas, e os eventos cobertos;
+  - ações: Registrar ligação (formulário), Não atendeu e Não ligar (com motivo, na própria janela).
+- **Banco**: `posvenda_contatos` + `posvenda_contato_pedidos` (cada pedido entra em uma ligação só) e `posvenda_registrar` (confere as obrigatórias, guarda as respostas com o texto e marca `atencao`). Migration `20261029000900_pos_venda.sql` (aplicada e registrada). Testado no banco numa transação desfeita.
+- Teste: `tests/posvenda-browser.cjs`.
+- **Ajuste do mesmo dia (pedido do usuário)**: as ligações viraram **tabela**, não cartões. "Para ligar" e "Próximas" viraram uma aba só, **Ligações**: as de agora vêm primeiro, com "Ligar agora" ou "Atrasada", e as futuras em cinza com "A partir de dd/mm". As abas passaram a ser as globais (`.el-tabs` + `role=tab`, bolinha `.tab-badge`), na **mesma linha do título "Pós-venda"**, com a busca à direita (`.pv-topo`, mesmo esquema do Financeiro). Concluídas e Precisam de atenção mostram o resumo (respostas ruins em vermelho) e o botão "Ver respostas". A frase de regras embaixo das abas foi apagada. Versões `?v=20261029-tabela`.
+- **Janela da segunda contagem** (29/out/2026, pedido "mais bonito, com fotos, melhor sinalizado"): `pedirSegundaContagem(itens, foto, cega, nomeComKit)` em `conferencia.js` mostra o número de itens num selo azul e a lista dos que não bateram, com foto, nome (e o kit) e a 1ª contagem. Sem ser às cegas mostra também "Saiu X · faltam N" (vermelho) ou "N a mais" (amarelo); às cegas não mostra quanto saiu. Embaixo, 3 passos numerados. CSS `.cf-segunda`/`.cf-seg-*` no fim de `conferencia.css` (`?v=20261029-segunda`).
+
+## Divergências resolvidas na Gestão do acervo, com contagem geral (29/out/2026)
+Pedido: a pendência de contagem não se resolve mais na Triagem nem na Expedição. Ela vai para **Estoque > Gestão do acervo > Divergências**, onde o sistema pede uma contagem geral do item no galpão. Supera a coluna "2ª conferência / Motivo" e a coluna Divergências da Triagem (seções de 28/out).
+- **Triagem e Expedição**: as duas contagens às cegas continuam. Depois elas só mostram o resultado, com um aviso (`.cf-div-enviada`, conferencia.js) de que a divergência foi para a Gestão do acervo. A coluna Divergências da Triagem fica `hidden`, e o quadro volta a ter 3 colunas. As Pendências da Expedição deixaram de listar a divergência.
+- **App do Montador**: a desmontagem ganhou o passo 3, "Contagem dos itens". A pessoa conta pela lista em papel e lança quanto voltou de cada item, vendo quanto saiu. As funções são `mont_contagem_itens`/`mont_contagem_salvar` (registro `contagem_itens`) e, no adaptador, `MONT_contagemItens`/`MONT_contagemSalvar`. Concluir a desmontagem exige essa contagem, inclusive no servidor (`mont_registro_salvar`). A foto da lista continua obrigatória.
+- **Banco** (migration `20261029001000_divergencias_gestao_acervo.sql`, aplicada e registrada):
+  - Tabela `acervo_contagens_gerais`, com uma pendente por item. O gatilho em `operacao_ocorrencias` cria a pendente a cada falta/sobra nova. As divergências que já estavam abertas ganharam a pendente na migration.
+  - `acervo_divergencias(p_empresa)` traz as contagens e as divergências, com o histórico: saiu, carregamento, desmontagem (com o nome de quem contou), descarregamento (1ª e 2ª) e triagem (1ª e 2ª).
+  - `acervo_contagem_registrar` grava a contagem com o esperado = estoque − manutenção − peças fora em outros eventos (`acervo_pecas_fora`).
+  - `acervo_divergencia_fechar(p_empresa,p_id,p_contagem,p_motivo)` exige a contagem feita e usa `operacao_fechar_divergencia_core`, com as mesmas regras de motivo e perda (`operacao_fechar_divergencia` virou só o embrulho que confere a permissão). Quando não sobra divergência aberta do item, a contagem é concluída.
+- **Bloqueio**: enquanto a contagem está pendente, o item fica com livre 0 (`operacao_livre_calc` → `acervo_item_bloqueado`) e não pode ganhar novas reservas. `operacao_validar_reserva` só recusa o aumento; o que o pedido já tinha continua. Isso é controlado em **Parâmetros > Logística e operação > Triagem e conferência > "Divergências de contagem"** (`empresa_logistica_regras.divergencia_bloqueia_item`, padrão ligado), via `parametros-divergencias.js` e `acervo_parametros_salvar`.
+- **Tela** (`acervo-divergencias.js`): um cartão por item.
+  - A contagem é às cegas. Depois de contar, a tela mostra "Estoque − Manutenção − Fora = Deveria ter" e o contado.
+  - Faltando peça, mostra "Pode ter ficado em: <local> (Pedido N…)".
+  - A tabela de divergências traz o histórico das contagens e a quantidade final sugerida. A diferença é distribuída da divergência mais antiga para a mais nova.
+  - O motivo é filtrado pela situação (bateu/continua) e o gestor confirma cada linha (uma perda pede confirmação).
+  - A bolinha da aba mostra quantas contagens estão pendentes.
+- Testes: `tests/acervo-divergencias-browser.cjs` (novo), `conferencia-descarregamento-cega-browser.cjs` (ok 4) e `separacao-cronograma-browser.cjs` (ok 6b). As funções do montador foram testadas no banco numa transação desfeita.
+
+## Central com Entrega/Coleta e % pago do Financeiro; card Reservado; trava de disponível; 3D com disponibilidade (29/out/2026)
+- **Central de Pedidos**: colunas novas **Entrega** e **Coleta** depois de **Evento** (antes "Data"); a tabela agora tem 9 colunas (min-width 1320px). Pedido do catálogo lê `dados.evento.data_entrega/data_coleta`. O "% pago" e o atraso passam a vir das contas a receber do Financeiro, pela RPC `pedidos_recebimentos(p_empresa, p_pedidos[])` (migration `20261029001100`, aplicada e registrada; exige `comercial.pedidos.visualizar` ou `financeiro.fluxo.visualizar`, então quem não vê o Financeiro também vê o %): recebido = Σ(valor − aberto) dos títulos não cancelados, total = maior entre o valor do pedido e a soma dos títulos, próximo vencimento = o título em aberto mais antigo. Pedido sem título continua com a conta antiga (parcelas gravadas no pedido).
+- **Quadro "Estoque e reservas"** (`pedido-estoque-tooltip.mjs`): 5º card **Reservado / Pré-reserva**, a soma dos pedidos da lista abaixo, separada por situação.
+- **Trava antes de entrar no pedido** ("isso nem chegue a entrar no pedido"): `faltaDisponivel()`/`mudarSeDisponivel()` em `catalogo-projetos.mjs` conferem antes de AUMENTAR a quantidade no "＋" do card, no campo de quantidade (o aviso fica dentro do campo e nada entra), no "+" e no campo de quantidade da Lista Completa (volta ao valor anterior) e no "＋ Componente".
+  - No pedido comercial, a conta é a `pedido_disponibilidade_comercial` do salvar: período entrega→coleta, todos os ambientes somados, kit aberto nos componentes e o próprio pedido fora.
+  - No projeto do decorador, vale o "Disponível" do catálogo (`window.catalogMapaEstoque()` em catalogo.mjs).
+  - Se não houver datas ou a consulta falhar, deixa passar (o salvar confere de novo). A Helena e os jogos da composição não passam por aqui.
+- **Formatos**: o "Lounge compacto" embutido saiu da lista (`studioFormats` só devolve os formatos salvos; `BUILTIN_FORMATS` continua no arquivo como modelo de papéis).
+- **3D Livre**: cada móvel da lista (e do "Trocar item") mostra "Estoque N · Disponível …/Esgotado …", com os mesmos selos e a mesma consulta do catálogo (`data-stock-item`, que `vigiarEstoque` pinta sozinho). A coluna de itens/formatos passou de 270px para 360px (310px até 1250px).
+- Testes: `tests/catalogo-pedido-bloqueio-disponivel-browser.cjs` (novo); `central-fluxo-browser.cjs` (9 colunas), `studio-formatos-browser.cjs` (sem o embutido) e `pedido-precos-browser.cjs` (5 cards) foram ajustados.
+
+## Vitrine do login sem acesso de decorador (29/out/2026)
+Reportado: os móveis pararam de aparecer sozinhos na tela de login. Causa: a vitrine (`catalogo_vitrine_login`) e o catálogo do visitante (`catalogo_empresa_publica`) descobriam a empresa só pela única empresa com acesso de decorador ativo (`catalogo_acessos`), e essa tabela ficou vazia depois da limpeza de dados. Migration `20261029001200_vitrine_login_sem_acessos.sql` (aplicada e registrada): sem acesso ativo, vale a única empresa com móveis ativos e visíveis no site. A vitrine passou a usar `catalogo_empresa_publica`. `?empresa=<id>` continua valendo. Testado com a chave anônima: 22 fotos voltaram.
+
+## Datas do pedido e selo de bloqueio por contagem (29/out/2026)
+- **Datas nos dados do pedido** (`js/pedido/pedido.entrada.mjs`, depois do bloco "Um dia / Vários dias"):
+  - os cartões ficam na ordem **Evento → Entrega → Coleta**;
+  - entrega e coleta (data e horário) ficam travadas até a data do evento ser preenchida (`.aguardando-evento`, com o aviso "Preencha primeiro a data do evento");
+  - o calendário limita a entrega a até a data do evento (`max`) e a coleta a partir do último dia (`min`);
+  - entrega depois do evento, ou coleta antes do último dia, é recusada na hora e volta à data anterior;
+  - entrega mais de **2 dias** antes do evento, ou coleta mais de 2 dias depois do último dia, pergunta "Tem certeza?" (`confirmarGlobal`). Respondendo "não", volta à data anterior; a mesma combinação aceita não pergunta de novo.
+
+  A folga é `DIAS_FOLGA = 2` no código (não é parâmetro). O salvar continua conferindo as regras de entrega ≤ evento e coleta ≥ último dia (`validarDados`). Datas preenchidas pelo sistema (pedido aberto, projeto do catálogo) não disparam a pergunta. Teste: `tests/pedido-datas-browser.cjs`.
+- **Selo "Bloqueado · aguardando contagem"**: item com divergência aguardando a contagem geral (ver "Divergências resolvidas na Gestão do acervo") aparecia só como "Esgotado no período", enquanto o quadro de reservas mostrava as peças livres (a Mesa Auxiliar Carvalho: 22 em estoque, 2 reservadas, "Esgotado"). Migration `20261029001300_selo_bloqueio_contagem.sql` (aplicada e registrada):
+  - `acervo_itens_bloqueados(empresa)` devolve os itens com contagem pendente e os kits que levam algum deles;
+  - `catalogo_estoque` e `pedido_catalogo_estoque` devolvem um 3º valor no mapa (`[estoque, livre, 1]`);
+  - `pedido_estoque_detalhes` devolve `livre = 0` e `bloqueio_contagem`.
+
+  Na tela, o selo vira "Bloqueado · aguardando contagem" (catálogo, pedido e 3D), o quadro mostra o motivo numa faixa vermelha, e a trava de quantidade avisa o motivo.
+
+## Pedido: rascunho automático, horários obrigatórios e cards de data iguais; "Adicionar ao projeto" em 2 colunas; Divergências em tabela (29/out/2026)
+- **Salvamento automático do pedido** (`js/pedido/pedido.mjs`):
+  - O Salvar continua exigindo o pedido completo (dados + financeiro distribuído). Por isso, a cada alteração, a tela grava um **rascunho no navegador** (`localStorage pedido_rascunho:<empresa>:<pedido|novo>`), no mesmo formato da linha do banco (`montarPayloadPedido`, função extraída do Salvar).
+  - Ao abrir o mesmo pedido (ou um novo), se houver rascunho mais recente que o salvo, pergunta "Encontramos alterações deste pedido que não foram salvas… Quer recuperar?". "Sim" aplica com o mesmo `carregarPedidoSalvoSeNecessario(rascunho)`, que não lê o banco; "não" apaga o rascunho.
+  - O rascunho só começa depois de uma alteração de verdade: evento do usuário (`isTrusted`) ou o catálogo mexer no projeto (`window.__pedidoHouveEdicao`, chamado em `pedidoSincronizarProjetoCatalogo`). Assim o recálculo de frete e parcelas ao abrir não vira "alterações".
+  - Some ao salvar (`marcarPedidoComoSalvo`). Também grava a cada 5 s, ao sair e ao esconder a aba.
+  - **Limite**: fica só naquele navegador/aparelho.
+- **Horário de entrega e de coleta obrigatórios para avançar** dos dados do pedido (antes só no Salvar): `validarDados` básico.
+- **Cards Evento/Entrega/Coleta iguais**: uma regra antiga (`.entrada-data-card:nth-child(2)`, feita para o Evento quando ele era o 2º card) pegava a Entrega depois da troca de ordem. Removida. Os três cards agora têm a mesma altura, o título na mesma linha e a linha de campos data + horário (no Evento, data + "Até"). CSS no fim de `pedido.css`.
+- **"Adicionar ao projeto" com foto** (`escolherDestino` com `imagem`): duas colunas, sem rolagem (foto e móveis à esquerda; projeto, ambiente e ambientes rápidos à direita; `.cpj-dest-2col`). Abaixo de 820px empilha.
+- **Divergências** (Gestão do acervo): virou **tabela** (`acervo-divergencias.js`, `.dv-tabela` no fim de `acervo.css`).
+  - Uma linha por divergência: Pedido, Histórico (Saiu · Carregamento · Desmontagem · Descarregamento · Triagem numa linha) e Resolução (final + motivo + Confirmar).
+  - Item e Contagem geral ocupam as linhas do mesmo item (`rowspan`).
+  - Abaixo de 1100px cada linha vira duas colunas.
+- **Painel do acervo**: os números das sub abas (Marcenaria, Solda, Acabamento e Pintura…) deixaram de ser bolinha vermelha (regra em `acervo-tabela.css`) e viraram um número discreto ao lado do nome.
+- Testes: `pedido-datas-browser.cjs` (ok 4–5, rascunho e recuperação), `acervo-divergencias-browser.cjs`; ajustados `decorador-bv-browser.cjs`, `pedido-precos-browser.cjs` e `catalogo-editor-cena-browser.cjs` (janela em 2 colunas sem rolagem).
+- **Divergências sem a coluna Resolução** (pedido seguinte, 29/out):
+  - Depois da contagem geral, o resultado de cada divergência é o que o sistema sugere ("Perda de 1", "Peças no galpão"…). Ele aparece na célula do pedido, e não se digita mais a quantidade final.
+  - Na célula "Contagem geral e confirmação" há uma lista de motivo por situação: faltou de verdade / faltou mas está no galpão / veio a mais (de verdade ou por erro). Cada lista traz só os motivos daquela situação (`gruposMotivo`).
+  - Um botão "Confirmar as N divergências" fecha todas as do item de uma vez (`acervo_divergencia_fechar` em sequência, com a confirmação de perda antes).
+- **Divergências v3** (29/out, pedido "esteticamente mais bonita, melhor distribuída… histórico como ícone"):
+  - Colunas: Item | Pedido | Histórico | Contagem geral | Confirmar.
+  - **Histórico** é um botão com ícone e "saiu → voltou" (`details.dv-hist-pop`); ao clicar, abre um quadro com as 5 contagens. Um aberto por vez, e fecha ao clicar fora.
+  - **Contagem geral** mostra "Deveria ter" e "Contado" lado a lado, com a conta embaixo. O contado aparece em verde (bateu), vermelho (falta) ou amarelo (a mais).
+  - **Confirmar** tem coluna própria, com o motivo por situação e o botão pequeno.
+  - O texto explicativo acima da tabela saiu, a pedido.
+  - Regras com 6 IDs (`html:root:is(#dv×6,html)`) para vencer o tema, que punha os rótulos em caixa alta e os botões grandes.
+  - Telas estreitas rolam de lado (min-width 980px).
+
+## Disponibilidade: uma conta só em todas as telas (29/out/2026)
+Reportado: o selo do catálogo mostrava 20 disponíveis da Mesa Auxiliar Carvalho e o quadro "Estoque e reservas" mostrava 22. Pedido: "precisamos ter apenas uma… o mesmo local que uma consulta a outra deve consultar também".
+- **Os dados já eram um lugar só** (pedidos, estoque e manutenção nas mesmas tabelas), mas a **conta** estava em três lugares diferentes:
+  - selo, Helena e salvar usavam `operacao_livre_calc`, no período entrega → coleta e no pior dia (20);
+  - o quadro de reservas tinha uma conta própria e olhava um dia só (22);
+  - a tela Disponibilidade de Itens fazia a conta inteira no navegador.
+- **Agora tudo passa por `operacao_livre_calc`:**
+  - `pedido_estoque_detalhes` (migration `20261029001400`) ganhou `p_inicio/p_fim`: o "Livre" vem de `operacao_livre_calc` no mesmo período do selo, e a lista mostra os pedidos que cruzam o período ("Estoque e reservas de dd/mm a dd/mm");
+  - a tela Disponibilidade de Itens usa `operacao_livre_periodo(empresa, início, fim)` (migration `20261029001500`, que embrulha `operacao_livre_calc` e diz quem está bloqueado por contagem) para o número "Disponível";
+  - a conta da tela ficou só para o detalhe dia a dia, e também zera a peça bloqueada por contagem.
+- Conferido no banco que não sobrou função de disponibilidade com conta própria (as outras que leem estoque são do inventário do acervo). **Função ou tela nova que mostre disponível: usar `operacao_livre_calc` (ou `operacao_disponibilidade`/`operacao_livre_periodo`), nunca somar reservas por conta própria.**
+- Testes: `disponibilidade-filtros-browser.cjs` (ok 9) e `pedido-precos-browser.cjs`.
+
+## Serviço operacional no cronograma, autocomplete do Uber e App do Motorista com o visual de antes (29/out/2026)
+- **Serviços adicionais operacionais** (pedido do usuário: "montagem extra, desmontagem extra… precisa de data e horário… precisa entrar no cronograma"). Migration `20261029001600_servicos_operacionais_cronograma.sql`, aplicada e registrada.
+  - **Cadastro** (Parâmetros > Comercial > Serviços adicionais): a coluna "No cronograma" grava `servicos_adicionais.etapa_operacao` (montagem/desmontagem/carregamento/descarregamento/triagem/outra; vazio = não entra). "Montagem Extra" já veio como montagem.
+  - **Pedido** (Lista Completa): ao escolher um serviço operacional, a janela pede data e horário. A linha (`dados.servicos[]` com `etapa`, `data`, `hora`) mostra "No cronograma · Montagem" com os dois campos editáveis.
+  - **Salvar**: sem data e horário o pedido não salva. A tela avisa e leva para a lista; o banco também recusa, pelo gatilho `pedido_servicos_operacionais_check`, que só confere quando a lista de serviços muda, para pedidos antigos continuarem gravando por outras telas.
+  - **Cronograma**: `operacao_sincronizar_pedido` cria uma etapa por linha de serviço. Ela fica em `operacao_etapas.servico_ref` (o id da linha), com o nome do serviço ("Montagem Extra (2x)"), o tipo da etapa e a data e o horário do pedido, e a escala automática preenche equipe e caminhão. Data mudada à mão no cronograma não é sobrescrita (mesma regra das outras etapas). Tirar o serviço do pedido apaga a etapa.
+  - As etapas normais ignoram as de serviço (`servico_ref is null`). A prévia/PDF do pedido mostra a data e o horário do serviço.
+- **Painel Logístico > Pedir Uber**: o ponto de encontro tem autocomplete do Google (`painel-uber.js`).
+  - As sugestões aparecem dentro da janela: a lista nativa do Google ficaria atrás do `<dialog>`. Usa `AutocompleteService` e `Geocoder` pelo placeId, que dá `ponto_lat/ponto_lng`.
+  - O km é calculado sozinho pelas coordenadas ao escolher o endereço (e ao mudar o destino), e continua editável ("Km alterado à mão").
+  - A página carrega `js/core/google.config.js` + `google.js`.
+- **App do Motorista voltou ao visual de antes** (pedido: "não queria que tivesse mudado… super parecido com o da Uber, com mapa, trajeto em tempo real"). `Uber/motorista.html` é de novo o app antigo: mapa de fundo, painel embaixo, rota desenhada, navegação com GPS, voz e Google Maps/Waze. Só o "motor" foi trocado:
+  - entrar ou criar cadastro (celular + senha, Pix, carro);
+  - "Para onde vamos hoje?" mostra as corridas pedidas no Painel;
+  - o detalhe mostra a rota do ponto de encontro até o evento, com "Navegar até o ponto de encontro" e "Aceitar corrida";
+  - "Corrida aceita!";
+  - Minhas corridas: a receber, pago no mês, check-in/check-out pelo QR do responsável (câmera ou código) e desistir;
+  - o link do QR (`?c=`) registra sozinho.
+
+  Saíram o modo supervisor e a tabela de faixas de km do app (o valor vem pronto da vaga). `motorista.js/.css` (o app novo) foram apagados.
+- Testes:
+  - `fretes-uber-live.cjs` (`RUN_FRETES_LIVE=1`, banco real): o app restaurado cadastra, aceita, faz check-in pelo link e check-out pelo código;
+  - `fretes-uber-telas-browser.cjs` (ok 4): autocomplete e km automático/editável;
+  - `catalogo-pedido-servicos-componentes-browser.cjs`: serviço operacional pede data e horário;
+  - regras do banco testadas numa transação desfeita.
+- **Correções do mesmo dia** (migration `20261029001700_cronograma_data_so_pelo_pedido.sql`, aplicada e registrada):
+  - **Serviço adicional não leva caminhão**: não há item para levar. A escala automática pula o caminhão nas etapas com `servico_ref`, e os caminhões que já estavam nelas foram tirados. O Painel Logístico não pede caminhão nem avisa "Sem caminhão" para elas (`servico` no `ESC_painel`).
+  - **Data e horário das etapas só mudam pelo pedido (Comercial)**. O cronograma não altera mais. O gatilho `operacao_etapa_data_do_pedido` recusa mudar data/hora ou apagar etapa `origem='pedido'`, a não ser dentro de `operacao_sincronizar_pedido`, que marca a transação com `acervo.sincronizando_pedido` e desmarca ao terminar.
+  - A sincronização agora sempre aplica a data e o horário do pedido. As etapas que alguém tinha mudado à mão voltaram à data do pedido na migration.
+  - `salvarPedidoCompleto` (adaptador) recusa com mensagem clara; observação, equipe e caminhão continuam editáveis.
+  - Etapa manual (`origem='manual'`) segue como antes.
+- **Bug achado de passagem**: `js/core/limpezaDados.js` (limpeza única de 26/10) apagava todo o `localStorage`, menos `sb-*-auth-token`. Só que o login do sistema fica em `easyloc-auth`, então a limpeza deslogava todo mundo uma vez (num navegador novo, sempre). Agora preserva `easyloc-auth`, `uber_motorista_token` e `montadorToken`.
+- `tests/operacao-sem-motor-live.cjs` voltou a passar (ok 1–6): passou a usar a semana dos pedidos atuais e a pôr `empresa_id` na sessão, que o Painel exige.
+
+## Central de Pedidos: fluxo com 10 etapas (29/out/2026)
+Comercial › Triagem › Carregamento › Entrega › Coleta › Descarregamento › Triagem (volta) › Posição final › Pós-venda ›
+Finalizado (`renderFluxoPedido` em CentralPedidos.js). `comercial_fluxo_pedidos` (migration `20261029001800`, aplicada e
+registrada) devolve também `posicao_final` (Posição final confirmada) e `posvenda_feita` (ligação concluída, sem contato ou
+dispensada); `finalizado` = posição final + pós-venda + financeiro sem pendência. Coluna do fluxo com 660px.
+Teste `tests/central-fluxo-browser.cjs`. Versões `?v=20261029-fluxo-completo`.
+
+## Pedido extra (29/out/2026)
+Pedido do usuário: o cliente acrescenta itens depois de o pedido fechar ou ser entregue. Decisões dele:
+- **Numeração**: número com barra, o principal é "1" e os extras são "1/2", "1/3"…
+- **Financeiro**: o extra tem parcelas próprias, mas a posição final mostra todas as parcelas ligadas ao pedido.
+- **Contrato**: opcional (já era).
+- **Entrega**: o extra tem entrega e linha próprias na Central.
+- **Da coleta em diante**: vira uma coisa só com o principal, com o número do principal e o selo dos extras.
+- **Prazo**: só dá para criar até a coleta começar.
+- **Banco** (migration `20261029001900_pedido_extra.sql`, aplicada e registrada; testada numa transação desfeita):
+  - `separacoes_pedidos.pedido_origem_id` (coluna que já existia sem uso) aponta para o principal (FK `on delete restrict`).
+  - Funções novas:
+    - `pedido_grupo(id)`: principal e extras não cancelados, o principal primeiro;
+    - `pedido_coleta_iniciada(id)`: coleta confirmada, desmontagem registrada, descarregamento/volta iniciados ou operação encerrada;
+    - `pedido_extras(id)`: para as telas;
+    - `pedido_grupo_carregamento(id)`: itens carregados de todos.
+  - **Salvar** (`pedido_salvar_integrado`):
+    - no extra, o banco numera e copia cliente, tipo, local, datas do evento, coleta, horário e observação da coleta do principal (o que a tela mandar nesses campos é ignorado);
+    - a entrega do extra pode ser até a coleta (`..._base_fluxo`: a regra "entrega ≤ evento" não vale para o extra);
+    - recusa extra de extra, principal cancelado e principal não reservado;
+    - recusa criar extra depois de a coleta começar.
+  - **Gatilho** `pedido_extra_acompanhar`: mudou cliente, local, evento ou coleta do principal, os extras acompanham.
+  - **Cronograma** (`operacao_sincronizar_pedido`): o extra só tem Triagem (Separação), Carregamento e Montagem.
+  - **Fluxo** (`pedido_fluxo_etapa`):
+    - extra com a entrega confirmada acompanha a etapa do principal (antes da coleta do principal, fica em "coleta");
+    - `pedido_fluxo_fila` não mostra o extra nas filas da coleta em diante;
+    - `comercial_fluxo_pedidos` devolve `unificado`, e posição final/pós-venda/operação do principal.
+  - **Volta conjunta**:
+    - `operacao_conferencia_pecas(pedido, p_grupo)` (2º parâmetro novo, padrão false; devolve também `pedido_id` e `pedido_numero`) soma os itens do grupo, uma linha por linha de cada pedido.
+    - `operacao_concluir_conferencia_sem_pagamento` do principal com extras, no descarregamento e na volta, conta tudo junto **sempre por quantidade** (mesmo com etiquetas).
+    - Esperado de cada item: o carregamento de cada um; senão as etiquetas lidas; senão o pedido.
+    - Ao concluir, marca as etiquetas do grupo como lidas (saem do trânsito da disponibilidade) e grava nos extras a etapa concluída (`unificado_no`).
+    - Conferir a volta pelo próprio extra é recusado.
+  - **Coleta** (`logistica_confirmacao_base_antes_fluxo`): a lista soma as entregas do principal e dos extras (cada item com `pedido_numero`) e fica travada até todos os extras reservados terem entrega confirmada. A coleta pelo próprio extra é recusada.
+  - **Posição final** (`fin_posicao_final_base`):
+    - créditos, preços, títulos e pagamentos de todo o grupo, e o valor total somado;
+    - `pedido.extras` e `titulos[].pedido_numero`.
+  - **App do Montador e Gestão do acervo**: a contagem da desmontagem (`mont_contagem_itens/salvar`) e `acervo_divergencias` usam o grupo.
+- **Telas**:
+  - Pedido (`js/pedido/pedido.extra.mjs`):
+    - no principal, a faixa "Pedidos extras" lista os extras e mostra o botão **+ Pedido extra**, que abre `pedido.html?extra_de=<principal>`;
+    - no extra, a faixa "Pedido extra · itens a mais do pedido N" (com link) trava cliente, tipo, local, evento e coleta;
+    - a entrega do extra é limitada à coleta, e o número aparece como "N/…" até salvar;
+    - o rascunho automático do extra novo fica em `pedido_rascunho:<empresa>:extra-<principal>`.
+  - Central de Pedidos: o extra aparece logo abaixo do principal, com o traço e "Extra do pedido N"; depois da entrega, o fluxo mostra "Da coleta em diante: junto com o pedido N".
+  - Conferência (`conferencia.js`): "Pedido 4 + 4/2", e cada item mostra "Pedido 4/2".
+  - Entregas e Coletas, Posição final e App do Montador mostram de qual pedido é cada item ou parcela.
+- **Acabamento** (migration `20261029002000_pedido_extra_acabamento.sql`, aplicada e registrada):
+  - `operacao_volume_pedido(p_pedido, p_grupo)`: a escala automática de desmontagem, descarregamento e triagem da volta usa o volume do principal + extras;
+  - gatilho `pedido_extra_proteger`: o principal não pode ser cancelado com extras ativos, e excluir um principal com extras dá uma mensagem clara (antes era o erro da FK). Cancelar o principal **não** cancela os extras sozinho: cancele os extras antes.
+- **Testes**: `tests/pedido-extra-browser.cjs` (novo); conferência, Central, datas, preços, entregas-coletas e posição final rodados de novo, todos passando.
+
+## Acertos achados rodando o teste de ponta a ponta (29/out/2026)
+`RUN_FLUXO_LIVE=1 node tests/fluxo-completo-live.cjs` passa de novo do pedido ao encerramento. Defeitos reais corrigidos:
+- **Volta por bipe com peça faltando travava**: a 1ª tentativa de concluir chamava `pedirSegundaContagem` com um texto, e a
+  função espera a lista de itens (dava erro e nada acontecia). Agora a janela recebe os itens que não bateram (foto, nome,
+  quantas foram lidas) e, no modo bipe, os passos dizem "procure de novo… bipe… conclua de novo" (`conferencia.js`, 5º
+  parâmetro `bipe`). `conferencia.js?v=20261029-segunda-bipe`.
+- **Encerrar a operação nunca encerrava depois da Gestão do acervo**: `operacao_encerrar_antes_fluxo` só aceitava a falta
+  resolvida com o texto antigo "Perda confirmada:…"; a Gestão do acervo grava "Perda de N confirmada na 2ª conferência…" ou
+  "2ª conferência bateu…". Agora vale qualquer falta resolvida da peça (migration `20261029002200`, aplicada e registrada).
+- **Expedição**: o pedido conferido continua na coluna "Conferido" até a entrega ser confirmada (ida) ou a triagem da volta
+  começar (descarregamento) — `pedido_fluxo_fila` setor `expedicao` (migration `20261029002100`, aplicada e registrada).
+- **Catálogo que não carregou não trava o Salvar do pedido**: o catálogo marca `window.__catalogoFalhou` e a tela do pedido
+  salva sem sincronizar com ele, avisando que o catálogo não carregou.
+- Teste ao vivo atualizado para o fluxo atual: parcelas por divisão completadas antes de salvar; contagem por item na
+  desmontagem do App do Montador; entrega e coleta confirmadas (`logistica_confirmacao_salvar`); volta com segunda busca;
+  falta resolvida pela Gestão do acervo (contagem geral + `acervo_divergencia_fechar`); limpeza que apaga confirmações,
+  retornos do acervo (+ histórico/OS), contagem geral do item e o resto que referencia o pedido. Precisa de pelo menos um
+  caminhão na frota e de motivo `divergencia_falta` com situação "continua". Roda em `http://localhost:5599` (endereço
+  `*.teste` quebra o catálogo: `crypto.randomUUID` só existe em contexto seguro).
+- Testes antigos consertados: `conferencia-sem-etiquetas` (regex sem barras, classe `is-div-falta`, aviso no alerta global,
+  simulação de `operacao_concluir_com_pendencia`), `conferencia-separacao-manual` (caminhão antes da confirmação) e
+  `operacao-rpc-fixture.cjs` (`window.__gravados?.push`).
+
+## Cards Evento / Entrega / Coleta mais finos e iguais (29/out/2026)
+Nos dados do pedido, os três cards têm o mesmo desenho: o título numa linha de 24px e os campos lado a lado numa linha só.
+No Evento, o título fica com "Um dia / Vários dias" e, embaixo, a data (ou o primeiro dia e o "Até").
+- Os campos têm 32px.
+- Os rótulos são curtos ("Data", "Horário"), porque o título do card já diz de qual data é. Em período, "Primeiro dia".
+- Medido com 98px de altura em 1168 e 1440px. Antes, a Entrega empilhava data e horário abaixo de 1250px.
+
+O CSS está no fim de `pedido.css`, com `html:root:is(#pedido-datas,html)` e `!important` na altura. É o necessário para vencer o `min-height:40px` que `styles/module-overrides.css` aplica a todo input de `.el-page`.
+Os rótulos são trocados em `pedido.entrada.mjs`. Versões `?v=20261029-cards-finos`.
+
+## Montagem de equipe: cards de montagem e desmontagem nunca somem (29/out/2026)
+Pedido: "os cards de montagem e desmontagem nunca podem sair dali, mesmo depois que o evento foi entregue ou coletado".
+O Painel Logístico (aba Montagem de equipe) mostra só as etapas dos pedidos devolvidos por `pedido_fluxo_fila(…,'montagem_equipe')`.
+Antes essa fila só tinha pedidos na Triagem ou na Expedição, então depois do carregamento o pedido inteiro sumia do painel.
+Com a migration `20261029002300_montagem_equipe_nunca_some.sql` (aplicada e registrada), o pedido continua na fila em todas as etapas, de triagem até `posicao_final`.
+- A regra que tira os pedidos extras da fila a partir da coleta não vale nesta fila.
+- Pré-reserva segue só como consulta. Orçamento e cancelado continuam fora.
+- Etapa com data passada continua aparecendo, sem edição (`passada`).
+- `tests/fluxo-unico-pedidos.test.cjs` carrega migrations antigas e ainda afirma a regra velha (linha 47). Ele passa porque não usa esta migration.
+
+## Carregamento só com caminhão programado (29/out/2026)
+Pedido: "dentro de expedição não pode iniciar um carregamento se não tiver o caminhão programado... coloca em parâmetros essa função de ativar carregamento sem programação".
+- **Banco** (migration `20261029002400_carregamento_exige_caminhao.sql`, aplicada e registrada):
+  - Parâmetro `empresa_logistica_regras.carregamento_sem_programacao` (padrão false = exige caminhão), salvo por `carregamento_parametros_salvar`.
+  - "Programado" = caminhão escalado no Painel Logístico na etapa Carregamento ou Montagem do pedido (`operacao_tem_caminhao_programado`, a mesma regra do cartão).
+  - `operacao_caminhao_conferir` entra nos embrulhos `operacao_iniciar_conferencia`, `operacao_ler_peca` e `operacao_concluir_conferencia`, só no carregamento e logo depois da trava de pagamento.
+  - Vale também para carregamento já começado: o pedido 5, que estava "Em conferência" sem caminhão, fica travado até programar.
+  - `pedidos_sem_caminhao_bloqueados(p_pedidos[])` diz à Expedição quais cartões travar.
+- **Expedição** (`expedicao.js`): o cartão de Ida ganha a pílula "Sem caminhão programado" (no mesmo lugar do "Aguardando Financeiro"; o Financeiro tem prioridade), fica apagado e não abre.
+- **Parâmetros** > Logística e operação > Triagem e conferência: card "Carregamento sem caminhão programado" (`carregarParametrosCarregamento` em `parametros-divergencias.js`).
+- Testes: `expedicao-browser.cjs` e `parametros-empresa-browser.cjs`. O fixture `operacao-rpc-fixture.cjs` responde `pedidos_sem_caminhao_bloqueados` com `banco.semCaminhao`.
+- `fluxo-completo-live.cjs` precisa que a escala automática ponha caminhão no carregamento, então precisa de frota cadastrada. Não rodado depois desta mudança.
+
+## App do Freteiro: frete com o mesmo mecanismo do Uber (29/out/2026)
+Pedido: "quero que o frete tenha o mesmo mecanismo do uber... app, mapa, ponto de encontro, cadastro, quando tiver frete anunciam ali, a pessoa marca que pode fazer e ela pega o frete".
+Escolhas do usuário:
+- freteiros autônomos se cadastram no app e só veem fretes depois de a logística aprovar;
+- o valor é calculado pelo sistema;
+- o anúncio é automático pela escala.
+
+**Banco** (migration `20261029002500_frete_app.sql`, aplicada e registrada):
+- Tabelas `frete_freteiros` (cadastro, senha bcrypt, Pix, veículo e capacidade m³, status pendente/aprovado/recusado/bloqueado; sem leitura direta) e `frete_anuncios` (um ativo por pedido + direção, `etapas`, valor, aceite, check-in/out).
+- `caminhoes.freteiro_id`, e `app_sessoes` com tipo `freteiro`.
+- **Aprovar** (`frete_freteiro_status`) cria um fornecedor (serviços, "Freteiro autônomo") e o caminhão do freteiro (terceirizado, código FRnn).
+  - Assim a viagem entra sozinha na Conciliação de Fretes (`frete_sincronizar`), e o fechamento vai para o Contas a Pagar como sempre.
+  - Recusar ou bloquear exige motivo e inativa o caminhão.
+- **Anúncio automático** (`frete_anuncios_sincronizar`):
+  - Roda pelo pg_cron a cada 10 min (job `frete-anuncios`), ao abrir o app e ao abrir a tela Freteiros.
+  - Para entrega (carregamento + montagem) ou coleta (desmontagem + descarregamento) futura de pedido aprovado sem caminhão próprio, ele antes tenta a escala (`operacao_escala_preencher_sem_fluxo`) e, se continuar sem caminhão, anuncia.
+  - Com a escala automática desligada, não anuncia.
+  - Caminhão próprio escalado depois cancela o anúncio aberto.
+  - Se a logística tira o caminhão do freteiro antes do check-in, o frete volta para o app.
+- **Valor** (`frete_anuncio_calculo`): o mesmo da viagem de frete (valor/km × km do pedido ÷ 2), com a categoria pelo volume do pedido. Sem km ou sem categoria, não anuncia.
+  - Na Conciliação, o "valor da transportadora" vem preenchido com o valor anunciado. O "sistema" é calculado pela capacidade do caminhão do freteiro, então pode ser diferente.
+- **Escala**: caminhão de freteiro nunca entra sozinho (`and k.freteiro_id is null` em `operacao_escala_preencher_sem_fluxo`). Ele só entra quando o freteiro aceita.
+- **App** (`frete_cadastrar`/`frete_login`/`frete_app`/`frete_perfil_salvar`/`frete_aceitar`/`frete_desistir`/`frete_presenca`, mesmo formato de JSON do Uber):
+  - Mostra só o frete que cabe no veículo (m³).
+  - Aceitar põe o caminhão do freteiro em todas as etapas do frete (passa na trava "carregamento só com caminhão programado") e recusa horário em conflito.
+  - O check-in/out é pelo QR do responsável da etapa no App do Montador (`mont_frete_qr`), com código de 6 números que muda a cada minuto.
+
+**Telas:**
+- `Modulos/Chiavari/Fretes/freteiro.html` é gerado a partir do App do Motorista (mapa, rota, navegação), com o cadastro do veículo e da capacidade e a tela "Cadastro em análise".
+  - **Mudança no App do Motorista: refazer a cópia.** O script está em `scratchpad` desta sessão; as substituições são textos e nomes de RPC.
+- `freteiros.html/.js/.css` (Logística > Fretes > Freteiros): abas Cadastros (aprovar/recusar/bloquear) e Fretes anunciados (valor total, freteiro, "Tirar o freteiro").
+- Menu: "Freteiros" e Apps > "App do Freteiro".
+- App do Montador: bloco "Frete" com "QR para o freteiro" (`pintarFreteMontador`).
+- `limpezaDados.js` preserva `frete_freteiro_token`.
+
+**Uber, valor total**: o app mostrava "X km por trecho". Agora mostra o km total (ida e volta) e "Valor total da corrida", na lista, no detalhe, no aceite e no histórico. O Painel mostra "Valor total da corrida (por carro)". As faixas de Parâmetros continuam valendo por trecho.
+
+**Testes:**
+- `RUN_FRETEIRO_LIVE=1 node tests/freteiro-live.cjs` (banco real, no celular): cadastro, em análise, aprovar, frete com valor total, aceitar vira caminhão programado, desistir. Apaga tudo no fim e precisa de um frete anunciado em aberto.
+- `tests/fretes-uber-telas-browser.cjs` (ok 5, tela Freteiros).
+- `RUN_FRETES_LIVE=1 node tests/fretes-uber-live.cjs`.
+
+## Clara: assistente financeira da Conciliação (29/out/2026)
+Pedido: "uma assistente de IA dentro da conciliação bancária, especialista financeira, que ajuda na conciliação e até na
+montagem da DRE com centros de custo: a gente envia o arquivo, ela organiza, a gente confere e confirma". Substitui a
+ideia de configurar colunas à mão (cancelada pelo usuário). A aba **Conciliação** do Financeiro virou a tela da Clara.
+- **Fluxo** (`Modulos/Financeiro/financeiro-clara.js/.css`; `financeiro.js` só chama `FinanceiroClara.render`):
+  arrastar o extrato (Excel, CSV, OFX ou PDF) → Edge Function **`financeiro-assistente`** `ler_extrato` → se o formato
+  é novo (ou PDF), janela "Entendi o extrato" com período, entradas/saídas, saldo e amostra para conferir →
+  `fin_importar_extrato_lote` → `organizar` grava em cada linha `fin_extrato.sugestao` {acao, confianca, origem, motivo,
+  resumo} → tabela com filtros Prontas/Confira/Sem sugestão, as prontas já marcadas, "Alterar" (baixar título(s) com valor,
+  transferência, lançar com categoria + centro, ignorar) → "Confirmar selecionadas" chama `fin_assist_aplicar` linha a linha.
+  Nada é aplicado sem confirmação. "Desfazer" nas conciliadas (`fin_assist_desfazer`: estorna as baixas, cancela o título
+  que a própria conciliação criou, cancela a transferência criada por ela). Cartão de saldo: saldo do banco (última linha
+  com saldo do lote) × `fin_saldo_em` do sistema na mesma data, com o motivo provável da diferença. Conversa numa **coluna fixa à direita** (sem botão de abrir/fechar,
+  pedido do usuário; `.cl-layout`, abaixo de 1200px desce para baixo da lista) (`conversar`, contexto: saldos, pendências, lotes, vencidos, DRE do mês por categoria e centro). "Regras aprendidas"
+  lista e apaga regras.
+- **Leitura** (`supabase/functions/financeiro-assistente/leitura.mjs`, sem IA, testada em
+  `tests/fin-assistente-leitura.test.mjs`): o navegador transforma Excel (SheetJS 0.18.5 por CDN, carregado só quando
+  precisa) e CSV (detecta separador e codificação latin1) numa grade; OFX vira linhas no navegador; PDF vai em base64 e a
+  IA lê os lançamentos. Para planilhas a IA aprende o **modelo** uma vez por layout (`fin_extrato_modelos`, chave = linha de
+  cabeçalho normalizada + nº de colunas): linha do cabeçalho, colunas (data, descrição, valor com sinal OU crédito/débito
+  OU valor + C/D, documento, contraparte, CPF/CNPJ, saldo), linhas a pular (SALDO…). Depois a leitura é sempre pelas
+  regras fixas. **A leitura começa logo depois do cabeçalho, não na "primeira linha de lançamento"** (essa muda de um
+  extrato para outro; com ela o 1º lançamento se perdia). Se o modelo não ler ≥60% das linhas com data, a IA aprende de
+  novo. `fitid` = documento ou hash de data+valor+descrição (+ contador): importar o mesmo extrato de novo não duplica.
+- **Organizar** (servidor): 1) transferência já registrada nesta conta (mesmo valor, ±3 dias, grupo ainda sem linha) →
+  vincula; 2) regra aprendida (`fin_assist_regras`, chave = `fin_assist_chave(contraparte ou descrição)`, igual a
+  `chaveRegra` no JS) quando nenhum título bate claramente; 3) título com valor igual ao em aberto, ≥90 pontos e sem
+  concorrente (`candidatosDaLinha`: valor, nome, nº do pedido na descrição, vencimento) → baixa "alta"; 4) o resto vai à IA
+  (`gpt-4.1`, `FIN_ASSISTENTE_MODEL`; nome `FIN_ASSISTENTE_NOME`) em lotes de 25 com os 6 melhores candidatos por linha,
+  linha oposta de outra conta (par de transferência), contas, categorias e centros com códigos curtos. A resposta é
+  validada (títulos existentes, soma = valor, categoria do lado certo); `achar()` aceita código, "k3 = nome" ou o nome
+  (a IA às vezes devolve o nome do centro). Sem resposta da IA, cai no melhor candidato de valor igual ("Confira").
+- **DRE**: botão "Organizar com a Clara" (`classificar_dre`: títulos do último ano sem categoria, com categoria genérica
+  "Outras…" ou sem centro, até 120) → janela com categoria e centro sugeridos, editáveis → `fin_assist_classificar`. Sem
+  nenhum centro cadastrado, `sugerir_centros` propõe a estrutura. DRE ganhou "Por centro de custo" (`fin_dre_centros`).
+  Ao confirmar uma baixa, o título ganha o centro/categoria sugeridos se não tinha (categoria só troca a genérica).
+- **Banco** (migration `20261029002600_fin_assistente_conciliacao.sql`, aplicada e registrada): colunas novas em
+  `fin_extrato` (documento, contraparte, contraparte_doc, saldo, lote_id, sugestao, transferencia_grupo, conciliado_*);
+  tabelas `fin_extrato_lotes`, `fin_extrato_modelos`, `fin_assist_regras` (RLS de leitura do Financeiro + 2FA; só as
+  funções gravam, exceto apagar regra). "Conciliada" = `baixa_id` ou `transferencia_grupo` ou `conciliado_em` ou ignorada.
+  `fin_importar_extrato`/`fin_conciliar*` antigos continuam no banco, sem uso pela tela.
+- **Saldo inicial**: `fin_saldo_em`/`fin_saldos` só contam movimentos a partir de `saldo_inicial_data` da conta — com o
+  saldo inicial errado o cartão mostra diferença (a tela avisa).
+- Testes: `tests/fin-assistente-leitura.test.mjs`, `tests/financeiro-browser.cjs` (ok 7 com a Clara simulada) e
+  `RUN_CLARA_LIVE=1 node tests/fin-clara-live.cjs` (empresa temporária, IA real: Excel tipo Itaú → 6 sugestões certas
+  incluindo transferência; confirmar dá baixa e o saldo bate; CSV tipo Bradesco na outra conta reconhece a transferência;
+  segundo extrato do mesmo banco lido direto com regra aprendida; conversa; DRE classificada; DRE por centro).
+- A Edge Function já está publicada; a tela só vale depois de publicar o site.
+
+### Aba "Bancos": conciliação + extrato oficial (30/out/2026)
+Pedido: "unificar Contas e PIX e Conciliação... uma aba só para conciliar e ver o extrato (resultado das conciliações) de
+cada banco, unificado ou separado; todo dia concilio, aprovo e o aprovado abastece o extrato daquela conta". Decisões do
+usuário: lista lateral de contas; **o extrato é exatamente o que veio no arquivo do banco**; filtro de período e saldo dia a
+dia; **conciliar só por conta** ("Todas as contas" só vê); **o extrato só recebe as linhas quando TODA a conciliação foi
+reconhecida**; nome "Bancos". **Supera** as abas "Contas e PIX" e "Conciliação" (`?aba=contas|conciliacao` cai em Bancos).
+- **Tela** (`financeiro-clara.js`, `render` monta `.bk-layout`): à esquerda `.bk-contas` ("Todas as contas" com o saldo
+  somado, uma linha por conta com saldo do extrato, "extrato até dd/mm" e a bolinha de pendentes, e "⚙ Configurar contas",
+  que desenha o antigo `pintarContas(alvo)` dentro de `#bkMain`: cadastro, PIX, contas do pedido, transferir, ajustar);
+  no meio `#bkMain` com os modos **Conciliar** (só a área de enviar o extrato + a lista; o texto de apresentação da Clara e o quadro
+  "Conciliação em andamento" saíram a pedido; "Desfazer" nas reconhecidas) e **Extrato**; à direita a conversa. Bolinha da aba = total pendente.
+- **Extrato** (`fin_bancos_extrato(p_empresa, p_conta|null, p_ini, p_fim)`): só linhas de conciliações **finalizadas**,
+  agrupadas por dia com "Saldo do dia"; saldo de cada linha = o saldo que o banco informou na linha, senão o anterior +
+  valor; resumo com saldo antes, entradas, saídas e saldo no fim. Em "Todas as contas" mostra a coluna Conta e o saldo do
+  dia somado. Aviso "Faltam N lançamento(s)…" quando há conciliação aberta. Atalhos Hoje/7 dias/Este mês/Mês passado.
+- **Banco** (migration `20261030000100_fin_bancos_extrato_oficial.sql`, aplicada e registrada): `fin_extrato_lotes.status`
+  (aberto/finalizado); `fin_extrato.ordem` = ordem cronológica (`seq`, calculada por `comSeq` no servidor, porque há banco
+  que lista do mais novo para o mais antigo); `fin_lote_conferir` finaliza quando não sobra linha pendente;
+  `fin_assist_aplicar`/`fin_assist_desfazer` viraram embrulhos das versões `_base` (devolve `conciliacao_finalizada` e
+  `faltam`; desfazer reabre a conciliação). Arquivo sem linhas novas já nasce finalizado. `fin_bancos_saldo_em(conta, dia)`:
+  último saldo do banco + o que veio depois; sem saldo do banco, saldo inicial da conta + linhas oficiais.
+  `fin_bancos_resumo` alimenta a lista lateral. O texto do que foi feito vai em `conciliado_acao.resumo`.
+- Testes: `tests/financeiro-browser.cjs` e `RUN_CLARA_LIVE=1 node tests/fin-clara-live.cjs` (ok 4b: extrato com as 6
+  linhas e o mesmo saldo do banco; ok 6b: conciliação aberta fora do extrato, "Todas as contas" sem Conciliar).
+
+### Clara em aba própria (30/out/2026)
+Pedido: "o chat da Clara terá que ser uma aba separada, dentro de Bancos ela ocupa espaço demais; bem bonito, parecido com
+o da Helena". Aba **Clara** (depois de DRE; `financeiro.js` → `FinanceiroClara.chat`, `renderChat` em
+`financeiro-clara.js`, CSS `.ch-*` em `financeiro-clara.css`): faixa grafite no topo (avatar, "Clara", online, "Nova
+conversa"), mensagens numa coluna central de 820px com bolhas (dela branca com avatar, sua azul) e hora, saudação com 6
+sugestões em cartões na primeira vez, campo que cresce (Enter envia, Shift+Enter quebra linha), "digitando". Respostas
+com **negrito** e listas formatadas. Conversa guardada na aba do navegador (`sessionStorage clara_chat:<empresa>`).
+Bancos voltou a 2 colunas; o "Por que não bate?" abre a aba Clara já perguntando (`perguntarNaAba`). O tema força
+altura/borda de textarea e cor de títulos: as regras da Clara usam `html:root:is(#ch-a,…,html)` para vencer.
+
+### Foto da conta (30/out/2026)
+Pedido: "na conta do lado esquerdo quero a foto da conta; no cadastro da conta algo para adicionar a foto do banco".
+`fin_contas.logo_url` (migration `20261030000200_fin_contas_logo.sql`, aplicada e registrada). No "Editar conta" /
+"Nova conta" (Configurar contas) há "Foto da conta": escolher (PNG/JPG/WebP/SVG até 5 MB, vira PNG de até 256px com o fundo
+transparente mantido, `logoPng`) ou remover. Sobe ao salvar, depois que `financeiro-protegido` devolve o id, para o bucket
+público `empresas-logos` em `<empresa>/bancos/<conta>-<data>.png` (as regras do bucket já limitam à pasta da empresa), e
+grava `logo_url` direto na tabela. Sem foto aparecem as iniciais (`iniciaisConta`, sem a palavra "Conta").
+`logoContaHtml(c, cls)` desenha a foto na lista lateral de Bancos, no título da conta, em "Todas as contas" (fotos
+sobrepostas) e nos cartões de Configurar contas. Teste: `fin-clara-live.cjs` ok 1b.
+
+### Clara com o visual da Helena (30/out/2026)
+Pedido: "o chat da IA do financeiro igual ao da Helena, exatamente igual, cor de fundo igual, só muda o nome; ao lado, onde está o pedido, o que for útil". `renderChat` refeito com as mesmas cores e medidas de `catalogo-assistente.css` (classes `.ch-*` = `.cas-*`): fundo creme #f4f1ec com brilho dourado, avatar dourado 88px, saudação em Cormorant, sugestões em pílulas douradas, bolhas brancas (dela) e grafite (suas), campo arredondado com botão grafite e a dica embaixo; sem faixa no topo. À direita (no lugar do "pedido que estamos alterando") o **Panorama do financeiro**: saldos por conta (com a foto), conciliação pendente, a receber (vencido, próximos 7 dias), a pagar (vencido, próximos 7 dias, aguardando aprovação), saldo total e "Nova conversa"; cada item vira uma pergunta para a Clara. Some abaixo de 1100px. Fonte: o tema só deixa serifa em títulos e classes com "titulo" no nome, por isso avatar e total levam `titulo-serifa`. `formatar` mantém listas numeradas abertas entre linhas em branco e junta linhas recuadas ao item.
+
+### Extrato dos bancos: colunas Conciliação e DRE (30/out/2026)
+Pedido: o indicativo da conciliação sai de baixo da descrição e vira a coluna **Conciliação** (entre Descrição e Conta), e no fim da tabela entra a coluna **DRE**. Vale em "Todas as contas" e em cada conta (`renderExtrato` em `financeiro-clara.js`). A DRE vem da função nova `fin_extrato_dre(extrato)` (migration `20261030000300`, aplicada e registrada): categoria do plano de contas, centro de custo e competência (`competencia`, senão vencimento) dos títulos baixados pela linha; `fin_bancos_extrato` devolve isso em `linhas[].dre`. Transferência mostra "Não entra na DRE"; ignorada, "—". Versões `financeiro-clara.{css,js}?v=20261030-extrato-dre`.
+**Conciliar com as mesmas colunas** (30/out, pedido seguinte): a tabela "Para conferir" (e as de "Já reconhecidas"/"Desfazer") usam Descrição · Conciliação · Conta · Entrada · Saída · DRE, agrupadas por dia, igual ao Extrato; ficam a caixinha de seleção e o botão Alterar/Desfazer. A DRE de uma sugestão ainda não confirmada é calculada na tela (`dreDaAcao`: categoria/centro/competência dos títulos, ou a categoria escolhida no "Lançar", senão "Outras receitas/despesas"). Funções compartilhadas `dreCelula`, `porDia`, `CAB` em `financeiro-clara.js`. Versões `?v=20261030-conciliar-colunas`.
+**DRE: despesas negativas e em vermelho** (30/out): `pintarDre` mostra as despesas (total e cada categoria) com sinal negativo; o vermelho vem do `colorirValores` de sempre. A visão "Por centro de custo" já mostrava negativo.
+**DRE: linhas de grupo em cinza** (30/out): Receitas/Despesas (`.fin-dre tr.grupo`) com o mesmo cinza #e7ebf1 do "Saldo do dia" do extrato (fim de `financeiro.css`, `?v=20261030-dre-cinza`).
+**DRE com centro de custo e centro padrão no plano de contas** (30/out): a DRE (`pintarDre`) lê `fin_dre_centros` e tem as colunas Categoria · Centro de custo · Previsto · Realizado; categoria com mais de um centro mostra o subtotal ("N centros") e uma linha por centro embaixo; ao lado de cada categoria, o % das receitas previstas; aviso quando há linha "Sem centro de custo". Plano de contas ganhou a coluna Centro de custo (select por categoria → `fin_categorias.centro_custo_id`, migration `20261030000400`, aplicada e registrada): título sem centro próprio usa o centro da categoria na DRE e no extrato (`fin_extrato_dre`). Versões `financeiro.{css,js}?v=20261030-dre-centro`. Na aba Plano de contas o card Plano de contas ocupa o espaço todo e o de Centros de custo fica estreito à direita (260–320px, `.fin-grade-plano`; empilha abaixo de 1000px).
+
+## Financeiro: caixa físico e fim do "Receber/Pagar" manual (30/out/2026)
+Pedido: "dentro de contas quero um caixa físico... somente nessa conta poderei registrar entradas e saídas manuais" e "em contas a pagar e a receber a pessoa não pode colocar recebimento ou pagamento; isso é pela conciliação/bancos; se foi em dinheiro, usa o caixa".
+- **Conta tipo "Caixa físico (dinheiro)"** (`fin_contas.tipo='caixa'`, já existia no cadastro; criar em Bancos > Configurar contas). Em Bancos, a conta caixa não tem Conciliar: fica no Extrato com **+ Entrada / − Saída**. A janela pede data (não futura), valor e descrição e o que foi: recebimento/pagamento de título (mesma escolha de títulos da conciliação), transferência entre contas (ex.: depósito do dinheiro no banco — a linha do banco depois reconhece a transferência já registrada) ou lançar com categoria e centro (DRE). Cada lançamento tem "Excluir" (desfaz a baixa/transferência/lançamento). `editorAcao(l, cfg)` em `financeiro-clara.js` é o mesmo editor da "Alterar sugestão", reaproveitado.
+- **Banco** (migration `20261030000500_fin_caixa_fisico.sql`, aplicada e registrada; testada numa transação desfeita): `fin_caixa_lancar(empresa, conta, data, valor ± , descrição, ação)` só aceita conta caixa ativa; cria um lote próprio (`formato='caixa'`) e uma linha em `fin_extrato` e aplica a ação por `fin_assist_aplicar` — então entra no extrato oficial, no saldo (`fin_bancos_saldo_em`) e na DRE igual a uma linha de banco. Não aprende regra da Clara (`acervo.caixa`). `fin_caixa_excluir` desfaz e apaga. **`fin_baixar` (baixa manual) agora sempre recusa**; a conciliação e o PIX do gateway usam `fin_baixar_` direto.
+- **Telas**: saíram "Receber" (A receber), "Pagar" (A pagar e conta corrente do decorador) e a janela de registrar baixa (`baixar()` apagada). Nos detalhes do título, baixa feita pela conciliação não tem "Estornar" (desfaz-se em Bancos). Ajustar saldo e Transferir de Configurar contas continuam. Teste `tests/financeiro-browser.cjs` (ok 4 e 6). Versões `?v=20261030-caixa`.
+
+## Gateways de Pagamento dentro do Financeiro (30/out/2026)
+Pedido: "trazer o gateways de pagamento pra dentro do financeiro, mais uma aba". Aba **Gateways** (depois de Bancos; `?aba=gateways`). `Modulos/Financeiro/financeiro-gateways.js` (`FinanceiroGateways.render`) desenha a mesma estrutura do módulo antigo (ids `pgBtnRefresh`, `pgGatewayList`, `pgConfigPanel`) e carrega `Modulos/Configuracoes/Integracoes/GatewaysPagamento/gateways.js/.css` uma vez, chamando o `__moduleInit` dele (e o `__activeModuleDestroy` antes de reabrir) — a lógica e a Edge Function `payment-gateways` não mudaram. Título "Gateways de Pagamento" com o Atualizar na mesma linha, sem frase embaixo e sem "Gateways disponíveis"; cards com a sombra do Financeiro e, na coluna Integrações, cada banco num card com contorno e sombra próprios (o escolhido com contorno azul e fundo azul-claro) (fim de `financeiro.css`). Contraste revisado: Ambiente (Sandbox/Produção) com a opção escolhida em contorno e texto azul, selos com contorno, logos (MP, AS…) em azul-claro, campos com um contorno só e o botão "Ver"/"Copiar" escrito (o ícone vinha do lucide, que o Financeiro não carrega). O Ambiente fica no topo do painel, na mesma linha do nome e da descrição do gateway, no lugar do selo "Sandbox" (`gateways.js`, `.pg-env-head`). Saiu do menu Gestão > Integrações (`sidebarMenu.js`); os arquivos antigos continuam (são usados pela aba).
+
+## Link de pagamento do pedido e gateway por conta (30/out/2026)
+Pedido: o cliente paga 3 contas (Locação, Frete, Montagem, 3 CNPJs) e pode errar a conta. Agora recebe **um link por pedido + código de 6 números**, vê "Pagamento 1, 2…" (sem conta, banco nem chave) e gera o QR de cada um, já na conta certa. Decisões do usuário: QR dinâmico (nunca chave PIX), qualquer pagamento em aberto pode ser pago, conta sem gateway mostra "Fale com a nossa equipe", dinheiro entra numa conta tipo Gateway do Financeiro, código sempre visível para a equipe.
+- **Limite que não dá para evitar**: o app do banco do cliente mostra o nome de quem recebe (são 3 CNPJs).
+- **Gateway por conta**: `payment_gateway_connections.conta_id` (+ `recebe_conta_id`, `conta_chave` gerada; único por empresa+gateway+conta; `conta_id` nulo = conexão "Geral", usada pelo PIX antigo da Central/pedido via `EasyLocPix`). Aba Gateways: botões "Gateway da conta" (`window.__pgContaId`, enviado como `conta_id` por `gateways.js`). Salvar uma conexão de conta cria a conta "Mercado Pago · <conta>" (`pagamento_gateway_conta_recebe`).
+- **Banco** (migration `20261030000600`, aplicada e registrada; testada numa transação desfeita): `pagamento_links` (um por pedido; sem políticas RLS, só funções), `pagamento_link_obter` (equipe; `p_novo_codigo`), `pagamento_link_abrir` (público), `pagamento_link_conferir` (5 erros = 15 min; devolve `{erro}` em JSON porque exceção desfaria a contagem), `pagamento_link_preparar` e `pagamento_link_baixar` (só servidor; uma baixa por cobrança, `payment_gateway_payments.baixa_id`). Pagamentos = `fin_receber` do pedido, ordem vencimento + divisão.
+- **Servidor**: Edge Function `pagamento-link` (pública, `gerar`/`consultar`; cobrança de 30 min, reaproveita a pendente de mesmo valor; `consultar` confere no gateway, então funciona sem webhook). `payment-webhook`: cobrança com `receber_id` dá baixa por `pagamento_link_baixar`. **Publicadas: pagamento-link, payment-gateways, payment-webhook.** Cobrança do link não grava `pedido_id`, para não passar pelo caminho antigo de `observacoes.parcelas_financeiras` (por isso o status da parcela na tela do pedido não muda; a verdade fica em Contas a receber).
+- **Telas**: `Modulos/Financeiro/pagar.html/.js/.css` (cliente; `?p=<slug>`, `#c=<código>` no QR entra direto e sai do endereço); `js/core/linkPagamento.js` (`EasyLocLinkPagamento.abrir`, `paraDocumento`): botão "Link de pagamento" em Financeiro do pedido e em A receber (no pedido). QR no documento do pedido (aba Pedido, PDF e prévia da Central): `model.pagamentoLink`, `pagarPeloCelularHtml`, CSS `.cpj-order-pagar` em **`catalogo-projetos.css`** (é ele que o PDF carrega, não o `projeto-apresentacao.css`). O QR só aparece com contas a receber (pedido reservado).
+- **Falta testar com um Mercado Pago de verdade** (Sandbox): nenhuma conta conectada ainda. Teste: `tests/pagamento-link-browser.cjs` (Supabase simulado).
+
+**Pedido digital (30/out)**: o link do pedido virou o pedido inteiro, com o pagamento no final ("o pedido e o pagamento no mesmo local"). `pagar.html`: capa (1ª renderização), faixa Evento/Local/Entrega/Coleta, um bloco por ambiente (fotos ampliáveis, itens com foto, medidas, personalização, quantidade, valor e reposição), Serviços, Resumo (Locação, Frete, Montagem, Total) e a seção Pagamento; barra fixa "Em aberto / Ir para o pagamento" que some quando o pagamento está na tela. Dados: `pagamento_link_pedido` (migration `20261030000700`, aplicada e registrada), dentro de `pagamento_link_abrir` (campo `detalhe`), mesmas fontes da prévia da Central. Atualizar após pagar redesenha só a seção Pagamento (`pintarPagamentos`). Só a lista de pagamentos é neutra: o Resumo mostra Frete e Montagem como valores, igual ao PDF. A planta não entra no link (no pedido ela é montada no navegador da equipe). O link funciona desde o pedido salvo (orçamento e pré-reserva mostram o pedido, sem pagamentos). Botões renomeados para "Link do pedido"; QR do documento "Seu pedido no celular". Teste `tests/pagamento-link-browser.cjs`.
+
+**Pedido digital = o documento do PDF (30/out, supera o desenho próprio do parágrafo acima)**: pedido do usuário: "exatamente o mesmo layout que transformamos em PDF, só que na versão vertical". `pagar.js` importa `projeto-apresentacao.mjs` e desenha `pedidoPreviewHtml(model, { layout: "final" })`, o mesmo código do PDF: mudou o PDF, muda o link. Única troca: `model.pagamentosSlot` entra no lugar da "Programação de pagamento" (`financeiroPedidoHtml`), com a lista de pagamentos neutra e o QR; e a barra fixa "Ir para o pagamento" fica por cima do documento. `pagamento_link_pedido` (migration `20261030000800`, aplicada e registrada) devolve os dados no formato que `dadosApresentacao` usa (`ambientes`, `cadastro`, `servicos`, `valores`). **Planta**: é montada no navegador da equipe; a cópia estática vai para `pagamento_links.plantas` quando a aba Pedido é aberta (`pagamento_link_plantas_salvar`, `window.__pedidoLinkPlantas`), então pedido cuja aba Pedido não foi aberta depois da última mudança na planta mostra a cópia anterior (ou nenhuma). Celular (≤700px, fim de `pagar.css`): mesmo conteúdo, com a tabela em blocos (item em cima; Reposição, Valor un. e Total embaixo) para nada ficar cortado. O QR do documento aparece com o pedido salvo, mesmo sem pagamentos.
+
+## Pedido com o operacional: só os itens ficam travados (30/out/2026)
+Pedido do usuário: "a única coisa que precisa ficar bloqueada é os itens do pedido, o resto pode continuar livre" (data de entrega, horário, plantas, financeiro e pagamento, contrato). **Supera** "Pedido com o operacional. Solicite a liberação" para dados do pedido. Migration `20261030000900` (aplicada e registrada; testada numa transação desfeita num pedido separado): `pedido_salvar_integrado` calcula `trava` (encerrado, carregamento iniciado, `status_operacional` ou `status<>'pendente'` sem `reducao_liberada_em`) e chama `pedido_salvar_sem_itens`: confere a revisão, recusa se a soma por item de `p_itens` mudou, nunca toca em `separacoes_itens` nem nas etiquetas e usa `app.fluxo_transferencia` para passar por `operacao_validar_pedido_update`. A situação comercial e a validade da pré-reserva ficam como estão (mexem na reserva; os campos ficam desabilitados na tela). Mudar item continua exigindo a liberação pela Triagem. Tela: `aplicarBloqueioComercialSeparacao` (pedido.mjs) só avisa e desabilita a situação; o Salvar não trava mais. Catálogo dentro do pedido: `itensTravados()` (catalogo-projetos.mjs) barra quantidade, móveis da composição, jogos, editor de cena, personalização e excluir ambiente com itens; imagem, planta, observações e serviços seguem livres. **Mudar data/hora depois do carregamento vai para o cronograma pela sincronização normal**: quem já executou a etapa não é avisado.
+Na parte final do link, o Resumo fica numa faixa (Locação, Frete, Montagem, Total lado a lado) e o Pagamento embaixo, na largura toda (só na tela do link, fim de `pagar.css`; o PDF continua com as duas colunas).
+Simulação do QR: `pagar.html?p=<slug>&simular=1` (só com a sessão da equipe no navegador; cliente sem login vê a página normal). Mostra o aviso amarelo, libera "Gerar QR Code" em todos os pagamentos em aberto, com um QR que não é PIX (`SIM_CODIGO`), e o botão "Simular pagamento recebido". Não chama o gateway nem grava nada: recarregar a página desfaz.

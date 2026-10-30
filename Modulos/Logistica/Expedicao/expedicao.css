@@ -32,3 +32,4 @@ html:root:is(#acervo-separacao,html) .exp-caminhoes>span{color:inherit}
 html:root:is(#acervo-separacao,html) .exp-caminhoes{background:#eaf0fa;color:#123f86;border:1px solid #123f86}
 html:root:is(#acervo-separacao,html) .exp-caminhoes b{border:1px solid #c7d4ea}
 html:root:is(#acervo-separacao,html) .exp-caminhoes.is-vazio{background:#fdf6dd;color:#7a5b10;border-color:#c9a24f}
+

@@ -169,7 +169,8 @@
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: { action, empresa_id: state.empresaId, ...payload },
+        // (out/2026) conexão de uma conta do Financeiro (Locação, Frete, Montagem…), escolhida na aba Gateways do Financeiro
+        body: { action, empresa_id: state.empresaId, conta_id: window.__pgContaId || null, ...payload },
       }),
       15000,
       "Tempo esgotado ao carregar os gateways de pagamento."
@@ -365,20 +366,16 @@
             ${account}
           </div>
         </div>
-        <div class="pg-config-actions">
-          <span class="pg-badge capability">${gateway.ambiente === "producao" ? "Produção" : "Sandbox"}</span>
-        </div>
-      </div>
-
-      <div class="pg-form">
-        <section class="pg-section">
+        <div class="pg-config-actions pg-env-head">
           <span class="pg-section-label">Ambiente</span>
           <div class="pg-env-toggle" data-pg-env-group>
             <button type="button" data-pg-env="sandbox" class="${gateway.ambiente === "sandbox" ? "is-active" : ""}">Sandbox</button>
             <button type="button" data-pg-env="producao" class="${gateway.ambiente === "producao" ? "is-active" : ""}">Produção</button>
           </div>
-        </section>
+        </div>
+      </div>
 
+      <div class="pg-form">
         <section class="pg-section">
           <span class="pg-section-label">Credenciais protegidas</span>
           <div class="pg-field-grid">${fields}</div>

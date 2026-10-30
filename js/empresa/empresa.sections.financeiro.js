@@ -3,11 +3,7 @@
   function render(container, state){
 
     container.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:32px;max-width:760px;">
-
-        <h3 style="margin:0;color:#2E1F1F;">
-          Logística
-        </h3>
+      <section class="pr-card" data-fin-card="desconto"><div style="display:flex;flex-direction:column;gap:32px;max-width:760px;">
 
         <div style="display:flex;flex-direction:column;gap:18px;">
 
@@ -81,7 +77,14 @@
 
         </div>
 
-      </div>
+      </div></section>
+      <section class="pr-card" data-fin-card="pagamento">
+        <h3>Pagamento mínimo para liberar o pedido</h3>
+        <p class="pr-ajuda">Quando ligado, o pedido só passa da etapa escolhida se tiver pelo menos a porcentagem abaixo paga em Contas a receber. Ex.: 100% = pedido quitado; 80% = libera com 80% pago. A entrega nunca é travada.</p>
+        <div class="pr-opcoes"><label class="pr-check"><input type="checkbox" id="financeiroPagamentoExige"><span>Exigir o pagamento mínimo</span></label></div>
+        <div class="pr-campo" style="margin-top:16px"><span>Onde travar</span><div class="pr-opcoes" role="radiogroup" aria-label="Onde travar"><label class="pr-check"><input type="radio" name="finPagamentoEtapa" value="triagem"><span>Na Triagem (a separação não começa)</span></label><label class="pr-check"><input type="radio" name="finPagamentoEtapa" value="carregamento"><span>No Carregamento (separa, mas não carrega)</span></label></div></div>
+        <label class="pr-campo fin-pagamento-perc" style="margin-top:16px"><span>Pagamento mínimo</span><div><input id="financeiroPagamentoPercent" type="number" min="1" max="100" step="1" inputmode="numeric"><small>% do valor do pedido</small></div></label>
+      </section>
     `;
   }
 
@@ -96,6 +99,13 @@
 
     inputFrete.value = (f?.absorcao_frete_percent ?? 0);
     inputMont.value  = (f?.absorcao_montagem_percent ?? 0);
+    const exige = container.querySelector("#financeiroPagamentoExige"), perc = container.querySelector("#financeiroPagamentoPercent");
+    exige.checked = f?.pagamento_exige === true;
+    const etapaTrava = f?.pagamento_trava_etapa === "triagem" ? "triagem" : "carregamento";
+    container.querySelectorAll("[name=finPagamentoEtapa]").forEach((r) => { r.checked = r.value === etapaTrava; });
+    perc.value = Number(f?.pagamento_percent ?? 100);
+    const verPerc = () => { perc.disabled = !exige.checked; container.querySelectorAll("[name=finPagamentoEtapa]").forEach((r) => { r.disabled = !exige.checked; }); };
+    exige.addEventListener("change", verPerc); verPerc();
 
     function clampInt(el){
       let v = parseInt(el.value, 10);

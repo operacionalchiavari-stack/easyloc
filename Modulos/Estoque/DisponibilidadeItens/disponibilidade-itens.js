@@ -25,6 +25,20 @@
   let detalheVersao = 0;
   let retornoLista = null;
   const bloqueiosPorData = new Map();
+  // Disponível de cada item no período, da MESMA conta do catálogo/pedido/salvar (operacao_livre_calc no banco). O
+  // cálculo desta tela (abaixo) fica só para o detalhe dia a dia; o número principal é o do banco.
+  const livrePorPeriodo = new Map();
+  const bloqueadosContagem = new Set();
+  const chavePeriodo = (p) => p.inicio + "~" + (p.fim || p.inicio);
+  async function carregarLivre(periodo, atualizar = false){
+    const chave = chavePeriodo(periodo);
+    if(!atualizar && livrePorPeriodo.has(chave)) return;
+    const { data: rows, error } = await sb().rpc("operacao_livre_periodo", { p_empresa: empresaId(), p_inicio: periodo.inicio, p_fim: periodo.fim || periodo.inicio });
+    if(error){ console.warn("[Disponibilidade] conta única indisponível:", error.message); return; }
+    const mapa = new Map();
+    (rows || []).forEach(r => { mapa.set(r.item_id, Number(r.livre)); if(r.bloqueio_contagem) bloqueadosContagem.add(r.item_id); });
+    livrePorPeriodo.set(chave, mapa);
+  }
   async function carregarBloqueios(data, atualizar = false){
     if(!atualizar && bloqueiosPorData.has(data)) return;
     const generation = state.generation;
@@ -98,6 +112,7 @@
     fatoresCache = new Map();
     materiaisCarregados = new Set();
     bloqueiosPorData.clear();
+    livrePorPeriodo.clear(); bloqueadosContagem.clear();
     Object.assign(state, { itens: [], patrimonios: [], reservas: [], rows: [], offset: 0,
       hasMore: true, loading: false, visibleCount: state.perPage });
     $("#disponTabela").innerHTML = "";
@@ -106,6 +121,7 @@
     $("#disponErro").textContent = "";
     await carregarComposicoes(generation);
     await carregarBloqueios(periodo.inicio, true);
+    await carregarLivre(periodo, true);
     if (generation !== state.generation) return;
     await loadMore(generation);
     if (generation === state.generation) await loadCategories(generation);
@@ -380,7 +396,7 @@
           const reservado = reservas.filter(row => row.componente_id === id && row.inicio <= data && row.fim >= data)
             .reduce((sum, row) => sum + row.quantidade_componente, 0);
           const bloqueado = manutencaoItem(componente) + bloqueioNoDia(id, data);
-          const livre = Math.max(0, estoque - bloqueado - reservado);
+          const livre = bloqueadosContagem.has(id) ? 0 : Math.max(0, estoque - bloqueado - reservado);
           if (livre < saldo) { saldo = livre; dataLimitante = data; }
           saldoSemManutencao = Math.min(saldoSemManutencao, Math.max(0, estoque - bloqueado));
           reservadoPico = Math.max(reservadoPico, reservado);
@@ -395,8 +411,10 @@
         componentes.push({ item: componente, porKit, total: estoque, reservado: reservadoPico,
           manutencao: bloqueadoPico, disponivel: saldo });
       });
+      const doBanco = livrePorPeriodo.get(chavePeriodo(periodo))?.get(item.id);
+      if (doBanco != null && Number.isFinite(doBanco)) disponivel = doBanco;
       const manutencao = total - semManutencao;
-      const reservado = semManutencao - disponivel;
+      const reservado = Math.max(0, semManutencao - disponivel);
       const status = disponivel <= 0 ? "indisponivel" : disponivel <= Math.max(1, total * 0.2) ? "atencao" : "disponivel";
       return { total, reservado, manutencao, disponivel, status, kit, limitante, componentes, reservas };
     } catch (error) {
@@ -607,6 +625,8 @@
         await Promise.all(datas.slice(start, start + 4).map(data => carregarBloqueios(data)));
         if (versao !== detalheVersao) return;
       }
+      await carregarLivre(periodo);
+      if (versao !== detalheVersao) return;
       renderizarDetalhe(item, periodo);
       $("#disponReservasPeriodo").textContent = "Pedidos que utilizam as peças no período";
       $("#disponDiasResumo").textContent = "Selecione um dia para ver os pedidos. Saldo em " + (calcularItem(item, periodo).kit ? "kits completos." : "peças.");
@@ -640,6 +660,7 @@
     const item = catalogo.get(itemId);
     if (!item) return null;
     for (const dia of datasDoPeriodo(periodo)) await carregarBloqueios(dia);
+    await carregarLivre(periodo);
     return calcularItem(item, periodo);
   }
 

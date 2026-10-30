@@ -6,8 +6,11 @@ const raiz = path.resolve(__dirname, ".."), BASE = "http://acervo.teste/";
 const mock = `(() => {
   window.__gravados = [];
   const banco = {
+    bloqueadosFinanceiro: ["p1"],
+    semCaminhao: ["p20"],
     separacoes_pedidos: [
       { id: "p1", empresa_id: "e1", numero_pedido: "12", cliente_nome: "Lis", tipo_evento: "Casamento", local_nome: "Villa", data_entrega: "2099-10-24", status: "separado", status_comercial: "aprovado", operacao: {} },
+      { id: "p20", empresa_id: "e1", numero_pedido: "18", cliente_nome: "Kelly", tipo_evento: "Casamento", local_nome: "Vale", data_entrega: "2099-10-26", status: "separado", status_comercial: "aprovado", operacao: {} },
       { id: "p2", empresa_id: "e1", numero_pedido: "13", cliente_nome: "Ana", tipo_evento: "15 anos", local_nome: "Haras", data_entrega: "2099-10-25", status: "separado", status_comercial: "aprovado", operacao: {} },
       { id: "p3", empresa_id: "e1", numero_pedido: "14", cliente_nome: "Rafa", tipo_evento: "Corporativo", local_nome: "Hotel", data_entrega: "2099-10-26", status: "separado", status_comercial: "aprovado", status_operacional: "carregado", operacao: { carregamento: { concluido_em: "2099-10-25T14:30:00Z", por: "Igor", faltando: 1 } } },
       { id: "p4", empresa_id: "e1", numero_pedido: "15", cliente_nome: "Bia", tipo_evento: "Casamento", local_nome: "Sitio", data_entrega: "2099-10-27", status: "em_separacao", status_comercial: "aprovado", operacao: {} },
@@ -85,7 +88,7 @@ const mock = `(() => {
   await page.goto(BASE + "Modulos/Logistica/Expedicao/expedicao.html");
   await page.waitForSelector("#expColAguardando [data-pedido]", { timeout: 15000 });
   const ids = (sel) => page.$$eval(sel + " [data-pedido]", (n) => n.map((x) => x.dataset.pedido + ":" + x.dataset.tipo));
-  assert.deepStrictEqual((await ids('#expColAguardando')).sort(),['p1:ida','p9:descarregamento']);
+  assert.deepStrictEqual((await ids('#expColAguardando')).sort(),['p1:ida','p20:ida','p9:descarregamento']);
   assert.deepStrictEqual(await ids('#expColAndamento'),['p2:ida']);
   assert.equal((await ids('#expColCarregados')).length,0,'conferidos avancam de etapa');
   assert.equal(await page.locator('[data-pedido=p3],[data-pedido=p4],[data-pedido=p8],[data-pedido=p-revisao]').count(),0,'outras etapas nao duplicam o pedido na Expedicao');
@@ -94,7 +97,22 @@ const mock = `(() => {
   const cam = await page.evaluate(() => ({ p1: document.querySelector('[data-pedido=p1][data-tipo=ida] .exp-caminhoes')?.innerText || '', p2: document.querySelector('[data-pedido=p2][data-tipo=ida] .exp-caminhoes')?.className || '' }));
   assert.ok(/programados/i.test(cam.p1) && /G/.test(cam.p1) && /M2/.test(cam.p1), 'cartão mostra os caminhões programados: ' + cam.p1);
   assert.ok(/is-vazio/.test(cam.p2), 'pedido sem caminhão programado avisa');
-  console.log('ok - caminhões programados em destaque no cartão da ida');if(process.env.FOTO)await page.screenshot({path:process.env.FOTO});
+  console.log('ok - caminhões programados em destaque no cartão da ida');
+  // Travado pelo pagamento mínimo: aviso pequeno na linha do Ida, sem % nem valor, e o cartão não abre.
+  const travado = page.locator('[data-pedido=p1][data-tipo=ida]');
+  assert.equal((await travado.locator('.exp-aviso-fin').innerText()).trim(), 'Aguardando Financeiro');
+  const linhaTopo = await travado.locator('.separacao-card-top').boundingBox(), aviso = await travado.locator('.exp-aviso-fin').boundingBox();
+  assert.ok(aviso.y >= linhaTopo.y - 1 && aviso.y + aviso.height <= linhaTopo.y + linhaTopo.height + 1, 'aviso na mesma linha do Ida');
+  await travado.click(); await page.waitForTimeout(500);
+  assert.ok(!/conferencia.html/.test(page.url()), 'cartão travado não abre a conferência');
+  assert.equal(await page.locator('[data-pedido=p2][data-tipo=ida] .exp-aviso-fin').count(), 0, 'pedido liberado sem aviso');
+  console.log('ok - pedido travado pelo Financeiro: aviso pequeno e não abre');
+  const semCam = page.locator('[data-pedido=p20][data-tipo=ida]');
+  assert.equal((await semCam.locator('.exp-aviso-fin').innerText()).trim(), 'Sem caminhão programado');
+  assert.ok(/Painel Logístico/.test(await semCam.getAttribute('title')), 'explica onde programar');
+  await semCam.click(); await page.waitForTimeout(400);
+  assert.ok(!/conferencia.html/.test(page.url()), 'sem caminhão programado não abre a conferência');
+  console.log('ok - sem caminhão programado: aviso e não abre');if(process.env.FOTO)await page.screenshot({path:process.env.FOTO});
   await page.fill('#expBusca','');await page.click('[data-pedido=p2][data-tipo=ida]');
   await page.waitForURL(/conferencia\.html\?pedido=p2&etapa=carregamento&de=expedicao/);
   await page.waitForSelector('#cfCorpo:not([hidden])');

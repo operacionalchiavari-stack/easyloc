@@ -8,30 +8,34 @@
   <script src="../../js/core/limpezaDados.js?v=20261026"></script><script src="../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="financeiro.css?v=20261021-filtros-integrados">
+  <link rel="stylesheet" href="financeiro.css?v=20261030-link">
   <link rel="stylesheet" href="financeiro-posicao-final.css?v=20261024">
+  <link rel="stylesheet" href="financeiro-clara.css?v=20261030-caixa">
 <script src="../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
 </head>
 <body>
 <div class="container el-page fin-page">
-  <div class="header-list">
+  <div class="header-list fin-topo">
     <h2>Financeiro</h2>
+    <!-- Título no centro e as abas divididas, metade de cada lado (out/2026). Cada lado é uma .fin-abas. -->
+    <nav class="fin-abas-duplas" id="finAbas" aria-label="Áreas do financeiro">
+      <div class="fin-abas fin-abas-esq">
+        <button type="button" data-aba="geral" class="ativa">Visão geral</button>
+        <button type="button" data-aba="receber">A receber <span class="fin-conta-aba" data-cont="receber"></span></button>
+        <button type="button" data-aba="pagar">A pagar <span class="fin-conta-aba" data-cont="pagar"></span></button>
+        <button type="button" data-aba="bv">Decoradores</button>
+        <button type="button" data-aba="resultados">Resultados</button>
+      </div>
+      <div class="fin-abas fin-abas-dir">
+        <button type="button" data-aba="posicao">Posição final</button>
+        <button type="button" data-aba="bancos">Bancos <span class="fin-conta-aba" data-cont="bancos"></span></button>
+        <button type="button" data-aba="gateways">Gateways</button>
+        <button type="button" data-aba="dre">DRE</button>
+        <button type="button" data-aba="clara">Clara</button>
+      </div>
+    </nav>
   </div>
-
-  <nav class="fin-abas" id="finAbas" aria-label="Áreas do financeiro">
-    <button type="button" data-aba="geral" class="ativa">Visão geral</button>
-    <button type="button" data-aba="receber">A receber <span class="fin-conta-aba" data-cont="receber"></span></button>
-    <button type="button" data-aba="pagar">A pagar <span class="fin-conta-aba" data-cont="pagar"></span></button>
-    <button type="button" data-aba="bv">Conta dos decoradores</button>
-    <button type="button" data-aba="creditos">Gestão de créditos</button>
-    <button type="button" data-aba="resultados">Resultados por evento</button>
-    <button type="button" data-aba="posicao">Posição final</button>
-    <button type="button" data-aba="contas">Contas e PIX</button>
-    <button type="button" data-aba="conciliacao">Conciliação</button>
-    <button type="button" data-aba="dre">DRE</button>
-    <button type="button" data-aba="inadimplencia">Inadimplência</button>
-    <button type="button" data-aba="plano">Plano de contas</button>
-  </nav>
+  <nav class="fin-subabas" id="finSubAbas" aria-label="Partes desta aba" hidden></nav>
 
   <p class="fin-aviso" id="finAviso" hidden></p>
   <main id="finConteudo"><div class="fin-vazio">Carregando o financeiro…</div></main>
@@ -51,13 +55,16 @@
 <script src="../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script src="conta-decorador-extrato.js?v=20261024-compensacoes"></script>
-<script src="financeiro-bv.js?v=20261021-filtros-integrados"></script>
-<script src="financeiro-gestao.js?v=20261024"></script>
+<script src="conta-decorador-extrato.js?v=20261030-caixa"></script>
+<script src="financeiro-bv.js?v=20261029-bv-linha"></script>
+<script src="financeiro-gestao.js?v=20261029-uber"></script>
 <script src="../../js/core/evidenciasOperacao.js?v=20261024"></script>
-<script src="financeiro-posicao-final.js?v=20261024-evidencias"></script>
+<script src="financeiro-posicao-final.js?v=20261029-extra"></script>
 <script src="../../js/core/campoProtegido.js?v=20261023-cofre"></script>
-<script src="financeiro.js?v=20261024-gestao"></script>
+<script src="financeiro-clara.js?v=20261030-caixa"></script>
+<script src="../../js/core/linkPagamento.js?v=20261030-pedido-digital"></script>
+<script src="financeiro-gateways.js?v=20261030-por-conta"></script>
+<script src="financeiro.js?v=20261030-pedido-digital"></script>
 <script src="../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

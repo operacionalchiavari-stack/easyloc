@@ -1319,3 +1319,40 @@ html:root:is(#acervo-separacao, html) .separacao-modal-header > div > p.separaca
 .separacao-cliente-nome{font-size:15px;font-weight:600;color:#1f2020;white-space:nowrap;}
 .separacao-cliente-local{font-size:14px;color:#6b6b6b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .separacao-cliente-local::before{content:"·";margin-right:10px;color:#a3a3a3;}
+
+/* Triagem: 4ª coluna "Divergências" (out/2026) — pedido da volta com falta (vermelho) ou peça a mais (amarelo) sem resolver. */
+html:root:is(#acervo-separacao,html) .separacao-page .separacao-kanban,html:root:is(#acervo-separacao,html) .separacao-kanban:has(.separacao-lane-divergencias){grid-template-columns:repeat(4,minmax(0,1fr))}
+html:root:is(#acervo-separacao,html) .separacao-lane-divergencias>header strong{background:#fde8e7;color:#a72d28}
+html:root:is(#acervo-separacao,html) .separacao-order-card.card-divergencia.tem-falta{background:#fbeceb;border-color:#efc2bf}
+html:root:is(#acervo-separacao,html) .separacao-order-card.card-divergencia.so-sobra{background:#fdf6dd;border-color:#ecd99a}
+.card-divergencia-resumo{margin-top:8px;font:600 13px Inter,sans-serif;color:#a72d28}
+.card-divergencia.so-sobra .card-divergencia-resumo{color:#8a6100}
+@media(max-width:1150px){html:root:is(#acervo-separacao,html) .separacao-kanban:has(.separacao-lane-divergencias){grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){html:root:is(#acervo-separacao,html) .separacao-kanban:has(.separacao-lane-divergencias){grid-template-columns:1fr}}
+
+/* Separação por setor (out/2026): faixa com os setores da pessoa, no topo da lista de itens */
+html:root:is(#acervo-separacao, html) .separacao-setor-banner{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:0 0 12px;padding:10px 14px;border:1px solid #c9d6ec;border-left:4px solid #123f86;border-radius:10px;background:#eef3fb;font-size:14px;color:#1f2020}
+html:root:is(#acervo-separacao, html) .separacao-setor-banner strong{font-weight:600}
+html:root:is(#acervo-separacao, html) .separacao-setor-banner span{color:#4f4f4f;font-size:13px}
+
+/* Pedido travado pelo pagamento mínimo (out/2026; Triagem e Expedição): aviso pequeno na linha do tipo e o cartão não abre */
+html:root:is(#acervo-separacao,html) .exp-aviso-fin{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;background:#fff4d6;border:1px solid #ecd28a;color:#7a5600;font:600 11px Inter,sans-serif;letter-spacing:.02em;white-space:nowrap}
+html:root:is(#acervo-separacao,html) .separacao-order-card.is-bloqueado-fin{cursor:not-allowed;opacity:.72}
+html:root:is(#acervo-separacao,html) .separacao-order-card.is-bloqueado-fin:hover{transform:none;box-shadow:none}
+
+/* Item personalizado: parte em produção (out/2026) — sem quantidade, só o aviso e a confirmação de recebimento */
+.item-card.item-card-producao{background:#f4effc;border-color:#d9cdf3}
+.item-card.item-card-producao.is-completo{background:#e6f4ea;border-color:#b9dfc4}
+.producao-aviso{margin-top:4px;color:#5b3fb0;font-size:14px;font-weight:600}
+.producao-lado{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:200px}
+.producao-sit{display:inline-block;padding:5px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#ede6fb;color:#5b3fb0;white-space:nowrap}
+.producao-sit.is-pronto{background:#fdf6dd;color:#8a6200}
+.producao-sit.is-ok{background:#e6f4ea;color:#1f7a44}
+.producao-confirmar{min-height:44px;white-space:nowrap}
+@media (max-width:760px){.producao-lado{align-items:stretch;min-width:0}}
+
+/* Coluna de divergências da Triagem escondida (out/2026: resolvidas na Gestão do acervo) → 3 colunas */
+html:root:is(#acervo-separacao,html) .separacao-lane[hidden]{display:none!important}
+html:root:is(#acervo-separacao,html) .separacao-page .separacao-kanban:has(.separacao-lane-divergencias[hidden]){grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:1150px){html:root:is(#acervo-separacao,html) .separacao-page .separacao-kanban:has(.separacao-lane-divergencias[hidden]){grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){html:root:is(#acervo-separacao,html) .separacao-page .separacao-kanban:has(.separacao-lane-divergencias[hidden]){grid-template-columns:1fr}}

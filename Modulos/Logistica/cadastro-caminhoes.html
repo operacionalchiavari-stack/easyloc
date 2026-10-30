@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="cadastro-caminhoes.css?v=20261027-cabecalho-v2">
+  <link rel="stylesheet" href="cadastro-caminhoes.css?v=20261029-fornecedor">
 </head>
 <body>
 <div class="container cadastro-caminhoes-page el-page">
@@ -128,7 +128,7 @@
       <option value="carreta">Carreta</option>
       <option value="van">Van</option>
     </select></div></div></section>
-<section class="caminhao-secao" aria-labelledby="caminhaoEmpresaTitulo"><h3 id="caminhaoEmpresaTitulo">Empresa proprietária</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 3"><label for="cnpjInput">CNPJ</label><input class="el-input" type="text" id="cnpjInput" data-mascara="cnpj"></div><div class="form-group el-field" style="grid-column:span 6"><label for="empresaInput">Empresa proprietária</label><input class="el-input" type="text" id="empresaInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="telefoneInput">Telefone</label><input class="el-input" type="text" id="telefoneInput" data-mascara="telefone"></div></div></section>
+<section class="caminhao-secao" aria-labelledby="caminhaoEmpresaTitulo"><h3 id="caminhaoEmpresaTitulo">Empresa proprietária</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 12"><label for="fornecedorInput">Fornecedor (transportadora)</label><select class="el-select" id="fornecedorInput"><option value="">Frota própria / sem fornecedor</option></select><small class="caminhao-forn-dica">Os fretes deste caminhão vão para a Conciliação de Fretes dessa transportadora (Cadastro de Fornecedores &gt; acesso ao Cadastro de Fretes).</small></div><div class="form-group el-field" style="grid-column:span 3"><label for="cnpjInput">CNPJ</label><input class="el-input" type="text" id="cnpjInput" data-mascara="cnpj"></div><div class="form-group el-field" style="grid-column:span 6"><label for="empresaInput">Empresa proprietária</label><input class="el-input" type="text" id="empresaInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="telefoneInput">Telefone</label><input class="el-input" type="text" id="telefoneInput" data-mascara="telefone"></div></div></section>
 <section class="caminhao-secao" aria-labelledby="caminhaoMedidasTitulo"><h3 id="caminhaoMedidasTitulo">Dimensões externas</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 4"><label for="comprimentoTotalInput">Comprimento total (m)</label><input class="el-input" type="number" step="0.01" id="comprimentoTotalInput"></div><div class="form-group el-field" style="grid-column:span 4"><label for="larguraTotalInput">Largura total (m)</label><input class="el-input" type="number" step="0.01" id="larguraTotalInput"></div><div class="form-group el-field" style="grid-column:span 4"><label for="alturaTotalInput">Altura total (m)</label><input class="el-input" type="number" step="0.01" id="alturaTotalInput"></div></div></section>
 <section class="caminhao-secao" aria-labelledby="caminhaoCargaTitulo"><h3 id="caminhaoCargaTitulo">Espaço de carga</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 3"><label for="comprimentoInput">Comprimento interno (m)</label><input class="el-input" type="number" step="0.01" id="comprimentoInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="larguraInput">Largura interna (m)</label><input class="el-input" type="number" step="0.01" id="larguraInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="alturaInput">Altura interna (m)</label><input class="el-input" type="number" step="0.01" id="alturaInput"></div><div class="caminhao-capacidade form-group" style="grid-column:span 3"><span>Capacidade calculada</span><output id="capacidadePreview" aria-live="polite">0.00 m³</output></div></div></section>
   </div>
@@ -143,7 +143,7 @@
 <script src="../../js/core/listPager.js?v=20261026-rolagem"></script>
 <script src="../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script src="cadastro-caminhoes.js?v=20261027-lista"></script>
+<script src="cadastro-caminhoes.js?v=20261029-fornecedor"></script>
 <script>lucide.createIcons();</script>
 <script src="../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

@@ -90,10 +90,8 @@ const mock = `(() => {
   assert.ok(/programados/i.test(faixa.texto) && /M2/.test(faixa.texto), "faixa com o caminhão programado: " + faixa.texto);
   console.log("ok 3 - caminhão programado em destaque no topo da conferência");
   for (const inp of await p2.locator(".cf-qtd-input").all()) { const max = await inp.evaluate((e) => e.closest("[data-esperado]")?.dataset.esperado || e.getAttribute("max") || ""); await inp.fill(max || "2"); }
-  await p2.locator(".cf-qtd-input").nth(1).fill("1");
+  // tudo carregado (a falta no carregamento abre a janela de pendências, testada em conferencia-sem-etiquetas)
   await p2.click("#cfQtdConfirmar");
-  await p2.waitForSelector("dialog.cf-confirmacao[open]");
-  await p2.click("dialog.cf-confirmacao [type=submit]");
   await p2.waitForSelector("dialog.cf-escolha-caminhao[open]");
   const marcados = await p2.evaluate(() => [...document.querySelectorAll("dialog.cf-escolha-caminhao input")].map((i) => i.value + ":" + i.checked));
   assert.deepStrictEqual(marcados, ["c2:true", "c1:false"], "programado primeiro e já marcado: " + marcados);
@@ -103,6 +101,7 @@ const mock = `(() => {
   assert.ok(await p2.isVisible("dialog.cf-escolha-caminhao[open]"), "sem caminhão marcado não conclui");
   await p2.check("dialog.cf-escolha-caminhao input[value=c1]");
   await p2.click("dialog.cf-escolha-caminhao [data-ok]");
+  if (await p2.locator("dialog.cf-confirmacao[open]").isVisible({ timeout: 1500 }).catch(() => false)) await p2.click("dialog.cf-confirmacao [type=submit]");
   await p2.waitForFunction(() => window.__gravados.some((g) => g.t === "separacoes_pedidos" && g.p?.operacao?.carregamento?.concluido_em));
   const reg = await p2.evaluate(() => window.__gravados.find((g) => g.t === "separacoes_pedidos" && g.p?.operacao?.carregamento).p.operacao.carregamento.caminhoes.map((c) => c.codigo));
   assert.deepStrictEqual(reg, ["G"], "registro do carregamento leva o caminhão escolhido");

@@ -14,9 +14,15 @@ const mock = `(() => {
       { id: "s2", empresa_id: "e1", separacao_pedido_id: "p1", item_id: "i2", item_nome: "Mesa Goa", quantidade_solicitada: 1, quantidade_separada: 0, tipo_controle: "quantidade", itens: { id: "i2", codigo: "MES1", produto: "Mesa" } }],
     itens: [{ id: "i1", empresa_id: "e1", codigo: "CAD1", produto: "Cadeira" }, { id: "i2", empresa_id: "e1", codigo: "MES1", produto: "Mesa" }],
     itens_patrimonios: [], separacoes_leituras: [], empresa_logistica_regras: [],
+    operacao_ocorrencias: [
+      { id: "d1", empresa_id: "e1", pedido_id: "pd", tipo: "falta", etapa: "retorno", quantidade: 2, resolvida_em: null },
+      { id: "d2", empresa_id: "e1", pedido_id: "pd", tipo: "sobra", etapa: "retorno", quantidade: 1, resolvida_em: null },
+      { id: "d3", empresa_id: "e1", pedido_id: "pd", tipo: "falta", etapa: "retorno", quantidade: 1, resolvida_em: "2026-10-28T10:00:00Z" },
+      { id: "d4", empresa_id: "e1", pedido_id: "px", tipo: "falta", etapa: "descarregamento", quantidade: 1, resolvida_em: null }],
     separacoes_etiquetas: [{ id: "t1", empresa_id: "e1", separacao_pedido_id: "p2", codigo: "13-001", lida_carregamento_em: "x" }, { id: "t2", empresa_id: "e1", separacao_pedido_id: "p2", codigo: "13-002", lida_carregamento_em: "x" }]
   };
   banco.separacoes_pedidos.find(p=>p.id==="p2").operacao.descarregamento={concluido_em:"2026-10-18T11:00:00Z"};
+  banco.separacoes_pedidos.push({ id: "pd", empresa_id: "e1", numero_pedido: "77", cliente_nome: "Bia Divergente", tipo_evento: "Casamento", local_nome: "Sítio", status: "separado", status_comercial: "aprovado", status_operacional: "retornado", data_evento: "2026-10-20", data_coleta: "2026-10-21", operacao: { retorno: { concluido_em: "2026-10-22T10:00:00Z" } } });
   banco.separacoes_pedidos.push({...banco.separacoes_pedidos[0],id:'standby',status:'separado',operacao:{}},{...banco.separacoes_pedidos[0],id:'assumido',status:'separado',operacao:{carregamento:{iniciado_em:'2026-10-23T12:00:00Z'}}},{...banco.separacoes_pedidos[0],id:'revisao',reducao_liberada_em:'2026-10-23T12:00:00Z'});
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
@@ -25,6 +31,7 @@ const mock = `(() => {
       or(expr){ const conds = expr.split(",").map((c) => c.split(".eq.")); linhas = linhas.filter((l) => conds.some(([c, v]) => String(l[c]) === v)); return q; },
       eq(c, v){ linhas = linhas.filter((l) => !(c in l) || String(l[c]) === String(v)); return q; },
       in(c, vs){ linhas = linhas.filter((l) => !(c in l) || vs.map(String).includes(String(l[c]))); return q; },
+      is(c, v){ linhas = linhas.filter((l) => (l[c] ?? null) === v); return q; },
       single(){ unico = true; return q; }, maybeSingle(){ unico = true; return q; },
       insert(p){ window.__gravados.push({ t, tipo: "insert", p }); const r = { id: "l" + Math.random(), created_at: new Date().toISOString(), ...p }; (banco[t] ||= []).unshift(r); linhas = [r]; return q; },
       update(p){ acao = "update"; dados = p; return q; },
@@ -95,6 +102,9 @@ const mock = `(() => {
   await page.click("#btnFinalizarSeparacao");
   await page.waitForFunction(() => window.__gravados.some((g) => g.t === "separacoes_pedidos" && g.p.status === "separado"));
   console.log("ok 5 - finalizar marca o pedido como separado");
+  // Separado e ainda não carregado: continua na Triagem, na coluna Concluídos.
+  await page.waitForFunction(() => !!document.querySelector("#separacaoColunaSeparados [data-pedido-id]"), null, { timeout: 8000 });
+  console.log("ok 5b - pedido separado fica em Concluídos até a Expedição carregar");
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(BASE + "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html?pedido=p1&etapa=volta");
@@ -105,7 +115,12 @@ const mock = `(() => {
   await page.goto(BASE + "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html");
   await page.evaluate(() => { window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Teste" }; });
   await page.locator('#separacaoColunaAguardando [data-pedido-id=p1]').waitFor();
-  assert.equal(await page.locator('[data-pedido-id=standby]').count(),0,'pedido separado segue para Expedicao');
+  // Out/2026: a divergência é resolvida na Gestão do acervo; a Triagem não tem mais a coluna Divergências.
+  assert.ok(await page.locator('.separacao-lane-divergencias').isHidden(), 'coluna Divergências escondida');
+  assert.equal(await page.locator('#separacaoColunaDivergencias [data-pedido-id=pd]').count(), 0, 'divergência não fica na Triagem');
+  console.log("ok 6b - divergência da volta não fica na Triagem (vai para a Gestão do acervo)");
+  assert.ok(await page.locator('#separacaoColunaSeparados [data-pedido-id=standby]').count() >= 1,'separado e ainda não carregado fica em Concluídos');
+  assert.equal(await page.locator('[data-pedido-id=assumido]').count(),0,'carregamento começou: sai da Triagem');
   assert.equal(await page.locator('[data-pedido-id=assumido]').count(),0);assert.equal(await page.locator('[data-pedido-id=revisao]').count(),0);
   await page.evaluate(()=>window.__modosSeparacao={manual:false,qr:true,'um-clique':false});
   await page.locator('#separacaoKanban .separacao-order-card[data-pedido-id=p1]').click();

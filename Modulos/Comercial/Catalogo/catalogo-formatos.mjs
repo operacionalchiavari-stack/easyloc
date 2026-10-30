@@ -158,7 +158,9 @@ function toRuntimeFormat(record, items){
 }
 
 export function studioFormats(records, items){
-  return [...BUILTIN_FORMATS, ...records.map(record => toRuntimeFormat(record, items))];
+  // só os formatos que a empresa criou (o "Lounge compacto" embutido saiu da lista a pedido do usuário; o objeto
+  // BUILTIN_FORMATS continua servindo de modelo de papéis para os formatos salvos)
+  return records.map(record => toRuntimeFormat(record, items));
 }
 
 // `selection` (opcional): mapa role.key -> item ESCOLHIDO À MÃO (ver diálogo "Escolher os móveis" em

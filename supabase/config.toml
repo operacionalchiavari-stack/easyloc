@@ -474,3 +474,16 @@ enabled = true
 # troca o PIX pelo token do app; revelar_rh confere sozinha o login da equipe, a 2FA e rh.dados_sensiveis.ver.
 verify_jwt = false
 entrypoint = "./functions/free-protegido/index.ts"
+
+[functions.financeiro-assistente]
+enabled = true
+# Clara, a assistente da Conciliação: lê o extrato, aprende o formato do banco, sugere a conciliação e a classificação
+# da DRE. Exige o login da equipe + 2FA; nada é aplicado aqui (a pessoa confirma pela tela, fin_assist_aplicar).
+verify_jwt = true
+entrypoint = "./functions/financeiro-assistente/index.ts"
+
+# Link de pagamento do pedido (página pública: confere o código de 6 números no banco)
+[functions.pagamento-link]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/pagamento-link/index.ts"

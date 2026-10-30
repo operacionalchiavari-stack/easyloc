@@ -200,7 +200,8 @@
   }
 
   function calcularFinanceiroPedido(pedido){
-    const total = moneyNumber(pedido.valor);
+    const fin = pedido.fin;
+    const total = fin ? Math.max(moneyNumber(pedido.valor), fin.devido) : moneyNumber(pedido.valor);
     const observacoes = pedido.observacoes || {};
     const parcelas = Array.isArray(observacoes.parcelas_financeiras)
       ? observacoes.parcelas_financeiras
@@ -235,7 +236,7 @@
       || observacoes.pagamento_status
       || observacoes.financeiro_status
     );
-    const recebido = Math.min(total, statusQuitado ? total : (recebidoPorCampo || recebidoPorParcelas));
+    const recebido = fin ? Math.min(total, fin.recebido) : Math.min(total, statusQuitado ? total : (recebidoPorCampo || recebidoPorParcelas));
     const pendente = Math.max(0, total - recebido);
     const percentual = total > 0 ? Math.min(100, Math.round((recebido / total) * 100)) : 0;
     const hoje = new Date();
@@ -260,10 +261,10 @@
       || observacoes.data_vencimento
       || observacoes.vencimento
     );
-    const proxima = pendentes[0] || (vencimentoDireto ? { vencimentoISO: vencimentoDireto } : null);
+    const proxima = fin ? (fin.proximo ? { vencimentoISO: fin.proximo } : null) : (pendentes[0] || (vencimentoDireto ? { vencimentoISO: vencimentoDireto } : null));
     const proximaDate = proxima?.vencimentoISO ? new Date(`${proxima.vencimentoISO}T00:00:00`) : null;
     const atrasado = percentual < 100 && proximaDate && proximaDate < hoje;
-    const qtdParcelas = parcelas.length
+    const qtdParcelas = (fin && fin.titulos) || parcelas.length
       || Number(pedido.quantidade_parcelas || pedido.parcelas || observacoes.quantidade_parcelas || observacoes.parcelas || 0);
 
     let estado = "empty";
@@ -615,6 +616,7 @@ function infoCadastro(rotulo, valor, icone){
     return {
       id: row.id,
       numero: row.numero_pedido || row.numero || row.codigo || row.id || "-",
+      origemId: row.pedido_origem_id || null, // pedido extra: id do pedido principal
       cliente_id: row.cliente_id || null,
       local_id: row.local_id || null,
       cliente: row.cliente_nome || row.cliente || row.nome_cliente || "Cliente nao informado",
@@ -622,6 +624,9 @@ function infoCadastro(rotulo, valor, icone){
       evento: row.tipo_evento || row.evento || row.nome_evento || "Evento",
       local: row.local_nome || row.local || row.endereco || "Local nao informado",
       data: row.data_evento || row.data_hora || row.data || row.created_at,
+      entrega: row.data_entrega || "",
+      coleta: row.data_coleta || "",
+      fin: row.fin || null,
       status: row.status_comercial || row.status || "orcamento",
       fluxo: row.fluxo || null,
       pre_reserva_ate: row.pre_reserva_ate || null,
@@ -887,7 +892,7 @@ function infoCadastro(rotulo, valor, icone){
   async function abrirPreviewPedido(pedidoId){
     if(!pedidoId || !state.supabase || !state.empresaId) return;
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261027-pedido-lateral");
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261030-link-documento");
       const { data: pedido, error } = await state.supabase.from("separacoes_pedidos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedidoId).single();
       if(error || !pedido) throw error || new Error("Pedido não encontrado.");
@@ -955,6 +960,7 @@ function infoCadastro(rotulo, valor, icone){
       }
       const obsPed = pedido.observacoes || {};
       model.evento = { ...(model.evento || {}), data_entrega: pedido.data_entrega || "", hora_entrega: obsPed.horario_entrega || "", data_coleta: pedido.data_coleta || "", hora_coleta: obsPed.horario_coleta || "" }; // resumo e programação de pagamento no fim do pedido
+      model.pagamentoLink = await window.EasyLocLinkPagamento?.paraDocumento({ empresaId: state.empresaId, pedidoId: pedido.id }) || null;
       abrirVisualizacaoPedido({
         titulo: `Pedido #${pedido.numero_pedido || "-"}`, model, empresa,
         decorador: pedido.cliente_nome ? { nome: pedido.cliente_nome, logo_url: foto } : null
@@ -1036,6 +1042,7 @@ function infoCadastro(rotulo, valor, icone){
       cliente: clientes.get(String(p.cliente_id)) || "Decorador",
       contato: "", evento: p.noivos || "Projeto", local: p.local_evento || "Local nao informado",
       data: p.data_evento || p.created_at,
+      entrega: p.dados?.evento?.data_entrega || "", coleta: p.dados?.evento?.data_coleta || "",
       status: `catalogo_${p.status || "rascunho"}`,
       valor: linhas(p).reduce((soma, i) => soma + (Number(i.quantidade) || 1) * (precos.get(String(i.item_id)) || 0), 0),
       observacoes: {}, comercial: "Catálogo"
@@ -1044,7 +1051,7 @@ function infoCadastro(rotulo, valor, icone){
 
   async function abrirPreviewProjetoCatalogo(pedido){
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261027-pedido-lateral");
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261030-link-documento");
       const { data: projeto, error } = await state.supabase.from("projetos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedido.projetoId).single();
       if(error || !projeto) throw error || new Error("Projeto não encontrado.");
@@ -1175,18 +1182,30 @@ function infoCadastro(rotulo, valor, icone){
     state.filtrados.sort((a, b) => (pre(b) - pre(a))
       || (pre(a) ? prazoPreReserva(a).ordem - prazoPreReserva(b).ordem : 0)
       || (ativo(b) - ativo(a)));
+    // Pedido extra (out/2026): aparece logo abaixo do pedido principal (quando os dois estão na lista)
+    const idsLista = new Set(state.filtrados.map((p) => String(p.id)));
+    const extrasDe = new Map(), principais = [];
+    for(const p of state.filtrados){
+      const origem = p.origemId && idsLista.has(String(p.origemId)) ? String(p.origemId) : null;
+      if(origem){ if(!extrasDe.has(origem)) extrasDe.set(origem, []); extrasDe.get(origem).push(p); } else principais.push(p);
+    }
+    state.filtrados = principais.flatMap((p) => [p, ...(extrasDe.get(String(p.id)) || [])
+      .sort((a, b) => String(a.numero).localeCompare(String(b.numero), "pt-BR", { numeric: true }))]);
 
     render();
   }
 
   function renderFluxoPedido(pedido){
-    const etapas=['Comercial','Triagem','Carregamento','Entrega','Coleta','Posição final','Finalizado'];
+    // fluxo completo (out/2026): depois da coleta vêm o descarregamento e a triagem da volta; depois da posição final, o pós-venda
+    const etapas=['Comercial','Triagem','Carregamento','Entrega','Coleta','Descarregamento','Triagem (volta)','Posição final','Pós-venda','Finalizado'];
     const etapa=pedido.origemCatalogo?'comercial':pedido.fluxo?.etapa;
-    const indice=pedido.fluxo?.finalizado?6:({comercial:0,pre_reserva:0,triagem:1,expedicao:2,entrega:3,coleta:4,retorno_simultaneo:4,descarregamento:4,triagem_retorno:4,posicao_final:5})[etapa];
+    const f=pedido.fluxo||{};
+    const indice=f.finalizado?9:f.posicao_final?8:({comercial:0,pre_reserva:0,triagem:1,expedicao:2,entrega:3,coleta:4,retorno_simultaneo:5,descarregamento:5,triagem_retorno:6,posicao_final:7})[etapa];
     const cancelado=pedido.status==='cancelado'||etapa==='cancelado';
-    const descricao=cancelado?'Cancelado':indice==null?'Fluxo indisponível':({retorno_simultaneo:'Retorno: Expedição e Triagem simultâneas',descarregamento:'Retorno: descarregamento',triagem_retorno:'Retorno: Triagem'})[etapa]||(indice===0?formatStatusLabel(pedido.status):etapas[indice]);
+    const descricao=cancelado?'Cancelado':indice==null?'Fluxo indisponível':(indice===5&&etapa==='retorno_simultaneo'?'Descarregamento e triagem da volta ao mesmo tempo':null)||(indice===8?'Pós-venda: aguardando a ligação para o cliente':null)||(indice===0?formatStatusLabel(pedido.status):etapas[indice]);
     const corComercial=cancelado?'vermelho':indice===0?(pedido.status==='pre_reserva'?'amarelo':['aprovado','enviado','finalizado'].includes(pedido.status)?'verde':'azul'):'';
-    const nota=pedido.fluxo?.operacao_concluida&&pedido.fluxo?.financeiro_pendente?'<small class="central-fluxo-descricao">Operação concluída · financeiro pendente</small>':(!cancelado&&indice==null)||['retorno_simultaneo','descarregamento','triagem_retorno'].includes(etapa)?'<small class="central-fluxo-descricao">'+escapeHtml(descricao)+'</small>':'';
+    const notaExtra=f.unificado?'<small class="central-fluxo-descricao">Da coleta em diante: junto com o pedido '+escapeHtml(String(pedido.numero).split('/')[0])+'</small>':'';
+    const nota=notaExtra||(f.posicao_final&&f.posvenda_feita&&f.financeiro_pendente?'<small class="central-fluxo-descricao">Pós-venda feito · financeiro pendente</small>':f.operacao_concluida&&f.financeiro_pendente&&!f.posicao_final?'<small class="central-fluxo-descricao">Operação concluída · financeiro pendente</small>':(!cancelado&&indice==null)||etapa==='retorno_simultaneo'?'<small class="central-fluxo-descricao">'+escapeHtml(descricao)+'</small>':'');
     return '<div class="central-fluxo'+(cancelado?' is-cancelado':'')+(corComercial?' comercial-'+corComercial:'')+'" title="'+escapeHtml(descricao)+'" aria-label="'+escapeHtml('Etapa atual: '+descricao)+'"><ol>'+etapas.map((nome,i)=>'<li class="'+(!cancelado&&indice!=null?(i<indice?'is-concluida':i===indice?'is-atual':''):'')+'"'+(!cancelado&&i===indice?' aria-current="step"':'')+'><span class="central-fluxo-ponto" aria-hidden="true">'+(!cancelado&&indice!=null&&i<indice?'✓':i+1)+'</span><span>'+nome+'</span></li>').join('')+'</ol>'+nota+'</div>';
   }
 
@@ -1200,6 +1219,21 @@ function infoCadastro(rotulo, valor, icone){
     }catch(e){console.warn('Não foi possível consultar o fluxo dos pedidos:',e.message);return pedidos;}
   }
 
+  // o "% pago" vem das contas a receber do Financeiro (recebimentos confirmados lá), não do que ficou gravado no pedido
+  async function enriquecerRecebimentos(rows){
+    const ids = rows.map((r) => r.id).filter(Boolean);
+    if(!ids.length) return rows;
+    const porPedido = new Map();
+    try{
+      for(let i = 0; i < ids.length; i += 150){
+        const { data, error } = await state.supabase.rpc("pedidos_recebimentos", { p_empresa: state.empresaId, p_pedidos: ids.slice(i, i + 150) });
+        if(error) throw error;
+        (data || []).forEach((t) => porPedido.set(t.pedido_id, { devido: Number(t.devido) || 0, recebido: Number(t.recebido) || 0, proximo: t.proximo ? String(t.proximo).slice(0, 10) : "", titulos: Number(t.titulos) || 0 }));
+      }
+    }catch(e){ console.warn("[CentralPedidos] contas a receber indisponiveis:", e.message); return rows; }
+    return rows.map((r) => porPedido.has(r.id) ? { ...r, fin: porPedido.get(r.id) } : r);
+  }
+
   function render(){
     if(els.centralStatusCarregamento){
       els.centralStatusCarregamento.textContent = `${state.filtrados.length} pedido(s)`;
@@ -1211,7 +1245,7 @@ function infoCadastro(rotulo, valor, icone){
     if(!state.filtrados.length){
       els.centralPedidosTbody.innerHTML = `
         <tr>
-          <td colspan="7">
+          <td colspan="9">
             <div class="central-empty">
               Nenhum pedido encontrado. Use "Novo Pedido" para montar um evento.
             </div>
@@ -1222,8 +1256,8 @@ function infoCadastro(rotulo, valor, icone){
     }
 
     els.centralPedidosTbody.innerHTML = state.filtrados.map((pedido) => `
-      <tr data-pedido-id="${escapeHtml(pedido.id)}" class="${pedido.origemCatalogo ? "is-catalogo" : ""}${presencaDe(pedido)?.ativo ? " is-montando" : ""}" title="${pedido.origemCatalogo ? "Projeto do catálogo: clique duas vezes para abrir como pedido" : "Clique duas vezes para abrir o pedido"}">
-        <td><span class="pedido-numero-card${pedido.origemCatalogo ? " pedido-numero-catalogo" : ""}" title="${pedido.origemCatalogo ? "Veio do catálogo" : "Pedido comercial"}" aria-label="${pedido.origemCatalogo ? "Pedido do catálogo" : "Pedido comercial"} ${escapeHtml(pedido.numero)}">${escapeHtml(pedido.numero)}</span>${presencaHtml(pedido)}</td>
+      <tr data-pedido-id="${escapeHtml(pedido.id)}" class="${pedido.origemCatalogo ? "is-catalogo" : ""}${pedido.origemId ? " is-extra" : ""}${presencaDe(pedido)?.ativo ? " is-montando" : ""}" title="${pedido.origemCatalogo ? "Projeto do catálogo: clique duas vezes para abrir como pedido" : "Clique duas vezes para abrir o pedido"}">
+        <td><span class="pedido-numero-card${pedido.origemCatalogo ? " pedido-numero-catalogo" : ""}" title="${pedido.origemCatalogo ? "Veio do catálogo" : "Pedido comercial"}" aria-label="${pedido.origemCatalogo ? "Pedido do catálogo" : "Pedido comercial"} ${escapeHtml(pedido.numero)}">${escapeHtml(pedido.numero)}</span>${pedido.origemId ? `<small class="pedido-extra-tag">Extra do pedido ${escapeHtml(String(pedido.numero).split("/")[0])}</small>` : ""}${presencaHtml(pedido)}</td>
         <td>
           <button type="button" class="central-record-link" data-action="abrir-cliente" title="Abrir cadastro do cliente">
             ${escapeHtml(pedido.cliente)}
@@ -1235,6 +1269,8 @@ function infoCadastro(rotulo, valor, icone){
           </button>
         </td>
         <td>${escapeHtml(formatDate(pedido.data))}</td>
+        <td>${pedido.entrega ? escapeHtml(formatDate(pedido.entrega)) : "—"}</td>
+        <td>${pedido.coleta ? escapeHtml(formatDate(pedido.coleta)) : "—"}</td>
         <td class="central-fluxo-cell">${renderFluxoPedido(pedido)}${prazoHtml(pedido)}</td>
         <td class="central-value-cell">${renderValorFinanceiro(pedido)}</td>
         <td>
@@ -1297,7 +1333,7 @@ function infoCadastro(rotulo, valor, icone){
         console.warn("[CentralPedidos] projetos do catalogo indisponiveis:", error);
         return [];
       });
-      const comFluxo=await enriquecerFluxoPedidos(data||[]);
+      const comFluxo=await enriquecerRecebimentos(await enriquecerFluxoPedidos(data||[]));
       state.pedidos = await enriquecerContatosClientes([...comFluxo.map(normalizarPedido), ...doCatalogo]);
       state.pedidos.sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
       sincronizarInatividadeCadastros(data || []).catch((error) => {

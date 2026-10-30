@@ -1,0 +1,69 @@
+/* Cadastro de Fretes — área da transportadora (out/2026). Página pública, sem o tema do sistema. */
+:root{--azul:#123f86;--azul-hover:#0d2f66;--azul-suave:#eaf0fa;--texto:#1f2020;--suave:#6b6b6b;--linha:#e3e7ec;--fundo:#f3f5f6;--verde:#1f7a44;--vermelho:#b42318}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--fundo);color:var(--texto);font:15px/1.45 Inter,system-ui,sans-serif}
+.fp-pagina{max-width:1100px;margin:0 auto;padding:28px 18px 60px}
+h1,h2{font-family:"Cormorant Garamond",serif;font-weight:600;margin:0}
+.fp-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 18px;border:1px solid var(--azul);border-radius:10px;background:var(--azul);color:#fff;font:600 14px Inter,sans-serif;cursor:pointer}
+.fp-btn:hover{background:var(--azul-hover)}
+.fp-btn:disabled{opacity:.55;cursor:wait}
+.fp-btn.fp-claro{background:#fff;color:var(--texto);border-color:#cfd6df}
+.fp-btn.fp-claro:hover{border-color:var(--azul);color:var(--azul)}
+.fp-erro{min-height:20px;margin:8px 0 0;color:var(--vermelho);font-size:14px}
+input,select{width:100%;min-height:44px;padding:0 12px;border:1px solid #cfd6df;border-radius:10px;background:#fff;color:var(--texto);font:15px Inter,sans-serif}
+input:focus,select:focus{outline:2px solid var(--azul-suave);border-color:var(--azul)}
+label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#4f4f4f}
+
+/* login */
+.fp-login{max-width:420px;margin:8vh auto 0;padding:34px 30px;border-radius:18px;background:#fff;box-shadow:0 0 8px rgba(15,23,42,.15),0 0 2px rgba(15,23,42,.12);text-align:center}
+.fp-logo{max-width:180px;max-height:70px;margin:0 auto 14px;display:block;object-fit:contain}
+.fp-login h1{font-size:34px;letter-spacing:.06em;text-transform:uppercase}
+.fp-login p{color:var(--suave);margin:8px 0 22px}
+.fp-login form{display:flex;flex-direction:column;gap:14px;text-align:left}
+.fp-login .fp-btn{margin-top:4px;min-height:46px}
+.fp-equipe{margin-top:18px!important;padding:12px 14px;border-radius:10px;background:var(--azul-suave);color:var(--texto)!important;font-size:14px;text-align:left}
+.fp-equipe a{color:var(--azul);font-weight:600}
+
+/* app */
+.fp-topo{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--linha)}
+.fp-kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--suave)}
+.fp-topo h1{font-size:34px}
+.fp-topo-acoes{display:flex;gap:10px;flex-wrap:wrap}
+.fp-abas{display:flex;gap:8px;margin:18px 0 10px;flex-wrap:wrap}
+.fp-abas button{position:relative;padding:9px 18px;border:1px solid #dfe4ea;border-radius:999px;background:#fff;font:500 14px Inter,sans-serif;cursor:pointer}
+.fp-abas button.ativa{background:var(--azul);border-color:var(--azul);color:#fff}
+.fp-abas b{display:inline-block;min-width:20px;margin-left:6px;padding:0 6px;border-radius:999px;background:#e60012;color:#fff;font-size:12px}
+.fp-abas b:empty{display:none}
+.fp-dica{margin:0 0 14px;color:var(--suave);font-size:14px}
+.fp-lista{display:flex;flex-direction:column;gap:10px}
+.fp-vazio{padding:28px;border-radius:14px;background:#fff;text-align:center;color:var(--suave)}
+.fp-viagem{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1.4fr) minmax(260px,1fr);gap:14px;align-items:center;padding:14px 18px;border-radius:14px;background:#fff;box-shadow:0 0 8px rgba(15,23,42,.12),0 0 2px rgba(15,23,42,.1)}
+.fp-viagem.is-informada{box-shadow:inset 4px 0 0 var(--verde),0 0 8px rgba(15,23,42,.12)}
+.fp-viagem strong{display:block;font-size:15px}
+.fp-viagem small{display:block;color:var(--suave);font-size:13px}
+.fp-tipo{display:inline-block;margin-right:6px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.fp-tipo.entrega{background:#e6f4ea;color:var(--verde)}
+.fp-tipo.coleta{background:#f4effc;color:#6d4fc2}
+.fp-tipo.extra{background:#fdf6dd;color:#8a6200}
+.fp-valor{display:flex;gap:8px;align-items:center}
+.fp-valor input{max-width:150px}
+.fp-valor .fp-obs{max-width:none}
+.fp-valor-col{display:flex;flex-direction:column;gap:6px}
+.fp-salvo{color:var(--verde);font-size:13px;font-weight:600}
+.fp-fechada{font-size:14px;color:var(--suave);text-align:right}
+.fp-fechada b{display:block;color:var(--texto);font-size:16px}
+.fp-link-apagar{border:0;background:none;color:var(--vermelho);font:500 13px Inter,sans-serif;cursor:pointer;padding:0;text-align:left}
+
+.fp-modal{width:min(720px,94vw);border:0;border-radius:16px;padding:0;box-shadow:0 20px 60px rgba(15,23,42,.3)}
+.fp-modal::backdrop{background:rgba(15,23,42,.45)}
+.fp-modal form{padding:24px}
+.fp-modal h2{font-size:28px;margin-bottom:14px}
+.fp-grade{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.fp-inteiro{grid-column:1/-1}
+.fp-modal-acoes{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
+
+@media (max-width:820px){
+  .fp-viagem{grid-template-columns:1fr}
+  .fp-grade{grid-template-columns:1fr 1fr}
+  .fp-topo h1{font-size:28px}
+}

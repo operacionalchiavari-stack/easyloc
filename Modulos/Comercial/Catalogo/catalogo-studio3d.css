@@ -1,4 +1,4 @@
-.catalog-studio{height:calc(100svh - var(--header-h));min-height:680px;display:grid;grid-template-columns:270px minmax(0,1fr);background:#fff;color:var(--ink)}
+.catalog-studio{height:calc(100svh - var(--header-h));min-height:680px;display:grid;grid-template-columns:360px minmax(0,1fr);background:#fff;color:var(--ink)}
 .studio-library{display:flex;flex-direction:column;min-height:0;padding:30px 22px;border-right:1px solid var(--line);background:#fff;overflow:hidden}
 .studio-library-heading{display:flex;flex-direction:column;gap:5px;margin-bottom:22px}.studio-library-heading span,.studio-scene-title span{font-family:"Cormorant Garamond",serif;font-size:1.75rem}.studio-library-heading small,.studio-scene-title small{color:var(--muted);font-size:.844rem;letter-spacing:.08em}
 .studio-library-search{display:block;margin-bottom:18px;border-bottom:1px solid var(--line)}.studio-library-search input{width:100%;height:34px;border:0;outline:0;background:transparent;color:var(--ink);font:400 .875rem "Manrope",sans-serif}
@@ -275,3 +275,24 @@
 @media(max-width:1600px){.studio-tool-menu-trigger>small{display:none}.studio-floor-plan .studio-tool-menu-trigger{grid-template-columns:auto 12px}}
 @media(max-width:620px){.studio-add-project-button span{display:none}.studio-render-button+.studio-render-button{margin-left:6px}}
 @media(max-width:1300px){.studio-add-project-button{padding-inline:13px}.studio-add-project-button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}}
+
+/* Giro do móvel: ↺ [ângulo°] ↻ (out/2026) */
+.studio-giro{display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 6px}
+.studio-giro-linha{display:flex;align-items:center;gap:4px}
+.studio-giro button{width:30px;height:30px;padding:0;border:1px solid var(--line,#ddd6cc);border-radius:999px;background:#fff;color:#2c2a26;font-size:16px;line-height:1;cursor:pointer;touch-action:none;user-select:none}
+.studio-giro button:hover,.studio-giro button:focus-visible{border-color:#5a5a55;background:#5a5a55;color:#fff;outline:none}
+.studio-giro-angulo{display:inline-flex;align-items:center;gap:1px;height:30px;padding:0 6px;border:1px solid var(--line,#ddd6cc);border-radius:8px;background:#fff}
+.studio-giro-angulo:focus-within{border-color:#5a5a55}
+html:root .studio-giro-angulo input{width:38px!important;min-width:0!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;text-align:right;font:600 13px Manrope,Inter,sans-serif;color:#2c2a26;-moz-appearance:textfield;appearance:textfield}
+.studio-giro-angulo input::-webkit-inner-spin-button,.studio-giro-angulo input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.studio-giro-angulo span{font:600 13px Manrope,Inter,sans-serif;color:#77716a}
+.studio-giro small{font-size:12px;color:var(--muted,#77716a);white-space:nowrap}
+/* Disponibilidade no 3D (out/2026): cada móvel mostra o estoque e quantos estão livres na data/período do pedido ou
+   projeto aberto (mesmos selos e mesma consulta do catálogo). A coluna de itens/formatos ficou mais larga para caber. */
+.studio-library-item .studio-library-item-text{display:flex;flex-direction:column;gap:4px;min-width:0;overflow:visible;white-space:normal}
+.studio-library-item .studio-library-item-text>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.875rem}
+.studio-item-stock{display:flex;flex-wrap:wrap;gap:4px}.studio-item-stock[hidden]{display:none}
+.studio-item-stock>span{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:999px;font:600 .72rem/1.3 Manrope,sans-serif;white-space:nowrap}
+.studio-item-stock .is-estoque{background:#eef0f2;color:#4f4f4f}.studio-item-stock .is-livre{background:#e3f1e7;color:#22673f}.studio-item-stock .is-esgotado{background:#fbe6e2;color:#a73a2f}
+.studio-library-item:has(.is-esgotado) img{opacity:.55}
+@media(max-width:1250px){.catalog-studio{grid-template-columns:310px minmax(0,1fr)}}

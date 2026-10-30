@@ -97,6 +97,17 @@ const QR = "/* qrcodejs falso */ window.QRCode = function(el, o){ const c = docu
   if (process.env.FOTO) await page.screenshot({ path: process.env.FOTO });
   assert.ok(barras.length <= 1, 'uma barra de rolagem só, achou: ' + barras.join(' | '));
   console.log('ok 2 - uma barra de rolagem só na tela da separação');
+  // Enter na quantidade salva e já vai para a linha de baixo (Shift+Enter volta).
+  const campos = await page.$$eval('#separacaoManualItens [data-manual-qty]:not(:disabled)', (l) => l.map((e) => e.dataset.separacaoItemId));
+  if (campos.length >= 2) {
+    const primeiro = page.locator('#separacaoManualItens [data-manual-qty][data-separacao-item-id="' + campos[0] + '"]');
+    await primeiro.click(); await primeiro.fill('0'); await page.keyboard.press('Enter');
+    await page.waitForTimeout(900);
+    assert.equal(await page.evaluate(() => document.activeElement?.dataset?.separacaoItemId), campos[1], 'Enter foi para a linha de baixo');
+    await page.keyboard.press('Shift+Enter'); await page.waitForTimeout(900);
+    assert.equal(await page.evaluate(() => document.activeElement?.dataset?.separacaoItemId), campos[0], 'Shift+Enter voltou para a linha de cima');
+    console.log('ok 2b - Enter na quantidade vai para a linha de baixo');
+  }
   await page.click('#btnSalvarManualSeparacao');
   await page.waitForTimeout(500);
   const finalizou = await page.evaluate(() => window.__gravados.some((g) => g.t === 'separacoes_pedidos' && /separado/.test(g.p?.status || '')));

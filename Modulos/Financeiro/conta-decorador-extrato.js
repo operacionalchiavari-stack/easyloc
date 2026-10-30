@@ -49,7 +49,7 @@
       movimentos.map(l=>'<tr><td>'+dataBr(l.data)+'</td><td><b>'+esc(l.descricao)+'</b>'+(l.obs?'<small>'+esc(l.obs)+'</small>':'')+'</td>'+(!cliente?'<td>'+esc(l.cliente || '—')+'</td>':'')+
         '<td class="num">'+(l.credito?brl(l.credito):'—')+'</td><td class="num">'+(l.debito?brl(l.debito):'—')+'</td><td class="num fin-extrato-saldo">'+brl(l.saldo)+'</td><td><div class="acoes">'+
         (l.titulo?'<button type="button" class="fin-btn peq claro" data-p-ver="'+esc(l.titulo)+'">Detalhes</button>':'')+
-        (podePagar && l.acao && l.pendente>0?'<button type="button" class="fin-btn peq claro" data-p-baixar="'+esc(l.titulo)+'">Pagar</button>':'')+'</div></td></tr>').join('')+
+        '</div></td></tr>').join('')+
       (!movimentos.length?'<tr><td colspan="7" class="fin-vazio">Nenhum lançamento neste período.</td></tr>':'')+
       '</tbody></table></div><p class="fin-extrato-nota">Créditos aumentam o saldo a favor do decorador; pagamentos e devoluções diminuem. O saldo considera todos os movimentos, inclusive os ocultos pelo filtro de situação.</p></section>';
   };

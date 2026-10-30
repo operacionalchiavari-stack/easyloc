@@ -58,16 +58,22 @@
   const status = document.getElementById("parametrosStatus");
   const botao = document.getElementById("btnSalvarParametros");
   let empresaId = null;
+  // Os cards ficam na aba Logística e operação, fora do <form> (ligados pelo atributo form): procurar por form.elements.
+  const statusCampos = () => [...form.elements].filter((c) => c.name === "status" && c.type === "checkbox");
+  // Mensagem no card do botão clicado (cada card tem o seu Salvar).
+  let statusCard = null;
+  const avisoStatus = (t) => { status.textContent = t; if (statusCard) statusCard.textContent = t; };
 
   function preencher(dados){
     const r = Object.assign({}, PADRAO, dados || {});
-    form.querySelectorAll('input[name="status"]').forEach((c) => { c.checked = (r.status_cronograma || []).includes(c.value); });
+    statusCampos().forEach((c) => { c.checked = (r.status_cronograma || []).includes(c.value); });
     DIAS.forEach((k) => { form.elements[k].value = r[k] ?? PADRAO[k]; });
     form.elements.descarregamento_minutos_apos_desmontagem.value = r.descarregamento_minutos_apos_desmontagem ?? 60;
     form.elements.hora_padrao.value = String(r.hora_padrao || PADRAO.hora_padrao).slice(0, 5);
     form.elements.triagem_responsavel.value = r.triagem_responsavel || "";
     form.elements.triagem_equipe.value = r.triagem_equipe || "";
     form.elements.separacao_dias_antes_evento.value = r.separacao_dias_antes_evento ?? PADRAO.separacao_dias_antes_evento;
+    form.elements.descarregamento_conferencia.value = r.descarregamento_conferencia === "cegas" ? "cegas" : "quantidade";
     const esc = Object.assign({}, ESCALA_PADRAO, r.escala || {});
     form.elements.esc_deslocamento_h.value = esc.deslocamento_h;
     form.elements.esc_volume_padrao_m3.value = esc.volume_padrao_m3;
@@ -86,7 +92,10 @@
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const escolhidos = [...form.querySelectorAll('input[name="status"]:checked')].map((c) => c.value);
+    document.querySelectorAll("[data-op-status]").forEach((el) => { el.textContent = ""; });
+    statusCard = e.submitter?.closest(".pr-card")?.querySelector("[data-op-status]") || null;
+    const botaoCard = e.submitter && e.submitter !== botao ? e.submitter : null;
+    const escolhidos = statusCampos().filter((c) => c.checked).map((c) => c.value);
     if(!escolhidos.length){ window.alerta?.("Escolha pelo menos um status para o pedido entrar no cronograma.", "Parâmetros", "aviso"); return; }
     // Pedido aprovado continua no cronograma depois de finalizado/enviado.
     if(escolhidos.includes("aprovado")) escolhidos.push("finalizado", "enviado");
@@ -105,13 +114,14 @@
     const diasSeparacao = Number(form.elements.separacao_dias_antes_evento.value);
     if(!Number.isInteger(diasSeparacao) || diasSeparacao < 0 || diasSeparacao > 60){ form.elements.separacao_dias_antes_evento.focus(); window.alerta?.("Use um número de 0 a 60 dias.", "Parâmetros", "aviso"); return; }
     payload.separacao_dias_antes_evento = diasSeparacao;
+    payload.descarregamento_conferencia = form.elements.descarregamento_conferencia.value === "cegas" ? "cegas" : "quantidade";
     try { payload.escala = escalaLer(); }
     catch(erro){ if(Array.isArray(erro)){ erro[0]?.focus(); window.alerta?.(erro[1], "Parâmetros", "aviso"); return; } throw erro; }
-    botao.disabled = true; status.textContent = "Salvando…";
+    botao.disabled = true; if (botaoCard) botaoCard.disabled = true; avisoStatus("Salvando…");
     const { error } = await window.supabaseClient.from("empresa_logistica_regras").upsert(payload, { onConflict: "empresa_id" });
-    botao.disabled = false;
-    if(error){ console.error(error); status.textContent = ""; window.alerta?.("Não foi possível salvar: " + error.message, "Parâmetros", "erro"); return; }
-    status.textContent = "Parâmetros salvos. Valem para os próximos pedidos salvos.";
+    botao.disabled = false; if (botaoCard) botaoCard.disabled = false;
+    if(error){ console.error(error); avisoStatus(""); window.alerta?.("Não foi possível salvar: " + error.message, "Parâmetros", "erro"); return; }
+    avisoStatus("Salvo. Vale para os próximos pedidos salvos.");
   });
 
   carregar();

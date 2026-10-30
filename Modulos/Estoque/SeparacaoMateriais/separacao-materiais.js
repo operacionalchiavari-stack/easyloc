@@ -13,6 +13,7 @@
   const STATUS_FINALIZADO = new Set(["separado", "separado_com_divergencia"]);
 
   const state = {
+    meusSetores: null,   // Separação por setor (Parâmetros): null = todos; senão Set com os setores da pessoa
     supabase: null,
     empresaId: null,
     usuarioId: null,
@@ -180,8 +181,11 @@
     return state.pedidos.find((pedido) => String(pedido.id) === String(state.pedidoAtualId)) || null;
   }
 
+  // Item personalizado (out/2026): a parte que está em produção não se separa aqui. itemTotal é só a parte normal;
+  // a parte em produção entra no resumo do pedido e só conta depois que o separador confirma que recebeu.
+  function itemProducao(item) { return Number(item?.prod?.unidades || 0); }
   function itemTotal(item) {
-    return Number(item?.quantidade_solicitada || 0);
+    return Math.max(Number(item?.quantidade_solicitada || 0) - itemProducao(item), 0);
   }
 
   function itemSeparado(item) {
@@ -198,10 +202,23 @@
     return Math.min(Math.round((itemSeparado(item) / total) * 100), 100);
   }
 
-  function pedidoResumo(pedidoId = state.pedidoAtualId) {
-    const itens = state.itens.filter((item) => String(item.separacao_pedido_id) === String(pedidoId));
-    const total = itens.reduce((acc, item) => acc + itemTotal(item), 0);
-    const separado = itens.reduce((acc, item) => acc + itemSeparado(item), 0);
+  // Separação por setor (out/2026): o setor é o "Setor de estoque" do item (no Kit, o do componente).
+  function setorDoItem(item) { return String(item?.itens?.setor_estoque || "").trim() || "Sem setor"; }
+  function itemVisivel(item) { return !state.meusSetores || state.meusSetores.has(setorDoItem(item)); }
+  function itensDoPedido(pedidoId, soMeus = false) {
+    return state.itens.filter((item) => String(item.separacao_pedido_id) === String(pedidoId) && (!soMeus || itemVisivel(item)));
+  }
+  async function carregarMeusSetores() {
+    try {
+      const { data, error } = await state.supabase.rpc("separacao_meus_setores", { p_empresa: state.empresaId });
+      state.meusSetores = !error && Array.isArray(data) && data.length ? new Set(data) : null;
+    } catch (erro) { console.warn("Setores da separação indisponíveis:", erro); state.meusSetores = null; }
+  }
+
+  function pedidoResumo(pedidoId = state.pedidoAtualId, soMeus = false) {
+    const itens = itensDoPedido(pedidoId, soMeus);
+    const total = itens.reduce((acc, item) => acc + itemTotal(item) + itemProducao(item), 0);
+    const separado = itens.reduce((acc, item) => acc + itemSeparado(item) + Math.min(Number(item?.prod?.confirmadas || 0), itemProducao(item)), 0);
     const faltante = Math.max(total - separado, 0);
     const percent = total ? Math.min(Math.round((separado / total) * 100), 100) : 0;
     return { total, separado, faltante, percent, itensCount: itens.length };
@@ -429,11 +446,14 @@
       cardAction = "resumo";
     }
 
+    // Pagamento mínimo (Parâmetros > Financeiro) travando a Triagem: aviso pequeno e o cartão não abre.
+    const bloqueado = coluna !== "separado" && state.bloqueados?.has(String(pedido.id));
     return `
-      <article class="separacao-order-card" data-pedido-id="${escapeHtml(pedido.id)}" data-card-action="${escapeHtml(cardAction)}" data-clickable="true" data-coluna="${escapeHtml(coluna)}" tabindex="0">
+      <article class="separacao-order-card${bloqueado ? " is-bloqueado-fin" : ""}" data-pedido-id="${escapeHtml(pedido.id)}" data-card-action="${escapeHtml(cardAction)}" data-clickable="${bloqueado ? "false" : "true"}" data-coluna="${escapeHtml(coluna)}" ${bloqueado ? 'aria-disabled="true" title="Aguardando aprovação do Financeiro. Avise o supervisor."' : 'tabindex="0"'}>
         <div class="separacao-card-top">
           <span class="separacao-order-number">Pedido ${escapeHtml(numeroLabel)}</span>
           <span class="card-tipo-ida">Ida</span>
+          ${bloqueado ? '<span class="exp-aviso-fin">Aguardando Financeiro</span>' : ""}
           ${coluna === "separado" ? `<span class="separacao-done-mark"><i data-lucide="check"></i></span>` : ""}
         </div>
         <div class="separacao-card-mainline">
@@ -480,6 +500,33 @@
       lidosHtml + '<div class="separacao-lock-note">' + escapeHtml(nota) + "</div></article>";
   }
 
+  // Divergências abertas da volta (out/2026): o pedido não some do quadro enquanto houver falta ou peça a mais sem resolver.
+  async function divergenciasAbertas(sb, empresa, etapa) {
+    let data, error;
+    try { ({ data, error } = await sb.from("operacao_ocorrencias").select("pedido_id,tipo,quantidade,etapa")
+      .eq("empresa_id", empresa).is("resolvida_em", null).in("tipo", ["falta", "sobra"]).eq("etapa", etapa)); } catch (e) { error = e; }
+    if (error) { console.warn("Divergências não carregadas:", error); return { mapa: new Map(), pedidos: [] }; }
+    const mapa = new Map();
+    (data || []).forEach((o) => { const k = String(o.pedido_id); const r = mapa.get(k) || { falta: 0, sobra: 0 }; r[o.tipo] += 1; mapa.set(k, r); });
+    if (!mapa.size) return { mapa, pedidos: [] };
+    const { data: pedidos } = await sb.from("separacoes_pedidos").select("*").eq("empresa_id", empresa).in("id", [...mapa.keys()]);
+    return { mapa, pedidos: pedidos || [] };
+  }
+  function resumoDivergencia(r) {
+    return [r.falta ? r.falta + " item(ns) faltando" : "", r.sobra ? r.sobra + " item(ns) a mais" : ""].filter(Boolean).join(" · ");
+  }
+
+  function divergenciaCard(pedido) {
+    const r = state.divergencias?.mapa.get(String(pedido.id)) || { falta: 0, sobra: 0 };
+    const numero = String(pedido.numero_pedido || "-");
+    return '<article class="separacao-order-card card-retorno card-divergencia' + (r.falta ? " tem-falta" : " so-sobra") + '" data-pedido-id="' + escapeHtml(pedido.id) + '" data-card-action="retorno" data-clickable="true" data-coluna="divergencias" tabindex="0">' +
+      '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + escapeHtml(numero.startsWith("#") ? numero : "#" + numero) + '</span><span class="card-tipo-retorno">Retorno</span></div>' +
+      '<div class="separacao-card-mainline"><strong>' + escapeHtml(pedido.cliente_nome || "Cliente nao informado") + "</strong><span>" +
+      escapeHtml(pedido.tipo_evento || "Evento") + " &middot; " + escapeHtml(pedidoLocal(pedido)) + "</span></div>" +
+      '<div class="separacao-card-meta-line">Coleta ' + escapeHtml(formatDateOnly(pedido.data_coleta || pedido.data_evento)) + "</div>" +
+      '<div class="card-divergencia-resumo">' + escapeHtml(resumoDivergencia(r)) + '</div><div class="separacao-lock-note">Abra para resolver</div></article>';
+  }
+
   function abrirConferenciaRetorno(pedidoId) {
     const query = "?pedido=" + encodeURIComponent(pedidoId) + "&etapa=retorno&de=separacao";
     try {
@@ -520,7 +567,8 @@
       return (!termo || texto.includes(termo)) && (!status || pedido.status === status);
     });
 
-    const naTriagem=state.pedidosFiltrados.filter(p=>p.fluxo_etapa==='triagem'||p.somente_consulta);
+    // Separado e ainda não carregado chega com fluxo_etapa 'expedicao': fica em Concluídos até a Expedição começar.
+    const naTriagem=state.pedidosFiltrados.filter(p=>(p.fluxo_etapa==='triagem'||p.fluxo_etapa==='expedicao'||p.somente_consulta)&&(!state.meusSetores||itensDoPedido(p.id,true).length));
     const grupos = {
       aguardando: naTriagem.filter((pedido) => pedido.status === "pendente"),
       emSeparacao: naTriagem.filter((pedido) => STATUS_EM_ANDAMENTO.has(pedido.status)),
@@ -537,6 +585,10 @@
     renderColuna(els.separacaoColunaAguardando, grupos.aguardando, "aguardando", retornos.aguardando);
     renderColuna(els.separacaoColunaEmSeparacao, grupos.emSeparacao, "andamento", retornos.andamento);
     renderColuna(els.separacaoColunaSeparados, grupos.separados, "separado", retornos.separado);
+    const divergentes = (state.divergencias?.pedidos || []).filter((p) => !termo || [p.numero_pedido, p.cliente_nome, p.tipo_evento, pedidoLocal(p)].join(" ").toLowerCase().includes(termo));
+    const colDiv = document.getElementById("separacaoColunaDivergencias");
+    if (colDiv) colDiv.innerHTML = divergentes.length ? divergentes.map(divergenciaCard).join("") : '<div class="empty-state">Nenhuma divergência aberta.</div>';
+    atualizaTexto(document.getElementById("separacaoLaneDivergenciasCount"), divergentes.length);
 
     if (window.lucide) lucide.createIcons();
   }
@@ -572,7 +624,7 @@
     atualizaTexto(els.separacaoUmCliqueTitulo, `Concluir ${titulo}?`);
     atualizaTexto(els.separacaoUmCliqueMeta, `Marcar todos os itens do pedido ${pedido.numero_pedido || "-"} como separados.`);
 
-    renderProgress(pedidoResumo(pedido.id));
+    renderProgress(pedidoResumo(pedido.id, true));
     renderItens();
     aplicarEstadoOperacaoPedido(pedido);
   }
@@ -631,7 +683,40 @@
     return { cadastro, nome, codigo, localizacao };
   }
 
+  // Parte em produção: sem quantidade, só o aviso. Quando a produção termina, o separador confirma que recebeu.
+  function renderProducaoItem(item, editavel) {
+    const { nome, codigo } = itemBaseInfo(item);
+    const p = item.prod, un = itemProducao(item), conf = Math.min(Number(p.confirmadas || 0), un), prontas = Math.min(Number(p.prontas || 0), un);
+    const linhaItem = item.virtual ? item.kitRow.item_id : item.item_id;
+    let situacao, acao = "";
+    if (conf >= un) situacao = '<span class="producao-sit is-ok">✓ Recebido da produção</span>';
+    else if (prontas > conf) {
+      situacao = '<span class="producao-sit is-pronto">Pronto na produção' + (prontas < un ? " (" + formatQty(prontas) + " de " + formatQty(un) + ")" : "") + "</span>";
+      acao = '<button type="button" class="btn primary producao-confirmar" data-confirmar-producao="' + escapeHtml(linhaItem) + '" data-pedido="' + escapeHtml(item.separacao_pedido_id) + '"' + (editavel ? "" : " disabled") + ">Confirmar recebimento</button>";
+    } else situacao = '<span class="producao-sit is-andamento">Em produção</span>';
+    return `
+      <article class="item-card item-card-producao${conf >= un ? " is-completo" : ""}" data-separacao-item-id="${escapeHtml(item.id)}-producao">
+        <div class="item-requested" title="Quantidade em produção"><span>Qtd</span><strong>${escapeHtml(formatQty(un))}</strong></div>
+        <div class="item-photo">${itemPhotoHtml(item, nome)}</div>
+        <div class="item-content">
+          <div class="item-name">${escapeHtml(nome)}</div>
+          ${codigo ? `<div class="item-code">Cod. ${escapeHtml(codigo)}</div>` : ""}
+          <div class="producao-aviso">Personalização${p.personalizacoes ? " · " + escapeHtml(p.personalizacoes) : ""} — a separação desta parte é feita pela Produção${item.virtual ? " (kit " + escapeHtml(item.kit_nome || "") + ")" : ""}.</div>
+        </div>
+        <div class="producao-lado">${situacao}${acao}</div>
+      </article>`;
+  }
+
   function renderManualItem(item, editavel) {
+    if (itemProducao(item) > 0) {
+      const prod = renderProducaoItem(item, editavel);
+      if (itemTotal(item) <= 0) return prod;
+      return renderManualItemNormal(item, editavel) + prod;
+    }
+    return renderManualItemNormal(item, editavel);
+  }
+
+  function renderManualItemNormal(item, editavel) {
     const { nome, codigo, localizacao } = itemBaseInfo(item);
     const total = itemTotal(item);
     const separado = itemSeparado(item);
@@ -667,6 +752,14 @@
   }
 
   function renderQrItem(item) {
+    if (itemProducao(item) > 0) {
+      const prod = renderProducaoItem(item, modoEditavel());
+      return itemTotal(item) <= 0 ? prod : renderQrItemNormal(item) + prod;
+    }
+    return renderQrItemNormal(item);
+  }
+
+  function renderQrItemNormal(item) {
     const { nome, codigo, localizacao } = itemBaseInfo(item);
     const percent = itemPercent(item);
 
@@ -705,12 +798,12 @@
       return;
     }
 
-    const itens = state.itens.filter((item) => String(item.separacao_pedido_id) === String(pedido.id));
+    const itens = itensDoPedido(pedido.id, true);
     if (!itens.length) {
       containers.forEach((container) => {
         container.innerHTML = `
           <div class="empty-state">
-            Nenhum item encontrado neste pedido.
+            ${state.meusSetores ? "Nenhum item dos seus setores neste pedido." : "Nenhum item encontrado neste pedido."}
           </div>
         `;
       });
@@ -719,15 +812,35 @@
 
     const regra = regraSeparacaoPedido(pedido);
     const editavel = modoEditavel();
-    const avisoBloqueio = editavel ? "" : `
+    const outros = itensDoPedido(pedido.id).length - itens.length;
+    const avisoSetor = state.meusSetores ? `
+      <div class="separacao-setor-banner">
+        <strong>Seus setores: ${escapeHtml([...state.meusSetores].join(" · "))}</strong>
+        <span>${outros ? `${outros} item(ns) de outros setores ficam com a equipe de cada setor.` : "Todos os itens deste pedido são dos seus setores."}</span>
+      </div>
+    ` : "";
+    const avisoBloqueio = avisoSetor + (editavel ? "" : `
       <div class="separacao-readonly-banner">
         <strong>Somente visualização</strong>
         <span>${escapeHtml(STATUS_FINALIZADO.has(pedido.status) ? "Separação já concluída." : (regra.motivo || "Pedido bloqueado para alterações."))}</span>
       </div>
-    `;
+    `);
 
     if (els.separacaoManualItens) {
+      // Campo em edição antes de redesenhar (quem já está digitando na linha de baixo não perde o que digitou).
+      const ativo = document.activeElement?.matches?.("[data-manual-qty]") && els.separacaoManualItens.contains(document.activeElement)
+        ? { id: document.activeElement.dataset.separacaoItemId, valor: document.activeElement.value, inicio: document.activeElement.selectionStart, fim: document.activeElement.selectionEnd } : null;
       els.separacaoManualItens.innerHTML = avisoBloqueio + itens.map((item) => renderManualItem(item, editavel)).join("");
+      // Enter na quantidade leva à linha de baixo: a lista é redesenhada depois de salvar, então o foco volta pelo id.
+      const idFoco = ativo?.id || (state.focoManual && Date.now() < state.focoManual.ate ? state.focoManual.id : null);
+      if (idFoco) {
+        const alvo = els.separacaoManualItens.querySelector('[data-manual-qty][data-separacao-item-id="' + CSS.escape(idFoco) + '"]');
+        if (alvo && !alvo.disabled) {
+          alvo.focus({ preventScroll: true });
+          if (ativo && ativo.id === idFoco && ativo.valor !== alvo.value) { alvo.value = ativo.valor; try { alvo.setSelectionRange(ativo.inicio, ativo.fim); } catch (_) {} }
+          else alvo.select();
+        }
+      }
     }
 
     if (els.separacaoQrItens) {
@@ -783,8 +896,18 @@
 
         if (erroItens) throw erroItens;
         state.itens = await abrirKitsEmComponentes(itens || []);
+        await aplicarProducao(pedidoIds);
       }
       await carregarRetornos();
+      state.bloqueados = new Set();
+      const idaIds = state.pedidos.filter((p) => p.fluxo_etapa === "triagem").map((p) => p.id);
+      for (let i = 0; i < idaIds.length; i += 100) {
+        const { data: bloq, error: erroBloq } = await state.supabase.rpc("pedidos_pagamento_bloqueados", { p_pedidos: idaIds.slice(i, i + 100), p_etapa: "triagem" });
+        if (erroBloq || !Array.isArray(bloq)) break;
+        bloq.forEach((id) => state.bloqueados.add(String(id)));
+      }
+      // Divergência da volta é resolvida na Gestão do acervo (out/2026): a Triagem não lista mais.
+      state.divergencias = { mapa: new Map(), pedidos: [] };
 
       if (state.pedidoAtualId && !state.pedidos.some((pedido) => String(pedido.id) === String(state.pedidoAtualId))) {
         state.pedidoAtualId = null;
@@ -839,6 +962,33 @@
       });
     });
     return saida;
+  }
+
+  // Quanto de cada linha está em produção (personalização), quanto ficou pronto e quanto o separador já confirmou.
+  async function aplicarProducao(pedidoIds) {
+    const mapa = new Map();
+    for (let i = 0; i < pedidoIds.length; i += 100) {
+      const { data, error } = await state.supabase.rpc("separacao_producao", { p_pedidos: pedidoIds.slice(i, i + 100) });
+      if (error) { console.warn("Produção da triagem indisponível:", error); return; }
+      (Array.isArray(data) ? data : []).forEach((r) => mapa.set(r.pedido_id + "|" + r.item_id, r));
+    }
+    state.itens.forEach((item) => {
+      const r = mapa.get(item.separacao_pedido_id + "|" + (item.virtual ? item.kitRow.item_id : item.item_id));
+      if (!r) { delete item.prod; return; }
+      const f = item.virtual ? Number(item.por_kit || 1) : 1;
+      item.prod = { unidades: Number(r.unidades || 0) * f, prontas: Number(r.prontas || 0) * f, confirmadas: Number(r.confirmadas || 0) * f, personalizacoes: r.personalizacoes || "" };
+    });
+  }
+
+  async function confirmarProducao(pedidoId, itemId, botao) {
+    if (!modoEditavel()) { avisarSeparacaoBloqueada(); return; }
+    if (botao) botao.disabled = true;
+    try {
+      const { error } = await state.supabase.rpc("separacao_producao_confirmar", { p_pedido: pedidoId, p_item: itemId });
+      if (error) throw error;
+      avisar("Recebimento da produção confirmado.", "Produção", "sucesso");
+      await carregarFila();
+    } catch (e) { avisar(e.message || String(e), "Produção", "aviso"); if (botao) botao.disabled = false; }
   }
 
   // Linha real do pedido + componente: é assim que as etiquetas de envio apontam para a peça.
@@ -963,6 +1113,9 @@
       return;
     }
 
+    // Pagamento mínimo (Parâmetros > Financeiro): com a trava na Triagem, a separação não começa sem ele.
+    const {data:pagamento,error:erroPagamento}=await state.supabase.rpc('pedido_pagamento_situacao',{p_pedido:pedido.id,p_etapa:'triagem'});
+    if(!erroPagamento && pagamento && pagamento.liberada===false){avisar(pagamento.mensagem,'Separação','aviso');return;}
     const {data:modos,error:erroModos}=await state.supabase.rpc('separacao_modos_disponiveis',{p_empresa:state.empresaId});
     if(erroModos){avisar(erroModos.message,'Separação','erro');return;}
     state.modosDisponiveis=modos || {};
@@ -1133,8 +1286,8 @@
   function imprimirRelatorioSeparacao() {
     const pedido = getPedidoAtual();
     if (!pedido) { avisar("Selecione um pedido.", "Relatório", "aviso"); return; }
-    const itens = state.itens.filter((item) => String(item.separacao_pedido_id) === String(pedido.id));
-    if (!itens.length) { avisar("Este pedido não tem itens para separar.", "Relatório", "aviso"); return; }
+    const itens = itensDoPedido(pedido.id, true);
+    if (!itens.length) { avisar(state.meusSetores ? "Este pedido não tem itens dos seus setores." : "Este pedido não tem itens para separar.", "Relatório", "aviso"); return; }
     const obs = pedido.observacoes && typeof pedido.observacoes === "object" ? pedido.observacoes : {};
     const notasItens = Array.isArray(obs.itens_operacionais) ? obs.itens_operacionais : [];
     const notaDoItem = (item) => {
@@ -1582,6 +1735,7 @@
   }
 
   async function atualizarItemSeparacao(itemSeparacao, payload, etiquetaId = null) {
+    if (!itemVisivel(itemSeparacao)) throw new Error(`Este item é do setor ${setorDoItem(itemSeparacao)}, que não está liberado para você separar.`);
     const modo=state.activeMode;
     if(!state.modosDisponiveis[modo])throw new Error('Este modo de separação não está liberado para você.');
     payload={...payload,modo_separacao:modo};
@@ -1697,7 +1851,20 @@
     let status = "separado";
     let motivo = "";
 
+    // Separação por setor: a parte da pessoa pronta e outros setores faltando → avisa e fecha (a triagem termina
+    // quando o último setor separar).
+    if (resumo.faltante > 0 && state.meusSetores && pedidoResumo(pedido.id, true).faltante === 0) {
+      avisar(`Sua parte deste pedido está separada. Faltam ${formatQty(resumo.faltante)} itens de outros setores; a triagem termina quando todos os setores separarem.`, "Separação por setor", "sucesso");
+      await carregarFila();
+      return "parcial";
+    }
     // A triagem só termina com a separação inteira (out/2026): não existe mais finalizar com divergência.
+    const emProducao = itensDoPedido(pedido.id).reduce((s, i) => s + Math.max(itemProducao(i) - Number(i.prod?.confirmadas || 0), 0), 0);
+    if (resumo.faltante > 0 && emProducao > 0 && resumo.faltante <= emProducao) {
+      avisar(`A parte do galpão está separada. Faltam ${formatQty(emProducao)} peça(s) em produção (personalização): a triagem termina quando a Produção entregar e você confirmar o recebimento.`, "Aguardando a Produção", "aviso");
+      await carregarFila();
+      return "parcial";
+    }
     if (resumo.faltante > 0) {
       avisar(`Ainda faltam ${formatQty(resumo.faltante)} itens. Separe todos os itens para finalizar a triagem.`, "Separação incompleta", "aviso");
       return false;
@@ -1742,7 +1909,7 @@
       return;
     }
 
-    const itens = state.itens.filter((item) => String(item.separacao_pedido_id) === String(pedido.id));
+    const itens = itensDoPedido(pedido.id, true);
     for (const item of itens) {
       if (itemSeparado(item) >= itemTotal(item)) continue;
       await atualizarItemSeparacao(item, {
@@ -1767,6 +1934,10 @@
   }
 
   function bindEvents() {
+    document.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-confirmar-producao]");
+      if (b) confirmarProducao(b.dataset.pedido, b.dataset.confirmarProducao, b);
+    });
     els.btnAtualizarSeparacao?.addEventListener("click", carregarFila);
     els.btnCameraSeparacao?.addEventListener("click", () => iniciarCamera().catch(console.error));
     document.querySelectorAll("[data-relatorio-separacao]").forEach((botao) => botao.addEventListener("click", () => { try { imprimirRelatorioSeparacao(); } catch (e) { console.error(e); avisar("Não foi possível imprimir o relatório.", "Relatório", "erro"); } }));
@@ -1882,7 +2053,12 @@
       const input = event.target.closest("[data-manual-qty]");
       if (!input || event.key !== "Enter") return;
       event.preventDefault();
-      input.blur();
+      // Salva (o change dispara no blur) e já vai para a próxima linha editável (Shift+Enter volta para a anterior).
+      const campos = [...els.separacaoManualItens.querySelectorAll("[data-manual-qty]:not(:disabled)")];
+      const proximo = campos[campos.indexOf(input) + (event.shiftKey ? -1 : 1)];
+      state.focoManual = proximo ? { id: proximo.dataset.separacaoItemId, ate: Date.now() + 4000 } : null;
+      if (proximo) { proximo.focus({ preventScroll: true }); proximo.select(); proximo.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+      else input.blur();
     });
 
     els.scannerInput?.addEventListener("keydown", (event) => {
@@ -1939,6 +2115,7 @@
     }
 
     bindEvents();
+    await carregarMeusSetores();
     await carregarFila();
     await abrirPedidoDaUrl();
     // Sem botão Atualizar (out/2026): a fila se atualiza sozinha a cada 30 s e ao voltar para a aba,

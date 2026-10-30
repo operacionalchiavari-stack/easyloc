@@ -64,7 +64,7 @@ export function dadosApresentacao(project, findItem){
         imagens: (amb.renders || []).filter(r => r.url).map(r => ({url:r.url, nome:r.origem || amb.nome, jogos: Math.max(1, Number(r.jogos) || 1)})), itens: [...grupos.values()] };
     }),
     // Serviços adicionais do pedido comercial (out/2026).
-    servicos: (Array.isArray(project.dados?.servicos) ? project.dados.servicos : []).map(s => ({ nome: s.nome || 'Serviço', quantidade: Number(s.quantidade) || 1, valor: Number(s.valor) || 0 })),
+    servicos: (Array.isArray(project.dados?.servicos) ? project.dados.servicos : []).map(s => ({ nome: s.nome || 'Serviço', quantidade: Number(s.quantidade) || 1, valor: Number(s.valor) || 0, data: s.data || '', hora: s.hora || '' })),
   };
 }
 // Seção "Serviços adicionais" da prévia/PDF do pedido.
@@ -84,18 +84,25 @@ export function financeiroPedidoSalvo(pedido){
 }
 function financeiroPedidoHtml(model){
   const f = model.financeiro;
-  if(!f || (!(f.total > 0) && !f.parcelas?.length)) return '';
+  // model.pagamentosSlot: pedido digital (o link do pedido), a lista de pagamentos entra no lugar da programação
+  if(!f || (!(f.total > 0) && !f.parcelas?.length)) return model.pagamentosSlot ? `<div class="cpj-order-financeiro">${model.pagamentosSlot}</div>` : '';
   const resumo = (f.resumo || []).filter(l => Number(l.valor) !== 0);
   const blocoResumo = `<section class="cpj-order-financeiro-resumo"><h2>Resumo do pedido</h2><dl>${resumo.map(l => `<div><dt>${esc(l.rotulo)}</dt><dd>${dinheiro.format(l.valor)}</dd></div>`).join('')}<div class="is-total"><dt>Total do pedido</dt><dd>${dinheiro.format(Number(f.total) || 0)}</dd></div></dl></section>`;
   const grupos = Object.keys(COMPONENTES_PAGAMENTO).map(c => [c, (f.parcelas || []).filter(p => (p.componente || 'locacao') === c)]).filter(([, ps]) => ps.length);
   const blocoParcelas = grupos.length ? `<section class="cpj-order-financeiro-parcelas"><h2>Programação de pagamento</h2><table class="cpj-order-pagamentos"><thead><tr><th scope="col">Parcela</th><th scope="col">Vencimento</th><th scope="col">Forma</th><th scope="col" class="cpj-order-valor-col">Valor</th></tr></thead>${grupos.map(([c, ps]) => `<tbody><tr class="cpj-order-pag-grupo"><th colspan="4" scope="rowgroup">${COMPONENTES_PAGAMENTO[c]} · ${dinheiro.format(ps.reduce((t, p) => t + p.valor, 0))}</th></tr>${ps.map((p, i) => `<tr><td>${esc(p.tipo && !/^parcela\s*\d*$/i.test(p.tipo) ? p.tipo : 'Parcela')} ${i + 1} de ${ps.length}</td><td>${esc(dataBr(p.vencimento))}</td><td>${esc(p.metodo || 'A combinar')}</td><td class="cpj-order-valor-col">${dinheiro.format(p.valor)}</td></tr>`).join('')}</tbody>`).join('')}</table></section>` : '';
-  return `<div class="cpj-order-financeiro">${blocoResumo}${blocoParcelas}</div>`;
+  return `<div class="cpj-order-financeiro">${blocoResumo}${model.pagamentosSlot || blocoParcelas}${pagarPeloCelularHtml(model.pagamentoLink)}</div>`;
+}
+// QR do link de pagamento do pedido (out/2026): o cliente aponta a câmera, vê os pagamentos e gera o PIX de cada um
+// (o código de acesso vai junto no QR). model.pagamentoLink = { url, urlCurta, pin, qr } (EasyLocLinkPagamento.paraDocumento).
+function pagarPeloCelularHtml(link){
+  if(!link?.qr) return '';
+  return `<section class="cpj-order-pagar"><div class="cpj-order-pagar-qr"><img src="${esc(link.qr)}" alt="QR Code para pagar o pedido"></div><div class="cpj-order-pagar-txt"><span class="cpj-order-pagar-sobre">Pagamento por PIX</span><h2>Seu pedido no celular</h2><p>Aponte a câmera para o QR Code: você confere o pedido completo e, no final, faz os pagamentos pelo PIX, com o valor já preenchido.</p><p class="cpj-order-pagar-link">Ou acesse <span>${esc(link.urlCurta)}</span> com o código <b>${esc(link.pin)}</b></p></div></section>`;
 }
 function servicosPedidoHtml(model){
   const lista = model.servicos || [];
   if(!lista.length) return '';
   const total = lista.reduce((t, s) => t + s.quantidade * s.valor, 0);
-  return `<section class="cpj-order-servicos"><h3>Serviços adicionais</h3><table class="cpj-order-table cpj-order-servicos-tabela"><tbody>${lista.map(s => `<tr><td class="cpj-order-qty">${s.quantidade}</td><td><strong>${esc(s.nome)}</strong></td><td class="cpj-order-valor">${dinheiro.format(s.valor)}</td><td class="cpj-order-valor pa-valor-total"><b>${dinheiro.format(s.quantidade * s.valor)}</b></td></tr>`).join('')}</tbody><tfoot><tr><td></td><td>Total dos serviços</td><td></td><td class="cpj-order-valor"><b>${dinheiro.format(total)}</b></td></tr></tfoot></table></section>`;
+  return `<section class="cpj-order-servicos"><h3>Serviços adicionais</h3><table class="cpj-order-table cpj-order-servicos-tabela"><tbody>${lista.map(s => `<tr><td class="cpj-order-qty">${s.quantidade}</td><td><strong>${esc(s.nome)}</strong>${s.data ? `<small class="cpj-order-servico-quando">${esc(s.data.split('-').reverse().join('/'))}${s.hora ? ' às ' + esc(s.hora) : ''}</small>` : ''}</td><td class="cpj-order-valor">${dinheiro.format(s.valor)}</td><td class="cpj-order-valor pa-valor-total"><b>${dinheiro.format(s.quantidade * s.valor)}</b></td></tr>`).join('')}</tbody><tfoot><tr><td></td><td>Total dos serviços</td><td></td><td class="cpj-order-valor"><b>${dinheiro.format(total)}</b></td></tr></tfoot></table></section>`;
 }
 const dinheiro = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
 // Valores em colunas próprias, na mesma linha do nome: reposição (por unidade), locação por unidade e total da linha.
@@ -281,7 +288,7 @@ export async function imprimirApresentacao(model){
   return imprimirDocumento(documentoApresentacao(model));
 }
 export async function imprimirPedido(model, { decorador = null, empresa = null, observacao = '', layout = null } = {}){
-  const css = new URL('./catalogo-projetos.css?v=20261027-pedido-lateral',import.meta.url).href;
+  const css = new URL('./catalogo-projetos.css?v=20261030-link-pagamento2',import.meta.url).href;
   // Decorador com os valores ocultos (botão do olho no catálogo): o PDF sai sem as colunas de valores.
   const semValores = document.documentElement.classList.contains('catalogo-sem-valores');
   const horizontal = (layout || layoutPedido()) === 'horizontal';

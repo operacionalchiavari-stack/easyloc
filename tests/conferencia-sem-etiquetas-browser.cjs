@@ -38,13 +38,14 @@ const mock = `(() => {
     rpc: (n, args) => { window.__rpc = window.__rpc || []; window.__rpc.push([n, args]);
       if (n === "operacao_conferencia_pecas") return Promise.resolve({ data: [
         { chave: "s1|i1", linha: "s1", item_id: "i1", nome: "Cadeira Tiffany", esperado: 2 },
-        { chave: "s2|c1", linha: "s2", item_id: "c1", nome: "Tampo", esperado: 1 },
+        { chave: "s2|c1", linha: "s2", item_id: "c1", nome: "Tampo", esperado: 1, kit_nome: "Mesa Nice   (L) 3 m", por_kit: 1 },
         { chave: "s2|c2", linha: "s2", item_id: "c2", nome: "Pé", esperado: 2 }], error: null });
-      if (n === "operacao_concluir_conferencia") {
+      if (n === "operacao_concluir_conferencia" || n === "operacao_concluir_com_pendencia") {
+        if (n === "operacao_concluir_com_pendencia") window.__pendencia = args.p_pendencia;
         const pecas = { "s1|i1": ["Cadeira Tiffany", 2], "s2|c1": ["Tampo", 1], "s2|c2": ["Pé", 2] };
         const itens = Object.entries(pecas).map(([k, [nome, esp]]) => ({ chave: k, item: nome, esperado: esp, conferido: args.p_quantidades[k], obs: (args.p_observacoes || {})[k] || null }));
         const faltando = itens.filter((x) => x.conferido < x.esperado);
-        const r = { concluido_em: new Date().toISOString(), por: "Igor", total: 5, lidas: itens.reduce((t, x) => t + Math.min(x.conferido, x.esperado), 0), faltando, sem_etiquetas: true, itens };
+        const r = { concluido_em: new Date().toISOString(), por: "Igor", total: 5, lidas: itens.reduce((t, x) => t + Math.min(x.conferido, x.esperado), 0), faltando, sem_etiquetas: true, itens, ...(args.p_pendencia ? { pendencia: { ...args.p_pendencia, caminhoes: [{ codigo: "G", placa: "ABC1D23" }] } } : {}) };
         return Promise.resolve({ data: r, error: null }); }
       return rpcOperacao(banco, n, args); }
   };
@@ -72,7 +73,7 @@ const mock = `(() => {
   });
   await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=carregamento");
   await page.waitForSelector(".cf-qtd-input", { timeout: 15000 });
-  const linhas = await page.$$eval(".cf-qtd-linha:not(.cf-qtd-cabeca)", (l) => l.map((x) => [x.querySelector("strong").textContent, x.querySelector("strong + span").textContent]));
+  const linhas = await page.$$eval(".cf-qtd-linha:not(.cf-qtd-cabeca)", (l) => l.map((x) => [x.querySelector("strong").firstChild.textContent, x.querySelector("strong + span").textContent]));
   assert.deepStrictEqual(linhas, [["Cadeira Tiffany", "2"], ["Pé", "2"], ["Tampo", "1"]]);
   assert.ok(await page.isHidden("#cfCorpo"), "sem área de bipagem");
   // Topo numa linha (out/2026): sem o texto explicativo; Pedido, decorador e progresso na mesma linha.
@@ -106,15 +107,29 @@ const mock = `(() => {
   assert.strictEqual(await page.textContent("#cfContagem"), "4 de 5 peças");
   assert.ok(await page.$eval(".cf-qtd-input[data-chave=\"s2|c2\"]", (i) => i.closest(".cf-qtd-linha").classList.contains("is-falta")));
   assert.equal(await page.$eval(".cf-qtd-input[data-chave=\"s2|c2\"]", (i) => getComputedStyle(i.closest(".cf-qtd-linha")).backgroundColor), "rgb(253, 246, 221)", "linha amarela com quantidade menor");
+  // Componente de Kit mostra o Kit embaixo do nome (igual à Triagem); item comum não mostra nada.
+  const kitTampo = await page.$eval('.cf-qtd-input[data-chave="s2|c1"]', (i) => i.closest(".cf-qtd-linha").querySelector(".cf-qtd-kit")?.textContent);
+  assert.strictEqual(kitTampo, "Parte do kit: Mesa Nice (L) 3 m (1 por kit)");
+  assert.strictEqual(await page.$eval('.cf-qtd-input[data-chave="s1|i1"]', (i) => i.closest(".cf-qtd-linha").querySelectorAll(".cf-qtd-kit").length), 0);
+  // A mais também é conferência errada: amarelo, nunca verde. Só a quantidade exata fica verde.
+  const linha1 = ".cf-qtd-input[data-chave=\"s1|i1\"]";
+  const valorOriginal = await page.inputValue(linha1);
+  await page.fill(linha1, String(Number(valorOriginal) + 3));
+  const aMais = await page.$eval(linha1, (i) => { const l = i.closest(".cf-qtd-linha"); return { ok: l.classList.contains("is-ok"), aMais: l.classList.contains("is-a-mais"), fundo: getComputedStyle(l).backgroundColor }; });
+  assert.deepStrictEqual(aMais, { ok: false, aMais: true, fundo: "rgb(253, 246, 221)" }, "quantidade a mais fica amarela");
+  await page.fill(linha1, valorOriginal);
+  assert.ok(await page.$eval(linha1, (i) => i.closest(".cf-qtd-linha").classList.contains("is-ok")), "quantidade exata volta a verde");
   if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT });
   await page.click("#cfQtdConfirmar");
-  await page.locator("dialog.cf-escolha-caminhao[open]").waitFor();await page.check("dialog.cf-escolha-caminhao input[value=c1]");await page.click("dialog.cf-escolha-caminhao [data-ok]");await page.locator('dialog.cf-pendencias[open]').waitFor();assert.match(await page.locator('dialog.cf-pendencias').innerText(),/Pendências/i);assert.match(await page.locator('.cf-pend-itens').innerText(),/Pé[sS]*1 faltante/);await page.locator('dialog.cf-pendencias [data-voltar]').click();assert.equal(await page.evaluate(()=>(window.__rpc||[]).filter(r=>/^operacao_concluir/.test(r[0])).length),0);await page.click('#cfQtdConfirmar');await page.locator("dialog.cf-escolha-caminhao[open]").waitFor();await page.check("dialog.cf-escolha-caminhao input[value=c1]");await page.click("dialog.cf-escolha-caminhao [data-ok]");await page.locator('dialog.cf-pendencias[open]').waitFor();await page.screenshot({path:'.tmp/conferencia-confirmacao-pendencias.png'});await page.selectOption('dialog.cf-pendencias select[name=motivo]','m1');await page.fill('dialog.cf-pendencias input[name=data]','2099-12-01');await page.fill('dialog.cf-pendencias input[name=hora]','09:00');await page.locator('dialog.cf-pendencias [type=submit]').click();
+  await page.evaluate(() => { window.__avisos = []; const o = window.alerta; window.alerta = (m, ...r) => { window.__avisos.push(String(m)); return o?.(m, ...r); }; });
+  await page.locator("dialog.cf-escolha-caminhao[open]").waitFor();await page.check("dialog.cf-escolha-caminhao input[value=c1]");await page.click("dialog.cf-escolha-caminhao [data-ok]");await page.locator('dialog.cf-pendencias[open]').waitFor();assert.match(await page.locator('dialog.cf-pendencias').innerText(),/Pendências/i);assert.match(await page.locator('.cf-pend-itens').innerText(),/Pé[\s\S]*1 faltante/);await page.locator('dialog.cf-pendencias [data-voltar]').click();assert.equal(await page.evaluate(()=>(window.__rpc||[]).filter(r=>/^operacao_concluir/.test(r[0])).length),0);await page.click('#cfQtdConfirmar');await page.locator("dialog.cf-escolha-caminhao[open]").waitFor();await page.check("dialog.cf-escolha-caminhao input[value=c1]");await page.click("dialog.cf-escolha-caminhao [data-ok]");await page.locator('dialog.cf-pendencias[open]').waitFor();await page.screenshot({path:'.tmp/conferencia-confirmacao-pendencias.png'});await page.selectOption('dialog.cf-pendencias select[name=motivo]','m1');await page.fill('dialog.cf-pendencias input[name=data]','2099-12-01');await page.fill('dialog.cf-pendencias input[name=hora]','09:00');await page.locator('dialog.cf-pendencias [type=submit]').click();
   await page.waitForSelector(".cf-qtd-valor", { timeout: 10000 });
   const rpc = await page.evaluate(() => window.__rpc.filter((r) => r[0] === "operacao_concluir_com_pendencia").map((r) => r[1]));
   assert.deepStrictEqual(rpc, [{ p_pedido: "p1", p_etapa: "carregamento", p_aceitar_faltas: true, p_quantidades: { "s1|i1": 2, "s2|c1": 1, "s2|c2": 1 }, p_observacoes: { "s2|c2": "um pé quebrado" }, p_pendencia: { motivo_id: "m1", data: "2099-12-01", hora: "09:00" } }]);
-  assert.ok((await page.textContent(".cf-qtd-linha.is-falta .cf-qtd-obs-texto")).includes("um pé quebrado"), "observação aparece no resultado");
-  assert.ok((await page.textContent("#cfAviso")).includes("1 item(ns) com quantidade menor"));
-  assert.ok((await page.textContent(".cf-qtd-linha.is-falta")).includes("faltam 1"));
+  assert.ok((await page.textContent(".cf-qtd-linha.is-div-falta .cf-qtd-obs-texto")).includes("um pé quebrado"), "observação aparece no resultado");
+  // o resumo vai para o alerta global (a faixa #cfAviso saiu a pedido do usuário)
+  assert.ok((await page.evaluate(() => window.__avisos || [])).some((m) => /1 item\(ns\) faltando/.test(m)), "aviso de conclusão com a falta: " + JSON.stringify(await page.evaluate(() => window.__avisos)));
+  assert.ok((await page.textContent(".cf-qtd-linha.is-div-falta")).includes("faltam 1"));
   assert.strictEqual(await page.evaluate(() => window.__inseridas.length), 0, "nenhuma etiqueta criada");
   console.log("ok 4 - foto/quantidade no tamanho da Triagem, observação por item; concluir manda as quantidades, aceita a falta com confirmação e mostra o resultado");
 

@@ -44,6 +44,32 @@ function mostrarListaCaminhoes() {
   document.querySelector(".cadastro-caminhoes-page")?.classList.remove("hidden");
 }
 
+/* Fornecedor (transportadora) dono do caminhão (out/2026): liga o caminhão à Conciliação de Fretes. */
+let fornecedoresCaminhao = [];
+async function carregarFornecedoresCaminhao() {
+  const sel = document.getElementById("fornecedorInput");
+  if (!sel) return;
+  const ctx = await window.aguardarContexto();
+  const { data } = await window.supabaseClient.from("fornecedores").select("id,nome_razao_social,nome_fantasia,documento,telefone,status")
+    .eq("empresa_id", ctx?.empresa_id).order("nome_razao_social");
+  fornecedoresCaminhao = data || [];
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Frota própria / sem fornecedor</option>' + fornecedoresCaminhao
+    .map(f => '<option value="' + f.id + '">' + String(f.nome_fantasia || f.nome_razao_social || "").replace(/[<>&"]/g, "") + (f.status === "inativo" ? " (inativo)" : "") + '</option>').join("");
+  sel.value = sel.dataset.desejado ?? atual;
+  if (!sel.dataset.evento) {
+    sel.dataset.evento = "1";
+    sel.addEventListener("change", () => {
+      const f = fornecedoresCaminhao.find(x => x.id === sel.value);
+      if (!f) return;
+      const doc = String(f.documento || "").replace(/D/g, "");
+      if (doc.length === 14 && !document.getElementById("cnpjInput").value) document.getElementById("cnpjInput").value = doc;
+      document.getElementById("empresaInput").value = f.nome_razao_social || f.nome_fantasia || "";
+      if (f.telefone && !document.getElementById("telefoneInput").value) document.getElementById("telefoneInput").value = f.telefone;
+    });
+  }
+}
+
 window.initCadastroCaminhoes = function () {
 
   console.log("🚀 initCadastroCaminhoes");
@@ -65,6 +91,7 @@ window.initCadastroCaminhoes = function () {
     }
 
     clearInterval(intervalo);
+    carregarFornecedoresCaminhao();
 
     // pega um "root" do módulo (ou o próprio tbody)
     const root =
@@ -474,6 +501,7 @@ async function salvarCaminhao() {
   const status = document.getElementById("statusInput").value;
 
   const empresaNome = document.getElementById("empresaInput").value.trim();
+  const fornecedorId = document.getElementById("fornecedorInput")?.value || null;
   const telefone = document.getElementById("telefoneInput").value.trim();
   const categoria = document.getElementById("categoriaInput").value;
 
@@ -526,6 +554,7 @@ async function salvarCaminhao() {
       tipo,
       categoria,
       empresa_nome: empresaNome || null,
+      fornecedor_id: fornecedorId,
       telefone: telefone || null,
       cnpj: cnpj || null,
       largura_bau: largura,
@@ -607,6 +636,7 @@ function preencherFormularioCaminhao(cam) {
   document.getElementById("tipoInput").value = cam.tipo || "proprio";
   document.getElementById("categoriaInput").value = cam.categoria || "vuc";
   document.getElementById("empresaInput").value = cam.empresa_nome || "";
+  if (document.getElementById("fornecedorInput")) { const sel = document.getElementById("fornecedorInput"); sel.dataset.desejado = cam.fornecedor_id || ""; sel.value = cam.fornecedor_id || ""; }
   document.getElementById("telefoneInput").value = cam.telefone || "";
   document.getElementById("cnpjInput").value = cam.cnpj || "";
 
@@ -639,6 +669,7 @@ function abrirModalCaminhao(){
   definirFotoCaminhao("");
   modoCaminhao = "novo";
   caminhaoSelecionado = null;
+  { const sel = document.getElementById("fornecedorInput"); if (sel) { sel.dataset.desejado = ""; sel.value = ""; } }
 
   const modal = document.getElementById("modalCaminhao");
 

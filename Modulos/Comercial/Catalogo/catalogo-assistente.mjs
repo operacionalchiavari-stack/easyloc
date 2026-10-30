@@ -20,10 +20,15 @@ function miniatura(url, w = 220){
   return /\/storage\/v1\/object\/public\//.test(url) ? url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/") + `${url.includes("?") ? "&" : "?"}width=${w}&quality=74&resize=contain` : url;
 }
 
+// Dentro do pedido comercial, o id do pedido vai junto: a Helena tira ele da conta de disponibilidade.
+function pedidoAberto(){
+  try{ return window.parent.__PEDIDO_ATUAL_ID || null; }catch{ return null; }
+}
+
 async function chamar(action, extra = {}){
   const sessao = ctx.getSession() || {};
   const { data, error } = await ctx.supabase.functions.invoke("catalogo-assistente", {
-    body: { action, empresa_id: sessao.empresa_id, catalog_token: sessao.token || undefined, ...extra },
+    body: { action, empresa_id: sessao.empresa_id, catalog_token: sessao.token || undefined, pedido_id: ctx.modoPedido ? (pedidoAberto() || undefined) : undefined, ...extra },
   });
   if(error){
     let detalhe = "";

@@ -125,12 +125,12 @@ const mockSupabase = `
   assert.deepStrictEqual(tela.projeto, ["Lounge", "Bar"], "ambientes vão para o catálogo do pedido");
 
   // A trilha comercial separa as duas etapas das ferramentas de criação.
-  assert.deepStrictEqual((await page.locator('.ct-ferramentas button').allTextContents()).map(t=>t.replace('F2','').trim()), ['Catálogo','3D','Plantas']);
+  assert.deepStrictEqual((await page.locator('.ct-ferramentas button').allTextContents()).map(t=>t.replace('F2','').trim()), ['3D']);
   // Dados obrigatórios (out/2026): sem a data de entrega, não abre a lista/catálogo e marca o campo.
   const entregaOriginal = await page.inputValue("#dataEntrega");
   await page.fill("#dataEntrega", "");
   await page.locator('.ct-depois button[data-etapa="lista"]').click();
-  await page.waitForFunction(() => /data de entrega/i.test(document.querySelector(".ct-erro")?.textContent || ""));
+  await page.waitForFunction(() => /data de entrega/i.test(document.querySelector(".el-alert-stack .el-alert")?.textContent || ""));
   assert.ok(await page.locator("#dataEntrega").evaluate(el => el.classList.contains("is-invalido")), "campo de entrega marcado");
   assert.ok(!(await page.locator(".pedido-screen").evaluate(el => el.classList.contains("em-catalogo-comercial"))), "não abriu o catálogo/lista");
   assert.strictEqual(await page.locator(".ct-avancar").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(18, 63, 134)", "Salvar azul");

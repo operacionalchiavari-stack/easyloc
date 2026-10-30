@@ -534,3 +534,9 @@ html:root #caminhoesCabecalho#caminhoesCabecalho.page-header{display:grid!import
 html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>h1:first-child{grid-column:1!important;grid-row:1!important;width:100%!important;min-width:0!important;margin:0!important;padding:0!important;text-align:center!important;justify-self:stretch!important;border:0!important}
 html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>.header-actions{grid-column:1!important;grid-row:1!important;justify-self:end!important;z-index:1;margin:0!important}
 @media(max-width:1250px){html:root #caminhoesCabecalho#caminhoesCabecalho.page-header{row-gap:20px!important}html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>.header-actions{grid-row:2!important}}
+
+/* Fornecedor (transportadora) do caminhão (out/2026) */
+.caminhao-forn-dica{display:block;margin-top:6px;color:#6b6b6b;font-size:12.5px}
+
+/* Fornecedor (transportadora) do caminhão (out/2026) */
+.caminhao-forn-dica{display:block;margin-top:6px;color:#6b6b6b;font-size:12.5px}

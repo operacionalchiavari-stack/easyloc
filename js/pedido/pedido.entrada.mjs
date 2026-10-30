@@ -64,7 +64,14 @@ export function iniciarEntradaComercial(vitrine){
   tela.append(contrato);
   let etapaAtual='dados';
   const reduzido=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const erroTrilha=texto=>{trilha.querySelector('.ct-erro').textContent=texto || '';};
+  // Avisos da barra (dado faltando, financeiro pendente, erro ao salvar) vão para o alerta global do sistema (out/2026);
+  // a faixa .ct-erro embaixo do Salvar só é usada se o alerta global não estiver carregado.
+  const erroTrilha=texto=>{
+    const faixa=trilha.querySelector('.ct-erro');
+    if(!texto){faixa.textContent='';return;}
+    if(typeof window.alerta==='function'){faixa.textContent='';window.alerta(texto,'Pedido','aviso');}
+    else faixa.textContent=texto;
+  };
   function medir(){
     const mapa=new Map();
     trilha.querySelectorAll('.ct-linha [data-etapa]').forEach(el=>mapa.set(el.dataset.etapa,el.getBoundingClientRect()));
@@ -119,11 +126,14 @@ export function iniciarEntradaComercial(vitrine){
   dados.appendChild(info.querySelector('.pedido-observacoes-evento'));
   const agenda=document.createElement('div');agenda.className='entrada-agenda';
   let cardEvento=null;
-  for(const [titulo,dataId,horaId] of [['Entrega','dataEntrega','horaEntrega'],['Evento','dataEvento',null],['Coleta','dataColeta','horaColeta']]){
+  // pedido do usuário: "primeiro a pessoa deve preencher a data do evento e só depois entrega e coleta"
+  for(const [titulo,dataId,horaId] of [['Evento','dataEvento',null],['Entrega','dataEntrega','horaEntrega'],['Coleta','dataColeta','horaColeta']]){
     const card=document.createElement('section');card.className='entrada-data-card';
     const tituloCard=document.createElement('h4');tituloCard.textContent=titulo;card.appendChild(tituloCard);
     card.appendChild(document.getElementById(dataId).closest('.meta-item'));
     if(horaId)card.appendChild(document.getElementById(horaId).closest('.meta-item'));
+    /* o título do card já diz de qual data é: rótulos curtos ("Data", "Horário") */
+    for(const span of card.querySelectorAll('.meta-item>span'))span.textContent=span.textContent.includes('Hor')?'Horário':'Data';
     if(dataId==='dataEvento')cardEvento=card;
     agenda.appendChild(card);
   }
@@ -142,13 +152,70 @@ export function iniciarEntradaComercial(vitrine){
     const definirModo=m=>{
       const periodo=m==='periodo';
       cardEvento.classList.toggle('is-periodo',periodo);fimItem.hidden=!periodo;
-      if(rotuloInicio)rotuloInicio.textContent=periodo?'Primeiro dia':'Data evento';
+      if(rotuloInicio)rotuloInicio.textContent=periodo?'Primeiro dia':'Data';
       modo.querySelectorAll('button').forEach(b=>{const ativo=b.dataset.modo===m;b.classList.toggle('is-ativo',ativo);b.setAttribute('aria-pressed',String(ativo));});
     };
     modo.addEventListener('click',e=>{const b=e.target.closest('[data-modo]');if(!b)return;definirModo(b.dataset.modo);if(b.dataset.modo==='periodo')document.getElementById('dataEventoFim')?.focus();});
     window.__definirModoEvento=definirModo;
     definirModo(document.getElementById('dataEventoFim').value?'periodo':'dia');
   }
+
+  /* Regras de data (out/2026, pedido do usuário):
+     - entrega e coleta só depois da data do evento (ficam travadas até ela);
+     - entrega nunca depois do evento e coleta nunca antes do último dia (o calendário já limita e o salvar confere);
+     - entrega mais de 2 dias antes do evento, ou coleta mais de 2 dias depois do último dia, pergunta "tem certeza?". */
+  const DIAS_FOLGA=2;
+  const elData=id=>document.getElementById(id);
+  const somarDias=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
+  const dataBr=iso=>iso.split('-').reverse().join('/');
+  const ultimoDiaEvento=()=>(fimItem && !fimItem.hidden && elData('dataEventoFim')?.value) || elData('dataEvento')?.value || '';
+  // pedido extra (out/2026): coleta e evento seguem o principal; a entrega pode ser até a coleta
+  const ehExtra=()=>!!window.__pedidoExtra;
+  function sincronizarDatas(){
+    const evento=elData('dataEvento')?.value||'',ultimo=ultimoDiaEvento();
+    for(const id of ['dataEntrega','horaEntrega','dataColeta','horaColeta']){
+      const el=elData(id);if(!el)continue;
+      el.disabled=!evento || (ehExtra() && (id==='dataColeta'||id==='horaColeta'));
+      el.title=evento?'':'Preencha primeiro a data do evento';
+    }
+    document.querySelectorAll('.entrada-data-card').forEach(card=>card.classList.toggle('aguardando-evento',!evento && !card.contains(elData('dataEvento'))));
+    if(elData('dataEntrega'))elData('dataEntrega').max=(ehExtra()?elData('dataColeta')?.value:evento)||'';
+    if(elData('dataColeta'))elData('dataColeta').min=ultimo||'';
+  }
+  window.__pedidoSincronizarDatas=sincronizarDatas;
+  const perguntar=async(texto,titulo)=>window.confirmarGlobal?await window.confirmarGlobal(texto,titulo):window.confirm(texto);
+  const aceitas=new Set(),conferindo=new Set();
+  async function conferirData(el,tipo){conferindo.add(el);try{await conferirData_(el,tipo);}finally{conferindo.delete(el);}}
+  async function conferirData_(el,tipo){
+    const v=el.value,evento=elData('dataEvento')?.value,ultimo=ultimoDiaEvento();
+    const anterior=el.dataset.valorConferido||'';
+    if(!v||!evento){el.dataset.valorConferido=v;return;}
+    if(tipo==='entrega' && ehExtra()){
+      const coleta=elData('dataColeta')?.value||'';
+      if(coleta && v>coleta){el.value=anterior&&anterior<=coleta?anterior:'';window.alerta?.('A entrega do pedido extra precisa ser até a coleta ('+dataBr(coleta)+').','Data de entrega','aviso');el.dispatchEvent(new Event('input',{bubbles:true}));return;}
+    }else if(tipo==='entrega'){
+      if(v>evento){el.value=anterior&&anterior<=evento?anterior:'';window.alerta?.('A data de entrega não pode ser depois da data do evento ('+dataBr(evento)+').','Data de entrega','aviso');el.dispatchEvent(new Event('input',{bubbles:true}));return;}
+      const limite=somarDias(evento,-DIAS_FOLGA);
+      if(v<limite && !aceitas.has('entrega:'+v+':'+evento)){
+        const ok=await perguntar('A entrega em '+dataBr(v)+' fica mais de '+DIAS_FOLGA+' dias antes do evento ('+dataBr(evento)+'). Normalmente a entrega é até '+DIAS_FOLGA+' dias antes. Tem certeza?','Entrega antecipada');
+        if(!ok){el.value=anterior;el.dispatchEvent(new Event('input',{bubbles:true}));return;}
+        aceitas.add('entrega:'+v+':'+evento);
+      }
+    }else{
+      if(v<ultimo){el.value=anterior&&anterior>=ultimo?anterior:'';window.alerta?.('A data de coleta não pode ser antes do último dia do evento ('+dataBr(ultimo)+').','Data de coleta','aviso');el.dispatchEvent(new Event('input',{bubbles:true}));return;}
+      const limite=somarDias(ultimo,DIAS_FOLGA);
+      if(v>limite && !aceitas.has('coleta:'+v+':'+ultimo)){
+        const ok=await perguntar('A coleta em '+dataBr(v)+' fica mais de '+DIAS_FOLGA+' dias depois do evento ('+dataBr(ultimo)+'). Normalmente a desmontagem é até '+DIAS_FOLGA+' dias depois. Tem certeza?','Coleta depois do prazo');
+        if(!ok){el.value=anterior;el.dispatchEvent(new Event('input',{bubbles:true}));return;}
+        aceitas.add('coleta:'+v+':'+ultimo);
+      }
+    }
+    el.dataset.valorConferido=el.value;
+  }
+  elData('dataEntrega')?.addEventListener('change',e=>conferirData(e.target,'entrega'));
+  elData('dataColeta')?.addEventListener('change',e=>conferirData(e.target,'coleta'));
+  for(const id of ['dataEvento','dataEventoFim'])elData(id)?.addEventListener('change',sincronizarDatas);
+  sincronizarDatas();
 
   const clienteCampo=document.getElementById('clienteInput');
   // Pendência na programação de pagamento (out/2026: o pedido não salva com ela). Devolve o motivo, ou '' sem pendência.
@@ -179,6 +246,8 @@ export function iniciarEntradaComercial(vitrine){
     const campos=['clienteInput','telefoneInput','tipoEventoSelect','dataEntrega','horaEntrega','dataEvento','dataColeta','horaColeta','localInput'];
     if(fimItem && !fimItem.hidden)campos.push('dataEventoFim');
     const faltantes=campos.filter(id=>!document.getElementById(id)?.value?.trim());
+    sincronizarDatas();
+    for(const id of ['dataEntrega','dataColeta']){const el=document.getElementById(id);if(el && document.activeElement!==el && !conferindo.has(el))el.dataset.valorConferido=el.value;}
     trilha.classList.toggle('dados-incompletos',faltantes.length>0);
     const aba=trilha.querySelector('.ct-linha [data-etapa="dados"]');
     if(aba){
@@ -213,7 +282,7 @@ export function iniciarEntradaComercial(vitrine){
   /* ---------- troca de etapa ---------- */
   const frame=()=>vitrine.querySelector('iframe');
   async function esperarCatalogo(fn){
-    for(let i=0;i<150;i++){const cw=frame()?.contentWindow;if(cw && typeof cw[fn]==='function')return cw;await new Promise(r=>setTimeout(r,100));}
+    for(let i=0;i<150;i++){const cw=frame()?.contentWindow;if(cw && typeof cw[fn]==='function')return cw;if(cw?.__catalogoFalhou)throw Error('O catálogo não carregou. Recarregue a página para tentar de novo.');await new Promise(r=>setTimeout(r,100));}
     throw Error('Aguarde o catálogo terminar de carregar.');
   }
   // Dados obrigatórios do pedido (out/2026): cliente, local e as datas de entrega, evento e coleta, em ordem. Sem eles
@@ -255,9 +324,10 @@ export function iniciarEntradaComercial(vitrine){
     const cliente=campo('clienteInput'),local=campo('localInput'),data=campo('dataEvento'),entrega=campo('dataEntrega'),coleta=campo('dataColeta');
     const focar=el=>{el?.focus({preventScroll:true});el?.scrollIntoView({block:'center',behavior:'smooth'});};
     const falta=(el,msg)=>{marcarInvalido(el,msg);focar(el);return msg;};
-    const obrigatorios=[[cliente,'Informe o cliente do pedido.'],[data,'Informe a data do evento.'],[entrega,'Informe a data de entrega.'],[coleta,'Informe a data de coleta.'],[local,'Informe o local do evento.']];
+    // horários de entrega e coleta também são obrigatórios para avançar (pedido do usuário, out/2026)
+    const obrigatorios=[[cliente,'Informe o cliente do pedido.'],[data,'Informe a data do evento.'],[entrega,'Informe a data de entrega.'],[campo('horaEntrega'),'Informe o horário de entrega.'],[coleta,'Informe a data de coleta.'],[campo('horaColeta'),'Informe o horário de coleta.'],[local,'Informe o local do evento.']];
     if(fimItem && !fimItem.hidden)obrigatorios.push([campo('dataEventoFim'),'Informe até quando vai o evento.']);
-    if(completo)obrigatorios.splice(1,0,[campo('telefoneInput'),'Informe o telefone / WhatsApp.'],[campo('tipoEventoSelect'),'Escolha o tipo de evento.'],[campo('horaEntrega'),'Informe o horário de entrega.'],[campo('horaColeta'),'Informe o horário de coleta.']);
+    if(completo)obrigatorios.splice(1,0,[campo('telefoneInput'),'Informe o telefone / WhatsApp.'],[campo('tipoEventoSelect'),'Escolha o tipo de evento.']);
     const vazios=obrigatorios.filter(([el])=>!el?.value.trim());
     if(vazios.length){
       vazios.forEach(([el,msg])=>marcarInvalido(el,msg));focar(vazios[0][0]);
@@ -271,7 +341,8 @@ export function iniciarEntradaComercial(vitrine){
       if(fim.value<=data.value)return falta(fim,'O último dia do evento precisa ser depois do primeiro.');
     }
     if(!entrega?.value)return falta(entrega,'Informe a data de entrega.');
-    if(entrega.value>data.value)return falta(entrega,'A entrega precisa ser no dia do evento ou antes.');
+    if(window.__pedidoExtra){if(coleta?.value && entrega.value>coleta.value)return falta(entrega,'A entrega do pedido extra precisa ser até a coleta.');}
+    else if(entrega.value>data.value)return falta(entrega,'A entrega precisa ser no dia do evento ou antes.');
     if(!coleta?.value)return falta(coleta,'Informe a data de coleta.');
     const ultimoDia=(fimItem && !fimItem.hidden && campo('dataEventoFim')?.value) || data.value;
     if(coleta.value<ultimoDia)return falta(coleta,'A coleta precisa ser no último dia do evento ou depois.');
@@ -351,9 +422,10 @@ export function iniciarEntradaComercial(vitrine){
       const erro=validarDados({completo:true});
       if(erro){if(etapaAtual!=='dados'){mostrarDados();etapaAtual='dados';pintarTrilha(true);}throw Error(erro);}
       const f=frame();
-      if(f?.getAttribute('src')){
-        const cw=await esperarCatalogo('sincronizarPedidoCatalogo');
-        await cw.sincronizarPedidoCatalogo();
+      // catálogo que não carregou não tem alteração a trazer: o salvar segue sem ele (antes travava para sempre)
+      if(f?.getAttribute('src') && !f.contentWindow?.__catalogoFalhou){
+        const cw=await esperarCatalogo('sincronizarPedidoCatalogo').catch(e=>{if(f.contentWindow?.__catalogoFalhou)return null;throw e;});
+        if(cw)await cw.sincronizarPedidoCatalogo();
       }
       const erroFin=pendenciaFinanceiro();
       if(erroFin){if(etapaAtual!=='financeiro'){mostrarFinanceiro();etapaAtual='financeiro';pintarTrilha(true);}throw Error(erroFin);}

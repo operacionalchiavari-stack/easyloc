@@ -265,3 +265,45 @@ html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-painel-cab h2{margin-ri
 /* O cronograma acompanha a altura do conteudo e usa a rolagem da pagina. */
 html:root #plCronogramaFrame{height:1px;min-height:0;overflow:hidden}
 html:root #plModuloCronograma{overflow:visible}
+
+/* Faixa de dias sem limite: rola para o lado e carrega mais ao chegar no fim. */
+.pl-abas-dias{scrollbar-width:thin;cursor:grab;user-select:none}
+.pl-abas-dias.is-arrastando{cursor:grabbing}
+.pl-abas-dias.is-arrastando [role=tab]{cursor:grabbing}
+.pl-dias-carregando{flex:0 0 auto;align-self:center;padding:0 12px;color:#86909c;font:500 13px Inter,sans-serif;white-space:nowrap}
+
+/* Uber no painel da etapa (out/2026, painel-uber.js) */
+.pl-uber .pl-uber-pedido{padding:10px 0;border-top:1px solid #eef1f4}
+.pl-uber .pl-uber-pedido:first-child{border-top:0;padding-top:0}
+.pl-uber-linha{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
+.pl-uber-linha span{color:#4f4f4f}
+.pl-uber-acoes{margin-left:auto;display:flex;gap:10px}
+.pl-uber-acoes button{padding:0;border:0;background:none;color:#123f86;font:500 13px Inter,sans-serif;cursor:pointer}
+.pl-uber-acoes button[data-uber-cancelar]{color:#b42318}
+.pl-vaga-uber small a{color:#123f86}
+.pl-uber-sit{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#eaf0fa;color:#123f86}
+.pl-uber-sit.is-and{background:#fdf6dd;color:#8a6200}
+.pl-uber-sit.is-ok{background:#e6f4ea;color:#1f7a44}
+.pl-uber-novo{margin-top:10px}
+.pl-uber-dialog{width:min(640px,94vw);border:0;border-radius:16px;padding:0;box-shadow:0 20px 60px rgba(15,23,42,.3)}
+.pl-uber-dialog::backdrop{background:rgba(15,23,42,.45)}
+.pl-uber-dialog form{padding:22px}
+.pl-uber-dialog h2{margin:0 0 14px;font:600 26px "Cormorant Garamond",serif}
+.pl-uber-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pl-uber-grade label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#4f4f4f}
+.pl-uber-grade input,.pl-uber-grade select{min-height:40px;padding:0 10px;border:1px solid #dfe4ea;border-radius:10px;font:14px Inter,sans-serif}
+.pl-uber-inteiro{grid-column:1/-1}
+.pl-uber-km{grid-column:span 2;display:flex;align-items:flex-end;gap:10px}
+.pl-uber-km small{color:#6b6b6b;font-size:12px;padding-bottom:10px}
+.pl-uber-valor{margin:12px 0 0;font-weight:600;color:#1f2020}
+.pl-uber-erro{min-height:18px;margin:6px 0 0;color:#b42318;font-size:13px}
+.pl-uber-dialog-acoes{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+@media (max-width:640px){.pl-uber-grade{grid-template-columns:1fr 1fr}.pl-uber-km{grid-column:1/-1}}
+/* Uber: autocomplete do Google no ponto de encontro (lista dentro da janela; a nativa fica atrás do <dialog>) */
+.pl-uber-endereco{position:relative}
+.pl-uber-sugestoes{position:absolute;left:0;right:0;top:100%;z-index:5;margin:4px 0 0;padding:4px;list-style:none;border:1px solid #dfe4ea;border-radius:10px;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.16);max-height:240px;overflow:auto}
+.pl-uber-sugestoes[hidden]{display:none}
+.pl-uber-sugestoes li{display:flex;flex-direction:column;gap:1px;padding:7px 10px;border-radius:7px;cursor:pointer;font-weight:400;text-transform:none;letter-spacing:0}
+.pl-uber-sugestoes li b{font-size:13px;color:#1f2020}
+.pl-uber-sugestoes li small{font-size:11.5px;color:#6b6b6b}
+.pl-uber-sugestoes li:hover,.pl-uber-sugestoes li.ativo{background:#eaf0fa}

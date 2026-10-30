@@ -11,7 +11,7 @@ const { chromium } = require("playwright");
 const { randomUUID } = require("node:crypto");
 const fs = require("fs"), path = require("path"), assert = require("node:assert/strict");
 // FLUXO_SITE=https://operacionalchiavari-stack.github.io/easyloc/ roda contra o site publicado em vez dos arquivos locais
-const raiz = path.resolve(__dirname, ".."), BASE = process.env.FLUXO_SITE || "http://acervo.teste/";
+const raiz = path.resolve(__dirname, ".."), BASE = process.env.FLUXO_SITE || "http://localhost:5599/"; // localhost: contexto seguro (o catálogo usa crypto.randomUUID)
 const EMPRESA = "bb1260f0-99cd-4d17-ab9b-23c299b4c50b";
 const ITEM = "935f7e88-04b8-4d1a-9c0b-693e17e44a0b";   // Katrina (Item)
 const KIT = "8d158e93-8828-4f6d-8b48-dd6533e2ec28";    // Tiffany (Kit)
@@ -28,13 +28,17 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
   const client = createClient(url, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
   const check = r => { if (r.error) { throw Error(r.error.message); } return r.data; };
   const suffix = randomUUID().slice(0, 8), senha = "Temp-" + randomUUID() + "!";
+  const inicioTeste = new Date(Date.now() - 60000).toISOString();
   const nomeCliente = "Cliente Fluxo " + suffix, nomeLocal = "Espaço Fluxo " + suffix, nomeMont = "Montador Fluxo " + suffix;
   const ENTREGA = dia(1), EVENTO = dia(1), COLETA = dia(2);
-  let owner, clienteId, localId, mont, browser, pedidoId, contaId;
-  const estoques = [], respostas = [];
+  let owner, clienteId, localId, mont, browser, pedidoId, contaId, travaPagamento = null;
+  const estoques = [], respostas = [], contagensTeste = [];
   const erros = [], passo = m => console.log("ok - " + m);
   try {
     /* ---------- preparação ---------- */
+    // trava de pagamento mínimo (Parâmetros > Financeiro): desligada só durante o teste (não há conta para um recebimento de teste antes do carregamento); religada no fim
+    travaPagamento = (await admin.from("empresa_financeiro").select("pagamento_exige").eq("empresa_id", EMPRESA).maybeSingle()).data?.pagamento_exige ?? null;
+    if (travaPagamento) check(await admin.from("empresa_financeiro").update({ pagamento_exige: false }).eq("empresa_id", EMPRESA));
     owner = check(await admin.auth.admin.createUser({ email: "fluxo-" + suffix + "@example.invalid", password: senha, email_confirm: true, user_metadata: { nome: "Equipe Fluxo " + suffix } })).user;
     check(await admin.from("usuarios_empresas").insert({ user_id: owner.id, empresa_id: EMPRESA, role: "admin" }));
     const sessao = check(await client.auth.signInWithPassword({ email: owner.email, password: senha })).session;
@@ -80,41 +84,54 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     await ped.click(`.autocomplete-item:has-text("${nomeCliente}")`, { timeout: 15000 });
     const tipoEv = await ped.$$eval("#tipoEventoSelect option", os => os.map(o => o.value).filter(Boolean));
     if (tipoEv.length) { await ped.selectOption("#tipoEventoSelect", tipoEv[0]); }
+    await ped.fill("#dataEvento", EVENTO); await ped.locator("#dataEvento").dispatchEvent("change"); // entrega e coleta só depois do evento
     await ped.fill("#dataEntrega", ENTREGA); await ped.fill("#horaEntrega", "08:00");
-    await ped.fill("#dataEvento", EVENTO);
     await ped.fill("#dataColeta", COLETA); await ped.fill("#horaColeta", "09:00");
     await ped.fill("#localInput", nomeLocal);
     await ped.click(`#localLista .autocomplete-item:has-text("${nomeLocal}")`, { timeout: 15000 }).catch(async () => { await ped.locator(".autocomplete-item", { hasText: nomeLocal }).first().click(); });
     await ped.waitForFunction(() => document.getElementById("localIdHidden")?.value);
+    // itens entram pelo catálogo do pedido (a lista do pedido vem dos ambientes do catálogo)
+    await ped.waitForFunction(() => { const w = document.querySelector("iframe.pedido-catalogo-real")?.contentWindow; return w?.catalogAssistenteProjeto && typeof w.sincronizarPedidoCatalogo === "function"; }, null, { timeout: 90000 });
     await ped.evaluate(async ([item, kit]) => {
-      await window.pedidoAdicionarDoCatalogo(item); await window.pedidoAdicionarDoCatalogo(kit);
-      const linha = id => [...document.querySelectorAll("#listaItens tr.item-row")].find(r => r.dataset.itemId === id);
-      linha(item).querySelector(".qtd").innerText = "3"; linha(kit).querySelector(".qtd").innerText = "2";
-      linha(item).querySelector(".qtd").dispatchEvent(new Event("input", { bubbles: true }));
-      linha(kit).querySelector(".qtd").dispatchEvent(new Event("input", { bubbles: true }));
+      const w = document.querySelector("iframe.pedido-catalogo-real").contentWindow;
+      await w.catalogAssistenteProjeto.quantidade({ item_id: item, quantidade: 3, ambiente: "Lounge" });
+      await w.catalogAssistenteProjeto.quantidade({ item_id: kit, quantidade: 2, ambiente: "Lounge" });
+      await w.sincronizarPedidoCatalogo();
     }, [ITEM, KIT]);
     // financeiro do pedido separado por divisão: um bloco para locação, frete e montagem; o frete vira 2 parcelas
     await ped.click(".comercial-trilha [data-etapa=financeiro]");
     await ped.waitForSelector(".pedido-etapa-financeiro:not([hidden])", { timeout: 15000 });
-    await ped.waitForFunction(() => document.querySelectorAll("#cronogramaParcelas tr.pg-grupo").length >= 2, null, { timeout: 30000 });
-    const grupos = await ped.$$eval("#cronogramaParcelas tr.pg-grupo", gs => gs.map(g => g.dataset.componente));
+    await ped.waitForFunction(() => document.querySelectorAll("#cronogramaParcelas .pg-grupo").length >= 2, null, { timeout: 30000 });
+    const grupos = await ped.$$eval("#cronogramaParcelas .pg-grupo", gs => gs.map(g => g.dataset.componente));
     assert.ok(grupos.includes("locacao") && grupos.includes("frete"), "blocos do financeiro: " + grupos);
     const valorFrete = await ped.evaluate(() => window.__PEDIDO_VALORES.frete);
     const metade = Math.round(valorFrete * 50) / 100;
     await ped.evaluate(v => { const c = document.querySelector("#cronogramaParcelas tr.pg-linha[data-componente=frete] .pg-valor"); c.textContent = v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); c.dispatchEvent(new Event("input", { bubbles: true })); }, metade);
     await ped.click("#cronogramaParcelas [data-pg-add=frete]");
     assert.equal(await ped.locator("#cronogramaParcelas tr.pg-linha[data-componente=frete]").count(), 2, "frete com 2 parcelas");
-    assert.equal((await ped.textContent("#cronogramaParcelas tr.pg-grupo[data-componente=frete] [data-pg-grupo-falta]")).trim(), "Distribuído");
+    assert.equal((await ped.textContent("#cronogramaParcelas .pg-grupo[data-componente=frete] [data-pg-grupo-falta]")).trim(), "Distribuído");
+    // montagem com valor (categorias de montagem cadastradas): uma parcela com o que falta, senão o pedido não salva
+    if (await ped.locator("#cronogramaParcelas [data-pg-add=montagem]").count() && (await ped.textContent("#cronogramaParcelas .pg-grupo[data-componente=montagem] [data-pg-grupo-falta]")).trim() !== "Distribuído") {
+      await ped.click("#cronogramaParcelas [data-pg-add=montagem]");
+      assert.equal((await ped.textContent("#cronogramaParcelas .pg-grupo[data-componente=montagem] [data-pg-grupo-falta]")).trim(), "Distribuído");
+    }
+    // frete e montagem são recalculados em segundo plano: antes de salvar, completa toda divisão que ainda falte
+    await ped.waitForTimeout(2000);
+    for (const comp of await ped.$$eval("#cronogramaParcelas .pg-grupo", gs => gs.map(g => g.dataset.componente))) {
+      const falta = (await ped.textContent("#cronogramaParcelas .pg-grupo[data-componente=" + comp + "] [data-pg-grupo-falta]")).trim();
+      if (falta !== "Distribuído" && /Falta/i.test(falta)) await ped.click("#cronogramaParcelas [data-pg-add=" + comp + "]");
+    }
     await foto(ped, "01b-pedido-financeiro");
     await ped.selectOption("#pedidoStatusComercial", "aprovado");
     await ped.waitForFunction(() => (window.__PEDIDO_STATUS_ATUAL || "") === "aprovado", null, { timeout: 10000 }).catch(() => {});
     await foto(ped, "01-pedido-dados");
+    await ped.evaluate(() => { window.__alertas = []; const o = window.alerta; window.alerta = (...a) => { window.__alertas.push(a.slice(0, 2).join(" · ")); return o?.(...a); }; });
     await ped.click(".ct-avancar");
     await ped.waitForFunction(() => window.__PEDIDO_ATUAL_ID, null, { timeout: 30000 }).catch(() => {});
     await ped.waitForTimeout(2500);
     await foto(ped, "02-pedido-salvo");
     pedidoId = await ped.evaluate(() => window.__PEDIDO_ATUAL_ID);
-    if (!pedidoId) { const msg = await ped.evaluate(() => [...document.querySelectorAll(".ct-erro, .alerta, .toast, [role=alert], .modal-alerta")].map(e => e.innerText).join(" | ")); throw Error("Pedido não foi salvo: " + msg); }
+    if (!pedidoId) { const msg = await ped.evaluate(() => [...document.querySelectorAll(".ct-erro, .el-alert, .alerta, .toast, [role=alert], .modal-alerta")].map(e => e.innerText).join(" | ") + " | alertas: " + (window.__alertas || []).join(" / ")); throw Error("Pedido não foi salvo: " + msg); }
     const p1 = check(await admin.from("separacoes_pedidos").select("*").eq("id", pedidoId).single());
     assert.equal(p1.status_comercial, "aprovado");
     const linhas1 = check(await admin.from("separacoes_itens").select("*").eq("separacao_pedido_id", pedidoId));
@@ -178,23 +195,27 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     /* ---------- conferência por bipagem (carregamento, descarregamento e volta) ---------- */
     const conferir = async (etapa, codigos, nomeFoto) => {
       const cf = await abrir(equipe, "Modulos/Logistica/Conferencia/conferencia.html?pedido=" + pedidoId + "&etapa=" + etapa);
-      await cf.waitForSelector("#cfCorpo:not([hidden])", { timeout: 30000 });
+      await cf.waitForSelector("#cfCorpo:not([hidden])", { timeout: 30000 }).catch(async (e) => { console.log("TELA:", (await cf.innerText("body")).slice(0, 1500)); throw e; });
       for (const c of codigos) {
         await cf.fill("#cfEntrada", "ACERVO:ENV:" + c); await cf.press("#cfEntrada", "Enter"); await cf.waitForTimeout(450);
       }
       await cf.waitForTimeout(800);
       await foto(cf, nomeFoto);
       await cf.click("#cfConcluir");
-      const confirma = cf.locator(".el-alert-confirm .el-alert__actions button").last();
-      if (await confirma.isVisible({ timeout: 2500 }).catch(() => false)) { await confirma.click(); }
-      const confirmaNova = cf.locator("dialog.cf-confirmacao[open] [type=submit]");
-      if (await confirmaNova.isVisible({ timeout: 2500 }).catch(() => false)) { await confirmaNova.click(); }
-      // Out/2026: o carregamento só conclui escolhendo o caminhão (a frota da empresa precisa ter pelo menos um).
-      const escolha = cf.locator("dialog.cf-escolha-caminhao[open]");
-      if (await escolha.isVisible({ timeout: 4000 }).catch(() => false)) {
-        const marcado = await escolha.locator("input:checked").count();
-        if (!marcado) { assert.ok(await escolha.locator("input").count(), "a frota precisa ter um caminhão para concluir o carregamento"); await escolha.locator("input").first().check(); }
-        await escolha.locator("[data-ok]").click();
+      // janelas da conclusão, na ordem em que aparecerem: caminhão (só no carregamento), confirmações
+      for (let i = 0; i < 24; i++) {
+        const escolha = cf.locator("dialog.cf-escolha-caminhao[open]");
+        if (await escolha.isVisible().catch(() => false)) {
+          if (!(await escolha.locator("input:checked").count())) { assert.ok(await escolha.locator("input").count(), "a frota precisa ter um caminhão para concluir o carregamento"); await escolha.locator("input").first().check(); }
+          await escolha.locator("[data-ok]").click(); await cf.waitForTimeout(600); continue;
+        }
+        const confirma = cf.locator(".el-alert-confirm .el-alert__actions button").last();
+        if (await confirma.isVisible().catch(() => false)) { await confirma.click(); await cf.waitForTimeout(600); continue; }
+        const confirmaNova = cf.locator("dialog.cf-confirmacao[open] [type=submit]");
+        if (await confirmaNova.isVisible().catch(() => false)) { await confirmaNova.click(); await cf.waitForTimeout(600); continue; }
+        const r = check(await admin.from("separacoes_pedidos").select("operacao").eq("id", pedidoId).single());
+        if (r.operacao?.[etapa]?.concluido_em) break;
+        await cf.waitForTimeout(500);
       }
       let reg;
       for (let i = 0; i < 30; i++) { await cf.waitForTimeout(500); reg = check(await admin.from("separacoes_pedidos").select("operacao,status_operacional").eq("id", pedidoId).single()); if (reg.operacao?.[etapa]?.concluido_em) { break; } }
@@ -238,11 +259,33 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     await L("salvarEquipeTerceirizada", { idCronograma: desmontagem.id, foto: FOTO, latitude: -23.5501, longitude: -46.6301, precisaoGPS: 10, quantidade: 2 });
     await assert.rejects(L("concluirDesmontagem", { idCronograma: desmontagem.id }), /lista conferida/);
     await L("salvarListaConferidaDesmontagem", { idCronograma: desmontagem.id, fotos: [FOTO] });
+    await assert.rejects(L("concluirDesmontagem", { idCronograma: desmontagem.id }), /contagem/);
+    // contagem por item (out/2026): o montador lança quanto voltou de cada item — aqui tudo voltou
+    const contagem = await L("MONT_contagemItens", tok, desmontagem.id);
+    assert.ok((contagem.itens || []).length > 0, "a contagem lista os itens do pedido");
+    const qtd = {}; for (const it of contagem.itens) qtd[it.chave] = it.esperado;
+    await L("MONT_contagemSalvar", tok, desmontagem.id, qtd);
     await L("concluirDesmontagem", { idCronograma: desmontagem.id });
     await L("MONT_finalizarApontamento", tok, ap2.id);
     const regs = check(await admin.from("operacao_registros").select("tipo").in("etapa_id", [montagem.id, desmontagem.id]));
-    assert.equal(regs.length, 7, regs.map(r => r.tipo).join());
-    passo("5 - App do Montador: entra com PIN, registra chegada no local, sacolas, posicionamento, lista assinada; desmontagem com lista conferida e concluída (com as travas de ordem)");
+    assert.equal(regs.length, 8, regs.map(r => r.tipo).join());
+    passo("5 - App do Montador: entra com PIN, registra chegada no local, sacolas, posicionamento, lista assinada; desmontagem com lista conferida, contagem por item e concluída (com as travas de ordem)");
+
+    /* ---------- 5b. entrega e coleta confirmadas (Logística > Entregas e Coletas) ---------- */
+    for (const etapaEc of ["entrega", "coleta"]) {
+      const r = await exp.evaluate(async ({ id, etapa }) => {
+        const sb = window.supabaseClient;
+        const { data: base, error: e1 } = await sb.rpc("logistica_confirmacao_base", { p_pedido: id, p_etapa: etapa });
+        if (e1) return { erro: e1.message };
+        const itens = (base.itens || []).map((p) => etapa === "entrega"
+          ? { chave: p.chave, entregue: Number(p.previsto), voltou_antes: 0, retirado_lista: 0, motivo_id: null, observacao: "" }
+          : { chave: p.chave, coletado: Number(p.previsto), danificado: 0, retirado_lista: 0, motivo_id: null, observacao: "" });
+        const { error: e2 } = await sb.rpc("logistica_confirmacao_salvar", { p_pedido: id, p_etapa: etapa, p_token: base.token, p_itens: itens, p_responsavel: "Teste do fluxo", p_observacao: "" });
+        return e2 ? { erro: e2.message } : { ok: itens.length };
+      }, { id: pedidoId, etapa: etapaEc });
+      assert.ok(r.ok, etapaEc + ": " + r.erro);
+    }
+    passo("5b - entrega e coleta confirmadas, com todas as peças");
 
     /* ---------- 6. descarregamento ---------- */
     const { cf: cfDesc, reg: r6 } = await conferir("descarregamento", codigos, "08-descarregamento");
@@ -259,8 +302,20 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     const textoCego = await cfRet.innerText("#cfCorpo");
     assert.ok(!/de 7|7 volumes|\/ ?7/.test(textoCego), "às cegas: a tela não diz quantas peças devem voltar: " + textoCego.slice(0, 200));
     for (const c of codigos.filter(c => c !== faltou.codigo)) { await cfRet.fill("#cfEntrada", "ACERVO:ENV:" + c); await cfRet.press("#cfEntrada", "Enter"); await cfRet.waitForTimeout(450); }
+    // faltou peça: a 1ª tentativa de concluir pede a segunda busca (janela com o item que não bateu); a 2ª conclui
     await cfRet.click("#cfConcluir");
-    await cfRet.locator(".el-alert-confirm .el-alert__actions button").last().click({ timeout: 10000 });
+    const segunda = cfRet.locator("dialog.cf-segunda[open]");
+    await segunda.waitFor({ timeout: 10000 });
+    assert.ok(/lidas/i.test(await segunda.innerText()), "a janela da segunda busca mostra o item que não bateu");
+    await foto(cfRet, "09-retorno-segunda-busca");
+    await segunda.locator("[type=submit]").click();
+    await cfRet.click("#cfConcluir");
+    for (let i = 0; i < 30; i++) {
+      const confirma = cfRet.locator("dialog.cf-confirmacao[open] [type=submit], .el-alert-confirm .el-alert__actions button").last();
+      if (await confirma.isVisible().catch(() => false)) { await confirma.click(); await cfRet.waitForTimeout(600); continue; }
+      if (/Não voltaram|não voltaram/.test(await cfRet.innerText("body"))) break;
+      await cfRet.waitForTimeout(500);
+    }
     await cfRet.waitForFunction(() => /Não voltaram|não voltaram/.test(document.body.innerText), null, { timeout: 30000 });
     await foto(cfRet, "09-retorno-resultado");
     const ocs = check(await admin.from("operacao_ocorrencias").select("*").eq("pedido_id", pedidoId));
@@ -277,25 +332,40 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     await cfRet.selectOption("#cfFormularioOcorrencia select[name=codigo]", futton.codigo);
     await cfRet.fill("#cfFormularioOcorrencia textarea[name=descricao]", "Futton rasgado, mandar para a costura");
     await cfRet.click("#cfNovaOcorrencia");
-    await cfRet.waitForFunction(() => document.querySelectorAll("[data-resolver]").length === 2, null, { timeout: 15000 });
+    // a falta vai para a Gestão do acervo; aqui só a avaria tem "Resolver"
+    await cfRet.waitForFunction(() => document.querySelectorAll("[data-resolver]").length === 1, null, { timeout: 15000 });
     const dispAv = await client.functions.invoke("catalogo-assistente", { body: { action: "disponibilidade", empresa_id: EMPRESA, data: dia(30), item_ids: [futton.item_id] } });
     const futtonItem = check(await admin.from("itens").select("estoque_total").eq("id", futton.item_id).single());
     assert.ok(dispAv.data.itens[futton.item_id].livre <= futtonItem.estoque_total - 1, "peça em avaria fica indisponível até ser resolvida");
-    respostas.push("perda", "Cliente não devolveu, cobrar reposição", "resolvido", "Costura trocou o tecido");
-    const btnFalta = cfRet.locator("[data-resolver]").first();
-    await btnFalta.click();
-    await cfRet.locator(".el-alert-confirm .el-alert__actions button").last().click({ timeout: 10000 });
-    await cfRet.waitForFunction(() => document.querySelectorAll("[data-resolver]").length === 1, null, { timeout: 15000 });
+    // falta: contagem geral do item e perda confirmada pela Gestão do acervo (Estoque > Gestão do acervo > Divergências)
+    const falta = check(await admin.from("operacao_ocorrencias").select("*").eq("pedido_id", pedidoId).eq("tipo", "falta").single());
+    const rAcervo = await cfRet.evaluate(async ({ emp, itemId, oc }) => {
+      const sb = window.supabaseClient;
+      const { data: g, error: e0 } = await sb.from("acervo_contagens_gerais").select("id").eq("empresa_id", emp).eq("item_id", itemId).eq("status", "pendente").maybeSingle();
+      if (e0 || !g) return { erro: "sem contagem geral pendente: " + (e0?.message || "") };
+      const { data: it } = await sb.from("itens").select("estoque_total").eq("id", itemId).single();
+      const { error: e1 } = await sb.rpc("acervo_contagem_registrar", { p_empresa: emp, p_contagem: g.id, p_contado: Math.max(Number(it.estoque_total) - 1, 0) });
+      if (e1) return { erro: e1.message };
+      const { data: m } = await sb.from("logistica_motivos").select("id").eq("empresa_id", emp).eq("etapa", "divergencia_falta").eq("situacao", "continua").eq("ativo", true).limit(1).maybeSingle();
+      const esperado = oc.esperado != null ? Number(oc.esperado) : Number(oc.conferido || 0) + Number(oc.quantidade);
+      const { data: r, error: e2 } = await sb.rpc("acervo_divergencia_fechar", { p_empresa: emp, p_id: oc.id, p_contagem: esperado - 1, p_motivo: m?.id });
+      return e2 ? { erro: e2.message } : { r, contagemId: g.id };
+    }, { emp: EMPRESA, itemId: ITEM, oc: falta });
+    assert.ok(rAcervo.r, "Gestão do acervo: " + rAcervo.erro);
+    contagensTeste.push(rAcervo.contagemId);
+    assert.equal(Number(rAcervo.r.perda), 1, "perda de 1 confirmada");
+    const estoqueDepois = check(await admin.from("itens").select("estoque_total").eq("id", ITEM).single()).estoque_total;
+    assert.ok(rAcervo.r.acervo || Number(estoqueDepois) === Number(estoqueAntes) - 1, "perda: baixa no estoque ou no Retorno do acervo");
+    respostas.push("resolvido", "Costura trocou o tecido");
+    await cfRet.reload(); await cfRet.waitForSelector("[data-resolver]", { timeout: 30000 });
     await cfRet.locator("[data-resolver]").first().click();
     await cfRet.waitForFunction(() => document.querySelectorAll("[data-resolver]").length === 0, null, { timeout: 15000 });
-    const estoqueDepois = check(await admin.from("itens").select("estoque_total").eq("id", ITEM).single()).estoque_total;
-    assert.equal(Number(estoqueDepois), Number(estoqueAntes) - 1, "perda confirmada baixa 1 do estoque");
     await cfRet.click("#cfEncerrar");
-    await cfRet.waitForFunction(() => /Operação encerrada/.test(document.getElementById("cfEncerramentoMensagem")?.textContent || ""), null, { timeout: 15000 });
+    await cfRet.waitForFunction(() => /Operação encerrada/.test(document.getElementById("cfEncerramentoMensagem")?.textContent || ""), null, { timeout: 15000 }).catch(async (e) => { console.log("ENCERRAR:", await cfRet.locator("#cfEncerramentoMensagem").textContent()); throw e; });
     await foto(cfRet, "10-encerrado");
     const pf = check(await admin.from("separacoes_pedidos").select("status_operacional,encerrado_operacional_em").eq("id", pedidoId).single());
     assert.equal(pf.status_operacional, "encerrado"); assert.ok(pf.encerrado_operacional_em);
-    passo("8 - avaria registrada (peça indisponível até resolver), falta confirmada como perda (baixa 1 do estoque), operação encerrada");
+    passo("8 - avaria registrada (peça indisponível até resolver), falta resolvida pela Gestão do acervo (contagem geral + perda), operação encerrada");
 
     /* ---------- 9. financeiro: o pedido reservado virou contas a receber; recebimento pela tela ---------- */
     const titulos = check(await admin.from("fin_receber").select("*").eq("pedido_id", pedidoId).neq("status", "cancelado"));
@@ -336,14 +406,15 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     assert.deepEqual(erros, [], "sem erros de JavaScript nem chamadas ao motor antigo: " + erros.join(" | "));
     console.log("PASS LIVE: fluxo completo do pedido ao encerramento" + (process.env.FLUXO_SITE ? " no site publicado" : ""));
   } finally {
+    if (travaPagamento) { const r = await admin.from("empresa_financeiro").update({ pagamento_exige: true }).eq("empresa_id", EMPRESA); console.log(r.error ? "ERRO ao religar a trava de pagamento: " + r.error.message : "trava de pagamento religada"); }
     if (browser) { await browser.close(); }
     if (process.env.FLUXO_MANTER === "1") { console.log("FLUXO_MANTER=1: dados mantidos. pedido", pedidoId, "owner", owner?.email); return; }
     for (const e of estoques) { await admin.from("itens").update({ estoque_total: e.valor }).eq("id", e.id); }
-    await limpar({ admin, pedidoId, clienteId, localId, mont, owner, suffix, contaId });
+    await limpar({ admin, pedidoId, clienteId, localId, mont, owner, suffix, contaId, inicioTeste });
   }
 })().catch(e => { console.error(e); process.exit(1); });
 
-async function limpar({ admin, pedidoId, clienteId, localId, mont, owner, suffix, contaId }) {
+async function limpar({ admin, pedidoId, clienteId, localId, mont, owner, suffix, contaId, inicioTeste }) {
   const tenta = async (nome, fn) => { try { const r = await fn(); if (r && r.error) { console.error("limpeza", nome, r.error.message); } } catch (e) { console.error("limpeza", nome, e.message); } };
   if (pedidoId) {
     const etapas = ((await admin.from("operacao_etapas").select("id").eq("pedido_id", pedidoId)).data || []).map(e => e.id);
@@ -351,7 +422,14 @@ async function limpar({ admin, pedidoId, clienteId, localId, mont, owner, suffix
       for (const t of ["operacao_registros", "operacao_apontamentos", "operacao_trocas", "operacao_etapa_pessoas", "operacao_etapa_caminhoes", "free_vagas"]) { await tenta(t, () => admin.from(t).delete().in("etapa_id", etapas)); }
     }
     // fin_receber apaga junto as baixas e os movimentos delas (cascade)
-    for (const t of ["fin_receber", "operacao_alertas_motorista", "operacao_ocorrencias", "operacao_patrimonios_lidos", "pedido_cronograma_pendencias", "operacao_etapas", "operacao_pedidos_info"]) { await tenta(t, () => admin.from(t).delete().eq("pedido_id", pedidoId)); }
+    // retornos do acervo (e o histórico/OS deles) e a contagem geral que a falta do teste abriu no item
+    const rets = ((await admin.from("acervo_retornos").select("id").eq("pedido_id", pedidoId)).data || []).map(r => r.id);
+    if (rets.length) { for (const t of ["acervo_historico", "acervo_os"]) { await tenta(t, () => admin.from(t).delete().in("retorno_id", rets)); } }
+    if (inicioTeste) { await tenta("contagem_geral", () => admin.from("acervo_contagens_gerais").delete().eq("item_id", ITEM).gte("criado_em", inicioTeste)); }
+    for (const t of ["fin_receber", "logistica_confirmacoes", "acervo_retornos", "logistica_evidencias", "logistica_envios", "fin_posicoes_finais", "fin_custos_evento", "fin_resultados_revisados", "producao_itens", "operacao_alertas_motorista", "operacao_ocorrencias", "operacao_patrimonios_lidos", "pedido_cronograma_pendencias", "operacao_pedidos_info"]) { await tenta(t, () => admin.from(t).delete().eq("pedido_id", pedidoId)); }
+    // comissão do decorador (BV) não apaga em cascata e segurava o pedido e o cliente
+    await tenta("bv", () => admin.from("fin_bv_comissoes").delete().eq("pedido_id", pedidoId));
+    await tenta("historico", () => admin.from("comercial_historico").delete().eq("pedido_id", pedidoId));
     await tenta("pedido0", () => admin.from("separacoes_pedidos").delete().eq("id", pedidoId));
     await tenta("leituras", () => admin.from("separacoes_leituras").delete().eq("separacao_pedido_id", pedidoId));
     await tenta("etiquetas", () => admin.from("separacoes_etiquetas").delete().eq("separacao_pedido_id", pedidoId));
@@ -362,6 +440,7 @@ async function limpar({ admin, pedidoId, clienteId, localId, mont, owner, suffix
   if (contaId) { await tenta("fin_movimentos", () => admin.from("fin_movimentos").delete().eq("conta_id", contaId)); await tenta("fin_baixas", () => admin.from("fin_baixas").delete().eq("conta_id", contaId)); await tenta("fin_auditoria", () => admin.from("fin_auditoria").delete().eq("entidade_id", contaId)); await tenta("conta", () => admin.from("fin_contas").delete().eq("id", contaId)); }
   await tenta("alteracoes", () => admin.from("operacao_alteracoes").delete().like("usuario_nome", "%" + suffix + "%"));
   if (owner) { await tenta("fin_auditoria", () => admin.from("fin_auditoria").delete().eq("usuario_id", owner.id)); await tenta("qualidade", () => admin.from("qualidade_inspecoes").delete().eq("criado_por", owner.id)); await tenta("alteracoes2", () => admin.from("operacao_alteracoes").delete().eq("usuario_nome", owner.email)); }
+  if (clienteId) { await tenta("bv_cliente", () => admin.from("fin_bv_comissoes").delete().eq("cliente_id", clienteId)); }
   if (clienteId) { await tenta("cliente", () => admin.from("clientes_empresas").delete().eq("id", clienteId)); }
   if (localId) { await tenta("local", () => admin.from("locais_empresas").delete().eq("id", localId)); }
   if (mont) {

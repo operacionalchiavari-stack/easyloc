@@ -9,6 +9,7 @@ const mock = `(() => {
   const H = "${hoje}";
   const banco = {
     fin_contas: [{ id: "c1", empresa_id: "e1", nome: "Locações Itaú", tipo: "corrente", titular_nome: "Chiavari Locações", titular_documento: "11.111.111/0001-11", pix_tipo: "cnpj", pix_chave: "11111111000111", ativo: true, saldo_inicial: 0, saldo_minimo: 0 },
+      { id: "cx", empresa_id: "e1", nome: "Caixa", tipo: "caixa", ativo: true, saldo_inicial: 0, saldo_minimo: 0 },
       { id: "c2", empresa_id: "e1", nome: "Fretes BB", tipo: "corrente", agencia: "cofre:v1:aa:bb", conta: "cofre:v1:cc:dd", titular_documento: "cofre:v1:ee:ff", pix_chave: "cofre:v1:gg:hh", ativo: true, saldo_inicial: 0, saldo_minimo: 0,
         cofre_mascaras: { agencia: "••••34", conta: "••••90", titular_documento: "••••22", pix_chave: "f•••@x.com" } }],
     fin_config: [{ empresa_id: "e1", conta_locacao: "c1", conta_frete: "c2", conta_montagem: null, conta_gateway: null }],
@@ -18,7 +19,8 @@ const mock = `(() => {
     fin_receber: [
       { id: "r1", empresa_id: "e1", origem: "pedido", grupo: "g1", pedido_id: "p1", pedido_numero: "12", componente: "locacao", cliente_nome: "Lis", descricao: "Pedido 12 · Locação", vencimento: H, valor: 3000, recebido: 0, aberto: 3000, parcela: 1, parcelas: 1, conta_id: "c1", status: "aberto" },
       { id: "r2", empresa_id: "e1", origem: "pedido", grupo: "g1", pedido_id: "p1", pedido_numero: "12", componente: "frete", cliente_nome: "Lis", descricao: "Pedido 12 · Frete", vencimento: H, valor: 400, recebido: 0, aberto: 400, parcela: 1, parcelas: 1, conta_id: "c2", status: "aberto" },
-      { id: "r3", empresa_id: "e1", origem: "pedido", grupo: "g1", pedido_id: "p1", pedido_numero: "12", componente: "montagem", cliente_nome: "Lis", descricao: "Pedido 12 · Montagem", vencimento: H, valor: 600, recebido: 0, aberto: 600, parcela: 1, parcelas: 1, conta_id: null, status: "aberto" }],
+      { id: "r3", empresa_id: "e1", origem: "pedido", grupo: "g1", pedido_id: "p1", pedido_numero: "12", componente: "montagem", cliente_nome: "Lis", descricao: "Pedido 12 · Montagem", vencimento: H, valor: 600, recebido: 0, aberto: 600, parcela: 1, parcelas: 1, conta_id: null, status: "aberto" },
+      { id: "r9", empresa_id: "e1", origem: "manual", grupo: "g9", pedido_id: null, pedido_numero: null, componente: "outro", cliente_nome: "Ana Recebida", descricao: "Sinal recebido", vencimento: H, valor: 250, recebido: 250, aberto: 0, parcela: 1, parcelas: 1, conta_id: null, status: "recebido" }],
     fin_pagar: [{ id: "g9", empresa_id: "e1", fornecedor_nome: "Transp X", descricao: "Frete terceirizado", vencimento: H, valor: 500, pago: 0, aberto: 500, parcela: 1, parcelas: 1, status: "pendente", requer_aprovacao: true, aprovacao: "pendente" }],
     fin_extrato: [], fin_baixas: [],
     fornecedores: [{ id: "f1", empresa_id: "e1", nome_razao_social: "Transp X Ltda", nome_fantasia: "Transp X" }],
@@ -44,18 +46,27 @@ const mock = `(() => {
   const respostas = {
     funcionario_contexto: () => ({ ativo: true, administrador_legado: true }),
     fin_saldos: () => [{ conta_id: "c1", saldo: 1500 }, { conta_id: "c2", saldo: -200 }],
-    fin_fluxo: () => Array.from({ length: 31 }, (_, i) => ({ dia: H, previsto_entrada: i === 0 ? 4000 : 0, previsto_saida: i === 0 ? 500 : 0, realizado_entrada: 0, realizado_saida: 0, saldo_previsto: 1300 + (i === 0 ? 3500 : 0), saldo_realizado: 1300, vencido_receber: 0, vencido_pagar: 0 })),
+    fin_fluxo: () => Array.from({ length: 31 }, (_, i) => ({ dia: new Date(Date.parse(H + "T12:00:00Z") + i * 864e5).toISOString().slice(0, 10), previsto_entrada: i === 0 ? 4000 : 0, previsto_saida: i === 0 ? 500 : 0, realizado_entrada: 0, realizado_saida: 0, saldo_previsto: 1300 + (i === 0 ? 3500 : 0), saldo_realizado: 1300, vencido_receber: 0, vencido_pagar: 0 })),
     fin_dre: () => [{ categoria_id: "k2", codigo: "1.1", nome: "Locação de mobiliário", tipo: "entrada", previsto: 3000, realizado: 0 }],
     fin_inadimplencia: () => [],
     fin_baixar: (a) => { const t = banco[a.p_tipo === "receber" ? "fin_receber" : "fin_pagar"].find((x) => x.id === a.p_id); if (a.p_tipo === "receber") { t.recebido += a.p_valor; t.aberto = t.valor - t.recebido; t.status = t.aberto <= 0 ? "recebido" : "parcial"; } return null; },
     fin_aprovar_pagar: (a) => { const t = banco.fin_pagar.find((x) => x.id === a.p_id); t.aprovacao = a.p_aprovar ? "aprovada" : "reprovada"; t.status = a.p_aprovar ? "aprovado" : "pendente"; return null; },
     fin_salvar_config: (a) => { Object.assign(banco.fin_config[0], a.p_dados); banco.fin_receber.filter((r) => r.componente === "montagem").forEach((r) => { r.conta_id = a.p_dados.conta_montagem || null; }); return null; },
-    fin_importar_extrato: (a) => { a.p_linhas.forEach((l, i) => banco.fin_extrato.push({ id: "x" + i, empresa_id: "e1", conta_id: a.p_conta, ...l, ignorado: false, baixa_id: null })); return a.p_linhas.length; }
+    fin_importar_extrato_lote: (a) => { a.p_linhas.forEach((l, i) => banco.fin_extrato.push({ id: "x" + i, empresa_id: "e1", conta_id: a.p_conta, ...l, ignorado: false, baixa_id: null, sugestao: null })); return { novas: a.p_linhas.length, total: a.p_linhas.length }; },
+    fin_assist_aplicar: (a) => { const l = banco.fin_extrato.find((x) => x.id === a.p_extrato); l.baixa_id = "b1"; l.conciliado_em = "agora"; return { ok: true }; },
+    fin_saldo_em: () => 0,
+    fin_bancos_resumo: () => [{ conta_id: "c1", saldo: 1500, pendentes: 0 }],
+    fin_bancos_extrato: () => ({ contas: [], linhas: [], pendentes: 0 })
   };
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
-    functions: { invoke: async (n, o) => { window.__rpc.push({ n: "fn:" + n, a: o.body }); return { data: o.body.action === "revelar" ? { valores: { agencia: "1234" } } : { ok: true, id: o.body.conta_id || "n1" }, error: null }; } },
+    functions: { invoke: async (n, o) => {
+      window.__rpc.push({ n: "fn:" + n, a: o.body });
+      if (n === "financeiro-assistente" && o.body.action === "ler_extrato") return { data: { formato: "ofx", banco: "", modelo_novo: false, arquivo: o.body.arquivo.nome, linhas: o.body.arquivo.linhas.map((l) => ({ ...l, fitid: "ofx-" + l.fitid })), resumo: {} }, error: null };
+      if (n === "financeiro-assistente" && o.body.action === "organizar") { banco.fin_extrato.forEach((l) => { l.sugestao = { acao: { tipo: "lancar", categoria_id: "" }, confianca: "alta", resumo: "Lançar · Outras receitas", motivo: "PIX sem título." }; }); return { data: { total: banco.fin_extrato.length, restantes: 0 }, error: null }; }
+      return { data: o.body.action === "revelar" ? { valores: { agencia: "1234" } } : { ok: true, id: o.body.conta_id || "n1" }, error: null };
+    } },
     rpc: (n, a) => ({ then: (ok, erro) => { window.__rpc.push({ n, a }); return Promise.resolve({ data: respostas[n] ? respostas[n](a) : null, error: null }).then(ok, erro); } })
   };
   window.supabase = { createClient: () => cliente };
@@ -78,10 +89,32 @@ const mock = `(() => {
     return r.abort();
   });
   await page.goto(BASE + "Modulos/Financeiro/financeiro.html");
-  await page.waitForSelector(".fin-cards", { timeout: 15000 });
+  await page.waitForSelector(".fin-geral-2col", { timeout: 15000 });
   const geral = await page.textContent("#finConteudo");
-  assert.match(geral, /Saldo nas contas/); assert.match(geral, /Locações Itaú/); assert.match(geral, /Montagem/);
+  assert.doesNotMatch(geral, /Saldo nas contas|A pagar em aberto|Pagamentos vencidos/, "sem os cartões de totais"); assert.match(geral, /Locações Itaú/); assert.match(geral, /Montagem/);
+  const col = await page.evaluate(() => { const c = document.querySelector(".fin-geral-cal").getBoundingClientRect(), l = document.querySelector(".fin-geral-lado").getBoundingClientRect(); return { ladoALado: l.left > c.right - 1 && Math.abs(l.top - c.top) < 2, blocosNoLado: document.querySelectorAll(".fin-geral-lado > .fin-bloco").length }; });
+  assert.deepStrictEqual(col, { ladoALado: true, blocosNoLado: 2 }, "calendário de um lado, os 2 blocos do outro");
   console.log("ok 1 - visão geral com saldos, divisões e próximos 30 dias");
+  // Calendário financeiro em destaque: mês inteiro, hoje com E/S/Saldo e cor pelo saldo; passar o mouse abre o detalhe.
+  await page.waitForSelector("#finCalDias [data-dia]");
+  const hojeCal = new Date().toISOString().slice(0, 10);
+  const dia = page.locator('#finCalDias [data-dia="' + hojeCal + '"]');
+  assert.match(await dia.innerText(), /E: 4 mil[\s\S]*S: 500[\s\S]*Saldo: 4,8 mil/);
+  assert.ok(await dia.evaluate((el) => el.classList.contains("positivo") && el.classList.contains("hoje")), "hoje em verde (saldo positivo)");
+  const dias = await page.locator("#finCalDias [data-dia]").count();
+  assert.equal(dias, Number(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()), "um quadro por dia do mês");
+  await dia.hover(); await page.waitForSelector("#finCalDetalhe:not([hidden])");
+  assert.match(await page.textContent("#finCalDetalhe"), /Entradas do dia[\s\S]*Saídas do dia/);
+  const mesAtual = await page.textContent("#finCalMes");
+  await page.click('[data-cal="1"]'); await page.waitForFunction((m) => document.getElementById("finCalMes").textContent !== m, mesAtual);
+  await page.click('[data-cal="hoje"]'); await page.waitForFunction((m) => document.getElementById("finCalMes").textContent === m, mesAtual);
+  // Valores em reais: verde se positivo, vermelho se negativo, no Financeiro inteiro.
+  await page.waitForTimeout(200);
+  const cores = await page.evaluate(() => [...document.querySelectorAll(".fin-geral-lado td b")].map((b) => [b.textContent.trim(), getComputedStyle(b).color]));
+  const neg = cores.find(([t]) => /-R\$/.test(t)), pos = cores.find(([t]) => !/-/.test(t) && /[1-9]/.test(t));
+  assert.ok(neg && neg[1] === "rgb(180, 35, 24)", "negativo em vermelho: " + JSON.stringify(cores));
+  assert.ok(pos && pos[1] === "rgb(31, 122, 68)", "positivo em verde: " + JSON.stringify(cores));
+  console.log("ok 1b - calendário financeiro em destaque na visão geral (E/S/saldo por dia, detalhe ao passar o mouse, troca de mês)");
 
   await page.click('[data-aba="receber"]');
   await page.waitForSelector(".fin-pedido");
@@ -96,16 +129,65 @@ const mock = `(() => {
   assert.strictEqual(await page.locator(".fin-pedido tbody tr").count(), 1);
   await page.selectOption("#frDiv", "");
   console.log("ok 3 - filtro por divisão");
+  // Botão ao lado de "+ Novo recebimento": troca o agrupado por pedido por "por data" (cada parcela numa linha).
+  const modo = page.locator("#frModo");
+  assert.ok(await modo.isVisible(), "botão de trocar a visão ao lado de Novo recebimento");
+  const vizinho = await page.evaluate(() => document.getElementById("frModo").nextElementSibling?.id);
+  assert.strictEqual(vizinho, "frRecebidas");
+  await modo.click();
+  await page.waitForSelector(".fin-receber-data");
+  assert.strictEqual(await page.locator(".fin-pedido:not(.fin-receber-data)").count(), 0, "não agrupa mais por pedido");
+  const linhasData = await page.$$eval(".fin-receber-data tbody tr", (l) => l.map((tr) => tr.children[0].textContent));
+  assert.strictEqual(linhasData.length, 3, "uma linha por parcela");
+  assert.deepStrictEqual(linhasData, linhasData.slice().sort((x, y) => x.split("/").reverse().join("").localeCompare(y.split("/").reverse().join(""))), "em ordem de vencimento");
+  assert.match(await page.textContent(".fin-receber-data tbody tr"), /Pedido 12 · Lis/);
+  assert.strictEqual(await modo.getAttribute("aria-pressed"), "true");
+  await page.selectOption("#frDiv", "frete");
+  assert.strictEqual(await page.locator(".fin-receber-data tbody tr").count(), 1, "filtro vale na visão por data");
+  await page.selectOption("#frDiv", "");
+  await page.click("#frModo");
+  await page.waitForSelector(".fin-pedido:not(.fin-receber-data)");
+  console.log("ok 3b - a receber por data (cada parcela numa linha) e volta para agrupado por pedido");
+  // "Recebidas", ao lado do ícone: mostra só o que já foi recebido; clicar de novo volta para em aberto.
+  assert.strictEqual(await page.evaluate(() => document.getElementById("frRecebidas").previousElementSibling?.id), "frModo", "Recebidas ao lado do ícone");
+  assert.ok(!(await page.textContent("#finConteudo")).includes("Ana Recebida"), "em aberto não mostra o que já foi recebido");
+  await page.click("#frRecebidas");
+  await page.waitForFunction(() => document.getElementById("frRecebidas")?.getAttribute("aria-pressed") === "true");
+  const rec = await page.textContent("#finConteudo");
+  assert.ok(rec.includes("Ana Recebida") && !rec.includes("Pedido 12 · Lis"), "só as recebidas");
+  assert.strictEqual(await page.inputValue("#frStatus"), "recebidos");
+  await page.click("#frRecebidas");
+  await page.waitForFunction(() => document.getElementById("frRecebidas")?.getAttribute("aria-pressed") === "false");
+  assert.strictEqual(await page.inputValue("#frStatus"), "abertos");
+  console.log("ok 3c - botão Recebidas mostra só as contas recebidas e volta");
 
-  await page.click('[data-r-baixar="r1"]');
-  await page.waitForSelector("#finModal[open]");
-  await page.fill('[name="valor"]', "1000");
+  assert.strictEqual(await page.locator("[data-r-baixar]").count(), 0, "A receber não tem mais o botão Receber");
+  await page.click('[data-aba="bancos"]');
+  await page.click('[data-bk-conta="cx"]');
+  await page.waitForSelector('[data-caixa-lancar="1"]');
+  assert.strictEqual(await page.locator("[data-bk-vista=conciliar]").count(), 0, "caixa não tem Conciliar");
+  await page.click('[data-caixa-lancar="1"]');
+  await page.waitForSelector("#finModal[open] [name=cx_valor]");
   await page.click('#finModalRodape [data-bt="1"]');
-  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "fin_baixar" && r.a.p_valor === 1000 && r.a.p_conta === "c1"));
+  assert.match(await page.textContent("#finModal"), /Informe o valor/);
+  await page.fill("[name=cx_valor]", "1000"); await page.fill("[name=cx_desc]", "Recebido em dinheiro");
+  await page.check('[data-tit="r1"]');
+  await page.click('#finModalRodape [data-bt="1"]');
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "fin_caixa_lancar" && r.a.p_valor === 1000 && r.a.p_conta === "cx" && r.a.p_acao.tipo === "baixar" && r.a.p_acao.titulos[0].id === "r1" && r.a.p_acao.titulos[0].valor === 1000));
   await page.waitForFunction(() => !document.getElementById("finModal").open);
-  console.log("ok 4 - baixa parcial na conta da locação");
+  await page.click('[data-caixa-lancar="-1"]');
+  await page.waitForSelector("#finModal[open] [name=cx_valor]");
+  assert.ok(await page.locator('[data-alt-tipo="ignorar"]').count() === 0);
+  await page.fill("[name=cx_valor]", "35,50"); await page.fill("[name=cx_desc]", "Café");
+  await page.click('[data-alt-tipo="lancar"]');
+  await page.selectOption('#finModalCorpo [name="categoria_id"]', { index: 1 });
+  await page.click('#finModalRodape [data-bt="1"]');
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "fin_caixa_lancar" && r.a.p_valor === -35.5 && r.a.p_acao.tipo === "lancar"));
+  await page.click(".alerta-btn, #alertaOk", { timeout: 1500 }).catch(() => {});
+  console.log("ok 4 - receber só pelo caixa físico (entrada com título, saída lançada) ou pela conciliação");
 
-  await page.click('[data-aba="contas"]');
+  await page.click('[data-aba="bancos"]');
+  await page.click("[data-bk-config]");
   await page.waitForSelector("[data-cfg=conta_montagem]");
   await page.selectOption("[data-cfg=conta_montagem]", "c2");
   await page.click("#fcSalvarCfg");
@@ -137,22 +219,37 @@ const mock = `(() => {
   await page.waitForSelector('[data-p-aprovar="g9"]');
   assert.strictEqual(await page.locator('[data-p-baixar="g9"]').count(), 0, "sem aprovar não aparece Pagar");
   await page.click('[data-p-aprovar="g9"]');
-  await page.waitForSelector('[data-p-baixar="g9"]');
-  console.log("ok 6 - a pagar com aprovação antes de pagar");
+  await page.waitForSelector('[data-p-programar="g9"]');
+  assert.strictEqual(await page.locator("[data-p-baixar]").count(), 0, "A pagar não tem mais o botão Pagar");
+  console.log("ok 6 - a pagar com aprovação, sem botão de pagar à mão");
 
-  await page.click('[data-aba="conciliacao"]');
-  await page.waitForSelector("#fcArquivo", { state: "attached" });
+  await page.click('[data-aba="bancos"]');
+  await page.click('[data-bk-conta="c1"]');
+  await page.click('[data-bk-vista="conciliar"]');
+  await page.waitForSelector("#clArquivo", { state: "attached" });
   const ofx = "<OFX><STMTTRN><TRNTYPE>CREDIT<DTPOSTED>" + hoje.replace(/-/g, "") + "<TRNAMT>2000.00<FITID>abc<MEMO>PIX LIS</STMTTRN></OFX>";
-  page.once("dialog", (d) => d.accept());
-  await page.setInputFiles("#fcArquivo", { name: "extrato.ofx", mimeType: "text/plain", buffer: Buffer.from(ofx) });
-  const conf = page.getByRole("button", { name: "Confirmar", exact: true });
-  await conf.click({ timeout: 4000 }).catch(() => {});
-  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "fin_importar_extrato" && r.a.p_linhas[0].valor === 2000 && r.a.p_linhas[0].fitid === "abc"));
-  console.log("ok 7 - extrato OFX lido e importado");
+  await page.setInputFiles("#clArquivo", { name: "extrato.ofx", mimeType: "text/plain", buffer: Buffer.from(ofx) });
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "fn:financeiro-assistente" && r.a.action === "ler_extrato" && r.a.arquivo.formato === "ofx" && r.a.arquivo.linhas[0].valor === 2000 && r.a.arquivo.linhas[0].fitid === "abc"));
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "fin_importar_extrato_lote" && r.a.p_linhas[0].valor === 2000) && window.__rpc.some((r) => r.a?.action === "organizar"));
+  await page.waitForSelector(".cl-tabela tbody tr");
+  assert.match(await page.textContent(".cl-tabela"), /Lançar · Outras receitas/);
+  await page.click("#clConfirmar");
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "fin_assist_aplicar" && r.a.p_acao.tipo === "lancar"));
+  console.log("ok 7 - extrato OFX enviado à Clara, importado, organizado e confirmado");
 
-  for (const aba of ["dre", "inadimplencia", "plano"]) { await page.click('[data-aba="' + aba + '"]'); await page.waitForTimeout(300); }
+  for (const aba of ["dre"]) { await page.click('[data-aba="' + aba + '"]'); await page.waitForTimeout(300); }
+  // Plano de contas mora dentro da aba DRE; créditos dentro de Decoradores (out/2026: abas numa linha só).
+  await page.click('[data-aba="dre"]'); await page.click('#finSubAbas [data-subaba="plano"]'); await page.waitForTimeout(300);
+  assert.ok(await page.$eval('#finAbas [data-aba="dre"]', (b) => b.classList.contains("ativa")), "aba DRE continua marcada no Plano de contas");
+  await page.click('[data-aba="bv"]'); assert.strictEqual(await page.locator('#finSubAbas [data-subaba]').count(), 0, 'Decoradores sem a parte Gestão de créditos');
+  assert.equal(await page.locator('#finAbas [data-aba]').count(), 10, "10 abas (Bancos, Gateways e a Clara)");
+  await page.click('[data-aba="gateways"]'); await page.waitForSelector(".fin-gateways #pgBtnRefresh"); assert.ok(await page.locator(".fin-gateways .pg-card").count() === 2, "gateways dentro do Financeiro");
+  await page.setViewportSize({ width: 1700, height: 900 }); await page.waitForTimeout(200);
+  assert.equal(await page.$$eval('#finAbas [data-aba]', (l) => new Set(l.map((b) => Math.round(b.getBoundingClientRect().top))).size), 1, "abas numa linha só a 1700px");
+  assert.equal(Math.round(await page.$eval('.fin-topo h2', (h) => h.getBoundingClientRect().top)), Math.round(await page.$eval('#finAbas [data-aba]', (b) => b.getBoundingClientRect().top)), "na mesma linha do título");
+  await page.click('[data-aba="dre"]'); await page.click('#finSubAbas [data-subaba="plano"]'); await page.waitForTimeout(300);
   assert.match(await page.textContent("#finConteudo"), /Locação de mobiliário/);
-  console.log("ok 8 - DRE, inadimplência e plano de contas abrem");
+  console.log("ok 8 - DRE e plano de contas abrem");
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.click('[data-aba="receber"]');

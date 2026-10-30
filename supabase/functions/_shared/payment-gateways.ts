@@ -336,11 +336,13 @@ export function sanitizeConnection(connection: Record<string, any> | null, defin
   };
 }
 
-export async function listGateways(serviceClient: SupabaseService, empresaId: string) {
+// (out/2026) cada conta do Financeiro pode ter a sua conexão; contaId vazio = a conexão geral de antes
+export async function listGateways(serviceClient: SupabaseService, empresaId: string, contaId?: string | null) {
   const { data, error } = await serviceClient
     .from("payment_gateway_connections")
     .select("*")
-    .eq("empresa_id", empresaId);
+    .eq("empresa_id", empresaId)
+    .eq("conta_chave", contaId || "");
 
   if (error) throw error;
 
@@ -348,12 +350,13 @@ export async function listGateways(serviceClient: SupabaseService, empresaId: st
   return GATEWAY_DEFINITIONS.map((definition) => sanitizeConnection(connections.get(definition.id) || null, definition));
 }
 
-export async function getConnection(serviceClient: SupabaseService, empresaId: string, gateway: string) {
+export async function getConnection(serviceClient: SupabaseService, empresaId: string, gateway: string, contaId?: string | null) {
   const { data, error } = await serviceClient
     .from("payment_gateway_connections")
     .select("*")
     .eq("empresa_id", empresaId)
     .eq("gateway", gateway)
+    .eq("conta_chave", contaId || "")
     .maybeSingle();
 
   if (error) throw error;
@@ -373,7 +376,7 @@ export async function upsertConnection(
       gateway: definition.id,
       capabilities: definition.capabilities,
       ...payload,
-    }, { onConflict: "empresa_id,gateway" })
+    }, { onConflict: "empresa_id,gateway,conta_chave" })
     .select("*")
     .single();
 

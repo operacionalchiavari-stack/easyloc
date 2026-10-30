@@ -185,3 +185,193 @@ html:root:is(#acervo-fin,html) #contaDecoradorOpcoes button{display:block;width:
 html:root:is(#acervo-fin,html) #contaDecoradorOpcoes button:hover,html:root:is(#acervo-fin,html) #contaDecoradorOpcoes button.is-focado{background:#f1f3f5}
 .fin-conta-sem-opcoes{display:block;padding:12px;color:#64748b;font-size:13px}
 @media(max-width:700px){html:root:is(#acervo-fin,html) .fin-bv-conta-pessoa{flex:auto}html:root:is(#acervo-fin,html) .fin-conta-filtros{flex:auto;justify-content:flex-start}html:root:is(#acervo-fin,html) #contaDecoradorBusca{font-size:20px}}
+
+/* ===== Calendário financeiro em destaque na Visão geral (out/2026, igual ao da Tecnoweld) ===== */
+.fin-calendario{margin:16px 0}
+.fin-cal-topo{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.fin-cal-topo h3{margin:0}
+.fin-cal-topo p{margin:2px 0 0;color:#6b6b6b;font-size:13px}
+.fin-cal-nav{display:flex;align-items:center;gap:8px}
+.fin-cal-nav strong{min-width:150px;text-align:center;font-size:15px;color:#1f2020}
+.fin-cal-seta{width:34px;height:34px;border:1px solid #e3e7ec;border-radius:999px;background:#fff;color:#1f2020;font-size:20px;line-height:1;cursor:pointer}
+.fin-cal-seta:hover,.fin-cal-seta:focus-visible{border-color:#123f86;color:#123f86;outline:none}
+.fin-cal-semana,.fin-cal-dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.fin-cal-semana span{padding:6px;color:#6b6b6b;font-size:12px;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:.04em}
+.fin-cal-dia{min-height:104px;padding:9px;border:1px solid #e3e7ec;border-radius:8px;background:#fff;text-align:left;display:flex;flex-direction:column;gap:6px;cursor:pointer;font:inherit;color:inherit;transition:filter .12s}
+.fin-cal-dia.vazio{background:transparent;border-color:transparent;cursor:default}
+.fin-cal-dia.positivo{background:#e4f5ec;border-color:#b6dfc8;--fin-cal:#166343}
+.fin-cal-dia.alerta{background:#fff9eb;border-color:#f0e4c5;--fin-cal:#947128}
+.fin-cal-dia.negativo{background:#fff2f3;border-color:#efdadd;--fin-cal:#b34b58}
+.fin-cal-dia:not(.vazio):hover{filter:brightness(.97)}
+.fin-cal-dia:focus-visible{outline:2px solid var(--fin-cal,#123f86);outline-offset:2px}
+.fin-cal-dia.selecionado{border-color:var(--fin-cal,#123f86);box-shadow:inset 0 0 0 1px var(--fin-cal,#123f86)}
+.fin-cal-num{align-self:flex-start;min-width:24px;padding:1px 6px;border-radius:999px;font-weight:700;font-size:13px;color:var(--fin-cal,#1f2020)}
+.fin-cal-dia.hoje .fin-cal-num{background:#ffffffcc;box-shadow:0 0 0 1px var(--fin-cal,#1f2020)}
+.fin-cal-valores{display:flex;flex-direction:column;gap:2px;font-size:12px;color:#465569}
+.fin-cal-valores b{font-weight:600;color:var(--fin-cal,#1f2020)}
+.fin-cal-legenda{display:flex;flex-wrap:wrap;gap:16px;padding-top:10px;color:#6b6b6b;font-size:12px}
+.fin-cal-legenda span{display:flex;align-items:center;gap:6px}
+.fin-cal-legenda i{width:8px;height:8px;border-radius:99px}
+.fin-cal-legenda .positivo{background:#0ba47c}.fin-cal-legenda .alerta{background:#e5a20a}.fin-cal-legenda .negativo{background:#dc3545}
+.fin-cal-detalhe{position:fixed;z-index:80;padding:12px 14px;background:#fff;border:1px solid #e3e7ec;border-radius:12px;box-shadow:0 14px 36px rgba(15,23,42,.16);font-size:13px;color:#1f2020}
+.fin-cal-detalhe[hidden]{display:none}
+.fin-cal-detalhe header{font-weight:700;margin-bottom:8px}
+.fin-cal-detalhe h4{display:flex;justify-content:space-between;gap:10px;margin:8px 0 4px;font-size:13px}
+.fin-cal-detalhe .entrada h4 b{color:#166343}.fin-cal-detalhe .saida h4 b{color:#b34b58}
+.fin-cal-detalhe ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.fin-cal-detalhe li{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.fin-cal-detalhe li small{display:block;color:#6b6b6b;font-size:12px}
+.fin-cal-detalhe li b{white-space:nowrap}
+.fin-cal-nada{margin:0;color:#6b6b6b}
+.fin-grade-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media(max-width:900px){.fin-cal-dia{min-height:72px;padding:6px}.fin-cal-valores{font-size:11px}.fin-grade-2{grid-template-columns:1fr}}
+@media(max-width:600px){.fin-cal-valores span{display:none}.fin-cal-dia{min-height:56px}}
+
+/* ===== Abas na mesma linha do título "Financeiro" (out/2026) =====
+   O tema centraliza o título numa faixa só dele; aqui o título fica à esquerda e as abas à direita, na mesma linha.
+   A linha fina de ponta a ponta passa para o cabeçalho. Em tela estreita as abas descem para a linha de baixo. */
+html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:space-between!important;gap:8px 36px!important;margin:0 0 20px!important;padding:16px 0 0!important;position:relative;border:0!important}
+html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo::after{content:"";position:absolute;left:50%;bottom:0;width:100vw;height:1px;transform:translateX(-50%);background:var(--ch-line,#e3e7ec);pointer-events:none}
+html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child{flex:none!important;order:0!important;margin:0!important;padding:0 0 12px!important;border:0!important;text-align:left!important;font-size:clamp(24px,2.2vw,32px)!important}
+html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child::after{content:none!important;display:none!important}
+html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > .fin-abas{--el-tab-gap:13px;flex:1 1 auto!important;justify-content:flex-end!important;margin:0!important;padding-top:0!important;min-width:0}
+@media(max-width:1279px){
+  html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo{flex-wrap:wrap!important}
+  html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > .fin-abas{flex:1 1 100%!important;justify-content:center!important}
+  html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child{flex:1 1 100%!important;text-align:center!important;padding:20px 0 4px!important}
+}
+
+/* Partes de uma aba que junta duas telas (Decoradores; DRE + Plano de contas) */
+.fin-subabas{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 18px}
+.fin-subabas[hidden]{display:none}
+.fin-subabas button{padding:7px 16px;border:1px solid #dfe4ea;border-radius:999px;background:#fff;color:#2b2b2b;font:500 13px Inter,sans-serif;cursor:pointer}
+.fin-subabas button:hover{border-color:#123f86;color:#123f86}
+.fin-subabas button.ativa{background:#123f86;border-color:#123f86;color:#fff}
+
+/* A receber: cabeçalho do pedido numa linha só (pedido · cliente · evento · divisões · aviso · total · em aberto) */
+.fin-pedido-topo.fin-pedido-linha{flex-wrap:nowrap;justify-content:flex-start;gap:14px;align-items:center}
+.fin-pedido-linha>strong,.fin-pedido-linha>small{white-space:nowrap}
+.fin-pedido-linha>.fin-divisoes{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;margin:0;min-width:0;flex:1 1 auto}
+.fin-pedido-linha .fin-alerta-dif{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.fin-pedido-linha>.fin-pedido-tot{margin-left:auto;display:flex;gap:16px;align-items:baseline;white-space:nowrap;text-align:right}
+@media(max-width:1100px){.fin-pedido-topo.fin-pedido-linha{flex-wrap:wrap}.fin-pedido-linha>.fin-divisoes{flex-wrap:wrap}.fin-pedido-linha .fin-alerta-dif{white-space:normal}}
+
+/* ===== Título no centro e abas divididas para cada lado (out/2026) =====
+   Grade de 3 colunas: abas da esquerda | FINANCEIRO | abas da direita. O <nav id="finAbas"> some do layout
+   (display:contents) e cada lado é uma .fin-abas, que recebe o estilo global de abas. */
+html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;column-gap:32px!important}
+html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child{grid-column:2!important;grid-row:1!important;text-align:center!important;padding:0 0 12px!important}
+html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > .fin-abas-duplas{display:contents!important}
+html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-topo,html) body .fin-topo .fin-abas-duplas > .fin-abas{--el-tab-gap:13px;flex-wrap:nowrap!important;grid-row:1;margin:0!important;padding-top:0!important;min-width:0}
+html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-topo,html) body .fin-topo .fin-abas-duplas > .fin-abas-esq{grid-column:1;justify-content:flex-end!important}
+html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-topo,html) body .fin-topo .fin-abas-duplas > .fin-abas-dir{grid-column:3;justify-content:flex-start!important}
+@media(max-width:1279px){
+  html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child{grid-column:1 / -1!important;padding:20px 0 4px!important}
+  html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-topo,html) body .fin-topo .fin-abas-duplas > .fin-abas{grid-row:2;flex-wrap:wrap!important}
+  html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-topo,html) body .fin-topo .fin-abas-duplas > .fin-abas-dir{grid-column:2}
+}
+
+/* Visão geral em duas colunas: calendário | saldos por conta + a receber por divisão (out/2026) */
+.fin-geral-2col{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,30%);gap:16px;align-items:start}
+.fin-geral-2col .fin-calendario{margin:0}
+.fin-geral-lado{display:flex;flex-direction:column;gap:16px}
+.fin-geral-lado .fin-bloco{margin:0}
+@media(max-width:1100px){.fin-geral-2col{grid-template-columns:1fr}}
+
+/* A receber: botão de ícone para alternar entre "agrupado por pedido" e "por data" (out/2026) */
+.fin-modo-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid #dfe4ea;border-radius:10px;background:#fff;color:#4f4f4f;cursor:pointer}
+.fin-modo-btn:hover,.fin-modo-btn:focus-visible{border-color:#123f86;color:#123f86;outline:none}
+.fin-modo-btn[aria-pressed="true"]{background:#eaf0fa;border-color:#123f86;color:#123f86}
+.fin-recebidas-btn{height:40px;padding:0 16px;border:1px solid #dfe4ea;border-radius:10px;background:#fff;color:#4f4f4f;font:600 13px Inter,sans-serif;cursor:pointer}
+.fin-recebidas-btn:hover,.fin-recebidas-btn:focus-visible{border-color:#3f9a63;color:#2f7a4b;outline:none}
+.fin-recebidas-btn[aria-pressed="true"]{background:#e6f4ea;border-color:#3f9a63;color:#2f7a4b}
+
+/* Decoradores: quadro da conta corrente mais compacto (out/2026, pedido do usuário: "deixe isso menor") */
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta{gap:10px 24px;padding:14px 20px;margin:0 0 14px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta-pessoa{gap:14px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta .fin-bv-avatar{width:52px;height:52px;border-width:2px;font-size:17px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta-legenda{font-size:11px;margin-bottom:0}
+html:root:is(#acervo-fin#acervo-fin,html) #contaDecoradorBusca{font-size:17px;padding:2px 26px 2px 0}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-busca::after{top:3px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta p{margin:2px 0 0;font-size:12px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta-saldo strong{margin:2px 0;font-size:24px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta-saldo>span{font-size:12px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta-saldo small{font-size:12px;line-height:1.4}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-filtros{padding-top:10px}
+
+/* Decoradores: filtros na linha da busca; Atualizar / Registrar crédito na linha das partes da aba (out/2026) */
+html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-linha{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;min-width:0}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-linha>.fin-conta-busca{flex:0 1 360px;min-width:220px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-linha>.fin-conta-filtros{flex:0 1 auto;border-top:0;padding-top:0;justify-content:flex-start;gap:12px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-linha .fin-bv-filtros input{width:130px;height:36px;min-height:36px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-linha .fin-bv-filtros [data-bv-situacao]{width:150px;height:36px;min-height:36px}
+.fin-subabas{align-items:center}
+.fin-subabas-acoes{display:flex;align-items:center;gap:8px;margin-left:auto}
+.fin-subabas-acoes .fin-btn{height:36px}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta-saldo{flex:0 0 auto}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta-pessoa{flex:1 1 auto;min-width:0}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-linha>.fin-conta-busca{flex:0 1 300px}
+/* Quadro da conta corrente em branco, como os outros cartões (pedido do usuário) */
+html:root:is(#acervo-fin#acervo-fin,html) .fin-bv-conta{background:#fff;border-color:#e3e7ec;border-radius:16px;box-shadow:0 0 8px rgba(15,23,42,.15),0 0 2px rgba(15,23,42,.12)}
+
+/* Valores em reais: verde positivo, vermelho negativo, no Financeiro inteiro (out/2026) */
+html:root:root:is(#fin-cor#fin-cor#fin-cor#fin-cor#fin-cor#fin-cor,html) body .fin-page .fin-valor-pos{color:#1f7a44!important}
+html:root:root:is(#fin-cor#fin-cor#fin-cor#fin-cor#fin-cor#fin-cor,html) body .fin-page .fin-valor-neg{color:#b42318!important}
+/* DRE: linhas de grupo (Receitas / Despesas) no mesmo cinza do "Saldo do dia" do extrato */
+html:root:is(#dre-g1,#dre-g2,#dre-g3,#dre-g4,html) .fin-dre tr.grupo td{background:#e7ebf1;border-top:1px solid #d6dce5;border-bottom:1px solid #d6dce5;font-weight:600}
+/* DRE com centro de custo + plano de contas com centro padrão */
+html:root:is(#dre-g1,#dre-g2,#dre-g3,#dre-g4,html) .fin-dre td.fin-dre-semcc{color:#9a9a9a;font-style:italic}
+html:root:is(#dre-g1,#dre-g2,#dre-g3,#dre-g4,html) .fin-dre tr.fin-dre-cat td{font-weight:600}
+html:root:is(#dre-g1,#dre-g2,#dre-g3,#dre-g4,html) .fin-dre tr.fin-dre-sub td{padding-top:6px;padding-bottom:6px;font-size:13px;color:#4f4f4f}
+html:root:is(#dre-g1,#dre-g2,#dre-g3,#dre-g4,html) .fin-dre .fin-dre-pct{margin-left:6px;padding:1px 7px;border-radius:999px;background:#eef1f5;color:#4f4f4f;font-size:11px;font-weight:600}
+html:root:is(#dre-g1,#dre-g2,#dre-g3,#dre-g4,html) .fin-plano tr.grupo td{background:#e7ebf1;font-weight:600;border-top:1px solid #d6dce5;border-bottom:1px solid #d6dce5}
+html:root:is(#dre-g1,#dre-g2,#dre-g3,#dre-g4,html) .fin-plano select.fin-cat-cc{min-width:180px;height:34px;min-height:34px;padding:4px 8px;font-size:13px}
+/* Plano de contas largo, Centros de custo estreito */
+.fin-grade.fin-grade-plano{grid-template-columns:minmax(0,1fr) minmax(260px,320px)}
+.fin-grade.fin-grade-plano .fin-plano th:nth-child(2),.fin-grade.fin-grade-plano .fin-plano td:nth-child(2){width:230px}
+@media(max-width:1000px){.fin-grade.fin-grade-plano{grid-template-columns:1fr}}
+/* Aba Gateways: título e Atualizar na mesma linha, cards com a sombra do Financeiro */
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,html) .fin-gateways .fin-gw-topo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 4px;padding:0;border:0;text-align:left}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,html) .fin-gateways .fin-gw-topo h2{margin:0;font-size:22px}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,html) .fin-gateways .fin-gw-sub{margin:0 0 14px;color:#6b6b6b;font-size:14px}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,html) .fin-gateways .pg-card{background:#fff;border:0;box-shadow:0 0 8px rgba(15,23,42,.15),0 0 2px rgba(15,23,42,.12)}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,html) .fin-gateways .fin-gw-topo{margin-bottom:14px}
+/* um card por banco, bem separado: contorno, fundo e sombra próprios; o escolhido em azul */
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,html) .fin-gateways .pg-gateway-list{gap:14px}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,html) .fin-gateways .pg-gateway-card{border:1px solid #dde3ea;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.08);padding:14px}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,html) .fin-gateways .pg-gateway-card:hover{border-color:#b9c6d8;box-shadow:0 4px 12px rgba(15,23,42,.1)}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,html) .fin-gateways .pg-gateway-card.is-selected{border:2px solid #123f86;background:#eef3fb;padding:13px}
+/* Aba Gateways: mais contraste, discreto (30/out) */
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-env-toggle{background:#eef1f5;border:1px solid #d6dce5}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-env-toggle button{color:#4f4f4f;font-weight:500;border:1px solid transparent;background:transparent;box-shadow:none}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-env-toggle button:hover{background:#e3e8ef}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-env-toggle button.is-active{background:#fff;border-color:#123f86;color:#123f86;font-weight:600;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-badge{background:#eef1f5;border:1px solid #d6dce5;color:#3f3f3f}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-badge.capability{background:#fff;color:#4f4f4f}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-badge.status-conectado{background:#e6f4ea;border-color:#b7dfc3;color:#1f7a44}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-badge.status-erro{background:#fdecea;border-color:#f3c3bd;color:#b42318}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-badge.status-em_teste{background:#fdf6dd;border-color:#ecd99a;color:#7a5a00}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways :is(.pg-logo,.pg-config-logo){background:#eef3fb;border:1px solid #d3deef;color:#123f86;box-shadow:none}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-input-wrap{border:1px solid #cfd6df;border-radius:10px;overflow:hidden;background:#fff}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-input-wrap:focus-within{border-color:#123f86;box-shadow:0 0 0 3px rgba(18,63,134,.12)}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-input-wrap input{border:0!important;box-shadow:none!important;border-radius:0!important;background:transparent!important;outline:0}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-input-wrap input::placeholder{color:#8a8f96}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways :is(.pg-eye-btn,.pg-copy-btn){border:0;border-left:1px solid #d6dce5;border-radius:0;background:#f5f7fa;color:#3f3f3f;font-size:12px;font-weight:600;width:auto;min-width:58px;padding:0 10px}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways :is(.pg-eye-btn,.pg-copy-btn):hover{background:#e9eef5;color:#123f86}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways :is(.pg-eye-btn,.pg-copy-btn) :is(i,svg){display:none}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-eye-btn::before{content:"Ver"}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-copy-btn::before{content:"Copiar"}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-input-wrap{grid-template-columns:minmax(0,1fr) auto}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways :is(.pg-field small,.pg-readonly small,.pg-test-result small){color:#6b6b6b}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways :is(.pg-test-result,.pg-readonly-box){background:#f3f5f8;border:1px solid #dde3ea}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-section > label,html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-field > label{color:#3f3f3f}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-env-head{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-env-head .pg-env-toggle{grid-template-columns:repeat(2,minmax(110px,1fr))}
+@media(max-width:900px){html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-config-head{grid-template-columns:auto minmax(0,1fr)}html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .pg-env-head{grid-column:1/-1;align-items:flex-start}}
+/* Gateways: uma conexão por conta */
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-contas{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 6px}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-contas>span{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b;margin-right:4px}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-contas button{height:34px;padding:0 14px;border:1px solid #d6dce5;border-radius:999px;background:#fff;color:#3f3f3f;font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-contas button.ativa{border-color:#123f86;background:#eef3fb;color:#123f86;font-weight:600}
+html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-dica{margin:0 0 14px;color:#6b6b6b;font-size:13px}
