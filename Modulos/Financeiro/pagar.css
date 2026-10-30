@@ -145,3 +145,11 @@ html:is(#pg-fin,html) #pgLista .pg-tabela .pg-acao{width:1%}
 .pg-sim{padding:9px 16px;background:#fdf6dd;border-bottom:1px solid #ecd99a;color:#5c4300;font-size:13px;font-weight:600;text-align:center}
 .pg-sim-btn{width:100%;margin-top:14px;background:#1f7a44}
 .pg-sim-btn:hover{background:#17603a}
+
+/* Celular: o cabeçalho do pedido não pode passar da largura da tela */
+@media(max-width:700px){
+  html:is(#pg-cel,html) #pgLista .cpj-order-letterhead{max-width:100%;overflow:hidden}
+  html:is(#pg-cel,html) #pgLista .cpj-order-letterhead-side{flex-wrap:wrap;min-width:0;max-width:100%;gap:8px 12px}
+  html:is(#pg-cel,html) #pgLista .cpj-order-kind{min-width:0;white-space:normal}
+}
+#pgLista .cpj-order-planta-folha{max-width:100%}

@@ -111,10 +111,23 @@
     $("pgLista").innerHTML = docMod.pedidoPreviewHtml(model, { decorador: d.nome ? { nome: d.nome, logo_url: d.cliente_foto || "" } : null, empresa: dados.empresa, layout: "final" }) +
       '<div class="pd-barra" id="pdBarra" hidden></div>';
     $("pgLista").querySelectorAll(".cpj-order-render-group img").forEach((img) => { img.dataset.foto = img.src; });
+    ajustarPlantas();
     pintarPagamentos();
     const pag = $("pagamento"), barra = $("pdBarra");
     if (pag && barra && "IntersectionObserver" in window) new IntersectionObserver(([e]) => barra.classList.toggle("oculta", e.isIntersecting), { threshold: 0.05 }).observe(pag);
   }
+
+  // A planta tem o tamanho da folha A4: na tela, encolhe até caber na largura do papel (no celular, principalmente)
+  function ajustarPlantas() {
+    const papel = document.querySelector("#pgLista .cpj-order-paper");
+    if (!papel) return;
+    const cs = getComputedStyle(papel), livre = papel.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    papel.querySelectorAll(".cpj-order-planta-folha").forEach((f) => {
+      const largura = parseFloat(f.style.width) * 96 / 25.4; // mm → px
+      if (largura > 0) f.style.zoom = String(Math.min(Number(f.style.getPropertyValue("--zt")) || 1, livre / largura));
+    });
+  }
+  window.addEventListener("resize", ajustarPlantas);
 
   function pintarPagamentos() {
     const lista = dados.pagamentos || [], alvo = $("pagamento");

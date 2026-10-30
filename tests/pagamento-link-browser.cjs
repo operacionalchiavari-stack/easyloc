@@ -29,7 +29,7 @@ const mock = `(() => {
             cadastro: [{ id: "i1", descricao_total: "Sofá Orka Estofado Tecido Off White (L) 2.40 m (A) 0.75 m (P) 1.10 m", produto: "Orka", foto_url: "/slide2.jpg", codigo: "SOF1", valor_locacao: 762.3, valor_reposicao: 12000 },
               { id: "i2", produto: "Mesa Lateral", largura: 0.5, altura: 0.6, profundidade: 0.5, valor_locacao: 100, valor_reposicao: 800 },
               { id: "i3", descricao_total: "Bar Bistrol (L) 2 m (A) 1.1 m (P) 0.6 m", produto: "Bar", foto_url: "/slide2.jpg", valor_locacao: 900, valor_reposicao: 5000 }],
-            servicos: [{ nome: "Montagem Extra", quantidade: 1, valor: 250, data: "2026-11-19", hora: "14:00" }], plantas: [] } }, error: null };
+            servicos: [{ nome: "Montagem Extra", quantidade: 1, valor: 250, data: "2026-11-19", hora: "14:00" }], plantas: [{ nome: "Planta", w: 297, h: 210, html: '<div style="width:100%;height:100%;background:#ddd"></div>' }] } }, error: null };
       }
       if (n === "pagamento_link_obter") return { data: { slug: "abc", pin: a.p_novo_codigo ? "654321" : "123456", ativo: true, pagamentos: 4, contas_sem_gateway: ["Conta Montagem"] }, error: null };
       return { data: null, error: null };
@@ -92,6 +92,7 @@ const mock = `(() => {
   assert.match(await page.locator(".pg-item").nth(2).textContent(), /Fale com a nossa equipe/);
   assert.match(await page.locator(".pg-item").nth(3).textContent(), /Pago ✓/);
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "celular sem rolagem lateral");
+  assert.ok(await page.evaluate(() => { const f = document.querySelector(".cpj-order-planta-folha").getBoundingClientRect(); return f.width > 100 && f.right <= innerWidth; }), "planta cabe no celular");
   console.log("ok 1 - pedido completo e, no final, pagamentos neutros, conta sem gateway e pago");
   if (process.env.SP) {
     await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; scrollTo(0, 0); });
