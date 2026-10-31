@@ -1,0 +1,29 @@
+/* A faixa pertence ao Portal; os apps abertos diretamente mantêm a própria interface. */
+body.portal-shell .main.main-com-link-app{display:flex;flex-direction:column;overflow:hidden}
+body.portal-shell .main.main-com-link-app .app-module-frame{flex:1 1 0;height:0;min-height:0!important}
+.app-link-toolbar[hidden]{display:none!important}
+.app-link-toolbar{
+ display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px 20px;flex:none;
+ padding:12px 24px;border-bottom:1px solid #e5dfd4;background:#fffdf9;color:#302d28;
+ font:400 12px/1.5 "Manrope",system-ui,sans-serif;box-sizing:border-box;
+}
+.app-link-toolbar *{box-sizing:border-box}
+.app-link-toolbar__titulo{display:flex;flex-direction:column;gap:2px;min-width:130px}
+.app-link-toolbar__titulo strong{font:600 12px "Manrope",system-ui,sans-serif;color:#3b3832}
+.app-link-toolbar__titulo span{font-size:11px;color:#847766}
+.app-link-toolbar__url{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#88663e;text-decoration:underline;text-underline-offset:3px;font-size:12px}
+.app-link-toolbar__acoes{display:flex;gap:8px}
+.app-link-toolbar__acoes :is(button,a){display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 14px;border:1px solid #e4daca;border-radius:24px;background:#fff;color:#634e34;font:600 12px/1.4 "Manrope",system-ui,sans-serif;text-decoration:none;white-space:nowrap;cursor:pointer}
+.app-link-toolbar__acoes button{background:#7d603d;border-color:#7d603d;color:#fff}
+.app-link-toolbar__acoes svg{width:17px;height:17px;flex:none}
+.app-link-toolbar__acoes :is(button,a):hover{filter:brightness(.96)}
+.app-link-toolbar :is(button,a):focus-visible{outline:3px solid #b18a5a;outline-offset:3px}
+.app-link-toolbar__status{grid-column:1/-1;color:#386145;font-size:11px}
+.app-link-toolbar__status:empty{display:none}
+@media(max-width:760px){
+ .app-link-toolbar{grid-template-columns:minmax(0,1fr);gap:8px;padding:12px 16px}
+ .app-link-toolbar__titulo{flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:8px;min-width:0}
+ .app-link-toolbar__acoes{justify-content:flex-start}
+ .app-link-toolbar__acoes :is(button,a){min-height:44px;padding:10px 14px}
+ .app-link-toolbar__url{font-size:11px}
+}
