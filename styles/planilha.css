@@ -1,0 +1,65 @@
+/* Planilha (out/2026): grade estilo Excel usada no Financeiro > Gerencial e nos relatórios do Comercial
+   (Cancelamentos, Contas a receber). Classes .gr-*. Números alinhados, negativos entre parênteses (feito no JS). */
+.gr-barra label{display:flex;align-items:center;gap:6px;font-size:13px;color:#4f4f4f}
+.gr-base{display:inline-flex;border:1px solid #d6dce5;border-radius:8px;overflow:hidden}
+.gr-base button{padding:7px 12px;border:0;background:#fff;color:#2b2b2b;font:500 13px Inter,sans-serif;cursor:pointer}
+.gr-base button+button{border-left:1px solid #d6dce5}
+.gr-base button.ativa{background:#123f86;color:#fff}
+.gr-nota{margin:0 0 14px;color:#5f5f5f;font-size:13px}
+.gr-bloco h3{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.gr-bloco h3 .fin-esp{flex:1}
+.gr-rolar{overflow:auto;max-width:100%;border:1px solid #d9dde3;border-radius:6px}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha{width:100%;border-collapse:collapse;font:13px/1.35 Inter,sans-serif;font-variant-numeric:tabular-nums;background:#fff;color:#1f2020}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha th,
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha td{padding:6px 10px!important;border:1px solid #e3e7ec;text-align:left;vertical-align:middle;white-space:nowrap;font-size:13px;background:transparent;box-shadow:none}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha thead th{background:#f3f5f6!important;color:#3a3a3a!important;font-weight:600;font-size:12px;text-transform:none;letter-spacing:0;position:sticky;top:0;z-index:1;border-bottom:1px solid #cfd5dd}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tbody th{font-weight:500;color:#1f2020}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha .num{text-align:right}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha .neg,
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha .neg .gr-num{color:#b42318}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha .forte{font-weight:600}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha td.gr-leitura{white-space:normal;color:#6b6b6b;font-size:12px;min-width:260px}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.alerta th,
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.alerta td{background:#fdf1f0}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.grupo th,
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.grupo td{background:#eef1f5;font-weight:600}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.sub th{padding-left:34px!important;font-weight:400;color:#3a3a3a}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.derivada th,
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.derivada td{font-weight:700;border-top:2px solid #9aa4b2;background:#fff}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.final th,
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.final td{border-top:3px double #5b6573;background:#f7f9fb}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.pct-linha th,
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha tr.pct-linha td{color:#6b6b6b;font-size:12px;font-style:italic}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha td.ref{background:#f5f8fd}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha thead th.ref{background:#e3ebf7!important}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha td.tot{font-weight:600;background:#f7f9fb}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha td.pct{color:#4f4f4f}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha td.acima{background:#fff4d6!important}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha td.alto{color:#b42318;font-weight:600}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-dre .gr-fixa{position:sticky;left:0;z-index:2;background:#fff;min-width:300px;box-shadow:1px 0 0 #d9dde3}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-dre thead .gr-fixa{z-index:3;background:#f3f5f6!important}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-dre tr.grupo .gr-fixa{background:#eef1f5}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-dre tr.final .gr-fixa{background:#f7f9fb}
+.gr-num{all:unset;cursor:pointer;color:inherit;border-bottom:1px dotted #9aa4b2}
+.gr-num:hover,.gr-num:focus-visible{color:#123f86;border-bottom-color:#123f86;outline:none}
+.gr-abrir{all:unset;cursor:pointer;display:inline-block;width:16px;margin-right:6px;color:#4f4f4f;text-align:center}
+.gr-abrir:focus-visible{outline:2px solid #123f86;border-radius:3px}
+.gr-abrir-vazio{display:inline-block;width:22px}
+.gr-legenda{margin:8px 0 0;font-size:12px;color:#6b6b6b;display:flex;align-items:center;gap:6px}
+.gr-amostra{display:inline-block;width:14px;height:14px;background:#fff4d6;border:1px solid #ecd99a}
+.gr-detalhe{max-height:60vh}
+.fin-modal.gr-modal-largo{width:min(1280px,96vw)}
+@media print{
+  .fin-topo,.fin-subabas,.gr-barra,.fin-aviso,[data-gr-abrir]{display:none!important}
+  .gr-rolar{overflow:visible;border:0}
+  .gr-bloco{break-inside:avoid;box-shadow:none!important}
+  html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha th,html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-planilha td{font-size:10px;padding:3px 5px!important}
+  .gr-num{border:0}
+}
+
+/* Painel gerencial: ponto de equilíbrio e lucro por evento */
+.gr-frase{margin:0 0 12px;padding:10px 14px;background:#f7f9fb;border:1px solid #e3e7ec;border-radius:6px;font-size:13.5px;color:#2b2b2b;line-height:1.5}
+.gr-vermelho{color:#b42318}
+.gr-pendente{color:#9a5b00;font-size:12px}
+.gr-sub{margin:16px 0 8px;font-size:14px}
+html:root:is(#gr1,#gr2,#gr3,#gr4,#gr5,#gr6,html) .gr-ev tbody th{font-weight:600}

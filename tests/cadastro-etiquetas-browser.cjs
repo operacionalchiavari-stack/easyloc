@@ -25,6 +25,7 @@ function mock(banco) {
         ilike() { return q; }, or() { return q; }, gte() { return q; }, lte() { return q; }, neq() { return q; }, is() { return q; },
         single() { single = true; return q; }, maybeSingle() { single = true; return q; },
         upsert(row) { window.__gravados.push({ t, row }); return Promise.resolve({ error: null }); },
+        update(row) { window.__gravados.push({ t, row, op: "update" }); return q; }, insert(row) { window.__gravados.push({ t, row, op: "insert" }); return q; },
         then(o, f) { return Promise.resolve({ data: single ? linhas[0] || null : linhas, error: null }).then(o, f); }
       };
       return q;
@@ -77,12 +78,26 @@ async function abrir(b, pagina, banco) {
     assert.equal(await p.locator('.tag-group[data-group="estilo"] .tag.fora-da-lista.selected').count(), 1);
     assert.equal(await p.getAttribute('.tag-group[data-group="canal"]', 'data-obrigatoria'), 'false');
     await p.screenshot({ path: path.join(process.env.TMP || '.', 'clientes-etiquetas.png') });
+    // BV com explicação: campos existem, ficam travados fora da edição e são obrigatórios para dar BV
+    for (const id of ["clienteBvObservacao", "clienteBvNegociadoPor", "clienteBvAprovadoPor"]) assert.equal(await p.locator("#" + id).count(), 1, id);
+    assert.equal(await p.locator("#clienteBvObservacao").evaluate((e) => e.readOnly), true);
+    const dialogos = []; p.on("dialog", (d) => dialogos.push(d.message()));
+    await p.evaluate(async () => {
+      document.getElementById("clienteBvRecebe").disabled = false; document.getElementById("clienteBvRecebe").value = "true";
+      const pc = document.getElementById("clienteBvPercentual"); pc.readOnly = false; pc.value = "10";
+      document.getElementById("clienteBvObservacao").value = "";
+      window.__msgs = []; const orig = window.alerta; window.alerta = (m) => window.__msgs.push(m);
+      try { await window.clientes_salvar(); } finally { window.alerta = orig; }
+    });
+    const alerta = dialogos.concat(await p.evaluate(() => window.__msgs)).join(" | ");
+    assert.match(alerta, /por que o cliente recebe esse BV/);
+    assert.equal(await p.evaluate(() => window.__gravados.filter((g) => g.t === "clientes_empresas").length), 0, "não salvou sem a explicação");
     assert.deepEqual(errs, []);
     console.log('ok 1 - clientes: etiquetas do parâmetro, foto, blocos ao rolar, filtros');
     await p.close();
 
     // ---------- Parâmetros ----------
-    ({ p, errs } = await abrir(b, 'Modulos/Configuracoes/Parametros/parametros.html', { cadastro_etiquetas: [{ empresa_id: 'e1', cadastro: 'cliente', grupos: GRUPOS_CLI }, { empresa_id: 'e1', cadastro: 'local', grupos: [{ chave: 'tipo', titulo: 'Tipo', cor: 'azul', unica: true, obrigatoria: true, opcoes: ['Hotel'] }] }], empresas: [{ id: 'e1', nome: 'Teste' }] }));
+    ({ p, errs } = await abrir(b, 'Modulos/Configuracoes/Parametros/parametros.html', { cadastro_etiquetas: [{ empresa_id: 'e1', cadastro: 'cliente', grupos: GRUPOS_CLI }, { empresa_id: 'e1', cadastro: 'local', grupos: [{ chave: 'tipo', titulo: 'Tipo', cor: 'azul', unica: true, obrigatoria: true, opcoes: ['Hotel'] }] }], empresas: [{ id: 'e1', nome: 'Teste' }], comercial_motivos_cancelamento: [{ id: "m1", empresa_id: "e1", nome: "Evento remarcado", descricao: "Mudou a data", ativo: true, ordem: 1 }, { id: "m2", empresa_id: "e1", nome: "Outro motivo", descricao: "", ativo: true, ordem: 99 }], clientes_equipe_papeis: [{ id: "pp1", empresa_id: "e1", nome: "Titular", ativo: true, ordem: 1 }, { id: "pp2", empresa_id: "e1", nome: "Assistente", ativo: true, ordem: 2 }] }));
     await p.waitForFunction(() => !document.getElementById('salvarEmpresaParametros').disabled, null, { timeout: 15000 });
     await p.click('#pr-tab-comercial');
     await p.waitForSelector('[data-etiquetas-cadastro="cliente"] .pe-grupo');
@@ -103,6 +118,23 @@ async function abrir(b, pagina, banco) {
     assert.equal(gc[3].chave, 'tamanho_do_evento');
     assert.deepEqual(gc[3].opcoes, ['Até 100 pessoas']);
     assert.ok(g.some(x => x.row.cadastro === 'local'));
-    console.log('ok 2 - parâmetros: incluir/tirar opção, novo grupo, salvar', errs.length ? errs : '');
+    // motivos de cancelamento
+    await p.waitForSelector(".pr-motivos-cancel .pr-mc-lista li");
+    assert.deepEqual(await p.$$eval(".pr-motivos-cancel [data-nome]", (l) => l.map((x) => x.value)), ["Evento remarcado", "Outro motivo"]);
+    await p.fill(".pr-motivos-cancel [data-novo] [name=nome]", "Orçamento acima do previsto");
+    await p.click(".pr-motivos-cancel [data-novo] button");
+    await p.waitForFunction(() => window.__gravados.some((g) => g.t === "comercial_motivos_cancelamento" && g.op === "insert"));
+    assert.equal((await p.evaluate(() => window.__gravados.find((g) => g.t === "comercial_motivos_cancelamento" && g.op === "insert").row)).nome, "Orçamento acima do previsto");
+    await p.locator(".pr-motivos-cancel [data-ativo]").first().uncheck();
+    await p.waitForFunction(() => window.__gravados.some((g) => g.t === "comercial_motivos_cancelamento" && g.op === "update" && g.row.ativo === false));
+    // papéis das equipes de clientes
+    await p.waitForSelector(".pr-papeis-equipe .pr-mc-lista li");
+    assert.deepEqual(await p.$$eval(".pr-papeis-equipe [data-nome]", (l) => l.map((x) => x.value)), ["Titular", "Assistente"]);
+    assert.equal(await p.locator(".pr-papeis-equipe [data-descricao]").count(), 0, "papel sem explicação");
+    await p.fill(".pr-papeis-equipe [data-novo] [name=nome]", "Produtora");
+    await p.click(".pr-papeis-equipe [data-novo] button");
+    await p.waitForFunction(() => window.__gravados.some((g) => g.t === "clientes_equipe_papeis" && g.op === "insert"));
+    assert.deepEqual(await p.evaluate(() => { const r = window.__gravados.find((g) => g.t === "clientes_equipe_papeis" && g.op === "insert").row; return [r.nome, "descricao" in r]; }), ["Produtora", false]);
+    console.log('ok 2 - parâmetros: incluir/tirar opção, novo grupo, salvar; motivos de cancelamento; papéis das equipes', errs.length ? errs : '');
   } finally { await b.close(); }
 })().catch(e => { console.error(e); process.exit(1); });

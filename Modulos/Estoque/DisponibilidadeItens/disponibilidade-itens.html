@@ -1,33 +1,32 @@
 <div class="dispon-page el-page" data-module="disponibilidade-itens">
   <div id="disponLista" class="dispon-list-view">
-  <header class="dispon-hero">
-    <div>
+  <!-- Título no centro; à esquerda os filtros Data e Buscar item, à direita como ver as reservas (out/2026).
+       O título é o primeiro filho do cabeçalho (o tema reconhece a faixa); a posição vem da grade no CSS. -->
+  <header class="dispon-hero dispon-hero-linha">
+    <div class="dispon-hero-titulo">
       <span class="dispon-eyebrow">Estoque</span>
       <h1>Disponibilidade de Itens</h1>
       <p>Compare estoque total, reservas por data, manutencao e quantidade disponivel para venda.</p>
     </div>
+    <div class="dispon-filters dispon-hero-filtros">
+      <label>Data
+        <input class="el-input" type="date" id="disponData">
+      </label>
+      <label>Buscar item
+        <input class="el-input" id="disponBusca" placeholder="Nome ou código" title="Busca pelo nome, código ou categoria">
+      </label>
+    </div>
+    <div class="dispon-hero-dir">
+      <div class="dispon-visao" role="group" aria-label="Como ver as reservas">
+        <button type="button" data-dispon-visao="resumo" title="Reservado somado numa coluna" aria-label="Reservado somado numa coluna">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18"/></svg>
+        </button>
+        <button type="button" data-dispon-visao="pedidos" title="Uma coluna por pedido na data" aria-label="Uma coluna por pedido na data">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16M3 10h18"/></svg>
+        </button>
+      </div>
+    </div>
   </header>
-  <section class="dispon-filters">
-    <label>Data
-      <input class="el-input" type="date" id="disponData">
-    </label>
-    <label>Buscar item
-      <input class="el-input" id="disponBusca" placeholder="Nome, codigo ou categoria">
-    </label>
-    <label>Categoria
-      <select class="el-select" id="disponCategoria">
-        <option value="">Todas</option>
-      </select>
-    </label>
-    <label>Status
-      <select class="el-select" id="disponStatus">
-        <option value="">Todos</option>
-        <option value="disponivel">Disponivel</option>
-        <option value="atencao">Atencao</option>
-        <option value="indisponivel">Indisponivel</option>
-      </select>
-    </label>
-  </section>
 
 
   <p class="dispon-periodo-ajuda" id="disponErro" role="alert" hidden></p>
@@ -35,7 +34,7 @@
     <div class="dispon-table-wrap">
       <table>
         <thead>
-          <tr>
+          <tr id="disponCabecalho">
             <th>Foto</th>
             <th>Item</th>
             <th>Categoria</th>

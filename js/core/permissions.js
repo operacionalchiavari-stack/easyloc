@@ -176,6 +176,7 @@
     [/CreditosIA/i, 'comercial.creditos.visualizar'],
     [/Catalogo/i, 'comercial.catalogo.visualizar'],
     [/Comercial\/Historico/i, 'comercial.pedidos.visualizar'], // Histórico do comercial (out/2026)
+    [/Comercial\/Cancelamentos/i, 'comercial.pedidos.visualizar'], // relatório de cancelamentos (out/2026)
     [/Pedidos/i, 'comercial.pedidos.visualizar'],
     [/Contratos/i, 'comercial.contratos.visualizar'],
     [/ImportarItens/i, 'estoque.importacao.executar'],

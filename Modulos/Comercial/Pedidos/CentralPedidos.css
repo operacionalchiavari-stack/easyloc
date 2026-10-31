@@ -173,7 +173,7 @@ html:root :is(body:not(.portal-shell), #main-content) #centralPedidosPage > .cen
   font-size: 14px;
 }
 
-.central-col-numero{width:76px}.central-col-data{width:98px}.central-col-fluxo{width:660px}.central-col-valor{width:124px}.central-col-acoes{width:80px}
+.central-col-numero{width:96px}.central-col-data{width:98px}.central-col-fluxo{width:660px}.central-col-valor{width:124px}.central-col-acoes{width:80px}
 .central-table td:nth-child(2) .central-record-link,.central-table td:nth-child(3) .central-record-link{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .central-table th:is(:nth-child(4),:nth-child(5),:nth-child(6)),.central-table td:is(:nth-child(4),:nth-child(5),:nth-child(6)){padding-left:8px;padding-right:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .central-fluxo-cell{min-width:0}
@@ -876,6 +876,30 @@ html:root #btnFecharCadastroRelacionado:hover{background:#f4f6f8!important}
 }
 .central-fluxo li>span:last-child{display:block;padding:0 1px;overflow-wrap:anywhere;hyphens:auto}
 /* Pedido extra (out/2026): linha logo abaixo do principal */
-.central-table tr.is-extra td:first-child{padding-left:22px;position:relative}
-.central-table tr.is-extra td:first-child::before{content:"";position:absolute;left:9px;top:-2px;bottom:50%;width:8px;border-left:1.5px solid #9fb3d6;border-bottom:1.5px solid #9fb3d6;border-bottom-left-radius:6px}
+.central-table tr.is-extra td:first-child .pedido-numero-card,.central-table tr.is-extra td:first-child .pedido-extra-tag{margin-left:22px}
+.central-table-wrap{position:relative}
+/* traço do pedido principal até o extra: medido e desenhado pelo JS (ligarExtras) */
+.central-extra-ligacao{position:absolute;z-index:1;pointer-events:none;box-sizing:border-box;border-left:1.5px solid #9fb3d6;border-bottom:1.5px solid #9fb3d6;border-bottom-left-radius:8px}
 .pedido-extra-tag{display:block;margin-top:4px;font-size:11px;font-weight:600;color:#123f86;white-space:nowrap}
+
+/* Ordenar por (out/2026): no cabeçalho, ao lado de Filtros */
+.central-ordem{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:13px;color:#4f4f4f;white-space:nowrap}
+.central-ordem span{font-weight:500}
+html:root:is(#central-ordem,html) .central-ordem select.el-select{width:auto;min-width:220px;height:40px;min-height:40px;padding:6px 32px 6px 12px;font-size:13px}
+/* "Ordenar por" fica à direita da linha dos botões de situação */
+.central-barra .central-ordem{margin-left:auto}
+
+/* Pedidos | Contas a receber (out/2026) */
+/* As duas abas (Pedidos | Contas a receber) e as situações seguem as abas globais do sistema (.el-tabs, styles/abas-global.css):
+   texto em caixa alta, sublinhado na ativa. Aqui só o espaço entre os grupos e as bolinhas de contagem. */
+.central-barra{column-gap:44px}
+.central-visao-badge{position:absolute;top:-9px;right:-7px;min-width:20px;height:20px;padding:0 6px;display:grid;place-items:center;border-radius:999px;background:#e60012;color:#fff;font:600 11px/1 Inter,sans-serif;border:2px solid #fff;animation:ch-pendencia-pulsa 1.15s ease-in-out infinite}
+.central-visao-badge[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.central-visao-badge{animation:none}}
+.central-barra .central-ordem[hidden]{display:none}
+.cr-page.cr-embutido{padding:0;margin:0 0 20px}
+.central-situacoes[hidden],#centralListaTabela[hidden],#centralContasReceber[hidden]{display:none!important}
+.central-filters .el-field[hidden]{display:none!important}
+
+/* Equipe do pedido embaixo do nome do cliente (out/2026) */
+html:root:is(#central-equipe#central-equipe,html) .pedido-equipe-tag{display:block;margin-top:2px;font-size:12px;font-weight:500;color:#123f86}

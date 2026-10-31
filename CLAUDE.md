@@ -11162,3 +11162,152 @@ Pedido: "fica sempre em dia e não muda para pago, e pagamentos pagos não podem
 **Aviso de vencimento em A receber (30/out)**: bolinha piscando abaixo da data (`alertaVenc` em financeiro.js, CSS `.fin-venc-alerta`, cor e ritmo da bolinha de pendência): vermelho do vencido até 3 dias, amarelo de 4 a 7, nada depois disso; título recebido, cancelado ou sem saldo não mostra. Vale nas duas visões (por pedido e por data). Conta em dias pela data local (`hoje()` é UTC e viraria o dia às 21h).
 
 **Abas por vencimento em A receber (30/out)**: na mesma linha da busca e dos filtros, Vencidos, Vence hoje e Próximos 7 dias (1 a 7 dias: hoje fica só em "Vence hoje"), com a bolinha vermelha piscando com a quantidade (sem bolinha quando é zero), igual à Central de Pedidos. `PRAZOS`/`noPrazo` em financeiro.js; `S.filtroR.prazo` soma com busca, divisão e conta; clicar de novo limpa; escolher outro status ou Recebidas também limpa. A quantidade conta todas as contas em aberto, sem olhar a busca nem os outros filtros.
+
+## A receber com a situação do pedido + Painel gerencial (30/out/2026)
+- **A receber** (`financeiro.js`): cada pedido ganhou, abaixo do cabeçalho, a faixa `.fin-ped-resumo` com tipo, evento, local, entrega e coleta, uma barra de "% pago", "N de M parcelas recebidas", a próxima parcela e Recebido / **Falta para quitar** / Vencido. O status do pedido aparece ao lado do nome. Toda parcela, nas duas visões (por pedido e por data), tem a coluna **Falta no pedido**: quanto falta para quitar o pedido inteiro e "depois desta: R$ X" (parcelas em aberto em ordem de vencimento). `situacaoPedido(chave)` olha todas as parcelas, sem os filtros. Esses campos ficam fora da coloração verde/vermelha automática (`colorirValores`).
+- **Aba Gerencial** (`financeiro-gerencial.js`, `FinanceiroGerencial.render`; depois de DRE; agora são 11 abas): pedido da diretora (ex-auditora, gosta de planilha e não de dashboard), então tudo é número em grade estilo Excel (`.gr-planilha`, despesas entre parênteses, zero vira "–"), sem gráficos. Ano, mês de referência e base **Lançado (competência)** ou **Realizado (recebido e pago)**, com a mesma regra da DRE (`fin_dre_centros`), calculada no navegador a partir de `S.receber`/`S.pagar`. Blocos:
+  1. Saúde financeira: mês anterior × mês × variação × acumulado, com "Como ler" (receita, % impostos, % custos, margem de contribuição, % despesas, resultado, margem líquida, pedidos, ticket médio).
+  2. Posição de hoje: saldo, a receber, vencidos, inadimplência, 30 dias, cobertura.
+  3. DRE mês a mês (Jan–Dez + total + % receita): receita bruta, (−) impostos, receita líquida, (−) custos, margem de contribuição, (−) cada grupo de despesa e resultado. Os grupos abrem com ▸, e a despesa do mês mais de 30% acima da média dos meses anteriores fica amarela.
+  4. Onde está o gasto: ranking por categoria.
+  5. Fornecedores: os 15 maiores.
+  6. Resultado por centro de custo.
+
+  **Todo número abre a lista de lançamentos** que o forma (janela larga `.gr-modal-largo`), com exportar para Excel. "Exportar para Excel" do painel gera `.xlsx` (SheetJS 0.18.5 pelo CDN) com a DRE mês a mês e todos os lançamentos do ano. "Imprimir" abre todos os grupos. Grupos vêm do plano de contas: Impostos = chave `impostos`; Custos = 1º grupo de saída com "custo" no nome; os outros grupos de saída são despesas; título sem categoria entra em "Sem categoria".
+- Teste: `tests/financeiro-gerencial-browser.cjs`. `tests/financeiro-browser.cjs` agora roda em UTC (perto da meia-noite UTC o "hoje" do teste e da tela divergiam) e espera 11 abas. Versões `?v=20261030-gerencial`.
+- **Ponto de equilíbrio e lucro por evento no Gerencial (mesmo dia)**. A aba **Resultados saiu** e virou a sub-aba "Lançar custos dos eventos" do Gerencial (`GRUPOS_ABA.gerencial = Painel + resultados`; `?aba=resultados` continua abrindo). O Financeiro voltou a ter 10 abas, com Gerencial no lugar de Resultados. O painel ganhou:
+  - **Ponto de equilíbrio** (`pontos`/`pontoEquilibrio`): mês a mês, receita − custos variáveis = margem de contribuição; ponto = custos fixos ÷ margem %, mais faturamento acima/abaixo do ponto, % atingido e pedidos necessários pelo ticket médio. Uma frase do mês ("precisava faturar R$ X… faturou R$ Y"), e as duas linhas também na Saúde financeira.
+  - **Fixo ou variável**: coluna nova `fin_categorias.natureza` ('fixo'|'variavel'|null; migration `20261030001100`, aplicada e registrada), editável na coluna "Fixo ou variável" do Plano de contas. Vazio = automático (`FinanceiroGerencial.naturezaDe`): a marcação do grupo; sem ela, impostos, custos da operação e comissões (BV) são variáveis e o resto é fixo. Lançamento sem categoria conta como fixo.
+  - **Lucro por evento**: `fin_resultado_eventos` + `fin_custos_evento` do ano. Uma linha por pedido: receita (valor − créditos + reposição, a mesma conta da antiga Resultados), uma coluna por tipo de custo lançado, total, lucro, margem, recebido, em aberto e se os custos foram revisados. Ordena por data, maior lucro ou menor margem; pode ser o ano todo ou só o mês. O evento com prejuízo fica destacado, e clicar no pedido ou num custo abre os custos lançados. Não depende da base lançado/realizado. Os eventos são relidos a cada vez que a aba abre.
+  - Excel do painel com as abas "Ponto de equilíbrio" e "Lucro por evento". Versões `?v=20261030-ponto-equilibrio`.
+
+## Comercial: contas a receber, cancelamentos, BV explicado e ordem da Central (30/out/2026)
+Migration `20261030001200_comercial_cancelamento_bv_receber.sql` (aplicada e registrada).
+- **Contas a receber dentro da Central de Pedidos** (era a tela própria Comercial > Contas a receber; o usuário pediu dentro da Central): botões **Pedidos | Contas a receber** no começo da linha das situações. A bolinha vermelha conta as parcelas vencidas e as que vencem hoje. Escolher Contas a receber esconde situações, "Ordenar por", filtros e a lista, e mostra `#centralContasReceber`. O código está em `Modulos/Comercial/Pedidos/central-contas-receber.js` (`window.CentralContasReceber.abrir(host)` / `.contarAlertas()`), e o link do pedido abre `pedido.html?pedido=…&modo=editar`. O Comercial vê o que cada cliente deve sem acesso ao Financeiro. Só leitura, pela RPC `comercial_contas_receber(p_empresa)` (security definer; comercial ou financeiro): parcelas, valores, situação e `recebido_em` (última baixa não estornada), **sem conta bancária, PIX ou CNPJ**. Mostra:
+  - agrupado por cliente (padrão, quem tem vencido em cima), por pedido ou por data;
+  - situações Em aberto / Vencidos / Vence hoje / Próximos 7 dias / Recebidas / Todas, com bolinha vermelha piscando;
+  - "Falta no pedido";
+  - quando foi recebido e se foi no prazo;
+  - link para o pedido e exportação para Excel.
+- **Comercial > Cancelamentos** (`Modulos/Comercial/Cancelamentos/`): relatório em planilha.
+  - Blocos: resumo (quantidade, valor, taxa sobre pedidos criados no período, antecedência média, motivo / decorador / cidade mais comuns), por motivo, por decorador (com taxa), por cidade e bairro, por distância do galpão, mês a mês e a lista dos pedidos.
+  - Clicar numa linha filtra a lista. Exporta para Excel.
+  - Período pela data do cancelamento (dia de Brasília; sem ela, a última alteração).
+  - A região sai do texto do endereço do local (`regiao()` em `Modulos/Comercial/comercial-relatorios.js`, formato do Google "…, Cidade - UF, …").
+  - Leitura direta de `separacoes_pedidos` (`cancelamento:observacoes->cancelamento`) e `locais_empresas`.
+- **Motivos de cancelamento em Parâmetros > Comercial** (`parametros-motivos-cancelamento.js`): tabela `comercial_motivos_cancelamento` (RLS: ler = membro; gravar = `configuracoes.empresa.editar`; 2FA), já semeada com os 6 motivos que eram fixos no HTML. Tem incluir, renomear, explicação, ordem e "Aparece" (desativar em vez de apagar, para o relatório manter o nome).
+- **Janela "Cancelar pedido"** (`setupTimelinePedido` em `pedido.mjs`):
+  - Lê os motivos ativos; sem resposta do banco, ficam os do HTML.
+  - "Outro motivo" exige observação.
+  - Grava `observacoes.cancelamento = {motivo, motivo_id, observacao, data, usuario}`. Salvar de novo um pedido já cancelado não apaga mais o motivo.
+  - **Cancelar não exige mais o financeiro distribuído nem a data dos serviços**; os dados obrigatórios continuam valendo (o banco também exige).
+  - `salvarPedidoOperacional(opts)` agora devolve `true` quando grava (`opts.silencioso` tira o aviso). Se não gravou, a situação volta à anterior e não aparece "Pedido cancelado" (antes aparecia mesmo com o salvamento falhando).
+- **BV explicado no cadastro do cliente**: colunas `clientes_empresas.bv_observacao`, `bv_negociado_por` e `bv_aprovado_por`. Com "Recebe BV", os três são obrigatórios (explicação com 10 letras ou mais). Sugestões vêm do Cadastro de Funcionários (datalist); dá para digitar outro nome. Cliente que já recebia BV vai pedir a explicação no próximo salvamento.
+- **Financeiro > A receber: coluna "Recebido em"** nas duas visões. Mostra a data do último recebimento (`fin_baixas`, sem estornados, carregado em `carregar()` como `S.recebidoEm`) e se foi no dia, N dias antes (verde) ou N dias depois (vermelho). Título quitado não mostra mais a bolinha de vencimento.
+- **Central de Pedidos: "Ordenar por"** à direita da linha dos botões de situação (no cabeçalho do título não cabia). Opções:
+  - Padrão (pré-reservas primeiro, como antes);
+  - evento mais próximo (próximos em cima, passados no fim);
+  - data do evento (mais recente / mais antiga);
+  - entrega mais próxima;
+  - nº do pedido (maior / menor);
+  - cliente A–Z;
+  - maior valor.
+
+  A escolha fica guardada (`localStorage central_pedidos_ordem`). `ordenarLista()` em `CentralPedidos.js`.
+- **`styles/planilha.css`**: a grade de planilha (`.gr-*`) saiu do `financeiro.css` e virou compartilhada (Financeiro > Gerencial e os relatórios do Comercial). `Modulos/Comercial/comercial-relatorios.{js,css}`: ajudantes comuns (formato de número, Excel, região, contexto). **Pegadinha de CSS**: `:is(#a,#b,#c,html)` soma o peso de UM id; para somar vários, repetir no mesmo seletor (`:is(#a#a#a,html)`).
+- Testes:
+  - `tests/comercial-relatorios-browser.cjs` (o Contas a receber pela Central) e `tests/pedido-cancelamento-browser.cjs` (novos);
+  - `central-situacoes` (ok 4, ordenação);
+  - `cadastro-etiquetas` (BV obrigatório e motivos em Parâmetros);
+  - `financeiro-gerencial` (recebido em).
+
+- **Pedido extra na Central: a ligação chega no pedido principal** (`ligarExtras()` em CentralPedidos.js). Antes, o traço começava no topo da linha do extra e não alcançava o número do principal. Agora:
+  - é um elemento medido na tela (`.central-extra-ligacao` dentro de `.central-table-wrap`), em "L", do pé do número do principal até o meio do número de cada extra;
+  - é redesenhado quando a tabela muda de tamanho (ResizeObserver);
+  - o recuo do extra é `margin-left:22px` no número: o `padding-left` da célula era vencido por um `!important` do tema;
+  - a coluna do número passou de 76 para 96px.
+
+  Teste: `tests/central-extra-ligacao-browser.cjs`.
+- **Disponibilidade de Itens: visão por pedido**. Dois botões com ícone ao lado de Status: "Reservado somado" (padrão) e "Uma coluna por pedido". Na visão por pedido:
+  - a coluna "Reservado na data" some e entra uma coluna por pedido com reserva na data, logo antes de "Disponível" (ordem: Total, Manutenção, pedidos, Disponível);
+  - cada coluna tem o número, o cliente e o selo de pré-reserva; o `title` traz evento, local e período;
+  - a célula mostra quanto aquele pedido usa do item, contando também as peças dentro de kits do pedido; para um kit, mostra quantos kits as reservas comprometem; zero vira "–".
+
+  Detalhes de implementação:
+  - os pedidos vêm das reservas já carregadas das linhas visíveis (`pedidosDaData`/`usoDoPedido` em `disponibilidade-itens.js`), sem consulta nova;
+  - nessa visão a tabela é sempre redesenhada inteira, porque as colunas dependem das linhas;
+  - a escolha fica em `localStorage dispon_visao`.
+
+  É tela antiga (`carregarNaMain`): a versão do HTML e do JS fica no `sidebarMenu.js`. Teste: ok 10 de `tests/disponibilidade-filtros-browser.cjs`.
+- **Disponibilidade de Itens: cabeçalho fixo** (31/out/2026).
+  - Causa: `.dispon-table-wrap` tinha `overflow-x:auto`, então o `position:sticky` do cabeçalho prendia numa caixa que não rola na vertical.
+  - Agora a tabela rola dentro da própria caixa (`max-height:max(360px, 100vh - 260px)`), e o cabeçalho fica parado no topo dela, com fundo branco (o tema deixava transparente).
+  - O carregamento de mais itens também acompanha a rolagem da caixa (`onListScroll` aceita um rolador dentro da página).
+  - Teste: ok 11 de `tests/disponibilidade-filtros-browser.cjs`.
+- **Tela antiga que não carrega não trava mais** (31/out/2026, `js/core/moduleLoader.js`, `carregarNaMain`).
+  - O que aconteceu: com o Live Server desligado, os arquivos da tela falhavam (`ERR_FAILED`). O carregador esperava o `<script>` da tela para sempre (não tinha `onerror`) e a tela ficava parada.
+  - Agora: HTML com status de erro ou script que falha vira erro tratado, o "carregando" some e `#main-content` mostra "Não foi possível abrir esta tela", com a dica do Live Server ou da internet. Clicar de novo, com o servidor no ar, abre normalmente.
+  - Teste: `tests/modulo-legado-erro-browser.cjs`.
+  - **Para diagnosticar "a tela não abre" no computador local**: se o Console mostrar `WebSocket … 127.0.0.1:5501 … CONNECTION_REFUSED` e `ERR_FAILED` nos arquivos, é o Live Server desligado ("Go Live" no VS Code), não código.
+- **Disponibilidade de Itens só com Data e Buscar item, na linha do título** (31/out/2026).
+  - Categoria e Status saíram da tela; a busca continua achando pelo nome, código ou categoria.
+  - O cabeçalho `.dispon-hero-linha` é uma grade de 3 colunas: filtros à esquerda, título no centro exato da tela e os botões de visualização (somado / por pedido) à direita. Abaixo de 1150px, o título vai para cima e o resto para baixo.
+  - O título continua o primeiro filho do `<header>` (o tema reconhece a faixa), e a grade usa peso alto para vencer o `display:flex` do tema.
+  - `loadCategories()` não consulta mais nada sem o select.
+  - Teste: ok 2 e ok 5 de `tests/disponibilidade-filtros-browser.cjs`.
+- **Contas a receber na Central: só os filtros da Central, e abas globais** (31/out/2026).
+  - Saíram o aviso "Só consulta…", o "Exportar para Excel" e a busca própria.
+  - O botão **Filtros** e a pesquisa de cima valem nas duas visões. `aplicarFiltros()` repassa os filtros para `CentralContasReceber.filtrar()`, sem nova consulta ao banco.
+  - Nas contas a receber, Cliente / Pedido / Local / Status filtram as parcelas e as datas viram **"Vencimento de / até"**. "Comercial" fica escondido, porque a parcela não tem responsável.
+  - As contagens das bolinhas respeitam os filtros.
+  - "Pedidos | Contas a receber" e as situações (Todos / Pré-reserva / Orçamento / Reservado) usam a classe global `.el-tabs` (`styles/abas-global.css`: caixa alta, sublinhado verde na ativa), no lugar dos botões próprios. Continuam com as bolinhas vermelhas.
+
+## Equipes de clientes (31/out/2026, etapa 1)
+Pedido: vincular cadastros (decoradora titular + assistentes/sócios que fecham pedidos em nome dela), útil para relatórios.
+Decisões do usuário: nome "Equipe"; uma pessoa pode estar em várias equipes e o pedido pergunta de qual é; cobrança continua
+com quem fez o pedido; o pedido mostra a pessoa + a equipe; papéis cadastráveis; catálogo fica para depois.
+- **Banco** (migration `20261031000100_clientes_equipes.sql`, aplicada e registrada): `clientes_equipe_papeis` (semeada
+  Titular/Assistente/Sócio(a)), `clientes_equipes` (nome único na empresa, `titular_id`, observação, ativo),
+  `clientes_equipe_membros` (equipe + cliente, papel). Gatilho confere a mesma empresa. RLS: ler = membro; gravar =
+  `comercial.clientes.editar` (papéis: `configuracoes.empresa.editar`); política `seguranca_2fa`. `comercial_contas_receber`
+  devolve `equipe_id`/`equipe_nome`.
+- **Cadastro de Clientes** (`clientes-equipes.js`, `window.ClientesEquipes`): botão "Equipes" no topo abre a janela (lista →
+  nova/editar: nome, observação, ativa, pessoas com "Titular" e papel; a 1ª pessoa vira a titular; excluir). No cadastro do
+  cliente, o bloco `#clienteEquipesBloco` mostra as equipes dele (clicar abre a equipe).
+- **Parâmetros > Comercial**: card "Papéis nas equipes de clientes" (`carregarPapeisEquipe`, mesmo card dos motivos de
+  cancelamento: `cardLista` em `parametros-motivos-cancelamento.js`).
+- **Pedido** (`js/pedido/pedido.equipe.mjs`): ao escolher o cliente, lê as equipes dele; 0 = nada; 1 = escolhida sozinha;
+  2+ = select "Qual equipe?" abaixo do Cliente, obrigatório para salvar (`__pedidoValidarEquipe`). Grava
+  `observacoes.equipe_id/equipe_nome` (`__pedidoEquipe`, em `montarPayloadPedido`); pedido salvo volta com a equipe gravada
+  (mesmo se a pessoa saiu da equipe, aparece "não faz mais parte").
+- **Relatórios**: Central mostra a equipe embaixo do cliente e a pesquisa/filtro de cliente acham pela equipe; Contas a
+  receber ganhou "Por equipe"; Cancelamentos ganhou o bloco "Por equipe" (e no Excel).
+- **BV da equipe** (migration `20261031000200_bv_divisao_equipe.sql`, aplicada e registrada; testada antes numa
+  transação desfeita). Regra: pedido com equipe usa o **percentual da titular** (vigência na criação do pedido) e 100% vai
+  para ela; sem equipe, como antes (de quem fez). Em **Financeiro e pagamentos** do pedido, o card "Comissão do decorador
+  (BV)" — título "BV do decorador" — (`js/pedido/pedido.bv.mjs`, embaixo da Montagem) mostra a regra, o valor estimado e "Quem recebe": dá para
+  **dividir** o BV entre a titular, quem fez e outras pessoas da equipe (em pontos da locação que precisam somar o BV, ex.:
+  15% = 10% + 5%) e marcar **"BV negociado diferente neste pedido"** (% próprio + "por quê"). Grava
+  `observacoes.bv = {manual, percentual, observacao, partes}` (null = padrão); o salvar recusa divisão que não fecha.
+  - Banco: `fin_bv_partes` (uma linha e **um título no Contas a Pagar por pessoa**); `fin_bv_comissoes` continua o resumo
+    do pedido (+ `manual`, `observacao`). `fin_bv_sincronizar` refeito: confere a soma, só aceita quem fez/titular/
+    membros, cancela o título de quem saiu, nunca reduz abaixo do já pago (pede estorno). `fin_bv_linhas` (uma linha por
+    pessoa, com `linha_id`, `percentual_total`, `feito_por`, `manual`) alimenta `fin_bv_extrato` e
+    `fin_conta_cliente_extrato_sem_compensacoes`; `pedido_saldo_conta_cliente` soma pelas partes. RPC
+    `pedido_bv_regra(empresa, pedido, cliente, equipe)` para a tela. Os 6 BVs que existiam viraram uma parte cada.
+  - Conta corrente em Financeiro > Decoradores: cada pessoa vê só a parte dela ("parte do BV de 15%", "pedido de Ana").
+- Testes: `tests/clientes-equipes-browser.cjs` (ok 5 = BV); `comercial-relatorios-browser.cjs` e `cadastro-etiquetas-browser.cjs` ganharam
+  as checagens de equipe e papéis.
+- **Financeiro e pagamentos em 3 colunas** (31/out/2026, pedido do usuário): parcelas | Resumo do pedido + Frete | BV +
+  Montagem (depois invertido: Frete em cima e Resumo embaixo; Montagem em cima e BV embaixo, as duas da mesma largura). `pedido.entrada.mjs` cria `.pf-col-a`/`.pf-col-b` dentro de `.pedido-financeiro` e um MutationObserver põe cada
+  card na sua coluna (o card do BV nasce depois, em `pedido.bv.mjs`). CSS no fim de `pedido.css` (`#pf3`): colunas laterais
+  de ~600–660px (Resumo + Frete 260–300px, BV + Montagem o resto); abaixo de 1450px os cards descem para baixo das parcelas (2 colunas), e abaixo de 760px uma só.
+  Depois: Volume e Distância foram para a linha do título "Frete" (`.frete-topo` no `pedido.html`), e acima de 760px as
+  colunas viram `display:contents` com os 4 cards num grid 2×2 (`#cardLogisticaPedido`/`#cardMontagemPedido` na 1ª linha,
+  Resumo/BV na 2ª), então Frete e Montagem — e Resumo e BV — ficam sempre com a mesma altura.
+  Ajuste manual de frete/montagem (`pedido.logistica-manual.mjs`) compactado: uma linha "Cálculo automático · Ajustar"
+  (link), e o valor final + observação obrigatória abrem num painel flutuante (`.logistica-manual-painel`, OK / "Voltar ao
+  automático" / Esc) — o card não cresce. No Frete a linha fica logo abaixo de `.frete-topo`.
+  A distância do frete se ajusta na própria caixinha "Distância" da linha do Frete (`.frete-km-chip`, contorno tracejado):
+  clicar mostra o campo `#freteKmManual` ali dentro, Enter/sair confirma (recalcula o frete), Esc desiste. O campo separado
+  "Distância para cálculo (km)" saiu do card.

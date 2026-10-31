@@ -3132,6 +3132,7 @@ function pintarAbaPedido(host){
         ${qtd ? `<button type="button" class="cpj-btn cpj-btn-ghost" data-pedido-renderizar>${rotulo(qtd)}</button>` : ""}
         <button type="button" class="cpj-btn cpj-btn-ghost" data-pedido-imprimir>Imprimir</button>
         <button type="button" class="cpj-btn cpj-btn-primary" data-pedido-pdf>Gerar PDF</button>
+        ${typeof window.parent.__pedidoAbrirLink === "function" ? `<button type="button" class="cpj-btn cpj-btn-ghost cpj-btn-link-pedido" data-pedido-link title="Pedido digital: o cliente vê o pedido e paga pelo mesmo link"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>Link do pedido</button>` : ""}
       </div>
     </header>
     <p class="cpj-modal-error" role="alert" hidden></p>
@@ -3161,6 +3162,8 @@ function pintarAbaPedido(host){
   };
   host.querySelector("[data-pedido-imprimir]").addEventListener("click", (e) => imprimir(e.currentTarget, "Imprimir"));
   host.querySelector("[data-pedido-pdf]").addEventListener("click", (e) => imprimir(e.currentTarget, "Gerar PDF"));
+  // Link do pedido (pedido digital + pagamento): a janela é a da tela do pedido (pedido.html), por cima de tudo
+  host.querySelector("[data-pedido-link]")?.addEventListener("click", () => window.parent.__pedidoAbrirLink?.());
   const botao = host.querySelector("[data-pedido-renderizar]");
   botao?.addEventListener("click", async () => {
     botao.disabled = true; botao.textContent = "Preparando as cenas…";

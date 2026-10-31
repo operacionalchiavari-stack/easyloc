@@ -7087,3 +7087,105 @@ html:root:is(#pedido-pagas,html) .pedido-screen tr.pg-linha.pg-travada.is-partia
 html:root:is(#pedido-pagas,html) .pedido-screen tr.pg-linha.pg-travada :is(input,select){background:transparent;border-color:transparent;color:#4f4f4f;cursor:not-allowed;opacity:1}
 html:root:is(#pedido-pagas,html) .pedido-screen tr.pg-linha.pg-travada .pg-valor{cursor:not-allowed;color:#4f4f4f}
 html:root:is(#pedido-pagas,html) .pedido-screen tr.pg-linha [hidden]{display:none}
+
+/* Equipe do pedido (out/2026): aparece abaixo do Cliente quando a pessoa está em alguma equipe */
+html:root:is(#pedido-equipe#pedido-equipe,html) .pedido-equipe{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+html:root:is(#pedido-equipe#pedido-equipe,html) .pedido-equipe[hidden]{display:none!important}
+html:root:is(#pedido-equipe#pedido-equipe,html) .pedido-equipe label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b}
+html:root:is(#pedido-equipe#pedido-equipe,html) .pedido-equipe select{min-height:34px;height:34px;padding:4px 10px;font-size:14px}
+html:root:is(#pedido-equipe#pedido-equipe,html) .pedido-equipe small{font-size:12px;color:#8a6d1f}
+html:root:is(#pedido-equipe#pedido-equipe,html) .pedido-equipe.is-invalido select{border-color:#b42318;box-shadow:0 0 0 2px rgba(180,35,24,.15)}
+
+/* Comissão do decorador (BV) no Financeiro e pagamentos (out/2026, pedido.bv.mjs) */
+html:root:is(#pedido-bv#pedido-bv,html) .pedido-bv-card[hidden]{display:none!important}
+html:root:is(#pedido-bv#pedido-bv,html) .pedido-bv-card{display:flex;flex-direction:column;gap:10px;margin-top:14px;background:#fff}
+html:root:is(#pedido-bv#pedido-bv,html) .pedido-bv-card p{margin:0;font-size:13px;color:#4f4f4f;line-height:1.45}
+.pbv-manual{display:flex;align-items:center;gap:8px;font-size:13px;color:#1f2020}
+.pbv-neg{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #e3e7ec;border-radius:10px;background:#f7f9fb}
+.pbv-neg label{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#6b6b6b}
+.pbv-neg label span{display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px}
+html:root:is(#pedido-bv#pedido-bv,html) .pedido-bv-card input[type=number],html:root:is(#pedido-bv#pedido-bv,html) .pedido-bv-card input[type=text]{min-height:32px;height:32px;padding:4px 8px;border:1px solid #d6dde6;border-radius:8px;font-size:13px;background:#fff}
+.pbv-neg input[type=number]{width:90px}
+.pbv-total{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-top:1px solid #e3e7ec;border-bottom:1px solid #e3e7ec;font-size:13px}
+.pbv-total strong{font-size:15px}
+.pbv-sub{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b}
+.pbv-div ul{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pbv-div li{display:grid;grid-template-columns:1fr 84px 92px 22px;align-items:center;gap:8px;font-size:13px}
+.pbv-nome small{display:block;font-size:11px;color:#6b6b6b}
+.pbv-nome small.pbv-pago{color:#1f7a44}
+.pbv-pct{display:flex;align-items:center;gap:4px}
+html:root:is(#pedido-bv#pedido-bv,html) .pbv-pct input{width:64px}
+.pbv-rs{text-align:right;font-variant-numeric:tabular-nums}
+.pbv-rem{border:0;background:none;color:#b42318;font-size:18px;cursor:pointer;padding:0}
+html:root:is(#pedido-bv#pedido-bv,html) .pbv-add{min-height:32px;height:32px;font-size:13px;padding:2px 8px}
+.pbv-soma{font-weight:600;color:#1f7a44!important}
+.pbv-soma.is-erro{color:#b42318!important}
+.pbv-padrao{align-self:flex-start;border:0;background:none;color:#123f86;font-size:13px;text-decoration:underline;cursor:pointer;padding:0}
+html:root:is(#pedido-bv#pedido-bv,html) .pedido-bv-card .pbv-nota{font-size:12px;color:#6b6b6b}
+
+/* Financeiro e pagamentos em 3 colunas (out/2026): parcelas | Resumo do pedido + Frete | BV + Montagem */
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-etapa-financeiro{grid-template-columns:minmax(0,1fr) minmax(620px,760px);gap:20px}
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-etapa-financeiro>.pedido-financeiro{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-financeiro .pf-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-financeiro .pf-col>.finance-card{margin:0;width:auto;box-sizing:border-box}
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-financeiro .pf-col:empty{display:none}
+/* tela média: as duas colunas de cards descem para baixo das parcelas */
+@media(max-width:1450px){
+  html:root:is(#pf3#pf3,html) .pedido-screen .pedido-etapa-financeiro{grid-template-columns:minmax(0,1fr)}
+  html:root:is(#pf3#pf3,html) .pedido-screen .pedido-etapa-financeiro>.pedido-financeiro{grid-row:auto}
+}
+@media(max-width:760px){
+  html:root:is(#pf3#pf3,html) .pedido-screen .pedido-etapa-financeiro>.pedido-financeiro{grid-template-columns:1fr}
+}
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-financeiro .pedido-bv-card>:not(h2){margin-left:18px;margin-right:18px}
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-financeiro .pedido-bv-card>:last-child{margin-bottom:16px}
+/* Resumo + Frete mais estreitos (valores perto da descrição); a coluna do BV fica um pouco maior */
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-etapa-financeiro{grid-template-columns:minmax(0,1fr) minmax(600px,660px)}
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-etapa-financeiro>.pedido-financeiro{grid-template-columns:minmax(260px,300px) minmax(320px,1fr)}
+/* "Parcela 1 / 1 de 1" não quebra letra por letra quando a tabela aperta */
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pg-card-tabela .cronograma-table th:first-child,
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pg-card-tabela .cronograma-table td:first-child{min-width:96px;width:96px;white-space:nowrap}
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-bv-card .pbv-div li{grid-template-columns:minmax(0,1fr) 74px 82px 18px;gap:6px}
+html:root:is(#pf3#pf3,html) .pedido-screen .pedido-bv-card .pbv-pct input{width:54px}
+/* as duas colunas de cards com a mesma largura (Frete + Resumo | Montagem + BV) */
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-etapa-financeiro{grid-template-columns:minmax(0,1fr) minmax(536px,616px)}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-etapa-financeiro>.pedido-financeiro{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Volume e Distância na linha do título "Frete"; Frete e Montagem (e Resumo e BV) com a mesma altura */
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #e3e7ec}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo h2{border-bottom:0!important;margin:0}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .logistica-extra{display:flex;gap:6px;margin:0 16px 0 0;padding:0;border:0}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .logistica-extra div{display:flex;flex-direction:column;gap:1px;padding:4px 8px;min-width:0;border:1px solid #d6dde6;border-radius:8px;margin:0}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .logistica-extra span{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:#6b6b6b}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .logistica-extra strong{font-size:12.5px;white-space:nowrap}
+@media(min-width:761px){
+  html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .pf-col{display:contents}
+  html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro{align-items:stretch}
+  html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro #cardLogisticaPedido{grid-column:1;grid-row:1}
+  html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro #cardMontagemPedido{grid-column:2;grid-row:1}
+  html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .resumo-card{grid-column:1;grid-row:2}
+  html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .pedido-bv-card{grid-column:2;grid-row:2}
+}
+/* Ajuste manual de frete/montagem: uma linha só + painel flutuante (o card não cresce) */
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-card{position:relative;overflow:visible}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-card .logistica-manual{position:relative;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:8px;margin:8px 16px 4px}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-manual small{font-size:12px;color:#6b6b6b}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-manual-link{border:0;background:none;padding:0;color:#123f86;font-size:12.5px;font-weight:600;text-decoration:underline;cursor:pointer;min-height:0;height:auto;letter-spacing:0;text-transform:none;box-shadow:none}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-manual-painel{position:absolute;top:calc(100% + 6px);right:0;z-index:30;width:min(280px,calc(100vw - 32px));display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #d6dde6;border-radius:12px;background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.18)}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-manual-painel label{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:0;font-size:12px;color:#4f4f4f}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-manual-painel input{width:100%;box-sizing:border-box;min-height:34px;height:34px}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-manual-painel textarea{min-height:70px}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-manual-acoes{display:flex;align-items:center;justify-content:space-between;gap:8px}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .logistica-manual-acoes .btn{min-height:32px;height:32px;padding:0 16px;font-size:13px}
+/* Distância editável na própria caixinha da linha do Frete */
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .frete-km-chip{cursor:pointer;border-style:dashed!important;border-color:#123f86!important}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .frete-km-chip:hover,
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .frete-km-chip:focus-visible{background:#eaf0fa;outline:none}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .frete-km-chip.is-editando{border-style:solid!important;background:#fff}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .frete-km-chip strong[hidden],
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .frete-km-chip input[hidden]{display:none!important}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pedido-financeiro .frete-topo .frete-km-chip input{width:64px;min-height:0!important;height:20px!important;padding:0 2px!important;border:0!important;box-shadow:none!important;background:transparent;font-size:12.5px;font-weight:600}
+/* Locação, Montagem e Frete bem separados: contorno mais firme, sombra e mais espaço entre os cards */
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pg-componentes{display:flex;flex-direction:column;gap:22px}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pg-componente-card{border:1px solid #cfd6df;box-shadow:0 1px 2px rgba(15,23,42,.06),0 8px 22px rgba(15,23,42,.09)}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pg-componente-card>.pg-grupo{background:#eef1f5;border-bottom:1px solid #d9dfe6}
+html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pg-componente-card>.pg-grupo{background:#fff}

@@ -247,3 +247,16 @@ html:root #parametrosPagina .pr-painel-cards #logisticaManualParametros{margin-t
 .pr-pv-opcao input[data-o=texto]{width:190px;min-height:32px;padding:0 8px;border:1px solid #dfe4ea;border-radius:6px;font:13px Inter,sans-serif}
 .pr-pv-opcao label{display:flex;align-items:center;gap:4px;font-size:12px;color:#b42318}
 .pr-pv-nova-op{border:1px dashed #cfd6df;border-radius:10px;background:none;padding:0 12px;min-height:40px;color:#123f86;cursor:pointer}
+
+/* Motivos de cancelamento do pedido (out/2026) */
+.pr-mc-lista{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:6px}
+.pr-mc-lista li{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:8px 10px;border:1px solid #e3e7ec;border-radius:10px;background:#fff}
+.pr-mc-lista li.inativo{opacity:.55;background:#f7f9fb}
+.pr-mc-ordem{display:flex;flex-direction:column;gap:2px}
+.pr-mc-ordem button{width:24px;height:20px;border:1px solid #dfe4ea;border-radius:5px;background:#fff;cursor:pointer;font-size:11px;line-height:1;color:#4f4f4f}
+.pr-mc-ordem button:disabled{opacity:.3;cursor:default}
+.pr-mc-texto{display:grid;grid-template-columns:minmax(180px,1fr) minmax(220px,2fr);gap:8px}
+.pr-mc-texto input,.pr-mc-novo input{height:36px;padding:6px 10px;border:1px solid #dfe4ea;border-radius:8px;font:inherit;font-size:13px}
+.pr-mc-texto input[data-nome]{font-weight:600}
+.pr-mc-novo{display:grid;grid-template-columns:minmax(200px,1fr) minmax(220px,2fr) auto;gap:8px}
+@media(max-width:800px){.pr-mc-texto,.pr-mc-novo{grid-template-columns:1fr}}

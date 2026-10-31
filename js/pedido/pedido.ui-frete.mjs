@@ -1,5 +1,5 @@
 import { corDoValor, colorirValor } from "./pedido.valores-ui.mjs";
-import { aplicarLogisticaManual } from './pedido.logistica-manual.mjs';
+import { aplicarLogisticaManual } from './pedido.logistica-manual.mjs?v=20261031-ajuste-compacto';
 export async function renderizarFreteCard(resumo){
   const automatico = resumo;
   const finalManual = aplicarLogisticaManual('frete', resumo?.totalFrete || 0, () => renderizarFreteCard(automatico));

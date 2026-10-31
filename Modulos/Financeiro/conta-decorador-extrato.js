@@ -13,10 +13,14 @@
       const f={nome:p.cliente_nome,clienteId:p.cliente_id,titulo:p.pagar_id,
         pendente:Number(p.saldo || 0),situacao:p.registro==='sem_registro'?'sem_registro':!p.ativo?'cancelado':Number(p.saldo)>0?'aberto':'pago'};
       if(p.pagar_id)fontes.set(p.pagar_id,f);
+      // uma linha por pessoa: o BV de um pedido pode ser dividido entre a titular da equipe e quem fez (out/2026)
+      const lid=p.linha_id || p.id;
+      const parte=p.percentual_total!=null && Number(p.percentual)!==Number(p.percentual_total)?' (parte do BV de '+Number(p.percentual_total)+'%)':'';
+      const feito=p.feito_por && p.feito_por!==p.cliente_nome?' · pedido de '+p.feito_por:'';
       if(Number(p.valor)>0){
-        adicionar('bv-'+p.id,t?.emissao || p.data_evento,'BV · Pedido #'+p.numero_pedido,Number(p.valor),f,{obs:Number(p.percentual)+'% sobre '+Number(p.base_locacao || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+' de locação',acao:true});
-        if(!p.ativo || t?.status==='cancelado')adicionar('bv-cancelado-'+p.id,t?.cancelado_em || t?.updated_at || p.data_evento,'Cancelamento de BV · Pedido #'+p.numero_pedido,-Number(p.valor),f);
-      } else adicionar('pedido-'+p.id,p.data_evento,'Pedido #'+p.numero_pedido,0,f,{obs:p.registro==='sem_registro'?'Sem BV registrado':'Sem comissão'});
+        adicionar('bv-'+lid,t?.emissao || p.data_evento,'BV · Pedido #'+p.numero_pedido,Number(p.valor),f,{obs:Number(p.percentual)+'% sobre '+Number(p.base_locacao || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+' de locação'+parte+(p.manual?' · negociado no pedido':'')+feito,acao:true});
+        if(!p.ativo || t?.status==='cancelado')adicionar('bv-cancelado-'+lid,t?.cancelado_em || t?.updated_at || p.data_evento,'Cancelamento de BV · Pedido #'+p.numero_pedido,-Number(p.valor),f);
+      } else adicionar('pedido-'+lid,p.data_evento,'Pedido #'+p.numero_pedido,0,f,{obs:p.registro==='sem_registro'?'Sem BV registrado':'Sem comissão'});
     }
     for(const c of dados.creditos || []){
       const f={nome:c.fornecedor_nome,clienteId:c.fornecedor_id,titulo:c.id,pendente:c.status==='cancelado'?0:Number(c.aberto || 0),

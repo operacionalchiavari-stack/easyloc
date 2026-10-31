@@ -3,6 +3,7 @@
 const { chromium } = require("playwright");
 const fs = require("fs"), path = require("path"), assert = require("assert");
 const raiz = path.resolve(__dirname, ".."), BASE = "http://acervo.teste/";
+process.env.TZ = "UTC"; // datas do teste e da tela no mesmo fuso (perto da meia-noite UTC o "hoje" mudava)
 const hoje = new Date().toISOString().slice(0, 10);
 const mock = `(() => {
   window.__rpc = [];
@@ -30,7 +31,7 @@ const mock = `(() => {
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
     const q = {
-      select(){ return q; }, order(){ return q; }, limit(){ return q; }, range(){ return q; },
+      select(){ return q; }, order(){ return q; }, not(){ return q; }, limit(){ return q; }, range(){ return q; },
       eq(c, v){ linhas = linhas.filter((l) => !(c in l) || String(l[c]) === String(v)); return q; },
       in(c, vs){ linhas = linhas.filter((l) => vs.map(String).includes(String(l[c]))); return q; },
       single(){ unico = true; return q; }, maybeSingle(){ unico = true; return q; },
@@ -74,7 +75,7 @@ const mock = `(() => {
 
 (async () => {
   const browser = await chromium.launch({ channel: "msedge" });
-  const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: 1400, height: 900 }, timezoneId: "UTC" });
   const erros = [];
   page.on("pageerror", (e) => { if (!/lucide/.test(e.message)) erros.push(e.message); });
   await page.addInitScript(() => { sessionStorage.setItem("login_ok", "1"); sessionStorage.setItem("empresa_id", "e1"); });
@@ -163,7 +164,7 @@ const mock = `(() => {
   // aviso de vencimento: limites de 3 e 7 dias, passado e título sem saldo
   const fonte = fs.readFileSync(path.join(raiz, "Modulos/Financeiro/financeiro.js"), "utf8").replace(/\r\n/g, "\n");
   const ini = fonte.indexOf("  function diasParaVencer(t) {"), corpo = fonte.slice(ini, fonte.indexOf("  function statusR(t) {"));
-  const alertaVenc = new Function(corpo + "; return alertaVenc;")();
+  const alertaVenc = new Function("S", corpo + "; return alertaVenc;")({});
   const emDias = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toLocaleDateString("sv-SE"); };
   const aviso = (n, extra = {}) => { const h = alertaVenc({ status: "aberto", aberto: 100, vencimento: emDias(n), ...extra }); return h ? [/vermelho/.test(h) ? "vermelho" : "amarelo", h.replace(/<[^>]+>/g, "")] : null; };
   assert.deepStrictEqual([aviso(-2), aviso(-1), aviso(0), aviso(1), aviso(3), aviso(4), aviso(7), aviso(8)], [["vermelho", "Venceu há 2 dias"], ["vermelho", "Venceu ontem"], ["vermelho", "Vence hoje"], ["vermelho", "Vence amanhã"], ["vermelho", "Vence em 3 dias"], ["amarelo", "Vence em 4 dias"], ["amarelo", "Vence em 7 dias"], null]);
@@ -273,7 +274,7 @@ const mock = `(() => {
   await page.click('[data-aba="dre"]'); await page.click('#finSubAbas [data-subaba="plano"]'); await page.waitForTimeout(300);
   assert.ok(await page.$eval('#finAbas [data-aba="dre"]', (b) => b.classList.contains("ativa")), "aba DRE continua marcada no Plano de contas");
   await page.click('[data-aba="bv"]'); assert.strictEqual(await page.locator('#finSubAbas [data-subaba]').count(), 0, 'Decoradores sem a parte Gestão de créditos');
-  assert.equal(await page.locator('#finAbas [data-aba]').count(), 10, "10 abas (Bancos, Gateways e a Clara)");
+  assert.equal(await page.locator('#finAbas [data-aba]').count(), 10, "10 abas (Gerencial no lugar de Resultados)");
   await page.click('[data-aba="gateways"]'); await page.waitForSelector(".fin-gateways #pgBtnRefresh"); assert.ok(await page.locator(".fin-gateways .pg-card").count() === 2, "gateways dentro do Financeiro");
   await page.setViewportSize({ width: 1700, height: 900 }); await page.waitForTimeout(200);
   assert.equal(await page.$$eval('#finAbas [data-aba]', (l) => new Set(l.map((b) => Math.round(b.getBoundingClientRect().top))).size), 1, "abas numa linha só a 1700px");

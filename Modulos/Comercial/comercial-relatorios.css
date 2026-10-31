@@ -1,0 +1,76 @@
+/* Relatórios do Comercial (out/2026): Cancelamentos e Contas a receber. A grade é a de styles/planilha.css. */
+.cr-page .fin-barra-ferr{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:0 0 10px}
+.cr-page .fin-barra-ferr label{display:flex;align-items:center;gap:6px;font-size:13px;color:#4f4f4f}
+.cr-page .fin-barra-ferr input,.cr-page .fin-barra-ferr select{height:38px;min-height:38px;padding:6px 10px;border:1px solid #dfe4ea;border-radius:8px;background:#fff;font:inherit;font-size:13px}
+.cr-page .fin-barra-ferr input[type=search]{min-width:260px}
+.cr-page .fin-esp{flex:1}
+.cr-bloco{background:#fff;border-radius:14px;padding:16px 18px 18px;margin:0 0 16px;box-shadow:0 0 8px rgba(15,23,42,.15),0 0 2px rgba(15,23,42,.12)}
+.cr-bloco h3{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:17px}
+.cr-bloco h3 small{font-size:12.5px;color:#6b6b6b;font-weight:500}
+.cr-bloco h3 .fin-esp{flex:1}
+.cr-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.cr-grade>.cr-bloco{margin:0 0 0}
+@media(max-width:1100px){.cr-grade{grid-template-columns:1fr}}
+.cr-vazio{padding:28px;text-align:center;color:#6b6b6b;background:#fff;border-radius:12px}
+.cr-page .gr-planilha tbody tr[data-filtro]{cursor:pointer}
+html:root:is(#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha tbody tr[data-filtro]:hover th,
+html:root:is(#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha tbody tr[data-filtro]:hover td{background:#f2f6fc}
+html:root:is(#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha tbody tr.ativo th,
+html:root:is(#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha tbody tr.ativo td{background:#e3ebf7;font-weight:600}
+html:root:is(#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha td.cr-texto{white-space:normal;min-width:220px;max-width:420px}
+.cr-filtro-ativo{display:inline-flex;align-items:center;gap:8px;padding:4px 6px 4px 12px;border-radius:999px;background:#eaf0fa;color:#123f86;font-size:12.5px;font-weight:600}
+.cr-filtro-ativo button{all:unset;cursor:pointer;width:20px;height:20px;border-radius:50%;text-align:center;line-height:20px;background:#fff;color:#123f86}
+.cr-link{all:unset;cursor:pointer;color:#123f86;font-weight:600;border-bottom:1px dotted #123f86}
+.cr-link:focus-visible{outline:2px solid #123f86;outline-offset:2px}
+.cr-barra-pct{display:inline-block;width:70px;height:6px;margin-left:8px;border-radius:999px;background:#e6e9ee;vertical-align:middle;overflow:hidden}
+.cr-barra-pct i{display:block;height:100%;background:#b42318}
+
+/* Contas a receber do Comercial */
+.cr-prazos{display:inline-flex;flex-wrap:wrap;gap:8px}
+.cr-prazo{position:relative;padding:8px 16px;border:1px solid #dfe4ea;border-radius:999px;background:#fff;color:#2b2b2b;font:500 13px Inter,sans-serif;cursor:pointer}
+.cr-prazo.ativa{background:#123f86;border-color:#123f86;color:#fff}
+.cr-prazo .tab-badge{position:absolute;top:-8px;right:-8px}
+.cr-modo{display:inline-flex;border:1px solid #d6dce5;border-radius:8px;overflow:hidden}
+.cr-modo button{padding:8px 14px;border:0;background:#fff;color:#2b2b2b;font:500 13px Inter,sans-serif;cursor:pointer}
+.cr-modo button+button{border-left:1px solid #d6dce5}
+.cr-modo button.ativa{background:#123f86;color:#fff}
+.cr-cliente{background:#fff;border-radius:14px;margin:0 0 14px;overflow:hidden;box-shadow:0 0 8px rgba(15,23,42,.15),0 0 2px rgba(15,23,42,.12)}
+.cr-cliente>summary{display:flex;flex-wrap:wrap;align-items:center;gap:8px 22px;padding:14px 18px;cursor:pointer;list-style:none;background:#f8f9fb;border-bottom:1px solid #e9ecf0}
+.cr-cliente>summary::-webkit-details-marker{display:none}
+.cr-cliente>summary::before{content:"▸";color:#6b6b6b;font-size:13px}
+.cr-cliente[open]>summary::before{content:"▾"}
+.cr-cliente>summary strong{font-size:16px}
+.cr-cliente>summary .cr-sub{color:#6b6b6b;font-size:13px}
+.cr-cliente>summary .cr-nums{margin-left:auto;display:flex;gap:18px;font-size:13px;color:#4f4f4f;white-space:nowrap}
+.cr-cliente>summary .cr-nums b{color:#1f2020;font-size:14.5px}
+.cr-cliente>summary .cr-nums .falta b{color:#9a5b00}
+.cr-cliente>summary .cr-nums .venc b{color:#b42318}
+.cr-cliente .gr-rolar{border:0;border-radius:0}
+.cr-receb small{display:block;font-size:11.5px;margin-top:2px}
+.cr-receb small.ok{color:#1f7a44}
+.cr-receb small.atraso{color:#b42318;font-weight:600}
+.cr-venc small{display:block;font-size:11.5px;margin-top:2px;font-weight:600}
+.cr-venc small.vermelho{color:#b42318}
+.cr-venc small.amarelo{color:#9a5b00}
+.cr-sit{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600}
+.cr-sit.aberto{background:#eef1f5;color:#3a3a3a}
+.cr-sit.parcial{background:#fff4d6;color:#7a5200}
+.cr-sit.vencido{background:#fdecea;color:#b42318}
+.cr-sit.recebido{background:#e6f4ea;color:#1f7a44}
+.cr-aviso-leitura{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#f7f9fb;border:1px solid #e3e7ec;color:#4f4f4f;font-size:13px}
+.cr-quitado{color:#1f7a44}
+.gr-planilha small.cr-sub{color:#6b6b6b;font-weight:400;font-size:12px}
+/* respiro lateral da página (o container não tem) */
+.cr-page{padding:0 clamp(16px,2vw,28px) 32px}
+/* bolinha vermelha piscando, igual às abas do sistema */
+.cr-prazos{padding-top:8px}
+.cr-prazo .tab-badge{position:absolute;top:-9px;right:-7px;min-width:20px;height:20px;padding:0 6px;display:grid;place-items:center;border-radius:999px;background:#e60012;color:#fff;font:600 11px/1 Inter,sans-serif;border:2px solid #fff;box-shadow:0 0 0 0 rgba(230,0,18,.42);animation:ch-pendencia-pulsa 1.15s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.cr-prazo .tab-badge{animation:none}}
+/* avisos de vencimento e pontualidade com cor (o tema força a cor do texto das tabelas) */
+html:root:is(#cr#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha small.vermelho,
+html:root:is(#cr#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha small.atraso{color:#b42318!important;font-weight:600}
+html:root:is(#cr#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha small.amarelo{color:#9a5b00!important;font-weight:600}
+html:root:is(#cr#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha small.ok{color:#1f7a44!important}
+html:root:is(#cr#cr#cr#cr#cr#cr#cr#cr,html) .cr-page .gr-planilha .cr-quitado{color:#1f7a44!important}
+html:root:is(#cr#cr#cr#cr#cr#cr#cr#cr,html) .cr-cliente>summary .cr-nums .falta b{color:#9a5b00!important}
+html:root:is(#cr#cr#cr#cr#cr#cr#cr#cr,html) .cr-cliente>summary .cr-nums .venc b{color:#b42318!important}

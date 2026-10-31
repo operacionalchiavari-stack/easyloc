@@ -30,6 +30,10 @@
   const livrePorPeriodo = new Map();
   const bloqueadosContagem = new Set();
   const chavePeriodo = (p) => p.inicio + "~" + (p.fim || p.inicio);
+  // Visão "por pedido" (out/2026): no lugar da coluna "Reservado na data", uma coluna para cada pedido que tem itens na
+  // data, com a quantidade que ele usa de cada item, logo antes de "Disponível". Escolha guardada no navegador.
+  let visao = "resumo";
+  try { visao = localStorage.getItem("dispon_visao") === "pedidos" ? "pedidos" : "resumo"; } catch (_) {}
   async function carregarLivre(periodo, atualizar = false){
     const chave = chavePeriodo(periodo);
     if(!atualizar && livrePorPeriodo.has(chave)) return;
@@ -423,12 +427,55 @@
     }
   }
 
+  // Pedidos com reserva na data (entre as linhas carregadas), na ordem do número
+  function pedidosDaData(rows, periodo) {
+    const mapa = new Map();
+    rows.forEach((row) => (row.reservas || []).forEach((r) => {
+      const p = r.separacoes_pedidos || {};
+      if (!p.id || r.inicio > periodo.fim || r.fim < periodo.inicio) return;
+      if (!mapa.has(p.id)) mapa.set(p.id, { ...p, inicio: r.inicio, fim: r.fim });
+    }));
+    return [...mapa.values()].sort((a, b) => String(a.numero_pedido || "").localeCompare(String(b.numero_pedido || ""), "pt-BR", { numeric: true }));
+  }
+  // Quanto o pedido usa deste item na data. Item comum: as peças (inclusive dentro de kits do pedido).
+  // Kit: quantos kits as reservas do pedido comprometem (o componente mais tomado).
+  function usoDoPedido(row, pedidoId) {
+    const doPedido = (row.reservas || []).filter((r) => r.separacoes_pedidos?.id === pedidoId);
+    if (!doPedido.length) return 0;
+    if (!row.kit) return doPedido.reduce((s, r) => s + Number(r.quantidade_componente || 0), 0);
+    let kits = 0;
+    (row.componentes || []).forEach((c) => {
+      const usado = doPedido.filter((r) => r.componente_id === c.item?.id).reduce((s, r) => s + Number(r.quantidade_componente || 0), 0);
+      if (usado && c.porKit) kits = Math.max(kits, Math.ceil(usado / c.porKit));
+    });
+    return kits;
+  }
+  const STATUS_PEDIDO = { pre_reserva: "Pré-reserva", aprovado: "Reservado", enviado: "Reservado", finalizado: "Reservado" };
+  function cabecalhoTabela(pedidos) {
+    const tr = $("#disponCabecalho");
+    if (!tr) return;
+    const colPedido = (p) => {
+      const st = normalize(p.status_comercial);
+      const dica = ["Pedido " + (p.numero_pedido || ""), p.cliente_nome, p.tipo_evento, p.local_nome, "de " + formatDate(p.inicio) + " a " + formatDate(p.fim), STATUS_PEDIDO[st] || p.status_comercial].filter(Boolean).join(" · ");
+      return '<th class="dispon-quantity-cell dispon-col-pedido' + (st === "pre_reserva" ? " is-pre" : "") + '" title="' + escapeHtml(dica) + '"><span class="dispon-ped-num">Pedido ' + escapeHtml(p.numero_pedido || "–") + '</span><span class="dispon-ped-cli">' + escapeHtml(p.cliente_nome || "") + "</span>" + (st === "pre_reserva" ? '<span class="dispon-ped-st">Pré-reserva</span>' : "") + "</th>";
+    };
+    tr.innerHTML = "<th>Foto</th><th>Item</th><th>Categoria</th>" + '<th class="dispon-quantity-cell">Total</th>' +
+      (visao === "pedidos"
+        ? '<th class="dispon-quantity-cell">Manutencao</th>' + (pedidos.length ? pedidos.map(colPedido).join("") : '<th class="dispon-quantity-cell dispon-col-pedido">Pedidos<span class="dispon-ped-cli">nenhum na data</span></th>')
+        : '<th class="dispon-quantity-cell">Reservado na data</th><th class="dispon-quantity-cell">Manutencao</th>') +
+      '<th class="dispon-quantity-cell">Disponivel</th><th>Status</th>';
+  }
+  function marcarVisao() {
+    document.querySelectorAll("[data-dispon-visao]").forEach((b) => { const on = b.dataset.disponVisao === visao; b.classList.toggle("ativa", on); b.setAttribute("aria-pressed", String(on)); });
+  }
+
   function buildRows() {
     const periodo = selectedPeriod();
     state.rows = state.itens.map(item => ({ item, ...calcularItem(item, periodo) }));
   }
 
   async function loadCategories(generation) {
+    if (!$("#disponCategoria")) return; // o filtro de categoria saiu da tela (out/2026)
     const categories = new Set();
     for (let offset = 0; ; offset += 1000) {
       let query = sb().from("itens").select("categoria").order("id");
@@ -496,6 +543,11 @@
   function render(append = false) {
     buildRows();
     const rows = filteredRows();
+    if (visao === "pedidos") append = false;
+    const pedidos = visao === "pedidos" ? pedidosDaData(rows.slice(0, state.visibleCount), selectedPeriod()) : [];
+    cabecalhoTabela(pedidos);
+    marcarVisao();
+    const colunas = 6 + (visao === "pedidos" ? Math.max(1, pedidos.length) + 1 : 2);
     const tbody = $("#disponTabela");
     const start = append ? tbody.querySelectorAll(".dispon-row").length : 0;
     const pageRows = rows.slice(start, state.visibleCount);
@@ -527,13 +579,16 @@
           </td>
           <td>${escapeHtml(item.categoria || "-")}</td>
           <td class="dispon-quantity-cell"><span class="dispon-quantity">${number(row.total)}</span></td>
-          <td class="dispon-quantity-cell"><span title="${row.kit ? 'Capacidade de kits comprometida por reservas dos componentes, inclusive em outros kits.' : 'Maior quantidade reservada simultaneamente no período.'}" class="dispon-quantity ${row.reservado > 0 ? 'dispon-quantity-reserved' : ''}">${number(row.reservado)}</span></td>
+          ${visao === "pedidos" ? `
           <td class="dispon-quantity-cell"><span class="dispon-quantity ${row.manutencao > 0 ? 'dispon-quantity-maintenance' : ''}">${number(row.manutencao)}</span></td>
+          ${pedidos.length ? pedidos.map((p) => { const q = usoDoPedido(row, p.id); return `<td class="dispon-quantity-cell dispon-cel-pedido">${q ? `<span class="dispon-quantity dispon-quantity-reserved${normalize(p.status_comercial) === "pre_reserva" ? " is-pre" : ""}" title="Pedido ${escapeHtml(p.numero_pedido || "")}${row.kit ? " · kits comprometidos" : ""}">${number(q)}</span>` : '<span class="dispon-sem">–</span>'}</td>`; }).join("") : '<td class="dispon-quantity-cell"><span class="dispon-sem">–</span></td>'}` : `
+          <td class="dispon-quantity-cell"><span title="${row.kit ? 'Capacidade de kits comprometida por reservas dos componentes, inclusive em outros kits.' : 'Maior quantidade reservada simultaneamente no período.'}" class="dispon-quantity ${row.reservado > 0 ? 'dispon-quantity-reserved' : ''}">${number(row.reservado)}</span></td>
+          <td class="dispon-quantity-cell"><span class="dispon-quantity ${row.manutencao > 0 ? 'dispon-quantity-maintenance' : ''}">${number(row.manutencao)}</span></td>`}
           <td class="dispon-quantity-cell"><strong class="dispon-quantity dispon-quantity-available ${row.disponivel <= 0 ? 'dispon-quantity-empty' : ''}">${number(row.disponivel)}</strong></td>
           <td><span class="dispon-badge ${row.status}">${statusLabel(row.status)}</span></td>
         </tr>
       `;
-    }).join("") || `<tr><td colspan="8" class="dispon-empty">Nenhum item encontrado.</td></tr>`;
+    }).join("") || `<tr><td colspan="${colunas}" class="dispon-empty">Nenhum item encontrado.</td></tr>`;
 
     if (!append || !rows.length) tbody.innerHTML = html;
     else if (pageRows.length) tbody.insertAdjacentHTML("beforeend", html);
@@ -726,6 +781,13 @@
     });
 
     $("#btnVoltarDispon")?.addEventListener("click", voltarParaLista);
+    document.querySelectorAll("[data-dispon-visao]").forEach((b) => b.addEventListener("click", () => {
+      if (visao === b.dataset.disponVisao) return;
+      visao = b.dataset.disponVisao;
+      try { localStorage.setItem("dispon_visao", visao); } catch (_) {}
+      render(false);
+    }));
+    marcarVisao();
   }
 
   function voltarParaLista() {
@@ -749,7 +811,8 @@
   function onListScroll(event) {
     const scroller = event.target === document ? document.scrollingElement : event.target;
     const page = $(".dispon-page");
-    if (!scroller || !page || (scroller !== document.scrollingElement && !scroller.contains(page))) return;
+    // rola a página ou a própria tabela (cabeçalho fixo: a tabela rola dentro da caixa dela)
+    if (!scroller || !page || (scroller !== document.scrollingElement && !scroller.contains(page) && !page.contains(scroller))) return;
     const position = scroller.scrollTop;
     const previous = scrollPositions.get(scroller) || 0;
     scrollPositions.set(scroller, position);

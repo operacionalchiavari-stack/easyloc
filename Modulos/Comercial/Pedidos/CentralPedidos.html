@@ -9,7 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="CentralPedidos.css?v=20261029-extra">
+  <link rel="stylesheet" href="CentralPedidos.css?v=20261031-equipes">
+  <link rel="stylesheet" href="../../../styles/planilha.css?v=20261030">
+  <link rel="stylesheet" href="../comercial-relatorios.css?v=20261030c">
   <!-- Visualização do pedido = prévia do catálogo (cabeçalho, itens por ambiente, PDF). -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261030-link-pagamento2">
@@ -83,8 +85,16 @@
   <!-- Um botão por situação, com a contagem numa bolinha vermelha piscando; clicar filtra a lista.
        As pré-reservas ficam sempre no topo da lista. -->
   <div class="central-barra">
-    <div class="central-situacoes" id="centralSituacoes" role="group" aria-label="Filtrar por situação"></div>
+    <!-- Contas a receber fica dentro da Central (out/2026): troca a lista de pedidos pela visão das parcelas -->
+    <div class="central-visao el-tabs" role="group" aria-label="O que ver">
+      <button type="button" data-central-visao="pedidos" class="ativa" aria-pressed="true">Pedidos</button>
+      <button type="button" data-central-visao="receber" aria-pressed="false">Contas a receber<span class="central-visao-badge" id="centralReceberBadge" hidden></span></button>
+    </div>
+    <div class="central-situacoes el-tabs" id="centralSituacoes" role="group" aria-label="Filtrar por situação"></div>
+    <label class="central-ordem"><span>Ordenar por</span><select class="el-select" id="centralOrdem" aria-label="Ordenar a lista de pedidos"></select></label>
   </div>
+
+  <section class="cr-page cr-embutido" id="centralContasReceber" aria-label="Contas a receber" hidden></section>
 
   <section class="central-list el-card" id="centralListaTabela">
     <div class="central-table-wrap">
@@ -178,7 +188,9 @@
 <script src="../../../js/core/paymentPix.js?v=20261021-divisao"></script>
 <script src="../../../js/core/linkPagamento.js?v=20261030-pedido-digital"></script>
 <script src="../../../js/core/zapiMessaging.js?v=20261026-acentos"></script>
-<script src="CentralPedidos.js?v=20261030-link-documento"></script>
+<script src="../comercial-relatorios.js?v=20261030"></script>
+<script src="central-contas-receber.js?v=20261031-equipes"></script>
+<script src="CentralPedidos.js?v=20261031-equipes"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

@@ -57,6 +57,21 @@ export function iniciarEntradaComercial(vitrine){
   if(programacao)financeiro.append(programacao);
   if(resumo)financeiro.append(resumo);
   tela.append(financeiro);
+  // Três colunas (out/2026, pedido do usuário): parcelas | Frete em cima e Resumo embaixo | Montagem em cima e BV embaixo.
+  // O card do BV é criado por pedido.bv.mjs; o observador põe cada card na sua coluna, não importa a ordem.
+  if(resumo){
+    const colA=document.createElement('div');colA.className='pf-col pf-col-a';
+    const colB=document.createElement('div');colB.className='pf-col pf-col-b';
+    resumo.append(colA,colB);
+    const organizar=()=>{
+      [['#cardLogisticaPedido',colA],['.resumo-card',colA],['#cardMontagemPedido',colB],['.pedido-bv-card',colB]].forEach(([sel,col])=>{
+        // reanexa na ordem certa (o observador só olha os filhos diretos, então não entra em laço)
+        const el=resumo.querySelector(sel);if(el)col.append(el);
+      });
+    };
+    organizar();
+    new MutationObserver(organizar).observe(resumo,{childList:true});
+  }
   const contrato=document.createElement('section');contrato.className='pedido-etapa-contrato';contrato.hidden=true;
   contrato.setAttribute('aria-label','Contrato do pedido');
   const contratoCard=tela.querySelector('#pedidoContratoCard');

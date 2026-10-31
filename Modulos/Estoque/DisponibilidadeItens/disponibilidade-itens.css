@@ -588,3 +588,41 @@
   .dispon-detail-metrics { gap: 8px; margin-bottom: 16px; }
   #disponDetalheTela .dispon-daily-scroll { max-height: 240px; }
 }
+
+/* Visão por pedido (out/2026): botões de visualização e uma coluna por pedido na data */
+.dispon-filters{grid-template-columns:repeat(4,minmax(140px,1fr)) auto}
+.dispon-visao{display:inline-flex;align-self:end;border:1px solid var(--dispon-border,#dfe4ea);border-radius:10px;overflow:hidden;background:#fff;height:42px}
+.dispon-visao button{display:grid;place-items:center;width:44px;border:0;background:#fff;color:#4f4f4f;cursor:pointer}
+.dispon-visao button+button{border-left:1px solid var(--dispon-border,#dfe4ea)}
+.dispon-visao button.ativa{background:#123f86;color:#fff}
+.dispon-visao button:focus-visible{outline:2px solid #123f86;outline-offset:-2px}
+.dispon-table-wrap th.dispon-col-pedido{white-space:nowrap;line-height:1.25;text-transform:none}
+.dispon-col-pedido .dispon-ped-num{display:block;text-transform:uppercase;letter-spacing:.04em}
+.dispon-col-pedido .dispon-ped-cli{display:block;max-width:120px;margin:2px auto 0;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:500;letter-spacing:0;opacity:.85}
+.dispon-col-pedido .dispon-ped-st{display:inline-block;margin-top:3px;padding:1px 7px;border-radius:999px;background:#fff4d6;color:#7a5200;font-size:10px;font-weight:600}
+.dispon-quantity.dispon-quantity-reserved.is-pre{background:#fff4d6;border-color:#ecd99a;color:#7a5200}
+.dispon-sem{color:#b5b5b5}
+@media(max-width:900px){.dispon-filters{grid-template-columns:1fr 1fr}}
+
+/* Cabeçalho fixo na rolagem (out/2026): a tabela rola dentro da própria caixa (altura da tela), assim o cabeçalho
+   (position:sticky) fica parado no topo dela; a rolagem de lado continua na mesma caixa. */
+.dispon-table-wrap{max-height:max(360px,calc(100vh - 260px));overflow:auto;overscroll-behavior:contain}
+.dispon-table-wrap thead th{position:sticky;top:0;z-index:3}
+/* fundo no cabeçalho fixo (o tema deixa o cabeçalho das tabelas sem fundo e as linhas apareceriam por trás) */
+html:root:is(#dp#dp#dp#dp#dp#dp#dp#dp,html) .dispon-table-wrap thead th{background:#fff!important;box-shadow:inset 0 -1px 0 #e3e7ec}
+
+/* Título na mesma linha dos filtros (out/2026): grade de 3 colunas iguais nas pontas, título no centro exato;
+   Data e Buscar item à esquerda, como ver as reservas à direita. Peso alto porque o tema transforma o primeiro
+   cabeçalho da página numa faixa (display:flex, título centralizado). Abaixo de 1150px empilha. */
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero.dispon-hero-linha{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;grid-template-areas:"filtros titulo dir";align-items:center!important;column-gap:24px!important;text-align:left}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-titulo{grid-area:titulo;width:auto;text-align:center}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-filtros{grid-area:filtros;display:flex!important;align-items:flex-end;gap:10px;width:auto;margin:0;padding:0;border:0;background:transparent;box-shadow:none;justify-self:start;min-width:0}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-filtros label{display:grid;gap:4px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4f4f4f;min-width:0}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-filtros label:first-child{flex:0 0 150px}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-filtros label:last-child{flex:1 1 240px;max-width:300px}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-filtros .el-input{height:38px!important;min-height:38px!important;padding:6px 10px!important;font-size:13px;text-transform:none;letter-spacing:0;width:100%}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-dir{grid-area:dir;justify-self:end;width:auto}
+.dispon-hero-dir .dispon-visao{height:38px;align-self:center}
+@media(max-width:1150px){
+  html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero.dispon-hero-linha{grid-template-columns:minmax(0,1fr) auto!important;grid-template-areas:"titulo titulo" "filtros dir";row-gap:12px!important}
+}

@@ -71,6 +71,7 @@
           },
           { rotulo: "Pedidos e Orçamentos", href: "Modulos/Comercial/Pedidos/CentralPedidos.html" },
           { rotulo: "Histórico", href: "Modulos/Comercial/Historico/historico.html" },
+          { rotulo: "Cancelamentos", href: "Modulos/Comercial/Cancelamentos/cancelamentos.html" },
           {
             rotulo: "Contratos",
             legado: {
@@ -83,8 +84,8 @@
           {
             rotulo: "Disponibilidade de Itens",
             legado: {
-              html: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html",
-              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js?v=20261029-conta-unica",
+              html: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html?v=20261031-filtros-titulo",
+              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js?v=20261031-filtros-titulo",
               css: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css",
             },
           },

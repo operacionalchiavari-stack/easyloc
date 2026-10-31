@@ -620,6 +620,7 @@ function infoCadastro(rotulo, valor, icone){
       cliente_id: row.cliente_id || null,
       local_id: row.local_id || null,
       cliente: row.cliente_nome || row.cliente || row.nome_cliente || "Cliente nao informado",
+      equipe: observacoes?.equipe_nome || "", // equipe do Cadastro de Clientes que a pessoa representa (out/2026)
       contato: row.contato_cliente || row.telefone_cliente || row.cliente_telefone || row.telefone || "",
       evento: row.tipo_evento || row.evento || row.nome_evento || "Evento",
       local: row.local_nome || row.local || row.endereco || "Local nao informado",
@@ -1153,6 +1154,8 @@ function infoCadastro(rotulo, valor, icone){
     const status = els.filtroStatusPedido?.value || "";
     const inicial = els.filtroDataInicialPedido?.value;
     const final = els.filtroDataFinalPedido?.value;
+    // os mesmos filtros valem para o Contas a receber (datas = vencimento da parcela)
+    window.CentralContasReceber?.filtrar({ termos, cliente: normalizarBusca(cliente), numero: normalizarBusca(numero), local: normalizarBusca(local), status, de: inicial || "", ate: final || "" });
 
     state.filtrados = state.pedidos.filter((pedido) => {
       const dataPedido = pedido.data ? new Date(pedido.data) : null;
@@ -1161,14 +1164,14 @@ function infoCadastro(rotulo, valor, icone){
         : "";
 
       const textoBusca = normalizarBusca([
-        pedido.numero, pedido.cliente, pedido.contato, formatPhone(pedido.contato),
+        pedido.numero, pedido.cliente, pedido.equipe, pedido.contato, formatPhone(pedido.contato),
         pedido.evento, pedido.local, pedido.comercial, pedido.status,
         formatStatusLabel(pedido.status), pedido.data, formatDate(pedido.data),
         pedido.valor, formatCurrency(pedido.valor)
       ].join(" "));
 
       return termos.every((termo) => textoBusca.includes(termo))
-        && (!cliente || pedido.cliente.toLowerCase().includes(cliente))
+        && (!cliente || pedido.cliente.toLowerCase().includes(cliente) || String(pedido.equipe || "").toLowerCase().includes(cliente))
         && (!numero || String(pedido.numero).toLowerCase().includes(numero))
         && (!local || pedido.local.toLowerCase().includes(local))
         && (!comercial || pedido.comercial.toLowerCase().includes(comercial))
@@ -1176,12 +1179,7 @@ function infoCadastro(rotulo, valor, icone){
         && (!inicial || dataISO >= inicial)
         && (!final || dataISO <= final);
     });
-    // Pré-reservas sempre no topo (a que vence primeiro em cima); depois quem está montando agora; o resto na ordem de sempre.
-    const ativo = (p) => (presencaDe(p)?.ativo ? 1 : 0);
-    const pre = (p) => (p.status === "pre_reserva" ? 1 : 0);
-    state.filtrados.sort((a, b) => (pre(b) - pre(a))
-      || (pre(a) ? prazoPreReserva(a).ordem - prazoPreReserva(b).ordem : 0)
-      || (ativo(b) - ativo(a)));
+    ordenarLista(state.filtrados);
     // Pedido extra (out/2026): aparece logo abaixo do pedido principal (quando os dois estão na lista)
     const idsLista = new Set(state.filtrados.map((p) => String(p.id)));
     const extrasDe = new Map(), principais = [];
@@ -1193,6 +1191,65 @@ function infoCadastro(rotulo, valor, icone){
       .sort((a, b) => String(a.numero).localeCompare(String(b.numero), "pt-BR", { numeric: true }))]);
 
     render();
+  }
+
+  // Ordem da tabela (out/2026): escolhida no cabeçalho ("Ordenar por") e lembrada no navegador.
+  // "Padrão" = pré-reservas no topo (a que vence primeiro em cima), depois quem está montando agora, depois evento mais recente.
+  const ORDENS = [
+    ["padrao", "Padrão (pré-reservas primeiro)"],
+    ["evento_proximo", "Evento mais próximo"],
+    ["evento_recente", "Data do evento (mais recente)"],
+    ["evento_antigo", "Data do evento (mais antiga)"],
+    ["entrega_proxima", "Entrega mais próxima"],
+    ["numero_desc", "Nº do pedido (maior primeiro)"],
+    ["numero_asc", "Nº do pedido (menor primeiro)"],
+    ["cliente", "Cliente (A a Z)"],
+    ["valor", "Maior valor"]
+  ];
+  function ordemAtual(){
+    if(!state.ordem){ try{ state.ordem = localStorage.getItem("central_pedidos_ordem") || "padrao"; }catch{ state.ordem = "padrao"; } }
+    if(!ORDENS.some(([k]) => k === state.ordem)) state.ordem = "padrao";
+    return state.ordem;
+  }
+  function ordenarLista(lista){
+    const hoje = new Date().toLocaleDateString("sv-SE");
+    const dia = (v) => String(v || "").slice(0, 10);
+    const num = (p) => String(p.numero || "");
+    const porNumero = (a, b) => num(a).localeCompare(num(b), "pt-BR", { numeric: true });
+    // próximos primeiro (mais perto de hoje em cima); os que já passaram vão para o fim, do mais recente ao mais antigo
+    const proximo = (campo) => (a, b) => {
+      const da = dia(a[campo]), db = dia(b[campo]), fa = da && da >= hoje, fb = db && db >= hoje;
+      if(fa !== fb) return fa ? -1 : 1;
+      if(!da || !db) return da ? -1 : db ? 1 : 0;
+      return fa ? da.localeCompare(db) : db.localeCompare(da);
+    };
+    const ativo = (p) => (presencaDe(p)?.ativo ? 1 : 0);
+    const pre = (p) => (p.status === "pre_reserva" ? 1 : 0);
+    const cmp = {
+      padrao: (a, b) => (pre(b) - pre(a)) || (pre(a) ? prazoPreReserva(a).ordem - prazoPreReserva(b).ordem : 0) || (ativo(b) - ativo(a)) || dia(b.data).localeCompare(dia(a.data)),
+      evento_proximo: proximo("data"),
+      evento_recente: (a, b) => dia(b.data).localeCompare(dia(a.data)),
+      evento_antigo: (a, b) => (dia(a.data) || "9999").localeCompare(dia(b.data) || "9999"),
+      entrega_proxima: proximo("entrega"),
+      numero_desc: (a, b) => porNumero(b, a),
+      numero_asc: porNumero,
+      cliente: (a, b) => String(a.cliente || "").localeCompare(String(b.cliente || ""), "pt-BR", { sensitivity: "base" }) || dia(b.data).localeCompare(dia(a.data)),
+      valor: (a, b) => (Number(b.valor) || 0) - (Number(a.valor) || 0)
+    }[ordemAtual()];
+    lista.sort((a, b) => cmp(a, b) || porNumero(b, a));
+    return lista;
+  }
+  function montarSeletorOrdem(){
+    const sel = document.getElementById("centralOrdem");
+    if(!sel || sel.dataset.pronto) return;
+    sel.dataset.pronto = "1";
+    sel.innerHTML = ORDENS.map(([k, t]) => '<option value="' + k + '">' + t + "</option>").join("");
+    sel.value = ordemAtual();
+    sel.addEventListener("change", () => {
+      state.ordem = sel.value;
+      try{ localStorage.setItem("central_pedidos_ordem", state.ordem); }catch{}
+      aplicarFiltros();
+    });
   }
 
   function renderFluxoPedido(pedido){
@@ -1261,7 +1318,7 @@ function infoCadastro(rotulo, valor, icone){
         <td>
           <button type="button" class="central-record-link" data-action="abrir-cliente" title="Abrir cadastro do cliente">
             ${escapeHtml(pedido.cliente)}
-          </button>
+          </button>${pedido.equipe ? `<small class="pedido-equipe-tag" title="Equipe do pedido">${escapeHtml(pedido.equipe)}</small>` : ""}
         </td>
         <td>
           <button type="button" class="central-record-link" data-action="abrir-local" title="Abrir cadastro do local">
@@ -1286,6 +1343,39 @@ function infoCadastro(rotulo, valor, icone){
       </tr>
     `).join("");
     window.lucide?.createIcons?.();
+    ligarExtras();
+  }
+
+  // Pedido extra (out/2026): traço que sai de baixo do número do pedido principal e chega no número do extra (em "L").
+  // O número fica no meio de uma linha de altura variável (o fluxo), então a posição é medida na tela e o traço é um
+  // elemento à parte dentro da área da tabela; é refeito quando a tabela muda de tamanho.
+  let ligacaoObservada = false;
+  function ligarExtras(){
+    const wrap = els.centralPedidosTbody?.closest(".central-table-wrap");
+    if(!wrap) return;
+    wrap.querySelectorAll(".central-extra-ligacao").forEach((el) => el.remove());
+    const base = wrap.getBoundingClientRect();
+    const pos = (el) => { const r = el.getBoundingClientRect(); return { left: r.left - base.left + wrap.scrollLeft, top: r.top - base.top + wrap.scrollTop, bottom: r.bottom - base.top + wrap.scrollTop, height: r.height }; };
+    const porId = new Map([...els.centralPedidosTbody.querySelectorAll("tr[data-pedido-id]")].map((tr) => [tr.dataset.pedidoId, tr]));
+    for(const pedido of state.filtrados){
+      if(!pedido.origemId) continue;
+      const pai = porId.get(String(pedido.origemId))?.querySelector(".pedido-numero-card");
+      const filho = porId.get(String(pedido.id))?.querySelector(".pedido-numero-card");
+      if(!pai || !filho) continue;
+      const a = pos(pai), b = pos(filho);
+      const x = a.left + 9, y = a.bottom, alvoY = b.top + b.height / 2;
+      if(b.left - x < 4 || alvoY - y < 4) continue;
+      const linha = document.createElement("span");
+      linha.className = "central-extra-ligacao";
+      linha.setAttribute("aria-hidden", "true");
+      linha.style.cssText = "left:" + x + "px;top:" + y + "px;width:" + (b.left - x) + "px;height:" + (alvoY - y) + "px";
+      wrap.append(linha);
+    }
+    if(!ligacaoObservada && "ResizeObserver" in window){
+      ligacaoObservada = true;
+      let pendente = 0;
+      new ResizeObserver(() => { cancelAnimationFrame(pendente); pendente = requestAnimationFrame(ligarExtras); }).observe(els.centralPedidosTbody);
+    }
   }
 
   async function carregarPedidos(){
@@ -1365,7 +1455,37 @@ function infoCadastro(rotulo, valor, icone){
       .subscribe();
   }
 
+  // Pedidos | Contas a receber (out/2026): a mesma página mostra a lista de pedidos ou as contas a receber (só leitura)
+  function trocarVisao(visao){
+    const receber = visao === "receber";
+    document.querySelectorAll("[data-central-visao]").forEach((b) => { const on = b.dataset.centralVisao === visao; b.classList.toggle("ativa", on); b.setAttribute("aria-pressed", String(on)); });
+    const host = document.getElementById("centralContasReceber");
+    ["centralSituacoes", "centralListaTabela"].forEach((id) => { const el = document.getElementById(id); if(el) el.hidden = receber; });
+    document.querySelector(".central-barra .central-ordem")?.toggleAttribute("hidden", receber);
+    // nas contas a receber as datas do filtro são o vencimento da parcela; "Comercial" não se aplica
+    const rotulo = (id, texto) => { const l = document.getElementById(id)?.closest(".el-field")?.querySelector("label"); if(l) l.textContent = texto; };
+    rotulo("filtroDataInicialPedido", receber ? "Vencimento de" : "Data Inicial");
+    rotulo("filtroDataFinalPedido", receber ? "Vencimento até" : "Data Final");
+    const comercialCampo = document.getElementById("filtroComercialPedido")?.closest(".el-field");
+    if(comercialCampo) comercialCampo.hidden = receber;
+    if(host) host.hidden = !receber;
+    if(receber && host){ aplicarFiltros(); window.CentralContasReceber?.abrir(host).then(atualizarBadgeReceber); }
+  }
+  async function atualizarBadgeReceber(){
+    const badge = document.getElementById("centralReceberBadge");
+    if(!badge || !window.CentralContasReceber) return;
+    const n = await window.CentralContasReceber.contarAlertas();
+    badge.textContent = n ? String(n) : ""; badge.hidden = !n;
+    badge.title = n ? n + " parcela(s) vencida(s) ou vencendo hoje" : "";
+  }
+
   function bindEvents(){
+    montarSeletorOrdem();
+    document.querySelector(".central-visao")?.addEventListener("click", (event) => {
+      const b = event.target.closest("[data-central-visao]");
+      if(b) trocarVisao(b.dataset.centralVisao);
+    });
+    setTimeout(() => atualizarBadgeReceber().catch(() => {}), 800);
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')carregarPedidos();});
     els.pesquisaGeralPedidos?.addEventListener("input", aplicarFiltros);
     els.btnFiltrosPedidos?.addEventListener("click", () => {

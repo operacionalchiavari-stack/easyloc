@@ -29,7 +29,10 @@ const mock = () => {
     // dia D: a000 esgota (10/10), a001 fica em atenção (9/10), z000 esgota (2/2)
     { id: "r1", item_id: "a000", quantidade_solicitada: 10, empresa_id: E, separacoes_pedidos: pedido(1, D, D) },
     { id: "r2", item_id: "a001", quantidade_solicitada: 9, empresa_id: E, separacoes_pedidos: pedido(2, D, D) },
-    { id: "r3", item_id: "z000", quantidade_solicitada: 2, empresa_id: E, separacoes_pedidos: pedido(3, D, D) }
+    { id: "r3", item_id: "z000", quantidade_solicitada: 2, empresa_id: E, separacoes_pedidos: pedido(3, D, D) },
+    // visão por pedido: a002 usado por dois pedidos no dia D (um em pré-reserva)
+    { id: "r4", item_id: "a002", quantidade_solicitada: 2, empresa_id: E, separacoes_pedidos: pedido(4, D, D) },
+    { id: "r5", item_id: "a002", quantidade_solicitada: 3, empresa_id: E, separacoes_pedidos: { ...pedido(5, D, D), status_comercial: "pre_reserva" } }
   ];
   const tabelas = { itens, kit_itens: [], separacoes_itens: reservas, itens_patrimonios: [] };
   window.__consultas = 0;
@@ -79,9 +82,12 @@ const mock = () => {
   assert.equal((await linhas()).length, 20, "primeira página com 20 itens");
   console.log("ok 1 - sem simulação; carrega 20 itens");
 
-  const cats = await page.$$eval("#disponCategoria option", os => os.map(o => o.value));
-  assert.deepEqual(cats, ["", "Cadeiras", "Mesas", "Sofás"], "categorias completas: " + cats);
-  console.log("ok 2 - lista de categorias completa");
+  // só dois filtros (Data e Buscar item), na mesma linha do título, que continua no centro
+  assert.equal(await page.locator("#disponCategoria, #disponStatus").count(), 0, "sem Categoria e Status");
+  const naLinha = await page.evaluate(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); const t = r(".dispon-hero h1"), d = r("#disponData"), b = r("#disponBusca"), h = r(".dispon-hero"); return { mesmaLinha: Math.abs((d.top + d.bottom) / 2 - (t.top + t.bottom) / 2) < 20 && Math.abs(b.top - d.top) < 2, aEsquerda: b.right < t.left, centro: Math.abs((t.left + t.right) / 2 - (h.left + h.right) / 2) }; });
+  assert.ok(naLinha.mesmaLinha && naLinha.aEsquerda, "filtros na linha do título, à esquerda: " + JSON.stringify(naLinha));
+  assert.ok(naLinha.centro < 2, "título no centro (" + naLinha.centro + "px)");
+  console.log("ok 2 - só Data e Buscar item, na linha do título, que fica no centro");
 
   await page.fill("#disponData", "2099-11-10"); await page.dispatchEvent("#disponData", "change"); await esperarFim();
   let l = await linhas();
@@ -101,25 +107,13 @@ const mock = () => {
   assert.ok(await page.evaluate(() => window.__consultas) - antes < 25, "busca não recarrega tudo do banco");
   console.log("ok 4 - busca por nome (sem acento) e por código");
 
-  await page.selectOption("#disponCategoria", "Sofás"); await esperarFim();
+  await page.fill("#disponBusca", "sofas"); await esperarFim();
   l = await linhas();
-  assert.deepEqual(l.map(x => x.nome), ["Sofá 0", "Sofá 1", "Sofá 2"], "categoria Sofás (no fim da lista): " + JSON.stringify(l));
-  console.log("ok 5 - categoria acha itens do fim da lista");
+  assert.deepEqual(l.map(x => x.nome), ["Sofá 0", "Sofá 1", "Sofá 2"], "busca pela categoria acha itens do fim da lista: " + JSON.stringify(l));
+  await page.fill("#disponBusca", ""); await esperarFim();
+  console.log("ok 5 - buscar pela categoria acha itens do fim da lista");
 
-  await page.selectOption("#disponCategoria", ""); await page.selectOption("#disponStatus", "indisponivel"); await esperarFim();
-  l = await linhas();
-  assert.deepEqual(l.map(x => x.nome).sort(), ["Cadeira 0", "Sofá 0"], "status indisponível: " + JSON.stringify(l));
-  await page.selectOption("#disponStatus", "atencao"); await esperarFim();
-  l = await linhas();
-  assert.ok(l.length >= 1 && l.every(x => x.status === "atencao"), "status atenção");
-  console.log("ok 6 - status");
 
-  await page.selectOption("#disponCategoria", "Sofás"); await page.selectOption("#disponStatus", "indisponivel"); await esperarFim();
-  l = await linhas();
-  assert.deepEqual(l.map(x => x.nome), ["Sofá 0"], "categoria + status");
-  console.log("ok 7 - filtros combinados");
-
-  await page.selectOption("#disponCategoria", ""); await page.selectOption("#disponStatus", "");
   for (const t of ["c", "ca", "cad", "cade", "cadei", ""]) { await page.fill("#disponBusca", t); await page.waitForTimeout(60); }
   await esperarFim();
   l = await linhas();
@@ -137,6 +131,43 @@ const mock = () => {
   const c2 = await page.$$eval(".dispon-row", rs => rs.find(r => r.querySelector(".dispon-item-name").textContent.trim() === "Cadeira 2")?.textContent || "");
   assert.match(c2, /\b3\b/, "Cadeira 2 com o disponível do banco (3): " + c2);
   console.log("ok 9 - disponível vem da mesma conta do catálogo e do pedido");
+
+  // visão por pedido: no lugar de "Reservado na data", uma coluna por pedido da data, antes de "Disponível"
+  await page.evaluate(() => { window.__livreDb = null; });
+  await page.fill("#disponData", "2099-11-10"); await page.dispatchEvent("#disponData", "change"); await esperarFim();
+  await page.fill("#disponBusca", ""); await page.dispatchEvent("#disponBusca", "input");
+  await page.waitForTimeout(400);
+  await page.click("[data-dispon-visao=pedidos]");
+  await page.waitForSelector("th.dispon-col-pedido");
+  const cab = await page.$$eval("#disponCabecalho th", (t) => t.map((x) => x.querySelector(".dispon-ped-num")?.textContent || x.textContent.trim()));
+  assert.ok(!cab.some((t) => /Reservado/.test(t)), "sem a coluna Reservado: " + cab);
+  assert.deepEqual(cab.filter((t) => /^Pedido/.test(t)), ["Pedido 1", "Pedido 2", "Pedido 4", "Pedido 5"]);
+  assert.equal(cab[cab.length - 2], "Disponivel"); assert.equal(cab[cab.indexOf("Pedido 1") - 1], "Manutencao", "pedidos logo antes de Disponível");
+  const linha = await page.$$eval(".dispon-row", (rs) => { const r = rs.find((x) => x.querySelector(".dispon-item-name").textContent.trim() === "Cadeira 2"); return [...r.querySelectorAll(".dispon-cel-pedido")].map((c) => c.textContent.trim()); });
+  assert.deepEqual(linha, ["–", "–", "2", "3"], "Cadeira 2: 2 no pedido 4 e 3 no pedido 5");
+  assert.equal(await page.locator("th.dispon-col-pedido.is-pre").count(), 1, "pré-reserva sinalizada");
+  assert.equal(await page.evaluate(() => { const r = [...document.querySelectorAll(".dispon-row")][0]; return r.children.length === document.querySelectorAll("#disponCabecalho th").length; }), true, "linha com o mesmo número de colunas do cabeçalho");
+  if (process.env.SP) { await page.setViewportSize({ width: 1500, height: 900 }); await page.evaluate(() => window.scrollTo(0, 0)); await page.screenshot({ path: process.env.SP + "/dispon-pedidos.png" }); }
+  await page.click("[data-dispon-visao=resumo]");
+  await page.waitForFunction(() => /Reservado na data/.test(document.getElementById("disponCabecalho").textContent));
+  assert.equal(await page.locator("th.dispon-col-pedido").count(), 0);
+  console.log("ok 10 - visão por pedido: uma coluna por pedido da data, antes de Disponível, e volta ao resumo");
+
+  // cabeçalho fixo: a tabela rola dentro da própria caixa e o cabeçalho fica parado no topo dela; rolar carrega mais itens
+  await page.setViewportSize({ width: 1400, height: 800 });
+  await page.fill("#disponBusca", ""); await page.dispatchEvent("#disponBusca", "input"); await page.waitForTimeout(400);
+  const linhasAntes = await page.locator(".dispon-row").count();
+  const fixo = await page.evaluate(async () => {
+    const wrap = document.querySelector(".dispon-table-wrap"), th = document.querySelector("#disponCabecalho th");
+    const topo = th.getBoundingClientRect().top;
+    wrap.scrollTop = 400; await new Promise((r) => setTimeout(r, 120));
+    return { rolou: wrap.scrollTop > 300, rolaDentro: wrap.scrollHeight > wrap.clientHeight, mesmoLugar: Math.abs(document.querySelector("#disponCabecalho th").getBoundingClientRect().top - wrap.getBoundingClientRect().top) < 1 && topo > -1 };
+  });
+  assert.deepEqual(fixo, { rolou: true, rolaDentro: true, mesmoLugar: true }, "cabeçalho parado: " + JSON.stringify(fixo));
+  await page.evaluate(() => { const w = document.querySelector(".dispon-table-wrap"); w.scrollTop = w.scrollHeight; w.dispatchEvent(new Event("scroll")); });
+  await page.waitForFunction((n) => document.querySelectorAll(".dispon-row").length > n, linhasAntes, { timeout: 10000 });
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("#disponCabecalho th")).backgroundColor), "rgb(255, 255, 255)", "cabeçalho com fundo (as linhas não aparecem por trás)");
+  console.log("ok 11 - cabeçalho fixo ao rolar a tabela, e rolar a tabela carrega mais itens");
 
   assert.deepEqual(erros, []);
   await browser.close(); console.log("todos os testes passaram");

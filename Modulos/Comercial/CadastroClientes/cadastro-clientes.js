@@ -298,6 +298,7 @@ document.getElementById("catalogoSenha")?.addEventListener("input", event => {
 ===================================================== */
 function clientes_openAdd() {
   clienteAtualId = null;
+  window.ClientesEquipes?.mostrarDoCliente(null);
   clienteTinhaAcessoCatalogo = false;
   resetarLogoCatalogo();
 
@@ -333,6 +334,7 @@ function clientes_openAdd() {
   document.getElementById("catalogoAtivo").value = "false";
   document.getElementById("clienteBvRecebe").value = "false";
   document.getElementById("clienteBvPercentual").value = "0";
+  sugerirPessoasBv();
   const bvVig = document.getElementById('clienteBvVigencia'); if (bvVig) bvVig.textContent = 'A vigência será registrada automaticamente ao salvar.';
   atualizarEstadoSenhaCatalogo(false);
 
@@ -500,6 +502,19 @@ async function verificarDuplicidadeCliente({
    SALVAR
 ===================================================== */
 
+// Sugestões para "Quem negociou" / "Quem aprovou": as pessoas do Cadastro de Funcionários (pode digitar outro nome).
+let pessoasBvCarregadas = false;
+async function sugerirPessoasBv() {
+  if (pessoasBvCarregadas) return;
+  pessoasBvCarregadas = true;
+  try {
+    const empresaId = await getEmpresaAtualId();
+    const { data } = await supabase.from("funcionarios_acesso").select("nome,ativo").eq("empresa_id", empresaId);
+    const lista = document.getElementById("clienteBvPessoas");
+    if (lista) lista.innerHTML = [...new Set((data || []).filter((p) => p.ativo !== false && p.nome).map((p) => p.nome.trim()))].sort((a, b) => a.localeCompare(b, "pt-BR")).map((n) => '<option value="' + n.replace(/"/g, "&quot;") + '">').join("");
+  } catch (_) { pessoasBvCarregadas = false; }
+}
+
 async function clientes_salvar() {
   const bvRecebe = document.getElementById('clienteBvRecebe').value === 'true';
   const bvCampo = document.getElementById('clienteBvPercentual');
@@ -507,6 +522,12 @@ async function clientes_salvar() {
   if (bvRecebe && (!Number.isFinite(bvPercentual) || bvPercentual <= 0 || bvPercentual > 100 || !bvCampo.checkValidity())) {
     mostrarAlerta('Informe o percentual de BV entre 0,01% e 100%.');
     bvCampo.focus(); bvCampo.reportValidity(); return;
+  }
+  // BV não é só um número: precisa da explicação, de quem negociou e de quem aprovou (out/2026)
+  const bvObs = document.getElementById('clienteBvObservacao'), bvNeg = document.getElementById('clienteBvNegociadoPor'), bvApr = document.getElementById('clienteBvAprovadoPor');
+  if (bvRecebe) {
+    const falta = [[bvObs, 'por que o cliente recebe esse BV'], [bvNeg, 'quem negociou'], [bvApr, 'quem aprovou']].find(([c]) => (c?.value || '').trim().length < (c === bvObs ? 10 : 3));
+    if (falta) { mostrarAlerta('Para dar BV, informe ' + falta[1] + (falta[0] === bvObs ? ' (pelo menos 10 letras).' : '.')); falta[0].focus(); return; }
   }
   if (!validarClienteCompleto()) return;
   if (!validarTagsObrigatorias()) return;
@@ -554,6 +575,9 @@ async function clientes_salvar() {
     const payload = {
       bv_recebe: bvRecebe,
       bv_percentual: bvPercentual,
+      bv_observacao: (bvObs?.value || '').trim() || null,
+      bv_negociado_por: (bvNeg?.value || '').trim() || null,
+      bv_aprovado_por: (bvApr?.value || '').trim() || null,
       nome_razao: nome.value,
       telefone: telefone.value,
       email: email.value,
@@ -622,10 +646,15 @@ async function clientes_salvar() {
 async function abrirDetalhesCliente(cliente) {
   document.getElementById('clienteBvRecebe').value = String(Boolean(cliente.bv_recebe));
   document.getElementById('clienteBvPercentual').value = cliente.bv_percentual || 0;
+  document.getElementById('clienteBvObservacao').value = cliente.bv_observacao || '';
+  document.getElementById('clienteBvNegociadoPor').value = cliente.bv_negociado_por || '';
+  document.getElementById('clienteBvAprovadoPor').value = cliente.bv_aprovado_por || '';
+  sugerirPessoasBv();
   const bvVig = document.getElementById('clienteBvVigencia'); if (bvVig) bvVig.textContent = cliente.bv_vigente_desde
     ? 'Regra atual registrada em ' + new Date(cliente.bv_vigente_desde).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + '.'
     : 'BV ainda não habilitado. A vigência começará quando a ativação for salva.';
   clienteAtualId = cliente.id;
+  window.ClientesEquipes?.mostrarDoCliente(cliente.id);
 
   // abre tela de detalhes
   mostrarDetalhesCliente();

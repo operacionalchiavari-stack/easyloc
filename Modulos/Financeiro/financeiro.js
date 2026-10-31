@@ -66,10 +66,13 @@
     S.contas = contas; S.cfg = cfg; S.cats = cats; S.ccs = ccs; S.receber = receber; S.pagar = pagar;
     S.fornecedores = forn; S.clientes = cli;
     S.saldos = {}; (saldos || []).forEach((s) => { S.saldos[s.conta_id] = Number(s.saldo) || 0; });
+    S.recebidoEm = {};
+    const baixas = await todos("fin_baixas", "receber_id,data,estornado_em", (q) => q.not("receber_id", "is", null)).catch(() => []);
+    baixas.forEach((b) => { if (b.estornado_em || !b.receber_id) return; const d = String(b.data || "").slice(0, 10); if (d > (S.recebidoEm[b.receber_id] || "")) S.recebidoEm[b.receber_id] = d; });
     const ids = [...new Set(receber.map((r) => r.pedido_id).filter(Boolean))];
     S.pedidos = {};
     for (let i = 0; i < ids.length; i += 100) {
-      const { data } = await S.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,tipo_evento,data_evento,valor_total,status_comercial").in("id", ids.slice(i, i + 100));
+      const { data } = await S.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,tipo_evento,data_evento,data_evento_fim,data_entrega,data_coleta,local_nome,valor_total,status_comercial").in("id", ids.slice(i, i + 100));
       (data || []).forEach((p) => { S.pedidos[p.id] = p; });
     }
     contadores();
@@ -89,6 +92,7 @@
   const PRAZOS = [["vencidos", "Vencidos", (d) => d < 0], ["hoje", "Vence hoje", (d) => d === 0], ["semana", "Próximos 7 dias", (d) => d >= 1 && d <= 7]];
   const noPrazo = (t, chave) => { const d = diasParaVencer(t); return d !== null && PRAZOS.find(([k]) => k === chave)[2](d); };
   function alertaVenc(t) {
+    if (S.recebidoEm?.[t.id] && Number(t.aberto) <= 0.005) return "";
     const dias = diasParaVencer(t);
     if (dias === null || dias > 7) return "";
     const txt = dias < -1 ? "Venceu há " + -dias + " dias" : dias === -1 ? "Venceu ontem" : dias === 0 ? "Vence hoje" : dias === 1 ? "Vence amanhã" : "Vence em " + dias + " dias";
@@ -164,7 +168,8 @@
     // Decoradores: uma tela só (a "Gestão de créditos" saiu, tudo é feito na conta corrente); a linha fica para
     // os botões Atualizar / Registrar crédito que financeiro-bv.js põe à direita.
     bv: [["bv", "Conta dos decoradores"]],
-    dre: [["dre", "DRE"], ["plano", "Plano de contas"]]
+    dre: [["dre", "DRE"], ["plano", "Plano de contas"]],
+    gerencial: [["gerencial", "Painel"], ["resultados", "Lançar custos dos eventos"]]
   };
   const abaDoGrupo = (aba) => (aba === "contas" || aba === "conciliacao") ? "bancos" : Object.keys(GRUPOS_ABA).find((g) => GRUPOS_ABA[g].some(([k]) => k === aba)) || aba;
   function pintarSubAbas() {
@@ -177,7 +182,7 @@
     $('finConteudo').classList.toggle('fin-bv-extrato', S.aba === 'bv');
     document.querySelectorAll("#finAbas [data-aba]").forEach((b) => b.classList.toggle("ativa", b.dataset.aba === abaDoGrupo(S.aba)));
     pintarSubAbas();
-    const f = { geral: pintarGeral, receber: pintarReceber, pagar: pintarPagar, bv: () => window.FinanceiroBV.render({ S, rpc, brl, esc, dataBr, card, recarregar, registrarCredito }), resultados: () => window.FinanceiroGestao.resultados({ S, rpc, brl, esc, dataBr, recarregar }), posicao: () => window.FinanceiroPosicaoFinal.render({ S, rpc, brl, esc, dataBr, recarregar }), bancos: pintarConciliacao, clara: () => window.FinanceiroClara.chat(ctxClara()), gateways: () => window.FinanceiroGateways.render(), contas: pintarConciliacao, conciliacao: pintarConciliacao, dre: pintarDre, plano: pintarPlano }[S.aba];
+    const f = { geral: pintarGeral, gerencial: () => window.FinanceiroGerencial.render({ S, esc, brl, dataBr, modal, fecharModal, avisar, rpc, irPara: (aba) => { S.aba = aba; pintar(); } }), receber: pintarReceber, pagar: pintarPagar, bv: () => window.FinanceiroBV.render({ S, rpc, brl, esc, dataBr, card, recarregar, registrarCredito }), resultados: () => window.FinanceiroGestao.resultados({ S, rpc, brl, esc, dataBr, recarregar }), posicao: () => window.FinanceiroPosicaoFinal.render({ S, rpc, brl, esc, dataBr, recarregar }), bancos: pintarConciliacao, clara: () => window.FinanceiroClara.chat(ctxClara()), gateways: () => window.FinanceiroGateways.render(), contas: pintarConciliacao, conciliacao: pintarConciliacao, dre: pintarDre, plano: pintarPlano }[S.aba];
     Promise.resolve(f()).catch((e) => { console.error(e); $("finConteudo").innerHTML = '<div class="fin-vazio">Erro: ' + esc(e.message || e) + "</div>"; });
   }
 
@@ -309,6 +314,39 @@
     return '<td><div class="acoes">' +
       '<button class="fin-btn peq claro" data-r-editar="' + t.id + '">Editar</button><button class="fin-btn peq claro" data-r-ver="' + t.id + '">Detalhes</button></div></td>';
   }
+  // Situação do pedido inteiro (todas as parcelas, sem olhar os filtros): quanto já entrou e quanto falta para quitar.
+  const ST_PEDIDO = { orcamento: "Orçamento", pre_reserva: "Pré-reserva", aprovado: "Reservado", finalizado: "Reservado", enviado: "Reservado", cancelado: "Cancelado" };
+  function situacaoPedido(chave) {
+    const ts = S.receber.filter((x) => (x.pedido_id || x.grupo) === chave && x.status !== "cancelado");
+    const total = ts.reduce((s, x) => s + Number(x.valor), 0), aberto = ts.reduce((s, x) => s + Number(x.aberto), 0);
+    const vencidoV = ts.filter(vencido).reduce((s, x) => s + Number(x.aberto), 0);
+    const abertas = ts.filter((x) => Number(x.aberto) > 0.005).sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)));
+    return { ts, total, aberto, recebido: Math.max(0, total - aberto), vencido: vencidoV, pct: total > 0 ? Math.floor(((total - aberto) / total) * 100) : 0,
+      pagas: ts.filter((x) => Number(x.aberto) <= 0.005).length, proxima: abertas[0] || null, abertas };
+  }
+  const barraPago = (pct) => '<span class="fin-pago-barra" role="img" aria-label="' + pct + '% pago"><i style="width:' + Math.min(100, Math.max(0, pct)) + '%"></i></span>';
+  // Coluna "Falta no pedido" de cada parcela: o que falta para o pedido ficar quitado e, embaixo, quanto ainda vai faltar
+  // depois que esta parcela for paga (as parcelas em aberto em ordem de vencimento).
+  function faltaNoPedido(t) {
+    const sit = situacaoPedido(t.pedido_id || t.grupo);
+    if (sit.aberto <= 0.005) return '<td class="num fin-falta"><b class="fin-quitado">Quitado</b>' + barraPago(100) + "</td>";
+    const i = sit.abertas.findIndex((x) => x.id === t.id);
+    const depois = i >= 0 ? sit.abertas.slice(i + 1).reduce((s, x) => s + Number(x.aberto), 0) : null;
+    return '<td class="num fin-falta"><b>' + brl(sit.aberto) + "</b>" + barraPago(sit.pct) + "<small>" + sit.pct + "% pago" +
+      (depois != null ? " · depois desta: " + (depois > 0.005 ? brl(depois) : "quitado") : "") + "</small></td>";
+  }
+  // Quando foi recebido e se foi no prazo: "Recebido em 02/11 · 3 dias depois do vencimento".
+  // Pagamento parcial mostra a data do último recebimento.
+  function recebidoEmHtml(t) {
+    const d = S.recebidoEm?.[t.id];
+    if (!d) return '<td class="fin-receb-em"><span class="fin-receb-nada">—</span></td>';
+    const venc = String(t.vencimento || "").slice(0, 10);
+    const dias = venc ? Math.round((new Date(d + "T12:00:00") - new Date(venc + "T12:00:00")) / 864e5) : 0;
+    const prazo = !venc ? "" : dias === 0 ? '<small class="ok">no dia do vencimento</small>' : dias < 0 ? '<small class="ok">' + -dias + " dia" + (dias === -1 ? "" : "s") + " antes</small>" : '<small class="atraso">' + dias + " dia" + (dias === 1 ? "" : "s") + " depois</small>";
+    return '<td class="fin-receb-em"><b>' + dataBr(d) + "</b>" + prazo + "</td>";
+  }
+  const metaPedido = (ped) => [ped.tipo_evento, ped.data_evento ? "Evento " + dataBr(ped.data_evento) + (ped.data_evento_fim && ped.data_evento_fim !== ped.data_evento ? " a " + dataBr(ped.data_evento_fim) : "") : "",
+    ped.local_nome, ped.data_entrega ? "Entrega " + dataBr(ped.data_entrega) : "", ped.data_coleta ? "Coleta " + dataBr(ped.data_coleta) : ""].filter(Boolean);
   function receberPorData(lista) {
     const ord = ["locacao", "frete", "montagem", "outro"];
     const linhas = lista.slice().sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)) || String(a.pedido_numero || "").localeCompare(String(b.pedido_numero || ""), "pt-BR", { numeric: true }) || a.parcela - b.parcela || ord.indexOf(a.componente) - ord.indexOf(b.componente));
@@ -316,12 +354,13 @@
     const total = linhas.reduce((s, t) => s + Number(t.valor), 0), aberto = linhas.reduce((s, t) => s + Number(t.aberto), 0);
     return '<section class="fin-pedido fin-receber-data"><div class="fin-pedido-topo fin-pedido-linha"><strong>Por data</strong><small>' + linhas.length + " parcela(s)" +
       '</small><div class="fin-pedido-tot">Total <b>' + brl(total) + "</b><span>Em aberto <b>" + brl(aberto) + "</b></span></div></div>" +
-      '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Pedido · cliente</th><th>Parcela</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th class="num">Valor</th><th class="num">Recebido</th><th>Status</th><th></th></tr></thead><tbody>' +
+      '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Pedido · cliente</th><th>Parcela</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th class="num">Valor</th><th class="num">Recebido</th><th>Recebido em</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
       linhas.map((t) => {
         const [cls, rot] = statusR(t), ped = t.pedido_id ? S.pedidos[t.pedido_id] : null;
-        const quem = ped ? "Pedido " + esc(ped.numero_pedido || t.pedido_numero) + " · " + esc(ped.cliente_nome || t.cliente_nome || "") : esc(t.descricao || "Lançamento") + (t.cliente_nome ? " · " + esc(t.cliente_nome) : "");
+        const quem = (ped ? "<b>Pedido " + esc(ped.numero_pedido || t.pedido_numero) + "</b> · " + esc(ped.cliente_nome || t.cliente_nome || "") : esc(t.descricao || "Lançamento") + (t.cliente_nome ? " · " + esc(t.cliente_nome) : "")) +
+          (ped ? '<small class="fin-linha-meta">' + esc(metaPedido(ped).join(" · ")) + "</small>" : "");
         return "<tr><td><b>" + dataBr(t.vencimento) + "</b>" + alertaVenc(t) + "</td><td>" + quem + "</td><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
-          '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + '</td><td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + acoesR(t) + "</tr>";
+          '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + recebidoEmHtml(t) + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + acoesR(t) + "</tr>";
       }).join("") + "</tbody></table></div></section>";
   }
   function pintarReceber() {
@@ -331,23 +370,28 @@
     const html = porData ? receberPorData(lista) : [...grupos.values()].map((ts) => {
       ts.sort((a, b) => a.parcela - b.parcela || ["locacao", "frete", "montagem", "outro"].indexOf(a.componente) - ["locacao", "frete", "montagem", "outro"].indexOf(b.componente));
       const t0 = ts[0], ped = t0.pedido_id ? S.pedidos[t0.pedido_id] : null;
-      const todosDoGrupo = S.receber.filter((x) => (x.pedido_id || x.grupo) === (t0.pedido_id || t0.grupo) && x.status !== "cancelado");
-      const total = todosDoGrupo.reduce((s, x) => s + Number(x.valor), 0), aberto = todosDoGrupo.reduce((s, x) => s + Number(x.aberto), 0);
+      const sit = situacaoPedido(t0.pedido_id || t0.grupo), todosDoGrupo = sit.ts, total = sit.total, aberto = sit.aberto;
       const divs = [...new Set(todosDoGrupo.map((x) => x.componente))];
       const dif = ped && Math.abs(Number(ped.valor_total) - total) > 0.05;
       const titulo = ped ? "Pedido " + esc(ped.numero_pedido || t0.pedido_numero) + " · " + esc(ped.cliente_nome || t0.cliente_nome || "") : esc(t0.descricao) + (t0.cliente_nome ? " · " + esc(t0.cliente_nome) : "");
-      const sub = ped ? esc([ped.tipo_evento, ped.data_evento ? "evento " + dataBr(ped.data_evento) : ""].filter(Boolean).join(" · ")) : esc(t0.documento || "Lançamento manual");
+      const sub = ped ? (ped.status_comercial ? '<span class="fin-ped-st">' + esc(ST_PEDIDO[ped.status_comercial] || ped.status_comercial) + "</span>" : "") : esc(t0.documento || "Lançamento manual");
+      const meta = ped ? metaPedido(ped) : [];
+      const prox = sit.proxima ? "Próxima parcela " + dataBr(sit.proxima.vencimento) + " · " + brl(sit.proxima.aberto) : "Sem parcelas em aberto";
+      const resumo = '<div class="fin-ped-resumo">' + (meta.length ? '<span class="fin-ped-meta">' + meta.map(esc).join("<i>·</i>") + "</span>" : "") +
+        '<span class="fin-ped-quita">' + barraPago(sit.pct) + "<b>" + sit.pct + "% pago</b><span>" + sit.pagas + " de " + todosDoGrupo.length + " parcela(s) recebidas</span><span>" + esc(prox) + "</span></span>" +
+        '<span class="fin-ped-nums"><span>Recebido <b>' + brl(sit.recebido) + "</b></span><span" + (aberto > 0.005 ? ' class="falta"' : "") + ">Falta para quitar <b>" + (aberto > 0.005 ? brl(aberto) : "quitado") + "</b></span>" +
+        (sit.vencido > 0.005 ? '<span class="venc">Vencido <b>' + brl(sit.vencido) + "</b></span>" : "") + "</span></div>";
       return '<article class="fin-pedido"><div class="fin-pedido-topo fin-pedido-linha"><strong>' + titulo + "</strong><small>" + sub + '</small><div class="fin-divisoes">' +
         divs.map((d) => { const v = todosDoGrupo.filter((x) => x.componente === d).reduce((s, x) => s + Number(x.valor), 0); return '<span class="fin-chip ' + d + '">' + DIV[d] + " " + brl(v) + "</span>"; }).join("") +
         (dif ? '<span class="fin-alerta-dif" title="As parcelas somam ' + brl(total) + " e o pedido está em " + brl(ped.valor_total) + '">As parcelas somam ' + brl(total) + " e o pedido está em " + brl(ped.valor_total) + "</span>" : "") +
         '</div>' + (ped && aberto > 0.005 ? '<button type="button" class="fin-btn peq claro fin-link-pag" data-link-pag="' + t0.pedido_id + '" title="Pedido digital: o cliente vê o pedido e paga pelo mesmo link">Link do pedido</button>' : "") +
-        '<div class="fin-pedido-tot">Total <b>' + brl(total) + "</b><span>Em aberto <b>" + brl(aberto) + "</b></span></div></div>" +
-        '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Parcela</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th>Vencimento</th><th class="num">Valor</th><th class="num">Recebido</th><th>Status</th><th></th></tr></thead><tbody>' +
+        '<div class="fin-pedido-tot">Total <b>' + brl(total) + "</b></div></div>" + resumo +
+        '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Parcela</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th>Vencimento</th><th class="num">Valor</th><th class="num">Recebido</th><th>Recebido em</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
         ts.map((t) => {
           const [cls, rot] = statusR(t);
           return "<tr><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
-            "</td><td>" + dataBr(t.vencimento) + alertaVenc(t) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + '</td><td><span class="fin-status ' + cls + '">' + rot + "</span></td>" +
-            acoesR(t) + "</tr>";
+            "</td><td>" + dataBr(t.vencimento) + alertaVenc(t) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + recebidoEmHtml(t) + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" +
+            faltaNoPedido(t) + acoesR(t) + "</tr>";
         }).join("") + "</tbody></table></div></article>";
     }).join("");
     $("finConteudo").innerHTML =
@@ -756,10 +800,18 @@
       const raiz = S.cats.filter((c) => c.tipo === tipo && !c.pai_id);
       return raiz.map((r) => linhaCat(r, 0) + S.cats.filter((c) => c.pai_id === r.id).map((f) => linhaCat(f, 1)).join("")).join("");
     };
-    $("finConteudo").innerHTML = '<div class="fin-grade fin-grade-plano"><section class="fin-bloco"><h3>Plano de contas <button class="fin-btn peq" id="fpcNova">+ Categoria</button></h3><p class="cl-dica">O centro de custo de cada categoria vale para os títulos que não têm centro próprio, na DRE e no extrato.</p><table class="fin-tabela fin-plano"><thead><tr><th>Categoria</th><th>Centro de custo</th><th></th></tr></thead><tbody>' +
-      '<tr class="grupo"><td colspan="3">Entradas</td></tr>' + arv("entrada") + '<tr class="grupo"><td colspan="3">Saídas</td></tr>' + arv("saida") + "</tbody></table></section>" +
+    $("finConteudo").innerHTML = '<div class="fin-grade fin-grade-plano"><section class="fin-bloco"><h3>Plano de contas <button class="fin-btn peq" id="fpcNova">+ Categoria</button></h3><p class="cl-dica">O centro de custo de cada categoria vale para os títulos que não têm centro próprio, na DRE e no extrato.</p><table class="fin-tabela fin-plano"><thead><tr><th>Categoria</th><th>Centro de custo</th><th title="Para o ponto de equilíbrio no Gerencial">Fixo ou variável</th><th></th></tr></thead><tbody>' +
+      '<tr class="grupo"><td colspan="4">Entradas</td></tr>' + arv("entrada") + '<tr class="grupo"><td colspan="4">Saídas</td></tr>' + arv("saida") + "</tbody></table></section>" +
       '<section class="fin-bloco"><h3>Centros de custo <button class="fin-btn peq" id="fpcCc">+ Centro de custo</button></h3><table class="fin-tabela"><tbody>' +
       S.ccs.map((c) => "<tr" + (c.ativo ? "" : ' style="opacity:.5"') + "><td>" + esc((c.codigo ? c.codigo + " · " : "") + c.nome) + '</td><td class="num"><button class="fin-btn peq claro" data-cc-tog="' + c.id + '">' + (c.ativo ? "Desativar" : "Ativar") + "</button></td></tr>").join("") + "</tbody></table></section></div>";
+    $("finConteudo").querySelectorAll("[data-cat-nat]").forEach((sel) => sel.addEventListener("change", async () => {
+      const id = sel.dataset.catNat, v = sel.value || null;
+      const r = await S.sb.from("fin_categorias").update({ natureza: v }).eq("id", id).eq("empresa_id", S.emp);
+      if (r.error) { avisar(r.error.message || "Não foi possível salvar.", "Financeiro", "erro"); return; }
+      const c = S.cats.find((x) => x.id === id); if (c) c.natureza = v;
+      avisar("Categoria marcada como " + (v === "variavel" ? "variável" : v === "fixo" ? "fixa" : "automática") + ".", "Financeiro", "sucesso");
+      pintarPlano();
+    }));
     $("finConteudo").querySelectorAll("[data-cat-cc]").forEach((sel) => sel.addEventListener("change", async () => {
       const id = sel.dataset.catCc, v = sel.value || null;
       const r = await S.sb.from("fin_categorias").update({ centro_custo_id: v }).eq("id", id).eq("empresa_id", S.emp);
@@ -776,8 +828,16 @@
         [{ rotulo: "Cancelar", classe: "claro", acao: fecharModal }, { rotulo: "Salvar", acao: async () => { const d = campos($("finModalCorpo")); if (!d.nome.trim()) return erroModal("Informe o nome."); await executar(async () => { const r = await S.sb.from("fin_centros_custo").insert({ empresa_id: S.emp, codigo: d.codigo || null, nome: d.nome.trim() }); if (r.error) throw r.error; }, "Centro de custo criado."); } }]);
     });
   }
+  // Fixo ou variável (ponto de equilíbrio do Gerencial). "Automático" mostra o que vale hoje (regra em financeiro-gerencial.js).
+  function naturezaSelect(c) {
+    if (c.tipo === "entrada") return '<span class="fin-dre-semcc">—</span>';
+    const auto = window.FinanceiroGerencial?.naturezaDe ? window.FinanceiroGerencial.naturezaDe({ ...c, natureza: null }, S.cats) : "fixo";
+    const op = (v, t) => '<option value="' + v + '"' + ((c.natureza || "") === v ? " selected" : "") + ">" + t + "</option>";
+    return '<select class="fin-cat-cc fin-cat-nat" data-cat-nat="' + c.id + '" aria-label="Fixo ou variável: ' + esc(c.nome) + '">' +
+      op("", "Automático (" + (auto === "variavel" ? "variável" : "fixo") + ")") + op("fixo", "Fixo") + op("variavel", "Variável") + "</select>";
+  }
   const linhaCat = (c, nivel) => "<tr" + (c.ativo ? "" : ' style="opacity:.5"') + '><td style="padding-left:' + (10 + nivel * 22) + 'px">' + esc((c.codigo ? c.codigo + " " : "") + c.nome) + (c.chave ? ' <small style="color:#8a6c48">automática</small>' : "") + '</td><td><select class="fin-cat-cc" data-cat-cc="' + c.id + '" aria-label="Centro de custo de ' + esc(c.nome) + '"><option value="">— nenhum —</option>' +
-    S.ccs.filter((x) => x.ativo || x.id === c.centro_custo_id).map((x) => '<option value="' + x.id + '"' + (x.id === c.centro_custo_id ? " selected" : "") + ">" + esc(x.nome) + "</option>").join("") + '</select></td><td class="num"><button class="fin-btn peq claro" data-cat-tog="' + c.id + '">' + (c.ativo ? "Desativar" : "Ativar") + "</button></td></tr>";
+    S.ccs.filter((x) => x.ativo || x.id === c.centro_custo_id).map((x) => '<option value="' + x.id + '"' + (x.id === c.centro_custo_id ? " selected" : "") + ">" + esc(x.nome) + "</option>").join("") + '</select></td><td>' + naturezaSelect(c) + '</td><td class="num"><button class="fin-btn peq claro" data-cat-tog="' + c.id + '">' + (c.ativo ? "Desativar" : "Ativar") + "</button></td></tr>";
 
   // ---------------------------------------------------------------- eventos
   function ligar() {
@@ -809,7 +869,7 @@
   function colorirValores(raiz) {
     if (!raiz) return;
     raiz.querySelectorAll("td, th, strong, b, span, small, div, p").forEach((el) => {
-      if (el.children.length || el.closest("button, select, option, .fin-chip, .fin-status")) return;
+      if (el.children.length || el.closest("button, select, option, .fin-chip, .fin-status, .fin-ped-nums, .fin-falta")) return;
       const t = el.textContent.replace(/ /g, " ").trim();
       if (!VALOR_BRL.test(t)) { el.classList.remove("fin-valor-pos", "fin-valor-neg"); return; }
       const negativo = /[-−–]/.test(t), zero = !/[1-9]/.test(t);

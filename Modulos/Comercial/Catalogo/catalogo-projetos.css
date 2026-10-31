@@ -1173,3 +1173,4 @@ dialog.cpj-modal.is-wide:has(.cpj-dest-2col){width:min(1080px,calc(100vw - 28px)
 .cpj-order-pagar-link b{color:#123f86;letter-spacing:.18em}
 @media(max-width:560px){.cpj-order-pagar{flex-direction:column;text-align:center}}
 .cpj-order-financeiro .cpj-order-pagar{grid-column:1/-1}
+.cpj-btn-link-pedido{display:inline-flex;align-items:center;gap:6px}.cpj-btn-link-pedido svg{flex:none}

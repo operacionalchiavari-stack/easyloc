@@ -1,5 +1,5 @@
-import { renderizarFreteCard } from "./pedido.ui-frete.mjs";
-import { atualizarMontagemSugerida } from "./pedido.montagem.mjs?v=20261026-acentos";
+import { renderizarFreteCard } from "./pedido.ui-frete.mjs?v=20261031-ajuste-compacto";
+import { atualizarMontagemSugerida } from "./pedido.montagem.mjs?v=20261031-ajuste-compacto";
 
 export function initFrete(ctx){
 
@@ -16,6 +16,31 @@ export function initFrete(ctx){
     cacheCategorias = { empresa: empresaId, em: Date.now(), promessa };
     return promessa;
   };
+  // A distância se ajusta na própria caixinha "Distância" da linha do Frete (out/2026): clicar mostra o campo,
+  // Enter ou sair confirma, Esc desiste.
+  const chipKm = document.querySelector(".frete-km-chip");
+  const campoKm = document.getElementById("freteKmManual");
+  const textoKm = document.getElementById("freteDistanciaKm");
+  if(chipKm && campoKm && textoKm){
+    let antes = "";
+    const fechar = () => { campoKm.hidden = true; textoKm.hidden = false; chipKm.classList.remove("is-editando"); };
+    chipKm.tabIndex = 0;
+    chipKm.setAttribute("role", "button");
+    const abrir = () => {
+      if(!campoKm.hidden) return;
+      antes = campoKm.value || String(window.kmPedido || "");
+      campoKm.value = antes;
+      textoKm.hidden = true; campoKm.hidden = false; chipKm.classList.add("is-editando");
+      campoKm.focus(); campoKm.select();
+    };
+    chipKm.addEventListener("click", abrir);
+    chipKm.addEventListener("keydown", e => { if(e.target === chipKm && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); abrir(); } });
+    campoKm.addEventListener("keydown", e => {
+      if(e.key === "Enter"){ e.preventDefault(); campoKm.blur(); }
+      if(e.key === "Escape"){ campoKm.value = antes; fechar(); chipKm.focus(); }
+    });
+    campoKm.addEventListener("blur", fechar);
+  }
   document.getElementById("freteKmManual")?.addEventListener("change", event => {
     const km = Number(event.target.value);
     if(!Number.isFinite(km) || km < 0) return;

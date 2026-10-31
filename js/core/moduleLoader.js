@@ -179,6 +179,7 @@ delete window.__caminhoesEventosAtivos;
        LOAD HTML
     ===================== */
     const response = await fetch(htmlPath);
+    if(!response.ok) throw new Error("A tela não foi encontrada (" + response.status + ").");
     const html = await response.text();
 
     main.innerHTML = html;
@@ -210,7 +211,7 @@ delete window.__caminhoesEventosAtivos;
     ===================== */
     if(jsPath){
 
-      await new Promise((resolve)=>{
+      await new Promise((resolve, reject)=>{
 
 const script = document.createElement("script");
 
@@ -256,6 +257,8 @@ script.onload = () => {
 
 };
 
+        // sem isto, um arquivo que não carrega deixava a tela esperando para sempre
+        script.onerror = () => reject(new Error("Não foi possível carregar o arquivo da tela."));
         document.body.appendChild(script);
 
       });
@@ -264,6 +267,13 @@ script.onload = () => {
 
   }catch(err){
     console.error("❌ Erro ao carregar módulo:", err);
+    // avisa em vez de deixar a tela parada em "carregando" (ex.: servidor local desligado, sem internet)
+    try{ window.moduleLoadingIndicator?.hide?.(); }catch(_){}
+    const aviso = document.createElement("div");
+    aviso.setAttribute("role", "alert");
+    aviso.style.cssText = "margin:32px auto;max-width:560px;padding:20px 24px;border:1px solid #f1c4c0;border-radius:12px;background:#fdf1f0;color:#7a1f17;font:15px/1.5 Inter,system-ui,sans-serif";
+    aviso.innerHTML = "<strong>Não foi possível abrir esta tela.</strong><br>" + (navigator.onLine ? "Confira se o sistema está no ar (no computador local: o Live Server ligado) e tente de novo." : "Sem conexão com a internet.");
+    if(main){ main.innerHTML = ""; main.append(aviso); }
   }
 finally{
 

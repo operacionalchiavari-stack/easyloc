@@ -1,4 +1,4 @@
-import { renderMontagemSugerida } from "./pedido.ui-montagem.mjs?v=20261026-acentos";
+import { renderMontagemSugerida } from "./pedido.ui-montagem.mjs?v=20261031-ajuste-compacto";
 
 function _parseCombToMap(str){
   const s = String(str || "").toUpperCase().replace(/\s+/g, "");

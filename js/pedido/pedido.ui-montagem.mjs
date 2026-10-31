@@ -1,4 +1,4 @@
-import { aplicarLogisticaManual } from './pedido.logistica-manual.mjs';
+import { aplicarLogisticaManual } from './pedido.logistica-manual.mjs?v=20261031-ajuste-compacto';
 import { colorirValor } from "./pedido.valores-ui.mjs";
 ﻿export function renderMontagemSugerida(payload){
   const automatico = payload;

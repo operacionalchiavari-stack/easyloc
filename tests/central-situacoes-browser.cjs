@@ -103,6 +103,21 @@ const mockSupabase = `
   await page.click("[data-situacao=\"\"]");
   assert.strictEqual((await numeros()).length, 7, "Todos de novo continua em todos");
   console.log("ok 3 - clicar filtra e clicar de novo mostra todos");
+  // Ordenar por (cabeçalho): número, data do evento e de volta ao padrão; a escolha fica guardada
+  assert.strictEqual(await page.inputValue("#centralOrdem"), "padrao");
+  await page.selectOption("#centralOrdem", "numero_asc");
+  assert.deepStrictEqual(await numeros(), ["o1", "r1", "p1", "p2", "o2", "p3", "c1"], "nº do pedido, menor primeiro");
+  await page.selectOption("#centralOrdem", "numero_desc");
+  assert.deepStrictEqual((await numeros())[0], "c1");
+  await page.selectOption("#centralOrdem", "evento_antigo");
+  assert.deepStrictEqual((await numeros()).slice(0, 3), ["p2", "p3", "p1"], "evento mais antigo primeiro");
+  await page.selectOption("#centralOrdem", "evento_recente");
+  assert.deepStrictEqual((await numeros())[0], "c1", "evento mais recente primeiro");
+  await page.reload(); await page.waitForFunction(() => document.querySelectorAll("#centralTabelaPedidos tr, .central-table tbody tr").length > 1);
+  assert.strictEqual(await page.inputValue("#centralOrdem"), "evento_recente", "a escolha fica guardada");
+  await page.selectOption("#centralOrdem", "padrao");
+  assert.deepStrictEqual((await numeros()).slice(0, 3), ["p2", "p3", "p1"]);
+  console.log("ok 4 - ordenar por número, data do evento e padrão; escolha guardada");
   await page.screenshot({ path: process.env.FOTO || path.join(require("os").tmpdir(), "central-situacoes.png"), clip: { x: 0, y: 0, width: 1440, height: 420 } });
   assert.deepStrictEqual(erros, []);
   await browser.close();

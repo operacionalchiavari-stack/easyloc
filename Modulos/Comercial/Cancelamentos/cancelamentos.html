@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Cancelamentos</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="../../../styles/planilha.css?v=20261030">
+  <link rel="stylesheet" href="../comercial-relatorios.css?v=20261030c">
+</head>
+<body>
+<div class="container el-page cr-page" id="cancPage">
+  <div class="header-list">
+    <h2>Cancelamentos</h2>
+  </div>
+  <div class="fin-barra-ferr gr-barra cr-barra">
+    <label>De <input type="date" id="cDe"></label>
+    <label>Até <input type="date" id="cAte"></label>
+    <label>Decorador <select id="cDecorador"><option value="">Todos</option></select></label>
+    <label>Motivo <select id="cMotivo"><option value="">Todos</option></select></label>
+    <span class="fin-esp"></span>
+    <button type="button" class="btn secondary" id="cLimpar">Limpar filtros</button>
+    <button type="button" class="btn primary" id="cExcel">Exportar para Excel</button>
+  </div>
+  <p class="gr-nota" id="cNota">Período pela data do cancelamento. Clique numa linha dos quadros para filtrar a lista de pedidos.</p>
+  <main id="cConteudo"><div class="cr-vazio">Carregando…</div></main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261030-comercial-relatorios"></script>
+<script src="../comercial-relatorios.js?v=20261030"></script>
+<script src="cancelamentos.js?v=20261031-equipes"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+</body>
+</html>

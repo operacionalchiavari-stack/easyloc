@@ -1,11 +1,13 @@
-import { iniciarLogisticaManual, restaurarLogisticaManual, validarObservacoesLogisticaManual } from './pedido.logistica-manual.mjs';
+import { iniciarLogisticaManual, restaurarLogisticaManual, validarObservacoesLogisticaManual } from './pedido.logistica-manual.mjs?v=20261031-ajuste-compacto';
 console.log("✅ pedido.mjs carregado");
 
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs";
+import { initEquipePedido } from "./pedido.equipe.mjs?v=20261031-bv";
+import { initBvPedido } from "./pedido.bv.mjs?v=20261031-3colunas3";
 import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261026-local-endereco";
-import { initItens } from "./pedido.itens.mjs?v=20261029-cards-finos";
-import { initFrete } from "./pedido.frete.mjs?v=20261027-abas-rapidas";
+import { initItens } from "./pedido.itens.mjs?v=20261031-3colunas2";
+import { initFrete } from "./pedido.frete.mjs?v=20261031-km-chip";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261026-acentos";
 import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261029-extra";
@@ -159,6 +161,8 @@ export async function initPedido(){
      ITENS (tabela, espaços, componentes, volume, resumo)
   ===================================================== */
 initItens({ supabase, els });
+initEquipePedido({ supabase });
+initBvPedido({ supabase });
 
 /* =====================================================
    SERVIÇOS
@@ -1018,6 +1022,10 @@ async function setupPedidoWorkspace({ supabase }){
       observacoes: {
         ...observacoesAtuais,
         projeto_comercial: window.__pedidoProjetoComercial || observacoesAtuais.projeto_comercial || null,
+        // equipe do Cadastro de Clientes que a pessoa representa neste pedido (pedido.equipe.mjs)
+        ...(window.__pedidoEquipe ? window.__pedidoEquipe() : {}),
+        // BV dividido / negociado neste pedido (pedido.bv.mjs); undefined = a tela não carregou, mantém o gravado
+        bv: window.__pedidoBV?.() === undefined ? (observacoesAtuais.bv ?? null) : window.__pedidoBV(),
         observacoes_entrega: document.getElementById('observacoesEntrega')?.value.trim() || '',
         observacoes_coleta: document.getElementById('observacoesColeta')?.value.trim() || '',
         observacoes_separacao: document.getElementById('observacoesSeparacao')?.value.trim() || '',
@@ -1029,7 +1037,7 @@ async function setupPedidoWorkspace({ supabase }){
         logistica_snapshot: coletarLogisticaSnapshot(),
         logistica_manual: window.__PEDIDO_LOGISTICA_MANUAL || {},
         valores: window.__PEDIDO_VALORES || observacoesAtuais.valores || null,
-        cancelamento: window.__PEDIDO_CANCELAMENTO || null,
+        cancelamento: window.__PEDIDO_CANCELAMENTO || ((window.__PEDIDO_STATUS_ATUAL || "") === "cancelado" ? observacoesAtuais.cancelamento || null : null),
         local_html: document.getElementById("localObservacoes")?.innerHTML || "",
         local_tags_html: document.getElementById("localTagsInline")?.innerHTML || "",
         horario_entrega: horaEntrega,
@@ -1116,7 +1124,8 @@ async function setupPedidoWorkspace({ supabase }){
     document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") gravarRascunho(); });
   }
 
-  async function salvarPedidoOperacional(){
+  // Devolve true quando gravou. opts.silencioso: sem o aviso de sucesso (o cancelamento mostra o próprio aviso).
+  async function salvarPedidoOperacional(opts = {}){
     const erroObservacaoManual = validarObservacoesLogisticaManual();
     if (erroObservacaoManual) {
       avisar(erroObservacaoManual, 'Ajuste manual', 'aviso');
@@ -1159,13 +1168,28 @@ async function setupPedidoWorkspace({ supabase }){
       avisar(erroDados, "Dados do pedido", "aviso");
       return;
     }
-    const servicoSemData = (window.__pedidoProjetoComercial?.dados?.servicos || []).find((s) => s.etapa && (!s.data || !s.hora));
+    const erroEquipe = window.__pedidoValidarEquipe?.();
+    if(erroEquipe){
+      if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("dados");
+      window.__pedidoValidarEquipe?.();
+      avisar(erroEquipe, "Dados do pedido", "aviso");
+      return;
+    }
+    // Pedido cancelado não precisa da data dos serviços nem do financeiro distribuído (não vai acontecer).
+    const cancelando = statusComercialAtual() === "cancelado";
+    const servicoSemData = cancelando ? null : (window.__pedidoProjetoComercial?.dados?.servicos || []).find((s) => s.etapa && (!s.data || !s.hora));
     if(servicoSemData){
       if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("lista");
       avisar(`Informe a data e o horário do serviço "${servicoSemData.nome}": ele entra no cronograma.`, "Serviços adicionais", "aviso");
       return;
     }
-    const erroFinanceiro = window.__pedidoPendenciaFinanceiro?.();
+    const erroBv = cancelando ? null : window.__pedidoValidarBV?.();
+    if(erroBv){
+      if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("financeiro");
+      avisar(erroBv, "Comissão do decorador (BV)", "aviso");
+      return;
+    }
+    const erroFinanceiro = cancelando ? null : window.__pedidoPendenciaFinanceiro?.();
     if(erroFinanceiro){
       if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("financeiro");
       avisar(erroFinanceiro, "Financeiro e pagamentos", "aviso");
@@ -1276,6 +1300,7 @@ async function setupPedidoWorkspace({ supabase }){
     }
 
     marcarPedidoComoSalvo();
+    if(opts.silencioso) return true;
     avisar(
       (deveReservar
         ? "Pedido salvo e disponibilidade atualizada."
@@ -1284,6 +1309,7 @@ async function setupPedidoWorkspace({ supabase }){
       "Salvar pedido",
       "sucesso"
     );
+    return true;
   }
 
   window.__salvarPedidoOperacional = salvarPedidoOperacional;
@@ -1520,8 +1546,25 @@ function setupTimelinePedido({ avisar }){
   const statusEl = document.getElementById("pedidoStatus");
   const modalCancelamento = document.getElementById("modalCancelarOrcamento");
   const motivoInput = document.getElementById("motivoCancelamentoPedido");
-  const motivoCards = document.querySelectorAll(".cancelamento-motivo-card");
-  let motivoSelecionado = "";
+  // Motivos vêm de Parâmetros > Comercial (comercial_motivos_cancelamento, só os ativos, na ordem de lá).
+  // Sem resposta do banco ficam os cartões que já estão no HTML.
+  let motivoCards = document.querySelectorAll(".cancelamento-motivo-card");
+  let motivoSelecionado = "", motivoIdSelecionado = null, motivosCarregados = false;
+  const escMotivo = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  async function carregarMotivosCancelamento(){
+    if(motivosCarregados) return;
+    try{
+      await window.aguardarContexto?.();
+      const empresa = window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id");
+      const { data, error } = await window.supabaseClient.from("comercial_motivos_cancelamento").select("id,nome,descricao").eq("empresa_id", empresa).eq("ativo", true).order("ordem").order("nome");
+      if(error || !data?.length) return;
+      const caixa = document.getElementById("cancelamentoMotivos");
+      caixa.innerHTML = data.map((m) => '<button type="button" class="cancelamento-motivo-card" data-motivo="' + escMotivo(m.nome) + '" data-motivo-id="' + m.id + '"><strong>' + escMotivo(m.nome) + "</strong><span>" + escMotivo(m.descricao || "") + "</span></button>").join("");
+      motivoCards = caixa.querySelectorAll(".cancelamento-motivo-card");
+      ligarCartoesMotivo();
+      motivosCarregados = true;
+    }catch(erro){ console.warn("[pedido] motivos de cancelamento:", erro); }
+  }
   const fecharCancelamento = () => modalCancelamento?.classList.add("hidden");
   const statusLabels = {
     orcamento: "Or\u00e7amento",
@@ -1546,9 +1589,10 @@ function setupTimelinePedido({ avisar }){
 
       if(status === "cancelado"){
         if(motivoInput) motivoInput.value = "";
-        motivoSelecionado = "";
+        motivoSelecionado = ""; motivoIdSelecionado = null;
         motivoCards.forEach((card) => card.classList.remove("active"));
         modalCancelamento?.classList.remove("hidden");
+        carregarMotivosCancelamento();
         return;
       }
 
@@ -1573,16 +1617,20 @@ function setupTimelinePedido({ avisar }){
     if(event.target === modalCancelamento) fecharCancelamento();
   });
 
-  motivoCards.forEach((card) => {
-    card.addEventListener("click", () => {
-      motivoSelecionado = card.dataset.motivo || "";
-      motivoCards.forEach((item) => item.classList.remove("active"));
-      card.classList.add("active");
-      motivoInput?.focus?.();
+  function ligarCartoesMotivo(){
+    motivoCards.forEach((card) => {
+      card.addEventListener("click", () => {
+        motivoSelecionado = card.dataset.motivo || "";
+        motivoIdSelecionado = card.dataset.motivoId || null;
+        motivoCards.forEach((item) => item.classList.remove("active"));
+        card.classList.add("active");
+        motivoInput?.focus?.();
+      });
     });
-  });
+  }
+  ligarCartoesMotivo();
 
-  document.getElementById("btnConfirmarCancelamentoPedido")?.addEventListener("click", () => {
+  document.getElementById("btnConfirmarCancelamentoPedido")?.addEventListener("click", async () => {
     const observacao = (motivoInput?.value || "").trim();
 
     if(!motivoSelecionado){
@@ -1590,8 +1638,16 @@ function setupTimelinePedido({ avisar }){
       return;
     }
 
+    if(/outro/i.test(motivoSelecionado) && observacao.length < 5){
+      avisar("Explique o motivo na observação do cancelamento.", "Observação obrigatória", "aviso");
+      motivoInput?.focus?.();
+      return;
+    }
+
     const payloadCancelamento = {
       motivo: motivoSelecionado,
+      motivo_id: motivoIdSelecionado,
+      usuario: window.__CONTEXT?.usuario_nome || sessionStorage.getItem("usuario_nome") || "",
       observacao,
       data: new Date().toISOString()
     };
@@ -1604,10 +1660,18 @@ function setupTimelinePedido({ avisar }){
       localStorage.setItem("easyloc:pedido:motivo-cancelamento", motivoSelecionado);
     }catch{}
 
+    const anterior = window.__PEDIDO_STATUS_ATUAL || "orcamento";
+    const cancelamentoAnterior = window.__PEDIDO_CANCELAMENTO_ANTERIOR ?? null;
     aplicarStatus("cancelado");
     fecharCancelamento();
-    window.__salvarPedidoOperacional?.();
-    avisar("Orcamento cancelado com motivo registrado.", "Cancelamento", "sucesso");
+    const gravou = await window.__salvarPedidoOperacional?.({ silencioso: true });
+    if(gravou === true){
+      avisar("Pedido cancelado com o motivo registrado.", "Cancelamento", "sucesso");
+    }else{
+      // não gravou (dado faltando, sem conexão…): o pedido continua como estava
+      aplicarStatus(anterior);
+      window.__PEDIDO_CANCELAMENTO = cancelamentoAnterior;
+    }
   });
 }
 
