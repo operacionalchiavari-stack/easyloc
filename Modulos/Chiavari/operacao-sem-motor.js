@@ -286,10 +286,11 @@
         distanciaEvento: ch ? ch.distancia : "", enviadoPor: (ch && ch.autor) || "", uniformizada: uni ? uni.valor : "", avaliadoPor: uni ? uni.avaliadoPor : "", avaliadoEm: uni ? uni.avaliadoEm : "" };
     }
     if (regs.sacolas) { r.sacolas = regs.sacolas.sacolas || []; }
+    if (regs.conferencia_entrega) { r.conferenciaEntrega = regs.conferencia_entrega; }
     if (regs.posicionamento) { r.posicionamento = { observacao: regs.posicionamento.observacao || "", fotos: regs.posicionamento.fotos || [] }; }
     if (regs.observacoes) { r.observacoesGerais = { texto: regs.observacoes.observacao || "", observacao: regs.observacoes.observacao || "", responsavel: regs.observacoes.responsavel || "" }; }
     if (regs.lista_assinada) { r.listaAssinada = { recebedor: regs.lista_assinada.nome || "", nome: regs.lista_assinada.nome || "", foto: regs.lista_assinada.foto || "" }; }
-    var total = (r.equipeTerceirizada ? 1 : 0) + (r.sacolas && r.sacolas.length ? 1 : 0) + (r.posicionamento ? 1 : 0) + (r.listaAssinada ? 1 : 0);
+    var total = (r.equipeTerceirizada ? 1 : 0) + (r.sacolas && r.sacolas.length ? 1 : 0) + (r.conferenciaEntrega || r.posicionamento ? 1 : 0) + (r.listaAssinada ? 1 : 0);
     r.totalRegistros = total; r.totalEsperado = 4; r.completo = total === 4;
     return r;
   }
@@ -814,6 +815,11 @@
       if (r.equipe) { add(r.equipe.foto, "equipe", "Foto da equipe" + (r.equipe.empresa ? " · " + r.equipe.empresa : "")); }
       ((r.sacolas && r.sacolas.sacolas) || []).forEach(function (s) { (s.fotos || []).forEach(function (u) { add(u, "sacola", "Sacola " + (s.codigo || "")); }); });
       ((r.posicionamento && r.posicionamento.fotos) || []).forEach(function (u, k) { add(u, "posicionamento", "Posicionamento " + (k + 1)); });
+      var entrega = r.conferencia_entrega || {};
+      (entrega.lista || []).forEach(function (it) {
+        var conferido = (entrega.itens || {})[it.chave] || {};
+        if (conferido.foto) { add(conferido.foto, "troca", "Dano na entrega: " + (it.nome || "Item")); }
+      });
       if (r.lista_assinada) { add(r.lista_assinada.foto, "lista", "Lista assinada" + (r.lista_assinada.nome ? " · " + r.lista_assinada.nome : "")); }
       ((r.lista_conferida && r.lista_conferida.fotos) || []).forEach(function (u, k) { add(u, "lista", "Lista conferida · pág. " + (k + 1)); });
       trs.filter(function (t) { return t.etapa_id === v.idEtapa; }).forEach(function (t) { add(t.foto_url, "troca", "Troca: " + t.quantidade + "× " + t.item); });
@@ -937,7 +943,7 @@
       return { id: e.id, pedido: e.pedido, dataEvento: e.dataEvento || "", cliente: e.cliente, local: e.local, etapa: e.etapa, dataISO: e.dataISO, horario: e.horario || "",
         caminhao: e.caminhao || "", responsavel: e.responsavel, equipe: e.equipe || [], observacao: e.observacao || "", lat: e.lat == null ? "" : e.lat, lng: e.lng == null ? "" : e.lng,
         lona: info.lona || "", confirmadoDecorador: true, operacao: e.tipo === "montagem" || e.tipo === "desmontagem" ? e.tipo : "",
-        registros: (r.equipe ? 1 : 0) + (r.sacolas ? 1 : 0) + (r.posicionamento ? 1 : 0) + (r.observacoes ? 1 : 0) + (r.lista_assinada ? 1 : 0),
+        registros: (r.equipe ? 1 : 0) + (r.sacolas ? 1 : 0) + (r.conferencia_entrega || r.posicionamento ? 1 : 0) + (r.lista_assinada ? 1 : 0),
         chegadaEquipe: r.equipe ? { empresa: r.equipe.empresa, quantidade: r.equipe.quantidade, foto: r.equipe.foto, data: p ? p.day + "/" + p.month + "/" + p.year : "", hora: p ? p.hour + ":" + p.minute : "",
           origemChegada: ch ? "CHEGADA_V1" : "", previsto: ch ? ch.previsto : "", minutosAtraso: ch ? ch.atraso : "", localStatus: ch ? ch.localStatus : "", uniformizada: r.uniformizacao ? r.uniformizacao.valor : "" } : null,
         free: e.free ? Object.assign({}, e.free, { pessoas: (e.free.pessoas || []).map(function (x) { return Object.assign({}, x, { checkinEm: dataHoraTexto(x.checkinEm), checkoutEm: dataHoraTexto(x.checkoutEm) }); }) }) : null,
@@ -962,6 +968,14 @@
     return r;
   };
   L.MONT_contagemSalvar = async function (token, idEtapa, quantidades) { return rpc("mont_contagem_salvar", { p_token: token, p_etapa: idEtapa, p_quantidades: quantidades }); };
+  L.MONT_entregaItens = function (token, idEtapa) { return rpc("mont_entrega_itens", { p_token: token, p_etapa: idEtapa }); };
+  L.MONT_entregaSalvar = async function (token, idEtapa, itens) {
+    var dados = {};
+    for (var chave of Object.keys(itens || {})) {
+      dados[chave] = Object.assign({}, itens[chave], { foto: await subirFoto(itens[chave].foto, pastaMont()) });
+    }
+    return rpc("mont_entrega_salvar", { p_token: token, p_etapa: idEtapa, p_itens: dados });
+  };
   L.MONT_iniciarApontamento = function (token, idEtapa) { return rpc("mont_apontamento_iniciar", { p_token: token, p_etapa: idEtapa }); };
   L.MONT_finalizarApontamento = function (token, id) { return rpc("mont_apontamento_finalizar", { p_token: token, p_id: id }); };
   L.MONT_apontamentoAtual = async function (token) { return (await L.MONT_appCarregar(token, "")).apontamento; };

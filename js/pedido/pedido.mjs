@@ -1125,7 +1125,16 @@ async function setupPedidoWorkspace({ supabase }){
   }
 
   // Devolve true quando gravou. opts.silencioso: sem o aviso de sucesso (o cancelamento mostra o próprio aviso).
-  async function salvarPedidoOperacional(opts = {}){
+  let salvamentoComercialEmCurso;
+  function salvarPedidoOperacional(opts = {}){
+    if(salvamentoComercialEmCurso)return salvamentoComercialEmCurso;
+    window.__comercialOperacaoAtual=window.ComercialProdutividade?.uuid?.() || String(Date.now())+'-'+Math.random().toString(36).slice(2);
+    salvamentoComercialEmCurso=salvarPedidoOperacionalInterno(opts).finally(()=>{
+      window.__comercialOperacaoAtual=null;salvamentoComercialEmCurso=null;
+    });
+    return salvamentoComercialEmCurso;
+  }
+  async function salvarPedidoOperacionalInterno(opts = {}){
     const erroObservacaoManual = validarObservacoesLogisticaManual();
     if (erroObservacaoManual) {
       avisar(erroObservacaoManual, 'Ajuste manual', 'aviso');
@@ -1613,6 +1622,9 @@ function setupTimelinePedido({ avisar }){
 
   document.getElementById("btnFecharCancelarOrcamento")?.addEventListener("click", fecharCancelamento);
   document.getElementById("btnCancelarCancelamento")?.addEventListener("click", fecharCancelamento);
+  if(new URLSearchParams(location.search).get('cancelar') === '1'){
+    document.querySelector('.timeline-step[data-status="cancelado"]')?.click();
+  }
   modalCancelamento?.addEventListener("click", (event) => {
     if(event.target === modalCancelamento) fecharCancelamento();
   });

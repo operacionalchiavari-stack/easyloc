@@ -31,6 +31,8 @@ const mockSupabase = `
     empresas: [{ id: "e1", nome: "Chiavari", logo_url: "https://fixture/logo.png" }],
     clientes_empresas: [{ empresa_id: "e1", nome_razao: "Lis Baêtas", catalogo_logo_url: "https://fixture/lis.png" }]
   };
+  banco.separacoes_pedidos.forEach(p=>{p.cliente_nome='DEMO · Decorações Casa das Flores e Eventos Corporativos '+p.numero_pedido;});
+  const contatos=banco.separacoes_pedidos.map(p=>({pedido_id:p.id,situacao:'Aguardando decisão',motivo:'Reunião para decidir',observacao:'DEMO · Cliente fará uma reunião com a equipe para confirmar os itens, horários e detalhes do evento. Entrar em contato novamente após a reunião.',criado_em:'2026-10-20T15:00:00Z',autor:'DEMO · Beatriz Comercial',prazo:'2026-10-22',responsavel_id:'u1',responsavel:'DEMO · Ana Comercial'}));
   function consulta(tabela){
     let linhas = (banco[tabela] || []).slice(), unico = false;
     const q = {
@@ -51,7 +53,7 @@ const mockSupabase = `
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
     rpc: (nome) => ({ then: (ok, erro) => Promise.resolve(nome === "funcionario_contexto"
-      ? { data: { ativo: true, administrador_legado: true }, error: null } : { data: [], error: null }).then(ok, erro) }),
+      ? { data: { ativo: true, administrador_legado: true }, error: null } : { data: nome==='comercial_acompanhamentos'?contatos:[], error: null }).then(ok, erro) }),
     channel: () => canal, removeChannel(){},
     storage: { from: () => ({ getPublicUrl: (p) => ({ data: { publicUrl: "https://fixture/" + p } }) }) }
   };
@@ -92,7 +94,37 @@ const mockSupabase = `
   await page.click("[data-situacao=orcamento]");
   assert.deepStrictEqual((await numeros()).sort(), ["o1", "o2"]);
   assert.strictEqual(await page.getAttribute("[data-situacao=orcamento]", "aria-pressed"), "true");
+  assert.equal(await page.locator('.cp-acomp-filtros').isVisible(),false,'sem faixa de filtros na tabela');
+  assert.equal(await page.locator('#centralListaTabela .cp-acomp-filtros').count(),0);
+  await page.click('#btnFiltrosPedidos');
+  assert.equal(await page.locator('#centralFiltrosPedidos .cp-acomp-filtros').isVisible(),true,'Filtros do topo abre os controles da aba');
+  await page.selectOption('[data-prazo]','hoje');
+  assert.equal((await numeros()).length,0,'retornos filtrados pelo painel comum');
+  await page.selectOption('[data-prazo]','');
+  assert.equal((await numeros()).length,2);
+  await page.click('[data-central-visao=receber]');
+  assert.equal(await page.locator('#centralFiltrosPedidos').isVisible(),true);
+  assert.equal(await page.locator('.cp-acomp-filtros').isVisible(),false,'contas a receber não mostra filtros de acompanhamento');
+  assert.match(await page.locator('#filtroDataInicialPedido').locator('..').innerText(),/Vencimento de/i);
+  await page.click('[data-central-visao=pedidos]');
+  assert.equal(await page.locator('.cp-acomp-filtros').isVisible(),true);
+  await page.click('#btnFiltrosPedidos');
+  assert.equal(await page.locator('#centralFiltrosPedidos').isVisible(),false);
+  async function conferirAlinhamento(){
+    const r=await page.locator('.cp-acomp-table').evaluate(t=>{
+      const cab=[...t.querySelectorAll('thead th')].map(c=>c.getBoundingClientRect());
+      const linhas=[...t.querySelectorAll('tbody tr[data-pedido-id]')];
+      return {larguraNumero:cab[0].width,colunas:linhas.every(tr=>[...tr.cells].every((c,i)=>Math.abs(c.getBoundingClientRect().left-cab[i].left)<1)),semSobreposicao:linhas.every(tr=>[...tr.cells].every(c=>{const range=document.createRange();range.selectNodeContents(c);const texto=range.getBoundingClientRect(),celula=c.getBoundingClientRect();return texto.right<=celula.right+1&&texto.left>=celula.left-1;}))};
+    });
+    assert.ok(r.larguraNumero>=180,JSON.stringify(r));assert.ok(r.colunas,JSON.stringify(r));assert.ok(r.semSobreposicao,JSON.stringify(r));
+  }
+  await conferirAlinhamento();
+  await page.screenshot({path:path.join(raiz,'outputs/central-orcamentos-alinhados.png'),fullPage:true});
+  await page.click('[data-situacao=pre_reserva]');await conferirAlinhamento();
+  assert.equal(await page.locator('.cp-acomp-validade').count(),3);
+  await page.screenshot({path:path.join(raiz,'outputs/central-prereserva-alinhada.png'),fullPage:true});
   await page.click("[data-situacao=aprovado]");
+  assert.equal(await page.locator('.cp-acomp-table').count(),0,'retorna ao layout original nos reservados');
   assert.deepStrictEqual(await numeros(), ["r1"]);
   await page.click("[data-situacao=aprovado]");
   assert.strictEqual((await numeros()).length, 7, "clicar de novo mostra todos");

@@ -50,7 +50,7 @@ for (let n = 0; n < 8; n++) {
   await page.waitForFunction(()=>document.querySelector('table.board thead tr').cells.length===16);
   assert.equal(await page.locator('table.board thead .crono-pedido-col').count(),2);
   assert.equal(buscas.filter(d=>d==='2026-10-20').length,1,'consome dados preparados sem buscar a semana novamente');
-  assert.equal(await page.locator('table.board th.crono-pedido-col').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(244, 239, 232)');
+  assert.equal(await page.locator('table.board th.crono-pedido-col').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(236, 238, 240)');
   assert.equal(await page.locator('tr.linha-pedido').count(),linhasOriginais,'as semanas reutilizam linhas, sem somar todos os pedidos');
   const pedidosDaSegundaSemana=await page.locator('tr.linha-pedido').evaluateAll(rows=>rows.map(r=>r.cells[8].textContent.trim()).filter(Boolean));
   assert.equal(pedidosDaSegundaSemana.length,1);assert.match(pedidosDaSegundaSemana[0],/Evento futuro/);
@@ -59,7 +59,7 @@ for (let n = 0; n < 8; n++) {
   assert.equal(await page.locator('[data-crono-detalhes]').evaluateAll(nodes=>nodes.filter(n=>JSON.parse(n.dataset.cronoDetalhes).pedido==='9999').length),1);
   const medidas=await page.locator('table.board thead th').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().width));
   assert.ok(medidas.every(w=>Math.abs(w-260)<1),JSON.stringify(medidas));
-  assert.equal(await page.locator('table.board td.crono-pedido-col').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(244, 239, 232)');
+  assert.equal(await page.locator('table.board td.crono-pedido-col').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(241, 242, 243)');
   assert.match(await page.locator('table.board thead th').nth(9).innerText(),/20\/10\/2026/);
   for(const quantidade of await page.locator('table.board tbody tr').evaluateAll(rows=>rows.filter(r=>r.cells.length>1).map(r=>r.cells.length)))assert.equal(quantidade,16);
   await wrap.evaluate(el=>el.scrollLeft=el.scrollWidth);

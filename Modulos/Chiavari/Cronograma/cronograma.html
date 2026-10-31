@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261029-extra2"></script>
+  <script src="../operacao-sem-motor.js?v=20261031-entrega"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <meta charset="UTF-8" />
 <meta
@@ -8806,7 +8806,7 @@ html:root body .topbar .semana-nav .semana-seta:focus-visible{outline:2px solid 
 html:root body .topbar .semana-nav .week-badge{padding:0 10px!important;font-size:13px!important;font-weight:500!important;letter-spacing:0!important;color:#111!important}
 @media(max-width:600px){html:root body .topbar .semana-nav .week-badge{font-size:12px!important;padding:0 4px!important}}
 </style>
-<link rel="stylesheet" href="cronograma-detalhes.css?v=20261027-contagem-lateral">
+<link rel="stylesheet" href="cronograma-detalhes.css?v=20261031-pedido-divisor">
 <script src="cronograma-sequencia.js?v=20261027-contagem-circular"></script>
 </head>
 <body>
@@ -8855,9 +8855,8 @@ html:root body .topbar .semana-nav .week-badge{padding:0 10px!important;font-siz
     <div class="acoes-cronograma">
 
 
-      <button type="button" class="acao" onclick="abrirAgendaNova()" title="Nova agenda interna">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M12 14v4"/><path d="M10 16h4"/></svg>
-        Agenda
+      <button type="button" class="acao" id="btnVisualizacaoCronograma" title="Visualizar como tabela" aria-label="Visualizar como tabela" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg>
       </button>
 
 
@@ -9310,6 +9309,8 @@ function normalizarResumoMontagem(valor){
       montagem.posicionamento ||
       null,
 
+    conferenciaEntrega: montagem.conferenciaEntrega || null,
+
     observacoes:
       montagem.observacoesGerais ||
       montagem.observacoes ||
@@ -9344,11 +9345,7 @@ function contarRegistrosMontagem(valor){
     total++;
   }
 
-  if(montagem.posicionamento){
-    total++;
-  }
-
-  if(montagem.observacoes){
+  if(montagem.conferenciaEntrega || montagem.posicionamento){
     total++;
   }
 
@@ -9876,8 +9873,7 @@ function criarTooltipMontagem(
   const passos = [
     ["Equipe", !!montagem.equipe],
     ["Sacolas", montagem.sacolas.length > 0],
-    ["Posicionamento", !!montagem.posicionamento],
-    ["Observações", !!montagem.observacoes],
+    [montagem.conferenciaEntrega ? "Conferência" : "Posicionamento", !!(montagem.conferenciaEntrega || montagem.posicionamento)],
     ["Lista assinada", !!montagem.listaAssinada]
   ];
 
@@ -9907,9 +9903,9 @@ function criarTooltipMontagem(
       <div class="rm-cabecalho">
         <div>
           <div class="rm-titulo">Resumo da montagem</div>
-          <div class="rm-contador">${total} de 5 registros enviados</div>
+          <div class="rm-contador">${total} de 4 registros enviados</div>
         </div>
-        <div class="rm-barra"><i style="width:${Math.round(total / 5 * 100)}%"></i></div>
+        <div class="rm-barra"><i style="width:${Math.round(total / 4 * 100)}%"></i></div>
         <div class="rm-passos">
           ${passos.map(function(p){ return `<span class="${p[1] ? "feito" : ""}">${p[1] ? "✓" : "○"} ${p[0]}</span>`; }).join("")}
         </div>
@@ -9930,6 +9926,14 @@ function criarTooltipMontagem(
             ${(equipe.observacao || equipe.observacoes) ? `<p>${escapeHtml(equipe.observacao || equipe.observacoes)}</p>` : ""}
           </div>
         </div>`) : ""}
+
+      ${montagem.conferenciaEntrega ? secao("Conferência da entrega", montagem.conferenciaEntrega, (montagem.conferenciaEntrega.lista || []).map(function(item){
+        const conferido = (montagem.conferenciaEntrega.itens || {})[item.chave] || {};
+        return `<div class="rm-dados" style="margin-bottom:14px"><b>${escapeHtml(item.nome || "Item")}</b>
+          <p class="rm-texto">Previsto: ${escapeHtml(item.esperado)} · Entregue: ${escapeHtml(conferido.entregue ?? "—")} · Danificados: ${escapeHtml(conferido.danificados || 0)}</p>
+          ${conferido.observacao ? `<p class="rm-texto alerta">${escapeHtml(conferido.observacao)}</p>` : ""}
+          ${conferido.foto ? fotoResumoMontagem(conferido.foto, "Foto do dano", false) : ""}</div>`;
+      }).join("")) : ""}
 
       ${montagem.posicionamento ? secao("Posicionamento dos itens", posicionamento, `
         <p class="rm-texto ${fotosPosicionamento.length ? "alerta" : "ok"}">${escapeHtml(posicionamento.observacao || posicionamento.texto || "Registro enviado.")}</p>
@@ -12324,7 +12328,7 @@ function progressoEtapaHtml(etapa, pedido){
   if(tipo === "montagem"){
     const m = normalizarResumoMontagem(etapa.montagem);
     total = 4;
-    concluido = [m.equipe, m.sacolas.length > 0, m.posicionamento, m.listaAssinada].filter(Boolean).length;
+    concluido = [m.equipe, m.sacolas.length > 0, m.conferenciaEntrega || m.posicionamento, m.listaAssinada].filter(Boolean).length;
     unidade = "registros";
   } else if(tipo === "desmontagem"){
     const d = etapa.progressoDesmontagem || {};
@@ -16985,7 +16989,7 @@ function renderCronogramaApp(){
         '</div>' +
         '<button type="button" class="app-icone-btn app-btn-menu" onclick="appAlternarMenu(event)" aria-label="Mais opções">' + APP_ICONES.menu + '</button>' +
         '<div class="app-menu" id="appMenu" role="menu">' +
-          '<button type="button" role="menuitem" onclick="appMenuAcao(abrirAgendaNova)">' + APP_ICONES.agenda + 'Agenda</button>' +
+          '<button type="button" role="menuitem" onclick="appMenuAcao(function(){window.CronoVisualizacao.alternar();})">Visualizar como tabela</button>' +
           '<hr>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(function(){ appMudarSemana(-7); })">' + APP_ICONES.esquerda + 'Semana anterior</button>' +
           '<button type="button" role="menuitem" onclick="appMenuAcao(function(){ appMudarSemana(7); })">' + APP_ICONES.direita + 'Próxima semana</button>' +
@@ -18252,5 +18256,7 @@ function avisoRapido(msg){
 }
 </script>
 <script src="cronograma-detalhes.js?v=20261027-clique"></script>
+<link rel="stylesheet" href="cronograma-tabela.css?v=20261031-progresso">
+<script src="cronograma-tabela.js?v=20261031-sem-resumo"></script>
 </body>
 </html>

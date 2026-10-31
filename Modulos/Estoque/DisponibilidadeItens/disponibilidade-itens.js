@@ -134,6 +134,7 @@
   async function loadMore(generation = state.generation) {
     if (state.loading || !state.hasMore || generation !== state.generation) return;
     state.loading = true;
+    observeMore(filteredRows());
     let falhou = false;
     try {
       do {
@@ -164,6 +165,9 @@
     } finally {
       if (generation === state.generation) {
         state.loading = false;
+        const sentinel = $("#disponMais");
+        if (sentinel) { sentinel.disabled = false; sentinel.setAttribute("aria-busy", "false"); }
+        if (!falhou) observeMore(filteredRows());
         // O filtro pode mudar enquanto o lote ainda está sendo carregado.
         if (!falhou && state.hasMore && filtroAtivo() && filteredRows().length < state.visibleCount) {
           queueMicrotask(() => loadMore(generation));
@@ -535,7 +539,9 @@
   function observeMore(rows) {
     const sentinel = $("#disponMais");
     if (!sentinel) return;
-    sentinel.textContent = "Carregando mais itens...";
+    sentinel.textContent = state.loading ? "Carregando mais itens..." : "Carregar mais itens";
+    sentinel.disabled = state.loading;
+    sentinel.setAttribute("aria-busy", String(state.loading));
     sentinel.hidden = !state.hasMore && state.visibleCount >= rows.length;
 
   }
@@ -740,7 +746,7 @@
   }
 
   function bindEvents() {
-    $("#disponMais")?.addEventListener("click", () => loadMore());
+    $("#disponMais")?.addEventListener("click", carregarProximaPagina);
     ["disponDetalheInicio", "disponDetalheFim"].forEach(id => {
       $("#" + id)?.addEventListener("change", () => {
         if (detalheAtual) abrirDetalheItem(detalheAtual.item.id, {
@@ -808,6 +814,13 @@
     retornoLista = null;
   }
 
+  function carregarProximaPagina() {
+    if (state.loading || detalheAtual) return;
+    state.visibleCount += state.perPage;
+    if (filteredRows().length >= state.visibleCount || !state.hasMore) render(true);
+    else loadMore();
+  }
+
   function onListScroll(event) {
     const scroller = event.target === document ? document.scrollingElement : event.target;
     const page = $(".dispon-page");
@@ -819,13 +832,16 @@
     if (position <= previous || state.loading || !state.initialized || detalheAtual) return;
     const sentinel = $("#disponMais");
     if (!sentinel || sentinel.hidden) return;
-    const rect = sentinel.getBoundingClientRect();
-    const viewport = scroller === document.scrollingElement
-      ? { top: 0, bottom: window.innerHeight } : scroller.getBoundingClientRect();
-    if (rect.top > viewport.bottom || rect.bottom < viewport.top) return;
-    state.visibleCount += state.perPage;
-    if (filteredRows().length >= state.visibleCount || !state.hasMore) render(true);
-    else loadMore();
+    if (scroller.contains($("#disponTabela")) && !scroller.contains(sentinel)) {
+      // O rodapé fica fora da caixa rolável da tabela: observar o fim da própria caixa.
+      if (position + scroller.clientHeight < scroller.scrollHeight - 80) return;
+    } else {
+      const rect = sentinel.getBoundingClientRect();
+      const viewport = scroller === document.scrollingElement
+        ? { top: 0, bottom: window.innerHeight } : scroller.getBoundingClientRect();
+      if (rect.top > viewport.bottom || rect.bottom < viewport.top) return;
+    }
+    carregarProximaPagina();
   }
 
   function initDisponibilidade() {

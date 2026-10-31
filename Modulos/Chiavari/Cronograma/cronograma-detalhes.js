@@ -1,6 +1,6 @@
 ﻿(function(){
  'use strict';
- const css=new URL('cronograma-detalhes.css?v=20261027',document.currentScript.src).href;
+ const css=new URL('cronograma-detalhes.css?v=20261031-pedido-divisor',document.currentScript.src).href;
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const chave=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
  let alvo=null,popup=null,timer=null,carregando=null,carregadoEm=0;

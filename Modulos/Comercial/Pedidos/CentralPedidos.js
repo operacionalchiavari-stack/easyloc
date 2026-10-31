@@ -1,6 +1,7 @@
 ﻿(function(){
   const state = {
     pedidos: [],
+    visao: 'pedidos',
     filtrados: [],
     supabase: null,
     empresaId: null,
@@ -14,6 +15,36 @@
   };
 
   const els = {};
+  let acompanhamentos = [], acompanhamentoErro = '', acompanhamentoPronto = false;
+  let acompanhamentoFiltros;
+  const tabelaOriginal = {};
+  async function carregarAcompanhamentos(){
+    const {data,error}=await state.supabase.rpc('comercial_acompanhamentos',{p_empresa:state.empresaId});
+    acompanhamentoErro=error ? error.message : ''; acompanhamentos=data||[];acompanhamentoPronto=true;render();
+  }
+  function renderAcompanhamentos(){
+    const tabela=els.centralPedidosTbody.closest('table');
+    const especial=['orcamento','pre_reserva'].includes(els.filtroStatusPedido?.value);
+    tabela.classList.toggle('cp-acomp-table',especial);
+    if(!tabelaOriginal.head){tabelaOriginal.head=tabela.querySelector('thead').innerHTML;tabelaOriginal.cols=tabela.querySelector('colgroup').innerHTML;}
+    if(!acompanhamentoFiltros){
+      acompanhamentoFiltros=document.createElement('div');acompanhamentoFiltros.className='cp-filtros cp-acomp-filtros';
+      acompanhamentoFiltros.innerHTML='<label>Retornos<select data-prazo><option value="">Todos</option><option value="atrasados">Atrasados</option><option value="hoje">Hoje</option><option value="proximos">Próximos</option><option value="sem">Sem agendamento / encerrados</option></select></label><label>Responsável<select data-responsavel></select></label><label>Situação<select data-situacao-contato></select></label><label>Motivo<select data-motivo-contato></select></label><button type="button" data-atualizar>Atualizar contatos</button><span role="status" data-contato-status></span>';
+      acompanhamentoFiltros.setAttribute('aria-label','Filtros de acompanhamento comercial');
+      els.centralFiltrosPedidos.append(acompanhamentoFiltros);acompanhamentoFiltros.addEventListener('change',render);acompanhamentoFiltros.querySelector('[data-atualizar]').onclick=()=>carregarAcompanhamentos().catch(e=>{acompanhamentoErro=e.message;render();});
+    }
+    acompanhamentoFiltros.hidden=!especial||state.visao==='receber';
+    if(!especial){tabela.querySelector('thead').innerHTML=tabelaOriginal.head;tabela.querySelector('colgroup').innerHTML=tabelaOriginal.cols;return false;}
+    acompanhamentoFiltros.querySelector('[data-contato-status]').textContent=acompanhamentoErro?'Acompanhamentos indisponíveis: '+acompanhamentoErro:acompanhamentoPronto?'':'Carregando acompanhamentos…';
+    for(const [seletor,chave] of [['[data-responsavel]','responsavel_id'],['[data-situacao-contato]','situacao'],['[data-motivo-contato]','motivo']]){
+      const sel=acompanhamentoFiltros.querySelector(seletor),valor=sel.value;const opcoes=new Map(acompanhamentos.filter(c=>c[chave]).map(c=>[c[chave],chave==='responsavel_id'?c.responsavel:c[chave]]));
+      sel.innerHTML='<option value="">Todos</option>'+[...opcoes].map(([k,v])=>`<option value="${escapeHtml(k)}">${escapeHtml(v||'')}</option>`).join('');sel.value=valor;
+    }
+    tabela.querySelector('colgroup').innerHTML=[190,220,110,125,300,180,165,190,140].map(largura=>'<col style="width:'+largura+'px">').join('');
+    tabela.querySelector('thead').innerHTML='<tr>'+['Número','Cliente','Evento','Valor','Situação / motivo','Último contato','Próximo contato','Responsável','Ações'].map(t=>'<th>'+t+'</th>').join('')+'</tr>';
+    els.centralPedidosTbody.innerHTML=window.ComercialProdutividade.tabela(state.filtrados.filter(p=>!p.origemCatalogo),acompanhamentos,{prazo:acompanhamentoFiltros.querySelector('[data-prazo]').value,responsavel:acompanhamentoFiltros.querySelector('[data-responsavel]').value,situacao:acompanhamentoFiltros.querySelector('[data-situacao-contato]').value,motivo:acompanhamentoFiltros.querySelector('[data-motivo-contato]').value});
+    return true;
+  }
   const MISSING_SEPARACAO_TABLES_KEY = "easyloc:separacao-tabelas-ausentes";
 
   function $(id){
@@ -1298,6 +1329,7 @@ function infoCadastro(rotulo, valor, icone){
     renderAvisoPreReserva();
 
     if(!els.centralPedidosTbody) return;
+    if(window.ComercialProdutividade && renderAcompanhamentos()) return;
 
     if(!state.filtrados.length){
       els.centralPedidosTbody.innerHTML = `
@@ -1457,6 +1489,7 @@ function infoCadastro(rotulo, valor, icone){
 
   // Pedidos | Contas a receber (out/2026): a mesma página mostra a lista de pedidos ou as contas a receber (só leitura)
   function trocarVisao(visao){
+    state.visao=visao;
     const receber = visao === "receber";
     document.querySelectorAll("[data-central-visao]").forEach((b) => { const on = b.dataset.centralVisao === visao; b.classList.toggle("ativa", on); b.setAttribute("aria-pressed", String(on)); });
     const host = document.getElementById("centralContasReceber");
@@ -1469,6 +1502,8 @@ function infoCadastro(rotulo, valor, icone){
     const comercialCampo = document.getElementById("filtroComercialPedido")?.closest(".el-field");
     if(comercialCampo) comercialCampo.hidden = receber;
     if(host) host.hidden = !receber;
+    if(acompanhamentoFiltros) acompanhamentoFiltros.hidden=receber||!['orcamento','pre_reserva'].includes(els.filtroStatusPedido?.value);
+    els.centralFiltrosPedidos?.setAttribute('aria-label',receber?'Filtros de contas a receber':'Filtros de pedidos');
     if(receber && host){ aplicarFiltros(); window.CentralContasReceber?.abrir(host).then(atualizarBadgeReceber); }
   }
   async function atualizarBadgeReceber(){
@@ -1559,6 +1594,11 @@ function infoCadastro(rotulo, valor, icone){
       const action = button.dataset.action;
       const pedido = state.pedidos.find((item) => String(item.id) === String(pedidoId));
 
+      if(action === 'acompanhar'){
+        window.ComercialProdutividade.abrir(pedido,state.empresaId,()=>{window.location.href='pedido.html?pedido='+encodeURIComponent(pedidoId)+'&cancelar=1';}).catch(e=>window.alert(e.message));
+        return;
+      }
+
       if(action === "abrir-cliente"){
         abrirCadastroRelacionado("cliente", pedido);
         return;
@@ -1622,6 +1662,9 @@ function infoCadastro(rotulo, valor, icone){
     state.supabase = window.supabaseClient;
     await window.aguardarContexto?.(); // espera a empresa ser identificada (ver CLAUDE.md, "aguardarContexto")
     state.empresaId = window.__CONTEXT?.empresa_id;
+    state.onContatoSalvo=()=>carregarAcompanhamentos().catch(e=>{acompanhamentoErro=e.message;render();});
+    window.addEventListener('comercial:contato-salvo',state.onContatoSalvo);
+    state.onContatoSalvo();
     bindEvents();
     try{ localStorage.removeItem("central_pedidos_visao"); }catch{}
     await carregarPedidos();
@@ -1630,6 +1673,7 @@ function infoCadastro(rotulo, valor, icone){
   }
 
   function destroy(){
+    window.removeEventListener('comercial:contato-salvo',state.onContatoSalvo);
     clearInterval(state.presencaTimer);
     if(state.onFinanceiroAtualizado){
       window.removeEventListener("easyloc:pedido-financeiro-atualizado", state.onFinanceiroAtualizado);

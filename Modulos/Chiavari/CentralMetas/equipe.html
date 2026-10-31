@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-theme-legacy lang="pt-BR">
+<html lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
 <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
@@ -780,9 +780,11 @@ button{ font-family:inherit; }
 }
 </style>
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
+  <meta name="theme-color" content="#5a5a55">
+  <link rel="stylesheet" href="../apps-equipe.css?v=20261031-catalogo">
 </head>
 
-<body>
+<body class="chiavari-equipe-app" data-app-equipe="bonus">
 <div class="app">
 
   <!-- Entrada -->
@@ -1385,5 +1387,6 @@ if(app.token){
   mostrarEntrada("");
 }
 </script>
+<script src="../apps-equipe.js?v=20261031-catalogo"></script>
 </body>
 </html>

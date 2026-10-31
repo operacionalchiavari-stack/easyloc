@@ -43,6 +43,7 @@
       window.prOrganizarLogistica?.(host);
     }
     if (nome === 'comercial') { await window.carregarParametrosLogisticaManual(host, state.empresaId); await window.carregarEtiquetasCadastro?.(host, state.empresaId); await window.carregarMotivosCancelamento?.(host, state.empresaId); await window.carregarPapeisEquipe?.(host, state.empresaId); await window.carregarParametrosPosVenda?.(host, state.empresaId); }
+    if(nome === 'comercial') await window.carregarParametrosProdutividade?.(host,state.empresaId);
     state.sections[nome] = { cleanup };
   }
   async function selecionar(nome) {

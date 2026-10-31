@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Produtividade comercial</title>
+<link rel="stylesheet" href="../../../styles/global.css"><link rel="stylesheet" href="../produtividade.css?v=20261031-padrao-titulo"></head><body>
+<main class="container el-page cp-painel" id="produtividadeComercial">
+<div class="header-list"><h2>Produtividade comercial</h2></div>
+<section class="cp-filtro-card" aria-label="Consulta de produtividade">
+<form class="cp-filtros"><label>De<input type="date" name="de" required></label><label>Até<input type="date" name="ate" required></label><label>Visualizar<select name="pessoa"></select></label><button class="btn btn-primary">Consultar</button></form>
+<p class="cp-status" role="status">Carregando…</p></section><section class="cp-kpis" data-kpis aria-label="Indicadores"></section>
+<section class="cp-bloco"><div class="cp-bloco-cabecalho"><h2>Participação individual</h2><p>Um pedido pode ter participação de várias pessoas. O total de pedidos distintos da equipe não é a soma das participações.</p></div>
+<div class="cp-scroll"><table><thead><tr><th>Pessoa</th><th>Criados</th><th>Trabalhados</th><th>Alterações</th><th>Detalhes</th><th>Contatos</th><th>No prazo</th><th>Atrasados atuais</th></tr></thead><tbody data-pessoas></tbody></table></div>
+</section><div class="cp-painel-grade"><section class="cp-bloco"><div class="cp-bloco-cabecalho"><h2>Atividade por dia</h2><p data-evolucao></p></div><div class="cp-bloco-conteudo" data-dias></div></section>
+<section class="cp-bloco"><div class="cp-bloco-cabecalho"><h2>Ações e detalhes</h2><p>Últimas 500 ações do período. Os totais consideram todos os registros.</p><label class="cp-tipo-filtro">Tipo de atividade<select data-tipo><option value="">Todas</option><option value="criacao">Pedido criado</option><option value="alteracao">Alteração</option><option value="acompanhamento">Acompanhamento</option></select></label></div><div class="cp-bloco-conteudo" data-eventos></div></section></div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/companyTheme.js"></script><script src="../../../js/core/context.js"></script><script src="../../../js/core/permissions.js"></script><script src="../produtividade.js"></script><script src="../../../js/core/moduleTheme.js"></script></body></html>

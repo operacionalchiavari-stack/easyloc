@@ -8,6 +8,7 @@ const DIR = "Modulos/Estoque/DisponibilidadeItens/";
 const host = `<!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="/styles/global.css"><link rel="stylesheet" href="/${DIR}disponibilidade-itens.css"></head>
 <body><main id="main-content"></main>
+<script src="/js/core/loading.js"></script>
 <script>
 (async () => {
   document.getElementById("main-content").innerHTML = await (await fetch("/${DIR}disponibilidade-itens.html")).text();
@@ -81,6 +82,17 @@ const mock = () => {
   assert.equal(await page.locator("#btnSimularSemana, #disponSimulacaoAviso, #disponSimulacaoRoteiro").count(), 0, "simulação removida");
   assert.equal((await linhas()).length, 20, "primeira página com 20 itens");
   console.log("ok 1 - sem simulação; carrega 20 itens");
+  await page.waitForFunction(() => document.querySelector('#disponMais').getAttribute('aria-busy') === 'false');
+  assert.equal(await page.locator('#disponMais').textContent(), 'Carregar mais itens', 'sem carregamento permanente entre páginas');
+  assert.equal(await page.locator('#disponMais .el-loading-indicator').count(), 0);
+  await page.locator('#disponMais').click();
+  await page.waitForFunction(() => document.querySelectorAll('.dispon-row').length === 40 && document.querySelector('#disponMais').getAttribute('aria-busy') === 'false');
+  await page.locator('.dispon-table-wrap').evaluate(el => { el.scrollTop=el.scrollHeight; });
+  await page.waitForFunction(() => document.querySelectorAll('.dispon-row').length === 60 && document.querySelector('#disponMais').getAttribute('aria-busy') === 'false');
+  await page.locator('#disponMais').click();
+  await page.locator('#disponMais').waitFor({state:'hidden'});
+  assert.equal((await linhas()).length,60,'rolagem interna carrega os itens restantes');
+  console.log('ok - botão e rolagem interna paginam; indicador encerra e some ao fim da lista');
 
   // só dois filtros (Data e Buscar item), na mesma linha do título, que continua no centro
   assert.equal(await page.locator("#disponCategoria, #disponStatus").count(), 0, "sem Categoria e Status");

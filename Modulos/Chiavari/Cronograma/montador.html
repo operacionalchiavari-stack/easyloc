@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html data-theme-legacy lang="pt-BR">
+<html lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
 <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261029-frete"></script>
+  <script src="../operacao-sem-motor.js?v=20261031-entrega"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -312,7 +312,6 @@
   </style>
   <link rel="stylesheet" href="montador-app.css?v=20261014-pedido">
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
-<link rel="stylesheet" href="../../../styles/abas-global.css?v=20261024">
 <style id="contagem-desmontagem">
 .contagem-itens{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .contagem-linha{display:grid;grid-template-columns:52px minmax(0,1fr) 84px;align-items:center;gap:10px;padding:8px;border:1px solid var(--line,#e3e7ec);border-radius:12px;background:#fff}
@@ -322,8 +321,11 @@
 .contagem-nome small{display:block;font-weight:500;color:var(--muted,#6b6b6b);font-size:12px;margin-top:2px}
 .contagem-qtd{text-align:center;font-size:18px;font-weight:700}
 </style>
+  <meta name="theme-color" content="#5a5a55">
+  <link rel="stylesheet" href="../apps-equipe.css?v=20261031-catalogo">
+  <link rel="stylesheet" href="montador-evento.css?v=20261031-fluxo">
 </head>
-<body>
+<body class="chiavari-equipe-app" data-app-equipe="montagem">
 
   <!-- CARREGANDO -->
   <section class="tela ativa" id="telaCarregando">
@@ -398,6 +400,7 @@
 
   <div class="toast" id="toast"></div>
 
+<script src="montador-evento.js?v=20261031-fluxo"></script>
 <script>
   /* =========================================================
      ESTADO E APOIO
@@ -673,6 +676,9 @@
     document.querySelectorAll('[data-acesso]').forEach(function(b){const ativo=b.dataset.acesso===estado.acesso;b.classList.toggle('ativo',ativo);b.setAttribute('aria-current',ativo?'page':'false');});
   }
   function irAcesso(acesso){
+    if(acesso !== 'agenda' && window.MontadorEvento && MontadorEvento.linear()){
+      trocarPainelEtapa(acesso);renderApontamento();mostrarTela('telaEtapa');return;
+    }
     estado.acesso=acesso;atualizarNavegacao();
     if(acesso==='agenda'){
       renderLista();renderApontamento();mostrarTela('telaInicio');
@@ -700,6 +706,7 @@
       area.innerHTML='<section class="apontamento-ativo"><div><small>EVENTO EM ANDAMENTO · #'+esc(p.pedido)+'</small><strong>'+esc(e?e.cliente:'Evento em andamento')+'</strong></div><div class="apontamento-relogio"><span class="apontamento-tempo" role="timer" aria-label="Tempo decorrido">00:00:00</span><small>tempo em andamento</small></div><div class="apontamento-acoes">'+(id==='apontamentoInicio'?'<button type="button" class="btn btn-claro" onclick="irAcesso(\'equipe\')">Continuar evento</button>':'<button type="button" class="btn btn-claro" onclick="trocarPainelEtapa(\'info\')">Dados do evento</button>')+'<button type="button" class="encerrar-evento" onclick="encerrarEvento(this)">Encerrar apontamento</button></div></section>';
     });
     atualizarCronometro();
+    if(window.MontadorEvento){ MontadorEvento.sincronizar(); }
   }
   function atualizarCronometro(){
     const p=estado.apontamento;if(!p)return;
@@ -725,6 +732,7 @@
   }
 
   function trocarPainelEtapa(painel){
+    if(window.MontadorEvento && MontadorEvento.navegar(painel)){ return; }
     if(painel!=='info' && (!estado.apontamento || estado.apontamento.idEtapa!==estado.etapaAberta)){irAcesso(painel);return;}
     estado.painel=painel;
     const grupos={info:['etapaInfo','etapaPedido'],equipe:['etapaFotoEquipe'],avarias:['etapaTrocas'],registros:['etapaRegistros','etapaSacolas']};
@@ -786,7 +794,7 @@
       chips.push(e.confirmadoDecorador ? '<span class="chip ok">' + I.check + 'Decorador confirmou</span>' : '<span class="chip aviso">Decorador não confirmou</span>');
     }
     if(e.operacao === "montagem"){
-      chips.push('<span class="chip ' + (e.registros >= 5 ? "ok" : "") + '">' + e.registros + ' de 5 registros</span>');
+      chips.push('<span class="chip ' + (e.registros >= 4 ? "ok" : "") + '">' + e.registros + ' de 4 registros</span>');
     }
     if(e.free){
       const chegaram = e.free.pessoas.filter(function(p){ return p.checkinEm; }).length;
@@ -816,6 +824,7 @@
     if(!e){ return; }
     if(estado.apontamento && estado.apontamento.idEtapa!==id){toast("Há um evento em andamento. Encerre o apontamento antes de abrir outro.",true);return;}
     if(estado.etapaAberta===id && document.getElementById("passo_equipe")){trocarPainelEtapa(estado.acesso==='agenda'?'info':estado.acesso);renderApontamento();mostrarTela("telaEtapa");return;}
+    if(window.MontadorEvento){ MontadorEvento.preparar(); }
     estado.etapaAberta = id;
     try{ history.pushState({ etapa: id }, "", "#etapa"); }catch(err){}
 
@@ -829,6 +838,7 @@
     document.getElementById("etapaFotoEquipe").innerHTML = "";
     if(e.operacao){ montarRegistros(e); }
     organizarPainelEquipe(e);
+    if(window.MontadorEvento){ MontadorEvento.montar(e); }
     trocarPainelEtapa(estado.acesso === "agenda" ? "info" : estado.acesso);
     renderApontamento();
     mostrarTela("telaEtapa");
@@ -841,6 +851,7 @@
   }
 
   function fecharEtapa(){
+    if(window.MontadorEvento){ MontadorEvento.sair(); }
     estado.acesso="agenda";
     renderLista();
     mostrarTela("telaInicio");
@@ -908,7 +919,7 @@
     abrirFolha('<h3>'+esc(btn.dataset.nome)+'</h3><img class="foto-free-ampliada" src="'+esc(btn.dataset.foto)+'" alt="Foto do cadastro"><button class="btn btn-claro" type="button" onclick="fecharFolha()">Fechar foto</button>');
   }
   function renderEquipe(e){
-    const internos = (e.equipe || []).map(function(n){
+    const internos = (e.equipe || []).filter(function(n){ return n !== e.responsavel; }).map(function(n){
       return '<div class="pessoa"><div class="pessoa-ini">' + esc(n.charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(n) + '</div></div>';
     }).join("");
 
@@ -928,14 +939,14 @@
             }).join("") + '</div>'
           : '<div class="vazio" style="padding:14px">Nenhum free confirmou ainda.</div>') +
         '<div class="acoes-linha">' +
-          '<button class="btn btn-pequeno" type="button" onclick="abrirQr(\'' + esc(e.id) + '\')">' + I.qr + 'QR de presença dos free</button>' +
+          '<button class="btn btn-pequeno" type="button" onclick="abrirQr(\'' + esc(e.id) + '\')">' + I.qr + 'QR code da equipe</button>' +
         '</div>' +
         '<div style="margin-top:8px;font-size:12.5px;color:var(--muted)">Encontro dos free: ' + esc(f.horario) + ' · ' + esc(f.pontoEncontro) + '</div>';
     }
 
     document.getElementById("etapaEquipe").innerHTML =
       '<section class="secao">' +
-        '<div class="secao-titulo"><h2>Equipe da etapa</h2><small>presença atualizada</small></div>' +
+        '<div class="secao-titulo"><h2>Sua equipe</h2><small>presença atualizada</small></div>' +
         '<div class="subtitulo">Responsável</div>' +
         '<div class="pessoas"><div class="pessoa"><div class="pessoa-ini">' + esc(String(e.responsavel || "?").charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(e.responsavel || "-") + '</div></div></div>' +
         (internos ? '<div class="subtitulo">Equipe interna</div><div class="pessoas">' + internos + '</div>' : "") +
@@ -951,6 +962,7 @@
     if(!area){ area = document.createElement("div"); area.id = "etapaFrete"; (document.getElementById("etapaUber") || document.getElementById("etapaEquipe")).after(area); }
     area.innerHTML = "";
     chamar("MONT_freteQr", estado.token, e.id).then(function(d){
+      if(estado.etapaAberta !== e.id){ return; }
       const fretes = (d && d.fretes) || [];
       if(!fretes.length){ area.innerHTML = ""; return; }
       area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Frete</h2><small>check-in pelo QR</small></div>' +
@@ -993,10 +1005,11 @@
   function pintarUberMontador(e){
     let area = document.getElementById("etapaUber");
     if(!area){ area = document.createElement("div"); area.id = "etapaUber"; document.getElementById("etapaEquipe").after(area); }
-    area.innerHTML = "";
+    area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2></div><p class="evento-sem-transporte" role="status">Consultando transporte…</p></section>';
     chamar("MONT_uberQr", estado.token, e.id).then(function(d){
       const vagas = (d && d.vagas) || [];
-      if(!vagas.length){ area.innerHTML = ""; return; }
+      if(estado.etapaAberta !== e.id){ return; }
+      if(!vagas.length){ area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2></div><p class="evento-sem-transporte">Nenhum Uber programado para esta etapa.</p></section>'; return; }
       area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2><small>check-in pelo QR</small></div>' +
         vagas.map(function(v){
           const corr = v.corridas || [];
@@ -1009,7 +1022,11 @@
             }).join("") + '</div>' : '<div class="vazio" style="padding:12px">Nenhum motorista aceitou ainda.</div>') +
             '<div class="acoes-linha"><button class="btn btn-pequeno" type="button" onclick="abrirQrUber(\'' + esc(e.id) + '\',\'' + esc(v.id) + '\')">' + I.qr + 'QR para o motorista</button></div>';
         }).join("") + '</section>';
-    }).catch(function(){ area.innerHTML = ""; });
+    }).catch(function(){
+      if(estado.etapaAberta !== e.id){ return; }
+      area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2></div><p class="evento-sem-transporte">Não foi possível consultar o transporte.</p><button class="btn btn-claro btn-pequeno" type="button" style="margin-top:12px">Consultar Uber novamente</button></section>';
+      area.querySelector('button').addEventListener('click',function(){ pintarUberMontador(e); });
+    });
   }
 
   function abrirQrUber(etapa, vaga){
@@ -1222,28 +1239,16 @@
     let passos = "";
 
     if(e.operacao === "montagem"){
-      reg.obrigatorios = ["equipe", "sacolas", "posicionamento", "lista"];
+      reg.obrigatorios = ["equipe", "conferencia", "sacolas", "lista"];
       passos =
-        passoHtml("equipe", 1, "Chegada da equipe", "Foto, localização e horário do envio", equipe, "✓ Equipe enviada") +
-        passoHtml("sacolas", 2, "Sacolas de proteção", "Código e foto de cada sacola usada",
+        passoHtml("equipe", 1, "Foto da equipe reunida", "Reúna todos e registre uma foto no local do evento", equipe, "✓ Foto da equipe enviada") +
+        passoHtml("sacolas", 3, "Sacolas de proteção", "Registre o código e a foto de cada sacola",
           '<div id="regSacolas" style="display:flex;flex-direction:column;gap:10px"></div>' +
           '<button class="btn btn-claro" type="button" onclick="adicionarSacola()">' + I.mais + 'Adicionar outra sacola</button>' +
           '<button class="btn" type="button" onclick="enviarSacolas(this)">' + I.enviar + 'Enviar sacolas</button>', "✓ Sacolas enviadas") +
-        passoHtml("posicionamento", 3, "Posicionamento", "Os itens ficaram no lugar certo?",
-          '<div class="sim-nao"><button class="sim" type="button" onclick="escolherPosicionamento(true)">' + I.check + ' Sim</button><button class="nao" type="button" onclick="escolherPosicionamento(false)">✕ Não</button></div>' +
-          '<div id="regPosBox" style="display:none;flex-direction:column;gap:12px">' +
-            '<div class="rotulo">Fotos do que ficou fora do lugar</div><div class="galeria" id="regPosGaleria"></div>' +
-            '<button class="btn btn-claro" type="button" onclick="document.getElementById(\'regPosInput\').click()">' + I.camera + 'Adicionar foto</button>' +
-            '<input type="file" id="regPosInput" accept="image/*" capture="environment" hidden onchange="fotoPosicionamento(event)">' +
-            '<textarea class="input" id="regPosObs" placeholder="Explique o que ficou fora do lugar"></textarea>' +
-          '</div>' +
-          '<button class="btn" type="button" onclick="enviarPosicionamento(this)">' + I.enviar + 'Enviar posicionamento</button>', "✓ Posicionamento enviado") +
-        passoHtml("observacoes", 4, "Observações gerais", "Ocorrências ou recados da montagem",
-          '<textarea class="input" id="regObsGerais" placeholder="Escreva aqui o que aconteceu na montagem"></textarea>' +
-          '<button class="btn" type="button" onclick="enviarObservacoes(this)">' + I.enviar + 'Enviar observações</button>', "") +
-        passoHtml("lista", 5, "Lista assinada", "Quem recebeu e a foto da lista",
-          '<div class="rotulo">Quem recebeu</div><input class="input" id="regRecebedor" type="text" autocomplete="name" placeholder="Nome de quem recebeu">' +
-          '<div class="rotulo">Foto da lista</div>' + fotoTile("regFotoLista", "Tirar foto da lista", "fotoLista(event)") +
+        passoHtml("lista", 4, "Foto da lista assinada", "Informe quem recebeu e fotografe a lista assinada",
+          '<label class="rotulo" for="regRecebedor">Quem recebeu</label><input class="input" id="regRecebedor" type="text" autocomplete="name" placeholder="Nome de quem recebeu">' +
+          fotoTile("regFotoLista", "Tirar foto da lista assinada", "fotoLista(event)") +
           '<button class="btn" type="button" onclick="enviarListaAssinada(this)">' + I.enviar + 'Enviar lista assinada</button>', "✓ Lista assinada enviada");
     }else{
       reg.obrigatorios = ["equipe", "conferida", "contagem", "conclusao"];
@@ -1262,13 +1267,10 @@
           '<button class="btn btn-ok" id="regBtnConcluir" type="button" onclick="concluirDesmontagemApp(this)" disabled>' + I.check + 'Concluir desmontagem</button>', "🎉 Desmontagem concluída");
     }
 
-    document.getElementById("etapaRegistros").innerHTML =
-      '<section class="secao">' +
-        '<div class="secao-titulo"><h2>Registros da ' + esc(e.operacao) + '</h2></div>' +
-        '<div class="progresso" id="regProgresso"><div class="progresso-linha"><span id="regProgressoTexto">Verificando…</span><span id="regProgressoPct">0%</span></div><div class="progresso-barra"><i id="regProgressoBarra"></i></div></div>' +
-        resumoChegada + '<button class="btn btn-claro" type="button" onclick="trocarPainelEtapa(\'equipe\')" style="margin-bottom:14px">Ver foto e chegada da equipe</button>' + '<div class="passos">' + passos + '</div>' +
-        (e.operacao === "montagem" ? '<div class="tudo-pronto"><b>Montagem registrada</b>Todos os registros obrigatórios foram enviados.</div>' : "") +
-      '</section>';
+    const progresso = '<div class="progresso" id="regProgresso"><div class="progresso-linha"><span id="regProgressoTexto">Verificando…</span><span id="regProgressoPct">0%</span></div><div class="progresso-barra"><i id="regProgressoBarra"></i></div></div>';
+    document.getElementById("etapaRegistros").innerHTML = e.operacao === "montagem"
+      ? progresso + '<div class="passos">' + passos + '</div><div class="tudo-pronto"><b>Montagem registrada</b>Todos os registros obrigatórios foram enviados.</div>'
+      : '<section class="secao"><div class="secao-titulo"><h2>Registros da ' + esc(e.operacao) + '</h2></div>' + progresso + resumoChegada + '<div class="passos">' + passos + '</div></section>';
 
     carregarEmpresas();
     montarBotoesQtd();
@@ -1285,8 +1287,6 @@
 
     if(e.operacao === "montagem"){
       chamar("verificarSacolasJaEnviadas", id).then(function(r){ if(mesmo() && r && r.enviado){ sacolasFeitas(r); } }).catch(console.error);
-      chamar("verificarPosicionamentoJaEnviado", id).then(function(r){ if(mesmo() && r && r.enviado){ posicionamentoFeito(r); } }).catch(console.error);
-      chamar("buscarObservacoesMontagem", id).then(function(r){ if(mesmo() && r && r.observacao){ observacoesFeitas(r.observacao); } }).catch(console.error);
       chamar("verificarListaAssinadaJaEnviada", id).then(function(r){ if(mesmo() && r && r.enviado){ marcarFeito("lista"); } }).catch(console.error);
     }else{
       chamar("verificarListaConferidaDesmontagem", id).then(function(r){ if(mesmo() && r && r.enviado){ conferidaFeita(r); } }).catch(console.error);
@@ -1766,5 +1766,6 @@
 </script>
 <script>window.MONT_MAPS_SDK="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRTnhpv3S0kqV9G56x0npaxd6YABj8dnI&libraries=geometry&language=pt-BR&region=BR&callback=MONT_mapsPronto&loading=async";</script>
 <script src="montador-mapa.js?v=20261014-pedido"></script>
+<script src="../apps-equipe.js?v=20261031-catalogo"></script>
 </body>
 </html>

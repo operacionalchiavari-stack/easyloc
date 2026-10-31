@@ -9,7 +9,9 @@ for (let n = 0; n < 8; n++) {
   pedidos.push({ pedido: String(1410 + n), chave: String(1410 + n), cliente: ["Ana Souza Decorações e Eventos", "Lis", "Casamento Paula e Rafael", "Expo Feira"][n % 4],
     local: "Villa Bisutti, São Paulo", dataEvento: "2026-10-1" + (4 + (n % 5)),
     infoLogistica: { baldeacao: "Sim", escada: "Não", caminhaoPerto: "Não", lona: "Não" },
+    andamento: {total:10,separado:5,carregamento:{total:10,lidas:3}},
     etapas: [
+      { id: "t" + n, etapa: "Triagem (Separação)", dataEtapa: "2026-10-1" + (3 + (n % 5)), horario: "06:00", responsavel:"Igor Ramos" },
       { id: "a" + n, etapa: "Carregamento", dataEtapa: "2026-10-1" + (3 + (n % 5)), horario: "07:00", caminhao: "Mercedez - Benz (G)", responsavel: "Igor Ramos", equipe: "Igor Ramos" },
       { id: "b" + n, etapa: "Montagem", dataEtapa: "2026-10-1" + (3 + (n % 5)), horario: "08:00", caminhao: "Volkswagen (XL)", responsavel: "Wesley", equipe: "Equipe Interna | Free", observacao: n % 2 ? "Levar escada própria" : "" },
       { id: "c" + n, etapa: "Desmontagem", dataEtapa: "2026-10-1" + (5 + (n % 4)), horario: "07:00", caminhao: "", responsavel: "", equipe: "" }] });
@@ -38,6 +40,43 @@ for (let n = 0; n < 8; n++) {
   await page.goto(BASE + "Modulos/Chiavari/Cronograma/cronograma.html", { waitUntil: "load" });
   await page.evaluate(() => { const d = new Date("2026-10-13T12:00:00"); semanaInicioAtual = getInicioSemanaOperacional(d); carregarCronograma(); });
   await page.waitForTimeout(2500);
+
+  assert.equal(await page.getByRole('button',{name:'Agenda',exact:true}).count(),0);
+  const quantidadeEtapas=await page.locator('#cronogramaGrade [data-crono-detalhes]').count();
+  await page.getByRole('button',{name:'Visualizar como tabela',exact:true}).click();
+  await page.locator('#cronogramaTabela').waitFor({state:'visible'});
+  assert.equal(await page.locator('.board-wrap').isVisible(),false);
+  assert.equal(await page.locator('#cronogramaTabela .crono-tabela-linha').count(),Math.min(20,quantidadeEtapas),'primeiro lote com até 20 etapas');
+  const corGrade=await page.locator('#cronogramaGrade .task-montagem[data-crono-detalhes]').first().evaluate(el=>getComputedStyle(el).backgroundColor);
+  const corTabela=await page.locator('#cronogramaTabela [data-crono-detalhes]').filter({hasText:'Montagem'}).first().evaluate(el=>getComputedStyle(el).backgroundColor);
+  assert.equal(corTabela,corGrade,'etapa usa a mesma cor da grade');
+  assert.equal(await page.locator('#cronogramaTabela .crono-tabela-etapa').filter({hasText:'Triagem (Separação)'}).first().getByRole('progressbar').getAttribute('aria-valuenow'),'50');
+  assert.equal(await page.locator('#cronogramaTabela .crono-tabela-etapa').filter({hasText:'Carregamento'}).first().getByRole('progressbar').getAttribute('aria-valuenow'),'30');
+  await page.evaluate(()=>{cronogramaData.find(p=>p.pedido==='1410').andamento.carregamento.lidas=7;renderCronograma();});
+  await page.waitForFunction(()=>[...document.querySelectorAll('#cronogramaTabela .crono-tabela-etapa')].some(el=>{const d=JSON.parse(el.dataset.cronoDetalhes);return d.pedido==='1410'&&d.etapa==='Carregamento'&&el.querySelector('[role=progressbar]')?.getAttribute('aria-valuenow')==='70';}));
+  assert.equal(await page.locator('.crono-tabela-scroll').evaluate(el=>el.scrollHeight>el.clientHeight+1),false,'sem rolagem vertical interna');
+  await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+  await page.waitForFunction(n=>document.querySelectorAll('#cronogramaTabela tbody [data-crono-detalhes]').length===n,quantidadeEtapas);
+  assert.equal(await page.locator('.crono-tabela-mais').isVisible(),false,'rodapé desaparece ao terminar as etapas');
+  const datas=await page.locator('#cronogramaTabela .crono-tabela-linha').evaluateAll(rows=>rows.map(r=>r.cells[0].textContent.split('/').reverse().join('-')+' '+r.cells[1].textContent));
+  assert.deepEqual(datas,[...datas].sort(),'tabela em ordem de data e horário');
+  const grupos=await page.locator('#cronogramaTabela tbody[data-dia]').evaluateAll(nodes=>nodes.map(el=>({dia:el.dataset.dia,linhas:[...el.querySelectorAll('.crono-tabela-data')].map(c=>c.textContent.split('/').reverse().join('-')),cabecalhos:el.querySelectorAll('.crono-tabela-dia').length})));
+  assert.ok(grupos.length>1);assert.ok(grupos.every(g=>g.cabecalhos===1&&g.linhas.every(d=>d===g.dia)),'um grupo por dia, sem misturar etapas');
+  await page.locator('#cronogramaTabela [data-crono-responsavel="Wesley"] img').first().waitFor();
+  assert.match(await page.locator('.crono-tabela-pedido-tag').first().innerText(),/^#\d+/);
+  await page.screenshot({path:path.join(raiz,'outputs/cronograma-tabela.png'),fullPage:true});
+  await page.locator('#cronogramaTabela [data-crono-detalhes]').filter({hasText:'Montagem'}).first().click();
+  await page.locator('.crono-detalhes').waitFor();
+  assert.match(await page.locator('.crono-detalhes').innerText(),/Wesley/);
+  await page.keyboard.press('Escape');
+  await page.evaluate(()=>{window.__testeBackupCronograma=cronogramaData;cronogramaData=[];renderCronograma();});
+  await page.getByText('Nenhuma etapa no período selecionado.',{exact:true}).waitFor();
+  await page.evaluate(()=>{cronogramaData=window.__testeBackupCronograma;renderCronograma();});
+  await page.waitForFunction(n=>document.querySelectorAll('#cronogramaTabela tbody [data-crono-detalhes]').length===n,quantidadeEtapas);
+  await page.getByRole('button',{name:'Visualizar como cronograma',exact:true}).click();
+  assert.equal(await page.locator('.board-wrap').isVisible(),true);
+  assert.equal(await page.locator('#cronogramaTabela').isVisible(),false);
+  console.log('PASS: alternância grade/tabela, ordenação por data e hora, detalhes e atualização sem etapas.');
 
   const card=page.locator('.task-montagem[data-crono-detalhes]').first();
   await card.waitFor();

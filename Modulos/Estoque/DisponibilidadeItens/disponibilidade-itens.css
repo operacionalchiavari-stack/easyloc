@@ -512,10 +512,20 @@
 #disponDetalheTela .dispon-detail-head { border: 1px solid #e1e5eb; border-radius: 16px; margin-bottom: 24px; }
 #disponDetalheTela .dispon-detail-body { padding: 0; overflow: visible; max-height: none; background: transparent; }
 .dispon-infinite-sentinel:not([hidden]) {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #edf0f3;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
   padding: 16px;
   text-align: center;
   color: #111;
 }
+#disponMais[hidden] { display: none !important; }
+#disponMais:disabled { cursor: wait; }
 
 #disponDetalheTela .dispon-detail-head {
   padding: 22px 28px;

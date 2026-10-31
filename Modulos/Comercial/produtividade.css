@@ -1,0 +1,96 @@
+.cp-dialog{width:min(850px,94vw);max-height:90vh;border:1px solid #cbd5e1;border-radius:14px;padding:24px;color:inherit;background:var(--el-surface,#fff)}.cp-dialog::backdrop{background:#0f172a80}.cp-dialog header,.cp-dialog footer{display:flex;align-items:center;justify-content:space-between;gap:12px}.cp-dialog header h2{font-size:20px}.cp-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}.cp-grade label,.cp-dialog label{display:flex;flex-direction:column;gap:6px}.cp-grade input,.cp-grade select,.cp-grade textarea,.cp-dialog textarea,.cp-dialog select,.cp-dialog input{font:inherit;padding:9px;border:1px solid #cbd5e1;border-radius:6px;max-width:100%;box-sizing:border-box}.cp-dialog textarea{width:100%}.cp-dialog p,.cp-dialog small{line-height:1.5}.cp-dialog small{display:block}.cp-historico article{padding:12px 0;border-top:1px solid #e2e8f0}.cp-scroll{overflow:auto}.cp-scroll table{width:100%;border-collapse:collapse}.cp-scroll th,.cp-scroll td{padding:12px;text-align:left;border-bottom:1px solid #e2e8f0}.cp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:20px 0}.cp-kpis>div{padding:18px;border:1px solid #e2e8f0;border-radius:10px}.cp-kpis strong{display:block;font-size:28px;margin-top:8px}.cp-dia{display:flex;gap:14px;align-items:center;padding:5px}.cp-dia meter{flex:1;height:22px}.cp-painel details{padding:12px;border-bottom:1px solid #e2e8f0}.cp-painel summary{cursor:pointer}.cp-contato-cell small{display:block;line-height:1.5}.cp-atrasado{color:#b42318;font-weight:600}.cp-filtros{display:flex;gap:12px;flex-wrap:wrap;padding:12px}.cp-filtros label{display:flex;gap:8px;align-items:center}@media(max-width:600px){.cp-grade{grid-template-columns:1fr}.cp-dialog{padding:14px}.cp-dialog footer{flex-direction:column}}
+/* Painel: regras próprias também quando inserido no shell do sistema. */
+#produtividadeComercial.cp-painel {
+  --cp-acento: var(--el-color-primary, #80613b);
+  --cp-borda: var(--el-color-border, #e3e6eb);
+  --cp-texto: var(--el-color-text, #242a32);
+  --cp-suave: var(--el-color-muted, #69717d);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 28px 32px 40px !important;
+  font-family: Inter, Arial, sans-serif;
+  color: var(--cp-texto);
+  background: var(--el-color-bg, #f5f6f8);
+}
+#produtividadeComercial *, #produtividadeComercial *::before, #produtividadeComercial *::after { box-sizing: border-box; }
+#produtividadeComercial .cp-filtro-card, #produtividadeComercial .cp-bloco { background: var(--el-color-surface, #fff); border: 1px solid var(--cp-borda); border-radius: 12px; box-shadow: 0 2px 5px #18212e04; overflow: hidden; }
+#produtividadeComercial .cp-filtros { padding: 18px 20px 14px; margin: 0; gap: 16px; display: flex; align-items: flex-end; flex-wrap: wrap; }
+#produtividadeComercial .cp-filtros label, #produtividadeComercial .cp-tipo-filtro { display: flex; flex-direction: column; align-items: stretch; gap: 7px; margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+#produtividadeComercial .cp-filtros label { flex: 0 1 175px; }
+#produtividadeComercial .cp-filtros label:has(select) { flex-basis: 260px; }
+#produtividadeComercial input, #produtividadeComercial select { width: 100%; min-height: 40px; height: 40px; padding: 8px 12px; border: 1px solid var(--cp-borda); border-radius: 7px; background: var(--el-color-surface, #fff); color: var(--cp-texto); font: 400 13px Inter, Arial, sans-serif; letter-spacing: normal; box-shadow: none; }
+#produtividadeComercial :is(input, select, button):focus-visible { outline: 2px solid var(--cp-acento); outline-offset: 3px; }
+#produtividadeComercial .cp-filtros button { width: auto; height: 40px; min-height: 40px; margin: 0; padding: 0 24px; border: 0; border-radius: 7px; background: var(--cp-acento); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+#produtividadeComercial .cp-status { margin: 0; padding: 11px 20px; border-top: 1px solid var(--cp-borda); background: var(--el-color-surface-soft, #fafaf9); color: var(--cp-suave); font-size: 12px; line-height: 1.6; }
+#produtividadeComercial .cp-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 20px 0 24px; }
+#produtividadeComercial .cp-kpis > div { min-height: 112px; padding: 18px 20px; background: var(--el-color-surface, #fff); border: 1px solid var(--cp-borda); border-radius: 10px; position: relative; overflow: hidden; }
+#produtividadeComercial .cp-kpis > div::before { content: ''; position: absolute; left: 0; top: 20px; bottom: 20px; width: 3px; background: var(--cp-acento); opacity: .65; border-radius: 0 3px 3px 0; }
+#produtividadeComercial .cp-kpis small { display: block; color: var(--cp-suave); font-size: 12px; line-height: 1.45; }
+#produtividadeComercial .cp-kpis strong { display: block; margin-top: 12px; color: var(--cp-texto); font-size: 30px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+#produtividadeComercial .cp-bloco { margin-bottom: 20px; min-width: 0; }
+#produtividadeComercial .cp-bloco-cabecalho { padding: 20px 22px 16px; border-bottom: 1px solid var(--cp-borda); }
+#produtividadeComercial .cp-bloco h2 { margin: 0 0 7px; font-size: 16px; line-height: 1.4; font-weight: 600; letter-spacing: -.01em; }
+#produtividadeComercial .cp-bloco p { margin: 0; color: var(--cp-suave); font-size: 12px; line-height: 1.65; }
+#produtividadeComercial .cp-scroll { overflow-x: auto; }
+#produtividadeComercial .cp-scroll table { width: 100%; min-width: 860px; border-collapse: collapse; margin: 0; }
+#produtividadeComercial .cp-scroll th, #produtividadeComercial .cp-scroll td { padding: 14px 18px; font-size: 12px; white-space: nowrap; border-bottom: 1px solid var(--cp-borda); text-align: right; }
+#produtividadeComercial .cp-scroll th:first-child, #produtividadeComercial .cp-scroll td:first-child { text-align: left; padding-left: 22px; }
+#produtividadeComercial .cp-scroll thead th { background: var(--el-color-surface-soft, #fafaf9); font-weight: 600; color: var(--cp-suave); }
+#produtividadeComercial .cp-painel-grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px; align-items: start; }
+#produtividadeComercial .cp-bloco-conteudo { padding: 20px 22px; min-height: 100px; color: var(--cp-suave); font-size: 13px; line-height: 1.6; }
+#produtividadeComercial .cp-tipo-filtro { margin-top: 16px; max-width: 260px; }
+#produtividadeComercial .cp-dia { padding: 8px 0; font-size: 12px; }
+#produtividadeComercial .cp-dia meter { accent-color: var(--cp-acento); }
+#produtividadeComercial details { padding: 12px 0; }
+#produtividadeComercial summary { font-size: 12px; line-height: 1.6; color: var(--cp-texto); }
+#produtividadeComercial details p { padding: 8px 12px; overflow-wrap: anywhere; background: var(--el-color-surface-soft, #fafaf9); border-radius: 6px; margin-top: 8px; }
+@media (max-width: 1050px) {
+  #produtividadeComercial.cp-painel { padding: 22px 20px 32px !important; }
+  #produtividadeComercial .cp-painel-grade { grid-template-columns: 1fr; gap: 0; }
+}
+@media (max-width: 600px) {
+  #produtividadeComercial.cp-painel { padding: 18px 12px 28px !important; }
+  #produtividadeComercial .cp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  #produtividadeComercial .cp-kpis > div { padding: 16px; }
+  #produtividadeComercial .cp-filtros { padding: 16px; gap: 12px; }
+  #produtividadeComercial .cp-filtros label { flex: 1 1 120px; min-width: 0; }
+  #produtividadeComercial .cp-filtros label:has(select) { flex-basis: 100%; }
+  #produtividadeComercial .cp-filtros button { width: 100%; }
+}
+/* Orçamentos e pré-reservas têm colunas próprias, independentes da grade de fluxo. */
+html:root #centralPedidosPage table.central-table.cp-acomp-table{table-layout:fixed;width:100%;min-width:1720px}
+html:root #centralPedidosPage table.cp-acomp-table :is(th,td){box-sizing:border-box;width:auto!important;padding:14px 16px!important;white-space:normal!important;overflow-wrap:anywhere;vertical-align:top;text-align:left;line-height:1.5;font-size:13px}
+html:root #centralPedidosPage table.cp-acomp-table th{font-size:11px!important;letter-spacing:.03em}
+html:root #centralPedidosPage table.cp-acomp-table td small{display:block;margin-top:5px;font-size:11.5px;line-height:1.5;color:#7b838d;white-space:normal;overflow-wrap:anywhere}
+html:root #centralPedidosPage table.cp-acomp-table :is(th,td):nth-child(4){text-align:right;white-space:nowrap!important}
+html:root #centralPedidosPage table.cp-acomp-table td:nth-child(3){white-space:nowrap!important}
+html:root #centralPedidosPage table.cp-acomp-table :is(th,td):last-child{text-align:center}
+html:root #centralPedidosPage table.cp-acomp-table .cp-acomp-numero{display:block;font-size:12px;font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+html:root #centralPedidosPage table.cp-acomp-table .cp-acomp-cliente{font-weight:500}
+html:root #centralPedidosPage table.cp-acomp-table .cp-acomp-situacao{display:block;font-weight:500}
+html:root #centralPedidosPage table.cp-acomp-table .cp-acomp-observacao{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+html:root #centralPedidosPage table.cp-acomp-table [data-action=acompanhar]{width:auto;min-width:105px;max-width:100%;font-size:11px;padding:8px 10px;white-space:nowrap}
+#centralPedidosPage .cp-acomp-filtros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:14px;align-items:end;padding:18px 16px;border-bottom:1px solid #e8ebef;margin-bottom:0}
+#centralPedidosPage .cp-acomp-filtros[hidden]{display:none!important}
+#centralFiltrosPedidos > .cp-acomp-filtros{grid-column:1/-1;border-bottom:0;border-top:1px solid #e8ebef;padding:16px 0 0;margin-top:4px}
+#centralPedidosPage .cp-acomp-filtros label{display:flex;flex-direction:column;align-items:stretch;gap:7px;min-width:0;font-size:11px;font-weight:600}
+#centralPedidosPage .cp-acomp-filtros select{box-sizing:border-box;width:100%;min-width:0;height:40px;padding:8px 10px;border:1px solid #dfe4eb;border-radius:8px;background:#fff;font:400 13px Inter,system-ui,sans-serif}
+#centralPedidosPage .cp-acomp-filtros [data-atualizar]{height:40px;padding:0 14px;border:1px solid #dfe4eb;border-radius:8px;background:#f7f8fa;color:#505965;font:500 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+#centralPedidosPage .cp-acomp-filtros [data-contato-status]{grid-column:1/-1;font-size:12px;color:#767f89}
+#centralPedidosPage .cp-acomp-filtros [data-contato-status]:empty{display:none}
+@media(max-width:1000px){#centralPedidosPage .cp-acomp-filtros{grid-template-columns:repeat(2,minmax(0,1fr))}#centralPedidosPage .cp-acomp-filtros [data-atualizar]{justify-self:start}}
+@media(max-width:540px){#centralPedidosPage .cp-acomp-filtros{grid-template-columns:1fr}}
+/* Cores semânticas leves para leitura rápida dos acompanhamentos. */
+html:root #centralPedidosPage table.cp-acomp-table :is(.cp-acomp-numero,.cp-acomp-situacao,.cp-acomp-prazo){display:inline-block;max-width:100%;box-sizing:border-box;padding:5px 9px;border:1px solid var(--cp-badge-borda,#e1e5eb);border-radius:7px;background:var(--cp-badge-fundo,#f3f5f7)!important;color:var(--cp-badge-texto,#697480)!important;font-size:12px;font-weight:500;line-height:1.5}
+#centralPedidosPage .cp-tom-azul{--cp-badge-fundo:#edf4ff;--cp-badge-texto:#37649a;--cp-badge-borda:#d3e2f6}
+#centralPedidosPage .cp-tom-ambar{--cp-badge-fundo:#fff6e6;--cp-badge-texto:#996815;--cp-badge-borda:#f0dfbc}
+#centralPedidosPage .cp-tom-vermelho{--cp-badge-fundo:#fff0ef;--cp-badge-texto:#b44944;--cp-badge-borda:#f0d4d1}
+#centralPedidosPage .cp-tom-verde{--cp-badge-fundo:#edf8f2;--cp-badge-texto:#378160;--cp-badge-borda:#d1e9db}
+#centralPedidosPage .cp-tom-violeta{--cp-badge-fundo:#f3effc;--cp-badge-texto:#7c62a6;--cp-badge-borda:#e2d9f3}
+html:root #centralPedidosPage table.cp-acomp-table .cp-acomp-numero{font-weight:600}
+html:root #centralPedidosPage table.cp-acomp-table .cp-acomp-valor{color:#41785e!important;font-weight:500}
+html:root #centralPedidosPage table.cp-acomp-table .cp-texto-vermelho{color:#b44944!important}
+html:root #centralPedidosPage table.cp-acomp-table .cp-texto-ambar{color:#996815!important}
+html:root #centralPedidosPage table.cp-acomp-table .cp-texto-azul{color:#37649a!important}

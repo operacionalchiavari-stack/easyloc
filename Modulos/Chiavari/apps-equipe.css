@@ -1,0 +1,180 @@
+/* Identidade dos apps Montagem, Free e Meu Bônus. Não é carregada nos apps de transporte. */
+html:has(body.chiavari-equipe-app){background:#f4f1ec;color-scheme:light}
+body.chiavari-equipe-app{
+ --bg:#f4f1ec;--card:#fff;--campo:#faf8f4;--line:#e9e3d9;--borda-card:#e9e3d9;
+ --text:#2f2b27;--muted:#7c756d;--suave:#7c756d;--soft:#f0ece5;--escuro:#5a5a55;--escuro-2:#464640;
+ --serif:"Cormorant Garamond",Georgia,serif;--sans:"Manrope",system-ui,-apple-system,sans-serif;
+ --sombra:0 8px 28px #2f2b2708;--equipe-accent:#997347;--equipe-verde:#22653d;
+ margin:0 auto;padding:0 0 calc(90px + env(safe-area-inset-bottom));width:100%;max-width:680px;
+ min-height:100dvh;background:var(--bg);color:var(--text);font:15px/1.5 var(--sans);
+ -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+}
+.chiavari-equipe-app *{box-sizing:border-box}
+.chiavari-equipe-app [hidden]{display:none!important}
+body.chiavari-equipe-app:has(#telaLogin.ativa,#telaCadastro.ativa,#telaEntrada:not(.oculto),#telaPendente.ativa){padding-bottom:0}
+.chiavari-equipe-app button{cursor:pointer;touch-action:manipulation}
+.chiavari-equipe-app button:disabled{cursor:default}
+.chiavari-equipe-app :is(button,a,input,select,textarea):focus-visible{outline:3px solid #b18a5a;outline-offset:3px}
+.chiavari-equipe-app :is(h1,h2,h3,p){overflow-wrap:anywhere}
+.chiavari-equipe-app .app{max-width:none;padding:0;min-height:0}
+
+/* A mesma capa pública configurada no Catálogo é aplicada pelo apps-equipe.js. */
+.chiavari-equipe-app :is(.topo,.perfil,.marca,.entrada-marca){
+ position:relative;isolation:isolate;background-color:#5a5a55;
+ background-image:linear-gradient(130deg,#858276,#393c35);background-image:var(--equipe-capa,linear-gradient(130deg,#858276,#393c35));
+ background-size:cover;background-position:center 52%;color:#fff;
+}
+.chiavari-equipe-app :is(.topo,.perfil,.marca,.entrada-marca)::before{
+ content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#15181235 0%,#22251f0d 30%,#28241fc9 100%);pointer-events:none;
+}
+.chiavari-equipe-app .equipe-logo{display:block;width:154px;max-width:100%;height:54px;object-fit:contain;object-position:left center;filter:brightness(0) invert(1)}
+.chiavari-equipe-app .equipe-logo.quadrada{object-fit:cover;object-position:center 49%}
+.chiavari-equipe-app :is(.topo,.perfil){
+ display:grid;grid-template-columns:minmax(0,1fr) 44px 44px 44px;grid-template-rows:54px 1fr;
+ gap:8px;align-items:start;min-height:310px;margin:0;padding:calc(16px + env(safe-area-inset-top)) 20px 46px;
+ border:0;border-radius:0;box-shadow:none;top:auto;z-index:auto;
+}
+.chiavari-equipe-app :is(.topo,.perfil)>.equipe-logo{grid-column:1;grid-row:1}
+.chiavari-equipe-app :is(.topo,.perfil)>.avatar{
+ grid-column:2;grid-row:1;width:44px;height:44px;min-width:0;border-radius:50%;background:#fff;color:#4c473e;
+ border:1px solid #ffffffb3;font:500 24px var(--serif);box-shadow:0 2px 8px #0000000a;overflow:hidden;
+}
+.chiavari-equipe-app .avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.chiavari-equipe-app :is(.topo,.perfil)>.icone-btn{
+ grid-column:3;grid-row:1;display:grid;place-items:center;width:44px;height:44px;border:1px solid #ffffff4a;
+ background:#ffffff20;color:#fff;border-radius:50%;backdrop-filter:blur(8px);
+}
+.chiavari-equipe-app :is(.topo,.perfil)>.icone-btn:last-child{grid-column:4}
+.chiavari-equipe-app .icone-btn svg{width:20px;height:20px}
+.chiavari-equipe-app :is(.topo-texto,.perfil-texto){grid-row:2;grid-column:1/-1;align-self:end;min-width:0;padding-top:50px}
+.chiavari-equipe-app .topo-texto small{display:block;color:#f4f1ec;font-size:13px;letter-spacing:.06em;margin:0 0 2px}
+.chiavari-equipe-app .topo-texto strong{display:block;color:#fff;font:500 clamp(34px,7vw,42px)/1.07 var(--serif);letter-spacing:-.02em}
+.chiavari-equipe-app .equipe-descricao{color:#f0e9df;font-size:13px;line-height:1.5;margin:10px 0 0;max-width:380px}
+.chiavari-equipe-app .nota-btn{color:#fff;background:#ffffff1c;border:1px solid #ffffff55;margin-top:12px;border-radius:30px;padding:7px 12px;min-height:36px;font-size:12px}
+.chiavari-equipe-app :is(.agenda-cabecalho,.equipe-intro){
+ position:relative;margin:-24px 16px 22px;background:#fff;border:1px solid var(--line);border-radius:20px;
+ box-shadow:0 10px 24px #2f2b2708;padding:19px 20px;display:flex;align-items:center;gap:15px;
+}
+.chiavari-equipe-app :is(.agenda-cabecalho,.equipe-intro) h1{font:600 26px/1.15 var(--serif);margin:0;color:var(--text)}
+.chiavari-equipe-app :is(.agenda-cabecalho,.equipe-intro) p{font-size:13px;line-height:1.5;margin:4px 0 0;color:var(--muted)}
+.chiavari-equipe-app .equipe-intro-icone{display:grid;place-items:center;flex:0 0 48px;height:52px;border-radius:15px;background:var(--soft);color:var(--equipe-accent)}
+.chiavari-equipe-app .equipe-intro-icone svg{width:24px;height:24px}
+.chiavari-equipe-app :is(#listaEtapas,#conteudo,#apontamentoInicio){padding:0 16px}
+.chiavari-equipe-app :is(#telaEtapa,#telaSemEvento,#telaPendente){padding:20px 16px 0}
+.chiavari-equipe-app .abas{margin:0 16px 22px;padding:4px;background:#eae5dd;border:1px solid #e5ded2;border-radius:16px;gap:4px}
+.chiavari-equipe-app .aba{min-height:46px;border-radius:12px;font-size:13px;font-weight:600;color:#70685f;background:transparent}
+.chiavari-equipe-app .aba.ativa{background:#fff;color:var(--text);box-shadow:0 2px 6px #2f2b2709}
+.chiavari-equipe-app .contador{background:#eae5dc;color:#70624e}
+.chiavari-equipe-app .dia-titulo{margin:25px 2px 12px}
+.chiavari-equipe-app .dia-titulo strong{font:600 25px/1.2 var(--serif)}
+.chiavari-equipe-app .dia-titulo span{font-size:12px;color:var(--muted)}
+.chiavari-equipe-app :is(.etapa,.vaga,.cartao,.secao,.cabeca){background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--sombra)}
+.chiavari-equipe-app .etapa{border-left:3px solid var(--montagem-forte);padding:18px;margin-bottom:12px}
+.chiavari-equipe-app .etapa.desmontagem{border-left-color:var(--desmontagem-forte)}
+.chiavari-equipe-app .etapa.carregamento{border-left-color:var(--carregamento-forte)}
+.chiavari-equipe-app .etapa-cliente{font:600 25px/1.15 var(--serif);margin-top:10px;letter-spacing:0}
+.chiavari-equipe-app .etapa-local{color:#746d64;font-size:13px;margin-top:8px;line-height:1.6}
+.chiavari-equipe-app .hora{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.chiavari-equipe-app .tipo{font-size:11px;letter-spacing:.06em}
+.chiavari-equipe-app :is(.chip,.pedido){font-size:11px;padding:5px 9px}
+.chiavari-equipe-app :is(.secao,.cabeca){padding:20px;margin-bottom:16px}
+.chiavari-equipe-app :is(.secao-titulo h2,.cabeca h1,.pagina-tarefa-titulo,#telaSemEvento>h1){font-family:var(--serif);font-size:29px;font-weight:600}
+.chiavari-equipe-app :is(.secao-titulo small,.subtitulo,.linha small){font-size:12px}
+.chiavari-equipe-app :is(.linha strong,.pessoa-nome){font-size:15px}
+.chiavari-equipe-app :is(.btn,.botao){min-height:50px;font-size:14px;font-weight:600;border-radius:30px;background:var(--escuro);color:#fff;box-shadow:none;padding:12px 18px;border:1px solid transparent}
+.chiavari-equipe-app .btn-claro{background:#f3efe8;border-color:var(--line);color:var(--text)}
+.chiavari-equipe-app .btn-texto{background:transparent;color:var(--text)}
+.chiavari-equipe-app .btn-ok{background:#286640;color:#fff}
+.chiavari-equipe-app .btn-perigo{background:#fff0ed;color:#a3352c}
+.chiavari-equipe-app .btn-pequeno{min-height:44px;font-size:13px}
+.chiavari-equipe-app .campo>span,.chiavari-equipe-app .campo>label{display:block;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#736b60;margin-bottom:8px;font-weight:600}
+.chiavari-equipe-app :is(.campo input,.campo select,.campo textarea,.input){border:1px solid var(--line);border-radius:14px;background:#faf8f4;min-height:52px;font-size:16px;color:var(--text);padding:12px 14px;width:100%}
+.chiavari-equipe-app .opcao{font-size:14px;min-height:46px;border-color:var(--line);border-radius:14px}
+.chiavari-equipe-app .opcao.ativa{background:var(--escuro);border-color:var(--escuro);color:#fff}
+.chiavari-equipe-app :is(.passo-titulo,.sem-evento h2){font:600 26px/1.15 var(--serif)}
+.chiavari-equipe-app :is(.passo-sub,.obs,.alerta,.sem-evento p){font-size:14px;line-height:1.6}
+.chiavari-equipe-app .passo{border-radius:20px;padding:20px 16px}
+.chiavari-equipe-app .voltar{font-size:14px;min-height:44px}
+.chiavari-equipe-app .vazio{background:#fff;border:1px solid var(--line);border-radius:20px;padding:35px 22px;color:var(--muted)}
+.chiavari-equipe-app .vazio strong{color:var(--text);font:600 26px/1.2 var(--serif);margin-bottom:8px}
+.chiavari-equipe-app .aviso-pix{margin:0 16px 18px;border-radius:16px;font-size:13px}
+.chiavari-equipe-app .vaga{padding:20px;margin-bottom:14px}
+.chiavari-equipe-app .vaga-data{font:600 26px/1.2 var(--serif)}
+.chiavari-equipe-app .vaga-valor{font:600 29px/1.1 var(--serif);color:var(--equipe-accent);background:#f8f3eb}
+.chiavari-equipe-app .vaga-hora{font-size:14px}
+.chiavari-equipe-app .secao-titulo{color:var(--text)}
+
+/* Entrada com foto, marca e formulário sobreposto, como no Catálogo. */
+.chiavari-equipe-app :is(.marca,.entrada-marca){margin:0;padding:calc(22px + env(safe-area-inset-top)) 24px 52px;min-height:300px;text-align:left;display:flex;flex-direction:column;justify-content:flex-end}
+.chiavari-equipe-app :is(.marca,.entrada-marca)>.equipe-logo{position:absolute;top:calc(20px + env(safe-area-inset-top));left:24px;width:170px}
+.chiavari-equipe-app :is(.marca-selo,.entrada-selo){display:none}
+.chiavari-equipe-app :is(.marca h1,.entrada-marca h1){font:500 39px/1.07 var(--serif);color:#fff;margin:0;letter-spacing:-.02em}
+.chiavari-equipe-app :is(.marca p,.entrada-marca p){font-size:13px;line-height:1.6;color:#eee7dd;max-width:320px;margin:10px 0 0}
+.chiavari-equipe-app :is(#telaLogin,#telaCadastro,#telaEntrada){min-height:100dvh}
+.chiavari-equipe-app .entrada{display:block}
+.chiavari-equipe-app :is(#telaLogin,#telaCadastro,#telaEntrada)>:is(.cartao,.entrada-cartao){position:relative;margin:-25px 16px 0;padding:24px;border:1px solid var(--line);border-radius:22px;background:#fff;box-shadow:0 12px 30px #2f2b2708}
+.chiavari-equipe-app :is(.rodape-form,.entrada-ajuda){margin:22px 24px;text-align:center;font-size:13px;color:var(--muted);line-height:1.7}
+.chiavari-equipe-app .link{color:#785b37;min-height:44px;text-decoration:none}
+.chiavari-equipe-app .entrada-ajuda{padding:0}
+
+/* Barra inferior: mesmos tamanhos, ícones de traço e tratamento de seleção do Catálogo. */
+.chiavari-equipe-app :is(.app-navegacao,.equipe-navegacao){
+ position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:15;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ width:min(100%,680px);padding:7px 8px calc(7px + env(safe-area-inset-bottom));gap:2px;border:0;border-top:1px solid #e9e3d9;
+ background:#fbfaf7f5;backdrop-filter:blur(18px);box-shadow:none;
+}
+.chiavari-equipe-app .equipe-navegacao-free{grid-template-columns:repeat(3,minmax(0,1fr))}
+.chiavari-equipe-app :is(.app-navegacao,.equipe-navegacao) button{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:54px;padding:5px 0;
+ border:0;border-radius:12px;background:transparent;color:#68685f;font:600 10px/1.25 var(--sans);letter-spacing:.025em;
+}
+.chiavari-equipe-app :is(.app-navegacao,.equipe-navegacao) button:is(.ativo,[aria-current="page"]){color:#1c693d;background:transparent}
+.chiavari-equipe-app :is(.app-navegacao,.equipe-navegacao) svg{display:block;width:23px;height:23px;stroke-width:1.7}
+.chiavari-equipe-app .folha{max-width:680px;border-radius:26px 26px 0 0;padding:26px 20px calc(24px + env(safe-area-inset-bottom));background:#fff}
+.chiavari-equipe-app .folha-fundo{z-index:50}
+.chiavari-equipe-app .visor{z-index:60}
+.chiavari-equipe-app .folha h3{font:600 29px/1.1 var(--serif)}
+.chiavari-equipe-app .toast{bottom:calc(88px + env(safe-area-inset-bottom));font-size:14px;background:#464640;color:#fff;z-index:100}
+.chiavari-equipe-app .equipe-conta{position:fixed;inset:auto 0 0;margin:0 auto;width:min(100%,680px);max-height:85dvh;overflow-y:auto;border:1px solid var(--line);border-bottom:0;border-radius:26px 26px 0 0;padding:28px 22px calc(28px + env(safe-area-inset-bottom));background:#fff;color:var(--text);box-shadow:0 -12px 60px #00000018}
+.chiavari-equipe-app .equipe-conta::backdrop{background:#24231e80;backdrop-filter:blur(3px)}
+.equipe-conta-fechar{position:absolute;right:16px;top:16px;width:44px;height:44px;display:grid;place-items:center;border:1px solid #e9e3d9;border-radius:50%;background:#faf8f4;color:#5a5a55}
+.equipe-conta-fechar svg{width:20px;height:20px}
+.equipe-conta .avatar{width:64px;height:64px;border-radius:50%;overflow:hidden;margin:0 0 16px;background:#f0ece5;color:#7c633e;display:grid;place-items:center;font:500 30px var(--serif)}
+.equipe-conta h2{font:600 32px/1.1 var(--serif);margin:0 45px 8px 0}
+.equipe-conta p{margin:0 0 22px;font-size:13px;color:var(--muted)}
+.equipe-conta-acoes{display:grid;gap:10px}
+
+/* Meu Bônus: capa e saldo em um cartão branco; valores sempre legíveis. */
+.chiavari-equipe-app .heroi{border-radius:0;background:transparent;margin:0;padding:0;overflow:visible;color:var(--text);box-shadow:none}
+.chiavari-equipe-app .perfil{grid-template-columns:minmax(0,1fr) 44px 44px;min-height:310px}
+.chiavari-equipe-app .perfil>.avatar{grid-column:2}
+.chiavari-equipe-app .perfil>.btn-sair{grid-column:3;grid-row:1;width:44px;height:44px;padding:0;border:1px solid #ffffff55;border-radius:50%;background:#ffffff20;color:#fff;display:grid;place-items:center}
+.chiavari-equipe-app .btn-sair svg{width:20px;height:20px}
+.chiavari-equipe-app .perfil-ola{font:500 36px/1.1 var(--serif);color:#fff;margin:0}
+.chiavari-equipe-app .perfil-nome{font:600 12px var(--sans);color:#e9dfce;margin:9px 0 0}
+.chiavari-equipe-app .perfil-cargo{font-size:12px;color:#eee7dc;margin:5px 0 0}
+.chiavari-equipe-app .heroi-total{position:relative;margin:-25px 16px 0;padding:24px;border:1px solid var(--line);border-radius:22px;background:#fff;box-shadow:0 10px 24px #2f2b2708;color:var(--text)}
+.chiavari-equipe-app .heroi-rotulo{font-size:11px;letter-spacing:.06em;color:#777065;text-transform:uppercase}
+.chiavari-equipe-app .heroi-valor{font:600 44px/1.15 var(--serif);color:#775b38;margin:8px 0 20px}
+.chiavari-equipe-app .heroi-valor small{color:#997347}
+.chiavari-equipe-app[data-app-equipe="bonus"]{--premiacao:#6d835a;--premiacao-soft:#edf1e7;--livre:#9a998d;--ok:#287041;--ok-soft:#eaf4ed;--nao:#996522;--nao-soft:#fcf2df;--hero-muted:#7c756d}
+.chiavari-equipe-app .heroi-mini{border-top:1px solid var(--line);padding-top:18px;gap:16px}
+.chiavari-equipe-app .mini-valor{font-size:18px;font-weight:600;color:#424a38}
+.chiavari-equipe-app .anos{padding:0 16px;margin:22px 0;gap:8px}
+.chiavari-equipe-app .ano-chip{min-width:64px;min-height:44px;border-radius:24px;font-size:13px;background:#fff;border-color:var(--line);color:var(--muted)}
+.chiavari-equipe-app .ano-chip.ativo{background:var(--escuro);color:#fff;border-color:var(--escuro)}
+.chiavari-equipe-app #telaExtrato>.secao{margin:0 16px 20px;padding:20px;scroll-margin-top:18px}
+.chiavari-equipe-app #telaExtrato .secao h2{font:600 28px/1.15 var(--serif);color:var(--text);margin:0 0 6px}
+.chiavari-equipe-app .secao-sub{font-size:12px;line-height:1.7;color:var(--muted)}
+.chiavari-equipe-app #rodape{margin:20px 20px 0;color:var(--muted);font-size:11px}
+@media(min-width:720px){
+ body.chiavari-equipe-app{box-shadow:0 0 70px #2f2b2710;border-left:1px solid #e9e3d9;border-right:1px solid #e9e3d9}
+}
+@media(max-width:359px){
+ .chiavari-equipe-app :is(.topo,.perfil){padding-left:16px;padding-right:16px;gap:5px}
+ .chiavari-equipe-app .equipe-logo{width:124px}
+ .chiavari-equipe-app .heroi-total{padding:20px}
+ .chiavari-equipe-app .apontamento-ativo{grid-template-columns:1fr}
+ .chiavari-equipe-app .apontamento-relogio{text-align:left}
+}
+@media(prefers-reduced-motion:reduce){.chiavari-equipe-app *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
