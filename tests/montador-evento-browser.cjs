@@ -18,6 +18,7 @@ async function main(){
     Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(ok){ok({coords:{latitude:-23,longitude:-46,accuracy:10}});}}});
     const data=new Date().toLocaleDateString('en-CA');
     const etapas=[{id:'montagem',pedido:'123',cliente:'Evento Jardim',local:'Espaço Jardim',caminhao:'Caminhão 01',dataEvento:'01/11/2026',confirmadoDecorador:true,etapa:'montagem',operacao:'montagem',dataISO:data,horario:'08:00',responsavel:'Ana Silva',equipe:['Ana Silva','Bruno'],free:{quantidade:1,pessoas:[{nome:'Carlos Free',miniatura:location.origin+'/fixture.png'}]},trocas:[],info:{},outrasEtapas:[{etapa:'Carregamento',dataISO:data,horario:'06:00'}]},{id:'volta',pedido:'124',cliente:'Outro evento',etapa:'desmontagem',operacao:'desmontagem',dataISO:data,horario:'18:00',responsavel:'Ana Silva',equipe:[],trocas:[],sacolasMontagem:[],info:{},outrasEtapas:[]}];
+    const amanha=new Date();amanha.setDate(amanha.getDate()+1);etapas.push({...etapas[0],id:'amanha',cliente:'Evento Amanhã',dataISO:amanha.toLocaleDateString('en-CA')});
     const lista=[{chave:'a',nome:'Cadeira natural de madeira com assento estofado em linho bege e acabamento especial para composição de ambientes (L) 0.60 m (A) 0.90 m '.repeat(2),esperado:3,foto:location.origin+'/fixture.png'},{chave:'kit/b',nome:'Mesa do kit',kit_nome:'Composição Jardim',esperado:2,foto:location.origin+'/fixture.png'}];
     function registro(tipo){return JSON.parse(localStorage.getItem('fixture:'+tipo)||'null');}
     function guardar(tipo,d){localStorage.setItem('fixture:'+tipo,JSON.stringify(d));return d;}
@@ -25,6 +26,7 @@ async function main(){
      window.chamadas.push({fn,args});
      if(fn==='MONT_login'){if(args[1]!=='1234')throw Error('CPF ou PIN incorretos.');return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};}
      if(fn==='MONT_appCarregar')return {nome:'Ana Silva',perfil:'RESPONSAVEL',etapas,apontamento:registro('apontamento')};
+     if(fn==='MONT_fotosEtapa')return {pessoas:[{nome:'Ana Silva',papel:'responsavel',foto:location.origin+'/fixture.png'},{nome:'Bruno',papel:'equipe',foto:location.origin+'/fixture.png'}],caminhoes:[{nome:'Caminhão 01',foto:location.origin+'/fixture.png'}],solicitante:{nome:etapas.find(e=>e.id===args[1]).cliente,foto:location.origin+'/fixture.png'}};
      if(fn==='MONT_sincronizarCheckin')return registro('apontamento');
      if(fn==='MONT_finalizarApontamento'){localStorage.removeItem('fixture:apontamento');return {};}
      if(fn==='MONT_uberQr'){
@@ -66,6 +68,14 @@ async function main(){
    assert.equal(await page.evaluate(()=>chamadas.some(c=>c.fn==='MONT_listarResponsaveis')),false);
    assert.equal(await page.evaluate(()=>chamadas.find(c=>c.fn==='MONT_login').args[0]),'12345678901');
    await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();
+   for(const nome of ['Evento Jardim','Ana Silva','Bruno','Caminhão 01']){
+    await page.getByRole('button',{name:'Ver foto de '+nome,exact:true}).click();
+    await page.locator('#folha .foto-free-ampliada').waitFor();assert.equal(await page.locator('#folha h3').textContent(),nome);
+    await page.getByRole('button',{name:'Fechar foto',exact:true}).click();
+   }
+   const cabeca=await page.locator('#etapaCabeca .cabeca').evaluate(e=>({cor:getComputedStyle(e).backgroundColor,borda:getComputedStyle(e).borderTopWidth,altura:e.getBoundingClientRect().height}));
+   assert.equal(cabeca.cor,'rgb(255, 255, 255)');assert.equal(cabeca.borda,'1px');assert.ok(cabeca.altura<300);
+   assert.equal(await page.getByRole('button',{name:'Abrir mapa no app'}).count(),0);assert.equal(await page.locator('.evento-endereco').textContent(),'Espaço Jardim');
    await page.getByRole('button',{name:'Consultar Uber novamente',exact:true}).click();
    await page.locator('#etapaUber').filter({hasText:'Pedro Motorista'}).waitFor();
    const ordem=await page.evaluate(()=>['etapaEquipe','etapaUber','etapaFotoEquipe','etapaConferencia','passo_sacolas','passo_lista'].map(id=>document.getElementById(id).getBoundingClientRect().top));
@@ -100,7 +110,14 @@ async function main(){
    await page.screenshot({path:path.join(os.tmpdir(),`montador-fluxo-completo-${width}.png`),fullPage:true});
    await page.reload();await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();await page.waitForSelector('.conferencia-enviada');await page.waitForFunction(()=>document.getElementById('regProgressoPct').textContent==='100%');assert.equal(await page.locator('#regProgresso').count(),1);
    await page.locator('#apontamentoEtapa .encerrar-evento').click();await page.getByRole('button',{name:'Encerrar',exact:true}).click();await page.locator('#telaInicio.ativa').waitFor();
+   await page.locator('#telaInicio .etapa').filter({hasText:'Evento Amanhã'}).click();
+   await page.getByRole('button',{name:'Ver foto de Evento Amanhã',exact:true}).waitFor();
+   const cabecaAmanha=await page.locator('#etapaCabeca .cabeca').evaluate(e=>({cor:getComputedStyle(e).backgroundColor,borda:getComputedStyle(e).borderTopWidth,raio:getComputedStyle(e).borderRadius}));
+   assert.equal(cabecaAmanha.cor,cabeca.cor);assert.equal(cabecaAmanha.borda,cabeca.borda);assert.equal(cabecaAmanha.raio,'20px');
+   await page.screenshot({path:path.join(os.tmpdir(),`montador-cabeca-amanha-${width}.png`)});
+   await page.locator('#btnVoltar').click();
    await page.locator('#telaInicio .etapa').filter({hasText:'Outro evento'}).click();assert.equal(await page.locator('#etapaInfo').count(),1);assert.equal(await page.locator('#regProgresso').count(),1);assert.equal(await page.locator('#etapaConferencia').count(),0);assert.equal(await page.locator('#telaEtapa').evaluate(e=>e.classList.contains('evento-linear')),false);
+   assert.equal(await page.locator('#etapaCabeca .cabeca').evaluate(e=>getComputedStyle(e).backgroundColor),cabeca.cor);
    assert.deepEqual(errors,[]);await page.close();console.log(`Montagem ${width}px: QR, foto, conferência com dano, sacolas, assinatura, restauração e troca de etapa OK.`);
   }
  }finally{await browser.close();await new Promise(r=>server.close(r));}

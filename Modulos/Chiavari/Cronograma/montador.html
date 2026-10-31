@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261031-cpf-checkin"></script>
+  <script src="../operacao-sem-motor.js?v=20261031-fotos-etapa"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -323,7 +323,7 @@
 </style>
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261031-catalogo">
-  <link rel="stylesheet" href="montador-evento.css?v=20261031-cpf-checkin">
+  <link rel="stylesheet" href="montador-evento.css?v=20261031-fotos-etapa">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
 
@@ -398,7 +398,7 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="montador-evento.js?v=20261031-cpf-checkin"></script>
+<script src="montador-evento.js?v=20261031-fotos-etapa"></script>
 <script>
   /* =========================================================
      ESTADO E APOIO
@@ -861,13 +861,14 @@
 
   function renderCabeca(e){
     const t = tipoInfo(e.etapa);
+    const solicitante = window.MontadorEvento?.fotosEtapa(e.id).solicitante || {};
     document.getElementById("etapaEtiquetas").innerHTML='<span class="tipo" style="background:'+t.fundo+';color:'+t.forte+'">'+esc(e.etapa)+'</span><span class="pedido" title="Pedido #'+esc(e.pedido)+'">Pedido <b>#'+esc(e.pedido)+'</b></span>';
     document.getElementById("etapaCabeca").innerHTML =
       '<div class="cabeca" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '">' +
-        '<h1>' + esc(e.cliente || "-") + '</h1>' +
+        '<div class="evento-cliente">'+fotoCadastroHtml({nome:solicitante.nome || e.cliente,foto:solicitante.foto})+'<div><small>Solicitante / decorador</small><h1>' + esc(solicitante.nome || e.cliente || "-") + '</h1></div></div>' +
         (e.dataEvento ? '<p class="evento-data">Data do evento: '+esc(e.dataEvento)+'</p>' : '') +
         '<div class="pedido-agendamento"><div><small>Dia da etapa</small><strong>' + esc(tituloDia(e.dataISO)) + ', ' + esc(dataCurta(e.dataISO)) + '</strong></div><div><small>Horário previsto</small><strong>' + esc(hora(e.horario) || 'A definir') + '</strong></div></div>' +
-        '<div class="evento-local"><small>Local</small><p>'+esc(e.local || 'A definir')+'</p>'+ (e.local || (e.lat && e.lng) ? '<button class="btn btn-claro btn-pequeno" type="button" onclick="abrirMapa(\''+esc(e.id)+'\')">'+I.rota+'Abrir mapa no app</button>' : '') + '</div>' +
+        '<div class="evento-local"><small>Local</small>'+ (e.local || (e.lat && e.lng) ? '<a class="evento-endereco" href="https://www.google.com/maps/search/?api=1&amp;query='+encodeURIComponent(e.lat && e.lng ? e.lat+','+e.lng : e.local)+'" onclick="abrirMapa(\''+esc(e.id)+'\');return false">'+I.rota+'<span>'+esc(e.local || 'Ver localização')+'</span></a>' : '<p>A definir</p>') + '</div>' +
         (e.observacao ? '<p class="evento-orientacao">'+esc(e.observacao)+'</p>' : '') +
       '</div>' +
       (e.alerta ? '<div class="alerta">' + I.alerta + '<div><strong>' + esc(e.alerta.problema) + '</strong>' + esc(e.alerta.observacao || "") + (e.alerta.enviadoPor ? ' — ' + esc(e.alerta.enviadoPor) : "") + '</div></div>' : "");
@@ -890,12 +891,23 @@
     if(!p.miniatura)return '<div class="pessoa-foto sem-foto" aria-label="Foto não cadastrada">'+esc(nome.charAt(0).toUpperCase())+'</div>';
     return '<button class="pessoa-foto" type="button" data-foto="'+esc(p.miniatura)+'" data-nome="'+esc(nome)+'" onclick="abrirFotoFree(this)" aria-label="Ver foto de '+esc(nome)+'"><span>'+esc(nome.charAt(0).toUpperCase())+'</span><img src="'+esc(p.miniatura)+'" alt="Foto de '+esc(nome)+'" loading="lazy" onerror="this.remove()"></button>';
   }
+  function fotoCadastroHtml(p,veiculo){
+    const nome=String(p.nome||'?'),foto=/^https?:\/\//i.test(p.foto||'')?p.foto:'';
+    const classe='cadastro-foto'+(veiculo?' cadastro-foto-veiculo':'');
+    const inicial=esc(nome.charAt(0).toUpperCase());
+    if(!foto)return '<div class="'+classe+' sem-foto" aria-label="Foto não cadastrada">'+inicial+'</div>';
+    return '<button class="'+classe+'" type="button" data-foto="'+esc(foto)+'" data-nome="'+esc(nome)+'" onclick="abrirFotoFree(this)" aria-label="Ver foto de '+esc(nome)+'"><span>'+inicial+'</span><img src="'+esc(foto)+'" alt="Foto de '+esc(nome)+'" loading="lazy" onerror="this.parentElement.disabled=true;this.parentElement.removeAttribute(\'onclick\');this.parentElement.setAttribute(\'aria-label\',\'Foto indisponível\');this.remove()"></button>';
+  }
   function abrirFotoFree(btn){
     abrirFolha('<h3>'+esc(btn.dataset.nome)+'</h3><img class="foto-free-ampliada" src="'+esc(btn.dataset.foto)+'" alt="Foto do cadastro"><button class="btn btn-claro" type="button" onclick="fecharFolha()">Fechar foto</button>');
   }
-  function renderEquipe(e){
+  function renderEquipe(e,soFotos){
+    const fotos = window.MontadorEvento?.fotosEtapa(e.id) || {};
+    const pessoas = fotos.pessoas || [];
+    const responsavel = pessoas.find(p=>p.papel==='responsavel' && p.nome===e.responsavel) || {nome:e.responsavel};
     const internos = (e.equipe || []).filter(function(n){ return n !== e.responsavel; }).map(function(n){
-      return '<div class="pessoa"><div class="pessoa-ini">' + esc(n.charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(n) + '</div></div>';
+      const p=pessoas.find(p=>p.papel==='equipe' && p.nome===n) || {nome:n};
+      return '<div class="pessoa">'+fotoCadastroHtml(p)+'<div class="pessoa-nome">' + esc(n) + '</div></div>';
     }).join("");
 
     let free = "";
@@ -923,12 +935,11 @@
       '<section class="secao">' +
         '<div class="secao-titulo"><h2>Sua equipe</h2><small>presença atualizada</small></div>' +
         '<div class="subtitulo">Responsável</div>' +
-        '<div class="pessoas"><div class="pessoa"><div class="pessoa-ini">' + esc(String(e.responsavel || "?").charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(e.responsavel || "-") + '</div></div></div>' +
+        '<div class="pessoas"><div class="pessoa">'+fotoCadastroHtml(responsavel)+'<div class="pessoa-nome">' + esc(e.responsavel || "-") + '</div></div></div>' +
         (internos ? '<div class="subtitulo">Equipe interna</div><div class="pessoas">' + internos + '</div>' : "") +
         free +
-      '</section>' + (e.caminhao ? '<section class="secao evento-caminhoes"><div class="secao-titulo"><h2>Caminhões</h2></div><p>'+esc(String(e.caminhao).replace(/\n/g,', '))+'</p></section>' : '');
-    pintarUberMontador(e);
-    pintarFreteMontador(e);
+      '</section>' + (e.caminhao ? '<section class="secao evento-caminhoes"><div class="secao-titulo"><h2>Caminhões</h2></div><div class="pessoas">'+(fotos.caminhoes?.length ? fotos.caminhoes : String(e.caminhao).split(/,|\n/).map(nome=>({nome:nome.trim()}))).map(c=>'<div class="pessoa">'+fotoCadastroHtml(c,true)+'<div class="pessoa-nome">'+esc(c.nome)+'</div></div>').join('')+'</div></section>' : '');
+    if(!soFotos){pintarUberMontador(e);pintarFreteMontador(e);}
   }
 
   /* Frete da etapa (out/2026): freteiro autônomo que aceitou o frete no App do Freteiro + QR de check-in/check-out. */

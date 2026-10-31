@@ -36,7 +36,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
    assert.equal(await page.locator('#etapaEquipe').isVisible(),true);assert.equal(await page.locator('img[alt="Foto de Carlos Free"]').count(),1);assert.ok(await page.locator('#etapaEquipe').textContent().then(t=>t.includes('Foto não cadastrada')));
    await page.screenshot({path:path.join(os.tmpdir(),`montador-pedido-${width}.png`),fullPage:true});
    await page.getByRole('button',{name:'Ver foto de Carlos Free',exact:true}).click();await page.waitForSelector('.foto-free-ampliada');await page.getByRole('button',{name:'Fechar foto',exact:true}).click();
-   await page.getByRole('button',{name:'Abrir mapa no app',exact:true}).click();await page.waitForFunction(()=>!document.getElementById('mapaRota').disabled);
+   await page.getByRole('link',{name:'Local do evento',exact:true}).click();await page.waitForFunction(()=>!document.getElementById('mapaRota').disabled);
    await page.evaluate(()=>denyGps=true);await page.locator('#mapaRota').click();assert.match(await page.locator('#mapaStatus').textContent(),/Permita a localização/);
    await page.evaluate(()=>denyGps=false);await page.locator('#mapaRota').click();await page.waitForSelector('.mapa-resumo');assert.equal(await page.locator('#mapaResumo strong').textContent(),'12 min');assert.equal(await page.evaluate(()=>pedidoRota.destination),'-23,-46');assert.equal(await page.locator('#folha a[target="_blank"]').count(),0);
    await page.getByRole('button',{name:'Fechar mapa',exact:true}).click();assert.equal(await page.evaluate(()=>gpsEncerrado),1);

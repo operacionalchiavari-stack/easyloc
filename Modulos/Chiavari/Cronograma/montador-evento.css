@@ -16,20 +16,33 @@
 #etapaEtiquetas{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:1;min-width:0}
 .chiavari-equipe-app #etapaEtiquetas .tipo{font-size:10px;padding:5px 8px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .chiavari-equipe-app #etapaEtiquetas .pedido{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%;min-width:0}
-.evento-data{font-size:11px;color:var(--muted);margin:0 0 14px}
-.evento-local{margin-top:15px;padding-top:14px;border-top:1px solid var(--line)}
+.evento-data{font-size:11px;color:var(--muted);margin:8px 0 10px}
+.evento-local{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 .evento-local>small{font-size:12px;font-weight:600;color:var(--muted)}
-.evento-local>p{font-size:14px;line-height:1.6;margin:5px 0 10px}
+.evento-local>p{font-size:13px;line-height:1.45;margin:5px 0 0}
+.evento-endereco{display:flex;gap:7px;align-items:flex-start;color:#786041;font-size:13px;line-height:1.45;padding:7px 0;min-height:44px;overflow-wrap:anywhere;text-decoration:none}
+.evento-endereco:hover span,.evento-endereco:focus-visible span{text-decoration:underline}
+.evento-endereco svg{width:17px;height:17px;flex:none;margin-top:1px}
+.evento-cliente{display:flex;align-items:center;gap:10px;min-width:0}
+.evento-cliente>div:last-child{min-width:0}
+.evento-cliente small{display:block;font-size:10px;color:var(--muted)}
+.cadastro-foto{position:relative;display:grid;place-items:center;flex:none;width:46px;height:46px;padding:0;border:1px solid var(--line);border-radius:50%;overflow:hidden;background:#f0ece4;color:#846d4d;font:600 22px var(--serif);cursor:pointer}
+.cadastro-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cadastro-foto.sem-foto{cursor:default}
+.cadastro-foto-veiculo{width:64px;border-radius:10px}
+.cadastro-foto-veiculo img{object-fit:contain;background:#f8f6f1}
+.cadastro-foto:focus-visible{outline:2px solid #846d4d;outline-offset:3px}
 .evento-orientacao{font-size:12px;color:var(--muted);line-height:1.6;margin-top:14px}
 .evento-caminhoes p{font-size:14px;line-height:1.5;color:var(--muted);margin:0}
 .evento-checkin-status,.foto-equipe-instrucao{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 14px}
 .chiavari-equipe-app .foto-equipe-instrucao{font-size:12px;margin:0}
 .chiavari-equipe-app #telaEtapa.evento-linear{padding:12px 16px 0}
 .evento-linear>div,.evento-linear>details{scroll-margin-top:16px}
-.chiavari-equipe-app .evento-linear .cabeca{padding:16px 18px;background:transparent;border:0;box-shadow:none;border-radius:0}
-.chiavari-equipe-app .evento-linear .cabeca h1{font-size:28px;margin:10px 0}
-.evento-linear .pedido-agendamento{padding-top:10px;gap:8px}
-.chiavari-equipe-app .evento-linear .pedido-agendamento strong{font-size:14px}
+.chiavari-equipe-app #telaEtapa .cabeca{padding:15px 16px;background:#fff;border:1px solid var(--line);box-shadow:var(--sombra);border-radius:20px}
+.chiavari-equipe-app #telaEtapa .cabeca h1{font-size:25px;margin:3px 0;line-height:1.15}
+#telaEtapa .pedido-agendamento{padding-top:10px;gap:8px}
+.chiavari-equipe-app #telaEtapa .pedido-agendamento small{font-size:11px}
+.chiavari-equipe-app #telaEtapa .pedido-agendamento strong{font-size:13px;margin-top:3px}
 .evento-linear .pedido-atalhos{display:none}
 .evento-reposicao{margin:-4px 0 20px;border:1px solid var(--line);border-radius:16px;background:#fff}
 .evento-reposicao>summary{padding:14px 16px;cursor:pointer;font-size:12px;font-weight:600;min-height:50px;list-style-position:inside;color:#875b3d}

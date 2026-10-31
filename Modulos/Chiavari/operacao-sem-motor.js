@@ -972,6 +972,15 @@
     return r;
   };
   L.MONT_contagemSalvar = async function (token, idEtapa, quantidades) { return rpc("mont_contagem_salvar", { p_token: token, p_etapa: idEtapa, p_quantidades: quantidades }); };
+  L.MONT_fotosEtapa = async function (token, idEtapa) {
+    const r = await rpc("mont_fotos_etapa", { p_token: token, p_etapa: idEtapa });
+    const c = await sb();
+    for (const p of r.pessoas || []) {
+      if (p.avatar) p.foto = c.storage.from("avatares").getPublicUrl(p.avatar).data.publicUrl;
+      delete p.avatar;
+    }
+    return r;
+  };
   L.MONT_entregaItens = function (token, idEtapa) { return rpc("mont_entrega_itens", { p_token: token, p_etapa: idEtapa }); };
   L.MONT_entregaSalvar = async function (token, idEtapa, itens) {
     var dados = {};

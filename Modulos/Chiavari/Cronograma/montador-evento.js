@@ -3,6 +3,15 @@
  "use strict";
  let atual=null;
  let inicioPendente=null;
+ const fotos=new Map();
+ async function carregarFotos(e){
+  const token=estado.token;
+  try{
+   const r=await chamar('MONT_fotosEtapa',token,e.id);
+   if(estado.etapaAberta!==e.id||estado.token!==token)return;
+   fotos.set(token+':'+e.id,r||{});renderCabeca(e);renderEquipe(e,true);
+  }catch(_){/* As iniciais permanecem disponíveis quando não há conexão. */}
+ }
  const el=id=>document.getElementById(id);
  function etapaAtual(){return typeof estado!=="undefined"?acharEtapa(estado.etapaAberta):null;}
  function linear(){return etapaAtual()?.operacao==="montagem";}
@@ -37,6 +46,7 @@
   return true;
  }
  function montar(e){
+  carregarFotos(e);
   sincronizarInicio(e);
   if(e.operacao!=='montagem'){
    sair();el('eventoDetalhes')?.remove();el('etapaConferencia')?.remove();return;
@@ -173,5 +183,5 @@
  function sair(){
   el('telaEtapa').classList.remove('evento-linear','evento-pendente');rotulos(false);
  }
- window.MontadorEvento={montar,navegar,sair,preparar,linear,sincronizarInicio,sincronizar(){if(linear()){acesso();resumo();}}};
+ window.MontadorEvento={montar,navegar,sair,preparar,linear,sincronizarInicio,fotosEtapa(id){return fotos.get(estado.token+':'+id)||{};},sincronizar(){if(linear()){acesso();resumo();}}};
 })();
