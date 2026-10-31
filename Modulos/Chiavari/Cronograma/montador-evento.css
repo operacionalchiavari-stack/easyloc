@@ -1,4 +1,29 @@
 /* O cronograma permanece igual. Dentro da montagem há um roteiro único, na ordem de execução. */
+.chiavari-equipe-app[data-app-equipe="montagem"] .marca{min-height:185px;padding:calc(70px + env(safe-area-inset-top)) 24px 38px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .marca>.equipe-logo{top:calc(12px + env(safe-area-inset-top));height:44px;width:144px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .marca h1{font-size:34px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .marca p{font-size:12px;line-height:1.45;margin-top:7px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .topo{min-height:160px;grid-template-rows:44px 1fr;gap:5px;padding:calc(12px + env(safe-area-inset-top)) 20px 32px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .topo .equipe-logo{height:44px;width:144px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .topo-texto{padding-top:10px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .topo-texto strong{font-size:32px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .equipe-descricao{display:none}
+.chiavari-equipe-app[data-app-equipe="montagem"] .agenda-cabecalho{padding:14px 17px;margin:-18px 16px 18px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .agenda-cabecalho h1{font-size:25px}
+.chiavari-equipe-app[data-app-equipe="montagem"] .equipe-intro-icone{flex-basis:42px;height:46px}
+.evento-navegacao{display:flex;align-items:center;gap:10px;margin:0 0 8px;min-height:44px}
+.chiavari-equipe-app .evento-navegacao .voltar{flex:none;display:inline-flex;align-items:center;gap:4px;margin:0;padding:6px 0;font-size:13px;min-height:44px}
+#etapaEtiquetas{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:1;min-width:0}
+.chiavari-equipe-app #etapaEtiquetas .tipo{font-size:10px;padding:5px 8px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.chiavari-equipe-app #etapaEtiquetas .pedido{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%;min-width:0}
+.evento-data{font-size:11px;color:var(--muted);margin:0 0 14px}
+.evento-local{margin-top:15px;padding-top:14px;border-top:1px solid var(--line)}
+.evento-local>small{font-size:12px;font-weight:600;color:var(--muted)}
+.evento-local>p{font-size:14px;line-height:1.6;margin:5px 0 10px}
+.evento-orientacao{font-size:12px;color:var(--muted);line-height:1.6;margin-top:14px}
+.evento-caminhoes p{font-size:14px;line-height:1.5;color:var(--muted);margin:0}
+.evento-checkin-status,.foto-equipe-instrucao{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 14px}
+.chiavari-equipe-app .foto-equipe-instrucao{font-size:12px;margin:0}
 .chiavari-equipe-app #telaEtapa.evento-linear{padding:12px 16px 0}
 .evento-linear>div,.evento-linear>details{scroll-margin-top:16px}
 .chiavari-equipe-app .evento-linear .cabeca{padding:16px 18px;background:transparent;border:0;box-shadow:none;border-radius:0}
@@ -6,15 +31,10 @@
 .evento-linear .pedido-agendamento{padding-top:10px;gap:8px}
 .chiavari-equipe-app .evento-linear .pedido-agendamento strong{font-size:14px}
 .evento-linear .pedido-atalhos{display:none}
-.evento-linear .evento-detalhes{margin:0 0 20px;border:1px solid var(--line);border-radius:16px;background:#fff}
-.evento-detalhes>summary{cursor:pointer;min-height:50px;padding:14px 16px;font-size:13px;font-weight:600;list-style-position:inside}
-.evento-detalhes>summary span{display:block;font-size:11px;color:var(--muted);font-weight:400;margin:4px 0 0 17px}
-.evento-detalhes[open]>summary{border-bottom:1px solid var(--line)}
 .evento-reposicao{margin:-4px 0 20px;border:1px solid var(--line);border-radius:16px;background:#fff}
 .evento-reposicao>summary{padding:14px 16px;cursor:pointer;font-size:12px;font-weight:600;min-height:50px;list-style-position:inside;color:#875b3d}
 .evento-reposicao>summary span{display:block;margin:5px 0 0 15px;font-size:11px;color:var(--muted);font-weight:400}
 .chiavari-equipe-app .evento-reposicao .secao{border:0;box-shadow:none;margin:0}
-.chiavari-equipe-app .evento-detalhes .secao{border:0;box-shadow:none;margin:0;border-radius:0}
 .chiavari-equipe-app .evento-linear #etapaEquipe .secao-titulo h2,.chiavari-equipe-app .evento-linear #etapaUber .secao-titulo h2,.chiavari-equipe-app .evento-linear #etapaFrete .secao-titulo h2{font-size:27px}
 .evento-linear #etapaEquipe .secao-titulo small{display:none}
 .evento-linear .pessoa-free{grid-template-columns:52px minmax(0,1fr);padding:12px;border-radius:16px;background:#f8f6f1;border:1px solid var(--line)}
@@ -29,8 +49,6 @@
 .evento-linear #apontamentoEtapa .apontamento-acoes{grid-column:2;align-self:center}
 .evento-linear #apontamentoEtapa .apontamento-acoes>.btn{display:none}
 .evento-linear .encerrar-evento{font-size:12px;border-color:#dad6ca;border-radius:24px}
-.evento-linear .iniciar-evento{padding:16px 18px;background:#edece4;border:1px solid var(--line)}
-.evento-linear .iniciar-evento p{font-size:13px}
 .evento-linear>#regProgresso{padding:0 4px;margin:0 0 22px}
 .evento-linear fieldset{margin:0;padding:0;border:0;min-width:0}
 .evento-linear fieldset:disabled .btn,.evento-linear fieldset:disabled .foto{opacity:.55}
@@ -43,11 +61,6 @@
 .evento-linear .passo-status{grid-column:2;font-size:10px;padding:4px 9px;margin-top:0;justify-self:start}
 .evento-linear .passo-corpo{padding-top:18px}
 .evento-linear .passo-corpo fieldset{display:flex;flex-direction:column;gap:12px}
-.evento-foto-config{padding:0 0 8px;border-bottom:1px solid var(--line);margin-bottom:2px}
-.evento-foto-config summary{font-size:13px;font-weight:600;cursor:pointer;min-height:44px;line-height:1.6}
-.evento-foto-config summary small{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-left:16px}
-.evento-foto-config .opcoes{margin:10px 0 16px}
-.evento-foto-config .rotulo{font-size:12px}
 .chiavari-equipe-app .evento-linear .chegada-info{margin:0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#f8f6f1}
 .chiavari-equipe-app .evento-linear .chegada-info b{font-size:13px;font-weight:600}
 .chiavari-equipe-app .evento-linear .chegada-info span{font-size:12px;line-height:1.6;color:var(--muted)}
@@ -65,7 +78,8 @@
 .entrega-item-topo{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;align-items:center;margin-bottom:14px}
 .entrega-foto{display:grid;place-items:center;width:76px;height:82px;border-radius:14px;overflow:hidden;background:#f6f4ef;border:1px solid var(--line);padding:4px;color:var(--muted);font-size:10px}
 .entrega-foto img{display:block;width:100%;height:100%;object-fit:contain;border-radius:10px}
-.chiavari-equipe-app .entrega-item h3{font:600 19px/1.2 var(--serif);margin:0 0 5px}
+.chiavari-equipe-app .entrega-item h3{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis;max-height:42px;font:600 15px/1.4 var(--sans);margin:0 0 5px}
+.chiavari-equipe-app .contagem-descricao{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis;max-height:40px;font:600 14px/1.4 var(--sans)}
 .entrega-item-topo p{font-size:11px;color:var(--muted);margin:0 0 4px;line-height:1.5}
 .entrega-item-topo .entrega-previsto{font-size:12px;color:var(--text)}
 .entrega-item .entrega-tudo{border:1px solid #d8e3d6;border-radius:12px;background:#f3f7f0;color:#376142;min-height:46px;font:600 12px var(--sans);padding:10px}

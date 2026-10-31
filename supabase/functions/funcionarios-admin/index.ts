@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.93.3';
 import { validateEmployee } from './validation.mjs';
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
-import { protegerRh } from "../_shared/cofre.ts";
+import { protegerRh, indice } from "../_shared/cofre.ts";
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const url = Deno.env.get('SUPABASE_URL')!;
@@ -15,6 +15,13 @@ Deno.serve(async (req) => {
   try {
     if (Number(req.headers.get('content-length') || 0) > 2_000_000) return response({ error: 'Foto muito grande' }, 413);
     const body = await req.json();
+    if (body.action === 'montador-login') {
+      const cpf = String(body.cpf || '').replace(/\D/g, '');
+      const pin = String(body.pin || '');
+      if (cpf.length !== 11 || !/^\d{4}$/.test(pin)) return response({ error: 'CPF ou PIN incorretos.' }, 401);
+      const data = checked(await admin.rpc('mont_login_cpf_cofre', { p_cpf_hash: await indice(cpf, 'cpf'), p_cpf_legado: cpf, p_pin: pin }));
+      return response(data, data?.error ? 401 : 200);
+    }
     // O próprio Auth valida a senha e aplica seus limites de autenticação.
     if (body.action === 'login') {
       const login = String(body.login || '').trim().toLowerCase();

@@ -2,6 +2,7 @@
 (function(){
  "use strict";
  let atual=null;
+ let inicioPendente=null;
  const el=id=>document.getElementById(id);
  function etapaAtual(){return typeof estado!=="undefined"?acharEtapa(estado.etapaAberta):null;}
  function linear(){return etapaAtual()?.operacao==="montagem";}
@@ -10,7 +11,7 @@
  function preparar(){
   const tela=el('telaEtapa');mover(['etapaInfo','etapaPedido','etapaTrocas'],tela);el('eventoDetalhes')?.remove();el('etapaConferencia')?.remove();
   if(el('regProgresso')&&!el('etapaRegistros').contains(el('regProgresso')))el('regProgresso').remove();
-  mover(['btnVoltar','etapaCabeca','apontamentoEtapa','etapaTituloPagina','etapaFotoEquipe','etapaEquipe','etapaUber','etapaFrete','etapaInfo','etapaTrocas','etapaSacolas','etapaPedido','etapaRegistros'],tela);
+  mover(['etapaNavegacao','etapaCabeca','apontamentoEtapa','etapaTituloPagina','etapaFotoEquipe','etapaEquipe','etapaUber','etapaFrete','etapaInfo','etapaTrocas','etapaSacolas','etapaPedido','etapaRegistros'],tela);
   atual=null;sair();
  }
  function rotulos(sim){
@@ -22,7 +23,7 @@
   }
  }
  function acesso(){
-  document.querySelectorAll('#telaEtapa fieldset[data-evento-dados]').forEach(f=>f.disabled=!ativo());
+  document.querySelectorAll('#telaEtapa fieldset[data-evento-dados]').forEach(f=>f.disabled=!f.closest('#etapaFotoEquipe')&&!ativo());
   el('telaEtapa').classList.toggle('evento-pendente',!ativo());
  }
  function navegar(painel){
@@ -36,19 +37,14 @@
   return true;
  }
  function montar(e){
+  sincronizarInicio(e);
   if(e.operacao!=='montagem'){
    sair();el('eventoDetalhes')?.remove();el('etapaConferencia')?.remove();return;
   }
   const tela=el('telaEtapa');tela.classList.add('evento-linear');rotulos(true);
-  let detalhes=el('eventoDetalhes');
-  if(!detalhes){
-   detalhes=document.createElement('details');detalhes.id='eventoDetalhes';detalhes.className='evento-detalhes';
-   detalhes.innerHTML='<summary>Local e orientações <span>Ver detalhes do evento</span></summary>';
-  }
-  mover(['etapaInfo','etapaPedido'],detalhes);
   let conferencia=el('etapaConferencia');
   if(!conferencia){conferencia=document.createElement('div');conferencia.id='etapaConferencia';}
-  tela.append(detalhes,el('etapaEquipe'));
+  tela.append(el('etapaEquipe'));
   mover(['etapaUber','etapaFrete','apontamentoEtapa'],tela);
   const progresso=el('regProgresso');if(progresso)tela.append(progresso);
   tela.append(el('etapaFotoEquipe'),conferencia);
@@ -57,7 +53,6 @@
    const campo=document.createElement('fieldset');campo.dataset.eventoDados='';
    while(corpo.firstChild)campo.append(corpo.firstChild);corpo.append(campo);
   });
-  prepararFoto(e);
   atual={id:e.id,lista:[],itens:{},carregado:false,enviado:false,carregandoFoto:0};
   conferencia.innerHTML=passoHtml('conferencia',2,'Conferência dos itens','Veja a foto, confira a entrega e sinalize danos.',
    '<div id="entregaItens" aria-live="polite"><p class="entrega-carregando">Carregando os itens do pedido…</p></div>'+
@@ -68,21 +63,15 @@
   el('entregaSalvar').addEventListener('click',salvar);
   acesso();carregar(e.id);
  }
- function prepararFoto(e){
-  const corpo=el('passo_equipe')?.querySelector('fieldset');if(!corpo)return;
-  const pessoas=new Set([e.responsavel,...(e.equipe||[]),...(e.free?.pessoas||[]).map(p=>p.nome)].map(n=>String(n||'').trim()).filter(Boolean));
-  const quantidade=Math.max(1,pessoas.size);
-  reg.empresa='Equipe própria';reg.qtd=String(quantidade);
-  const config=document.createElement('details');config.className='evento-foto-config';
-  config.innerHTML='<summary>Dados da equipe <small>Conferir ou ajustar</small></summary>';
-  const empresa=el('regEmpresas'),qtd=el('regQtd'),outro=el('regQtdOutro');
-  [empresa.previousElementSibling,empresa,qtd.previousElementSibling,qtd,outro].forEach(n=>config.append(n));
-  corpo.prepend(config);
-  const qtdBtn=[...qtd.querySelectorAll('button')].find(b=>b.textContent===String(quantidade));
-  if(qtdBtn)qtdBtn.classList.add('ativa');else{outro.value=quantidade;outro.style.display='block';reg.qtd='';}
-  const marcarEmpresa=()=>{const b=[...empresa.querySelectorAll('button')].find(b=>b.dataset.valor===reg.empresa);if(b)b.classList.add('ativa');};
-  new MutationObserver(marcarEmpresa).observe(empresa,{childList:true});marcarEmpresa();
-  const obs=el('regObsEquipe');obs.placeholder='Alguma observação sobre a equipe? (opcional)';
+ async function sincronizarInicio(e){
+  if(!e?.operacao||estado.apontamento||inicioPendente===e.id)return;
+  inicioPendente=e.id;
+  try{
+   const p=await chamar('MONT_sincronizarCheckin',estado.token,e.id);
+   if(estado.etapaAberta!==e.id||!p?.id||p.idEtapa!==e.id||p.status!=='ATIVO')return;
+   estado.apontamento=p;estado.dados.apontamento=p;renderApontamento();
+  }catch(_){/* A foto continua disponível quando ainda não houve check-in. */}
+  finally{if(inicioPendente===e.id)inicioPendente=null;}
  }
  async function carregar(id){
   try{
@@ -106,7 +95,7 @@
    const linha=document.createElement('article');linha.className='entrega-item';linha.dataset.chave=it.chave;
    const foto=imagem(it.foto);
    linha.innerHTML='<div class="entrega-item-topo">'+(foto?'<button type="button" class="entrega-foto" aria-label="Ampliar foto de '+esc(it.nome)+'"><img src="'+esc(foto)+'" alt="'+esc(it.nome)+'" loading="lazy"></button>':'<div class="entrega-foto sem-foto">Sem foto</div>')+
-    '<div><h3>'+esc(it.nome)+'</h3>'+(it.kit_nome?'<p>Parte do kit: '+esc(it.kit_nome)+'</p>':'')+'<p class="entrega-previsto">Previsto: <b>'+esc(it.esperado)+'</b></p></div></div>'+
+    '<div><h3 title="'+esc(it.nome)+'">'+esc(it.nome)+'</h3><p class="entrega-previsto">Previsto: <b>'+esc(it.esperado)+'</b></p></div></div>'+
     '<fieldset data-evento-dados><button type="button" class="entrega-tudo" aria-pressed="false">✓ Tudo entregue, sem danos</button>'+
     '<div class="entrega-quantidades"><label for="entregue-'+i+'">Entregues<input id="entregue-'+i+'" class="input" data-entregue type="number" min="0" max="'+esc(it.esperado)+'" step="1" inputmode="numeric" placeholder="Qtd."></label>'+
     '<label for="dano-'+i+'">Danificados<input id="dano-'+i+'" class="input" data-dano type="number" min="0" step="1" inputmode="numeric" value="0"></label></div>'+
@@ -184,5 +173,5 @@
  function sair(){
   el('telaEtapa').classList.remove('evento-linear','evento-pendente');rotulos(false);
  }
- window.MontadorEvento={montar,navegar,sair,preparar,linear,sincronizar(){if(linear()){acesso();resumo();}}};
+ window.MontadorEvento={montar,navegar,sair,preparar,linear,sincronizarInicio,sincronizar(){if(linear()){acesso();resumo();}}};
 })();

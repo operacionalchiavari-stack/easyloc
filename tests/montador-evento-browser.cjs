@@ -14,17 +14,18 @@ async function main(){
    const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'});const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.route('https://**/*',r=>r.fulfill({body:''}));await page.route('**/gas-cliente.js*',r=>r.fulfill({body:''}));await page.route('**/operacao-sem-motor.js*',r=>r.fulfill({body:''}));
    await page.addInitScript(()=>{
-    localStorage.setItem('easyloc:limpeza-dados','20261026-zerado');localStorage.setItem('montadorToken','fixture');window.chamadas=[];window.falhaItens=!localStorage.getItem('fixture:falhaTestada');window.falhaUber=!localStorage.getItem('fixture:uberTestado');
+    localStorage.setItem('easyloc:limpeza-dados','20261026-zerado');if(!sessionStorage.getItem('fixture:inicializado')){localStorage.removeItem('montadorToken');sessionStorage.setItem('fixture:inicializado','1');}window.chamadas=[];window.falhaItens=!localStorage.getItem('fixture:falhaTestada');window.falhaUber=!localStorage.getItem('fixture:uberTestado');
     Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(ok){ok({coords:{latitude:-23,longitude:-46,accuracy:10}});}}});
     const data=new Date().toLocaleDateString('en-CA');
-    const etapas=[{id:'montagem',pedido:'123',cliente:'Evento Jardim',local:'Espaço Jardim',etapa:'montagem',operacao:'montagem',dataISO:data,horario:'08:00',responsavel:'Ana Silva',equipe:['Ana Silva','Bruno'],free:{quantidade:1,pessoas:[{nome:'Carlos Free',miniatura:location.origin+'/fixture.png'}]},trocas:[],info:{},outrasEtapas:[]},{id:'volta',pedido:'124',cliente:'Outro evento',etapa:'desmontagem',operacao:'desmontagem',dataISO:data,horario:'18:00',responsavel:'Ana Silva',equipe:[],trocas:[],sacolasMontagem:[],info:{},outrasEtapas:[]}];
-    const lista=[{chave:'a',nome:'Cadeira natural',esperado:3,foto:location.origin+'/fixture.png'},{chave:'kit/b',nome:'Mesa do kit',kit_nome:'Composição Jardim',esperado:2,foto:location.origin+'/fixture.png'}];
+    const etapas=[{id:'montagem',pedido:'123',cliente:'Evento Jardim',local:'Espaço Jardim',caminhao:'Caminhão 01',dataEvento:'01/11/2026',confirmadoDecorador:true,etapa:'montagem',operacao:'montagem',dataISO:data,horario:'08:00',responsavel:'Ana Silva',equipe:['Ana Silva','Bruno'],free:{quantidade:1,pessoas:[{nome:'Carlos Free',miniatura:location.origin+'/fixture.png'}]},trocas:[],info:{},outrasEtapas:[{etapa:'Carregamento',dataISO:data,horario:'06:00'}]},{id:'volta',pedido:'124',cliente:'Outro evento',etapa:'desmontagem',operacao:'desmontagem',dataISO:data,horario:'18:00',responsavel:'Ana Silva',equipe:[],trocas:[],sacolasMontagem:[],info:{},outrasEtapas:[]}];
+    const lista=[{chave:'a',nome:'Cadeira natural de madeira com assento estofado em linho bege e acabamento especial para composição de ambientes (L) 0.60 m (A) 0.90 m '.repeat(2),esperado:3,foto:location.origin+'/fixture.png'},{chave:'kit/b',nome:'Mesa do kit',kit_nome:'Composição Jardim',esperado:2,foto:location.origin+'/fixture.png'}];
     function registro(tipo){return JSON.parse(localStorage.getItem('fixture:'+tipo)||'null');}
     function guardar(tipo,d){localStorage.setItem('fixture:'+tipo,JSON.stringify(d));return d;}
     function result(fn,args){
      window.chamadas.push({fn,args});
+     if(fn==='MONT_login'){if(args[1]!=='1234')throw Error('CPF ou PIN incorretos.');return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};}
      if(fn==='MONT_appCarregar')return {nome:'Ana Silva',perfil:'RESPONSAVEL',etapas,apontamento:registro('apontamento')};
-     if(fn==='MONT_iniciarApontamento')return guardar('apontamento',{id:'apontamento',idEtapa:args[1],pedido:'123',inicio:new Date().toISOString(),status:'ATIVO'});
+     if(fn==='MONT_sincronizarCheckin')return registro('apontamento');
      if(fn==='MONT_finalizarApontamento'){localStorage.removeItem('fixture:apontamento');return {};}
      if(fn==='MONT_uberQr'){
       if(window.falhaUber){window.falhaUber=false;localStorage.setItem('fixture:uberTestado','1');throw Error('Conexão interrompida');}
@@ -38,7 +39,10 @@ async function main(){
      }
      if(fn==='MONT_entregaSalvar')return guardar('conferencia',{itens:lista,conferencia:args[2],enviado:true,autor:'Ana Silva'});
      if(fn==='buscarEmpresasTerceirizadas')return [];
-     if(fn==='salvarEquipeTerceirizada')return guardar('equipe',{enviado:true,chegada:{localStatus:'NO_LOCAL'}});
+     if(fn==='MONT_fotoEquipe'){
+      const apontamento=guardar('apontamento',{id:'apontamento',idEtapa:args[0].idCronograma,pedido:'123',inicio:new Date().toISOString(),status:'ATIVO'});
+      return guardar('equipe',{enviado:true,chegada:{localStatus:'NO_LOCAL'},apontamento});
+     }
      if(fn==='verificarEquipeTerceirizadaJaEnviada')return registro('equipe')||{};
      if(fn==='salvarSacolasProtecao')return guardar('sacolas',{enviado:true,sacolas:args[0].sacolas.map(s=>({codigo:s.codigo,fotos:['https://fixture.test/sacola.jpg']}))});
      if(fn==='verificarSacolasJaEnviadas')return registro('sacolas')||{};
@@ -50,19 +54,36 @@ async function main(){
     function runner(ok,no){return new Proxy({},{get:(_,fn)=>fn==='withSuccessHandler'?f=>runner(f,no):fn==='withFailureHandler'?f=>runner(ok,f):(...args)=>Promise.resolve().then(()=>result(fn,args)).then(r=>ok&&ok(r)).catch(e=>no&&no(e))});}
     window.google={script:{run:runner()}};
    });
-   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html`);await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();
+   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html`);
+   await page.locator('#telaLogin.ativa').waitFor();assert.equal(await page.locator('#loginNome').count(),0);
+   assert.ok(await page.locator('#telaLogin .marca').evaluate(e=>e.getBoundingClientRect().height<240));
+   await page.locator('#loginCpf').fill('12345678901');assert.equal(await page.locator('#loginCpf').inputValue(),'123.456.789-01');
+   await page.locator('#loginSenha').fill('0000');await page.locator('#btnEntrar').click();await page.getByText('CPF ou PIN incorretos.',{exact:true}).waitFor();
+   await page.locator('#btnModo').click();assert.equal(await page.locator('#loginCpf').isVisible(),false);assert.equal(await page.locator('#loginCpf').getAttribute('required'),null);await page.locator('#btnModo').click();
+   await page.locator('#loginSenha').fill('1234');await page.screenshot({path:path.join(os.tmpdir(),`montador-cpf-login-${width}.png`)});await page.locator('#btnEntrar').click();await page.locator('#telaInicio.ativa').waitFor();
+   assert.ok(await page.locator('#telaInicio .topo').evaluate(e=>e.getBoundingClientRect().height<190));
+   await page.screenshot({path:path.join(os.tmpdir(),`montador-cpf-inicio-${width}.png`)});
+   assert.equal(await page.evaluate(()=>chamadas.some(c=>c.fn==='MONT_listarResponsaveis')),false);
+   assert.equal(await page.evaluate(()=>chamadas.find(c=>c.fn==='MONT_login').args[0]),'12345678901');
+   await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();
    await page.getByRole('button',{name:'Consultar Uber novamente',exact:true}).click();
    await page.locator('#etapaUber').filter({hasText:'Pedro Motorista'}).waitFor();
    const ordem=await page.evaluate(()=>['etapaEquipe','etapaUber','etapaFotoEquipe','etapaConferencia','passo_sacolas','passo_lista'].map(id=>document.getElementById(id).getBoundingClientRect().top));
    assert.ok(ordem.every((n,i)=>!i||n>ordem[i-1]),'ordem do roteiro');assert.equal(await page.locator('#passo_posicionamento').count(),0);
-   assert.equal(await page.locator('#regFotoEquipe input').isDisabled(),true);
+   assert.equal(await page.getByText('Outras etapas do pedido',{exact:true}).count(),0);assert.equal(await page.getByText('Decorador confirmou',{exact:true}).count(),0);
+   assert.ok(await page.evaluate(()=>{const b=document.getElementById('btnVoltar').getBoundingClientRect(),c=document.getElementById('etapaEtiquetas').getBoundingClientRect();return Math.abs(b.top+b.height/2-c.top-c.height/2)<3;}));
+   assert.equal(await page.locator('#btnVoltar').textContent(),'Voltar');assert.ok(await page.evaluate(()=>document.querySelector('.evento-local').getBoundingClientRect().top>document.querySelector('.pedido-agendamento').getBoundingClientRect().bottom));
+   assert.ok(await page.locator('#etapaEquipe .evento-caminhoes').isVisible());assert.match(await page.locator('#etapaEquipe').textContent(),/Caminhão 01/);
+   assert.equal(await page.locator('#regFotoEquipe input').isDisabled(),false);
+   assert.equal(await page.getByRole('button',{name:'Iniciar evento'}).count(),0);
+   assert.equal(await page.locator('#regEmpresas,#regQtd,#eventoDetalhes').count(),0);
    await page.getByRole('button',{name:'QR code da equipe',exact:true}).click();await page.getByText('123456',{exact:true}).waitFor();await page.locator('#folha').getByRole('button',{name:'Fechar',exact:true}).click();
    await page.getByRole('button',{name:'QR para o motorista',exact:true}).click();await page.getByText('654321',{exact:true}).waitFor();await page.locator('#folha').getByRole('button',{name:'Fechar',exact:true}).click();
    await page.getByRole('button',{name:'Tentar novamente',exact:true}).click();await page.locator('.entrega-item').first().waitFor();
+   assert.equal(await page.getByText(/Parte do kit:/).count(),0);assert.ok(await page.locator('.entrega-item h3').first().evaluate(e=>e.scrollHeight>e.clientHeight&&getComputedStyle(e).webkitLineClamp==='2'));
    await page.screenshot({path:path.join(os.tmpdir(),`montador-fluxo-inicial-${width}.png`),fullPage:true});
-   await page.getByRole('button',{name:'▶ Iniciar evento',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#regFotoEquipe input').disabled&&!document.querySelector('#regFotoEquipe input').closest('fieldset').disabled);
-   await page.locator('#regFotoEquipe input').setInputFiles({name:'equipe.png',mimeType:'image/png',buffer:png});await page.waitForSelector('#regFotoEquipe.tem');await page.getByRole('button',{name:'Enviar equipe',exact:true}).click();await page.waitForSelector('#passo_equipe.concluido');
-   assert.equal(await page.evaluate(()=>chamadas.find(c=>c.fn==='salvarEquipeTerceirizada').args[0].quantidade),'3');
+   await page.locator('#regFotoEquipe input').setInputFiles({name:'equipe.png',mimeType:'image/png',buffer:png});await page.waitForSelector('#regFotoEquipe.tem');await page.getByRole('button',{name:'Enviar foto da equipe',exact:true}).click();await page.waitForSelector('#passo_equipe.concluido');
+   assert.equal(await page.evaluate(()=>('quantidade' in chamadas.find(c=>c.fn==='MONT_fotoEquipe').args[0])),false);
    assert.equal(await page.locator('#regProgressoPct').textContent(),'25%');
    await page.getByRole('button',{name:'Salvar conferência',exact:true}).click();assert.equal(await page.evaluate(()=>chamadas.some(c=>c.fn==='MONT_entregaSalvar')),false);
    const linhas=page.locator('.entrega-item');await linhas.nth(0).getByRole('button',{name:'Tudo entregue, sem danos'}).click();

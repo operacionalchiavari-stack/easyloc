@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261031-entrega"></script>
+  <script src="../operacao-sem-motor.js?v=20261031-cpf-checkin"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -323,7 +323,7 @@
 </style>
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261031-catalogo">
-  <link rel="stylesheet" href="montador-evento.css?v=20261031-fluxo">
+  <link rel="stylesheet" href="montador-evento.css?v=20261031-cpf-checkin">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
 
@@ -342,9 +342,7 @@
 
     <form class="cartao" onsubmit="entrar(event)">
       <div class="erro" id="erroLogin"></div>
-      <label class="campo" id="campoNome"><span>Seu nome</span>
-        <select id="loginNome"><option value="">Carregando nomes…</option></select>
-      </label>
+      <label class="campo" id="campoCpf"><span>Seu CPF</span><input id="loginCpf" type="text" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="000.000.000-00" required></label>
       <label class="campo" id="campoSenha"><span id="rotuloSenha">Seu PIN</span><input id="loginSenha" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN do cadastro de funcionários" required></label>
       <p class="aviso-supervisor" id="avisoSupervisor" style="display:none;margin:0 0 12px;font-size:13.5px;color:var(--muted)">Entre no Acervo neste aparelho com o seu usuário (com a permissão de Supervisor de Montagem) e toque em Entrar.</p>
       <button class="btn" id="btnEntrar" type="submit">Entrar</button>
@@ -374,7 +372,7 @@
 
   <!-- ETAPA -->
   <section class="tela" id="telaEtapa">
-    <button class="voltar" type="button" onclick="voltarInicio()" id="btnVoltar"></button>
+    <div id="etapaNavegacao" class="evento-navegacao"><button class="voltar" type="button" onclick="voltarInicio()" id="btnVoltar"></button><div id="etapaEtiquetas"></div></div>
     <div id="etapaCabeca"></div>
     <div id="apontamentoEtapa"></div>
     <div id="etapaTituloPagina" class="pagina-tarefa-titulo"></div>
@@ -387,7 +385,7 @@
     <div id="etapaRegistros"></div>
   </section>
 
-  <section class="tela" id="telaSemEvento"><h1 id="semEventoTitulo">Foto da equipe</h1><div class="secao sem-evento"><h2>Nenhum evento iniciado</h2><p>Abra uma etapa no seu cronograma e toque em <strong>Iniciar evento</strong>. A foto e as avarias serão vinculadas a esse evento.</p><button class="btn" type="button" onclick="irAcesso('agenda')">Abrir meu cronograma</button></div></section>
+  <section class="tela" id="telaSemEvento"><h1 id="semEventoTitulo">Foto da equipe</h1><div class="secao sem-evento"><h2>Selecione um evento</h2><p>Abra uma etapa no seu cronograma. O check-in ou a foto da equipe registra o início do atendimento.</p><button class="btn" type="button" onclick="irAcesso('agenda')">Abrir meu cronograma</button></div></section>
   <nav class="app-navegacao" id="appNavegacao" aria-label="Navegação principal" hidden>
     <button type="button" data-acesso="agenda" onclick="irAcesso('agenda')"><span aria-hidden="true">▦</span>Cronograma</button>
     <button type="button" data-acesso="equipe" onclick="irAcesso('equipe')"><span aria-hidden="true">◎</span>Foto da equipe</button>
@@ -400,7 +398,7 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="montador-evento.js?v=20261031-fluxo"></script>
+<script src="montador-evento.js?v=20261031-cpf-checkin"></script>
 <script>
   /* =========================================================
      ESTADO E APOIO
@@ -440,7 +438,11 @@
 
   document.getElementById("btnAtualizar").innerHTML = I.atualizar;
   document.getElementById("btnSair").innerHTML = I.sair;
-  document.getElementById("btnVoltar").innerHTML = I.voltar + "Minhas etapas";
+  document.getElementById("btnVoltar").innerHTML = I.voltar + "Voltar";
+  document.getElementById("loginCpf").addEventListener("input",function(){
+    const n=this.value.replace(/\D/g,'').slice(0,11);
+    this.value=n.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/,'$1.$2.$3-$4');
+  });
 
   function lerToken(){ try{ return localStorage.getItem(CHAVE_TOKEN) || ""; }catch(e){ return ""; } }
   function salvarToken(t){
@@ -565,19 +567,10 @@
   /* =========================================================
      LOGIN
   ========================================================= */
-  function carregarNomes(){
-    chamar("MONT_listarResponsaveis")
-      .then(function(nomes){
-        const sel = document.getElementById("loginNome");
-        sel.innerHTML = '<option value="">Escolha seu nome</option>' + nomes.map(function(n){ return '<option>' + esc(n) + '</option>'; }).join("");
-        try{ const ultimo = localStorage.getItem("montadorUltimoNome"); if(ultimo){ sel.value = ultimo; } }catch(e){}
-      })
-      .catch(function(){ document.getElementById("loginNome").innerHTML = '<option value="">Não foi possível carregar os nomes</option>'; });
-  }
-
   function alternarSupervisor(){
     estado.supervisor = !estado.supervisor;
-    document.getElementById("campoNome").style.display = estado.supervisor ? "none" : "";
+    document.getElementById("campoCpf").style.display = estado.supervisor ? "none" : "";
+    document.getElementById("loginCpf").required = !estado.supervisor;
     document.getElementById("campoSenha").style.display = estado.supervisor ? "none" : "";
     document.getElementById("loginSenha").required = !estado.supervisor;
     document.getElementById("avisoSupervisor").style.display = estado.supervisor ? "" : "none";
@@ -589,20 +582,19 @@
     const erro = document.getElementById("erroLogin");
     erro.textContent = mensagem || "";
     erro.classList.toggle("ver", !!mensagem);
-    if(document.getElementById("loginNome").options.length <= 1){ carregarNomes(); }
   }
 
   function entrar(ev){
     ev.preventDefault();
     const btn = document.getElementById("btnEntrar");
-    const nome = document.getElementById("loginNome").value;
+    const cpf = document.getElementById("loginCpf").value.replace(/\D/g, '');
+    if(!estado.supervisor && cpf.length !== 11){ mostrarLogin('Informe seu CPF completo.');return; }
     ocupar(btn, "Entrando…");
     document.getElementById("erroLogin").classList.remove("ver");
 
-    chamar("MONT_login", nome, document.getElementById("loginSenha").value, estado.supervisor)
+    chamar("MONT_login", cpf, document.getElementById("loginSenha").value, estado.supervisor)
       .then(function(r){
         salvarToken(r.token);
-        try{ if(nome){ localStorage.setItem("montadorUltimoNome", nome); } }catch(e){}
         document.getElementById("loginSenha").value = "";
         return carregar();
       })
@@ -679,6 +671,9 @@
     if(acesso !== 'agenda' && window.MontadorEvento && MontadorEvento.linear()){
       trocarPainelEtapa(acesso);renderApontamento();mostrarTela('telaEtapa');return;
     }
+    if(acesso === 'equipe' && estado.etapaAberta && acharEtapa(estado.etapaAberta)){
+      trocarPainelEtapa('equipe');renderApontamento();mostrarTela('telaEtapa');return;
+    }
     estado.acesso=acesso;atualizarNavegacao();
     if(acesso==='agenda'){
       renderLista();renderApontamento();mostrarTela('telaInicio');
@@ -700,7 +695,7 @@
       const area=document.getElementById(id);
       if(!p){
         const etapa=acharEtapa(estado.etapaAberta);
-        area.innerHTML=id==='apontamentoEtapa' && etapa && etapa.operacao ? '<section class="iniciar-evento"><p>Inicie o evento para registrar a equipe, avarias e tempo de trabalho.</p><button class="btn" type="button" onclick="iniciarEvento(this)">▶ Iniciar evento</button></section>' : '';
+        area.innerHTML=id==='apontamentoEtapa' && etapa && etapa.operacao ? '<p class="evento-checkin-status">O check-in da equipe registra o início. Se não houver check-in, envie a foto da equipe para registrar a chegada.</p>' : '';
         return;
       }
       area.innerHTML='<section class="apontamento-ativo"><div><small>EVENTO EM ANDAMENTO · #'+esc(p.pedido)+'</small><strong>'+esc(e?e.cliente:'Evento em andamento')+'</strong></div><div class="apontamento-relogio"><span class="apontamento-tempo" role="timer" aria-label="Tempo decorrido">00:00:00</span><small>tempo em andamento</small></div><div class="apontamento-acoes">'+(id==='apontamentoInicio'?'<button type="button" class="btn btn-claro" onclick="irAcesso(\'equipe\')">Continuar evento</button>':'<button type="button" class="btn btn-claro" onclick="trocarPainelEtapa(\'info\')">Dados do evento</button>')+'<button type="button" class="encerrar-evento" onclick="encerrarEvento(this)">Encerrar apontamento</button></div></section>';
@@ -715,12 +710,6 @@
     document.querySelectorAll('.apontamento-tempo').forEach(function(el){el.textContent=texto;});
   }
   setInterval(atualizarCronometro,1000);
-  function iniciarEvento(btn){
-    if(btn.disabled)return;ocupar(btn,'Iniciando…');
-    chamar('MONT_iniciarApontamento',estado.token,estado.etapaAberta).then(function(p){
-      estado.apontamento=p;estado.dados.apontamento=p;renderApontamento();irAcesso('equipe');toast('Evento iniciado.');
-    }).catch(function(e){liberar(btn);toast(mensagemErro(e,'Não foi possível iniciar o evento.'),true);});
-  }
   function encerrarEvento(btn){
     const p=estado.apontamento;if(!p||btn.disabled)return;
     perguntar('Encerrar apontamento?','O tempo será salvo. Os registros já enviados continuam vinculados ao evento.','Encerrar').then(function(sim){
@@ -733,7 +722,7 @@
 
   function trocarPainelEtapa(painel){
     if(window.MontadorEvento && MontadorEvento.navegar(painel)){ return; }
-    if(painel!=='info' && (!estado.apontamento || estado.apontamento.idEtapa!==estado.etapaAberta)){irAcesso(painel);return;}
+    if(painel!=='info' && painel!=='equipe' && (!estado.apontamento || estado.apontamento.idEtapa!==estado.etapaAberta)){irAcesso(painel);return;}
     estado.painel=painel;
     const grupos={info:['etapaInfo','etapaPedido'],equipe:['etapaFotoEquipe'],avarias:['etapaTrocas'],registros:['etapaRegistros','etapaSacolas']};
     Object.keys(grupos).forEach(function(k){grupos[k].forEach(function(id){document.getElementById(id).hidden=k!==painel;});});
@@ -791,10 +780,9 @@
     }
     if(e.alerta){ chips.push('<span class="chip erro">' + I.alerta + esc(e.alerta.problema) + '</span>'); }
     if(e.operacao){
-      chips.push(e.confirmadoDecorador ? '<span class="chip ok">' + I.check + 'Decorador confirmou</span>' : '<span class="chip aviso">Decorador não confirmou</span>');
     }
     if(e.operacao === "montagem"){
-      chips.push('<span class="chip ' + (e.registros >= 4 ? "ok" : "") + '">' + e.registros + ' de 4 registros</span>');
+      chips.push('<span class="chip ' + (Number(e.registros || 0) >= 4 ? "ok" : "") + '">' + Number(e.registros || 0) + ' de 4 registros</span>');
     }
     if(e.free){
       const chegaram = e.free.pessoas.filter(function(p){ return p.checkinEm; }).length;
@@ -868,38 +856,25 @@
     renderCabeca(e);
     renderTrocas(e);
     renderEquipe(e);
+    if(window.MontadorEvento){MontadorEvento.sincronizarInicio(e);}
   }
 
   function renderCabeca(e){
     const t = tipoInfo(e.etapa);
+    document.getElementById("etapaEtiquetas").innerHTML='<span class="tipo" style="background:'+t.fundo+';color:'+t.forte+'">'+esc(e.etapa)+'</span><span class="pedido" title="Pedido #'+esc(e.pedido)+'">Pedido <b>#'+esc(e.pedido)+'</b></span>';
     document.getElementById("etapaCabeca").innerHTML =
       '<div class="cabeca" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '">' +
-        '<div class="cabeca-linha"><span class="tipo">' + esc(e.etapa) + '</span><span class="pedido">Pedido <b>#' + esc(e.pedido) + '</b></span></div>' +
         '<h1>' + esc(e.cliente || "-") + '</h1>' +
+        (e.dataEvento ? '<p class="evento-data">Data do evento: '+esc(e.dataEvento)+'</p>' : '') +
         '<div class="pedido-agendamento"><div><small>Dia da etapa</small><strong>' + esc(tituloDia(e.dataISO)) + ', ' + esc(dataCurta(e.dataISO)) + '</strong></div><div><small>Horário previsto</small><strong>' + esc(hora(e.horario) || 'A definir') + '</strong></div></div>' +
-        '<div class="pedido-atalhos">' + (e.local || (e.lat && e.lng) ? '<button class="btn btn-claro" type="button" onclick="abrirMapa(\'' + esc(e.id) + '\')">' + I.rota + 'Mapa e rota</button>' : '') + '<button class="btn btn-claro" type="button" onclick="document.getElementById(\'etapaEquipe\').scrollIntoView({behavior:\'smooth\',block:\'start\'})">' + I.pessoa + 'Ver equipe</button></div>' +
+        '<div class="evento-local"><small>Local</small><p>'+esc(e.local || 'A definir')+'</p>'+ (e.local || (e.lat && e.lng) ? '<button class="btn btn-claro btn-pequeno" type="button" onclick="abrirMapa(\''+esc(e.id)+'\')">'+I.rota+'Abrir mapa no app</button>' : '') + '</div>' +
+        (e.observacao ? '<p class="evento-orientacao">'+esc(e.observacao)+'</p>' : '') +
       '</div>' +
       (e.alerta ? '<div class="alerta">' + I.alerta + '<div><strong>' + esc(e.alerta.problema) + '</strong>' + esc(e.alerta.observacao || "") + (e.alerta.enviadoPor ? ' — ' + esc(e.alerta.enviadoPor) : "") + '</div></div>' : "");
   }
 
   function renderInfo(e){
-    const linha = function(icone, rotulo, valor){
-      return '<div class="linha"><div class="linha-icone">' + icone + '</div><div><small>' + rotulo + '</small><strong>' + valor + '</strong></div></div>';
-    };
-    const logistica = avisosLogistica(e, false);
-
-    document.getElementById("etapaInfo").innerHTML =
-      '<section class="secao">' +
-        '<div class="secao-titulo"><h2>Local e orientações</h2></div>' +
-        '<div class="linhas">' +
-          linha(I.local, "Local", esc(e.local || "-") + (e.local ? '<br><button class="btn btn-claro btn-pequeno" style="margin-top:6px" type="button" onclick="abrirMapa(\'' + esc(e.id) + '\')">' + I.rota + 'Abrir mapa no app</button>' : "")) +
-          linha(I.festa, "Data do evento", esc(e.dataEvento || "-")) +
-          (String(e.etapa).toLowerCase().indexOf("triagem") < 0 ? linha(I.caminhao, "Caminhão", esc(String(e.caminhao || "-").replace(/\n/g, ", "))) : "") +
-          (e.operacao ? linha(I.check, "Decorador", e.confirmadoDecorador ? '<span class="chip ok">' + I.check + 'Confirmou a data</span>' : '<span class="chip aviso">Ainda não confirmou</span>') : "") +
-        '</div>' +
-        (logistica ? '<div class="etapa-chips" style="margin-top:12px">' + logistica + '</div>' : "") +
-        (e.observacao ? '<div class="obs"><strong>Obs.:</strong> ' + esc(e.observacao) + '</div>' : "") +
-      '</section>';
+    document.getElementById("etapaInfo").innerHTML = "";
   }
 
   function chipPresenca(p){
@@ -951,7 +926,7 @@
         '<div class="pessoas"><div class="pessoa"><div class="pessoa-ini">' + esc(String(e.responsavel || "?").charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(e.responsavel || "-") + '</div></div></div>' +
         (internos ? '<div class="subtitulo">Equipe interna</div><div class="pessoas">' + internos + '</div>' : "") +
         free +
-      '</section>';
+      '</section>' + (e.caminhao ? '<section class="secao evento-caminhoes"><div class="secao-titulo"><h2>Caminhões</h2></div><p>'+esc(String(e.caminhao).replace(/\n/g,', '))+'</p></section>' : '');
     pintarUberMontador(e);
     pintarFreteMontador(e);
   }
@@ -1088,15 +1063,7 @@
   }
 
   function renderPedido(e){
-    if(!(e.outrasEtapas || []).length){ document.getElementById("etapaPedido").innerHTML = ""; return; }
-    document.getElementById("etapaPedido").innerHTML =
-      '<section class="secao">' +
-        '<div class="secao-titulo"><h2>Outras etapas do pedido</h2></div>' +
-        '<div class="linha-tempo">' + e.outrasEtapas.map(function(o){
-          return '<div class="marco"><div><b>' + esc(dataCurta(o.dataISO)) + '</b><small>' + esc(hora(o.horario) || "-") + '</small></div>' +
-            '<div><b>' + esc(o.etapa) + '</b><small>' + esc(o.responsavel || "-") + (o.caminhao ? ' · ' + esc(String(o.caminhao).replace(/\n/g, ", ")) : "") + '</small></div></div>';
-        }).join("") + '</div>' +
-      '</section>';
+    document.getElementById("etapaPedido").innerHTML = "";
   }
 
   /* ---------- Mapa e QR ---------- */
@@ -1225,14 +1192,9 @@
     reg = { id: e.id, pedido: e.pedido, cliente: e.cliente, responsavel: e.responsavel, tipo: e.operacao, horario: e.horario, feitos: {}, empresa: "", qtd: "", fotoEquipe: "", fotosPos: [], posCorreto: null, fotoLista: "", paginas: [] };
 
     const equipe =
-      '<div class="rotulo">Empresa</div><div class="opcoes" id="regEmpresas"><span style="color:var(--muted)">Carregando…</span></div>' +
-      '<div class="rotulo">Quantidade de pessoas na foto</div><div class="opcoes" id="regQtd"></div>' +
-      '<input class="input" id="regQtdOutro" type="number" min="1" inputmode="numeric" placeholder="Digite a quantidade" style="display:none">' +
-      '<div class="chegada-info"><b>Registre a chegada da equipe</b><span>Horário previsto: ' + esc(e.horario || 'não informado') + '. Tire a foto de todos com o uniforme. Sua localização será registrada no envio.</span></div>' +
-      '<div class="rotulo">Foto da equipe (obrigatória)</div>' +
+      '<p class="foto-equipe-instrucao">Fotografe todos juntos. O horário e a localização serão registrados no envio.</p>' +
       fotoTile("regFotoEquipe", "Tirar foto da equipe", "fotoEquipe(event)") +
-      '<textarea class="input" id="regObsEquipe" placeholder="Observações (opcional)"></textarea>' +
-      '<button class="btn" type="button" onclick="enviarEquipe(this)">' + I.enviar + 'Enviar equipe</button>';
+      '<button class="btn" type="button" onclick="enviarEquipe(this)">' + I.enviar + 'Enviar foto da equipe</button>';
 
     const registro = e.chegadaEquipe;
     const resumoChegada = registro ? '<div class="chegada-resumo"><strong>Chegada registrada</strong><span>'+esc(registro.data)+' às '+esc(registro.hora)+'</span><span>'+(registro.origemChegada === 'CHEGADA_V1' && registro.previsto ? (Number(registro.minutosAtraso)>0 ? esc(registro.minutosAtraso)+' min de atraso' : 'Envio no horário') : 'Horário antigo sem verificação automática')+'</span><span class="pendente">'+(registro.uniformizada === 'SIM' ? 'Uniforme aprovado pelo RH' : registro.uniformizada === 'NAO' ? 'RH: equipe sem uniforme' : 'Uniforme aguardando avaliação do RH')+'</span><span>'+(registro.localStatus === 'NO_LOCAL' ? 'Localização no evento' : 'Localização pendente de conferência')+'</span></div>' : '';
@@ -1272,8 +1234,6 @@
       ? progresso + '<div class="passos">' + passos + '</div><div class="tudo-pronto"><b>Montagem registrada</b>Todos os registros obrigatórios foram enviados.</div>'
       : '<section class="secao"><div class="secao-titulo"><h2>Registros da ' + esc(e.operacao) + '</h2></div>' + progresso + resumoChegada + '<div class="passos">' + passos + '</div></section>';
 
-    carregarEmpresas();
-    montarBotoesQtd();
     if(e.operacao === "montagem"){ adicionarSacola(); }
     verificarRegistros(e);
     atualizarProgresso();
@@ -1296,36 +1256,6 @@
   }
 
   /* ---------- 1. Equipe terceirizada ---------- */
-  function carregarEmpresas(){
-    chamar("buscarEmpresasTerceirizadas").then(function(lista){
-      lista = ["Equipe própria"].concat(lista || []);
-      const box = document.getElementById("regEmpresas");
-      if(!box){ return; }
-      box.innerHTML = (lista || []).length
-        ? lista.map(function(n){ return '<button class="opcao" type="button" data-valor="' + esc(n) + '" onclick="escolherEmpresa(this)">' + esc(n) + '</button>'; }).join("")
-        : '<span style="color:var(--muted)">Nenhuma empresa terceirizada ativa encontrada.</span>';
-    }).catch(console.error);
-  }
-
-  function escolherEmpresa(btn){
-    btn.parentElement.querySelectorAll(".opcao").forEach(function(b){ b.classList.remove("ativa"); });
-    btn.classList.add("ativa");
-    reg.empresa = btn.dataset.valor;
-  }
-
-  function montarBotoesQtd(){
-    const box = document.getElementById("regQtd");
-    box.innerHTML = [1, 2, 3, 4, 5, 6].map(function(n){ return '<button class="opcao" type="button" onclick="escolherQtd(this,\'' + n + '\')">' + n + '</button>'; }).join("") +
-      '<button class="opcao" type="button" onclick="escolherQtd(this,\'\')">Outro</button>';
-  }
-
-  function escolherQtd(btn, n){
-    btn.parentElement.querySelectorAll(".opcao").forEach(function(b){ b.classList.remove("ativa"); });
-    btn.classList.add("ativa");
-    reg.qtd = n;
-    document.getElementById("regQtdOutro").style.display = n ? "none" : "block";
-  }
-
   function mostrarFoto(tile, foto){
     tile.querySelector("img").src = foto;
     tile.classList.add("tem");
@@ -1339,26 +1269,23 @@
 
   function enviarEquipe(btn){
     if(btn.disabled || aguardandoFotos()){ return; }
-    if(!reg.empresa){ toast("Selecione a empresa terceirizada.", true); return; }
-    const quantidade = reg.qtd || document.getElementById("regQtdOutro").value.trim();
-    if(!quantidade){ toast("Informe a quantidade de ajudantes.", true); return; }
     if(!reg.fotoEquipe){ toast("Tire a foto da equipe antes de enviar.", true); return; }
 
     ocupar(btn);
     btn.textContent = 'Obtendo localização…';
     localizarChegada().then(function(gps){
       btn.textContent = 'Enviando foto e chegada…';
-      return chamar('salvarEquipeTerceirizada', {
-        token:estado.token, apontamentoId:estado.apontamento ? estado.apontamento.id : "", idCronograma:reg.id, pedido:reg.pedido, empresa:reg.empresa, quantidade:quantidade,
-        observacao:document.getElementById('regObsEquipe').value.trim(), foto:reg.fotoEquipe,
+      return chamar('MONT_fotoEquipe', {
+        token:estado.token, idCronograma:reg.id, foto:reg.fotoEquipe,
         latitude:gps.latitude,longitude:gps.longitude,precisaoGPS:gps.accuracy
       });
     }).then(function(r){
+      if(r.apontamento){estado.apontamento=r.apontamento;estado.dados.apontamento=r.apontamento;renderApontamento();}
       marcarFeito('equipe');
       const c = r.chegada;
       toast(c && c.atraso > 0 ? 'Chegada registrada: '+c.atraso+' min após o previsto.' : 'Foto e chegada registradas.');
       if(c && c.localStatus !== 'NO_LOCAL') toast(c.localStatus === 'FORA_DO_LOCAL' ? 'Localização fora do raio do evento. O RH poderá conferir o registro.' : 'Evento sem coordenadas. Localização registrada para conferência.',true);
-    }).catch(function(e){ liberar(btn);btn.textContent='Enviar equipe';toast(mensagemErro(e,'Não foi possível registrar a chegada.'),true); });
+    }).catch(function(e){ liberar(btn);btn.textContent='Enviar foto da equipe';toast(mensagemErro(e,'Não foi possível registrar a chegada.'),true); });
   }
 
   function localizarChegada(){
@@ -1538,8 +1465,7 @@
       if(!box){ return; }
       box.innerHTML = (r.itens || []).length ? (r.itens || []).map(function(it){
         const foto = /^https?:/.test(it.foto || "") ? '<img src="' + esc(it.foto) + '" alt="" loading="lazy">' : '';
-        return '<label class="contagem-linha"><span class="contagem-foto">' + foto + '</span><span class="contagem-nome">' + esc(it.nome) +
-          (it.kit_nome ? '<small>Parte do kit: ' + esc(String(it.kit_nome).replace(/\s+/g, " ")) + '</small>' : '') + '<small>Saiu: <b>' + esc(it.esperado) + '</b></small></span>' +
+        return '<label class="contagem-linha"><span class="contagem-foto">' + foto + '</span><span class="contagem-nome"><span class="contagem-descricao" title="'+esc(it.nome)+'">' + esc(it.nome) + '</span><small>Saiu: <b>' + esc(it.esperado) + '</b></small></span>' +
           '<input class="input contagem-qtd" type="number" min="0" step="1" inputmode="numeric" data-chave="' + esc(it.chave) + '" value="' + (it.chave in q ? esc(q[it.chave]) : '') + '" placeholder="Qtd." aria-label="Quantidade que voltou de ' + esc(it.nome) + '"></label>';
       }).join("") : '<div class="vazio" style="padding:12px">Este pedido não tem itens.</div>';
       if(r.enviado){ marcarFeito("contagem", "✓ Contagem enviada" + (r.autor ? " por " + esc(r.autor) : "")); }

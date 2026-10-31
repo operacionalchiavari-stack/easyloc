@@ -919,17 +919,21 @@
     l.forEach(function (p) { nomesMont[p.nome] = p.id; });
     return l.map(function (p) { return p.nome; });
   };
-  L.MONT_login = async function (nome, senha, supervisor) {
+  L.MONT_login = async function (cpf, senha, supervisor) {
     var r;
     if (supervisor) {
       var c = await sb(), u = (await c.auth.getUser()).data.user;
       if (!u) { throw new Error("Para entrar como supervisor, entre antes no sistema (Acervo) neste aparelho com o seu usuário."); }
       r = await rpc("mont_login_supervisor");
     } else {
-      if (!nomesMont[nome]) { await L.MONT_listarResponsaveis(); }
-      if (!nomesMont[nome]) { throw new Error("Escolha o seu nome."); }
+      cpf = String(cpf || "").replace(/\D/g, "");
+      if (cpf.length !== 11) { throw new Error("Informe seu CPF completo."); }
       if (!String(senha || "").trim()) { throw new Error("Digite o seu PIN."); }
-      r = await rpc("mont_login", { p_funcionario: nomesMont[nome], p_pin: String(senha).trim() });
+      var c = await sb(), resposta = await c.functions.invoke("funcionarios-admin", { body: { action: "montador-login", cpf: cpf, pin: String(senha).trim() } });
+      var mensagem = resposta.data && resposta.data.error;
+      if (resposta.error && !mensagem) { try { mensagem = (await resposta.error.context.json()).error; } catch (_) { mensagem = "Não foi possível entrar. Verifique o CPF e o PIN."; } }
+      if (mensagem || resposta.error) { throw new Error(mensagem || "Não foi possível entrar."); }
+      r = resposta.data;
     }
     try { localStorage.setItem("montadorPasta", r.pasta); } catch (e) {}
     return { token: r.token, nome: r.nome, perfil: r.perfil };
@@ -979,6 +983,13 @@
   L.MONT_iniciarApontamento = function (token, idEtapa) { return rpc("mont_apontamento_iniciar", { p_token: token, p_etapa: idEtapa }); };
   L.MONT_finalizarApontamento = function (token, id) { return rpc("mont_apontamento_finalizar", { p_token: token, p_id: id }); };
   L.MONT_apontamentoAtual = async function (token) { return (await L.MONT_appCarregar(token, "")).apontamento; };
+  L.MONT_sincronizarCheckin = function (token, idEtapa) { return rpc("mont_checkin_apontamento", { p_token: token, p_etapa: idEtapa }); };
+  L.MONT_fotoEquipe = async function (d) {
+    var foto = await subirFoto(d.foto, pastaMont());
+    var r = await rpc("mont_equipe_foto", { p_token: d.token || tokMont(), p_etapa: d.idCronograma,
+      p_dados: { foto: foto, latitude: d.latitude, longitude: d.longitude, precisaoGPS: d.precisaoGPS } });
+    return { sucesso: true, chegada: r.chegada || null, apontamento: r.apontamento || null };
+  };
   L.MONT_solicitarTroca = async function (token, dados) {
     dados = Object.assign({}, dados || {}); dados.foto = await subirFoto(dados.foto, pastaMont());
     return (await rpc("mont_troca_solicitar", { p_token: token, p_dados: dados })).map(trocaLegado);

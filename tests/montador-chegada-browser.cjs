@@ -16,12 +16,12 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
     function result(fn,args){
      const atual=JSON.parse(localStorage.getItem('fixtureApontamento')||'null');
      if(fn==='MONT_appCarregar')return {nome:'Ana Silva',perfil:'RESPONSAVEL',etapas:[etapa],apontamento:atual};
-     if(fn==='MONT_iniciarApontamento'){const p=atual||{id:'apontamento-1',idEtapa:args[1],pedido:'1234',inicio:new Date(Date.now()-65000).toISOString(),status:'ATIVO'};localStorage.setItem('fixtureApontamento',JSON.stringify(p));return p;}
+     if(fn==='MONT_sincronizarCheckin'){const p=atual||{id:'apontamento-1',idEtapa:args[1],pedido:'1234',inicio:new Date(Date.now()-65000).toISOString(),status:'ATIVO'};localStorage.setItem('fixtureApontamento',JSON.stringify(p));return p;}
      if(fn==='MONT_finalizarApontamento'){localStorage.removeItem('fixtureApontamento');return {status:'ENCERRADO'};}
      if(fn==='MONT_solicitarTroca'){window.savedAvarias.push(args[1]);return [];}
      if(fn==='buscarItensOperacao')return [];
      if(fn==='buscarEmpresasTerceirizadas')return ['Equipe Parceira'];
-     if(fn==='salvarEquipeTerceirizada'){window.saved.push(args[0]);return {sucesso:true,chegada:{atraso:20,localStatus:'NO_LOCAL'}};}
+     if(fn==='MONT_fotoEquipe'){window.saved.push(args[0]);return {sucesso:true,chegada:{atraso:20,localStatus:'NO_LOCAL'},apontamento:atual};}
      return {};
     }
     function runner(ok,no){return new Proxy({},{get:(_,fn)=>fn==='withSuccessHandler'?f=>runner(f,no):fn==='withFailureHandler'?f=>runner(ok,f):(...args)=>Promise.resolve().then(()=>result(fn,args)).then(r=>ok&&ok(r)).catch(e=>no&&no(e))});}
@@ -36,26 +36,27 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
    assert.equal(await page.locator('#etapaEquipe').isVisible(),true);assert.equal(await page.locator('img[alt="Foto de Carlos Free"]').count(),1);assert.ok(await page.locator('#etapaEquipe').textContent().then(t=>t.includes('Foto não cadastrada')));
    await page.screenshot({path:path.join(os.tmpdir(),`montador-pedido-${width}.png`),fullPage:true});
    await page.getByRole('button',{name:'Ver foto de Carlos Free',exact:true}).click();await page.waitForSelector('.foto-free-ampliada');await page.getByRole('button',{name:'Fechar foto',exact:true}).click();
-   await page.locator('#eventoDetalhes summary').click();await page.getByRole('button',{name:'Abrir mapa no app',exact:true}).click();await page.waitForFunction(()=>!document.getElementById('mapaRota').disabled);
+   await page.getByRole('button',{name:'Abrir mapa no app',exact:true}).click();await page.waitForFunction(()=>!document.getElementById('mapaRota').disabled);
    await page.evaluate(()=>denyGps=true);await page.locator('#mapaRota').click();assert.match(await page.locator('#mapaStatus').textContent(),/Permita a localização/);
    await page.evaluate(()=>denyGps=false);await page.locator('#mapaRota').click();await page.waitForSelector('.mapa-resumo');assert.equal(await page.locator('#mapaResumo strong').textContent(),'12 min');assert.equal(await page.evaluate(()=>pedidoRota.destination),'-23,-46');assert.equal(await page.locator('#folha a[target="_blank"]').count(),0);
    await page.getByRole('button',{name:'Fechar mapa',exact:true}).click();assert.equal(await page.evaluate(()=>gpsEncerrado),1);
-   await page.getByRole('button',{name:'▶ Iniciar evento',exact:true}).click();
+   assert.equal(await page.getByRole('button',{name:'Iniciar evento'}).count(),0);
+   await page.waitForFunction(()=>estado.apontamento?.id==='apontamento-1');
    await page.waitForSelector('#etapaFotoEquipe:not([hidden])');
    assert.equal(await page.locator('#passo_equipe').count(),1);assert.equal(await page.locator('#etapaCabeca').isVisible(),true);assert.equal(await page.locator('#etapaTituloPagina').textContent(),'');assert.match(await page.locator('#apontamentoEtapa .apontamento-tempo').textContent(),/^00:01:/);
-   await page.locator('.evento-foto-config summary').click();await page.getByText('Equipe própria',{exact:true}).click();await page.locator('#regQtd .opcao').first().click();
+   assert.equal(await page.locator('#regEmpresas,#regQtd').count(),0);
    await page.locator('[data-acesso="avarias"]').click();await page.locator('.evento-reposicao summary').click();await page.getByRole('button',{name:'Informar avaria ou falta',exact:true}).click();await page.waitForSelector('#trocaItem');await page.locator('#trocaItem').fill('Mesa');await page.locator('#trocaMotivos .opcao').first().click();
    await page.locator('#trocaFoto input').setInputFiles({name:'avaria.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1XQAAAAASUVORK5CYII=','base64')});
    await page.waitForFunction(()=>document.querySelector('#trocaFoto').classList.contains('tem'));await page.locator('#btnTroca').click();await page.waitForFunction(()=>savedAvarias.length===1);const avaria=await page.evaluate(()=>savedAvarias[0]);assert.equal(avaria.idEtapa,'etapa');assert.equal(avaria.apontamentoId,'apontamento-1');
-   await page.locator('[data-acesso="equipe"]').click();assert.equal(await page.locator('#regEmpresas .ativa').textContent(),'Equipe própria');
-   const button=page.locator('button').filter({hasText:/^Enviar equipe$/});
+   await page.locator('[data-acesso="equipe"]').click();
+   const button=page.getByRole('button',{name:'Enviar foto da equipe',exact:true});
    await button.click();assert.equal(await page.evaluate(()=>saved.length),0);
    await page.locator('#regFotoEquipe input').setInputFiles({name:'equipe.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1XQAAAAASUVORK5CYII=','base64')});
    await page.waitForFunction(()=>document.querySelector('#regFotoEquipe').classList.contains('tem'));
    await page.locator('[data-acesso="registros"]').click();await page.locator('[data-acesso="equipe"]').click();assert.equal(await page.locator('#regFotoEquipe').evaluate(e=>e.classList.contains('tem')),true);
    await page.evaluate(()=>denyGps=true);await button.click();await page.waitForFunction(()=>!document.querySelector('[onclick="enviarEquipe(this)"]').disabled);assert.equal(await page.evaluate(()=>saved.length),0);
    await page.evaluate(()=>denyGps=false);await button.click();await page.waitForFunction(()=>saved.length===1);
-   const sent=await page.evaluate(()=>saved[0]);assert.equal(sent.apontamentoId,'apontamento-1');assert.equal(sent.token,'fixture');assert.equal(sent.latitude,-23);assert.equal(sent.precisaoGPS,12);assert.ok(sent.foto.startsWith('data:image/'));assert.equal('uniformizada' in sent,false);
+   const sent=await page.evaluate(()=>saved[0]);assert.equal('empresa' in sent,false);assert.equal('quantidade' in sent,false);assert.equal(sent.token,'fixture');assert.equal(sent.latitude,-23);assert.equal(sent.precisaoGPS,12);assert.ok(sent.foto.startsWith('data:image/'));assert.equal('uniformizada' in sent,false);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
    await page.screenshot({path:path.join(os.tmpdir(),`montador-chegada-${width}.png`),fullPage:true});
    const inicio=await page.evaluate(()=>JSON.parse(localStorage.getItem('fixtureApontamento')).inicio);await page.reload();await page.waitForSelector('.etapa');await page.locator('[data-acesso="equipe"]').click();await page.waitForSelector('#etapaFotoEquipe:not([hidden])');assert.equal(await page.evaluate(()=>estado.apontamento.inicio),inicio);
