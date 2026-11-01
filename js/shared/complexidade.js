@@ -30,7 +30,8 @@
   if(longe===null&&tags.some(t=>['caminhao para perto','caminhao para em frente'].includes(t)))longe=false;
   put(17,longe,'Cadastro do local',dist!=null?'Transporte manual: '+dist+' m; referência: '+cfg.distancia_manual_m+' m':'Informe a distância de transporte no local');
   put(18,c.caminhoes>0?c.caminhoes>cfg.limite_caminhoes:null,'Cronograma','Caminhões distintos nas etapas de entrega: '+(c.caminhoes||'a planejar')+'; limite: '+cfg.limite_caminhoes);
-  put(5,bool(cliente.complexidade?.reclamacao),'Cadastro do cliente','Registro explícito de reclamação operacional; exigência não significa reclamação');
+  const reclamacao=cliente.reclamacao_historico;
+  put(5,reclamacao?bool(reclamacao.valor):bool(cliente.complexidade?.reclamacao),reclamacao?.fonte||'Cadastro do cliente',reclamacao?.detalhe||'Registro explícito de reclamação operacional; exigência não significa reclamação');
   const anteriores=c.pedidos_anteriores;
   put(6,Number.isInteger(anteriores)?anteriores>0:null,'Histórico do cliente','Pedidos confirmados anteriores: '+(anteriores??'cliente não vinculado'));
   put(8,Number.isInteger(anteriores)?anteriores===0:null,'Histórico do cliente','Considera pedidos aprovados, enviados ou finalizados anteriores a este pedido');

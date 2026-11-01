@@ -8,7 +8,9 @@ async function fixture(){
  create function seguranca_2fa_ok() returns boolean language sql stable as $$select coalesce(current_setting('test.twofa',true),'on')<>'off'$$;
  create function operacao_pode(uuid,text) returns boolean language sql stable as $$select eh_membro_empresa($1) and (auth.uid()='${id(10)}'::uuid or $2 like '%.visualizar')$$;
  create table empresas(id uuid primary key);insert into empresas values('${id(1)}'),('${id(2)}');
- create table clientes_empresas(id uuid primary key,empresa_id uuid,tags jsonb);
+ create table clientes_empresas(id uuid primary key,empresa_id uuid,tags jsonb,nome_razao text);
+ create table gs_linhas(planilha_id text,aba text,linha int,valores jsonb,primary key(planilha_id,aba,linha));
+ create function gs_empresa_dona() returns uuid language sql immutable as $$select '${id(1)}'::uuid$$;
  create table locais_empresas(id uuid primary key,empresa_id uuid,tags jsonb);
  create table itens(id uuid primary key,empresa_id uuid,familia text,categoria text,produto_base text,material text);
  create table separacoes_pedidos(id uuid primary key,empresa_id uuid,numero_pedido text,cliente_nome text,local_nome text,cliente_id uuid,local_id uuid,data_evento date,tipo_evento text,status_comercial text,observacoes jsonb,pedido_origem_id uuid,criado_em timestamptz default now(),encerrado_operacional_em timestamptz);
@@ -22,7 +24,8 @@ async function fixture(){
  create table producao_etapas(producao_item_id uuid,empresa_id uuid,setor text,estado text);
  create function operacao_conferencia_pecas(uuid,boolean) returns table(item_id uuid,esperado numeric) language sql as $$select item_id,quantidade_solicitada from separacoes_itens where separacao_pedido_id=$1$$;`);
  await db.exec(fs.readFileSync('supabase/migrations/20261031007000_complexidade_automatica.sql','utf8'));
- await db.exec(`insert into clientes_empresas values('${id(20)}','${id(1)}','{}','{"reclamacao":false}');
+ await db.exec(fs.readFileSync('supabase/migrations/20261101000100_complexidade_reclamacoes_cliente.sql','utf8'));
+ await db.exec(`insert into clientes_empresas(id,empresa_id,tags,complexidade,nome_razao) values('${id(20)}','${id(1)}','{}','{"reclamacao":false}','Cliente');
  insert into locais_empresas values('${id(21)}','${id(1)}','{"observacoes":["Tem escadas"]}','{"baldeacao":false,"escada":false,"distancia_manual_m":0}');
  insert into itens values('${id(22)}','${id(1)}','Mesas','Mesas','Mesa','Madeira','{"fragil":false,"sob_medida":false,"volumoso":false}');
  insert into separacoes_pedidos(id,empresa_id,numero_pedido,cliente_nome,local_nome,cliente_id,local_id,data_evento,tipo_evento,status_comercial,observacoes) values
@@ -77,5 +80,32 @@ test('banco: valida dados reutilizáveis e parâmetros, preservando falso e desc
  await assert.rejects(save({...cx.padrao(),limite_pecas:-1}),/Limite/);await assert.rejects(save({...cx.padrao(),dias_expediente:[8]}),/dias/);
  await assert.rejects(save({...cx.padrao(),pesos:{1:{sim:-2,nao:0}}}),/Pesos/);
  await save({...cx.padrao(),limite_pecas:5});assert.equal((await contexto(db)).config.limite_pecas,5);
+ }finally{await db.close();}
+});
+test('banco: cliente cadastrado sem reclamação recebe Não; feedback real vira Sim e fica congelado',async()=>{
+ const db=await fixture();try{
+ await db.exec(`update clientes_empresas set complexidade='{}',nome_razao='Kelly Khawam' where id='${id(20)}';`);
+ let c=await contexto(db);assert.equal(c.cliente.reclamacao_historico.valor,false);assert.equal(cx.avaliar(c).respostas[5].valor,false);assert.match(cx.avaliar(c).respostas[5].fonte,/feedbacks/);
+ const pid='1lh7ArXcVK11PxGrmbMhTA9plR_S8eiESi3s49ZrgYOA';
+ const linha=(n,valores)=>db.query("insert into gs_linhas values($1,'Feedback',$2,$3) on conflict(planilha_id,aba,linha) do update set valores=excluded.valores",[pid,n,JSON.stringify(valores)]);
+ await linha(1,['Houve Reclamação','Cliente']);await linha(2,['Sim','Outro cliente']);await linha(3,['Não',' KELLY   KHAWAM ']);
+ assert.equal((await contexto(db)).cliente.reclamacao_historico.valor,false);
+ await linha(4,['Sim','Kelly Khawam']);c=await contexto(db);assert.equal(c.cliente.reclamacao_historico.valor,true);assert.equal(c.cliente.reclamacao_historico.reclamacoes,1);assert.equal(cx.avaliar(c).respostas[5].valor,true);
+ await db.exec(`update clientes_empresas set complexidade='{"reclamacao":false}' where id='${id(20)}';`);assert.equal((await contexto(db)).cliente.reclamacao_historico.valor,true);
+ await linha(1,['Cliente','Houve Ponto de Melhoria']);await linha(2,['Kelly Khawam','Sim']);await db.exec('delete from gs_linhas where linha>2');assert.equal((await contexto(db)).cliente.reclamacao_historico.valor,true);
+ await db.exec(`update separacoes_pedidos set status_comercial='finalizado' where id='${id(30)}';`);const congelado=await contexto(db);
+ await linha(2,['Kelly Khawam','Não']);assert.deepEqual(await contexto(db),congelado);
+ await db.exec('set role authenticated');await assert.rejects(db.query('select complexidade_reclamacao_cliente($1,$2)',[id(1),id(20)]),/permission denied/);
+ }finally{await db.close();}
+});
+test('banco: histórico de reclamações respeita empresa, vínculo, nomes ambíguos e formato da fonte',async()=>{
+ const db=await fixture();try{
+ const valor=async(emp,cliente)=>(await db.query('select complexidade_reclamacao_cliente($1,$2) c',[emp,cliente])).rows[0].c.valor;
+ assert.equal(await valor(id(2),id(20)),null);assert.equal(await valor(id(1),null),null);
+ await db.exec(`update clientes_empresas set complexidade='{}';insert into clientes_empresas(id,empresa_id,nome_razao) values('${id(23)}','${id(2)}','Cliente');`);
+ assert.equal(await valor(id(1),id(20)),false);assert.equal(await valor(id(2),id(23)),null);
+ await db.exec(`insert into clientes_empresas(id,empresa_id,nome_razao) values('${id(24)}','${id(1)}',' cliente ');`);assert.equal(await valor(id(1),id(20)),null);
+ await db.exec(`delete from clientes_empresas where id='${id(24)}';insert into gs_linhas values('1lh7ArXcVK11PxGrmbMhTA9plR_S8eiESi3s49ZrgYOA','Feedback',1,'["Cliente","Campo desconhecido"]');`);assert.equal(await valor(id(1),id(20)),null);
+ await db.exec(`update clientes_empresas set complexidade='{"reclamacao":true}' where id='${id(20)}';`);assert.equal(await valor(id(1),id(20)),true);
  }finally{await db.close();}
 });

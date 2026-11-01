@@ -1,6 +1,7 @@
 const {chromium}=require('playwright'),express=require('express'),assert=require('node:assert/strict'),path=require('node:path'),os=require('node:os');
 const regras=require('../js/shared/complexidade');
 const contexto={id:'00000000-0000-0000-0000-000000000030',numero:'101',data_evento:'2026-11-04',cliente_nome:'Cliente de teste',local_nome:'Local de teste',tipo_evento:'Casamento',config:regras.padrao(),cliente:{complexidade:{reclamacao:false}},pedidos_anteriores:1,local:{complexidade:{baldeacao:false,escada:true,distancia_manual_m:20}},caminhoes:1,carregamento:{data:'2026-11-02',hora:'09:00:00'},montagem:{data:'2026-11-04',hora:'10:00:00'},confirmado_em:'2026-10-30T10:00:00-03:00',excecoes:{viagens:1},itens:[{item_id:'a',familia:'Sofás',complexidade:{sob_medida:false,volumoso:true}}],pecas:[{item_id:'a',quantidade:5,complexidade:{fragil:false}}],servicos:[]};
+contexto.cliente={complexidade:{},reclamacao_historico:{valor:false,fonte:'Histórico de feedbacks',detalhe:'Nenhuma reclamação registrada para este cliente no histórico de feedbacks'}};
 (async()=>{
  const app=express();app.use(express.static(process.cwd()));const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.on('listening',r));const browser=await chromium.launch({channel:'msedge',headless:true});
  try{for(const width of [390,1360]){
@@ -21,8 +22,9 @@ const contexto={id:'00000000-0000-0000-0000-000000000030',numero:'101',data_even
   },contexto);
   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Costura/costura.html`);
   await page.locator('#listaPedidos tbody tr').waitFor();assert.match(await page.locator('#listaPedidos .score').textContent(),/\d+(,\d+)?%/);assert.equal(await page.locator('#listaPedidos .cx-score-legenda').textContent(),'Dificuldade mínima');assert.doesNotMatch(await page.locator('#listaPedidos').textContent(),/Não se aplica/);
+  assert.equal((await page.locator('#listaPedidos tbody tr td').nth(8).textContent()).trim(),'Não');
   await page.locator('#btnPintura').click();assert.equal(await page.locator('#listaPedidos .cx-score-legenda').textContent(),'Dificuldade mínima');
-  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cx-auto-dialog[open]').waitFor();assert.match(await page.locator('.cx-auto-scores').textContent(),/Dificuldade mínima/);assert.doesNotMatch(await page.locator('.cx-auto-scores').textContent(),/Não se aplica/);await page.getByRole('button',{name:'Fechar análise',exact:true}).click();
+  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cx-auto-dialog[open]').waitFor();assert.match(await page.locator('.cx-auto-scores').textContent(),/Dificuldade mínima/);assert.doesNotMatch(await page.locator('.cx-auto-scores').textContent(),/Não se aplica/);assert.match(await page.locator('.cx-auto-dialog').textContent(),/Histórico de feedbacks/);await page.getByRole('button',{name:'Fechar análise',exact:true}).click();
   await page.locator('#btnPersonalizacao').click();
   await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).click();await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('Local de teste');assert.equal(await page.locator('#listaPedidos tbody tr').count(),1);
   await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('Cliente de teste');assert.equal(await page.locator('#listaPedidos tbody tr').count(),1);

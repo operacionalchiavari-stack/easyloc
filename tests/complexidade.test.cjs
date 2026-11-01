@@ -45,6 +45,13 @@ test('mescla preserva históricos sem duplicar pedidos; vínculos ambíguos fica
  legado[1]='2025-11-04';assert.equal(cx.linhas([[],legado],[pendente])[1][0],'anterior');
 });
 module.exports={completo};
+test('reclamação automática usa o resultado consultado, preserva falhas como pendência e aceita exceções',()=>{
+ const c=completo();c.cliente={complexidade:{},reclamacao_historico:{valor:false,fonte:'Histórico de feedbacks',detalhe:'Nenhuma reclamação registrada'}};
+ assert.equal(cx.avaliar(c).respostas[5].valor,false);assert.equal(cx.paraPainel(c).r5,false);
+ c.cliente.reclamacao_historico.valor=true;assert.equal(cx.avaliar(c).respostas[5].valor,true);
+ c.cliente.reclamacao_historico.valor=null;c.cliente.complexidade.reclamacao=false;assert.equal(cx.avaliar(c).respostas[5].valor,null);
+ c.excecoes.respostas={5:{valor:false,motivo:'Conferência autorizada do histórico'}};assert.equal(cx.avaliar(c).respostas[5].valor,false);assert.equal(cx.avaliar(c).respostas[5].fonte,'Exceção do pedido');
+});
 test('score parcial delimita as respostas desconhecidas sem criar percentual definitivo ou bônus',()=>{
  const c=completo();c.local={complexidade:{distancia_manual_m:80}};c.cliente={};
  const s=cx.avaliar(c).setores.montagem;
