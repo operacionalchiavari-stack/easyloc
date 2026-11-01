@@ -96,7 +96,7 @@ module.exports = {
     bloqueadas: ["doGet"],
     // Funções chamadas pelos apps de campo (sem conta no Acervo): liberadas sem login.
     // Todo o resto exige o login do Acervo de alguém da empresa (ver api/gs.js).
-    publicas: ["equipeEntrar", "equipeExtrato", "equipeSair"],
+    publicas: ["equipeEntrar", "equipeExtrato", "equipeExtratoMontador", "equipeSair"],
     loginsApp: ["equipeEntrar"]
   },
   portal: {

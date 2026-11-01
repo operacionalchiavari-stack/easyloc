@@ -939,6 +939,15 @@
     return { token: r.token, nome: r.nome, perfil: r.perfil };
   };
   L.MONT_sair = function (t) { return rpc("app_sair", { p_token: t }); };
+  L.MONT_bonusExtrato = async function (token) {
+    const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port === "3000";
+    const servidor = local || /\.vercel\.app$/i.test(location.hostname) ? "" : "https://easyloc-zeta.vercel.app";
+    const r = await fetch(servidor + "/api/gs", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projeto: "central", fn: "equipeExtratoMontador", args: [token] }) });
+    const dados = await r.json();
+    if (!r.ok || !dados.ok) throw new Error(dados.erro || "Não foi possível carregar seu bônus.");
+    return dados.resultado;
+  };
   L.MONT_appCarregar = async function (token, idExtra) {
     var d = await rpc("mont_dados", { p_token: token, p_id_extra: uuid(idExtra) });
     try { if (d.pasta) { localStorage.setItem("montadorPasta", d.pasta); } } catch (e) {}

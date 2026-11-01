@@ -909,6 +909,9 @@ const app = {
   ano: "",
   premios: []
 };
+let montadorIntegrado=false;
+try{montadorIntegrado=new URLSearchParams(location.search).get('montador')==='1' && window.parent!==window && window.parent.location.origin===location.origin && !!window.parent.MontadorBonus;}catch(_){}
+if(montadorIntegrado)document.body.classList.add('bonus-integrado');
 
 const NOMES_MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 const SIGLAS_MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -1065,6 +1068,19 @@ function sair(){
 function carregarExtrato(){
 
   mostrarTela("telaCarregando");
+  if(montadorIntegrado){
+    window.parent.MontadorBonus.extrato().then(function(res){
+      app.dados=res;const anos=anosDisponiveis();app.ano=anos[anos.length-1]||String(new Date().getFullYear());
+      montarPremios();render();mostrarTela('telaExtrato');
+    }).catch(function(falha){
+      document.getElementById('telaCarregando').replaceChildren();
+      const box=document.createElement('div'),texto=document.createElement('p'),botao=document.createElement('button');
+      texto.textContent=String(falha.message||'Não foi possível carregar seu bônus.');
+      botao.type='button';botao.className='botao';botao.textContent='Tentar novamente';botao.onclick=carregarExtrato;
+      box.append(texto,botao);document.getElementById('telaCarregando').append(box);
+    });
+    return;
+  }
 
   google.script.run
     .withSuccessHandler(function(res){
@@ -1381,12 +1397,18 @@ document.addEventListener("keydown", function(evento){
 
 app.token = lerArmazenado("meuBonusToken");
 
-if(app.token){
+if(montadorIntegrado || app.token){
   carregarExtrato();
 } else {
   mostrarEntrada("");
 }
 </script>
-<script src="../apps-equipe.js?v=20261031-catalogo"></script>
+<script src="../apps-equipe.js?v=20261031-bonus-integrado"></script>
+<style>
+body.chiavari-equipe-app.bonus-integrado{padding-bottom:20px}
+.chiavari-equipe-app.bonus-integrado .perfil>.btn-sair{display:none}
+.bonus-integrado .perfil{min-height:170px;grid-template-columns:minmax(0,1fr) 44px;grid-template-rows:44px 1fr;padding-top:12px;padding-bottom:24px}
+.bonus-integrado .perfil>.equipe-logo{height:44px}
+</style>
 </body>
 </html>

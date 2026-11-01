@@ -20,12 +20,17 @@ async function main(){
     const etapas=[{id:'montagem',pedido:'123',cliente:'Evento Jardim',local:'Espaço Jardim',caminhao:'Caminhão 01',dataEvento:'01/11/2026',confirmadoDecorador:true,etapa:'montagem',operacao:'montagem',dataISO:data,horario:'08:00',responsavel:'Ana Silva',equipe:['Ana Silva','Bruno'],free:{quantidade:1,pessoas:[{nome:'Carlos Free',miniatura:location.origin+'/fixture.png'}]},trocas:[],info:{},outrasEtapas:[{etapa:'Carregamento',dataISO:data,horario:'06:00'}]},{id:'volta',pedido:'124',cliente:'Outro evento',etapa:'desmontagem',operacao:'desmontagem',dataISO:data,horario:'18:00',responsavel:'Ana Silva',equipe:[],trocas:[],sacolasMontagem:[],info:{},outrasEtapas:[]}];
     const amanha=new Date();amanha.setDate(amanha.getDate()+1);etapas.push({...etapas[0],id:'amanha',cliente:'Evento Amanhã',dataISO:amanha.toLocaleDateString('en-CA')});
     const lista=[{chave:'a',nome:'Cadeira natural de madeira com assento estofado em linho bege e acabamento especial para composição de ambientes (L) 0.60 m (A) 0.90 m '.repeat(2),esperado:3,foto:location.origin+'/fixture.png'},{chave:'kit/b',nome:'Mesa do kit',kit_nome:'Composição Jardim',esperado:2,foto:location.origin+'/fixture.png'}];
+    lista.forEach((it,i)=>Object.assign(it,{ambiente_id:'amb'+i,ambiente:i?'Recepção':'Cerimônia',ambiente_ordem:i+1}));
     function registro(tipo){return JSON.parse(localStorage.getItem('fixture:'+tipo)||'null');}
     function guardar(tipo,d){localStorage.setItem('fixture:'+tipo,JSON.stringify(d));return d;}
     function result(fn,args){
      window.chamadas.push({fn,args});
      if(fn==='MONT_login'){if(args[1]!=='1234')throw Error('CPF ou PIN incorretos.');return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};}
-     if(fn==='MONT_appCarregar')return {nome:'Ana Silva',perfil:'RESPONSAVEL',etapas,apontamento:registro('apontamento')};
+     if(fn==='MONT_appCarregar')return {nome:'Ana Silva',perfil:'RESPONSAVEL',etapas,apontamento:registro('apontamento')?.status==='ATIVO'?registro('apontamento'):null};
+     if(fn==='MONT_bonusExtrato'){
+      if(!window.bonusTentado){window.bonusTentado=true;throw Error('Sem conexão para carregar o bônus.');}
+      return {pessoa:{nome:'Ana Silva',cargo:'Montadora',setor:'Montagem'},meses:[{mes:'2026-10',abastecido:300,pago:100,premiacao:false}],saldoPremiacao:0,atualizadoEm:'31/10/2026'};
+     }
      if(fn==='MONT_fotosEtapa')return {pessoas:[{nome:'Ana Silva',papel:'responsavel',foto:location.origin+'/fixture.png'},{nome:'Bruno',papel:'equipe',foto:location.origin+'/fixture.png'}],caminhoes:[{nome:'Caminhão 01',foto:location.origin+'/fixture.png'}],solicitante:{nome:etapas.find(e=>e.id===args[1]).cliente,foto:location.origin+'/fixture.png'}};
      if(fn==='MONT_sincronizarCheckin')return registro('apontamento');
      if(fn==='MONT_finalizarApontamento'){localStorage.removeItem('fixture:apontamento');return {};}
@@ -67,6 +72,16 @@ async function main(){
    await page.screenshot({path:path.join(os.tmpdir(),`montador-cpf-inicio-${width}.png`)});
    assert.equal(await page.evaluate(()=>chamadas.some(c=>c.fn==='MONT_listarResponsaveis')),false);
    assert.equal(await page.evaluate(()=>chamadas.find(c=>c.fn==='MONT_login').args[0]),'12345678901');
+   assert.deepEqual(await page.locator('#appNavegacao button').allTextContents(),['Cronograma','Meu bônus']);
+   await page.getByRole('button',{name:'Meu bônus',exact:true}).click();
+   const bonus=page.frameLocator('#bonusConteudo iframe');await bonus.getByRole('button',{name:'Tentar novamente',exact:true}).click();
+   await bonus.locator('#telaExtrato:not(.oculto)').waitFor();assert.match(await bonus.locator('#valorTotal').textContent(),/300/);
+   assert.equal(await bonus.locator('#telaEntrada').isVisible(),false);assert.equal(await bonus.locator('.equipe-navegacao').count(),0);
+   assert.equal(await bonus.locator('.btn-sair').isVisible(),false);
+   assert.equal(await page.locator('#bonusConteudo iframe').getAttribute('src').then(v=>v.includes('token')),false);
+   await page.evaluate(()=>carregar());assert.equal(await page.locator('#telaBonus').isVisible(),true);
+   await page.screenshot({path:path.join(os.tmpdir(),`montador-bonus-${width}.png`)});
+   await page.getByRole('button',{name:'Cronograma',exact:true}).click();
    await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();
    for(const nome of ['Evento Jardim','Ana Silva','Bruno','Caminhão 01']){
     await page.getByRole('button',{name:'Ver foto de '+nome,exact:true}).click();
@@ -90,6 +105,7 @@ async function main(){
    await page.getByRole('button',{name:'QR code da equipe',exact:true}).click();await page.getByText('123456',{exact:true}).waitFor();await page.locator('#folha').getByRole('button',{name:'Fechar',exact:true}).click();
    await page.getByRole('button',{name:'QR para o motorista',exact:true}).click();await page.getByText('654321',{exact:true}).waitFor();await page.locator('#folha').getByRole('button',{name:'Fechar',exact:true}).click();
    await page.getByRole('button',{name:'Tentar novamente',exact:true}).click();await page.locator('.entrega-item').first().waitFor();
+   assert.deepEqual(await page.locator('.entrega-ambiente>h3').allTextContents(),['Cerimônia','Recepção']);
    assert.equal(await page.getByText(/Parte do kit:/).count(),0);assert.ok(await page.locator('.entrega-item h3').first().evaluate(e=>e.scrollHeight>e.clientHeight&&getComputedStyle(e).webkitLineClamp==='2'));
    await page.screenshot({path:path.join(os.tmpdir(),`montador-fluxo-inicial-${width}.png`),fullPage:true});
    await page.locator('#regFotoEquipe input').setInputFiles({name:'equipe.png',mimeType:'image/png',buffer:png});await page.waitForSelector('#regFotoEquipe.tem');await page.getByRole('button',{name:'Enviar foto da equipe',exact:true}).click();await page.waitForSelector('#passo_equipe.concluido');
@@ -97,6 +113,10 @@ async function main(){
    assert.equal(await page.locator('#regProgressoPct').textContent(),'25%');
    await page.getByRole('button',{name:'Salvar conferência',exact:true}).click();assert.equal(await page.evaluate(()=>chamadas.some(c=>c.fn==='MONT_entregaSalvar')),false);
    const linhas=page.locator('.entrega-item');await linhas.nth(0).getByRole('button',{name:'Tudo entregue, sem danos'}).click();
+   assert.equal(await linhas.nth(0).locator('.entrega-quantidades').isVisible(),false);
+   await linhas.nth(0).getByRole('button',{name:'Corrigir quantidades ou informar dano',exact:true}).click();
+   assert.equal(await linhas.nth(0).locator('.entrega-quantidades').isVisible(),true);
+   await linhas.nth(0).getByRole('button',{name:'Tudo entregue, sem danos'}).click();
    await linhas.nth(1).locator('[data-entregue]').fill('1');await linhas.nth(1).locator('[data-dano]').fill('1');
    await linhas.nth(1).locator('[data-obs]').fill('Pé da mesa danificado no transporte');
    await linhas.nth(1).locator('input[type=file]').setInputFiles({name:'dano.png',mimeType:'image/png',buffer:png});await page.waitForSelector('.entrega-foto-dano:not([hidden])');
@@ -104,12 +124,16 @@ async function main(){
    await page.getByRole('button',{name:'Salvar conferência',exact:true}).click();await page.waitForSelector('.conferencia-enviada');assert.equal(await page.locator('#regProgressoPct').textContent(),'50%');
    const enviado=await page.evaluate(()=>chamadas.find(c=>c.fn==='MONT_entregaSalvar').args);assert.equal(enviado[0],'fixture');assert.equal(enviado[1],'montagem');assert.equal(enviado[2]['kit/b'].danificados,1);assert.match(enviado[2]['kit/b'].foto,/^data:image/);
    assert.equal(await linhas.nth(1).locator('[data-entregue]').isDisabled(),true);
+   assert.equal(await linhas.nth(0).locator('.entrega-quantidades').isVisible(),false);assert.match(await linhas.nth(0).locator('.entrega-confirmado').textContent(),/3 entregues/);
    await page.locator('.codigo-sacola').fill('SC-001');await page.locator('#regSacolas input[type=file]').setInputFiles({name:'sacola.png',mimeType:'image/png',buffer:png});await page.waitForSelector('#regSacolas .foto.tem');await page.getByRole('button',{name:'Enviar sacolas',exact:true}).click();await page.waitForSelector('#passo_sacolas.concluido');
    await page.locator('#regRecebedor').fill('Maria Cliente');await page.locator('#regFotoLista input').setInputFiles({name:'lista.png',mimeType:'image/png',buffer:png});await page.waitForSelector('#regFotoLista.tem');await page.getByRole('button',{name:'Enviar lista assinada',exact:true}).click();await page.waitForSelector('#passo_lista.concluido');assert.equal(await page.locator('#regProgressoPct').textContent(),'100%');assert.equal(await page.locator('.tudo-pronto').isVisible(),true);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    await page.screenshot({path:path.join(os.tmpdir(),`montador-fluxo-completo-${width}.png`),fullPage:true});
    await page.reload();await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();await page.waitForSelector('.conferencia-enviada');await page.waitForFunction(()=>document.getElementById('regProgressoPct').textContent==='100%');assert.equal(await page.locator('#regProgresso').count(),1);
-   await page.locator('#apontamentoEtapa .encerrar-evento').click();await page.getByRole('button',{name:'Encerrar',exact:true}).click();await page.locator('#telaInicio.ativa').waitFor();
+   assert.equal(await page.getByRole('button',{name:/Encerrar apontamento/}).count(),0);
+   await page.evaluate(async()=>{const p=JSON.parse(localStorage.getItem('fixture:apontamento'));p.status='ENCERRADO';p.fim=new Date().toISOString();localStorage.setItem('fixture:apontamento',JSON.stringify(p));await carregar();});
+   await page.locator('.apontamento-tempo-final').waitFor();assert.equal(await page.evaluate(()=>estado.apontamento),null);
+   await page.getByRole('button',{name:'Cronograma',exact:true}).click();
    await page.locator('#telaInicio .etapa').filter({hasText:'Evento Amanhã'}).click();
    await page.getByRole('button',{name:'Ver foto de Evento Amanhã',exact:true}).waitFor();
    const cabecaAmanha=await page.locator('#etapaCabeca .cabeca').evaluate(e=>({cor:getComputedStyle(e).backgroundColor,borda:getComputedStyle(e).borderTopWidth,raio:getComputedStyle(e).borderRadius}));

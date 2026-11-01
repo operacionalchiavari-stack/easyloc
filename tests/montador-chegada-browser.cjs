@@ -31,7 +31,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
    await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html`);
    await page.waitForSelector('.etapa');await page.screenshot({path:path.join(os.tmpdir(),`montador-agenda-${width}.png`),fullPage:true});
    assert.equal(await page.locator('#agendaBusca').count(),0);assert.equal(await page.locator('[data-periodo]').count(),0);
-   await page.locator('[data-acesso="equipe"]').click();await page.waitForSelector('#telaSemEvento.ativa');assert.equal(await page.locator('#telaInicio').isVisible(),false);
+   assert.equal(await page.locator('#appNavegacao button').count(),2);
    await page.locator('[data-acesso="agenda"]').click();await page.locator('.etapa').first().click();
    assert.equal(await page.locator('#etapaEquipe').isVisible(),true);assert.equal(await page.locator('img[alt="Foto de Carlos Free"]').count(),1);assert.ok(await page.locator('#etapaEquipe').textContent().then(t=>t.includes('Foto não cadastrada')));
    await page.screenshot({path:path.join(os.tmpdir(),`montador-pedido-${width}.png`),fullPage:true});
@@ -45,24 +45,23 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
    await page.waitForSelector('#etapaFotoEquipe:not([hidden])');
    assert.equal(await page.locator('#passo_equipe').count(),1);assert.equal(await page.locator('#etapaCabeca').isVisible(),true);assert.equal(await page.locator('#etapaTituloPagina').textContent(),'');assert.match(await page.locator('#apontamentoEtapa .apontamento-tempo').textContent(),/^00:01:/);
    assert.equal(await page.locator('#regEmpresas,#regQtd').count(),0);
-   await page.locator('[data-acesso="avarias"]').click();await page.locator('.evento-reposicao summary').click();await page.getByRole('button',{name:'Informar avaria ou falta',exact:true}).click();await page.waitForSelector('#trocaItem');await page.locator('#trocaItem').fill('Mesa');await page.locator('#trocaMotivos .opcao').first().click();
+   await page.locator('.evento-reposicao summary').click();await page.getByRole('button',{name:'Informar avaria ou falta',exact:true}).click();await page.waitForSelector('#trocaItem');await page.locator('#trocaItem').fill('Mesa');await page.locator('#trocaMotivos .opcao').first().click();
    await page.locator('#trocaFoto input').setInputFiles({name:'avaria.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1XQAAAAASUVORK5CYII=','base64')});
    await page.waitForFunction(()=>document.querySelector('#trocaFoto').classList.contains('tem'));await page.locator('#btnTroca').click();await page.waitForFunction(()=>savedAvarias.length===1);const avaria=await page.evaluate(()=>savedAvarias[0]);assert.equal(avaria.idEtapa,'etapa');assert.equal(avaria.apontamentoId,'apontamento-1');
-   await page.locator('[data-acesso="equipe"]').click();
+   await page.locator('#passo_equipe').scrollIntoViewIfNeeded();
    const button=page.getByRole('button',{name:'Enviar foto da equipe',exact:true});
    await button.click();assert.equal(await page.evaluate(()=>saved.length),0);
    await page.locator('#regFotoEquipe input').setInputFiles({name:'equipe.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1XQAAAAASUVORK5CYII=','base64')});
    await page.waitForFunction(()=>document.querySelector('#regFotoEquipe').classList.contains('tem'));
-   await page.locator('[data-acesso="registros"]').click();await page.locator('[data-acesso="equipe"]').click();assert.equal(await page.locator('#regFotoEquipe').evaluate(e=>e.classList.contains('tem')),true);
+   await page.locator('[data-acesso="agenda"]').click();await page.locator('.etapa').first().click();assert.equal(await page.locator('#regFotoEquipe').evaluate(e=>e.classList.contains('tem')),true);
    await page.evaluate(()=>denyGps=true);await button.click();await page.waitForFunction(()=>!document.querySelector('[onclick="enviarEquipe(this)"]').disabled);assert.equal(await page.evaluate(()=>saved.length),0);
    await page.evaluate(()=>denyGps=false);await button.click();await page.waitForFunction(()=>saved.length===1);
    const sent=await page.evaluate(()=>saved[0]);assert.equal('empresa' in sent,false);assert.equal('quantidade' in sent,false);assert.equal(sent.token,'fixture');assert.equal(sent.latitude,-23);assert.equal(sent.precisaoGPS,12);assert.ok(sent.foto.startsWith('data:image/'));assert.equal('uniformizada' in sent,false);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
    await page.screenshot({path:path.join(os.tmpdir(),`montador-chegada-${width}.png`),fullPage:true});
-   const inicio=await page.evaluate(()=>JSON.parse(localStorage.getItem('fixtureApontamento')).inicio);await page.reload();await page.waitForSelector('.etapa');await page.locator('[data-acesso="equipe"]').click();await page.waitForSelector('#etapaFotoEquipe:not([hidden])');assert.equal(await page.evaluate(()=>estado.apontamento.inicio),inicio);
-   await page.locator('#apontamentoEtapa .encerrar-evento').click();await page.getByRole('button',{name:'Encerrar',exact:true}).click();await page.waitForSelector('#telaInicio.ativa');assert.equal(await page.evaluate(()=>localStorage.getItem('fixtureApontamento')),null);
-   await page.locator('[data-acesso="avarias"]').click();await page.waitForSelector('#telaSemEvento.ativa');await page.close();
+   const inicio=await page.evaluate(()=>JSON.parse(localStorage.getItem('fixtureApontamento')).inicio);await page.reload();await page.waitForSelector('.etapa');await page.locator('.etapa').first().click();await page.waitForSelector('#etapaFotoEquipe:not([hidden])');assert.equal(await page.evaluate(()=>estado.apontamento.inicio),inicio);
+   assert.equal(await page.locator('.encerrar-evento').count(),0);await page.close();
   }
-  console.log('App: início, cronômetro, vínculo da foto, abas completas, restauração e encerramento validados em celular/desktop.');
+  console.log('App: início, cronômetro sem encerramento manual, foto, avarias e restauração validados em celular/desktop.');
  }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

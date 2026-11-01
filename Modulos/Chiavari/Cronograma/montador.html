@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261031-fotos-etapa"></script>
+  <script src="../operacao-sem-motor.js?v=20261031-app-integrado"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -323,7 +323,7 @@
 </style>
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261031-catalogo">
-  <link rel="stylesheet" href="montador-evento.css?v=20261031-endereco-azul">
+  <link rel="stylesheet" href="montador-evento.css?v=20261031-app-integrado">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
 
@@ -386,11 +386,10 @@
   </section>
 
   <section class="tela" id="telaSemEvento"><h1 id="semEventoTitulo">Foto da equipe</h1><div class="secao sem-evento"><h2>Selecione um evento</h2><p>Abra uma etapa no seu cronograma. O check-in ou a foto da equipe registra o início do atendimento.</p><button class="btn" type="button" onclick="irAcesso('agenda')">Abrir meu cronograma</button></div></section>
+  <section class="tela" id="telaBonus"><div class="bonus-cabecalho"><h1>Meu bônus</h1><button type="button" class="btn btn-claro btn-pequeno" onclick="MontadorBonus.atualizar()">Atualizar</button></div><div id="bonusConteudo"></div></section>
   <nav class="app-navegacao" id="appNavegacao" aria-label="Navegação principal" hidden>
     <button type="button" data-acesso="agenda" onclick="irAcesso('agenda')"><span aria-hidden="true">▦</span>Cronograma</button>
-    <button type="button" data-acesso="equipe" onclick="irAcesso('equipe')"><span aria-hidden="true">◎</span>Foto da equipe</button>
-    <button type="button" data-acesso="avarias" onclick="irAcesso('avarias')"><span aria-hidden="true">⚠</span>Avarias</button>
-    <button type="button" data-acesso="registros" onclick="irAcesso('registros')"><span aria-hidden="true">☑</span>Checklist</button>
+    <button type="button" data-acesso="bonus" onclick="irAcesso('bonus')"><span aria-hidden="true">♧</span>Meu bônus</button>
   </nav>
   <div class="folha-fundo" id="folha" onclick="if(event.target === this) fecharFolha()">
     <div class="folha" id="folhaConteudo"></div>
@@ -398,7 +397,8 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="montador-evento.js?v=20261031-fotos-etapa"></script>
+<script src="montador-evento.js?v=20261031-app-integrado"></script>
+<script src="montador-bonus.js?v=20261031-integrado"></script>
 <script>
   /* =========================================================
      ESTADO E APOIO
@@ -475,7 +475,7 @@
   function sessaoExpirou(erro){ return /SESSAO_EXPIRADA/.test(String(erro && erro.message || erro)); }
 
   function mostrarTela(id){
-    document.getElementById("appNavegacao").hidden = id !== "telaInicio" && id !== "telaEtapa" && id !== "telaSemEvento";
+    document.getElementById("appNavegacao").hidden = !["telaInicio","telaEtapa","telaSemEvento","telaBonus"].includes(id);
     atualizarNavegacao();
     document.querySelectorAll(".tela").forEach(function(t){ t.classList.toggle("ativa", t.id === id); });
     window.scrollTo(0, 0);
@@ -578,6 +578,7 @@
   }
 
   function mostrarLogin(mensagem){
+    MontadorBonus.limpar();
     mostrarTela("telaLogin");
     const erro = document.getElementById("erroLogin");
     erro.textContent = mensagem || "";
@@ -607,6 +608,7 @@
       if(!sim){ return; }
       const t = estado.token;
       salvarToken("");
+      MontadorBonus.limpar();
       estado.dados = null;
       mostrarLogin("");
       if(t){ chamar("MONT_sair", t).catch(function(){}); }
@@ -642,6 +644,7 @@
     document.getElementById("inicioNome").textContent = String(d.nome || "").split(" ")[0];
     document.getElementById("inicioPerfil").textContent = d.perfil === "SUPERVISOR" ? "Supervisor · todas as montagens" : "Olá,";
     document.getElementById("inicioAvatar").textContent = String(d.nome || "?").charAt(0).toUpperCase();
+    if(estado.acesso==='bonus' && document.getElementById('telaBonus').classList.contains('ativa')){return;}
 
     // Link direto para uma etapa (QR/cronograma): abre assim que carregar
     if(estado.idLink){
@@ -668,6 +671,9 @@
     document.querySelectorAll('[data-acesso]').forEach(function(b){const ativo=b.dataset.acesso===estado.acesso;b.classList.toggle('ativo',ativo);b.setAttribute('aria-current',ativo?'page':'false');});
   }
   function irAcesso(acesso){
+    if(acesso==='bonus'){
+      estado.acesso='bonus';mostrarTela('telaBonus');MontadorBonus.abrir();return;
+    }
     if(acesso !== 'agenda' && window.MontadorEvento && MontadorEvento.linear()){
       trocarPainelEtapa(acesso);renderApontamento();mostrarTela('telaEtapa');return;
     }
@@ -695,41 +701,35 @@
       const area=document.getElementById(id);
       if(!p){
         const etapa=acharEtapa(estado.etapaAberta);
-        area.innerHTML=id==='apontamentoEtapa' && etapa && etapa.operacao ? '<p class="evento-checkin-status">O check-in da equipe registra o início. Se não houver check-in, envie a foto da equipe para registrar a chegada.</p>' : '';
+        const encerrado=etapa?.apontamento?.status==='ENCERRADO'?etapa.apontamento:null;
+        area.innerHTML=id!=='apontamentoEtapa'?'':encerrado?'<section class="apontamento-ativo apontamento-encerrado"><div class="apontamento-relogio"><span class="apontamento-tempo-final" aria-label="Tempo total">'+esc(duracaoApontamento(encerrado))+'</span><small>Tempo total · check-out da equipe</small></div></section>':etapa?.operacao?'<p class="evento-checkin-status">O check-in da equipe registra o início. Se não houver check-in, envie a foto da equipe para registrar a chegada.</p>':'';
         return;
       }
-      area.innerHTML='<section class="apontamento-ativo"><div><small>EVENTO EM ANDAMENTO · #'+esc(p.pedido)+'</small><strong>'+esc(e?e.cliente:'Evento em andamento')+'</strong></div><div class="apontamento-relogio"><span class="apontamento-tempo" role="timer" aria-label="Tempo decorrido">00:00:00</span><small>tempo em andamento</small></div><div class="apontamento-acoes">'+(id==='apontamentoInicio'?'<button type="button" class="btn btn-claro" onclick="irAcesso(\'equipe\')">Continuar evento</button>':'<button type="button" class="btn btn-claro" onclick="trocarPainelEtapa(\'info\')">Dados do evento</button>')+'<button type="button" class="encerrar-evento" onclick="encerrarEvento(this)">Encerrar apontamento</button></div></section>';
+      area.innerHTML='<section class="apontamento-ativo"><div><small>EVENTO EM ANDAMENTO · #'+esc(p.pedido)+'</small><strong>'+esc(e?e.cliente:'Evento em andamento')+'</strong></div><div class="apontamento-relogio"><span class="apontamento-tempo" role="timer" aria-label="Tempo decorrido">'+esc(duracaoApontamento(p))+'</span><small>tempo em andamento</small></div>'+(id==='apontamentoInicio'?'<div class="apontamento-acoes"><button type="button" class="btn btn-claro" onclick="abrirEtapa(\''+esc(p.idEtapa)+'\')">Continuar evento</button></div>':'')+'</section>';
     });
     atualizarCronometro();
     if(window.MontadorEvento){ MontadorEvento.sincronizar(); }
   }
   function atualizarCronometro(){
     const p=estado.apontamento;if(!p)return;
-    const inicio=Date.parse(p.inicio);const segundos=Number.isFinite(inicio)?Math.max(0,Math.floor((Date.now()-inicio)/1000)):0;
-    const texto=String(Math.floor(segundos/3600)).padStart(2,'0')+':'+String(Math.floor(segundos/60)%60).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
-    document.querySelectorAll('.apontamento-tempo').forEach(function(el){el.textContent=texto;});
+    document.querySelectorAll('.apontamento-tempo').forEach(function(el){el.textContent=duracaoApontamento(p);});
+  }
+  function duracaoApontamento(p){
+    const inicio=Date.parse(p.inicio),fim=p.fim?Date.parse(p.fim):Date.now();
+    const segundos=Number.isFinite(inicio)&&Number.isFinite(fim)?Math.max(0,Math.floor((fim-inicio)/1000)):0;
+    return String(Math.floor(segundos/3600)).padStart(2,'0')+':'+String(Math.floor(segundos/60)%60).padStart(2,'0')+':'+String(segundos%60).padStart(2,'0');
   }
   setInterval(atualizarCronometro,1000);
-  function encerrarEvento(btn){
-    const p=estado.apontamento;if(!p||btn.disabled)return;
-    perguntar('Encerrar apontamento?','O tempo será salvo. Os registros já enviados continuam vinculados ao evento.','Encerrar').then(function(sim){
-      if(!sim)return;ocupar(btn,'Encerrando…');
-      chamar('MONT_finalizarApontamento',estado.token,p.id).then(function(){
-        estado.apontamento=null;estado.dados.apontamento=null;estado.etapaAberta='';renderApontamento();irAcesso('agenda');toast('Apontamento encerrado e tempo salvo.');
-      }).catch(function(e){liberar(btn);toast(mensagemErro(e,'Não foi possível encerrar.'),true);});
-    });
-  }
 
   function trocarPainelEtapa(painel){
     if(window.MontadorEvento && MontadorEvento.navegar(painel)){ return; }
-    if(painel!=='info' && painel!=='equipe' && (!estado.apontamento || estado.apontamento.idEtapa!==estado.etapaAberta)){irAcesso(painel);return;}
     estado.painel=painel;
     const grupos={info:['etapaInfo','etapaPedido'],equipe:['etapaFotoEquipe'],avarias:['etapaTrocas'],registros:['etapaRegistros','etapaSacolas']};
-    Object.keys(grupos).forEach(function(k){grupos[k].forEach(function(id){document.getElementById(id).hidden=k!==painel;});});
-    document.getElementById('etapaEquipe').hidden=painel!=='info' && painel!=='equipe';
-    document.getElementById('etapaCabeca').hidden=painel!=='info';
-    document.getElementById('etapaTituloPagina').textContent=painel==='equipe'?'Foto da equipe':painel==='avarias'?'Avarias':painel==='registros'?'Checklist':'';
-    estado.acesso=painel==='info'?'agenda':painel;atualizarNavegacao();
+    Object.values(grupos).flat().forEach(function(id){document.getElementById(id).hidden=false;});
+    document.getElementById('etapaEquipe').hidden=false;
+    document.getElementById('etapaCabeca').hidden=false;
+    document.getElementById('etapaTituloPagina').textContent='';
+    estado.acesso='agenda';atualizarNavegacao();
     window.scrollTo({top:0,behavior:'auto'});
   }
 
@@ -810,7 +810,7 @@
   function abrirEtapa(id){
     const e = acharEtapa(id);
     if(!e){ return; }
-    if(estado.apontamento && estado.apontamento.idEtapa!==id){toast("Há um evento em andamento. Encerre o apontamento antes de abrir outro.",true);return;}
+    if(estado.apontamento && estado.apontamento.idEtapa!==id){toast("Há um evento em andamento. Aguarde o check-out da equipe antes de abrir outro.",true);return;}
     if(estado.etapaAberta===id && document.getElementById("passo_equipe")){trocarPainelEtapa(estado.acesso==='agenda'?'info':estado.acesso);renderApontamento();mostrarTela("telaEtapa");return;}
     if(window.MontadorEvento){ MontadorEvento.preparar(); }
     estado.etapaAberta = id;
@@ -1703,6 +1703,6 @@
 </script>
 <script>window.MONT_MAPS_SDK="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRTnhpv3S0kqV9G56x0npaxd6YABj8dnI&libraries=geometry&language=pt-BR&region=BR&callback=MONT_mapsPronto&loading=async";</script>
 <script src="montador-mapa.js?v=20261014-pedido"></script>
-<script src="../apps-equipe.js?v=20261031-catalogo"></script>
+<script src="../apps-equipe.js?v=20261031-bonus-integrado"></script>
 </body>
 </html>

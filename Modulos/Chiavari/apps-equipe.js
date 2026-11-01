@@ -14,6 +14,7 @@
   conta:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
   extrato:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8m-8 4h5"/>',
   premios:'<path d="M3 8h18v4H3zm2 4v9h14v-9M12 8v13"/><path d="M12 8H8a3 3 0 1 1 3-3Zm0 0h4a3 3 0 1 0-3-3Z"/>',
+  bonus:'<path d="M3 8h18v4H3zm2 4v9h14v-9M12 8v13"/><path d="M12 8H8a3 3 0 1 1 3-3Zm0 0h4a3 3 0 1 0-3-3Z"/>',
   sair:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9"/>',
   fechar:'<path d="m6 6 12 12M6 18 18 6"/>'
  };
@@ -24,6 +25,7 @@
   img.src=new URL("logo nova branca - sem fundo.png",raiz).href;img.alt="Chiavari · Móveis para eventos";return img;
  }
  document.querySelectorAll(".marca,.entrada-marca,.topo,.perfil").forEach(el=>el.prepend(logo()));
+ if(tipo==='bonus'&&corpo.classList.contains('bonus-integrado')){identidade();return;}
 
  if(tipo==="montagem"||tipo==="free"){
   const texto=document.querySelector(".topo-texto");

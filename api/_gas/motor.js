@@ -656,6 +656,11 @@ class Execucao {
         if (f && f.cpf) { f = { ...f, cpf: cofre.decifrar(f.cpf, `rh:${f.empresa_id}:cpf`) }; }
         return f ? {...f,fotoUrl: !f.foto_url ? '' : /^https?:\/\//.test(f.foto_url) ? f.foto_url : `${cfg.url}/storage/v1/object/public/avatares/${f.empresa_id}/${f.id}.jpg`} : null;
       },
+      equipeCadastroMontador: token => {
+        let f = rpcSincrono(cfg, 'mont_bonus_cadastro', { p_token: String(token || '') });
+        if (f && f.cpf) f = { ...f, cpf: cofre.decifrar(f.cpf, `rh:${f.empresa_id}:cpf`) };
+        return f ? { ...f, fotoUrl: !f.foto_url ? '' : /^https?:\/\//.test(f.foto_url) ? f.foto_url : `${cfg.url}/storage/v1/object/public/avatares/${f.empresa_id}/${f.id}.jpg` } : null;
+      },
       equipePinConferir: (empresa, id, pin) => rpcSincrono(cfg, 'rh_pin_conferir', { p_empresa: empresa, p_funcionario: id, p_pin: pin }),
       ciencias: () => {
         if (!ex.usuario) throw new Error('Sessão necessária');

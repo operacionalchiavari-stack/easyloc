@@ -122,6 +122,18 @@ function equipeExtrato(token){
   const cadastro =
     appEquipeValidarSessao_(token);
 
+  return appEquipeExtratoCadastro_(cadastro);
+}
+
+function equipeExtratoMontador(token){
+  const f = Acervo.equipeCadastroMontador(token);
+  if(!f) throw new Error('SESSAO_EXPIRADA');
+  return appEquipeExtratoCadastro_({id:f.id,empresaId:f.empresa_id,
+    chave:f.cpf?'CPF:'+f.cpf:'RH:'+f.id,nome:f.nome,fotoId:'',fotoUrl:f.fotoUrl});
+}
+
+function appEquipeExtratoCadastro_(cadastro){
+
   /* As consultas abaixo são da Central; a sessão já foi conferida */
   liberarAcessoInterno_();
 
