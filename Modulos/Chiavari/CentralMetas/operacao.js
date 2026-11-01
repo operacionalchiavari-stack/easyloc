@@ -53,7 +53,7 @@
       '<ol>' +
         '<li><b>Bolo do mês.</b> Para cada evento do mês na Matriz, cada equipe ganha <code>valor de locação × score de dificuldade × % da equipe</code>. ' +
           'Hoje: Triagem ' + pct(p.percentual.triagem) + ', Carregamento ' + pct(p.percentual.carregamento) + ', Montagem ' + pct(p.percentual.montagem) + '. ' +
-          'O score vem do Painel de Complexidade. Setores automáticos pendentes ou sem serviço não geram bônus. Registros manuais antigos sem avaliação conservam o score padrão (' + p.scorePadrao.triagem + ', ' + p.scorePadrao.carregamento + ' e ' + p.scorePadrao.montagem + ').</li>' +
+          'O score vem do Painel de Complexidade. Mesmo sem serviço específico, o setor mantém a dificuldade dos fatores gerais e os pesos mínimos configurados. Scores automáticos pendentes aguardam conferência para o cálculo de bônus. Registros manuais antigos sem avaliação conservam o score padrão (' + p.scorePadrao.triagem + ', ' + p.scorePadrao.carregamento + ' e ' + p.scorePadrao.montagem + ').</li>' +
         '<li><b>Desconto dos danos.</b> Cada item danificado da equipe desconta <b>' + pct(p.descontoPercentual) + ' do valor de reposição</b> dele' +
           (p.tetoDescontoItem > 0 ? ' (no máximo ' + brl(p.tetoDescontoItem) + ' por item)' : '') + '. ' +
           'O dano é descontado da equipe selecionada no lançamento: Triagem, Carregamento ou Montagem. Limpeza de estofados (desgaste) e danos da Produção não contam. Registros antigos de Dano Interno vão para a Triagem; registros antigos de Evento usam as equipes do Cronograma. O total nunca fica negativo.</li>' +

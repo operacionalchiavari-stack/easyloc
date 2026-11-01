@@ -20,7 +20,10 @@ const contexto={id:'00000000-0000-0000-0000-000000000030',numero:'101',data_even
    }};
   },contexto);
   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Costura/costura.html`);
-  await page.locator('#listaPedidos tbody tr').waitFor();assert.match(await page.locator('#listaPedidos').textContent(),/Não se aplica/);
+  await page.locator('#listaPedidos tbody tr').waitFor();assert.match(await page.locator('#listaPedidos .score').textContent(),/\d+(,\d+)?%/);assert.equal(await page.locator('#listaPedidos .cx-score-legenda').textContent(),'Dificuldade mínima');assert.doesNotMatch(await page.locator('#listaPedidos').textContent(),/Não se aplica/);
+  await page.locator('#btnPintura').click();assert.equal(await page.locator('#listaPedidos .cx-score-legenda').textContent(),'Dificuldade mínima');
+  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cx-auto-dialog[open]').waitFor();assert.match(await page.locator('.cx-auto-scores').textContent(),/Dificuldade mínima/);assert.doesNotMatch(await page.locator('.cx-auto-scores').textContent(),/Não se aplica/);await page.getByRole('button',{name:'Fechar análise',exact:true}).click();
+  await page.locator('#btnPersonalizacao').click();
   await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).click();await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('Local de teste');assert.equal(await page.locator('#listaPedidos tbody tr').count(),1);
   await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('Cliente de teste');assert.equal(await page.locator('#listaPedidos tbody tr').count(),1);
   await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('');
@@ -50,6 +53,9 @@ const contexto={id:'00000000-0000-0000-0000-000000000030',numero:'101',data_even
   assert.match(await page.locator('#cxSubtitulo').textContent(),/pendentes ficam fora/);
   assert.equal(await page.locator('#painelCX svg').evaluateAll(els=>els.some(e=>/NaN/.test(e.outerHTML))),false);
   await page.evaluate(()=>PainelCX.fechar());
+  await page.evaluate(async()=>{__contexto.local={};__contexto.excecoes={viagens:1,montagem_aplica:false};pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});await page.locator('#listaPedidos tbody tr').click();
+  await page.locator('.cx-auto-dialog[open]').waitFor();assert.match(await page.locator('.cx-auto-scores').textContent(),/Dificuldade mínima/);assert.equal(await page.locator('#cxSemPendencias').isVisible(),true);assert.equal(await page.locator('[data-cx-pendente="true"]').count(),0);
+  await page.getByRole('button',{name:'Fechar análise',exact:true}).click();
   await page.evaluate(async()=>{__contexto.congelado_em='2026-11-05T10:00:00Z';pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});await page.locator('#listaPedidos tbody tr').click();
   await page.locator('.cx-auto-dialog[open]').waitFor();assert.equal(await page.getByRole('button',{name:'Salvar ajustes do pedido',exact:true}).count(),0);assert.equal(await page.locator('[data-cx-resposta="16"]').isDisabled(),true);
   assert.deepEqual(errors,[]);await page.close();console.log(`Complexidade ${width}px: fontes, exceções, gráficos e histórico congelado OK.`);

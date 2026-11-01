@@ -69,10 +69,14 @@
   for(const q of perguntas){const e=ex.respostas?.[q.id];if(typeof e?.valor==='boolean'&&e.motivo){r[q.id]={valor:e.valor,fonte:'Exceção do pedido',detalhe:e.motivo,por:e.por,em:e.em};}}
   const aplica={personalizacao:est,pintura:pin,montagem:typeof ex.montagem_aplica==='boolean'?ex.montagem_aplica:c.montagem?true:null,triagem:itens.length>0?true:null,carregamento:carga?true:null};
   const resultado={};
-  for(const s of setores){const ids=[...gerais,...s.perguntas],pendentes=ids.filter(i=>r[i].valor===null);let total=0,maximo=0,minimoPendente=0,maximoPendente=0;for(const id of ids){const p=cfg.pesos[id];maximo+=Math.max(p.sim,p.nao);if(r[id].valor!==null)total+=r[id].valor?p.sim:p.nao;else{minimoPendente+=Math.min(p.sim,p.nao);maximoPendente+=Math.max(p.sim,p.nao);}}
-   const status=aplica[s.id]===false?'nao_aplica':aplica[s.id]===null||pendentes.length||maximo<=0?'pendente':'completo';
-   const intervalo=aplica[s.id]!==false&&maximo>0?{minimo:Math.round((total+minimoPendente)/maximo*1000)/10,maximo:Math.round((total+maximoPendente)/maximo*1000)/10}:null;
-   resultado[s.id]={status,score:status==='completo'?Math.round(total/maximo*1000)/10:null,intervalo,pendentes,aplica:aplica[s.id]};
+  for(const s of setores){const ids=[...gerais,...s.perguntas],baseGeral=aplica[s.id]===false;
+   // A ausência de serviço mantém os fatores gerais e os pesos "Não" do setor.
+   // As respostas de origem continuam intactas para consulta e auditoria.
+   const valor=id=>baseGeral&&s.perguntas.includes(id)?false:r[id].valor;
+   const pendentes=ids.filter(i=>valor(i)===null);let total=0,maximo=0,minimoPendente=0,maximoPendente=0;for(const id of ids){const p=cfg.pesos[id];maximo+=Math.max(p.sim,p.nao);if(valor(id)!==null)total+=valor(id)?p.sim:p.nao;else{minimoPendente+=Math.min(p.sim,p.nao);maximoPendente+=Math.max(p.sim,p.nao);}}
+   const status=aplica[s.id]===null||pendentes.length||maximo<=0?'pendente':'completo';
+   const intervalo=maximo>0?{minimo:Math.round((total+minimoPendente)/maximo*1000)/10,maximo:Math.round((total+maximoPendente)/maximo*1000)/10}:null;
+   resultado[s.id]={status,score:status==='completo'?Math.round(total/maximo*1000)/10:null,intervalo,pendentes,aplica:aplica[s.id],base_geral:baseGeral};
   }
   return {versao:1,respostas:r,setores:resultado,congelado:!!c.congelado_em,congelado_em:c.congelado_em||null};
  }
@@ -112,13 +116,13 @@
  function apresentarScore(s){
   if(!s)return {texto:'Pendente',legenda:'',detalhe:'Avaliação ainda indisponível.'};
   const percentual=n=>n.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
-  if(s.status==='nao_aplica')return {texto:'Não se aplica',legenda:'',detalhe:'Este pedido não exige serviço deste setor.'};
+  const base=s.base_geral?'Sem serviço específico neste setor: os fatores gerais continuam pontuando e as perguntas específicas usam o peso de Não. ':'';
   if(s.status==='pendente'){
    const n=s.pendentes.length,pendencias=n+' '+(n===1?'resposta pendente':'respostas pendentes');
    const texto=s.intervalo?(s.intervalo.minimo===s.intervalo.maximo?percentual(s.intervalo.minimo):percentual(s.intervalo.minimo)+' – '+percentual(s.intervalo.maximo)):'Pendente';
-   return {texto,legenda:'Parcial · '+(s.aplica===null?'setor a confirmar':pendencias),detalhe:'Faixa possível de dificuldade com os dados atuais. '+pendencias+'.'+(s.aplica===null?' Confirme se este setor participa do pedido.':'')+' O percentual final será definido após completar as informações.'};
+   return {texto,legenda:'Parcial · '+(s.aplica===null?'setor a confirmar':pendencias),detalhe:base+'Faixa possível de dificuldade com os dados atuais. '+pendencias+'.'+(s.aplica===null?' Confirme se este setor participa do pedido.':'')+' O percentual final será definido após completar as informações.'};
   }
-  return {texto:percentual(s.score),legenda:s.status==='manual_preservado'?'Avaliação anterior':'',detalhe:s.status==='manual_preservado'?'Percentual da avaliação manual preservada enquanto as fontes automáticas estão incompletas.':'Dificuldade calculada com todas as respostas preenchidas.'};
+  return {texto:percentual(s.score),legenda:s.status==='manual_preservado'?'Avaliação anterior':s.base_geral?'Dificuldade mínima':'',detalhe:s.status==='manual_preservado'?'Percentual da avaliação manual preservada enquanto as fontes automáticas estão incompletas.':base+'Dificuldade calculada com todas as respostas necessárias preenchidas.'};
  }
  return {padrao,perguntas,setores,gerais,avaliar,paraPainel,grupo,mesclar,linhas,apresentarScore};
 });

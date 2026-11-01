@@ -19,7 +19,8 @@ test('ausência é pendência; etiquetas em arrays e distância zero são reconh
 });
 test('cor do móvel não cria serviço; quantidades somam ambientes e kits contam pelas peças físicas',()=>{
  const c=completo();c.servicos=[];c.itens[0].cor='Azul';let r=cx.avaliar(c);
- assert.equal(r.setores.personalizacao.status,'nao_aplica');assert.equal(r.setores.pintura.status,'nao_aplica');
+ assert.equal(r.setores.personalizacao.status,'completo');assert.equal(r.setores.pintura.status,'completo');
+ assert.equal(r.setores.personalizacao.base_geral,true);assert.equal(r.setores.pintura.base_geral,true);
  c.servicos=[{item_id:'sofa',quantidade:3,etapas:['forracao']},{item_id:'sofa',quantidade:2,etapas:['forracao']}];
  assert.equal(cx.avaliar(c).respostas[4].valor,true);
  c.itens[0].quantidade=1000;c.pecas[0].quantidade=50;assert.equal(cx.avaliar(c).respostas[19].valor,false);
@@ -59,7 +60,7 @@ test('score parcial delimita as respostas desconhecidas sem criar percentual def
  const fechado=cx.avaliar(completo()).setores.montagem;assert.equal(fechado.intervalo.minimo,fechado.score);assert.equal(fechado.intervalo.maximo,fechado.score);assert.equal(cx.apresentarScore(fechado).legenda,'');
  assert.equal(cx.apresentarScore({...s,aplica:null}).legenda,'Parcial · setor a confirmar');
  assert.equal(cx.apresentarScore({...s,status:'manual_preservado',score:62}).texto,'62%');
- const semServico=cx.avaliar({...c,servicos:[]}).setores.personalizacao;assert.equal(semServico.intervalo,null);assert.equal(cx.apresentarScore(semServico).texto,'Não se aplica');
+ const semServico=cx.avaliar({...c,servicos:[]}).setores.personalizacao;assert.ok(semServico.intervalo.minimo>0);assert.match(cx.apresentarScore(semServico).texto,/%/);assert.equal(semServico.status,'pendente');assert.deepEqual(semServico.pendentes,[5]);
  // Um peso "Não" maior que "Sim" também precisa respeitar os limites.
  c.cliente={complexidade:{reclamacao:false}};c.pedidos_anteriores=null;
  const recorrencia=cx.avaliar(c).setores.montagem;assert.ok(recorrencia.intervalo.minimo<=recorrencia.intervalo.maximo);
@@ -71,4 +72,23 @@ test('Central de Metas consome a mesma projeção, mantém o score anterior e n�
  let eventos=ctx.operacaoEventosMes_('2026-11');assert.equal(eventos.length,1);assert.equal(eventos[0].scores.montagem,0);assert.equal(eventos[0].complexidade.montagem.status,'pendente');
  const linha=Array(49).fill('');Object.assign(linha,{0:'antigo',1:'2026-11-04',2:'101',5:1000,32:62});legado=[[],linha];
  eventos=ctx.operacaoEventosMes_('2026-11');assert.equal(eventos.length,1);assert.equal(eventos[0].scores.montagem,62);assert.equal(eventos[0].complexidade.montagem.status,'manual_preservado');
+});
+test('sem serviço mantém dificuldade geral, pesos Não e a mesma porcentagem na projeção dos setores',()=>{
+ const c=completo();c.servicos=[];c.excecoes.montagem_aplica=false;c.local={};c.caminhoes=0;
+ let r=cx.avaliar(c);
+ const esperado=s=>{
+  const ids=[...cx.gerais,...s.perguntas],p=c.config.pesos;
+  const soma=ids.reduce((n,id)=>n+p[id][s.perguntas.includes(id)?'nao':r.respostas[id].valor?'sim':'nao'],0);
+  return Math.round(soma/ids.reduce((n,id)=>n+Math.max(p[id].sim,p[id].nao),0)*1000)/10;
+ };
+ for(const id of ['personalizacao','pintura','montagem']){
+  const s=r.setores[id];assert.equal(s.status,'completo');assert.equal(s.aplica,false);assert.equal(s.base_geral,true);assert.equal(s.score,esperado(cx.setores.find(s=>s.id===id)));assert.ok(s.score>0);assert.deepEqual(s.pendentes,[]);assert.equal(cx.apresentarScore(s).legenda,'Dificuldade mínima');
+ }
+ assert.equal(r.respostas[15].valor,null); // A fonte ausente não é falsificada para calcular a base.
+ const anterior=r.setores.pintura.score;c.cliente.complexidade.reclamacao=true;r=cx.avaliar(c);assert.ok(r.setores.pintura.score>anterior);
+ c.config.pesos[11].nao=0;r=cx.avaliar(c);assert.equal(r.setores.pintura.score,esperado(cx.setores.find(s=>s.id==='pintura')));
+ const p=cx.paraPainel(c),linha=cx.linhas([[]],[p])[1];assert.equal(linha[18],p.score);assert.equal(linha[25],p.scorePintura);assert.equal(linha[32],p.scoreMontagem);
+ const vm=require('node:vm'),fs=require('node:fs'),ctx={Acervo:{complexidadeLinhas:l=>cx.linhas(l,[p])},Session:{getScriptTimeZone:()=>''},Utilities:{formatDate:d=>d.toISOString().slice(0,7)}};
+ vm.createContext(ctx);vm.runInContext(fs.readFileSync('api/_gas/projetos/central/OperacaoCentral.js','utf8'),ctx);ctx.operacaoValores_=()=>[[]];
+ assert.equal(ctx.operacaoEventosMes_('2026-11')[0].scores.montagem,p.scoreMontagem);
 });
