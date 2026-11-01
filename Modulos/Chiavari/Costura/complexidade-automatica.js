@@ -43,7 +43,5 @@
  window.CXAutomatico={abrir,score(p,setor){const s=p.complexidade?.setores[setor];return !s?'':s.status==='nao_aplica'?'Não se aplica':s.status==='pendente'?'Pendente':s.score+'%';}};
  const original=window.abrirPedidoPorId;
  window.abrirPedidoPorId=function(id){const p=pedidos.find(p=>p.id===decodeURIComponent(id));if(p?.automatico)return abrir(p);return original(id);};
- const aviso=document.createElement('p');aviso.className='cx-automacao-ajuda';aviso.textContent='Automático: dados do pedido, cadastros e cronograma. Clique no pedido para consultar as fontes e tratar pendências. Avaliações manuais anteriores permanecem preservadas.';document.getElementById('listaPedidos').before(aviso);
- const atualizar=document.createElement('button');atualizar.type='button';atualizar.className='btn-painel-cx';atualizar.textContent='Atualizar dados';atualizar.onclick=async()=>{atualizar.disabled=true;try{pedidos=await chamada('listarPedidos');render();}catch(e){aviso.textContent=e.message;}finally{atualizar.disabled=false;}};aviso.after(atualizar);
  setInterval(async()=>{if(document.visibilityState!=='visible'||dlg.open)return;try{pedidos=await chamada('listarPedidos');render();}catch(_){/* Mantém a última leitura, sem apagar dados durante perda de conexão. */}},60000);
 })();

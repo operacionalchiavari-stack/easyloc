@@ -21,6 +21,12 @@ const contexto={id:'00000000-0000-0000-0000-000000000030',numero:'101',data_even
   },contexto);
   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Costura/costura.html`);
   await page.locator('#listaPedidos tbody tr').waitFor();assert.match(await page.locator('#listaPedidos').textContent(),/Não se aplica/);
+  await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).click();await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('Local de teste');assert.equal(await page.locator('#listaPedidos tbody tr').count(),1);
+  await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('Cliente de teste');assert.equal(await page.locator('#listaPedidos tbody tr').count(),1);
+  await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('');
+  if(width>1100){assert.ok(await page.locator('.cx-cabecalho-linha').evaluate(e=>{const [a,b,c]=[...e.children].map(x=>x.getBoundingClientRect());return a.right<b.left&&b.right<c.left&&Math.abs((b.left+b.right)/2-innerWidth/2)<3;}));}
+  assert.equal(await page.getByRole('button',{name:'Limpar',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Atualizar dados',exact:true}).count(),0);assert.equal(await page.locator('.cx-automacao-ajuda').count(),0);
+  await page.screenshot({path:path.join(os.tmpdir(),`complexidade-cabecalho-${width}.png`)});
   await page.locator('#listaPedidos tbody tr').click();await page.locator('.cx-auto-dialog[open]').waitFor();
   assert.equal(await page.locator('[data-cx-resposta]').count(),26);assert.match(await page.locator('.cx-auto-dialog').textContent(),/Cadastro do local/);
   assert.equal(await page.locator('#cxSemPendencias').isVisible(),true);await page.locator('#cxMostrarTodas').check();
@@ -34,7 +40,7 @@ const contexto={id:'00000000-0000-0000-0000-000000000030',numero:'101',data_even
   assert.match(await page.locator('#cxSubtitulo').textContent(),/pendentes ficam fora/);
   assert.equal(await page.locator('#painelCX svg').evaluateAll(els=>els.some(e=>/NaN/.test(e.outerHTML))),false);
   await page.evaluate(()=>PainelCX.fechar());
-  await page.evaluate(()=>{__contexto.congelado_em='2026-11-05T10:00:00Z';});await page.getByRole('button',{name:'Atualizar dados',exact:true}).click();await page.locator('#listaPedidos tbody tr').click();
+  await page.evaluate(async()=>{__contexto.congelado_em='2026-11-05T10:00:00Z';pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});await page.locator('#listaPedidos tbody tr').click();
   await page.locator('.cx-auto-dialog[open]').waitFor();assert.equal(await page.getByRole('button',{name:'Salvar ajustes do pedido',exact:true}).count(),0);assert.equal(await page.locator('[data-cx-resposta="16"]').isDisabled(),true);
   assert.deepEqual(errors,[]);await page.close();console.log(`Complexidade ${width}px: fontes, exceções, gráficos e histórico congelado OK.`);
  }}finally{await browser.close();server.close();}
