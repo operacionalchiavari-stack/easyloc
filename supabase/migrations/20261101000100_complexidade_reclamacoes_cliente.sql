@@ -97,4 +97,3 @@ begin
  );
 end $$;
 revoke all on function complexidade_contexto(uuid,uuid) from public,anon,authenticated;
-
