@@ -68,7 +68,7 @@
   #sidebar.portal-menu .usuario-dados{ opacity:1 !important; }
   #sidebar.portal-menu .usuario-dados b{ max-width:150px; font-size:13.5px; }
   #sidebar.portal-menu .usuario-dados small{ max-width:150px; font-size:12px; color:#d6d1c8; }
-  #sidebar.portal-menu .avatar{ width:calc(var(--topo) - 8px); height:calc(var(--topo) - 8px); font-size:22px; }
+  #sidebar.portal-menu .avatar{ width:52px; height:52px; font-size:18px; }
   #sidebar.portal-menu .menu-rodape > .menu-item{ width:auto; min-height:40px; padding:0 12px; gap:0; color:#f1eee8; border-radius:999px; }
   #sidebar.portal-menu .menu-rodape > .menu-item .rotulo{ display:none; }
   #sidebar.portal-menu .menu-rodape > .menu-item:hover{ background:rgba(255,255,255,.12); color:#fff; }
@@ -85,5 +85,9 @@
 }
 
 #sidebar.portal-menu .menu-rodape > .menu-sair,
-#sidebar.portal-menu .menu-rodape > .menu-sair:hover{ color:var(--el-color-danger,#e30613); }
-#sidebar.portal-menu .menu-sair > :is(svg,[data-lucide="log-out"]){ color:var(--el-color-danger,#e30613); }
+#sidebar.portal-menu .menu-rodape > .menu-sair:hover{ color:#fff; background:var(--el-color-danger,#e30613); border-radius:12px; min-height:44px; justify-content:center; }
+#sidebar.portal-menu .menu-rodape > .menu-sair:hover{ background:#c90510; }
+#sidebar.portal-menu .menu-sair > :is(svg,[data-lucide="log-out"]){ color:#fff; }
+@media (min-width:861px){
+  #sidebar.portal-menu .menu-rodape > .menu-sair{ width:44px; height:44px; padding:0; }
+}
