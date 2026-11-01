@@ -42,7 +42,7 @@
       // Junta os cards da antiga aba Operação e separa cada assunto num card (parametros-organizar.js).
       window.prOrganizarLogistica?.(host);
     }
-    if (nome === 'comercial') { await window.carregarParametrosLogisticaManual(host, state.empresaId); await window.carregarEtiquetasCadastro?.(host, state.empresaId); await window.carregarMotivosCancelamento?.(host, state.empresaId); await window.carregarPapeisEquipe?.(host, state.empresaId); await window.carregarParametrosPosVenda?.(host, state.empresaId); }
+    if (nome === 'comercial') { await window.carregarParametrosLogisticaManual(host, state.empresaId); await window.carregarEtiquetasCadastro?.(host, state.empresaId); await window.carregarParametrosComplexidade?.(host,state.empresaId); await window.carregarMotivosCancelamento?.(host, state.empresaId); await window.carregarPapeisEquipe?.(host, state.empresaId); await window.carregarParametrosPosVenda?.(host, state.empresaId); }
     if(nome === 'comercial') await window.carregarParametrosProdutividade?.(host,state.empresaId);
     state.sections[nome] = { cleanup };
   }
@@ -107,6 +107,7 @@
         await window.salvarParametrosLogisticaManual(state.empresaId);
         await window.__salvarServicosComercial();
         await window.salvarEtiquetasCadastro?.(state.empresaId);
+        await window.salvarParametrosComplexidade?.(state.empresaId);
       } else if (atual === 'identidade') {
         if (!await window.__salvarIdentidadeVisual()) throw Error('Revise a identidade visual antes de salvar.');
       }

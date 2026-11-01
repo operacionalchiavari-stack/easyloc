@@ -1,0 +1,21 @@
+(function(){
+ 'use strict';let host,config;
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ window.carregarParametrosComplexidade=async(root,empresa)=>{
+  const {data,error}=await window.supabaseClient.from('complexidade_config').select('config').eq('empresa_id',empresa).maybeSingle();if(error)throw error;
+  config={...CXRegras.padrao(),...(data?.config||{}),pesos:{...CXRegras.padrao().pesos,...(data?.config?.pesos||{})}};
+  host=document.createElement('section');host.className='pr-card';host.id='parametrosComplexidade';
+  const numeros=[['limite_personalizados','Personalização: limite de peças'],['limite_pecas','Triagem: limite de peças físicas'],['limite_caminhoes','Montagem: limite de caminhões'],['distancia_manual_m','Transporte manual longo: metros'],['antecedencia_horas','Pedido urgente: antecedência em horas']];
+  host.innerHTML='<h3>Complexidade automática dos pedidos</h3><p class="pr-ajuda">As respostas vêm dos cadastros, dos itens e do cronograma. Pontos são normalizados para 0 a 100%. Pendências e setores sem serviço não geram um percentual definitivo. Avaliações encerradas conservam as regras anteriores.</p><div class="cx-param-grid">'+numeros.map(([k,n])=>'<label>'+n+'<input data-cx-param="'+k+'" type="number" min="1" max="100000" value="'+esc(config[k])+'"></label>').join('')+
+  ['inicio_expediente','fim_expediente'].map((k,i)=>'<label>'+['Início do expediente','Fim do expediente'][i]+'<input data-cx-param="'+k+'" type="time" value="'+esc(config[k])+'"></label>').join('')+
+  '<label>Tipos de evento com operação especial (um por linha)<textarea data-cx-param="tipos_especiais">'+esc(config.tipos_especiais.join('\n'))+'</textarea></label><label>Grupos de manuseio volumoso (um por linha)<textarea data-cx-param="grupos_volumosos">'+esc(config.grupos_volumosos.join('\n'))+'</textarea></label></div><fieldset><legend>Dias de expediente</legend>'+['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((n,i)=>'<label style="margin-right:14px"><input type="checkbox" data-cx-dia="'+i+'"'+(config.dias_expediente.includes(i)?' checked':'')+'> '+n+'</label>').join('')+'</fieldset><details><summary>Revisar perguntas e pesos</summary><p class="pr-ajuda">“Sim” e “Não” possuem pesos próprios. O máximo possível de cada setor corresponde a 100%.</p><table><thead><tr><th>Pergunta</th><th>Sim</th><th>Não</th></tr></thead><tbody>'+CXRegras.perguntas.map(q=>'<tr><td>'+esc(q.titulo)+'</td>'+['sim','nao'].map(k=>'<td><input type="number" min="0" max="1000" aria-label="'+k+' da pergunta '+q.id+'" data-cx-peso="'+q.id+'" data-resposta="'+k+'" value="'+esc(config.pesos[q.id][k])+'"></td>').join('')+'</tr>').join('')+'</tbody></table></details>';
+  const style=document.createElement('style');style.textContent='#parametrosComplexidade .cx-param-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px}#parametrosComplexidade label{font-size:13px}#parametrosComplexidade .cx-param-grid label{display:flex;flex-direction:column;gap:7px}#parametrosComplexidade input[type=number],#parametrosComplexidade input[type=time],#parametrosComplexidade textarea{min-height:42px;border:1px solid #dce0e5;border-radius:9px;padding:9px;font:inherit;width:100%}#parametrosComplexidade td{padding:8px}#parametrosComplexidade td input{max-width:85px}#parametrosComplexidade summary{cursor:pointer;padding:16px 0}#parametrosComplexidade fieldset{margin:20px 0;border:1px solid #dce0e5;border-radius:12px;padding:14px}';host.append(style);root.append(host);
+ };
+ window.salvarParametrosComplexidade=async empresa=>{
+  if(!host)return;const novo=structuredClone(config);
+  host.querySelectorAll('[data-cx-param]').forEach(el=>{const k=el.dataset.cxParam;novo[k]=el.type==='number'?Number(el.value):el.tagName==='TEXTAREA'?el.value.split('\n').map(s=>s.trim()).filter(Boolean):el.value;});
+  novo.dias_expediente=[...host.querySelectorAll('[data-cx-dia]:checked')].map(el=>Number(el.dataset.cxDia));
+  host.querySelectorAll('[data-cx-peso]').forEach(el=>{novo.pesos[el.dataset.cxPeso][el.dataset.resposta]=Number(el.value);});
+  const {error}=await window.supabaseClient.rpc('complexidade_config_salvar',{p_empresa:empresa,p_config:novo});if(error)throw error;config=novo;
+ };
+})();

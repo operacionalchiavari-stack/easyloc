@@ -30,7 +30,7 @@ function mock(banco) {
       };
       return q;
     },
-    async rpc() { return { data: [], error: null }; }
+    async rpc(nome,args) { window.__gravados.push({t:'rpc:'+nome,row:args});return { data: [], error: null }; }
   };
 }
 
@@ -77,6 +77,8 @@ async function abrir(b, pagina, banco) {
     assert.deepEqual(await p.$$eval('.tag-group[data-group="estilo"] .tag', t => t.map(x => x.textContent)), ['Clássico', 'Industrial', 'Boho'], 'opção antiga continua aparecendo');
     assert.equal(await p.locator('.tag-group[data-group="estilo"] .tag.fora-da-lista.selected').count(), 1);
     assert.equal(await p.getAttribute('.tag-group[data-group="canal"]', 'data-obrigatoria'), 'false');
+    assert.equal(await p.locator('#cx-cliente-reclamacao').inputValue(),'');
+    assert.deepEqual(await p.evaluate(()=>{CXCadastro.preencher('cliente',{reclamacao:false,exclusivo:true,anterior:'preservar'});const r=CXCadastro.ler('cliente');CXCadastro.preencher('cliente',{});return r;}),{reclamacao:false,exclusivo:true,anterior:'preservar'});
     await p.screenshot({ path: path.join(process.env.TMP || '.', 'clientes-etiquetas.png') });
     // BV com explicação: campos existem, ficam travados fora da edição e são obrigatórios para dar BV
     for (const id of ["clienteBvObservacao", "clienteBvNegociadoPor", "clienteBvAprovadoPor"]) assert.equal(await p.locator("#" + id).count(), 1, id);
@@ -101,6 +103,8 @@ async function abrir(b, pagina, banco) {
     await p.waitForFunction(() => !document.getElementById('salvarEmpresaParametros').disabled, null, { timeout: 15000 });
     await p.click('#pr-tab-comercial');
     await p.waitForSelector('[data-etiquetas-cadastro="cliente"] .pe-grupo');
+    await p.waitForSelector('#parametrosComplexidade');assert.equal(await p.locator('[data-cx-peso]').count(),52);
+    await p.locator('[data-cx-param="limite_pecas"]').fill('60');
     const cli = p.locator('[data-etiquetas-cadastro="cliente"]');
     await cli.locator('.pe-grupo[data-i="0"] .pe-nova').fill('Rústico');
     await cli.locator('.pe-grupo[data-i="0"] .pe-nova').press('Enter');
@@ -113,6 +117,7 @@ async function abrir(b, pagina, banco) {
     await p.click('#salvarEmpresaParametros');
     await p.waitForFunction(() => window.__gravados.filter(x => x.t === 'cadastro_etiquetas').length >= 2);
     const g = await p.evaluate(() => window.__gravados);
+    const cx=g.find(x=>x.t==='rpc:complexidade_config_salvar');assert.equal(cx.row.p_config.limite_pecas,60);assert.equal(Object.keys(cx.row.p_config.pesos).length,26);
     const gc = g.find(x => x.t === 'cadastro_etiquetas' && x.row.cadastro === 'cliente').row.grupos;
     assert.deepEqual(gc[0].opcoes, ['Clássico', 'Rústico']);
     assert.equal(gc[3].chave, 'tamanho_do_evento');

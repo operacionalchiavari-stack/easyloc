@@ -1,4 +1,4 @@
-import { getEmpresaAtualId } from "./itens.api.mjs?v=20261015-estoque";
+import { getEmpresaAtualId } from "./itens.api.mjs?v=20261031-complexidade";
 import "./itens.modal.mjs";
 import "./itens.foto.mjs?v=20261008-banco";
 import "./itens.3d.mjs?v=20261005-otimizar";
@@ -54,6 +54,7 @@ function statusDoItem(item = state.item){
 }
 
 function resetarFormularioNovo(){
+  window.CXCadastro?.preencher('item',{});
   window.itemAtualId = null;
   window.itemAtualQrCode = null;
 
@@ -85,6 +86,7 @@ function resetarFormularioNovo(){
 
 function preencherFormulario(item){
   if(!item) return resetarFormularioNovo();
+  window.CXCadastro?.preencher('item',item.complexidade);
 
   window.itemAtualId = item.id;
   window.itemAtualQrCode = item.qr_code || null;

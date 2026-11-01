@@ -53,7 +53,7 @@
       '<ol>' +
         '<li><b>Bolo do mês.</b> Para cada evento do mês na Matriz, cada equipe ganha <code>valor de locação × score de dificuldade × % da equipe</code>. ' +
           'Hoje: Triagem ' + pct(p.percentual.triagem) + ', Carregamento ' + pct(p.percentual.carregamento) + ', Montagem ' + pct(p.percentual.montagem) + '. ' +
-          'O score de cada equipe vem do Painel de Complexidade (abas Triagem, Carregamento e Montagem). Evento ainda sem resposta usa o score padrão (' + p.scorePadrao.triagem + ', ' + p.scorePadrao.carregamento + ' e ' + p.scorePadrao.montagem + ').</li>' +
+          'O score vem do Painel de Complexidade. Setores automáticos pendentes ou sem serviço não geram bônus. Registros manuais antigos sem avaliação conservam o score padrão (' + p.scorePadrao.triagem + ', ' + p.scorePadrao.carregamento + ' e ' + p.scorePadrao.montagem + ').</li>' +
         '<li><b>Desconto dos danos.</b> Cada item danificado da equipe desconta <b>' + pct(p.descontoPercentual) + ' do valor de reposição</b> dele' +
           (p.tetoDescontoItem > 0 ? ' (no máximo ' + brl(p.tetoDescontoItem) + ' por item)' : '') + '. ' +
           'O dano é descontado da equipe selecionada no lançamento: Triagem, Carregamento ou Montagem. Limpeza de estofados (desgaste) e danos da Produção não contam. Registros antigos de Dano Interno vão para a Triagem; registros antigos de Evento usam as equipes do Cronograma. O total nunca fica negativo.</li>' +
@@ -174,7 +174,7 @@
       if(!porPedido[k]){ porPedido[k] = { pedido: e.pedido, data: e.data, cliente: e.cliente, locacao: e.valorLocacao }; ordem.push(k); }
       porPedido[k][eq.chave] = e;
     }); });
-    const cel = function(e){ return e ? '<td class="op-evento-score"><span class="score-card">' + esc(e.score) + '</span>' + (e.scorePadrao ? ' <small class="op-tag">padrão</small>' : '') + '</td><td class="valor-vermelho op-evento-valor">' + brl(e.comissao) + '</td>' : '<td class="op-evento-score">—</td><td class="op-evento-valor">—</td>'; };
+    const cel = function(e){ return e ? '<td class="op-evento-score"><span class="score-card">' + esc(e.complexidadeStatus==='pendente'?'Pendente':e.complexidadeStatus==='nao_aplica'?'Não se aplica':e.score) + '</span>' + (e.scorePadrao ? ' <small class="op-tag">padrão</small>' : '') + '</td><td class="valor-vermelho op-evento-valor">' + brl(e.comissao) + '</td>' : '<td class="op-evento-score">—</td><td class="op-evento-valor">—</td>'; };
     const linhas = ordem.map(function(k){
       const r = porPedido[k];
       return '<tr><td>' + esc(r.data) + '</td><td class="pedido">' + esc(r.pedido) + '</td><td>' + esc(r.cliente) + '</td><td>' + (r.locacao ? brl(r.locacao) : '<span class="op-alerta">sem valor</span>') + '</td>' +

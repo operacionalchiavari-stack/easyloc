@@ -3230,7 +3230,7 @@ function listarEventosMes(mes){
     .openById("1btYPbmM0-uwwjHx2Yu6zbFFUefv3IXHwcMXY_qw0p78")
     .getSheetByName("Matriz");
 
-  const dados = sheet.getDataRange().getDisplayValues();
+  const dados = Acervo.complexidadeLinhas(sheet.getDataRange().getDisplayValues());
 
   const resultado = [];
 

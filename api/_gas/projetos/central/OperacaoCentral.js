@@ -193,7 +193,7 @@ function operacaoFuncionariosRH_(){
 }
 
 function operacaoEventosMes_(mes){
-  const linhas = operacaoValores_(OPERACAO_MATRIZ_ID, "Matriz");
+  const linhas = Acervo.complexidadeLinhas(operacaoValores_(OPERACAO_MATRIZ_ID, "Matriz"));
   const eventos = [];
   for(let i = 1; i < linhas.length; i++){
     const l = linhas[i];
@@ -201,14 +201,15 @@ function operacaoEventosMes_(mes){
     const scores = {};
     OPERACAO_EQUIPES.forEach(function(e){
       const s = operacaoNumero_(l[e.colunaScore]);
-      scores[e.chave] = s > 0 ? s : null;
+      scores[e.chave] = l[49]?.automatico ? (['completo','manual_preservado'].includes(l[49].setores[e.chave].status)?s:0) : s > 0 ? s : null;
     });
     eventos.push({
       pedido: operacaoPedido_(l[2]),
       cliente: String(l[3] || "").trim(),
       data: l[1] instanceof Date ? Utilities.formatDate(l[1], Session.getScriptTimeZone(), "dd/MM/yyyy") : String(l[1] || ""),
       valorLocacao: operacaoNumero_(l[5]),
-      scores: scores
+      scores: scores,
+      complexidade: l[49]?.automatico ? l[49].setores : null
     });
   }
   return eventos;
@@ -365,12 +366,15 @@ function operacaoCalcular_(d){
       eq.eventos.push({
         pedido: ev.pedido, cliente: ev.cliente, data: ev.data, valorLocacao: ev.valorLocacao,
         score: score, scorePadrao: usouPadrao, comissao: comissao,
+        complexidadeStatus: ev.complexidade?.[e.chave]?.status || null,
         noCronograma: minhas.length > 0, pessoas: qtd
       });
     });
   });
 
   const controleMontagem = d.montagemRH;
+  const cxPendentes=(d.eventos||[]).filter(function(ev){return ev.complexidade&&Object.values(ev.complexidade).some(function(s){return s.status==='pendente';});}).length;
+  if(cxPendentes) avisos.push(cxPendentes+' pedido(s) com complexidade automática pendente: setores incompletos não geram bônus até a conferência.');
   if(controleMontagem) {
     if(controleMontagem.uniformePendente) avisos.push('Montagem: '+controleMontagem.uniformePendente+' foto(s) aguardam avaliação de uniforme pelo RH.');
     if(controleMontagem.localPendente) avisos.push('Montagem: '+controleMontagem.localPendente+' envio(s) precisam de conferência de localização no cronograma.');

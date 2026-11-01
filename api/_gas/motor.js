@@ -13,6 +13,7 @@ process.env.TZ = "America/Sao_Paulo";
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const complexidade = require('../../js/shared/complexidade');
 const { fetchSincrono } = require("./sincrono");
 const { formatarData } = require("./datas");
 const { Aba, Planilha } = require("./planilha");
@@ -508,6 +509,26 @@ class Execucao {
        Acervo.pode(chave): administrador da empresa pode tudo; os outros, só as
        permissões marcadas para eles (mesma regra de funcionario_pode no banco). */
     const Acervo = {
+      complexidadePedidos: () => {
+        const empresa = ex.usuario?.empresaId || ex.complexidadeEmpresa;
+        if (!empresa) throw new Error('Sessão necessária para consultar a complexidade');
+        if (!ex.complexidadeCache) {
+          const aba = SpreadsheetApp.openById('1btYPbmM0-uwwjHx2Yu6zbFFUefv3IXHwcMXY_qw0p78').getSheetByName('Comissão');
+          const taxas = new Map((aba ? aba.getDataRange().getValues().slice(1) : []).map(l => [String(l[0]).trim(), Number(l[1] || 0)]));
+          ex.complexidadeCache = rpcSincrono(cfg, 'complexidade_contextos', { p_empresa: empresa }).map(c => {
+            const p = { ...complexidade.paraPainel(c), planejamento: c.excecoes || {} };
+            for (const [s,nome,sufixo] of [['personalizacao','Forração',''],['pintura','Acabamento e Pintura','Pintura'],['montagem','Montagem','Montagem'],['triagem','Triagem','Triagem'],['carregamento','Carregamento','Carregamento']]) {
+              const score=p.complexidade.setores[s].score,taxa=taxas.get(nome)||0,valor=Number(s==='montagem'?p.valorMontagem:p.valorLocacao);
+              p['comissao'+sufixo]=taxa;p['valorComissao'+sufixo]=score===null?null:Math.round(valor*score/100*taxa*100)/100;
+            }
+            return p;
+          });
+        }
+        return ex.complexidadeCache;
+      },
+      complexidadeMesclar: manuais => complexidade.mesclar(manuais, Acervo.complexidadePedidos()),
+      complexidadeLinhas: linhas => complexidade.linhas(linhas, Acervo.complexidadePedidos()),
+      complexidadeLiberarEquipe: empresa => { if (empresa !== 'bb1260f0-99cd-4d17-ab9b-23c299b4c50b') throw new Error('Empresa inválida'); ex.complexidadeEmpresa = empresa; },
       usuario: () => (ex.usuario ? { id: ex.usuario.id, nome: ex.usuario.nome, email: ex.usuario.email, empresaId: ex.usuario.empresaId, admin: !!ex.usuario.admin } : null),
       pode: chave => !!(ex.usuario && (ex.usuario.admin || (ex.usuario.permissoes || []).indexOf(chave) >= 0)),
       funcionarios: () => {

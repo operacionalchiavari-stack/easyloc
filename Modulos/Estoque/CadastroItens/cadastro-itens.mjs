@@ -3,8 +3,8 @@
    EasyLoc
 ===================================================== */
 
-import { carregarItens } from "./itens.api.mjs?v=20260920-paginacao";
-import "./itens.modal.mjs";
+import { carregarItens } from "./itens.api.mjs?v=20261031-complexidade";
+import "./itens.modal.mjs?v=20261031-complexidade";
 import "./itens.tabela.mjs?v=20261023-lista-dispon";
 import "./itens.foto.mjs?v=20261008-banco";
 // itens.3d.mjs antes só era carregado em item-detalhes.html (Item/Componente).
@@ -13,7 +13,7 @@ import "./itens.foto.mjs?v=20261008-banco";
 import "./itens.3d.mjs?v=20261005-otimizar";
 import "./itens.filtros.mjs";
 import "./itens.print.mjs?v=20261026-acentos";
-import "./kits.modal.mjs?v=20261020-kit-sem-duplicar";
+import "./kits.modal.mjs?v=20261031-complexidade";
 
 function abrirPaginaDetalhesItem(itemId = null, modo = "editar"){
   window.__ITEM_DETALHE_ID = itemId || null;

@@ -10,6 +10,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Complexidade</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/shared/complexidade.js?v=20261031"></script>
+<link rel="stylesheet" href="complexidade-automatica.css?v=20261031">
 
 <style>
 :root{
@@ -2771,7 +2775,7 @@ ${setorAtual === "personalizacao" ? `
 
             <td>
               <span class="score">
-${
+${p.automatico ? (function(s){return s.status==='nao_aplica'?'Não se aplica':s.status==='pendente'?'Pendente':s.score+'%'+(s.status==='manual_preservado'?' · anterior':'');})(p.complexidade.setores[setorAtual]) : (
   setorAtual === "personalizacao"
     ? (p.score || 0)
     : setorAtual === "pintura"
@@ -2781,7 +2785,7 @@ ${
         : setorAtual === "carregamento"
           ? (p.scoreCarregamento || 0)
           : (p.scoreMontagem || 0)
-}%
+)+"%"}
               </span>
             </td>
           </tr>
@@ -3169,7 +3173,7 @@ var PainelCX = (function(){
   const esc = function(v){ return String(v === null || v === undefined ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); };
   const moeda = function(v){ return Number(v || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" }); };
   const inteiro = function(v){ return Math.round(Number(v || 0)).toLocaleString("pt-BR"); };
-  const pct = function(v){ return Math.round(Number(v || 0)) + "%"; };
+  const pct = function(v){ return v===null?'—':Math.round(Number(v || 0)) + "%"; };
   const quieto = function(){ return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); };
   const depois = function(fn){ requestAnimationFrame(function(){ requestAnimationFrame(fn); }); };
   const chaveMes = function(d){ return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); };
@@ -3194,6 +3198,7 @@ var PainelCX = (function(){
 
   function contar(el, alvo, formato){
     if (!el) return;
+    if(alvo===null){el.textContent=formato(null);return;}
     if (quieto()){ el.textContent = formato(alvo); return; }
     const t0 = performance.now();
     (function passo(agora){
@@ -3263,9 +3268,9 @@ var PainelCX = (function(){
   function periodo(n){ meses = n; desenhar(); }
 
   function lista(){
-    return (typeof pedidos !== "undefined" && Array.isArray(pedidos) ? pedidos : []).map(function(p){
+    return (typeof pedidos !== "undefined" && Array.isArray(pedidos) ? pedidos : []).filter(function(p){return !p.vinculo_ambiguo;}).map(function(p){
       const o = { p:p, data:lerData(p.data), numero:p.numero, cliente:p.cliente, local:p.local, id:p.id };
-      SETORES.forEach(function(s){ o[s.id] = numero(p[s.score]); o["c_" + s.id] = numero(p[s.comissao]); });
+      SETORES.forEach(function(s){ o[s.id] = p.automatico&&!['completo','manual_preservado'].includes(p.complexidade.setores[s.id].status)?null:numero(p[s.score]); o["c_" + s.id] = numero(p[s.comissao]); });
       o.maximo = Math.max.apply(null, SETORES.map(function(s){ return o[s.id]; }));
       o.soma = SETORES.reduce(function(t, s){ return t + o[s.id]; }, 0);
       o.comissaoTotal = SETORES.reduce(function(t, s){ return t + o["c_" + s.id]; }, 0);
@@ -3282,7 +3287,7 @@ var PainelCX = (function(){
       filtrados = todos.filter(function(o){ return o.data && o.data >= ini && o.data <= fim; });
       texto = meses === 1 ? "Eventos de " + nomeMes(chaveMes(hoje), true) : "Eventos de " + ini.toLocaleDateString("pt-BR") + " a " + fim.toLocaleDateString("pt-BR");
     }
-    $("cxSubtitulo").textContent = texto + " · " + inteiro(filtrados.length) + (filtrados.length === 1 ? " pedido" : " pedidos");
+    $("cxSubtitulo").textContent = texto + " · " + inteiro(filtrados.length) + (filtrados.length === 1 ? " pedido" : " pedidos") + ' · Avaliações automáticas pendentes ficam fora das médias.';
 
     $("cxCorpo").innerHTML =
       '<div class="pa-g4" id="cxKpis"></div>' +
@@ -3313,11 +3318,11 @@ var PainelCX = (function(){
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>',
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>'
   ];
-  function media(l, campo){ return l.length ? l.reduce(function(t, o){ return t + o[campo]; }, 0) / l.length : 0; }
+  function media(l, campo){ const validos=l.filter(function(o){return Number.isFinite(o[campo]);});return validos.length ? validos.reduce(function(t, o){ return t + o[campo]; }, 0) / validos.length : null; }
 
   function kpis(l){
     const medias = SETORES.map(function(s){ return media(l, s.id); });
-    const geral = medias.length ? medias.reduce(function(a, b){ return a + b; }, 0) / medias.length : 0;
+    const validas=medias.filter(Number.isFinite);const geral = validas.length ? validas.reduce(function(a, b){ return a + b; }, 0) / validas.length : null;
     const altas = l.filter(function(o){ return o.maximo >= 67; }).length;
     const comissao = l.reduce(function(t, o){ return t + o.comissaoTotal; }, 0);
     const cards = [
@@ -3341,9 +3346,9 @@ var PainelCX = (function(){
     todos.forEach(function(o){
       if (!o.data) return;
       const i = idx[chaveMes(o.data)]; if (i === undefined) return;
-      s[i].qtd++; SETORES.forEach(function(st){ s[i][st.id] += o[st.id]; });
+      s[i].qtd++; SETORES.forEach(function(st){ if(Number.isFinite(o[st.id])){s[i][st.id] += o[st.id];s[i]['n_'+st.id]=(s[i]['n_'+st.id]||0)+1;} });
     });
-    s.forEach(function(m){ SETORES.forEach(function(st){ m[st.id] = m.qtd ? m[st.id] / m.qtd : null; }); });
+    s.forEach(function(m){ SETORES.forEach(function(st){ m[st.id] = m['n_'+st.id] ? m[st.id] / m['n_'+st.id] : null; }); });
     if (!s.some(function(m){ return m.qtd; })){ area.innerHTML = '<div class="pa-vazio">Sem pedidos com data nos últimos 12 meses.</div>'; return; }
 
     const W = Math.max(320, area.clientWidth || 800), H = 320, mg = { e:46, d:14, t:16, b:32 };
@@ -3379,7 +3384,7 @@ var PainelCX = (function(){
   function setores(l){
     $("cxSetores").innerHTML = SETORES.map(function(st, i){
       const m = media(l, st.id), f = { baixa:0, media:0, alta:0 };
-      l.forEach(function(o){ f[faixa(o[st.id])]++; });
+      l.forEach(function(o){ if(Number.isFinite(o[st.id]))f[faixa(o[st.id])]++; });
       const tot = l.length || 1;
       return '<div class="cx-setor"><div class="cx-setor-topo"><span><i style="background:' + st.cor + '"></i>' + st.nome + '</span><strong>' + pct(m) + '</strong></div>' +
         '<div class="cx-media"><span class="cheio" style="background:' + st.cor + ';transition-delay:' + (0.3 + i * 0.1) + 's" data-l="' + Math.min(100, m).toFixed(1) + '"></span></div>' +
@@ -3394,7 +3399,7 @@ var PainelCX = (function(){
   /* ---------- Pedidos mais complexos ---------- */
   function top(l){
     const caixa = $("cxTop");
-    const t = l.slice().sort(function(a, b){ return b.maximo - a.maximo || b.soma - a.soma; }).slice(0, 7);
+    const t = l.filter(function(o){return SETORES.some(function(s){return Number.isFinite(o[s.id]);});}).sort(function(a, b){ return b.maximo - a.maximo || b.soma - a.soma; }).slice(0, 7);
     if (!t.length){ caixa.innerHTML = '<div class="pa-vazio">Sem pedidos no período.</div>'; return; }
     caixa.innerHTML = t.map(function(o){
       return '<div class="linha cx-pedido" role="button" tabindex="0" onclick="PainelCX.abrirPedido(\'' + encodeURIComponent(o.id || "") + '\')">' +
@@ -3443,5 +3448,6 @@ var PainelCX = (function(){
   return { abrir:abrir, fechar:fechar, periodo:periodo, abrirPedido:abrirPedido };
 })();
 </script>
+<script src="complexidade-automatica.js?v=20261031"></script>
 </body>
 </html>

@@ -555,6 +555,7 @@ document.getElementById("locaisCentralizarEndereco")
    MODAL
 ===================================================== */
 function Locais_openAdd() {
+  window.CXCadastro?.preencher('local',{});
   localAtualId = null;
 
   mostrarDetalhesLocal();
@@ -800,7 +801,8 @@ const payload = {
   distancia_calculada_em: localGeoState.calculadaEm,
   google_place_id: localGeoState.placeId || null,
   empresa_id: empresaId,
-  tags: coletarTagsSelecionadas()
+  tags: coletarTagsSelecionadas(),
+  complexidade: window.CXCadastro?.ler('local')
 };
 if (doc) {
   const atual = (locaisCache || []).find((x) => x.id === localAtualId);
@@ -833,6 +835,7 @@ if (doc) {
 }
 
 function abrirDetalhesLocal(local) {
+  window.CXCadastro?.preencher('local',local.complexidade);
   localAtualId = local.id;
 
   mostrarDetalhesLocal();

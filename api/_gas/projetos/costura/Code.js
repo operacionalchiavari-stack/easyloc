@@ -787,6 +787,9 @@ function salvarPedido(dados) {
 // ================= LISTAR =================
 // ================= LISTAR =================
 function listarPedidos(){
+ return Acervo.complexidadeMesclar(listarPedidosManuais_());
+}
+function listarPedidosManuais_(){
 
   const sheet = SpreadsheetApp
     .openById(
@@ -805,7 +808,7 @@ function listarPedidos(){
    * recalcula Montagem com as respostas
    * que vieram do cronograma.
    */
-  recalcularMontagemTodasLinhas();
+  // As avaliações manuais anteriores são históricas; a leitura não recalcula suas comissões.
 
   const dados =
     sheet.getDataRange().getDisplayValues();

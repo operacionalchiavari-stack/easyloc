@@ -124,6 +124,7 @@ window.itens_openAdd = function(){
 
   /* limpa item atual */
   window.itemAtualId = null;
+  window.CXCadastro?.preencher('item',{});
   window.itemAtualQrCode = null;
 
   /* ===============================
@@ -218,6 +219,7 @@ window.itens_enableEdit = function(){};
 ===================================================== */
 
 window.abrirDetalhesItem = function(item){
+  window.CXCadastro?.preencher('item',item.complexidade);
 
   const modal = document.getElementById("itensModal");
   if(!modal) return;

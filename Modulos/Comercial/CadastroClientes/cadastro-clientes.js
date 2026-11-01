@@ -298,6 +298,7 @@ document.getElementById("catalogoSenha")?.addEventListener("input", event => {
 ===================================================== */
 function clientes_openAdd() {
   clienteAtualId = null;
+  window.CXCadastro?.preencher('cliente',{});
   window.ClientesEquipes?.mostrarDoCliente(null);
   clienteTinhaAcessoCatalogo = false;
   resetarLogoCatalogo();
@@ -592,7 +593,8 @@ async function clientes_salvar() {
       empresa_id: empresaId,
 
       // TAGS (JSON)
-      tags: coletarTagsSelecionadas()
+      tags: coletarTagsSelecionadas(),
+      complexidade: window.CXCadastro?.ler('cliente')
     };
     if (doc) {
       const atual = (clientesCache || []).find((x) => x.id === clienteAtualId);
@@ -644,6 +646,7 @@ async function clientes_salvar() {
 }
 
 async function abrirDetalhesCliente(cliente) {
+  window.CXCadastro?.preencher('cliente',cliente.complexidade);
   document.getElementById('clienteBvRecebe').value = String(Boolean(cliente.bv_recebe));
   document.getElementById('clienteBvPercentual').value = cliente.bv_percentual || 0;
   document.getElementById('clienteBvObservacao').value = cliente.bv_observacao || '';

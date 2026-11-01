@@ -133,6 +133,7 @@ function equipeExtratoMontador(token){
 }
 
 function appEquipeExtratoCadastro_(cadastro){
+  if(Acervo.complexidadeLiberarEquipe) Acervo.complexidadeLiberarEquipe(cadastro.empresaId);
 
   /* As consultas abaixo são da Central; a sessão já foi conferida */
   liberarAcessoInterno_();

@@ -42,6 +42,7 @@ window.kits_abrirAba = function(aba){
 };
 
 window.kits_openAdd = async function(){
+  window.CXCadastro?.preencher('kit',{});
 
   const modal = document.getElementById("kitsModal");
 
@@ -413,6 +414,7 @@ if(kitIdExistente){
   const res = await supabase
   .from("itens")
   .update({
+    complexidade: window.CXCadastro?.ler('kit'),
 
     codigo: codigo,
     produto: produto,
@@ -452,6 +454,7 @@ if(kitIdExistente){
   const res = await supabase
   .from("itens")
   .insert({
+    complexidade: window.CXCadastro?.ler('kit'),
 
     empresa_id: empresaId,
 
@@ -795,6 +798,7 @@ window.kits_openEdit = async function(kitId){
   .eq("empresa_id", empresaId)
   .eq("id", kitId)
   .single();
+  if(!error) window.CXCadastro?.preencher('kit',kit.complexidade);
 
 if(error){
   console.error(error);

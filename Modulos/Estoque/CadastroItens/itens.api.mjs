@@ -346,6 +346,7 @@ if(profundidade){
 ===================================================== */
 
 const itemData = {
+  complexidade: window.CXCadastro?.ler('item'),
 
   id: itemId,
   empresa_id: empresaId,
