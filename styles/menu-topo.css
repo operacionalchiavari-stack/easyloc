@@ -85,8 +85,8 @@
 }
 
 #sidebar.portal-menu .menu-rodape > .menu-sair,
-#sidebar.portal-menu .menu-rodape > .menu-sair:hover{ color:#fff; background:var(--el-color-danger,#e30613); border-radius:12px; min-height:44px; justify-content:center; }
-#sidebar.portal-menu .menu-rodape > .menu-sair:hover{ background:#c90510; }
+#sidebar.portal-menu .menu-rodape > .menu-sair:hover{ color:#fff; background:#a65e5e; border-radius:12px; min-height:44px; justify-content:center; }
+#sidebar.portal-menu .menu-rodape > .menu-sair:hover{ background:#924e4e; }
 #sidebar.portal-menu .menu-sair > :is(svg,[data-lucide="log-out"]){ color:#fff; }
 @media (min-width:861px){
   #sidebar.portal-menu .menu-rodape > .menu-sair{ width:44px; height:44px; padding:0; }
