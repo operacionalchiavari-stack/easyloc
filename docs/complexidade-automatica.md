@@ -15,6 +15,8 @@ Os limites, expediente, tipos especiais de evento, grupos volumosos e pesos fica
 
 ## Pendências, exceções e fechamento
 
+Na coluna Score e nos detalhes, setores pendentes exibem a faixa percentual possível, identificada como parcial e acompanhada da quantidade de respostas faltantes. O limite inferior usa o menor peso possível de cada resposta desconhecida; o superior usa o maior. Respostas confirmadas mantêm seus pontos. A faixa não substitui o score definitivo, não participa das médias nem calcula bônus. Ao completar os dados, os limites convergem para a porcentagem final. Se a participação do setor ainda não foi definida, a legenda informa "setor a confirmar"; setores sem serviço permanecem como "Não se aplica".
+
 O setor pode estar completo, pendente ou não se aplicar. Estofados/Pintura sem serviço solicitado não se aplicam. Condições desconhecidas não recebem Não por omissão. Quando há uma avaliação manual anterior positiva, ela permanece identificada como "anterior" até as fontes estarem completas. Setores pendentes sem avaliação anterior e setores sem serviço ficam fora das médias e não geram bônus automático. Os registros manuais legados conservam o comportamento anterior de score padrão na Central.
 
 No pedido, podem ser informadas viagens, confirmação autorizada e necessidade de montagem. Exceções por pergunta exigem motivo, permissão e 2FA; ficam auditadas com autor e data. Escolher "Usar automático" remove a exceção. Esses ajustes não alteram o cadastro do cliente/local/item.

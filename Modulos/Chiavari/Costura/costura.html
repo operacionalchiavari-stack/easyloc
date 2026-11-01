@@ -12,8 +12,8 @@
 <title>Painel de Complexidade</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../../../js/core/supabase.js"></script>
-<script src="../../../js/shared/complexidade.js?v=20261031"></script>
-<link rel="stylesheet" href="complexidade-automatica.css?v=20261101-filtros">
+<script src="../../../js/shared/complexidade.js?v=20261101-score"></script>
+<link rel="stylesheet" href="complexidade-automatica.css?v=20261101-score">
 
 <style>
 :root{
@@ -2736,8 +2736,8 @@ ${setorAtual === "personalizacao" ? `
 <td>${respostaTabela(p.r10)}</td>
 
             <td>
-              <span class="score">
-${p.automatico ? (function(s){return s.status==='nao_aplica'?'Não se aplica':s.status==='pendente'?'Pendente':s.score+'%'+(s.status==='manual_preservado'?' · anterior':'');})(p.complexidade.setores[setorAtual]) : (
+              <span class="score" title="${p.automatico ? CXRegras.apresentarScore(p.complexidade.setores[setorAtual]).detalhe : ''}">
+${p.automatico ? CXRegras.apresentarScore(p.complexidade.setores[setorAtual]).texto : (
   setorAtual === "personalizacao"
     ? (p.score || 0)
     : setorAtual === "pintura"
@@ -2749,6 +2749,7 @@ ${p.automatico ? (function(s){return s.status==='nao_aplica'?'Não se aplica':s.
           : (p.scoreMontagem || 0)
 )+"%"}
               </span>
+              ${p.automatico ? '<small class="cx-score-legenda">'+CXRegras.apresentarScore(p.complexidade.setores[setorAtual]).legenda+'</small>' : ''}
             </td>
           </tr>
         `).join("")}
@@ -3410,6 +3411,6 @@ var PainelCX = (function(){
   return { abrir:abrir, fechar:fechar, periodo:periodo, abrirPedido:abrirPedido };
 })();
 </script>
-<script src="complexidade-automatica.js?v=20261101-filtros"></script>
+<script src="complexidade-automatica.js?v=20261101-score"></script>
 </body>
 </html>

@@ -44,6 +44,26 @@ test('mescla preserva históricos sem duplicar pedidos; vínculos ambíguos fica
  legado[1]='2025-11-04';assert.equal(cx.linhas([[],legado],[pendente])[1][0],'anterior');
 });
 module.exports={completo};
+test('score parcial delimita as respostas desconhecidas sem criar percentual definitivo ou bônus',()=>{
+ const c=completo();c.local={complexidade:{distancia_manual_m:80}};c.cliente={};
+ const s=cx.avaliar(c).setores.montagem;
+ assert.equal(s.score,null);assert.deepEqual(s.pendentes,[5,15,16]);
+ const finais=[];
+ for(const reclamacao of [false,true])for(const baldeacao of [false,true])for(const escada of [false,true]){
+  const confirmado={...c,cliente:{complexidade:{reclamacao}},local:{complexidade:{distancia_manual_m:80,baldeacao,escada}}};
+  finais.push(cx.avaliar(confirmado).setores.montagem.score);
+ }
+ assert.equal(s.intervalo.minimo,Math.min(...finais));assert.equal(s.intervalo.maximo,Math.max(...finais));
+ const visual=cx.apresentarScore(s);assert.match(visual.texto,/%.*%/);assert.match(visual.legenda,/Parcial.*3 respostas/);
+ assert.equal(cx.linhas([[]],[cx.paraPainel(c)])[1][32],null);
+ const fechado=cx.avaliar(completo()).setores.montagem;assert.equal(fechado.intervalo.minimo,fechado.score);assert.equal(fechado.intervalo.maximo,fechado.score);assert.equal(cx.apresentarScore(fechado).legenda,'');
+ assert.equal(cx.apresentarScore({...s,aplica:null}).legenda,'Parcial · setor a confirmar');
+ assert.equal(cx.apresentarScore({...s,status:'manual_preservado',score:62}).texto,'62%');
+ const semServico=cx.avaliar({...c,servicos:[]}).setores.personalizacao;assert.equal(semServico.intervalo,null);assert.equal(cx.apresentarScore(semServico).texto,'Não se aplica');
+ // Um peso "Não" maior que "Sim" também precisa respeitar os limites.
+ c.cliente={complexidade:{reclamacao:false}};c.pedidos_anteriores=null;
+ const recorrencia=cx.avaliar(c).setores.montagem;assert.ok(recorrencia.intervalo.minimo<=recorrencia.intervalo.maximo);
+});
 test('Central de Metas consome a mesma projeção, mantém o score anterior e não atribui padrão às pendências novas',()=>{
  const vm=require('node:vm'),fs=require('node:fs'),p=cx.paraPainel({...completo(),cliente:{}});
  let legado=[[]];const ctx={Acervo:{complexidadeLinhas:l=>cx.linhas(l,[p])},Session:{getScriptTimeZone:()=>''},Utilities:{formatDate:d=>d.toISOString().slice(0,7)}};

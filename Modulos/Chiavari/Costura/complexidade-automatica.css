@@ -4,4 +4,5 @@ html:root body .header .cx-cabecalho-linha{display:grid;grid-template-columns:mi
 html:root body .cx-cabecalho-linha h1{white-space:nowrap;text-align:center}
 .cx-cabecalho-linha input{min-width:0;max-width:300px}
 .cx-cabecalho-linha #filtroCliente{justify-self:end}
+.cx-score-legenda{display:block;margin-top:5px;color:#846531;font-size:11px;font-weight:500;line-height:1.4}.cx-score-legenda:empty{display:none}.score{white-space:nowrap}
 @media(max-width:1100px){html:root body .header .cx-cabecalho-linha{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px!important}html:root body .cx-cabecalho-linha h1{grid-column:1/-1;grid-row:1;white-space:normal}.cx-cabecalho-linha input{max-width:none;grid-row:2}}

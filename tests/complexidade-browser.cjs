@@ -27,6 +27,16 @@ const contexto={id:'00000000-0000-0000-0000-000000000030',numero:'101',data_even
   if(width>1100){assert.ok(await page.locator('.cx-cabecalho-linha').evaluate(e=>{const [a,b,c]=[...e.children].map(x=>x.getBoundingClientRect());return a.right<b.left&&b.right<c.left&&Math.abs((b.left+b.right)/2-innerWidth/2)<3;}));}
   assert.equal(await page.getByRole('button',{name:'Limpar',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Atualizar dados',exact:true}).count(),0);assert.equal(await page.locator('.cx-automacao-ajuda').count(),0);
   await page.screenshot({path:path.join(os.tmpdir(),`complexidade-cabecalho-${width}.png`)});
+  await page.locator('#btnMontagem').click();
+  assert.match(await page.locator('#listaPedidos .score').textContent(),/\d+(,\d+)?%/);assert.equal(await page.locator('#listaPedidos .cx-score-legenda').textContent(),'');
+  await page.evaluate(async()=>{__contexto.cliente={};pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});
+  assert.match(await page.locator('#listaPedidos .score').textContent(),/%.*%/);assert.match(await page.locator('#listaPedidos .cx-score-legenda').textContent(),/Parcial/);
+  assert.match(await page.locator('#listaPedidos .score').getAttribute('title'),/Faixa possível/);
+  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cx-auto-dialog[open]').waitFor();
+  assert.match(await page.locator('.cx-auto-scores').textContent(),/Parcial/);assert.equal(await page.locator('[data-cx-pendente="true"]').count(),1);
+  await page.getByRole('button',{name:'Fechar análise',exact:true}).click();
+  await page.screenshot({path:path.join(os.tmpdir(),`complexidade-score-parcial-${width}.png`)});
+  await page.evaluate(async()=>{__contexto.cliente={complexidade:{reclamacao:false}};pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});
   await page.locator('#listaPedidos tbody tr').click();await page.locator('.cx-auto-dialog[open]').waitFor();
   assert.equal(await page.locator('[data-cx-resposta]').count(),26);assert.match(await page.locator('.cx-auto-dialog').textContent(),/Cadastro do local/);
   assert.equal(await page.locator('#cxSemPendencias').isVisible(),true);await page.locator('#cxMostrarTodas').check();
