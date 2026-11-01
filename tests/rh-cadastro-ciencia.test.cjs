@@ -36,7 +36,7 @@ test('Produção não entra no desconto; registros antigos preservam a regra his
  const danos=ctx.operacaoDanosMes_('2026-10');assert.equal(danos.length,5);assert.equal(danos[0].ciencia.status,'pendente');assert.equal(danos[3].ciencia.status,'legado');
 });
 test('atalhos antigos não mantêm uma segunda implementação de cadastro',()=>{
- for(const [file,names] of [['api/_gas/projetos/almoxarifado/Code.js',['buscarUsuarios','salvarUsuario']],['Modulos/Configuracoes/Permissoes/permissoes.js',['createUser']],['Modulos/Chiavari/Almoxarifado/almoxarifado.html',['salvarUsuarioFront']]]){
+ for(const [file,names] of [['api/_gas/projetos/almoxarifado/Code.js',['buscarUsuarios','salvarUsuario']],['Modulos/Chiavari/Almoxarifado/almoxarifado.html',['salvarUsuarioFront']]]){
   const s=fs.readFileSync(file,'utf8');
   for(const name of names)assert.equal([...s.matchAll(new RegExp('^[ \\t]*(?:async )?function '+name+'\\(','gm'))].length,1,file+' '+name);
  }

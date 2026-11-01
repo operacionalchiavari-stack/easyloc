@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261031-app-integrado"></script>
+  <script src="../operacao-sem-motor.js?v=20261101-ocorrencias"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -1380,7 +1380,7 @@
 
     ocupar(btn);
     chamar("salvarPosicionamentoItens", {
-      idCronograma: reg.id, pedido: reg.pedido,
+      idCronograma: reg.id, pedido: reg.pedido, correto: reg.posCorreto,
       observacao: reg.posCorreto ? "Itens posicionados corretamente." : document.getElementById("regPosObs").value.trim(),
       fotos: reg.posCorreto ? [] : reg.fotosPos
     }).then(function(r){ posicionamentoFeito(r || {}); toast("Posicionamento enviado"); })

@@ -9,7 +9,7 @@
     /* Mesmo roteamento do doGet do Apps Script deste sistema */
     (function () {
       var p = new URLSearchParams(location.search);
-      var destino = "PainelQualidade.html";
+      var destino = "OcorrenciasOperacionais.html";
       if (["OcorrenciasOperacionais"].indexOf(p.get("page")) >= 0) { destino = "OcorrenciasOperacionais.html"; }
       if (["PainelQualidade"].indexOf(p.get("page")) >= 0) { destino = "PainelQualidade.html"; }
       location.replace(destino + location.search + location.hash);

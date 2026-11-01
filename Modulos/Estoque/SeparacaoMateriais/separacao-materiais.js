@@ -747,6 +747,7 @@
           >
           <button type="button" data-manual-delta="1" data-separacao-item-id="${escapeHtml(item.id)}" ${editavel ? "" : "disabled"} aria-label="Aumentar quantidade">+</button>
         </div>
+        ${state.capas?.celula(item, editavel) || ''}
       </article>
     `;
   }
@@ -779,12 +780,19 @@
           <div class="item-progress-track"><span style="width:${percent}%"></span></div>
           <span>${escapeHtml(formatQty(itemSeparado(item)))} / ${escapeHtml(formatQty(itemTotal(item)))}</span>
         </div>
+        ${state.capas?.celula(item, modoEditavel()) || ''}
       </article>
     `;
   }
 
   function renderItens() {
     const pedido = getPedidoAtual();
+    const capasReabriram=pedido&&modoEditavel()&&state.capas?.rows?.some(r=>r.concluida)&&!state.capasRecarregando;
+    if(pedido&&window.CapasOperacao&&(state.capas?.pedido!==pedido.id||capasReabriram)){
+      state.capasRecarregando=true;
+      const capas=state.capas=window.CapasOperacao.criar({sb:state.supabase,pedido:pedido.id,etapa:'triagem'});
+      capas.pronto.then(()=>{state.capasRecarregando=false;if(state.capas===capas)renderItens();}).catch(e=>{state.capasRecarregando=false;console.error(e);if(state.capas===capas)renderItens();});
+    }
     const containers = [els.separacaoManualItens, els.separacaoQrItens].filter(Boolean);
 
     if (!pedido) {
@@ -1870,7 +1878,7 @@
       return false;
     }
 
-    try { await atualizarPedidoStatus(pedido.id, status, true, {
+    try { await state.capas?.salvar(true);await atualizarPedidoStatus(pedido.id, status, true, {
       finalizado_por: state.usuarioId,
       finalizado_em: new Date().toISOString(),
       motivo_divergencia: motivo || null

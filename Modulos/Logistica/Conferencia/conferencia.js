@@ -130,7 +130,22 @@
     return i?.item_nome || "Item";
   }
 
+  function anexarCapasQuantidade(lista,caixa,editavel){
+    if(!s.capas)return;
+    const cab=caixa.querySelector('.cf-qtd-cabeca');
+    if(cab){const th=document.createElement('span');th.className='cp-coluna';th.textContent='Material de proteção';cab.insertBefore(th,cab.lastElementChild);}
+    caixa.querySelectorAll('.cf-qtd-linha:not(.cf-qtd-cabeca)').forEach((linha,i)=>{const p=lista[i];if(!p)return;const quantidade=linha.children[3];if(quantidade){const grupo=document.createElement('label');grupo.className='cp-pecas-coluna';const rotulo=document.createElement('span');rotulo.className='cp-mobile-label';rotulo.textContent='Quantidade de peças';grupo.append(rotulo);linha.replaceChild(grupo,quantidade);grupo.append(quantidade);}const div=document.createElement('div');div.innerHTML=s.capas.celula(p,editavel);linha.insertBefore(div.firstElementChild,linha.lastElementChild);});
+  }
+  function pintarCapasBipe(){
+    if(!s.capas||!s.capas.rows.length||!$('cfCorpo')||$('cfCorpo').hidden)return;
+    let box=$('cfCapasBipe');if(!box){box=document.createElement('section');box.id='cfCapasBipe';box.className='cf-capas-bipe';document.querySelector('.cf-lista').append(box);}
+    box.innerHTML='<h3>Peças e materiais de proteção</h3><p>Conte todas as capas deste modelo, inclusive as que estão nas sacolas.</p><div class="cp-bipe-cab"><span>Item</span><span>Qtd. lida</span><span>Material de proteção</span></div>'+s.capas.rows.map(r=>{
+      const n=s.etiquetas.filter(e=>String(e.item_id)===String(r.item_id)&&e[cfg.campo]).length;
+      return '<div class="cp-bipe-linha"><strong>'+esc(r.nome)+'</strong><span>'+n+'</span>'+s.capas.celula(r)+'</div>';
+    }).join('');
+  }
   function pintarCego() {
+    pintarCapasBipe();
     const lidas = s.etiquetas.filter((e) => e[cfg.campo]);
     $("cfPercent").hidden = true; $("cfBarra").parentElement.hidden = true;
     $("cfSoFaltando").parentElement.hidden = true;
@@ -146,6 +161,7 @@
   }
 
   function pintar() {
+    pintarCapasBipe();
     if (escondido()) { pintarCego(); return; }
     $("cfPercent").hidden = false; $("cfBarra").parentElement.hidden = false; $("cfSoFaltando").parentElement.hidden = false;
     document.querySelector(".cf-lista-topo h3").textContent = "Volumes do pedido";
@@ -257,17 +273,20 @@
       const ok = await confirmarConclusao(faltando.map(e=>({nome:nomeItem(e),faltam:1})));
       if (!ok) return;
     }
+    try{await s.capas?.salvar(true);}catch(e){avisar(e.message,'Material de proteção','aviso');return;}
     const { data: registro, error } = pendencia
       ? await s.sb.rpc("operacao_concluir_com_pendencia", { p_pedido: s.pedido.id, p_etapa: etapa, p_aceitar_faltas: true, p_pendencia: pendencia })
       : await s.sb.rpc("operacao_concluir_conferencia", { p_pedido: s.pedido.id, p_etapa: etapa, p_aceitar_faltas: faltando.length > 0 });
     if (error) { avisar(error.message, cfg.rotulo, "erro"); return; }
     const operacao = { ...(s.pedido.operacao || {}), [etapa]: registro };
     s.pedido.operacao = operacao;
+    await s.capas?.carregar().catch(console.error);
     $("cfLiberarTriagem")?.remove();
     leitor?.desligar();
     if (cega) { s.revelado = true; pintar(); mostrarResultadoRetorno(registro); await carregarOcorrencias(); }
     if (etapaVolta) await carregarDivergencias();
-    avisar(faltando.length ? "Conferência concluída com " + faltando.length + " pendência(s)." + avisoPendencia(registro) : "Conferência concluída: tudo " + cfg.verbo + ".", cfg.rotulo, faltando.length ? "aviso" : "sucesso");
+    const divCapas=s.capas?.diferencas()||0;
+    avisar(faltando.length ? "Conferência concluída com " + faltando.length + " pendência(s)." + avisoPendencia(registro) : divCapas?'Conferência concluída. Diferenças de capas registradas em '+divCapas+' modelo(s).':"Conferência concluída: tudo " + cfg.verbo + ".", cfg.rotulo, faltando.length||divCapas ? "aviso" : "sucesso");
     $("cfConcluir").textContent = "Concluída · conferir de novo";
   }
 
@@ -277,23 +296,9 @@
     const { data, error } = await s.sb.from("operacao_ocorrencias").select("*").eq("pedido_id", s.pedido.id).order("criado_em");
     if(error){ mostrarAviso("Não foi possível carregar as ocorrências. Tente novamente."); return; }
     raiz.hidden = false;
-    raiz.innerHTML = '<h3>Ocorrências e encerramento</h3><details><summary>Registrar ocorrência</summary>' +
-      '<form id="cfFormularioOcorrencia" class="cf-formulario-ocorrencia"><label>Tipo<select name="tipo"><option value="avaria">Avaria</option><option value="limpeza">Limpeza</option><option value="manutencao">Manutenção</option><option value="outro">Outro</option></select></label>' +
-      '<label>Peça<select name="codigo"><option value="">Ocorrência geral</option>' + s.etiquetas.map(e => '<option value="' + esc(e.codigo) + '">' + esc(e.codigo + ' · ' + nomeItem(e)) + '</option>').join('') + '</select></label>' +
-      '<label>O que aconteceu e para onde encaminhar?<textarea name="descricao" required minlength="5"></textarea></label><button type="submit" class="btn" id="cfNovaOcorrencia">Salvar ocorrência</button></form></details>' +
+    raiz.innerHTML = '<h3>Ocorr&#234;ncias e encerramento</h3><p>As ocorr&#234;ncias s&#227;o geradas pelos registros da opera&#231;&#227;o. <a href="../../Chiavari/Ocorrencias/OcorrenciasOperacionais.html">Visualizar painel autom&#225;tico</a></p>' +
       (data || []).filter(o => !["falta", "sobra"].includes(o.tipo)).map(o => '<p>' + esc(o.tipo + ': ' + o.descricao) + (o.resolvida_em ? ' · Resolvida' : ' · Pendente <button type="button" class="btn" data-resolver="' + esc(o.id) + '">Resolver</button>') + '</p>').join('') +
       '<button type="button" class="btn primary" id="cfEncerrar">Encerrar operação</button><p id="cfEncerramentoMensagem" role="status"></p>';
-    $("cfFormularioOcorrencia").onsubmit = async event => {
-      event.preventDefault();
-      const campos = new FormData(event.currentTarget);
-      const tipo = campos.get("tipo"), codigo = campos.get("codigo"), descricao = String(campos.get("descricao") || "").trim();
-      const etiqueta = codigo ? s.etiquetas.find(e => e.codigo === codigo) : null;
-      if(codigo && !etiqueta){ avisar("Etiqueta não pertence a este pedido"); return; }
-      if(!descricao?.trim()) return;
-      $("cfNovaOcorrencia").disabled = true;
-      const { error } = await s.sb.from("operacao_ocorrencias").insert({ empresa_id: s.empresa, pedido_id: s.pedido.id, item_id: etiqueta?.item_id || null, codigo: codigo || null, tipo, descricao: descricao.trim() });
-      if(error){ $("cfNovaOcorrencia").disabled = false; avisar(error.message); } else await carregarOcorrencias();
-    };
     raiz.querySelectorAll("[data-resolver]").forEach(btn => btn.onclick = async () => {
       const o = data.find(o => o.id === btn.dataset.resolver);
       const destino = o.tipo === "falta" ? prompt("Digite devolvido para conferir uma peça recebida, ou perda para confirmar a baixa do estoque:", "devolvido") : "resolvido";
@@ -460,6 +465,7 @@
     const {data:assumido,error:erroInicio}=await s.sb.rpc('operacao_iniciar_conferencia',{p_pedido:pedidoId,p_etapa:etapa});
     if(erroInicio){mostrarAviso(erroInicio.message);return;}
     s.pedido = assumido?.id?assumido:pedido; s.itens = itens || []; s.etiquetas = etiquetas || [];
+    if(window.CapasOperacao){s.capas=window.CapasOperacao.criar({sb:s.sb,pedido:pedido.id,etapa,cega});try{await s.capas.pronto;}catch(e){mostrarAviso('Não foi possível carregar as materiais de proteção: '+e.message);return;}}
     if(etapa==='carregamento'&&!s.pedido.operacao?.carregamento?.concluido_em){
       const liberar=document.createElement('button');liberar.id='cfLiberarTriagem';liberar.type='button';liberar.className='btn secondary cf-liberar';liberar.textContent='Liberar para a Triagem';$('cfImprimir').before(liberar);
       liberar.onclick=async()=>{const certo=typeof window.confirmarGlobal==='function'?await window.confirmarGlobal('O pedido volta para a Triagem. Tem certeza?','Liberar para a Triagem',{confirmarTexto:'Liberar',cancelarTexto:'Voltar',tipo:'warning'}):confirm('O pedido volta para a Triagem. Tem certeza?');if(!certo)return;const motivo='Liberado pela Expedição para a Triagem';liberar.disabled=true;try{const {error}=await s.sb.rpc('operacao_transferir_pedido',{p_pedido:pedidoId,p_acao:'devolver_triagem',p_motivo:motivo});if(error)throw error;leitor?.desligar();if(typeof window.top.shellNavigate==='function')window.top.shellNavigate('Modulos/Logistica/Expedicao/expedicao.html');else location.href='../Expedicao/expedicao.html';}catch(e){avisar(e.message,'Devolver para a Triagem','aviso');liberar.disabled=false;}};
@@ -527,7 +533,7 @@
       const r = feitos?.get(p.chave);
       return "<tr><td class='n'>" + (i + 1) + "</td><td class='f'>" + foto(p) + "</td><td>" + esc(p.nome) + (p.kit_nome ? "<br><small>Parte do kit: " + esc(String(p.kit_nome).replace(/s+/g, " ").trim()) + (Number(p.por_kit) ? " (" + esc(p.por_kit) + " por kit)" : "") + "</small>" : "") + "</td>" +
         (mostrarEsperado ? "<td class='q'>" + esc(r ? r.esperado : p.esperado) + "</td>" : "") +
-        "<td class='q'>" + (r ? esc(r.conferido) : "<span class='caixa'></span>") + "</td><td class='ok'><span class='caixa pq'></span></td><td class='obs-c'>" + esc(r?.obs || "") + "</td></tr>";
+        "<td class='q'>" + (r ? esc(r.conferido) : "<span class='caixa'></span>") + "</td><td class='q cp-print'>"+(s.capas?.linha(p)?.usa_capa?(feitos?esc(s.capas.linha(p).quantidade??'Sem registro'):"<span class='caixa'></span>"):'—')+"</td><td class='ok'><span class='caixa pq'></span></td><td class='obs-c'>" + esc(r?.obs || "") + "</td></tr>";
     }).join("");
     const html = "<!doctype html><html><head><meta charset='utf-8'><title>Lista - Pedido " + esc(s.pedido.numero_pedido || "") + "</title><style>" +
       "@page{size:A4;margin:12mm}body{font:12px Inter,Arial,sans-serif;color:#1f2020;margin:0}h1{font:600 20px Georgia,serif;margin:0 0 4px;letter-spacing:.04em}" +
@@ -538,7 +544,7 @@
       "</style></head><body><h1>Lista de " + esc(cfg.rotulo.toLowerCase()) + " · Pedido " + esc(s.pedido.numero_pedido || "-") + "</h1><p class='meta'>" +
       esc([s.pedido.cliente_nome, s.pedido.local_nome, data ? new Date(data + "T12:00:00").toLocaleDateString("pt-BR") : ""].filter(Boolean).join(" · ")) + "</p>" +
       "<table><thead><tr><th></th><th></th><th>Item</th>" + (mostrarEsperado ? "<th class='q'>" + (etapa === "carregamento" ? "Pedido" : "Esperado") + "</th>" : "") +
-      "<th class='q'>" + verbo + "</th><th class='ok'>OK</th><th>Observação</th></tr></thead><tbody>" + linhas + "</tbody></table>" +
+      "<th class='q'>" + verbo + "</th><th class='q'>Capas</th><th class='ok'>OK</th><th>Observação</th></tr></thead><tbody>" + linhas + "</tbody></table>" +
       "<div class='obs'>Observações</div><div class='ass'><div>Conferido por</div><div>Motorista / responsável</div><div>Data e hora</div></div></body></html>";
     const quadro = document.createElement("iframe");
     quadro.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
@@ -615,6 +621,7 @@
           return '<div class="cf-qtd-linha' + (falta ? " is-div-falta" : sobra ? " is-div-sobra" : "") + '">' + foto(p) + '<strong>' + nomeComKit(p) + '</strong><span>' + esc(r.esperado ?? p.esperado) +
             '</span><span class="cf-qtd-valor">' + esc(r.conferido ?? "-") + (primeira(r) ? '<small class="cf-qtd-primeira">1ª contagem: ' + esc(primeira(r)) + "</small>" : "") + (falta ? ' <small>faltam ' + esc(Number(r.esperado) - Number(r.conferido)) + "</small>" : sobra ? ' <small>' + esc(Number(r.conferido) - Number(r.esperado)) + " a mais</small>" : "") + '</span><em class="cf-qtd-obs-texto">' + esc(r.obs || "—") + "</em>" + (comResolver ? (() => { const o = divPorChave.get(p.chave); if (o) s.divNaTabela.add(String(o.id)); return celulaResolver(o, dv.motivos); })() : "") + "</div>";
         }).join("") + "</div>" + (comResolver ? RODAPE_SEGUNDA : "");
+      anexarCapasQuantidade(lista,caixa,false);
       atualizarRodapeSegunda();
       mostrarBotaoImprimir(() => imprimirLista(lista, foto, porChave));
       return;
@@ -634,6 +641,7 @@
         '<input type="text" class="el-input cf-qtd-obs" maxlength="500" placeholder="Opcional" data-chave="' + esc(p.chave) + '" aria-label="' + esc("Observação: " + p.nome) + '"></div>').join("") +
       '</div><footer class="cf-qtd-rodape"><span id="cfQtdResumo"></span><button type="button" class="btn primary" id="cfQtdConfirmar">Confirmar ' + esc(cfg.rotulo.toLowerCase()) + "</button></footer>";
 
+    anexarCapasQuantidade(lista,caixa,true);
     const inputs = [...caixa.querySelectorAll(".cf-qtd-input")];
     const somar = () => {
       let conferido = 0, preenchidos = 0;
@@ -693,6 +701,7 @@
         const ok = await confirmarConclusao([],false);
         if (!ok) return;
       }
+      try{await s.capas?.salvar(true);}catch(e){avisar(e.message,'Material de proteção','aviso');return;}
       botao.disabled = true;
       // A volta é às cegas: aceita a diferença (as faltas viram ocorrência no servidor).
       const args = { p_pedido: s.pedido.id, p_etapa: etapa, p_aceitar_faltas: cega || faltas.length > 0, p_quantidades: quantidades, p_observacoes: observacoes, ...(s.primeira ? { p_primeira: s.primeira } : {}) };
@@ -701,6 +710,7 @@
         : await s.sb.rpc("operacao_concluir_conferencia", args);
       if (erro) { botao.disabled = false; avisar(erro.message, cfg.rotulo, "erro"); return; }
       s.pedido.operacao = { ...(s.pedido.operacao || {}), [etapa]: registro };
+      await s.capas?.carregar().catch(console.error);
       $("cfLiberarTriagem")?.remove();
       $("cfPercent").hidden = false; $("cfBarra").parentElement.hidden = false;
       await mostrarSemEtiquetas();
@@ -708,7 +718,8 @@
       if (etapaVolta) await carregarDivergencias();
       const n = (registro.faltando || []).length;
       const mais = (registro.itens || []).filter((x) => Number(x.conferido) > Number(x.esperado)).length;
-      const div = [n ? n + " item(ns) faltando" : "", mais ? mais + " item(ns) a mais" : ""].filter(Boolean).join(" e ");
+      const divCapas=s.capas?.diferencas()||0;
+      const div = [n ? n + " item(ns) faltando" : "", mais ? mais + " item(ns) a mais" : "",divCapas?divCapas+' modelo(s) com diferença de capas':''].filter(Boolean).join(" e ");
       avisar(div ? "Conferência concluída com divergência: " + div + "." + avisoPendencia(registro) : "Conferência concluída: tudo " + cfg.verbo + ".", cfg.rotulo, div ? "aviso" : "sucesso");
     });
     somar();

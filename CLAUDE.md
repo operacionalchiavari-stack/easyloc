@@ -11311,3 +11311,10 @@ com quem fez o pedido; o pedido mostra a pessoa + a equipe; papéis cadastrávei
   A distância do frete se ajusta na própria caixinha "Distância" da linha do Frete (`.frete-km-chip`, contorno tracejado):
   clicar mostra o campo `#freteKmManual` ali dentro, Enter/sair confirma (recalcula o frete), Esc desiste. O campo separado
   "Distância para cálculo (km)" saiu do card.
+
+## Preparação para o lançamento (01/11/2026)
+- **Lote de demonstração apagado** (`DEMO-SISTEMA-20261031`) com `Scripts/remover-demo.cjs` (ensaio sem `--aplicar`): segue as FKs a partir do manifesto em `sistema_demo_lotes`, apaga também o que foi gerado (etapas, contas a receber, histórico, ocorrências automáticas, linhas das planilhas do motor com a versão da aba subida) e confere que não ficou órfão. Sobrou: 8 pedidos reais, 17→1 clientes reais etc. `Scripts/demo-sistema.cjs` continua podendo criar um lote novo.
+- **Telas antigas apagadas** (fora do menu, substituídas): Fluxo de Caixa antigo, Ordem de Serviços antiga, RH/GestaoPessoas, Logistica/Cronograma antigo, Equipe das Rotas, Compras/legado, Controle de Qualidade antigo (a tabela `qualidade_inspecoes` continua em uso), Permissões (ficou no Cadastro de Funcionários), `gateways.html` avulso (o JS/CSS continua, usado por Financeiro > Gateways). Mantidos de propósito: Almoxarifado Acervo (link em Compras), `Chiavari/Almoxarifado/financeiro.html` (percentuais do teto de gastos), `EntregasColetas` (JS/CSS do Painel Logístico) e os `index.html` roteadores.
+- **Bibliotecas com versão fixa**: `lucide@1.66.0` e `@supabase/supabase-js@2.118.0` (eram `@latest`/`@2`).
+- **Cadastro público do Supabase Auth desligado** (`disable_signup:true`, pela API de gerenciamento). Usuários novos só pelo Cadastro de Funcionários.
+- Migrations: `20261026000100_rotas…` renomeada para `…000101` (duas tinham o mesmo número); as 3 sem registro foram registradas; `20261101000600` tira a leitura pública do bucket antigo `avatars` (vazio).

@@ -85,14 +85,14 @@ const mock = () => {
   await page.waitForFunction(() => document.querySelector('#disponMais').getAttribute('aria-busy') === 'false');
   assert.equal(await page.locator('#disponMais').textContent(), 'Carregar mais itens', 'sem carregamento permanente entre páginas');
   assert.equal(await page.locator('#disponMais .el-loading-indicator').count(), 0);
-  await page.locator('#disponMais').click();
+  await page.evaluate(() => document.getElementById('disponMais').click());
   await page.waitForFunction(() => document.querySelectorAll('.dispon-row').length === 40 && document.querySelector('#disponMais').getAttribute('aria-busy') === 'false');
-  await page.locator('.dispon-table-wrap').evaluate(el => { el.scrollTop=el.scrollHeight; });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await page.waitForFunction(() => document.querySelectorAll('.dispon-row').length === 60 && document.querySelector('#disponMais').getAttribute('aria-busy') === 'false');
-  await page.locator('#disponMais').click();
+  await page.evaluate(() => document.getElementById('disponMais').click());
   await page.locator('#disponMais').waitFor({state:'hidden'});
-  assert.equal((await linhas()).length,60,'rolagem interna carrega os itens restantes');
-  console.log('ok - botão e rolagem interna paginam; indicador encerra e some ao fim da lista');
+  assert.equal((await linhas()).length,60,'rolagem da pagina carrega os itens restantes');
+  console.log('ok - botão e rolagem da pagina paginam; indicador encerra e some ao fim da lista');
 
   // só dois filtros (Data e Buscar item), na mesma linha do título, que continua no centro
   assert.equal(await page.locator("#disponCategoria, #disponStatus").count(), 0, "sem Categoria e Status");
@@ -157,29 +157,44 @@ const mock = () => {
   assert.equal(cab[cab.length - 2], "Disponivel"); assert.equal(cab[cab.indexOf("Pedido 1") - 1], "Manutencao", "pedidos logo antes de Disponível");
   const linha = await page.$$eval(".dispon-row", (rs) => { const r = rs.find((x) => x.querySelector(".dispon-item-name").textContent.trim() === "Cadeira 2"); return [...r.querySelectorAll(".dispon-cel-pedido")].map((c) => c.textContent.trim()); });
   assert.deepEqual(linha, ["–", "–", "2", "3"], "Cadeira 2: 2 no pedido 4 e 3 no pedido 5");
-  assert.equal(await page.locator("th.dispon-col-pedido.is-pre").count(), 1, "pré-reserva sinalizada");
+  assert.equal(await page.locator("#disponCabecalho th.dispon-col-pedido.is-pre").count(), 1, "pré-reserva sinalizada");
   assert.equal(await page.evaluate(() => { const r = [...document.querySelectorAll(".dispon-row")][0]; return r.children.length === document.querySelectorAll("#disponCabecalho th").length; }), true, "linha com o mesmo número de colunas do cabeçalho");
+  await page.setViewportSize({width:700,height:800});
+  await page.evaluate(()=>{const w=document.querySelector('.dispon-table-wrap');w.scrollLeft=0;window.scrollTo(0,window.scrollY+w.getBoundingClientRect().top+80);});
+  const arraste=await page.locator('.dispon-table-wrap').evaluate(w=>({x:w.getBoundingClientRect().left+350,y:180,temColunas:w.scrollWidth>w.clientWidth}));
+  assert.ok(arraste.temColunas,'ha colunas fora da largura visivel');
+  await page.mouse.move(arraste.x,arraste.y);await page.mouse.down();await page.mouse.move(arraste.x-180,arraste.y,{steps:8});await page.mouse.up();
+  assert.ok(await page.locator('.dispon-table-wrap').evaluate(w=>w.scrollLeft>100),'arrastar o mouse desloca as colunas');
+  assert.equal(await page.locator('#disponDetalheTela').isVisible(),false,'arrastar nao abre detalhes do item');
+  await page.waitForFunction(()=>{const h=document.querySelector('.dispon-floating-header');if(!h||h.hidden)return false;const a=document.querySelector('#disponCabecalho th'),b=h.querySelector('th');return Math.abs(a.getBoundingClientRect().left-b.getBoundingClientRect().left)<2;});
+  await page.setViewportSize({width:1400,height:900});await page.evaluate(()=>{document.querySelector('.dispon-table-wrap').scrollLeft=0;window.scrollTo(0,0);});
+  console.log('ok - arraste horizontal com mouse, sem clique acidental e cabecalho alinhado');
   if (process.env.SP) { await page.setViewportSize({ width: 1500, height: 900 }); await page.evaluate(() => window.scrollTo(0, 0)); await page.screenshot({ path: process.env.SP + "/dispon-pedidos.png" }); }
   await page.click("[data-dispon-visao=resumo]");
   await page.waitForFunction(() => /Reservado na data/.test(document.getElementById("disponCabecalho").textContent));
-  assert.equal(await page.locator("th.dispon-col-pedido").count(), 0);
+  assert.equal(await page.locator("#disponCabecalho th.dispon-col-pedido").count(), 0);
   console.log("ok 10 - visão por pedido: uma coluna por pedido da data, antes de Disponível, e volta ao resumo");
 
-  // cabeçalho fixo: a tabela rola dentro da própria caixa e o cabeçalho fica parado no topo dela; rolar carrega mais itens
+  // A tabela aumenta; o fim da pagina carrega mais linhas sem rolagem vertical interna.
   await page.setViewportSize({ width: 1400, height: 800 });
-  await page.fill("#disponBusca", ""); await page.dispatchEvent("#disponBusca", "input"); await page.waitForTimeout(400);
-  const linhasAntes = await page.locator(".dispon-row").count();
-  const fixo = await page.evaluate(async () => {
-    const wrap = document.querySelector(".dispon-table-wrap"), th = document.querySelector("#disponCabecalho th");
-    const topo = th.getBoundingClientRect().top;
-    wrap.scrollTop = 400; await new Promise((r) => setTimeout(r, 120));
-    return { rolou: wrap.scrollTop > 300, rolaDentro: wrap.scrollHeight > wrap.clientHeight, mesmoLugar: Math.abs(document.querySelector("#disponCabecalho th").getBoundingClientRect().top - wrap.getBoundingClientRect().top) < 1 && topo > -1 };
-  });
-  assert.deepEqual(fixo, { rolou: true, rolaDentro: true, mesmoLugar: true }, "cabeçalho parado: " + JSON.stringify(fixo));
-  await page.evaluate(() => { const w = document.querySelector(".dispon-table-wrap"); w.scrollTop = w.scrollHeight; w.dispatchEvent(new Event("scroll")); });
-  await page.waitForFunction((n) => document.querySelectorAll(".dispon-row").length > n, linhasAntes, { timeout: 10000 });
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("#disponCabecalho th")).backgroundColor), "rgb(255, 255, 255)", "cabeçalho com fundo (as linhas não aparecem por trás)");
-  console.log("ok 11 - cabeçalho fixo ao rolar a tabela, e rolar a tabela carrega mais itens");
+  await page.evaluate(() => window.scrollTo(0,0));
+  await page.fill('#disponBusca','');await page.dispatchEvent('#disponBusca','input');await page.waitForTimeout(400);
+  const linhasAntes=await page.locator('.dispon-row').count();
+  const alturaAntes=await page.locator('.dispon-table-wrap').evaluate(w=>w.clientHeight);
+  assert.equal(await page.locator('.dispon-table-wrap').evaluate(w=>Math.abs(w.scrollHeight-w.clientHeight)<=1),true,'sem rolagem vertical interna');
+  await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+  await page.waitForFunction(n=>document.querySelectorAll('.dispon-row').length>n,linhasAntes,{timeout:10000});
+  assert.ok(await page.locator('.dispon-table-wrap').evaluate((w,h)=>w.clientHeight>h,alturaAntes),'a tabela cresceu ao carregar mais itens');
+  assert.ok(await page.evaluate(()=>window.scrollY>0),'a pagina e que rola');
+  await page.evaluate(()=>window.scrollTo(0,500));
+  await page.waitForFunction(()=>{const h=document.querySelector('.dispon-floating-header');return h&&!h.hidden&&Math.abs(h.getBoundingClientRect().top)<2;});
+  const alinhado=await page.evaluate(()=>{const a=[...document.querySelectorAll('#disponCabecalho th')],b=[...document.querySelectorAll('.dispon-floating-header th')];return a.length===b.length&&a.every((th,i)=>Math.abs(th.getBoundingClientRect().left-b[i].getBoundingClientRect().left)<2);});
+  assert.ok(alinhado,'colunas do cabecalho fixo alinhadas com a tabela');
+  await page.evaluate(()=>{const menu=document.createElement('div');menu.id='sidebar';menu.style.cssText='position:fixed;top:0;left:0;width:100%;height:90px';document.body.append(menu);window.dispatchEvent(new Event('resize'));});
+  await page.waitForFunction(()=>Math.abs(document.querySelector('.dispon-floating-header').getBoundingClientRect().top-90)<2);
+  assert.equal(await page.locator('#disponCabecalho').count(),1,'sem duplicar o identificador do cabecalho');
+  await page.evaluate(()=>window.scrollTo(0,0));await page.waitForFunction(()=>document.querySelector('.dispon-floating-header').hidden);
+  console.log('ok 11 - tabela cresce e cabecalho permanece fixo e alinhado durante a rolagem');
 
   assert.deepEqual(erros, []);
   await browser.close(); console.log("todos os testes passaram");

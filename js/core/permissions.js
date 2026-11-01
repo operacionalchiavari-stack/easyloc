@@ -181,7 +181,7 @@
     [/Pedidos/i, 'comercial.pedidos.visualizar'],
     [/Contratos/i, 'comercial.contratos.visualizar'],
     [/ImportarItens/i, 'estoque.importacao.executar'],
-    [/CadastroItens|DisponibilidadeItens|Estoque\/Acervo/i, 'estoque.itens.visualizar'],
+    [/CadastroItens|DisponibilidadeItens|Estoque\/Acervo|Estoque\/CapasProtecao/i, 'estoque.itens.visualizar'],
     [/Producao/i, 'producao.ordens.visualizar'],
     [/Personalizacoes/i, 'estoque.insumos.visualizar'],
     [/CadastroFornecedores/i, 'estoque.fornecedores.visualizar'],

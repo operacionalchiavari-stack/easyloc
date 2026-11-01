@@ -1,6 +1,6 @@
 const {spawnSync}=require('node:child_process');
 const suites=[
- 'tests/complexidade.test.cjs','tests/complexidade-db.test.cjs',
+ 'tests/complexidade.test.cjs','tests/complexidade-db.test.cjs','tests/capas-protecao-db.test.cjs',
  'tests/pedido-ciclo-excecoes.test.cjs','tests/fluxo-unico-pedidos.test.cjs','tests/fin-posicao-final.test.cjs',
  'tests/ciclo-operacional.test.cjs','tests/continuidade-operacional.test.cjs',
  'tests/inventario-qualidade.test.cjs','tests/acervo-operacao-real.test.cjs',

@@ -1034,7 +1034,7 @@
   };
   L.salvarPosicionamentoItens = async function (d) {
     var fotos = []; for (var f of (d.fotos || [])) { fotos.push(await subirFoto(f, pastaMont())); }
-    var r = await salvarReg(d.idCronograma, "posicionamento", { observacao: d.observacao || "", fotos: fotos });
+    var r = await salvarReg(d.idCronograma, "posicionamento", { observacao: d.observacao || "", fotos: fotos, correto: typeof d.correto === "boolean" ? d.correto : null });
     return { sucesso: true, fotos: r.fotos || fotos };
   };
   L.salvarObservacoesMontagem = async function (d) { await salvarReg(d.idCronograma, "observacoes", { observacao: d.observacao || "", responsavel: d.responsavel || "" }); return { sucesso: true }; };

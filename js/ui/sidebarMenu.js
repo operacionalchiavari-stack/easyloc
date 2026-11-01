@@ -54,7 +54,7 @@
           { rotulo: "Cronograma", href: "Modulos/Chiavari/Cronograma/cronograma.html" },
           { rotulo: "Catálogo", href: "Modulos/Comercial/Catalogo/catalogo.html" },
           { rotulo: "Painel de Complexidade", href: "Modulos/Chiavari/Costura/costura.html" },
-          { rotulo: "Registro de Ocorrências", href: "Modulos/Chiavari/Ocorrencias/OcorrenciasOperacionais.html" },
+          { rotulo: "Ocorrências operacionais", href: "Modulos/Chiavari/Ocorrencias/OcorrenciasOperacionais.html" },
         ],
       },
       {
@@ -86,8 +86,8 @@
             rotulo: "Disponibilidade de Itens",
             legado: {
               html: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html?v=20261031-filtros-titulo",
-              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js?v=20261031-paginacao",
-              css: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css",
+              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js?v=20261101-arraste-horizontal",
+              css: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css?v=20261101-arraste-horizontal",
             },
           },
         ],
@@ -108,6 +108,7 @@
             ],
           },
           { rotulo: "Gestão do acervo", href: "Modulos/Estoque/Acervo/acervo.html" },
+          { rotulo: "Material de proteção", href: "Modulos/Estoque/CapasProtecao/capas.html" },
           { rotulo: "Almoxarifado", href: "Modulos/Chiavari/Almoxarifado/almoxarifado.html" },
           { rotulo: "Ordens de serviço", href: "Modulos/Chiavari/CentralMetas/itens-danificados.html" },
           {
@@ -175,17 +176,6 @@
           { rotulo: "Parâmetros", href: "Modulos/Configuracoes/Parametros/parametros.html" },
           // Era categoria própria; com o menu no topo foi para dentro de Gestão (pedido do usuário).
           { rotulo: "Importar Itens", href: "Modulos/Importacao/ImportarItens/importar-itens.html" },
-          {
-            // Fora do menu (out/2026, pedido do usuário): as permissões ficam num lugar só,
-            // no Cadastro de Funcionários (Recursos Humanos), que já tem os bloqueios de acesso.
-            rotulo: "Permissões",
-            oculto: true,
-            legado: {
-              html: "Modulos/Configuracoes/Permissoes/permissoes.html",
-              js: "Modulos/Configuracoes/Permissoes/permissoes.js",
-              css: "Modulos/Configuracoes/Permissoes/permissoes.css",
-            },
-          },
           {
             rotulo: "Integrações",
             grupo: [

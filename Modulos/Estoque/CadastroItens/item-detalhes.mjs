@@ -55,6 +55,7 @@ function statusDoItem(item = state.item){
 
 function resetarFormularioNovo(){
   window.CXCadastro?.preencher('item',{});
+  window.CapasCadastro?.mostrar(null);
   window.itemAtualId = null;
   window.itemAtualQrCode = null;
 
@@ -89,6 +90,7 @@ function preencherFormulario(item){
   window.CXCadastro?.preencher('item',item.complexidade);
 
   window.itemAtualId = item.id;
+  window.CapasCadastro?.mostrar(item);
   window.itemAtualQrCode = item.qr_code || null;
 
   $("itensId").value = item.id || "";

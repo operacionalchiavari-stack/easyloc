@@ -61,7 +61,7 @@ module.exports = {
     planilhaAtiva: "1i197sFXQSzZ7yVdRlQ_Z6H7K9TuaoN5rOOpPnoyjOhI",
     urlApp: base => base + "/Modulos/Chiavari/Ocorrencias/",
     agendadas: [],
-    bloqueadas: ["doGet"]
+    bloqueadas: ["doGet", "salvarOcorrenciaOperacional", "atualizarStatusOcorrencia"]
   },
   almoxarifado: {
     chave: "almoxarifado",
