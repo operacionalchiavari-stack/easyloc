@@ -28,9 +28,11 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
   const client = createClient(url, process.env.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
   const check = r => { if (r.error) { throw Error(r.error.message); } return r.data; };
   const suffix = randomUUID().slice(0, 8), senha = "Temp-" + randomUUID() + "!";
+  const cpfMont = (() => { const n = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)); for (const t of [10, 11]) { const s = n.reduce((a, d, i) => a + d * (t - i), 0) % 11; n.push(s < 2 ? 0 : 11 - s); } return n.join(""); })();
   const inicioTeste = new Date(Date.now() - 60000).toISOString();
   const nomeCliente = "Cliente Fluxo " + suffix, nomeLocal = "Espaço Fluxo " + suffix, nomeMont = "Montador Fluxo " + suffix;
-  const ENTREGA = dia(1), EVENTO = dia(1), COLETA = dia(2);
+  const DESLOC = Number(process.env.FLUXO_DESLOCAR_DIAS || 0); // dia livre na frota (ex.: 30)
+  const ENTREGA = dia(1 + DESLOC), EVENTO = dia(1 + DESLOC), COLETA = dia(2 + DESLOC);
   let owner, clienteId, localId, mont, browser, pedidoId, contaId, travaPagamento = null;
   const estoques = [], respostas = [], contagensTeste = [];
   const erros = [], passo = m => console.log("ok - " + m);
@@ -44,7 +46,7 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     const sessao = check(await client.auth.signInWithPassword({ email: owner.email, password: senha })).session;
     clienteId = check(await admin.from("clientes_empresas").insert({ empresa_id: EMPRESA, tipo_pessoa: "PF", nome_razao: nomeCliente, telefone: "11999990000", email: "cliente-fluxo@example.invalid", endereco: "Rua Teste, 1", status: "Ativo" }).select("id").single()).id;
     localId = check(await admin.from("locais_empresas").insert({ empresa_id: EMPRESA, tipo_pessoa: "PJ", cpf_cnpj: "", inscricao_estadual: "isento", telefone: "11999990000", email: "fluxo@example.invalid", numero_endereco: "100", ponto_referencia: "Teste", tags: { tipo: "Casa de Festa", observacoes: ["Tem escadas"] }, nome_razao: nomeLocal, endereco: "Rua Teste, 100 - São Paulo", status: "Ativo", latitude: -23.55, longitude: -46.63, distancia_galpao_km: 12 }).select("id").single()).id;
-    const r = await client.functions.invoke("funcionarios-admin", { body: { action: "save", empresa_id: EMPRESA, employee: { nome: nomeMont, setor: "Montagem", cargo: "Teste", acesso_sistema: false, ativo: true, pin: "0123", nivel_acesso: "Visualizador", cpf: "", equipe_operacional: "montagem" } } });
+    const r = await client.functions.invoke("funcionarios-admin", { body: { action: "save", empresa_id: EMPRESA, employee: { nome: nomeMont, setor: "Montagem", cargo: "Teste", acesso_sistema: false, ativo: true, pin: "0123", nivel_acesso: "Visualizador", cpf: cpfMont, equipe_operacional: "montagem" } } });
     if (r.error) { let d; try { d = await r.error.context.json(); } catch (e) {} throw Error(d?.error || r.error.message); }
     mont = r.data.id;
     check(await client.rpc("rh_definir_lider", { p_empresa_id: EMPRESA, p_funcionario: mont, p_lider: true }));
@@ -236,13 +238,13 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     /* ---------- 5. montagem e desmontagem pelo App do Montador ---------- */
     const campo = await novoContexto(false);
     const app = await abrir(campo, "Modulos/Chiavari/Cronograma/montador.html");
-    await app.waitForFunction(n => [...document.querySelectorAll("#loginNome option")].some(o => o.textContent.trim() === n), nomeMont, { timeout: 30000 });
-    await app.selectOption("#loginNome", { label: nomeMont });
+    await app.waitForSelector("#loginCpf", { timeout: 30000 });
+    await app.fill("#loginCpf", cpfMont);
     await app.fill("#loginSenha", "0123"); await app.click("#btnEntrar");
     await app.waitForFunction(() => localStorage.getItem("montadorToken"), null, { timeout: 20000 });
     const tok = await app.evaluate(() => localStorage.getItem("montadorToken"));
     const L = (fn, ...args) => app.evaluate(([fn, args]) => window.ACERVO_LOCAL[fn](...args), [fn, args]);
-    const dadosApp = JSON.stringify(await L("MONT_appCarregar", tok, ""));
+    const dadosApp = JSON.stringify(DESLOC ? [await L("MONT_appCarregar", tok, montagem.id), await L("MONT_appCarregar", tok, desmontagem.id)] : await L("MONT_appCarregar", tok, "")); // com data deslocada, abre a etapa pelo id (o app lista só 7 dias)
     assert.ok(dadosApp.includes(montagem.id) && dadosApp.includes(desmontagem.id), "o montador vê a montagem e a desmontagem do pedido");
     await foto(app, "07-app-montador");
     await assert.rejects(L("salvarEquipeTerceirizada", { idCronograma: montagem.id, foto: FOTO, latitude: -23.55, longitude: -46.63, precisaoGPS: 10, quantidade: 2 }), /Inicie este evento/);
@@ -324,19 +326,8 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
 
     /* ---------- 8. avaria, perda e encerramento ---------- */
     await cfRet.waitForSelector("#cfEncerrar", { timeout: 20000 });
-    await cfRet.click("#cfEncerrar");
-    await cfRet.waitForFunction(() => /Resolva as ocorr/.test(document.getElementById("cfEncerramentoMensagem")?.textContent || ""), null, { timeout: 15000 });
-    await cfRet.click("#cfOcorrencias summary");
-    const futton = etiquetas.find(e => e.item_id !== ITEM);
-    await cfRet.selectOption("#cfFormularioOcorrencia select[name=tipo]", "avaria");
-    await cfRet.selectOption("#cfFormularioOcorrencia select[name=codigo]", futton.codigo);
-    await cfRet.fill("#cfFormularioOcorrencia textarea[name=descricao]", "Futton rasgado, mandar para a costura");
-    await cfRet.click("#cfNovaOcorrencia");
-    // a falta vai para a Gestão do acervo; aqui só a avaria tem "Resolver"
-    await cfRet.waitForFunction(() => document.querySelectorAll("[data-resolver]").length === 1, null, { timeout: 15000 });
-    const dispAv = await client.functions.invoke("catalogo-assistente", { body: { action: "disponibilidade", empresa_id: EMPRESA, data: dia(30), item_ids: [futton.item_id] } });
-    const futtonItem = check(await admin.from("itens").select("estoque_total").eq("id", futton.item_id).single());
-    assert.ok(dispAv.data.itens[futton.item_id].livre <= futtonItem.estoque_total - 1, "peça em avaria fica indisponível até ser resolvida");
+    // desde 01/11 as ocorrências são automáticas: a conferência não tem mais registro manual de avaria
+    assert.equal(await cfRet.locator("#cfFormularioOcorrencia").count(), 0, "sem formulário manual de ocorrência");
     // falta: contagem geral do item e perda confirmada pela Gestão do acervo (Estoque > Gestão do acervo > Divergências)
     const falta = check(await admin.from("operacao_ocorrencias").select("*").eq("pedido_id", pedidoId).eq("tipo", "falta").single());
     const rAcervo = await cfRet.evaluate(async ({ emp, itemId, oc }) => {
@@ -356,16 +347,13 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     assert.equal(Number(rAcervo.r.perda), 1, "perda de 1 confirmada");
     const estoqueDepois = check(await admin.from("itens").select("estoque_total").eq("id", ITEM).single()).estoque_total;
     assert.ok(rAcervo.r.acervo || Number(estoqueDepois) === Number(estoqueAntes) - 1, "perda: baixa no estoque ou no Retorno do acervo");
-    respostas.push("resolvido", "Costura trocou o tecido");
-    await cfRet.reload(); await cfRet.waitForSelector("[data-resolver]", { timeout: 30000 });
-    await cfRet.locator("[data-resolver]").first().click();
-    await cfRet.waitForFunction(() => document.querySelectorAll("[data-resolver]").length === 0, null, { timeout: 15000 });
+    await cfRet.reload(); await cfRet.waitForSelector("#cfEncerrar", { timeout: 30000 });
     await cfRet.click("#cfEncerrar");
     await cfRet.waitForFunction(() => /Operação encerrada/.test(document.getElementById("cfEncerramentoMensagem")?.textContent || ""), null, { timeout: 15000 }).catch(async (e) => { console.log("ENCERRAR:", await cfRet.locator("#cfEncerramentoMensagem").textContent()); throw e; });
     await foto(cfRet, "10-encerrado");
     const pf = check(await admin.from("separacoes_pedidos").select("status_operacional,encerrado_operacional_em").eq("id", pedidoId).single());
     assert.equal(pf.status_operacional, "encerrado"); assert.ok(pf.encerrado_operacional_em);
-    passo("8 - avaria registrada (peça indisponível até resolver), falta resolvida pela Gestão do acervo (contagem geral + perda), operação encerrada");
+    passo("8 - falta resolvida pela Gestão do acervo (contagem geral + perda), operação encerrada");
 
     /* ---------- 9. financeiro: o pedido reservado virou contas a receber; recebimento pela tela ---------- */
     const titulos = check(await admin.from("fin_receber").select("*").eq("pedido_id", pedidoId).neq("status", "cancelado"));
@@ -378,19 +366,23 @@ const shots = path.join(raiz, "outputs", "fluxo-completo");
     for (const x of salvas) { assert.ok(titulos.some(t => t.componente === x.componente && Math.abs(Number(t.valor) - x.valor) < 0.01), "conta a receber igual à parcela " + x.componente + " " + x.valor); }
     const somaTit = titulos.reduce((s, t) => s + Number(t.valor), 0);
     assert.ok(Math.abs(somaTit - Number(p1.valor_total)) < 0.05, "contas a receber somam o valor do pedido: " + somaTit + " x " + p1.valor_total);
-    contaId = check(await admin.from("fin_contas").insert({ empresa_id: EMPRESA, nome: "Conta Fluxo " + suffix, tipo: "corrente" }).select("id").single()).id;
+    // desde 30/10 não há "Receber" manual: recebimento entra pela conciliação do banco ou pelo caixa físico
+    contaId = check(await admin.from("fin_contas").insert({ empresa_id: EMPRESA, nome: "Caixa Fluxo " + suffix, tipo: "caixa" }).select("id").single()).id;
     const fin = await abrir(equipe, "Modulos/Financeiro/financeiro.html?aba=receber");
     const cartao = fin.locator("article.fin-pedido", { hasText: "Pedido " + p1.numero_pedido + " · " + nomeCliente });
     await cartao.waitFor({ timeout: 30000 });
-    await cartao.locator("[data-r-baixar]").first().click();
-    await fin.waitForSelector("#finModal[open]");
-    await fin.selectOption("#finModalCorpo select[name=conta]", contaId);
-    await fin.locator("#finModalRodape button", { hasText: "Confirmar recebimento" }).click();
+    assert.equal(await cartao.locator("[data-r-baixar]").count(), 0, "sem botão Receber manual");
+    const tit = titulos.sort((x, y) => String(x.vencimento).localeCompare(String(y.vencimento)))[0];
+    const rCaixa = await fin.evaluate(async ({ emp, conta, t, hoje }) => {
+      const { data, error } = await window.supabaseClient.rpc("fin_caixa_lancar", { p_empresa: emp, p_conta: conta, p_data: hoje, p_valor: Number(t.valor), p_descricao: "Recebimento em dinheiro (teste)", p_acao: { tipo: "baixar", titulos: [{ tipo: "receber", id: t.id, valor: Number(t.valor) }], resumo: "Recebimento · teste" } });
+      return error ? { erro: error.message } : { ok: data };
+    }, { emp: EMPRESA, conta: contaId, t: tit, hoje: dia(0) });
+    assert.ok(rCaixa.ok !== undefined, "caixa físico: " + rCaixa.erro);
     let recebido = 0;
     for (let i = 0; i < 30 && !recebido; i++) { await fin.waitForTimeout(500); recebido = check(await admin.from("fin_receber").select("recebido").eq("pedido_id", pedidoId)).reduce((s, t) => s + Number(t.recebido), 0); }
     assert.ok(recebido > 0, "recebimento registrado");
     await foto(fin, "11-financeiro");
-    passo("9 - financeiro: o pedido gerou " + titulos.length + " conta(s) a receber somando o valor do pedido, e o recebimento foi registrado pela tela");
+    passo("9 - financeiro: o pedido gerou " + titulos.length + " conta(s) a receber somando o valor do pedido, e o recebimento entrou pelo caixa físico");
 
     /* ---------- 10. Central de Pedidos e cronograma mostram o pedido encerrado ---------- */
     const central = await abrir(equipe, "Modulos/Comercial/Pedidos/CentralPedidos.html");
@@ -437,7 +429,7 @@ async function limpar({ admin, pedidoId, clienteId, localId, mont, owner, suffix
     await tenta("itens", () => admin.from("separacoes_itens").delete().eq("separacao_pedido_id", pedidoId));
     await tenta("pedido", () => admin.from("separacoes_pedidos").delete().eq("id", pedidoId));
   }
-  if (contaId) { await tenta("fin_movimentos", () => admin.from("fin_movimentos").delete().eq("conta_id", contaId)); await tenta("fin_baixas", () => admin.from("fin_baixas").delete().eq("conta_id", contaId)); await tenta("fin_auditoria", () => admin.from("fin_auditoria").delete().eq("entidade_id", contaId)); await tenta("conta", () => admin.from("fin_contas").delete().eq("id", contaId)); }
+  if (contaId) { await tenta("fin_extrato", () => admin.from("fin_extrato").delete().eq("conta_id", contaId)); await tenta("fin_extrato_lotes", () => admin.from("fin_extrato_lotes").delete().eq("conta_id", contaId)); await tenta("fin_movimentos", () => admin.from("fin_movimentos").delete().eq("conta_id", contaId)); await tenta("fin_baixas", () => admin.from("fin_baixas").delete().eq("conta_id", contaId)); await tenta("fin_auditoria", () => admin.from("fin_auditoria").delete().eq("entidade_id", contaId)); await tenta("conta", () => admin.from("fin_contas").delete().eq("id", contaId)); }
   await tenta("alteracoes", () => admin.from("operacao_alteracoes").delete().like("usuario_nome", "%" + suffix + "%"));
   if (owner) { await tenta("fin_auditoria", () => admin.from("fin_auditoria").delete().eq("usuario_id", owner.id)); await tenta("qualidade", () => admin.from("qualidade_inspecoes").delete().eq("criado_por", owner.id)); await tenta("alteracoes2", () => admin.from("operacao_alteracoes").delete().eq("usuario_nome", owner.email)); }
   if (clienteId) { await tenta("bv_cliente", () => admin.from("fin_bv_comissoes").delete().eq("cliente_id", clienteId)); }
