@@ -11318,3 +11318,6 @@ com quem fez o pedido; o pedido mostra a pessoa + a equipe; papéis cadastrávei
 - **Bibliotecas com versão fixa**: `lucide@1.66.0` e `@supabase/supabase-js@2.118.0` (eram `@latest`/`@2`).
 - **Cadastro público do Supabase Auth desligado** (`disable_signup:true`, pela API de gerenciamento). Usuários novos só pelo Cadastro de Funcionários.
 - Migrations: `20261026000100_rotas…` renomeada para `…000101` (duas tinham o mesmo número); as 3 sem registro foram registradas; `20261101000600` tira a leitura pública do bucket antigo `avatars` (vazio).
+
+## Gestão > Fluxo do sistema (01/11/2026)
+Fluxograma do pedido para a equipe (`Modulos/Gestao/Fluxograma/fluxograma.{html,css,js}`), aberto para todos os logados (regra própria em `canNavigate`, como a Ideia Premiada). É dado: `FASES` (Venda, Planejamento, Ida, Volta, Fechamento) com nós `passo`/`duplo`/`decisao`/`auto`/`fim` e `PARALELOS` (dinheiro, compras, pessoas); cada caixa abre a tela pelo `shellNavigate` do dashboard e fica desabilitada sem permissão. **Ao mudar uma regra do fluxo (trava, parâmetro, o que é automático), atualize o texto em `fluxograma.js`.**

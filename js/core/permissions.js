@@ -211,6 +211,8 @@
     // Todos os membros ativos podem enviar e acompanhar suas próprias ideias.
     // A consulta geral e a avaliação são controladas nas RPCs por permissões do RH.
     if (/\/Modulos\/RH\/IdeiaPremiada\/ideia-premiada\.html$/i.test(path)) return true;
+    // Fluxo do sistema (Gestão): só leitura, aberto para toda a equipe (nov/2026).
+    if (/\/Modulos\/Gestao\/Fluxograma\/fluxograma\.html$/i.test(path)) return true;
     if (cache.legacyAdmin) return true;
     const match = routes.find(([pattern]) => pattern.test(path));
     if (/\/Modulos\/Logistica\/(PainelLogistico|EntregasColetas)\//i.test(path)) return hasPermission('logistica.planejamento.visualizar') || hasPermission('logistica.expedicao.visualizar') || hasPermission('logistica.cronograma.visualizar');

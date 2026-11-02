@@ -172,6 +172,8 @@
         icone: "clipboard-list",
         rotulo: "Gestão",
         itens: [
+          // Fluxograma do sistema, aberto para toda a equipe (nov/2026).
+          { rotulo: "Fluxo do sistema", href: "Modulos/Gestao/Fluxograma/fluxograma.html" },
           { rotulo: "Central de Metas", href: "Modulos/Chiavari/CentralMetas/central.html" },
           { rotulo: "Parâmetros", href: "Modulos/Configuracoes/Parametros/parametros.html" },
           // Era categoria própria; com o menu no topo foi para dentro de Gestão (pedido do usuário).
