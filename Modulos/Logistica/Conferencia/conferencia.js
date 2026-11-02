@@ -470,6 +470,8 @@
       const liberar=document.createElement('button');liberar.id='cfLiberarTriagem';liberar.type='button';liberar.className='btn secondary cf-liberar';liberar.textContent='Liberar para a Triagem';$('cfImprimir').before(liberar);
       liberar.onclick=async()=>{const certo=typeof window.confirmarGlobal==='function'?await window.confirmarGlobal('O pedido volta para a Triagem. Tem certeza?','Liberar para a Triagem',{confirmarTexto:'Liberar',cancelarTexto:'Voltar',tipo:'warning'}):confirm('O pedido volta para a Triagem. Tem certeza?');if(!certo)return;const motivo='Liberado pela Expedição para a Triagem';liberar.disabled=true;try{const {error}=await s.sb.rpc('operacao_transferir_pedido',{p_pedido:pedidoId,p_acao:'devolver_triagem',p_motivo:motivo});if(error)throw error;leitor?.desligar();if(typeof window.top.shellNavigate==='function')window.top.shellNavigate('Modulos/Logistica/Expedicao/expedicao.html');else location.href='../Expedicao/expedicao.html';}catch(e){avisar(e.message,'Devolver para a Triagem','aviso');liberar.disabled=false;}};
     }
+    // Triagem da volta: registrar item danificado (nov/2026), em conferencia-avarias.js
+    if(etapa==='retorno'&&!s.pedido.pedido_origem_id&&window.ConferenciaAvarias)window.ConferenciaAvarias.montar({sb:s.sb,empresa:s.empresa,pedido:s.pedido,antes:$('cfImprimir')});
     // O que deve voltar = o que saiu no carregamento (se ele foi conferido); senão, todas as etiquetas.
     const carregadas = s.etiquetas.filter((e) => e.lida_carregamento_em);
     s.base = carregadas.length ? carregadas : s.etiquetas;

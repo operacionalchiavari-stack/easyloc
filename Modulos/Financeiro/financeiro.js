@@ -65,6 +65,8 @@
     ]);
     S.contas = contas; S.cfg = cfg; S.cats = cats; S.ccs = ccs; S.receber = receber; S.pagar = pagar;
     S.fornecedores = forn; S.clientes = cli;
+    // pré-reservas (nov/2026): parcelas programadas no pedido, só como previsão (não são contas a receber)
+    S.previsoes = await rpc("fin_previsao_pre_reservas", { p_empresa: S.emp }).catch(() => []) || [];
     S.saldos = {}; (saldos || []).forEach((s) => { S.saldos[s.conta_id] = Number(s.saldo) || 0; });
     S.recebidoEm = {};
     const baixas = await todos("fin_baixas", "receber_id,data,estornado_em", (q) => q.not("receber_id", "is", null)).catch(() => []);
@@ -246,8 +248,9 @@
       const chave = ini.slice(0, 8) + String(d).padStart(2, "0"), r = porDia.get(chave) || {};
       const entra = Number(r.previsto_entrada || 0) + Number(r.realizado_entrada || 0), sai = Number(r.previsto_saida || 0) + Number(r.realizado_saida || 0);
       const saldo = Number(r.saldo_previsto || 0), estado = !porDia.has(chave) ? "neutro" : saldo < 0 ? "negativo" : saldo <= minimo ? "alerta" : "positivo";
+      const pre = (S.previsoes || []).filter((x) => String(x.vencimento || "").slice(0, 10) === chave).reduce((t, x) => t + Number(x.valor || 0), 0);
       html += '<button type="button" class="fin-cal-dia ' + estado + (chave === hj ? " hoje" : "") + (chave === S.calDia ? " selecionado" : "") + '" data-dia="' + chave + '" aria-label="' + esc(dataBr(chave) + ": entradas " + brl(entra) + ", saídas " + brl(sai) + ", saldo " + brl(saldo)) + '">' +
-        '<span class="fin-cal-num">' + d + '</span><span class="fin-cal-valores"><span class="e">E: ' + compacto(entra) + '</span><span class="s">S: ' + compacto(sai) + '</span><b>Saldo: ' + compacto(saldo) + "</b></span></button>";
+        '<span class="fin-cal-num">' + d + '</span><span class="fin-cal-valores"><span class="e">E: ' + compacto(entra) + '</span><span class="s">S: ' + compacto(sai) + '</span><b>Saldo: ' + compacto(saldo) + "</b>" + (pre ? '<span class="p" title="Previsão de pré-reserva, fora do saldo">Pré: ' + compacto(pre) + "</span>" : "") + "</span></button>";
     }
     const resto = (7 - ((vazios + qtd) % 7)) % 7;
     for (let i = 0; i < resto; i++) html += '<span class="fin-cal-dia vazio" aria-hidden="true"></span>';
@@ -278,6 +281,7 @@
       : '<p class="fin-cal-nada">Nenhum lançamento neste dia.</p>';
     p.innerHTML = "<header>" + esc(dataBr(dia)) + "</header>" +
       '<section class="entrada"><h4><span>Entradas do dia</span><b>' + brl(Number(r.previsto_entrada || 0) + Number(r.realizado_entrada || 0)) + "</b></h4>" + lista(entradas, nomeR) + "</section>" +
+      (() => { const pr = (S.previsoes || []).filter((x) => String(x.vencimento || "").slice(0, 10) === dia); return pr.length ? '<section class="pre"><h4><span>Pré-reservas (previsão, fora do saldo)</span><b>' + brl(pr.reduce((t, x) => t + Number(x.valor || 0), 0)) + "</b></h4><ul>" + pr.slice(0, 5).map((x) => "<li><div><strong>Pedido " + esc(x.pedido_numero || "") + " · " + esc(x.cliente_nome || "") + "</strong><small>" + esc((DIV[x.componente] || "") + " · " + (x.parcela || "")) + "</small></div><b>" + brl(x.valor) + "</b></li>").join("") + "</ul></section>" : ""; })() +
       '<section class="saida"><h4><span>Saídas do dia</span><b>' + brl(Number(r.previsto_saida || 0) + Number(r.realizado_saida || 0)) + "</b></h4>" + lista(saidas, nomeP) + "</section>";
     p.hidden = false;
     const rect = botao.getBoundingClientRect(), largura = Math.min(380, innerWidth - 24);
@@ -363,6 +367,23 @@
           '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + recebidoEmHtml(t) + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + acoesR(t) + "</tr>";
       }).join("") + "</tbody></table></div></section>";
   }
+  // Pré-reservas como previsão (nov/2026): selo amarelo, sem cobrança, sem link de PIX e sem baixa.
+  function previsaoHtml(f) {
+    if (["recebidos", "cancelados", "vencidos"].includes(f.status) || f.prazo || f.conta) return "";
+    const b = (f.busca || "").trim().toLowerCase();
+    const lista = (S.previsoes || []).filter((x) => (!f.div || x.componente === f.div) && (!b || [x.cliente_nome, x.pedido_numero].join(" ").toLowerCase().includes(b)));
+    if (!lista.length) return "";
+    const grupos = new Map(); lista.forEach((x) => { if (!grupos.has(x.pedido_id)) grupos.set(x.pedido_id, []); grupos.get(x.pedido_id).push(x); });
+    const total = lista.reduce((t, x) => t + Number(x.valor || 0), 0);
+    return '<details class="fin-previsao"' + (S.previsaoAberta ? " open" : "") + '><summary><span class="fin-pre-selo">Pré-reserva</span><b>Previsão de ' + grupos.size + " pedido(s) em pré-reserva · " + brl(total) + "</b>" +
+      '<small>Não são contas a receber: viram cobrança quando o pedido for Reservado.</small></summary>' +
+      [...grupos.values()].map((ps) => { const x0 = ps[0];
+        return '<article class="fin-previsao-ped"><header><strong>Pedido ' + esc(x0.pedido_numero || "") + " · " + esc(x0.cliente_nome || "") + "</strong>" +
+          '<span class="fin-pre-selo">Pré-reserva' + (x0.pre_reserva_ate ? " até " + dataBr(x0.pre_reserva_ate) : "") + "</span>" + (x0.data_evento ? "<small>Evento " + dataBr(x0.data_evento) + "</small>" : "") + "</header>" +
+          '<table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Parcela</th><th>Divisão</th><th>Forma</th><th class="num">Valor</th></tr></thead><tbody>' +
+          ps.map((x) => "<tr><td>" + (x.vencimento ? dataBr(x.vencimento) : "—") + "</td><td>" + esc(x.parcela || "") + "</td><td>" + esc(DIV[x.componente] || x.componente) + "</td><td>" + esc(x.forma || "") + '</td><td class="num">' + brl(x.valor) + "</td></tr>").join("") +
+          "</tbody></table></article>"; }).join("") + "</details>";
+  }
   function pintarReceber() {
     const f = S.filtroR, lista = filtrarR(), porData = modoReceber() === "data";
     const grupos = new Map();
@@ -404,10 +425,12 @@
       // "Recebidas": atalho para ver só o que já foi recebido (é o filtro de status "Recebidos"); clicar de novo volta.
       '<button type="button" class="fin-recebidas-btn" id="frRecebidas" aria-pressed="' + (f.status === "recebidos") + '">Recebidas</button>' +
       '<button class="fin-btn" id="frNovo">+ Novo recebimento</button></div>' +
+      previsaoHtml(f) +
       (html || '<div class="fin-vazio">Nenhuma conta a receber com esses filtros. Pedido aprovado aparece aqui sozinho, dividido em locação, frete e montagem.</div>');
     const at = () => { const status = $("frStatus").value; S.filtroR = { busca: $("frBusca").value, status, div: $("frDiv").value, conta: $("frConta").value, prazo: status === "abertos" ? S.filtroR.prazo : "" }; pintarReceber(); };
     // clicar de novo na aba escolhida volta a mostrar tudo em aberto
     $("finConteudo").querySelectorAll("[data-prazo]").forEach((b) => b.addEventListener("click", () => { S.filtroR = { ...S.filtroR, status: "abertos", prazo: S.filtroR.prazo === b.dataset.prazo ? "" : b.dataset.prazo }; pintarReceber(); }));
+    $("finConteudo").querySelector(".fin-previsao")?.addEventListener("toggle", (e) => { S.previsaoAberta = e.target.open; });
     $("frBusca").addEventListener("change", at); $("frBusca").addEventListener("keydown", (e) => { if (e.key === "Enter") at(); });
     ["frStatus", "frDiv", "frConta"].forEach((id) => $(id).addEventListener("change", at));
     $("frNovo").addEventListener("click", () => novoTitulo("receber"));

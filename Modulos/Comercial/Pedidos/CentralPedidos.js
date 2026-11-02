@@ -1150,14 +1150,17 @@ function infoCadastro(rotulo, valor, icone){
     { status: "", titulo: "Todos", icone: "list" },
     { status: "pre_reserva", titulo: "Pré-reserva", icone: "alarm-clock", alerta: true },
     { status: "orcamento", titulo: "Orçamento", icone: "file-text", alerta: true },
-    { status: "aprovado", titulo: "Reservado", icone: "calendar-check" }
+    { status: "aprovado", titulo: "Reservado", icone: "calendar-check" },
+    // Catálogo (nov/2026): pedidos enviados pelo decorador que o Comercial ainda precisa finalizar (pagamento, frete, montagem)
+    { status: "catalogo", titulo: "Catálogo", icone: "book-open", alerta: true }
   ];
+  const CATALOGO_PENDENTE = ["catalogo_pedido_enviado", "catalogo_em_analise"];
   function renderAvisoPreReserva(){
     const caixa = $("centralSituacoes");
     if(!caixa) return;
     const atual = els.filtroStatusPedido?.value || "";
     caixa.innerHTML = SITUACOES.map((sit) => {
-      const lista = sit.status ? state.pedidos.filter((p) => p.status === sit.status) : state.pedidos;
+      const lista = sit.status === "catalogo" ? state.pedidos.filter((p) => CATALOGO_PENDENTE.includes(p.status)) : sit.status ? state.pedidos.filter((p) => p.status === sit.status) : state.pedidos;
       let detalhe = "";
       if(sit.status === "pre_reserva"){
         const pre = lista.map(prazoPreReserva);
@@ -1206,7 +1209,7 @@ function infoCadastro(rotulo, valor, icone){
         && (!numero || String(pedido.numero).toLowerCase().includes(numero))
         && (!local || pedido.local.toLowerCase().includes(local))
         && (!comercial || pedido.comercial.toLowerCase().includes(comercial))
-        && (!status || pedido.status === status)
+        && (!status || pedido.status === status || (status === "catalogo" && CATALOGO_PENDENTE.includes(pedido.status)))
         && (!inicial || dataISO >= inicial)
         && (!final || dataISO <= final);
     });

@@ -771,6 +771,43 @@ export function initPagamento(){
   window.__pedidoColetarPagamentoConfig = coletarConfig;
   window.__pedidoAplicarPagamentoConfig = aplicarConfig;
 
+  // Condição de pagamento escolhida pelo decorador no catálogo (nov/2026): fica em projeto_comercial.dados.pagamento.
+  // Aparece no topo do Financeiro do pedido; "Aplicar esta condição" gera as parcelas de cada divisão
+  // (entrada % + N parcelas mensais) e puxa para a data limite as que passariam de "X dias antes do evento".
+  const condicaoCatalogo = () => window.__pedidoProjetoComercial?.dados?.pagamento || null;
+  const aplicarCondicaoCatalogo = () => {
+    const c = condicaoCatalogo();
+    if(!c) return;
+    if(COMPONENTES.some(([comp]) => divisaoTravada(comp))){ window.alerta?.("Há parcela recebida neste pedido: ajuste as parcelas à mão.", "Condição do catálogo", "aviso"); return; }
+    const { valorFinal } = calcularTotais();
+    const hoje = new Date().toLocaleDateString("sv-SE");
+    if(metodoEl && c.forma) metodoEl.value = c.forma;
+    if(entradaEl) entradaEl.value = centavos(valorFinal * (Number(c.entrada_pct) || 0) / 100);
+    if(parcelasEl) parcelasEl.value = Number(c.entrada_pct) >= 100 ? 0 : Math.max(1, Number(c.parcelas) || 1);
+    if(dataEntradaEl) dataEntradaEl.value = hoje;
+    if(diaFixoEl) diaFixoEl.value = "";
+    gerarParcelas();
+    const evento = document.getElementById("dataEvento")?.value;
+    if(evento && c.quitar_dias_antes != null){
+      const lim = new Date(evento + "T12:00:00"); lim.setDate(lim.getDate() - Number(c.quitar_dias_antes));
+      const limite = lim.toLocaleDateString("sv-SE") < hoje ? hoje : lim.toLocaleDateString("sv-SE");
+      tbody.querySelectorAll(".pg-vencimento").forEach((inp) => { if(inp.value && inp.value > limite) inp.value = limite; });
+      atualizarResumo();
+    }
+    mostrarCondicaoCatalogo(true);
+  };
+  const mostrarCondicaoCatalogo = (aplicada) => {
+    const c = condicaoCatalogo(), card = document.querySelector(".pagamento-card");
+    let box = document.getElementById("pgCondicaoCatalogo");
+    if(!c || !card){ box?.remove(); return; }
+    if(!box){ box = document.createElement("div"); box.id = "pgCondicaoCatalogo"; box.className = "pg-condicao-catalogo"; card.prepend(box); }
+    const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    box.innerHTML = '<div><small>Condição escolhida pelo decorador no catálogo</small><b>' + esc(c.nome) + '</b><span>' + esc(c.resumo || "") + '</span></div>' +
+      '<button type="button" class="pg-condicao-aplicar">' + (aplicada ? "✓ Aplicada · aplicar de novo" : "Aplicar esta condição") + '</button>';
+    box.querySelector("button").onclick = aplicarCondicaoCatalogo;
+  };
+  window.__pedidoMostrarCondicaoCatalogo = mostrarCondicaoCatalogo;
+
   gerarParcelas();
   refreshIcons();
 }

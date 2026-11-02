@@ -260,3 +260,15 @@ html:root #parametrosPagina .pr-painel-cards #logisticaManualParametros{margin-t
 .pr-mc-texto input[data-nome]{font-weight:600}
 .pr-mc-novo{display:grid;grid-template-columns:minmax(200px,1fr) minmax(220px,2fr) auto;gap:8px}
 @media(max-width:800px){.pr-mc-texto,.pr-mc-novo{grid-template-columns:1fr}}
+
+/* Condições de pagamento do catálogo (nov/2026) */
+.pr-cond-lista{list-style:none;margin:8px 0 12px;padding:0;display:flex;flex-direction:column;gap:10px}
+.pr-cond{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 12px;border:1px solid #e3e7ec;border-radius:10px;background:#fff}
+.pr-cond.inativo{opacity:.6}
+.pr-cond-campos{display:grid;grid-template-columns:minmax(180px,2fr) repeat(4,minmax(110px,1fr));gap:8px 10px;align-items:end}
+.pr-cond-campos label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:600;color:#4f4f4f}
+.pr-cond-campos input,.pr-cond-campos select{font:inherit;font-weight:400;font-size:14px;padding:6px 8px;border:1px solid #d5dbe3;border-radius:8px;min-height:0}
+.pr-cond-resumo{grid-column:1/-1;margin:0;font-size:13px;color:#123f86}
+.pr-cond-acoes{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.pr-cond-excluir{border:0;background:none;color:#b42318;font-size:12.5px;cursor:pointer}
+@media (max-width:900px){.pr-cond-campos{grid-template-columns:1fr 1fr}.pr-cond-nome{grid-column:1/-1}}

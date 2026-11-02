@@ -301,3 +301,10 @@ body.assistente-aberta .app-toasts{bottom:calc(var(--base) + 96px)}
 
 /* "Disponível em 20/10 | 34": traço separando a data da quantidade */
 .produto-estoque .is-livre b{margin-left:3px;padding-left:9px;border-left:1.5px solid rgba(34,103,63,.38)}
+
+/* Forma de pagamento no envio (nov/2026) */
+.cond-pag{border:0;padding:0;margin:0 0 12px;display:flex;flex-direction:column;gap:8px}
+.cond-op{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #e3e7ec;border-radius:12px}
+.cond-op:has(input:checked){border-color:#123f86;background:#eaf0fa}
+.cond-op b{display:block}
+.cond-op small{display:block;color:#4f4f4f;font-size:12.5px}

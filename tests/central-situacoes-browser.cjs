@@ -83,7 +83,7 @@ const mockSupabase = `
   await page.waitForSelector("[data-situacao=pre_reserva] .central-situacao-conta", { timeout: 15000 });
   const numeros = () => page.$$eval("#centralPedidosTbody [data-pedido-id]", (l) => l.map((t) => t.dataset.pedidoId));
   const botoes = await page.$$eval("[data-situacao]", (l) => l.map((b) => ({ s: b.dataset.situacao, t: b.querySelector("b").textContent, n: b.querySelector(".central-situacao-conta")?.textContent || null, small: b.querySelector("small")?.textContent || "", anim: b.querySelector(".central-situacao-conta") && getComputedStyle(b.querySelector(".central-situacao-conta")).animationName, cor: b.querySelector(".central-situacao-conta") && getComputedStyle(b.querySelector(".central-situacao-conta")).backgroundColor })));
-  assert.deepStrictEqual(botoes.map((b) => [b.t, b.n]), [["Todos", null], ["Pré-reserva", "3"], ["Orçamento", "2"], ["Reservado", null]]);
+  assert.deepStrictEqual(botoes.map((b) => [b.t, b.n]), [["Todos", null], ["Pré-reserva", "3"], ["Orçamento", "2"], ["Reservado", null], ["Catálogo", null]]);
   assert.ok(botoes.filter((b) => b.n).every((b) => b.cor === "rgb(230, 0, 18)" && b.anim === "central-situacao-pulsa"), "bolinha vermelha piscando");
   assert.strictEqual(await page.getAttribute("[data-situacao=\"\"]", "aria-pressed"), "true", "Todos começa ativo");
   assert.strictEqual(botoes[1].small, "1 vencida · 1 vencendo");

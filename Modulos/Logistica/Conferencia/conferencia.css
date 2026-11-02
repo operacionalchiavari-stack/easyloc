@@ -300,3 +300,29 @@ html:root:is(#conferencia-confirmacao,html) dialog.cf-confirmacao.cf-segunda{wid
 .cf-div-enviada.is-ok .cf-div-enviada-icone{background:#e6f4ea;color:#1f7a44}
 .cf-div-enviada b{display:block;color:#1f2020;font-size:15px}
 .cf-div-enviada span{display:block;margin-top:3px;color:#4f5b6b;font-size:14px;line-height:1.45}
+
+/* Triagem da volta: item danificado (nov/2026) */
+.cf-avaria-btn{color:#b42318!important;border-color:#e7a29a!important}
+.cf-avaria-n{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;margin-left:4px;border-radius:999px;background:#b42318;color:#fff;font-size:12px;font-weight:700}
+.cf-avaria-n[hidden]{display:none}
+.cf-avaria-dlg{width:min(560px,94vw);max-height:90vh;border:0;border-radius:14px;padding:0;box-shadow:0 20px 50px rgba(15,23,42,.25)}
+.cf-avaria-dlg::backdrop{background:rgba(15,23,42,.45)}
+.cf-avaria-form{display:flex;flex-direction:column;gap:12px;padding:18px 20px}
+.cf-avaria-form header{display:flex;align-items:center;justify-content:space-between}
+.cf-avaria-form h3{margin:0;font-size:18px}
+.cf-avaria-form h4{margin:6px 0 0;font-size:14px;border-top:1px solid #e3e7ec;padding-top:12px}
+.cf-avaria-x{border:0;background:none;font-size:24px;line-height:1;cursor:pointer;color:#6b6b6b}
+.cf-avaria-ajuda{margin:0;color:#6b6b6b;font-size:13.5px}
+.cf-avaria-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+.cf-avaria-form select,.cf-avaria-form input[type=number],.cf-avaria-form textarea{font:inherit;font-weight:400;padding:8px 10px;border:1px solid #d5dbe3;border-radius:8px}
+.cf-avaria-form textarea{min-height:64px}
+.cf-avaria-novas{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cf-avaria-novas img,.cf-avaria-fotos img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+.cf-avaria-novas button{border:0;background:none;color:#b42318;font-size:12px}
+.cf-avaria-add{display:inline-flex!important;flex-direction:row!important;align-items:center;padding:8px 12px;border:2px dashed #d5dbe3;border-radius:8px;cursor:pointer;font-weight:600}
+.cf-avaria-acoes{display:flex;justify-content:flex-end;gap:8px}
+.cf-avaria-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.cf-avaria-lista li{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid #f0d3cf;border-radius:10px;background:#fff8f7}
+.cf-avaria-lista small{display:block;color:#6b6b6b;font-size:12.5px}
+.cf-avaria-fotos{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.cf-avaria-vazio{margin:0;color:#6b6b6b;font-size:13.5px}

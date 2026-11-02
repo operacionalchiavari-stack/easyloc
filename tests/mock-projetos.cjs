@@ -54,6 +54,7 @@ function installMock(opts){
       db.projetos.push(r);return ok({...resumo(r),dados:r.dados,slug:null,pin_definido:false});
     },
     projeto_salvar:(p)=>{const r=achar(p.p_id);r.noivos=p.p_noivos;r.data_evento=p.p_data_evento;r.local_evento=p.p_local_evento;r.dados=p.p_dados;r.atualizado_em=new Date().toISOString();return ok(resumo(r));},
+    catalogo_condicoes_pagamento:()=>ok(opts.semCondicoes?[]:[{id:'cond-1',nome:'À vista no fechamento',entrada_pct:100,parcelas:0,quitar_dias_antes:null,forma:'PIX'},{id:'cond-2',nome:'50% de entrada + saldo',entrada_pct:50,parcelas:1,quitar_dias_antes:5,forma:'PIX'}]),
     projeto_excluir:(p)=>{achar(p.p_id);db.projetos=db.projetos.filter(x=>x.id!==p.p_id);return ok({ok:true});},
     projeto_enviar_pedido:(p)=>{const r=achar(p.p_id);const total=r.dados.ambientes.reduce((s,a)=>s+a.itens.reduce((t,i)=>t+(i.quantidade||1),0),0);
       if(!total) return fail('Adicione ao menos um item ao projeto antes de enviar o pedido');

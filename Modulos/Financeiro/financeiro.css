@@ -427,3 +427,14 @@ html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-dica{marg
 .fin-tabela td.fin-receb-em small.ok{color:#1f7a44}
 .fin-tabela td.fin-receb-em small.atraso{color:#b42318;font-weight:600}
 .fin-receb-nada{color:#b5b5b5}
+
+/* Pré-reserva como previsão (nov/2026) */
+.fin-pre-selo{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;background:#fdf6dd;border:1px solid #ead9a8;color:#7a5a06;font-size:12px;font-weight:700}
+.fin-previsao{margin:0 0 14px;background:#fffdf5;border:1px solid #ead9a8;border-radius:12px;padding:10px 14px}
+.fin-previsao>summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;cursor:pointer}
+.fin-previsao>summary small{color:#6b6b6b;flex-basis:100%}
+.fin-previsao-ped{margin-top:12px;background:#fff;border:1px solid #f0e6c8;border-radius:10px;padding:10px 12px}
+.fin-previsao-ped header{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+.fin-previsao-ped header small{color:#6b6b6b}
+.fin-cal-valores .p{color:#9a6b00;font-weight:600}
+.fin-cal-detalhe section.pre h4{color:#7a5a06}

@@ -1041,7 +1041,7 @@ html.catalogo-sem-valores .cpj-order-financeiro{display:none!important}
 .cpj-planta-toolbar .cpj-planta-nome-input{flex:none;width:100%}
 .cpj-planta-dica{margin:-4px 0 0;color:var(--muted);font-size:12px;line-height:1.4}
 .cpj-planta-secao{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--line,#e3e7ec)}
-.cpj-planta-secao-titulo{color:var(--muted);font:600 11.5px "Manrope",sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.cpj-planta-secao-titulo{color:var(--muted);font:600 12px "Manrope",sans-serif;letter-spacing:.08em;text-transform:uppercase}
 .cpj-planta-secao .cpj-planta-papel-select{width:100%}
 .cpj-planta-secao .cpj-planta-toggle{white-space:normal}
 .cpj-planta-passo{display:grid;grid-template-columns:1fr 32px 44px 32px;align-items:center;gap:6px;font:500 .8125rem "Manrope",sans-serif;color:var(--ink,#1f2020)}
@@ -1174,3 +1174,12 @@ dialog.cpj-modal.is-wide:has(.cpj-dest-2col){width:min(1080px,calc(100vw - 28px)
 @media(max-width:560px){.cpj-order-pagar{flex-direction:column;text-align:center}}
 .cpj-order-financeiro .cpj-order-pagar{grid-column:1/-1}
 .cpj-btn-link-pedido{display:inline-flex;align-items:center;gap:6px}.cpj-btn-link-pedido svg{flex:none}
+
+/* Forma de pagamento no envio do pedido (nov/2026) */
+.cpj-cond{border:1px solid #e3e7ec;border-radius:12px;padding:12px 14px;margin:14px 0 10px;display:flex;flex-direction:column;gap:8px}
+.cpj-cond legend{font-weight:700;padding:0 6px}
+.cpj-cond-ajuda{margin:0;color:#6b6b6b;font-size:13px}
+.cpj-cond-op{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid #e3e7ec;border-radius:10px;cursor:pointer}
+.cpj-cond-op:has(input:checked){border-color:#123f86;background:#eaf0fa}
+.cpj-cond-op b{display:block}
+.cpj-cond-op small{display:block;color:#4f4f4f;font-size:12.5px}

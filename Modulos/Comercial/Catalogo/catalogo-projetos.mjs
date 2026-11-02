@@ -1308,12 +1308,31 @@ function seletorLayoutNoModal(dialog, gerar){
   ligarSeletorLayout(dialog, () => { const atual = dialog.querySelector(".cpj-order-paper"); if(atual) atual.outerHTML = gerar(); });
 }
 
+// Condições de pagamento do catálogo (nov/2026): cadastradas em Parâmetros > Comercial. O decorador escolhe uma ao
+// enviar; fica em dados.pagamento e o Comercial aplica no Financeiro do pedido (aba "Catálogo" da Central).
+const FORMA_NOME = { PIX: "PIX", Boleto: "Boleto", Cartao: "Cartão", Transferencia: "Transferência", Dinheiro: "Dinheiro" };
+export function resumoCondicao(c){
+  if(!c) return "";
+  const e = Number(c.entrada_pct) || 0, n = Number(c.parcelas) || 0;
+  let t = e >= 100 ? "À vista" : (e > 0 ? e + "% de entrada + " : "") + (n === 1 ? (e > 0 ? "saldo em 1 parcela" : "1 parcela") : n + " parcelas mensais");
+  if(c.quitar_dias_antes != null && e < 100) t += ", quitado até " + c.quitar_dias_antes + " dia(s) antes do evento";
+  return t + " · " + (FORMA_NOME[c.forma] || c.forma || "");
+}
+function condicoesHtml(condicoes, atual){
+  if(!condicoes.length) return "";
+  return `<fieldset class="cpj-cond"><legend>Forma de pagamento</legend><p class="cpj-cond-ajuda">Escolha uma das condições da Chiavari. A equipe comercial confirma os valores e as datas ao receber o pedido.</p>
+    ${condicoes.map((c) => `<label class="cpj-cond-op"><input type="radio" name="condicao" value="${escapeAttr(c.id)}" ${atual === c.id ? "checked" : ""} required><span><b>${escapeHtml(c.nome)}</b><small>${escapeHtml(resumoCondicao(c))}${c.observacao ? " · " + escapeHtml(c.observacao) : ""}</small></span></label>`).join("")}</fieldset>`;
+}
+
 async function fluxoEnviarPedido(){
   const project = S.current;
   if(!project) return;
   await salvarAgora();
   const total = totalItens(project);
   const reenvio = project.status !== "rascunho";
+  let condicoes = [];
+  try{ condicoes = (await rpc("catalogo_condicoes_pagamento")) || []; }catch{ condicoes = []; }
+  const condAtual = project.dados?.pagamento?.id || "";
 
   const enviado = await abrirModal({
     largo: true,
@@ -1334,9 +1353,17 @@ async function fluxoEnviarPedido(){
     confirmar: total ? (reenvio ? "Reenviar pedido" : "Enviar pedido") : null,
     corpo: total
       ? `${pedidoPreviewHtml(dadosApresentacao(project, ctx.findItem), { decorador: ctx.getDecorator?.(), empresa: ctx.getCompany?.() })}
+         ${condicoesHtml(condicoes, condAtual)}
          <label class="cpj-field"><span>Observação para a equipe (opcional)</span><textarea name="obs" rows="3" maxlength="800" placeholder="Ex.: prazo, detalhes de montagem, preferências…">${escapeHtml(reenvio ? (project.pedido_observacao || "") : "")}</textarea></label>`
       : `<p class="cpj-share-text">Adicione ao menos um móvel a um ambiente antes de enviar o pedido.</p>`,
     async onSubmit(api){
+      if(condicoes.length){
+        const escolhida = condicoes.find((c) => c.id === api.form.elements.condicao?.value);
+        if(!escolhida){ api.erro("Escolha a forma de pagamento."); return; } // sem valor: a janela continua aberta
+        project.dados = { ...(project.dados || {}), pagamento: { ...escolhida, resumo: resumoCondicao(escolhida), escolhido_em: new Date().toISOString() } };
+        marcarSujo();
+        await salvarAgora();
+      }
       const resumoNovo = await rpc("projeto_enviar_pedido", { p_id: project.id, p_observacao: api.form.elements.obs.value.trim() || null });
       Object.assign(project, resumoNovo);
       return true;

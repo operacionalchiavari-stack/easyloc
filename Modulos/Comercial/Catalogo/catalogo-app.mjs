@@ -694,14 +694,33 @@ function telaProjeto(){
 }
 const rotuloStatus = (s) => ({ rascunho: "Em montagem", pedido_enviado: "Pedido enviado", em_analise: "Em análise", convertido: "Convertido em pedido" }[s] || "Em montagem");
 
+// Forma de pagamento (nov/2026): mesmas condições de Parâmetros > Comercial que o catálogo do computador.
+const FORMA_NOME = { PIX: "PIX", Boleto: "Boleto", Cartao: "Cartão", Transferencia: "Transferência", Dinheiro: "Dinheiro" };
+function resumoCondicao(c){
+  const e = Number(c.entrada_pct) || 0, n = Number(c.parcelas) || 0;
+  let t = e >= 100 ? "À vista" : (e > 0 ? e + "% de entrada + " : "") + (n === 1 ? (e > 0 ? "saldo em 1 parcela" : "1 parcela") : n + " parcelas mensais");
+  if(c.quitar_dias_antes != null && e < 100) t += ", quitado até " + c.quitar_dias_antes + " dia(s) antes do evento";
+  return t + " · " + (FORMA_NOME[c.forma] || c.forma || "");
+}
 async function enviarPedido(){
   if(!S.projeto) return;
   await salvarAgora();
+  let condicoes = [];
+  try{ condicoes = (await rpc("catalogo_condicoes_pagamento", {})) || []; }catch{ condicoes = []; }
+  const atual = S.projeto.dados?.pagamento?.id || "";
+  const blocoCond = condicoes.length ? `<fieldset class="campo cond-pag"><span>Forma de pagamento</span>${condicoes.map((c) => `<label class="cond-op"><input type="radio" name="condicao" value="${esc(c.id)}" ${atual === c.id ? "checked" : ""}><span><b>${esc(c.nome)}</b><small>${esc(resumoCondicao(c))}</small></span></label>`).join("")}</fieldset>` : "";
   const r = await folha({ titulo: "Enviar pedido", sub: `${S.projeto.noivos} · ${totalPecas()} peças. A equipe da Chiavari recebe os itens e as quantidades de cada ambiente e confirma a disponibilidade, o frete e os serviços.`,
-    corpo: `<form data-form><label class="campo"><span>Observação (opcional)</span><textarea name="obs" maxlength="1000" placeholder="Algo que a equipe precisa saber?"></textarea></label><p class="folha-erro" data-erro></p><button class="btn btn-bloco btn-ouro" type="submit">Enviar pedido</button></form>`,
+    corpo: `<form data-form>${blocoCond}<label class="campo"><span>Observação (opcional)</span><textarea name="obs" maxlength="1000" placeholder="Algo que a equipe precisa saber?"></textarea></label><p class="folha-erro" data-erro></p><button class="btn btn-bloco btn-ouro" type="submit">Enviar pedido</button></form>`,
     aoMontar: ({ el, fechar }) => el.querySelector("[data-form]").addEventListener("submit", async (e) => {
-      e.preventDefault(); const btn = e.target.querySelector("button"); btn.disabled = true;
-      try{ await rpc("projeto_enviar_pedido", { p_id: S.projeto.id, p_observacao: e.target.obs.value.trim() || null }); fechar(true); }
+      e.preventDefault(); const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+      try{
+        if(condicoes.length){
+          const escolhida = condicoes.find((c) => c.id === e.target.condicao?.value);
+          if(!escolhida) throw new Error("Escolha a forma de pagamento.");
+          S.projeto.dados = { ...(S.projeto.dados || {}), pagamento: { ...escolhida, resumo: resumoCondicao(escolhida), escolhido_em: new Date().toISOString() } };
+          marcarSujo(); await salvarAgora();
+        }
+        await rpc("projeto_enviar_pedido", { p_id: S.projeto.id, p_observacao: e.target.obs.value.trim() || null }); fechar(true); }
       catch(error){ el.querySelector("[data-erro]").textContent = mensagem(error); btn.disabled = false; }
     }) });
   if(!r) return;

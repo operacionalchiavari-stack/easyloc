@@ -71,3 +71,8 @@ html:root #ecDetalhe#ecDetalhe .ec-tabela tbody tr.ec-coleta-avaria>td{backgroun
 
 html:root #ecDetalhe .ec-tabela select[name=motivo]{box-sizing:border-box;width:210px;max-width:100%;min-height:42px;padding:9px 28px 9px 10px;border:1px solid #dce4ed;border-radius:8px;background-color:#fff;color:#24364b;font:12px/1.4 Inter,system-ui,sans-serif}
  .ec-anexar{display:inline-flex;align-items:center;gap:7px;margin-top:8px;color:#397a61;font-size:12px;cursor:pointer}.ec-anexar input{max-width:155px;font-size:10px}.ec-evidencias{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.ec-evidencias>span{display:grid;gap:3px}.ec-evidencias button{font-size:10px;padding:3px 5px}
+
+/* Danificado registrado pelo montador no App (nov/2026) */
+.ec-dano-app{display:block;margin-top:3px;color:#b42318;font-weight:600}
+.ec-dano-fotos{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.ec-dano-fotos img{width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e7a29a}

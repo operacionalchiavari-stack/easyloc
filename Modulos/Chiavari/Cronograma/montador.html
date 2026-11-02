@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261101-ocorrencias"></script>
+  <script src="../operacao-sem-motor.js?v=20261101-danificado"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -320,6 +320,19 @@
 .contagem-nome{font-weight:700;font-size:14px;line-height:1.3}
 .contagem-nome small{display:block;font-weight:500;color:var(--muted,#6b6b6b);font-size:12px;margin-top:2px}
 .contagem-qtd{text-align:center;font-size:18px;font-weight:700}
+/* Danificado no evento (nov/2026): quantidade + foto obrigatória + o que aconteceu */
+.contagem-bloco{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--line,#e3e7ec);border-radius:12px;background:#fff}
+.contagem-bloco .contagem-linha{border:0;padding:0}
+.contagem-bloco.tem-dano{border-color:#e7a29a;background:#fff8f7}
+.dano-toggle{align-self:flex-start;border:1px solid #e3e7ec;background:#fff;color:#b42318;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700}
+.dano-toggle[aria-expanded="true"]{background:#fdf2f0;border-color:#e7a29a}
+.dano-box{display:grid;grid-template-columns:90px minmax(0,1fr);gap:8px;align-items:start}
+.dano-box[hidden]{display:none}
+.dano-box textarea{grid-column:1/-1;min-height:54px;font-size:14px}
+.dano-fotos{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.dano-fotos img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+.dano-fotos .dano-add{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border:2px dashed #e7a29a;border-radius:8px;color:#b42318;font-size:12px;text-align:center;line-height:1.1;cursor:pointer}
+.dano-fotos .dano-rem{border:0;background:none;color:#b42318;font-size:12px;padding:0 4px}
 </style>
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261031-catalogo">
@@ -1472,13 +1485,24 @@
       if(mesmo && !mesmo()){ return; }
       reg.contagem = r || { itens: [] };
       const q = (r && r.quantidades) || {};
+      // danificados já enviados (fotos = links) ficam como estão; fotos novas entram como dataURL até enviar
+      reg.danos = {};
+      Object.keys((r && r.danificados) || {}).forEach(function(k){ const x = r.danificados[k]; reg.danos[k] = { quantidade: x.quantidade, descricao: x.descricao || "", fotos: (x.fotos || []).slice() }; });
+      const danos = reg.danos;
       const box = document.getElementById("regContagemItens");
       if(!box){ return; }
       box.innerHTML = (r.itens || []).length ? (r.itens || []).map(function(it){
         const foto = /^https?:/.test(it.foto || "") ? '<img src="' + esc(it.foto) + '" alt="" loading="lazy">' : '';
-        return '<label class="contagem-linha"><span class="contagem-foto">' + foto + '</span><span class="contagem-nome"><span class="contagem-descricao" title="'+esc(it.nome)+'">' + esc(it.nome) + '</span><small>Saiu: <b>' + esc(it.esperado) + '</b></small></span>' +
-          '<input class="input contagem-qtd" type="number" min="0" step="1" inputmode="numeric" data-chave="' + esc(it.chave) + '" value="' + (it.chave in q ? esc(q[it.chave]) : '') + '" placeholder="Qtd." aria-label="Quantidade que voltou de ' + esc(it.nome) + '"></label>';
+        const d = danos[it.chave] || { quantidade: 0, fotos: [], descricao: "" };
+        const aberto = Number(d.quantidade) > 0;
+        return '<div class="contagem-bloco' + (aberto ? ' tem-dano' : '') + '" data-bloco="' + esc(it.chave) + '"><label class="contagem-linha"><span class="contagem-foto">' + foto + '</span><span class="contagem-nome"><span class="contagem-descricao" title="'+esc(it.nome)+'">' + esc(it.nome) + '</span><small>Saiu: <b>' + esc(it.esperado) + '</b></small></span>' +
+          '<input class="input contagem-qtd" type="number" min="0" step="1" inputmode="numeric" data-chave="' + esc(it.chave) + '" value="' + (it.chave in q ? esc(q[it.chave]) : '') + '" placeholder="Qtd." aria-label="Quantidade que voltou de ' + esc(it.nome) + '"></label>' +
+          '<button type="button" class="dano-toggle" aria-expanded="' + aberto + '" onclick="alternarDano(this)">⚠ Danificado</button>' +
+          '<div class="dano-box"' + (aberto ? '' : ' hidden') + '><input class="input dano-qtd" type="number" min="0" step="1" inputmode="numeric" value="' + (aberto ? esc(d.quantidade) : '') + '" placeholder="Qtd." aria-label="Quantidade danificada de ' + esc(it.nome) + '">' +
+          '<div class="dano-fotos" data-dano-fotos="' + esc(it.chave) + '"></div>' +
+          '<textarea class="input dano-desc" placeholder="O que aconteceu? (ex.: pé quebrado, tecido rasgado)">' + esc(d.descricao || "") + '</textarea></div></div>';
       }).join("") : '<div class="vazio" style="padding:12px">Este pedido não tem itens.</div>';
+      Object.keys(danos).forEach(desenharFotosDano);
       if(r.enviado){ marcarFeito("contagem", "✓ Contagem enviada" + (r.autor ? " por " + esc(r.autor) : "")); }
     }).catch(function(e){ const box = document.getElementById("regContagemItens"); if(box){ box.innerHTML = '<div class="vazio" style="padding:12px">' + esc(mensagemErro(e, "Não foi possível carregar os itens.")) + '</div>'; } });
   }
@@ -1490,16 +1514,50 @@
     if(vazio){ vazio.focus(); toast("Informe a quantidade de todos os itens (0 se não voltou).", true); return; }
     const quantidades = {};
     campos.forEach(function(c){ quantidades[c.dataset.chave] = Number(c.value); });
+    // danificados: quantidade até o que voltou, foto obrigatória
+    const danificados = {}; let erroDano = null;
+    Array.prototype.slice.call(document.querySelectorAll("#regContagemItens .contagem-bloco")).forEach(function(b){
+      if(erroDano){ return; }
+      const chave = b.dataset.bloco, box = b.querySelector(".dano-box");
+      if(box.hidden){ return; }
+      const campoQ = b.querySelector(".dano-qtd"), qd = campoQ.value === "" ? 0 : Number(campoQ.value);
+      if(!Number.isInteger(qd) || qd < 0){ erroDano = [campoQ, "Quantidade danificada inválida."]; return; }
+      if(!qd){ return; }
+      if(qd > Number(quantidades[chave])){ erroDano = [campoQ, "Danificados não podem passar do que voltou."]; return; }
+      const fotos = (reg.danos[chave] && reg.danos[chave].fotos) || [];
+      if(!fotos.length){ erroDano = [b.querySelector(".dano-add"), "Tire a foto do item danificado."]; return; }
+      danificados[chave] = { quantidade: qd, fotos: fotos, descricao: b.querySelector(".dano-desc").value.trim() };
+    });
+    if(erroDano){ if(erroDano[0]){ erroDano[0].scrollIntoView({ block: "center" }); } toast(erroDano[1], true); return; }
+    const nDanos = Object.keys(danificados).length;
     const diferentes = (reg.contagem && reg.contagem.itens || []).filter(function(it){ return Number(quantidades[it.chave]) !== Number(it.esperado); }).length;
-    perguntar("Enviar a contagem?", diferentes ? diferentes + " item(ns) com quantidade diferente do que saiu. Confirma a contagem pela lista?" : "Todos os itens batem com o que saiu.", "Enviar").then(function(sim){
+    perguntar("Enviar a contagem?", (diferentes ? diferentes + " item(ns) com quantidade diferente do que saiu. Confirma a contagem pela lista?" : "Todos os itens batem com o que saiu.") + (nDanos ? " " + nDanos + " item(ns) marcado(s) como danificado." : ""), "Enviar").then(function(sim){
       if(!sim){ return; }
       ocupar(btn, "Enviando…");
-      chamar("MONT_contagemSalvar", estado.token, reg.id, quantidades)
-        .then(function(){ liberar(btn); marcarFeito("contagem", "✓ Contagem enviada"); toast("Contagem enviada"); atualizarConclusao(); })
+      chamar("MONT_contagemSalvar", estado.token, reg.id, quantidades, danificados)
+        .then(function(r){ if(r && r.danificados){ Object.keys(r.danificados).forEach(function(k){ reg.danos[k] = { quantidade: r.danificados[k].quantidade, descricao: r.danificados[k].descricao || "", fotos: r.danificados[k].fotos || [] }; desenharFotosDano(k); }); } liberar(btn); marcarFeito("contagem", "✓ Contagem enviada"); toast("Contagem enviada"); atualizarConclusao(); })
         .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao enviar a contagem."), true); });
     });
   }
   window.enviarContagemItens = enviarContagemItens;
+
+  function alternarDano(btn){
+    const bloco = btn.closest(".contagem-bloco"), box = bloco.querySelector(".dano-box"), abrir = box.hidden;
+    box.hidden = !abrir; btn.setAttribute("aria-expanded", String(abrir)); bloco.classList.toggle("tem-dano", abrir);
+    const chave = bloco.dataset.bloco;
+    if(abrir){ reg.danos[chave] = reg.danos[chave] || { quantidade: 0, fotos: [], descricao: "" }; desenharFotosDano(chave); const qd = bloco.querySelector(".dano-qtd"); if(!qd.value){ qd.value = 1; } qd.focus(); }
+  }
+  window.alternarDano = alternarDano;
+  function desenharFotosDano(chave){
+    const host = Array.prototype.slice.call(document.querySelectorAll("[data-dano-fotos]")).filter(function(h){ return h.dataset.danoFotos === chave; })[0];
+    if(!host){ return; }
+    const fotos = (reg.danos[chave] && reg.danos[chave].fotos) || [];
+    host.innerHTML = fotos.map(function(f, i){ return '<span><img src="' + esc(f) + '" alt="Foto do dano ' + (i + 1) + '"><button type="button" class="dano-rem" data-i="' + i + '">remover</button></span>'; }).join("") +
+      (fotos.length < 6 ? '<label class="dano-add"><input type="file" accept="image/*" capture="environment" hidden>📷<br>Foto</label>' : '');
+    host.querySelectorAll(".dano-rem").forEach(function(b){ b.onclick = function(){ fotos.splice(Number(b.dataset.i), 1); desenharFotosDano(chave); }; });
+    const inp = host.querySelector("input[type=file]");
+    if(inp){ inp.onchange = function(){ const f = inp.files && inp.files[0]; if(!f){ return; } comprimirFoto(f, 1600, 0.8).then(function(url){ reg.danos[chave].fotos.push(url); desenharFotosDano(chave); }); }; }
+  }
 
   /* ---------- 4. Concluir (desmontagem) ---------- */
   function atualizarConclusao(){

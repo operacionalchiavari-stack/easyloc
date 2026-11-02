@@ -11,7 +11,7 @@ import { initFrete } from "./pedido.frete.mjs?v=20261031-km-chip";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261026-acentos";
 import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261029-extra";
-import { initPagamento } from "./pedido.pagamento.mjs?v=20261030-parcelas-pagas";
+import { initPagamento } from "./pedido.pagamento.mjs?v=20261101-condicao";
 import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261027-abas-rapidas";
 
 /* =====================================================
@@ -1438,6 +1438,7 @@ async function setupPedidoWorkspace({ supabase }){
   await carregarPedidoSalvoSeNecessario();
   await carregarProjetoCatalogoSeNecessario();
   await carregarPedidoExtraSeNecessario();
+  window.__pedidoMostrarCondicaoCatalogo?.(); // condição de pagamento escolhida pelo decorador (nov/2026)
   if(window.__PEDIDO_DADOS_ATUAL?.pedido_origem_id && !window.__pedidoExtra) window.__pedidoExtra = { principalId: window.__PEDIDO_DADOS_ATUAL.pedido_origem_id, principalNumero: String(window.__PEDIDO_DADOS_ATUAL.numero_pedido || "").split("/")[0] };
   prepararPedidoExtra({ supabase }).catch((e) => console.warn("[Pedido] extra:", e));
   setTimeout(() => iniciarRascunho().catch((e) => console.warn("[Pedido] rascunho:", e)), 1500); // depois de a tela terminar de preencher (frete, parcelas)

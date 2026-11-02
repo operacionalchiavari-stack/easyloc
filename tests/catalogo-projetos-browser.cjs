@@ -199,8 +199,15 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.locator('.cpj-dock-main').click();await page.locator('.cpj-work').waitFor();
  await page.locator('[data-cpj-worktab="geral"]').click();
  await page.locator('[data-cpj="enviar"]').click();await modal(page).waitFor();
- await modal(page).locator('textarea[name=obs]').fill('Montagem pela manha');await modal(page).locator('button[type=submit]').click();
+ await modal(page).locator('textarea[name=obs]').fill('Montagem pela manha');
+ // forma de pagamento (nov/2026): obrigatória quando a empresa tem condições cadastradas
+ assert.equal(await modal(page).locator('input[name=condicao]').count(),2);
+ await modal(page).locator('button[type=submit]').click();
+ await modal(page).locator('.cpj-modal-error:not([hidden])').waitFor();assert.match(await modal(page).locator('.cpj-modal-error').innerText(),/forma de pagamento/i);
+ assert.equal(await page.evaluate(()=>window.mockdb.projetos[0].status),'rascunho');
+ await modal(page).locator('input[name=condicao][value="cond-2"]').check();await modal(page).locator('button[type=submit]').click();
  await page.waitForFunction(()=>window.mockdb.projetos[0].status==='pedido_enviado');
+ const pag=await page.evaluate(()=>window.mockdb.projetos[0].dados.pagamento);assert.equal(pag.id,'cond-2');assert.match(pag.resumo,/50% de entrada/);
  const enviado=await page.evaluate(()=>window.mockdb.projetos[0]);assert.ok(enviado.pedido_snapshot.total_itens>0);assert.equal(enviado.pedido_observacao,'Montagem pela manha');
  await page.reload();await page.locator('[data-gateway-tile="projetos"]').click();await page.locator('.cpj-card').waitFor();assert.match(await page.locator('.cpj-card').innerText(),/Ana & Bruno/);assert.deepEqual(errors,[]);await page.close();
 }
@@ -691,7 +698,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  assert.ok(Math.abs(paginaBoxPaisagem.width/(await page.locator('[data-cpj-planta-frame]').evaluate(el=>Number(el.dataset.escalaVisual)))-1123)<=1,'A folha em paisagem usa o tamanho físico real (297mm a 96dpi ≈ 1123px): '+JSON.stringify(paginaBoxPaisagem));
 
  // "Ajustar planta (arrastar)" — modo dedicado (clicar fora dele marcaria um ponto; aqui não pode).
- assert.equal(await page.locator('[data-cpj-planta-ajuste-btn]').textContent(),'Ajustar planta (arrastar)');
+ assert.equal(await page.locator('[data-cpj-planta-ajuste-btn]').textContent(),'Mover a planta');
  await page.locator('[data-cpj-planta-ajuste-btn]').click();
  assert.equal(await page.locator('[data-cpj-planta-ajuste-btn]').textContent(),'Concluir ajuste');
  assert.equal(await page.locator('[data-cpj-planta-ajuste-btn]').evaluate((el)=>el.classList.contains('is-active')),true);
@@ -736,7 +743,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
 
  // "Concluir ajuste" sai do modo — clicar na planta volta a marcar ponto normalmente (comportamento de sempre).
  await page.locator('[data-cpj-planta-ajuste-btn]').click();
- assert.equal(await page.locator('[data-cpj-planta-ajuste-btn]').textContent(),'Ajustar planta (arrastar)');
+ assert.equal(await page.locator('[data-cpj-planta-ajuste-btn]').textContent(),'Mover a planta');
  assert.equal(await page.locator('[data-cpj-planta-stage]').evaluate((el)=>getComputedStyle(el).cursor),'crosshair');
  await page.evaluate(()=>new Promise((r)=>requestAnimationFrame(()=>requestAnimationFrame(r)))); // mesma corrida documentada acima — repintou de novo, religa via RAF
  await page.locator('[data-cpj-planta-stage]').scrollIntoViewIfNeeded();

@@ -980,7 +980,16 @@
     (r && r.itens || []).forEach(function (it) { if (it.pedido_numero) it.nome = (it.nome || "Item") + " · Pedido " + it.pedido_numero; });
     return r;
   };
-  L.MONT_contagemSalvar = async function (token, idEtapa, quantidades) { return rpc("mont_contagem_salvar", { p_token: token, p_etapa: idEtapa, p_quantidades: quantidades }); };
+  L.MONT_contagemSalvar = async function (token, idEtapa, quantidades, danificados) {
+    // foto do item danificado (nov/2026): as novas (dataURL) sobem para a pasta do app; as já enviadas ficam como estão
+    var dn = {};
+    for (var k of Object.keys(danificados || {})) {
+      var x = danificados[k], fotos = [];
+      for (var f of (x.fotos || [])) { fotos.push(/^data:/.test(f) ? await subirFoto(f, pastaMont()) : f); }
+      dn[k] = { quantidade: x.quantidade, descricao: x.descricao || "", fotos: fotos };
+    }
+    return rpc("mont_contagem_salvar", { p_token: token, p_etapa: idEtapa, p_quantidades: quantidades, p_danificados: dn });
+  };
   L.MONT_fotosEtapa = async function (token, idEtapa) {
     const r = await rpc("mont_fotos_etapa", { p_token: token, p_etapa: idEtapa });
     const c = await sb();
