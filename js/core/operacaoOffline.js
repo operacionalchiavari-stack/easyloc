@@ -1,7 +1,22 @@
 (function(){'use strict';
  const raizOperacao=new URL('../../',document.currentScript.src);
  const enc=new TextEncoder(),dec=new TextDecoder();let banco,sb,ctx,owner,chave,ocupado=false,resultados=new Map();
- const abrir=()=>new Promise((ok,falha)=>{const r=indexedDB.open('acervo-operacao-v1',1);r.onupgradeneeded=()=>{for(const nome of ['chaves','cache','envios'])r.result.createObjectStore(nome,{keyPath:'id'});};r.onsuccess=()=>ok(r.result);r.onerror=()=>falha(r.error);});
+ const lojasOperacao=['chaves','cache','envios'];
+ function abrirVersao(versao){return new Promise((ok,falha)=>{
+  const r=versao?indexedDB.open('acervo-operacao-v1',versao):indexedDB.open('acervo-operacao-v1');
+  r.onupgradeneeded=()=>{for(const nome of lojasOperacao)if(!r.result.objectStoreNames.contains(nome))r.result.createObjectStore(nome,{keyPath:'id'});};
+  r.onsuccess=()=>{r.result.onversionchange=()=>r.result.close();ok(r.result);};r.onerror=()=>falha(r.error);
+ });}
+ async function abrir(){
+  // Uma limpeza antiga podia criar este banco vazio na versão 1.
+  // Cria apenas as lojas ausentes, preservando chaves e envios pendentes.
+  for(let tentativa=0;tentativa<3;tentativa++){
+   const db=await abrirVersao();if(lojasOperacao.every(nome=>db.objectStoreNames.contains(nome)))return db;
+   const versao=db.version+1;db.close();
+   try{return await abrirVersao(versao);}catch(e){if(e.name!=='VersionError')throw e;}
+  }
+  throw Error('Não foi possível preparar o armazenamento local. Feche as outras abas do sistema e tente novamente.');
+ }
  const get=(loja,id)=>new Promise((ok,falha)=>{const r=banco.transaction(loja).objectStore(loja).get(id);r.onsuccess=()=>ok(r.result);r.onerror=()=>falha(r.error);});
  const todos=loja=>new Promise((ok,falha)=>{const r=banco.transaction(loja).objectStore(loja).getAll();r.onsuccess=()=>ok(r.result);r.onerror=()=>falha(r.error);});
  const gravar=(loja,dado,remover=false)=>new Promise((ok,falha)=>{const t=banco.transaction(loja,'readwrite');remover?t.objectStore(loja).delete(dado):t.objectStore(loja).put(dado);t.oncomplete=ok;t.onerror=()=>falha(t.error);t.onabort=()=>falha(t.error||Error('Não foi possível guardar o registro neste dispositivo'));});
