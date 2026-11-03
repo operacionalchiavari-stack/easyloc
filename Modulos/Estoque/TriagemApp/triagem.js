@@ -4,7 +4,7 @@
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const data=v=>v?String(v).slice(0,10).split('-').reverse().join('/'):'Sem data';
  const numero=v=>Number(v||0).toLocaleString('pt-BR');
- const s={usuario:null,empresa:null,vinculos:[],fila:[],fotos:new Map(),etapa:'ida',base:null,q:{},danos:{},primeira:null,fotosNovas:new Map(),vistos:new Set(),ocupado:false,leitor:null,pausada:false,pendente:null,geracao:0};
+ const s={usuario:null,empresa:null,vinculos:[],fila:[],fotos:new Map(),etapa:'ida',base:null,q:{},danos:{},primeira:null,fotosNovas:new Map(),vistos:new Set(),ocupado:false,leitor:null,pendente:null,geracao:0};
  const imagens=url=>/^https?:\/\//i.test(url||'');
  const marca=$('taLogoEmpresa');let geracaoMarca=0;
  const ajustarMarca=()=>marca.classList.toggle('quadrada',!!marca.naturalHeight&&marca.naturalWidth/marca.naturalHeight<1.6);
@@ -24,7 +24,7 @@
   marca.hidden=!imagens(logo);if(imagens(logo)){marca.src=logo;marca.alt=brand?.nome||brand?.empresa?.nome||'Logo da empresa';$('taIconEmpresa').href=logo;}else{marca.removeAttribute('src');$('taIconEmpresa').removeAttribute('href');}
   $('taMarcaNome').textContent=brand?.nome||brand?.empresa?.nome||s.empresaNome||'';$('taMarcaNome').hidden=imagens(logo);
  }
- function pararCamera(){s.leitor?.desligar();s.pausada=false;const v=$('taVideo');if(v)v.hidden=true;const proxima=document.querySelector('[data-proxima]');if(proxima)proxima.hidden=true;}
+ function pararCamera(){s.leitor?.desligar();const v=$('taVideo');if(v)v.hidden=true;}
  function bloquear(v){s.ocupado=v;document.querySelectorAll('#taDetalhe button,#taDetalhe input').forEach(el=>{const capa=el.closest('[data-capas-chave]'),fechada=capa&&(s.base.concluido||s.base.bloqueio||!s.base.pode_editar||s.capas?.rows.find(r=>r.chave===capa.dataset.capasChave)?.concluida);el.disabled=v||el.dataset.travado==='1'||!!fechada;});}
  function assinatura(){return JSON.stringify(s.base.itens.map(p=>[p.chave,p.esperado]));}
  function chaveRascunho(){return 'triagem-app:v1:'+s.usuario.id+':'+s.empresa+':'+s.base.pedido.id;}
@@ -103,7 +103,7 @@
    (editavel?'<footer class="rodape-detalhe"><button type="button" class="botao" id="taFinalizar">'+(volta?(s.primeira?'Confirmar segunda contagem':'Confirmar retorno'):'Finalizar separação')+'</button></footer>':'');
   renderMateriais();progresso();
   if(editavel){
-   s.leitor=window.EasyLocLeitor.criar({video:$('taVideo'),aoLer:async codigo=>{if(s.pausada||s.ocupado)return;s.pausada=true;try{await ler(codigo);}finally{const b=document.querySelector('[data-proxima]');if(b)b.hidden=false;}},aoMudar:ligada=>{const v=$('taVideo'),b=document.querySelector('[data-camera]');if(v)v.hidden=!ligada;if(b)b.textContent=ligada?'Fechar câmera':'Abrir câmera';}});
+   s.leitor=window.EasyLocLeitor.criar({video:$('taVideo'),leituraContinua:true,aoLer:async codigo=>{if(!s.ocupado)await ler(codigo);},aoMudar:ligada=>{const v=$('taVideo'),b=document.querySelector('[data-camera]');if(v)v.hidden=!ligada;if(b)b.textContent=ligada?'Fechar câmera':'Abrir câmera';}});
    $('taFormCodigo').onsubmit=e=>{e.preventDefault();ler($('taCodigo').value);};$('taFinalizar').onclick=finalizar;
   }
  }
@@ -198,8 +198,7 @@
  $('taEscolha').onclick=e=>{const b=e.target.closest('[data-escolher]');if(b){$('taEscolha').returnValue=b.dataset.escolher;$('taEscolha').close();}if(e.target.closest('[data-fechar-escolha]'))$('taEscolha').close();};
  $('taDetalhe').addEventListener('click',async e=>{
   if(e.target.closest('[data-voltar]'))return voltar();
-  if(e.target.closest('[data-camera]')){try{if(s.leitor.ligada){pararCamera();}else{s.pausada=false;await s.leitor.ligar();}}catch(err){mensagem(err.message);}return;}
-  if(e.target.closest('[data-proxima]')){s.pausada=false;e.target.closest('[data-proxima]').hidden=true;mensagem('');return;}
+  if(e.target.closest('[data-camera]')){try{if(s.leitor.ligada){pararCamera();}else{await s.leitor.ligar();}}catch(err){mensagem(err.message);}return;}
   const delta=e.target.closest('[data-delta]');if(delta&&!s.ocupado){const p=s.base.itens.find(p=>p.chave===delta.dataset.chave);if(!p||!editavelLinha(p))return;s.q[p.chave]=Math.max(0,Number(s.q[p.chave]||0)+Number(delta.dataset.delta));guardar();renderMateriais();progresso();}
   const tirar=e.target.closest('[data-tirar-foto]');if(tirar){s.fotosNovas.set(tirar.dataset.chave,(s.fotosNovas.get(tirar.dataset.chave)||[]).filter(f=>f.id!==tirar.dataset.tirarFoto));renderFotos();}
   const producao=e.target.closest('[data-producao]');if(producao&&!s.ocupado){bloquear(true);try{await rpc('separacao_producao_confirmar',{p_pedido:s.base.pedido.id,p_item:producao.dataset.producao});s.base=await rpc('triagem_app_base',{p_pedido:s.base.pedido.id,p_etapa:s.etapa});renderMateriais();progresso();mensagem('Recebimento da produção confirmado.',true);}catch(err){mensagem(err.message);}finally{bloquear(false);}}

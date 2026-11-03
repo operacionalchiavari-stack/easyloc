@@ -26,8 +26,8 @@
     });
   }
 
-  function criar({ video, aoLer, aoMudar }) {
-    const c = { stream: null, timer: null, detector: null, canvas: null, ultimo: "", ultimoEm: 0, ocupado: false };
+  function criar({ video, aoLer, aoMudar, leituraContinua = false }) {
+    const c = { stream: null, timer: null, detector: null, canvas: null, ultimo: "", ultimoEm: 0, ocupado: false, ausenteEm: 0 };
 
     async function quadro() {
       if (!c.stream || video.readyState < 2) return "";
@@ -63,11 +63,18 @@
         try {
           const codigo = String(await quadro() || "").trim();
           const agora = Date.now();
-          if (codigo && (codigo !== c.ultimo || agora - c.ultimoEm > 2000)) {
+          // Na leitura cont?nua, o mesmo QR precisa sair do enquadramento
+          // antes de contar outra pe?a; c?digos diferentes seguem imediatamente.
+          if (!codigo) {
+            if (!c.ausenteEm) c.ausenteEm = agora;
+          }
+          const novaPeca = codigo !== c.ultimo || (c.ausenteEm && agora - c.ausenteEm >= 500);
+          if (codigo && (leituraContinua ? novaPeca : codigo !== c.ultimo || agora - c.ultimoEm > 2000)) {
             c.ultimo = codigo; c.ultimoEm = agora;
             navigator.vibrate?.(60);
             await aoLer(codigo);
           }
+          if (codigo) c.ausenteEm = 0;
         } finally { c.ocupado = false; }
       }, 250);
       aoMudar?.(true);
