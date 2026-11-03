@@ -23,6 +23,8 @@ const mock = `(() => {
   };
   banco.separacoes_pedidos.find(p=>p.id==="p2").operacao.descarregamento={concluido_em:"2026-10-18T11:00:00Z"};
   banco.separacoes_pedidos.push({ id: "pd", empresa_id: "e1", numero_pedido: "77", cliente_nome: "Bia Divergente", tipo_evento: "Casamento", local_nome: "Sítio", status: "separado", status_comercial: "aprovado", status_operacional: "retornado", data_evento: "2026-10-20", data_coleta: "2026-10-21", operacao: { retorno: { concluido_em: "2026-10-22T10:00:00Z" } } });
+  banco.separacoes_pedidos.push({...banco.separacoes_pedidos.find(p=>p.id==='pd'),id:'sobra',numero_pedido:'78'});
+  banco.operacao_ocorrencias.push({id:'ds',empresa_id:'e1',pedido_id:'sobra',tipo:'sobra',etapa:'retorno',quantidade:3,resolvida_em:null});
   banco.separacoes_pedidos.push({...banco.separacoes_pedidos[0],id:'standby',status:'separado',operacao:{}},{...banco.separacoes_pedidos[0],id:'assumido',status:'separado',operacao:{carregamento:{iniciado_em:'2026-10-23T12:00:00Z'}}},{...banco.separacoes_pedidos[0],id:'revisao',reducao_liberada_em:'2026-10-23T12:00:00Z'});
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
@@ -117,6 +119,10 @@ const mock = `(() => {
   await page.locator('#separacaoColunaAguardando [data-pedido-id=p1]').waitFor();
   assert.ok(await page.locator('.separacao-lane-divergencias').isVisible(), 'coluna Divergencias visivel');
   assert.equal(await page.locator('#separacaoColunaDivergencias [data-pedido-id=pd]').count(), 1, 'pedido permanece na Triagem enquanto houver contagem pendente');
+  for(const id of ['pd','sobra']){
+    const cores=await page.locator('#separacaoColunaDivergencias [data-pedido-id='+id+']').evaluate(card=>({fundo:getComputedStyle(card).backgroundColor,borda:getComputedStyle(card).borderTopColor}));
+    assert.deepStrictEqual(cores,{fundo:'rgb(251, 236, 235)',borda:'rgb(239, 194, 191)'},'falta e sobra ficam vermelhas, sem herdar o roxo do retorno');
+  }
   const medidas=await page.locator('#separacaoColunaDivergencias [data-pedido-id=pd]').evaluate(card=>({altura:card.getBoundingClientRect().height,resumoX:card.querySelector('.card-divergencia-resumo').getBoundingClientRect().left,fotoX:card.querySelector('.decorador-card-foto').getBoundingClientRect().right,linhas:card.children.length}));
   const outraAltura=await page.locator('#separacaoColunaAguardando [data-pedido-id=p1]').evaluate(card=>card.getBoundingClientRect().height);
   assert.ok(medidas.altura<=outraAltura+24,'card divergente usa a mesma altura compacta dos demais');
