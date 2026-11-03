@@ -307,3 +307,147 @@ html:root #plModuloCronograma{overflow:visible}
 .pl-uber-sugestoes li b{font-size:13px;color:#1f2020}
 .pl-uber-sugestoes li small{font-size:11.5px;color:#6b6b6b}
 .pl-uber-sugestoes li:hover,.pl-uber-sugestoes li.ativo{background:#eaf0fa}
+.pl-capacidade-resumo{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;padding:14px 16px;background:#f3f6fa;border:1px solid #dce4ee;border-radius:12px;margin-bottom:18px;font-size:13px}.pl-capacidade-resumo span{display:grid;gap:4px}.pl-capacidade-resumo b{font-size:18px;color:#123f86}.pl-capacidade-resumo .is-falta{color:#ad4c27}.pl-capacidade-resumo .is-ok{color:#1e7650}.pl-vaga .pl-capacidade-caminhao{font-weight:700;color:#123f86}
+
+/* Escala visual compacta, preservando as colunas e a posi??o dos pain?is. */
+html:root .pl-page .pl-painel-cab{padding:12px 14px;gap:10px}
+html:root .pl-page .pl-painel-cab h2,
+html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-painel-cab h2,
+html:root .pl-page .pl-planejamento-edicao .pl-distribuicao>.pl-painel-cab h2{font:600 16px/1.35 Inter,system-ui,sans-serif!important;letter-spacing:normal!important;margin:0}
+html:root .pl-page .pl-painel-cab small{font-size:11px;margin-bottom:3px}
+html:root .pl-page .pl-painel-cab>b{font-size:11px;padding:4px 7px}
+html:root .pl-page .pl-servicos-lista{padding:8px;gap:8px}
+html:root .pl-page .pl-servico{padding:10px;gap:5px}
+html:root .pl-page .pl-servico>strong{font-size:14px;line-height:1.35}
+html:root .pl-page .pl-servico .pl-local{font-size:12px;line-height:1.4}
+html:root .pl-page .pl-servico .pl-hora{font-size:13px}
+html:root .pl-page .pl-servico .pl-pedido-numero{font-size:12px!important;padding:3px 7px}
+html:root .pl-page .pl-planejamento .pl-etapa-escala{padding:12px 14px;gap:10px}
+html:root .pl-page .pl-planejamento-edicao .pl-distribuicao>.pl-painel-cab{padding:12px 14px}
+html:root .pl-page .pl-planejamento-edicao .pl-vagas{gap:8px}
+html:root .pl-page .pl-planejamento-edicao .pl-vaga{flex-basis:160px;width:160px;padding:10px 10px 8px;gap:5px}
+html:root .pl-page .pl-planejamento-edicao .pl-vaga strong{font:600 14px/1.3 Inter,system-ui,sans-serif}
+html:root .pl-page .pl-planejamento-edicao .pl-vaga small{font:400 12px/1.35 Inter,system-ui,sans-serif}
+html:root .pl-page .pl-planejamento-edicao :is(.pl-avatar,.pl-caminhao-icone){width:40px;height:40px;padding:4px}
+html:root .pl-page .pl-planejamento-edicao .pl-caminhao-icone svg{width:30px;height:24px}
+html:root .pl-page .pl-planejamento-edicao .pl-dica{font-size:12px;line-height:1.4}
+html:root .pl-page .pl-equipe-completa{font-size:11px;padding:3px 6px}
+html:root .pl-page .pl-recurso{padding:8px 0;gap:8px}
+html:root .pl-page .pl-recurso strong{font-size:13px;line-height:1.35}
+html:root .pl-page .pl-recursos-abas [role=tab]{padding:8px 0!important;gap:4px}
+html:root .pl-page select.pl-add{height:28px!important;font-size:12px!important}
+html:root .pl-page .pl-recurso button{width:28px;height:28px;min-height:28px;padding:0;font-size:17px}
+@media(max-width:600px){html:root .pl-page .pl-planejamento-edicao .pl-vaga{flex-basis:calc(50% - 4px);width:calc(50% - 4px)}}
+
+/* Datas menores, com navega??o por arrasto e sem barra aparente. */
+html:root #plAbasDias#plAbasDias{scrollbar-width:none;-ms-overflow-style:none;gap:18px;margin-bottom:16px}
+html:root #plAbasDias#plAbasDias::-webkit-scrollbar{display:none;width:0;height:0}
+html:root #plAbasDias#plAbasDias [role=tab]{font-size:13px!important;gap:6px;padding:12px 14px 10px 4px!important}
+html:root #plAbasDias#plAbasDias [role=tab] strong{font-size:13px!important}
+html:root #plAbasDias#plAbasDias [role=tab] small{font-size:10px}
+
+html:root .pl-page .pl-servico-cliente{display:flex;align-items:center;gap:9px;min-width:0}
+html:root .pl-page .pl-decorador-foto{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;border-radius:50%;overflow:hidden;background:#e5eaf0;color:#526477;font:600 16px Inter,system-ui,sans-serif}
+html:root .pl-page .pl-decorador-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+html:root .pl-page .pl-servico-identidade{display:flex;flex-direction:column;gap:3px;min-width:0}
+html:root .pl-page .pl-servico-identidade strong{font:600 14px/1.35 Inter,system-ui,sans-serif;overflow-wrap:anywhere}
+
+/* Contadores discretos nas abas e nos dias. */
+html:root #plModuloAbas#plModuloAbas .pl-alerta-aba,
+html:root #plAbasDias#plAbasDias .pl-pendencia-dia{min-width:16px;width:auto;height:16px;padding:0 4px;background:#edc5c0!important;color:#8c3029!important;font:600 10px/1 Inter,system-ui,sans-serif!important;border-radius:999px;animation:none!important;box-shadow:none!important}
+html:root #plModuloAbas#plModuloAbas .pl-alerta-aba{top:-2px;right:-7px}
+html:root #plAbasDias#plAbasDias .pl-pendencia-dia{top:-3px;right:3px}
+html:root #plAbasDias#plAbasDias .pl-pendencia-dia.is-completo{background:#b9dcc6!important;color:#236540!important}
+
+/* Mais largura para a montagem da equipe, com lista lateral enxuta. */
+@media(min-width:1201px){
+ html:root .pl-page .pl-planejamento{grid-template-columns:minmax(270px,.6fr) minmax(0,2fr) minmax(240px,.85fr)}
+}
+@media(min-width:761px) and (max-width:1200px){
+ html:root .pl-page .pl-planejamento{grid-template-columns:270px minmax(0,1fr)}
+}
+html:root .pl-page .pl-planejamento-lista .pl-etapa-linha1{flex-wrap:wrap;row-gap:4px}
+html:root .pl-page .pl-planejamento-lista .pl-painel-cab h2{overflow-wrap:anywhere}
+
+/* Capacidades integradas ao cabe?alho da distribui??o. */
+html:root .pl-page .pl-distribuicao>.pl-painel-cab{flex-wrap:wrap;gap:8px 14px;align-items:center}
+html:root .pl-page .pl-distribuicao>.pl-painel-cab h2{margin-right:auto}
+html:root .pl-page .pl-distribuicao>.pl-painel-cab .pl-capacidade-resumo{display:flex;flex-wrap:wrap;gap:6px 14px;padding:0;margin:0;background:none;border:0;border-radius:0;font-size:11px;line-height:1.35;align-items:center}
+html:root .pl-page .pl-distribuicao>.pl-painel-cab .pl-capacidade-resumo span{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+html:root .pl-page .pl-distribuicao>.pl-painel-cab .pl-capacidade-resumo b{font-size:13px;white-space:nowrap}
+
+/* Escala completa sinalizada pela borda do servi?o. */
+html:root:is(#plCoresCronograma,html) .pl-page .pl-servico.is-completo{border-color:#22c55e!important;--pl-servico-borda:#22c55e!important;--pl-servico-brilho:#22c55e20!important}
+html:root:is(#plCoresCronograma,html) .pl-page .pl-servico.is-completo.is-selecionado{border-color:#16c75a!important;box-shadow:0 0 0 1px #16c75a!important}
+
+/* Recursos dispon?veis em painel sobreposto; a equipe aproveita a largura liberada. */
+@media(min-width:761px){html:root .pl-page .pl-planejamento{grid-template-columns:minmax(270px,.6fr) minmax(0,2.85fr)}}
+html:root .pl-page .pl-abrir-disponiveis{margin-left:auto;min-height:30px;padding:5px 10px!important;border:1px solid #b9cdbf!important;border-radius:8px!important;background:#f0f7f2!important;color:#276140!important;font:600 12px/1.4 Inter,system-ui,sans-serif!important;letter-spacing:normal!important;text-transform:none!important;cursor:pointer}
+html:root .pl-disponiveis-dialog{position:fixed;inset:0 0 0 auto;margin:0;width:min(420px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;box-sizing:border-box;padding:0;border:0;border-left:1px solid #dfe5eb;border-radius:16px 0 0 16px;background:#fff;color:#263144;box-shadow:-12px 0 40px #182b4326;overflow-y:auto}
+.pl-disponiveis-dialog::backdrop{background:rgba(24,39,57,.22)}
+.pl-disponiveis-topo{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid #e5eaf0}
+html:root .pl-page .pl-disponiveis-topo h2{margin:0;font:600 16px/1.4 Inter,system-ui,sans-serif;letter-spacing:normal}
+html:root .pl-page .pl-disponiveis-topo button{width:32px;height:32px;min-height:32px;padding:0!important;border:0!important;background:#f1f4f7!important;border-radius:50%!important;color:#526477!important;font:400 24px/1 Inter,system-ui,sans-serif!important;cursor:pointer}
+html:root .pl-disponiveis-dialog .pl-recursos-painel{border:0;border-radius:0;box-shadow:none}
+html:root .pl-disponiveis-dialog .pl-recursos-lista{max-height:none}
+
+.pl-info-supervisor{margin-bottom:14px;min-width:0}
+.pl-info-pedido{font:600 12px Inter,system-ui,sans-serif;color:#526477}
+.pl-info-conteudo{padding:12px 14px}
+.pl-info-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 18px;margin:0}
+.pl-info-campo{min-width:0}
+.pl-info-campo dt{font:500 11px/1.4 Inter,system-ui,sans-serif;color:#718096;margin-bottom:3px}
+.pl-info-campo dd{margin:0;font:500 13px/1.45 Inter,system-ui,sans-serif;color:#263144;white-space:pre-wrap;overflow-wrap:anywhere}
+.pl-info-observacoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px;padding-top:12px;border-top:1px solid #edf0f3}
+html:root .pl-page .pl-info-observacao h3{font:600 12px/1.4 Inter,system-ui,sans-serif!important;letter-spacing:normal!important;margin:0 0 4px}
+.pl-info-observacao p{margin:0;font:400 13px/1.5 Inter,system-ui,sans-serif;color:#526477;white-space:pre-wrap;overflow-wrap:anywhere}
+.pl-info-acesso{display:flex;flex-wrap:wrap;gap:12px 24px;margin:14px 0 0;padding-top:12px;border-top:1px solid #edf0f3}
+@media(max-width:760px){.pl-info-grade,.pl-info-observacoes{grid-template-columns:1fr}}
+
+html:root .pl-page .pl-info-supervisor>.pl-painel-cab{flex-wrap:wrap;gap:8px 20px}
+.pl-info-datas{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin:0 0 0 auto}
+.pl-info-datas .pl-info-campo{display:flex;align-items:baseline;gap:6px}
+.pl-info-datas .pl-info-campo dt{margin:0;font-size:11px}
+.pl-info-datas .pl-info-campo dd{font-size:12px;font-weight:600;white-space:nowrap}
+@media(max-width:760px){.pl-info-datas{margin-left:0;flex-basis:100%}}
+
+/* Datas pr?ximas do t?tulo e com contraste mais claro. */
+html:root .pl-page .pl-info-supervisor>.pl-painel-cab{justify-content:flex-start;column-gap:16px}
+html:root .pl-page .pl-info-datas{margin-left:0;gap:8px 14px}
+html:root .pl-page .pl-info-datas .pl-info-campo{padding:5px 8px;border-radius:6px;background:#edf2f7;gap:6px}
+html:root .pl-page .pl-info-datas .pl-info-campo dt{font-size:12px;font-weight:600;color:#526477}
+html:root .pl-page .pl-info-datas .pl-info-campo dd{font-size:13px;font-weight:600;color:#243e59}
+html:root .pl-page .pl-info-supervisor>.pl-painel-cab>.pl-info-pedido{margin-left:auto}
+
+/* Endere?o e observa??es lado a lado no resumo da opera??o. */
+html:root .pl-page .pl-info-conteudo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 20px;align-items:start}
+html:root .pl-page .pl-info-grade{grid-template-columns:1fr;gap:10px}
+html:root .pl-page .pl-info-observacoes{display:block;margin:0;padding:0;border:0}
+html:root .pl-page .pl-info-acesso{grid-column:1 / -1;margin-top:0}
+@media(max-width:760px){html:root .pl-page .pl-info-conteudo{grid-template-columns:1fr}}
+
+/* Planejamento em tr?s colunas: equipe, caminh?es e Uber. */
+@media(min-width:1101px){
+ html:root .pl-page .pl-planejamento-edicao .pl-etapa.pl-painel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto 1fr;align-items:start}
+ html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-painel-cab{grid-column:1;grid-row:1;align-self:stretch}
+ html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-etapa-escala{grid-column:1;grid-row:2;min-width:0}
+ html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-distribuicao{grid-column:2;grid-row:1 / 3;margin:0;border-top:0;border-left:1px solid #e1e5eb;min-width:0;align-self:stretch}
+ html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-uber{grid-column:3}
+ html:root .pl-page .pl-planejamento-edicao .pl-etapa>.pl-painel-cab,
+ html:root .pl-page .pl-planejamento-edicao .pl-distribuicao>.pl-painel-cab{padding:12px;gap:8px;min-height:65px;box-sizing:border-box}
+ html:root .pl-page .pl-planejamento-edicao .pl-etapa-escala{padding:12px}
+ html:root .pl-page .pl-planejamento-edicao .pl-vagas{gap:8px}
+ html:root .pl-page .pl-planejamento-edicao .pl-vaga{flex:1 1 130px;width:130px;max-width:180px}
+ html:root .pl-page .pl-distribuicao>.pl-painel-cab .pl-capacidade-resumo{flex-basis:100%;gap:5px 10px}
+ html:root .pl-page .pl-planejamento-edicao .pl-uber .pl-uber-linha{font-size:12px;overflow-wrap:anywhere}
+}
+
+/* Disponibilidade resumida junto aos par?metros. */
+html:root #plTopoUnificado #plAcoesDireita{gap:10px}
+html:root #plEquipeDisponivel.pl-abrir-disponiveis{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:7px 10px!important;margin:0;max-width:100%;white-space:normal}
+.pl-disponiveis-titulo{font-size:12px;font-weight:600}
+.pl-disponiveis-contagens{display:flex;flex-wrap:wrap;gap:5px 12px;font-size:11px;font-weight:400}
+.pl-disponiveis-contagens>span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.pl-disponiveis-contagens b{font-size:12px;font-weight:700}
+html:root .pl-page:has(#plModuloEquipe[hidden]) #plEquipeDisponivel{display:none}
+@media(min-width:1200px){html:root #plTopoUnificado#plTopoUnificado #plAcoesDireita{flex-wrap:wrap;min-width:0}}

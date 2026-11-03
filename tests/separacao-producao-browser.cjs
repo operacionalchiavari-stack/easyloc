@@ -85,6 +85,7 @@ const mock = `(() => {
   assert.ok(!(await page.evaluate(() => window.__gravados.some((g) => g.t === "separacoes_pedidos" && g.p?.status === "separado"))), "não finaliza");
   console.log("ok 2 - galpão separado, mas a triagem não finaliza enquanto a produção não entrega");
 
+  await page.locator('.separacao-pendencias-dialog button').click();
   await page.evaluate(() => sessionStorage.setItem("prontas", "4"));
   await abrir();
   const btn = page.locator("#separacaoManualItens [data-confirmar-producao]");

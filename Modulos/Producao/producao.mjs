@@ -1,5 +1,7 @@
-import { renderizarFila } from './producao-vistas.mjs?v=20261022-fila-separacao';
-import { etapaAtual, roteiroHtml, situacao } from './producao-op.mjs?v=20261023-avanco-quantidade';
+import { renderizarFila } from './producao-vistas.mjs?v=20261103-reabrir-producao';
+import { etapaAtual, roteiroHtml, situacao,pacotesRecebimentoManual } from './producao-op.mjs?v=20261103-recebimento-manual';
+import {saldoKit} from './producao-kits.mjs?v=20261102-kits';
+import {montarTriagemMateriais} from './materiais-triagem.mjs?v=20261103-recebimento-manual';
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const setores={todos:'Todos os setores',pintura:'Pintura',forracao:'Forração',personalizacao:'Personalização',almoxarifado:'Almoxarifado'};
 const estados={pendente:'Aguardando execução',execucao:'Em execução',pausada:'Pausada',conferencia:'Aguardando conferência',concluida:'Concluída',cancelada:'Cancelada'};
@@ -9,7 +11,8 @@ const n=v=>Number(v||0).toLocaleString('pt-BR',{maximumFractionDigits:3});
 function url(v){if(!v)return '';try{const u=new URL(v,location.href);return ['http:','https:'].includes(u.protocol)?u.href:'';}catch{return '';}}
 const foto=(v,alt='')=>v&&url(v)?`<img src="${esc(url(v))}" alt="${esc(alt)}" loading="lazy">`:'';
 let itemSel=new URLSearchParams(location.search).get('item');
-let empresa,sb,dados,setor=new URLSearchParams(location.search).get('setor')||'todos',busy=false;
+let empresa,sb,dados,setor=new URLSearchParams(location.search).get('setor')||new URLSearchParams(location.search).get('origem_setor')||'todos',busy=false;
+let triagemMateriais;
 const params=new URLSearchParams(location.search);
 const pedidoAberto=params.get('pedido');
 if(params.has('situacao')) $('#situacao').value=params.get('situacao');
@@ -17,7 +20,7 @@ if(params.has('busca')) $('#busca').value=params.get('busca');
 if(pedidoAberto){
  document.title='Ordem de produção';
  document.body.classList.add('producao-detalhe-page');
- $('.producao-topo h1').textContent='Ordem de produção';
+ $('.producao-page h1').textContent='Ordem de produção';
  const voltar=$('#voltarFila');
  if(voltar){voltar.href='ordens.html?'+new URLSearchParams({setor:params.get('origem_setor')||'todos',situacao:params.get('situacao')||'todas',busca:params.get('busca')||''});voltar.hidden=false;}
 }
@@ -49,7 +52,15 @@ function amostra(c){
 function etapaQuantidade(t){return etapaAtual(t,setor)||t.etapas.filter(e=>['todos','almoxarifado'].includes(setor)||e.setor===setor).at(-1);}
 // Linha amarela com quantidade salva menor que a solicitada; verde quando chega na solicitada (pedido do usuário).
 function classeQuantidade(t){const qtd=Number(t.origem.quantidade||0);const e=etapaQuantidade(t);if(!e)return '';const feita=Number(e.quantidade_feita||0);if(qtd>0&&feita>=qtd)return ' is-qtd-completa';return feita>0?' is-qtd-parcial':'';}
-function quantidadesHtml(t){const qtd=Number(t.origem.quantidade||0);return `<div class="op-producao-quantidades"><label>Quantidade solicitada<input type="number" value="${qtd}" readonly></label>${(()=>{const e=etapaQuantidade(t);const habilitado=e&&['iniciar','retomar','concluir'].includes(situacao(t,e,dados).principal?.[0]);return `<label>Quantidade feita<input type="number" data-quantidade-feita data-etapa="${esc(e?.id||'')}" min="0" max="${qtd}" step="1" value="${e?Number(e.quantidade_feita||0):qtd}" ${habilitado?'title="Digite e aperte Enter para salvar"':'disabled'}></label>`;})()}</div>`;}
+function quantidadesHtml(t){
+ const qtd=Number(t.origem.quantidade||0),e=etapaQuantidade(t),s=e?situacao(t,e,dados):null;
+ const habilitado=e&&['pendente','execucao','pausada'].includes(e.estado)&&['iniciar','retomar','concluir'].includes(s.principal?.[0]);
+ const conferir=s?.principal?.[0]==='conferir',acao=habilitado?'quantidade':conferir?'conferir':null;
+ const rotulo=conferir?'Salvar e liberar':e&&['conferencia','concluida'].includes(e.estado)?'Salvo':'Salvar';
+ const motivo=habilitado?'Salvar a quantidade feita':conferir?'Conferir a peça e liberar esta etapa':s?.texto||'Quantidade já salva';
+ return `<div class="op-producao-quantidades"><label>Quantidade solicitada<input type="number" value="${qtd}" readonly></label><label>Quantidade feita<input type="number" data-quantidade-feita data-etapa="${esc(e?.id||'')}" min="0" max="${qtd}" step="1" value="${e?Number(e.quantidade_feita||0):qtd}" ${habilitado?'title="Digite a quantidade e clique em Salvar ou aperte Enter"':'disabled'}></label><button type="button" class="op-salvar-quantidade" ${acao?`data-acao="${acao}"`:'disabled'} data-etapa="${esc(e?.id||'')}" title="${esc(motivo)}">${rotulo}</button></div>`;
+}
+
 function linhaProducao(t){
  const nome=t.item_nome||t.snapshot.personalizacao.vinculo_nome||t.origem.nome||'Item';
  const atual=etapaAtual(t,setor);const concluido=!atual;
@@ -75,6 +86,7 @@ function itemHtml(t){
   <div class="op-item-grade">
    ${galeria}
    <div class="op-info">
+    ${recebimentoHtml(t)}
     ${roteiroHtml(t,setor)}
     <div class="op-notas-colunas">
     ${t.snapshot.personalizacao.observacoes?`<div class="op-nota op-nota-instrucao"><small>Instruções de produção</small><p>${esc(t.snapshot.personalizacao.observacoes)}</p></div>`:''}
@@ -85,6 +97,13 @@ function itemHtml(t){
   </div>
 
  </article>`;
+}
+function recebimentoHtml(t){
+ const e=etapaQuantidade(t);if(!e)return '';const s=situacao(t,e,dados),acao=s.principal?.[0];
+ if(s.tom!=='material')return '';
+ const pacote=pacotesRecebimentoManual(e)[0];
+ const botao=['receber','receber_manual'].includes(acao)?`<button type="button" data-acao="${acao}" data-etapa="${e.id}" ${acao==='receber_manual'?`data-pacote="${pacote.id}"`:''}>${esc(s.principal[1])}</button>`:'';
+ return `<section class="op-material-recebimento"><strong>${esc(s.titulo)}</strong><p>${esc(s.texto)}</p>${botao}</section>`;
 }
 function abrirLightbox(id,indice){
  const imgs=galerias.get(id)||[];if(!imgs.length)return;let i=indice;
@@ -98,8 +117,13 @@ function abrirLightbox(id,indice){
 }
 $('#ordens').addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.matches('[data-quantidade-feita]:not(:disabled)')){ev.preventDefault();ev.stopPropagation();salvarQuantidade(ev.target);return;}if(ev.target.matches('[data-op-item]')&&['Enter',' '].includes(ev.key)){ev.preventDefault();ev.target.click();}});
 $('#ordens').addEventListener('click',ev=>{
+ const reabrir=ev.target.closest('[data-reabrir-producao]');
+ if(reabrir){
+  dialogo('Reabrir produção','<p>O pedido voltará para a fila de produção e precisará de nova conferência e recebimento pela triagem. Os materiais já recebidos e o histórico serão preservados.</p>','Reabrir',()=>rpc('producao_reabrir',{p_pedido:reabrir.dataset.reabrirProducao}));return;
+ }
+
  const linha=ev.target.closest('[data-op-item]');
- if(linha&&ev.target.closest('input, [data-acao]'))return;
+ if(linha&&ev.target.closest('input, button'))return;
  if(linha){itemSel=linha.dataset.opItem;const q=new URLSearchParams(location.search);q.set('item',itemSel);history.replaceState(null,'','?'+q);pintar();return;}
  const thumb=ev.target.closest('[data-galeria-thumb]');
  if(thumb){const box=thumb.closest('[data-galeria]');const g=galerias.get(box.dataset.galeria)[Number(thumb.dataset.galeriaThumb)];
@@ -110,8 +134,17 @@ $('#ordens').addEventListener('click',ev=>{
 });
 
 function pintar(){
+ document.body.classList.toggle('producao-kits-page',setor==='almoxarifado');
  $('#setores').innerHTML=Object.entries(setores).map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
  $('#setores').value=setor;
+ if(setor==='almoxarifado'){
+  $('.producao-page h1').textContent='Separação de kits da produção';
+  if(!triagemMateriais){triagemMateriais=montarTriagemMateriais($('#ordens'),{sb,empresa,dados,pedido:pedidoAberto,usuario:window.__CONTEXT?.user_id||window.__CONTEXT?.usuario_id||''});triagemMateriais.atualizar();}
+  else triagemMateriais.setDados(dados);
+  $('#contagem').textContent='';return;
+ }
+ if(triagemMateriais){triagemMateriais.destroy();triagemMateriais=null;$('#ordens').classList.remove('mp-root');}
+ $('.producao-page h1').textContent=pedidoAberto?'Ordem de produção':'Ordens de produção';
  if(pedidoAberto){
   const todos=dados.itens.filter(t=>t.pedido_id===pedidoAberto);
   const lista=todos.filter(t=>['todos','almoxarifado'].includes(setor)||t.etapas.some(e=>e.setor===setor));
@@ -129,7 +162,7 @@ function pintar(){
   $('#contagem').textContent='';
   return;
  }
- const resultado=renderizarFila(dados.itens,{setor,situacao:$('#situacao').value,busca:$('#busca').value.trim()});
+ const resultado=renderizarFila(dados.itens,{executar:dados.executar,setor,situacao:$('#situacao').value,busca:$('#busca').value.trim()});
  $('#contagem').textContent=`${resultado.total} pedido(s)`;
  $('#ordens').innerHTML=resultado.html;
 }
@@ -144,11 +177,11 @@ async function etiqueta(t,e,p){
  const d=dialogo('Etiqueta de materiais',`<section class="producao-etiqueta"><strong>Pedido ${esc(t.pedido.numero)} · ${esc(t.pedido.cliente)}</strong><p>${esc(e.nome)} · ${setores[e.setor]}</p><p>Entrega do item: ${dia(t.pedido.entrega)}</p><div data-qr></div><small>${esc(p.qr)}</small><ul>${p.materiais.map(v=>{const m=e.materiais.find(m=>m.id===v.id);return `<li>${esc(m?.nome)} · ${n(v.quantidade)} ${esc(m?.unidade)}</li>`;}).join('')}</ul></section>`,'Imprimir',async()=>window.print());
  await window.EasyLocQR.render(d.querySelector('[data-qr]'),p.qr,160);
 }
-// Quantidade feita: salva ao apertar Enter no campo (não há mais botão "Salvar quantidade").
+// Quantidade feita: botão Salvar e tecla Enter usam o mesmo salvamento.
 async function salvarQuantidade(input){
  if(!input||input.disabled||!input.dataset.etapa)return;
  if(!input.reportValidity())return;
- input.disabled=true;try{await rpc('producao_quantidade_salvar',{p_etapa:input.dataset.etapa,p_quantidade:Number(input.value)});await carregar();}catch(err){$('#retorno').textContent=err.message;input.disabled=false;}
+ const botao=input.closest('.op-producao-quantidades')?.querySelector('[data-acao=quantidade]');input.disabled=true;if(botao){botao.disabled=true;botao.textContent='Salvando...';}try{await rpc('producao_quantidade_salvar',{p_etapa:input.dataset.etapa,p_quantidade:Number(input.value)});await carregar();}catch(err){$('#retorno').textContent=err.message;input.disabled=false;if(botao){botao.disabled=false;botao.textContent='Salvar';}}
 }
 document.addEventListener('click',async ev=>{
  const btn=ev.target.closest('[data-acao]');if(!btn)return;const a=btn.dataset.acao;
@@ -157,15 +190,37 @@ document.addEventListener('click',async ev=>{
   salvarQuantidade(btn.closest('.op-producao-quantidades').querySelector('[data-quantidade-feita]'));return;
  }
  if(a==='etiqueta'){try{await etiqueta(t,e,e.pacotes.find(p=>p.id===btn.dataset.pacote));}catch(err){$('#retorno').textContent=err.message;}return;}
+ if(a==='separar-kit'){
+  btn.disabled=true;
+  try{
+   const ficha=btn.closest('[data-kit-etapa]'),materiais=[];
+   for(const check of ficha.querySelectorAll('[data-kit-material]:checked')){
+    const input=ficha.querySelector('[data-kit-qtd="'+check.dataset.kitMaterial+'"]');
+    if(!input.reportValidity())throw Error('Confira a quantidade do material.');
+    const m=e.materiais.find(m=>m.id===check.dataset.kitMaterial),quantidade=Number(input.value);
+    if(!m||!Number.isFinite(quantidade)||quantidade<=0||quantidade>saldoKit(e,m).falta)throw Error('Quantidade acima da necessidade do kit.');
+    materiais.push({id:m.id,quantidade});
+   }
+   if(!materiais.length)throw Error('Marque pelo menos um material do kit.');
+   const id=await rpc('producao_separar_modo',{p_etapa:e.id,p_materiais:materiais,p_modo:'manual'});await carregar();
+   const novo=dados.itens.find(v=>v.id===t.id),etapa=novo?.etapas.find(v=>v.id===e.id),pacote=etapa?.pacotes.find(v=>v.id===id);
+   if(pacote)await etiqueta(novo,etapa,pacote);
+   else $('#retorno').textContent='Kit separado. Atualize a tela para acessar a etiqueta.';
+  }catch(err){$('#retorno').textContent=err.message;btn.disabled=false;}return;
+ }
  if(a==='separar'){
   const dispo=m=>Math.max(0,Number(m.necessario)-Number(m.recebido)+Number(m.devolvido)-e.pacotes.filter(p=>p.estado==='separado').reduce((s,p)=>s+p.materiais.filter(v=>v.id===m.id).reduce((a,v)=>a+Number(v.quantidade),0),0));
   const ms=e.materiais.filter(m=>m.produto_id&&dispo(m)>0);
   dialogo('Separar materiais para a produção',`<p>Pedido ${esc(t.pedido.numero)} · ${esc(e.nome)}. Separar reserva o pacote; a baixa acontece ao confirmar o recebimento pelo QR.</p>${ms.map(m=>`<label>${esc(m.nome)} · ${esc(m.unidade)}<input type="number" name="${m.id}" min="0" max="${dispo(m)}" step="0.001" value="${dispo(m)}"></label>`).join('')||'<p>Não há materiais pendentes vinculados ao Almoxarifado.</p>'}`,'Separar e gerar etiqueta',async v=>{
    const materiais=ms.map(m=>({id:m.id,quantidade:Number(v.get(m.id))})).filter(m=>m.quantidade>0);
-   const id=await rpc('producao_separar',{p_etapa:e.id,p_materiais:materiais});
+   const id=await rpc('producao_separar_modo',{p_etapa:e.id,p_materiais:materiais,p_modo:'manual'});
    // A etiqueta fica disponível no próprio pedido após a confirmação.
    $('#retorno').textContent='Pacote '+id.slice(0,8)+' separado.';
   });return;
+ }
+ if(a==='receber_manual'){
+  const pacote=pacotesRecebimentoManual(e).find(p=>p.id===btn.dataset.pacote);if(!pacote)return;
+  dialogo('Confirmar recebimento dos materiais',`<p>Pedido ${esc(t.pedido.numero)} · ${esc(e.nome)}</p><ul>${pacote.materiais.map(v=>{const m=e.materiais.find(m=>m.id===v.id);return `<li>${esc(m?.nome||'Material')} · ${n(v.quantidade)} ${esc(m?.unidade||'')}</li>`;}).join('')}</ul><label class="op-confirmar-kit"><input name="confirmado" type="checkbox" required>Confirmo que recebi e conferi os materiais deste kit.</label>`,'Confirmar recebimento e dar baixa',()=>rpc('producao_receber_manual',{p_etapa:e.id,p_pacote:pacote.id}));return;
  }
  if(a==='receber'){
   const d=dialogo('Confirmar recebimento dos materiais','<p>Leia o QR da etiqueta com o leitor conectado ao computador. O recebimento registra a saída do Almoxarifado.</p><label>QR do pacote<input name="qr" required autocomplete="off" placeholder="PROD:MAT:…"></label>','Receber e dar baixa',async v=>{await rpc('producao_receber',{p_qr:v.get('qr'),p_etapa:e.id});});d.querySelector('input').focus();return;
@@ -175,12 +230,16 @@ document.addEventListener('click',async ev=>{
   dialogo('Devolver sobra ao Almoxarifado',`<p>${esc(m.nome)}</p><label>Quantidade conferida<input name="qtd" type="number" min="0.001" max="${Number(m.recebido)-Number(m.devolvido)}" step="0.001" required></label><label>Motivo<textarea name="motivo" minlength="5" required></textarea></label>`,'Confirmar entrada',v=>rpc('producao_devolver',{p_material:m.id,p_quantidade:Number(v.get('qtd')),p_motivo:v.get('motivo')}));return;
  }
  const justificar=['pausar','urgencia','autorizar_prazo','revisar','cancelar_revisao'].includes(a);
- dialogo(btn.textContent,`<p>Pedido ${esc(t.pedido.numero)} · ${esc(e.nome)}</p>${a==='revisar'?'<p>A revisão preserva o histórico. Materiais recebidos devem ser reconciliados antes de substituir a ordem.</p>':''}${justificar?'<label>Justificativa<textarea name="motivo" minlength="5" maxlength="1000" required></textarea></label>':''}`,'Confirmar',v=>rpc('producao_acao',{p_etapa:e.id,p_acao:a,p_motivo:v.get('motivo')||''}));
+ dialogo(btn.textContent,`<p>Pedido ${esc(t.pedido.numero)} · ${esc(e.nome)}</p>${a==='conferir'?'<p>Confira a peça produzida antes de confirmar. Esta ação libera a etapa para continuidade do pedido.</p>':''}${a==='revisar'?'<p>A revisão preserva o histórico. Materiais recebidos devem ser reconciliados antes de substituir a ordem.</p>':''}${justificar?'<label>Justificativa<textarea name="motivo" minlength="5" maxlength="1000" required></textarea></label>':''}`,'Confirmar',v=>rpc('producao_acao',{p_etapa:e.id,p_acao:a,p_motivo:v.get('motivo')||''}));
 });
 $('#setores').onchange=e=>{setor=e.target.value;pintar();};
 $('#busca').oninput=()=>{if(dados)pintar();};$('#situacao').onchange=()=>{if(dados)pintar();};$('#atualizar').onclick=carregar;
 try{
  const ctx=await window.aguardarContexto();empresa=ctx.empresa_id;sb=window.supabaseClient;await carregar();
+ if(!pedidoAberto&&typeof sb.channel==='function'){
+  sb.channel('producao-triagem-'+empresa).on('postgres_changes',{event:'UPDATE',schema:'public',table:'separacoes_pedidos',filter:'empresa_id=eq.'+empresa},()=>{if(!document.hidden)carregar();}).subscribe();
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregar();});
+ }
  // Mantém a equipe informada de novos pedidos sem interromper leitura de QR ou formulários.
- setInterval(()=>{if(!document.hidden&&!document.querySelector('.producao-dialog[open],.op-lightbox[open]'))carregar();},30000);
+ setInterval(()=>{if(setor!=='almoxarifado'&&!document.hidden&&!document.querySelector('.producao-dialog[open],.op-lightbox[open]'))carregar();},30000);
 }catch(e){$('#retorno').textContent=e.message;}

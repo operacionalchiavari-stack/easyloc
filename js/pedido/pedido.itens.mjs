@@ -1,6 +1,6 @@
 import { colorirValor } from "./pedido.valores-ui.mjs";
 import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
-import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261031-3colunas2";
+import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261102-insumos-kits";
 
 export function initItens({ supabase, els }){
 
@@ -779,9 +779,9 @@ function calcularVolumeTotalPedido(){
   };
   // Grava o projeto do pedido (renderizações, cenas, ambientes) direto no pedido já salvo, sem esperar "Salvar pedido"
   // (out/2026): a renderização com IA que termina depois de salvar, ou com a pessoa já fora da tela, não se perde mais.
-  window.__pedidoGravarProjetoComercial = async () => {
-    await sincronizacao.catch(()=>{});
-    const pedidoId=window.__PEDIDO_ATUAL_ID, projeto=window.__pedidoProjetoComercial;
+  window.__pedidoGravarProjetoComercial = async (snapshot = null) => {
+    await sincronizacao;
+    const pedidoId=window.__PEDIDO_ATUAL_ID, projeto=structuredClone(snapshot || window.__pedidoProjetoComercial);
     const empresaId=window.__CONTEXT?.empresa_id || sessionStorage.getItem('empresa_id');
     if(!pedidoId || !projeto || !empresaId || !window.supabaseClient) return false;
     const { data, error } = await window.supabaseClient.rpc('pedido_salvar_projeto_comercial',{ p_empresa_id: empresaId, p_pedido_id: pedidoId, p_projeto: projeto });

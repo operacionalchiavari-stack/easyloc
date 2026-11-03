@@ -3228,6 +3228,7 @@ async function renderWithAI(renderOptions = { iluminacao: "suave" }){
     selectObject(null);
     // Cena no INÍCIO da renderização (a IA leva minutos e a pessoa pode mexer no 3D enquanto isso): é ela que o projeto
     // reabre quando a imagem salva é clicada (editor de cena).
+    const salvarAutomaticamente = studio.pedidoComercial ? await window.catalogPrepararRenderPedido?.() : null;
     const cena = { tipo: "ia", snapshot: snapshotCena() };
     const corpo = montarCorpoIA(renderOptions);
     const objects = corpo.scene.objects;
@@ -3241,6 +3242,7 @@ async function renderWithAI(renderOptions = { iluminacao: "suave" }){
     const src = await executarIA(corpo);
     // Quais móveis estão nesta imagem — o projeto (catalogo-projetos.mjs) leva os mesmos móveis junto ao salvar a renderização.
     window.catalogRegisterRenderItems?.(src, objects, cena);
+    if(salvarAutomaticamente) await salvarAutomaticamente(src,cena,objects);
     workingToast?.close();
     window.catalogNotify?.({
       title: "Sua renderização ficou pronta",
@@ -3762,6 +3764,7 @@ function cenaModalSelecionar(objeto){
 
 export const cenaEditor = {
   pronto: () => studio.initialized,
+  ocupado: () => Boolean(studio.cenaModal),
   // Móveis que podem entrar na cena: qualquer item do catálogo com modelo 3D (mesma lista da biblioteca do 3D Livre).
   itens: () => studio.items.filter((item) => item.glb).map((item) => ({ id: String(item.id), nome: item.name, foto: item.photo || "", categoria: item.catLabel || "", busca: normalizeSearch(`${item.name} ${item.catLabel || ""}`) })),
   normalizar: normalizeSearch,

@@ -7,6 +7,8 @@
 //                    mesma fotografia de estúdio do "Renderizar com IA"; a imagem volta pra conversa.
 // Self-contido: não importa catalogo.mjs nem o contrário (recebe tudo por initCatalogAssistente).
 
+import { demarcarAreasPlanta } from './assistente-planta-areas.mjs';
+const MONTAGEM_PLANTA_ATIVA = false;
 let ctx = null;
 const S = { pendentes: [], aberto: false, carregado: false, enviando: false, nome: "Helena", mensagens: [], fila: Promise.resolve(), naoLidas: 0 };
 const $ = (id) => document.getElementById(id);
@@ -65,6 +67,10 @@ function montar(){
         <div class="cas-vitrine" data-cas-vitrine hidden></div>
         <div class="cas-msgs" data-cas-msgs aria-live="polite"><div class="cas-coluna" data-cas-coluna></div></div>
         <form class="cas-form" data-cas-form>
+          <div class="cas-modo-planta" ${MONTAGEM_PLANTA_ATIVA?'':'hidden'}>
+            <label><input type="checkbox" data-cas-modo-planta ${MONTAGEM_PLANTA_ATIVA?'':'disabled'}> Montar pedido pela planta</label>
+    <div data-cas-planta-opcoes hidden><input type="text" maxlength="300" data-cas-planta-estilo placeholder="Estilo: clássico, moderno, rústico…" aria-label="Estilo da montagem"><small>Anexe a planta, demarque e nomeie os ambientes. A Helena analisa cada área ampliada e monta a lista sem perguntas. Contagens incertas serão marcadas como estimativa.</small></div>
+          </div>
           <div class="cas-anexos-pend" data-cas-pend hidden></div>
           <div class="cas-form-in">
             <button type="button" class="cas-clip" data-cas-clip aria-label="Anexar arquivo (planta em PDF ou foto)" title="Anexar arquivo (planta em PDF ou foto)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5l-8.2 8.2a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg></button>
@@ -98,11 +104,18 @@ function montar(){
   if(!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) painel.querySelector("[data-cas-ligar]").hidden = true;
   painel.querySelector("[data-cas-pedido]").addEventListener("click", () => alternarPedido());
   const input = painel.querySelector("[data-cas-input]");
-  const ajustar = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; painel.querySelector("[data-cas-form]").classList.toggle("tem-texto", Boolean(input.value.trim() || S.pendentes.length)); };
+  painel.querySelector('[data-cas-modo-planta]').addEventListener('change',event=>{
+    painel.querySelector('[data-cas-planta-opcoes]').hidden=!event.target.checked;
+    input.placeholder=event.target.checked?'Envie a planta para montar a lista completa…':'Escreva ou mande um áudio…';
+    S.ajustarForm?.();
+  });
+  const ajustar = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; painel.querySelector("[data-cas-form]").classList.toggle("tem-texto", Boolean(input.value.trim() || S.pendentes.length || painel.querySelector('[data-cas-modo-planta]').checked)); };
   S.ajustarForm = ajustar;
   painel.querySelector("[data-cas-clip]").addEventListener("click", () => painel.querySelector("[data-cas-arquivo]").click());
   painel.querySelector("[data-cas-arquivo]").addEventListener("change", (event) => { escolherArquivos([...event.target.files]); event.target.value = ""; });
-  painel.querySelector("[data-cas-pend]").addEventListener("click", (event) => {
+  painel.querySelector("[data-cas-pend]").addEventListener("click", async (event) => {
+    const demarcar=event.target.closest('[data-cas-demarcar]');
+    if(demarcar){try{await prepararAreasArquivo(Number(demarcar.dataset.casDemarcar));}catch(error){ctx.notify({title:'Não foi possível abrir a planta',message:error.message,status:'error'});}return;}
     const x = event.target.closest("[data-cas-tirar]");
     if(x){ S.pendentes.splice(Number(x.dataset.casTirar), 1); pintarPendentes(); }
   });
@@ -114,14 +127,19 @@ function montar(){
   input.addEventListener("keydown", (event) => {
     if(event.key === "Enter" && !event.shiftKey){ event.preventDefault(); painel.querySelector("[data-cas-form]").requestSubmit(); }
   });
-  painel.querySelector("[data-cas-form]").addEventListener("submit", (event) => {
+  painel.querySelector("[data-cas-form]").addEventListener("submit", async (event) => {
     event.preventDefault();
     if(gravacao){ pararGravacao(true); return; }
     const valor = input.value.trim();
-    if((!valor && !S.pendentes.length) || S.enviando) return;
+    const montagemPlanta=MONTAGEM_PLANTA_ATIVA && painel.querySelector('[data-cas-modo-planta]').checked;
+    if((!valor && !S.pendentes.length && !montagemPlanta) || S.enviando) return;
+    if(montagemPlanta && S.pendentes.some(a=>!a.area) && !S.pendentes.some(a=>a.area)){
+      if(S.pendentes.length!==1){ctx.notify({title:'Demarque uma planta por vez',message:'Mantenha apenas a planta que deseja demarcar nesta mensagem.',status:'error'});return;}
+      try{if(!await prepararAreasArquivo(0))return;}catch(error){ctx.notify({title:'Não foi possível demarcar a planta',message:error.message,status:'error'});return;}
+    }
     const arquivos = S.pendentes.splice(0);
     input.value = ""; pintarPendentes(); ajustar();
-    enviar(valor, { arquivos });
+    enviar(valor || 'Monte a lista completa de móveis desta planta, por ambiente.', { arquivos, montagemPlanta, estiloPlanta:painel.querySelector('[data-cas-planta-estilo]').value.trim() });
   });
   painel.addEventListener("click", aoClicar);
   painel.addEventListener("keydown", (event) => { if(event.key === "Escape"){ event.stopPropagation(); if(lig) return; if(gravacao) pararGravacao(false); else alternar(false); } });
@@ -553,7 +571,7 @@ async function limpar(){
 
 // ---------------------------------------------------------------------------------------------------------------
 // Conversa
-async function enviar(valor, { porAudio = false, arquivos = [] } = {}){
+async function enviar(valor, { porAudio = false, arquivos = [], montagemPlanta = false, estiloPlanta = '' } = {}){
   if(!S.carregado || projetoAtualId() !== S.conversaDe) await carregarHistorico();
   const local = { papel: "user", conteudo: valor, anexos: [...(porAudio ? [{ tipo: "audio" }] : []), ...arquivos.map((a) => ({ tipo: "arquivo", nome: a.nome, mime: a.mime, url: a.preview, enviando: true }))] };
   S.mensagens.push(local);
@@ -562,12 +580,13 @@ async function enviar(valor, { porAudio = false, arquivos = [] } = {}){
     for(const a of arquivos) await subirArquivo(a);
     local.anexos = local.anexos.map((x) => (x.tipo === "arquivo" ? { ...x, enviando: false } : x));
     pintar(); statusTopo("digitando…");
-    const data = await chamar("conversar", { mensagem: valor, por_audio: porAudio, arquivos: arquivos.map((a) => ({ path: a.path, mime: a.mime, nome: a.nome })), projeto: window.catalogAssistenteProjeto?.retrato() || null, modo: ctx.modoPedido ? "pedido" : "catalogo" });
+    const data = await chamar("conversar", { mensagem: valor, por_audio: porAudio, montagem_planta:montagemPlanta,estilo_planta:estiloPlanta, arquivos: arquivos.map((a) => ({ path: a.path, mime: a.mime, nome: a.nome, ...(a.area?{area:a.area,recorte:a.recorte,origem:a.origem}:{}) })), projeto: window.catalogAssistenteProjeto?.retrato() || null, modo: ctx.modoPedido ? "pedido" : "catalogo" });
     if(data?.pergunta) Object.assign(local, data.pergunta);
     if(data?.nome && data.nome !== S.nome){ S.nome = data.nome; atualizarNome(); }
+    if(montagemPlanta) await aplicarAcoes(data?.acoes || [], {estrito:true});
     if(data?.mensagem) S.mensagens.push(data.mensagem);
+    if(!montagemPlanta) await aplicarAcoes(data?.acoes || []);
     S.enviando = false; pintar(); statusTopo();
-    await aplicarAcoes(data?.acoes || []);
     pintarLado();
     const anexos = data?.mensagem?.anexos || [];
     const res = { opcoes: anexos.find((x) => x.tipo === "opcoes"), itens: anexos.find((x) => x.tipo === "itens")?.itens?.map((i) => i.id) || [], circular: anexos.find((x) => x.tipo === "escolha")?.ids || [] };
@@ -585,6 +604,16 @@ async function enviar(valor, { porAudio = false, arquivos = [] } = {}){
 // Arquivos (planta em PDF ou foto). Foto vira JPEG de até 2400 px (planta precisa de detalhe); PDF vai como está
 // (até 20 MB). Sobe direto pro Storage com a URL assinada que o servidor dá; a conversa recebe só o caminho.
 const MAX_ARQUIVO = 20 * 1024 * 1024;
+async function prepararAreasArquivo(index){
+  if(!MONTAGEM_PLANTA_ATIVA)return false;
+  const original=S.pendentes[index];if(!original || original.area)return false;
+  const recortes=await demarcarAreasPlanta(original.file);if(!recortes)return false;
+  const modo=$('catalogAssistente')?.querySelector('[data-cas-modo-planta]');if(modo){modo.checked=true;modo.dispatchEvent(new Event('change'));}
+  original.plantaId ||= crypto.randomUUID();
+  S.pendentes=S.pendentes.filter(a=>a.plantaOrigem!==original.plantaId);
+  for(const r of recortes)S.pendentes.push({...r,nome:r.file.name,mime:'image/jpeg',pdf:false,preview:URL.createObjectURL(r.file),plantaOrigem:original.plantaId});
+  pintarPendentes();return true;
+}
 function escolherArquivos(lista){
   for(const file of lista){
     if(S.pendentes.length >= 4){ ctx.notify({ title: "Até 4 arquivos por mensagem", status: "error", duration: 4000 }); break; }
@@ -600,13 +629,13 @@ function pintarPendentes(){
   const el = $("catalogAssistente")?.querySelector("[data-cas-pend]");
   if(!el) return;
   el.hidden = !S.pendentes.length;
-  el.innerHTML = S.pendentes.map((a, i) => `<span class="cas-pend">${a.pdf ? `<i class="cas-pdf-ico">PDF</i>` : `<img src="${esc(a.preview)}" alt="">`}<span>${esc(a.nome)}</span><button type="button" data-cas-tirar="${i}" aria-label="Tirar ${esc(a.nome)}">×</button></span>`).join("");
+  el.innerHTML = S.pendentes.map((a, i) => `<span class="cas-pend">${a.pdf ? `<i class="cas-pdf-ico">PDF</i>` : `<img src="${esc(a.preview)}" alt="">`}<span>${esc(a.nome)}</span>${MONTAGEM_PLANTA_ATIVA && !a.area?`<button type="button" class="cas-demarcar" data-cas-demarcar="${i}">Demarcar áreas</button>`:''}<button type="button" data-cas-tirar="${i}" aria-label="Tirar ${esc(a.nome)}">×</button></span>`).join("");
   S.ajustarForm?.();
 }
 async function subirArquivo(a){
   let blob = a.file;
-  if(!a.pdf){
-    try{ const dataUrl = await paraJpegDataUrl(URL.createObjectURL(a.file), 2400); blob = await (await fetch(dataUrl)).blob(); }
+  if(!a.pdf && !a.area){
+    try{ const dataUrl = await paraJpegDataUrl(URL.createObjectURL(a.file), a.area?3200:2400); blob = await (await fetch(dataUrl)).blob(); }
     catch{ throw new Error("Não consegui abrir essa foto. Tente tirar um print ou mandar em PDF."); }
   }
   const prep = await chamar("arquivo_upload", { mime: a.mime, tamanho: blob.size });
@@ -621,11 +650,15 @@ function statusTopo(texto = ""){
   if(el) el.textContent = texto || (S.renderizando?.size ? "montando sua composição…" : "Consultora comercial · online");
 }
 
-async function aplicarAcoes(acoes){
+async function aplicarAcoes(acoes, {estrito=false} = {}){
   const projeto = window.catalogAssistenteProjeto;
   for(const acao of acoes){
     try{
-      if(acao.tipo === "usar_projeto"){ await projeto?.usarProjeto(acao.projeto_id); if(!lig) await carregarHistorico(); }
+      if(acao.tipo === 'montar_planta'){
+        if(!projeto?.montarPlanta)throw Error('Atualize a página para carregar a montagem pela planta.');
+        await projeto.montarPlanta(acao);
+      }
+      else if(acao.tipo === "usar_projeto"){ await projeto?.usarProjeto(acao.projeto_id); if(!lig) await carregarHistorico(); }
       else if(acao.tipo === "atualizar_evento"){
         await projeto?.atualizarEvento?.(acao);
         ctx.notify({ title: "Dados do pedido atualizados", message: "Entrega, evento, coleta e local conferidos.", status: "done", duration: 3500 });
@@ -651,6 +684,7 @@ async function aplicarAcoes(acoes){
       else if(acao.tipo === "renderizar") enfileirarRender(acao);
       else if(acao.tipo === "apagar_imagem"){ S.mensagens = S.mensagens.filter((m) => m.id !== acao.mensagem_id); pintar(); }
     }catch(error){
+      if(estrito)throw Error('A montagem não foi concluída no pedido: '+error.message);
       ctx.notify({ title: "Não consegui concluir", message: error.message, status: "error" });
     }
   }

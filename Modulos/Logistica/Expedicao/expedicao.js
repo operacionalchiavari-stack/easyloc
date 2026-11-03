@@ -84,7 +84,7 @@
     let nota = p.fluxo_etapa==='retorno_simultaneo' ? 'Retorno simultâneo com a Triagem' : '';
     if ((col === "conferidos" || col === "pendencias") && feito) {
       const falta = faltas(p,tipo).length;
-      nota = (volta ? "Retorno conferido " : descarga ? "Descarregado " : "Carregado ") + dataHoraBr(feito.concluido_em) + (feito.por ? " por " + feito.por : "") +
+      nota = col === "conferidos" ? "" : (volta ? "Retorno conferido " : descarga ? "Descarregado " : "Carregado ") + dataHoraBr(feito.concluido_em) + (feito.por ? " por " + feito.por : "") +
         (falta ? " · " + falta + (volta ? " não voltou" : " pendência(s)") : "");
     } else if (volta || (descarga && s.descargaCega)) {
       nota = "Conferência às cegas";
@@ -107,9 +107,9 @@
     const carregados = p.operacao?.carregamento?.caminhoes || p.operacao?.carregamento_caminhoes || [];
     const usaCarregados = volta || descarga || col === "conferidos" || col === "pendencias";
     const lista = usaCarregados ? carregados : (s.caminhoes?.get(String(p.id)) || []);
-    const caminhoes = usaCarregados && !carregados.length ? "" :
-      '<div class="exp-caminhoes' + (lista.length ? "" : " is-vazio") + '"><span>' + (usaCarregados ? "Carregado em" : "Caminhões programados") + "</span>" +
-      (lista.length ? lista.map((c) => '<b title="' + esc([c.placa, c.modelo].filter(Boolean).join(" · ")) + '">' + esc(c.codigo || c.placa || "Caminhão") + (c.codigo && c.placa && !/^SEM PLACA/i.test(c.placa) ? "<small>" + esc(c.placa) + "</small>" : "") + "</b>").join("") : "<em>Nenhum caminhão programado no Painel Logístico</em>") + "</div>";
+    const caminhoes = !lista.length ? "" :
+      '<div class="exp-caminhoes"><span>' + (usaCarregados ? "Carregado em" : "Caminh&#245;es programados") + "</span>" +
+      lista.map((c) => '<b title="' + esc([c.placa, c.modelo].filter(Boolean).join(" · ")) + '">' + esc(c.codigo || c.placa || "Caminhão") + (c.codigo && c.placa && !/^SEM PLACA/i.test(c.placa) ? "<small>" + esc(c.placa) + "</small>" : "") + "</b>").join("") + "</div>";
     const meta = (volta || descarga)
       ? "Coleta " + esc(dataBr(p.data_coleta || p.data_evento))
       : "Entrega " + esc(dataBr(p.data_entrega || p.data_evento)) + " · " + v.total + " volume" + (v.total === 1 ? "" : "s");
@@ -117,18 +117,23 @@
     const ida = !volta && !descarga && col !== "conferidos" && col !== "pendencias";
     const travaFin = ida && s.bloqueados?.has(String(p.id));
     // Sem caminhão programado no Painel Logístico (Parâmetros > Logística e operação): não carrega.
-    const travaCam = ida && !travaFin && s.semCaminhao?.has(String(p.id));
+    const travaCam = ida && s.semCaminhao?.has(String(p.id));
     const bloqueado = travaFin || travaCam;
-    const motivoTrava = travaFin ? "Aguardando aprovação do Financeiro. Avise o supervisor." : "Nenhum caminhão programado. Programe o caminhão no Painel Logístico antes de iniciar o carregamento.";
-    return '<article class="separacao-order-card exp-card-' + tipo + (bloqueado ? " is-bloqueado-fin" : "") + '" data-coluna="' + col + '" data-tipo="' + tipo + '" data-pedido="' + esc(p.id) + '"' + (bloqueado ? ' data-bloqueado="1" aria-disabled="true" title="' + esc(motivoTrava) + '"' : ' tabindex="0" role="button"') + '>' +
+    const motivoTrava = [
+      travaFin ? 'O Financeiro ainda não liberou o carregamento deste pedido. Solicite a conferência do pagamento e a liberação ao responsável financeiro.' : '',
+      travaCam ? 'Nenhum caminhão está programado para este pedido. Programe o caminhão no Painel Logístico antes de iniciar o carregamento.' : ''
+    ].filter(Boolean).join('\n\n');
+    return '<article class="separacao-order-card exp-card-' + tipo + (bloqueado ? " is-bloqueado-fin" : "") + '" data-coluna="' + col + '" data-tipo="' + tipo + '" data-pedido="' + esc(p.id) + '"' + (bloqueado ? ' data-bloqueado="1" tabindex="0" role="button" aria-label="Consultar bloqueio do pedido" title="' + esc(motivoTrava) + '"' : ' tabindex="0" role="button"') + '>' +
       '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + esc(numero.startsWith("#") ? numero : "#" + numero) + "</span>" +
       '<span class="exp-tipo">' + (volta ? "Retorno" : descarga ? "Descarregamento" : "Ida") + "</span>" +
-      (bloqueado ? '<span class="exp-aviso-fin">' + (travaFin ? "Aguardando Financeiro" : "Sem caminhão programado") + '</span>' : "") +
-      (col === "conferidos" ? '<span class="separacao-done-mark">✓</span>' : "") + "</div>" +
+      (travaFin ? '<span class="exp-pendencia-dot exp-dot-financeiro" role="img" aria-label="Aguardando Financeiro" title="Aguardando Financeiro"></span>' : "") +
+      ((ida && !lista.length) ? '<span class="exp-pendencia-dot exp-dot-caminhao" role="img" aria-label="Sem caminh&#227;o programado" title="Sem caminh&#227;o programado"></span>' : "") +
+      "</div>" +
       '<div class="separacao-card-mainline"><strong>' + esc(p.cliente_nome || "Cliente não informado") + "</strong><span>" +
       esc(p.tipo_evento || "Evento") + " · " + esc(local(p)) + "</span></div>" +
-      '<div class="separacao-card-meta-line">' + meta + "</div>" +
+      (col === "conferidos" ? "" : '<div class="separacao-card-meta-line">' + meta + "</div>") +
       caminhoes +
+      (col==='conferidos'&&tipo==='ida'&&s.reabriveis?.has(String(p.id))?'<button type="button" class="exp-reabrir" data-reabrir-conferencia="'+esc(p.id)+'">Voltar</button>':'') +
       progresso + (nota ? '<div class="separacao-lock-note">' + esc(nota) + "</div>" : "") +
       (col==='pendencias'&&s.divergencias?.mapa.get(String(p.id))&&tipo==='descarregamento'?'<div class="exp-pendencia-resumo"><b>'+esc(resumoDivergencia(s.divergencias.mapa.get(String(p.id))))+'</b><small>Abra para resolver</small></div>':'')+(col==='pendencias'&&!(s.divergencias?.mapa.get(String(p.id))&&tipo==='descarregamento')?'<div class="exp-pendencia-resumo"><b>'+faltas(p,tipo).length+' item(ns) com pendência</b>'+faltas(p,tipo).filter(f=>f.item).slice(0,3).map(f=>'<small>'+esc(f.item)+(f.faltam?' · '+esc(f.faltam)+' faltante(s)':'')+'</small>').join('')+'</div>':'') + "</article>";
   }
@@ -146,6 +151,7 @@
       $(cont).textContent = grupos[g].length;
       $(col).innerHTML = grupos[g].length ? grupos[g].map(cartao).join("") : '<div class="empty-state">' + vazio[g] + "</div>";
     });
+    window.pintarFotosDecoradores?.({ sb: s.sb, empresa: s.empresa, pedidos: [...s.pedidos, ...(s.divergencias?.pedidos || [])] });
   }
 
   async function etiquetasDe(ids) {
@@ -168,6 +174,12 @@
     s.carregando = true;
     try {
       s.pedidos = await window.PedidoFluxo.fila(s.sb,s.empresa,'expedicao');
+      s.reabriveis=new Set();
+      for(let i=0;i<s.pedidos.length;i+=100){
+        const {data,error}=await s.sb.rpc('expedicao_reaberturas_disponiveis',{p_pedidos:s.pedidos.slice(i,i+100).map(p=>p.id)});
+        if(error){console.warn('Reabertura da conferência:',error.message);break;}
+        for(const id of data||[])s.reabriveis.add(String(id));
+      }
       // Descarregamento às cegas (Parâmetros > Operação): o cartão não mostra quanto devia chegar.
       const {data:regra}=await s.sb.from('empresa_logistica_regras').select('descarregamento_conferencia').eq('empresa_id',s.empresa).maybeSingle();
       s.descargaCega=regra?.descarregamento_conferencia==='cegas';
@@ -228,6 +240,17 @@
     location.href = "../Conferencia/conferencia.html" + query;
   }
 
+  function ativarCard(card) {
+    if (!card) return;
+    if (card.dataset.bloqueado) {
+      const motivo = card.getAttribute('title') || 'Este pedido possui um bloqueio. Consulte o responsável pela operação.';
+      if (typeof window.alerta === 'function') window.alerta(motivo, {titulo:'Pedido bloqueado', tipo:'aviso', duracao:10000});
+      else window.alert(motivo);
+      return;
+    }
+    abrir(card.dataset.pedido, card.dataset.tipo);
+  }
+
   async function iniciar() {
     const ctx = await window.aguardarContexto?.();
     s.sb = window.supabaseClient;
@@ -235,11 +258,22 @@
     $("expBusca").addEventListener("input", pintar);
     const quadro = document.querySelector(".separacao-kanban");
     quadro.addEventListener("click", (ev) => {
-      const card = ev.target.closest("[data-pedido]"); if (card && !card.dataset.bloqueado) abrir(card.dataset.pedido, card.dataset.tipo);
+      const botao=ev.target.closest('[data-reabrir-conferencia]');
+      if(botao){
+        ev.preventDefault();ev.stopPropagation();
+        (async()=>{
+          const confirmar=typeof window.confirmarGlobal==='function'?await window.confirmarGlobal('O pedido voltará para conferência. As quantidades e os caminhões registrados serão preservados para revisão.','Voltar para conferência',{confirmarTexto:'Reabrir',cancelarTexto:'Voltar'}):window.confirm('Voltar este pedido para conferência?');
+          if(!confirmar)return;botao.disabled=true;
+          const {error}=await s.sb.rpc('expedicao_reabrir_conferencia',{p_pedido:botao.dataset.reabrirConferencia});if(error)throw error;
+          await carregar();
+        })().catch(e=>{botao.disabled=false;window.alerta?.(e.message,'Conferência','aviso');});return;
+      }
+      ativarCard(ev.target.closest("[data-pedido]"));
     });
     quadro.addEventListener("keydown", (ev) => {
+      if(ev.target.closest("button"))return;
       const card = ev.target.closest("[data-pedido]");
-      if (card && !card.dataset.bloqueado && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); abrir(card.dataset.pedido, card.dataset.tipo); }
+      if (card && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); ativarCard(card); }
     });
     await carregar();
     setInterval(() => { if (!document.hidden) carregar(); }, 30000);

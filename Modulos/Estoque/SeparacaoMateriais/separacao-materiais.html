@@ -9,10 +9,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="separacao-materiais.css?v=20261029-div-acervo">
+  <link rel="stylesheet" href="separacao-materiais.css?v=20261103-divergencias-compactas">
 <script src="../../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
+<link rel="stylesheet" href="../../../styles/separacao-ocorrencias.css?v=20261103-anexo-foto">
+<script src="../../../js/ui/separacao-ocorrencias.js?v=20261103-resposta-direta"></script>
 </head>
-<body>
+<body class="triagem-compacta">
 <section class="separacao-page el-page" data-module-root>
   <header class="separacao-header">
     <div class="separacao-title-block">
@@ -37,7 +39,6 @@
       <section class="separacao-lane separacao-lane-pendente">
         <header>
           <div>
-            <span>Fila</span>
             <h2>Aguardando triagem</h2>
           </div>
           <strong id="separacaoLaneAguardandoCount">0</strong>
@@ -48,7 +49,6 @@
       <section class="separacao-lane separacao-lane-andamento">
         <header>
           <div>
-            <span>Operação</span>
             <h2>Em triagem</h2>
           </div>
           <strong id="separacaoLaneEmSeparacaoCount">0</strong>
@@ -59,7 +59,6 @@
       <section class="separacao-lane separacao-lane-separado">
         <header>
           <div>
-            <span>Concluídos</span>
             <h2>Concluído</h2>
           </div>
           <strong id="separacaoLaneSeparadosCount">0</strong>
@@ -67,7 +66,7 @@
         <div class="separacao-lane-list" id="separacaoColunaSeparados"></div>
       </section>
 
-      <section class="separacao-lane separacao-lane-divergencias" hidden>
+      <section class="separacao-lane separacao-lane-divergencias">
         <header>
           <div>
             <span>Atenção</span>
@@ -295,7 +294,8 @@
 <script src="../../../js/core/etiquetas.js?v=20261017-etiquetas"></script>
 <link rel="stylesheet" href="../../../styles/capas-operacao.css?v=20261101-ocorrencias-auto">
 <script src="../../../js/ui/capas-operacao.js?v=20261101-ocorrencias-auto"></script>
-<script src="separacao-materiais.js?v=20261101-capas"></script>
+<script src="../../../js/ui/decorador-cards.js?v=20261103-triagem-acoes"></script>
+<script src="separacao-materiais.js?v=20261103-divergencias-compactas"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

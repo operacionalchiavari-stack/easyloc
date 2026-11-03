@@ -876,10 +876,10 @@ html:root #btnFecharCadastroRelacionado:hover{background:#f4f6f8!important}
 }
 .central-fluxo li>span:last-child{display:block;padding:0 1px;overflow-wrap:anywhere;hyphens:auto}
 /* Pedido extra (out/2026): linha logo abaixo do principal */
-.central-table tr.is-extra td:first-child .pedido-numero-card,.central-table tr.is-extra td:first-child .pedido-extra-tag{margin-left:22px}
-.central-table-wrap{position:relative}
+.central-table tr.is-extra td:first-child .pedido-numero-card,.central-table tr.is-extra td:first-child .pedido-extra-tag{margin-left:0}
+.central-table-wrap{position:relative;padding-left:22px;box-sizing:border-box}
 /* traço do pedido principal até o extra: medido e desenhado pelo JS (ligarExtras) */
-.central-extra-ligacao{position:absolute;z-index:1;pointer-events:none;box-sizing:border-box;border-left:1.5px solid #9fb3d6;border-bottom:1.5px solid #9fb3d6;border-bottom-left-radius:8px}
+.central-extra-ligacao{position:absolute;z-index:1;pointer-events:none;box-sizing:border-box;border:1.5px solid #9fb3d6;border-right:0;border-radius:6px 0 0 6px}
 .pedido-extra-tag{display:block;margin-top:4px;font-size:11px;font-weight:600;color:#123f86;white-space:nowrap}
 
 /* Ordenar por (out/2026): no cabeçalho, ao lado de Filtros */
@@ -903,3 +903,5 @@ html:root:is(#central-ordem,html) .central-ordem select.el-select{width:auto;min
 
 /* Equipe do pedido embaixo do nome do cliente (out/2026) */
 html:root:is(#central-equipe#central-equipe,html) .pedido-equipe-tag{display:block;margin-top:2px;font-size:12px;font-weight:500;color:#123f86}
+
+.central-extra-ramo{position:absolute;left:0;right:0;border-top:1.5px solid #9fb3d6}

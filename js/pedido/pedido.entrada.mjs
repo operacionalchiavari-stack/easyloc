@@ -19,6 +19,8 @@ export function iniciarEntradaComercial(vitrine){
   const trilha=document.createElement('div');trilha.className='comercial-trilha';trilha.setAttribute('role','navigation');trilha.setAttribute('aria-label','Etapas do pedido');
   trilha.innerHTML='<button type="button" class="ct-voltar">← Voltar</button><div class="ct-linha"><div class="ct-antes"></div><h2 class="ct-atual" aria-live="polite"></h2><div class="ct-depois"></div></div><div class="ct-direita"><div class="ct-ferramentas" role="group" aria-label="Ferramentas de criação"><button type="button" data-etapa="modulo3d">3D</button></div><div class="ct-acoes"><span class="ct-numero" aria-live="polite" aria-atomic="true"></span><button type="button" class="ct-avancar"></button></div></div><p class="ct-erro" role="alert"></p>';
   tela.prepend(trilha);
+  const sublocacao=tela.querySelector('[data-sublocacoes="atual"]');
+  if(sublocacao)trilha.querySelector('.ct-ferramentas').append(sublocacao);
   const voltarStatus=document.createElement('div');voltarStatus.className='ct-voltar-status';
   const voltar=trilha.querySelector('.ct-voltar');voltar.before(voltarStatus);voltarStatus.append(voltar);
   const statusPedido=document.getElementById('pedidoStatus');
@@ -168,9 +170,10 @@ export function iniciarEntradaComercial(vitrine){
       const periodo=m==='periodo';
       cardEvento.classList.toggle('is-periodo',periodo);fimItem.hidden=!periodo;
       if(rotuloInicio)rotuloInicio.textContent=periodo?'Primeiro dia':'Data';
+      window.__pedidoSincronizarDatas?.();
       modo.querySelectorAll('button').forEach(b=>{const ativo=b.dataset.modo===m;b.classList.toggle('is-ativo',ativo);b.setAttribute('aria-pressed',String(ativo));});
     };
-    modo.addEventListener('click',e=>{const b=e.target.closest('[data-modo]');if(!b)return;definirModo(b.dataset.modo);if(b.dataset.modo==='periodo')document.getElementById('dataEventoFim')?.focus();});
+    modo.addEventListener('click',e=>{const b=e.target.closest('[data-modo]');if(!b)return;definirModo(b.dataset.modo);window.__pedidoHouveEdicao?.();if(b.dataset.modo==='periodo')document.getElementById('dataEventoFim')?.focus();});
     window.__definirModoEvento=definirModo;
     definirModo(document.getElementById('dataEventoFim').value?'periodo':'dia');
   }
@@ -198,6 +201,11 @@ export function iniciarEntradaComercial(vitrine){
     if(elData('dataColeta'))elData('dataColeta').min=ultimo||'';
   }
   window.__pedidoSincronizarDatas=sincronizarDatas;
+  const coletaMesmoDia=document.createElement('button');coletaMesmoDia.type='button';coletaMesmoDia.className='coleta-mesmo-dia';coletaMesmoDia.textContent='Coletar no dia do evento';
+  coletaMesmoDia.style.cssText='border:0;background:transparent;color:#123f86;font:12px Inter,system-ui;cursor:pointer;padding:8px 0;text-align:left';
+  elData('dataColeta')?.closest('.entrada-data-card')?.append(coletaMesmoDia);
+  coletaMesmoDia.addEventListener('click',()=>{sincronizarDatas();const el=elData('dataColeta');if(el.disabled)return;el.value=ultimoDiaEvento();window.__pedidoHouveEdicao?.();el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));elData('horaColeta')?.focus();});
+  elData('dataColeta')?.addEventListener('focus',sincronizarDatas);
   const perguntar=async(texto,titulo)=>window.confirmarGlobal?await window.confirmarGlobal(texto,titulo):window.confirm(texto);
   const aceitas=new Set(),conferindo=new Set();
   async function conferirData(el,tipo){conferindo.add(el);try{await conferirData_(el,tipo);}finally{conferindo.delete(el);}}

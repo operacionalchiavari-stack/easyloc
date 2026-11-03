@@ -580,6 +580,13 @@
       fila=fila.concat(lote||[]);if(!lote||lote.length<500)break;
     }
     var planejamento=Object.fromEntries(fila.map(function(p){return [p.id,p];}));
+    var detalhesPainel = await emLote(fila.map(function(p){return p.id;}), function(b){return c.from('separacoes_pedidos').select('id,local_id,local_nome,data_entrega,data_coleta,data_evento,observacoes').eq('empresa_id',emp).in('id',b);});
+    var locaisPainel = await emLote(detalhesPainel.map(function(p){return p.local_id;}), function(b){return c.from('locais_empresas').select('id,endereco,numero_endereco,ponto_referencia').eq('empresa_id',emp).in('id',b);});
+    var acessosPainel = await emLote(fila.map(function(p){return p.id;}), function(b){return c.from('operacao_pedidos_info').select('pedido_id,baldeacao,escada,caminhao_perto,horario_limite,lona').eq('empresa_id',emp).in('pedido_id',b);});
+    var detalhesPorId = Object.fromEntries(detalhesPainel.map(function(p){return [p.id,p];}));
+    var locaisPorId = Object.fromEntries(locaisPainel.map(function(l){return [l.id,l];}));
+    var acessosPorId = Object.fromEntries(acessosPainel.map(function(i){return [i.pedido_id,i];}));
+
     var etapas = await tudo(function () { return c.from("operacao_etapas").select(SEL_ETAPA + ",pedido:separacoes_pedidos(numero_pedido,cliente_nome,local_nome,status_comercial,status)").eq("empresa_id", emp).gte("data", inicio).lte("data", fim).order("data").order("hora"); });
     var ocupacoes=etapas.filter(function(e){return !e.pedido_id||(e.pedido&&['aprovado','enviado','finalizado'].includes(e.pedido.status_comercial)&&e.pedido.status!=='cancelado');});
     etapas=etapas.filter(function(e){return !e.pedido_id||!!planejamento[e.pedido_id];});
@@ -624,6 +631,10 @@
         }
         return { id: e.id, pedido: e.pedido ? String(e.pedido.numero_pedido || "") : "", cliente: e.pedido ? e.pedido.cliente_nome || "" : "", local: e.pedido ? e.pedido.local_nome || "" : "",
           etapa: e.nome, tipo: tipoRegra(e.tipo), servico: semCaminhao, data: e.data, hora: hhmm(e.hora), responsavel: resp, equipe: eq, caminhoes: cs, pedidoSistemaId: e.pedido_id || "",
+          supervisor: (function(){
+            var p=detalhesPorId[e.pedido_id]||e.pedido||{}, obs=p.observacoes||{}, l=locaisPorId[p.local_id]||{}, info=acessosPorId[e.pedido_id]||{};
+            return {local:p.local_nome||'',endereco:[l.endereco,l.numero_endereco].filter(Boolean).join(', '),referencia:l.ponto_referencia||'',data_evento:p.data_evento||'',data_entrega:p.data_entrega||'',data_coleta:p.data_coleta||'',horario_entrega:obs.horario_entrega||'',horario_coleta:obs.horario_coleta||'',observacoes_entrega:obs.observacoes_entrega||'',observacoes_coleta:obs.observacoes_coleta||'',observacao_etapa:e.observacao||'',acesso:info};
+          })(),
           m3: m3, pecas: Number(v.pecas) || 0, volumeEstimado: estimado, sugerido: sug,
           freeConfirmados: insc.filter(function (i) { return i.vaga_id === vagaDe[e.id]; }).map(function (i) { return i.nome; }),
           conflitos: consulta?[]:Array.from(new Set(mConf[e.id] || [])), avisos: av, passada: e.data < hoje, somente_consulta:consulta };
@@ -919,12 +930,12 @@
     l.forEach(function (p) { nomesMont[p.nome] = p.id; });
     return l.map(function (p) { return p.nome; });
   };
-  L.MONT_login = async function (cpf, senha, supervisor) {
+  L.MONT_login = async function (cpf, senha, supervisor, sistema) {
     var r;
     if (supervisor) {
       var c = await sb(), u = (await c.auth.getUser()).data.user;
       if (!u) { throw new Error("Para entrar como supervisor, entre antes no sistema (Acervo) neste aparelho com o seu usuário."); }
-      r = await rpc("mont_login_supervisor");
+      r = await rpc(sistema ? "mont_login_sistema" : "mont_login_supervisor");
     } else {
       cpf = String(cpf || "").replace(/\D/g, "");
       if (cpf.length !== 11) { throw new Error("Informe seu CPF completo."); }

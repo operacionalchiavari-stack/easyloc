@@ -34,6 +34,7 @@ const RENDERS = [
     const renders = req.query.renders ? RENDERS : [];
     res.type('html').send(`<!doctype html><html><body style="margin:0">
 <script>
+  window.__PEDIDO_ATUAL_ID='ped-salvo';window.__pedidoGravarProjetoComercial=async p=>{window.__projetoGravado=p;return true;};
   window.__pedidoClienteAtual = { nome: 'Lis Baêtas', foto: 'https://fixture/lis.png' };
   const projeto = { id: 'ped-1', noivos: 'Lis Baêtas', data_evento: '2026-11-11', data_evento_fim: '2026-11-13', local_evento: 'Vale dos Desejos', status: 'rascunho',
     dados: { ambientes: [{ id: 'a1', nome: 'Lounge', itens: [{ item_id: '1', quantidade: 2 }], renders: ${JSON.stringify(renders)}, notas: '' }], plantas: [] } };

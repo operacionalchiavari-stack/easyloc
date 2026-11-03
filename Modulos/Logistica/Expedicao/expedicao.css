@@ -33,3 +33,99 @@ html:root:is(#acervo-separacao,html) .exp-caminhoes{background:#eaf0fa;color:#12
 html:root:is(#acervo-separacao,html) .exp-caminhoes b{border:1px solid #c7d4ea}
 html:root:is(#acervo-separacao,html) .exp-caminhoes.is-vazio{background:#fdf6dd;color:#7a5b10;border-color:#c9a24f}
 
+
+/* Cards de expedicao: base neutra e hierarquia visual consistente. */
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-card[data-coluna]{
+  background:#fff!important;border:1px solid #dce3eb!important;border-radius:12px!important;
+  padding:16px!important;box-shadow:0 2px 6px #182b4310!important;
+  color:#243449!important;opacity:1!important;transition:border-color .15s,box-shadow .15s;
+}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-card:not([data-bloqueado]):hover{
+  border-color:#96adc7!important;box-shadow:0 4px 12px #182b4318!important;transform:none!important;
+}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-card:focus-visible{outline:2px solid #244d7a;outline-offset:3px;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-top{gap:7px;margin-bottom:12px;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-number{
+  background:#edf2f8!important;color:#23486e!important;border:1px solid #dce5ef!important;
+  font:600 12px/1.4 Inter,system-ui,sans-serif!important;padding:5px 9px!important;border-radius:7px!important;
+}
+html:root:is(#acervo-separacao,html) .exp-page .exp-tipo{
+  background:#f6f7f9!important;color:#5a6879!important;border:1px solid #e5e9ef!important;
+  font-size:10px!important;padding:4px 7px!important;border-radius:6px!important;letter-spacing:.05em!important;
+}
+html:root:is(#acervo-separacao,html) .exp-page .exp-aviso-fin{
+  display:inline-flex;align-items:center;max-width:100%;white-space:normal!important;
+  padding:4px 8px!important;border-radius:6px!important;background:#faf5e9!important;
+  color:#805f23!important;border:1px solid #eadfc7!important;font:500 11px/1.4 Inter,system-ui,sans-serif!important;
+}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-mainline{display:flex!important;flex-direction:column;align-items:flex-start!important;gap:4px!important;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-mainline strong{font:600 15px/1.4 Inter,system-ui,sans-serif!important;color:#243449!important;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-mainline>span{
+  max-width:100%;white-space:normal!important;overflow:visible!important;text-align:left!important;color:#68788a!important;font-size:12px!important;line-height:1.5;
+}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-meta-line{margin-top:9px!important;color:#526477!important;font:500 12px/1.5 Inter,system-ui,sans-serif!important;}
+html:root:is(#acervo-separacao,html) .exp-page .exp-caminhoes,
+html:root:is(#acervo-separacao,html) .exp-page .exp-caminhoes.is-vazio{
+  margin-top:13px;padding:11px 12px;border-radius:8px;background:#f6f8fa!important;
+  border:1px solid #e5eaf0!important;color:#526477!important;gap:8px;
+}
+html:root:is(#acervo-separacao,html) .exp-page .exp-caminhoes>span{font:600 10px/1.4 Inter,system-ui,sans-serif;letter-spacing:.06em;opacity:1;color:#718195!important;}
+html:root:is(#acervo-separacao,html) .exp-page .exp-caminhoes b{background:#fff!important;border:1px solid #dce3eb!important;border-radius:6px!important;color:#304c6a!important;font-size:12px!important;padding:4px 8px!important;}
+html:root:is(#acervo-separacao,html) .exp-page .exp-caminhoes b small{color:#627386!important;}
+html:root:is(#acervo-separacao,html) .exp-page .exp-caminhoes em{font-size:12px;line-height:1.5;color:#6b7787;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-lock-note{color:#66778a!important;font:500 11px/1.5 Inter,system-ui,sans-serif!important;margin-top:11px!important;}
+html:root:is(#acervo-separacao,html) .exp-page .mini-progress{height:5px!important;background:#e9eef4!important;}
+html:root:is(#acervo-separacao,html) .exp-page .mini-progress>span{background:#38648e!important;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-progress{color:#627386!important;font-size:11px!important;margin-top:14px!important;}
+html:root:is(#acervo-separacao,html) .exp-page .exp-pendencia-resumo{border-top:1px solid #eee4df;color:#9a5037;font-size:12px;}
+
+/* Cor por etapa, como na Triagem; detalhes internos permanecem neutros. */
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-card[data-coluna="aguardando"]{background:#fff9ec!important;border-color:#eadcc1!important;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-card[data-coluna="andamento"]{background:#eff6ff!important;border-color:#c8dbf5!important;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-card[data-coluna="conferidos"]{background:#eef8f2!important;border-color:#c5e2d0!important;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-order-card[data-coluna="pendencias"]{background:#fff3ef!important;border-color:#ecd2c8!important;}
+html:root:is(#acervo-separacao,html) .exp-page .exp-caminhoes,
+html:root:is(#acervo-separacao,html) .exp-page .exp-caminhoes.is-vazio{background:#ffffffa6!important;border-color:#dce3e9!important;}
+
+/* Cabecalhos compactos apenas nas colunas da Expedicao. */
+html:root:is(#acervo-separacao,html) .exp-page .separacao-lane>header{min-height:76px!important;padding:13px 16px!important;gap:12px!important;align-items:center!important;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-lane>header>div{min-width:0;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-lane>header h2{font-size:18px!important;line-height:1.35!important;letter-spacing:.055em!important;margin:0!important;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-lane>header span{font-size:10px!important;line-height:1.3!important;margin-bottom:3px!important;}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-lane>header>strong{width:28px!important;height:28px!important;min-width:28px!important;font-size:12px!important;}
+
+html:root:is(#acervo-separacao,html) .exp-page .exp-reabrir{display:inline-flex;align-items:center;margin-top:12px;min-height:32px;padding:6px 12px!important;border:1px solid #a9ceba!important;border-radius:8px!important;background:#fff!important;color:#236342!important;font:600 12px/1.4 Inter,system-ui!important;letter-spacing:0!important;text-transform:none!important;cursor:pointer;}
+html:root:is(#acervo-separacao,html) .exp-page .exp-reabrir:hover{background:#dff1e6!important;border-color:#75ac8d!important;}
+html:root:is(#acervo-separacao,html) .exp-page .exp-reabrir:focus-visible{outline:2px solid #236342;outline-offset:3px;}
+html:root:is(#acervo-separacao,html) .exp-page .exp-reabrir:disabled{opacity:.5;cursor:wait;}
+
+/* Mesma composi??o compacta dos cards da Triagem. */
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-order-card[data-coluna]{padding:10px 12px!important;border-radius:14px!important;row-gap:4px;column-gap:12px}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-card-top{margin:0;gap:6px;flex-wrap:wrap}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-card-mainline.com-foto-decorador{display:contents!important}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-card-meta-line{margin:0!important;font:600 11px/1.35 Inter,system-ui,sans-serif!important}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-card-top .separacao-card-progress{margin:0!important;flex:1;min-width:80px}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-order-number{border-radius:999px!important;padding:4px 9px!important;background:rgba(220,38,38,.10)!important;border-color:rgba(220,38,38,.18)!important;color:#b91c1c!important}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .exp-tipo{border-radius:999px!important;padding:3px 9px!important}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .exp-caminhoes{grid-column:2 / -1;margin:2px 0 0;padding:3px 0;gap:4px;background:transparent!important;border:0!important}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .exp-caminhoes>span{flex-basis:auto;letter-spacing:normal}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .exp-caminhoes b{padding:2px 6px!important}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page :is(.exp-lidos,.exp-pendencia-resumo,.separacao-lock-note){grid-column:2 / -1;margin-top:2px!important}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .triagem-cliente-acao .exp-reabrir{grid-column:3;grid-row:2 / 5;align-self:start;justify-self:end;margin:0;min-height:28px;padding:4px 8px!important;font-size:11px!important;max-width:130px;white-space:normal}
+
+/* Indicadores compactos de pend?ncia e legenda no cabe?alho. */
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-mainline .decorador-card-foto{width:56px!important;height:56px!important;min-width:56px;max-width:56px;border-radius:50%!important;overflow:hidden!important;display:flex!important;align-items:center!important;justify-content:center!important;position:relative;line-height:1}
+html:root:is(#acervo-separacao,html) .exp-page .decorador-card-foto img{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important}
+.exp-pendencia-dot{display:inline-block;flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:var(--exp-dot-cor);animation:exp-pendencia-pulso 1.6s ease-in-out infinite}
+.exp-dot-caminhao{--exp-dot-cor:#d99100}
+.exp-dot-financeiro{--exp-dot-cor:#a855d0}
+@keyframes exp-pendencia-pulso{0%,100%{opacity:1;box-shadow:0 0 0 0 color-mix(in srgb,var(--exp-dot-cor) 30%,transparent)}50%{opacity:.45;box-shadow:0 0 0 4px transparent}}
+html:root:is(#acervo-separacao,html) .exp-page .separacao-card-top .exp-tipo{margin-right:0}
+html:root:is(#acervo-separacao,html) .exp-page .exp-legenda{grid-column:1;grid-row:1;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font:500 11px/1.4 Inter,system-ui,sans-serif;color:var(--el-color-muted,#526477);min-width:0}
+.exp-legenda>span{display:inline-flex;align-items:center;gap:7px}
+.exp-legenda .exp-pendencia-dot{animation:none}
+@media(prefers-reduced-motion:reduce){.exp-pendencia-dot{animation:none}}
+@media(max-width:1000px){html:root:is(#acervo-separacao,html) .exp-page .exp-legenda{grid-row:auto;justify-content:center}}
+
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-order-card[data-coluna="conferidos"]{column-gap:8px}
+html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-order-card[data-coluna="conferidos"] .exp-reabrir{white-space:nowrap;max-width:none}

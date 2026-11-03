@@ -1830,45 +1830,14 @@ td.almox-zero{ color:#9ca3af; }
 .hist-resumo{ font-size:13px; color:#6b6b6b; margin:0 0 10px; }
 td.hist-vazio{ text-align:center; color:#6b6b6b; padding:24px !important; }
 </style>
-</head>
-<body>
+<link rel="stylesheet" href="insumos-cadastro.css?v=20261102-insumos"><link rel="stylesheet" href="../../Estoque/SeparacaoMateriais/separacao-materiais.css?v=20261029-div-acervo"><link rel="stylesheet" href="../../Producao/materiais-triagem.css?v=20261103-recebimento-manual"><link rel="stylesheet" href="almoxarifado-compacto.css?v=20261103-recebimento-manual"></head>
+<body class="almox-page">
 
 <div class="loading" id="loading">
   <div class="spinner"></div>
 </div>
 
-<div class="topbar almox-topo">
-  <div>
-    <h1>Almoxarifado</h1>
-  </div>
-  <div class="cards">
-
-<div class="card card-destaque-amarelo">
-  <div class="label">Meta mensal de contagem</div>
-  <div class="value" id="cardMeta">0%</div>
-  <div class="small" id="semanaAtualLabel"></div>
-</div>
-
-<div class="card card-destaque-amarelo">
-  <div class="label">Assertividade do mês</div>
-  <div class="value" id="cardAssertividade">0%</div>
-  <div class="small">Qualidade da contagem</div>
-</div>
-
-<div class="card card-destaque-amarelo">
-  <div class="label">Total de compras no mês</div>
-  <div class="value" id="cardEstoqueTotal">R$ 0,00</div>
-  <div class="small" id="comprasMesLabel"></div>
-</div>
-
-<div class="card card-destaque-amarelo">
-  <div class="label">Teto de gastos do mês</div>
-  <div class="value" id="cardTetoGastos">0%</div>
-</div>
-</div>
-
-
-</div>
+<header class="topbar almox-topo"><h1>Almoxarifado</h1></header>
 
 <div class="container">
 
@@ -1882,7 +1851,7 @@ td.hist-vazio{ text-align:center; color:#6b6b6b; padding:24px !important; }
 
 <div class="tabs">
     <button class="tab-btn active" data-tab="dashboard" onclick="abrirTab('dashboard')">Estoque atual <span class="tab-badge" id="badgeAbaixoMinimo" role="button" tabindex="0" title="Itens abaixo do mínimo — clique para ver" onclick="event.stopPropagation(); abrirModalAbaixoMinimo()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();abrirModalAbaixoMinimo();}"></span></button>
-    <button type="button" class="tab-btn" onclick="location.href='../../Producao/ordens.html?setor=almoxarifado'">Materiais da produção</button>
+    <button type="button" class="tab-btn" data-tab="producao" onclick="abrirTab('producao')">Materiais da produção <span class="tab-badge" id="badgeMateriaisProducao" aria-live="polite"></span></button>
     <button class="tab-btn" data-tab="historico" onclick="abrirTab('historico')">Histórico</button>
     <button class="tab-btn" data-tab="movimentacao" onclick="abrirTab('movimentacao')">Entrada / Saída</button>
     <button class="tab-btn" data-tab="emprestimos" onclick="abrirTab('emprestimos')">Retiradas <span class="tab-badge" id="badgeRetiradas" title="Itens em uso"></span></button>
@@ -1898,6 +1867,7 @@ td.hist-vazio{ text-align:center; color:#6b6b6b; padding:24px !important; }
 </button>
   </div>
 
+<section class="section" id="tab-producao" aria-label="Materiais da produção"><div id="almoxMateriaisProducao"></div></section>
 <section class="section active" id="tab-dashboard">
   <div class="grid-2">
 <div class="panel">
@@ -1931,6 +1901,7 @@ oninput="renderTabelaProdutos()" autocomplete="off" data-lpignore="true" data-1p
 <th class="col-minimo">Mínimo</th>
 <th class="col-minimo" title="Quantidade que deve ter depois de comprar">Ideal</th>
 <th class="col-custo" title="Valor de custo da unidade">Custo</th>
+<th class="col-custo">Reposição</th>
 <th class="col-status">Status</th>
                 </tr>
               </thead>
@@ -2075,47 +2046,13 @@ oninput="renderTabelaProdutos()" autocomplete="off" data-lpignore="true" data-1p
 
           <div class="field">
             <label>Categoria</label>
-<select id="cadCategoria">
-  <option value="">Selecione</option>
-
-  <!-- Limpeza -->
-  <option value="Limpeza">Limpeza</option>
-
-  <!-- Escritório -->
-  <option value="Escritório">Escritório</option>
-
-  <!-- Manutenção -->
-  <option value="Manutenção">Manutenção</option>
-
-  <!-- Marcenaria -->
-  <option value="Marcenaria">Marcenaria</option>
-
-  <!-- Elétrica -->
-  <option value="Elétrica">Elétrica</option>
-
-  <!-- Pintura -->
-  <option value="Pintura">Pintura</option>
-
-  <!-- Costura -->
-  <option value="Costura">Costura</option>
-
-  <!-- Forração -->
-  <option value="Forração">Forração</option>
-
-  <!-- Ferramentas -->
-  <option value="Ferramentas">Ferramentas</option>
-
-  <!-- Embalagem -->
-  <option value="Embalagem">Embalagem</option>
-
-  <!-- Diversos -->
-  <option value="Diversos">Diversos</option>
-</select>
+<select id="cadCategoria" disabled><option value="">Carregando categorias...</option></select>
           </div>
 
           <div class="field">
-            <label>Setor</label>
-            <input type="text" id="prodSetor" placeholder="Ex: Almoxarifado">
+            <label>Setor de armazenamento</label>
+            <select id="prodSetor" disabled><option value="">Carregando setores cadastrados…</option></select>
+            <small>Local responsável pelo estoque, como Almoxarifado central, Forração ou Costura. Setores são cadastrados em Parâmetros → RH.</small>
           </div>
 
           <div class="field">
@@ -2156,8 +2093,10 @@ oninput="renderTabelaProdutos()" autocomplete="off" data-lpignore="true" data-1p
           </div>
 
           <div class="field">
-            <label>Valor de reposição</label>
-            <input type="number" id="prodValorReposicao" placeholder="0" step="0.01">
+            <label>Acréscimo de reposição sobre o custo (%)</label>
+            <input type="number" id="prodReposicaoPercentual" value="100" min="0" max="10000" step="0.01">
+            <small>Valor de reposição calculado</small>
+            <input type="text" id="prodValorReposicao" readonly aria-label="Valor de reposição calculado">
           </div>
 
           <div class="field">
@@ -2632,6 +2571,7 @@ function showLoading(show){
 }
 
 function abrirTab(tab){
+  if(tab!=='producao')window.AlmoxMateriaisProducao?.suspender();
 
   // Gráficos agora é o painel (dashboard) em tela cheia
   if(tab === "graficos"){
@@ -2684,6 +2624,7 @@ function abrirTab(tab){
   secao.classList.add(
     "active"
   );
+  if(tab==='producao')window.AlmoxMateriaisProducao?.abrirAba();
 
   if(
     tab === "cadastro" &&
@@ -2972,6 +2913,8 @@ function renderTabelaProdutos(lista){
 
   (produtosDashboard || [])
     .filter(p => {
+      const setorFiltro=document.getElementById('filtroSetorArmazenamento')?.value;
+      if(setorFiltro && String(p.Setor||'')!==setorFiltro)return false;
       if(!filtro) return true;
       return (
         String(p.Codigo || "").toLowerCase().includes(filtro) ||
@@ -2983,13 +2926,14 @@ function renderTabelaProdutos(lista){
     .forEach(p => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${p.Codigo || "-"}</td>
-        <td>${p.Produto || "-"}</td>
+        <td><span class="insumo-codigo">${escAlmox(p.Codigo || "-")}</span></td>
+        <td><strong class="insumo-nome">${escAlmox(p.Produto || "-")}</strong></td>
         ${celulaEditavel(p, "categoria")}
         ${celulaEditavel(p, "setor")}
 <td>${p.Unidade || "-"}</td>
 ${colunasReservaHtml(p)}
 ${colunasLimitesHtml(p)}
+        <td>${numeroAlmox(p.ValorReposicao)>0?'<strong>'+formatarMoedaBR(numeroAlmox(p.ValorReposicao))+'</strong><small class="insumo-acrescimo">'+(numeroAlmox(p.ValorCusto)>0?formatarNumero((numeroAlmox(p.ValorReposicao)/numeroAlmox(p.ValorCusto)-1)*100)+'% sobre custo':'Sem custo informado')+'</small>':'<span class="almox-cel-vazia">definir</span>'}</td>
         <td>${statusEstoqueHtml(p)}</td>
       `;
       tbody.appendChild(tr);
@@ -3002,7 +2946,7 @@ ${colunasLimitesHtml(p)}
 window.__ALMOX_RESERVAS = {};
 function numeroAlmox(v){
   if(typeof v === "number") return v;
-  const s = String(v ?? "").trim();
+  const s = String(v ?? "").replace(/[^\d,.-]/g, "").trim();
   if(!s) return 0;
   const n = Number(s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s);
   return Number.isFinite(n) ? n : 0;
@@ -3094,7 +3038,7 @@ function colunasLimitesHtml(p){
   return celulaEditavel(p, "minimo") + celulaEditavel(p, "ideal") + celulaEditavel(p, "custo");
 }
 function editarCelulaAlmox(td){
-  if(!td || td.querySelector("input")) return;
+  if(!td || td.querySelector("input,select")) return;
   const campo = td.dataset.campo, def = CAMPOS_EDITAVEIS[campo];
   const p = (produtosDashboard || []).find(x => String(x.ID) === td.dataset.id);
   if(!p) return;
@@ -3109,10 +3053,12 @@ function editarCelulaAlmox(td){
     document.getElementById(listaId).innerHTML = valores.map(v => `<option value="${escAlmox(v)}">`).join("");
   }
   td.classList.add("is-editando");
-  td.innerHTML = `<input type="text" class="almox-cel-input" ${def.texto ? `list="${listaId}"` : 'inputmode="decimal"'} aria-label="${def.coluna}">`;
-  const input = td.querySelector("input");
+  const escolhas=campo==='categoria'?window.__almoxCadastros?.categorias:campo==='setor'?window.__almoxCadastros?.setores:null;
+  if(def.texto&&!escolhas){alertar('Aguarde o carregamento dos cadastros de Parâmetros.');return;}
+  td.innerHTML = escolhas?'<select class="almox-cel-input" aria-label="'+def.coluna+'">'+[...new Set([inicial,...escolhas])].map(v=>'<option value="'+escAlmox(v)+'">'+escAlmox(v)+'</option>').join('')+'</select>':`<input type="text" class="almox-cel-input" inputmode="decimal" aria-label="${def.coluna}">`;
+  const input = td.querySelector("input,select");
   input.value = inicial;
-  input.focus(); input.select();
+  input.focus(); input.select?.();
   let encerrado = false;
   const fechar = () => { encerrado = true; renderTabelaProdutos(); };
   const gravar = async (proximo) => {
@@ -3133,9 +3079,12 @@ function editarCelulaAlmox(td){
       const c = await almoxBanco();
       const empresa = empresaAlmox();
       if(!c || !empresa) throw new Error("Sem conexão com o banco.");
-      const { error } = await c.rpc("almox_produto_editar", { p_empresa: empresa, p_produto_id: String(p.ID), p_dados: { [campo]: valor } });
+      const alteracoes={ [campo]: valor };
+      if(campo==='custo'){alteracoes.reposicao=valor*(numeroAlmox(p.ValorCusto)>0?numeroAlmox(p.ValorReposicao)/numeroAlmox(p.ValorCusto):2);}
+      const { error } = await c.rpc("almox_produto_editar", { p_empresa: empresa, p_produto_id: String(p.ID), p_dados: alteracoes });
       if(error) throw new Error(error.message);
       p[def.coluna] = valor;
+      if(campo==='custo')p.ValorReposicao=alteracoes.reposicao;
       renderTabelaProdutos();
       const nova = document.querySelector(`#tbodyProdutos td[data-id="${CSS.escape(String(p.ID))}"][data-campo="${campo}"]`);
       if(nova){ nova.classList.add("is-salvo"); setTimeout(() => nova.classList.remove("is-salvo"), 1400); }
@@ -3166,7 +3115,7 @@ document.addEventListener("click", ev => {
 });
 document.addEventListener("keydown", ev => {
   const td = ev.target.closest && ev.target.closest("#tbodyProdutos td.almox-editavel");
-  if(td && !td.querySelector("input") && (ev.key === "Enter" || ev.key === "F2")){ ev.preventDefault(); editarCelulaAlmox(td); }
+  if(td && !td.querySelector("input,select") && (ev.key === "Enter" || ev.key === "F2")){ ev.preventDefault(); editarCelulaAlmox(td); }
 });
 function escAlmox(v){ return String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function abrirLimites(id){
@@ -3390,8 +3339,8 @@ function salvarProdutoFront(){
     estoqueAtual: document.getElementById("prodEstoqueAtual")?.value || 0,
     estoqueMinimo: document.getElementById("prodEstoqueMinimo")?.value || 0,
     estoqueIdeal: document.getElementById("prodEstoqueIdeal")?.value || 0,
-    valorCusto: document.getElementById("prodValorCusto")?.value || 0,
-    valorReposicao: document.getElementById("prodValorReposicao")?.value || 0,
+    valorCusto: numeroAlmox(document.getElementById("prodValorCusto")?.value),
+    valorReposicao: numeroAlmox(document.getElementById("prodValorCusto")?.value) * (1 + Number(document.getElementById("prodReposicaoPercentual")?.value || 0) / 100),
     status: document.getElementById("prodStatus")?.value || "Ativo",
     observacoes: document.getElementById("prodObs")?.value || ""
   };
@@ -3400,6 +3349,10 @@ function salvarProdutoFront(){
     alertar("Preencha pelo menos o produto.");
     return;
   }
+  if(!window.__almoxCadastros?.categorias.includes(dados.categoria) || !window.__almoxCadastros?.setores.includes(dados.setor)){
+    alertar("Selecione uma categoria e um setor cadastrados em Parâmetros.");return;
+  }
+  if(dados.valorCusto<0 || Number(document.getElementById('prodReposicaoPercentual').value)<0){alertar('Custo e percentual não podem ser negativos.');return;}
 
   if(numeroAlmox(dados.estoqueIdeal) > 0 && numeroAlmox(dados.estoqueIdeal) < numeroAlmox(dados.estoqueMinimo)){
     alertar("O estoque ideal não pode ser menor que o estoque mínimo.");
@@ -3448,14 +3401,15 @@ function salvarProdutoFront(){
   function limparFormProduto(){
     document.getElementById("prodCodigo").value = "";
     document.getElementById("prodNome").value = "";
-    document.getElementById("prodCategoria").value = "";
+    document.getElementById("cadCategoria").value = "";
     document.getElementById("prodSetor").value = "";
-    document.getElementById("prodUnidade").value = "";
+    document.getElementById("cadUnidade").value = "";
     document.getElementById("prodEstoqueAtual").value = "";
     document.getElementById("prodEstoqueMinimo").value = "";
     const idealCampo = document.getElementById("prodEstoqueIdeal"); if(idealCampo) idealCampo.value = "";
     document.getElementById("prodValorCusto").value = "";
     document.getElementById("prodValorReposicao").value = "";
+    document.getElementById("prodReposicaoPercentual").value = "100";
     document.getElementById("prodStatus").value = "Ativo";
     document.getElementById("prodObs").value = "";
   }
@@ -6173,6 +6127,8 @@ document.getElementById('formComunicadoPortal').addEventListener('submit',functi
 </script>
 <script src="../../Estoque/Compras/nfe-xml-parser.js?v=20261022-recebimento"></script>
 <script src="almox-recebimento.js?v=20261023-chegada-locacao"></script>
+<script type="module" src="insumos-cadastro.mjs?v=20261102-insumos"></script>
+<script type="module" src="materiais-aba.mjs?v=20261103-recebimento-manual"></script>
 <script>
 // badge de pedidos a receber e ?aba=recebimento (link "Recebimento no Almoxarifado" de Compras)
 (function(){

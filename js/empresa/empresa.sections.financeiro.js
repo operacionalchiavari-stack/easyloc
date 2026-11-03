@@ -85,6 +85,12 @@
         <div class="pr-campo" style="margin-top:16px"><span>Onde travar</span><div class="pr-opcoes" role="radiogroup" aria-label="Onde travar"><label class="pr-check"><input type="radio" name="finPagamentoEtapa" value="triagem"><span>Na Triagem (a separação não começa)</span></label><label class="pr-check"><input type="radio" name="finPagamentoEtapa" value="carregamento"><span>No Carregamento (separa, mas não carrega)</span></label></div></div>
         <label class="pr-campo fin-pagamento-perc" style="margin-top:16px"><span>Pagamento mínimo</span><div><input id="financeiroPagamentoPercent" type="number" min="1" max="100" step="1" inputmode="numeric"><small>% do valor do pedido</small></div></label>
       </section>
+      <section class="pr-card" data-fin-card="producao">
+        <h3>Libera&#231;&#227;o financeira da Produ&#231;&#227;o</h3>
+        <p class="pr-ajuda">Regra independente da Triagem e do Carregamento. Sem o pagamento confirmado, a produ&#231;&#227;o n&#227;o pode iniciar nem retomar uma etapa.</p>
+        <label class="pr-check"><input type="checkbox" id="financeiroProducaoExige"><span>Exigir pagamento para iniciar a produ&#231;&#227;o</span></label>
+        <label class="pr-campo fin-pagamento-perc"><span>Pagamento m&#237;nimo para produ&#231;&#227;o</span><div><input id="financeiroProducaoPercent" type="number" min="1" max="100" step="1"><small>% do valor do pedido</small></div></label>
+      </section>
     `;
   }
 
@@ -96,6 +102,11 @@
     if(!inputFrete || !inputMont) return () => {};
 
     const f = state.financeiro || null;
+    const prodExige=container.querySelector('#financeiroProducaoExige'),prodPercent=container.querySelector('#financeiroProducaoPercent');
+    prodExige.checked=f?.producao_pagamento_exige===true;
+    prodPercent.value=f?.producao_pagamento_percent??100;
+    const atualizarProducao=()=>{prodPercent.disabled=!prodExige.checked;};
+    prodExige.addEventListener('change',atualizarProducao);atualizarProducao();
 
     inputFrete.value = (f?.absorcao_frete_percent ?? 0);
     inputMont.value  = (f?.absorcao_montagem_percent ?? 0);

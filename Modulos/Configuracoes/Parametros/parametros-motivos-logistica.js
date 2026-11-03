@@ -2,8 +2,11 @@
   'use strict';
   // Motivos em dois cards (out/2026): pendências (carregamento, entrega, coleta) e divergências da 2ª conferência.
   const SIT = '<option value="bateu">Quando a 2ª conferência bate</option><option value="continua">Quando a diferença continua</option>';
-  const NOMES = {carregamento:'Pendência do carregamento',entrega:'Entrega',coleta:'Coleta',divergencia_falta:'Divergência: faltou',divergencia_sobra:'Divergência: veio a mais'};
+  const NOMES = {separacao:'Separa??o',carregamento:'Pendência do carregamento',entrega:'Entrega',coleta:'Coleta',divergencia_falta:'Divergência: faltou',divergencia_sobra:'Divergência: veio a mais'};
   const GRUPOS = [
+    {titulo:'Tipos de problema da separação', etapas:['separacao'],
+     ajuda:'Tipos oferecidos em Reportar problema na Triagem. As ocorrências seguem para a Gestão do Acervo. Desative um tipo sem apagar o histórico.',
+     exemplo:'Ex.: Componente faltando'},
     {titulo:'Motivos das pendências', etapas:['carregamento','entrega','coleta'],
      ajuda:'Opções da coluna Motivo dos itens e das pendências do carregamento, da entrega e da coleta. Desative um motivo para deixar de oferecê-lo sem apagar o histórico.',
      exemplo:'Ex.: Item não encontrado no local'},

@@ -367,16 +367,25 @@
       const { data: frota, error } = await s.sb.rpc("operacao_frota", { p_empresa: s.empresa });
       if (error) { avisar(error.message, cfg.rotulo, "erro"); resolve(false); return; }
       const programados = new Set((s.programados || []).map((c) => String(c.caminhao_id || c.id)));
+      for(const c of s.pedido.operacao?.carga_por_veiculo||[])programados.add(String(c.caminhao_id));
       const lista = (frota || []).slice().sort((a, b) => (programados.has(String(b.id)) - programados.has(String(a.id))));
       const dlg = document.createElement("dialog"); dlg.className = "cf-escolha-caminhao";
-      dlg.innerHTML = '<h3>Confirme o caminhão carregado</h3><p>Marque o caminhão em que o pedido foi carregado. Os programados para esta entrega já vêm marcados.</p><div class="cf-escolha-lista"></div><div class="cf-escolha-acoes"><button type="button" class="btn secondary" data-v>Voltar</button><button type="button" class="btn primary" data-ok>Confirmar caminhão</button></div>';
+      dlg.innerHTML = '<h3>Confirme o caminhão carregado</h3><div class="cf-escolha-lista"></div><div class="cf-escolha-acoes"><button type="button" class="btn secondary" data-v>Voltar</button><button type="button" class="btn primary" data-ok>Confirmar caminhão</button></div>';
       const box = dlg.querySelector(".cf-escolha-lista");
       if (!lista.length) box.innerHTML = "<p>Nenhum caminhão cadastrado em Logística > Caminhões.</p>";
       lista.forEach((c) => {
         const l = document.createElement("label"); l.className = "cf-escolha-item" + (programados.has(String(c.id)) ? " is-programado" : "");
         const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = c.id; cb.checked = programados.has(String(c.id));
         const t = document.createElement("span"); t.textContent = nomeCaminhao(c);
-        l.append(cb, t);
+        const foto = document.createElement('span'); foto.className = 'cf-escolha-foto';
+        foto.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 5h11v12H3zM14 9h4l3 4v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>';
+        const fotoUrl = c.foto_url || (s.programados || []).find(p => String(p.caminhao_id || p.id) === String(c.id))?.foto_url;
+        if (/^https?:\/\//i.test(fotoUrl || '')) {
+          const img = document.createElement('img'); img.src = fotoUrl; img.alt = 'Foto do caminhão'; img.loading = 'lazy';
+          img.onerror = () => img.remove(); foto.append(img);
+        }
+        t.className = 'cf-escolha-nome';
+        l.append(cb, foto, t);
         if (programados.has(String(c.id))) { const tag = document.createElement("small"); tag.textContent = "Programado"; l.append(tag); }
         box.append(l);
       });
@@ -471,7 +480,7 @@
       liberar.onclick=async()=>{const certo=typeof window.confirmarGlobal==='function'?await window.confirmarGlobal('O pedido volta para a Triagem. Tem certeza?','Liberar para a Triagem',{confirmarTexto:'Liberar',cancelarTexto:'Voltar',tipo:'warning'}):confirm('O pedido volta para a Triagem. Tem certeza?');if(!certo)return;const motivo='Liberado pela Expedição para a Triagem';liberar.disabled=true;try{const {error}=await s.sb.rpc('operacao_transferir_pedido',{p_pedido:pedidoId,p_acao:'devolver_triagem',p_motivo:motivo});if(error)throw error;leitor?.desligar();if(typeof window.top.shellNavigate==='function')window.top.shellNavigate('Modulos/Logistica/Expedicao/expedicao.html');else location.href='../Expedicao/expedicao.html';}catch(e){avisar(e.message,'Devolver para a Triagem','aviso');liberar.disabled=false;}};
     }
     // Triagem da volta: registrar item danificado (nov/2026), em conferencia-avarias.js
-    if(etapa==='retorno'&&!s.pedido.pedido_origem_id&&window.ConferenciaAvarias)window.ConferenciaAvarias.montar({sb:s.sb,empresa:s.empresa,pedido:s.pedido,antes:$('cfImprimir')});
+
     // O que deve voltar = o que saiu no carregamento (se ele foi conferido); senão, todas as etiquetas.
     const carregadas = s.etiquetas.filter((e) => e.lida_carregamento_em);
     s.base = carregadas.length ? carregadas : s.etiquetas;
@@ -487,7 +496,7 @@
     mostrarCaminhoes().catch((e) => console.error(e));
     // Sem etiquetas de envio, ou separado no modo manual / 1 clique (out/2026): não há bipe, a conferência é por quantidade.
     // Pedido com extras: a volta soma tudo e é sempre por quantidade (cada linha diz de qual pedido veio).
-    if (s.grupo || !s.etiquetas.length || ["manual", "um-clique"].includes(s.pedido.modo_separacao || pedido.modo_separacao)) {
+    if (etapa === "retorno" || s.grupo || !s.etiquetas.length || ["manual", "um-clique"].includes(s.pedido.modo_separacao || pedido.modo_separacao)) {
       await mostrarSemEtiquetas();
       if (etapa === "retorno" && s.pedido.operacao?.retorno?.concluido_em) await carregarOcorrencias();
       if (etapaVolta && s.pedido.operacao?.[etapa]?.concluido_em) await carregarDivergencias();
@@ -576,6 +585,7 @@
     };
     const lista = pecas.map((p) => {
       if (s.grupo) return { ...p, esperado: Number(esperadoGrupo(p)) || 0 };
+      if(etapa==='retorno'&&!base){const etiquetas=s.etiquetas.filter(t=>String(t.separacao_item_id)+'|'+String(t.item_id)===p.chave);if(etiquetas.length)return {...p,esperado:etiquetas.filter(t=>t.lida_carregamento_em).length};}
       const anterior = Array.isArray(base) ? base.find((x) => x.chave === p.chave) : null;
       return { ...p, esperado: Number(anterior ? anterior.conferido : base ? 0 : p.esperado) || 0 };
     }).sort((a, b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
@@ -620,10 +630,11 @@
         lista.map((p) => {
           const r = porChave.get(p.chave) || {};
           const falta = Number(r.conferido) < Number(r.esperado), sobra = Number(r.conferido) > Number(r.esperado);
-          return '<div class="cf-qtd-linha' + (falta ? " is-div-falta" : sobra ? " is-div-sobra" : "") + '">' + foto(p) + '<strong>' + nomeComKit(p) + '</strong><span>' + esc(r.esperado ?? p.esperado) +
+          return '<div class="cf-qtd-linha' + (falta ? " is-div-falta" : sobra ? " is-div-sobra" : r.conferido != null && Number(r.conferido) === Number(r.esperado ?? p.esperado) ? " is-ok" : "") + '">' + foto(p) + '<strong>' + nomeComKit(p) + '</strong><span>' + esc(r.esperado ?? p.esperado) +
             '</span><span class="cf-qtd-valor">' + esc(r.conferido ?? "-") + (primeira(r) ? '<small class="cf-qtd-primeira">1ª contagem: ' + esc(primeira(r)) + "</small>" : "") + (falta ? ' <small>faltam ' + esc(Number(r.esperado) - Number(r.conferido)) + "</small>" : sobra ? ' <small>' + esc(Number(r.conferido) - Number(r.esperado)) + " a mais</small>" : "") + '</span><em class="cf-qtd-obs-texto">' + esc(r.obs || "—") + "</em>" + (comResolver ? (() => { const o = divPorChave.get(p.chave); if (o) s.divNaTabela.add(String(o.id)); return celulaResolver(o, dv.motivos); })() : "") + "</div>";
         }).join("") + "</div>" + (comResolver ? RODAPE_SEGUNDA : "");
       anexarCapasQuantidade(lista,caixa,false);
+      if(etapa==='retorno')await window.RetornoColunas.montar({caixa,lista,sb:s.sb,empresa:s.empresa,pedido:s.pedido,feito});
       atualizarRodapeSegunda();
       mostrarBotaoImprimir(() => imprimirLista(lista, foto, porChave));
       return;
@@ -644,6 +655,7 @@
       '</div><footer class="cf-qtd-rodape"><span id="cfQtdResumo"></span><button type="button" class="btn primary" id="cfQtdConfirmar">Confirmar ' + esc(cfg.rotulo.toLowerCase()) + "</button></footer>";
 
     anexarCapasQuantidade(lista,caixa,true);
+    if(etapa==='retorno')await window.RetornoColunas.montar({caixa,lista,sb:s.sb,empresa:s.empresa,pedido:s.pedido});
     const inputs = [...caixa.querySelectorAll(".cf-qtd-input")];
     const somar = () => {
       let conferido = 0, preenchidos = 0;
@@ -673,6 +685,7 @@
         const diferentes = inputs.filter((inp) => Number(inp.value) !== lista[Number(inp.dataset.i)].esperado);
         if (diferentes.length) {
           s.primeira = { ...quantidades };
+          if(etapa==='retorno')window.RetornoColunas.segunda(quantidades);
           const recontar = diferentes.map((inp) => ({ p: lista[Number(inp.dataset.i)], v: Number(inp.value) }));
           inputs.forEach((inp) => {
             const linha = inp.closest(".cf-qtd-linha"), recontar = diferentes.includes(inp);
@@ -707,9 +720,11 @@
       botao.disabled = true;
       // A volta é às cegas: aceita a diferença (as faltas viram ocorrência no servidor).
       const args = { p_pedido: s.pedido.id, p_etapa: etapa, p_aceitar_faltas: cega || faltas.length > 0, p_quantidades: quantidades, p_observacoes: observacoes, ...(s.primeira ? { p_primeira: s.primeira } : {}) };
+      let avarias={};
+      if(etapa==='retorno'){try{avarias=await window.RetornoColunas.payload(caixa,quantidades);}catch(e){botao.disabled=false;avisar(e.message,cfg.rotulo,'aviso');return;}}
       const { data: registro, error: erro } = pendencia
         ? await s.sb.rpc("operacao_concluir_com_pendencia", { ...args, p_pendencia: pendencia })
-        : await s.sb.rpc("operacao_concluir_conferencia", args);
+        : await s.sb.rpc(etapa==='retorno'?"operacao_concluir_retorno_avarias":"operacao_concluir_conferencia", {...args,...avarias});
       if (erro) { botao.disabled = false; avisar(erro.message, cfg.rotulo, "erro"); return; }
       s.pedido.operacao = { ...(s.pedido.operacao || {}), [etapa]: registro };
       await s.capas?.carregar().catch(console.error);

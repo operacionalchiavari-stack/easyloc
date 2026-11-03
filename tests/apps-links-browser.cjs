@@ -1,7 +1,7 @@
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http'),os=require('node:os');
 const raiz=path.resolve(__dirname,'..');
-const apps=[['Cronograma/montador.html','App do Montador'],['Cronograma/free.html','Vagas Free'],['Uber/motorista.html','App do Motorista'],['Fretes/freteiro.html','App do Freteiro'],['CentralMetas/equipe.html','Meu Bônus']];
+const apps=[['Modulos/Chiavari/Cronograma/montador.html','App do Montador'],['Modulos/Chiavari/Cronograma/free.html','Vagas Free'],['Modulos/Chiavari/Uber/motorista.html','App do Motorista'],['Modulos/Chiavari/Fretes/freteiro.html','App do Freteiro'],['Modulos/Estoque/TriagemApp/triagem.html','App da Triagem'],['Modulos/Chiavari/CentralMetas/equipe.html','Meu Bônus']];
 (async()=>{
  const servidor=http.createServer((req,res)=>{
   const rota=decodeURIComponent(req.url.split('?')[0]).replace(/^\/easyloc\//,'/');
@@ -17,7 +17,7 @@ const apps=[['Cronograma/montador.html','App do Montador'],['Cronograma/free.htm
    const contexto=await navegador.newContext({viewport:{width,height:900},permissions:['clipboard-read','clipboard-write']});const pagina=await contexto.newPage();const erros=[];pagina.on('pageerror',e=>erros.push(e.message));
    await pagina.goto(origem+prefixo+'/dashboard.html');assert.equal(await pagina.locator('#appLinkToolbar').isVisible(),false);
    for(const [arquivo,nome]of apps){
-    const caminho=prefixo+'/Modulos/Chiavari/'+arquivo;
+    const caminho=prefixo+'/'+arquivo;
     await pagina.evaluate(url=>{const f=document.getElementById('appModuleFrame');f.classList.remove('hidden');f.src=url;},caminho+'?empresa=empresa-teste&c=codigo-presenca&token=nao-compartilhar#evento');
     await pagina.waitForFunction(n=>document.getElementById('appLinkNome').textContent===n,nome);
     const esperado=origem+caminho+'?empresa=empresa-teste';
@@ -31,7 +31,7 @@ const apps=[['Cronograma/montador.html','App do Montador'],['Cronograma/free.htm
    await pagina.evaluate(()=>document.getElementById('appModuleFrame').classList.add('hidden'));await pagina.locator('#appLinkToolbar').waitFor({state:'hidden'});
    await pagina.evaluate(()=>document.getElementById('appModuleFrame').classList.remove('hidden'));await pagina.locator('#appLinkToolbar').waitFor({state:'visible'});
    await pagina.evaluate(prefixo=>document.getElementById('appModuleFrame').src=prefixo+'/Modulos/Outro/index.html',prefixo);await pagina.locator('#appLinkToolbar').waitFor({state:'hidden'});
-   assert.deepEqual(erros,[]);await contexto.close();console.log(`Links dos cinco apps: cópia, nova aba, navegação e layout ${prefixo||'/'} em ${width}px OK.`);
+   assert.deepEqual(erros,[]);await contexto.close();console.log(`Links dos seis apps: cópia, nova aba, navegação e layout ${prefixo||'/'} em ${width}px OK.`);
   }
  }finally{await navegador.close();await new Promise(r=>servidor.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

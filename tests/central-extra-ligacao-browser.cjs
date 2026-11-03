@@ -83,15 +83,15 @@ const mockSupabase = `
   await page.waitForSelector("[data-situacao=pre_reserva] .central-situacao-conta", { timeout: 15000 });
   const numeros = () => page.$$eval("#centralPedidosTbody [data-pedido-id]", (l) => l.map((t) => t.dataset.pedidoId));
   const botoes = await page.$$eval("[data-situacao]", (l) => l.map((b) => ({ s: b.dataset.situacao, t: b.querySelector("b").textContent, n: b.querySelector(".central-situacao-conta")?.textContent || null, small: b.querySelector("small")?.textContent || "", anim: b.querySelector(".central-situacao-conta") && getComputedStyle(b.querySelector(".central-situacao-conta")).animationName, cor: b.querySelector(".central-situacao-conta") && getComputedStyle(b.querySelector(".central-situacao-conta")).backgroundColor })));
-  assert.deepStrictEqual(botoes.map((b) => [b.t, b.n]), [["Todos", null], ["Pré-reserva", "3"], ["Orçamento", "2"], ["Reservado", null]]);
+  assert.deepStrictEqual(botoes.filter(b=>b.s!=="catalogo").map((b) => [b.t, b.n]), [["Todos", null], ["Pré-reserva", "3"], ["Orçamento", "2"], ["Reservado", null]]);
   assert.ok(botoes.filter((b) => b.n).every((b) => b.cor === "rgb(230, 0, 18)" && b.anim === "central-situacao-pulsa"), "bolinha vermelha piscando");
   assert.strictEqual(await page.getAttribute("[data-situacao=\"\"]", "aria-pressed"), "true", "Todos começa ativo");
   assert.strictEqual(botoes[1].small, "1 vencida · 1 vencendo");
   await page.waitForSelector(".central-extra-ligacao");
   const medir = () => page.evaluate(() => { const card = (id) => document.querySelector("tr[data-pedido-id=" + id + "] .pedido-numero-card").getBoundingClientRect(); const pai = card("r1"); const cli = document.querySelector("tr[data-pedido-id=x1] td:nth-child(2)").getBoundingClientRect();
-    return { n: document.querySelectorAll(".central-extra-ligacao").length, folga: Math.round(cli.left - card("x1").right), l: [...document.querySelectorAll(".central-extra-ligacao")].map((l, k) => { const r = l.getBoundingClientRect(), f = card(k ? "x2" : "x1"); return [Math.round(r.top - pai.bottom), r.left > pai.left && r.left < pai.right, Math.round(r.right - f.left), Math.round(r.bottom - (f.top + f.height / 2))]; }) }; });
+    return { n: document.querySelectorAll(".central-extra-ligacao").length, folga: Math.round(cli.left - card("x1").right), l: [...document.querySelectorAll(".central-extra-ligacao")].map((l, k) => { const r = l.getBoundingClientRect(), f = card("x2"); return [Math.round(r.top - (pai.top + pai.height / 2)), r.right < document.querySelector("tr[data-pedido-id=r1] td").getBoundingClientRect().left && Math.abs(card("x1").left - pai.left)<1 && Math.abs(card("x2").left-pai.left)<1, Math.round(r.width - 14), Math.round(r.bottom - (f.top + f.height / 2))]; }) }; });
   let m = await medir();
-  assert.equal(m.n, 2, "uma ligação por extra");
+  assert.equal(m.n, 1, "uma ligação por extra");
   m.l.forEach((x) => assert.deepStrictEqual(x, [0, true, 0, 0], "sai de baixo do principal e chega no meio do extra: " + JSON.stringify(m.l)));
   assert.ok(m.folga >= 4, "o número do extra não encosta no cliente (folga " + m.folga + "px)");
   console.log("ok 1 - a ligação sai do número do principal e chega em cada extra");

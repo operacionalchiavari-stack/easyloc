@@ -31,6 +31,8 @@ window.carregarNaMain = async function (
   el,
   cssPath
 ){
+  const frameAtual=document.getElementById('appModuleFrame');
+  try{if(frameAtual&&!frameAtual.classList.contains('hidden')&&await frameAtual.contentWindow.appBeforeLeave?.()===false)return;}catch{return;}
   await window.EasyLocPermissions?.load();
   if (!window.EasyLocPermissions?.canNavigate(htmlPath)) {
     window.alerta?.("Você não possui acesso a esta parte do sistema.");

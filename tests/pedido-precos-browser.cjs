@@ -119,6 +119,17 @@ const mockSupabase = `
   assert.strictEqual(tela.entrega, "2026-11-19");
   assert.strictEqual(tela.hora, "09:00");
   assert.strictEqual(tela.coleta, "2026-11-21");
+  await page.locator('.coleta-mesmo-dia').click();
+  assert.equal(await page.locator('#dataColeta').inputValue(),'2026-11-20');
+  assert.equal(await page.locator('#dataColeta').evaluate(el=>el.validity.rangeUnderflow),false);
+  await page.locator('[data-modo="periodo"]').click();await page.locator('#dataEventoFim').fill('2026-11-22');
+  await page.locator('.coleta-mesmo-dia').click();assert.equal(await page.locator('#dataColeta').inputValue(),'2026-11-22');
+  await page.locator('[data-modo="dia"]').click();
+  assert.equal(await page.locator('#dataColeta').getAttribute('min'),'2026-11-20');
+  await page.evaluate(()=>{window.confirmarGlobal=async()=>false;});
+  assert.equal(await page.evaluate(()=>window.appBeforeLeave()),false);
+  await page.locator('#dataColeta').fill('2026-11-21');
+
   assert.strictEqual(tela.local, "Villa Teste");
   assert.strictEqual(tela.obs, "Portão lateral");
   assert.deepStrictEqual(tela.linhas.sort(), [["i1", "3"], ["i2", "3"]], "mesma peça em 2 ambientes vira uma linha com a soma");
@@ -156,12 +167,12 @@ const mockSupabase = `
   assert.equal(await cf.locator('.pedido-estoque-foto img').count(),1);
   assert.equal(await cf.locator('.pedido-estoque-insuficiente dd').first().evaluate(el=>getComputedStyle(el).color),'rgb(185, 28, 28)');
   const detalhe=await cf.locator('#pedidoEstoqueTooltip').innerText();
-  assert.match(detalhe,/SARGENTO/);assert.match(detalhe,/123/);assert.match(detalhe,/Salao Teste/);assert.equal(await cf.locator('.pedido-estoque-tabela th').count(),6);assert.match(detalhe,/Decoradora Teste/);
+  assert.match(detalhe,/SARGENTO/);assert.match(detalhe,/123/);assert.match(detalhe,/Salao Teste/);assert.equal(await cf.locator('.pedido-estoque-tabela th').count(),7);assert.match(detalhe,/Decoradora Teste/);
   assert.match(detalhe,/19\/11\/2026/);
   // O card e o quadro tiram o próprio pedido da conta e o card olha o período inteiro (entrega → coleta).
   // (aqui o pedido ainda não foi salvo: sem id, nada a descontar)
   const pedidoAberto=await page.evaluate(()=>window.__PEDIDO_ATUAL_ID||null);
-  const consultaCard=await cf.locator('body').evaluate(()=>window.__rpcs.find(r=>r.nome==='pedido_catalogo_estoque'));
+  const consultaCard=await cf.locator('body').evaluate(()=>window.__rpcs.filter(r=>r.nome==='pedido_catalogo_estoque').at(-1));
   assert.equal(consultaCard.args.p_pedido,pedidoAberto);assert.equal(consultaCard.args.p_inicio,'2026-11-19');assert.equal(consultaCard.args.p_fim,'2026-11-21');
   const consultaQuadro=await cf.locator('body').evaluate(()=>window.__rpcs.find(r=>r.nome==='pedido_estoque_detalhes'));
   assert.equal(consultaQuadro.args.p_pedido,pedidoAberto);

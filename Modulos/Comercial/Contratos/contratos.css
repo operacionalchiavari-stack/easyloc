@@ -477,3 +477,5 @@ html:root #main-content #contratosPage #contratoNovoModelo {
     grid-template-columns: 1fr;
   }
 }
+
+.contratos-assinatura-empresa{background:#fff;border:1px solid #e1e5eb;border-radius:16px;padding:24px;margin:20px 0}.contratos-assinatura-empresa label{display:block;margin:12px 0}.contratos-assinatura-empresa input{max-width:420px}.contratos-assinatura-empresa img{display:block;max-width:280px;max-height:120px;margin:16px 0;object-fit:contain}.contratos-assinatura-empresa img[hidden]{display:none}.contratos-assinatura-empresa button{margin:6px 6px 0 0}

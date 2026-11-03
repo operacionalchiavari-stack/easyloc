@@ -463,7 +463,7 @@
         <div class="separacao-card-meta-line">${escapeHtml(data)} &middot; ${escapeHtml(setor)} &middot; ${escapeHtml(qtdLabel)}</div>
         ${coluna === "andamento" ? progresso : ""}
         ${regra.liberado ? "" : `<div class="separacao-lock-note">${escapeHtml(regra.motivo)}</div>`}
-        ${coluna === "andamento" && STATUS_EM_ANDAMENTO.has(pedido.status) && !pedido.status_operacional ? `<button type="button" class="btn" data-separacao-action="liberar-retirada" data-pedido-id="${escapeHtml(pedido.id)}">Liberar para o Comercial</button>` : ""}
+        ${coluna === "andamento" && STATUS_EM_ANDAMENTO.has(pedido.status) && !pedido.status_operacional ? `<button type="button" class="btn" data-separacao-action="liberar-retirada" data-pedido-id="${escapeHtml(pedido.id)}">Liberar pedido</button>` : ""}
         ${coluna==='separado'?`<button type="button" class="btn" data-separacao-action="reabrir-triagem" data-pedido-id="${escapeHtml(pedido.id)}">Reabrir triagem</button>`:''}
       </article>
     `;
@@ -523,8 +523,7 @@
       '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + escapeHtml(numero.startsWith("#") ? numero : "#" + numero) + '</span><span class="card-tipo-retorno">Retorno</span></div>' +
       '<div class="separacao-card-mainline"><strong>' + escapeHtml(pedido.cliente_nome || "Cliente nao informado") + "</strong><span>" +
       escapeHtml(pedido.tipo_evento || "Evento") + " &middot; " + escapeHtml(pedidoLocal(pedido)) + "</span></div>" +
-      '<div class="separacao-card-meta-line">Coleta ' + escapeHtml(formatDateOnly(pedido.data_coleta || pedido.data_evento)) + "</div>" +
-      '<div class="card-divergencia-resumo">' + escapeHtml(resumoDivergencia(r)) + '</div><div class="separacao-lock-note">Abra para resolver</div></article>';
+      '<div class="separacao-card-meta-line divergencia-meta"><span>Coleta ' + escapeHtml(formatDateOnly(pedido.data_coleta || pedido.data_evento)) + '</span><span class="card-divergencia-resumo" title="' + escapeHtml(resumoDivergencia(r)) + '">' + escapeHtml([r.falta ? r.falta + ' faltante(s)' : '', r.sobra ? r.sobra + ' a mais' : ''].filter(Boolean).join(' · ')) + '</span></div></article>';
   }
 
   function abrirConferenciaRetorno(pedidoId) {
@@ -589,6 +588,8 @@
     const colDiv = document.getElementById("separacaoColunaDivergencias");
     if (colDiv) colDiv.innerHTML = divergentes.length ? divergentes.map(divergenciaCard).join("") : '<div class="empty-state">Nenhuma divergência aberta.</div>';
     atualizaTexto(document.getElementById("separacaoLaneDivergenciasCount"), divergentes.length);
+
+    window.pintarFotosDecoradores?.({ sb: state.supabase, empresa: state.empresaId, pedidos: [...state.pedidos, ...(state.divergencias?.pedidos || [])] });
 
     if (window.lucide) lucide.createIcons();
   }
@@ -701,10 +702,15 @@
         <div class="item-content">
           <div class="item-name">${escapeHtml(nome)}</div>
           ${codigo ? `<div class="item-code">Cod. ${escapeHtml(codigo)}</div>` : ""}
+          ${ocorrenciaItemHtml(item, typeof editavel!=="undefined"?editavel:modoEditavel())}
           <div class="producao-aviso">Personalização${p.personalizacoes ? " · " + escapeHtml(p.personalizacoes) : ""} — a separação desta parte é feita pela Produção${item.virtual ? " (kit " + escapeHtml(item.kit_nome || "") + ")" : ""}.</div>
         </div>
         <div class="producao-lado">${situacao}${acao}</div>
       </article>`;
+  }
+
+  function ocorrenciaItemHtml(item,editavel){
+    return `<div class="so-item-acoes">${editavel?`<button type="button" data-reportar-problema="${escapeHtml(item.id)}">Reportar problema</button>`:''}<button type="button" data-ver-ocorrencias="${escapeHtml(item.id)}">Ocorrências</button><span data-so-item="${escapeHtml(item.item_id)}"></span></div>`;
   }
 
   function renderManualItem(item, editavel) {
@@ -731,6 +737,7 @@
         <div class="item-content">
           <div class="item-name">${escapeHtml(nome)}</div>
           ${codigo ? `<div class="item-code">Cod. ${escapeHtml(codigo)}</div>` : ""}
+          ${ocorrenciaItemHtml(item, typeof editavel!=="undefined"?editavel:modoEditavel())}
           ${localizacao ? `<div class="item-location">${escapeHtml(localizacao)}</div>` : ""}
         </div>
         <div class="manual-stepper" aria-label="Quantidade separada">
@@ -774,6 +781,7 @@
         <div class="item-content">
           <div class="item-name">${escapeHtml(nome)}</div>
           ${codigo ? `<div class="item-code">Cod. ${escapeHtml(codigo)}</div>` : ""}
+          ${ocorrenciaItemHtml(item, typeof editavel!=="undefined"?editavel:modoEditavel())}
           ${localizacao ? `<div class="item-location">${escapeHtml(localizacao)}</div>` : ""}
         </div>
         <div class="item-progress">
@@ -856,6 +864,8 @@
     }
 
     if (window.lucide) lucide.createIcons();
+    containers.forEach(host=>window.SeparacaoOcorrencias?.sinalizar({sb:state.supabase,empresa:state.empresaId,pedido:pedido.id,host}));
+
   }
 
   function renderHistorico() {
@@ -914,8 +924,8 @@
         if (erroBloq || !Array.isArray(bloq)) break;
         bloq.forEach((id) => state.bloqueados.add(String(id)));
       }
-      // Divergência da volta é resolvida na Gestão do acervo (out/2026): a Triagem não lista mais.
-      state.divergencias = { mapa: new Map(), pedidos: [] };
+      // A Triagem acompanha as divergencias abertas ate a contagem do estoque ser finalizada.
+      state.divergencias = await divergenciasAbertas(state.supabase, state.empresaId, "retorno");
 
       if (state.pedidoAtualId && !state.pedidos.some((pedido) => String(pedido.id) === String(state.pedidoAtualId))) {
         state.pedidoAtualId = null;
@@ -1843,6 +1853,19 @@
     renderHistorico();
   }
 
+  function pendenciasDoPedido(pedidoId){
+    return itensDoPedido(pedidoId).map(item=>({
+      nome:nomeItemSeparacao(item),codigo:item.itens?.codigo||item.item_codigo||'',setor:setorDoItem(item),
+      solicitada:itemTotal(item)+itemProducao(item),separada:itemSeparado(item)+Math.min(Number(item.prod?.confirmadas||0),itemProducao(item)),
+      faltante:itemFaltante(item)+Math.max(itemProducao(item)-Number(item.prod?.confirmadas||0),0)
+    })).filter(item=>item.faltante>0);
+  }
+  function mostrarPendenciasSeparacao(itens,titulo='Revise a separação',texto='Separe os itens abaixo para finalizar a triagem.'){
+    const dialog=document.createElement('dialog');dialog.className='separacao-pendencias-dialog';
+    dialog.setAttribute('aria-labelledby','separacaoPendenciasTitulo');
+    dialog.innerHTML='<header><h2 id="separacaoPendenciasTitulo">'+escapeHtml(titulo)+'</h2></header><p>'+escapeHtml(texto)+'</p><div class="separacao-pendencias-lista"><table><thead><tr><th>Item pendente</th><th>Separado / necessário</th><th>Falta</th></tr></thead><tbody>'+itens.map(i=>'<tr><td><strong>'+escapeHtml(i.nome||'Item')+'</strong><small>'+escapeHtml([i.codigo,i.setor].filter(Boolean).join(' · '))+'</small></td><td>'+escapeHtml(formatQty(i.separada))+' / '+escapeHtml(formatQty(i.solicitada))+'</td><td><b>'+escapeHtml(formatQty(i.faltante))+'</b></td></tr>').join('')+'</tbody></table></div><footer><button type="button" class="btn secondary">Fechar</button></footer>';
+    document.body.append(dialog);dialog.showModal();dialog.querySelector('button').onclick=()=>dialog.close();dialog.addEventListener('close',()=>dialog.remove());
+  }
   async function finalizarSeparacao() {
     const pedido = getPedidoAtual();
     if (!pedido) {
@@ -1862,19 +1885,19 @@
     // Separação por setor: a parte da pessoa pronta e outros setores faltando → avisa e fecha (a triagem termina
     // quando o último setor separar).
     if (resumo.faltante > 0 && state.meusSetores && pedidoResumo(pedido.id, true).faltante === 0) {
-      avisar(`Sua parte deste pedido está separada. Faltam ${formatQty(resumo.faltante)} itens de outros setores; a triagem termina quando todos os setores separarem.`, "Separação por setor", "sucesso");
+      mostrarPendenciasSeparacao(pendenciasDoPedido(pedido.id),'Pendências de outros setores','Sua parte está separada. Os itens abaixo ainda precisam ser separados pelos outros setores.');
       await carregarFila();
       return "parcial";
     }
     // A triagem só termina com a separação inteira (out/2026): não existe mais finalizar com divergência.
     const emProducao = itensDoPedido(pedido.id).reduce((s, i) => s + Math.max(itemProducao(i) - Number(i.prod?.confirmadas || 0), 0), 0);
     if (resumo.faltante > 0 && emProducao > 0 && resumo.faltante <= emProducao) {
-      avisar(`A parte do galpão está separada. Faltam ${formatQty(emProducao)} peça(s) em produção (personalização): a triagem termina quando a Produção entregar e você confirmar o recebimento.`, "Aguardando a Produção", "aviso");
+      mostrarPendenciasSeparacao(pendenciasDoPedido(pedido.id),'Aguardando a Produção','A parte do galpão está separada. Falta receber e conferir as peças abaixo que estão em produção.');
       await carregarFila();
       return "parcial";
     }
     if (resumo.faltante > 0) {
-      avisar(`Ainda faltam ${formatQty(resumo.faltante)} itens. Separe todos os itens para finalizar a triagem.`, "Separação incompleta", "aviso");
+      mostrarPendenciasSeparacao(pendenciasDoPedido(pedido.id),'Separação incompleta');
       return false;
     }
 
@@ -1883,7 +1906,10 @@
       finalizado_em: new Date().toISOString(),
       motivo_divergencia: motivo || null
     }); } catch(error){
-      avisar(error.message, "Revise a separação", "aviso");
+      let pendentes;try{const detalhe=JSON.parse(error.details||'null');if(Array.isArray(detalhe))pendentes=detalhe.filter(i=>Number(i.faltante)>0);}catch{}
+      if(pendentes?.length)mostrarPendenciasSeparacao(pendentes);
+      else if(/itens? pendentes/i.test(error.message||'')&&pendenciasDoPedido(pedido.id).length)mostrarPendenciasSeparacao(pendenciasDoPedido(pedido.id));
+      else avisar(error.message, "Revise a separação", "aviso");
       await carregarFila();
       return false;
     }
@@ -1942,6 +1968,15 @@
   }
 
   function bindEvents() {
+    document.addEventListener('click',e=>{
+      const b=e.target.closest('[data-reportar-problema],[data-ver-ocorrencias]');if(!b)return;
+      const item=itemPorId(b.dataset.reportarProblema||b.dataset.verOcorrencias);if(!item)return;
+      const op={sb:state.supabase,empresa:state.empresaId,pedido:item.separacao_pedido_id,item:item.item_id};
+      if(b.hasAttribute('data-ver-ocorrencias')){window.SeparacaoOcorrencias.abrirPainel({...op,fila:'triagem'});return;}
+      if(!modoEditavel()){avisarSeparacaoBloqueada();return;}
+      window.SeparacaoOcorrencias.reportar({...op,linha:linhaDoItem(item),quantidade:itemTotal(item)+itemProducao(item),nome:itemBaseInfo(item).nome,aoSalvar:renderItens});
+    });
+    document.addEventListener('separacao-ocorrencias-atualizadas',()=>{if(getPedidoAtual())renderItens();});
     document.addEventListener("click", (e) => {
       const b = e.target.closest("[data-confirmar-producao]");
       if (b) confirmarProducao(b.dataset.pedido, b.dataset.confirmarProducao, b);
@@ -1968,7 +2003,7 @@
           if(!pedido || !STATUS_EM_ANDAMENTO.has(pedido.status) || pedido.status_operacional) return;
           const liberar = !pedido?.reducao_liberada_em;
           (async () => {
-            if(liberar && !await window.confirmarGlobal("O pedido voltará ao Comercial e sairá da fila da Triagem até a revisão ser salva. Peças separadas precisam ser desmarcadas antes de reduzir a quantidade.", "Liberar para o Comercial", { confirmarTexto: "Liberar", cancelarTexto: "Voltar" })) return;
+            if(liberar && !await window.confirmarGlobal("O pedido voltará ao Comercial e sairá da fila da Triagem até a revisão ser salva. Peças separadas precisam ser desmarcadas antes de reduzir a quantidade.", "Liberar pedido", { confirmarTexto: "Liberar", cancelarTexto: "Voltar" })) return;
             actionButton.disabled = true;
             const { error } = await state.supabase.rpc("pedido_liberar_reducao", { p_pedido: pedidoId, p_liberar: liberar });
             if(error) throw error;

@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261101-danificado"></script>
+  <script src="../operacao-sem-motor.js?v=20261102-origem"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -416,7 +416,9 @@
   /* =========================================================
      ESTADO E APOIO
   ========================================================= */
-  const CHAVE_TOKEN = "montadorToken";
+  const MODO_SISTEMA = new URLSearchParams(location.search).get('sistema')==='1';
+  const CHAVE_TOKEN = MODO_SISTEMA ? 'montadorSistemaToken' : 'montadorToken';
+  const ARMAZENAMENTO_TOKEN = MODO_SISTEMA ? sessionStorage : localStorage;
   const DIAS = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
   const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 
@@ -457,10 +459,10 @@
     this.value=n.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/,'$1.$2.$3-$4');
   });
 
-  function lerToken(){ try{ return localStorage.getItem(CHAVE_TOKEN) || ""; }catch(e){ return ""; } }
+  function lerToken(){ try{ return ARMAZENAMENTO_TOKEN.getItem(CHAVE_TOKEN) || ""; }catch(e){ return ""; } }
   function salvarToken(t){
     estado.token = t || "";
-    try{ if(t){ localStorage.setItem(CHAVE_TOKEN, t); } else { localStorage.removeItem(CHAVE_TOKEN); } }catch(e){}
+    try{ if(t){ ARMAZENAMENTO_TOKEN.setItem(CHAVE_TOKEN, t); } else { ARMAZENAMENTO_TOKEN.removeItem(CHAVE_TOKEN); } }catch(e){}
   }
 
   function esc(v){
@@ -1746,7 +1748,13 @@
     });
   }
 
-  lerLink().then(function(){ carregar(); });
+  lerLink().then(async function(){
+    if(MODO_SISTEMA){
+      try{const r=await chamar('MONT_login','','',true,true);salvarToken(r.token);estado.supervisor=true;}
+      catch(e){mostrarLogin(mensagemErro(e));return;}
+    }
+    carregar();
+  });
 
   // Equipe em tempo real: atualiza a cada 45s com o app aberto
   setInterval(function(){

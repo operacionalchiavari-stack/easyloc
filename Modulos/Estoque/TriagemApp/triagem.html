@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f1ec">
+  <meta name="format-detection" content="telephone=no">
+  <title>App da Triagem</title>
+  <link rel="icon" id="taIconEmpresa">
+  <link rel="manifest" href="triagem.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="triagem.css?v=20261103-identidade-empresa">
+  <link rel="stylesheet" href="../../../styles/capas-operacao.css?v=20261101-ocorrencias-auto">
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script>
+</head>
+<body>
+  <header class="marca">
+    <div class="marca-empresa"><img id="taLogoEmpresa" alt="" hidden><span id="taMarcaNome"></span></div>
+    <div class="marca-acoes" id="taMarcaAcoes" hidden>
+      <button type="button" class="botao-icone" id="taConta" aria-label="Minha conta">●</button>
+      <button class="botao-icone" type="button" id="taAtualizar" aria-label="Atualizar pedidos">↻</button>
+      <button class="botao-icone" type="button" id="taSairTopo" aria-label="Sair da conta"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M9 4H4v16h5m6-14 6 6-6 6m-6-6h12"/></svg></button>
+    </div>
+    <div class="marca-saudacao" id="taMarcaSaudacao" hidden><small id="taSaudacao">Olá,</small><strong id="taNomeTopo"></strong></div>
+  </header>
+  <main>
+    <div id="taMensagem" class="mensagem" role="status" aria-live="polite" hidden></div>
+    <section id="taCarregando" class="carregando"><span class="spinner" aria-hidden="true"></span><p>Preparando a Triagem…</p></section>
+    <section id="taLogin" hidden>
+      <div class="introducao"><span class="icone-qr" aria-hidden="true">▦</span><h1>Cada peça no seu lugar.</h1><p>Separe na ida. Confira na volta.<br>Leia o QR e acompanhe os materiais.</p></div>
+      <form id="taFormLogin" class="cartao login-form">
+        <h2>Entrar na Triagem</h2><p class="muted">Use seu e-mail ou login do sistema.</p>
+        <label>E-mail ou login<input name="login" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+        <label>Senha<input name="senha" type="password" autocomplete="current-password" required></label>
+        <button class="botao" type="submit">Entrar</button>
+      </form>
+    </section>
+    <section id="taFila" hidden>
+      <header class="titulo-fila"><span class="titulo-icone" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9V3h6m6 0h6v6m0 6v6h-6M9 21H3v-6M7 7h3v3H7zm7 0h3v3h-3zM7 14h3v3H7zm7 0h3v3h-3z"/></svg></span><div><h1>Triagem</h1><p>Materiais de ida e volta.</p></div></header>
+      <div class="busca-linha"><label class="busca"><span aria-hidden="true">⌕</span><input id="taBusca" type="search" placeholder="Pedido, cliente ou local" aria-label="Buscar pedido"></label></div>
+      <div class="titulo-secao"><h2 id="taFilaTitulo">Separação de ida</h2><span id="taFilaContagem" class="contador"></span></div>
+      <p class="muted descricao" id="taFilaDescricao">Os pedidos liberados para separar aparecem aqui.</p>
+      <div id="taPedidos" class="pedidos" aria-live="polite"></div>
+      <nav id="taNavegacao" class="navegacao" aria-label="Etapas da Triagem">
+        <button type="button" data-etapa="ida" aria-current="page"><span class="nav-icone" aria-hidden="true">↗</span><span>Ida <b data-total="ida">0</b></span></button>
+        <button type="button" data-etapa="volta"><span class="nav-icone" aria-hidden="true">↙</span><span>Volta <b data-total="volta">0</b></span></button>
+      </nav>
+    </section>
+    <section id="taDetalhe" hidden></section>
+  </main>
+  <dialog id="taConfirmacao" class="folha"><form method="dialog"><h2 id="taConfirmacaoTitulo"></h2><p id="taConfirmacaoTexto"></p><div class="acoes"><button type="submit" value="cancelar" class="botao secundario">Revisar</button><button type="submit" value="confirmar" class="botao">Confirmar</button></div></form></dialog>
+  <dialog id="taEscolha" class="folha"><h2>Qual material você está conferindo?</h2><p class="muted">Este código aparece em mais de uma linha do pedido.</p><div id="taEscolhaItens"></div><button type="button" class="botao secundario" data-fechar-escolha>Cancelar</button></dialog>
+  <dialog id="taContaDialog" class="folha"><h2>Minha conta</h2><p id="taContaNome"></p><label>Empresa<select id="taEmpresa"></select></label><button class="botao secundario" type="button" data-fechar-conta>Voltar</button><button class="botao sair" type="button" id="taSair">Sair da conta</button></dialog>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="../../../js/core/supabase.js?v=20261103-login-triagem" data-auth-storage-key="triagem-app-auth"></script>
+  <script src="../../../js/core/doisFatores.js?v=20261023-2fa"></script>
+  <script src="../../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
+  <script src="../../../js/core/leitorQr.js?v=20261017-inicio"></script>
+  <script src="../../../js/core/evidenciasOperacao.js?v=20261024"></script>
+  <script src="../../../js/ui/capas-operacao.js?v=20261101-ocorrencias-auto"></script>
+  <script src="triagem.js?v=20261103-login-proprio"></script>
+</body>
+</html>

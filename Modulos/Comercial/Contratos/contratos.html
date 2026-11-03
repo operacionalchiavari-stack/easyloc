@@ -10,6 +10,16 @@
     </button>
   </header>
 
+  <section class="contratos-assinatura-empresa" aria-label="Assinatura da empresa">
+    <h2>Assinatura da empresa</h2>
+    <p>Salve uma imagem da assinatura para usar automaticamente nos contratos de todos os modelos.</p>
+    <label>Nome de quem assina <input class="el-input" id="contratoSignatario" maxlength="200" placeholder="Nome do representante da empresa"></label>
+    <label>Imagem da assinatura (PNG ou JPG) <input id="contratoAssinaturaArquivo" type="file" accept="image/png,image/jpeg"></label>
+    <img id="contratoAssinaturaPreview" alt="Assinatura cadastrada da empresa" hidden>
+    <div><button type="button" class="btn btn-primary" id="contratoSalvarAssinatura">Salvar assinatura da empresa</button>
+    <button type="button" class="btn btn-secondary" id="contratoRemoverAssinatura">Remover assinatura</button></div>
+    <p id="contratoAssinaturaStatus" role="status"></p>
+  </section>
   <main class="contratos-layout">
     <aside class="contratos-list-panel">
       <div class="contratos-panel-head">

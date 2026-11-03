@@ -989,3 +989,9 @@ input[placeholder="Digite para buscar item..."]:focus {
     grid-template-columns: 1fr;
   }
 }
+/* Busca de itens com referência visual. */
+.personalizacao-resultados{max-height:340px;overflow:auto;position:relative;z-index:5;margin-top:8px;border:1px solid #d6e0ec;border-radius:12px;background:white;box-shadow:0 8px 24px #18344e18}
+.personalizacao-resultados[hidden]{display:none}
+.personalizacao-resultados button{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:10px 14px;border:0;border-bottom:1px solid #edf1f6;background:white;color:#23354b;font:14px/1.45 Inter,system-ui;cursor:pointer}
+.personalizacao-resultados button:hover,.personalizacao-resultados button:focus-visible{background:#edf3fb}
+.personalizacao-resultados img{width:60px;height:60px;object-fit:contain;flex:none;background:#f5f7fa;border-radius:8px}

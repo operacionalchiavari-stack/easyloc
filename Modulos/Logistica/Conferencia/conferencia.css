@@ -326,3 +326,50 @@ html:root:is(#conferencia-confirmacao,html) dialog.cf-confirmacao.cf-segunda{wid
 .cf-avaria-lista small{display:block;color:#6b6b6b;font-size:12.5px}
 .cf-avaria-fotos{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
 .cf-avaria-vazio{margin:0;color:#6b6b6b;font-size:13.5px}
+
+.cf-escolha-caminhao h3{margin-bottom:16px;}
+.cf-escolha-foto{position:relative;display:grid;place-items:center;width:52px;height:52px;flex:0 0 52px;overflow:hidden;border:1px solid #d9e2ee;border-radius:9px;background:#fff;color:#8091a6;}
+.cf-escolha-foto svg{width:27px;height:27px;}
+.cf-escolha-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff;}
+.cf-escolha-nome{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.4;}
+.cf-escolha-item input{flex-shrink:0;}
+@media(max-width:500px){.cf-escolha-item{gap:9px;padding:10px;flex-wrap:wrap;}.cf-escolha-item small{margin-left:41px;}.cf-escolha-foto{width:44px;height:44px;flex-basis:44px;}}
+
+/* Resultado carregado: mesma tipografia das quantidades pedidas, inclusive dentro da coluna de pe?as. */
+html:root .cf-qtd-tabela .cf-qtd-linha .cf-qtd-valor{display:block;text-align:center;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+html:root .cf-qtd-tabela .cf-qtd-linha.is-ok{background:#e6f4ea}
+html:root .cf-qtd-tabela .cf-qtd-linha.is-ok .cf-qtd-valor{color:#2f7a4b}
+
+/* Triagem de volta: contagens independentes e danos na pr?pria lista. */
+html:root .cf-retorno-colunas .cf-qtd-linha{grid-template-columns:60px minmax(160px,1fr) 90px 90px minmax(120px,170px) 120px minmax(100px,180px);gap:10px}
+html:root .cf-retorno-colunas:has(.cf-primeira-valor) .cf-qtd-linha{grid-template-columns:60px minmax(160px,1fr) 65px 80px 80px minmax(110px,160px) 110px minmax(80px,150px)}
+.cf-primeira-celula,.cf-segunda-celula{min-width:0;text-align:center}
+html:root .cf-primeira-celula input,html:root .cf-danos-celula input[type=number]{width:100%;min-width:0;box-sizing:border-box;border:1px solid #d9e1eb;border-radius:9px;padding:10px 5px;font-size:20px;text-align:center}
+.cf-danos-celula{min-width:0;text-align:center}
+.cf-danos-celula strong{font-size:24px!important}
+.cf-foto-dano{position:relative;display:block;overflow:hidden;border:1px solid #cbd8e7;background:#eff5fa;border-radius:6px;padding:5px;margin-top:5px;font-size:11px;color:#315676;cursor:pointer}
+.cf-foto-dano input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.cf-danos-celula small{display:block;font-size:10px}
+html:root .cf-retorno-colunas .cf-segunda-espera{font-size:18px;color:#94a3b8}
+@media(max-width:850px){html:root .cf-retorno-colunas .cf-qtd-linha,html:root .cf-retorno-colunas:has(.cf-primeira-valor) .cf-qtd-linha{grid-template-columns:50px minmax(100px,1fr) repeat(2,65px)}html:root .cf-retorno-colunas .cp-cell,html:root .cf-retorno-colunas .cf-danos-celula,html:root .cf-retorno-colunas .cf-qtd-obs,html:root .cf-retorno-colunas .cf-qtd-obs-texto{grid-column:2/-1}html:root .cf-retorno-colunas .cf-qtd-cabeca span:nth-child(n+5){display:none}}
+
+/* As novas colunas prevalecem sobre a grade compartilhada dos materiais. */
+html:root #cfQtd .cf-retorno-colunas{overflow:visible}
+html:root #cfQtd .cf-retorno-colunas .cf-qtd-linha{grid-template-columns:60px minmax(160px,1fr) 95px 95px minmax(140px,180px) 110px minmax(90px,160px)!important;min-width:0!important;align-items:center;gap:10px}
+html:root #cfQtd .cf-retorno-colunas:has(.cf-primeira-valor) .cf-qtd-linha{grid-template-columns:60px minmax(160px,1fr) 65px 90px 90px minmax(140px,180px) 100px minmax(90px,150px)!important}
+html:root #cfQtd .cf-retorno-colunas .cp-cell{width:100%;min-width:0;max-width:none;box-sizing:border-box;padding:8px}
+html:root #cfQtd .cf-retorno-colunas .cp-stepper{grid-template-columns:30px minmax(35px,1fr) 30px;gap:4px}
+html:root #cfQtd .cf-retorno-colunas .cp-stepper button{width:30px;height:40px;font-size:20px}
+html:root #cfQtd .cf-retorno-colunas .cf-qtd-cabeca span{white-space:normal;overflow:visible;font-size:11px;line-height:1.35}
+@media(max-width:950px){
+ html:root #cfQtd .cf-retorno-colunas .cf-qtd-linha,html:root #cfQtd .cf-retorno-colunas:has(.cf-primeira-valor) .cf-qtd-linha{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:12px!important;gap:10px!important}
+ html:root #cfQtd .cf-retorno-colunas .cf-qtd-cabeca{display:none!important}
+ html:root #cfQtd .cf-retorno-colunas .cf-qtd-linha:not(.cf-qtd-cabeca)>*{grid-column:auto!important;grid-row:auto!important;min-width:0!important;max-width:100%;box-sizing:border-box}
+ html:root #cfQtd .cf-retorno-colunas .cf-qtd-linha:not(.cf-qtd-cabeca)>strong{grid-column:1/-1!important;grid-row:1!important;padding-left:60px;min-height:48px;align-self:center;font-size:14px!important}
+ html:root #cfQtd .cf-retorno-colunas .cf-qtd-linha>:first-child{grid-column:1!important;grid-row:1!important;width:48px;height:48px}
+ html:root #cfQtd .cf-retorno-colunas [data-coluna]:not(strong):not(:first-child)::before{content:attr(data-coluna);display:block;font:600 11px/1.4 Inter,system-ui,sans-serif;color:#64748b;margin-bottom:5px;text-align:left}
+ html:root #cfQtd .cf-retorno-colunas .cp-cell::before{display:none!important}
+ html:root #cfQtd .cf-retorno-colunas .cf-qtd-obs{width:100%}
+}
+
+html:root #cfQtd .cf-retorno-colunas .cp-mobile-label{display:none!important}

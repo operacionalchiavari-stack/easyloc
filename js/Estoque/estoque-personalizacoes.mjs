@@ -4,6 +4,7 @@
 ===================================================== */
 
 import { criarEditorEtapas } from '../../Modulos/Producao/producao-cadastro.mjs';
+import {carregarCadastros,ligarMoeda,numeroMoeda,moedaBR,fatorComplexidade,calcularPreco} from '../shared/custos-personalizacao.mjs';
 let personalizacoes = [];
 
 function avisar(mensagem, titulo = "Atenção", tipo = "aviso"){
@@ -128,6 +129,26 @@ let cartelaTipos = [];
 // consultas abaixo falhavam silenciosamente (personalizacoes cadastradas
 // nunca apareciam). Ver window.aguardarContexto() em js/core/context.js.
 await window.aguardarContexto();
+const configCustos=(await carregarCadastros(window.supabaseClient,window.__CONTEXT.empresa_id)).custos;
+for(const [valor,nivel,nome] of [['1','simples','Simples'],['1.15','media','Média'],['1.30','alta','Alta']]){const o=[...els.inpComplexidade.options].find(o=>o.value===valor);if(o)o.textContent=nome+' (+'+configCustos.complexidades[nivel]+'%)';}
+ligarMoeda(els.inpCustoHora);ligarMoeda(els.inpPrecoManual);
+els.inpCustoHora.readOnly=true;els.inpMargem.readOnly=true;
+els.inpCustoHora.title=els.inpMargem.title='Regra fixa em Parâmetros → Almoxarifado → Preço das personalizações';
+els.inpVinculoNome.removeAttribute('list');
+els.listaVinculos.replaceWith(Object.assign(document.createElement('div'),{id:'listaVinculos',className:'personalizacao-resultados'}));
+els.listaVinculos=root.querySelector('#listaVinculos');els.listaVinculos.hidden=true;
+els.inpVinculoNome.setAttribute('aria-label','Pesquisar item para personalizar');
+els.inpVinculoNome.setAttribute('aria-controls','listaVinculos');
+function pesquisarVinculos(){
+ const q=els.inpVinculoNome.value.trim().toLocaleLowerCase('pt-BR');els.listaVinculos.replaceChildren();
+ const lista=q?modalState.vinculos.filter(v=>v.nome.toLocaleLowerCase('pt-BR').includes(q)).slice(0,30):[];
+ for(const v of lista){const b=document.createElement('button');b.type='button';b.dataset.item=v.id;const img=document.createElement('img');if(/^https?:\/\//i.test(v.foto||'')){img.src=v.foto;img.alt='';img.loading='lazy';b.append(img);}const nome=document.createElement('span');nome.textContent=v.nome;b.append(nome);b.addEventListener('click',()=>{els.inpVinculoNome.value=v.nome;els.listaVinculos.hidden=true;els.inpVinculoNome.dispatchEvent(new Event('change',{bubbles:true}));});els.listaVinculos.append(b);}
+ els.listaVinculos.hidden=!lista.length;
+}
+els.inpVinculoNome.addEventListener('input',pesquisarVinculos);
+els.inpVinculoNome.addEventListener('keydown',e=>{if(e.key==='Escape'){els.listaVinculos.hidden=true;e.stopPropagation();}if(e.key==='ArrowDown'){e.preventDefault();els.listaVinculos.querySelector('button')?.focus();}});
+els.listaVinculos.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){e.preventDefault();e.target.nextElementSibling?.focus();}if(e.key==='ArrowUp'){e.preventDefault();(e.target.previousElementSibling||els.inpVinculoNome).focus();}if(e.key==='Escape'){els.listaVinculos.hidden=true;els.inpVinculoNome.focus();}});
+document.addEventListener('pointerdown',e=>{if(!els.listaVinculos.contains(e.target)&&e.target!==els.inpVinculoNome)els.listaVinculos.hidden=true;});
 
 await carregarItensEComponentes();
 await carregarInsumos();
@@ -153,7 +174,7 @@ async function carregarItensEComponentes(){
   for(let inicio = 0; ; inicio += PAGINA){
     const { data: pagina, error } = await window.supabaseClient
       .from("itens")
-      .select("id, descricao_total, tipo")
+      .select("id, descricao_total, tipo, foto_url")
       .eq("empresa_id", window.__CONTEXT.empresa_id)
       .order("descricao_total")
       .order("id")
@@ -173,14 +194,14 @@ async function carregarItensEComponentes(){
     .filter(i => i.tipo === "Item" || i.tipo === "Kit")
     .map(i => ({
       id: i.id,
-      nome: i.descricao_total
+      nome: i.descricao_total, foto:i.foto_url
     }));
 
   componentes = data
     .filter(i => i.tipo === "Componente")
     .map(i => ({
       id: i.id,
-      nome: i.descricao_total
+      nome: i.descricao_total, foto:i.foto_url
     }));
 
 }
@@ -380,11 +401,10 @@ function renderTable(){
     const custoFixo = 0;
     const custoTotal = custoMat + custoMO + custoFixo;
 
-    const margem = toNum(p.margem || 0);
-    const comp = toNum(p.complexidade || 1) || 1;
+    const margem = configCustos.margem;
+    const comp = fatorComplexidade(p.complexidade,configCustos);
 
-    const precoBase = custoTotal * (1 + (margem/100));
-    const precoFinal = precoBase * comp;
+    const precoFinal = calcularPreco(custoTotal,margem,comp);
 
     p.custo_total = custoTotal;
     p.preco_sugerido = precoFinal;
@@ -577,14 +597,14 @@ async function openModalEdit(id){
       // carrega mão de obra / margem / complexidade se existirem
       if(p.tempo != null) els.inpTempo.value = String(p.tempo);
       editorProducao.set(p.producao_etapas || []);
-      if(p.custo_hora != null) els.inpCustoHora.value = String(p.custo_hora);
-      if(p.complexidade != null) els.inpComplexidade.value = String(p.complexidade);
-      if(p.margem != null) els.inpMargem.value = String(p.margem);
+      els.inpCustoHora.value = moedaBR(configCustos.custo_hora);
+      if(p.complexidade != null) els.inpComplexidade.value = Number(p.complexidade)>=1.3?'1.30':Number(p.complexidade)>=1.15?'1.15':'1';
+      els.inpMargem.value = String(configCustos.margem);
 
       // preço manual
       els.chkManual.checked = !!p.preco_manual_ativo;
       els.manualWrap.style.display = els.chkManual.checked ? "block" : "none";
-      if(p.preco_manual != null) els.inpPrecoManual.value = String(p.preco_manual);
+      if(p.preco_manual != null) els.inpPrecoManual.value = moedaBR(p.preco_manual);
 
       recalcularResumo();
 
@@ -605,9 +625,9 @@ function resetModalFields(){
 
   // mão de obra
   els.inpTempo.value = "";
-  els.inpCustoHora.value = "";
+  els.inpCustoHora.value = moedaBR(configCustos.custo_hora);
   els.inpComplexidade.value = "1";
-  els.inpMargem.value = "";
+  els.inpMargem.value = String(configCustos.margem);
 
   // manual
   els.chkManual.checked = false;
@@ -631,12 +651,7 @@ function resetModalFields(){
       }
 
       els.listaVinculos.innerHTML = "";
-      modalState.vinculos.forEach(v=>{
-        const opt = document.createElement("option");
-        opt.value = `${v.nome}`;
-        opt.setAttribute("data-id", v.id);
-        els.listaVinculos.appendChild(opt);
-      });
+      els.listaVinculos.hidden=true;
     }
 
     // =============================================
@@ -790,10 +805,9 @@ function getComplexidadeLabel(valor){
       }
 
       const margem = toNum(els.inpMargem.value);
-      const comp = toNum(els.inpComplexidade.value) || 1;
+      const comp = fatorComplexidade(els.inpComplexidade.value,configCustos);
 
-      const precoBase = custoTotal * (1 + (margem/100));
-      const precoFinal = precoBase * comp;
+      const precoFinal = calcularPreco(custoTotal,margem,comp);
 
       const margemReal = precoFinal > 0
         ? ((precoFinal - custoTotal) / precoFinal) * 100
@@ -849,7 +863,7 @@ function calcCustoMateriaisFromUI(){
 
     function calcCustoMaoObraFromObj(p){
       const tempo = toNum(p.tempo);
-      const custoHora = toNum(p.custo_hora);
+      const custoHora = Number(configCustos.custo_hora);
       return tempo * custoHora;
     }
 
@@ -1031,8 +1045,7 @@ if(insErr) throw insErr;
     // HELPERS
     // =============================================
     function toNum(v){
-      const n = Number(String(v || "").replace(",", "."));
-      return Number.isFinite(n) ? n : 0;
+      return numeroMoeda(v);
     }
 
     function formatCurrency(v){

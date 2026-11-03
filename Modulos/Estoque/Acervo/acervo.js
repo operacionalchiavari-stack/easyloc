@@ -18,7 +18,7 @@
   if(seq!==cargaPainel)return;s.dados=dados;render();}
 
  async function executar(botao,fn){botao.disabled=true;try{await fn();if($('acDetalhe').open)$('acDetalhe').close();await carregar();msg('Registro salvo.');}catch(e){msg(e.message,true);}finally{botao.disabled=false;}}
- function render(){document.querySelectorAll('[data-aba]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.aba===s.aba)));if(s.aba==='retorno'||s.aba==='conferir')retornos();else if(s.aba==='divergencias'){window.AcervoDivergencias.render({host:$('acConteudo'),sb:s.sb,empresa:s.empresa,esc,msg});}else if(s.aba==='concluidas'){$('acConteudo').innerHTML='<iframe class="ac-historico-os" title="O.S. conclu&#237;das" src="../../Chiavari/CentralMetas/itens-danificados.html?concluidas=1"></iframe>';}else inventarios();}
+ function render(){document.querySelectorAll('[data-aba]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.aba===s.aba)));if(s.aba==='retorno'||s.aba==='conferir')retornos();else if(s.aba==='ocorrencias'){window.SeparacaoOcorrencias.painel({host:$('acConteudo'),sb:s.sb,empresa:s.empresa,fila:'acervo'});}else if(s.aba==='divergencias'){window.AcervoDivergencias.render({host:$('acConteudo'),sb:s.sb,empresa:s.empresa,esc,msg});}else if(s.aba==='concluidas'){$('acConteudo').innerHTML='<iframe class="ac-historico-os" title="O.S. conclu&#237;das" src="../../Chiavari/CentralMetas/itens-danificados.html?concluidas=1"></iframe>';}else inventarios();}
  function retornos(){window.AcervoPainel.render({host:$('acConteudo'),s,esc,nomes,abrir:abrirCard,gerenciar:gerenciarOS,abrirPedido});}
  async function abrirPedido(evento,selecionado){
   let dlg=$('acPedido');if(!dlg){dlg=document.createElement('dialog');dlg.id='acPedido';dlg.className='ac-dialogo ac-pedido-dialogo';document.body.append(dlg);}
@@ -68,7 +68,9 @@
   $('acBuscaItens').oninput=e=>document.querySelectorAll('[data-nome]').forEach(l=>l.hidden=!l.dataset.nome.includes(e.target.value.toLowerCase()));$('acCriar').onsubmit=e=>{e.preventDefault();const f=e.target,ids=[...f.querySelectorAll('[name=item]:checked')].map(c=>c.value);executar(f.querySelector('button'),async()=>{s.inv=await rpc('acervo_inventario_criar',{p_nome:f.nome.value,p_itens:ids});});};
  }catch(e){msg(e.message,true);}}
  // bolinha da aba Divergências: contagens gerais pendentes
- async function contarDivergencias(){try{const {count}=await s.sb.from('acervo_contagens_gerais').select('id',{count:'exact',head:true}).eq('empresa_id',s.empresa).eq('status','pendente');const b=document.querySelector('[data-aba="divergencias"] .tab-badge');if(b)b.textContent=count||'';}catch{}}
+ async function contarDivergencias(){try{
+  const ocorrencias=await s.sb.from('separacao_ocorrencias').select('id',{count:'exact',head:true}).eq('empresa_id',s.empresa).eq('estado','acervo');const badge=document.querySelector('[data-aba="ocorrencias"] .tab-badge');if(badge)badge.textContent=ocorrencias.count||'';
+const {count}=await s.sb.from('acervo_contagens_gerais').select('id',{count:'exact',head:true}).eq('empresa_id',s.empresa).eq('status','pendente');const b=document.querySelector('[data-aba="divergencias"] .tab-badge');if(b)b.textContent=count||'';}catch{}}
  const atualizarPainel=()=>{if(s.empresa&&!document.hidden&&['retorno','conferir'].includes(s.aba)&&!document.querySelector('.ac-dialogo[open]')&&!document.activeElement?.matches('input,select'))carregar().catch(e=>msg(e.message,true));};setInterval(atualizarPainel,30000);document.addEventListener('visibilitychange',atualizarPainel);
  document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{s.aba=b.dataset.aba;render();});
  (async()=>{const c=await window.aguardarContexto();s.sb=window.supabaseClient;s.empresa=c.empresa_id;await carregar();contarDivergencias();window.finalizarCarregamentoModulo?.();})().catch(e=>msg(e.message,true));

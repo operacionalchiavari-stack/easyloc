@@ -8,28 +8,10 @@
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="fluxograma.css?v=20261101">
+  <link rel="stylesheet" href="fluxograma.css?v=20261102-guia-area">
 </head>
 <body>
-<div class="container el-page fx-page" id="fxPage">
-  <div class="header-list">
-    <h2>Fluxo do sistema</h2>
-  </div>
-
-  <section class="fx-intro" aria-label="Como ler">
-    <p>O caminho de um pedido, do primeiro contato ao pedido finalizado. Clique numa caixa para abrir a tela dela.</p>
-    <ul class="fx-legenda">
-      <li><span class="fx-ico fx-ico-auto">⚡</span> O sistema faz sozinho</li>
-      <li><span class="fx-ico fx-ico-trava">🔒</span> Trava: só segue se a regra for cumprida</li>
-      <li><span class="fx-ico fx-ico-param">⚙</span> Regra ajustável em Gestão &gt; Parâmetros</li>
-      <li><span class="fx-losango-mini"></span> Decisão</li>
-    </ul>
-    <ul class="fx-setores" id="fxSetores"></ul>
-  </section>
-
-  <nav class="fx-fases" id="fxFases" aria-label="Fases"></nav>
-  <main id="fxConteudo"></main>
-</div>
+<main id="fxDetalhado" aria-label="Fluxograma do sistema"></main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
@@ -37,7 +19,11 @@
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261101-fluxograma"></script>
-<script src="fluxograma.js?v=20261101-regras2"></script>
+<script src="fluxograma-rotas.js?v=20261102-primeiro-uso"></script>
+<script src="fluxograma-primeiro-uso.js?v=20261102-primeiro-uso"></script>
+<script src="fluxograma-setores.js?v=20261102-setores"></script>
+<script src="fluxograma-guia.js?v=20261102-guia-area"></script>
+<script src="fluxograma-detalhado.js?v=20261102-guia-area"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

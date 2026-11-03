@@ -9,13 +9,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="CentralPedidos.css?v=20261031-equipes">
+  <link rel="stylesheet" href="CentralPedidos.css?v=20261102-colchete-externo">
+  <link rel="stylesheet" href="../../../styles/sublocacoes.css?v=20261102-sublocacoes">
   <link rel="stylesheet" href="../../../styles/planilha.css?v=20261030">
   <link rel="stylesheet" href="../comercial-relatorios.css?v=20261030c">
   <!-- Visualização do pedido = prévia do catálogo (cabeçalho, itens por ambiente, PDF). -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261030-link-pagamento2">
   <link rel="stylesheet" href="../Catalogo/projeto-apresentacao.css?v=20261030-link-pagamento">
+<link rel="stylesheet" href="../../../styles/separacao-ocorrencias.css?v=20261103-anexo-foto">
+<script src="../../../js/ui/separacao-ocorrencias.js?v=20261103-resposta-direta"></script>
 </head>
 <body>
 <div class="central-pedidos-page el-page" id="centralPedidosPage" data-module-root>
@@ -25,6 +28,8 @@
       <p>Consulta e gestao dos pedidos, eventos e contratos comerciais.</p>
     </div>
     <div class="el-page-actions central-actions-left">
+      <button type="button" class="btn btn-secondary" data-ocorrencias-comercial>Ocorrências da separação</button>
+      <button type="button" class="btn btn-secondary" data-sublocacoes>Sublocações</button>
       <!-- Tabelas de Preço fica aqui dentro (pedido do usuário), não no menu. data-module-href: some se a pessoa não tiver permissão (js/core/permissions.js?v=20261019-painel-logistico). -->
       <button type="button" class="btn btn-secondary" id="btnCatalogoCentral" title="Abrir o catálogo (F2) · pesquisar no catálogo (F4)" aria-keyshortcuts="F2">Catálogo <kbd class="central-kbd">F2</kbd></button>
       <button type="button" class="btn btn-secondary" id="btnTabelasPreco" data-module-href="../../Estoque/TabelasPreco/tabelas-preco.html">Tabelas de Preço</button>
@@ -193,7 +198,8 @@
 <script src="central-contas-receber.js?v=20261031-equipes"></script>
 <link rel="stylesheet" href="../produtividade.css?v=20261031-acompanhamento-cores">
 <script src="../produtividade.js?v=20261031-acompanhamento-cores"></script>
-<script src="CentralPedidos.js?v=20261101-aba-catalogo"></script>
+<script src="../../../js/ui/sublocacoes.js?v=20261102-remessas-parciais"></script>
+<script src="CentralPedidos.js?v=20261102-colchete-externo"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

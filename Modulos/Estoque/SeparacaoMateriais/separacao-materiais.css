@@ -1052,25 +1052,47 @@ body.separacao-modal-open {
    html:root:is(#acervo-separacao, html) para vencer o tema-chiavari.css e o design-system.css. */
 html:root:is(#acervo-separacao, html) .separacao-lane-pendente{--lane-cor:#c27803;--lane-fundo:#fff9ea;}
 html:root:is(#acervo-separacao, html) .separacao-lane-andamento{--lane-cor:#2563eb;--lane-fundo:#eff6ff;}
-html:root:is(#acervo-separacao, html) .separacao-order-card [data-separacao-action="liberar-retirada"]{
-  min-height:28px!important;
+html:root:is(#acervo-separacao, html) .separacao-order-card :is([data-separacao-action="liberar-retirada"], [data-separacao-action="reabrir-triagem"]){
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:32px!important;
+  height:auto!important;
+  min-width:0!important;
   width:auto!important;
-  padding:4px 8px!important;
-  margin-top:8px;
-  border:1px solid #d9dee6!important;
-  border-radius:6px!important;
-  background:transparent!important;
-  color:#526176!important;
-  font-size:11px!important;
-  font-weight:400!important;
+  padding:6px 12px!important;
+  margin-top:10px;
+  border:1px solid #b8cfee!important;
+  border-radius:8px!important;
+  background:#dceafe!important;
+  color:#174583!important;
+  font:600 12px/1.4 Inter,system-ui,sans-serif!important;
   letter-spacing:normal!important;
   text-transform:none!important;
   box-shadow:none!important;
+  cursor:pointer;
+  transition:background .15s,border-color .15s;
 }
 html:root:is(#acervo-separacao, html) .separacao-order-card [data-separacao-action="liberar-retirada"]:hover{
-  background:rgba(255,255,255,.65)!important;
-  color:#111!important;
-  border-color:#b8c1cd!important;
+  background:#c8ddfb!important;
+  border-color:#8aafe2!important;
+}
+html:root:is(#acervo-separacao, html) .separacao-order-card [data-separacao-action="reabrir-triagem"]{
+  background:#fff!important;
+  border-color:#a9ceba!important;
+  color:#236342!important;
+}
+html:root:is(#acervo-separacao, html) .separacao-order-card [data-separacao-action="reabrir-triagem"]:hover{
+  background:#dff1e6!important;
+  border-color:#75ac8d!important;
+}
+html:root:is(#acervo-separacao, html) .separacao-order-card :is([data-separacao-action="liberar-retirada"], [data-separacao-action="reabrir-triagem"]):focus-visible{
+  outline:2px solid #174583!important;
+  outline-offset:3px;
+}
+html:root:is(#acervo-separacao, html) .separacao-order-card :is([data-separacao-action="liberar-retirada"], [data-separacao-action="reabrir-triagem"]):disabled{
+  opacity:.55!important;
+  cursor:wait;
 }
 html:root:is(#acervo-separacao, html) .separacao-lane-separado{--lane-cor:#1f8a4c;--lane-fundo:#eef9f2;}
 html:root:is(#acervo-separacao, html) .separacao-lane,
@@ -1356,3 +1378,49 @@ html:root:is(#acervo-separacao,html) .separacao-lane[hidden]{display:none!import
 html:root:is(#acervo-separacao,html) .separacao-page .separacao-kanban:has(.separacao-lane-divergencias[hidden]){grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:1150px){html:root:is(#acervo-separacao,html) .separacao-page .separacao-kanban:has(.separacao-lane-divergencias[hidden]){grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){html:root:is(#acervo-separacao,html) .separacao-page .separacao-kanban:has(.separacao-lane-divergencias[hidden]){grid-template-columns:1fr}}
+.separacao-pendencias-dialog{width:760px;max-width:calc(100vw - 24px);max-height:90vh;border:1px solid #dce4ee;border-radius:16px;padding:22px;color:#263b51;overflow:auto}.separacao-pendencias-dialog::backdrop{background:#14253b70}.separacao-pendencias-dialog h2{font:600 21px Inter,system-ui!important;text-transform:none!important;letter-spacing:0!important;margin:0 0 10px}.separacao-pendencias-dialog p{font:13px/1.6 Inter,system-ui;color:#63798e}.separacao-pendencias-lista{max-height:55vh;overflow:auto;border:1px solid #dce4ee;border-radius:10px}.separacao-pendencias-lista table{width:100%;border-collapse:collapse;font:13px/1.5 Inter,system-ui}.separacao-pendencias-lista th{text-align:left;padding:12px;background:#f4f7fa;position:sticky;top:0}.separacao-pendencias-lista td{padding:12px;border-top:1px solid #e7edf4;vertical-align:top}.separacao-pendencias-lista small{display:block;color:#687e93;margin-top:4px}.separacao-pendencias-lista td:last-child{color:#b44c27}.separacao-pendencias-dialog footer{display:flex;justify-content:flex-end;margin-top:18px}@media(max-width:600px){.separacao-pendencias-dialog{padding:15px}.separacao-pendencias-lista th,.separacao-pendencias-lista td{padding:9px;font-size:12px}}
+
+/* Foto do decorador nos quadros de Triagem e Expedi??o. */
+.separacao-order-card .separacao-card-mainline.com-foto-decorador{display:flex;align-items:center;gap:14px}
+.decorador-card-foto{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 56px;width:56px;height:56px;overflow:hidden;border-radius:50%;background:var(--bg-secondary,#edf1f7);color:var(--text-primary,#334155);font-size:22px;font-weight:700}
+.decorador-card-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.decorador-card-texto{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;overflow-wrap:anywhere}
+
+/* Quadro da Triagem: foto ao lado das informa??es, em tr?s linhas compactas. */
+html:root .triagem-compacta .separacao-lane > header{padding:10px 14px}
+html:root .triagem-compacta .separacao-lane > header h2{margin:0}
+html:root .triagem-compacta .separacao-order-card{display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:12px;row-gap:4px;padding:10px 12px}
+html:root .triagem-compacta .separacao-card-top{grid-column:2;grid-row:1;min-width:0;flex-wrap:wrap}
+html:root .triagem-compacta .separacao-card-mainline.com-foto-decorador,
+html:root .triagem-compacta .decorador-card-texto{display:contents}
+html:root .triagem-compacta .decorador-card-foto{grid-column:1;grid-row:1 / 5;align-self:center;text-align:center}
+html:root .triagem-compacta .decorador-card-texto > strong{grid-column:2;grid-row:2;white-space:normal}
+html:root .triagem-compacta .decorador-card-texto > span{grid-column:2;grid-row:3;text-align:left;white-space:normal;overflow-wrap:anywhere}
+html:root .triagem-compacta .separacao-card-meta-line{grid-column:2;grid-row:4;margin:0;font-size:11px}
+html:root .triagem-compacta .separacao-card-progress{grid-column:1 / -1;margin-top:3px}
+html:root .triagem-compacta .separacao-order-card > :is(button,.separacao-lock-note,.separacao-card-footer){grid-column:1 / -1;justify-self:start;margin-top:3px}
+
+html:root .triagem-compacta .separacao-card-top{flex-wrap:nowrap;gap:6px}
+html:root .triagem-compacta .separacao-card-top .separacao-card-progress{flex:1;min-width:80px;grid-template-columns:24px minmax(16px,1fr) auto;gap:5px;margin:0;font-size:11px}
+html:root .triagem-compacta .triagem-cliente-acao{grid-column:2;grid-row:2;display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+html:root .triagem-compacta .triagem-cliente-acao > strong{flex:1;min-width:0;white-space:normal}
+html:root .triagem-compacta .triagem-cliente-acao :is([data-separacao-action="liberar-retirada"], [data-separacao-action="reabrir-triagem"]){margin:0;padding:4px 8px!important;min-height:28px!important;font-size:11px!important;flex-shrink:0}
+@media(max-width:600px){
+ html:root .triagem-compacta .separacao-card-top{flex-wrap:wrap}
+ html:root .triagem-compacta .triagem-cliente-acao :is([data-separacao-action="liberar-retirada"], [data-separacao-action="reabrir-triagem"]){flex-shrink:1;max-width:55%}
+}
+
+/* A a??o ocupa a lateral das informa??es sem aumentar a linha do nome. */
+html:root .triagem-compacta .separacao-order-card:has(.triagem-cliente-acao){grid-template-columns:56px minmax(0,1fr) auto}
+html:root .triagem-compacta .separacao-order-card:has(.triagem-cliente-acao) .separacao-card-top{grid-column:2 / -1}
+html:root .triagem-compacta .triagem-cliente-acao{display:contents}
+html:root .triagem-compacta .triagem-cliente-acao > strong{grid-column:2;grid-row:2}
+html:root .triagem-compacta .triagem-cliente-acao :is([data-separacao-action="liberar-retirada"], [data-separacao-action="reabrir-triagem"]){grid-column:3;grid-row:2 / 5;align-self:start;justify-self:end;max-width:none}
+@media(max-width:600px){
+ html:root .triagem-compacta .separacao-order-card:has(.triagem-cliente-acao){column-gap:8px}
+ html:root .triagem-compacta .triagem-cliente-acao :is([data-separacao-action="liberar-retirada"], [data-separacao-action="reabrir-triagem"]){max-width:110px;white-space:normal}
+}
+
+/* Diverg?ncias com as mesmas quatro linhas dos demais cards. */
+html:root .triagem-compacta .card-divergencia .divergencia-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;min-width:0}
+html:root .triagem-compacta .card-divergencia .card-divergencia-resumo{display:inline;margin:0;font-size:11px;line-height:1.35;overflow-wrap:normal}

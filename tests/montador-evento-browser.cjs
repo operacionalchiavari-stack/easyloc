@@ -25,7 +25,7 @@ async function main(){
     function guardar(tipo,d){localStorage.setItem('fixture:'+tipo,JSON.stringify(d));return d;}
     function result(fn,args){
      window.chamadas.push({fn,args});
-     if(fn==='MONT_login'){if(args[1]!=='1234')throw Error('CPF ou PIN incorretos.');return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};}
+     if(fn==='MONT_login'){if(args[2]===true&&args[3]===true)return {token:'fixture-sistema',nome:'Supervisor',perfil:'SUPERVISOR'};if(args[1]!=='1234')throw Error('CPF ou PIN incorretos.');return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};}
      if(fn==='MONT_appCarregar')return {nome:'Ana Silva',perfil:'RESPONSAVEL',etapas,apontamento:registro('apontamento')?.status==='ATIVO'?registro('apontamento'):null};
      if(fn==='MONT_bonusExtrato'){
       if(!window.bonusTentado){window.bonusTentado=true;throw Error('Sem conexão para carregar o bônus.');}
@@ -59,7 +59,7 @@ async function main(){
      return {};
     }
     function runner(ok,no){return new Proxy({},{get:(_,fn)=>fn==='withSuccessHandler'?f=>runner(f,no):fn==='withFailureHandler'?f=>runner(ok,f):(...args)=>Promise.resolve().then(()=>result(fn,args)).then(r=>ok&&ok(r)).catch(e=>no&&no(e))});}
-    window.google={script:{run:runner()}};
+    window.google={script:{run:runner(),url:{getLocation(cb){cb({parameter:Object.fromEntries(new URLSearchParams(location.search))});}}}};
    });
    await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html`);
    await page.locator('#telaLogin.ativa').waitFor();assert.equal(await page.locator('#loginNome').count(),0);
@@ -142,6 +142,11 @@ async function main(){
    await page.locator('#btnVoltar').click();
    await page.locator('#telaInicio .etapa').filter({hasText:'Outro evento'}).click();assert.equal(await page.locator('#etapaInfo').count(),1);assert.equal(await page.locator('#regProgresso').count(),1);assert.equal(await page.locator('#etapaConferencia').count(),0);assert.equal(await page.locator('#telaEtapa').evaluate(e=>e.classList.contains('evento-linear')),false);
    assert.equal(await page.locator('#etapaCabeca .cabeca').evaluate(e=>getComputedStyle(e).backgroundColor),cabeca.cor);
+   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html?sistema=1&etapa=montagem`);
+   await page.waitForFunction(()=>estado.token==='fixture-sistema'&&estado.etapaAberta==='montagem');
+   assert.equal(await page.evaluate(()=>localStorage.getItem('montadorToken')),'fixture');
+   assert.equal(await page.evaluate(()=>sessionStorage.getItem('montadorSistemaToken')),'fixture-sistema');
+   assert.equal(await page.evaluate(()=>estado.supervisor),true);
    assert.deepEqual(errors,[]);await page.close();console.log(`Montagem ${width}px: QR, foto, conferência com dano, sacolas, assinatura, restauração e troca de etapa OK.`);
   }
  }finally{await browser.close();await new Promise(r=>server.close(r));}

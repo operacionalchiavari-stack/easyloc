@@ -40,6 +40,7 @@ const mock = `(() => {
   banco.separacoes_pedidos.push({id:'p-revisao',empresa_id:'e1',numero_pedido:'20',status:'separado',status_comercial:'aprovado',reducao_liberada_em:'2099-10-24T12:00:00Z',data_entrega:'2099-10-26',operacao:{}});
   banco.separacoes_pedidos.find(p=>p.id==='p2').operacao={carregamento:{iniciado_em:'2099-10-25T08:00:00Z'}};
   banco.separacoes_pedidos.push({id:'p9',empresa_id:'e1',numero_pedido:'21',cliente_nome:'Retorno confirmado no evento',status:'separado',status_comercial:'aprovado',data_coleta:'2099-10-27',operacao:{coleta:{concluido_em:'2099-10-27T08:00:00Z'},carregamento:{concluido_em:'2099-10-25T08:00:00Z'}}});
+  banco.separacoes_pedidos.push(...['p10','p11'].map(id=>({id,empresa_id:'e1',numero_pedido:id==='p10'?'22':'23',cliente_nome:'Conferencia concluida',status:'separado',status_comercial:'aprovado',status_operacional:'carregado',data_entrega:'2099-10-28',operacao:{carregamento:{concluido_em:'2099-10-27T08:00:00Z',por:'Operador Teste',faltando:[]},...(id==='p11'?{entrega:{iniciado_em:'2099-10-27T09:00:00Z'}}:{})}})));
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
     const q = {
@@ -60,7 +61,13 @@ const mock = `(() => {
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
-    rpc: (n, args) => rpcOperacao(banco, n, args)
+    rpc: async (n,args)=>{
+      if(n==='expedicao_reaberturas_disponiveis')return {data:banco.separacoes_pedidos.filter(p=>['p10','p11'].includes(p.id)&&p.operacao.carregamento.concluido_em&&!p.operacao.entrega?.iniciado_em).map(p=>p.id),error:null};
+      if(n==='expedicao_reabrir_conferencia'){const p=banco.separacoes_pedidos.find(p=>p.id===args.p_pedido);delete p.operacao.carregamento.concluido_em;p.operacao.carregamento.iniciado_em='2099-10-27T08:00:00Z';p.status_operacional=null;return {data:null,error:null};}
+      const r=await rpcOperacao(banco,n,args);
+      if(n==='pedido_fluxo_fila'&&args.p_setor==='expedicao')r.data.push(...banco.separacoes_pedidos.filter(p=>['p10','p11'].includes(p.id)&&p.operacao.carregamento.concluido_em).map(p=>({...p,fluxo_etapa:'entrega'})));
+      return r;
+    }
   };
   window.supabase = { createClient: () => cliente };
   window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Igor" };
@@ -90,7 +97,16 @@ const mock = `(() => {
   const ids = (sel) => page.$$eval(sel + " [data-pedido]", (n) => n.map((x) => x.dataset.pedido + ":" + x.dataset.tipo));
   assert.deepStrictEqual((await ids('#expColAguardando')).sort(),['p1:ida','p20:ida','p9:descarregamento']);
   assert.deepStrictEqual(await ids('#expColAndamento'),['p2:ida']);
-  assert.equal((await ids('#expColCarregados')).length,0,'conferidos avancam de etapa');
+  assert.equal((await ids('#expColCarregados')).length,2,'conferidos aguardam inicio da entrega');
+  assert.equal(await page.locator('[data-reabrir-conferencia=p10]').count(),1);
+  assert.equal(await page.locator('[data-reabrir-conferencia=p11]').count(),0);
+  assert.ok(!(await page.locator('#expColCarregados').innerText()).includes('Operador Teste'));
+  assert.ok(!(await page.locator('#expColCarregados').innerText()).includes('27/10'));
+  await page.evaluate(()=>window.confirmarGlobal=async()=>true);
+  await page.locator('[data-reabrir-conferencia=p10]').focus();await page.keyboard.press('Space');
+  await page.locator('#expColAndamento [data-pedido=p10]').waitFor();
+  assert.ok(/expedicao.html/.test(page.url()),'reabrir nao navega pelo clique do card');
+
   assert.equal(await page.locator('[data-pedido=p3],[data-pedido=p4],[data-pedido=p8],[data-pedido=p-revisao]').count(),0,'outras etapas nao duplicam o pedido na Expedicao');
   await page.click('#expBusca');await page.fill('#expBusca','ana');assert.deepStrictEqual(await ids('#expColAguardando'),[]);assert.deepStrictEqual(await ids('#expColAndamento'),['p2:ida']);
   await page.fill('#expBusca','');await page.waitForTimeout(300);
@@ -104,6 +120,11 @@ const mock = `(() => {
   const linhaTopo = await travado.locator('.separacao-card-top').boundingBox(), aviso = await travado.locator('.exp-aviso-fin').boundingBox();
   assert.ok(aviso.y >= linhaTopo.y - 1 && aviso.y + aviso.height <= linhaTopo.y + linhaTopo.height + 1, 'aviso na mesma linha do Ida');
   await travado.click(); await page.waitForTimeout(500);
+  assert.match(await page.locator('.el-alert').innerText(),/Financeiro.*carregamento/s);
+  await page.evaluate(()=>window.fecharAlertaGlobal());
+  await travado.focus();await page.keyboard.press('Enter');
+  assert.match(await page.locator('.el-alert').innerText(),/Pedido bloqueado/);
+  await page.evaluate(()=>window.fecharAlertaGlobal());
   assert.ok(!/conferencia.html/.test(page.url()), 'cartão travado não abre a conferência');
   assert.equal(await page.locator('[data-pedido=p2][data-tipo=ida] .exp-aviso-fin').count(), 0, 'pedido liberado sem aviso');
   console.log('ok - pedido travado pelo Financeiro: aviso pequeno e não abre');
@@ -111,6 +132,8 @@ const mock = `(() => {
   assert.equal((await semCam.locator('.exp-aviso-fin').innerText()).trim(), 'Sem caminhão programado');
   assert.ok(/Painel Logístico/.test(await semCam.getAttribute('title')), 'explica onde programar');
   await semCam.click(); await page.waitForTimeout(400);
+  assert.match(await page.locator('.el-alert').innerText(),/Painel Logístico/);
+  await page.evaluate(()=>window.fecharAlertaGlobal());
   assert.ok(!/conferencia.html/.test(page.url()), 'sem caminhão programado não abre a conferência');
   console.log('ok - sem caminhão programado: aviso e não abre');if(process.env.FOTO)await page.screenshot({path:process.env.FOTO});
   await page.fill('#expBusca','');await page.click('[data-pedido=p2][data-tipo=ida]');

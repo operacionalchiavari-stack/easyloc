@@ -6,6 +6,7 @@
  const base=new URL('.',location.href);
  const apps=new Map([
   ['Modulos/Chiavari/Cronograma/montador.html','App do Montador'],
+  ['Modulos/Estoque/TriagemApp/triagem.html','App da Triagem'],
   ['Modulos/Chiavari/Cronograma/free.html','Vagas Free'],
   ['Modulos/Chiavari/Uber/motorista.html','App do Motorista'],
   ['Modulos/Chiavari/Fretes/freteiro.html','App do Freteiro'],

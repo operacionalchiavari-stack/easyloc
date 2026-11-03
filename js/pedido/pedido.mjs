@@ -1,18 +1,19 @@
 import { iniciarLogisticaManual, restaurarLogisticaManual, validarObservacoesLogisticaManual } from './pedido.logistica-manual.mjs?v=20261031-ajuste-compacto';
+import {instalarProtecaoSaida} from './pedido.saida.mjs?v=20261102-proteger';
 console.log("✅ pedido.mjs carregado");
 
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
-import { initAutocompleteClientes } from "./pedido.clientes.mjs";
+import { initAutocompleteClientes } from "./pedido.clientes.mjs?v=20261102-auditoria-identidade";
 import { initEquipePedido } from "./pedido.equipe.mjs?v=20261031-bv";
 import { initBvPedido } from "./pedido.bv.mjs?v=20261031-3colunas3";
-import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261026-local-endereco";
-import { initItens } from "./pedido.itens.mjs?v=20261031-3colunas2";
+import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261102-auditoria-identidade";
+import { initItens } from "./pedido.itens.mjs?v=20261102-insumos-kits";
 import { initFrete } from "./pedido.frete.mjs?v=20261031-km-chip";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261026-acentos";
 import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261029-extra";
 import { initPagamento } from "./pedido.pagamento.mjs?v=20261101-condicao";
-import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261027-abas-rapidas";
+import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261102-auditoria-identidade";
 
 /* =====================================================
    ESTADO VINDO DA URL (documento proprio / navegacao real)
@@ -1100,8 +1101,8 @@ async function setupPedidoWorkspace({ supabase }){
     let guardado = null;
     try{ guardado = JSON.parse(localStorage.getItem(chaveRascunho()) || "null"); }catch{}
     const salvoNoBanco = window.__PEDIDO_DADOS_ATUAL?.atualizado_em || window.__PEDIDO_DADOS_ATUAL?.updated_at || "";
-    rascunhoBase = assinaturaRascunho();
-    if(guardado?.pedido && (!salvoNoBanco || String(guardado.salvo_em) > String(salvoNoBanco)) && JSON.stringify(guardado.pedido) !== rascunhoBase){
+    if(!houveEdicao)rascunhoBase = assinaturaRascunho();
+    if(!houveEdicao && guardado?.pedido && (!salvoNoBanco || String(guardado.salvo_em) > String(salvoNoBanco)) && JSON.stringify(guardado.pedido) !== rascunhoBase){
       const quando = new Date(guardado.salvo_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
       const texto = `Encontramos alterações deste pedido que não foram salvas (${quando}). Quer recuperar o que você estava fazendo?`;
       const sim = window.confirmarGlobal ? await window.confirmarGlobal(texto, "Recuperar alterações") : window.confirm(texto);
@@ -1116,9 +1117,6 @@ async function setupPedidoWorkspace({ supabase }){
       }
     }
     rascunhoLigado = true;
-    const tela = document.querySelector(".pedido-screen") || document.body;
-    tela.addEventListener("input", agendarRascunho, true);
-    tela.addEventListener("change", agendarRascunho, true);
     setInterval(gravarRascunho, 5000); // pega o que muda por código (itens do catálogo, parcelas, frete)
     window.addEventListener("pagehide", gravarRascunho);
     document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") gravarRascunho(); });
@@ -1364,7 +1362,7 @@ async function setupPedidoWorkspace({ supabase }){
     document.addEventListener("keydown", window.__pedidoAtalhosHandler);
   }
 
-  document.getElementById("btnVoltarCentralPedidos")?.addEventListener("click", abrirCentral);
+  document.getElementById("btnVoltarCentralPedidos")?.addEventListener("click",async()=>{if(await window.appBeforeLeave?.()!==false)abrirCentral();});
 
   document.getElementById("btnSalvarPedido")?.addEventListener("click", salvarPedidoOperacional);
 
@@ -1441,6 +1439,10 @@ async function setupPedidoWorkspace({ supabase }){
   window.__pedidoMostrarCondicaoCatalogo?.(); // condição de pagamento escolhida pelo decorador (nov/2026)
   if(window.__PEDIDO_DADOS_ATUAL?.pedido_origem_id && !window.__pedidoExtra) window.__pedidoExtra = { principalId: window.__PEDIDO_DADOS_ATUAL.pedido_origem_id, principalNumero: String(window.__PEDIDO_DADOS_ATUAL.numero_pedido || "").split("/")[0] };
   prepararPedidoExtra({ supabase }).catch((e) => console.warn("[Pedido] extra:", e));
+  rascunhoBase=assinaturaRascunho();
+  instalarProtecaoSaida({temAlteracoes:()=>!['visualizar','imprimir'].includes(window.__PEDIDO_MODO_ABERTURA)&&houveEdicao&&assinaturaRascunho()!==rascunhoBase,salvar:()=>salvarPedidoOperacional(),rascunho:gravarRascunho});
+  const telaRascunho=document.querySelector('.pedido-screen')||document.body;
+  telaRascunho.addEventListener('input',agendarRascunho,true);telaRascunho.addEventListener('change',agendarRascunho,true);
   setTimeout(() => iniciarRascunho().catch((e) => console.warn("[Pedido] rascunho:", e)), 1500); // depois de a tela terminar de preencher (frete, parcelas)
   // Catálogo carregado escondido depois que o pedido terminou de abrir (out/2026): o 1º clique em Catálogo/Lista não
   // espera mais o catálogo inteiro carregar (~5 s). Só agora, porque o catálogo lê o projeto do pedido ao iniciar.

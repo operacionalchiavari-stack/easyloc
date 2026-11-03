@@ -125,7 +125,7 @@ const mockSupabase = `
   assert.deepStrictEqual(tela.projeto, ["Lounge", "Bar"], "ambientes vão para o catálogo do pedido");
 
   // A trilha comercial separa as duas etapas das ferramentas de criação.
-  assert.deepStrictEqual((await page.locator('.ct-ferramentas button').allTextContents()).map(t=>t.replace('F2','').trim()), ['3D']);
+  assert.deepStrictEqual((await page.locator('.ct-ferramentas button').allTextContents()).map(t=>t.replace('F2','').trim()), ['3D','Sublocação']);
   // Dados obrigatórios (out/2026): sem a data de entrega, não abre a lista/catálogo e marca o campo.
   const entregaOriginal = await page.inputValue("#dataEntrega");
   await page.fill("#dataEntrega", "");
@@ -135,6 +135,7 @@ const mockSupabase = `
   assert.ok(!(await page.locator(".pedido-screen").evaluate(el => el.classList.contains("em-catalogo-comercial"))), "não abriu o catálogo/lista");
   assert.strictEqual(await page.locator(".ct-avancar").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(18, 63, 134)", "Salvar azul");
   await page.fill("#dataEntrega", entregaOriginal);
+  await page.fill("#horaColeta", "16:00");
   console.log("ok - sem data de entrega não abre a lista; campo marcado; Salvar azul");
 
   assert.ok(!(await page.locator('.ct-linha').innerText()).includes('Catálogo'));
@@ -187,7 +188,7 @@ const mockSupabase = `
   assert.ok(await cf.locator('[data-cpj-render="r2"] img').evaluate(img=>img.naturalWidth>0 && img.src.includes('/object/public/')));
   assert.strictEqual(await cf.locator('[data-cpj="ir-estudio"]').count(),0,'botao 3D Livre removido apenas do comercial');
   await cf.locator('body').evaluate(async()=>{
-    const {cenaEditor}=await import('./catalogo-studio3d.mjs?v=20261015-assistente');
+    const {cenaEditor}=await import('./catalogo-studio3d.mjs?v=20261102-3d-persistente');
     cenaEditor.pronto=()=>true;cenaEditor.abrir=async()=>({faltando:0});cenaEditor.fechar=async()=>{};
     cenaEditor.capturar=()=>{const canvas=document.createElement('canvas');canvas.width=20;canvas.height=20;canvas.getContext('2d').fillRect(0,0,20,20);return {foto:canvas.toDataURL('image/png'),snapshot:{}};};
   });
@@ -197,7 +198,7 @@ const mockSupabase = `
   await cf.locator('[data-cpj-render="r2"] .cpj-render-erro').waitFor({state:'detached'});
   assert.ok(await cf.locator('[data-cpj-render="r2"] img').evaluate(img=>img.src.includes('/comercial/')), 'imagem recuperada usa pasta exclusiva do pedido');
   console.log('OK - imagens originais, tentativa manual e recuperacao pela cena sem alterar itens');
-  await page.locator('.ct-ferramentas [data-etapa="plantas"]').click();
+  await page.locator('.ct-linha [data-etapa="plantas"]').click();
   await cf.locator('.cpj-work-comercial.is-plantas').waitFor();
   await page.locator('.ct-antes [data-etapa="lista"]').click();
   await cf.locator('.cpj-work-comercial:not(.is-plantas)').waitFor();
@@ -215,5 +216,33 @@ const mockSupabase = `
   assert.ok(/pedido=novo-separacoes_pedidos/.test(salvo.url), "endereço passa a ser o do pedido");
   assert.deepStrictEqual(erros, [], erros.join("\n"));
   console.log("OK — projeto do catálogo abre e salva como pedido");
+  const persistencia3d=await cf.locator('body').evaluate(async()=>{
+    const preparar=window.catalogPrepararRenderPedido;
+    const gravar=window.parent.__pedidoGravarProjetoComercial;
+    const antes=structuredClone(window.parent.__pedidoProjetoComercial);
+    const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;canvas.getContext('2d').fillRect(0,0,32,32);
+    const cena={tipo:'ia',snapshot:{version:1,objects:[],roomWidth:10,roomDepth:10}};
+    window.parent.__pedidoGravarProjetoComercial=async()=>{throw Error('Conex?o interrompida no teste');};
+    const salvar=await preparar();let falhou=false;
+    try{await salvar(canvas.toDataURL(),cena,[]);}catch{falhou=true;}
+    const pendentes=await import('./projeto-render-pendentes.mjs');
+    const prefixo='e1:'+antes.id+':';
+    const quantidade=(await pendentes.listarRendersPendentes(prefixo)).length;
+    window.parent.__pedidoGravarProjetoComercial=gravar;
+    const m=await import('./catalogo-projetos.mjs?v=20261102-montagem-planta');
+    await m.definirProjetoComercialPedido(antes);
+    const depois=await pendentes.listarRendersPendentes(prefixo);
+    return {falhou,quantidade,restantes:depois.length,render:window.parent.__pedidoProjetoComercial.dados.ambientes.flatMap(a=>a.renders).find(r=>r.cena?.tipo==='ia')};
+  });
+  assert.equal(persistencia3d.falhou,true);assert.equal(persistencia3d.quantidade,1);
+  assert.equal(persistencia3d.restantes,0);assert.ok(persistencia3d.render.cena.snapshot);
+  console.log('OK - IA salva automaticamente, preserva cena e recupera grava??o interrompida.');
+  await page.locator('.ct-linha [data-etapa="lista"]').click();
+  await cf.locator('#catalogAssistenteBotao').click();
+  assert.equal(await cf.locator('[data-cas-modo-planta]').isVisible(),false);
+  assert.equal(await cf.locator('[data-cas-modo-planta]').isDisabled(),true);
+  assert.equal(await cf.locator('[data-cas-demarcar]').count(),0);
+  assert.equal(await cf.locator('[data-cas-clip]').isVisible(),true);
+  console.log('OK - montagem pela planta desativada e anexos normais disponiveis.');
   await browser.close();
 })().catch((e) => { console.error(e); process.exit(1); });

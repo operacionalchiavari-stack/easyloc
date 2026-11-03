@@ -36,7 +36,7 @@ const { chromium } = require('playwright'); const express = require('express'); 
         rpc: async (nome, args) => { window.__rpc.push([nome, args]); return { data: nome === 'almox_reservas_personalizacao' ? [
           { produto_id: 'P1', reservado: 6, pre_reserva: 0, pedidos: [{ numero: '2104', cliente: 'Ana Lima', data_evento: '2026-11-02', tipo: 'res', quantidade: 6 }] },
           { produto_id: 'P2', reservado: 4, pre_reserva: 9, pedidos: [{ numero: '2117', cliente: 'Bia', data_evento: '2026-11-05', tipo: 'res', quantidade: 4 }, { numero: '2123', cliente: 'Caio', data_evento: '2026-11-09', tipo: 'pre', quantidade: 9 }] },
-        ] : nome === 'almox_compra_config' ? { automatica: true } : nome === 'almox_solicitacoes_lista' ? JSON.parse(JSON.stringify(window.__solicitacoes))
+        ] : nome === 'operacao_cadastros_config' ? {categorias:['Pintura','Costura','Tecidos'],setores:['Almoxarifado','Forracao','Costura'],custos:{custo_hora:30,margem:40,complexidades:{simples:0,media:20,alta:50}}} : nome === 'almox_compra_config' ? { automatica: true } : nome === 'almox_solicitacoes_lista' ? JSON.parse(JSON.stringify(window.__solicitacoes))
           : nome === 'almox_solicitacao_cancelar' ? (Object.assign(window.__solicitacoes.find((x) => x.id === args.p_id), { status: 'cancelada', fase: 'cancelada', rotulo: 'Cancelada', pode_cancelar: false, observacao: args.p_motivo, concluida_por_nome: 'Ana' }), { ok: true })
           : nome === 'almox_produto_editar' ? { ok: true } : [], error: null }; },
         from: (tabela) => { const q = { select: () => q, eq: () => q, order: () => q, limit: () => q, then: (ok) => Promise.resolve({ data: tabela === 'almox_solicitacoes_compra' ? JSON.parse(JSON.stringify(window.__solicitacoes)) : [], error: null }).then(ok) }; return q; },
@@ -54,19 +54,22 @@ const { chromium } = require('playwright'); const express = require('express'); 
     assert.equal((await page.locator('.tab-btn[data-tab="dashboard"] .tab-badge').innerText()).trim(), '2');
     assert.equal(await page.locator('#tab-dashboard').getByText('Últimas movimentações').count(), 0, 'Últimas movimentações saiu do Estoque atual');
     const cab = (await page.locator('#tab-dashboard thead th').allTextContents()).map((t) => t.trim());
-    assert.deepEqual(cab.slice(5), ['Em estoque', 'Reservado', 'Pré-reserva', 'Mínimo', 'Ideal', 'Custo', 'Status']);
+    assert.deepEqual(cab.slice(5), ['Em estoque', 'Reservado', 'Pré-reserva', 'Mínimo', 'Ideal', 'Custo', 'Reposi\u00e7\u00e3o', 'Status']);
     const larg = await page.evaluate(() => { const p = document.querySelector('#tab-dashboard .panel').getBoundingClientRect().width; return p / document.querySelector('#tab-dashboard').getBoundingClientRect().width; });
     assert.ok(larg > 0.95, 'Estoque atual ocupa a aba inteira: ' + larg);
     assert.deepEqual(await page.evaluate(() => window.__rpc.find((x) => x[0] === 'almox_reservas_personalizacao')), ['almox_reservas_personalizacao', { p_empresa_id: 'emp-1' }]);
     const linha = (cod) => page.locator('#tbodyProdutos tr', { hasText: cod }).locator('td').allTextContents();
     const l1 = (await linha('INS001')).map((t) => t.trim()); const l2 = (await linha('INS002')).map((t) => t.trim()); const l3 = (await linha('INS003')).map((t) => t.trim());
-    assert.deepEqual(l1.slice(5), ['4', '6', '0', '2', '10', 'R$ 35,90', 'Vai faltar']);
-    assert.deepEqual(l2.slice(5), ['10', '4', '9', '1', 'definir', 'definir', 'Falta se fechar']);
-    assert.deepEqual(l3.slice(5), ['30', '0', '0', '5', 'definir', 'definir', 'OK']);
+    assert.deepEqual(l1.slice(5), ['4', '6', '0', '2', '10', 'R$ 35,90', 'definir', 'Vai faltar']);
+    assert.deepEqual(l2.slice(5), ['10', '4', '9', '1', 'definir', 'definir', 'definir', 'Falta se fechar']);
+    assert.deepEqual(l3.slice(5), ['30', '0', '0', '5', 'definir', 'definir', 'definir', 'OK']);
     assert.equal((await page.locator('#cardTotalItens').innerText()).trim(), '466 itens cadastrados');
     assert.equal((await page.locator('.tab-btn[data-tab="emprestimos"] .tab-badge').innerText()).trim(), '3');
-    const topo = await page.evaluate(() => { const h = document.querySelector('.topbar h1').getBoundingClientRect(), cs = [...document.querySelectorAll('.topbar .card')].map(c => c.getBoundingClientRect()); const meio = (h.left + h.right) / 2; return { mesmaLinha: cs.every(c => c.top < h.bottom && c.bottom > h.top), centro: Math.abs(meio - innerWidth / 2) < 30 && cs.filter(c => c.right <= h.left).length === 2 && cs.filter(c => c.left >= h.right).length === 2, cards: document.querySelectorAll('.topbar .card').length, semCardsAntigos: !document.getElementById('boxEmprestimos') && !document.getElementById('boxAbaixoMinimo') }; });
-    assert.deepEqual(topo, { mesmaLinha: true, centro: true, cards: 4, semCardsAntigos: true });
+    assert.equal(await page.locator('.topbar .card').count(),0);
+    assert.equal(await page.locator('#cardMeta,#cardAssertividade,#cardEstoqueTotal,#cardTetoGastos').count(),0);
+    const topo=await page.locator('.topbar').boundingBox();assert.ok(topo.height<=70);
+    assert.ok((await page.locator('.tab-btn[data-tab="dashboard"]').boundingBox()).height<=38);
+    assert.ok((await page.locator('.almox-btn-cadastrar').boundingBox()).height<=38);
     await page.screenshot({ path: process.env.SHOT || require('os').tmpdir() + '/almox.png' });
     console.log('ok 1 - Estoque atual: aba inteira, colunas Em estoque / Reservado / Pré-reserva e status pelo que vai faltar');
 
@@ -82,6 +85,17 @@ const { chromium } = require('playwright'); const express = require('express'); 
     await page.click('.almox-btn-cadastrar');
     await page.locator('#tab-cadastro.active').waitFor();
     assert.ok(await page.locator('.tab-btn[data-tab="dashboard"].active').count(), 'Estoque atual continua marcado no cadastro');
+    await page.waitForFunction(()=>window.__almoxCadastros?.setores.length>0);
+    await page.evaluate(()=>abrirTab('dashboard'));await page.locator('#filtroSetorArmazenamento').selectOption('Costura');assert.equal(await page.locator('#tbodyProdutos tr').count(),0);await page.locator('#filtroSetorArmazenamento').selectOption('');assert.equal(await page.locator('#tbodyProdutos tr').count(),3);await page.screenshot({path:'.tmp/almox-lista-insumos.png',fullPage:true});await page.evaluate(()=>abrirTab('cadastro'));
+    await page.locator('#prodNome').fill('Tecido do setor');
+    await page.locator('#cadCategoria').selectOption('Tecidos');
+    await page.locator('#prodSetor').selectOption('Forracao');
+    await page.locator('#prodValorCusto').fill('1.234,56');
+    await page.locator('#prodReposicaoPercentual').fill('25');
+    assert.match(await page.locator('#prodValorReposicao').inputValue(),/1\.543,20/);
+    await page.evaluate(()=>limparFormProduto());
+    assert.equal(await page.locator('#cadCategoria').inputValue(),'');
+    assert.equal(await page.locator('#cadUnidade').inputValue(),'');
     await page.getByRole('button', { name: '← Voltar ao estoque' }).click();
     await page.locator('#tab-dashboard.active').waitFor();
     console.log('ok 2 - clicar no reservado mostra os pedidos');
@@ -119,13 +133,13 @@ const { chromium } = require('playwright'); const express = require('express'); 
     await cel('INS003', 'custo').locator('input').fill('12,50');
     await cel('INS003', 'custo').locator('input').press('Enter');
     await page.waitForFunction(() => /12,50/.test(document.querySelector('#tbodyProdutos tr:nth-child(3) td[data-campo="custo"]')?.textContent || ''));
-    assert.deepEqual((await ultimaEdicao())[1].p_dados, { custo: 12.5 });
+    assert.deepEqual((await ultimaEdicao())[1].p_dados, { custo: 12.5, reposicao:25 });
     await cel('INS002', 'categoria').click();
-    await cel('INS002', 'categoria').locator('input').fill('Tecidos');
-    await cel('INS002', 'categoria').locator('input').press('Tab');
-    await page.waitForFunction(() => document.querySelector('#tbodyProdutos tr:nth-child(2) td[data-campo="setor"] input'));
+    await cel('INS002', 'categoria').locator('select').selectOption('Tecidos');
+    await cel('INS002', 'categoria').locator('select').press('Tab');
+    await page.waitForFunction(() => document.querySelector('#tbodyProdutos tr:nth-child(2) td[data-campo="setor"] select'));
     assert.deepEqual((await ultimaEdicao())[1].p_dados, { categoria: 'Tecidos' });
-    await cel('INS002', 'setor').locator('input').press('Escape');
+    await cel('INS002', 'setor').locator('select').press('Escape');
     assert.equal((await cel('INS002', 'categoria').innerText()).trim(), 'Tecidos');
     assert.equal(await page.locator('#tbodyProdutos input').count(), 0);
     // Código, produto, unidade e estoque não viram campo

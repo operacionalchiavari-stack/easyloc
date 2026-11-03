@@ -2,6 +2,21 @@ import {test} from 'node:test';import assert from 'node:assert/strict';
 import {renderizarFila,renderizarPedido} from '../Modulos/Producao/producao-vistas.mjs';
 import {situacao,etapaAtual} from '../Modulos/Producao/producao-op.mjs';
 const tarefa=(id,estado)=>({pedido_id:id,pedido:{numero:id,cliente:'Cliente '+id,status:'aprovado',entrega:'2026-11-01',evento:'2026-11-02',local:'Local'},origem:{quantidade:2},inicio_previsto:'2026-10-27T11:00:00Z',fim_previsto:'2026-10-30T20:00:00Z',etapas:[{setor:'pintura',estado,materiais:[]}]});
+test('concluídos saem da fila após a triagem e reaparecem se ela for reaberta',()=>{
+ const t=tarefa('p1','concluida');t.pedido.triagem_status='em_separacao';
+ assert.equal(renderizarFila([t],{}).total,1);
+ assert.match(renderizarFila([t],{executar:true}).html,/data-reabrir-producao/);
+ assert.doesNotMatch(renderizarFila([t],{executar:false}).html,/data-reabrir-producao/);
+ for(const status of ['separado','separado_com_divergencia']){
+  t.pedido.triagem_status=status;
+  assert.equal(renderizarFila([t],{}).total,0);
+  assert.doesNotMatch(renderizarFila([t],{executar:true}).html,/data-reabrir-producao/);
+  assert.equal(renderizarFila([t],{situacao:'concluidas'}).total,0);
+  assert.match(renderizarPedido([t]),/Cliente p1/);
+ }
+ t.pedido.triagem_status='em_separacao';
+ assert.equal(renderizarFila([t],{}).total,1);
+});
 test('um card por pedido em três colunas e filtro por setor',()=>{
  const a=tarefa('p1','pendente'),b=tarefa('p2','execucao'),c=tarefa('p3','concluida');
  const r=renderizarFila([a,b,c,{...a}],{});
@@ -27,9 +42,10 @@ test('etapa atual: um botão principal ou o motivo do bloqueio',()=>{
  let t=item();
  assert.equal(situacao(t,t.etapas[1],dados).titulo,'Aguardando a etapa anterior');
  assert.equal(situacao(t,t.etapas[0],dados).titulo,'Falta material de outra etapa');
- t.etapas[1].pacotes=[{estado:'separado',materiais:[{id:'m',quantidade:2}]}];
+ t.etapas[1].pacotes=[{modo_separacao:'qr',estado:'separado',materiais:[{id:'m',quantidade:2}]}];
  t.etapas[0].estado='concluida';assert.equal(etapaAtual(t,'pintura').id,'b');
  assert.deepEqual(situacao(t,t.etapas[1],dados).principal,['receber','Receber material (ler QR)']);
+ t.etapas[1].pacotes[0].modo_separacao='manual';assert.equal(situacao(t,t.etapas[1],dados).principal[0],'receber_manual');
  t.etapas[1].pacotes=[];assert.deepEqual(situacao(t,t.etapas[1],dados).principal,['separar','Separar materiais']);
  assert.equal(situacao(t,t.etapas[1],{...dados,almox:false}).principal,null);
  t.etapas[1].materiais[0].recebido=2;assert.deepEqual(situacao(t,t.etapas[1],dados).principal,['iniciar','Iniciar etapa']);

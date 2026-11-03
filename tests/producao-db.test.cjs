@@ -26,6 +26,7 @@ test('produção: calendário útil, pré-reserva, etapas, QR idempotente, devol
  for(const name of ['20261022001800_producao_pedidos','20261022001900_producao_fluxo']) await db.exec(fs.readFileSync('supabase/migrations/'+name+'.sql','utf8'));
  // Apenas a validação e atualização: a conciliação do Almoxarifado depende do schema de cartelas completo.
  const integ=fs.readFileSync('supabase/migrations/20261022002000_producao_integracoes.sql','utf8');await db.exec(integ);
+ await db.exec(fs.readFileSync('supabase/migrations/20261103000100_producao_recebimento_manual.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/migrations/20261023003000_producao_quantidades.sql','utf8'));await db.exec(fs.readFileSync('supabase/migrations/20261023003100_producao_avanco_quantidade.sql','utf8'));
  const rpc=async(sql,args=[]) => (await db.query(sql,args)).rows;
  const cfg=(await rpc('select producao_config($1) c',[emp]))[0].c;
@@ -44,12 +45,21 @@ test('produção: calendário útil, pré-reserva, etapas, QR idempotente, devol
  await assert.rejects(rpc('select producao_separar($1,$2,$3)',[emp,e,[{id:mat.id,quantidade:2}]]),/confirmação/);
  await db.exec(`update separacoes_pedidos set status_comercial='aprovado' where id='${pedido}'`);
  await assert.rejects(rpc(`select producao_acao($1,$2,'iniciar')`,[emp,e]),/materiais/);
- const pacote=(await rpc('select producao_separar($1,$2,$3) id',[emp,e,[{id:mat.id,quantidade:2}]]))[0].id;
+ const manual=(await rpc('select producao_separar_modo($1,$2,$3,$4) id',[emp,e,[{id:mat.id,quantidade:0.5}],'manual']))[0].id;
+ assert.equal((await rpc('select modo_separacao from producao_pacotes where id=$1',[manual]))[0].modo_separacao,'manual');
+ assert.equal(Number((await rpc('select recebido from producao_materiais where id=$1',[mat.id]))[0].recebido),0);
+ await assert.rejects(rpc('select producao_receber_manual($1,$2,$3)',[outro,e,manual]),/permiss/);
+ await assert.rejects(rpc('select producao_receber_manual($1,$2,$3)',[emp,etapas[1].id,manual]),/pertence/);
+ await rpc('select producao_receber_manual($1,$2,$3)',[emp,e,manual]);await rpc('select producao_receber_manual($1,$2,$3)',[emp,e,manual]);
+ assert.equal(Number((await rpc('select estoque_atual from estoque'))[0].estoque_atual),9.5);
+ assert.equal((await rpc("select count(*)::int n from producao_historico where acao='receber_manual'"))[0].n,1);
+ const pacote=(await rpc('select producao_separar_modo($1,$2,$3,$4) id',[emp,e,[{id:mat.id,quantidade:1.5}],'qr']))[0].id;
+ await assert.rejects(rpc('select producao_receber_manual($1,$2,$3)',[emp,e,pacote]),/etiqueta/);
  const qr=(await rpc('select qr from producao_pacotes where id=$1',[pacote]))[0].qr;
  await assert.rejects(rpc('select producao_receber($1,$2,$3)',[emp,qr,etapas[1].id]),/esta etapa/);
  await rpc('select producao_receber($1,$2,$3)',[emp,qr,e]);await rpc('select producao_receber($1,$2,$3)',[emp,qr,e]);
  assert.equal(Number((await rpc('select * from almox_reservas_personalizacao($1)',[emp]))[0].reservado),0,'material recebido não continua reservado');
- assert.equal((await rpc('select count(*)::int n from movimentos'))[0].n,1);
+ assert.equal((await rpc('select count(*)::int n from movimentos'))[0].n,2);
  await rpc(`select producao_acao($1,$2,'iniciar')`,[emp,e]);
  await assert.rejects(rpc(`select producao_acao($1,$2,'iniciar')`,[emp,etapas[1].id]),/anterior/);
  await rpc(`select producao_acao($1,$2,'concluir')`,[emp,e]);assert.equal((await rpc('select estado from producao_etapas where id=$1',[e]))[0].estado,'conferencia');

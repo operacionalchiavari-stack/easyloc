@@ -19,7 +19,7 @@
           }
         },
         auth:{
-          storageKey:"easyloc-auth",
+          storageKey:document.currentScript?.dataset.authStorageKey || "easyloc-auth",
           persistSession:true,
           autoRefreshToken:true
         }

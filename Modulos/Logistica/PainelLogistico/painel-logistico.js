@@ -11,6 +11,7 @@
   let inicio = segundaOuHoje(new Date());
   let dados = null;
   let salvando = false;
+  let recursosAbertos = false;
   let diaSelecionado=null,etapaSelecionada=null,abaRecursos='cam';
   // Dias carregados (cresce quando a faixa de dias chega ao fim); o servidor devolve no máximo 14 por chamada.
   const BLOCO=14;
@@ -111,10 +112,65 @@
     if(!mostrar.some(e=>e.id===etapaSelecionada))etapaSelecionada=(mostrar.find(e=>['montagem','desmontagem'].includes(e.tipo))||mostrar[0])?.id||null;
     const atual=mostrar.find(e=>e.id===etapaSelecionada);
     const principais=mostrar;
-    $('plDias').innerHTML=`<div class="pl-planejamento"><section class="pl-planejamento-lista pl-painel"><header class="pl-painel-cab"><div><small>${diaSemana(diaSelecionado)} · ${br(diaSelecionado)}</small><h2>Montagens e desmontagens</h2></div><b>${principais.length}</b></header><div class="pl-servicos-lista">${principais.map(servico).join('')||'<p class="pl-vazio">Nenhuma montagem ou desmontagem neste dia.</p>'}</div></section><div class="pl-planejamento-edicao">${atual?cartao(atual):'<section class="pl-painel"><p class="pl-vazio">'+'Selecione uma etapa para montar a equipe e distribuir os caminhões.'+'</p></section>'}</div><aside class="pl-planejamento-recursos">${recursosDoDia(doDia,atual)}</aside></div>`;
+    $('plDias').innerHTML=`<div class="pl-planejamento"><section class="pl-planejamento-lista pl-painel"><header class="pl-painel-cab"><div><h2>Montagens e desmontagens</h2></div><b>${principais.length}</b></header><div class="pl-servicos-lista">${principais.map(servico).join('')||'<p class="pl-vazio">Nenhuma montagem ou desmontagem neste dia.</p>'}</div></section><div class="pl-planejamento-edicao">${atual?informacoesSupervisor(atual)+cartao(atual):'<section class="pl-painel"><p class="pl-vazio">'+'Selecione uma etapa para montar a equipe e distribuir os caminhões.'+'</p></section>'}</div><dialog id="plDisponiveisDialog" class="pl-disponiveis-dialog" aria-labelledby="plDisponiveisTitulo"><header class="pl-disponiveis-topo"><h2 id="plDisponiveisTitulo">Dispon&#237;veis no dia</h2><button type="button" data-fechar-disponiveis aria-label="Fechar dispon&#237;veis">&times;</button></header>${recursosDoDia(doDia,atual)}</dialog></div>`;
+    const dialog = $('plDisponiveisDialog');
+    const gatilho = document.querySelector('[data-abrir-disponiveis]');
+    if (gatilho) {
+      const quantidade = tipo => dialog.querySelector('#plRecursoTab-'+tipo+' .pl-disponiveis')?.textContent || '0';
+      gatilho.innerHTML = '<span class="pl-disponiveis-titulo">Equipe dispon&#237;vel</span><span class="pl-disponiveis-contagens"><span>Equipe <b>'+quantidade('interna')+'</b></span><span>Caminh&#245;es <b>'+quantidade('cam')+'</b></span><span>Free <b>'+quantidade('free')+'</b></span></span>';
+      gatilho.disabled = false;
+    }
+    dialog.addEventListener('close', () => { recursosAbertos = false; document.querySelector('[data-abrir-disponiveis]')?.focus(); });
+    dialog.addEventListener('cancel', () => { recursosAbertos = false; });
+    dialog.addEventListener('click', ev => {
+      if (ev.target !== dialog) return;
+      const r = dialog.getBoundingClientRect();
+      if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) dialog.close();
+    });
+    if (recursosAbertos) dialog.showModal();
+    pintarFotosServicos(principais).catch(() => {});
   }
 
-  function servico(e){return `<button type="button" class="pl-servico ${e.id===etapaSelecionada?'is-selecionado':''}" data-selecionar="${esc(e.id)}" data-tipo="${esc(e.tipo)}" aria-pressed="${e.id===etapaSelecionada}"><span class="pl-etapa-linha1"><b class="pl-hora">${esc(e.hora||'--:--')}</b><span class="pl-tipo pl-tipo-${esc(e.tipo)}">${esc(e.etapa)}</span><b class="pl-pedido-numero">Pedido #${esc(String(e.pedido||"-").replace(/^#/,""))}</b></span><strong>${esc(e.cliente)}</strong><span class="pl-local">${esc(e.local)}</span><small>${e.m3||0} m³ · ${(e.responsavel?1:0)+e.equipe.length}/${e.sugerido} pessoas · ${e.caminhoes.length} caminhão(ões)</small>${e.somente_consulta?'<span class="pl-consulta">Pré-reserva · somente consulta</span>':escalaCompleta(e)?'<span class="pl-situacao-ok pl-equipe-completa">✓ Equipe e caminhões completos</span>':''}</button>`;}
+  const fotosDecoradores = new Map();
+  async function pintarFotosServicos(etapas) {
+    const sb = window.supabaseClient;
+    if (!sb) return;
+    let ctx;
+    try { ctx = await window.aguardarContexto?.(); } catch { return; }
+    const empresa = ctx?.empresa_id || window.__CONTEXT?.empresa_id;
+    if (!empresa) return;
+    const porId = new Map(etapas.map(e => [String(e.id), e]));
+    document.querySelectorAll('.pl-servico').forEach(card => {
+      const e = porId.get(card.dataset.selecionar), avatar = card.querySelector('[data-decorador-foto]');
+      if (!e || !avatar) return;
+      const chave = JSON.stringify([empresa,e.cliente_id || null,e.cliente]);
+      if (!fotosDecoradores.has(chave)) fotosDecoradores.set(chave, (async () => {
+        let q = sb.from('clientes_empresas').select('catalogo_logo_url').eq('empresa_id',empresa);
+        q = e.cliente_id ? q.eq('id',e.cliente_id) : q.eq('nome_razao',e.cliente || '');
+        const {data,error} = await q.limit(1);
+        if (error) return '';
+        const url = data?.[0]?.catalogo_logo_url || '';
+        return /^https?:\/\//i.test(url) ? url : '';
+      })().catch(() => ''));
+      fotosDecoradores.get(chave).then(url => {
+        if (!url || !avatar.isConnected) return;
+        const img = document.createElement('img');
+        img.alt = 'Foto de ' + (e.cliente || 'decorador'); img.loading = 'lazy';
+        img.onerror = () => img.remove(); img.src = url; avatar.append(img);
+      });
+    });
+  }
+
+  function informacoesSupervisor(e) {
+    const d=e.supervisor||{}, acesso=d.acesso||{};
+    const dataHora=(data,hora)=>[data?br(String(data).slice(0,10)):'',hora||''].filter(Boolean).join(' · ')||'Não informado';
+    const campo=(nome,valor)=>`<div class="pl-info-campo"><dt>${esc(nome)}</dt><dd>${esc(valor||'Não informado')}</dd></div>`;
+    const acessoCampos=[['Baldeação',acesso.baldeacao],['Escada',acesso.escada],['Caminhão próximo',acesso.caminhao_perto],['Horário limite',acesso.horario_limite],['Lona',acesso.lona]].filter(([,v])=>v!=null&&String(v).trim());
+    const obs=(titulo,texto)=>`<div class="pl-info-observacao"><h3>${esc(titulo)}</h3><p>${esc(texto||'Nenhuma observação registrada.')}</p></div>`;
+    return `<section class="pl-painel pl-info-supervisor" aria-label="Informações da operação"><header class="pl-painel-cab"><h2>Informações da operação</h2><dl class="pl-info-datas">${campo('Entrega',dataHora(d.data_entrega,d.horario_entrega))}${campo('Coleta',dataHora(d.data_coleta,d.horario_coleta))}${campo('Evento',dataHora(d.data_evento,''))}</dl></header><div class="pl-info-conteudo"><dl class="pl-info-grade">${campo('Endereço completo',d.endereco)}${e.tipo==='desmontagem'?'':campo('Montagem programada',dataHora(e.data,e.hora))}</dl><div class="pl-info-observacoes">${e.tipo==='desmontagem'?obs('Observações de coleta',d.observacoes_coleta):obs('Observações de entrega',d.observacoes_entrega)}</div>${acessoCampos.length?`<dl class="pl-info-acesso">${acessoCampos.map(([k,v])=>campo(k,v)).join('')}</dl>`:''}</div></section>`;
+  }
+
+  function servico(e){return `<button type="button" class="pl-servico ${e.id===etapaSelecionada?'is-selecionado':''} ${escalaCompleta(e)?'is-completo':''}" data-selecionar="${esc(e.id)}" data-tipo="${esc(e.tipo)}" aria-pressed="${e.id===etapaSelecionada}"><span class="pl-etapa-linha1"><b class="pl-hora">${esc(e.hora||'--:--')}</b><b class="pl-pedido-numero">Pedido #${esc(String(e.pedido||"-").replace(/^#/,""))}</b></span><span class="pl-servico-cliente"><span class="pl-decorador-foto" data-decorador-foto>${esc(String(e.cliente||"?").trim().charAt(0))}</span><span class="pl-servico-identidade"><strong>${esc(e.cliente)}</strong><span class="pl-local">${esc(e.local)}</span></span></span>${e.somente_consulta?'<span class="pl-consulta">Pré-reserva · somente consulta</span>':''}</button>`;}
 
   function fotoRecurso(p,tipo){const url=p.foto_url||'';return '<div class="pl-recurso-foto">'+(tipo==='cam'?iconeCam:iconePessoa)+(/^https?:\/\//i.test(url)?'<img src="'+esc(url)+'" alt="'+esc(p.nome||p.codigo)+'" loading="lazy">':'')+'</div>';}
   function recursosDoDia(etapas,atual){
@@ -157,9 +213,10 @@
     };
     const vagasEquipe=e.equipe.map(n=>vagaPessoa(n,'equipe')).join('')+Array.from({length:Math.max(0,(Number(e.sugerido)||1)-1-e.equipe.length)},()=>vagaPessoa('','equipe')).join('');
     const plano=planoCaminhoes(e),restantes=e.caminhoes.map(c=>caminhaoInfo(c)||{codigo:c,capacidade:0});
-    const vagaCam=(c,alocado)=>`<div class="pl-vaga pl-vaga-cam ${alocado?'is-preenchida':'is-vazia'}"><div class="pl-caminhao-icone">${iconeCam}${alocado&&/^https?:\/\//i.test(c.foto_url||'')?`<img src="${esc(c.foto_url)}" alt="${esc(c.codigo)}">`:''}</div><strong>${esc(alocado?c.codigo:c.capacidade?'Caminhão · '+c.capacidade+' m³':'Selecionar caminhão')}</strong><small>${esc(alocado?(c.modelo||'Caminhão selecionado'):'A preencher')}</small>${alocado?remover(c.codigo,'cam'):''}</div>`;
+    const vagaCam=(c,alocado)=>`<div class="pl-vaga pl-vaga-cam ${alocado?'is-preenchida':'is-vazia'}"><div class="pl-caminhao-icone">${iconeCam}${alocado&&/^https?:\/\//i.test(c.foto_url||'')?`<img src="${esc(c.foto_url)}" alt="${esc(c.codigo)}">`:''}</div><strong>${esc(alocado?c.codigo:c.capacidade?'Caminhão · '+c.capacidade+' m³':'Selecionar caminhão')}</strong><small>${esc(alocado?(c.modelo||'Caminhão selecionado'):'A preencher')}</small><small class="pl-capacidade-caminhao">${Number(c.capacidade)>0?Number(c.capacidade).toLocaleString('pt-BR')+' m\u00b3 de capacidade':'Capacidade n\u00e3o cadastrada'}</small>${alocado?remover(c.codigo,'cam'):''}</div>`;
+    const capacidadeDistribuida=e.caminhoes.reduce((s,c)=>s+Math.max(0,Number(caminhaoInfo(c)?.capacidade)||0),0),capacidadeNecessaria=Math.max(0,Number(e.m3)||0);
     const camVagas=plano.vagas.map(v=>{let i=restantes.findIndex(c=>c.capacidade>=v.capacidade);return i>=0?vagaCam(restantes.splice(i,1)[0],true):vagaCam(v,false);}).join('')+restantes.map(c=>vagaCam(c,true)).join('');
-    return `<article class="pl-etapa pl-painel${e.passada?' is-passada':''}" data-id="${esc(e.id)}"><header class="pl-painel-cab"><h2>Montagem da equipe</h2>${equipeCompleta(e)?'<span class="pl-equipe-completa">✓ Equipe completa</span>':''}${e.somente_consulta?'<span class="pl-consulta">Pré-reserva · somente consulta</span>':''}<b>${total}/${e.sugerido}</b></header><div class="pl-etapa-escala"><div class="pl-vagas">${vagaPessoa(e.responsavel,'resp')}${vagasEquipe}</div></div><section class="pl-distribuicao"><header class="pl-painel-cab"><h2>Distribuição de caminhões</h2><b>${e.caminhoes.length}/${usaCaminhao?plano.vagas.length:0}</b></header><div class="pl-etapa-escala">${usaCaminhao||e.caminhoes.length?`<p class="pl-dica">Volume a transportar: ${esc(e.m3||0)} m³ · vagas sugeridas pela capacidade cadastrada.</p><div class="pl-vagas">${camVagas}</div>${plano.insuficiente?'<small class="pl-dica">Capacidade cadastrada insuficiente para completar a sugestão de transporte.</small>':''}`:'<p class="pl-dica">Esta etapa não exige caminhão.</p>'}</div></section></article>`;
+    return `<article class="pl-etapa pl-painel${e.passada?' is-passada':''}" data-id="${esc(e.id)}"><header class="pl-painel-cab"><h2>Montagem da equipe</h2>${e.somente_consulta?'<span class="pl-consulta">Pré-reserva · somente consulta</span>':''}<b>${total}/${e.sugerido}</b></header><div class="pl-etapa-escala"><div class="pl-vagas">${vagaPessoa(e.responsavel,'resp')}${vagasEquipe}</div></div><section class="pl-distribuicao"><header class="pl-painel-cab"><h2>Distribuição de caminhões</h2>${usaCaminhao||e.caminhoes.length?`<div class="pl-capacidade-resumo"><span>Capacidade necess\u00e1ria <b>${capacidadeNecessaria.toLocaleString('pt-BR')} m\u00b3</b></span><span>Caminh\u00f5es distribu\u00eddos <b>${capacidadeDistribuida.toLocaleString('pt-BR')} m\u00b3</b></span>${capacidadeDistribuida<capacidadeNecessaria?'<span class="is-falta">Faltam '+(capacidadeNecessaria-capacidadeDistribuida).toLocaleString('pt-BR')+' m\u00b3</span>':''}</div>`:""}</header><div class="pl-etapa-escala">${usaCaminhao||e.caminhoes.length?`<div class="pl-vagas">${camVagas}</div>`:'<p class="pl-dica">Esta etapa não exige caminhão.</p>'}</div></section></article>`;
   }
 
 
@@ -235,6 +292,9 @@
   });
 
   $("plDias").addEventListener("click", ev => {
+
+    if (ev.target.closest('[data-fechar-disponiveis]')) { $('plDisponiveisDialog').close(); return; }
+
     const aba=ev.target.closest('[data-aba-recurso]');if(aba){abaRecursos=aba.dataset.abaRecurso;desenhar();$('plRecursoTab-'+abaRecursos).focus();return;}
     const selecionado=ev.target.closest('[data-selecionar]');
     if(selecionado){etapaSelecionada=selecionado.dataset.selecionar;desenhar();return;}
@@ -252,6 +312,11 @@
 
   $('plDias').addEventListener('keydown',ev=>{const tab=ev.target.closest('[data-aba-recurso]');if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(ev.key))return;ev.preventDefault();const tabs=[...document.querySelectorAll('[data-aba-recurso]')],i=tabs.indexOf(tab),n=ev.key==='Home'?0:ev.key==='End'?tabs.length-1:(i+(ev.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;tabs[n].click();});
   $('plDias').addEventListener('error',ev=>{if(ev.target.matches('.pl-avatar img,.pl-recurso-foto img,.pl-caminhao-icone img'))ev.target.remove();},true);
+  document.querySelector('[data-abrir-disponiveis]').onclick = () => {
+    const dialog = $('plDisponiveisDialog');
+    if (!dialog) return;
+    recursosAbertos = true; dialog.showModal();
+  };
   $("plPreencher").onclick = () => carregar(true);
 
 

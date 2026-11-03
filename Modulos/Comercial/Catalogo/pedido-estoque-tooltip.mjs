@@ -17,6 +17,13 @@ export function iniciarDetalhesEstoque({ supabase, empresa, data, pedido = () =>
   let ponteiro = null;
   const n = v => Number(v).toLocaleString('pt-BR');
   const dia = v => v ? v.slice(0,10).split('-').reverse().join('/') : '—';
+  const etapaAtual = fluxo => {
+    if (!fluxo) return 'Etapa indisponível';
+    if (fluxo.etapa === 'cancelado') return 'Cancelado';
+    if (fluxo.finalizado) return 'Finalizado';
+    if (fluxo.posicao_final) return fluxo.posvenda_feita && fluxo.financeiro_pendente ? 'Pós-venda feito · financeiro pendente' : 'Pós-venda';
+    return ({ comercial:'Comercial', pre_reserva:'Comercial', triagem:'Triagem', expedicao:'Carregamento', entrega:'Entrega', coleta:'Coleta', retorno_simultaneo:'Descarregamento e triagem da volta', descarregamento:'Descarregamento', triagem_retorno:'Triagem da volta', posicao_final:'Posição final' })[fluxo.etapa] || 'Etapa indisponível';
+  };
   const linha = (texto, classe = '') => {
     const p = document.createElement('p'); p.textContent = texto; p.className = classe; caixa.append(p);
   };
@@ -64,7 +71,17 @@ export function iniciarDetalhesEstoque({ supabase, empresa, data, pedido = () =>
       const chave = `${empresaAtual}:${id}:${dataAtual}:${pedidoAtual || ""}:${per?.ini || ""}:${per?.fim || ""}`;
       if (!cache.has(chave) || cache.get(chave).ate < Date.now()) {
         const promessa = supabase.rpc('pedido_estoque_detalhes', { p_empresa_id: empresaAtual, p_item_id: id, p_data: dataAtual, p_pedido: pedidoAtual, p_inicio: per?.ini || null, p_fim: per?.fim || null })
-          .then(({data, error}) => { if(error) throw error; return data; });
+          .then(async ({data, error}) => {
+            if(error) throw error;
+            const ids = [...new Set((data?.componentes || []).flatMap(c => [...(c.pedidos || []), ...(c.bloqueios || [])].map(p => p.pedido_id)).filter(Boolean))];
+            const fluxos = new Map();
+            for (let i = 0; i < ids.length; i += 500) {
+              const resposta = await supabase.rpc('comercial_fluxo_pedidos', { p_empresa: empresaAtual, p_pedidos: ids.slice(i, i + 500) });
+              if (resposta.error) { console.warn('Não foi possível consultar as etapas dos pedidos:', resposta.error.message); break; }
+              for (const fluxo of Array.isArray(resposta.data) ? resposta.data : []) fluxos.set(fluxo.id, fluxo);
+            }
+            return { ...data, fluxos };
+          });
         cache.set(chave, { promessa, ate: Date.now() + 60000 });
         promessa.catch(() => cache.delete(chave));
       }
@@ -123,7 +140,7 @@ export function iniciarDetalhesEstoque({ supabase, empresa, data, pedido = () =>
           tabela.className = 'pedido-estoque-tabela';
           tabela.setAttribute('aria-label', `Reservas de ${c.nome}`);
           const cabecalho = tabela.createTHead().insertRow();
-          for (const titulo of ['Cliente', 'Data do evento', 'Pedido', 'Local', 'Qtd.', 'Período reservado']) {
+          for (const titulo of ['Cliente', 'Data do evento', 'Pedido', 'Etapa atual', 'Local', 'Qtd.', 'Período reservado']) {
             const th = document.createElement('th'); th.scope = 'col'; th.textContent = titulo; cabecalho.append(th);
           }
           const corpo = tabela.createTBody();
@@ -131,7 +148,7 @@ export function iniciarDetalhesEstoque({ supabase, empresa, data, pedido = () =>
           for (const p of c.pedidos) {
             const tr = corpo.insertRow(); tr.className = 'pedido-estoque-reserva';
             const proprio = p.pedido_id === window.parent.__PEDIDO_ATUAL_ID ? ' (este pedido)' : '';
-            const valores = [p.cliente || '—', dia(p.evento), `${p.numero}${proprio}`, p.local || 'Não informado', n(p.quantidade), `${dia(p.inicio)} até ${dia(p.fim)}`];
+            const valores = [p.cliente || '—', dia(p.evento), `${p.numero}${proprio}`, etapaAtual(resultado.fluxos.get(p.pedido_id)), p.local || 'Não informado', n(p.quantidade), `${dia(p.inicio)} até ${dia(p.fim)}`];
             for (const valor of valores) tr.insertCell().textContent = valor;
             if(p.situacao) {
               const status = document.createElement('small'); status.textContent = situacoes[p.situacao] || p.situacao;
@@ -141,7 +158,12 @@ export function iniciarDetalhesEstoque({ supabase, empresa, data, pedido = () =>
           rolagem.append(tabela); caixa.append(rolagem);
         }
         const motivos = { avaria:'Avaria', limpeza:'Limpeza', manutencao:'Manutenção' };
-        for (const b of c.bloqueios || []) linha(`${motivos[b.motivo] || b.motivo}: ${n(b.quantidade)} unidade(s)${b.numero ? ` · Pedido ${b.numero}` : ''}`);
+        for (const b of c.bloqueios || []) {
+          const identificacao = [b.cliente || (b.pedido_id ? 'Cliente não informado' : ''), b.numero ? `Pedido ${b.numero}` : '', b.evento ? `Evento ${dia(b.evento)}` : '', b.local].filter(Boolean);
+          if (b.pedido_id) identificacao.push(etapaAtual(resultado.fluxos.get(b.pedido_id)));
+          identificacao.push(`${motivos[b.motivo] || b.motivo}: ${n(b.quantidade)} unidade(s)`);
+          linha(identificacao.join(' · '));
+        }
       }
       posicionar();
     } catch (e) {

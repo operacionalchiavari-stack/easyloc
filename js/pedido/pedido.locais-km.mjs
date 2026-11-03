@@ -10,7 +10,8 @@ const pedidoMiniMapState = {
   largeMarker: null,
   currentLocal: null,
   supabase: null,
-  modalBound: false
+  modalBound: false,
+  revisaoLocal: 0
 };
 
 export function initAutocompleteLocaisEKm({
@@ -47,6 +48,7 @@ export function initAutocompleteLocaisEKm({
   })();
 
   window.__pedidoRenderizarLocalEvento = (local) => {
+    pedidoMiniMapState.revisaoLocal++;
     // Endereço completo do local, para o topo da prévia/PDF do pedido (out/2026).
     window.__pedidoLocalAtual = local ? {
       nome: local.nome_razao || "",
@@ -111,6 +113,7 @@ export function initAutocompleteLocaisEKm({
     if(termo.length < 2 || localIdHidden?.value) return;
 
     const { data, error } = await buscarLocais(termo, true, 1);
+    if((localInput.value || '').trim() !== termo || localIdHidden?.value) return;
 
     if(error){
       console.error("[EasyLoc Debug]", {
@@ -138,6 +141,7 @@ export function initAutocompleteLocaisEKm({
     }
 
     const { data, error } = await buscarLocais(termo, false, 10);
+    if((localInput.value || '').trim() !== termo) return;
 
     if(error){
       console.error("[EasyLoc Debug]", {
@@ -161,13 +165,10 @@ export function initAutocompleteLocaisEKm({
     data.forEach((local) => {
       const item = document.createElement("div");
       item.classList.add("autocomplete-item");
-      item.innerHTML = `
-        <strong>${local.nome_razao}</strong>
-        <div style="font-size:12px;color:#64748b;">
-          ${local.endereco || ""}
-          ${local.numero_endereco ? ", " + local.numero_endereco : ""}
-        </div>
-      `;
+      const nome=document.createElement('strong');nome.textContent=local.nome_razao;
+      const endereco=document.createElement('div');endereco.style.cssText='font-size:12px;color:#64748b';
+      endereco.textContent=[local.endereco,local.numero_endereco].filter(Boolean).join(', ');
+      item.append(nome,endereco);
       item.addEventListener("click", () => selecionarLocal(local));
       localLista.appendChild(item);
     });
@@ -177,6 +178,11 @@ export function initAutocompleteLocaisEKm({
 
   localInput.addEventListener("input", () => {
     if(localIdHidden) localIdHidden.value = "";
+    ultimoLocalCalculado='';
+    window.__pedidoRenderizarLocalEvento?.(null);
+    aplicarDistanciaIndisponivel();
+    const manual=document.getElementById('freteKmManual');if(manual)manual.value='';
+    localLista.innerHTML='';localLista.style.display='none';
     doBusca();
   });
 
@@ -194,6 +200,7 @@ export function initAutocompleteLocaisEKm({
 
 function renderizarObservacoesLocal({ local, obsDiv }){
   if(!obsDiv) return;
+  local ||= {};
 
   const observacoes = getTagsOperacionais(local?.tags || {});
   const tagsDiv = document.getElementById("localTagsInline");
@@ -232,9 +239,10 @@ function enderecoCompletoLocal(local = {}){
 }
 
 function coordenadasLocal(local = {}){
+  if([local.latitude,local.longitude].some(v=>v===null||v===undefined||String(v).trim()===''))return null;
   const lat = Number(local.latitude);
   const lng = Number(local.longitude);
-  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat)<=90 && Math.abs(lng)<=180 ? { lat, lng } : null;
 }
 
 async function geocodificarLocal(local = {}){
@@ -617,6 +625,9 @@ async function salvarDistanciaNoLocal({ supabase, local, km, texto }){
 }
 
 async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }){
+  const revisao=pedidoMiniMapState.revisaoLocal;
+  const aplicarKmSeAtual=(...args)=>{if(revisao===pedidoMiniMapState.revisaoLocal)aplicarKmCalculado(...args);};
+  const aplicarIndisponivelSeAtual=(...args)=>{if(revisao===pedidoMiniMapState.revisaoLocal)aplicarDistanciaIndisponivel(...args);};
   const debugBase = {
     arquivo: "js/pedido/pedido.locais-km.mjs",
     funcao: "calcularKmAutomatico"
@@ -625,7 +636,7 @@ async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }
   try{
     const distanciaSalva = Number(local?.distancia_galpao_km || 0);
     if(!forcarRecalculo && Number.isFinite(distanciaSalva) && distanciaSalva > 0){
-      aplicarKmCalculado(distanciaSalva, local?.distancia_galpao_texto || "");
+      aplicarKmSeAtual(distanciaSalva, local?.distancia_galpao_texto || "");
       return;
     }
 
@@ -655,9 +666,10 @@ async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }
       return;
     }
 
-    const latitudeDestino = Number(local?.latitude);
-    const longitudeDestino = Number(local?.longitude);
-    const temCoordenadasDestino = Number.isFinite(latitudeDestino) && Number.isFinite(longitudeDestino);
+    const coordenadas = coordenadasLocal(local);
+    const latitudeDestino = coordenadas?.lat ?? null;
+    const longitudeDestino = coordenadas?.lng ?? null;
+    const temCoordenadasDestino = Boolean(coordenadas);
     const enderecoLocal = String(local?.endereco || "").trim();
     const numeroLocal = String(local?.numero_endereco || "").trim();
     const enderecoComNumero = numeroLocal && !enderecoLocal.includes(numeroLocal)
@@ -696,7 +708,7 @@ async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }
         origemFinal,
         destinoFinal
       });
-      aplicarDistanciaIndisponivel("Nao calculado");
+      aplicarIndisponivelSeAtual("Nao calculado");
       return;
     }
 
@@ -743,14 +755,14 @@ async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }
         body,
         payloadDistancia
       });
-      aplicarDistanciaIndisponivel("Nao calculado");
+      aplicarIndisponivelSeAtual("Nao calculado");
       return;
     }
 
     if(result?.km != null){
       const km = Number(Number(result.km).toFixed(1));
       const texto = formatKmTexto(km);
-      aplicarKmCalculado(km, texto);
+      aplicarKmSeAtual(km, texto);
       salvarDistanciaNoLocal({ supabase, local, km, texto });
       return;
     }
@@ -765,7 +777,7 @@ async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }
         origem: result?.origem || payloadDistancia.origem,
         destino: result?.destino || payloadDistancia.destino
       });
-      aplicarDistanciaIndisponivel(
+      aplicarIndisponivelSeAtual(
         result?.statusGoogle === "REQUEST_DENIED" ? "Google bloqueado" : "Nao calculado"
       );
       return;

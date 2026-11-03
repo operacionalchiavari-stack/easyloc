@@ -34,6 +34,9 @@ export function initAutocompleteClientes({
       .ilike("nome_razao", `%${termo}%`)
       .limit(10);
 
+    // Uma resposta antiga não pode repor sugestões depois de editar/limpar o campo.
+    if((clienteInput.value || '').trim() !== termo) return;
+
     if (error) {
       console.error("Erro ao buscar clientes:", error);
       return;
@@ -54,7 +57,21 @@ export function initAutocompleteClientes({
     data.forEach(cliente => {
       const item = document.createElement("div");
       item.classList.add("autocomplete-item");
-      item.innerText = cliente.nome_razao;
+      const retrato = document.createElement("span");
+      retrato.className = "cliente-busca-retrato";
+      retrato.setAttribute("aria-hidden", "true");
+      retrato.textContent = cliente.nome_razao?.trim().charAt(0).toUpperCase() || "?";
+      if (/^https?:\/\//i.test(cliente.catalogo_logo_url || "")) {
+        const foto = document.createElement("img");
+        foto.src = cliente.catalogo_logo_url;
+        foto.alt = "";
+        foto.addEventListener("error", () => foto.remove(), { once: true });
+        retrato.appendChild(foto);
+      }
+      const nome = document.createElement("span");
+      nome.className = "cliente-busca-nome";
+      nome.textContent = cliente.nome_razao;
+      item.append(retrato, nome);
 
       item.addEventListener("click", () => {
         clienteInput.value = cliente.nome_razao;
@@ -74,7 +91,15 @@ export function initAutocompleteClientes({
 
   }, 300);
 
-  clienteInput.addEventListener("input", doBusca);
+  clienteInput.addEventListener("input", () => {
+    if(clienteIdHidden?.value){
+      if(telefoneInput)telefoneInput.value='';
+      if(responsavelInput)responsavelInput.value='';
+    }
+    if(clienteIdHidden) clienteIdHidden.value = '';
+    ocultarLista();
+    doBusca();
+  });
 
   document.addEventListener("click", function (e) {
     if (!e.target.closest(".autocomplete-wrapper")) {

@@ -812,7 +812,7 @@ window.catalogAssistenteProjeto = {
     for(const href of ["catalogo-projetos.css?v=20261030-link-pagamento2", "projeto-apresentacao.css?v=20261030-link-pagamento"]){
       if(!document.querySelector(`link[data-previa="${href}"]`)){ const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
     }
-    const m = await import("./projeto-apresentacao.mjs?v=20261030-link-documento");
+    const m = await import("./projeto-apresentacao.mjs?v=20261102-contrato-no-pedido");
     await new Promise((r) => setTimeout(r, 360));
     document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());
     S.previaHelena = m.abrirVisualizacaoPedido({ titulo: S.projeto.noivos || "Pedido", model: m.dadosApresentacao(S.projeto, acharItem),

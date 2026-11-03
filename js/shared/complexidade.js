@@ -77,7 +77,14 @@
    const pendentes=ids.filter(i=>valor(i)===null);let total=0,maximo=0,minimoPendente=0,maximoPendente=0;for(const id of ids){const p=cfg.pesos[id];maximo+=Math.max(p.sim,p.nao);if(valor(id)!==null)total+=valor(id)?p.sim:p.nao;else{minimoPendente+=Math.min(p.sim,p.nao);maximoPendente+=Math.max(p.sim,p.nao);}}
    const status=aplica[s.id]===null||pendentes.length||maximo<=0?'pendente':'completo';
    const intervalo=maximo>0?{minimo:Math.round((total+minimoPendente)/maximo*1000)/10,maximo:Math.round((total+maximoPendente)/maximo*1000)/10}:null;
-   resultado[s.id]={status,score:status==='completo'?Math.round(total/maximo*1000)/10:null,intervalo,pendentes,aplica:aplica[s.id],base_geral:baseGeral};
+   const area=s.id==='personalizacao'?['forracao','personalizacao']:s.id==='pintura'?['pintura']:[];
+   const classificados=serv.filter(v=>v.etapas.some(e=>area.includes(e))&&Number(v.personalizacao_complexidade)>0);
+   const acrescimos={simples:0,media:15,alta:30,...(c.custos_personalizacao?.complexidades||{})};
+   const quantidade=classificados.reduce((a,v)=>a+Math.max(0,Number(v.quantidade)||0),0);
+   const acrescimo=quantidade?classificados.reduce((a,v)=>{const nivel=Number(v.personalizacao_complexidade)>=1.3?'alta':Number(v.personalizacao_complexidade)>=1.15?'media':'simples';return a+Math.max(0,Number(v.quantidade)||0)*Number(acrescimos[nivel]);},0)/quantidade:0;
+   const ajustar=v=>Math.round(Math.min(100,v+(100-v)*acrescimo/100)*10)/10;
+   if(intervalo&&acrescimo){intervalo.minimo=ajustar(intervalo.minimo);intervalo.maximo=ajustar(intervalo.maximo);}
+   resultado[s.id]={status,score:status==='completo'?ajustar(total/maximo*100):null,intervalo,pendentes,aplica:aplica[s.id],base_geral:baseGeral,ajuste_personalizacao:{acrescimo_percentual:acrescimo,quantidade,criterio:'Média pela quantidade de peças do setor; acréscimo sobre a dificuldade restante até 100%'}};
   }
   return {versao:1,respostas:r,setores:resultado,congelado:!!c.congelado_em,congelado_em:c.congelado_em||null};
  }

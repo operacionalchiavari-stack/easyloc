@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 test('frete, cubagem, montagem e limpeza dos totais', async () => {
   const els = new Map();
-  global.document = { getElementById(id) {
+  global.document = { querySelector(){return null;}, getElementById(id) {
     if(id==='cardLogisticaPedido'||id==='cardMontagemPedido')return null;
     if(!els.has(id)) els.set(id, {innerText:'',textContent:'',innerHTML:'',style:{},dataset:{},classList:{remove(){}},addEventListener(){}});
     return els.get(id);
@@ -37,8 +37,9 @@ test('frete, cubagem, montagem e limpeza dos totais', async () => {
   assert.equal(window.__MONTAGEM_FINAL,0);
   assert.equal(window.__FRETE_FINAL,0);
   assert.equal(els.get('montagemDesconto').style.color,'#6b6b6b');
+  const agora=Date.now;Date.now=()=>agora()+300001;
   rows.categorias_caminhao=[{nome:'P',volume_maximo:0,valor_km:1}];
   window.volumeTotalPedido=15;
   await window.calcularFreteInteligente();
-  assert.equal(window.__FRETE_CARD_RESUMO,null);
+  assert.equal(window.__FRETE_CARD_RESUMO,null);Date.now=agora;
 });

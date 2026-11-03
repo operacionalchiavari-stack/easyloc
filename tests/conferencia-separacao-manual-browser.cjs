@@ -93,6 +93,9 @@ const mock = `(() => {
   // tudo carregado (a falta no carregamento abre a janela de pendências, testada em conferencia-sem-etiquetas)
   await p2.click("#cfQtdConfirmar");
   await p2.waitForSelector("dialog.cf-escolha-caminhao[open]");
+  assert.ok(!(await p2.locator('dialog.cf-escolha-caminhao').innerText()).includes('Marque o caminhão'));
+  assert.equal(await p2.locator('dialog.cf-escolha-caminhao .cf-escolha-foto').count(),2);
+
   const marcados = await p2.evaluate(() => [...document.querySelectorAll("dialog.cf-escolha-caminhao input")].map((i) => i.value + ":" + i.checked));
   assert.deepStrictEqual(marcados, ["c2:true", "c1:false"], "programado primeiro e já marcado: " + marcados);
   await p2.uncheck("dialog.cf-escolha-caminhao input[value=c2]");

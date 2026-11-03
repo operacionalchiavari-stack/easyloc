@@ -1,4 +1,6 @@
 import { imagemOriginalProjeto, configurarImagensRender } from "./projeto-imagens.mjs";
+import { carregarCenaSalva } from './projeto-cena-salva.mjs';
+import { guardarRenderPendente, removerRenderPendente, listarRendersPendentes } from './projeto-render-pendentes.mjs';
 // Frete e montagem saíram da lista do pedido e foram para a etapa Financeiro e pagamentos (out/2026).
 import { sinalizarDisponibilidade } from "./pedido-disponibilidade-comercial.mjs";
 // Projetos do catálogo (pedido explícito do usuário): o decorador monta, DE DENTRO do catálogo, um projeto pro
@@ -29,8 +31,9 @@ import { sinalizarDisponibilidade } from "./pedido-disponibilidade-comercial.mjs
 // mostra ou envia preço: o catálogo nunca teve valores.
 
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas } from './projeto-apresentacao.mjs?v=20261030-link-documento';
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas } from './projeto-apresentacao.mjs?v=20261102-insumos-kits';
 
+const temCena = render => Boolean(render?.cena?.url || render?.cena?.snapshot);
 const $ = (id) => document.getElementById(id);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -137,7 +140,7 @@ function rpcParams(extra){
 async function rpc(nome, extra = {}){
   if(ctx.pedidoComercial){
     if(nome === 'projeto_salvar'){
-      await ctx.salvarPedidoComercial(S.current);
+      await ctx.salvarPedidoComercial({ ...S.current, id: extra.p_id, noivos: extra.p_noivos, data_evento: extra.p_data_evento, local_evento: extra.p_local_evento, dados: structuredClone(extra.p_dados) });
       return {};
     }
     throw new Error('Esta ação pertence ao projeto do catálogo.');
@@ -850,7 +853,7 @@ function levarMoveisParaAmbiente(amb, lista){
 // Sobe uma imagem pro bucket "projetos" e já empurra a entrada em amb.renders (sem salvar/notificar — isso fica
 // por conta de quem chama, que pode estar subindo só uma imagem ou um lote de várias de uma vez).
 async function subirImagemRender(project, src){
-  const blob = await paraJpeg(src);
+  const blob = src instanceof Blob ? src : await paraJpeg(src);
   const path = `${pastaArquivosProjeto(project)}/renders/${crypto.randomUUID()}.jpg`;
   const { error } = await arquivosProjeto().upload(path, blob, { contentType: "image/jpeg", upsert: false });
   if(error) throw error;
@@ -863,13 +866,20 @@ async function subirCena(project, cena){
   const blob = new Blob([JSON.stringify(cena.snapshot)], { type: "application/json" });
   const { error } = await arquivosProjeto().upload(path, blob, { contentType: "application/json", upsert: false });
   if(error) throw error;
-  return { url: arquivosProjeto().getPublicUrl(path).data.publicUrl, path, tipo: cena.tipo === "ia" ? "ia" : "print" };
+  return { url: arquivosProjeto().getPublicUrl(path).data.publicUrl, path, tipo: cena.tipo === "ia" ? "ia" : "print", snapshot: structuredClone(cena.snapshot) };
 }
 async function uploadRenderPara(amb, project, src, origem, cena = null){
   const imagem = await subirImagemRender(project, src);
   // Sem a cena a imagem continua salva normalmente — só não dá pra reabrir o 3D dela depois.
   let cenaSalva = null;
-  if(cena) try{ cenaSalva = await subirCena(project, cena); }catch(error){ console.warn("Cena 3D não salva junto da imagem:", error); }
+  if(cena?.snapshot){
+    try{ cenaSalva = await subirCena(project, cena); }
+    catch(error){
+      // O retrato no pedido mantém o 3D reabrível mesmo durante uma falha do Storage.
+      cenaSalva = { tipo: cena.tipo === 'ia' ? 'ia' : 'print', snapshot: structuredClone(cena.snapshot) };
+      console.warn('Cena preservada nos dados do pedido; upload indisponível:', error);
+    }
+  }
   amb.renders.push({ id: novoId("r"), url: imagem.url, path: imagem.path, origem: origem || "Renderização", criado_em: new Date().toISOString(), ...(cenaSalva ? { cena: cenaSalva } : {}) });
 }
 
@@ -880,12 +890,10 @@ async function uploadRenderPara(amb, project, src, origem, cena = null){
 // Devolve null quando não dá para saber os móveis da foto (cena 3D ausente no Storage ou imagem sem cena).
 async function moveisDoRender(render){
   if(Array.isArray(render.moveis) && render.moveis.length) return render.moveis;
-  if(!render.cena?.url) return null;
+  if(!render.cena?.url && !render.cena?.snapshot) return null;
   let cena;
   try{
-    const resposta = await fetch(render.cena.url, { cache: "no-store" });
-    if(!resposta.ok) return null;
-    cena = await resposta.json();
+    cena = await carregarCenaSalva(render.cena, { supabase: ctx.supabase });
   }catch{ return null; }
   const contagem = new Map();
   (cena?.objects || []).forEach((o) => {
@@ -970,6 +978,7 @@ async function salvarRender({ src, origem, botao, titulo = "Salvar renderizaçã
 // renderização de IA nova da cena editada, que toma o lugar do print quando fica pronta. A cena usa o motor do 3D Livre
 // (ctx.cenaEditor, catalogo-studio3d.mjs).
 async function abrirEditorCena(amb, render){
+  if(renderizandoProjeto || recuperandoFoto3D || document.querySelector('.cpj-cena-modal[open]')){ ctx.notify({title:'3D em uso',message:'Conclua a cena aberta ou aguarde a preparação das imagens terminar.',status:'error'}); return; }
   if(itensTravados()) return;
   const editor = ctx.cenaEditor;
   if(!editor?.pronto?.()){ ctx.notify({ title: "3D indisponível", message: "Abra o catálogo de novo e tente outra vez.", status: "error" }); return; }
@@ -1067,9 +1076,7 @@ async function abrirEditorCena(amb, render){
   pintarTrocas();
   dialog.showModal();
   try{
-    const resposta = await fetch(render.cena.url);
-    if(!resposta.ok) throw new Error("A cena 3D desta imagem não foi encontrada.");
-    const cena = await resposta.json();
+    const cena = await carregarCenaSalva(render.cena, { supabase: ctx.supabase });
     const { faltando } = await editor.abrir($d("[data-cena-host]"), cena, { onSelecionar: pintarSelecao });
     carregou = true;
     $d("[data-cena-carregando]")?.remove();
@@ -1088,17 +1095,16 @@ async function recuperarFoto3D(renderId){
   const project=S.current;
   const render=ambientesDe(project).flatMap(a=>a.renders || []).find(r=>r.id===renderId);
   const editor=ctx.cenaEditor;
-  if(!render?.cena?.url || !editor?.pronto?.())throw Error('A cena 3D desta imagem nao esta disponivel.');
+  if(!temCena(render) || !editor?.pronto?.())throw Error('A cena 3D desta imagem nao esta disponivel.');
   recuperandoFoto3D=true;
   const palco=document.createElement('div');
   palco.style.cssText='position:fixed;left:-12000px;top:0;width:1200px;height:800px;pointer-events:none';
   palco.setAttribute('aria-hidden','true');document.body.appendChild(palco);
   let abriu=false;
   try{
-    const resposta=await fetch(render.cena.url);
-    if(!resposta.ok)throw Error('A cena 3D salva nao foi encontrada.');
+    const snapshot=await carregarCenaSalva(render.cena, { supabase: ctx.supabase });
     abriu=true;
-    const resultado=await editor.abrir(palco,await resposta.json());
+    const resultado=await editor.abrir(palco,snapshot);
     if(resultado.faltando)throw Error('Alguns modelos 3D estao indisponiveis. A imagem original foi preservada.');
     const captura=editor.capturar();
     await editor.fechar();abriu=false;
@@ -1123,8 +1129,12 @@ async function substituirImagemDaCena(project, ambId, renderId, captura, corpoIA
     return { alvo, amb, render: amb?.renders.find((r) => r.id === renderId) };
   };
   const persistir = async (alvo) => {
-    if(alvo === S.current){ marcarSujo(); if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); } await salvarAgora(); await gravarNoPedidoComercial(); }
-    else await rpc("projeto_salvar", { p_id: alvo.id, p_noivos: alvo.noivos, p_data_evento: alvo.data_evento, p_local_evento: alvo.local_evento, p_dados: alvo.dados });
+    const render = ambientesDe(alvo).find(a=>a.id===ambId)?.renders.find(r=>r.id===renderId);
+    const chave = prefixoRenderPendente(alvo)+renderId;
+    if(render)await guardarRenderPendente({chave,ambId,render});
+    if(alvo === S.current){ marcarSujo(); if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); } await salvarAgora(); if(S.save === 'error' || S.save === 'dirty')throw Error(S.saveError || 'O projeto ainda não foi salvo.'); await gravarNoPedidoComercial(alvo); }
+    else { await rpc("projeto_salvar", { p_id: alvo.id, p_noivos: alvo.noivos, p_data_evento: alvo.data_evento, p_local_evento: alvo.local_evento, p_dados: alvo.dados }); await gravarNoPedidoComercial(alvo); }
+    if(render)await removerRenderPendente(chave);
   };
   try{
     const [imagem, cena] = await Promise.all([subirImagemRender(project, captura.foto), subirCena(project, { tipo: corpoIA ? "ia" : "print", snapshot: captura.snapshot })]);
@@ -1154,7 +1164,7 @@ async function substituirImagemDaCena(project, ambId, renderId, captura, corpoIA
     const printProvisorio = render.path;
     Object.assign(render, { url: imagem.url, path: imagem.path, atualizado_em: new Date().toISOString() });
     await persistir(alvo);
-    if(printProvisorio) arquivosProjeto().remove([printProvisorio]).catch(() => {});
+    if(printProvisorio && !ctx.pedidoComercial) arquivosProjeto().remove([printProvisorio]).catch(() => {});
     ctx.notify({ title: "Renderização atualizada", message: "A imagem de IA do ambiente já mostra os móveis novos.", status: "done", image: imagem.url });
   }catch(error){
     aguarde?.close?.();
@@ -1172,23 +1182,29 @@ function printsParaRenderizar(project){
   const alvos = []; let semCena = 0;
   for(const amb of ambientesDe(project)) for(const render of amb.renders || []){
     if(render.cena?.tipo === "ia") continue;
-    if(render.cena?.url) alvos.push({ ambId: amb.id, renderId: render.id, cenaUrl: render.cena.url });
+    if(temCena(render)) alvos.push({ ambId: amb.id, renderId: render.id, cenaUrl: render.cena.url });
     else semCena++;
   }
   return { alvos, semCena };
 }
 let renderizandoProjeto = false;
+const prefixoRenderPendente = project => `${ctx.getSession().empresa_id}:${project.id}:`;
 // Pedido comercial: depois de uma renderização com IA ou de trocar móveis no 3D, grava o projeto direto no pedido salvo
 // (sem esperar "Salvar pedido"). Pedido ainda não salvo: fica só na tela até salvar, como antes.
-async function gravarNoPedidoComercial(){
+async function gravarNoPedidoComercial(project = S.current){
   if(!ctx.pedidoComercial) return;
-  try{ await window.parent.__pedidoGravarProjetoComercial?.(); }
-  catch(error){ console.warn("Renderização não gravada no pedido:", error); ctx.notify({ title: "A imagem ficou só nesta tela", message: "Clique em Salvar pedido para guardá-la. " + mensagemDe(error), status: "error" }); }
+  const salvo = await window.parent.__pedidoGravarProjetoComercial?.(structuredClone(project));
+  if(!salvo) throw Error('A imagem ainda não foi gravada no pedido. Salve o pedido e tente novamente.');
 }
 async function renderizarProjetoComIA(project, { aoProgresso = () => {}, aoAtualizar = () => {} } = {}){
   const editor = ctx.cenaEditor;
   if(renderizandoProjeto) return 0;
+  if(editor?.ocupado?.() || document.querySelector('.cpj-cena-modal[open]')){ctx.notify({title:'3D em uso',message:'Conclua a edição da cena antes de renderizar o projeto.',status:'error'});return 0;}
   if(!editor?.pronto?.()){ ctx.notify({ title: "3D indisponível", message: "Abra o catálogo de novo e tente outra vez.", status: "error" }); return 0; }
+  if(ctx.pedidoComercial && !window.parent.__PEDIDO_ATUAL_ID){
+    const salvo = await window.parent.__salvarPedidoOperacional?.({silencioso:true});
+    if(!salvo){ctx.notify({title:'Salve o pedido antes de renderizar',message:'Preencha os dados obrigatórios e salve para guardar as imagens com segurança.',status:'error'});return 0;}
+  }
   const { alvos, semCena } = printsParaRenderizar(project);
   if(!alvos.length){
     ctx.notify({ title: "Nada para renderizar", message: semCena ? "As imagens deste projeto foram salvas antes do 3D guardar a cena. Gere de novo no 3D Livre." : "Todas as imagens do projeto já estão renderizadas.", status: "error" });
@@ -1205,8 +1221,8 @@ async function renderizarProjetoComIA(project, { aoProgresso = () => {}, aoAtual
   };
   let gravando = Promise.resolve();
   const persistir = (dono) => (gravando = gravando.catch(() => {}).then(async () => {
-    if(dono === S.current){ marcarSujo(); if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); } await salvarAgora(); await gravarNoPedidoComercial(); }
-    else await rpc("projeto_salvar", { p_id: dono.id, p_noivos: dono.noivos, p_data_evento: dono.data_evento, p_local_evento: dono.local_evento, p_dados: dono.dados });
+    if(dono === S.current){ marcarSujo(); if(S.open && S.view === "work"){ pintarNavegacao(); pintarPainel(); } await salvarAgora(); if(S.save === 'error' || S.save === 'dirty')throw Error(S.saveError || 'O projeto ainda não foi salvo.'); await gravarNoPedidoComercial(dono); }
+    else { await rpc("projeto_salvar", { p_id: dono.id, p_noivos: dono.noivos, p_data_evento: dono.data_evento, p_local_evento: dono.local_evento, p_dados: dono.dados }); await gravarNoPedidoComercial(dono); }
   }));
   // 1) Um por vez no 3D (só existe um motor): carrega a cena do print e monta o pedido da IA.
   const pedidos = [];
@@ -1217,9 +1233,11 @@ async function renderizarProjetoComIA(project, { aoProgresso = () => {}, aoAtual
   try{
     for(const alvo of alvos){
       try{
-        const resposta = await fetch(alvo.cenaUrl);
-        if(!resposta.ok) throw new Error("A cena 3D desta imagem não foi encontrada.");
-        await editor.abrir(palco, await resposta.json());
+        const render = localizar(alvo).render;
+        if(!render)throw Error('A imagem foi removida do projeto.');
+        const snapshot = await carregarCenaSalva(render.cena, { supabase: ctx.supabase });
+        const resultado = await editor.abrir(palco, snapshot);
+        if(resultado?.faltando)throw Error('Há móveis cujo modelo 3D não carregou. A imagem original foi preservada; tente novamente após conferir os modelos.');
         pedidos.push({ alvo, corpo: editor.corpoIA() });
       }catch(error){ falhas.push({ alvo, error }); progresso(); }
     }
@@ -1233,12 +1251,18 @@ async function renderizarProjetoComIA(project, { aoProgresso = () => {}, aoAtual
     for(let p = fila.shift(); p; p = fila.shift()){
       try{
         const src = await editor.executarIA(p.corpo);
-        const imagem = await subirImagemRender(project, src);
         const { dono, render } = localizar(p.alvo);
-        if(!render){ arquivosProjeto().remove([imagem.path]).catch(() => {}); throw new Error("A imagem foi removida do projeto enquanto renderizava."); }
+        if(!render)throw new Error("A imagem foi removida do projeto enquanto renderizava.");
+        const blob = await paraJpeg(src);
+        const chave = prefixoRenderPendente(dono) + render.id;
+        await guardarRenderPendente({chave,ambId:p.alvo.ambId,imagemPendente:true,imagemBlob:blob,render:{...render,url:src,origem:'Renderização IA',atualizado_em:new Date().toISOString(),cena:{...render.cena,tipo:'ia'}}});
+        const imagem = await subirImagemRender(project, blob);
         const antigo = render.path;
-        Object.assign(render, { url: imagem.url, path: imagem.path, origem: "Renderização IA", atualizado_em: new Date().toISOString(), cena: { ...render.cena, tipo: "ia" } });
+        const novoRender = { ...render, url: imagem.url, path: imagem.path, origem: "Renderização IA", atualizado_em: new Date().toISOString(), cena: { ...render.cena, tipo: "ia" } };
+        await guardarRenderPendente({ chave, ambId:p.alvo.ambId, render:novoRender });
+        Object.assign(render, novoRender);
         await persistir(dono);
+        await removerRenderPendente(chave);
         if(antigo && !ctx.pedidoComercial) arquivosProjeto().remove([antigo]).catch(() => {}); // pedido comercial: o arquivo antigo fica (outra cópia do pedido pode apontar para ele)
         prontas++; aoAtualizar(dono);
       }catch(error){ falhas.push({ alvo: p.alvo, error }); }
@@ -1708,7 +1732,7 @@ function rendersMapaHtml(amb){
   const naCapa = ambCapa?.id === amb.id;
   // Todas as renderizações com o mesmo tamanho (pedido do usuário, out/2026): sem "destaque" maior na primeira.
   const nota = (n) => n === 1 && naCapa && !ctx.pedidoComercial ? "Também é a foto da capa" : "";
-  const figuras = reais.map((r, i) => `<figure class="cpj-render" data-cpj-render="${escapeAttr(r.id)}">${(r.cena?.url || r.moveis?.length) ? `<label class="cpj-jogos cpj-badge" title="Quantos jogos desta composição vão no pedido"><input type="number" min="1" max="99" value="${Math.max(1, Number(r.jogos) || 1)}" data-cpj-jogos aria-label="Quantidade de jogos da composição ${i + 1} de ${escapeAttr(amb.nome)}"><span>${Math.max(1, Number(r.jogos) || 1) === 1 ? "jogo" : "jogos"}</span></label>` : `<span class="cpj-slot-num cpj-badge">${i + 1}</span>`}<img src="${escapeAttr(otimizarFoto(r.url, i === 0 ? 960 : 640))}" data-cpj-imagem-cena="${escapeAttr(r.cena?.url || "")}" data-cpj-imagem-original="${escapeAttr(imagemOriginalProjeto(r.url))}" alt="${r.cena?.url ? `Trocar móveis de ${escapeAttr(amb.nome)} no 3D` : `Renderização de ${escapeAttr(amb.nome)}`}" loading="lazy" decoding="async" data-cpj="render-ver" tabindex="0" role="button">${r.cena?.url ? '<span class="cpj-render-3d cpj-badge" aria-hidden="true">Trocar móveis no 3D</span>' : ""}<figcaption>${escapeHtml(r.origem || "Renderização")}${nota(i + 1) ? ` · ${escapeHtml(nota(i + 1))}` : ""}</figcaption><button type="button" class="cpj-icon-btn" data-cpj="render-remover" aria-label="Remover renderização" title="Remover">×</button></figure>`).join("");
+  const figuras = reais.map((r, i) => `<figure class="cpj-render" data-cpj-render="${escapeAttr(r.id)}">${(temCena(r) || r.moveis?.length) ? `<label class="cpj-jogos cpj-badge" title="Quantos jogos desta composição vão no pedido"><input type="number" min="1" max="99" value="${Math.max(1, Number(r.jogos) || 1)}" data-cpj-jogos aria-label="Quantidade de jogos da composição ${i + 1} de ${escapeAttr(amb.nome)}"><span>${Math.max(1, Number(r.jogos) || 1) === 1 ? "jogo" : "jogos"}</span></label>` : `<span class="cpj-slot-num cpj-badge">${i + 1}</span>`}<img src="${escapeAttr(otimizarFoto(r.url, i === 0 ? 960 : 640))}" data-cpj-imagem-cena="${escapeAttr(r.cena?.url || "")}" data-cpj-imagem-original="${escapeAttr(imagemOriginalProjeto(r.url))}" alt="${temCena(r) ? `Trocar móveis de ${escapeAttr(amb.nome)} no 3D` : `Renderização de ${escapeAttr(amb.nome)}`}" loading="lazy" decoding="async" data-cpj="render-ver" tabindex="0" role="button">${temCena(r) ? '<span class="cpj-render-3d cpj-badge" aria-hidden="true">Trocar móveis no 3D</span>' : ""}<figcaption>${escapeHtml(r.origem || "Renderização")}${nota(i + 1) ? ` · ${escapeHtml(nota(i + 1))}` : ""}</figcaption><button type="button" class="cpj-icon-btn" data-cpj="render-remover" aria-label="Remover renderização" title="Remover">×</button></figure>`).join("");
   return `<div class="cpj-renders cpj-renders-map" data-modo="grade">${figuras}</div>`;
 }
 
@@ -3107,6 +3131,7 @@ function modeloPedidoComercial(dono){
   return { ...m, local: campoPai("localInput") || m.local,
     evento: { ...(m.evento || {}), data_entrega: campoPai("dataEntrega") || m.evento?.data_entrega, hora_entrega: campoPai("horaEntrega") || m.evento?.hora_entrega, data_coleta: campoPai("dataColeta") || m.evento?.data_coleta, hora_coleta: campoPai("horaColeta") || m.evento?.hora_coleta },
     financeiro: window.parent.__pedidoFinanceiroResumo?.() || null, semAviso: true,
+    contrato: window.parent.__pedidoContratoAnexado?.() || '',
     numero: window.parent.document.getElementById("orcamentoNumero")?.textContent.trim() || "",
     statusPedido: { chave: campoPai("pedidoStatusComercial") || "orcamento", ate: campoPai("preReservaAte") },
     localEndereco: window.parent.__pedidoLocalAtual?.nome === campoPai("localInput") ? window.parent.__pedidoLocalAtual.endereco : "" };
@@ -3362,7 +3387,7 @@ async function aoClicarOverlay(event){
     }
     else if(tipo === "render-ver"){
       const render = amb?.renders.find((r) => r.id === acao.closest("[data-cpj-render]")?.dataset.cpjRender);
-      if(render?.cena?.url) abrirEditorCena(amb, render);
+      if(temCena(render)) abrirEditorCena(amb, render);
       // Imagem salva antes do editor de cena existir: não tem a cena guardada, só a foto.
       else if(render) abrirModal({ titulo: amb.nome, sub: render.origem, corpo: `<p class="cpj-cena-aviso">Esta imagem foi salva antes da troca de móveis no 3D existir. Para trocar os móveis por aqui, gere a imagem de novo no 3D Livre e salve no projeto.</p><img class="cpj-lightbox" src="${escapeAttr(otimizarFoto(render.url, 1600, 82))}" alt="">`, confirmar: null, cancelar: "Fechar", largo: true });
     }else if(tipo === "render-remover" && amb){
@@ -3649,7 +3674,7 @@ export function initCatalogProjetos(contexto){
     event.target.replaceWith(vazio);
   },true);
   window.addEventListener('beforeunload',event=>{
-    if(['dirty','saving','error'].includes(S.save)){ event.preventDefault(); event.returnValue=''; }
+    if(renderizandoProjeto || recuperandoFoto3D || ['dirty','saving','error'].includes(S.save) || document.getElementById('studioRenderButton')?.disabled){ event.preventDefault(); event.returnValue=''; }
   });
   $("catalogProjetoDock")?.addEventListener("click", aoClicarDock);
   document.addEventListener("click", (event) => {
@@ -3695,6 +3720,27 @@ export function initCatalogProjetos(contexto){
     salvarRender({ src: img?.currentSrc || img?.src, origem: botao.dataset.origem, botao });
   });
   window.catalogRegisterRenderItems = registrarItensDaRenderizacao;
+  window.catalogPrepararRenderPedido = async () => {
+    if(!ctx.pedidoComercial)return null;
+    if(!window.parent.__PEDIDO_ATUAL_ID && !await window.parent.__salvarPedidoOperacional?.({silencioso:true}))throw Error('Salve o pedido antes de renderizar.');
+    const project=S.current, amb=ambienteAtivo();
+    if(!project || !amb)throw Error('Selecione um ambiente do pedido antes de renderizar.');
+    return async (src,cena,objects) => {
+      const id=novoId('r'),chave=prefixoRenderPendente(project)+id;
+      const render={id,url:src,origem:'Renderização IA',cena:{tipo:'ia',snapshot:structuredClone(cena.snapshot)},criado_em:new Date().toISOString(),atualizado_em:new Date().toISOString()};
+      const blob=await paraJpeg(src);
+      await guardarRenderPendente({chave,ambId:amb.id,render,automatico:true,imagemPendente:true,imagemBlob:blob});
+      const imagem=await subirImagemRender(project,blob);Object.assign(render,imagem);
+      await guardarRenderPendente({chave,ambId:amb.id,render,automatico:true});
+      amb.renders.push(render);
+      const contagem=new Map();
+      for(const o of objects || []){const item=String(o.itemId || o.id || '');if(item)contagem.set(item,(contagem.get(item)||0)+1);}
+      levarMoveisParaAmbiente(amb,[...contagem].map(([id,quantidade])=>({id,quantidade})));
+      await ctx.salvarPedidoComercial(project);await gravarNoPedidoComercial(project);
+      await removerRenderPendente(chave);
+      if(S.current===project){pintarDock();atualizarBotoes();}
+    };
+  };
   // "Adicionar ao projeto" do 3D Livre (substitui o antigo "Tirar print"): a foto da composição + os móveis dela vão
   // direto pra janela de escolher projeto/ambiente, sem a tela intermediária de resultado.
   window.catalogAddCompositionToProject = (src, origem = "3D Livre") => salvarRender({ src, origem, titulo: "Adicionar ao projeto", confirmar: "Adicionar ao projeto", sub: "Escolha o projeto e o ambiente desta composição.", comImagem: true });
@@ -3729,6 +3775,30 @@ const assistenteProjeto = {
     if(!p) return null;
     return { id: p.id, noivos: p.noivos, data_evento: p.data_evento, local_evento: p.local_evento, evento: p.dados?.evento || {}, status: p.status, ambiente_ativo: S.activeAmb,
       ambientes: ambientesDe(p).map((amb) => ({ id: amb.id, nome: amb.nome, itens: amb.itens.map((i) => ({ item_id: String(i.item_id), quantidade: Number(i.quantidade) || 1 })) })) };
+  },
+  async montarPlanta(acao){
+    if(!S.current || itensTravados())throw Error('O pedido não está disponível para alterar os itens.');
+    const project=structuredClone(S.current);
+    const chave=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+    for(const area of acao.ambientes||[]){
+      let amb=project.dados.ambientes.find(a=>chave(a.nome)===chave(area.nome));
+      if(!amb){amb={id:novoId('a'),nome:area.nome,itens:[],renders:[],notas:''};project.dados.ambientes.push(amb);}
+      for(const linha of area.itens){
+        if(!ctx.findItem(linha.item_id) || !Number.isInteger(linha.quantidade) || linha.quantidade<1 || linha.quantidade>999)throw Error('A montagem contém um item inválido.');
+        const item=amb.itens.find(i=>String(i.item_id)===String(linha.item_id));
+        if(item)item.quantidade=linha.quantidade;
+        else amb.itens.push({item_id:linha.item_id,quantidade:linha.quantidade});
+      }
+    }
+    project.dados.montagem_planta={ambientes:acao.ambientes,observacoes:acao.observacoes,atualizado_em:new Date().toISOString()};
+    S.current=normalizar(project);marcarSujo();await salvarAgora();
+    if(S.save!=='saved')throw Error(S.saveError || 'A lista aguarda salvamento.');
+    if(ctx.pedidoComercial){
+      if(!window.parent.__PEDIDO_ATUAL_ID && !await window.parent.__salvarPedidoOperacional?.({silencioso:true}))throw Error('A lista foi montada, mas faltam dados obrigatórios para salvar o pedido.');
+      await gravarNoPedidoComercial(S.current);
+    }
+    pintarDock();atualizarBotoes();if(S.open && S.view==='work')pintarPainel();
+    return {ok:true};
   },
   async quantidade({ item_id, quantidade, ambiente }){
     if(!S.current) throw new Error("Abra ou crie um projeto primeiro.");
@@ -3783,8 +3853,29 @@ const assistenteProjeto = {
   },
 };
 
-export function definirProjetoComercialPedido(project){
+export async function definirProjetoComercialPedido(project){
   definirAtual(normalizar(project));
+  try{
+    const pendentes=await listarRendersPendentes(prefixoRenderPendente(project));
+    if(!pendentes.length)return;
+    for(const pendente of pendentes){
+      const amb=ambientesDe(project).find(a=>a.id===pendente.ambId);
+      if(!amb)continue;
+      if(pendente.imagemPendente)Object.assign(pendente.render,await subirImagemRender(project,pendente.imagemBlob || pendente.render.url));
+      const render=amb.renders.find(r=>r.id===pendente.render.id);
+      if(render && (!render.atualizado_em || render.atualizado_em<=pendente.render.atualizado_em))Object.assign(render,pendente.render);
+      else if(!render)amb.renders.push(pendente.render);
+      if(pendente.automatico){
+        const contagem=new Map();
+        for(const objeto of pendente.render.cena?.snapshot?.objects || []){const id=String(objeto.itemId || '');if(id)contagem.set(id,(contagem.get(id)||0)+1);}
+        levarMoveisParaAmbiente(amb,[...contagem].map(([id,quantidade])=>({id,quantidade})));
+      }
+    }
+    marcarSujo();await salvarAgora();
+    if(S.save!=='saved')throw Error(S.saveError || 'Salvamento pendente.');
+    await gravarNoPedidoComercial(project);
+    for(const pendente of pendentes)await removerRenderPendente(pendente.chave);
+  }catch(error){ctx.notify({title:'Renderizações aguardando confirmação',message:mensagemDe(error),status:'error'});}
 }
 export async function sincronizarProjetoComercialPedido(meta = {}){
   await salvarAgora();

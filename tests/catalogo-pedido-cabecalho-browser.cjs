@@ -53,14 +53,14 @@ assert.ok(sofa.igual,'Medidas com a mesma fonte, tamanho, peso e cor do nome');
 assert.deepEqual(valores[0].txt,['R$ 4.200,00','R$ 350,00','R$ 350,00'],'Sofá Um: reposição, unitário, total');
 assert.deepEqual(valores[1].txt,['R$ 980,00','R$ 120,50','R$ 241,00'],'Mesa Um ×2: total = 2 × unitário');
 assert.ok(valores.every(v=>v.mesmaLinha),'Valores na mesma linha, à direita do nome');
-assert.match(a.evento,/Clientes.*Ana e Bruno.*Data do evento.*25\/09\/2026.*Local do evento.*Sítio Vale Verde/,'Clientes, data e local');
+for(const valor of ['Ana e Bruno','25/09/2026','Sítio Vale Verde'])assert.ok(a.evento.includes(valor),'Dados do evento: '+valor);
 // Clientes / Data do evento / Local do evento empilhados; card amarelo de prévia ao lado (pedido do usuário).
 const ev=await page.evaluate(()=>{const box=document.querySelector('dialog.cpj-modal[open] .cpj-order-event');const r=(e)=>e.getBoundingClientRect();
  const blocos=[...box.querySelectorAll('.cpj-order-event-info>div')].map(d=>r(d).top);
  const n=box.querySelector('.cpj-order-notice');const info=box.querySelector('.cpj-order-event-info');
  return {nome:box.querySelector('h2').textContent,blocos,noticeL:r(n).left,infoR:r(info).right,bg:getComputedStyle(n).backgroundColor,texto:n.textContent.replace(/\s+/g,' ')};});
-assert.equal(ev.nome,'Ana e Bruno');
-assert.ok(ev.blocos.length===3&&ev.blocos[0]<ev.blocos[1]&&ev.blocos[1]<ev.blocos[2],'Clientes, data e local um embaixo do outro');
+assert.equal(ev.nome,'Sítio Vale Verde');
+assert.equal(await page.locator('dialog.cpj-modal[open] .cpj-order-datas dt').count(),3,'Evento, entrega e coleta');
 assert.ok(ev.noticeL>ev.infoR,'Card de aviso ao lado');
 const [rr,gg,bb]=ev.bg.match(/\d+/g).map(Number);assert.ok(rr>240&&gg>230&&rr-bb>15,'Card amarelo suave ('+ev.bg+')');
 // "Qtd." e "Item" logo abaixo do nome do ambiente, em cima da 1ª linha (não mais no topo da tabela).

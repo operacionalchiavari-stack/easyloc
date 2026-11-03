@@ -9,7 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="pedido.css?v=20261101-condicao">
+  <link rel="stylesheet" href="pedido.css?v=20261102-3d-persistente">
+  <link rel="stylesheet" href="../../../styles/sublocacoes.css?v=20261102-sublocacoes">
 </head>
 <body>
 <div class="pedido-screen orcamento-page el-page em-entrada" data-module-root>
@@ -40,6 +41,7 @@
         </section>
 
         <div class="pedido-actions-top">
+          <button type="button" class="btn btn-secondary" data-sublocacoes="atual">Sublocação</button>
           <button type="button" class="btn btn-secondary" id="btnSalvarPedido">Salvar</button>
           <button type="button" class="btn btn-secondary btn-icon-text" id="btnMaisOpcoesPedido">...</button>
         </div>
@@ -278,6 +280,7 @@
               <button type="button" class="btn btn-secondary" id="btnVisualizarContratoPedido">Visualizar completo</button>
               <button type="button" class="btn btn-secondary" id="btnImprimirContratoPedido">Imprimir</button>
               <button type="button" class="btn btn-secondary" id="btnGerarPdfContratoPedido">Gerar PDF</button>
+              <button type="button" class="btn btn-primary" id="btnAnexarContratoPedido">Anexar ao pedido</button>
             </div>
           </header>
           <div class="pedido-contrato-alert" id="pedidoContratoAviso" hidden></div>
@@ -550,7 +553,8 @@
 </script>
 <link rel="stylesheet" href="../produtividade.css?v=20261031">
 <script src="../produtividade.js?v=20261031"></script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20261101-condicao"></script>
+<script src="../../../js/ui/sublocacoes.js?v=20261102-remessas-parciais"></script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261102-insumos-kits"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

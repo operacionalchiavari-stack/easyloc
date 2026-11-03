@@ -16,6 +16,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
+import { INSTRUCOES_PLANTA_AUTONOMA, FERRAMENTA_MONTAR_PLANTA, FERRAMENTA_PLANTA_ILEGIVEL, validarMontagemPlanta, resumoMontagemPlanta } from './planta-pedido.mjs';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "*",
@@ -307,7 +308,9 @@ function sugerirCombinacoes(acervo: Item[], a: any, perfil: any) {
 async function mapaDisponibilidade(ctx: Ctx, data: string) {
   const mapa = new Map<string, { total: number; livre: number }>();
   for (let de = 0; ; de += 1000) {
-    const { data: pagina, error } = await ctx.service.rpc("operacao_disponibilidade", { p_empresa: ctx.empresaId, p_data: data, p_pedido: ctx.pedidoId || null }).order("item_id").range(de, de + 999);
+    const periodo = (ctx as any)._periodoPlanta;
+    const consulta = periodo ? ctx.service.rpc('operacao_livre_calc', {p_empresa:ctx.empresaId,p_inicio:periodo.inicio,p_fim:periodo.fim,p_pedido:ctx.pedidoId||null}) : ctx.service.rpc("operacao_disponibilidade", { p_empresa: ctx.empresaId, p_data: data, p_pedido: ctx.pedidoId || null });
+    const { data: pagina, error } = await consulta.order("item_id").range(de, de + 999);
     if (error) throw new Error("Não foi possível consultar a disponibilidade: " + error.message);
     for (const r of pagina || []) mapa.set(String(r.item_id), { total: Number(r.total) || 0, livre: Number(r.livre) || 0 });
     if (!pagina || pagina.length < 1000) break;
@@ -620,13 +623,13 @@ const FERRAMENTAS = (modo: string) => [
     remover: { type: "array", items: { type: "string" }, description: "Gostos que deixaram de valer." } } } },
 ].map((f) => ({ type: "function", function: f }));
 
-async function chamarOpenAI(messages: any[], tools: any[], toolChoice: "auto" | "required" = "auto") {
+async function chamarOpenAI(messages: any[], tools: any[], toolChoice: "auto" | "required" = "auto", temperature = 0.7) {
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) throw new Error("OPENAI_API_KEY não configurada");
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST", signal: AbortSignal.timeout(60000),
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: MODELO, temperature: 0.7, messages, tools, tool_choice: toolChoice, parallel_tool_calls: true }),
+    body: JSON.stringify({ model: MODELO, temperature, messages, tools, tool_choice: toolChoice, parallel_tool_calls: true }),
   });
   const data = await r.json();
   if (!r.ok) throw new Error(data?.error?.message || "A assistente está indisponível agora.");
@@ -1089,7 +1092,8 @@ ANTES DE RESPONDER, CONFIRA (vale mais que qualquer exemplo acima):
 - Pediram para criar/adicionar um espaço (ambiente)? Use criar_ambiente e ele fica VAZIO. Nunca coloque uma peça que a pessoa não nomeou.`;
 
 async function conversar(ctx: Ctx, body: any) {
-  const arquivos = arquivosValidos(ctx, body?.arquivos);
+  if(body?.montagem_planta === true)return json({erro:'A montagem automática de pedidos pela planta está desativada.'},400);
+  const arquivos = arquivosValidos(ctx, body?.arquivos, body?.montagem_planta === true ? 13 : 4);
   const mensagem = String(body?.mensagem || "").trim().slice(0, 2000);
   if (!mensagem && !arquivos.length) return json({ erro: "Mensagem vazia" }, 400);
   const modo = body?.modo === "pedido" ? "pedido" : "catalogo";
@@ -1106,6 +1110,12 @@ async function conversar(ctx: Ctx, body: any) {
   ]);
   const perfil = perfilInicial;
   const projeto = limparProjeto(body?.projeto, acervo);
+  const montarPlanta = body?.montagem_planta === true;
+  if(montarPlanta){
+    if(!projeto?.id || !projeto?.data_evento)return json({erro:'Abra o pedido e preencha a data do evento antes de montar pela planta.'},400);
+    if(!arquivos.length && !passadas.some((m:any)=>m.papel==='user' && m.anexos?.some((a:any)=>a.tipo==='arquivo')))return json({erro:'Anexe a planta em imagem ou PDF para montar o pedido.'},400);
+    (ctx as any)._periodoPlanta={inicio:projeto.evento?.data_entrega||projeto.data_evento,fim:projeto.evento?.data_coleta||projeto.evento?.data_fim||projeto.data_evento};
+  }
   const formatos: Formato[] | null = await carregarFormatos(ctx, acervo);
   const acoes: any[] = [];
   const mostrados = new Set<string>();
@@ -1123,7 +1133,7 @@ async function conversar(ctx: Ctx, body: any) {
   ];
   // Arquivos (planta em PDF/foto): o modelo enxerga os da mensagem atual e os de até 2 mensagens anteriores com arquivo.
   {
-    const comArquivo = passadas.filter((m: any) => m.papel === "user" && (m.anexos || []).some((a: any) => a.tipo === "arquivo")).slice(-2).map((m: any) => m.id);
+    const comArquivo = montarPlanta && arquivos.some(a=>a.area) ? [] : passadas.filter((m: any) => m.papel === "user" && (m.anexos || []).some((a: any) => a.tipo === "arquivo")).slice(-2).map((m: any) => m.id);
     for (const id of comArquivo) {
       const i = passadas.findIndex((m: any) => m.id === id);
       const m = passadas[i];
@@ -1132,10 +1142,13 @@ async function conversar(ctx: Ctx, body: any) {
     if (arquivos.length) {
       const atual = messages[messages.length - 1];
       const texto = (atual.content || "") + "\n" + arquivos.map((a) => `[arquivo enviado agora: ${a.nome}]`).join("\n");
-      messages[messages.length - 1] = { role: "user", content: [{ type: "text", text: texto.trim() }, ...(await partesDosArquivos(ctx, arquivos))] };
+      const recortes=montarPlanta?arquivos.filter(a=>a.area):[];
+      messages[messages.length - 1] = { role: "user", content: [{ type: "text", text: texto.trim() }, ...(await partesDosArquivos(ctx, recortes.length?recortes:arquivos))] };
     }
   }
-  const tools = FERRAMENTAS(modo);
+  const tools = montarPlanta ? [...FERRAMENTAS(modo).filter((t:any)=>['buscar_itens','listar_categorias','verificar_disponibilidade','sugerir_combinacoes'].includes(t.function.name)),FERRAMENTA_MONTAR_PLANTA,FERRAMENTA_PLANTA_ILEGIVEL] : FERRAMENTAS(modo);
+  if(montarPlanta) messages.push({role:'system',content:INSTRUCOES_PLANTA_AUTONOMA+'\nEstilo informado: '+String(body?.estilo_planta||'usar o perfil ou o estilo mais coerente disponível').slice(0,300)});
+  if(montarPlanta && arquivos.some(a=>a.area))messages.push({role:'system',content:'A pessoa DEMARCOU os ambientes. Cada imagem anexada é um recorte em alta resolução de UMA área. Analise-os individualmente. Monte SOMENTE estas áreas, usando exatamente os nomes fornecidos, sem duplicar móveis que aparecem em recortes sobrepostos. A planta inteira não é outro ambiente. Relação entre arquivo e área: '+JSON.stringify(arquivos.filter(a=>a.area).map(a=>({arquivo:a.nome,ambiente:a.area,recorte:a.recorte}))) });
   const rastro: any[] = [];
   const encontrados = new Set<string>(); // itens que as ferramentas devolveram nesta mensagem (pros cartões automáticos)
   // Peças citadas pela pessoa, já procuradas no acervo pelo servidor (não depende do modelo buscar): evita "não temos" de
@@ -1170,18 +1183,34 @@ async function conversar(ctx: Ctx, body: any) {
   // em teste ela respondeu "vou incluir" sem chamar nada (não incluiu nem conferiu a data).
   const pedeAcao = /\b(coloc|inclu|adicion|acrescent|bota|bote|poe|põe|ponha|tira|tire|remov|troca|troque|abr(e|a|ir)|fech(a|e|ar)|quero (o|a|os|as|um|uma|\d))/i.test(normalizar(mensagem));
   for (let rodada = 0; rodada < 7; rodada++) {
-    const msg = await chamarOpenAI(messages, tools, rodada === 0 && pedeAcao ? "required" : "auto");
+    const msg = await chamarOpenAI(messages, tools, montarPlanta || rodada === 0 && pedeAcao ? "required" : "auto", montarPlanta ? 0.1 : 0.7);
     if (!msg) break;
     messages.push(msg);
     if (!msg.tool_calls?.length) { resposta = String(msg.content || "").trim(); break; }
     for (const chamada of msg.tool_calls) {
       let resultado: unknown;
-      try { resultado = await executar(chamada.function.name, JSON.parse(chamada.function.arguments || "{}")); }
+      try {
+        const args=JSON.parse(chamada.function.arguments || '{}');
+        if(montarPlanta && !tools.some((t:any)=>t.function.name===chamada.function.name))throw Error('Ferramenta não autorizada neste modo. Use a montagem em lote.');
+        if(montarPlanta && chamada.function.name==='planta_ilegivel'){
+          E.plantaIlegivel=String(args.motivo||'Não foi possível identificar os móveis.').slice(0,600);resultado={ok:true,nenhuma_alteracao:true};
+        }else if(montarPlanta && chamada.function.name==='montar_pedido_planta'){
+          const acao=validarMontagemPlanta(args,{projeto:E.projeto,acharItem:itemValido,disponibilidade:mapas.get(dataDoEvento),areasEsperadas:arquivos.filter(a=>a.area).map(a=>a.area)});
+          if(!acoes.some(a=>a.tipo==='montar_planta'))acoes.push(acao);
+          resultado={ok:true,ambientes:acao.ambientes.length};
+        }else resultado = await executar(chamada.function.name,args);
+      }
       catch (e) { resultado = { erro: (e as Error).message || "Falha na ferramenta" }; }
       JSON.stringify(resultado).replace(/"id":"(m\d+)"/g, (_, ref) => { const it = itemValido(ref); if (it) { encontrados.add(it.id); E.recentes.add(it.id); } return ""; });
       rastro.push({ ferramenta: chamada.function.name, args: chamada.function.arguments, resultado: JSON.stringify(resultado).slice(0, 400) });
       messages.push({ role: "tool", tool_call_id: chamada.id, content: JSON.stringify(resultado).slice(0, 14000) });
     }
+    if(montarPlanta && (E.plantaIlegivel || acoes.some(a=>a.tipo==='montar_planta')))break;
+  }
+  if(montarPlanta){
+    const montagem=acoes.find(a=>a.tipo==='montar_planta');
+    resposta=montagem?resumoMontagemPlanta(montagem):E.plantaIlegivel?'Não foi possível ler a planta com segurança: '+E.plantaIlegivel+' Nenhum item foi alterado.':'Não foi possível concluir a lista com contagens e estoque confirmados nesta tentativa. Nenhum item foi alterado. A planta pode estar ilegível ou não haver peças suficientes disponíveis.';
+    if(montagem)acoes.push({tipo:'ver_pedido',abrir:true});
   }
   if (!resposta) resposta = "Desculpa, me perdi aqui por um instante. Pode repetir pra mim?";
   // Cartões com foto sem depender do modelo lembrar de mostrar_itens: toda peça encontrada nesta mensagem cujo nome
@@ -1289,9 +1318,11 @@ async function transcrever(ctx: Ctx, body: any) {
 // (ação arquivo_upload) e depois manda só o caminho; aqui só aceitamos caminhos da pasta da própria pessoa.
 const TIPOS_ARQUIVO: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf" };
 const pastaArquivos = (ctx: Ctx) => `${ctx.empresaId}/${ctx.dono.replace(":", "-")}/arquivos/`;
-function arquivosValidos(ctx: Ctx, lista: unknown) {
-  return (Array.isArray(lista) ? lista : []).slice(0, 4).map((a: any) => ({
+function arquivosValidos(ctx: Ctx, lista: unknown, limite = 4) {
+  return (Array.isArray(lista) ? lista : []).slice(0, limite).map((a: any) => ({
     tipo: "arquivo", path: String(a?.path || ""), mime: String(a?.mime || ""), nome: String(a?.nome || "arquivo").slice(0, 120),
+    area:limite>4?String(a?.area||'').trim().slice(0,60):'',
+    recorte:limite>4 && a?.recorte && ['x','y','w','h'].every(k=>Number.isFinite(a.recorte[k]) && a.recorte[k]>=0 && a.recorte[k]<=1)?{x:a.recorte.x,y:a.recorte.y,w:a.recorte.w,h:a.recorte.h}:null,
   })).filter((a) => a.path.startsWith(pastaArquivos(ctx)) && !a.path.includes("..") && TIPOS_ARQUIVO[a.mime])
     .map((a) => ({ ...a, url: ctx.service.storage.from(BUCKET).getPublicUrl(a.path).data.publicUrl }));
 }

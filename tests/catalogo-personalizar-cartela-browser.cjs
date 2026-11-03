@@ -11,12 +11,13 @@ const { installMock } = require('./mock-projetos.cjs');
     await page.route('https://**/*', (r) => r.fulfill({ body: '', contentType: 'text/javascript' }));
     await page.route('https://fixture/**', (r) => r.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#c9b9a6"/></svg>' }));
     await page.addInitScript(() => { if (!sessionStorage.getItem('mockdb')) sessionStorage.setItem('mockdb', JSON.stringify({ projetos: [{ id: 'p1', cliente_id: 'client', noivos: 'Ana & Bruno', data_evento: '2027-05-22', local_evento: 'Jardim', status: 'rascunho', dados: { ambientes: [{ id: 'a1', nome: 'Lounge', itens: [], renders: [] }] } }], calls: [], uploads: [], removed: [], seq: 3 })); });
-    await page.addInitScript(installMock, { token: true, cartela: true });
+    await page.addInitScript(installMock, { token: true, cartela: true, pinturaSemCartela:true });
     const base = 'http://127.0.0.1:' + server.address().port + '/Modulos/Comercial/Catalogo/catalogo.html';
     await page.goto(base);
     await page.locator('[data-gateway-tile="catalogo"]').click();
     await page.locator('[data-entry-project="p1"]').click();
     await page.locator('.cpj-entry').waitFor({ state: 'detached' });
+    assert.match(await page.locator('#catalogSearch').getAttribute('placeholder'),/Esc/);await page.locator('#catalogSearch').fill('teste');await page.locator('#catalogSearch').press('Escape');assert.equal(await page.locator('#catalogSearch').inputValue(),'');
     const abrirItem = async (cat, id) => {
       await page.locator('#catalogGlobalBack').isVisible().catch(() => false);
       await page.evaluate(() => window.scrollTo(0, 0));
@@ -70,8 +71,8 @@ const { installMock } = require('./mock-projetos.cjs');
     // 4. Sofá Dois: personalizável sem cartela → continua "Experimente outro tecido"
     await voltarHome();
     sec = await abrirItem('sofas', '2');
-    assert.equal(await sec.locator('.product-bespoke-icon span').textContent(), 'Experimente outro tecido');
-    await sec.locator('.product-bespoke-icon').click(); await page.locator('#catalogCustomizeDialog[open]').waitFor();
+    assert.equal(await sec.locator('.product-bespoke-icon span').textContent(), 'Experimente sua cor');
+    await sec.locator('.product-bespoke-icon').click(); await page.locator('#catalogCustomizeDialog[open]').waitFor();assert.equal(await page.locator('#catalogCustomizeDialog h2').innerText(),'Experimente sua cor');assert.match(await page.locator('#catalogFabricUpload span').innerText(),/cor/);
     await page.keyboard.press('Escape');
     console.log('ok 4 - personalizável sem cartela continua com o envio da foto do tecido');
 

@@ -18,6 +18,7 @@ export function etapaAtual(t,setor){const l=etapasDoSetor(t,setor);return l.find
 const separadoNaoRecebido=(e,m)=>e.pacotes.filter(p=>p.estado==='separado').reduce((a,p)=>a+p.materiais.filter(v=>v.id===m.id).reduce((s,v)=>s+Number(v.quantidade),0),0);
 export const faltaReceber=(e,m)=>Math.max(0,Number(m.necessario)-(Number(m.recebido)-Number(m.devolvido)));
 export const faltaSeparar=(e,m)=>Math.max(0,faltaReceber(e,m)-separadoNaoRecebido(e,m));
+export const pacotesRecebimentoManual=e=>(e.pacotes||[]).filter(p=>p.estado==='separado'&&p.modo_separacao!=='qr');
 
 // O que a etapa pede agora: {tom, titulo, texto, principal:[acao,rotulo], extra:[[acao,rotulo]]}
 export function situacao(t,e,dados){
@@ -33,6 +34,7 @@ export function situacao(t,e,dados){
  const r={tom:'ok',titulo:'',texto:'',principal:null,extra:[]};
  const bloqueio=(titulo,texto,principal=null)=>Object.assign(r,{tom:'bloqueio',titulo,texto,principal});
  if(t.cancelado)return bloqueio('Ordem encerrada','O histórico fica guardado. Sobras de material podem ser devolvidas pelo Almoxarifado.');
+ if(t.pagamento?.liberada===false && ['pendente','pausada'].includes(e.estado))return bloqueio('Aguardando Financeiro',t.pagamento.mensagem||'O pagamento minimo para iniciar a producao ainda nao foi confirmado. Avise o supervisor.');
  if(t.revisao)return Object.assign(r,{tom:'bloqueio',titulo:'O Comercial alterou esta ordem',texto:'Nada pode ser executado até o responsável da área revisar.',principal:lider?['revisar','Revisar alteração']:null,extra:lider?[['cancelar_revisao','Encerrar ordem anterior']]:[]});
  if(pre)return bloqueio('Pré-reserva','O pedido ainda não foi confirmado pelo Comercial. A produção começa depois da confirmação.');
  if(e.estado==='execucao')return Object.assign(r,{tom:'execucao',titulo:'Em execução',texto:e.iniciada_em?`Iniciada em ${quando(e.iniciada_em)}`:'',principal:exec?['concluir','Concluir etapa']:null,extra:exec?[['pausar','Pausar']]:[]});
@@ -42,6 +44,8 @@ export function situacao(t,e,dados){
  if(Number(e.horas)<=0)return bloqueio('Sem tempo de execução','Informe o tempo por peça no cadastro da personalização.');
  if(semVinculo.length&&faltaMaterial)return bloqueio('Material sem vínculo',`${semVinculo.map(m=>m.nome).join(', ')} precisa ser ligado a um material do Almoxarifado no cadastro da personalização.`);
  if(faltaMaterial){
+  if(pacotesRecebimentoManual(e).length)return exec?Object.assign(r,{tom:'material',titulo:'Material separado',texto:'Confira o kit e confirme o recebimento dos materiais. A leitura de etiqueta não é obrigatória neste kit.',principal:['receber_manual','Confirmar recebimento dos materiais']})
+   :bloqueio('Material separado','Aguardando a produção confirmar o recebimento dos materiais.');
   if(aReceber.length)return exec?Object.assign(r,{tom:'material',titulo:'Material separado',texto:'Leia o QR da etiqueta do pacote para receber o material.',principal:['receber','Receber material (ler QR)']})
    :bloqueio('Material separado','Aguardando a produção receber o pacote pelo QR.');
   if(aSeparar.length)return almox?Object.assign(r,{tom:'material',titulo:'Aguardando material',texto:'Separe o material e imprima a etiqueta do pacote.',principal:['separar','Separar materiais']})
@@ -107,7 +111,7 @@ export function roteiroHtml(t,setor){
  return `<nav class="op-timeline" aria-label="Roteiro de produção"><ol>${todas.map(e=>`<li class="op-timeline-${e.estado}"><strong>${esc(SETORES[e.setor]||e.setor)}</strong><small>${esc(e.nome)}</small></li>`).join('')}</ol></nav>`;
 }
 
-const ACOES={quantidade:'Registrou quantidade feita',iniciar:'Iniciou',retomar:'Retomou',pausar:'Pausou',concluir:'Concluiu',conferir:'Conferiu e liberou',autorizar_prazo:'Autorizou o prazo',urgencia:'Mudou a urgência',revisar:'Revisou a alteração',cancelar_revisao:'Encerrou a ordem anterior',separar:'Separou material',receber:'Recebeu material',devolver:'Devolveu sobra',alteracao_comercial:'Comercial alterou o pedido'};
+const ACOES={quantidade:'Registrou quantidade feita',iniciar:'Iniciou',retomar:'Retomou',pausar:'Pausou',concluir:'Concluiu',conferir:'Conferiu e liberou',autorizar_prazo:'Autorizou o prazo',urgencia:'Mudou a urgência',revisar:'Revisou a alteração',cancelar_revisao:'Encerrou a ordem anterior',separar:'Separou material',receber:'Recebeu material',receber_manual:'Confirmou recebimento manual',modo_separacao:'Registrou o modo de separacao',devolver:'Devolveu sobra',alteracao_comercial:'Comercial alterou o pedido'};
 export function historicoHtml(lista,t,nomes){
  const ids=new Set(t.etapas.map(e=>e.id));
  const meus=lista.filter(h=>h.etapa_id?ids.has(h.etapa_id):h.detalhes?.item===t.id).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));

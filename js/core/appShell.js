@@ -150,6 +150,7 @@
   };
 
   window.addEventListener("popstate", async () => {
+    try { if(await frame.contentWindow.appBeforeLeave?.() === false) {history.pushState({page:trail.at(-1)?.href},'', 'dashboard.html?page='+encodeURIComponent(trail.at(-1)?.href||''));return;} } catch { return; }
     const page = new URLSearchParams(location.search).get("page");
     if (!page || !safeModule(page)) { hideLoader(); frame.classList.add('hidden'); mainContent?.classList.remove('hidden'); return; }
     await window.EasyLocPermissions?.load();

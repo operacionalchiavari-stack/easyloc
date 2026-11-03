@@ -1,5 +1,6 @@
 // Uma projeção dos dados existentes, compartilhada por Geral, apresentação e PDF.
 // As medidas saem do nome gerado ("... (L) 2.40 m (A) 0.75 m (P) 1.10 m") porque já aparecem na linha de baixo, com as siglas.
+import { textoParaHtml, CONTRATO_ESTILOS } from '../../../js/core/contracts.mjs';
 const MEDIDA_RE = /\s*\((?:L|A|P)\)\s*[\d.,]+\s*m\b/gi;
 const semMedidas = nome => String(nome || '').replace(MEDIDA_RE, '').replace(/\s{2,}/g, ' ').trim();
 // Mesmo formato do cadastro: "(L) 2.50 m (A) 1.00 m (P) 0.60 m". Usa o trecho do próprio nome gerado; sem ele, monta a partir
@@ -21,7 +22,7 @@ export function definirPersonalizacoes(lista = []){
     const id = String(p.id), item = String(p.vinculo_id);
     PERSONALIZACOES.nome.set(id, p.nome);
     if(!PERSONALIZACOES.porItem.has(item)) PERSONALIZACOES.porItem.set(item, []);
-    PERSONALIZACOES.porItem.get(item).push({ id, nome: p.nome, precoBase: p.preco_base ?? null, tiposCartela: p.tipos_cartela || [] });
+    PERSONALIZACOES.porItem.get(item).push({ id, nome: p.nome, tipo:p.tipo, precoBase: p.preco_base ?? null, tiposCartela: p.tipos_cartela || [] });
   }
 }
 export const opcoesPersonalizacaoDoItem = (itemId) => PERSONALIZACOES.porItem.get(String(itemId)) || [];
@@ -246,6 +247,7 @@ export function pedidoPreviewHtml(model, { decorador = null, empresa = null, lay
     ${!horizontal && model.ambientes.some(a => a.imagens?.length) ? `<section class="cpj-order-renders"><h2>Renderizações do projeto</h2>${model.ambientes.filter(a => a.imagens?.length).map(amb => `<section class="cpj-order-render-group"><h3>${esc(amb.nome)}</h3><div>${amb.imagens.map(r => `<figure><img src="${esc(r.url)}" alt="Renderização de ${esc(amb.nome)}" loading="lazy" decoding="async"></figure>`).join('')}</div></section>`).join('')}</section>` : ''}
     ${plantasPedidoHtml(model, horizontal)}
     ${financeiroPedidoHtml(model)}
+    ${model.contrato ? `<section class="cpj-order-contrato" aria-label="Contrato anexado"><style>${CONTRATO_ESTILOS}.cpj-order-contrato{margin-top:32px;padding-top:24px;border-top:1px solid #dce1e8;line-height:1.75;overflow-wrap:anywhere}.cpj-order-contrato>h2{margin:0 0 20px}@media print{.cpj-order-contrato{break-before:page;border-top:0}}</style><h2>Contrato de Locação</h2><div>${textoParaHtml(model.contrato)}</div></section>` : ''}
   </article>`;
 }
 // Planta do evento (com as legendas das fotos), antes do resumo e das parcelas — out/2026. model.plantas vem pronto

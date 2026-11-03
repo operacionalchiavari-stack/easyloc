@@ -200,6 +200,7 @@
         rotulo: "Apps",
         itens: [
           { rotulo: "App do Montador", href: "Modulos/Chiavari/Cronograma/montador.html" },
+          { rotulo: "App da Triagem", href: "Modulos/Estoque/TriagemApp/triagem.html" },
           { rotulo: "Vagas Free", href: "Modulos/Chiavari/Cronograma/free.html" },
           { rotulo: "App do Motorista", href: "Modulos/Chiavari/Uber/motorista.html" },
           { rotulo: "App do Freteiro", href: "Modulos/Chiavari/Fretes/freteiro.html" },

@@ -14,6 +14,41 @@ const state = {
 };
 
 const els = {};
+let imagemAssinatura = '';
+
+async function iniciarAssinaturaEmpresa(){
+  const nome = $('contratoSignatario'), arquivo = $('contratoAssinaturaArquivo'), preview = $('contratoAssinaturaPreview');
+  const salvar = $('contratoSalvarAssinatura'), remover = $('contratoRemoverAssinatura'), status = $('contratoAssinaturaStatus');
+  if(!nome || !arquivo || !salvar) return;
+  const pintar = () => { preview.hidden = !imagemAssinatura; if(imagemAssinatura) preview.src = imagemAssinatura; else preview.removeAttribute('src'); };
+  const {data,error} = await state.supabase.from('contratos_assinaturas_empresa').select('nome_signatario,imagem').eq('empresa_id',state.empresaId).maybeSingle();
+  if(error){ status.textContent = 'Não foi possível carregar a assinatura: '+error.message; salvar.disabled=true; remover.disabled=true; return; }
+  nome.value=data?.nome_signatario || ''; imagemAssinatura=data?.imagem || ''; pintar();
+  arquivo.addEventListener('change',async()=>{
+    const file=arquivo.files[0]; if(!file)return;
+    salvar.disabled=true;
+    try{
+      if(!['image/png','image/jpeg'].includes(file.type) || file.size>5*1024*1024)throw Error('Escolha uma imagem PNG ou JPG de até 5 MB.');
+      const bitmap=await createImageBitmap(file);
+      const scale=Math.min(1,1000/bitmap.width,400/bitmap.height);
+      const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+      canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+      const imagem=canvas.toDataURL('image/png');
+      if(imagem.length>400000)throw Error('A imagem é muito detalhada. Recorte apenas a assinatura e tente novamente.');
+      imagemAssinatura=imagem;pintar();status.textContent='Prévia pronta. Clique em Salvar assinatura da empresa.';
+    }catch(e){status.textContent=e.message;}finally{salvar.disabled=false;arquivo.value='';}
+  });
+  async function gravar(removerImagem=false){
+    salvar.disabled=true;remover.disabled=true;
+    try{
+      const {error}=await state.supabase.from('contratos_assinaturas_empresa').upsert({empresa_id:state.empresaId,nome_signatario:nome.value.trim(),imagem:removerImagem?'':imagemAssinatura,atualizado_em:new Date().toISOString()},{onConflict:'empresa_id'});
+      if(error)throw error;
+      if(removerImagem){imagemAssinatura='';pintar();}
+      status.textContent=removerImagem?'Assinatura removida.':'Assinatura salva. Será usada nos próximos contratos gerados.';
+    }catch(e){status.textContent='Não foi possível salvar: '+e.message;}finally{salvar.disabled=false;remover.disabled=false;}
+  }
+  salvar.addEventListener('click',()=>gravar());remover.addEventListener('click',()=>gravar(true));
+}
 
 function $(id){
   return document.getElementById(id);
@@ -494,6 +529,7 @@ export async function initContratos(){
   }
 
   await carregarModelos();
+  await iniciarAssinaturaEmpresa();
   window.lucide?.createIcons?.();
   window.finalizarCarregamentoModulo?.();
 }

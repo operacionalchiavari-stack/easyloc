@@ -1,0 +1,20 @@
+const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({channel:'msedge'});try{
+ const source=fs.readFileSync(path.join(__dirname,'conferencia-sem-etiquetas-browser.cjs'),'utf8');
+ let mock=new Function('require','__dirname',source.slice(0,source.indexOf('(async () =>'))+';return mock;')(require,__dirname);
+ mock=mock.replace('n === "operacao_concluir_conferencia" ||','n === "operacao_concluir_retorno_avarias" || n === "operacao_concluir_conferencia" ||').replace('return Promise.resolve({ data: r, error: null });','Object.assign(r,{primeira_contagem:args.p_primeira||{},danificados:args.p_danificados||{}});return Promise.resolve({ data: r, error: null });');
+ const page=await browser.newPage({viewport:{width:1440,height:900}}),erros=[];page.on('pageerror',e=>erros.push(e.message));
+ await page.route('**/*',r=>{const u=r.request().url();if(u.includes('supabase-js'))return r.fulfill({contentType:'text/javascript',body:mock});if(u.startsWith('http://acervo.teste/')){const file=path.join(process.cwd(),decodeURIComponent(new URL(u).pathname));if(!fs.existsSync(file))return r.fulfill({status:404,body:''});return r.fulfill({body:fs.readFileSync(file),contentType:{'.html':'text/html','.css':'text/css'}[path.extname(file)]||'text/javascript'});}return r.abort();});
+ await page.addInitScript(()=>{sessionStorage.setItem('login_ok','1');sessionStorage.setItem('empresa_id','e1');});
+ await page.goto('http://acervo.teste/Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=retorno');await page.locator('[data-danificado]').first().waitFor({timeout:8000}).catch(async e=>{console.log(erros,await page.locator('body').innerText());throw e;});
+ assert.equal(await page.locator('#cfAvariaBtn').count(),0);
+ await page.locator('.cf-qtd-input[data-chave="s1|i1"]').fill('1');await page.locator('.cf-qtd-input[data-chave="s2|c1"]').fill('1');await page.locator('.cf-qtd-input[data-chave="s2|c2"]').fill('2');await page.locator('[data-danificado="s1|i1"]').fill('1');
+ await page.locator('#cfQtdConfirmar').click();await page.locator('dialog.cf-segunda [type=submit]').click();
+ assert.equal(await page.locator('.cf-primeira-celula').first().innerText(),'1');
+ await page.locator('.cf-qtd-input[data-chave="s1|i1"]').fill('1');await page.locator('#cfQtdConfirmar').click();await page.locator('dialog.cf-confirmacao [type=submit]').click();
+ await page.waitForFunction(()=>document.querySelectorAll('.cf-primeira-valor').length===3);
+ assert.equal(await page.locator('.cf-qtd-cabeca').getByText('1ª contagem',{exact:true}).count(),1);
+ assert.equal(await page.locator('.cf-qtd-cabeca').getByText('2ª contagem',{exact:true}).count(),1);
+ const args=await page.evaluate(()=>__rpc.find(([n])=>n==='operacao_concluir_retorno_avarias')[1]);assert.equal(args.p_danificados['s1|i1'],1);assert.equal(args.p_primeira['s1|i1'],1);
+ await page.screenshot({path:'.tmp/triagem-retorno-colunas.png',fullPage:true});await page.setViewportSize({width:390,height:844});assert.ok(await page.locator('#cfQtd').evaluate(el=>el.scrollWidth<=el.clientWidth+2),'lista da volta sem rolagem horizontal');await page.screenshot({path:'.tmp/triagem-retorno-colunas-celular.png',fullPage:true});assert.deepEqual(erros,[]);console.log('OK - triagem completa: duas contagens, quantidade danificada e confirmacao atomica.');
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

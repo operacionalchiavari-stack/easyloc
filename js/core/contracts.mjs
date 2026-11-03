@@ -132,6 +132,13 @@ function renderizarNoPermitido(node, options){
     .join("");
 
   if(tag === "br") return "<br>";
+  if(tag === "img"){
+    const src = node.getAttribute("src") || "";
+    return /^(https?:\/\/|data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$)/i.test(src) ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(node.getAttribute('alt') || '')}" loading="eager">` : "";
+  }
+  if(["table", "thead", "tbody", "tr", "th", "td"].includes(tag)){
+    return `<${tag}${tag === 'table' ? ` class="${node.classList.contains('contrato-assinaturas') ? 'contrato-assinaturas' : 'contrato-itens'}"` : ''}>${content}</${tag}>`;
+  }
   if(tag === "strong" || tag === "b") return `<strong>${content}</strong>`;
   if(tag === "em" || tag === "i") return `<em>${content}</em>`;
 
@@ -149,7 +156,7 @@ function renderizarNoPermitido(node, options){
 
 export function contratoMarkupParaHtml(value = "", options = {}){
   const raw = String(value ?? "");
-  if(!/<\/?(strong|b|em|i|span|br|div|p)\b/i.test(raw)){
+  if(!/<\/?(strong|b|em|i|span|br|div|p|table|thead|tbody|tr|th|td|img)\b/i.test(raw)){
     return renderizarTextoContrato(raw, options);
   }
 
@@ -194,7 +201,23 @@ function listaItens(itens = []){
   return linhas.length ? linhas.join("\n") : NAO_INFORMADO;
 }
 
-export function renderizarContrato(conteudoModelo = "", dadosPedido = {}){
+export const CONTRATO_ESTILOS = `.contrato-itens{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;line-height:1.5}.contrato-itens th,.contrato-itens td{padding:12px;border:1px solid #dce1e8;text-align:left;vertical-align:middle}.contrato-itens th{background:#f5f6f8}.contrato-itens img{display:block;width:80px;height:80px;object-fit:contain}.contrato-itens tr{break-inside:avoid}.contrato-itens thead{display:table-header-group}.contrato-itens td:nth-last-child(-n+2){white-space:nowrap}.contrato-assinaturas{width:100%;margin-top:48px;border-collapse:collapse;break-inside:avoid}.contrato-assinaturas td{width:50%;text-align:center;border:0;padding:8px;vertical-align:bottom}.contrato-assinaturas img{display:block;margin:0 auto;max-width:220px;max-height:90px;object-fit:contain}.contrato-assinaturas tr:first-child{height:100px}`;
+
+export function blocoAssinaturasContrato(dados = {}){
+  const assinatura = dados.assinatura_empresa || {};
+  const imagem = /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(assinatura.imagem || '') ? '<img src="'+escapeHtml(assinatura.imagem)+'" alt="Assinatura da empresa">' : '';
+  return '<table class="contrato-assinaturas"><tbody><tr><td>'+imagem+'</td><td></td></tr><tr><td>________________________________<br><strong>'+escapeHtml(assinatura.nome_signatario || dados.empresa?.nome || 'Empresa')+'</strong><br>Assinatura da empresa</td><td>________________________________<br><strong>'+escapeHtml(dados.cliente?.nome || 'Cliente')+'</strong><br>Assinatura do cliente</td></tr></tbody></table>';
+}
+
+function tabelaItens(itens = []){
+  if(!Array.isArray(itens) || !itens.length) return NAO_INFORMADO;
+  return '<table class="contrato-itens"><thead><tr><th>Foto</th><th>Item</th><th>Qtd.</th><th>Valor unitário</th><th>Total</th></tr></thead><tbody>' + itens.map(item => {
+    const foto = /^https?:\/\//i.test(item.foto_url || '') ? `<img src="${escapeHtml(item.foto_url)}" alt="${escapeHtml(item.nome || 'Item')}">` : 'Sem foto';
+    return `<tr><td>${foto}</td><td><strong>${escapeHtml(item.nome || 'Item')}</strong></td><td><strong>${Number(item.quantidade) || 1}</strong></td><td>${escapeHtml(item.valor_unitario || '—')}</td><td><strong>${escapeHtml(item.valor_total || '—')}</strong></td></tr>`;
+  }).join('') + '</tbody></table>';
+}
+
+export function renderizarContrato(conteudoModelo = "", dadosPedido = {}, { formatado = false } = {}){
   const dados = {
     pedido_numero: valor(dadosPedido.pedido?.numero || dadosPedido.pedido_numero),
     cliente_nome: valor(dadosPedido.cliente?.nome || dadosPedido.cliente_nome),
@@ -225,11 +248,13 @@ export function renderizarContrato(conteudoModelo = "", dadosPedido = {}){
   };
 
   return String(conteudoModelo || "").replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, key) => (
-    Object.prototype.hasOwnProperty.call(dados, key) ? dados[key] : NAO_INFORMADO
+    Object.prototype.hasOwnProperty.call(dados, key)
+      ? formatado ? key === 'itens_locados' ? tabelaItens(dadosPedido.itens || dadosPedido.itens_locados) : `<strong>${escapeHtml(dados[key])}</strong>` : dados[key]
+      : NAO_INFORMADO
   ));
 }
 
-window.EasyLocContratos = {
+if(typeof window !== 'undefined') window.EasyLocContratos = {
   CONTRATO_MODELO_INICIAL,
   CONTRATO_TAG_GROUPS,
   escapeHtml,

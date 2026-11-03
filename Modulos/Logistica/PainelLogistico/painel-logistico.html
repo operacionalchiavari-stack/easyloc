@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <script src="../../Chiavari/gas-cliente.js?v=20261019-sem-motor" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../../Chiavari/operacao-sem-motor.js?v=20261029-extra2"></script>
+  <script src="../../Chiavari/operacao-sem-motor.js?v=20261103-supervisor-datas-topo"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Painel Logístico</title>
@@ -12,9 +12,9 @@
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="../EntregasColetas/entregas-coletas.css?v=20261101-dano-app">
-  <link rel="stylesheet" href="../../../styles/escala-parametros.css?v=20261027">
-  <link rel="stylesheet" href="painel-logistico.css?v=20261029-autocomplete">
+  <link rel="stylesheet" href="../EntregasColetas/entregas-coletas.css?v=20261103-conferencia-colunas">
+  <link rel="stylesheet" href="../../../styles/escala-parametros.css?v=20261103-uber">
+  <link rel="stylesheet" href="painel-logistico.css?v=20261103-disponiveis-topo">
 <script src="../../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
 </head>
 <body>
@@ -22,7 +22,7 @@
   <header id="plTopoUnificado" class="page-header pl-topo">
     <h1>Painel Logístico</h1>
     <nav id="plModuloAbas" role="tablist" aria-owns="plTabParametros" aria-label="Áreas do painel"><button id="plTabEquipe" type="button" role="tab" aria-controls="plModuloEquipe" aria-selected="true" data-modulo="equipe">Montagem de equipe<span class="pl-alerta-aba" aria-hidden="true" hidden></span></button><button id="plTabEntrega" type="button" role="tab" aria-controls="plModuloEntregas" aria-selected="false" tabindex="-1" data-modulo="entrega">Entrega<span class="pl-alerta-aba" aria-hidden="true" hidden></span></button><button id="plTabColeta" type="button" role="tab" aria-controls="plModuloEntregas" aria-selected="false" tabindex="-1" data-modulo="coleta">Coleta<span class="pl-alerta-aba" aria-hidden="true" hidden></span></button><button id="plTabCronograma" type="button" role="tab" aria-controls="plModuloCronograma" aria-selected="false" tabindex="-1" data-modulo="cronograma">Cronograma</button></nav>
-    <div id="plAcoesDireita"><button id="plTabParametros" type="button" role="tab" aria-controls="plModuloParametros" aria-selected="false" tabindex="-1" data-modulo="parametros">Parâmetros</button><button type="button" id="plPreencher" class="pl-preencher-icone" title="Preencher vazios do dia" aria-label="Preencher vazios do dia"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 4 5 5L8 21l-5-5L15 4Z"/><path d="m12 7 5 5M5 3v4M3 5h4M20 15v4M18 17h4"/></svg></button></div>
+    <div id="plAcoesDireita"><button type="button" id="plEquipeDisponivel" class="pl-abrir-disponiveis" data-abrir-disponiveis aria-haspopup="dialog" aria-controls="plDisponiveisDialog" disabled>Equipe dispon&#237;vel</button><button id="plTabParametros" type="button" role="tab" aria-controls="plModuloParametros" aria-selected="false" tabindex="-1" data-modulo="parametros">Parâmetros</button><button type="button" id="plPreencher" class="pl-preencher-icone" title="Preencher vazios do dia" aria-label="Preencher vazios do dia"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 4 5 5L8 21l-5-5L15 4Z"/><path d="m12 7 5 5M5 3v4M3 5h4M20 15v4M18 17h4"/></svg></button></div>
   </header>
 
   <nav id="plAbasDias" class="pl-abas-dias" role="tablist" aria-label="Dias do planejamento"></nav>
@@ -57,13 +57,15 @@
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261024-offline"></script>
 <script src="painel-dias.js?v=20261028-dias-infinitos"></script>
-<script src="painel-logistico.js?v=20261028-dias-infinitos"></script>
+<script src="painel-logistico.js?v=20261103-disponiveis-topo"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="painel-uber.js?v=20261029-autocomplete"></script>
 <script src="../../../js/core/evidenciasOperacao.js?v=20261024"></script>
-<script src="../EntregasColetas/entregas-coletas.js?v=20261101-dano-app"></script>
-<script src="../../../js/logistica/escala-parametros.js?v=20261027-gestao"></script>
-<script src="painel-modulos.js?v=20261027-altura-estavel"></script>
+<script src="../EntregasColetas/montagem-registros.js?v=20261103-conferencia-colunas"></script>
+<script src="../EntregasColetas/entregas-coletas.js?v=20261103-conferencia-colunas"></script>
+<script src="../../../js/logistica/uber-parametros.js?v=20261103-automacao"></script>
+<script src="../../../js/logistica/escala-parametros.js?v=20261103-uber"></script>
+<script src="painel-modulos.js?v=20261103-uber"></script>
 </body>
 </html>

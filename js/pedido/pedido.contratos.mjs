@@ -1,6 +1,8 @@
 import {
   renderizarContrato,
   textoParaHtml,
+  CONTRATO_ESTILOS,
+  blocoAssinaturasContrato,
 } from "../core/contracts.mjs";
 import { parseCurrency } from "./pedido.utils.mjs";
 
@@ -15,6 +17,7 @@ const state = {
   carregado: false,
   valido: false,
   editing: false,
+  revisao: 0,
   empresa: null,
   cliente: null,
   local: null,
@@ -50,6 +53,7 @@ function cacheEls(){
     "btnVisualizarContratoPedido",
     "btnImprimirContratoPedido",
     "btnGerarPdfContratoPedido",
+    "btnAnexarContratoPedido",
     "pedidoContratoModal",
     "pedidoContratoModalTexto",
     "btnFecharContratoModal",
@@ -86,13 +90,15 @@ async function carregarEmpresa(){
 
 async function carregarCliente(){
   const clienteId = $("clienteIdHidden")?.value || "";
-  if(!clienteId || state.cliente?.id === clienteId) return state.cliente || {};
+  if(!clienteId){ state.cliente = null; return {}; }
+  if(state.cliente?.id === clienteId) return state.cliente;
   const { data } = await state.supabase
     .from("clientes_empresas")
     .select("*")
     .eq("empresa_id", state.empresaId)
     .eq("id", clienteId)
     .maybeSingle();
+  if($('clienteIdHidden')?.value !== clienteId) return {};
   state.cliente = data || {};
   return state.cliente;
 }
@@ -113,13 +119,15 @@ async function documentoCliente(cliente){
 
 async function carregarLocal(){
   const localId = $("localIdHidden")?.value || "";
-  if(!localId || state.local?.id === localId) return state.local || {};
+  if(!localId){ state.local = null; return {}; }
+  if(state.local?.id === localId) return state.local;
   const { data } = await state.supabase
     .from("locais_empresas")
     .select("*")
     .eq("empresa_id", state.empresaId)
     .eq("id", localId)
     .maybeSingle();
+  if($('localIdHidden')?.value !== localId) return {};
   state.local = data || {};
   return state.local;
 }
@@ -144,6 +152,9 @@ function coletarItens(){
   return Array.from(document.querySelectorAll("#listaItens tr.item-row")).map((row) => ({
     quantidade: Number(String(row.querySelector(".qtd")?.textContent || row.querySelector(".qtd")?.value || "1").replace(",", ".")) || 1,
     nome: row.querySelector(".nome-item")?.innerText?.trim() || "Item",
+    foto_url: row.querySelector('.foto-item img')?.src || '',
+    valor_unitario: row.querySelector('.valor-unitario')?.textContent?.trim() || '',
+    valor_total: row.querySelector('.valor-total')?.textContent?.trim() || '',
   })).filter((item) => item.nome && item.nome !== "Item");
 }
 
@@ -167,10 +178,11 @@ function enderecoCompletoLocal(local = {}){
 }
 
 async function coletarDadosContrato(){
-  const [empresa, cliente, local] = await Promise.all([
+  const [empresa, cliente, local, assinatura] = await Promise.all([
     carregarEmpresa(),
     carregarCliente(),
     carregarLocal(),
+    state.supabase.from('contratos_assinaturas_empresa').select('nome_signatario,imagem').eq('empresa_id',state.empresaId).maybeSingle(),
   ]);
   const localCidadeEstado = extrairCidadeEstado(local);
   const valorLocacao = valorResumo("resumoLocacaoBruto");
@@ -179,6 +191,7 @@ async function coletarDadosContrato(){
   const total = valorResumo("resumoTotalGeral");
 
   return {
+    assinatura_empresa: assinatura.data || {},
     pedido: {
       numero: texto("orcamentoNumero"),
       data_evento: $("dataEvento")?.value || "",
@@ -273,6 +286,7 @@ async function carregarContratoPedido(){
 
 async function recalcularContrato({ forceModelo = false } = {}){
   if(state.editing && !forceModelo)return;
+  const revisao = ++state.revisao;
   if(!state.modeloPadrao) await carregarModeloPadrao();
   if(!state.modeloPadrao && !state.conteudoEditado && !state.conteudoCongelado){
     setValid(false);
@@ -289,7 +303,8 @@ async function recalcularContrato({ forceModelo = false } = {}){
 
   if(!state.conteudoEditado && !state.conteudoCongelado){
     const dados = await coletarDadosContrato();
-    state.conteudoFinal = renderizarContrato(state.modeloPadrao.conteudo, dados);
+    if(revisao !== state.revisao || state.editing) return;
+    state.conteudoFinal = renderizarContrato(state.modeloPadrao.conteudo, dados, { formatado: true }) + blocoAssinaturasContrato(dados);
   }
 
   setValid(Boolean(state.conteudoFinal?.trim()));
@@ -307,6 +322,7 @@ async function recalcularContrato({ forceModelo = false } = {}){
 async function salvarContratoPedido(pedidoId, { final = false } = {}){
   if(!pedidoId || !state.supabase || !state.empresaId) return false;
   if(state.editing){
+    state.revisao++;
     state.conteudoFinal=els.pedidoContratoEditor?.value || '';
     state.conteudoEditado=true;state.conteudoCongelado=false;state.editing=false;
     if(els.pedidoContratoEditor)els.pedidoContratoEditor.hidden=true;
@@ -317,7 +333,7 @@ async function salvarContratoPedido(pedidoId, { final = false } = {}){
   if(!state.conteudoFinal?.trim()) await recalcularContrato();
   if(!state.conteudoFinal?.trim()) return false;
   const conteudoFinal = final
-    ? renderizarContrato(state.conteudoFinal, await coletarDadosContrato())
+    ? renderizarContrato(state.conteudoFinal, await coletarDadosContrato(), { formatado: true })
     : state.conteudoFinal;
   state.conteudoFinal = conteudoFinal;
 
@@ -348,6 +364,7 @@ async function salvarContratoPedido(pedidoId, { final = false } = {}){
 
 function alternarEdicao(){
   if(!els.pedidoContratoEditor || !els.btnEditarContratoPedido) return;
+  state.revisao++;
   if(els.pedidoContratoEditor.hidden){
     state.editing = true;
     els.pedidoContratoEditor.hidden = false;
@@ -407,6 +424,7 @@ function imprimirContrato(){
         <style>
           body{font-family:Arial,sans-serif;color:#1f2937;line-height:1.65;padding:36px;}
           h1{font-size:22px;margin-bottom:24px;}
+          ${CONTRATO_ESTILOS}
         </style>
       </head>
       <body>
@@ -417,10 +435,29 @@ function imprimirContrato(){
   `);
   win.document.close();
   win.focus();
-  win.print();
+  Promise.all(Array.from(win.document.images).map(img => img.complete ? Promise.resolve() : new Promise(resolve => { img.onload = resolve; img.onerror = resolve; })))
+    .then(() => { if(!win.closed) win.print(); });
 }
 
 function gerarPdfContrato(){ imprimirContrato(); }
+
+async function anexarContratoPedido(){
+  const botao = els.btnAnexarContratoPedido;
+  if(botao) botao.disabled = true;
+  try {
+    if(!state.editing) await recalcularContrato();
+    if(!state.conteudoFinal?.trim() && !els.pedidoContratoEditor?.value?.trim()) throw new Error('Preencha o contrato antes de anexar.');
+    // Salva os dados e os itens que compõem esta cópia do contrato, inclusive em pedidos novos.
+    const salvo = await window.__salvarPedidoOperacional?.({ silencioso: true });
+    if(!salvo || !window.__PEDIDO_ATUAL_ID) throw new Error('Não foi possível salvar o pedido. Confira os campos obrigatórios.');
+    if(!await salvarContratoPedido(window.__PEDIDO_ATUAL_ID)) throw new Error('Não foi possível anexar o contrato. Tente novamente.');
+    notify('Contrato anexado ao pedido com sucesso.', 'Contrato', 'sucesso');
+  } catch(e) {
+    notify(e.message, 'Contrato', 'aviso');
+  } finally {
+    if(botao) botao.disabled = false;
+  }
+}
 
 async function validarStatusContrato(status){
   const statusAlvo = String(status || "").toLowerCase();
@@ -446,6 +483,7 @@ function bindEvents(){
   els.btnVisualizarContratoPedido?.addEventListener("click", abrirModal);
   els.btnImprimirContratoPedido?.addEventListener("click", imprimirContrato);
   els.btnGerarPdfContratoPedido?.addEventListener("click", gerarPdfContrato);
+  els.btnAnexarContratoPedido?.addEventListener("click", anexarContratoPedido);
   els.btnFecharContratoModal?.addEventListener("click", fecharModal);
   els.btnFecharContratoModalFooter?.addEventListener("click", fecharModal);
   els.btnImprimirContratoModal?.addEventListener("click", imprimirContrato);
@@ -478,6 +516,9 @@ export async function initContratoPedido({ supabase, avisar } = {}){
   state.empresaId = window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id");
   state.avisar = avisar;
   cacheEls();
+  if(!document.getElementById('contratoItensEstilos')){
+    const estilo = document.createElement('style'); estilo.id = 'contratoItensEstilos'; estilo.textContent = CONTRATO_ESTILOS; document.head.append(estilo);
+  }
   if(!els.pedidoContratoCard || !state.supabase || !state.empresaId) return;
   bindEvents();
   await inicializarDadosContrato();
@@ -486,6 +527,7 @@ export async function initContratoPedido({ supabase, avisar } = {}){
   window.__pedidoPodeAlterarStatus = validarStatusContrato;
   window.__pedidoContratoPodeSalvarStatus = validarStatusContrato;
   window.__pedidoContratoAtualizar = () => recalcularContrato();
+  window.__pedidoContratoAnexado = () => state.contratoPedido?.conteudo_final || '';
   window.__pedidoSalvarContratoRascunho = async pedidoId => {
     if(!state.conteudoFinal?.trim() && !state.editing)return null;
     await recalcularContrato();
@@ -509,6 +551,7 @@ export function destroyContratoPedido(){
   delete window.__pedidoPodeAlterarStatus;
   delete window.__pedidoContratoPodeSalvarStatus;
   delete window.__pedidoContratoAtualizar;
+  delete window.__pedidoContratoAnexado;
   delete window.__pedidoSalvarContratoRascunho;
   delete window.__pedidoContratoRecarregar;
   delete window.__pedidoSalvarContratoFinal;

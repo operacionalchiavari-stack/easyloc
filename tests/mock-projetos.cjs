@@ -41,7 +41,7 @@ function installMock(opts){
     catalogo_capas_carregar_interno:()=>ok({portal:'https://fixture/capa.png'}),
     biblioteca_carregar:()=>ok({fotos:[]}),
     projeto_listar:()=>ok(visiveis().map(resumo)),
-    personalizacao_lista:()=>ok(opts.cartela?[{id:"pers1",vinculo_id:"1",tipo:"Pintura",preco_base:50,tipos_cartela:["Tinta"]},{id:"pers3",vinculo_id:"3",tipo:"Pintura",preco_base:20,tipos_cartela:["Tinta"]}]:[]),
+    personalizacao_lista:()=>ok(opts.cartela?[{id:"pers1",vinculo_id:"1",tipo:"Pintura",preco_base:50,tipos_cartela:["Tinta"]},{id:"pers3",vinculo_id:"3",tipo:"Pintura",preco_base:20,tipos_cartela:["Tinta"]},...(opts.pinturaSemCartela?[{id:"pers2",vinculo_id:"2",tipo:"Pintura",preco_base:20,tipos_cartela:[]}]:[])]:[]),
     personalizacao_cartelas:()=>ok({tipo:"Pintura",preco_base:50,variaveis:[{tipo:"Tinta",quantidade:0.5,unidade:"L",cartelas:[{id:"c1",nome:"Cartela Suvinil",fornecedor:"Suvinil",opcoes:[{id:"o1",codigo:"SV-101",nome:"Verde Musgo",cor:"#4a6b3a",acrescimo:20},{id:"o2",codigo:"SV-202",nome:"Azul Petróleo",cor:"#22447a",acrescimo:30}]}]}]}),
     personalizacao_precos:(p)=>ok((p.p_linhas||[]).map(()=>null)),
     catalogo_creditos_saldo:()=>ok({saldo:100,custos:{tecido:3,render:5,planta:2,layout:4}}),

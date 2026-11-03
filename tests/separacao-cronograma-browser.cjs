@@ -115,10 +115,16 @@ const mock = `(() => {
   await page.goto(BASE + "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html");
   await page.evaluate(() => { window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Teste" }; });
   await page.locator('#separacaoColunaAguardando [data-pedido-id=p1]').waitFor();
-  // Out/2026: a divergência é resolvida na Gestão do acervo; a Triagem não tem mais a coluna Divergências.
-  assert.ok(await page.locator('.separacao-lane-divergencias').isHidden(), 'coluna Divergências escondida');
-  assert.equal(await page.locator('#separacaoColunaDivergencias [data-pedido-id=pd]').count(), 0, 'divergência não fica na Triagem');
-  console.log("ok 6b - divergência da volta não fica na Triagem (vai para a Gestão do acervo)");
+  assert.ok(await page.locator('.separacao-lane-divergencias').isVisible(), 'coluna Divergencias visivel');
+  assert.equal(await page.locator('#separacaoColunaDivergencias [data-pedido-id=pd]').count(), 1, 'pedido permanece na Triagem enquanto houver contagem pendente');
+  const medidas=await page.locator('#separacaoColunaDivergencias [data-pedido-id=pd]').evaluate(card=>({altura:card.getBoundingClientRect().height,resumoX:card.querySelector('.card-divergencia-resumo').getBoundingClientRect().left,fotoX:card.querySelector('.decorador-card-foto').getBoundingClientRect().right,linhas:card.children.length}));
+  const outraAltura=await page.locator('#separacaoColunaAguardando [data-pedido-id=p1]').evaluate(card=>card.getBoundingClientRect().height);
+  assert.ok(medidas.altura<=outraAltura+24,'card divergente usa a mesma altura compacta dos demais');
+  assert.ok(medidas.resumoX>=medidas.fotoX,'resumo fica junto aos dados, fora da coluna estreita da foto');
+  await page.evaluate(async()=>{await window.supabaseClient.from('operacao_ocorrencias').update({resolvida_em:new Date().toISOString()}).eq('pedido_id','pd');});
+  await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+  await page.waitForFunction(()=>document.querySelectorAll('#separacaoColunaDivergencias [data-pedido-id=pd]').length===0);
+  console.log('ok 6b - divergencias ficam na Triagem ate o estoque finalizar a contagem');
   assert.ok(await page.locator('#separacaoColunaSeparados [data-pedido-id=standby]').count() >= 1,'separado e ainda não carregado fica em Concluídos');
   assert.equal(await page.locator('[data-pedido-id=assumido]').count(),0,'carregamento começou: sai da Triagem');
   assert.equal(await page.locator('[data-pedido-id=assumido]').count(),0);assert.equal(await page.locator('[data-pedido-id=revisao]').count(),0);

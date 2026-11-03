@@ -35,7 +35,7 @@
     try {
       if (nome === 'parametros') {
         const ctx=await window.aguardarContexto();
-        await window.carregarParametrosEscala(document.getElementById('plModuloParametros'),ctx.empresa_id,{mostrarAutomatica:false});
+        await window.carregarParametrosEscala(document.getElementById('plModuloParametros'),ctx.empresa_id,{mostrarAutomatica:false,mostrarUber:true});
       }
       else if (nome === 'cronograma') {
         const quadro = document.getElementById('plCronogramaFrame');

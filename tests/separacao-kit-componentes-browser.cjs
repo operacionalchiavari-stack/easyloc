@@ -19,6 +19,7 @@ const mock = `(() => {
     separacoes_etiquetas: [],
     separacoes_leituras: [], empresa_logistica_regras: []
   };
+  window.__bancoSeparacao=banco;
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
     const q = {
@@ -30,6 +31,7 @@ const mock = `(() => {
       insert(p){ const lista = (Array.isArray(p) ? p : [p]).map((x) => ({ id: "n" + Math.random().toString(36).slice(2), created_at: new Date().toISOString(), ...x })); window.__gravados.push({ t, tipo: "insert", p }); (banco[t] ||= []).push(...lista); linhas = lista; return q; },
       update(p){ acao = "update"; dados = p; return q; },
       then(ok, erro){
+        if(acao === "update" && t === "separacoes_pedidos" && dados.status === "separado" && window.__erroFinalizacao)return Promise.resolve({data:null,error:window.__erroFinalizacao}).then(ok,erro);
         if(acao === "update"){ linhas.forEach((l) => Object.assign(l, dados)); window.__gravados.push({ t, tipo: "update", p: dados }); }
         return Promise.resolve({ data: unico ? (linhas[0] || null) : linhas, error: null }).then(ok, erro);
       }
@@ -84,6 +86,13 @@ const QR = "/* qrcodejs falso */ window.QRCode = function(el, o){ const c = docu
   assert.ok((await page.textContent("#separacaoQrQtd")).startsWith("0 / 9"), "2 corpos + 6 almofadas + 1 mesa");
   assert.ok((await page.textContent("#separacaoQrItens")).includes("Parte do kit: Sofá Becca (kit)"));
   console.log("ok 1 - kit vira os componentes (2 corpos, 6 almofadas), sem a linha do kit");
+  await page.locator('#separacaoQrItens [data-reportar-problema]').first().click();
+  await page.locator('.so-dialog').waitFor();
+  assert.match(await page.locator('.so-dialog').innerText(),/Cadastre ou ative os tipos/);
+  await page.click('.so-dialog [data-fechar]');
+
+  await page.locator('#btnFinalizarSeparacao').click();await page.locator('.separacao-pendencias-dialog[open]').waitFor();
+  assert.equal(await page.locator('.separacao-pendencias-dialog tbody tr').count(),3);assert.match(await page.locator('.separacao-pendencias-dialog').innerText(),/Almofada/);await page.locator('.separacao-pendencias-dialog button').click();
   const ler = async (c) => { await page.fill("#scannerInput", c); await page.press("#scannerInput", "Enter"); await page.waitForTimeout(250); };
   await ler("ALM1"); await ler("ALM1"); await ler("ALM1"); await ler("CORPO1");
   assert.ok((await page.textContent("#separacaoQrQtd")).startsWith("4 / 9"));
@@ -105,6 +114,10 @@ const QR = "/* qrcodejs falso */ window.QRCode = function(el, o){ const c = docu
   await ler("ACERVO:ENV:" + etq.codigo);
   assert.ok((await page.textContent("#separacaoQrQtd")).startsWith("5 / 9"));
   console.log("ok 5 - etiqueta de componente marca a peça certa");
+  await ler('ALM1');await ler('ALM1');await ler('ALM1');await ler('MES1');
+  await page.evaluate(()=>{window.__erroFinalizacao={message:'Itens pendentes na separacao',details:JSON.stringify([{nome:'Base diferente',codigo:'COMP-99',solicitada:3,separada:1,faltante:2,setor:'Estoque'}])};});
+  await page.locator('#btnFinalizarSeparacao').click();await page.locator('.separacao-pendencias-dialog[open]').waitFor();assert.match(await page.locator('.separacao-pendencias-dialog').innerText(),/Base diferente.*COMP-99/s);assert.equal(await page.locator('.separacao-pendencias-dialog tbody tr td:last-child').innerText(),'2');
+  await page.screenshot({path:'.tmp/triagem-pendencias-detalhadas.png'});await page.locator('.separacao-pendencias-dialog button').click();
   assert.deepStrictEqual(erros, [], erros.join("\n"));
   console.log("todos os testes passaram");
   await browser.close();

@@ -1349,7 +1349,7 @@ function infoCadastro(rotulo, valor, icone){
 
     els.centralPedidosTbody.innerHTML = state.filtrados.map((pedido) => `
       <tr data-pedido-id="${escapeHtml(pedido.id)}" class="${pedido.origemCatalogo ? "is-catalogo" : ""}${pedido.origemId ? " is-extra" : ""}${presencaDe(pedido)?.ativo ? " is-montando" : ""}" title="${pedido.origemCatalogo ? "Projeto do catálogo: clique duas vezes para abrir como pedido" : "Clique duas vezes para abrir o pedido"}">
-        <td><span class="pedido-numero-card${pedido.origemCatalogo ? " pedido-numero-catalogo" : ""}" title="${pedido.origemCatalogo ? "Veio do catálogo" : "Pedido comercial"}" aria-label="${pedido.origemCatalogo ? "Pedido do catálogo" : "Pedido comercial"} ${escapeHtml(pedido.numero)}">${escapeHtml(pedido.numero)}</span>${pedido.origemId ? `<small class="pedido-extra-tag">Extra do pedido ${escapeHtml(String(pedido.numero).split("/")[0])}</small>` : ""}${presencaHtml(pedido)}</td>
+        <td><span class="pedido-numero-card${pedido.origemCatalogo ? " pedido-numero-catalogo" : ""}" title="${pedido.origemCatalogo ? "Veio do catálogo" : "Pedido comercial"}" aria-label="${pedido.origemCatalogo ? "Pedido do catálogo" : "Pedido comercial"} ${escapeHtml(pedido.numero)}">${escapeHtml(pedido.numero)}</span>${presencaHtml(pedido)}</td>
         <td>
           <button type="button" class="central-record-link" data-action="abrir-cliente" title="Abrir cadastro do cliente">
             ${escapeHtml(pedido.cliente)}
@@ -1381,9 +1381,8 @@ function infoCadastro(rotulo, valor, icone){
     ligarExtras();
   }
 
-  // Pedido extra (out/2026): traço que sai de baixo do número do pedido principal e chega no número do extra (em "L").
-  // O número fica no meio de uma linha de altura variável (o fluxo), então a posição é medida na tela e o traço é um
-  // elemento à parte dentro da área da tabela; é refeito quando a tabela muda de tamanho.
+  // Colchete na margem externa da tabela, do centro do principal até o último extra.
+  // Os números ficam alinhados; as posições são medidas novamente quando as linhas mudam de altura.
   let ligacaoObservada = false;
   function ligarExtras(){
     const wrap = els.centralPedidosTbody?.closest(".central-table-wrap");
@@ -1392,18 +1391,30 @@ function infoCadastro(rotulo, valor, icone){
     const base = wrap.getBoundingClientRect();
     const pos = (el) => { const r = el.getBoundingClientRect(); return { left: r.left - base.left + wrap.scrollLeft, top: r.top - base.top + wrap.scrollTop, bottom: r.bottom - base.top + wrap.scrollTop, height: r.height }; };
     const porId = new Map([...els.centralPedidosTbody.querySelectorAll("tr[data-pedido-id]")].map((tr) => [tr.dataset.pedidoId, tr]));
+    const grupos = new Map();
     for(const pedido of state.filtrados){
       if(!pedido.origemId) continue;
-      const pai = porId.get(String(pedido.origemId))?.querySelector(".pedido-numero-card");
-      const filho = porId.get(String(pedido.id))?.querySelector(".pedido-numero-card");
-      if(!pai || !filho) continue;
-      const a = pos(pai), b = pos(filho);
-      const x = a.left + 9, y = a.bottom, alvoY = b.top + b.height / 2;
-      if(b.left - x < 4 || alvoY - y < 4) continue;
+      const id = String(pedido.origemId);
+      if(!grupos.has(id)) grupos.set(id, []);
+      const filho = porId.get(String(pedido.id))?.querySelector('.pedido-numero-card');
+      if(filho) grupos.get(id).push(pos(filho));
+    }
+    for(const [id, filhos] of grupos){
+      const trPai = porId.get(id), pai = trPai?.querySelector('.pedido-numero-card');
+      if(!pai || !filhos.length) continue;
+      const a = pos(pai), coluna = pos(trPai.cells[0]);
+      const y = a.top + a.height / 2;
+      const centros = filhos.map(b => b.top + b.height / 2).filter(centro => centro > y);
+      if(!centros.length) continue;
+      const fim = Math.max(...centros);
       const linha = document.createElement("span");
       linha.className = "central-extra-ligacao";
       linha.setAttribute("aria-hidden", "true");
-      linha.style.cssText = "left:" + x + "px;top:" + y + "px;width:" + (b.left - x) + "px;height:" + (alvoY - y) + "px";
+      linha.style.cssText = "left:" + (coluna.left - 18) + "px;top:" + y + "px;width:14px;height:" + (fim - y) + "px";
+      for(const centro of centros.filter(centro => centro < fim)){
+        const ramo = document.createElement('span'); ramo.className = 'central-extra-ramo';
+        ramo.style.top = (centro - y - 1.5) + 'px'; linha.append(ramo);
+      }
       wrap.append(linha);
     }
     if(!ligacaoObservada && "ResizeObserver" in window){
