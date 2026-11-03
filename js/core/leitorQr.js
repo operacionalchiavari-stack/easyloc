@@ -26,12 +26,16 @@
     });
   }
 
-  function criar({ video, aoLer, aoMudar, leituraContinua = false }) {
+  function criar({ video, aoLer, aoMudar, aoDetectar, leituraContinua = false }) {
     const c = { stream: null, timer: null, detector: null, canvas: null, ultimo: "", ultimoEm: 0, ocupado: false, ausenteEm: 0 };
 
     async function quadro() {
-      if (!c.stream || video.readyState < 2) return "";
-      if (c.detector) return (await c.detector.detect(video).catch(() => []))[0]?.rawValue || "";
+      if (!c.stream || video.readyState < 2) { aoDetectar?.(null); return ""; }
+      if (c.detector) {
+        const qr = (await c.detector.detect(video).catch(() => []))[0];
+        aoDetectar?.(qr ? { codigo:qr.rawValue, pontos:qr.cornerPoints || [], largura:video.videoWidth, altura:video.videoHeight } : null);
+        return qr?.rawValue || "";
+      }
       if (!window.jsQR || !video.videoWidth) return "";
       c.canvas ||= document.createElement("canvas");
       const k = Math.min(1, 640 / video.videoWidth);
@@ -39,7 +43,10 @@
       const ctx = c.canvas.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(video, 0, 0, c.canvas.width, c.canvas.height);
       const img = ctx.getImageData(0, 0, c.canvas.width, c.canvas.height);
-      return window.jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" })?.data || "";
+      const qr = window.jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
+      const l = qr?.location;
+      aoDetectar?.(qr ? { codigo:qr.data, pontos:l ? [l.topLeftCorner,l.topRightCorner,l.bottomRightCorner,l.bottomLeftCorner] : [], largura:img.width, altura:img.height } : null);
+      return qr?.data || "";
     }
 
     async function ligar() {
@@ -86,6 +93,7 @@
       c.stream?.getTracks().forEach((t) => t.stop());
       c.stream = null;
       video.srcObject = null;
+      aoDetectar?.(null);
       aoMudar?.(false);
     }
 

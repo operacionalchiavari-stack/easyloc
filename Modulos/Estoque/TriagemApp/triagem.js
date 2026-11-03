@@ -24,7 +24,14 @@
   marca.hidden=!imagens(logo);if(imagens(logo)){marca.src=logo;marca.alt=brand?.nome||brand?.empresa?.nome||'Logo da empresa';$('taIconEmpresa').href=logo;}else{marca.removeAttribute('src');$('taIconEmpresa').removeAttribute('href');}
   $('taMarcaNome').textContent=brand?.nome||brand?.empresa?.nome||s.empresaNome||'';$('taMarcaNome').hidden=imagens(logo);
  }
- function pararCamera(){s.leitor?.desligar();const v=$('taVideo');if(v)v.hidden=true;}
+ function destacarQr(qr){
+  const svg=$('taQrMarcador'),texto=$('taQrCodigo'),quadro=$('taCameraQuadro');if(!svg||!texto)return;
+  const identificado=!!qr?.codigo;quadro.classList.toggle('qr-identificado',identificado);
+  texto.textContent=identificado?qr.codigo:'Aponte para o QR Code';
+  const contorno=identificado&&qr.pontos?.length===4&&qr.largura>0&&qr.altura>0;svg.toggleAttribute('hidden',!contorno);
+  if(contorno){svg.setAttribute('viewBox','0 0 '+qr.largura+' '+qr.altura);$('taQrContorno').setAttribute('points',qr.pontos.map(p=>p.x+','+p.y).join(' '));}
+ }
+ function pararCamera(){s.leitor?.desligar();const v=$('taCameraQuadro');if(v)v.hidden=true;}
  function bloquear(v){s.ocupado=v;document.querySelectorAll('#taDetalhe button,#taDetalhe input').forEach(el=>{const capa=el.closest('[data-capas-chave]'),fechada=capa&&(s.base.concluido||s.base.bloqueio||!s.base.pode_editar||s.capas?.rows.find(r=>r.chave===capa.dataset.capasChave)?.concluida);el.disabled=v||el.dataset.travado==='1'||!!fechada;});}
  function assinatura(){return JSON.stringify(s.base.itens.map(p=>[p.chave,p.esperado]));}
  function chaveRascunho(){return 'triagem-app:v1:'+s.usuario.id+':'+s.empresa+':'+s.base.pedido.id;}
@@ -98,12 +105,12 @@
   const b=s.base,p=b.pedido,volta=s.etapa==='volta',editavel=!b.concluido&&!b.bloqueio&&b.pode_editar;
   $('taDetalhe').innerHTML='<div class="voltar-linha"><button class="voltar" type="button" data-voltar>← Pedidos</button><span class="etapa-chip '+(volta?'volta':'')+'">'+(volta?'TRIAGEM DA VOLTA':'SEPARAÇÃO DE IDA')+'</span></div><section class="cartao pedido-detalhe"><h1>Pedido #'+esc(p.numero)+'</h1><div class="pessoa">'+avatar(p.cliente,p.foto)+'<div class="pessoa-texto"><strong>'+esc(p.cliente)+'</strong><small>'+esc(p.local)+'</small><small>'+data(p.data)+'</small></div></div><div id="taProgresso"></div></section>'+
    (b.concluido?'<div class="concluido"><h2>✓ Conferência concluída</h2><p>Os materiais já estão atualizados no sistema.</p></div>':b.bloqueio?'<div class="aviso-bloco">'+esc(b.bloqueio)+'</div>':!b.pode_editar?'<div class="aviso-bloco">Você possui acesso somente para consulta.</div>':'')+
-   (editavel?'<section class="cartao leitor"><div class="leitor-titulo"><h2>Ler QR Code</h2><button type="button" class="botao secundario" data-camera>Abrir câmera</button></div><video id="taVideo" playsinline muted hidden aria-label="Câmera do leitor QR"></video><button type="button" class="botao secundario" data-proxima hidden>Ler próxima peça</button><form class="leitor-form" id="taFormCodigo"><input id="taCodigo" autocomplete="off" placeholder="Ou passe / digite o código" aria-label="Código do material" maxlength="200"><button class="botao" type="submit" aria-label="Conferir código">↵</button></form><p class="dica">QR de item, patrimônio ou etiqueta de envio. Cada leitura conta uma peça. Depois de ler com a câmera, toque em “Ler próxima peça”.</p><p class="ultima-leitura" id="taUltima" role="status"></p></section>':'')+
+   (editavel?'<section class="cartao leitor"><div class="leitor-titulo"><h2>Ler QR Code</h2><button type="button" class="botao secundario" data-camera>Abrir câmera</button></div><div class="camera-quadro" id="taCameraQuadro" hidden><video id="taVideo" playsinline muted aria-label="Câmera do leitor QR"></video><svg class="camera-marcador" id="taQrMarcador" aria-hidden="true" hidden><polygon id="taQrContorno"/></svg><div class="camera-codigo" id="taQrCodigo" role="status">Aponte para o QR Code</div></div><form class="leitor-form" id="taFormCodigo"><input id="taCodigo" autocomplete="off" placeholder="Ou passe / digite o código" aria-label="Código do material" maxlength="200"><button class="botao" type="submit" aria-label="Conferir código">↵</button></form><p class="dica">QR de item, patrimônio ou etiqueta de envio. Cada leitura conta uma peça. Leitura contínua: passe uma peça após a outra. Para repetir o mesmo QR, retire-o da câmera e apresente a próxima peça.</p><p class="ultima-leitura" id="taUltima" role="status"></p></section>':'')+
    '<div class="materiais-cab"><h2>Materiais</h2><span id="taRodada">'+(volta?(s.primeira?'2ª contagem':'1ª contagem'):'QR Code')+'</span></div><div class="materiais" id="taMateriais"></div>'+renderProtecao()+
    (editavel?'<footer class="rodape-detalhe"><button type="button" class="botao" id="taFinalizar">'+(volta?(s.primeira?'Confirmar segunda contagem':'Confirmar retorno'):'Finalizar separação')+'</button></footer>':'');
   renderMateriais();progresso();
   if(editavel){
-   s.leitor=window.EasyLocLeitor.criar({video:$('taVideo'),leituraContinua:true,aoLer:async codigo=>{if(!s.ocupado)await ler(codigo);},aoMudar:ligada=>{const v=$('taVideo'),b=document.querySelector('[data-camera]');if(v)v.hidden=!ligada;if(b)b.textContent=ligada?'Fechar câmera':'Abrir câmera';}});
+   s.leitor=window.EasyLocLeitor.criar({video:$('taVideo'),leituraContinua:true,aoDetectar:destacarQr,aoLer:async codigo=>{if(!s.ocupado)await ler(codigo);},aoMudar:ligada=>{const v=$('taCameraQuadro'),b=document.querySelector('[data-camera]');if(v)v.hidden=!ligada;if(b)b.textContent=ligada?'Fechar câmera':'Abrir câmera';}});
    $('taFormCodigo').onsubmit=e=>{e.preventDefault();ler($('taCodigo').value);};$('taFinalizar').onclick=finalizar;
   }
  }
