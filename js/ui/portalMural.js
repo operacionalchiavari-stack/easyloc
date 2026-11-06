@@ -198,7 +198,7 @@
           const base=(local && location.port==='3000') ? '/' : /\.vercel\.app$/.test(location.hostname) ? '/' : 'https://easyloc-zeta.vercel.app/';
           const r=await fetch(base+'api/portal-mural',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessao.data.session?.access_token},body:JSON.stringify({acao:'aviso',dados:{titulo:titulo,texto:texto,validoAte:f.elements.validoAte.value,importante:!modoAnexo&&f.elements.importante.checked,fixado:!modoAnexo&&f.elements.fixado.checked,cor:modoAnexo?'neutro':f.elements.cor.value}})});
           const j=await r.json();if(!j.ok)throw Error(j.erro || 'Falha ao publicar.');
-          const novo=Object.assign({},await buscarMural(),{resumoDia:estado.mural?.resumoDia,celebracao:estado.mural?.celebracao});
+          const novo=Object.assign({},await buscarMural(),{resumoDia:estado.mural?.resumoDia,celebracao:estado.mural?.celebracao,numeros:estado.mural?.numeros});
           if(anexo){const aviso=(novo.avisos||[]).filter(a=>!idsAntes.has(a.id)&&a.titulo===titulo)[0];if(aviso)await gravarAnexoAviso(aviso.id,anexo);}
           await juntarAnexos(novo);estado.mural=novo;montarMural();
           const pontos=document.querySelectorAll('#portalInicio .hero-ponto');pontos[pontos.length-1]?.click();
@@ -379,6 +379,15 @@
       (outras.length ? '<div class="cel-outras">Também premiadas: ' + outras.map(function(o){ return '<b>' + esc(o.titulo) + '</b> (' + esc(o.autor) + ')'; }).join(' · ') + '</div>' : '') +
       '</div></div></div>';
   }
+  // Nov/2026: "Nossos últimos números" lido do Supabase (só eventos do mês). O mural antigo lia a planilha do Cronograma, parada.
+  async function buscarNumeros(){
+    const sb = window.supabaseClient; if(!sb){ return null; }
+    const contexto = window.__CONTEXT || await window.aguardarContexto?.(); const empresa = contexto && contexto.empresa_id;
+    if(!empresa){ return null; }
+    const { data, error } = await sb.rpc("portal_numeros_mes", { p_empresa: empresa });
+    if(error){ throw error; }
+    return data && data.mes ? { mes: data.mes, eventos: Number(data.eventos) || 0 } : null;
+  }
   async function buscarCelebracao(){
     const sb = window.supabaseClient; if(!sb){ return null; }
     const contexto = window.__CONTEXT || await window.aguardarContexto?.(); const empresa = contexto && contexto.empresa_id;
@@ -426,7 +435,7 @@
           '<div class="hero-atalhos"><button class="atalho atalho-ideia" type="button" onclick="shellNavigate(\'Modulos/RH/IdeiaPremiada/ideia-premiada.html\')"><i data-lucide="lightbulb"></i>Quero participar<i data-lucide="arrow-up-right"></i></button></div></div>') +
         (aniversariantesHero.length ? '<div class="hero-conteudo hero-slide hero-aniversario hero-aniversarios" role="group" aria-roledescription="slide" aria-label="Aniversariantes de ' + MESES[new Date().getMonth()] + '" aria-hidden="true" inert><div class="hero-aniversario-texto"><div class="hero-data">Aniversariantes de ' + MESES[new Date().getMonth()] + '</div><h1>Parabéns,<br>' + (aniversariantesHero.length === 1 ? esc(aniversariantesHero[0].nome) : 'aniversariantes') + '!</h1><p>Que o novo ano venha cheio de conquistas. É uma alegria ter vocês na nossa equipe.</p><div class="aniver-lista">' + aniversariantesHero.map(a => '<div class="aniver-pessoa' + (a.hoje ? ' is-hoje' : '') + '"><span class="aniver-pessoa-foto">' + fotoOuInicial(a.foto,a.nome) + '</span><b>' + esc(a.nome) + '</b><small>' + (a.hoje ? 'Hoje!' : 'Dia ' + esc(a.dia)) + (a.setor && !/^sem setor$/i.test(a.setor) ? ' · ' + esc(a.setor) : '') + '</small></div>').join('') + '</div></div>' + parabensHtml({ id: 'todos', titulo: aniversariantesHero.length === 1 ? 'Carinho da equipe' : 'Carinho para todos', mensagens: m.parabensTodos || aniversariantesHero.flatMap(a => a.mensagens || []) }) + '</div>' : '') +
         paginasAvisos.map(avisosSlideHtml).join('') +
-        (m.numeros ? '<div class="hero-conteudo hero-slide hero-numeros" role="group" aria-roledescription="slide" aria-label="Nossos últimos números" aria-hidden="true" inert><div class="hero-numeros-texto"><div class="hero-data">' + esc(mesCurto(m.numeros.mes)) + ' &middot; Em equipe, vamos mais longe</div><h1>Nossos últimos números.</h1><p>Cada entrega é uma conquista de todos nós.</p><div class="hero-numeros-indicadores">' + [['eventos','Eventos'],['montagens','Montagens'],['desmontagens','Desmontagens']].map(n=>'<div><b data-contar="' + Math.max(0,Number(m.numeros[n[0]]) || 0) + '">0</b><span>' + n[1] + '</span></div>').join('') + '</div></div></div>' : '') +
+        (m.numeros ? '<div class="hero-conteudo hero-slide hero-numeros" role="group" aria-roledescription="slide" aria-label="Nossos últimos números" aria-hidden="true" inert><div class="hero-numeros-texto"><div class="hero-data">' + esc(mesCurto(m.numeros.mes)) + ' &middot; Em equipe, vamos mais longe</div><h1>Nossos últimos números.</h1><p>Cada entrega é uma conquista de todos nós.</p><div class="hero-numeros-indicadores">' + [['eventos','Eventos']].map(n=>'<div><b data-contar="' + Math.max(0,Number(m.numeros[n[0]]) || 0) + '">0</b><span>' + n[1] + '</span></div>').join('') + '</div></div></div>' : '') +
         (m.numeros ? '<div class="hero-subida" aria-hidden="true"><svg viewBox="0 0 420 300" preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="subidaBarra" x1="0" y1="1" x2="0" y2="0"><stop stop-color="#b08d57" stop-opacity=".05"/><stop offset="1" stop-color="#b08d57" stop-opacity=".32"/></linearGradient><linearGradient id="subidaLinha" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#c9a24f" stop-opacity=".35"/><stop offset="1" stop-color="#9b793f"/></linearGradient><radialGradient id="subidaLuz"><stop stop-color="#e9cf9f" stop-opacity=".9"/><stop offset="1" stop-color="#e9cf9f" stop-opacity="0"/></radialGradient></defs><g class="subida-grade"><line x1="20" y1="260" x2="400" y2="260"/><line x1="20" y1="200" x2="400" y2="200"/><line x1="20" y1="140" x2="400" y2="140"/><line x1="20" y1="80" x2="400" y2="80"/></g><rect class="subida-barra" style="--i:0" x="38" y="220" width="28" height="40" rx="3"/><rect class="subida-barra" style="--i:1" x="98" y="190" width="28" height="70" rx="3"/><rect class="subida-barra" style="--i:2" x="158" y="164" width="28" height="96" rx="3"/><rect class="subida-barra" style="--i:3" x="218" y="122" width="28" height="138" rx="3"/><rect class="subida-barra" style="--i:4" x="278" y="84" width="28" height="176" rx="3"/><rect class="subida-barra" style="--i:5" x="338" y="38" width="28" height="222" rx="3"/><path class="subida-area" d="M30 238 C 110 225, 150 200, 200 160 S 300 70, 372 34 L372 260 L30 260 Z"/><path class="subida-linha" pathLength="1" d="M30 238 C 110 225, 150 200, 200 160 S 300 70, 372 34"/><path class="subida-seta" d="M356 30 L374 33 L366 49"/><circle class="subida-luz" cx="372" cy="34" r="30"/><circle class="subida-anel" cx="372" cy="34" r="6"/><circle class="subida-ponto" cx="372" cy="34" r="4.5"/></svg><span class="subida-traco" style="--i:0"></span><span class="subida-traco" style="--i:1"></span><span class="subida-traco" style="--i:2"></span></div>' : '') +
         '<button type="button" class="hero-novo-aviso" onclick="abrirAvisoPortal()" aria-label="Novo comunicado" title="Novo comunicado"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>' +
         '<div class="hero-controles"><button class="hero-anterior" type="button" aria-label="Destaque anterior">‹</button><div class="hero-pontos">' + fotosHero.map((_, i) => '<button class="hero-ponto" type="button" aria-label="Ir para destaque ' + (i + 1) + '" aria-pressed="' + (i === 0) + '"></button>').join('') + '</div><button class="hero-proximo" type="button" aria-label="Próximo destaque">›</button><button class="hero-pausa" type="button">Pausar</button></div>' +
@@ -779,11 +788,12 @@
     estado.carregando = Promise.all([
       buscarMural().catch(function(e){ console.warn("[Mural] não carregou:", e); return null; }),
       buscarResumoDia().catch(function(e){ console.warn("[Resumo do dia] não carregou:", e); return null; }),
-      buscarCelebracao().catch(function(e){ console.warn("[Ideia premiada] não carregou:", e); return null; })
+      buscarCelebracao().catch(function(e){ console.warn("[Ideia premiada] não carregou:", e); return null; }),
+      buscarNumeros().catch(function(e){ console.warn("[Números do mês] não carregou:", e); return null; })
     ])
       .then(function(r){
-        const m = r[0], resumo = r[1] || (m && m.resumoDia) || null, celebracao = r[2];
-        if(m || resumo || (celebracao && (celebracao.ideias || []).length)){ estado.mural = Object.assign({}, m || {}, { resumoDia: resumo, celebracao: celebracao }); montarMural();
+        const m = r[0], resumo = r[1] || (m && m.resumoDia) || null, celebracao = r[2], numeros = r[3];
+        if(m || resumo || numeros || (celebracao && (celebracao.ideias || []).length)){ estado.mural = Object.assign({}, m || {}, { resumoDia: resumo, celebracao: celebracao, numeros: numeros || (m && m.numeros) || null }); montarMural();
           juntarAnexos(estado.mural).then(function(mm){ if(mm === estado.mural && (mm.avisos || []).some(function(a){ return a.anexo; })){ montarMural(); } }); }
       })
       .catch(function(e){ console.warn("[Mural] não carregou:", e); })
