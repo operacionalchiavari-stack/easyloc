@@ -82,22 +82,21 @@ async function main(){
    await page.evaluate(()=>carregar());assert.equal(await page.locator('#telaBonus').isVisible(),true,'atualizar não sai do bônus');
    await page.screenshot({path:path.join(os.tmpdir(),`montador-bonus-${width}.png`)});
    await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html`);await page.locator('#telaInicio.ativa').waitFor();
-   await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();
-   for(const nome of ['Evento Jardim','Ana Silva','Bruno','Caminhão 01']){
+   const cartao=page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'});assert.equal(await cartao.locator('.etapa-cliente-foto').count(),1,'foto do cliente no cartão');assert.equal(await cartao.locator('a.etapa-endereco').count(),1,'endereço como link');
+   await cartao.click();
+   for(const nome of ['Ana Silva','Bruno','Caminhão 01']){
     await page.getByRole('button',{name:'Ver foto de '+nome,exact:true}).click();
     await page.locator('#folha .foto-free-ampliada').waitFor();assert.equal(await page.locator('#folha h3').textContent(),nome);
     await page.getByRole('button',{name:'Fechar foto',exact:true}).click();
    }
-   const cabeca=await page.locator('#etapaCabeca .cabeca').evaluate(e=>({cor:getComputedStyle(e).backgroundColor,borda:getComputedStyle(e).borderTopWidth,altura:e.getBoundingClientRect().height}));
-   assert.equal(cabeca.cor,'rgb(255, 255, 255)');assert.equal(cabeca.borda,'1px');assert.ok(cabeca.altura<300);
-   assert.equal(await page.getByRole('button',{name:'Abrir mapa no app'}).count(),0);assert.equal(await page.locator('.evento-endereco').textContent(),'Espaço Jardim');
+   assert.equal(await page.locator('#etapaCabeca .cabeca,#etapaCabeca .evento-cliente,#etapaCabeca .evento-endereco').count(),0,'sem cliente/endereço dentro da etapa');
    await page.getByRole('button',{name:'Consultar Uber novamente',exact:true}).click();
    await page.locator('#etapaUber').filter({hasText:'Pedro Motorista'}).waitFor();
    const ordem=await page.evaluate(()=>['etapaEquipe','etapaUber','etapaFotoEquipe','etapaConferencia','passo_sacolas','passo_lista'].map(id=>document.getElementById(id).getBoundingClientRect().top));
    assert.ok(ordem.every((n,i)=>!i||n>ordem[i-1]),'ordem do roteiro');assert.equal(await page.locator('#passo_posicionamento').count(),0);
    assert.equal(await page.getByText('Outras etapas do pedido',{exact:true}).count(),0);assert.equal(await page.getByText('Decorador confirmou',{exact:true}).count(),0);
    assert.ok(await page.evaluate(()=>{const b=document.getElementById('btnVoltar').getBoundingClientRect(),c=document.getElementById('etapaEtiquetas').getBoundingClientRect();return Math.abs(b.top+b.height/2-c.top-c.height/2)<3;}));
-   assert.equal(await page.locator('#btnVoltar').textContent(),'Voltar');assert.ok(await page.evaluate(()=>document.querySelector('.evento-local').getBoundingClientRect().top>document.querySelector('.pedido-agendamento').getBoundingClientRect().bottom));
+   assert.equal(await page.locator('#btnVoltar').textContent(),'Voltar');
    assert.ok(await page.locator('#etapaEquipe .evento-caminhoes').isVisible());assert.match(await page.locator('#etapaEquipe').textContent(),/Caminhão 01/);
    assert.equal(await page.locator('#regFotoEquipe input').isDisabled(),false);
    assert.equal(await page.getByRole('button',{name:'Iniciar evento'}).count(),0);

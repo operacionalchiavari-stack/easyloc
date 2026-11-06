@@ -1022,6 +1022,7 @@
       var r = e.registros || {}, info = e.info || {}, ch = r.equipe && r.equipe.chegada, p = ch && ch.em ? partes(ch.em) : null;
       return { id: e.id, pedido: e.pedido, dataEvento: e.dataEvento || "", cliente: e.cliente, local: e.local, etapa: e.etapa, dataISO: e.dataISO, horario: e.horario || "",
         caminhao: e.caminhao || "", responsavel: e.responsavel, equipe: e.equipe || [], observacao: e.observacao || "", lat: e.lat == null ? "" : e.lat, lng: e.lng == null ? "" : e.lng,
+        clienteFoto: e.clienteFoto || "", localNome: e.localNome || "", endereco: e.endereco || "",
         lona: info.lona || "", confirmadoDecorador: true, operacao: e.tipo === "montagem" || e.tipo === "desmontagem" ? e.tipo : "",
         registros: (r.equipe ? 1 : 0) + (r.sacolas ? 1 : 0) + (r.conferencia_entrega || r.posicionamento ? 1 : 0) + (r.lista_assinada ? 1 : 0),
         chegadaEquipe: r.equipe ? { empresa: r.equipe.empresa, quantidade: r.equipe.quantidade, foto: r.equipe.foto, data: p ? p.day + "/" + p.month + "/" + p.year : "", hora: p ? p.hour + ":" + p.minute : "",

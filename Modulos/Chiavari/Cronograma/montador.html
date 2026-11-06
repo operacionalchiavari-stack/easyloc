@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261106-bonus"></script>
+  <script src="../operacao-sem-motor.js?v=20261106-cartao-cliente"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -335,7 +335,7 @@
 .dano-fotos .dano-rem{border:0;background:none;color:#b42318;font-size:12px;padding:0 4px}
 </style>
   <meta name="theme-color" content="#5a5a55">
-  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-cores-etapa">
+  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-cartao-cliente">
   <link rel="stylesheet" href="montador-evento.css?v=20261031-app-integrado">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
@@ -813,15 +813,30 @@
     return chips.join("") + avisosLogistica(e, true);
   }
 
+  function fotoClienteCartao(e){
+    const nome = String(e.cliente || "?"), ini = esc(nome.trim().charAt(0).toUpperCase() || "?");
+    const foto = /^https?:\/\//i.test(e.clienteFoto || "") ? e.clienteFoto : "";
+    return '<span class="etapa-cliente-foto">' + ini + (foto ? '<img src="' + esc(foto) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>';
+  }
+  function enderecoCartao(e){
+    const texto = e.endereco || e.local || "";
+    if(!texto && !(e.lat && e.lng)) return '';
+    const q = e.lat && e.lng ? e.lat + ',' + e.lng : texto;
+    return '<a class="etapa-endereco" href="https://www.google.com/maps/search/?api=1&amp;query=' + encodeURIComponent(q) + '" target="_blank" rel="noopener" aria-label="Local do evento: ' + esc(texto || 'ver no mapa') + '" onclick="event.stopPropagation();if(window.MontadorMapa){abrirMapa(\'' + esc(e.id) + '\');return false;}">' + I.rota + '<span>' + esc(texto || 'Ver localização') + '</span></a>';
+  }
+
   function cartaoEtapa(e){
     const t = tipoInfo(e.etapa);
     return (
-      '<button class="etapa ' + t.classe + '" type="button" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '" onclick="abrirEtapa(\'' + esc(e.id) + '\')">' +
+      /* Nov/2026: foto do cliente e endereço como link no cartão (dentro da etapa não aparecem mais). Div com
+         role=button porque um link não pode ficar dentro de um <button>. */
+      '<div class="etapa ' + t.classe + '" role="button" tabindex="0" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '" onclick="abrirEtapa(\'' + esc(e.id) + '\')" onkeydown="if(event.target===this&&(event.key===\'Enter\'||event.key===\' \')){event.preventDefault();abrirEtapa(\'' + esc(e.id) + '\')}">' +
         '<div class="etapa-topo"><span class="tipo">' + esc(e.etapa) + '</span><span class="hora">' + I.relogio + esc(hora(e.horario) || "A definir") + '</span></div>' +
-        '<div class="etapa-cliente">' + esc(e.cliente || "-") + '</div>' +
-        '<div class="etapa-local">Pedido #' + esc(e.pedido) + (e.local ? ' · ' + esc(e.local) : "") + '</div>' +
+        '<div class="etapa-cliente-linha">' + fotoClienteCartao(e) + '<div class="etapa-cliente-texto"><div class="etapa-cliente">' + esc(e.cliente || "-") + '</div>' +
+        '<div class="etapa-local">Pedido #' + esc(e.pedido) + (e.localNome ? ' · ' + esc(e.localNome) : "") + '</div></div></div>' +
+        enderecoCartao(e) +
         '<div class="etapa-chips">' + chipsEtapa(e) + '</div>' +
-      '</button>'
+      '</div>'
     );
   }
 
@@ -882,16 +897,11 @@
 
   function renderCabeca(e){
     const t = tipoInfo(e.etapa);
-    const solicitante = window.MontadorEvento?.fotosEtapa(e.id).solicitante || {};
     document.getElementById("etapaEtiquetas").innerHTML='<span class="tipo" style="background:'+t.fundo+';color:'+t.forte+'">'+esc(e.etapa)+'</span><span class="pedido" title="Pedido #'+esc(e.pedido)+'">Pedido <b>#'+esc(e.pedido)+'</b></span>';
+    /* Nov/2026: cliente, data e endereço ficam só no cartão da lista; aqui a tela começa na Equipe.
+       Fica só a orientação (observação) e o alerta, quando houver. */
     document.getElementById("etapaCabeca").innerHTML =
-      '<div class="cabeca" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '">' +
-        '<div class="evento-cliente">'+fotoCadastroHtml({nome:solicitante.nome || e.cliente,foto:solicitante.foto})+'<div><small>Solicitante / decorador</small><h1>' + esc(solicitante.nome || e.cliente || "-") + '</h1></div></div>' +
-        (e.dataEvento ? '<p class="evento-data">Data do evento: '+esc(e.dataEvento)+'</p>' : '') +
-        '<div class="pedido-agendamento"><div><small>Dia da etapa</small><strong>' + esc(tituloDia(e.dataISO)) + ', ' + esc(dataCurta(e.dataISO)) + '</strong></div><div><small>Horário previsto</small><strong>' + esc(hora(e.horario) || 'A definir') + '</strong></div></div>' +
-        '<div class="evento-local"><small>Local</small>'+ (e.local || (e.lat && e.lng) ? '<a class="evento-endereco" href="https://www.google.com/maps/search/?api=1&amp;query='+encodeURIComponent(e.lat && e.lng ? e.lat+','+e.lng : e.local)+'" onclick="abrirMapa(\''+esc(e.id)+'\');return false">'+I.rota+'<span>'+esc(e.local || 'Ver localização')+'</span></a>' : '<p>A definir</p>') + '</div>' +
-        (e.observacao ? '<p class="evento-orientacao">'+esc(e.observacao)+'</p>' : '') +
-      '</div>' +
+      (e.observacao ? '<p class="evento-orientacao evento-orientacao-solta">'+esc(e.observacao)+'</p>' : '') +
       (e.alerta ? '<div class="alerta">' + I.alerta + '<div><strong>' + esc(e.alerta.problema) + '</strong>' + esc(e.alerta.observacao || "") + (e.alerta.enviadoPor ? ' — ' + esc(e.alerta.enviadoPor) : "") + '</div></div>' : "");
   }
 
@@ -959,7 +969,7 @@
         '<div class="pessoas"><div class="pessoa">'+fotoCadastroHtml(responsavel)+'<div class="pessoa-nome">' + esc(e.responsavel || "-") + '</div></div></div>' +
         (internos ? '<div class="subtitulo">Equipe interna</div><div class="pessoas">' + internos + '</div>' : "") +
         free +
-      '</section>' + (e.caminhao ? '<section class="secao evento-caminhoes"><div class="secao-titulo"><h2>Caminhões</h2></div><div class="pessoas">'+(fotos.caminhoes?.length ? fotos.caminhoes : String(e.caminhao).split(/,|\n/).map(nome=>({nome:nome.trim()}))).map(c=>'<div class="pessoa">'+fotoCadastroHtml(c,true)+'<div class="pessoa-nome">'+esc(c.nome)+'</div></div>').join('')+'</div></section>' : '');
+      '</section>' + (e.caminhao ? '<section class="secao secao-compacta evento-caminhoes"><div class="secao-titulo"><h2>Caminhões</h2></div><div class="pessoas pessoas-linha">'+(fotos.caminhoes?.length ? fotos.caminhoes : String(e.caminhao).split(/,|\n/).map(nome=>({nome:nome.trim()}))).map(c=>'<div class="pessoa">'+fotoCadastroHtml(c,true)+'<div class="pessoa-nome">'+esc(c.nome)+'</div></div>').join('')+'</div></section>' : '');
     if(!soFotos){pintarUberMontador(e);pintarFreteMontador(e);}
   }
 
@@ -1016,18 +1026,18 @@
     chamar("MONT_uberQr", estado.token, e.id).then(function(d){
       const vagas = (d && d.vagas) || [];
       if(estado.etapaAberta !== e.id){ return; }
-      if(!vagas.length){ area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2></div><p class="evento-sem-transporte">Nenhum Uber programado para esta etapa.</p></section>'; return; }
-      area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2><small>check-in pelo QR</small></div>' +
+      if(!vagas.length){ area.innerHTML = '<section class="secao secao-compacta evento-uber"><div class="secao-titulo"><h2>Uber</h2></div><p class="evento-sem-transporte">Nenhum Uber programado para esta etapa.</p></section>'; return; }
+      area.innerHTML = '<section class="secao secao-compacta evento-uber"><div class="secao-titulo"><h2>Uber</h2></div>' +
         vagas.map(function(v){
           const corr = v.corridas || [];
-          return '<div class="subtitulo">' + esc(v.quantidade) + ' carro(s) · ' + (v.ida_volta ? 'ida e volta' : 'só ida') + ' · ' + esc(v.ponto_encontro) + ' → ' + esc(v.destino) + (v.hora ? ' · ' + esc(v.hora) : '') + '</div>' +
-            (corr.length ? '<div class="pessoas">' + corr.map(function(c){
+          return '<div class="uber-vaga"><div class="uber-vaga-topo"><span>' + esc(v.quantidade) + ' carro(s) · ' + (v.ida_volta ? 'ida e volta' : 'só ida') + (v.hora ? ' · ' + esc(v.hora) : '') + '<small>' + esc(v.ponto_encontro) + ' → ' + esc(v.destino) + '</small></span>' +
+            '<button class="btn btn-pequeno" type="button" aria-label="QR para o motorista" onclick="abrirQrUber(\'' + esc(e.id) + '\',\'' + esc(v.id) + '\')">' + I.qr + 'QR</button></div>' +
+            (corr.length ? corr.map(function(c){
               const n = String(c.telefone || "").replace(/\D/g, "");
               const sit = c.checkout_em ? "Concluída" : c.checkin_em ? "Chegou" : "A caminho";
-              return '<div class="pessoa"><div class="pessoa-ini">' + esc(String(c.motorista || "?").charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(c.motorista) +
-                '<small>' + esc(c.carro || "") + '</small>' + (n.length >= 10 ? '<small><a href="https://wa.me/55' + n + '" target="_blank" rel="noopener">' + esc(c.telefone) + '</a></small>' : '') + '</div><span class="chip">' + sit + '</span></div>';
-            }).join("") + '</div>' : '<div class="vazio" style="padding:12px">Nenhum motorista aceitou ainda.</div>') +
-            '<div class="acoes-linha"><button class="btn btn-pequeno" type="button" onclick="abrirQrUber(\'' + esc(e.id) + '\',\'' + esc(v.id) + '\')">' + I.qr + 'QR para o motorista</button></div>';
+              return '<div class="uber-motorista"><span class="pessoa-ini">' + esc(String(c.motorista || "?").charAt(0).toUpperCase()) + '</span><span class="uber-motorista-nome">' + esc(c.motorista) +
+                (c.carro ? ' · <small>' + esc(c.carro) + '</small>' : '') + '</span>' + (n.length >= 10 ? '<a href="https://wa.me/55' + n + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + '<span class="chip">' + sit + '</span></div>';
+            }).join("") : '<div class="uber-vazio">Nenhum motorista aceitou ainda.</div>') + '</div>';
         }).join("") + '</section>';
     }).catch(function(){
       if(estado.etapaAberta !== e.id){ return; }
