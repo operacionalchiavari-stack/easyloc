@@ -24,10 +24,13 @@ window.supabaseClient={rpc:async(n,a)=>{window.__rpc.push({n,a});if(a.p_acao==='
       await page.route("https://cdn.jsdelivr.net/**", (r) => r.fulfill({ contentType: "text/javascript", body: "" }));
       await page.goto(BASE + pagina);
       await page.waitForFunction(() => window.__rpc.some((c) => c.a.p_acao === "listar"));
-      await page.click("#novaSolicitacao");
-      await page.waitForSelector("dialog.as-dialog[open]");
+      await page.waitForSelector("#slChat section.as-inline");
+      assert.ok(await page.locator("#painelNova .sl-intro").isVisible(), tipo + ": duas colunas, explicação à esquerda");
+      const [ie, ch] = [await page.locator(".sl-intro").boundingBox(), await page.locator("#slChat").boundingBox()];
+      assert.ok(ch.x > ie.x + ie.width - 5 && Math.abs(ch.y - ie.y) < 60, "conversa à direita da explicação");
+      assert.ok(await page.locator("#painelLista").isHidden(), "lista na outra aba");
       assert.match(await page.locator(".as-msg.ia").first().textContent(), /Oi, Igor!/);
-      assert.equal(await page.locator("#solicitacaoDialog[open]").count(), 0, tipo + ": não abre mais o formulário direto");
+      
       await page.fill(".as-campo textarea", "Preciso de algo"); await page.keyboard.press("Enter");
       await page.waitForFunction(() => document.querySelectorAll(".as-msg.ia").length === 2);
       assert.equal(await page.locator(".as-resumo").count(), 0, "ainda perguntando");
@@ -44,14 +47,15 @@ window.supabaseClient={rpc:async(n,a)=>{window.__rpc.push({n,a});if(a.p_acao==='
       } else {
         assert.equal(criar.n, "manutencao_predial_operar"); assert.equal(criar.a.p_dados.categoria, "hidraulica"); assert.equal(criar.a.p_dados.prioridade, "alta"); assert.ok(criar.a.p_dados.token);
       }
-      // reabre limpo e o formulário continua como alternativa
-      await page.click("[data-as=fechar]"); await page.click("#novaSolicitacao");
+      await page.click("[data-as=ver-lista]");
+      assert.ok(await page.locator("#painelLista").isVisible() && await page.locator("#painelNova").isHidden(), "Ver minhas solicitações abre a lista");
+      await page.click('.sl-abas [data-aba="nova"]'); await page.click("[data-as=nova]");
       assert.equal(await page.locator(".as-msg").count(), 1, "conversa nova depois de registrar");
       await page.click("[data-as=formulario]");
       assert.equal(await page.locator("#solicitacaoDialog[open]").count(), 1, "formulário ainda acessível");
-      await page.setViewportSize({ width: 390, height: 800 }); await page.keyboard.press("Escape"); await page.click("#novaSolicitacao");
-      const caixa = await page.locator("dialog.as-dialog").boundingBox();
-      assert.ok(caixa.width <= 390 && caixa.height <= 800, "cabe no celular");
+      await page.keyboard.press("Escape");
+      await page.setViewportSize({ width: 390, height: 800 });
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "sem rolagem lateral no celular");
       assert.deepEqual(erros, []);
       console.log("ok - " + tipo);
       await page.close();

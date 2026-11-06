@@ -7,13 +7,21 @@ function pintar(){const busca=$('busca').value.toLocaleLowerCase('pt-BR'),status
  const rows=lista.filter(r=>(!busca||[r.titulo,r.local,r.numero,r.responsavel,r.solicitante_nome].join(' ').toLocaleLowerCase('pt-BR').includes(busca))&&(!prioridade||r.prioridade===prioridade)&&(status==='todas'||status==='abertas'?!['concluida','cancelada'].includes(r.status)||status==='todas':r.status===status));
  $('solicitacoes').innerHTML=rows.map(r=>`<tr><td>#${r.numero}</td><td><strong>${esc(r.titulo)}</strong><small>${esc(categorias[r.categoria]||r.categoria)}</small></td><td>${esc(r.local)}</td><td><span class="predial-prioridade is-${r.prioridade}">${prioridades[r.prioridade]}</span></td><td class="solicitacao-prazo text-danger">${dia(r.necessario_ate)}</td><td>${esc(r.solicitante_nome)}</td><td><span class="solicitacao-status is-${r.status==='concluida'?'concluida':r.status==='cancelada'?'cancelada':r.status==='aberta'?'enviada':'atencao'}">${estados[r.status]}</span></td><td>${esc(r.responsavel||'A definir')}${r.programada_para?`<small>Agendada: ${dia(r.programada_para)}</small>`:''}</td><td><button class="predial-abrir btn btn-secondary" type="button" data-abrir="${r.id}">Ver solicitação</button></td></tr>`).join('');$('vazio').hidden=rows.length>0;
 }
-async function carregar(){const data=await rpc('listar');lista=data.itens||[];$('novaSolicitacao').disabled=!data.criar;pintar();}
+let podeCriar=true;
+async function carregar(){const data=await rpc('listar');lista=data.itens||[];podeCriar=!!data.criar;
+ // Sem permissão de criar: a aba Nova solicitação some e a tela fica só com a lista.
+ document.querySelector('.sl-abas [data-aba="nova"]').hidden=!podeCriar;if(!podeCriar)trocarAba('lista');
+ contar(lista.filter(r=>!['concluida','cancelada'].includes(r.status)).length);pintar();}
+
+// Nov/2026: tela em duas colunas (como a Ideia Premiada): aba "Nova solicitação" com a conversa sempre aberta e aba
+// "Minhas solicitações" com a lista.
+const trocarAba=aba=>{document.querySelectorAll('.sl-abas [data-aba]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.aba===aba)));$('painelNova').hidden=aba!=='nova';$('painelLista').hidden=aba!=='lista';try{localStorage.setItem('sl_aba:'+location.pathname,aba);}catch(_){}if(aba==='nova')window.EasyLocAssistenteSolicitacao?.focar();};
+document.querySelectorAll('.sl-abas [data-aba]').forEach(b=>b.onclick=()=>trocarAba(b.dataset.aba));
+const contar=n=>{$('slQtd').textContent=n?` · ${n}`:'';};
 const abrirFormulario=()=>{$('solicitacaoForm').reset();token=crypto.randomUUID();$('erroSolicitacao').textContent='';$('solicitacaoDialog').showModal();};
 // Nov/2026: a nova solicitação é feita conversando com a especialista em manutenção; o formulário fica como alternativa.
-$('novaSolicitacao').onclick=()=>{
- if(!window.EasyLocAssistenteSolicitacao){abrirFormulario();return;}
- let chave=crypto.randomUUID();
- window.EasyLocAssistenteSolicitacao.abrir({tipo:'manutencao',titulo:'Nova solicitação de manutenção',assistente:'Especialista em manutenção',icone:'🔧',
+let chave=crypto.randomUUID();
+const configIA={tipo:'manutencao',titulo:'Nova solicitação de manutenção',assistente:'Especialista em manutenção',icone:'🔧',
   saudacao:n=>(n?`Oi, ${n}! `:'Oi! ')+'Me conte o que está acontecendo e onde. Pode escrever ou mandar um áudio.',
   resumoHtml:(r,esc)=>`<h3>${esc(r.titulo)}</h3><div class="as-res-grade"><div class="as-res-campo"><span>Local</span><p>${esc(r.local)}</p></div><div class="as-res-campo"><span>Tipo de serviço</span><p>${esc(categorias[r.categoria]||r.categoria)}</p></div><div class="as-res-campo"><span>Prioridade</span><p><span class="as-selo ${esc(r.prioridade)}">${esc(prioridades[r.prioridade]||r.prioridade)}</span></p></div><div class="as-res-campo"><span>Necessário até</span><p>${r.necessario_ate?dia(r.necessario_ate):'Sem prazo definido'}</p></div><div class="as-res-campo inteira"><span>Descrição do problema</span><p>${esc(r.descricao)}</p></div></div>`,
   confirmar:async r=>{
@@ -21,8 +29,7 @@ $('novaSolicitacao').onclick=()=>{
    chave=crypto.randomUUID();await carregar();
    return `Pronto! A solicitação ${criada?.numero?'#'+criada.numero+' ':''}foi registrada para a equipe de manutenção. Você acompanha o atendimento aqui nesta lista.`;
   },
-  formulario:abrirFormulario});
-};
+  formulario:abrirFormulario,verLista:()=>trocarAba('lista')};
 document.querySelectorAll('[data-fechar]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 $('solicitacaoForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('[type=submit]');b.disabled=true;try{await rpc('criar',{...Object.fromEntries(new FormData(e.target)),token});$('solicitacaoDialog').close();await carregar();window.alerta('Solicitação de manutenção enviada.','Manutenção da estrutura','sucesso');}catch(err){$('erroSolicitacao').textContent=err.message;}finally{b.disabled=false;}};
 const opcoes=(map,atual)=>Object.entries(map).map(([v,t])=>`<option value="${v}" ${v===atual?'selected':''}>${t}</option>`).join('');
@@ -33,4 +40,4 @@ async function detalhes(id){aberta=await rpc('consultar',{id});const r=aberta,de
 $('solicitacoes').onclick=async e=>{const b=e.target.closest('[data-abrir]');if(!b)return;b.disabled=true;try{await detalhes(b.dataset.abrir);}catch(err){window.alerta(err.message,'Manutenção da estrutura','erro');}finally{b.disabled=false;}};
 $('atendimentoForm').onsubmit=async e=>{e.preventDefault();const b=$('salvarAtendimento');b.disabled=true;try{await rpc('atualizar',{...Object.fromEntries(new FormData(e.target)),id:aberta.id,updated_at:aberta.updated_at});$('atendimentoDialog').close();await carregar();window.alerta('Atendimento atualizado.','Manutenção da estrutura','sucesso');}catch(err){$('erroAtendimento').textContent=err.message;}finally{b.disabled=false;}};
 for(const id of ['busca','filtroStatus','filtroPrioridade'])$(id).addEventListener(id==='busca'?'input':'change',pintar);
-try{const ctx=await window.aguardarContexto();empresa=ctx.empresa_id;await carregar();}catch(err){$('retorno').textContent=err.message;}
+try{const ctx=await window.aguardarContexto();empresa=ctx.empresa_id;window.EasyLocAssistenteSolicitacao?.montarNaTela($('slChat'),configIA);let ab='nova';try{ab=localStorage.getItem('sl_aba:'+location.pathname)||'nova';}catch(_){}trocarAba(ab);await carregar();}catch(err){$('retorno').textContent=err.message;}

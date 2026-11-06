@@ -22,14 +22,14 @@
     return false;
   }
 
-  function montar() {
-    S.dlg?.remove();
-    const d = document.createElement("dialog");
-    d.className = "as-dialog";
+  function montar(host) {
+    if (!host) S.dlg?.remove();
+    const d = document.createElement(host ? "section" : "dialog");
+    d.className = host ? "as-dialog as-inline" : "as-dialog";
     d.setAttribute("aria-label", S.cfg.titulo);
     d.innerHTML =
       '<div class="as-topo"><span class="as-avatar" aria-hidden="true">' + esc(S.cfg.icone || "✦") + '</span><div><strong>' + esc(S.cfg.assistente) + '</strong><small>' + esc(S.cfg.titulo) + '</small></div>' +
-      '<div class="as-topo-acoes"><button type="button" class="as-link" data-as="recomecar">Começar de novo</button><button type="button" class="as-fechar" data-as="fechar" aria-label="Fechar">×</button></div></div>' +
+      '<div class="as-topo-acoes"><button type="button" class="as-link" data-as="recomecar">Começar de novo</button>' + (host ? "" : '<button type="button" class="as-fechar" data-as="fechar" aria-label="Fechar">×</button>') + '</div></div>' +
       '<div class="as-msgs" aria-live="polite"></div>' +
       '<div class="as-gravando" hidden><span class="as-rec"></span>Gravando <b data-as="tempo">0:00</b><button type="button" class="as-link" data-as="cancelar-rec">Cancelar</button></div>' +
       '<form class="as-campo"><button type="button" class="as-icone" data-as="clipe" title="Enviar um arquivo de áudio" aria-label="Enviar um arquivo de áudio">' + ICONE.clipe + '</button>' +
@@ -38,7 +38,7 @@
       '<button type="button" class="as-icone" data-as="mic" title="Gravar áudio" aria-label="Gravar áudio">' + ICONE.mic + '</button>' +
       '<button type="submit" class="as-enviar" aria-label="Enviar">' + ICONE.enviar + '</button></form>' +
       (S.cfg.formulario ? '<p class="as-rodape"><button type="button" class="as-link" data-as="formulario">Prefiro preencher o formulário</button></p>' : "");
-    document.body.appendChild(d);
+    if (host) { host.innerHTML = ""; host.appendChild(d); } else document.body.appendChild(d);
     S.dlg = d;
     const texto = $("textarea");
     $("form").addEventListener("submit", (e) => { e.preventDefault(); const v = texto.value; texto.value = ""; texto.style.height = ""; enviarTexto(v); });
@@ -52,6 +52,8 @@
       else if (a === "cancelar-rec") { S.cancelada = true; parar(); }
       else if (a === "clipe") $('[data-as="arquivo"]').click();
       else if (a === "formulario") { fechar(); S.cfg.formulario(); }
+      else if (a === "nova") recomecar();
+      else if (a === "ver-lista") S.cfg.verLista?.();
       else if (a === "aprovar") aprovar();
       else if (a === "ajustar") { texto.placeholder = "Diga o que quer mudar no resumo…"; texto.focus(); }
     });
@@ -65,7 +67,7 @@
       return '<div class="as-resumo' + (m.enviado ? " enviado" : "") + '"><span class="as-eyebrow">Confira o resumo</span>' + S.cfg.resumoHtml(m.resumo, esc) +
         (m.enviado ? '<p class="as-ok">✓ Registrada</p>' : '<footer><button type="button" class="as-link" data-as="ajustar">Quero ajustar</button><button type="button" class="btn btn-primary" data-as="aprovar">Está certo, registrar</button></footer>') + "</div>";
     }
-    if (m.tipo === "ok") return '<div class="as-msg ia as-msg-ok"><p>' + esc(m.texto) + "</p></div>";
+    if (m.tipo === "ok") return '<div class="as-msg ia as-msg-ok"><p>' + esc(m.texto) + '</p><div class="as-ok-acoes">' + (S.cfg.verLista ? '<button type="button" class="as-link" data-as="ver-lista">Ver minhas solicitações</button>' : "") + '<button type="button" class="as-link" data-as="nova">Fazer outra solicitação</button></div></div>';
     return '<div class="as-msg ' + (m.papel === "ia" ? "ia" : "pessoa") + (m.erro ? " erro" : "") + '">' + (m.audio ? '<span class="as-audio">🎙 Áudio</span>' : "") + "<p>" + esc(m.texto) + "</p></div>";
   }
   function pintar(digitando) {
@@ -168,15 +170,16 @@
 
   function fechar() { if (S.dlg?.open) S.dlg.close(); }
 
-  async function abrir(cfg) {
+  async function abrir(cfg, host) {
     S.cfg = cfg;
     try { S.ctx = await window.aguardarContexto(); } catch (_) {}
     if (!S.ctx?.empresa_id) { window.alerta?.("Não foi possível identificar a empresa.", cfg.titulo, "erro"); return; }
-    montar();
+    montar(host);
     if (!recuperar()) S.msgs = [{ papel: "ia", texto: cfg.saudacao(primeiroNome()) }];
     pintar(false);
-    S.dlg.showModal();
-    $("textarea").focus();
+    if (!host) { S.dlg.showModal(); $("textarea").focus(); }
   }
-  window.EasyLocAssistenteSolicitacao = { abrir, fechar };
+  /* Nov/2026: na tela (duas colunas, como a Ideia Premiada) a conversa fica sempre aberta dentro de `host`. */
+  const montarNaTela = (host, cfg) => abrir(cfg, host);
+  window.EasyLocAssistenteSolicitacao = { abrir, montarNaTela, fechar, focar: () => S.dlg?.querySelector("textarea")?.focus() };
 })();

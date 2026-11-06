@@ -11478,5 +11478,6 @@ Pedido: no lugar de preencher o modal, uma IA que entende o pedido, pergunta o n
 - **Gravação**: pela mesma RPC do formulário. Compra: `compras_galpao('criar')` com `observacao` = "Para que: …
 Pedido / evento: …
 <observações>" (não há campo próprio de pedido). Manutenção: `manutencao_predial_operar('criar')` com um `token` por abertura da conversa.
+- **Tela em duas colunas, como a Ideia Premiada** (06/11, pedido seguinte; supera o "botão abre o chat"): o botão "+ Nova solicitação" saiu. Na linha do título, à esquerda, as abas **Nova solicitação** (padrão; explicação com passos 1-2-3 e aviso amarelo à esquerda, conversa sempre aberta à direita, `EasyLocAssistenteSolicitacao.montarNaTela(#slChat, cfg)`) e **Minhas solicitações** (a lista e os filtros de antes, com a contagem; na manutenção conta só as em aberto). A última aba usada fica guardada (`localStorage sl_aba:<página>`). Depois de registrar: "Ver minhas solicitações" e "Fazer outra solicitação". Manutenção sem permissão de criar esconde a aba Nova solicitação.
 - Testes: `tests/solicitacao-assistente-browser.cjs` (telas, Supabase simulado) e `RUN_SOLIC_LIVE=1 node tests/solicitacao-assistente-live.cjs` (IA real, empresa e usuário temporários).
 
