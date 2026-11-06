@@ -49,7 +49,12 @@ const {chromium}=require('playwright'),fs=require('fs'),assert=require('assert/s
  await page.evaluate(()=>portalMural.m({avisos:[{id:'AVI_antigo1',titulo:'Antigo',texto:'x',publicadoEm:'2026-11-01'}]}));
  await page.evaluate(()=>abrirAvisoPortal());
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64');
- await page.fill('#novoAvisoPortal [name=titulo]','Outubro Rosa');
+ assert.ok(await page.locator('#novoAvisoPortal [name=anexo]').isHidden(),'escrito: sem campo de foto');
+ await page.click('#novoAvisoPortal .aviso-modo label:nth-of-type(2)');
+ assert.ok(await page.locator('#novoAvisoPortal [name=titulo]').isHidden(),'anexo: sem título');
+ assert.ok(await page.locator('#novoAvisoPortal [name=texto]').isHidden(),'anexo: sem mensagem');
+ assert.ok(await page.locator('#novoAvisoPortal .aviso-cores').isHidden(),'anexo: sem cor');
+ assert.ok(await page.locator('#novoAvisoPortal [name=validoAte]').isVisible(),'anexo: até quando fica');
  await page.setInputFiles('#novoAvisoPortal [name=anexo]',{name:'outubro-rosa.png',mimeType:'image/png',buffer:png});
  assert.equal(await page.locator('#novoAvisoPortal .aviso-anexo-previa img').count(),1,'prévia da foto');
  await page.click('#novoAvisoPortal [type=submit]');
@@ -58,6 +63,7 @@ const {chromium}=require('playwright'),fs=require('fs'),assert=require('assert/s
  assert.equal(sub.b,'empresas-logos');assert.match(sub.path,/^e1\/avisos\/.+\.png$/);
  assert.equal(grav.aviso_id,'AVI_novo1234','anexo ligado ao aviso novo');assert.equal(grav.tipo,'imagem');
  assert.equal(await page.locator('.qa-nota.com-foto[data-aviso="AVI_novo1234"] .qa-foto img').count(),1,'cartaz com a foto no quadro');
- assert.equal(await page.locator('.qa-nota[data-aviso="AVI_novo1234"] .qa-texto').count(),0,'sem texto repetido quando só tem título');
+ for(const sel of ['.qa-texto','h2','time','.qa-selo'])assert.equal(await page.locator('.qa-nota[data-aviso="AVI_novo1234"] '+sel).count(),0,'só a foto, sem '+sel);
+ const alt=await page.locator('.qa-nota[data-aviso="AVI_novo1234"] .qa-foto').evaluate(e=>e.getBoundingClientRect().height);assert.ok(alt>=200,'foto grande: '+alt);
  assert.deepEqual(errors,[]);console.log('OK - quadro de avisos de cortiça: papéis com alfinete, animação, publicar, páginas, vazio, celular.');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

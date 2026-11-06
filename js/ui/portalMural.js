@@ -167,13 +167,28 @@
     let modal=document.getElementById('novoAvisoPortal');
     if(!modal){
       modal=document.createElement('dialog');modal.id='novoAvisoPortal';
-      modal.innerHTML='<form><h2>Novo comunicado</h2><label>Título<input name="titulo" required maxlength="120"></label><label>Mensagem<textarea name="texto" rows="4" maxlength="1200" placeholder="Opcional quando houver foto ou PDF"></textarea></label><label class="aviso-anexo-campo">Foto ou PDF (opcional)<input name="anexo" type="file" accept="image/jpeg,image/png,image/webp,application/pdf"><span class="aviso-anexo-previa" hidden></span></label><label>Válido até (opcional)<input name="validoAte" type="date"></label><fieldset class="aviso-cores"><legend>Cor do comunicado</legend><label><input type="radio" name="cor" value="neutro" checked><span class="aviso-amostra aviso-cor-neutro"></span>Neutro</label><label><input type="radio" name="cor" value="areia" ><span class="aviso-amostra aviso-cor-areia"></span>Areia</label><label><input type="radio" name="cor" value="verde" ><span class="aviso-amostra aviso-cor-verde"></span>Verde</label><label><input type="radio" name="cor" value="azul" ><span class="aviso-amostra aviso-cor-azul"></span>Azul</label><label><input type="radio" name="cor" value="lavanda" ><span class="aviso-amostra aviso-cor-lavanda"></span>Lavanda</label></fieldset><label class="aviso-check"><input name="importante" type="checkbox">Importante</label><label class="aviso-check"><input name="fixado" type="checkbox">Fixar comunicado</label><p role="status"></p><footer><button type="button">Cancelar</button><button type="submit">Publicar</button></footer></form>';
+      /* Nov/2026: o comunicado é escrito OU um anexo (foto). Anexo: só a foto e até quando fica. */
+      modal.innerHTML='<form><h2>Novo comunicado</h2><fieldset class="aviso-modo"><legend>O que você vai publicar?</legend><label><input type="radio" name="modo" value="escrito" checked><span>Algo escrito</span></label><label><input type="radio" name="modo" value="anexo"><span>Anexo (foto)</span></label></fieldset><div data-so="escrito"><label>Título<input name="titulo" maxlength="120"></label><label>Mensagem<textarea name="texto" rows="4" maxlength="1200"></textarea></label></div><div data-so="anexo" hidden><label class="aviso-anexo-campo">Foto<input name="anexo" type="file" accept="image/jpeg,image/png,image/webp"><span class="aviso-anexo-previa" hidden></span></label></div><label>Válido até (opcional)<input name="validoAte" type="date"></label><div data-so="escrito"><fieldset class="aviso-cores"><legend>Cor do comunicado</legend><label><input type="radio" name="cor" value="neutro" checked><span class="aviso-amostra aviso-cor-neutro"></span>Neutro</label><label><input type="radio" name="cor" value="areia" ><span class="aviso-amostra aviso-cor-areia"></span>Areia</label><label><input type="radio" name="cor" value="verde" ><span class="aviso-amostra aviso-cor-verde"></span>Verde</label><label><input type="radio" name="cor" value="azul" ><span class="aviso-amostra aviso-cor-azul"></span>Azul</label><label><input type="radio" name="cor" value="lavanda" ><span class="aviso-amostra aviso-cor-lavanda"></span>Lavanda</label></fieldset><label class="aviso-check"><input name="importante" type="checkbox">Importante</label><label class="aviso-check"><input name="fixado" type="checkbox">Fixar comunicado</label></div><p role="status"></p><footer><button type="button">Cancelar</button><button type="submit">Publicar</button></footer></form>';
       document.body.appendChild(modal);modal.querySelector('[type=button]').onclick=()=>modal.close();
-      modal.querySelector('[name=anexo]').addEventListener('change',function(){const f=this.files[0],pv=modal.querySelector('.aviso-anexo-previa');if(!f){pv.hidden=true;pv.innerHTML='';return;}pv.hidden=false;pv.innerHTML=/^image\//.test(f.type)?'<img alt="" src="'+URL.createObjectURL(f)+'">':'<b>PDF</b> '+esc(f.name);});
+      const limparPrevia=()=>{const pv=modal.querySelector('.aviso-anexo-previa');pv.hidden=true;pv.innerHTML='';};
+      const aplicarModo=()=>{const m=modal.querySelector('[name=modo]:checked').value;modal.querySelectorAll('[data-so]').forEach(el=>{el.hidden=el.dataset.so!==m;});modal.querySelector('[role=status]').textContent='';};
+      modal.querySelectorAll('[name=modo]').forEach(r=>r.addEventListener('change',aplicarModo));
+      modal.querySelector('[name=anexo]').addEventListener('change',function(){const f=this.files[0],pv=modal.querySelector('.aviso-anexo-previa');if(!f){limparPrevia();return;}pv.hidden=false;pv.innerHTML='<img alt="" src="'+URL.createObjectURL(f)+'">';});
       modal.querySelector('form').onsubmit=async function(e){
         e.preventDefault();const f=e.currentTarget,b=f.querySelector('[type=submit]'),status=f.querySelector('[role=status]');
-        const arquivo=f.elements.anexo.files[0];
-        if(!f.elements.texto.value.trim() && !arquivo){status.textContent='Escreva a mensagem ou anexe uma foto/PDF.';f.elements.texto.focus();return;}
+        const modoAnexo=f.elements.modo.value==='anexo';
+        const arquivo=modoAnexo?f.elements.anexo.files[0]:null;
+        let titulo,texto;
+        if(modoAnexo){
+          if(!arquivo){status.textContent='Escolha a foto.';return;}
+          if(!/^image\//.test(arquivo.type)){status.textContent='Envie uma foto (JPG, PNG ou WebP).';return;}
+          // O servidor exige título: vai um título técnico (não aparece no quadro), único para achar o aviso depois.
+          titulo=('Anexo · '+(arquivo.name.replace(/\.[^.]+$/,'')||'foto')).slice(0,100)+' · '+Date.now().toString(36).slice(-5);texto=titulo;
+        }else{
+          titulo=f.elements.titulo.value.trim();texto=f.elements.texto.value.trim();
+          if(!titulo){status.textContent='Escreva o título.';f.elements.titulo.focus();return;}
+          if(!texto){status.textContent='Escreva a mensagem.';f.elements.texto.focus();return;}
+        }
         b.disabled=true;status.textContent='Publicando...';
         try{
           const anexo=arquivo?await subirAnexoAviso(arquivo):null;
@@ -181,13 +196,13 @@
           const sessao=await window.supabaseClient.auth.getSession();
           const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
           const base=(local && location.port==='3000') ? '/' : /\.vercel\.app$/.test(location.hostname) ? '/' : 'https://easyloc-zeta.vercel.app/';
-          const r=await fetch(base+'api/portal-mural',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessao.data.session?.access_token},body:JSON.stringify({acao:'aviso',dados:{titulo:f.elements.titulo.value,texto:f.elements.texto.value.trim()||f.elements.titulo.value,validoAte:f.elements.validoAte.value,importante:f.elements.importante.checked,fixado:f.elements.fixado.checked,cor:f.elements.cor.value}})});
+          const r=await fetch(base+'api/portal-mural',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessao.data.session?.access_token},body:JSON.stringify({acao:'aviso',dados:{titulo:titulo,texto:texto,validoAte:f.elements.validoAte.value,importante:!modoAnexo&&f.elements.importante.checked,fixado:!modoAnexo&&f.elements.fixado.checked,cor:modoAnexo?'neutro':f.elements.cor.value}})});
           const j=await r.json();if(!j.ok)throw Error(j.erro || 'Falha ao publicar.');
           const novo=Object.assign({},await buscarMural(),{resumoDia:estado.mural?.resumoDia,celebracao:estado.mural?.celebracao});
-          if(anexo){const aviso=(novo.avisos||[]).filter(a=>!idsAntes.has(a.id)&&a.titulo===f.elements.titulo.value.trim())[0];if(aviso)await gravarAnexoAviso(aviso.id,anexo);}
+          if(anexo){const aviso=(novo.avisos||[]).filter(a=>!idsAntes.has(a.id)&&a.titulo===titulo)[0];if(aviso)await gravarAnexoAviso(aviso.id,anexo);}
           await juntarAnexos(novo);estado.mural=novo;montarMural();
           const pontos=document.querySelectorAll('#portalInicio .hero-ponto');pontos[pontos.length-1]?.click();
-          f.reset();const pv=f.querySelector('.aviso-anexo-previa');pv.hidden=true;pv.innerHTML='';status.textContent='';modal.close();
+          f.reset();limparPrevia();aplicarModo();modal.close();
         }catch(err){status.textContent=err.message;}finally{b.disabled=false;}
       };
     }
@@ -300,9 +315,15 @@
       const imp = a.prioridade === 'IMPORTANTE';
       const ax = a.anexo, foto = ax && ax.tipo === 'imagem', pdf = ax && ax.tipo === 'pdf';
       const soTitulo = String(a.texto || '').trim() === String(a.titulo || '').trim();
+      if(foto){
+        // Nov/2026: aviso com foto mostra só a foto, grande (sem selo, data, título nem texto).
+        return '<article class="qa-nota qa-so-foto com-foto" data-aviso="' + esc(a.id) + '" style="--i:' + i + ';--r:' + GIRO[i % 6] + 'deg">' +
+          '<span class="qa-pino" aria-hidden="true"></span>' +
+          '<button type="button" class="qa-foto" onclick="abrirAnexoAviso(\'' + esc(a.id) + '\')" aria-label="Ampliar a foto do aviso"><img src="' + esc(ax.url) + '" alt="Comunicado" loading="eager"></button>' +
+          '<button type="button" class="qa-anexar" onclick="anexarAvisoPortal(\'' + esc(a.id) + '\')"><i data-lucide="paperclip" aria-hidden="true"></i>Trocar foto</button></article>';
+      }
       return '<article class="qa-nota aviso-cor-' + cor(a) + (imp ? ' is-importante' : '') + (foto ? ' com-foto' : '') + (pdf ? ' com-pdf' : '') + '" data-aviso="' + esc(a.id) + '" style="--i:' + i + ';--r:' + GIRO[i % 6] + 'deg">' +
         '<span class="qa-pino" aria-hidden="true"></span>' +
-        (foto ? '<button type="button" class="qa-foto" onclick="abrirAnexoAviso(\'' + esc(a.id) + '\')" aria-label="Ampliar a foto do aviso"><img src="' + esc(ax.url) + '" alt="' + esc(a.titulo) + '" loading="eager"></button>' : '') +
         '<div class="qa-topo"><span class="qa-selo">' + (imp ? 'Importante' : 'Comunicado') + (a.fixado ? ' · Fixado' : '') + '</span><time>' + esc(avisoData(a.publicadoEm)) + '</time></div>' +
         '<h2>' + esc(a.titulo) + '</h2>' + (soTitulo ? '' : '<div class="qa-texto" tabindex="0">' + esc(a.texto || '') + '</div>') +
         (pdf ? '<a class="qa-pdf" href="' + esc(ax.url) + '" target="_blank" rel="noopener"><i data-lucide="file-text" aria-hidden="true"></i>Abrir PDF</a>' : '') +
