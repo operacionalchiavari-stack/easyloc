@@ -335,7 +335,7 @@
 .dano-fotos .dano-rem{border:0;background:none;color:#b42318;font-size:12px;padding:0 4px}
 </style>
   <meta name="theme-color" content="#5a5a55">
-  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-bonus-menu">
+  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-cores-etapa">
   <link rel="stylesheet" href="montador-evento.css?v=20261031-app-integrado">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
@@ -556,10 +556,10 @@
 
   function tipoInfo(nome){
     const t = String(nome || "").toLowerCase();
-    if(t.indexOf("desmontagem") >= 0){ return { fundo: "var(--desmontagem)", forte: "var(--desmontagem-forte)" }; }
-    if(t.indexOf("montagem") >= 0){ return { fundo: "var(--montagem)", forte: "var(--montagem-forte)" }; }
-    if(t.indexOf("carregamento") >= 0){ return { fundo: "var(--carregamento)", forte: "var(--carregamento-forte)" }; }
-    return { fundo: "var(--soft)", forte: "var(--escuro-2)" };
+    if(t.indexOf("desmontagem") >= 0){ return { fundo: "var(--desmontagem)", forte: "var(--desmontagem-forte)", classe: "desmontagem" }; }
+    if(t.indexOf("montagem") >= 0){ return { fundo: "var(--montagem)", forte: "var(--montagem-forte)", classe: "montagem" }; }
+    if(t.indexOf("carregamento") >= 0){ return { fundo: "var(--carregamento)", forte: "var(--carregamento-forte)", classe: "carregamento" }; }
+    return { fundo: "var(--soft)", forte: "var(--escuro-2)", classe: "outra" };
   }
 
   function acharEtapa(id){ return ((estado.dados && estado.dados.etapas) || []).filter(function(e){ return e.id === id; })[0]; }
@@ -816,7 +816,7 @@
   function cartaoEtapa(e){
     const t = tipoInfo(e.etapa);
     return (
-      '<button class="etapa" type="button" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '" onclick="abrirEtapa(\'' + esc(e.id) + '\')">' +
+      '<button class="etapa ' + t.classe + '" type="button" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '" onclick="abrirEtapa(\'' + esc(e.id) + '\')">' +
         '<div class="etapa-topo"><span class="tipo">' + esc(e.etapa) + '</span><span class="hora">' + I.relogio + esc(hora(e.horario) || "A definir") + '</span></div>' +
         '<div class="etapa-cliente">' + esc(e.cliente || "-") + '</div>' +
         '<div class="etapa-local">Pedido #' + esc(e.pedido) + (e.local ? ' · ' + esc(e.local) : "") + '</div>' +

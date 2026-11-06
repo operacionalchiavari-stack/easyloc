@@ -195,3 +195,10 @@ body[data-app-equipe="montagem"] #appNavegacao{display:none!important}
 body[data-app-equipe="montagem"] .bonus-cabecalho{display:flex;align-items:center;gap:10px}
 body[data-app-equipe="montagem"] .bonus-cabecalho h1{flex:1}
 body[data-app-equipe="montagem"] .bonus-inicio{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid #ddd5c8;background:#fff;color:#4c473e;font:600 18px/1 system-ui;display:grid;place-items:center}
+/* App do Montador (nov/2026, pedido: "remover a faixa lateral mais escura" e "cores de montagem e desmontagem iguais
+   ao cronograma"): cartões sem a faixa da esquerda, com o fundo da etapa como no Cronograma (montagem azul-claro,
+   desmontagem laranja-claro, carregamento lilás); selos e chips em branco para aparecerem sobre a cor. */
+body[data-app-equipe="montagem"] .etapa{border-left:1px solid #c7dbf6!important;border-color:#c7dbf6!important;background:#dbeafe!important}
+body[data-app-equipe="montagem"] .etapa.desmontagem{border-left-color:#fed7aa!important;border-color:#fed7aa!important;background:#ffedd5!important}
+body[data-app-equipe="montagem"] .etapa.carregamento{border-left-color:#ddd6fe!important;border-color:#ddd6fe!important;background:#ede9fe!important}
+body[data-app-equipe="montagem"] .etapa :is(.chip,.etapa-chips>*,.etapa-topo>span:first-child){background:rgba(255,255,255,.75)}
