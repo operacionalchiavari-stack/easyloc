@@ -140,8 +140,39 @@
   }else{const total=b.itens.reduce((n,p)=>n+Number(p.esperado),0),feitas=b.itens.reduce((n,p)=>n+Math.min(Number(p.esperado),Number(p.separado)+Math.min(Number(p.producao),Number(p.confirmadas))),0),pct=total?Math.round(feitas/total*100):0;$('taProgresso').innerHTML='<div class="resumo"><span>Materiais separados</span><strong>'+numero(feitas)+'<small> / '+numero(total)+'</small></strong></div><div class="barra" role="progressbar" aria-label="Separação" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><span style="width:'+pct+'%"></span></div>';}
  }
  async function escolher(achados){const disponiveis=achados.filter(p=>s.etapa==='ida'?Number(p.separado)<Number(p.necessario):editavelLinha(p));if(!disponiveis.length)throw Error('As linhas deste material já estão completas nesta rodada.');const d=$('taEscolha');$('taEscolhaItens').innerHTML=disponiveis.map(p=>'<button type="button" class="escolha-material" data-escolher="'+esc(p.chave)+'"><strong>'+esc(p.nome)+'</strong><small>'+esc([p.pedido_numero?'Pedido #'+p.pedido_numero:'',p.kit||'Item do pedido',p.setor].filter(Boolean).join(' · '))+'</small></button>').join('');d.returnValue='';d.showModal();return new Promise(resolve=>d.addEventListener('close',()=>resolve(d.returnValue||null),{once:true}));}
+ /* Nov/2026 (pedido: "saber de forma fácil se leu ou se não leu"): cada leitura mostra um sinal em tela cheia.
+    Verde = leu (foto grande do item, nome e contagem); amarelo = já conferido / já completo; vermelho = não é deste
+    pedido, não encontrado ou sem permissão. Vibração e som diferentes por cor. O verde some rápido (bipagem em
+    sequência continua); amarelo e vermelho ficam mais tempo e seguram novas leituras até sumir ou tocar na tela. */
+ const SINAL_MS={ok:1100,aviso:2400,erro:2800};
+ let sinalTimer=null,sinalTravado=false,audio=null;
+ function tom(tipo){
+  try{
+   audio=audio||new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();
+   const notas=tipo==='ok'?[[1180,.09]]:tipo==='aviso'?[[660,.12],[660,.12]]:[[220,.35]];let t=audio.currentTime;
+   notas.forEach(([f,d])=>{const o=audio.createOscillator(),g=audio.createGain();o.type=tipo==='erro'?'square':'sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.25,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+d+.02);t+=d+.07;});
+  }catch(_){/* Sem som disponível: fica a cor e a vibração. */}
+ }
+ function fecharSinal(){clearTimeout(sinalTimer);const el=$('taSinal');if(el){el.classList.remove('ver');el.setAttribute('aria-hidden','true');}sinalTravado=false;}
+ function sinal(tipo,{titulo,texto,nome,foto,contagem}={}){
+  let el=$('taSinal');
+  if(!el){el=document.createElement('div');el.id='taSinal';el.className='sinal';el.setAttribute('role','alert');el.setAttribute('aria-hidden','true');el.addEventListener('click',fecharSinal);document.body.appendChild(el);}
+  const icone=tipo==='ok'?'✓':tipo==='aviso'?'!':'✕';
+  el.className='sinal sinal-'+tipo;
+  el.innerHTML='<div class="sinal-cartao">'+
+   (imagens(foto)?'<div class="sinal-foto"><img src="'+esc(foto)+'" alt=""><span class="sinal-icone">'+icone+'</span></div>':'<div class="sinal-icone sinal-icone-grande">'+icone+'</div>')+
+   '<strong class="sinal-titulo">'+esc(titulo||'')+'</strong>'+(nome?'<b class="sinal-nome">'+esc(nome)+'</b>':'')+
+   (contagem?'<span class="sinal-contagem">'+contagem+'</span>':'')+(texto?'<p class="sinal-texto">'+esc(texto)+'</p>':'')+
+   '<small class="sinal-dica">Toque para continuar</small></div>';
+  void el.offsetWidth;el.classList.add('ver');el.setAttribute('aria-hidden','false');
+  navigator.vibrate?.(tipo==='ok'?70:tipo==='aviso'?[90,70,90]:[260,90,260]);tom(tipo);
+  sinalTravado=tipo!=='ok';clearTimeout(sinalTimer);sinalTimer=setTimeout(fecharSinal,SINAL_MS[tipo]);
+ }
+ function tipoDoErro(msg){return /j[aá] foi confer|j[aá] foi contad|j[aá] est[aá] complet|j[aá] est[aã]o complet|j[aá] bateu|j[aá] salva/i.test(msg)?'aviso':'erro';}
+ function tituloDoErro(msg,tipo){if(tipo==='aviso')return /complet/i.test(msg)?'Item já completo':'Já conferido';if(/outro pedido|n[aã]o pertence/i.test(msg))return 'Não é deste pedido';if(/n[aã]o encontrad/i.test(msg))return 'Código não encontrado';return 'Não foi possível ler';}
+
  async function ler(codigo){
-  codigo=String(codigo||'').trim();if(!codigo||s.ocupado||!s.base)return;
+  codigo=String(codigo||'').trim();if(!codigo||s.ocupado||!s.base||sinalTravado)return;
   bloquear(true);mensagem('');
   try{
    if(!s.pendente||s.pendente.codigo!==codigo)s.pendente={codigo,id:crypto.randomUUID()};
@@ -158,8 +189,10 @@
    }
    s.pendente=null;progresso();$('taCodigo').value='';
    const p=s.base.itens.find(p=>p.chave===r.chave);$('taUltima').textContent=r.repetida?'Leitura já salva. Quantidade atualizada.':'✓ '+(p?.nome||'Material')+' · leitura confirmada';
-   navigator.vibrate?.(60);
-  }catch(e){mensagem(e.message);}finally{bloquear(false);}
+   if(s.etapa==='ida'){const feitas=Number(p?.separado||0),total=Number(p?.esperado||0),completo=total>0&&feitas>=total;
+    sinal('ok',{titulo:r.repetida?'Leitura já salva':completo?'Item completo':'Leu!',nome:p?.nome||'Material',foto:p?.foto,contagem:'<b>'+numero(feitas)+'</b> de '+numero(total)+' separados'});}
+   else{sinal('ok',{titulo:'Leu!',nome:p?.nome||'Material',foto:p?.foto,contagem:'Contados: <b>'+numero(s.q[r.chave]||0)+'</b>'});}
+  }catch(e){mensagem(e.message);const tipo=tipoDoErro(e.message);sinal(tipo,{titulo:tituloDoErro(e.message,tipo),texto:e.message});}finally{bloquear(false);}
  }
  async function finalizar(){
   if(s.ocupado||!s.base)return;const b=s.base;

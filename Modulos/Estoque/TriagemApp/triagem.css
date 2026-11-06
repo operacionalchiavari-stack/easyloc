@@ -29,3 +29,31 @@ body:not(.ta-logado) header.marca{min-height:160px}.ta-na-fila main{padding-top:
 /* Fundo igual ao do menu do app (branco), em vez do bege mais escuro. */
 :root{--bg:#ffffff}
 html,body{background:#fff!important}
+
+/* Sinal de leitura em tela cheia (nov/2026): verde = leu, amarelo = já conferido/completo, vermelho = não serve.
+   A tela inteira pisca na cor e o cartão do meio traz a foto grande do item. Toque fecha. */
+.sinal{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .18s ease}
+.sinal.ver{opacity:1;pointer-events:auto}
+.sinal::before{content:"";position:absolute;inset:0;background:var(--sinal-fundo);animation:sinalPisca .7s ease-out both}
+.sinal::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 10px var(--sinal-cor),inset 0 0 90px var(--sinal-cor);opacity:.85;pointer-events:none}
+.sinal-ok{--sinal-cor:#1f9d55;--sinal-fundo:rgba(31,157,85,.82);--sinal-claro:#e7f6ee}
+.sinal-aviso{--sinal-cor:#e0a100;--sinal-fundo:rgba(224,161,0,.84);--sinal-claro:#fff6dc}
+.sinal-erro{--sinal-cor:#d1261b;--sinal-fundo:rgba(209,38,27,.86);--sinal-claro:#fdecea}
+@keyframes sinalPisca{0%{opacity:0}18%{opacity:1}38%{opacity:.55}60%{opacity:.95}100%{opacity:.9}}
+.sinal-cartao{position:relative;z-index:1;width:min(340px,92vw);display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 20px 16px;border-radius:26px;background:#fff;text-align:center;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);animation:sinalEntra .35s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes sinalEntra{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}
+.sinal-foto{position:relative;width:min(240px,64vw);aspect-ratio:1;border-radius:20px;background:var(--sinal-claro);display:grid;place-items:center;overflow:visible}
+.sinal-foto img{width:100%;height:100%;object-fit:contain;border-radius:20px;mix-blend-mode:multiply}
+.sinal-icone{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--sinal-cor);color:#fff;font:800 30px/1 var(--sans);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.sinal-foto .sinal-icone{position:absolute;right:-10px;bottom:-10px;border:4px solid #fff}
+.sinal-icone-grande{width:110px;height:110px;font-size:62px;margin:6px 0}
+.sinal-titulo{font:800 26px/1.1 var(--sans);color:var(--sinal-cor);margin-top:6px}
+.sinal-nome{font:600 17px/1.3 var(--sans);color:#211e19}
+.sinal-contagem{font:500 16px/1.3 var(--sans);color:#3b372f}
+.sinal-contagem b{font-size:22px;color:var(--sinal-cor)}
+.sinal-texto{margin:2px 0 0;font:600 15px/1.4 var(--sans);color:#3b372f}
+.sinal-dica{margin-top:6px;font-size:12px;color:#8a8378}
+.sinal-ok .sinal-dica{display:none}
+@media(prefers-reduced-motion:reduce){.sinal::before,.sinal-cartao{animation:none}}
+.sinal-ok.ver{pointer-events:none}
