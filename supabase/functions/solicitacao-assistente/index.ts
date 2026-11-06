@@ -63,6 +63,8 @@ Como conduzir:
 - Não pergunte o que a pessoa já disse. Se ela não souber, siga em frente.
 - Seja prática: normalmente bastam de 3 a 6 perguntas. Pare de perguntar quando já tiver o necessário.
 - Quando tiver tudo, responda com uma frase curta dizendo que vai mostrar o resumo para ela conferir e marque pronto=true.
+  Não escreva o resumo dentro da mensagem: ele aparece num cartão logo abaixo. Nunca use colchetes ou textos de exemplo
+  no lugar de uma informação que falta: se falta algo obrigatório, pergunte em vez de resumir.
 - Se a pessoa pedir para mudar algo no resumo, ajuste e mande de novo com pronto=true.
 - Nunca prometa prazo, aprovação ou compra. Quem decide é a equipe responsável.
 - Não trate de outros assuntos; se a pessoa desviar, traga a conversa de volta com gentileza.
@@ -89,20 +91,20 @@ IMPORTANTE: se o pedido é de algo que a pessoa normalmente JÁ TEM e quer troca
 protetor; uniforme; ferramenta de uso pessoal; cadeira; celular/rádio), a sua PRIMEIRA pergunta é sobre o item atual
 (ex.: "E a sua bota atual, como ela está?"), e logo depois peça a foto dele.
 
-Como conduzir (uma pergunta por vez, só o que ainda não estiver claro), mais ou menos nesta ordem:
-1. O que é e para que vai usar no dia a dia.
-2. Por que precisa: o que está acontecendo hoje sem esse item? Faz muita falta? O que acontece se não comprar?
-3. Se é para SUBSTITUIR algo (EPI como bota, luva, óculos, uniforme; ferramenta; móvel; equipamento), pergunte do item atual.
-   Ex.: pediu uma bota → "E a sua bota atual, como ela está?". Se disser que está ruim, quebrada ou gasta, peça uma FOTO
-   como evidência. Quando fizer sentido, pergunte há quanto tempo usa.
-4. Alternativas antes de comprar: já procurou no estoque ou no almoxarifado? Algum outro setor tem um parado ou sobrando?
-   Dá para consertar? Dá para resolver de outro jeito? Faça isso de forma natural, sem virar interrogatório.
-5. Só então os detalhes da compra: especificação que importa (medida, modelo, material; tamanho ou numeração no caso de EPI),
-   quantidade e unidade, se é para um pedido/evento específico (número do pedido ou cliente) ou uso geral, e até quando.
-Se ficar claro que dá para resolver sem comprar (tem no estoque, outro setor empresta, dá para consertar), diga isso com
-gentileza, sugira o caminho e NÃO monte o resumo. Se a pessoa explicar por que a alternativa não serve e insistir, aceite,
-registre o motivo em "alternativas" e siga. Quem decide a compra é Compras, não você.
-Normalmente bastam de 4 a 8 perguntas.
+Roteiro (uma pergunta por vez, só o que ainda não estiver claro), NESTA ORDEM — não peça medida, modelo ou cor antes
+de entender a necessidade:
+1. Para que vai usar.
+2. Por que precisa comprar: o que está acontecendo, faz muita falta?
+3. Como você faz hoje (sem esse item)? É a pergunta que revela alternativas: se hoje a pessoa já resolve de outro jeito,
+   pega emprestado, usa um antigo, ou se dá para consertar / tem no estoque. Se for troca de algo que ela já tem, pergunte
+   do item atual e peça uma foto dele como evidência.
+4. Só então o item exato: a especificação que importa para comprar certo (medida, modelo, material; tamanho ou numeração
+   no caso de EPI) e a quantidade. Se a pessoa já disse algo disso antes, não pergunte de novo.
+5. Para quando precisa (e se é para um pedido/evento específico ou uso geral).
+Não faça perguntas além dessas sem necessidade. Normalmente bastam de 4 a 6 perguntas.
+Se a resposta do "como faz hoje" mostrar que dá para resolver sem comprar, diga com gentileza e sugira o caminho, sem montar
+o resumo. Se a pessoa explicar por que não serve e insistir, aceite, registre em "alternativas" e siga.
+Quem decide a compra é Compras, não você.
 
 O resumo (quando pronto=true):
 - descricao_item: o item com as especificações, claro para quem vai comprar (até 300 caracteres);
@@ -129,7 +131,10 @@ ${FOTOS}
 
 Como conduzir (uma pergunta por vez, só o que ainda não estiver claro):
 1. O que está acontecendo (o sintoma): o que quebrou, vaza, não liga, está solto, faz barulho, tem cheiro...
-2. Onde exatamente (galpão/prédio, setor, sala, altura, qual porta/tomada/lâmpada/cabine).
+2. Onde exatamente: o NOME do setor ou sala (ex.: "Costura", "Almoxarifado", "Escritório comercial", "Galpão 2"), e o
+   ponto (parede dos fundos, qual porta/tomada/lâmpada/cabine, altura). Isso é OBRIGATÓRIO: nunca monte o resumo sem saber
+   o setor ou a sala. Se a pessoa disser só "meu setor" ou "aqui", pergunte qual é. Se ela não souber o nome, peça que
+   explique como chegar lá. Nunca escreva "informar", "não informado" ou algo genérico no local.
 3. SEMPRE peça foto como evidência: de perto do problema e, se ajudar, outra mostrando o lugar. Para o que não aparece em
    foto (barulho, cheiro), peça para descrever bem ou mandar um áudio.
 4. Detalhes que ajudam o técnico: tamanho, modelo ou marca quando aparecer, se é intermitente, se começou depois de algo
@@ -212,6 +217,10 @@ function validarCompra(r: any) {
   const completo = resumo.descricao_item.length >= 3 && resumo.quantidade > 0 && resumo.motivo.length >= 5 && resumo.justificativa.length >= 10;
   return completo ? resumo : null;
 }
+function localVago(local: string) {
+  const t = String(local || "").toLowerCase();
+  return /[\[\]{}<>]|nome do setor|seu setor|setor do\b|setor da\b|informar|não informad|nao informad|indefinid|a definir|desconhecid|qual setor|\?|meu setor|nosso setor|no setor\b|^setor\b(?!\s+[a-zà-ú0-9])/i.test(t) || t.replace(/[^a-zà-ú0-9]/gi, "").length < 4;
+}
 function validarManutencao(r: any) {
   const resumo = {
     titulo: corta(r?.titulo, 200), local: corta(r?.local, 200),
@@ -254,8 +263,14 @@ async function conversar(nome: string, body: any) {
   if (!r.ok) { console.warn("openai:", d?.error?.message); return json({ erro: "A assistente não conseguiu responder agora. Tente de novo." }, 502); }
   let saida: any;
   try { saida = JSON.parse(d?.choices?.[0]?.message?.content || "{}"); } catch { saida = {}; }
-  const resumo = saida?.pronto ? (tipo === "compra" ? validarCompra(saida.resumo) : validarManutencao(saida.resumo)) : null;
-  return json({ resposta: corta(saida?.resposta, 2000) || "Pode me contar um pouco mais?", pronto: Boolean(resumo), resumo });
+  let resumo = saida?.pronto ? (tipo === "compra" ? validarCompra(saida.resumo) : validarManutencao(saida.resumo)) : null;
+  let resposta = corta(saida?.resposta, 2000) || "Pode me contar um pouco mais?";
+  // Manutenção sem o setor/sala: não fecha; pergunta o local (a IA às vezes resumia com "Setor (informar qual)").
+  if (resumo && tipo === "manutencao" && localVago(resumo.local)) {
+    resumo = null;
+    resposta = "Antes de registrar, preciso saber o lugar certinho: em qual setor ou sala fica isso? Se não souber o nome, me diz como chegar lá.";
+  }
+  return json({ resposta, pronto: Boolean(resumo), resumo });
 }
 
 async function transcrever(body: any) {

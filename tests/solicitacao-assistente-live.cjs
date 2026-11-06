@@ -30,7 +30,7 @@ const assert = require("node:assert/strict"), fs = require("fs");
         const resp = await fetch(url + "/functions/v1/solicitacao-assistente", { method: "POST", headers: { "Content-Type": "application/json", apikey: process.env.SUPABASE_ANON_KEY, Authorization: "Bearer " + sessao.access_token }, body: JSON.stringify({ empresa_id: empresa, tipo, acao: "conversar", mensagens: msgs }) });
         r = await resp.json(); if (!resp.ok || r.erro) throw Error(r.erro || resp.status);
         msgs.push({ papel: "ia", texto: r.resposta }); console.log("  IA:", r.resposta, r.pronto ? "[PRONTO]" : "");
-        if (msgs.length === 3 && !process.env.SEM_CHECAGEM) { assert.equal(r.pronto, false, tipo + ": com pouca informação ela pergunta"); assert.ok((r.resposta.match(/\?/g) || []).length <= 1, "uma pergunta por vez"); }
+        if (msgs.length === 3 && !process.env.SEM_CHECAGEM) { assert.equal(r.pronto, false, tipo + ": com pouca informação ela pergunta"); assert.ok((r.resposta.match(/\?/g) || []).length <= 2, "uma pergunta por vez (com no máximo um complemento)"); }
         if (r.pronto) break;
       }
       return r;
@@ -63,6 +63,16 @@ const assert = require("node:assert/strict"), fs = require("fs");
     for (const fala of ["É a terceira lâmpada do corredor, tubular de LED, apagou ontem.", "Não tem risco, só fica escuro para separar os pedidos."]) { if (/foto/i.test(man.filter((m) => m.papel === "ia").map((m) => m.texto).join(" "))) break; r = await conversa("manutencao", [fala], man); }
     assert.match(man.filter((m) => m.papel === "ia").map((m) => m.texto).join(" "), /foto/i, "manutenção pede foto");
     console.log("ok 3 - manutenção pede foto como evidência");
+    // 4) Manutenção nunca fecha sem o setor/sala (no print do usuário saiu "Setor (informar qual)").
+    const inf = [];
+    r = await conversa("manutencao", ["Tem uma infiltração na parede dos fundos do meu setor, perto do chão.", "Tem mofo e a pintura está descascando. Não piorou com chuva, não atrapalha o trabalho e ninguém mexeu.", "Não tenho como tirar foto agora. É isso, pode resumir."], inf);
+    if (r.pronto) assert.ok(!/[\[\]]|nome do setor|seu setor|setor d[oa] |informar|meu setor|^setor\b(?!\s+\w)/i.test(r.resumo.local), "local vago no resumo: " + r.resumo.local);
+    else assert.match(r.resposta, /setor|sala|onde|lugar/i, "pergunta o local: " + r.resposta);
+    console.log("  local:", r.pronto ? r.resumo.local : "(perguntou) " + r.resposta);
+    r = await conversa("manutencao", ["É no setor de costura."], inf);
+    for (const fala of ["É isso, pode resumir."]) { if (r.pronto) break; r = await conversa("manutencao", [fala], inf); }
+    assert.ok(r.pronto && /costura/i.test(r.resumo.local), "com o setor, fecha: " + JSON.stringify(r.resumo));
+    console.log("ok 4 - manutenção só fecha com o setor: " + r.resumo.local);
     console.log("todos os testes passaram");
   } finally {
     if (fotosEnviadas.length) await admin.storage.from("solicitacoes-evidencias").remove(fotosEnviadas);
