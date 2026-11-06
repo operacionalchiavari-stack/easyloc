@@ -14,8 +14,8 @@ const {chromium}=require('playwright'),fs=require('fs'),assert=require('assert/s
  await page.evaluate(a=>portalMural.m({avisos:a}),tres);
  assert.equal((await page.locator('.qa-quadro .qa-placa').textContent()).trim(),'Quadro de avisos');
  assert.equal(await page.locator('.qa-nota:not(.qa-nova)').count(),3,'um papel por aviso');
- assert.equal(await page.locator('.qa-nova').count(),1,'papel para publicar');
- assert.equal(await page.locator('.qa-nota .qa-pino').count(),4,'alfinete em todos');
+ assert.equal(await page.locator('.qa-nova').count(),0,'sem papel em branco');assert.equal(await page.locator('.hero-novo-aviso').count(),1,'ícone de novo comunicado');
+ assert.equal(await page.locator('.qa-nota .qa-pino').count(),3,'alfinete em todos');
  assert.match(await page.locator('.qa-nota.is-importante .qa-selo').textContent(),/Importante/i);
  assert.match(await page.locator('.qa-nota').first().locator('time').textContent(),/^\d\d\/\d\d\/2026$/);
  assert.equal(await page.locator('.hero-aviso-item, .av-item').count(),0,'sem os modelos antigos');
@@ -26,12 +26,12 @@ const {chromium}=require('playwright'),fs=require('fs'),assert=require('assert/s
  await page.waitForTimeout(2200);
  const caixa=await page.evaluate(()=>{const q=document.querySelector('.qa-quadro').getBoundingClientRect(),h=document.querySelector('.hero').getBoundingClientRect();return [q.top-h.top,h.bottom-q.bottom];});
  assert.ok(caixa[0]>=0&&caixa[1]>=0,'quadro dentro do destaque: '+caixa);
- await page.locator('.qa-nova').click();assert.equal(await page.evaluate(()=>__abriu),1,'papel em branco abre o novo aviso');
+ {const ic=await page.locator('.hero-novo-aviso').boundingBox(),he=await page.locator('.hero').boundingBox();assert.ok(ic.x-he.x<60&&he.y+he.height-(ic.y+ic.height)<40&&ic.width<=32,'ícone discreto no canto inferior esquerdo: '+JSON.stringify(ic));}await page.locator('.hero-novo-aviso').click();assert.equal(await page.evaluate(()=>__abriu),1,'papel em branco abre o novo aviso');
  await page.evaluate(a=>portalMural.m({avisos:a}),Array.from({length:8},(_,i)=>aviso(i)));
  assert.equal(await page.locator('.hero-aviso').count(),2,'8 avisos = 2 quadros (até 6 por quadro)');
- assert.equal(await page.locator('.hero-aviso').first().locator('.qa-nova').count(),0,'quadro cheio sem papel em branco');
+ 
  await page.evaluate(()=>portalMural.m({avisos:[]}));
- assert.match(await page.locator('.qa-nova').textContent(),/Nenhum comunicado por enquanto/);
+ assert.match(await page.locator('.qa-vazio').textContent(),/Nenhum comunicado por enquanto/);
  await page.setViewportSize({width:390,height:844});await page.evaluate(a=>portalMural.m({avisos:a}),tres);
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'sem overflow no celular');
  // Publicar com foto: sobe para empresas-logos/<empresa>/avisos/, publica e liga o anexo ao aviso novo.
