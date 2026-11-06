@@ -3,7 +3,7 @@
    EasyLoc
 ===================================================== */
 
-import { carregarItens } from "./itens.api.mjs?v=20261031-complexidade";
+import { carregarItens } from "./itens.api.mjs?v=20261103-kit-unificado";
 import "./itens.modal.mjs?v=20261031-complexidade";
 import "./itens.tabela.mjs?v=20261023-lista-dispon";
 import "./itens.foto.mjs?v=20261008-banco";
@@ -34,6 +34,10 @@ window.itens_abrirPaginaDetalhes = function(itemId){
 window.abrirDetalhesItem = function(item){
   if(item?.id) abrirPaginaDetalhesItem(item.id, "editar");
 };
+
+// Kits usam o mesmo formulario de detalhes dos itens.
+window.kits_openEdit = kitId => { window.location.href = 'item-detalhes.html?id='+encodeURIComponent(kitId)+'&tipo=Kit'; };
+window.kits_openAdd = () => { window.location.href = 'item-detalhes.html?novo=1&tipo=Kit'; };
 
 console.log("📦 cadastro-itens módulo carregado");
 

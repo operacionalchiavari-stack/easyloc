@@ -10,3 +10,11 @@
 .pf-nota{color:#68798a;font-size:12px;line-height:1.6;margin:10px 0 16px}.pf-erro{padding:12px;border-radius:9px;background:#fff0ed;color:#a33427}.pf-acoes{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.pf-vazio{padding:25px;color:#748293;text-align:center}.pf-estornado{text-decoration:line-through;opacity:.65}
 @media(max-width:1000px){.pf-layout{grid-template-columns:245px minmax(0,1fr)}}
 @media(max-width:700px){.pf-layout{grid-template-columns:1fr}.pf-lateral{position:static}.pf-lista{max-height:230px}.pf-cabecalho{align-items:flex-start;flex-wrap:wrap}.pf-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}.pf-resumo strong{font-size:18px}}
+/* Nov/2026: abas Pendentes/Concluídos e foto do decorador */
+.pf-abas{display:flex;gap:18px;margin:0 0 12px}
+.pf-pedido{grid-template-columns:44px minmax(0,1fr);align-items:center;column-gap:12px}
+.pf-pedido-txt{display:grid;gap:4px;min-width:0}
+.pf-avatar{position:relative;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;overflow:hidden;background:#e7ebf1;color:#4f4f4f;font:600 14px Inter,sans-serif;flex:none}
+.pf-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pf-avatar.grande{width:60px;height:60px;font-size:18px}
+.pf-cab-cliente{display:flex;align-items:center;gap:14px;min-width:0}

@@ -25,6 +25,7 @@ async function main(){
     function guardar(tipo,d){localStorage.setItem('fixture:'+tipo,JSON.stringify(d));return d;}
     function result(fn,args){
      window.chamadas.push({fn,args});
+     if(fn==='MONT_usuarioSistema')return 'u1';if(fn==='MONT_loginConta')return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};
      if(fn==='MONT_login'){if(args[2]===true&&args[3]===true)return {token:'fixture-sistema',nome:'Supervisor',perfil:'SUPERVISOR'};if(args[1]!=='1234')throw Error('CPF ou PIN incorretos.');return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};}
      if(fn==='MONT_appCarregar')return {nome:'Ana Silva',perfil:'RESPONSAVEL',etapas,apontamento:registro('apontamento')?.status==='ATIVO'?registro('apontamento'):null};
      if(fn==='MONT_bonusExtrato'){
@@ -62,26 +63,25 @@ async function main(){
     window.google={script:{run:runner(),url:{getLocation(cb){cb({parameter:Object.fromEntries(new URLSearchParams(location.search))});}}}};
    });
    await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html`);
-   await page.locator('#telaLogin.ativa').waitFor();assert.equal(await page.locator('#loginNome').count(),0);
-   assert.ok(await page.locator('#telaLogin .marca').evaluate(e=>e.getBoundingClientRect().height<240));
-   await page.locator('#loginCpf').fill('12345678901');assert.equal(await page.locator('#loginCpf').inputValue(),'123.456.789-01');
-   await page.locator('#loginSenha').fill('0000');await page.locator('#btnEntrar').click();await page.getByText('CPF ou PIN incorretos.',{exact:true}).waitFor();
-   await page.locator('#btnModo').click();assert.equal(await page.locator('#loginCpf').isVisible(),false);assert.equal(await page.locator('#loginCpf').getAttribute('required'),null);await page.locator('#btnModo').click();
-   await page.locator('#loginSenha').fill('1234');await page.screenshot({path:path.join(os.tmpdir(),`montador-cpf-login-${width}.png`)});await page.locator('#btnEntrar').click();await page.locator('#telaInicio.ativa').waitFor();
+   // Nov/2026: sem login próprio; entra sozinho pela conta do sistema (MONT_loginConta).
+   await page.locator('#telaInicio.ativa').waitFor();assert.equal(await page.locator('#loginCpf').count(),0,'sem CPF/PIN');
+   await page.screenshot({path:path.join(os.tmpdir(),`montador-cpf-login-${width}.png`)});
    assert.ok(await page.locator('#telaInicio .topo').evaluate(e=>e.getBoundingClientRect().height<190));
    await page.screenshot({path:path.join(os.tmpdir(),`montador-cpf-inicio-${width}.png`)});
    assert.equal(await page.evaluate(()=>chamadas.some(c=>c.fn==='MONT_listarResponsaveis')),false);
-   assert.equal(await page.evaluate(()=>chamadas.find(c=>c.fn==='MONT_login').args[0]),'12345678901');
-   assert.deepEqual(await page.locator('#appNavegacao button').allTextContents(),['Cronograma','Meu bônus']);
-   await page.getByRole('button',{name:'Meu bônus',exact:true}).click();
+   assert.equal(await page.evaluate(()=>chamadas.filter(c=>c.fn==='MONT_loginConta').length),1,'entrou pela conta do sistema');
+   // Nov/2026: a barra "Cronograma | Meu bônus" saiu; o bônus abre pelo menu do app (?tela=bonus).
+   assert.equal(await page.locator('#appNavegacao').isVisible(),false,'sem a barra de baixo');
+   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus`);
+   await page.locator('#telaBonus.ativa').waitFor();assert.equal(await page.locator('.bonus-inicio').isVisible(),true,'botão de voltar ao início');
    const bonus=page.frameLocator('#bonusConteudo iframe');await bonus.getByRole('button',{name:'Tentar novamente',exact:true}).click();
    await bonus.locator('#telaExtrato:not(.oculto)').waitFor();assert.match(await bonus.locator('#valorTotal').textContent(),/300/);
    assert.equal(await bonus.locator('#telaEntrada').isVisible(),false);assert.equal(await bonus.locator('.equipe-navegacao').count(),0);
    assert.equal(await bonus.locator('.btn-sair').isVisible(),false);
    assert.equal(await page.locator('#bonusConteudo iframe').getAttribute('src').then(v=>v.includes('token')),false);
-   await page.evaluate(()=>carregar());assert.equal(await page.locator('#telaBonus').isVisible(),true);
+   await page.evaluate(()=>carregar());assert.equal(await page.locator('#telaBonus').isVisible(),true,'atualizar não sai do bônus');
    await page.screenshot({path:path.join(os.tmpdir(),`montador-bonus-${width}.png`)});
-   await page.getByRole('button',{name:'Cronograma',exact:true}).click();
+   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html`);await page.locator('#telaInicio.ativa').waitFor();
    await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();
    for(const nome of ['Evento Jardim','Ana Silva','Bruno','Caminhão 01']){
     await page.getByRole('button',{name:'Ver foto de '+nome,exact:true}).click();
@@ -120,7 +120,7 @@ async function main(){
    await linhas.nth(1).locator('[data-entregue]').fill('1');await linhas.nth(1).locator('[data-dano]').fill('1');
    await linhas.nth(1).locator('[data-obs]').fill('Pé da mesa danificado no transporte');
    await linhas.nth(1).locator('input[type=file]').setInputFiles({name:'dano.png',mimeType:'image/png',buffer:png});await page.waitForSelector('.entrega-foto-dano:not([hidden])');
-   await page.locator('[data-acesso=agenda]').click();await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();assert.equal(await linhas.nth(1).locator('[data-entregue]').inputValue(),'1');
+   await page.locator('#btnVoltar').click();await page.locator('#telaInicio.ativa').waitFor();await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();assert.equal(await linhas.nth(1).locator('[data-entregue]').inputValue(),'1');
    await page.getByRole('button',{name:'Salvar conferência',exact:true}).click();await page.waitForSelector('.conferencia-enviada');assert.equal(await page.locator('#regProgressoPct').textContent(),'50%');
    const enviado=await page.evaluate(()=>chamadas.find(c=>c.fn==='MONT_entregaSalvar').args);assert.equal(enviado[0],'fixture');assert.equal(enviado[1],'montagem');assert.equal(enviado[2]['kit/b'].danificados,1);assert.match(enviado[2]['kit/b'].foto,/^data:image/);
    assert.equal(await linhas.nth(1).locator('[data-entregue]').isDisabled(),true);
@@ -133,7 +133,7 @@ async function main(){
    assert.equal(await page.getByRole('button',{name:/Encerrar apontamento/}).count(),0);
    await page.evaluate(async()=>{const p=JSON.parse(localStorage.getItem('fixture:apontamento'));p.status='ENCERRADO';p.fim=new Date().toISOString();localStorage.setItem('fixture:apontamento',JSON.stringify(p));await carregar();});
    await page.locator('.apontamento-tempo-final').waitFor();assert.equal(await page.evaluate(()=>estado.apontamento),null);
-   await page.getByRole('button',{name:'Cronograma',exact:true}).click();
+   await page.locator('#btnVoltar').click();await page.locator('#telaInicio.ativa').waitFor();
    await page.locator('#telaInicio .etapa').filter({hasText:'Evento Amanhã'}).click();
    await page.getByRole('button',{name:'Ver foto de Evento Amanhã',exact:true}).waitFor();
    const cabecaAmanha=await page.locator('#etapaCabeca .cabeca').evaluate(e=>({cor:getComputedStyle(e).backgroundColor,borda:getComputedStyle(e).borderTopWidth,raio:getComputedStyle(e).borderRadius}));

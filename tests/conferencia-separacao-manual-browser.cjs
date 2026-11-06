@@ -95,6 +95,16 @@ const mock = `(() => {
   await p2.waitForSelector("dialog.cf-escolha-caminhao[open]");
   assert.ok(!(await p2.locator('dialog.cf-escolha-caminhao').innerText()).includes('Marque o caminhão'));
   assert.equal(await p2.locator('dialog.cf-escolha-caminhao .cf-escolha-foto').count(),2);
+  const circulos=await p2.locator('.cf-escolha-foto').evaluateAll(els=>els.map(el=>({w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height,r:getComputedStyle(el).borderRadius})));
+  assert.ok(circulos.every(c=>c.w===c.h&&c.r==='50%'),'fotos circulares');
+  const posicoes=await p2.locator('.cf-escolha-item').evaluateAll(els=>els.map(el=>el.getBoundingClientRect().top));assert.equal(posicoes[0],posicoes[1],'caminhoes lado a lado');
+  await p2.locator('.cf-escolha-item').first().hover();await p2.waitForTimeout(280);
+  assert.notEqual(await p2.locator('.cf-escolha-foto').first().evaluate(el=>getComputedStyle(el).transform),'none','zoom ao passar o mouse');
+  await p2.locator('dialog.cf-escolha-caminhao').screenshot({path:'.tmp/escolha-caminhoes-circular.png'});
+  await p2.setViewportSize({width:390,height:844});
+  const caixa=await p2.locator('dialog.cf-escolha-caminhao').boundingBox();assert.ok(caixa.x>=0&&caixa.x+caixa.width<=390);
+  await p2.setViewportSize({width:1280,height:900});
+
 
   const marcados = await p2.evaluate(() => [...document.querySelectorAll("dialog.cf-escolha-caminhao input")].map((i) => i.value + ":" + i.checked));
   assert.deepStrictEqual(marcados, ["c2:true", "c1:false"], "programado primeiro e já marcado: " + marcados);

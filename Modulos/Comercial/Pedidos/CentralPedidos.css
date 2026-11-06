@@ -905,3 +905,137 @@ html:root:is(#central-ordem,html) .central-ordem select.el-select{width:auto;min
 html:root:is(#central-equipe#central-equipe,html) .pedido-equipe-tag{display:block;margin-top:2px;font-size:12px;font-weight:500;color:#123f86}
 
 .central-extra-ramo{position:absolute;left:0;right:0;border-top:1.5px solid #9fb3d6}
+
+/* Aba "Ocorrências da separação" dentro da Central (nov/2026) */
+#centralListaTabela[hidden],#centralOcorrencias[hidden]{display:none!important}
+.central-ocorrencias{padding:18px 20px}
+.central-ocorrencias .so-painel-topo{display:none}
+
+/* Pré-reserva, Orçamento e Catálogo sem barra horizontal (nov/2026): a tabela cabe na largura do cartão. */
+html:root #centralPedidosPage table.central-table.central-sem-rolagem{min-width:0!important}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-numero{width:6%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-cliente{width:12%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-local{width:10%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-data{width:8%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-fluxo{width:34%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-valor{width:8%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-acoes{width:6%}
+html:root #centralPedidosPage table.central-sem-rolagem.cp-acomp-table [data-action=acompanhar]{min-width:0!important;white-space:nowrap!important;padding:8px 12px!important}
+/* Aba Ocorrências da separação: sem o texto de orientação e sem a linha "Nenhuma ocorrência nesta fila" (nov/2026) */
+#centralOcorrencias .so-ajuda,#centralOcorrencias tr:has(> .so-vazio){display:none!important}
+html:root #centralPedidosPage table.central-sem-rolagem .central-fluxo li{overflow-wrap:normal!important;word-break:normal!important;hyphens:none}
+@media (max-width:1300px){
+  html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) :is(th,td){padding-left:8px!important;padding-right:8px!important}
+  html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) td:nth-child(4),html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) td:nth-child(5),html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) td:nth-child(6){font-size:12px;white-space:nowrap}
+}
+
+/* Acompanhamento (Pré-reserva, Orçamento, Catálogo) no lugar do Fluxo (nov/2026) */
+.ca-trilha{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap}
+.ca-col{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 0;max-width:150px;padding:7px 9px;border:1px solid #e3e7ec;border-radius:10px;background:#fff;font:400 12px/1.35 Inter,system-ui,sans-serif;color:#1f2020}
+.ca-col span{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b6b6b}
+.ca-col b{font-weight:600;font-size:13px}
+.ca-col small{color:#4f4f4f;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.ca-col.ca-ok{border-left:3px solid #2f8a52}
+.ca-col.ca-mais{flex:0 0 auto;justify-content:center;align-items:center;font-weight:600;color:#6b6b6b;background:#f6f7f9}
+.ca-col.ca-proximo{border-left:3px solid #123f86;background:#f3f6fb}
+.ca-col.ca-proximo.hoje{border-left-color:#c58a00;background:#fdf6dd}
+.ca-col.ca-proximo.hoje small{color:#7a5b00;font-weight:600}
+.ca-col.ca-proximo.atrasado{border-left-color:#c4453b;background:#fbeceb}
+.ca-col.ca-proximo.atrasado small{color:#b0362d;font-weight:600}
+.ca-col.ca-fim{border-left:3px solid #999;background:#f6f7f9;max-width:none}
+.ca-acoes{display:flex;flex-direction:column;justify-content:center;gap:5px;flex:0 0 auto}
+.ca-btn{border:1px solid #cfd8e3;background:#fff;color:#1f2020;border-radius:8px;padding:5px 10px;font:500 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.ca-btn:hover{border-color:#123f86;background:#eaf0fa}
+.ca-btn-nao{color:#b0362d;border-color:#efc2bf}
+.ca-btn-nao:hover{background:#fbeceb;border-color:#c4453b}
+.ca-btn-principal{background:#123f86;border-color:#123f86;color:#fff}
+.ca-btn-principal:hover{background:#0d2f66;color:#fff}
+.ca-dialog{border:0;border-radius:16px;padding:0;width:min(520px,94vw);box-shadow:0 24px 60px rgba(15,23,42,.25);font:14px/1.5 Inter,system-ui,sans-serif;color:#1f2020}
+.ca-dialog::backdrop{background:rgba(15,23,42,.35)}
+.ca-dialog form{display:flex;flex-direction:column;gap:12px;padding:20px 22px}
+.ca-dialog header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ca-dialog h2{margin:0;font:600 18px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+.ca-dialog header button{border:0;background:none;font-size:22px;cursor:pointer;color:#6b6b6b}
+.ca-dialog label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;color:#4f4f4f}
+.ca-dialog select,.ca-dialog input,.ca-dialog textarea{box-sizing:border-box;width:100%;padding:9px 10px;border:1px solid #d6dde6;border-radius:8px;background:#fff;font:400 14px Inter,system-ui,sans-serif;color:#1f2020}
+.ca-dialog footer{display:flex;justify-content:flex-end;gap:8px}
+.ca-sub{margin:-6px 0 0;color:#6b6b6b}
+.ca-aviso{margin:0;padding:9px 12px;border-radius:8px;background:#fdf6dd;border:1px solid #ecdca0;color:#7a5b00;font-size:13px}
+.ca-erro{margin:0;color:#b0362d;font-size:13px}.ca-erro:empty{display:none}
+.ca-hist{margin:0;padding:10px 14px 10px 30px;background:#f6f7f9;border-radius:10px;font-size:13px;max-height:180px;overflow:auto}
+.ca-hist li{margin:2px 0}.ca-hist small{display:block;color:#6b6b6b}
+html:root #centralPedidosPage table.central-sem-rolagem .central-actions{flex-wrap:wrap;justify-content:flex-start}
+/* Botões do acompanhamento no cabeçalho (nov/2026): mesma cor do Novo Pedido (btn-primary do tema) */
+html:root #centralPedidosPage #centralColFluxo{white-space:nowrap}
+html:root #centralPedidosPage .ca-th-acoes{display:inline-flex;gap:6px;margin-left:12px;vertical-align:middle}
+html:root #centralPedidosPage .ca-th-btn{min-height:0!important;height:28px!important;padding:0 12px!important;font-size:11px!important;letter-spacing:.04em}
+html:root #centralPedidosPage .ca-th-btn:disabled{opacity:.45;cursor:not-allowed}
+html:root #centralPedidosPage #centralPedidosTbody tr:has(.ca-trilha){cursor:pointer}
+html:root #centralPedidosPage #centralPedidosTbody tr.ca-selecionada td{background:#eaf0fa!important}
+html:root #centralPedidosPage #centralPedidosTbody tr.ca-selecionada td:first-child{box-shadow:inset 3px 0 0 #123f86}
+html:root #centralPedidosPage #centralColFluxo .ca-th-btn:disabled{background:var(--ch-primary-dark)!important;border-color:var(--ch-primary-dark)!important;color:#fff!important}
+/* Cards do acompanhamento: mais espaço e sem a faixa colorida à esquerda (nov/2026) */
+html:root #centralPedidosPage .ca-trilha{gap:12px}
+html:root #centralPedidosPage .ca-col{padding:11px 16px;gap:4px;max-width:180px;border-left-width:1px!important;border-left-color:#e3e7ec!important}
+html:root #centralPedidosPage .ca-col.ca-proximo.hoje{border-color:#ecdca0!important}
+html:root #centralPedidosPage .ca-col.ca-proximo.atrasado{border-color:#efc2bf!important}
+html:root #centralPedidosPage .ca-col.ca-proximo:not(.hoje):not(.atrasado){border-color:#d6e0ee!important}
+/* Botões do acompanhamento em cada linha (nov/2026): um em cima do outro, ao lado do próximo contato, só com a borda colorida */
+html:root #centralPedidosPage .ca-acoes{display:flex;flex-direction:column;justify-content:center;gap:6px;flex:0 0 auto}
+html:root #centralPedidosPage .ca-acoes .ca-btn{min-height:0;height:28px;padding:0 12px;border-radius:999px;background:#fff;font:500 12px Inter,system-ui,sans-serif;text-transform:none;letter-spacing:0;box-shadow:none;cursor:pointer;white-space:nowrap}
+html:root #centralPedidosPage .ca-acoes .ca-btn-reg{border:1px solid #123f86;color:#123f86}
+html:root #centralPedidosPage .ca-acoes .ca-btn-reg:hover{background:#eaf0fa}
+html:root #centralPedidosPage .ca-acoes .ca-btn-nao{border:1px solid #c4453b;color:#b0362d}
+html:root #centralPedidosPage .ca-acoes .ca-btn-nao:hover{background:#fbeceb}
+/* Mais largura para o acompanhamento (nov/2026) */
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-cliente{width:11%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-local{width:9%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-data{width:7%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-fluxo{width:40%}
+html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-valor{width:7%}
+html:root #centralPedidosPage .ca-trilha{gap:8px;flex-wrap:nowrap}
+html:root #centralPedidosPage .ca-col{padding:10px 12px;flex:1 1 0;min-width:0}
+html:root #centralPedidosPage .ca-col.ca-mais{flex:0 0 auto;padding:10px 8px}
+@media (max-width:1300px){
+  html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-data{width:8.3%}
+  html:root #centralPedidosPage table.central-sem-rolagem:not(.cp-acomp-table) .central-col-fluxo{width:36.1%}
+}
+/* Pedido extra (nov/2026): ligação por dentro da coluna, linha reta do número do principal ao do extra */
+html:root #centralPedidosPage .central-table-wrap{padding-left:0}
+html:root #centralPedidosPage .central-extra-ligacao{position:absolute;z-index:1;pointer-events:none;width:2px;border:0;border-radius:2px;background:linear-gradient(#9fb3d6,#123f86)}
+html:root #centralPedidosPage .central-extra-ligacao::before,html:root #centralPedidosPage .central-extra-ligacao::after{content:"";position:absolute;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#fff;border:1.5px solid #123f86;box-sizing:border-box}
+html:root #centralPedidosPage .central-extra-ligacao::before{top:-3px;border-color:#9fb3d6}
+html:root #centralPedidosPage .central-extra-ligacao::after{bottom:-3px}
+/* Primeira coluna mais perto da borda do cartão (nov/2026) */
+html:root #centralPedidosPage #centralListaTabela{padding-left:8px!important;padding-right:8px!important}
+html:root #centralPedidosPage .central-table :is(th,td):first-child{padding-left:10px!important;text-align:left}
+/* Acompanhamento com 2 cards (última resposta + próximo contato) e histórico ao passar o mouse (nov/2026) */
+html:root #centralPedidosPage .ca-ultimo{cursor:help;transition:border-color .15s,box-shadow .15s}
+html:root #centralPedidosPage .ca-ultimo:hover,html:root #centralPedidosPage .ca-ultimo:focus-visible{border-color:#9fb3d6!important;box-shadow:0 2px 10px rgba(15,23,42,.08);outline:none}
+html:root #centralPedidosPage .ca-qtd{font-style:normal;font-weight:500;color:#9aa1ab;text-transform:none;letter-spacing:0}
+.ca-historico{position:fixed;z-index:9999;width:300px;max-height:min(420px,80vh);overflow:auto;padding:14px 16px 6px;background:#fff;border:1px solid #e3e7ec;border-radius:12px;box-shadow:0 12px 32px rgba(15,23,42,.16);font:400 12.5px/1.45 Inter,system-ui,sans-serif;color:#1f2020;pointer-events:none}
+.ca-historico h4{margin:0 0 10px;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b}
+.ca-historico ol{list-style:none;margin:0;padding:0}
+.ca-historico li{position:relative;display:flex;gap:12px;padding-bottom:12px}
+.ca-historico li:not(:last-child)::before{content:"";position:absolute;left:5px;top:14px;bottom:0;width:2px;background:#e3e7ec}
+.ca-historico li>i{flex:0 0 12px;height:12px;margin-top:3px;border-radius:50%;background:#fff;border:2px solid #2f8a52;box-sizing:border-box;position:relative;z-index:1}
+.ca-historico li.ca-h-proximo>i{border-color:#123f86;border-style:dashed}
+.ca-historico li>div{display:flex;flex-direction:column;min-width:0}
+.ca-historico b{font-weight:600;font-size:12.5px}
+.ca-historico time{color:#6b6b6b;font-size:11.5px}
+.ca-historico p{margin:2px 0 0;color:#1f2020}
+.ca-historico small{color:#6b6b6b;font-size:11.5px;overflow-wrap:anywhere}
+.ca-historico .ca-h-quem{display:flex;align-items:center;gap:7px;margin-top:5px;color:#4f4f4f;font-size:11.5px}
+.ca-historico .ca-h-avatar{position:relative;flex:0 0 24px;width:24px;height:24px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#eaf0fa;color:#123f86;font:600 10px Inter,system-ui,sans-serif}
+.ca-historico .ca-h-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ca-historico li>div{flex:1}
+.ca-historico .ca-h-topo{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ca-historico .ca-h-topo .ca-h-quem{margin-top:0;min-width:0}
+
+/* Nov/2026: enquanto a lista carrega, linhas "esqueleto" no lugar de "Nenhum pedido encontrado". */
+.central-skeleton td{padding-top:18px!important;padding-bottom:18px!important}
+.central-skeleton td span{display:block;height:12px;border-radius:6px;width:70%;background:linear-gradient(90deg,#eef1f5 25%,#f7f9fb 50%,#eef1f5 75%);background-size:200% 100%;animation:central-skeleton 1.2s ease-in-out infinite}
+.central-skeleton td:first-child span{width:44px;height:28px;border-radius:8px}
+.central-skeleton td:nth-child(7) span{width:90%}
+@keyframes central-skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.central-skeleton td span{animation:none}}

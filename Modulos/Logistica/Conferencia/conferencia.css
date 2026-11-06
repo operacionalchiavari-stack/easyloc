@@ -373,3 +373,24 @@ html:root #cfQtd .cf-retorno-colunas .cf-qtd-cabeca span{white-space:normal;over
 }
 
 html:root #cfQtd .cf-retorno-colunas .cp-mobile-label{display:none!important}
+
+/* Escolha do caminhao em galeria circular. */
+html:root dialog.cf-escolha-caminhao{width:min(680px,calc(100vw - 32px));max-width:calc(100vw - 32px);padding:26px;border:1px solid #e4e9e5;border-radius:24px;background:#fff;box-shadow:0 24px 80px #14291e30}
+.cf-escolha-caminhao h3{font-size:21px;line-height:1.4;margin-bottom:20px}
+html:root .cf-escolha-caminhao .cf-escolha-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,180px));justify-content:center;gap:14px 22px;max-height:55dvh;padding:12px 8px 18px;margin:0 0 16px;overflow:auto}
+html:root .cf-escolha-caminhao .cf-escolha-item{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;min-width:0;padding:8px 4px;border:0;background:transparent;border-radius:16px;text-align:center;font-weight:500;isolation:isolate}
+html:root .cf-escolha-caminhao .cf-escolha-item input{position:absolute;inset:0;z-index:3;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+html:root .cf-escolha-caminhao .cf-escolha-foto{width:112px;height:112px;flex:0 0 112px;border:4px solid #fff;border-radius:50%;background:#f2f5f3;color:#839689;box-shadow:0 0 0 1px #dce5df,0 6px 18px #1c39220d;transition:transform .2s ease,box-shadow .2s ease;overflow:hidden}
+.cf-escolha-caminhao .cf-escolha-foto svg{width:40px;height:40px}
+.cf-escolha-caminhao .cf-escolha-foto img{transition:transform .25s ease}
+html:root .cf-escolha-caminhao .cf-escolha-nome{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;line-height:1.4}
+.cf-escolha-nome strong{font-size:19px;font-weight:700;color:#243b30}
+.cf-escolha-placa{font-size:12px;font-weight:600;color:#51665a;letter-spacing:.04em}
+.cf-escolha-modelo{font-size:12px;color:#7a8780}
+html:root .cf-escolha-caminhao .cf-escolha-item small{margin:0;font-size:9px;letter-spacing:.08em;color:#78867c;background:#f1f5f2;padding:4px 8px;border-radius:999px}
+.cf-escolha-item:has(input:checked) .cf-escolha-foto{box-shadow:0 0 0 3px #24a364,0 8px 22px #1b965426!important}
+.cf-escolha-item:has(input:checked) .cf-escolha-foto::after{content:'\2713';position:absolute;bottom:12px;right:12px;z-index:2;display:grid;place-items:center;width:23px;height:23px;border:2px solid #fff;border-radius:50%;background:#238b56;color:#fff;font-size:14px;font-weight:700}
+.cf-escolha-item:has(input:focus-visible){outline:2px solid #278c59;outline-offset:4px}
+@media(hover:hover){.cf-escolha-item:hover .cf-escolha-foto{transform:translateY(-3px) scale(1.07);box-shadow:0 0 0 2px #8db79d,0 12px 28px #264c3424}.cf-escolha-item:hover .cf-escolha-foto img{transform:scale(1.14)}}
+@media(max-width:480px){html:root dialog.cf-escolha-caminhao{padding:20px 16px}.cf-escolha-caminhao h3{font-size:18px}html:root .cf-escolha-caminhao .cf-escolha-lista{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cf-escolha-acoes{flex-wrap:wrap}.cf-escolha-acoes .btn{flex:1;white-space:nowrap;font-size:12px!important;padding:10px 12px!important}}
+@media(prefers-reduced-motion:reduce){.cf-escolha-caminhao .cf-escolha-foto,.cf-escolha-caminhao .cf-escolha-foto img{transition:none!important;transform:none!important}}

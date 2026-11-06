@@ -1,19 +1,19 @@
-.so-dialog{width:760px;max-width:calc(100vw - 32px);max-height:88vh;box-sizing:border-box;overflow:auto;border:1px solid #dce3eb;border-radius:16px;padding:22px;color:#243449;font:14px/1.5 Inter,system-ui,sans-serif}.so-dialog::backdrop{background:#12223873}.so-dialog>header,.so-painel-topo,.so-identificacao{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.so-dialog h2,.so-painel h3{font:600 20px/1.4 Inter,system-ui!important;letter-spacing:0!important;text-transform:none!important;margin:0}.so-dialog button,.so-painel button{border:1px solid #cbd8e7;background:#f2f6fb;color:#224b77;border-radius:8px;padding:7px 12px;font:600 12px/1.4 Inter,system-ui;cursor:pointer}.so-dialog button:disabled{opacity:.5;cursor:wait}.so-dialog>header>button{font-size:22px;padding:2px 10px}.so-dialog form{display:grid;gap:14px;margin-top:16px}.so-dialog label{display:grid;gap:6px;font-weight:500;font-size:13px}.so-dialog input,.so-dialog select,.so-dialog textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid #ced8e4;border-radius:8px;background:#fff;color:#243449;font:14px Inter,system-ui}.so-dialog textarea{min-height:100px;resize:vertical}.so-dialog footer{display:flex;justify-content:flex-end}.so-dialog [type=submit]{background:#234f7d;color:#fff}.so-ajuda{color:#68798b;font-size:12px}.so-erro{color:#a84432}.so-lista{display:grid;gap:14px;margin-top:18px}.so-ocorrencia{padding:18px;background:#fff;border:1px solid #dce4ed;border-radius:12px}.so-ocorrencia h4{font:600 15px/1.5 Inter,system-ui!important;margin:12px 0 7px!important}.so-ocorrencia h4 small{display:block;color:#748296;font-weight:400}.so-ocorrencia p{font-size:13px;white-space:pre-wrap}.so-estado{background:#f6efd9;color:#7b6124;border-radius:6px;padding:4px 8px;font-size:11px}.so-estado[data-estado=triagem]{background:#e5f1e9;color:#286843}.so-estado[data-estado=comercial]{background:#eaf0fa;color:#345582}.so-estado[data-estado=resolvida]{background:#edf2f0;color:#526b5b}.so-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.so-ocorrencia details{color:#617386;font-size:12px;margin-top:12px}.so-ocorrencia summary{cursor:pointer}.so-foto{max-width:100%;max-height:65vh;object-fit:contain}.so-item-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:9px}.so-item-acoes button{padding:4px 8px!important;min-height:28px!important;width:auto!important;height:auto!important;border:1px solid #c6d2e0!important;background:#ffffffb3!important;color:#485f78!important;border-radius:6px!important;font:500 11px/1.4 Inter,system-ui!important;text-transform:none!important;letter-spacing:0!important}.so-item-acoes [data-so-item]{font-size:11px;color:#92652b}.so-vazio{padding:24px;text-align:center;color:#718195}
+.so-dialog{width:760px;max-width:calc(100vw - 32px);max-height:88vh;box-sizing:border-box;overflow:auto;border:1px solid #dce3eb;border-radius:16px;padding:22px;color:#243449;font:14px/1.5 Inter,system-ui,sans-serif}.so-dialog::backdrop{background:#12223873}.so-dialog>header,.so-painel-topo,.so-identificacao{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}:is(.so-dialog,.so-inline-conversa) h2,.so-painel h3{font:600 20px/1.4 Inter,system-ui!important;letter-spacing:0!important;text-transform:none!important;margin:0}:is(.so-dialog,.so-inline-conversa) button,.so-painel button{border:1px solid #cbd8e7;background:#f2f6fb;color:#224b77;border-radius:8px;padding:7px 12px;font:600 12px/1.4 Inter,system-ui;cursor:pointer}:is(.so-dialog,.so-inline-conversa) button:disabled{opacity:.5;cursor:wait}.so-dialog>header>button{font-size:22px;padding:2px 10px}:is(.so-dialog,.so-inline-conversa) form{display:grid;gap:14px;margin-top:16px}:is(.so-dialog,.so-inline-conversa) label{display:grid;gap:6px;font-weight:500;font-size:13px}:is(.so-dialog,.so-inline-conversa) input,:is(.so-dialog,.so-inline-conversa) select,:is(.so-dialog,.so-inline-conversa) textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid #ced8e4;border-radius:8px;background:#fff;color:#243449;font:14px Inter,system-ui}:is(.so-dialog,.so-inline-conversa) textarea{min-height:100px;resize:vertical}:is(.so-dialog,.so-inline-conversa) footer{display:flex;justify-content:flex-end}:is(.so-dialog,.so-inline-conversa) [type=submit]{background:#234f7d;color:#fff}.so-ajuda{color:#68798b;font-size:12px}.so-erro{color:#a84432}.so-lista{display:grid;gap:14px;margin-top:18px}.so-ocorrencia{padding:18px;background:#fff;border:1px solid #dce4ed;border-radius:12px}.so-ocorrencia h4{font:600 15px/1.5 Inter,system-ui!important;margin:12px 0 7px!important}.so-ocorrencia h4 small{display:block;color:#748296;font-weight:400}.so-ocorrencia p{font-size:13px;white-space:pre-wrap}.so-estado{background:#f6efd9;color:#7b6124;border-radius:6px;padding:4px 8px;font-size:11px}.so-estado[data-estado=triagem]{background:#e5f1e9;color:#286843}.so-estado[data-estado=comercial]{background:#eaf0fa;color:#345582}.so-estado[data-estado=resolvida]{background:#edf2f0;color:#526b5b}.so-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.so-ocorrencia details{color:#617386;font-size:12px;margin-top:12px}.so-ocorrencia summary{cursor:pointer}.so-foto{max-width:100%;max-height:65vh;object-fit:contain}.so-item-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:9px}.so-item-acoes button{padding:4px 8px!important;min-height:28px!important;width:auto!important;height:auto!important;border:1px solid #c6d2e0!important;background:#ffffffb3!important;color:#485f78!important;border-radius:6px!important;font:500 11px/1.4 Inter,system-ui!important;text-transform:none!important;letter-spacing:0!important}.so-item-acoes [data-so-item]{font-size:11px;color:#92652b}.so-vazio{padding:24px;text-align:center;color:#718195}
 
-.so-dialog .so-report-form{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px;align-items:start;}
+:is(.so-dialog,.so-inline-conversa) .so-report-form{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px;align-items:start;}
 .so-report-col{display:grid;gap:16px;min-width:0;}
-.so-dialog .so-report-form>.so-erro,.so-dialog .so-report-form>footer{grid-column:1/-1;margin:0;}
+:is(.so-dialog,.so-inline-conversa) .so-report-form>.so-erro,:is(.so-dialog,.so-inline-conversa) .so-report-form>footer{grid-column:1/-1;margin:0;}
 .so-tipos{min-width:0;padding:0;margin:0;border:0;}
 .so-tipos legend{font-size:13px;font-weight:500;margin-bottom:8px;padding:0;}
 .so-tipos>div{display:flex;flex-wrap:wrap;gap:8px;}
-.so-dialog .so-tipo{position:relative;display:block;cursor:pointer;}
-.so-dialog .so-tipo input{position:absolute;width:1px;height:1px;opacity:0;padding:0;}
+:is(.so-dialog,.so-inline-conversa) .so-tipo{position:relative;display:block;cursor:pointer;}
+:is(.so-dialog,.so-inline-conversa) .so-tipo input{position:absolute;width:1px;height:1px;opacity:0;padding:0;}
 .so-tipo span{display:block;padding:8px 11px;border:1px solid #cdd8e4;border-radius:8px;background:#f7f9fc;color:#4b6076;font-size:12px;line-height:1.4;transition:background .15s,border-color .15s;}
 .so-tipo:hover span{background:#edf3fa;border-color:#98b2ce;}
 .so-tipo input:checked+span{background:#e5eefb;border-color:#315c8b;color:#214b7c;box-shadow:inset 0 0 0 1px #315c8b;}
 .so-tipo input:focus-visible+span{outline:2px solid #315c8b;outline-offset:3px;}
-.so-dialog .so-report-form textarea{min-height:130px;}
-@media(max-width:600px){.so-dialog .so-report-form{grid-template-columns:1fr;gap:16px;}}
+:is(.so-dialog,.so-inline-conversa) .so-report-form textarea{min-height:130px;}
+@media(max-width:600px){:is(.so-dialog,.so-inline-conversa) .so-report-form{grid-template-columns:1fr;gap:16px;}}
 
 .so-dialog.so-dialog-tabela{width:1180px;}
 .so-table-wrap{max-width:100%;overflow:auto;margin-top:16px;border:1px solid #dce4ed;border-radius:10px;background:#fff;}
@@ -46,7 +46,7 @@
 .so-table tr[data-so-linha]{cursor:pointer;}
 .so-table tr[data-so-linha][aria-selected=true]{background:#f0f5fb;}
 .so-table tr[data-so-linha]:focus-visible{outline:2px solid #547ba5;outline-offset:-2px;}
-.so-dialog footer.so-painel-rodape,.so-painel-rodape{display:block;border-top:1px solid #e0e7ef;margin-top:18px;padding-top:16px;}
+:is(.so-dialog,.so-inline-conversa) footer.so-painel-rodape,.so-painel-rodape{display:block;border-top:1px solid #e0e7ef;margin-top:18px;padding-top:16px;}
 .so-rodape-grupo{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:14px;}
 .so-rodape-grupo[hidden]{display:none!important;}
 .so-rodape-item{flex:1;min-width:180px;}
@@ -60,9 +60,9 @@
 .so-anexo{min-width:0;}
 .so-anexo-titulo{display:block;font-size:13px;font-weight:500;margin-bottom:8px;}
 .so-anexo-titulo small{font-size:11px;font-weight:400;color:#8290a1;margin-left:4px;text-transform:none;}
-.so-dialog .so-anexo-escolher{display:flex;align-items:center;gap:12px;width:100%;min-height:78px;padding:14px;border:1px dashed #b8cadd;border-radius:10px;background:#f7faff;text-align:left;color:#3e6082;}
-.so-dialog .so-anexo-escolher:hover{background:#edf4fd;border-color:#6d94bb;}
-.so-dialog .so-anexo-escolher svg{width:28px;height:28px;flex:none;}
+:is(.so-dialog,.so-inline-conversa) .so-anexo-escolher{display:flex;align-items:center;gap:12px;width:100%;min-height:78px;padding:14px;border:1px dashed #b8cadd;border-radius:10px;background:#f7faff;text-align:left;color:#3e6082;}
+:is(.so-dialog,.so-inline-conversa) .so-anexo-escolher:hover{background:#edf4fd;border-color:#6d94bb;}
+:is(.so-dialog,.so-inline-conversa) .so-anexo-escolher svg{width:28px;height:28px;flex:none;}
 .so-anexo-escolher>span:nth-child(2){flex:1;}
 .so-anexo-escolher strong{display:block;font-size:13px;font-weight:600;}
 .so-anexo-escolher small{display:block;font-size:11px;color:#7c8b9c;font-weight:400;margin-top:4px;}
@@ -72,7 +72,151 @@
 .so-anexo-preview>div{flex:1;min-width:0;}
 .so-anexo-preview strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:500;color:#35536f;}
 .so-anexo-preview small{display:block;font-size:11px;color:#8290a1;margin-top:5px;}
-.so-dialog [data-remover-foto]{border:0;background:transparent;color:#8c5960;font-size:23px;padding:4px 8px;}
+:is(.so-dialog,.so-inline-conversa) [data-remover-foto]{border:0;background:transparent;color:#8c5960;font-size:23px;padding:4px 8px;}
 .so-anexo-erro{color:#a84432;font-size:12px;margin:6px 0 0;}
 .so-anexo [hidden]{display:none!important;}
-.so-dialog .so-anexo button:focus-visible{outline:2px solid #315c8b;outline-offset:3px;}
+:is(.so-dialog,.so-inline-conversa) .so-anexo button:focus-visible{outline:2px solid #315c8b;outline-offset:3px;}
+
+/* Nov/2026: "Acompanhar problema" só aparece no item que tem problema aberto, em vermelho piscando de leve. */
+.so-item-acoes .so-acompanhar[hidden]{display:none!important}
+.so-item-acoes .so-acompanhar.is-ativo{border-color:#e7a29b!important;background:#fdeceb!important;color:#b42318!important;font-weight:600!important;animation:so-acompanhar-pulsa 1.8s ease-in-out infinite}
+@keyframes so-acompanhar-pulsa{0%,100%{box-shadow:0 0 0 0 rgba(180,35,24,.28);opacity:1}50%{box-shadow:0 0 0 4px rgba(180,35,24,0);opacity:.72}}
+@media(prefers-reduced-motion:reduce){.so-item-acoes .so-acompanhar.is-ativo{animation:none}}
+.so-conversas{display:grid;gap:22px;margin-top:20px}.so-detalhe{display:grid;grid-template-columns:minmax(240px,.85fr) minmax(0,1.65fr);border:1px solid #dce4ed;border-radius:12px;overflow:hidden;background:#fff}.so-detalhe-item{padding:22px;background:#f7f9fc;border-right:1px solid #dce4ed;min-width:0}.so-detalhe-item h3{margin:16px 0 4px!important;font-size:17px!important}.so-detalhe-item h4{margin:20px 0 8px;font-size:12px;color:#617386}.so-item-meta{color:#718195;font-size:12px}.so-detalhe-item .so-item-foto{width:100%;height:190px;box-sizing:border-box;background:#fff}.so-detalhe-item .so-item-foto button{padding:10px}.so-avaria{border:1px solid #e0e6ee;border-radius:8px;background:#fff;overflow:hidden;color:#718195;font-size:12px}.so-avaria>span{display:block;padding:14px}.so-painel .so-avaria button{display:block;padding:0;border:0;background:#fff;width:100%}.so-avaria img{display:block;width:100%;max-height:210px;object-fit:contain}.so-chat{display:flex;flex-direction:column;min-width:0;padding:22px}.so-chat>header{padding-bottom:16px;border-bottom:1px solid #e5eaf0}.so-chat>header>span{display:block;font-size:12px;color:#718195;margin-top:4px}.so-chat-mensagens{display:flex;flex-direction:column;gap:18px;overflow:auto;max-height:360px;min-height:200px;padding:20px 0;overscroll-behavior:contain}.so-mensagem{display:flex;align-items:flex-start;gap:9px;max-width:92%}.so-mensagem-triagem{align-self:flex-end;flex-direction:row-reverse}.so-avatar{position:relative;display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:50%;background:#dce7f2;color:#315576;font-size:11px;font-weight:600;overflow:hidden}.so-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.so-balao{padding:12px 14px;background:#f0f3f7;border-radius:0 12px 12px;min-width:0;overflow-wrap:anywhere;font-size:13px}.so-mensagem-triagem .so-balao{background:#eaf2fd;border-radius:12px 0 12px 12px}.so-mensagem-autor{display:flex;flex-wrap:wrap;gap:5px 10px;margin-bottom:7px;font-size:12px}.so-mensagem-autor span{color:#748498;font-size:11px}.so-balao p{white-space:pre-wrap;margin:5px 0 8px}.so-balao>small{display:block;color:#748498;font-size:10px}:is(.so-dialog,.so-inline-conversa) .so-chat-form{margin-top:auto;padding-top:14px;border-top:1px solid #e5eaf0;gap:8px}:is(.so-dialog,.so-inline-conversa) .so-chat-form textarea{min-height:70px}.so-chat .so-acoes{padding-top:12px;border-top:1px solid #e5eaf0}.so-chat-encerrado{color:#526b5b;font-size:12px}.so-chat>.so-erro:empty{display:none}@media(max-width:700px){.so-detalhe{grid-template-columns:1fr}.so-detalhe-item{border-right:0;border-bottom:1px solid #dce4ed;padding:16px}.so-chat{padding:16px}.so-detalhe-item .so-item-foto{height:150px}.so-chat-mensagens{max-height:340px}.so-mensagem{max-width:100%}}
+/* Cabeçalho do pedido e conversa mais compacta. */
+.so-dialog.so-dialog-tabela{width:1020px}
+.so-detalhe{grid-template-columns:minmax(240px,1fr) minmax(0,1.2fr)}
+.so-cabecalho-cliente{display:flex;align-items:center;gap:12px}
+.so-cabecalho-cliente strong{display:block;font-size:20px;font-weight:600}
+.so-cabecalho-cliente small{display:block;font-size:14px;font-weight:400;color:#617386;margin-top:2px}
+.so-cliente-avatar{width:48px;height:48px;font-size:15px}
+.so-chat>header.so-chat-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.so-chat>header.so-chat-topo>span{margin:0}
+.so-chat>header.so-chat-topo>.so-estado{color:#7b6124;font-size:11px}
+.so-chat>header.so-chat-topo>.so-estado[data-estado=triagem]{color:#286843}
+.so-chat>header.so-chat-topo>.so-estado[data-estado=comercial]{color:#345582}
+.so-chat>header.so-chat-topo>.so-estado[data-estado=resolvida]{color:#526b5b}
+.so-detalhe-item h3{margin-top:0!important}
+.so-item-resumo{display:flex;align-items:center;gap:14px;min-width:0}
+.so-detalhe-item .so-item-resumo .so-item-foto{width:80px;height:80px;flex:none}
+.so-detalhe-item .so-item-resumo .so-item-foto button{padding:5px;box-sizing:border-box}
+.so-item-resumo .so-item-foto img{object-fit:contain}
+.so-item-descricao{min-width:0;overflow-wrap:anywhere}
+.so-item-descricao .so-item-meta{margin:6px 0 0}
+.so-detalhe-item .so-avaria{margin-top:10px;padding:10px}
+.so-painel .so-avaria button{height:360px;box-sizing:border-box}
+.so-avaria img{width:100%;height:100%;max-height:none;object-fit:contain}
+.so-detalhe-item h4{font-size:14px;color:#30445a;margin-top:26px}
+@media(max-width:700px){.so-painel .so-avaria button{height:300px}.so-detalhe-item .so-item-resumo .so-item-foto{width:70px;height:70px}}
+@media(max-width:700px){.so-detalhe{grid-template-columns:1fr}}
+/* Fotos respeitam a coluna, independentemente das dimensões do arquivo. */
+.so-dialog-tabela,.so-dialog-tabela [data-corpo],.so-conversas,.so-detalhe,.so-avaria{min-width:0;max-width:100%;box-sizing:border-box}
+.so-dialog.so-dialog-tabela{overflow-x:hidden}
+.so-painel .so-avaria button{position:relative;min-width:0;max-width:100%;height:clamp(180px,32dvh,320px);overflow:hidden}
+.so-avaria button img{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain}
+:is(.so-dialog,.so-inline-conversa) .so-foto{display:block;width:auto;height:auto;max-width:100%;max-height:70dvh;object-fit:contain;margin:auto}
+.so-dialog-tabela>header{flex-wrap:nowrap}
+.so-dialog-tabela>header>h2{min-width:0;flex:1}
+.so-dialog-tabela>header>[data-fechar]{flex:none}
+.so-cabecalho-produto{display:flex;align-items:center;gap:14px;min-width:0}
+.so-cabecalho-produto .so-item-foto{width:88px;height:88px;flex:none;box-sizing:border-box}
+:is(.so-dialog,.so-inline-conversa) .so-cabecalho-produto .so-item-foto button{width:100%;height:100%;padding:4px;border:0;background:#fff;box-sizing:border-box}
+.so-cabecalho-nome{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:17px}
+.so-quantidades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;flex:none}
+.so-quantidade-card{padding:14px;border:1px solid #dce4ed;border-radius:10px;background:#fff;min-width:0}
+.so-quantidade-card>span,.so-quantidade-card>small{display:block;font-size:12px;color:#617386;overflow-wrap:anywhere}
+.so-quantidade-card>strong{display:block;font-size:28px;line-height:1.3;margin:7px 0;color:#294b6e}
+.so-quantidade-card>small{font-size:10px}
+.so-quantidade-avaria{border-color:#ecd6b3;background:#fff9ee}
+.so-quantidade-avaria>strong{color:#956426}
+.so-dialog>footer.so-dialog-rodape{display:flex;flex:none;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid #e5eaf0}
+.so-dialog-rodape [data-fechar]{min-width:92px;padding:9px 18px}
+.so-pedidos{display:grid;grid-template-columns:180px minmax(0,1fr);gap:20px;align-items:start;min-width:0}
+.so-pedidos-lista{display:grid;gap:8px;position:sticky;top:16px;padding:10px;border:1px solid #dce4ed;border-radius:12px;background:#f7f9fc}
+.so-pedidos-lista button{padding:16px;text-align:left;border:1px solid transparent;border-radius:8px;background:transparent;color:#465c73;cursor:pointer;font:14px Inter,system-ui}
+.so-pedidos-lista button[aria-pressed=true]{background:#fff;border-color:#c3d5e8;color:#234f7d;box-shadow:0 2px 5px #24344908}
+.so-pedidos-lista button:focus-visible{outline:2px solid #315c8b;outline-offset:2px}
+.so-pedido-detalhes{display:grid;gap:22px;min-width:0}
+.so-inline-conversa{min-width:0;border:1px solid #dce4ed;border-radius:12px;background:#fff;color:#243449;font:14px/1.5 Inter,system-ui}
+.so-inline-conversa>header{padding:16px 20px;border-bottom:1px solid #e5eaf0}
+.so-inline-conversa>header h2{margin:0;font:600 17px/1.4 Inter,system-ui;min-width:0}
+.so-inline-conversa .so-conversas{margin:0;display:block}
+.so-inline-conversa .so-detalhe{border:0;border-radius:0 0 12px 12px;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);min-height:540px}
+.so-inline-conversa .so-chat-form{display:grid;gap:8px;margin-top:auto}
+.so-inline-conversa .so-chat-form footer{display:flex;justify-content:flex-end}
+.so-inline-conversa .so-chat-form textarea{min-height:70px}
+.so-inline-conversa .so-detalhe:only-child .so-avaria{flex:none}
+.so-inline-conversa .so-detalhe:only-child .so-avaria button{height:clamp(180px,32dvh,320px)}
+.so-inline-conversa .so-chat-mensagens{max-height:340px!important}
+@media(max-width:1000px){.so-pedidos{grid-template-columns:140px minmax(0,1fr);gap:12px}.so-inline-conversa .so-detalhe{grid-template-columns:1fr}.so-inline-conversa .so-detalhe-item{border-right:0;border-bottom:1px solid #e5eaf0}}
+@media(max-width:600px){.so-pedidos{grid-template-columns:1fr}.so-pedidos-lista{position:static;display:flex;flex-wrap:wrap}.so-pedidos-lista button{padding:10px 14px}.so-inline-conversa>header{padding:12px}.so-inline-conversa .so-cabecalho-nome{white-space:normal;overflow-wrap:anywhere}}
+.so-pedidos{grid-template-columns:300px minmax(0,1fr)}
+.so-pedidos-lista{padding:8px;background:#fff;gap:10px}
+.so-pedidos-lista button{display:block;width:100%;min-width:0;padding:12px;border:1px solid #dce4ed;border-radius:15px;background:#fff;box-sizing:border-box}
+.so-pedidos-lista button[aria-pressed=true]{background:#eff6ff;border:2px solid #8cbfff;padding:11px;box-shadow:0 0 0 2px #eaf3ff}
+.so-pedido-card-topo{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.so-pedido-agenda{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.so-pedido-agenda>strong{font-size:15px;color:#203950}
+.so-pedido-agenda>span{font-size:12px;color:#596d83}
+.so-pedido-numero{padding:4px 8px;border:1px solid #adc8e8;border-radius:8px;background:#fff;color:#28547f;font-size:13px;font-weight:600;white-space:nowrap}
+.so-pedido-cliente{display:flex;align-items:center;gap:10px;min-width:0;text-align:left}
+.so-pedido-avatar{width:48px;height:48px;font-size:15px}
+.so-pedido-identidade{display:block;min-width:0}
+.so-pedido-identidade>strong{display:block;font-size:15px;color:#203950;overflow-wrap:anywhere}
+.so-pedido-identidade>small{display:block;font-size:12px;color:#6b7c8f;margin-top:5px;overflow-wrap:anywhere}
+@media(min-width:601px) and (max-width:1150px){.so-pedidos{grid-template-columns:280px minmax(0,1fr)}.so-inline-conversa .so-detalhe{grid-template-columns:1fr}}
+@media(max-width:600px){.so-pedidos{grid-template-columns:1fr}.so-pedidos-lista{display:grid}}
+@media(max-width:700px){.so-cabecalho-produto .so-item-foto{width:76px;height:76px}}
+@media(min-width:701px) and (min-height:600px){
+ .so-dialog.so-dialog-tabela:has(.so-detalhe:only-child){height:min(760px,88dvh);display:flex;flex-direction:column;overflow:hidden}
+ .so-dialog-tabela>header{flex:none}
+ .so-dialog-tabela:has(.so-detalhe:only-child)>[data-corpo]{flex:1;min-height:0;padding-top:18px}
+ .so-dialog-tabela .so-conversas:has(>.so-detalhe:only-child){height:100%;margin-top:0;grid-template-rows:minmax(0,1fr)}
+ .so-conversas>.so-detalhe:only-child{min-height:0}
+ .so-detalhe:only-child .so-detalhe-item{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+ .so-detalhe:only-child .so-item-resumo,.so-detalhe:only-child .so-detalhe-item h4{flex:none}
+ .so-detalhe:only-child .so-avaria{flex:1;min-height:0}
+ .so-detalhe:only-child .so-avaria button{height:100%}
+ .so-detalhe:only-child .so-chat{min-height:0;overflow:hidden}
+ .so-detalhe:only-child .so-chat-mensagens{flex:1;min-height:0;max-height:none;overflow-x:hidden}
+ .so-detalhe:only-child .so-chat>header,.so-detalhe:only-child .so-chat-form,.so-detalhe:only-child .so-acoes{flex:none}
+}
+.so-pedidos{grid-template-columns:280px 300px minmax(0,1fr);gap:16px}
+.so-produtos-lista{display:grid;gap:12px;min-width:0;align-content:start}
+.so-produtos-lista>button{display:block;width:100%;box-sizing:border-box;min-width:0;padding:12px;text-align:left;border:1px solid #dce4ed;border-radius:12px;background:#fff;color:#243449;font:14px/1.5 Inter,system-ui;cursor:pointer}
+.so-produtos-lista>button[aria-pressed=true]{border-color:#8cbfff;background:#f4f8ff;box-shadow:inset 0 0 0 1px #8cbfff}
+.so-produtos-lista>button:focus-visible{outline:2px solid #315c8b;outline-offset:2px}
+.so-produto-nome{display:block;font-size:14px;overflow-wrap:anywhere}
+.so-produto-resumo{display:flex;align-items:center;gap:10px;min-width:0}
+.so-produto-resumo .so-item-foto{width:58px;height:58px;flex:none;box-sizing:border-box;padding:4px;background:#fff}
+.so-produto-texto{min-width:0}
+.so-produto-medidas{display:block;color:#718195;margin-top:4px;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.so-produtos-lista .so-quantidades{margin-top:10px;gap:8px}
+.so-produtos-lista .so-quantidade-card{padding:7px 8px}
+.so-produtos-lista .so-quantidade-card>span{font-size:10px}
+.so-produtos-lista .so-quantidade-card>strong{font-size:20px;margin:3px 0 0}
+.so-pedido-detalhes .so-inline-conversa .so-detalhe{display:flex;flex-direction:column;min-height:0}
+.so-pedido-detalhes .so-inline-conversa .so-detalhe-item{display:flex;flex-direction:row;align-items:center;gap:16px;border-right:0;border-bottom:1px solid #e5eaf0;padding:12px 20px}
+.so-pedido-detalhes .so-inline-conversa .so-detalhe-item h4{margin:0;font-size:13px;flex:1}
+.so-pedido-detalhes .so-inline-conversa .so-avaria{margin:0;padding:4px;width:84px;height:84px;flex:none;border-radius:8px}
+.so-pedido-detalhes .so-inline-conversa .so-detalhe:only-child .so-avaria button{height:100%}
+.so-pedido-detalhes .so-inline-conversa .so-chat-mensagens{min-height:260px;max-height:420px!important;flex:auto}
+.so-pedido-detalhes .so-inline-conversa .so-cabecalho-produto .so-item-foto{width:64px;height:64px}
+.so-pedido-detalhes .so-cabecalho-nome{white-space:normal;overflow-wrap:anywhere;font-size:14px}
+@media(min-width:901px) and (max-width:1200px){.so-pedidos{grid-template-columns:240px 250px minmax(0,1fr);gap:12px}.so-pedido-card-topo{flex-wrap:wrap}.so-pedido-detalhes .so-chat{padding:16px}}
+@media(max-width:900px){.so-pedidos{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.so-pedido-detalhes{grid-column:1/-1}.so-pedidos-lista{position:static}}
+@media(max-width:600px){.so-pedidos{grid-template-columns:1fr}.so-pedido-detalhes{grid-column:auto}}
+.so-pedidos .so-pedidos-lista,.so-pedidos .so-produtos-lista>button,.so-pedidos .so-inline-conversa{box-shadow:0 2px 7px rgb(25 45 65 / 6%)}
+.so-pedidos .so-pedidos-lista button[aria-pressed=true]{box-shadow:0 0 0 2px #eaf3ff,0 2px 5px rgb(25 45 65 / 5%)}
+.so-pedidos .so-produtos-lista>button[aria-pressed=true]{box-shadow:inset 0 0 0 1px #8cbfff,0 2px 7px rgb(25 45 65 / 6%)}
+.so-chat-anexos{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;max-width:100%}
+.so-chat-anexos figure{margin:0;width:170px;max-width:100%;min-width:0}
+.so-chat .so-chat-anexos button{display:block;width:100%;height:150px;box-sizing:border-box;padding:5px;border:1px solid #d5e1ee;border-radius:8px;background:#fff;overflow:hidden;cursor:zoom-in}
+.so-chat-anexos img{display:block;width:100%;height:100%;max-width:100%;object-fit:contain}
+.so-chat-anexos figcaption{font-size:10px;color:#718195;margin-top:4px}
+.so-pedido-detalhes .so-inline-conversa .so-chat-mensagens{min-height:320px;max-height:560px!important}
+/* Ações de encaminhamento no topo da conversa. */
+.so-chat>header.so-chat-topo>.so-acoes{margin:0;padding:0;border:0;flex:1;gap:8px}
+.so-chat-topo .so-acoes button{text-align:left}
+/* Conversa mais estreita e alinhada às abas principais. */
+@media(min-width:1201px){.so-pedidos{grid-template-columns:280px minmax(300px,1fr) minmax(380px,1.8fr)}html:root body main.el-page:has(.so-pedidos) .ac-cabecalho>.fin-abas{max-width:calc(100% - var(--so-conversa-largura,380px) - 16px)!important;flex-wrap:wrap!important;box-sizing:border-box}}

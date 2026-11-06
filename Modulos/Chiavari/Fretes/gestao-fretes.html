@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Acervo - Fretes</title>
+<link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+<link rel="stylesheet" href="../../../styles/global.css?v=20261103"><link rel="stylesheet" href="../../Financeiro/financeiro.css?v=20261101-pre-reserva"><link rel="stylesheet" href="gestao-fretes.css?v=20261103-rolagem-unica">
+</head><body><main class="container el-page fin-page gf-page" id="gfPagina">
+<div class="header-list gf-topo"><h2>Fretes</h2><input id="gfBuscaConciliacao" class="el-input" type="search" placeholder="Pedido, cliente ou caminhão" aria-label="Pesquisar fretes" hidden><div id="gfFiltrosConciliacao" hidden><select id="gfTransportadora" aria-label="Transportadora"><option value="">Todas as transportadoras</option></select><select id="gfSituacao" aria-label="Situação"><option value="aberto">Em aberto</option><option value="fechado">Fechadas</option></select><label class="gf-agrupar">Agrupar por<select id="gfAgrupar"><option value="eventos">Evento</option><option value="pessoas">Pessoa</option><option value="dias">Dia</option></select></label></div><input id="gfBuscaCaminhao" class="el-input" type="search" placeholder="Pesquisar caminhão..." aria-label="Pesquisar caminhão" hidden><button id="gfNovoCaminhao" class="btn primary" type="button" hidden>+ Caminhão</button></div>
+<nav class="fin-abas" id="gfAbas" role="tablist" aria-label="Áreas de fretes">
+<button type="button" role="tab" data-aba="conciliacao">Conciliação</button>
+<button type="button" role="tab" data-aba="anuncios">Fretes anunciados</button>
+<button type="button" role="tab" data-aba="caminhoes">Caminhões</button>
+<button type="button" role="tab" data-aba="cadastro">Cadastro de fretes</button>
+</nav><section id="gfPaineis" aria-label="Conteúdo de fretes"></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js?v=20261103-topo"></script><script src="../../../js/core/companyTheme.js?v=20260913m"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="../../../js/core/permissions.js?v=20261103-fretes"></script><script src="gestao-fretes.js?v=20261103-rolagem-unica"></script><script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+</body></html>

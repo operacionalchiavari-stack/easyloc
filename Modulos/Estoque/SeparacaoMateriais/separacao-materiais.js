@@ -449,7 +449,8 @@
     // Pagamento mínimo (Parâmetros > Financeiro) travando a Triagem: aviso pequeno e o cartão não abre.
     const bloqueado = coluna !== "separado" && state.bloqueados?.has(String(pedido.id));
     return `
-      <article class="separacao-order-card${bloqueado ? " is-bloqueado-fin" : ""}" data-pedido-id="${escapeHtml(pedido.id)}" data-card-action="${escapeHtml(cardAction)}" data-clickable="${bloqueado ? "false" : "true"}" data-coluna="${escapeHtml(coluna)}" ${bloqueado ? 'aria-disabled="true" title="Aguardando aprovação do Financeiro. Avise o supervisor."' : 'tabindex="0"'}>
+      <article class="separacao-order-card${bloqueado ? " is-bloqueado-fin" : ""}${state.problemas?.[pedido.id] ? " tem-problema" : ""}" data-pedido-id="${escapeHtml(pedido.id)}" data-card-action="${escapeHtml(cardAction)}" data-clickable="${bloqueado ? "false" : "true"}" data-coluna="${escapeHtml(coluna)}" ${bloqueado ? 'aria-disabled="true" title="Aguardando aprovação do Financeiro. Avise o supervisor."' : 'tabindex="0"'}>
+        ${state.problemas?.[pedido.id] ? `<span class="sep-problema-dot" title="${state.problemas[pedido.id]} problema(s) reportado(s) na separação" aria-label="Problema reportado na separação"></span>` : ""}
         <div class="separacao-card-top">
           <span class="separacao-order-number">Pedido ${escapeHtml(numeroLabel)}</span>
           <span class="card-tipo-ida">Ida</span>
@@ -710,7 +711,7 @@
   }
 
   function ocorrenciaItemHtml(item,editavel){
-    return `<div class="so-item-acoes">${editavel?`<button type="button" data-reportar-problema="${escapeHtml(item.id)}">Reportar problema</button>`:''}<button type="button" data-ver-ocorrencias="${escapeHtml(item.id)}">Ocorrências</button><span data-so-item="${escapeHtml(item.item_id)}"></span></div>`;
+    return `<div class="so-item-acoes">${editavel?`<button type="button" data-reportar-problema="${escapeHtml(item.id)}">Reportar problema</button>`:''}<button type="button" class="so-acompanhar" data-ver-ocorrencias="${escapeHtml(item.id)}" hidden>Acompanhar problema</button><span data-so-item="${escapeHtml(item.item_id)}"></span></div>`;
   }
 
   function renderManualItem(item, editavel) {
@@ -917,6 +918,12 @@
         await aplicarProducao(pedidoIds);
       }
       await carregarRetornos();
+      // Nov/2026: pedidos com problema reportado na separação e ainda não resolvido ganham a bolinha vermelha no cartão.
+      state.problemas = {};
+      try {
+        const { data: probs, error: erroProbs } = await state.supabase.rpc("separacao_ocorrencias_listar", { p_empresa: state.empresaId, p_pedido: null });
+        if (!erroProbs) (probs || []).forEach((o) => { if (o && o.estado !== "resolvida" && o.pedido_id) state.problemas[o.pedido_id] = (state.problemas[o.pedido_id] || 0) + 1; });
+      } catch (_) {}
       state.bloqueados = new Set();
       const idaIds = state.pedidos.filter((p) => p.fluxo_etapa === "triagem").map((p) => p.id);
       for (let i = 0; i < idaIds.length; i += 100) {

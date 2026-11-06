@@ -4,7 +4,7 @@ import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-log
 import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261102-3d-persistente";
 import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261102-planta-desativada";
 import { initCatalogBiblioteca, openCatalogBiblioteca, backCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261021-subpastas";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem } from "./catalogo-projetos.mjs?v=20261102-insumos-kits";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem } from "./catalogo-projetos.mjs?v=20261105-sublocacoes";
 
 const supabase = window.supabaseClient;
 const modoPedido = new URLSearchParams(location.search).get('comercial') === 'pedido' && window.parent !== window;
@@ -2094,7 +2094,7 @@ function renderGridMarkup(items, heading, categoryItems){
   // menu, o que está embaixo pode remover pra não ficar duplicado"
   // (reportado com print mostrando "BIBLIOTECA" repetida — mesma lógica
   // vale pro nome da categoria aqui).
-  const showHeading = heading && heading !== currentViewLabel();
+  const showHeading = heading && heading !== currentViewLabel() && !(modoPedido && heading === "Resultados da busca"); // nov/2026: no catálogo do pedido comercial a busca não mostra o título
   const subcatBar = categoryItems ? renderCategoryFilterBar(categoryItems) : "";
   if(!items.length && !subcatBar) return "";
   return `<div class="catalog-grid-wrap">
@@ -2120,7 +2120,7 @@ function renderGridMarkup(items, heading, categoryItems){
 // hover/foco — mesmo mecanismo de fade já usado em outros lugares do
 // catálogo (ex. escurecer da foto ambientada do item).
 function renderMosaicMarkup(items, heading, categoryItems){
-  const showHeading = heading && heading !== currentViewLabel();
+  const showHeading = heading && heading !== currentViewLabel() && !(modoPedido && heading === "Resultados da busca"); // nov/2026: no catálogo do pedido comercial a busca não mostra o título
   const subcatBar = categoryItems ? renderCategoryFilterBar(categoryItems) : "";
   if(!items.length && !subcatBar) return "";
   return `<div class="catalog-grid-wrap">

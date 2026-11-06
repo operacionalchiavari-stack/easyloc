@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Item de sublocação</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@1.66.0"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <!-- Mesmo visual da página do item do nosso cadastro (Estoque > Cadastro de Itens). -->
+  <link rel="stylesheet" href="../../Estoque/CadastroItens/item-detalhes.css?v=20261103-cores-movimentacoes">
+  <link rel="stylesheet" href="sublocacao-item.css?v=20261105-item-completo2">
+  <script type="module" src="../../../js/vendor/model-viewer/model-viewer.min.js"></script>
+</head>
+<body>
+<!-- Item de sublocação (nov/2026): cópia da página do item do Cadastro de Itens, sem os campos de uso interno
+     (setor de estoque, grupo de separação, referência do cliente, tipo/kit, tabelas de preço, histórico, QR Code).
+     Grava em terceirizacao_itens; fotos e GLB no bucket itens, pasta <empresa>/terceirizados/<item>/. -->
+<div class="item-detail-page el-page subloc-item-page" data-module-root id="subItemPage">
+  <header class="item-detail-top" id="itemDetailHeader">
+    <div class="item-detail-heading-row" id="itemDetailHeadingRow">
+      <button type="button" class="btn btn-secondary item-back-btn" id="btnVoltarItens"><i data-lucide="arrow-left"></i> Voltar</button>
+      <h1 class="item-detail-heading" id="itemDetailTitle">Item de sublocação</h1>
+    </div>
+    <div class="subloc-topo-acoes">
+      <button type="button" class="btn btn-primary item-save-top" id="btnSalvarItemDetalhes"><i data-lucide="save"></i> Salvar</button>
+    </div>
+  </header>
+
+  <div class="item-detail-shell">
+    <aside class="item-profile-card">
+      <section class="item-photo-card item-photo-card-primary">
+        <div class="item-photo-card-title">Foto principal</div>
+        <div class="foto-guia-container item-photo-frame-primary"><div class="foto-preview-wrapper"><img id="subFotoPrincipal" alt="Foto principal" draggable="false"></div></div>
+        <input type="file" accept="image/*" data-slot-input="principal" hidden>
+        <div class="item-photo-actions">
+          <button class="btn-foto-action" type="button" data-slot-escolher="principal">Adicionar</button>
+          <button class="btn-foto-action danger" type="button" data-slot-remover="principal">Remover</button>
+        </div>
+      </section>
+
+      <section class="item-photo-card item-3d-compact-card">
+        <div class="item-photo-card-title">Visualizador 3D</div>
+        <input type="file" id="sub3DInput" accept=".glb,model/gltf-binary" hidden>
+        <div class="item-3d-canvas-host item-3d-canvas-compact" id="sub3DHost">
+          <div class="item-3d-empty item-3d-empty-compact" id="sub3DVazio"><i data-lucide="box"></i><p>Envie um GLB para visualizar.</p></div>
+          <div class="item-3d-loading" id="sub3DCarregando" hidden>Carregando...</div>
+        </div>
+        <div class="item-3d-compact-meta">
+          <span class="item-3d-status sem-modelo" id="sub3DStatus">Sem modelo</span>
+          <span id="sub3DNome">-</span>
+        </div>
+        <div class="item-3d-compact-actions">
+          <button type="button" title="Enviar GLB" aria-label="Enviar GLB" id="sub3DEnviar"><i data-lucide="upload"></i></button>
+          <button type="button" title="Girar automaticamente" aria-label="Girar automaticamente" id="sub3DGirar"><i data-lucide="rotate-3d"></i></button>
+          <button type="button" title="Resetar câmera" aria-label="Resetar câmera" id="sub3DResetar"><i data-lucide="scan"></i></button>
+          <button type="button" title="Tela cheia" aria-label="Tela cheia" id="sub3DTelaCheia"><i data-lucide="maximize-2"></i></button>
+          <button type="button" class="danger" title="Remover modelo" aria-label="Remover modelo" id="sub3DRemover"><i data-lucide="trash-2"></i></button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="item-detail-workspace">
+      <nav class="item-detail-tabs" aria-label="Abas do item">
+        <button type="button" class="item-tab active" data-item-tab="dados"><i data-lucide="layout-list"></i> Dados Gerais</button>
+        <button type="button" class="item-tab" data-item-tab="galeria"><i data-lucide="image"></i> Galeria</button>
+      </nav>
+
+      <main class="item-detail-panels">
+        <section class="item-tab-panel active" data-item-panel="dados">
+          <section class="item-state-strip" aria-label="Status do item">
+            <div class="item-control-group">
+              <span>Status</span>
+              <div class="item-status-toggle-row">
+                <button type="button" class="status-btn ativo active" data-ativo="true">Ativo</button>
+                <button type="button" class="status-btn inativo" data-ativo="false">Inativo</button>
+              </div>
+            </div>
+          </section>
+
+          <div class="item-form-grid">
+            <article class="item-card">
+              <h3>Informações principais</h3>
+              <div class="item-fields-grid info-grid">
+                <label class="el-field"><span>Produto</span><input class="el-input" name="produto_base" placeholder="Ex.: Sofá"></label>
+                <label class="el-field"><span>Especificação (nome do item) *</span><input class="el-input" name="produto" maxlength="160"></label>
+                <label class="el-field"><span>Código</span><input class="el-input" name="codigo" placeholder="Código da empresa"></label>
+                <label class="el-field"><span>Marca/Modelo</span><input class="el-input" name="marca_modelo"></label>
+                <label class="el-field"><span>Material</span><input class="el-input" name="material"></label>
+                <label class="el-field"><span>Cor</span><input class="el-input" name="cor"></label>
+                <label class="el-field span-4"><span>Descrição complementar</span><input class="el-input" name="descricao"></label>
+              </div>
+            </article>
+
+            <article class="item-card">
+              <h3>Classificação</h3>
+              <div class="item-fields-grid info-grid">
+                <label class="el-field"><span>Categoria</span><input class="el-input" name="categoria"></label>
+                <label class="el-field"><span>Subcategoria</span><input class="el-input" name="subcategoria"></label>
+                <label class="el-field"><span>Família</span><input class="el-input" name="familia"></label>
+                <label class="el-field"><span>Estilo</span><input class="el-input" name="estilo" placeholder="Ex.: Clássico"></label>
+              </div>
+            </article>
+
+            <article class="item-card">
+              <h3>Dimensões e Cubagem</h3>
+              <div class="item-fields-grid dims-grid">
+                <label class="el-field"><span>Largura ou Diâmetro (m)</span><input class="el-input" name="largura" inputmode="decimal"></label>
+                <label class="el-field"><span>Altura (m)</span><input class="el-input" name="altura" inputmode="decimal"></label>
+                <label class="el-field"><span>Profundidade (m)</span><input class="el-input" name="profundidade" inputmode="decimal"></label>
+                <label class="el-field"><span>Volume cúbico (m³)</span><input class="el-input" id="subVolume" placeholder="Auto" readonly tabindex="-1"></label>
+              </div>
+            </article>
+
+            <article class="item-card">
+              <h3>Informações comerciais</h3>
+              <div class="item-fields-grid values-grid">
+                <label class="el-field"><span>Empresa *</span><select class="el-select" name="fornecedor_id"></select></label>
+                <label class="el-field"><span>Custo (pagamos à empresa) (R$)</span><input class="el-input" name="custo" placeholder="0,00" inputmode="decimal"></label>
+                <label class="el-field"><span>Valor de locação ao cliente (R$)</span><input class="el-input" name="valor_locacao" placeholder="0,00" inputmode="decimal"></label>
+                <label class="el-field"><span>Valor de reposição (R$)</span><input class="el-input" name="valor_reposicao" placeholder="0,00" inputmode="decimal"></label>
+                <label class="el-field"><span>Quantidade que a empresa tem</span><input class="el-input" name="quantidade" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></label>
+                <label class="el-field subloc-margem"><span>Margem</span><strong id="subMargem">—</strong></label>
+              </div>
+            </article>
+
+            <article class="item-card">
+              <h3>Exibição no catálogo/site</h3>
+              <div class="item-fields-grid info-grid">
+                <label class="el-field"><span>Exibir no catálogo/site?</span>
+                  <select class="el-select" name="exibir_site"><option value="false">Não</option><option value="true">Sim</option></select></label>
+                <label class="el-field"><span>Destaque no site</span>
+                  <select class="el-select" name="destaque_site"><option value="false">Não</option><option value="true">Sim</option></select></label>
+              </div>
+            </article>
+
+            <article class="item-card">
+              <h3>Observações (internas)</h3>
+              <label class="el-field"><span class="subloc-sr">Observações</span><textarea class="el-input subloc-obs" name="observacoes" rows="3" maxlength="1000" placeholder="Só a equipe vê. Não sai no pedido nem no catálogo."></textarea></label>
+            </article>
+          </div>
+        </section>
+
+        <section class="item-tab-panel" data-item-panel="galeria">
+          <article class="item-card item-gallery-card">
+            <div class="item-card-header-inline"><div><h3>Fotos de detalhe</h3><p>Use estas imagens para mostrar ângulos ou acabamentos do item.</p></div></div>
+            <div class="item-gallery-grid item-detail-gallery-grid" data-galeria="detalhe_01,detalhe_02"></div>
+          </article>
+          <article class="item-card item-gallery-card">
+            <div class="item-card-header-inline"><div><h3>Fotos ambientadas do catálogo</h3><p>Fotos do item montado em eventos.</p></div></div>
+            <div class="item-gallery-grid" data-galeria="galeria_01,galeria_02,galeria_03"></div>
+          </article>
+        </section>
+      </main>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261105-terceirizacoes"></script>
+<script type="module" src="sublocacao-item.mjs?v=20261105-sem-excluir"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+</body>
+</html>

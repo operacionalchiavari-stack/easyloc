@@ -34,11 +34,4 @@ test('failed submission retains the form and restores the button',async()=>{
   const form=element('formIdeia');form.values={titulo:example.titulo,area:example.area,problema:example.problema,proposta:example.proposta,beneficio:example.beneficio};
   await form.events.submit({preventDefault(){},target:form});assert(!form.wasReset);assert.equal(element('btnEnviarIdeia').disabled,false);assert.equal(element('avisoIdeias').textContent,'Network failed');
 });
-test('RH can open the full inbox and reviewers can evaluate',async()=>{
-  const {element,calls}=await setup(['rh.ideias.avaliar']);
-  assert.equal(element('tabRecebidas').hidden,false);element('tabRecebidas').events.click();await flush();assert.equal(calls[0].args.p_todas,true);
-  element('listaIdeias').events.click({target:{closest:()=>({dataset:{id:example.id}})}});
-  assert(element('detalheIdeia').open);assert.equal(element('formAvaliacao').hidden,false);
-  const form=element('formAvaliacao');form.values={status:'selecionada',retorno:'Vamos testar',premio:''};await form.events.submit({preventDefault(){},target:form});
-  const save=calls.find(c=>c.name==='ideias_premiadas_avaliar');assert.equal(save.args.p_updated_at,example.updated_at);assert.equal(save.args.p_id,example.id);assert.equal(element('detalheIdeia').open,false);
-});
+// O caso do RH (duas colunas, decisão com justificativa) está em tests/ideia-premiada-browser.cjs.

@@ -90,6 +90,28 @@
   const bloqueados=new Map(),segmentos=new Map(),usados=roteiros.flatMap(r=>[[r.inicio,r.partida,r],[r.chegada,r.fim,r]]);
   const bloqueado=i=>{if(!bloqueados.has(i))bloqueados.set(i,obstaculos.some(r=>dentro(ponto(i),r)));return bloqueados.get(i);};
   const livre=(a,b)=>{const chave=Math.min(a,b)+':'+Math.max(a,b);if(!segmentos.has(chave))segmentos.set(chave,!obstaculos.some(r=>atravessa(ponto(a),ponto(b),r)));return segmentos.get(chave);};
+  // Nov/2026: as linhas já traçadas ficam separadas em verticais e horizontais (sem as da própria rota) e o custo de cada
+  // trecho é guardado durante a busca — antes cada passo comparava com todas as linhas, e a tela travava ~30 s.
+  // segV: verticais ordenadas por x; segH: horizontais ordenadas por y (busca binária para olhar só as próximas).
+  let segV=[],segH=[],memo=new Map();
+  const primeiro=(arr,k,v)=>{let lo=0,hi=arr.length;while(lo<hi){const m=(lo+hi)>>1;if(arr[m][k]<v)lo=m+1;else hi=m;}return lo;};
+  function prepararCusto(rota){segV=[];segH=[];memo=new Map();
+   for(const s of usados){if(s[2]===rota)continue;const [p,q]=s;
+    if(p.x===q.x)segV.push({x:p.x,y0:Math.min(p.y,q.y),y1:Math.max(p.y,q.y)});else segH.push({y:p.y,x0:Math.min(p.x,q.x),x1:Math.max(p.x,q.x)});}
+   segV.sort((m,n)=>m.x-n.x);segH.sort((m,n)=>m.y-n.y);}
+  function custoExtraRapido(a,b,va,vb){
+   const chave=va<vb?va*1e6+vb:vb*1e6+va;let c=memo.get(chave);if(c!==undefined)return c;c=0;
+   if(a.x===b.x){
+    const y0=Math.min(a.y,b.y),y1=Math.max(a.y,b.y);
+    for(let k=primeiro(segV,'x',a.x-11.999);k<segV.length&&segV[k].x<a.x+12;k++){const t=segV[k];if(Math.min(y1,t.y1)>Math.max(y0,t.y0)){c=Infinity;break;}}
+    if(c!==Infinity)for(let k=primeiro(segH,'y',y0);k<segH.length&&segH[k].y<y1;k++){const t=segH[k];if(t.y>y0&&a.x>t.x0&&a.x<t.x1)c+=100;}
+   }else{
+    const x0=Math.min(a.x,b.x),x1=Math.max(a.x,b.x);
+    for(let k=primeiro(segH,'y',a.y-11.999);k<segH.length&&segH[k].y<a.y+12;k++){const t=segH[k];if(Math.min(x1,t.x1)>Math.max(x0,t.x0)){c=Infinity;break;}}
+    if(c!==Infinity)for(let k=primeiro(segV,'x',x0);k<segV.length&&segV[k].x<x1;k++){const t=segV[k];if(t.x>x0&&a.y>t.y0&&a.y<t.y1)c+=100;}
+   }
+   memo.set(chave,c);return c;
+  }
   function custoExtra(a,b,rota){let custo=0;for(const [c,d,dono] of usados){
    if(dono===rota)continue;
    if(a.x===b.x&&c.x===d.x&&Math.abs(a.x-c.x)<12){if(Math.min(Math.max(a.y,b.y),Math.max(c.y,d.y))>Math.max(Math.min(a.y,b.y),Math.min(c.y,d.y)))return Infinity;}
@@ -99,14 +121,14 @@
   }return custo;}
   for(const r of roteiros){
    const ini=indice(r.partida),fim=indice(r.chegada),fila=new Fila(),dist=new Map(),pais=new Map(),inicial=ini*3+2;
-   dist.set(inicial,0);fila.push({id:inicial,g:0,f:0});let encontrado=null;
+   prepararCusto(r);dist.set(inicial,0);fila.push({id:inicial,g:0,f:0});let encontrado=null;
    while(fila.a.length){
     const atual=fila.pop();if(atual.g!==dist.get(atual.id))continue;const vertice=Math.floor(atual.id/3),direcao=atual.id%3;
     if(vertice===fim){encontrado=atual.id;break;}
     const x=vertice%nx,y=Math.floor(vertice/nx),vizinhos=[];
     if(x>0)vizinhos.push([vertice-1,0]);if(x+1<nx)vizinhos.push([vertice+1,0]);if(y>0)vizinhos.push([vertice-nx,1]);if(y+1<Y.length)vizinhos.push([vertice+nx,1]);
     for(const [v,dir] of vizinhos){if(bloqueado(v)||!livre(vertice,v))continue;const a=ponto(vertice),b=ponto(v),id=v*3+dir;
-     const g=atual.g+Math.abs(a.x-b.x)+Math.abs(a.y-b.y)+(direcao!==2&&direcao!==dir?36:0)+custoExtra(a,b,r);
+     const g=atual.g+Math.abs(a.x-b.x)+Math.abs(a.y-b.y)+(direcao!==2&&direcao!==dir?36:0)+custoExtraRapido(a,b,vertice,v);
      if(g>=(dist.get(id)??Infinity))continue;dist.set(id,g);pais.set(id,atual.id);fila.push({id,g,f:g+Math.abs(b.x-r.chegada.x)+Math.abs(b.y-r.chegada.y)});
     }
    }

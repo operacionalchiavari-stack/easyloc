@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261029-extra2"></script>
+  <script src="../operacao-sem-motor.js?v=20261106-bonus"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -14,7 +14,7 @@
   <title>RH · Equipe Free</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     /* =========================================================
@@ -210,47 +210,153 @@
       .uniforme .uni{ width:96px; height:128px; }
       .galeria{ grid-template-columns:repeat(2, minmax(0,1fr)); padding:12px; }
     }
-  </style>
+    .abas{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 4px; }
+  .filtro-situacao{ display:inline-flex; gap:6px; margin-right:18px; padding-right:18px; border-right:1px solid #e3e7ec; }
+  .filtro-situacao button{ border:1px solid #dfe4ea; background:#fff; color:#2b2b2b; border-radius:999px; padding:6px 14px; font:500 13px Inter,sans-serif; cursor:pointer; }
+  .filtro-situacao button.ativo{ background:#123f86; border-color:#123f86; color:#fff; }
+  .filtro-situacao button span:empty{ display:none; }
+  .filtro-situacao button span{ display:inline-block; min-width:18px; margin-left:4px; padding:0 5px; border-radius:999px; background:rgba(0,0,0,.08); font-size:11px; }
+  .filtro-situacao button.ativo span{ background:rgba(255,255,255,.25); }
+  /* Nov/2026: cards finos, como os de Funcionários (rótulo à esquerda, número à direita, numa linha) */
+  #resumo .tile{ display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; padding:0 14px; border-radius:10px; }
+  #resumo .tile small{ margin:0; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+  #resumo .tile strong{ margin:0; font-size:18px; line-height:1; white-space:nowrap; }
+  #telaPainel{ padding-top:4px; }
+  #resumo[hidden]{ display:none !important; }
+  .agrupar{ display:inline-flex; align-items:center; gap:8px; font:500 13px Inter,sans-serif; color:#4f4f4f; }
+  .agrupar select{ min-height:34px; padding:0 30px 0 12px; border:1px solid #dfe4ea; border-radius:999px; background:#fff; font:500 13px Inter,sans-serif; color:#1f2020; cursor:pointer; }
+  .agrupar[hidden]{ display:none !important; }
+  .agrupar{ margin-left:14px; }
+  .dia-grupo{ margin-bottom:22px; }
+  .dia-titulo{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 10px; padding:0 2px 6px; border-bottom:2px solid #123f86; font:700 16px Inter,sans-serif !important; color:#1f2020; }
+  .dia-info{ font:500 13px Inter,sans-serif; color:#4f4f4f; }
+  html, body{ background:#f3f5f6 !important; }
+  /* Nov/2026: uma fonte só (Inter, a do sistema) em toda a tela */
+  :root{ --sans:"Inter", system-ui, sans-serif !important; --serif:"Inter", system-ui, sans-serif !important; }
+  body, button, input, select, textarea, .evento-titulo strong, .janela h2, .tile strong, .chip, table, th, td{ font-family:"Inter", system-ui, sans-serif !important; }
+  .evento-topo{ align-items:center; }
+  .evento-cli{ position:relative; flex:none; width:52px; height:52px; border-radius:50%; overflow:hidden; display:grid; place-items:center; background:#e7ebf1; color:#4f4f4f; font:600 15px Inter,sans-serif; }
+  .evento-cli img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .evento-linha1{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .evento-titulo strong{ font-size:17px !important; font-weight:600 !important; }
+  .evento-pedido{ display:inline-block; padding:2px 9px; border-radius:999px; background:#123f86; color:#fff !important; font:600 12px Inter,sans-serif; }
+  .evento-local{ margin:2px 0 1px; font:500 13.5px Inter,sans-serif; color:#1f2020; }
+  .evento-data{ flex:none; display:flex; flex-direction:column; align-items:center; min-width:54px; padding:4px 8px; border-right:1px solid #e3e7ec; }
+  .evento-data small{ font:600 11px Inter,sans-serif; color:#6b6b6b; text-transform:uppercase; letter-spacing:.06em; }
+  .evento-data b{ font:700 16px Inter,sans-serif; color:#1f2020; }
+  .evento-topo > .evento-pedido{ flex:none; align-self:center; }
+  .evento-data .evento-pedido{ margin-bottom:5px; white-space:nowrap; }
+  .evento-titulo{ min-width:200px; }
+</style>
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 <link rel="stylesheet" href="../../../styles/abas-global.css?v=20261024">
+<!-- Nov/2026: menos negrito (pedido do usuário). Só o total do evento e o total da linha ficam em semi-negrito. -->
+<style id="rh-barra-pagamentos">
+  .pg-barra{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin:0 0 16px; border-bottom:1px solid #e3e7ec; }
+  .pg-abas{ display:flex; gap:22px; border:0 !important; margin:0 !important; padding:0 !important; background:none !important; }
+  .pg-abas button{ border:0; background:none; padding:10px 0 11px; margin-bottom:-1px; border-bottom:2px solid transparent; font:500 12px/1 Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#6b6b6b; cursor:pointer; }
+  .pg-abas button.ativo{ color:#1f2020; border-bottom-color:#123f86; }
+  .pg-abas button span:empty{ display:none; }
+  .pg-abas button span{ display:inline-block; min-width:18px; margin-left:5px; padding:2px 6px; border-radius:999px; background:#eef1f4; color:#4f4f4f; font-size:11px; letter-spacing:0; }
+  .pg-abas button[data-filtro="apagar"] span{ background:#e60012; color:#fff; }
+  .pg-agrupar{ display:inline-flex; gap:4px; padding:3px; margin-bottom:6px; border:1px solid #e3e7ec; border-radius:10px; background:#fff; }
+  .pg-agrupar button{ width:34px; height:30px; display:grid; place-items:center; border:0; border-radius:7px; background:none; color:#6b6b6b; cursor:pointer; }
+  .pg-agrupar button:hover{ background:#f3f5f6; color:#1f2020; }
+  .pg-agrupar button.ativo{ background:#123f86; color:#fff; }
+  .pg-agrupar svg{ width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+</style>
+<style id="rh-valores-vermelho">
+  /* Nov/2026: valores em vermelho (é dinheiro que sai: diária, hora extra, ajuste e totais). */
+  html:root:is(#rhv#rhv#rhv#rhv#rhv,html) #telaPainel :is(.evento-total strong, td.num > b, .rs, .dia-info b){ color:#b42318 !important; }
+  /* cabeçalho da tabela em cinza claro (pedido do usuário) */
+  html:root:is(#rhv#rhv#rhv#rhv#rhv,html) #telaPainel :is(thead th, thead tr){ background:#eef1f5 !important; }
+</style>
+<style id="rh-envio-financeiro">
+  .td-sel{ width:34px; text-align:center; padding-left:12px !important; padding-right:0 !important; }
+  .td-sel input{ width:17px; height:17px; accent-color:#123f86; cursor:pointer; }
+  tr.marcada td{ background:#f2f6fd !important; }
+  .envio-barra{ position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:15; display:flex; align-items:center; gap:12px; padding:10px 12px 10px 18px; background:#fff; border:1px solid #d6dde7; border-radius:14px; box-shadow:0 12px 36px rgba(15,23,42,.18); font:400 14px Inter,sans-serif; white-space:nowrap; }
+  .envio-barra[hidden]{ display:none; }
+  .envio-aviso{ margin:0 0 12px; padding:10px 12px; border-radius:10px; background:#fdf6dd; border:1px solid #ecd9a0; color:#5f4a00; font-size:13px; }
+  .envio-resumo{ width:100%; border-collapse:collapse; margin-bottom:12px; font:400 13.5px Inter,sans-serif; }
+  .envio-resumo th{ text-align:left; padding:8px 10px; background:#eef1f5; font:500 11px Inter,sans-serif; text-transform:uppercase; letter-spacing:.05em; color:#4f4f4f; }
+  .envio-resumo td{ padding:8px 10px; border-bottom:1px solid #eef1f4; vertical-align:top; }
+  .envio-resumo tfoot td{ font-weight:500; border-bottom:0; }
+  .envio-resumo .num{ text-align:right; }
+  .envio-resumo .sub{ display:block; color:#6b6b6b; font-size:12px; }
+  .envio-campos{ display:flex; gap:12px; flex-wrap:wrap; }
+  .chip.FINANCEIRO{ background:#e8eefb; color:#123f86; }
+</style>
+<style id="rh-colunas-checkin">
+  .lc{ display:block; font:400 13px Inter,sans-serif; }
+  html:root:is(#rhc#rhc#rhc#rhc,html) #telaPainel .lc-ok{ color:#1f7a44 !important; } html:root:is(#rhc#rhc#rhc#rhc,html) #telaPainel .lc-longe{ color:#b42318 !important; } html:root:is(#rhc#rhc#rhc#rhc,html) #telaPainel :is(.lc-sem,.lc-manual){ color:#7a5300 !important; }
+  html:root:is(#rhc#rhc#rhc#rhc,html) #telaPainel .lc-mapa{ color:#123f86 !important; }
+  .lc-mapa{ border:0; background:none; padding:0; cursor:pointer; }
+  .mapa-checkin{ border-radius:14px; overflow:hidden; background:#eef1f4; height:clamp(180px, calc(var(--rh-vh, 100vh) * .88 - 200px), 520px); margin-bottom:8px; }
+  .janela:has(.mapa-checkin){ overflow:hidden; padding:18px 20px; }
+  .janela:has(.mapa-checkin) h2{ font-size:22px; margin-bottom:4px; }
+  .janela:has(.mapa-checkin) p{ margin-bottom:10px; }
+  .mapa-checkin iframe{ display:block; width:100%; height:100%; border:0; }
+  .lc-mapa{ display:inline-block; margin-top:2px; font:400 12px Inter,sans-serif; color:#123f86; text-decoration:underline; text-underline-offset:2px; }
+  .uz{ display:inline-block; padding:3px 10px; border-radius:999px; border:1px solid transparent; font:500 12px/1.4 Inter,sans-serif; background:#eef1f4; color:#4f4f4f; }
+  button.uz{ cursor:pointer; }
+  button.uz:hover{ filter:brightness(.96); border-color:currentColor; }
+  .uz-sim{ background:#e6f4ea; color:#1f7a44; } .uz-nao{ background:#fde8e6; color:#b42318; } .uz-inc{ background:#fdf0c6; color:#7a5300; } .uz-conferir{ background:#eef1f4; color:#6b6b6b; }
+</style>
+<style id="rh-uniforme-equipe">
+  .evento-topo .evento-titulo{ flex:0 1 auto !important; }
+  .evento-topo .evento-total{ margin-left:auto; }
+  .eq-foto{ position:relative; flex:none; width:112px; height:72px; padding:0; border:1px solid #e3e7ec; border-radius:12px; overflow:hidden; background:#eef1f4; cursor:zoom-in; display:block; }
+  .eq-foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .eq-foto.eq-sem{ cursor:default; display:grid; place-items:center; text-align:center; font:400 11px/1.3 Inter,sans-serif; color:#8a8a8a; border-style:dashed; background:#fff; }
+  .eq-selo{ position:absolute; left:4px; right:4px; bottom:4px; padding:2px 6px; border-radius:999px; font:500 10.5px/1.4 Inter,sans-serif; font-style:normal; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .eq-selo.conferir{ background:#fdf0c6; color:#7a5300; }
+  .eq-selo.ok{ background:#e6f4ea; color:#1f7a44; }
+  .eq-selo.sem{ background:#fde8e6; color:#b42318; }
+  .eq-janela{ display:grid; grid-template-columns:minmax(0,1.6fr) minmax(240px,1fr); gap:20px; align-items:start; }
+  .eq-janela-foto{ background:#111; border-radius:14px; overflow:hidden; display:grid; place-items:center; }
+  .eq-janela-foto img{ display:block; width:100%; max-height:calc(var(--rh-vh, 100vh) * .7); object-fit:contain; }
+  .eq-pergunta{ margin:14px 0 8px; font:500 15px Inter,sans-serif; color:#1f2020; }
+  .eq-resposta{ display:flex; gap:8px; }
+  .eq-pessoa{ display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid #e3e7ec; border-radius:10px; margin-bottom:6px; cursor:pointer; font:400 14px Inter,sans-serif; }
+  .eq-pessoa input{ width:18px; height:18px; accent-color:#b42318; }
+  .eq-pessoa:has(input:checked){ background:#fdf3f2; border-color:#f3c2bd; }
+  @media (max-width:760px){ .eq-janela{ grid-template-columns:1fr; } }
+</style>
+<style id="rh-menos-negrito">
+  html:root:is(#rhm#rhm#rhm,html) #telaPainel :is(td, td b, td strong, td .hora, td .link, .extra label, .chip, .nota, .evento-local, .evento-data b, .foto, .evento-cli, .acoes-linha .btn, .acoes-linha button){ font-weight:400 !important; }
+  html:root:is(#rhm#rhm#rhm,html) #telaPainel :is(td .pessoa b .link, .evento-titulo strong, .evento-data b, td.num > b){ font-weight:500 !important; }
+  html:root:is(#rhm#rhm#rhm,html) #telaPainel :is(th, .evento-total small, .evento-data small, .rotulo-secao){ font-weight:500 !important; }
+  html:root:is(#rhm#rhm#rhm,html) #telaPainel .evento-total strong{ font-weight:600 !important; }
+  html:root:is(#rhm#rhm#rhm,html) #telaPainel :is(.dia-titulo){ font-weight:600 !important; }
+  html:root:is(#rhm#rhm#rhm,html) #telaPainel .chip{ font-weight:500 !important; }
+</style>
 </head>
 <body>
 
   <section class="tela ativa" id="telaCarregando"><div class="carregando"><div><div class="spinner"></div>Carregando…</div></div></section>
 
-  <section class="tela" id="telaLogin">
-    <div class="login">
-      <h1>RH · Equipe Free</h1>
-      <p>Pagamentos, presença e uniforme dos free.</p>
-      <form class="cartao" onsubmit="entrar(event)">
-        <div class="erro" id="erroLogin"></div>
-        <label class="campo"><span>Senha da RH</span><input id="loginSenha" type="password" autocomplete="current-password" required></label>
-        <button class="btn" style="width:100%;min-height:48px" id="btnEntrar" type="submit">Entrar</button>
-      </form>
-    </div>
-  </section>
+  <!-- Nov/2026: sem a tela "Senha da RH": entra sozinho com o login do sistema (o acesso é conferido por permissão). -->
 
   <section class="tela" id="telaPainel">
-    <header class="topo">
-      <div><h1>RH · Equipe Free</h1><small id="usuarioNome"></small></div>
-      <div class="ciclo">
-        <button type="button" onclick="mudarCiclo(-7)" aria-label="Ciclo anterior">‹</button>
-        <strong id="cicloTexto">-</strong>
-        <button type="button" onclick="mudarCiclo(7)" aria-label="Próximo ciclo">›</button>
-      </div>
-      <div class="topo-acoes">
-        <button class="btn btn-claro" type="button" onclick="abrirConfig()">Valor da hora</button>
-        <button class="btn btn-claro" type="button" id="btnExportar" onclick="exportar(this)">Exportar planilha</button>
-        <button class="btn btn-claro" type="button" onclick="sair()">Sair</button>
-      </div>
-    </header>
+    <!-- Nov/2026: como um contas a pagar — sem semana, sem título, sem "Valor da hora", "Exportar planilha" e "Sair". -->
 
-    <div class="resumo" id="resumo"></div>
+    <!-- Nov/2026: sem os cards de resumo (A pagar, Já pago, Diárias, Para revisar, Faltas). -->
+    <div class="resumo" id="resumo" hidden></div>
 
-    <nav class="abas">
-      <button class="aba ativa" data-aba="eventos" type="button" onclick="trocarAba('eventos')">Por evento</button>
-      <button class="aba" data-aba="pessoas" type="button" onclick="trocarAba('pessoas')">Por pessoa</button>
-      <button class="aba" data-aba="fotos" type="button" onclick="trocarAba('fotos')">Fotos e uniforme</button>
+    <!-- Nov/2026: abas A pagar / Pagos (sem Todos, sem Pagamentos e sem Fotos e uniforme) e, à direita, agrupar por evento, dia ou pessoa em ícones. -->
+    <nav class="pg-barra">
+      <div class="el-tabs pg-abas" role="tablist" aria-label="Situação">
+        <button type="button" role="tab" aria-selected="true" data-filtro="apagar" class="ativo" onclick="trocarFiltro('apagar')">A pagar <span data-conta="apagar"></span></button>
+        <button type="button" role="tab" aria-selected="false" data-filtro="financeiro" onclick="trocarFiltro('financeiro')">No financeiro <span data-conta="financeiro"></span></button>
+        <button type="button" role="tab" aria-selected="false" data-filtro="pagos" onclick="trocarFiltro('pagos')">Pagos <span data-conta="pagos"></span></button>
+      </div>
+      <div class="pg-agrupar" role="group" aria-label="Agrupar por">
+        <button type="button" data-agrupar="eventos" class="ativo" title="Agrupar por evento" aria-label="Agrupar por evento" onclick="trocarAba('eventos')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></button>
+        <button type="button" data-agrupar="dias" title="Agrupar por dia" aria-label="Agrupar por dia" onclick="trocarAba('dias')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="4" cy="6" r=".6"/><circle cx="4" cy="12" r=".6"/><circle cx="4" cy="18" r=".6"/></svg></button>
+        <button type="button" data-agrupar="pessoas" title="Agrupar por pessoa" aria-label="Agrupar por pessoa" onclick="trocarAba('pessoas')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.6c2.6.2 4.4 1.8 5 4.4"/></svg></button>
+        <select id="agruparPor" hidden onchange="trocarAba(this.value)"><option value="eventos">Evento</option><option value="dias">Dia</option><option value="pessoas">Pessoa</option></select>
+      </div>
     </nav>
 
     <main id="conteudo"></main>
@@ -265,8 +371,8 @@
      ESTADO E APOIO
   ========================================================= */
   const CHAVE = "rhToken";
-  const estado = { token: lerToken(), ciclo: "", dados: null, aba: "eventos" };
-  const SITUACAO = { PAGAR: "Pagar", REVISAR: "Revisar", NAO_PAGAR: "Não pagar", PAGO: "Pago", EM_ANDAMENTO: "Em andamento" };
+  const estado = { token: lerToken(), ciclo: "tudo", dados: null, aba: "eventos", filtro: "apagar", envio: {} };
+  const SITUACAO = { PAGAR: "Pagar", REVISAR: "Revisar", NAO_PAGAR: "Não pagar", PAGO: "Pago", EM_ANDAMENTO: "Em andamento", FINANCEIRO: "No financeiro" };
   const UNIFORME = { OK: "✅ Ok", INCOMPLETO: "⚠️ Incompleto", SEM: "❌ Sem uniforme" };
 
   function lerToken(){ try{ return localStorage.getItem(CHAVE) || ""; }catch(e){ return ""; } }
@@ -304,42 +410,41 @@
   /* =========================================================
      LOGIN E CARGA
   ========================================================= */
-  function entrar(ev){
-    ev.preventDefault();
-    const btn = document.getElementById("btnEntrar");
-    btn.disabled = true;
-    chamar("RH_login", document.getElementById("loginSenha").value)
-      .then(function(r){ salvarToken(r.token); estado.ciclo = r.cicloAtual; document.getElementById("loginSenha").value = ""; return carregar(); })
-      .catch(function(e){ const el = document.getElementById("erroLogin"); el.textContent = msg(e); el.classList.add("ver"); })
-      .finally(function(){ btn.disabled = false; });
+  function entrarAuto(){
+    document.getElementById("conteudo").innerHTML = '<div class="carregando"><div><div class="spinner"></div>Carregando…</div></div>';
+    tela("telaPainel");
+    return chamar("RH_login", "").then(function(r){ salvarToken(r.token); estado.ciclo = "tudo"; return carregar(); })
+      .catch(function(e){ semAcesso(msg(e)); });
+  }
+  function semAcesso(texto){
+    tela("telaPainel");
+    document.getElementById("resumo").innerHTML = "";
+    document.getElementById("conteudo").innerHTML = '<div class="vazio"><strong>Sem acesso</strong>' + esc(texto || "Seu usuário não tem permissão para o pagamento de freelancer.") + '</div>';
   }
 
   function sair(){
     const t = estado.token;
     salvarToken("");
-    tela("telaLogin");
     if(t){ chamar("RH_sair", t).catch(function(){}); }
+    entrarAuto();
   }
 
   function tratar(e){
-    if(expirou(e)){ salvarToken(""); tela("telaLogin"); const el = document.getElementById("erroLogin"); el.textContent = "Sessão expirada. Entre de novo."; el.classList.add("ver"); return; }
+    if(expirou(e)){ salvarToken(""); if(!estado.reentrou){ estado.reentrou = true; entrarAuto(); } else { semAcesso("Não foi possível entrar. Recarregue a página."); } return; }
     toast(msg(e), true);
   }
 
   function carregar(){
-    if(!estado.token){ tela("telaLogin"); return Promise.resolve(); }
-    return chamar("RH_carregarCiclo", estado.token, estado.ciclo || "").then(aplicar).catch(function(e){
-      if(!estado.dados){ tela("telaLogin"); }
+    if(!estado.token){ return entrarAuto(); }
+    return chamar("RH_carregarCiclo", estado.token, "tudo").then(aplicar).catch(function(e){
+      if(!estado.dados){ semAcesso(msg(e)); }
       tratar(e);
     });
   }
 
   function aplicar(d){
     estado.dados = d;
-    estado.ciclo = d.inicio;
-    document.getElementById("usuarioNome").textContent = "Olá, " + (d.usuario || "") + " · ciclo de terça a segunda";
-    document.getElementById("cicloTexto").innerHTML = "Ter " + dataBR(d.inicio) + " a Seg " + dataBR(d.fim) +
-      '<small>Hora extra: ' + (d.config.valorHora ? moeda(d.config.valorHora) + "/h" : "valor não definido") + ' · diária cobre ' + d.config.horasDiaria + 'h</small>';
+    estado.ciclo = "tudo";
     renderResumo();
     render();
     tela("telaPainel");
@@ -353,15 +458,96 @@
     carregar();
   }
 
+  const NO_FILTRO = { apagar: ["PAGAR", "REVISAR", "EM_ANDAMENTO"], financeiro: ["FINANCEIRO"], pagos: ["PAGO"] };
+  function passaFiltro(p, filtro){ const l = NO_FILTRO[filtro || estado.filtro]; return !l || l.indexOf(p.calc.situacao) >= 0; }
+  function trocarFiltro(f){
+    estado.filtro = f;
+    document.querySelectorAll("[data-filtro]").forEach(function(b){ const on = b.dataset.filtro === f; b.classList.toggle("ativo", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
+    render();
+  }
+  // A pagar: o mais antigo primeiro (o que vence antes); pagos e todos: o mais recente primeiro.
+  function eventosFiltrados(){
+    const lista = (estado.dados.eventos || []).map(function(ev){ return Object.assign({}, ev, { pessoas: ev.pessoas.filter(function(p){ return passaFiltro(p); }) }); })
+      .filter(function(ev){ return ev.pessoas.length; })
+      .sort(function(a, b){ return (a.dataISO + a.horario).localeCompare(b.dataISO + b.horario); });
+    return estado.filtro === "apagar" ? lista : lista.reverse();
+  }
+  /* Nov/2026: enviar ao Contas a Pagar. Marca-se em "A pagar" e envia: o Financeiro recebe uma conta por freelancer. */
+  function pessoaPorInscricao(id){ let r = null; (estado.dados.eventos || []).forEach(function(ev){ (ev.pessoas || []).forEach(function(p){ if(p.idInscricao === id){ r = { ev: ev, p: p }; } }); }); return r; }
+  function marcadosEnvio(){
+    return Object.keys(estado.envio).map(pessoaPorInscricao).filter(function(x){ return x && (x.p.calc.situacao === "PAGAR" || x.p.calc.situacao === "REVISAR") && x.p.calc.total > 0; });
+  }
+  function pintarBarraEnvio(){
+    let barra = document.getElementById("barraEnvio");
+    const lista = estado.filtro === "apagar" ? marcadosEnvio() : [];
+    if(!lista.length){ if(barra){ barra.hidden = true; } return; }
+    if(!barra){ barra = document.createElement("div"); barra.id = "barraEnvio"; barra.className = "envio-barra"; document.body.appendChild(barra); }
+    const total = lista.reduce(function(s, x){ return s + x.p.calc.total; }, 0);
+    const pessoas = {}; lista.forEach(function(x){ pessoas[x.p.idFree] = 1; });
+    barra.innerHTML = '<span><b>' + lista.length + (lista.length === 1 ? " diária" : " diárias") + '</b> de ' + Object.keys(pessoas).length + (Object.keys(pessoas).length === 1 ? " freelancer" : " freelancers") + ' · <b class="rs">' + moeda(total) + '</b></span>' +
+      '<button type="button" class="btn btn-claro" data-envio-limpar>Desmarcar</button><button type="button" class="btn" data-envio-abrir>Enviar ao Contas a Pagar</button>';
+    barra.hidden = false;
+  }
+  function abrirEnvio(){
+    const lista = marcadosEnvio(); if(!lista.length){ return; }
+    const porFree = {};
+    lista.forEach(function(x){ const k = x.p.idFree; (porFree[k] = porFree[k] || { nome: x.p.nome, itens: [], total: 0 }).itens.push(x); porFree[k].total += x.p.calc.total; });
+    const revisar = lista.filter(function(x){ return x.p.calc.situacao === "REVISAR"; });
+    const total = lista.reduce(function(s, x){ return s + x.p.calc.total; }, 0);
+    const venc = new Date(Date.now() + 3 * 864e5).toISOString().slice(0, 10);
+    abrirJanela(
+      '<h2>Enviar ao Contas a Pagar</h2>' +
+      '<p>Cada freelancer vira uma conta a pagar no Financeiro (para pagar no PIX dele). O custo também entra no resultado de cada pedido.</p>' +
+      (revisar.length ? '<div class="envio-aviso">' + revisar.length + (revisar.length === 1 ? " diária está" : " diárias estão") + ' em <b>Revisar</b>: ' + revisar.map(function(x){ return esc(x.p.nome) + " (" + esc(x.p.calc.motivos.join(", ")) + ")"; }).join("; ") + '. Confira antes de enviar.</div>' : "") +
+      '<table class="envio-resumo"><thead><tr><th>Freelancer</th><th class="num">Diárias</th><th class="num">Total</th></tr></thead><tbody>' +
+        Object.keys(porFree).map(function(k){ const g = porFree[k]; return '<tr><td>' + esc(g.nome) + '<span class="sub">' + g.itens.map(function(x){ return esc(x.ev.etapa || "") + " " + dataBR(x.ev.dataISO) + " · " + moeda(x.p.calc.total); }).join(" · ") + '</span></td><td class="num">' + g.itens.length + '</td><td class="num"><b class="rs">' + moeda(g.total) + '</b></td></tr>'; }).join("") +
+      '</tbody><tfoot><tr><td>Total</td><td class="num">' + lista.length + '</td><td class="num"><b class="rs">' + moeda(total) + '</b></td></tr></tfoot></table>' +
+      '<div class="envio-campos"><label class="campo"><span>Vencimento</span><input type="date" id="envioVenc" value="' + venc + '"></label>' +
+      '<label class="campo" style="flex:1"><span>Observação (opcional)</span><input type="text" id="envioObs" maxlength="300"></label></div>' +
+      '<div class="acoes"><button type="button" class="btn btn-claro" onclick="fecharJanela()">Cancelar</button><button type="button" class="btn" id="envioConfirmar">Enviar ' + moeda(total) + '</button></div>', true);
+    document.getElementById("envioConfirmar").onclick = function(){
+      const v = document.getElementById("envioVenc").value;
+      if(!v){ toast("Informe o vencimento.", true); return; }
+      const botao = this; botao.disabled = true;
+      chamar("RH_enviarFinanceiro", estado.token, estado.ciclo, lista.map(function(x){ return { inscricao: x.p.idInscricao, valor: x.p.calc.total }; }), v, document.getElementById("envioObs").value)
+        .then(function(d){ estado.envio = {}; fecharJanela(); aplicar(d); toast("Enviado ao Contas a Pagar: " + Object.keys(porFree).length + (Object.keys(porFree).length === 1 ? " conta" : " contas")); })
+        .catch(function(e){ botao.disabled = false; tratar(e); });
+    };
+  }
+  document.addEventListener("change", function(e){
+    const t = e.target;
+    if(t.matches && t.matches(".sel-envio")){ if(t.checked){ estado.envio[t.dataset.envio] = 1; } else { delete estado.envio[t.dataset.envio]; } t.closest("tr").classList.toggle("marcada", t.checked); pintarBarraEnvio(); }
+    if(t.matches && t.matches(".sel-evento")){
+      const sec = t.closest(".evento");
+      sec.querySelectorAll(".sel-envio").forEach(function(c){ c.checked = t.checked; if(t.checked){ estado.envio[c.dataset.envio] = 1; } else { delete estado.envio[c.dataset.envio]; } c.closest("tr").classList.toggle("marcada", t.checked); });
+      pintarBarraEnvio();
+    }
+  });
+  document.addEventListener("click", function(e){
+    const b = e.target.closest && e.target.closest("[data-envio-abrir],[data-envio-limpar],[data-desfazer-envio],[data-envio-pessoa]");
+    if(!b){ return; }
+    if(b.hasAttribute("data-envio-pessoa")){ estado.envio = {}; b.dataset.envioPessoa.split(",").forEach(function(id){ estado.envio[id] = 1; }); abrirEnvio(); return; }
+    if(b.hasAttribute("data-envio-abrir")){ abrirEnvio(); }
+    else if(b.hasAttribute("data-envio-limpar")){ estado.envio = {}; render(); }
+    else {
+      const doc = b.dataset.doc;
+      abrirJanela('<h2>Desfazer envio</h2><p>A conta ' + esc(doc) + ' será cancelada no Contas a Pagar e as diárias voltam para "A pagar".</p><div class="acoes"><button type="button" class="btn btn-claro" onclick="fecharJanela()">Voltar</button><button type="button" class="btn" id="desfazerEnvioOk">Desfazer envio</button></div>');
+      document.getElementById("desfazerEnvioOk").onclick = function(){
+        this.disabled = true;
+        chamar("RH_desfazerEnvio", estado.token, estado.ciclo, b.dataset.desfazerEnvio).then(function(d){ fecharJanela(); aplicar(d); toast("Envio desfeito"); }).catch(function(err){ tratar(err); });
+      };
+    }
+  });
   function trocarAba(aba){
     estado.aba = aba;
-    document.querySelectorAll(".aba").forEach(function(b){ b.classList.toggle("ativa", b.dataset.aba === aba); });
+    const sel = document.getElementById("agruparPor"); if(sel && aba !== "fotos" && sel.value !== aba) sel.value = aba;
+    document.querySelectorAll("[data-agrupar]").forEach(function(b){ const on = b.dataset.agrupar === aba; b.classList.toggle("ativo", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
     render();
   }
 
-  function todasPessoas(){
+  function todasPessoas(filtrado){
     const lista = [];
-    (estado.dados.eventos || []).forEach(function(ev){ ev.pessoas.forEach(function(p){ lista.push({ ev: ev, p: p }); }); });
+    (filtrado ? eventosFiltrados() : (estado.dados.eventos || [])).forEach(function(ev){ ev.pessoas.forEach(function(p){ lista.push({ ev: ev, p: p }); }); });
     return lista;
   }
 
@@ -380,16 +566,20 @@
       '<div class="tile"><small>Diárias trabalhadas</small><strong>' + t.diarias + '</strong></div>' +
       '<div class="tile ambar"><small>Para revisar</small><strong>' + t.revisar + '</strong></div>' +
       '<div class="tile vermelho"><small>Faltas</small><strong>' + t.faltas + '</strong></div>';
+    const todas = todasPessoas(false);
+    [["apagar"], ["financeiro"], ["pagos"]].forEach(function(f){ const el = document.querySelector('[data-conta="' + f[0] + '"]'); if(el){ const n = todas.filter(function(x){ return passaFiltro(x.p, f[0]); }).length; el.textContent = n ? String(n) : ""; } });
   }
 
   function render(){
+    setTimeout(pintarBarraEnvio, 0);
     const area = document.getElementById("conteudo");
-    if(!(estado.dados.eventos || []).length){
-      area.innerHTML = '<div class="vazio"><strong>Nenhuma vaga de free neste ciclo</strong>Use as setas para ver outros ciclos.</div>';
+    if(!eventosFiltrados().length){
+      area.innerHTML = '<div class="vazio"><strong>' + (estado.filtro === "apagar" ? "Nada a pagar" : estado.filtro === "pagos" ? "Nenhum pagamento feito" : "Nenhuma vaga de free") + '</strong>' + (estado.filtro === "apagar" ? "Tudo em dia." : "") + '</div>';
       return;
     }
     if(estado.aba === "pessoas"){ area.innerHTML = htmlPessoas(); return; }
     if(estado.aba === "fotos"){ area.innerHTML = htmlFotos(); return; }
+    if(estado.aba === "dias"){ area.innerHTML = htmlDias(); return; }
     area.innerHTML = htmlEventos();
   }
 
@@ -398,16 +588,129 @@
   }
 
   function tituloEvento(ev){
-    return '<div class="evento-titulo"><strong>' + esc(ev.cliente || "-") + '</strong><span>' +
-      diaSemana(ev.dataISO) + ' ' + dataBR(ev.dataISO) + ' · ' + esc(ev.etapa) + ' · encontro ' + esc(ev.horario) + ' · Pedido #' + esc(ev.pedido) +
-      ' · Responsável ' + esc(ev.responsavel || "-") + ' · Diária ' + moeda(ev.valor) + '</span></div>';
+    // Nov/2026: data · foto da decoradora · pedido · "Montagem · Cliente – Local" · encontro, ponto de encontro e responsável.
+    const ini = String(ev.cliente || "?").trim().split(/\s+/).slice(0, 2).map(function(x){ return x.charAt(0); }).join("").toUpperCase();
+    const hh = String(ev.horario || "").match(/^(\d{1,2}):(\d{2})/), encontro = hh ? (hh[1].padStart(2, "0") + "h" + (hh[2] === "00" ? "" : hh[2])) : (ev.horario || "-");
+    return '<div class="evento-data"><span class="evento-pedido">Pedido ' + esc(ev.pedido || "-") + '</span><small>' + diaSemana(ev.dataISO) + '</small><b>' + dataBR(ev.dataISO) + '</b></div>' +
+      '<div class="evento-cli">' + (ev.clienteFoto ? '<img src="' + esc(ev.clienteFoto) + '" alt="" onerror="this.remove()">' : "") + '<b>' + esc(ini) + '</b></div>' +
+      '<div class="evento-titulo"><strong>' + esc(ev.etapa || "") + ' · ' + esc(ev.cliente || "-") + (ev.local ? ' – ' + esc(ev.local) : "") + '</strong>' +
+      '<span>Encontro ' + esc(encontro) + (ev.pontoEncontro ? ' · ' + esc(ev.pontoEncontro) : "") + ' · Responsável ' + esc(ev.responsavel || "-") + '</span></div>' +
+      fotoEquipeHtml(ev);
   }
+
+  /* Nov/2026: uniforme conferido pela foto da equipe (o responsável tira no App do Montador).
+     Clicar na foto pergunta se todos estavam uniformizados e, se não, quem não estava. */
+  // Nov/2026: colunas "Local do check-in" (distância do ponto de encontro + mapa) e "Uniformizado" (o que o RH marcou pela foto da equipe).
+  function localCheckinHtml(p){
+    if(!p.checkinEm){ return '<span class="sub">—</span>'; }
+    if(p.presencaPor && (p.distancia === "" || p.distancia == null)){ return '<span class="lc lc-manual">Lançado à mão</span><span class="sub">por ' + esc(p.presencaPor) + '</span>'; }
+    const d = p.distancia === "" || p.distancia == null ? null : Number(p.distancia);
+    const dist = d == null ? "" : d >= 1000 ? (d / 1000).toFixed(1).replace(".", ",") + " km" : d + " m";
+    const cls = d == null ? "lc-sem" : d > 1000 ? "lc-longe" : "lc-ok";
+    const mapa = p.lat !== "" && p.lat != null && p.lng !== "" && p.lng != null ? '<button type="button" class="lc-mapa" data-mapa-ins="' + esc(p.idInscricao) + '">ver no mapa</button>' : "";
+    const txt = d == null ? "Sem localização" : d <= 1000 ? "No ponto · " + dist : "A " + dist + " do ponto";
+    return '<span class="lc ' + cls + '">' + txt + '</span>' + mapa;
+  }
+  function uniformizadoHtml(ev, p){
+    if(!p.calc || p.calc.fase === "FALTOU" || !p.checkinEm){ return '<span class="sub">—</span>'; }
+    const a = p.uniforme && p.uniforme.avaliacao;
+    const r = a === "OK" ? ["uz-sim", "Sim"] : a === "SEM" ? ["uz-nao", "Não"] : a === "INCOMPLETO" ? ["uz-inc", "Incompleto"] : ["uz-conferir", "A conferir"];
+    const full = eventoCompleto(ev.idVaga) || ev;
+    if(full.fotoEquipe){ return '<button type="button" class="uz ' + r[0] + '" data-eq-vaga="' + esc(ev.idVaga) + '" title="Ver a foto da equipe">' + r[1] + '</button>'; }
+    return '<span class="uz ' + r[0] + '" title="Sem foto da equipe">' + r[1] + '</span>';
+  }
+  // Mapa do check-in dentro do sistema (janela com o mapa do Google, sem sair da tela).
+  function abrirMapaCheckin(idIns){
+    let ev = null, p = null;
+    (estado.dados.eventos || []).forEach(function(e){ (e.pessoas || []).forEach(function(x){ if(x.idInscricao === idIns){ ev = e; p = x; } }); });
+    if(!p){ return; }
+    const q = encodeURIComponent(p.lat + "," + p.lng);
+    const d = p.distancia === "" || p.distancia == null ? null : Number(p.distancia);
+    const dist = d == null ? "" : d >= 1000 ? (d / 1000).toFixed(1).replace(".", ",") + " km" : d + " m";
+    abrirJanela(
+      '<h2>Local do check-in</h2>' +
+      '<p><b>' + esc(p.nome) + '</b> · check-in às ' + esc(hora(p.checkinEm) || "—") + (p.via ? ' por ' + esc(p.via) : "") + '<br>' +
+        (d == null ? "" : (d <= 1000 ? '<span class="lc lc-ok" style="display:inline">No ponto de encontro · ' + dist + '</span>' : '<span class="lc lc-longe" style="display:inline">A ' + dist + ' do ponto de encontro</span>')) +
+        (ev.pontoEncontro ? ' · Ponto: ' + esc(ev.pontoEncontro) : "") + '</p>' +
+      '<div class="mapa-checkin"><iframe title="Mapa do check-in" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=' + q + '&z=17&t=k&output=embed"></iframe></div>' +
+      '<div class="acoes"><a class="btn btn-claro" target="_blank" rel="noopener" href="https://www.google.com/maps?q=' + q + '">Abrir no Google Maps</a><button type="button" class="btn" onclick="fecharJanela()">Fechar</button></div>', true);
+  }
+  document.addEventListener("click", function(e){
+    const b = e.target.closest && e.target.closest("[data-mapa-ins]");
+    if(b){ abrirMapaCheckin(b.dataset.mapaIns); }
+  });
+  function eventoCompleto(idVaga){ return (estado.dados.eventos || []).filter(function(e){ return e.idVaga === idVaga; })[0] || null; }
+  function presentes(ev){ return (ev.pessoas || []).filter(function(p){ return p.calc && p.calc.fase !== "FALTOU"; }); }
+  function fotoEquipeHtml(evFiltrado){
+    const ev = eventoCompleto(evFiltrado.idVaga) || evFiltrado, gente = presentes(ev);
+    if(!gente.length){ return ""; }
+    if(!ev.fotoEquipe){ return '<div class="eq-foto eq-sem" title="O responsável ainda não enviou a foto da equipe no App do Montador"><span>Sem foto<br>da equipe</span></div>'; }
+    const sem = gente.filter(function(p){ return p.uniforme && p.uniforme.avaliacao !== "OK"; }).length;
+    const falta = gente.filter(function(p){ return !p.uniforme; }).length;
+    const selo = falta ? '<em class="eq-selo conferir">Conferir uniforme</em>' : sem ? '<em class="eq-selo sem">' + sem + ' sem uniforme</em>' : '<em class="eq-selo ok">✓ Uniformizados</em>';
+    return '<button type="button" class="eq-foto" data-eq-vaga="' + esc(ev.idVaga) + '" title="Foto da equipe · clique para conferir o uniforme">' +
+      '<img src="' + esc(miniDrive(ev.fotoEquipe, 400) || ev.fotoEquipe) + '" alt="Foto da equipe">' + selo + '</button>';
+  }
+  function abrirUniformeEquipe(idVaga){
+    const ev = eventoCompleto(idVaga); if(!ev){ return; }
+    const gente = presentes(ev);
+    const algumSem = gente.some(function(p){ return p.uniforme && p.uniforme.avaliacao !== "OK"; });
+    abrirJanela(
+      '<div class="eq-janela">' +
+        '<div class="eq-janela-foto"><img src="' + esc(miniDrive(ev.fotoEquipe, 1600) || ev.fotoEquipe) + '" alt="Foto da equipe"></div>' +
+        '<div class="eq-janela-lado">' +
+          '<h2>Foto da equipe</h2>' +
+          '<p>' + esc(ev.etapa || "") + ' · ' + esc(ev.cliente || "") + (ev.local ? ' – ' + esc(ev.local) : "") + (ev.fotoEquipeEm ? '<br>Enviada em ' + esc(ev.fotoEquipeEm) : "") + '</p>' +
+          '<div class="eq-pergunta">Todos estavam uniformizados?</div>' +
+          '<div class="eq-resposta"><button type="button" class="btn" data-eq-sim>Sim, todos</button><button type="button" class="btn btn-claro" data-eq-nao>Não</button></div>' +
+          '<div class="eq-quem" hidden><div class="eq-pergunta">Quem não estava uniformizado?</div>' +
+            gente.map(function(p){
+              const marcado = p.uniforme && p.uniforme.avaliacao !== "OK";
+              return '<label class="eq-pessoa"><input type="checkbox" value="' + esc(p.idInscricao) + '"' + (marcado ? " checked" : "") + '><span>' + esc(p.nome) + '</span></label>';
+            }).join("") +
+            '<div class="acoes"><button type="button" class="btn btn-claro" data-eq-fechar>Cancelar</button><button type="button" class="btn" data-eq-salvar>Salvar</button></div>' +
+          '</div>' +
+          '<div class="acoes eq-fechar-linha"><button type="button" class="btn btn-claro" data-eq-fechar>Fechar</button></div>' +
+        '</div>' +
+      '</div>', true);
+    const j = document.getElementById("janela"), quem = j.querySelector(".eq-quem"), linhaFechar = j.querySelector(".eq-fechar-linha");
+    if(algumSem){ quem.hidden = false; linhaFechar.hidden = true; }
+    const salvar = function(semIds, botao){
+      const lista = gente.map(function(p){ return { idInscricao: p.idInscricao, avaliacao: semIds.indexOf(p.idInscricao) >= 0 ? "SEM" : "OK" }; });
+      botao.disabled = true;
+      chamar("RH_uniformeEquipe", estado.token, estado.ciclo, lista)
+        .then(function(d){ fecharJanela(); aplicar(d); toast(semIds.length ? semIds.length + (semIds.length === 1 ? " pessoa sem uniforme" : " pessoas sem uniforme") : "Todos uniformizados"); })
+        .catch(function(e){ botao.disabled = false; tratar(e); });
+    };
+    j.querySelector("[data-eq-sim]").onclick = function(){ salvar([], this); };
+    j.querySelector("[data-eq-nao]").onclick = function(){ quem.hidden = false; linhaFechar.hidden = true; };
+    j.querySelector("[data-eq-salvar]").onclick = function(){
+      const ids = Array.prototype.map.call(quem.querySelectorAll("input:checked"), function(x){ return x.value; });
+      if(!ids.length){ toast("Marque quem não estava uniformizado, ou responda Sim.", true); return; }
+      salvar(ids, this);
+    };
+    j.querySelectorAll("[data-eq-fechar]").forEach(function(b){ b.onclick = fecharJanela; });
+  }
+  document.addEventListener("click", function(e){
+    const b = e.target.closest && e.target.closest("[data-eq-vaga]");
+    if(b){ abrirUniformeEquipe(b.dataset.eqVaga); }
+  });
 
   /* =========================================================
      POR EVENTO
   ========================================================= */
-  function htmlEventos(){
-    return estado.dados.eventos.map(function(ev){
+  // Agrupar por dia: um título por dia (com total e número de pessoas) e os eventos daquele dia embaixo.
+  function htmlDias(){
+    const dias = [], porDia = {};
+    eventosFiltrados().forEach(function(ev){ if(!porDia[ev.dataISO]){ porDia[ev.dataISO] = []; dias.push(ev.dataISO); } porDia[ev.dataISO].push(ev); });
+    return dias.map(function(d){
+      const evs = porDia[d], pessoas = evs.reduce(function(n, ev){ return n + ev.pessoas.length; }, 0);
+      const total = evs.reduce(function(s, ev){ return s + ev.pessoas.reduce(function(t, p){ return t + (p.calc.situacao === "NAO_PAGAR" || p.calc.situacao === "EM_ANDAMENTO" ? 0 : p.calc.total); }, 0); }, 0);
+      return '<div class="dia-grupo"><h3 class="dia-titulo"><span class="dia-nome">' + diaSemana(d) + ' ' + dataBR(d) + '</span><span class="dia-info">' + evs.length + (evs.length === 1 ? " evento" : " eventos") + ' · ' + pessoas + (pessoas === 1 ? " pessoa" : " pessoas") + ' · <b>' + moeda(total) + '</b></span></h3>' + htmlEventos(evs) + '</div>';
+    }).join("");
+  }
+  function htmlEventos(lista){
+    return (lista || eventosFiltrados()).map(function(ev){
       const pagaveis = ev.pessoas.filter(function(p){ return p.calc.situacao === "PAGAR" || p.calc.situacao === "REVISAR"; });
       const total = ev.pessoas.reduce(function(s, p){ return s + (p.calc.situacao === "NAO_PAGAR" || p.calc.situacao === "EM_ANDAMENTO" ? 0 : p.calc.total); }, 0);
 
@@ -416,26 +719,31 @@
         const pag = p.pagamento || {};
         const pago = c.situacao === "PAGO";
         const editavel = !pago && (c.situacao === "PAGAR" || c.situacao === "REVISAR" || pag.naoPagar);
-        return '<tr>' +
+        const enviavel = estado.filtro === "apagar" && (c.situacao === "PAGAR" || c.situacao === "REVISAR") && c.total > 0;
+        const fin = p.financeiro;
+        return '<tr' + (enviavel && estado.envio[p.idInscricao] ? ' class="marcada"' : "") + '>' +
+          (estado.filtro === "apagar" ? '<td class="td-sel" data-label="">' + (enviavel ? '<input type="checkbox" class="sel-envio" data-envio="' + esc(p.idInscricao) + '"' + (estado.envio[p.idInscricao] ? " checked" : "") + ' aria-label="Enviar ao Contas a Pagar">' : "") + '</td>' : "") +
           '<td data-label="Free"><div class="pessoa">' + fotoCadastro(p) + '<div><b><button class="link" type="button" onclick="abrirFicha(\'' + esc(p.idFree) + '\')">' + esc(p.nome) + '</button></b><small>' + esc(p.cpf) + ' <span class="nota">★ ' + Number(p.nota).toFixed(1).replace(".", ",") + '</span></small></div></div></td>' +
-          '<td data-label="Check-in"><span class="hora">' + (hora(p.checkinEm) || "—") + '</span><span class="sub">' + esc(p.via || "") + (p.distancia !== "" && p.distancia != null ? " · " + (p.distancia >= 1000 ? (p.distancia / 1000).toFixed(1).replace(".", ",") + " km" : p.distancia + " m") : "") + '</span></td>' +
+          '<td data-label="Check-in"><span class="hora">' + (hora(p.checkinEm) || "—") + '</span><span class="sub">' + esc(p.via || "") + '</span></td>' +
+          '<td data-label="Local do check-in">' + localCheckinHtml(p) + '</td>' +
+          '<td data-label="Uniformizado">' + uniformizadoHtml(ev, p) + '</td>' +
           '<td data-label="Check-out"><span class="hora">' + (hora(p.checkoutEm) || "—") + '</span></td>' +
           '<td data-label="Horas" class="num"><span class="hora">' + (c.horas || "—") + '</span></td>' +
           '<td data-label="Hora extra" class="extra">' + (c.extraMin > 0
-            ? '<label><input type="checkbox"' + (pag.pagarExtra ? " checked" : "") + (editavel ? "" : " disabled") + ' onchange="salvarDiaria(\'' + esc(p.idInscricao) + '\', { pagarExtra: this.checked })">' + esc(c.extraTexto) + ' · ' + moeda(c.extraValor) + '</label>'
+            ? '<label><input type="checkbox"' + (pag.pagarExtra ? " checked" : "") + (editavel ? "" : " disabled") + ' onchange="salvarDiaria(\'' + esc(p.idInscricao) + '\', { pagarExtra: this.checked })">' + esc(c.extraTexto) + ' · <span class="rs">' + moeda(c.extraValor) + '</span></label>'
             : '<span class="sub">—</span>') + '</td>' +
-          '<td data-label="Ajuste" class="num">' + (pag.ajuste ? '<b style="color:' + (pag.ajuste < 0 ? "var(--erro)" : "var(--ok-forte)") + '">' + (pag.ajuste > 0 ? "+" : "") + moeda(pag.ajuste) + '</b><span class="sub">' + esc(pag.motivoAjuste) + '</span>' : '<span class="sub">—</span>') +
+          '<td data-label="Ajuste" class="num">' + (pag.ajuste ? '<b class="rs">' + (pag.ajuste > 0 ? "+" : "") + moeda(pag.ajuste) + '</b><span class="sub">' + esc(pag.motivoAjuste) + '</span>' : '<span class="sub">—</span>') +
             (editavel ? '<br><button class="link" style="font-size:11.5px" type="button" onclick="abrirAjuste(\'' + esc(p.idInscricao) + '\')">ajustar</button>' : "") + '</td>' +
           '<td data-label="Total" class="num"><b>' + (c.situacao === "NAO_PAGAR" || c.situacao === "EM_ANDAMENTO" ? "—" : moeda(c.total)) + '</b></td>' +
           '<td data-label="Situação"><span class="chip ' + c.situacao + '">' + SITUACAO[c.situacao] + '</span>' +
-            (pago ? '<span class="sub">' + esc(pag.forma) + ' · ' + esc(String(pag.pagoEm).slice(0, 10)) + '</span>' : "") +
+            (fin ? '<span class="sub">' + esc(fin.documento) + ' · vence ' + esc(dataBR(String(fin.vencimento || "").slice(0, 10))) + (fin.pago > 0 && c.situacao !== "PAGO" ? ' · pago em parte' : "") + '</span>' :
+              pago ? '<span class="sub">' + esc(pag.forma) + ' · ' + esc(String(pag.pagoEm).slice(0, 10)) + '</span>' : "") +
             (c.motivos.length ? '<div class="motivos">' + c.motivos.map(function(m){ return '<div>' + esc(m) + '</div>'; }).join("") + '</div>' : "") + '</td>' +
           '<td data-label="" class="td-acoes"><div class="acoes-linha">' +
-            (pago ? '<button class="btn btn-claro btn-mini" type="button" onclick="desfazerPago(\'' + esc(p.idInscricao) + '\')">Desfazer</button>' : "") +
-            (!pago && (c.situacao === "PAGAR" || c.situacao === "REVISAR") ? '<button class="btn btn-mini" type="button" onclick="pagar([\'' + esc(p.idInscricao) + '\'], \'' + esc(p.nome) + '\')">Pago</button>' : "") +
-            (!pago && c.fase !== "FALTOU" && c.situacao !== "EM_ANDAMENTO"
-              ? '<button class="btn btn-claro btn-mini" type="button" onclick="salvarDiaria(\'' + esc(p.idInscricao) + '\', { naoPagar: ' + (pag.naoPagar ? "false" : "true") + ' })">' + (pag.naoPagar ? "Voltar a pagar" : "Não pagar") + '</button>'
-              : "") +
+            (pago && !fin ? '<button class="btn btn-claro btn-mini" type="button" onclick="desfazerPago(\'' + esc(p.idInscricao) + '\')">Desfazer</button>' : "") +
+            (fin && c.situacao === "FINANCEIRO" && !(fin.pago > 0) ? '<button class="btn btn-claro btn-mini" type="button" data-desfazer-envio="' + esc(fin.fechamento) + '" data-doc="' + esc(fin.documento) + '">Desfazer envio</button>' : "") +
+            // Nov/2026: sem "Pago" e "Não pagar" na linha (o pagamento é marcado em Agrupar por pessoa). Quem já estava em "não pagar" pode voltar.
+            (!pago && pag.naoPagar ? '<button class="btn btn-claro btn-mini" type="button" onclick="salvarDiaria(&quot;' + esc(p.idInscricao) + '&quot;, { naoPagar: false })">Voltar a pagar</button>' : "") +
           '</div></td>' +
         '</tr>';
       }).join("");
@@ -443,10 +751,9 @@
       return '<section class="evento">' +
         '<div class="evento-topo">' + tituloEvento(ev) +
           '<div class="evento-total"><small>Total do evento</small><strong>' + moeda(total) + '</strong></div>' +
-          (pagaveis.length ? '<button class="btn btn-ok" type="button" onclick="pagar(' + esc(JSON.stringify(pagaveis.map(function(p){ return p.idInscricao; }))) + ', \'todos deste evento\')">Marcar evento como pago</button>' : "") +
         '</div>' +
         (ev.pessoas.length
-          ? '<div class="tabela-rolavel"><table><thead><tr><th>Free</th><th>Check-in</th><th>Check-out</th><th class="num">Horas</th><th>Hora extra</th><th class="num">Ajuste</th><th class="num">Total</th><th>Situação</th><th></th></tr></thead><tbody>' + linhas + '</tbody></table></div>'
+          ? '<div class="tabela-rolavel"><table><thead><tr>' + (estado.filtro === "apagar" ? '<th class="td-sel">' + (ev.pessoas.some(function(p){ return (p.calc.situacao === "PAGAR" || p.calc.situacao === "REVISAR") && p.calc.total > 0; }) ? '<input type="checkbox" class="sel-evento" data-sel-vaga="' + esc(ev.idVaga) + '" aria-label="Marcar todos do evento">' : "") + '</th>' : "") + '<th>Free</th><th>Check-in</th><th>Local do check-in</th><th>Uniformizado</th><th>Check-out</th><th class="num">Horas</th><th>Hora extra</th><th class="num">Ajuste</th><th class="num">Total</th><th>Situação</th><th></th></tr></thead><tbody>' + linhas + '</tbody></table></div>'
           : '<div class="vazio" style="padding:18px">Ninguém confirmou nesta vaga.</div>') +
       '</section>';
     }).join("");
@@ -457,13 +764,13 @@
   ========================================================= */
   function agruparPessoas(){
     const mapa = {};
-    todasPessoas().forEach(function(x){
+    todasPessoas(true).forEach(function(x){
       const p = x.p, c = p.calc;
       const r = mapa[p.idFree] = mapa[p.idFree] || { p: p, dias: [], total: 0, pago: 0, pendentes: [] };
       if(c.situacao === "NAO_PAGAR" || c.situacao === "EM_ANDAMENTO"){ return; }
       r.dias.push(x);
       r.total += c.total;
-      if(c.situacao === "PAGO"){ r.pago += c.total; } else { r.pendentes.push(p.idInscricao); }
+      if(c.situacao === "PAGO"){ r.pago += c.total; } else if(c.situacao === "FINANCEIRO"){ r.fin = (r.fin || 0) + c.total; } else if(c.total > 0){ r.pendentes.push(p.idInscricao); }
     });
     return Object.keys(mapa).map(function(k){ return mapa[k]; }).filter(function(r){ return r.dias.length; })
       .sort(function(a, b){ return (b.total - b.pago) - (a.total - a.pago) || a.p.nome.localeCompare(b.p.nome); });
@@ -471,16 +778,16 @@
 
   function htmlPessoas(){
     const grupos = agruparPessoas();
-    if(!grupos.length){ return '<div class="vazio"><strong>Nada a pagar neste ciclo</strong></div>'; }
+    if(!grupos.length){ return '<div class="vazio"><strong>Nada por aqui</strong></div>'; }
 
     const linhas = grupos.map(function(g){
       const p = g.p;
-      const aPagar = g.total - g.pago;
+      const aPagar = g.total - g.pago - (g.fin || 0);
       const dias = g.dias.map(function(x){
         return diaSemana(x.ev.dataISO) + " " + dataBR(x.ev.dataISO) + " · " + x.ev.cliente + " · " + (hora(x.p.checkinEm) || "—") + "–" + (hora(x.p.checkoutEm) || "—") + " · " + moeda(x.p.calc.total);
       });
       const tel = String(p.telefone || "").replace(/\D/g, "");
-      const texto = "Oi " + String(p.nome).split(" ")[0] + "! Resumo do seu pagamento (ciclo " + dataBR(estado.dados.inicio) + " a " + dataBR(estado.dados.fim) + "):\n" +
+      const texto = "Oi " + String(p.nome).split(" ")[0] + "! Resumo do seu pagamento:\n" +
         dias.map(function(d){ return "• " + d; }).join("\n") + "\nTotal: " + moeda(g.total) + (p.pix ? "\nPIX: " + p.pix : "");
 
       return '<tr>' +
@@ -491,7 +798,7 @@
         '<td data-label="Situação"><span class="chip ' + (aPagar > 0.004 ? "aviso" : "PAGO") + '">' + (aPagar > 0.004 ? "A pagar " + moeda(aPagar) : "Pago") + '</span></td>' +
         '<td data-label="" class="td-acoes"><div class="acoes-linha">' +
           (tel.length >= 10 ? '<a class="btn btn-claro btn-mini" target="_blank" rel="noopener" href="https://wa.me/55' + tel + '?text=' + encodeURIComponent(texto) + '">WhatsApp</a>' : "") +
-          (g.pendentes.length ? '<button class="btn btn-mini" type="button" onclick="pagar(' + esc(JSON.stringify(g.pendentes)) + ', \'' + esc(p.nome) + '\')">Marcar como pago</button>' : "") +
+          (g.pendentes.length ? '<button class="btn btn-mini" type="button" data-envio-pessoa="' + esc(g.pendentes.join(",")) + '">Enviar ao Contas a Pagar</button>' : "") +
         '</div></td>' +
       '</tr>';
     }).join("");
@@ -503,7 +810,7 @@
      FOTOS E UNIFORME
   ========================================================= */
   function htmlFotos(){
-    return estado.dados.eventos.map(function(ev){
+    return eventosFiltrados().map(function(ev){
       const fotos = (ev.fotos || []).map(function(f){
         const mini = miniDrive(f.url, 500);
         return '<div class="miniatura" onclick="abrirLuz(\'' + esc(f.url) + '\')">' + (mini ? '<img src="' + esc(mini) + '" alt="" loading="lazy">' : "") + '<span>' + esc(f.legenda) + '</span></div>';
@@ -530,7 +837,7 @@
         '<div class="evento-topo">' + tituloEvento(ev) + '</div>' +
         '<div class="rotulo-secao">Fotos enviadas pela equipe (' + (ev.fotos || []).length + ')</div>' +
         (fotos ? '<div class="galeria">' + fotos + '</div>' : '<div class="vazio" style="padding:14px">A equipe ainda não enviou fotos deste evento.</div>') +
-        '<div class="rotulo-secao">Uniforme · foto do cadastro × foto do check-in</div>' +
+        '<div class="rotulo-secao">Uniforme · conferido pela foto da equipe (clique na foto acima)</div>' +
         (pessoas ? '<div class="uniforme-lista" style="padding-top:10px">' + pessoas + '</div>' : '<div class="vazio" style="padding:14px">Ninguém fez check-in ainda.</div>') +
       '</section>';
     }).join("");
@@ -662,7 +969,7 @@
   }
 
   /* ---------- Início ---------- */
-  if(estado.token){ carregar(); } else { tela("telaLogin"); }
+  if(estado.token){ carregar(); } else { entrarAuto(); }
 </script>
 </body>
 </html>

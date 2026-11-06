@@ -12,6 +12,8 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2.118.0"></script>
 <script src="js/core/supabase.js"></script>
 <script src="js/core/doisFatores.js?v=20261023-2fa"></script>
+<script src="js/core/entrar.js?v=20261106-app"></script>
+<script src="js/core/versaoCelular.js?v=20261106-app" data-ir-para-app></script>
 
 <style>
   /* =========================================================
@@ -159,115 +161,16 @@ async function login(ev){
   btn.disabled = true;
   btn.textContent = "Entrando…";
   mensagem("");
-
-  const email = document.getElementById("email").value.trim();
-  const senha = document.getElementById("senha").value;
-
-  if(!email || !senha){
-    mensagem("Preencha e-mail e senha.");
+  try{
+    await window.EasyLocEntrar.entrar(document.getElementById("email").value, document.getElementById("senha").value, function(t){ btn.textContent = t; });
+  }catch(e){
+    mensagem(e.message || "Não foi possível entrar.");
     resetButton();
     return;
   }
-
-  let data, error;
-  if (email.includes("@")) {
-    ({ data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha }));
-  } else {
-    const result = await supabaseClient.functions.invoke("funcionarios-admin", {
-      body: { action: "login", login: email, password: senha }
-    });
-    error = result.error;
-    if (!error && result.data?.session) {
-      ({ data, error } = await supabaseClient.auth.setSession(result.data.session));
-    }
-  }
-
-  if(error || !data?.user){
-    mensagem("E-mail ou senha incorretos.");
-    resetButton();
-    return;
-  }
-
-  const userId = data.user.id;
-
-  // Verificação em duas etapas (out/2026): com a exigência ligada, o código do WhatsApp vem antes de qualquer dado.
-  // Se a função não responder, segue: quem barra de verdade é o banco (funcionario_contexto avisa abaixo).
-  btn.textContent = "Verificando…";
-  try {
-    const liberado = await window.EasyLoc2FA.garantir({ supabase: supabaseClient });
-    if (!liberado) {
-      await supabaseClient.auth.signOut();
-      mensagem("Entrada cancelada.");
-      resetButton();
-      return;
-    }
-  } catch (e) {
-    console.warn("[login] verificação em duas etapas indisponível", e);
-  }
-
-  const { data: vinculos, error: erroVinculo } = await supabaseClient
-    .from("usuarios_empresas")
-    .select("empresa_id")
-    .eq("user_id", userId)
-    .limit(1);
-
-  if(erroVinculo || !vinculos || vinculos.length === 0){
-    mensagem("Usuário não está vinculado a nenhuma empresa.");
-    resetButton();
-    return;
-  }
-
-  const empresaId = vinculos[0].empresa_id;
-
-  const acesso = await supabaseClient.rpc("funcionario_contexto", { p_empresa_id: empresaId });
-  if (acesso.error || !acesso.data?.ativo) {
-    mensagem(acesso.data?.dois_fatores_pendente
-      ? "Não foi possível confirmar o código do WhatsApp. Entre de novo."
-      : "Acesso indisponível. Consulte o administrador.");
-    await supabaseClient.auth.signOut();
-    resetButton();
-    return;
-  }
-
-  const { data: assinatura, error: erroAssinatura } = await supabaseClient
-    .from("assinaturas")
-    .select("status,vencimento")
-    .eq("empresa_id", empresaId)
-    .single();
-
-  if(erroAssinatura || !assinatura){
-    mensagem("Nenhuma assinatura encontrada. Entre em contato com o suporte.");
-    resetButton();
-    return;
-  }
-
-  const vencida =
-    assinatura.status !== "ativo" ||
-    new Date(assinatura.vencimento) < new Date();
-
-  if(vencida){
-    mensagem("Assinatura inativa ou vencida. Entre em contato com o suporte.");
-    resetButton();
-    return;
-  }
-
-  const { data: usuario, error: erroUsuario } = await supabaseClient
-    .from("usuarios")
-    .select("nome")
-    .eq("id", userId)
-    .single();
-
-  if(erroUsuario){
-    console.error("Erro ao buscar usuário:", erroUsuario);
-  }
-
-  sessionStorage.setItem("login_ok", "1");
-  sessionStorage.setItem("empresa_id", empresaId);
-  sessionStorage.setItem("usuario_nome", usuario?.nome || "Usuário");
-
-  location.href = "dashboard.html";
+  // Celular (nov/2026): o mesmo login abre o app (app.html), a não ser que a pessoa tenha escolhido a versão completa.
+  location.href = window.EasyLocCelular && window.EasyLocCelular.usarApp() ? "app.html" : "dashboard.html";
 }
-
 function resetButton(){
   const btn = document.getElementById("loginBtn");
   btn.disabled = false;

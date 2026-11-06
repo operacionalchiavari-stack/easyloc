@@ -6,14 +6,14 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261029-extra2"></script>
+  <script src="../operacao-sem-motor.js?v=20261106-bonus"></script>
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <meta charset="UTF-8" />
 <meta
   name="viewport"
   content="width=device-width, initial-scale=1, viewport-fit=cover"
 />
-  <title>Equipe Free</title>
+  <title>Cadastro de Freelancer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -8844,19 +8844,100 @@ textarea{ font-family:inherit; }
   .free-topo .semana-nav{ display:flex; align-items:center; gap:8px; }
   @media (max-width:760px){ .free-topo{ grid-template-columns:1fr; } .free-topo h1{ order:-1; } }
 </style>
+<style id="equipe-free-revisao">
+  /* Nov/2026: uma tela só — faixa de dias, vagas do dia (esquerda) e cadastros (direita), sem moldura em volta. */
+  .free-pagina{ max-width:none; padding:0 0 40px; }
+  .free-pagina .free-corpo{ background:transparent; border:0; border-radius:0; padding:0; box-shadow:none; }
+  .free-dias{ display:flex; gap:6px; overflow-x:auto; padding:4px 2px 4px; margin:0 0 12px; border-bottom:1px solid #e3e7ec; scrollbar-width:none; cursor:grab; user-select:none; }
+  .free-dias::-webkit-scrollbar{ display:none; }
+  .free-dias.arrastando{ cursor:grabbing; }
+  .free-dias button{ position:relative; flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:2px; min-width:58px; padding:8px 10px; border:0; border-bottom:3px solid transparent; border-radius:0; background:none; color:#6b6b6b; font:500 12px Inter,sans-serif; cursor:pointer; box-shadow:none; }
+  .free-dias button strong{ font:600 14px Inter,sans-serif; color:#1f2020; }
+  .free-dias button.is-hoje span{ color:#123f86; font-weight:700; }
+  .free-dias button[aria-selected="true"]{ border-bottom-color:#123f86; color:#123f86; }
+  .free-dias button[aria-selected="true"] strong{ color:#123f86; }
+  .free-dias .free-dia-conta{ position:absolute; top:0; right:2px; min-width:16px; height:16px; padding:0 4px; box-sizing:border-box; border-radius:999px; background:#ef3340; color:#fff; font:700 10px/16px Inter,sans-serif; font-style:normal; text-align:center; }
+  .free-dias .free-dia-conta.is-ok{ background:#26915c; }
+  .free-abas-principais{ display:flex; gap:26px; border-bottom:1px solid #e3e7ec; margin:0 0 12px; }
+  .free-abas-principais button{ border:0; background:none; padding:10px 0 11px; margin-bottom:-1px; border-bottom:2px solid transparent; font:500 13px/1 Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#6b6b6b; cursor:pointer; }
+  .free-abas-principais button.ativa{ color:#1f2020; border-bottom-color:#123f86; }
+  .free-abas-principais button span:empty{ display:none; }
+  .free-abas-principais button span{ display:inline-block; min-width:18px; margin-left:5px; padding:2px 6px; border-radius:999px; background:#e60012; color:#fff; font-size:11px; letter-spacing:0; }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .free-dias[hidden]{ display:none!important; }
+  .free-col-cheia{ margin-top:4px; }
+  .fc-mestre{ display:grid; grid-template-columns:minmax(260px,340px) minmax(0,1fr); gap:18px; align-items:start; }
+  .fc-lista .free-busca{ margin-bottom:8px; }
+  .fc-itens{ display:flex; flex-direction:column; gap:4px; max-height:calc(100vh - 230px); overflow:auto; }
+  .fc-item{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:8px 10px; border:1px solid transparent; border-radius:10px; background:none; cursor:pointer; font:400 13.5px Inter,sans-serif; color:#1f2020; }
+  .fc-item:hover{ background:#f3f5f6; }
+  .fc-item.ativo{ background:#eaf0fa; border-color:#c9d6ec; }
+  .fc-item-txt{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .fc-item-txt b{ font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fc-item-txt small{ color:#6b6b6b; font-size:12px; }
+  .fc-item-nota{ flex:none; }
+  .fc-detalhe{ border-left:1px solid #e3e7ec; padding-left:18px; min-width:0; }
+  .fc-det-topo{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-bottom:12px; border-bottom:1px solid #eef1f4; }
+  .fc-det-nome{ flex:1; min-width:200px; display:flex; flex-direction:column; gap:2px; }
+  .fc-det-linha{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .fc-det-nome strong{ font:500 18px Inter,sans-serif; }
+  .fc-det-nome span{ color:#6b6b6b; font-size:13px; }
+  .fc-det-acoes{ display:flex; gap:6px; }
+  .fc-det-info, .fc-vazio-det{ padding:16px 0; color:#6b6b6b; }
+  .fc-cards{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:14px 0; }
+  .fc-card{ border:1px solid #e3e7ec; border-radius:10px; padding:10px 12px; background:#fff; }
+  .fc-card small{ display:block; font:500 11px Inter,sans-serif; letter-spacing:.05em; text-transform:uppercase; color:#6b6b6b; }
+  .fc-card b{ display:block; font:500 20px Inter,sans-serif; margin-top:2px; }
+  .fc-card em{ display:block; font-style:normal; font-size:11.5px; color:#b42318; }
+  .fc-card.ruim b{ color:#b42318; }
+  .fc-det-titulo{ margin:6px 0 8px; font:500 12px Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#4f4f4f; }
+  .fc-det-titulo span{ display:inline-block; margin-left:4px; padding:1px 6px; border-radius:999px; background:#eef1f4; font-size:11px; }
+  .fc-hist-tab{ width:100%; border-collapse:collapse; font:400 13.5px Inter,sans-serif; }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .fc-hist-tab thead th{ background:#eef1f5!important; padding:9px 12px!important; text-align:left; font:500 11px Inter,sans-serif!important; letter-spacing:.05em; text-transform:uppercase; color:#4f4f4f!important; }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .fc-hist-tab td{ padding:9px 12px!important; border-bottom:1px solid #eef1f4; font-weight:400!important; }
+  .fc-hist-tab .fc-num{ text-align:center; }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .fc-hist-tab tr.sobe .fc-pontos{ color:#1f7a44!important; font-weight:600!important; }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .fc-hist-tab tr.desce .fc-pontos, html:root:is(#fd#fd#fd#fd#fd#fd,html) body .fc-hist-tab tr.desce td:nth-child(2){ color:#b42318!important; }
+  .fc-falta{ color:#b42318; }
+  @media (max-width:900px){ .fc-mestre{ grid-template-columns:1fr; } .fc-detalhe{ border-left:0; padding-left:0; } .fc-itens{ max-height:260px; } .fc-cards{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .fc-tabela-wrap{ overflow-x:auto; }
+  .fc-tabela{ width:100%; border-collapse:collapse; font:400 13.5px Inter,sans-serif; color:#1f2020; }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .fc-tabela thead th{ background:#eef1f5!important; padding:10px 12px!important; text-align:left; font:500 11px Inter,sans-serif!important; letter-spacing:.05em; text-transform:uppercase; color:#4f4f4f!important; white-space:nowrap; border-bottom:1px solid #e3e7ec; }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .fc-tabela td{ padding:12px!important; vertical-align:top; border-bottom:1px solid #eef1f4; font-weight:400!important; }
+  .fc-tabela .fc-num{ text-align:center; white-space:nowrap; }
+  .fc-pessoa > div{ display:flex; align-items:center; gap:10px; min-width:180px; }
+  .fc-pessoa strong{ font-weight:500; }
+  .fc-cpf{ display:block; color:#6b6b6b; white-space:nowrap; }
+  .fc-falta{ color:#b42318; font-weight:500; }
+  .fc-alerta{ display:block; color:#b42318; font-size:11.5px; }
+  .fc-acoes > div{ display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; }
+  .fc-hist-cel{ min-width:300px; }
+  .fc-hist{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px; }
+  .fc-hist li{ display:grid; grid-template-columns:44px 1fr; column-gap:8px; align-items:baseline; }
+  .fc-hist li b{ font-weight:600; text-align:right; }
+  .fc-hist li small{ grid-column:2; color:#8a8a8a; font-size:11.5px; }
+  .fc-hist li.sobe b, .fc-hist li.sobe span{ color:#1f7a44; }
+  .fc-hist li.desce b, .fc-hist li.desce span{ color:#b42318; }
+  .fc-vazio{ color:#8a8a8a; }
+  .free-cabeca{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 12px; }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .free-pagina{ padding-top:0!important; margin-top:0!important; }
+  .free-colunas{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; align-items:start; }
+  .free-col{ min-width:0; background:#fff; border:1px solid #e3e7ec; border-radius:14px; padding:16px 18px; box-shadow:0 0 8px rgba(15,23,42,.08); }
+  .free-col-titulo{ margin:0 0 4px; font:600 13px Inter,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:#4f4f4f; }
+  @media (max-width:1000px){ .free-colunas{ grid-template-columns:1fr; } }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .free-dias{ display:flex!important; flex-wrap:nowrap!important; overflow-x:auto!important; justify-content:flex-start!important; gap:4px!important; }
+  html:root:is(#fd#fd#fd#fd#fd#fd,html) body .free-dias > button{ flex:0 0 auto!important; min-width:58px!important; margin:0!important; padding:8px 10px!important; text-transform:none!important; letter-spacing:0!important; }
+</style>
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 </head>
 <body>
   <div class="free-pagina">
-    <div class="free-topo">
-      <div class="semana-nav">
-        <button type="button" class="semana-seta" onclick="freeMudarSemana(-7)" title="Semana anterior" aria-label="Semana anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-        <div class="week-badge" id="weekLabel">Carregando semana…</div>
-        <button type="button" class="semana-seta" onclick="freeMudarSemana(7)" title="Próxima semana" aria-label="Próxima semana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
-      </div>
-      <h1>Equipe Free</h1>
-      <div></div>
+    <!-- Nov/2026: faixa de dias (vários para trás e para a frente, igual ao Painel Logístico) no lugar da semana e do título. -->
+    <!-- Nov/2026: abas Necessidades (vagas dos eventos e confirmações, por dia) e Cadastros (cadastros e aprovações). -->
+    <div class="free-abas-principais" role="tablist" aria-label="Cadastro de Freelancer">
+      <button type="button" role="tab" data-free-aba="necessidades" aria-selected="true" class="ativa" onclick="freeTrocarAbaPrincipal('necessidades')">Necessidades</button>
+      <button type="button" role="tab" data-free-aba="cadastros" aria-selected="false" onclick="freeTrocarAbaPrincipal('cadastros')">Cadastros <span id="freeAbaCadConta"></span></button>
     </div>
+    <nav class="free-dias" id="freeDias" role="tablist" aria-label="Dias"></nav>
     <div class="free-corpo" id="freePainelCorpo"><div class="free-vazio">Carregando…</div></div>
   </div>
 
@@ -8943,6 +9024,11 @@ textarea{ font-family:inherit; }
   .free-status.ok{ background:#ecf8ef; color:#166534; }
   .free-status.aviso{ background:#fdf4e3; color:#b45309; }
   .free-status.erro{ background:#fdeeee; color:#dc2626; }
+  .free-abas-cad{ display:flex; gap:22px; border-bottom:1px solid #e3e7ec; margin:0 0 12px; }
+  .free-abas-cad button{ border:0; background:none; padding:8px 0 9px; margin-bottom:-1px; border-bottom:2px solid transparent; font:600 12px/1 Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#8a8a8a; cursor:pointer; }
+  .free-abas-cad button.ativa{ color:#1f2020; border-bottom-color:#123f86; }
+  .free-abas-cad button span{ display:inline-block; min-width:18px; margin-left:4px; padding:2px 5px; border-radius:999px; background:#eef1f4; color:#4f4f4f; font-size:11px; letter-spacing:0; }
+  .free-abas-cad button span.alerta{ background:#e60012; color:#fff; }
   .free-secao{ margin:24px 0 10px; display:flex; align-items:baseline; gap:10px; font:600 12px/1 var(--sans); letter-spacing:.06em; text-transform:uppercase; color:#9e9e9e; }
   .free-secao span{ color:#1f2020; font-size:13px; }
   .free-lista{ display:flex; flex-direction:column; gap:8px; }
@@ -8954,8 +9040,6 @@ textarea{ font-family:inherit; }
   .free-pessoa-info a{ color:#166534; font-weight:600; text-decoration:none; }
   .free-pessoa .btn{ padding:8px 12px; font-size:12.5px; }
   .free-vazio{ padding:16px; border:1px dashed #e3e7ec; border-radius:14px; text-align:center; color:#9e9e9e; font-size:13px; }
-  .free-link{ display:flex; gap:8px; align-items:center; padding:12px 14px; border-radius:14px; background:#f3f5f7; margin-bottom:16px; font-size:13px; }
-  .free-link code{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#2b2b2b; }
   .free-abas{ display:flex; gap:8px; margin-bottom:16px; }
   .free-linha-vaga{ display:grid; grid-template-columns:92px 1fr auto; gap:12px; align-items:center; padding:12px 14px; border:1px solid #e3e7ec; border-radius:14px; background:#fff; cursor:pointer; }
   .free-linha-vaga:hover{ border-color:var(--el-color-border,#e3e7ec); }
@@ -9189,7 +9273,7 @@ function pedirSenha(setor){
 
 /* Semana: o painel usa as etapas da semana para "Sem pedido de free" */
 function carregarCronograma(){
-  document.getElementById("weekLabel").textContent = "Semana: " + formatWeekRange(semanaInicioAtual);
+  const rotuloSemana = document.getElementById("weekLabel"); if(rotuloSemana) rotuloSemana.textContent = "Semana: " + formatWeekRange(semanaInicioAtual);
   return new Promise(function(resolve){
     google.script.run
       .withSuccessHandler(function(res){ cronogramaData = Array.isArray(res) ? res : []; window.cronogramaData = cronogramaData; resolve(); })
@@ -10264,10 +10348,6 @@ async function freeRenderPainel(){
   const pendentes = (freeEstado.cadastros || []).filter(function(c){ return c.status === "PENDENTE"; }).length;
 
   const topo =
-    '<div class="free-link">' +
-      '<span>Link do app dos free:</span><code id="freeUrlTexto">carregando…</code>' +
-      '<button class="btn btn-light" type="button" onclick="freeCopiarLink()">Copiar</button>' +
-    '</div>' +
     '<div class="free-abas">' +
       '<button class="btn ' + (freeEstado.aba === "vagas" ? "btn-primary" : "btn-light") + '" type="button" onclick="freeTrocarAba(\'vagas\')">Vagas da semana</button>' +
       '<button class="btn ' + (freeEstado.aba === "cadastros" ? "btn-primary" : "btn-light") + '" type="button" onclick="freeTrocarAba(\'cadastros\')">Cadastros' + (pendentes ? " (" + pendentes + " novos)" : "") + '</button>' +
@@ -10359,68 +10439,90 @@ function freeHtmlVagasSemana(){
   return html;
 }
 
+// Nov/2026: Cadastros em duas colunas — à esquerda a lista de freelancers; escolhendo um, à direita aparecem
+// os dados dele e o histórico de pontuação inteiro (todas as vezes que a nota subiu ou desceu).
+function freeBotoesCadastro(c){
+  if(c.status === "PENDENTE"){
+    return '<button class="btn btn-primary" type="button" onclick="freeStatusCadastro(&quot;' + escapeHtml(c.id) + '&quot;, &quot;APROVADO&quot;)">Aprovar</button>' +
+      '<button class="btn btn-light" type="button" onclick="freeStatusCadastro(&quot;' + escapeHtml(c.id) + '&quot;, &quot;BLOQUEADO&quot;)">Recusar</button>';
+  }
+  if(c.status === "APROVADO"){ return '<button class="btn btn-light" type="button" onclick="freeStatusCadastro(&quot;' + escapeHtml(c.id) + '&quot;, &quot;BLOQUEADO&quot;)">Bloquear</button>'; }
+  return '<button class="btn btn-light" type="button" onclick="freeStatusCadastro(&quot;' + escapeHtml(c.id) + '&quot;, &quot;APROVADO&quot;)">Desbloquear</button>';
+}
+function freeDetalheCadastro(c){
+  if(!c){ return '<div class="fc-vazio-det">Escolha um freelancer na lista.</div>'; }
+  const topo = '<div class="fc-det-topo">' + freeFotoHtml(c) +
+    '<div class="fc-det-nome"><div class="fc-det-linha"><strong>' + escapeHtml(c.nome) + '</strong>' + (c.status !== "PENDENTE" ? freeEstrelas(c.nota) : "") + '</div>' +
+      '<span>CPF ' + escapeHtml(c.cpf) + ' · ' + freeLinkWhats(c.telefone, c.nome) + '</span></div>' +
+    '<div class="fc-det-acoes">' + freeBotoesCadastro(c) + '</div></div>';
+  if(c.status === "PENDENTE"){
+    return topo + '<div class="fc-det-info">Cadastrou em ' + escapeHtml(c.cadastradoEm || "-") + '. Ainda não tem trabalhos nem pontuação.</div>';
+  }
+  const cards = [["Trabalhos", c.trabalhos || 0, ""], ["Confirmações", c.confirmacoes || 0, ""], ["Cancelamentos", c.cancelamentos || 0, c.cimaDaHora ? c.cimaDaHora + " em cima da hora" : ""], ["Faltas", c.faltas || 0, ""]]
+    .map(function(x){ return '<div class="fc-card' + (x[0] === "Faltas" && x[1] ? " ruim" : "") + '"><small>' + x[0] + '</small><b>' + x[1] + '</b>' + (x[2] ? '<em>' + escapeHtml(x[2]) + '</em>' : "") + '</div>'; }).join("");
+  const hist = c.historico || [];
+  const tabela = hist.length
+    ? '<table class="fc-hist-tab"><thead><tr><th>Evento</th><th>Motivo</th><th class="fc-num">Pontos</th><th class="fc-num">Nota depois</th></tr></thead><tbody>' +
+      hist.map(function(h){
+        const pos = h.delta >= 0;
+        return '<tr class="' + (pos ? "sobe" : "desce") + '"><td>' + escapeHtml(h.titulo) + '</td><td>' + escapeHtml(h.motivo) + '</td>' +
+          '<td class="fc-num fc-pontos">' + (pos ? "+" : "") + String(h.delta).replace(".", ",") + '</td>' +
+          '<td class="fc-num">' + (h.nota != null ? String(h.nota).replace(".", ",") : "—") + '</td></tr>';
+      }).join("") + '</tbody></table>'
+    : '<div class="fc-det-info">Sem pontuações ainda. A nota começa em 5,0.</div>';
+  return topo + '<div class="fc-cards">' + cards + '</div><h4 class="fc-det-titulo">Histórico de pontuação <span>' + hist.length + '</span></h4>' + tabela;
+}
+
 function freeHtmlCadastros(){
   const todos = freeEstado.cadastros || [];
   const pendentes = todos.filter(function(c){ return c.status === "PENDENTE"; });
   const aprovados = todos.filter(function(c){ return c.status === "APROVADO"; });
   const bloqueados = todos.filter(function(c){ return c.status === "BLOQUEADO"; });
 
-  function linha(c){
-    let botoes = "";
-    if(c.status === "PENDENTE"){
-      botoes =
-        '<button class="btn btn-primary" type="button" onclick="freeStatusCadastro(\'' + escapeHtml(c.id) + '\', \'APROVADO\')">Aprovar</button>' +
-        '<button class="btn btn-light" type="button" onclick="freeStatusCadastro(\'' + escapeHtml(c.id) + '\', \'BLOQUEADO\')">Recusar</button>';
-    }else if(c.status === "APROVADO"){
-      botoes = '<button class="btn btn-light" type="button" onclick="freeStatusCadastro(\'' + escapeHtml(c.id) + '\', \'BLOQUEADO\')">Bloquear</button>';
-    }else{
-      botoes = '<button class="btn btn-light" type="button" onclick="freeStatusCadastro(\'' + escapeHtml(c.id) + '\', \'APROVADO\')">Desbloquear</button>';
-    }
+  const abas = [["pendentes", "Aguardando aprovação", pendentes.length], ["aprovados", "Aprovados", aprovados.length]];
+  if(bloqueados.length) abas.push(["bloqueados", "Bloqueados", bloqueados.length]);
+  let aba = freeEstado.abaCad || "pendentes";
+  if(!abas.some(function(x){ return x[0] === aba; })) aba = "pendentes";
+  let html = '<div class="free-abas-cad" role="tablist">' + abas.map(function(x){
+    return '<button type="button" role="tab" aria-selected="' + (x[0] === aba) + '" class="' + (x[0] === aba ? "ativa" : "") + '" onclick="freeTrocarAbaCad(&quot;' + x[0] + '&quot;)">' + x[1] +
+      ' <span class="' + (x[0] === "pendentes" && x[2] ? "alerta" : "") + '">' + x[2] + '</span></button>';
+  }).join("") + '</div>';
 
-    const historico = c.status === "PENDENTE"
-      ? "cadastrou em " + escapeHtml(c.cadastradoEm)
-      : c.trabalhos + " trabalhos · " + c.confirmacoes + " confirmações · " + c.cancelamentos + " cancelamentos" +
-        (c.faltas ? ' · <span style="color:#dc2626;">' + c.faltas + (c.faltas === 1 ? " falta" : " faltas") + '</span>' : "") +
-        (c.cimaDaHora ? ' · <span style="color:#dc2626;">' + c.cimaDaHora + ' em cima da hora</span>' : "");
-
-    const historicoNota = (c.historico || []).slice(0, 4).map(function(h){
-      return '<span style="color:' + (h.delta < 0 ? "#dc2626" : "#166534") + ';">' + (h.delta > 0 ? "+" : "") + String(h.delta).replace(".", ",") + ' ' + escapeHtml(h.motivo) + ' (' + escapeHtml(h.titulo) + ')</span>';
-    }).join("");
-
-    return '<div class="free-pessoa" data-busca="' + escapeHtml((c.nome + " " + c.cpf + " " + c.telefone).toLowerCase()) + '">' + freeFotoHtml(c) +
-      '<div class="free-pessoa-info"><strong>' + escapeHtml(c.nome) + (c.status !== "PENDENTE" ? " " + freeEstrelas(c.nota) : "") + '</strong>' +
-        'CPF ' + escapeHtml(c.cpf) + ' · ' + freeLinkWhats(c.telefone, c.nome) + '<br>' + historico +
-        (historicoNota ? '<div class="free-historico">' + historicoNota + '</div>' : "") + '</div>' +
-      '<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">' + botoes + '</div>' +
-    '</div>';
+  const lista = aba === "pendentes" ? pendentes : aba === "aprovados" ? aprovados : bloqueados;
+  if(!lista.length){
+    return html + '<div class="free-vazio">' + (aba === "pendentes" ? "Nenhum cadastro novo." : "Ninguém aprovado ainda.") + '</div>';
   }
+  let sel = lista.filter(function(c){ return c.id === freeEstado.selCad; })[0];
+  if(!sel){ sel = lista[0]; freeEstado.selCad = sel.id; }
+  const itens = lista.map(function(c){
+    const busca = escapeHtml((c.nome + " " + c.cpf + " " + c.telefone).toLowerCase());
+    const sub = c.status === "PENDENTE" ? "cadastrou em " + escapeHtml(c.cadastradoEm || "-") : (c.trabalhos || 0) + " trabalhos" + (c.faltas ? ' · <span class="fc-falta">' + c.faltas + (c.faltas === 1 ? " falta" : " faltas") + '</span>' : "");
+    return '<button type="button" class="fc-item' + (c.id === sel.id ? " ativo" : "") + '" data-cad-id="' + escapeHtml(c.id) + '" data-busca="' + busca + '" onclick="freeSelecionarCad(this.dataset.cadId)">' +
+      freeFotoHtml(c) + '<span class="fc-item-txt"><b>' + escapeHtml(c.nome) + '</b><small>' + sub + '</small></span>' +
+      (c.status !== "PENDENTE" ? '<span class="fc-item-nota">' + freeEstrelas(c.nota) + '</span>' : "") + '</button>';
+  }).join("");
+  return html + '<div class="fc-mestre">' +
+    '<aside class="fc-lista"><input class="free-busca" type="search" placeholder="Buscar por nome, CPF ou telefone" oninput="freeFiltrarCadastros(this.value)" autocomplete="off" data-lpignore="true" data-1p-ignore="true">' +
+      '<div class="fc-itens" id="freeListaCad">' + itens + '</div></aside>' +
+    '<section class="fc-detalhe" id="freeDetalheCad">' + freeDetalheCadastro(sel) + '</section></div>';
+}
 
-  let html = "";
+function freeSelecionarCad(id){
+  freeEstado.selCad = id;
+  const c = (freeEstado.cadastros || []).filter(function(x){ return x.id === id; })[0];
+  document.querySelectorAll("#freeListaCad .fc-item").forEach(function(b){ b.classList.toggle("ativo", b.dataset.cadId === id); });
+  const det = document.getElementById("freeDetalheCad"); if(det){ det.innerHTML = freeDetalheCadastro(c); }
+}
 
-  html += '<div class="free-secao">Aguardando aprovação <span>' + pendentes.length + '</span></div>';
-  html += pendentes.length
-    ? '<div class="free-lista">' + pendentes.map(linha).join("") + '</div>'
-    : '<div class="free-vazio">Nenhum cadastro novo.</div>';
-
-  html += '<div class="free-secao">Aprovados <span>' + aprovados.length + '</span></div>';
-  if(aprovados.length > 6){
-    html += '<input class="free-busca" type="search" placeholder="Buscar por nome, CPF ou telefone" oninput="freeFiltrarCadastros(this.value)" autocomplete="off" data-lpignore="true" data-1p-ignore="true">';
-  }
-  html += aprovados.length
-    ? '<div class="free-lista" id="freeListaAprovados">' + aprovados.map(linha).join("") + '</div>'
-    : '<div class="free-vazio">Ninguém aprovado ainda.</div>';
-
-  if(bloqueados.length){
-    html += '<div class="free-secao">Bloqueados <span>' + bloqueados.length + '</span></div>';
-    html += '<div class="free-lista">' + bloqueados.map(linha).join("") + '</div>';
-  }
-
-  return html;
+function freeTrocarAbaCad(aba){
+  freeEstado.abaCad = aba;
+  const col = document.getElementById("freeColCadastros");
+  if(col) col.innerHTML = freeHtmlCadastros();
 }
 
 function freeFiltrarCadastros(termo){
   const t = String(termo || "").toLowerCase().trim();
-  document.querySelectorAll("#freeListaAprovados .free-pessoa").forEach(function(el){
+  document.querySelectorAll("#freeListaCad .fc-item").forEach(function(el){
     el.style.display = !t || el.dataset.busca.indexOf(t) >= 0 ? "" : "none";
   });
 }
@@ -10461,16 +10563,121 @@ async function freeObterToken(forcar){
   const ok = await pedirSenha("Equipe Free");
   return ok ? window.tokenAuditoria : null;
 }
-async function freeMudarSemana(dias){
-  semanaInicioAtual.setDate(semanaInicioAtual.getDate() + dias);
-  semanaInicioAtual = getInicioSemanaOperacional(semanaInicioAtual);
-  freeEstado.vagasSemana = null;
-  await carregarCronograma();
+/* ---------- Nov/2026: faixa de dias + uma tela só ---------- */
+function freeIsoHoje(){ return new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()); }
+function freeSomarDias(dia, n){ const d = new Date(dia + "T12:00:00"); d.setDate(d.getDate() + n); return formatDateISO(d); }
+const FREE_ANTES = 14, FREE_DEPOIS = 45;
+freeEstado.dia = freeEstado.dia || freeIsoHoje();
+function freeFaixa(){ const h = freeIsoHoje(); return { inicio: freeSomarDias(h, -FREE_ANTES), fim: freeSomarDias(h, FREE_DEPOIS) }; }
+function freeDesenharDias(){
+  const nav = document.getElementById("freeDias"); if(!nav) return;
+  const faixa = freeFaixa(), hoje = freeIsoHoje(), vagas = (freeEstado.vagasSemana || []).filter(function(v){ return v.status !== "CANCELADA"; });
+  const nomes = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"], html = [];
+  for(let dia = faixa.inicio; dia <= faixa.fim; dia = freeSomarDias(dia, 1)){
+    const doDia = vagas.filter(function(v){ return v.dataISO === dia; });
+    const faltam = doDia.some(function(v){ return v.status !== "ENCERRADA" && v.confirmados < v.quantidade; });
+    html.push('<button type="button" role="tab" data-dia="' + dia + '" aria-selected="' + (dia === freeEstado.dia) + '" class="' + (dia === hoje ? "is-hoje" : "") + '"><span>' + (dia === hoje ? "Hoje" : nomes[new Date(dia + "T12:00:00").getDay()]) + '</span><strong>' + dia.slice(8,10) + "/" + dia.slice(5,7) + '</strong>' +
+      (doDia.length ? '<i class="free-dia-conta' + (faltam ? "" : " is-ok") + '" title="' + doDia.length + ' vaga(s)">' + doDia.length + '</i>' : "") + '</button>');
+  }
+  nav.innerHTML = html.join("");
+  if(!nav.dataset.posicionado){ const alvo = nav.querySelector('[data-dia="' + freeEstado.dia + '"]'); if(alvo){ nav.scrollLeft = alvo.offsetLeft - nav.clientWidth / 2 + alvo.offsetWidth / 2; nav.dataset.posicionado = "1"; } }
+}
+(function(){
+  const nav = document.getElementById("freeDias"); if(!nav) return;
+  let arrasto = null, moveu = false;
+  nav.addEventListener("pointerdown", function(e){ if(e.button !== 0) return; arrasto = { x: e.clientX, esq: nav.scrollLeft }; moveu = false; });
+  window.addEventListener("pointermove", function(e){ if(!arrasto) return; const dx = e.clientX - arrasto.x; if(Math.abs(dx) > 5){ moveu = true; nav.classList.add("arrastando"); } if(moveu) nav.scrollLeft = arrasto.esq - dx; });
+  window.addEventListener("pointerup", function(){ arrasto = null; nav.classList.remove("arrastando"); });
+  nav.addEventListener("wheel", function(e){ if(Math.abs(e.deltaY) > Math.abs(e.deltaX)){ nav.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive:false });
+  nav.addEventListener("click", function(e){
+    if(moveu){ moveu = false; return; }
+    const b = e.target.closest("[data-dia]"); if(!b || b.dataset.dia === freeEstado.dia) return;
+    freeEstado.dia = b.dataset.dia; freeDesenharDias(); freeRenderPainel();
+  });
+})();
+/* As etapas do cronograma (para "Sem pedido de free") vêm por semana: troca de semana quando o dia escolhido é de outra. */
+async function freeGarantirSemanaDoDia(){
+  const inicio = getInicioSemanaOperacional(new Date(freeEstado.dia + "T12:00:00"));
+  if(!freeEstado.semanaCarregada || formatDateISO(inicio) !== formatDateISO(semanaInicioAtual)){ semanaInicioAtual = inicio; await carregarCronograma(); freeEstado.semanaCarregada = true; }
+}
+function freeHtmlVagasDia(){
+  const dia = freeEstado.dia;
+  const vagas = (freeEstado.vagasSemana || []).filter(function(v){ return v.status !== "CANCELADA" && v.dataISO === dia; });
+  const comVaga = {}; vagas.forEach(function(v){ comVaga[v.idEtapa] = true; });
+  let html = '<div class="free-secao">Vagas abertas <span>' + vagas.length + '</span></div>';
+  html += vagas.length ? '<div class="free-lista">' + vagas.map(function(v){
+      const completa = v.confirmados >= v.quantidade;
+      return '<div class="free-linha-vaga" onclick="freeAbrirVagaId(\'' + escapeHtml(v.idVaga) + '\')">' +
+        '<div class="free-dia">' + escapeHtml(freeDataCurta(v.dataISO)) + '<small>' + escapeHtml(v.horario) + '</small></div>' +
+        '<div class="free-meio"><strong>' + escapeHtml(v.etapa) + ' · ' + escapeHtml(v.cliente || "-") + '</strong>' + escapeHtml(v.pontoEncontro) + ' · Líder ' + escapeHtml(v.lider) + (v.nomes.length ? '<br>' + escapeHtml(v.nomes.join(", ")) : "") + '</div>' +
+        '<div class="free-num" style="color:' + (v.status === "ENCERRADA" ? "#6b6b6b" : completa ? "#166534" : "#b45309") + ';">' + v.confirmados + '/' + v.quantidade +
+          '<small>' + (v.status === "ENCERRADA" ? "encerrada" : completa ? "completa" : "faltam " + (v.quantidade - v.confirmados)) + '</small>' +
+          (v.cimaDaHora ? '<small style="color:#dc2626;">' + v.cimaDaHora + ' cancel. em cima</small>' : "") +
+          (v.checkins ? '<small style="color:#166534;">✓ ' + v.checkins + ' check-in</small>' : "") +
+          (v.faltas ? '<small style="color:#dc2626;">' + v.faltas + ' falta' + (v.faltas > 1 ? "s" : "") + '</small>' : "") +
+          (v.mudancasPendentes ? '<small style="color:#b45309;">' + v.mudancasPendentes + ' não viu mudança</small>' : "") +
+        '</div></div>';
+    }).join("") + '</div>' : '<div class="free-vazio">Nenhuma vaga aberta neste dia.</div>';
+  const semVaga = [];
+  (window.cronogramaData || (typeof cronogramaData !== "undefined" ? cronogramaData : [])).forEach(function(pedido){
+    (pedido.etapas || []).forEach(function(etapa){
+      if(String(etapa.etapa || "").toLowerCase().indexOf("montagem") < 0) return;
+      if(String(etapa.dataEtapa || "").slice(0, 10) !== dia || dia < freeIsoHoje()) return;
+      const id = freeRegistrarContexto(etapa, pedido);
+      if(id && !comVaga[id] && !etapa.freeVaga) semVaga.push(window.freeContextos[id]);
+    });
+  });
+  semVaga.sort(function(a, b){ return String(a.horario || "").localeCompare(String(b.horario || "")); });
+  if(semVaga.length){
+    html += '<div class="free-secao">Sem pedido de free <span>' + semVaga.length + '</span></div><div class="free-lista">' + semVaga.map(function(c){
+      return '<div class="free-linha-vaga" onclick="freeAbrirVagaEtapa(\'' + escapeHtml(c.idEtapa) + '\')">' +
+        '<div class="free-dia">' + escapeHtml(freeDataCurta(c.dataEtapa)) + '<small>' + escapeHtml(c.horario || "-") + '</small></div>' +
+        '<div class="free-meio"><strong>' + escapeHtml(c.etapa) + ' · ' + escapeHtml(c.cliente || "-") + '</strong>Resp. ' + escapeHtml(c.responsavel || "-") + '</div>' +
+        '<div class="free-num"><span class="free-status">+ Pedir free</span></div></div>';
+    }).join("") + '</div>';
+  }
+  return html;
+}
+function freeTrocarAbaPrincipal(aba){
+  freeEstado.abaPrincipal = aba;
   freeRenderPainel();
 }
-window.addEventListener("load", async function(){
-  await carregarCronograma();
-  freeAbrirPainel(new URLSearchParams(location.search).get("aba") || "vagas");
+function freeSincronizarAbasPrincipais(){
+  const aba = freeEstado.abaPrincipal || "necessidades";
+  document.querySelectorAll("[data-free-aba]").forEach(function(b){ const on = b.dataset.freeAba === aba; b.classList.toggle("ativa", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
+  const dias = document.getElementById("freeDias"); if(dias) dias.hidden = aba !== "necessidades";
+  const n = (freeEstado.cadastros || []).filter(function(c){ return c.status === "PENDENTE"; }).length;
+  const conta = document.getElementById("freeAbaCadConta"); if(conta) conta.textContent = n ? String(n) : "";
+}
+async function freeRenderPainel(){
+  const corpo = document.getElementById("freePainelCorpo");
+  const aba = freeEstado.abaPrincipal || "necessidades";
+  freeSincronizarAbasPrincipais();
+  corpo.innerHTML =
+    '<div class="free-erro" id="freePainelErro"></div>' +
+    (aba === "necessidades"
+      ? '<section class="free-col free-col-cheia"><div id="freeColVagas"><div class="free-vazio">Carregando…</div></div></section>'
+      : '<section class="free-col free-col-cheia"><div id="freeColCadastros"><div class="free-vazio">Carregando…</div></div></section>');
+  try{
+    const faixa = freeFaixa();
+    const res = await Promise.all([
+      freeEstado.vagasSemana ? Promise.resolve(freeEstado.vagasSemana) : freeChamar("FREE_admListarVagas", faixa.inicio, faixa.fim),
+      freeEstado.cadastros ? Promise.resolve(freeEstado.cadastros) : freeChamar("FREE_admListarCadastros"),
+      aba === "necessidades" ? freeGarantirSemanaDoDia() : Promise.resolve()
+    ]);
+    freeEstado.vagasSemana = res[0] || []; freeEstado.cadastros = res[1] || [];
+    freeDesenharDias();
+    freeSincronizarAbasPrincipais();
+    const vagas = document.getElementById("freeColVagas"); if(vagas) vagas.innerHTML = freeHtmlVagasDia();
+    const cad = document.getElementById("freeColCadastros"); if(cad) cad.innerHTML = freeHtmlCadastros();
+  }catch(erro){
+    freeTratarErro(erro, "freePainelErro");
+  }
+}
+function freeMudarSemana(){}
+window.addEventListener("load", function(){
+  freeDesenharDias();
+  freeAbrirPainel();
 });
 </script>
 </body>

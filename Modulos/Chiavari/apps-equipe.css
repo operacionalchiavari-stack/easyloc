@@ -178,3 +178,20 @@ body.chiavari-equipe-app:has(#telaLogin.ativa,#telaCadastro.ativa,#telaEntrada:n
  .chiavari-equipe-app .apontamento-relogio{text-align:left}
 }
 @media(prefers-reduced-motion:reduce){.chiavari-equipe-app *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* App do Montador (nov/2026, pedido: "remova essa foto que só ocupa espaço, remova o Olá, foque nos pedidos"):
+   topo vira uma faixa fina grafite com a logo e os botões. Só no Montador (o app dos Free continua com a capa). */
+body[data-app-equipe="montagem"] :is(.topo,.perfil){background:#5a5a55!important;background-image:none!important;min-height:0!important;grid-template-rows:54px!important;align-items:center!important;padding:calc(8px + env(safe-area-inset-top)) 16px 8px!important}
+body[data-app-equipe="montagem"] :is(.topo,.perfil)::before{display:none!important}
+body[data-app-equipe="montagem"] :is(.topo,.perfil) .topo-texto{display:none!important}
+/* Idem: sem a capa, o cartão "Cronograma" (sobreposto à foto) some; as abas e as etapas ficam logo abaixo da faixa. */
+body[data-app-equipe="montagem"] .agenda-cabecalho{display:none!important}
+body[data-app-equipe="montagem"] #telaInicio .topo + *{margin-top:14px}
+body[data-app-equipe="montagem"] .abas{margin-top:14px}
+/* Fundo igual ao do menu do app (branco), em vez do bege mais escuro. */
+html:has(body[data-app-equipe="montagem"]),body[data-app-equipe="montagem"],body[data-app-equipe="montagem"] :is(.app,.tela,main){--bg:#ffffff;background:#fff!important}
+/* "Meu bônus" aberto pelo menu do app: botão de voltar ao Início ao lado do título; sem a barra de baixo. */
+body[data-app-equipe="montagem"] #appNavegacao{display:none!important}
+body[data-app-equipe="montagem"] .bonus-cabecalho{display:flex;align-items:center;gap:10px}
+body[data-app-equipe="montagem"] .bonus-cabecalho h1{flex:1}
+body[data-app-equipe="montagem"] .bonus-inicio{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid #ddd5c8;background:#fff;color:#4c473e;font:600 18px/1 system-ui;display:grid;place-items:center}

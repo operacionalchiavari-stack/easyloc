@@ -86,10 +86,15 @@ const mockSupabase = `
   });
   // 1) principal: faixa com os extras e o botão "+ Pedido extra"
   await page.goto(BASE + "Modulos/Comercial/Pedidos/pedido.html?pedido=p1&modo=editar");
-  await page.locator('#pedidoExtraFaixa').waitFor({ state: 'visible', timeout: 15000 });
-  assert.match(await page.textContent('#pedidoExtraFaixa'), /Pedidos extras[\s\S]*7\/2/);
+  // Nov/2026: no principal, botão pequeno ao lado do nome do cliente (sem a faixa grande)
+  await page.locator('#pedidoExtraMini [data-pedido-extra-criar]').waitFor({ state: 'visible', timeout: 15000 });
+  assert.equal(await page.locator('#pedidoExtraFaixa').count(), 0, 'sem a faixa grande no principal');
+  assert.match(await page.textContent('#pedidoExtraMini'), /7\/2[\s\S]*\+ Pedido extra/);
   assert.equal(await page.locator('[data-pedido-extra-criar]').count(), 1);
+  const visual = await page.evaluate(() => { const b = document.querySelector('#pedidoExtraMini .pedido-extra-botao'), h = document.querySelector('.entrada-identidade h3'); const cs = getComputedStyle(b), rb = b.getBoundingClientRect(), rh = h.getBoundingClientRect(); return { bg: cs.backgroundColor, cor: cs.color, borda: cs.borderTopColor, altura: rb.height, aoLado: rb.left > rh.right && Math.abs((rb.top + rb.bottom) / 2 - (rh.top + rh.bottom) / 2) < 16 }; });
+  assert.deepEqual(visual, { bg: 'rgb(255, 255, 255)', cor: 'rgb(18, 63, 134)', borda: 'rgb(18, 63, 134)', altura: 28, aoLado: true }, JSON.stringify(visual));
   assert.equal(await page.locator('#clienteInput').isDisabled(), false, 'principal não fica travado');
+  if (process.env.SHOT) await page.locator('.entrada-identidade').screenshot({ path: process.env.SHOT });
   console.log('ok 1 - principal mostra os extras e o botão + Pedido extra');
   // 2) + Pedido extra: abre pedido novo com os dados do principal, travados
   await page.click('[data-pedido-extra-criar]');

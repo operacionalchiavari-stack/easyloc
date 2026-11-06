@@ -114,7 +114,18 @@ async function abrir(browser, regra){
   await r.page.waitForSelector('#cfDivergencias .cf-div-enviada');
   assert.match(await r.page.textContent('#cfDivergencias'), /Gestão do acervo/);
   assert.equal(await r.page.locator('.cf-qtd-tabela.com-resolver, .cf-div-segunda, .cf-div-salvar').count(), 0, 'sem colunas nem botão de resolver');
-  console.log("ok 4 - divergência enviada para a Gestão do acervo, sem resolver na conferência");
+  // Nov/2026: o resultado vai para o alerta global e volta a cada clique na tela (um alerta só, nunca empilhado).
+  await r.page.waitForSelector('.el-alert-stack .el-alert');
+  assert.match(await r.page.textContent('.el-alert-stack'), /A contagem não bateu: .*Gestão do acervo/);
+  await r.page.evaluate(() => window.fecharAlertaGlobal());
+  await r.page.mouse.click(20, 300);
+  await r.page.click('.el-alert-stack .el-alert:has(h4:text-is("Divergência na contagem"))' + ' button');
+  assert.equal(await r.page.locator('.el-alert-stack .el-alert:has(h4:text-is("Divergência na contagem"))').count(), 0, 'Fechar não traz o alerta de volta');
+  await r.page.mouse.click(20, 300);
+  await r.page.waitForSelector('.el-alert-stack .el-alert');
+  await r.page.mouse.click(30, 320);
+  assert.equal(await r.page.locator('.el-alert-stack .el-alert:has(h4:text-is("Divergência na contagem"))').count(), 1, 'um alerta só');
+  console.log("ok 4 - divergência enviada para a Gestão do acervo, sem resolver na conferência; alerta volta a cada clique");
   assert.deepStrictEqual([...r.erros], []);
   await browser.close();
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -1,7 +1,7 @@
 ﻿(function(){
   const state = {
     pedidos: [],
-    visao: 'pedidos',
+
     filtrados: [],
     supabase: null,
     empresaId: null,
@@ -33,14 +33,14 @@
       acompanhamentoFiltros.setAttribute('aria-label','Filtros de acompanhamento comercial');
       els.centralFiltrosPedidos.append(acompanhamentoFiltros);acompanhamentoFiltros.addEventListener('change',render);acompanhamentoFiltros.querySelector('[data-atualizar]').onclick=()=>carregarAcompanhamentos().catch(e=>{acompanhamentoErro=e.message;render();});
     }
-    acompanhamentoFiltros.hidden=!especial||state.visao==='receber';
+    acompanhamentoFiltros.hidden=!especial;
     if(!especial){tabela.querySelector('thead').innerHTML=tabelaOriginal.head;tabela.querySelector('colgroup').innerHTML=tabelaOriginal.cols;return false;}
     acompanhamentoFiltros.querySelector('[data-contato-status]').textContent=acompanhamentoErro?'Acompanhamentos indisponíveis: '+acompanhamentoErro:acompanhamentoPronto?'':'Carregando acompanhamentos…';
     for(const [seletor,chave] of [['[data-responsavel]','responsavel_id'],['[data-situacao-contato]','situacao'],['[data-motivo-contato]','motivo']]){
       const sel=acompanhamentoFiltros.querySelector(seletor),valor=sel.value;const opcoes=new Map(acompanhamentos.filter(c=>c[chave]).map(c=>[c[chave],chave==='responsavel_id'?c.responsavel:c[chave]]));
       sel.innerHTML='<option value="">Todos</option>'+[...opcoes].map(([k,v])=>`<option value="${escapeHtml(k)}">${escapeHtml(v||'')}</option>`).join('');sel.value=valor;
     }
-    tabela.querySelector('colgroup').innerHTML=[190,220,110,125,300,180,165,190,140].map(largura=>'<col style="width:'+largura+'px">').join('');
+    tabela.querySelector('colgroup').innerHTML=[180,215,105,120,280,170,155,180,175].map(largura=>'<col style="width:'+(largura/15.8).toFixed(2)+'%">').join('');
     tabela.querySelector('thead').innerHTML='<tr>'+['Número','Cliente','Evento','Valor','Situação / motivo','Último contato','Próximo contato','Responsável','Ações'].map(t=>'<th>'+t+'</th>').join('')+'</tr>';
     els.centralPedidosTbody.innerHTML=window.ComercialProdutividade.tabela(state.filtrados.filter(p=>!p.origemCatalogo),acompanhamentos,{prazo:acompanhamentoFiltros.querySelector('[data-prazo]').value,responsavel:acompanhamentoFiltros.querySelector('[data-responsavel]').value,situacao:acompanhamentoFiltros.querySelector('[data-situacao-contato]').value,motivo:acompanhamentoFiltros.querySelector('[data-motivo-contato]').value});
     return true;
@@ -646,6 +646,7 @@ function infoCadastro(rotulo, valor, icone){
     const observacoes = normalizarObservacoes(row.observacoes);
     return {
       id: row.id,
+      criadoEm: row.created_at || row.data_hora || "",
       numero: row.numero_pedido || row.numero || row.codigo || row.id || "-",
       origemId: row.pedido_origem_id || null, // pedido extra: id do pedido principal
       cliente_id: row.cliente_id || null,
@@ -921,10 +922,16 @@ function infoCadastro(rotulo, valor, icone){
   // isso, vira um ambiente só com os itens de separacoes_itens; item do pedido que não está em nenhum ambiente entra em
   // "Outros itens".
   let apresentacaoModulo = null;
+  // Frases do aviso de Orçamento/Pré-reserva no documento (Parâmetros > Comercial), lidas uma vez.
+  let avisosDocumentoLidos = false;
+  async function carregarAvisosDocumento(){
+    if(avisosDocumentoLidos || !apresentacaoModulo?.definirAvisosStatus) return; avisosDocumentoLidos = true;
+    try{ const { data } = await state.supabase.rpc("comercial_avisos_pedido_ler", { p_empresa: state.empresaId }); if(data) apresentacaoModulo.definirAvisosStatus(data); }catch(_){ }
+  }
   async function abrirPreviewPedido(pedidoId){
     if(!pedidoId || !state.supabase || !state.empresaId) return;
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261030-link-documento");
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261105-terceirizacoes"); await carregarAvisosDocumento();
       const { data: pedido, error } = await state.supabase.from("separacoes_pedidos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedidoId).single();
       if(error || !pedido) throw error || new Error("Pedido não encontrado.");
@@ -1069,7 +1076,7 @@ function infoCadastro(rotulo, valor, icone){
     const { data: cadastros } = await state.supabase.from("clientes_empresas").select("id,nome_razao").in("id", clienteIds);
     (cadastros || []).forEach((c) => clientes.set(String(c.id), c.nome_razao));
     return projetos.map((p) => ({
-      id: `projeto:${p.id}`, projetoId: p.id, origemCatalogo: true,
+      id: `projeto:${p.id}`, projetoId: p.id, origemCatalogo: true, criadoEm: p.pedido_enviado_em || p.created_at,
       numero: p.numero_catalogo ? String(p.numero_catalogo).padStart(3, "0") : "—", cliente_id: p.cliente_id, local_id: null,
       cliente: clientes.get(String(p.cliente_id)) || "Decorador",
       contato: "", evento: p.noivos || "Projeto", local: p.local_evento || "Local nao informado",
@@ -1083,7 +1090,7 @@ function infoCadastro(rotulo, valor, icone){
 
   async function abrirPreviewProjetoCatalogo(pedido){
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261030-link-documento");
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261105-terceirizacoes"); await carregarAvisosDocumento();
       const { data: projeto, error } = await state.supabase.from("projetos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedido.projetoId).single();
       if(error || !projeto) throw error || new Error("Projeto não encontrado.");
@@ -1147,12 +1154,12 @@ function infoCadastro(rotulo, valor, icone){
   /* Botões de situação (out/2026): Todos, Pré-reserva, Orçamento e Reservado, Pré-reserva e Orçamento com a contagem numa bolinha
      vermelha piscando (Todos e Reservado sem bolinha). Clicar filtra a lista pela situação (mesmo filtro de "Situação" dos Filtros); clicar de novo mostra todos. */
   const SITUACOES = [
-    { status: "", titulo: "Todos", icone: "list" },
-    { status: "pre_reserva", titulo: "Pré-reserva", icone: "alarm-clock", alerta: true },
-    { status: "orcamento", titulo: "Orçamento", icone: "file-text", alerta: true },
-    { status: "aprovado", titulo: "Reservado", icone: "calendar-check" },
+    { status: "", titulo: "Todos" },
+    { status: "aprovado", titulo: "Reservado" },
+    { status: "pre_reserva", titulo: "Pré-reserva", alerta: true },
+    { status: "orcamento", titulo: "Orçamento", alerta: true },
     // Catálogo (nov/2026): pedidos enviados pelo decorador que o Comercial ainda precisa finalizar (pagamento, frete, montagem)
-    { status: "catalogo", titulo: "Catálogo", icone: "book-open", alerta: true }
+    { status: "catalogo", titulo: "Catálogo", alerta: true }
   ];
   const CATALOGO_PENDENTE = ["catalogo_pedido_enviado", "catalogo_em_analise"];
   function renderAvisoPreReserva(){
@@ -1160,7 +1167,7 @@ function infoCadastro(rotulo, valor, icone){
     if(!caixa) return;
     const atual = els.filtroStatusPedido?.value || "";
     caixa.innerHTML = SITUACOES.map((sit) => {
-      const lista = sit.status === "catalogo" ? state.pedidos.filter((p) => CATALOGO_PENDENTE.includes(p.status)) : sit.status ? state.pedidos.filter((p) => p.status === sit.status) : state.pedidos;
+      const lista = sit.status === "catalogo" ? state.pedidos.filter((p) => CATALOGO_PENDENTE.includes(p.status) && !window.CentralAcompanhamento?.encerrado(p)) : sit.status ? state.pedidos.filter((p) => p.status === sit.status) : state.pedidos;
       let detalhe = "";
       if(sit.status === "pre_reserva"){
         const pre = lista.map(prazoPreReserva);
@@ -1169,13 +1176,44 @@ function infoCadastro(rotulo, valor, icone){
         const semData = pre.filter((x) => x.cls === "sem-data").length;
         detalhe = [vencidas && `${vencidas} vencida${vencidas > 1 ? "s" : ""}`, vencendo && `${vencendo} vencendo`, semData && `${semData} sem data`].filter(Boolean).join(" · ");
       }
-      const ativo = atual === sit.status;
+      const ativo = !state.abaOcorrencias && atual === sit.status;
       return `<button type="button" class="central-situacao situacao-${sit.status}${ativo ? " is-active" : ""}" data-situacao="${sit.status}" aria-pressed="${ativo}" title="${!sit.status ? "Mostrar todos os pedidos" : ativo ? "Mostrar todos" : "Mostrar só " + escapeHtml(sit.titulo)}">
-        <i data-lucide="${sit.icone}" aria-hidden="true"></i><span class="central-situacao-texto"><b>${escapeHtml(sit.titulo)}</b>${detalhe ? `<small>${escapeHtml(detalhe)}</small>` : ""}</span>
+        <span class="central-situacao-texto"><b>${escapeHtml(sit.titulo)}</b>${detalhe ? `<small>${escapeHtml(detalhe)}</small>` : ""}</span>
         ${sit.alerta && lista.length ? `<span class="central-situacao-conta" aria-label="${lista.length} pedido(s)">${lista.length}</span>` : ""}
       </button>`;
-    }).join("");
-    window.lucide?.createIcons?.();
+    }).join("") +
+      // Ocorrências da separação (nov/2026): era um botão no topo; virou aba aqui. Abre a janela das ocorrências
+      // (js/ui/separacao-ocorrencias.js escuta [data-ocorrencias-comercial]); a bolinha conta as que esperam o Comercial.
+      `<button type="button" class="central-situacao situacao-ocorrencias${state.abaOcorrencias ? " is-active" : ""}" data-aba-ocorrencias aria-pressed="${!!state.abaOcorrencias}" title="Ocorrências que a Triagem encaminhou ao Comercial">
+        <span class="central-situacao-texto"><b>Ocorrências da separação</b></span>
+        ${state.ocorrenciasComercial ? `<span class="central-situacao-conta" aria-label="${state.ocorrenciasComercial} ocorrência(s)">${state.ocorrenciasComercial}</span>` : ""}
+      </button>` +
+      // Finalizados (nov/2026): pedidos com o fluxo encerrado (posição final, pós-venda e financeiro sem pendência —
+      // o passo "Finalizado" do fluxo, `comercial_fluxo_pedidos.finalizado`).
+      (() => { const ativo = !state.abaOcorrencias && atual === "finalizados";
+        return `<button type="button" class="central-situacao situacao-finalizados${ativo ? " is-active" : ""}" data-situacao="finalizados" aria-pressed="${ativo}" title="${ativo ? "Mostrar todos" : "Mostrar só os pedidos finalizados"}"><span class="central-situacao-texto"><b>Finalizados</b></span></button>`; })();
+  }
+  // Mostra/esconde a aba das ocorrências: no lugar da lista de pedidos (e do "Ordenar por"), a fila do Comercial
+  // desenhada por SeparacaoOcorrencias.painel (js/ui/separacao-ocorrencias.js), a mesma da janela antiga.
+  function mostrarAbaOcorrencias(sim){
+    state.abaOcorrencias = !!sim;
+    const host = $("centralOcorrencias"), lista = $("centralListaTabela"), ordem = document.querySelector(".central-ordem");
+    if(lista) lista.hidden = state.abaOcorrencias;
+    if(ordem) ordem.hidden = state.abaOcorrencias;
+    if(host) host.hidden = !state.abaOcorrencias;
+    renderAvisoPreReserva();
+    if(state.abaOcorrencias && host && window.SeparacaoOcorrencias?.painel){
+      window.SeparacaoOcorrencias.painel({ host, sb: state.supabase, empresa: state.empresaId, fila: "comercial" });
+    }
+  }
+  async function contarOcorrenciasComercial(){
+    if(!state.supabase || !state.empresaId) return;
+    try{
+      const { data, error } = await state.supabase.rpc("separacao_ocorrencias_listar", { p_empresa: state.empresaId, p_pedido: null });
+      if(error) throw error;
+      const n = (data || []).filter((o) => o.estado === "comercial").length;
+      if(n !== state.ocorrenciasComercial){ state.ocorrenciasComercial = n; renderAvisoPreReserva(); }
+    }catch(e){ console.warn("Ocorrências da separação:", e.message || e); }
   }
 
   function aplicarFiltros(){
@@ -1188,9 +1226,6 @@ function infoCadastro(rotulo, valor, icone){
     const status = els.filtroStatusPedido?.value || "";
     const inicial = els.filtroDataInicialPedido?.value;
     const final = els.filtroDataFinalPedido?.value;
-    // os mesmos filtros valem para o Contas a receber (datas = vencimento da parcela)
-    window.CentralContasReceber?.filtrar({ termos, cliente: normalizarBusca(cliente), numero: normalizarBusca(numero), local: normalizarBusca(local), status, de: inicial || "", ate: final || "" });
-
     state.filtrados = state.pedidos.filter((pedido) => {
       const dataPedido = pedido.data ? new Date(pedido.data) : null;
       const dataISO = dataPedido && !Number.isNaN(dataPedido.getTime())
@@ -1209,7 +1244,7 @@ function infoCadastro(rotulo, valor, icone){
         && (!numero || String(pedido.numero).toLowerCase().includes(numero))
         && (!local || pedido.local.toLowerCase().includes(local))
         && (!comercial || pedido.comercial.toLowerCase().includes(comercial))
-        && (!status || pedido.status === status || (status === "catalogo" && CATALOGO_PENDENTE.includes(pedido.status)))
+        && (!status || pedido.status === status || (status === "catalogo" && CATALOGO_PENDENTE.includes(pedido.status) && !window.CentralAcompanhamento?.encerrado(pedido)) || (status === "finalizados" && pedido.fluxo?.finalizado === true))
         && (!inicial || dataISO >= inicial)
         && (!final || dataISO <= final);
     });
@@ -1325,15 +1360,32 @@ function infoCadastro(rotulo, valor, icone){
     return rows.map((r) => porPedido.has(r.id) ? { ...r, fin: porPedido.get(r.id) } : r);
   }
 
+  // Nov/2026: até a 1ª carga terminar, a tabela mostra linhas "esqueleto" (nunca "Nenhum pedido encontrado").
+  function renderCarregando(){
+    if(els.centralStatusCarregamento) els.centralStatusCarregamento.textContent = "Carregando...";
+    if(!els.centralPedidosTbody || els.centralPedidosTbody.dataset.carregando) return;
+    els.centralPedidosTbody.dataset.carregando = "1";
+    els.centralPedidosTbody.innerHTML = Array.from({ length: 6 }, () => `<tr class="central-skeleton" aria-hidden="true">` + Array.from({ length: 9 }, () => "<td><span></span></td>").join("") + "</tr>").join("");
+  }
+
   function render(){
+    if(!state.carregado){ renderCarregando(); return; }
+    if(els.centralPedidosTbody) delete els.centralPedidosTbody.dataset.carregando;
     if(els.centralStatusCarregamento){
       els.centralStatusCarregamento.textContent = `${state.filtrados.length} pedido(s)`;
     }
     renderAvisoPreReserva();
+    contarOcorrenciasComercial();
 
     if(!els.centralPedidosTbody) return;
-    if(window.ComercialProdutividade && renderAcompanhamentos()) return;
+    // Pré-reserva, Orçamento e Catálogo (nov/2026): a tabela cabe na largura da tela, sem barra de rolagem lateral.
+    const statusAba = els.filtroStatusPedido?.value || "";
+    els.centralPedidosTbody.closest("table")?.classList.add("central-sem-rolagem"); // nov/2026: nenhuma aba com barra horizontal
+    // Nov/2026: nessas abas a linha é a mesma dos pedidos; no lugar do Fluxo entra o acompanhamento (central-acompanhamento.js).
+    const comAcomp = ["pre_reserva", "orcamento", "catalogo"].includes(statusAba) && !!window.CentralAcompanhamento;
+    const thFluxo = document.getElementById("centralColFluxo"); if(thFluxo) thFluxo.textContent = comAcomp ? "Acompanhamento" : "Fluxo";
 
+    if(!state.filtrados.length && statusAba === "catalogo"){ els.centralPedidosTbody.innerHTML = ""; return; }
     if(!state.filtrados.length){
       els.centralPedidosTbody.innerHTML = `
         <tr>
@@ -1363,7 +1415,7 @@ function infoCadastro(rotulo, valor, icone){
         <td>${escapeHtml(formatDate(pedido.data))}</td>
         <td>${pedido.entrega ? escapeHtml(formatDate(pedido.entrega)) : "—"}</td>
         <td>${pedido.coleta ? escapeHtml(formatDate(pedido.coleta)) : "—"}</td>
-        <td class="central-fluxo-cell">${renderFluxoPedido(pedido)}${prazoHtml(pedido)}</td>
+        <td class="central-fluxo-cell">${comAcomp ? window.CentralAcompanhamento.celula(pedido) : renderFluxoPedido(pedido)}${prazoHtml(pedido)}</td>
         <td class="central-value-cell">${renderValorFinanceiro(pedido)}</td>
         <td>
           <div class="central-actions">
@@ -1389,7 +1441,7 @@ function infoCadastro(rotulo, valor, icone){
     if(!wrap) return;
     wrap.querySelectorAll(".central-extra-ligacao").forEach((el) => el.remove());
     const base = wrap.getBoundingClientRect();
-    const pos = (el) => { const r = el.getBoundingClientRect(); return { left: r.left - base.left + wrap.scrollLeft, top: r.top - base.top + wrap.scrollTop, bottom: r.bottom - base.top + wrap.scrollTop, height: r.height }; };
+    const pos = (el) => { const r = el.getBoundingClientRect(); return { left: r.left - base.left + wrap.scrollLeft, top: r.top - base.top + wrap.scrollTop, bottom: r.bottom - base.top + wrap.scrollTop, height: r.height, width: r.width }; };
     const porId = new Map([...els.centralPedidosTbody.querySelectorAll("tr[data-pedido-id]")].map((tr) => [tr.dataset.pedidoId, tr]));
     const grupos = new Map();
     for(const pedido of state.filtrados){
@@ -1399,23 +1451,21 @@ function infoCadastro(rotulo, valor, icone){
       const filho = porId.get(String(pedido.id))?.querySelector('.pedido-numero-card');
       if(filho) grupos.get(id).push(pos(filho));
     }
+    // Nov/2026: linha reta por dentro da coluna, saindo de baixo do número do pedido principal e chegando em cima
+    // do número de cada extra (um trecho entre cada par de cartões), com um pontinho em cada ponta.
     for(const [id, filhos] of grupos){
       const trPai = porId.get(id), pai = trPai?.querySelector('.pedido-numero-card');
       if(!pai || !filhos.length) continue;
-      const a = pos(pai), coluna = pos(trPai.cells[0]);
-      const y = a.top + a.height / 2;
-      const centros = filhos.map(b => b.top + b.height / 2).filter(centro => centro > y);
-      if(!centros.length) continue;
-      const fim = Math.max(...centros);
-      const linha = document.createElement("span");
-      linha.className = "central-extra-ligacao";
-      linha.setAttribute("aria-hidden", "true");
-      linha.style.cssText = "left:" + (coluna.left - 18) + "px;top:" + y + "px;width:14px;height:" + (fim - y) + "px";
-      for(const centro of centros.filter(centro => centro < fim)){
-        const ramo = document.createElement('span'); ramo.className = 'central-extra-ramo';
-        ramo.style.top = (centro - y - 1.5) + 'px'; linha.append(ramo);
+      const cartoes = [pos(pai), ...filhos.sort((x, y) => x.top - y.top)].filter((c, i, l) => i === 0 || c.top > l[0].top);
+      for(let i = 1; i < cartoes.length; i++){
+        const de = cartoes[i - 1], ate = cartoes[i];
+        const altura = ate.top - de.bottom; if(altura < 4) continue;
+        const linha = document.createElement("span");
+        linha.className = "central-extra-ligacao";
+        linha.setAttribute("aria-hidden", "true");
+        linha.style.cssText = "left:" + (de.left + de.width / 2 - 1) + "px;top:" + de.bottom + "px;height:" + altura + "px";
+        wrap.append(linha);
       }
-      wrap.append(linha);
     }
     if(!ligacaoObservada && "ResizeObserver" in window){
       ligacaoObservada = true;
@@ -1430,6 +1480,7 @@ function infoCadastro(rotulo, valor, icone){
     if(!state.supabase || !state.empresaId){
       state.pedidos = [];
       state.filtrados = [];
+      state.carregado = true;
       render();
       window.finalizarCarregamentoModulo?.();
       return;
@@ -1447,6 +1498,11 @@ function infoCadastro(rotulo, valor, icone){
         throw new Error("Sessao ausente para carregar pedidos");
       }
 
+      const projetosPromise = carregarProjetosCatalogo().catch((error) => {
+        console.warn("[CentralPedidos] projetos do catalogo indisponiveis:", error);
+        return [];
+      });
+      const acompPromise = Promise.resolve(window.CentralAcompanhamento?.carregar()).catch(() => {});
       const { data, error } = await state.supabase
         .from("separacoes_pedidos")
         .select("*")
@@ -1465,12 +1521,9 @@ function infoCadastro(rotulo, valor, icone){
         if(isTabelaAusente(error)) marcarTabelasSeparacaoAusentes();
         throw error;
       }
-      const doCatalogo = await carregarProjetosCatalogo().catch((error) => {
-        console.warn("[CentralPedidos] projetos do catalogo indisponiveis:", error);
-        return [];
-      });
-      const comFluxo=await enriquecerRecebimentos(await enriquecerFluxoPedidos(data||[]));
+      const [doCatalogo, comFluxo] = await Promise.all([projetosPromise, enriquecerFluxoPedidos(data||[]).then(enriquecerRecebimentos)]);
       state.pedidos = await enriquecerContatosClientes([...comFluxo.map(normalizarPedido), ...doCatalogo]);
+      await acompPromise;
       state.pedidos.sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
       sincronizarInatividadeCadastros(data || []).catch((error) => {
         console.warn("[CentralPedidos] sincronizacao de inatividade falhou:", error);
@@ -1483,6 +1536,7 @@ function infoCadastro(rotulo, valor, icone){
       }
     }
 
+    state.carregado = true;
     aplicarFiltros();
     window.finalizarCarregamentoModulo?.();
   }
@@ -1501,40 +1555,8 @@ function infoCadastro(rotulo, valor, icone){
       .subscribe();
   }
 
-  // Pedidos | Contas a receber (out/2026): a mesma página mostra a lista de pedidos ou as contas a receber (só leitura)
-  function trocarVisao(visao){
-    state.visao=visao;
-    const receber = visao === "receber";
-    document.querySelectorAll("[data-central-visao]").forEach((b) => { const on = b.dataset.centralVisao === visao; b.classList.toggle("ativa", on); b.setAttribute("aria-pressed", String(on)); });
-    const host = document.getElementById("centralContasReceber");
-    ["centralSituacoes", "centralListaTabela"].forEach((id) => { const el = document.getElementById(id); if(el) el.hidden = receber; });
-    document.querySelector(".central-barra .central-ordem")?.toggleAttribute("hidden", receber);
-    // nas contas a receber as datas do filtro são o vencimento da parcela; "Comercial" não se aplica
-    const rotulo = (id, texto) => { const l = document.getElementById(id)?.closest(".el-field")?.querySelector("label"); if(l) l.textContent = texto; };
-    rotulo("filtroDataInicialPedido", receber ? "Vencimento de" : "Data Inicial");
-    rotulo("filtroDataFinalPedido", receber ? "Vencimento até" : "Data Final");
-    const comercialCampo = document.getElementById("filtroComercialPedido")?.closest(".el-field");
-    if(comercialCampo) comercialCampo.hidden = receber;
-    if(host) host.hidden = !receber;
-    if(acompanhamentoFiltros) acompanhamentoFiltros.hidden=receber||!['orcamento','pre_reserva'].includes(els.filtroStatusPedido?.value);
-    els.centralFiltrosPedidos?.setAttribute('aria-label',receber?'Filtros de contas a receber':'Filtros de pedidos');
-    if(receber && host){ aplicarFiltros(); window.CentralContasReceber?.abrir(host).then(atualizarBadgeReceber); }
-  }
-  async function atualizarBadgeReceber(){
-    const badge = document.getElementById("centralReceberBadge");
-    if(!badge || !window.CentralContasReceber) return;
-    const n = await window.CentralContasReceber.contarAlertas();
-    badge.textContent = n ? String(n) : ""; badge.hidden = !n;
-    badge.title = n ? n + " parcela(s) vencida(s) ou vencendo hoje" : "";
-  }
-
   function bindEvents(){
     montarSeletorOrdem();
-    document.querySelector(".central-visao")?.addEventListener("click", (event) => {
-      const b = event.target.closest("[data-central-visao]");
-      if(b) trocarVisao(b.dataset.centralVisao);
-    });
-    setTimeout(() => atualizarBadgeReceber().catch(() => {}), 800);
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')carregarPedidos();});
     els.pesquisaGeralPedidos?.addEventListener("input", aplicarFiltros);
     els.btnFiltrosPedidos?.addEventListener("click", () => {
@@ -1551,7 +1573,6 @@ function infoCadastro(rotulo, valor, icone){
       try { if (window.parent !== window && window.parent.shellNavigate) { window.parent.shellNavigate(href); return; } } catch (e) {}
       location.href = "../Catalogo/catalogo.html" + (pesquisar ? "?pesquisar=1" : "");
     };
-    document.getElementById("btnCatalogoCentral")?.addEventListener("click", () => abrirCatalogo(false));
     document.addEventListener("keydown", (event) => {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return;
       const acao = !event.altKey ? (event.key === "F2" ? "catalogo" : event.key === "F4" ? "pesquisar" : "") : (event.code === "KeyC" ? "catalogo" : event.code === "KeyP" ? "pesquisar" : "");
@@ -1644,8 +1665,14 @@ function infoCadastro(rotulo, valor, icone){
       }
     });
 
+    document.addEventListener("separacao-ocorrencias-atualizadas", () => contarOcorrenciasComercial());
     $("centralSituacoes")?.addEventListener("click", (event) => {
+      if(event.target.closest("[data-aba-ocorrencias]")){ mostrarAbaOcorrencias(true); return; }
       const botao = event.target.closest("[data-situacao]");
+      if(botao && state.abaOcorrencias){
+        state.abaOcorrencias = false; mostrarAbaOcorrencias(false);
+        els.filtroStatusPedido.value = botao.dataset.situacao; aplicarFiltros(); return;
+      }
       if(!botao || !els.filtroStatusPedido) return;
       const status = botao.dataset.situacao;
       els.filtroStatusPedido.value = status && els.filtroStatusPedido.value === status ? "" : status;
@@ -1676,6 +1703,7 @@ function infoCadastro(rotulo, valor, icone){
     state.supabase = window.supabaseClient;
     await window.aguardarContexto?.(); // espera a empresa ser identificada (ver CLAUDE.md, "aguardarContexto")
     state.empresaId = window.__CONTEXT?.empresa_id;
+    window.CentralAcompanhamento?.iniciar({ sb: state.supabase, empresa: state.empresaId, pedido: (id) => state.pedidos.find((p) => String(p.id) === String(id)), aoMudar: () => carregarPedidos() });
     state.onContatoSalvo=()=>carregarAcompanhamentos().catch(e=>{acompanhamentoErro=e.message;render();});
     window.addEventListener('comercial:contato-salvo',state.onContatoSalvo);
     state.onContatoSalvo();

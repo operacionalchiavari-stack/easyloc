@@ -54,7 +54,8 @@
     });
     const opPedidos = titulo(achar('Pedidos no cronograma'), 'Quais pedidos entram no cronograma');
     const opDatas = titulo(achar('Datas das etapas'), 'Datas e horário das etapas');
-    const opTriagem = titulo(achar('Triagem'), 'Triagem: responsável, equipe e conferência');
+    const opTriagem = titulo(achar('Triagem'), 'Triagem: responsável e equipe');
+    const opCegas = titulo(achar('Conferência às cegas'), 'Conferência às cegas (descarregamento)');
     const opEscala = titulo(achar('Escala automática'), 'Regras da escala por etapa');
 
     const fluxo = host.querySelector('.pr-fluxo-pedidos');
@@ -98,11 +99,12 @@
       ]),
       grupo('Triagem e conferência', [
         opTriagem,
+        opCegas,
         titulo(modos, 'Modos de separação'),
         titulo(setoresSep, 'Setores da separação'),
         titulo(divergencias, 'Divergências de contagem'),
         titulo(carregCam, 'Carregamento sem caminhão programado'),
-        titulo(qualidade, 'Inventário e controle de qualidade')
+        titulo(qualidade, 'Inventário · colunas da contagem')
       ]),
       grupo('Equipes e caminhões (escala)', [
         titulo(escalaLiga, 'Escala automática'),

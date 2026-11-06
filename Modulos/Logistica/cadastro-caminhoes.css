@@ -525,18 +525,36 @@ html:root :is(body:not(.portal-shell),#main-content) .cadastro-caminhoes-page .p
 html:root :is(body:not(.portal-shell),#main-content) .cadastro-caminhoes-page .page-header>h1:first-child{flex:1 1 auto!important;min-width:0;order:0;margin:0!important;padding:0!important;border:0!important;text-align:left!important}
 .cadastro-caminhoes-page .header-actions{flex-shrink:0}
 .cadastro-caminhoes-page .caminhao-foto-coluna{width:108px;padding:10px 16px}
-.caminhao-lista-foto{position:relative;display:grid;place-items:center;width:76px;height:64px;border:1px solid #dfe5ec;border-radius:10px;background:#f8fafc;color:#64748b;font-size:12px;overflow:hidden}
-.caminhao-lista-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+.caminhao-lista-foto{position:relative;display:grid;place-items:center;width:64px;height:64px;border:1px solid #dfe5ec;border-radius:50%;background:#f8fafc;color:#64748b;font-size:12px;overflow:hidden}
+.caminhao-lista-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
 @media(max-width:650px){html:root :is(body:not(.portal-shell),#main-content) .cadastro-caminhoes-page .page-header{gap:12px!important}html:root :is(body:not(.portal-shell),#main-content) .cadastro-caminhoes-page .page-header>h1:first-child{font-size:22px!important;letter-spacing:.04em!important}.cadastro-caminhoes-page .header-actions .btn{padding:10px 12px;font-size:12px}.cadastro-caminhoes-page .table-wrapper{overflow-x:auto}}
 
-/* A largura do botao nao interfere no centro do titulo. */
-html:root #caminhoesCabecalho#caminhoesCabecalho.page-header{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:center!important;gap:0!important;padding:44px 0 26px!important;margin-top:0!important}
-html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>h1:first-child{grid-column:1!important;grid-row:1!important;width:100%!important;min-width:0!important;margin:0!important;padding:0!important;text-align:center!important;justify-self:stretch!important;border:0!important}
-html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>.header-actions{grid-column:1!important;grid-row:1!important;justify-self:end!important;z-index:1;margin:0!important}
-@media(max-width:1250px){html:root #caminhoesCabecalho#caminhoesCabecalho.page-header{row-gap:20px!important}html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>.header-actions{grid-row:2!important}}
+/* Pesquisa, titulo central e acao compacta no mesmo cabecalho. */
+html:root #caminhoesCabecalho#caminhoesCabecalho.page-header{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;gap:18px!important;padding:44px 0 26px!important;margin-top:0!important}
+html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>h1:first-child{grid-column:2!important;grid-row:1!important;width:100%!important;min-width:0!important;margin:0!important;padding:0!important;text-align:center!important;justify-self:stretch!important;border:0!important}
+html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>.header-actions{grid-column:3!important;grid-row:1!important;justify-self:end!important;z-index:1;margin:0!important}
+#caminhoesCabecalho .caminhoes-pesquisa{grid-column:1;grid-row:1;width:280px;max-width:100%;min-width:0}
+html:root #caminhoesCabecalho .caminhoes-pesquisa input{width:100%;min-width:0;min-height:38px!important;height:38px!important;padding:8px 12px!important;font-size:13px!important;border-radius:12px!important;background:#fff}
+html:root #caminhoesCabecalho .header-actions .btn{min-height:34px!important;height:34px!important;padding:7px 14px!important;border-radius:10px!important;font-size:12px!important;font-weight:600!important;line-height:1.3!important;letter-spacing:0!important;text-transform:none!important;white-space:nowrap}
+@media(max-width:1150px){html:root #caminhoesCabecalho#caminhoesCabecalho.page-header{grid-template-columns:minmax(0,1fr) auto!important;row-gap:16px!important}html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>h1:first-child{grid-column:1/-1!important;grid-row:1!important}#caminhoesCabecalho .caminhoes-pesquisa{grid-row:2}html:root #caminhoesCabecalho#caminhoesCabecalho.page-header>.header-actions{grid-column:2!important;grid-row:2!important}}
 
 /* Fornecedor (transportadora) do caminhão (out/2026) */
 .caminhao-forn-dica{display:block;margin-top:6px;color:#6b6b6b;font-size:12.5px}
 
 /* Fornecedor (transportadora) do caminhão (out/2026) */
 .caminhao-forn-dica{display:block;margin-top:6px;color:#6b6b6b;font-size:12.5px}
+
+/* Foto com controles simples e sem o campo de arquivo nativo. */
+#modalCaminhao .caminhao-foto-campo{padding:16px;border:1px solid #dfe5ec;border-radius:16px;background:#fff;gap:12px}
+#modalCaminhao .caminhao-foto-titulo{font-size:12px;letter-spacing:.02em;text-transform:none;color:#526477}
+#modalCaminhao .caminhao-foto-preview{display:grid;place-items:center;height:auto;aspect-ratio:4/3;border-radius:12px;background:#f7f9fb}
+#modalCaminhao .caminhao-foto-preview img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+#modalCaminhao .caminhao-foto-preview [hidden],#modalCaminhao .caminhao-foto-acoes [hidden]{display:none!important}
+#modalCaminhao #caminhaoSemFoto{font-size:12px;gap:8px}
+#modalCaminhao #caminhaoSemFoto svg{width:36px;height:36px}
+#modalCaminhao .caminhao-foto-acoes{gap:10px}
+#modalCaminhao .caminhao-foto-selecionar{width:100%;min-height:36px;padding:8px 12px;border:1px solid #dfe5ec;border-radius:9px;background:#f8fafc;color:#34485d;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;text-transform:none;letter-spacing:0}
+#modalCaminhao .caminhao-foto-acoes small{font-size:11px;line-height:1.5;text-align:center;color:#7a8794}
+#modalCaminhao #caminhaoRemoverFoto{align-self:center;padding:3px 6px;font-size:11px;background:none;border:0;color:#ae4545}
+#modalCaminhao .caminhao-foto-campo:has(#caminhaoFotoArquivo:disabled) .caminhao-foto-acoes,#modalCaminhao .caminhao-foto-campo:has(#caminhaoFotoArquivo:disabled) .caminhao-foto-camera{display:none}
+#modalCaminhao .caminhao-foto-campo:has(#caminhaoFotoArquivo:disabled) .caminhao-foto-preview{cursor:default}

@@ -41,3 +41,47 @@ html:root:is(#cf-t#cf-t#cf-t#cf-t#cf-t,html) .cf-tabela td{padding:9px 10px;bord
 .cf-rodape label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#4f4f4f}
 .cf-rodape input{min-height:40px;padding:0 10px;border:1px solid #dfe4ea;border-radius:10px;font:14px Inter,sans-serif}
 .cf-obs-fech{width:260px}
+
+.cf-evento{margin-bottom:18px;border:1px solid var(--el-color-border,#e2e6ec);border-radius:14px;overflow:hidden;background:#fff}.cf-evento-topo{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 18px;border-bottom:1px solid var(--el-color-border,#e2e6ec);background:var(--el-color-surface-soft,#f8f9fb)}.cf-evento-topo h3{margin:0;font:600 16px var(--ch-sans,Inter,sans-serif)}.cf-evento-topo p{margin:5px 0 0;font-size:12px;color:#64748b}.cf-evento-totais{display:flex;align-items:center;gap:24px}.cf-evento-totais span{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#64748b}.cf-evento-totais b{font-size:14px;color:var(--el-color-text,#1f2020)}.cf-evento-totais strong{font-size:18px;color:var(--el-color-text,#1f2020)}.cf-dia{margin-bottom:22px}.cf-dia-titulo{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 10px;padding:0 2px 6px;border-bottom:2px solid var(--el-color-primary,#123f86);font:700 16px var(--ch-sans,Inter,sans-serif)!important}.cf-dia-titulo>span:last-child{font-size:13px;font-weight:500;color:#64748b}.cf-pagamento{box-shadow:none;border:1px solid var(--el-color-border,#e8e1d6);padding:12px 16px}.cf-pagamento .cf-rodape{margin-top:8px}@media(max-width:650px){.cf-dia-titulo{flex-wrap:wrap}.cf-evento-totais{gap:16px}}
+
+.cf-evento-data{flex:none;display:flex;flex-direction:column;align-items:center;min-width:54px;padding:4px 8px;border-right:1px solid #e3e7ec}.cf-evento-data small{font:600 11px var(--ch-sans,Inter,sans-serif);color:#6b6b6b;text-transform:uppercase;letter-spacing:.06em}.cf-evento-data b{font:700 16px var(--ch-sans,Inter,sans-serif);color:#1f2020}.cf-evento-foto{position:relative;flex:none;width:52px;height:52px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#e7ebf1;color:#4f4f4f;font:600 15px var(--ch-sans,Inter,sans-serif)}.cf-evento-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.cf-evento-pedido{flex:none;display:inline-block;padding:2px 9px;border-radius:999px;background:#123f86;color:#fff;font:600 12px var(--ch-sans,Inter,sans-serif)}.cf-evento-identidade{flex:1;min-width:200px}.cf-evento-identidade strong{display:block;font:600 17px var(--ch-sans,Inter,sans-serif);line-height:1.2}.cf-evento-identidade span{display:block;margin-top:5px;color:#64748b;font-size:13px}.cf-evento-topo:has(.cf-evento-data){justify-content:flex-start;gap:8px 16px}
+
+html:root .cf-page .cf-evento{border:1px solid #d6dde5!important;box-shadow:0 3px 7px rgba(24,39,55,.09),0 10px 24px rgba(24,39,55,.07)!important;margin-bottom:22px}
+html:root .cf-page .cf-evento-topo{border-bottom:1px solid #dce2e9!important}
+
+html:root .cf-page .cf-dia-titulo{border-bottom:0!important}
+
+html:root .cf-page .cf-tipo.entrega,html:root .cf-page .cf-tipo.coleta{display:inline-flex;align-items:center;white-space:nowrap;padding:7px 11px!important;min-height:30px;box-sizing:border-box;border-radius:8px!important;font-size:12px!important;font-weight:700!important;letter-spacing:.02em;border:1px solid transparent;margin-bottom:5px}
+html:root .cf-page .cf-tipo.entrega{background:#d5f3e2!important;color:#11643b!important;border-color:#8ed4ac!important;box-shadow:none}
+html:root .cf-page .cf-tipo.coleta{background:#ffead3!important;color:#9b430b!important;border-color:#edba83!important;box-shadow:none}
+
+html:root:is(#cf-v#cf-v#cf-v#cf-v#cf-v#cf-v,html) .cf-viagens :is(th,td).cf-valor-ch{background:#edf4ff!important;border-left:1px solid #dce7f6;border-right:1px solid #dce7f6}
+html:root:is(#cf-v#cf-v#cf-v#cf-v#cf-v#cf-v,html) .cf-viagens :is(th,td).cf-valor-transportadora{background:#eef8f0!important;border-right:1px solid #dcebdd}
+.cf-viagens .cf-origem,.cf-viagens .cf-destino{min-width:140px;max-width:250px;white-space:normal;overflow-wrap:anywhere}
+
+.cf-viagens{table-layout:fixed;min-width:1300px}.cf-viagens :is(th,td){box-sizing:border-box;overflow-wrap:anywhere}.cf-viagens .cf-origem,.cf-viagens .cf-destino{min-width:0;max-width:none}.cf-viagens .cf-observacao{text-align:center!important;white-space:nowrap}.cf-viagens .cf-final input{width:100%;max-width:110px;min-width:0;box-sizing:border-box}.cf-viagens .cf-atalhos{flex-wrap:wrap;justify-content:flex-end}.cf-viagens .cf-atalhos button{white-space:normal}.cf-obs-icone{display:inline-grid;place-items:center;width:30px;height:30px;min-width:0!important;padding:0!important;border:1px solid #e9cf8a;border-radius:8px;background:#fff4cf;color:#946000;cursor:pointer}.cf-obs-icone.com-nota{animation:cf-nota-pulsa 1.7s ease-in-out infinite}.cf-obs-icone.sem-nota{background:transparent;border-color:#e1e5eb;color:#8a95a4}.cf-sem-nota{color:#a8b0bb}@keyframes cf-nota-pulsa{0%,100%{opacity:1}50%{opacity:.48}}@media(prefers-reduced-motion:reduce){.cf-obs-icone.com-nota{animation:none}}.cf-nota-dialog{width:min(460px,calc(100vw - 32px));padding:22px;border:1px solid #dce2e9;border-radius:16px;box-shadow:0 18px 60px #15283b33}.cf-nota-dialog::backdrop{background:#14223555}.cf-nota-dialog h3{margin:0 0 14px;font-size:18px}.cf-nota-dialog textarea{box-sizing:border-box;width:100%;resize:vertical;padding:12px;border:1px solid #dce2e9;border-radius:10px;font:inherit}.cf-nota-dialog form>div{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.cf-nota-texto,.cf-nota-transp{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.5}
+
+html:root:is(#cf-head#cf-head#cf-head#cf-head#cf-head#cf-head#cf-head,html) .cf-viagens thead th{white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;line-height:1.4!important;vertical-align:middle!important}
+.cf-evento-totais{flex-wrap:wrap;min-width:0;max-width:100%}.cf-evento-totais>span{min-width:0;overflow-wrap:anywhere}
+
+/* Nov/2026: enviar ao Contas a Pagar como no Pagamento de Freelancer (caixa em cada viagem, barra embaixo, janela de resumo). */
+.cf-viagens .cf-sel{text-align:center!important;white-space:nowrap;overflow-wrap:normal!important}.cf-sel-todos{display:inline-flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.cf-viagens .cf-sel input{width:17px;height:17px;accent-color:#123f86;cursor:pointer}
+.cf-viagens tr.is-sel td{background:#f2f6fd!important}
+.cf-barra-envio{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:15;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 18px;background:#fff;border:1px solid #d6dde7;border-radius:14px;box-shadow:0 12px 36px rgba(15,23,42,.18);font:400 14px Inter,sans-serif;white-space:nowrap}
+.cf-barra-envio[hidden]{display:none}
+.cf-barra-envio em{font-style:normal;color:#b42318}
+.cf-rs{color:#b42318}
+.cf-envio-dialog{width:min(760px,calc(100vw - 32px))}
+.cf-envio-sub{margin:-6px 0 12px;color:#6b6b6b;font-size:13.5px}
+.cf-envio-aviso{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#fdf6dd;border:1px solid #ecd9a0;color:#5f4a00;font-size:13px}
+.cf-envio-resumo{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13.5px}
+.cf-envio-resumo th{text-align:left;padding:8px 10px;background:#eef1f5;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:#4f4f4f}
+.cf-envio-resumo td{padding:8px 10px;border-bottom:1px solid #eef1f4;vertical-align:top}
+.cf-envio-resumo tfoot td{font-weight:500;border-bottom:0}
+.cf-envio-resumo .num{text-align:right}
+.cf-envio-resumo small{display:block;color:#6b6b6b;font-size:12px}
+.cf-envio-campos{display:flex;gap:12px;flex-wrap:wrap}
+.cf-envio-campos label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#4f4f4f}
+.cf-envio-campos input{padding:8px 10px;border:1px solid #dce2e9;border-radius:10px;font:inherit;font-size:14px}
+.cf-envio-obs{flex:1;min-width:200px}

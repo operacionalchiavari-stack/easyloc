@@ -93,7 +93,7 @@ const QR = "/* qrcodejs falso */ window.QRCode = function(el, o){ const c = docu
   await page.click('#btnSalvarManualSeparacao');
   await page.waitForTimeout(700);
   const texto = await page.evaluate(() => document.body.innerText);
-  assert.ok(/Sua parte deste pedido está separada/.test(texto), 'avisa que a parte da pessoa terminou');
+  assert.ok(/Sua parte (deste pedido )?está separada/.test(texto), 'avisa que a parte da pessoa terminou');
   const finalizou = await page.evaluate(() => window.__gravados.some((g) => g.t === 'separacoes_pedidos' && /separado/.test(g.p?.status || '')));
   assert.ok(!finalizou, 'não finaliza: falta o setor de Louças');
   console.log('ok 2 - sua parte pronta não finaliza enquanto outro setor não separar');

@@ -13,6 +13,11 @@ function definirFotoCaminhao(url) {
   img.hidden = !url;
   document.getElementById('caminhaoSemFoto').hidden = !!url;
   if(url) img.src=url; else img.removeAttribute('src');
+  atualizarControlesFotoCaminhao(!!url);
+}
+function atualizarControlesFotoCaminhao(temFoto){
+  document.getElementById('caminhaoTrocarFoto').textContent=temFoto?'Alterar foto':'Selecionar foto';
+  document.getElementById('caminhaoRemoverFoto').hidden=!temFoto;
 }
 function selecionarFotoCaminhao(input) {
   const file=input.files[0]; if(!file)return;
@@ -21,6 +26,7 @@ function selecionarFotoCaminhao(input) {
   window.caminhaoFotoBlob=URL.createObjectURL(file);
   const img=document.getElementById('caminhaoFotoPreview');img.src=window.caminhaoFotoBlob;img.hidden=false;
   document.getElementById('caminhaoSemFoto').hidden=true;
+  atualizarControlesFotoCaminhao(true);
 }
 async function enviarFotoCaminhao(empresaId){
   const file=document.getElementById('caminhaoFotoArquivo').files[0];
@@ -122,7 +128,7 @@ window.initCadastroCaminhoes = function () {
       delete root.dataset.caminhoesInit;
 
       // remove listeners recriando elementos de filtro
-      ["filtroTexto","filtroTipo","filtroStatus"].forEach(id => {
+      ["filtroTexto"].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const novo = el.cloneNode(true);
@@ -162,7 +168,7 @@ function setStatusCaminhao(status) {
 ===================================================== */
 
 function inicializarEventos() {
-  ["filtroTexto", "filtroTipo", "filtroStatus"].forEach(id => {
+  ["filtroTexto"].forEach(id => {
     document.getElementById(id)?.addEventListener("input", carregarCaminhoes);
     document.getElementById(id)?.addEventListener("change", carregarCaminhoes);
   });
@@ -362,8 +368,6 @@ async function carregarCaminhoes() {
   }
 
   const filtroTexto  = (document.getElementById("filtroTexto")?.value || "").toLowerCase();
-  const filtroTipo   = document.getElementById("filtroTipo")?.value || "";
-  const filtroStatus = document.getElementById("filtroStatus")?.value || "";
 
   let query = supabase
     .from("caminhoes")
@@ -371,8 +375,6 @@ async function carregarCaminhoes() {
     .eq("empresa_id", empresaId)
     .order("created_at", { ascending: false });
 
-  if (filtroTipo)   query = query.eq("tipo", filtroTipo);
-  if (filtroStatus) query = query.eq("status", filtroStatus);
 
   const { data, error } = await query;
 
@@ -480,6 +482,14 @@ async function carregarCaminhoes() {
    SALVAR
 ===================================================== */
 
+function atualizarObrigatoriedadeEmpresaCaminhao(){
+  const obrigatorio=document.getElementById('tipoInput').value==='terceirizado';
+  for(const id of ['cnpjInput','empresaInput','telefoneInput']){
+    const campo=document.getElementById(id);campo.required=obrigatorio;
+    const label=document.querySelector('label[for="'+id+'"]');
+    if(label){if(!label.dataset.rotulo)label.dataset.rotulo=label.textContent.replace(/\s*\*$/,'');label.textContent=label.dataset.rotulo+(obrigatorio?' *':'');}
+  }
+}
 async function salvarCaminhao() {
 
   const supabase = window.supabaseClient;
@@ -521,6 +531,13 @@ async function salvarCaminhao() {
   if (!modelo || !codigo || !tipo) {
     mostrarAlerta("Preencha os campos obrigatórios (modelo, código e tipo).");
     return;
+  }
+
+  atualizarObrigatoriedadeEmpresaCaminhao();
+  if(tipo==='terceirizado'){
+    for(const [id,valor,rotulo] of [['cnpjInput',cnpj,'CNPJ'],['empresaInput',empresaNome,'nome da empresa proprietária'],['telefoneInput',telefone,'telefone da empresa proprietária']]){
+      if(!valor){mostrarAlerta('Para caminhão terceirizado, informe o '+rotulo+'.');document.getElementById(id).focus();return;}
+    }
   }
 
   if (!placa.startsWith("SEM PLACA") && !validarPlaca(placa)) {
@@ -653,10 +670,12 @@ function preencherFormularioCaminhao(cam) {
   atualizarCapacidadePreview();
 }
 function bloquearFormularioCaminhao(bloquear) {
+  atualizarObrigatoriedadeEmpresaCaminhao();
 
   const campos = document.querySelectorAll("#modalCaminhao input, #modalCaminhao select");
 
   document.getElementById("caminhaoRemoverFoto").disabled = bloquear;
+  document.getElementById("caminhaoTrocarFoto").disabled = bloquear;
   campos.forEach(campo => {
     campo.disabled = bloquear;
   });

@@ -208,3 +208,5 @@ body :is(#main-content, .el-page) :is(.table-wrapper,.table-wrap) + .easyloc-lis
   .el-stat-card { min-width:calc(50% - 5px)!important; }
 }
 :is(#main-content, .el-page) .stat-body small { font-size:10px!important; line-height:1.15!important; }
+
+.el-alert-confirm.el-alert-confirm--top{align-items:start;justify-items:center;overflow-y:auto;padding-top:max(22px,env(safe-area-inset-top));box-sizing:border-box}

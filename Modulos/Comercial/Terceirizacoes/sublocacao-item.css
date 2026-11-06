@@ -1,0 +1,10 @@
+/* Item de sublocação (nov/2026): o visual vem de item-detalhes.css (Cadastro de Itens); aqui só o que é próprio. */
+.subloc-topo-acoes{display:flex;align-items:center;gap:10px}
+.subloc-item-page .subloc-topo-acoes{flex:0 0 auto}
+.subloc-viewer{position:absolute;inset:0;width:100%;height:100%;background:transparent;--poster-color:transparent}
+.subloc-item-page .item-3d-canvas-host{position:relative}
+.subloc-item-page #sub3DGirar.is-on{color:#123f86;border-color:#123f86}
+.subloc-margem strong{display:flex;align-items:center;min-height:40px;font:600 16px Inter,system-ui,sans-serif;color:#1f2020}
+.subloc-obs{width:100%;min-height:84px;resize:vertical;font:400 14px Inter,system-ui,sans-serif;padding:10px 12px}
+.subloc-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.subloc-item-page [hidden]{display:none!important}

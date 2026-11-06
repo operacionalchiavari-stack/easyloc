@@ -64,3 +64,208 @@ html:root body main.container.el-page{padding-left:20px!important;padding-right:
 #acAprovar,#acCancelar{flex:0 0 auto;font:600 14px Inter,sans-serif;padding:11px 16px;border-radius:8px;cursor:pointer}#acAprovar{background:#467f68;color:#fff;border:1px solid #467f68}#acCancelar{background:#fff;color:#52697c;border:1px solid #dce4ec}
 
 .ac-inv-tratamento{display:flex;align-items:end;flex-wrap:wrap;gap:14px;padding:16px;margin:14px 0;border:1px solid #dac79c;border-radius:10px;background:#fffbf3}.ac-inv-tratamento[hidden]{display:none!important}.ac-inv-tratamento h4,.ac-inv-tratamento p{flex-basis:100%;margin:0}.ac-inv-tratamento label{min-width:180px}
+/* Setores na lateral do painel, mantendo listagem e resumo. */
+.ac-duas-colunas.ac-tres-colunas{grid-template-columns:180px minmax(0,1fr) minmax(0,1fr);gap:16px}
+.ac-tres-colunas>#acSetores{grid-column:1;grid-row:1;position:sticky;top:16px;display:flex!important;flex-direction:column!important;align-items:stretch!important;flex-wrap:nowrap!important;gap:4px!important;padding:8px!important;border:1px solid #dce4ec;border-radius:12px;background:#fff;box-shadow:0 2px 7px rgb(25 45 65 / 6%)}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;min-width:0;box-sizing:border-box;padding:12px 10px!important;margin:0!important;border:1px solid transparent!important;border-radius:8px;white-space:normal;text-align:left;font-size:12px!important;line-height:1.5;background:transparent;color:#52697c}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button[aria-pressed=true]{border-color:#8cbfff!important;background:#eff6ff;color:#28547f}
+.ac-tres-colunas>#acSetores>button::after{display:none!important}
+.ac-duas-colunas.ac-tres-colunas>.ac-coluna-itens{grid-column:2;grid-row:1;min-width:0}
+.ac-duas-colunas.ac-tres-colunas>.ac-proximo-evento{grid-column:3;grid-row:1}
+.ac-tres-colunas .ac-tabela-topo{flex-wrap:wrap;gap:10px}
+.ac-tres-colunas .ac-tabela-topo #acBusca{max-width:100%}
+@media(max-width:1100px){.ac-duas-colunas.ac-tres-colunas{grid-template-columns:160px minmax(0,1fr)}.ac-duas-colunas.ac-tres-colunas>.ac-proximo-evento{grid-column:2;grid-row:2;position:static}.ac-tres-colunas>#acSetores{grid-row:1 / 3}}
+@media(max-width:600px){.ac-duas-colunas.ac-tres-colunas{grid-template-columns:minmax(0,1fr)}.ac-tres-colunas>#acSetores{grid-column:1;grid-row:1;position:static}.ac-duas-colunas.ac-tres-colunas>.ac-coluna-itens{grid-column:1;grid-row:2}.ac-duas-colunas.ac-tres-colunas>.ac-proximo-evento{grid-column:1;grid-row:3}}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button{width:auto!important;max-width:100%!important;box-sizing:border-box!important;white-space:normal!important;flex:0 1 auto!important;overflow-wrap:anywhere}
+/* Cards de setores com nome alinhado à esquerda. */
+html:root body main.el-page .ac-tres-colunas>#acSetores{border:0!important;border-radius:0;background:transparent!important;box-shadow:none;padding:0!important;gap:10px!important}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button{display:flex!important;justify-content:space-between!important;align-items:center!important;text-align:left!important;width:100%!important;min-height:48px;padding:13px 12px!important;border:1px solid #dce4ec!important;border-radius:10px!important;background:#fff!important;box-shadow:0 2px 6px rgb(25 45 65 / 6%)!important;font-weight:500!important;text-transform:none!important;letter-spacing:0!important;color:#52697c!important}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button[aria-pressed=true]{border:1px solid #8cbfff!important;background:#eff6ff!important;color:#28547f!important;box-shadow:inset 0 0 0 1px #8cbfff,0 2px 6px rgb(25 45 65 / 6%)!important}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button:hover{background:#f5f9ff!important}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button::before,html:root body main.el-page .ac-tres-colunas>#acSetores>button::after{display:none!important}
+/* Conferência e encaminhamento no resumo do item. */
+.ac-conferencia-inline{margin-top:20px;padding-top:20px;border-top:1px solid #e2e9ef;min-width:0}
+.ac-conferencia-inline .ac-card{padding:16px;margin:0 0 14px;min-width:0;box-sizing:border-box}
+.ac-conferencia-inline .ac-card>header{align-items:flex-start;gap:12px}
+.ac-conferencia-inline .ac-card h3{font-size:15px;line-height:1.5;margin:0}
+.ac-conferencia-inline .ac-card header img{width:64px;height:64px;flex:none;object-fit:contain}
+.ac-conferencia-inline .ac-card form,.ac-conferencia-inline #acOSNativa{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:end}
+.ac-conferencia-inline label{display:grid;gap:6px;min-width:0;font-size:12px}
+.ac-conferencia-inline input,.ac-conferencia-inline select{width:100%;min-width:0;box-sizing:border-box;font:14px Inter,system-ui;padding:9px;border:1px solid #ced8e4;border-radius:8px;background:#fff;color:#243449}
+.ac-conferencia-inline button{font:500 12px Inter,system-ui;border:1px solid #cbd8e4;border-radius:8px;padding:10px 12px;cursor:pointer}
+.ac-conferencia-inline .ac-vinculo{padding:16px}
+.ac-conferencia-inline #acVincular{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ac-conferencia-inline #acVincular label{grid-column:1/-1}
+.ac-conferencia-inline .ac-dialogo-topo h2{font-size:16px;margin:0}
+.ac-conferencia-inline .ac-dialogo-topo button{font-size:12px}
+.ac-ordem-inline:empty{display:none}
+@media(max-width:600px){.ac-conferencia-inline .ac-card form,.ac-conferencia-inline #acOSNativa{grid-template-columns:1fr}}
+/* Indicadores compactos ao lado do título do resumo. */
+#acProximoEvento .ac-resumo-cabecalho{flex-wrap:nowrap;align-items:center;gap:10px}
+#acProximoEvento .ac-resumo-cabecalho h3{font-size:15px;flex:0 0 auto}
+#acProximoEvento .ac-resumo-numeros{flex:1 1 0;gap:5px}
+#acProximoEvento .ac-resumo-numero{padding:6px 7px;border-radius:7px}
+#acProximoEvento .ac-resumo-numero span{font-size:10px;line-height:1.3;min-height:0}
+#acProximoEvento .ac-resumo-numero strong{font-size:17px;line-height:1.2;margin-top:3px}
+@media(max-width:600px){#acProximoEvento .ac-resumo-cabecalho{gap:7px}#acProximoEvento .ac-resumo-cabecalho h3{font-size:13px}#acProximoEvento .ac-resumo-numero{padding:5px}#acProximoEvento .ac-resumo-numero span{font-size:9px}#acProximoEvento .ac-resumo-numero strong{font-size:15px}}
+/* A tabela ocupa a coluna disponível sem impor largura mínima. */
+.ac-tres-colunas .ac-danos-tabela{width:100%;min-width:0;max-width:100%;table-layout:fixed}
+.ac-tres-colunas .ac-danos-tabela th,.ac-tres-colunas .ac-danos-tabela td{width:auto;min-width:0;padding:10px 6px;white-space:normal;overflow-wrap:anywhere;word-break:normal;box-sizing:border-box}
+.ac-tres-colunas .ac-danos-tabela th{font-size:11px!important;letter-spacing:0!important}
+.ac-tres-colunas .ac-item-tabela{width:100%;min-width:0;max-width:100%;gap:8px;align-items:flex-start}
+.ac-tres-colunas .ac-item-tabela img,.ac-tres-colunas .ac-item-tabela .ac-sem-foto{width:48px;height:48px;flex:0 0 48px;box-sizing:border-box}
+.ac-tres-colunas .ac-item-tabela strong{display:block;min-width:0;overflow:visible;overflow-wrap:anywhere;-webkit-line-clamp:unset}
+.ac-tres-colunas .ac-os-numero,.ac-tres-colunas .ac-prazo{white-space:normal;overflow-wrap:anywhere}
+.ac-tres-colunas .ac-listagem .ac-lista-scroll{overflow-x:visible;max-width:100%}
+.ac-tres-colunas .ac-tabela-topo h3{min-width:0;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:1300px){.ac-tres-colunas .ac-item-tabela{flex-direction:column}}
+@media(max-width:600px){.ac-tres-colunas .ac-danos-tabela th,.ac-tres-colunas .ac-danos-tabela td{padding:8px 4px}.ac-tres-colunas .ac-danos-tabela th{font-size:10px!important}.ac-tres-colunas .ac-item-tabela strong,.ac-tres-colunas .ac-danos-tabela td,.ac-tres-colunas .ac-danos-tabela td b,.ac-tres-colunas .ac-danos-tabela td small{font-size:12px}}
+html:root body main.el-page .ac-tres-colunas .ac-danos-tabela th{white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important}
+/* Mais espaço para os itens; resumo com cinco colunas de eventos. */
+@media(min-width:1101px){.ac-duas-colunas.ac-tres-colunas{grid-template-columns:180px minmax(0,1fr) minmax(340px,.65fr)}}
+#acProximoEvento .ac-eventos-tabela th,#acProximoEvento .ac-eventos-tabela td{width:auto;overflow-wrap:break-word!important;word-break:normal!important}
+#acProximoEvento .ac-eventos-tabela th{white-space:normal!important}
+#acProximoEvento .ac-eventos-tabela td:nth-child(1),#acProximoEvento .ac-eventos-tabela td:nth-child(4){white-space:nowrap!important}
+#acProximoEvento .ac-eventos-tabela td:nth-child(2),#acProximoEvento .ac-eventos-tabela td:nth-child(3),#acProximoEvento .ac-eventos-tabela td:nth-child(5){white-space:normal!important}
+#acProximoEvento .ac-eventos-tabela th:nth-child(4),#acProximoEvento .ac-eventos-tabela td:nth-child(4){text-align:center}
+#acProximoEvento .ac-eventos-tabela th:nth-child(5),#acProximoEvento .ac-eventos-tabela td:nth-child(5){text-align:left}
+/* Pesquisa no cabeçalho, liberando a área da listagem. */
+html:root body main.el-page .ac-cabecalho>#acBusca{grid-area:1 / 1;justify-self:end;align-self:center;z-index:1;width:250px;max-width:100%;min-width:0;box-sizing:border-box;padding:10px 12px;border:1px solid #dce4ec;border-radius:9px;background:#fff;color:#294156;font:14px Inter,system-ui}
+html:root body main.el-page .ac-cabecalho>#acBusca[hidden]{display:none!important}
+@media(min-width:601px) and (max-width:1050px){html:root body main.el-page .ac-cabecalho:has(>#acBusca:not([hidden]))>h2:first-child{justify-self:start!important;font-size:28px!important;letter-spacing:2px!important}}
+@media(max-width:600px){html:root body main.el-page .ac-cabecalho>#acBusca{grid-area:2 / 1;justify-self:stretch;width:100%;margin:8px 0 12px}html:root body main.el-page .ac-cabecalho:has(>#acBusca:not([hidden]))>.fin-abas{grid-area:3 / 1!important}}
+/* Abas do resumo junto ao cabeçalho e indicadores menores. */
+#acProximoEvento .ac-resumo-cabecalho{margin-bottom:8px;gap:8px}
+#acProximoEvento .ac-resumo-numeros{gap:4px}
+#acProximoEvento .ac-resumo-numero{padding:4px 5px;border-radius:6px}
+#acProximoEvento .ac-resumo-numero span{font-size:9px;line-height:1.2}
+#acProximoEvento .ac-resumo-numero strong{font-size:15px;margin-top:2px}
+#acProximoEvento .ac-resumo-abas{display:flex;gap:4px;border-bottom:1px solid #dce4ec;margin:0 0 12px;padding:0}
+html:root body main.el-page #acProximoEvento .ac-resumo-abas>button{flex:1 1 auto;min-width:0;margin:0!important;padding:9px 5px!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#6a7e90!important;font:500 11px/1.4 Inter,system-ui!important;text-transform:none!important;letter-spacing:0!important;white-space:normal!important;cursor:pointer}
+html:root body main.el-page #acProximoEvento .ac-resumo-abas>button[aria-selected=true]{border-bottom-color:#467f68!important;color:#356b54!important}
+#acProximoEvento [data-ac-resumo-painel][hidden]{display:none!important}
+#acProximoEvento [data-ac-resumo-painel]{margin-top:0;padding-top:0;border-top:0}
+#acProximoEvento [data-ac-resumo-painel]>.ac-resumo-bloco{margin-top:0}
+#acProximoEvento [data-ac-resumo-painel]>.ac-card{margin-top:0}
+#acProximoEvento [data-ac-resumo-painel]>h4{display:none}
+/* O resumo começa junto às abas principais, com espaço reservado. */
+@media(min-width:1101px){html:root body main.el-page:has(.ac-tres-colunas) .ac-cabecalho>.fin-abas{max-width:calc(100% - var(--ac-resumo-largura,340px) - 16px)!important;flex-wrap:wrap!important;box-sizing:border-box}}
+/* Destaque dos cabeçalhos das tabelas do painel. */
+html:root body main.el-page .ac-tres-colunas .ac-danos-tabela thead,
+html:root body main.el-page .ac-tres-colunas .ac-danos-tabela th,
+html:root body main.el-page #acProximoEvento .ac-eventos-tabela th{background:#e9edf1!important;color:#405468!important;border-bottom:1px solid #d4dce4!important}
+/* Sem a linha divisória geral das abas; mantém o indicador da aba ativa. */
+html:root body main.el-page .ac-cabecalho,
+html:root body main.el-page .ac-cabecalho>.fin-abas,
+html:root body main.el-page #acProximoEvento .ac-resumo-abas{border-bottom:0!important}
+html:root body main.el-page .ac-cabecalho::after,
+html:root body main.el-page .ac-cabecalho>h2:first-child::after,
+html:root body main.el-page .ac-cabecalho>.fin-abas::after,
+html:root body main.el-page #acProximoEvento .ac-resumo-abas::after{display:none!important;content:none!important}
+/* Documento comercial do pedido, isolado dos estilos do painel. */
+.ac-dialogo.ac-pedido-dialogo{width:min(1180px,94vw);padding:18px;background:#fff}
+.ac-pedido-documento{display:block;width:100%;height:72vh;border:0;background:#fff;border-radius:8px}
+/* Concluídas: setores e listagem, sem a coluna do resumo. */
+.ac-duas-colunas.ac-tres-colunas.ac-sem-resumo{grid-template-columns:180px minmax(0,1fr)}
+.ac-sem-resumo>#acProximoEvento[hidden]{display:none!important}
+html:root body main.el-page:has(.ac-sem-resumo) .ac-cabecalho>.fin-abas{max-width:100%!important}
+@media(min-width:601px) and (max-width:1100px){.ac-duas-colunas.ac-tres-colunas.ac-sem-resumo{grid-template-columns:160px minmax(0,1fr)}}
+@media(max-width:600px){.ac-duas-colunas.ac-tres-colunas.ac-sem-resumo{grid-template-columns:minmax(0,1fr)}}
+/* Mais destaque nos cards dos setores da primeira coluna. */
+html:root body main.el-page .ac-tres-colunas>#acSetores>button{border:1px solid #c5d1dd!important;background:#fff!important;box-shadow:0 3px 9px rgb(25 45 65 / 11%)!important;color:#344e66!important;font-weight:600!important}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button:hover{border-color:#8fadc9!important;background:#f3f7fc!important;box-shadow:0 4px 11px rgb(25 45 65 / 14%)!important}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button[aria-pressed=true]{border:2px solid #619fe7!important;padding:12px 11px!important;background:#e8f2ff!important;box-shadow:0 3px 10px rgb(44 104 170 / 17%)!important;color:#20558c!important}
+html:root body main.el-page .ac-tres-colunas>#acSetores>button>span{opacity:1!important;color:#627b92!important;font-weight:600!important}
+/* Duas abas de cada lado do título; conteúdo alinhado na mesma linha. */
+html:root body main.el-page .ac-cabecalho>.fin-abas>[data-aba]{grid-row:1;justify-self:center;max-width:100%;text-align:center;white-space:normal!important;font-size:12px!important}
+html:root body main.el-page .ac-cabecalho [data-aba=retorno]{grid-column:1}
+html:root body main.el-page .ac-cabecalho [data-aba=ocorrencias]{grid-column:2}
+html:root body main.el-page .ac-cabecalho [data-aba=divergencias]{grid-column:4}
+html:root body main.el-page .ac-cabecalho [data-aba=inventario]{grid-column:5}
+html:root body main.el-page .ac-cabecalho>#acBusca{grid-area:2 / 1 / 3 / -1;justify-self:end;margin:4px 0 0}
+html:root body main.el-page .ac-cabecalho>h2:first-child{font-size:clamp(22px,2.3vw,32px)!important;letter-spacing:3px!important}
+.ac-duas-colunas.ac-tres-colunas{margin-top:16px}
+#acProximoEvento,.so-pedido-detalhes{margin-top:0}
+@media(max-width:800px){html:root body main.el-page .ac-cabecalho{grid-template-columns:repeat(4,minmax(0,1fr))!important;column-gap:8px!important}html:root body main.el-page .ac-cabecalho>h2:first-child{grid-area:1 / 1 / 2 / -1!important;justify-self:center!important}html:root body main.el-page .ac-cabecalho>.fin-abas>[data-aba]{grid-row:2}html:root body main.el-page .ac-cabecalho [data-aba=divergencias]{grid-column:3}html:root body main.el-page .ac-cabecalho [data-aba=inventario]{grid-column:4}html:root body main.el-page .ac-cabecalho>#acBusca{grid-area:3 / 1 / 4 / -1;width:100%;justify-self:stretch}}
+html:root body main.el-page .ac-cabecalho>h2#acTitulo{grid-area:1 / 3!important;justify-self:center!important}
+@media(max-width:800px){html:root body main.el-page .ac-cabecalho>h2#acTitulo{grid-area:1 / 1 / 2 / -1!important}}
+/* Abas próximas do título e contadores dentro da sua área. */
+html:root body main.el-page #acCabecalho{padding-top:10px;column-gap:12px!important}
+@media(min-width:801px){html:root body main.el-page #acCabecalho [data-aba=retorno]{justify-self:end}html:root body main.el-page #acCabecalho [data-aba=inventario]{justify-self:start}}
+html:root body main.el-page #acCabecalho>.fin-abas>button .tab-badge:not(:empty){position:static!important;inset:auto!important;transform:none!important;margin:0 0 0 6px!important;flex:0 0 auto;vertical-align:middle}
+/* Busca junto às abas e contadores acima, com folga do menu. */
+html:root body main.el-page #acCabecalho{padding-top:20px;column-gap:12px!important}
+html:root body main.el-page #acCabecalho>#acBusca{grid-area:1 / 6 / 2 / 7;justify-self:end;align-self:center;width:230px;margin:0}
+html:root body main.el-page #acCabecalho>.fin-abas>button .tab-badge:not(:empty){position:absolute!important;inset:auto!important;top:-10px!important;right:-5px!important;margin:0!important;transform:none!important}
+@media(min-width:1101px){html:root body main.el-page #acCabecalho>h2#acTitulo{white-space:nowrap}}
+@media(min-width:801px) and (max-width:1100px){html:root body main.el-page #acCabecalho{grid-template-columns:repeat(4,minmax(0,1fr)) minmax(180px,230px)!important;row-gap:12px!important}html:root body main.el-page #acCabecalho>h2#acTitulo{grid-area:1 / 1 / 2 / -1!important}html:root body main.el-page #acCabecalho>.fin-abas>[data-aba]{grid-row:2;justify-self:center}html:root body main.el-page #acCabecalho [data-aba=divergencias]{grid-column:3}html:root body main.el-page #acCabecalho [data-aba=inventario]{grid-column:4}html:root body main.el-page #acCabecalho>#acBusca{grid-area:2 / 5 / 3 / 6;width:100%}}
+@media(max-width:800px){html:root body main.el-page #acCabecalho{row-gap:12px!important}html:root body main.el-page #acCabecalho>#acBusca{grid-area:3 / 1 / 4 / -1;width:100%}}
+html:root body main.el-page #acCabecalho{padding-top:24px!important}
+/* Título centralizado na página, independente da largura da busca. */
+@media(min-width:1401px){html:root body main.el-page #acCabecalho{position:relative!important}html:root body main.el-page #acCabecalho>h2#acTitulo{position:absolute!important;left:50%!important;top:24px!important;transform:translateX(-50%);white-space:nowrap;z-index:1}html:root body main.el-page #acCabecalho>.fin-abas>[data-aba],html:root body main.el-page #acCabecalho>#acBusca{min-height:44px}}
+@media(min-width:801px) and (max-width:1400px){html:root body main.el-page #acCabecalho{grid-template-columns:repeat(4,minmax(0,1fr)) minmax(180px,230px)!important;row-gap:12px!important}html:root body main.el-page #acCabecalho>h2#acTitulo{grid-area:1 / 1 / 2 / -1!important;justify-self:center!important}html:root body main.el-page #acCabecalho>.fin-abas>[data-aba]{grid-row:2;justify-self:center}html:root body main.el-page #acCabecalho [data-aba=divergencias]{grid-column:3}html:root body main.el-page #acCabecalho [data-aba=inventario]{grid-column:4}html:root body main.el-page #acCabecalho>#acBusca{grid-area:2 / 5 / 3 / 6;width:100%}}
+/* Busca ao lado de Item em todas as listagens de setores e concluídas. */
+.ac-item-cabecalho{display:flex;align-items:center;gap:8px;min-width:0;justify-content:space-between}
+.ac-item-cabecalho>[data-ac-busca]{display:block;min-width:0;flex:1;max-width:180px}
+html:root body main.el-page .ac-danos-tabela #acBusca{width:100%!important;min-width:0!important;max-width:100%;height:30px;min-height:30px;padding:5px 8px!important;margin:0!important;box-sizing:border-box;border:1px solid #c5d0dc!important;border-radius:7px!important;background:#fff!important;color:#294156!important;font:12px Inter,system-ui!important;letter-spacing:0;text-transform:none}
+/* Centralização independente, sem campo de busca no topo. */
+@media(min-width:1001px){html:root body main.el-page #acCabecalho{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;row-gap:0!important}html:root body main.el-page #acCabecalho>h2#acTitulo{grid-area:1 / 2!important;position:static!important;transform:none!important;justify-self:center!important}html:root body main.el-page #acCabecalho>.fin-abas>[data-aba]{grid-row:1!important}html:root body main.el-page #acCabecalho [data-aba=retorno]{grid-column:1;justify-self:end;margin-right:110px!important}html:root body main.el-page #acCabecalho [data-aba=ocorrencias]{grid-column:1;justify-self:end}html:root body main.el-page #acCabecalho [data-aba=divergencias]{grid-column:3;justify-self:start}html:root body main.el-page #acCabecalho [data-aba=inventario]{grid-column:3;justify-self:start;margin-left:130px!important}}
+@media(max-width:1000px){html:root body main.el-page #acCabecalho{grid-template-columns:repeat(4,minmax(0,1fr))!important;row-gap:12px!important}html:root body main.el-page #acCabecalho>h2#acTitulo{grid-area:1 / 1 / 2 / -1!important;position:static!important;transform:none!important;justify-self:center!important}html:root body main.el-page #acCabecalho>.fin-abas>[data-aba]{grid-row:2!important;justify-self:center}html:root body main.el-page #acCabecalho [data-aba=retorno]{grid-column:1}html:root body main.el-page #acCabecalho [data-aba=ocorrencias]{grid-column:2}html:root body main.el-page #acCabecalho [data-aba=divergencias]{grid-column:3}html:root body main.el-page #acCabecalho [data-aba=inventario]{grid-column:4}}
+/* Contagens organizadas por categorias, com as capas do catálogo. */
+.ac-inv-duas-colunas{display:grid;grid-template-columns:240px minmax(0,1fr);gap:20px;align-items:start;margin-top:18px;min-width:0}
+[data-inv-categorias]{display:grid;gap:10px;min-width:0;position:sticky;top:16px}
+[data-inv-categorias]>button{display:flex;align-items:center;gap:12px;width:100%;padding:10px!important;border:1px solid #c5d1dd!important;border-radius:12px!important;background:#fff!important;color:#344e66!important;box-shadow:0 2px 7px #19304116!important;text-align:left!important;cursor:pointer}
+[data-inv-categorias]>button[aria-pressed=true]{border-color:#619fe7!important;background:#e8f2ff!important;box-shadow:inset 0 0 0 1px #619fe7,0 2px 7px #19304116!important}
+.ac-inv-categoria-foto{display:grid;place-items:center;width:64px;height:64px;flex:none;background:#fff;border:1px solid #e1e7ee;border-radius:8px;overflow:hidden;font-size:10px;color:#718195}
+.ac-inv-categoria-foto img{width:100%;height:100%;object-fit:contain}
+[data-inv-categorias] strong{display:block;font-size:13px;overflow-wrap:anywhere}
+[data-inv-categorias] small{display:block;font-size:11px;color:#718195;margin-top:5px}
+[data-inv-lista]{min-width:0;border:1px solid #dce4ec;border-radius:12px;background:#fff;overflow:hidden}
+[data-inv-categoria-titulo]{font:600 16px Inter,system-ui;margin:0!important;padding:16px}
+.ac-inv-tabela{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;font:13px/1.5 Inter,system-ui;color:#294156}
+.ac-inv-tabela th,.ac-inv-tabela td{padding:10px 8px;vertical-align:top;text-align:left;border-bottom:1px solid #e5eaf0;white-space:normal!important;overflow-wrap:anywhere;box-sizing:border-box}
+.ac-inv-tabela thead th{font-size:11px!important}
+.ac-inv-tabela th:first-child{width:24%}
+.ac-inv-tabela th:nth-child(2){width:9%}
+.ac-inv-tabela th:nth-child(3){width:12%}
+.ac-inv-tabela th:nth-child(4){width:9%}
+.ac-inv-tabela th:nth-child(5){width:18%}
+.ac-inv-tabela th:nth-child(6){width:18%}
+.ac-inv-tabela th:nth-child(7){width:10%}
+.ac-inv-novo .ac-inv-tabela th:first-child{width:15%}
+.ac-inv-novo .ac-inv-tabela th:nth-child(2){width:65%}
+.ac-inv-novo .ac-inv-tabela th:nth-child(3){width:20%}
+.ac-inv-tabela small{display:block;font-size:11px;color:#718195}
+.ac-inv-tabela [data-item][hidden]{display:none!important}
+.ac-inv-tabela input:not([type=checkbox]),.ac-inv-tabela select{width:100%;min-width:0!important;box-sizing:border-box;padding:8px;border:1px solid #ced8e4;border-radius:7px;background:#fff;color:#294156;font:13px Inter,system-ui}
+.ac-inv-item-identidade{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.ac-inv-item-identidade>img{width:48px;height:48px;flex:none;object-fit:contain}
+.ac-inv-item-identidade>span{min-width:0}
+.ac-inv-tabela .ac-inv-status{display:inline-block;font-size:10px;padding:3px 5px;margin-top:6px}
+.ac-inv-tabela .ac-inv-verificacao{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:6px 0}
+.ac-inv-tabela .ac-inv-verificacoes{margin:10px 0;padding:0;border:0}
+.ac-inv-tabela .ac-inv-tratamento{display:grid;gap:10px;padding:10px;margin:10px 0}
+.ac-inv-tabela .ac-inv-tratamento label{min-width:0}
+.ac-inv-tabela summary{cursor:pointer;font-size:12px;color:#315c7e}
+.ac-inv-tabela .ac-inv-tratamento h4{font-size:12px;margin:0}
+.ac-inv-novo>label{display:grid;gap:8px;max-width:400px}
+.ac-inv-novo>button{margin-top:14px}
+@media(max-width:1000px){.ac-inv-duas-colunas{grid-template-columns:190px minmax(0,1fr)}.ac-inv-tabela .ac-inv-item-identidade{flex-direction:column}}
+@media(max-width:700px){.ac-inv-duas-colunas{grid-template-columns:1fr}[data-inv-categorias]{position:static;grid-template-columns:repeat(2,minmax(0,1fr))}[data-inv-categorias]>button{flex-direction:column;align-items:flex-start}.ac-inv-tabela,.ac-inv-tabela tbody,.ac-inv-tabela tr,.ac-inv-tabela td{display:block;width:100%}.ac-inv-tabela thead{display:none}.ac-inv-tabela td{border:0;padding:8px 12px}.ac-inv-tabela tr{padding:12px 0;border-bottom:1px solid #dce4ec}.ac-inv-tabela [data-rotulo]::before{content:attr(data-rotulo);display:block;color:#718195;font-size:11px;margin-bottom:5px}.ac-inv-tabela .ac-inv-item-identidade{flex-direction:row}.ac-inv-tabela .ac-inventario-item form{margin:0}}
+/* Contagem cega: apenas quantidades e fotos do mesmo tamanho das categorias. */
+.ac-inv-cega th:first-child{width:36%}
+.ac-inv-cega th:nth-child(n+2){width:auto}
+.ac-inv-cega th:last-child{width:10%}
+.ac-inv-foto-item{display:grid;place-items:center;width:64px;height:64px;flex:0 0 64px;border:1px solid #e1e7ee;border-radius:8px;background:#fff;overflow:hidden;box-sizing:border-box;color:#718195;font-size:11px;text-align:center}
+.ac-inv-foto-item img{display:block;width:100%;height:100%;object-fit:contain}
+.ac-inv-cega [data-contar]{font:500 12px Inter,system-ui;border:1px solid #c5d1dd;border-radius:7px;background:#f2f6fb;color:#315c7e;padding:9px 12px;cursor:pointer}
+.ac-inv-cega .ac-inv-item-identidade{flex-direction:row}
+.ac-inv-cega form{margin:0}
+.ac-inv-categoria-foto{box-sizing:border-box}
+/* Resultados aparecem apenas depois das duas contagens cegas. */
+html:root body main.el-page .ac-inv-cega tr.ac-contagem-bateu>td{background:#eaf5ed!important}
+html:root body main.el-page .ac-inv-cega tr.ac-contagem-atencao>td{background:#fff5d9!important}
+html:root body main.el-page .ac-inv-cega tr.ac-contagem-falta>td{background:#fdebea!important}
+.ac-inv-cega .ac-contagem-bateu>td:first-child{border-left:3px solid #459968}
+.ac-inv-cega .ac-contagem-atencao>td:first-child{border-left:3px solid #d5a333}
+.ac-inv-cega .ac-contagem-falta>td:first-child{border-left:3px solid #d8615b}

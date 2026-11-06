@@ -64,6 +64,12 @@ export function dadosApresentacao(project, findItem){
       return { id: amb.id, nome: amb.nome || 'Ambiente', notas: amb.notas || '',
         imagens: (amb.renders || []).filter(r => r.url).map(r => ({url:r.url, nome:r.origem || amb.nome, jogos: Math.max(1, Number(r.jogos) || 1)})), itens: [...grupos.values()] };
     }),
+    // Itens terceirizados do pedido comercial (nov/2026): entram no documento dentro do ambiente escolhido, como itens
+    // comuns (sem o nome da empresa parceira nem o custo). Só o documento do pedido mostra (pedidoPreviewHtml).
+    terceirizados: (Array.isArray(project.dados?.terceirizados) ? project.dados.terceirizados : []).map(t => ({ ambienteId: t.ambiente_id || '', id: 't:' + (t.id || t.terceirizado_id || ''),
+      quantidade: Math.max(1, Number(t.quantidade) || 1), nome: t.nome || 'Item', nomeCompleto: t.nome || 'Item', observacao: '', foto: t.foto || '', referencia: t.codigo || '',
+      categoria: '', tipo: '', personalizable: false, medidas: t.medidas || '', preco: Number.isFinite(Number(t.valor)) ? Number(t.valor) : null, reposicao: null,
+      personalizacaoId: '', personalizacaoNome: '', personalizacaoEscolhas: {}, personalizacaoValor: null, opcoesPersonalizacao: [], terceirizado: true })),
     // Serviços adicionais do pedido comercial (out/2026).
     servicos: (Array.isArray(project.dados?.servicos) ? project.dados.servicos : []).map(s => ({ nome: s.nome || 'Serviço', quantidade: Number(s.quantidade) || 1, valor: Number(s.valor) || 0, data: s.data || '', hora: s.hora || '' })),
   };
@@ -188,6 +194,22 @@ function statusPedidoHtml(st){
   const ate = st.chave === "pre_reserva" && st.ate ? " até " + String(st.ate).slice(0, 10).split("-").reverse().join("/") : "";
   return '<span class="cpj-order-status is-' + esc(st.chave) + '"><i aria-hidden="true"></i>' + esc(STATUS_PEDIDO[st.chave] + ate) + '</span>';
 }
+// Aviso no documento conforme a situação (nov/2026): azul em Orçamento, amarelo em Pré-reserva. As frases vêm de
+// Parâmetros > Comercial (comercial_avisos_pedido); quem monta o documento chama definirAvisosStatus() antes.
+// {data} na frase da pré-reserva vira a validade da pré-reserva.
+const AVISOS_PADRAO = {
+  orcamento: "Este documento é um orçamento. Os móveis ainda não estão reservados: a disponibilidade só fica garantida quando o pedido for confirmado.",
+  pre_reserva: "Pré-reserva: os móveis estão reservados para você até {data}. Depois dessa data, se o pedido não for confirmado, a reserva é liberada."
+};
+let avisosStatus = { ...AVISOS_PADRAO };
+export function definirAvisosStatus(textos){ avisosStatus = { ...AVISOS_PADRAO }; for(const k of Object.keys(AVISOS_PADRAO)) if(textos && String(textos[k] || "").trim()) avisosStatus[k] = String(textos[k]).trim(); }
+function avisoStatusHtml(st){
+  if(!st || !["orcamento", "pre_reserva"].includes(st.chave)) return "";
+  const data = st.ate ? String(st.ate).slice(0, 10).split("-").reverse().join("/") : "a data combinada";
+  const texto = String(avisosStatus[st.chave] || "").replace(/\{data\}/g, data);
+  if(!texto) return "";
+  return '<div class="cpj-order-aviso-status is-' + st.chave + '" role="note"><span class="cpj-order-aviso-status-icone" aria-hidden="true">i</span><div><strong>' + (st.chave === "orcamento" ? "Orçamento" : "Pré-reserva") + '</strong><p>' + esc(texto) + '</p></div></div>';
+}
 function cabecalhoPedidoHtml(empresa, decorador, model = {}){
   const nome = empresa?.nome || 'Chiavari';
   const marca = empresa?.logo_url
@@ -209,25 +231,44 @@ export function layoutPedido(valor){
   try{ return localStorage.getItem('pedido_layout_pdf') === 'horizontal' ? 'horizontal' : 'final'; }catch{ return 'final'; }
 }
 const layoutSeletorHtml = (atual) => `<div class="cpj-order-layout" role="radiogroup" aria-label="Layout do pedido">${LAYOUTS_PEDIDO.map(([v, r]) => `<button type="button" role="radio" aria-checked="${v === atual}" data-pedido-layout="${v}">${r}</button>`).join('')}</div>`;
-const linhaItemPedido = item => `<tr><td class="cpj-order-qty">${item.quantidade}</td><td class="cpj-order-photo">${foto(item.foto)}</td><td><strong>${esc(item.nomeCompleto || item.nome)}</strong>${item.medidas ? `<small class="pa-medidas">${esc(item.medidas)}</small>` : ""}${personalizacaoHtml(item, false)}${item.referencia ? `<small>Cód. ${esc(item.referencia)}</small>` : ''}${item.observacao ? `<p class="pa-item-observacao-texto">${esc(item.observacao)}</p>` : ''}</td>${valoresTd(item,'cpj-order-valor')}</tr>`;
+const identidadeItemPedido = item => `<strong>${esc(item.nomeCompleto || item.nome)}</strong>${item.medidas ? `<small class="pa-medidas">${esc(item.medidas)}</small>` : ""}${personalizacaoHtml(item, false)}${item.referencia ? `<small>Cód. ${esc(item.referencia)}</small>` : ''}${item.observacao ? `<p class="pa-item-observacao-texto">${esc(item.observacao)}</p>` : ''}`;
+const linhaItemPedido = item => `<tr><td class="cpj-order-qty">${item.quantidade}</td><td class="cpj-order-photo">${foto(item.foto)}</td><td>${identidadeItemPedido(item)}</td>${valoresTd(item,'cpj-order-valor')}</tr>`;
 const COLGROUP_PEDIDO = '<colgroup><col class="cpj-order-col-qty"><col class="cpj-order-col-photo"><col><col class="cpj-order-col-valor"><col class="cpj-order-col-valor"><col class="cpj-order-col-valor"></colgroup>';
 const COLHEAD_PEDIDO = '<tr class="cpj-order-colhead" aria-hidden="true"><td>Qtd.</td><td></td><td>Item</td><td class="cpj-order-valor">Reposição</td><td class="cpj-order-valor">Valor un.</td><td class="cpj-order-valor">Total</td></tr>';
 const fotoAmbientePedido = (amb, r) => `<figure><img src="${esc(r.url)}" alt="Renderização de ${esc(amb.nome)}" loading="lazy" decoding="async"><figcaption>${esc(r.nome)}${r.jogos > 1 ? ` · <b>${r.jogos} jogos</b>` : ''}</figcaption></figure>`;
 // Horizontal: um bloco por ambiente — título em cima, tabela à esquerda e a(s) renderização(ões) à direita.
-function ambientesHorizontalHtml(ambientes){
-  return ambientes.map(amb => `<section class="cpj-order-amb${amb.imagens?.length ? ' has-foto' : ''}">
-    <div class="cpj-order-amb-corpo"><div class="cpj-order-amb-lista"><h3 class="cpj-order-amb-nome">${esc(amb.nome)}</h3><table class="cpj-order-table">${COLGROUP_PEDIDO}<thead class="pa-sr"><tr><th scope="col">Qtd.</th><th scope="col"><span class="pa-sr">Foto</span></th><th scope="col">Item</th>${valoresTh('cpj-order-valor')}</tr></thead><tbody>${COLHEAD_PEDIDO}${amb.itens.map(linhaItemPedido).join('')}</tbody></table></div>
-    ${amb.imagens?.length ? `<aside class="cpj-order-amb-fotos">${amb.imagens.map((r, i) => fotoAmbientePedido(amb, r, i)).join('')}</aside>` : ''}</div></section>`).join('');
+function configuracaoTabelaPedido(conferencia){
+  if(!conferencia)return {colgroup:COLGROUP_PEDIDO,cabecalho:COLHEAD_PEDIDO,thead:'<tr><th scope="col">Qtd.</th><th scope="col"><span class="pa-sr">Foto</span></th><th scope="col">Item</th>'+valoresTh('cpj-order-valor')+'</tr>',linha:linhaItemPedido,colunas:3+VALOR_COLS,classe:''};
+  const rotulos=['Qtd.','','Item',...conferencia.colunas];
+  const linha=item=>{
+    const kit=!!item.conferenciaKit,componentes=item.componentesConferencia||[];
+    const campos=kit?'<td class="ec-kit-sem-conferencia" colspan="'+conferencia.colunas.length+'" aria-hidden="true"></td>':conferencia.campos(item);
+    const identificacao=kit?identidadeItemPedido({...item,medidas:''})+'<span class="ec-kit-composicao">&#183; Composto por '+componentes.length+' '+(componentes.length===1?'item':'itens')+'</span>':identidadeItemPedido(item);
+    const miniatura=item.foto?foto(item.foto):'<span class="pa-sem-foto ec-sem-foto-item" aria-label="Sem foto">Sem foto</span>';
+    const ramo=item.componenteConferencia?'<span class="ec-componente-ramo" aria-hidden="true"></span>':'';
+    return '<tr class="ec-documento-item'+(kit?' ec-documento-kit':item.componenteConferencia?' ec-documento-componente'+(item.ultimoComponenteConferencia?' ec-documento-componente-ultimo':''):'')+'"><td class="cpj-order-qty">'+ramo+item.quantidade+'</td><td class="cpj-order-photo">'+miniatura+'</td><td>'+identificacao+'</td>'+campos+'</tr>'+componentes.map((componente,i)=>linha({...componente,ultimoComponenteConferencia:i===componentes.length-1})).join('');
+  };
+
+  return {colgroup:'<colgroup><col class="cpj-order-col-qty"><col class="cpj-order-col-photo"><col>'+conferencia.colunas.map(()=>'<col class="cpj-order-col-conferencia">').join('')+'</colgroup>',cabecalho:'<tr class="cpj-order-colhead" aria-hidden="true">'+rotulos.map(r=>'<td>'+esc(r)+'</td>').join('')+'</tr>',thead:'<tr>'+rotulos.map(r=>'<th scope="col">'+esc(r||'Foto')+'</th>').join('')+'</tr>',linha,colunas:rotulos.length,classe:' ec-documento-tabela'};
 }
-export function pedidoPreviewHtml(model, { decorador = null, empresa = null, layout = null } = {}){
+function ambientesHorizontalHtml(ambientes,conferencia=null){
+  const t=configuracaoTabelaPedido(conferencia);
+  return ambientes.map(amb => `<section class="cpj-order-amb${amb.imagens?.length ? ' has-foto' : ''}">
+    <div class="cpj-order-amb-corpo"><div class="cpj-order-amb-lista"><h3 class="cpj-order-amb-nome">${esc(amb.nome)}</h3><table class="cpj-order-table${t.classe}">${t.colgroup}<thead class="pa-sr">${t.thead}</thead><tbody>${t.cabecalho}${amb.itens.map(t.linha).join('')}</tbody></table></div>
+    ${amb.imagens?.length ? `<aside class="cpj-order-amb-fotos">${amb.imagens.map((r,i)=>fotoAmbientePedido(amb,r,i)).join('')}</aside>` : ''}</div></section>`).join('');
+}
+export function pedidoPreviewHtml(model, { decorador = null, empresa = null, layout = null, conferencia = null } = {}){
+  const t=configuracaoTabelaPedido(conferencia);
   const horizontal = (layout || layoutPedido()) === 'horizontal';
-  const ambientes = model.ambientes.filter(a => a.itens.length);
+  const terc = model.terceirizados || [];
+  const ambientes = model.ambientes.map(a => terc.some(t => t.ambienteId === a.id) ? { ...a, itens: [...a.itens, ...terc.filter(t => t.ambienteId === a.id)] } : a).filter(a => a.itens.length);
   const total = ambientes.reduce((s,a) => s + a.itens.reduce((n,i) => n + i.quantidade,0),0);
-  return `<article class="cpj-order-paper${horizontal ? ' is-horizontal' : ''}" aria-label="Prévia do pedido">
+  return `<article class="cpj-order-paper${conferencia?' ec-documento-pedido':''}${horizontal ? ' is-horizontal' : ''}" aria-label="Prévia do pedido">
     ${cabecalhoPedidoHtml(empresa, decorador, model)}
     <!-- Out/2026 (pedido do usuário): o nome do cliente já está no cabeçalho (decorador solicitante), então aqui ficam só o
          local do evento em destaque e, abaixo, data do evento, entrega e coleta. Aviso de prévia no card amarelo à direita.
          Projeto do decorador: o nome dos noivos (diferente do decorador) continua, pequeno, acima do local. -->
+    ${avisoStatusHtml(model.statusPedido)}
     <div class="cpj-order-event">
       <div class="cpj-order-event-info">
         ${model.nome && model.nome !== decorador?.nome ? `<p class="cpj-order-event-cliente">${esc(model.nome)}</p>` : ''}
@@ -240,15 +281,20 @@ export function pedidoPreviewHtml(model, { decorador = null, empresa = null, lay
       </div>
       ${model.semAviso ? "" : `<aside class="cpj-order-notice" role="note"><span class="cpj-order-notice-icon" aria-hidden="true">i</span><div><strong>Esta é uma prévia do pedido</strong><p>Este arquivo reúne os itens escolhidos para o projeto. O pedido oficial será enviado pela nossa equipe comercial, com todas as disponibilidades e os serviços adicionais.</p></div></aside>`}
     </div>
-    ${horizontal ? ambientesHorizontalHtml(ambientes) : `<table class="cpj-order-table">${COLGROUP_PEDIDO}<thead class="pa-sr"><tr><th scope="col">Qtd.</th><th scope="col"><span class="pa-sr">Foto</span></th><th scope="col">Item</th>${valoresTh('cpj-order-valor')}</tr></thead>
-    ${ambientes.map(amb => `<tbody><tr class="cpj-order-environment"><th colspan="${3 + VALOR_COLS}" scope="rowgroup">${esc(amb.nome)}</th></tr>${COLHEAD_PEDIDO}${amb.itens.map(linhaItemPedido).join('')}</tbody>`).join('')}</table>`}
+    ${horizontal ? ambientesHorizontalHtml(ambientes,conferencia) : `<table class="cpj-order-table${t.classe}">${t.colgroup}<thead class="pa-sr">${t.thead}</thead>
+    ${ambientes.map(amb => `<tbody><tr class="cpj-order-environment"><th colspan="${t.colunas}" scope="rowgroup">${esc(amb.nome)}</th></tr>${t.cabecalho}${amb.itens.map(t.linha).join('')}</tbody>`).join('')}</table>`}
     <div class="cpj-order-paper-total"><span>${ambientes.length} ${ambientes.length === 1 ? 'ambiente' : 'ambientes'}</span><strong>${total} ${total === 1 ? 'item' : 'itens'}</strong></div>
-    ${servicosPedidoHtml(model)}
+    ${conferencia?'':servicosPedidoHtml(model)}
     ${!horizontal && model.ambientes.some(a => a.imagens?.length) ? `<section class="cpj-order-renders"><h2>Renderizações do projeto</h2>${model.ambientes.filter(a => a.imagens?.length).map(amb => `<section class="cpj-order-render-group"><h3>${esc(amb.nome)}</h3><div>${amb.imagens.map(r => `<figure><img src="${esc(r.url)}" alt="Renderização de ${esc(amb.nome)}" loading="lazy" decoding="async"></figure>`).join('')}</div></section>`).join('')}</section>` : ''}
     ${plantasPedidoHtml(model, horizontal)}
-    ${financeiroPedidoHtml(model)}
-    ${model.contrato ? `<section class="cpj-order-contrato" aria-label="Contrato anexado"><style>${CONTRATO_ESTILOS}.cpj-order-contrato{margin-top:32px;padding-top:24px;border-top:1px solid #dce1e8;line-height:1.75;overflow-wrap:anywhere}.cpj-order-contrato>h2{margin:0 0 20px}@media print{.cpj-order-contrato{break-before:page;border-top:0}}</style><h2>Contrato de Locação</h2><div>${textoParaHtml(model.contrato)}</div></section>` : ''}
+    ${conferencia?'':financeiroPedidoHtml(model)}
+    ${!conferencia && model.contrato ? `<section class="cpj-order-contrato" aria-label="Contrato anexado"><style>${CONTRATO_ESTILOS}.cpj-order-contrato{margin-top:32px;padding-top:24px;border-top:1px solid #dce1e8;line-height:1.75;overflow-wrap:anywhere}.cpj-order-contrato>h2{margin:0 0 20px}@media print{.cpj-order-contrato{break-before:page;border-top:0}}</style><h2>Contrato de Locação</h2><div>${textoParaHtml(model.contrato)}</div></section>` : ''}
   </article>`;
+}
+// Lista operacional: mesmos itens, fotos e detalhes do documento comercial,
+// substituindo valores pelos campos de conferencia. Financeiro e contrato nao entram no HTML.
+export function listaConferenciaPedidoHtml(model,{colunas=[],campos=()=>'',layout=null}={}){
+  return pedidoPreviewHtml({...model,semAviso:true},{empresa:model.empresa,decorador:model.decorador,layout,conferencia:{colunas,campos}});
 }
 // Planta do evento (com as legendas das fotos), antes do resumo e das parcelas — out/2026. model.plantas vem pronto
 // (cópia estática da planta inteira feita no catálogo: { nome, w, h, html } com w/h em mm, na proporção da folha).
@@ -289,8 +335,12 @@ export function documentoApresentacao(model){
 export async function imprimirApresentacao(model){
   return imprimirDocumento(documentoApresentacao(model));
 }
+export function estilosImpressaoPedido(horizontal=false){
+  const estilosHorizontal = horizontal ? `@page{size:A4 landscape;margin:0 0 10mm}.cpj-order-amb{padding-top:3mm}.cpj-order-amb{break-inside:avoid-page}.cpj-order-amb-nome{break-after:avoid}` : '';
+  return `@page{size:A4 portrait;margin:0 0 12mm}.cpj-order-table thead.pa-sr{position:static;width:auto;height:auto;overflow:visible;clip-path:none}.cpj-order-table thead.pa-sr th{height:10mm;padding:0;border:0;font-size:0;line-height:0}.cpj-order-render-group,.cpj-order-financeiro{padding-top:6mm}@page plantaDeitada{size:A4 landscape;margin:6mm 0}@page plantaEmPe{size:A4 portrait;margin:6mm 0}.cpj-order-planta.is-deitada{page:plantaDeitada}.cpj-order-planta.is-em-pe{page:plantaEmPe}.cpj-order-paper .cpj-order-planta{margin:0 -6mm;padding:0;break-after:page}.cpj-order-planta h2{margin:0 0 3mm;font-size:13pt}.cpj-order-planta-folha{zoom:var(--zp)!important;box-shadow:none!important}body{margin:0;font-family:Arial,sans-serif;color:#34352f}.cpj-order-paper{padding:0 14mm;box-shadow:none}.cpj-order-paper .cpj-order-letterhead{margin:0 -14mm;padding:9mm 14mm}.cpj-order-notes{padding:0 14mm}.cpj-order-table thead{display:table-header-group}.cpj-order-table tr,figure,.cpj-order-requester{break-inside:avoid}.cpj-order-render-group{break-inside:auto}.cpj-order-render-group>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5mm}.cpj-order-render-group figure{margin:0}.cpj-order-render-group figure:first-child{grid-column:auto}.cpj-order-renders{break-before:auto}.cpj-order-renders>h2,.cpj-order-render-group h3{break-after:avoid}.cpj-order-notes{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:24px;font-size:12px;line-height:1.6}.pa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}*{print-color-adjust:exact}${estilosHorizontal}`;
+}
 export async function imprimirPedido(model, { decorador = null, empresa = null, observacao = '', layout = null } = {}){
-  const css = new URL('./catalogo-projetos.css?v=20261030-link-pagamento2',import.meta.url).href;
+  const css = new URL('./catalogo-projetos.css?v=20261105-terceirizacoes',import.meta.url).href;
   // Decorador com os valores ocultos (botão do olho no catálogo): o PDF sai sem as colunas de valores.
   const semValores = document.documentElement.classList.contains('catalogo-sem-valores');
   const horizontal = (layout || layoutPedido()) === 'horizontal';
@@ -298,8 +348,7 @@ export async function imprimirPedido(model, { decorador = null, empresa = null, 
   // descia a faixa escura ~1cm na 1ª página. Agora toda página tem margem 0 em cima; nas seguintes, o respiro vem do
   // cabeçalho da tabela repetido (em pé) ou do espaço no começo de cada ambiente (deitado).
   // Horizontal: A4 deitado; cada ambiente tenta caber inteiro na página (foto ao lado da tabela), e a foto nunca passa da altura útil.
-  const estilosHorizontal = horizontal ? `@page{size:A4 landscape;margin:0 0 10mm}.cpj-order-amb{padding-top:3mm}.cpj-order-amb{break-inside:avoid-page}.cpj-order-amb-nome{break-after:avoid}` : '';
-  const estilos = `@page{size:A4 portrait;margin:0 0 12mm}.cpj-order-table thead.pa-sr{position:static;width:auto;height:auto;overflow:visible;clip-path:none}.cpj-order-table thead.pa-sr th{height:10mm;padding:0;border:0;font-size:0;line-height:0}.cpj-order-render-group,.cpj-order-financeiro{padding-top:6mm}@page plantaDeitada{size:A4 landscape;margin:6mm 0}@page plantaEmPe{size:A4 portrait;margin:6mm 0}.cpj-order-planta.is-deitada{page:plantaDeitada}.cpj-order-planta.is-em-pe{page:plantaEmPe}.cpj-order-paper .cpj-order-planta{margin:0 -6mm;padding:0;break-after:page}.cpj-order-planta h2{margin:0 0 3mm;font-size:13pt}.cpj-order-planta-folha{zoom:var(--zp)!important;box-shadow:none!important}body{margin:0;font-family:Arial,sans-serif;color:#34352f}.cpj-order-paper{padding:0 14mm;box-shadow:none}.cpj-order-paper .cpj-order-letterhead{margin:0 -14mm;padding:9mm 14mm}.cpj-order-notes{padding:0 14mm}.cpj-order-table thead{display:table-header-group}.cpj-order-table tr,figure,.cpj-order-requester{break-inside:avoid}.cpj-order-render-group{break-inside:auto}.cpj-order-render-group>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5mm}.cpj-order-render-group figure{margin:0}.cpj-order-render-group figure:first-child{grid-column:auto}.cpj-order-renders{break-before:auto}.cpj-order-renders>h2,.cpj-order-render-group h3{break-after:avoid}.cpj-order-notes{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:24px;font-size:12px;line-height:1.6}.pa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}*{print-color-adjust:exact}${estilosHorizontal}`;
+  const estilos=estilosImpressaoPedido(horizontal);
   const html = `<!doctype html><html lang="pt-BR"${semValores ? ' class="catalogo-sem-valores"' : ''}><head><meta charset="utf-8"><title>${esc(model.nome)} — Pedido Chiavari</title><link rel="stylesheet" href="${esc(css)}"><style>${estilos}${semValores ? 'html.catalogo-sem-valores :is(.pa-valor,.cpj-order-valor,.cpj-order-col-valor){display:none!important}' : ''}</style></head><body>${pedidoPreviewHtml(model,{decorador,empresa,layout:horizontal ? "horizontal" : "final"})}${observacao.trim() ? `<section class="cpj-order-notes"><strong>Observação para a equipe</strong><p>${esc(observacao.trim())}</p></section>` : ''}</body></html>`;
   return imprimirDocumento(html);
 }

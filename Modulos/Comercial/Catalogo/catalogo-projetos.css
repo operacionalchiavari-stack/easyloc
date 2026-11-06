@@ -1183,3 +1183,40 @@ dialog.cpj-modal.is-wide:has(.cpj-dest-2col){width:min(1080px,calc(100vw - 28px)
 .cpj-cond-op:has(input:checked){border-color:#123f86;background:#eaf0fa}
 .cpj-cond-op b{display:block}
 .cpj-cond-op small{display:block;color:#4f4f4f;font-size:12.5px}
+
+/* Aviso da situação no documento do pedido (nov/2026): azul em Orçamento, amarelo em Pré-reserva (frases em Parâmetros > Comercial) */
+.cpj-order-aviso-status{display:flex;gap:12px;align-items:flex-start;margin:26px 0 0;padding:14px 18px;border-radius:12px;border:1px solid;print-color-adjust:exact;-webkit-print-color-adjust:exact;break-inside:avoid;font:400 13.5px/1.5 Inter,system-ui,sans-serif}
+.cpj-order-aviso-status strong{display:block;font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.cpj-order-aviso-status p{margin:0}
+.cpj-order-aviso-status-icone{flex:0 0 22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 13px/1 Georgia,serif;margin-top:1px}
+.cpj-order-aviso-status.is-orcamento{background:#eaf0fa;border-color:#b9cbe8;color:#123f86}
+.cpj-order-aviso-status.is-orcamento .cpj-order-aviso-status-icone{background:#123f86}
+.cpj-order-aviso-status.is-pre_reserva{background:#fdf6dd;border-color:#ecdca0;color:#6b4e00}
+.cpj-order-aviso-status.is-pre_reserva .cpj-order-aviso-status-icone{background:#c58a00}
+@media (max-width:700px){.cpj-order-aviso-status{margin-top:16px}}
+@media print{.cpj-order-aviso-status{margin:6mm 0 0}}
+/* Catálogo dentro do pedido comercial (nov/2026): o dock mostra só o ambiente, fica na mesma linha da busca e os
+   itens sobem (pedido: "ganhar espaço pros itens aparecerem mais em cima"). */
+@media(min-width:768px){
+  html.catalogo-comercial-pedido .cpj-dock{top:0!important}
+  html.catalogo-comercial-pedido body:has(#catalogProjetoDock:not(.hidden)) .catalog-grid-wrap:not(:has(>.catalog-home-filters-wrap:first-child,>.catalog-subcat-filter:first-child)){padding-top:62px}
+}
+/* ＋ Ambiente ao lado do decorador solicitante (nov/2026) */
+.cpj-geral-topo-comercial .cpj-geral-esq{display:flex;align-items:center;gap:16px;flex-wrap:wrap;min-width:0;justify-self:start}
+.cpj-geral-topo-comercial .cpj-geral-esq .cpj-btn{white-space:nowrap}
+@media(max-width:700px){.cpj-geral-topo-comercial .cpj-geral-esq{justify-self:center;justify-content:center}}
+/* Itens terceirizados na Lista Completa do pedido (nov/2026) */
+.cpj-terc-item{display:flex;align-items:center;gap:12px}
+.cpj-terc-foto{flex:0 0 56px;width:56px;height:46px;border-radius:8px;background:#f6f7f9;overflow:hidden;display:grid;place-items:center}
+.cpj-terc-foto img{width:100%;height:100%;object-fit:contain}
+.cpj-terc-item small{display:block;color:#6b6b6b;font-size:12px}
+.cpj-terc-empresa{color:#123f86!important;font-weight:500}
+.cpj-terc-info{display:block;margin-top:2px;color:#6b6b6b;font-size:11.5px}
+.cpj-terc-info.is-alerta{color:#9a5b00;font-weight:600}
+.cpj-terc-tabela select{max-width:180px;padding:6px 8px;border:1px solid #d6dde6;border-radius:8px;background:#fff;font:400 13px Inter,system-ui,sans-serif}
+.cpj-terc-tabela td:nth-child(2),.cpj-terc-tabela th:nth-child(2){width:190px}
+.cpj-terc-tabela td:nth-child(3),.cpj-terc-tabela th:nth-child(3){width:90px}
+.cpj-terc-antigo{margin:12px 0 0;text-align:right}
+.cpj-link{border:0;background:none;padding:0;color:#123f86;font:500 12.5px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline}
+.cpj-terc-escolha{display:flex;gap:14px;flex-wrap:wrap}
+.cpj-terceirizados{margin:30px 0 10px}

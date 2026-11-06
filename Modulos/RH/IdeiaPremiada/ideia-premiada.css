@@ -12,3 +12,134 @@ html:root #ideiaPremiada > .ideia-heading > :is(.eyebrow,h1,p){width:100%;text-a
 #avisoIdeias:not(:empty){padding:14px 18px;margin-bottom:20px;background:#e9ebed;border-radius:8px;font-size:13px;line-height:1.6}.ideia-list-tools{display:flex;gap:12px;align-items:center;margin-bottom:22px;flex-wrap:wrap}.ideia-list-tools h2{margin-right:auto;font-family:var(--ch-serif,Georgia,serif);font-size:28px;font-weight:500}.ideia-list-tools input{width:260px}.ideia-list-tools select{width:180px}.ideia-lista{display:grid;gap:12px}.ideia-item{text-align:left;background:#fff;border:1px solid #e8e2d9;padding:22px;border-radius:12px;cursor:pointer;font:inherit;color:inherit;width:100%}.ideia-item:hover{border-color:#b7a385}.ideia-item header{display:flex;justify-content:space-between;gap:16px}.ideia-item h3{font-family:var(--ch-serif,Georgia,serif);font-size:24px;font-weight:500;margin:0 0 8px}.ideia-meta{font-size:11px;line-height:1.7;color:#8b857d}.ideia-status{font-size:11px;border-radius:20px;padding:6px 10px;background:#eaecee;white-space:nowrap;align-self:start}.ideia-status.premiada,.ideia-status.implementada{background:#e7f0e7;color:#42634a}.ideia-status.selecionada{background:#f5edda;color:#866d3c}.ideia-status.em_analise{background:var(--el-color-surface-soft,#f6f7f9);color:var(--el-color-text,#1f2020)}.ideia-vazio{padding:48px 24px;text-align:center;color:#8b857d;border:1px dashed #e2dbd1;border-radius:12px;font-size:14px}
 dialog{border:1px solid #e8e2d9;border-radius:16px;width:min(680px,calc(100vw - 48px));max-height:85vh;overflow:auto;padding:30px;color:#29251f;background:#fffefd}dialog::backdrop{background:rgba(30,27,23,.5);backdrop-filter:blur(4px)}dialog header{display:flex;justify-content:space-between;align-items:center}dialog header button{border:0;background:none;font-size:28px;cursor:pointer}dialog h2{font-family:var(--ch-serif,Georgia,serif);font-size:32px;font-weight:500}dialog h3{font-size:13px;font-weight:600;margin:24px 0 10px}dialog p{font-size:13px;color:#77716a;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}#formAvaliacao{border-top:1px solid #e8e2d9;margin-top:28px;padding-top:8px}
 @media(max-width:800px){.ideia-form-layout{grid-template-columns:1fr;gap:22px}aside{padding:0}aside h2{font-size:30px}aside small{margin-top:12px}form footer{align-items:stretch;flex-direction:column}.ideia-list-tools input,.ideia-list-tools select{width:100%}.ideia-card{padding:20px}.ideia-item header{flex-wrap:wrap}}
+/* Nov/2026: duas colunas — lista de ideias (com a foto de quem enviou) | detalhes, decisão e histórico. */
+#ideiaPremiada{max-width:none}
+.ideia-duas{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:20px;align-items:start}
+.ideia-lista{gap:8px;max-height:calc(100vh - 220px);overflow:auto;padding:2px}
+.ideia-item{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;border-radius:12px}
+.ideia-item.ativo{border-color:#123f86;background:#f3f7fd;box-shadow:inset 3px 0 0 #123f86}
+.ideia-item-texto{display:grid;gap:3px;min-width:0}
+.ideia-item-texto strong{font:600 14px Inter,system-ui,sans-serif;color:#1f2020;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ideia-item-texto small{font-size:12px;color:#6b6b6b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ideia-foto{position:relative;width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#eaf0fa;color:#123f86;font:600 14px Inter,system-ui,sans-serif;flex:0 0 auto}
+.ideia-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.ideia-foto.grande{width:56px;height:56px;font-size:18px}
+.ideia-detalhe{background:#fff;border:1px solid #e8e2d9;border-radius:14px;padding:24px 28px;min-height:300px}
+.ideia-det-topo{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding-bottom:16px;border-bottom:1px solid #eee}
+.ideia-det-topo h2{margin:0 0 4px;font-family:var(--ch-serif,Georgia,serif);font-size:26px;font-weight:500}
+.ideia-bloco h3,.ideia-decisao h3{font-size:13px;font-weight:600;margin:20px 0 6px;color:#1f2020}
+.ideia-bloco p{margin:0;font-size:14px;color:#4f4f4f;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.ideia-retorno{background:#f7f9fb;border-radius:10px;padding:2px 16px 14px;margin-top:18px}
+.ideia-decisao{margin-top:22px;padding-top:4px;border-top:1px solid #eee}
+.ideia-decisao-botoes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.ideia-dec{border:1.5px solid currentColor;background:#fff;border-radius:999px;padding:8px 16px;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}
+.ideia-dec.aprovar{color:#1f7a44}.ideia-dec.espera{color:#a16207}.ideia-dec.reprovar{color:#b42318}.ideia-dec.implementada{color:#123f86}.ideia-dec.premiada{color:#866d3c}
+.ideia-dec.ativo{color:#fff!important}
+.ideia-dec.aprovar.ativo{background:#1f7a44;border-color:#1f7a44}.ideia-dec.espera.ativo{background:#a16207;border-color:#a16207}.ideia-dec.reprovar.ativo{background:#b42318;border-color:#b42318}.ideia-dec.implementada.ativo{background:#123f86;border-color:#123f86}.ideia-dec.premiada.ativo{background:#866d3c;border-color:#866d3c}
+.ideia-obrig{color:#b42318}
+#avisoAvaliacao{color:#b42318;font-size:13px;min-height:0;margin:0 0 10px}
+#avisoAvaliacao:empty{display:none}
+.ideia-hist{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:10px}
+.ideia-hist li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;padding:10px 12px;border:1px solid #eef1f5;border-radius:10px}
+.ideia-hist small{color:#6b6b6b;font-size:12px}
+.ideia-hist p{margin:4px 0 0;font-size:13px;color:#4f4f4f;white-space:pre-wrap}
+.ideia-status.nao_priorizada{background:#fdeceb;color:#b42318}.ideia-status.em_analise{background:#fef6e4;color:#a16207}.ideia-status.selecionada{background:#e7f0e7;color:#1f7a44}.ideia-status.recebida{background:#eaf0fa;color:#123f86}
+@media(max-width:900px){.ideia-duas{grid-template-columns:1fr}.ideia-lista{max-height:none}.ideia-det-topo{grid-template-columns:auto minmax(0,1fr)}.ideia-det-topo .ideia-status{grid-column:1/-1;justify-self:start}}
+html:root #ideiaPremiada .ideia-list-tools{flex-wrap:nowrap}
+html:root #ideiaPremiada .ideia-list-tools input{flex:0 1 300px;width:300px!important}
+html:root #ideiaPremiada .ideia-list-tools select{flex:0 0 200px;width:200px!important}
+html:root #ideiaPremiada .ideia-list-tools .btn{flex:0 0 auto;width:auto!important}
+@media(max-width:800px){html:root #ideiaPremiada .ideia-list-tools{flex-wrap:wrap}html:root #ideiaPremiada .ideia-list-tools :is(input,select){flex:1 1 100%;width:100%!important}}
+/* Sem barra própria na lista de ideias (a página rola) e as colunas mais perto das abas (nov/2026). */
+html:root #ideiaPremiada .ideia-lista{max-height:none;overflow:visible}
+html:root #ideiaPremiada .ideia-tabs{margin-bottom:14px}
+html:root #ideiaPremiada .ideia-list-tools{margin-bottom:12px}
+html:root #ideiaPremiada .ideia-list-tools h2{margin:0}
+html.ideia-embutida:root #ideiaPremiada{padding-top:8px}
+html.ideia-embutida:root #ideiaPremiada #avisoIdeias:empty{display:none}
+/* Abas da coluna de ideias (nov/2026): Recebidas (bolinha vermelha) · Em espera · Aprovadas · Premiadas · Reprovadas. */
+.ideia-col-lista{display:grid;gap:10px;align-content:start;min-width:0}
+html:root #ideiaPremiada .ideia-grupos{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0;border-bottom:1px solid #e3e7ec}
+html:root #ideiaPremiada .ideia-grupos button{position:relative;padding:8px 2px;font-size:12px;white-space:nowrap}
+.ideia-grupo-n{margin-left:4px;font-size:11px;color:#6b6b6b;font-weight:500}
+html:root:is(#ip#ip#ip#ip#ip,html) #ideiaPremiada .ideia-grupos{flex-wrap:nowrap;gap:0 12px;overflow:visible}
+html:root:is(#ip#ip#ip#ip#ip,html) #ideiaPremiada .ideia-grupos button{margin:0;padding:8px 0 9px;min-height:0;font-size:11px;letter-spacing:.03em}
+html:root:is(#ip#ip#ip#ip#ip,html) #ideiaPremiada .ideia-grupos .ideia-grupo-n{margin-left:3px}
+@media(max-width:480px){html:root:is(#ip#ip#ip#ip#ip,html) #ideiaPremiada .ideia-grupos{flex-wrap:wrap}}
+html:root #ideiaPremiada .ideia-duas{grid-template-columns:minmax(340px,500px) minmax(0,1fr)}
+html:root:is(#ip#ip#ip#ip#ip,html) #ideiaPremiada .ideia-grupos{flex-wrap:wrap;gap:0 14px;min-width:0}
+html:root:is(#ip#ip#ip#ip#ip,html) #ideiaPremiada .ideia-grupos button{letter-spacing:.01em}
+@media(max-width:900px){html:root #ideiaPremiada .ideia-duas{grid-template-columns:1fr}}
+/* O padrão global de abas usa !important; aqui as abas da coluna são menores para caber as cinco numa linha. */
+html:root:is(#ip#ip#ip#ip#ip,html) #ideiaPremiada .ideia-grupos:not([hidden]){gap:0 12px!important;flex-wrap:wrap}
+html:root:is(#ip#ip#ip#ip#ip,html) #ideiaPremiada .ideia-grupos>button[role=tab]:not([hidden]){min-height:34px!important;padding:6px 1px!important;font-size:11px!important;letter-spacing:.01em!important;gap:4px}
+/* Nov/2026: abas (Enviar uma ideia / Minhas ideias) na mesma linha do título, à esquerda; título no centro. */
+html:root:is(#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:auto auto;align-items:end!important;column-gap:24px;margin:0 0 18px!important;padding-bottom:0;border-bottom:1px solid #e6e0d6}
+html:root:is(#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading>.eyebrow{grid-column:2;grid-row:1}
+html:root:is(#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading>h1{grid-column:2;grid-row:2;margin:6px 0 12px!important;white-space:nowrap}
+html:root:is(#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading>.ideia-tabs{grid-column:1;grid-row:1/3;align-self:end;justify-self:start;width:auto!important;margin:0!important;border-bottom:0!important}
+@media(max-width:900px){html:root:is(#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading{grid-template-columns:1fr}html:root:is(#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading>:is(.eyebrow,h1){grid-column:1}html:root:is(#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading>.ideia-tabs{grid-column:1;grid-row:3;justify-self:center}}
+/* Dentro da Gestão de Pessoas (?embutido=1) o cabeçalho e as abas continuam escondidos. */
+html.ideia-embutida:root:is(#ip#ip#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading,html.ideia-embutida:root:is(#ip#ip#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada .ideia-tabs{display:none!important}
+
+/* ===== Nov/2026: lado esquerdo mais bonito + chat com a assistente no lugar do formulário ===== */
+.ideia-form-layout{grid-template-columns:minmax(280px,.9fr) minmax(0,1.5fr)!important;gap:48px!important;align-items:start}
+.ideia-intro{padding-top:8px!important}
+.ideia-intro h2{margin:14px 0 14px;font-size:clamp(30px,3vw,40px)!important;line-height:1.12}
+.ideia-intro h2 em{font-style:italic;color:#9a815c}
+.ideia-intro>p{margin:0 0 26px;max-width:420px}
+.ideia-passos{list-style:none;padding:0!important;margin:0 0 24px;display:grid;gap:14px}
+.ideia-passos li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:14px;align-items:start;line-height:1.5!important}
+.ideia-passos li>span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid #e3d9c8;color:#9a815c;font:600 14px Inter,system-ui,sans-serif}
+.ideia-passos strong{display:block;font:600 14px Inter,system-ui,sans-serif;color:#1f2020}
+.ideia-passos small{display:block;margin:3px 0 0!important;max-width:none!important;font-size:13px!important;color:#6b6b6b!important;line-height:1.55!important}
+.ideia-aviso{display:flex;gap:12px;align-items:flex-start;max-width:440px;padding:12px 14px;background:#fffaeb;border:1px solid #f1dfa6;border-radius:12px}
+.ideia-aviso>span{flex:0 0 22px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#f6e3a6;color:#8a6a12;font:700 12px Inter,system-ui,sans-serif}
+.ideia-aviso p{margin:0;font-size:12.5px;line-height:1.55;color:#7a5d12}
+
+.ideia-chat{display:flex;flex-direction:column;height:min(640px,calc(100vh - 210px));min-height:460px;background:#fff;border:1px solid #ece7df;border-radius:16px;box-shadow:0 0 8px rgba(15,23,42,.08);overflow:hidden}
+.ideia-chat[hidden]{display:none!important}
+.ideia-chat-topo{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid #eef1f5}
+.ideia-chat-avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#b49a6e,#8a6f48);color:#fff;font-size:18px}
+.ideia-chat-topo strong{display:block;font:600 15px Inter,system-ui,sans-serif}
+.ideia-chat-topo small{display:block;font-size:12px;color:#6b6b6b}
+.ideia-chat-link{border:0;background:none;padding:4px 2px;color:#123f86;font:500 12.5px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.ideia-chat-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px;background:#fbfaf8}
+.ideia-msg{max-width:82%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.55}
+.ideia-msg p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:inherit!important;font-size:14px!important}
+.ideia-msg.ia{align-self:flex-start;background:#fff;border:1px solid #ece7df;border-bottom-left-radius:6px;color:#1f2020}
+.ideia-msg.pessoa{align-self:flex-end;background:#123f86;color:#fff;border-bottom-right-radius:6px}
+.ideia-msg-audio{display:block;font-size:11px;opacity:.8;margin-bottom:2px}
+.ideia-msg-ok{background:#e7f4ec!important;border-color:#bfe3cc!important}
+.ideia-digitando{display:flex;gap:4px;padding:14px}
+.ideia-digitando span{width:7px;height:7px;border-radius:50%;background:#b8ad9c;animation:ideia-dig 1s infinite ease-in-out}
+.ideia-digitando span:nth-child(2){animation-delay:.15s}.ideia-digitando span:nth-child(3){animation-delay:.3s}
+@keyframes ideia-dig{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.ideia-resumo{align-self:stretch;background:#fff;border:1px solid #e3d9c8;border-radius:14px;padding:16px 18px;box-shadow:0 2px 10px rgba(15,23,42,.05)}
+.ideia-resumo header{margin-bottom:6px}
+.ideia-resumo h3{margin:4px 0 2px;font-family:var(--ch-serif,Georgia,serif);font-size:22px;font-weight:500}
+.ideia-resumo header small{font-size:12px;color:#6b6b6b}
+.ideia-resumo-campo{margin-top:10px}
+.ideia-resumo-campo span{display:block;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9a815c}
+.ideia-resumo-campo p{margin:3px 0 0;font-size:13.5px;line-height:1.6;color:#3f3f3f;white-space:pre-wrap}
+.ideia-resumo footer{display:flex;justify-content:flex-end;align-items:center;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid #eef1f5}
+.ideia-resumo-ok{margin:12px 0 0;color:#1f7a44;font:600 13px Inter,system-ui,sans-serif}
+.ideia-gravando{display:flex;align-items:center;gap:10px;padding:8px 18px;background:#fdeceb;color:#b42318;font-size:13px}
+.ideia-gravando[hidden]{display:none!important}
+.ideia-rec-dot{width:10px;height:10px;border-radius:50%;background:#e60012;animation:ideia-rec 1s infinite}
+@keyframes ideia-rec{50%{opacity:.3}}
+.ideia-gravando .ideia-chat-link{margin-left:auto;color:#b42318}
+.ideia-chat-campo{display:flex;align-items:flex-end;gap:8px;padding:12px 14px;border-top:1px solid #eef1f5;margin:0}
+.ideia-chat-campo textarea{flex:1;min-height:42px!important;max-height:160px;resize:none!important;padding:10px 14px;border:1px solid #dce3eb;border-radius:22px;font:400 14px Inter,system-ui,sans-serif;line-height:1.45;background:#fff;box-sizing:border-box}
+.ideia-chat-icone,.ideia-chat-enviar{flex:0 0 42px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid #dce3eb;background:#fff;color:#4f4f4f;padding:0}
+.ideia-chat-icone svg,.ideia-chat-enviar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ideia-chat-enviar{background:#123f86;border-color:#123f86;color:#fff}
+.ideia-chat-icone.gravando{background:#e60012;border-color:#e60012;color:#fff;animation:ideia-rec 1.2s infinite}
+.ideia-chat-icone:disabled,.ideia-chat-enviar:disabled{opacity:.45;cursor:default}
+.ideia-form-alt{align-self:center;margin:0 0 10px;font-size:12px;color:#6b6b6b}
+#formIdeia footer{flex-wrap:wrap}
+@media(max-width:900px){.ideia-form-layout{grid-template-columns:1fr!important;gap:24px!important}.ideia-chat{height:70vh}.ideia-msg{max-width:92%}}
+@media(prefers-reduced-motion:reduce){.ideia-digitando span,.ideia-rec-dot,.ideia-chat-icone.gravando{animation:none}}
+/* Sem a frase de cima: o título ocupa a linha das abas. */
+html:root:is(#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading>h1{grid-row:1;margin:0 0 10px!important}
+html:root:is(#ip#ip#ip#ip#ip#ip,html) #ideiaPremiada>.ideia-heading>.ideia-tabs{grid-row:1}

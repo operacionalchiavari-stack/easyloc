@@ -16,6 +16,9 @@
       texto.append(...linha.childNodes);
       linha.classList.add('com-foto-decorador');
       linha.append(avatar, texto);
+      // Nov/2026: a bolinha de problema na separação fica em cima da foto do decorador.
+      const dot = card.querySelector(".sep-problema-dot");
+      if (dot) { avatar.classList.add("com-problema"); linha.append(dot); requestAnimationFrame(() => { dot.style.left = (avatar.offsetLeft + avatar.offsetWidth - 9) + "px"; dot.style.top = (avatar.offsetTop - 1) + "px"; }); }
       if (card.closest('.triagem-compacta')) {
         const progresso = card.querySelector('.separacao-card-progress');
         if (progresso) card.querySelector('.separacao-card-top')?.append(progresso);

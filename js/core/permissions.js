@@ -178,6 +178,8 @@
     [/Comercial\/Historico/i, 'comercial.pedidos.visualizar'], // Histórico do comercial (out/2026)
     [/Comercial\/Produtividade/i, 'comercial.pedidos.visualizar'],
     [/Comercial\/Cancelamentos/i, 'comercial.pedidos.visualizar'], // relatório de cancelamentos (out/2026)
+    [/Comercial\/Terceirizacoes/i, 'comercial.pedidos.visualizar'], // empresas e itens de terceirização (nov/2026)
+    [/Comercial\/ContasReceber/i, 'comercial.pedidos.visualizar'],
     [/Pedidos/i, 'comercial.pedidos.visualizar'],
     [/Contratos/i, 'comercial.contratos.visualizar'],
     [/ImportarItens/i, 'estoque.importacao.executar'],

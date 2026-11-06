@@ -66,23 +66,31 @@ const mock = `(() => {
 
   // ---------------- Conciliação de Fretes
   await page.goto(BASE + "Modulos/Chiavari/Fretes/conciliacao.html");
-  await page.waitForSelector(".cf-grupo");
-  assert.strictEqual(await page.locator(".cf-grupo").count(), 2, "um bloco por transportadora");
-  const t1 = await page.locator(".cf-grupo").first().innerText();
+  await page.waitForSelector(".cf-evento");
+  assert.strictEqual(await page.locator(".cf-grupo.cf-pagamento").count(), 0, "sem os rodapés de fechamento por transportadora (agora é a barra de envio)");
+  const t1 = await page.locator("#cfConteudo").innerText();
   assert.ok(/Transp A/.test(t1) && /Entrega/.test(t1) && /Coleta/.test(t1) && /505,50/.test(t1) && /490,00/.test(t1), t1);
   assert.ok(/aguardando/.test(t1), "coleta sem valor da transportadora");
   assert.ok(!(await page.isHidden("#cfAvisoForn")), "aviso de caminhão sem fornecedor");
   console.log("ok 1 - viagens por transportadora, sistema x transportadora, entrega e coleta");
-  await page.check('[data-sel="v1"]').catch(() => {});
-  assert.ok(!(await page.isChecked('[data-sel="v1"]')), "sem valor final não seleciona");
+  assert.strictEqual(await page.locator('.cf-viagens tbody tr').first().locator('td').first().locator('[data-sel]').count(),0,'sem caixas antes do pedido');
+  assert.deepStrictEqual((await page.locator('.cf-viagens thead').first().locator('th').allTextContents()).map((x)=>x.trim()),['Pedido','Tipo · data','Caminhão','Origem','Destino','Valor CH','Valor transportadora','Diferença','Valor final','Obs.','Enviar']);
+  assert.ok((await page.locator('.cf-origem').first().innerText()).includes('Galpão'));
+  assert.ok((await page.locator('.cf-destino').first().innerText()).includes('Villa'));
+  assert.notStrictEqual(await page.locator('td.cf-valor-ch').first().evaluate(el=>getComputedStyle(el).backgroundColor),await page.locator('td.cf-valor-transportadora').first().evaluate(el=>getComputedStyle(el).backgroundColor));
+  await page.locator('[data-nota="v1"]').click();await page.locator('.cf-nota-dialog textarea').fill('Conferir acesso pela portaria lateral');await page.locator('.cf-nota-dialog [type="submit"]').click();await page.locator('.cf-nota-dialog').waitFor({state:'detached'});assert.match(await page.locator('[data-nota="v1"]').getAttribute('title'),/portaria lateral/);
   await page.click('[data-usar="transp"][data-id="v1"]');
   await page.waitForFunction(() => document.querySelector('[data-final="v1"]').value === "490");
   await page.fill('[data-final="v2"]', "490"); await page.press('[data-final="v2"]', "Enter");
-  await page.waitForFunction(() => window.__rpc.filter((x) => x.n === "frete_definir_final").length === 2);
-  await page.check('[data-sel-todos="f1"]');
-  await page.waitForFunction(() => /2<\/b> selecionada/.test(document.querySelector('.cf-grupo .cf-rodape').innerHTML));
-  assert.ok(/980,00/.test(await page.locator(".cf-grupo .cf-rodape").first().innerText()), "total final");
-  await page.click('[data-fechar="f1"]');
+  await page.waitForFunction(() => window.__rpc.filter((x) => x.n === "frete_definir_final").length === 3);
+  // Enviar ao Contas a Pagar como no Pagamento de Freelancer: caixa em cada viagem (última coluna), barra embaixo e janela de resumo
+  await page.check('[data-sel="v1"]'); await page.check('[data-sel="v2"]');
+  await page.waitForFunction(() => /2 viagens/.test(document.getElementById("cfBarraEnvio")?.innerText || ""));
+  assert.ok(/980,00/.test(await page.locator("#cfBarraEnvio").innerText()), "total final na barra");
+  await page.click('[data-envio-abrir]');
+  assert.match(await page.locator('.cf-envio-dialog').innerText(), /Enviar ao Contas a Pagar[\s\S]*980,00/);
+  if (process.env.SHOTFR) await page.screenshot({ path: process.env.SHOTFR });
+  await page.click('.cf-envio-dialog [type="submit"]');
   await page.waitForFunction(() => window.__rpc.some((x) => x.n === "frete_fechar"));
   const fech = await page.evaluate(() => window.__rpc.find((x) => x.n === "frete_fechar").a);
   assert.deepStrictEqual(fech.p_viagens.sort(), ["v1", "v2"]);

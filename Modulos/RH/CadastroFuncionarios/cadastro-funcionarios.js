@@ -5,7 +5,7 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const levels = ['Administrador', 'Recursos Humanos', 'Gestor', 'Financeiro', 'Líder de setor', 'Operador', 'Qualidade', 'Almoxarifado', 'Visualizador'];
   let opcoesRh = [];
-  let proprio = false, context, employees = [], catalog = [], mode = 'create', photo = '', preview = '', busy = false, returnFocus;
+  let proprio = false, context, employees = [], catalog = [], mode = 'create', photo = '', preview = '', busy = false, returnFocus, listaScroll=0;
   const photoUrls = new Map();
   const can = key => window.EasyLocPermissions.hasPermission(key, false);
   const initials = name => String(name || 'FT').trim().split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase();
@@ -60,19 +60,20 @@
     $('funcInativos').textContent = employees.filter(e => !e.ativo).length;
     $('funcAdmins').textContent = employees.filter(e => e.nivel_acesso === 'Administrador').length;
     const groups = new Map();
-    employees.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).forEach(e => {
+    const busca=$('funcBusca').value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+    employees.filter(e=>[e.nome,e.setor,e.cargo,e.login,e.email].filter(Boolean).join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').includes(busca)).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).forEach(e => {
       const key = e.setor || 'Sem setor';
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(e);
     });
     $('funcionariosTableBody').innerHTML = [...groups].sort(([a], [b]) => a.localeCompare(b, 'pt-BR')).map(([sector, rows]) => `
-      <tr class="table-group-row"><td colspan="9">${esc(sector)}<span class="table-group-count">${rows.length}</span></td></tr>
-      ${rows.map(e => `<tr><td class="photo-column"><span class="employee-table-photo"><span>${esc(initials(e.nome))}</span>${fotoDe(e) ? `<img src="${esc(fotoDe(e))}" alt="Foto de ${esc(e.nome)}" loading="lazy">` : ''}</span></td>
-      <td><strong>${esc(e.nome)}</strong><span class="subtext">${esc(e.email)}</span></td><td>${esc(e.setor)}</td><td>${esc(e.cargo || '-')}</td><td>${esc(e.login)}</td>
-      <td><span class="status-pill">${e.acesso_sistema === false ? "Sem login" : esc(e.nivel_acesso)}</span><span class="subtext">${e.tem_pin ? "PIN cadastrado" : "PIN pendente"}</span></td><td><span class="status-pill ${e.ativo ? 'active' : 'inactive'}">${e.ativo ? 'Ativo' : 'Inativo'}</span></td>
-      <td>${e.ultimo_acesso ? esc(new Date(e.ultimo_acesso).toLocaleString('pt-BR')) : '-'}</td><td class="action-buttons">
-      <button class="icon-btn" data-action="view" data-id="${esc(e.id)}" aria-label="Ver ${esc(e.nome)}" title="Ver"><i data-lucide="eye"></i></button>
-      ${can('rh.funcionarios.editar') || e.id === context.usuario_id ? `<button class="icon-btn" data-action="edit" data-id="${esc(e.id)}" aria-label="Editar ${esc(e.nome)}" title="Editar"><i data-lucide="pencil"></i></button>` : ''}</td></tr>`).join('')}`).join('') || '<tr><td colspan="9" class="empty-state">Nenhum funcionário cadastrado.</td></tr>';
+      <tr class="table-group-row"><td colspan="5">${esc(sector)}<span class="table-group-count">${rows.length}</span></td></tr>
+      ${rows.map(e => `<tr class="funcionario-linha" data-funcionario-id="${esc(e.id)}" tabindex="0" aria-label="Abrir cadastro de ${esc(e.nome)}">
+      <td><div class="funcionario-identidade"><span class="employee-table-photo"><span>${esc(initials(e.nome))}</span>${fotoDe(e)?`<img src="${esc(fotoDe(e))}" alt="" loading="lazy">`:''}</span><span class="funcionario-identidade-texto"><strong>${esc(e.nome)}</strong>${e.email?`<span class="subtext">${esc(e.email)}</span>`:''}</span></div></td>
+      <td>${esc(e.cargo||'—')}</td>
+      <td><span class="funcionario-acesso">${e.acesso_sistema===false?'Sem login':esc(e.nivel_acesso||'Visualizador')}</span><span class="subtext">${[e.acesso_sistema!==false?e.login:'',e.tem_pin?'PIN cadastrado':'PIN pendente'].filter(Boolean).map(esc).join(' &#183; ')}</span></td>
+      <td><span class="status-pill ${e.ativo?'active':'inactive'}">${e.ativo?'Ativo':'Inativo'}</span></td>
+      <td class="funcionario-ultimo-acesso">${e.ultimo_acesso?esc(new Date(e.ultimo_acesso).toLocaleString('pt-BR')):'—'}</td></tr>`).join('')}`).join('') || '<tr><td colspan="5" class="empty-state">Nenhum funcionário encontrado.</td></tr>';
     $('newFuncionarioBtn').hidden = !can('rh.funcionarios.criar');
     icons();
   }
@@ -111,6 +112,25 @@
       return p.chave === 'comercial.catalogo.visualizar';
     }).map(p => p.chave);
   }
+  const moeda=valor=>Number(valor||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const salarioParaSalvar=()=>{const digitos=$('funcSalario').value.replace(/\D/g,'');return digitos?(Number(digitos)/100).toFixed(2):'';};
+  $('funcSalario').addEventListener('input',()=>{const el=$('funcSalario'),digitos=el.value.replace(/\D/g,'').slice(0,14);el.value=digitos?moeda(Number(digitos)/100):'';});
+  $('funcBusca').addEventListener('input',render);
+  function syncStatus(){
+    document.querySelectorAll('[data-func-status]').forEach(el=>{el.setAttribute('aria-pressed',String(el.dataset.funcStatus===$('funcStatus').value));el.disabled=busy||$('funcStatus').disabled;});
+  }
+  document.querySelectorAll('[data-func-status]').forEach(el=>el.addEventListener('click',()=>{if(busy||$('funcStatus').disabled)return;$('funcStatus').value=el.dataset.funcStatus;syncStatus();}));
+  let enderecoAutocomplete,enderecoCarregando=false;
+  $('funcEndereco').addEventListener('focus',async()=>{
+    if(enderecoAutocomplete||enderecoCarregando||$('funcEndereco').disabled)return;
+    enderecoCarregando=true;
+    try{
+      await window.carregarGooglePlaces();
+      enderecoAutocomplete=new google.maps.places.Autocomplete($('funcEndereco'),{types:['address'],componentRestrictions:{country:'br'},fields:['formatted_address']});
+      enderecoAutocomplete.addListener('place_changed',()=>{const endereco=enderecoAutocomplete.getPlace()?.formatted_address;if(endereco&&!$('funcEndereco').disabled)$('funcEndereco').value=endereco;});
+    }catch(error){console.warn('Autocomplete de endereço:',error.message);}
+    finally{enderecoCarregando=false;}
+  });
   function setPhoto(src) {
     if (src) $('funcFotoPreview').src = src; else $('funcFotoPreview').removeAttribute('src');
     $('funcFotoPreview').classList.toggle('show', Boolean(src));
@@ -127,6 +147,7 @@
     $('permissionsGrid').closest('fieldset').hidden = !acesso;
     if ((!employee || employee.acesso_sistema === false) && !can('configuracoes.permissoes.editar')) $('funcAcesso').disabled = true;
     if (!acesso && !proprio && mode !== 'view') $('funcStatus').disabled = false;
+    syncStatus();
   }
   $('funcAcesso').addEventListener('change', syncAccess);
   async function openForm(nextMode, id) {
@@ -154,11 +175,12 @@
     $('funcNivel').innerHTML = levels.map(s => `<option>${esc(s)}</option>`).join('');
     $('funcionarioId').value = id || '';
     const fields = { funcNome: 'nome', funcSetor: 'setor', funcCargo: 'cargo', funcLogin: 'login', funcEmail: 'email', funcTelefone: 'telefone', funcFotoValue: 'foto_url', funcCpf: 'cpf',funcSalario:'salario_bruto',funcAdmissao:'data_admissao',funcEquipe:'equipe_operacional' };
-    Object.entries(fields).forEach(([field, key]) => { $(field).value = employee?.[key] || ''; });
+    Object.entries(fields).forEach(([field, key]) => { $(field).value = employee?.[key] ?? ''; });
+    if($('funcSalario').value!=='')$('funcSalario').value=moeda($('funcSalario').value);
     Object.entries({funcRg:'rg',funcNascimento:'data_nascimento',funcWhatsapp:'whatsapp',funcEndereco:'endereco',funcObservacoes:'observacoes'}).forEach(([id,key])=>{$(id).value=employee?.dados_rh?.[key] || '';});
     // Cofre: CPF, RG e salário cifrados chegam só como máscara; "Ver" mostra o valor (com registro).
     const protegidos = employee?.protegidos || [];
-    const revelar = campo => async () => (await window.EasyLocCofre.revelarRh(client, context.empresa_id, id, [campo]))[campo];
+    const revelar = campo => async () => {const valor=(await window.EasyLocCofre.revelarRh(client,context.empresa_id,id,[campo]))[campo];return campo==='salario'&&valor!=null?moeda(valor):valor;};
     [['funcCpf','cpf',employee?.cpf],['funcRg','rg',employee?.dados_rh?.rg],['funcSalario','salario',employee?.salario_mascara]].forEach(([campoId, campo, mascara]) =>
       window.EasyLocCofre.preparar($(campoId), { protegido: protegidos.includes(campo), mascara, podeRevelar: employee?.pode_revelar && mode !== 'create', revelar: revelar(campo) }));
     $('funcLider').checked = !!employee?.lider_operacao;
@@ -185,21 +207,26 @@
     setPhoto(fotoDe(employee));
     returnFocus = document.activeElement;
     $('funcionarioFormCard').classList.remove('hidden');
-    $('funcionariosView').querySelector('.section-head').inert = true;
-    document.body.style.overflow = 'hidden';
+    listaScroll=window.scrollY;$('funcionariosView').hidden=true;
+    window.scrollTo(0,0);
     (mode === 'view' ? $('closeFuncionarioForm') : $('funcNome')).focus();
   }
   function closeForm() {
     if (busy) return;
     $('funcionarioFormCard').classList.add('hidden');
-    $('funcionariosView').querySelector('.section-head').inert = false;
-    document.body.style.overflow = '';
+    $('funcionariosView').hidden=false;
+    window.scrollTo(0,listaScroll);
     photo = ''; preview = '';
     returnFocus?.focus();
   }
   $('newFuncionarioBtn').addEventListener('click', () => openForm('create'));
   ['closeFuncionarioForm', 'cancelFuncionarioBtn'].forEach(id => $(id).addEventListener('click', closeForm));
-  $('funcionariosTableBody').addEventListener('click', e => { const button = e.target.closest('[data-action]'); if (button) openForm(button.dataset.action, button.dataset.id); });
+  function abrirLinhaFuncionario(evento){
+    const linha=evento.target.closest('[data-funcionario-id]');if(!linha)return;
+    const id=linha.dataset.funcionarioId;linha.focus();openForm(can('rh.funcionarios.editar')||id===context.usuario_id?'edit':'view',id);
+  }
+  $('funcionariosTableBody').addEventListener('click',abrirLinhaFuncionario);
+  $('funcionariosTableBody').addEventListener('keydown',e=>{if(!['Enter',' '].includes(e.key)||!e.target.matches('[data-funcionario-id]'))return;e.preventDefault();abrirLinhaFuncionario(e);});
   $('funcNivel').addEventListener('change', () => renderPermissions(profile($('funcNivel').value)));
   $('permissionsGrid').addEventListener('change', e => {
     if (e.target.matches('[data-module-toggle]')) e.target.closest('.permission-module').querySelectorAll('[data-permission-item]').forEach(input => { input.checked = e.target.checked; });
@@ -224,19 +251,14 @@
   document.addEventListener('keydown', e => {
     if ($('funcionarioFormCard').classList.contains('hidden')) return;
     if (e.key === 'Escape') closeForm();
-    if (e.key === 'Tab') {
-      const targets = [...$('funcionarioFormCard').querySelectorAll('button,input,select')].filter(x => !x.disabled && x.type !== 'hidden' && x.getClientRects().length);
-      const first = targets[0], last = targets.at(-1);
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    }
+
   });
   $('funcionarioForm').addEventListener('submit', async e => {
     e.preventDefault(); if (busy || mode === 'view') return;
-    busy = true; $('saveFuncionarioBtn').disabled = true; $('closeFuncionarioForm').disabled = true; $('cancelFuncionarioBtn').disabled = true;
+    busy = true; syncStatus(); $('saveFuncionarioBtn').disabled = true; $('closeFuncionarioForm').disabled = true; $('cancelFuncionarioBtn').disabled = true;
     try {
       const result = await api({ action: 'save', id: $('funcionarioId').value || null, photo: photo || null,
-        employee: { nome: $('funcNome').value, setor: $('funcSetor').value, cargo: $('funcCargo').value, login: $('funcLogin').value, senha: $('funcSenha').value, pin: $('funcWarehousePin').value, nivel_acesso: $('funcNivel').value, ativo: $('funcStatus').value === 'Ativo', email: $('funcEmail').value, telefone: $('funcTelefone').value, foto_url: $('funcFotoValue').value,...(window.EasyLocCofre.mudou($('funcCpf')) ? {cpf:$('funcCpf').value} : {}),...(window.EasyLocCofre.mudou($('funcSalario')) ? {salario_bruto:$('funcSalario').value} : {}),data_admissao:$('funcAdmissao').value,equipe_operacional:$('funcEquipe').value,acesso_sistema:$('funcAcesso').value==='true',dados_rh:{...(window.EasyLocCofre.mudou($('funcRg')) ? {rg:$('funcRg').value} : {}),data_nascimento:$('funcNascimento').value,whatsapp:$('funcWhatsapp').value,endereco:$('funcEndereco').value,observacoes:$('funcObservacoes').value} },
+        employee: { nome: $('funcNome').value, setor: $('funcSetor').value, cargo: $('funcCargo').value, login: $('funcLogin').value, senha: $('funcSenha').value, pin: $('funcWarehousePin').value, nivel_acesso: $('funcNivel').value, ativo: $('funcStatus').value === 'Ativo', email: $('funcEmail').value, telefone: $('funcTelefone').value, foto_url: $('funcFotoValue').value,...(window.EasyLocCofre.mudou($('funcCpf')) ? {cpf:$('funcCpf').value} : {}),...(window.EasyLocCofre.mudou($('funcSalario')) ? {salario_bruto:salarioParaSalvar()} : {}),data_admissao:$('funcAdmissao').value,equipe_operacional:$('funcEquipe').value,acesso_sistema:$('funcAcesso').value==='true',dados_rh:{...(window.EasyLocCofre.mudou($('funcRg')) ? {rg:$('funcRg').value} : {}),data_nascimento:$('funcNascimento').value,whatsapp:$('funcWhatsapp').value,endereco:$('funcEndereco').value,observacoes:$('funcObservacoes').value} },
         permissions: $('funcAcesso').value==='true' && !proprio && can('configuracoes.permissoes.editar') ? [...document.querySelectorAll('[data-permission-item]:checked')].map(x => x.value) : null });
       // Líder (Painel Logístico): gravado à parte, só por quem edita funcionários
       const idSalvo = result.id || $('funcionarioId').value;
@@ -244,12 +266,12 @@
       if (idSalvo && !proprio && liderAntes !== $('funcLider').checked) await rpc('rh_definir_lider', { p_empresa_id: context.empresa_id, p_funcionario: idSalvo, p_lider: $('funcLider').checked });
       busy = false; closeForm();
       message('');
-      window.alertaModal(result.warning || 'Funcionário salvo com sucesso.', result.warning ? 'Atenção' : 'Sucesso', result.warning ? 'aviso' : 'sucesso');
+      window.alerta(result.warning || 'Funcionário salvo com sucesso.', result.warning ? 'Atenção' : 'Sucesso', result.warning ? 'aviso' : 'sucesso');
       await loadEmployees();
     } catch (error) {
       if (!$('funcionarioFormCard').classList.contains('hidden')) { if (window.alerta) window.alerta(error.message); else alert(error.message); }
       else message(error.message, true);
-    } finally { busy = false; $('saveFuncionarioBtn').disabled = false; $('closeFuncionarioForm').disabled = false; $('cancelFuncionarioBtn').disabled = false; }
+    } finally { busy = false; syncStatus(); $('saveFuncionarioBtn').disabled = false; $('closeFuncionarioForm').disabled = false; $('cancelFuncionarioBtn').disabled = false; }
   });
   try {
     context = await window.aguardarContexto();

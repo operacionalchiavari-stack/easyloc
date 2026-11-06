@@ -27,9 +27,10 @@ function painel() {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const erros = [], chamadas = [];
   page.on("pageerror", e => erros.push(e.message));
+  let atrasoSalvar=0,falharSalvar=false,conflitarSalvar=false;
   let tentativa = 0;const planejamento=painel();planejamento.pessoas[2].foto_url=BASE+'foto-igor.png';planejamento.pessoas.push({nome:'Bruno Lima',foto_url:BASE+'foto-igor.png',equipe:'montagem',lider:false});planejamento.etapas.push({...planejamento.etapas[1],id:'pre',data:'2026-10-22',pedido:'9999',cliente:'Pre reserva em consulta',somente_consulta:true,responsavel:'',equipe:[],caminhoes:[]});planejamento.etapas.push({...planejamento.etapas[1],id:'e4',data:'2026-10-21',cliente:'Evento do dia seguinte',responsavel:'',equipe:[],caminhoes:[]});
   await page.addInitScript(()=>{window.__CONTEXT={empresa_id:'e1',usuario_id:'u1'};window.aguardarContexto=async()=>window.__CONTEXT;window.supabaseClient={auth:{getSession:async()=>({data:{session:null}})},rpc:async()=>({data:[],error:null})};});
-  await page.route("**/*", r => {
+  await page.route("**/*", async r => {
     if(r.request().url().includes('/js/core/permissions.js'))return r.fulfill({contentType:'text/javascript',body:'window.EasyLocPermissions={load:async()=>{},hasPermission:()=>true};window.hasPermission=()=>true;'});
     if(r.request().url().includes('/js/core/context.js')||r.request().url().includes('/js/core/supabase.js'))return r.fulfill({contentType:'text/javascript',body:''});
     const u = r.request().url();
@@ -38,8 +39,13 @@ function painel() {
     if (u.includes("/api/gs")) {
       const { fn, args } = JSON.parse(r.request().postData() || "{}");
       chamadas.push({ fn, args });
+      if(fn==='ESC_salvarEtapa'){
+        if(atrasoSalvar)await new Promise(resolve=>setTimeout(resolve,atrasoSalvar));
+        if(falharSalvar){falharSalvar=false;return r.fulfill({contentType:'application/json',body:JSON.stringify({ok:false,erro:'Falha simulada ao salvar'})});}
+        if(conflitarSalvar&&!args[2])return r.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,resultado:{ok:false,conflitos:['Conflito simulado']}})});
+      }
       let res = null;
-      if (fn === "ESC_painel") { res = structuredClone(planejamento); if (args[2]) res.preenchidas = 3; }
+      if (fn === "ESC_painel") { res = structuredClone(planejamento); res.inicio=args[0];const fim=new Date(args[0]+'T12:00:00');fim.setDate(fim.getDate()+args[1]-1);res.fim=fim.toISOString().slice(0,10);res.etapas=res.etapas.filter(e=>e.data>=res.inicio&&e.data<=res.fim); if (args[2]) res.preenchidas = 3; }
       if (fn === "ESC_salvarEtapa") { tentativa++; res = args[2] ? { ok: true, conflitos: ["Caminhão M também está em Montagem do pedido 2104"] } : (args[1].caminhoes.includes("M") && args[0] === "e3" ? { ok: false, conflitos: ["Caminhão M também está em Montagem do pedido 2104 (09:00)"] } : { ok: true, conflitos: [] }); }
       if(fn==='ESC_salvarEtapa'&&res.ok){Object.assign(planejamento.etapas.find(e=>e.id===args[0]),args[1]);}
       return r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, resultado: res }) });
@@ -79,6 +85,85 @@ function painel() {
   await page.locator('[data-abrir-disponiveis]').click();
   await page.locator('[data-fechar-disponiveis]').click();
   assert.equal(await dialog.isVisible(), false);
+  const faixa=page.locator('#plAbasDias');
+  const antes=await page.evaluate(()=>PainelLogisticoDias.inicio);
+  const selecionado=await page.evaluate(()=>PainelLogisticoDias.data);
+  const historico={...planejamento.etapas.find(e=>e.id==='e2'),id:'historico',data:'2026-10-05',cliente:'Entrega anterior',passada:true,caminhoes:[]};planejamento.etapas.push(historico);
+  await faixa.evaluate(nav=>nav.scrollLeft=0);
+  await page.waitForFunction(inicio=>PainelLogisticoDias.inicio<inicio,antes);
+  assert.equal(await page.evaluate(()=>PainelLogisticoDias.data),selecionado,'carregar passado preserva selecao');
+  assert.ok(await faixa.evaluate(nav=>nav.scrollLeft>500),'novos dias preservam a posicao visual');
+  await page.locator('[data-dia="2026-10-05"]').click();
+  await page.locator('[data-selecionar=historico]').waitFor();
+  assert.equal(await page.locator('[data-selecionar=historico] .pl-servico-etapa').innerText(),'Entrega');
+  const cadeado=page.locator('[data-liberar-edicao=historico]');
+  assert.equal(await cadeado.getAttribute('aria-pressed'),'false');
+  await page.locator('[data-abrir-disponiveis]').click();await page.locator('[data-aba-recurso=cam]').click();
+  assert.equal(await page.locator('[data-recurso=cam][data-valor=G]').isDisabled(),true);
+  await page.locator('[data-fechar-disponiveis]').click();
+  await cadeado.click();assert.equal(await cadeado.getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('.pl-etapa[data-id=historico]').evaluate(el=>el.classList.contains('is-passada')),false);
+  const equipeAntes=historico.equipe.slice(),responsavelAntes=historico.responsavel;
+  await page.locator('.pl-etapa[data-id=historico] .pl-vaga-cam.is-vazia').click();
+  assert.equal(await page.locator('#plDisponiveisDialog').isVisible(),true,'vaga abre a selecao apos liberar');
+  await page.locator('[data-aba-recurso=cam]').click();
+  assert.equal(await page.locator('[data-recurso=cam][data-valor=G]').isEnabled(),true,'caminhao pode ser alocado em data passada');
+  await page.locator('[data-recurso=cam][data-valor=G]').click();
+  await page.waitForFunction(()=>document.querySelector('.pl-etapa[data-id=historico] .pl-vaga-cam.is-preenchida strong')?.textContent==='G');
+  const gravacao=chamadas.filter(c=>c.fn==='ESC_salvarEtapa'&&c.args[0]==='historico').at(-1);
+  assert.deepEqual(gravacao.args[1],{responsavel:responsavelAntes,equipe:equipeAntes,caminhoes:['G']});
+  assert.equal(await page.locator('.pl-etapa[data-id=historico] [data-acao=tirar][data-papel=cam]').count(),1,'permite corrigir o caminhao selecionado');
+  assert.equal(await page.locator('.pl-etapa[data-id=historico] [data-acao=tirar][data-papel=resp]').count(),1,'equipe liberada tambem');
+  await page.locator('[data-fechar-disponiveis]').click();
+  await page.locator('.pl-etapa[data-id=historico] [data-acao=tirar][data-papel=equipe]').first().click();
+  await page.waitForFunction(()=>document.querySelectorAll('.pl-etapa[data-id=historico] [data-acao=tirar][data-papel=equipe]').length===2);
+  assert.equal(await cadeado.getAttribute('aria-pressed'),'true','liberacao permanece apos salvar');
+  await cadeado.click();assert.equal(await cadeado.getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('.pl-etapa[data-id=historico] [data-acao=tirar]').count(),0,'bloqueia novamente equipe e caminhoes');
+  const total=await page.evaluate(()=>PainelLogisticoDias.quantos);
+  await faixa.evaluate(nav=>nav.scrollLeft=nav.scrollWidth);
+  await page.waitForFunction(n=>PainelLogisticoDias.quantos>n,total);
+  assert.equal(await page.evaluate(()=>PainelLogisticoDias.data),'2026-10-05');
+  assert.ok(chamadas.filter(c=>c.fn==='ESC_painel').every(c=>c.args[1]<=14),'requisicoes em blocos de ate 14 dias');
+  await page.goto(BASE+'Modulos/Logistica/PainelLogistico/painel-logistico.html?dia=2026-10-05');
+  await page.locator('[data-selecionar=historico]').waitFor();
+  assert.equal(await page.evaluate(()=>PainelLogisticoDias.data),'2026-10-05','link abre diretamente o dia passado');
+  await page.locator('[data-liberar-edicao=historico]').click();
+  await page.locator('[data-abrir-disponiveis]').click();await page.locator('[data-aba-recurso=cam]').click();
+  await page.evaluate(()=>window.__dialogOriginal=document.getElementById('plDisponiveisDialog'));
+  const leiturasAntes=chamadas.filter(c=>c.fn==='ESC_painel').length;
+  const enviosAntes=chamadas.filter(c=>c.fn==='ESC_salvarEtapa').length;
+  atrasoSalvar=1200;
+  await page.locator('[data-recurso=cam][data-valor=M] .pl-recurso-dados').click();
+  await page.locator('[data-recurso=cam][data-valor=P] .pl-recurso-dados').click();
+  assert.equal(await page.locator('.pl-etapa[data-id=historico] .pl-vaga-cam.is-preenchida').count(),3,'dois cliques entram imediatamente antes da resposta');
+  assert.equal(chamadas.filter(c=>c.fn==='ESC_salvarEtapa').length,enviosAntes+1,'envios sao sequenciais');
+  assert.equal(await page.evaluate(()=>__dialogOriginal===document.getElementById('plDisponiveisDialog')&&__dialogOriginal.open),true,'mesma janela permanece aberta');
+  await page.waitForFunction(()=>document.getElementById('plSalvamentoEstado')?.hidden===true);
+  assert.deepEqual(planejamento.etapas.find(e=>e.id==='historico').caminhoes,['G','M','P']);
+  assert.equal(chamadas.filter(c=>c.fn==='ESC_painel').length,leiturasAntes,'salvar nao recarrega o painel');
+  assert.equal(await page.locator('.pl-toast.is-on').count(),0,'sem aviso de salvo a cada clique');
+  await page.locator('[data-fechar-disponiveis]').click();
+  falharSalvar=true;
+  const antesFalha=chamadas.filter(c=>c.fn==='ESC_salvarEtapa').length;
+  await page.locator('.pl-etapa[data-id=historico] [data-acao=tirar][data-papel=cam][data-nome=M]').click();
+  await page.locator('.pl-etapa[data-id=historico] [data-acao=tirar][data-papel=cam][data-nome=P]').click();
+  assert.equal(await page.locator('.pl-etapa[data-id=historico] .pl-vaga-cam.is-preenchida').count(),1);
+  await page.waitForFunction(()=>document.getElementById('plErro').textContent.includes('Falha simulada'));
+  assert.equal(await page.locator('.pl-etapa[data-id=historico] .pl-vaga-cam.is-preenchida').count(),3,'falha restaura a selecao confirmada');
+  assert.equal(chamadas.filter(c=>c.fn==='ESC_salvarEtapa').length,antesFalha+1,'mudanca dependente da falha nao e enviada');
+  atrasoSalvar=0;conflitarSalvar=true;
+  await page.locator('.pl-etapa[data-id=historico] [data-acao=tirar][data-papel=cam][data-nome=M]').click();
+  await page.locator('#plConflito').waitFor({state:'visible'});await page.locator('#plConflitoVoltar').click();
+  await page.waitForFunction(()=>document.getElementById('plSalvamentoEstado').hidden);
+  assert.equal(await page.locator('.pl-etapa[data-id=historico] [data-papel=cam][data-nome=M]').count(),1,'cancelar conflito desfaz a selecao');
+  await page.locator('.pl-etapa[data-id=historico] [data-acao=tirar][data-papel=cam][data-nome=M]').click();
+  await page.locator('#plConflito').waitFor({state:'visible'});await page.locator('#plConflitoSalvar').click();
+  await page.waitForFunction(()=>document.getElementById('plSalvamentoEstado').hidden);
+  assert.deepEqual(planejamento.etapas.find(e=>e.id==='historico').caminhoes,['G','P'],'confirmacao explicita salva com conflito');
+  console.log('OK - cards clicaveis, resposta imediata, fila de cliques, rollback e conflitos.');
+  assert.deepEqual(erros,[]);
+  console.log('OK - datas anteriores e futuras, selecao, posicao da faixa e link de data passada.');
   await page.screenshot({path:'.tmp/caminhoes-capacidades.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=392));

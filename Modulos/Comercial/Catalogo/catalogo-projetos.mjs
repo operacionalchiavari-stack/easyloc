@@ -31,7 +31,7 @@ import { sinalizarDisponibilidade } from "./pedido-disponibilidade-comercial.mjs
 // mostra ou envia preço: o catálogo nunca teve valores.
 
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas } from './projeto-apresentacao.mjs?v=20261102-insumos-kits';
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas, definirAvisosStatus } from './projeto-apresentacao.mjs?v=20261105-terceirizacoes';
 
 const temCena = render => Boolean(render?.cena?.url || render?.cena?.snapshot);
 const $ = (id) => document.getElementById(id);
@@ -1689,7 +1689,8 @@ const assinatura = (ambientes) => JSON.stringify((ambientes || []).map((amb) => 
 // renderizações, renomear/excluir ambiente). Os botões ficam na linha do título, ao lado do decorador solicitante.
 function botoesPedidoComercial(){
   // O Catálogo virou uma etapa da barra do pedido (logo depois de Dados do pedido) — sem botão aqui (out/2026). F2 continua.
-  return `<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="novo-ambiente">＋ Ambiente</button>`
+  // ＋ Ambiente fica ao lado do decorador solicitante (nov/2026, ver cpj-geral-esq).
+  return `<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="sublocacao">Subloca&#231;&#227;o</button>`
     + (ambientesDe().length ? `<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="add-componente">＋ Componente</button><button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="add-servico">＋ Serviço</button>` : "");
 }
 
@@ -1848,6 +1849,115 @@ async function fluxoAdicionarServico(){
   marcarSujo(); pintarPainel();
   ctx.notify({ title: "Serviço adicionado", message: escolhido.servico.nome, status: "done" });
 }
+// ---------------------------------------------------------------------------------------------------------------
+// Itens terceirizados (nov/2026): itens de outras empresas (Comercial > Sublocações) que entram no pedido como
+// linhas próprias, com o preço ao cliente. Ficam em dados.terceirizados [{id, terceirizado_id, nome, foto, medidas,
+// codigo, fornecedor_id, fornecedor_nome, ambiente_id, quantidade, valor, custo}]. Não reservam o nosso estoque nem
+// passam pela separação; a quantidade da empresa é só referência (mostra quantos já estão em outros pedidos no período).
+const terceirizadosDe = () => (Array.isArray(S.current?.dados?.terceirizados) ? S.current.dados.terceirizados : (S.current.dados.terceirizados = []));
+let tercCadastro = null, tercOcupacao = {}, tercOcupacaoChave = "";
+async function carregarTerceirizados(forcar = false){
+  if(tercCadastro && !forcar) return tercCadastro;
+  const { data, error } = await ctx.supabase.from("terceirizacao_itens").select("*").eq("empresa_id", ctx.getSession()?.empresa_id).eq("ativo", true).order("produto");
+  if(error) throw error;
+  const { data: emp } = await ctx.supabase.rpc("terceirizacao_empresas", { p_empresa: ctx.getSession()?.empresa_id });
+  const nomes = new Map((emp || []).map((e) => [String(e.id), e.nome]));
+  tercCadastro = (data || []).map((i) => ({ ...i, fornecedor_nome: nomes.get(String(i.fornecedor_id)) || "Empresa" }));
+  return tercCadastro;
+}
+function periodoPedidoPai(){
+  const pai = window.parent, campo = (id) => pai.document?.getElementById(id)?.value;
+  const inicio = campo("dataEntrega") || campo("dataEvento"), fim = campo("dataColeta") || campo("dataEventoFim") || campo("dataEvento");
+  return inicio && fim && fim >= inicio ? { inicio, fim } : null;
+}
+async function carregarOcupacaoTerc(){
+  const p = periodoPedidoPai();
+  const chave = p ? p.inicio + "|" + p.fim : "";
+  if(chave === tercOcupacaoChave) return tercOcupacao;
+  tercOcupacaoChave = chave;
+  if(!p){ tercOcupacao = {}; return tercOcupacao; }
+  try{
+    const { data } = await ctx.supabase.rpc("terceirizacao_ocupacao", { p_empresa: ctx.getSession()?.empresa_id, p_inicio: p.inicio, p_fim: p.fim, p_pedido: window.parent.__PEDIDO_ATUAL_ID || null });
+    tercOcupacao = data || {};
+  }catch{ tercOcupacao = {}; }
+  return tercOcupacao;
+}
+const medidasTerc = (i) => [i.largura, i.altura, i.profundidade].some((x) => Number(x) > 0)
+  ? ["L", "A", "P"].map((l, k) => `(${l}) ${String(Number([i.largura, i.altura, i.profundidade][k]) || 0).replace(".", ",")} m`).join(" ") : "";
+// "A empresa tem N · M em outros pedidos no período": só informação (a confirmação é sempre com a empresa).
+function infoTerc(terceirizadoId, nestePedido){
+  const cad = (tercCadastro || []).find((i) => String(i.id) === String(terceirizadoId));
+  const outros = Number(tercOcupacao?.[terceirizadoId]?.quantidade || 0);
+  if(!cad) return outros ? `${outros} em outros pedidos no período` : "";
+  const tem = Number(cad.quantidade) || 0;
+  const passa = outros + (Number(nestePedido) || 0) > tem;
+  return `<span class="cpj-terc-info${passa ? " is-alerta" : ""}">A empresa tem ${tem} · ${outros} em outros pedidos no período${passa ? " · confirme com a empresa" : ""}</span>`;
+}
+function terceirizadosHtml(){
+  const lista = terceirizadosDe();
+  if(!lista.length) return "";
+  if(!tercCadastro) carregarTerceirizados().then(() => pintarPainel()).catch(() => {});
+  const chaveAntes = tercOcupacaoChave;
+  carregarOcupacaoTerc().then(() => { if(tercOcupacaoChave !== chaveAntes) pintarPainel(); });
+  const ambs = ambientesDe();
+  const total = lista.reduce((s, x) => s + (Number(x.quantidade) || 0) * (Number(x.valor) || 0), 0);
+  return `<section class="cpj-terceirizados" aria-label="Itens sublocados">
+    <div class="cpj-block-head cpj-block-head-center"><h4>Itens sublocados</h4></div>
+    <table class="cpj-servicos-tabela cpj-terc-tabela"><thead><tr><th>Item</th><th>Ambiente</th><th>Qtd.</th><th>Valor un.</th><th>Total</th><th><span class="pa-sr">Remover</span></th></tr></thead><tbody>${lista.map((t) => `<tr class="cpj-linha-terc" data-terc-id="${escapeAttr(t.id)}">
+      <td><div class="cpj-terc-item"><span class="cpj-terc-foto">${t.foto ? `<img src="${escapeAttr(t.foto)}" alt="" loading="lazy">` : ""}</span><div><strong>${escapeHtml(t.nome)}</strong>${t.medidas ? `<small>${escapeHtml(t.medidas)}</small>` : ""}<small class="cpj-terc-empresa">Sublocado · ${escapeHtml(t.fornecedor_nome || "")}</small>${infoTerc(t.terceirizado_id, t.quantidade)}</div></div></td>
+      <td><select data-terc-campo="ambiente_id" aria-label="Ambiente de ${escapeAttr(t.nome)}">${ambs.map((a) => `<option value="${escapeAttr(a.id)}"${a.id === t.ambiente_id ? " selected" : ""}>${escapeHtml(a.nome)}</option>`).join("")}</select></td>
+      <td><input type="number" min="1" max="9999" step="1" value="${escapeAttr(t.quantidade)}" data-terc-campo="quantidade" aria-label="Quantidade de ${escapeAttr(t.nome)}"></td>
+      <td><input type="number" min="0" step="0.01" value="${escapeAttr(Number(t.valor || 0).toFixed(2))}" data-terc-campo="valor" aria-label="Valor de ${escapeAttr(t.nome)}"></td>
+      <td><b>${dinheiroBR.format((Number(t.quantidade) || 0) * (Number(t.valor) || 0))}</b></td>
+      <td><button type="button" class="cpj-icon-btn" data-cpj="terc-remover" aria-label="Remover ${escapeAttr(t.nome)}" title="Remover">×</button></td>
+    </tr>`).join("")}</tbody><tfoot><tr><td colspan="4">Total dos itens sublocados</td><td><b>${dinheiroBR.format(total)}</b></td><td></td></tr></tfoot></table>
+  </section>`;
+}
+// Botão "Sublocação" do pedido: busca os itens terceirizados e escolhe ambiente e quantidade.
+async function fluxoSublocacao(){
+  let cadastro;
+  try{ cadastro = await carregarTerceirizados(true); }
+  catch(error){ ctx.notify({ title: "Não foi possível carregar os itens de sublocação", message: mensagemDe(error), status: "error" }); return; }
+  await carregarOcupacaoTerc();
+  const ambs = ambientesDe();
+  if(!ambs.length){ ctx.notify({ title: "Crie um ambiente primeiro", message: "O item sublocado entra num ambiente do pedido.", status: "error" }); return; }
+  let escolhido = null;
+  const desenhar = (host, busca) => {
+    const b = String(busca || "").trim().toLowerCase();
+    const lista = cadastro.filter((i) => !b || [i.produto, i.descricao, i.categoria, i.codigo, i.material, i.cor, i.fornecedor_nome].join(" ").toLowerCase().includes(b)).slice(0, 60);
+    host.innerHTML = lista.length ? lista.map((i) => `<button type="button" class="cpj-comp${escolhido?.id === i.id ? " is-escolhido" : ""}" data-terc-escolher="${escapeAttr(i.id)}">
+        <img src="${escapeAttr(i.foto_url || "")}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span><strong>${escapeHtml(i.produto)}</strong><small>${escapeHtml([i.fornecedor_nome, medidasTerc(i), i.codigo ? "Cód. " + i.codigo : ""].filter(Boolean).join(" · "))}</small><small>${infoTerc(i.id, 0)}</small></span>
+        <b>${dinheiroBR.format(Number(i.valor_locacao) || 0)}</b></button>`).join("")
+      : `<p class="cpj-empty">${cadastro.length ? "Nenhum item com essa pesquisa." : 'Nenhum item de sublocação cadastrado. Cadastre em Comercial > Sublocações.'}</p>`;
+  };
+  const ambAtivo = ambienteAtivo()?.id || ambs[0].id;
+  const r = await abrirModal({
+    titulo: "Sublocação", sub: "Itens de empresas parceiras (Comercial > Sublocações). A disponibilidade é confirmada com a empresa.", confirmar: "Adicionar ao pedido", largo: true,
+    corpo: `<label class="cpj-busca-comp"><input type="search" data-terc-busca placeholder="Buscar item de sublocação (nome, código ou empresa)" autocomplete="off" data-lpignore="true"></label>
+      <div class="cpj-comp-lista" data-terc-lista></div>
+      <div class="cpj-comp-destino cpj-terc-escolha"><label class="cpj-campo-curto"><span>Ambiente</span><select name="ambiente">${ambs.map((a) => `<option value="${escapeAttr(a.id)}"${a.id === ambAtivo ? " selected" : ""}>${escapeHtml(a.nome)}</option>`).join("")}</select></label>
+      <label class="cpj-campo-curto"><span>Quantidade</span><input type="number" name="quantidade" min="1" max="9999" value="1"></label></div>
+      <p class="cpj-terc-antigo"><button type="button" class="cpj-link" data-terc-antigo>Cobrir a falta de um item do nosso estoque (sublocação antiga)</button></p>`,
+    onMount: ({ form }) => {
+      const host = form.querySelector("[data-terc-lista]"), busca = form.querySelector("[data-terc-busca]");
+      desenhar(host, ""); busca.focus();
+      busca.addEventListener("input", () => desenhar(host, busca.value));
+      host.addEventListener("click", (e) => { const b = e.target.closest("[data-terc-escolher]"); if(!b) return; escolhido = cadastro.find((i) => String(i.id) === b.dataset.tercEscolher) || null; desenhar(host, busca.value); });
+      form.querySelector("[data-terc-antigo]").addEventListener("click", () => { form.closest("dialog")?.close(); window.parent.Sublocacoes?.abrir("atual"); });
+    },
+    onSubmit: ({ form }) => {
+      if(!escolhido) throw new Error("Escolha um item da lista.");
+      return { item: escolhido, ambiente: form.querySelector("select[name=ambiente]").value, quantidade: Math.max(1, Math.min(9999, parseInt(form.querySelector("input[name=quantidade]").value, 10) || 1)) };
+    },
+  });
+  if(!r) return;
+  const i = r.item;
+  terceirizadosDe().push({ id: crypto.randomUUID(), terceirizado_id: i.id, nome: i.produto, foto: i.foto_url || "", medidas: medidasTerc(i), codigo: i.codigo || "",
+    fornecedor_id: i.fornecedor_id, fornecedor_nome: i.fornecedor_nome, ambiente_id: r.ambiente, quantidade: r.quantidade, valor: Number(i.valor_locacao) || 0, custo: Number(i.custo) || 0 });
+  marcarSujo(); pintarPainel();
+  ctx.notify({ title: "Item sublocado adicionado", message: `${r.quantidade}× ${i.produto}`, status: "done" });
+}
 async function fluxoAdicionarComponente(amb){
   if(typeof ctx.buscarComponentes !== "function") return;
   let lista = [];
@@ -1914,7 +2024,16 @@ async function rpcPers(nome, extra = {}){
   if(error) throw error;
   return data;
 }
+// Frases do aviso de Orçamento/Pré-reserva no documento do pedido (Parâmetros > Comercial). Sem login da equipe ficam as padrão.
+let avisosCarregados = false;
+function carregarAvisosStatus(){
+  if(avisosCarregados) return; avisosCarregados = true;
+  const emp = (ctx.getSession() || {}).empresa_id;
+  if(!emp) return;
+  Promise.resolve(ctx.supabase.rpc("comercial_avisos_pedido_ler", { p_empresa: emp })).then(({ data }) => { if(data){ definirAvisosStatus(data); if(S.workTab === "pedido") pintarPainel(); } }).catch(() => {});
+}
 function carregarPersonalizacoes(){
+  carregarAvisosStatus();
   if(personalizacoesCarregando) return personalizacoesCarregando;
   personalizacoesCarregando = (async () => {
     let lista;
@@ -2111,11 +2230,11 @@ function pintarPainel(){
     const solicitante = solicitanteHtml();
     const titulo = `<header class="cpj-geral-title"><span class="cpj-geral-title-orn" aria-hidden="true"></span><h2>Lista <em>Completa</em></h2><span class="cpj-geral-title-orn" aria-hidden="true"></span></header>`;
     // Pedido comercial: decorador solicitante, título e os botões (Catálogo, Ambiente, Componente, Serviço) na mesma linha.
-    host.innerHTML = (ctx.pedidoComercial ? `<div class="cpj-geral-topo cpj-geral-topo-comercial">${solicitante || "<span></span>"}${titulo}<div class="cpj-geral-botoes" role="toolbar" aria-label="Ações do pedido">${botoesPedidoComercial()}</div></div>` : solicitante ? `<div class="cpj-geral-topo">${solicitante}${titulo}<span aria-hidden="true"></span></div>` : titulo)
+    host.innerHTML = (ctx.pedidoComercial ? `<div class="cpj-geral-topo cpj-geral-topo-comercial"><div class="cpj-geral-esq">${solicitante || ""}<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="novo-ambiente">＋ Ambiente</button></div>${titulo}<div class="cpj-geral-botoes" role="toolbar" aria-label="Ações do pedido">${botoesPedidoComercial()}</div></div>` : solicitante ? `<div class="cpj-geral-topo">${solicitante}${titulo}<span aria-hidden="true"></span></div>` : titulo)
       // Quantidade editável e ambientes que se arrastam inteiros (pedido do usuário, out/2026).
       + geralHtml(dadosApresentacao(S.current,ctx.findItem), { editar: Boolean(ctx.pedidoComercial), quantidade: true, moverAmbientes: true, ...(ctx.pedidoComercial ? { vazios: true, acoesAmbiente: acoesAmbienteLista, fotoLado: rendersDaLista } : {}) })
 
-      + (ctx.pedidoComercial ? servicosHtml() : "")
+      + (ctx.pedidoComercial ? terceirizadosHtml() + servicosHtml() : "")
       // Pedido comercial: sem rodapé (o Salvar fica no topo do pedido e a prévia/PDF na aba Pedido) — out/2026.
       + (ctx.pedidoComercial ? '' : `<footer class="pa-geral-footer"><button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`);
 
@@ -2465,11 +2584,11 @@ async function escolherFormatoPlanta(legenda){
 // esse caso). `amb?.nome` continua sendo lido só pro `aria-label` do botão (acessibilidade) e como chave dos dados
 // (render/itens), nunca mais impresso na tela.
 function legendaLabelHtml(entrada, planta){
-  const amb = ambientesDe().find((a) => a.id === entrada.legenda.ambienteId);
+  const amb = ambientesDe(planta.projetoLeitura || S.current).find((a) => a.id === entrada.legenda.ambienteId);
   // Foto escolhida para esse ponto (pedido comercial, out/2026); sem escolha ou se ela foi apagada, a mais recente do ambiente.
   const render = (entrada.legenda.renderId && (amb?.renders || []).find((r) => r.id === entrada.legenda.renderId && r.url)) || renderAtualDoAmbiente(amb);
   const itensTexto = (amb?.itens || []).map((linha) => {
-    const item = ctx.findItem(linha.item_id);
+    const item = (planta.itemLeitura || ctx.findItem)(linha.item_id);
     const qtd = Number(linha.quantidade) || 1;
     return `${qtd > 1 ? `${qtd}× ` : ""}${escapeHtml(item?.name || "Indisponível")}`;
   }).join(", ");
@@ -3156,6 +3275,19 @@ async function plantaFolhaPedido(planta){
   }catch(error){ console.warn("Planta no pedido:", error); return null; }
   finally{ host.remove(); }
 }
+let filaPlantasLeitura=Promise.resolve();
+export function plantasPedidoLeitura(project,findItem){
+  const trabalho=filaPlantasLeitura.then(async()=>{
+    const resultado=[];
+    for(const origem of project?.dados?.plantas||[]){
+      if(!/^https?:\/\//i.test(origem.url||''))continue;
+      const planta=normalizarPlanta(structuredClone(origem));planta.projetoLeitura=project;planta.itemLeitura=findItem;
+      const folha=await plantaFolhaPedido(planta);if(folha)resultado.push(folha);
+    }
+    return resultado;
+  });
+  filaPlantasLeitura=trabalho.catch(()=>[]);return trabalho;
+}
 const cachePlantasPedido = new Map();
 function plantasDoPedido(project){
   const plantas = (project?.dados?.plantas || []).filter((p) => p.url);
@@ -3243,9 +3375,10 @@ function pintarDock(){
   const mudou = anterior && anterior.id === p.id && anterior.total !== total;
   const dir = mudou ? (total > anterior.total ? "up" : "down") : "";
   dock.classList.remove("hidden");
-  const html = `<button type="button" class="cpj-dock-main" data-cpj-dock="abrir" title="Abrir o projeto"><span class="cpj-dock-icon">${ICONE.layers}</span><span class="cpj-dock-text"><small>Projeto</small><strong>${escapeHtml(p.noivos)}</strong></span></button>
+  // Pedido comercial (nov/2026): só o ambiente, sem o "Projeto" (o pedido já está na barra de cima), para os itens subirem.
+  const html = `${ctx.pedidoComercial ? "" : `<button type="button" class="cpj-dock-main" data-cpj-dock="abrir" title="Abrir o projeto"><span class="cpj-dock-icon">${ICONE.layers}</span><span class="cpj-dock-text"><small>Projeto</small><strong>${escapeHtml(p.noivos)}</strong></span></button>`}
     <button type="button" class="cpj-dock-amb" data-cpj-dock="ambiente" aria-expanded="${S.dockPop}" aria-haspopup="listbox"><span class="cpj-dock-text"><small>Ambiente</small><strong>${escapeHtml(amb?.nome || "Escolher…")}</strong></span><b class="cpj-dock-count${mudou ? " is-bump" : ""}" data-dir="${dir}" aria-label="${total} itens no projeto"><span>${total}</span></b><i aria-hidden="true">▾</i></button>
-    ${S.dockPop ? `<div class="cpj-dock-pop" role="listbox" aria-label="Ambientes do projeto">${ambientesDe(p).map((a) => `<button type="button" role="option" aria-selected="${a.id === S.activeAmb}" class="${a.id === S.activeAmb ? "is-active" : ""}" data-cpj-dock-amb="${escapeAttr(a.id)}"><span>${escapeHtml(a.nome)}</span><b>${a.itens.reduce((s, i) => s + (Number(i.quantidade) || 1), 0)}</b></button>`).join("")}<button type="button" data-cpj-dock="novo-ambiente">＋ Novo ambiente</button><button type="button" data-cpj-dock="trocar">Trocar de projeto</button></div>` : ""}`;
+    ${S.dockPop ? `<div class="cpj-dock-pop" role="listbox" aria-label="Ambientes do projeto">${ambientesDe(p).map((a) => `<button type="button" role="option" aria-selected="${a.id === S.activeAmb}" class="${a.id === S.activeAmb ? "is-active" : ""}" data-cpj-dock-amb="${escapeAttr(a.id)}"><span>${escapeHtml(a.nome)}</span><b>${a.itens.reduce((s, i) => s + (Number(i.quantidade) || 1), 0)}</b></button>`).join("")}<button type="button" data-cpj-dock="novo-ambiente">＋ Novo ambiente</button>${ctx.pedidoComercial ? "" : `<button type="button" data-cpj-dock="trocar">Trocar de projeto</button>`}</div>` : ""}`;
   // Repintar com o mesmo conteúdo (ex.: salvamento automático logo depois de adicionar) não recria o dock —
   // senão a animação do contador seria cortada no meio.
   const chave = html.replace(" is-bump", "").replace(/ data-dir="\w*"/, "");
@@ -3345,6 +3478,12 @@ async function aoClicarOverlay(event){
     else if(tipo === "voltar"){ await salvarAgora(); S.view = "list"; pintarTela(); carregarLista().then(() => { if(S.open && S.view === "list") pintarLista(); }); }
     else if(tipo === "editar-info"){if(ctx.pedidoComercial)ctx.editarPedidoComercial();else fluxoEditarInfo();}
     else if(tipo === "foto-remover"){ event.preventDefault?.(); removerFotoCasal(); }
+    else if(tipo === "sublocacao"){ await fluxoSublocacao(); }
+    else if(tipo === "terc-remover"){
+      const id = acao.closest("[data-terc-id]")?.dataset.tercId;
+      S.current.dados.terceirizados = terceirizadosDe().filter((t) => t.id !== id);
+      marcarSujo(); pintarPainel();
+    }
     else if(tipo === "ir-catalogo-pedido"){ (window.parent.__pedidoAtalho || window.parent.__pedidoIrPara)?.("catalogo"); }
     else if(tipo === "add-componente"){ if(amb) fluxoAdicionarComponente(amb); }
     else if(tipo === "add-servico"){ fluxoAdicionarServico(); }
@@ -3437,6 +3576,19 @@ function aoAlterarOverlay(event){
     const amb = ambId ? ambientesDe().find((a) => a.id === ambId) : ambienteAtivo();
     const render = amb?.renders.find((r) => r.id === campoJogos.closest("[data-cpj-render]")?.dataset.cpjRender);
     if(render) aplicarJogos(amb, render, campoJogos);
+    return;
+  }
+  // Item terceirizado: ambiente, quantidade e valor editáveis na própria linha.
+  const campoTerc = event.target.closest("[data-terc-campo]");
+  if(campoTerc){
+    const t = terceirizadosDe().find((x) => x.id === campoTerc.closest("[data-terc-id]")?.dataset.tercId);
+    if(t){
+      const campo = campoTerc.dataset.tercCampo, n = Number(String(campoTerc.value).replace(",", "."));
+      if(campo === "quantidade") t.quantidade = Math.max(1, Math.min(9999, Math.round(n) || 1));
+      if(campo === "valor") t.valor = Math.max(0, Math.round((Number.isFinite(n) ? n : 0) * 100) / 100);
+      if(campo === "ambiente_id") t.ambiente_id = campoTerc.value;
+      marcarSujo(); pintarPainel();
+    }
     return;
   }
   // Serviço adicional: quantidade e valor editáveis na própria linha.

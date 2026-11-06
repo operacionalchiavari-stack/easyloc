@@ -2298,3 +2298,12 @@ html:root:is(#cadastro-itens, html) #itensTable th:first-child{width:124px!impor
 html:root:is(#cadastro-itens, html) .itens-resumo-pop .el-stat-row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:0!important;width:auto!important;flex:none!important}
 html:root:is(#cadastro-itens, html) .itens-resumo-pop .el-stat-card{box-shadow:none!important;border:1px solid var(--el-color-border,#e3e7ec)!important;min-height:0!important}
 @media(max-width:1260px){.itens-resumo-pop{left:0;right:auto}}
+
+/* Pesquisa na faixa do titulo, com o nome da tela centralizado. */
+html:root #itensListHeader#itensListHeader{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center!important;gap:16px!important;position:relative;min-height:96px;margin-bottom:20px!important;padding:20px 0!important}
+html:root #itensListHeader#itensListHeader>h2{grid-column:2;grid-row:1;min-width:0;margin:0!important;padding:0!important;text-align:center!important;border:0!important;white-space:nowrap}
+html:root #itensListHeader#itensListHeader>h2::after{display:none!important}
+html:root #itensListHeader#itensListHeader>#itensSearchInput{display:block!important;grid-column:1;grid-row:1;justify-self:start;box-sizing:border-box;width:min(320px,100%);min-width:0;height:44px;margin:0!important;padding:10px 14px;font:14px Inter,system-ui,sans-serif;border:1px solid #dce3eb;border-radius:12px;background:#f5f6f7}
+html:root #itensListHeader#itensListHeader>.header-actions.header-actions{position:static!important;grid-column:3;grid-row:1;justify-self:end;margin:0!important;width:auto!important;max-width:100%;flex-wrap:nowrap!important;gap:8px!important}
+@media(max-width:1400px){html:root #itensListHeader#itensListHeader{grid-template-columns:minmax(0,1fr) auto;row-gap:16px!important}html:root #itensListHeader#itensListHeader>h2{grid-column:1/-1;grid-row:1}html:root #itensListHeader#itensListHeader>#itensSearchInput{grid-column:1;grid-row:2}html:root #itensListHeader#itensListHeader>.header-actions.header-actions{grid-column:2;grid-row:2}}
+@media(max-width:650px){html:root #itensListHeader#itensListHeader{grid-template-columns:minmax(0,1fr)}html:root #itensListHeader#itensListHeader>#itensSearchInput{grid-column:1;grid-row:2;width:100%}html:root #itensListHeader#itensListHeader>.header-actions.header-actions{grid-column:1;grid-row:3;justify-self:end;flex-wrap:wrap!important}}

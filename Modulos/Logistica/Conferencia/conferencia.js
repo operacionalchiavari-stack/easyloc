@@ -385,6 +385,10 @@
           img.onerror = () => img.remove(); foto.append(img);
         }
         t.className = 'cf-escolha-nome';
+        const codigo=document.createElement('strong');codigo.textContent=c.codigo||c.placa||'Caminhão';
+        const placa=document.createElement('span');placa.className='cf-escolha-placa';placa.textContent=c.codigo?c.placa||'':'';
+        const modelo=document.createElement('span');modelo.className='cf-escolha-modelo';modelo.textContent=c.modelo||'';
+        t.replaceChildren(codigo,placa,modelo);cb.setAttribute('aria-label',nomeCaminhao(c));
         l.append(cb, foto, t);
         if (programados.has(String(c.id))) { const tag = document.createElement("small"); tag.textContent = "Programado"; l.append(tag); }
         box.append(l);
@@ -860,6 +864,13 @@
   }
 
   // Fora da tabela por quantidade (bipe, ou divergência sem linha correspondente): mesmo controle, num bloco próprio.
+  let avisoDivergencia = null;
+  function mostrarAvisoDivergencia() { if (!avisoDivergencia) return; window.fecharAlertaGlobal?.(); avisar(avisoDivergencia, "Divergência na contagem", "aviso"); }
+  document.addEventListener("click", (ev) => {
+    // composedPath: o botão Fechar já saiu da tela quando o clique chega aqui.
+    if (!avisoDivergencia || ev.composedPath().some((n) => n.classList?.contains("el-alert") || n.classList?.contains("el-alert-confirm"))) return;
+    mostrarAvisoDivergencia();
+  });
   async function carregarDivergencias() {
     let raiz = $("cfDivergencias");
     if (!raiz) { raiz = document.createElement("section"); raiz.id = "cfDivergencias"; raiz.className = "cf-divergencias"; ($("cfQtd") || $("cfAviso")).after(raiz); }
@@ -868,8 +879,14 @@
     s.divMotivos = dv.motivos;
     s.divAtuais = [...new Map([...(s.divAtuais || []), ...dv.todas].map((o) => [String(o.id), o])).values()];
     const todas = dv.todas || [], abertas = todas.filter((o) => !o.resolvida_em), faltas = abertas.filter((o) => o.tipo === "falta").length, sobras = abertas.length - faltas;
-    if (!todas.length) { raiz.hidden = true; raiz.innerHTML = ""; return; }
+    if (!todas.length) { raiz.hidden = true; raiz.innerHTML = ""; avisoDivergencia = null; return; }
     raiz.hidden = false;
+    // Pedido do usuário (nov/2026): o resultado vai também para o alerta global e volta a cada clique na tela.
+    avisoDivergencia = abertas.length
+      ? "A contagem não bateu: " + [faltas ? faltas + " item(ns) faltando" : "", sobras ? sobras + " item(ns) a mais" : ""].filter(Boolean).join(" e ") +
+        ". A divergência foi enviada para Estoque > Gestão do acervo, que faz a contagem geral do item e resolve. Nada mais a fazer aqui."
+      : null;
+    mostrarAvisoDivergencia();
     raiz.innerHTML = abertas.length
       ? '<div class="cf-div-enviada"><span class="cf-div-enviada-icone" aria-hidden="true">!</span><div><b>A contagem não bateu: ' + [faltas ? faltas + " item(ns) faltando" : "", sobras ? sobras + " item(ns) a mais" : ""].filter(Boolean).join(" e ") +
         '.</b><span>A divergência foi enviada para Estoque &gt; Gestão do acervo, que faz a contagem geral do item e resolve. Nada mais a fazer aqui.</span></div></div>'

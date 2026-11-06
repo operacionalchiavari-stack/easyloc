@@ -7,13 +7,13 @@ import { initAutocompleteClientes } from "./pedido.clientes.mjs?v=20261102-audit
 import { initEquipePedido } from "./pedido.equipe.mjs?v=20261031-bv";
 import { initBvPedido } from "./pedido.bv.mjs?v=20261031-3colunas3";
 import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261102-auditoria-identidade";
-import { initItens } from "./pedido.itens.mjs?v=20261102-insumos-kits";
+import { initItens } from "./pedido.itens.mjs?v=20261105-terceirizacoes";
 import { initFrete } from "./pedido.frete.mjs?v=20261031-km-chip";
 import { initServicos } from "./pedido.servicos.mjs";
 import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261026-acentos";
-import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261029-extra";
+import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261105-extra-botao";
 import { initPagamento } from "./pedido.pagamento.mjs?v=20261101-condicao";
-import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261102-auditoria-identidade";
+import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261105-terceirizacoes";
 
 /* =====================================================
    ESTADO VINDO DA URL (documento proprio / navegacao real)

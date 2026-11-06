@@ -7,12 +7,13 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 (async () => {
   const app = express();
   app.get('/host-pedido.html', (req, res) => {
-    res.type('html').send(`<!doctype html><html><body style="margin:0">
+    res.type('html').send(`<!doctype html><html><body style="margin:0"><input type="hidden" id="dataEntrega" value="2026-11-10"><input type="hidden" id="dataColeta" value="2026-11-12">
 <script>
   window.__pedidoClienteAtual = { nome: 'Lis Baêtas', foto: '' };
   const projeto = { id: 'ped-1', noivos: 'Lis Baêtas', data_evento: '2026-11-11', local_evento: 'Vale dos Desejos', status: 'rascunho',
     dados: { ambientes: [{ id: 'a1', nome: 'Lounge', itens: [{ item_id: '1', quantidade: 2 }], renders: [{ id: 'r9', url: 'https://fixture/r9.png', origem: '3D Livre', cena: { url: 'https://fixture/sem-cena.json', path: 'x/sem.json', tipo: 'print' } }], notas: '' }, { id: 'a2', nome: 'Bar', itens: [], renders: [{ id: 'r1', url: 'https://fixture/render.png', origem: '3D Livre', cena: { url: 'https://fixture/cena.json', path: 'x/cena.json', tipo: 'print' } }], notas: '' }], plantas: [] } };
   window.__sincronizados = [];
+  window.__sublocacoes=[];window.Sublocacoes={abrir:async pedido=>window.__sublocacoes.push(pedido)};
   window.pedidoProjetoCatalogo = () => structuredClone(projeto);
   window.pedidoMetadadosCatalogo = () => ({ noivos: projeto.noivos, data_evento: projeto.data_evento, data_evento_fim: null, local_evento: projeto.local_evento });
   window.pedidoSincronizarProjetoCatalogo = async (p) => { window.__sincronizados.push(structuredClone(p)); };
@@ -37,7 +38,11 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
       const builder = (dados) => new Proxy({}, { get(_t, prop) { if (prop === 'then') return (ok) => ok({ data: dados, error: null }); return () => builder(dados); } });
       const orig = window.supabaseClient.from.bind(window.supabaseClient);
       const PERS = [{ id: '11111111-1111-4111-8111-111111111111', tipo: 'Pintura', vinculo_id: '1', status: 'ATIVO', preco_sugerido: 0 }];
-      window.supabaseClient.from = (t) => t === 'servicos_adicionais' ? builder(SERVICOS) : t === 'itens' ? builder(COMP) : t === 'personalizacoes' ? builder(PERS) : orig(t);
+      const TERC = [{ id: 't1', fornecedor_id: 'f2', produto: 'Tenda Cristal 10x10', largura: 10, altura: 3, profundidade: 10, codigo: 'TC10', quantidade: 3, custo: 1500, valor_locacao: 3000, foto_url: 'https://fixture/tenda.png', ativo: true },
+        { id: 't2', fornecedor_id: 'f1', produto: 'Sofá Veludo Rosa', quantidade: 6, custo: 200, valor_locacao: 500, foto_url: '', ativo: true }];
+      window.supabaseClient.from = (t) => t === 'servicos_adicionais' ? builder(SERVICOS) : t === 'itens' ? builder(COMP) : t === 'personalizacoes' ? builder(PERS) : t === 'terceirizacao_itens' ? builder(TERC) : orig(t);
+      const origRpc = window.supabaseClient.rpc.bind(window.supabaseClient);
+      window.supabaseClient.rpc = (nome, args) => nome === 'terceirizacao_empresas' ? builder([{ id: 'f1', nome: 'Lounge Parceira' }, { id: 'f2', nome: 'Tendas Brasil' }]) : nome === 'terceirizacao_ocupacao' ? builder({ t1: { quantidade: 2, pedidos: ['7'] } }) : origRpc(nome, args);
     });
     await page.goto('http://127.0.0.1:' + server.address().port + '/host-pedido.html');
     await page.waitForFunction(() => typeof document.getElementById('cat').contentWindow.abrirProjetoComercialPedido === 'function', null, { timeout: 20000 });
@@ -46,6 +51,37 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     const cat = page.frameLocator('#cat');
     await cat.locator('.cpj-geral-title').waitFor({ timeout: 15000 });
     const ultimo = () => page.evaluate(() => window.__sincronizados.at(-1));
+    const posicoes=await cat.locator('.cpj-geral-botoes').evaluate(el=>[...el.querySelectorAll('button')].map(b=>b.dataset.cpj));
+    assert.equal(posicoes[0],'sublocacao','sublocacao abre a barra da direita');
+    const ladoSolic = await frame().evaluate(() => { const s = document.querySelector('.cpj-geral-esq .cpj-solicitante').getBoundingClientRect(), b = document.querySelector('.cpj-geral-esq [data-cpj="novo-ambiente"]').getBoundingClientRect(); return b.left > s.right && Math.abs((b.top + b.bottom) / 2 - (s.top + s.bottom) / 2) < 20; });
+    assert.equal(ladoSolic, true, '+ Ambiente ao lado do decorador solicitante');
+    // Sublocação: busca os itens terceirizados (Comercial > Terceirizações) e o escolhido vira linha do pedido
+    await cat.locator('[data-cpj="sublocacao"]').click();
+    const sdlg = cat.locator('dialog.cpj-modal');
+    await sdlg.locator('[data-terc-escolher]').first().waitFor({ timeout: 8000 });
+    assert.equal(await sdlg.locator('[data-terc-escolher]').count(), 2, 'lista os itens terceirizados');
+    await sdlg.locator('[data-terc-busca]').fill('tenda');
+    assert.equal(await sdlg.locator('[data-terc-escolher]').count(), 1, 'a busca filtra');
+    assert.match(await sdlg.locator('[data-terc-escolher]').innerText(), /Tendas Brasil[\s\S]*A empresa tem 3/);
+    await sdlg.locator('button[type=submit]').click();
+    assert.equal(await sdlg.isVisible(), true, 'sem escolher um item não adiciona');
+    await sdlg.locator('[data-terc-escolher]').first().click();
+    await sdlg.locator('select[name=ambiente]').selectOption('a2');
+    await sdlg.locator('input[name=quantidade]').fill('2');
+    await sdlg.locator('button[type=submit]').click();
+    await page.waitForFunction(() => (window.__sincronizados.at(-1)?.dados?.terceirizados || []).length === 1, null, { timeout: 8000 });
+    const tl = (await ultimo()).dados.terceirizados[0];
+    assert.deepEqual({ id: tl.terceirizado_id, amb: tl.ambiente_id, q: tl.quantidade, v: tl.valor, c: tl.custo, emp: tl.fornecedor_nome }, { id: 't1', amb: 'a2', q: 2, v: 3000, c: 1500, emp: 'Tendas Brasil' });
+    const secTerc = await cat.locator('.cpj-terceirizados').innerText();
+    assert.match(secTerc, /Tenda Cristal 10x10[\s\S]*Sublocado · Tendas Brasil/);
+    assert.match(secTerc, /A empresa tem 3 · 2 em outros pedidos no período · confirme com a empresa/, 'passa do que a empresa tem: avisa');
+    await cat.locator('[data-terc-campo="quantidade"]').fill('1'); await cat.locator('[data-terc-campo="quantidade"]').dispatchEvent('change');
+    await page.waitForFunction(() => window.__sincronizados.at(-1)?.dados?.terceirizados?.[0]?.quantidade === 1, null, { timeout: 8000 });
+    await cat.locator('[data-cpj="sublocacao"]').click();
+    await sdlg.locator('[data-terc-antigo]').click();
+    assert.deepEqual(await page.evaluate(()=>window.__sublocacoes),['atual'],'a sublocação antiga (cobrir falta de item nosso) continua acessível');
+    console.log('ok 1c - Sublocação busca os itens terceirizados, o escolhido entra no pedido (ambiente, quantidade, valor, custo)');
+
 
     // Serviço
     await cat.locator('[data-cpj="add-servico"]').click();
@@ -76,9 +112,10 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     // Componente
     // Sem abas no pedido comercial: só os botões, com Ambiente ao lado do Catálogo; tudo na Lista Completa
     const barra = await frame().evaluate(() => [...document.querySelector('.cpj-geral-botoes').querySelectorAll('button')].map((b) => b.textContent.trim()));
-    assert.deepEqual(barra, ['＋ Ambiente', '＋ Componente', '＋ Serviço'], 'barra só com os botões (Catálogo virou etapa do pedido)');
+    assert.deepEqual(barra, ['Sublocação', '＋ Componente', '＋ Serviço'], 'barra só com os botões (＋ Ambiente foi para o lado do solicitante)');
     const linha = await frame().evaluate(() => { const meio = (q) => { const r = document.querySelector(q).getBoundingClientRect(); return (r.top + r.bottom) / 2; }; const a = meio('.cpj-geral-topo .cpj-solicitante'), b = meio('.cpj-geral-title h2'), c = meio('.cpj-geral-botoes'); return Math.abs(a - b) < 24 && Math.abs(b - c) < 24; });
     assert.equal(linha, true, 'solicitante, Lista Completa e botões na mesma linha');
+    if (process.env.FOTO_TOPO) await cat.locator('.cpj-geral-topo').screenshot({ path: process.env.FOTO_TOPO });
     assert.equal(await cat.locator('[data-cpj-amb], [data-cpj-worktab]').count(), 0, 'sem abas de ambiente');
     assert.equal(await cat.locator('[data-pa-grupo="a2"] .pa-ambiente-vazio').count(), 1, 'ambiente vazio aparece na lista');
     assert.equal(await cat.locator('[data-pa-grupo="a2"] .pa-ambiente-renders [data-cpj-render="r1"]').count(), 1, 'renderização dentro da lista, no ambiente');
@@ -143,6 +180,10 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     assert.match(texto, /Tampo Redondo Madeira/);
     assert.match(texto, /Personalização: Pintura/);
     console.log('ok 3 - prévia do pedido mostra os serviços (com total) e o componente');
+    const blocoBar = await frame().evaluate(() => [...document.querySelectorAll('.cpj-aba-pedido h3, .cpj-aba-pedido .cpj-order-amb h3, .cpj-aba-pedido td')].map((e) => e.textContent).join(' | '));
+    assert.match(texto, /Tenda Cristal 10x10/, 'item terceirizado no documento do pedido');
+    assert.doesNotMatch(texto, /Tendas Brasil/, 'o cliente não vê o nome da empresa parceira');
+    console.log('ok 3b - item terceirizado no documento do pedido, sem o nome da empresa');
     assert.deepEqual(errors, []);
     console.log('todos os testes passaram');
   } finally { await browser.close(); server.close(); }

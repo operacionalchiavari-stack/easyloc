@@ -9,16 +9,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="CentralPedidos.css?v=20261102-colchete-externo">
-  <link rel="stylesheet" href="../../../styles/sublocacoes.css?v=20261102-sublocacoes">
-  <link rel="stylesheet" href="../../../styles/planilha.css?v=20261030">
-  <link rel="stylesheet" href="../comercial-relatorios.css?v=20261030c">
+  <link rel="stylesheet" href="CentralPedidos.css?v=20261105-sem-vazio">
+
+
+
   <!-- Visualização do pedido = prévia do catálogo (cabeçalho, itens por ambiente, PDF). -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261030-link-pagamento2">
+  <link rel="stylesheet" href="../Catalogo/catalogo-projetos.css?v=20261105-terceirizacoes">
   <link rel="stylesheet" href="../Catalogo/projeto-apresentacao.css?v=20261030-link-pagamento">
-<link rel="stylesheet" href="../../../styles/separacao-ocorrencias.css?v=20261103-anexo-foto">
-<script src="../../../js/ui/separacao-ocorrencias.js?v=20261103-resposta-direta"></script>
+<link rel="stylesheet" href="../../../styles/separacao-ocorrencias.css?v=20261105-acompanhar">
+<script src="../../../js/ui/separacao-ocorrencias.js?v=20261105-acompanhar"></script>
 </head>
 <body>
 <div class="central-pedidos-page el-page" id="centralPedidosPage" data-module-root>
@@ -28,10 +28,7 @@
       <p>Consulta e gestao dos pedidos, eventos e contratos comerciais.</p>
     </div>
     <div class="el-page-actions central-actions-left">
-      <button type="button" class="btn btn-secondary" data-ocorrencias-comercial>Ocorrências da separação</button>
-      <button type="button" class="btn btn-secondary" data-sublocacoes>Sublocações</button>
       <!-- Tabelas de Preço fica aqui dentro (pedido do usuário), não no menu. data-module-href: some se a pessoa não tiver permissão (js/core/permissions.js?v=20261019-painel-logistico). -->
-      <button type="button" class="btn btn-secondary" id="btnCatalogoCentral" title="Abrir o catálogo (F2) · pesquisar no catálogo (F4)" aria-keyshortcuts="F2">Catálogo <kbd class="central-kbd">F2</kbd></button>
       <button type="button" class="btn btn-secondary" id="btnTabelasPreco" data-module-href="../../Estoque/TabelasPreco/tabelas-preco.html">Tabelas de Preço</button>
       <button type="button" class="btn btn-secondary" id="btnFiltrosPedidos" aria-expanded="false" aria-controls="centralFiltrosPedidos">
         <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
@@ -73,6 +70,7 @@
         <option value="em_separacao">Em separação</option>
         <option value="separado">Separado</option>
         <option value="finalizado">Finalizado</option>
+        <option value="finalizados">Finalizados (fluxo encerrado)</option>
         <option value="catalogo_rascunho">Catálogo: em montagem</option>
         <option value="catalogo_pedido_enviado">Catálogo: pedido enviado</option>
         <option value="catalogo">Catálogo: aguardando o Comercial</option>
@@ -91,16 +89,9 @@
   <!-- Um botão por situação, com a contagem numa bolinha vermelha piscando; clicar filtra a lista.
        As pré-reservas ficam sempre no topo da lista. -->
   <div class="central-barra">
-    <!-- Contas a receber fica dentro da Central (out/2026): troca a lista de pedidos pela visão das parcelas -->
-    <div class="central-visao el-tabs" role="group" aria-label="O que ver">
-      <button type="button" data-central-visao="pedidos" class="ativa" aria-pressed="true">Pedidos</button>
-      <button type="button" data-central-visao="receber" aria-pressed="false">Contas a receber<span class="central-visao-badge" id="centralReceberBadge" hidden></span></button>
-    </div>
     <div class="central-situacoes el-tabs" id="centralSituacoes" role="group" aria-label="Filtrar por situação"></div>
     <label class="central-ordem"><span>Ordenar por</span><select class="el-select" id="centralOrdem" aria-label="Ordenar a lista de pedidos"></select></label>
   </div>
-
-  <section class="cr-page cr-embutido" id="centralContasReceber" aria-label="Contas a receber" hidden></section>
 
   <section class="central-list el-card" id="centralListaTabela">
     <div class="central-table-wrap">
@@ -124,7 +115,7 @@
             <th>Evento</th>
             <th>Entrega</th>
             <th>Coleta</th>
-            <th>Fluxo</th>
+            <th id="centralColFluxo">Fluxo</th>
             <th>Valor</th>
             <th>Acoes</th>
           </tr>
@@ -133,6 +124,9 @@
       </table>
     </div>
   </section>
+
+  <!-- Aba "Ocorrências da separação" (nov/2026): a fila do Comercial desenhada aqui, no lugar da lista de pedidos. -->
+  <section class="central-ocorrencias el-card" id="centralOcorrencias" aria-label="Ocorrências da separação" hidden></section>
 
   <div class="central-whatsapp-modal hidden" id="centralWhatsappModal" aria-hidden="true">
     <div class="central-whatsapp-dialog" role="dialog" aria-modal="true" aria-labelledby="centralWhatsappTitulo">
@@ -194,12 +188,13 @@
 <script src="../../../js/core/paymentPix.js?v=20261021-divisao"></script>
 <script src="../../../js/core/linkPagamento.js?v=20261030-pedido-digital"></script>
 <script src="../../../js/core/zapiMessaging.js?v=20261026-acentos"></script>
-<script src="../comercial-relatorios.js?v=20261030"></script>
-<script src="central-contas-receber.js?v=20261031-equipes"></script>
+
+
 <link rel="stylesheet" href="../produtividade.css?v=20261031-acompanhamento-cores">
 <script src="../produtividade.js?v=20261031-acompanhamento-cores"></script>
-<script src="../../../js/ui/sublocacoes.js?v=20261102-remessas-parciais"></script>
-<script src="CentralPedidos.js?v=20261102-colchete-externo"></script>
+
+<script src="central-acompanhamento.js?v=20261105-foto-linha"></script>
+<script src="CentralPedidos.js?v=20261105-sem-vazio"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

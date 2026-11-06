@@ -83,20 +83,23 @@ const mockSupabase = `
   await page.waitForSelector("[data-situacao=pre_reserva] .central-situacao-conta", { timeout: 15000 });
   const numeros = () => page.$$eval("#centralPedidosTbody [data-pedido-id]", (l) => l.map((t) => t.dataset.pedidoId));
   const botoes = await page.$$eval("[data-situacao]", (l) => l.map((b) => ({ s: b.dataset.situacao, t: b.querySelector("b").textContent, n: b.querySelector(".central-situacao-conta")?.textContent || null, small: b.querySelector("small")?.textContent || "", anim: b.querySelector(".central-situacao-conta") && getComputedStyle(b.querySelector(".central-situacao-conta")).animationName, cor: b.querySelector(".central-situacao-conta") && getComputedStyle(b.querySelector(".central-situacao-conta")).backgroundColor })));
-  assert.deepStrictEqual(botoes.filter(b=>b.s!=="catalogo").map((b) => [b.t, b.n]), [["Todos", null], ["Pré-reserva", "3"], ["Orçamento", "2"], ["Reservado", null]]);
+  assert.deepStrictEqual(botoes.filter(b=>["","aprovado","pre_reserva","orcamento"].includes(b.s)).map((b) => [b.t, b.n]), [["Todos", null], ["Reservado", null], ["Pré-reserva", "3"], ["Orçamento", "2"]]);
   assert.ok(botoes.filter((b) => b.n).every((b) => b.cor === "rgb(230, 0, 18)" && b.anim === "central-situacao-pulsa"), "bolinha vermelha piscando");
   assert.strictEqual(await page.getAttribute("[data-situacao=\"\"]", "aria-pressed"), "true", "Todos começa ativo");
-  assert.strictEqual(botoes[1].small, "1 vencida · 1 vencendo");
+  assert.strictEqual(botoes.find((b) => b.s === "pre_reserva").small, "1 vencida · 1 vencendo");
   await page.waitForSelector(".central-extra-ligacao");
-  const medir = () => page.evaluate(() => { const card = (id) => document.querySelector("tr[data-pedido-id=" + id + "] .pedido-numero-card").getBoundingClientRect(); const pai = card("r1"); const cli = document.querySelector("tr[data-pedido-id=x1] td:nth-child(2)").getBoundingClientRect();
-    return { n: document.querySelectorAll(".central-extra-ligacao").length, folga: Math.round(cli.left - card("x1").right), l: [...document.querySelectorAll(".central-extra-ligacao")].map((l, k) => { const r = l.getBoundingClientRect(), f = card("x2"); return [Math.round(r.top - (pai.top + pai.height / 2)), r.right < document.querySelector("tr[data-pedido-id=r1] td").getBoundingClientRect().left && Math.abs(card("x1").left - pai.left)<1 && Math.abs(card("x2").left-pai.left)<1, Math.round(r.width - 14), Math.round(r.bottom - (f.top + f.height / 2))]; }) }; });
+  // Nov/2026: linha reta por dentro da coluna, de baixo do número de um pedido até em cima do número do seguinte
+  const medir = () => page.evaluate(() => { const card = (id) => document.querySelector("tr[data-pedido-id=" + id + "] .pedido-numero-card").getBoundingClientRect(); const ids = ["r1", "x1", "x2"]; const cli = document.querySelector("tr[data-pedido-id=x1] td:nth-child(2)").getBoundingClientRect();
+    const linhas = [...document.querySelectorAll(".central-extra-ligacao")].map((l) => l.getBoundingClientRect()).sort((a, b) => a.top - b.top);
+    return { n: linhas.length, folga: Math.round(cli.left - card("x1").right), l: linhas.map((r, k) => { const de = card(ids[k]), ate = card(ids[k + 1]); return [Math.round(r.top - de.bottom), Math.round(r.bottom - ate.top), Math.round((r.left + r.width / 2) - (de.left + de.width / 2)), Math.round(r.width)].map((v) => v + 0); }), dentro: linhas.every((r) => r.left >= document.querySelector("tr[data-pedido-id=r1] td").getBoundingClientRect().left) }; });
   let m = await medir();
-  assert.equal(m.n, 1, "uma ligação por extra");
-  m.l.forEach((x) => assert.deepStrictEqual(x, [0, true, 0, 0], "sai de baixo do principal e chega no meio do extra: " + JSON.stringify(m.l)));
+  assert.equal(m.n, 2, "um trecho entre cada par de cartões (principal → extra 1 → extra 2)");
+  m.l.forEach((x) => assert.deepStrictEqual(x, [0, 0, 0, 2], "sai de baixo de um cartão e chega em cima do outro, no centro: " + JSON.stringify(m.l)));
+  assert.ok(m.dentro, "a linha fica dentro da coluna, não na margem");
   assert.ok(m.folga >= 4, "o número do extra não encosta no cliente (folga " + m.folga + "px)");
   console.log("ok 1 - a ligação sai do número do principal e chega em cada extra");
   await page.setViewportSize({ width: 1280, height: 900 }); await page.waitForTimeout(300);
-  m = await medir(); m.l.forEach((x) => assert.deepStrictEqual(x, [0, true, 0, 0], "redesenha ao mudar o tamanho: " + JSON.stringify(m.l)));
+  m = await medir(); m.l.forEach((x) => assert.deepStrictEqual(x, [0, 0, 0, 2], "redesenha ao mudar o tamanho: " + JSON.stringify(m.l)));
   console.log("ok 2 - redesenha quando a tela muda de tamanho");
   if (process.env.SP) { const r = await page.evaluate(() => { document.querySelector("tr[data-pedido-id=r1]").scrollIntoView({ block: "start" }); const a = document.querySelector("tr[data-pedido-id=r1]").getBoundingClientRect(), b = document.querySelector("tr[data-pedido-id=x2]").getBoundingClientRect(); return { y: a.top, h: b.bottom - a.top }; }); await page.screenshot({ path: process.env.SP + "/extra.png", clip: { x: 30, y: Math.max(0, r.y - 4), width: 380, height: Math.min(880, r.h + 8) } }); }
   assert.deepStrictEqual(erros, []);

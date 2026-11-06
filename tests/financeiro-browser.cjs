@@ -251,7 +251,16 @@ const mock = `(() => {
   await page.waitForSelector('[data-p-aprovar="g9"]');
   assert.strictEqual(await page.locator('[data-p-baixar="g9"]').count(), 0, "sem aprovar não aparece Pagar");
   await page.click('[data-p-aprovar="g9"]');
-  await page.waitForSelector('[data-p-programar="g9"]');
+  await page.waitForFunction(() => !document.querySelector('[data-p-aprovar="g9"]'));
+  assert.strictEqual(await page.locator('#finConteudo [data-p-programar], #finConteudo [data-p-editar], #finConteudo [data-p-ver]').count(), 0, 'sem Programar/Editar/Detalhes na linha');
+  await page.click('[data-p-linha="g9"] td:first-child');
+  await page.waitForSelector('#finModal.fin-modal-detalhe .fpd-topo');
+  if (process.env.SHOT_PAGAR) await page.screenshot({ path: process.env.SHOT_PAGAR });
+  const det = await page.textContent('#finModalCorpo');
+  assert.match(det, /Pagamentos/); assert.match(det, /Informações/);
+  const rod = await page.textContent('#finModalRodape');
+  assert.match(rod, /Programar pagamento/); assert.match(rod, /Editar/);
+  await page.click('#finModal .fin-x');
   assert.strictEqual(await page.locator("[data-p-baixar]").count(), 0, "A pagar não tem mais o botão Pagar");
   console.log("ok 6 - a pagar com aprovação, sem botão de pagar à mão");
 

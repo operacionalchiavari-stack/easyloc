@@ -26,6 +26,13 @@ test('ocorrências: tipos parametrizados, kit, encaminhamento, permissões e tra
  await db.exec(fs.readFileSync('supabase/migrations/20261103000700_ocorrencias_separacao.sql','utf8'));
  await db.exec("alter table itens add column foto_url text;update itens set foto_url='https://foto.teste/torre.png'");
  await db.exec(fs.readFileSync('supabase/migrations/20261103000800_ocorrencias_foto_item.sql','utf8'));
+ await db.exec(`create table auth.users(id uuid primary key,raw_user_meta_data jsonb);insert into auth.users values('${emp}','{"nome":"Ana"}');create table funcionarios_acesso(id uuid,empresa_id uuid,nome text,foto_url text);insert into funcionarios_acesso values('${emp}','${emp}','Ana Triagem','https://foto.teste/ana.jpg')`);
+ await db.exec(fs.readFileSync('supabase/migrations/20261105000700_separacao_ocorrencias_chat.sql','utf8'));
+ await db.exec(`create table clientes_empresas(id uuid,empresa_id uuid,nome_razao text,catalogo_logo_url text);insert into clientes_empresas values(gen_random_uuid(),'${emp}','Cliente','https://foto.teste/cliente.jpg')`);
+ await db.exec(fs.readFileSync('supabase/migrations/20261105000800_ocorrencias_cliente_foto.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261105000900_ocorrencias_quantidade_pedido.sql','utf8'));
+ await db.exec(`alter table separacoes_pedidos add column local_nome text,add column observacoes jsonb;update separacoes_pedidos set local_nome='Vale dos Desejos',observacoes='{"horario_entrega":"08:00"}'`);
+ await db.exec(fs.readFileSync('supabase/migrations/20261105001000_ocorrencias_pedido_card.sql','utf8'));
  const motivos=(await db.query("select * from logistica_motivos where empresa_id=$1 and etapa='separacao' order by nome",[emp])).rows;
  assert.equal(motivos.length,5);
  const m=motivos[0].id;
@@ -36,6 +43,16 @@ test('ocorrências: tipos parametrizados, kit, encaminhamento, permissões e tra
  await db.query('update logistica_motivos set ativo=false where id=$1',[m]);await assert.rejects(criar(),/tipo de problema ativo/);
  await db.query('update logistica_motivos set ativo=true where id=$1',[m]);
  const id=(await criar()).rows[0].id;
+ const enviar=(texto,equipe='triagem',empresa=emp)=>db.query('select separacao_ocorrencia_mensagem($1,$2,$3,$4)',[empresa,id,texto,equipe]);
+ await assert.rejects(enviar('   '),/Escreva/);await assert.rejects(enviar('Olá','triagem',outra),/Sem acesso/);
+ await enviar('Consegue verificar a peça?');
+ assert.equal((await db.query('select estado from separacao_ocorrencias')).rows[0].estado,'acervo');
+ let chat=(await db.query('select separacao_ocorrencias_listar($1,$2) l',[emp,ped])).rows[0].l[0].historico;
+ assert.equal(chat.at(-1).nome,'Ana Triagem');assert.equal(chat.at(-1).foto_url,'https://foto.teste/ana.jpg');assert.equal(chat.at(-1).equipe,'Triagem');
+ assert.equal((await db.query('select separacao_ocorrencias_listar($1,$2) l',[emp,ped])).rows[0].l[0].cliente_foto,'https://foto.teste/cliente.jpg');
+ assert.equal((await db.query('select separacao_ocorrencias_listar($1,$2) l',[emp,ped])).rows[0].l[0].quantidade_pedido,6);
+ const card=(await db.query('select separacao_ocorrencias_listar($1,$2) l',[emp,ped])).rows[0].l[0];assert.equal(card.pedido_local,'Vale dos Desejos');assert.equal(card.pedido_hora_entrega,'08:00');
+ await assert.rejects(enviar('Resposta','acervo'),/Sem permissão/);
  await db.query('update logistica_motivos set nome=$1 where id=$2',['Nome alterado',m]);
  assert.equal((await db.query('select motivo_nome from separacao_ocorrencias')).rows[0].motivo_nome,motivos[0].nome);
  await assert.rejects(db.exec("update separacoes_pedidos set status='separado'"),/problemas reportados/);
@@ -48,7 +65,8 @@ test('ocorrências: tipos parametrizados, kit, encaminhamento, permissões e tra
  await db.exec("set test.triagem='sim';set test.permissoes=''");await acao('resolvida');
  await db.exec("update separacoes_pedidos set status='separado'");
  await assert.rejects(criar(),/não está disponível/);
- const o=(await db.query('select * from separacao_ocorrencias')).rows[0];assert.equal(o.estado,'resolvida');assert.equal(o.historico.length,4);
+ await assert.rejects(enviar('Depois de encerrada'),/resolvida/);
+ const o=(await db.query('select * from separacao_ocorrencias')).rows[0];assert.equal(o.estado,'resolvida');assert.equal(o.historico.length,5);
  const lista=(await db.query('select separacao_ocorrencias_listar($1,$2) l',[emp,ped])).rows[0].l;assert.equal(lista[0].item_nome,'Componente');assert.equal(lista[0].item_foto,'https://foto.teste/torre.png');
  await db.exec('delete from separacoes_itens');assert.equal((await db.query('select linha_id from separacao_ocorrencias')).rows[0].linha_id,null);
  }finally{await db.close();}

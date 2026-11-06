@@ -82,11 +82,17 @@ export async function prepararPedidoExtra({ supabase }){
   }
   const extras = Array.isArray(info?.extras) ? info.extras : [];
   if(!extras.length && !info?.pode_criar) return;
-  const lista = extras.map((x) => `<a class="pedido-extra-chip" href="${esc(linkPedido(x.id))}">${esc(x.numero)}</a>`).join("");
-  const el = faixa(`<span class="pedido-extra-selo is-principal">Pedidos extras</span>
-    <p>${extras.length ? `Este pedido tem ${extras.length === 1 ? "um pedido extra" : extras.length + " pedidos extras"}: ${lista}` : "O cliente pediu mais itens depois de fechar? Crie um pedido extra ligado a este."}
-    ${info?.coleta_iniciada ? "<small>A coleta já começou: não dá mais para criar pedido extra.</small>" : ""}</p>
-    ${info?.pode_criar ? `<button type="button" class="pedido-extra-criar" data-pedido-extra-criar>+ Pedido extra</button>` : ""}`);
+  // Nov/2026 (pedido do usuário): no principal, em vez da faixa grande, um botão pequeno ao lado do nome do cliente
+  // (fundo branco, texto e borda azuis) e os números dos extras que já existem.
+  document.getElementById("pedidoExtraFaixa")?.remove();
+  const nome = document.querySelector(".entrada-identidade h3");
+  let el = document.getElementById("pedidoExtraMini");
+  if(!el){ el = document.createElement("span"); el.id = "pedidoExtraMini"; el.className = "pedido-extra-mini"; }
+  if(nome) nome.after(el); else return;
+  el.innerHTML = extras.map((x) => `<a class="pedido-extra-chip" href="${esc(linkPedido(x.id))}" title="Pedido extra ${esc(x.numero)}">${esc(x.numero)}</a>`).join("")
+    + (info?.pode_criar ? `<button type="button" class="pedido-extra-botao" data-pedido-extra-criar title="O cliente pediu mais itens depois de fechar? Crie um pedido extra ligado a este.">+ Pedido extra</button>`
+      : "");
+  if(info?.coleta_iniciada && info?.pode_criar === false) el.title = "A coleta já começou: não dá mais para criar pedido extra.";
   el.querySelector("[data-pedido-extra-criar]")?.addEventListener("click", () => {
     window.__pedidoGravarRascunho?.();
     location.href = `pedido.html?extra_de=${encodeURIComponent(atual.id || pedidoId)}`;

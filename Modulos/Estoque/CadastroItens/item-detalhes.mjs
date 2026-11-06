@@ -1,20 +1,27 @@
-import { getEmpresaAtualId } from "./itens.api.mjs?v=20261031-complexidade";
+import { getEmpresaAtualId } from "./itens.api.mjs?v=20261103-kit-unificado";
 import "./itens.modal.mjs";
+import { criarHistoricoQuantidades } from "./item-historico.mjs?v=20261103-cores-movimentacoes";
+import { criarEditorComponentes } from "./kit-componentes.mjs?v=20261103-unificado";
 import "./itens.foto.mjs?v=20261008-banco";
 import "./itens.3d.mjs?v=20261005-otimizar";
 import { initPatrimonios } from "./itens.patrimonios.mjs?v=20261017-etiquetas";
 
 const supabase = window.supabaseClient;
+let editorComponentes;
+let salvandoDetalhes=false;
 const urlParams = new URLSearchParams(window.location.search);
 const itemIdFromUrl = urlParams.get("id");
 
 const state = {
   itemId: window.__ITEM_DETALHE_ID || itemIdFromUrl || null,
   modo: window.__ITEM_DETALHE_MODO || (window.__ITEM_DETALHE_ID || itemIdFromUrl ? "editar" : "novo"),
+  kit: urlParams.get("tipo") === "Kit",
   empresaId: null,
   item: null,
   loadedTabs: new Set(["dados"]),
 };
+
+const historicoQuantidades=criarHistoricoQuantidades({sb:supabase,contexto:()=>({empresaId:state.empresaId,itemId:state.itemId})});
 
 function $(id){
   return document.getElementById(id);
@@ -46,6 +53,24 @@ function voltarParaItens(){
   window.__ITEM_DETALHE_ID = null;
   window.__ITEM_DETALHE_MODO = null;
   window.location.href = "cadastro-itens.html";
+}
+
+function configurarKit(ativo){
+  state.kit=ativo;
+  document.querySelector('[data-item-tab="componentes"]').hidden=!ativo;
+  document.querySelector('[data-item-tab="kits"]').hidden=ativo;
+  document.querySelectorAll('.item-tipo-toggle-row .tipo-btn').forEach(btn=>{
+    const kit=btn.id==='itemTipoKit';btn.hidden=ativo?!kit:kit;
+    btn.classList.toggle('active',ativo?kit:(!kit&&btn.textContent.trim()===(state.item?.tipo||'Item')));
+  });
+}
+async function carregarComponentes(){
+  if(!state.kit)return;
+  editorComponentes=criarEditorComponentes({sb:supabase,empresaId:state.empresaId,kitId:state.itemId,onAlterar:totais=>{
+    for(const [campo,valor] of [['itensCusto',totais.custo],['itensValorLocacao',totais.valor_locacao],['itensValorReposicao',totais.valor_reposicao]])if($(campo))$(campo).value=valor;
+    atualizarResumo();
+  }});
+  await editorComponentes.carregar();
 }
 
 function statusDoItem(item = state.item){
@@ -166,6 +191,7 @@ function atualizarResumo(){
     .join(" x ");
 
   setText("itemDetailTitle", nome);
+  $("itemDetailTitle")?.setAttribute("title", nome);
   setText("itemDetailSummaryName", nome);
   setText("itemDetailCode", codigo);
   setText("itemDetailStatus", status);
@@ -261,6 +287,9 @@ async function carregarItem(){
   if(!state.itemId){
     state.modo = "novo";
     resetarFormularioNovo();
+    configurarKit(state.kit);
+    if(state.kit)$("itensSetor").value="Kits";
+    await carregarComponentes();
     window.finalizarCarregamentoModulo?.();
     return;
   }
@@ -281,6 +310,8 @@ async function carregarItem(){
 
   state.item = data;
   preencherFormulario(data);
+  configurarKit(data.tipo === "Kit");
+  await carregarComponentes();
   window.finalizarCarregamentoModulo?.();
 }
 
@@ -292,7 +323,8 @@ function abrirAba(tab){
     panel.classList.toggle("active", panel.dataset.itemPanel === tab);
   });
 
-  if(!state.loadedTabs.has(tab)){
+  if(tab === "historico")historicoQuantidades.carregar().catch(error=>notify(error.message,"erro"));
+  if(tab !== "historico" && !state.loadedTabs.has(tab)){
     state.loadedTabs.add(tab);
     carregarAbaSobDemanda(tab).catch((error) => console.error("Erro ao carregar aba:", tab, error));
   }
@@ -305,6 +337,7 @@ function abrirAba(tab){
 }
 
 async function carregarAbaSobDemanda(tab){
+  if(tab === "historico") return historicoQuantidades.carregar();
   if(tab === "kits") return carregarKits();
   return Promise.resolve();
 }
@@ -355,15 +388,17 @@ async function carregarKits(){
 }
 
 async function salvarDetalhes(){
-  const result = await window.itens_salvar?.();
-  if(result === false) return;
-
-  atualizarResumo();
-  notify("Item salvo com sucesso.", "sucesso");
-
-  if(state.modo === "novo"){
-    voltarParaItens();
-  }
+  if(salvandoDetalhes)return;
+  salvandoDetalhes=true;const botao=$("btnSalvarItemDetalhes");botao.disabled=true;
+  try{
+    if(state.kit)editorComponentes?.validar();
+    if(state.kit&&!editorComponentes)throw Error('Aguarde o carregamento dos componentes.');
+    const result=await window.itens_salvar?.();if(result===false)return;
+    if(state.kit)await editorComponentes.salvar(window.itemAtualId);
+    atualizarResumo();notify(state.kit?'Kit salvo com sucesso.':'Item salvo com sucesso.',"sucesso");
+    if(state.modo==="novo")voltarParaItens();
+  }catch(error){notify(error.message,'erro');}
+  finally{salvandoDetalhes=false;botao.disabled=false;}
 }
 
 function bindEvents(){
@@ -412,7 +447,8 @@ function bindEvents(){
 
 export async function initItemDetalhes(){
   bindEvents();
-  await carregarItem();
+  try{await carregarItem();}
+  catch(error){notify('Nao foi possivel carregar o cadastro: '+error.message,'erro');window.finalizarCarregamentoModulo?.();}
   initPatrimonios();
   window.lucide?.createIcons?.();
 }

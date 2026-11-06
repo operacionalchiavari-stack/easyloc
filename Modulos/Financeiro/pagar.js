@@ -67,7 +67,7 @@
   }
 
   const SITUACAO = { pago: ["Pago", "ok"], vencido: ["Vencido", "venc"], parcial: ["Pago em parte", "parc"], aberto: ["Em aberto", "aberto"] };
-  const MODULO = "../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261030-link-documento";
+  const MODULO = "../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261105-terceirizacoes";
   let docMod = null;
 
   function marca() {
@@ -96,13 +96,14 @@
     docMod ||= await import(MODULO);
     const d = dados.detalhe || {};
     const model = docMod.dadosApresentacao({ noivos: d.nome || "Pedido", data_evento: d.data_evento || "", data_evento_fim: d.data_evento_fim || "", local_evento: d.local || "",
-      dados: { ambientes: d.ambientes || [], servicos: d.servicos || [] } }, achadorDeItem(d.cadastro));
+      dados: { ambientes: d.ambientes || [], servicos: d.servicos || [], terceirizados: d.terceirizados || [] } }, achadorDeItem(d.cadastro));
     const fin = docMod.financeiroPedidoSalvo({ valor_total: d.valor_total, observacoes: { valores: d.valores } });
     model.financeiro = fin ? { ...fin, parcelas: [] } : null;
     model.pagamentosSlot = '<section class="cpj-order-financeiro-parcelas pg-slot" id="pagamento"></section>';
     model.semAviso = true;
     model.numero = d.numero || "";
     model.statusPedido = { chave: d.status || "orcamento", ate: d.pre_reserva_ate || "" };
+    docMod.definirAvisosStatus?.(d.avisos);
     model.localEndereco = d.endereco || "";
     model.evento = { ...(model.evento || {}), data_entrega: d.data_entrega || "", hora_entrega: d.hora_entrega || "", data_coleta: d.data_coleta || "", hora_coleta: d.hora_coleta || "" };
     model.plantas = Array.isArray(d.plantas) ? d.plantas : [];

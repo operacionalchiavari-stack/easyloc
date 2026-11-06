@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261102-origem"></script>
+  <script src="../operacao-sem-motor.js?v=20261106-bonus"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -335,7 +335,7 @@
 .dano-fotos .dano-rem{border:0;background:none;color:#b42318;font-size:12px;padding:0 4px}
 </style>
   <meta name="theme-color" content="#5a5a55">
-  <link rel="stylesheet" href="../apps-equipe.css?v=20261031-catalogo">
+  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-bonus-menu">
   <link rel="stylesheet" href="montador-evento.css?v=20261031-app-integrado">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
@@ -353,15 +353,11 @@
       <p id="loginSubtitulo">Suas montagens, a equipe e os registros num só lugar.</p>
     </div>
 
-    <form class="cartao" onsubmit="entrar(event)">
+    <!-- Nov/2026: sem login próprio. O app entra pela conta do sistema (app.html); aqui só aparece o motivo quando não dá. -->
+    <div class="cartao">
       <div class="erro" id="erroLogin"></div>
-      <label class="campo" id="campoCpf"><span>Seu CPF</span><input id="loginCpf" type="text" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="000.000.000-00" required></label>
-      <label class="campo" id="campoSenha"><span id="rotuloSenha">Seu PIN</span><input id="loginSenha" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN do cadastro de funcionários" required></label>
-      <p class="aviso-supervisor" id="avisoSupervisor" style="display:none;margin:0 0 12px;font-size:13.5px;color:var(--muted)">Entre no Acervo neste aparelho com o seu usuário (com a permissão de Supervisor de Montagem) e toque em Entrar.</p>
-      <button class="btn" id="btnEntrar" type="submit">Entrar</button>
-    </form>
-
-    <div class="rodape-form"><button class="link" type="button" id="btnModo" onclick="alternarSupervisor()">Entrar como supervisor</button></div>
+      <button class="btn" id="btnEntrar" type="button" onclick="irParaApp()">Entrar pelo app</button>
+    </div>
   </section>
 
   <!-- INÍCIO -->
@@ -399,7 +395,7 @@
   </section>
 
   <section class="tela" id="telaSemEvento"><h1 id="semEventoTitulo">Foto da equipe</h1><div class="secao sem-evento"><h2>Selecione um evento</h2><p>Abra uma etapa no seu cronograma. O check-in ou a foto da equipe registra o início do atendimento.</p><button class="btn" type="button" onclick="irAcesso('agenda')">Abrir meu cronograma</button></div></section>
-  <section class="tela" id="telaBonus"><div class="bonus-cabecalho"><h1>Meu bônus</h1><button type="button" class="btn btn-claro btn-pequeno" onclick="MontadorBonus.atualizar()">Atualizar</button></div><div id="bonusConteudo"></div></section>
+  <section class="tela" id="telaBonus"><div class="bonus-cabecalho"><button type="button" class="bonus-inicio" onclick="irParaApp()" aria-label="Voltar ao início do app" hidden>←</button><h1>Meu bônus</h1><button type="button" class="btn btn-claro btn-pequeno" onclick="MontadorBonus.atualizar()">Atualizar</button></div><div id="bonusConteudo"></div></section>
   <nav class="app-navegacao" id="appNavegacao" aria-label="Navegação principal" hidden>
     <button type="button" data-acesso="agenda" onclick="irAcesso('agenda')"><span aria-hidden="true">▦</span>Cronograma</button>
     <button type="button" data-acesso="bonus" onclick="irAcesso('bonus')"><span aria-hidden="true">♧</span>Meu bônus</button>
@@ -417,7 +413,10 @@
      ESTADO E APOIO
   ========================================================= */
   const MODO_SISTEMA = new URLSearchParams(location.search).get('sistema')==='1';
-  const CHAVE_TOKEN = MODO_SISTEMA ? 'montadorSistemaToken' : 'montadorToken';
+  const MODO_BONUS_TOKEN = new URLSearchParams(location.search).get('tela')==='bonus';
+  // Nov/2026: "Meu bônus" saiu daqui e virou um módulo do menu do app (app.html), que abre esta página com ?tela=bonus.
+  const MODO_BONUS = new URLSearchParams(location.search).get('tela')==='bonus';
+  const CHAVE_TOKEN = MODO_SISTEMA ? 'montadorSistemaToken' : MODO_BONUS_TOKEN ? 'montadorBonusToken' : 'montadorToken';
   const ARMAZENAMENTO_TOKEN = MODO_SISTEMA ? sessionStorage : localStorage;
   const DIAS = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
   const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
@@ -453,8 +452,10 @@
 
   document.getElementById("btnAtualizar").innerHTML = I.atualizar;
   document.getElementById("btnSair").innerHTML = I.sair;
+  // Nov/2026: aberto como app (sem ser dentro do sistema), o botão de sair vira "Início" (volta para o app.html).
+  if(!MODO_SISTEMA && window.top === window){ const b=document.getElementById("btnSair"); b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>'; b.setAttribute("aria-label","Voltar ao início do app"); b.title="Início"; }
   document.getElementById("btnVoltar").innerHTML = I.voltar + "Voltar";
-  document.getElementById("loginCpf").addEventListener("input",function(){
+  document.getElementById("loginCpf")?.addEventListener("input",function(){
     const n=this.value.replace(/\D/g,'').slice(0,11);
     this.value=n.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/,'$1.$2.$3-$4');
   });
@@ -490,7 +491,9 @@
   function sessaoExpirou(erro){ return /SESSAO_EXPIRADA/.test(String(erro && erro.message || erro)); }
 
   function mostrarTela(id){
-    document.getElementById("appNavegacao").hidden = !["telaInicio","telaEtapa","telaSemEvento","telaBonus"].includes(id);
+    // Nov/2026: a barra de baixo (Cronograma | Meu bônus) saiu; o bônus é um módulo do menu do app.
+    document.getElementById("appNavegacao").hidden = true;
+    const inicioBonus=document.querySelector(".bonus-inicio"); if(inicioBonus){ inicioBonus.hidden = !(MODO_BONUS && window.top === window); }
     atualizarNavegacao();
     document.querySelectorAll(".tela").forEach(function(t){ t.classList.toggle("ativa", t.id === id); });
     window.scrollTo(0, 0);
@@ -596,6 +599,7 @@
     MontadorBonus.limpar();
     mostrarTela("telaLogin");
     const erro = document.getElementById("erroLogin");
+    if(MODO_BONUS_TOKEN){ document.getElementById("btnEntrar").textContent = "Voltar ao início"; }
     erro.textContent = mensagem || "";
     erro.classList.toggle("ver", !!mensagem);
   }
@@ -619,6 +623,7 @@
   }
 
   function perguntarSair(){
+    if(!MODO_SISTEMA && !NO_QUADRO){ irParaApp(); return; }
     perguntar("Sair do app?", "Para entrar de novo você vai precisar do PIN.", "Sair").then(function(sim){
       if(!sim){ return; }
       const t = estado.token;
@@ -645,7 +650,7 @@
         aplicarDados(manual);
       })
       .catch(function(e){
-        if(sessaoExpirou(e)){ salvarToken(""); mostrarLogin("Sua sessão expirou. Entre de novo."); return; }
+        if(sessaoExpirou(e)){ salvarToken(""); if(!MODO_SISTEMA){ location.reload(); return; } mostrarLogin("Sua sessão expirou. Entre de novo."); return; }
         if(!estado.dados){ mostrarLogin(mensagemErro(e, "Não foi possível carregar.")); return; }
         if(manual){ toast(mensagemErro(e, "Não foi possível atualizar."), true); }
       })
@@ -659,6 +664,7 @@
     document.getElementById("inicioNome").textContent = String(d.nome || "").split(" ")[0];
     document.getElementById("inicioPerfil").textContent = d.perfil === "SUPERVISOR" ? "Supervisor · todas as montagens" : "Olá,";
     document.getElementById("inicioAvatar").textContent = String(d.nome || "?").charAt(0).toUpperCase();
+    if(MODO_BONUS){ if(!document.getElementById('telaBonus').classList.contains('ativa')){ irAcesso('bonus'); } return; }
     if(estado.acesso==='bonus' && document.getElementById('telaBonus').classList.contains('ativa')){return;}
 
     // Link direto para uma etapa (QR/cronograma): abre assim que carregar
@@ -1218,7 +1224,7 @@
     reg = { id: e.id, pedido: e.pedido, cliente: e.cliente, responsavel: e.responsavel, tipo: e.operacao, horario: e.horario, feitos: {}, empresa: "", qtd: "", fotoEquipe: "", fotosPos: [], posCorreto: null, fotoLista: "", paginas: [] };
 
     const equipe =
-      '<p class="foto-equipe-instrucao">Fotografe todos juntos. O horário e a localização serão registrados no envio.</p>' +
+      '<p class="foto-equipe-instrucao">Fotografe todos juntos, de corpo inteiro e com o uniforme à mostra: o RH confere o uniforme por esta foto. O horário e a localização serão registrados no envio.</p>' +
       fotoTile("regFotoEquipe", "Tirar foto da equipe", "fotoEquipe(event)") +
       '<button class="btn" type="button" onclick="enviarEquipe(this)">' + I.enviar + 'Enviar foto da equipe</button>';
 
@@ -1748,11 +1754,19 @@
     });
   }
 
+  // Nov/2026: entra pela conta do sistema (mesma sessão do login). Sem sessão, volta para o app (app.html), que tem o login.
+  const NO_QUADRO = window.top !== window;
+  function irParaApp(){ location.href = '../../../app.html'; }
   lerLink().then(async function(){
-    if(MODO_SISTEMA){
-      try{const r=await chamar('MONT_login','','',true,true);salvarToken(r.token);estado.supervisor=true;}
-      catch(e){mostrarLogin(mensagemErro(e));return;}
-    }
+    try{
+      if(MODO_SISTEMA){ const r=await chamar('MONT_login','','',true,true);salvarToken(r.token);estado.supervisor=true; }
+      else{
+        const uid = await chamar('MONT_usuarioSistema');
+        if(!uid){ if(NO_QUADRO){ mostrarLogin('Entre no sistema para abrir o App do Montador.'); } else { irParaApp(); } return; }
+        let dono=''; try{ dono=localStorage.getItem(CHAVE_TOKEN+'Conta')||''; }catch(e){}
+        if(!estado.token || dono!==uid){ const r=await chamar('MONT_loginConta', MODO_BONUS_TOKEN); salvarToken(r.token); try{ localStorage.setItem(CHAVE_TOKEN+'Conta',uid); }catch(e){} }
+      }
+    }catch(e){ mostrarLogin(mensagemErro(e)); return; }
     carregar();
   });
 

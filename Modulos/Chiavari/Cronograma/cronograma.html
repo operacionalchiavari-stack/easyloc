@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261031-entrega"></script>
+  <script src="../operacao-sem-motor.js?v=20261106-bonus"></script>
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <meta charset="UTF-8" />
 <meta
@@ -12292,6 +12292,18 @@ function abrirExecucaoMontagem(etapa){
 /* Andamento da operação (out/2026): só para pedidos do sistema. Triagem de ida = separação,
    Carregamento = conferência do carregamento, Triagem da volta = conferência do retorno. */
 function andamentoEtapaHtml(etapa, pedido){
+  return marcaProblemaTriagemHtml(etapa, pedido) + andamentoEtapaHtmlBase(etapa, pedido);
+}
+/* Nov/2026: bolinha vermelha piscando na Triagem (ida) do pedido que tem problema reportado e ainda não resolvido
+   na separação. Nasce escondida; quem liga é atualizarProblemasTriagem() (fim do arquivo). */
+function marcaProblemaTriagemHtml(etapa, pedido){
+  const nome = String(etapa && etapa.etapa || "");
+  if(!pedido || !pedido.pedidoSistemaId || !/triagem/i.test(nome) || /confer/i.test(nome)) return "";
+  const id = String(pedido.pedidoSistemaId).replace(/[^a-zA-Z0-9-]/g, "");
+  const n = (window.__cronoProblemas || {})[id] || 0;
+  return `<span class="crono-problema" data-crono-problema="${id}"${n ? '' : ' hidden'} title="${n ? n + " problema(s) na triagem" : ""}" aria-label="Problema reportado na triagem"></span>`;
+}
+function andamentoEtapaHtmlBase(etapa, pedido){
   const progresso = progressoEtapaHtml(etapa, pedido);
   const a = pedido && pedido.andamento;
   if(!a) return progresso;
@@ -18258,5 +18270,50 @@ function avisoRapido(msg){
 <script src="cronograma-detalhes.js?v=20261027-clique"></script>
 <link rel="stylesheet" href="cronograma-tabela.css?v=20261031-progresso">
 <script src="cronograma-tabela.js?v=20261031-sem-resumo"></script>
+<!-- Nov/2026: problemas da Triagem (separação) no cronograma: bolinha vermelha piscando no cartão da Triagem. -->
+<style id="crono-problema-estilo">
+  :is(.task, .app-cartao, [data-crono-detalhes]):has(> .crono-problema:not([hidden])), .app-cartao:has(.crono-problema:not([hidden])){position:relative}
+  .crono-problema{position:absolute;top:7px;right:7px;width:10px;height:10px;border-radius:50%;background:#e60012;z-index:3;pointer-events:auto}
+  html body .crono-problema:not([hidden]), html body .board .task-card[data-crono-detalhes] > .crono-problema.crono-problema:not([hidden]){display:block!important}
+  .crono-problema[hidden]{display:none!important}
+  .crono-problema::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid #e60012;animation:crono-problema-pulsa .9s ease-out infinite}
+  @keyframes crono-problema-pulsa{0%{transform:scale(.5);opacity:1}100%{transform:scale(2.1);opacity:0}}
+  @media (prefers-reduced-motion: reduce){.crono-problema::after{animation:none;opacity:0}}
+</style>
+<script>
+(function(){
+  let ultimo = 0, buscando = false;
+  function cliente(){ try{ const t = window.top && window.top !== window ? window.top : null; return (t && t.supabaseClient) || window.supabaseClient; }catch(_){ return window.supabaseClient; } }
+  function empresa(){ try{ return (window.top && window.top.__CONTEXT && window.top.__CONTEXT.empresa_id) || (window.__CONTEXT && window.__CONTEXT.empresa_id) || sessionStorage.getItem("empresa_id"); }catch(_){ return sessionStorage.getItem("empresa_id"); } }
+  function aplicar(){
+    const mapa = window.__cronoProblemas || {};
+    document.querySelectorAll("[data-crono-problema]").forEach(function(el){
+      const n = mapa[el.dataset.cronoProblema] || 0;
+      el.hidden = !n; el.title = n ? n + " problema(s) na triagem" : "";
+    });
+  }
+  async function atualizar(forcar){
+    if(buscando || (!forcar && Date.now() - ultimo < 60000)) { aplicar(); return; }
+    const sb = cliente(), emp = empresa();
+    if(!sb || !sb.rpc || !emp) return;
+    buscando = true;
+    try{
+      const r = await sb.rpc("separacao_ocorrencias_listar", { p_empresa: emp, p_pedido: null });
+      if(r && !r.error){
+        const mapa = {};
+        (r.data || []).forEach(function(o){ if(o && o.estado !== "resolvida" && o.pedido_id) mapa[o.pedido_id] = (mapa[o.pedido_id] || 0) + 1; });
+        window.__cronoProblemas = mapa; ultimo = Date.now();
+      }
+    }catch(e){ console.warn("Problemas da triagem:", e && e.message); }
+    finally{ buscando = false; aplicar(); }
+  }
+  window.atualizarProblemasTriagem = atualizar;
+  let t = 0;
+  new MutationObserver(function(){ clearTimeout(t); t = setTimeout(function(){ atualizar(false); }, 150); }).observe(document.body, { childList: true, subtree: true });
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "visible") atualizar(true); });
+  setInterval(function(){ if(document.visibilityState === "visible") atualizar(true); }, 60000);
+  atualizar(true);
+})();
+</script>
 </body>
 </html>

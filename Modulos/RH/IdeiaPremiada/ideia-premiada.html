@@ -5,37 +5,70 @@
   <title>Ideia Premiada — Chiavari</title>
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="ideia-premiada.css?v=20261018-cinza">
+  <link rel="stylesheet" href="ideia-premiada.css?v=20261105-sem-eyebrow">
+  <!-- Nov/2026: aberta como aba da Gestão de Pessoas (?embutido=1) mostra só as ideias recebidas, sem piscar a tela da equipe. -->
+  <script>if(/[?&]embutido=1/.test(location.search))document.documentElement.classList.add('ideia-embutida');</script>
+  <style>html.ideia-embutida:is(#ie#ie#ie#ie#ie#ie,html) body .ideia-heading,html.ideia-embutida:is(#ie#ie#ie#ie#ie#ie,html) body .ideia-tabs,html.ideia-embutida:is(#ie#ie#ie#ie#ie#ie,html) body .ideia-list-tools,html.ideia-embutida:is(#ie#ie#ie#ie#ie#ie,html) body #painelEnviar{display:none!important}html.ideia-embutida,html.ideia-embutida body{background:transparent!important}</style>
 </head>
 <body>
 <main id="ideiaPremiada" class="el-page">
-  <header class="ideia-heading"><span class="eyebrow">Uma empresa melhor começa com você</span><h1>Ideia Premiada</h1><p>Enxergou uma oportunidade de melhoria? Compartilhe sua ideia e ajude a transformar nosso jeito de trabalhar.</p></header>
-  <div id="avisoIdeias" role="status" aria-live="polite"></div>
-  <nav class="ideia-tabs" aria-label="Ideia Premiada">
+  <header class="ideia-heading"><h1>Ideia Premiada</h1><nav class="ideia-tabs" aria-label="Ideia Premiada">
     <button type="button" class="ativo" id="tabEnviar" aria-pressed="true">Enviar uma ideia</button>
     <button type="button" id="tabMinhas" aria-pressed="false">Minhas ideias</button>
+    <!-- Nov/2026: as ideias recebidas são geridas só em RH > Gestão de Pessoas > Ideia Premiada (?embutido=1&aba=recebidas); esta aba nunca aparece aqui. -->
     <button type="button" id="tabRecebidas" aria-pressed="false" hidden>Ideias recebidas · RH</button>
-  </nav>
+  </nav></header>
+  <div id="avisoIdeias" role="status" aria-live="polite"></div>
   <section id="painelEnviar" class="ideia-form-layout">
-    <aside><span class="eyebrow">Sua visão faz a diferença</span><h2>Pequenas ideias.<br>Grandes melhorias.</h2><p>Pode ser uma mudança no dia a dia, uma forma de economizar, cuidar da equipe ou encantar nossos clientes.</p><ol><li>Conte o que pode melhorar.</li><li>Explique sua solução.</li><li>Acompanhe o retorno da avaliação.</li></ol><small>As ideias são avaliadas pela empresa. O envio não garante seleção ou premiação.</small></aside>
-    <form id="formIdeia" class="ideia-card">
+    <aside class="ideia-intro">
+      <span class="eyebrow">Sua visão faz a diferença</span>
+      <h2>Pequenas ideias.<br><em>Grandes melhorias.</em></h2>
+      <p>Uma mudança no dia a dia, um jeito de economizar, de cuidar da equipe ou de encantar nossos clientes: toda boa melhoria começa com alguém que reparou.</p>
+      <ol class="ideia-passos">
+        <li><span>1</span><div><strong>Conte do seu jeito</strong><small>Escreva ou mande um áudio. A assistente faz algumas perguntas para entender bem a ideia.</small></div></li>
+        <li><span>2</span><div><strong>Confira o resumo</strong><small>Ela organiza tudo e você aprova antes de enviar ao RH.</small></div></li>
+        <li><span>3</span><div><strong>Acompanhe o retorno</strong><small>A resposta da avaliação aparece em Minhas ideias.</small></div></li>
+      </ol>
+      <div class="ideia-aviso" role="note"><span aria-hidden="true">!</span><p>As ideias são avaliadas pela empresa. Enviar uma ideia não garante seleção nem premiação.</p></div>
+    </aside>
+    <!-- Nov/2026: chat com a assistente (Edge Function ideia-assistente) no lugar do formulário. O formulário continua
+         como alternativa ("Prefiro escrever eu mesmo") e é quem grava pela RPC ideias_premiadas_enviar. -->
+    <section class="ideia-chat" id="ideiaChat" aria-label="Conversa com a assistente de ideias">
+      <header class="ideia-chat-topo">
+        <span class="ideia-chat-avatar" aria-hidden="true">✦</span>
+        <div><strong>Assistente de ideias</strong><small>Conte sua ideia por texto ou áudio</small></div>
+        <button type="button" class="ideia-chat-link" id="ideiaRecomecar">Começar de novo</button>
+      </header>
+      <div class="ideia-chat-msgs" id="ideiaMsgs" aria-live="polite"></div>
+      <div class="ideia-gravando" id="ideiaGravando" hidden><span class="ideia-rec-dot" aria-hidden="true"></span><strong id="ideiaRecTempo">0:00</strong><span>Gravando… toque no microfone para enviar</span><button type="button" class="ideia-chat-link" id="ideiaRecCancelar">Cancelar</button></div>
+      <form class="ideia-chat-campo" id="ideiaChatForm">
+        <textarea id="ideiaChatTexto" rows="1" maxlength="3000" placeholder="Escreva sua ideia…" aria-label="Mensagem"></textarea>
+        <input type="file" id="ideiaAudioArquivo" accept="audio/*" hidden>
+        <button type="button" class="ideia-chat-icone" id="ideiaAnexarAudio" title="Enviar um arquivo de áudio" aria-label="Enviar um arquivo de áudio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.5l-8.6 8.6a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>
+        <button type="button" class="ideia-chat-icone" id="ideiaMicrofone" title="Gravar áudio" aria-label="Gravar áudio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+        <button type="submit" class="ideia-chat-enviar" id="ideiaChatEnviar" title="Enviar" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button>
+      </form>
+      <button type="button" class="ideia-chat-link ideia-form-alt" id="ideiaUsarFormulario">Prefiro escrever eu mesmo, sem a assistente</button>
+    </section>
+    <form id="formIdeia" class="ideia-card" hidden>
       <label>Título da ideia<input class="el-input" name="titulo" required minlength="5" maxlength="120" placeholder="Dê um nome à sua melhoria"></label>
       <label>Área que pode melhorar<select class="el-select" name="area" required><option value="">Selecione uma área</option><option>Operação e eventos</option><option>Estoque e triagem</option><option>Logística</option><option>Comercial e atendimento</option><option>Financeiro</option><option>Pessoas e bem-estar</option><option>Sustentabilidade</option><option>Outra área</option></select></label>
       <label>O que pode melhorar?<textarea class="el-input" name="problema" required minlength="10" maxlength="3000" rows="3" placeholder="Descreva a situação atual e a dificuldade que você percebe."></textarea></label>
       <label>Qual é a sua ideia?<textarea class="el-input" name="proposta" required minlength="10" maxlength="5000" rows="4" placeholder="Como sua solução funcionaria na prática?"></textarea></label>
       <label>Qual seria o benefício?<textarea class="el-input" name="beneficio" required minlength="10" maxlength="3000" rows="3" placeholder="O que muda para a empresa, a equipe ou os clientes?"></textarea></label>
-      <footer><small id="autorIdeia">Seu nome será registrado junto à ideia.</small><button class="btn primary" id="btnEnviarIdeia" disabled>Enviar minha ideia</button></footer>
+      <footer><button type="button" class="ideia-chat-link" id="ideiaVoltarChat">← Voltar para a assistente</button><small id="autorIdeia">Seu nome será registrado junto à ideia.</small><button class="btn primary" id="btnEnviarIdeia" disabled>Enviar minha ideia</button></footer>
     </form>
   </section>
   <section id="painelLista" hidden>
-    <div class="ideia-list-tools"><h2 id="tituloLista">Minhas ideias</h2><input type="search" class="el-input" id="buscaIdeias" aria-label="Pesquisar ideias" placeholder="Pesquisar título, autor ou área" autocomplete="off" data-lpignore="true" data-1p-ignore="true"><select id="statusIdeias" class="el-select" aria-label="Filtrar status"><option value="">Todos os status</option><option value="recebida">Recebida</option><option value="em_analise">Em análise</option><option value="selecionada">Selecionada</option><option value="implementada">Implementada</option><option value="premiada">Premiada</option><option value="nao_priorizada">Não priorizada</option></select><button class="btn secondary" id="recarregarIdeias" type="button">Recarregar</button></div>
-    <div id="listaIdeias" class="ideia-lista"></div>
+    <div class="ideia-list-tools"><h2 id="tituloLista">Minhas ideias</h2><input type="search" class="el-input" id="buscaIdeias" aria-label="Pesquisar ideias" placeholder="Pesquisar título, autor ou área" autocomplete="off" data-lpignore="true" data-1p-ignore="true"><select id="statusIdeias" class="el-select" aria-label="Filtrar status" hidden><option value="">Todos os status</option><option value="recebida">Nova</option><option value="em_analise">Em espera</option><option value="selecionada">Aprovada</option><option value="implementada">Implementada</option><option value="premiada">Premiada</option><option value="nao_priorizada">Reprovada</option></select><button class="btn secondary" id="recarregarIdeias" type="button">Recarregar</button></div>
+    <!-- Nov/2026: duas colunas — ideias e quem enviou | detalhes, decisão com justificativa e histórico. -->
+    <div class="ideia-duas"><div class="ideia-col-lista"><nav id="ideiaGrupos" class="el-tabs ideia-grupos" role="tablist" aria-label="Situação das ideias"></nav><div id="listaIdeias" class="ideia-lista"></div></div><section id="ideiaDetalhe" class="ideia-detalhe" aria-live="polite"></section></div>
   </section>
-  <dialog id="detalheIdeia" aria-labelledby="tituloDetalhe"><header><span class="eyebrow">Ideia Premiada</span><button type="button" id="fecharDetalhe" aria-label="Fechar detalhes">×</button></header><h2 id="tituloDetalhe"></h2><div id="conteudoDetalhe"></div><form id="formAvaliacao" hidden><h3>Avaliação do RH</h3><label>Status<select name="status" class="el-select"><option value="recebida">Recebida</option><option value="em_analise">Em análise</option><option value="selecionada">Selecionada</option><option value="implementada">Implementada</option><option value="premiada">Premiada</option><option value="nao_priorizada">Não priorizada</option></select></label><label>Retorno para o autor<textarea class="el-input" name="retorno" maxlength="3000" rows="3" placeholder="Explique a avaliação e os próximos passos."></textarea></label><label>Premiação, quando houver<input class="el-input" name="premio" maxlength="300" placeholder="Descreva o reconhecimento concedido"></label><p id="avisoAvaliacao" role="status"></p><button class="btn primary" id="salvarAvaliacao">Salvar avaliação</button></form></dialog>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script><script src="../../../js/core/companyTheme.js"></script>
-<script src="ideia-premiada.js?v=20261008"></script>
+<script src="ideia-premiada.js?v=20261105-chat"></script>
+<script src="ideia-chat.js?v=20261105-chat"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body></html>

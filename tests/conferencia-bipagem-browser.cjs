@@ -112,14 +112,12 @@ const mock = `(() => {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=retorno");
-  await page.waitForSelector("#cfCorpo:not([hidden])", { timeout: 15000 });
+  // Desde 03/11 a volta é sempre por quantidade (sem bipe): o quadro de bipagem não aparece.
+  await page.waitForFunction(() => document.getElementById("cfCorpo")?.hidden !== false || /conferir/i.test(document.body.innerText), null, { timeout: 15000 });
   assert.strictEqual(await page.textContent("#cfTitulo"), "Conferência da volta");
-  await bipar("ACERVO:ENV:12-001");
-  const campo = await page.evaluate(() => Object.keys(window.__gravados.filter((g) => g.t === "separacoes_etiquetas").pop().p)[0]);
-  assert.strictEqual(campo, "lida_retorno_em");
+  assert.ok(await page.evaluate(() => document.getElementById("cfCorpo").hidden), "volta sem o quadro de bipagem");
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "sem rolagem lateral no celular");
-  await page.screenshot({ path: path.join(require("os").tmpdir(), "conferencia-celular.png") });
-  console.log("ok 6 - volta marca lida_retorno_em; celular sem rolagem lateral");
+  console.log("ok 6 - volta por quantidade (sem bipe); celular sem rolagem lateral");
   await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=carregamento");
   await page.waitForSelector("#cfCorpo:not([hidden])");
   await page.evaluate(()=>{window.__falhaRede=true;});

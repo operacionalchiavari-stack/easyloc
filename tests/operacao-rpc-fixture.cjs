@@ -88,6 +88,7 @@ module.exports = function operacaoRpcFixture(banco, nome, args = {}) {
     window.__gravados?.push({t:'separacoes_pedidos',tipo:'update',p:{status_operacional:p.status_operacional,operacao:p.operacao}});
     return ok(registro);
   }
+  if(nome==='separacao_ocorrencias_listar')return ok(banco.ocorrenciasSeparacao||[]);
   if(nome==='separacao_meus_setores')return ok(banco.meusSetores||null);
   if(nome==='pedidos_pagamento_bloqueados')return ok((banco.bloqueadosFinanceiro||[]).filter(id=>(args.p_pedidos||[]).includes(id)));
   if(nome==='pedidos_sem_caminhao_bloqueados')return ok((banco.semCaminhao||[]).filter(id=>(args.p_pedidos||[]).includes(id)));

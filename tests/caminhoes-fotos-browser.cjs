@@ -27,6 +27,27 @@ const fs=require('fs'),assert=require('assert');
     assert.equal(await page.evaluate(()=>enviarFotoCaminhao('empresa-teste')),null);
     await page.evaluate(()=>abrirModalCaminhao());
     assert.equal(await page.locator('#caminhaoFotoUrl').inputValue(),'');
+    await page.evaluate(()=>{
+      window.aguardarContexto=async()=>({empresa_id:'e1'});window.__salvos=[];window.__avisos=[];
+      window.mostrarAlerta=t=>__avisos.push(t);window.carregarCaminhoes=()=>{};
+      window.supabaseClient.from=()=>({insert:async r=>{__salvos.push(r[0]);return {};}});
+    });
+    await page.locator('#modeloInput').fill('Mercedes');await page.locator('#codigoInput').fill('M');
+    for(const id of ['larguraInput','alturaInput','comprimentoInput'])await page.locator('#'+id).fill('2');
+    await page.locator('#tipoInput').selectOption('terceirizado');
+    assert.equal(await page.locator('#empresaInput').getAttribute('required'),'');
+    for(const [id,valor] of [['cnpjInput','11222333000181'],['empresaInput','Transportadora Teste'],['telefoneInput','(21) 99999-9999']]){
+      await page.evaluate(()=>salvarCaminhao());assert.equal(await page.evaluate(()=>__salvos.length),0,'terceirizado incompleto nao salva');
+      assert.equal(await page.evaluate(()=>document.activeElement.id),id);
+      await page.locator('#'+id).fill(valor);
+    }
+    await page.evaluate(()=>salvarCaminhao());assert.equal(await page.evaluate(()=>__salvos.length),1);
+    await page.evaluate(()=>abrirModalCaminhao());await page.locator('#tipoInput').selectOption('proprio');
+    assert.equal(await page.locator('#empresaInput').getAttribute('required'),null);
+    await page.locator('#modeloInput').fill('Frota propria');await page.locator('#codigoInput').fill('P');
+    for(const id of ['larguraInput','alturaInput','comprimentoInput'])await page.locator('#'+id).fill('2');
+    await page.evaluate(()=>salvarCaminhao());assert.equal(await page.evaluate(()=>__salvos.length),2,'proprio continua sem obrigacao dos dados da proprietaria');
+    console.log('OK: empresa proprietaria obrigatoria para terceirizado e opcional para proprio.');
     console.log('OK: upload, preview, stored photo, readonly detail, edit, remove and reset.');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

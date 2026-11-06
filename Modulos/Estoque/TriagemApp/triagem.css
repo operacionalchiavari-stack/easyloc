@@ -14,3 +14,18 @@ header.marca.tem-capa{color:#fff}header.marca.tem-capa::before{content:"";positi
 body:not(.ta-logado) header.marca{min-height:160px}.ta-na-fila main{padding-top:0}.ta-na-fila .titulo-fila{position:relative;margin:-26px 0 20px;justify-content:flex-start;gap:14px;padding:19px 20px;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 24px #2f2b2708}.titulo-fila h1{font:600 27px/1.15 var(--serif)}.titulo-fila p{font-size:12px;color:var(--muted);margin-top:4px}.titulo-icone{display:grid;place-items:center;flex:0 0 48px;height:50px;border-radius:14px;background:#f1ede5;color:#9b7949}
 
 .camera-quadro{position:relative;margin:10px 0;border-radius:12px;overflow:hidden;background:#252520}.leitor .camera-quadro video{margin:0;border-radius:0;object-fit:contain}.camera-marcador{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.camera-marcador polygon{fill:#39ed8a20;stroke:#4cff9b;stroke-width:3;stroke-linejoin:round;vector-effect:non-scaling-stroke}.camera-codigo{position:absolute;bottom:10px;left:10px;right:10px;width:fit-content;max-width:calc(100% - 20px);margin:auto;padding:7px 11px;border-radius:9px;background:#171d18d9;color:#fff;font-size:12px;font-weight:600;overflow-wrap:anywhere;pointer-events:none}.qr-identificado .camera-codigo{background:#123e29ed;color:#91ffc2}
+
+/* Nov/2026 (pedido: "remova essa foto que só ocupa espaço, remova o Olá, foque nos pedidos"): topo vira uma faixa
+   fina grafite com a logo em branco e os botões; sem a foto de capa e sem a saudação. */
+.marca,.marca.tem-capa{min-height:0!important;grid-template-rows:auto!important;align-items:center!important;gap:0 10px!important;padding:calc(10px + env(safe-area-inset-top)) 16px 10px!important;background:#5a5a55!important;background-image:none!important;color:#fff}
+.marca::before,.marca.tem-capa::before{display:none!important}
+.marca-saudacao{display:none!important}
+.marca .marca-empresa img{filter:brightness(0) invert(1);height:44px}
+.marca .marca-acoes .botao-icone{border-color:#ffffff60!important;color:#fff}
+.marca .marca-acoes #taConta{color:#665c4f}
+/* Sem a capa, o cartão "Triagem" (que ficava sobreposto à foto) só repetia o nome: some; a busca fica logo abaixo da faixa. */
+#taFila .titulo-fila{display:none!important}
+#taFila{padding-top:14px}
+/* Fundo igual ao do menu do app (branco), em vez do bege mais escuro. */
+:root{--bg:#ffffff}
+html,body{background:#fff!important}

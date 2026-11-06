@@ -2,14 +2,15 @@
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Funcionários | Chiavari</title>
 <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais"><link rel="stylesheet" href="cadastro-funcionarios.css?v=20261019-lider">
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais"><link rel="stylesheet" href="cadastro-funcionarios.css?v=20261103-voltar-esquerda">
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script></head>
 <body><main class="main cadastros-page"><p id="funcMessage" role="status" hidden></p>    <section id="funcionariosView" class="cadastro-view">
-      <header class="section-head">
+      <header id="funcCabecalho" class="section-head">
         <div>
           <h2>Funcionários</h2>
         </div>
-        <button id="newFuncionarioBtn" class="btn btn-primary" data-permission="rh.funcionarios.criar"><i data-lucide="plus"></i> Novo funcionário</button>
+        <label class="func-pesquisa" aria-label="Pesquisar funcionário"><input id="funcBusca" type="search" placeholder="Pesquisar funcionário..." autocomplete="off"></label>
+        <button id="newFuncionarioBtn" class="btn btn-primary" data-permission="rh.funcionarios.criar"><i data-lucide="plus"></i> Funcionário</button>
       </header>
 
       <section class="summary-grid compact-summary" aria-label="Resumo de funcionários">
@@ -19,15 +20,30 @@
         <article class="summary-card orange"><div class="summary-icon"><i data-lucide="shield-check"></i></div><div><span>Administradores</span><strong id="funcAdmins">0</strong></div></article>
       </section>
 
-      <section id="funcionarioFormCard" class="cadastro-modal hidden" role="dialog" aria-modal="true" aria-labelledby="funcionarioFormTitle">
+      <section class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Funcionário</th><th>Cargo/Função</th><th>Acesso ao sistema</th><th>Status</th><th>Último acesso</th>
+              </tr>
+            </thead>
+            <tbody id="funcionariosTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+      <section id="funcionarioFormCard" class="cadastro-tela hidden" aria-labelledby="funcionarioFormTitle">
         <div class="content-card cadastro-form-card">
         <div class="card-title-row">
+          <button id="closeFuncionarioForm" class="btn btn-secondary"><i data-lucide="arrow-left"></i> Voltar</button>
           <div>
             <h2 id="funcionarioFormTitle">Novo funcionário</h2>
             <p id="funcionarioFormHint">Cadastre a pessoa, seu PIN e, quando autorizado, o acesso ao sistema.</p>
             <p id="funcionarioProprioAviso" class="func-proprio-aviso" hidden>Você pode atualizar seu nome, contato, foto e senhas. Setor, equipe e dados de trabalho são alterados pelo RH; acesso e permissões são autorizados por um administrador.</p>
           </div>
-          <button id="closeFuncionarioForm" class="btn btn-secondary"><i data-lucide="x"></i> Fechar</button>
+          <div class="func-form-acoes"><div class="func-status-botoes" role="group" aria-label="Status do funcionário"><button type="button" data-func-status="Ativo" class="func-status-ativo">Ativo</button><button type="button" data-func-status="Inativo" class="func-status-inativo">Inativo</button></div></div>
         </div>
         <form id="funcionarioForm" class="cadastro-form-grid">
           <input id="funcionarioId" type="hidden">
@@ -47,9 +63,9 @@
           <label>RG<input id="funcRg" class="tw-field" maxlength="40"></label>
           <label>Data de nascimento<input id="funcNascimento" class="tw-field" type="date"></label>
           <label>WhatsApp<input id="funcWhatsapp" class="tw-field" data-mascara="telefone"></label>
-          <label>Endereço<input id="funcEndereco" class="tw-field" maxlength="300"></label>
+          <label>Endereço<input id="funcEndereco" class="tw-field" maxlength="300" autocomplete="off" placeholder="Digite o endereço"></label>
           <label>Observações<input id="funcObservacoes" class="tw-field" maxlength="2000"></label>
-          <label>Salário bruto (R$)<input id="funcSalario" class="tw-field" type="number" min="0" step="0.01"></label>
+          <label>Salário bruto (R$)<input id="funcSalario" class="tw-field" type="text" inputmode="numeric" placeholder="R$ 0,00" maxlength="24"></label>
           <label>Data de admissão<input id="funcAdmissao" class="tw-field" type="date"></label>
           <label>Equipe operacional<select id="funcEquipe" class="tw-field" title="Também define em quais etapas do cronograma a pessoa entra na escala automática do Painel Logístico e quem responde por danos"><option value="">Não participa das equipes operacionais</option><option value="triagem">Triagem</option><option value="carregamento">Carregamento</option><option value="montagem">Montagem</option><option value="producao">Produção</option></select></label>
           <label class="func-lider"><input type="checkbox" id="funcLider"> Pode ser responsável de etapa (líder)</label>
@@ -58,9 +74,9 @@
           <label id="funcSenhaLabel">Senha *<input minlength="8" id="funcSenha" class="tw-field" type="password" autocomplete="new-password"></label>
           <label id="funcWarehousePinLabel">PIN individual (4 dígitos) *<input id="funcWarehousePin" class="tw-field" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" placeholder="4 dígitos"></label>
           <label>Nível de acesso *<select id="funcNivel" class="tw-field" required></select></label>
-          <label>Status *<select id="funcStatus" class="tw-field" required><option>Ativo</option><option>Inativo</option></select></label>
+          <label hidden>Status *<select id="funcStatus" class="tw-field" required><option>Ativo</option><option>Inativo</option></select></label>
           <label>E-mail<input required id="funcEmail" class="tw-field" type="email"></label>
-          <label>Telefone<input id="funcTelefone" data-mascara="telefone" class="tw-field"></label>
+          <label>Contato de emergência<input id="funcTelefone" data-mascara="telefone" class="tw-field"></label>
           <fieldset class="permissions-box">
             <legend>Permissões por módulo</legend>
             <div id="permissionsGrid" class="permissions-grid"></div>
@@ -73,28 +89,7 @@
         </div>
       </section>
 
-      <section class="table-card">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="photo-column"><span class="sr-only">Foto</span></th>
-                <th>Nome</th>
-                <th>Setor</th>
-                <th>Cargo/Função</th>
-                <th>Login</th>
-                <th>Nível de acesso</th>
-                <th>Status</th>
-                <th>Último acesso</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="funcionariosTableBody"></tbody>
-          </table>
-        </div>
-      </section>
-    </section>
-
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js?v=20261027-modal"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script><script src="../../../js/core/campoProtegido.js?v=20261023-cofre"></script>
-  <script src="cadastro-funcionarios.js?v=20261027-parametros-rh"></script></body></html>
+  <script src="../../../js/core/google.config.js"></script><script src="../../../js/core/google.js"></script>
+  <script src="cadastro-funcionarios.js?v=20261103-alerta-topo"></script></body></html>

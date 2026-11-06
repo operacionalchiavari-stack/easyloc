@@ -1,16 +1,9 @@
-/* =====================================================
-   CENTRAL DE PEDIDOS > CONTAS A RECEBER (out/2026; era uma tela própria, Comercial > Contas a receber — o usuário pediu
-   dentro da Central). Botão "Contas a receber" na linha de cima da lista; window.CentralContasReceber.abrir(host)
-   desenha tudo dentro do host e relê os dados a cada abertura; .contarAlertas() dá o número da bolinha do botão.
-   O Comercial vê o que cada cliente tem a pagar sem precisar de acesso ao Financeiro: só leitura, pela função
-   comercial_contas_receber (migration 20261030001200; exige comercial.pedidos.visualizar ou o Financeiro). Não mostra
-   conta bancária, PIX nem CNPJ das contas. Recebimento continua sendo registrado no Financeiro (conciliação ou caixa).
-   Agrupado por cliente (padrão), por pedido ou por data; situações Em aberto / Vencidos / Vence hoje / Próximos 7 dias
-   / Recebidas / Todas. Cada parcela mostra quando foi recebida e se foi no prazo, e quanto falta no pedido.
-===================================================== */
+/* Contas a receber do Comercial. A pagina propria reutiliza a consulta somente leitura.
+   Agrupamentos por cliente, equipe, pedido e data; registro dos recebimentos permanece no Financeiro. */
 (function () {
   "use strict";
   const R = window.ComercialRelatorios;
+  const urlPedido=new URL("pedido.html",document.currentScript.src||location.href);
   const { esc, fmt, dataBr } = R;
   const $ = (id) => document.getElementById(id);
   const DIV = { locacao: "Locação", frete: "Frete", montagem: "Montagem", outro: "Outro" };
@@ -87,7 +80,7 @@
   }
   function pintar() {
     $("crPrazos").innerHTML = PRAZOS.map(([k, t]) => { const n = ["vencidos", "hoje", "semana"].includes(k) ? s.linhas.filter((x) => noPrazo(x, k) && passaFiltros(x)).length : 0; return '<button type="button" class="cr-prazo' + (s.prazo === k ? " ativa" : "") + '" data-prazo="' + k + '" aria-pressed="' + (s.prazo === k) + '">' + t + (n ? '<span class="tab-badge">' + n + "</span>" : "") + "</button>"; }).join("");
-    document.querySelectorAll("[data-modo]").forEach((b) => b.classList.toggle("ativa", b.dataset.modo === s.modo));
+    $("crOrdenar").value = s.modo;
     const lista = filtradas().sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)) || String(a.numero_pedido).localeCompare(String(b.numero_pedido), "pt-BR", { numeric: true }));
     if (!lista.length) { $("crConteudo").innerHTML = '<div class="cr-vazio">Nenhuma parcela nessa situação' + (Object.values(s.filtros || {}).some((v) => (Array.isArray(v) ? v.length : v)) ? " com esses filtros" : "") + ".</div>"; return; }
     if (s.modo === "data") {
@@ -118,7 +111,7 @@
     return s.linhas;
   }
   const MOLDE = '<div class="fin-barra-ferr cr-barra"><div class="cr-prazos" role="group" aria-label="Situação" id="crPrazos"></div><span class="fin-esp"></span>' +
-    '<div class="cr-modo" role="group" aria-label="Agrupar"><button type="button" data-modo="cliente">Por cliente</button><button type="button" data-modo="equipe">Por equipe</button><button type="button" data-modo="pedido">Por pedido</button><button type="button" data-modo="data">Por data</button></div></div>' +
+    '<label class="cr-ordenar">Ordenar por... <select id="crOrdenar" aria-label="Ordenar por"><option value="cliente">Cliente</option><option value="equipe">Equipe</option><option value="pedido">Pedido</option><option value="data">Data</option></select></label></div>' +
     '<main id="crConteudo"><div class="cr-vazio">Carregando…</div></main>';
   async function abrir(host, filtros) {
     if (filtros) s.filtros = filtros;
@@ -135,10 +128,10 @@
   }
   function ligar() {
     $("crPrazos").addEventListener("click", (e) => { const b = e.target.closest("[data-prazo]"); if (!b) return; s.prazo = b.dataset.prazo; pintar(); });
-    document.querySelector(".cr-modo").addEventListener("click", (e) => { const b = e.target.closest("[data-modo]"); if (!b) return; s.modo = b.dataset.modo; try { localStorage.setItem("cr_receber_modo", s.modo); } catch (_) {} pintar(); });
-    $("crConteudo").addEventListener("click", (e) => { const ab = e.target.closest("[data-abrir]"); if (ab) { e.preventDefault(); window.location.href = "pedido.html?pedido=" + encodeURIComponent(ab.dataset.abrir) + "&modo=editar"; } });
+    $("crOrdenar").addEventListener("change", (e) => { s.modo = e.target.value; try { localStorage.setItem("cr_receber_modo", s.modo); } catch (_) {} pintar(); });
+    $("crConteudo").addEventListener("click", (e) => { const ab = e.target.closest("[data-abrir]"); if (ab) { e.preventDefault(); const url=new URL(urlPedido);url.searchParams.set("pedido",ab.dataset.abrir);url.searchParams.set("modo","editar");window.location.href=url.href; } });
   }
-  // a Central chama ao mudar os filtros (sem buscar de novo no banco)
+  // Os filtros da pagina sao aplicados sem buscar novamente no banco.
   function filtrar(filtros) { s.filtros = filtros || {}; if (document.getElementById("crConteudo")) pintar(); }
-  window.CentralContasReceber = { abrir, contarAlertas, filtrar };
+  window.ContasReceber = window.CentralContasReceber = { abrir, contarAlertas, filtrar };
 })();

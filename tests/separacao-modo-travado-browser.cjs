@@ -112,7 +112,7 @@ const QR = "/* qrcodejs falso */ window.QRCode = function(el, o){ const c = docu
   await page.waitForTimeout(500);
   const finalizou = await page.evaluate(() => window.__gravados.some((g) => g.t === 'separacoes_pedidos' && /separado/.test(g.p?.status || '')));
   assert.ok(!finalizou, 'não finaliza a triagem com itens faltando');
-  assert.ok(/Separe todos os itens/.test(await page.evaluate(() => document.body.innerText)), 'avisa que falta separar');
+  assert.ok(/Separação incompleta|Separe todos os itens/.test(await page.evaluate(() => document.body.innerText)), 'avisa que falta separar');
   assert.ok(!/Finalizar com divergencia|Finalizar com pendencia/i.test(await page.evaluate(() => document.body.innerText)), 'não oferece finalizar com pendência');
   console.log('ok 3 - não finaliza a triagem com item faltando');
   assert.ok(erros.length === 0, erros.join('\n'));

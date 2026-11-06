@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261029-extra2"></script>
+  <script src="../operacao-sem-motor.js?v=20261106-bonus"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -1276,30 +1276,11 @@
   }
 
   /*
-   * No check-in o free tira uma foto de corpo inteiro com o uniforme
-   * (a RH avalia por ela). No check-out não precisa.
+   * Nov/2026: o free não tira mais foto do uniforme. O responsável da etapa fotografa a equipe toda
+   * no App do Montador e o RH marca quem estava uniformizado.
    */
   function registrarPresenca(id, codigo, via){
-    const v = acharVaga(id);
-    const ehCheckin = v && v.minhaStatus === "CONFIRMADO" && !v.checkinEm;
-
-    if(!ehCheckin){
-      enviarPresenca(id, codigo, via, "");
-      return;
-    }
-
-    window._presenca = { id: id, codigo: codigo, via: via, foto: "" };
-    abrirFolha(
-      '<h3>Foto do uniforme</h3>' +
-      '<p>Para o check-in, tire uma foto <strong>de corpo inteiro</strong> mostrando o uniforme. Pode pedir para um colega tirar.</p>' +
-      '<img class="uniforme-foto" id="uniformeFoto" alt="" style="display:none">' +
-      '<input type="file" id="uniformeInput" accept="image/*" capture="environment" hidden onchange="fotoUniforme(this)">' +
-      '<div class="acoes">' +
-        '<button class="btn" id="btnFotoUniforme" type="button" onclick="document.getElementById(\'uniformeInput\').click()">' + ICONES.check + 'Tirar foto</button>' +
-        '<button class="btn btn-ok" id="btnFolha" type="button" style="display:none" onclick="confirmarCheckinComFoto()">' + ICONES.check + 'Fazer check-in</button>' +
-        '<button class="btn btn-texto" type="button" onclick="fecharFolha()">Cancelar</button>' +
-      '</div>'
-    );
+    enviarPresenca(id, codigo, via, "");
   }
 
   function fotoUniforme(input){

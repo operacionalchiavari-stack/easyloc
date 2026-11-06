@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="pedido.css?v=20261102-3d-persistente">
+  <link rel="stylesheet" href="pedido.css?v=20261105-extra-botao2">
   <link rel="stylesheet" href="../../../styles/sublocacoes.css?v=20261102-sublocacoes">
 </head>
 <body>
@@ -41,7 +41,6 @@
         </section>
 
         <div class="pedido-actions-top">
-          <button type="button" class="btn btn-secondary" data-sublocacoes="atual">Sublocação</button>
           <button type="button" class="btn btn-secondary" id="btnSalvarPedido">Salvar</button>
           <button type="button" class="btn btn-secondary btn-icon-text" id="btnMaisOpcoesPedido">...</button>
         </div>
@@ -295,6 +294,7 @@
           <div class="resumo-linha"><span>Valor de locacao</span><strong id="resumoLocacaoBruto">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Desconto</span><strong id="resumoLocacaoDesconto">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Customizacoes</span><strong id="resumoCustomizacoes">R$ 0,00</strong></div>
+          <div class="resumo-linha"><span>Itens sublocados</span><strong id="resumoTerceirizados">R$ 0,00</strong></div>
           <div class="resumo-linha subtotal"><span>Subtotal</span><strong id="resumoSubtotal">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Frete</span><strong id="resumoFreteBruto">R$ 0,00</strong></div>
           <div class="resumo-linha sr-only"><span>Desconto frete</span><strong id="resumoFreteDesconto">- R$ 0,00</strong></div>
@@ -554,7 +554,7 @@
 <link rel="stylesheet" href="../produtividade.css?v=20261031">
 <script src="../produtividade.js?v=20261031"></script>
 <script src="../../../js/ui/sublocacoes.js?v=20261102-remessas-parciais"></script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20261102-insumos-kits"></script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261105-extra-botao"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

@@ -9,24 +9,49 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
   <link rel="stylesheet" href="../../Financeiro/financeiro.css?v=20261018-cinza">
-  <link rel="stylesheet" href="pessoas.css?v=20261018-inter">
+  <link rel="stylesheet" href="pessoas.css?v=20261103-veu">
 </head>
 <body>
 <div class="container el-page fin-page rh-page">
-  <div class="header-list">
+  <div class="header-list rh-topo">
     <h2>Gestão de Pessoas</h2>
+    <!-- Nov/2026: na aba Funcionários, a pesquisa e o "+ Funcionário" do cadastro ficam aqui (o topo do cadastro some). -->
+    <label class="rh-topo-busca" hidden><input id="rhBuscaFunc" type="search" placeholder="Pesquisar funcionário..." autocomplete="off" aria-label="Pesquisar funcionário"></label>
+    <label class="rh-topo-busca rh-topo-busca-ocor" hidden><input id="rhBuscaOcor" type="search" placeholder="Pesquisar ocorrência..." autocomplete="off" aria-label="Pesquisar ocorrência"></label>
+    <div class="rh-topo-busca rh-topo-busca-ideia" hidden>
+      <input id="rhBuscaIdeia" type="search" placeholder="Pesquisar título, autor ou área" autocomplete="off" aria-label="Pesquisar ideias">
+      <select id="rhStatusIdeia" aria-label="Filtrar status" hidden><option value="">Todos os status</option><option value="recebida">Nova</option><option value="em_analise">Em espera</option><option value="selecionada">Aprovada</option><option value="implementada">Implementada</option><option value="premiada">Premiada</option><option value="nao_priorizada">Reprovada</option></select>
+    </div>
+    <div class="rh-topo-acoes">
+      <button type="button" class="fin-btn claro" id="rhOcorPainel" hidden>Painel</button>
+      <button type="button" class="fin-btn" id="rhOcorNova" hidden>+ Nova ocorrência</button>
+      <button type="button" class="fin-btn" id="rhNovoFunc" hidden>+ Funcionário</button>
+      <button type="button" class="fin-btn" id="rhTopoExame" data-topo-aba="vencimentos" data-topo-acao="novo-exame" hidden>+ Registrar exame</button>
+      <button type="button" class="fin-btn" data-topo-aba="beneficios" data-topo-acao="novo-beneficio" hidden>+ Novo benefício</button>
+      <button type="button" class="fin-btn claro" data-topo-aba="ferias" data-topo-acao="coletiva" hidden>Férias coletivas</button>
+      <button type="button" class="fin-btn" data-topo-aba="ferias" data-topo-acao="programar-ferias" hidden>+ Programar férias</button>
+      <button type="button" class="fin-btn claro" data-topo-aba="movimentacoes" data-topo-acao="desligar-escolher" hidden>Registrar desligamento</button>
+      <button type="button" class="fin-btn" data-topo-aba="movimentacoes" data-topo-acao="admissao" hidden>+ Nova admissão</button>
+    </div>
   </div>
 
   <nav class="fin-abas" id="rhAbas" aria-label="Áreas do RH">
-    <button type="button" data-aba="pessoas" class="ativa">Colaboradores</button>
+    <!-- Nov/2026: a aba Colaboradores saiu; a lista de pessoas é a aba Funcionários (o cadastro). A ficha continua abrindo pelas outras abas. -->
+    <button type="button" data-aba="cadastro" class="ativa" data-embutida="../CadastroFuncionarios/cadastro-funcionarios.html">Funcionários</button>
     <button type="button" data-aba="vencimentos">Exames e treinamentos <span class="fin-conta-aba" data-cont="vencimentos"></span></button>
     <button type="button" data-aba="beneficios">Benefícios</button>
     <button type="button" data-aba="ferias">Férias <span class="fin-conta-aba" data-cont="ferias"></span></button>
     <button type="button" data-aba="movimentacoes">Admissão e desligamento <span class="fin-conta-aba" data-cont="movimentacoes"></span></button>
+    <button type="button" data-aba="controle" data-embutida="../../Chiavari/ControleRH/rh.html">Ocorrências</button>
+    <button type="button" data-aba="free-cad" data-embutida="../../Chiavari/Cronograma/equipe-free.html">Cadastro de Freelancer</button>
+    <button type="button" data-aba="free-pag" data-embutida="../../Chiavari/Cronograma/rh.html">Pagamento de Freelancer</button>
+    <button type="button" data-aba="ideias" data-embutida="../IdeiaPremiada/ideia-premiada.html?aba=recebidas&amp;embutido=1">Ideia Premiada</button>
   </nav>
 
   <p class="fin-aviso" id="rhAviso" hidden></p>
   <main id="rhConteudo"><div class="fin-vazio">Carregando…</div></main>
+  <!-- Nov/2026: Cadastro de funcionários e Controle RH abertos aqui dentro (cada um continua sendo a própria tela). -->
+  <div id="rhEmbutidas"></div>
 </div>
 
 <dialog class="fin-modal" id="rhModal">
@@ -44,7 +69,7 @@
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/campoProtegido.js?v=20261023-cofre"></script>
-<script src="pessoas.js?v=20261023-cofre"></script>
+<script src="pessoas.js?v=20261104-envio"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

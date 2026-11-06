@@ -9,14 +9,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="cadastro-itens.css?v=20261026-acentos">
+  <link rel="stylesheet" href="cadastro-itens.css?v=20261103-fonte-original">
 </head>
 <body>
 <div class="container el-page">
 
   <!-- ================= HEADER ================= -->
-  <div class="header-list">
+  <div class="header-list" id="itensListHeader">
     <h2>Itens Cadastrados</h2>
+    <input type="search" class="el-input itens-pesquisa-topo" aria-label="Pesquisar item"
+      id="itensSearchInput"
+      placeholder="Pesquisar item..."
+      oninput="itens_aplicarFiltros()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
 
 <div class="header-actions">
   <!-- Resumo (Total / Itens / Componentes / Kits) num ícone pequeno: abre ao clicar (pedido do usuário). -->
@@ -55,31 +59,6 @@
 
   </div>
 
-
-  <!-- ================= FILTROS ================= -->
-  <div class="filters">
-    <input type="search" class="el-input"
-      id="itensSearchInput"
-      placeholder="Pesquisar item..."
-      oninput="itens_aplicarFiltros()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
-
-    <select class="el-select" id="itensTipoFilter" onchange="itens_aplicarFiltros()">
-      <option value="">Todos os tipos</option>
-      <option value="Item">Item</option>
-      <option value="Componente">Componente</option>
-      <option value="Kit">Kit</option>
-    </select>
-
-    <select class="el-select" id="itensCategoriaFilter" onchange="itens_aplicarFiltros()">
-      <option value="">Todas as categorias</option>
-    </select>
-
-    <select class="el-select" id="itensStatusFilter" onchange="itens_aplicarFiltros()">
-      <option value="">Todos os status</option>
-      <option value="Ativo">Ativo</option>
-      <option value="Inativo">Inativo</option>
-    </select>
-  </div>
 
 <!-- ================= TABELA ================= -->
 <section class="el-table-card itens-table-card">
@@ -887,7 +866,7 @@ alt="Ambientada 03"
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/qrCode.js"></script>
 <script src="../../../js/ui/complexidade-cadastros.js?v=20261031"></script>
-<script type="module" src="cadastro-itens.mjs?v=20261031-complexidade"></script>
+<script type="module" src="cadastro-itens.mjs?v=20261103-kit-unificado"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

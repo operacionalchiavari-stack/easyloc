@@ -6,7 +6,7 @@ const {PGlite}=require('@electric-sql/pglite');
 const emp='10000000-0000-0000-0000-000000000001',ana='20000000-0000-0000-0000-000000000001',bia='20000000-0000-0000-0000-000000000002',ped='30000000-0000-0000-0000-000000000001';
 test('cliente mantém autenticação e vincula apenas gravações relacionadas ao salvamento',async()=>{
  let opcoes;const chamadas=[];const janela={supabase:{createClient:(_url,_key,cfg)=>{opcoes=cfg;return {};}}};
- vm.runInNewContext(fs.readFileSync('js/core/supabase.js','utf8'),{window:janela,Request,Headers,fetch:async(url,init)=>{chamadas.push({url,init});}});
+ vm.runInNewContext(fs.readFileSync('js/core/supabase.js','utf8'),{window:janela,document:{currentScript:null},Request,Headers,fetch:async(url,init)=>{chamadas.push({url,init});}});
  janela.__comercialOperacaoAtual='salvamento-1';
  await opcoes.global.fetch('https://exemplo/rest/v1/rpc/pedido_salvar_integrado',{method:'POST',headers:{authorization:'Bearer teste'}});
  assert.equal(chamadas[0].init.headers.get('authorization'),'Bearer teste');assert.equal(chamadas[0].init.headers.get('x-comercial-operacao'),'salvamento-1');

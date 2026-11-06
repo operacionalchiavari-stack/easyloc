@@ -112,12 +112,12 @@ const mock = `(() => {
   await page.fill('#expBusca','');await page.waitForTimeout(300);
   const cam = await page.evaluate(() => ({ p1: document.querySelector('[data-pedido=p1][data-tipo=ida] .exp-caminhoes')?.innerText || '', p2: document.querySelector('[data-pedido=p2][data-tipo=ida] .exp-caminhoes')?.className || '' }));
   assert.ok(/programados/i.test(cam.p1) && /G/.test(cam.p1) && /M2/.test(cam.p1), 'cartão mostra os caminhões programados: ' + cam.p1);
-  assert.ok(/is-vazio/.test(cam.p2), 'pedido sem caminhão programado avisa');
+  assert.ok(!cam.p2, 'pedido sem caminhão programado: sem a faixa de caminhões (o aviso é o selo "Sem caminhão programado")');
   console.log('ok - caminhões programados em destaque no cartão da ida');
   // Travado pelo pagamento mínimo: aviso pequeno na linha do Ida, sem % nem valor, e o cartão não abre.
   const travado = page.locator('[data-pedido=p1][data-tipo=ida]');
-  assert.equal((await travado.locator('.exp-aviso-fin').innerText()).trim(), 'Aguardando Financeiro');
-  const linhaTopo = await travado.locator('.separacao-card-top').boundingBox(), aviso = await travado.locator('.exp-aviso-fin').boundingBox();
+  assert.equal(await travado.locator('.exp-dot-financeiro').getAttribute('aria-label'), 'Aguardando Financeiro');
+  const linhaTopo = await travado.locator('.separacao-card-top').boundingBox(), aviso = await travado.locator('.exp-dot-financeiro').boundingBox();
   assert.ok(aviso.y >= linhaTopo.y - 1 && aviso.y + aviso.height <= linhaTopo.y + linhaTopo.height + 1, 'aviso na mesma linha do Ida');
   await travado.click(); await page.waitForTimeout(500);
   assert.match(await page.locator('.el-alert').innerText(),/Financeiro.*carregamento/s);
@@ -126,10 +126,10 @@ const mock = `(() => {
   assert.match(await page.locator('.el-alert').innerText(),/Pedido bloqueado/);
   await page.evaluate(()=>window.fecharAlertaGlobal());
   assert.ok(!/conferencia.html/.test(page.url()), 'cartão travado não abre a conferência');
-  assert.equal(await page.locator('[data-pedido=p2][data-tipo=ida] .exp-aviso-fin').count(), 0, 'pedido liberado sem aviso');
+  assert.equal(await page.locator('[data-pedido=p2][data-tipo=ida] .exp-dot-financeiro').count(), 0, 'pedido liberado sem aviso');
   console.log('ok - pedido travado pelo Financeiro: aviso pequeno e não abre');
   const semCam = page.locator('[data-pedido=p20][data-tipo=ida]');
-  assert.equal((await semCam.locator('.exp-aviso-fin').innerText()).trim(), 'Sem caminhão programado');
+  assert.equal(await semCam.locator('.exp-dot-caminhao').getAttribute('aria-label'), 'Sem caminhão programado');
   assert.ok(/Painel Logístico/.test(await semCam.getAttribute('title')), 'explica onde programar');
   await semCam.click(); await page.waitForTimeout(400);
   assert.match(await page.locator('.el-alert').innerText(),/Painel Logístico/);

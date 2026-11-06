@@ -83,54 +83,7 @@ const mock = `(() => {
   assert.match(dl.suggestedFilename(), /Cancelamentos\.xlsx$/);
   console.log("ok 1 - cancelamentos: resumo, por motivo, decorador (taxa), cidade, distância, filtro e Excel");
 
-  // ---------------- Contas a receber
-  // fica dentro da Central de Pedidos: botão "Contas a receber" troca a lista
-  await page.goto(BASE + "Modulos/Comercial/Pedidos/CentralPedidos.html");
-  await page.waitForFunction(() => document.getElementById("centralReceberBadge") && !document.getElementById("centralReceberBadge").hidden, null, { timeout: 15000 });
-  assert.equal(await page.textContent("#centralReceberBadge"), "2", "bolinha: vencidos + vence hoje");
-  await page.click("[data-central-visao=receber]");
-  await page.waitForSelector(".cr-cliente");
-  assert.ok(!(await page.isVisible("#centralListaTabela")) && !(await page.isVisible("#centralSituacoes")) && !(await page.isVisible(".central-ordem")), "a lista de pedidos, as situações e a ordem somem");
-  const cli = await page.evaluate(() => [...document.querySelectorAll(".cr-cliente summary")].map((s) => s.textContent.replace(/\s+/g, " ")));
-  assert.equal(cli.length, 2);
-  assert.match(cli[0], /Lis Decor/, "quem tem vencido aparece primeiro"); assert.match(cli[0], /Falta pagar 5\.000,00/); assert.match(cli[0], /Vencido 4\.000,00/);
-  const badges = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll("[data-prazo]")].map((b) => [b.dataset.prazo, b.querySelector(".tab-badge")?.textContent || ""])));
-  assert.deepStrictEqual([badges.vencidos, badges.hoje, badges.semana], ["1", "1", "1"]);
-  await page.click('[data-prazo="recebidas"]');
-  await page.waitForFunction(() => /3 dias depois/.test(document.getElementById("crConteudo").textContent));
-  assert.match(await page.textContent("#crConteudo"), /Recebido/);
-  await page.click('[data-prazo="vencidos"]');
-  await page.click('[data-modo="data"]');
-  await page.waitForFunction(() => /Por data/.test(document.getElementById("crConteudo").textContent));
-  assert.match(await page.textContent("#crConteudo"), /Venceu há 2 dias/);
-  assert.equal(await page.locator("#crConteudo tbody tr").count(), 1);
-  await page.click('[data-prazo="todas"]'); await page.click('[data-modo="equipe"]');
-  await page.waitForFunction(() => [...document.querySelectorAll(".cr-equipe summary")].some((x) => /Equipe Rosa/.test(x.textContent)));
-  assert.ok([...await page.$$eval(".cr-equipe summary strong", (l) => l.map((x) => x.textContent))].includes("Sem equipe"));
-  await page.click('[data-modo="pedido"]');
-  await page.waitForFunction(() => document.querySelectorAll(".cr-cliente").length === 2);
-  assert.doesNotMatch(await page.textContent("#centralContasReceber"), /PIX|CNPJ|Conta \(/, "sem dados bancários");
-  // sem o aviso, sem o Excel e sem busca própria: o botão Filtros e a pesquisa de cima valem aqui também
-  assert.equal(await page.locator("#centralContasReceber .cr-aviso-leitura, #crExcel, #crBusca").count(), 0);
-  await page.click("[data-modo=cliente]"); await page.click("#btnFiltrosPedidos");
-  assert.ok(await page.isVisible("#centralFiltrosPedidos"), "o painel de filtros abre no Contas a receber");
-  assert.equal((await page.textContent("#centralFiltrosPedidos .el-field:has(#filtroDataInicialPedido) label")).trim(), "Vencimento de");
-  assert.ok(!(await page.isVisible("#filtroComercialPedido")), "Comercial não se aplica");
-  await page.fill("#filtroClientePedido", "ana"); await page.dispatchEvent("#filtroClientePedido", "input");
-  await page.waitForFunction(() => document.querySelectorAll(".cr-cliente").length === 1);
-  assert.match(await page.textContent(".cr-cliente summary"), /Ana Eventos/);
-  await page.fill("#filtroClientePedido", ""); await page.dispatchEvent("#filtroClientePedido", "input");
-  await page.fill("#filtroDataInicialPedido", dia(1)); await page.dispatchEvent("#filtroDataInicialPedido", "change");
-  await page.waitForFunction(() => document.querySelectorAll(".cr-cliente").length === 1);
-  assert.match(await page.textContent(".cr-cliente summary"), /Ana Eventos/, "vencimento a partir de amanhã: só a parcela da Ana");
-  await page.fill("#filtroDataInicialPedido", ""); await page.dispatchEvent("#filtroDataInicialPedido", "change");
-  await page.click("#pesquisaGeralPedidos"); await page.fill("#pesquisaGeralPedidos", "lis"); await page.dispatchEvent("#pesquisaGeralPedidos", "input");
-  await page.waitForFunction(() => document.querySelectorAll(".cr-cliente").length === 1 && /Lis Decor/.test(document.querySelector(".cr-cliente summary").textContent));
-  await page.fill("#pesquisaGeralPedidos", ""); await page.dispatchEvent("#pesquisaGeralPedidos", "input");
-  await page.click("#btnFiltrosPedidos");
-  await page.click("[data-central-visao=pedidos]");
-  assert.ok((await page.isVisible("#centralListaTabela")) && (await page.isVisible("#centralSituacoes")) && !(await page.isVisible("#centralContasReceber")), "volta para os pedidos");
-  console.log("ok 2 - contas a receber dentro da Central: por cliente/pedido/data, situações com contagem, recebido em e os filtros da Central");
+  // Contas a receber saiu da Central (voltou a ter tela própria em Comercial > Contas a receber): coberto por tests/comercial-contas-receber-browser.cjs
   if (process.env.SP) {
     await page.click("[data-central-visao=receber]"); await page.click('[data-modo="cliente"]'); await page.click('[data-prazo="abertos"]');
     await page.screenshot({ path: process.env.SP + "/cr-receber.png", fullPage: true });

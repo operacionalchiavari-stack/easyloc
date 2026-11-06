@@ -212,7 +212,7 @@
     return { nota: Math.round(nota * 10) / 10, trabalhos: ev.filter(function (e) { return e.delta === F.PONTOS.concluido; }).length,
       faltas: ev.filter(function (e) { return e.delta === F.PONTOS.faltou; }).length,
       cancelamentos: ev.filter(function (e) { return e.delta === F.PONTOS.cancelouAntes || e.delta === F.PONTOS.cancelouEmCima; }).length,
-      historico: ev.slice(-12).reverse().map(function (e) { return { titulo: e.titulo, motivo: e.motivo, delta: e.delta, nota: e.notaDepois }; }) };
+      historico: ev.slice().reverse().map(function (e) { return { titulo: e.titulo, motivo: e.motivo, delta: e.delta, nota: e.notaDepois }; }) };
   }
   function fMapaNotas(insc, vagas) {
     var mv = {}; vagas.forEach(function (v) { mv[v.idVaga] = v; });
@@ -609,7 +609,7 @@
     var hoje = hojeISO(), mConf = {}; (conflitos || []).forEach(function (x) { (mConf[x.etapa_id] = mConf[x.etapa_id] || []).push(x.mensagem); });
     var vagaDe = {}; vagas.forEach(function (v) { vagaDe[v.etapa_id] = v.id; });
     return { inicio: inicio, fim: fim, hoje: hoje, preenchidas: preenchidas || 0, regras: regras,
-      ocupacoes:ocupacoes.map(function(e){return {data:e.data,responsavel:responsavelDe(e),equipe:equipeDe(e),caminhoes:caminhoesDe(e)};}),
+      ocupacoes:ocupacoes.map(function(e){return {id:e.id,data:e.data,responsavel:responsavelDe(e),equipe:equipeDe(e),caminhoes:caminhoesDe(e)};}),
       pessoas: pess.map(function (p) { return { nome: p.nome, foto_url: p.foto_url || (!p.free && p.id ? c.storage.from("avatares").getPublicUrl(emp + "/" + p.id + ".jpg").data.publicUrl : ""), equipe: p.equipe, lider: p.lider, free: p.free }; }),
       caminhoes: cams.map(function (k) { return { id: k.id, foto_url: k.foto_url || "", modelo: k.modelo, codigo: k.codigo || "", placa: k.placa, capacidade: Number(k.capacidade_m3) || 0, empresa: k.empresa_nome || "", vinculo: k.tipo === "proprio" ? "Próprio" : "Terceiro" }; }),
       etapas: etapas.map(function (e) {
@@ -788,7 +788,7 @@
   function dinheiro(n) { return Math.round((Number(n) || 0) * 100) / 100; }
   function inicioCiclo(iso) { var d = iso ? new Date(iso + "T12:00:00") : new Date(); var volta = (d.getDay() - 2 + 7) % 7; d.setDate(d.getDate() - volta); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   async function rhConfig() { var c = await sb(), emp = await empresa(); var r = await q(c.from("free_rh_config").select("*").eq("empresa_id", emp).maybeSingle()); return { valorHora: r ? Number(r.valor_hora) || 0 : 0, horasDiaria: r ? Number(r.horas_diaria) || 8 : 8 }; }
-  function rhCalcular(v, i, pag, uni, cfg) {
+  function rhCalcular(v, i, pag, uni, cfg, temFotoEquipe) {
     var fase = fFase(v, i), min = fTrabalhados(i), e = fParse(i.checkinEm), marc = fQuando(v), atraso = e && marc ? Math.round((e - marc) / 60000) : 0;
     var diaria = dinheiro(v.valor), extraMin = min != null ? Math.max(0, min - Math.round(cfg.horasDiaria * 60)) : 0, extraValor = dinheiro(extraMin / 60 * cfg.valorHora);
     var motivos = [], situacao = "PAGAR";
@@ -799,7 +799,8 @@
       if (i.presencaPor) { motivos.push("Presença lançada à mão por " + i.presencaPor); }
       if (i.checkinDistancia !== "" && i.checkinDistancia > F.DIST_ALERTA) { motivos.push("Check-in a " + (i.checkinDistancia / 1000).toFixed(1).replace(".", ",") + " km do ponto"); }
       if (atraso > F.TOLERANCIA_ATRASO) { motivos.push("Chegou " + atraso + " min atrasado"); }
-      if (!i.fotoUniforme && !i.presencaPor) { motivos.push("Sem foto de uniforme"); }
+      // Nov/2026: o uniforme é conferido pela foto da equipe que o responsável tira no App do Montador.
+      if (!uni) { motivos.push(temFotoEquipe === false ? "Sem foto da equipe" : "Uniforme não conferido"); }
       if (uni && uni.avaliacao === "INCOMPLETO") { motivos.push("Uniforme incompleto"); }
       if (uni && uni.avaliacao === "SEM") { motivos.push("Sem uniforme"); }
       if (motivos.length) { situacao = "REVISAR"; }
@@ -810,9 +811,18 @@
     if (pag && pag.valorPago != null && pag.pagoEm) { situacao = "PAGO"; }
     return { fase: fase, minutos: min, horas: fDuracao(min), atrasoMin: Math.max(0, atraso), diaria: diaria, extraMin: extraMin, extraTexto: fDuracao(extraMin), extraValor: extraValor, total: situacao === "PAGO" ? pag.valorPago : total, situacao: situacao, motivos: motivos };
   }
+  // Diária enviada ao Contas a Pagar: "No financeiro" até a conta ser paga; paga por inteiro, vira "Pago".
+  function rhNoFinanceiro(calc, fin) {
+    if (!fin) { return calc; }
+    calc.total = fin.valor || calc.total;
+    calc.situacao = fin.totalConta > 0 && fin.pago >= fin.totalConta - 0.004 ? "PAGO" : "FINANCEIRO";
+    return calc;
+  }
   function pagLegado(p) { return p ? { pagarExtra: !!p.pagar_extra, ajuste: Number(p.ajuste) || 0, motivoAjuste: p.motivo_ajuste || "", naoPagar: !!p.nao_pagar, valorPago: p.valor_pago == null ? null : Number(p.valor_pago), pagoEm: dataHoraTexto(p.pago_em), forma: p.forma || "", pagoPor: p.pago_por || "" } : null; }
   async function rhCiclo(inicioISO) {
-    var c = await sb(), emp = await empresa(), ini = inicioCiclo(isoDeQualquer(inicioISO) || ""), fim = somarDias(ini, 6), cfg = await rhConfig();
+    // "tudo" (nov/2026, Pagamento de Freelancer como contas a pagar): todos os eventos do último ano até 2 semanas à frente.
+    var c = await sb(), emp = await empresa(), tudoPeriodo = inicioISO === "tudo";
+    var ini = tudoPeriodo ? somarDias(hojeISO(), -365) : inicioCiclo(isoDeQualquer(inicioISO) || ""), fim = tudoPeriodo ? somarDias(hojeISO(), 14) : somarDias(ini, 6), cfg = await rhConfig();
     var d = await freeTudo(function (x) { return x.gte("data", ini).lte("data", fim).neq("status", "CANCELADA"); });
     var pags = await tudo(function () { return c.from("free_rh_pagamentos").select("*").eq("empresa_id", emp); }), mPag = {}; pags.forEach(function (p) { mPag[p.inscricao_id] = pagLegado(p); });
     var etIds = d.vagas.map(function (v) { return v.idEtapa; });
@@ -820,6 +830,17 @@
     var regs = await emLote(etIds, function (b) { return c.from("operacao_registros").select("etapa_id,tipo,dados").in("etapa_id", b); }), mR = {}; regs.forEach(function (r) { (mR[r.etapa_id] = mR[r.etapa_id] || {})[r.tipo] = r.dados; });
     var trs = await emLote(etIds, function (b) { return c.from("operacao_trocas").select("*").in("etapa_id", b).neq("status", "CANCELADO"); });
     var pv = porVaga(d.inscricoes);
+    // Nov/2026: o que já foi enviado ao Contas a Pagar (e se o Financeiro já pagou).
+    var mFin = {};
+    try { ((await rpc("free_rh_financeiro", { p_empresa: emp })) || []).forEach(function (x) { mFin[x.inscricao] = { fechamento: x.fechamento, documento: x.documento, vencimento: x.vencimento, enviadoPor: x.enviado_por, valor: Number(x.valor) || 0, pagarStatus: x.pagar_status, pago: Number(x.pago) || 0, totalConta: Number(x.total_conta) || 0 }; }); } catch (_) { /* sem a função ainda: segue sem a situação do financeiro */ }
+    // Foto da decoradora (nov/2026): a do catálogo, pelo nome do cliente do pedido.
+    var nomesCli = Array.from(new Set(d.vagas.map(function (v) { return v.cliente; }).filter(Boolean))), mFoto = {};
+    if (nomesCli.length) {
+      try {
+        var clis = await emLote(nomesCli, function (b) { return c.from("clientes_empresas").select("nome_razao,catalogo_logo_url").eq("empresa_id", emp).in("nome_razao", b); });
+        clis.forEach(function (x) { if (x.catalogo_logo_url) mFoto[String(x.nome_razao).trim().toLowerCase()] = x.catalogo_logo_url; });
+      } catch (_) { /* sem foto não impede a tela */ }
+    }
     var eventos = d.vagas.map(function (v) {
       var et = mEt[v.idEtapa] || {}, r = mR[v.idEtapa] || {}, fotos = [];
       var add = function (url, tipo, leg) { if (url) { fotos.push({ url: url, tipo: tipo, legenda: leg || "" }); } };
@@ -834,16 +855,17 @@
       if (r.lista_assinada) { add(r.lista_assinada.foto, "lista", "Lista assinada" + (r.lista_assinada.nome ? " · " + r.lista_assinada.nome : "")); }
       ((r.lista_conferida && r.lista_conferida.fotos) || []).forEach(function (u, k) { add(u, "lista", "Lista conferida · pág. " + (k + 1)); });
       trs.filter(function (t) { return t.etapa_id === v.idEtapa; }).forEach(function (t) { add(t.foto_url, "troca", "Troca: " + t.quantidade + "× " + t.item); });
-      return { idVaga: v.idVaga, idEtapa: v.idEtapa, pedido: v.pedido, cliente: v.cliente, local: v.local, etapa: v.etapa, dataISO: v.dataISO, horario: v.horario, lider: v.lider,
+      return { idVaga: v.idVaga, idEtapa: v.idEtapa, pedido: v.pedido, cliente: v.cliente, clienteFoto: mFoto[String(v.cliente || "").trim().toLowerCase()] || "", local: v.local, pontoEncontro: v.pontoEncontro || "", etapa: v.etapa, dataISO: v.dataISO, horario: v.horario, lider: v.lider,
         responsavel: responsavelDe(et) || v.lider, valor: v.valor, quantidade: v.quantidade, fotos: fotos,
+        fotoEquipe: (r.equipe && r.equipe.foto) || "", fotoEquipeEm: (r.equipe && r.equipe.chegada && r.equipe.chegada.em) ? dataHoraTexto(r.equipe.chegada.em) : "",
         pessoas: (pv[v.idVaga] || []).filter(function (i) { return i.status === "CONFIRMADO"; }).map(function (i) {
           var cad = d.cadastros[i.idFree] || {}, pag = mPag[i.id] || null, uni = d.uniformes[i.id] ? { avaliacao: d.uniformes[i.id].avaliacao, observacao: d.uniformes[i.id].observacao, avaliadoPor: d.uniformes[i.id].avaliado_por } : null;
           return { idInscricao: i.id, idFree: i.idFree, nome: i.nome, cpf: cad.cpf || "", telefone: i.telefone, pix: cad.chave_pix || "", nota: (d.notas[i.idFree] || fNotaVazia()).nota,
-            checkinEm: i.checkinEm, checkoutEm: i.checkoutEm, via: i.checkinVia, distancia: i.checkinDistancia, presencaPor: i.presencaPor, fotoUniforme: i.fotoUniforme, fotoUniformeId: "",
-            uniforme: uni, pagamento: pag, calc: rhCalcular(v, i, pag, uni, cfg), miniatura: cad.foto_url || "" };
+            checkinEm: i.checkinEm, checkoutEm: i.checkoutEm, via: i.checkinVia, distancia: i.checkinDistancia, presencaPor: i.presencaPor, fotoUniforme: i.fotoUniforme, fotoUniformeId: "", lat: i.checkinLat, lng: i.checkinLng,
+            uniforme: uni, pagamento: pag, calc: rhNoFinanceiro(rhCalcular(v, i, pag, uni, cfg, !!(r.equipe && r.equipe.foto)), mFin[i.id]), financeiro: mFin[i.id] || null, miniatura: cad.foto_url || "" };
         }) };
     }).sort(function (a, b) { return (a.dataISO + a.horario).localeCompare(b.dataISO + b.horario); });
-    return { inicio: ini, fim: fim, config: cfg, eventos: eventos, usuario: await meuNome() };
+    return { inicio: tudoPeriodo ? "tudo" : ini, fim: fim, config: cfg, eventos: eventos, usuario: await meuNome() };
   }
   async function exigirRh() { if (!(await pode("rh.colaboradores.editar")) && !(await pode("logistica.cronograma.montagem"))) { throw new Error("Sem permissão para o Painel RH Free."); } }
   L.RH_login = async function () {
@@ -853,8 +875,15 @@
   L.RH_sair = function () { return true; };
   L.RH_carregarCiclo = async function (t, ini) { await exigirRh(); return rhCiclo(ini); };
   async function gravarPag(idIns, ini, campos) {
-    var c = await sb();
-    await q(c.from("free_rh_pagamentos").upsert(Object.assign({ inscricao_id: idIns, empresa_id: await empresa(), ciclo: inicioCiclo(isoDeQualquer(ini) || ""), atualizado_por: await meuNome(), atualizado_em: new Date().toISOString() }, campos), { onConflict: "inscricao_id" }));
+    var c = await sb(), ciclo = inicioCiclo(isoDeQualquer(ini) || "");
+    if (ini === "tudo") {
+      // sem semana escolhida: o ciclo é o da data do evento da inscrição
+      var ins = await q(c.from("free_inscricoes").select("vaga_id").eq("id", idIns).maybeSingle());
+      var vg = ins && await q(c.from("free_vagas").select("etapa_id").eq("id", ins.vaga_id).maybeSingle());
+      var et = vg && await q(c.from("operacao_etapas").select("data").eq("id", vg.etapa_id).maybeSingle());
+      if (et && et.data) ciclo = inicioCiclo(String(et.data).slice(0, 10));
+    }
+    await q(c.from("free_rh_pagamentos").upsert(Object.assign({ inscricao_id: idIns, empresa_id: await empresa(), ciclo: ciclo, atualizado_por: await meuNome(), atualizado_em: new Date().toISOString() }, campos), { onConflict: "inscricao_id" }));
   }
   L.RH_salvarDiaria = async function (t, ini, idIns, dados) {
     await exigirRh(); dados = dados || {};
@@ -880,6 +909,25 @@
     if (["OK", "INCOMPLETO", "SEM", ""].indexOf(avaliacao) < 0) { throw new Error("Avaliação inválida."); }
     if (!avaliacao) { await q(c.from("free_rh_uniforme").delete().eq("inscricao_id", idIns)); }
     else { await q(c.from("free_rh_uniforme").upsert({ inscricao_id: idIns, empresa_id: await empresa(), avaliacao: avaliacao, observacao: String(obs || "").slice(0, 300), avaliado_por: await meuNome(), avaliado_em: new Date().toISOString() }, { onConflict: "inscricao_id" })); }
+    return rhCiclo(ini);
+  };
+  // Nov/2026: conferência do uniforme pela foto da equipe — todos de uma vez (lista de {idInscricao, avaliacao}).
+  L.RH_uniformeEquipe = async function (t, ini, lista) {
+    await exigirRh(); var c = await sb(), emp = await empresa(), nome = await meuNome(), agora = new Date().toISOString();
+    var linhas = (lista || []).filter(function (x) { return x && x.idInscricao && ["OK", "SEM"].indexOf(x.avaliacao) >= 0; })
+      .map(function (x) { return { inscricao_id: x.idInscricao, empresa_id: emp, avaliacao: x.avaliacao, observacao: x.avaliacao === "SEM" ? "Sem uniforme na foto da equipe" : "", avaliado_por: nome, avaliado_em: agora }; });
+    if (!linhas.length) { throw new Error("Nada para salvar."); }
+    await q(c.from("free_rh_uniforme").upsert(linhas, { onConflict: "inscricao_id" }));
+    return rhCiclo(ini);
+  };
+  L.RH_enviarFinanceiro = async function (t, ini, itens, vencimento, obs) {
+    await exigirRh();
+    await rpc("free_rh_enviar_financeiro", { p_empresa: await empresa(), p_itens: itens || [], p_vencimento: vencimento, p_obs: obs || null });
+    return rhCiclo(ini);
+  };
+  L.RH_desfazerEnvio = async function (t, ini, fechamento) {
+    await exigirRh();
+    await rpc("free_rh_desfazer_envio", { p_empresa: await empresa(), p_fechamento: fechamento });
     return rhCiclo(ini);
   };
   L.RH_salvarConfig = async function (t, ini, valorHora, horas) {
@@ -946,6 +994,14 @@
       if (mensagem || resposta.error) { throw new Error(mensagem || "Não foi possível entrar."); }
       r = resposta.data;
     }
+    try { localStorage.setItem("montadorPasta", r.pasta); } catch (e) {}
+    return { token: r.token, nome: r.nome, perfil: r.perfil };
+  };
+  /* Nov/2026: o app entra pela conta do sistema (mesma sessão do login), sem CPF + PIN. Responsável se a pessoa está na
+     equipe de Montagem do Cadastro de Funcionários; supervisor se tem a permissão de Supervisor de Montagem. */
+  L.MONT_usuarioSistema = async function () { var c = await sb(), u = (await c.auth.getUser()).data.user; return u ? u.id : null; };
+  L.MONT_loginConta = async function (bonus) {
+    var r = await rpc("mont_login_conta", { p_bonus: !!bonus });
     try { localStorage.setItem("montadorPasta", r.pasta); } catch (e) {}
     return { token: r.token, nome: r.nome, perfil: r.perfil };
   };

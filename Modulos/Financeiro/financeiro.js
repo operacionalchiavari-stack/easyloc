@@ -141,6 +141,7 @@
   let aoConfirmar = null;
   function modal(titulo, corpo, botoes, montar) {
     $("finModalTitulo").textContent = titulo;
+    $("finModal").classList.remove("fin-modal-detalhe");
     // caixa nova a cada janela: os eventos da janela anterior não podem disparar nesta
     const velho = $("finModalCorpo"), novo = velho.cloneNode(false); velho.replaceWith(novo);
     $("finModalCorpo").innerHTML = corpo;
@@ -459,12 +460,12 @@
           const [cls, rot] = statusP(t), c = cat(t.categoria_id);
           const bloqueadoServico = t.manutencao_confirmada === false;
           const aberto = !["pago", "cancelado"].includes(t.status), aguard = t.requer_aprovacao && t.aprovacao === "pendente";
-          return "<tr><td>" + esc(t.fornecedor_nome || "-") + "</td><td>" + esc(t.descricao) + (bloqueadoServico ? '<small class="text-danger" style="display:block;margin-top:5px">Pagar somente após confirmação do serviço em Compras → Serviços.</small>' : t.manutencao_confirmada === true ? '<small style="display:block;margin-top:5px">Serviço confirmado em Compras.</small>' : '') + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + "</td><td>" + esc(c?.nome || "-") +
+          return '<tr class="fin-linha-click" data-p-linha="' + t.id + '" tabindex="0" title="Ver detalhes"><td>' + esc(t.fornecedor_nome || "-") + "</td><td>" + esc(t.descricao) + (bloqueadoServico ? '<small class="text-danger" style="display:block;margin-top:5px">Pagar somente após confirmação do serviço em Compras → Serviços.</small>' : t.manutencao_confirmada === true ? '<small style="display:block;margin-top:5px">Serviço confirmado em Compras.</small>' : '') + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + "</td><td>" + esc(c?.nome || "-") +
             "</td><td>" + dataBr(t.vencimento) + "</td><td>" + contaHtml(t.conta_id) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.aberto) + '</td><td><span class="fin-status ' + cls + '">' + esc(rot) + "</span></td>" +
             '<td><div class="acoes">' + (aguard ? '<button class="fin-btn peq" data-p-aprovar="' + t.id + '">Aprovar</button><button class="fin-btn peq verm" data-p-reprovar="' + t.id + '">Reprovar</button>' : "") +
-            (aberto && !aguard && !bloqueadoServico && t.aprovacao !== "reprovada" ? '<button class="fin-btn peq claro" data-p-programar="' + t.id + '">Programar</button>' : "") +
-            '<button class="fin-btn peq claro" data-p-editar="' + t.id + '">Editar</button><button class="fin-btn peq claro" data-p-ver="' + t.id + '">Detalhes</button></div></td></tr>';
+            "</div></td></tr>";
         }).join("") + "</tbody></table></div></section>" : '<div class="fin-vazio">Nenhuma conta a pagar com esses filtros.</div>');
+    $("finConteudo").querySelectorAll("[data-p-linha]").forEach((tr) => tr.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === tr) { e.preventDefault(); detalhesPagar(tr.dataset.pLinha); } }));
     const at = () => { S.filtroP = { busca: $("fpBusca").value, status: $("fpStatus").value }; pintarPagar(); };
     $("fpBusca").addEventListener("change", at); $("fpBusca").addEventListener("keydown", (e) => { if (e.key === "Enter") at(); });
     $("fpStatus").addEventListener("change", at);
@@ -590,6 +591,92 @@
         const motivo = prompt("Motivo do estorno:"); if (!motivo) return;
         await executar(() => rpc("fin_estornar_baixa", { p_empresa: S.emp, p_baixa: b.dataset.estornar, p_motivo: motivo }), "Baixa estornada.");
       }));
+  }
+  // Detalhes da conta a pagar (nov/2026): abre ao clicar na linha. Mostra de onde veio a conta (pedido do evento,
+  // fechamento de frete/Uber/freelancer, BV, compra), a classificação, os pagamentos e as ações (programar, editar,
+  // aprovar, cancelar), que saíram da linha da tabela.
+  const ORIGEM_P = { manual: "Lançamento manual", compra: "Compra (pedido de compra)", frete: "Fechamento de frete", uber: "Corridas de Uber", free: "Pagamento de freelancer", bv: "BV do decorador", manutencao_predial: "Manutenção predial", conciliacao: "Conciliação bancária", caixa: "Caixa físico" };
+  const CUSTO_CAT = { equipe: "Equipe", frete: "Frete", uber: "Uber", terceiros: "Terceiros", personalizacao: "Personalização", reparo: "Reparo", impostos: "Impostos", outros: "Outros" };
+  const FECH_PREF = { frete: "FR", uber: "UB", free: "FL" };
+  function prazoTexto(t) {
+    if (["pago", "cancelado"].includes(t.status) || !t.vencimento) return "";
+    const d = Math.round((new Date(t.vencimento + "T12:00:00") - new Date(hoje() + "T12:00:00")) / 864e5);
+    if (d === 0) return "vence hoje";
+    return d > 0 ? "vence em " + d + (d === 1 ? " dia" : " dias") : "vencido há " + -d + (d === -1 ? " dia" : " dias");
+  }
+  async function detalhesPagar(id) {
+    const t = S.pagar.find((x) => x.id === id);
+    if (!t) return;
+    const ler = (p) => Promise.resolve(p).then((r) => (r && r.data) || []).catch(() => []);
+    const [baixas, custos, fechs, bvs, compras] = await Promise.all([
+      ler(S.sb.from("fin_baixas").select("*").eq("empresa_id", S.emp).eq("pagar_id", id).order("data")),
+      ler(S.sb.from("fin_custos_evento").select("pedido_id,categoria,descricao,valor,cancelado_em").eq("empresa_id", S.emp).eq("pagar_id", id)),
+      ler(S.sb.from("logistica_fechamentos").select("tipo,numero,beneficiario,total,vencimento,obs,status,criado_por_nome,criado_em").eq("empresa_id", S.emp).eq("pagar_id", id)),
+      ler(S.sb.from("fin_bv_partes").select("pedido_id,cliente_id,percentual,valor,ativo").eq("empresa_id", S.emp).eq("pagar_id", id)),
+      t.origem === "compra" && t.origem_id ? ler(S.sb.from("compras_registros").select("numero,status").eq("id", t.origem_id)) : []
+    ]);
+    const porPedido = {};
+    custos.filter((c) => !c.cancelado_em).forEach((c) => { (porPedido[c.pedido_id] ||= []).push({ rot: CUSTO_CAT[c.categoria] || c.categoria, desc: c.descricao, valor: c.valor }); });
+    bvs.filter((b) => b.ativo !== false).forEach((b) => { (porPedido[b.pedido_id] ||= []).push({ rot: "BV", desc: "BV de " + Number(b.percentual || 0).toLocaleString("pt-BR") + "% da locação", valor: b.valor }); });
+    const ids = Object.keys(porPedido).filter((x) => !S.pedidos[x]);
+    if (ids.length) {
+      const peds = await ler(S.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,tipo_evento,data_evento,data_evento_fim,data_entrega,data_coleta,local_nome,valor_total,status_comercial").in("id", ids));
+      peds.forEach((p) => { S.pedidos[p.id] = p; });
+    }
+    const [cls, rot] = statusP(t), c = cat(t.categoria_id), cc = S.ccs.find((x) => x.id === t.centro_custo_id);
+    const aberto = !["pago", "cancelado"].includes(t.status), aguard = t.requer_aprovacao && t.aprovacao === "pendente" && t.status !== "cancelado";
+    const bloqueado = t.manutencao_confirmada === false;
+    const pago = Number(t.pago) || 0, pct = Number(t.valor) > 0 ? Math.min(100, Math.round((pago / Number(t.valor)) * 100)) : 0;
+    const prazo = prazoTexto(t), info = (r, v) => (v ? '<div class="fpd-info"><span>' + r + "</span><b>" + v + "</b></div>" : "");
+    const pedidosHtml = Object.entries(porPedido).map(([pid, itens]) => {
+      const p = S.pedidos[pid] || {};
+      const evento = p.data_evento ? dataBr(p.data_evento) + (p.data_evento_fim && p.data_evento_fim !== p.data_evento ? " a " + dataBr(p.data_evento_fim) : "") : "";
+      const dados = [p.tipo_evento && ["Evento", esc(p.tipo_evento)], evento && ["Data", evento], p.local_nome && ["Local", esc(p.local_nome)], p.data_entrega && ["Entrega", dataBr(p.data_entrega)], p.data_coleta && ["Coleta", dataBr(p.data_coleta)]].filter(Boolean);
+      return '<article class="fpd-pedido"><header><div><span class="fpd-selo">Pedido ' + esc(p.numero_pedido || "—") + "</span><strong>" + esc(p.cliente_nome || "Pedido") + "</strong></div>" +
+        '<a class="fpd-abrir" href="../Comercial/Pedidos/pedido.html?pedido=' + encodeURIComponent(pid) + '&modo=editar">Abrir pedido →</a></header>' +
+        (dados.length ? '<div class="fpd-ped-dados">' + dados.map(([a, b]) => "<div><span>" + a + "</span><b>" + b + "</b></div>").join("") + "</div>" : "") +
+        '<ul class="fpd-custos">' + itens.map((i) => "<li><span>" + esc(i.rot) + "</span><em>" + esc(i.desc || "") + "</em><b>" + brl(i.valor) + "</b></li>").join("") + "</ul></article>";
+    }).join("");
+    const fechHtml = fechs.map((f) => '<div class="fpd-fech"><span class="fpd-selo claro">' + (FECH_PREF[f.tipo] || "FC") + "-" + String(f.numero).padStart(4, "0") + "</span><div><b>" + esc(f.beneficiario) + "</b><small>Fechado" + (f.criado_por_nome ? " por " + esc(f.criado_por_nome) : "") + (f.criado_em ? " em " + dataBr(f.criado_em) : "") + (f.obs ? " · " + esc(f.obs) : "") + "</small></div><b>" + brl(f.total) + "</b></div>").join("");
+    const comp = compras[0];
+    const compraHtml = comp ? '<div class="fpd-fech"><span class="fpd-selo claro">PC-' + String(comp.numero).padStart(4, "0") + "</span><div><b>Pedido de compra</b><small>Situação: " + esc(comp.status || "-") + "</small></div></div>" : "";
+    const origemHtml = fechHtml + compraHtml + pedidosHtml;
+    const baixasHtml = baixas.length ? '<ul class="fpd-linha-tempo">' + baixas.map((b) => '<li class="' + (b.estornado_em ? "estornada" : "") + '"><i></i><div><b>' + brl(b.valor) + "</b> em " + dataBr(b.data) + "<small>" + esc(conta(b.conta_id)?.nome || "Sem conta") + " · " + esc({ manual: "Manual", gateway: "PIX do gateway", conciliacao: "Extrato do banco" }[b.origem] || b.origem || "") + (b.estornado_em ? " · estornada" : "") + "</small></div>" +
+      (b.estornado_em || b.origem === "conciliacao" ? "" : '<button type="button" class="fin-btn peq verm" data-estornar="' + b.id + '">Estornar</button>') + "</li>").join("") + "</ul>" : '<p class="fpd-vazio">Nenhum pagamento registrado. O pagamento é reconhecido pela conciliação em Bancos.</p>';
+    const corpo =
+      '<div class="fpd">' +
+      '<section class="fpd-topo"><div class="fpd-quem"><span class="fpd-origem">' + esc(ORIGEM_P[t.origem] || t.origem || "Lançamento") + "</span><h4>" + esc(t.fornecedor_nome || "Sem fornecedor") + "</h4><p>" + esc(t.descricao) + (t.parcelas > 1 ? " · parcela " + t.parcela + " de " + t.parcelas : "") + '</p><span class="fin-status ' + cls + '">' + esc(rot) + "</span></div>" +
+      '<div class="fpd-valor"><span>' + (aberto ? "Em aberto" : "Valor") + "</span><strong>" + brl(aberto ? t.aberto : t.valor) + "</strong><small>Vencimento " + dataBr(t.vencimento) + (prazo ? ' · <em class="' + (prazo.startsWith("vencido") ? "atraso" : "") + '">' + prazo + "</em>" : "") + "</small>" +
+      '<div class="fpd-barra" title="' + pct + '% pago"><i style="width:' + pct + '%"></i></div><small>' + brl(pago) + " pago de " + brl(t.valor) + "</small></div></section>" +
+      (bloqueado ? '<p class="fpd-alerta">Pagar somente depois da confirmação do serviço em Compras → Serviços.</p>' : "") +
+      (aguard ? '<p class="fpd-alerta amarelo">Esta conta precisa de aprovação antes de ser paga.</p>' : "") +
+      (t.aprovacao === "reprovada" ? '<p class="fpd-alerta">Reprovada' + (t.aprovacao_obs ? ": " + esc(t.aprovacao_obs) : "") + "</p>" : "") +
+      (origemHtml ? '<section class="fpd-bloco"><h5>De onde vem esta conta</h5>' + origemHtml + "</section>" : "") +
+      '<section class="fpd-bloco"><h5>Informações</h5><div class="fpd-grade">' +
+      info("Documento", esc(t.documento || "")) + info("Forma de pagamento", esc(t.forma || "")) + info("Conta que paga", esc(conta(t.conta_id)?.nome || "")) +
+      info("Categoria", esc(c?.nome || "")) + info("Centro de custo", esc(cc?.nome || "")) + info("Programado para", t.programado_para ? dataBr(t.programado_para) : "") +
+      info("Emissão", t.emissao ? dataBr(t.emissao) : "") + info("Competência", t.competencia ? dataBr(t.competencia) : "") +
+      info("Aprovação", t.requer_aprovacao ? ({ pendente: "Aguardando", aprovada: "Aprovada" + (t.aprovado_em ? " em " + dataBr(t.aprovado_em) : ""), reprovada: "Reprovada" }[t.aprovacao] || "") : "") +
+      info("Lançado em", t.created_at ? dataBr(t.created_at) : "") +
+      "</div>" + (t.codigo_barras ? '<div class="fpd-codigo"><span>Código de barras</span><code>' + esc(t.codigo_barras) + '</code><button type="button" class="fin-btn peq claro" data-copiar-cb>Copiar</button></div>' : "") +
+      (t.observacoes ? '<div class="fpd-obs"><span>Observações</span><p>' + esc(t.observacoes) + "</p></div>" : "") +
+      (t.cancelamento_motivo ? '<div class="fpd-obs"><span>Cancelamento</span><p>' + esc(t.cancelamento_motivo) + "</p></div>" : "") + "</section>" +
+      '<section class="fpd-bloco"><h5>Pagamentos</h5>' + baixasHtml + "</section></div>";
+    const botoes = [
+      t.origem !== "bv" && t.status !== "cancelado" && pago === 0 ? { rotulo: "Cancelar conta", classe: "verm", acao: () => cancelar("pagar", id) } : null,
+      aguard ? { rotulo: "Reprovar", classe: "verm", acao: () => { fecharModal(); aprovar(id, false); } } : null,
+      aguard ? { rotulo: "Aprovar", acao: () => { fecharModal(); aprovar(id, true); } } : null,
+      aberto && !aguard && !bloqueado && t.aprovacao !== "reprovada" ? { rotulo: "Programar pagamento", classe: "claro", acao: () => programar(id) } : null,
+      t.status !== "cancelado" ? { rotulo: "Editar", classe: "claro", acao: () => editarTitulo("pagar", id) } : null,
+      { rotulo: "Fechar", classe: "claro", acao: fecharModal }
+    ].filter(Boolean);
+    modal("Conta a pagar", corpo, botoes, (cx) => cx.addEventListener("click", async (e) => {
+      if (e.target.closest("[data-copiar-cb]")) { try { await navigator.clipboard.writeText(t.codigo_barras); avisar("Código copiado.", "Financeiro", "sucesso"); } catch (_) {} return; }
+      const b = e.target.closest("[data-estornar]"); if (!b) return;
+      const motivo = prompt("Motivo do estorno:"); if (!motivo) return;
+      await executar(() => rpc("fin_estornar_baixa", { p_empresa: S.emp, p_baixa: b.dataset.estornar, p_motivo: motivo }), "Baixa estornada.");
+    }));
+    $("finModal").classList.add("fin-modal-detalhe");
   }
   async function cancelar(tipo, id) {
     const motivo = prompt("Motivo do cancelamento:"); if (!motivo) return;
@@ -869,13 +956,15 @@
     $("finModalRodape").addEventListener("click", (e) => { const b = e.target.closest("[data-bt]"); if (!b) return; aoConfirmar?.[Number(b.dataset.bt)]?.acao(); });
     $("finModal").addEventListener("click", (e) => { if (e.target.closest("[data-fechar]")) fecharModal(); });
     $("finConteudo").addEventListener("click", async (e) => {
+      const linhaP = !e.target.closest("button, a, input, select, label") && e.target.closest("[data-p-linha]");
+      if (linhaP) { detalhesPagar(linhaP.dataset.pLinha); return; }
       const b = e.target.closest("button"); if (!b) return;
       const d = b.dataset;
       if (d.linkPag) { const p = S.pedidos[d.linkPag] || {}; window.EasyLocLinkPagamento?.abrir({ empresaId: S.emp, pedidoId: d.linkPag, numero: p.numero_pedido || "", cliente: p.cliente_nome || "", telefone: p.telefone || "" }); }
       else if (d.rEditar) editarTitulo("receber", d.rEditar);
       else if (d.rVer) detalhes("receber", d.rVer);
       else if (d.pEditar) editarTitulo("pagar", d.pEditar);
-      else if (d.pVer) detalhes("pagar", d.pVer);
+      else if (d.pVer) detalhesPagar(d.pVer);
       else if (d.pAprovar) aprovar(d.pAprovar, true);
       else if (d.pReprovar) aprovar(d.pReprovar, false);
       else if (d.pProgramar) programar(d.pProgramar);

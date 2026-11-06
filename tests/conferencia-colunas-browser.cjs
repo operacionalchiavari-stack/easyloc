@@ -17,6 +17,7 @@ const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('nod
    if(n==='logistica_montagem_registros')return {data:[{tipo:'montagem',registros:[{tipo:'conferencia_entrega',origem:'mobile',autor:'Ana',criado_em:new Date().toISOString()}]}]};
    return {data:[]};}};
  });
+ await page.addScriptTag({path:'js/core/alerta.js'});
  await page.addScriptTag({path:'Modulos/Logistica/EntregasColetas/montagem-registros.js'});
  await page.addScriptTag({path:'Modulos/Logistica/EntregasColetas/entregas-coletas.js'});
  await page.locator('[data-pedido=p1]').click();await page.locator('[name=entregue_local]').waitFor();
@@ -24,12 +25,12 @@ const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('nod
  assert.equal(await page.locator('.ec-historico').count(),0);
  assert.equal(await page.locator('.ec-fotos-item').isVisible(),false);
  await page.locator('[name=entregue_local]').fill('6');await page.locator('[name=desistencia]').fill('2');await page.locator('[name=danificado]').fill('2');await page.locator('[name=motivo]').selectOption('motivo');
- await page.locator('#ecForm [type=submit]').click();assert.match(await page.locator('#ecMensagem').innerText(),/foto/);assert.equal(await page.evaluate(()=>chamadas.filter(([n])=>n==='logistica_confirmacao_salvar').length),0);
+ await page.locator('#ecForm [type=submit]').click();assert.match(await page.locator('.el-alert-stack').innerText(),/foto/);assert.equal(await page.evaluate(()=>chamadas.filter(([n])=>n==='logistica_confirmacao_salvar').length),0);
  await page.locator('[data-evidencia]').setInputFiles({name:'foto.jpg',mimeType:'image/jpeg',buffer:Buffer.from('foto')});
  await page.waitForFunction(()=>document.querySelector('#ecForm')&&document.querySelector('[data-fotos-item]').hidden===false);
  await page.locator('#ecForm [type=submit]').click();await page.waitForFunction(()=>chamadas.some(([n])=>n==='logistica_confirmacao_salvar'));
  const enviado=await page.evaluate(()=>chamadas.find(([n])=>n==='logistica_confirmacao_salvar')[1].p_itens[0]);
- assert.equal(enviado.entregue_local,6);assert.equal(enviado.entregue,10);assert.equal(enviado.voltou_antes,4);assert.equal(enviado.desistencia,2);assert.equal(enviado.danificado,2);
+ assert.equal(enviado.entregue_local,6);assert.equal(enviado.entregue,6);assert.equal(enviado.voltou_antes,2);assert.equal(enviado.desistencia,2);assert.equal(enviado.danificado,2);
  await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=390));
  await page.screenshot({path:'.tmp/entrega-colunas-celular.png',fullPage:true});
  // Colunas da volta e foto opcional.

@@ -9,7 +9,7 @@ test('rotas e equipes: persistencia, consulta sem escrita e isolamento entre emp
  create function has_permission(e uuid,u uuid,k text) returns boolean language sql stable security definer as $$select exists(select 1 from acessos where empresa=e and usuario=u and (k like '%.visualizar' or editar))$$;
  insert into empresas values('11111111-1111-4111-8111-111111111111'),('22222222-2222-4222-8222-222222222222');
  insert into acessos values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111',true),('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','11111111-1111-4111-8111-111111111111',false),('cccccccc-cccc-4ccc-8ccc-cccccccccccc','22222222-2222-4222-8222-222222222222',true);`);
- await db.exec(fs.readFileSync('supabase/migrations/20261026000100_rotas_persistencia_supabase.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261026000101_rotas_persistencia_supabase.sql','utf8'));
  await db.exec(`set role authenticated;select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
  insert into logistica_rotas(empresa_id,id,dados) values('11111111-1111-4111-8111-111111111111','r1','{"name":"Rota"}');
  insert into logistica_equipes_rotas(empresa_id,rota_id,dados) values('11111111-1111-4111-8111-111111111111','r1','{"roles":[{"employeeId":"p1"}]}');`);

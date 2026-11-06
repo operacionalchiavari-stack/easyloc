@@ -70,7 +70,8 @@
             ],
           },
           { rotulo: "Pedidos e Orçamentos", href: "Modulos/Comercial/Pedidos/CentralPedidos.html" },
-          { rotulo: "Histórico", href: "Modulos/Comercial/Historico/historico.html" },
+          { rotulo: "Sublocações", href: "Modulos/Comercial/Terceirizacoes/terceirizacoes.html" }, // empresas e itens sublocados (nov/2026)
+          { rotulo: "Contas a receber", href: "Modulos/Comercial/ContasReceber/contas-receber.html" },
           { rotulo: "Produtividade", href: "Modulos/Comercial/Produtividade/produtividade.html" },
           { rotulo: "Cancelamentos", href: "Modulos/Comercial/Cancelamentos/cancelamentos.html" },
           {
@@ -131,17 +132,7 @@
           { rotulo: "Painel Logístico", href: "Modulos/Logistica/PainelLogistico/painel-logistico.html" },
           // Triagem era categoria própria; com o menu no topo foi para dentro de Logística (pedido do usuário).
           { rotulo: "Triagem", href: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html" },
-          {
-            // subcategoria: abre para a direita, igual Estoque > Cadastros
-            rotulo: "Fretes",
-            flyout: true,
-            grupo: [
-              { rotulo: "Cadastro de Fretes", href: "Modulos/Chiavari/Fretes/fretes.html" },
-              { rotulo: "Conciliação de Fretes", href: "Modulos/Chiavari/Fretes/conciliacao.html" },
-              { rotulo: "Freteiros", href: "Modulos/Chiavari/Fretes/freteiros.html" },
-              { rotulo: "Cadastro de Caminhões", href: "Modulos/Logistica/cadastro-caminhoes.html" },
-            ],
-          },
+          { rotulo: "Fretes", href: "Modulos/Chiavari/Fretes/gestao-fretes.html" },
           { rotulo: "Controle de Uber", href: "Modulos/Chiavari/Uber/index.html" },
           { rotulo: "Expedição", href: "Modulos/Logistica/Expedicao/expedicao.html" },
         ],
@@ -150,22 +141,15 @@
         id: "rh",
         icone: "users",
         rotulo: "Recursos Humanos",
-        itens: [
-          { rotulo: "Ideia Premiada", href: "Modulos/RH/IdeiaPremiada/ideia-premiada.html?aba=recebidas" },
-          { rotulo: "Gestão de Pessoas", href: "Modulos/RH/Pessoas/pessoas.html" },
-          { rotulo: "Cadastro de Funcionários", href: "Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html" },
-          { rotulo: "Controle RH", href: "Modulos/Chiavari/ControleRH/rh.html" },
-          { rotulo: "Equipe Free", href: "Modulos/Chiavari/Cronograma/equipe-free.html" },
-          { rotulo: "RH da Equipe Free", href: "Modulos/Chiavari/Cronograma/rh.html" },
-        ],
+        // Nov/2026: Cadastro de Funcionários, Controle RH, Ideia Premiada e Freelancer viraram abas dentro de Gestão de Pessoas;
+        // com um destino só, a categoria abre a tela direto (sem painel).
+        href: "Modulos/RH/Pessoas/pessoas.html",
       },
       {
         id: "financeiro",
         icone: "wallet",
         rotulo: "Financeiro",
-        itens: [
-          { rotulo: "Financeiro", href: "Modulos/Financeiro/financeiro.html" },
-        ],
+        href: "Modulos/Financeiro/financeiro.html",
       },
       {
         id: "gestao",
@@ -174,6 +158,7 @@
         itens: [
           // Fluxograma do sistema, aberto para toda a equipe (nov/2026).
           { rotulo: "Fluxo do sistema", href: "Modulos/Gestao/Fluxograma/fluxograma.html" },
+          { rotulo: "Histórico", href: "Modulos/Comercial/Historico/historico.html" },
           { rotulo: "Central de Metas", href: "Modulos/Chiavari/CentralMetas/central.html" },
           { rotulo: "Parâmetros", href: "Modulos/Configuracoes/Parametros/parametros.html" },
           // Era categoria própria; com o menu no topo foi para dentro de Gestão (pedido do usuário).

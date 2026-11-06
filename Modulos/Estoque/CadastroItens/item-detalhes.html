@@ -9,12 +9,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="item-detalhes.css?v=20261018-cinza">
+  <link rel="stylesheet" href="item-detalhes.css?v=20261103-cores-movimentacoes">
 </head>
 <body>
 <div class="item-detail-page el-page" data-module-root>
-  <header class="item-detail-top">
-    <div class="item-detail-heading-row">
+  <header class="item-detail-top" id="itemDetailHeader">
+    <div class="item-detail-heading-row" id="itemDetailHeadingRow">
       <button type="button" class="btn btn-secondary item-back-btn" id="btnVoltarItens">
         <i data-lucide="arrow-left"></i>
         Voltar
@@ -113,6 +113,7 @@
           <i data-lucide="layout-list"></i>
           Dados Gerais
         </button>
+        <button type="button" class="item-tab" data-item-tab="componentes" hidden><i data-lucide="layers"></i>Componentes</button>
         <button type="button" class="item-tab" data-item-tab="galeria">
           <i data-lucide="image"></i>
           Galeria
@@ -139,6 +140,7 @@
               <div class="item-tipo-toggle-row">
                 <button type="button" class="tipo-btn active" onclick="itens_setTipo('Item', this)">Item</button>
                 <button type="button" class="tipo-btn" onclick="itens_setTipo('Componente', this)">Componente</button>
+                <button type="button" class="tipo-btn" id="itemTipoKit" hidden disabled>Kit</button>
               </div>
             </div>
 
@@ -464,6 +466,14 @@
           </article>
         </section>
 
+        <section class="item-tab-panel" data-item-panel="componentes">
+          <article class="item-card">
+            <div class="item-componentes-cab"><h3>Componentes do kit</h3><span id="kitDetalheContagem" class="item-chip">0 componentes</span></div>
+            <div class="item-componentes-busca"><label class="el-field"><span>Adicionar componente</span><input class="el-input" id="kitDetalheBusca" type="search" autocomplete="off" placeholder="Pesquisar item ou componente" aria-controls="kitDetalheResultados" aria-expanded="false"></label><div id="kitDetalheResultados" class="item-componentes-resultados" hidden></div></div>
+            <div class="item-table-wrap"><table class="item-detail-table item-componentes-tabela"><thead><tr><th>Foto</th><th>Item / componente</th><th>Quantidade</th><th></th></tr></thead><tbody id="kitDetalheComponentes"><tr><td colspan="4">Carregando componentes...</td></tr></tbody></table></div>
+            <div class="item-componentes-totais" id="kitDetalheTotais"></div>
+          </article>
+        </section>
         <section class="item-tab-panel" data-item-panel="kits">
           <article class="item-card">
             <h3>Kits vinculados</h3>
@@ -486,10 +496,12 @@
         </section>
 
         <section class="item-tab-panel" data-item-panel="historico">
-          <article class="item-card item-empty-state">
-            <i data-lucide="history"></i>
-            <h3>Historico do item</h3>
-            <p>Area preparada para movimentacoes e auditoria do item.</p>
+          <article class="item-card">
+            <div class="item-componentes-cab"><h3>Hist&#243;rico de movimenta&#231;&#245;es</h3><button type="button" class="btn btn-secondary" id="itemHistoricoAtualizar">Atualizar</button></div>
+            <div id="itemHistoricoResumo" class="item-historico-resumo"></div>
+            <div id="itemHistoricoAviso" role="status"></div>
+            <div class="item-table-wrap"><table class="item-detail-table item-historico-tabela"><thead><tr><th>Data e hora</th><th>Movimenta&#231;&#227;o</th><th>Quantidade</th><th>Pedido / origem</th><th>Respons&#225;vel</th></tr></thead><tbody id="itemHistoricoLinhas"></tbody></table></div>
+            <button type="button" class="btn btn-secondary item-historico-mais" id="itemHistoricoMais" hidden>Carregar mais</button>
           </article>
         </section>
 
@@ -535,7 +547,7 @@
 <script src="../../../js/core/etiquetas.js?v=20261017-etiquetas"></script>
 <script src="../../../js/ui/complexidade-cadastros.js?v=20261031"></script>
 <script src="../../../js/ui/capas-cadastro.js?v=20261101-material-tipo"></script>
-<script type="module" src="item-detalhes.mjs?v=20261101-capas"></script>
+<script type="module" src="item-detalhes.mjs?v=20261103-cores-movimentacoes"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

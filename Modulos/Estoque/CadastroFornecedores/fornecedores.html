@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="fornecedores.css?v=20261029-portal">
+  <link rel="stylesheet" href="fornecedores.css?v=20261105-foto">
 </head>
 <body>
 <div class="container-fornecedores el-page">
@@ -68,6 +68,7 @@
       <option value="metal">Metal</option>
       <option value="tecidos">Tecidos</option>
       <option value="servicos">Serviços</option>
+      <option value="locacao_moveis">Locação de móveis</option>
     </select>
   </div>
 
@@ -150,7 +151,18 @@
               <option value="tecidos">Tecidos</option>
               <option value="servicos">Serviços</option>
               <option value="limpeza">Limpeza</option>
+              <option value="locacao_moveis">Locação de móveis</option>
             </select>
+          </div>
+
+          <!-- Foto (logo) do fornecedor; obrigatória em "Locação de móveis" (nov/2026) -->
+          <div class="field el-field forn-foto-campo" style="grid-column:span 5;">
+            <label>Foto / logo <span id="fFotoObrig" hidden>*</span></label>
+            <div class="forn-foto-linha">
+              <span class="forn-foto" id="fFotoPrev"></span>
+              <label class="btn secondary forn-foto-btn">Escolher foto<input type="file" accept="image/*" id="fFoto" hidden></label>
+              <button type="button" class="btn secondary forn-foto-btn" id="fFotoRemover" hidden>Remover</button>
+            </div>
           </div>
 
           <div class="field el-field" style="grid-column:span 3;">
@@ -286,7 +298,8 @@
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
-<script src="fornecedores.js?v=20261029-portal"></script>
+<script src="fornecedores.js?v=20261105-foto"></script>
+<script src="fornecedores-app.js?v=20261103"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

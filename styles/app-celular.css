@@ -1,0 +1,81 @@
+/* App de celular do sistema (nov/2026): faixa grafite com a logo em branco (como o login do sistema), móveis do
+   acervo flutuando no login e, depois de entrar, dois cartões grandes (Triagem e Montagem). */
+:root{ --ap-tinta:#2b2622; --ap-suave:#77716a; --ap-linha:#e6e1d8; --ap-dourado:#8b6a45; --ap-grafite:#5a5a55; --ap-fundo:#ffffff; color-scheme:light; }
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; min-height:100%; background:var(--ap-fundo); color:var(--ap-tinta); font:400 16px/1.45 Manrope,system-ui,sans-serif; }
+body{ min-height:100dvh; display:flex; flex-direction:column; }
+[hidden]{ display:none!important; }
+
+.ap-barra{ flex:none; display:flex; align-items:center; justify-content:center; height:calc(64px + env(safe-area-inset-top)); padding-top:env(safe-area-inset-top);
+  background:var(--ap-grafite); box-shadow:0 10px 30px -18px rgba(30,28,24,.55); position:sticky; top:0; z-index:5; }
+.ap-marca{ display:flex; align-items:center; justify-content:center; color:#fff; font:500 22px/1 "Cormorant Garamond",serif; letter-spacing:.18em; text-transform:uppercase; }
+.ap-logo{ display:block; height:38px; width:auto; max-width:200px; object-fit:contain; filter:brightness(0) invert(1); }
+.ap-logo.is-quadrada{ width:168px; height:46px; max-width:none; object-fit:cover; object-position:center 49%; }
+
+.ap-main{ flex:1; display:flex; flex-direction:column; min-height:0; }
+.ap-carregando{ flex:1; display:grid; place-items:center; }
+.ap-spinner{ width:34px; height:34px; border-radius:50%; border:3px solid var(--ap-linha); border-top-color:var(--ap-dourado); animation:apGira .8s linear infinite; }
+@keyframes apGira{ to{ transform:rotate(360deg); } }
+
+/* ---------- Login ---------- */
+.ap-login{ flex:1; display:flex; flex-direction:column; padding:0 24px calc(28px + env(safe-area-inset-bottom)); }
+.ap-vitrine{ position:relative; flex:1 1 auto; min-height:min(42dvh,360px); margin:0 -24px; overflow:hidden; pointer-events:none; }
+.ap-vitrine::after{ content:""; position:absolute; inset:auto 0 0 0; height:30%; background:linear-gradient(transparent,#fff); }
+.ap-peca{ position:absolute; opacity:0; transform:translateY(10px) scale(.98); transition:opacity 1.4s cubic-bezier(.22,1,.36,1), transform 2s cubic-bezier(.22,1,.36,1); transition-delay:var(--atraso,0ms); }
+.ap-peca.is-visivel{ opacity:1; transform:none; }
+.ap-peca img{ display:block; width:100%; height:auto; max-height:22dvh; object-fit:contain; mix-blend-mode:multiply; filter:brightness(1.06) contrast(1.03);
+  -webkit-mask-image:radial-gradient(ellipse 72% 72% at 50% 50%,#000 62%,transparent 100%); mask-image:radial-gradient(ellipse 72% 72% at 50% 50%,#000 62%,transparent 100%);
+  animation:apFlutua var(--flutua,10s) ease-in-out infinite alternate; }
+.ap-peca.is-fundo.is-visivel{ opacity:.38; }
+.ap-peca.is-fundo img{ filter:brightness(1.06) blur(2px); max-height:15dvh; }
+@keyframes apFlutua{ from{ translate:0 -6px; } to{ translate:0 7px; } }
+
+.ap-form{ flex:none; width:min(420px,100%); margin:0 auto; display:flex; flex-direction:column; gap:16px; animation:apEntra .9s cubic-bezier(.22,1,.36,1) both; }
+.ap-convite{ margin:0 0 4px; text-align:center; font:700 12px/1.2 Manrope,sans-serif; letter-spacing:.24em; text-transform:uppercase; color:var(--ap-dourado); }
+.ap-form label{ display:flex; flex-direction:column; gap:6px; font:700 11px/1.2 Manrope,sans-serif; letter-spacing:.16em; text-transform:uppercase; color:var(--ap-suave); }
+.ap-form input{ width:100%; height:48px; border:0; border-bottom:1.5px solid #cfc8bd; border-radius:0; background:transparent; padding:0 2px; color:var(--ap-tinta);
+  font:500 17px Manrope,sans-serif; letter-spacing:0; text-transform:none; outline:none; transition:border-color .2s; }
+.ap-form input:focus{ border-bottom-color:var(--ap-dourado); }
+.ap-form input:-webkit-autofill{ -webkit-box-shadow:0 0 0 40px #fff inset; -webkit-text-fill-color:var(--ap-tinta); }
+.ap-msg{ min-height:1.2em; margin:0; color:#b42318; font-size:14px; text-align:center; }
+.ap-botao{ display:flex; align-items:center; justify-content:center; gap:10px; height:54px; border:0; border-radius:999px; background:var(--ap-grafite); color:#fff;
+  font:700 16px Manrope,sans-serif; letter-spacing:.04em; cursor:pointer; box-shadow:0 12px 24px -14px rgba(30,28,24,.6); }
+.ap-botao:active{ transform:scale(.98); }
+.ap-botao:disabled{ opacity:.7; }
+.ap-botao svg,.ap-sair svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+@keyframes apEntra{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+
+/* ---------- Início ---------- */
+.ap-inicio{ flex:1; display:flex; flex-direction:column; padding:26px 20px calc(24px + env(safe-area-inset-bottom)); width:min(560px,100%); margin:0 auto; }
+.ap-ola{ display:flex; align-items:center; gap:14px; animation:apEntra .7s cubic-bezier(.22,1,.36,1) both; }
+.ap-avatar{ position:relative; flex:none; width:56px; height:56px; border-radius:50%; overflow:hidden; display:grid; place-items:center; background:#efe6d6; color:var(--ap-dourado); font:600 22px Manrope,sans-serif; box-shadow:0 0 0 3px #fff,0 0 0 4px #d9c9ab; }
+.ap-avatar img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.ap-ola small{ display:block; color:var(--ap-suave); font-size:13px; }
+.ap-ola h1{ margin:2px 0 0; font:500 32px/1.05 "Cormorant Garamond",serif; color:var(--ap-tinta); }
+.ap-titulo{ margin:30px 0 14px; font:700 12px/1.2 Manrope,sans-serif; letter-spacing:.2em; text-transform:uppercase; color:var(--ap-dourado); }
+.ap-modulos{ display:flex; flex-direction:column; gap:14px; }
+.ap-modulo{ display:flex; align-items:center; gap:16px; padding:22px 18px; border-radius:22px; background:#fff; color:var(--ap-tinta); text-decoration:none;
+  box-shadow:0 0 0 1px var(--ap-linha),0 14px 30px -20px rgba(40,30,15,.45); animation:apEntra .7s cubic-bezier(.22,1,.36,1) both calc(.12s + var(--i,0) * .1s); transition:transform .15s; }
+.ap-modulo:active{ transform:scale(.98); }
+.ap-modulo-icone{ flex:none; width:58px; height:58px; border-radius:18px; display:grid; place-items:center; background:linear-gradient(135deg,#f6efe2,#ead9bd); color:#7a5a32; }
+.ap-modulo-icone svg{ width:30px; height:30px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+.ap-modulo-texto{ flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.ap-modulo-titulo{ font:600 26px/1.05 "Cormorant Garamond",serif; }
+.ap-modulo-texto small{ color:var(--ap-suave); font-size:14px; line-height:1.35; }
+.ap-seta{ flex:none; font-size:30px; line-height:1; color:#b8a68a; }
+.ap-vazio{ margin:0; padding:22px; border-radius:18px; background:#faf7f1; color:var(--ap-suave); text-align:center; }
+.ap-rodape{ margin-top:auto; padding-top:32px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.ap-link{ border:0; background:none; padding:8px 0; color:var(--ap-suave); font:600 13px Manrope,sans-serif; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.ap-sair{ display:inline-flex; align-items:center; gap:8px; height:42px; padding:0 18px; border:0; border-radius:999px; background:#fdecea; color:#b42318; font:700 14px Manrope,sans-serif; cursor:pointer; }
+
+@media(prefers-reduced-motion:reduce){ .ap-peca,.ap-peca img,.ap-form,.ap-ola,.ap-modulo{ animation:none!important; transition:none!important; } }
+
+/* Login centralizado (nov/2026): o formulário no meio da tela e os móveis atrás, numa faixa em cima e outra embaixo. */
+.ap-login{position:relative;justify-content:center;align-items:center;padding:24px 28px calc(24px + env(safe-area-inset-bottom));overflow:hidden}
+.ap-vitrine{position:absolute;inset:0;margin:0;min-height:0}
+.ap-vitrine::after{content:"";position:absolute;inset:0;height:auto;background:radial-gradient(ellipse 78% 34% at 50% 50%,#fff 0%,rgba(255,255,255,.92) 55%,rgba(255,255,255,0) 100%)}
+.ap-peca img{max-height:17dvh}
+.ap-peca.is-fundo img{max-height:12dvh}
+.ap-form{position:relative;z-index:1;width:min(360px,100%)}
+.ap-form label{align-items:center;text-align:center}
+.ap-form input{text-align:center}

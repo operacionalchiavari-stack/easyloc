@@ -7233,3 +7233,11 @@ html:root:is(#pf3#pf3#pf3,html) .pedido-screen .pg-componente-card>.pg-grupo{bac
 .pg-condicao-catalogo b{display:block;font-size:15px;color:#1f2020}
 .pg-condicao-catalogo span{display:block;font-size:13px;color:#123f86}
 .pg-condicao-aplicar{border:0;border-radius:999px;background:#123f86;color:#fff;font-weight:700;padding:8px 16px;cursor:pointer}
+
+/* Pedido extra no principal (nov/2026): botão pequeno ao lado do nome do cliente, no lugar da faixa */
+html:is(#pedido-extra,html) .entrada-identidade h3{display:inline-block;vertical-align:middle}
+html:is(#pedido-extra,html) .pedido-extra-mini{display:inline-flex;align-items:center;gap:6px;margin-left:12px;vertical-align:middle}
+html:is(#pedido-extra,html) .pedido-extra-mini .pedido-extra-botao{height:28px;padding:0 12px;border:1px solid #123f86;border-radius:999px;background:#fff;color:#123f86;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+html:is(#pedido-extra,html) .pedido-extra-mini .pedido-extra-botao:hover{background:#eaf0fa}
+html:is(#pedido-extra,html) .pedido-extra-mini .pedido-extra-chip{height:24px;display:inline-flex;align-items:center;padding:0 9px;border:1px solid #c9d6ec;border-radius:999px;background:#fff;color:#123f86;font:600 11.5px Inter,system-ui,sans-serif;text-decoration:none}
+html:is(#pedido-extra,html) .entrada-identidade small{display:block}

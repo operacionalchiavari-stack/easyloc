@@ -17,6 +17,8 @@ test('entrega particiona saldo, exige foto e retorno registra avaria atomicament
  create function operacao_concluir_conferencia(p_pedido uuid,p_etapa text,p_aceitar_faltas boolean,p_quantidades jsonb,p_observacoes jsonb,p_primeira jsonb) returns jsonb language plpgsql as $f$declare r jsonb:=jsonb_build_object('concluido_em',now(),'itens','[]'::jsonb);begin update separacoes_pedidos set operacao=jsonb_set(operacao,'{retorno}',r) where id=p_pedido;update acervo_retornos set estado='triagem' where pedido_id=p_pedido and estado='aguardando_retorno';return r;end $f$;`);
  const avarias=fs.readFileSync('supabase/migrations/20261101000700_avarias_app_triagem_volta.sql','utf8');await db.exec(avarias.slice(avarias.indexOf('create or replace function public.operacao_avarias_pedido')));
  await db.exec(fs.readFileSync('supabase/migrations/20261103001100_conferencia_entrega_retorno_colunas.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261103001500_entrega_desistencia_sobreposicao.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261103001600_entrega_motivos_por_coluna.sql','utf8'));
  const base=async(etapa='entrega')=>(await db.query('select logistica_confirmacao_base($1,$2) b',[pedido,etapa])).rows[0].b;
  const motivo=(await db.query("select id from logistica_motivos where etapa='entrega' limit 1")).rows[0].id;
  const dados=[{chave,entregue_local:6,desistencia:2,danificado:2,retirado_lista:0,motivo_id:motivo}];
@@ -28,6 +30,29 @@ test('entrega particiona saldo, exige foto e retorno registra avaria atomicament
  assert.equal(Number((await db.query("select quantidade from acervo_retornos where tipo='avaria'")).rows[0].quantidade),2);
  assert.equal(Number((await db.query("select quantidade from acervo_retornos where tipo='revisao'")).rows[0].quantidade),2);
  assert.equal((await base('coleta')).itens[0].previsto,6,'somente os seis deixados no evento sao coletados');
+ // Novo significado: entrega inclui danos e desistencias podem abranger as mesmas unidades.
+ const nova=async(entregue,danificado,desistencia)=>{
+  const atual=await base();
+  return db.query('select logistica_confirmacao_salvar($1,$2,$3,$4,$5)',[pedido,'entrega',atual.token,[{chave,entregue_local:entregue,danificado,desistencia,retirado_lista:0,motivo_id:motivo,conferencia_versao:2}],'Supervisor']);
+ };
+ const motivoSeparado=await base();
+ await assert.rejects(db.query('select logistica_confirmacao_salvar($1,$2,$3,$4,$5)',[pedido,'entrega',motivoSeparado.token,[{chave,entregue_local:6,danificado:0,desistencia:2,retirado_lista:0,motivo_id:motivo,conferencia_versao:2,motivos:{desistencia:{id:motivo}}}],'Supervisor']),/motivo de entregue/);
+ await db.query('select logistica_confirmacao_salvar($1,$2,$3,$4,$5)',[pedido,'entrega',motivoSeparado.token,[{chave,entregue_local:6,danificado:0,desistencia:2,retirado_lista:0,motivo_id:motivo,conferencia_versao:2,motivos:{entregue:{id:motivo},desistencia:{id:motivo}}}],'Supervisor']);
+ const motivosSalvos=(await base()).atual.itens[0].motivos;
+ assert.equal(motivosSalvos.entregue.id,motivo);assert.equal(motivosSalvos.desistencia.id,motivo);
+ await nova(10,4,5);
+ assert.equal((await base()).atual.itens[0].entregue,10);
+ assert.equal((await base()).atual.itens[0].voltou_antes,5);
+ assert.equal((await base()).atual.itens[0].conferencia_versao,2);
+ assert.equal((await base('coleta')).itens[0].previsto,5,'cinco unidades permanecem no evento');
+ assert.equal(Number((await db.query("select sum(quantidade) n from acervo_retornos")).rows[0].n),5,'dano e desistencia nao duplicam retorno');
+ await assert.rejects(nova(3,4,0),/Quantidades/);
+ await db.exec('update pecas set esperado=8');
+ await nova(6,0,2);
+ assert.equal((await base()).atual.itens[0].voltou_antes,0,'desistencia de duas nao entregues nao cria retorno');
+ assert.equal((await base('coleta')).itens[0].previsto,6);
+ assert.equal((await db.query('select count(*) n from acervo_retornos')).rows[0].n,0);
+ await db.exec('update pecas set esperado=10');b=await base();await salvar();
  // Coleta precisa existir para registrar dano da volta; saldo em revisao simula a coleta real.
  await db.query("insert into logistica_confirmacoes(empresa_id,pedido_id,etapa,versao,criado_por,responsavel,itens) values($1,$2,'coleta',1,auth.uid(),'Supervisor','[]')",[empresa,pedido]);
  const confirmar=(q,danos)=>db.query("select operacao_concluir_retorno_avarias($1,'retorno',true,$2,'{}',null,$3,'{}') r",[pedido,{[chave]:q},{[chave]:danos}]);

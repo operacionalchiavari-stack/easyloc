@@ -7,6 +7,7 @@ const hoje = new Date().toISOString().slice(0, 10);
 const mock = `(() => {
   window.__gravados = [];
   const banco = {
+    ocorrenciasSeparacao: [{ id: "oc1", pedido_id: "p1", estado: "acervo" }, { id: "oc2", pedido_id: "p2", estado: "resolvida" }],
     separacoes_pedidos: [{ id: "p1", empresa_id: "e1", numero_pedido: "12", cliente_nome: "Lis", tipo_evento: "Casamento", local_nome: "Villa", status: "pendente", status_comercial: "aprovado", data_evento: "${hoje}", data_hora: "${hoje}T12:00:00" },
       { id: "p2", empresa_id: "e1", numero_pedido: "13", cliente_nome: "Ana", tipo_evento: "Feira", local_nome: "Expo", status: "separado", status_comercial: "aprovado", status_operacional: "carregado", data_evento: "${hoje}", data_coleta: "${hoje}", data_hora: "${hoje}T13:00:00", operacao: { carregamento: { concluido_em: "${hoje}T10:00:00Z", por: "Igor", faltando: [] } } }],
     separacoes_itens: [
@@ -131,6 +132,14 @@ const mock = `(() => {
   await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
   await page.waitForFunction(()=>document.querySelectorAll('#separacaoColunaDivergencias [data-pedido-id=pd]').length===0);
   console.log('ok 6b - divergencias ficam na Triagem ate o estoque finalizar a contagem');
+  assert.equal(await page.locator('#separacaoKanban [data-pedido-id=p1] .sep-problema-dot').count(),1,'pedido com problema aberto tem a bolinha');
+  assert.equal(await page.locator('#separacaoKanban [data-pedido-id=p1] .sep-problema-dot').evaluate(d=>getComputedStyle(d).backgroundColor),'rgb(230, 0, 18)');
+  assert.equal(await page.locator('#separacaoKanban [data-pedido-id=standby] .sep-problema-dot').count(),0,'sem problema, sem bolinha');
+  await page.waitForTimeout(100);
+  const sob=await page.locator('#separacaoKanban [data-pedido-id=p1]').first().evaluate(c=>{const d=c.querySelector('.sep-problema-dot').getBoundingClientRect(),f=c.querySelector('.decorador-card-foto').getBoundingClientRect();return {d:[d.left,d.top,d.right,d.bottom],f:[f.left,f.top,f.right,f.bottom]};});
+  assert.ok(sob.d[0]>=sob.f[0]&&sob.d[2]<=sob.f[2]+6&&sob.d[1]<=sob.f[1]+8&&sob.d[3]>=sob.f[1],'bolinha em cima da foto do decorador '+JSON.stringify(sob));
+  if(process.env.SHOT_DOT)await page.locator('#separacaoKanban [data-pedido-id=p1]').first().screenshot({path:process.env.SHOT_DOT});
+  console.log('ok 6c - bolinha vermelha no cartão do pedido com problema na separação');
   assert.ok(await page.locator('#separacaoColunaSeparados [data-pedido-id=standby]').count() >= 1,'separado e ainda não carregado fica em Concluídos');
   assert.equal(await page.locator('[data-pedido-id=assumido]').count(),0,'carregamento começou: sai da Triagem');
   assert.equal(await page.locator('[data-pedido-id=assumido]').count(),0);assert.equal(await page.locator('[data-pedido-id=revisao]').count(),0);

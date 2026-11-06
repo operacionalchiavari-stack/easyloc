@@ -14,10 +14,11 @@
   const quando = (v) => (v ? new Date(v).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "");
   const fone = (v) => { const d = String(v || "").replace(/\D/g, ""); return d.length === 11 ? "(" + d.slice(0, 2) + ") " + d.slice(2, 7) + "-" + d.slice(7) : d.length === 10 ? "(" + d.slice(0, 2) + ") " + d.slice(2, 6) + "-" + d.slice(6) : d; };
   const m3 = (v) => String(Number(v || 0)).replace(".", ",") + " m³";
+  const integrado = new URLSearchParams(location.search).get("integrado");
   const S = { sb: null, emp: null, aba: "cadastros", dados: { freteiros: [], anuncios: [] }, podeEditar: false };
   const SIT = { pendente: ["Em análise", "fr-st-pend"], aprovado: ["Aprovado", "fr-st-ok"], recusado: ["Recusado", "fr-st-nao"], bloqueado: ["Bloqueado", "fr-st-nao"] };
 
-  async function rpc(nome, args) { const { data, error } = await S.sb.rpc(nome, args); if (error) throw new Error(error.message || error); return data; }
+  async function rpc(nome, args) { if(window.FretesExemplos)return window.FretesExemplos.rpc(nome); const { data, error } = await S.sb.rpc(nome, args); if (error) throw new Error(error.message || error); return data; }
   const avisar = (m, tipo = "aviso") => (window.alerta ? window.alerta(m, "Freteiros", tipo) : alert(m));
 
   async function carregar() { S.dados = await rpc("frete_adm_lista", { p_empresa: S.emp }); pintar(); }
@@ -29,10 +30,12 @@
     $("frAbertos").textContent = abertos ? abertos + " sem freteiro" : "";
     document.querySelectorAll(".fr-abas [data-aba]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.aba === S.aba)));
     $("frConteudo").innerHTML = S.aba === "cadastros" ? cadastros() : fretes();
+    if (integrado === "fornecedores") requestAnimationFrame(() => window.parent.postMessage({tipo:"fretes-cadastros-altura",altura:document.documentElement.scrollHeight},location.origin));
   }
 
   function cadastros() {
-    const lista = S.dados.freteiros;
+    const lista = integrado === "fornecedores" ? S.dados.freteiros.filter(f => f.status === "pendente") : S.dados.freteiros;
+    if (!lista.length && integrado === "fornecedores") return '<div class="cf-vazio">Nenhum cadastro do app aguardando an&#225;lise.</div>';
     if (!lista.length) return '<div class="cf-vazio">Nenhum freteiro se cadastrou ainda. Passe o link do App do Freteiro para eles.</div>';
     return '<section class="cf-bloco"><div class="cf-rolar"><table class="cf-tabela fr-tabela"><thead><tr><th>Freteiro</th><th>Veículo</th><th class="num">Capacidade</th><th>Pix</th><th>Situação</th><th class="num">Fretes</th><th></th></tr></thead><tbody>' +
       lista.map((f) => {
@@ -86,14 +89,13 @@
   async function mudarStatus(id, status) {
     let motivo = null;
     if (status !== "aprovado") { motivo = await pedirMotivo(status === "recusado" ? "Recusar o cadastro" : "Bloquear o freteiro"); if (!motivo) return; }
-    try { S.dados = await rpc("frete_freteiro_status", { p_empresa: S.emp, p_freteiro: id, p_status: status, p_motivo: motivo }); pintar(); avisar(status === "aprovado" ? "Freteiro aprovado: ele já vê os fretes no app." : "Situação atualizada.", "sucesso"); }
+    try { S.dados = await rpc("frete_freteiro_status", { p_empresa: S.emp, p_freteiro: id, p_status: status, p_motivo: motivo }); pintar(); if (integrado === "fornecedores" && status === "aprovado") window.parent.postMessage({tipo:"fretes-cadastro-aprovado"},location.origin); avisar(status === "aprovado" ? "Freteiro aprovado: ele já vê os fretes no app." : "Situação atualizada.", "sucesso"); }
     catch (e) { avisar(e.message, "erro"); }
   }
 
   function ligar() {
     document.addEventListener("click", async (e) => {
       const aba = e.target.closest(".fr-abas [data-aba]"); if (aba) { S.aba = aba.dataset.aba; return pintar(); }
-      if (e.target.closest("#frAtualizar")) { try { await carregar(); } catch (er) { avisar(er.message, "erro"); } return; }
       const ap = e.target.closest("[data-aprovar]"); if (ap) return mudarStatus(ap.dataset.aprovar, "aprovado");
       const re = e.target.closest("[data-recusar]"); if (re) return mudarStatus(re.dataset.recusar, "recusado");
       const bl = e.target.closest("[data-bloquear]"); if (bl) return mudarStatus(bl.dataset.bloquear, "bloqueado");
@@ -107,10 +109,16 @@
   }
 
   async function iniciar() {
+    if(window.FretesExemplos){S.aba="fretes";S.podeEditar=false;document.querySelectorAll(".header-list,.fr-abas,.cf-barra>a").forEach(el=>el.style.setProperty("display","none","important"));ligar();await carregar();return;}
     const ctx = await window.aguardarContexto?.();
     S.sb = window.supabaseClient; S.emp = ctx?.empresa_id || window.__CONTEXT?.empresa_id;
     try { await window.EasyLocPermissions?.load?.(); S.podeEditar = window.EasyLocPermissions?.hasPermission ? !!window.EasyLocPermissions.hasPermission("logistica.planejamento.editar") : true; } catch (_) { S.podeEditar = true; }
     if (new URLSearchParams(location.search).get("aba") === "fretes") S.aba = "fretes";
+    if(integrado){
+      document.documentElement.classList.add('fr-integrado');
+      document.querySelectorAll('.header-list,.fr-abas,.cf-barra>a').forEach(el=>el.style.setProperty('display','none','important'));
+      const style=document.createElement('style');style.textContent='.fr-integrado .header-list,.fr-integrado .fr-abas,.fr-integrado .cf-barra>a{display:none!important}.fr-integrado .cf-page{padding:8px 12px!important}.fr-integrado .cf-barra{margin-bottom:6px}.fr-integrado .cf-vazio{padding:16px}.fr-integrado body{min-height:0!important}';document.head.append(style);
+    }
     ligar();
     try { await carregar(); } catch (e) { $("frConteudo").innerHTML = '<div class="cf-vazio">' + esc(e.message) + "</div>"; }
   }

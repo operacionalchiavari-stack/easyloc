@@ -181,6 +181,9 @@ function atualizarResumo() {
   // Serviços adicionais do pedido comercial (lista do catálogo, dados.servicos — out/2026).
   const projetoComercial = (window.__pedidoProjetoComercial || window.__PEDIDO_DADOS_ATUAL?.observacoes?.projeto_comercial)?.dados;
   for(const sv of (projetoComercial?.servicos || [])) servicos += (Number(sv.quantidade) || 0) * (Number(sv.valor) || 0);
+  // Itens terceirizados (sublocação de empresas parceiras, nov/2026): entram na locação, mas fora da base do BV.
+  let terceirizados = 0;
+  for(const t of (projetoComercial?.terceirizados || [])) terceirizados += (Number(t.quantidade) || 0) * (Number(t.valor) || 0);
   // Personalização escolhida nos itens (cartelas de tecido/tinta, out/2026): valor por unidade × quantidade da linha.
   for(const amb of (projetoComercial?.ambientes || [])) for(const linha of (amb.itens || [])){
     if(linha.personalizacao_id && Number(linha.personalizacao_valor) > 0) customizacoes += (Number(linha.quantidade) || 0) * Number(linha.personalizacao_valor);
@@ -218,7 +221,8 @@ function atualizarResumo() {
   set("resumoLocacaoDesconto", -descontoLocacao);
 
   set("resumoCustomizacoes", customizacoes);
-  set("resumoSubtotal", locacaoFinal + customizacoes);
+  set("resumoTerceirizados", terceirizados);
+  set("resumoSubtotal", locacaoFinal + customizacoes + terceirizados);
 
   set("resumoFreteBruto", freteFinal);
   set("resumoFreteDesconto", -freteDesconto);
@@ -237,6 +241,7 @@ function atualizarResumo() {
   const total =
     locacaoFinal +
     customizacoes +
+    terceirizados +
     freteFinal +
     montagemFinal +
     servicos;
@@ -250,7 +255,7 @@ window.__TOTAL_PEDIDO = totalFinalPedido;
 // Os três valores do pedido, separados, para o financeiro dividir as contas a receber (out/2026).
 // Customizações e serviços adicionais entram na locação.
 window.__PEDIDO_VALORES = {
-  locacao: Math.max(locacaoFinal + customizacoes + servicos, 0),
+  locacao: Math.max(locacaoFinal + customizacoes + servicos + terceirizados, 0),
   locacao_bv: Math.max(locacaoFinal, 0),
   frete: Math.max(freteFinal, 0),
   montagem: Math.max(montagemFinal, 0),
@@ -753,7 +758,7 @@ function calcularVolumeTotalPedido(){
     try{ const temItens=(snapshot?.dados?.ambientes||[]).some(a=>(a.itens||[]).length); if((window.__pedidoProjetoComercial||temItens) && JSON.stringify(window.__pedidoProjetoComercial?.dados||null)!==JSON.stringify(snapshot?.dados||null)) window.__pedidoHouveEdicao?.(); }catch{}
     sincronizacao=sincronizacao.catch(()=>{}).then(async()=>{
       const d=snapshot?.dados||{};
-      const assinatura=JSON.stringify([(d.ambientes||[]).map(a=>(a.itens||[]).map(i=>[i.item_id,i.quantidade,i.personalizacao_id||'',i.personalizacao_valor||0])),d.servicos||[]]);
+      const assinatura=JSON.stringify([(d.ambientes||[]).map(a=>(a.itens||[]).map(i=>[i.item_id,i.quantidade,i.personalizacao_id||'',i.personalizacao_valor||0])),d.servicos||[],d.terceirizados||[]]);
       const linhasAtuais=Array.from(tbody.querySelectorAll('tr.item-row')).filter(tr=>tr.dataset.itemId).length;
       if(assinatura===assinaturaAplicada && linhasAtuais){window.__pedidoProjetoComercial=snapshot;return;}
       let mudou=false;

@@ -136,6 +136,7 @@ function Itens_popularCategorias(lista){
 ===================================================== */
 
 window.itens_salvar = async function(){
+const cadastroKit=document.querySelector(".item-tipo-toggle-row .tipo-btn.active")?.textContent.trim()==="Kit";
 
 /* =====================================================
    PEGAR CAMPOS
@@ -163,37 +164,37 @@ if(!produto){
   return false;
 }
 
-if(!material){
+if((!material)&&!cadastroKit){
   alerta("Informe o material.");
   return false;
 }
 
-if(!cor){
+if((!cor)&&!cadastroKit){
   alerta("Informe a cor.");
   return false;
 }
 
-if(!largura || !altura || !profundidade){
+if((!largura || !altura || !profundidade)&&!cadastroKit){
   alerta("Informe todas as dimensões.");
   return false;
 }
 
-if(!categoria){
+if((!categoria)&&!cadastroKit){
   alerta("Informe a categoria.");
   return false;
 }
 
-if(!setor){
+if((!setor)&&!cadastroKit){
   alerta("Informe o setor de estoque.");
   return false;
 }
 
-if(!valorLocacao){
+if((!valorLocacao)&&!cadastroKit){
   alerta("Informe o valor de locação.");
   return false;
 }
 
-if(!valorReposicao){
+if((!valorReposicao)&&!cadastroKit){
   alerta("Informe o valor de reposição.");
   return false;
 }

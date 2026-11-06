@@ -125,7 +125,7 @@ const mockSupabase = `
   assert.deepStrictEqual(tela.projeto, ["Lounge", "Bar"], "ambientes vão para o catálogo do pedido");
 
   // A trilha comercial separa as duas etapas das ferramentas de criação.
-  assert.deepStrictEqual((await page.locator('.ct-ferramentas button').allTextContents()).map(t=>t.replace('F2','').trim()), ['3D','Sublocação']);
+  assert.deepStrictEqual((await page.locator('.ct-ferramentas button').allTextContents()).map(t=>t.replace('F2','').trim()), ['3D'] /* Sublocação foi para a Lista Completa (03/11) */);
   // Dados obrigatórios (out/2026): sem a data de entrega, não abre a lista/catálogo e marca o campo.
   const entregaOriginal = await page.inputValue("#dataEntrega");
   await page.fill("#dataEntrega", "");

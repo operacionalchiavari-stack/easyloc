@@ -3,18 +3,19 @@ const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:
  const browser=await chromium.launch({channel:'msedge',headless:true});try{
  const page=await browser.newPage({viewport:{width:1280,height:900}}),erros=[];page.on('pageerror',e=>erros.push(e.message));
  await page.route('https://foto.teste/**',r=>r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#b8cddd"/></svg>'}));
- await page.setContent('<html lang="pt-BR"><body><main id="painel"></main></body></html>');
+ await page.setContent('<html lang="pt-BR"><body><section id="painel"></section></body></html>');
  await page.addStyleTag({content:fs.readFileSync('styles/separacao-ocorrencias.css','utf8')});
  await page.addScriptTag({content:fs.readFileSync('js/ui/separacao-ocorrencias.js','utf8')});
  await page.evaluate(()=>{
   window.__lista=[];window.__motivos=[{id:'m1',nome:'Dano cadastrado em Parâmetros'},{id:'m2',nome:'Falta de componente'}];window.__chamadas=[];
-  window.__sb={from:()=>{const q={select:()=>q,eq:()=>q,order:async()=>({data:window.__motivos,error:null})};return q;},rpc:async(n,a)=>{
+  window.__sb={storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:'https://foto.teste/ana.jpg'}}),createSignedUrl:async()=>({data:{signedUrl:'https://foto.teste/avaria.jpg'}})})},from:()=>{const q={select:()=>q,eq:()=>q,order:async()=>({data:window.__motivos,error:null})};return q;},rpc:async(n,a)=>{
    window.__chamadas.push({n,a});
    if(n==='separacao_ocorrencias_listar')return {data:window.__lista};
    if(n==='separacao_ocorrencia_criar'){
     window.__lista.push({id:'o1',pedido_numero:'8',cliente:'Kelly',item_id:'i1',item_nome:'Torre Bar',item_foto:'https://foto.teste/torre.png',codigo:'TORRE',motivo_nome:window.__motivos.find(m=>m.id===a.p_motivo).nome,estado:'acervo',quantidade:a.p_quantidade,observacao:a.p_observacao,historico:[{acao:'reportar',em:new Date().toISOString(),texto:a.p_observacao}]});return {data:'o1'};
    }
    if(n==='separacao_ocorrencia_acao'){const o=window.__lista.find(o=>o.id===a.p_id);const anterior=o.estado;o.estado=a.p_acao;o.historico.push({anterior,acao:a.p_acao,em:new Date().toISOString(),texto:a.p_texto});return {data:null};}
+   if(n==='separacao_ocorrencia_mensagem'){window.__lista.find(o=>o.id===a.p_id).historico.push({acao:'mensagem',equipe:'Triagem',por:'u1',nome:'Ana Triagem',texto:a.p_texto,em:new Date().toISOString()});return {data:null};}
    throw Error(n);
   }};
   window.__op={sb:window.__sb,empresa:'e1',pedido:'p1',linha:'l1',item:'i1',nome:'Torre Bar',quantidade:3};
@@ -55,8 +56,38 @@ const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:
  await montar('comercial');assert.match(await page.locator('#painel').innerText(),/Verificar troca ou sublocação/);
  await page.click('[data-so-acao=triagem]');await page.fill('textarea','Cliente aprovou substituição. Peça disponível para receber.');await page.click('dialog [type=submit]');await page.waitForFunction(()=>!document.querySelector('dialog'));
  await montar('triagem');assert.equal(await page.locator('.so-estado[data-estado=triagem]').count(),1);
- await page.evaluate(async()=>{const host=document.createElement('div');host.id='teste-sinalizar';host.innerHTML='<span data-so-item="i1"></span>';document.body.append(host);await window.SeparacaoOcorrencias.sinalizar({sb:window.__sb,empresa:'e1',pedido:'p1',host});});
- assert.equal(await page.locator('#teste-sinalizar [data-so-item]').innerText(),'');
+ await page.evaluate(()=>{window.__lista[0].quantidade_pedido=3;window.__lista[0].foto_path='e1/avaria.jpg';window.__lista[0].cliente_foto='https://foto.teste/kelly.jpg';window.SeparacaoOcorrencias.abrirPainel({sb:window.__sb,empresa:'e1',fila:'triagem',pedido:'p1'});});
+ await page.locator('.so-avaria img').waitFor();
+ // Uma foto de celular em resolução alta deve caber sem aumentar o modal.
+ await page.locator('.so-avaria img').evaluate(async img=>{img.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="3024" height="4032"><rect width="3024" height="4032" fill="#b8cddd"/></svg>');await img.decode();});
+ await page.setViewportSize({width:1482,height:798});
+ assert.ok(await page.locator('dialog').evaluate(d=>d.scrollWidth<=d.clientWidth&&d.scrollHeight<=d.clientHeight),'foto grande não cria barras no modal');
+ assert.ok(await page.locator('.so-avaria').evaluate(el=>{const img=el.querySelector('img').getBoundingClientRect(),box=el.getBoundingClientRect();return img.width<=box.width&&img.height<=box.height&&getComputedStyle(el.querySelector('img')).objectFit==='contain';}));
+ await page.locator('.so-avaria button').click();
+ assert.equal(await page.locator('dialog .so-foto').count(),1);
+ await page.locator('dialog').last().locator('[data-fechar]').click();
+ await page.setViewportSize({width:1280,height:900});
+ assert.equal(await page.locator('dialog .so-table').count(),0);
+ assert.match(await page.locator('dialog>header').innerText(),/Torre Bar/);
+ assert.doesNotMatch(await page.locator('dialog>header').innerText(),/Pedido 8|Kelly/);
+ assert.equal(await page.locator('dialog>header .so-item-foto img').getAttribute('src'),'https://foto.teste/torre.png');
+ assert.equal(await page.locator('.so-quantidade-avaria strong').innerText(),'2');
+ assert.equal(await page.locator('.so-quantidade-card strong').first().innerText(),'3');
+ assert.doesNotMatch(await page.locator('dialog').innerText(),/Conversa da ocorrência|Ocorrências da separação/);
+ assert.equal(await page.locator('.so-chat-topo .so-estado').count(),1);
+ const layout=await page.locator('.so-detalhe').evaluate(el=>{const a=el.children[0].getBoundingClientRect(),b=el.children[1].getBoundingClientRect();return {esquerda:a.x< b.x,alinhadas:a.y===b.y};});assert.deepEqual(layout,{esquerda:true,alinhadas:true});
+ await page.fill('.so-chat-form textarea','Consegue conferir novamente? <script>erro()</script>');await page.click('.so-chat-form [type=submit]');
+ await page.locator('.so-mensagem-autor strong').filter({hasText:'Ana Triagem'}).waitFor();
+ assert.equal(await page.locator('.so-chat .so-avatar img').count(),1);assert.equal(await page.locator('.so-chat script').count(),0);
+ assert.match(await page.locator('.so-chat-mensagens').innerText(),/Consegue conferir novamente/);
+ await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ fs.mkdirSync('.tmp',{recursive:true});await page.screenshot({path:path.resolve('.tmp/ocorrencias-chat-celular.png'),fullPage:true});
+ await page.setViewportSize({width:1280,height:900});await page.screenshot({path:path.resolve('.tmp/ocorrencias-chat-desktop.png')});await page.locator('dialog [data-fechar]').click();
+ await page.evaluate(async()=>{const host=document.createElement('div');host.id='teste-sinalizar';host.innerHTML='<div class="so-item-acoes"><button data-ver-ocorrencias="x" class="so-acompanhar" hidden>Acompanhar problema</button><span data-so-item="i1"></span></div><div class="so-item-acoes"><button data-ver-ocorrencias="y" class="so-acompanhar" hidden>Acompanhar problema</button><span data-so-item="outro"></span></div>';document.body.append(host);await window.SeparacaoOcorrencias.sinalizar({sb:window.__sb,empresa:'e1',pedido:'p1',host});});
+ assert.equal(await page.locator('#teste-sinalizar [data-so-item=i1]').innerText(),'');
+ assert.ok(await page.locator('#teste-sinalizar [data-ver-ocorrencias=x]').isVisible(),'item com problema aberto mostra Acompanhar problema');
+ assert.equal(await page.locator('#teste-sinalizar [data-ver-ocorrencias=x]').evaluate(b=>b.classList.contains('is-ativo')),true);
+ assert.ok(await page.locator('#teste-sinalizar [data-ver-ocorrencias=y]').isHidden(),'item sem problema não mostra o botão');
  await page.locator('#teste-sinalizar').evaluate(el=>el.remove());
  assert.match(await page.locator('.so-resposta-col').innerText(),/Não é possível reparar a tempo/);
  assert.doesNotMatch(await page.locator('.so-problema-col').innerText(),/Não é possível reparar a tempo/);
@@ -76,6 +107,40 @@ const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.equal(await page.locator('.so-table .so-item-foto img').count(),1);
  assert.deepEqual(erros,[]);fs.mkdirSync('.tmp',{recursive:true});await page.screenshot({path:path.resolve('.tmp/ocorrencias-separacao.png'),fullPage:true});
- console.log('OK: tipos parametrizados, reporte, Acervo, Comercial, confirmação na Triagem, segurança de texto e celular.');
+ await page.setViewportSize({width:1440,height:960});
+ await page.evaluate(()=>{const host=document.querySelector('#painel'),pagina=document.createElement('main');pagina.className='container el-page';const cabecalho=document.createElement('div');cabecalho.className='ac-cabecalho';cabecalho.innerHTML='<h2>Gestao do acervo</h2><nav class="fin-abas" style="display:flex;gap:12px;padding:12px 0;margin-bottom:20px">Ocorrencias da separacao</nav>';host.before(pagina);pagina.append(cabecalho,host);});
+ await page.evaluate(async()=>{const o={...window.__lista[0],pedido_hora_entrega:'08:00',pedido_local:'Vale dos Desejos'};window.__lista=[{...o,id:'a1',pedido_id:'p1',estado:'acervo'},{...o,id:'a2',pedido_id:'p2',pedido_numero:'9',estado:'acervo',item_nome:'Estante Solar'}];await window.SeparacaoOcorrencias.painel({host:document.querySelector('#painel'),sb:window.__sb,empresa:'e1',fila:'acervo',layout:'pedidos'});});
+ assert.equal(await page.locator('.so-table').count(),0);assert.equal(await page.locator('.so-painel-topo').count(),0);
+ assert.equal(await page.locator('[data-so-pedido]').count(),2);
+ assert.match(await page.locator('[data-so-pedido=p1]').innerText(),/08:00[\s\S]*Entrega[\s\S]*Pedido #8[\s\S]*Kelly[\s\S]*Vale dos Desejos/);
+ assert.equal(await page.locator('[data-so-pedido=p1] .so-pedido-avatar img').count(),1);
+ assert.equal(await page.locator('.so-inline-conversa>header').count(),0);
+ assert.equal(await page.locator('.so-inline-conversa [data-foto-item]').count(),0);
+ await page.click('[data-so-pedido=p2]');await page.locator('.so-inline-conversa [data-ocorrencia=a2]').waitFor();
+ await page.fill('.so-chat-form textarea','Pode verificar a avaria deste pedido?');await page.click('.so-chat-form [type=submit]');
+ await page.waitForFunction(()=>document.querySelector('.so-chat-mensagens')?.textContent.includes('Pode verificar a avaria deste pedido?'));
+ assert.equal(await page.locator('[data-so-pedido=p2]').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('dialog').count(),0);
+ const colunasPainel=await page.locator('.so-pedidos').evaluate(el=>Array.from(el.children).map(c=>c.getBoundingClientRect()));
+ assert.equal(colunasPainel.length,3);assert.ok(Math.abs(colunasPainel[2].y-colunasPainel[0].y)<2);assert.ok(colunasPainel[0].x<colunasPainel[1].x&&colunasPainel[1].x<colunasPainel[2].x);
+ assert.equal(await page.locator('.so-produtos-lista .so-quantidades').count(),1);
+ assert.equal(await page.locator('.so-inline-conversa .so-quantidades').count(),0);
+ await page.evaluate(async()=>{window.__lista.push({...window.__lista[1],id:'a3',item_id:'i3',item_nome:'Mesa Solar (L) 0.70 m (A) 0.62 m',quantidade:1});await window.SeparacaoOcorrencias.painel({host:document.querySelector('#painel'),sb:window.__sb,empresa:'e1',fila:'acervo',layout:'pedidos'});});
+ assert.equal(await page.locator('[data-so-produto]').count(),2);
+ await page.click('[data-so-produto=a3]');await page.locator('.so-inline-conversa [data-ocorrencia=a3]').waitFor();
+ assert.equal(await page.locator('[data-so-produto=a3]').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('[data-so-produto=a3] .so-produto-nome').innerText(),'Mesa Solar');
+ assert.match(await page.locator('[data-so-produto=a3] .so-produto-medidas').innerText(),/0.70 m/);
+ assert.equal(await page.locator('[data-so-produto=a3] .so-item-foto img').count(),1);
+ assert.equal(await page.locator('.so-produtos-lista .so-quantidade-card small,.so-produto-codigo').count(),0);
+ await page.locator('.so-inline-conversa .so-chat-anexos img').first().waitFor();
+ assert.equal(await page.locator('.so-inline-conversa .so-detalhe-item').count(),0);
+ assert.equal(await page.locator('.so-chat-anexos img').count(),1);
+ assert.equal(await page.locator('.so-chat-anexos').evaluate(el=>!!el.closest('.so-mensagem .so-balao')),true);
+ await page.locator('.so-chat-anexos [data-chat-foto]').last().click();assert.ok(await page.locator('.so-foto').isVisible());assert.equal(await page.locator('.so-foto').getAttribute('src'),'https://foto.teste/avaria.jpg');await page.click('dialog [data-fechar]');
+ await page.screenshot({path:path.resolve('.tmp/ocorrencias-acervo-pedidos.png'),fullPage:true});
+ await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ assert.deepEqual(erros,[]);
+ console.log('OK: reporte, encaminhamento, conversa no modal e painel por pedido, fotos, permissões e celular.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

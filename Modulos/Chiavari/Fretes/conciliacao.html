@@ -8,7 +8,7 @@
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="conciliacao.css?v=20261029-banco">
+  <link rel="stylesheet" href="conciliacao.css?v=20261104-envio">
 </head>
 <body>
 <!-- Conciliação de Fretes (out/2026, no banco): compara o que o SISTEMA registrou (cada caminhão escalado no Painel
@@ -24,8 +24,8 @@
     <label>Transportadora<select id="cfTransp"><option value="">Todas</option></select></label>
     <label>Mostrar<select id="cfSituacao"><option value="aberto">Em aberto</option><option value="fechado">Fechadas</option></select></label>
     <label class="cf-busca">Buscar<input id="cfBusca" type="search" placeholder="Pedido, cliente ou caminhão" autocomplete="off"></label>
+    <label class="cf-agrupar">Agrupar por<select id="cfAgrupar"><option value="eventos">Evento</option><option value="pessoas">Pessoa</option><option value="dias">Dia</option></select></label>
     <span class="cf-esp"></span>
-    <button type="button" class="btn" id="cfAtualizar">Atualizar</button>
   </div>
   <p class="cf-aviso" id="cfAvisoForn" hidden></p>
 
@@ -43,7 +43,8 @@
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script src="conciliacao.js?v=20261029-banco"></script>
+<script src="fretes-exemplos.js?v=20261104-envio"></script>
+<script src="conciliacao.js?v=20261104-envio2"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

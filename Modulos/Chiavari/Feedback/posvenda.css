@@ -68,3 +68,11 @@ html:root:is(#pv-t#pv-t#pv-t#pv-t#pv-t,html) .pv-tabela td{padding:10px 12px;bor
 .pv-resp dd.ruim{color:#b42318}
 .pv-obs{margin:10px 0 0;padding:8px 12px;border-left:3px solid #dfe4ea;color:#4f4f4f;font-size:14px}
 .pv-eventos{margin:0 0 6px;padding:0 0 0 18px;font-size:14px}
+
+/* Nov/2026 (pedido do usuário): "Pós-venda" no centro exato da tela, abas à esquerda e a busca à direita. */
+@media (min-width:1100px){
+  html:root:is(#pv-centro#pv-centro#pv-centro#pv-centro,html) body .pv-page > .header-list.pv-topo{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:end!important}
+  html:root:is(#pv-centro#pv-centro#pv-centro#pv-centro,html) body .pv-page > .header-list.pv-topo > h1:first-child{grid-column:2!important;grid-row:1!important;text-align:center!important}
+  html:root:is(#pv-centro#pv-centro#pv-centro#pv-centro,html) body .pv-page > .header-list.pv-topo > .pv-abas{grid-column:1!important;grid-row:1!important;justify-self:start!important}
+  html:root:is(#pv-centro#pv-centro#pv-centro#pv-centro,html) body .pv-page > .header-list.pv-topo > .pv-busca{grid-column:3!important;grid-row:1!important;justify-self:end!important}
+}

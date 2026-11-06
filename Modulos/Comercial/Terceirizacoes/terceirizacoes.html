@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Sublocações</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
+  <link rel="stylesheet" href="terceirizacoes.css?v=20261105-sublocacoes">
+</head>
+<body>
+<!-- Sublocações (nov/2026; módulo criado como "Terceirizações"): empresas que alugam itens para nós (fornecedores marcados como terceirização) e os itens
+     de cada uma. No pedido, "Sublocação" busca esses itens. -->
+<div class="container el-page tz-page" id="tzPage">
+  <div class="header-list" id="tzCabecalho">
+    <h2>Sublocações</h2>
+    <input type="search" id="tzBusca" placeholder="Pesquisar item" autocomplete="off" data-lpignore="true">
+    <div class="tz-topo-acoes">
+      <button type="button" class="btn primary" id="tzNovaEmpresa">+ Empresa</button>
+      <button type="button" class="btn primary" id="tzNovoItem" disabled>+ Item</button>
+    </div>
+  </div>
+  <div class="tz-layout">
+    <aside class="tz-empresas" aria-label="Empresas de sublocação">
+      <div class="tz-empresas-topo">
+        <h3>Empresas</h3>
+      </div>
+      <div id="tzListaEmpresas"><p class="tz-vazio">Carregando…</p></div>
+    </aside>
+    <main class="tz-itens" aria-live="polite">
+      <div class="tz-itens-topo">
+        <div class="tz-empresa-cab"><div id="tzEmpresaFoto" class="tz-empresa-foto" hidden></div><div><h3 id="tzEmpresaNome">Itens</h3><p id="tzEmpresaSub" class="tz-sub"></p></div></div>
+      </div>
+      <div id="tzListaItens"><p class="tz-vazio">Escolha uma empresa ao lado.</p></div>
+    </main>
+  </div>
+
+</div>
+
+<dialog class="tz-dialog" id="tzDialog">
+  <form method="dialog" id="tzForm">
+    <header><h2 id="tzDialogTitulo">Item</h2><button type="button" data-fechar aria-label="Fechar">×</button></header>
+    <div class="tz-dialog-corpo" id="tzDialogCorpo"></div>
+    <p class="tz-erro" id="tzErro" role="status"></p>
+    <footer id="tzDialogRodape"></footer>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261105-terceirizacoes"></script>
+<script src="terceirizacoes.js?v=20261105-item-pagina"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+</body>
+</html>

@@ -208,7 +208,7 @@ function renderizarTabela(lista) {
       <td>${esc(f.telefone || "-")}</td>
       <td>${esc(f.email || "-")}</td>
       <td><span class="badge tipo">${esc(f.tipo || "-")}</span></td>
-      <td><span class="badge categoria">${esc(f.categoria || "-")}</span></td>
+      <td><span class="badge categoria">${esc(f.categoria === "locacao_moveis" ? "Locação de móveis" : (f.categoria || "-"))}</span></td>
       <td>
         <span class="badge ${esc(f.status || "")}">
           ${f.status === "ativo" ? "Ativo" : "Inativo"}
@@ -306,8 +306,58 @@ function limparFormulario() {
     .forEach(t => t.classList.remove("selected"));
 
   document.getElementById("fStatus").value = "ativo";
+  fotoForn.arquivo = null; fotoForn.removida = false; pintarFotoFornecedor(null);
   const ativo = document.getElementById("fPortalAtivo"); if (ativo) ativo.checked = true;
   pintarLinkPortal("");
+}
+
+/* Foto (logo) do fornecedor (nov/2026): bucket itens, pasta <empresa>/fornecedores/. Obrigatória em Locação de móveis. */
+const fotoForn = { arquivo: null, removida: false };
+function pintarFotoFornecedor(url) {
+  const prev = document.getElementById("fFotoPrev");
+  if (!prev) return;
+  const nome = (document.getElementById("fFantasia")?.value || document.getElementById("fNome")?.value || "").trim();
+  const ini = nome.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
+  prev.innerHTML = esc(ini) + (url ? '<img src="' + esc(url) + '" alt="">' : "");
+  document.getElementById("fFotoRemover").hidden = !url;
+  const obrig = document.getElementById("fCategoria")?.value === "locacao_moveis";
+  document.getElementById("fFotoObrig").hidden = !obrig;
+}
+document.getElementById("fFoto")?.addEventListener("change", (e) => {
+  const f = e.target.files?.[0]; if (!f) return;
+  if (!/^image\//.test(f.type) || f.size > 15 * 1024 * 1024) { mostrarAlerta("Escolha uma imagem de até 15 MB."); e.target.value = ""; return; }
+  fotoForn.arquivo = f; fotoForn.removida = false; pintarFotoFornecedor(URL.createObjectURL(f));
+});
+document.getElementById("fFotoRemover")?.addEventListener("click", () => {
+  fotoForn.arquivo = null; fotoForn.removida = true; document.getElementById("fFoto").value = ""; pintarFotoFornecedor(null);
+});
+document.getElementById("fCategoria")?.addEventListener("change", () => {
+  const atual = fotoForn.arquivo ? URL.createObjectURL(fotoForn.arquivo) : (fotoForn.removida ? null : fornecedorSelecionado?.foto_url || null);
+  pintarFotoFornecedor(atual);
+});
+async function salvarFotoFornecedor(id, anterior) {
+  try {
+    if (fotoForn.arquivo) {
+      const f = fotoForn.arquivo;
+      const ext = (f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const path = empresaId + "/fornecedores/" + id + "-" + Date.now() + "." + ext;
+      const up = await sb.storage.from("itens").upload(path, f, { upsert: true, contentType: f.type });
+      if (up.error) throw up.error;
+      const url = sb.storage.from("itens").getPublicUrl(path).data.publicUrl;
+      const { error } = await sb.from("fornecedores").update({ foto_url: url, foto_path: path }).eq("id", id).eq("empresa_id", empresaId);
+      if (error) throw error;
+      if (anterior?.foto_path && anterior.foto_path !== path) sb.storage.from("itens").remove([anterior.foto_path]).catch(() => {});
+    } else if (fotoForn.removida && anterior?.foto_url) {
+      const { error } = await sb.from("fornecedores").update({ foto_url: null, foto_path: null }).eq("id", id).eq("empresa_id", empresaId);
+      if (error) throw error;
+      if (anterior.foto_path) sb.storage.from("itens").remove([anterior.foto_path]).catch(() => {});
+    }
+    fotoForn.arquivo = null; fotoForn.removida = false;
+    return true;
+  } catch (err) {
+    mostrarAlerta("Fornecedor salvo, mas a foto não: " + (err.message || err), "Foto do fornecedor");
+    return false;
+  }
 }
 
 /* Acesso da transportadora ao Cadastro de Fretes (out/2026): login e senha gravados pela função do banco
@@ -374,6 +424,11 @@ async function salvarFornecedor() {
   const longitude = document.getElementById("endLongitude").value;
 
   /* ================= VALIDAÇÕES ================= */
+
+  if (categoria === "locacao_moveis" && !fotoForn.arquivo && (fotoForn.removida || !fornecedorSelecionado?.foto_url)) {
+    mostrarAlerta("Empresa de locação de móveis precisa de foto (o logo da empresa).", "Foto obrigatória");
+    return;
+  }
 
   if (!nome) {
 mostrarAlerta("Razão Social é obrigatória");
@@ -476,6 +531,7 @@ if (existente && existente.id !== fornecedorSelecionado?.id) {
     return;
   }
 
+  if (salvoId && !(await salvarFotoFornecedor(salvoId, fornecedorSelecionado))) { await carregarFornecedores(); return; }
   if (salvoId && !(await salvarPortalFornecedor(salvoId, fornecedorSelecionado))) { await carregarFornecedores(); return; }
 
   fecharModalFornecedor();
@@ -617,6 +673,7 @@ function preencherFormularioFornecedor(f) {
   document.getElementById("fDocumento").value = f.documento || "";
   document.getElementById("fTipo").value = f.tipo || "";
   document.getElementById("fCategoria").value = f.categoria || "";
+  fotoForn.arquivo = null; fotoForn.removida = false; pintarFotoFornecedor(f.foto_url || null);
   document.getElementById("fStatus").value = f.status || "ativo";
   document.getElementById("fTelefone").value = f.telefone || "";
   document.getElementById("fEmail").value = f.email || "";
@@ -762,6 +819,7 @@ function fecharModalAlerta() {
    REGISTRO MODULE LOADER ✅ EASYLOC SPA
 ===================================================== */
 
+window.addEventListener("fornecedores-atualizar", carregarFornecedores);
 window.initCadastroFornecedores = initCadastroFornecedores;
 requestAnimationFrame(() => requestAnimationFrame(window.initCadastroFornecedores));
 

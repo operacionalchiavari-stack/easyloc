@@ -584,3 +584,47 @@ body{margin:0;background:#f3f4f6;color:var(--tw-text);font-family:Inter,system-u
 /* Líder de etapa (Painel Logístico, out/2026) */
 .func-lider{ display:flex !important; flex-direction:row !important; align-items:center; gap:8px; align-self:end; min-height:42px; font-weight:600; cursor:pointer; }
 .func-lider input{ width:18px; height:18px; margin:0; accent-color:var(--el-button-primary-bg,#7d603d); }
+
+/* Cabecalho compacto, pesquisa a esquerda e titulo centralizado. */
+html:root #funcionariosView>#funcCabecalho.section-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;gap:18px!important}
+html:root #funcionariosView>#funcCabecalho.section-head>div{grid-column:2;grid-row:1}
+html:root #funcionariosView>#funcCabecalho.section-head .func-pesquisa{grid-column:1;grid-row:1;width:280px;max-width:100%;min-width:0}
+html:root #funcBusca{width:100%;min-width:0;height:38px!important;min-height:38px!important;padding:8px 12px!important;border:1px solid #dfe5ec;border-radius:12px;background:#fff;font:13px Inter,system-ui,sans-serif}
+html:root #funcionariosView>#funcCabecalho.section-head>#newFuncionarioBtn{position:static!important;grid-column:3;grid-row:1;justify-self:end;min-height:34px!important;height:34px!important;padding:7px 14px!important;font-size:12px!important;letter-spacing:0!important;text-transform:none!important;border-radius:10px!important}
+html:root #funcionariosView .compact-summary{gap:10px}
+html:root #funcionariosView#funcionariosView .summary-card{display:block!important;min-height:0!important;padding:10px 14px!important;border:1px solid #e3e8ee!important;border-radius:10px!important;box-shadow:none!important}
+html:root #funcionariosView#funcionariosView .summary-card .summary-icon{display:none!important}
+html:root #funcionariosView#funcionariosView .summary-card>div:last-child{display:flex;align-items:center;justify-content:space-between;gap:10px}
+html:root #funcionariosView#funcionariosView .summary-card span{font-size:11px!important;font-weight:500!important;letter-spacing:.03em!important;color:#728091!important}
+html:root #funcionariosView#funcionariosView .summary-card strong{font:600 18px/1 Inter,system-ui,sans-serif!important;margin:0!important}
+.func-form-acoes{display:flex;align-items:center;gap:12px;flex:none}
+.func-status-botoes{display:flex;gap:6px}
+html:root .func-status-botoes button{min-height:34px!important;padding:7px 12px!important;border-radius:999px!important;font:600 12px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;cursor:pointer;background:#fff!important;border:1px solid #dfe5ec!important}
+html:root .func-status-botoes .func-status-ativo{color:#21834f!important}
+html:root .func-status-botoes .func-status-inativo{color:#b64242!important}
+html:root .func-status-botoes .func-status-ativo[aria-pressed=true]{background:#e2f6e9!important;border-color:#8dd6a9!important}
+html:root .func-status-botoes .func-status-inativo[aria-pressed=true]{background:#fde9e9!important;border-color:#eaa0a0!important}
+html:root .func-status-botoes button:disabled{opacity:.5;cursor:default}
+.pac-container{z-index:20000!important}
+@media(max-width:1000px){html:root #funcionariosView>#funcCabecalho.section-head{grid-template-columns:minmax(0,1fr) auto!important}html:root #funcionariosView>#funcCabecalho.section-head>div{grid-column:1/-1;grid-row:1}html:root #funcionariosView>#funcCabecalho.section-head .func-pesquisa{grid-row:2}html:root #funcionariosView>#funcCabecalho.section-head>#newFuncionarioBtn{grid-column:2;grid-row:2}}
+@media(max-width:760px){html:root #funcionariosView .compact-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.func-form-acoes{width:100%;justify-content:space-between}.func-form-acoes #closeFuncionarioForm{padding:8px 12px!important;font-size:12px!important}}
+
+html:root #funcionariosView>#funcCabecalho.section-head>div:first-child{width:auto!important;max-width:none!important;margin:0!important;padding:24px 0!important;border:0!important;flex:none!important}
+
+/* Cadastro como tela, com rolagem normal e sem sobreposicao. */
+html:root #funcionarioFormCard#funcionarioFormCard{position:static!important;inset:auto!important;z-index:auto!important;padding:0!important;background:none!important}
+html:root #funcionarioFormCard#funcionarioFormCard .cadastro-form-card{width:100%!important;max-width:none!important;max-height:none!important;padding:0!important;overflow:visible!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;gap:24px}
+#funcionarioFormCard#funcionarioFormCard .card-title-row{padding:12px 0 22px;border-bottom:1px solid #dfe5ec;align-items:center}
+#funcionarioFormCard#funcionarioFormCard .cadastro-form-grid{padding:22px;border:1px solid #dfe5ec;border-radius:16px;background:#fff;gap:20px 16px}
+html:root #funcionariosView table{min-width:820px}
+html:root #funcionariosView th:nth-child(1){width:32%}html:root #funcionariosView th:nth-child(2){width:18%}html:root #funcionariosView th:nth-child(3){width:26%}html:root #funcionariosView th:nth-child(4){width:10%}html:root #funcionariosView th:nth-child(5){width:14%}
+.funcionario-identidade{display:flex;align-items:center;gap:12px;min-width:0}.funcionario-identidade .employee-table-photo{flex:none}.funcionario-identidade-texto{min-width:0}.funcionario-identidade-texto strong{display:block;overflow-wrap:anywhere}.funcionario-identidade-texto .subtext{overflow-wrap:anywhere;font-size:12px;color:#738293}
+.funcionario-linha{cursor:pointer}.funcionario-linha:hover td,.funcionario-linha:focus-visible td{background:#f0f6f3!important}.funcionario-linha:focus-visible{outline:2px solid #6f9e86;outline-offset:-2px}
+.funcionario-acesso{font-weight:500}.funcionario-ultimo-acesso{font-size:12px!important;color:#738293}
+@media(max-width:760px){#funcionarioFormCard#funcionarioFormCard .cadastro-form-grid{padding:16px;gap:16px}#funcionarioFormCard#funcionarioFormCard .card-title-row{padding-top:0}}
+
+#funcionarioFormCard#funcionarioFormCard .card-title-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px 18px;align-items:start}
+#funcionarioFormCard #closeFuncionarioForm{grid-column:1;grid-row:1;white-space:nowrap;align-self:start;min-height:42px!important}
+#funcionarioFormCard #funcionarioFormTitle{display:flex;align-items:center;min-height:42px;margin:0}
+#funcionarioFormCard .func-form-acoes{width:auto;align-self:start;margin-top:4px}
+@media(max-width:760px){#funcionarioFormCard#funcionarioFormCard .card-title-row{grid-template-columns:auto minmax(0,1fr);gap:10px 12px}#funcionarioFormCard .func-form-acoes{grid-column:2;grid-row:2;justify-self:end;margin:0}#funcionarioFormCard #funcionarioFormTitle{font-size:20px!important;letter-spacing:.05em!important}}

@@ -45,7 +45,7 @@
   window.confirmarGlobal = function (message, title = "Confirmação", options = {}) {
     const result = queue.then(() => new Promise(resolve => {
       const previous = document.activeElement;
-      const overlay = document.createElement("div"); overlay.className = "el-alert-confirm";
+      const overlay = document.createElement("div"); overlay.className = "el-alert-confirm" + (options.somenteOk ? " el-alert-confirm--top" : "");
       const el = card(message, title, options.tipo || "warning");
       el.setAttribute("role", "alertdialog"); el.setAttribute("aria-modal", "true");
       el.querySelector("h4").id = "el-confirm-title"; el.querySelector("p").id = "el-confirm-message";

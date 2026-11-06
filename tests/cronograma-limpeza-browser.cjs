@@ -65,7 +65,7 @@ function resposta(fn, args) {
   const free = await abrir("equipe-free.html");
   await free.waitForFunction(() => !/Carregando/.test(document.getElementById("freePainelCorpo").textContent), { timeout: 15000 });
   assert.ok(chamadas.includes("CRON_entrarComLogin"), "entra pelo login");
-  assert.ok(await free.locator("#freePainelCorpo .free-aba, #freePainelCorpo [data-aba], #freePainelCorpo button").count() > 0, "painel desenhado");
+  assert.ok(await free.locator("[data-free-aba], #freePainelCorpo .free-aba, #freePainelCorpo [data-aba], #freePainelCorpo button").count() > 0, "painel desenhado");
   await free.screenshot({ path: path.join(raiz, "outputs", "equipe-free.png") });
   console.log("ok 2 - Equipe Free abre o painel direto na tela (" + (await free.locator("#freePainelCorpo").innerText()).slice(0, 80).replace(/\n/g, " | ") + ")");
 

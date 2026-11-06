@@ -1,0 +1,71 @@
+/* Terceirizações (nov/2026) */
+.tz-page .tz-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px;align-items:start;margin-top:12px}
+.tz-empresas,.tz-itens{background:#fff;border-radius:14px;box-shadow:0 0 8px rgba(15,23,42,.12),0 0 2px rgba(15,23,42,.1);padding:16px}
+.tz-empresas-topo,.tz-itens-topo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.tz-itens-topo>div{flex:1;min-width:160px}
+.tz-empresas h3,.tz-itens h3{margin:0;font:600 16px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+.tz-sub{margin:2px 0 0;color:#6b6b6b;font-size:12.5px}
+.tz-itens-topo input[type=search]{height:38px;min-width:220px;padding:0 12px;border:1px solid #d6dde6;border-radius:999px;font:400 13.5px Inter,system-ui,sans-serif}
+.tz-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.tz-empresa{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;border:1px solid transparent;border-radius:10px;background:none;cursor:pointer;text-align:left;font:400 13.5px Inter,system-ui,sans-serif;color:#1f2020}
+.tz-empresa small{color:#6b6b6b;font-size:12px}
+.tz-empresa:hover{background:#f3f6fb}
+.tz-empresa.is-ativa{background:#eaf0fa;border-color:#b9cbe8}
+.tz-vazio{margin:8px 0;color:#6b6b6b;font-size:13.5px}
+.tz-link{border:0;background:none;padding:0;color:#123f86;font:500 12.5px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline}
+.tz-tabela{width:100%;border-collapse:collapse;font:400 13.5px Inter,system-ui,sans-serif}
+.tz-tabela th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b;padding:8px 10px;border-bottom:1px solid #e3e7ec}
+.tz-tabela td{padding:10px;border-bottom:1px solid #eef0f3;vertical-align:middle}
+.tz-tabela td small{display:block;color:#6b6b6b;font-size:12px}
+.tz-tabela .num{text-align:right;white-space:nowrap}
+.tz-linha{cursor:pointer}
+.tz-linha:hover td{background:#f3f6fb}
+.tz-linha.is-inativo td{opacity:.55}
+.tz-foto{display:grid;place-items:center;width:64px;height:52px;border-radius:8px;background:#f6f7f9;overflow:hidden}
+.tz-foto img{width:100%;height:100%;object-fit:contain}
+.tz-foto.grande{width:120px;height:96px}
+.tz-sit{display:inline-block;padding:2px 10px;border-radius:999px;background:#eef0f3;color:#6b6b6b;font-size:12px}
+.tz-sit.ok{background:#e8f6ee;color:#23693f}
+.tz-dialog{border:0;border-radius:16px;padding:0;width:min(760px,94vw);max-height:92vh;box-shadow:0 24px 60px rgba(15,23,42,.25)}
+.tz-dialog::backdrop{background:rgba(15,23,42,.35)}
+.tz-dialog form{display:flex;flex-direction:column;max-height:92vh}
+.tz-dialog header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e9ecf0}
+.tz-dialog h2{margin:0;font:600 18px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+.tz-dialog header button{border:0;background:none;font-size:22px;cursor:pointer;color:#6b6b6b}
+.tz-dialog-corpo{padding:16px 20px;overflow:auto}
+.tz-dialog footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid #e9ecf0}
+.tz-erro{margin:0 20px;color:#b0362d;font-size:13px}.tz-erro:empty{display:none}
+.tz-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 14px}
+.tz-campo{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:#4f4f4f;font-weight:500}
+.tz-campo.inteiro,.tz-foto-campo.inteiro{grid-column:1/-1}
+.tz-campo input,.tz-campo select,.tz-campo textarea{box-sizing:border-box;width:100%;padding:9px 10px;border:1px solid #d6dde6;border-radius:8px;background:#fff;font:400 14px Inter,system-ui,sans-serif;color:#1f2020}
+.tz-foto-campo{display:flex;align-items:center;gap:14px}
+.tz-ajuda{margin:0 0 10px;color:#6b6b6b;font-size:13px}
+.tz-escolha{display:flex;flex-direction:column;gap:4px;margin:10px 0;max-height:46vh;overflow:auto}
+.tz-escolha-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;border:1px solid #e3e7ec;border-radius:10px;background:#fff;cursor:pointer;text-align:left;font:400 13.5px Inter,system-ui,sans-serif}
+.tz-escolha-item:hover{border-color:#123f86;background:#f3f6fb}
+.tz-escolha-item small{color:#6b6b6b;font-size:12px}
+#tzBuscaEmp{width:100%;box-sizing:border-box;height:38px;padding:0 12px;border:1px solid #d6dde6;border-radius:999px;font:400 13.5px Inter,system-ui,sans-serif}
+.tz-perigo{color:#b0362d!important;border-color:#efc2bf!important;margin-right:auto}
+@media(max-width:900px){.tz-page .tz-layout{grid-template-columns:1fr}.tz-form{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.tz-form{grid-template-columns:1fr}}
+.tz-empresas,.tz-itens{min-width:0}#tzListaItens{overflow-x:auto}.tz-itens-topo input[type=search]{min-width:0;flex:1 1 180px}
+
+/* Foto (logo) da empresa (nov/2026) */
+.tz-empresa{flex-direction:row!important;align-items:center!important;gap:12px!important}
+.tz-empresa>span:last-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tz-avatar{position:relative;flex:0 0 44px;width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#eaf0fa;color:#123f86;font:600 14px Inter,system-ui,sans-serif;border:1px solid #e3e7ec}
+.tz-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.tz-avatar.grande{flex-basis:64px;width:64px;height:64px;font-size:20px}
+.tz-empresa-cab{display:flex;align-items:center;gap:14px;flex:1;min-width:200px}
+.tz-empresa-foto{display:flex;flex-direction:column;align-items:center;gap:4px}
+.tz-empresa-foto .tz-link{font-size:11.5px}
+
+/* Pesquisa à esquerda e botões à direita, na linha do título (nov/2026) */
+html:root #tzCabecalho#tzCabecalho{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center!important;gap:16px!important;position:relative;min-height:96px;margin-bottom:20px!important;padding:20px 0!important}
+html:root #tzCabecalho#tzCabecalho>h2{grid-column:2;grid-row:1;margin:0!important;padding:0!important;text-align:center!important;border:0!important;white-space:nowrap}
+html:root #tzCabecalho#tzCabecalho>h2::after{display:none!important}
+html:root #tzCabecalho#tzCabecalho>#tzBusca{grid-column:1;grid-row:1;justify-self:start;box-sizing:border-box;width:min(320px,100%);min-width:0;height:44px;margin:0!important;padding:10px 14px;font:14px Inter,system-ui,sans-serif;border:1px solid #dce3eb;border-radius:12px;background:#f5f6f7}
+html:root #tzCabecalho#tzCabecalho>.tz-topo-acoes{grid-column:3;grid-row:1;justify-self:end;display:flex;gap:8px;flex-wrap:nowrap}
+@media(max-width:900px){html:root #tzCabecalho#tzCabecalho{grid-template-columns:minmax(0,1fr) auto}html:root #tzCabecalho#tzCabecalho>h2{grid-column:1/-1}html:root #tzCabecalho#tzCabecalho>#tzBusca{grid-column:1;grid-row:2}html:root #tzCabecalho#tzCabecalho>.tz-topo-acoes{grid-column:2;grid-row:2}}
+

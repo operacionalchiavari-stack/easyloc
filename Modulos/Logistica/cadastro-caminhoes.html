@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="cadastro-caminhoes.css?v=20261029-fornecedor">
+  <link rel="stylesheet" href="cadastro-caminhoes.css?v=20261103-fotos-organizadas">
 </head>
 <body>
 <div class="container cadastro-caminhoes-page el-page">
@@ -18,29 +18,16 @@
   <header id="caminhoesCabecalho" class="page-header">
     <h1>Caminhões Cadastrados</h1>
 
+    <label class="caminhoes-pesquisa" aria-label="Pesquisar caminhão">
+      <input class="el-input" type="search" id="filtroTexto" placeholder="Pesquisar caminhão..." autocomplete="off" data-lpignore="true" data-1p-ignore="true">
+    </label>
+
     <div class="header-actions">
       <button class="btn primary" type="button" onclick="abrirModalCaminhao()">
-        + Adicionar Caminhão
+        + Caminhão
       </button>
     </div>
   </header>
-
-  <!-- FILTRO -->
-  <div class="filtros">
-    <input class="el-input" type="search" id="filtroTexto" placeholder="Pesquisar caminhão..." autocomplete="off" data-lpignore="true" data-1p-ignore="true">
-
-    <select class="el-select" id="filtroTipo">
-      <option value="">Todos os tipos</option>
-      <option value="proprio">Próprio</option>
-      <option value="terceirizado">Terceirizado</option>
-    </select>
-
-    <select class="el-select" id="filtroStatus">
-      <option value="">Todos os status</option>
-      <option value="ativo">Ativo</option>
-      <option value="inativo">Inativo</option>
-    </select>
-  </div>
 
 <!-- TABELA -->
 <section class="table-wrapper">
@@ -113,10 +100,10 @@
   <aside class="caminhao-foto-campo" aria-label="Foto do caminhão">
     <span class="caminhao-foto-titulo">Foto do caminhão</span>
     <label class="caminhao-foto-preview" for="caminhaoFotoArquivo" title="Selecionar foto do caminhão"><img id="caminhaoFotoPreview" alt="Foto do caminhão" hidden><span id="caminhaoSemFoto"><i data-lucide="truck"></i>Adicionar foto</span><span class="caminhao-foto-camera" aria-hidden="true"><i data-lucide="camera"></i></span></label>
-    <div class="caminhao-foto-acoes"><input id="caminhaoFotoArquivo" type="file" accept="image/jpeg,image/png,image/webp" onchange="selecionarFotoCaminhao(this)"><small>JPG, PNG ou WebP, até 5 MB.</small><button type="button" id="caminhaoRemoverFoto" onclick="definirFotoCaminhao('')">Remover foto</button><input id="caminhaoFotoUrl" type="hidden"></div>
+    <div class="caminhao-foto-acoes"><button type="button" class="caminhao-foto-selecionar" id="caminhaoTrocarFoto" onclick="document.getElementById('caminhaoFotoArquivo').click()">Selecionar foto</button><input hidden id="caminhaoFotoArquivo" type="file" accept="image/jpeg,image/png,image/webp" onchange="selecionarFotoCaminhao(this)"><small>JPG, PNG ou WebP, até 5 MB.</small><button type="button" id="caminhaoRemoverFoto" onclick="definirFotoCaminhao('')">Remover foto</button><input id="caminhaoFotoUrl" type="hidden"></div>
   </aside>
   <div class="caminhao-cadastro-dados">
-<section class="caminhao-secao" aria-labelledby="caminhaoDadosTitulo"><h3 id="caminhaoDadosTitulo">Dados do veículo</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 6"><label for="modeloInput">Modelo *</label><input class="el-input" type="text" id="modeloInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="placaInput">Placa</label><input class="el-input" type="text" id="placaInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="codigoInput">Código no cronograma *</label><input class="el-input" type="text" id="codigoInput" maxlength="12" placeholder="Ex.: G, M2, XL" title="Como o caminhão aparece no cronograma e no Painel Logístico"></div><div class="form-group el-field" style="grid-column:span 6"><label for="tipoInput">Vínculo *</label><select class="el-select" id="tipoInput">
+<section class="caminhao-secao" aria-labelledby="caminhaoDadosTitulo"><h3 id="caminhaoDadosTitulo">Dados do veículo</h3><div class="form-grid"><div class="form-group el-field" style="grid-column:span 6"><label for="modeloInput">Modelo *</label><input class="el-input" type="text" id="modeloInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="placaInput">Placa</label><input class="el-input" type="text" id="placaInput"></div><div class="form-group el-field" style="grid-column:span 3"><label for="codigoInput">Código no cronograma *</label><input class="el-input" type="text" id="codigoInput" maxlength="12" placeholder="Ex.: G, M2, XL" title="Como o caminhão aparece no cronograma e no Painel Logístico"></div><div class="form-group el-field" style="grid-column:span 6"><label for="tipoInput">Vínculo *</label><select class="el-select" id="tipoInput" onchange="atualizarObrigatoriedadeEmpresaCaminhao()">
       <option value="proprio">Próprio</option>
       <option value="terceirizado">Terceirizado</option>
     </select></div><div class="form-group el-field" style="grid-column:span 6"><label for="categoriaInput">Categoria do veículo *</label><select class="el-select" id="categoriaInput">
@@ -143,7 +130,7 @@
 <script src="../../js/core/listPager.js?v=20261026-rolagem"></script>
 <script src="../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script src="cadastro-caminhoes.js?v=20261029-fornecedor"></script>
+<script src="cadastro-caminhoes.js?v=20261103-terceirizado-obrigatorio"></script>
 <script>lucide.createIcons();</script>
 <script src="../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

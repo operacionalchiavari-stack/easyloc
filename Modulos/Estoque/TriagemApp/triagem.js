@@ -12,6 +12,9 @@
  const avatar=(nome,url)=>'<span class="avatar">'+esc(String(nome||'?').trim().charAt(0).toUpperCase())+(imagens(url)?'<img src="'+esc(url)+'" alt="" loading="lazy">':'')+'</span>';
  function mensagem(texto,ok=false){$('taMensagem').hidden=!texto;$('taMensagem').classList.toggle('ok',ok);$('taMensagem').textContent=texto||'';}
  async function rpc(nome,args){const r=await sb.rpc(nome,args);if(r.error)throw Error(r.error.message);if(r.data==null&&nome!=='separacao_producao_confirmar')throw Error('Não foi possível confirmar a resposta. Atualize e tente novamente.');return r.data;}
+ // Nov/2026: sem login próprio. Sem sessão do sistema, volta para o app (app.html), que tem o login único.
+ const NO_QUADRO=window.top!==window,APP='../../../app.html';
+ function irParaLogin(msg){if(NO_QUADRO){tela('taLogin');if(msg)mensagem(msg);return;}location.replace(APP);}
  function tela(id){['taLogin','taFila','taDetalhe','taCarregando'].forEach(x=>$(x).hidden=x!==id);const logado=id==='taFila'||id==='taDetalhe';$('taMarcaAcoes').hidden=!logado;$('taMarcaSaudacao').hidden=!logado;document.body.classList.toggle('ta-logado',logado);document.body.classList.toggle('ta-na-fila',id==='taFila');}
  async function identidade(empresa){
   const geracao=++geracaoMarca;
@@ -200,8 +203,9 @@
  $('taConta').onclick=()=>$('taContaDialog').showModal();
  document.querySelector('[data-fechar-conta]').onclick=()=>$('taContaDialog').close();
  $('taEmpresa').onchange=async e=>{if(s.ocupado)return;s.ocupado=true;const anterior=s.empresa;$('taContaDialog').close();tela('taCarregando');try{await selecionarEmpresa(e.target.value);}catch(err){s.empresa=anterior;localStorage.setItem('triagem-app:empresa',anterior);$('taEmpresa').value=anterior;tela('taFila');mensagem(err.message);}finally{s.ocupado=false;}};
- $('taSair').onclick=async()=>{pararCamera();s.geracao++;s.base=null;s.fila=[];s.usuario=null;s.fotosNovas.clear();$('taContaDialog').close();try{await sb.auth.signOut({scope:'local'});tela('taLogin');mensagem('');}catch(e){tela('taLogin');mensagem(e.message);}};
- $('taSairTopo').onclick=()=>$('taSair').click();
+ $('taSair').onclick=async()=>{pararCamera();s.geracao++;s.base=null;s.fila=[];s.usuario=null;s.fotosNovas.clear();$('taContaDialog').close();try{await sb.auth.signOut({scope:'local'});}catch(e){}irParaLogin('');};
+ $('taSairTopo').onclick=()=>{if(s.ocupado)return;location.href=APP;};
+ if(NO_QUADRO){$('taSairTopo').hidden=true;$('taSair').hidden=true;}
  $('taEscolha').onclick=e=>{const b=e.target.closest('[data-escolher]');if(b){$('taEscolha').returnValue=b.dataset.escolher;$('taEscolha').close();}if(e.target.closest('[data-fechar-escolha]'))$('taEscolha').close();};
  $('taDetalhe').addEventListener('click',async e=>{
   if(e.target.closest('[data-voltar]'))return voltar();
@@ -218,6 +222,6 @@
  window.addEventListener('beforeunload',e=>{if(s.ocupado||[...s.fotosNovas.values()].some(f=>f.length)){e.preventDefault();e.returnValue='';}});
  window.addEventListener('offline',()=>{pararCamera();mensagem('Sem conexão. As leituras de ida precisam de internet; a contagem da volta fica guardada neste aparelho até confirmar.');});
  window.addEventListener('online',()=>mensagem('Conexão restabelecida. Você pode continuar a conferência.',true));
- sb.auth.onAuthStateChange((evento)=>{if(evento==='SIGNED_OUT'){pararCamera();s.geracao++;s.base=null;s.fila=[];s.usuario=null;s.fotosNovas.clear();tela('taLogin');}});
- (async()=>{await window.__limpezaDadosPronta;identidade(new URLSearchParams(location.search).get('empresa')||localStorage.getItem('triagem-app:empresa'));try{const {data,error}=await sb.auth.getSession();if(error)throw Error(error.message);if(data.session?.user)await validarSessao(data.session.user);else tela('taLogin');}catch(e){tela('taLogin');mensagem(e.message);}})();
+ sb.auth.onAuthStateChange((evento)=>{if(evento==='SIGNED_OUT'){pararCamera();s.geracao++;s.base=null;s.fila=[];s.usuario=null;s.fotosNovas.clear();irParaLogin('');}});
+ (async()=>{await window.__limpezaDadosPronta;identidade(new URLSearchParams(location.search).get('empresa')||localStorage.getItem('triagem-app:empresa'));try{const {data,error}=await sb.auth.getSession();if(error)throw Error(error.message);if(data.session?.user)await validarSessao(data.session.user);else irParaLogin('');}catch(e){if(NO_QUADRO){tela('taLogin');mensagem(e.message);}else{try{sessionStorage.setItem('app_aviso',e.message);}catch(_){}location.replace(APP);}}})();
 })();

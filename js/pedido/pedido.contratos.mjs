@@ -185,7 +185,7 @@ async function coletarDadosContrato(){
     state.supabase.from('contratos_assinaturas_empresa').select('nome_signatario,imagem').eq('empresa_id',state.empresaId).maybeSingle(),
   ]);
   const localCidadeEstado = extrairCidadeEstado(local);
-  const valorLocacao = valorResumo("resumoLocacaoBruto");
+  const valorLocacao = valorResumo("resumoLocacaoBruto") + valorResumo("resumoTerceirizados");
   const valorServicos = valorResumo("resumoServicos") + valorResumo("resumoFreteBruto") + valorResumo("resumoMontagemBruto");
   const desconto = Math.abs(valorResumo("resumoLocacaoDesconto")) + Math.abs(valorResumo("resumoFreteDesconto")) + Math.abs(valorResumo("resumoMontagemDesconto"));
   const total = valorResumo("resumoTotalGeral");

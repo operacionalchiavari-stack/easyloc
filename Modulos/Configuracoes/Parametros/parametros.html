@@ -89,7 +89,16 @@
         <label class="pr-campo"><span>Responsável padrão</span><div><input type="text" maxlength="80" name="triagem_responsavel" placeholder="Ex.: Matheus Martins"></div></label>
         <label class="pr-campo"><span>Equipe padrão</span><div><input type="text" maxlength="80" name="triagem_equipe" placeholder="Ex.: Equipe Galpão"></div></label>
         <label class="pr-campo"><span>Separação liberada</span><div><input type="number" min="0" max="60" name="separacao_dias_antes_evento"><small>dia(s) antes do evento (pedido aprovado)</small></div></label>
-        <label class="pr-campo"><span>Conferência do descarregamento</span><div><select name="descarregamento_conferencia"><option value="quantidade">Com quantidade (mostra o esperado)</option><option value="cegas">Às cegas (não mostra quanto devia chegar)</option></select><small>na Expedição; às cegas o sistema compara com o carregamento ao concluir</small></div></label>
+      </div>
+    </section>
+
+    <section class="pr-card">
+      <h3>Conferência às cegas</h3>
+      <p class="pr-ajuda">Às cegas, quem confere não vê quanto devia chegar: conta o que tem e, ao concluir, o sistema compara com o que saiu no carregamento. A triagem da volta é sempre às cegas.</p>
+      <p class="pr-ajuda"><b>Descarregamento na Expedição</b></p>
+      <div class="pr-opcoes" role="radiogroup" aria-label="Conferência do descarregamento">
+        <label class="pr-check"><input type="radio" name="descarregamento_conferencia" value="quantidade"><span>Com quantidade (mostra o esperado)</span></label>
+        <label class="pr-check"><input type="radio" name="descarregamento_conferencia" value="cegas"><span>Às cegas</span></label>
       </div>
     </section>
 
@@ -142,7 +151,7 @@
 <script src="parametros-modos-separacao.js?v=20261027"></script>
 <script src="parametros-setores-separacao.js?v=20261029-setores"></script>
 <script src="parametros-motivos-logistica.js?v=20261103-problemas-separacao"></script>
-<script src="parametros-qualidade-acervo.js?v=20261024-1"></script><script src="parametros-etiquetas.js?v=20261026"></script><script src="parametros-rh.js?v=20261027"></script><script src="parametros-empresa.js?v=20261102-producao"></script>
+<script src="parametros-qualidade-acervo.js?v=20261105-contagem-cega"></script><script src="parametros-etiquetas.js?v=20261026"></script><script src="parametros-rh.js?v=20261105-ideia-celebracao"></script><script src="parametros-empresa.js?v=20261105-avisos-pedido"></script>
 <script src="../../../js/shared/complexidade.js?v=20261102-personalizacao"></script>
 <script src="parametros-complexidade.js?v=20261102-personalizacao"></script>
 <script src="parametros.js?v=20261028-organizado"></script>
@@ -150,10 +159,11 @@
 <link rel="stylesheet" href="../../Comercial/produtividade.css?v=20261031">
 <script src="../../Comercial/produtividade.js?v=20261031"></script>
 <script src="parametros-motivos-cancelamento.js?v=20261031-papeis"></script>
+<script src="parametros-acompanhamento.js?v=20261105-avisos-pedido"></script>
 <script src="parametros-condicoes-pagamento.js?v=20261101"></script>
 <script src="parametros-posvenda.js?v=20261029-posvenda"></script>
 <script src="parametros-divergencias.js?v=20261029-carreg"></script>
-<script src="parametros-organizar.js?v=20261029-carreg"></script>
+<script src="parametros-organizar.js?v=20261105-contagem-cega"></script>
 <script src="parametros-catalogo.js?v=20261021-catalogo2"></script>
 <script src="../../../js/core/doisFatores.js?v=20261023-2fa"></script>
 <script src="parametros-backup.js?v=20261024-nuvem"></script>
