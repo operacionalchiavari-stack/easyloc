@@ -10,6 +10,7 @@
     mic: '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     clipe: '<svg viewBox="0 0 24 24"><path d="M21 12.5 12.6 21a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg>',
     enviar: '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+    camera: '<svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   };
   const S = { cfg: null, ctx: null, msgs: [], resumo: null, enviando: false, gravador: null, pedacos: [], inicio: 0, relogio: 0, cancelada: false, dlg: null };
   const $ = (sel) => S.dlg.querySelector(sel);
@@ -34,6 +35,8 @@
       '<div class="as-gravando" hidden><span class="as-rec"></span>Gravando <b data-as="tempo">0:00</b><button type="button" class="as-link" data-as="cancelar-rec">Cancelar</button></div>' +
       '<form class="as-campo"><button type="button" class="as-icone" data-as="clipe" title="Enviar um arquivo de áudio" aria-label="Enviar um arquivo de áudio">' + ICONE.clipe + '</button>' +
       '<input type="file" accept="audio/*" hidden data-as="arquivo">' +
+      '<button type="button" class="as-icone" data-as="foto" title="Enviar foto" aria-label="Enviar foto">' + ICONE.camera + '</button>' +
+      '<input type="file" accept="image/*" multiple hidden data-as="arquivo-foto">' +
       '<textarea rows="1" placeholder="Escreva aqui ou grave um áudio…" aria-label="Sua mensagem"></textarea>' +
       '<button type="button" class="as-icone" data-as="mic" title="Gravar áudio" aria-label="Gravar áudio">' + ICONE.mic + '</button>' +
       '<button type="submit" class="as-enviar" aria-label="Enviar">' + ICONE.enviar + '</button></form>' +
@@ -51,6 +54,7 @@
       else if (a === "mic") (S.gravador ? parar() : gravar());
       else if (a === "cancelar-rec") { S.cancelada = true; parar(); }
       else if (a === "clipe") $('[data-as="arquivo"]').click();
+      else if (a === "foto") $('[data-as="arquivo-foto"]').click();
       else if (a === "formulario") { fechar(); S.cfg.formulario(); }
       else if (a === "nova") recomecar();
       else if (a === "ver-lista") S.cfg.verLista?.();
@@ -58,6 +62,7 @@
       else if (a === "ajustar") { texto.placeholder = "Diga o que quer mudar no resumo…"; texto.focus(); }
     });
     $('[data-as="arquivo"]').addEventListener("change", (e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) transcrever(f); });
+    $('[data-as="arquivo-foto"]').addEventListener("change", (e) => { const fs = [...(e.target.files || [])]; e.target.value = ""; if (fs.length) enviarFotos(fs); });
     d.addEventListener("cancel", (e) => { if (S.gravador) { e.preventDefault(); S.cancelada = true; parar(); } });
     d.addEventListener("close", () => { if (S.gravador) { S.cancelada = true; parar(); } });
   }
@@ -65,17 +70,18 @@
   function bolha(m) {
     if (m.tipo === "resumo") {
       return '<div class="as-resumo' + (m.enviado ? " enviado" : "") + '"><span class="as-eyebrow">Confira o resumo</span>' + S.cfg.resumoHtml(m.resumo, esc) +
+        fotosHtml(todasFotos(), "Fotos anexadas") +
         (m.enviado ? '<p class="as-ok">✓ Registrada</p>' : '<footer><button type="button" class="as-link" data-as="ajustar">Quero ajustar</button><button type="button" class="btn btn-primary" data-as="aprovar">Está certo, registrar</button></footer>') + "</div>";
     }
     if (m.tipo === "ok") return '<div class="as-msg ia as-msg-ok"><p>' + esc(m.texto) + '</p><div class="as-ok-acoes">' + (S.cfg.verLista ? '<button type="button" class="as-link" data-as="ver-lista">Ver minhas solicitações</button>' : "") + '<button type="button" class="as-link" data-as="nova">Fazer outra solicitação</button></div></div>';
-    return '<div class="as-msg ' + (m.papel === "ia" ? "ia" : "pessoa") + (m.erro ? " erro" : "") + '">' + (m.audio ? '<span class="as-audio">🎙 Áudio</span>' : "") + "<p>" + esc(m.texto) + "</p></div>";
+    return '<div class="as-msg ' + (m.papel === "ia" ? "ia" : "pessoa") + (m.erro ? " erro" : "") + '">' + (m.audio ? '<span class="as-audio">🎙 Áudio</span>' : "") + fotosHtml(m.fotos) + (m.texto ? "<p>" + esc(m.texto) + "</p>" : "") + "</div>";
   }
   function pintar(digitando) {
     const host = $(".as-msgs");
     host.innerHTML = S.msgs.map(bolha).join("") + (digitando ? '<div class="as-msg ia as-digitando" aria-label="A assistente está escrevendo"><span></span><span></span><span></span></div>' : "");
     host.scrollTop = host.scrollHeight;
     const ocupado = S.enviando || !!S.gravador;
-    $(".as-enviar").disabled = ocupado; $('[data-as="mic"]').disabled = S.enviando; $('[data-as="clipe"]').disabled = ocupado;
+    $(".as-enviar").disabled = ocupado; $('[data-as="mic"]').disabled = S.enviando; $('[data-as="clipe"]').disabled = ocupado; $('[data-as="foto"]').disabled = ocupado;
   }
 
   async function chamar(corpo) {
@@ -89,13 +95,13 @@
     return data;
   }
 
-  async function enviarTexto(texto, audio) {
+  async function enviarTexto(texto, audio, fotos) {
     texto = String(texto || "").trim();
-    if (!texto || S.enviando) return;
-    S.msgs.push({ papel: "pessoa", texto, audio: !!audio });
+    if ((!texto && !fotos?.length) || S.enviando) return;
+    S.msgs.push({ papel: "pessoa", texto, audio: !!audio, ...(fotos?.length ? { fotos } : {}) });
     S.enviando = true; guardar(); pintar(true);
     try {
-      const historico = S.msgs.filter((m) => !m.tipo && !m.erro).map((m) => ({ papel: m.papel, texto: m.texto }));
+      const historico = S.msgs.filter((m) => !m.tipo && !m.erro && !m.provisorio).map((m) => ({ papel: m.papel, texto: m.texto, ...(m.fotos ? { fotos: m.fotos } : {}) }));
       const r = await chamar({ acao: "conversar", mensagens: historico });
       S.msgs.push({ papel: "ia", texto: r.resposta });
       if (r.pronto && r.resumo) { S.resumo = r.resumo; S.msgs.push({ tipo: "resumo", resumo: r.resumo }); }
@@ -109,7 +115,7 @@
     S.enviando = true; pintar(false);
     const botao = S.dlg.querySelector('[data-as="aprovar"]'); if (botao) { botao.disabled = true; botao.textContent = "Registrando…"; }
     try {
-      const msg = await S.cfg.confirmar(S.resumo);
+      const msg = await S.cfg.confirmar(S.resumo, todasFotos());
       const ultimo = [...S.msgs].reverse().find((m) => m.tipo === "resumo"); if (ultimo) ultimo.enviado = true;
       S.msgs.push({ tipo: "ok", texto: msg || "Pronto! Sua solicitação foi registrada." });
       S.resumo = null;
@@ -165,6 +171,45 @@
       S.msgs = S.msgs.filter((m) => !m.provisorio); S.enviando = false;
       aviso("Não consegui entender o áudio (" + e.message + "). Pode mandar de novo ou escrever?");
     }
+  }
+  /* ---------- fotos de evidência: JPEG de até 1600px no bucket solicitacoes-evidencias/<empresa>/<usuário>/ ---------- */
+  function todasFotos() { return S.msgs.flatMap((m) => (Array.isArray(m.fotos) ? m.fotos : [])).slice(0, 12); }
+  function fotosHtml(lista, titulo) {
+    if (!lista || !lista.length) return "";
+    return (titulo ? '<span class="as-fotos-titulo">' + esc(titulo) + "</span>" : "") + '<div class="as-fotos">' +
+      lista.map((u) => '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" alt="Foto enviada" loading="lazy"></a>').join("") + "</div>";
+  }
+  async function paraJpeg(arquivo) {
+    const bmp = await createImageBitmap(arquivo);
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise((ok, erro) => c.toBlob((b) => (b ? ok(b) : erro(new Error("Não foi possível ler a foto."))), "image/jpeg", 0.85));
+  }
+  async function enviarFotos(arquivos) {
+    if (S.enviando) return;
+    if (todasFotos().length + arquivos.length > 12) { aviso("Dá para mandar até 12 fotos por solicitação."); return; }
+    const imagens = arquivos.filter((f) => /^image\//.test(f.type));
+    if (!imagens.length) { aviso("Envie uma foto (JPG, PNG ou WebP)."); return; }
+    S.enviando = true; S.msgs.push({ papel: "pessoa", texto: "Enviando foto…", provisorio: true }); pintar(false);
+    const sb = window.supabaseClient; const urls = [];
+    try {
+      let uid = S.ctx.usuario_id;
+      if (!uid) { const r = await sb.auth.getUser(); uid = r?.data?.user?.id; }
+      for (const f of imagens.slice(0, 4)) {
+        const blob = await paraJpeg(f);
+        const caminho = S.ctx.empresa_id + "/" + uid + "/" + (crypto.randomUUID?.() || Date.now() + "-" + Math.random().toString(36).slice(2)) + ".jpg";
+        const { error } = await sb.storage.from("solicitacoes-evidencias").upload(caminho, blob, { contentType: "image/jpeg", upsert: false });
+        if (error) throw error;
+        urls.push(sb.storage.from("solicitacoes-evidencias").getPublicUrl(caminho).data.publicUrl);
+      }
+    } catch (e) {
+      S.msgs = S.msgs.filter((m) => !m.provisorio); S.enviando = false;
+      aviso("Não consegui enviar a foto (" + (e.message || e) + "). Tente de novo."); return;
+    }
+    S.msgs = S.msgs.filter((m) => !m.provisorio); S.enviando = false;
+    const t = $("textarea"); const legenda = t.value; t.value = ""; t.style.height = "";
+    await enviarTexto(legenda, false, urls);
   }
   function aviso(t) { S.msgs.push({ papel: "ia", texto: t, erro: true }); guardar(); pintar(false); }
 

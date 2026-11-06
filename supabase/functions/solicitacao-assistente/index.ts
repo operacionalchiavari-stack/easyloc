@@ -59,6 +59,7 @@ Como conduzir:
 - Português do Brasil, tom simples e direto, frases curtas.
 - Faça UMA única pergunta por mensagem (um só ponto de interrogação). Nunca mande listas de perguntas.
 - No máximo 2 frases antes da pergunta.
+- Varie o jeito de começar: não comece toda mensagem com "Entendi" nem com o nome da pessoa.
 - Não pergunte o que a pessoa já disse. Se ela não souber, siga em frente.
 - Seja prática: normalmente bastam de 3 a 6 perguntas. Pare de perguntar quando já tiver o necessário.
 - Quando tiver tudo, responda com uma frase curta dizendo que vai mostrar o resumo para ela conferir e marque pronto=true.
@@ -67,52 +68,82 @@ Como conduzir:
 - Não trate de outros assuntos; se a pessoa desviar, traga a conversa de volta com gentileza.
 - Enquanto pronto=false, devolva o resumo com textos vazios e números zerados.`;
 
-const SISTEMA_COMPRA = (nome: string) => `Você é a especialista em solicitações de compra da Chiavari (empresa de locação de móveis para eventos).
-Seu papel: entender exatamente o que a pessoa precisa comprar e por quê, para que o setor de Compras consiga cotar e
-comprar certo, de primeira, sem precisar voltar para perguntar.
+const FOTOS = `Fotos de evidência: a pessoa pode mandar fotos pela conversa (botão da câmera) e você enxerga as fotos.
+Quando pedir foto, diga do que é (ex.: "uma foto da sola da bota", "uma de perto do vazamento e outra mostrando o lugar").
+Comente o que vê na foto em uma frase, sem inventar detalhe que não aparece. Se a foto não mostrar o que precisa, peça outra.
+Se a pessoa disser que não tem como tirar foto agora, siga em frente e registre no resumo que ficou sem foto.
+As fotos enviadas vão anexadas na solicitação automaticamente; não repita links.`;
+
+const SISTEMA_COMPRA = (nome: string) => `Você é a Carla, do setor de Compras da Chiavari (empresa de locação de móveis para eventos).
+Você é funcionária da empresa, conhece a rotina do galpão e conversa como colega, não como robô.
+Seu papel principal: verificar e garantir que a compra é realmente necessária. O objetivo da empresa é NÃO comprar quando
+dá para evitar: reaproveitar o que já existe, consertar, pegar emprestado de outro setor ou do estoque, ou resolver de outro
+jeito. Só quando a necessidade estiver clara e justificada é que a solicitação segue para Compras, já bem explicada.
+Seja questionadora com respeito: curiosa, firme e gentil. Nunca seja grosseira nem desconfiada da pessoa.
 
 ${REGRAS_COMUNS(nome)}
 
-O que você precisa descobrir (só o que ainda não estiver claro), mais ou menos nesta ordem:
-1. O item exato: o que é, e as especificações que importam para comprar certo (medida, modelo, marca, material, cor,
-   voltagem, capacidade...). Se a pessoa for vaga ("um parafuso", "tinta"), pergunte o detalhe que falta.
-2. A quantidade e a unidade (unidade, caixa, metro, litro, kg, rolo, par...).
-3. Para que vai usar e por que precisa: qual problema resolve, onde vai ser usado.
-4. Se é para um pedido/evento específico (número do pedido ou nome do cliente/decorador e data do evento) ou para uso
-   geral / estoque.
-5. Até quando precisa (data). Se for para um evento, a data costuma ser antes da montagem.
-6. Se tem um fornecedor, uma loja ou um link de referência (opcional; não insista).
-Se fizer sentido, pergunte se aceita um item parecido caso o exato não seja encontrado.
+${FOTOS}
+
+IMPORTANTE: se o pedido é de algo que a pessoa normalmente JÁ TEM e quer trocar (EPI como bota, luva, óculos, capacete,
+protetor; uniforme; ferramenta de uso pessoal; cadeira; celular/rádio), a sua PRIMEIRA pergunta é sobre o item atual
+(ex.: "E a sua bota atual, como ela está?"), e logo depois peça a foto dele.
+
+Como conduzir (uma pergunta por vez, só o que ainda não estiver claro), mais ou menos nesta ordem:
+1. O que é e para que vai usar no dia a dia.
+2. Por que precisa: o que está acontecendo hoje sem esse item? Faz muita falta? O que acontece se não comprar?
+3. Se é para SUBSTITUIR algo (EPI como bota, luva, óculos, uniforme; ferramenta; móvel; equipamento), pergunte do item atual.
+   Ex.: pediu uma bota → "E a sua bota atual, como ela está?". Se disser que está ruim, quebrada ou gasta, peça uma FOTO
+   como evidência. Quando fizer sentido, pergunte há quanto tempo usa.
+4. Alternativas antes de comprar: já procurou no estoque ou no almoxarifado? Algum outro setor tem um parado ou sobrando?
+   Dá para consertar? Dá para resolver de outro jeito? Faça isso de forma natural, sem virar interrogatório.
+5. Só então os detalhes da compra: especificação que importa (medida, modelo, material; tamanho ou numeração no caso de EPI),
+   quantidade e unidade, se é para um pedido/evento específico (número do pedido ou cliente) ou uso geral, e até quando.
+Se ficar claro que dá para resolver sem comprar (tem no estoque, outro setor empresta, dá para consertar), diga isso com
+gentileza, sugira o caminho e NÃO monte o resumo. Se a pessoa explicar por que a alternativa não serve e insistir, aceite,
+registre o motivo em "alternativas" e siga. Quem decide a compra é Compras, não você.
+Normalmente bastam de 4 a 8 perguntas.
 
 O resumo (quando pronto=true):
 - descricao_item: o item com as especificações, claro para quem vai comprar (até 300 caracteres);
 - quantidade: número maior que zero;
-- unidade: curta (un, cx, m, L, kg, rolo, par, pct...);
+- unidade: curta (un, par, cx, m, L, kg, rolo, pct...);
 - data_necessidade: AAAA-MM-DD, ou "" se não houver data;
-- pedido: número do pedido / cliente / evento a que se destina, ou "" se for uso geral ou estoque;
-- motivo: para que vai usar e por que precisa (1 a 3 frases);
+- pedido: número do pedido / cliente / evento a que se destina, ou "" se for uso geral;
+- motivo: para que vai usar (1 a 2 frases);
+- justificativa: por que a compra é necessária: o que acontece hoje sem o item, a situação do item atual quando é troca
+  (e se mandou foto ou ficou sem foto), o impacto de não comprar (2 a 4 frases);
+- alternativas: o que foi considerado antes de comprar (estoque, outro setor, conserto...) e por que não serve; ou
+  "Nenhuma alternativa avaliada";
 - produto_url: link de referência que a pessoa mandou, ou "";
-- observacao: outros detalhes úteis para Compras (fornecedor sugerido, se aceita similar, cuidados), ou "".`;
+- observacao: outros detalhes úteis para Compras (fornecedor sugerido, se aceita similar), ou "".`;
 
-const SISTEMA_MANUTENCAO = (nome: string) => `Você é a especialista em manutenção da estrutura da Chiavari (galpão, escritório, banheiros,
-pátio, instalações). Seu papel: entender bem o problema para que a equipe de manutenção saiba o que é, onde é, quanto
-é grave e já chegue preparada para resolver.
+const SISTEMA_MANUTENCAO = (nome: string) => `Você é o Marcos, da manutenção da Chiavari (galpão, escritório, banheiros, pátio,
+instalações). Você é funcionário da empresa e conversa como colega. Seu papel: entender o problema em DETALHE e com
+EVIDÊNCIA, para a equipe saber exatamente o que é, onde é, quanto é grave e que material levar, e para confirmar que o
+serviço é necessário (às vezes basta um ajuste simples).
 
 ${REGRAS_COMUNS(nome)}
 
-O que você precisa descobrir (só o que ainda não estiver claro), mais ou menos nesta ordem:
-1. O que está acontecendo (o sintoma): o que quebrou, vaza, não liga, está solto, com barulho, com cheiro...
-2. Onde exatamente (prédio/galpão, setor, sala, altura, qual porta/tomada/lâmpada).
-3. Desde quando e se está piorando.
-4. Se há risco ou se atrapalha o trabalho: perigo de choque, queda, incêndio, alagamento, porta que não fecha
-   (segurança), se impede alguma operação ou evento.
-5. Se alguém já tentou resolver ou desligou algo (registro, disjuntor).
-6. Até quando precisa estar resolvido, se houver um motivo (ex.: evento, visita).
-Dê dicas curtas de segurança quando houver risco (ex.: "desligue o disjuntor", "isole a área"), sem substituir o técnico.
+${FOTOS}
+
+Como conduzir (uma pergunta por vez, só o que ainda não estiver claro):
+1. O que está acontecendo (o sintoma): o que quebrou, vaza, não liga, está solto, faz barulho, tem cheiro...
+2. Onde exatamente (galpão/prédio, setor, sala, altura, qual porta/tomada/lâmpada/cabine).
+3. SEMPRE peça foto como evidência: de perto do problema e, se ajudar, outra mostrando o lugar. Para o que não aparece em
+   foto (barulho, cheiro), peça para descrever bem ou mandar um áudio.
+4. Detalhes que ajudam o técnico: tamanho, modelo ou marca quando aparecer, se é intermitente, se começou depois de algo
+   (chuva, batida, troca), se está piorando, desde quando.
+5. Se há risco ou se atrapalha o trabalho: choque, queda, incêndio, alagamento, segurança, se impede alguma operação.
+6. Se alguém já tentou resolver ou desligou algo (registro, disjuntor). Se parecer algo simples (disjuntor desarmado,
+   plugue solto), sugira verificar antes, sem pedir que a pessoa faça nada perigoso.
+7. Até quando precisa estar resolvido, se houver um motivo (evento, visita).
+Dê dicas curtas de segurança quando houver risco ("desligue o disjuntor", "isole a área"), sem substituir o técnico.
+Normalmente bastam de 4 a 8 perguntas.
 
 Prioridade: urgente = risco à segurança das pessoas, alagamento grande, falta de energia/água geral ou impede a operação agora;
-alta = atrapalha o trabalho, desperdiça água/energia ou pode piorar em poucos dias; normal = precisa resolver mas não atrapalha muito;
-baixa = melhoria ou incômodo pequeno.
+alta = atrapalha o trabalho, desperdiça água/energia ou pode piorar em poucos dias; normal = precisa resolver mas não
+atrapalha muito; baixa = melhoria ou incômodo pequeno.
 
 O resumo (quando pronto=true):
 - titulo: o problema em poucas palavras (ex.: "Vazamento na descarga do banheiro masculino") (5 a 120 caracteres);
@@ -120,8 +151,8 @@ O resumo (quando pronto=true):
 - categoria: uma destas chaves exatamente: ${Object.entries(CATEGORIAS).map(([k, v]) => `${k} = ${v}`).join("; ")};
 - prioridade: uma destas exatamente: ${PRIORIDADES.join(", ")};
 - necessario_ate: AAAA-MM-DD, ou "" se não houver prazo;
-- descricao: o problema completo para o técnico: sintoma, desde quando, risco, o que já foi feito e o que se espera
-  (3 a 8 frases).`;
+- descricao: o problema completo para o técnico: sintoma, detalhes, o que aparece nas fotos (ou "sem foto"), desde quando,
+  risco, o que já foi feito e o que se espera (4 a 10 frases).`;
 
 const ESQUEMAS: Record<string, any> = {
   compra: {
@@ -132,10 +163,11 @@ const ESQUEMAS: Record<string, any> = {
         resposta: { type: "string" }, pronto: { type: "boolean" },
         resumo: {
           type: "object", additionalProperties: false,
-          required: ["descricao_item", "quantidade", "unidade", "data_necessidade", "pedido", "motivo", "produto_url", "observacao"],
+          required: ["descricao_item", "quantidade", "unidade", "data_necessidade", "pedido", "motivo", "justificativa", "alternativas", "produto_url", "observacao"],
           properties: {
             descricao_item: { type: "string" }, quantidade: { type: "number" }, unidade: { type: "string" },
             data_necessidade: { type: "string" }, pedido: { type: "string" }, motivo: { type: "string" },
+            justificativa: { type: "string" }, alternativas: { type: "string" },
             produto_url: { type: "string" }, observacao: { type: "string" },
           },
         },
@@ -175,9 +207,9 @@ function validarCompra(r: any) {
   const resumo = {
     descricao_item: corta(r?.descricao_item, 300), quantidade: Number.isFinite(q) && q > 0 ? Math.round(q * 100) / 100 : 0,
     unidade: corta(r?.unidade, 20) || "un", data_necessidade: dataOk(r?.data_necessidade), pedido: corta(r?.pedido, 200),
-    motivo: corta(r?.motivo, 1500), produto_url: /^https?:\/\//i.test(link) ? link : "", observacao: corta(r?.observacao, 1500),
+    motivo: corta(r?.motivo, 1500), justificativa: corta(r?.justificativa, 2000), alternativas: corta(r?.alternativas, 1500), produto_url: /^https?:\/\//i.test(link) ? link : "", observacao: corta(r?.observacao, 1500),
   };
-  const completo = resumo.descricao_item.length >= 3 && resumo.quantidade > 0 && resumo.motivo.length >= 5;
+  const completo = resumo.descricao_item.length >= 3 && resumo.quantidade > 0 && resumo.motivo.length >= 5 && resumo.justificativa.length >= 10;
   return completo ? resumo : null;
 }
 function validarManutencao(r: any) {
@@ -199,8 +231,18 @@ async function conversar(nome: string, body: any) {
   const lista = Array.isArray(body?.mensagens) ? body.mensagens : [];
   if (!lista.length) return json({ erro: "Conte o que você precisa para começar." }, 400);
   if (lista.length > 60) return json({ erro: "A conversa ficou longa demais. Envie o resumo ou comece de novo." }, 400);
-  const mensagens = lista.map((m: any) => ({ role: m?.papel === "ia" ? "assistant" : "user", content: String(m?.texto || "").slice(0, 4000) }))
-    .filter((m: any) => m.content.trim());
+  // Fotos: só do bucket de evidências da própria empresa, e no máximo as 6 mais recentes (as outras viram só texto).
+  const prefixo = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/solicitacoes-evidencias/${body.empresa_id}/`;
+  let restantes = 6;
+  const mensagens = lista.slice().reverse().map((m: any) => {
+    const texto = String(m?.texto || "").slice(0, 4000);
+    if (m?.papel === "ia") return { role: "assistant", content: texto };
+    const fotos = (Array.isArray(m?.fotos) ? m.fotos : []).map(String).filter((u: string) => u.startsWith(prefixo));
+    if (!fotos.length) return { role: "user", content: texto };
+    const usar = fotos.slice(0, Math.max(0, restantes)); restantes -= usar.length;
+    const legenda = (texto.trim() || "(foto)") + (usar.length < fotos.length ? ` [+${fotos.length - usar.length} foto(s) sem análise]` : "");
+    return { role: "user", content: [{ type: "text", text: legenda }, ...usar.map((u: string) => ({ type: "image_url", image_url: { url: u, detail: "low" } }))] };
+  }).reverse().filter((m: any) => typeof m.content !== "string" || m.content.trim());
   const sistema = tipo === "compra" ? SISTEMA_COMPRA(nome) : SISTEMA_MANUTENCAO(nome);
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",

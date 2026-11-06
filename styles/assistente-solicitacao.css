@@ -74,3 +74,10 @@ section.as-dialog.as-inline{display:flex;flex-direction:column;width:auto;height
 .as-ok-acoes{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px}
 .sl-abas .sl-qtd{margin-left:6px;color:#6b6b6b;font-weight:500}
 @media(max-width:900px){.sl-layout{grid-template-columns:1fr;gap:22px}.sl-intro{padding-top:0}section.as-dialog.as-inline{height:72vh}}
+/* Fotos de evidência na conversa e no resumo. */
+.as-fotos{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px}
+.as-fotos a{display:block;width:92px;height:92px;border-radius:10px;overflow:hidden;background:#eef1f5;box-shadow:0 0 0 1px rgba(15,23,42,.08)}
+.as-fotos img{width:100%;height:100%;object-fit:cover;display:block}
+.as-msg.pessoa .as-fotos a{box-shadow:0 0 0 2px rgba(255,255,255,.6)}
+.as-resumo .as-fotos a{width:110px;height:110px}
+.as-fotos-titulo{display:block;margin-top:4px;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#6b6b6b}
