@@ -1,0 +1,55 @@
+/* Conversa com a especialista (solicitação de compra e de manutenção), nov/2026. js/ui/assistente-solicitacao.js */
+dialog.as-dialog{width:min(760px,calc(100vw - 24px));height:min(720px,calc(100vh - 32px));max-height:none;max-width:none;margin:auto;padding:0;border:1px solid #e3e7ec;border-radius:18px;background:#fff;box-sizing:border-box;overflow:hidden;font:400 14px Inter,system-ui,sans-serif;color:#1f2020;box-shadow:0 18px 48px rgba(15,23,42,.22)}
+dialog.as-dialog[open]{display:flex;flex-direction:column}
+dialog.as-dialog::backdrop{background:rgba(20,33,52,.42);backdrop-filter:blur(3px)}
+.as-topo{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid #eef1f5}
+.as-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#2b5aa6,#123f86);color:#fff;font-size:19px}
+.as-topo strong{display:block;font:600 15px Inter,system-ui,sans-serif}
+.as-topo small{display:block;font-size:12px;color:#6b6b6b}
+.as-topo-acoes{display:flex;align-items:center;gap:6px}
+dialog.as-dialog .as-fechar{width:34px;height:34px;min-height:0;padding:0;border:0;border-radius:50%;background:transparent;color:#4f4f4f;font-size:24px;line-height:1;cursor:pointer}
+dialog.as-dialog .as-fechar:hover{background:#f1f4f8}
+dialog.as-dialog .as-link{border:0;background:none;padding:4px 2px;min-height:0;color:#123f86;font:500 12.5px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.as-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px;background:#f7f9fb}
+.as-msg{max-width:80%;padding:10px 14px;border-radius:16px;line-height:1.5;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.as-msg p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.as-msg.ia{align-self:flex-start;background:#fff;border:1px solid #e8ecf1;border-bottom-left-radius:5px}
+.as-msg.pessoa{align-self:flex-end;background:#123f86;color:#fff;border-bottom-right-radius:5px}
+.as-msg.erro{background:#fff6f5;border-color:#f3d2cf;color:#8a2a22}
+.as-msg-ok{background:#eaf7ef!important;border-color:#bfe3cc!important;color:#1f5e37}
+.as-audio{display:block;font-size:11px;opacity:.8;margin-bottom:3px}
+.as-digitando{display:flex;gap:4px;padding:14px 16px}
+.as-digitando span{width:7px;height:7px;border-radius:50%;background:#9aa6b4;animation:as-pulo 1.1s infinite}
+.as-digitando span:nth-child(2){animation-delay:.15s}.as-digitando span:nth-child(3){animation-delay:.3s}
+@keyframes as-pulo{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+.as-resumo{align-self:stretch;background:#fff;border:1px solid #cdd9ec;border-radius:14px;padding:16px 18px;box-shadow:0 4px 14px rgba(18,63,134,.08)}
+.as-resumo.enviado{border-color:#bfe3cc}
+.as-eyebrow{display:block;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#123f86;margin-bottom:8px}
+.as-resumo h3{margin:0 0 10px;font:600 17px Inter,system-ui,sans-serif;color:#1f2020}
+.as-res-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;margin:0 0 10px}
+.as-res-campo{min-width:0}
+.as-res-campo.inteira{grid-column:1/-1}
+.as-res-campo>span{display:block;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#6b6b6b;margin-bottom:2px}
+.as-res-campo p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+.as-res-campo a{color:#123f86;overflow-wrap:anywhere}
+.as-selo{display:inline-flex;padding:3px 9px;border-radius:999px;background:#f1f4f8;font-size:12px;font-weight:600}
+.as-selo.alta{background:#fff3de;color:#8d6114}.as-selo.urgente{background:#fdebed;color:#b42318}
+.as-resumo footer{display:flex;justify-content:flex-end;align-items:center;gap:14px;margin-top:12px}
+.as-ok{margin:10px 0 0;color:#1f7a44;font-weight:600}
+.as-gravando{display:flex;align-items:center;gap:8px;padding:8px 18px;background:#fff6f5;color:#8a2a22;font-size:13px;border-top:1px solid #f3d2cf}
+.as-gravando[hidden]{display:none}
+.as-gravando .as-link{margin-left:auto;color:#b42318}
+.as-rec{width:9px;height:9px;border-radius:50%;background:#e60012;animation:as-rec 1.2s infinite}
+@keyframes as-rec{50%{opacity:.3}}
+.as-campo{display:flex;align-items:flex-end;gap:8px;padding:12px 14px;border-top:1px solid #eef1f5;margin:0}
+dialog.as-dialog .as-campo textarea{flex:1;min-height:42px!important;max-height:150px;resize:none!important;padding:10px 14px;border:1px solid #dce3eb;border-radius:22px;font:400 14px Inter,system-ui,sans-serif;line-height:1.45;background:#fff;box-sizing:border-box;width:auto}
+dialog.as-dialog .as-icone,dialog.as-dialog .as-enviar{flex:0 0 42px;width:42px;height:42px;min-height:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid #dce3eb;background:#fff;color:#4f4f4f;padding:0}
+.as-icone svg,.as-enviar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+dialog.as-dialog .as-enviar{background:#123f86;border-color:#123f86;color:#fff}
+dialog.as-dialog .as-icone.gravando{background:#e60012;border-color:#e60012;color:#fff;animation:as-rec 1.2s infinite}
+dialog.as-dialog .as-icone:disabled,dialog.as-dialog .as-enviar:disabled{opacity:.45;cursor:default}
+.as-rodape{margin:0;padding:0 18px 10px;text-align:center}
+@media(max-width:600px){dialog.as-dialog{width:100vw;height:100dvh;border-radius:0;border:0}.as-msg{max-width:92%}.as-res-grade{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.as-digitando span,.as-rec,dialog.as-dialog .as-icone.gravando{animation:none}}
+html:root:is(#as-fechar#as-fechar#as-fechar,html) dialog.as-dialog .as-fechar{width:34px!important;height:34px!important;min-width:0!important;min-height:0!important;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;color:#4f4f4f!important;box-shadow:none!important;font-size:24px!important;line-height:1!important}
+html:root:is(#as-fechar#as-fechar#as-fechar,html) dialog.as-dialog .as-fechar:hover{background:#f1f4f8!important}

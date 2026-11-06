@@ -8,7 +8,21 @@ function pintar(){const busca=$('busca').value.toLocaleLowerCase('pt-BR'),status
  $('solicitacoes').innerHTML=rows.map(r=>`<tr><td>#${r.numero}</td><td><strong>${esc(r.titulo)}</strong><small>${esc(categorias[r.categoria]||r.categoria)}</small></td><td>${esc(r.local)}</td><td><span class="predial-prioridade is-${r.prioridade}">${prioridades[r.prioridade]}</span></td><td class="solicitacao-prazo text-danger">${dia(r.necessario_ate)}</td><td>${esc(r.solicitante_nome)}</td><td><span class="solicitacao-status is-${r.status==='concluida'?'concluida':r.status==='cancelada'?'cancelada':r.status==='aberta'?'enviada':'atencao'}">${estados[r.status]}</span></td><td>${esc(r.responsavel||'A definir')}${r.programada_para?`<small>Agendada: ${dia(r.programada_para)}</small>`:''}</td><td><button class="predial-abrir btn btn-secondary" type="button" data-abrir="${r.id}">Ver solicitação</button></td></tr>`).join('');$('vazio').hidden=rows.length>0;
 }
 async function carregar(){const data=await rpc('listar');lista=data.itens||[];$('novaSolicitacao').disabled=!data.criar;pintar();}
-$('novaSolicitacao').onclick=()=>{$('solicitacaoForm').reset();token=crypto.randomUUID();$('erroSolicitacao').textContent='';$('solicitacaoDialog').showModal();};
+const abrirFormulario=()=>{$('solicitacaoForm').reset();token=crypto.randomUUID();$('erroSolicitacao').textContent='';$('solicitacaoDialog').showModal();};
+// Nov/2026: a nova solicitação é feita conversando com a especialista em manutenção; o formulário fica como alternativa.
+$('novaSolicitacao').onclick=()=>{
+ if(!window.EasyLocAssistenteSolicitacao){abrirFormulario();return;}
+ let chave=crypto.randomUUID();
+ window.EasyLocAssistenteSolicitacao.abrir({tipo:'manutencao',titulo:'Nova solicitação de manutenção',assistente:'Especialista em manutenção',icone:'🔧',
+  saudacao:n=>(n?`Oi, ${n}! `:'Oi! ')+'Me conte o que está acontecendo e onde. Pode escrever ou mandar um áudio.',
+  resumoHtml:(r,esc)=>`<h3>${esc(r.titulo)}</h3><div class="as-res-grade"><div class="as-res-campo"><span>Local</span><p>${esc(r.local)}</p></div><div class="as-res-campo"><span>Tipo de serviço</span><p>${esc(categorias[r.categoria]||r.categoria)}</p></div><div class="as-res-campo"><span>Prioridade</span><p><span class="as-selo ${esc(r.prioridade)}">${esc(prioridades[r.prioridade]||r.prioridade)}</span></p></div><div class="as-res-campo"><span>Necessário até</span><p>${r.necessario_ate?dia(r.necessario_ate):'Sem prazo definido'}</p></div><div class="as-res-campo inteira"><span>Descrição do problema</span><p>${esc(r.descricao)}</p></div></div>`,
+  confirmar:async r=>{
+   const criada=await rpc('criar',{titulo:r.titulo,local:r.local,categoria:r.categoria,prioridade:r.prioridade,necessario_ate:r.necessario_ate||'',descricao:r.descricao,token:chave});
+   chave=crypto.randomUUID();await carregar();
+   return `Pronto! A solicitação ${criada?.numero?'#'+criada.numero+' ':''}foi registrada para a equipe de manutenção. Você acompanha o atendimento aqui nesta lista.`;
+  },
+  formulario:abrirFormulario});
+};
 document.querySelectorAll('[data-fechar]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 $('solicitacaoForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('[type=submit]');b.disabled=true;try{await rpc('criar',{...Object.fromEntries(new FormData(e.target)),token});$('solicitacaoDialog').close();await carregar();window.alerta('Solicitação de manutenção enviada.','Manutenção da estrutura','sucesso');}catch(err){$('erroSolicitacao').textContent=err.message;}finally{b.disabled=false;}};
 const opcoes=(map,atual)=>Object.entries(map).map(([v,t])=>`<option value="${v}" ${v===atual?'selected':''}>${t}</option>`).join('');
