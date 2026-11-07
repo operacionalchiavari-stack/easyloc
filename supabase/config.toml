@@ -487,3 +487,8 @@ entrypoint = "./functions/financeiro-assistente/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/pagamento-link/index.ts"
+
+[functions.app-push]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/app-push/index.ts"

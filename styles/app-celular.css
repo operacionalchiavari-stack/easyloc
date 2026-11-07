@@ -79,3 +79,18 @@ body{ min-height:100dvh; display:flex; flex-direction:column; }
 .ap-form{position:relative;z-index:1;width:min(360px,100%)}
 .ap-form label{align-items:center;text-align:center}
 .ap-form input{text-align:center}
+/* Avisos no celular (notificações), nov/2026 */
+.ap-avisos{display:flex;gap:14px;align-items:flex-start;margin-top:14px;padding:18px;border-radius:22px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px -14px rgba(15,23,42,.18)}
+.ap-avisos[hidden]{display:none}
+.ap-avisos-icone{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#f6f1e8;color:#9a7a4f}
+.ap-avisos-icone svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ap-avisos-texto{min-width:0;flex:1}
+.ap-avisos-texto b{display:block;font:600 16px var(--ap-serif, "Cormorant Garamond", Georgia, serif);margin-bottom:4px}
+.ap-avisos-texto p{margin:0;color:#5b6573;font-size:13.5px;line-height:1.5}
+.ap-avisos-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:12px}
+.ap-avisos-btn{border:0;border-radius:999px;padding:10px 16px;background:#5a5a55;color:#fff;font:600 13.5px Inter,system-ui,sans-serif;cursor:pointer}
+.ap-avisos-btn:disabled{opacity:.55}
+.ap-avisos-link{border:0;background:none;padding:4px 2px;color:#6b6b6b;font:500 13px Inter,system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ap-avisos-texto small{display:block;margin-top:8px;font-size:12.5px;color:#1f7a44}
+.ap-avisos-texto small:empty{display:none}
+.ap-avisos-texto small.erro{color:#b42318}

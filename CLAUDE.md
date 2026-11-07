@@ -11523,3 +11523,27 @@ para quem ela está falando, o que o decorador responde (com foto), as conversas
   histórico antigo apontava "client-token is not configured" (token de segurança da conta Z-API).
 - Teste: `tests/posvenda-conversas-browser.cjs`.
 
+## Notificações do app (Web Push), 1º aviso: "Você foi escalado" (06/11/2026)
+Pedido: "coloque algo pra montagem por enquanto, esse de você foi escalado… quero ter como gerar um teste".
+- **Celular**: Início do app (`app.html`) ganhou o bloco **Avisos no celular** (`js/app/avisos-app.js`, `#apAvisos`):
+  "Ativar avisos" (pede a permissão, registra o service worker `app-sw.js` na raiz, escopo `./`, e grava o celular por
+  `app_push_registrar`), **"Enviar notificação de teste"** (exemplo de "Você foi escalado" para os próprios celulares) e
+  "Desligar". iPhone só com o app na Tela de Início (iOS 16.4+); o bloco explica. `app-sw.js` mostra a notificação
+  (ícone do app, vibração) e o toque abre a URL do aviso (foca uma janela aberta do app ou abre outra).
+- **Servidor**: Edge Function `app-push` (publicada, `verify_jwt=false`): `teste` (login + 2FA + vínculo) e `processar`
+  (só com o cabeçalho `x-app-push-segredo` = segredo `APP_PUSH_SEGREDO`) que envia a fila com `npm:web-push`; celular que o
+  serviço de push diz não existir mais (404/410) é apagado. Chaves VAPID nos segredos (`VAPID_PUBLIC_KEY`,
+  `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` = URL do site); a pública também está em `avisos-app.js` (é pública). **Trocar as
+  chaves invalida todos os celulares cadastrados** (cada um precisa ativar de novo).
+- **Banco** (migration `20261106001000`, aplicada e registrada): `app_push_assinaturas` (por usuário), `app_push_fila`
+  (`chave` única evita repetir), `app_push_config` (URL da função + o mesmo segredo; preenchida à parte, fora do git) — sem
+  políticas, só funções. Gatilho `app_push_escala` em `operacao_etapa_pessoas` (insert de funcionário numa
+  montagem/desmontagem de hoje em diante, se ele tem celular com avisos): "Você foi escalado" + "Montagem · Pedido N · dia
+  às HH:MM" + cliente – local (+ "Você é o responsável."), abrindo `montador.html?app=1&etapa=<id>`; chama a função na hora
+  por `pg_net` (`app_push_disparar`) e o pg_cron `app-push-fila` repassa a cada 2 min o que falhou (até 5 tentativas).
+  Funcionário = `funcionarios_acesso.id` = usuário do login. Sair da escala e voltar não repete o aviso da mesma etapa.
+- **Testado**: no Edge de verdade (inscrição com a nossa chave → serviço de push 201 → o `app-sw.js` mostrou a
+  notificação), pelo caminho do servidor (fila → `pg_net` → `app-push` → notificação mostrada) e o gatilho numa transação
+  desfeita (um aviso só, com o texto certo). Não testado no celular físico.
+- Próximos avisos possíveis (o usuário ainda vai decidir): Triagem liberada, ocorrências, lembrete do dia seguinte.
+
