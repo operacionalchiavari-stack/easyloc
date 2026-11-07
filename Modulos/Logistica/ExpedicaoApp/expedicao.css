@@ -1,0 +1,13 @@
+/* App da Expedição: usa o triagem.css; aqui só o que é próprio. */
+.pedido.ex-bloqueado{opacity:.62;cursor:not-allowed}
+.pedido-status.ex-travado{color:#b42318}
+.pedido-status.ex-travado i{background:#d92d20}
+.ex-aviso-qtd{margin:0 0 12px}
+.ex-etq{display:inline-block;margin:2px 4px 0 0;padding:1px 7px;border:1px solid #e3e7ec;border-radius:999px;font-size:11px;color:#6b6b6b;background:#fff}
+.ex-etq.is-ok{border-color:#9fd3b2;background:#e6f4ea;color:#1f7a44}
+.escolha-material.ex-caminhao{display:flex;gap:10px;align-items:center}
+.escolha-material.ex-caminhao.is-programado{border-color:#123f86;background:#eaf0fa}
+.escolha-material.ex-caminhao small{display:block;color:#6b6b6b}
+label.escolha-material.ex-caminhao{display:flex;flex-direction:row;align-items:center;gap:12px;font-weight:400}
+label.escolha-material.ex-caminhao input{width:22px;height:22px;min-height:0;flex:none;padding:0;accent-color:#123f86}
+label.escolha-material.ex-caminhao strong{font-size:15px}

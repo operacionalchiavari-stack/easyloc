@@ -10,6 +10,8 @@
   const MODULOS = [
     { chave: "triagem", nome: "Triagem", texto: "Separar os pedidos na ida e conferir na volta.", href: "Modulos/Estoque/TriagemApp/triagem.html?app=1",
       icone: '<svg viewBox="0 0 24 24"><path d="M3 9V3h6m6 0h6v6m0 6v6h-6M9 21H3v-6M7 7h3v3H7zm7 0h3v3h-3zM7 14h3v3H7zm7 0h3v3h-3z"/></svg>' },
+    { chave: "expedicao", nome: "Expedição", texto: "Conferir o carregamento e o descarregamento com o QR.", href: "Modulos/Logistica/ExpedicaoApp/expedicao.html?app=1",
+      icone: '<svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>' },
     { chave: "montagem", nome: "Montagem", texto: "Suas montagens e desmontagens do dia.", href: "Modulos/Chiavari/Cronograma/montador.html?app=1",
       icone: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>' },
     { chave: "catalogo", nome: "Catálogo", texto: "O acervo completo, com fotos, medidas e disponibilidade.", href: "Modulos/Comercial/Catalogo/catalogo-app.html?app=1",
