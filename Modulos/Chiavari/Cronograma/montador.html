@@ -3,6 +3,7 @@
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
 <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/app/carregamento-app.js?v=20261106-carregamento" data-auto></script>
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
@@ -497,6 +498,7 @@
     atualizarNavegacao();
     document.querySelectorAll(".tela").forEach(function(t){ t.classList.toggle("ativa", t.id === id); });
     window.scrollTo(0, 0);
+    if(window.AppCarregamento && new URLSearchParams(location.search).get('app')==='1'){ id==='telaCarregando' ? AppCarregamento.mostrar() : AppCarregamento.pronto(); }
   }
 
   let toastTimer = null;

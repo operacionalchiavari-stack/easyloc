@@ -993,7 +993,7 @@ async function carregarCapas(){
 
 async function iniciar(){
   const abertura = $("appAbertura");
-  const sairAbertura = () => { abertura.classList.add("is-saindo"); setTimeout(() => abertura.remove(), 500); };
+  const sairAbertura = () => { window.AppCarregamento?.pronto(); abertura.classList.add("is-saindo"); setTimeout(() => abertura.remove(), 500); };
   try{
     if(!supabase) throw new Error("Sem conexão com o servidor.");
     S.sessao = await resolverSessao();
@@ -1026,6 +1026,7 @@ async function iniciar(){
     sairAbertura();
   }catch(error){
     console.error(error);
+    window.AppCarregamento?.pronto();
     abertura.querySelector(".app-abertura-linha")?.remove();
     abertura.insertAdjacentHTML("beforeend", `<p style="max-width:280px;text-align:center;color:rgba(255,255,255,.8);font-size:.95rem">Não foi possível abrir o catálogo agora.</p><button class="btn btn-claro" onclick="location.reload()">Tentar de novo</button>`);
   }

@@ -35,6 +35,8 @@
     if(empresa.logo_url){
       const img = new Image(); img.alt = empresa.nome || "Logo"; img.className = "ap-logo";
       img.onload = () => { if(img.naturalWidth / img.naturalHeight < 1.6){ img.classList.add("is-quadrada"); } $("apMarca").replaceChildren(img); };
+      // Nov/2026: o carregamento padrão dos módulos (js/app/carregamento-app.js) usa esta logo.
+      try{ localStorage.setItem("app_logo_url", empresa.logo_url); if(empresa.nome) localStorage.setItem("app_empresa_nome", empresa.nome); }catch(e){}
       img.src = empresa.logo_url;
     }else if(empresa.nome){ $("apMarca").innerHTML = "<span>" + esc(empresa.nome) + "</span>"; }
     return dadosVitrine;
@@ -110,6 +112,9 @@
       : '<p class="ap-vazio">Seu usuário ainda não tem acesso a nenhum módulo do app. Fale com o administrador.</p>';
     tela("apInicio");
   }
+
+  /* Nov/2026: tocar num módulo mostra o carregamento padrão (branco, com a logo) enquanto a página do módulo abre. */
+  $("apModulos").addEventListener("click", (e) => { if(e.target.closest(".ap-modulo")) window.AppCarregamento?.mostrar(); });
 
   /* ---------- Entrar e sair ---------- */
   $("apForm").addEventListener("submit", async (ev) => {

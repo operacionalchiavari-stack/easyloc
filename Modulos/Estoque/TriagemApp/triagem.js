@@ -15,7 +15,8 @@
  // Nov/2026: sem login próprio. Sem sessão do sistema, volta para o app (app.html), que tem o login único.
  const NO_QUADRO=window.top!==window,APP='../../../app.html';
  function irParaLogin(msg){if(NO_QUADRO){tela('taLogin');if(msg)mensagem(msg);return;}location.replace(APP);}
- function tela(id){['taLogin','taFila','taDetalhe','taCarregando'].forEach(x=>$(x).hidden=x!==id);const logado=id==='taFila'||id==='taDetalhe';$('taMarcaAcoes').hidden=!logado;$('taMarcaSaudacao').hidden=!logado;document.body.classList.toggle('ta-logado',logado);document.body.classList.toggle('ta-na-fila',id==='taFila');}
+ const APP_MODO=new URLSearchParams(location.search).get('app')==='1';
+ function tela(id){if(APP_MODO&&window.AppCarregamento){id==='taCarregando'?AppCarregamento.mostrar():AppCarregamento.pronto();}['taLogin','taFila','taDetalhe','taCarregando'].forEach(x=>$(x).hidden=x!==id);const logado=id==='taFila'||id==='taDetalhe';$('taMarcaAcoes').hidden=!logado;$('taMarcaSaudacao').hidden=!logado;document.body.classList.toggle('ta-logado',logado);document.body.classList.toggle('ta-na-fila',id==='taFila');}
  async function identidade(empresa){
   const geracao=++geracaoMarca;
   const resultados=await Promise.allSettled([sb.rpc('catalogo_capas_publico',{}),sb.rpc('catalogo_vitrine_login',empresa?{p_empresa_id:empresa}:{})]);
