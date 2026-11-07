@@ -336,7 +336,7 @@
 .dano-fotos .dano-rem{border:0;background:none;color:#b42318;font-size:12px;padding:0 4px}
 </style>
   <meta name="theme-color" content="#5a5a55">
-  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-bonus-admin">
+  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-topo-branco">
   <link rel="stylesheet" href="montador-evento.css?v=20261031-app-integrado">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
@@ -454,7 +454,7 @@
   document.getElementById("btnAtualizar").innerHTML = I.atualizar;
   document.getElementById("btnSair").innerHTML = I.sair;
   // Nov/2026: aberto como app (sem ser dentro do sistema), o botão de sair vira "Início" (volta para o app.html).
-  if(!MODO_SISTEMA && window.top === window){ const b=document.getElementById("btnSair"); b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>'; b.setAttribute("aria-label","Voltar ao início do app"); b.title="Início"; }
+  if(!MODO_SISTEMA && window.top === window){ const b=document.getElementById("btnSair"); b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>'; b.setAttribute("aria-label","Voltar ao início do app"); b.title="Início"; }
   document.getElementById("btnVoltar").innerHTML = I.voltar + "Voltar";
   document.getElementById("loginCpf")?.addEventListener("input",function(){
     const n=this.value.replace(/\D/g,'').slice(0,11);

@@ -57,3 +57,14 @@ html,body{background:#fff!important}
 .sinal-ok .sinal-dica{display:none}
 @media(prefers-reduced-motion:reduce){.sinal::before,.sinal-cartao{animation:none}}
 .sinal-ok.ver{pointer-events:none}
+/* Nov/2026: aberto pelo app (?app=1): sem a faixa de cima com a logo; fundo branco; voltar + busca + atualizar no topo,
+   como o catálogo da equipe. Fora do app (sistema) nada muda. */
+.ta-topo-btn{display:none}
+body.ta-app{background:#fff}
+body.ta-app header.marca{display:none!important}
+body.ta-app main{padding-top:calc(10px + env(safe-area-inset-top))}
+body.ta-app .ta-topo-btn{display:grid;width:44px;height:44px;border:0;background:transparent;color:#2f2b27;font-size:22px}
+body.ta-app .busca-linha{position:sticky;top:0;z-index:15;align-items:center;gap:6px;margin:0 -16px 18px;padding:8px 10px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px)}
+body.ta-app .busca input{min-height:46px;font-size:15px}
+body.ta-app.ta-na-fila .titulo-fila{display:none}
+

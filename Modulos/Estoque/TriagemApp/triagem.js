@@ -239,6 +239,9 @@
  $('taEmpresa').onchange=async e=>{if(s.ocupado)return;s.ocupado=true;const anterior=s.empresa;$('taContaDialog').close();tela('taCarregando');try{await selecionarEmpresa(e.target.value);}catch(err){s.empresa=anterior;localStorage.setItem('triagem-app:empresa',anterior);$('taEmpresa').value=anterior;tela('taFila');mensagem(err.message);}finally{s.ocupado=false;}};
  $('taSair').onclick=async()=>{pararCamera();s.geracao++;s.base=null;s.fila=[];s.usuario=null;s.fotosNovas.clear();$('taContaDialog').close();try{await sb.auth.signOut({scope:'local'});}catch(e){}irParaLogin('');};
  $('taSairTopo').onclick=()=>{if(s.ocupado)return;location.href=APP;};
+ // Nov/2026: aberto pelo app, sem a faixa de cima (logo): voltar, busca e atualizar numa linha só, como no catálogo.
+ document.body.classList.toggle('ta-app',APP_MODO);
+ $('taVoltarApp').onclick=()=>$('taSairTopo').click();$('taAtualizarTopo').onclick=()=>$('taAtualizar').click();
  if(NO_QUADRO){$('taSairTopo').hidden=true;$('taSair').hidden=true;}
  $('taEscolha').onclick=e=>{const b=e.target.closest('[data-escolher]');if(b){$('taEscolha').returnValue=b.dataset.escolher;$('taEscolha').close();}if(e.target.closest('[data-fechar-escolha]'))$('taEscolha').close();};
  $('taDetalhe').addEventListener('click',async e=>{

@@ -10,7 +10,7 @@
   <link rel="manifest" href="triagem.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="triagem.css?v=20261106-sinal2">
+  <link rel="stylesheet" href="triagem.css?v=20261106-topo-branco">
   <link rel="stylesheet" href="../../../styles/capas-operacao.css?v=20261101-ocorrencias-auto">
   <script src="../../../js/app/carregamento-app.js?v=20261106-abertura" data-auto></script>
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script>
@@ -39,7 +39,7 @@
     </section>
     <section id="taFila" hidden>
       <header class="titulo-fila"><span class="titulo-icone" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9V3h6m6 0h6v6m0 6v6h-6M9 21H3v-6M7 7h3v3H7zm7 0h3v3h-3zM7 14h3v3H7zm7 0h3v3h-3z"/></svg></span><div><h1>Triagem</h1><p>Materiais de ida e volta.</p></div></header>
-      <div class="busca-linha"><label class="busca"><span aria-hidden="true">⌕</span><input id="taBusca" type="search" placeholder="Pedido, cliente ou local" aria-label="Buscar pedido"></label></div>
+      <div class="busca-linha"><button type="button" class="botao-icone ta-topo-btn" id="taVoltarApp" aria-label="Voltar ao início do app"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><label class="busca"><span aria-hidden="true">⌕</span><input id="taBusca" type="search" placeholder="Pedido, cliente ou local" aria-label="Buscar pedido"></label><button type="button" class="botao-icone ta-topo-btn" id="taAtualizarTopo" aria-label="Atualizar pedidos">↻</button></div>
       <div class="titulo-secao"><h2 id="taFilaTitulo">Separação de ida</h2><span id="taFilaContagem" class="contador"></span></div>
       <p class="muted descricao" id="taFilaDescricao">Os pedidos liberados para separar aparecem aqui.</p>
       <div id="taPedidos" class="pedidos" aria-live="polite"></div>
@@ -60,7 +60,7 @@
   <script src="../../../js/core/leitorQr.js?v=20261103-qr-destaque"></script>
   <script src="../../../js/core/evidenciasOperacao.js?v=20261024"></script>
   <script src="../../../js/ui/capas-operacao.js?v=20261101-ocorrencias-auto"></script>
-  <script src="triagem.js?v=20261106-carregamento"></script>
+  <script src="triagem.js?v=20261106-topo-branco"></script>
 <script src="../../../js/app/rastreamento-app.js?v=20261107-principal"></script>
 <script src="../../../js/app/android-principal.js?v=20261107"></script>
 </body>

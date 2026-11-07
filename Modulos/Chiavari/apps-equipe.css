@@ -241,3 +241,12 @@ body[data-app-equipe="montagem"] .evento-uber .evento-sem-transporte{margin:0;fo
 .bonus-escolher b{font-size:15px}.bonus-escolher small{font-size:12.5px;color:#6b6b6b}
 .bonus-escolher:disabled{opacity:.5}
 .bonus-escolher-vazio{color:#6b6b6b;font-size:14px}
+/* Nov/2026 (pedido: "remova completamente [a faixa com a logo], que fique igual catálogo"): o topo do Montador fica
+   branco, sem a logo e sem o avatar: "←" (início do app) à esquerda, o nome no meio e "atualizar" à direita. */
+body[data-app-equipe="montagem"] .topo{background:#fff!important;color:#2f2b27!important;grid-template-columns:44px minmax(0,1fr) 44px!important;grid-template-rows:52px!important;gap:6px!important;padding:calc(6px + env(safe-area-inset-top)) 10px 6px!important;border-bottom:1px solid #f0ece5}
+body[data-app-equipe="montagem"] .topo>:is(.equipe-logo,.avatar){display:none!important}
+body[data-app-equipe="montagem"] .topo>#btnSair{grid-column:1!important;grid-row:1!important}
+body[data-app-equipe="montagem"] .topo>#btnAtualizar{grid-column:3!important;grid-row:1!important}
+body[data-app-equipe="montagem"] .topo>.icone-btn{width:44px;height:44px;border:0!important;background:transparent!important;color:#2f2b27!important;box-shadow:none!important}
+body[data-app-equipe="montagem"] .topo::after{content:"Montagem";grid-column:2;grid-row:1;align-self:center;text-align:center;font:600 21px/1 var(--serif,"Cormorant Garamond",Georgia,serif);letter-spacing:.02em;color:#2f2b27}
+
